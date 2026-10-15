@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { CHUNK_SIZE, heightAt } from '../core/world';
-import { LEVEL } from '../core/tuning';
+import { CHUNK_SIZE, heightAt, terrainBand } from '../core/world';
 import { RENDER } from '../core/renderSettings';
 
 // Aim slightly above the wolf's centre so it appears below screen centre.
@@ -30,6 +29,7 @@ export function positionCamera(camera: THREE.PerspectiveCamera, x: number, z: nu
     camera.position.y - Math.sin(angle), camera.position.z - Math.cos(yaw + lookYaw) * Math.cos(angle));
   camera.updateMatrixWorld(true);
 }
+const BAND_COLOR = { water: 0x929771, shore: 0x929771, upland: 0x8d9582, forest: 0x788e60 };
 export function terrainGeometry(cx: number, cz: number) {
   const geometry = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, RENDER.terrainSegments, RENDER.terrainSegments);
   geometry.rotateX(-Math.PI / 2);
@@ -39,7 +39,7 @@ export function terrainGeometry(cx: number, cz: number) {
     const z = positions.getZ(i) + (cz + .5) * CHUNK_SIZE;
     const y = heightAt(x, z);
     positions.setXYZ(i, x, y, z);
-    const color = new THREE.Color(y < LEVEL.shore ? 0x929771 : y > LEVEL.upland ? 0x8d9582 : 0x788e60);
+    const color = new THREE.Color(BAND_COLOR[terrainBand(y)]);
     colors.push(color.r, color.g, color.b);
   }
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));

@@ -1,6 +1,7 @@
 import type { Entity } from './world';
 import { random } from './random';
 import { smooth01 } from '../proc/math';
+import { f } from '../proc/trace';
 import { WOLF_SCALE } from './wolfModes';
 export const ROCK_SIZES = [.06, .08, .10, .13, .17, .22, .29, .38, .5] as const;
 export const PUSH_DISTANCE = .22;
@@ -10,9 +11,9 @@ export const SNOUT_RADIUS = .12 * WOLF_SCALE;
 export const SNOUT_HEIGHT = .12 * WOLF_SCALE;
 export function rockRecipe(seed: number) {
   const rng = random(seed);
-  return { shape: Math.floor(rng() * 9), size: Math.min(8, Math.floor(rng() ** 2.5 * 9)),
-    flipX: rng() < .5 ? -1 : 1, flipY: rng() < .5 ? -1 : 1,
-    tilt: rng() * Math.PI * 2, grey: .28 + rng() * .4 };
+  return { shape: f('rock', 'shape', Math.floor(rng() * 9)), size: f('rock', 'sizeClass', Math.min(8, Math.floor(rng() ** 2.5 * 9))),
+    flipX: f('rock', 'flipX', rng() < .5 ? -1 : 1), flipY: f('rock', 'flipY', rng() < .5 ? -1 : 1),
+    tilt: f('rock', 'tilt', rng() * Math.PI * 2), grey: f('rock', 'grey', .28 + rng() * .4) };
 }
 export function rockDiameter(e: Entity) { return ROCK_SIZES[rockRecipe(e.seed).size]; }
 export function pushContact(player: { x: number; z: number; heading?: number }, rock: Entity) {

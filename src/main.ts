@@ -22,6 +22,10 @@ import { RENDER_SETTINGS, createSettingsStore } from './core/renderSettings';
 import { settingsPanel } from './ui/settingsPanel';
 import { playerPanel } from './ui/playerPanel';
 import type { PhotoView } from './render/buildScene';
+import { createInspector } from './ui/inspector';
+import { createHandles } from './ui/shapeTools';
+import { setThunk } from './ui/haptics';
+import { appearancePanel, restoreLooks } from './ui/appearancePanel';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = element<HTMLCanvasElement>('world'), status = element('status'), actionButton = element<HTMLButtonElement>('act');
@@ -98,6 +102,12 @@ const renderStore = createSettingsStore(RENDER_SETTINGS);
 let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
 pauseMenu.addPanel({ id: 'render', title: 'Render settings', build: settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; }) });
 pauseMenu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
+setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
+const handles = createHandles(view.camera, canvas, view.scene);
+const inspector = createInspector(view, canvas, handles);
+restoreLooks((k, g) => view.setAppearance(k, g));
+pauseMenu.addPanel({ id: 'appearance', title: 'Appearance', build: appearancePanel(() => view.playerLookKey, (k, g) => view.setAppearance(k, g), undefined, { root: () => view.lookup('player')?.object, handles }) });
+pauseMenu.addPanel({ id: 'inspector', title: 'Generation inspector (I)', build: () => { if (paused) togglePause(); inspector.toggle(true); return document.createElement('div'); } });
 function applyPending() {
   if (pendingRegen) { view.invalidate(); pendingRegen = false; }
   if (pendingPlay) { const p = view.setPlayable(playAs); player.abilities = [...p.actions]; altitude = p.cameraHeight; pendingPlay = false; }
@@ -131,6 +141,7 @@ function clearInput() {
 addEventListener('keydown', event => {
   if (event.target instanceof HTMLElement && (event.target.isContentEditable || event.target.matches('input,textarea,select'))) return;
   if (dialog.open) return;
+  if (!event.repeat && event.key.toLowerCase() === 'i' && !event.ctrlKey) { inspector.toggle(); if (!photo.active) clearInput(); return; }
   if (photo.active) { if (!event.repeat && (event.key === 'Escape' || event.key.toLowerCase() === 'p')) void photo.exit(); return; } // photo mode has its own keys
   if (!event.repeat && event.key.toLowerCase() === 'p') { enterPhoto(); return; }
   if (event.code === 'Space') event.preventDefault();
@@ -233,7 +244,7 @@ function frame(time: number) {
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;
   actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
-  drawFrame(pv);
+  drawFrame(pv); inspector.update(); handles.update();
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted });
   if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
     sfx.hare(ev.type, ev);

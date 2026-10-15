@@ -4,6 +4,7 @@
  * To add a setting, add one entry here.
  */
 import { HARE } from '../animals/hare';
+import { FEEL, HAPTIC_CATS } from '../ui/haptics';
 
 /** Live config read by the world/render layers (buildScene, world scatter, hares, sound). Defaults = original game. */
 export const RENDER = {
@@ -39,6 +40,12 @@ export const RENDER_SETTINGS: SettingDef[] = [
   { id: 'animals.hares', label: 'Snowshoe hares', group: 'Animals', type: 'toggle', default: true, apply: v => { hareOn = !!v; HARE.count = hareOn ? hareCount : 0; } },
   { id: 'animals.hareCount', label: 'Hares around you', group: 'Animals', type: 'slider', min: 1, max: 15, step: 1, default: HARES_DEFAULT, apply: v => { hareCount = Number(v); HARE.count = hareOn ? hareCount : 0; } },
   { id: 'animals.birds', label: 'Birds (calls)', group: 'Animals', type: 'toggle', default: true, apply: v => { birdsOn = !!v; RENDER.birdRate = birdsOn ? birdRate : 0; } },
+  { id: 'feel.haptics', label: 'Haptics (gamepad, Quest controllers, phone; not mouse/pen)', group: 'Feel', type: 'toggle', default: true, apply: v => { FEEL.haptics = !!v; } },
+  { id: 'feel.intensity', label: 'Haptic strength', group: 'Feel', type: 'slider', min: 0, max: 1, step: .05, default: .6, apply: v => { FEEL.intensity = Number(v); } },
+  { id: 'feel.gameplay', label: 'Haptics: gameplay', group: 'Feel', type: 'toggle', default: true, apply: v => { HAPTIC_CATS.gameplay = !!v; } },
+  { id: 'feel.ui', label: 'Haptics: UI and photo mode', group: 'Feel', type: 'toggle', default: true, apply: v => { HAPTIC_CATS.ui = !!v; } },
+  { id: 'feel.editor', label: 'Haptics: editor limits', group: 'Feel', type: 'toggle', default: true, apply: v => { HAPTIC_CATS.editor = !!v; } },
+  { id: 'feel.sound', label: 'Sound at editor limits', group: 'Feel', type: 'toggle', default: true, apply: v => { FEEL.sound = !!v; } },
   { id: 'animals.birdRate', label: 'Bird activity ×', group: 'Animals', type: 'slider', min: .25, max: 3, step: .25, default: 1, apply: v => { birdRate = Number(v); RENDER.birdRate = birdsOn ? birdRate : 0; } },
 ];
 let hareOn = true, hareCount = HARES_DEFAULT, birdsOn = true, birdRate = 1;

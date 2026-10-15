@@ -13,6 +13,7 @@
 import type { AnimalBrain } from './animalBehavior';
 import { random, range as lerp } from '../proc/rng';
 import { angleTurn as turn } from '../proc/math';
+import { f, scope } from '../proc/trace';
 
 export const HERD = {
   radius: 30, cohesion: .35, align: .25,
@@ -38,6 +39,11 @@ export function forgetDeer(key: string) { states.delete(key); }
 
 /** Call after brain.decide(dt). `herd` = every simulated deer this frame (positions before movement). */
 export function shapeDeer(me: DeerView, herd: DeerView[], dt: number) {
+  scope(me.key); const posture = shape(me, herd, dt), s = states.get(me.key)!;
+  f('herd', 'posture', posture); f('herd', 'timer', s.timer); f('herd', 'alertLeft', s.alertLeft); f('herd', 'fleeTime', s.fleeTime);
+  scope(''); return posture;
+}
+function shape(me: DeerView, herd: DeerView[], dt: number) {
   const b = me.brain, s = deerState(me.key, b);
   if (b.motion === 'jump' || b.problem === 'avoid') { s.heading = b.heading; return s.posture; }
   const threat = b.problem === 'escape' ? b.target ?? b.lastThreat : undefined;
@@ -46,7 +52,8 @@ export function shapeDeer(me: DeerView, herd: DeerView[], dt: number) {
   const dThreat = s.threat ? Math.hypot(me.x - s.threat.x, me.z - s.threat.z) : Infinity;
 
   // A herd-mate already running is itself an alarm signal (with a shorter personal delay).
-  const mates = herd.filter(o => o.key !== me.key && Math.hypot(o.x - me.x, o.z - me.z) < HERD.radius);
+  const mates = herd.filter(o => o.key !== me.key && Math.hypot(o.x - me.x, o.z - me.z) < f('herd', 'radius', HERD.radius));
+  f('herd', 'mates', mates.length); f('herd', 'threatDistance', Math.min(dThreat, 999));
   s.settled = Math.max(0, s.settled - dt);
   const mateFleeing = s.settled <= 0 && mates.some(o => states.get(o.key)?.posture === 'flee');
 
@@ -90,9 +97,10 @@ export function shapeDeer(me: DeerView, herd: DeerView[], dt: number) {
     const cx = mates.reduce((a, o) => a + o.x, 0) / mates.length, cz = mates.reduce((a, o) => a + o.z, 0) / mates.length;
     const toCentre = Math.atan2(me.x - cx, me.z - cz), far = Math.hypot(cx - me.x, cz - me.z) > 6;
     const avgHeading = Math.atan2(mates.reduce((a, o) => a + Math.sin(o.brain.heading), 0), mates.reduce((a, o) => a + Math.cos(o.brain.heading), 0));
-    if (far) want = turn(want, toCentre, HERD.cohesion); else want = turn(want, avgHeading, HERD.align);
+    f('herd', 'toCentre', toCentre); f('herd', 'avgHeading', avgHeading);
+    if (far) want = turn(want, toCentre, f('herd', 'cohesion', HERD.cohesion)); else want = turn(want, avgHeading, f('herd', 'align', HERD.align));
   } else want += Math.sin(b.time * .2 + b.seed) * .4;
-  s.heading = turn(s.heading, want, HERD.turnRate.calm * dt);
+  f('herd', 'want', want); s.heading = turn(s.heading, want, f('herd', 'turnRate.calm', HERD.turnRate.calm) * dt);
   b.heading = s.heading; b.problem = 'explore';
   if (s.posture === 'walk') { b.motion = 'walk'; b.speed = .6; } else { b.motion = 'idle'; b.speed = 0; }
   return s.posture;

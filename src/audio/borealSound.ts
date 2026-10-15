@@ -12,6 +12,7 @@ import { RENDER } from '../core/renderSettings';
 /** Sound variation is seeded too (PROJECT-RULES.md rule 1). */
 const soundRng = stream(1400, 'borealSound-v1');
 
+import { haptic, SOUND_HAPTICS } from '../ui/haptics';
 export const SOUND_IDS = ['amb-day', 'amb-night', 'wind-pines', 'water', 'loon', 'wolf-howl', 'wolf-growl',
   'paw-walk', 'paw-run', 'deer-snort', 'deer-hooves', 'chew', 'land',
   'wolf-whine', 'herb-pluck', 'stone-roll', 'ui-click', 'ui-pause', 'wolf-pant', 'sprint-burst', 'stealth-rustle',
@@ -112,7 +113,9 @@ export class BorealSound {
   }
 
   /** One-shot; with a position it goes through an HRTF panner, otherwise it plays at the listener. */
-  playAt(id: SoundId, at?: { x: number; z: number }, level = 1, rate = 1) {
+  private ear = { x: 0, z: 0 }; private wet = false;
+  playAt(id: SoundId, at?: { x: number; z: number }, level = 1, rate = 1, feel = true) {
+    if (feel && SOUND_HAPTICS[id]) haptic(SOUND_HAPTICS[id], at ? Math.hypot(at.x - this.ear.x, at.z - this.ear.z) : 0); // same event point as the sound
     const ctx = this.ctx, buffer = this.buffers.get(id); if (!ctx || !buffer || ctx.state !== 'running') return;
     const src = ctx.createBufferSource(), gain = ctx.createGain();
     src.buffer = buffer; src.playbackRate.value = rate * (.94 + soundRng() * .12); gain.gain.value = level;
@@ -168,6 +171,7 @@ export class BorealSound {
     this.time += f.dt;
 
     // Listener follows the wolf; forward is -sin/-cos(yaw) like the movement code.
+    this.ear = { x: f.x, z: f.z }; const wet = heightAt(f.x, f.z) < LEVEL.waterSurface; if (wet && !this.wet) haptic('water'); this.wet = wet;
     const l = ctx.listener, y = heightAt(f.x, f.z) + .6, fx = -Math.sin(f.yaw), fz = -Math.cos(f.yaw);
     if (l.positionX) { l.positionX.value = f.x; l.positionY.value = y; l.positionZ.value = f.z; l.forwardX.value = fx; l.forwardY.value = 0; l.forwardZ.value = fz; l.upX.value = 0; l.upY.value = 1; l.upZ.value = 0; }
     else { l.setPosition(f.x, y, f.z); l.setOrientation(fx, 0, fz, 0, 1, 0); }

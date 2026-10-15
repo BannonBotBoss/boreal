@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { random } from '../core/random';
 import { shaderClock } from './shaderClock';
 import type { Entity } from '../core/world';
+import { f, choose, tracing } from '../proc/trace';
 
 /**
  * Stylized boreal forest (Grok Bot). Every 'spruce' entity becomes one of five species picked
@@ -11,10 +12,8 @@ import type { Entity } from '../core/world';
  */
 export type TreeSpecies = 'black-spruce' | 'white-spruce' | 'jack-pine' | 'paper-birch' | 'aspen';
 const VARIANTS = 6;
-export function treeSpecies(seed: number): TreeSpecies {
-  const r = random(seed ^ 0x9e3779b9)();
-  return r < .30 ? 'black-spruce' : r < .55 ? 'white-spruce' : r < .72 ? 'jack-pine' : r < .87 ? 'paper-birch' : 'aspen';
-}
+export const SPECIES_TABLE = [['black-spruce', .30], ['white-spruce', .55], ['jack-pine', .72], ['paper-birch', .87], ['aspen', 1]] as const;
+export function treeSpecies(seed: number): TreeSpecies { return choose('tree', 'species', random(seed ^ 0x9e3779b9)(), SPECIES_TABLE); }
 
 const wind = { value: 0 };
 let material: THREE.MeshStandardMaterial | undefined;
@@ -65,10 +64,10 @@ function build(species: TreeSpecies, variant: number, detail: number) {
     parts.push(painted(new THREE.IcosahedronGeometry(1, detail === 0 ? 1 : 0), color, M(x, y, z, sx, sy, sz, rng(), rng() * 6, rng()), .12, rng));
   if (species === 'black-spruce' || species === 'white-spruce') {
     const black = species === 'black-spruce';
-    const h = black ? 8 + rng() * 5 : 10 + rng() * 6, w = black ? .9 + rng() * .4 : 1.9 + rng() * .8;
+    const h = f('tree', 'height', black ? 8 + rng() * 5 : 10 + rng() * 6), w = f('tree', 'crownWidth', black ? .9 + rng() * .4 : 1.9 + rng() * .8);
     const green = black ? new THREE.Color(0x1f3b2f) : new THREE.Color(0x2e5a4a).offsetHSL((rng() - .5) * .03, 0, 0);
     trunk(h * .96, black ? .16 : .26, 0x4e3a2c);
-    const tiers = detail === 2 ? 2 : detail === 1 ? 5 : black ? 11 : 9;
+    const tiers = f('tree', 'tiers', detail === 2 ? 2 : detail === 1 ? 5 : black ? 11 : 9);
     for (let i = 0; i < tiers; i++) {
       const t = i / tiers, y = h * (.16 + .8 * t), radius = w * (1 - t * .88) * (.85 + rng() * .3);
       const tall = h * (detail === 2 ? .5 : black ? .2 : .24);
@@ -78,9 +77,9 @@ function build(species: TreeSpecies, variant: number, detail: number) {
     }
     if (black && detail < 2) blob(0, h * .97, 0, .38, .7, .38, green.clone().offsetHSL(0, 0, -.02)); // club top
   } else if (species === 'jack-pine') {
-    const h = 9 + rng() * 5, lean = (rng() - .5) * .12;
+    const h = f('tree', 'height', 9 + rng() * 5), lean = f('tree', 'lean', (rng() - .5) * .12);
     trunk(h, .22, 0x6a4a35, undefined, lean);
-    const clumps = detail === 2 ? 3 : detail === 1 ? 5 : 8;
+    const clumps = f('tree', 'clumps', detail === 2 ? 3 : detail === 1 ? 5 : 8);
     for (let i = 0; i < clumps; i++) {
       const a = rng() * Math.PI * 2, y = h * (.55 + rng() * .42), d = .4 + rng() * 1.2;
       const cx = Math.cos(a) * d - lean * y, cz = Math.sin(a) * d;
@@ -89,12 +88,12 @@ function build(species: TreeSpecies, variant: number, detail: number) {
     }
   } else {
     const birch = species === 'paper-birch';
-    const h = birch ? 8 + rng() * 4 : 9 + rng() * 5, lean = (rng() - .5) * (birch ? .2 : .06);
+    const h = f('tree', 'height', birch ? 8 + rng() * 4 : 9 + rng() * 5), lean = f('tree', 'lean', (rng() - .5) * (birch ? .2 : .06));
     const marks = Array.from({ length: 12 }, () => rng());
     const bands = (y: number) => { const m = marks[Math.min(11, Math.max(0, Math.floor(y / h * 12)))]; return y < .4 ? .55 : m < (birch ? .35 : .2) ? (birch ? .28 : .7) : 1; };
     trunk(h, birch ? .17 : .15, birch ? 0xe8e4da : 0xb9c2a8, bands, lean);
     const leaf = birch ? 0x6f9a3c : 0x8cab3e;
-    const n = detail === 2 ? 3 : detail === 1 ? 6 : 11;
+    const n = f('tree', 'leafBlobs', detail === 2 ? 3 : detail === 1 ? 6 : 11);
     for (let i = 0; i < n; i++) {
       const t = rng(), y = h * (birch ? .5 : .55) + t * h * .45, spread = (birch ? 1.6 : 1.0) * (1 - t * .5);
       const a = rng() * Math.PI * 2;
@@ -108,12 +107,13 @@ function build(species: TreeSpecies, variant: number, detail: number) {
 
 /** One LOD level of a tree: a single shared-geometry mesh, flagged so disposeObject skips it. */
 export function treeGeometry(entity: Entity, detail: number): THREE.Group {
-  const species = treeSpecies(entity.seed), variant = (entity.seed >>> 3) % VARIANTS, key = `${species}:${variant}:${detail}`;
-  let geometry = cache.get(key); if (!geometry) cache.set(key, geometry = build(species, variant, detail));
-  const mesh = new THREE.Mesh(geometry, treeMaterial()); mesh.userData.shared = true;
+  const species = treeSpecies(entity.seed), variant = f('tree', 'variant', (entity.seed >>> 3) % VARIANTS), key = `${species}:${variant}:${detail}`;
+  // Traced (inspector) builds bypass the shared cache so factors are reported and what-if overrides take effect.
+  let geometry = tracing() ? build(species, variant, detail) : cache.get(key); if (!geometry) cache.set(key, geometry = build(species, variant, detail));
+  const mesh = new THREE.Mesh(geometry, treeMaterial()); mesh.userData.shared = !tracing();
   mesh.onBeforeRender = () => { wind.value = shaderClock.time; };
   const group = new THREE.Group(); group.add(mesh);
-  const s = random(entity.seed)();
+  const s = f('tree', 'heightJitter', random(entity.seed)());
   group.scale.set(entity.scale, entity.scale * (.9 + s * .2), entity.scale); group.rotation.y = entity.rotation;
   return group;
 }

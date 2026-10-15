@@ -9,6 +9,7 @@ import { heightAt, WORLD_SEED } from '../core/world';
 import { stream, range } from '../proc/rng';
 import { stepForward } from '../proc/math';
 import { LEVEL } from '../core/tuning';
+import { f, scope } from '../proc/trace';
 import type { SnapshotSource } from '../core/snapshot';
 
 export const HARE = {
@@ -46,7 +47,7 @@ export function createHares(scene: THREE.Scene) {
       const a = spawnRng() * Math.PI * 2, d = range(spawnRng, [HARE.spawnMin, HARE.spawnMax]), x = px + Math.sin(a) * d, z = pz + Math.cos(a) * d;
       if (heightAt(x, z) < LEVEL.shore) continue;
       const { root } = model(); scene.add(root);
-      const id = nextId++, rng = stream(WORLD_SEED, `hare-v1:${id}`);
+      const id = nextId++; root.userData.inspect = { type: 'hare', key: `hare:${id}` }; const rng = stream(WORLD_SEED, `hare-v1:${id}`);
       hares.push({ id, x, z, heading: rng() * 6.3, state: 'nibble', timer: range(rng, [1, 4]), flee: 0, zig: 0, hopPhase: 0, root, rng });
       return;
     }
@@ -67,7 +68,8 @@ export function createHares(scene: THREE.Scene) {
       if (d < HARE.catchContact || (wolf.pouncing && d < HARE.catchPounce)) {
         events.push({ type: 'caught', x: h.x, z: h.z }); remove(h); pending.push(time + range(h.rng, HARE.respawnSeconds)); continue;
       }
-      const noticeAt = HARE.notice[wolf.mode] ?? 14, boltAt = HARE.bolt[wolf.mode] ?? 5;
+      scope(`hare:${h.id}`); f('hare', 'wolfDistance', d);
+      const noticeAt = f('hare', 'noticeAt', HARE.notice[wolf.mode] ?? 14), boltAt = f('hare', 'boltAt', HARE.bolt[wolf.mode] ?? 5);
       let speed = 0; h.timer -= dt; const rand = (a: number, b: number) => range(h.rng, [a, b]);
       if (h.state !== 'flee' && h.state !== 'freeze' && d < noticeAt && (wolf.moving || d < boltAt)) { h.state = 'freeze'; h.timer = rand(...HARE.freezeSeconds); }
       // A stalking (stealth) wolf keeps a hare frozen, trusting its camouflage, until it is very close.
@@ -87,6 +89,7 @@ export function createHares(scene: THREE.Scene) {
       h.hopPhase += speed > 0 ? dt * (speed > 3 ? 7 : 4) : 0;
       const hop = speed > 0 ? Math.abs(Math.sin(h.hopPhase * Math.PI)) * (speed > 3 ? .28 : .12) : 0;
       h.root.position.set(h.x, heightAt(h.x, h.z) + hop, h.z); h.root.rotation.y = h.heading;
+      f('hare', 'state', h.state); f('hare', 'timer', h.timer); f('hare', 'speed', speed); f('hare', 'fleeTime', h.flee); f('hare', 'zigTimer', h.zig); scope('');
       const body = h.root.children[0]; body.rotation.x = h.state === 'nibble' ? Math.sin(time * 9 + h.id) * .03 + .12 : h.state === 'freeze' ? -.05 : -Math.sin(h.hopPhase * Math.PI) * .2;
     }
     return events;

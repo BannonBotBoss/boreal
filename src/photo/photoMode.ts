@@ -2,6 +2,7 @@
  * Photo mode (Grok Bot): frozen world, free-fly camera, rewind timeline, photographic post settings, and one capture path
  * for stills, sequences and video. The world's state comes and goes only through the shared snapshot hub (core/snapshot.ts).
  */
+import { haptic } from '../ui/haptics';
 import { heightAt } from '../core/world';
 import { clamp } from '../proc/math';
 import type { SnapshotHub, Snapshot } from '../core/snapshot';
@@ -94,7 +95,7 @@ export function createPhotoMode(host: PhotoHost) {
 
   // ---------- timeline ----------
   function show(i: number) {
-    index = i;
+    index = i; haptic('scrub');
     if (i < 0 || !hub.ring.size) { index = -1; if (live) hub.restore(live); }
     else hub.restore(hub.ring.at(clamp(i, 0, hub.ring.size - 1))!);
     time.max = String(hub.ring.size); time.value = String(index < 0 ? hub.ring.size : index);
@@ -124,7 +125,7 @@ export function createPhotoMode(host: PhotoHost) {
   }
   async function add(kind: Capture['kind'], frames: Frame[], video?: Capture['video'], thumb?: string) {
     const rec = { kind, frames, settings: { ...settings }, aspect: capture.aspect, video };
-    const n = gallery.add({ ...rec, thumb: thumb ?? await thumbFor(rec) });
+    haptic('shutter'); const n = gallery.add({ ...rec, thumb: thumb ?? await thumbFor(rec) });
     host.notice(`${kind === 'photo' ? 'Photo' : kind === 'video' ? 'Video' : 'Sequence'} kept (${n} this session). Choose size and export when you leave photo mode.`);
   }
   /** Edit = the same camera panel + post stack on a stored capture; Save writes back (original kept for Revert). */

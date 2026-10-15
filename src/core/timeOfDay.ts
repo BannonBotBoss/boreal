@@ -32,7 +32,7 @@ export function sunPosition(hour: number, dayOfYear = DAY_OF_YEAR, latitude = LA
     direction: { x: Math.cos(el) * Math.sin(az), y: Math.sin(el), z: -Math.cos(el) * Math.cos(az) },
   };
 }
-const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+import { smoothstep as smooth } from '../proc/math';
 /** Lighting amounts for a sun elevation: daylight 0–1 (civil twilight blends from −6° to +8°), and a warm low-sun tint 0–1. */
 export function lighting(elevation: number) {
   const day = smooth(-6, 8, elevation);

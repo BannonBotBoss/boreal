@@ -1,4 +1,5 @@
 import { hash, random } from './random';
+import { clamp01, smooth01 } from '../proc/math';
 export const FORMATION_SPACING = 12;
 export const MAX_FORMATION_CELLS = 12;
 export const MAX_DEPTH_STEP = .025;
@@ -34,9 +35,9 @@ export function depressionFormation(px: number, pz: number): DepressionCell[] {
 }
 function segmentDepth(x:number,z:number,a:DepressionCell,b:DepressionCell) {
   const p=cellCenter(a),q=cellCenter(b),dx=q.x-p.x,dz=q.z-p.z;
-  const t=Math.max(0,Math.min(1,((x-p.x)*dx+(z-p.z)*dz)/(dx*dx+dz*dz||1)));
+  const t=clamp01(((x-p.x)*dx+(z-p.z)*dz)/(dx*dx+dz*dz||1));
   const d=Math.hypot(x-p.x-t*dx,z-p.z-t*dz);
-  const u=Math.max(0,1-d/.55); const falloff=u*u*(3-2*u);
+  const falloff=smooth01(1-d/.55);
   return (a.depth+(b.depth-a.depth)*t)*falloff;
 }
 const segmentCache = new WeakMap<DepressionCell[], [DepressionCell,DepressionCell][]>();

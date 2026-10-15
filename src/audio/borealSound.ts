@@ -6,6 +6,7 @@
  * Music (music-day/music-night) crossfades with darkness and ducks under one-shots.
  */
 import { heightAt } from '../core/world';
+import { LEVEL } from '../core/tuning';
 
 export const SOUND_IDS = ['amb-day', 'amb-night', 'wind-pines', 'water', 'loon', 'wolf-howl', 'wolf-growl',
   'paw-walk', 'paw-run', 'deer-snort', 'deer-hooves', 'chew', 'land',
@@ -220,9 +221,9 @@ export class BorealSound {
   }
 }
 
-/** 0..1: share of sample points within ~25 m that sit at water level (heightAt < .1, same rule the deer use). */
+/** 0..1: share of sample points within ~25 m that sit at water level (LEVEL.deerWater, same rule the deer use). */
 export function nearbyWater(x: number, z: number) {
   let wet = 0, n = 0;
-  for (const r of [6, 14, 25]) for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; n++; if (heightAt(x + Math.sin(a) * r, z + Math.cos(a) * r) < .1) wet += 30 / (r + 5); }
+  for (const r of [6, 14, 25]) for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; n++; if (heightAt(x + Math.sin(a) * r, z + Math.cos(a) * r) < LEVEL.deerWater) wet += 30 / (r + 5); }
   return Math.min(1, wet / n * 2);
 }

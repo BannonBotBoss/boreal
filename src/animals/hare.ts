@@ -7,6 +7,8 @@
 import * as THREE from 'three';
 import { heightAt, WORLD_SEED } from '../core/world';
 import { stream, range } from '../proc/rng';
+import { stepForward } from '../proc/math';
+import { LEVEL } from '../core/tuning';
 
 export const HARE = {
   count: 5, spawnMin: 18, spawnMax: 45, despawn: 70, respawnSeconds: [25, 45] as [number, number],
@@ -41,7 +43,7 @@ export function createHares(scene: THREE.Scene) {
   function spawn(px: number, pz: number) {
     for (let tries = 0; tries < 12; tries++) {
       const a = spawnRng() * Math.PI * 2, d = range(spawnRng, [HARE.spawnMin, HARE.spawnMax]), x = px + Math.sin(a) * d, z = pz + Math.cos(a) * d;
-      if (heightAt(x, z) < .5) continue;
+      if (heightAt(x, z) < LEVEL.shore) continue;
       const { root } = model(); scene.add(root);
       const id = nextId++, rng = stream(WORLD_SEED, `hare-v1:${id}`);
       hares.push({ id, x, z, heading: rng() * 6.3, state: 'nibble', timer: range(rng, [1, 4]), flee: 0, zig: 0, hopPhase: 0, root, rng });
@@ -78,8 +80,8 @@ export function createHares(scene: THREE.Scene) {
       } else if (h.state === 'hop') { speed = 1.6; if (h.timer <= 0) { h.state = 'nibble'; h.timer = rand(2, 6); } }
       else if (h.state === 'nibble' && h.timer <= 0) { h.state = 'hop'; h.timer = rand(.6, 1.4); h.heading += rand(-1.2, 1.2); if (d < 30) events.push({ type: 'hop', x: h.x, z: h.z }); }
       // Move (hares turn back from water and steep ground), then animate the hop.
-      const nx = h.x - Math.sin(h.heading) * speed * dt, nz = h.z - Math.cos(h.heading) * speed * dt;
-      if (speed > 0) { if (heightAt(nx, nz) > .15) { h.x = nx; h.z = nz; } else h.heading += Math.PI * .6; }
+      const { x: nx, z: nz } = stepForward(h.x, h.z, h.heading, speed, dt);
+      if (speed > 0) { if (heightAt(nx, nz) > LEVEL.hareWater) { h.x = nx; h.z = nz; } else h.heading += Math.PI * .6; }
       h.hopPhase += speed > 0 ? dt * (speed > 3 ? 7 : 4) : 0;
       const hop = speed > 0 ? Math.abs(Math.sin(h.hopPhase * Math.PI)) * (speed > 3 ? .28 : .12) : 0;
       h.root.position.set(h.x, heightAt(h.x, h.z) + hop, h.z); h.root.rotation.y = h.heading;

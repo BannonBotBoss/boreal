@@ -14,6 +14,8 @@ import { createSky } from './sky';
 import { shapeDeer, forgetDeer } from '../core/deerHerd';
 import { createHares } from '../animals/hare';
 import { formatHour, gameHour, START_HOUR } from '../core/timeOfDay';
+import { LEVEL, BLOCK } from '../core/tuning';
+import { stepForward } from '../proc/math';
 
 /** Scene entry point: assembles generated terrain, streamed objects, light and camera. */
 /** Commits an animal eating a forage patch; returns the animal's new energy, or undefined if not committed. */
@@ -45,7 +47,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const geometry = terrainGeometry(cx, cz);
     root.add(new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true })));
     const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), new THREE.MeshStandardMaterial({ color: 0x578d91, roughness: .32, metalness: .1 }));
-    water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, -.25, (cz + .5) * CHUNK_SIZE); root.add(water);
+    water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
     const entities = structuredClone(restoreEntities(generateChunk(cx, cz), context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
     for (const entity of entities) {
       if (catalog[entity.kind].objectType === 'animal') {
@@ -118,9 +120,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
         rig.root.userData.posture=shapeDeer({key,x:e.x,z:e.z,brain:rig.brain},herd,dt); // src/core/deerHerd.ts
         if(rig.brain.meal) eat(animal, rig.brain.meal.key);
         const oldX=e.x,oldZ=e.z;
-        const nextX=e.x-Math.sin(rig.brain.heading)*rig.brain.speed*dt,nextZ=e.z-Math.cos(rig.brain.heading)*rig.brain.speed*dt;
+        const {x:nextX,z:nextZ}=stepForward(e.x,e.z,rig.brain.heading,rig.brain.speed,dt);
         // Avoid deep water, steep slopes and solid trunks; low obstacles can be jumped.
-        const blocked=heightAt(nextX,nextZ)<.1 || Math.abs(heightAt(nextX,nextZ)-heightAt(e.x,e.z))>.35 || entities.some(o=>o.kind==='spruce'&&Math.hypot(o.x-nextX,o.z-nextZ)<.6);
+        const blocked=heightAt(nextX,nextZ)<LEVEL.deerWater || Math.abs(heightAt(nextX,nextZ)-heightAt(e.x,e.z))>BLOCK.deer.step || entities.some(o=>o.kind==='spruce'&&Math.hypot(o.x-nextX,o.z-nextZ)<BLOCK.deer.trunk);
         if(!blocked) {e.x=nextX;e.z=nextZ;} else {rig.brain.heading+=dt*2;rig.brain.speed=0;}
         rig.brain.expend(dt,Math.hypot(e.x-oldX,e.z-oldZ));e.energy=rig.brain.energy;e.rotation=rig.brain.heading;
       }

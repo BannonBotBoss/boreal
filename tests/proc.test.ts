@@ -45,3 +45,17 @@ test('fur cards and world chunks are byte-identical to the pre-refactor baseline
   const chunks = []; for (let x = -3; x < 3; x++) for (let z = -3; z < 3; z++) chunks.push(generateChunk(x, z));
   assert.equal(digest(JSON.stringify(chunks)), 'ffe391673e1a808a');
 });
+
+test('shared math matches the helpers it replaced', async () => {
+  const { angleTurn, smoothstep, smooth01, stepForward } = await import('../src/proc/math');
+  const oldTurn = (from: number, to: number, max: number) => { const d = ((to - from + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; return from + Math.max(-max, Math.min(max, d)); };
+  const oldSmooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const r = random(42);
+  for (let i = 0; i < 2000; i++) {
+    const a = (r() - .5) * 40, b = (r() - .5) * 40, m = r() * 3, x = (r() - .5) * 30;
+    assert.equal(angleTurn(a, b, m), oldTurn(a, b, m));
+    assert.equal(smoothstep(-6, 8, x), oldSmooth(-6, 8, x));
+    const t = Math.max(0, Math.min(1, x / 10)); assert.equal(smooth01(x / 10), t * t * (3 - 2 * t));
+    assert.deepEqual(stepForward(a, b, m, x, .016), { x: a - Math.sin(m) * x * .016, z: b - Math.cos(m) * x * .016 });
+  }
+});

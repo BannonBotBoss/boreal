@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { CHUNK_SIZE, heightAt } from '../core/world';
+import { LEVEL } from '../core/tuning';
 
 // Aim slightly above the wolf's centre so it appears below screen centre.
 export const DEFAULT_PITCH = 10 * Math.PI / 180;
@@ -37,7 +38,7 @@ export function terrainGeometry(cx: number, cz: number) {
     const z = positions.getZ(i) + (cz + .5) * CHUNK_SIZE;
     const y = heightAt(x, z);
     positions.setXYZ(i, x, y, z);
-    const color = new THREE.Color(y < .5 ? 0x929771 : y > 3.3 ? 0x8d9582 : 0x788e60);
+    const color = new THREE.Color(y < LEVEL.shore ? 0x929771 : y > LEVEL.upland ? 0x8d9582 : 0x788e60);
     colors.push(color.r, color.g, color.b);
   }
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));

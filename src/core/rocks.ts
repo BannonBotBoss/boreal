@@ -1,5 +1,6 @@
 import type { Entity } from './world';
 import { random } from './random';
+import { smooth01 } from '../proc/math';
 import { WOLF_SCALE } from './wolfModes';
 export const ROCK_SIZES = [.06, .08, .10, .13, .17, .22, .29, .38, .5] as const;
 export const PUSH_DISTANCE = .22;
@@ -28,6 +29,5 @@ export function pushContact(player: { x: number; z: number; heading?: number }, 
   return { sector, dx: -Math.cos(angle) * PUSH_DISTANCE, dz: -Math.sin(angle) * PUSH_DISTANCE };
 }
 export function pushProgress(elapsed: number) {
-  const t = Math.max(0, Math.min(1, (elapsed - .25) / .55));
-  return t * t * (3 - 2 * t);
+  return smooth01((elapsed - .25) / .55);
 }

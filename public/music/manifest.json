@@ -1,0 +1,4 @@
+{
+  "note": "Drop audio files (mp3/ogg/wav) in public/music and list them here. mood: day | night | storm | any (used by 'Music follows weather/time').",
+  "tracks": []
+}

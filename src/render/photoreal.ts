@@ -65,7 +65,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     if (GOVERNOR.auto) GOVERNOR.tier = Math.max(GOVERNOR.capTier, tierForGpu(GOVERNOR.gpu)); }
   let tier: Tier = applied(), csm: CSM | undefined;
   const chained = new Map<THREE.Material, THREE.Material['onBeforeCompile']>();
-  const COST = { csmMs: 0, iblMs: 0, giMs: 0, cloudMs: 0 }, INFO = { calls: 0, tris: 0 };
+  const COST = { csmMs: 0, iblMs: 0, giMs: 0, cloudMs: 0 }, INFO = { calls: 0, tris: 0, workMs: 0, drawMs: 0 };
   // ---- bounce light: an SH light probe captured around the viewer (three LightProbeGenerator, MIT; Ramamoorthi & Hanrahan 2001)
   const probe = new THREE.LightProbe(); probe.intensity = 0; scene.add(probe);
   rig.sunLight.layers.enable(1); rig.hemi.layers.enable(1); // the GI capture (layer 1) must still be lit
@@ -171,7 +171,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     },
     /** After rendering: GPU query + governor. `workMs` = CPU time of this frame's update+render. */
     after(workMs: number) {
-      INFO.calls = renderer.info.render.calls; INFO.tris = renderer.info.render.triangles;
+      INFO.calls = renderer.info.render.calls; INFO.tris = renderer.info.render.triangles; INFO.workMs = workMs;
       gpuEnd(); const now = performance.now(), frameMs = now - lastFrame; lastFrame = now;
       if (governFrame(workMs, gpuMs, frameMs)) applyTier();
     },

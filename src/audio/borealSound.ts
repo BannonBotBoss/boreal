@@ -57,6 +57,10 @@ export class BorealSound {
   private nextLoon = 30; private time = 0; private waterAmount = 0; private waterCheck = 0;
   private haltedNow = false;
   volume = .8; muted = false; musicVolume = .7; musicOn = true;
+  /** false = the audio/music module's source replaces the built-in music-day/night loops. */
+  builtInMusic = true;
+  /** Shared music input (the duck node → music bus → master); audio/music plugs its sources in here. */
+  musicInput() { return this.ctx && this.duck ? { ctx: this.ctx, node: this.duck as AudioNode } : undefined; }
 
   constructor() {
     try { const s = JSON.parse(localStorage.getItem(VOLUME_KEY) ?? '{}'); if (typeof s.volume === 'number') this.volume = s.volume; this.muted = !!s.muted; if (typeof s.musicVolume === 'number') this.musicVolume = s.musicVolume; if (typeof s.musicOn === 'boolean') this.musicOn = s.musicOn; } catch { /* defaults */ }
@@ -185,8 +189,8 @@ export class BorealSound {
     this.setLoop('amb-night', MIX.ambience.night * d);
     const wv = windAt(f.x, 10, f.z); this.setLoop('wind-pines', MIX.ambience.wind * Math.min(2, Math.hypot(wv.x, wv.z) / 4)); // shared wind field; 4 m/s = old level
     this.setLoop('water', MIX.ambience.water * this.waterAmount);
-    this.setLoop('music-day', MIX.music.day * (1 - d));
-    this.setLoop('music-night', MIX.music.night * d);
+    this.setLoop('music-day', this.builtInMusic ? MIX.music.day * (1 - d) : 0);
+    this.setLoop('music-night', this.builtInMusic ? MIX.music.night * d : 0);
     if (this.prevDark > .5 && d <= .5) this.playAt('dawn-chorus', undefined, MIX.dawn);
     this.prevDark = d;
     if (this.time > this.nextBird && RENDER.birdRate > 0) {

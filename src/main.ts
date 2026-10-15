@@ -5,10 +5,13 @@ import { catalog } from './core/catalog';
 import type { Entity } from './core/world';
 import { AudioLibrary } from './audio';
 import { BorealSound } from './audio/borealSound';
+import { createMusic } from './audio/music';
+import { MUSIC_SAFETY, MUSIC_SETTINGS } from './audio/musicSettings';
 import { wolfSpeak } from './audio/wolfVoice';
 import { playerSpeed, pounceSpeed } from './core/playerTuning';
 import { HARE } from './animals/hare';
 const sfx = new BorealSound();
+const music = createMusic(() => sfx.musicInput(), on => { sfx.builtInMusic = on; });
 import { clampLookPitch, springLookPitch, DEFAULT_PITCH, RIDER_HEIGHT } from './render/math';
 import { steerWolf } from './core/locomotion';
 import { createWolfModes, stepWolfModes, modeSpeed } from './core/wolfModes';
@@ -29,7 +32,7 @@ import { accelLimit, approach, gravity } from './proc/physics';
 import { GROUND, SAVE_KEY_GROUND, addDeposit, column, deerDroppingsKg, footing, loadGround, saveGround, tickGround } from './core/ground';
 import { appearancePanel, restoreLooks } from './ui/appearancePanel';
 import { runJobs } from './core/interest';
-import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, windAt } from './core/weather';
+import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
 import { DAY_OF_YEAR, START_HOUR, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
 
@@ -107,6 +110,12 @@ const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw:
 const renderStore = createSettingsStore(RENDER_SETTINGS);
 let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
 pauseMenu.addPanel({ id: 'render', title: 'Render settings', build: settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; }) });
+const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');
+pauseMenu.addPanel({ id: 'music', title: 'Music', build: () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore, () => {})() as HTMLElement;
+  const warn = document.createElement('p'); warn.className = 'note'; warn.textContent = MUSIC_SAFETY; form.prepend(warn);
+  const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Next track'; skip.onclick = () => music.skip(); form.append(skip);
+  const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Playlist: put audio files in public/music and list them in public/music/manifest.json (mood: day | night | storm | any). Gameplay sounds duck the music; a limiter caps its peaks; N toggles music, - / = changes music volume.'; form.append(hint);
+  return form; } });
 pauseMenu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
 let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1, sink: 0 };
@@ -268,7 +277,8 @@ function frame(time: number) { const frameStart = performance.now();
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;
   actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
-  drawFrame(pv); view.photoreal.after(performance.now() - frameStart); inspector.update(); handles.update();
+  const drawStart = performance.now(); drawFrame(pv); view.photoreal.INFO.drawMs = performance.now() - drawStart; view.photoreal.after(performance.now() - frameStart); inspector.update(); handles.update();
+  music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
   if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
     sfx.hare(ev.type, ev);
@@ -294,14 +304,14 @@ if (new URLSearchParams(location.search).has('bench')) void (async () => {
   const { GOVERNOR, MANUAL, LADDER } = await import('./core/quality'), { queued } = await import('./core/interest'), { TREE_FX } = await import('./render/trees');
   const wait = (ms: number) => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r));
   window.addEventListener('error', e => console.log(`BENCH error ${e.message} ${e.error?.stack}`)); window.addEventListener('unhandledrejection', e => console.log(`BENCH reject ${e.reason?.stack ?? e.reason}`));
-  const settle = async () => { const t = performance.now(); let quiet = 0; while (performance.now() - t < 40000 && quiet < 60) { await raf(); quiet = queued() ? 0 : quiet + 1; } await wait(1500); };
+  const settle = async () => { const t = performance.now(); let quiet = 0; while (performance.now() - t < 40000 && quiet < 60) { await raf(); quiet = queued() ? 0 : quiet + 1; } await wait(3000); };
   const M = MANUAL as Record<string, number>;
-  const sample = async (label: string) => { await settle(); const ws: number[] = [], gs: number[] = [], spikes: Record<string, number> = {}, t = performance.now(); let last = performance.now();
-    while (performance.now() - t < 4000) { await raf(); const n = performance.now(); ws.push(n - last); last = n; if (GOVERNOR.gpuMs !== undefined) gs.push(GOVERNOR.gpuMs);
+  const sample = async (label: string) => { await settle(); const ws: number[] = [], gs: number[] = [], cpu: number[] = [], drw: number[] = [], spikes: Record<string, number> = {}, t = performance.now(); let last = performance.now();
+    while (performance.now() - t < 4000) { await raf(); const n = performance.now(); ws.push(n - last); last = n; if (GOVERNOR.gpuMs !== undefined) gs.push(GOVERNOR.gpuMs); cpu.push(view.photoreal.INFO.workMs); drw.push(view.photoreal.INFO.drawMs);
       for (const [k, v] of Object.entries(view.photoreal.COST)) spikes[k] = Math.max(spikes[k] ?? 0, v); }
     const avg = (a: number[]) => a.length ? a.reduce((p, c) => p + c, 0) / a.length : NaN, p95 = [...ws].sort((x, y) => x - y)[Math.floor(ws.length * .95)];
-    console.log(`BENCH ${label} gpu=${avg(gs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms fps=${(1000 / avg(ws)).toFixed(0)} p95=${p95?.toFixed(1)}ms calls=${view.photoreal.INFO.calls} tris=${view.photoreal.INFO.tris} maxCpu=${JSON.stringify(Object.fromEntries(Object.entries(spikes).map(([k, v]) => [k, +v.toFixed(2)])))}`); };
-  GOVERNOR.auto = false; GOVERNOR.capTier = 0;
+    console.log(`BENCH ${label} gpu=${avg(gs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms fps=${(1000 / avg(ws)).toFixed(0)} cpu=${avg(cpu).toFixed(1)}ms(draw ${avg(drw).toFixed(1)}) p95=${p95?.toFixed(1)}ms calls=${view.photoreal.INFO.calls} tris=${view.photoreal.INFO.tris} maxCpu=${JSON.stringify(Object.fromEntries(Object.entries(spikes).map(([k, v]) => [k, +v.toFixed(2)])))}`); };
+  GOVERNOR.auto = false; GOVERNOR.capTier = 0; const rr = view.photoreal.renderer; if (rr) rr.info.autoReset = false; // count every pass
   await wait(3000); console.log(`BENCH gpu-string ${GOVERNOR.gpu}`);
   for (let i = 0; i < LADDER.length; i++) { GOVERNOR.tier = i; await sample(`tier-${LADDER[i].name}`); }
   GOVERNOR.tier = 0;

@@ -1,3 +1,4 @@
+import { GLSL_HASH } from '../proc/glsl';
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { WORLD_SEED } from '../core/world';
@@ -18,7 +19,8 @@ const CLOUD_FRAG = /* glsl */`
 uniform float uTime, uSeed, uCover, uDay, uGolden;
 uniform vec3 uSunDir, uSunColor;
 varying vec3 vDir;
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7)) + uSeed) * 43758.5453); }
+${GLSL_HASH}
+float hash(vec2 p) { return hash2s(p, uSeed); }
 float noise(vec2 p) {
   vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
   return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);

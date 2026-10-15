@@ -3,7 +3,10 @@
  * pre-generated ElevenLabs clips in public/sounds/voice/<id>.mp3 (voice: Adam). Plays through BorealSound so it
  * respects mute and volume. Lines are edited here; regenerate audio with /workspace/boreal-sfx/voice/tts.sh.
  */
+import { stream } from '../proc/rng';
 import type { BorealSound } from './borealSound';
+/** Sound variation is seeded too (PROJECT-RULES.md rule 1). */
+const soundRng = stream(1400, 'wolfVoice-v1');
 
 export const LINES: Record<string, string> = {
   'first-1': "Hello there. I'm new around here.",
@@ -25,12 +28,12 @@ let last = '';
 export interface SpeakContext { darkness: number; animal?: { problem: string; energy: number }; posture?: string }
 
 export function chooseLine(target: { key: string; kind: string }, ctx: SpeakContext, met: boolean) {
-  const pick = (prefix: string) => { const ids = Object.keys(LINES).filter(k => k.startsWith(prefix) && k !== last); return ids[Math.floor(Math.random() * ids.length)] ?? `${prefix}-1`; };
+  const pick = (prefix: string) => { const ids = Object.keys(LINES).filter(k => k.startsWith(prefix) && k !== last); return ids[Math.floor(soundRng() * ids.length)] ?? `${prefix}-1`; };
   if (target.kind === 'person') return 'person-1';
   if (ctx.animal?.problem === 'escape' || ctx.posture === 'alert' || ctx.posture === 'flee') return pick('fear');
   if (!met) return pick('first');
   if (ctx.animal && ctx.animal.energy < 25) return 'tired-1';
-  if (ctx.darkness > .5 && Math.random() < .6) return pick('night');
+  if (ctx.darkness > .5 && soundRng() < .6) return pick('night');
   return pick('calm');
 }
 

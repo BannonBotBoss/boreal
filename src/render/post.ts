@@ -9,6 +9,7 @@ import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { GLSL_HASH } from '../proc/glsl';
 
 export interface Param { key: string; label: string; group: string; min: number; max: number; step: number; value: number }
 /** value = neutral default. Order = panel order. */
@@ -52,9 +53,9 @@ const GRADE = {
   uniforms: Object.fromEntries(['tDiffuse', 'temperature', 'tint', 'contrast', 'saturation', 'vibrance', 'sepia', 'fade', 'vignette', 'grain', 'chroma', 'seed']
     .map(k => [k, { value: k === 'tDiffuse' ? null : 0 }])),
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
+  fragmentShader: `${GLSL_HASH}
+uniform sampler2D tDiffuse; varying vec2 vUv;
 uniform float temperature, tint, contrast, saturation, vibrance, sepia, fade, vignette, grain, chroma, seed;
-float rnd(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + seed) * 43758.5453); }
 void main(){
   vec2 d = vUv - .5; vec2 off = d * chroma * .012;
   vec3 c = vec3(texture2D(tDiffuse, vUv + off).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - off).b);
@@ -66,7 +67,7 @@ void main(){
   c = mix(c, vec3(l) * vec3(1.07, .88, .66) + vec3(.06, .03, 0.), sepia);
   c = c * (1. - fade * .25) + fade * .12;
   c *= 1. - vignette * smoothstep(.25, .75, length(d * vec2(1.25, 1.)));
-  c += (rnd(vUv * 917.) - .5) * grain * .16;
+  c += (hash2s(vUv * 917., seed) - .5) * grain * .16;
   gl_FragColor = vec4(clamp(c, 0., 1.), 1.);
 }`,
 };
@@ -102,7 +103,7 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
       bu.focus.value = s.focus; bu.aperture.value = bokehAperture(focalMmForFov, s.fstop); bu.maxblur.value = .02;
       const gu = grade.uniforms as Record<string, { value: number }>;
       for (const k of ['temperature', 'tint', 'contrast', 'saturation', 'vibrance', 'sepia', 'fade', 'vignette', 'grain', 'chroma']) gu[k].value = s[k];
-      gu.seed.value = Math.random() * 100; // grain is a visual effect only, not world state
+      gu.seed.value = (gu.seed.value + 7.31) % 100; // grain changes every frame (visual only)
       composer!.render();
     },
   };

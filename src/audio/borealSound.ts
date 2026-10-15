@@ -5,9 +5,12 @@
  * Keys: M mute all, [ / ] volume, N music on/off, - / = music volume, H howl, G growl.
  * Music (music-day/music-night) crossfades with darkness and ducks under one-shots.
  */
+import { stream } from '../proc/rng';
 import { heightAt } from '../core/world';
 import { LEVEL } from '../core/tuning';
 import { RENDER } from '../core/renderSettings';
+/** Sound variation is seeded too (PROJECT-RULES.md rule 1). */
+const soundRng = stream(1400, 'borealSound-v1');
 
 export const SOUND_IDS = ['amb-day', 'amb-night', 'wind-pines', 'water', 'loon', 'wolf-howl', 'wolf-growl',
   'paw-walk', 'paw-run', 'deer-snort', 'deer-hooves', 'chew', 'land',
@@ -100,7 +103,7 @@ export class BorealSound {
     const ctx = this.ctx!, buffer = this.buffers.get(id); if (!buffer) return;
     const src = ctx.createBufferSource(), gain = ctx.createGain();
     src.buffer = buffer; src.loop = true; gain.gain.value = 0;
-    src.connect(gain); gain.connect(bus ?? this.master!); src.start(ctx.currentTime, bus ? 0 : Math.random() * buffer.duration);
+    src.connect(gain); gain.connect(bus ?? this.master!); src.start(ctx.currentTime, bus ? 0 : soundRng() * buffer.duration);
     this.loops.set(id, gain);
   }
 
@@ -112,7 +115,7 @@ export class BorealSound {
   playAt(id: SoundId, at?: { x: number; z: number }, level = 1, rate = 1) {
     const ctx = this.ctx, buffer = this.buffers.get(id); if (!ctx || !buffer || ctx.state !== 'running') return;
     const src = ctx.createBufferSource(), gain = ctx.createGain();
-    src.buffer = buffer; src.playbackRate.value = rate * (.94 + Math.random() * .12); gain.gain.value = level;
+    src.buffer = buffer; src.playbackRate.value = rate * (.94 + soundRng() * .12); gain.gain.value = level;
     let tail: AudioNode = gain; src.connect(gain);
     if (at) {
       const p = new PannerNode(ctx, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 3, maxDistance: MIX.hearingDistance, rolloffFactor: 1.2,
@@ -181,9 +184,9 @@ export class BorealSound {
     if (this.prevDark > .5 && d <= .5) this.playAt('dawn-chorus', undefined, MIX.dawn);
     this.prevDark = d;
     if (this.time > this.nextBird && RENDER.birdRate > 0) {
-      this.nextBird = this.time + (MIX.birdEverySeconds[0] + Math.random() * (MIX.birdEverySeconds[1] - MIX.birdEverySeconds[0])) / RENDER.birdRate;
-      const a = Math.random() * Math.PI * 2, r = 15 + Math.random() * 20, at = { x: f.x + Math.sin(a) * r, z: f.z + Math.cos(a) * r };
-      this.playAt(d > .5 ? 'owl' : Math.random() < .5 ? 'raven' : 'woodpecker', at, MIX.birds);
+      this.nextBird = this.time + (MIX.birdEverySeconds[0] + soundRng() * (MIX.birdEverySeconds[1] - MIX.birdEverySeconds[0])) / RENDER.birdRate;
+      const a = soundRng() * Math.PI * 2, r = 15 + soundRng() * 20, at = { x: f.x + Math.sin(a) * r, z: f.z + Math.cos(a) * r };
+      this.playAt(d > .5 ? 'owl' : soundRng() < .5 ? 'raven' : 'woodpecker', at, MIX.birds);
     }
     if (f.mode && f.mode !== this.wolfMode) {
       if (f.mode === 'sprint') this.playAt('sprint-burst', undefined, MIX.sprint);
@@ -193,8 +196,8 @@ export class BorealSound {
     if (f.exhausted && (!this.wasExhausted || this.time > this.nextPant)) { this.playAt('wolf-pant', undefined, MIX.pant); this.nextPant = this.time + 3.2; }
     this.wasExhausted = !!f.exhausted;
     if (this.time > this.nextLoon) {
-      this.nextLoon = this.time + MIX.loonEverySeconds[0] + Math.random() * (MIX.loonEverySeconds[1] - MIX.loonEverySeconds[0]);
-      if (d > .25 || this.waterAmount > .2) { const a = Math.random() * Math.PI * 2; this.playAt('loon', { x: f.x + Math.sin(a) * 30, z: f.z + Math.cos(a) * 30 }, MIX.loon); }
+      this.nextLoon = this.time + MIX.loonEverySeconds[0] + soundRng() * (MIX.loonEverySeconds[1] - MIX.loonEverySeconds[0]);
+      if (d > .25 || this.waterAmount > .2) { const a = soundRng() * Math.PI * 2; this.playAt('loon', { x: f.x + Math.sin(a) * 30, z: f.z + Math.cos(a) * 30 }, MIX.loon); }
     }
 
     // Player wolf: a paw sound each half gait cycle (fore/hind pair), landing thud after a jump.
@@ -215,7 +218,7 @@ export class BorealSound {
       if (a.motion === 'run' && p.motion !== 'run') this.playAt('deer-hooves', at, MIX.hooves);
       else if (Math.floor(phase) !== Math.floor(p.phase) && a.motion === 'walk') this.playAt('paw-walk', at, MIX.deerSteps, .8);
       if (p.motion === 'jump' && a.motion !== 'jump') this.playAt('land', at, MIX.land, .85);
-      if (a.problem === 'feed' && a.motion === 'idle' && this.time > p.nextChew) { this.playAt('chew', at, MIX.chew); p.nextChew = this.time + 2 + Math.random(); }
+      if (a.problem === 'feed' && a.motion === 'idle' && this.time > p.nextChew) { this.playAt('chew', at, MIX.chew); p.nextChew = this.time + 2 + soundRng(); }
       this.prev.set(a.key, { ...p, problem: a.problem, motion: a.motion, phase });
     }
     for (const k of this.prev.keys()) if (!seen.has(k)) this.prev.delete(k);

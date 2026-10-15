@@ -34,6 +34,8 @@ import { appearancePanel, restoreLooks } from './ui/appearancePanel';
 import { runJobs } from './core/interest';
 import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
+import { createLoading } from './ui/loading';
+import { settle, startup } from './render/startup';
 import { DAY_OF_YEAR, START_HOUR, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -299,20 +301,21 @@ function frame(time: number) { const frameStart = performance.now();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+{ const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
+  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).finally(() => loading.finish()); }
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {
-  const { GOVERNOR, MANUAL, LADDER } = await import('./core/quality'), { queued } = await import('./core/interest'), { TREE_FX } = await import('./render/trees');
+  const { GOVERNOR, MANUAL, LADDER } = await import('./core/quality'), { TREE_FX } = await import('./render/trees');
   const wait = (ms: number) => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r));
   window.addEventListener('error', e => console.log(`BENCH error ${e.message} ${e.error?.stack}`)); window.addEventListener('unhandledrejection', e => console.log(`BENCH reject ${e.reason?.stack ?? e.reason}`));
-  const settle = async () => { const t = performance.now(); let quiet = 0; while (performance.now() - t < 40000 && quiet < 60) { await raf(); quiet = queued() ? 0 : quiet + 1; } await wait(3000); };
   const M = MANUAL as Record<string, number>;
-  const sample = async (label: string) => { await settle(); const ws: number[] = [], gs: number[] = [], cpu: number[] = [], drw: number[] = [], spikes: Record<string, number> = {}, t = performance.now(); let last = performance.now();
+  const sample = async (label: string) => { await settle(); await wait(3000); const ws: number[] = [], gs: number[] = [], cpu: number[] = [], drw: number[] = [], spikes: Record<string, number> = {}, t = performance.now(); let last = performance.now();
     while (performance.now() - t < 4000) { await raf(); const n = performance.now(); ws.push(n - last); last = n; if (GOVERNOR.gpuMs !== undefined) gs.push(GOVERNOR.gpuMs); cpu.push(view.photoreal.INFO.workMs); drw.push(view.photoreal.INFO.drawMs);
       for (const [k, v] of Object.entries(view.photoreal.COST)) spikes[k] = Math.max(spikes[k] ?? 0, v); }
     const avg = (a: number[]) => a.length ? a.reduce((p, c) => p + c, 0) / a.length : NaN, p95 = [...ws].sort((x, y) => x - y)[Math.floor(ws.length * .95)];
     console.log(`BENCH ${label} gpu=${avg(gs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms fps=${(1000 / avg(ws)).toFixed(0)} cpu=${avg(cpu).toFixed(1)}ms(draw ${avg(drw).toFixed(1)}) p95=${p95?.toFixed(1)}ms calls=${view.photoreal.INFO.calls} tris=${view.photoreal.INFO.tris} maxCpu=${JSON.stringify(Object.fromEntries(Object.entries(spikes).map(([k, v]) => [k, +v.toFixed(2)])))}`); };
-  GOVERNOR.auto = false; GOVERNOR.capTier = 0; const rr = view.photoreal.renderer; if (rr) rr.info.autoReset = false; // count every pass
+  GOVERNOR.auto = false; GOVERNOR.capTier = 0; GOVERNOR.probeCap = 0; const rr = view.photoreal.renderer; if (rr) rr.info.autoReset = false; // count every pass
   await wait(3000); console.log(`BENCH gpu-string ${GOVERNOR.gpu}`);
   for (let i = 0; i < LADDER.length; i++) { GOVERNOR.tier = i; await sample(`tier-${LADDER[i].name}`); }
   GOVERNOR.tier = 0;

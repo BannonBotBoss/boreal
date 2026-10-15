@@ -11,7 +11,7 @@
 import * as THREE from 'three';
 import { CSM } from 'three/examples/jsm/csm/CSM.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-import { GOVERNOR, applied, governFrame, tierForGpu, type Tier } from '../core/quality';
+import { GOVERNOR, applied, ceiling, governFrame, tierForGpu, type Tier } from '../core/quality';
 import { capRender } from '../core/renderSettings';
 import { WEATHER, initWeather } from '../core/weather';
 import { CLOUD, SUN_UNIFORMS, setCloudField } from './pbr';
@@ -62,7 +62,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
   { // starting tier from the GPU (discrete GeForce/Radeon → Ultra); the governor then steps down only on missed frames
     const g = renderer.getContext(), dbg = g.getExtension('WEBGL_debug_renderer_info');
     GOVERNOR.gpu = String(dbg ? g.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER));
-    if (GOVERNOR.auto) GOVERNOR.tier = Math.max(GOVERNOR.capTier, tierForGpu(GOVERNOR.gpu)); }
+    if (GOVERNOR.auto) GOVERNOR.tier = Math.max(ceiling(), tierForGpu(GOVERNOR.gpu)); }
   let tier: Tier = applied(), csm: CSM | undefined;
   const chained = new Map<THREE.Material, THREE.Material['onBeforeCompile']>();
   const COST = { csmMs: 0, iblMs: 0, giMs: 0, cloudMs: 0 }, INFO = { calls: 0, tris: 0, workMs: 0, drawMs: 0 };

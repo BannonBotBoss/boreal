@@ -1,0 +1,4 @@
+{
+  "note": "Remote https clips only (not bundled). Example entry: { \"src\": \"https://example.org/boreal-lake.mp4\", \"caption\": \"Lake at dawn\" }",
+  "videos": []
+}

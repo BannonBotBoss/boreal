@@ -42,7 +42,7 @@ export const KNOBS = Object.keys(LADDER[0]).filter(k => k !== 'name') as (keyof 
  * work time instead of wall fps; the cap tier bounds inclines. Input is frame WORK time (CPU frame cost, or GPU time from
  * EXT_disjoint_timer_query_webgl2 when available, whichever is larger) so headroom is visible even under v-sync. */
 export const GOVERNOR = {
-  auto: true, targetFps: 60, tier: 1, /** best tier the player allows (Auto never climbs above it) */ capTier: 0, xr: false, gpu: '',
+  auto: true, targetFps: 60, tier: 1, /** best tier the player allows (Auto never climbs above it) */ capTier: 0, /** best tier this machine may use (core/probe, startup resource probe): Auto and the player both stay at or below it */ probeCap: 0, probeHits: 0, /** called when sustained headroom lifts the probe cap (persists it) */ onProbeRaise: undefined as ((cap: number) => void) | undefined, xr: false, gpu: '',
   ms: 250, iterations: 10, threshold: .75, flipflops: 6,
   lower: 1, upper: 1.35, // margin as multiples of the target: decline below target, incline above 1.35 × target (drei default 60/100 ≈ 1.67)
   window: [] as number[], windowMs: 0, averages: [] as number[], flipped: 0, lastDir: 0, locked: false,
@@ -51,7 +51,7 @@ export const GOVERNOR = {
 export const MANUAL: Partial<Omit<Tier, 'name'>> = {}; // caps from the render settings
 /** The applied tier: the ladder tier with every knob capped by its manual setting. */
 export function applied(tier = GOVERNOR.tier): Tier {
-  const t = { ...LADDER[Math.max(GOVERNOR.capTier, Math.min(LADDER.length - 1, tier))] };
+  const t = { ...LADDER[Math.max(ceiling(), Math.min(LADDER.length - 1, tier))] };
   for (const k of KNOBS) if (MANUAL[k] !== undefined) t[k] = Math.min(t[k], MANUAL[k]!);
   if (GOVERNOR.xr) for (const k of KNOBS) if (XR_CAPS[k] !== undefined) t[k] = Math.min(t[k], XR_CAPS[k]!);
   return t;
@@ -71,12 +71,18 @@ export function governFrame(workMs: number, gpuMs?: number, frameMs = workMs) {
   const below = g.averages.filter(f => f < lo).length / g.iterations, above = g.averages.filter(f => f >= hi).length / g.iterations; // as upstream
   let dir = 0;
   if (below > g.threshold && g.tier < LADDER.length - 1) dir = 1;
-  else if (above > g.threshold && g.tier > g.capTier) dir = -1;
+  else if (above > g.threshold && g.tier > ceiling()) dir = -1;
+  else if (above > g.threshold && g.tier === g.probeCap && g.probeCap > g.capTier) { // the probe cap binds and fps shows headroom: lift it after N windows
+    g.averages = []; if (++g.probeHits >= PROBE_RAISE_AFTER) { g.probeHits = 0; g.probeCap--; g.onProbeRaise?.(g.probeCap); dir = -1; } }
+  if (below > g.threshold) g.probeHits = 0;
   if (!dir) return 0;
   if (g.lastDir && dir !== g.lastDir && ++g.flipped >= g.flipflops) { g.locked = true; if (dir < 0) return 0; } // fallback: stay on the cheaper tier
   g.lastDir = dir; g.tier += dir; g.averages = [];
   return dir;
 }
+/** The best tier allowed now: the player's cap and the probe's cap, whichever is cheaper. */
+export const ceiling = () => Math.max(GOVERNOR.capTier, GOVERNOR.probeCap);
+const PROBE_RAISE_AFTER = 3; // = core/probe PROBE.raiseAfter (kept here to avoid an import cycle)
 export const budgetMs = () => 1000 / GOVERNOR.targetFps;
 
 /** Starting tier from the GPU renderer string (WEBGL_debug_renderer_info). Discrete desktop GPUs start at Ultra; integrated

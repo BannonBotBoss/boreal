@@ -1,6 +1,7 @@
 ﻿import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { random } from '../core/random';
+import { shaderClock } from './shaderClock';
 import type { Entity } from '../core/world';
 
 /**
@@ -110,7 +111,7 @@ export function treeGeometry(entity: Entity, detail: number): THREE.Group {
   const species = treeSpecies(entity.seed), variant = (entity.seed >>> 3) % VARIANTS, key = `${species}:${variant}:${detail}`;
   let geometry = cache.get(key); if (!geometry) cache.set(key, geometry = build(species, variant, detail));
   const mesh = new THREE.Mesh(geometry, treeMaterial()); mesh.userData.shared = true;
-  mesh.onBeforeRender = () => { wind.value = performance.now() / 1000; };
+  mesh.onBeforeRender = () => { wind.value = shaderClock.time; };
   const group = new THREE.Group(); group.add(mesh);
   const s = random(entity.seed)();
   group.scale.set(entity.scale, entity.scale * (.9 + s * .2), entity.scale); group.rotation.y = entity.rotation;

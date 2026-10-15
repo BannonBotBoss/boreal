@@ -16,13 +16,19 @@ import { createHares } from '../animals/hare';
 import { formatHour, gameHour, START_HOUR } from '../core/timeOfDay';
 import { LEVEL, BLOCK } from '../core/tuning';
 import { stepForward } from '../proc/math';
+import type { SnapshotSource } from '../core/snapshot';
+import { createPost } from './post';
+import { tiles } from '../photo/frame';
 
 /** Scene entry point: assembles generated terrain, streamed objects, light and camera. */
 /** Commits an animal eating a forage patch; returns the animal's new energy, or undefined if not committed. */
+/** Photo mode: a free camera and an optional sun-hour override; the world is drawn frozen. */
+export interface PhotoView { cam: { x: number; y: number; z: number; yaw: number; pitch: number; roll: number; fov: number }; hour?: number; focalMm: number; /** false while a live sequence lets the world run */ frozen?: boolean }
 export type ForageHandler = (animal: Entity, plant: Entity) => number | undefined;
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  const BASE_RATIO = Math.min(devicePixelRatio, 1.5);
+  renderer.setPixelRatio(BASE_RATIO);
   renderer.setClearColor(0xc4d4c8);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -33,6 +39,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const startHour = Number.isFinite(startParam) && startParam >= 0 && startParam < 24 && location.search.includes('hour=') ? startParam : START_HOUR;
   let clock = formatHour(gameHour(0, startHour)), darkness = 0;
   const camera = new THREE.PerspectiveCamera(48, 1, .2, 700);
+  const post = createPost(renderer, scene, camera);
   const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.LOD> }>();
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
   const eatenForage = new Map<string, string>(); // plant key -> loaded chunk; never serialized
@@ -63,14 +70,16 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     scene.add(root); return { root, entities, objects };
   }
-  function sync(x: number, z: number, altitude: number, context: EventContext, eventRevision: number) {
+  /** `also`: a second streaming centre (the photo-mode camera); the player's own chunks always stay loaded. */
+  function sync(x: number, z: number, altitude: number, context: EventContext, eventRevision: number, also?: { x: number; z: number }) {
     activeContext = context;
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE), nextRadius = altitude > 85 ? 3 : 2;
-    if (centerKey === `${cx}:${cz}` && radius === nextRadius && revision === eventRevision) return;
+    const ax = also ? Math.floor(also.x / CHUNK_SIZE) : cx, az = also ? Math.floor(also.z / CHUNK_SIZE) : cz;
+    if (centerKey === `${cx}:${cz}:${ax}:${az}` && radius === nextRadius && revision === eventRevision) return;
     const changed = revision !== eventRevision;
-    centerKey = `${cx}:${cz}`; radius = nextRadius; revision = eventRevision;
+    centerKey = `${cx}:${cz}:${ax}:${az}`; radius = nextRadius; revision = eventRevision;
     const needed = new Set<string>();
-    for (let a = cx - radius; a <= cx + radius; a++) for (let b = cz - radius; b <= cz + radius; b++) needed.add(`${a}:${b}`);
+    for (const [ox, oz] of [[cx, cz], [ax, az]]) for (let a = ox - radius; a <= ox + radius; a++) for (let b = oz - radius; b <= oz + radius; b++) needed.add(`${a}:${b}`);
     for (const [plantKey, chunkKey] of eatenForage) if (!needed.has(chunkKey)) eatenForage.delete(plantKey);
     for (const [key, chunk] of chunks) if (changed || !needed.has(key)) {
       scene.remove(chunk.root); disposeObject(chunk.root); chunks.delete(key);
@@ -97,14 +106,14 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   let previousTime = 0;
   const headPoint = new THREE.Vector3();
   const audibleAnimals: {key:string; energy:number; motion:string; problem:string; x:number; z:number; phase:number}[] = [];
-  function simulateAnimals(dt:number, x:number,z:number) {
+  function simulateAnimals(dt:number, x:number,z:number, frozen=false) {
     audibleAnimals.length=0;
     scene.updateMatrixWorld(true);
     const entities=[...chunks.values()].flatMap(c=>c.entities), keys=new Set(entities.map(e=>e.key));
     // Only forage patches are food; low herbs are neither food nor obstacles.
     const observations:SenseItem[]=entities.filter(e=>e.kind!=='plant'&&(e.kind!=='rock'||rockDiameter(e)>.22)).map(e=>({key:e.key,x:e.x,y:heightAt(e.x,e.z)+ (e.kind==='deer'?1:0),z:e.z,
       kind:e.kind==='forage'?'food':e.kind==='deer'?'animal':'obstacle',low:e.kind==='log'||e.kind==='rock'}));
-    wolf.root.updateMatrixWorld(true);wolf.sensor.getWorldPosition(headPoint);wolf.brain.sense(headPoint,observations);
+    wolf.root.updateMatrixWorld(true);wolf.sensor.getWorldPosition(headPoint);if(!frozen)wolf.brain.sense(headPoint,observations);
     const herd=[...animals].map(([key,a])=>({key,x:a.entity.x,z:a.entity.z,brain:a.rig.brain}));
     for(const [key,animal] of animals) {
       if(!keys.has(key)) {scene.remove(animal.rig.root);disposeObject(animal.rig.root);animals.delete(key);forgetDeer(key);continue;}
@@ -112,6 +121,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       rig.root.position.set(e.x,heightAt(e.x,e.z),e.z);rig.root.rotation.y=rig.brain.heading;rig.root.updateMatrixWorld(true);
       rig.sensor.getWorldPosition(headPoint);
       if(!withinEarshot({x,y:heightAt(x,z)+.45*WOLF_SCALE,z},headPoint))continue;
+      if(frozen){rig.animate(0);continue;} // photo mode: pose from the (possibly rewound) brain state, no simulation
       const senses=observations.filter(i=>i.key!==key);
       if(activeContext.records[key]?.relationship!=='friend') senses.push({key:'player',x,y:heightAt(x,z)+.3*WOLF_SCALE,z,kind:'threat'});
       rig.brain.sense(headPoint,senses);
@@ -131,10 +141,11 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
   }
   function draw(x: number, z: number, altitude: number, yaw: number, time: number, target?: Entity, pitch?: number,
-    moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity) {
+    moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity, photo?: PhotoView) {
     const width = canvas.clientWidth, height = canvas.clientHeight;
-    if (canvas.width !== Math.floor(width * renderer.getPixelRatio()) || canvas.height !== Math.floor(height * renderer.getPixelRatio())) {
-      renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
+    if (output) { if (canvas.width !== output.w || canvas.height !== output.h) { renderer.setPixelRatio(1); renderer.setSize(output.w, output.h, false); } }
+    else if (renderer.getPixelRatio() !== BASE_RATIO || canvas.width !== Math.floor(width * BASE_RATIO) || canvas.height !== Math.floor(height * BASE_RATIO)) {
+      renderer.setPixelRatio(BASE_RATIO); renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
     }
     const ground = Math.max(heightAt(x, z), -.2);
     wolf.root.position.set(x, ground, z); wolf.root.rotation.y = yaw;
@@ -142,13 +153,15 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const pushVector = pushed && pushFrom ? { x: pushed.x - pushFrom.x, z: pushed.z - pushFrom.z, yaw } : undefined;
     wolf.animate(time, moving, action, actionElapsed, mode, pushVector);
     positionCamera(camera, x, z, altitude, yaw, pitch, lookYaw);
-    const focused = mode === 'super-stealth' ? focus : undefined;
-    const dt = Math.max(0, Math.min(.1, time - previousTime)); previousTime = time;
+    const focused = mode === 'super-stealth' && !photo ? focus : undefined;
+    const frozen = !!photo && photo.frozen !== false;
+    const dt = frozen ? 0 : Math.max(0, Math.min(.1, time - previousTime)); if (!frozen) previousTime = time;
     camera.fov += ((focused ? 30 : 48) - camera.fov) * (1 - Math.exp(-8 * dt));
+    if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
     camera.updateProjectionMatrix();
     if (focused) camera.lookAt(focused.x, heightAt(focused.x, focused.z) + (focused.kind === 'deer' ? 1.5 : 1), focused.z);
     const highlighted = focused ?? target;
-    halo.visible = !!highlighted;
+    halo.visible = !!highlighted && !photo;
     if (highlighted) {
       halo.position.set(highlighted.x, heightAt(highlighted.x, highlighted.z) + .02, highlighted.z);
       halo.scale.setScalar(highlighted.kind === 'rock' ? (rockDiameter(highlighted) / 2 + .05) / 1.6 : 1);
@@ -166,10 +179,12 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const lod = chunk.objects.get(entity.key)!;
       lod.rotation.y = Math.sin(time * .7 + entity.seed) * .07;
     }
-    simulateAnimals(dt, x, z);
-    const hour = gameHour(time, startHour); clock = formatHour(hour);
+    simulateAnimals(dt, x, z, frozen);
+    const hour = photo?.hour ?? gameHour(time, startHour); clock = formatHour(hour);
     darkness = sky.update(hour, time, camera, wolf.root.position).light.night;
-    renderer.render(scene, camera);
+    if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
+    else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
+    post.render(!!photo, photo?.focalMm ?? 0);
   }
   function forageWolf(plantKey: string) {
     for(const chunk of chunks.values()) {
@@ -184,7 +199,48 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       return;
     }
   }
-  return { sync, draw, forageWolf, hares, playerBrain: wolf.brain, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  type DeerShot = [string, number, number, number, number, string, number, number, number, number, string | undefined][];
+  /** Rewind sources (see core/snapshot.ts): only the state that is visible in a frozen frame. */
+  const snapshotSources: Record<string, SnapshotSource<any>> = {
+    wolf: {
+      capture: () => { const b = wolf.brain; return [b.motion, b.phase, b.jumpTime, b.gaitSpeed, b.speed, b.heading]; },
+      restore: (s: any[]) => { const b = wolf.brain; [b.motion, b.phase, b.jumpTime, b.gaitSpeed, b.speed, b.heading] = s; },
+    } as SnapshotSource<any[]>,
+    deer: {
+      capture: () => [...animals].map(([k, { rig: { brain: b, root }, entity: e }]) => [k, e.x, e.z, e.rotation, b.heading, b.motion, b.phase, b.jumpTime, b.gaitSpeed, b.speed, root.userData.posture]),
+      restore: shot => { for (const s of shot) { const a = animals.get(s[0]); if (!a) continue; const b = a.rig.brain, e = a.entity;
+        [, e.x, e.z, e.rotation, b.heading, b.motion as string, b.phase, b.jumpTime, b.gaitSpeed, b.speed, a.rig.root.userData.posture] = s; } },
+    } as SnapshotSource<DeerShot>,
+    hares: hares.snapshot,
+  };
+  /** Crop (screen px) + output size (px) for the video stream; undefined = normal full-screen rendering. */
+  let output: { crop: { x: number; y: number; w: number; h: number }; w: number; h: number } | undefined;
+  /** Renders `crop` of the current view into an exact w×h output, tiled when it exceeds the GPU's limits. */
+  function renderCrop(crop: { x: number; y: number; w: number; h: number }, w: number, h: number, focalMm: number, tile: { x: number; y: number; w: number; h: number }) {
+    const s = w / crop.w;
+    renderer.setPixelRatio(1); renderer.setSize(tile.w, tile.h, false);
+    camera.aspect = tile.w / tile.h;
+    camera.setViewOffset(canvas.clientWidth * s, canvas.clientHeight * s, crop.x * s + tile.x, crop.y * s + tile.y, tile.w, tile.h);
+    post.render(true, focalMm);
+  }
+  /** One capture path for photos, sequences and (via setOutput) video: PNG of `crop` at w×h, effects on, no UI. */
+  function capture(crop: { x: number; y: number; w: number; h: number }, w: number, h: number, photo: PhotoView, type = 'image/png', quality?: number): Promise<Blob | null> {
+    const gl = renderer.getContext(), max = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE), 4096);
+    const out = document.createElement('canvas'); out.width = w; out.height = h; const ctx = out.getContext('2d')!;
+    const ratio = renderer.getPixelRatio(), cw = canvas.clientWidth, ch = canvas.clientHeight, aspect = camera.aspect;
+    for (const t of tiles(w, h, max)) { renderCrop(crop, w, h, photo.focalMm, t); ctx.drawImage(canvas, 0, 0, t.w, t.h, t.x, t.y, t.w, t.h); }
+    camera.clearViewOffset(); camera.aspect = aspect; camera.updateProjectionMatrix();
+    renderer.setPixelRatio(ratio); renderer.setSize(cw, ch, false);
+    return new Promise(done => out.toBlob(done, type, quality));
+  }
+  /** Distance from the camera to whatever is under a screen point (NDC), for click-to-focus and autofocus. */
+  const ray = new THREE.Raycaster();
+  function distanceAt(ndcX: number, ndcY: number) {
+    ray.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+    const hit = ray.intersectObjects([...chunks.values()].map(c => c.root), true)[0];
+    return hit?.distance;
+  }
+  return { sync, draw, forageWolf, hares, camera, post, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, playerBrain: wolf.brain, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     stats: () => ({ chunks: chunks.size, entities: [...chunks.values()].reduce((n, c) => n + c.entities.length, 0), triangles: renderer.info.render.triangles }),
   };

@@ -14,6 +14,11 @@ import { steerWolf } from './core/locomotion';
 import { createWolfModes, stepWolfModes, modeSpeed } from './core/wolfModes';
 import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './core/animalBehavior';
 import { autonomousWolfStep } from './core/autonomy';
+import { createSnapshotHub } from './core/snapshot';
+import { createPhotoMode } from './photo/photoMode';
+import { createPauseMenu } from './ui/pauseMenu';
+import { shaderClock } from './render/shaderClock';
+import type { PhotoView } from './render/buildScene';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = element<HTMLCanvasElement>('world'), status = element('status'), actionButton = element<HTMLButtonElement>('act');
@@ -74,9 +79,21 @@ function perform() {
     notice(action === 'move' ? 'Stone pushed with your snout. Its new position is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.');
   } catch (error) { notice(`Interaction not committed: ${String(error)}`); }
 }
-function togglePause() { paused = !paused; element('pause').textContent = paused ? 'Resume' : 'Pause'; sfx.pauseCue(); }
+function togglePause() { paused = !paused; element('pause').textContent = paused ? 'Resume' : 'Pause'; pauseMenu.show(paused); sfx.pauseCue(); }
+const pauseMenu = createPauseMenu({ resume: () => { if (paused) togglePause(); }, photo: () => enterPhoto() });
+// Rewind history: every system registers its own snapshot source; photo mode never touches systems directly.
+const hub = createSnapshotHub(600); // 60 s at 10 Hz
+for (const [key, source] of Object.entries(view.snapshotSources)) hub.register(key, source);
+hub.register('player', {
+  capture: () => [player.x, player.z, yaw, simTime, shaderClock.time, actionStarted],
+  restore: (s: number[]) => { [player.x, player.z, yaw, simTime, shaderClock.time, actionStarted] = s; player.heading = yaw; },
+});
+const drawFrame = (pv?: PhotoView) => view.draw(player.x, player.z, altitude, yaw, simTime, target, pitch, Math.abs(view.playerBrain.speed) > .01, playerAction, simTime - actionStarted, lookYaw, modes.mode, focusTarget, pushFrom, pv);
+const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw: pv => drawFrame(pv), onExit: () => { clearInput(); accumulator = 0; document.body.classList.remove('photo-mode'); } });
+function enterPhoto() { if (paused) togglePause(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
 actionButton.onclick = perform;
 element('pause').onclick = togglePause;
+element('photo-btn').onclick = () => enterPhoto();
 element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = RIDER_HEIGHT; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
 element('help').onclick = () => dialog.showModal();
 element('close').onclick = () => dialog.close();
@@ -92,7 +109,7 @@ element('export').onclick = () => {
 };
 const keys = new Set<string>();
 let drag: { id: number; x: number; y: number } | undefined;
-const canControl = () => !paused && !dialog.open && !document.hidden;
+const canControl = () => !paused && !dialog.open && !document.hidden && !photo.active;
 function clearInput() {
   keys.clear();
   if (drag && canvas.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
@@ -101,11 +118,13 @@ function clearInput() {
 addEventListener('keydown', event => {
   if (event.target instanceof HTMLElement && (event.target.isContentEditable || event.target.matches('input,textarea,select'))) return;
   if (dialog.open) return;
+  if (photo.active) { if (!event.repeat && (event.key === 'Escape' || event.key.toLowerCase() === 'p')) void photo.exit(); return; } // photo mode has its own keys
+  if (!event.repeat && event.key.toLowerCase() === 'p') { enterPhoto(); return; }
   if (event.code === 'Space') event.preventDefault();
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) event.preventDefault();
   keys.add(event.key.toLowerCase());
   if (!event.repeat && event.key.toLowerCase() === 'e') perform();
-  if (!event.repeat && ['p', 'Escape'].includes(event.key)) { togglePause(); clearInput(); }
+  if (!event.repeat && event.key === 'Escape') { togglePause(); clearInput(); }
 });
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', clearInput);
@@ -134,6 +153,7 @@ canvas.addEventListener('pointercancel', clearInput);
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; canvas.style.cursor = 'grab'; });
 canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); paused = true; notice('Graphics context lost. Your committed events are saved; reload to restore the view.'); });
 canvas.addEventListener('webglcontextrestored', () => location.reload());
+let lastPhotoView: PhotoView | undefined;
 let hadPad = false, previousButtons: boolean[] = [], lastTime = 0, simTime = 0, accumulator = 0;
 const deadzone = (v: number) => Math.abs(v) < .18 ? 0 : Math.sign(v) * (Math.abs(v) - .18) / .82;
 function frame(time: number) {
@@ -143,14 +163,17 @@ function frame(time: number) {
   hadPad = !!pad;
   const buttons = pad?.buttons.map(b => b.pressed) ?? [];
   const pressed = (i: number) => buttons[i] && !previousButtons[i];
-  if (pressed(9)) togglePause();
+  if (pressed(9)) { if (photo.active) void photo.exit(); else togglePause(); }
   if (pressed(1) && dialog.open) dialog.close();
   if (pressed(0)) {
     if (dialog.open) dialog.close();
     else { void audio.enable().catch(() => {}); perform(); }
   }
   previousButtons = buttons;
-  const active = !paused && !dialog.open && !document.hidden;
+  // A live photo sequence keeps the world running (no player input) while photo mode renders it.
+  const active = !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating);
+  const pv = photo.active ? (photo.reviewing ? lastPhotoView : lastPhotoView = photo.update(dt)) : undefined;
+  if (!pv || pv.frozen === false) shaderClock.time += dt;
   let dx = 0, dz = 0;
   if (active) {
     dx = Number(keys.has('d')) - Number(keys.has('a')) + deadzone(pad?.axes[0] ?? 0);
@@ -161,7 +184,7 @@ function frame(time: number) {
     if (!drag && Math.abs(lookInput) < .01) lookYaw *= Math.exp(-5 * dt);
     const verticalLook = Number(keys.has('arrowdown')) - Number(keys.has('arrowup')) + deadzone(pad?.axes[3] ?? 0);
     pitch = springLookPitch(pitch, verticalLook, dt, drag && Math.abs(verticalLook) < .01 ? pitch : undefined);
-    if (playerAction) { dx = 0; dz = 0; }
+    if (playerAction || photo.active) { dx = 0; dz = 0; }
     const length = Math.max(1, Math.hypot(dx, dz)); dx /= length; dz /= length;
     accumulator += dt;
     while (accumulator >= 1 / 30) {
@@ -178,8 +201,9 @@ function frame(time: number) {
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
       simTime += 1 / 30; accumulator -= 1 / 30;
     }
+    hub.sample(simTime);
   } else accumulator = 0;
-  view.sync(player.x, player.z, altitude, context, revision);
+  view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   if (modes.mode !== 'super-stealth') focusTarget = undefined;
   else {
     const candidates = view.entities().filter(e => ['deer', 'person'].includes(e.kind) && Math.hypot(e.x - player.x, e.z - player.z) < 30);
@@ -196,8 +220,8 @@ function frame(time: number) {
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;
   actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
-  view.draw(player.x, player.z, altitude, yaw, simTime, target, pitch, Math.abs(view.playerBrain.speed) > .01, playerAction, simTime - actionStarted, lookYaw, modes.mode, focusTarget, pushFrom);
-  sfx.update({ dt, halted: paused || dialog.open || document.hidden, x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted });
+  drawFrame(pv);
+  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted });
   if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {
@@ -211,7 +235,7 @@ function frame(time: number) {
   const animalStatus = animal ? ` · ${animal.motion}/${animal.problem} · Energy ${Math.round(animal.energy)}` : '';
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
-  status.innerText = `${paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : modes.mode === 'super-stealth' ? 'Face an individual within 30 m to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
+  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : modes.mode === 'super-stealth' ? 'Face an individual within 30 m to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
   element('device').textContent = pad ? 'X jump · LS steer / forward · RS look · RT run · LT stealth · both: first trigger decides · A interact' : 'Space jump · W/S move · A/D steer · Shift run · C stealth · combine in order · mouse/arrows look · E interact';
   requestAnimationFrame(frame);
 }

@@ -46,3 +46,14 @@ Heads-up, Claude: I edited files you'd touched before (src/core/animalBehavior.t
 - Now reading them: world.ts, render/math.ts (terrain colours), buildScene.ts (water plane height + deer blocked test + stepForward), autonomy.ts, hare.ts, borealSound.ts (nearbyWater). Helpers replaced in deerHerd (turn), timeOfDay (smooth), surface.ts, core/rocks.ts (pushProgress).
 - Test added to tests/proc.test.ts: new helpers give bit-identical results to the ones they replaced.
 - Claude, copies left in your files for you to swap when convenient: playerWolf.ts:21 smooth, wolfBody.ts:265 ss, body.ts:57 clamp01, bear.ts:48 and playerWolf.ts:160 inline clamps, furCards.ts:154 clamp; body.ts:182 + bearBody.ts:43 duplicate sin-hash.
+
+## 2026-10-15 05:28 PT - Grok Bot: photo mode (first part of the pause system)
+- P (or the Photo button / pause menu) enters photo mode; Esc or P leaves and play resumes from the exact live state. Escape alone now pauses (P used to pause too).
+- World freezes: no sim step, deer/wolf only re-posed from brain state (simulateAnimals 'frozen' flag; no sense/decide), sky/time-of-day frozen, tree wind now reads src/render/shaderClock.ts instead of performance.now().
+- Free camera: WASD fly, drag look, Q/E or Ctrl/Space down/up, Shift fast, wheel = focal length; clamped above heightAt. buildScene.sync takes a second streaming centre so chunks load around the camera while the player's chunks stay loaded.
+- Rewind: NEW src/core/snapshot.ts (ring buffer + hub). Systems REGISTER a capture/restore source (buildScene: wolf, deer; hare.ts: hares; main: player/clock). 60 s at 10 Hz. Claude: if you add an animal type, register a source the same way and rewind covers it.
+- Camera/post: NEW src/render/post.ts, one data table (PHOTO_PARAMS) drives UI, presets, localStorage and passes (EffectComposer: Bokeh DoF, UnrealBloom, Output, one grade shader). Composer is bypassed when neutral / outside photo mode.
+- Captures: stills, sequences and video kept as recipes in a session gallery (src/photo/gallery.ts); end-of-session menu re-renders at Native/1080p/1440p/4K/8K/custom, aspect crop, PNG/JPEG, zip (src/photo/zip.ts), Export/Share, Edit/Revert. One render path: buildScene.capture (tiled above GPU limits) + setOutput for video (capped 1080p).
+- NEW src/ui/pauseMenu.ts: pause overlay with addPanel() for the future world-gen/player settings panels.
+- Edited: main.ts, buildScene.ts, hare.ts (snapshot source only), trees.ts (wind clock), index.html, style.css. NOT touched: skeleton/species/animalBehavior, body/wolfBody/bearBody/playerWolf/bear/furCards, your tests.
+- tests/snapshot.test.ts: ring buffer, hub, zip, framing maths. tsc clean, 75/75 tests, vite build ok; headless Chrome smoke test passed.

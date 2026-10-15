@@ -9,6 +9,7 @@ import { heightAt, WORLD_SEED } from '../core/world';
 import { stream, range } from '../proc/rng';
 import { stepForward } from '../proc/math';
 import { LEVEL } from '../core/tuning';
+import type { SnapshotSource } from '../core/snapshot';
 
 export const HARE = {
   count: 5, spawnMin: 18, spawnMax: 45, despawn: 70, respawnSeconds: [25, 45] as [number, number],
@@ -89,5 +90,16 @@ export function createHares(scene: THREE.Scene) {
     }
     return events;
   }
-  return { update, list: () => hares as readonly Hare[] };
+  type HareShot = [number, number, number, number, number][];
+  /** Photo-mode rewind: positions only; hares missing from a snapshot are hidden while it is shown. */
+  const snapshot: SnapshotSource<HareShot> = {
+    capture: () => hares.map(h => [h.id, h.x, h.z, h.heading, h.hopPhase]),
+    restore(shot) {
+      for (const h of hares) {
+        const s = shot.find(e => e[0] === h.id); h.root.visible = !!s; if (!s) continue;
+        [, h.x, h.z, h.heading, h.hopPhase] = s; h.root.position.set(h.x, heightAt(h.x, h.z), h.z); h.root.rotation.y = h.heading;
+      }
+    },
+  };
+  return { update, snapshot, list: () => hares as readonly Hare[] };
 }

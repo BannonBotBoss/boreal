@@ -1,12 +1,14 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { remoteVideos, cardIndex, ECOLOGY_CARDS } from '../src/ui/loading';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { manifestCards, cardIndex, FALLBACK_CARDS } from '../src/ui/loading';
 test('loading cards cycle and the manifest parses', () => {
   assert.equal(cardIndex(0, 3, 7), 0); assert.equal(cardIndex(7.1, 3, 7), 1); assert.equal(cardIndex(21, 3, 7), 0); assert.equal(cardIndex(5, 0), 0);
-  assert.ok(ECOLOGY_CARDS.length >= 5);
-  assert.ok(Array.isArray(JSON.parse(readFileSync('public/loading/manifest.json', 'utf8')).videos));
+  assert.ok(FALLBACK_CARDS.length >= 1);
+  const m = JSON.parse(readFileSync('public/loading/manifest.json', 'utf8')), cards = manifestCards(m);
+  assert.equal(cards.length, m.cards.length, 'every manifest card is valid'); assert.ok(cards.length >= 8);
+  for (const c of cards) { assert.ok(c.source, 'every fact is sourced'); assert.ok(existsSync('public' + c.image), c.image); assert.ok(statSync('public' + c.image).size < 400_000); }
 });
-test('only remote https clips are used', () => {
-  assert.deepEqual(remoteVideos({ videos: [{ src: '/loading/a.mp4' }, { src: 'http://x/b.mp4' }, { src: 'https://x/c.mp4' }] }).map(v => v.src), ['https://x/c.mp4']);
-  assert.deepEqual(remoteVideos({}), []);
+test('manifest cards: fact required, local webp art only', () => {
+  assert.deepEqual(manifestCards({ cards: [{ fact: '' }, { fact: 'a', image: 'https://x/y.webp' }, { fact: 'b', image: '/loading/cards/ok-1.webp' }, { fact: 'c' }] }).map(c => c.fact), ['b', 'c']);
+  assert.deepEqual(manifestCards(null), []);
 });

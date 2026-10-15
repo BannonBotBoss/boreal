@@ -1,4 +1,13 @@
 {
-  "note": "Remote https clips only (not bundled). Example entry: { \"src\": \"https://example.org/boreal-lake.mp4\", \"caption\": \"Lake at dawn\" }",
-  "videos": []
+  "note": "Loading cards. image = background art only (no text; generated with ElevenLabs flux-2-pro, flow qCTQpGtrgwx517hSVkVc, 2026-10-15). fact/source = HTML overlay. Optional per card: \"video\" (remote https URL, schema only, not played yet).",
+  "cards": [
+    { "image": "/loading/cards/mixedwood.webp", "fact": "Trembling aspen regrows after fire or cutting mainly from root suckers, so a whole aspen stand is often one genetic clone that leafs out and turns gold together.", "source": "Perala 1990, Populus tremuloides, in Silvics of North America vol. 2 (USDA Agric. Handb. 654)" },
+    { "image": "/loading/cards/old-growth.webp", "fact": "Balsam fir is shade tolerant: its seedlings wait for decades in the understorey and take over the canopy gaps left as old aspen and spruce die, a classic late-succession step in Ontario's boreal forest.", "source": "Frank 1990, Abies balsamea, in Silvics of North America vol. 1 (USDA Agric. Handb. 654)" },
+    { "image": "/loading/cards/birch-bark.webp", "fact": "Paper birch bark is rich in betulin, a white waxy compound that makes it waterproof and rot resistant; it was used for canoes, containers and roofing across the boreal forest.", "source": "Safford, Bjorkbom & Zasada 1990, Betula papyrifera, in Silvics of North America vol. 2" },
+    { "image": "/loading/cards/lake-dawn.webp", "fact": "Lake of the Woods, at Kenora, has more than 14,500 islands and about 105,000 km of shoreline; it drains north through the Winnipeg River to Hudson Bay.", "source": "Lake of the Woods Water Sustainability Foundation, State of the Basin Report (2014)" },
+    { "image": "/loading/cards/beaver-pond.webp", "fact": "Beaver dams turn streams into ponds that drown the trees behind them; when a pond is abandoned and the dam breaks, it drains into a sedge 'beaver meadow' that can last for decades.", "source": "Naiman, Johnston & Kelley 1988, BioScience 38(11):753" },
+    { "image": "/loading/cards/jackpine-river.webp", "fact": "Jack pine cones are sealed with resin that melts at about 50 °C, so a fire opens them and reseeds the burn. That is why jack pine dominates dry, sandy and rocky Shield sites that burn often.", "source": "Rudolph & Laidly 1990, Pinus banksiana, in Silvics of North America vol. 1" },
+    { "image": "/loading/cards/moose-wetland.webp", "fact": "In summer, moose wade into ponds to eat aquatic plants, which are richer in sodium than land browse; this helps them meet a mineral need that woody twigs cannot.", "source": "Belovsky & Jordan 1981, Journal of Mammalogy 62(3):613" },
+    { "image": "/loading/cards/winter-spruce.webp", "fact": "Snowshoe hares in the boreal forest rise and crash on a cycle of about ten years, and lynx numbers follow one to two years behind.", "source": "Krebs, Boonstra, Boutin & Sinclair 2001, BioScience 51(1):25" }
+  ]
 }

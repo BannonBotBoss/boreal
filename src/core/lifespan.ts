@@ -1,5 +1,6 @@
 /**
- * Player animal age (Grok Bot). Age is a 'clock' field (core/stateFields): it follows the world clock, also while paused.
+ * Player animal age (Grok Bot). Age is a 'clock' field (core/stateFields): it follows the world clock while playing and
+ * holds while the start/pause menu freezes that clock.
  * Game time runs 12× real (timeOfDay: 300 real s per game hour), so one game year ≈ 30.4 real days.
  * Wild maximum lifespans [verify]: grey wolf ~13 y (Mech & Boitani 2003, Wolves: Behavior, Ecology and Conservation);
  * white-tailed deer ~20 y (Ditchkoff 2011, in Biology and Management of White-tailed Deer); grizzly bear ~30 y

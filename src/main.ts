@@ -34,12 +34,10 @@ import { runJobs } from './core/interest';
 import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
 import { createLoading } from './ui/loading';
-import { GOVERNOR } from './core/quality';
 import { settle, startup } from './render/startup';
 import { createMenu } from './ui/menu';
-import { snapshot, restore } from './core/stateFields';
 import { ageYears, lifespanWarning } from './core/lifespan';
-import { CLOCK, loadClock, loadOffsets, localSec, worldSec, pause as freezeRadius, resume as thawRadius, saveClock, saveOffsets } from './core/worldClock';
+import { CLOCK, loadClock, worldSec, pauseClock, resumeClock, saveClock } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
 import { DAY_OF_YEAR, START_HOUR, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
 
@@ -102,10 +100,10 @@ function perform() {
     notice(action === 'move' ? 'Stone pushed with your snout. Its new position is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.');
   } catch (error) { notice(`Interaction not committed: ${String(error)}`); }
 }
-// ONE menu (ui/menu) for start and pause. The world clock (core/worldClock) never stops: pause freezes only what is in
-// the render/interest radius (per-object pause offsets) and stops drawing; on resume they continue from the snapshot.
-function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(); return; } paused = true; element('pause').textContent = 'Resume'; menu.show('pause'); sfx.pauseCue(); }
-function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(CLOCK.key + '.offsets', saveOffsets()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
+// ONE menu (ui/menu) for start and pause. The world clock freezes while the menu is open (Matthew): age/growth/seasons
+// hold, the renderer holds a frozen frame, and resume continues from that exact snapshot.
+function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(); return; } paused = true; pauseClock(); element('pause').textContent = 'Resume'; menu.show('pause'); sfx.pauseCue(); }
+function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
 const menu = createMenu({
   hasSave: () => [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND].some(k => { try { return !!localStorage.getItem(k); } catch { return false; } }),
   seed: () => STAGES.seed, staged: () => STAGES.on, music: () => musicPanel(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
@@ -114,8 +112,8 @@ const menu = createMenu({
     try { localStorage.setItem('boreal.seed.v1', String(o.seed)); } catch { /* blocked */ } renderStore.set('world.stagedTerrain', o.staged); location.reload(); },
   warning: () => { const born = Number(localStorage.getItem('boreal.player.born') ?? worldSec()); const p = view.playable;
     return lifespanWarning(p.id, ageYears(p.id, born, worldSec()), p.label); },
-  quitToMenu: () => { paused = false; element('pause').textContent = 'Pause'; },
-  close: mode => { if (mode === 'pause') { paused = false; applyPending(); element('pause').textContent = 'Pause'; sfx.pauseCue(); } else lookYaw = 0; clearInput(); canvas.focus({ preventScroll: true }); },
+  quitToMenu: () => { paused = false; element('pause').textContent = 'Pause'; }, // clock stays frozen: start page keeps it paused
+  close: mode => { resumeClock(); if (mode === 'pause') { paused = false; applyPending(); element('pause').textContent = 'Pause'; sfx.pauseCue(); } else lookYaw = 0; clearInput(); canvas.focus({ preventScroll: true }); },
 });
 const menuOpen = () => menu.open && menu.mode === 'start'; // start page: camera drift, no game input
 // Rewind history: every system registers its own snapshot source; photo mode never touches systems directly.
@@ -143,8 +141,8 @@ menu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, 
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
 let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1, sink: 0 };
 loadGround(localStorage.getItem(SAVE_KEY_GROUND));
-setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(CLOCK.key + '.offsets', saveOffsets()); } catch { /* blocked */ }
-  if (paused || menu.open) return; // in-radius objects are frozen in the menu; the clock above keeps the world's time
+setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); } catch { /* blocked */ }
+  if (paused || menu.open) return; // menu freezes the world clock; no sim work while open
   playerMass = view.playerMass(); // follows Play-as + appearance edits
   ground = footing(column(player.x, player.z), playerMass, 'canid', gravity());
   for (const a of view.audibleAnimals()) if (a.x !== undefined && a.z !== undefined && /deer/.test(a.key)) { const kg = deerDroppingsKg(view.massOf(a.key) ?? 0, 12 * GROUND.speed / 86400);
@@ -229,23 +227,21 @@ canvas.addEventListener('pointercancel', clearInput);
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; canvas.style.cursor = 'grab'; });
 canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); paused = true; notice('Graphics context lost. Your committed events are saved; reload to restore the view.'); });
 canvas.addEventListener('webglcontextrestored', () => location.reload());
-let lastPhotoView: PhotoView | undefined, lastMenuDraw = 0;
-let hadPad = false, previousButtons: boolean[] = [], lastTime = 0, accumulator = 0, wasActive = false;
-const clock0 = loadClock(localStorage.getItem(CLOCK.key)); loadOffsets(localStorage.getItem(CLOCK.key + '.offsets'));
-// simTime = the animation clock of SNAPSHOT state (pose, motion, actions): world time minus time frozen.
-let simTime = localSec('player'), lastWorld = worldSec(), pauseSnap: { brain: object; modes: object; player: object } | undefined; // in-radius objects + the player run on the player's local clock (world time − time frozen)
-try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ } // player age is a clock field
-if (clock0.offlineSec > 0) tickGround(12 * clock0.offlineSec); // out-of-radius closed-form layers (ground/deltas ageing) follow world time
+let lastPhotoView: PhotoView | undefined;
+let hadPad = false, previousButtons: boolean[] = [], lastTime = 0, accumulator = 0;
+const clock0 = loadClock(localStorage.getItem(CLOCK.key));
+let simTime = clock0.worldSec, lastWorld = worldSec(); // sim and clock fields share the world clock (frozen with the menu)
+try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
+if (clock0.offlineSec > 0) tickGround(12 * clock0.offlineSec); // time away between quits ages the ground/deltas
 const deadzone = (v: number) => Math.abs(v) < .18 ? 0 : Math.sign(v) * (Math.abs(v) - .18) / .82;
 function frame(time: number) { const frameStart = performance.now();
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time;
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');
-  if (hadPad && !pad) { paused = true; element('pause').textContent = 'Resume'; notice('Controller disconnected. Reconnect and press Menu to resume.'); }
+  if (hadPad && !pad) { paused = true; pauseClock(); element('pause').textContent = 'Resume'; if (!menu.open) menu.show('pause'); notice('Controller disconnected. Reconnect and press Menu to resume.'); }
   hadPad = !!pad;
   const buttons = pad?.buttons.map(b => b.pressed) ?? [];
   const pressed = (i: number) => buttons[i] && !previousButtons[i];
-  if (menuOpen()) { lookYaw += dt * .04; previousButtons = buttons; } // start menu: slow camera drift, no game input
-  else if (menu.open) previousButtons = buttons; // the menu reads the pad itself
+  if (menu.open) previousButtons = buttons; // the menu reads the pad itself; clock is frozen, frame is held
   else if (pressed(9)) { if (photo.active) void photo.exit(); else togglePause(); }
   if (!menuOpen() && pressed(1) && dialog.open) dialog.close();
   if (!menuOpen() && pressed(0)) {
@@ -255,11 +251,7 @@ function frame(time: number) { const frameStart = performance.now();
   previousButtons = buttons;
   // A live photo sequence keeps the world running (no player input) while photo mode renders it.
   const active0 = !menuOpen() && !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating);
-  if (active0 !== wasActive) { // freeze / thaw the in-radius set: no catch-up, they resume from the snapshot
-    if (active0) { thawRadius(); if (pauseSnap) { restore(view.playerBrain, pauseSnap.brain); restore(modes, pauseSnap.modes); restore(player, pauseSnap.player); pauseSnap = undefined; } }
-    else { freezeRadius(['player', ...view.entities().map(e => e.key)]); // snapshot fields only (core/stateFields); clock fields keep running
-      pauseSnap = { brain: snapshot('brain', view.playerBrain), modes: snapshot('modes', modes), player: snapshot('player', player) }; } }
-  wasActive = active0; const active = active0;
+  const active = active0; // the world clock (pauseClock/resumeClock around the menu) freezes age and every clock field
   const pv = photo.active ? (photo.reviewing ? lastPhotoView : lastPhotoView = photo.update(dt)) : undefined;
   if (!pv || pv.frozen === false) shaderClock.time += dt;
   let dx = 0, dz = 0;
@@ -298,7 +290,7 @@ function frame(time: number) { const frameStart = performance.now();
   } else accumulator = 0;
   view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(); // chunk instantiation etc., time-budgeted (core/interest)
-  { const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow; view.worldTime = wNow; // 'clock' fields: world time, paused or not
+  { const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow; view.worldTime = wNow; // 'clock' fields follow worldSec (frozen while the menu is open)
     tickGround(12 * wDt); // 1 real s = 12 game s (timeOfDay REAL_SECONDS_PER_GAME_HOUR 300)
     const h = (START_HOUR + wNow / REAL_SECONDS_PER_GAME_HOUR); updateWeather(Math.min(wDt, .25), 3600 / REAL_SECONDS_PER_GAME_HOUR, DAY_OF_YEAR + Math.floor(h / 24), h % 24); }
   if (modes.mode !== 'super-stealth') focusTarget = undefined;
@@ -317,9 +309,8 @@ function frame(time: number) { const frameStart = performance.now();
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;
   actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
-  // Pause holds the last frame (no rendering); the start page renders slowly behind it (≈20 fps, 5 fps on Low and below).
-  const behind = menu.open && (frameStart - lastMenuDraw < (menu.mode === 'pause' ? Infinity : GOVERNOR.tier >= 3 ? 200 : 50)); if (!behind) lastMenuDraw = frameStart;
-  const drawStart = performance.now(); if (!behind) drawFrame(pv); view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap) inspector.update(); handles.update();
+  // Menu open: hold the last frame (clock frozen; no age/growth/render). Playing: draw every frame.
+  const drawStart = performance.now(); if (!menu.open) drawFrame(pv); view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap) inspector.update(); handles.update();
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
   if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
@@ -341,7 +332,7 @@ function frame(time: number) { const frameStart = performance.now();
 }
 requestAnimationFrame(frame);
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) menu.show('start'); }); }
+  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { pauseClock(); menu.show('start'); } }); }
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

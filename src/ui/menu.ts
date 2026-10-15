@@ -1,8 +1,8 @@
 /**
  * ONE menu screen for start and pause (Grok Bot; replaces ui/pauseMenu). Mode 'start' (after the loading screen):
  * Continue, New world, Music, Graphics, Quit. Mode 'pause' (Esc / gamepad Menu): Resume, Save, Music, Graphics, More
- * (registered panels: player, appearance, inspector, photo), Quit to menu (autosaves first). Plain HTML over the live world. The world keeps rendering behind
- * it (main.ts drifts the camera slowly while it is open), so chunk streaming and first-use shader work continue.
+ * (registered panels: player, appearance, inspector, photo), Quit to menu (autosaves first). While either mode is open the
+ * world clock is frozen (core/worldClock.pauseClock) and the renderer holds its last frame.
  * Keyboard: ↑/↓ (or Tab) move, Enter/Space choose, Escape back. Gamepad (standard mapping): d-pad / left stick move,
  * A choose, B back. Sub-pages reuse the shared settings panels (ui/settingsPanel) passed in by main.
  */

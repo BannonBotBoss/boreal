@@ -2,7 +2,7 @@ import test from 'node:test'; import assert from 'node:assert/strict';
 import { AnimalBrain } from '../src/core/animalBehavior';
 import { createWolfModes } from '../src/core/wolfModes';
 import { generateChunk } from '../src/core/world';
-import { untagged, snapshot, restore, tagOf, STATE_FIELDS } from '../src/core/stateFields';
+import { untagged, tagOf, STATE_FIELDS } from '../src/core/stateFields';
 test('every state field is tagged clock / snapshot', () => {
   assert.deepEqual(untagged('brain', new AnimalBrain(1)), []);
   assert.deepEqual(untagged('modes', createWolfModes()), []);
@@ -10,11 +10,9 @@ test('every state field is tagged clock / snapshot', () => {
   assert.deepEqual(untagged('player', { x: 0, z: 0, heading: 0, abilities: [] }), []);
   for (const g of Object.values(STATE_FIELDS)) for (const t of Object.values(g)) assert.ok(['clock', 'snapshot'].includes(t));
 });
-test('pause snapshot restores dynamic state exactly and never freezes clock fields', () => {
-  const b = new AnimalBrain(1); b.energy = 50; b.speed = 1.2; b.heading = .7;
-  const s = snapshot('brain', b); b.energy = 0; b.speed = 9; b.heading = 3;
-  restore(b, s); assert.equal(b.energy, 50); assert.equal(b.speed, 1.2); assert.equal(b.heading, .7);
-  assert.ok(!('seed' in s) && !('legs' in s), 'clock fields are not snapshotted'); assert.equal(tagOf('entity', 'scale'), 'clock'); assert.equal(tagOf('brain', 'energy'), 'snapshot', 'vitals are snapshot');
+test('vitals are snapshot; age/growth fields are clock', () => {
+  assert.equal(tagOf('brain', 'energy'), 'snapshot'); assert.equal(tagOf('entity', 'scale'), 'clock');
+  assert.equal(tagOf('modes', 'stamina'), 'snapshot'); assert.equal(tagOf('world', 'season'), 'clock');
 });
 import { ageYears, lifespanWarning, LIFESPAN } from '../src/core/lifespan';
 test('age follows the world clock; warning near the species maximum only', () => {

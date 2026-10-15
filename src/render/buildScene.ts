@@ -93,15 +93,15 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       }
       const ranges = (entity.kind === 'rock' ? [0, 10, 24] : [0, 55, 115]).map(r => r * RENDER.lod[entity.kind === 'rock' ? 'rocks' : entity.kind === 'spruce' ? 'trees' : 'props']);
       const y = heightAt(entity.x, entity.z);
-      if (entity.kind !== 'rock' && entity.kind !== 'person') { // static: batched per chunk + material (render/batch)
+      if (entity.kind !== 'person') { // static: batched per chunk + material (render/batch); a pushed rock becomes a live LOD (see draw)
         const levels = [0, 1, 2].map(d => generateGeometry(entity, d));
-        batch.add(entity.key, new THREE.Vector3(entity.x, y, entity.z), levels, ranges);
+        batch.add(entity.key, new THREE.Vector3(entity.x, y, entity.z), levels, entity.kind === 'rock' ? [...ranges, 45 * RENDER.lod.rocks] : ranges);
         const proxy = new THREE.Object3D(); proxy.position.set(entity.x, y, entity.z); proxy.userData.inspect = { type: 'entity', key: entity.key }; objects.set(entity.key, proxy);
         yield; continue;
       }
       const lod = new THREE.LOD();
       for (let detail = 0; detail < 3; detail++) lod.addLevel(generateGeometry(entity, detail), ranges[detail], .12);
-      if (entity.kind === 'rock') lod.addLevel(new THREE.Group(), 45 * RENDER.lod.rocks, .12);
+      // (rocks are batched; only persons reach this live-LOD path)
       lod.position.set(entity.x, y, entity.z); lod.userData.inspect = { type: 'entity', key: entity.key }; root.add(lod); objects.set(entity.key, lod);
       yield;
     }
@@ -223,7 +223,11 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     for (const chunk of chunks.values()) for (const entity of chunk.entities) {
       if (entity.kind === 'rock' && pushFrom?.key === entity.key) {
-        const t = pushProgress(actionElapsed), lod = chunk.objects.get(entity.key)! as THREE.LOD;
+        let lod = chunk.objects.get(entity.key) as THREE.LOD;
+        if (!lod.isLOD) { // first push: take this rock out of the batch and give it its own LOD so it can roll
+          lod = new THREE.LOD(); [0, 10, 24].forEach((r, d) => lod.addLevel(generateGeometry(entity, d), r * RENDER.lod.rocks, .12)); lod.addLevel(new THREE.Group(), 45 * RENDER.lod.rocks, .12);
+          lod.userData.inspect = { type: 'entity', key: entity.key }; chunk.root.add(lod); chunk.objects.set(entity.key, lod); chunk.batch.hide(entity.key); }
+        const t = pushProgress(actionElapsed);
         const pose = { ...entity, x: pushFrom.x + (entity.x - pushFrom.x) * t, z: pushFrom.z + (entity.z - pushFrom.z) * t,
           rollX: (pushFrom.rollX ?? 0) + ((entity.rollX ?? 0) - (pushFrom.rollX ?? 0)) * t,
           rollZ: (pushFrom.rollZ ?? 0) + ((entity.rollZ ?? 0) - (pushFrom.rollZ ?? 0)) * t };

@@ -13,11 +13,12 @@ type Item = { key: string; pos: THREE.Vector3; levels: Map<THREE.Material, THREE
 
 /** Flatten one LOD level (a Group of meshes) into one geometry per material (props → PROP_MATERIAL with baked colour). */
 function flatten(root: THREE.Object3D) {
-  root.updateMatrixWorld(true); const inv = root.matrixWorld.clone().invert(), parts = new Map<THREE.Material, THREE.BufferGeometry[]>();
+  // The root's own rotation/scale (per-entity yaw, size jitter, rock seating) are baked in; its position is the instance's.
+  root.position.set(0, 0, 0); root.updateMatrixWorld(true); const parts = new Map<THREE.Material, THREE.BufferGeometry[]>();
   root.traverse(o => {
     const m = o as THREE.Mesh; if (!m.isMesh || Array.isArray(m.material)) return;
     const shared = !!m.userData.shared || m.material === PROP_MATERIAL, mat = shared ? m.material as THREE.Material : PROP_MATERIAL;
-    let g = m.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld));
+    let g = m.geometry.clone().applyMatrix4(m.matrixWorld);
     if (!shared) { // keep position/normal + colour from the part's material, so every prop part merges into one buffer
       g = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k);
       const c = (m.material as THREE.MeshStandardMaterial).color ?? new THREE.Color(1, 1, 1), n = g.getAttribute('position').count, a = new Float32Array(n * 3);

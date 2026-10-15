@@ -5,3 +5,15 @@
 - 2026-10-15 07:30 PT: stand map (core/stand) behind the `world.standMap` toggle (default on): Van Wagner fire ages (C = 100 yr) on seeded Voronoi fire patches. These drive stem density, succession mix, DBH (reverse-J in old growth), snags, CWD → logs + the ground CWD layer, moss/understory cover, and inspector traces. Cost: a few hashes per lookup; tree geometry cache ×4 age classes ×2 (snag).
 - 2026-10-15 07:30 PT: WORLD-STAGES.md design doc (elevation → hydrology → ground → vegetation; slow processes; tests; build order).
 - 2026-10-15 07:55 PT: Music panel in the pause menu (audio/music.ts, one shared module on the existing music bus with ducking): built-in ambient | isochronic tones (default 40 Hz gamma; 10/6/2 Hz presets; 100–500 Hz carrier; smooth/sharp pulse; brown/pink noise or drone bed) | binaural beats | crossfading, shuffled playlist from public/music/manifest.json. Includes a 'follows weather/time' option, a limiter (−10 dBFS, 20:1) and a safety note. Cost: 2–6 Web Audio nodes; no measurable CPU.
+- 2026-10-15 08:15 PT: rocks batched too (a pushed rock becomes a live LOD); batched geometry now keeps each entity's yaw/scale. RE-BENCH, RTX 5060 Laptop at 1920×1080 after streaming settles:
+
+| Tier | fps | Frame (ms) | p95 (ms) | GPU (ms) | Calls | Triangles |
+|---|---|---|---|---|---|---|
+| Ultra | 74 | 13.5 | 15.9 | 9.0 | 796 | 1.17 M |
+| High | 63 | 15.9 | 18.6 | 9.2 | 796 | 1.16 M |
+| Medium | 64 | 15.6 | 18.2 | 10.4 | 882 | 1.50 M |
+| Low | 156 | 6.4 | 7.4 | 3.8 | 277 | 0.51 M |
+| Very low | 177 | 5.7 | 6.7 | 3.4 | 271 | 0.43 M |
+| Minimum | 280 | 3.6 | 4.1 | 1.1 | 117 | 0.16 M |
+
+  Feature costs vs the Ultra baseline later in the same run (≈15.5 ms frame, 11 ms GPU): shadows ≈ 7 ms GPU, GTAO ≈ 4 ms GPU, GI probe ≈ 1 ms. PCSS, contact shadows, god rays, IBL and bark are each < 1 ms (within run-to-run noise). CPU spikes: CSM ≤ 0.2 ms, GI ≤ 1.2 ms, IBL ≤ 0.1 ms.

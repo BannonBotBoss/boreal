@@ -3,7 +3,9 @@ import { ANIMAL_DEFAULT_ENERGY } from './animalBehavior';
 import { surfaceDetail } from './surface';
 import type { Kind } from './catalog';
 import { LEVEL } from './tuning';
-import { f, choose, scope } from '../proc/trace';
+import { STAGES, elevationGrid, flowGrid, lakeAt, sampleGrid, toWorld } from './stages/elevation';
+import { cellAt, twi } from './stages/flow';
+import { f, choose, scope, tracing } from '../proc/trace';
 export const GENERATOR_VERSION = 1;
 export const WORLD_SEED = 1400;
 export const CHUNK_SIZE = 40;
@@ -17,6 +19,11 @@ const T = 'terrain';
 /** One stacked terrain layer: traced contribution = (overridable) amplitude x shape. */
 const layer = (name: string, shape: number, amp: number) => f(T, name, shape * f(T, `amp.${name}`, amp));
 export function heightAt(x: number, z: number) {
+  if (STAGES.on) { // stage 1 (core/stages/elevation): eroded coarse grid mapped so the lowest 8 % is open water and the top 15 % is upland rock (Shield ridges)
+    const g = elevationGrid(STAGES.seed);
+    if (tracing()) { const fl = flowGrid(STAGES.seed), c = cellAt(fl, x, z); f('hydrology', 'flow accumulation (cells)', fl.acc[c]); f('hydrology', 'upslope area (ha)', fl.acc[c] * fl.cell * fl.cell / 1e4);
+      f('hydrology', 'fill depth (m)', fl.filled[c] - g.h[c]); f('hydrology', 'TWI ln(a/tanβ)', twi(fl, c)); f('hydrology', 'D8 receiver', fl.dir[c]); const lk = lakeAt(STAGES.seed, x, z); if (lk) { f('hydrology', 'water body', `${lk.kind} #${lk.body}`); f('hydrology', 'water area (ha)', lk.areaHa); f('hydrology', 'max depth (m)', lk.maxDepth); } f('hydrology', 'grid build (ms)', Math.round(g.ms + fl.ms)); }
+    return f(T, 'stage1 elevation', toWorld(g, sampleGrid(g, x, z))) + f(T, 'depressions', surfaceDetail(x, z)) * .5; }
   const distance = Math.abs(x - riverCenter(z));
   const land = f(T, 'base', 1.8) + layer('ridgesX', Math.sin(x * .043), 1.4) + layer('ridgesZ', Math.cos(z * .038), 1.3)
     + layer('ripples', Math.sin(x * .13 + z * .09), .28);
@@ -39,7 +46,7 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     const x = f('draw', 'x', (cx + rng()) * CHUNK_SIZE), z = f('draw', 'z', (cz + rng()) * CHUNK_SIZE);
     const roll = rng(), seed = f('draw', 'seed', Math.floor(rng() * 0xffffffff)), rotation = f('draw', 'rotation', rng() * Math.PI * 2);
     const scale = f('draw', 'scale', .75 + rng() * .65);
-    if (heightAt(x, z) < LEVEL.shore || Math.hypot(x, z) < 13) continue;
+    if (heightAt(x, z) < LEVEL.shore || Math.hypot(x, z) < 13 || (STAGES.on && lakeAt(STAGES.seed, x, z))) continue; // stage 2b: nothing grows in lakes
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
     result.push({ key: `${cx}:${cz}:${i}`, kind, seed, generatorVersion: GENERATOR_VERSION, x, z, rotation, scale });
   }

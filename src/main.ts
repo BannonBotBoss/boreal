@@ -108,6 +108,7 @@ const drawFrame = (pv?: PhotoView) => view.draw(player.x, player.z, altitude, ya
 const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw: pv => drawFrame(pv), onExit: () => { clearInput(); accumulator = 0; document.body.classList.remove('photo-mode'); } });
 // Pause-menu panels. Anything that rebuilds the world or swaps the body waits until resume.
 const renderStore = createSettingsStore(RENDER_SETTINGS);
+if (new URLSearchParams(location.search).has('stages')) renderStore.set('world.stagedTerrain', true); // dev/bench: ?stages=1
 let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
 pauseMenu.addPanel({ id: 'render', title: 'Render settings', build: settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; }) });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');

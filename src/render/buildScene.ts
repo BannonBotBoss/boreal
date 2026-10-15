@@ -24,6 +24,8 @@ import { stepForward } from '../proc/math';
 import type { SnapshotSource } from '../core/snapshot';
 import { createPost } from './post';
 import { createChunkBatch } from './batch';
+import { STAGES, lakeAt } from '../core/stages/elevation';
+import { updateTreeUniforms } from './trees';
 import { tiles } from '../photo/frame';
 import { applyGenome } from './appearance';
 import { entityMass, rigMass } from './mass';
@@ -83,6 +85,12 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; ground.layers.enable(1); root.add(ground); // layer 1 = GI probe capture
     const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), new THREE.MeshStandardMaterial({ color: 0x578d91, roughness: .32, metalness: .1 }));
     water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
+    if (STAGES.on) { // stage 2b lakes/ponds: a 17×17 water sheet at the filled level inside water bodies, sunk below ground elsewhere
+      const lg = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, 16, 16); lg.rotateX(-Math.PI / 2); const p = lg.getAttribute('position'); let any = false;
+      for (let i = 0; i < p.count; i++) { const wx = p.getX(i) + (cx + .5) * CHUNK_SIZE, wz = p.getZ(i) + (cz + .5) * CHUNK_SIZE, lk = lakeAt(STAGES.seed, wx, wz);
+        if (lk) any = true; p.setY(i, lk ? lk.surface : heightAt(wx, wz) - .6); }
+      if (any) { lg.translate((cx + .5) * CHUNK_SIZE, 0, (cz + .5) * CHUNK_SIZE); lg.computeVertexNormals(); const lake = new THREE.Mesh(lg, water.material); lake.userData.inspect = { type: 'terrain', key: `lake:${cx}:${cz}` }; root.add(lake); } else lg.dispose();
+    }
     const entities = structuredClone(restoreEntities(applyPopulation(generateChunk(cx, cz), cx, cz), context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
     for (const entity of entities) {
       if (catalog[entity.kind].objectType === 'animal') {
@@ -239,6 +247,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       lod.rotation.y = Math.sin(time * .7 + entity.seed) * .07;
     }
     if (time - lastBatchLod > .25 || time < lastBatchLod) { lastBatchLod = time; for (const c of chunks.values()) c.batch.update(camera.position, 1); }
+    updateTreeUniforms();
     simulateAnimals(dt, x, z, frozen);
     const hour = photo?.hour ?? gameHour(time, startHour); clock = formatHour(hour);
     const lit = sky.update(hour, time, camera, wolf.root.position); darkness = lit.light.night;

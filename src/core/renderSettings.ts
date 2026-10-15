@@ -8,6 +8,7 @@ import { FEEL, HAPTIC_CATS } from '../ui/haptics';
 import { GROUND } from './ground';
 import { WEATHER, initWeather } from './weather';
 import { INTEREST } from './interest';
+import { STAGES } from './stages/elevation';
 import { GOVERNOR, LADDER, MANUAL, applied, resetGovernor } from './quality';
 
 /** Live config read by the world/render layers (buildScene, world scatter, hares, sound). Defaults = original game. */
@@ -49,6 +50,7 @@ export const RENDER_SETTINGS: SettingDef[] = [
   { id: 'lod.props', label: 'Plants, logs & props: detail distance', group: 'Level of detail', type: 'select', options: LOD_OPTIONS, default: 'Normal', regen: true, apply: v => { USER.lod.props = LOD_SCALE[v as string] ?? 1; capRender(); } },
   { id: 'lod.animals', label: 'Animals: draw distance', group: 'Level of detail', type: 'select', options: ['60 m', '120 m', '240 m', 'Unlimited'], default: 'Unlimited',
     apply: v => { RENDER.animalDistance = parseFloat(v as string) || Infinity; } },
+  { id: 'world.stagedTerrain', label: 'Staged terrain (stage 1: eroded elevation)', group: 'World', type: 'toggle', default: false, regen: true, apply: v => { STAGES.on = !!v; } },
   { id: 'world.standMap', label: 'Pre-settlement stand map (fire history)', group: 'World', type: 'toggle', default: true, regen: true, apply: v => { RENDER.standMap = !!v; } },
   { id: 'world.treeDensity', label: 'Tree density', group: 'World', type: 'slider', min: .25, max: 2, step: .05, default: 1, regen: true, apply: v => { USER.treeDensity = Number(v); capRender(); } },
   { id: 'animals.deer', label: 'Deer', group: 'Animals', type: 'toggle', default: true, regen: true, apply: v => { RENDER.deer.on = !!v; } },

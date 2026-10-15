@@ -19,7 +19,6 @@ import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './core/animalBehavior';
 import { autonomousWolfStep } from './core/autonomy';
 import { createSnapshotHub } from './core/snapshot';
 import { createPhotoMode } from './photo/photoMode';
-import { createPauseMenu } from './ui/pauseMenu';
 import { shaderClock } from './render/shaderClock';
 import { RENDER_SETTINGS, createSettingsStore } from './core/renderSettings';
 import { settingsPanel } from './ui/settingsPanel';
@@ -35,7 +34,13 @@ import { runJobs } from './core/interest';
 import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
 import { createLoading } from './ui/loading';
+import { GOVERNOR } from './core/quality';
 import { settle, startup } from './render/startup';
+import { createMenu } from './ui/menu';
+import { snapshot, restore } from './core/stateFields';
+import { ageYears, lifespanWarning } from './core/lifespan';
+import { CLOCK, loadClock, loadOffsets, localSec, worldSec, pause as freezeRadius, resume as thawRadius, saveClock, saveOffsets } from './core/worldClock';
+import { STAGES } from './core/stages/elevation';
 import { DAY_OF_YEAR, START_HOUR, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -97,8 +102,22 @@ function perform() {
     notice(action === 'move' ? 'Stone pushed with your snout. Its new position is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.');
   } catch (error) { notice(`Interaction not committed: ${String(error)}`); }
 }
-function togglePause() { paused = !paused; if (!paused) applyPending(); element('pause').textContent = paused ? 'Resume' : 'Pause'; pauseMenu.show(paused); sfx.pauseCue(); }
-const pauseMenu = createPauseMenu({ resume: () => { if (paused) togglePause(); }, photo: () => enterPhoto() });
+// ONE menu (ui/menu) for start and pause. The world clock (core/worldClock) never stops: pause freezes only what is in
+// the render/interest radius (per-object pause offsets) and stops drawing; on resume they continue from the snapshot.
+function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(); return; } paused = true; element('pause').textContent = 'Resume'; menu.show('pause'); sfx.pauseCue(); }
+function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(CLOCK.key + '.offsets', saveOffsets()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
+const menu = createMenu({
+  hasSave: () => [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND].some(k => { try { return !!localStorage.getItem(k); } catch { return false; } }),
+  seed: () => STAGES.seed, staged: () => STAGES.on, music: () => musicPanel(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
+  newWorld: o => { // fresh world: forget the per-world saves (settings, music and the probe stay)
+    for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
+    try { localStorage.setItem('boreal.seed.v1', String(o.seed)); } catch { /* blocked */ } renderStore.set('world.stagedTerrain', o.staged); location.reload(); },
+  warning: () => { const born = Number(localStorage.getItem('boreal.player.born') ?? worldSec()); const p = view.playable;
+    return lifespanWarning(p.id, ageYears(p.id, born, worldSec()), p.label); },
+  quitToMenu: () => { paused = false; element('pause').textContent = 'Pause'; },
+  close: mode => { if (mode === 'pause') { paused = false; applyPending(); element('pause').textContent = 'Pause'; sfx.pauseCue(); } else lookYaw = 0; clearInput(); canvas.focus({ preventScroll: true }); },
+});
+const menuOpen = () => menu.open && menu.mode === 'start'; // start page: camera drift, no game input
 // Rewind history: every system registers its own snapshot source; photo mode never touches systems directly.
 const hub = createSnapshotHub(600); // 60 s at 10 Hz
 for (const [key, source] of Object.entries(view.snapshotSources)) hub.register(key, source);
@@ -109,21 +128,24 @@ hub.register('player', {
 const drawFrame = (pv?: PhotoView) => view.draw(player.x, player.z, altitude, yaw, simTime, target, pitch, Math.abs(view.playerBrain.speed) > .01, playerAction, simTime - actionStarted, lookYaw, modes.mode, focusTarget, pushFrom, pv);
 const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw: pv => drawFrame(pv), onExit: () => { clearInput(); accumulator = 0; document.body.classList.remove('photo-mode'); } });
 // Pause-menu panels. Anything that rebuilds the world or swaps the body waits until resume.
+{ const sd = Number(localStorage.getItem('boreal.seed.v1')); if (sd > 0) STAGES.seed = sd; } // seed chosen in the start menu
 const renderStore = createSettingsStore(RENDER_SETTINGS);
 if (new URLSearchParams(location.search).has('stages')) renderStore.set('world.stagedTerrain', true); // dev/bench: ?stages=1
 let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
-pauseMenu.addPanel({ id: 'render', title: 'Render settings', build: settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; }) });
+const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');
-pauseMenu.addPanel({ id: 'music', title: 'Music', build: () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore, () => {})() as HTMLElement;
+const musicPanel = () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore, () => {})() as HTMLElement;
   const warn = document.createElement('p'); warn.className = 'note'; warn.textContent = MUSIC_SAFETY; form.prepend(warn);
   const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Next track'; skip.onclick = () => music.skip(); form.append(skip);
   const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Playlist: put audio files in public/music and list them in public/music/manifest.json (mood: day | night | storm | any). Gameplay sounds duck the music; a limiter caps its peaks; N toggles music, - / = changes music volume.'; form.append(hint);
-  return form; } });
-pauseMenu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
+  return form; };
+menu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
 let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1, sink: 0 };
 loadGround(localStorage.getItem(SAVE_KEY_GROUND));
-setInterval(() => { playerMass = view.playerMass(); // follows Play-as + appearance edits
+setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(CLOCK.key + '.offsets', saveOffsets()); } catch { /* blocked */ }
+  if (paused || menu.open) return; // in-radius objects are frozen in the menu; the clock above keeps the world's time
+  playerMass = view.playerMass(); // follows Play-as + appearance edits
   ground = footing(column(player.x, player.z), playerMass, 'canid', gravity());
   for (const a of view.audibleAnimals()) if (a.x !== undefined && a.z !== undefined && /deer/.test(a.key)) { const kg = deerDroppingsKg(view.massOf(a.key) ?? 0, 12 * GROUND.speed / 86400);
     if (kg > 0) record({ kind: 'droppings', x: a.x, z: a.z, t: GROUND.years, m: kg }, 3); } // residue reaches the ground when the delta expires
@@ -134,14 +156,15 @@ loadWeather(localStorage.getItem(SAVE_KEY_WEATHER)); loadDeltas(localStorage.get
 const handles = createHandles(view.camera, canvas, view.scene);
 const inspector = createInspector(view, canvas, handles);
 restoreLooks((k, g) => view.setAppearance(k, g));
-pauseMenu.addPanel({ id: 'appearance', title: 'Appearance', build: appearancePanel(() => view.playerLookKey, (k, g) => view.setAppearance(k, g), undefined, { root: () => view.lookup('player')?.object, handles }) });
-pauseMenu.addPanel({ id: 'inspector', title: 'Generation inspector (I)', build: () => { if (paused) togglePause(); inspector.toggle(true); return document.createElement('div'); } });
+menu.addPanel({ id: 'appearance', title: 'Appearance', build: appearancePanel(() => view.playerLookKey, (k, g) => view.setAppearance(k, g), undefined, { root: () => view.lookup('player')?.object, handles }) });
+menu.addPanel({ id: 'photo', title: 'Photo mode (P)', build: () => { enterPhoto(); return document.createElement('div'); } });
+menu.addPanel({ id: 'inspector', title: 'Generation inspector (I)', build: () => { if (paused) menu.close(); inspector.toggle(true); return document.createElement('div'); } });
 function applyPending() {
   if (pendingRegen) { view.invalidate(); pendingRegen = false; }
   if (pendingPlay) { const p = view.setPlayable(playAs); player.abilities = [...p.actions]; altitude = p.cameraHeight; pendingPlay = false; }
 }
 applyPending();
-function enterPhoto() { if (paused) togglePause(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
+function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
 actionButton.onclick = perform;
 element('pause').onclick = togglePause;
 element('photo-btn').onclick = () => enterPhoto();
@@ -160,7 +183,7 @@ element('export').onclick = () => {
 };
 const keys = new Set<string>();
 let drag: { id: number; x: number; y: number } | undefined;
-const canControl = () => !paused && !dialog.open && !document.hidden && !photo.active;
+const canControl = () => !menuOpen() && !paused && !dialog.open && !document.hidden && !photo.active;
 function clearInput() {
   keys.clear();
   if (drag && canvas.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
@@ -169,6 +192,7 @@ function clearInput() {
 addEventListener('keydown', event => {
   if (event.target instanceof HTMLElement && (event.target.isContentEditable || event.target.matches('input,textarea,select'))) return;
   if (dialog.open) return;
+  if (menu.open) return;
   if (!event.repeat && event.key.toLowerCase() === 'i' && !event.ctrlKey) { inspector.toggle(); if (!photo.active) clearInput(); return; }
   if (photo.active) { if (!event.repeat && (event.key === 'Escape' || event.key.toLowerCase() === 'p')) void photo.exit(); return; } // photo mode has its own keys
   if (!event.repeat && event.key.toLowerCase() === 'p') { enterPhoto(); return; }
@@ -205,8 +229,13 @@ canvas.addEventListener('pointercancel', clearInput);
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; canvas.style.cursor = 'grab'; });
 canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); paused = true; notice('Graphics context lost. Your committed events are saved; reload to restore the view.'); });
 canvas.addEventListener('webglcontextrestored', () => location.reload());
-let lastPhotoView: PhotoView | undefined;
-let hadPad = false, previousButtons: boolean[] = [], lastTime = 0, simTime = 0, accumulator = 0;
+let lastPhotoView: PhotoView | undefined, lastMenuDraw = 0;
+let hadPad = false, previousButtons: boolean[] = [], lastTime = 0, accumulator = 0, wasActive = false;
+const clock0 = loadClock(localStorage.getItem(CLOCK.key)); loadOffsets(localStorage.getItem(CLOCK.key + '.offsets'));
+// simTime = the animation clock of SNAPSHOT state (pose, motion, actions): world time minus time frozen.
+let simTime = localSec('player'), lastWorld = worldSec(), pauseSnap: { brain: object; modes: object; player: object } | undefined; // in-radius objects + the player run on the player's local clock (world time − time frozen)
+try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ } // player age is a clock field
+if (clock0.offlineSec > 0) tickGround(12 * clock0.offlineSec); // out-of-radius closed-form layers (ground/deltas ageing) follow world time
 const deadzone = (v: number) => Math.abs(v) < .18 ? 0 : Math.sign(v) * (Math.abs(v) - .18) / .82;
 function frame(time: number) { const frameStart = performance.now();
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time;
@@ -215,15 +244,22 @@ function frame(time: number) { const frameStart = performance.now();
   hadPad = !!pad;
   const buttons = pad?.buttons.map(b => b.pressed) ?? [];
   const pressed = (i: number) => buttons[i] && !previousButtons[i];
-  if (pressed(9)) { if (photo.active) void photo.exit(); else togglePause(); }
-  if (pressed(1) && dialog.open) dialog.close();
-  if (pressed(0)) {
+  if (menuOpen()) { lookYaw += dt * .04; previousButtons = buttons; } // start menu: slow camera drift, no game input
+  else if (menu.open) previousButtons = buttons; // the menu reads the pad itself
+  else if (pressed(9)) { if (photo.active) void photo.exit(); else togglePause(); }
+  if (!menuOpen() && pressed(1) && dialog.open) dialog.close();
+  if (!menuOpen() && pressed(0)) {
     if (dialog.open) dialog.close();
     else { void audio.enable().catch(() => {}); perform(); }
   }
   previousButtons = buttons;
   // A live photo sequence keeps the world running (no player input) while photo mode renders it.
-  const active = !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating);
+  const active0 = !menuOpen() && !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating);
+  if (active0 !== wasActive) { // freeze / thaw the in-radius set: no catch-up, they resume from the snapshot
+    if (active0) { thawRadius(); if (pauseSnap) { restore(view.playerBrain, pauseSnap.brain); restore(modes, pauseSnap.modes); restore(player, pauseSnap.player); pauseSnap = undefined; } }
+    else { freezeRadius(['player', ...view.entities().map(e => e.key)]); // snapshot fields only (core/stateFields); clock fields keep running
+      pauseSnap = { brain: snapshot('brain', view.playerBrain), modes: snapshot('modes', modes), player: snapshot('player', player) }; } }
+  wasActive = active0; const active = active0;
   const pv = photo.active ? (photo.reviewing ? lastPhotoView : lastPhotoView = photo.update(dt)) : undefined;
   if (!pv || pv.frozen === false) shaderClock.time += dt;
   let dx = 0, dz = 0;
@@ -255,7 +291,6 @@ function frame(time: number) { const frameStart = performance.now();
       if(!autonomous && brain.motion==='idle') brain.problem='recover';
       if(autonomous && brain.meal) view.forageWolf(brain.meal.key);
       brain.expend(1/30,Math.hypot(pose.x-player.x,pose.z-player.z)*ground.cost); // soft ground costs more (Bekker compaction)
-      tickGround(12/30); // 1 real s = 12 game s (timeOfDay REAL_SECONDS_PER_GAME_HOUR 300)
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
       simTime += 1 / 30; accumulator -= 1 / 30;
     }
@@ -263,7 +298,9 @@ function frame(time: number) { const frameStart = performance.now();
   } else accumulator = 0;
   view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(); // chunk instantiation etc., time-budgeted (core/interest)
-  { const h = (START_HOUR + simTime / REAL_SECONDS_PER_GAME_HOUR); updateWeather(active ? dt : 0, 3600 / REAL_SECONDS_PER_GAME_HOUR, DAY_OF_YEAR + Math.floor(h / 24), h % 24); }
+  { const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow; view.worldTime = wNow; // 'clock' fields: world time, paused or not
+    tickGround(12 * wDt); // 1 real s = 12 game s (timeOfDay REAL_SECONDS_PER_GAME_HOUR 300)
+    const h = (START_HOUR + wNow / REAL_SECONDS_PER_GAME_HOUR); updateWeather(Math.min(wDt, .25), 3600 / REAL_SECONDS_PER_GAME_HOUR, DAY_OF_YEAR + Math.floor(h / 24), h % 24); }
   if (modes.mode !== 'super-stealth') focusTarget = undefined;
   else {
     const candidates = view.entities().filter(e => ['deer', 'person'].includes(e.kind) && Math.hypot(e.x - player.x, e.z - player.z) < 30);
@@ -280,7 +317,9 @@ function frame(time: number) { const frameStart = performance.now();
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;
   actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
-  const drawStart = performance.now(); drawFrame(pv); view.photoreal.INFO.drawMs = performance.now() - drawStart; view.photoreal.after(performance.now() - frameStart); inspector.update(); handles.update();
+  // Pause holds the last frame (no rendering); the start page renders slowly behind it (≈20 fps, 5 fps on Low and below).
+  const behind = menu.open && (frameStart - lastMenuDraw < (menu.mode === 'pause' ? Infinity : GOVERNOR.tier >= 3 ? 200 : 50)); if (!behind) lastMenuDraw = frameStart;
+  const drawStart = performance.now(); if (!behind) drawFrame(pv); view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap) inspector.update(); handles.update();
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
   if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
@@ -302,7 +341,7 @@ function frame(time: number) { const frameStart = performance.now();
 }
 requestAnimationFrame(frame);
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).finally(() => loading.finish()); }
+  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) menu.show('start'); }); }
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

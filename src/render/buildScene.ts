@@ -51,6 +51,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const startParam = Number(new URLSearchParams(location.search).get('hour'));
   const startHour = Number.isFinite(startParam) && startParam >= 0 && startParam < 24 && location.search.includes('hour=') ? startParam : START_HOUR;
   let clock = formatHour(gameHour(0, startHour)), darkness = 0;
+  let worldTime: number | undefined; // set by main from core/worldClock
   const camera = new THREE.PerspectiveCamera(48, 1, .2, 700);
   const post = createPost(renderer, scene, camera);
   const photoreal = createPhotoreal(renderer, scene, camera, sky, BASE_RATIO); // PBR lighting, CSM, IBL, GTAO + quality governor
@@ -249,8 +250,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     if (time - lastBatchLod > .25 || time < lastBatchLod) { lastBatchLod = time; for (const c of chunks.values()) c.batch.update(camera.position, 1); }
     updateTreeUniforms();
     simulateAnimals(dt, x, z, frozen);
-    const hour = photo?.hour ?? gameHour(time, startHour); clock = formatHour(hour);
-    const lit = sky.update(hour, time, camera, wolf.root.position); darkness = lit.light.night;
+    const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
+    const hour = photo?.hour ?? gameHour(tod, startHour); clock = formatHour(hour);
+    const lit = sky.update(hour, tod, camera, wolf.root.position); darkness = lit.light.night;
     photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
     else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
@@ -337,7 +339,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
-  return { scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { set worldTime(t: number | undefined) { worldTime = t; }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     stats: () => ({ chunks: chunks.size, entities: [...chunks.values()].reduce((n, c) => n + c.entities.length, 0), triangles: renderer.info.render.triangles }),
   };

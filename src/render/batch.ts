@@ -6,9 +6,20 @@
  * Props built with per-part materials are flattened into vertex colours on ONE shared material.
  */
 import * as THREE from 'three';
+import { GLSL_NOISE } from '../proc/glsl';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 export const PROP_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }); PROP_MATERIAL.userData.shared = true;
+/** Rocks: the old 16×16 striped texture can't ride in a batch (one map per material), so the same look is procedural:
+ *  horizontal banding (as the old texture's rows) + fBm grain + lichen-free speckle from world position (proc/glsl). */
+export const ROCK_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true, side: THREE.DoubleSide }); ROCK_MATERIAL.userData.shared = true;
+ROCK_MATERIAL.onBeforeCompile = shader => {
+  shader.vertexShader = 'varying vec3 vRockW;\n' + shader.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n  vec4 rw = vec4(transformed, 1.);\n  #ifdef USE_BATCHING\n    rw = batchingMatrix * rw;\n  #endif\n  vRockW = (modelMatrix * rw).xyz;');
+  shader.fragmentShader = `varying vec3 vRockW;\n${GLSL_NOISE}\n` + shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+    float band = .9 + .1 * fract(vRockW.y * 2.3 + vnoise(vRockW.xz * 3., 7.) * .6); // old texture: brighter rows upward + jitter
+    float grain = .82 + .3 * fbm(vRockW.xz * 4. + vRockW.y * 2., 3.);
+    diffuseColor.rgb *= band * grain;`);
+};
 type Item = { key: string; pos: THREE.Vector3; levels: Map<THREE.Material, THREE.BufferGeometry>[]; ranges: number[]; shadowFar: number };
 
 /** Flatten one LOD level (a Group of meshes) into one geometry per material (props → PROP_MATERIAL with baked colour). */
@@ -17,7 +28,7 @@ function flatten(root: THREE.Object3D) {
   root.position.set(0, 0, 0); root.updateMatrixWorld(true); const parts = new Map<THREE.Material, THREE.BufferGeometry[]>();
   root.traverse(o => {
     const m = o as THREE.Mesh; if (!m.isMesh || Array.isArray(m.material)) return;
-    const shared = !!m.userData.shared || m.material === PROP_MATERIAL, mat = shared ? m.material as THREE.Material : PROP_MATERIAL;
+    const shared = !!m.userData.shared || m.material === PROP_MATERIAL, mat = shared ? m.material as THREE.Material : m.userData.rock ? ROCK_MATERIAL : PROP_MATERIAL;
     let g = m.geometry.clone().applyMatrix4(m.matrixWorld);
     if (!shared) { // keep position/normal + colour from the part's material, so every prop part merges into one buffer
       g = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k);

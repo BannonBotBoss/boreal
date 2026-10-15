@@ -81,11 +81,15 @@ function treeMaterial() {
     shader.defines = { ...(shader.defines ?? {}), TRANSLUCENCY_MASK: 'step(0.5, vLeaf)' }; addTranslucency(shader); addCloudShadow(shader);
     shader.vertexShader = 'uniform float uWind, uWindAmp;\nuniform vec2 uWindDir;\nattribute float aLeaf; attribute float aFlutter; attribute vec3 aFall; attribute vec4 aBark; attribute vec3 aInner; attribute vec3 aLen; attribute float aNear; varying float vLeaf; varying vec3 vFall; varying vec3 vObj; varying vec4 vBark; varying vec3 vInner; varying vec3 vLen; varying float vNear;\n' + shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
       vLeaf = aLeaf; vFall = aFall; vObj = position; vBark = aBark; vInner = aInner; vLen = aLen; vNear = aNear;
-      float windPhase = modelMatrix[3].x * .11 + modelMatrix[3].z * .07;
+      mat4 treeM = modelMatrix;
+      #ifdef USE_BATCHING
+        treeM = modelMatrix * batchingMatrix; // batched (render/batch): this instance's own placement
+      #endif
+      float windPhase = treeM[3].x * .11 + treeM[3].z * .07;
       float bend = max(position.y, 0.) * max(position.y, 0.) * .0016;
       float gust = (.6 + .4 * sin(uWind * .23 + windPhase * .3)) * uWindAmp;
       // the shared wind field (core/weather): lean + sway along the wind, in this tree's model space
-      vec3 wl = transpose(mat3(modelMatrix)) * vec3(uWindDir.x, 0., uWindDir.y); vec2 along = normalize(wl.xz + 1e-5), across = vec2(-along.y, along.x);
+      vec3 wl = transpose(mat3(treeM)) * vec3(uWindDir.x, 0., uWindDir.y); vec2 along = normalize(wl.xz + 1e-5), across = vec2(-along.y, along.x);
       transformed.xz += bend * gust * (along * (.8 + sin(uWind * 1.1 + windPhase) + .35 * sin(uWind * 2.7 + windPhase * 1.7)) + across * .6 * cos(uWind * .9 + windPhase * 1.3));
       // leaf flutter: per-species petiole factor (aspen's flattened petioles flutter most; Niklas 1991), driven by the shared wind
       transformed.xz += step(0.5, aLeaf) * aFlutter * .06 * uWindAmp * vec2(sin(uWind * 13. + position.y * 5. + position.x * 3.), cos(uWind * 11. + position.z * 4.));`);
@@ -197,14 +201,18 @@ function build(id: TreeSpecies, variant: number, detail: number, cls = 1, snag =
   merged.computeBoundingSphere(); return merged;
 }
 
+/** Per-frame tree uniforms (wind clock/field, phenology, bark range), shared by every tree material user. Called from the
+ *  frame loop; with batching there is no per-mesh onBeforeRender any more (it used to run once per tree per pass). */
+export function updateTreeUniforms() {
+  wind.value = shaderClock.time; const w = windAt(INTEREST.x, 10, INTEREST.z), U = Math.hypot(w.x, w.z);
+  windDir.value.set(w.x / (U || 1), w.z / (U || 1)); windAmp.value = Math.min(4, (U / 4) ** 2); const ph = phenology(WEATHER.day); barkFar.value = TREE_FX.barkOff ? 0 : INTEREST.near * .5; leafColour.value = ph.colour; leafOff.value = ph.off; // drag ∝ U² (4 m/s = the old look)
+}
 /** One LOD level of a tree: a single shared-geometry mesh, flagged so disposeObject skips it. */
 export function treeGeometry(entity: Entity, detail: number): THREE.Group {
   const species = treeSpecies(entity.seed, entity.x, entity.z), variant = f('tree', 'variant', (entity.seed >>> 3) % VARIANTS), cls = ageClass(entity.x, entity.z), snag = isSnag(entity.seed, entity.x, entity.z), key = `${species}:${variant}:${cls}:${snag ? 1 : 0}:${detail}`;
   // Traced (inspector) builds bypass the shared cache so factors are reported and what-if overrides take effect.
   let geometry = tracing() ? build(species, variant, detail, cls, snag) : cache.get(key); if (!geometry) cache.set(key, geometry = build(species, variant, detail, cls, snag));
   const mesh = new THREE.Mesh(geometry, treeMaterial()); mesh.userData.shared = !tracing();
-  mesh.onBeforeRender = () => { wind.value = shaderClock.time; const w = windAt(INTEREST.x, 10, INTEREST.z), U = Math.hypot(w.x, w.z);
-    windDir.value.set(w.x / (U || 1), w.z / (U || 1)); windAmp.value = Math.min(4, (U / 4) ** 2); const ph = phenology(WEATHER.day); barkFar.value = TREE_FX.barkOff ? 0 : INTEREST.near * .5; leafColour.value = ph.colour; leafOff.value = ph.off; }; // drag ∝ U² (4 m/s = the old look)
   const group = new THREE.Group(); group.add(mesh);
   const s = f('tree', 'heightJitter', random(entity.seed)());
   group.scale.set(entity.scale, entity.scale * (.9 + s * .2), entity.scale); group.rotation.y = entity.rotation;

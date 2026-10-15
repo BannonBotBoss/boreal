@@ -30,6 +30,7 @@ export function rockGeometry(e: Entity, detail: number) {
   geometry.rotateX(recipe.tilt); geometry.rotateY(e.rotation);
   geometry.computeVertexNormals();
   const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(recipe.grey, recipe.grey, recipe.grey), map: texture, flatShading: true, roughness: 1, side: THREE.DoubleSide }));
+  mesh.userData.rock = true; // render/batch maps it to the procedural ROCK_MATERIAL
   const group = new THREE.Group(); group.add(mesh); seatRock(group, e); return group;
 }
 export function seatRock(group: THREE.Object3D, e: Entity) {

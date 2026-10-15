@@ -3,7 +3,9 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { random } from '../core/random';
 import { shaderClock } from './shaderClock';
 import type { Entity } from '../core/world';
-import { f, choose, tracing } from '../proc/trace';
+import { f, choose, tracing, withTrace, type Trace } from '../proc/trace';
+import { massOf, frustum, cone } from '../core/mass';
+import { PHYS } from '../core/tuning';
 
 /**
  * Stylized boreal forest (Grok Bot). Every 'spruce' entity becomes one of five species picked
@@ -59,7 +61,7 @@ function build(species: TreeSpecies, variant: number, detail: number) {
   const rng = random(0x51ab + variant * 7919 + species.length * 104729);
   const parts: THREE.BufferGeometry[] = [], seg = [8, 6, 4][detail];
   const trunk = (h: number, r: number, color: number, bands?: (y: number) => number, lean = 0) =>
-    parts.push(painted(new THREE.CylinderGeometry(r * .45, r, h, seg, detail === 0 && bands ? 10 : 1), color, M(0, h / 2, 0, 1, 1, 1, 0, 0, lean), .06, rng, bands));
+    (f('tree', 'trunkRadius', r), f('tree', 'trunkHeight', h), parts.push(painted(new THREE.CylinderGeometry(r * .45, r, h, seg, detail === 0 && bands ? 10 : 1), color, M(0, h / 2, 0, 1, 1, 1, 0, 0, lean), .06, rng, bands)));
   const blob = (x: number, y: number, z: number, sx: number, sy: number, sz: number, color: THREE.ColorRepresentation) =>
     parts.push(painted(new THREE.IcosahedronGeometry(1, detail === 0 ? 1 : 0), color, M(x, y, z, sx, sy, sz, rng(), rng() * 6, rng()), .12, rng));
   if (species === 'black-spruce' || species === 'white-spruce') {
@@ -116,4 +118,21 @@ export function treeGeometry(entity: Entity, detail: number): THREE.Group {
   const s = f('tree', 'heightJitter', random(entity.seed)());
   group.scale.set(entity.scale, entity.scale * (.9 + s * .2), entity.scale); group.rotation.y = entity.rotation;
   return group;
+}
+
+/** Generator dimensions for mass: the build's own traced factors (LOD 2), cached per species/variant. */
+const dimsCache = new Map<string, Record<string, number>>();
+export function treeDims(seed: number) {
+  const species = treeSpecies(seed), variant = (seed >>> 3) % VARIANTS, key = `${species}:${variant}`;
+  let d = dimsCache.get(key);
+  if (!d) { const t: Trace = { factors: [], overrides: {} }; withTrace(t, () => build(species, variant, 2).dispose());
+    d = Object.fromEntries(t.factors.filter(x => typeof x.value === 'number').map(x => [x.name, x.value as number])); dimsCache.set(key, d); }
+  return { ...d, species } as Record<string, number> & { species: TreeSpecies };
+}
+/** Tree mass: trunk frustum (heartwood/sapwood/bark/water) + crown cone x fill (needles or leaves), at entity scale. */
+export function treeMass(e: Entity) {
+  const d = treeDims(e.seed), s = e.scale, sy = s * (.9 + random(e.seed)() * .2), w = d.crownWidth ?? 1.6, h = d.height ?? d.trunkHeight;
+  const conifer = d.species.includes('spruce') || d.species === 'jack-pine';
+  return massOf('tree', [{ region: 'trunk', volume: frustum(d.trunkRadius * s, d.trunkRadius * .45 * s, d.trunkHeight * sy) },
+    { region: conifer ? 'crownConifer' : 'crownBroadleaf', volume: cone(w * s, h * .8 * sy) * PHYS.crownFill }]);
 }

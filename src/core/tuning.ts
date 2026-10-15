@@ -22,3 +22,13 @@ export const BLOCK = {
   /** Autonomous wolf: max height change per probe and spruce/person clearance (m). */
   wolf: { step: .45, trunk: .7 },
 };
+/** Physical constants (SI). Gravity is DERIVED from these in proc/physics.ts; never write a literal g. */
+export const PHYS = {
+  G: 6.674e-11, EARTH_MASS: 5.972e24, EARTH_RADIUS: 6.371e6,
+  /** Share of a crown's cone that is wood + foliage (the rest is air); materials/densities live in core/materials.ts. */
+  crownFill: .08,
+  /** Muscle force ~ k * m^(2/3) (so heavier animals accelerate/turn slower); k calibrated so the wolf keeps today's feel. */
+  wolfAccel: 30,
+  /** Claude's jump lasts 0.85 s (animalBehavior); the ballistic arc that fits it gives launch/landing speed. */
+  jumpSeconds: .85,
+};

@@ -15,11 +15,11 @@ interface CoatUniforms { uRootInv: { value: THREE.Matrix4 }; uMin: { value: THRE
 
 /** Rig-local base bounds and a side-profile point cloud (z,y), normalized to centre 0 / span 1. Captured once. */
 export function baseProfile(root: THREE.Object3D) {
-  if (root.userData.profile) return root.userData.profile as { min: THREE.Vector3; size: THREE.Vector3; side: [number, number][] };
+  if (root.userData.profile) return root.userData.profile as { min: THREE.Vector3; size: THREE.Vector3; side: [number, number][]; points: THREE.Vector3[] };
   root.updateMatrixWorld(true);
   const inv = root.matrixWorld.clone().invert(), m = new THREE.Matrix4(), v = new THREE.Vector3(), pts: THREE.Vector3[] = [];
   root.traverse(o => { if (!(o instanceof THREE.Mesh) || !o.visible) return; m.multiplyMatrices(inv, o.matrixWorld);
-    const p = o.geometry.attributes.position, step = Math.max(1, Math.floor(p.count / 400));
+    const p = o.geometry.attributes.position, step = Math.max(1, Math.floor(p.count / 1500));
     for (let i = 0; i < p.count; i += step) pts.push(v.fromBufferAttribute(p, i).applyMatrix4(m).clone()); });
   const box = new THREE.Box3().setFromPoints(pts), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
   // side silhouette: per 32 columns along z, the top and bottom y (a closed outline the sketch tool fits against)
@@ -28,7 +28,7 @@ export function baseProfile(root: THREE.Object3D) {
   const side: [number, number][] = [];
   cols.forEach(([lo, hi], k) => { if (lo > hi) return; const z = -((box.min.z + (k + .5) / 32 * size.z) - c.z) / size.z; // -z is forward: nose at +0.5
     side.push([z, (hi - c.y) / size.y], [z, (lo - c.y) / size.y]); });
-  return root.userData.profile = { min: box.min, size, side };
+  return root.userData.profile = { min: box.min, size, side, points: pts };
 }
 
 function coatUniforms(root: THREE.Object3D): CoatUniforms {

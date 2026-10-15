@@ -7,6 +7,7 @@ export interface Definition {
   generator: { id: Kind; version: 1; levels: readonly number[] };
   interactions: Action[] | null; audio: string | null;
   inventory: { item: string; stackLimit: number } | null;
+  /** Composition plan in core/materials.ts COMPOSITIONS. */ material: string;
 }
 const entry = (id: Kind, title: string, purpose: string, visualDescription: string,
   parentGroup: string, objectType: Definition['objectType'], interactions: Action[] | null): Definition => ({
@@ -15,6 +16,7 @@ const entry = (id: Kind, title: string, purpose: string, visualDescription: stri
   categories: [parentGroup, objectType], generator: { id, version: 1, levels: [0, 1, 2] },
   interactions, audio: id === 'rock' ? 'stone-roll' : interactions?.includes('speak') ? 'friend-chime' : interactions ? 'gather-rustle' : null,
   inventory: id === 'plant' ? { item: 'herb', stackLimit: 99 } : null,
+  material: ({ spruce: 'tree', rock: 'rock', log: 'log', plant: 'plant', forage: 'plant', deer: 'cervid', person: 'human' } as Record<string, string>)[id] ?? 'human',
 });
 export const catalog: Record<Kind, Definition> = {
   forage: entry('forage', 'Forage berry patch', 'Restore animal energy; fictional edible plant', 'Low broad green leaves with clusters of blue berries', 'vegetation', 'resource', ['forage']),

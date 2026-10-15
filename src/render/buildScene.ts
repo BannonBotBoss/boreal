@@ -22,6 +22,9 @@ import type { SnapshotSource } from '../core/snapshot';
 import { createPost } from './post';
 import { tiles } from '../photo/frame';
 import { applyGenome } from './appearance';
+import { entityMass, rigMass } from './mass';
+import { RIG_BODY_PLAN } from '../core/materials';
+import { body, step, collide, gravity, type Body } from '../proc/physics';
 import { defaultGenome as defaultLook, type Genome } from '../core/genome';
 
 /** Scene entry point: assembles generated terrain, streamed objects, light and camera. */
@@ -52,6 +55,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   /** Appearance genomes: 'player:<playable>', 'species:deer' (all deer) or an entity key (one animal). */
   const looks = new Map<string, Genome>();
   const lookOf = (key: string, species: string) => looks.get(key) ?? looks.get(`species:${species}`);
+  const WOLF_MASS = rigMass(wolf.root, 'canid');
+  const planOf = () => RIG_BODY_PLAN[current.id] ?? 'canid'; // reference for force calibration (default wolf)
   const PLAYER_TAG = { type: 'player', key: 'player' }; wolf.root.userData.inspect = PLAYER_TAG;
   /** Swap the controlled animal in place (keeps position, heading and energy). */
   function setPlayable(id: string) {
@@ -150,6 +155,13 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
         // Avoid deep water, steep slopes and solid trunks; low obstacles can be jumped.
         const blocked=heightAt(nextX,nextZ)<LEVEL.deerWater || Math.abs(heightAt(nextX,nextZ)-heightAt(e.x,e.z))>BLOCK.deer.step || entities.some(o=>o.kind==='spruce'&&Math.hypot(o.x-nextX,o.z-nextZ)<BLOCK.deer.trunk);
         if(!blocked) {e.x=nextX;e.z=nextZ;} else {rig.brain.heading+=dt*2;rig.brain.speed=0;}
+        // Momentum contact with the player (one integrator): knock velocity decays by ground friction.
+        const ddx=e.x-x,ddz=e.z-z,dist=Math.hypot(ddx,ddz);
+        if(dist<1.3&&dist>1e-3){const nx=ddx/dist,nz=ddz/dist,mp=rigMass(wolf.root,planOf()),md=rigMass(rig.root,'cervid'),vp=wolf.brain.speed*(-Math.sin(wolf.brain.heading)*nx-Math.cos(wolf.brain.heading)*nz);
+          const kb:Body=rig.root.userData.kb??=body(md),vd=kb.vx*nx+kb.vz*nz,[,vd2]=collide(mp,vp,md,vd);if(vd2>vd){kb.vx+=(vd2-vd)*nx;kb.vz+=(vd2-vd)*nz;}}
+        const kb:Body|undefined=rig.root.userData.kb;
+        if(kb&&Math.hypot(kb.vx,kb.vz)>.01){const v=Math.hypot(kb.vx,kb.vz),fr=Math.min(.6*kb.mass*gravity(),kb.mass*v/dt);kb.x=e.x;kb.z=e.z;kb.y=0;step(kb,dt,{x:-kb.vx/v*fr,z:-kb.vz/v*fr,y:kb.mass*gravity()},-1);
+          if(heightAt(kb.x,kb.z)>=LEVEL.deerWater){e.x=kb.x;e.z=kb.z;}else{kb.vx=0;kb.vz=0;}}
         rig.brain.expend(dt,Math.hypot(e.x-oldX,e.z-oldZ));e.energy=rig.brain.energy;e.rotation=rig.brain.heading;
       }
       rig.root.position.set(e.x,heightAt(e.x,e.z),e.z);rig.root.rotation.y=rig.brain.heading;rig.animate(dt);
@@ -279,7 +291,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     if (key === `player:${current.id}`) applyGenome(wolf.root, g ?? defaultLook());
     for (const [k, a] of animals) { const l = lookOf(k, 'deer'); if (key === k || key === 'species:deer') applyGenome(a.rig.root, l ?? defaultLook()); }
   }
-  return { scene, pick, lookup, setAppearance, appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
+  function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
+  return { scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     stats: () => ({ chunks: chunks.size, entities: [...chunks.values()].reduce((n, c) => n + c.entities.length, 0), triangles: renderer.info.render.triangles }),
   };

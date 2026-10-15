@@ -11,9 +11,9 @@ const texture = new THREE.DataTexture(pixels, 16, 16);
 texture.magFilter = THREE.NearestFilter; texture.minFilter = THREE.NearestFilter;
 texture.colorSpace = THREE.SRGBColorSpace; texture.needsUpdate = true;
 // Fixed recipes: pebble, slab, wedge, upright, oblong, triangular, knobby, flat shard, asymmetric lump.
-const shapes = [[1,.8,.9], [1,.35,.85], [1,.65,.6], [.6,1,.65], [1,.55,.45], [.9,.7,1], [1,.85,.8], [1,.25,.5], [.7,.8,1]];
+export const ROCK_SHAPES = [[1,.8,.9], [1,.35,.85], [1,.65,.6], [.6,1,.65], [1,.55,.45], [.9,.7,1], [1,.85,.8], [1,.25,.5], [.7,.8,1]];
 export function rockGeometry(e: Entity, detail: number) {
-  const recipe = rockRecipe(e.seed), dims = shapes[recipe.shape];
+  const recipe = rockRecipe(e.seed), dims = ROCK_SHAPES[recipe.shape];
   const geometry = new THREE.IcosahedronGeometry(1, detail === 0 ? 1 : 0);
   const p = geometry.attributes.position;
   for (let i = 0; i < p.count; i++) {

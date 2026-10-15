@@ -25,6 +25,7 @@ import type { PhotoView } from './render/buildScene';
 import { createInspector } from './ui/inspector';
 import { createHandles } from './ui/shapeTools';
 import { setThunk } from './ui/haptics';
+import { accelLimit, approach } from './proc/physics';
 import { appearancePanel, restoreLooks } from './ui/appearancePanel';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -103,6 +104,7 @@ let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? '
 pauseMenu.addPanel({ id: 'render', title: 'Render settings', build: settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; }) });
 pauseMenu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
+let playerMass = view.playerMass(); setInterval(() => { playerMass = view.playerMass(); }, 1000); // follows Play-as + appearance edits
 const handles = createHandles(view.camera, canvas, view.scene);
 const inspector = createInspector(view, canvas, handles);
 restoreLooks((k, g) => view.setAppearance(k, g));
@@ -213,11 +215,13 @@ function frame(time: number) {
     accumulator += dt;
     while (accumulator >= 1 / 30) {
       modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30) : stepWolfModes(modes, Math.max(pad?.buttons[6]?.value ?? 0, Number(keys.has('c'))), Math.max(pad?.buttons[7]?.value ?? 0, Number(keys.has('shift'))), Math.abs(dz) > .01, 1 / 30);
-      const brain = view.playerBrain, speed = -dz * playerSpeed(modes.mode) * view.playable.speedScale;
+      const brain = view.playerBrain, prevSpeed = brain.speed, speed = -dz * playerSpeed(modes.mode) * view.playable.speedScale;
       const jump = (keys.has(' ') || buttons[2]) && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
       if(!autonomous || playerAction) brain.decide({x:player.x,y:0,z:player.z},1/30,{
         motion:jump?'jump':speed<-.01?'back':speed>.01?(modes.mode==='run'||modes.mode==='sprint'?'run':'walk'):'idle',
         heading:yaw-dx*2.2/30,speed:jump?pounceSpeed(speed):speed});
+      // Inertia: walking/running speed changes are capped at force/mass (heavier = slower); jumps are impulses.
+      if(!autonomous && brain.motion!=='jump') brain.speed=approach(prevSpeed,brain.speed,accelLimit(playerMass,view.wolfMass),1/30);
       const pose = autonomous && !playerAction ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities()) : steerWolf({ x: player.x, z: player.z, heading: brain.heading }, 0, Math.sign(brain.speed), 1 / 30, Math.abs(brain.speed));
       if(!autonomous && brain.motion==='idle') brain.problem='recover';
       if(autonomous && brain.meal) view.forageWolf(brain.meal.key);
@@ -245,7 +249,7 @@ function frame(time: number) {
   actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
   drawFrame(pv); inspector.update(); handles.update();
-  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted });
+  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass });
   if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {

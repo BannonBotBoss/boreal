@@ -71,7 +71,8 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
     fields = {};
     if (found.entity) {
       const r = regenerate(s.key, cx, cz, overrides, s.type === 'entity');
-      out.push(...r.factors.filter(fa => fa.group !== 'terrain'), obs('entity', 'kind', found.entity.kind), obs('entity', 'title', catalog[found.entity.kind].title));
+      const pm: Trace = { factors: [] }; withTrace(pm, () => view.massOf(s.key));
+      out.push(...r.factors.filter(fa => fa.group !== 'terrain'), ...pm.factors, obs('entity', 'kind', found.entity.kind), obs('entity', 'title', catalog[found.entity.kind].title));
       const lod = found.object as THREE.LOD | undefined;
       if (lod?.isLOD) out.push(obs('render', 'lodLevel', lod.getCurrentLevel()), obs('render', 'lodLevels', lod.levels.length));
       if (r.mesh && lod && Object.keys(overrides).length) {
@@ -91,6 +92,7 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       obs('senses', 'target', b.target ? `${b.target.kind} ${b.target.key}` : '-'), obs('brain', 'seed', b.seed));
     if (found.audible) out.push(obs('sound', 'audible', true), obs('sound', 'voice', `${found.audible.motion}/${found.audible.problem}`));
     else if (found.brain && sel?.type === 'deer') out.push(obs('sound', 'audible', false));
+    { const t: Trace = { factors: [] }; withTrace(t, () => view.massOf(sel!.key)); out.push(...t.factors); }
     if (found.hare) out.push(obs('hare', 'id', found.hare.id), obs('hare', 'rng stream', `hare-v1:${found.hare.id}`), obs('hare', 'heading', found.hare.heading));
     return out;
   }

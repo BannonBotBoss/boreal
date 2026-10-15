@@ -13,6 +13,7 @@ import { RENDER } from '../core/renderSettings';
 const soundRng = stream(1400, 'borealSound-v1');
 
 import { haptic, SOUND_HAPTICS } from '../ui/haptics';
+import { jumpArc } from '../proc/physics';
 export const SOUND_IDS = ['amb-day', 'amb-night', 'wind-pines', 'water', 'loon', 'wolf-howl', 'wolf-growl',
   'paw-walk', 'paw-run', 'deer-snort', 'deer-hooves', 'chew', 'land',
   'wolf-whine', 'herb-pluck', 'stone-roll', 'ui-click', 'ui-pause', 'wolf-pant', 'sprint-burst', 'stealth-rustle',
@@ -36,7 +37,7 @@ export interface AudibleAnimal { key: string; motion: string; problem: string; x
 export interface SoundFrame {
   dt: number; halted: boolean; x: number; z: number; yaw: number; darkness: number;
   wolf: { motion: string; phase: number };
-  mode?: string; exhausted?: boolean;
+  mode?: string; exhausted?: boolean; /** player mass + the default wolf mass (landing impact scaling) */ mass?: number; refMass?: number;
   animals: AudibleAnimal[];
 }
 
@@ -208,7 +209,9 @@ export class BorealSound {
     const w = f.wolf, wp = this.wolfPrev;
     if (Math.floor(w.phase * 2) !== Math.floor(wp.phase * 2) && (w.motion === 'walk' || w.motion === 'run' || w.motion === 'back'))
       this.playAt(w.motion === 'run' ? 'paw-run' : 'paw-walk', undefined, MIX.wolfSteps);
-    if (wp.motion === 'jump' && w.motion !== 'jump') this.playAt('land', undefined, MIX.land);
+    if (wp.motion === 'jump' && w.motion !== 'jump') { // landing thud + haptic scale with impact energy (½ m v², proc/physics)
+      const k = Math.sqrt(jumpArc(f.mass ?? 1).energy / jumpArc(f.refMass ?? f.mass ?? 1).energy);
+      this.playAt('land', undefined, MIX.land * Math.min(2, Math.max(.4, k)), 1 / Math.min(1.4, Math.max(.7, Math.sqrt(k))), false); haptic('land', 0, Math.min(1.6, k)); }
     this.wolfPrev = { motion: w.motion, phase: w.phase };
 
     // Deer: alarm snort on flee start, hooves per gait cycle, chewing while feeding, thud on landing.

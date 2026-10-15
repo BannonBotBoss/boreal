@@ -20,3 +20,15 @@ export const mulberry32 = random;
 export const stream = (seed: number, label: string) => random(hash(`${label}:${seed}`));
 /** Uniform value in [a, b) from a generator. */
 export const range = (r: () => number, [a, b]: readonly number[]) => a + r() * (b - a);
+/** ONE bounded-probability helper for every generator (trees, branches; animals can adopt it). A distribution is
+ * mean + spread (normal: SD; lognormal: SD of ln x, mean = median) truncated to hard [min, max] by rejection
+ * (≤ 16 draws, then clamp). Normal deviates by Box–Muller (Box & Muller 1958). */
+export interface Dist { mean: number; sd: number; min: number; max: number; kind?: 'normal' | 'lognormal' }
+export function sample(r: () => number, d: Dist) {
+  for (let i = 0; i < 16; i++) {
+    const z = Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
+    const v = d.kind === 'lognormal' ? d.mean * Math.exp(d.sd * z) : d.mean + d.sd * z;
+    if (v >= d.min && v <= d.max) return v;
+  }
+  return Math.min(d.max, Math.max(d.min, d.mean));
+}

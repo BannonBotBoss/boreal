@@ -20,6 +20,8 @@ export const MATERIALS: Record<string, number> = {
   pineWood: 480,    // jack pine SG12 0.43
   birchWood: 615,   // paper birch SG12 0.55
   aspenWood: 425,   // quaking aspen SG12 0.38
+  firWood: 405,     // balsam fir SG12 0.36 [verify]
+  poplarWood: 380,  // balsam poplar SG12 0.34 [verify]
   bark: 400,        // conifer bark SG ~0.3–0.5 (Miles & Smith 2009, USDA FPL Research Note FPL-RN-0315) [verify]
   foliage: 950,     // fresh needle/leaf tissue: dry leaf density 0.3–0.5 g/cm³ (Niinemets 2001, Ecology 82:453) + ~55–60 % water [derived, verify]
   organicSolid: 1450, // particle density of soil organic matter 1.1–1.5 g/cm³ (Rühlmann et al. 2006, Geoderma 130:272) [verify]
@@ -46,7 +48,8 @@ const mammal = (furShare: number): Record<string, Mix> => {
 export const COMPOSITIONS: Record<string, Record<string, Mix>> = {
   canid: mammal(.12), cervid: mammal(.06), ursid: mammal(.14), leporid: mammal(.2), human: mammal(0),
   // Green stems ~50 % moisture of oven-dry mass in spruce (Wood Handbook ch. 4) → water share of volume; crowns are mostly air.
-  tree: { trunk: { spruceWood: .85, bark: .1, water: .05 }, crownConifer: { foliage: .35, spruceWood: .25, bark: .05, water: .1, air: .25 },
+  tree: { trunk: { spruceWood: .85, bark: .1, water: .05 },
+    ...Object.fromEntries(['spruceWood', 'pineWood', 'birchWood', 'aspenWood', 'firWood', 'poplarWood'].map(w => [`trunk:${w}`, { [w]: .85, bark: .1, water: .05 }])), crownConifer: { foliage: .35, spruceWood: .25, bark: .05, water: .1, air: .25 },
     crownBroadleaf: { foliage: .3, birchWood: .25, bark: .05, water: .1, air: .3 } },
   log: { body: { spruceWood: .8, bark: .08, water: .12 } },
   plant: { body: { foliage: .7, water: .25, air: .05 } },

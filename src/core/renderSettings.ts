@@ -8,6 +8,7 @@ import { FEEL, HAPTIC_CATS } from '../ui/haptics';
 import { GROUND } from './ground';
 import { WEATHER, initWeather } from './weather';
 import { INTEREST } from './interest';
+import { GOVERNOR, LADDER, MANUAL, applied, resetGovernor } from './quality';
 
 /** Live config read by the world/render layers (buildScene, world scatter, hares, sound). Defaults = original game. */
 export const RENDER = {
@@ -18,6 +19,15 @@ export const RENDER = {
   deer: { on: true, count: 1 },
   birdRate: 1,
 };
+/** What the player chose. The governor can only LOWER it: radii = min(choice, tier); density/LOD = choice × tier factor (≤ 1). */
+export const USER = { lod: { trees: 1, rocks: 1, props: 1 } as Record<'trees' | 'rocks' | 'props', number>, treeDensity: 1, near: 60, mid: 100 };
+export function capRender() {
+  const t = applied();
+  for (const k of ['trees', 'rocks', 'props'] as const) RENDER.lod[k] = USER.lod[k] * t.lod * (k === 'props' ? t.foliage : 1);
+  RENDER.treeDensity = USER.treeDensity * t.trees;
+  INTEREST.near = Math.min(USER.near, t.near); INTEREST.mid = Math.max(INTEREST.near, Math.min(USER.mid, t.mid));
+}
+const QUALITY_CAP_OPTIONS = LADDER.map(t => t.name);
 const LOD_SCALE: Record<string, number> = { Near: .6, Normal: 1, Far: 1.6, 'Very far': 2.4 };
 const LOD_OPTIONS = Object.keys(LOD_SCALE);
 const HARES_DEFAULT = HARE.count;
@@ -32,12 +42,12 @@ export interface SettingDef {
 export const RENDER_SETTINGS: SettingDef[] = [
   { id: 'lod.terrain', label: 'Terrain detail', group: 'Level of detail', type: 'select', options: ['Low', 'Normal', 'High'], default: 'Normal', regen: true,
     apply: v => { RENDER.terrainSegments = ({ Low: 40, Normal: 80, High: 120 } as Record<string, number>)[v as string] ?? 80; } },
-  { id: 'lod.trees', label: 'Trees: detail distance', group: 'Level of detail', type: 'select', options: LOD_OPTIONS, default: 'Normal', regen: true, apply: v => { RENDER.lod.trees = LOD_SCALE[v as string] ?? 1; } },
-  { id: 'lod.rocks', label: 'Rocks: detail distance', group: 'Level of detail', type: 'select', options: LOD_OPTIONS, default: 'Normal', regen: true, apply: v => { RENDER.lod.rocks = LOD_SCALE[v as string] ?? 1; } },
-  { id: 'lod.props', label: 'Plants, logs & props: detail distance', group: 'Level of detail', type: 'select', options: LOD_OPTIONS, default: 'Normal', regen: true, apply: v => { RENDER.lod.props = LOD_SCALE[v as string] ?? 1; } },
+  { id: 'lod.trees', label: 'Trees: detail distance', group: 'Level of detail', type: 'select', options: LOD_OPTIONS, default: 'Normal', regen: true, apply: v => { USER.lod.trees = LOD_SCALE[v as string] ?? 1; capRender(); } },
+  { id: 'lod.rocks', label: 'Rocks: detail distance', group: 'Level of detail', type: 'select', options: LOD_OPTIONS, default: 'Normal', regen: true, apply: v => { USER.lod.rocks = LOD_SCALE[v as string] ?? 1; capRender(); } },
+  { id: 'lod.props', label: 'Plants, logs & props: detail distance', group: 'Level of detail', type: 'select', options: LOD_OPTIONS, default: 'Normal', regen: true, apply: v => { USER.lod.props = LOD_SCALE[v as string] ?? 1; capRender(); } },
   { id: 'lod.animals', label: 'Animals: draw distance', group: 'Level of detail', type: 'select', options: ['60 m', '120 m', '240 m', 'Unlimited'], default: 'Unlimited',
     apply: v => { RENDER.animalDistance = parseFloat(v as string) || Infinity; } },
-  { id: 'world.treeDensity', label: 'Tree density', group: 'World', type: 'slider', min: .25, max: 2, step: .05, default: 1, regen: true, apply: v => { RENDER.treeDensity = Number(v); } },
+  { id: 'world.treeDensity', label: 'Tree density', group: 'World', type: 'slider', min: .25, max: 2, step: .05, default: 1, regen: true, apply: v => { USER.treeDensity = Number(v); capRender(); } },
   { id: 'animals.deer', label: 'Deer', group: 'Animals', type: 'toggle', default: true, regen: true, apply: v => { RENDER.deer.on = !!v; } },
   { id: 'animals.deerCount', label: 'Deer population ×', group: 'Animals', type: 'slider', min: .25, max: 4, step: .25, default: 1, regen: true, apply: v => { RENDER.deer.count = Number(v); } },
   { id: 'animals.hares', label: 'Snowshoe hares', group: 'Animals', type: 'toggle', default: true, apply: v => { hareOn = !!v; HARE.count = hareOn ? hareCount : 0; } },
@@ -50,8 +60,16 @@ export const RENDER_SETTINGS: SettingDef[] = [
   { id: 'feel.editor', label: 'Haptics: editor limits', group: 'Feel', type: 'toggle', default: true, apply: v => { HAPTIC_CATS.editor = !!v; } },
   { id: 'feel.sound', label: 'Sound at editor limits', group: 'Feel', type: 'toggle', default: true, apply: v => { FEEL.sound = !!v; } },
   { id: 'world.groundSpeed', label: 'Ground flow / decay speed ×', group: 'World', type: 'slider', min: 1, max: 100000, step: 1, default: 1, apply: v => { GROUND.speed = Number(v); } },
-  { id: 'interest.near', label: 'Full-detail radius (m)', group: 'Interest radius', type: 'slider', min: 40, max: 120, step: 10, default: 60, apply: v => { INTEREST.near = Number(v); INTEREST.mid = Math.max(INTEREST.mid, INTEREST.near); } },
-  { id: 'interest.mid', label: 'LOD radius (m; beyond = math only)', group: 'Interest radius', type: 'slider', min: 60, max: 240, step: 20, default: 100, apply: v => { INTEREST.mid = Math.max(Number(v), INTEREST.near); } },
+  { id: 'interest.near', label: 'Full-detail radius (m)', group: 'Interest radius', type: 'slider', min: 40, max: 120, step: 10, default: 60, apply: v => { USER.near = Number(v); capRender(); } },
+  { id: 'interest.mid', label: 'LOD radius (m; beyond = math only)', group: 'Interest radius', type: 'slider', min: 60, max: 240, step: 20, default: 100, apply: v => { USER.mid = Number(v); capRender(); } },
+  { id: 'quality.auto', label: 'Adaptive quality (Auto keeps the target frame rate)', group: 'Quality', type: 'toggle', default: true, apply: v => { GOVERNOR.auto = !!v; resetGovernor(); } },
+  { id: 'quality.target', label: 'Target frame rate', group: 'Quality', type: 'select', options: ['30', '60', '72 (Quest)', '90 (Quest)', '120'], default: '60', apply: v => { GOVERNOR.targetFps = parseInt(String(v)) || 60; resetGovernor(); } },
+  { id: 'quality.tier', label: 'Quality tier (Manual; in Auto: highest allowed)', group: 'Quality', type: 'select', options: QUALITY_CAP_OPTIONS, default: 'Ultra',
+    apply: v => { const i = Math.max(0, QUALITY_CAP_OPTIONS.indexOf(String(v))); GOVERNOR.capTier = i; GOVERNOR.tier = GOVERNOR.auto ? Math.max(GOVERNOR.tier, i) : i; resetGovernor(); capRender(); } },
+  { id: 'quality.resScale', label: 'Max resolution scale (2 = supersampled)', group: 'Quality', type: 'slider', min: .5, max: 2, step: .05, default: 2, apply: v => { MANUAL.resScale = Number(v); capRender(); } },
+  { id: 'quality.shadows', label: 'Max shadows', group: 'Quality', type: 'select', options: ['Off', '1 map', '2 cascades', '3 cascades'], default: '3 cascades',
+    apply: v => { MANUAL.shadows = ['Off', '1 map', '2 cascades', '3 cascades'].indexOf(String(v)); } },
+  { id: 'quality.ssao', label: 'Max ambient occlusion', group: 'Quality', type: 'select', options: ['Off', 'Half', 'Full'], default: 'Full', apply: v => { MANUAL.ssao = ['Off', 'Half', 'Full'].indexOf(String(v)); } },
   { id: 'weather.on', label: 'Weather simulation', group: 'Weather', type: 'toggle', default: true, apply: v => { WEATHER.on = !!v; } },
   { id: 'weather.quality', label: 'Weather grid', group: 'Weather', type: 'select', options: ['Low (6×6)', 'Normal (8×8)', 'High (12×12)'], default: 'Normal (8×8)',
     apply: v => { const n = parseInt(String(v).split('(')[1]) || 8; if (n !== WEATHER.quality) { WEATHER.quality = n; initWeather(); } } },

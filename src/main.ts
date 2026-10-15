@@ -196,7 +196,7 @@ canvas.addEventListener('webglcontextrestored', () => location.reload());
 let lastPhotoView: PhotoView | undefined;
 let hadPad = false, previousButtons: boolean[] = [], lastTime = 0, simTime = 0, accumulator = 0;
 const deadzone = (v: number) => Math.abs(v) < .18 ? 0 : Math.sign(v) * (Math.abs(v) - .18) / .82;
-function frame(time: number) {
+function frame(time: number) { const frameStart = performance.now();
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time;
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');
   if (hadPad && !pad) { paused = true; element('pause').textContent = 'Resume'; notice('Controller disconnected. Reconnect and press Menu to resume.'); }
@@ -268,7 +268,7 @@ function frame(time: number) {
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;
   actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
-  drawFrame(pv); inspector.update(); handles.update();
+  drawFrame(pv); view.photoreal.after(performance.now() - frameStart); inspector.update(); handles.update();
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
   if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
     sfx.hare(ev.type, ev);
@@ -288,3 +288,21 @@ function frame(time: number) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// ?bench=1: measure each lighting/shadow feature's cost by toggling it through the quality caps (logs to the console).
+if (new URLSearchParams(location.search).has('bench')) void (async () => {
+  const { GOVERNOR, MANUAL, LADDER } = await import('./core/quality');
+  const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+  GOVERNOR.auto = false; GOVERNOR.capTier = 0; GOVERNOR.tier = 0;
+  const sample = async (label: string) => { await wait(2500); const xs: number[] = [], ws: number[] = [], t = performance.now();
+    let last = performance.now(); while (performance.now() - t < 3000) { await new Promise(r => requestAnimationFrame(r)); const n = performance.now(); ws.push(n - last); last = n; if (GOVERNOR.gpuMs !== undefined) xs.push(GOVERNOR.gpuMs); }
+    const avg = (a: number[]) => a.length ? a.reduce((p, c) => p + c, 0) / a.length : NaN;
+    const info = view.photoreal.renderer?.info.render;
+    console.log(`BENCH ${label} gpu=${avg(xs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms calls=${info?.calls} tris=${info?.triangles} cost=${JSON.stringify(view.photoreal.COST)}`); };
+  await wait(8000); console.log(`BENCH gpu-string ${GOVERNOR.gpu}`);
+  await sample('ultra-all');
+  for (const [k, off] of [['ssao', 0], ['shadows', 0], ['gi', 0], ['ibl', 0], ['clouds', 0]] as const) { (MANUAL as Record<string, number>)[k] = off; await sample(`without-${k}`); delete (MANUAL as Record<string, number>)[k]; }
+  MANUAL.resScale = 1; await sample('ultra-res1');
+  for (let i = 1; i < LADDER.length; i++) { delete MANUAL.resScale; GOVERNOR.tier = i; await sample(`tier-${LADDER[i].name}`); }
+  console.log('BENCH done');
+})();

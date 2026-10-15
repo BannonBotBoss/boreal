@@ -3,6 +3,8 @@ import { generateGeometry, disposeObject } from './geometry';
 import { CHUNK_SIZE, generateChunk, heightAt, type Entity } from '../core/world';
 import { restoreEntities, type EventContext } from '../core/events';
 import { positionCamera, terrainJob } from './math';
+import { terrainMaterial } from './pbr';
+import { createPhotoreal } from './photoreal';
 import { INTEREST, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
 import { playable, type PlayerRig } from './playables';
 import { RENDER } from '../core/renderSettings';
@@ -34,7 +36,7 @@ import { defaultGenome as defaultLook, type Genome } from '../core/genome';
 export interface PhotoView { cam: { x: number; y: number; z: number; yaw: number; pitch: number; roll: number; fov: number }; hour?: number; focalMm: number; /** false while a live sequence lets the world run */ frozen?: boolean }
 export type ForageHandler = (animal: Entity, plant: Entity) => number | undefined;
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU
   const BASE_RATIO = Math.min(devicePixelRatio, 1.5);
   renderer.setPixelRatio(BASE_RATIO);
   renderer.setClearColor(0xc4d4c8);
@@ -48,6 +50,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   let clock = formatHour(gameHour(0, startHour)), darkness = 0;
   const camera = new THREE.PerspectiveCamera(48, 1, .2, 700);
   const post = createPost(renderer, scene, camera);
+  const photoreal = createPhotoreal(renderer, scene, camera, sky, BASE_RATIO); // PBR lighting, CSM, IBL, GTAO + quality governor
+  const ratio = () => Math.min(BASE_RATIO, 1.5) * photoreal.tier.resScale;
   const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.LOD>; near: boolean }>();
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
   const eatenForage = new Map<string, string>(); // plant key -> loaded chunk; never serialized
@@ -73,7 +77,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   function* createChunk(cx: number, cz: number, context: EventContext, near: boolean) {
     const root = new THREE.Group(), objects = new Map<string, THREE.LOD>();
     const geometry: THREE.BufferGeometry = yield* terrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near);
-    const ground = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }));
+    const ground = new THREE.Mesh(geometry, terrainMaterial()); ground.receiveShadow = true;
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; root.add(ground);
     const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), new THREE.MeshStandardMaterial({ color: 0x578d91, roughness: .32, metalness: .1 }));
     water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
@@ -183,8 +187,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity, photo?: PhotoView) {
     const width = canvas.clientWidth, height = canvas.clientHeight;
     if (output) { if (canvas.width !== output.w || canvas.height !== output.h) { renderer.setPixelRatio(1); renderer.setSize(output.w, output.h, false); } }
-    else if (renderer.getPixelRatio() !== BASE_RATIO || canvas.width !== Math.floor(width * BASE_RATIO) || canvas.height !== Math.floor(height * BASE_RATIO)) {
-      renderer.setPixelRatio(BASE_RATIO); renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
+    else if (renderer.getPixelRatio() !== ratio() || canvas.width !== Math.floor(width * ratio()) || canvas.height !== Math.floor(height * ratio())) {
+      renderer.setPixelRatio(ratio()); renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
     }
     const ground = Math.max(heightAt(x, z), -.2);
     wolf.root.position.set(x, ground, z); wolf.root.rotation.y = yaw;
@@ -220,10 +224,11 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     simulateAnimals(dt, x, z, frozen);
     const hour = photo?.hour ?? gameHour(time, startHour); clock = formatHour(hour);
-    darkness = sky.update(hour, time, camera, wolf.root.position).light.night;
+    const lit = sky.update(hour, time, camera, wolf.root.position); darkness = lit.light.night;
+    photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
     else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
-    post.render(!!photo, photo?.focalMm ?? 0);
+    post.render(!!photo, photo?.focalMm ?? 0, photoreal.tier.ssao);
   }
   function forageWolf(plantKey: string) {
     for(const chunk of chunks.values()) {
@@ -304,7 +309,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
-  return { scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     stats: () => ({ chunks: chunks.size, entities: [...chunks.values()].reduce((n, c) => n + c.entities.length, 0), triangles: renderer.info.render.triangles }),
   };

@@ -38,18 +38,19 @@ const BAND_COLOR = { water: 0x929771, shore: 0x929771, upland: 0x8d9582, forest:
 export function* terrainJob(cx: number, cz: number, segments = RENDER.terrainSegments, groundColour = true) {
   const geometry = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, segments, segments);
   geometry.rotateX(-Math.PI / 2);
-  const positions = geometry.attributes.position, colors = new Float32Array(positions.count * 3), color = new THREE.Color(), tmp = new THREE.Color();
+  const positions = geometry.attributes.position, colors = new Float32Array(positions.count * 3), wet = new Float32Array(positions.count), snow = new Float32Array(positions.count), color = new THREE.Color(), tmp = new THREE.Color();
   for (let i = 0; i < positions.count; i++) {
     const x = positions.getX(i) + (cx + .5) * CHUNK_SIZE;
     const z = positions.getZ(i) + (cz + .5) * CHUNK_SIZE;
     const y = heightAt(x, z);
     positions.setXYZ(i, x, y, z);
     color.set(BAND_COLOR[terrainBand(y)]);
-    if (groundColour && y > LEVEL.waterSurface) { const s = surfaceColor(column(x, z)); color.lerp(tmp.setRGB(s[0], s[1], s[2]), .55); } // top-layer composition
+    if (groundColour && y > LEVEL.waterSurface) { const c = column(x, z), s = surfaceColor(c); color.lerp(tmp.setRGB(s[0], s[1], s[2]), .55); // top-layer composition
+      const top = c.layers[0]; snow[i] = top?.id === 'snow' ? Math.min(1, top.thickness / .05) : 0; wet[i] = c.layers.find(l => l.moisture !== undefined && l.id !== 'snow')?.moisture ?? 0; }
     colors.set([color.r, color.g, color.b], i * 3);
     if (i % ((segments + 1) * 2) === 0) yield;
   }
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geometry.setAttribute('aWet', new THREE.BufferAttribute(wet, 1)); geometry.setAttribute('aSnow', new THREE.BufferAttribute(snow, 1));
   geometry.computeVertexNormals();
   return geometry;
 }

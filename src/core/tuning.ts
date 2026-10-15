@@ -28,7 +28,7 @@ export const PHYS = {
   EARTH_MASS: 5.9722e24, // NASA Earth Fact Sheet (Williams, NSSDCA) / IAU 2015 nominal GM ÷ G
   EARTH_RADIUS: 6.3710e6, // IUGG mean radius R1 (Moritz 2000, Geodetic Reference System 1980)
   /** Share of a crown's cone that is wood + foliage (the rest is air); materials/densities live in core/materials.ts. */
-  crownFill: .08, // [verify] crown volume fraction occupied by tissue; order of crown bulk density 0.5–1 kg/m³ foliage (Waring & Running 2007)
+  crownFill: .0015, // crown tissue volume share → crown bulk density ≈ 0.9 kg/m³ (foliage + twigs 0.5–1 kg/m³: Waring & Running 2007) [verify]; was .08 (≈ 50 kg/m³, too dense)
   /** Muscle force ~ k * m^(2/3) (so heavier animals accelerate/turn slower); k calibrated so the wolf keeps today's feel. */
   wolfAccel: 30, // game calibration (keeps today's feel), not a measurement
   /** Claude's jump lasts 0.85 s (animalBehavior); the ballistic arc that fits it gives launch/landing speed. */

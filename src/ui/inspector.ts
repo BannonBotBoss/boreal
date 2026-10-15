@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { GROUND, column } from '../core/ground';
 import { WEATHER, qsat, shortwave, solar, surfaceBalance, weatherAt, type SurfaceKind } from '../core/weather';
 import { DELTA_KINDS, near as nearDeltas } from '../core/deltas';
+import { GOVERNOR, applied } from '../core/quality';
 const c2s = (c: ReturnType<typeof column>): SurfaceKind => c.layers[0]?.id === 'water' ? 'water' : c.layers[0]?.id === 'snow' ? 'snow' : c.cover ? 'forest' : 'moss';
 import { withTrace, setLiveTrace, scope, type Factor, type Trace, type Value } from '../proc/trace';
 import { stream } from '../proc/rng';
@@ -56,6 +57,8 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
     const s = sel!, [cx, cz] = chunkOf(s.key, s.point), out: Factor[] = [];
     out.push(...withTrace({ factors: [] }, () => { chunkSeed(cx, cz); return [] as Factor[]; }) as Factor[]);
     const seedTrace: Trace = { factors: [] }; withTrace(seedTrace, () => chunkSeed(cx, cz)); out.push(...seedTrace.factors, obs('chunk', 'chunk', `${cx}, ${cz}`));
+    { const q = applied(); out.push(obs('render', 'quality tier', `${q.name} (${GOVERNOR.auto ? 'Auto' : 'Manual'}${GOVERNOR.locked ? ', locked after flip-flops' : ''}) · target ${GOVERNOR.targetFps} fps · measured ${GOVERNOR.fps.toFixed(0)} fps work${GOVERNOR.gpuMs !== undefined ? ` · GPU ${GOVERNOR.gpuMs.toFixed(2)} ms` : ' · GPU timer n/a'} · ${GOVERNOR.gpu}`),
+      obs('render', 'tier knobs', `res ×${q.resScale} · shadows ${q.shadows} · AO ${q.ssao} · IBL ${q.ibl} · LOD ×${q.lod} · radii ${q.near}/${q.mid} m · trees ×${q.trees} · foliage ×${q.foliage} · weather ${q.weather}²`)); }
     clearPreview();
     if (s.type === 'terrain') {
       const t: Trace = { factors: [] }; withTrace(t, () => terrainBand(heightAt(s.point.x, s.point.z)));

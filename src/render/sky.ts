@@ -1,10 +1,12 @@
-import { GLSL_HASH } from '../proc/glsl';
+import { GLSL_NOISE } from '../proc/glsl';
 import { hash, random } from '../proc/rng';
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { WORLD_SEED } from '../core/world';
 import { lighting, sunPosition } from '../core/timeOfDay';
-import { WEATHER, weatherAt } from '../core/weather';
+import { WEATHER, shortwave, weatherAt } from '../core/weather';
+import { LUX, SYNODIC, exposureFor, moonAge, moonLux, sunColour } from '../core/light';
+import { LIGHTING } from './pbr';
 
 /**
  * Procedural sky: three.js's physically based Sky (Preetham scattering) driven by the real sun position,
@@ -22,19 +24,14 @@ uniform float uTime, uSeed, uCover, uDay, uGolden;
 uniform vec2 uDrift;
 uniform vec3 uSunDir, uSunColor;
 varying vec3 vDir;
-${GLSL_HASH}
-float hash(vec2 p) { return hash2s(p, uSeed); }
-float noise(vec2 p) {
-  vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
-}
-float fbm(vec2 p) { float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + 17.1; a *= 0.5; } return v; }
+${GLSL_NOISE}
+#define hash(p) hash2s(p, uSeed)
 void main() {
   vec3 d = normalize(vDir);
   if (d.y <= 0.0) discard;
   // Project onto a flat cloud layer so clouds shrink toward the horizon; wind drifts them east.
   vec2 uv = d.xz / (d.y + 0.08) * 1.6 + uDrift; // drift = integrated wind of the top weather layer
-  float n = fbm(uv) * 0.75 + fbm(uv * 3.1 + 5.0) * 0.25;
+  float n = fbm(uv, uSeed) * 0.75 + fbm(uv * 3.1 + 5.0, uSeed) * 0.25;
   float cloud = smoothstep(uCover, uCover + 0.18, n) * smoothstep(0.0, 0.15, d.y);
   // Lit from the sun side, warm at sunrise/sunset, faint moonlit grey at night; denser cores are darker.
   float facing = 0.5 + 0.5 * dot(d, uSunDir);
@@ -71,23 +68,29 @@ export function createSky(scene: THREE.Scene) {
   const moonLight = new THREE.DirectionalLight(0x9fb4e6, .35); scene.add(moonLight, moonLight.target);
   const hemi = new THREE.HemisphereLight(0xf1f5dd, 0x526753, 2.7); scene.add(hemi);
   const fogDay = new THREE.Color(0xc4d4c8), fogGolden = new THREE.Color(0xd9a47c), fogNight = new THREE.Color(0x0d1422);
-  const sunWarm = new THREE.Color(0xff9a52), sunWhite = new THREE.Color(0xffebc3), tmp = new THREE.Color();
+  const tmp = new THREE.Color(), tmpV = new THREE.Vector3();
   // Precipitation: one Points cloud around the camera (only drawn while it rains/snows), fall speed from Kessler V_t / snow ~1 m/s.
   const N = 1500, P = new Float32Array(N * 3), rnd = random(hash(`precip:${WORLD_SEED}`));
   for (let i = 0; i < N * 3; i++) P[i] = (rnd() - .5) * 40;
   const precipGeo = new THREE.BufferGeometry(); precipGeo.setAttribute('position', new THREE.BufferAttribute(P, 3));
   const precipMat = new THREE.PointsMaterial({ color: 0xc8d4e0, size: .06, transparent: true, opacity: .6, depthWrite: false });
   const precip = new THREE.Points(precipGeo, precipMat); precip.frustumCulled = false; scene.add(precip);
-  const drift = new THREE.Vector2(); let lastTime = 0;
+  const drift = new THREE.Vector2(); let lastTime = 0; const fogFar = (scene.fog as THREE.Fog).far, fogNear = (scene.fog as THREE.Fog).near;
   return {
+    sky, sunLight, hemi,
     /** Moves the sun and recolours sky, light and fog for the hour; the sky follows the camera. */
     update(hour: number, time: number, camera: THREE.Camera, focus: THREE.Vector3) {
       const sun = sunPosition(hour), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
       sky.position.copy(camera.position); clouds.position.copy(camera.position);
       u.sunPosition.value.copy(dir);
-      sunLight.color.copy(sunWhite).lerp(sunWarm, light.golden);
-      sunLight.intensity = 3 * light.day; sunLight.position.copy(focus).addScaledVector(dir, 80); sunLight.target.position.copy(focus);
-      moonLight.intensity = .35 * light.night; moonLight.position.copy(focus).addScaledVector(dir, -80).setY(focus.y + 60); moonLight.target.position.copy(focus);
+      // Physical light (core/light): sun colour from spectral transmittance, illuminance in lux, adaptive exposure.
+      const cosZ = Math.sin(sun.elevation * Math.PI / 180), wq = weatherAt(focus.x, focus.z), haze = (u.turbidity.value as number) / 2.5;
+      const sc = sunColour(cosZ, haze), age = moonAge(WEATHER.day), moon = sunPosition(hour - age / SYNODIC * 24); // moon transits ~0.8 h later per day of age
+      const Esun = shortwave(cosZ, WEATHER.on ? wq.cloud : 0) * LUX.efficacy, Emoon = moonLux(age, Math.sin(moon.elevation * Math.PI / 180)) * (1 - .75 * (WEATHER.on ? wq.cloud : 0));
+      LIGHTING.lux = Esun + Emoon + LUX.nightSky; LIGHTING.gain = exposureFor(LIGHTING.lux); LIGHTING.moonAge = age; LIGHTING.Esun = Esun; LIGHTING.Emoon = Emoon;
+      sunLight.color.setRGB(sc.r, sc.g, sc.b);
+      sunLight.intensity = 3 * Esun / LUX.ref * LIGHTING.gain; sunLight.position.copy(focus).addScaledVector(dir, 80); sunLight.target.position.copy(focus);
+      moonLight.intensity = 3 * Emoon / LUX.ref * LIGHTING.gain; moonLight.position.copy(focus).add(tmpV.set(moon.direction.x, moon.direction.y, moon.direction.z).multiplyScalar(80)); moonLight.target.position.copy(focus);
       hemi.intensity = .35 + 2.35 * light.day;
       hemi.color.setRGB(.25, .3, .45).lerp(tmp.set(0xf1f5dd), light.day);
       hemi.groundColor.setRGB(.05, .06, .09).lerp(tmp.set(0x526753), light.day);
@@ -100,7 +103,11 @@ export function createSky(scene: THREE.Scene) {
       if (WEATHER.on) {
         cu.uCover.value = .62 - .4 * Math.max(w.cloud, Math.max(0, w.rh - .6)); // more condensate → lower noise threshold → more cover
         drift.x += w.wind.x * dt * 2e-4; drift.y += w.wind.z * dt * 2e-4; cu.uDrift.value.copy(drift);
-        const f = scene.fog as THREE.Fog; f.far = 260 - 200 * w.fog - 60 * Math.min(1, w.rainMmH / 4);
+        // Aerial perspective: Koschmieder visibility V = 3.912/β (Koschmieder 1924). β = clear air 3.912/30 km + fog
+        // 144.7·LWC^0.88 km⁻¹ (Kunkel 1984, J. Clim. Appl. Meteorol. 23:34; LWC g/m³) + rain 0.25·R^0.63 km⁻¹ [verify].
+        const lwc = w.fog * .3, beta = 3.912 / 30 + 144.7 * lwc ** .88 + .25 * w.rainMmH ** .63, V = 3912 / beta; // m
+        const f = scene.fog as THREE.Fog; f.far = Math.min(fogFar, V); f.near = Math.min(fogNear, V * .1);
+        u.turbidity.value = 2 + 6 * Math.max(w.cloud, w.rh * .5) + 4 * w.fog; // hazier with humidity/cloud (Preetham turbidity 2–10)
         const falling = w.rainMmH > .05; precip.visible = falling;
         if (falling) {
           const speed = w.snow ? 1 : 6, a = precipGeo.attributes.position as THREE.BufferAttribute;
@@ -109,10 +116,9 @@ export function createSky(scene: THREE.Scene) {
             if (Math.abs(a.getX(i)) > 20) a.setX(i, -Math.sign(a.getX(i)) * 20); if (Math.abs(a.getZ(i)) > 20) a.setZ(i, -Math.sign(a.getZ(i)) * 20); }
           a.needsUpdate = true;
         }
-        sunLight.intensity *= 1 - .7 * w.cloud;
       } else { precip.visible = false; cu.uDrift.value.set(time * .004, time * .0015); }
       cu.uSunDir.value.copy(dir); cu.uSunColor.value.copy(sunLight.color);
-      return { sun, light };
+      return { sun, light, dir };
     },
   };
 }

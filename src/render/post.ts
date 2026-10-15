@@ -7,6 +7,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { GLSL_HASH } from '../proc/glsl';
@@ -75,12 +76,13 @@ void main(){
 const bokehAperture = (focalMm: number, fstop: number) => (focalMm / 1000) ** 2 / fstop * 10;
 
 export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
-  let lastW = 0, lastH = 0, settings = defaultSettings(), composer: EffectComposer | undefined, bokeh: BokehPass, bloom: UnrealBloomPass, grade: ShaderPass;
+  let lastW = 0, lastH = 0, settings = defaultSettings(), composer: EffectComposer | undefined, gtao: GTAOPass, aoLevel = -1, bokeh: BokehPass, bloom: UnrealBloomPass, grade: ShaderPass;
   const baseExposure = renderer.toneMappingExposure, baseToneMap = renderer.toneMapping;
   const neutral = (s: PhotoSettings) => PHOTO_PARAMS.every(p => p.group === 'Lens' || p.group === 'Guides' || p.key === 'autofocus' || p.key === 'focus' || p.key === 'fstop' || s[p.key] === p.value);
   function build() {
     composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(gtao = new GTAOPass(scene, camera, 512, 512)); // GTAO (Jiménez et al. 2016), three r180 examples/jsm, MIT
     composer.addPass(bokeh = new BokehPass(scene, camera, { focus: 8, aperture: .001, maxblur: .02 }));
     composer.addPass(bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0, .4, .85));
     composer.addPass(new OutputPass());
@@ -90,14 +92,19 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
     get settings() { return settings; },
     set(next: PhotoSettings) { settings = { ...defaultSettings(), ...next }; },
     /** `active` = photo mode; outside it the game renders exactly as before. */
-    render(active: boolean, focalMmForFov: number) {
+    /** `ao` = ambient-occlusion level from the quality ladder (0 off, 1 half-res, 2 full-res). */
+    render(active: boolean, focalMmForFov: number, ao = 0) {
       const s = active ? settings : defaultSettings();
-      renderer.toneMappingExposure = baseExposure * 2 ** s.ev;
+      renderer.toneMappingExposure = baseExposure * 2 ** s.ev; // photo EV; the physical adaptation gain is folded into light intensities (render/sky)
       renderer.toneMapping = active ? TONE_MAPS[s.toneMap] ?? baseToneMap : baseToneMap;
-      if (!active || neutral(s)) { renderer.render(scene, camera); return; }
+      if (!ao && (!active || neutral(s))) { renderer.render(scene, camera); return; }
       if (!composer) build();
       const size = renderer.getDrawingBufferSize(new THREE.Vector2());
-      if (size.x !== lastW || size.y !== lastH) { composer!.setPixelRatio(1); composer!.setSize(lastW = size.x, lastH = size.y); }
+      if (size.x !== lastW || size.y !== lastH || ao !== aoLevel) { composer!.setPixelRatio(1); composer!.setSize(lastW = size.x, lastH = size.y); aoLevel = ao;
+        if (ao === 1) gtao.setSize(size.x >> 1, size.y >> 1); }
+      gtao.enabled = ao > 0;
+      const effects = active && !neutral(s);
+      grade.enabled = effects;
       bokeh.enabled = s.dof > 0; bloom.enabled = s.bloom > 0; bloom.strength = s.bloom;
       const bu = bokeh.uniforms as Record<string, { value: number }>;
       bu.focus.value = s.focus; bu.aperture.value = bokehAperture(focalMmForFov, s.fstop); bu.maxblur.value = .02;

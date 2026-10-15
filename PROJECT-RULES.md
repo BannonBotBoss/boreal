@@ -61,6 +61,20 @@ One pipeline: **species spec → skeleton (`skeleton.ts`/`species.ts`) → body 
 - Each kind's lifetime and decay is ONE row in `DELTA_KINDS`, with a cited real rate or a `[verify]` tag. Deltas fade in closed form, are dropped when they expire, and their residue merges into the math layer that owns it (for example, carcass mass goes into the ground's decay chain).
 - Everything else is NOT stored; it regenerates from the seed. The ground clock, the weather grid near the player and the delta log are the whole save.
 
+## 10. Photoreal, but always smooth: one quality ladder, one governor
+- Rendering is physically based: the Preetham sky driven by the NOAA sun and the weather cells, IBL from that sky (PMREM), ACES/AgX tone mapping with photo-mode exposure, procedural PBR surfaces (`render/pbr.ts`) whose wet and snow response comes from the ground state, CSM shadows, GTAO, Koschmieder fog, and needle translucency.
+- Every cost knob is a column of `LADDER` in `core/quality.ts`, ordered best to cheapest (tested). No feature may add its own quality switch outside it.
+- ONE governor (adapted from drei's PerformanceMonitor) measures work time and GPU time, and steps the ladder with hysteresis toward the target (60 fps on desktop, 72/90 Hz on Quest). The starting tier comes from the GPU (a discrete GeForce or Radeon starts at Ultra). It steps down only when frames miss the target, then recovers.
+- Manual settings are CAPS. The governor may only lower quality below what the player chose, never raise it. WebXR applies `XR_CAPS` (Quest 3: about 100 draw calls, 750K triangles per eye, textures up to 2048).
+
+## 11. Search for existing solutions first, in any language
+Before building a feature, follow `adopt-and-tailor-existing-code`:
+- Search npm, the three.js examples, the pmndrs packages, Shadertoy and GLSL/HLSL, C++ engines, Python and Fortran scientific code, and papers' reference code.
+- Shortlist 2 or 3 candidates, recording licence, maintenance, size and the model each implements, and pick one.
+- Prefer a native dependency. Otherwise vendor the code with its licence and source, or port it faithfully, then check the port numerically against the original.
+- Commit the unmodified baseline first, then refactor it onto the shared modules. Keep attribution and test it.
+- Record each adoption in `AGENT-NOTES.md`.
+
 ## Checks before you commit
 1. `npx tsc --noEmit` and `npm test` (includes `tests/rules.test.ts`) are green.
 2. If you fixed an allowlisted legacy file, remove it from its allowlist. The lists only shrink.

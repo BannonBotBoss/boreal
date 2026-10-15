@@ -27,7 +27,7 @@ guard('no Math.random outside proc/rng.ts', t => /Math\.random\s*\(/.test(t), []
 guard('no second CPU RNG/hash implementation', t => /Math\.imul\(|1664525|0x6d2b79f5|43758\.5453/i.test(t.replace(/`[\s\S]*?`/g, '')),
   ['core/bearBody.ts', 'core/body.ts'], ['proc/rng.ts', 'proc/glsl.ts']); // Claude's coat hashes -> proc/rng (proposal in AGENT-NOTES)
 guard('no second shader hash/noise library', t => /float\s+(hash\w*|v?noise|fbm)\s*\(/.test(t) || /43758\.5453/.test(t.match(/`[\s\S]*?`/g)?.join('') ?? ''),
-  ['render/fur.ts', 'render/sky.ts'], ['proc/glsl.ts']); // fur.ts: dead, awaiting Claude's OK to delete; sky.ts: its noise/fbm move to proc/glsl.ts next
+  ['render/fur.ts'], ['proc/glsl.ts']); // fur.ts: dead, awaiting Claude's OK to delete
 // Rule 3: species are data. Species-named source files are legacy and may only disappear.
 guard('no new species-specific source files', (_t, p) => /wolf|bear|deer|hare|elk|moose|fox|bird|owl|lynx|rabbit|animalRig/i.test(p),
   ['animals/hare.ts', 'audio/wolfVoice.ts', 'core/bearBody.ts', 'core/deerHerd.ts', 'core/wolfBody.ts', 'core/wolfModes.ts', 'render/animalRig.ts', 'render/bear.ts', 'render/playerWolf.ts']);

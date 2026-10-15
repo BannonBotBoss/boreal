@@ -56,5 +56,5 @@ export function disposeObject(object: THREE.Object3D) {
       for (const m of Array.isArray(child.material) ? child.material : [child.material]) materials.add(m);
     }
   });
-  materials.forEach(m => m.dispose());
+  materials.forEach(m => { if (!m.userData.shared) m.dispose(); }); // shared materials (render/pbr) outlive chunks
 }

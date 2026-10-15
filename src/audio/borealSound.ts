@@ -5,6 +5,7 @@
  * Keys: M mute all, [ / ] volume, N music on/off, - / = music volume, H howl, G growl.
  * Music (music-day/music-night) crossfades with darkness and ducks under one-shots.
  */
+import { windAt } from '../core/weather';
 import { stream } from '../proc/rng';
 import { heightAt } from '../core/world';
 import { LEVEL } from '../core/tuning';
@@ -182,7 +183,7 @@ export class BorealSound {
     const d = Math.min(1, Math.max(0, f.darkness));
     this.setLoop('amb-day', MIX.ambience.day * (1 - d));
     this.setLoop('amb-night', MIX.ambience.night * d);
-    this.setLoop('wind-pines', MIX.ambience.wind);
+    const wv = windAt(f.x, 10, f.z); this.setLoop('wind-pines', MIX.ambience.wind * Math.min(2, Math.hypot(wv.x, wv.z) / 4)); // shared wind field; 4 m/s = old level
     this.setLoop('water', MIX.ambience.water * this.waterAmount);
     this.setLoop('music-day', MIX.music.day * (1 - d));
     this.setLoop('music-night', MIX.music.night * d);

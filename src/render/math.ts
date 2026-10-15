@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { column, surfaceColor } from '../core/ground';
+import { finish } from '../core/interest';
 import { CHUNK_SIZE, heightAt, terrainBand } from '../core/world';
 import { LEVEL } from '../core/tuning';
 import { RENDER } from '../core/renderSettings';
@@ -32,20 +33,24 @@ export function positionCamera(camera: THREE.PerspectiveCamera, x: number, z: nu
   camera.updateMatrixWorld(true);
 }
 const BAND_COLOR = { water: 0x929771, shore: 0x929771, upland: 0x8d9582, forest: 0x788e60 };
-export function terrainGeometry(cx: number, cz: number) {
-  const geometry = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, RENDER.terrainSegments, RENDER.terrainSegments);
+/** Terrain mesh for a chunk, as a sliced job (yields every few rows) so building is spread over frames (core/interest).
+ * `segments`/`groundColour` come from the interest tier: mid-tier chunks are coarse and skip the layered-ground colour. */
+export function* terrainJob(cx: number, cz: number, segments = RENDER.terrainSegments, groundColour = true) {
+  const geometry = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, segments, segments);
   geometry.rotateX(-Math.PI / 2);
-  const positions = geometry.attributes.position, colors: number[] = [];
+  const positions = geometry.attributes.position, colors = new Float32Array(positions.count * 3), color = new THREE.Color(), tmp = new THREE.Color();
   for (let i = 0; i < positions.count; i++) {
     const x = positions.getX(i) + (cx + .5) * CHUNK_SIZE;
     const z = positions.getZ(i) + (cz + .5) * CHUNK_SIZE;
     const y = heightAt(x, z);
     positions.setXYZ(i, x, y, z);
-    const color = new THREE.Color(BAND_COLOR[terrainBand(y)]);
-    if (y > LEVEL.waterSurface) { const s = surfaceColor(column(x, z)); color.lerp(new THREE.Color(s[0], s[1], s[2]), .55); } // top-layer composition
-    colors.push(color.r, color.g, color.b);
+    color.set(BAND_COLOR[terrainBand(y)]);
+    if (groundColour && y > LEVEL.waterSurface) { const s = surfaceColor(column(x, z)); color.lerp(tmp.setRGB(s[0], s[1], s[2]), .55); } // top-layer composition
+    colors.set([color.r, color.g, color.b], i * 3);
+    if (i % ((segments + 1) * 2) === 0) yield;
   }
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geometry.computeVertexNormals();
   return geometry;
 }
+export const terrainGeometry = (cx: number, cz: number) => finish(terrainJob(cx, cz));

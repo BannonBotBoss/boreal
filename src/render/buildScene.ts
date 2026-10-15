@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { generateGeometry, disposeObject } from './geometry';
 import { CHUNK_SIZE, generateChunk, heightAt, type Entity } from '../core/world';
 import { restoreEntities, type EventContext } from '../core/events';
-import { positionCamera, terrainGeometry } from './math';
+import { positionCamera, terrainJob } from './math';
+import { INTEREST, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
 import { playable, type PlayerRig } from './playables';
 import { RENDER } from '../core/renderSettings';
 import { applyPopulation } from '../core/population';
@@ -47,7 +48,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   let clock = formatHour(gameHour(0, startHour)), darkness = 0;
   const camera = new THREE.PerspectiveCamera(48, 1, .2, 700);
   const post = createPost(renderer, scene, camera);
-  const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.LOD> }>();
+  const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.LOD>; near: boolean }>();
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
   const eatenForage = new Map<string, string>(); // plant key -> loaded chunk; never serialized
   let activeContext: EventContext;
@@ -67,10 +68,11 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const hares = createHares(scene); // src/animals/hare.ts
   const halo = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.85, 40), new THREE.MeshBasicMaterial({ color: 0xffe9a1, side: THREE.DoubleSide, transparent: true, opacity: .7, depthWrite: false }));
   halo.rotation.x = -Math.PI / 2; halo.visible = false; scene.add(halo);
-  let centerKey = '', radius = -1, revision = -1;
-  function createChunk(cx: number, cz: number, context: EventContext) {
+  let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
+  /** Instantiates a chunk from the math layers as a sliced job (core/interest): near = full, mid = coarse terrain + far LODs. */
+  function* createChunk(cx: number, cz: number, context: EventContext, near: boolean) {
     const root = new THREE.Group(), objects = new Map<string, THREE.LOD>();
-    const geometry = terrainGeometry(cx, cz);
+    const geometry: THREE.BufferGeometry = yield* terrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near);
     const ground = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }));
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; root.add(ground);
     const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), new THREE.MeshStandardMaterial({ color: 0x578d91, roughness: .32, metalness: .1 }));
@@ -87,25 +89,34 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       for (let detail = 0; detail < 3; detail++) lod.addLevel(generateGeometry(entity, detail), (entity.kind === 'rock' ? [0, 10, 24] : [0, 55, 115])[detail] * RENDER.lod[entity.kind === 'rock' ? 'rocks' : entity.kind === 'spruce' ? 'trees' : 'props'], .12);
       if (entity.kind === 'rock') lod.addLevel(new THREE.Group(), 45 * RENDER.lod.rocks, .12);
       lod.position.set(entity.x, heightAt(entity.x, entity.z), entity.z); lod.userData.inspect = { type: 'entity', key: entity.key }; root.add(lod); objects.set(entity.key, lod);
+      yield;
     }
-    scene.add(root); return { root, entities, objects };
+    scene.add(root); return { root, entities, objects, near };
   }
   /** `also`: a second streaming centre (the photo-mode camera); the player's own chunks always stay loaded. */
   function sync(x: number, z: number, altitude: number, context: EventContext, eventRevision: number, also?: { x: number; z: number }) {
     activeContext = context;
-    const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE), nextRadius = altitude > 85 ? 3 : 2;
+    setInterestCentre(also?.x ?? x, also?.z ?? z); // photo mode: the free camera is the centre
+    const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE), nextRadius = Math.ceil((altitude > 85 ? INTEREST.mid * 1.5 : INTEREST.mid) / CHUNK_SIZE);
     const ax = also ? Math.floor(also.x / CHUNK_SIZE) : cx, az = also ? Math.floor(also.z / CHUNK_SIZE) : cz;
-    if (centerKey === `${cx}:${cz}:${ax}:${az}` && radius === nextRadius && revision === eventRevision) return;
+    const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}`;
+    if (centerKey === tierKey && radius === nextRadius && revision === eventRevision) return;
     const changed = revision !== eventRevision;
-    centerKey = `${cx}:${cz}:${ax}:${az}`; radius = nextRadius; revision = eventRevision;
-    const needed = new Set<string>();
-    for (const [ox, oz] of [[cx, cz], [ax, az]]) for (let a = ox - radius; a <= ox + radius; a++) for (let b = oz - radius; b <= oz + radius; b++) needed.add(`${a}:${b}`);
+    centerKey = tierKey; radius = nextRadius; revision = eventRevision;
+    const needed = new Map<string, boolean>(); // chunk key -> near tier
+    for (const [ox, oz] of [[cx, cz], [ax, az]]) for (let a = ox - radius; a <= ox + radius; a++) for (let b = oz - radius; b <= oz + radius; b++) {
+      const d = squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), own = a === cx && b === cz;
+      if (d <= INTEREST.mid || own) needed.set(`${a}:${b}`, (needed.get(`${a}:${b}`) ?? false) || d <= INTEREST.near || own);
+    }
     for (const [plantKey, chunkKey] of eatenForage) if (!needed.has(chunkKey)) eatenForage.delete(plantKey);
-    for (const [key, chunk] of chunks) if (changed || !needed.has(key)) {
+    // Far = math only: dispose everything outside the radius (and re-instantiate when a chunk changes tier).
+    for (const [key, chunk] of chunks) if (changed || !needed.has(key) || needed.get(key) !== chunk.near) {
       scene.remove(chunk.root); disposeObject(chunk.root); chunks.delete(key);
     }
-    for (const key of needed) if (!chunks.has(key)) {
-      const [a, b] = key.split(':').map(Number); chunks.set(key, createChunk(a, b, context));
+    for (const key of [...chunkJobs]) if (!needed.has(key)) { cancel(`chunk:${key}`); chunkJobs.delete(key); }
+    for (const [key, near] of needed) if (!chunks.has(key) && !pending(`chunk:${key}`)) {
+      const [a, b] = key.split(':').map(Number); chunkJobs.add(key);
+      enqueue(`chunk:${key}`, squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), createChunk(a, b, context, near), c => { chunkJobs.delete(key); chunks.set(key, c); });
     }
   }
   function eat(animal: { rig: ReturnType<typeof createDeerRig>; entity: Entity }, plantKey: string) {

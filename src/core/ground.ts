@@ -11,6 +11,7 @@ import { hash, random } from '../proc/rng';
 import { f } from '../proc/trace';
 import { CHUNK_SIZE, WORLD_SEED, heightAt, generateChunk } from './world';
 import { LEVEL } from './tuning';
+import { HYDRO, WEATHER, setSurfaceSource, weatherAt } from './weather';
 
 export const CELL = 2; // m
 /** Organic pools (dry mass, kg/m²) in chain order. CBM-CFS3 DOM pools (Kurz et al. 2009, Ecol. Model. 220:480, Table 3) [verify]:
@@ -50,7 +51,7 @@ export const BEKKER = {
   wetLoam32: { n: .5, kc: .77, kphi: 51.91 },       // sandy loam, 32 % moisture: softest upland soil in the table; PROXY for the
   // organic mat until muskeg parameters (Wong, Radforth & Preston-Thomas 1982, J. Terramech. 19:107) are sourced [verify]
   drySand: { n: 1.1, kc: .99, kphi: 1528.43 },
-  snow: { n: 1.6, kc: 4.37, kphi: 196.72 },         // snow (US) — unused until seasons exist
+  snow: { n: 1.6, kc: 4.37, kphi: 196.72 },         // snow (US): used for the snowpack layer (core/weather)
 };
 /** Foot contact (one foot): wolf track 10–13 × 8–10 cm (Mech 1970, The Wolf); white-tailed deer hoof 5–9 cm (Rezendes 1999,
  * Tracking and the Art of Seeing); grizzly hind foot ~25 × 15 cm (Murie 1954, Peterson Field Guide to Animal Tracks) [verify]. */
@@ -109,7 +110,8 @@ export interface Layer { id: string; label: string; top: number; thickness: numb
 /** The layer stack of the cell containing (x, z) at `years` since world start (plus the stand's age since fire). */
 const colCache = new Map<string, ReturnType<typeof columnRaw>>();
 export function column(x: number, z: number, years = GROUND.years) {
-  const key = `${Math.floor(x / CELL)}:${Math.floor(z / CELL)}:${years}`; let c = colCache.get(key);
+  years = Math.round(years * 365.25) / 365.25; // resolve to one game day: decay is invisible below that and the cache stays warm
+  const key = `${Math.floor(x / CELL)}:${Math.floor(z / CELL)}:${years}:${WEATHER.steps >> 6}`; let c = colCache.get(key); // weather (moisture/snow) refreshes every 64 steps
   if (!c) { c = columnRaw(x, z, years); if (colCache.size > 20000) colCache.clear(); colCache.set(key, c); } return c;
 }
 function columnRaw(x: number, z: number, years: number) {
@@ -128,9 +130,13 @@ function columnRaw(x: number, z: number, years: number) {
   }
   const layers: Layer[] = []; let top = 0;
   const push = (l: Omit<Layer, 'top'>) => { if (l.thickness > 1e-4) { layers.push({ ...l, top }); top += l.thickness; } };
+  // Hydrosphere (core/weather): snowpack on top, bucket soil water blended into the organic layers' moisture.
+  const wx = weatherAt(cx, cz), snowM = f('ground', 'snow water equivalent (mm)', wx.sweMm) / HYDRO.snowDensity;
+  if (y >= LEVEL.waterSurface) push({ id: 'snow', label: 'snowpack', thickness: snowM, kg: snowM * HYDRO.snowDensity, bulk: HYDRO.snowDensity, moisture: 1, source: 'core/weather Kessler + degree-day melt; Sturm et al. 2010' });
+  const moist = f('ground', 'organic moisture (vol. share)', Math.min(1, (.3 + .6 * wet) * .5 + wx.soil * .5));
   if (y < LEVEL.waterSurface) push({ id: 'water', label: 'water', thickness: LEVEL.waterSurface - y, kg: (LEVEL.waterSurface - y) * 998, bulk: 998, source: 'CRC Handbook' });
-  push({ id: 'moss', label: 'live moss mat', thickness: .02 + .04 * wet, kg: (.02 + .04 * wet) * 20, bulk: 20, moisture: .3 + .6 * wet, source: 'Yi et al. 2009 (live horizon) [verify]' });
-  POOLS.slice(0, 4).forEach((p, i) => push({ id: p.id, label: p.label, thickness: pool[i] / p.bulk, kg: pool[i], bulk: p.bulk, moisture: .3 + .6 * wet,
+  push({ id: 'moss', label: 'live moss mat', thickness: .02 + .04 * wet, kg: (.02 + .04 * wet) * 20, bulk: 20, moisture: moist, source: 'Yi et al. 2009 (live horizon) [verify]' });
+  POOLS.slice(0, 4).forEach((p, i) => push({ id: p.id, label: p.label, thickness: pool[i] / p.bulk, kg: pool[i], bulk: p.bulk, moisture: moist,
     age: `turnover ${(1 / k[i]).toFixed(0)} yr at ${CLIMATE.meanAnnualTempC} °C`, source: 'CBM-CFS3, Kurz et al. 2009; Yi et al. 2009' }));
   let ae = lerp(MINERAL.ae, noise(gx, gz, 'ae')), b = lerp(MINERAL.b, noise(gx, gz, 'b')), bulk = lerp(MINERAL.bulk, noise(gx, gz, 'bulk'));
   const soil = lerp(MINERAL.bedrock, noise(Math.floor(cx / 20), Math.floor(cz / 20), 'rock')) - top;
@@ -146,9 +152,11 @@ export type Column = ReturnType<typeof columnRaw>;
 /** Static sinkage (m) under one foot at `pressure` kPa: Bekker through the organic mat, then the mineral soil. Monotonic in p. */
 export function sinkage(col: Column, pressureKPa: number, footWidth: number) {
   if (col.layers[0]?.id === 'water') return Math.min(2, col.layers[0].thickness); // wading
+  const snow = col.layers[0]?.id === 'snow' ? col.layers[0].thickness : 0;
+  if (snow) { const sn = BEKKER.snow, zs = (pressureKPa / (sn.kc / footWidth + sn.kphi)) ** (1 / sn.n); if (zs <= snow) return zs; } // sinks into snow first
   const o = BEKKER.wetLoam32, m = BEKKER.sandyLoam15, zo = (pressureKPa / (o.kc / footWidth + o.kphi)) ** (1 / o.n);
-  if (zo <= col.organic) return zo;
-  return col.organic + (pressureKPa / (m.kc / footWidth + m.kphi)) ** (1 / m.n);
+  if (zo <= col.organic) return snow + zo;
+  return snow + col.organic + (pressureKPa / (m.kc / footWidth + m.kphi)) ** (1 / m.n);
 }
 /** Ground interaction for an animal: pressure, sink, compaction resistance (Bekker: R = b(kc/b+kφ)z^(n+1)/(n+1)) as a cost factor. */
 export function footing(col: Column, massKg: number, plan: string, g: number) {
@@ -159,10 +167,12 @@ export function footing(col: Column, massKg: number, plan: string, g: number) {
   return { pressure: p, sink: z, cost: f('ground', 'movement cost ×', 1 + R / (massKg * g)), absorb: f('ground', 'impact softening ×', 1 / (1 + z / foot.w)) };
 }
 /** Surface colour mix from the top 2 cm composition (art mapping of real layers; colours are not measurements). */
-const SURFACE: Record<string, number[]> = { water: [.34, .55, .57], moss: [.37, .48, .23], freshLitter: [.42, .33, .2], fragmented: [.33, .26, .17], duff: [.27, .21, .14], humus: [.2, .15, .1], ae: [.6, .57, .48], b: [.55, .42, .27] };
+const SURFACE: Record<string, number[]> = { snow: [.92, .94, .96], water: [.34, .55, .57], moss: [.37, .48, .23], freshLitter: [.42, .33, .2], fragmented: [.33, .26, .17], duff: [.27, .21, .14], humus: [.2, .15, .1], ae: [.6, .57, .48], b: [.55, .42, .27] };
 export function surfaceColor(col: Column) {
   const c = [0, 0, 0]; let w = 0;
   for (const l of col.layers) { const take = Math.max(0, Math.min(l.top + l.thickness, .02) - l.top); if (take <= 0 || !SURFACE[l.id]) continue; SURFACE[l.id].forEach((v, i) => { c[i] += v * take; }); w += take; }
   return w ? c.map(v => v / w) : SURFACE.b;
 }
 export function addDeposit(d: Deposit) { colCache.clear(); GROUND.deposits.push(d); if (GROUND.deposits.length > 2000) GROUND.deposits.shift(); }
+// The weather's surface energy balance reads the top layer of this cell (albedo, surface resistance, roughness).
+setSurfaceSource((x, z) => { const c = column(x, z), top = c.layers[0]?.id; return top === 'water' ? 'water' : top === 'snow' ? 'snow' : c.cover ? 'forest' : 'moss'; });

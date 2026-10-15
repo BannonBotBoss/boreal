@@ -10,6 +10,7 @@ export const LATITUDE = 49.5;
 export const DAY_OF_YEAR = 227;
 export const START_HOUR = 8;
 const RAD = Math.PI / 180;
+import { solar } from './weather';
 
 /** Hour of day (0–24) after `simTime` seconds of unpaused play. */
 export function gameHour(simTime: number, startHour = START_HOUR) {
@@ -20,7 +21,8 @@ export function formatHour(hour: number) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 /** Solar declination (degrees) for a day of the year. */
-export function declination(dayOfYear: number) { return 23.44 * Math.sin(RAD * 360 / 365 * (284 + dayOfYear)); }
+/** Solar declination (degrees) at local noon: NOAA General Solar Position (Spencer 1971 series), shared with core/weather. */
+export function declination(dayOfYear: number) { return solar(dayOfYear, 12).decl; }
 /** Sun elevation and azimuth (degrees; azimuth clockwise from north) and a unit direction toward the sun. */
 export function sunPosition(hour: number, dayOfYear = DAY_OF_YEAR, latitude = LATITUDE) {
   const d = declination(dayOfYear) * RAD, phi = latitude * RAD, h = 15 * (hour - 12) * RAD;

@@ -5,6 +5,9 @@
  */
 import * as THREE from 'three';
 import { GROUND, column } from '../core/ground';
+import { WEATHER, qsat, shortwave, solar, surfaceBalance, weatherAt, type SurfaceKind } from '../core/weather';
+import { DELTA_KINDS, near as nearDeltas } from '../core/deltas';
+const c2s = (c: ReturnType<typeof column>): SurfaceKind => c.layers[0]?.id === 'water' ? 'water' : c.layers[0]?.id === 'snow' ? 'snow' : c.cover ? 'forest' : 'moss';
 import { withTrace, setLiveTrace, scope, type Factor, type Trace, type Value } from '../proc/trace';
 import { stream } from '../proc/rng';
 import { CHUNK_SIZE, WORLD_SEED, chunkSeed, generateChunk, heightAt, terrainBand } from '../core/world';
@@ -59,6 +62,14 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       out.push(...t.factors, obs('terrain', 'height', heightAt(s.point.x, s.point.z)), obs('sound', 'nearbyWater', nearbyWater(s.point.x, s.point.z)));
       const gt: Trace = { factors: [] }, col = withTrace(gt, () => column(s.point.x, s.point.z)); out.push(...gt.factors, obs('ground', 'cell', col.cell), obs('ground', 'game years elapsed', GROUND.years));
       for (const l of col.layers) out.push(obs('layers', `${(l.top * 100).toFixed(1)} cm ${l.label}`, `${(l.thickness * 100).toFixed(1)} cm · ${l.kg.toFixed(2)} kg/m² · ρ ${l.bulk} kg/m³${l.moisture !== undefined ? ` · moisture ${Math.round(l.moisture * 100)}%` : ''}${l.age ? ` · ${l.age}` : ''} — ${l.source}`));
+      // Weather cell above this point (core/weather) and the persistent deltas near it (core/deltas).
+      const wt: Trace = { factors: [] }, w = weatherAt(s.point.x, s.point.z), sun = solar(WEATHER.day, WEATHER.hour);
+      const sb = withTrace(wt, () => surfaceBalance(c2s(col), shortwave(sun.cosZ, w.cloud), w.tC, w.rh * qsat(w.tC, 96000), 96000, Math.hypot(w.wind.x, w.wind.z), w.cloud, Math.min(1, w.soil / .75)));
+      out.push(...wt.factors, obs('weather', 'date', `day ${WEATHER.day} ${WEATHER.hour.toFixed(2)} h`), obs('weather', 'sun zenith ° (NOAA)', +sun.zenith.toFixed(2)), obs('weather', 'TOA W/m² (S0 1361)', +sun.toa.toFixed(0)),
+        obs('weather', 'air °C', +w.tC.toFixed(1)), obs('weather', 'RH', +w.rh.toFixed(2)), obs('weather', 'cloud fraction', +w.cloud.toFixed(2)), obs('weather', 'rain mm/h (Kessler)', +w.rainMmH.toFixed(2)),
+        obs('weather', 'wind 10 m (m/s)', `${w.wind.x.toFixed(1)}, ${w.wind.y.toFixed(2)}, ${w.wind.z.toFixed(1)}`), obs('weather', 'soil bucket (Manabe)', +w.soil.toFixed(2)), obs('weather', 'snow SWE mm', +w.sweMm.toFixed(1)),
+        obs('energy', 'Rn W/m²', +sb.Rn.toFixed(0)), obs('energy', 'λE Penman–Monteith', +sb.LE.toFixed(0)), obs('energy', 'H (residual)', +sb.H.toFixed(0)), obs('energy', 'G', +sb.G.toFixed(0)));
+      for (const d of nearDeltas(s.point.x, s.point.z)) out.push(obs('deltas', `${d.kind} @ ${d.x.toFixed(1)}, ${d.z.toFixed(1)}`, `strength ${(d.strength * 100).toFixed(0)}% · m ${d.m.toFixed(3)} — ${DELTA_KINDS[d.kind]?.source ?? ''}`));
       fields = {}; // 24x24 noise layer previews, 40 m around the point
       for (let j = 0; j < 24; j++) for (let i = 0; i < 24; i++) {
         const g: Trace = { factors: [] }; withTrace(g, () => heightAt(s.point.x + (i - 12) * 40 / 24, s.point.z + (j - 12) * 40 / 24));

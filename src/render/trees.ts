@@ -1,4 +1,6 @@
 ﻿import * as THREE from 'three';
+import { windAt } from '../core/weather';
+import { INTEREST } from '../core/interest';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { setTreeSource } from '../core/ground';
 import { random } from '../core/random';
@@ -18,21 +20,22 @@ const VARIANTS = 6;
 export const SPECIES_TABLE = [['black-spruce', .30], ['white-spruce', .55], ['jack-pine', .72], ['paper-birch', .87], ['aspen', 1]] as const;
 export function treeSpecies(seed: number): TreeSpecies { return choose('tree', 'species', random(seed ^ 0x9e3779b9)(), SPECIES_TABLE); }
 
-const wind = { value: 0 };
+const wind = { value: 0 }, windDir = { value: new THREE.Vector2(1, 0) }, windAmp = { value: 1 };
 let material: THREE.MeshStandardMaterial | undefined;
 function treeMaterial() {
   if (material) return material;
   material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, flatShading: true });
   material.onBeforeCompile = shader => {
-    shader.uniforms.uWind = wind;
-    shader.vertexShader = 'uniform float uWind;\n' + shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+    shader.uniforms.uWind = wind; shader.uniforms.uWindDir = windDir; shader.uniforms.uWindAmp = windAmp;
+    shader.vertexShader = 'uniform float uWind, uWindAmp;\nuniform vec2 uWindDir;\n' + shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
       float windPhase = modelMatrix[3].x * .11 + modelMatrix[3].z * .07;
       float bend = max(position.y, 0.) * max(position.y, 0.) * .0016;
-      float gust = .6 + .4 * sin(uWind * .23 + windPhase * .3);
-      transformed.x += bend * gust * (sin(uWind * 1.1 + windPhase) + .35 * sin(uWind * 2.7 + windPhase * 1.7));
-      transformed.z += bend * gust * .6 * cos(uWind * .9 + windPhase * 1.3);
+      float gust = (.6 + .4 * sin(uWind * .23 + windPhase * .3)) * uWindAmp;
+      // the shared wind field (core/weather): lean + sway along the wind, in this tree's model space
+      vec3 wl = transpose(mat3(modelMatrix)) * vec3(uWindDir.x, 0., uWindDir.y); vec2 along = normalize(wl.xz + 1e-5), across = vec2(-along.y, along.x);
+      transformed.xz += bend * gust * (along * (.8 + sin(uWind * 1.1 + windPhase) + .35 * sin(uWind * 2.7 + windPhase * 1.7)) + across * .6 * cos(uWind * .9 + windPhase * 1.3));
       // leaf flutter on the crown (birch/aspen get extra via colour-free height term)
-      transformed.xz += .025 * bend * 6. * vec2(sin(uWind * 7. + position.y * 3.), cos(uWind * 6.3 + position.x * 4.));`);
+      transformed.xz += .025 * bend * 6. * uWindAmp * vec2(sin(uWind * 7. + position.y * 3.), cos(uWind * 6.3 + position.x * 4.));`);
   };
   material.customProgramCacheKey = () => 'boreal-tree-wind';
   return material;
@@ -114,7 +117,8 @@ export function treeGeometry(entity: Entity, detail: number): THREE.Group {
   // Traced (inspector) builds bypass the shared cache so factors are reported and what-if overrides take effect.
   let geometry = tracing() ? build(species, variant, detail) : cache.get(key); if (!geometry) cache.set(key, geometry = build(species, variant, detail));
   const mesh = new THREE.Mesh(geometry, treeMaterial()); mesh.userData.shared = !tracing();
-  mesh.onBeforeRender = () => { wind.value = shaderClock.time; };
+  mesh.onBeforeRender = () => { wind.value = shaderClock.time; const w = windAt(INTEREST.x, 10, INTEREST.z), U = Math.hypot(w.x, w.z);
+    windDir.value.set(w.x / (U || 1), w.z / (U || 1)); windAmp.value = Math.min(4, (U / 4) ** 2); }; // drag ∝ U² (4 m/s = the old look)
   const group = new THREE.Group(); group.add(mesh);
   const s = f('tree', 'heightJitter', random(entity.seed)());
   group.scale.set(entity.scale, entity.scale * (.9 + s * .2), entity.scale); group.rotation.y = entity.rotation;

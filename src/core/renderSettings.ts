@@ -6,6 +6,8 @@
 import { HARE } from '../animals/hare';
 import { FEEL, HAPTIC_CATS } from '../ui/haptics';
 import { GROUND } from './ground';
+import { WEATHER, initWeather } from './weather';
+import { INTEREST } from './interest';
 
 /** Live config read by the world/render layers (buildScene, world scatter, hares, sound). Defaults = original game. */
 export const RENDER = {
@@ -48,6 +50,12 @@ export const RENDER_SETTINGS: SettingDef[] = [
   { id: 'feel.editor', label: 'Haptics: editor limits', group: 'Feel', type: 'toggle', default: true, apply: v => { HAPTIC_CATS.editor = !!v; } },
   { id: 'feel.sound', label: 'Sound at editor limits', group: 'Feel', type: 'toggle', default: true, apply: v => { FEEL.sound = !!v; } },
   { id: 'world.groundSpeed', label: 'Ground flow / decay speed ×', group: 'World', type: 'slider', min: 1, max: 100000, step: 1, default: 1, apply: v => { GROUND.speed = Number(v); } },
+  { id: 'interest.near', label: 'Full-detail radius (m)', group: 'Interest radius', type: 'slider', min: 40, max: 120, step: 10, default: 60, apply: v => { INTEREST.near = Number(v); INTEREST.mid = Math.max(INTEREST.mid, INTEREST.near); } },
+  { id: 'interest.mid', label: 'LOD radius (m; beyond = math only)', group: 'Interest radius', type: 'slider', min: 60, max: 240, step: 20, default: 100, apply: v => { INTEREST.mid = Math.max(Number(v), INTEREST.near); } },
+  { id: 'weather.on', label: 'Weather simulation', group: 'Weather', type: 'toggle', default: true, apply: v => { WEATHER.on = !!v; } },
+  { id: 'weather.quality', label: 'Weather grid', group: 'Weather', type: 'select', options: ['Low (6×6)', 'Normal (8×8)', 'High (12×12)'], default: 'Normal (8×8)',
+    apply: v => { const n = parseInt(String(v).split('(')[1]) || 8; if (n !== WEATHER.quality) { WEATHER.quality = n; initWeather(); } } },
+  { id: 'weather.timeScale', label: 'Weather time scale ×', group: 'Weather', type: 'slider', min: 0, max: 20, step: 1, default: 1, apply: v => { WEATHER.timeScale = Number(v); } },
   { id: 'animals.birdRate', label: 'Bird activity ×', group: 'Animals', type: 'slider', min: .25, max: 3, step: .25, default: 1, apply: v => { birdRate = Number(v); RENDER.birdRate = birdsOn ? birdRate : 0; } },
 ];
 let hareOn = true, hareCount = HARES_DEFAULT, birdsOn = true, birdRate = 1;

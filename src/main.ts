@@ -28,6 +28,10 @@ import { setThunk } from './ui/haptics';
 import { accelLimit, approach, gravity } from './proc/physics';
 import { GROUND, SAVE_KEY_GROUND, addDeposit, column, deerDroppingsKg, footing, loadGround, saveGround, tickGround } from './core/ground';
 import { appearancePanel, restoreLooks } from './ui/appearancePanel';
+import { runJobs } from './core/interest';
+import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, windAt } from './core/weather';
+import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
+import { DAY_OF_YEAR, START_HOUR, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = element<HTMLCanvasElement>('world'), status = element('status'), actionButton = element<HTMLButtonElement>('act');
@@ -105,13 +109,16 @@ let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? '
 pauseMenu.addPanel({ id: 'render', title: 'Render settings', build: settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; }) });
 pauseMenu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
-let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1 };
+let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1, sink: 0 };
 loadGround(localStorage.getItem(SAVE_KEY_GROUND));
 setInterval(() => { playerMass = view.playerMass(); // follows Play-as + appearance edits
   ground = footing(column(player.x, player.z), playerMass, 'canid', gravity());
   for (const a of view.audibleAnimals()) if (a.x !== undefined && a.z !== undefined && /deer/.test(a.key)) { const kg = deerDroppingsKg(view.massOf(a.key) ?? 0, 12 * GROUND.speed / 86400);
-    if (kg > 0) addDeposit({ x: a.x, z: a.z, year: GROUND.years, pool: 0, kg, what: 'deer droppings' }); }
-  try { localStorage.setItem(SAVE_KEY_GROUND, saveGround()); } catch { /* storage blocked */ } }, 1000);
+    if (kg > 0) record({ kind: 'droppings', x: a.x, z: a.z, t: GROUND.years, m: kg }, 3); } // residue reaches the ground when the delta expires
+  if (Math.abs(view.playerBrain.speed) > .3 && ground.sink > .002) record({ kind: 'footprint', x: player.x, z: player.z, t: GROUND.years, m: ground.sink });
+  prune();
+  try { localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); } catch { /* storage blocked */ } }, 1000);
+loadWeather(localStorage.getItem(SAVE_KEY_WEATHER)); loadDeltas(localStorage.getItem(SAVE_KEY_DELTAS));
 const handles = createHandles(view.camera, canvas, view.scene);
 const inspector = createInspector(view, canvas, handles);
 restoreLooks((k, g) => view.setAppearance(k, g));
@@ -229,6 +236,9 @@ function frame(time: number) {
         heading:yaw-dx*2.2/30,speed:jump?pounceSpeed(speed):speed});
       // Inertia: walking/running speed changes are capped at force/mass (heavier = slower); jumps are impulses.
       if(!autonomous && brain.motion!=='jump') brain.speed=approach(prevSpeed,brain.speed,accelLimit(playerMass,view.wolfMass),1/30);
+      { // wind drag through the shared field: relative air velocity on the frontal area (∝ m^(2/3), 0.15 m² for a 40 kg wolf [verify])
+        const fx = -Math.sin(yaw), fz = -Math.cos(yaw), F = airDrag({ x: fx * brain.speed, z: fz * brain.speed }, windAt(player.x, .6, player.z), .15 * (playerMass / 40) ** (2 / 3));
+        brain.speed += (F.x * fx + F.z * fz) / playerMass / 30; }
       const pose = autonomous && !playerAction ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities()) : steerWolf({ x: player.x, z: player.z, heading: brain.heading }, 0, Math.sign(brain.speed), 1 / 30, Math.abs(brain.speed));
       if(!autonomous && brain.motion==='idle') brain.problem='recover';
       if(autonomous && brain.meal) view.forageWolf(brain.meal.key);
@@ -240,6 +250,8 @@ function frame(time: number) {
     hub.sample(simTime);
   } else accumulator = 0;
   view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
+  runJobs(); // chunk instantiation etc., time-budgeted (core/interest)
+  { const h = (START_HOUR + simTime / REAL_SECONDS_PER_GAME_HOUR); updateWeather(active ? dt : 0, 3600 / REAL_SECONDS_PER_GAME_HOUR, DAY_OF_YEAR + Math.floor(h / 24), h % 24); }
   if (modes.mode !== 'super-stealth') focusTarget = undefined;
   else {
     const candidates = view.entities().filter(e => ['deer', 'person'].includes(e.kind) && Math.hypot(e.x - player.x, e.z - player.z) < 30);

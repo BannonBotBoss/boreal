@@ -1,5 +1,8 @@
 # Boreal project rules (read first)
 
+## 0. The purpose: live the lives of different animals
+The game exists so the player can experience the life of any animal. Its challenges (hunger, cold and heat, thirst, speed and endurance limits, predators and prey, breeding seasons, ageing) are generated from real-world biological math applied to the species spec and to the simulated world. No challenge is hand-written for one species. See `CHALLENGES.md`.
+
 These are Matthew's standing rules for every contributor, human or agent. `tests/rules.test.ts` enforces the parts that can be checked statically. `npm test` fails on a new violation.
 
 ## 1. Everything is procedurally generated
@@ -38,6 +41,25 @@ One pipeline: **species spec → skeleton (`skeleton.ts`/`species.ts`) → body 
 - Softness comes from pressure = weight / foot area (Bekker). It drives sinkage, landing absorption and movement cost.
 - Trees and fauna deposit material. Decay follows the CBM-CFS3 chain (rates × Q10). Mass is conserved minus respiration.
 - Time is closed-form: a cell is a function of seed + elapsed years, so catch-up is exact and there is no per-frame stepping.
+
+## 7. Use established mathematical models, implemented as lightly as possible
+- Physical, biological and atmospheric behaviour comes from a published model, cited by name in the code (for example NOAA solar position, Penman–Monteith, Stam Stable Fluids, Kessler microphysics, Olson/CBM-CFS3 decay, Bekker sinkage, Kleiber scaling). Ad-hoc rules are not allowed.
+- Use the simplest established form that gives the right behaviour at game scale: coarse grids, closed forms and low update rates.
+- Pure game calibration must be labelled as such in a comment.
+
+## 8. Only what is near is real; everything else is math
+- ONE interest system (`core/interest.ts`) is centred on the player, or the free camera in photo mode. Its tiers and radii come from `INTEREST`, and the render settings expose them.
+  - **near**: full simulation and full render.
+  - **mid**: cheap LOD and low-rate simulation.
+  - **far**: no meshes, no stored per-entity objects and no per-frame simulation.
+- Far state is a pure function of (seed, position, elapsed time): noise terrain, deterministic placement, closed-form ground decay, climatological weather (from solar input, season and latitude), and animal populations as density fields. Whatever enters range is instantiated from those functions, and whatever leaves it is disposed.
+- This applies to every system: terrain chunks, ground cells, the weather grid, vegetation, animals, particles and sound.
+- Instantiation runs as time-budgeted jobs (`enqueue`/`runJobs`, `INTEREST.budgetMs`) so it never stalls a frame. Write new builders as generators that `yield` between slices.
+
+## 9. Only certain interactions persist, and only for a while
+- The only stored world state is the sparse, capped delta log in `core/deltas.ts`. Each entry is `{kind, x, z, t, m}`. Examples are tracks, scent marks, carcasses, droppings, disturbed ground, broken branches, moved stones and felled trees.
+- Each kind's lifetime and decay is ONE row in `DELTA_KINDS`, with a cited real rate or a `[verify]` tag. Deltas fade in closed form, are dropped when they expire, and their residue merges into the math layer that owns it (for example, carcass mass goes into the ground's decay chain).
+- Everything else is NOT stored; it regenerates from the seed. The ground clock, the weather grid near the player and the delta log are the whole save.
 
 ## Checks before you commit
 1. `npx tsc --noEmit` and `npm test` (includes `tests/rules.test.ts`) are green.

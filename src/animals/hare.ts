@@ -60,6 +60,7 @@ export function createHares(scene: THREE.Scene) {
     const events: HareEvent[] = []; time += dt;
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }
     while (hares.length + pending.length < HARE.count) spawn(wolf.x, wolf.z);
+    while (hares.length > HARE.count) remove(hares[hares.length - 1]); // count lowered in settings
     for (const h of [...hares]) {
       const dx = h.x - wolf.x, dz = h.z - wolf.z, d = Math.hypot(dx, dz);
       if (d > HARE.despawn) { remove(h); continue; }

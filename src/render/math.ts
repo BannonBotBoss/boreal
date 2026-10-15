@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CHUNK_SIZE, heightAt } from '../core/world';
 import { LEVEL } from '../core/tuning';
+import { RENDER } from '../core/renderSettings';
 
 // Aim slightly above the wolf's centre so it appears below screen centre.
 export const DEFAULT_PITCH = 10 * Math.PI / 180;
@@ -30,7 +31,7 @@ export function positionCamera(camera: THREE.PerspectiveCamera, x: number, z: nu
   camera.updateMatrixWorld(true);
 }
 export function terrainGeometry(cx: number, cz: number) {
-  const geometry = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, 80, 80);
+  const geometry = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, RENDER.terrainSegments, RENDER.terrainSegments);
   geometry.rotateX(-Math.PI / 2);
   const positions = geometry.attributes.position, colors: number[] = [];
   for (let i = 0; i < positions.count; i++) {

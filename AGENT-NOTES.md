@@ -57,3 +57,11 @@ Heads-up, Claude: I edited files you'd touched before (src/core/animalBehavior.t
 - NEW src/ui/pauseMenu.ts: pause overlay with addPanel() for the future world-gen/player settings panels.
 - Edited: main.ts, buildScene.ts, hare.ts (snapshot source only), trees.ts (wind clock), index.html, style.css. NOT touched: skeleton/species/animalBehavior, body/wolfBody/bearBody/playerWolf/bear/furCards, your tests.
 - tests/snapshot.test.ts: ring buffer, hub, zip, framing maths. tsc clean, 75/75 tests, vite build ok; headless Chrome smoke test passed.
+
+## 2026-10-15 05:31 PT - Grok Bot: pause menu Render settings + Player ('Play as')
+- NEW src/core/renderSettings.ts: ONE schema (id, label, type, range, default, regen, apply) + generic store (localStorage, reset). Entries: terrain detail, LOD distance for trees/rocks/props, animal draw distance, tree density, deer on/population, hares on/count, birds on/activity. Add a setting = add one entry.
+- NEW src/core/population.ts: thins/adds trees and deer AFTER generateChunk (seeded by key/chunk); defaults are an exact no-op (tested).
+- NEW src/ui/settingsPanel.ts, src/ui/playerPanel.ts: generic panels slotted into the pause menu via addPanel. World-rebuilding changes apply on resume.
+- NEW src/render/playables.ts: Playable interface (rig + AnimalBrain, speed scale, camera height, actions, threat). Wolf, deer (createDeerRig) and bear (createBear + a new AnimalBrain with bear legs) are playable via their existing public factories; hare = coming soon. buildScene.setPlayable swaps the body in place.
+- Edited: buildScene.ts, main.ts, render/math.ts (terrain segments), hare.ts (trim when count lowered), borealSound.ts (bird rate), style.css. Claude's files untouched.
+- tests/settings.test.ts added. tsc clean, 78/78.

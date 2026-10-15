@@ -18,6 +18,9 @@ import { createSnapshotHub } from './core/snapshot';
 import { createPhotoMode } from './photo/photoMode';
 import { createPauseMenu } from './ui/pauseMenu';
 import { shaderClock } from './render/shaderClock';
+import { RENDER_SETTINGS, createSettingsStore } from './core/renderSettings';
+import { settingsPanel } from './ui/settingsPanel';
+import { playerPanel } from './ui/playerPanel';
 import type { PhotoView } from './render/buildScene';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -79,7 +82,7 @@ function perform() {
     notice(action === 'move' ? 'Stone pushed with your snout. Its new position is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.');
   } catch (error) { notice(`Interaction not committed: ${String(error)}`); }
 }
-function togglePause() { paused = !paused; element('pause').textContent = paused ? 'Resume' : 'Pause'; pauseMenu.show(paused); sfx.pauseCue(); }
+function togglePause() { paused = !paused; if (!paused) applyPending(); element('pause').textContent = paused ? 'Resume' : 'Pause'; pauseMenu.show(paused); sfx.pauseCue(); }
 const pauseMenu = createPauseMenu({ resume: () => { if (paused) togglePause(); }, photo: () => enterPhoto() });
 // Rewind history: every system registers its own snapshot source; photo mode never touches systems directly.
 const hub = createSnapshotHub(600); // 60 s at 10 Hz
@@ -90,11 +93,21 @@ hub.register('player', {
 });
 const drawFrame = (pv?: PhotoView) => view.draw(player.x, player.z, altitude, yaw, simTime, target, pitch, Math.abs(view.playerBrain.speed) > .01, playerAction, simTime - actionStarted, lookYaw, modes.mode, focusTarget, pushFrom, pv);
 const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw: pv => drawFrame(pv), onExit: () => { clearInput(); accumulator = 0; document.body.classList.remove('photo-mode'); } });
+// Pause-menu panels. Anything that rebuilds the world or swaps the body waits until resume.
+const renderStore = createSettingsStore(RENDER_SETTINGS);
+let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
+pauseMenu.addPanel({ id: 'render', title: 'Render settings', build: settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; }) });
+pauseMenu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
+function applyPending() {
+  if (pendingRegen) { view.invalidate(); pendingRegen = false; }
+  if (pendingPlay) { const p = view.setPlayable(playAs); player.abilities = [...p.actions]; altitude = p.cameraHeight; pendingPlay = false; }
+}
+applyPending();
 function enterPhoto() { if (paused) togglePause(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
 actionButton.onclick = perform;
 element('pause').onclick = togglePause;
 element('photo-btn').onclick = () => enterPhoto();
-element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = RIDER_HEIGHT; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
+element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = view.playable.cameraHeight; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
 element('help').onclick = () => dialog.showModal();
 element('close').onclick = () => dialog.close();
 element('sound').onclick = async () => {
@@ -189,7 +202,7 @@ function frame(time: number) {
     accumulator += dt;
     while (accumulator >= 1 / 30) {
       modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30) : stepWolfModes(modes, Math.max(pad?.buttons[6]?.value ?? 0, Number(keys.has('c'))), Math.max(pad?.buttons[7]?.value ?? 0, Number(keys.has('shift'))), Math.abs(dz) > .01, 1 / 30);
-      const brain = view.playerBrain, speed = -dz * playerSpeed(modes.mode);
+      const brain = view.playerBrain, speed = -dz * playerSpeed(modes.mode) * view.playable.speedScale;
       const jump = (keys.has(' ') || buttons[2]) && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
       if(!autonomous || playerAction) brain.decide({x:player.x,y:0,z:player.z},1/30,{
         motion:jump?'jump':speed<-.01?'back':speed>.01?(modes.mode==='run'||modes.mode==='sprint'?'run':'walk'):'idle',

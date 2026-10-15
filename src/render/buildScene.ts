@@ -3,7 +3,9 @@ import { generateGeometry, disposeObject } from './geometry';
 import { CHUNK_SIZE, generateChunk, heightAt, type Entity } from '../core/world';
 import { restoreEntities, type EventContext } from '../core/events';
 import { positionCamera, terrainGeometry } from './math';
-import { createPlayerWolf } from './playerWolf';
+import { playable, type PlayerRig } from './playables';
+import { RENDER } from '../core/renderSettings';
+import { applyPopulation } from '../core/population';
 import { WOLF_SCALE, type WolfMode } from '../core/wolfModes';
 import { pushProgress, rockDiameter } from '../core/rocks';
 import { createDeerRig } from './animalRig';
@@ -44,7 +46,13 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
   const eatenForage = new Map<string, string>(); // plant key -> loaded chunk; never serialized
   let activeContext: EventContext;
-  const wolf = createPlayerWolf(); scene.add(wolf.root);
+  let current = playable('wolf'), wolf: PlayerRig = current.create(); scene.add(wolf.root);
+  /** Swap the controlled animal in place (keeps position, heading and energy). */
+  function setPlayable(id: string) {
+    const next = playable(id); if (next.id === current.id) return current;
+    const old = wolf; wolf = next.create(); current = next; scene.remove(old.root); disposeObject(old.root);
+    wolf.brain.heading = old.brain.heading; wolf.brain.energy = old.brain.energy; scene.add(wolf.root); return current;
+  }
   const hares = createHares(scene); // src/animals/hare.ts
   const halo = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.85, 40), new THREE.MeshBasicMaterial({ color: 0xffe9a1, side: THREE.DoubleSide, transparent: true, opacity: .7, depthWrite: false }));
   halo.rotation.x = -Math.PI / 2; halo.visible = false; scene.add(halo);
@@ -55,7 +63,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     root.add(new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true })));
     const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), new THREE.MeshStandardMaterial({ color: 0x578d91, roughness: .32, metalness: .1 }));
     water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
-    const entities = structuredClone(restoreEntities(generateChunk(cx, cz), context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
+    const entities = structuredClone(restoreEntities(applyPopulation(generateChunk(cx, cz), cx, cz), context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
     for (const entity of entities) {
       if (catalog[entity.kind].objectType === 'animal') {
         const previous = animals.get(entity.key);
@@ -64,8 +72,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
         continue;
       }
       const lod = new THREE.LOD();
-      for (let detail = 0; detail < 3; detail++) lod.addLevel(generateGeometry(entity, detail), (entity.kind === 'rock' ? [0, 10, 24] : [0, 55, 115])[detail], .12);
-      if (entity.kind === 'rock') lod.addLevel(new THREE.Group(), 45, .12);
+      for (let detail = 0; detail < 3; detail++) lod.addLevel(generateGeometry(entity, detail), (entity.kind === 'rock' ? [0, 10, 24] : [0, 55, 115])[detail] * RENDER.lod[entity.kind === 'rock' ? 'rocks' : entity.kind === 'spruce' ? 'trees' : 'props'], .12);
+      if (entity.kind === 'rock') lod.addLevel(new THREE.Group(), 45 * RENDER.lod.rocks, .12);
       lod.position.set(entity.x, heightAt(entity.x, entity.z), entity.z); root.add(lod); objects.set(entity.key, lod);
     }
     scene.add(root); return { root, entities, objects };
@@ -121,9 +129,10 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       rig.root.position.set(e.x,heightAt(e.x,e.z),e.z);rig.root.rotation.y=rig.brain.heading;rig.root.updateMatrixWorld(true);
       rig.sensor.getWorldPosition(headPoint);
       if(!withinEarshot({x,y:heightAt(x,z)+.45*WOLF_SCALE,z},headPoint))continue;
+      rig.root.visible=Math.hypot(e.x-x,e.z-z)<RENDER.animalDistance;
       if(frozen){rig.animate(0);continue;} // photo mode: pose from the (possibly rewound) brain state, no simulation
       const senses=observations.filter(i=>i.key!==key);
-      if(activeContext.records[key]?.relationship!=='friend') senses.push({key:'player',x,y:heightAt(x,z)+.3*WOLF_SCALE,z,kind:'threat'});
+      if(activeContext.records[key]?.relationship!=='friend') senses.push({key:'player',x,y:heightAt(x,z)+.3*WOLF_SCALE,z,kind:current.threat?'threat':'animal'});
       rig.brain.sense(headPoint,senses);
       if(dt>0) {
         rig.brain.decide(headPoint,dt);
@@ -151,7 +160,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     wolf.root.position.set(x, ground, z); wolf.root.rotation.y = yaw;
     const pushed = pushFrom && [...chunks.values()].flatMap(c => c.entities).find(e => e.key === pushFrom.key);
     const pushVector = pushed && pushFrom ? { x: pushed.x - pushFrom.x, z: pushed.z - pushFrom.z, yaw } : undefined;
-    wolf.animate(time, moving, action, actionElapsed, mode, pushVector);
+    wolf.animate({ time, dt: photo && photo.frozen !== false ? 0 : Math.max(0, Math.min(.1, time - previousTime)), moving, action, elapsed: actionElapsed, mode, push: pushVector });
     positionCamera(camera, x, z, altitude, yaw, pitch, lookYaw);
     const focused = mode === 'super-stealth' && !photo ? focus : undefined;
     const frozen = !!photo && photo.frozen !== false;
@@ -240,7 +249,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const hit = ray.intersectObjects([...chunks.values()].map(c => c.root), true)[0];
     return hit?.distance;
   }
-  return { sync, draw, forageWolf, hares, camera, post, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, playerBrain: wolf.brain, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     stats: () => ({ chunks: chunks.size, entities: [...chunks.values()].reduce((n, c) => n + c.entities.length, 0), triangles: renderer.info.render.triangles }),
   };

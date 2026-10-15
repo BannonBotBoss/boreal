@@ -7,6 +7,7 @@
  */
 import { heightAt } from '../core/world';
 import { LEVEL } from '../core/tuning';
+import { RENDER } from '../core/renderSettings';
 
 export const SOUND_IDS = ['amb-day', 'amb-night', 'wind-pines', 'water', 'loon', 'wolf-howl', 'wolf-growl',
   'paw-walk', 'paw-run', 'deer-snort', 'deer-hooves', 'chew', 'land',
@@ -179,8 +180,8 @@ export class BorealSound {
     this.setLoop('music-night', MIX.music.night * d);
     if (this.prevDark > .5 && d <= .5) this.playAt('dawn-chorus', undefined, MIX.dawn);
     this.prevDark = d;
-    if (this.time > this.nextBird) {
-      this.nextBird = this.time + MIX.birdEverySeconds[0] + Math.random() * (MIX.birdEverySeconds[1] - MIX.birdEverySeconds[0]);
+    if (this.time > this.nextBird && RENDER.birdRate > 0) {
+      this.nextBird = this.time + (MIX.birdEverySeconds[0] + Math.random() * (MIX.birdEverySeconds[1] - MIX.birdEverySeconds[0])) / RENDER.birdRate;
       const a = Math.random() * Math.PI * 2, r = 15 + Math.random() * 20, at = { x: f.x + Math.sin(a) * r, z: f.z + Math.cos(a) * r };
       this.playAt(d > .5 ? 'owl' : Math.random() < .5 ? 'raven' : 'woodpecker', at, MIX.birds);
     }

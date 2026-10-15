@@ -289,25 +289,23 @@ function frame(time: number) { const frameStart = performance.now();
 }
 requestAnimationFrame(frame);
 
-// ?bench=1: measure each lighting/shadow feature's cost by toggling it through the quality caps (logs to the console).
+// ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {
-  const { GOVERNOR, MANUAL, LADDER } = await import('./core/quality');
-  const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
-  GOVERNOR.auto = false; GOVERNOR.capTier = 0; GOVERNOR.tier = 0;
-  const sample = async (label: string) => { await wait(2500); const xs: number[] = [], ws: number[] = [], t = performance.now();
-    let last = performance.now(); while (performance.now() - t < 3000) { await new Promise(r => requestAnimationFrame(r)); const n = performance.now(); ws.push(n - last); last = n; if (GOVERNOR.gpuMs !== undefined) xs.push(GOVERNOR.gpuMs); }
-    const avg = (a: number[]) => a.length ? a.reduce((p, c) => p + c, 0) / a.length : NaN;
-    const info = view.photoreal.INFO;
-    console.log(`BENCH ${label} gpu=${avg(xs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms calls=${info.calls} tris=${info.tris} cost=${JSON.stringify(view.photoreal.COST)}`); };
-  const { TREE_FX } = await import('./render/trees');
-  const r = view.photoreal.renderer; if (r) r.info.autoReset = false; // count every pass of the frame
+  const { GOVERNOR, MANUAL, LADDER } = await import('./core/quality'), { queued } = await import('./core/interest'), { TREE_FX } = await import('./render/trees');
+  const wait = (ms: number) => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r));
   window.addEventListener('error', e => console.log(`BENCH error ${e.message} ${e.error?.stack}`)); window.addEventListener('unhandledrejection', e => console.log(`BENCH reject ${e.reason?.stack ?? e.reason}`));
-  await wait(25000); console.log(`BENCH gpu-string ${GOVERNOR.gpu}`);
-  await sample('ultra-all');
-  TREE_FX.barkOff = true; await sample('without-bark'); TREE_FX.barkOff = false;
-  (MANUAL as Record<string, number>).trees = 0; await sample('without-trees'); delete (MANUAL as Record<string, number>).trees;
-  for (const [k, off] of [['ssao', 0], ['shadows', 0], ['pcss', 0], ['contact', 0], ['rays', 0], ['gi', 0], ['ibl', 0], ['clouds', 0]] as const) { (MANUAL as Record<string, number>)[k] = off; await sample(`without-${k}`); delete (MANUAL as Record<string, number>)[k]; }
-  MANUAL.resScale = 1; await sample('ultra-res1');
-  for (let i = 1; i < LADDER.length; i++) { delete MANUAL.resScale; GOVERNOR.tier = i; await sample(`tier-${LADDER[i].name}`); }
+  const settle = async () => { const t = performance.now(); let quiet = 0; while (performance.now() - t < 40000 && quiet < 60) { await raf(); quiet = queued() ? 0 : quiet + 1; } await wait(1500); };
+  const M = MANUAL as Record<string, number>;
+  const sample = async (label: string) => { await settle(); const ws: number[] = [], gs: number[] = [], spikes: Record<string, number> = {}, t = performance.now(); let last = performance.now();
+    while (performance.now() - t < 4000) { await raf(); const n = performance.now(); ws.push(n - last); last = n; if (GOVERNOR.gpuMs !== undefined) gs.push(GOVERNOR.gpuMs);
+      for (const [k, v] of Object.entries(view.photoreal.COST)) spikes[k] = Math.max(spikes[k] ?? 0, v); }
+    const avg = (a: number[]) => a.length ? a.reduce((p, c) => p + c, 0) / a.length : NaN, p95 = [...ws].sort((x, y) => x - y)[Math.floor(ws.length * .95)];
+    console.log(`BENCH ${label} gpu=${avg(gs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms fps=${(1000 / avg(ws)).toFixed(0)} p95=${p95?.toFixed(1)}ms calls=${view.photoreal.INFO.calls} tris=${view.photoreal.INFO.tris} maxCpu=${JSON.stringify(Object.fromEntries(Object.entries(spikes).map(([k, v]) => [k, +v.toFixed(2)])))}`); };
+  GOVERNOR.auto = false; GOVERNOR.capTier = 0;
+  await wait(3000); console.log(`BENCH gpu-string ${GOVERNOR.gpu}`);
+  for (let i = 0; i < LADDER.length; i++) { GOVERNOR.tier = i; await sample(`tier-${LADDER[i].name}`); }
+  GOVERNOR.tier = 0;
+  TREE_FX.barkOff = true; await sample('ultra-without-bark'); TREE_FX.barkOff = false;
+  for (const k of ['ssao', 'shadows', 'pcss', 'contact', 'rays', 'gi', 'ibl', 'clouds']) { M[k] = 0; await sample(`ultra-without-${k}`); delete M[k]; }
   console.log('BENCH done');
 })();

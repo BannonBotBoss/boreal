@@ -41,6 +41,21 @@ float pcssShadow(sampler2D map, vec2 texel, vec3 c) {
   c = c.replace('float getShadow(', PCSS_GLSL + '\nfloat getShadow(');
   c = c.replace('#if defined( SHADOWMAP_TYPE_PCF )', '#if defined( PCSS )\n\t\t\tshadow = pcssShadow(shadowMap, 1. / shadowMapSize, shadowCoord.xyz);\n\t\t#elif defined( SHADOWMAP_TYPE_PCF )');
   THREE.ShaderChunk.shadowmap_pars_fragment = c; }
+/** Time-sliced cube capture (shared by IBL and the GI probe): ONE face per frame through a CubeCamera's own face cameras,
+ *  so no frame pays for six scene renders. `done` fires after the 6th face. */
+function slicedCube(size: number, layer: number, near = .5, far = 1000) {
+  const rt = new THREE.WebGLCubeRenderTarget(size, { type: THREE.HalfFloatType }), cam = new THREE.CubeCamera(near, far, rt);
+  for (const c of cam.children) c.layers.set(layer);
+  let face = -1;
+  return { rt, cam, get busy() { return face >= 0; }, start(pos: THREE.Vector3) { if (face < 0) { cam.position.copy(pos); cam.updateMatrixWorld(true); face = 0; } },
+    /** Renders the next face; returns true when the cube is complete. */
+    step(renderer: THREE.WebGLRenderer, scene: THREE.Object3D) {
+      if (face < 0) return false;
+      if (cam.coordinateSystem !== renderer.coordinateSystem) { cam.coordinateSystem = renderer.coordinateSystem; cam.updateCoordinateSystem(); }
+      const prev = renderer.getRenderTarget(), xr = renderer.xr.enabled; renderer.xr.enabled = false;
+      renderer.setRenderTarget(rt, face); renderer.render(scene, cam.children[face] as THREE.Camera); renderer.setRenderTarget(prev); renderer.xr.enabled = xr;
+      if (++face < 6) return false; face = -1; return true; } };
+}
 type SkyRig = { sky: Sky; sunLight: THREE.DirectionalLight; hemi: THREE.HemisphereLight };
 export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera, rig: SkyRig, baseRatio: number) {
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -53,17 +68,16 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
   const COST = { csmMs: 0, iblMs: 0, giMs: 0, cloudMs: 0 }, INFO = { calls: 0, tris: 0 };
   // ---- bounce light: an SH light probe captured around the viewer (three LightProbeGenerator, MIT; Ramamoorthi & Hanrahan 2001)
   const probe = new THREE.LightProbe(); probe.intensity = 0; scene.add(probe);
-  let cubeRT = new THREE.WebGLCubeRenderTarget(32, { type: THREE.HalfFloatType }), cubeCam = new THREE.CubeCamera(.5, 200, cubeRT);
-  let lastProbe = -1e9;
+  rig.sunLight.layers.enable(1); rig.hemi.layers.enable(1); // the GI capture (layer 1) must still be lit
+  // bench (RTX 5060 Laptop): a full 6-face capture cost 58–1600 ms in one frame. Now: sky + terrain only (layer 1), one face per frame.
+  let giCube = slicedCube(32, 1, .5, 200), lastProbe = -1e9, giReading = false;
   function captureGI(time: number) {
-    const size = tier.gi >= 2 ? 64 : 32; if (cubeRT.width !== size) { cubeRT.dispose(); cubeRT = new THREE.WebGLCubeRenderTarget(size, { type: THREE.HalfFloatType }); scene.remove(cubeCam); cubeCam = new THREE.CubeCamera(.5, 200, cubeRT); }
-    if (time - lastProbe < (tier.gi >= 2 ? 1 : 4)) return; lastProbe = time; const t0 = performance.now();
-    // bench (RTX 5060 Laptop): a full-scene 6-face capture cost 100–1600 ms CPU (thousands of draws ×6). Capture only
-    // layer 1 = sky + terrain (the dominant bounce sources); trees/animals are left out.
-    cubeCam.layers.set(1); for (const c of cubeCam.children) c.layers.set(1);
-    cubeCam.position.copy(camera.position); const env = scene.environment; scene.environment = null; probe.visible = false;
-    cubeCam.update(renderer, scene); scene.environment = env; probe.visible = true;
-    void LightProbeGenerator.fromCubeRenderTarget(renderer, cubeRT).then(p => { probe.sh.copy(p.sh); probe.intensity = .6; }); // async GPU readback (r180); .6 = bounce only [game calibration]
+    const size = tier.gi >= 2 ? 64 : 32; // The TypeError seen in the first bench ("reading '2'", in a promise) was this: a tier switch disposed the cube
+    // while LightProbeGenerator's async readback was still in flight. Resize only when no capture or readback is pending.
+    if (giCube.rt.width !== size && !giCube.busy && !giReading) { giCube.rt.dispose(); giCube = slicedCube(size, 1, .5, 200); }
+    const t0 = performance.now();
+    if (!giCube.busy && time - lastProbe >= (tier.gi >= 2 ? 1 : 4)) { lastProbe = time; giCube.start(camera.position); }
+    if (giCube.step(renderer, scene)) { giReading = true; LightProbeGenerator.fromCubeRenderTarget(renderer, giCube.rt).then(p => { probe.sh.copy(p.sh); probe.intensity = .6; }).catch(e => console.warn('GI probe readback', e)).finally(() => { giReading = false; }); } // async readback (r180); .6 = bounce only [game calibration]
     COST.giMs = performance.now() - t0;
   }
   let lastCloud = -1e9;
@@ -79,9 +93,9 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     for (const [m, prev] of chained) { m.onBeforeCompile = prev; const d = (m as unknown as { defines?: Record<string, unknown> }).defines; delete d?.USE_CSM; delete d?.CSM_CASCADES; delete d?.PCSS; m.needsUpdate = true; }
     chained.clear(); csm?.remove(); csm?.dispose(); csm = undefined;
     if (!tier.shadows) { rig.sunLight.castShadow = false; return; }
-    csm = new CSM({ camera, parent: scene, cascades: tier.shadows, maxFar: 160, shadowMapSize: tier.shadows >= 3 ? 2048 : 1024, // ≤ 2048 (Quest budget)
+    csm = new CSM({ camera, parent: scene, cascades: tier.shadows, maxFar: 110, // ≈ the LOD-1 range: distant LOD-2 trees cast no shadow (outside the cascades) shadowMapSize: tier.resScale >= 1 ? 2048 : 1024, // ≤ 2048 (Quest budget)
       lightDirection: new THREE.Vector3(0, -1, 0), lightIntensity: 0, mode: 'practical', shadowBias: -.0004 });
-    csm.fade = true;
+    csm.fade = true; for (const l of csm.lights) l.layers.enable(1);
   }
   function setupMaterials() {
     if (!csm) return;
@@ -99,12 +113,14 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
   // ---- image-based lighting from the sky ----------------------------------------------------------------------------
   const pmrem = new THREE.PMREMGenerator(renderer), envScene = new THREE.Scene(), envSky = new Sky();
   envSky.material = rig.sky.material; envSky.scale.setScalar(100); envScene.add(envSky); // same uniforms as the visible sky
-  let envRT: THREE.WebGLRenderTarget | undefined; const lastSun = new THREE.Vector3(); let lastTurb = 0;
+  let envRT: THREE.WebGLRenderTarget | undefined; const lastSun = new THREE.Vector3(); let lastTurb = 0, iblPending = false;
+  const iblCube = slicedCube(128, 0, .1, 1000);
+  // bench: pmrem.fromScene took 87 ms in one frame. Now: the sky cube is rendered one face per frame, then filtered
+  // with pmrem.fromCubemap into a REUSED target (GPU-only blur, no allocation).
   function bakeIBL(sunDir: THREE.Vector3) {
-    const turb = (rig.sky.material as THREE.ShaderMaterial).uniforms.turbidity.value as number;
-    if (envRT && sunDir.angleTo(lastSun) < .035 && Math.abs(turb - lastTurb) < .5) return; // re-bake when the sun moves 2° or haze changes
-    const t0 = performance.now(); lastSun.copy(sunDir); lastTurb = turb;
-    const next = pmrem.fromScene(envScene, 0, .1, 1000); envRT?.dispose(); envRT = next; scene.environment = next.texture;
+    const turb = (rig.sky.material as THREE.ShaderMaterial).uniforms.turbidity.value as number, t0 = performance.now();
+    if (!iblCube.busy && !iblPending && (!envRT || sunDir.angleTo(lastSun) >= .035 || Math.abs(turb - lastTurb) >= .5)) { lastSun.copy(sunDir); lastTurb = turb; iblCube.start(new THREE.Vector3()); iblPending = true; }
+    if (iblPending && iblCube.step(renderer, envScene)) { iblPending = false; envRT = pmrem.fromCubemap(iblCube.rt.texture, envRT); scene.environment = envRT.texture; }
     COST.iblMs = performance.now() - t0;
   }
 

@@ -5,6 +5,7 @@
  * typical mature ranges; [verify] = from memory, still to be checked against the chapter.
  */
 import type { Dist } from '../proc/rng';
+import { SUCCESSION, successionWeight } from './stand';
 export type CrownForm = 'spire' | 'open-pine' | 'broadleaf';
 export interface TreeSpec {
   id: string; label: string; latin: string; form: CrownForm;
@@ -83,8 +84,9 @@ export const TREE_SPECIES: TreeSpec[] = [
 export const chapmanRichards = (dbh: number, hd: { a: number; b: number; c: number }) => 1.3 + hd.a * (1 - Math.exp(-hd.b * dbh)) ** hd.c;
 export const TREE_BY_ID = Object.fromEntries(TREE_SPECIES.map(s => [s.id, s]));
 /** Stand mix at a site of wetness w (0 dry – 1 wet): weight = stand share × triangular niche fit. Cumulative table for `choose`. */
-export function standTable(wet: number) {
-  const w = TREE_SPECIES.map(s => { const [a, b] = s.site, mid = (a + b) / 2, half = (b - a) / 2 + .25; return s.stand * Math.max(.02, 1 - Math.abs(wet - mid) / half); });
+/** `age` (yr since fire, core/stand) shifts the mix along succession; omitted = the landscape-average mix. */
+export function standTable(wet: number, age?: number) {
+  const w = TREE_SPECIES.map(s => { const [a, b] = s.site, mid = (a + b) / 2, half = (b - a) / 2 + .25; return s.stand * Math.max(.02, 1 - Math.abs(wet - mid) / half) * (age === undefined ? 1 : successionWeight(SUCCESSION[s.id] ?? 'mid', age)); });
   const sum = w.reduce((p, c) => p + c, 0); let acc = 0;
   return TREE_SPECIES.map((s, i) => [s.id, i === TREE_SPECIES.length - 1 ? 1 : (acc += w[i] / sum)] as const);
 }

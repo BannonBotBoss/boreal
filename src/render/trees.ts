@@ -7,6 +7,8 @@ import { setTreeSource } from '../core/ground';
 import { random } from '../core/random';
 import { shaderClock } from './shaderClock';
 import { heightAt, type Entity } from '../core/world';
+import { RENDER } from '../core/renderSettings';
+import { fireAt, standDbh, standStructure } from '../core/stand';
 import { TREE_BY_ID, TREE_SPECIES, chapmanRichards, phenology, standTable } from '../core/treeSpecies';
 import { hash, sample, type Dist } from '../proc/rng';
 import { GLSL_NOISE } from '../proc/glsl';
@@ -26,8 +28,14 @@ const VARIANTS = 6;
 /** Species from the Kenora stand mix weighted by site wetness (low ground → black spruce/balsam poplar, dry sand → jack pine). */
 export function treeSpecies(seed: number, x?: number, z?: number): TreeSpecies {
   const wet = x === undefined || z === undefined ? .5 : Math.min(1, Math.max(0, (LEVEL.shore + 2.5 - heightAt(x, z)) / 4));
-  return choose('tree', 'species', random(seed ^ 0x9e3779b9)(), standTable(wet));
+  const age = x === undefined || z === undefined || !RENDER.standMap ? undefined : f('stand', 'stand age (yr since fire)', fireAt(x, z).age);
+  return choose('tree', 'species', random(seed ^ 0x9e3779b9)(), standTable(wet, age));
 }
+/** Stand age class for the shared geometry cache (representative ages; core/stand drives the structure). */
+const AGE_CLASSES = [20, 70, 140, 260];
+const ageClass = (x?: number, z?: number) => { if (x === undefined || z === undefined || !RENDER.standMap) return 1; const a = fireAt(x, z).age; return a < 40 ? 0 : a < 100 ? 1 : a < 190 ? 2 : 3; };
+/** Snag (standing dead) per tree: probability = snags/ha ÷ stems/ha of the stand (core/stand). */
+const isSnag = (seed: number, x?: number, z?: number) => { if (x === undefined || z === undefined || !RENDER.standMap) return false; const st = standStructure(fireAt(x, z).age); return random(seed ^ 0x5a17)() < st.snags / (st.stems + st.snags); };
 
 /** Bench hook: barkOff = true disables the near-tier bark shader (cost measurement). */
 export const TREE_FX = { barkOff: false };
@@ -123,7 +131,8 @@ const M = (x: number, y: number, z: number, sx = 1, sy = 1, sz = 1, rx = 0, ry =
 
 /** ONE builder; the crown FORM and every number come from the species spec (core/treeSpecies). Per-vertex attributes:
  * aLeaf (0 bark, 1 needle, 2 deciduous leaf), aFall (fall colour), aFlutter (petiole flutter) feed the shared tree shader. */
-function build(id: TreeSpecies, variant: number, detail: number) {
+function build(id: TreeSpecies, variant: number, detail: number, cls = 1, snag = false) {
+  const stand = standStructure(f('tree', 'stand age class (yr)', AGE_CLASSES[cls]));
   const sp = TREE_BY_ID[id] ?? TREE_SPECIES[0], rng = random(0x51ab + variant * 7919 + hash(id));
   const parts: THREE.BufferGeometry[] = [], seg = [8, 6, 4][detail];
   const tag = (g: THREE.BufferGeometry, leaf: number) => {
@@ -134,7 +143,7 @@ function build(id: TreeSpecies, variant: number, detail: number) {
   };
   // Per-tree attributes: sampled from the species table (bounded distributions, proc/rng `sample`), traced to the inspector.
   const A = sp.attr, S = (name: string, d: Dist) => f('tree', name, sample(rng, d));
-  const dbh = S('DBH (cm)', A.dbh);
+  const dbh = f('tree', 'DBH (cm)', standDbh(rng, A.dbh, stand)); f('tree', 'snag', snag ? 1 : 0);
   const h = f('tree', 'height', sample(rng, { mean: chapmanRichards(dbh, A.hd), sd: A.hd.sd, min: sp.height[0] * .5, max: sp.height[1] * 1.25, kind: 'lognormal' }));
   const crownBase = 1 - S('crown ratio', A.crownRatio), w = f('tree', 'crownWidth', h * sp.crownWidth / 2 * (.85 + rng() * .3));
   const r = f('tree', 'trunkRadius', dbh / 200 * 1.15); // DBH at 1.3 m → base radius (+15 % butt swell) [verify]
@@ -165,7 +174,9 @@ function build(id: TreeSpecies, variant: number, detail: number) {
   if (detail === 0) { const deadTop = crownY0, deadFrom = crownY0 * (1 - B.dead), rows = Math.min(14, Math.floor((deadTop - deadFrom) / B.spacing));
     for (let i = 0; i < rows; i++) for (let k = 0; k < Math.min(B.per, 4); k++) limb(deadFrom + i * B.spacing + rng() * .1, k * 2 * Math.PI / B.per + i * B.div, w * .3 * (.5 + rng() * .5), r * .12, B.angle + B.droop * .5, 0x3a2e25); }
   const childR = r * Math.max(1, B.per) ** (-1 / B.taper) * .5; // pipe model: r^Δ = Σ r_i^Δ (half the stem radius at crown base)
-  if (sp.form === 'spire') { // excurrent conifer: one drooping cone tier per (group of) whorls
+  if (snag) { // standing dead: bare broken limbs only (crown shed), core/stand snag share
+    for (let i = 0; i < Math.min(nodes * B.per, detail === 2 ? 0 : 8); i++) limb(h * (crownBase + rng() * (1 - crownBase) * .8), i * B.div, w * .35 * rng(), childR * .7, B.angle + B.droop, 0x4a3f36);
+  } else if (sp.form === 'spire') { // excurrent conifer: one drooping cone tier per (group of) whorls
     const tiers = f('tree', 'tiers', Math.min(nodes, detail === 2 ? 2 : detail === 1 ? 5 : 10));
     for (let i = 0; i < tiers; i++) {
       const t = i / tiers, y = h * (crownBase + (.96 - crownBase) * t), radius = Math.max(.3, w * B.len * (1 - t * .88) * (.85 + rng() * .3)), tall = h * (1 - crownBase) / tiers * 1.8 + h * (detail === 2 ? .2 : 0);
@@ -188,9 +199,9 @@ function build(id: TreeSpecies, variant: number, detail: number) {
 
 /** One LOD level of a tree: a single shared-geometry mesh, flagged so disposeObject skips it. */
 export function treeGeometry(entity: Entity, detail: number): THREE.Group {
-  const species = treeSpecies(entity.seed, entity.x, entity.z), variant = f('tree', 'variant', (entity.seed >>> 3) % VARIANTS), key = `${species}:${variant}:${detail}`;
+  const species = treeSpecies(entity.seed, entity.x, entity.z), variant = f('tree', 'variant', (entity.seed >>> 3) % VARIANTS), cls = ageClass(entity.x, entity.z), snag = isSnag(entity.seed, entity.x, entity.z), key = `${species}:${variant}:${cls}:${snag ? 1 : 0}:${detail}`;
   // Traced (inspector) builds bypass the shared cache so factors are reported and what-if overrides take effect.
-  let geometry = tracing() ? build(species, variant, detail) : cache.get(key); if (!geometry) cache.set(key, geometry = build(species, variant, detail));
+  let geometry = tracing() ? build(species, variant, detail, cls, snag) : cache.get(key); if (!geometry) cache.set(key, geometry = build(species, variant, detail, cls, snag));
   const mesh = new THREE.Mesh(geometry, treeMaterial()); mesh.userData.shared = !tracing();
   mesh.onBeforeRender = () => { wind.value = shaderClock.time; const w = windAt(INTEREST.x, 10, INTEREST.z), U = Math.hypot(w.x, w.z);
     windDir.value.set(w.x / (U || 1), w.z / (U || 1)); windAmp.value = Math.min(4, (U / 4) ** 2); const ph = phenology(WEATHER.day); barkFar.value = TREE_FX.barkOff ? 0 : INTEREST.near * .5; leafColour.value = ph.colour; leafOff.value = ph.off; }; // drag ∝ U² (4 m/s = the old look)
@@ -203,9 +214,9 @@ export function treeGeometry(entity: Entity, detail: number): THREE.Group {
 /** Generator dimensions for mass: the build's own traced factors (LOD 2), cached per species/variant. */
 const dimsCache = new Map<string, Record<string, number>>();
 export function treeDims(seed: number, x?: number, z?: number) {
-  const species = treeSpecies(seed, x, z), variant = (seed >>> 3) % VARIANTS, key = `${species}:${variant}`;
+  const species = treeSpecies(seed, x, z), variant = (seed >>> 3) % VARIANTS, cls = ageClass(x, z), key = `${species}:${variant}:${cls}`;
   let d = dimsCache.get(key);
-  if (!d) { const t: Trace = { factors: [], overrides: {} }; withTrace(t, () => build(species, variant, 2).dispose());
+  if (!d) { const t: Trace = { factors: [], overrides: {} }; withTrace(t, () => build(species, variant, 2, cls).dispose());
     d = Object.fromEntries(t.factors.filter(x => typeof x.value === 'number').map(x => [x.name, x.value as number])); dimsCache.set(key, d); }
   return { ...d, species } as Record<string, number> & { species: TreeSpecies };
 }

@@ -20,7 +20,7 @@ test('settings store applies, persists and resets over the schema', () => {
 test('population layer: defaults change nothing; density thins/adds trees deterministically', () => {
   const store = createSettingsStore(RENDER_SETTINGS, 'k', memory()); store.reset();
   const base = generateChunk(1, 2);
-  assert.deepEqual(applyPopulation(base, 1, 2), base);
+  store.set('world.standMap', false); assert.deepEqual(applyPopulation(base, 1, 2), base); // stand map off = original generator
   const count = (es: { kind: string }[], k: string) => es.filter(e => e.kind === k).length;
   store.set('world.treeDensity', .5); const thin = applyPopulation(base, 1, 2);
   assert.ok(count(thin, 'spruce') < count(base, 'spruce'));

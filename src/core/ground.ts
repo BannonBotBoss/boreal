@@ -7,6 +7,7 @@
  * Softness uses Bekker pressure–sinkage; appearance comes from the top-layer composition.
  * Every constant has a citation (PROJECT-RULES rule 5); [verify] = from memory or derived, still to be checked.
  */
+import { standAt } from './stand';
 import { hash, random } from '../proc/rng';
 import { f } from '../proc/trace';
 import { CHUNK_SIZE, WORLD_SEED, heightAt, generateChunk } from './world';
@@ -118,7 +119,9 @@ export function column(x: number, z: number, years = GROUND.years) {
 function columnRaw(x: number, z: number, years: number) {
   const gx = Math.floor(x / CELL), gz = Math.floor(z / CELL), cx = gx * CELL + CELL / 2, cz = gz * CELL + CELL / 2;
   const y = heightAt(cx, cz), wet = Math.min(1, Math.max(0, (LEVEL.shore + 1.5 - y) / 2)); // low ground is wetter
-  const standAge = f('ground', 'stand age since fire (yr)', Math.round(lerp(CLIMATE.fireReturnYears, noise(Math.floor(cx / 60), Math.floor(cz / 60), 'fire'))));
+  const stand = standAt(cx, cz, wet), standAge = f('ground', 'stand age since fire (yr)', Math.round(stand.age)); // core/stand (Van Wagner 1978)
+  f('ground', 'fire patch', stand.patch); f('ground', 'canopy closure', stand.canopy); f('ground', 'stems/ha', Math.round(stand.stems)); f('ground', 'snags/ha', Math.round(stand.snags));
+  f('ground', 'CWD (kg/m²)', stand.cwd); for (const [k, v] of Object.entries(stand.cover)) f('ground', `cover: ${k}`, v as number);
   let cover = 0, litter = 0;
   for (const t of treesNear(Math.floor(cx / CHUNK_SIZE), Math.floor(cz / CHUNK_SIZE))) if (Math.hypot(t.x - cx, t.z - cz) < t.r) { cover++; litter += t.rate; }
   const input = [f('ground', 'litterfall (kg/m²/yr)', litter), 0, f('ground', 'moss input (kg/m²/yr)', lerp(MOSS_INPUT, wet)), 0, 0];
@@ -136,7 +139,9 @@ function columnRaw(x: number, z: number, years: number) {
   if (y >= LEVEL.waterSurface) push({ id: 'snow', label: 'snowpack', thickness: snowM, kg: snowM * HYDRO.snowDensity, bulk: HYDRO.snowDensity, moisture: 1, source: 'core/weather Kessler + degree-day melt; Sturm et al. 2010' });
   const moist = f('ground', 'organic moisture (vol. share)', Math.min(1, (.3 + .6 * wet) * .5 + wx.soil * .5));
   if (y < LEVEL.waterSurface) push({ id: 'water', label: 'water', thickness: LEVEL.waterSurface - y, kg: (LEVEL.waterSurface - y) * 998, bulk: 998, source: 'CRC Handbook' });
-  push({ id: 'moss', label: 'live moss mat', thickness: .02 + .04 * wet, kg: (.02 + .04 * wet) * 20, bulk: 20, moisture: moist, source: 'Yi et al. 2009 (live horizon) [verify]' });
+  push({ id: 'cwd', label: 'coarse woody debris (down logs, area-averaged)', thickness: stand.cwd / 420, kg: stand.cwd, bulk: 420, moisture: moist, source: 'core/stand: Sturtevant et al. 1997 U-curve, k ≈ 0.03/yr (Harmon et al. 1986)' });
+  const mossT = (.02 + .04 * wet) * (.3 + .7 * (stand.cover.feathermoss + stand.cover.sphagnum)); // feathermoss/Sphagnum cover from the stand
+  push({ id: 'moss', label: 'live moss mat (feathermoss / Sphagnum)', thickness: mossT, kg: mossT * 20, bulk: 20, moisture: moist, source: 'Yi et al. 2009 (live horizon) [verify]' });
   POOLS.slice(0, 4).forEach((p, i) => push({ id: p.id, label: p.label, thickness: pool[i] / p.bulk, kg: pool[i], bulk: p.bulk, moisture: moist,
     age: `turnover ${(1 / k[i]).toFixed(0)} yr at ${CLIMATE.meanAnnualTempC} °C`, source: 'CBM-CFS3, Kurz et al. 2009; Yi et al. 2009' }));
   let ae = lerp(MINERAL.ae, noise(gx, gz, 'ae')), b = lerp(MINERAL.b, noise(gx, gz, 'b')), bulk = lerp(MINERAL.bulk, noise(gx, gz, 'bulk'));

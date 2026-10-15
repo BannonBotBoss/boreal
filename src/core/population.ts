@@ -8,15 +8,20 @@ import { ANIMAL_DEFAULT_ENERGY } from './animalBehavior';
 import { LEVEL } from './tuning';
 import { RENDER } from './renderSettings';
 import type { Kind } from './catalog';
+import { standAt } from './stand';
 
 /** Share of the 35 generator candidates per chunk that become each kind (world.ts roll thresholds). */
-const SHARE: Partial<Record<Kind, number>> = { spruce: .6, deer: .005 };
+const SHARE: Partial<Record<Kind, number>> = { spruce: .6, deer: .005, log: .11, plant: .06 };
 const keep = (e: Entity, mult: number) => mult >= 1 || hash(`keep:${e.key}`) / 4294967296 < mult;
 
 export function applyPopulation(entities: Entity[], cx: number, cz: number, worldSeed = WORLD_SEED): Entity[] {
-  const mult: Partial<Record<Kind, number>> = { spruce: RENDER.treeDensity, deer: RENDER.deer.on ? RENDER.deer.count : 0 };
+  // Stand structure (core/stand) at the chunk centre: stem density vs the generator's ~1500 stems/ha-equivalent baseline,
+  // coarse woody debris → logs, understory cover → small plants. Clamped to keep chunk build cost bounded.
+  const st = RENDER.standMap ? standAt((cx + .5) * CHUNK_SIZE, (cz + .5) * CHUNK_SIZE) : undefined, clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+  const mult: Partial<Record<Kind, number>> = { spruce: RENDER.treeDensity * (st ? clamp(st.stems / 1500, .45, 2.2) : 1), deer: RENDER.deer.on ? RENDER.deer.count : 0,
+    ...(st ? { log: clamp(st.cwd / 3, .3, 2.5), plant: clamp((st.cover.shrubs + st.cover.bunchberry + st.cover.seedlings) / .3, .3, 2) } : {}) };
   const out = entities.filter(e => keep(e, mult[e.kind] ?? 1));
-  for (const kind of ['spruce', 'deer'] as Kind[]) {
+  for (const kind of ['spruce', 'deer', 'log', 'plant'] as Kind[]) {
     const extra = (mult[kind] ?? 1) - 1; if (extra <= 0) continue;
     const rng = random(hash(`extra-${kind}-v1:${worldSeed}:${cx}:${cz}`)), tries = Math.round(35 * SHARE[kind]! * extra) + (rng() < (35 * SHARE[kind]! * extra) % 1 ? 1 : 0);
     for (let i = 0; i < tries; i++) {

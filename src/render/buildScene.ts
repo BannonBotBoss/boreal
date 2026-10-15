@@ -23,6 +23,7 @@ import { LEVEL, BLOCK } from '../core/tuning';
 import { stepForward } from '../proc/math';
 import type { SnapshotSource } from '../core/snapshot';
 import { createPost } from './post';
+import { createChunkBatch } from './batch';
 import { tiles } from '../photo/frame';
 import { applyGenome } from './appearance';
 import { entityMass, rigMass } from './mass';
@@ -52,7 +53,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const post = createPost(renderer, scene, camera);
   const photoreal = createPhotoreal(renderer, scene, camera, sky, BASE_RATIO); // PBR lighting, CSM, IBL, GTAO + quality governor
   const ratio = () => Math.min(BASE_RATIO, 1.5) * photoreal.tier.resScale;
-  const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.LOD>; near: boolean }>();
+  const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.Object3D>; near: boolean; batch: import('./batch').ChunkBatch }>();
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
   const eatenForage = new Map<string, string>(); // plant key -> loaded chunk; never serialized
   let activeContext: EventContext;
@@ -72,10 +73,11 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const hares = createHares(scene); // src/animals/hare.ts
   const halo = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.85, 40), new THREE.MeshBasicMaterial({ color: 0xffe9a1, side: THREE.DoubleSide, transparent: true, opacity: .7, depthWrite: false }));
   halo.rotation.x = -Math.PI / 2; halo.visible = false; scene.add(halo);
+  let lastBatchLod = -1;
   let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
   /** Instantiates a chunk from the math layers as a sliced job (core/interest): near = full, mid = coarse terrain + far LODs. */
   function* createChunk(cx: number, cz: number, context: EventContext, near: boolean) {
-    const root = new THREE.Group(), objects = new Map<string, THREE.LOD>();
+    const root = new THREE.Group(), objects = new Map<string, THREE.Object3D>(), batch = createChunkBatch();
     const geometry: THREE.BufferGeometry = yield* terrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near);
     const ground = new THREE.Mesh(geometry, terrainMaterial()); ground.receiveShadow = true;
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; ground.layers.enable(1); root.add(ground); // layer 1 = GI probe capture
@@ -89,13 +91,23 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
         else { const rig = createDeerRig(entity.seed, 0); rig.root.scale.setScalar(entity.scale); rig.brain.heading = entity.rotation; rig.brain.energy = entity.energy ?? ANIMAL_DEFAULT_ENERGY; rig.root.userData.inspect = { type: 'deer', key: entity.key }; const g = lookOf(entity.key, 'deer'); if (g) applyGenome(rig.root, g); scene.add(rig.root); animals.set(entity.key, {rig, entity}); }
         continue;
       }
+      const ranges = (entity.kind === 'rock' ? [0, 10, 24] : [0, 55, 115]).map(r => r * RENDER.lod[entity.kind === 'rock' ? 'rocks' : entity.kind === 'spruce' ? 'trees' : 'props']);
+      const y = heightAt(entity.x, entity.z);
+      if (entity.kind !== 'rock' && entity.kind !== 'person') { // static: batched per chunk + material (render/batch)
+        const levels = [0, 1, 2].map(d => generateGeometry(entity, d));
+        batch.add(entity.key, new THREE.Vector3(entity.x, y, entity.z), levels, ranges);
+        const proxy = new THREE.Object3D(); proxy.position.set(entity.x, y, entity.z); proxy.userData.inspect = { type: 'entity', key: entity.key }; objects.set(entity.key, proxy);
+        yield; continue;
+      }
       const lod = new THREE.LOD();
-      for (let detail = 0; detail < 3; detail++) lod.addLevel(generateGeometry(entity, detail), (entity.kind === 'rock' ? [0, 10, 24] : [0, 55, 115])[detail] * RENDER.lod[entity.kind === 'rock' ? 'rocks' : entity.kind === 'spruce' ? 'trees' : 'props'], .12);
+      for (let detail = 0; detail < 3; detail++) lod.addLevel(generateGeometry(entity, detail), ranges[detail], .12);
       if (entity.kind === 'rock') lod.addLevel(new THREE.Group(), 45 * RENDER.lod.rocks, .12);
-      lod.position.set(entity.x, heightAt(entity.x, entity.z), entity.z); lod.userData.inspect = { type: 'entity', key: entity.key }; root.add(lod); objects.set(entity.key, lod);
+      lod.position.set(entity.x, y, entity.z); lod.userData.inspect = { type: 'entity', key: entity.key }; root.add(lod); objects.set(entity.key, lod);
       yield;
     }
-    scene.add(root); return { root, entities, objects, near };
+    for (const m of batch.build()) root.add(m);
+    yield;
+    scene.add(root); return { root, entities, objects, near, batch };
   }
   /** `also`: a second streaming centre (the photo-mode camera); the player's own chunks always stay loaded. */
   function sync(x: number, z: number, altitude: number, context: EventContext, eventRevision: number, also?: { x: number; z: number }) {
@@ -133,7 +145,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       eatenForage.set(plantKey, `${Math.floor(plant.x / CHUNK_SIZE)}:${Math.floor(plant.z / CHUNK_SIZE)}`);
       chunk.entities.splice(index, 1);
       const lod = chunk.objects.get(plantKey);
-      if (lod) { chunk.root.remove(lod); disposeObject(lod); chunk.objects.delete(plantKey); }
+      if (lod) { chunk.root.remove(lod); disposeObject(lod); chunk.objects.delete(plantKey); chunk.batch.hide(plantKey); }
       animal.rig.brain.energy = energy; animal.entity.energy = energy;
       return;
     }
@@ -211,7 +223,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     for (const chunk of chunks.values()) for (const entity of chunk.entities) {
       if (entity.kind === 'rock' && pushFrom?.key === entity.key) {
-        const t = pushProgress(actionElapsed), lod = chunk.objects.get(entity.key)!;
+        const t = pushProgress(actionElapsed), lod = chunk.objects.get(entity.key)! as THREE.LOD;
         const pose = { ...entity, x: pushFrom.x + (entity.x - pushFrom.x) * t, z: pushFrom.z + (entity.z - pushFrom.z) * t,
           rollX: (pushFrom.rollX ?? 0) + ((entity.rollX ?? 0) - (pushFrom.rollX ?? 0)) * t,
           rollZ: (pushFrom.rollZ ?? 0) + ((entity.rollZ ?? 0) - (pushFrom.rollZ ?? 0)) * t };
@@ -219,9 +231,10 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
         for (const level of lod.levels) if (level.object.children.length) seatRock(level.object, pose);
       }
       if (entity.kind !== 'person') continue;
-      const lod = chunk.objects.get(entity.key)!;
+      const lod = chunk.objects.get(entity.key)! as THREE.LOD;
       lod.rotation.y = Math.sin(time * .7 + entity.seed) * .07;
     }
+    if (time - lastBatchLod > .25 || time < lastBatchLod) { lastBatchLod = time; for (const c of chunks.values()) c.batch.update(camera.position, 1); }
     simulateAnimals(dt, x, z, frozen);
     const hour = photo?.hour ?? gameHour(time, startHour); clock = formatHour(hour);
     const lit = sky.update(hour, time, camera, wolf.root.position); darkness = lit.light.night;
@@ -238,7 +251,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       if(Math.hypot(plant.x-wolf.root.position.x,plant.z-wolf.root.position.z)>2.5)return;
       eatenForage.set(plantKey,`${Math.floor(plant.x/CHUNK_SIZE)}:${Math.floor(plant.z/CHUNK_SIZE)}`);
       chunk.entities.splice(index,1);const lod=chunk.objects.get(plantKey);
-      if(lod){chunk.root.remove(lod);disposeObject(lod);chunk.objects.delete(plantKey);}
+      if(lod){chunk.root.remove(lod);disposeObject(lod);chunk.objects.delete(plantKey);chunk.batch.hide(plantKey);}
       wolf.brain.energy=Math.min(100,wolf.brain.energy+FORAGE_ENERGY);wolf.brain.meal=undefined;
       return;
     }
@@ -289,6 +302,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     ray.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
     const roots = [...[...chunks.values()].map(c => c.root), ...[...animals.values()].map(a => a.rig.root), ...hares.list().map(h => h.root), wolf.root];
     for (const hit of ray.intersectObjects(roots, true)) {
+      const keys = hit.object.userData.keys as string[] | undefined;
+      if (keys && hit.batchId !== undefined) return { type: 'entity', key: keys[hit.batchId], point: hit.point.clone() };
       let o: THREE.Object3D | null = hit.object; while (o && !o.userData.inspect) o = o.parent;
       if (o?.visible !== false && o) return { ...(o.userData.inspect as { type: string; key: string }), point: hit.point.clone() };
     }

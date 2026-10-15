@@ -112,6 +112,7 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
     composer.addPass(new RenderPass(scene, camera));
     composer.addPass(sunfx = new ShaderPass(SUNFX));
     composer.addPass(gtao = new GTAOPass(scene, camera, 512, 512)); // GTAO (Jiménez et al. 2016), three r180 examples/jsm, MIT
+    gtao.updateGtaoMaterial({ samples: 8 }); gtao.updatePdMaterial({ samples: 8 }); // bench: 16+16 samples at full res = ~43 ms; half res + 8/8 samples
     composer.addPass(bokeh = new BokehPass(scene, camera, { focus: 8, aperture: .001, maxblur: .02 }));
     composer.addPass(bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0, .4, .85));
     composer.addPass(new OutputPass());

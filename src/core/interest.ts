@@ -32,6 +32,7 @@ export function enqueue<T>(key: string, priority: number, gen: Generator<unknown
 }
 export const cancel = (key: string) => jobs.delete(key);
 export const pending = (key: string) => jobs.has(key);
+export const queued = () => jobs.size;
 /** Runs queued jobs for at most `budgetMs` (always at least one slice). Returns the time used. */
 export function runJobs(budgetMs = INTEREST.budgetMs, now = () => performance.now()) {
   const t0 = now();

@@ -11,6 +11,7 @@
  * Postures are written to rig.root.userData.posture for the rig ('graze' | 'scan' | 'alert' | 'flee' | 'walk').
  */
 import type { AnimalBrain } from './animalBehavior';
+import { random, range as lerp } from '../proc/rng';
 
 export const HERD = {
   radius: 30, cohesion: .35, align: .25,
@@ -26,8 +27,6 @@ export interface DeerState {
 export interface DeerView { key: string; x: number; z: number; brain: AnimalBrain }
 
 const states = new Map<string, DeerState>();
-const lerp = (r: () => number, [a, b]: number[]) => a + r() * (b - a);
-function rngFor(seed: number) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 function turn(from: number, to: number, max: number) {
   let d = ((to - from + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
   return from + Math.max(-max, Math.min(max, d));
@@ -35,7 +34,7 @@ function turn(from: number, to: number, max: number) {
 
 export function deerState(key: string, brain: AnimalBrain) {
   let s = states.get(key);
-  if (!s) { const rng = rngFor(brain.seed * 9301 + 49297); s = { posture: 'graze', timer: lerp(rng, HERD.graze), heading: brain.heading, alertLeft: 0, fleeTime: 0, bounded: false, rng, snorted: false, settled: 0 }; states.set(key, s); }
+  if (!s) { const rng = random(brain.seed * 9301 + 49297); s = { posture: 'graze', timer: lerp(rng, HERD.graze), heading: brain.heading, alertLeft: 0, fleeTime: 0, bounded: false, rng, snorted: false, settled: 0 }; states.set(key, s); }
   return s;
 }
 export function forgetDeer(key: string) { states.delete(key); }

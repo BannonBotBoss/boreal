@@ -5,7 +5,8 @@
  * Caught by body contact or by a pounce (jump) that lands close. Non-gory: the hare just vanishes with a squeak.
  */
 import * as THREE from 'three';
-import { heightAt } from '../core/world';
+import { heightAt, WORLD_SEED } from '../core/world';
+import { stream, range } from '../proc/rng';
 
 export const HARE = {
   count: 5, spawnMin: 18, spawnMax: 45, despawn: 70, respawnSeconds: [25, 45] as [number, number],
@@ -15,11 +16,10 @@ export const HARE = {
   catchContact: 1.3, catchPounce: 2.4, energy: 35, stamina: 40,
 };
 export type HareState = 'nibble' | 'hop' | 'freeze' | 'flee';
-export interface Hare { id: number; x: number; z: number; heading: number; state: HareState; timer: number; flee: number; zig: number; hopPhase: number; root: THREE.Group }
+export interface Hare { id: number; x: number; z: number; heading: number; state: HareState; timer: number; flee: number; zig: number; hopPhase: number; root: THREE.Group; rng: () => number }
 export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
 export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean }
 
-const rand = (a: number, b: number) => a + Math.random() * (b - a);
 function model() {
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
   const brown = new THREE.MeshStandardMaterial({ color: 0x8a6d4e, flatShading: true, roughness: 1 });
@@ -37,12 +37,14 @@ function model() {
 
 export function createHares(scene: THREE.Scene) {
   const hares: Hare[] = []; let nextId = 1; const pending: number[] = [];
+  const spawnRng = stream(WORLD_SEED, 'hares-v1'); // seeded: one stream for placement, one per hare id for behaviour
   function spawn(px: number, pz: number) {
     for (let tries = 0; tries < 12; tries++) {
-      const a = Math.random() * Math.PI * 2, d = rand(HARE.spawnMin, HARE.spawnMax), x = px + Math.sin(a) * d, z = pz + Math.cos(a) * d;
+      const a = spawnRng() * Math.PI * 2, d = range(spawnRng, [HARE.spawnMin, HARE.spawnMax]), x = px + Math.sin(a) * d, z = pz + Math.cos(a) * d;
       if (heightAt(x, z) < .5) continue;
       const { root } = model(); scene.add(root);
-      hares.push({ id: nextId++, x, z, heading: Math.random() * 6.3, state: 'nibble', timer: rand(1, 4), flee: 0, zig: 0, hopPhase: 0, root });
+      const id = nextId++, rng = stream(WORLD_SEED, `hare-v1:${id}`);
+      hares.push({ id, x, z, heading: rng() * 6.3, state: 'nibble', timer: range(rng, [1, 4]), flee: 0, zig: 0, hopPhase: 0, root, rng });
       return;
     }
   }
@@ -59,10 +61,10 @@ export function createHares(scene: THREE.Scene) {
       const dx = h.x - wolf.x, dz = h.z - wolf.z, d = Math.hypot(dx, dz);
       if (d > HARE.despawn) { remove(h); continue; }
       if (d < HARE.catchContact || (wolf.pouncing && d < HARE.catchPounce)) {
-        events.push({ type: 'caught', x: h.x, z: h.z }); remove(h); pending.push(time + rand(...HARE.respawnSeconds)); continue;
+        events.push({ type: 'caught', x: h.x, z: h.z }); remove(h); pending.push(time + range(h.rng, HARE.respawnSeconds)); continue;
       }
       const noticeAt = HARE.notice[wolf.mode] ?? 14, boltAt = HARE.bolt[wolf.mode] ?? 5;
-      let speed = 0; h.timer -= dt;
+      let speed = 0; h.timer -= dt; const rand = (a: number, b: number) => range(h.rng, [a, b]);
       if (h.state !== 'flee' && h.state !== 'freeze' && d < noticeAt && (wolf.moving || d < boltAt)) { h.state = 'freeze'; h.timer = rand(...HARE.freezeSeconds); }
       // A stalking (stealth) wolf keeps a hare frozen, trusting its camouflage, until it is very close.
       const stalking = wolf.mode.includes('stealth');
@@ -70,7 +72,7 @@ export function createHares(scene: THREE.Scene) {
       else if (h.state === 'freeze' && h.timer <= 0 && d >= noticeAt) { h.state = 'nibble'; h.timer = rand(2, 5); }
       if (h.state === 'flee') {
         h.flee += dt; h.zig -= dt;
-        if (h.zig <= 0) { h.zig = rand(...HARE.zigEvery); h.heading = Math.atan2(dx, dz) + Math.PI + (Math.random() < .5 ? -1 : 1) * HARE.zigAngle * Math.random(); }
+        if (h.zig <= 0) { h.zig = rand(...HARE.zigEvery); h.heading = Math.atan2(dx, dz) + Math.PI + (h.rng() < .5 ? -1 : 1) * HARE.zigAngle * h.rng(); }
         speed = h.flee < HARE.burstSeconds ? HARE.burstSpeed : HARE.tiredSpeed;
         if (d > HARE.safeDistance) { h.state = 'nibble'; h.timer = rand(3, 6); }
       } else if (h.state === 'hop') { speed = 1.6; if (h.timer <= 0) { h.state = 'nibble'; h.timer = rand(2, 6); } }

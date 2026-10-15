@@ -1,0 +1,47 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { hash, random, mulberry32, stream, range } from '../src/proc/rng';
+import { random as coreRandom } from '../src/core/random';
+import { mulberry32 as samplerRng } from '../src/core/surfaceSampler';
+import { buildBody, wolfCoat } from '../src/core/body';
+import { wolfTubes, sculptWolf } from '../src/core/wolfBody';
+import { buildFurCards, strandAlpha } from '../src/render/furCards';
+import { generateChunk } from '../src/core/world';
+
+// The two generators that existed before proc/rng.ts, copied verbatim (core/random.ts and core/surfaceSampler.ts).
+function legacyRandom(seed: number) {
+  return () => { seed += 0x6d2b79f5; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function legacyMulberry32(seed: number) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const digest = (x: string | Uint8Array) => createHash('sha256').update(x).digest('hex').slice(0, 16);
+
+test('shared rng reproduces both legacy generators exactly', () => {
+  const seeds = [0, 1, 3, 5, 9, 77, 1400, 0x51ab, 0xffffffff, 0x9e3779b9, -1, -123456, 1400 ^ 0x9e3779b9, hash('1:1400:0:0'), hash('stones-v1:1400:-2:3')];
+  for (const s of seeds) {
+    const a = random(s), b = legacyRandom(s), c = legacyMulberry32(s), d = coreRandom(s), e = samplerRng(s);
+    for (let i = 0; i < 5000; i++) { const v = a(); assert.equal(v, b()); assert.equal(v, c()); assert.equal(v, d()); assert.equal(v, e()); }
+  }
+  assert.equal(mulberry32, random);
+});
+
+test('streams and ranges are seeded', () => {
+  const a = stream(1400, 'hare-v1:1'), b = stream(1400, 'hare-v1:1'), c = stream(1400, 'hare-v1:2');
+  const xs = [...Array(20)].map(() => range(a, [2, 5]));
+  assert.deepEqual(xs, [...Array(20)].map(() => range(b, [2, 5])));
+  assert.notDeepEqual(xs, [...Array(20)].map(() => range(c, [2, 5])));
+  assert.ok(xs.every(x => x >= 2 && x < 5));
+});
+
+test('fur cards and world chunks are byte-identical to the pre-refactor baseline (56506c5)', () => {
+  const body = buildBody(wolfTubes(wolfCoat(1400))), clear = sculptWolf(body);
+  const g = buildFurCards(body, { count: 3000, length: .03, width: .0065, seed: 9, clear });
+  const fur = Object.entries(g.attributes).map(([k, a]) => k + digest(new Uint8Array((a.array as Float32Array).buffer))).join(',');
+  assert.equal(digest(fur), '181874e9c7eb7b23');
+  assert.equal(digest(new Uint8Array((strandAlpha().image.data as Uint8Array).buffer)), '8b54d4c67942e685');
+  const chunks = []; for (let x = -3; x < 3; x++) for (let z = -3; z < 3; z++) chunks.push(generateChunk(x, z));
+  assert.equal(digest(JSON.stringify(chunks)), 'ffe391673e1a808a');
+});

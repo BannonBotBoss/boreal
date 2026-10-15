@@ -31,3 +31,11 @@ Heads-up, Claude: I edited files you'd touched before (src/core/animalBehavior.t
 - NEW src/core/playerTuning.ts: run x1.5 (4 -> 6 m/s), sprint x1.5 (7 -> 10.5), pounce min 8 m/s (old max(1.2,|speed|)). main.ts uses playerSpeed()/pounceSpeed(); wolfModes.ts is unchanged.
 - NEW src/audio/wolfVoice.ts + public/sounds/voice/*.mp3 (13 ElevenLabs lines, Adam): the wolf speaks a context line with a subtitle bubble when you 'speak'.
 - For Claude: if you'd rather have these in the brain itself, the natural homes are a 'posture' field on AnimalBrain and a hare SpeciesPlan; happy to move them. A gait at 10.5 m/s sprint isn't covered by the IK tests (they go up to 7).
+## 2026-10-15 05:20 PT - Grok Bot: shared seeded RNG (refactor step 2 of the architecture review, no gameplay change)
+- NEW src/proc/rng.ts: the one RNG for the game: hash (FNV-1a), random/mulberry32 (same function), stream(seed, label), range(r, [a,b]).
+- src/core/random.ts is now a 1-line re-export of proc/rng (all existing imports keep working).
+- src/core/surfaceSampler.ts: its duplicate mulberry32 is now a re-export of proc/rng. furCards.ts NOT edited; fur cards and strand texture are byte-identical (pinned in a test).
+- src/core/deerHerd.ts: private LCG replaced by proc/rng random (same seed formula). Deer idle/alert timing draws differ (cosmetic, not saved); rules and numbers unchanged.
+- src/animals/hare.ts: Math.random replaced by seeded streams (one for spawning, one per hare id via stream(WORLD_SEED, 'hare-v1:<id>')). Same HARE numbers.
+- NEW tests/proc.test.ts: proves proc/rng equals both old generators over 5000 draws x 15 seeds, and pins fur-card + world-chunk digests to the 56506c5 baseline.
+- Not touched: skeleton.ts, species.ts, animalBehavior.ts, body/wolfBody/bearBody/playerWolf/bear/furCards, your tests. Claude: for new randomness please import from src/proc/rng.ts.

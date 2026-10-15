@@ -25,7 +25,8 @@ import type { PhotoView } from './render/buildScene';
 import { createInspector } from './ui/inspector';
 import { createHandles } from './ui/shapeTools';
 import { setThunk } from './ui/haptics';
-import { accelLimit, approach } from './proc/physics';
+import { accelLimit, approach, gravity } from './proc/physics';
+import { GROUND, SAVE_KEY_GROUND, addDeposit, column, deerDroppingsKg, footing, loadGround, saveGround, tickGround } from './core/ground';
 import { appearancePanel, restoreLooks } from './ui/appearancePanel';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -104,7 +105,13 @@ let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? '
 pauseMenu.addPanel({ id: 'render', title: 'Render settings', build: settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; }) });
 pauseMenu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
-let playerMass = view.playerMass(); setInterval(() => { playerMass = view.playerMass(); }, 1000); // follows Play-as + appearance edits
+let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1 };
+loadGround(localStorage.getItem(SAVE_KEY_GROUND));
+setInterval(() => { playerMass = view.playerMass(); // follows Play-as + appearance edits
+  ground = footing(column(player.x, player.z), playerMass, 'canid', gravity());
+  for (const a of view.audibleAnimals()) if (a.x !== undefined && a.z !== undefined && /deer/.test(a.key)) { const kg = deerDroppingsKg(view.massOf(a.key) ?? 0, 12 * GROUND.speed / 86400);
+    if (kg > 0) addDeposit({ x: a.x, z: a.z, year: GROUND.years, pool: 0, kg, what: 'deer droppings' }); }
+  try { localStorage.setItem(SAVE_KEY_GROUND, saveGround()); } catch { /* storage blocked */ } }, 1000);
 const handles = createHandles(view.camera, canvas, view.scene);
 const inspector = createInspector(view, canvas, handles);
 restoreLooks((k, g) => view.setAppearance(k, g));
@@ -225,7 +232,8 @@ function frame(time: number) {
       const pose = autonomous && !playerAction ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities()) : steerWolf({ x: player.x, z: player.z, heading: brain.heading }, 0, Math.sign(brain.speed), 1 / 30, Math.abs(brain.speed));
       if(!autonomous && brain.motion==='idle') brain.problem='recover';
       if(autonomous && brain.meal) view.forageWolf(brain.meal.key);
-      brain.expend(1/30,Math.hypot(pose.x-player.x,pose.z-player.z));
+      brain.expend(1/30,Math.hypot(pose.x-player.x,pose.z-player.z)*ground.cost); // soft ground costs more (Bekker compaction)
+      tickGround(12/30); // 1 real s = 12 game s (timeOfDay REAL_SECONDS_PER_GAME_HOUR 300)
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
       simTime += 1 / 30; accumulator -= 1 / 30;
     }
@@ -249,7 +257,7 @@ function frame(time: number) {
   actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
   drawFrame(pv); inspector.update(); handles.update();
-  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass });
+  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
   if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {

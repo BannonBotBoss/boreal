@@ -1,5 +1,6 @@
 ﻿import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { setTreeSource } from '../core/ground';
 import { random } from '../core/random';
 import { shaderClock } from './shaderClock';
 import type { Entity } from '../core/world';
@@ -136,3 +137,5 @@ export function treeMass(e: Entity) {
   return massOf('tree', [{ region: 'trunk', volume: frustum(d.trunkRadius * s, d.trunkRadius * .45 * s, d.trunkHeight * sy) },
     { region: conifer ? 'crownConifer' : 'crownBroadleaf', volume: cone(w * s, h * .8 * sy) * PHYS.crownFill }]);
 }
+// Ground litter input needs species + crown radius per tree (core/ground stays three.js-free).
+setTreeSource(seed => treeSpecies(seed), seed => treeDims(seed).crownWidth ?? 1.6);

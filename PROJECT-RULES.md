@@ -29,6 +29,16 @@ One pipeline: **species spec → skeleton (`skeleton.ts`/`species.ts`) → body 
 - So mass follows size (×2 size → ×8 mass, tested), and appearance edits change mass automatically. The inspector shows the region breakdown.
 - Everything that moves steps through ONE integrator (`physics.step`). Inertia = force/mass (`accelLimit`), contacts exchange momentum (`collide`), impacts are ½mv² (`kinetic`). Static things still carry mass for interactions and the inspector.
 
+## 5. Use real-world values everywhere
+- Every constant and every table row comes from a published measurement and has a citation comment (author, year, venue or table).
+- No invented numbers. A value from memory or derived gets a `[verify]` tag until it is checked against the source; pure game calibration says so.
+
+## 6. The ground is layered material, not a hard surface
+- Each ~2 m cell is a column: water, moss mat, litter (L), fragmented (F), duff, humus, mineral Ae/B with SOM, bedrock (`core/ground.ts`).
+- Softness comes from pressure = weight / foot area (Bekker). It drives sinkage, landing absorption and movement cost.
+- Trees and fauna deposit material. Decay follows the CBM-CFS3 chain (rates × Q10). Mass is conserved minus respiration.
+- Time is closed-form: a cell is a function of seed + elapsed years, so catch-up is exact and there is no per-frame stepping.
+
 ## Checks before you commit
 1. `npx tsc --noEmit` and `npm test` (includes `tests/rules.test.ts`) are green.
 2. If you fixed an allowlisted legacy file, remove it from its allowlist. The lists only shrink.

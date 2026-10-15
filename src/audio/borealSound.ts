@@ -37,7 +37,7 @@ export interface AudibleAnimal { key: string; motion: string; problem: string; x
 export interface SoundFrame {
   dt: number; halted: boolean; x: number; z: number; yaw: number; darkness: number;
   wolf: { motion: string; phase: number };
-  mode?: string; exhausted?: boolean; /** player mass + the default wolf mass (landing impact scaling) */ mass?: number; refMass?: number;
+  mode?: string; exhausted?: boolean; /** player mass + the default wolf mass (landing impact scaling) */ mass?: number; refMass?: number; /** core/ground footing().absorb: soft ground = quieter thud, weaker haptic */ groundAbsorb?: number;
   animals: AudibleAnimal[];
 }
 
@@ -210,7 +210,7 @@ export class BorealSound {
     if (Math.floor(w.phase * 2) !== Math.floor(wp.phase * 2) && (w.motion === 'walk' || w.motion === 'run' || w.motion === 'back'))
       this.playAt(w.motion === 'run' ? 'paw-run' : 'paw-walk', undefined, MIX.wolfSteps);
     if (wp.motion === 'jump' && w.motion !== 'jump') { // landing thud + haptic scale with impact energy (½ m v², proc/physics)
-      const k = Math.sqrt(jumpArc(f.mass ?? 1).energy / jumpArc(f.refMass ?? f.mass ?? 1).energy);
+      const k = Math.sqrt(jumpArc(f.mass ?? 1).energy / jumpArc(f.refMass ?? f.mass ?? 1).energy) * (f.groundAbsorb ?? 1);
       this.playAt('land', undefined, MIX.land * Math.min(2, Math.max(.4, k)), 1 / Math.min(1.4, Math.max(.7, Math.sqrt(k))), false); haptic('land', 0, Math.min(1.6, k)); }
     this.wolfPrev = { motion: w.motion, phase: w.phase };
 

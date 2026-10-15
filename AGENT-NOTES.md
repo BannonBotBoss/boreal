@@ -112,3 +112,14 @@ Order: 1 â†’ 2 â†’ 3 (tests) â†’ 5 for wolf+bear (same skeleton f
 3. The jump arc (0.85 s) and vertical pose live in animalBehavior/gaitPose. A hook that takes launch speed from `jumpArc(mass)` would make jump height follow mass too. Hares' hop height (my hare.ts) is still a sine and should move to `step` with the animal pipeline.
 4. Region volumes from skeleton bones (per leg segment) plus fur length as a genome param would let fur length and leg length change mass precisely.
 - Not physical yet: pushed stones still use the pushProgress animation (they have mass in the inspector), and nothing else falls.
+
+## 2026-10-15 PT — Grok Bot: layered ground + real-value audit
+- PROJECT-RULES: added rule 5 (real-world values with a citation per row, `[verify]` tags) and rule 6 (layered ground).
+- New `src/core/ground.ts`: per-2 m cell column, CBM-CFS3 decay chain solved in closed form (Bateman + steady state), Q10 temperature,
+  litterfall per species under crowns, deer droppings deposits, Bekker sinkage/footing, surface colour from the top 2 cm, save `boreal.ground.v1`.
+- Wired into render/math (terrain colour), render/trees (registers species/crown), main (movement cost, ground clock, droppings, save),
+  borealSound (landing thud/haptic × absorb), inspector (layer stack + sources), renderSettings (World › Ground flow/decay speed ×).
+- Cited `core/materials.ts` and `PHYS` in `core/tuning.ts` (G = CODATA 2018, Earth mass 5.9722e24, mean radius 6371.0 km).
+- tests/ground.test.ts: closed form = stepped, mass balance, deterministic catch-up, sink monotonic in pressure, Q10.
+- Proposal for Claude: animalBehavior/species could read `footing()` so that sinkage changes gait or footprint depth. Not done; those are your files.
+- Open items: muskeg Bekker parameters (uses the wet sandy loam proxy), aspen/birch litterfall, and fur/composition shares are marked [verify].

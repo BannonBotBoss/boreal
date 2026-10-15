@@ -4,6 +4,7 @@
  * values for systems without trace hooks yet. One panel renderer, one gizmo set, one what-if path (overrides by name).
  */
 import * as THREE from 'three';
+import { GROUND, column } from '../core/ground';
 import { withTrace, setLiveTrace, scope, type Factor, type Trace, type Value } from '../proc/trace';
 import { stream } from '../proc/rng';
 import { CHUNK_SIZE, WORLD_SEED, chunkSeed, generateChunk, heightAt, terrainBand } from '../core/world';
@@ -56,6 +57,8 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
     if (s.type === 'terrain') {
       const t: Trace = { factors: [] }; withTrace(t, () => terrainBand(heightAt(s.point.x, s.point.z)));
       out.push(...t.factors, obs('terrain', 'height', heightAt(s.point.x, s.point.z)), obs('sound', 'nearbyWater', nearbyWater(s.point.x, s.point.z)));
+      const gt: Trace = { factors: [] }, col = withTrace(gt, () => column(s.point.x, s.point.z)); out.push(...gt.factors, obs('ground', 'cell', col.cell), obs('ground', 'game years elapsed', GROUND.years));
+      for (const l of col.layers) out.push(obs('layers', `${(l.top * 100).toFixed(1)} cm ${l.label}`, `${(l.thickness * 100).toFixed(1)} cm · ${l.kg.toFixed(2)} kg/m² · ρ ${l.bulk} kg/m³${l.moisture !== undefined ? ` · moisture ${Math.round(l.moisture * 100)}%` : ''}${l.age ? ` · ${l.age}` : ''} — ${l.source}`));
       fields = {}; // 24x24 noise layer previews, 40 m around the point
       for (let j = 0; j < 24; j++) for (let i = 0; i < 24; i++) {
         const g: Trace = { factors: [] }; withTrace(g, () => heightAt(s.point.x + (i - 12) * 40 / 24, s.point.z + (j - 12) * 40 / 24));

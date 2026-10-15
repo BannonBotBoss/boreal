@@ -24,11 +24,13 @@ export const BLOCK = {
 };
 /** Physical constants (SI). Gravity is DERIVED from these in proc/physics.ts; never write a literal g. */
 export const PHYS = {
-  G: 6.674e-11, EARTH_MASS: 5.972e24, EARTH_RADIUS: 6.371e6,
+  G: 6.67430e-11,        // CODATA 2018 recommended value (Tiesinga et al. 2021, Rev. Mod. Phys. 93:025010)
+  EARTH_MASS: 5.9722e24, // NASA Earth Fact Sheet (Williams, NSSDCA) / IAU 2015 nominal GM ÷ G
+  EARTH_RADIUS: 6.3710e6, // IUGG mean radius R1 (Moritz 2000, Geodetic Reference System 1980)
   /** Share of a crown's cone that is wood + foliage (the rest is air); materials/densities live in core/materials.ts. */
-  crownFill: .08,
+  crownFill: .08, // [verify] crown volume fraction occupied by tissue; order of crown bulk density 0.5–1 kg/m³ foliage (Waring & Running 2007)
   /** Muscle force ~ k * m^(2/3) (so heavier animals accelerate/turn slower); k calibrated so the wolf keeps today's feel. */
-  wolfAccel: 30,
+  wolfAccel: 30, // game calibration (keeps today's feel), not a measurement
   /** Claude's jump lasts 0.85 s (animalBehavior); the ballistic arc that fits it gives launch/landing speed. */
-  jumpSeconds: .85,
+  jumpSeconds: .85, // Claude's jump duration in animalBehavior.ts
 };

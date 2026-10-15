@@ -5,6 +5,7 @@
  */
 import { HARE } from '../animals/hare';
 import { FEEL, HAPTIC_CATS } from '../ui/haptics';
+import { GROUND } from './ground';
 
 /** Live config read by the world/render layers (buildScene, world scatter, hares, sound). Defaults = original game. */
 export const RENDER = {
@@ -46,6 +47,7 @@ export const RENDER_SETTINGS: SettingDef[] = [
   { id: 'feel.ui', label: 'Haptics: UI and photo mode', group: 'Feel', type: 'toggle', default: true, apply: v => { HAPTIC_CATS.ui = !!v; } },
   { id: 'feel.editor', label: 'Haptics: editor limits', group: 'Feel', type: 'toggle', default: true, apply: v => { HAPTIC_CATS.editor = !!v; } },
   { id: 'feel.sound', label: 'Sound at editor limits', group: 'Feel', type: 'toggle', default: true, apply: v => { FEEL.sound = !!v; } },
+  { id: 'world.groundSpeed', label: 'Ground flow / decay speed ×', group: 'World', type: 'slider', min: 1, max: 100000, step: 1, default: 1, apply: v => { GROUND.speed = Number(v); } },
   { id: 'animals.birdRate', label: 'Bird activity ×', group: 'Animals', type: 'slider', min: .25, max: 3, step: .25, default: 1, apply: v => { birdRate = Number(v); RENDER.birdRate = birdsOn ? birdRate : 0; } },
 ];
 let hareOn = true, hareCount = HARES_DEFAULT, birdsOn = true, birdRate = 1;

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import { column, surfaceColor } from '../core/ground';
 import { CHUNK_SIZE, heightAt, terrainBand } from '../core/world';
+import { LEVEL } from '../core/tuning';
 import { RENDER } from '../core/renderSettings';
 
 // Aim slightly above the wolf's centre so it appears below screen centre.
@@ -40,6 +42,7 @@ export function terrainGeometry(cx: number, cz: number) {
     const y = heightAt(x, z);
     positions.setXYZ(i, x, y, z);
     const color = new THREE.Color(BAND_COLOR[terrainBand(y)]);
+    if (y > LEVEL.waterSurface) { const s = surfaceColor(column(x, z)); color.lerp(new THREE.Color(s[0], s[1], s[2]), .55); } // top-layer composition
     colors.push(color.r, color.g, color.b);
   }
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));

@@ -1,0 +1,3 @@
+# Live changelog (one line per piece that went live; costs measured on the RTX 5060 Laptop GPU, Edge/ANGLE D3D11, 1920×1080)
+- 2026-10-15 06:45 PT: lighting set on the ladder: PCSS (High+), screen-space contact shadows (Medium+), god rays (Medium+, 24/32/48 samples), probe GI (Low+; Ultra = 64² cube, 1 s). GI capture restricted to sky + terrain. Ultra (2× res): GPU 81 ms, 7.9k draw calls, 1.55 M tris. GTAO ≈ 43 ms GPU, CSM ≈ 30 ms GPU and 5.4k draws. The other per-feature deltas were swamped by chunk streaming (see AGENT-NOTES).
+- 2026-10-15 06:45 PT: Chapman–Richards height–DBH coefficients from Peng et al. 2001 for 6 of 7 species (paper birch still a hand fit). No runtime cost.

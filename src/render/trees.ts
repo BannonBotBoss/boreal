@@ -29,6 +29,8 @@ export function treeSpecies(seed: number, x?: number, z?: number): TreeSpecies {
   return choose('tree', 'species', random(seed ^ 0x9e3779b9)(), standTable(wet));
 }
 
+/** Bench hook: barkOff = true disables the near-tier bark shader (cost measurement). */
+export const TREE_FX = { barkOff: false };
 const barkFar = { value: 30 }, leafColour = { value: 0 }, leafOff = { value: 0 }, wind = { value: 0 }, windDir = { value: new THREE.Vector2(1, 0) }, windAmp = { value: 1 };
 let material: THREE.MeshStandardMaterial | undefined;
 /** Procedural bark for the near tier (one function, species = parameters). Approach after Lefebvre & Neyret 2002 ("Synthesizing
@@ -191,7 +193,7 @@ export function treeGeometry(entity: Entity, detail: number): THREE.Group {
   let geometry = tracing() ? build(species, variant, detail) : cache.get(key); if (!geometry) cache.set(key, geometry = build(species, variant, detail));
   const mesh = new THREE.Mesh(geometry, treeMaterial()); mesh.userData.shared = !tracing();
   mesh.onBeforeRender = () => { wind.value = shaderClock.time; const w = windAt(INTEREST.x, 10, INTEREST.z), U = Math.hypot(w.x, w.z);
-    windDir.value.set(w.x / (U || 1), w.z / (U || 1)); windAmp.value = Math.min(4, (U / 4) ** 2); const ph = phenology(WEATHER.day); barkFar.value = INTEREST.near * .5; leafColour.value = ph.colour; leafOff.value = ph.off; }; // drag ∝ U² (4 m/s = the old look)
+    windDir.value.set(w.x / (U || 1), w.z / (U || 1)); windAmp.value = Math.min(4, (U / 4) ** 2); const ph = phenology(WEATHER.day); barkFar.value = TREE_FX.barkOff ? 0 : INTEREST.near * .5; leafColour.value = ph.colour; leafOff.value = ph.off; }; // drag ∝ U² (4 m/s = the old look)
   const group = new THREE.Group(); group.add(mesh);
   const s = f('tree', 'heightJitter', random(entity.seed)());
   group.scale.set(entity.scale, entity.scale * (.9 + s * .2), entity.scale); group.rotation.y = entity.rotation;

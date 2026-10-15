@@ -55,7 +55,7 @@ void main() {
 }`;
 
 export function createSky(scene: THREE.Scene) {
-  const sky = new Sky(); sky.scale.setScalar(600); scene.add(sky);
+  const sky = new Sky(); sky.scale.setScalar(600); sky.layers.enable(1); scene.add(sky); // layer 1 = GI probe capture
   const u = sky.material.uniforms;
   u.turbidity.value = 2.5; u.rayleigh.value = 2.2; u.mieCoefficient.value = .004; u.mieDirectionalG.value = .8;
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(550, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.ShaderMaterial({

@@ -297,11 +297,16 @@ if (new URLSearchParams(location.search).has('bench')) void (async () => {
   const sample = async (label: string) => { await wait(2500); const xs: number[] = [], ws: number[] = [], t = performance.now();
     let last = performance.now(); while (performance.now() - t < 3000) { await new Promise(r => requestAnimationFrame(r)); const n = performance.now(); ws.push(n - last); last = n; if (GOVERNOR.gpuMs !== undefined) xs.push(GOVERNOR.gpuMs); }
     const avg = (a: number[]) => a.length ? a.reduce((p, c) => p + c, 0) / a.length : NaN;
-    const info = view.photoreal.renderer?.info.render;
-    console.log(`BENCH ${label} gpu=${avg(xs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms calls=${info?.calls} tris=${info?.triangles} cost=${JSON.stringify(view.photoreal.COST)}`); };
-  await wait(8000); console.log(`BENCH gpu-string ${GOVERNOR.gpu}`);
+    const info = view.photoreal.INFO;
+    console.log(`BENCH ${label} gpu=${avg(xs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms calls=${info.calls} tris=${info.tris} cost=${JSON.stringify(view.photoreal.COST)}`); };
+  const { TREE_FX } = await import('./render/trees');
+  const r = view.photoreal.renderer; if (r) r.info.autoReset = false; // count every pass of the frame
+  window.addEventListener('error', e => console.log(`BENCH error ${e.message} ${e.error?.stack}`)); window.addEventListener('unhandledrejection', e => console.log(`BENCH reject ${e.reason?.stack ?? e.reason}`));
+  await wait(25000); console.log(`BENCH gpu-string ${GOVERNOR.gpu}`);
   await sample('ultra-all');
-  for (const [k, off] of [['ssao', 0], ['shadows', 0], ['gi', 0], ['ibl', 0], ['clouds', 0]] as const) { (MANUAL as Record<string, number>)[k] = off; await sample(`without-${k}`); delete (MANUAL as Record<string, number>)[k]; }
+  TREE_FX.barkOff = true; await sample('without-bark'); TREE_FX.barkOff = false;
+  (MANUAL as Record<string, number>).trees = 0; await sample('without-trees'); delete (MANUAL as Record<string, number>).trees;
+  for (const [k, off] of [['ssao', 0], ['shadows', 0], ['pcss', 0], ['contact', 0], ['rays', 0], ['gi', 0], ['ibl', 0], ['clouds', 0]] as const) { (MANUAL as Record<string, number>)[k] = off; await sample(`without-${k}`); delete (MANUAL as Record<string, number>)[k]; }
   MANUAL.resScale = 1; await sample('ultra-res1');
   for (let i = 1; i < LADDER.length; i++) { delete MANUAL.resScale; GOVERNOR.tier = i; await sample(`tier-${LADDER[i].name}`); }
   console.log('BENCH done');

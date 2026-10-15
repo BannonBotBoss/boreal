@@ -18,6 +18,29 @@ import { CLOUD, SUN_UNIFORMS, setCloudField } from './pbr';
 import { LightProbeGenerator } from 'three/examples/jsm/lights/LightProbeGenerator.js';
 import { DY, NX, NY, getGrid } from '../core/weather';
 
+// PCSS (Fernando 2005, 'Percentage-Closer Soft Shadows'), adapted from three r180 examples/webgl_shadowmap_pcss.html (MIT,
+// spidersharma03): blocker search + Poisson PCF, injected into the shared shadow chunk behind `#ifdef PCSS` so only
+// materials of tiers with pcss compile it. Tailored for a DIRECTIONAL sun (ortho cascades): penumbra width =
+// (receiver − blocker depth) × tan(0.53°/2) in light-space, with PCSS_K folding in the cascade's depth/width ratio [game calibration].
+const PCSS_GLSL = `
+#ifdef PCSS
+#define PCSS_N 16
+#define PCSS_K 0.012
+vec2 pcssDisk(int i, float a0) { float r = pow((float(i) + .5) / float(PCSS_N), .75), a = a0 + float(i) * 2.39996; return r * vec2(cos(a), sin(a)); }
+float pcssShadow(sampler2D map, vec2 texel, vec3 c) {
+  float a0 = rand(c.xy) * PI2, search = 12. * texel.x, sum = 0., n = 0.;
+  for (int i = 0; i < PCSS_N; i++) { float d = unpackRGBAToDepth(texture2D(map, c.xy + pcssDisk(i, a0) * search)); if (d < c.z) { sum += d; n += 1.; } }
+  if (n < .5) return 1.;
+  float radius = clamp((c.z - sum / n) * PCSS_K * 40., texel.x, 24. * texel.x), lit = 0.;
+  for (int i = 0; i < PCSS_N; i++) lit += texture2DCompare(map, c.xy + pcssDisk(i, a0 + 1.) * radius, c.z);
+  return lit / float(PCSS_N);
+}
+#endif
+`;
+{ let c = THREE.ShaderChunk.shadowmap_pars_fragment;
+  c = c.replace('float getShadow(', PCSS_GLSL + '\nfloat getShadow(');
+  c = c.replace('#if defined( SHADOWMAP_TYPE_PCF )', '#if defined( PCSS )\n\t\t\tshadow = pcssShadow(shadowMap, 1. / shadowMapSize, shadowCoord.xyz);\n\t\t#elif defined( SHADOWMAP_TYPE_PCF )');
+  THREE.ShaderChunk.shadowmap_pars_fragment = c; }
 type SkyRig = { sky: Sky; sunLight: THREE.DirectionalLight; hemi: THREE.HemisphereLight };
 export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera, rig: SkyRig, baseRatio: number) {
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -27,13 +50,17 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     if (GOVERNOR.auto) GOVERNOR.tier = Math.max(GOVERNOR.capTier, tierForGpu(GOVERNOR.gpu)); }
   let tier: Tier = applied(), csm: CSM | undefined;
   const chained = new Map<THREE.Material, THREE.Material['onBeforeCompile']>();
-  const COST = { csmMs: 0, iblMs: 0, giMs: 0, cloudMs: 0 };
+  const COST = { csmMs: 0, iblMs: 0, giMs: 0, cloudMs: 0 }, INFO = { calls: 0, tris: 0 };
   // ---- bounce light: an SH light probe captured around the viewer (three LightProbeGenerator, MIT; Ramamoorthi & Hanrahan 2001)
   const probe = new THREE.LightProbe(); probe.intensity = 0; scene.add(probe);
-  const cubeRT = new THREE.WebGLCubeRenderTarget(32, { type: THREE.HalfFloatType }), cubeCam = new THREE.CubeCamera(.5, 200, cubeRT);
+  let cubeRT = new THREE.WebGLCubeRenderTarget(32, { type: THREE.HalfFloatType }), cubeCam = new THREE.CubeCamera(.5, 200, cubeRT);
   let lastProbe = -1e9;
   function captureGI(time: number) {
-    if (time - lastProbe < 4) return; lastProbe = time; const t0 = performance.now();
+    const size = tier.gi >= 2 ? 64 : 32; if (cubeRT.width !== size) { cubeRT.dispose(); cubeRT = new THREE.WebGLCubeRenderTarget(size, { type: THREE.HalfFloatType }); scene.remove(cubeCam); cubeCam = new THREE.CubeCamera(.5, 200, cubeRT); }
+    if (time - lastProbe < (tier.gi >= 2 ? 1 : 4)) return; lastProbe = time; const t0 = performance.now();
+    // bench (RTX 5060 Laptop): a full-scene 6-face capture cost 100–1600 ms CPU (thousands of draws ×6). Capture only
+    // layer 1 = sky + terrain (the dominant bounce sources); trees/animals are left out.
+    cubeCam.layers.set(1); for (const c of cubeCam.children) c.layers.set(1);
     cubeCam.position.copy(camera.position); const env = scene.environment; scene.environment = null; probe.visible = false;
     cubeCam.update(renderer, scene); scene.environment = env; probe.visible = true;
     void LightProbeGenerator.fromCubeRenderTarget(renderer, cubeRT).then(p => { probe.sh.copy(p.sh); probe.intensity = .6; }); // async GPU readback (r180); .6 = bounce only [game calibration]
@@ -49,7 +76,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
 
   // ---- cascaded shadows ----------------------------------------------------------------------------------------------
   function buildShadows() {
-    for (const [m, prev] of chained) { m.onBeforeCompile = prev; const d = (m as unknown as { defines?: Record<string, unknown> }).defines; delete d?.USE_CSM; delete d?.CSM_CASCADES; m.needsUpdate = true; }
+    for (const [m, prev] of chained) { m.onBeforeCompile = prev; const d = (m as unknown as { defines?: Record<string, unknown> }).defines; delete d?.USE_CSM; delete d?.CSM_CASCADES; delete d?.PCSS; m.needsUpdate = true; }
     chained.clear(); csm?.remove(); csm?.dispose(); csm = undefined;
     if (!tier.shadows) { rig.sunLight.castShadow = false; return; }
     csm = new CSM({ camera, parent: scene, cascades: tier.shadows, maxFar: 160, shadowMapSize: tier.shadows >= 3 ? 2048 : 1024, // ≤ 2048 (Quest budget)
@@ -63,7 +90,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
       if (!mesh.userData.shadowSet) { mesh.userData.shadowSet = true; mesh.receiveShadow = true; mesh.castShadow = !/terrain/.test(mesh.userData.inspect?.type ?? '') && !(mesh.geometry?.type === 'PlaneGeometry'); }
       for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
         if (chained.has(m) || !(m as THREE.MeshStandardMaterial).isMeshStandardMaterial) continue;
-        const prev = m.onBeforeCompile; chained.set(m, prev); csm!.setupMaterial(m); const theirs = m.onBeforeCompile;
+        const prev = m.onBeforeCompile; chained.set(m, prev); csm!.setupMaterial(m); if (tier.pcss) ((m as unknown as { defines: Record<string, unknown> }).defines ??= {}).PCSS = ''; const theirs = m.onBeforeCompile;
         m.onBeforeCompile = (s, r) => { prev.call(m, s, r); theirs.call(m, s, r); }; m.needsUpdate = true; // chain, don't replace
       }
     });
@@ -97,7 +124,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
 
   // ---- apply a tier --------------------------------------------------------------------------------------------------
   function applyTier() {
-    const next = applied(), shadowsChanged = !csm !== !next.shadows || next.shadows !== tier.shadows;
+    const next = applied(), shadowsChanged = !csm !== !next.shadows || next.shadows !== tier.shadows || next.pcss !== tier.pcss;
     tier = next; capRender();
     if (next.weather !== WEATHER.quality) { WEATHER.quality = next.weather; initWeather(); } // [note] resets the near grid to climatology
     renderer.setPixelRatio(Math.min(baseRatio, 1.5) * next.resScale);
@@ -106,10 +133,11 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
   buildShadows(); applyTier();
   let lastTraverse = 0, lastFrame = performance.now(), appliedKey = '';
   return {
-    COST, renderer, get tier() { return tier; }, get gpuMs() { return gpuMs; },
+    COST, INFO, renderer, get tier() { return tier; }, get gpuMs() { return gpuMs; },
     /** Before rendering: sun/IBL/shadows follow the sky; returns the render scale to use. */
     before(sunDir: THREE.Vector3, time: number) {
       const key = JSON.stringify(applied()); if (key !== appliedKey) { appliedKey = key; applyTier(); }
+      if (!renderer.info.autoReset) renderer.info.reset();
       gpuBegin();
       const sl = rig.sunLight;
       SUN_UNIFORMS.uSunView.value.copy(sunDir).transformDirection(camera.matrixWorldInverse); SUN_UNIFORMS.uSunCol.value.copy(sl.color).multiplyScalar(sl.intensity / 3);
@@ -127,6 +155,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     },
     /** After rendering: GPU query + governor. `workMs` = CPU time of this frame's update+render. */
     after(workMs: number) {
+      INFO.calls = renderer.info.render.calls; INFO.tris = renderer.info.render.triangles;
       gpuEnd(); const now = performance.now(), frameMs = now - lastFrame; lastFrame = now;
       if (governFrame(workMs, gpuMs, frameMs)) applyTier();
     },

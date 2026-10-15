@@ -78,7 +78,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const root = new THREE.Group(), objects = new Map<string, THREE.LOD>();
     const geometry: THREE.BufferGeometry = yield* terrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near);
     const ground = new THREE.Mesh(geometry, terrainMaterial()); ground.receiveShadow = true;
-    ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; root.add(ground);
+    ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; ground.layers.enable(1); root.add(ground); // layer 1 = GI probe capture
     const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), new THREE.MeshStandardMaterial({ color: 0x578d91, roughness: .32, metalness: .1 }));
     water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
     const entities = structuredClone(restoreEntities(applyPopulation(generateChunk(cx, cz), cx, cz), context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
@@ -228,7 +228,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
     else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
-    post.render(!!photo, photo?.focalMm ?? 0, photoreal.tier.ssao);
+    post.render(!!photo, photo?.focalMm ?? 0, photoreal.tier.ssao, { contact: photoreal.tier.contact, rays: photoreal.tier.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
   }
   function forageWolf(plantKey: string) {
     for(const chunk of chunks.values()) {

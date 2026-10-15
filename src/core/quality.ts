@@ -12,7 +12,10 @@ export interface Tier {
   shadows: number;      // 0 off, 1 = one 1024 map, 2 = 2 cascades 1024, 3 = 3 cascades 2048
   ssao: number;         // 0 off, 1 half-res GTAO, 2 full-res GTAO
   ibl: number;          // 0 hemisphere light only, 1 sky PMREM environment
-  gi: number;           // 0 off, 1 = SH light probe of the surroundings (bounce light), re-captured every few seconds
+  gi: number;           // probe GI fallback for SSGI: 0 off, 1 = SH probe (32² cube) every 4 s, 2 = 64² cube every 1 s
+  pcss: number;         // 1 = PCSS soft penumbrae from the sun's 0.53° disc (three webgl_shadowmap_pcss, Fernando 2005)
+  contact: number;      // 1 = screen-space contact shadows (depth ray-march toward the sun; Bend Studio SSS idea)
+  rays: number;         // god-ray samples (0 off): radial scattering of the sky mask (three GodRaysShader, Mitchell 2007)
   clouds: number;       // 0 off, 1 = cloud shadows from the weather cells
   lod: number;          // LOD distance multiplier (≤ 1, scales the player's choice)
   near: number; mid: number; // interest radii (m)
@@ -22,12 +25,12 @@ export interface Tier {
 }
 /** Ordered best → cheapest. Every knob is non-increasing down the ladder (tested). */
 export const LADDER: Tier[] = [
-  { name: 'Ultra',   resScale: 2,    shadows: 3, ssao: 2, ibl: 1, gi: 1, clouds: 1, lod: 1,   near: 100, mid: 180, trees: 1, foliage: 1, weather: 12 },
-  { name: 'High',    resScale: 1.5, shadows: 3, ssao: 1, ibl: 1, gi: 1, clouds: 1, lod: 1,   near: 70, mid: 120, trees: 1, foliage: 1, weather: 8 },
-  { name: 'Medium',  resScale: 1,    shadows: 2, ssao: 1, ibl: 1, gi: 0, clouds: 1, lod: .85, near: 60, mid: 100, trees: 1, foliage: .8, weather: 8 },
-  { name: 'Low',     resScale: .85,  shadows: 1, ssao: 0, ibl: 1, gi: 0, clouds: 1, lod: .7,  near: 50, mid: 80, trees: .8, foliage: .6, weather: 8 },
-  { name: 'Very low', resScale: .7,  shadows: 1, ssao: 0, ibl: 0, gi: 0, clouds: 0, lod: .6,  near: 40, mid: 70, trees: .6, foliage: .4, weather: 6 },
-  { name: 'Minimum', resScale: .5,   shadows: 0, ssao: 0, ibl: 0, gi: 0, clouds: 0, lod: .5,  near: 40, mid: 60, trees: .5, foliage: .25, weather: 6 },
+  { name: 'Ultra',   resScale: 2,    shadows: 3, ssao: 2, ibl: 1, gi: 2, pcss: 1, contact: 1, rays: 48, clouds: 1, lod: 1,   near: 100, mid: 180, trees: 1, foliage: 1, weather: 12 },
+  { name: 'High',    resScale: 1.5, shadows: 3, ssao: 1, ibl: 1, gi: 1, pcss: 1, contact: 1, rays: 32, clouds: 1, lod: 1,   near: 70, mid: 120, trees: 1, foliage: 1, weather: 8 },
+  { name: 'Medium',  resScale: 1,    shadows: 2, ssao: 1, ibl: 1, gi: 1, pcss: 0, contact: 1, rays: 24, clouds: 1, lod: .85, near: 60, mid: 100, trees: 1, foliage: .8, weather: 8 },
+  { name: 'Low',     resScale: .85,  shadows: 1, ssao: 0, ibl: 1, gi: 1, pcss: 0, contact: 0, rays: 0, clouds: 1, lod: .7,  near: 50, mid: 80, trees: .8, foliage: .6, weather: 8 },
+  { name: 'Very low', resScale: .7,  shadows: 1, ssao: 0, ibl: 0, gi: 0, pcss: 0, contact: 0, rays: 0, clouds: 0, lod: .6,  near: 40, mid: 70, trees: .6, foliage: .4, weather: 6 },
+  { name: 'Minimum', resScale: .5,   shadows: 0, ssao: 0, ibl: 0, gi: 0, pcss: 0, contact: 0, rays: 0, clouds: 0, lod: .5,  near: 40, mid: 60, trees: .5, foliage: .25, weather: 6 },
 ];
 export const KNOBS = Object.keys(LADDER[0]).filter(k => k !== 'name') as (keyof Omit<Tier, 'name'>)[];
 
@@ -86,4 +89,4 @@ export function tierForGpu(renderer: string) {
   return 2;
 }
 /** WebXR on Quest 3 keeps its own budget (≈100 draw calls, 750K tris/eye, 72/90 Hz): these caps apply on top of any tier. */
-export const XR_CAPS: Partial<Omit<Tier, 'name'>> = { gi: 0, resScale: 1, shadows: 1, ssao: 0, near: 50, mid: 80, trees: .6, foliage: .4, weather: 6 };
+export const XR_CAPS: Partial<Omit<Tier, 'name'>> = { gi: 0, pcss: 0, contact: 0, rays: 0, resScale: 1, shadows: 1, ssao: 0, near: 50, mid: 80, trees: .6, foliage: .4, weather: 6 };

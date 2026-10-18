@@ -33,7 +33,7 @@ guard('no new species-specific source files', (_t, p) => /wolf|bear|deer|hare|el
   ['animals/hare.ts', 'audio/wolfVoice.ts', 'core/bearBody.ts', 'core/deerHerd.ts', 'core/wolfBody.ts', 'core/wolfModes.ts', 'render/animalRig.ts', 'render/bear.ts', 'render/playerWolf.ts']);
 // Rule 2: one LOD/mesh path. Icosahedron "blob" builders and LOD assembly may only shrink.
 guard('no new hand-built LOD or blob-geometry sites', t => /addLevel\(|IcosahedronGeometry/.test(t),
-  ['animals/hare.ts', 'render/animalRig.ts', 'render/buildScene.ts', 'render/geometry.ts', 'render/rocks.ts', 'render/trees.ts']);
+  ['animals/hare.ts', 'render/animalRig.ts', 'render/buildScene.ts', 'render/rocks.ts']); // rocks.ts: the one cached icosphere (render/geometry + trees use it)
 // Rule 4: gravity is derived from G, Earth mass and radius (proc/physics.ts). No literal g anywhere else.
 guard('no literal gravity outside proc/physics.ts', t => /(^|[^\d.])9\.8\d*(?!\d)/m.test(t), ['core/animalBehavior.ts'], ['proc/physics.ts']); // Claude's Froude G = 9.81 (AGENT-NOTES)
 // Rule 4b: masses are derived from composition x generated volume; no typed mass values in source.

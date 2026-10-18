@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GOVERNOR, KNOBS, LADDER, MANUAL, applied, governFrame, resetGovernor, tierForGpu } from '../src/core/quality';
+import { GOVERNOR, KNOBS, LADDER, MANUAL, applied, governFrame, pendingWorld, resetGovernor, tierForGpu } from '../src/core/quality';
 
 const feed = (ms: number, seconds: number) => { let changed = 0; for (let t = 0; t < seconds * 1000; t += 16.7) changed += governFrame(ms, undefined, 16.7); return changed; };
 const fresh = (tier = 1) => { Object.assign(GOVERNOR, { auto: true, targetFps: 60, tier, capTier: 0 }); resetGovernor(); for (const k of KNOBS) delete MANUAL[k]; };
@@ -69,4 +69,12 @@ test('bounded distributions: within bounds, mean and SD match (normal + lognorma
   const dry = standTable(0), wet = standTable(1), share = (t: readonly (readonly [string, number])[], id: string) => { const i = t.findIndex(x => x[0] === id); return t[i][1] - (i ? t[i - 1][1] : 0); };
   assert.ok(share(dry, 'jack-pine') > share(wet, 'jack-pine') && share(wet, 'black-spruce') > share(dry, 'black-spruce'));
   assert.ok(share(standTable(.45), 'trembling-aspen') > .15, 'aspen common on mesic sites');
+});
+
+test('pendingWorld: the held-back world tier is reported until it applies', () => {
+  fresh(1); assert.equal(pendingWorld(), undefined);
+  GOVERNOR.worldTier = 1; GOVERNOR.tier = 4; // stepped down, world still on High
+  assert.equal(applied().shadows, LADDER[1].shadows); assert.equal(pendingWorld()!.shadows, LADDER[4].shadows); assert.equal(pendingWorld()!.ibl, LADDER[4].ibl);
+  GOVERNOR.worldTier = 4; assert.equal(pendingWorld(), undefined);
+  GOVERNOR.worldTier = 1; GOVERNOR.auto = false; assert.equal(pendingWorld(), undefined); fresh();
 });

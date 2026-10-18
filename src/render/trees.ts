@@ -19,6 +19,7 @@ import { WEATHER } from '../core/weather';
 import { f, choose, tracing, withTrace, type Trace } from '../proc/trace';
 import { massOf, frustum, cone } from '../core/mass';
 import { PHYS } from '../core/tuning';
+import { icosphere } from './rocks';
 
 /**
  * Stylized boreal forest (Grok Bot). Every 'spruce' entity becomes one of five species picked
@@ -174,7 +175,7 @@ function build(id: TreeSpecies, variant: number, detail: number, cls = 1, snag =
   parts.push(stem);
   const leafKind = sp.leaf.deciduous ? 2 : 1, green = new THREE.Color(sp.leaf.color);
   const blob = (x: number, y: number, z: number, sx: number, sy: number, sz: number, c: THREE.Color) =>
-    parts.push(tag(painted(new THREE.IcosahedronGeometry(1, detail === 0 ? 1 : 0), c, M(x, y, z, sx, sy, sz, rng(), rng() * 6, rng()), .12, rng), leafKind));
+    parts.push(tag(painted(icosphere(detail === 0 ? 1 : 0), c, M(x, y, z, sx, sy, sz, rng(), rng() * 6, rng()), .12, rng), leafKind));
   const limb = (y: number, az: number, len: number, rad: number, ang: number, color: number) => // one branch segment from the stem
     parts.push(tag(painted(new THREE.CylinderGeometry(rad * .5, rad, len, 4), color, M(Math.cos(az) * Math.sin(ang) * len / 2 - lean * y, y + Math.cos(ang) * len / 2, Math.sin(az) * Math.sin(ang) * len / 2, 1, 1, 1, 0, -az, -ang)), 0));
   const crownY0 = h * crownBase, nodes = Math.max(1, Math.floor(h * (1 - crownBase) / B.spacing));

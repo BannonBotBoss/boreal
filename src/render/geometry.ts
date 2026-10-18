@@ -2,7 +2,7 @@
 import type { Entity } from '../core/world';
 import { random } from '../core/random';
 import { createDeerRig } from './animalRig';
-import { rockGeometry } from './rocks';
+import { icosphere, rockGeometry } from './rocks';
 import { treeGeometry } from './trees';
 
 /** Only this layer knows Three.js. No model files are loaded. */
@@ -19,7 +19,7 @@ export function generateGeometry(entity: Entity, detail: number): THREE.Group {
     const mesh = new THREE.Mesh(geometry, mat); mesh.position.set(x, y, z); mesh.scale.set(sx, sy, sz); group.add(mesh); return mesh;
   };
   const ellipsoid = (mat: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number) =>
-    add(new THREE.IcosahedronGeometry(1, detail === 0 ? 1 : 0), mat, x, y, z, sx, sy, sz);
+    add(icosphere(detail === 0 ? 1 : 0), mat, x, y, z, sx, sy, sz);
   if (entity.kind === 'log') {
     const log = add(new THREE.CylinderGeometry(.32, .43, 4.4, segments), wood, 0, .4, 0); log.rotation.z = Math.PI / 2;
     const end = add(new THREE.CircleGeometry(.33, segments), pale, 2.21, .4, 0); end.rotation.y = Math.PI / 2;

@@ -6,7 +6,7 @@
  * max(CPU work, GPU timer) per frame, the governor's own metric. Cached per renderer string (?reprobe forces a new probe).
  */
 import { getGPUTier } from '../../vendor/detect-gpu/index.js';
-import { GOVERNOR, LADDER, resetGovernor } from '../core/quality';
+import { GOVERNOR, LADDER, applied, resetGovernor } from '../core/quality';
 import { STATS, queued } from '../core/interest';
 import { cachedProbe, median, saveProbe, type ProbeResult } from '../core/probe';
 import type { buildScene } from './buildScene';
@@ -29,8 +29,8 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
   const auto = GOVERNOR.auto; GOVERNOR.auto = false; // loading stalls must not walk the governor down the ladder
   ui.step('Generating the land around you…', .1); await settle(15, 20000, ms => ui.step('Generating the land around you…', .1 + .3 * Math.min(1, ms / 8000)));
   ui.step('Compiling shaders…', .45); const r = view.photoreal.renderer;
-  view.photoreal.prepare(); // CSM/PCSS defines first, so each program is compiled once, in its final form
-  try { await r.compileAsync(view.scene, view.camera); } catch (e) { console.warn('compileAsync', e); }
+  await view.photoreal.compile(); // CSM/PCSS defines first and the final render target, so each program is compiled once, in its final form
+  const compiled = JSON.stringify(applied());
   ui.step('Lighting the sky…', .6); const t0 = performance.now();
   while (performance.now() - t0 < 3000 && view.photoreal.tier.ibl && !view.scene.environment) await raf();
   let probe: ProbeResult | undefined;
@@ -50,6 +50,8 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
     GOVERNOR.probeCap = probe.cap; GOVERNOR.tier = Math.max(GOVERNOR.tier, probe.cap);
     console.log(`PROBE cap=${LADDER[probe.cap].name} ${JSON.stringify(probe)}`);
   }
+  if (JSON.stringify(applied()) !== compiled) { ui.step('Compiling shaders…', .9); await raf(); await view.photoreal.compile(); } // the probe moved the tier: its variants too, still covered
+  await view.photoreal.warmUp(applied(GOVERNOR.tier + 1)); // and the next cheaper world tier's (the governor's likely first step)
   ui.step('Ready', 1); await raf(); await raf(); // one more frame at the final tier before the reveal
   GOVERNOR.auto = auto; resetGovernor(); GOVERNOR.cool = GOVERNOR.cooldownMs; // grace: streaming right after the reveal is not the steady cost
   return probe;

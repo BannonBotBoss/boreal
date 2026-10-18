@@ -30,7 +30,7 @@ function flatten(root: THREE.Object3D) {
   root.traverse(o => {
     const m = o as THREE.Mesh; if (!m.isMesh || Array.isArray(m.material)) return;
     const shared = !!m.userData.shared || m.material === PROP_MATERIAL, mat = shared ? m.material as THREE.Material : m.userData.rock ? ROCK_MATERIAL : PROP_MATERIAL;
-    let g = m.geometry.clone().applyMatrix4(m.matrixWorld);
+    let g = new THREE.BufferGeometry().copy(m.geometry).applyMatrix4(m.matrixWorld); // (clone() of a Cylinder/Cone/Polyhedron geometry first rebuilds a default one)
     if (!shared) { // keep position/normal + colour from the part's material, so every prop part merges into one buffer
       g = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k);
       const c = (m.material as THREE.MeshStandardMaterial).color ?? new THREE.Color(1, 1, 1), n = g.getAttribute('position').count, a = new Float32Array(n * 3);

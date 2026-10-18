@@ -11,7 +11,7 @@
 import * as THREE from 'three';
 import { CSM } from 'three/examples/jsm/csm/CSM.js';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-import { GOVERNOR, applied, ceiling, governFrame, tierForGpu, type Tier } from '../core/quality';
+import { GOVERNOR, applied, ceiling, governFrame, pendingWorld, tierForGpu, type Tier } from '../core/quality';
 import { capRender } from '../core/renderSettings';
 import { WEATHER, initWeather } from '../core/weather';
 import { CLOUD, SUN_UNIFORMS, setCloudField } from './pbr';
@@ -66,7 +66,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     if (GOVERNOR.auto) GOVERNOR.tier = Math.max(ceiling(), tierForGpu(GOVERNOR.gpu)); }
   let tier: Tier = applied(), csm: CSM | undefined;
   const chained = new Map<THREE.Material, THREE.Material['onBeforeCompile']>();
-  const COST = { csmMs: 0, iblMs: 0, giMs: 0, cloudMs: 0 }, INFO = { calls: 0, tris: 0, workMs: 0, drawMs: 0 };
+  const COST = { csmMs: 0, iblMs: 0, giMs: 0, cloudMs: 0, warmMs: 0 }, INFO = { calls: 0, tris: 0, workMs: 0, drawMs: 0 };
   // ---- bounce light: an SH light probe captured around the viewer (three LightProbeGenerator, MIT; Ramamoorthi & Hanrahan 2001)
   const probe = new THREE.LightProbe(); probe.intensity = 0; scene.add(probe);
   rig.sunLight.layers.enable(1); rig.hemi.layers.enable(1); // the GI capture (layer 1) must still be lit
@@ -106,9 +106,94 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
       for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
         if (chained.has(m) || !(m as THREE.MeshStandardMaterial).isMeshStandardMaterial) continue;
         const prev = m.onBeforeCompile; chained.set(m, prev); csm!.setupMaterial(m); if (tier.pcss) ((m as unknown as { defines: Record<string, unknown> }).defines ??= {}).PCSS = ''; const theirs = m.onBeforeCompile;
-        m.onBeforeCompile = (s, r) => { prev.call(m, s, r); theirs.call(m, s, r); }; m.needsUpdate = true; // chain, don't replace
+        m.onBeforeCompile = chain(m, prev, theirs); m.needsUpdate = true; // chain, don't replace
       }
     });
+  }
+
+  // ---- shader variants ahead of a world-tier change ------------------------------------------------------------------
+  // A world-tier switch (shadows, PCSS, IBL, and the post route: GTAO/contact/rays draw the scene into a half-float target,
+  // which changes tone mapping + output colour space) gives every material a new program key, and three compiled each one
+  // synchronously at its first draw: the 2.3-3.4 s freezes at the 20 s world catch-up. While core/quality reports a pending
+  // world tier, its variants are compiled a few per frame on CLONES (target defines, the program key the live material will
+  // have), drawn by proxies of the real meshes (Object.create: same geometry/batching/instancing) and lit by stand-ins for
+  // the target's lights. The live materials and CSM are untouched; three's program cache is shared by key, so at the switch
+  // each material finds its program already linked (in the background with KHR_parallel_shader_compile). Not covered:
+  // point-light shadow programs, materials first seen after the late pass, a target with IBL before any sky bake.
+  type OBC = THREE.Material['onBeforeCompile'];
+  function chain(m: THREE.Material, prev: OBC, theirs: OBC): OBC { return (s, r) => { prev.call(m, s, r); theirs.call(m, s, r); }; }
+  const CHAIN_KEY = chain(new THREE.Material(), () => {}, () => {}).toString(); // = customProgramCacheKey() of every chained material
+  // Both post routes are compiled for a world variant: ssao/contact/rays are not world knobs, so a step across Medium/Low
+  // flips the route at once (the 4.7 s freeze at the drop to Very low in the second omen bench, once startup compiled one route).
+  const viaTarget = (t: Tier) => !!(t.ssao || t.contact || t.rays); // render/post renders into the composer's target
+  const variantOf = (t: Tier) => `${t.shadows}:${t.pcss}:${t.ibl}`;
+  const offscreen = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
+  function compileVia<T>(via: boolean, fn: () => T): T { const prev = renderer.getRenderTarget(); renderer.setRenderTarget(via ? offscreen : null); try { return fn(); } finally { renderer.setRenderTarget(prev); } }
+  type Defines = Record<string, unknown>;
+  interface Warm { key: string; target: Tier; lit: THREE.Scene; litDepth: THREE.Scene; clones: Map<THREE.Material, THREE.Material>; depths: THREE.Material[]; seen: Set<string>; queue: { p: THREE.Object3D; via: boolean; depth?: boolean }[]; busy: THREE.Material[]; late: boolean }
+  let warm: Warm | undefined;
+  // Clones are disposed (their programs released) only 120 frames later: a switch and a new target can land in the same
+  // frame (the world catches up as the governor steps again), and the live materials must acquire the programs first.
+  let retired: { mats: THREE.Material[]; frames: number }[] = [];
+  function release() { if (warm) retired.push({ mats: [...warm.clones.values(), ...warm.depths], frames: 0 }); warm = undefined; }
+  function reap() { retired = retired.filter(r => ++r.frames < 120 || (r.mats.forEach(m => m.dispose()), false)); }
+  const SHADOW_SIDE = { [THREE.FrontSide]: THREE.BackSide, [THREE.BackSide]: THREE.FrontSide, [THREE.DoubleSide]: THREE.DoubleSide };
+  /** The state three's WebGLShadowMap.getDepthMaterial gives its built-in depth material for `m` (PCF shadow maps). */
+  function shadowDepth(w: Warm, m: THREE.Material) {
+    const s = m as THREE.MeshStandardMaterial, d = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+    d.visible = s.visible; d.wireframe = !!s.wireframe; d.side = s.shadowSide ?? SHADOW_SIDE[s.side]; d.alphaMap = s.alphaMap ?? null; d.alphaTest = s.alphaToCoverage ? .5 : s.alphaTest; d.map = s.map ?? null;
+    d.clipShadows = s.clipShadows; d.clippingPlanes = s.clippingPlanes; d.clipIntersection = s.clipIntersection;
+    d.displacementMap = s.displacementMap ?? null; d.displacementScale = s.displacementScale ?? 1; d.displacementBias = s.displacementBias ?? 0;
+    w.depths.push(d); return d;
+  }
+  function variant(w: Warm, m: THREE.Material) {
+    let c = w.clones.get(m); if (c) return c;
+    const t = w.target, std = !!(m as THREE.MeshStandardMaterial).isMeshStandardMaterial, base = chained.get(m) ?? m.onBeforeCompile, live = chained.has(m);
+    const key = m.customProgramCacheKey !== THREE.Material.prototype.customProgramCacheKey ? m.customProgramCacheKey() : std && t.shadows ? CHAIN_KEY : base.toString();
+    const d: Defines = { ...(m as unknown as { defines?: Defines }).defines }; // replay buildShadows + setupMaterial in order: the key lists defines in insertion order
+    if (std && (live || t.shadows) && (!live || !csm !== !t.shadows || t.shadows !== tier.shadows || t.pcss !== tier.pcss)) {
+      if (live) { delete d.USE_CSM; delete d.CSM_CASCADES; delete d.CSM_FADE; delete d.PCSS; } // CSM.dispose drops CSM_FADE too
+      if (t.shadows) { d.USE_CSM = 1; d.CSM_CASCADES = t.shadows; d.CSM_FADE = ''; if (t.pcss) d.PCSS = ''; }
+    }
+    const k = m.clone(); (k as unknown as { defines: Defines }).defines = d; k.onBeforeCompile = (s, r) => base.call(k, s, r); k.customProgramCacheKey = () => key;
+    w.clones.set(m, k); return k;
+  }
+  /** Queue every mesh/material pairing not yet seen for target `t` (a new target starts over). */
+  function precompile(t: Tier) {
+    const key = variantOf(t);
+    if (warm?.key !== key) {
+      release(); const lit = new THREE.Scene(), litDepth = new THREE.Scene(), csmLights = new Set<THREE.Object3D>(csm?.lights ?? []); // litDepth: the shadow pass draws with no scene (no env, no fog)
+      lit.fog = scene.fog; lit.environment = t.ibl ? scene.environment ?? envRT?.texture ?? null : null;
+      for (const s of [lit, litDepth]) {
+        scene.traverseVisible(o => { if (!(o as THREE.Light).isLight || csmLights.has(o)) return; const l = o.clone(false); if (o === rig.sunLight && !t.shadows) l.castShadow = false; s.add(l); });
+        for (let i = 0; i < t.shadows; i++) { const l = new THREE.DirectionalLight(); l.castShadow = true; s.add(l); } // CSM's cascade lights
+      }
+      warm = { key, target: t, lit, litDepth, clones: new Map(), depths: [], seen: new Set(), queue: [], busy: [], late: false };
+    }
+    const w = warm!;
+    scene.traverse(o => {
+      const mesh = o as THREE.Mesh, mat = mesh.material, g = mesh.geometry; if (!mesh.isMesh || !mat || !g) return;
+      const mats = Array.isArray(mat) ? mat : [mat], x = o as unknown as Record<string, unknown>, recv = mesh.receiveShadow || (!!t.shadows && !mesh.userData.shadowSet);
+      const sig = mats.map(m => m.uuid).join() + '|' + Object.keys(g.attributes).join() + '|' + Object.keys(g.morphAttributes).length + [x.isBatchedMesh, x.isInstancedMesh, x.isSkinnedMesh, x.instanceColor, x._colorsTexture, recv].map(v => +!!v).join('');
+      if (w.seen.has(sig)) return; w.seen.add(sig);
+      const p = Object.create(o) as THREE.Mesh; p.material = Array.isArray(mat) ? mats.map(m => variant(w, m)) : variant(w, mat); p.receiveShadow = recv; w.queue.push({ p, via: !viaTarget(t) }, { p, via: viaTarget(t) }); // popped from the end: the target's own route first
+      const cdm = mesh.customDepthMaterial; // the shadow pass's program keys carry the light counts too
+      if (t.shadows && mesh.castShadow && !w.seen.has(sig + 'd')) { w.seen.add(sig + 'd'); const q = Object.create(o) as THREE.Mesh;
+        q.material = cdm ? variant(w, cdm) : Array.isArray(mat) ? mats.map(m => shadowDepth(w, m)) : shadowDepth(w, mat); w.queue.unshift({ p: q, via: true, depth: true }); }
+    });
+  }
+  /** Compile queued proxies: at most `maxNew` new programs, and only once the previous ones have linked. gl.compile
+   * returns at once, but the GPU process works through every queued compile before it answers the frame's next
+   * synchronous call: compiling the whole queue in one go froze the first omen bench for 4.9 s. Readiness is the
+   * non-blocking KHR_parallel_shader_compile status (three's isReady, as in compileAsync); without it, isReady is true. */
+  function stepWarm(budgetMs: number, maxNew = 2) {
+    const w = warm; if (!w) return;
+    const ready = (m: THREE.Material) => (renderer.properties.get(m) as { currentProgram?: { isReady(): boolean } }).currentProgram?.isReady() ?? true;
+    w.busy = w.busy.filter(m => !ready(m)); if (w.busy.length || !w.queue.length) return;
+    const t0 = performance.now(), programs = () => renderer.info.programs?.length ?? 0, n0 = programs();
+    while (w.queue.length && performance.now() - t0 < budgetMs && programs() - n0 < maxNew) { const { p, via, depth } = w.queue.pop()!;
+      for (const m of compileVia(via, () => renderer.compile({ traverse: (f: (o: THREE.Object3D) => void) => f(p), traverseVisible() {} } as unknown as THREE.Object3D, camera, depth ? w.litDepth : w.lit))) w.busy.push(m); }
+    COST.warmMs += performance.now() - t0;
   }
 
   // ---- image-based lighting from the sky ----------------------------------------------------------------------------
@@ -158,7 +243,12 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
       gpuBegin();
       const sl = rig.sunLight;
       SUN_UNIFORMS.uSunView.value.copy(sunDir).transformDirection(camera.matrixWorldInverse); SUN_UNIFORMS.uSunCol.value.copy(sl.color).multiplyScalar(sl.intensity / 3);
-      if (tier.ibl) { bakeIBL(sunDir); scene.environmentIntensity = AMBIENT.env; rig.hemi.intensity *= AMBIENT.hemiIbl; } // core/light AMBIENT: sky diffuse fraction else if (scene.environment) { scene.environment = null; }
+      if (tier.ibl) { if (!scene.environment && envRT) scene.environment = envRT.texture; bakeIBL(sunDir); scene.environmentIntensity = AMBIENT.env; rig.hemi.intensity *= AMBIENT.hemiIbl; } // core/light AMBIENT: sky diffuse fraction
+      else if (scene.environment) scene.environment = null; // (this else sat inside the comment above: Very low/Minimum kept the env map)
+      const pend = pendingWorld(); // the world tier waiting out its hold: compile its variants now (late pass at 3/4 of the hold for new meshes)
+      if (pend && variantOf(pend) !== variantOf(tier)) { if (warm?.key !== variantOf(pend)) precompile(pend); else if (!warm.late && GOVERNOR.heldMs > GOVERNOR.worldHoldMs * .75) { warm.late = true; precompile(pend); } }
+      else if (warm && warm.key === variantOf(tier)) release(); // switched: the live materials hold the programs (once drawn)
+      stepWarm(3); reap();
       if (tier.gi) captureGI(time); else probe.intensity = 0;
       CLOUD.uSunWorld.value.copy(sunDir); updateClouds(time);
       if (csm) {
@@ -179,6 +269,14 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     get governor() { return GOVERNOR; },
     /** Startup warm-up: give every material in the scene its CSM/PCSS defines now, so renderer.compileAsync builds final programs. */
     prepare() { setupMaterials(); },
+    /** Startup (behind the loading screen): prepare, then compileAsync through the render target the current tier draws into
+     * (render/post: the scene renders into the composer's half-float target while GTAO/contact/rays are on, a different
+     * tone-mapping/colour-space variant than the canvas a plain compileAsync assumes). */
+    async compile() { setupMaterials(); const via = viaTarget(tier);
+      try { await Promise.all([via, !via].map(v => compileVia(v, () => renderer.compileAsync(scene, camera)))); } catch (e) { console.warn('compileAsync', e); } },
+    /** Compile tier `t`'s world variant now (startup: the governor's likely first step); kept until a world change uses or replaces it. */
+    async warmUp(t: Tier, maxMs = 6000) { if (variantOf(t) === variantOf(tier)) return; precompile(t); const t0 = performance.now();
+      while ((warm?.queue.length || warm?.busy.length) && performance.now() - t0 < maxMs) { stepWarm(12, 6); await new Promise(r => requestAnimationFrame(r)); } },
   };
 }
 export type Photoreal = ReturnType<typeof createPhotoreal>;

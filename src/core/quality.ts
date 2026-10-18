@@ -59,13 +59,16 @@ export const WORLD_KNOBS: (keyof Omit<Tier, 'name'>)[] = ['shadows', 'pcss', 'ib
 const clampTier = (tier: number) => Math.max(ceiling(), Math.min(LADDER.length - 1, tier));
 export const MANUAL: Partial<Omit<Tier, 'name'>> = {}; // caps from the render settings
 /** The applied tier: the ladder tier with every knob capped by its manual setting. */
-export function applied(tier = GOVERNOR.tier): Tier {
+export function applied(tier = GOVERNOR.tier, world = true): Tier {
   const t = { ...LADDER[clampTier(tier)] }, g = GOVERNOR;
-  if (g.auto && g.worldTier >= 0 && tier === g.tier) { const w = LADDER[clampTier(g.worldTier)]; for (const k of WORLD_KNOBS) t[k] = w[k]; } // world waits for a tier that holds
+  if (world && g.auto && g.worldTier >= 0 && tier === g.tier) { const w = LADDER[clampTier(g.worldTier)]; for (const k of WORLD_KNOBS) t[k] = w[k]; } // world waits for a tier that holds
   for (const k of KNOBS) if (MANUAL[k] !== undefined) t[k] = Math.min(t[k], MANUAL[k]!);
   if (GOVERNOR.xr) for (const k of KNOBS) if (XR_CAPS[k] !== undefined) t[k] = Math.min(t[k], XR_CAPS[k]!);
   return t;
 }
+/** The tier the world will switch to once `tier` has held worldHoldMs (auto mode), else undefined: render/photoreal
+ * compiles its shader variants during the hold. */
+export const pendingWorld = (): Tier | undefined => { const g = GOVERNOR; return g.auto && !g.locked && g.worldTier >= 0 && g.worldTier !== g.tier ? applied(g.tier, false) : undefined; };
 export function resetGovernor() { Object.assign(GOVERNOR, { window: [], windowMs: 0, averages: [], flipped: 0, lastDir: 0, locked: false, cool: 0, upBlock: 0, worldTier: -1, heldMs: 0 }); }
 /** Feed one frame. `workMs` = CPU work this frame, `gpuMs` = GPU time if measured, `frameMs` = wall interval (window clock).
  * Returns +1 (stepped to a cheaper tier), −1 (stepped up) or 0. */

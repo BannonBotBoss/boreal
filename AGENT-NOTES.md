@@ -711,3 +711,59 @@ Since Edge updated to 155.0.4283.62 (2026-10-17) on omen, a `--headless=new` pag
 - **Fold-back check fixed:** our round-2 paws were 6.8 cm wide, below `tests/body.test.ts`'s 7–11 cm, so the folded patch would have failed that test. The paws are now 8 % wider (about 7.3 cm). Verified in a temporary worktree at HEAD: `git apply MERGE.patch`, then `tsc` and the body, rules and fur-card tests all pass.
 - Captures for this pass were taken under `tools/bench-lock.mjs`.
 - **Fold back:** `fork/MERGE.patch` regenerated (base 56506c55, `git apply --check` clean): `COAT`, `streakAt`, `streakCards` and the layered `zoneCoat` go into `core/wolfBody.ts`, and `render/playerWolf.ts` wraps the game wolf's fur geometry in `streakCards(g, seed)`.
+
+## 2026-10-18 14:20 PT - Grok Bot (trees M1): procedural black spruce, Weber-Penn base, near/mid/crown/impostor LODs, far-ring bench
+Not in the live game yet: nothing in the game imports the new files. Viewer: `/tools/tree-viewer.html?tree=1`, with `&view=lod` (`&atlas=1`), `&view=one&age=&seed=`, and `&bench=far&r=260&split=160` (`&imp=0`).
+
+### Base survey (Milestone 1)
+| candidate | licence | conifer | bark / needle cards | LOD / impostor | seed determinism | cost |
+|---|---|---|---|---|---|---|
+| **SeedThree weber-penn.js + branch-mesh.js** (SkyeShark, @cf2eaad) | MIT | good: W&P shape 0 conical, downAngle/curve per level gives drooping tiers | tubes; cards are ours | none (ours) | RNG injectable | ~10 ms/tree |
+| ez-tree (dgreenheck, @dcf309b) | MIT | weak (broadleaf recursion, image textures) | image textures | none | seeded | medium |
+| proctree.js | BSD-3 | broadleaf only | leaf cards | none | seeded | cheap |
+| space colonization | various | broadleaf crowns | none | none | ok | slow (attraction points) |
+| Blender Sapling (W&P) | GPL | the reference implementation | n/a | n/a | n/a | paper only |
+| repo vendor/plant-generator | MIT | herbs only | n/a | n/a | yes | n/a |
+| **agargaro/octahedral-impostor** (@ca0046a) | MIT | (impostors) | albedo + normal/depth atlas | hemi-octahedral 3-sprite blend, WebGL GLSL | n/a | 1 bake per variant |
+
+Choice: a Weber & Penn (1995) port tailored from SeedThree, plus octahedral-impostor for the far LOD. Both are MIT; unmodified baselines are in `vendor/seedthree` and `vendor/octahedral-impostor` (NOTICE.md in each).
+
+Why: W&P is parametric per level, so a species is a parameter table (`src/core/flora/trees/forms.ts`, data), not code. The generator is a pure function of (seed, age) through proc/rng, and conifers come straight out of shape 0 + whorls.
+
+### Files
+- `src/core/flora/trees/forms.ts`: species form data: W&P params, growth, colours from photo medians, citations; `heightAt` (Richards, [verify] Plonski 1974) and `dbhAt` (inverse Peng et al. 2001 H-DBH, the core/treeSpecies coefficients).
+- `src/render/trees/weberPenn.ts`: skeleton with trunk whorls (whorlSpacing from core/treeSpecies), dead lower stubs, a club-top band, a conical shape cap and tropism.
+- `tube.ts`: parallel-transport tubes, vertex colours.
+- `conifer.ts`: `buildConifer(form, seed, age)` gives near (tubes + cross-cards with baked AO), mid (thinned tubes + one spray card per limb) and crown (trunkless, 38 tris).
+  - Needle atlas: DataTexture with shade-filled transparent texels, Golus mip-alpha, alphaToCoverage.
+  - Crown material follows Matthew's wide-view architecture: per-instance palette by `vnoiseU(worldXZ/70)` + hash jitter, fake vertical AO `mix(.25, 1.15, y)`, up-bent normals. Uniform-only, one program key.
+- `impostor.ts`: tailored octahedral-impostor (sRGB albedo target, mip-alpha in the bake, renderer state restored, normals bent up via `IMPOSTOR_FX`).
+- `farRing.ts`: crowns inside `split`, impostors beyond, one InstancedMesh per variant. Placement comes from `farTreesInTile` (Thomas clusters, core/flora/stands); variant, rotation and non-uniform scale come from `hash(key)`. No Math.random, no FogExp2.
+- `tests/trees.test.ts`: allometry, determinism, spire taper.
+- `tools/tree-ref/`: 10 Commons photos (CC BY / BY-SA / PD), SOURCES.json, README.
+
+### Numbers (omen, RTX 5060 Laptop, Edge 155 headless D3D11, under the bench lock)
+- Triangles per LOD, age 90 / 13.4 m / DBH 14.9 cm: near 47,850 | mid 3,516 | crown 38 | impostor 2.
+- Near triangles by age (mean of 3 seeds): age 15 ≈ 6k; 35 ≈ 15k; 70 ≈ 33k; 120 ≈ 51k. Age 140 (16.2 m) is 73k.
+- Build time, all LODs, CPU: mean 12.8 ms per tree over 12 trees (3.4–13.7 ms; the first call is 59 ms, cold atlas + JIT).
+  - Single cold tree: 53–89 ms.
+  - Impostors: 4 variants built and baked (1024² atlas, 8×8 sprites) in 252 ms, so roughly 50 ms per bake.
+- Draw calls per tree: near 2 (bark + leaves), mid 2, crown 1 per InstancedMesh, impostor 1 per InstancedMesh.
+- Far ring (1600×900, camera 120 m up):
+  - r = 260 m, 26,176 trees (10,086 crowns + 16,090 impostors, 4 variants): **9 draw calls, 416k tris, GPU 0.94 ms** (timer query median, p95 1.01); render + readback 1.4 ms.
+  - Same ring, crowns only: 5 calls, 995k tris, **GPU 0.54 ms**. On this GPU the 38-tri crowns are cheaper than alpha-tested impostors (overdraw), so prefer crowns to ~260 m and impostors only farther out.
+  - r = 400 m, 61,975 trees (12,834 crowns + 49,141 impostors): 9 calls, 586k tris, GPU 1.68 ms.
+  - Placement 78–146 ms, sync, for the whole ring. In-game this must go through the job scheduler per tile, as fartrees does.
+
+### Known gaps (M2)
+- Compared with the photos (`spruce-vs-ref.png`), the generated trees are too regular and too full. Real black spruce are scragglier: ragged, uneven limb lengths, gaps, layering skirts and a denser club. Add per-whorl limb drop-outs, a length jitter and broken tops.
+- Colours: near foliage renders bluer and darker than the sunlit photos. The mid gain (1.9) and crown tint (.36) are matched to the near LOD in the viewer [game calibration]; recheck under the game's light and fog.
+- The impostor albedo is yellower than near (blue low).
+- Only black spruce. Next: jack pine, white spruce, balsam fir and tamarack from the same W&P tables, then aspen/birch with `uNormalUp` > 0.
+
+### Upstream bug (octahedral-impostor @ca0046a)
+`createOctahedralImpostorMaterial` replaces `#include <map_fragment>` after inserting its own chunk, and that chunk contains the same include inside a comment. The replace hits the comment, so the impostor shows the whole atlas or black. Fix: replace map_fragment first. Not reported upstream yet.
+
+### Proposals (nothing of yours edited)
+- Globe Builder: a one-line `?tree=1` route in `src/world/globe/entry.ts`, e.g. `if (q.has('tree')) { await import('../../render/trees/viewer'); return; }`, so the viewer opens at `/?tree=1`. Until then use `/tools/tree-viewer.html?tree=1`.
+- Far filler (render/flora/fartrees.ts owner): swap the BatchedMesh LOD for `farRing`'s crown InstancedMesh per species group (crowns ≤ ~260 m, impostors beyond), behind a hook in trees.ts. Ask before the swap. The dark forest floor under thinning trees is a ground-colour mix by far-tree density (core/ground owner).

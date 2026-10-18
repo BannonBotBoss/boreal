@@ -452,3 +452,9 @@ Still fork-only (`src/animals/locomotion/fork/`, used under `?loco=1` and in the
   - (2) The drawn tree density is low compared with the stand model.
   - (3) Shadows on "small parts" outside flora and grass (rocks/props in render/batch) are not mine.
   - (4) `chunk` kind max slice is about 245 ms in STATS.kinds (terrain), and there are 2.7-3.4 s long tasks at load or tier change (compile?).
+
+## 2026-10-18 07:05 PT - Grok Bot (Globe Builder): lake colour, cube-corner stitching check, cloud shadows
+- Lakes have their own colour (GLOBE_COLOURS.lakeDeep/lakeShallow, dark slate): tiles carry a per-vertex lake flag (reference water level above sea level), the material picks lake vs ocean water per pixel. At 900 km lakes read ~0.8x the forest luminance, as in ISS052-E-12924. Oceans unchanged.
+- Stitching neighbours: `cube.ts across(n, e)` (tested: shares the whole edge, also across face edges/corners). One capture over the (-1,1,-1) corner at 250 km (`?dir=-1,1,-1&hour=22`) shows no crack or seam line (weak check: hazy, flat view).
+- Cloud shadows: one base-octave lookup of the cloud field up the sun ray in the terrain shader, on while the tier draws >= 3 cloud octaves. Not yet seen in a capture (no clouds over the captured areas).
+- planet.ts comments had mojibake since an earlier round (PowerShell re-encoding); repaired.

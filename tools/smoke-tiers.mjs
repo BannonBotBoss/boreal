@@ -24,7 +24,9 @@ try {
   let t; for (let k = 0; k < 60 && !t; k++) { await sleep(500); try { t = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); } catch {} }
   const ws = new WebSocket(t.find(x => x.type === 'page').webSocketDebuggerUrl); await new Promise(r => ws.onopen = r);
   let id = 0; const pend = new Map();
+  const trace = []; let traceDone = null;
   ws.onmessage = m => { const d = JSON.parse(m.data); if (d.id && pend.has(d.id)) { pend.get(d.id)(d); pend.delete(d.id); }
+    if (d.method === 'Tracing.dataCollected') trace.push(...d.params.value); if (d.method === 'Tracing.tracingComplete') traceDone?.();
     if (d.method === 'Runtime.exceptionThrown') errors.push('exception: ' + (d.params.exceptionDetails.exception?.description ?? d.params.exceptionDetails.text));
     if (d.method === 'Runtime.consoleAPICalled' && d.params.type === 'error') errors.push('console.error: ' + d.params.args.map(a => a.value ?? a.description ?? '').join(' '));
     if (d.method === 'Log.entryAdded' && d.params.entry.level === 'error' && !/favicon/.test(d.params.entry.url ?? '')) errors.push('log: ' + d.params.entry.text + ' ' + (d.params.entry.url ?? '')); };
@@ -32,11 +34,16 @@ try {
   const ev = async e => { const r = await Promise.race([cdp('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }), sleep(120000).then(() => ({ timeout: true }))]);
     if (r.timeout) throw new Error('evaluate timed out'); if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description ?? r.result.exceptionDetails.text); return r.result?.result?.value; };
   await cdp('Page.enable'); await cdp('Runtime.enable'); await cdp('Log.enable'); await cdp('Page.bringToFront'); await cdp('Emulation.setFocusEmulationEnabled', { enabled: true });
+  // program links (shader compiles in the GPU process: ANGLE/D3D11 links can take 100s of ms there while the page's main thread idles)
+  await cdp('Page.addScriptToEvaluateOnNewDocument', { source: `(() => { const P = WebGL2RenderingContext.prototype, L = window.__links = [], ss = P.shaderSource, lp = P.linkProgram, at = P.attachShader, nm = new WeakMap(), pn = new WeakMap();
+    P.shaderSource = function (sh, src) { nm.set(sh, (/#define SHADER_NAME (\\S+)/.exec(src) || [])[1] || (/#define (USE_CSM|DEPTH_PACKING)/.exec(src) || [])[1] || '?'); return ss.call(this, sh, src); };
+    P.attachShader = function (p, sh) { if (nm.get(sh) !== '?' || !pn.has(p)) pn.set(p, nm.get(sh)); return at.call(this, p, sh); };
+    P.linkProgram = function (p) { L.push([performance.now(), pn.get(p) || '?']); return lp.call(this, p); }; })()` });
   await cdp('Page.navigate', { url: `${base}/?nomenu&hour=11` });
   const t0 = Date.now(); await sleep(3000);
   const loaded = async () => { try { return await ev(`document.readyState === 'complete' && !document.getElementById('loading')`) === true; } catch { return false; } }; // startup can block the page for a minute (cold shader compiles)
   while (!await loaded()) { if (Date.now() - t0 > 300000) throw new Error('loading screen still up after 300 s'); await sleep(1000); }
-  console.log(`loaded in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+  console.log(`loaded in ${((Date.now() - t0) / 1000).toFixed(0)} s, ${await ev('window.__links.length')} program links`);
   const gpu = await ev(`(() => { const c = [...document.querySelectorAll('canvas')].find(c => c.getContext('webgl2')), gl = c?.getContext('webgl2'), x = gl?.getExtension('WEBGL_debug_renderer_info');
     return gl ? (gl.isContextLost() ? 'CONTEXT LOST ' : '') + gl.getParameter(x ? x.UNMASKED_RENDERER_WEBGL : gl.RENDERER) : 'no webgl2 canvas'; })()`);
   console.log('renderer ' + gpu); if (/SwiftShader|WARP|Basic Render|llvmpipe|software|CONTEXT LOST|no webgl2/i.test(gpu)) errors.push('not on the GPU: ' + gpu); // a 2 fps run with an idle main thread is the GPU process, not app code
@@ -47,12 +54,19 @@ try {
     for (const c of document.querySelectorAll('canvas')) { const md = c.getContext('webgl2')?.getExtension('WEBGL_multi_draw'); if (md) for (const k of ['multiDrawElementsWEBGL', 'multiDrawArraysWEBGL', 'multiDrawElementsInstancedWEBGL', 'multiDrawArraysInstancedWEBGL']) { const f = md[k]; if (f) md[k] = function (...a) { calls++; return f.apply(this, a); }; } }
     const raf = () => new Promise(r => requestAnimationFrame(r)), wait = ms => new Promise(r => setTimeout(r, ms)), out = [];
     G.auto = false; G.capTier = 0; G.probeCap = 0;
-    for (let t = 0; t < Q.LADDER.length; t++) { G.tier = t; await wait(${holdMs}); let frames = 0, sum = 0; const s = performance.now();
-      while (performance.now() - s < 1000) { calls = 0; await raf(); frames++; sum += calls; } out.push({ tier: Q.LADDER[t].name, ssao: Q.LADDER[t].ssao, frames, draws: Math.round(sum / frames), gpu: G.gpuMs === undefined ? '-' : G.gpuMs.toFixed(1) }); }
+    for (let t = 0; t < Q.LADDER.length; t++) { const l0 = window.__links.length; G.tier = t; await wait(${holdMs}); let frames = 0, sum = 0; const s = performance.now(), l1 = window.__links.length;
+      while (performance.now() - s < 1000) { calls = 0; await raf(); frames++; sum += calls; } out.push({ tier: Q.LADDER[t].name, ssao: Q.LADDER[t].ssao, frames, draws: Math.round(sum / frames), gpu: G.gpuMs === undefined ? '-' : G.gpuMs.toFixed(1), links: l1 - l0, linksSampled: window.__links.length - l1 }); }
     G.auto = true; return JSON.stringify(out); })()`));
   console.log('gpu after tiers: ' + gpuMem());
-  for (const r of res) console.log(`${r.tier.padEnd(9)} ssao ${r.ssao}  ${r.frames} frames/s  ${r.draws} draws/frame  gpu ${r.gpu} ms`);
+  for (const r of res) console.log(`${r.tier.padEnd(9)} ssao ${r.ssao}  ${r.frames} frames/s  ${r.draws} draws/frame  gpu ${r.gpu} ms  links ${r.links} (+${r.linksSampled} in the 1 s sample)`);
   const dead = res.filter(r => r.frames < 5), empty = res[0].draws < 150; // Ultra draws ~600 with the world built, ~90 with terrain only
+  if (dead.length) console.log('links in the last 20 s by shader: ' + await ev(`(() => { const n = performance.now(), m = new Map(); for (const [t, k] of window.__links) if (n - t < 20000) m.set(k, (m.get(k) || 0) + 1); return JSON.stringify([...m].sort((a, b) => b[1] - a[1]).slice(0, 10)); })()`));
+  if (dead.length) { // where a dead frame goes: 3 s browser trace, wall time per event name and thread (top 15)
+    await cdp('Tracing.start', { categories: 'devtools.timeline,disabled-by-default-devtools.timeline.frame,viz,cc,gpu,benchmark,toplevel,blink.user_timing', transferMode: 'ReportEvents' });
+    await sleep(3000); const done = new Promise(r => traceDone = r); await cdp('Tracing.end'); await Promise.race([done, sleep(20000)]);
+    const tn = new Map(); for (const e of trace) if (e.ph === 'M' && e.name === 'thread_name') tn.set(e.pid + ':' + e.tid, e.args.name);
+    const agg = new Map(); for (const e of trace) if (e.ph === 'X' && e.dur) { const k = (tn.get(e.pid + ':' + e.tid) ?? e.tid) + ' ' + e.name; agg.set(k, (agg.get(k) ?? 0) + e.dur); }
+    console.log('trace 3 s, ms per thread+event:'); for (const [k, v] of [...agg].sort((a, b) => b[1] - a[1]).slice(0, 15)) console.log('  ' + (v / 1000).toFixed(0).padStart(6) + ' ' + k); }
   if (dead.length) errors.push('not rendering at ' + dead.map(r => r.tier).join(', ') + ' (' + await ev(`document.visibilityState + ' focus=' + document.hasFocus()`) + ')');
   if (empty) errors.push(`world not built: ${res[0].draws} draws at ${res[0].tier}`);
   ok = !errors.length; ws.close();

@@ -21,9 +21,10 @@ import { createFarLayer } from './farLayer';
 import { TRANSITION, transitionPath, planetToGame, gameBasis, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
 import { GLOBE_ENTRY_ALT, HANDOFF, landSpawn } from './handoff';
 import { PLANET, GLOBE_COLOURS } from './planet';
-import { setPatchFade } from '../../render/fade';
+import { setPatchFade, setPatchFar } from '../../render/fade';
+import { LOG_DEPTH } from './logDepth';
 import { GOVERNOR, resetGovernor } from '../../core/quality';
-import { INTEREST, pending } from '../../core/interest';
+import { INTEREST, pending, queued, STATS as JOBS } from '../../core/interest';
 import { CHUNK_SIZE, heightAt } from '../../core/world';
 import { EXPOSURE } from '../../core/light';
 import { clamp01, smoothstep } from '../../proc/math';
@@ -34,8 +35,17 @@ import { clamp01, smoothstep } from '../../proc/math';
  *  bandGain, lakeShallow/lakeDeep: the globe's radiance scale and lake colours eased to by fadeFull (from 1 / the globe's own
  *  lakes at the band top), matched to the game patch seen from 600 m at Ultra; ring: the patch = the chunks within ring of
  *  the player's chunk (readiness and the fade disc, ring x CHUNK_SIZE); jobMs: chunk job budget per frame while the descent
- *  waits for them (the sim is frozen in the band, so its time goes to the patch). */
-export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .25, fadeSec: .8, bandGain: 2.6, lakeShallow: [.017, .063, .07] as [number, number, number], lakeDeep: [.012, .047, .056] as [number, number, number], ring: 2, jobMs: 10 };
+ *  waits for them (the sim is frozen in the band, so its time goes to the patch); prepAlt: descending over home below this
+ *  (globe mode), the landing spot is chosen and its chunks start building (terrain in the chunk worker pool, 506d0aa). */
+export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .03, fadeSec: .8, bandGain: 2.6, lakeShallow: [.017, .063, .07] as [number, number, number], lakeDeep: [.012, .047, .056] as [number, number, number], ring: 2, jobMs: 10, prepAlt: 3000, haze: .9, hazeLow: 60, hazeTop: 800, occ: [15, .03] as [number, number], pop: [.55, .95] as [number, number], bandAO: 0, bandContact: 1 };
+/** bandAO: GTAO in the band (x the tier's). 0: over the far layer (cleared depth) it drew a dark square and specks around the
+ *  patch at 600 m, so ambient occlusion comes on with the game (handover); contact shadows stay. */
+/** pop: what cannot dither (animals, the wolf: their materials are not opted in) appears object by object at a fade between
+ *  pop[0] and pop[1] (a fixed per-object threshold), so they come in over the last part of the dither, not all at 1. */
+/** haze: the patch blends toward the globe pixel behind it (the far layer, per pixel) by haze x smoothstep(hazeLow, hazeTop,
+ *  height), so the game patch (tree greens, a dark forest floor, the water) meets the globe at the globe's own colour high up
+ *  and keeps its own look by the handover; occ: [metres, fraction of the distance] a globe surface must be in front of a
+ *  patch fragment to hide it (globe tiles are coarser than the game terrain). [game calibration] */
 type View = { scene: THREE.Scene; camera: THREE.PerspectiveCamera; canvas: HTMLCanvasElement; photoreal: { renderer: THREE.WebGLRenderer } };
 export interface InPageHost { player(): { x: number; z: number; yaw: number }; place(x: number, z: number, yaw: number): void; save(): void; notice?(m: string): void }
 type FxTier = { ssao: number; contact: number; rays: number };
@@ -56,6 +66,7 @@ function controller(view: View, host: InPageHost) {
   const renderer = view.photoreal.renderer, far = createFarLayer(), hold = createGovernorHold(GOVERNOR, resetGovernor);
   let globe: Globe | null = null, mode: TransitionMode = 'game', down = true, phase: 'fly' | 'blend' = 'fly';
   let next: 'globe' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
+  let prep: { x: number; z: number } | null = null; // landing chosen (and chunks building) while still in globe mode
   let h = 0, h0 = 1, blend = 0, fade = 0, fadeT = 0, ready = false, readySeen = false, needStart = false, placedFrame = 0, frameNo = 0, lastT = 0, cameraTouched = false;
   const start = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, end = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   const cam = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, gcam = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
@@ -90,47 +101,63 @@ function controller(view: View, host: InPageHost) {
     const g = globe!, v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]);
     start.p.set(pg.x, pg.y, pg.z); start.q.setFromRotationMatrix(gameBasis(g.planet, pg.x, pg.z, tmpM)).invert().multiply(g.camera.quaternion);
     h0 = Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)); fwd.set(-Math.sin(at.yaw), -Math.cos(at.yaw));
-    const lim = PLANET.home.halfSize - PLANET.home.feather - HANDOFF.margin, clampL = (u: number) => Math.max(-lim, Math.min(lim, u));
-    const s = landSpawn({ x: clampL(pg.x + fwd.x * h0), z: clampL(pg.z + fwd.y * h0) }); host.place(s.x, s.z, at.yaw); placedFrame = frameNo;
+    let s = landingFor(pg.x, pg.z, fwd, h0);
+    if (prep && Math.hypot(s.x - prep.x, s.z - prep.z) < 2 * CHUNK_SIZE) s = prep; // the spot prepared on the way down (chunks already building)
+    else { host.place(s.x, s.z, at.yaw); placedFrame = frameNo; } prep = null;
     land.set(s.x, ground(s.x, s.z), s.z); h0 = Math.max(TRANSITION.handover + 1, pg.y - land.y); h = h0;
     off.set(start.p.x - (land.x - fwd.x * h0), start.p.y - (land.y + h0), start.p.z - (land.z - fwd.y * h0)); // decays to 0 with height
     phase = 'fly'; blend = 0; fadeT = 0; readySeen = false; down = true; lastT = performance.now(); setMode('band');
+  }
+  /** The landing ahead along the heading, one camera height away, inside the playable region, on dry land. */
+  function landingFor(x: number, z: number, f: THREE.Vector2, hh: number) {
+    const lim = PLANET.home.halfSize - PLANET.home.feather - HANDOFF.margin, clampL = (u: number) => Math.max(-lim, Math.min(lim, u));
+    return landSpawn({ x: clampL(x + f.x * hh), z: clampL(z + f.y * hh) });
+  }
+  /** Globe mode, descending over home below prepAlt: choose the landing the descent will use (from the band top) and place
+   *  the player there now, so the patch chunks build during the last of the globe zoom. */
+  function prepare(yaw: number) {
+    const g = globe!, v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]), f = new THREE.Vector2(-Math.sin(yaw), -Math.cos(yaw));
+    const s = landingFor(pg.x, pg.z, f, Math.min(TRANSITION.bandTop, Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z))));
+    host.place(s.x, s.z, yaw); placedFrame = frameNo; prep = { x: s.x, z: s.z };
   }
   function toGlobe() { restoreScene(); globe!.drive(null); setMode('globe'); }
   function toGame() { restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
   function restoreScene() {
     for (const [o, v] of hidden) o.visible = v; hidden.clear();
-    if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; setPatchFade(1); bandLook(0);
+    if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; setPatchFade(1); setPatchFar(null); bandLook(0);
   }
   const isChunkRoot = (o: THREE.Object3D) => o.type === 'Group' && (o.children[0]?.userData.inspect as { type?: string } | undefined)?.type === 'terrain';
   const hasLight = (o: THREE.Object3D) => (o as THREE.Light).isLight || !!o.getObjectByProperty('isLight', true);
   const faded = (o: THREE.Object3D) => !!((o as THREE.Mesh).material as THREE.Material | undefined)?.userData?.patchFade;
   const dithers = new WeakMap<THREE.Object3D, boolean>(); // grass, flora, far trees: every mesh under it dithers with the patch (render/fade)
   const allFaded = (o: THREE.Object3D) => { let v = dithers.get(o); if (v === undefined) { let n = 0, ok = true; o.traverse(c => { if ((c as THREE.Mesh).isMesh) { n++; ok &&= faded(c); } }); v = ok && n > 0; dithers.set(o, v); } return v; };
+  const popAt = (o: THREE.Object3D) => { const u = (o.id * .6180339887) % 1; return INPAGE.pop[0] + (INPAGE.pop[1] - INPAGE.pop[0]) * u; };
   /** Hide what cannot dither while the patch is partly in (and the sky dome for the whole band); restore the rest. */
   function hideForBand(scene: THREE.Scene) {
     const now = new Set<THREE.Object3D>(), partial = fade < 1;
     for (const o of scene.children) {
       if (isChunkRoot(o)) { if (partial) for (const m of o.children) if (!faded(m)) now.add(m); continue; }
       if (hasLight(o) || (!(o as THREE.Mesh).isMesh && (o as THREE.Points).type !== 'Points' && !o.children.length)) continue;
-      if (o.renderOrder < 0 || o.type === 'Points' || (partial && !allFaded(o))) now.add(o); // sky (-2), cloud dome (-1), precipitation; everything else that cannot dither while partial
+      if (o.renderOrder < 0 || o.type === 'Points' || (partial && !allFaded(o) && fade < popAt(o))) now.add(o); // sky (-2), cloud dome (-1), precipitation; everything else that cannot dither while partial
     }
     for (const [o, v] of hidden) if (!now.has(o)) { o.visible = v; hidden.delete(o); }
     for (const o of now) { if (!hidden.has(o)) hidden.set(o, o.visible); o.visible = false; }
   }
 
   const api = {
+    /** dev (the check script): chunk job scheduler state */
+    jobs: () => ({ q: queued(), run: JOBS.jobsRun, deferred: JOBS.deferred, lastMs: +JOBS.lastFrameMs.toFixed(1), kinds: JSON.parse(JSON.stringify(JOBS.kinds)) as unknown }),
     get mode() { return mode; }, get globe() { return globe; }, get fade() { return fade; }, get height() { return h; }, STATS, INPAGE, far,
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */
     ascend(): boolean {
       if (mode !== 'game') return true;
       if (!globe) { void loadGlobe().then(() => api.ascend()); return true; } // first use before the prewarm finished
-      const g = globe; host.save(); hold.hold(); g.resumeWorkers(); down = false; needStart = true; lastT = performance.now(); setMode('band');
+      const g = globe; prep = null; host.save(); hold.hold(); g.resumeWorkers(); down = false; needStart = true; lastT = performance.now(); setMode('band');
       return true;
     },
     blocksGame: () => mode !== 'game',
     /** main's runJobs budget: undefined = the default; larger while the descent waits for the patch chunks */
-    jobBudgetMs: () => (mode === 'band' && down && !readySeen ? INPAGE.jobMs : undefined),
+    jobBudgetMs: () => ((mode === 'band' && down && !readySeen) || (mode === 'globe' && prep && !chunksReady()) ? INPAGE.jobMs : undefined),
     ownsInput: () => mode !== 'game',
     /** main's draw slot: globe mode draws the globe to the screen; band and game draw the game (buildScene calls the hooks). */
     frame(drawGame: () => void) {
@@ -138,6 +165,8 @@ function controller(view: View, host: InPageHost) {
       if (next) { if (next === 'globe') toGlobe(); else toGame(); next = null; }
       if (mode === 'globe' && globe) {
         const o = globe.overHome;
+        if (o && globe.descending && globe.altitude < INPAGE.prepAlt && !prep) prepare(globe.headingYaw);
+        else if (prep && globe.altitude > INPAGE.prepAlt * 1.5) prep = null; // climbed away: choose again next time
         if (o && globe.descending && globe.altitude < TRANSITION.bandTop) descend({ ...o, yaw: globe.headingYaw });
         else {
           const t0 = performance.now(), w = renderer.domElement.width, hh = renderer.domElement.height;
@@ -188,10 +217,12 @@ function controller(view: View, host: InPageHost) {
       if (savedBg === undefined) savedBg = scene.background; scene.background = far.texture;
       const s = bandLook(smoothstep(TRANSITION.bandTop, TRANSITION.fadeFull, h)); scene.backgroundIntensity = (INPAGE.gain + (INPAGE.bandGain - INPAGE.gain) * s) / EXPOSURE.base; // the globe's own look at the band top -> matched to the game by fadeFull
       const p = host.player(); setPatchFade(fade, { x: p.x, z: p.z, r: Math.min(INTEREST.mid, INPAGE.ring * CHUNK_SIZE) }); hideForBand(scene); // disc inside the chunks chunksReady checked
+      // the patch's aerial blend toward the globe behind it, and globe terrain in front of the patch hides it (render/fade, uniforms)
+      setPatchFar({ color: far.texture, depth: far.target.depthTexture, mix: Math.min(1, INPAGE.haze * smoothstep(INPAGE.hazeLow, INPAGE.hazeTop, h)), scale: scene.backgroundIntensity, logFC: LOG_DEPTH.uniform.value, occ: INPAGE.occ });
     },
     /** buildScene's screen-space effects in the band: god rays off (the far layer has no depth, so its ground would read as sky
      *  in the ray mask), ambient occlusion only once the patch is fully in (GTAO's normal pass cannot dither). */
-    fx(t: FxTier): FxTier { return mode === 'band' ? { ssao: fade >= 1 ? t.ssao : 0, contact: t.contact, rays: 0 } : t; },
+    fx(t: FxTier): FxTier { return mode === 'band' ? { ssao: fade >= 1 ? t.ssao * INPAGE.bandAO : 0, contact: t.contact * INPAGE.bandContact, rays: 0 } : t; },
     /** Behind the loading screen: create the globe, compile its programs for the far layer AND the screen, build the tiles over
      *  the player at the entry altitude, compile the far-layer background program, then terminate the workers. */
     async prewarm() {

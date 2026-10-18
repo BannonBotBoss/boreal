@@ -7,6 +7,9 @@ import { lighting, sunPosition } from '../core/timeOfDay';
 import { WEATHER, shortwave, weatherAt } from '../core/weather';
 import { LUX, SYNODIC, exposureFor, moonAge, moonLux, sunColour } from '../core/light';
 import { LIGHTING } from './pbr';
+import { createStars, skyUniforms } from './stars';
+import { NIGHT_SKY, equatorialToWorld, galacticRows, limitingMagnitude, localSiderealHours, moonIllumination } from '../core/celestial';
+import { smoothstep } from '../proc/math';
 
 /**
  * Procedural sky: three.js's physically based Sky (Preetham scattering) driven by the real sun position,
@@ -19,19 +22,39 @@ void main() {
   vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   gl_Position = p.xyww; // always at the far plane, behind the world
 }`;
+/** The cloud field, shared by the dome and by the stars and meteors (render/stars), so clouds hide what is behind them. */
+export const SKY_CLOUD = /* glsl */`
+uniform float uSeed, uCover; uniform vec2 uDrift;
+float skyCloudNoise(vec3 d) { // project onto a flat cloud layer so clouds shrink toward the horizon; wind drifts them east
+  vec2 uv = d.xz / (max(d.y, 0.0) + 0.08) * 1.6 + uDrift; // drift = integrated wind of the top weather layer
+  return fbm(uv, uSeed) * 0.75 + fbm(uv * 3.1 + 5.0, uSeed) * 0.25;
+}
+float skyCloudAlpha(vec3 d) { return d.y <= 0.0 ? 0.0 : smoothstep(uCover, uCover + 0.18, skyCloudNoise(d)) * smoothstep(0.0, 0.15, d.y) * 0.95; }`;
 const CLOUD_FRAG = /* glsl */`
-uniform float uTime, uSeed, uCover, uDay, uGolden;
-uniform vec2 uDrift;
+uniform float uTime, uDay, uGolden, uMilky, uK;
 uniform vec3 uSunDir, uSunColor;
+uniform mat3 uWorldToGal;
 varying vec3 vDir;
 ${GLSL_NOISE}
-#define hash(p) hash2s(p, uSeed)
+${SKY_CLOUD}
+// The Milky Way in galactic coordinates: a band widening into the bulge toward Sagittarius, mottled star clouds, and the dust
+// of the Great Rift from Cygnus to Sagittarius splitting it (overhead at midnight in August at Kenora).
+vec3 milkyWay(vec3 d) {
+  vec3 g = uWorldToGal * d; float b = asin(clamp(g.z, -1.0, 1.0)), l = atan(g.y, g.x);
+  float width = 0.1 + 0.08 * exp(-l * l / 0.6);
+  float band = exp(-b * b / (width * width)) * (0.25 + 0.75 * (0.5 + 0.5 * cos(l)));
+  float bulge = exp(-(l * l / 0.09 + b * b / 0.025)) * 1.3;
+  vec2 q = vec2(l * 7.0, b * 18.0);
+  float big = fbm(q, uSeed + 3.0), fine = fbm(q * 3.7 + 11.0, uSeed + 7.0);
+  float lum = (band + bulge) * (0.3 + 1.2 * big * (0.55 + 0.45 * fine));
+  float rift = exp(-pow((b - 0.03 - 0.02 * sin(l * 3.0)) / (0.024 + 0.012 * fine), 2.0)) * smoothstep(1.15, 0.75, abs(l - 0.75));
+  lum *= 1.0 - 0.8 * rift * smoothstep(0.3, 0.6, big + 0.2);
+  return mix(vec3(0.72, 0.8, 1.0), vec3(1.0, 0.85, 0.66), exp(-l * l / 0.5)) * lum;
+}
 void main() {
   vec3 d = normalize(vDir);
   if (d.y <= 0.0) discard;
-  // Project onto a flat cloud layer so clouds shrink toward the horizon; wind drifts them east.
-  vec2 uv = d.xz / (d.y + 0.08) * 1.6 + uDrift; // drift = integrated wind of the top weather layer
-  float n = fbm(uv, uSeed) * 0.75 + fbm(uv * 3.1 + 5.0, uSeed) * 0.25;
+  float n = skyCloudNoise(d);
   float cloud = smoothstep(uCover, uCover + 0.18, n) * smoothstep(0.0, 0.15, d.y);
   // Lit from the sun side, warm at sunrise/sunset, faint moonlit grey at night; denser cores are darker.
   float facing = 0.5 + 0.5 * dot(d, uSunDir);
@@ -39,14 +62,14 @@ void main() {
   vec3 col = mix(vec3(0.16, 0.17, 0.22), dayCol, uDay);
   col = mix(col, uSunColor * (0.75 + 0.45 * facing), uGolden * 0.55);
   col *= mix(1.0, 0.82, smoothstep(0.6, 0.95, n));
-  // Stars: hashed cells, only at night and where the sky is clear.
-  vec3 s = d * 380.0; vec2 cell = floor(s.xz / max(d.y, 0.2)) + floor(s.y);
-  float star = step(0.9972, hash(cell)) * (0.6 + 0.4 * sin(uTime * 3.0 + hash(cell + 3.0) * 40.0));
-  // Layers, back to front: night darkening over the scattering sky, then stars, then clouds.
+  // Layers, back to front: night darkening over the scattering sky, then the Milky Way (emission), then clouds.
+  // The stars themselves are their own draw (render/stars), after this dome, dimmed there by the same clouds.
   float night = 1.0 - uDay;
-  vec3 c = vec3(0.015, 0.025, 0.06); float a = night * 0.9;
-  float sa = star * night * smoothstep(0.05, 0.3, d.y);
-  c = mix(c * a, vec3(0.92, 0.94, 1.0), sa); a = sa + a * (1.0 - sa);
+  vec3 c = vec3(0.015, 0.025, 0.06); float a = night * 0.9; c *= a;
+  if (uMilky > 0.0) { // extinction as for the stars: k (X - 1) mag, Kasten & Young air mass
+    float cz = d.y, z = degrees(acos(clamp(cz, 0.0, 1.0))), X = z >= 89.9 ? 40.0 : 1.0 / (cz + 0.50572 * pow(96.07995 - z, -1.6364));
+    c += milkyWay(d) * uMilky * pow(10.0, -0.4 * uK * (X - 1.0)) * smoothstep(0.0, 0.12, d.y);
+  }
   float ca = cloud * 0.95;
   c = col * ca + c * (1.0 - ca); a = ca + a * (1.0 - ca);
   gl_FragColor = vec4(c / max(a, 1e-4), a);
@@ -58,12 +81,17 @@ export function createSky(scene: THREE.Scene) {
   const sky = new Sky(); sky.scale.setScalar(600); sky.layers.enable(1); scene.add(sky); // layer 1 = GI probe capture
   const u = sky.material.uniforms;
   u.turbidity.value = 2.5; u.rayleigh.value = 2.2; u.mieCoefficient.value = .004; u.mieDirectionalG.value = .8;
+  // Cloud uniforms are shared objects: the dome, the stars and the meteors read the same values.
+  const cloudU = { uSeed: { value: (WORLD_SEED % 997) * .37 }, uCover: { value: .47 }, uDrift: { value: new THREE.Vector2() } };
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(550, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.ShaderMaterial({
     vertexShader: CLOUD_VERT, fragmentShader: CLOUD_FRAG, side: THREE.BackSide, transparent: true, depthWrite: false, fog: false,
-    uniforms: { uTime: { value: 0 }, uSeed: { value: (WORLD_SEED % 997) * .37 }, uCover: { value: .47 }, uDrift: { value: new THREE.Vector2() }, uDay: { value: 1 }, uGolden: { value: 0 },
-      uSunDir: { value: new THREE.Vector3() }, uSunColor: { value: new THREE.Color() } },
+    uniforms: { ...cloudU, uTime: { value: 0 }, uDay: { value: 1 }, uGolden: { value: 0 }, uMilky: { value: 0 }, uK: { value: NIGHT_SKY.extinction },
+      uWorldToGal: { value: new THREE.Matrix3() }, uSunDir: { value: new THREE.Vector3() }, uSunColor: { value: new THREE.Color() } },
   }));
   clouds.renderOrder = -1; sky.renderOrder = -2; scene.add(clouds);
+  const starU = skyUniforms(cloudU), stars = createStars(scene, SKY_CLOUD, starU);
+  const G = new THREE.Matrix3().set(...galacticRows().flat() as [number, number, number, number, number, number, number, number, number]), tmpM = new THREE.Matrix3();
+  let adapt = 0; const fwd = new THREE.Vector3();
   const sunLight = new THREE.DirectionalLight(0xffebc3, 3); scene.add(sunLight, sunLight.target);
   const moonLight = new THREE.DirectionalLight(0x9fb4e6, .35); scene.add(moonLight, moonLight.target);
   const hemi = new THREE.HemisphereLight(0xf1f5dd, 0x526753, 2.7); scene.add(hemi);
@@ -77,7 +105,7 @@ export function createSky(scene: THREE.Scene) {
   const precip = new THREE.Points(precipGeo, precipMat); precip.frustumCulled = false; scene.add(precip);
   const drift = new THREE.Vector2(); let lastTime = 0; const fogFar = (scene.fog as THREE.Fog).far, fogNear = (scene.fog as THREE.Fog).near;
   return {
-    sky, sunLight, hemi,
+    sky, sunLight, hemi, stars,
     /** Moves the sun and recolours sky, light and fog for the hour; the sky follows the camera. */
     update(hour: number, time: number, camera: THREE.Camera, focus: THREE.Vector3) {
       const sun = sunPosition(hour), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
@@ -122,6 +150,17 @@ export function createSky(scene: THREE.Scene) {
       // fog is offset by the camera's height above the focus [game calibration]. At eye height the offset is ~2 m (no change).
       { const f = scene.fog as THREE.Fog, alt = Math.max(0, camera.position.y - focus.y); f.far = Math.min(fogFar, fogV) + alt; f.near = Math.min(fogNear, fogV * .1) + alt; }
       cu.uSunDir.value.copy(dir); cu.uSunColor.value.copy(sunLight.color);
+      // Night sky (core/celestial): the sphere turns with sidereal time; twilight, moonlight and haze set the limiting magnitude;
+      // looking up adapts the eye (fainter stars and the Milky Way come out, everything brightens).
+      camera.getWorldDirection(fwd);
+      const look = NIGHT_SKY.look, target = smoothstep(Math.sin(look.from * Math.PI / 180), Math.sin(look.to * Math.PI / 180), fwd.y);
+      adapt += (target - adapt) * (1 - Math.exp(-dt / (target > adapt ? look.rise : look.fall)));
+      const lst = localSiderealHours(WEATHER.day, hour), skyHaze = Math.max(0, Math.min(1, ((u.turbidity.value as number) - 2) / 8));
+      const lm = limitingMagnitude(sun.elevation, moonIllumination(age), moon.elevation, skyHaze, adapt), gain = 1 + look.gain * adapt;
+      stars.update(time, WEATHER.day, hour, lst, lm, gain);
+      starU.uSeeing.value = 1 + .05 * Math.hypot(w.wind.x, w.wind.z); // windier upper air, deeper twinkling [game calibration]
+      tmpM.fromArray(equatorialToWorld(lst)).transpose(); cu.uWorldToGal.value.multiplyMatrices(G, tmpM);
+      cu.uMilky.value = smoothstep(4.6, 6.8, lm) * .055 * (1 + 1.2 * adapt) * (1 - light.day);
       return { sun, light, dir };
     },
   };

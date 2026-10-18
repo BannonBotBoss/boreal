@@ -2,7 +2,7 @@
  * Locomotion lab (dev page tools/locomotion-lab.html). One test quadruped walks a circle over a chosen terrain, driven
  * by the locomotion layer. Params: ?terrain=flat|hills|world  ?gait=auto|walk|trot|pace|canter|gallop|bound|pronk
  * ?speed=<m/s>  ?lod=near|mid  ?rig=stick|real  ?t=<seconds to pre-simulate>  ?cam=side|follow  ?pause=1 (freeze after ?t)
- * ?posture=key:value,... (override posture.ts)  ?cam=profile (eye-level side view, for comparing with reference photos)  ?hide=body,legs,feet,ik  ?raw=1 (springs off)  ?ui=0 (hide the panel)
+ * ?seed=<n> (coat variety)  ?posture=key:value,... (override posture.ts)  ?cam=profile (eye-level side view, for comparing with reference photos)  ?hide=body,legs,feet,ik  ?raw=1 (springs off)  ?ui=0 (hide the panel)
  * ?pounce=1 (a pounce at t = 1 s and every 3 s after; P key or the button pounces any time)
  */
 import * as THREE from 'three';
@@ -69,7 +69,7 @@ if (q.get('rig') === 'real' || q.get('rig') === 'orig') void loadReal();
 async function loadReal() {
   // ?rig=orig loads Claude's original rig (unposed by us) for the before/after budget numbers in ?stats=1
   const { createPlayerWolf } = q.get('rig') === 'orig' ? await import('../../render/playerWolf') as unknown as typeof import('./fork/playerRig') : await import('./fork/playerRig');
-  const wolf = createPlayerWolf(1400); scene.add(wolf.root);
+  const wolf = createPlayerWolf(Number(q.get('seed') ?? 1400)); scene.add(wolf.root); // ?seed= shows the seeded coat variety
   if (q.get('stats') === '1') setTimeout(() => statsOf(wolf.root), 1500);
   wolf.root.traverse(o => { o.castShadow = true; if ((o as THREE.Mesh).isMesh) realMeshes.push(o); });
   realChains = wolf.loco.chains; stick.root.visible = false; applyLayers();

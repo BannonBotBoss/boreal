@@ -8,15 +8,16 @@
  *   girdle Euler order 'ZXY' so the sideways swing (z) is applied outside the girdle pitch (x), as the IK assumes;
  *   hook 2 also reads legPose.carry (walking head and tail carry);
  *   visual fixes (Matthew, 2026-10-18): skin from fork/bodyTubes.ts (wolfTubes + shapeBody), dark amber non-emissive eyes;
- *   round 2: PHOTO_COAT instead of the seeded wolfCoat, and furStyle() options for the same 13 000 fur cards.
+ *   round 2: photo coat varied by the seeded wolfCoat (photoVariant), and furStyle() options for the same 13 000 fur cards;
+ *   round 3: shorter/broader/rounder ears, heavier muzzle and brow, leg fur covering the leg, darker paws with toe grooves.
  */
 import * as THREE from 'three';
 import { WOLF_SCALE, type WolfMode } from '../../../core/wolfModes';
 import { AnimalBrain, quadrupedPose, WOLF_LEGS } from '../../../core/animalBehavior';
 import { pushProgress } from '../../../core/rocks';
-import { buildBody } from '../../../core/body';
+import { buildBody, wolfCoat } from '../../../core/body';
 import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth } from '../../../core/wolfBody';
-import { PHOTO_COAT, furStyle, shapeBody, wolfTubes } from './bodyTubes'; // FORK: reshaped skin, photo coat, fur style
+import { furStyle, photoVariant, shapeBody, wolfTubes } from './bodyTubes'; // FORK: reshaped skin, photo coat with seeded variety, fur style
 import { buildFurCards, furCardMaterial } from '../../../render/furCards';
 import type { LegPose } from '../signals';
 
@@ -61,10 +62,10 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   });
 
   // Skin: built once at the straight bind pose, then bound to the skeleton. Fur cards grow from it.
-  const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : PHOTO_COAT /* FORK: coat from the reference photo */));
-  const coat = portrait ? PORTRAIT_COAT : PHOTO_COAT /* FORK: coat from the reference photo */;
+  const coat = portrait ? PORTRAIT_COAT : photoVariant(wolfCoat(seed)); // FORK: photo coat, varied by Claude's seeded wolfCoat
+  const body = buildBody(wolfTubes(coat));
   const clear = sculptWolf(body, portrait ? { ...coat, belly: [.7, .66, .58] } : coat); // portrait: cream cheeks in the muzzle gradient
-  shapeBody(body); // FORK: flat soles with toe grooves; fur off the legs and belly, onto the neck and back
+  shapeBody(body, coat); // FORK: flat soles with toe grooves; fur off the legs and belly, onto the neck and back
   // Brow shelf fur: short, swept back and outward over the ridge.
   const browAt = (p: [number, number, number]) => {
     for (const side of [-1, 1]) {

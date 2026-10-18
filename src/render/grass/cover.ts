@@ -13,13 +13,10 @@
  */
 import { CHUNK_SIZE, heightAt, WORLD_SEED } from '../../core/world';
 import { RENDER } from '../../core/renderSettings';
-import { LEVEL } from '../../core/tuning';
-import { STAGES, lakeAt, flowGrid } from '../../core/stages/elevation';
-import { twi } from '../../core/stages/flow';
-import { riverAt } from '../../core/stages/rivers';
+import { siteAt, type Site } from '../../core/flora/site';
 import { CELL } from '../../core/ground';
 import { hash, random, sample, type Dist } from '../../proc/rng';
-import { clamp01, smoothstep } from '../../proc/math';
+import { smoothstep } from '../../proc/math';
 
 /** profile: 0 grass leaf (convex taper), 1 sedge leaf (straight taper, keeled/stiff), 2 sprig (stem + elliptic leaf: shrubs). */
 export interface CoverSpecies {
@@ -54,24 +51,7 @@ export const COVER_SPECIES: CoverSpecies[] = [
     base: [.12, .072, .036], tip: [.048, .084, .03], fall: [.0625, .0875, .0375] },
 ];
 
-export interface Site { water: boolean; slopeDeg: number; wet: number; rock: number; h: number }
-/** The site at a point from the world stages (no state). wet: TWI (stage 2a) in staged mode, else height above the shore. */
-export function siteAt(x: number, z: number): Site {
-  const h = heightAt(x, z), e = 1, gx = (heightAt(x + e, z) - heightAt(x - e, z)) / (2 * e), gz = (heightAt(x, z + e) - heightAt(x, z - e)) / (2 * e);
-  const slopeDeg = Math.atan(Math.hypot(gx, gz)) * 180 / Math.PI;
-  let water = h < LEVEL.waterSurface + .03, wet: number;
-  if (STAGES.on) {
-    const rv = riverAt(STAGES.seed, x, z); water ||= !!lakeAt(STAGES.seed, x, z) || (!!rv && rv.d < rv.half + rv.bank * .5); // no blades in lakes or river channels (bed + inner bank)
-    const fl = flowGrid(STAGES.seed), n = fl.n, fx = x / fl.cell - .5, fz = z / fl.cell - .5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, w = (k: number) => ((k % n) + n) % n;
-    const t = (a: number, b: number) => twi(fl, w(b) * n + w(a)); // TWI bilinear between cell centres (avoids 30 m steps)
-    const T = t(i, j) * (1 - u) * (1 - v) + t(i + 1, j) * u * (1 - v) + t(i, j + 1) * (1 - u) * v + t(i + 1, j + 1) * u * v;
-    wet = smoothstep(5, 12, T); // TWI 5 (ridge) .. 12 (valley floor) mapped to the wetness axis [game calibration, verify against FEC moisture regimes]
-  } else wet = clamp01((LEVEL.shore + 2.5 - h) / 4); // same proxy as render/trees treeSpecies
-  wet = Math.max(wet, 1 - smoothstep(0, 1.2, h - LEVEL.waterSurface)); // shoreline: saturated within ~1 m above water
-  // Bedrock: upland band = Shield ridges (thin soil, outcrop); steep ground sheds soil. Talus/till repose ≈ 35° (Selby 1993, Hillslope Materials) [verify]
-  const rock = Math.max(smoothstep(LEVEL.upland - .4, LEVEL.upland + 1.2, h), smoothstep(28, 38, slopeDeg));
-  return { water, slopeDeg, wet, rock, h };
-}
+export { siteAt, type Site } from '../../core/flora/site';
 export interface Cover { density: number; weights: number[] }
 /** Default density field: 0..1 of the tier's max blade density, plus per-species weights. */
 export function defaultCover(x: number, z: number, s = siteAt(x, z)): Cover {
@@ -81,7 +61,7 @@ export function defaultCover(x: number, z: number, s = siteAt(x, z)): Cover {
   const pocket = random(hash(`cover:${WORLD_SEED}:${Math.floor(x / 4)}:${Math.floor(z / 4)}`))();
   const bare = s.rock > pocket ? 1 : 0;
   // closed forest floor is feathermoss-dominated, graminoid cover peaks in wet openings/shores (Baldwin & Sims 1997) [game calibration .45]
-  const density = (1 - bare) * (.45 + .55 * smoothstep(.55, .95, s.wet)) * (1 - smoothstep(30, 40, s.slopeDeg));
+  const density = (1 - bare) * (.45 + .55 * smoothstep(.55, .95, s.wet)) * (.4 + .6 * s.light) * (1 - smoothstep(30, 40, s.slopeDeg)); // shade thins graminoids [game calibration]
   return { density, weights };
 }
 let source: (x: number, z: number) => Cover = defaultCover;

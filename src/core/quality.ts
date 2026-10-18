@@ -44,12 +44,15 @@ export const KNOBS = Object.keys(LADDER[0]).filter(k => k !== 'name') as (keyof 
 export const GOVERNOR = {
   auto: true, targetFps: 60, tier: 1, /** best tier the player allows (Auto never climbs above it) */ capTier: 0, /** best tier this machine may use (core/probe, startup resource probe): Auto and the player both stay at or below it */ probeCap: 0, probeHits: 0, /** called when sustained headroom lifts the probe cap (persists it) */ onProbeRaise: undefined as ((cap: number) => void) | undefined, xr: false, gpu: '',
   ms: 250, iterations: 10, threshold: .75, flipflops: 6,
-  lower: 1, upper: 1.35, // margin as multiples of the target: decline below target, incline above 1.35 × target (drei default 60/100 ≈ 1.67)
+  lower: .92, upper: 1.35, // margin as multiples of the target: decline below 0.92 × target (55 fps: slack under 16.7 ms, so vsync jitter around 60 is not a decline), incline above 1.35 × target (drei default 60/100 ≈ 1.67)
   window: [] as number[], windowMs: 0, averages: [] as number[], flipped: 0, lastDir: 0, locked: false,
   fps: 0, gpuMs: undefined as number | undefined,
   /** Time hysteresis (the 2026-10-18 omen bench saw a tier change every ~2.5 s, each one rebuilding chunks or recompiling
    * every shader): after any step no decision for cooldownMs; after a step down no step up for upHoldMs. */
   cooldownMs: 10000, upHoldMs: 30000, cool: 0, upBlock: 0, changes: 0,
+  /** A tier left for being over budget is not climbed back into for rememberMs (the 2026-10-18 uncapped bench bounced
+   *  High/Medium <-> Low every ~40 s, a 30-50 ms hitch each time): `slow[t]` = governor clock when tier t was left. */
+  rememberMs: 60000, clock: 0, slow: [] as number[],
   /** WORLD_KNOBS (radii, densities, LOD, shadows, IBL) rebuild chunks or change shader defines, so they follow `tier` only once
    * it has held worldHoldMs; until then they stay at worldTier (-1 = follow `tier`: manual mode, after a reset). */
   worldHoldMs: 20000, worldTier: -1, heldMs: 0,
@@ -69,16 +72,21 @@ export function applied(tier = GOVERNOR.tier, world = true): Tier {
 /** The tier the world will switch to once `tier` has held worldHoldMs (auto mode), else undefined: render/photoreal
  * compiles its shader variants during the hold. */
 export const pendingWorld = (): Tier | undefined => { const g = GOVERNOR; return g.auto && !g.locked && g.worldTier >= 0 && g.worldTier !== g.tier ? applied(g.tier, false) : undefined; };
-export function resetGovernor() { Object.assign(GOVERNOR, { window: [], windowMs: 0, averages: [], flipped: 0, lastDir: 0, locked: false, cool: 0, upBlock: 0, worldTier: -1, heldMs: 0 }); }
+export function resetGovernor() { Object.assign(GOVERNOR, { window: [], windowMs: 0, averages: [], flipped: 0, lastDir: 0, locked: false, cool: 0, upBlock: 0, worldTier: -1, heldMs: 0, slow: [] }); }
 /** Feed one frame. `workMs` = CPU work this frame, `gpuMs` = GPU time if measured, `frameMs` = wall interval (window clock).
  * Returns +1 (stepped to a cheaper tier), −1 (stepped up) or 0. */
 export function governFrame(workMs: number, gpuMs?: number, frameMs = workMs) {
   const g = GOVERNOR; if (gpuMs !== undefined) g.gpuMs = gpuMs;
   if (!g.auto || g.locked) return 0;
+  g.clock += frameMs;
   if (g.worldTier >= 0 && g.worldTier !== g.tier && (g.heldMs += frameMs) >= g.worldHoldMs) g.worldTier = g.tier; // the tier held: the world follows
   g.upBlock = Math.max(0, g.upBlock - frameMs);
   if (g.cool > 0) { g.cool -= frameMs; g.window = []; g.windowMs = 0; g.averages = []; return 0; } // the new tier's first seconds are not evidence
-  g.window.push(Math.max(workMs, gpuMs ?? 0)); g.windowMs += frameMs;
+  // Frames arriving on time (vsync-bound, or uncapped and fast) prove the GPU keeps up: cost = CPU work. The GPU timer
+  // (EXT_disjoint_timer_query on ANGLE/D3D11) over-reads ~2x on omen, so it only counts when frames are late, and never
+  // for more than the wall interval it would have to explain.
+  const late = frameMs > budgetMs() * 1.1;
+  g.window.push(late && gpuMs !== undefined ? Math.max(workMs, Math.min(gpuMs, frameMs)) : workMs); g.windowMs += frameMs;
   if (g.windowMs < g.ms) return 0;
   // window MEDIAN (drei: mean): one stall (shader compile, GC, a job step) is not a reason to drop a tier, and lowering the tier
   // does not cure it (the job budget and the shader warm-up do). Sustained cost still moves the median.
@@ -89,13 +97,14 @@ export function governFrame(workMs: number, gpuMs?: number, frameMs = workMs) {
   const below = g.averages.filter(f => f < lo).length / g.iterations, above = g.averages.filter(f => f >= hi).length / g.iterations; // as upstream
   let dir = 0;
   if (below > g.threshold && g.tier < LADDER.length - 1) dir = 1;
-  else if (above > g.threshold && g.tier > ceiling() && !g.upBlock) dir = -1;
+  else if (above > g.threshold && g.tier > ceiling() && !g.upBlock && !(g.clock - (g.slow[g.tier - 1] ?? -Infinity) < g.rememberMs)) dir = -1;
   else if (above > g.threshold && !g.upBlock && g.tier === g.probeCap && g.probeCap > g.capTier) { // the probe cap binds and fps shows headroom: lift it after N windows
     g.averages = []; if (++g.probeHits >= PROBE_RAISE_AFTER) { g.probeHits = 0; g.probeCap--; g.onProbeRaise?.(g.probeCap); dir = -1; } }
   if (below > g.threshold) g.probeHits = 0;
   if (!dir) return 0;
   if (g.lastDir && dir !== g.lastDir && ++g.flipped >= g.flipflops) { g.locked = true; if (dir < 0) return 0; } // fallback: stay on the cheaper tier
   if (g.worldTier < 0) g.worldTier = g.tier; // the world stays where it is until the new tier has held
+  if (dir > 0) g.slow[g.tier] = g.clock;
   g.lastDir = dir; g.tier += dir; g.averages = []; g.cool = g.cooldownMs; g.heldMs = 0; g.changes++; if (dir > 0) g.upBlock = g.upHoldMs;
   return dir;
 }

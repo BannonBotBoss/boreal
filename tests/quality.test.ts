@@ -20,9 +20,9 @@ test('hysteresis: no change inside the margin; steps up only with clear headroom
   fresh(2); feed(5, 3); assert.equal(GOVERNOR.tier, 1, 'stepped up');
 });
 test('flip-flops lock on the cheaper tier; manual caps bound the ladder', () => {
-  fresh(2); GOVERNOR.flipflops = 2;
+  fresh(2); GOVERNOR.flipflops = 2; GOVERNOR.rememberMs = 0;
   for (let i = 0; i < 6 && !GOVERNOR.locked; i++) { feed(40, 14); feed(5, 44); } // each leg outlasts the 10 s cooldown / 30 s up-hold
-  assert.ok(GOVERNOR.locked); const at = GOVERNOR.tier; feed(5, 5); assert.equal(GOVERNOR.tier, at, 'locked'); GOVERNOR.flipflops = 6;
+  assert.ok(GOVERNOR.locked); const at = GOVERNOR.tier; feed(5, 5); assert.equal(GOVERNOR.tier, at, 'locked'); GOVERNOR.flipflops = 6; GOVERNOR.rememberMs = 60000;
   fresh(3); GOVERNOR.capTier = 2; feed(5, 10); assert.equal(GOVERNOR.tier, 2, 'climbs only to the cap');
   fresh(0); MANUAL.shadows = 1; MANUAL.resScale = .8; const a = applied(); assert.equal(a.shadows, 1); assert.equal(a.resScale, .8);
   GOVERNOR.auto = false; GOVERNOR.tier = 3; feed(40, 10); assert.equal(GOVERNOR.tier, 3, 'manual mode never moves');
@@ -33,7 +33,8 @@ test('time hysteresis: 10 s cooldown, 30 s up-hold after a drop, world knobs wai
   let a = applied(); assert.equal(a.resScale, LADDER[2].resScale, 'cheap knobs move at once'); assert.equal(a.lod, LADDER[1].lod); assert.equal(a.near, LADDER[1].near); assert.equal(a.shadows, LADDER[1].shadows);
   feed(40, 6); assert.equal(GOVERNOR.tier, 2, 'cooldown: no second step');
   feed(5, 16); assert.equal(GOVERNOR.tier, 2, 'up-hold: no bounce back'); a = applied(); assert.equal(a.lod, LADDER[2].lod, 'tier held 20 s: world follows');
-  feed(5, 10); assert.equal(GOVERNOR.tier, 1, 'steps up after the hold'); assert.equal(applied().lod, LADDER[2].lod, 'world waits again');
+  feed(5, 10); assert.equal(GOVERNOR.tier, 2, 'the tier it left as too slow is not retried for 60 s');
+  feed(5, 30); assert.equal(GOVERNOR.tier, 1, 'steps up after the hold'); assert.equal(applied().lod, LADDER[2].lod, 'world waits again');
   fresh(1); for (let t = 0; t < 10000; t += 16.7) governFrame(t % 1000 < 20 ? 400 : 14, undefined, 16.7); assert.equal(GOVERNOR.tier, 1, 'a 400 ms stall each second: median holds');
   fresh(1); GOVERNOR.auto = false; GOVERNOR.tier = 3; assert.equal(applied().lod, LADDER[3].lod, 'manual: world knobs follow at once'); fresh();
 });
@@ -77,4 +78,11 @@ test('pendingWorld: the held-back world tier is reported until it applies', () =
   assert.equal(applied().shadows, LADDER[1].shadows); assert.equal(pendingWorld()!.shadows, LADDER[4].shadows); assert.equal(pendingWorld()!.ibl, LADDER[4].ibl);
   GOVERNOR.worldTier = 4; assert.equal(pendingWorld(), undefined);
   GOVERNOR.worldTier = 1; GOVERNOR.auto = false; assert.equal(pendingWorld(), undefined); fresh();
+});
+test('vsync-bound frames trust CPU work over the GPU timer; late frames count the GPU, capped at the wall interval', () => {
+  const run = (work: number, gpu: number, frame: number, seconds: number) => { for (let t = 0; t < seconds * 1000; t += frame) governFrame(work, gpu, frame); };
+  fresh(1); run(9, 22, 1000 / 60, 10); assert.equal(GOVERNOR.tier, 0, 'on-time 60 fps with an over-reading GPU timer: steps up on CPU headroom');
+  fresh(1); run(9, 22, 22, 4); assert.equal(GOVERNOR.tier, 2, 'late frames: GPU-bound, steps down');
+  fresh(1); run(15, 80, 17.5, 10); assert.equal(GOVERNOR.tier, 1, 'vsync jitter just over 16.7 ms is inside the slack');
+  fresh();
 });

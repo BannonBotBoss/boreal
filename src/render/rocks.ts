@@ -38,16 +38,21 @@ export function rockGeometry(e: Entity, detail: number) {
   mesh.userData.rock = true; // render/batch maps it to the procedural ROCK_MATERIAL
   const group = new THREE.Group(); group.add(mesh); seatRock(group, e); return group;
 }
+const seatV = new THREE.Vector3(), seatH = new Map<number, number>();
 export function seatRock(group: THREE.Object3D, e: Entity) {
   const mesh = group.children[0] as THREE.Mesh;
   mesh.rotation.set(e.rollX ?? 0, 0, e.rollZ ?? 0);
   mesh.position.y = 0; mesh.updateMatrix();
-  const p = mesh.geometry.attributes.position, v = new THREE.Vector3();
-  let lift = -Infinity, minY = Infinity, maxY = -Infinity;
+  const p = mesh.geometry.attributes.position, v = seatV, big = rockDiameter(e) > .22;
+  // The ground lift only matters for small rocks; the icosphere is non-indexed (each corner repeated ~6x), so heightAt runs once
+  // per distinct (x, z) corner, and the centre height once per rock (was 2 heightAt per vertex: ~480 per rock). Same result.
+  let lift = -Infinity, minY = Infinity, maxY = -Infinity; const h0 = big ? 0 : heightAt(e.x, e.z); seatH.clear();
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i).applyMatrix4(mesh.matrix);
     minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y);
-    lift = Math.max(lift, heightAt(e.x + v.x, e.z + v.z) - heightAt(e.x, e.z) - v.y);
+    if (big) continue;
+    const k = v.x * 1048573 + v.z; let h = seatH.get(k); if (h === undefined) { h = heightAt(e.x + v.x, e.z + v.z); seatH.set(k, h); }
+    lift = Math.max(lift, h - h0 - v.y);
   }
-  mesh.position.y = rockDiameter(e) > .22 ? -(minY + maxY) / 2 : lift;
+  mesh.position.y = big ? -(minY + maxY) / 2 : lift;
 }

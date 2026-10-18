@@ -53,7 +53,8 @@ vec3 groundLayer(vec3 base, vec2 xz) {
   float d = length(xz - cameraPosition.xz), oct = clamp(uMossOct - floor(log2(max(d, 1.0) / 16.0)), 1.0, uMossOct);
   // fbm is near-normal (mean .5, sd ~.13): smoothstep(.3, .7) ~ its CDF, so a share s covers ~s of the ground (raw fbm: s > .6 covered everything)
   float n = smoothstep(0.3, 0.7, mossFbm(xz * 0.35, 17.3, oct)), f = d < 40.0 ? vnoiseU(xz * 2.3, 4.1) : 0.5;
-  float fm = mossCover(w.r, n, 0.05), li = mossCover(w.g, 1.0 - n, 0.04), sp = mossCover(w.b, n, 0.05);
+  // lichen: near the camera the 2.3/m detail noise breaks the mats into 0.3-2 m pieces with rock between (Cladonia mats on granite)
+  float fm = mossCover(w.r, n, 0.05), li = mossCover(w.g, 1.0 - mix(n, f, 0.45 * (1.0 - smoothstep(30.0, 40.0, d))), 0.035), sp = mossCover(w.b, n, 0.05);
   base = mix(base, mix(${v3(F[0])}, ${v3(F[1])}, f) * (0.8 + 0.4 * f), fm);
   base = mix(base, mix(${v3(S[0])}, ${v3(S[1])}, smoothstep(0.45, 0.6, f)), sp);
   return mix(base, mix(${v3(L[0])}, ${v3(L[1])}, f) * (0.85 + 0.3 * f), li);

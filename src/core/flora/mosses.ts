@@ -23,7 +23,7 @@ export const GROUND_LAYERS: GroundLayer[] = [
     albedo: [[.055, .09, .024], [.08, .088, .03]] }, // Pleurozium yellow-green, Hylocomium olive-brown
   { id: 'lichen', latin: 'Cladonia rangiferina / C. stellaris', cover: .85,
     niche: { wet: [.1, .28], light: [.9, .35], rock: 1, soils: { bedrock: 1, sand: 1, till: .25, clay: .05, peat: .05 } },
-    albedo: [[.25, .26, .19], [.21, .23, .16]] },     // pale grey-green to cream; low end of the 0.2-0.3 mat albedo (texel mix of mats, crust and gaps)
+    albedo: [[.2, .22, .165], [.17, .2, .135]] },   // grey-green C. rangiferina / yellow-green C. mitis mats (dry visible ~0.2, Petzold & Goward 1988)
   { id: 'sphagnum', latin: 'Sphagnum fuscum / magellanicum / angustifolium', cover: .95,
     niche: { wet: [.95, .15], light: [.6, .5], rock: 0, soils: { peat: 1, clay: .35, till: .2, sand: .05, bedrock: 0 } },
     albedo: [[.05, .09, .03], [.1, .045, .03]] },    // green lawns, red-brown hummocks
@@ -33,8 +33,16 @@ export const GROUND_LAYERS: GroundLayer[] = [
  * Very low .4 -> 3, Minimum .25 -> 2, 0 -> layer off. A uniform, so tier changes never recompile the terrain shader. */
 export const mossOctaves = (foliage: number) => foliage <= 0 ? 0 : Math.max(2, Math.min(5, Math.round(1 + 4 * foliage)));
 
+/** Reindeer lichen on Shield outcrops grows as mats in the thin-soil pockets, cracks and margins; the knob crests (high TPI,
+ * near-zero depth to bedrock in core/stages/soils) stay bare granite with crustose lichens. Calibration: the Sentinel-2 L2A
+ * 'bare' outcrop albedo at Kenora (0.136 / 0.125 / 0.110, render/terrainCore) is the 10 m pixel MEAN of rock + mats; bare
+ * weathered granite ~0.10-0.13 and mats ~0.2 put the mat share near 0.3 on a typical outcrop [game calibration, verify]:
+ * ~.25 of the niche cover on the crest (depth .02 m), the full niche cover on the margins (depth >= .3 m). */
+export const lichenOnRock = (depth: number) => .25 + .75 * Math.min(1, Math.max(0, (depth - .02) / .28));
+
 /** Cover share of each ground layer at a site (sums to ≤ 1; the rest is litter / bare soil / rock). */
 export function groundCover(s: Site): number[] {
   const w = GROUND_LAYERS.map(l => l.cover * suitability(l.niche, s)), t = w.reduce((a, b) => a + b, 0);
+  if (s.soil === 'bedrock') w[1] *= lichenOnRock(s.depth);
   return t > 1 ? w.map(v => v / t) : w;
 }

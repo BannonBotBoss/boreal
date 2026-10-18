@@ -31,11 +31,13 @@ export const PLANET = {
     halfSize: 3840,              // m: half the region side = one tile of the stage-1 periodic grid (ELEV.n Ã— ELEV.cell / 2)
     feather: 1200,               // m: blend from the game terrain into the planet relief at the region edge [game calibration]
   },
-  /** Far-field Shield lakes: three octaves of the planet's value noise (cells ~8, 2.5, 0.8 km) + the hill hollows; water
-   *  where the field is under `threshold`. Calibrated to ~20 % water on Shield-latitude land (Canadian Shield lake country
-   *  is 15-30 % water; NRCan) and checked against ISS052-E-12924. Off within ~1.5 region widths of home, where the game's
-   *  own lakes (surfaceAt) are the only lakes. Pure function of the direction, so every LOD samples the same lakes. */
-  lakes: { threshold: .49, depthPerUnit: 300, cellsKm: [8, 2.5, .8], weights: [.45, .35, .2], hollow: .12 },
+  /** Far-field Shield lakes: three octaves of the planet's value noise (cells ~24, 7, 1.8 km) on a domain-warped
+   *  direction (warp field ~40 km cells, about +-`warpKm`), + the hill hollows; water where the field is under `threshold`.
+   *  The warp makes fewer, larger, irregular lakes with arms and bays (ISS052-E-12924) instead of an even speckle; the
+   *  threshold (.43) keeps ~16 % water on Shield-latitude land (measured 16.2 %; vs the old speckle: ~3x fewer, ~2x larger lakes) (Shield lake country is 15-30 %; NRCan). Off within ~1.5
+   *  region widths of home, where the game's own lakes (surfaceAt) rule. Pure function of the direction: every LOD
+   *  samples the same lakes. [reference calibration] */
+  lakes: { threshold: .43, depthPerUnit: 300, cellsKm: [24, 7, 1.8], weights: [.55, .3, .15], warpCellKm: 40, warpKm: 18, hollow: .08 },
 };
 
 export type Vec3 = [number, number, number];
@@ -120,7 +122,7 @@ export function planetFor(seed: number, local?: LocalHeight, key = '') {
   const k = `${seed}:${key}`; let p = planets.get(k); if (!p) planets.set(k, p = createPlanet(seed, local)); return p;
 }
 export function createPlanet(seed: number, local?: LocalHeight) {
-  const { relief, hills, noise } = makeNoise(seed), R = PLANET.radius, H = PLANET.home, fm = R / 150, LK = PLANET.lakes, lf = LK.cellsKm.map(k => R / (k * 1000));
+  const { relief, hills, noise } = makeNoise(seed), R = PLANET.radius, H = PLANET.home, fm = R / 150, LK = PLANET.lakes, lf = LK.cellsKm.map(k => R / (k * 1000)), lw = R / (LK.warpCellKm * 1000), wa = LK.warpKm * 2000 / R;
   // Hypsometry: sea level so `landShare` of the surface is above it (low octaves suffice for the distribution).
   const N = 6000, samples = new Float32Array(N);
   for (let k = 0; k < N; k++) { const [x, y, z] = fibonacci(k, N); samples[k] = relief(x, y, z, 8); }
@@ -144,8 +146,10 @@ export function createPlanet(seed: number, local?: LocalHeight) {
       const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI;
       const dens = smoothstep(38, 46, lat) * (1 - smoothstep(64, 72, lat)) * (1 - smoothstep(500, 1400, h)) * smoothstep(H.halfSize * 1.45, H.halfSize * 2.2, ang * R);
       if (dens > 0) {
-        const v = LK.weights[0] * noise(d[0] * lf[0] + 3.1, d[1] * lf[0] + 7.7, d[2] * lf[0] + 1.9) + LK.weights[1] * noise(d[0] * lf[1] + 5.3, d[1] * lf[1] + 2.9, d[2] * lf[1] + 8.3)
-          + LK.weights[2] * noise(d[0] * lf[2] + 9.7, d[1] * lf[2] + 4.1, d[2] * lf[2] + 6.7) + LK.hollow * out.hill;
+        const ex = d[0] + (noise(d[0] * lw + 12.1, d[1] * lw + 3.3, d[2] * lw + 7.9) - .5) * wa, ey = d[1] + (noise(d[0] * lw + 4.4, d[1] * lw + 15.2, d[2] * lw + 2.6) - .5) * wa,
+          ez = d[2] + (noise(d[0] * lw + 8.8, d[1] * lw + 6.1, d[2] * lw + 19.4) - .5) * wa; // domain warp (irregular shores, arms)
+        const v = LK.weights[0] * noise(ex * lf[0] + 3.1, ey * lf[0] + 7.7, ez * lf[0] + 1.9) + LK.weights[1] * noise(ex * lf[1] + 5.3, ey * lf[1] + 2.9, ez * lf[1] + 8.3)
+          + LK.weights[2] * noise(ex * lf[2] + 9.7, ey * lf[2] + 4.1, ez * lf[2] + 6.7) + LK.hollow * out.hill;
         const f = (v - LK.threshold * dens) * LK.depthPerUnit;
         if (f < 0) { out.water = out.level = h; out.kind = 'lake'; h += f; } else if (f < h) out.level = h - f;
       }

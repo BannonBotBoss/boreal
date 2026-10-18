@@ -33,7 +33,7 @@ import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
 import { GLOBE_SHORE, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, stitchIndex, tileGeometry, type TileData } from './tile';
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
-export { GLOBE_LAKE } from './tile'; // inpage.ts (lazy): the band's lake ease
+export { GLOBE_LAKE, GLOBE_LAND } from './tile'; // inpage.ts (lazy): the band's lake ease
 /** Deeper tiles under a low camera: split x(1 + k) for tiles within reach x altitude, ramping in from `from` to `full` m. [game calibration] */
 export const NEAR_SPLIT = { k: 1.2, from: 3000, full: 1200, reach: 4 };
 import type { TileRequest } from './tileWorker';
@@ -436,6 +436,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     suspendWorkers() { if (suspended || !pool.length) return; suspended = true; for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); if (maskPending) maskPending = ''; }, // an unfinished shoreline mask is asked for again on resume
     resumeWorkers() { if (!suspended || down) return; suspended = false; spawn(); },
     get workers() { return pool.length; },
+    /** the home shoreline mask is on the GPU (inpage holds the landing until it is, so tile triangles never show as lakes) */
+    get maskReady() { return GLOBE_SHORE.key === maskKey; },
     stats: () => ({ drawn, inView, cached: tiles.size, queued: queued.size + inflight.size, deepest, tier: GOVERNOR.tier, segments: lod.segments }),
   };
 }

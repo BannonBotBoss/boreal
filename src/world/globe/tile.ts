@@ -1,5 +1,5 @@
 /**
- * One globe tile (Grok Bot): a (segments+1)² grid on a quadtree node, displaced by the planet's surface, plus a skirt
+ * One globe tile (Grok Bot): a (segments+1)Â² grid on a quadtree node, displaced by the planet's surface, plus a skirt
  * (SimonDev ProceduralTerrain_Part10 `FixEdgeSkirt_`, MIT: edge vertices dropped toward the centre so cracks between LOD
  * levels show ground, not sky). Vertices are RELATIVE to the tile centre (float32 keeps centimetres inside a tile) and the
  * mesh sits at the centre in double precision; three.js composes modelView on the CPU in float64 (floating origin).
@@ -11,7 +11,7 @@
  * tile swaps to a shared index buffer that collapses its odd edge vertices onto their even neighbours (stitchIndex), so
  * that edge runs straight through the coarse tile's own vertices: no crack, no T-junction, and the skirt stays hidden.
  * Vertex data never changes (only the index buffer), so the exactness tests still hold. Deeper steps fall back to the skirt.
- * Coastlines: each vertex carries the signed field h − level (aH); the material contours it per pixel (globeMaterial), so
+ * Coastlines: each vertex carries the signed field h âˆ’ level (aH); the material contours it per pixel (globeMaterial), so
  * the land/water edge is an interpolated contour instead of a per-vertex colour switch (no stair steps).
  */
 import * as THREE from 'three';
@@ -29,10 +29,10 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
   const cd = faceDir(q.face, a0 + s / 2, b0 + s / 2), centre: Vec3 = [cd[0] * R, cd[1] * R, cd[2] * R];
   const count = n * n + 4 * n, position = new Float32Array(count * 3), color = new Float32Array(count * 3), height = new Float32Array(count), lake = new Uint8Array(count), loc = new Float32Array(count * 3), normal = new Float32Array(count * 3);
   const P = new Float64Array(m * m * 3), d: Vec3 = [0, 0, 0], rgb = [0, 0, 0], fp = 1.6 * R / den; // fp: ~vertex spacing (m), the soil colour's filter footprint
-  for (let jj = 0; jj < m; jj++) { // sample rows −1 … n (the outer ring only feeds normals)
+  for (let jj = 0; jj < m; jj++) { // sample rows âˆ’1 â€¦ n (the outer ring only feeds normals)
     for (let ii = 0; ii < m; ii++) {
       const i = ii - 1, j = jj - 1, inside = i >= 0 && j >= 0 && i < n && j < n;
-      // exact dyadic lattice: a = -1 + 2g / (segments·2^L) with integer g, so a point shared by neighbours, parents and
+      // exact dyadic lattice: a = -1 + 2g / (segmentsÂ·2^L) with integer g, so a point shared by neighbours, parents and
       // children gets the SAME double (division is correctly rounded): shared vertices are bit-identical, never 1-ulp apart
       const a = -1 + 2 * (q.i * segments + i) / den, b = -1 + 2 * (q.j * segments + j) / den;
       faceDir(q.face, a, b, d);
@@ -52,7 +52,7 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
     const c = ((j + 1) * m + i + 1) * 3, v = (j * n + i) * 3, e = c + 3, w = c - 3, nn = c + m * 3, ss = c - m * 3;
     position[v] = P[c]; position[v + 1] = P[c + 1]; position[v + 2] = P[c + 2];
     const ax = P[e] - P[w], ay = P[e + 1] - P[w + 1], az = P[e + 2] - P[w + 2], bx = P[nn] - P[ss], by = P[nn + 1] - P[ss + 1], bz = P[nn + 2] - P[ss + 2];
-    const nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx, l = Math.hypot(nx, ny, nz) || 1; // a × b, outward (u × v = n)
+    const nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx, l = Math.hypot(nx, ny, nz) || 1; // a Ã— b, outward (u Ã— v = n)
     normal[v] = nx / l; normal[v + 1] = ny / l; normal[v + 2] = nz / l;
   }
   const idx: number[] = [];
@@ -103,14 +103,14 @@ export function tileGeometry(t: TileData) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(t.position, 3)); g.setAttribute('normal', new THREE.BufferAttribute(t.normal, 3));
   g.setAttribute('color', new THREE.BufferAttribute(t.color, 3)); g.setAttribute('aH', new THREE.BufferAttribute(t.height, 1)); g.setAttribute('aLake', new THREE.BufferAttribute(t.lake, 1, true)); g.setAttribute('aLoc', new THREE.BufferAttribute(t.loc, 3));
-  const seg = Math.round(Math.sqrt(4 + t.position.length / 3)) - 3; // count = n² + 4n
+  const seg = Math.round(Math.sqrt(4 + t.position.length / 3)) - 3; // count = nÂ² + 4n
   g.setIndex(stitchIndex(seg, 0)); g.userData.stitch = 0; // shared index buffers (same triangles as t.index), never per tile
   g.computeBoundingSphere(); return g;
 }
 /** The globe material: vertex-colour land, per-pixel land/water contour of aH (antialiased with fwidth), water shaded
- *  shallow → deep by depth and smoother than land. Colours come from planet GLOBE_COLOURS (one table). */
+ *  shallow â†’ deep by depth and smoother than land. Colours come from planet GLOBE_COLOURS (one table). */
 /** `debugSegments` (?seams=1): skirts drawn red and tile borders yellow, unlit, over everything else (seam hunting); the
- *  vertex id tells skirt from surface (buildTile layout: n² grid, then 4 edges of n skirt copies). */
+ *  vertex id tells skirt from surface (buildTile layout: nÂ² grid, then 4 edges of n skirt copies). */
 /** Lake colours, one uniform pair shared by every globe material (the in-page band eases them toward the game's water near
  *  the ground, inpage.ts; values only, the program is the same). */
 export const GLOBE_LAKE = { shallow: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeShallow) }, deep: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeDeep) } };
@@ -123,7 +123,8 @@ export const GLOBE_LAKE = { shallow: { value: new THREE.Color().setRGB(...GLOBE_
 /** proc/glsl's noise, namespaced (gd_): other patches of this material (atmosphere, the game's photoreal chain) may or may
  *  not bring their own unguarded copy, and GLSL allows one body per name. Same code, same values. */
 const DETAIL_NOISE = GLSL_NOISE.replace(/\b(hash2s|vnoise|hash2u|vnoiseU|fbm)\b/g, 'gd_$1');
-export const DETAIL = { lambda: [40, 12, 4], amp: [3, 1.2, .4], albedo: .6, fadeFrom: 5000, fadeFull: 2500 };
+/** r20: finer and much weaker than r19 (40/12/4 m, albedo .6, bumps 3 m read as blotches): crown-scale grain, not patches. */
+export const DETAIL = { lambda: [24, 8, 3], amp: [1.2, .6, .25], albedo: .22, weight: [.3, .4, .3], fadeFrom: 5000, fadeFull: 2500 };
 export const GLOBE_DETAIL = { uDetail: { value: new THREE.Vector4(0, DETAIL.albedo, 1, 0) }, uDetO0: { value: new THREE.Vector3() }, uDetO1: { value: new THREE.Vector3() }, uDetO2: { value: new THREE.Vector3() },
   uDetL: { value: new THREE.Vector3(...DETAIL.lambda.map(l => 1 / l)) }, uDetAmp: { value: new THREE.Vector3(...DETAIL.amp) } };
 /** globeView, each render: the detail strength and the camera's lattice offsets (double precision in, float32 out). */
@@ -138,6 +139,8 @@ export function setGlobeDetail(cam: Vec3, alt: number, tierScale: number, seed: 
  *  then, and outside the home region, the per-vertex field aH contours as before). Uniform values only, same program. */
 const SHORE_EMPTY = new THREE.DataTexture(new Uint8Array([255]), 1, 1, THREE.RedFormat); SHORE_EMPTY.needsUpdate = true;
 export const GLOBE_SHORE = { uShoreTex: { value: SHORE_EMPTY as THREE.Texture }, uShore: { value: new THREE.Vector4(1, 0, 0, 0) }, key: '' };
+/** Land tint (1 = unchanged): inpage.ts eases it toward the game patch's colour over the end of the descent. Uniform only. */
+export const GLOBE_LAND = { uLandTint: { value: new THREE.Color(1, 1, 1) } };
 /** Shore band widths (m of the field): wet ground above the waterline, shallows below it. [game calibration] */
 export const SHORE = { wet: .6, shallow: 1.5, wetDark: .2, shallowMix: .4 };
 export function setLakeMask(key: string, data: Uint8Array, n: number, size: number) {
@@ -160,7 +163,7 @@ export function globeMaterial(debugSegments = 0) {
     sh.vertexShader = centroid(sh.vertexShader, 'logdepthbuf_pars_vertex'); sh.fragmentShader = centroid(sh.fragmentShader, 'logdepthbuf_pars_fragment');
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
-    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; Object.assign(sh.uniforms, GLOBE_DETAIL); sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore;
+    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; Object.assign(sh.uniforms, GLOBE_DETAIL); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying vec3 vDetW, vLoc;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
 vH = aH; vLake = aLake; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
@@ -170,7 +173,7 @@ vH = aH; vLake = aLake; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -187,8 +190,9 @@ vH = aH; vLake = aLake; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.
     float k0 = 1.0 - smoothstep(0.25, 0.6, length(fwidth(q0))), k1 = 1.0 - smoothstep(0.25, 0.6, length(fwidth(q1))), k2 = 1.0 - smoothstep(0.25, 0.6, length(fwidth(q2)));
     float n0 = detN(q0, uDetail.w) - 0.5, n1 = detN(q1, uDetail.w + 1.0) - 0.5, n2 = detN(q2, uDetail.w + 2.0) - 0.5;
     detH = (k0 * n0 * uDetAmp.x + k1 * n1 * uDetAmp.y + k2 * n2 * uDetAmp.z) * uDetail.x * uDetail.z * landMask;
-    a = k0 * n0 * 0.55 + k1 * n1 * 0.3 + k2 * n2 * 0.15;
-    diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask; }`)
+    a = k0 * n0 * ${DETAIL.weight[0].toFixed(3)} + k1 * n1 * ${DETAIL.weight[1].toFixed(3)} + k2 * n2 * ${DETAIL.weight[2].toFixed(3)};
+    diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask; }
+  diffuseColor.rgb *= mix(vec3(1.0), uLandTint, landMask); // in-page band: land matched to the game patch near the handover (GLOBE_LAND)`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   if (uDetail.x > 0.001) { // derivative bump from the detail height (Mikkelsen 2010), view space
     vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition); float dhx = dFdx(detH), dhy = dFdy(detH);

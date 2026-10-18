@@ -72,7 +72,8 @@ export function* terrainCore(r: TerrainRequest): Generator<void, TerrainData> {
   for (let i = 0; i < n; i++) {
     const x = gridRel(i % row, segments) + ox, z = gridRel((i / row) | 0, segments) + oz, y = heightAt(x, z);
     position[i * 3] = x; position[i * 3 + 1] = y; position[i * 3 + 2] = z;
-    const b = terrainBand(y, x, z); if (isStaged(b)) groundColor(b as SoilKind, c); else c.set(BAND_COLOR[b]);
+    let b = terrainBand(y, x, z); if (b === 'water' && STAGES.on && y > (lakeAt(STAGES.seed, x, z)?.surface ?? LEVEL.waterSurface)) b = 'till'; // a lake soil cell's ground above the water plane: shore ground, not the khaki lake bed (the pale strip along staged shores, r26)
+    if (isStaged(b)) groundColor(b as SoilKind, c); else c.set(BAND_COLOR[b]);
     color[i * 3] = c.r; color[i * 3 + 1] = c.g; color[i * 3 + 2] = c.b; band[i] = BANDS.indexOf(b) | (y > LEVEL.waterSurface ? ABOVE : 0);
     if (i % slice === slice - 1) yield;
   }

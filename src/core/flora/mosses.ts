@@ -23,7 +23,7 @@ export const GROUND_LAYERS: GroundLayer[] = [
     albedo: [[.055, .09, .024], [.08, .088, .03]] }, // Pleurozium yellow-green, Hylocomium olive-brown
   { id: 'lichen', latin: 'Cladonia rangiferina / C. stellaris', cover: .85,
     niche: { wet: [.1, .28], light: [.9, .35], rock: 1, soils: { bedrock: 1, sand: 1, till: .25, clay: .05, peat: .05 } },
-    albedo: [[.33, .34, .24], [.29, .31, .22]] },     // pale grey-green to cream
+    albedo: [[.25, .26, .19], [.21, .23, .16]] },     // pale grey-green to cream; low end of the 0.2-0.3 mat albedo (texel mix of mats, crust and gaps)
   { id: 'sphagnum', latin: 'Sphagnum fuscum / magellanicum / angustifolium', cover: .95,
     niche: { wet: [.95, .15], light: [.6, .5], rock: 0, soils: { peat: 1, clay: .35, till: .2, sand: .05, bedrock: 0 } },
     albedo: [[.05, .09, .03], [.1, .045, .03]] },    // green lawns, red-brown hummocks

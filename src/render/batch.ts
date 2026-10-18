@@ -53,17 +53,20 @@ function placedFlat(src: THREE.BufferGeometry, mw: THREE.Matrix4, c: THREE.Color
   return g;
 }
 /** Flatten one LOD level (a Group of meshes) into one geometry per material (props → PROP_MATERIAL with baked colour). */
-function flatten(root: THREE.Object3D) {
+// Sliced: yields between parts once clock.t is more than SLICE_MS old (a tree's LOD 0 is ~10 parts, up to ~9 ms in one go).
+function* flatten(root: THREE.Object3D, clock = { t: performance.now() }): Generator<unknown, Map<THREE.Material, THREE.BufferGeometry>> {
   // The root's own rotation/scale (per-entity yaw, size jitter, rock seating) are baked in; its position is the instance's.
   root.position.set(0, 0, 0); root.updateMatrixWorld(true); const parts = new Map<THREE.Material, THREE.BufferGeometry[]>();
-  root.traverse(o => {
-    const m = o as THREE.Mesh; if (!m.isMesh || Array.isArray(m.material)) return;
+  const meshes: THREE.Mesh[] = []; root.traverse(o => { const m = o as THREE.Mesh; if (m.isMesh && !Array.isArray(m.material)) meshes.push(m); });
+  for (const m of meshes) {
+    if (performance.now() - clock.t > SLICE_MS) { yield; clock.t = performance.now(); }
     const shared = !!m.userData.shared || m.material === PROP_MATERIAL, mat = shared ? m.material as THREE.Material : m.userData.rock ? ROCK_MATERIAL : PROP_MATERIAL;
     const g = shared ? placed(m.geometry, m.matrixWorld) : placedFlat(m.geometry, m.matrixWorld, (m.material as THREE.MeshStandardMaterial).color ?? new THREE.Color(1, 1, 1));
     if (!m.userData.shared) { m.geometry.dispose(); if (!shared) (m.material as THREE.Material).dispose(); } // source parts are throwaway
     if (!g.index) { const n = g.getAttribute('position').count, a = n > 65535 ? new Uint32Array(n) : new Uint16Array(n); for (let i = 0; i < n; i++) a[i] = i; g.setIndex(new THREE.BufferAttribute(a, 1)); } // same type three's setIndex(array) picks, no JS array
     (parts.get(mat) ?? parts.set(mat, []).get(mat)!).push(g);
-  });
+  }
+  if (performance.now() - clock.t > SLICE_MS) { yield; clock.t = performance.now(); }
   return new Map([...parts].map(([m, gs]) => [m, gs.length === 1 ? gs[0] : mergeGeometries(gs)!] as const));
 }
 
@@ -80,8 +83,9 @@ export function createChunkBatch() {
     build() { return finish(this.buildJob()); },
     /** build() as a budgeted job (core/interest): yields per material and every few instances. */
     *buildJob(): Generator<unknown, THREE.BatchedMesh[]> {
-      let t = performance.now();
-      for (const it of items) { while (it.raw.length) { it.levels.push(flatten(it.raw.shift()!)); if (performance.now() - t > SLICE_MS) { yield; t = performance.now(); } } }
+      const clock = { t: performance.now() };
+      for (const it of items) while (it.raw.length) it.levels.push(yield* flatten(it.raw.shift()!, clock));
+      let t = clock.t;
       const mats = new Set<THREE.Material>(); for (const it of items) for (const l of it.levels) for (const m of l.keys()) mats.add(m);
       for (const mat of mats) { fadeOptIn(mat, true); // render/fade: in-page transition patch fade (uniform only, same cache key; props' default keys kept byte-identical)
         let v = 0, ix = 0, n = 0;

@@ -10,8 +10,12 @@
 import * as THREE from 'three';
 
 /** uPatchCut: 0 = patch fully drawn, 1 = fully cut (globe shows). uPatchDisc: centre x, z and radius (m); radius 0 = no disc. */
-export const PATCH_FADE = { uPatchCut: { value: 0 }, uPatchDisc: { value: new THREE.Vector3(0, 0, 0) } };
-export function setPatchFade(opacity: number, disc?: { x: number; z: number; r: number }) {
+/** uPatchY: the height (m) of the plane the disc distance is measured on. Each fragment's distance is taken where the camera ray
+ *  through it meets that plane, so everything on one pixel (water surface and the lake bed under it, a crown and the ground behind)
+ *  gets the same keep value (inpage puts it on the water surface of the lake the disc reaches into). */
+export const PATCH_FADE = { uPatchCut: { value: 0 }, uPatchDisc: { value: new THREE.Vector3(0, 0, 0) }, uPatchY: { value: 0 } };
+export function setPatchFade(opacity: number, disc?: { x: number; z: number; r: number; y?: number }) {
+  PATCH_FADE.uPatchY.value = disc?.y ?? 0;
   PATCH_FADE.uPatchCut.value = 1 - Math.min(1, Math.max(0, opacity));
   if (disc) PATCH_FADE.uPatchDisc.value.set(disc.x, disc.z, disc.r); else PATCH_FADE.uPatchDisc.value.set(0, 0, 0);
 }
@@ -32,11 +36,13 @@ const VERT = `#include <project_vertex>
     #ifdef USE_INSTANCING
       pw = instanceMatrix * pw;
     #endif
-    vPatchXZ = (modelMatrix * pw).xz; }`;
+    vPatchXZ = (modelMatrix * pw).xz; vPatchY = (modelMatrix * pw).y; }`;
 const FRAG = `
   if (uPatchCut > 0.0 || uPatchDisc.z > 0.0) {
     float keep = 1.0 - uPatchCut;
-    if (uPatchDisc.z > 0.0) keep *= 1.0 - smoothstep(0.75, 1.0, length(vPatchXZ - uPatchDisc.xy) / uPatchDisc.z);
+    if (uPatchDisc.z > 0.0) { float dy = cameraPosition.y - vPatchY, t = (cameraPosition.y - uPatchY) / max(dy, 1e-3); // ray -> plane uPatchY
+      vec2 pxz = dy > 1.0 && t > 0.0 && t < 4.0 ? cameraPosition.xz + (vPatchXZ - cameraPosition.xz) * t : vPatchXZ;
+      keep *= 1.0 - smoothstep(0.75, 1.0, length(pxz - uPatchDisc.xy) / uPatchDisc.z); }
     int bx = int(gl_FragCoord.x) & 3, by = int(gl_FragCoord.y) & 3, bxy = bx ^ by;
     int bayer = ((bxy & 1) << 3) | ((by & 1) << 2) | (((bxy >> 1) & 1) << 1) | ((by >> 1) & 1);
     if ((float(bayer) + 0.5) / 16.0 >= keep) discard;
@@ -44,15 +50,15 @@ const FRAG = `
   if (uFarMix.w > 0.5) { // in-page band: globe terrain in front hides the patch; the patch blends toward the globe behind it
     vec2 fuv = vPatchClip.xy / vPatchClip.w * 0.5 + 0.5; float fd = textureLod(uFarDepth, fuv, 0.0).r;
     if (fd < 1.0 && vPatchClip.w > exp2(fd * 2.0 / uFarMix.z) - 1.0 + uFarOcc.x + uFarOcc.y * vPatchClip.w) discard;
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, textureLod(uFarColor, fuv, 0.0).rgb * uFarMix.y, uFarMix.x);
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, textureLod(uFarColor, fuv, 0.0).rgb * uFarMix.y, fd < 1.0 ? uFarMix.x : 0.0); // only toward globe terrain: over sky (cleared far depth) a tree top kept its own colour, not the pale horizon
   }
   #include <dithering_fragment>`; // at the end: no gradient instruction follows the discard (an early discard made ANGLE/D3D's fxc warn X3595 on the shadow loops)
 /** The source edit (exported for tests). */
 export function addPatchFade(shader: { uniforms: Record<string, THREE.IUniform>; vertexShader: string; fragmentShader: string }) {
   if (shader.fragmentShader.includes('uPatchCut')) return;
   Object.assign(shader.uniforms, PATCH_FADE, PATCH_FAR);
-  shader.vertexShader = 'varying vec2 vPatchXZ; varying vec4 vPatchClip;\n' + shader.vertexShader.replace('#include <project_vertex>', VERT);
-  shader.fragmentShader = 'uniform float uPatchCut; uniform vec3 uPatchDisc; varying vec2 vPatchXZ; varying vec4 vPatchClip;\nuniform sampler2D uFarColor, uFarDepth; uniform vec4 uFarMix; uniform vec2 uFarOcc;\n' + shader.fragmentShader.replace('#include <dithering_fragment>', FRAG);
+  shader.vertexShader = 'varying vec2 vPatchXZ; varying float vPatchY; varying vec4 vPatchClip;\n' + shader.vertexShader.replace('#include <project_vertex>', VERT);
+  shader.fragmentShader = 'uniform float uPatchCut, uPatchY; uniform vec3 uPatchDisc; varying vec2 vPatchXZ; varying float vPatchY; varying vec4 vPatchClip;\nuniform sampler2D uFarColor, uFarDepth; uniform vec4 uFarMix; uniform vec2 uFarOcc;\n' + shader.fragmentShader.replace('#include <dithering_fragment>', FRAG);
 }
 const wired = new WeakSet<THREE.Material>();
 const defaultKey = THREE.Material.prototype.customProgramCacheKey;

@@ -52,7 +52,7 @@ export function* skeletonSteps(p: WPParams, height: number, radius: number, rnd:
     }
     if (level === 0 && p.flare > 0) for (let i = 0; i < points.length; i++) { const z = i / (points.length - 1); if (z < .15) radii[i] *= 1 + p.flare * (1 - z / .15); }
     const stem: Stem = { level, points, radii, length, radialSegments: p.radialSegments[level] ?? 4, dead, id: stems.length, parentId, maxLevel: p.levels - 1 };
-    stems.push(stem); if (stems.length % 32 === 0) yield;
+    stems.push(stem); if (stems.length % 16 === 0) yield;
     const cl = level + 1; if (cl >= p.levels || dead) return;
     // children: trunk = whorls over the live crown (+ dead stubs below, + the club band on top); branches = per metre
     type Slot = { t: number; dead: boolean; club: boolean };

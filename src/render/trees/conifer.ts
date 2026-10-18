@@ -148,7 +148,7 @@ function* cardSteps(slice: () => Generator<unknown, void>, cards: Card[], h: num
   const pos: number[] = [], nor: number[] = [], uv: number[] = [], col: number[] = [], idx: number[] = [];
   const d = new THREE.Vector3(), s = new THREE.Vector3(), cn = new THREE.Vector3(), out = new THREE.Vector3(), q = new THREE.Quaternion(), n = new THREE.Vector3(), tint = new THREE.Color();
   for (const c of cards) {
-    if (++done % 250 === 0) yield* slice();
+    if (++done % 150 === 0) yield* slice();
     d.subVectors(c.b, c.a); const L = d.length(); if (L < .01) continue; d.divideScalar(L);
     s.crossVectors(d, new THREE.Vector3(0, 1, 0)); if (s.lengthSq() < 1e-6) s.set(1, 0, 0); s.normalize();
     const mid = c.a.clone().lerp(c.b, .5), r = Math.hypot(mid.x, mid.z), radial = Math.min(1, r / Math.max(.15, crownR(mid.y)));

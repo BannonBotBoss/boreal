@@ -22,7 +22,7 @@ export function* tubeSteps(stems: Stem[], o: TubeOpts, slice: () => Generator<un
   let base = 0;
   for (const s of stems) {
     if (o.keep && !o.keep(s)) continue;
-    if (++done % 48 === 0) yield* slice();
+    if (++done % 24 === 0) yield* slice();
     const sides = Math.max(o.minSides ?? 3, Math.round(s.radialSegments * (o.radialScale ?? 1))), stride = Math.max(1, o.ringStride ?? 1);
     let P = s.points, R = s.radii;
     if (stride > 1 && P.length > 2) { const p2: THREE.Vector3[] = [], r2: number[] = []; for (let i = 0; i < P.length - 1; i += stride) { p2.push(P[i]); r2.push(R[i]); } p2.push(P[P.length - 1]); r2.push(R[R.length - 1]); P = p2; R = r2; }

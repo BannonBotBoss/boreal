@@ -37,6 +37,7 @@ import { createLoading } from './ui/loading';
 import { settle, startup } from './render/startup';
 import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
+import { createInPage } from './world/globe/inpage';
 import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, loadClock, worldSec, pauseClock, resumeClock, saveClock } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
@@ -162,12 +163,13 @@ menu.addPanel({ id: 'appearance', title: 'Appearance', build: appearancePanel(()
 menu.addPanel({ id: 'photo', title: 'Photo mode (P)', build: () => { enterPhoto(); return document.createElement('div'); } });
 menu.addPanel({ id: 'inspector', title: 'Generation inspector (I)', build: () => { if (paused) menu.close(); inspector.toggle(true); return document.createElement('div'); } });
 menu.addPanel({ id: 'globe', title: 'Planet view (Shift+G)', build: () => { toGlobe(); return document.createElement('div'); } });
-function toGlobe() { if (!STAGES.on) { notice('The planet view needs staged terrain (Graphics).'); return; } saveAll(); location.search = globeUrl(location.search, player.x, player.z, yaw + lookYaw); } // up to the globe at this spot and heading; it hands back through ?at=x,z,yaw (world/globe/handoff)
+function toGlobe() { if (!STAGES.on) { notice('The planet view needs staged terrain (Graphics).'); return; } if (inpage?.ascend()) return; saveAll(); location.search = globeUrl(location.search, player.x, player.z, yaw + lookYaw); } // up to the globe at this spot and heading; it hands back through ?at=x,z,yaw (world/globe/handoff)
 function applyPending() {
   if (pendingRegen) { view.invalidate(); pendingRegen = false; }
   if (pendingPlay) { const p = view.setPlayable(playAs); player.abilities = [...p.actions]; altitude = p.cameraHeight; pendingPlay = false; }
 }
 applyPending();
+const inpage = createInPage(view, { player: () => ({ x: player.x, z: player.z, yaw: yaw + lookYaw }), place: (x, z, y) => { player.x = x; player.z = z; yaw = y; player.heading = y; lookYaw = 0; }, save: saveAll }); // ?transition=inpage: world/globe/inpage (null = the reload path)
 function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
 actionButton.onclick = perform;
 element('pause').onclick = togglePause;
@@ -188,7 +190,7 @@ element('export').onclick = () => {
 };
 const keys = new Set<string>();
 let drag: { id: number; x: number; y: number } | undefined;
-const canControl = () => !menuOpen() && !paused && !dialog.open && !document.hidden && !photo.active;
+const canControl = () => !menuOpen() && !paused && !dialog.open && !document.hidden && !photo.active && !inpage?.blocksGame();
 function clearInput() {
   keys.clear();
   if (drag && canvas.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
@@ -198,6 +200,7 @@ addEventListener('keydown', event => {
   if (event.target instanceof HTMLElement && (event.target.isContentEditable || event.target.matches('input,textarea,select'))) return;
   if (dialog.open) return;
   if (menu.open) return;
+  if (inpage?.ownsInput()) return; // in-page globe/band: only the active scene's keymap is live
   if (!event.repeat && event.key.toLowerCase() === 'i' && !event.ctrlKey) { inspector.toggle(); if (!photo.active) clearInput(); return; }
   if (photo.active) { if (!event.repeat && (event.key === 'Escape' || event.key.toLowerCase() === 'p')) void photo.exit(); return; } // photo mode has its own keys
   if (!event.repeat && event.key.toLowerCase() === 'p') { enterPhoto(); return; }
@@ -233,7 +236,7 @@ canvas.addEventListener('pointermove', event => {
 canvas.addEventListener('pointerup', clearInput);
 canvas.addEventListener('pointercancel', clearInput);
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; canvas.style.cursor = 'grab'; });
-canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); paused = true; notice('Graphics context lost. Your committed events are saved; reload to restore the view.'); });
+canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); inpage?.dispose(); paused = true; notice('Graphics context lost. Your committed events are saved; reload to restore the view.'); });
 canvas.addEventListener('webglcontextrestored', () => location.reload());
 let lastPhotoView: PhotoView | undefined;
 let hadPad = false, previousButtons: boolean[] = [], lastTime = 0, accumulator = 0;
@@ -258,7 +261,7 @@ function frame(time: number) { const frameStart = performance.now();
   }
   previousButtons = buttons;
   // A live photo sequence keeps the world running (no player input) while photo mode renders it.
-  const active0 = !menuOpen() && !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating);
+  const active0 = !menuOpen() && !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating) && !inpage?.blocksGame(); // in-page globe/band: sim frozen, world clock runs
   const active = active0; // the world clock (pauseClock/resumeClock around the menu) freezes age and every clock field
   const pv = photo.active ? (photo.reviewing ? lastPhotoView : lastPhotoView = photo.update(dt)) : undefined;
   if (!pv || pv.frozen === false) shaderClock.time += dt;
@@ -318,10 +321,10 @@ function frame(time: number) { const frameStart = performance.now();
   actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
   // Menu open: hold the last frame (clock frozen; no age/growth/render). Playing: draw every frame.
-  const drawStart = performance.now(); if (!menu.open) drawFrame(pv); view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
+  const drawStart = performance.now(); if (!menu.open) { if (inpage) inpage.frame(() => drawFrame(pv)); else drawFrame(pv); } view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
-  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
+  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
   if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {
@@ -341,7 +344,7 @@ function frame(time: number) { const frameStart = performance.now();
 }
 requestAnimationFrame(frame);
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { pauseClock(); menu.show('start'); } }); }
+  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).then(() => inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { pauseClock(); menu.show('start'); } }); }
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

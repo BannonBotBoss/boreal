@@ -37,6 +37,7 @@ import { entityMass, rigMass } from './mass';
 import { RIG_BODY_PLAN } from '../core/materials';
 import { body, step, collide, gravity, type Body } from '../proc/physics';
 import { defaultGenome as defaultLook, type Genome } from '../core/genome';
+import { bandBackground, bandCamera, bandFx } from '../world/globe/inpage';
 
 /** Scene entry point: assembles generated terrain, streamed objects, light and camera. */
 /** Commits an animal eating a forage patch; returns the animal's new energy, or undefined if not committed. */
@@ -232,6 +233,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const dt = frozen ? 0 : Math.max(0, Math.min(.1, time - previousTime)); if (!frozen) previousTime = time;
     camera.fov += ((focused ? 30 : 48) - camera.fov) * (1 - Math.exp(-8 * dt));
     if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
+    bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
     camera.updateProjectionMatrix();
     if (focused) camera.lookAt(focused.x, heightAt(focused.x, focused.z) + (focused.kind === 'deer' ? 1.5 : 1), focused.z);
     const highlighted = focused ?? target;
@@ -263,10 +265,12 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
     const hour = photo?.hour ?? gameHour(tod, startHour); clock = formatHour(hour);
     const lit = sky.update(hour, tod, camera, wolf.root.position); darkness = lit.light.night;
+    bandBackground(scene, camera); // world/globe/inpage: band = globe far layer as the background + patch fade (no-op otherwise)
     photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
     else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
-    post.render(!!photo, photo?.focalMm ?? 0, photoreal.tier.ssao, { contact: photoreal.tier.contact, rays: photoreal.tier.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
+    const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
+    post.render(!!photo, photo?.focalMm ?? 0, fx.ssao, { contact: fx.contact, rays: fx.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
   }
   function forageWolf(plantKey: string) {
     for(const chunk of chunks.values()) {

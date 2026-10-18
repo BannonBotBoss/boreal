@@ -423,3 +423,11 @@ test('patch fade (render/fade): uniform only, cache key unchanged, default-key m
   setPatchFade(.25, { x: 3, z: 4, r: 180 }); assert.ok(Math.abs(PATCH_FADE.uPatchCut.value - .75) < 1e-9); assert.deepEqual(PATCH_FADE.uPatchDisc.value.toArray(), [3, 4, 180]);
   setPatchFade(1); assert.equal(PATCH_FADE.uPatchCut.value, 0); assert.equal(PATCH_FADE.uPatchDisc.value.z, 0, 'no disc = no fade at all');
 });
+test('in-page band pose: the band start reproduces the globe camera (game <-> planet frame round trip)', async () => {
+  const THREE = await import('three'), { gameToPlanet, planetToGame, gameBasis, globeCameraFrom } = await import('../src/world/globe/transition');
+  const p = createPlanet(1400, heightAt), gq = new THREE.Quaternion().setFromEuler(new THREE.Euler(.3, 1.1, -.2));
+  const v = gameToPlanet(p, 120, 1900, -340), g = planetToGame(p, v);
+  const q = new THREE.Quaternion().setFromRotationMatrix(gameBasis(p, g.x, g.z)).invert().multiply(gq); // inpage.ts descend()
+  const out = globeCameraFrom(p, { position: new THREE.Vector3(g.x, g.y, g.z), quaternion: q }, { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() });
+  assert.ok(out.position.distanceTo(new THREE.Vector3(...v)) < 1e-3, 'position'); assert.ok(out.quaternion.angleTo(gq) < 1e-6, 'orientation');
+});

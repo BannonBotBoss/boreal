@@ -34,6 +34,9 @@ try {
   const loaded = async () => { try { return await ev(`document.readyState === 'complete' && !document.getElementById('loading')`) === true; } catch { return false; } }; // startup can block the page for a minute (cold shader compiles)
   while (!await loaded()) { if (Date.now() - t0 > 300000) throw new Error('loading screen still up after 300 s'); await sleep(1000); }
   console.log(`loaded in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+  const gpu = await ev(`(() => { const c = [...document.querySelectorAll('canvas')].find(c => c.getContext('webgl2')), gl = c?.getContext('webgl2'), x = gl?.getExtension('WEBGL_debug_renderer_info');
+    return gl ? (gl.isContextLost() ? 'CONTEXT LOST ' : '') + gl.getParameter(x ? x.UNMASKED_RENDERER_WEBGL : gl.RENDERER) : 'no webgl2 canvas'; })()`);
+  console.log('renderer ' + gpu); if (/SwiftShader|WARP|Basic Render|llvmpipe|software|CONTEXT LOST|no webgl2/i.test(gpu)) errors.push('not on the GPU: ' + gpu); // a 2 fps run with an idle main thread is the GPU process, not app code
   const res = JSON.parse(await ev(`(async () => {
     const u = performance.getEntriesByType('resource').map(e => e.name).filter(n => n.includes('/src/core/quality.ts')), Q = await import(u[u.length - 1] ?? '/src/core/quality.ts'), G = Q.GOVERNOR;
     const P = WebGL2RenderingContext.prototype; let calls = 0;
@@ -42,11 +45,11 @@ try {
     const raf = () => new Promise(r => requestAnimationFrame(r)), wait = ms => new Promise(r => setTimeout(r, ms)), out = [];
     G.auto = false; G.capTier = 0; G.probeCap = 0;
     for (let t = 0; t < Q.LADDER.length; t++) { G.tier = t; await wait(${holdMs}); let frames = 0, sum = 0; const s = performance.now();
-      while (performance.now() - s < 1000) { calls = 0; await raf(); frames++; sum += calls; } out.push({ tier: Q.LADDER[t].name, ssao: Q.LADDER[t].ssao, frames, draws: Math.round(sum / frames) }); }
+      while (performance.now() - s < 1000) { calls = 0; await raf(); frames++; sum += calls; } out.push({ tier: Q.LADDER[t].name, ssao: Q.LADDER[t].ssao, frames, draws: Math.round(sum / frames), gpu: G.gpuMs === undefined ? '-' : G.gpuMs.toFixed(1) }); }
     G.auto = true; return JSON.stringify(out); })()`));
-  for (const r of res) console.log(`${r.tier.padEnd(9)} ssao ${r.ssao}  ${r.frames} frames/s  ${r.draws} draws/frame`);
+  for (const r of res) console.log(`${r.tier.padEnd(9)} ssao ${r.ssao}  ${r.frames} frames/s  ${r.draws} draws/frame  gpu ${r.gpu} ms`);
   const dead = res.filter(r => r.frames < 5), empty = res[0].draws < 150; // Ultra draws ~600 with the world built, ~90 with terrain only
-  if (dead.length) errors.push('not rendering at ' + dead.map(r => r.tier).join(', '));
+  if (dead.length) errors.push('not rendering at ' + dead.map(r => r.tier).join(', ') + ' (' + await ev(`document.visibilityState + ' focus=' + document.hasFocus()`) + ')');
   if (empty) errors.push(`world not built: ${res[0].draws} draws at ${res[0].tier}`);
   ok = !errors.length; ws.close();
 } catch (e) { errors.push('smoke: ' + (e.stack ?? e)); }

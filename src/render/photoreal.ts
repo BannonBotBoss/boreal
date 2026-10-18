@@ -223,13 +223,14 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
   // what three does at the flip anyway, only earlier. three keeps every program of a material until the material is
   // disposed, so nothing needs releasing. A pending world variant goes first.
   const routed = new WeakMap<THREE.Material, Set<string>>(); let routeQ: THREE.Object3D[] = [], routeLit: THREE.Scene | undefined, routeScan = 0;
-  let routeBusy: Prog[] = [];
+  let routeBusy: Prog[] = [], routeKey = '';
   function stepRoutes() {
     if (warm && (warm.queue.length || warm.busy.length)) return;
     routeBusy = settle(routeBusy); if (routeBusy.length) return;
+    if (routeQ.length && routeKey !== variantOf(tier)) routeQ = []; // the tier changed since the scan: routeLit has the old cascade lights, and a live material compiled against them (its new CSM_CASCADES > the scene's shadow lights) fails ('CSM_cascades' index out of range) and was left on that program
     if (!routeQ.length) {
       if (++routeScan < 60 || (tier.ibl && !scene.environment)) return; routeScan = 0; // a rescan every 60 frames picks up new meshes
-      routeLit = litFor(tier); const seen = new Set<string>();
+      routeLit = litFor(tier); routeKey = variantOf(tier); const seen = new Set<string>();
       scene.traverse(o => { const k = routeSig(o); if (k && !seen.has(k[1]) && k[0].some(m => !routed.get(m)?.has(k[2]))) { seen.add(k[1]); routeQ.push(o); } });
       return;
     }

@@ -22,7 +22,7 @@ import { smoothstep, clamp } from '../../proc/math';
 import { children, edgeMetres, faceDir, roots, wantsSplit, centre as nodeCentre, type QNode } from './cube';
 import { renderOffset } from './origin';
 import { createAtmosphere } from './atmosphere';
-import { faceNeighbour } from './cube';
+import { across } from './cube';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
 import { gameHour, START_HOUR, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, handoffTarget, HANDOFF } from './handoff';
@@ -92,7 +92,8 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const controls = new OrbitControls(camera, canvas); controls.enableZoom = false; controls.enablePan = false; controls.enableDamping = true; controls.dampingFactor = .12;
   const bench = q.get('bench') === 'zoom', benchFrom = 14e6, benchTo = 300, benchSec = 20; let benchT = -2, benchOrbit = {}; // 2 s settle at orbit, 20 s zoom, 8 s hold
   const startAlt = bench ? benchFrom : Number(q.get('alt')) || R * 2.2;
-  const start = q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
+  const dirQ = q.get('dir')?.split(',').map(Number); // ?dir=x,y,z: start over any planet direction (e.g. a cube-face corner, screenshots)
+  const start = dirQ?.length === 3 && dirQ.every(Number.isFinite) ? new THREE.Vector3(...dirQ).normalize().toArray() as [number, number, number] : q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
   let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0, overHome: { x: number; z: number } | null = null, leaving = false;
   const autoHandoff = !bench && !q.has('shot') && q.get('handoff') !== '0'; // screenshots and benches stay on the globe
   if (q.get('handoff') === 'demo') targetAlt = HANDOFF.alt * .75; // ?handoff=demo&alt=4000: descend and hand off by itself
@@ -178,14 +179,9 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   function stitch() {
     drawnKeys.clear(); for (const n of drawnNodes) drawnKeys.add(n.key);
     for (const n of drawnNodes) {
-      const N = 1 << n.level; let flags = 0;
-      if (n.level > 0) for (const [di, dj, bit] of [[0, -1, 1], [0, 1, 2], [-1, 0, 4], [1, 0, 8]] as const) {
-        let f = n.face, ai = n.i + di, aj = n.j + dj;
-        if (ai < 0 || aj < 0 || ai >= N || aj >= N) { // across a cube-face edge: the same-level node on the neighbouring face
-          const nb = faceNeighbour(n.face, Math.log2(bit)), k0 = bit < 4 ? n.i : n.j, k = nb.flip ? N - 1 - k0 : k0;
-          f = nb.face; ai = nb.edge < 2 ? k : nb.edge === 2 ? 0 : N - 1; aj = nb.edge < 2 ? (nb.edge === 0 ? 0 : N - 1) : k;
-        }
-        if (drawnKeys.has(`${f}/${n.level - 1}/${ai >> 1}/${aj >> 1}`)) flags |= bit;
+      let flags = 0;
+      if (n.level > 0) for (let e = 0; e < 4; e++) { // the same-level node across each edge (also across cube-face edges): its parent drawn?
+        const a = across(n, e); if (drawnKeys.has(`${a.face}/${n.level - 1}/${a.i >> 1}/${a.j >> 1}`)) flags |= 1 << e;
       }
       const t = tiles.get(n.key)!, g = t.mesh.geometry;
       if ((g.userData.stitch ?? 0) !== flags) { g.userData.stitch = flags; g.setIndex(stitchIndex(t.seg, flags)); }

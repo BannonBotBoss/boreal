@@ -246,3 +246,18 @@ test('globe tiles: lake water (above sea level) gets the lake colour flag, sea w
   }
   assert.ok(lakeV > 0 && seaV > 0, `lake ${lakeV} sea ${seaV}`);
 });
+
+import { across } from '../src/world/globe/cube';
+test('cube nodes: the node across each edge shares that whole edge, also across cube-face edges and at face corners (stitching)', () => {
+  const corners = (f: number, l: number, i: number, j: number) => { const s = 2 / (1 << l), a = -1 + i * s, b = -1 + j * s; return [[a, b], [a + s, b], [a, b + s], [a + s, b + s]].map(([x, y]) => faceDir(f, x, y)); };
+  const ends = [[0, 1], [2, 3], [0, 2], [1, 3]]; // corner indices of edges south, north, west, east
+  const near = (p: number[], q: number[]) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < 1e-12;
+  let crossings = 0;
+  for (const l of [1, 3]) for (let f = 0; f < 6; f++) for (let i = 0; i < 1 << l; i++) for (let j = 0; j < 1 << l; j++) for (let e = 0; e < 4; e++) {
+    const n = node(f, l, i, j), a = across(n, e), mine = corners(f, l, i, j), theirs = corners(a.face, l, a.i, a.j);
+    if (a.face !== f) crossings++;
+    assert.ok(!(a.face === f && a.i === i && a.j === j), 'a different node');
+    for (const c of ends[e]) assert.ok(theirs.some(t => near(t, mine[c])), `edge ${e} of ${n.key} shared by ${a.face}/${l}/${a.i}/${a.j}`);
+  }
+  assert.equal(crossings, 6 * 4 * 2 + 6 * 4 * 8, 'every face-edge node crosses');
+});

@@ -50,6 +50,14 @@ export const roots = () => FACES.map((_, f) => node(f, 0, 0, 0));
 export const children = (p: QNode) => [node(p.face, p.level + 1, p.i * 2, p.j * 2), node(p.face, p.level + 1, p.i * 2 + 1, p.j * 2),
   node(p.face, p.level + 1, p.i * 2, p.j * 2 + 1), node(p.face, p.level + 1, p.i * 2 + 1, p.j * 2 + 1)];
 /** Face-coordinate bounds of a node. */
+/** The same-level node across edge `e` (0 south j-1, 1 north j+1, 2 west i-1, 3 east i+1) of `n`, crossing cube-face
+ *  edges through faceNeighbour (globe stitching: is the neighbour drawn one level coarser?). */
+export function across(n: QNode, e: number): { face: number; i: number; j: number } {
+  const N = 1 << n.level, i = n.i + (e === 2 ? -1 : e === 3 ? 1 : 0), j = n.j + (e === 0 ? -1 : e === 1 ? 1 : 0);
+  if (i >= 0 && j >= 0 && i < N && j < N) return { face: n.face, i, j };
+  const nb = faceNeighbour(n.face, e), k0 = e < 2 ? n.i : n.j, k = nb.flip ? N - 1 - k0 : k0;
+  return nb.edge < 2 ? { face: nb.face, i: k, j: nb.edge === 0 ? 0 : N - 1 } : { face: nb.face, i: nb.edge === 2 ? 0 : N - 1, j: k };
+}
 export function bounds(q: QNode) { const s = 2 / (1 << q.level); return { a0: -1 + q.i * s, b0: -1 + q.j * s, s }; }
 /** Approximate edge length (m) of a node on a sphere of radius r (a face spans a quarter great circle). */
 export const edgeMetres = (level: number, r: number) => r * Math.PI / 2 / (1 << level);

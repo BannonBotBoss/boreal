@@ -489,3 +489,128 @@ Still fork-only (`src/animals/locomotion/fork/`, used under `?loco=1` and in the
 - **Not covered:** manual (settings) tier switches, which are immediate; point-light shadows; meshes that first appear after the late pass at 15 s.
 - **Geometry (render/rocks `icosphere`):** one cached IcosahedronGeometry per detail, handed out as plain BufferGeometry copies (geometry.ts ellipsoid, trees leaf blobs, rocks). `batch.ts` flatten copies instead of `clone()`: clone on a Polyhedron/Cylinder/Cone geometry first rebuilds a default one in the constructor. The rules allowlist shrank by geometry.ts and trees.ts.
 - **Remaining freezes seen in the bench (not shader compiles, 1 link or none):** 0.7-1.6 s single frames during Ultra-locked streaming and idle, intermittent. The profile points at chunk geometry work (applyMatrix4, ground columnRaw) and GPU-process stalls (useProgram/getAttribLocation).
+
+## 2026-10-18 08:30 PT - Grok Bot (Globe Builder): round trip polish + PLAN for the in-page transition (not started)
+**Landed** (each one tested green in a clean checkout: tsc, npm test, vite build):
+- 5ab1463: the growl key ignores Shift (`k === 'g' && !e.shiftKey`), so Shift+G opens the planet view without growling.
+- 6c6d422: globe heading turns below 300 km with right-drag and Q/E. Left-drag still pans. The heading is measured on the local tangent plane.
+- 09aecfe: coming down from the globe you land on the nearest dry land, using the game's own `dryStart` (`handoff.ts landSpawn`). Lake spot 72,186 arrives at 132,186. If nothing within 900 m is dry, the spot stays as it is.
+
+### PLAN: in-page globe <-> game transition (scoped only; main.ts/buildScene.ts are NOT changed yet)
+**Goal:**
+- One WebGLRenderer, with the globe scene and the game scene both resident.
+- Going down, game terrain fades in under the globe tiles from about 2 km; going up, it fades out.
+- The camera is handed over with no reload.
+- The reload path (`?view=globe`, `?at=`) stays as the fallback behind a flag.
+- The origin shift (`originBus`) stays off.
+
+**How it works now** (HEAD 09aecfe):
+- **Entry:** `index.html` loads `world/globe/entry.ts`. It imports either `globeView` (`?view=globe`) or `main.ts`. The two never share a page.
+- **Game:** `main.ts:84` calls `buildScene(canvas)`, which creates the only renderer (`buildScene.ts:46`).
+  - Renderer settings: antialias, linear depth, ACES, sRGB.
+  - Pixel ratio = photoreal `tier.resScale`, set every frame inside `draw()` (`:218-222`).
+  - Camera: 48 deg, near .2, far 700 (`:59`). Fog 200-480 m (`:52`). Preetham `Sky` (`createSky`, `:53`).
+  - Post: `post.render` (`:268`) either calls `renderer.render` directly or runs the EffectComposer (RenderPass -> SUNFX -> GTAO -> ...). SUNFX and GTAO read depth.
+- **Game loop:** `main.ts:245 frame()` runs on its own rAF.
+  - It drives the sim (30 Hz), then `view.sync` (`:299`), `runJobs` (`:300`), world clock/ground/weather (`:301-303`), and `drawFrame` + `photoreal.after` (the governor feed, `:321`).
+  - The menu holds the frame.
+- **Loading:** `startup()` (`render/startup.ts`) runs behind the loading screen (`main.ts:343`): settle chunks, `photoreal.compile`, IBL, probe, warm-up. It pauses the governor while it runs.
+- **Globe:** `startGlobe()` creates its OWN renderer (`logarithmicDepthBuffer: true`), its own rAF `tick`, OrbitControls, window key/pointer/resize listeners, and 4 tile workers.
+  - On leave, `shutdown()` calls `renderer.dispose()` + `forceContextLoss()`.
+  - It feeds the same `GOVERNOR` through `governFrame`, reads the seed from localStorage and the time from `worldSec()`.
+
+**Design:**
+- **Depth: two passes, never a shared depth buffer.**
+  - The game keeps its renderer and its linear depth. Turning `logarithmicDepthBuffer` on would recompile every game program and break the SUNFX/GTAO depth reads and the photoreal precompile cache.
+  - The globe draws first, as a FAR LAYER into its own render target, with log depth written by its own materials. `tile.ts` already declares `logDepthBufFC` itself (6fc8e0b); the dome does the same.
+  - That target becomes `scene.background` for the game pass. Three draws it under everything, with no depth.
+  - Game objects are always nearer than the globe tiles beyond the patch, so ordering by partition is correct.
+  - Works on both post paths (direct render and composer).
+- **Fade:**
+  - Patch alpha `t = smoothstep(2000, 600, camera height above ground)`, applied as screen-door dither (no transparency sorting).
+  - The dither also fades the patch edge radially (r 0.8-1.0 of the loaded ring), so the globe shows past the chunks.
+  - Below ~600 m: pure game plus far layer. Above 2 km: the game is not drawn at all (it stays resident; the sim is frozen).
+- **Camera:** one transition camera in game coordinates (x, y, z, yaw, pitch) drives both scenes.
+  - Game side: the existing `PhotoView` override in `draw()` (`buildScene.ts:233`) with `frozen: false`, so the world keeps running.
+  - Globe side: `planet.fromLocal(x, z)` times (R + y + DATUM), oriented by the tangent-plane N/E at that point (the same maths as `headingYaw`). Same fov and aspect.
+  - Descent ends with a ~1 s blend from the transition pose to `positionCamera`'s rig pose. Ascent starts from the rig pose.
+- **Fallback flag:** `?transition=reload` or a render setting `world.transition` (in-page | reload).
+  - The default stays `reload` until steps 1-6 are verified; then it flips.
+  - Automatic fallback to reload when globe creation throws, `deviceMemory <= 4`, or the probe cap is Low or worse.
+
+**Steps** (each one a small separate commit, green in a clean checkout):
+0. **Baseline:** log `renderer.info.memory`/`programs` and `performance.memory` in the game and on the globe (console only, no bench), so the budget below is measured rather than estimated.
+1. **(mine) Split `globeView.ts` into `createGlobe(renderer, { shared })`,** returning `{ update(dt, cam), renderTo(target), attachInput(on), dispose() }`.
+   - `startGlobe()` becomes a thin standalone wrapper with identical behaviour; the reload path is untouched.
+   - In shared mode, never call `setSize`/`setPixelRatio`/`dispose`/`forceContextLoss`, and never add `resize`/`pagehide` handlers. Test this.
+   - Log depth goes per material (tile + dome), so the globe no longer needs the renderer flag.
+2. **(mine) New `world/globe/transition.ts`:**
+   - Mode state machine `game | band | globe`.
+   - The transition camera and the game <-> planet frame mapping (DATUM offset).
+   - The far-layer RT (half resolution first: far terrain is soft).
+   - Fade factor, flag, fallback.
+   - Tests: frame mapping round trip, DATUM vs `surfaceAt` over the home region, mode transitions, the shared-mode guards.
+3. **buildScene.ts touch points** (small, by patch):
+   - `:43` `PhotoView` gets optional `far?: number`; `:233-234` sets `camera.far = photo?.far ?? 700`. At 2 km the patch lies beyond 700 m.
+   - `:264` (after `sky.update`): optional far layer, `setFarLayer(tex | null, fogFar)`. It sets `scene.background`, hides the `Sky` mesh, and pushes the fog out to the patch edge.
+   - `:351` return object: expose `setFarLayer` and `renderer` (the renderer is already reachable as `photoreal.renderer`).
+   - Later, phase 2 (only when the page starts as `?view=globe` and descends in-page): `:45-46` `buildScene(canvas, onForage, renderer?)` reuses a given renderer.
+4. **Dither fade uniform for terrain, water and batched objects:** `uPatchFade`, `uPatchCentre`, `uPatchR`.
+   - These live in `render/pbr.ts` (terrainMaterial), `render/water.ts` and `render/batch.ts`. I don't own them, so this is a REQUEST to their owners.
+   - Fallback without it: fade by fog only. Coarser, but it works.
+5. **main.ts touch points** (by patch; other agents edit this file):
+   - `:39` import `createTransition` (lazy `import()` of the globe code after startup, so the game bundle doesn't grow).
+   - `:84` after `buildScene`: `const trans = createTransition(view, ...)` when the flag allows. The seed is read at `:130`; the globe is created after that line.
+   - `:165 toGlobe()`: `trans ? trans.ascend(player, yaw + lookYaw) : location.search = globeUrl(...)` (the current line is the fallback). Keep `saveAll()`.
+   - `:191 canControl()` and `:197-210 keydown`: `&& trans?.mode !== 'globe'`. In globe or band mode only Shift+G, Esc (menu) and the globe keys act. E is interact in the game but turn on the globe: the globe listeners attach only in globe mode.
+   - `:245 frame()`:
+     - In `globe` mode, skip the sim (`active = false`, as with the menu, but WITHOUT `pauseClock`), keep clock/ground/weather, call `trans.frame(dt)` (which renders the globe) and skip `drawFrame`.
+     - In `band` mode, the game sim keeps running only on the descent's final blend; `drawFrame(trans.photoView)` with the far layer.
+   - `:299 view.sync(...)`: pass the transition camera height as `altitude` (radius x1.5 above 85 m), and on descent the landing spot (`landSpawn`) as the centre.
+   - `:321`: still ONE `governFrame` per frame (the combined work). Hold the governor during a transition (as `startup()` does: `auto = false`, then `cool` after).
+   - `:324 sfx.update`: `halted` while in globe mode.
+   - `:236` context lost: also stop the globe workers.
+   - `:343-344` after `startup`: prewarm on idle (import the module, `compileAsync` the globe programs). Spawn the workers on the first ascent.
+6. **Descent:** globe -> band at 2 km over home.
+   - The player teleports to `landSpawn(spot)`; chunks stream during the 2 km -> 600 m descent.
+   - The rig camera takes over only once `queued()` near the spot is quiet, or after a 3 s cap.
+   - **Ascent:** from the rig pose up the local vertical while pitching down. At 2 km the game stops drawing; the globe then runs standalone in the page.
+7. **Verify:** at most 4 captures (2 km fade, 600 m, ground handover, ascent) plus the round-trip time and memory figures. Then flip the default to in-page.
+
+**State ownership:**
+- **Time:** `core/worldClock` (main) is the only clock. The globe already reads `worldSec()`. The menu freezes it everywhere. In globe mode the clock runs and the sim is frozen (animals and player hold position). The lead should confirm this.
+- **Seed:** `STAGES.seed` is set once (`main.ts:130`) before the globe is created. New world = reload (as now).
+- **Input:** one owner per mode. Game handlers are gated by mode; globe handlers (OrbitControls `enabled`, key, pointer) are attached and detached by `transition.ts`. Gamepad: game only (the globe ignores it for now).
+- **Pause:** the main menu is the only pause. In globe mode, Esc opens it (it does not leave the globe); G or "Return to the ground" descends at the spot.
+- **Renderer, size, pixel ratio, tone mapping:** owned by the game (`draw()`).
+- **Governor:** one feed per frame from main.
+- **Saves:** `saveAll()` on ascent.
+
+**Memory and GPU budget, both resident** (ESTIMATES at Ultra, 1600x900 x 1.5 DPR; step 0 measures):
+- **Globe tiles:** about 41 B/vertex x 2,597 vertices + ~31 KB index, so ~136 KB per tile.
+  - Cache cap 1400 = ~190 MB GPU, plus the same again in JS (three keeps the arrays).
+  - Shared mode: cap the cache at ~500 (~70 MB GPU) and drop the CPU arrays after upload (~0 heap). Draw cap in band = 0.6 x `lod.draw` (~100 tiles, ~0.5 M triangles).
+- **Far-layer RT:** half resolution HalfFloat ~7 MB (full resolution 26 MB + depth 13 MB).
+- **Workers:** 4 module heaps (measure). Terminate them after 60 s in game mode; respawn on ascent.
+- **Game (exists today):** MSAA backbuffer ~100 MB, post RT ~39 MB, CSM 2x2048^2 ~32 MB, chunks/batches ~50-100 MB (measure).
+- **Target:** at most +150 MB GPU and +150 MB heap over the game alone; Low tier about half.
+- **GPU time:** the band frame = the globe pass + the game frame. Shadows go away on their own above ~110 m (CSM maxFar). SUNFX rays and contact shadows are off in band.
+
+**Risks:**
+1. **Depth flag is renderer-wide.** Sharing log depth breaks the game's depth passes. Mitigation: per-material log depth plus two passes. The first thing to prove in step 1.
+2. **Globe lifetime code kills the shared context.** `shutdown()` disposes the renderer and forces context loss; it also has resize/pagehide listeners. Guard these in shared mode and test them.
+3. **Colour pipeline:**
+   - Background-texture tone mapping and colour space could give double or missing ACES.
+   - Exposure differs (photoreal light intensities vs globe sun 3.2/hemi .35).
+   - Game fog colour vs atmosphere aerial perspective.
+   - Any of these leaves a visible seam at the patch edge. Calibrate by capture.
+4. **Depth-reading post passes:** the far layer sits at depth 1, so SUNFX and GTAO treat it as sky. God rays would leak over distant terrain; turn rays off in band, or write depth.
+5. **Height DATUM and projection:** globe ground reads ~370 m at home where the game reads about -1.6 m. A fixed offset plus `fromLocal` distortion could leave a step or slide at the fade. A test over the home region is needed.
+6. **Frame budget in band:** globe adoption (2.5 ms) + game jobs (4 ms) + two renders. The governor could step down twice and rebuild both worlds mid-descent. Hold it during transitions.
+7. **Memory on iGPU/low-RAM machines.** Fall back to reload automatically.
+8. **Listener leaks and key clashes:** E, Q, G and Esc mean different things per mode; OrbitControls must detach.
+9. **Teleport streaming:** handing to the rig before the chunks arrive shows empty ground. Gate on `queued()`.
+10. **First-draw shader compiles in the game page:** the globe programs aren't covered by photoreal's precompile (a7c8549). Use `compileAsync` on idle.
+11. **Shared files** (main.ts, buildScene, post, pbr, water, batch) are edited by others. Keep the touch points tiny and land them by patch; the fade uniform is a request to its owners.
+12. **What runs while on the globe** (clock yes, sim no) is a design decision for the lead.
+13. **Precision:** the game frame stays small and the globe is camera-relative, so no origin shift is needed (it stays off by default).

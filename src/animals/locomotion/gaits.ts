@@ -1,0 +1,38 @@
+/**
+ * Gait table + selection. Inter-limb phase offsets (fraction of a stride, LH = 0, order LF, LH, RF, RH) from
+ * Hildebrand's gait diagrams (Hildebrand 1965 Science 150:701; 1977 Am. Zool. 17:85) and Alexander 1984 (IJRR 3:49).
+ * walk/trot/gallop rows are copied from core/animalBehavior gaitFor (Claude) so both systems agree.
+ * Gait choice and stride length come from Claude's gaitFor (Froude number, Alexander & Jayes 1983); we only read it.
+ */
+import { gaitFor, type LegDims } from '../../core/animalBehavior';
+import { gravity } from '../../proc/physics';
+import type { GaitId } from './signals';
+
+export interface GaitRow { offsets: readonly number[]; duty: number; /** swing clearance as a fraction of hip height */ lift: number }
+export const GAIT_TABLE: Record<GaitId, GaitRow> = {
+  walk:   { offsets: [.25, 0, .75, .5], duty: .65, lift: .10 },  // lateral-sequence walk (gaitFor)
+  trot:   { offsets: [0, .5, .5, 0], duty: .45, lift: .15 },     // diagonal pairs (gaitFor)
+  pace:   { offsets: [0, 0, .5, .5], duty: .5, lift: .15 },      // ipsilateral pairs; duty [verify], lift game calibration
+  canter: { offsets: [.3, 0, .6, .3], duty: .4, lift: .18 },     // three-beat, RH+LF diagonal [verify]
+  gallop: { offsets: [.6, 0, .45, .9], duty: .3, lift: .20 },    // canid rotary gallop (gaitFor); duty falls with speed there
+  bound:  { offsets: [.5, 0, .5, 0], duty: .3, lift: .20 },      // fore pair / hind pair [verify]
+  pronk:  { offsets: [0, 0, 0, 0], duty: .3, lift: .20 },        // all four together [verify]
+};
+
+export interface GaitPlan { id: GaitId; offsets: readonly number[]; duty: number; /** stride length, m */ cycle: number; /** swing clearance, m */ lift: number; froude: number; reverse: boolean }
+
+/** Froude number Fr = v²/(g·h) (Alexander 1976), g from proc/physics (rule 4). */
+export const froude = (speed: number, hip: number) => speed * speed / (gravity() * hip);
+
+/**
+ * The gait at this speed. Auto = gaitFor's choice (walk/trot/gallop by Froude). An override keeps gaitFor's cycle but
+ * shortens it if the override's longer stance would need more leg reach than gaitFor allowed.
+ */
+export function planGait(speed: number, legs: LegDims, override?: GaitId): GaitPlan {
+  const g = gaitFor(speed < 0 ? 'back' : 'walk', speed, legs)!;
+  const id: GaitId = override ?? g.name;
+  const row = GAIT_TABLE[id];
+  const duty = override ? row.duty : g.duty;
+  const cycle = duty > g.duty ? g.cycle * g.duty / duty : g.cycle;
+  return { id, offsets: row.offsets, duty, cycle, lift: override ? row.lift * legs.hip : g.lift, froude: froude(Math.max(.15, Math.abs(speed)), legs.hip), reverse: speed < 0 };
+}

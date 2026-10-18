@@ -106,3 +106,46 @@ test('globe surface data: soils/lakes from the staged lookups, placeholders flag
   } finally { STAGES.on = was; }
   const l = surfaceDataAt(0, 0, STAGES.seed, false); assert.equal(l.soil, null); assert.equal(l.lake, null); assert.equal(l.wetness, null);
 });
+import { renderOffset, gpuRelative } from '../src/world/globe/origin';
+test('camera-relative rendering: vertex error under 1 mm at 300 m and at 2 m altitude, 6400 km from the origin', () => {
+  const p = createPlanet(7, heightAt), R = p.radius, seg = 48;
+  for (const [alt, level] of [[300, 17], [2, 19]] as const) {
+    const near = (q: QNode) => { const c = centre(q, R); return -(c[0] * p.home[0] + c[1] * p.home[1] + c[2] * p.home[2]) / Math.hypot(...c); };
+    let q = roots().sort((x, y) => near(x) - near(y))[0];
+    while (q.level < level) q = children(q).sort((x, y) => near(x) - near(y))[0];
+    const t = finish(buildTile(q, p, seg)), den = seg * 2 ** q.level, n = seg + 1, cd = faceDir(q.face, 0, 0);
+    const s0 = p.sampleSurface(p.home), cam = p.home.map(v => v * (R + Math.max(s0.h, s0.water) + alt)) as [number, number, number];
+    const off = renderOffset(t.centre, cam); let worst = 0, naive = 0;
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const d = faceDir(q.face, -1 + 2 * (q.i * seg + i) / den, -1 + 2 * (q.j * seg + j) / den, cd), s = p.sampleSurface(d), r = R + Math.max(s.h, s.water);
+      const ref = [d[0] * r - cam[0], d[1] * r - cam[1], d[2] * r - cam[2]], g = gpuRelative(off, t.position, (j * n + i) * 3);
+      worst = Math.max(worst, Math.hypot(g[0] - ref[0], g[1] - ref[1], g[2] - ref[2]));
+      naive = Math.max(naive, Math.hypot(...[0, 1, 2].map(k => Math.fround(Math.fround(d[k] * r) - Math.fround(cam[k])) - ref[k]) as [number, number, number]));
+    }
+    assert.ok(Math.hypot(...off) < 2000, `tile is near the camera (${Math.hypot(...off).toFixed(0)} m)`);
+    assert.ok(worst < 1e-3, `alt ${alt} m: camera-relative vertex error ${(worst * 1000).toFixed(3)} mm`);
+    assert.ok(naive > 1e-2, `alt ${alt} m: float32 world coordinates would be off by ${(naive * 1000).toFixed(0)} mm (the bug this prevents)`);
+  }
+});
+import { createOriginBus } from '../src/world/globe/originBus';
+test('origin bus: a shift is velocity-neutral for a Verlet body (pos and prev translated in one tick)', () => {
+  const run = (shift: boolean) => {
+    const bus = createOriginBus(2000), b = { pos: [0, 10, 0], prev: [-30, 10, -.5] }, vel: number[][] = [], abs: number[][] = [];
+    if (shift) bus.onOriginShift(o => { for (let k = 0; k < 3; k++) { b.pos[k] -= o[k]; b.prev[k] -= o[k]; } });
+    for (let step = 0; step < 300; step++) {
+      for (let k = 0; k < 3; k++) { const v = b.pos[k] - b.prev[k]; b.prev[k] = b.pos[k]; b.pos[k] += v + (k === 1 ? -9.81 / 3600 : 0); }
+      if (shift) { bus.request(b.pos as [number, number, number]); bus.flush(); }
+      vel.push(b.pos.map((v, k) => v - b.prev[k])); abs.push(bus.toAbsolute(b.pos as [number, number, number]));
+    }
+    return { vel, abs, shifts: bus.shifts, local: Math.hypot(...b.pos) };
+  };
+  const a = run(false), s = run(true);
+  assert.ok(s.shifts >= 3, `shifted ${s.shifts} times`); assert.ok(s.local < 2100 && a.local > 8000);
+  for (let i = 0; i < a.vel.length; i++) for (let k = 0; k < 3; k++) {
+    assert.ok(Math.abs(a.vel[i][k] - s.vel[i][k]) < 1e-9, `velocity jump at step ${i}`);
+    assert.ok(Math.abs(a.abs[i][k] - s.abs[i][k]) < 1e-6, `absolute position drift at step ${i}`);
+  }
+  const bus = createOriginBus(); let calls = 0; const off = bus.onOriginShift(() => calls++);
+  bus.request([5000, 0, 0]); bus.request([5001, 0, 0]); bus.flush(); bus.flush(); off(); bus.request([9000, 0, 0]); bus.flush();
+  assert.equal(calls, 1, 'one shift per tick, unsubscribe works'); assert.deepEqual(bus.origin, [14001, 0, 0]);
+});

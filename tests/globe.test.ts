@@ -76,3 +76,20 @@ test('globe tile cost: one 32-segment tile builds well under a frame budget on t
   const p = createPlanet(1400, heightAt); finish(buildTile(node(2, 4, 3, 3), p, 32));
   const t = finish(buildTile(node(2, 5, 7, 9), p, 32)); assert.ok(t.cpu < 200, `${t.cpu.toFixed(1)} ms`);
 });
+import { centre } from '../src/world/globe/cube';
+test('globe tiles: exact dyadic lattice — a vertex a child shares with its parent is bit-identical', () => {
+  const p = createPlanet(7, heightAt), R = p.radius, near = (q: QNode) => { const c = centre(q, R); return -(c[0] * p.home[0] + c[1] * p.home[1] + c[2] * p.home[2]); };
+  let q = roots().sort((x, y) => near(x) - near(y))[0];
+  while (q.level < 11) q = children(q).sort((x, y) => near(x) - near(y))[0];
+  const seg = 24, n = seg + 1, par = finish(buildTile(q, p, seg)), world = (t: { position: Float32Array; centre: number[] }, v: number) => [0, 1, 2].map(k => t.position[v * 3 + k] + t.centre[k]);
+  let checked = 0;
+  for (const k of children(q)) { // child vertex (2i', 2j') in parent grid ↔ even child vertices: compare the sampled heights (exact)
+    const ch = finish(buildTile(k, p, seg)), oi = (k.i - q.i * 2) * seg / 2, oj = (k.j - q.j * 2) * seg / 2;
+    for (let j = 0; j < n; j += 2) for (let i = 0; i < n; i += 2) {
+      const pv = (oj + j / 2) * n + oi + i / 2, cv = j * n + i;
+      assert.equal(ch.height[cv], par.height[pv]); assert.deepEqual(ch.color.slice(cv * 3, cv * 3 + 3), par.color.slice(pv * 3, pv * 3 + 3));
+      const a = world(ch, cv), b = world(par, pv); assert.ok(Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) < 1, 'same point'); checked++;
+    }
+  }
+  assert.equal(checked, 4 * 13 * 13);
+});

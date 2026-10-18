@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import { generateGeometry, disposeObject } from './geometry';
 import { CHUNK_SIZE, generateChunk, heightAt, type Entity } from '../core/world';
 import { restoreEntities, type EventContext } from '../core/events';
-import { positionCamera, terrainJob } from './math';
+import { chunkTerrainJob, positionCamera } from './math';
+import { warmTerrainWorkers } from './terrainPool';
 import { terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
-import { INTEREST, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
+import { INTEREST, WAIT, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
 import { playable, type PlayerRig } from './playables';
 import { RENDER } from '../core/renderSettings';
 import { applyPopulation } from '../core/population';
@@ -84,22 +85,18 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   halo.rotation.x = -Math.PI / 2; halo.visible = false; scene.add(halo);
   let lastBatchLod = -1;
   let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
+  const CHUNK_ADDS_PER_FRAME = 2; let frameNo = 0; const adds = { frame: -1, n: 0 }; // upload pacing (see createChunk)
+  warmTerrainWorkers(); // stage grids in each terrain worker, behind the loading screen
   /** Instantiates a chunk from the math layers as a sliced job (core/interest): near = full, mid = coarse terrain + far LODs. */
   function* createChunk(cx: number, cz: number, context: EventContext, near: boolean) {
     const root = new THREE.Group(), objects = new Map<string, THREE.Object3D>(), batch = createChunkBatch();
-    const geometry: THREE.BufferGeometry = yield* terrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near);
-    const ground = new THREE.Mesh(geometry, terrainMaterial()); ground.receiveShadow = true;
+    // heights, normals, world-space positions and the water sheet come from a terrain worker (render/terrainPool); WAIT until then
+    const t = yield* chunkTerrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near, STAGES.on ? (near ? 32 : 8) : 0, { worker: true, wanted: () => chunkJobs.has(`${cx}:${cz}`) });
+    const ground = new THREE.Mesh(t.terrain, terrainMaterial()); ground.receiveShadow = true;
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; ground.layers.enable(1); root.add(ground); // layer 1 = GI probe capture
     const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), waterMaterial());
     water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
-    if (STAGES.on) { // stages 2b/2c: one water sheet at the lake level / river surface (with per-vertex flow for the shared water shader), sunk below ground elsewhere
-      const seg = near ? 32 : 8, lg = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, seg, seg); lg.rotateX(-Math.PI / 2); const p = lg.getAttribute('position'), flow = new Float32Array(p.count * 3); let any = false;
-      for (let i = 0; i < p.count; i++) { const wx = p.getX(i) + (cx + .5) * CHUNK_SIZE, wz = p.getZ(i) + (cz + .5) * CHUNK_SIZE, lk = lakeAt(STAGES.seed, wx, wz), rv = lk ? undefined : riverAt(STAGES.seed, wx, wz), inR = !!rv && rv.d < rv.half + rv.bank;
-        if (lk || inR) any = true; if (inR) { flow[i * 3] = rv!.dirX * rv!.speed; flow[i * 3 + 1] = rv!.dirZ * rv!.speed; flow[i * 3 + 2] = rv!.speed; }
-        p.setY(i, lk ? lk.surface : inR ? rv!.surface : heightAt(wx, wz) - .6); if (i % (seg + 1) === seg) yield; } // one row per step (core/interest budget)
-      lg.setAttribute('aFlow', new THREE.BufferAttribute(flow, 3));
-      if (any) { lg.translate((cx + .5) * CHUNK_SIZE, 0, (cz + .5) * CHUNK_SIZE); lg.computeVertexNormals(); const lake = new THREE.Mesh(lg, water.material); lake.userData.inspect = { type: 'terrain', key: `water:${cx}:${cz}` }; root.add(lake); } else lg.dispose();
-    }
+    if (t.water) { const lake = new THREE.Mesh(t.water, water.material); lake.userData.inspect = { type: 'terrain', key: `water:${cx}:${cz}` }; root.add(lake); } // stages 2b/2c: lake level / river surface sheet
     const generated = applyPopulation(generateChunk(cx, cz), cx, cz); yield; // chunk build steps stay within the 4 ms job budget
     const entities = structuredClone(restoreEntities(generated, context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
     for (const entity of entities) {
@@ -125,6 +122,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     for (const m of yield* batch.buildJob()) root.add(m); // sliced per material / few instances
     yield;
+    // GPU uploads happen on a mesh's first draw: add at most CHUNK_ADDS_PER_FRAME chunk roots per frame, so uploads spread out
+    while (adds.frame === frameNo && adds.n >= CHUNK_ADDS_PER_FRAME) yield WAIT;
+    if (adds.frame !== frameNo) { adds.frame = frameNo; adds.n = 0; } adds.n++;
     scene.add(root); return { root, entities, objects, near, batch };
   }
   /** `also`: a second streaming centre (the photo-mode camera); the player's own chunks always stay loaded. */
@@ -215,6 +215,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   function draw(x: number, z: number, altitude: number, yaw: number, time: number, target?: Entity, pitch?: number,
     moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity, photo?: PhotoView) {
+    frameNo++;
     const width = canvas.clientWidth, height = canvas.clientHeight;
     if (output) { if (canvas.width !== output.w || canvas.height !== output.h) { renderer.setPixelRatio(1); renderer.setSize(output.w, output.h, false); } }
     else if (renderer.getPixelRatio() !== ratio() || canvas.width !== Math.floor(width * ratio()) || canvas.height !== Math.floor(height * ratio())) {

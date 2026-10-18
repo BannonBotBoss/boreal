@@ -34,6 +34,9 @@ const kindStats = (key: string) => STATS.kinds[key.split(':')[0]] ??= { slices: 
 export function enqueue<T>(key: string, priority: number, gen: Generator<unknown, T>, done: (v: T) => void) {
   jobs.set(key, { key, priority, it: gen, done: done as (v: unknown) => void });
 }
+/** Yield this from a job that is waiting on something outside the frame (a worker result, an upload slot): runJobs skips the
+ *  job for the rest of this frame instead of calling it again, and the step does not feed the kind's cost estimate. */
+export const WAIT = Symbol('wait');
 export const cancel = (key: string) => jobs.delete(key);
 export const pending = (key: string) => jobs.has(key);
 export const queued = () => jobs.size;
@@ -41,14 +44,14 @@ export const queued = () => jobs.size;
  * estimated cost (decaying max of recent steps) still fits, so one slow step is not stacked on top of others. A single
  * step slower than the budget cannot be split here: STATS.kinds names the kind so its owner can slice it finer. */
 export function runJobs(budgetMs = INTEREST.budgetMs, now = () => performance.now()) {
-  const t0 = now(); let ran = 0;
-  while (jobs.size) {
-    let job: Job | undefined; for (const j of jobs.values()) if (!job || j.priority < job.priority) job = j;
+  const t0 = now(); let ran = 0; const waiting = new Set<Job>();
+  while (jobs.size > waiting.size) {
+    let job: Job | undefined; for (const j of jobs.values()) if (!waiting.has(j) && (!job || j.priority < job.priority)) job = j;
     const st = kindStats(job!.key), finishing = !!job!.result;
     if (ran && now() - t0 + (finishing ? st.estDone : st.estSlice) > budgetMs) { STATS.deferred++; break; } // would overrun: next frame
     const s = now();
     if (finishing) { jobs.delete(job!.key); job!.done?.(job!.result!.v); }
-    else { const r = job!.it.next(); if (r.done) job!.result = { v: r.value }; }
+    else { const r = job!.it.next(); if (r.done) job!.result = { v: r.value }; else if (r.value === WAIT) { waiting.add(job!); continue; } }
     const ms = now() - s; ran++; STATS.jobsRun++; if (ms > budgetMs) st.over++;
     if (finishing) { st.dones++; st.maxDone = Math.max(st.maxDone, ms); st.estDone = Math.max(ms, st.estDone * .9); }
     else { st.slices++; st.maxSlice = Math.max(st.maxSlice, ms); st.estSlice = Math.max(ms, st.estSlice * .9); }

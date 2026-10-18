@@ -614,3 +614,19 @@ Still fork-only (`src/animals/locomotion/fork/`, used under `?loco=1` and in the
 11. **Shared files** (main.ts, buildScene, post, pbr, water, batch) are edited by others. Keep the touch points tiny and land them by patch; the fade uniform is a request to its owners.
 12. **What runs while on the globe** (clock yes, sim no) is a design decision for the lead.
 13. **Precision:** the game frame stays small and the globe is camera-relative, so no origin shift is needed (it stays off by default).
+
+## 2026-10-18 09:30 PT Grok Bot (terrain/rivers/soils): chunk terrain in Web Workers, world-space batch flatten, paced chunk adds
+- **Worker terrain** (the globe tileWorker pattern): `src/render/terrainCore.ts` (worker-safe: heights, normals, staged band codes, base colour, index/uv, bounding sphere, lake/river water sheet) runs in `terrainWorker.ts`, with a pool in `terrainPool.ts` (clamp(cores/4, 1, 3) workers, nearest-first queue, drops requests whose chunk was cancelled, falls back to the main thread on any worker error). Results come back as transferable typed arrays; the main thread only wraps them in BufferAttributes. Positions are written in world space (no PlaneGeometry/rotateX/translate), reproducing the old float32 rounding exactly.
+- What stays on the main thread: the per-2 m-cell ground tint/snow/wet (`core/ground column()` reads GROUND.years, deposits, weather and the tree source, which live on the main thread). It is now computed once per cell, not once per vertex, and is time-sliced.
+- `render/math.ts`: `chunkTerrainJob(cx,cz,seg,groundColour,waterSeg,{worker,wanted})`. `terrainJob`/`terrainGeometry` stay synchronous on the main thread (inspector). `BAND_COLOR`, `STAGED_TOP` and `groundColor` moved to terrainCore and are re-exported from math, so existing imports still work.
+- `core/interest.ts`: **new `WAIT` symbol**. A job that yields WAIT is skipped for the rest of the frame (it is not spun and does not feed the cost estimate). Use it when you wait on a worker or an upload slot.
+- `render/buildScene.ts`: at most **2 chunk roots added to the scene per frame** (GPU upload happens on first draw), so a burst of finished chunks no longer uploads in one frame.
+- `render/batch.ts` flatten: `placed`/`placedFlat` write world-space positions and normals in one pass (three's own applyMatrix4/applyNormalMatrix math per vertex) instead of clone + applyMatrix4 + toNonIndexed + a colour fill.
+- **Identity:** 80 chunk builds (staged on/off, seg 80/10, colour on/off) plus 24 lake/river water sheets compare bit-identical to the HEAD path (position, normal, colour, aWet, aSnow, aFlow, uv, index, bounding sphere). Batched meshes from 4 chunks × 40 entities × 3 LODs (9.5 M attribute values) are identical too. heightAt/surfaceAt are untouched. Test: tests/terrainCore.test.ts (heights == heightAt in world space; WAIT scheduler).
+- **Bench** (%TEMP%\boreal-gb, worst frame ms / frames >100 ms / long tasks n/max ms; before = 3 runs at 73cb056, after = 3 runs, after2 profiled):
+  - load post-worst: 67 / 50 / 717 → 33 / 33 / 17.
+  - idle: 17 / 50 / 17 → 33 / 50 / 17, 0 frames >100 ms either way.
+  - move: 117 (1) / 767 (9, 22 long, 740) / 400 (3, 402) → 50 (0, 0 long) / 200 (9, 12 long, 192, profiled run) / 133 (1, 0 long).
+  - ultra locked: 67 / 800 (2) / 67 → 33 / 267 (1, profiled) / 34, 0 long tasks.
+  - tier change: 183 / 167 / 800 → 200 / 400 / 250, 4 frames >100 ms, 5-7 long tasks of ~200 ms: unchanged, because these are **shader program links** (25 links in the tier window: USE_CSM / USE_BATCHING / TRANSLUCENCY_MASK / GRASS_SEGMENTS variants).
+- applyMatrix4, columnRaw and heightAt no longer show in the main-thread profile. The top entries now are (program), getParameters, needsUpdate, getProgram (shader variants, not terrain), then surfaceDetail and rockRecipe (entity generation).

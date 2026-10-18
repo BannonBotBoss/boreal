@@ -1,8 +1,11 @@
 import * as THREE from 'three';
-import { column, surfaceColor } from '../core/ground';
+import { CELL, column, surfaceColor, type Column } from '../core/ground';
 import type { SoilKind } from '../core/stages/soils';
-import { finish } from '../core/interest';
-import { CHUNK_SIZE, heightAt, terrainBand } from '../core/world';
+import { WAIT, finish } from '../core/interest';
+import { CHUNK_SIZE, heightAt } from '../core/world';
+import { STAGES } from '../core/stages/elevation';
+import { ABOVE, BANDS, BAND_COLOR, STAGED_TOP, gridRel, groundColor, isStaged, terrainCore, type Sheet, type TerrainData, type TerrainRequest } from './terrainCore';
+import { requestTerrain, terrainWorkers } from './terrainPool';
 import { LEVEL } from '../core/tuning';
 import { RENDER } from '../core/renderSettings';
 
@@ -33,60 +36,46 @@ export function positionCamera(camera: THREE.PerspectiveCamera, x: number, z: nu
     camera.position.y - Math.sin(angle), camera.position.z - Math.cos(yaw + lookYaw) * Math.cos(angle));
   camera.updateMatrixWorld(true);
 }
-/** Staged materials as ALBEDO (sRGB-encoded hex; three decodes to linear). Sentinel-2 L2A (30 Jul 2024, Kenora window) median per
- *  ESA WorldCover 2021 class, converted from TCI to surface reflectance (Sen2Cor TCI is linear and saturates at 25 % reflectance:
- *  refl = TCI / 255 * 0.25; Sen2Cor team, ESA STEP forum) and then sRGB-encoded:
- *  - bedrock = 'bare' 0.136 / 0.125 / 0.110 -> #67635d
- *  - till = 'grassland' (open ground, moss/litter) 0.041 / 0.065 / 0.040 -> #394838
- *  - peat = 'herbaceous wetland' 0.039 / 0.052 / 0.039 -> #384038
- *  - sand / clay: no WorldCover class; the old tints scaled by the bedrock / till ratios [game estimate, verify].
- *  The old values used the TCI byte directly as sRGB colour, about 2.5x too bright in linear terms; that was a large part of the
- *  pale mint ground. The legacy bands (water/shore/upland/forest) are unchanged. */
-const BAND_COLOR = { water: 0x929771, shore: 0x929771, upland: 0x8d9582, forest: 0x788e60, bedrock: 0x67635d, till: 0x394838, sand: 0x746d4e, clay: 0x3c4639, peat: 0x384038 };
-/** Terrain mesh for a chunk, as a sliced job (yields every few rows) so building is spread over frames (core/interest).
- * `segments`/`groundColour` come from the interest tier: mid-tier chunks are coarse and skip the layered-ground colour. */
+/** Chunk terrain as a sliced job (core/interest). With `worker`, heights/normals/positions/water sheet come from a terrain
+ *  worker (render/terrainPool) and the job yields WAIT until they arrive; otherwise the same render/terrainCore generator runs
+ *  here. Near chunks (`groundColour`) then take the layered-ground tint, snow and wetness per 2 m cell (core/ground column,
+ *  main-thread state), one column per cell, time-sliced. Identical output either way. */
+export function* chunkTerrainJob(cx: number, cz: number, segments = RENDER.terrainSegments, groundColour = true, waterSeg = 0,
+  opts: { worker?: boolean; wanted?: () => boolean } = {}): Generator<unknown, { terrain: THREE.BufferGeometry; water: THREE.BufferGeometry | null }> {
+  const req: TerrainRequest = { cx, cz, segments, waterSeg, stagesOn: STAGES.on, stagesSeed: STAGES.seed };
+  let data: TerrainData | undefined;
+  if (opts.worker && terrainWorkers()) { const h = requestTerrain(req, opts.wanted); while (!h.data && !h.failed) yield WAIT; data = h.data; }
+  if (!data) data = yield* terrainCore(req);
+  const n = data.band.length, wet = new Float32Array(n), snow = new Float32Array(n);
+  if (groundColour) yield* groundTint(data, cx, cz, segments, wet, snow);
+  return { terrain: sheetGeometry(data, { color: [data.color, 3], aWet: [wet, 1], aSnow: [snow, 1] }), water: data.water ? sheetGeometry(data.water, { aFlow: [data.water.flow, 3] }) : null };
+}
+/** Terrain mesh geometry only (inspector what-ifs, tests): main thread, synchronous when run with finish(). */
 export function* terrainJob(cx: number, cz: number, segments = RENDER.terrainSegments, groundColour = true) {
-  const geometry = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, segments, segments);
-  geometry.rotateX(-Math.PI / 2);
-  const positions = geometry.attributes.position, colors = new Float32Array(positions.count * 3), wet = new Float32Array(positions.count), snow = new Float32Array(positions.count), color = new THREE.Color(), tmp = new THREE.Color();
-  const row = segments + 1, slice = Math.max(16, row >> 2); // yield every quarter row: one slice stays ~1 ms of heightAt/soil/ground work
-  for (let i = 0; i < positions.count; i++) {
-    const x = positions.getX(i) + (cx + .5) * CHUNK_SIZE;
-    const z = positions.getZ(i) + (cz + .5) * CHUNK_SIZE;
-    const y = heightAt(x, z);
-    positions.setXYZ(i, x, y, z);
-    const band = terrainBand(y, x, z), staged = band === 'bedrock' || band === 'till' || band === 'sand' || band === 'clay' || band === 'peat';
-    if (staged) groundColor(band, color, groundColour && y > LEVEL.waterSurface ? surfaceColor(column(x, z)) : STAGED_TOP); // mid tier: the mean tint, so near and mid chunks match
-    else color.set(BAND_COLOR[band]);
-    if (groundColour && y > LEVEL.waterSurface) { const c = column(x, z); if (!staged) { const s = surfaceColor(c); color.lerp(tmp.setRGB(s[0], s[1], s[2]), .55); } // top-layer composition (layered terrain)
-      const top = c.layers[0]; snow[i] = top?.id === 'snow' ? Math.min(1, top.thickness / .05) : 0; wet[i] = c.layers.find(l => l.moisture !== undefined && l.id !== 'snow')?.moisture ?? 0; }
-    colors.set([color.r, color.g, color.b], i * 3);
-    if (i % slice === slice - 1) yield;
+  return (yield* chunkTerrainJob(cx, cz, segments, groundColour)).terrain;
+}
+function sheetGeometry(s: Sheet, extra: Record<string, [Float32Array, number]>) {
+  const g = new THREE.BufferGeometry(); g.setIndex(new THREE.BufferAttribute(s.index, 1));
+  g.setAttribute('position', new THREE.BufferAttribute(s.position, 3)); g.setAttribute('normal', new THREE.BufferAttribute(s.normal, 3)); g.setAttribute('uv', new THREE.BufferAttribute(s.uv, 2));
+  for (const [k, [a, size]] of Object.entries(extra)) g.setAttribute(k, new THREE.BufferAttribute(a, size));
+  g.boundingSphere = new THREE.Sphere(new THREE.Vector3(s.sphere[0], s.sphere[1], s.sphere[2]), s.sphere[3]); // computed by terrainCore from the same float32 positions
+  return g;
+}
+/** Layered-ground tint per vertex above the water plane: one core/ground column per 2 m cell (column() depends only on the
+ *  cell), surfaceColor tint, snow and moisture. Yields when a slice passes ~2 ms (columnRaw is the expensive part). */
+function* groundTint(data: TerrainData, cx: number, cz: number, segments: number, wet: Float32Array, snow: Float32Array) {
+  const row = segments + 1, ox = (cx + .5) * CHUNK_SIZE, oz = (cz + .5) * CHUNK_SIZE, W = CHUNK_SIZE / CELL + 4, gx0 = Math.floor(cx * CHUNK_SIZE / CELL) - 1, gz0 = Math.floor(cz * CHUNK_SIZE / CELL) - 1;
+  const cells: ({ col: Column; tint: number[] } | undefined)[] = new Array(W * W), color = new THREE.Color(), tmp = new THREE.Color(), col3 = data.color;
+  let t0 = performance.now();
+  for (let i = 0; i < data.band.length; i++) {
+    const code = data.band[i]; if (!(code & ABOVE)) continue;
+    const x = gridRel(i % row, segments) + ox, z = gridRel((i / row) | 0, segments) + oz, k = (Math.floor(x / CELL) - gx0) + (Math.floor(z / CELL) - gz0) * W;
+    let cell = cells[k]; if (!cell) { const c = column(x, z); cell = cells[k] = { col: c, tint: surfaceColor(c) }; if (performance.now() - t0 > 2) { yield; t0 = performance.now(); } }
+    const b = BANDS[code & 0x7f], s = cell.tint;
+    if (isStaged(b)) groundColor(b as SoilKind, color, s); else color.set(BAND_COLOR[b]).lerp(tmp.setRGB(s[0], s[1], s[2]), .55); // top-layer composition (layered terrain)
+    col3[i * 3] = color.r; col3[i * 3 + 1] = color.g; col3[i * 3 + 2] = color.b;
+    const top = cell.col.layers[0]; snow[i] = top?.id === 'snow' ? Math.min(1, top.thickness / .05) : 0; wet[i] = cell.col.layers.find(l => l.moisture !== undefined && l.id !== 'snow')?.moisture ?? 0;
   }
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geometry.setAttribute('aWet', new THREE.BufferAttribute(wet, 1)); geometry.setAttribute('aSnow', new THREE.BufferAttribute(snow, 1));
-  // Normals by central differences on the height grid, sliced per row (computeVertexNormals ran in one go, ~6 ms per near chunk).
-  // Border vertices sample heightAt one step outside the chunk, so neighbouring chunks get identical border normals (no seams).
-  const d = CHUNK_SIZE / segments, nrm = new Float32Array(positions.count * 3), h = (ix: number, iz: number, x: number, z: number) =>
-    ix < 0 || ix > segments || iz < 0 || iz > segments ? heightAt(x, z) : positions.getY(iz * row + ix);
-  for (let iz = 0; iz <= segments; iz++) {
-    for (let ix = 0; ix <= segments; ix++) {
-      const i = iz * row + ix, x = positions.getX(i), z = positions.getZ(i);
-      const gx = (h(ix + 1, iz, x + d, z) - h(ix - 1, iz, x - d, z)) / (2 * d), gz = (h(ix, iz + 1, x, z + d) - h(ix, iz - 1, x, z - d)) / (2 * d), l = Math.hypot(gx, 1, gz);
-      nrm[i * 3] = -gx / l; nrm[i * 3 + 1] = 1 / l; nrm[i * 3 + 2] = -gz / l; }
-    if (iz % 4 === 3) yield; }
-  geometry.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
-  return geometry;
 }
-/** Mean top-layer tint (moss + fresh litter, core/ground SURFACE, sRGB) for chunks that skip the per-vertex ground column. */
-export const STAGED_TOP: readonly number[] = [.39, .41, .22];
-const tintTmp = new THREE.Color();
-/** Ground colour of a staged soil class, exactly as the terrain mesh paints it: the Sentinel-2 albedo (BAND_COLOR, sRGB hex)
- *  lerped 20 % (bedrock 10 %) toward the top-layer tint. `top` is an sRGB [r, g, b] tint: core/ground surfaceColor(column(x, z))
- *  for the per-point colour, or the default STAGED_TOP (the mean tint the mid-tier chunks use). Returns linear RGB in three's
- *  working colour space, written into `target` (no allocation when one is passed). 'water' returns the shore/water band colour.
- *  For grass and flora: read soil with soilAt(STAGES.seed, x, z).kind and call this instead of copying constants. */
-export function groundColor(soil: SoilKind, target = new THREE.Color(), top: readonly number[] = STAGED_TOP): THREE.Color {
-  target.set(BAND_COLOR[soil]); if (soil === 'water') return target;
-  return target.lerp(tintTmp.setRGB(top[0], top[1], top[2], THREE.SRGBColorSpace), soil === 'bedrock' ? .1 : .2);
-}
+export { BAND_COLOR, STAGED_TOP, groundColor };
 export const terrainGeometry = (cx: number, cz: number) => finish(terrainJob(cx, cz));

@@ -23,6 +23,33 @@ ROCK_MATERIAL.onBeforeCompile = shader => {
 };
 type Item = { key: string; pos: THREE.Vector3; levels: Map<THREE.Material, THREE.BufferGeometry>[]; ranges: number[]; shadowFar: number };
 
+const pv = new THREE.Vector3(), nmat = new THREE.Matrix3();
+/** World-placed copy of a part, written in one pass into fresh arrays (no copy() + applyMatrix4 over the copy). The per-vertex
+ *  maths is three's own (Vector3.applyMatrix4 / applyNormalMatrix / transformDirection), so the result is identical. */
+function placed(src: THREE.BufferGeometry, mw: THREE.Matrix4) {
+  const g = new THREE.BufferGeometry(); nmat.getNormalMatrix(mw);
+  if (src.index) g.setIndex(src.index.clone());
+  for (const [k, a] of Object.entries(src.attributes) as [string, THREE.BufferAttribute][]) {
+    if (k !== 'position' && k !== 'normal' && k !== 'tangent') { g.setAttribute(k, a.clone()); continue; }
+    const out = new Float32Array(a.count * a.itemSize), b = new THREE.BufferAttribute(out, a.itemSize, a.normalized);
+    for (let i = 0; i < a.count; i++) { pv.fromBufferAttribute(a, i); if (k === 'position') pv.applyMatrix4(mw); else if (k === 'normal') pv.applyNormalMatrix(nmat); else pv.transformDirection(mw);
+      out[i * a.itemSize] = pv.x; out[i * a.itemSize + 1] = pv.y; out[i * a.itemSize + 2] = pv.z; if (a.itemSize === 4) out[i * 4 + 3] = a.getW(i); }
+    g.setAttribute(k, b);
+  }
+  for (const gr of src.groups) g.addGroup(gr.start, gr.count, gr.materialIndex);
+  return g;
+}
+/** Prop part: non-indexed world-placed position + normal and the material colour per vertex, in one pass. */
+function placedFlat(src: THREE.BufferGeometry, mw: THREE.Matrix4, c: THREE.Color) {
+  const pos = src.getAttribute('position') as THREE.BufferAttribute, nrm = src.getAttribute('normal') as THREE.BufferAttribute | undefined, idx = src.index, n = idx ? idx.count : pos.count;
+  const P = new Float32Array(n * 3), N = nrm ? new Float32Array(n * 3) : null, C = new Float32Array(n * 3); nmat.getNormalMatrix(mw);
+  for (let i = 0; i < n; i++) { const v = idx ? idx.getX(i) : i;
+    pv.fromBufferAttribute(pos, v).applyMatrix4(mw); P[i * 3] = pv.x; P[i * 3 + 1] = pv.y; P[i * 3 + 2] = pv.z;
+    if (N) { pv.fromBufferAttribute(nrm!, v).applyNormalMatrix(nmat); N[i * 3] = pv.x; N[i * 3 + 1] = pv.y; N[i * 3 + 2] = pv.z; }
+    C[i * 3] = c.r; C[i * 3 + 1] = c.g; C[i * 3 + 2] = c.b; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); if (N) g.setAttribute('normal', new THREE.BufferAttribute(N, 3)); g.setAttribute('color', new THREE.BufferAttribute(C, 3));
+  return g;
+}
 /** Flatten one LOD level (a Group of meshes) into one geometry per material (props → PROP_MATERIAL with baked colour). */
 function flatten(root: THREE.Object3D) {
   // The root's own rotation/scale (per-entity yaw, size jitter, rock seating) are baked in; its position is the instance's.
@@ -30,12 +57,7 @@ function flatten(root: THREE.Object3D) {
   root.traverse(o => {
     const m = o as THREE.Mesh; if (!m.isMesh || Array.isArray(m.material)) return;
     const shared = !!m.userData.shared || m.material === PROP_MATERIAL, mat = shared ? m.material as THREE.Material : m.userData.rock ? ROCK_MATERIAL : PROP_MATERIAL;
-    let g = new THREE.BufferGeometry().copy(m.geometry).applyMatrix4(m.matrixWorld); // (clone() of a Cylinder/Cone/Polyhedron geometry first rebuilds a default one)
-    if (!shared) { // keep position/normal + colour from the part's material, so every prop part merges into one buffer
-      g = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k);
-      const c = (m.material as THREE.MeshStandardMaterial).color ?? new THREE.Color(1, 1, 1), n = g.getAttribute('position').count, a = new Float32Array(n * 3);
-      for (let i = 0; i < n; i++) a.set([c.r, c.g, c.b], i * 3); g.setAttribute('color', new THREE.BufferAttribute(a, 3));
-    }
+    const g = shared ? placed(m.geometry, m.matrixWorld) : placedFlat(m.geometry, m.matrixWorld, (m.material as THREE.MeshStandardMaterial).color ?? new THREE.Color(1, 1, 1));
     if (!m.userData.shared) { m.geometry.dispose(); if (!shared) (m.material as THREE.Material).dispose(); } // source parts are throwaway
     if (!g.index) g.setIndex([...Array(g.getAttribute('position').count).keys()]);
     (parts.get(mat) ?? parts.set(mat, []).get(mat)!).push(g);

@@ -40,7 +40,7 @@ test('fur cards and world chunks are byte-identical to the pre-refactor baseline
   const body = buildBody(wolfTubes(wolfCoat(1400))), clear = sculptWolf(body);
   const g = buildFurCards(body, { count: 3000, length: .03, width: .0065, seed: 9, clear });
   const fur = Object.entries(g.attributes).map(([k, a]) => k + digest(new Uint8Array((a.array as Float32Array).buffer))).join(',');
-  assert.equal(digest(fur), '181874e9c7eb7b23');
+  assert.equal(digest(fur), '6636251571cb657d'); // re-recorded 2026-10-18 after folding Grok Bot's wolf shape (locomotion fork); chunks unchanged
   assert.equal(digest(new Uint8Array((strandAlpha().image.data as Uint8Array).buffer)), '8b54d4c67942e685');
   const chunks = []; for (let x = -3; x < 3; x++) for (let z = -3; z < 3; z++) chunks.push(generateChunk(x, z));
   assert.equal(digest(JSON.stringify(chunks)), 'ffe391673e1a808a');

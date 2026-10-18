@@ -1,14 +1,14 @@
 /**
  * Game wiring behind ?loco=1 (Grok Bot / Gait Builder). render/playables.ts asks `createLocoPlayer()` for the player
  * body only when the flag is in the URL; without it this module is imported but never called, so the game is unchanged.
- * The player body is the forked rig (fork/playerRig.ts, hooks 1+2). buildScene still places root at the player's
+ * The player body is the player wolf rig (render/playerWolf.ts, hooks 1+2). buildScene still places root at the player's
  * ground point and heading before animate(); we read them back, run the locomotion layer on the same terrain function
  * (core/world heightAt, clamped like buildScene) and hand the pose to the rig through hook 2.
  */
 import { heightAt } from '../../core/world';
 import type { AnimateFrame, PlayerRig } from '../../render/playables';
 import { createLocomotion, type Locomotion } from './controller';
-import { createPlayerWolf } from './fork/playerRig';
+import { createPlayerWolf } from '../../render/playerWolf';
 import type { LegLayout, TerrainFn, Touchdown } from './signals';
 
 export const LOCO_FLAG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('loco');
@@ -31,8 +31,8 @@ export function createLocoPlayer(): PlayerRig {
       if (!loco || !(Math.hypot(x - last.x, z - last.z) < TELEPORT)) loco = createLocomotion(layout, gameGround, { x, z, heading });
       last = { x, z };
       const speed = b.motion === 'idle' ? 0 : (b.motion === 'back' ? -1 : 1) * b.gaitSpeed;
-      // the brain's jump (main.ts: Space / X, launched at pounceSpeed) becomes a pounce intent on its first frame
-      const jumping = b.motion === 'jump', intent = jumping && !wasJumping ? { kind: 'pounce' as const } : undefined; wasJumping = jumping;
+      // the brain's jump (main.ts: Space / X, launched at pounceSpeed) hands its intent (hook 3) to the layer on its first frame
+      const jumping = b.motion === 'jump', intent = jumping && !wasJumping ? (b.intent ?? { kind: 'pounce' as const }) : undefined; wasJumping = jumping;
       const pose = loco.update({ x, z, heading, speed, intent }, f.dt, 'near');
       for (const t of pose.touchdowns) touchListeners.forEach(fn => fn(t));
       w.animate(f.time, f.moving, f.action, f.elapsed, f.mode, f.push, pose);

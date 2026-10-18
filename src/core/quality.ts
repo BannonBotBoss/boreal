@@ -21,16 +21,17 @@ export interface Tier {
   near: number; mid: number; // interest radii (m)
   trees: number;        // tree density multiplier (≤ 1, scales the player's choice)
   foliage: number;      // grass/plant density multiplier
+  loco: number;         // full-detail locomotion radius (m): nearer animals plant feet on the terrain, farther ones run the cheap 'mid' gait
   weather: number;      // weather grid cells per side (6/8/12)
 }
 /** Ordered best → cheapest. Every knob is non-increasing down the ladder (tested). */
 export const LADDER: Tier[] = [
-  { name: 'Ultra',   resScale: 1,    shadows: 2, ssao: 1, ibl: 1, gi: 2, pcss: 1, contact: 1, rays: 48, clouds: 1, lod: 1,   near: 100, mid: 180, trees: 1, foliage: 1, weather: 12 },
-  { name: 'High',    resScale: 1,    shadows: 2, ssao: 1, ibl: 1, gi: 1, pcss: 1, contact: 1, rays: 32, clouds: 1, lod: 1,   near: 70, mid: 120, trees: 1, foliage: 1, weather: 8 },
-  { name: 'Medium',  resScale: .9,   shadows: 2, ssao: 1, ibl: 1, gi: 1, pcss: 0, contact: 1, rays: 24, clouds: 1, lod: .85, near: 60, mid: 100, trees: 1, foliage: .8, weather: 8 },
-  { name: 'Low',     resScale: .8,   shadows: 1, ssao: 0, ibl: 1, gi: 1, pcss: 0, contact: 0, rays: 0, clouds: 1, lod: .7,  near: 50, mid: 80, trees: .8, foliage: .6, weather: 8 },
-  { name: 'Very low', resScale: .7,   shadows: 1, ssao: 0, ibl: 0, gi: 0, pcss: 0, contact: 0, rays: 0, clouds: 0, lod: .6,  near: 40, mid: 70, trees: .6, foliage: .4, weather: 6 },
-  { name: 'Minimum', resScale: .5,   shadows: 0, ssao: 0, ibl: 0, gi: 0, pcss: 0, contact: 0, rays: 0, clouds: 0, lod: .5,  near: 40, mid: 60, trees: .5, foliage: .25, weather: 6 },
+  { name: 'Ultra',   resScale: 1,    shadows: 2, ssao: 1, ibl: 1, gi: 2, pcss: 1, contact: 1, rays: 48, clouds: 1, lod: 1,   near: 100, mid: 180, trees: 1, foliage: 1, loco: 40, weather: 12 },
+  { name: 'High',    resScale: 1,    shadows: 2, ssao: 1, ibl: 1, gi: 1, pcss: 1, contact: 1, rays: 32, clouds: 1, lod: 1,   near: 70, mid: 120, trees: 1, foliage: 1, loco: 30, weather: 8 },
+  { name: 'Medium',  resScale: .9,   shadows: 2, ssao: 1, ibl: 1, gi: 1, pcss: 0, contact: 1, rays: 24, clouds: 1, lod: .85, near: 60, mid: 100, trees: 1, foliage: .8, loco: 24, weather: 8 },
+  { name: 'Low',     resScale: .8,   shadows: 1, ssao: 0, ibl: 1, gi: 1, pcss: 0, contact: 0, rays: 0, clouds: 1, lod: .7,  near: 50, mid: 80, trees: .8, foliage: .6, loco: 16, weather: 8 },
+  { name: 'Very low', resScale: .7,   shadows: 1, ssao: 0, ibl: 0, gi: 0, pcss: 0, contact: 0, rays: 0, clouds: 0, lod: .6,  near: 40, mid: 70, trees: .6, foliage: .4, loco: 10, weather: 6 },
+  { name: 'Minimum', resScale: .5,   shadows: 0, ssao: 0, ibl: 0, gi: 0, pcss: 0, contact: 0, rays: 0, clouds: 0, lod: .5,  near: 40, mid: 60, trees: .5, foliage: .25, loco: 6, weather: 6 },
 ];
 export const KNOBS = Object.keys(LADDER[0]).filter(k => k !== 'name') as (keyof Omit<Tier, 'name'>)[];
 
@@ -111,4 +112,4 @@ export function tierForGpu(renderer: string) {
   return 2;
 }
 /** WebXR on Quest 3 keeps its own budget (≈100 draw calls, 750K tris/eye, 72/90 Hz): these caps apply on top of any tier. */
-export const XR_CAPS: Partial<Omit<Tier, 'name'>> = { gi: 0, pcss: 0, contact: 0, rays: 0, resScale: 1, shadows: 1, ssao: 0, near: 50, mid: 80, trees: .6, foliage: .4, weather: 6 };
+export const XR_CAPS: Partial<Omit<Tier, 'name'>> = { gi: 0, pcss: 0, contact: 0, rays: 0, resScale: 1, shadows: 1, ssao: 0, near: 50, mid: 80, trees: .6, foliage: .4, loco: 16, weather: 6 };

@@ -97,20 +97,20 @@ test('sled rider camera is three metres behind at human eye height', async () =>
   const bounds = new THREE.Box3().setFromObject(wolf.root);
   const { WOLF_SCALE } = await import('../src/core/wolfModes');
   assert.ok(Math.abs(bounds.min.y) < .02, `sole at ${bounds.min.y}`); // paws on the ground (fur adds a few mm)
-  assert.ok(bounds.max.y >= .5 * WOLF_SCALE - .001 && bounds.max.y < .5 * WOLF_SCALE + .06, `ear tips at ${bounds.max.y}`); // real wolf: ears ~1 m, plus ear fur
+  assert.ok(bounds.max.y >= .5 * WOLF_SCALE - .02 && bounds.max.y < .5 * WOLF_SCALE + .06, `ear tips at ${bounds.max.y}`); // real wolf: ears ~1 m, plus ear fur (the shorter, rounder ears from Matthew's photo, 2026-10-18, top out about 1 cm under 1 m)
   const camera = new THREE.PerspectiveCamera();
   for (const yaw of [0, Math.PI / 2, Math.PI]) {
     positionCamera(camera, 0, 0, 1.6, yaw);
     close(Math.hypot(camera.position.x, camera.position.z), 3);
     close(camera.position.y - Math.max(heightAt(0, 0), -.2), 1.6); // human eye height above ground
   }
-  const base = wolf.root.children[0].rotation.clone();
+  const base = wolf.loco.torso.rotation.clone(); // legs and torso hang from the locomotion tilt group (hook 2)
   wolf.brain.motion = 'walk'; wolf.brain.phase = .17;
   wolf.animate(1, true, undefined, 0);
-  assert.ok(wolf.root.children.slice(1).some(part => Math.abs(part.rotation.x) > .01));
+  assert.ok(wolf.loco.chains.some(c => Math.abs(c.girdle.rotation.x) > .01));
   for (const action of ['speak', 'gather'] as const) {
     wolf.animate(1, false, action, .4);
-    assert.ok(wolf.root.children[0].children.some(part => part instanceof THREE.Bone && Math.abs(part.rotation.x) > .1));
+    assert.ok(wolf.loco.torso.children.some(part => part instanceof THREE.Bone && Math.abs(part.rotation.x) > .1));
   }
   disposeObject(wolf.root);
 });

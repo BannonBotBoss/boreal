@@ -19,6 +19,7 @@ import { LEG_NAMES, type LegLayout, type LegPose, type LocoSignals, type Lod, ty
 import { smooth01 } from '../../proc/math';
 import { flightFoot, jumpFrame, type Jump, type JumpFrame } from './jump';
 import { POSTURE, carryWeight } from './posture';
+import { applied } from '../../core/quality';
 
 /** The reference test body: Claude's real-size gray-wolf legs (WOLF_LEGS) and limb positions (LEG_XZ × WOLF_SCALE). Read only. */
 export const referenceLayout = (): LegLayout => ({ legs: WOLF_LEGS, hips: LEG_XZ.map(([x, z]) => [x * WOLF_SCALE, z * WOLF_SCALE] as const) });
@@ -27,12 +28,12 @@ export const referenceLayout = (): LegLayout => ({ legs: WOLF_LEGS, hips: LEG_XZ
 export const SPRINGS = { joint: .025, body: .08, refHip: .55 };
 const KEYS = ['girdle', 'leg', 'knee', 'wrist', 'paw', 'abduct'] as const;
 /**
- * Full-detail radius (m): within it an animal runs the 'near' path, beyond it 'mid' (game calibration). PROJECT-RULES
- * rule 10 wants every cost knob in core/quality.ts LADDER; quality.ts is Claude's file, so this should become a LADDER
- * column `loco` (proposed Ultra 40 … Minimum 6) when Claude folds it in (AGENT-NOTES.md).
+ * Full-detail radius (m): within it an animal runs the 'near' path, beyond it 'mid'. It is the `loco` column of the
+ * core/quality.ts LADDER (PROJECT-RULES rule 10: Ultra 40 … Minimum 6 m), so it follows the governor's tier and the
+ * manual caps. Beyond INTEREST.mid (core/interest.ts) an animal is not instantiated, so it needs no locomotion at all.
  */
-export const LOCO_LOD = { nearRadius: 30 };
-export const lodAt = (distance: number): Lod => distance <= LOCO_LOD.nearRadius ? 'near' : 'mid';
+export const LOCO_LOD = { get nearRadius() { return applied().loco; } };
+export const lodAt = (distance: number, nearRadius = LOCO_LOD.nearRadius): Lod => distance <= nearRadius ? 'near' : 'mid';
 
 export interface Locomotion {
   update(s: LocoSignals, dt: number, lod?: Lod): LegPose;

@@ -35,6 +35,6 @@ guard('no new species-specific source files', (_t, p) => /wolf|bear|deer|hare|el
 guard('no new hand-built LOD or blob-geometry sites', t => /addLevel\(|IcosahedronGeometry/.test(t),
   ['animals/hare.ts', 'render/animalRig.ts', 'render/buildScene.ts', 'render/geometry.ts', 'render/rocks.ts', 'render/trees.ts']);
 // Rule 4: gravity is derived from G, Earth mass and radius (proc/physics.ts). No literal g anywhere else.
-guard('no literal gravity outside proc/physics.ts', t => /(^|[^\d.])9\.8\d*(?!\d)/m.test(t), ['core/animalBehavior.ts'], ['proc/physics.ts']); // Claude's Froude G = 9.81 (AGENT-NOTES)
+guard('no literal gravity outside proc/physics.ts', t => /(^|[^\d.])9\.8\d*(?!\d)/m.test(t), [], ['proc/physics.ts']);
 // Rule 4b: masses are derived from composition x generated volume; no typed mass values in source.
 guard('no literal mass values', t => /\bmass\w*\s*[:=]\s*[\d.]+\s*[,;}\n]/i.test(t) || /\bmass\(\s*[\d.]+\s*\)/.test(t), ['core/species.ts']); // Claude: massKg per archetype -> derive (AGENT-NOTES)

@@ -1,3 +1,4 @@
+import { gravity } from '../proc/physics';
 export const ANIMAL_DEFAULT_ENERGY = 75;
 export const FORAGE_ENERGY = 18;
 export const PLAYER_HEARING_RADIUS = 40;
@@ -9,6 +10,8 @@ export const FEED_REACH = 1;
 export const THREAT_MEMORY = 3;
 export function withinEarshot(player: Point, animal: Point) { return Math.hypot(player.x-animal.x,player.y-animal.y,player.z-animal.z) <= PLAYER_HEARING_RADIUS; }
 export type Motion = 'idle' | 'walk' | 'run' | 'back' | 'jump';
+/** Why the body is about to move unusually (locomotion hook 3): set when a jump starts, cleared when it ends. */
+export interface BrainIntent { kind: 'jump' | 'pounce' | 'stop'; target?: { x: number; z: number } }
 export type Problem = 'explore' | 'escape' | 'avoid' | 'feed' | 'recover' | 'player';
 export interface SenseItem { key: string; x: number; y: number; z: number; kind: 'threat' | 'food' | 'obstacle' | 'animal'; low?: boolean }
 export interface Point { x: number; y: number; z: number }
@@ -17,7 +20,7 @@ export class AnimalBrain {
   energy = ANIMAL_DEFAULT_ENERGY; motion: Motion = 'idle'; problem: Problem = 'explore';
   phase = 0; jumpTime = 0; jumpCooldown = 0; heading = 0; speed = 0;
   near: SenseItem[] = []; middle: SenseItem[] = []; far: SenseItem[] = [];
-  target?: SenseItem; time = 0; avoidTime = 0;
+  target?: SenseItem; time = 0; avoidTime = 0; intent?: BrainIntent;
   feedTime = 0; meal?: SenseItem; alarm = 0; lastThreat?: SenseItem;
   /** Leg proportions used for gait timing; set per species. */
   legs: LegDims = DEER_LEGS; gaitSpeed = 0;
@@ -31,11 +34,11 @@ export class AnimalBrain {
   decide(origin: Point, dt: number, command?: {motion:Motion; heading:number; speed:number}) {
     this.time+=dt; this.jumpCooldown=Math.max(0,this.jumpCooldown-dt);
     if(this.motion==='jump'&&this.jumpTime<.85) {this.jumpTime+=dt;return;}
-    if(this.motion==='jump') {this.jumpTime=0;this.jumpCooldown=1.5;}
+    if(this.motion==='jump') {this.jumpTime=0;this.jumpCooldown=1.5;this.intent=undefined;}
     if(command) {
       this.problem='player';this.motion=this.energy<=0?'idle':command.motion;
       this.heading=command.heading;this.speed=this.energy<=0?0:command.speed;
-      if(this.motion==='jump') {this.jumpTime=dt;this.energy=Math.max(0,this.energy-1.5);}
+      if(this.motion==='jump') {this.jumpTime=dt;this.energy=Math.max(0,this.energy-1.5);this.intent={kind:'pounce'};}
       return;
     }
     const threats=[...this.near,...this.middle,...this.far].filter(i=>i.kind==='threat');
@@ -51,7 +54,7 @@ export class AnimalBrain {
     const feeding=this.feedTime; this.feedTime=0;
     if(this.energy<=0) {this.motion='idle';this.problem='recover';this.speed=0;return;}
     if(obstacle && this.jumpCooldown===0 && obstacle.low && this.energy>10) {
-      this.motion='jump';this.problem='avoid';this.speed=2;this.jumpTime=dt;this.energy-=1.5;return;
+      this.motion='jump';this.problem='avoid';this.speed=2;this.jumpTime=dt;this.energy-=1.5;this.intent={kind:'jump',target:{x:obstacle.x,z:obstacle.z}};return;
     }
     if(obstacle || this.avoidTime>0) {
       if(this.avoidTime<=0) this.avoidTime=.7;
@@ -135,7 +138,6 @@ export const WOLF_LEGS: LegDims = {
 };
 export type GaitName = 'walk' | 'trot' | 'gallop';
 export interface Gait { name: GaitName; duty: number; cycle: number; lift: number; offsets: readonly number[]; reverse: boolean }
-const G = 9.81;
 /**
  * Research-based gait selection and stride length (dynamic similarity; Alexander 1976, Alexander & Jayes 1983):
  * Froude number Fr = v²/(g·h); relative stride λ/h ≈ 2.3·Fr^0.3; walk below Fr 0.5, trot to ~2.5, gallop above.
@@ -146,7 +148,7 @@ const G = 9.81;
  */
 export function gaitFor(motion: Motion, speed: number, legs: LegDims): Gait | null {
   if (motion === 'idle' || motion === 'jump') return null;
-  const h = legs.hip, v = Math.max(.15, Math.abs(speed)), fr = v * v / (G * h);
+  const h = legs.hip, v = Math.max(.15, Math.abs(speed)), fr = v * v / (gravity() * h);
   const name: GaitName = motion === 'back' || fr < .5 ? 'walk' : fr < 2.5 ? 'trot' : 'gallop';
   const duty = name === 'walk' ? .65 : name === 'trot' ? .45 : Math.max(.2, .3 - .02 * (fr - 2.5));
   // Reach limit, allowing for the gallop's body lift so stance feet stay reachable.

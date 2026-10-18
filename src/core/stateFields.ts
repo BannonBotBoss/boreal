@@ -17,7 +17,7 @@ export const STATE_FIELDS = {
   /** core/animalBehavior AnimalBrain (Claude's file: read-only here) */
   brain: { energy: 'snapshot', motion: 'snapshot', problem: 'snapshot', phase: 'snapshot', jumpTime: 'snapshot', jumpCooldown: 'snapshot',
     heading: 'snapshot', speed: 'snapshot', near: 'snapshot', middle: 'snapshot', far: 'snapshot', target: 'snapshot', time: 'snapshot',
-    avoidTime: 'snapshot', feedTime: 'snapshot', meal: 'snapshot', alarm: 'snapshot', lastThreat: 'snapshot',
+    avoidTime: 'snapshot', feedTime: 'snapshot', meal: 'snapshot', alarm: 'snapshot', lastThreat: 'snapshot', intent: 'snapshot',
     legs: 'clock', gaitSpeed: 'clock', seed: 'clock' }, // body build: from seed (+ age)
   /** core/wolfModes state (the player's animal) */
   modes: { stamina: 'snapshot', maxStamina: 'clock', mode: 'snapshot', first: 'snapshot', left: 'snapshot', right: 'snapshot',

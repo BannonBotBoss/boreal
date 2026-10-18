@@ -127,11 +127,11 @@ test('no foot sliding: a stance foot moves back exactly as far as the body moves
  }
 });
 test('gait follows dynamic similarity: walk, trot, gallop by Froude number; stride grows with speed and leg length',async()=>{
- const {gaitFor,DEER_LEGS,WOLF_LEGS}=await import('../src/core/animalBehavior');
+ const {gaitFor,DEER_LEGS,WOLF_LEGS}=await import('../src/core/animalBehavior'); const {gravity}=await import('../src/proc/physics');
  assert.equal(gaitFor('walk',.8,DEER_LEGS)!.name,'walk');assert.equal(gaitFor('run',3,DEER_LEGS)!.name,'trot');
  assert.equal(gaitFor('walk',2,WOLF_LEGS)!.name,'trot');assert.equal(gaitFor('run',7,WOLF_LEGS)!.name,'gallop');
  assert.equal(gaitFor('back',4,WOLF_LEGS)!.name,'walk');
- const fr=(v:number,h:number)=>v*v/(9.81*h);
+ const fr=(v:number,h:number)=>v*v/(gravity()*h);
  assert.ok(Math.abs(gaitFor('walk',.8,DEER_LEGS)!.cycle-2.3*1.1*fr(.8,1.1)**.3)<1e-9,'unclamped stride matches 2.3·h·Fr^0.3');
  assert.ok(gaitFor('walk',1,DEER_LEGS)!.cycle>gaitFor('walk',.65,DEER_LEGS)!.cycle);
  assert.equal(gaitFor('idle',0,DEER_LEGS),null);

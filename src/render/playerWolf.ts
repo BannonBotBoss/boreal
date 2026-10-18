@@ -3,8 +3,10 @@ import { WOLF_SCALE, type WolfMode } from '../core/wolfModes';
 import { AnimalBrain, quadrupedPose, WOLF_LEGS } from '../core/animalBehavior';
 import { pushProgress } from '../core/rocks';
 import { buildBody, wolfCoat } from '../core/body';
-import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
+import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, photoVariant, furStyle, shapeBody, wolfTeeth, wolfTubes } from '../core/wolfBody';
 import { buildFurCards, furCardMaterial } from './furCards';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import type { LegPose } from '../animals/locomotion/signals';
 
 /**
  * Procedural wolf: a low-poly base skin (tubes swept around an invisible skeleton, see core/body.ts and core/wolfBody.ts)
@@ -12,6 +14,8 @@ import { buildFurCards, furCardMaterial } from './furCards';
  * real size. The IK gait (core/animalBehavior.ts) drives the leg chains; the cranium carries the jaw, hinged at the rear
  * skull base; the tail is a four-bone chain that follows the body with a lag.
  */
+/** Meshes with a world bounding radius below this (m) skip the shadow passes: smaller than a cascade texel. */
+export const SHADOW_MIN_RADIUS = .03;
 /** Fur cards over the whole coat (about 3 triangles each). */
 /** Skin under fur matches the cards' root shade (see furCards: root vertices are 0.55 × coat colour); bare skin keeps the earlier 0.72. */
 const FUR_ROOT_SHADE = .55, BARE_SHADE = .72;
@@ -28,7 +32,8 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
   const torso = bones[BONE.torso], head = bones[BONE.head], jaw = bones[BONE.jaw];
   head.name = 'cranium'; jaw.name = 'jaw';
-  root.add(torso);
+  const tilt = new THREE.Group(); tilt.name = 'tilt'; root.add(tilt); // body tilt for the locomotion layer (hook 2)
+  tilt.add(torso);
   head.position.set(...HEAD_AT); torso.add(head);
   jaw.position.set(...JAW_AT); head.add(jaw); // hinge at the rear skull base, below the ears
   const tail = TAIL_BONES.map(i => bones[i]);
@@ -37,7 +42,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const chains = LEG_XZ.map(([x, z], i) => {
     const ids = legBone(i), m = limbModel(i);
     const [girdle, upper, lower, foot, paw] = [bones[ids.girdle], bones[ids.leg], bones[ids.knee], bones[ids.wrist], bones[ids.paw]];
-    girdle.position.set(x, m.hip + m.girdle, z); root.add(girdle);
+    girdle.position.set(x, m.hip + m.girdle, z); girdle.rotation.order = 'ZXY'; tilt.add(girdle); // under tilt; sideways swing (z) outside the pitch (x)
     upper.position.y = -m.girdle; girdle.add(upper);
     lower.position.y = -m.upper; upper.add(lower);
     foot.position.y = -m.lower; lower.add(foot);
@@ -46,9 +51,10 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   });
 
   // Skin: built once at the straight bind pose, then bound to the skeleton. Fur cards grow from it.
-  const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : wolfCoat(seed)));
-  const coat = portrait ? PORTRAIT_COAT : wolfCoat(seed);
+  const coat = portrait ? PORTRAIT_COAT : photoVariant(wolfCoat(seed)); // photo coat zoning, varied by the seeded wolfCoat
+  const body = buildBody(wolfTubes(coat));
   const clear = sculptWolf(body, portrait ? { ...coat, belly: [.7, .66, .58] } : coat); // portrait: cream cheeks in the muzzle gradient
+  shapeBody(body, coat); // flat soles with toe grooves; fur off the legs and belly, onto the neck and back
   // Brow shelf fur: short, swept back and outward over the ridge.
   const browAt = (p: [number, number, number]) => {
     for (const side of [-1, 1]) {
@@ -74,13 +80,13 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
-      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear }), furCardMaterial()),
+      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear, ...furStyle() }), furCardMaterial()),
   ];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.
-  const amber = new THREE.MeshStandardMaterial({ color: 0xc9830f, emissive: 0xe07800, emissiveIntensity: 1.0, roughness: .25 }), pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });
+  const amber = new THREE.MeshStandardMaterial({ color: 0x7a4a10, roughness: .25 }) /* dark amber, no glow */, pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });
   const lidMaterial = new THREE.MeshStandardMaterial({ color: 0x0b0b0d, roughness: .6, side: THREE.DoubleSide });
-  const irisEdge = new THREE.MeshStandardMaterial({ color: 0x6a3806, emissive: 0x4a2404, emissiveIntensity: .8, roughness: .3, side: THREE.DoubleSide });
+  const irisEdge = new THREE.MeshStandardMaterial({ color: 0x3a2206, roughness: .3, side: THREE.DoubleSide }); // no emissive
   // Flat almond eyelid cut: a dark flat shape with an almond hole, lying in the facial plane. Pointed corners, upper lid fuller than the lower.
   const almond = (a: number, up: number, down: number) => { const sh = new THREE.Shape(); sh.moveTo(-a, 0); sh.quadraticCurveTo(-a * .1, up * 1.9, a, 0); sh.quadraticCurveTo(-a * .1, -down * 1.9, -a, 0); return sh; };
   // Upper lid droops: the opening's top edge sits low, so the lid covers roughly the top quarter of the iris.
@@ -123,14 +129,24 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const philtrum = new THREE.Mesh(new THREE.BoxGeometry(.0008, .0052, .0008), nostrilMaterial); philtrum.rotation.x = .35; philtrum.position.set(0, -.0188, -.1083); head.add(philtrum); // groove down the middle of the pad
   // Dental arch (core/wolfBody.wolfTeeth): canines, incisors, premolars and molars along the jaw edges.
   const ivory = new THREE.MeshStandardMaterial({ color: 0xe8e0c8, roughness: .35 });
+  // The teeth are baked into one mesh per bone (upper arch on the cranium, lower on the jaw), same cones and
+  // placements as before, so the dentition costs 2 draw calls instead of one per tooth.
+  const arches = { upper: [] as THREE.BufferGeometry[], lower: [] as THREE.BufferGeometry[] }, place = new THREE.Object3D();
   for (const t of wolfTeeth()) {
-    const mesh = new THREE.Mesh(new THREE.ConeGeometry(t.r, t.h, 7), ivory);
-    mesh.position.set(t.at[0], t.at[1] + (t.jaw ? t.h / 2 : -t.h / 2), t.at[2]);
-    mesh.rotation.x = t.jaw ? t.tilt : Math.PI - t.tilt;
-    (t.jaw ? jaw : head).add(mesh);
+    place.position.set(t.at[0], t.at[1] + (t.jaw ? t.h / 2 : -t.h / 2), t.at[2]);
+    place.rotation.set(t.jaw ? t.tilt : Math.PI - t.tilt, 0, 0); place.updateMatrix();
+    (t.jaw ? arches.lower : arches.upper).push(new THREE.ConeGeometry(t.r, t.h, 7).applyMatrix4(place.matrix));
   }
+  const arch = (g: THREE.BufferGeometry[], bone: THREE.Bone) => { if (!g.length) return; const m = new THREE.Mesh(mergeGeometries(g), ivory); m.userData.tiny = true; bone.add(m); };
+  arch(arches.upper, head); arch(arches.lower, jaw); // tiny: each tooth is far below a shadow texel, though the merged arch is not
   const brain = new AnimalBrain(1400); brain.legs = WOLF_LEGS; const sensor = new THREE.Object3D(); sensor.name = 'head-sensor'; sensor.userData.brain = brain; head.add(sensor);
   root.add(...skins); root.updateMatrixWorld(true);
+  // Details smaller than a shadow-map texel (eyes, nose pad, nostrils, teeth) cast no shadow. shadowSet tells
+  // render/photoreal.ts to keep that choice instead of turning castShadow on for every mesh. Skin and fur still cast.
+  root.traverse(o => { const m = o as THREE.Mesh; if (!m.isMesh || m === skins[0] || m === skins[1]) return;
+    if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
+    const s = new THREE.Vector3(); m.getWorldScale(s);
+    if (m.userData.tiny || m.geometry.boundingSphere!.radius * Math.max(s.x, s.y, s.z) < SHADOW_MIN_RADIUS) { m.castShadow = false; m.receiveShadow = true; m.userData.shadowSet = true; } });
   const skeleton = new THREE.Skeleton(bones); // inverses captured now, at the bind pose
   skins.forEach(skin => skin.bind(skeleton));
 
@@ -142,21 +158,34 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const tailPitch = { value: TAIL_HANG }, tailYaw = tail.map(() => 0);
   const setTail = () => tail.forEach((bone, k) => { bone.rotation.x = k === 0 ? tailPitch.value : TAIL_CURVE[k] * (1 - .6 * (TAIL_HANG - tailPitch.value) / (TAIL_HANG - TAIL_LEVEL)); bone.rotation.y = tailYaw[k]; });
   poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), 0); setTail(); // stand on the ground before the first frame
+  // locomotion hook 2: angles are scale-free; heights are world metres, so the tilt offset is divided by the root scale.
+  const applyLegPose = (p: LegPose) => {
+    chains.forEach((c, i) => {
+      c.girdle.position.y = c.m.hip + c.m.girdle; c.girdle.rotation.set(p.girdles[i], 0, p.abduct[i]);
+      c.upper.rotation.x = p.legs[i]; c.lower.rotation.x = p.knees[i]; c.foot.rotation.x = p.wrists[i]; c.paw.rotation.x = p.paws[i];
+    });
+    torso.position.y = 0; tilt.rotation.set(p.pitch, 0, p.roll); tilt.position.y = (p.height - root.position.y) / root.scale.y;
+  };
+  // locomotion hook 1: what the locomotion layer needs (leg order LF, LH, RF, RH; hipXZ in world metres at WOLF_SCALE).
+  const loco = { root, tilt, torso, scale: WOLF_SCALE, legs: WOLF_LEGS, chains: chains.map((c, i) => ({ girdle: c.girdle, upper: c.upper, lower: c.lower, foot: c.foot, paw: c.paw, hipXZ: [LEG_XZ[i][0] * WOLF_SCALE, LEG_XZ[i][1] * WOLF_SCALE] as const })) };
   let lastTime = 0;
-  return { root, brain, sensor, animate(time: number, moving: boolean, action: 'speak' | 'gather' | 'move' | undefined, elapsed: number, mode: WolfMode = 'walk', push?: { x: number; z: number; yaw: number }) {
+  return { root, brain, sensor, loco, animate(time: number, moving: boolean, action: 'speak' | 'gather' | 'move' | undefined, elapsed: number, mode: WolfMode = 'walk', push?: { x: number; z: number; yaw: number }, legPose?: LegPose) {
     const stealth = mode === 'stealth' || mode === 'super-stealth';
     const running = mode === 'run' || mode === 'sprint';
-    root.scale.set(WOLF_SCALE, WOLF_SCALE * (stealth && action !== 'move' ? .72 : 1), WOLF_SCALE);
+    root.scale.set(WOLF_SCALE, WOLF_SCALE * (stealth && action !== 'move' && !legPose ? .72 : 1), WOLF_SCALE);
     const dt = Math.max(0, Math.min(.1, time - lastTime)); lastTime = time;
     const pose = quadrupedPose(brain.motion, brain.phase, brain.jumpTime, WOLF_LEGS, brain.gaitSpeed), bob = pose.bob / WOLF_SCALE;
     const gait = moving ? Math.sin(time * (mode === 'sprint' ? 24 : running ? 19 : stealth ? 5 : 13)) : 0;
     poseLegs(pose, bob);
     torso.position.y = moving ? Math.abs(gait) * .012 : Math.sin(time * 2) * .003;
     torso.position.y += bob;
+    if (legPose) applyLegPose(legPose); // locomotion hook 2: the locomotion layer drives legs, tilt and body height
+    else if (tilt.position.y || tilt.rotation.x || tilt.rotation.z) { tilt.position.y = 0; tilt.rotation.set(0, 0, 0); chains.forEach(c => { c.girdle.rotation.z = 0; }); } // layer stopped: back to the plain pose
     head.rotation.x = action === 'speak' ? -.45 * Math.sin(Math.min(1, elapsed / .2) * Math.PI / 2)
       : action === 'gather' ? .65 + Math.sin(elapsed * 12) * .12 : Math.sin(time * 1.4) * .035;
     head.position.set(...HEAD_AT);
-    if (action === 'move' && push) {
+    if (legPose?.carry && !action) { head.rotation.x += legPose.carry.head; head.position.y -= HEAD_DROP * legPose.carry.drop; } // hook 2: walking head carry
+    if (action === 'move' && push && !legPose) {
       const retract = Math.max(0, Math.min(1, (1.2 - elapsed) / .4));
       const amount = pushProgress(elapsed) * retract;
       head.rotation.x = 0; torso.position.y = 0;
@@ -173,7 +202,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
       const wave = brain.motion === 'idle' ? Math.sin(time * 1.3 - k * .8) * .05 : Math.sin(brain.phase * Math.PI * 2 - k * .9) * (.09 + .02 * k);
       tailYaw[k] += (wave - tailYaw[k]) * blendTo;
     });
-    tailPitch.value += (TAIL_HANG + (TAIL_LEVEL - TAIL_HANG) * lift - tailPitch.value) * (1 - Math.exp(-4 * dt));
+    tailPitch.value += (TAIL_HANG + (TAIL_LEVEL - TAIL_HANG) * lift + (legPose?.carry?.tail ?? 0) - tailPitch.value) * (1 - Math.exp(-4 * dt));
     setTail();
     tail[0].position.set(...TAIL_AT);
   } };

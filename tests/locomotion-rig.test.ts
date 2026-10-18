@@ -1,22 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { createPlayerWolf as original } from '../src/render/playerWolf';
-import { createPlayerWolf as forked } from '../src/animals/locomotion/fork/playerRig';
+import { createPlayerWolf as forked } from '../src/render/playerWolf';
 import { createLocomotion, SPRINGS, type TerrainFn } from '../src/animals/locomotion';
 
 const hills: TerrainFn = (x, z) => .35 * Math.sin(x * .45) * Math.cos(z * .38) + .12 * Math.sin(x * 1.1 + z * .7);
 const boneWorlds = (root: THREE.Object3D) => { root.updateMatrixWorld(true); const out: number[] = [];
   root.traverse(o => { if ((o as THREE.Bone).isBone) out.push(...o.matrixWorld.elements); }); return out; };
 
-test('fork without legPose poses every bone exactly like the original rig (hook 2 is a no-op when absent)', () => {
-  const a = original(1400), b = forked(1400);
-  for (const r of [a.root, b.root]) { r.position.set(3, .4, -2); r.rotation.y = .7; }
+test('without legPose the rig keeps the plain pose: tilt group at identity, no sideways girdle swing (hook 2 is a no-op when absent)', () => {
+  const w = forked(1400); w.root.position.set(3, .4, -2); w.root.rotation.y = .7;
+  const tilt = w.loco.tilt;
   for (const [motion, speed, mode] of [['idle', 0, 'walk'], ['walk', 1.2, 'walk'], ['run', 7, 'sprint'], ['walk', .5, 'stealth']] as const) for (let k = 0; k < 6; k++) {
-    for (const w of [a, b]) { w.brain.motion = motion; w.brain.gaitSpeed = speed; w.brain.phase = k / 6; w.animate(1 + k * .1, motion !== 'idle', undefined, 0, mode); }
-    const wa = boneWorlds(a.root), wb = boneWorlds(b.root);
-    assert.equal(wa.length, wb.length);
-    assert.ok(wa.every((v, i) => Math.abs(v - wb[i]) < 1e-12), `${motion} ${k}`);
+    w.brain.motion = motion; w.brain.gaitSpeed = speed; w.brain.phase = k / 6; w.animate(1 + k * .1, motion !== 'idle', undefined, 0, mode);
+    assert.ok(tilt.position.lengthSq() === 0 && tilt.quaternion.equals(new THREE.Quaternion()), `${motion} ${k}: tilt moved`);
+    assert.ok(w.loco.chains.every(c => c.girdle.rotation.z === 0), `${motion} ${k}: girdle swung sideways`);
   }
 });
 

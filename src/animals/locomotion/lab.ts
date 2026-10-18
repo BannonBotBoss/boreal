@@ -65,10 +65,10 @@ const stick = createStickRig(layout); scene.add(stick.root);
 let poseReal: ((p: LegPose, a: typeof body) => void) | undefined, realMeshes: THREE.Object3D[] = [], realChains: { girdle: THREE.Object3D; upper: THREE.Object3D; lower: THREE.Object3D; foot: THREE.Object3D; paw: THREE.Object3D }[] = [];
 if (q.get('rig') === 'real' || q.get('rig') === 'orig') void loadReal();
 
-/** The furred wolf through the forked rig (fork/playerRig.ts): hook 2 poses legs, tilt and height exactly from our pose. */
+/** The furred wolf (render/playerWolf.ts): hook 2 poses legs, tilt and height exactly from our pose. */
 async function loadReal() {
-  // ?rig=orig loads Claude's original rig (unposed by us) for the before/after budget numbers in ?stats=1
-  const { createPlayerWolf } = q.get('rig') === 'orig' ? await import('../../render/playerWolf') as unknown as typeof import('./fork/playerRig') : await import('./fork/playerRig');
+  // the fork was folded back into render/playerWolf.ts (2026-10-18), so ?rig=orig and ?rig=real load the same rig
+  const { createPlayerWolf } = await import('../../render/playerWolf');
   const wolf = createPlayerWolf(Number(q.get('seed') ?? 1400)); scene.add(wolf.root); // ?seed= shows the seeded coat variety
   if (q.get('stats') === '1') setTimeout(() => statsOf(wolf.root), 1500);
   wolf.root.traverse(o => { if (!o.userData.shadowSet) o.castShadow = true; if ((o as THREE.Mesh).isMesh) realMeshes.push(o); });

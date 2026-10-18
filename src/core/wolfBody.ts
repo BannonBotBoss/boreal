@@ -1,6 +1,7 @@
 import { WOLF_LEGS, limbOf, isFrontLeg } from './animalBehavior';
 import { WOLF_SCALE } from './wolfModes';
 import { computeNormals, dent, push, type BodyData, type RGB, type Ring, type Tube, type Vec3 } from './body';
+import { random } from '../proc/rng';
 
 /**
  * The wolf's skin as tubes, in model space (feet at 0, ear tips at 0.5, before WOLF_SCALE, so ×200 gives cm) at the
@@ -44,8 +45,8 @@ export function earFrame(side: number) {
   return { base, tip, t, n, w: [c[0] / cl, c[1] / cl, c[2] / cl] as Vec3, length: l };
 }
 /** Upper-jaw outline (z, centre y, half-width, half-height) in cranium space and lower-jaw outline in cranium space too; teeth and lips follow them. */
-const UPPER_OUTLINE = [[.03, 0, .042, .036], [.01, .004, .049, .04], [-.022, .002, .043, .037], [-.035, -.0055, .031, .029], [-.048, -.0095, .027, .0255], [-.07, -.0155, .0215, .0175], [-.088, -.0175, .019, .0145], [-.099, -.0175, .0155, .0125]];
-const LOWER_OUTLINE = [[.012, -.031, .02, .014], [-.02, -.036, .0195, .0105], [-.048, -.038, .0175, .0085], [-.068, -.038, .0135, .0075], [-.086, -.0365, .0095, .0065]];
+const UPPER_OUTLINE = [[.03, 0, .042, .036], [.01, .004, .049, .04], [-.022, .002, .043, .037], [-.035, -.0055, .031, .029], [-.048, -.0095, .0297, .0285], [-.07, -.0155, .0237, .0196], [-.088, -.0175, .0215, .0166], [-.099, -.0175, .019, .015]];
+const LOWER_OUTLINE = [[.012, -.031, .02, .014], [-.02, -.036, .0205, .0126], [-.048, -.038, .0185, .0102], [-.068, -.038, .0145, .009], [-.086, -.0365, .0105, .0078]];
 const outlineAt = (rings: number[][], z: number) => { for (let i = 0; i < rings.length - 1; i++) { const [a, b] = [rings[i], rings[i + 1]]; if (z <= a[0] && z >= b[0]) { const t = (a[0] - z) / (a[0] - b[0]); return a.map((v, k) => v + (b[k] - v) * t); } } return rings[rings.length - 1]; };
 const LIP_FRACTION = .6; // how far out along the half-width the lips and teeth sit
 
@@ -62,13 +63,13 @@ export function wolfTubes(coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB
   // back; fur is longest on the neck and shoulders (the ruff).
   tubes.push({ ...palette, radial: 12, smooth: 1, lay: [0, -.3, 1], rings: [
     { p: [0, .285, .185], rx: .03, ry: .05, w: blend(BONE.torso, BONE.tail, .15), fur: .9, saddle: .5 },
-    { p: [0, .30, .15], rx: .048, ry: .072, w: only(BONE.torso), fur: 1, saddle: .55 },
-    { p: [0, .31, .09], rx: .048, ry: .062, w: only(BONE.torso), fur: 1, saddle: .6 },
+    { p: [0, .304, .15], rx: .048, ry: .076, w: only(BONE.torso), fur: 1, saddle: .55 },
+    { p: [0, .314, .09], rx: .048, ry: .066, w: only(BONE.torso), fur: 1, saddle: .6 },
     { p: [0, .315, .02], rx: .05, ry: .07, w: only(BONE.torso), fur: 1.05, saddle: .6 },
-    { p: [0, .32, -.07], rx: .054, ry: .088, w: only(BONE.torso), fur: 1.2, saddle: .6 },
-    { p: [0, .325, -.135], rx: .057, ry: .097, w: only(BONE.torso), fur: 1.05, saddle: .55 },
-    { p: [0, .35, -.19], rx: .05, ry: .082, w: blend(BONE.torso, BONE.head, .2), fur: 1.28, saddle: .4 },
-    { p: [0, .385, -.25], rx: .048, ry: .066, w: blend(BONE.torso, BONE.head, .6), fur: 1.2, saddle: .25 },
+    { p: [0, .3135, -.07], rx: .054, ry: .0815, w: only(BONE.torso), fur: 1.2, saddle: .6 },
+    { p: [0, .3165, -.135], rx: .057, ry: .0885, w: only(BONE.torso), fur: 1.05, saddle: .55 },
+    { p: [0, .345, -.19], rx: .056, ry: .092, w: blend(BONE.torso, BONE.head, .2), fur: 1.28, saddle: .4 },
+    { p: [0, .383, -.25], rx: .051, ry: .071, w: blend(BONE.torso, BONE.head, .6), fur: 1.2, saddle: .25 },
     { p: [0, .405, -.29], rx: .044, ry: .056, w: only(BONE.head), fur: 1.2 },
   ] });
 
@@ -80,20 +81,20 @@ export function wolfTubes(coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB
     { p: H(0, .004, .01), rx: .049, ry: .04, w: only(BONE.head), fur: 1.1, saddle: .35, accent: .25 },
     { p: H(0, .002, -.022), rx: .043, ry: .037, w: only(BONE.head), fur: .8, accent: .55, under: .5 },
     { p: H(0, -.0055, -.035), rx: .031, ry: .029, w: only(BONE.head), fur: .7, accent: .55, under: .7, sq: 2.3 }, // the stop: the forehead drops steeply here
-    { p: H(0, -.0095, -.048), rx: .027, ry: .0255, w: only(BONE.head), fur: .85, pale: .2, accent: .55, under: .9, sq: 2.7 },
-    { p: H(0, -.0155, -.07), rx: .0215, ry: .0175, w: only(BONE.head), fur: .75, pale: .4, accent: .35, under: .9, sq: 3 },
-    { p: H(0, -.0175, -.088), rx: .019, ry: .0145, w: only(BONE.head), dark: .15, fur: .5, pale: .4, under: .9, sq: 3 },
-    { p: H(0, -.0175, -.099), rx: .0155, ry: .0125, w: only(BONE.head), dark: .8, fur: .12, sq: 2.6 },
+    { p: H(0, -.0095, -.048), rx: .0297, ry: .0285, w: only(BONE.head), fur: .85, pale: .2, accent: .55, under: .9, sq: 3.2 },
+    { p: H(0, -.0155, -.07), rx: .0237, ry: .0196, w: only(BONE.head), fur: .75, pale: .4, accent: .35, under: .9, sq: 3.5 },
+    { p: H(0, -.0175, -.088), rx: .0215, ry: .0166, w: only(BONE.head), dark: .15, fur: .5, pale: .4, under: .9, sq: 3.8 },
+    { p: H(0, -.0175, -.099), rx: .019, ry: .015, w: only(BONE.head), dark: .8, fur: .12, sq: 3.6 },
   ] });
 
   // Lower jaw: its own mesh, hinged at the rear skull base (JAW_AT), narrower than the upper muzzle, pale underside.
   tubes.push({ ...palette, back: coat.belly, dark: coat.dark, lining: jawFloor, radial: 10, rings: [
     { p: H(0, -.034, .03), rx: .024, ry: .018, w: only(BONE.head), fur: 1 }, // throat: part of the head, so the jaw tapers into the neck
     { p: H(0, -.031, .012), rx: .02, ry: .014, w: blend(BONE.head, BONE.jaw, .5), fur: .7, top: .9 },
-    { p: H(0, -.036, -.02), rx: .0195, ry: .0105, w: only(BONE.jaw), fur: .55, top: .9 },
-    { p: H(0, -.038, -.048), rx: .0175, ry: .0085, w: only(BONE.jaw), fur: .35, top: .9 },
-    { p: H(0, -.038, -.068), rx: .0135, ry: .0075, w: only(BONE.jaw), fur: .15, dark: .3, top: .8 },
-    { p: H(0, -.0365, -.086), rx: .0095, ry: .0065, w: only(BONE.jaw), fur: .08, dark: .8, top: .6 },
+    { p: H(0, -.036, -.02), rx: .0205, ry: .0126, w: only(BONE.jaw), fur: .55, top: .9 },
+    { p: H(0, -.038, -.048), rx: .0185, ry: .0102, w: only(BONE.jaw), fur: .35, top: .9 },
+    { p: H(0, -.038, -.068), rx: .0145, ry: .009, w: only(BONE.jaw), fur: .15, dark: .3, top: .8 },
+    { p: H(0, -.0365, -.086), rx: .0105, ry: .0078, w: only(BONE.jaw), fur: .08, dark: .8, top: .6 },
   ] });
 
   // Ears: 10 cm tall, set well apart. Each is a flat shell facing forward and outward (EAR_N) with a rounded rim (sq > 2);
@@ -111,32 +112,32 @@ export function wolfTubes(coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB
     const at = (y: number, zz = z): Vec3 => [x, y, zz];
     const r = (y: number, rx: number, ry: number, w: Ring['w'], dark?: number, fur?: number, pale?: number): Ring => ({ p: at(y), rx: rx * f, ry: ry * f, w, dark, fur, pale });
     const rings: Ring[] = front ? [
-      r(Gy, .026, .04, blend(BONE.torso, b.girdle, .5), 0, 1, 0),
-      r((Gy + Jy) / 2, .028, .042, only(b.girdle), 0, 1.1, 0),
+      r(Gy - .025, .024, .034, blend(BONE.torso, b.girdle, .3), 0, 1, 0), // sunk into the trunk, mostly torso-weighted
+      r((Gy + Jy) / 2 - .01, .027, .04, blend(BONE.torso, b.girdle, .7), 0, 1.1, 0),
       r(Jy, .027, .04, blend(b.girdle, b.leg, .5), 0, 1, .1),
-      r(Jy - m.upper * .5, .022, .032, only(b.leg), 0, .8, .3),
-      r(Ky, .017, .026, blend(b.leg, b.knee, .5), 0, .6, .5),
-      r(Ky - m.lower * .5, .014, .02, only(b.knee), 0, .5, .6),
-      r(Wy, .015, .019, blend(b.knee, b.wrist, .5), 0, .5, .6),
-      r((Wy + Py) / 2, .013, .016, only(b.wrist), 0, .45, .6),
-      r(Py + .014, .014, .016, blend(b.wrist, b.paw, .4), 0, .4, .6),
+      r(Jy - m.upper * .5, .024, .034, only(b.leg), 0, .8, .3),
+      r(Ky, .02, .028, blend(b.leg, b.knee, .5), 0, .6, .5),
+      r(Ky - m.lower * .4, .019, .025, only(b.knee), 0, .5, .6), // forearm: the thick part
+      r(Wy, .0135, .017, blend(b.knee, b.wrist, .5), 0, .5, .6),
+      r((Wy + Py) / 2, .0105, .013, only(b.wrist), 0, .45, .6), // slim pastern
+      r(Py + .012, .011, .013, blend(b.wrist, b.paw, .4), 0, .4, .6),
     ] : [
-      r(Jy + .06, .03, .045, only(BONE.torso), 0, 1, 0),
+      r(Jy + .035, .03, .042, only(BONE.torso), 0, 1, 0), // sunk below the topline
       r(Jy, .033, .05, blend(BONE.torso, b.leg, .5), 0, 1, 0),
       r(Jy - m.upper * .45, .03, .052, only(b.leg), 0, .9, .15),
-      r(Ky, .018, .028, blend(b.leg, b.knee, .5), 0, .6, .4),
-      r(Ky - m.lower * .5, .014, .02, only(b.knee), 0, .5, .55),
-      r(Wy, .014, .022, blend(b.knee, b.wrist, .5), 0, .5, .55),
-      r(Wy - m.foot * .5, .011, .015, only(b.wrist), 0, .45, .6),
-      r(Py + .014, .012, .015, blend(b.wrist, b.paw, .4), 0, .4, .6),
+      r(Ky, .02, .03, blend(b.leg, b.knee, .5), 0, .6, .4),
+      r(Ky - m.lower * .5, .016, .024, only(b.knee), 0, .5, .55),
+      r(Wy, .012, .024, blend(b.knee, b.wrist, .5), 0, .5, .55), // hock: narrow, deep fore-aft (defined point)
+      r(Wy - m.foot * .5, .0095, .013, only(b.wrist), 0, .45, .6),
+      r(Py + .012, .0105, .013, blend(b.wrist, b.paw, .4), 0, .4, .6),
     ];
     tubes.push({ ...palette, smooth: 1, lay: [0, -1, 0], rings });
     // Paw: a long oval pointing forward, pivoting at the sole.
-    const sole = (zz: number) => at(Py + .016, zz);
+    const sole = (zz: number) => at(Py + .012, zz);
     tubes.push({ ...palette, radial: 8, lay: [0, -1, 0], rings: [
-      { p: sole(z + .014), rx: .022 * f, ry: .016, w: only(b.paw), dark: .2, fur: .3, pale: .45 },
-      { p: sole(z - .018), rx: .022 * f, ry: .016, w: only(b.paw), dark: .3, fur: .3, pale: .4 },
-      { p: sole(z - .04), rx: .017 * f, ry: .012, w: only(b.paw), dark: .5, fur: .25, pale: .2 },
+      { p: sole(z + .008), rx: .0166 * f, ry: .012, w: only(b.paw), dark: .2, fur: .3, pale: .45, sq: 3 },
+      { p: sole(z - .012), rx: .0176 * f, ry: .012, w: only(b.paw), dark: .3, fur: .3, pale: .4, sq: 3 },
+      { p: sole(z - .028), rx: .0135 * f, ry: .009, w: only(b.paw), dark: .5, fur: .25, pale: .2, sq: 2.6 },
     ] });
   });
 
@@ -211,6 +212,110 @@ export function wolfTubes(coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB
     { p: H(0, -.038, -.03), rx: .016, ry: .0018, w: only(BONE.jaw), fur: 0 },
   ] });
   return tubes;
+}
+
+
+/** Tube index of leg i's paw tube (wolfTubes order: trunk, skull, jaw, ears, then leg + paw per leg). */
+const pawTube = (i: number) => 6 + 2 * i;
+/**
+ * After buildBody: flat paw soles with toe grooves, and fur moved off the legs and belly onto the neck and back.
+ * Same vertex count (no new geometry), so the fur-card budget and the perf governor see no change.
+ */
+export function shapeBody(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB } = PHOTO_COAT) {
+  const toes: Vec3[] = [];
+  LEG_XZ.forEach(([x, z], i) => {
+    const m = limbModel(i), Py = m.hip - m.upper - m.lower - m.foot, sole = Py + .012, floor = sole - .01;
+    for (let v = 0; v < body.tube.length; v++) {
+      if (body.tube[v] !== pawTube(i) || body.position[v * 3 + 1] >= floor) continue;
+      body.position[v * 3 + 1] = body.rest[v * 3 + 1] = floor; // flatten the sole
+    }
+    for (const t of [-1, 0, 1]) { const at: Vec3 = [x + t * .0062, sole + .008, z - .024]; dent(body, pawTube(i), at, .004, .0024); toes.push(at); } // grooves between the toes, top front
+  });
+  // Ears: shorter (×0.68 along the ear), broader and rounder toward the tip (in each ear's own frame), then set back and leaned
+  // back from the base. Inner tufts move with them. Done after the sculpt, so the cup indent and shading come along.
+  const earBase = HEAD_AT[1] + .042;
+  for (let v = 0; v < body.tube.length; v++) {
+    const t = body.tube[v], tuft = t >= EAR_TUFTS[0] && t <= EAR_TUFTS[1]; if (!(t === TUBE.earL || t === TUBE.earR || tuft)) continue;
+    const side = t === TUBE.earL || (tuft && t < EAR_TUFTS[0] + 3) ? -1 : 1, e = earFrame(side), o = [0, 1, 2].map(k => HEAD_AT[k] + e.base[k]);
+    const r = [0, 1, 2].map(k => body.position[v * 3 + k] - o[k]), along = r[0] * e.t[0] + r[1] * e.t[1] + r[2] * e.t[2];
+    const across = r[0] * e.w[0] + r[1] * e.w[1] + r[2] * e.w[2], out = r[0] * e.n[0] + r[1] * e.n[1] + r[2] * e.n[2], a = Math.max(0, along / e.length);
+    const nAlong = along * .68, nAcross = across * (1.2 + .6 * a * (1 - .4 * a)); // widest two-thirds up: a rounded tip
+    for (let k = 0; k < 3; k++) body.position[v * 3 + k] = o[k] + e.t[k] * nAlong + e.w[k] * nAcross + e.n[k] * out;
+    const dz = .01 + Math.max(0, body.position[v * 3 + 1] - earBase) * .3;
+    body.position[v * 3 + 2] += dz;
+    for (let k = 0; k < 3; k++) body.rest[v * 3 + k] = body.position[v * 3 + k];
+  }
+  // Heavier brow: push the supraorbital ridge further out and up (the sculpt already raised it a little).
+  for (const side of [-1, 1]) push(body, TUBE.skull, [side * EYE_AT[0] * 1.05, HEAD_AT[1] + EYE_AT[1] + .013, HEAD_AT[2] + EYE_AT[2] + .004], .022, [side * .0012, .0018, -.004]);
+  computeNormals(body);
+  zoneCoat(body, coat);
+  for (let v = 0; v < body.tube.length; v++) {
+    const tube = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1];
+    if (tube >= 6 && tube < 13 && (tube - 6) % 2 === 0) { body.furLen[v] *= .6; if (toes.some(q => Math.hypot(body.position[v * 3] - q[0], body.position[v * 3 + 1] - q[1], body.position[v * 3 + 2] - q[2]) < .004)) for (let k = 0; k < 3; k++) body.color[v * 3 + k] *= .55; } // short paw fur so the toes show; dark grooves
+    else if (tube >= 5 && tube < 13 && (tube - 5) % 2 === 0) { const top = limbModel((tube - 5) / 2).hip; if (y < top) body.furLen[v] *= .9 + .1 * Math.max(0, Math.min(1, (y - top + .08) / .08)); } // legs: short below the elbow / stifle
+    else if (tube === TUBE.trunk) {
+      if (ny < -.35) body.furLen[v] *= .6; // belly
+      else if (ny > .3 || z < -.17) body.furLen[v] *= 1.15; // back, neck and ruff
+    }
+  }
+}
+
+/** Tubes of the inner-ear tufts in wolfTubes order (trunk, skull, jaw, 2 ears, 8 leg/paw, tail, 2 cheek ruffs, 2 mouth corners, tongue, 2 lips, then 6 tufts). */
+const EAR_TUFTS = [21, 26] as const;
+/** Coat sampled by eye from Matthew's reference photo: brown-grey agouti back, cream belly and legs, near-black saddle and tail tip, tan accents. */
+export const PHOTO_COAT = { back: [.5, .42, .32] as RGB, belly: [.86, .8, .7] as RGB, dark: [.13, .11, .09] as RGB, accent: [.68, .5, .3] as RGB }; // round 4: warmer browns
+/** Seeded variety on the photo base: Claude's wolfCoat(seed) (archetype + jitter) pulls the photo coat 35 % of the way toward it, so every
+ * seed stays recognisably the photo's agouti pattern but shifts toward grey, tan or black like the original's variety. */
+export function photoVariant(seeded: { back: RGB; belly: RGB; dark: RGB; accent: RGB }) {
+  const m = (a: RGB, b: RGB) => a.map((v, k) => v + (b[k] - v) * .35) as RGB;
+  return { back: m(PHOTO_COAT.back, seeded.back), belly: m(PHOTO_COAT.belly, seeded.belly), dark: m(PHOTO_COAT.dark, seeded.dark), accent: m(PHOTO_COAT.accent, seeded.accent) };
+}
+const mix3 = (c: number[], v: number, to: RGB, t: number) => { for (let k = 0; k < 3; k++) c[v * 3 + k] += (to[k] - c[v * 3 + k]) * t; };
+const band = (a: number, b: number, x: number) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+/** Coat zoning from the photo (vertex colours; the fur cards copy them): dark saddle over the back, pale chest, throat and belly, buff legs. */
+function zoneCoat(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB }) {
+  const lerp = (a: RGB, b: RGB, t: number) => a.map((v, k) => v + (b[k] - v) * t) as RGB;
+  const c = body.color, saddle = lerp(coat.dark, coat.back, .3), buff = lerp(coat.belly, coat.accent ?? coat.back, .2), cream = coat.belly, pawDark = lerp(coat.dark, coat.back, .35);
+  for (let v = 0; v < body.tube.length; v++) {
+    const t = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1];
+    if (t === TUBE.trunk) {
+      mix3(c, v, saddle, .82 * band(.15, .6, ny) * band(-.2, -.1, z) * (1 - band(.15, .2, z)));
+      mix3(c, v, cream, .8 * band(-.15, -.55, ny)); // belly
+      if (z < -.1) mix3(c, v, cream, .7 * band(.1, -.4, ny) * band(-.1, -.2, z)); // chest and throat
+    } else if (t >= 5 && t < 13 && (t - 5) % 2 === 0) {
+      const top = limbModel((t - 5) / 2).hip;
+      mix3(c, v, buff, .85 * band(top + .03, top - .06, y)); // legs pale below the body
+    } else if (t >= 6 && t < 13 && (t - 6) % 2 === 0) mix3(c, v, pawDark, .6); // darker paws
+    else if (t === TAIL_TUBE) mix3(c, v, saddle, .45 * band(0, .7, ny));
+  }
+}
+const TAIL_TUBE = 13;
+
+/** Small 3D value noise (seeded lattice from proc/rng, smooth trilinear): the fur length/density map. */
+const LATTICE = (() => { const r = random(1400); return Float32Array.from({ length: 4096 }, () => r()); })();
+const hash3 = (x: number, y: number, z: number) => LATTICE[(((x * 73 + y * 1999 + z * 7919) % 4096) + 4096) % 4096];
+export function valueNoise3(x: number, y: number, z: number) {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), f = (u: number) => u * u * (3 - 2 * u), u = f(x - xi), v = f(y - yi), w = f(z - zi);
+  const l = (a: number, b: number, t: number) => a + (b - a) * t;
+  const c = (dx: number, dy: number, dz: number) => hash3(xi + dx, yi + dy, zi + dz);
+  return l(l(l(c(0, 0, 0), c(1, 0, 0), u), l(c(0, 1, 0), c(1, 1, 0), u), v), l(l(c(0, 0, 1), c(1, 0, 1), u), l(c(0, 1, 1), c(1, 1, 1), u), v), w);
+}
+type P3 = [number, number, number];
+/**
+ * Fur style for render/furCards (the repo's hair-card system; options it already exposes, so furCards itself is not forked):
+ * a noise-driven length map (clumps ~2 cm, after the length/density maps of Lengyel et al. 2001 and GPU Gems 2 ch. 23 "Hair
+ * Animation and Rendering in the Nalu Demo" texture-driven fur), longer strand cards in the silhouette zones (neck ruff, tail),
+ * combing (flat down the legs, back-curving over the neck, back and tail) and agouti tips on the back (banded guard hairs).
+ */
+export function furStyle() {
+  const leg = (p: P3) => p[1] < .21, tail = (p: P3) => p[2] > .19 && p[1] < .34, head = (p: P3) => p[2] < HEAD_AT[2] + .035 && p[1] > HEAD_AT[1] - .06;
+  const ruff = (p: P3) => band(-.12, -.18, p[2]) * band(-.34, -.3, p[2]) * band(.3, .34, p[1]);
+  return {
+    tone: .3,
+    scaleAt: (p: P3) => { const n = .75 + .5 * valueNoise3(p[0] * 55, p[1] * 55, p[2] * 55); return Math.min(1.4, n * (leg(p) ? 1 : tail(p) ? 1.2 : 1 + .3 * ruff(p))); },
+    comb: (p: P3) => head(p) ? undefined : leg(p) ? { lay: [0, -1, .15] as P3, lean: 1 } : tail(p) ? { lay: [0, -.6, 1] as P3, lean: .8 } : { lay: [0, -.25 - .5 * ruff(p), 1] as P3, lean: 1 + .3 * ruff(p) },
+    tipTint: (p: P3) => p[1] > .33 && !head(p) ? { color: [.12, .1, .08] as P3, amount: .3 } : undefined, // agouti guard hairs end in a black band (was a pale tip that washed the saddle out)
+  };
 }
 
 /** Sculpts the face: a socket around each eye with a raised brow above it. Returns the places fur must stay clear of. */

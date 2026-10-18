@@ -112,7 +112,7 @@ export function globeMaterial() {
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep;\nvarying float vH;\nfloat landMask;')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { float fw = max(fwidth(vH), 1e-3); landMask = smoothstep(-fw, fw, vH);
-    vec3 water = mix(uShallow, uDeep, smoothstep(0.0, 400.0, -vH)); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }`)
+    vec3 water = mix(uShallow, uDeep, smoothstep(0.0, 150.0, -vH)); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.55, roughnessFactor, landMask); // water: a soft sun glint [game calibration]');
   };
   return m;

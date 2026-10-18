@@ -69,7 +69,8 @@ test('globe tiles: deterministic, shared edges match in position AND normal (no 
   }
   let wet = 0;
   for (let f = 0; f < 6 && !wet; f++) { const sea = finish(buildTile(node(f, 2, 1, 1), p, seg));
-    for (let v = 0; v < n * n; v++) if (sea.height[v] < 0) { wet++; const r = Math.hypot(sea.position[v * 3] + sea.centre[0], sea.position[v * 3 + 1] + sea.centre[1], sea.position[v * 3 + 2] + sea.centre[2]); assert.ok(Math.abs(r - PLANET.radius) < 2, 'water vertices sit on the sea surface'); } }
+    for (let v = 0; v < n * n; v++) if (sea.height[v] < 0) { wet++; const r = Math.hypot(sea.position[v * 3] + sea.centre[0], sea.position[v * 3 + 1] + sea.centre[1], sea.position[v * 3 + 2] + sea.centre[2]); const vx = sea.position[v * 3] + sea.centre[0], vy = sea.position[v * 3 + 1] + sea.centre[1], vz = sea.position[v * 3 + 2] + sea.centre[2]; if (p.sampleSurface([vx / r, vy / r, vz / r]).kind !== 'ocean') continue; // far-field lakes sit at their own level
+      assert.ok(Math.abs(r - PLANET.radius) < 2, 'water vertices sit on the sea surface'); } }
   assert.ok(wet > 0, 'found ocean vertices');
 });
 test('globe tile cost: one 32-segment tile builds well under a frame budget on this machine', () => {
@@ -181,7 +182,7 @@ test('globe far field: land outside the playable region keeps Kenora-scale relie
   const p = createPlanet(1400, heightAt); let spread = 0, n = 0;
   for (let k = 0; k < 120 && n < 12; k++) { // patches 50-500 km from home along the east axis
     const x0 = 50e3 + k * 11e3, hs: number[] = [];
-    for (let i = 0; i < 25; i++) { const s = p.sampleSurface(p.fromLocal(x0 + (i % 5) * 700, (Math.floor(i / 5)) * 700)); if (s.h > 20) hs.push(s.h); }
+    for (let i = 0; i < 25; i++) { const s = p.sampleSurface(p.fromLocal(x0 + (i % 5) * 700, (Math.floor(i / 5)) * 700)); const top = Math.max(s.h, s.water); if (top > 20) hs.push(top); } // the visible surface (lakes included)
     if (hs.length === 25) { spread += Math.max(...hs) - Math.min(...hs); n++; }
   }
   assert.ok(n >= 3 && spread / n > 25, `mean local relief over 2.8 km patches ${n ? (spread / n).toFixed(1) : '-'} m`);
@@ -198,4 +199,15 @@ test('globe stitching: flags 0 is buildTile\'s own triangulation; flagged edges 
     for (let k = 0; k < ix.length; k += 3) { const a = ix[k], b = ix[k + 1], c = ix[k + 2]; if (a === b || b === c || a === c) continue; live++; assert.ok(!odd(a) && !odd(b) && !odd(c), `flags ${flags}: tri uses a collapsed vertex`); }
     assert.ok(live > seg * seg * 2 - 8 * seg, `flags ${flags}: grid still covered (${live} live tris)`);
   }
+});
+
+import { fromLatLon } from '../src/world/globe/planet';
+test('globe far-field lakes: Shield-like water share on boreal land, none near home (only the game\'s lakes there)', () => {
+  const p = createPlanet(1400, () => 50), R = p.radius; let land = 0, lake = 0;
+  for (let k = 0; k < 40000 && land < 3000; k++) { const lat = (44 + 18 * ((k * 0.618034) % 1)) * Math.PI / 180, lon = (k * 2.399963) % (2 * Math.PI) - Math.PI;
+    const s = p.sampleSurface(fromLatLon(lat, lon)); if (s.kind === 'ocean' || s.level > 1400 || s.h > 1400) continue; land++; if (s.kind === 'lake') lake++; }
+  const share = lake / land; assert.ok(land > 500 && share > .1 && share < .32, `lake share ${(share * 100).toFixed(1)} % of ${land}`);
+  for (let k = 0; k < 400; k++) { const r = PLANET.home.halfSize * 1.4 * Math.sqrt(k / 400), a = k * 2.399963, d = p.fromLocal(r * Math.cos(a), r * Math.sin(a));
+    assert.notEqual(p.sampleSurface(d).kind, 'lake', 'no far-field lake near home (the local sampler here is dry)'); }
+  void R;
 });

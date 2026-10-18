@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FLORA } from '../src/core/flora/plants';
-import { covered, setAreaPrefetch, setCanopySource, setFootprintSource, type Footprint } from '../src/core/flora/site';
+import { CANOPY, covered, setAreaPrefetch, setCanopySource, setFootprintSource, type Footprint } from '../src/core/flora/site';
 import { buildClump } from '../src/render/flora/plant';
 import { plantsJob } from '../src/render/flora/flora';
 import { bladesJob } from '../src/render/grass/cover';
@@ -11,8 +11,10 @@ const TILE = 20;
 test('carpets: dense mats in shade, few in the open (light = 1 - crown score)', () => {
   setAreaPrefetch(); setFootprintSource(() => []);
   const count = (cover: number) => { setCanopySource(() => cover); let n = 0; for (let a = 0; a < 6; a++) n += finish(plantsJob(4 + a, 6)).filter(p => p.clump && FLORA[p.species].id !== 'blueberry').length; return n; };
+  const stand = CANOPY.stand; CANOPY.stand = 0; // drawn crowns only
   const shade = count(.7), open = count(0);
   assert.ok(shade > 200, `shade clumps ${shade}`); assert.ok(shade > 4 * open, `shade ${shade} vs open ${open}`);
+  CANOPY.stand = stand; assert.ok(count(0) > 2 * open, 'stand closure shades ground between the drawn (subsampled) trees');
 });
 
 test('no plant, carpet clump or grass blade grows through a rock or a log', () => {

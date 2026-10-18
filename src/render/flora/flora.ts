@@ -13,7 +13,7 @@
  *    shrubs and carpets thin in shade and never grow through solid objects.
  *  - Cost: radius = min(near, 45 m × √foliage) (LADDER `foliage`); per plant, small ones drop out and switch to the mid LOD
  *    first; carpets: near clumps inside CLUMP_NEAR, far clumps (half the ramets, stemless) thinned with distance.
- * Viewing: V (in game) orbits the densest flora patch near you (V / Esc / a move key leaves); ?patch=1 = showcase (cluster
+ * Viewing: V (in game) orbits the densest flora patch near you (V or a move key leaves); ?patch=1 = showcase (cluster
  * intensity ×15, all in bloom), ?patch=view also starts in the patch view. Dev handle: globalThis.borealFlora.
  */
 import * as THREE from 'three';
@@ -37,9 +37,9 @@ const TILE = CHUNK_SIZE / 2, VARIANTS = 4, LOD_DIST = 9, CLUMP_NEAR = 6, CLUMP_F
 const liveTiles = new Set<Plant[]>();
 const now = () => performance.now();
 
-/** Flowering patch for the viewer: the 3 m cell with the most plants × species (carpet clumps not counted), near (x, z) if given. */
-function densest(near?: { x: number; z: number; r: number }) { const c = new Map<string, { n: number; sp: Set<number>; x: number; z: number }>();
-  for (const t of liveTiles) for (const p of t) { if (p.clump || (near && Math.hypot(p.x - near.x, p.z - near.z) > near.r)) continue;
+/** Flowering patch for the viewer: the 3 m cell with the most plants × species (carpet = true: the densest understorey carpet), near (x, z) if given. */
+function densest(near?: { x: number; z: number; r: number }, carpet = false) { const c = new Map<string, { n: number; sp: Set<number>; x: number; z: number }>();
+  for (const t of liveTiles) for (const p of t) { if (!!p.clump !== carpet || (near && Math.hypot(p.x - near.x, p.z - near.z) > near.r)) continue;
     const k = `${Math.floor(p.x / 3)}:${Math.floor(p.z / 3)}`, e = c.get(k) ?? { n: 0, sp: new Set(), x: 0, z: 0 }; e.n++; e.sp.add(p.species); e.x += p.x; e.z += p.z; c.set(k, e); }
   let best; for (const e of c.values()) if (!best || e.n * e.sp.size > best.n * best.sp.size) best = e; return best && { x: best.x / best.n, z: best.z / best.n, y: heightAt(best.x / best.n, best.z / best.n), species: best.sp.size }; }
 (globalThis as { borealFlora?: unknown }).borealFlora = { info: FLORA_INFO, fx: FLORA_FX, densest };
@@ -164,13 +164,13 @@ export function createFlora(scene: THREE.Scene) {
   const viewer = { on: PARAMS.get('patch') === 'view', site: undefined as undefined | { x: number; y: number; z: number }, a: .6, t: 0, hint: undefined as HTMLElement | undefined };
   const setViewer = (on: boolean) => { viewer.on = on; viewer.site = undefined; if (!on) FLORA_FX.view = undefined;
     if (typeof document === 'undefined') return;
-    if (on && !viewer.hint) { const h = viewer.hint = document.createElement('div'); h.textContent = 'Flora patch view · V or Esc to leave';
+    if (on && !viewer.hint) { const h = viewer.hint = document.createElement('div'); h.textContent = 'Flora patch view · V or a move key to leave';
       Object.assign(h.style, { position: 'fixed', left: '50%', bottom: '24px', transform: 'translateX(-50%)', padding: '6px 12px', background: 'rgba(0,0,0,.45)', color: '#fff', font: '13px system-ui, sans-serif', borderRadius: '6px', pointerEvents: 'none', zIndex: '5' }); document.body.appendChild(h); }
     if (viewer.hint) viewer.hint.hidden = !on; };
   if (typeof addEventListener !== 'undefined') addEventListener('keydown', e => {
     if (e.repeat || e.ctrlKey || e.metaKey || (e.target instanceof HTMLElement && (e.target.isContentEditable || e.target.matches('input,textarea,select')))) return;
     const k = e.key.toLowerCase();
-    if (k === 'v') setViewer(!viewer.on); else if (viewer.on && ['escape', 'w', 'a', 's', 'd', 'p', 'arrowup', 'arrowdown'].includes(k)) setViewer(false);
+    if (k === 'v') setViewer(!viewer.on); else if (viewer.on && ['w', 'a', 's', 'd', 'p', 'escape'].includes(k)) setViewer(false); // p: photo mode takes the camera; Esc also opens the pause menu (main.ts)
   });
   if (viewer.on) setViewer(true);
 

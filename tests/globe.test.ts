@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+﻿import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createPlanet, fibonacci, PLANET } from '../src/world/globe/planet';
 import { FACES, bounds, children, cubeToSphere, faceDir, roots, selectLeaves, type QNode } from '../src/world/globe/cube';
@@ -161,4 +161,28 @@ test('globe → game handoff: only below the handoff altitude, fully inside home
   assert.equal(gameUrl('?view=globe', null), '?');
   // the game's ?at= parser (main.ts) splits on ',' after URL decoding
   assert.deepEqual(new URLSearchParams(gameUrl('?view=globe', { x: 1, z: -2.5 })).get('at')!.split(',').map(Number), [1, -2.5]);
+});
+import { globePlanet } from '../src/world/globe/home';
+import { surfaceAt } from '../src/core/stages/surfaceAt';
+test('globe home (staged): surfaceAt heights = the game heightAt, and the staged globe planet carries them exactly', () => {
+  const was = STAGES.on; STAGES.on = true;
+  try {
+    const p = globePlanet(STAGES.seed, true, STAGES.seed); let worst = 0, lakes = 0;
+    for (let k = 0; k < 600; k++) {
+      const x = (k * 37.3) % 4800 - 2400, z = (k * 91.9) % 4800 - 2400, s = surfaceAt(x, z, STAGES.seed);
+      assert.equal(s.height, heightAt(x, z));
+      const g = p.sampleSurface(p.fromLocal(x, z)); worst = Math.max(worst, Math.abs(g.h - (PLANET.home.elevation + s.height)));
+      if (g.kind === 'lake') { lakes++; assert.ok(s.lake || s.river, 'globe water only where the game has water'); }
+    }
+    assert.ok(worst < 0.05, `planet vs game height ${worst} m (gnomonic round trip)`); assert.ok(lakes > 0, 'lakes reach the globe');
+  } finally { STAGES.on = was; }
+});
+test('globe far field: land outside the playable region keeps Kenora-scale relief (no flat band at the horizon)', () => {
+  const p = createPlanet(1400, heightAt); let spread = 0, n = 0;
+  for (let k = 0; k < 120 && n < 12; k++) { // patches 50-500 km from home along the east axis
+    const x0 = 50e3 + k * 11e3, hs: number[] = [];
+    for (let i = 0; i < 25; i++) { const s = p.sampleSurface(p.fromLocal(x0 + (i % 5) * 700, (Math.floor(i / 5)) * 700)); if (s.h > 20) hs.push(s.h); }
+    if (hs.length === 25) { spread += Math.max(...hs) - Math.min(...hs); n++; }
+  }
+  assert.ok(n >= 3 && spread / n > 25, `mean local relief over 2.8 km patches ${n ? (spread / n).toFixed(1) : '-'} m`);
 });

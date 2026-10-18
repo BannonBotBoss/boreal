@@ -25,7 +25,8 @@ import { createAtmosphere } from './atmosphere';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
 import { gameHour, START_HOUR, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, handoffTarget, HANDOFF } from './handoff';
-import { planetFor, toLatLon, PLANET, type Vec3 } from './planet';
+import { globePlanet } from './home';
+import { toLatLon, PLANET, type Vec3 } from './planet';
 import { buildTile, globeMaterial, tileGeometry, type TileData } from './tile';
 import type { TileRequest } from './tileWorker';
 import { globeLod } from './lod';
@@ -53,7 +54,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const q = new URLSearchParams(location.search);
   if (q.has('stages')) STAGES.on = true;
   const seed = Number(q.get('seed')) || (STAGES.on ? STAGES.seed : WORLD_SEED);
-  const planet = planetFor(seed, heightAt, STAGES.on ? 'staged' : 'layered'), R = PLANET.radius;
+  const planet = globePlanet(seed, STAGES.on, STAGES.seed), R = PLANET.radius; // home.ts: surfaceAt (staged) or heightAt
 
   // ---- renderer + governor start (same rules as render/photoreal: GPU string → start tier, probe cap from the cached probe)
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, logarithmicDepthBuffer: true, powerPreference: 'high-performance' });
@@ -101,15 +102,19 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   addEventListener('keydown', e => {
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
     else if (e.key === 'h' || e.key === 'H') flyHome = 1;
-    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') location.search = gameUrl(location.search, overHome); // over home: spawn right below
+    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { shutdown(); location.search = gameUrl(location.search, overHome); } // over home: spawn right below
   });
 
   // ---- tile builders: a worker pool (default) or budgeted main-thread jobs (?workers=0 or no Worker support)
   const tiles = new Map<string, Tile>(), queued = new Map<string, { n: QNode; pr: number }>(), inflight = new Set<string>();
-  let frame = 0, built = 0, reqId = 0;
+  let frame = 0, built = 0, reqId = 0, cancelledN = 0;
   const camPos: Vec3 = [0, 0, 0];
   const nWorkers = q.get('workers') === '0' ? 0 : clamp((navigator.hardwareConcurrency || 4) - 2, 1, 4);
-  const pool: { w: Worker; busy: string }[] = [], ids = new Map<number, QNode>();
+  const pool: { w: Worker; busy: string; id: number }[] = [], ids = new Map<number, QNode>();
+  // finished tiles wait here; each frame adopts the closest few within a small main-thread budget (geometry + GPU upload
+  // happen on adoption), so a burst of worker results never lands in one frame
+  const ready: { n: QNode; t: TileData; d: number }[] = [];
+  const ADOPT = { perFrame: 4, ms: 2.5 }; // [game calibration]
   const accept = (n: QNode, t: TileData) => {
     inflight.delete(n.key); STATS.build.push(t.cpu); built++;
     const mesh = new THREE.Mesh(tileGeometry(t), material); mesh.matrixAutoUpdate = false;
@@ -117,8 +122,13 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   };
   try {
     for (let k = 0; k < nWorkers; k++) {
-      const w = new Worker(new URL('./tileWorker.ts', import.meta.url), { type: 'module' }), slot = { w, busy: '' };
-      w.onmessage = (e: MessageEvent<{ id: number; tile: TileData; warm?: number }>) => { if (e.data.warm !== undefined) { STATS.warm.push(e.data.warm); return; } const n = ids.get(e.data.id)!; ids.delete(e.data.id); slot.busy = ''; accept(n, e.data.tile); };
+      const w = new Worker(new URL('./tileWorker.ts', import.meta.url), { type: 'module' }), slot = { w, busy: '', id: 0 };
+      w.onmessage = (e: MessageEvent<{ id: number; tile?: TileData; warm?: number; cancelled?: boolean }>) => {
+        if (e.data.warm !== undefined) { STATS.warm.push(e.data.warm); return; }
+        const n = ids.get(e.data.id); ids.delete(e.data.id); if (slot.id === e.data.id) { slot.busy = ''; slot.id = 0; }
+        if (!n) return; if (e.data.cancelled || !e.data.tile) { inflight.delete(n.key); cancelledN++; return; }
+        const c = e.data.tile.centre; ready.push({ n, t: e.data.tile, d: Math.hypot(c[0] - camPos[0], c[1] - camPos[1], c[2] - camPos[2]) });
+      };
       w.onerror = e => { console.warn('globe tile worker failed; using main-thread jobs', e.message); pool.length = 0; inflight.clear(); ids.clear(); };
       w.postMessage({ warm: true, id: 0, seed, staged: STAGES.on, stagesSeed: STAGES.seed, face: 0, level: 0, i: 0, j: 0, segments: 0 } satisfies TileRequest);
       pool.push(slot);
@@ -132,8 +142,8 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     }
     const order = [...queued.values()].sort((a, b) => a.pr - b.pr);
     for (const slot of pool) {
-      if (slot.busy) continue; const job = order.shift(); if (!job) break;
-      const { n } = job, id = ++reqId; queued.delete(n.key); inflight.add(n.key); ids.set(id, n); slot.busy = n.key;
+      if (slot.busy) continue; const job = order.shift(); if (!job) break; // busy includes '~' (cancel sent, waiting for the worker)
+      const { n } = job, id = ++reqId; queued.delete(n.key); inflight.add(n.key); ids.set(id, n); slot.busy = n.key; slot.id = id;
       slot.w.postMessage({ id, seed, staged: STAGES.on, stagesSeed: STAGES.seed, face: n.face, level: n.level, i: n.i, j: n.j, segments: lod.segments } satisfies TileRequest);
     }
   }
@@ -171,6 +181,13 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     }
     if (ready) { const tl = tiles.get(n.key)!; renderOffset(tl.centre, camPos, offTmp); tl.mesh.position.set(offTmp[0], offTmp[1], offTmp[2]); tl.mesh.updateMatrix(); group.add(tl.mesh); drawn++; if (seen) inView++; deepest = Math.max(deepest, n.level); }
   }
+  // Leaving (handoff, G, closing the tab): stop the workers and free the GPU now, so nothing of the globe lingers into the game
+  let down = false;
+  function shutdown() {
+    if (down) return; down = true; for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); queued.clear(); ready.length = 0;
+    for (const t of tiles.values()) t.mesh.geometry.dispose(); tiles.clear(); material.dispose(); renderer.dispose(); renderer.forceContextLoss();
+  }
+  addEventListener('pagehide', shutdown);
   // roots first, synchronously on this thread, so the planet is never empty
   for (const r of roots()) accept(r, (() => { const g = buildTile(r, planet, lod.segments); let x = g.next(); while (!x.done) x = g.next(); return x.value; })());
   STATS.build.length = 0;
@@ -178,12 +195,13 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   // ---- loop
   let last = performance.now(), fps = 0, prevT = 0;
   function tick() {
+    if (down) return;
     const t0 = performance.now(), dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++;
     const dir = camera.position.clone().normalize(), s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = Math.max(s.h, s.water);
     // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
-    if (autoHandoff && spawn && !leaving) { leaving = true; fade.style.opacity = '1'; setTimeout(() => { location.search = gameUrl(location.search, spawn); }, 650); }
+    if (autoHandoff && spawn && !leaving) { leaving = true; fade.style.opacity = '1'; setTimeout(() => { shutdown(); location.search = gameUrl(location.search, spawn); }, 650); }
     if (flyHome) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
     if (bench) { const prev = benchT; benchT += dt;
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }
@@ -213,6 +231,10 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     splitK = inView > lod.draw ? Math.max(.35, splitK * .97) : inView < lod.draw * .85 ? Math.min(1, splitK * 1.01) : splitK;
     for (const key of queued.keys()) if (!wanted.has(key)) queued.delete(key);
     if (!pool.length) for (const key of inflight) if (!wanted.has(key)) { cancel(key); inflight.delete(key); }
+    for (const slot of pool) if (slot.busy && !wanted.has(slot.busy) && !tiles.has(slot.busy)) { slot.w.postMessage({ cancel: true, id: slot.id } as TileRequest); slot.busy = '~'; } // stale: the worker drops it at its next slice
+    // adopt finished tiles: closest first, a few per frame within a budget
+    if (ready.length) { const ta = performance.now(); for (const it of ready) { const c = it.t.centre; it.d = Math.hypot(c[0] - camPos[0], c[1] - camPos[1], c[2] - camPos[2]); } ready.sort((a, b) => a.d - b.d);
+      let k = 0; while (ready.length && k < ADOPT.perFrame && performance.now() - ta < ADOPT.ms) { const it = ready.shift()!; accept(it.n, it.t); k++; } }
     dispatch();
     if (frame % 30 === 0 && tiles.size > lod.cache) { // evict least-recently-used tiles over the tier's cache cap (never the roots)
       const old = [...tiles.entries()].filter(([k, t]) => t.used < frame - 2 && k.split('/')[1] !== '0').sort((a, b) => a[1].used - b[1].used);
@@ -229,11 +251,11 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       hud.textContent = `Boreal planet · seed ${seed}${STAGES.on ? ' (staged)' : ''}\n` +
         `altitude ${alt >= 1e4 ? (alt / 1000).toFixed(0) + ' km' : alt.toFixed(0) + ' m'} · ground ${ground.toFixed(0)} m · ${(ll.lat * 180 / Math.PI).toFixed(2)}°, ${(ll.lon * 180 / Math.PI).toFixed(2)}°\n` +
         `tiles drawn ${drawn} (${inView} in view, cap ${lod.draw}${splitK < 1 ? ` · split ×${splitK.toFixed(2)}` : ''}) · culled ${culled} · cached ${tiles.size} · deepest L${deepest} · queued ${queued.size + inflight.size}\n` +
-        `build (${mode()}) ${built} tiles · avg ${avg(STATS.build).toFixed(1)} ms · p95 ${pct(STATS.build, .95).toFixed(1)} ms · worst frame ${Math.max(0, ...STATS.work).toFixed(1)} ms\n` +
+        `build (${mode()}) ${built} tiles (${cancelledN} cancelled, ${ready.length} waiting) · avg ${avg(STATS.build).toFixed(1)} ms · p95 ${pct(STATS.build, .95).toFixed(1)} ms · worst frame ${Math.max(0, ...STATS.work).toFixed(1)} ms\n` +
         `tier ${LADDER[GOVERNOR.tier].name}${GOVERNOR.auto ? ' (auto)' : ''} · ${lod.segments} seg · ${fps.toFixed(0)} fps · work ${work.toFixed(1)} ms\n` +
         (overHome && alt < HANDOFF.hintAlt ? `over the home region: descend below ${HANDOFF.alt / 1000} km to enter the game\n` : '') + `drag orbit · wheel / + - zoom · H home · G game`;
     }
-    requestAnimationFrame(tick);
+    if (!down) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
   return { planet, renderer, scene, camera, tiles };

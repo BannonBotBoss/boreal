@@ -24,18 +24,18 @@ import { RENDER } from '../../core/renderSettings';
 import { COVER_SPECIES, GRASS, bladesJob, keepAt, type Blades } from './cover';
 
 export const GRASS_FX = { off: false }; // bench hook (cost measurement), like TREE_FX
-export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0 };
+export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, sliceMaxMs: 0, packMaxMs: 0, packs: 0 };
 (globalThis as { borealGrass?: unknown }).borealGrass = { info: GRASS_INFO, fx: GRASS_FX }; // dev/bench handle (survives Vite HMR module copies)
 const K = COVER_SPECIES.length;
 const U = {
   uGrass: { value: new THREE.Vector4(GRASS.lodDist, GRASS.full, GRASS.radius, 1) }, // lodDist, full, radius, foliage
-  uPlayer: { value: new THREE.Vector3() }, uPx: { value: .001 }, // pixel footprint per metre of distance (2·tan(fov/2) / screen height)
+  uPlayer: { value: new THREE.Vector3() }, uCamFwd: { value: new THREE.Vector3(0, 0, -1) }, uPx: { value: .001 }, // pixel footprint per metre of distance (2·tan(fov/2) / screen height)
   uShape: { value: COVER_SPECIES.map(s => new THREE.Vector4(s.width, s.profile, s.stem, s.stiff)) },
   uBase: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.base)) }, uTip: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.tip)) }, uFall: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.fall)) },
 };
 const VERT_HEAD = `#define GRASS_K ${K}
 attribute float vertIndex; attribute vec4 aBlade; attribute float aKind;
-uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer; uniform float uPx;
+uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer, uCamFwd; uniform float uPx;
 uniform vec4 uShape[GRASS_K]; uniform vec3 uBase[GRASS_K]; uniform vec3 uTip[GRASS_K]; uniform vec3 uFall[GRASS_K];
 varying vec3 vGrassColour;
 ${GLSL_NOISE}
@@ -50,6 +50,7 @@ const VERT_BODY = `
   vec3 root = position;
   float dist = distance(cameraPosition, root);
   float keep = (dist <= uGrass.y ? 1.0 : pow(uGrass.y / dist, 2.0)) * (1.0 - smoothstep(uGrass.z * 0.8, uGrass.z, dist)) * uGrass.w; // cover.keepAt × foliage
+  keep *= max(step(dist, 3.0), step(-0.35, dot(root - cameraPosition, uCamFwd) / max(dist, 1e-3))); // one field mesh, no per-tile culling: blades well behind the view collapse
   float alive = step(aBlade.w, keep);
   float highLODOut = smoothstep(uGrass.x * 0.5, uGrass.x, dist);
   int k = int(aKind + 0.5); vec4 sh = uShape[k];
@@ -123,40 +124,52 @@ function template(segments: number) {
   t = { id: new THREE.BufferAttribute(Float32Array.from({ length: V * 2 }, (_, i) => i), 1), index: new THREE.BufferAttribute(new Uint16Array(idx), 1) };
   templates.set(segments, t); return t;
 }
-function tileMesh(b: Blades, segments: number, attrs: Record<string, THREE.InstancedBufferAttribute>, sphere: THREE.Sphere) {
-  const g = new THREE.InstancedBufferGeometry(), t = template(segments);
-  g.setIndex(t.index); g.setAttribute('vertIndex', t.id); for (const [k, a] of Object.entries(attrs)) g.setAttribute(k, a);
-  g.instanceCount = b.count; g.boundingSphere = sphere; g.boundingBox = new THREE.Box3().setFromCenterAndSize(sphere.center, new THREE.Vector3(GRASS.tile, b.maxY - b.minY + 1, GRASS.tile));
-  const mesh = new THREE.Mesh(g, grassMaterial(segments)); mesh.userData.shadowSet = true; mesh.castShadow = false; mesh.receiveShadow = true; // photoreal: no grass shadow casters (upstream castShadow = false)
-  mesh.matrixAutoUpdate = false; return mesh;
+/** ONE instanced mesh per blade LOD for the whole field (perf audit: was 2 meshes per 10 m tile, ~92 objects): kept blades of
+ * every tile are packed into one interleaved instance buffer [root xyz, angle, length, lean, keep, species]. Repacked only when
+ * a tile's quantised keep count or LOD changes (4 Hz at most), uploading just the used range. */
+function fieldMesh(segments: number) {
+  const mesh = new THREE.Mesh(new THREE.InstancedBufferGeometry(), grassMaterial(segments)); mesh.name = `grass-${segments}`;
+  Object.assign(mesh, { frustumCulled: false, castShadow: false, receiveShadow: true, matrixAutoUpdate: false }); mesh.userData.shadowSet = true; // photoreal: no grass shadow casters (upstream castShadow = false)
+  let buf: THREE.InstancedInterleavedBuffer | undefined;
+  return { mesh, pack(parts: Float32Array[], total: number) {
+    let g = mesh.geometry as THREE.InstancedBufferGeometry;
+    if (!buf || buf.count < total) { // grow ×2: a new geometry, so the old GL buffers are released
+      g.dispose(); g = new THREE.InstancedBufferGeometry(); const t = template(segments); g.setIndex(t.index); g.setAttribute('vertIndex', t.id);
+      buf = new THREE.InstancedInterleavedBuffer(new Float32Array(Math.max(4096, 2 ** Math.ceil(Math.log2(total))) * 8), 8); buf.setUsage(THREE.DynamicDrawUsage);
+      g.setAttribute('position', new THREE.InterleavedBufferAttribute(buf, 3, 0)); g.setAttribute('aBlade', new THREE.InterleavedBufferAttribute(buf, 4, 3)); g.setAttribute('aKind', new THREE.InterleavedBufferAttribute(buf, 1, 7));
+      mesh.geometry = g; }
+    let o = 0; for (const p of parts) { buf.array.set(p, o); o += p.length; }
+    buf.clearUpdateRanges(); buf.addUpdateRange(0, o); buf.needsUpdate = true; g.instanceCount = total; mesh.visible = total > 0;
+  } };
 }
+/** Keep share quantised to ~√2 steps, so moving does not repack every update. */
+const quant = (k: number) => k >= 1 ? 1 : k <= .01 ? 0 : Math.SQRT2 ** Math.ceil(Math.log(k) / Math.log(Math.SQRT2));
 
 /** The grass field around the camera: tiles within the radius, built by interest jobs, thinned with distance. */
 export function createGrass(scene: THREE.Scene) {
   const group = new THREE.Group(); group.name = 'grass'; scene.add(group);
-  const tiles = new Map<string, { tx: number; tz: number; b: Blades; high: THREE.Mesh; low: THREE.Mesh }>();
-  let segs = RENDER.terrainSegments; const jobs = new Set<string>();
-  const dispose = (key: string) => { const t = tiles.get(key)!; group.remove(t.high, t.low); t.high.geometry.dispose(); t.low.geometry.dispose(); tiles.delete(key); };
+  const tiles = new Map<string, { tx: number; tz: number; b: Blades }>(), jobs = new Set<string>();
+  const high = fieldMesh(GRASS.segHigh), low = fieldMesh(GRASS.segLow); group.add(high.mesh, low.mesh);
+  let segs = RENDER.terrainSegments, sig = '', lastPack = 0, dirty = true;
   function update(camera: THREE.Camera, player: THREE.Vector3, foliage: number, nearRadius: number) {
     const T = GRASS.tile, cx = camera.position.x, cz = camera.position.z, R = Math.min(GRASS.radius * Math.sqrt(foliage), nearRadius); // never beyond full-res terrain (interest near tier)
     group.visible = !GRASS_FX.off && foliage > 0;
-    if (segs !== RENDER.terrainSegments) { segs = RENDER.terrainSegments; for (const k of [...tiles.keys()]) dispose(k); } // roots follow the terrain lattice
+    if (segs !== RENDER.terrainSegments) { segs = RENDER.terrainSegments; tiles.clear(); } // roots follow the terrain lattice
     U.uGrass.value.set(GRASS.lodDist, GRASS.full, R, foliage); U.uPlayer.value.copy(player); const fov = (camera as THREE.PerspectiveCamera).fov ?? 48; U.uPx.value = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, globalThis.innerHeight ?? 900);
+    camera.getWorldDirection(U.uCamFwd.value);
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * T - cx, 0, cx - tx * T - T), Math.max(tz * T - cz, 0, cz - tz * T - T));
     const r = Math.ceil(R / T) + 1, ox = Math.floor(cx / T), oz = Math.floor(cz / T), want = new Set<string>();
     for (let a = ox - r; a <= ox + r; a++) for (let b = oz - r; b <= oz + r; b++) { const d = sq(a, b), key = `${a}:${b}`; if (d > R + T / 2) continue; want.add(key); // keep a half-tile margin (no flicker at the edge)
-      if (d <= R && !tiles.has(key) && !pending(`grass:${key}`)) { jobs.add(key); enqueue(`grass:${key}`, d + 5, bladesJob(a, b), (bl: Blades) => { jobs.delete(key);
-        if (!bl.count) { tiles.set(key, { tx: a, tz: b, b: bl, high: new THREE.Mesh(), low: new THREE.Mesh() }); return; }
-        const attrs = { position: new THREE.InstancedBufferAttribute(bl.pos, 3), aBlade: new THREE.InstancedBufferAttribute(bl.blade, 4), aKind: new THREE.InstancedBufferAttribute(bl.kind, 1) };
-        const sphere = new THREE.Sphere(new THREE.Vector3((a + .5) * T, (bl.minY + bl.maxY) / 2, (b + .5) * T), Math.hypot(T / 2, T / 2, (bl.maxY - bl.minY) / 2 + .5) + 1);
-        const t = { tx: a, tz: b, b: bl, high: tileMesh(bl, GRASS.segHigh, attrs, sphere), low: tileMesh(bl, GRASS.segLow, attrs, sphere) }; group.add(t.high, t.low); tiles.set(key, t); }); } }
-    for (const key of [...tiles.keys()]) if (!want.has(key)) dispose(key);
+      if (d <= R && !tiles.has(key) && !pending(`grass:${key}`)) { jobs.add(key); enqueue(`grass:${key}`, d + 5, timedGrass(bladesJob(a, b)), (bl: Blades) => { jobs.delete(key); tiles.set(key, { tx: a, tz: b, b: bl }); dirty = true; }); } }
+    for (const key of [...tiles.keys()]) if (!want.has(key)) { tiles.delete(key); dirty = true; }
     for (const key of [...jobs]) if (!want.has(key)) { cancel(`grass:${key}`); jobs.delete(key); }
-    let blades = 0, drawn = 0;
-    for (const t of tiles.values()) { if (!t.b.count) continue; const d = sq(t.tx, t.tz), n = Math.min(t.b.count, Math.ceil(t.b.count * keepAt(d, R) * foliage)); blades += t.b.count;
-      const near = d < GRASS.lodDist; t.high.visible = near && n > 0; t.low.visible = !near && n > 0;
-      (t.high.geometry as THREE.InstancedBufferGeometry).instanceCount = n; (t.low.geometry as THREE.InstancedBufferGeometry).instanceCount = n; drawn += n; }
+    let blades = 0, drawn = 0, s = ''; const hp: Float32Array[] = [], lp: Float32Array[] = []; let hn = 0, ln = 0;
+    for (const [key, t] of tiles) { if (!t.b.count) continue; const d = sq(t.tx, t.tz), n = Math.min(t.b.count, Math.ceil(t.b.count * quant(keepAt(d, R) * foliage))); blades += t.b.count; if (!n) continue;
+      const near = d < GRASS.lodDist, part = t.b.data.subarray(0, n * 8); if (near) { hp.push(part); hn += n; } else { lp.push(part); ln += n; } drawn += n; s += `${key}:${n}:${near ? 1 : 0};`; }
+    const tn = performance.now(); if (s !== sig && (dirty || tn - lastPack > 250)) { const t0 = tn; sig = s; lastPack = tn; dirty = false; /* thinning-only changes repack at most 4×/s */ high.pack(hp, hn); low.pack(lp, ln); GRASS_INFO.packMaxMs = Math.max(GRASS_INFO.packMaxMs, performance.now() - t0); GRASS_INFO.packs++; }
     Object.assign(GRASS_INFO, { tiles: tiles.size, blades, drawn });
   }
   return { group, update, tiles: () => tiles.size };
 }
+/** Slice timer for the perf audit (GRASS_INFO.sliceMaxMs). */
+function* timedGrass<T>(g: Generator<unknown, T>): Generator<unknown, T> { for (;;) { const t = performance.now(), r = g.next(); GRASS_INFO.sliceMaxMs = Math.max(GRASS_INFO.sliceMaxMs, performance.now() - t); if (r.done) return r.value; yield; } }

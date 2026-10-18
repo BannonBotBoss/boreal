@@ -23,6 +23,26 @@ export interface Site { water: boolean; slopeDeg: number; wet: number; rock: num
 let canopyOf: ((x: number, z: number) => number) | undefined;
 export function setCanopySource(fn?: (x: number, z: number) => number) { canopyOf = fn; }
 
+/** Ground footprints of rocks, logs, trunks and props, so ground plants never grow through them (render/flora registers the
+ * same entities the scene draws). Circle (hx = 0, radius r) or box with half extents hx, hz (a log: axis along x, as drawn). */
+export interface Footprint { x: number; z: number; r: number; hx: number; hz: number }
+let footprintOf: ((x0: number, z0: number, x1: number, z1: number) => Footprint[]) | undefined;
+export function setFootprintSource(fn?: (x0: number, z0: number, x1: number, z1: number) => Footprint[]) { footprintOf = fn; }
+/** Footprints overlapping the box [x0, x1] × [z0, z1] (fetch once per tile, then test points with `covered`). */
+export const footprintsIn = (x0: number, z0: number, x1: number, z1: number) => footprintOf?.(x0, z0, x1, z1) ?? [];
+/** Point (grown out by `pad` m, e.g. a plant's crown radius) inside any footprint. */
+export function covered(list: Footprint[], x: number, z: number, pad = 0) {
+  for (const f of list) { const dx = x - f.x, dz = z - f.z;
+    if (f.hx ? Math.abs(dx) < f.hx + pad && Math.abs(dz) < f.hz + pad : dx * dx + dz * dz < (f.r + pad) ** 2) return true; }
+  return false;
+}
+
+/** Area prefetch hook (render/flora registers it): builds the per-chunk caches the canopy and footprint hooks read, in
+ * budgeted slices, so a tile job never builds them synchronously inside one slice (perf audit: 35-50 ms stalls). */
+let prefetchOf: ((x0: number, z0: number, x1: number, z1: number) => Generator<unknown, void>) | undefined;
+export function setAreaPrefetch(fn?: (x0: number, z0: number, x1: number, z1: number) => Generator<unknown, void>) { prefetchOf = fn; }
+export function* prepareArea(x0: number, z0: number, x1: number, z1: number): Generator<unknown, void> { if (prefetchOf) yield* prefetchOf(x0, z0, x1, z1); }
+
 /** The site at a point. Staged: stage-3 soils (core/stages/soils soilAt, the same fields core/ground and the tree mix use):
  * wetness, bedrock share and depth to bedrock are bilinear between the 4 grid nodes (values sit on nodes, i·cell), the material
  * is the nearest node's. Bedrock counts .85 rock (NOEGTS RN: 'bare or thin patchy drift', so soil pockets remain). Unstaged: height above the shore, as render/trees and core/ground do. */

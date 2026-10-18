@@ -12,6 +12,7 @@
  * flora material; randomness = proc/rng streams; no L-system interpreter (organ counts come from the species rows).
  */
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { random, hash } from '../../proc/rng';
 import type { FloraSpec, LeafShape } from '../../core/flora/plants';
 
@@ -25,7 +26,7 @@ const col = (hex: string) => new THREE.Color(hex); // sRGB hex → linear (three
 const UP = new THREE.Vector3(0, 1, 0);
 
 class Builder {
-  p: number[] = []; c: number[] = []; f: number[] = []; o: number[] = []; b: number[] = []; i: number[] = [];
+  p: number[] = []; c: number[] = []; f: number[] = []; o: number[] = []; b: number[] = []; i: number[] = []; bare = false; // bare: no stems (far carpet clumps)
   private v(x: THREE.Vector3, c: THREE.Color, fall: THREE.Color, organ: number, bloom: [number, number]) { this.p.push(x.x, x.y, x.z); this.c.push(c.r, c.g, c.b); this.f.push(fall.r, fall.g, fall.b); this.o.push(organ); this.b.push(...bloom); return this.p.length / 3 - 1; }
   /** upstream createBlade: strip along local +y, width on x, curvature on z; placed by matrix m. */
   blade(m: THREE.Matrix4, length: number, width: number, prof: (t: number) => number, curv: (t: number) => number, segs: number, colour: (t: number) => THREE.Color, fall: THREE.Color, organ = 0, bloom: [number, number] = [0, 0]) {
@@ -36,6 +37,7 @@ class Builder {
   }
   /** Stem segment: open prism from a to b (sides 3-4), tapering r0 → r1. */
   tube(a: THREE.Vector3, b: THREE.Vector3, r0: number, r1: number, c: THREE.Color, sides: number, organ = 0, bloom: [number, number] = [0, 0]) {
+    if (this.bare) return;
     const d = b.clone().sub(a), q = new THREE.Quaternion().setFromUnitVectors(UP, d.clone().normalize()), base = this.p.length / 3, tmp = new THREE.Vector3();
     for (let s = 0; s < sides; s++) { const ang = s / sides * Math.PI * 2;
       for (const [o, r] of [[a, r0], [b, r1]] as const) this.v(tmp.set(Math.cos(ang) * r, 0, Math.sin(ang) * r).applyQuaternion(q).add(o), c, c, organ, bloom); }
@@ -56,14 +58,15 @@ function tilted(axis: THREE.Vector3, tilt: number, az: number) {
   return axis.clone().normalize().multiplyScalar(Math.cos(tilt)).addScaledVector(side, Math.sin(tilt)).normalize();
 }
 
-/** Builds one variant of a species at detail 0 (near) or 1 (mid). Sized to the species' mean height; instances scale it. */
+/** Builds one variant of a species at detail 0 (near), 1 (mid) or 2 (far: mid without stems, leaves ×1.25 to keep the cover).
+ * Sized to the species' mean height; instances scale it. */
 export function buildPlant(spec: FloraSpec, variant: number, detail: number) {
-  const r = random(hash(`flora:${spec.id}:${variant}`)), B = new Builder(), lo = detail > 0;
+  const r = random(hash(`flora:${spec.id}:${variant}`)), B = new Builder(), lo = detail > 0, grow = detail > 1 ? 1.25 : 1; B.bare = detail > 1;
   const leafSegs = lo ? 1 : 4, petalSegs = lo ? 1 : 3, sides = lo ? 3 : 4, H = spec.height.mean;
   const leafC = col(spec.leaf.colour), leafFall = col(spec.leaf.fall ?? spec.leaf.colour), stemC = col(spec.stemColour);
   const fl = spec.flower, bloom: [number, number] = fl ? fl.bloom : [0, 0];
   function leaf(at: THREE.Vector3, axis: THREE.Vector3, az: number, scale = 1) {
-    const L = spec.leaf, len = L.length * scale * (.85 + .3 * r()), wid = L.width * scale * (lo ? 1.3 : 1);
+    const L = spec.leaf, len = L.length * scale * grow * (.85 + .3 * r()), wid = L.width * scale * grow * (lo ? 1.3 : 1);
     const dir = tilted(axis, Math.PI / 2 * (.35 + .5 * L.droop) + (r() - .5) * .3, az);
     const shade = (t: number) => leafC.clone().multiplyScalar(.75 + .35 * t);
     const curv = (t: number) => -L.droop * len * .35 * t * t;
@@ -123,4 +126,15 @@ export function buildPlant(spec: FloraSpec, variant: number, detail: number) {
     }
   }
   return B.geometry();
+}
+
+/** One understorey carpet clump (core/flora/plants `carpet`): ramets of a clonal mat merged into ONE geometry (three
+ * BufferGeometryUtils.mergeGeometries), on a Vogel golden-angle disc of the row's radius. Detail 0: every ramet at the near LOD;
+ * detail 1 (far): half the ramets, stemless (buildPlant detail 2) and 15 % larger, so the mat keeps its cover at a fraction of the vertices. */
+export function buildClump(spec: FloraSpec, variant: number, detail: number) {
+  const c = spec.carpet!, form = { ...spec, ...c.form }, near = detail === 0, n = near ? c.ramets : Math.ceil(c.ramets / 2), r = random(hash(`clump:${spec.id}:${variant}`));
+  const parts: THREE.BufferGeometry[] = [], m = new THREE.Matrix4(), q = new THREE.Quaternion();
+  for (let k = 0; k < n; k++) { const rad = c.radius * Math.sqrt((k + .5) / n), az = k * GOLDEN_ANGLE + r() * .6, s = (.8 + .35 * r()) * (near ? 1 : 1.15);
+    const g = buildPlant(form, (variant * 3 + k) % 4, near ? 0 : 2); g.applyMatrix4(m.compose(new THREE.Vector3(Math.cos(az) * rad, 0, Math.sin(az) * rad), q.setFromAxisAngle(UP, r() * Math.PI * 2), new THREE.Vector3(s, s, s))); parts.push(g); }
+  const g = mergeGeometries(parts)!; for (const p of parts) p.dispose(); g.computeBoundingSphere(); return g;
 }

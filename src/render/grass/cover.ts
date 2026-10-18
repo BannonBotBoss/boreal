@@ -13,7 +13,7 @@
  */
 import { CHUNK_SIZE, heightAt, WORLD_SEED } from '../../core/world';
 import { RENDER } from '../../core/renderSettings';
-import { siteAt, type Site } from '../../core/flora/site';
+import { covered, footprintsIn, prepareArea, siteAt, type Site } from '../../core/flora/site';
 import { CELL } from '../../core/ground';
 import { hash, random, sample, type Dist } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
@@ -74,11 +74,12 @@ export const GRASS = { tile: CHUNK_SIZE / 4, maxDensity: 120 /* blades/m² at Ul
 /** Kept share of blades at distance d (density falloff): 1 inside `full`, then (full/d)² (constant blades per screen area), 0 at `radius`. */
 export function keepAt(d: number, radius: number, full = GRASS.full) { return (d <= full ? 1 : (full / d) ** 2) * (1 - smoothstep(radius * .8, radius, d)); }
 
-export interface Blades { count: number; pos: Float32Array; blade: Float32Array; kind: Float32Array; minY: number; maxY: number }
+export interface Blades { count: number; pos: Float32Array; blade: Float32Array; kind: Float32Array; data: Float32Array /* interleaved ×8, as render/grass packs it */; minY: number; maxY: number }
 /** One tile's blades as a sliced job (yields per row). Instances are sorted by their keep hash, so drawing the first
  * `keep × count` instances thins the tile uniformly (distance / quality) without rebuilding. */
 export function* bladesJob(tx: number, tz: number, seed = WORLD_SEED): Generator<unknown, Blades> {
   const T = GRASS.tile, x0 = tx * T, z0 = tz * T, step = CHUNK_SIZE / RENDER.terrainSegments, m = Math.round(T / step);
+  yield* prepareArea(x0 - 1, z0 - 1, x0 + T + 1, z0 + T + 1); // canopy + footprint caches, sliced
   const H = new Float32Array((m + 1) * (m + 1));
   for (let j = 0; j <= m; j++) { for (let i = 0; i <= m; i++) H[j * (m + 1) + i] = heightAt(x0 + i * step, z0 + j * step); if (j % 4 === 0) yield; }
   const cm = Math.round(T / CELL), C: Cover[] = [];
@@ -87,6 +88,7 @@ export function* bladesJob(tx: number, tz: number, seed = WORLD_SEED): Generator
   const ground = (x: number, z: number) => { const fx = (x - x0) / step, fz = (z - z0) / step, i = Math.min(m - 1, Math.floor(fx)), j = Math.min(m - 1, Math.floor(fz)), u = fx - i, v = fz - j;
     const a = H[j * (m + 1) + i], d = H[j * (m + 1) + i + 1], b = H[(j + 1) * (m + 1) + i], c = H[(j + 1) * (m + 1) + i + 1];
     return u + v <= 1 ? a + (d - a) * u + (b - a) * v : c + (b - c) * (1 - u) + (d - c) * (1 - v); };
+  const feet = footprintsIn(x0, z0, x0 + T, z0 + T); // rocks, logs, trunks, props: no blade grows through them
   const r = random(hash(`grass:${seed}:${tx}:${tz}`)), sp = 1 / Math.sqrt(GRASS.maxDensity), g = Math.round(T / sp), rows: number[][] = [];
   for (let j = 0; j < g; j++) {
     for (let i = 0; i < g; i++) {
@@ -96,13 +98,13 @@ export function* bladesJob(tx: number, tz: number, seed = WORLD_SEED): Generator
       if (q.some(c => c.density === 0) || r() >= q.reduce((s, c, k) => s + c.density * wq[k], 0)) continue; // hard edge at water / bare rock
       const w = COVER_SPECIES.map((_, s) => q.reduce((a, c, k) => a + c.weights[s] * wq[k], 0)), tot = w.reduce((a, b) => a + b, 0);
       let pick = r() * tot, k = 0; while (k < w.length - 1 && (pick -= w[k]) > 0) k++;
-      const sp_ = COVER_SPECIES[k];
-      rows.push([x, ground(x, z) - .01, z, r() * Math.PI * 2, sample(r, sp_.length), sp_.lean[0] + r() * (sp_.lean[1] - sp_.lean[0]), keep, k]);
+      const sp_ = COVER_SPECIES[k], row = [x, ground(x, z) - .01, z, r() * Math.PI * 2, sample(r, sp_.length), sp_.lean[0] + r() * (sp_.lean[1] - sp_.lean[0]), keep, k];
+      if (!feet.length || !covered(feet, x, z, .02)) rows.push(row); // tested after every draw, so the rng stream (the field elsewhere) is unchanged
     }
     yield;
   }
-  rows.sort((a, b) => a[6] - b[6]);
-  const n = rows.length, pos = new Float32Array(n * 3), blade = new Float32Array(n * 4), kind = new Float32Array(n); let minY = Infinity, maxY = -Infinity;
-  rows.forEach((b, i) => { pos.set(b.slice(0, 3), i * 3); blade.set(b.slice(3, 7), i * 4); kind[i] = b[7]; minY = Math.min(minY, b[1]); maxY = Math.max(maxY, b[1] + b[4]); });
-  return { count: n, pos, blade, kind, minY: n ? minY : 0, maxY: n ? maxY : 0 };
+  rows.sort((a, b) => a[6] - b[6]); yield;
+  const n = rows.length, pos = new Float32Array(n * 3), blade = new Float32Array(n * 4), kind = new Float32Array(n), data = new Float32Array(n * 8); let minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < n; i++) { const b = rows[i]; for (let k = 0; k < 8; k++) data[i * 8 + k] = b[k]; for (let k = 0; k < 3; k++) pos[i * 3 + k] = b[k]; for (let k = 0; k < 4; k++) blade[i * 4 + k] = b[3 + k]; kind[i] = b[7]; if (b[1] < minY) minY = b[1]; if (b[1] + b[4] > maxY) maxY = b[1] + b[4]; } // no per-row allocations (perf audit)
+  return { count: n, pos, blade, kind, data, minY: n ? minY : 0, maxY: n ? maxY : 0 };
 }

@@ -22,6 +22,10 @@ export interface FloraSpec {
   leaf: { shape: LeafShape; arrangement: Arrangement; perNode: number; nodes: number; length: number; width: number; colour: string; fall?: string; droop: number };
   flower?: { kind: Inflorescence; count: number; petals: number; petalLength: number; petalWidth: number; open: number; nod: number; cup: number; colour: string; centre: string; bloom: [number, number] };
   niche: Niche; cluster: Cluster;
+  /** Understorey carpet (clonal mats): extra ramets drawn as merged clumps (render/flora buildClump), placed by the same niche
+   * + Thomas process (mats = clusters). cluster: mats per m² × suitability, clumps per mat, mat σ (m); ramets per clump within
+   * `radius` m; `form` overrides the row for the ramet geometry (a single clonal shoot, not the whole shrub). */
+  carpet?: { cluster: Cluster; ramets: number; radius: number; form?: Partial<FloraSpec> };
 }
 const HERB = { stems: 1, branching: 0 };
 /** κ per m² (clusters), μ plants per cluster, σ m [game calibration, verify against plot data]. */
@@ -35,12 +39,17 @@ export const FLORA: FloraSpec[] = [
   { id: 'twinflower', latin: 'Linnaea borealis', form: 'herb', ...HERB, evergreen: true, height: { mean: .08, sd: .02, min: .05, max: .12 }, stemColour: '#6b4a32', stemRadius: .0008,
     leaf: { shape: 'round', arrangement: 'opposite', perNode: 2, nodes: 3, length: .014, width: .012, colour: '#355e2a', droop: .9 },
     flower: { kind: 'pair', count: 2, petals: 5, petalLength: .011, petalWidth: .006, open: .35, nod: 2.2, cup: .002, colour: '#f2b3c6', centre: '#f7e6ea', bloom: [165, 200] },
-    niche: { wet: [.55, .25], light: [.3, .3], rock: .1 }, cluster: { kappa: .008, mu: 25, sigma: .5 } },
+    niche: { wet: [.55, .25], light: [.3, .3], rock: .1 }, cluster: { kappa: .008, mu: 25, sigma: .5 },
+    // trailing runners 1-2 m forming loose mats under conifer crowns (FNA vol. 18; FEIS Linnaea borealis) [verify]; ~55 uprights/m² in a mat [game calibration]
+    carpet: { cluster: { kappa: .012, mu: 26, sigma: .9 }, ramets: 6, radius: .19 } },
   // Bunchberry: 4 white petal-like bracts 1-2.5 cm, whorl of 4-6 leaves 2-8 cm, 10-20 cm tall; Jun-Jul; moist conifer/mixedwood (FNA vol. 12) [verify]
   { id: 'bunchberry', latin: 'Cornus canadensis', form: 'herb', ...HERB, height: { mean: .14, sd: .03, min: .08, max: .22 }, stemColour: '#4f6a35', stemRadius: .0015,
     leaf: { shape: 'ovate', arrangement: 'whorled', perNode: 6, nodes: 1, length: .06, width: .03, colour: '#3c6a2c', fall: '#8a2e3a', droop: .15 },
     flower: { kind: 'solitary', count: 1, petals: 4, petalLength: .017, petalWidth: .013, open: 1.45, nod: 0, cup: .002, colour: '#f3f1e4', centre: '#7d8a4a', bloom: [155, 190] },
-    niche: { wet: [.5, .25], light: [.4, .35], rock: .1 }, cluster: { kappa: .01, mu: 30, sigma: .6 } },
+    niche: { wet: [.5, .25], light: [.4, .35], rock: .1 }, cluster: { kappa: .01, mu: 30, sigma: .6 },
+    // rhizomatous clones: 30-94 shoots/m² (FEIS Cornus canadensis, Wisconsin), dense clones to ~300 flowering shoots/m²; stand cover
+    // 4-8 % in spruce-fir / feathermoss stands (FEIS; N Alberta 8 %, mosses 58 %). Clump = 7 shoots in r .22 m ≈ 46 /m² [game calibration]
+    carpet: { cluster: { kappa: .02, mu: 30, sigma: 1.1 }, ramets: 7, radius: .22 } },
   // Prickly wild rose: 5 pink petals, flowers 4-6 cm across; shrub 0.3-1.2 m, pinnate leaves (drawn as ovate leaflets); Jun-Jul; open forest, edges (FNA vol. 9) [verify]
   { id: 'rose', latin: 'Rosa acicularis', form: 'shrub', height: { mean: .7, sd: .2, min: .3, max: 1.2 }, stems: 3, branching: 3, stemColour: '#6e3b2c', stemRadius: .004,
     leaf: { shape: 'ovate', arrangement: 'alternate', perNode: 5, nodes: 8, length: .03, width: .018, colour: '#41672f', fall: '#b5452a', droop: .4 },
@@ -69,7 +78,9 @@ export const FLORA: FloraSpec[] = [
   // Lowbush blueberry: 5-60 cm, branched, alternate elliptic leaves 1.5-3.5 cm, red in fall; jack pine / outcrops (FNA vol. 8) [verify]
   { id: 'blueberry', latin: 'Vaccinium angustifolium', form: 'shrub', height: { mean: .25, sd: .08, min: .1, max: .45 }, stems: 4, branching: 4, stemColour: '#7a3d2a', stemRadius: .002,
     leaf: { shape: 'elliptic', arrangement: 'alternate', perNode: 1, nodes: 10, length: .025, width: .01, colour: '#3f6c2c', fall: '#a82a22', droop: .3 },
-    niche: { wet: [.3, .2], light: [.7, .35], rock: .7 }, cluster: { kappa: .006, mu: 10, sigma: .9 } },
+    niche: { wet: [.3, .2], light: [.7, .35], rock: .7 }, cluster: { kappa: .006, mu: 10, sigma: .9 },
+    // clonal colonies from rhizomes (FEIS Vaccinium angustifolium): ramet = one upright shoot with 2 side branches [game calibration]
+    carpet: { cluster: { kappa: .012, mu: 22, sigma: 1.4 }, ramets: 4, radius: .28, form: { stems: 1, branching: 2 } } },
   // Labrador tea: 30-100 cm, evergreen, alternate revolute leaves 2-5 cm, rusty beneath; black spruce / peat (FNA vol. 8) [verify]
   { id: 'labradortea', latin: 'Rhododendron groenlandicum', form: 'shrub', evergreen: true, height: { mean: .55, sd: .15, min: .3, max: .9 }, stems: 3, branching: 3, stemColour: '#6a4a33', stemRadius: .003,
     leaf: { shape: 'linear', arrangement: 'alternate', perNode: 1, nodes: 12, length: .04, width: .009, colour: '#34572a', droop: .6 },

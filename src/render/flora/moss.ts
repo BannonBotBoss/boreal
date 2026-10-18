@@ -11,7 +11,7 @@
  * foliage 0 switches the layer off.
  */
 import * as THREE from 'three';
-import { GROUND_LAYERS, groundCover, mossOctaves } from '../../core/flora/mosses';
+import { GROUND_LAYERS, groundCover } from '../../core/flora/mosses';
 import { prepareArea, siteAt } from '../../core/flora/site';
 import { enqueue, pending } from '../../core/interest';
 import { addGroundLayer } from '../pbr';
@@ -19,9 +19,11 @@ import { groundColor } from '../math';
 import { SOIL_KINDS } from '../../core/stages/soils';
 
 const N = 128, TEXEL = 2, SLICE_MS = 2, SHIFT = 8; // texels, m, ms, texels moved before a refill [game calibration]
-export const MOSS_FX = { off: false };
+export const MOSS_FX = { off: typeof location !== 'undefined' && new URLSearchParams(location.search).get('moss') === '0' }; // ?moss=0: bench A/B
 export const MOSS_INFO = { refills: 0, texels: 0, sliceMaxMs: 0, octaves: 5, mean: [0, 0, 0] };
 (globalThis as { borealMoss?: unknown }).borealMoss = { info: MOSS_INFO, fx: MOSS_FX }; // dev/bench handle
+/** Patch-noise octaves at a LADDER foliage factor (Ultra/High 1 -> 5, Medium .8 -> 4, Low .6 -> 3, Very low .4 -> 3, Minimum .25 -> 2). */
+export const mossOctaves = (foliage: number) => foliage <= 0 ? 0 : Math.max(2, Math.min(5, Math.round(1 + 4 * foliage)));
 const data = new Uint8Array(N * N * 4);
 const tex = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
 Object.assign(tex, { wrapS: THREE.RepeatWrapping, wrapT: THREE.RepeatWrapping, magFilter: THREE.LinearFilter, minFilter: THREE.LinearFilter, generateMipmaps: false });
@@ -38,15 +40,22 @@ vec3 soilGround(vec2 xz) {
   float a = textureLod(uMoss, (floor(xz / uMossWin.w) + 0.5) / ${N}.0, 0.0).a; // explicit LOD: no derivatives in divergent code (ANGLE/D3D X3595)
   return length(xz - uMossWin.xy) > uMossWin.z ? uGroundSoil[${SOIL_KINDS.indexOf('till')}] : uGroundSoil[int(a * ${SOIL_KINDS.length - 1}.0 + 0.5)];
 }
-float mossFbm(vec2 p, float s) { float v = 0.0, a = 0.5, t = 0.0; for (int i = 0; i < 5; i++) { if (float(i) >= uMossOct) break; v += a * vnoiseU(p, s); t += a; p = p * 2.03 + 17.1; a *= 0.5; } return v * (0.96875 / t); } // proc/glsl fbm on vnoiseU, octaves by tier, same range
+float mossFbm(vec2 p, float s, float oct) { float v = 0.0, a = 0.5, t = 0.0; for (int i = 0; i < 5; i++) { if (float(i) >= oct) break; v += a * vnoiseU(p, s); t += a; p = p * 2.03 + 17.1; a *= 0.5; } return v * (0.96875 / t); } // proc/glsl fbm on vnoiseU, same range
+/** Covered where the patch noise is below the share (soft edge e); a zero share stays bare even where the noise is 0. */
+float mossCover(float w, float n, float e) { return smoothstep(n - e, n + e, w) * smoothstep(0.0, e, w); }
 vec3 groundLayer(vec3 base, vec2 xz) {
   if (uMossOn < 0.5) return base; // bench toggle (MOSS_FX.off) / foliage 0 skips the layer
   vec3 w = textureLod(uMoss, xz / (uMossWin.w * ${N}.0), 0.0).rgb;
   w = mix(w, uMossMean, smoothstep(uMossWin.z * 0.75, uMossWin.z, length(xz - uMossWin.xy))); // beyond the window: its mean
-  float n = mossFbm(xz * 0.35, 17.3), c = mossFbm(xz * 0.6 + 31.0, 9.7), f = vnoiseU(xz * 2.3, 4.1);
-  float fm = smoothstep(-0.08, 0.08, w.r - n), li = smoothstep(-0.08, 0.08, w.g - c), sp = smoothstep(-0.08, 0.08, w.b - n);
+  if (max(w.r, max(w.g, w.b)) < 0.004) return base; // no cover here (water, bare ground): skip the noise
+  // ONE patch field for all three: moss and Sphagnum where it is low, lichen where it is high (they rarely share a texel).
+  // Octaves: the tier's (uMossOct), minus one per doubling of distance beyond 16 m (finer ones are sub-pixel there).
+  float d = length(xz - cameraPosition.xz), oct = clamp(uMossOct - floor(log2(max(d, 1.0) / 16.0)), 1.0, uMossOct);
+  // fbm is near-normal (mean .5, sd ~.13): smoothstep(.3, .7) ~ its CDF, so a share s covers ~s of the ground (raw fbm: s > .6 covered everything)
+  float n = smoothstep(0.3, 0.7, mossFbm(xz * 0.35, 17.3, oct)), f = d < 40.0 ? vnoiseU(xz * 2.3, 4.1) : 0.5;
+  float fm = mossCover(w.r, n, 0.05), li = mossCover(w.g, 1.0 - n, 0.04), sp = mossCover(w.b, n, 0.05);
   base = mix(base, mix(${v3(F[0])}, ${v3(F[1])}, f) * (0.8 + 0.4 * f), fm);
-  base = mix(base, mix(${v3(S[0])}, ${v3(S[1])}, smoothstep(0.45, 0.6, c)), sp);
+  base = mix(base, mix(${v3(S[0])}, ${v3(S[1])}, smoothstep(0.45, 0.6, f)), sp);
   return mix(base, mix(${v3(L[0])}, ${v3(L[1])}, f) * (0.85 + 0.3 * f), li);
 }
 `;

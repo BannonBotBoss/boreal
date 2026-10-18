@@ -115,7 +115,10 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
     composer = new EffectComposer(renderer, rt);
     composer.addPass(new RenderPass(scene, camera));
     composer.addPass(sunfx = new ShaderPass(SUNFX));
-    composer.addPass(gtao = new GTAOPass(scene, camera, 512, 512)); // GTAO (Jiménez et al. 2016), three r180 examples/jsm, MIT
+    // GTAO reads the main pass's depth (the scene the RenderPass just drew) and reconstructs normals from it: no G-buffer re-draw
+    // of the scene (~280 draw calls and 3-5 ms at Ultra on omen). setGBuffer(depth, no normals) = three's NORMAL_VECTOR_TYPE 0;
+    // the depth texture of the composer's current read buffer is swapped in per frame as a uniform (same defines, same program).
+    composer.addPass(gtao = new GTAOPass(scene, camera, 512, 512, { depthTexture: rt.depthTexture })); // GTAO (Jiménez et al. 2016), three r180 examples/jsm, MIT
     gtao.updateGtaoMaterial({ samples: 8 }); gtao.updatePdMaterial({ samples: 8 }); // bench: 16+16 samples at full res = ~43 ms; half res + 8/8 samples
     composer.addPass(bokeh = new BokehPass(scene, camera, { focus: 8, aperture: .001, maxblur: .02 }));
     composer.addPass(bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0, .4, .85));
@@ -139,6 +142,8 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
       if (size.x !== lastW || size.y !== lastH || ao !== aoLevel) { composer!.setPixelRatio(1); composer!.setSize(lastW = size.x, lastH = size.y); aoLevel = ao;
         if (ao === 1) gtao.setSize(size.x >> 1, size.y >> 1); }
       gtao.enabled = ao > 0; gtao.blendIntensity = AO_BLEND.value; sunfx.enabled = lightFx;
+      if (ao > 0) { const depth = composer!.readBuffer.depthTexture; // the RenderPass draws into the read buffer: its depth is this frame's scene
+        if (depth && gtao.depthTexture !== depth) { gtao.depthTexture = depth; gtao.gtaoMaterial.uniforms.tDepth.value = depth; gtao.pdMaterial.uniforms.tDepth.value = depth; } }
       if (lightFx) { const u = sunfx.uniforms as Record<string, { value: any }>, sv = fx!.sunDir.clone().transformDirection(camera.matrixWorldInverse), sp = camera.position.clone().addScaledVector(fx!.sunDir, 1000).project(camera);
         u.tDepth.value = composer!.readBuffer.depthTexture; u.uProj.value.copy(camera.projectionMatrix); u.uProjInv.value.copy(camera.projectionMatrixInverse);
         u.uSunView.value.copy(sv); u.uSunUv.value.set(sp.x * .5 + .5, sp.y * .5 + .5); u.uContact.value = fx!.contact; u.uRays.value = sp.z < 1 ? fx!.rays : 0;

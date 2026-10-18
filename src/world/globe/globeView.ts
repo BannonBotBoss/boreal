@@ -33,7 +33,7 @@ import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
 import { GLOBE_SHORE, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, stitchIndex, tileGeometry, type TileData } from './tile';
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
-export { GLOBE_LAKE, GLOBE_LAND } from './tile'; // inpage.ts (lazy): the band's lake ease
+export { GLOBE_LAKE, GLOBE_LAND, GLOBE_SHORE } from './tile'; // inpage.ts (lazy): the band's lake ease
 /** Deeper tiles under a low camera: split x(1 + k) for tiles within reach x altitude, ramping in from `from` to `full` m. [game calibration] */
 export const NEAR_SPLIT = { k: 1.2, from: 3000, full: 1200, reach: 4 };
 import type { TileRequest } from './tileWorker';

@@ -45,7 +45,7 @@ export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 50
 /** landTint: the globe's land (not water) is tinted toward this from fadeFull down to tintLow (globe GLOBE_LAND, a uniform):
  *  bandGain matches the patch seen from 600 m, but lower down the dark forest floor between the crowns shows and the patch reads
  *  ~2x darker and greener than the globe around it (r20, 13:00, patch mean rgb 63/89/53 vs globe 103/121/87 at 145 m). */
-/** aoTop: GTAO eases in (render/post AO_BLEND, the blend intensity) from 0 at aoTop to full at the handover height, once the
+/** aoTop: (unused since r23: GTAO, render/post AO_BLEND, now eases in only over the final blend to the player) was: from 0 at aoTop to full at the handover height, once the
  *  patch is fully in; above it GTAO stays off in the band (over the far layer, cleared depth, it drew a dark square and specks
  *  around the patch at 600 m). Contact shadows stay. uploadMB: first-draw upload budget per band frame (hideForBand). */
 /** pop: what cannot dither (animals, the wolf: their materials are not opted in) appears object by object at a fade between
@@ -57,7 +57,7 @@ export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 50
 type View = { scene: THREE.Scene; camera: THREE.PerspectiveCamera; canvas: HTMLCanvasElement; photoreal: { renderer: THREE.WebGLRenderer } };
 export interface InPageHost { player(): { x: number; z: number; yaw: number }; place(x: number, z: number, yaw: number): void; save(): void; notice?(m: string): void }
 type FxTier = { ssao: number; contact: number; rays: number };
-let lakeU: typeof import('./globeView').GLOBE_LAKE | null = null, landU: typeof import('./globeView').GLOBE_LAND | null = null;
+let lakeU: typeof import('./globeView').GLOBE_LAKE | null = null, landU: typeof import('./globeView').GLOBE_LAND | null = null, shoreU: typeof import('./globeView').GLOBE_SHORE | null = null;
 let ctl: ReturnType<typeof controller> | null = null, globeModule: Promise<typeof import('./globeView')> | null = null, createGlobe: typeof import('./globeView').createGlobe | null = null;
 
 /** main.ts: the controller when the in-page path is on (?transition=inpage, or the default once flipped), else null (reload). */
@@ -97,11 +97,12 @@ function controller(view: View, host: InPageHost) {
   /** camera on the 45-degree glide path h metres above the landing ground (behind it along the heading), looking at it */
   const glide = (hh: number, k: number) => { cam.p.set(land.x - fwd.x * hh + off.x * k, land.y + hh + off.y * k, land.z - fwd.y * hh + off.z * k); tmpM.lookAt(cam.p, land, UP); tmpQ.setFromRotationMatrix(tmpM); };
   const hidden = new Map<THREE.Object3D, boolean>(); let savedBg: THREE.Scene['background'] | undefined;
-  const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks (DEBUG, frame-cost log fields) only with ?inpagedev
-  const DEBUG = { holdH: 0, far: 0, pose: null as null | { p: [number, number, number]; look: [number, number, number] } };
+  const NO_GLOBE = new THREE.Color(1, 0, 1);
+const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks (DEBUG, frame-cost log fields) only with ?inpagedev
+  const DEBUG = { noShore: false, noGlobe: false, noAO: false, holdH: 0, far: 0, pose: null as null | { p: [number, number, number]; look: [number, number, number] } };
   const STATS = { globeMs: 0, drawMs: 0, mode: 'game' as TransitionMode, h: 0, fade: 0, ready: false, readyAt: 0, log: [] as { t: number; mode: string; h: number; fade: number; globeMs: number; drawMs?: number; jobsMs?: number; cpuMs?: number }[] };
 
-  async function loadGlobe() { const mod = await globeModule!; createGlobe ??= mod.createGlobe; lakeU ??= mod.GLOBE_LAKE; landU ??= mod.GLOBE_LAND; return ensureGlobe(); }
+  async function loadGlobe() { const mod = await globeModule!; createGlobe ??= mod.createGlobe; lakeU ??= mod.GLOBE_LAKE; landU ??= mod.GLOBE_LAND; shoreU ??= mod.GLOBE_SHORE; return ensureGlobe(); }
   function ensureGlobe() {
     if (globe) return globe;
     const q = new URLSearchParams(location.search), p = host.player(), r = (v: number, k: number) => Math.round(v * k) / k;
@@ -255,7 +256,8 @@ function controller(view: View, host: InPageHost) {
       const t0 = performance.now(); renderer.getDrawingBufferSize(size); far.resize(size.x, size.y);
       globeCameraFrom(globe.planet, camera, gcam); globe.drive({ position: gcam.position, quaternion: gcam.quaternion, fov: camera.fov, aspect: camera.aspect });
       globe.step(far.target); STATS.globeMs = performance.now() - t0;
-      if (savedBg === undefined) savedBg = scene.background; scene.background = far.texture;
+      if (savedBg === undefined) savedBg = scene.background; scene.background = DEV && DEBUG.noGlobe ? NO_GLOBE : far.texture;
+      if (DEV && shoreU) shoreU.uShore.value.z = DEBUG.noShore ? 0 : +globe.maskReady; // ?inpagedev: noShore = per-vertex shoreline only, noGlobe = magenta instead of the globe (artefact layer checks)
       dusk = duskOf(scene); const s = bandLook(smoothstep(TRANSITION.bandTop, TRANSITION.fadeFull, h), smoothstep(TRANSITION.fadeFull, INPAGE.tintLow, h)); scene.backgroundIntensity = (INPAGE.gain + (INPAGE.bandGain - INPAGE.gain) * s) / EXPOSURE.base; // the globe's own look at the band top -> matched to the game by fadeFull
     // the game's linear fog (render/sky: ~200-480 m + camera height, pale) is pushed out above the handover: up here the haze toward
     // the globe (setPatchFar) is the aerial perspective, and the fog washed distant patch tree tops out to the fog colour (r19 risk)
@@ -268,7 +270,9 @@ function controller(view: View, host: InPageHost) {
      *  in the ray mask), ambient occlusion only once the patch is fully in (GTAO's normal pass cannot dither). */
     fx(t: FxTier): FxTier {
       if (mode !== 'band') return t;
-      const a = fade >= 1 ? smoothstep(INPAGE.aoTop, TRANSITION.handover, h) : 0; AO_BLEND.value = a;
+      // GTAO only in the final blend to the player: on the dithered disc rim its isolated kept water/ground pixels came out as a ring
+      // of dark dots (r23: gone with AO off; the patch rim is on screen for the whole fly phase)
+      const a = phase === 'blend' && fade >= 1 ? smoothstep(0, 1, blend) : 0; AO_BLEND.value = DEV && DEBUG.noAO ? 0 : a;
       return { ssao: a > 0 ? t.ssao : 0, contact: t.contact * INPAGE.bandContact, rays: 0 };
     },
     /** Behind the loading screen: create the globe, compile its programs for the far layer AND the screen, build the tiles over

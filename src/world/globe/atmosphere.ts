@@ -53,11 +53,12 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
 vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? vec3(0.0) : exp(-(BR * l.x + BME * l.y)); }
 `;
 
-export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3): void; patch(m: THREE.Material): void }
+export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3): void; patch(m: THREE.Material): void; setTier(tier: number): void }
+const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.length - 1, tier))];
 
 /** Sky shell + aerial-perspective patcher for a planet of radius `R` metres (centre at the world origin). */
 export function createAtmosphere(R: number, tier = 0): Atmosphere {
-  const [sn, sl, tn, tl] = ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.length - 1, tier))];
+  let [sn, sl, tn, tl] = stepsFor(tier), cur = tier; const patched: THREE.Material[] = [];
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
   const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI } };
   const mat = new THREE.ShaderMaterial({
@@ -68,7 +69,8 @@ varying vec3 vView;
 void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vView = mv.xyz; gl_Position = projectionMatrix * mv;
 #include <logdepthbuf_vertex>
 }`,
-    fragmentShader: /* glsl */`#include <common>
+    fragmentShader: '' });
+  const domeFrag = () => /* glsl */`#include <common>
 #include <logdepthbuf_pars_fragment>
 ${GLSL}
 varying vec3 vView;
@@ -80,12 +82,18 @@ void main() {
   gl_FragColor = vec4(c, 1.0);
 #include <tonemapping_fragment>
 #include <colorspace_fragment>
-}`,
-  });
+}`;
+  mat.fragmentShader = domeFrag();
   const dome = new THREE.Mesh(new THREE.SphereGeometry(Ra * 1000, 96, 48), mat); dome.frustumCulled = false; dome.renderOrder = 1; dome.matrixAutoUpdate = false;
   const centre = new THREE.Vector3(), sunV = new THREE.Vector3();
   return {
-    dome, uniforms,
+    dome, uniforms, get tier() { return cur; },
+    /** Governor tier changed: new ray-march sample counts (recompiles the sky shell and the patched materials once). */
+    setTier(t) {
+      if (t === cur) return; cur = t; [sn, sl, tn, tl] = stepsFor(t);
+      mat.fragmentShader = domeFrag(); mat.needsUpdate = true;
+      for (const m of patched) m.needsUpdate = true;
+    },
     /** Per frame, after the camera is placed (camera-relative: camera renders from the origin, `camPos` is its double
      *  world position): planet centre and sun in view space, km. */
     update(camera, camPos, sunDir) {
@@ -96,12 +104,15 @@ void main() {
     },
     /** Chain aerial perspective into a lit material (keeps its own onBeforeCompile). */
     patch(m) {
-      if (!tn) return; const prev = m.onBeforeCompile.bind(m);
+      const prev = m.onBeforeCompile.bind(m), key = m.customProgramCacheKey.bind(m); patched.push(m);
+      m.customProgramCacheKey = () => `${key()}|atm${tn},${tl}`; // one program per sample-count row
       m.onBeforeCompile = (sh, r) => {
-        prev(sh, r); Object.assign(sh.uniforms, uniforms);
+        prev(sh, r); if (!tn) return; Object.assign(sh.uniforms, uniforms);
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\n${GLSL}`)
           .replace('#include <opaque_fragment>', `{ vec3 fp = -vViewPosition * 1e-3, tr; float d = length(fp); vec3 rd = fp / max(d, 1e-6);
-    outgoingLight *= 0.45 + 0.55 * 1.12 * atmSunlight(fp, ${tl}); // sunlight reddened (sunset) / cut (planet shadow) on its way to the fragment; 0.45 keeps sky light; ×1.12 ≈ noon transmittance⁻¹
+    // only the DIRECT sun is reddened (sunset) / cut (planet shadow) on its way to the fragment (x1.12 = noon
+    // transmittance^-1); sky (hemisphere) light stays, so ground facing away from a low sun is lit by the sky, not black
+    outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * 1.12 * atmSunlight(fp, ${tl}) + reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular + totalEmissiveRadiance;
     vec3 ins = atmScatter(rd, d, ${tn}, ${tl}, tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL; }
 #include <opaque_fragment>`);
       };

@@ -161,7 +161,7 @@ export function createPlanet(seed: number, local?: LocalHeight) {
  *  follows the far-field hills (ridges ? outcrop, hollows ? wetland) and a fine per-point mottle. */
 export const GLOBE_COLOURS = {
   deep: [.03, .12, .25], shallow: [.07, .3, .45], // water: shaded per pixel by depth (tile.ts globeMaterial)
-  spruce: [.105, .17, .085], mixed: [.19, .27, .12], bog: [.30, .29, .17], rock: [.46, .42, .39], sand: [.62, .57, .42],
+  spruce: [.105, .17, .085], mixed: [.19, .27, .12], bog: [.30, .29, .17], rock: [.33, .31, .29], sand: [.62, .57, .42],
   temperate: [.24, .36, .16], tundra: [.45, .43, .33], snow: [.92, .93, .95], beach: [.70, .65, .48],
 } as const;
 type RGB = readonly [number, number, number];
@@ -176,13 +176,13 @@ export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0]) {
   if (lat < 45) mixTo(o, C.temperate, smoothstep(45, 38, lat)); else if (lat > 60) mixTo(o, C.tundra, smoothstep(60, 66, lat));
   if (s.home < 1) { // far field: outcrops on ridge tops, wetlands in hollows, beaches on sea coasts
     const k = 1 - s.home;
-    mixTo(o, C.rock, k * .75 * smoothstep(.45, .9, s.hill + .25 * (m - .5)));
+    mixTo(o, C.rock, k * .55 * smoothstep(.55, .95, s.hill + .5 * (m - .5))); // small, broken outcrops on ridge crests
     mixTo(o, C.bog, k * .55 * smoothstep(-.35, -.8, s.hill + .25 * (m - .5)));
     mixTo(o, C.beach, k * (1 - smoothstep(2, 25, s.h)));
   }
   if (s.home > 0 && s.soil) { // home: the game's soils
     const w = s.home, sc = s.soil === 'bedrock' ? C.rock : s.soil === 'peat' ? C.bog : s.soil === 'sand' ? C.sand : null;
-    if (sc) mixTo(o, sc, w * (s.soil === 'bedrock' ? .8 : s.soil === 'peat' ? .75 : .55));
+    if (sc) mixTo(o, sc, w * (s.soil === 'bedrock' ? .6 * smoothstep(.4, .75, m) : s.soil === 'peat' ? .7 : .5)); // bedrock soil = thin cover with outcrop patches, not bare rock
     if (s.wet >= 0) mixTo(o, C.bog, w * .45 * smoothstep(.6, .95, s.wet));
   }
   if (s.h > 1200) mixTo(o, C.rock, smoothstep(1200, 2600, s.h));

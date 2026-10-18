@@ -69,7 +69,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   applyRes(); addEventListener('resize', () => { applyRes(); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-  const SPACE = new THREE.Color(0x02040a), SKY = new THREE.Color(0x8fb4d9);
+  const SPACE = new THREE.Color(0x02040a), SKY = new THREE.Color(0x8fb4d9), SKY_DAY = new THREE.Color(0x9fb8d8), SKY_DUSK = new THREE.Color(0xc9a58f);
   const scene = new THREE.Scene(); scene.background = SPACE.clone();
   // Sun: the game's world clock (core/worldClock + timeOfDay, same ?hour= start offset as the game), placed at the home
   // region and turned into planet axes (game +x = east, +y = up, −z = north). One direction for the whole planet.
@@ -220,7 +220,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       camera.up.copy(up); camera.lookAt(camera.position.clone().add(h.addScaledVector(up, -.08))); }
     camera.near = clamp(alt * .02, .5, 1e5); camera.far = Math.sqrt((R + ground + alt) ** 2 - R * R) + R * 2; camera.updateProjectionMatrix();
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
-    sun.position.copy(sunNow()); hemi.intensity = .6 * smoothstep(-.25, .05, camera.position.clone().normalize().dot(sunDir)); // sky light fades with the local sun
+    sun.position.copy(sunNow()); { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = .04 + .66 * smoothstep(-.3, .12, se); hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
     camPos[0] = camera.position.x; camPos[1] = camera.position.y; camPos[2] = camera.position.z;
 
     // LOD selection, then hand the wanted builds to the workers (or jobs); drop builds nobody wants any more
@@ -245,7 +245,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     const work = performance.now() - t0; if (bench && work > 40) console.log(`SPIKE ${work.toFixed(0)}ms alt ${alt.toFixed(0)} pre-render ${(tR - t0).toFixed(0)} render ${(performance.now() - tR).toFixed(0)} calls ${renderer.info.render.calls} accepted ${built}`); STATS.work.push(work); if (prevT) STATS.interval.push(t0 - prevT);
     if (!bench) { keep(STATS.work, 600); keep(STATS.interval, 600); keep(STATS.build, 2000); }
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;
-    if (governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); }
+    if (governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); atmos?.setTier(GOVERNOR.tier); } // atmosphere sample counts follow the tier
     if (frame % 10 === 1) {
       const ll = toLatLon([dir.x, dir.y, dir.z]);
       hud.textContent = `Boreal planet · seed ${seed}${STAGES.on ? ' (staged)' : ''}\n` +

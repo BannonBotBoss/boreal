@@ -32,8 +32,12 @@ function tropism(o: Quaternion, amount: number) {
 
 /** Skeleton of one tree: trunk length `height` (m), base radius `radius` (m), all randomness from `rnd`. */
 export function generateSkeleton(p: WPParams, height: number, radius: number, rnd: () => number): Skeleton {
-  const vary = (b: number, s: number) => b + (rnd() * 2 - 1) * s, stems: Stem[] = [];
-  function build(level: number, origin: Vector3, orient: Quaternion, length: number, r0: number, parentId: number, dead: boolean) {
+  const g = skeletonSteps(p, height, radius, rnd); let r = g.next(); while (!r.done) r = g.next(); return r.value;
+}
+/** generateSkeleton as a sliced job (core/interest): yields every 32 stems; same output. */
+export function* skeletonSteps(p: WPParams, height: number, radius: number, rnd: () => number): Generator<unknown, Skeleton> {
+  const vary = (b: number, s: number) => b + (rnd() * 2 - 1) * s, stems: Stem[] = []; let leanRad = 0;
+  function* build(level: number, origin: Vector3, orient: Quaternion, length: number, r0: number, parentId: number, dead: boolean): Generator<unknown, void> {
     const res = Math.max(2, p.curveRes[level] | 0), seg = length / res, o = orient.clone(), pos = origin.clone();
     const points = [origin.clone()], radii = [r0], orients = [o.clone()];
     for (let i = 1; i <= res; i++) {
@@ -42,9 +46,13 @@ export function generateSkeleton(p: WPParams, height: number, radius: number, rn
       pos.addScaledVector(Y.clone().applyQuaternion(o).normalize(), seg);
       points.push(pos.clone()); radii.push(Math.max(.0015, r0 * (1 - i / res))); orients.push(o.clone());
     }
+    if (level === 0 && p.irregular?.sweep) { // basal sweep: the lower third bends back toward vertical after the lean
+      const ax = new Vector3().crossVectors(Y.clone().applyQuaternion(orient), UP), q = new Quaternion(); if (ax.lengthSq() < 1e-8) ax.set(1, 0, 0); ax.normalize();
+      for (let i = 1; i < points.length; i++) { const z = Math.min(1, (i / (points.length - 1)) / .33); q.setFromAxisAngle(ax, p.irregular.sweep * leanRad * z); const d = points[i].clone().sub(origin).applyQuaternion(q); points[i].copy(origin).add(d); }
+    }
     if (level === 0 && p.flare > 0) for (let i = 0; i < points.length; i++) { const z = i / (points.length - 1); if (z < .15) radii[i] *= 1 + p.flare * (1 - z / .15); }
     const stem: Stem = { level, points, radii, length, radialSegments: p.radialSegments[level] ?? 4, dead, id: stems.length, parentId, maxLevel: p.levels - 1 };
-    stems.push(stem);
+    stems.push(stem); if (stems.length % 32 === 0) yield;
     const cl = level + 1; if (cl >= p.levels || dead) return;
     // children: trunk = whorls over the live crown (+ dead stubs below, + the club band on top); branches = per metre
     type Slot = { t: number; dead: boolean; club: boolean };
@@ -53,14 +61,17 @@ export function generateSkeleton(p: WPParams, height: number, radius: number, rn
       const n = Math.round(p.branches[1]), ws = Math.max(1, p.whorlSize[1] | 0), nodes = Math.ceil(n / ws), club = p.club;
       for (let k = 0; k < nodes; k++) {
         const t = p.baseSize + (1 - p.baseSize) * (k + .5) / nodes, inClub = !!club && t > 1 - club.frac;
-        const per = inClub ? Math.round(ws * club!.density) : ws;
-        for (let s = 0; s < per; s++) slots.push({ t: Math.min(.995, t + (inClub ? vary(0, club!.frac / nodes) : 0)), dead: false, club: inClub });
+        const per = inClub ? Math.round(ws * club!.density) : ws, irr = p.irregular;
+        if (irr && !inClub && k > 0 && rnd() < irr.gap) continue; // a skipped whorl (gap in the crown)
+        for (let s = 0; s < per; s++) if (!irr || inClub || rnd() >= irr.miss) slots.push({ t: Math.min(.995, t + (inClub ? vary(0, club!.frac / nodes) : 0)), dead: false, club: inClub });
       }
       if (p.dead) { const from = p.baseSize * p.dead.from, rows = Math.round(nodes * (p.baseSize - from) / (1 - p.baseSize));
         for (let k = 0; k < rows; k++) for (let s = 0; s < ws; s++) if (rnd() < p.dead.keep) slots.push({ t: from + (p.baseSize - from) * (k + .5) / rows, dead: true, club: false }); }
     } else {
-      const n = Math.max(1, Math.round(length * p.branches[cl]));
-      for (let c = 0; c < n; c++) slots.push({ t: .12 + .85 * (c + .5) / n, dead: false, club: false });
+      const n = Math.max(1, Math.round(length * p.branches[cl])), irr = p.irregular;
+      for (let c = 0; c < n; c++) { if (irr && rnd() < irr.clump) continue; // clumped shoots: dropped slots leave bare stretches
+        slots.push({ t: Math.min(.98, Math.max(.08, .12 + .85 * (c + .5 + (irr ? vary(0, irr.clumpJitter * .5) : 0)) / n)), dead: false, club: false }); }
+      slots.sort((a, b) => a.t - b.t);
     }
     let az = rnd() * 360, lastT = -1;
     const ws = Math.max(1, p.whorlSize[cl] | 0);
@@ -75,11 +86,16 @@ export function generateSkeleton(p: WPParams, height: number, radius: number, rn
       let len = length * Math.max(.02, p.length[cl] + vary(0, p.lengthV[cl])) * shape;
       if (level === 0 && sl.t >= p.baseSize) len *= Math.min(1, (1 - sl.t) * length / Math.max(.05, len) * 1.6); // keep the spire tip inside the cone (W&P sec 4.3: child length <= remaining parent)
       if (sl.club) len *= p.club!.length;
+      let broken = false;
+      if (p.irregular && !sl.dead) { len *= Math.exp(vary(0, p.irregular.lenJitter)) / (1 + p.irregular.lenJitter * p.irregular.lenJitter / 6); // uneven limbs, mean kept ~1
+        if (level === 0 && !sl.club && rnd() < p.irregular.broken) { const [a, b] = p.irregular.brokenKeep; len *= a + rnd() * (b - a); broken = true; } }
       if (sl.dead) len = length * p.length[cl] * p.dead!.length * (.5 + rnd() * .5);
       const cr = Math.min(r0 * Math.pow(len / length, p.ratioPower), rHere * .9);
-      build(cl, cpos, co, len, cr, stem.id, sl.dead);
+      yield* build(cl, cpos, co, len, cr, stem.id, sl.dead || (broken && rnd() < .5)); // half the broken limbs are dead snags
     }
   }
-  build(0, new Vector3(), new Quaternion(), height, radius, -1, false);
+  const la = rnd() * 6.283; leanRad = p.irregular ? p.irregular.lean * Math.PI / 180 * (.3 + .7 * rnd()) : 0;
+  const lean = new Quaternion().setFromAxisAngle(new Vector3(Math.cos(la), 0, Math.sin(la)), leanRad);
+  yield* build(0, new Vector3(), lean, height, radius, -1, false);
   return { stems, height };
 }

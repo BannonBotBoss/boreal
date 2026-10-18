@@ -13,12 +13,16 @@ function tangent(p: THREE.Vector3[], i: number, out: THREE.Vector3) {
   const n = p.length; if (i === 0) out.subVectors(p[1], p[0]); else if (i === n - 1) out.subVectors(p[n - 1], p[n - 2]); else out.subVectors(p[i + 1], p[i - 1]);
   return out.lengthSq() < 1e-12 ? out.set(0, 1, 0) : out.normalize();
 }
-export function tubes(stems: Stem[], o: TubeOpts) {
+export function tubes(stems: Stem[], o: TubeOpts) { const g = tubeSteps(stems, o, function* () { yield; }); let r = g.next(); while (!r.done) r = g.next(); return r.value; }
+/** tubes() as a sliced job: calls `slice` every 48 stems (the caller decides how to yield). */
+export function* tubeSteps(stems: Stem[], o: TubeOpts, slice: () => Generator<unknown, void>): Generator<unknown, THREE.BufferGeometry> {
+  let done = 0;
   const pos: number[] = [], nor: number[] = [], uv: number[] = [], col: number[] = [], idx: number[] = [];
   const t = new THREE.Vector3(), n = new THREE.Vector3(), b = new THREE.Vector3(), rad = new THREE.Vector3();
   let base = 0;
   for (const s of stems) {
     if (o.keep && !o.keep(s)) continue;
+    if (++done % 48 === 0) yield* slice();
     const sides = Math.max(o.minSides ?? 3, Math.round(s.radialSegments * (o.radialScale ?? 1))), stride = Math.max(1, o.ringStride ?? 1);
     let P = s.points, R = s.radii;
     if (stride > 1 && P.length > 2) { const p2: THREE.Vector3[] = [], r2: number[] = []; for (let i = 0; i < P.length - 1; i += stride) { p2.push(P[i]); r2.push(R[i]); } p2.push(P[P.length - 1]); r2.push(R[R.length - 1]); P = p2; R = r2; }

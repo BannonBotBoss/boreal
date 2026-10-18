@@ -33,6 +33,10 @@ export interface WPParams {
   dead?: { from: number; keep: number; length: number };
   /** top band (share of the trunk) with denser, shorter, upturned shoots: density x, length x, down angle (deg) */
   club?: { frac: number; density: number; length: number; downAngle: number };
+  /** irregularity (M2): whole whorls skipped (gap), single limbs missing (miss), limbs broken off (broken: share, kept length
+   *  share range), extra lognormal-ish length spread (lenJitter), laterals clumped (clump: share of lateral slots dropped,
+   *  position jitter in slot widths), trunk lean (deg max, random azimuth) and sweep (share of the lean the stem recovers over its lower third: a butt sweep) */
+  irregular?: { gap: number; miss: number; broken: number; brokenKeep: [number, number]; lenJitter: number; clump: number; clumpJitter: number; lean: number; sweep: number };
 }
 export interface TreeForm {
   id: string;
@@ -58,8 +62,11 @@ export const TREE_FORMS: Record<string, TreeForm> = {
       whorlSize: [1,    5,     1],                                                 // 5 per whorl (attr.perWhorl)
       branches:  [0,    0,     9],                                                 // L1 total from the whorl spacing (set per tree); L2 per metre of limb [game calibration]
       radialSegments: [10, 4, 3],
-      dead: { from: .15, keep: .6, length: .35 },                                  // self-pruned stubs persist on the lower bole (attr.deadZone .8)
-      club: { frac: .08, density: 2.2, length: .6, downAngle: 60 },                // dense upturned top band [game calibration from tools/tree-ref photos]
+      dead: { from: .15, keep: .3, length: .35 },                                  // self-pruned stubs persist on the lower bole (attr.deadZone .8), sparse in the photos
+      club: { frac: .1, density: 3.2, length: .7, downAngle: 50 },                 // dense upturned top band ('club', Viereck & Johnston 1990; tools/tree-ref club_tops) [game calibration]
+      // M2 realism from tools/tree-ref (bigbog, club_tops, stand_inuvik): ragged spires with skipped whorls, missing and broken
+      // limbs, uneven limb lengths and clumped shoots; bog spruce lean a few degrees on sphagnum [game calibration]
+      irregular: { gap: .14, miss: .3, broken: .12, brokenKeep: [.2, .55], lenJitter: .38, clump: .3, clumpJitter: .7, lean: 4, sweep: .6 },
     },
     // Plonski (1974) Ontario normal yield tables, black spruce site class 1-2: ~11-15 m at 70-100 yr; hMax 16.5 = 1.1 x the
     // Silvics upper height (15 m). k, p fitted by eye to those points [verify against Plonski 1974 / Carmean et al. 1989].
@@ -68,7 +75,7 @@ export const TREE_FORMS: Record<string, TreeForm> = {
     // Medians of reference photos (tools/tree-ref, measured on green pixels): close-up needles #5a7239 / #668944 (sunlit),
     // crown-level stands #4f5d4a / #57633a; bark close-up #897863 (with lichen; the trunk in shade reads darker). Cone: dark
     // purple ripening purple-brown (Taylor 1993).
-    colour: { needle: 0x5a7239, shade: 0x2e3a26, bark: 0x6b5a4a, twig: 0x5b4636, cone: 0x4a3030, palette: [0x4a5c50, 0x52624a, 0x46594a, 0x566554, 0x415246] }, // palette: crown-level photo medians (#4f5d4a #57633a #556a53, refs in tools/tree-ref), blue raised to the near LOD's rendered hue [game calibration]
+    colour: { needle: 0x8eb054, shade: 0x5c7442, bark: 0x6b5a4a, twig: 0x5b4636, cone: 0x4a3030, palette: [0x5a7a48, 0x648046, 0x56744a, 0x6a8450, 0x506c44] }, // palette: crown-level photo medians (#4f5d4a #57633a #556a53, refs in tools/tree-ref), blue raised to the near LOD's rendered hue [game calibration]
   },
 };
 

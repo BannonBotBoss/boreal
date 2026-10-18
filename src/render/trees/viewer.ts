@@ -1,5 +1,5 @@
 /**
- * Tree viewer (Grok Bot): /tools/tree-viewer.html?tree=1. Modes:
+ * Tree viewer (Grok Bot): /?tree=1 (globe/entry.ts route) or /tools/tree-viewer.html?tree=1. Modes:
  *  ?tree=1             ages x seeds of black spruce side by side (near LOD) + one tree (age 90, seed 7) in all four LODs
  *  ?tree=1&view=lod    near | mid | far crown | impostor of one tree at the same size (&atlas=1 shows the impostor atlas)
  *  ?tree=1&view=one    one tree at eye level in front of a small stand (reference comparison); &age= &seed=
@@ -8,14 +8,18 @@
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { buildConifer, crownMaterial, type ConiferLods } from './conifer';
+import { BUILD_PHASE, buildConifer, buildConiferSteps, crownMaterial, type ConiferLods } from './conifer';
 import { bakeAtlas, impostorMesh, IMPOSTOR_FX, type Atlas } from './impostor';
 import { farRing, type FarTree } from './farRing';
 import { farTreesInTile, FAR_TREES } from '../../core/flora/stands';
 
-const q = new URLSearchParams(location.search), hud = document.getElementById('hud')!;
+const q = new URLSearchParams(location.search), hud = document.getElementById('hud') ?? (() => { // opened from the game page (/?tree=1, globe/entry.ts): clear its UI, add the HUD
+  for (const el of Array.from(document.body.children)) if (el.tagName !== 'SCRIPT') el.remove();
+  document.body.style.cssText = 'margin:0;height:100vh;overflow:hidden;background:#a9c3dc;font:600 13px system-ui;color:#123';
+  const d = document.createElement('div'); d.id = 'hud'; d.style.cssText = 'position:absolute;left:8px;top:6px;white-space:pre;text-shadow:0 0 3px #fff;pointer-events:none'; document.body.appendChild(d); return d; })();
 if (q.has('nmix')) IMPOSTOR_FX.normalMix.value = +q.get('nmix')!;
 if (q.has('upbend')) IMPOSTOR_FX.upBend.value = +q.get('upbend')!;
+if (q.has('itint')) IMPOSTOR_FX.tint.value.fromArray(q.get('itint')!.split(',').map(Number));
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.setSize(innerWidth, innerHeight); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; document.body.appendChild(renderer.domElement);
@@ -90,6 +94,14 @@ async function benchFar() {
   hud.textContent = `far ring: ${trees.length} trees (${ring.counts.crowns} crowns, ${ring.counts.impostors} impostors), ${calls} draw calls, ${triangles} tris\nframe avg ${stats.frameAvg} ms, render+sync median ${stats.renderSyncMedian} ms${stats.gpuMedian !== undefined ? `, GPU ${stats.gpuMedian} ms` : ''}`;
   handle.ready = true;
 }
-if (q.get('bench') === 'far') void benchFar(); else if (q.get('view') === 'one') one(); else if (q.get('view') === 'lod') lods(); else sheet();
+function steps() { // dev: step times of the sliced build (the game's 'trees2' jobs must stay under ~4 ms per step)
+  const out: Record<string, (number | string)[]> = {};
+  for (const [cls, age] of [[0, 25], [1, 70], [2, 130], [3, 220]]) for (let v = 0; v < 2; v++) {
+    const g = buildConiferSteps('black-spruce', 101 + v * 17 + cls * 1000, age), ms: number[] = [], ph: string[] = []; let r; do { const t = performance.now(); r = g.next(); ms.push(+(performance.now() - t).toFixed(2)); ph.push(BUILD_PHASE.at); } while (!r.done);
+    const i = ms.indexOf(Math.max(...ms)); out[`${age}y:${v}`] = [ms[i], ms.length, +ms.reduce((a, b) => a + b, 0).toFixed(1), i, ph[i]];
+  }
+  Object.assign(stats, out); hud.textContent = JSON.stringify(out); handle.ready = true;
+}
+if (q.has('steps')) steps(); else if (q.get('bench') === 'far') void benchFar(); else if (q.get('view') === 'one') one(); else if (q.get('view') === 'lod') lods(); else sheet();
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 renderer.setAnimationLoop(() => { if (q.get('bench') === 'far' && !handle.ready) return; controls.update(); renderer.render(scene, camera); });

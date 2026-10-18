@@ -650,3 +650,18 @@ Still fork-only (`src/animals/locomotion/fork/`, used under `?loco=1` and in the
   - Mode machine, game <-> planet mapping with the single datum (`PLANET.home.elevation`; the globe surface = game height + 370 m in the home region, tested).
   - Camera mapping, patch fade (0 until the chunks under the camera are ready), input scope, governor hold.
 - **Flora worker, one-line hook (not done yet, no grass/flora shader was touched):** the transition fade is coming as `render/fade.ts`, an opt-in helper with a dither threshold and patch centre/radius uniforms. When you want grass/flowers to fade with the game patch, call its `applyPatchFade(material)` in your onBeforeCompile.
+
+## 2026-10-18 Grok Bot (shared perf): tier-change shader hitch (cc6bb3b, c44b9aa)
+- **Cause, found with per-frame GL timing + program tracking (not the a7c8549 world catch-up, which was already clean):**
+  1. The immediate governor step (ssao/contact/rays are not world knobs) flips the post route at once. Materials and meshes that appeared after startup only had the route in use, so their other-route programs compiled in the switch frame. three's first use of a program (`getProgramInfoLog` in onFirstUse) is where the main thread waits: 5-30 ms per program on ANGLE/D3D11, even when the link finished long ago.
+  2. **The shared tree material was disposed on every chunk unload** (22 times in 30 s of running). Batched trees sit in an unflagged BatchedMesh, so `disposeObject` disposed `treeMaterial()`, and every tree program recompiled synchronously at its next draw (a streaming hitch too). This also dropped the tree's precompiled other-route program, so trees were always the last program still compiling at the switch.
+- **Fixes:**
+  - trees.ts: `material.userData.shared = true`, like every other shared material. far trees (fartrees.ts) use the same material and benefit too.
+  - photoreal.ts `stepRoutes`: live materials are compiled through **both** routes in the background for the live world variant. It rescans every 60 frames, compiles at most 2 new programs per frame, and runs after any pending world warm. three keeps every program of a material until the material is disposed, so nothing is released.
+  - Warm/route busy lists now hold programs, so both routes' readiness is checked; before, only the clone's last program was. `settle()` gives linked programs their first use at most 2 per frame instead of all in the switch frame.
+  - `litFor(t)` holds the stand-in light scenes shared by both warms.
+- **Bench** (%TEMP%\boreal-gb bench3 phases; 3 runs before at 4c7513a and 3 after at c44b9aa; worst frame ms / frames >100 ms / long tasks):
+  - tier change: 117 / 133 / 183, 1 frame >100 ms each, 2 long tasks up to 189 ms → 33 / 50 / 67, 0 frames >100 ms, 0 long tasks. The world catch-up frame (83/67/67 ms) is gone too.
+  - idle, move and ultra are unchanged (all ≤ 34 ms). GPU memory 411-447 → 425-437 MB.
+- **Anyone disposing chunk objects:** a material used by more than one chunk must carry `userData.shared`, or `disposeObject` frees its programs.
+- **Not covered:** a manual tier change from the settings menu (immediate, as before), and point-light shadow programs. The background compile uses lights captured at each rescan, so a light added between rescans can still compile at the switch.

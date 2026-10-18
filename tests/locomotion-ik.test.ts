@@ -29,9 +29,9 @@ test('reachable targets are reached exactly (FK of the solution lands on the tar
   }
 });
 
-test('abduction swings the foot sideways by atan(x / drop)', () => {
-  const L = limbOf(WOLF_LEGS, 0), a = solveLimb(L, bendsForward(WOLF_LEGS, 0), { x: .1, y: 0, z: 0 }, 0);
-  assert.ok(Math.abs(a.abduct - Math.atan2(.1, L.hip)) < 1e-12);
+test('abduction swings the foot sideways about the girdle pivot by atan(x / drop)', () => {
+  for (const i of [0, 1]) { const L = limbOf(WOLF_LEGS, i), a = solveLimb(L, bendsForward(WOLF_LEGS, i), { x: .1, y: 0, z: 0 }, 0);
+    assert.ok(Math.abs(a.abduct - Math.atan2(.1, L.hip + (L.girdle ?? 0))) < 1e-12); }
 });
 
 test('controller output stays inside the goniometric flexion limits at every gait and speed', () => {

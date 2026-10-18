@@ -11,6 +11,7 @@ import type { WolfMode } from '../core/wolfModes';
 import { createPlayerWolf } from './playerWolf';
 import { createDeerRig } from './animalRig';
 import { createBear } from './bear';
+import { LOCO_FLAG, createLocoPlayer } from '../animals/locomotion/game'; // ?loco=1 only (Gait Builder)
 
 export interface AnimateFrame { time: number; dt: number; moving: boolean; action?: 'speak' | 'gather' | 'move'; elapsed: number; mode: WolfMode; push?: { x: number; z: number; yaw: number } }
 export interface PlayerRig { root: THREE.Object3D; brain: AnimalBrain; sensor: THREE.Object3D; animate(f: AnimateFrame): void }
@@ -22,7 +23,7 @@ export interface Playable {
 }
 export const PLAYABLES: Playable[] = [
   { id: 'wolf', label: 'Grey wolf', available: true, speedScale: 1, cameraHeight: 1.6, actions: ['speak', 'gather', 'move'], threat: true,
-    create() { const w = createPlayerWolf(); return { ...w, animate: f => w.animate(f.time, f.moving, f.action, f.elapsed, f.mode, f.push) }; } },
+    create() { if (LOCO_FLAG) return createLocoPlayer(); const w = createPlayerWolf(); return { ...w, animate: f => w.animate(f.time, f.moving, f.action, f.elapsed, f.mode, f.push) }; } },
   { id: 'deer', label: 'White-tailed deer', available: true, speedScale: 1.15, cameraHeight: 2.2, actions: ['speak'], threat: false,
     create() { const d = createDeerRig(4242, 0); return { root: d.root, brain: d.brain, sensor: d.sensor, animate: f => d.animate(f.dt) }; } },
   { id: 'bear', label: 'Grizzly bear', available: true, speedScale: .85, cameraHeight: 2.4, actions: ['speak', 'move'], threat: true,

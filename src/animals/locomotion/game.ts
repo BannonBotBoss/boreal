@@ -1,0 +1,35 @@
+/**
+ * Game wiring behind ?loco=1 (Grok Bot / Gait Builder). render/playables.ts asks `createLocoPlayer()` for the player
+ * body only when the flag is in the URL; without it this module is imported but never called, so the game is unchanged.
+ * The player body is the forked rig (fork/playerRig.ts, hooks 1+2). buildScene still places root at the player's
+ * ground point and heading before animate(); we read them back, run the locomotion layer on the same terrain function
+ * (core/world heightAt, clamped like buildScene) and hand the pose to the rig through hook 2.
+ */
+import { heightAt } from '../../core/world';
+import type { AnimateFrame, PlayerRig } from '../../render/playables';
+import { createLocomotion, type Locomotion } from './controller';
+import { createPlayerWolf } from './fork/playerRig';
+import type { LegLayout, TerrainFn } from './signals';
+
+export const LOCO_FLAG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('loco');
+/** Same ground the player stands on in buildScene.draw: max(heightAt, −0.2). */
+export const gameGround: TerrainFn = (x, z) => Math.max(heightAt(x, z), -.2);
+/** A jump in one frame larger than this (m) is a teleport (home button, ?at=, rewind): restart the feet there. */
+const TELEPORT = 2;
+
+export function createLocoPlayer(): PlayerRig {
+  const w = createPlayerWolf();
+  const layout: LegLayout = { legs: w.loco.legs, hips: w.loco.chains.map(c => c.hipXZ) };
+  let loco: Locomotion | undefined, last = { x: NaN, z: NaN };
+  return {
+    root: w.root, brain: w.brain, sensor: w.sensor,
+    animate(f: AnimateFrame) {
+      const r = w.root, b = w.brain, x = r.position.x, z = r.position.z, heading = r.rotation.y;
+      if (!loco || !(Math.hypot(x - last.x, z - last.z) < TELEPORT)) loco = createLocomotion(layout, gameGround, { x, z, heading });
+      last = { x, z };
+      const speed = b.motion === 'idle' ? 0 : (b.motion === 'back' ? -1 : 1) * b.gaitSpeed;
+      const pose = loco.update({ x, z, heading, speed }, f.dt, 'near');
+      w.animate(f.time, f.moving, f.action, f.elapsed, f.mode, f.push, pose);
+    },
+  };
+}

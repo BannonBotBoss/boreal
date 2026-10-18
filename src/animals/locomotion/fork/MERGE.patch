@@ -1,0 +1,68 @@
+# Fold-back patch for Claude: hooks 1 + 2 from src/animals/locomotion/fork/playerRig.ts into src/render/playerWolf.ts
+# Base: src/render/playerWolf.ts @ 56506c55a2ebf881f3454265da00a618399e2996. Apply from the repo root: git apply src/animals/locomotion/fork/MERGE.patch
+# (CRLF content lines, like the working-tree file on omen). Then delete src/animals/locomotion/fork/ and see AGENT-NOTES.md.
+--- a/src/render/playerWolf.ts
++++ b/src/render/playerWolf.ts
+@@ -5,6 +5,7 @@
+ import { buildBody, wolfCoat } from '../core/body';
+ import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
+ import { buildFurCards, furCardMaterial } from './furCards';
++import type { LegPose } from '../animals/locomotion/signals';
+ 
+ /**
+  * Procedural wolf: a low-poly base skin (tubes swept around an invisible skeleton, see core/body.ts and core/wolfBody.ts)
+@@ -28,7 +29,8 @@
+   const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
+   const torso = bones[BONE.torso], head = bones[BONE.head], jaw = bones[BONE.jaw];
+   head.name = 'cranium'; jaw.name = 'jaw';
+-  root.add(torso);
++  const tilt = new THREE.Group(); tilt.name = 'tilt'; root.add(tilt); // body tilt for the locomotion layer (hook 2)
++  tilt.add(torso);
+   head.position.set(...HEAD_AT); torso.add(head);
+   jaw.position.set(...JAW_AT); head.add(jaw); // hinge at the rear skull base, below the ears
+   const tail = TAIL_BONES.map(i => bones[i]);
+@@ -37,7 +39,7 @@
+   const chains = LEG_XZ.map(([x, z], i) => {
+     const ids = legBone(i), m = limbModel(i);
+     const [girdle, upper, lower, foot, paw] = [bones[ids.girdle], bones[ids.leg], bones[ids.knee], bones[ids.wrist], bones[ids.paw]];
+-    girdle.position.set(x, m.hip + m.girdle, z); root.add(girdle);
++    girdle.position.set(x, m.hip + m.girdle, z); girdle.rotation.order = 'ZXY'; tilt.add(girdle); // under tilt; sideways swing (z) outside the pitch (x)
+     upper.position.y = -m.girdle; girdle.add(upper);
+     lower.position.y = -m.upper; upper.add(lower);
+     foot.position.y = -m.lower; lower.add(foot);
+@@ -142,21 +144,32 @@
+   const tailPitch = { value: TAIL_HANG }, tailYaw = tail.map(() => 0);
+   const setTail = () => tail.forEach((bone, k) => { bone.rotation.x = k === 0 ? tailPitch.value : TAIL_CURVE[k] * (1 - .6 * (TAIL_HANG - tailPitch.value) / (TAIL_HANG - TAIL_LEVEL)); bone.rotation.y = tailYaw[k]; });
+   poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), 0); setTail(); // stand on the ground before the first frame
++  // locomotion hook 2: angles are scale-free; heights are world metres, so the tilt offset is divided by the root scale.
++  const applyLegPose = (p: LegPose) => {
++    chains.forEach((c, i) => {
++      c.girdle.position.y = c.m.hip + c.m.girdle; c.girdle.rotation.set(p.girdles[i], 0, p.abduct[i]);
++      c.upper.rotation.x = p.legs[i]; c.lower.rotation.x = p.knees[i]; c.foot.rotation.x = p.wrists[i]; c.paw.rotation.x = p.paws[i];
++    });
++    torso.position.y = 0; tilt.rotation.set(p.pitch, 0, p.roll); tilt.position.y = (p.height - root.position.y) / root.scale.y;
++  };
++  // locomotion hook 1: what the locomotion layer needs (leg order LF, LH, RF, RH; hipXZ in world metres at WOLF_SCALE).
++  const loco = { root, tilt, torso, scale: WOLF_SCALE, legs: WOLF_LEGS, chains: chains.map((c, i) => ({ girdle: c.girdle, upper: c.upper, lower: c.lower, foot: c.foot, paw: c.paw, hipXZ: [LEG_XZ[i][0] * WOLF_SCALE, LEG_XZ[i][1] * WOLF_SCALE] as const })) };
+   let lastTime = 0;
+-  return { root, brain, sensor, animate(time: number, moving: boolean, action: 'speak' | 'gather' | 'move' | undefined, elapsed: number, mode: WolfMode = 'walk', push?: { x: number; z: number; yaw: number }) {
++  return { root, brain, sensor, loco, animate(time: number, moving: boolean, action: 'speak' | 'gather' | 'move' | undefined, elapsed: number, mode: WolfMode = 'walk', push?: { x: number; z: number; yaw: number }, legPose?: LegPose) {
+     const stealth = mode === 'stealth' || mode === 'super-stealth';
+     const running = mode === 'run' || mode === 'sprint';
+-    root.scale.set(WOLF_SCALE, WOLF_SCALE * (stealth && action !== 'move' ? .72 : 1), WOLF_SCALE);
++    root.scale.set(WOLF_SCALE, WOLF_SCALE * (stealth && action !== 'move' && !legPose ? .72 : 1), WOLF_SCALE);
+     const dt = Math.max(0, Math.min(.1, time - lastTime)); lastTime = time;
+     const pose = quadrupedPose(brain.motion, brain.phase, brain.jumpTime, WOLF_LEGS, brain.gaitSpeed), bob = pose.bob / WOLF_SCALE;
+     const gait = moving ? Math.sin(time * (mode === 'sprint' ? 24 : running ? 19 : stealth ? 5 : 13)) : 0;
+     poseLegs(pose, bob);
+     torso.position.y = moving ? Math.abs(gait) * .012 : Math.sin(time * 2) * .003;
+     torso.position.y += bob;
++    if (legPose) applyLegPose(legPose); // locomotion hook 2: the locomotion layer drives legs, tilt and body height
+     head.rotation.x = action === 'speak' ? -.45 * Math.sin(Math.min(1, elapsed / .2) * Math.PI / 2)
+       : action === 'gather' ? .65 + Math.sin(elapsed * 12) * .12 : Math.sin(time * 1.4) * .035;
+     head.position.set(...HEAD_AT);
+-    if (action === 'move' && push) {
++    if (action === 'move' && push && !legPose) {
+       const retract = Math.max(0, Math.min(1, (1.2 - elapsed) / .4));
+       const amount = pushProgress(elapsed) * retract;
+       head.rotation.x = 0; torso.position.y = 0;

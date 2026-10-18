@@ -2,8 +2,8 @@
 export * from './signals';
 export { GAIT_TABLE, planGait, froude, type GaitPlan, type GaitRow } from './gaits';
 export { CPG, createCpg, stepCpg, phases, phaseDiff, type Cpg } from './cpg';
-export { stepFoot, footState, toWorld, SETTLE_SECONDS, type FootState } from './foot';
+export { stepFoot, footState, forceStep, toWorld, SETTLE_SECONDS, type FootState } from './foot';
 export { supportPlane, type Tilt } from './balance';
 export { solveLimb, soleOf, clampLimb, FLEX_LIMIT, type LimbAngles } from './ik';
 export { spring, springTo, type Spring } from './spring';
-export { createLocomotion, referenceLayout, worldToLimb, limbToWorld, SPRINGS, type Locomotion } from './controller';
+export { createLocomotion, referenceLayout, worldToLimb, limbToWorld, SPRINGS, REACH_TOLERANCE, type Locomotion } from './controller';

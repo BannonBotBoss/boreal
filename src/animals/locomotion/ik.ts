@@ -2,7 +2,7 @@
  * One limb by analytic IK. Same chain and rules as core/animalBehavior quadrupedPose (Claude): optional shoulder blade
  * that swings with the paw, two-bone solve to the carpus/hock with Claude's solveLeg, then a foot bone whose angle is a
  * rule (stance angle folding back by footFlex as the paw lifts). Added here: a sideways hip swing (`abduct`) so feet
- * can sit off the sagittal plane on side slopes and turns, and a clamp to the goniometric limits (skeleton.ts R6).
+ * can sit off the sagittal plane on side slopes and turns (pivot at the girdle top), and a clamp to the goniometric limits (skeleton.ts R6).
  */
 import { solveLeg, type LimbDims } from '../../core/animalBehavior';
 import { CANID_LIMB } from '../../core/skeleton';
@@ -16,7 +16,9 @@ export interface LimbAngles { girdle: number; leg: number; knee: number; wrist: 
  */
 export function solveLimb(L: LimbDims, forward: boolean, foot: Vec3, liftFrac: number): LimbAngles {
   const S = L.girdle ?? 0, M = L.foot ?? 0;
-  const drop = Math.hypot(L.hip - foot.y, foot.x), abduct = Math.atan2(foot.x, L.hip - foot.y), fy = L.hip - drop;
+  // Sideways swing pivots at the top of the chain (the girdle pivot, L.hip + S, where the rig's girdle bone sits), so the
+  // planar solve below happens in the swung plane and the foot lands exactly on target.
+  const top = L.hip + S, drop = Math.hypot(top - foot.y, foot.x), abduct = Math.atan2(foot.x, top - foot.y), fy = top - drop;
   const psi = (L.footAngle ?? 0) - (L.footFlex ?? 0) * liftFrac;
   const hz = foot.z + M * Math.sin(psi), hy = fy + M * Math.cos(psi);
   const jointAt = (g: number) => ({ z: -S * Math.sin(g), y: L.hip + S - S * Math.cos(g) });

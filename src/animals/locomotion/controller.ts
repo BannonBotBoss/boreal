@@ -8,9 +8,9 @@ import { WOLF_LEGS, bendsForward, isFrontLeg, limbOf } from '../../core/animalBe
 import { LEG_XZ } from '../../core/wolfBody';
 import { WOLF_SCALE } from '../../core/wolfModes';
 import { createCpg, phases, stepCpg, type Cpg } from './cpg';
-import { footState, stepFoot, toWorld, type FootState } from './foot';
+import { footState, forceStep, stepFoot, toWorld, type FootState } from './foot';
 import { planGait, type GaitPlan } from './gaits';
-import { clampLimb, solveLimb, type LimbAngles } from './ik';
+import { clampLimb, soleOf, solveLimb, type LimbAngles } from './ik';
 import { supportPlane, type Tilt } from './balance';
 import { spring, springTo, type Spring } from './spring';
 import type { LegLayout, LegPose, LocoSignals, Lod, TerrainFn, Vec3 } from './signals';
@@ -64,7 +64,7 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
       const L = limbs[i], front = isFrontLeg(i);
       let rel: Vec3, lift: number, contact: boolean;
       if (lod === 'near') {
-        const r = stepFoot(feet[i], { phase: ph[i], duty: plan.duty, cycle: plan.cycle, lift: plan.lift, moving, reverse: plan.reverse, dt, rest: restWorld(s.x, s.z, h, i), fwd }, ground);
+        const r = stepFoot(feet[i], { phase: ph[i], duty: plan.duty, cycle: plan.cycle, lift: plan.lift, moving, reverse: plan.reverse, dt, speed: Math.abs(s.speed), rest: restWorld(s.x, s.z, h, i), fwd }, ground);
         rel = worldToLimb(r.at, s.x, s.z, h, tilt, hips[i]); lift = r.lift; contact = feet[i].planted; pose.feet.push({ ...r.at });
       } else {
         // ideal distance-phased trajectory (core/animalBehavior footTarget), on the tilted body plane
@@ -75,7 +75,8 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
         pose.feet.push(limbToWorld(rel, s.x, s.z, h, tilt, hips[i]));
         if (moving) { feet[i].planted = contact; feet[i].at = pose.feet[i]; }
       }
-      const a: LimbAngles = clampLimb(solveLimb(L, bendsForward(legs, i), rel, lift), front);
+      const raw = solveLimb(L, bendsForward(legs, i), rel, lift), a: LimbAngles = clampLimb(raw, front);
+      if (lod === 'near' && contact && reachError(L, a, rel) > REACH_TOLERANCE) { forceStep(feet[i]); contact = false; } // leash
       const j = joints[i], hj = SPRINGS.joint * scale;
       const out = near ? Object.fromEntries(KEYS.map(k => [k, springTo(j[k], a[k], hj, dt)])) as Record<typeof KEYS[number], number>
         : (KEYS.forEach(k => { j[k].x = a[k]; j[k].v = 0; }), a);
@@ -86,6 +87,14 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
     return pose;
   }
   return { update, feet, cpg, plan: () => plan };
+}
+
+/** A planted foot further than this (m) from where the limb can reach is lifted (leash). */
+export const REACH_TOLERANCE = 1e-4;
+/** Distance between a limb target and where the solved, clamped limb actually puts the sole. */
+function reachError(L: ReturnType<typeof limbOf>, a: LimbAngles, rel: Vec3) {
+  const top = L.hip + (L.girdle ?? 0), s = soleOf(L, a);
+  return Math.hypot(s.z - rel.z, s.y - (top - Math.hypot(top - rel.y, rel.x)));
 }
 
 /** World point → limb frame (x right, y up from the tilted body plane, z back, origin at the limb's ground point). */

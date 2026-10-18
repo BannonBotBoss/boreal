@@ -59,22 +59,15 @@ const stick = createStickRig(layout); scene.add(stick.root);
 let poseReal: ((p: LegPose, a: typeof body) => void) | undefined;
 if (q.get('rig') === 'real') void loadReal();
 
-/** Stretch: Claude's furred wolf, posed by overwriting its leg-bone rotations after its own animate(). No edits to its files. */
+/** The furred wolf through the forked rig (fork/playerRig.ts): hook 2 poses legs, tilt and height exactly from our pose. */
 async function loadReal() {
-  const [{ createPlayerWolf }, { legBone }] = await Promise.all([import('../../render/playerWolf'), import('../../core/wolfBody')]);
-  const wolf = createPlayerWolf(1400), holder = new THREE.Group(), tilt = new THREE.Group(); holder.add(tilt); tilt.add(wolf.root); scene.add(holder);
+  const { createPlayerWolf } = await import('./fork/playerRig');
+  const wolf = createPlayerWolf(1400); scene.add(wolf.root);
   wolf.root.traverse(o => { o.castShadow = true; });
-  let bones: THREE.Bone[] = [];
-  wolf.root.traverse(o => { if ((o as THREE.SkinnedMesh).isSkinnedMesh && !bones.length) bones = (o as THREE.SkinnedMesh).skeleton.bones; });
   stick.root.visible = false;
   poseReal = (p, a) => {
-    wolf.animate(performance.now() / 1000, false, undefined, 0);
-    holder.position.set(a.x, p.height, a.z); holder.rotation.y = a.heading; tilt.rotation.set(p.pitch, 0, p.roll);
-    for (let i = 0; i < 4; i++) {
-      const id = legBone(i);
-      bones[id.girdle].rotation.set(p.girdles[i], 0, p.abduct[i]); bones[id.leg].rotation.x = p.legs[i]; bones[id.knee].rotation.x = p.knees[i];
-      bones[id.wrist].rotation.x = p.wrists[i]; bones[id.paw].rotation.x = p.paws[i];
-    }
+    wolf.root.position.set(a.x, p.height, a.z); wolf.root.rotation.y = a.heading;
+    wolf.animate(performance.now() / 1000, state.speed > .05, undefined, 0, 'walk', undefined, p);
   };
 }
 

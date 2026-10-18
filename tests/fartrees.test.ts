@@ -4,7 +4,7 @@ import { applyPopulation } from '../src/core/population';
 import { RENDER } from '../src/core/renderSettings';
 import { CHUNK_SIZE, type Entity } from '../src/core/world';
 import { ENTITY_TREES, FAR_TREES, drawnTreesPerHa, farTreesInTile, fillPerHa } from '../src/core/flora/stands';
-import { standStructure } from '../src/core/stand';
+import { standStructure, speciesStems, standStems, STEM_CURVES } from '../src/core/stand';
 
 test('far trees: the entity baseline is ~131 trees/ha at the reference stand, clamped like core/population', () => {
   assert.ok(Math.abs(drawnTreesPerHa(ENTITY_TREES.stemRef, 1) - 131.25) < .01);
@@ -49,9 +49,17 @@ test('far trees: Thomas tiles hit the target density, cluster at a few metres, k
 });
 
 test('stand model: mature fire-origin black spruce 1300-2150 stems/ha (Rossi 2013), denser young, thinner old growth', () => {
-  for (const age of [80, 100, 120]) { const s = standStructure(age).stems; assert.ok(s >= 1300 && s <= 2150, `age ${age}: ${s.toFixed(0)}/ha`); }
-  assert.ok(standStructure(37).stems >= 2500 && standStructure(37).stems <= 3600, '36-38 yr Beardmore black spruce 2500-3400/ha');
-  for (let a = 1; a < 300; a += 7) assert.ok(standStructure(a + 7).stems < standStructure(a).stems, 'self-thinning is monotone');
+  for (const age of [80, 100, 120]) { const s = speciesStems('black-spruce', age); assert.ok(s >= 1300 && s <= 2150, `age ${age}: ${s.toFixed(0)}/ha`); }
+  assert.ok(speciesStems('black-spruce', 37) >= 2500 && speciesStems('black-spruce', 37) <= 3600, '36-38 yr Beardmore black spruce 2500-3400/ha');
+  for (const id of Object.keys(STEM_CURVES)) for (let a = 1; a < 300; a += 7) assert.ok(speciesStems(id, a + 7) < speciesStems(id, a), `${id}: self-thinning is monotone`);
+  for (const a of [47, 50, 53]) { const s = speciesStems('jack-pine', a); assert.ok(s >= 1164 && s <= 1789, `jack pine ${a} yr: ${s.toFixed(0)}/ha (sf.128; 1275 at 50 yr, Timmins)`); }
+  const jp32 = speciesStems('jack-pine', 32); assert.ok(jp32 >= 1131 && jp32 <= 7042, 'jack pine 32 yr in the NW Ontario plot range');
+  assert.ok(speciesStems('trembling-aspen', 6) >= 15000, 'aspen suckers 20-40k/ha by 6 yr'); assert.ok(speciesStems('trembling-aspen', 80) < 1000, 'aspen first cohort breaks up');
+  const f21 = speciesStems('balsam-fir', 21); assert.ok(f21 > 3000 && f21 < 4500, 'fir ~3800/ha at ~21 yr (NB SDMD)');
+  for (const a of [50, 75, 120]) { const s = speciesStems('balsam-fir', a); assert.ok(s >= 1000 && s <= 3000, `mature fir ${a} yr`); }
+  // the stand mixes the curves by its species table (one source: population and stands both read stand.stems)
+  for (const a of [30, 80, 150]) { const s = standStructure(a, .5).stems; assert.ok(s > 900 && s < 4000, `mixed stand ${a} yr: ${s.toFixed(0)}`); }
+  assert.equal(standStructure(90, .2).stems, standStems(90, .2));
   // drawn = entities + look-only filler reaches the fill share of the mature target, under the cap
   const s = standStructure(100).stems, drawn = drawnTreesPerHa(s, 1) + fillPerHa(s, 1);
   assert.ok(drawn > .6 * s && drawn <= Math.min(s, FAR_TREES.stemCap) + 1e-6, `drawn ${drawn.toFixed(0)}/ha of ${s.toFixed(0)}`);

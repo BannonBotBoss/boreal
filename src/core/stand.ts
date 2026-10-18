@@ -10,6 +10,7 @@
  */
 import { hash, sample, type Dist } from '../proc/rng';
 import { WORLD_SEED } from './world';
+import { standTable } from './treeSpecies'; // cycle-safe: treeSpecies only reads SUCCESSION/successionWeight at call time
 
 export const FIRE = {
   cycleYears: 100,   // C (yr), Heinselman 1973 [verify]; setting range 60–200
@@ -42,14 +43,41 @@ export function successionWeight(cls: 'pioneer' | 'mid' | 'late', age: number) {
   return cls === 'pioneer' ? .08 + Math.exp(-((Math.max(0, age - 60) / 70) ** 2)) : cls === 'late' ? .05 + (1 - Math.exp(-age / 90)) * 1.6 : 1;
 }
 
+/**
+ * Stems/ha by species vs stand age (yr since fire): base + a e^(-age/ta) + b e^(-age/tb) (two-rate Reineke-type self-thinning;
+ * stems >= ~1 cm dbh, no seedling layer). [base, a, ta, b, tb]. Plot data, NW Ontario first:
+ *  - spruces (black, also white): 37 yr ~3400 (Beardmore, sf.128), 80-120 yr 2110-1570 (Rossi 2013 sf.973), old growth ~1150.
+ *  - jack pine: 15 000-30 000/ha in the first years after fire (Thunder Bay 46 regeneration, Weth 1999), 1131-7042/ha at 32 yr
+ *    (NW Ontario, Phillion, Lakehead), 1275/ha at 50 yr (Timmins, fire origin, site class 2: Zhang et al., Wood Fiber Sci,
+ *    wfs 1093), 1164-1789 at 47-53 yr (sf.128); 33% mortality by 90 yr and break-up after ~100 -> 50 yr 1310, 90 yr 850.
+ *  - trembling aspen / paper birch / balsam poplar: suckers to 20 000-40 000/ha by 6 yr (OMNR 1988 in Deschamps, Lakehead;
+ *    Steneker 1976), rapid self-thinning, ~1300/ha at 50 yr and break-up of the first cohort from 60-80 yr (Bergeron 2000,
+ *    Ecology 81:1500) [50-80 yr verify against Plonski 1974 yield tables] -> 6 yr 19 900, 28 yr 2800, 50 yr 1320, 80 yr 750.
+ *  - balsam fir: 3783/ha mean at ~21 yr (New Brunswick SDMD, 584 plots: For. Chron. 82:700), 1000-3000/ha mature, break-up
+ *    from 60-75 yr (budworm; For. Chron. 84:60) -> 21 yr 3840, 50 yr 2190, 75 yr 1700, 120 yr 1320.
+ */
+export const STEM_CURVES: Record<string, readonly [number, number, number, number, number]> = {
+  'black-spruce': [1000, 4200, 60, 8000, 10], 'white-spruce': [1000, 4200, 60, 8000, 10],
+  'jack-pine': [600, 2400, 40, 20000, 6],
+  'trembling-aspen': [500, 6000, 25, 40000, 6], 'paper-birch': [500, 6000, 25, 40000, 6], 'balsam-poplar': [500, 6000, 25, 40000, 6],
+  'balsam-fir': [1100, 3200, 45, 6000, 10],
+};
+export const speciesStems = (id: string, age: number) => { const [c, a, ta, b, tb] = STEM_CURVES[id] ?? STEM_CURVES['black-spruce']; return c + a * Math.exp(-age / ta) + b * Math.exp(-age / tb); };
+const mixCache = new Map<number, number>();
+/** Stand stems/ha = the species curves weighted by the stand mix at (wetness, age) (core/treeSpecies standTable, the same
+ *  table trees are drawn from). Cached at 1 yr / 0.05 wetness. */
+export function standStems(age: number, wet = .5) {
+  const k = Math.round(Math.min(FIRE.maxAge, Math.max(0, age))) * 32 + Math.round(Math.min(1, Math.max(0, wet)) * 20);
+  let v = mixCache.get(k); if (v !== undefined) return v;
+  const t = standTable(wet, age); let prev = 0; v = 0;
+  for (const [id, cum] of t) { v += (cum - prev) * speciesStems(id, age); prev = cum; }
+  if (mixCache.size > 20000) mixCache.clear(); mixCache.set(k, v); return v;
+}
+
 /** The ONE stand-structure function: everything a cell needs from stand age and site wetness (0 dry … 1 wet). */
 export function standStructure(age: number, wet = .5) {
-  // stems/ha (NW Ontario / boreal Quebec plots): dense post-fire regeneration (>7000/ha at 10 yr) self-thins to 2500-3400/ha
-  // at 36-38 yr (black spruce, Beardmore; Silva Fennica doi:10.14214/sf.128), 1300-2150/ha in fire-origin black spruce at
-  // 80-120 yr (Rossi et al. 2013, doi:10.14214/sf.973) and ~1000-1200/ha in old growth (gap phase). Two-rate Reineke-type
-  // decline: 1000 + 4200 e^(-age/60) + 8000 e^(-age/10) -> 40 yr 3300, 80 yr 2110, 120 yr 1570, 200 yr 1150.
-  // (replaces 650 + 9000 e^(-age/18): ~700/ha at 80 yr, half the measured mature density)
-  const stems = 1000 + 4200 * Math.exp(-age / 60) + 8000 * Math.exp(-age / 10);
+  // stems/ha: per-species plot curves (STEM_CURVES) mixed by the stand's species table at this age and wetness
+  const stems = standStems(age, wet);
   // canopy closure: closes by ~30 yr, opens slightly in gap-phase old growth (>150 yr) (Harper et al. 2002) [verify]
   const canopy = Math.min(.95, .92 * (1 - Math.exp(-age / 14))) - .15 * Math.min(1, Math.max(0, (age - 150) / 100));
   // DBH age factor (0 → 1): stand mean diameter growth with age, used to shift each species' DBH distribution

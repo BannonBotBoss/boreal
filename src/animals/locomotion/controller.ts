@@ -18,6 +18,7 @@ import { spring, springTo, type Spring } from './spring';
 import type { LegLayout, LegPose, LocoSignals, Lod, TerrainFn, Vec3 } from './signals';
 import { smooth01 } from '../../proc/math';
 import { flightFoot, jumpFrame, type Jump, type JumpFrame } from './jump';
+import { POSTURE, carryWeight } from './posture';
 
 /** The reference test body: Claude's real-size gray-wolf legs (WOLF_LEGS) and limb positions (LEG_XZ × WOLF_SCALE). Read only. */
 export const referenceLayout = (): LegLayout => ({ legs: WOLF_LEGS, hips: LEG_XZ.map(([x, z]) => [x * WOLF_SCALE, z * WOLF_SCALE] as const) });
@@ -40,8 +41,9 @@ export interface Locomotion {
 
 export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { x: number; z: number; heading: number }): Locomotion {
   const { legs, hips } = layout;
-  const limbs = [0, 1, 2, 3].map(i => limbOf(legs, i));
-  const restBody = (i: number) => [hips[i][0], hips[i][1] - (limbs[i].stance ?? 0)] as const;
+  // the fore wrist folds further through the swing (POSTURE.swingWristFlex); the sole target is unchanged, so contacts stay exact
+  const limbs = [0, 1, 2, 3].map(i => { const L = limbOf(legs, i); return isFrontLeg(i) ? { ...L, footFlex: (L.footFlex ?? 0) + POSTURE.swingWristFlex } : L; });
+  const restBody = (i: number) => [hips[i][0] * POSTURE.track, hips[i][1] - (limbs[i].stance ?? 0) - (isFrontLeg(i) ? 0 : POSTURE.hindReach * legs.hip)] as const;
   const restWorld = (x: number, z: number, h: number, i: number) => toWorld(x, z, h, ...restBody(i));
   const wheelbase = Math.abs((hips[1][1] + hips[3][1]) / 2 - (hips[0][1] + hips[2][1]) / 2);
   const track = Math.abs((hips[2][0] + hips[3][0]) / 2 - (hips[0][0] + hips[1][0]) / 2);
@@ -80,27 +82,34 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
     const fwd = { x: -Math.sin(h), z: -Math.cos(h) };
     const pose: LegPose = { girdles: [], legs: [], knees: [], wrists: [], paws: [], abduct: [], feet: [], contacts: [], height: tilt.height, pitch: tilt.pitch, roll: tilt.roll,
       gait: plan.id, phases: ph, duty: plan.duty, cycle: plan.cycle, froude: plan.froude };
+    const cw = jf ? 0 : carryWeight(s.speed); pose.carry = { head: POSTURE.headPitch * cw, drop: POSTURE.headDrop * cw, tail: POSTURE.tailDrop * cw };
     for (let i = 0; i < 4; i++) {
       const L = limbs[i], front = isFrontLeg(i);
       let rel: Vec3, lift: number, contact: boolean;
       if (jf?.stage === 'flight' || (jf && lod !== 'near')) {
         const restZ = restBody(i)[1] - hips[i][1];
         const ff = jf.stage === 'flight' ? flightFoot(front, jf.air, L.hip, jump!.kind, restZ) : { x: 0, y: 0, z: restZ, lift: 0 };
-        rel = { x: ff.x, y: ff.y, z: ff.z }; lift = ff.lift; contact = jf.stage !== 'flight';
+        rel = { x: ff.x + restBody(i)[0] - hips[i][0], y: ff.y, z: ff.z }; lift = ff.lift; contact = jf.stage !== 'flight';
         const w = limbToWorld(rel, s.x, s.z, h, tilt, hips[i]); pose.feet.push(w); feet[i].at = w;
       } else if (lod === 'near') {
-        const r = stepFoot(feet[i], { phase: ph[i], duty: plan.duty, cycle: plan.cycle, lift: plan.lift, moving: moving && !jf, reverse: plan.reverse, dt, speed: Math.abs(s.speed), rest: restWorld(s.x, s.z, h, i), fwd }, ground);
+        const r = stepFoot(feet[i], { phase: ph[i], duty: plan.duty, cycle: plan.cycle, lift: plan.lift * (front ? 1 + (POSTURE.foreLift - 1) * carryWeight(s.speed) : 1), moving: moving && !jf, reverse: plan.reverse, dt, speed: Math.abs(s.speed), rest: restWorld(s.x, s.z, h, i), fwd }, ground);
         rel = worldToLimb(r.at, s.x, s.z, h, tilt, hips[i]); lift = r.lift; contact = feet[i].planted; pose.feet.push({ ...r.at });
       } else {
         // ideal distance-phased trajectory (core/animalBehavior footTarget), on the tilted body plane
         const stride = plan.duty * plan.cycle, dir = plan.reverse ? -1 : 1, p = ph[i], [, rz] = restBody(i);
         contact = !moving || p < plan.duty; const sw = (p - plan.duty) / (1 - plan.duty);
         rel = moving ? (contact ? { x: 0, y: 0, z: dir * stride * (p / plan.duty - .5) } : { x: 0, y: plan.lift * Math.sin(Math.PI * sw), z: dir * stride * (.5 - smooth01(sw)) }) : { x: 0, y: 0, z: 0 };
-        rel.z += rz - hips[i][1]; lift = moving && !contact ? Math.sin(Math.PI * sw) : 0;
+        rel.z += rz - hips[i][1]; rel.x += restBody(i)[0] - hips[i][0]; lift = moving && !contact ? Math.sin(Math.PI * sw) : 0;
         pose.feet.push(limbToWorld(rel, s.x, s.z, h, tilt, hips[i]));
         if (moving) { feet[i].planted = contact; feet[i].at = pose.feet[i]; }
       }
-      const raw = solveLimb(L, bendsForward(legs, i), rel, lift), a: LimbAngles = clampLimb(raw, front);
+      let raw = solveLimb(L, bendsForward(legs, i), rel, lift);
+      const fits = (r: LimbAngles) => reachError(L, clampLimb(r, front), rel) < 1e-7; // within joint limits and reach
+      if (front && lift > 0 && !fits(raw)) { // wrist flick past the joint limits or reach: fold only as far as they allow, keep the paw on target
+        let lo = 0, hi = 1; for (let k = 0; k < 6; k++) { const m = (lo + hi) / 2, r = solveLimb(L, bendsForward(legs, i), rel, lift * m); if (fits(r)) { lo = m; raw = r; } else hi = m; }
+        if (lo === 0) raw = solveLimb(L, bendsForward(legs, i), rel, 0);
+      }
+      const a: LimbAngles = clampLimb(raw, front);
       if (lod === 'near' && contact && reachError(L, a, rel) > REACH_TOLERANCE) { forceStep(feet[i]); contact = false; } // leash
       const j = joints[i], hj = Math.min(SPRINGS.joint * scale, SWING_SPRING_SHARE * (moving ? (1 - plan.duty) * plan.cycle / Math.max(Math.abs(s.speed), 1e-3) : Infinity)); // lag stays a small share of the swing, so fast gaits don't trail
       // planted legs snap (exact contact), swing legs follow through the spring ("muscle" lag only in the air)
@@ -118,7 +127,7 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
 /** Swing-leg spring half-life is capped at this share of the swing duration. */
 export const SWING_SPRING_SHARE = .1;
 /** A planted foot further than this (m) from where the limb can reach is lifted (leash). */
-export const REACH_TOLERANCE = 1e-4;
+export const REACH_TOLERANCE = 1e-6;
 /** Distance between a limb target and where the solved, clamped limb actually puts the sole. */
 function reachError(L: ReturnType<typeof limbOf>, a: LimbAngles, rel: Vec3) {
   const top = L.hip + (L.girdle ?? 0), s = soleOf(L, a);

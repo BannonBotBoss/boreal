@@ -30,7 +30,7 @@
      upper.position.y = -m.girdle; girdle.add(upper);
      lower.position.y = -m.upper; upper.add(lower);
      foot.position.y = -m.lower; lower.add(foot);
-@@ -142,21 +144,32 @@
+@@ -142,21 +144,33 @@
    const tailPitch = { value: TAIL_HANG }, tailYaw = tail.map(() => 0);
    const setTail = () => tail.forEach((bone, k) => { bone.rotation.x = k === 0 ? tailPitch.value : TAIL_CURVE[k] * (1 - .6 * (TAIL_HANG - tailPitch.value) / (TAIL_HANG - TAIL_LEVEL)); bone.rotation.y = tailYaw[k]; });
    poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), 0); setTail(); // stand on the ground before the first frame
@@ -62,7 +62,17 @@
        : action === 'gather' ? .65 + Math.sin(elapsed * 12) * .12 : Math.sin(time * 1.4) * .035;
      head.position.set(...HEAD_AT);
 -    if (action === 'move' && push) {
++    if (legPose?.carry && !action) { head.rotation.x += legPose.carry.head; head.position.y -= HEAD_DROP * legPose.carry.drop; } // hook 2: walking head carry
 +    if (action === 'move' && push && !legPose) {
        const retract = Math.max(0, Math.min(1, (1.2 - elapsed) / .4));
        const amount = pushProgress(elapsed) * retract;
        head.rotation.x = 0; torso.position.y = 0;
+@@ -173,7 +187,7 @@
+       const wave = brain.motion === 'idle' ? Math.sin(time * 1.3 - k * .8) * .05 : Math.sin(brain.phase * Math.PI * 2 - k * .9) * (.09 + .02 * k);
+       tailYaw[k] += (wave - tailYaw[k]) * blendTo;
+     });
+-    tailPitch.value += (TAIL_HANG + (TAIL_LEVEL - TAIL_HANG) * lift - tailPitch.value) * (1 - Math.exp(-4 * dt));
++    tailPitch.value += (TAIL_HANG + (TAIL_LEVEL - TAIL_HANG) * lift + (legPose?.carry?.tail ?? 0) - tailPitch.value) * (1 - Math.exp(-4 * dt));
+     setTail();
+     tail[0].position.set(...TAIL_AT);
+   } };

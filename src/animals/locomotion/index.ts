@@ -8,3 +8,4 @@ export { solveLimb, soleOf, clampLimb, FLEX_LIMIT, type LimbAngles } from './ik'
 export { spring, springTo, type Spring } from './spring';
 export { createLocomotion, referenceLayout, worldToLimb, limbToWorld, SPRINGS, REACH_TOLERANCE, LOCO_LOD, lodAt, type Locomotion } from './controller';
 export { JUMP, jumpFrame, flightFoot, apexHeight, airSeconds, jumpSeconds, type Jump, type JumpKind, type JumpStage, type JumpFrame } from './jump';
+export { POSTURE, carryWeight } from './posture';

@@ -178,6 +178,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
     head.rotation.x = action === 'speak' ? -.45 * Math.sin(Math.min(1, elapsed / .2) * Math.PI / 2)
       : action === 'gather' ? .65 + Math.sin(elapsed * 12) * .12 : Math.sin(time * 1.4) * .035;
     head.position.set(...HEAD_AT);
+    if (legPose?.carry && !action) { head.rotation.x += legPose.carry.head; head.position.y -= HEAD_DROP * legPose.carry.drop; } // FORK hook 2: walking head carry
     if (action === 'move' && push && !legPose) {
       const retract = Math.max(0, Math.min(1, (1.2 - elapsed) / .4));
       const amount = pushProgress(elapsed) * retract;
@@ -195,7 +196,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
       const wave = brain.motion === 'idle' ? Math.sin(time * 1.3 - k * .8) * .05 : Math.sin(brain.phase * Math.PI * 2 - k * .9) * (.09 + .02 * k);
       tailYaw[k] += (wave - tailYaw[k]) * blendTo;
     });
-    tailPitch.value += (TAIL_HANG + (TAIL_LEVEL - TAIL_HANG) * lift - tailPitch.value) * (1 - Math.exp(-4 * dt));
+    tailPitch.value += (TAIL_HANG + (TAIL_LEVEL - TAIL_HANG) * lift + (legPose?.carry?.tail ?? 0) - tailPitch.value) * (1 - Math.exp(-4 * dt));
     setTail();
     tail[0].position.set(...TAIL_AT);
   } };

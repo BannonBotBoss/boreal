@@ -2,12 +2,14 @@
  * Locomotion lab (dev page tools/locomotion-lab.html). One test quadruped walks a circle over a chosen terrain, driven
  * by the locomotion layer. Params: ?terrain=flat|hills|world  ?gait=auto|walk|trot|pace|canter|gallop|bound|pronk
  * ?speed=<m/s>  ?lod=near|mid  ?rig=stick|real  ?t=<seconds to pre-simulate>  ?cam=side|follow  ?pause=1 (freeze after ?t)
+ * ?cam=profile (eye-level side view, for comparing with reference photos)  ?hide=body,legs,feet,ik  ?raw=1 (springs off)  ?ui=0 (hide the panel)
  * ?pounce=1 (a pounce at t = 1 s and every 3 s after; P key or the button pounces any time)
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { heightAt } from '../../core/world';
-import { createLocomotion, referenceLayout } from './controller';
+import { createLocomotion, limbToWorld, referenceLayout, SPRINGS } from './controller';
+import { limbOf } from '../../core/animalBehavior';
 import { GAIT_TABLE } from './gaits';
 import { createStickRig } from './stickRig';
 import { LEG_NAMES, type GaitId, type LegPose, type Lod, type TerrainFn } from './signals';
@@ -57,15 +59,15 @@ const at = () => { const x = R * Math.cos(path.a), z = -R * Math.sin(path.a); re
 let body = at();
 const loco = createLocomotion(layout, ground, body);
 const stick = createStickRig(layout); scene.add(stick.root);
-let poseReal: ((p: LegPose, a: typeof body) => void) | undefined;
+let poseReal: ((p: LegPose, a: typeof body) => void) | undefined, realMeshes: THREE.Object3D[] = [], realChains: { girdle: THREE.Object3D; upper: THREE.Object3D; lower: THREE.Object3D; foot: THREE.Object3D; paw: THREE.Object3D }[] = [];
 if (q.get('rig') === 'real') void loadReal();
 
 /** The furred wolf through the forked rig (fork/playerRig.ts): hook 2 poses legs, tilt and height exactly from our pose. */
 async function loadReal() {
   const { createPlayerWolf } = await import('./fork/playerRig');
   const wolf = createPlayerWolf(1400); scene.add(wolf.root);
-  wolf.root.traverse(o => { o.castShadow = true; });
-  stick.root.visible = false;
+  wolf.root.traverse(o => { o.castShadow = true; if ((o as THREE.Mesh).isMesh) realMeshes.push(o); });
+  realChains = wolf.loco.chains; stick.root.visible = false; applyLayers();
   poseReal = (p, a) => {
     wolf.root.position.set(a.x, p.height, a.z); wolf.root.rotation.y = a.heading;
     wolf.animate(performance.now() / 1000, state.speed > .05, undefined, 0, 'walk', undefined, p);
@@ -75,6 +77,21 @@ async function loadReal() {
 // foot markers: green = planted (locked in the world), orange = swing
 const dotGeo = new THREE.SphereGeometry(.025, 10, 8), green = new THREE.MeshBasicMaterial({ color: 0x1fbf4a }), orange = new THREE.MeshBasicMaterial({ color: 0xff8a1f });
 const dots = LEG_NAMES.map(() => { const m = new THREE.Mesh(dotGeo, green); scene.add(m); return m; });
+// debug layers: IK targets (limb top → the sole target the solver is asked to reach), and a leg-bone overlay for the real rig
+const lineOf = (n: number, color: number) => { const g = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color, depthTest: false })); l.renderOrder = 10; l.frustumCulled = false; scene.add(l); return l; };
+const ikLines = LEG_NAMES.map(() => lineOf(2, 0x19c3e6)), boneLines = LEG_NAMES.map(() => lineOf(5, 0xffe14d));
+const setLine = (l: THREE.Line, pts: { x: number; y: number; z: number }[]) => { const a = l.geometry.attributes.position as THREE.BufferAttribute; pts.forEach((p, k) => a.setXYZ(k, p.x, p.y, p.z)); a.needsUpdate = true; };
+const layers = { body: true, legs: true, feet: true, ik: false, raw: q.get('raw') === '1' };
+for (const k of (q.get('hide') ?? '').split(',')) if (k in layers) (layers as Record<string, boolean>)[k] = false;
+if (q.get('show')) for (const k of q.get('show')!.split(',')) if (k in layers) (layers as Record<string, boolean>)[k] = true;
+const springDefaults = { ...SPRINGS };
+function applyLayers() {
+  stick.body.forEach(o => { o.visible = layers.body; }); stick.legs.forEach(o => { o.visible = layers.legs; });
+  realMeshes.forEach(o => { o.visible = layers.body; }); boneLines.forEach(l => { l.visible = layers.legs && !layers.body && realChains.length > 0; }); // real rig: the leg-bone overlay shows when the fur is hidden
+  dots.forEach(d => { d.visible = layers.feet; }); ikLines.forEach(l => { l.visible = layers.ik; });
+  Object.assign(SPRINGS, springDefaults, layers.raw ? { joint: 0, body: 0 } : {}); // raw = the solved pose without the critically damped springs
+}
 
 // ---------------------------------------------------------------- UI: speed slider, gait/LOD pickers, readout, footfall strip
 const css = document.createElement('style');
@@ -84,14 +101,17 @@ document.head.append(css);
 const ui = document.createElement('div'); ui.id = 'ui';
 ui.innerHTML = `<b>Locomotion lab</b> · terrain ${terrainName}<label>speed <input id="sp" type="range" min="0" max="10" step=".1"> <span id="spv"></span> m/s</label>
 <label>gait <select id="ga">${['auto', ...Object.keys(GAIT_TABLE)].map(g => `<option>${g}</option>`).join('')}</select> LOD <select id="lo"><option>near</option><option>mid</option></select> <button id="pa">pause</button> <button id="po">pounce</button></label>
+<label>show ${Object.keys(layers).map(k => `<input type="checkbox" id="ly-${k}">${k === 'raw' ? 'raw (no springs)' : k === 'feet' ? 'foot markers' : k === 'ik' ? 'IK targets' : k}`).join(' ')}</label>
 <div id="ro"></div><canvas id="strip" width="260" height="56"></canvas>`;
-document.body.append(ui);
+document.body.append(ui); if (q.get('ui') === '0') ui.style.display = 'none';
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const sp = $<HTMLInputElement>('sp'), ga = $<HTMLSelectElement>('ga'), lo = $<HTMLSelectElement>('lo');
 sp.value = String(state.speed); ga.value = state.gait ?? 'auto'; lo.value = state.lod;
 sp.oninput = () => { state.speed = Number(sp.value); }; ga.onchange = () => { state.gait = ga.value === 'auto' ? undefined : ga.value as GaitId; }; lo.onchange = () => { state.lod = lo.value as Lod; };
 $('pa').onclick = () => { state.paused = !state.paused; };
 $('po').onclick = () => { state.pounce = true; }; addEventListener('keydown', e => { if (e.key === 'p') state.pounce = true; });
+for (const k of Object.keys(layers) as (keyof typeof layers)[]) { const c = $<HTMLInputElement>(`ly-${k}`); c.checked = layers[k]; c.onchange = () => { layers[k] = c.checked; applyLayers(); }; }
+applyLayers();
 const autoPounce = q.get('pounce') === '1';
 const strip = $<HTMLCanvasElement>('strip').getContext('2d')!, history: boolean[][] = [];
 
@@ -116,12 +136,12 @@ function simulate(dt: number) {
 const warm = Number(q.get('t') ?? 0);
 for (let t = 0; t < warm; t += DT) simulate(DT);
 if (q.get('pause') === '1') state.paused = true;
-const sideCam = q.get('cam') !== 'follow';
+const sideCam = q.get('cam') !== 'follow', profile = q.get('cam') === 'profile';
 function placeCamera(initial: boolean) {
   const f = { x: -Math.sin(body.heading), z: -Math.cos(body.heading) };
   if (initial) {
     // side view: perpendicular to the direction of travel, slightly above
-    const d = 2.6; camera.position.set(body.x + f.z * d * (sideCam ? 1 : .6) - f.x * (sideCam ? 0 : 1.6), pose.height + .9, body.z - f.x * d * (sideCam ? 1 : .6) - f.z * (sideCam ? 0 : 1.6));
+    const d = profile ? 3.2 : 2.6; if (profile) { camera.fov = 58; camera.updateProjectionMatrix(); } camera.position.set(body.x + f.z * d * (sideCam ? 1 : .6) - f.x * (sideCam ? 0 : 1.6), pose.height + (profile ? .45 : .9), body.z - f.x * d * (sideCam ? 1 : .6) - f.z * (sideCam ? 0 : 1.6));
   }
   const target = new THREE.Vector3(body.x, pose.height + .45, body.z), delta = target.clone().sub(controls.target);
   controls.target.copy(target); camera.position.add(delta); sun.position.set(body.x + 4, pose.height + 8, body.z + 3); sun.target.position.copy(target);
@@ -133,6 +153,8 @@ function frame(now: number) {
   if (!state.paused) { acc += dt; while (acc >= DT) { simulate(DT); acc -= DT; } }
   stick.apply(pose, body); poseReal?.(pose, body);
   pose.feet.forEach((f, i) => { dots[i].position.set(f.x, f.y + .02, f.z); dots[i].material = pose.contacts[i] ? green : orange; });
+  if (layers.ik) pose.feet.forEach((f, i) => { const L = limbOf(layout.legs, i); setLine(ikLines[i], [limbToWorld({ x: 0, y: L.hip + (L.girdle ?? 0), z: 0 }, body.x, body.z, body.heading, pose, layout.hips[i]), f]); });
+  if (layers.legs && !layers.body && realChains.length) realChains.forEach((c, i) => { const v = new THREE.Vector3(); setLine(boneLines[i], [c.girdle, c.upper, c.lower, c.foot, c.paw].map(o => o.getWorldPosition(v).clone())); });
   placeCamera(false); controls.update(); renderer.render(scene, camera);
   $('spv').textContent = state.speed.toFixed(1);
   $('ro').textContent = `${loco.jumping() ? 'POUNCE  ' : ''}gait ${pose.gait}  Fr ${pose.froude.toFixed(2)}  duty ${pose.duty.toFixed(2)}\nstride ${pose.cycle.toFixed(2)} m  pitch ${(pose.pitch * 57.3).toFixed(1)}°  roll ${(pose.roll * 57.3).toFixed(1)}°\n`

@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { limbOf } from '../../core/animalBehavior';
 import type { LegLayout, LegPose } from './signals';
 
-export interface StickRig { root: THREE.Group; tilt: THREE.Group; apply(pose: LegPose, at: { x: number; z: number; heading: number }): void }
+export interface StickRig { root: THREE.Group; tilt: THREE.Group; /** debug layers */ body: THREE.Object3D[]; legs: THREE.Object3D[]; apply(pose: LegPose, at: { x: number; z: number; heading: number }): void }
 
 export function createStickRig(layout: LegLayout, color = 0x8a7a66): StickRig {
   const skin = new THREE.MeshStandardMaterial({ color, roughness: .8 }), dark = new THREE.MeshStandardMaterial({ color: 0x2c2620, roughness: .9 });
@@ -31,7 +31,7 @@ export function createStickRig(layout: LegLayout, color = 0x8a7a66): StickRig {
     return { abd, gird, upper, lower, foot, paw };
   });
   return {
-    root, tilt,
+    root, tilt, body: [torso, neck, head, tail], legs: chains.map(c => c.abd),
     apply(p, at) {
       root.position.set(at.x, p.height, at.z); root.rotation.y = at.heading; tilt.rotation.set(p.pitch, 0, p.roll);
       chains.forEach((c, i) => { c.abd.rotation.z = p.abduct[i]; c.gird.rotation.x = p.girdles[i]; c.upper.rotation.x = p.legs[i]; c.lower.rotation.x = p.knees[i]; c.foot.rotation.x = p.wrists[i]; c.paw.rotation.x = p.paws[i]; });

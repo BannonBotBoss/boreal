@@ -33,4 +33,6 @@ export interface LegPose {
   contacts: boolean[];
   /** body-frame origin: ground point under the body centre (world y), plus tilt */ height: number; pitch: number; roll: number;
   gait: GaitId; phases: number[]; duty: number; cycle: number; froude: number;
+  /** walking carry for head and tail (posture.ts): head pitch rad, head drop as a share of the rig's head drop, tail drop rad */
+  carry?: { head: number; drop: number; tail: number };
 }

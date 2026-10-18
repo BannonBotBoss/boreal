@@ -42,7 +42,7 @@ export interface Locomotion {
 export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { x: number; z: number; heading: number }): Locomotion {
   const { legs, hips } = layout;
   // the fore wrist folds further through the swing (POSTURE.swingWristFlex); the sole target is unchanged, so contacts stay exact
-  const limbs = [0, 1, 2, 3].map(i => { const L = limbOf(legs, i); return isFrontLeg(i) ? { ...L, footFlex: (L.footFlex ?? 0) + POSTURE.swingWristFlex } : L; });
+  const limbs = [0, 1, 2, 3].map(i => { const L = limbOf(legs, i); return isFrontLeg(i) ? { ...L, footFlex: (L.footFlex ?? 0) + POSTURE.swingWristFlex, footAngle: (L.footAngle ?? 0) + POSTURE.foreFootAngle } : { ...L, footAngle: (L.footAngle ?? 0) + POSTURE.hindFootAngle }; });
   const restBody = (i: number) => [hips[i][0] * POSTURE.track, hips[i][1] - (limbs[i].stance ?? 0) - (isFrontLeg(i) ? 0 : POSTURE.hindReach * legs.hip)] as const;
   const restWorld = (x: number, z: number, h: number, i: number) => toWorld(x, z, h, ...restBody(i));
   const wheelbase = Math.abs((hips[1][1] + hips[3][1]) / 2 - (hips[0][1] + hips[2][1]) / 2);
@@ -74,7 +74,8 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
     let jf: JumpFrame | undefined;
     if (jump) { jump.t += dt; jf = jumpFrame(jump, legs.hip); if (jf.done) { jump = undefined; jf = undefined; } }
     const bounce = !jf && moving && plan.id === 'gallop' ? gallopBob(ph[1], legs.hip, plan.duty) : 0;
-    const tilt: Tilt = { height: base.height + bounce + (jf?.heightOff ?? 0), pitch: base.pitch + (jf?.pitchOff ?? 0), roll: base.roll };
+    const crouch = jf ? 0 : POSTURE.bodyDrop * legs.hip * carryWeight(s.speed);
+    const tilt: Tilt = { height: base.height + bounce - crouch + (jf?.heightOff ?? 0), pitch: base.pitch + (jf ? 0 : POSTURE.bodyPitch * carryWeight(s.speed)) + (jf?.pitchOff ?? 0), roll: base.roll };
     const stage = jf?.stage ?? '';
     if (stage === 'flight' && lastStage !== 'flight') feet.forEach(f => { f.planted = false; f.forced = false; f.from = { ...f.at }; });
     if (stage === 'land' && lastStage === 'flight') feet.forEach(f => { f.planted = true; f.forced = false; f.at = { x: f.at.x, y: ground(f.at.x, f.at.z), z: f.at.z }; });

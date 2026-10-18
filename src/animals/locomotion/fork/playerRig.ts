@@ -5,14 +5,17 @@
  *   hook 1: the factory also returns `loco` (root, tilt, torso, scale, legs, per-leg bone chains, hip positions);
  *   hook 2: animate(..., legPose?) poses legs/tilt from the locomotion layer; with no legPose nothing changes;
  *   torso and leg chains hang from a `tilt` group under root (identity unless legPose sets pitch/roll/height);
- *   girdle Euler order 'ZXY' so the sideways swing (z) is applied outside the girdle pitch (x), as the IK assumes.
+ *   girdle Euler order 'ZXY' so the sideways swing (z) is applied outside the girdle pitch (x), as the IK assumes;
+ *   hook 2 also reads legPose.carry (walking head and tail carry);
+ *   visual fixes (Matthew, 2026-10-18): skin from fork/bodyTubes.ts (wolfTubes + shapeBody), dark amber non-emissive eyes.
  */
 import * as THREE from 'three';
 import { WOLF_SCALE, type WolfMode } from '../../../core/wolfModes';
 import { AnimalBrain, quadrupedPose, WOLF_LEGS } from '../../../core/animalBehavior';
 import { pushProgress } from '../../../core/rocks';
 import { buildBody, wolfCoat } from '../../../core/body';
-import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../../../core/wolfBody';
+import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth } from '../../../core/wolfBody';
+import { shapeBody, wolfTubes } from './bodyTubes'; // FORK: reshaped skin
 import { buildFurCards, furCardMaterial } from '../../../render/furCards';
 import type { LegPose } from '../signals';
 
@@ -60,6 +63,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : wolfCoat(seed)));
   const coat = portrait ? PORTRAIT_COAT : wolfCoat(seed);
   const clear = sculptWolf(body, portrait ? { ...coat, belly: [.7, .66, .58] } : coat); // portrait: cream cheeks in the muzzle gradient
+  shapeBody(body); // FORK: flat soles with toe grooves; fur off the legs and belly, onto the neck and back
   // Brow shelf fur: short, swept back and outward over the ridge.
   const browAt = (p: [number, number, number]) => {
     for (const side of [-1, 1]) {
@@ -89,9 +93,9 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   ];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.
-  const amber = new THREE.MeshStandardMaterial({ color: 0xc9830f, emissive: 0xe07800, emissiveIntensity: 1.0, roughness: .25 }), pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });
+  const amber = new THREE.MeshStandardMaterial({ color: 0x7a4a10, roughness: .25 }) /* FORK: dark amber, no glow */, pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });
   const lidMaterial = new THREE.MeshStandardMaterial({ color: 0x0b0b0d, roughness: .6, side: THREE.DoubleSide });
-  const irisEdge = new THREE.MeshStandardMaterial({ color: 0x6a3806, emissive: 0x4a2404, emissiveIntensity: .8, roughness: .3, side: THREE.DoubleSide });
+  const irisEdge = new THREE.MeshStandardMaterial({ color: 0x3a2206, roughness: .3, side: THREE.DoubleSide }); // FORK: no emissive
   // Flat almond eyelid cut: a dark flat shape with an almond hole, lying in the facial plane. Pointed corners, upper lid fuller than the lower.
   const almond = (a: number, up: number, down: number) => { const sh = new THREE.Shape(); sh.moveTo(-a, 0); sh.quadraticCurveTo(-a * .1, up * 1.9, a, 0); sh.quadraticCurveTo(-a * .1, -down * 1.9, -a, 0); return sh; };
   // Upper lid droops: the opening's top edge sits low, so the lid covers roughly the top quarter of the iris.

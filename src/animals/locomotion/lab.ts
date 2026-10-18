@@ -2,7 +2,7 @@
  * Locomotion lab (dev page tools/locomotion-lab.html). One test quadruped walks a circle over a chosen terrain, driven
  * by the locomotion layer. Params: ?terrain=flat|hills|world  ?gait=auto|walk|trot|pace|canter|gallop|bound|pronk
  * ?speed=<m/s>  ?lod=near|mid  ?rig=stick|real  ?t=<seconds to pre-simulate>  ?cam=side|follow  ?pause=1 (freeze after ?t)
- * ?cam=profile (eye-level side view, for comparing with reference photos)  ?hide=body,legs,feet,ik  ?raw=1 (springs off)  ?ui=0 (hide the panel)
+ * ?posture=key:value,... (override posture.ts)  ?cam=profile (eye-level side view, for comparing with reference photos)  ?hide=body,legs,feet,ik  ?raw=1 (springs off)  ?ui=0 (hide the panel)
  * ?pounce=1 (a pounce at t = 1 s and every 3 s after; P key or the button pounces any time)
  */
 import * as THREE from 'three';
@@ -10,11 +10,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { heightAt } from '../../core/world';
 import { createLocomotion, limbToWorld, referenceLayout, SPRINGS } from './controller';
 import { limbOf } from '../../core/animalBehavior';
+import { POSTURE } from './posture';
 import { GAIT_TABLE } from './gaits';
 import { createStickRig } from './stickRig';
 import { LEG_NAMES, type GaitId, type LegPose, type Lod, type TerrainFn } from './signals';
 
 const q = new URLSearchParams(location.search);
+// ?posture=headPitch:-.2,bodyDrop:.05 overrides POSTURE (posture.ts) for tuning
+for (const kv of (q.get('posture') ?? '').split(',')) { const [k, v] = kv.split(':'); if (k in POSTURE && Number.isFinite(Number(v))) (POSTURE as Record<string, number>)[k] = Number(v); }
 const terrainName = q.get('terrain') ?? 'flat';
 const W0 = { x: 30, z: 30 }; // world-terrain sample window origin
 const TERRAIN: Record<string, TerrainFn> = {

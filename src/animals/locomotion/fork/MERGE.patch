@@ -1,11 +1,14 @@
-# Fold-back patch for Claude: hooks 1 + 2 from src/animals/locomotion/fork/playerRig.ts into src/render/playerWolf.ts
-# Base: src/render/playerWolf.ts @ 56506c55a2ebf881f3454265da00a618399e2996. Apply from the repo root: git apply src/animals/locomotion/fork/MERGE.patch
-# (CRLF content lines, like the working-tree file on omen). Then delete src/animals/locomotion/fork/ and see AGENT-NOTES.md.
+# Fold-back patch for Claude: everything forked into src/animals/locomotion/fork/ (playerRig.ts -> src/render/playerWolf.ts; bodyTubes.ts -> src/core/wolfBody.ts)
+# Base: both files @ 56506c55a2ebf881f3454265da00a618399e2996. Apply from the repo root: git apply src/animals/locomotion/fork/MERGE.patch
+# (CRLF content lines, like the working-tree files on omen). Then delete src/animals/locomotion/fork/ and see AGENT-NOTES.md.
 --- a/src/render/playerWolf.ts
 +++ b/src/render/playerWolf.ts
-@@ -5,6 +5,7 @@
+@@ -3,8 +3,9 @@
+ import { AnimalBrain, quadrupedPose, WOLF_LEGS } from '../core/animalBehavior';
+ import { pushProgress } from '../core/rocks';
  import { buildBody, wolfCoat } from '../core/body';
- import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
+-import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
++import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, shapeBody, wolfTeeth, wolfTubes } from '../core/wolfBody';
  import { buildFurCards, furCardMaterial } from './furCards';
 +import type { LegPose } from '../animals/locomotion/signals';
  
@@ -30,7 +33,27 @@
      upper.position.y = -m.girdle; girdle.add(upper);
      lower.position.y = -m.upper; upper.add(lower);
      foot.position.y = -m.lower; lower.add(foot);
-@@ -142,21 +144,33 @@
+@@ -49,6 +51,7 @@
+   const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : wolfCoat(seed)));
+   const coat = portrait ? PORTRAIT_COAT : wolfCoat(seed);
+   const clear = sculptWolf(body, portrait ? { ...coat, belly: [.7, .66, .58] } : coat); // portrait: cream cheeks in the muzzle gradient
++  shapeBody(body); // flat soles with toe grooves; fur off the legs and belly, onto the neck and back
+   // Brow shelf fur: short, swept back and outward over the ridge.
+   const browAt = (p: [number, number, number]) => {
+     for (const side of [-1, 1]) {
+@@ -78,9 +81,9 @@
+   ];
+   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
+   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.
+-  const amber = new THREE.MeshStandardMaterial({ color: 0xc9830f, emissive: 0xe07800, emissiveIntensity: 1.0, roughness: .25 }), pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });
++  const amber = new THREE.MeshStandardMaterial({ color: 0x7a4a10, roughness: .25 }) /* dark amber, no glow */, pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });
+   const lidMaterial = new THREE.MeshStandardMaterial({ color: 0x0b0b0d, roughness: .6, side: THREE.DoubleSide });
+-  const irisEdge = new THREE.MeshStandardMaterial({ color: 0x6a3806, emissive: 0x4a2404, emissiveIntensity: .8, roughness: .3, side: THREE.DoubleSide });
++  const irisEdge = new THREE.MeshStandardMaterial({ color: 0x3a2206, roughness: .3, side: THREE.DoubleSide }); // no emissive
+   // Flat almond eyelid cut: a dark flat shape with an almond hole, lying in the facial plane. Pointed corners, upper lid fuller than the lower.
+   const almond = (a: number, up: number, down: number) => { const sh = new THREE.Shape(); sh.moveTo(-a, 0); sh.quadraticCurveTo(-a * .1, up * 1.9, a, 0); sh.quadraticCurveTo(-a * .1, -down * 1.9, -a, 0); return sh; };
+   // Upper lid droops: the opening's top edge sits low, so the lid covers roughly the top quarter of the iris.
+@@ -142,21 +145,33 @@
    const tailPitch = { value: TAIL_HANG }, tailYaw = tail.map(() => 0);
    const setTail = () => tail.forEach((bone, k) => { bone.rotation.x = k === 0 ? tailPitch.value : TAIL_CURVE[k] * (1 - .6 * (TAIL_HANG - tailPitch.value) / (TAIL_HANG - TAIL_LEVEL)); bone.rotation.y = tailYaw[k]; });
    poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), 0); setTail(); // stand on the ground before the first frame
@@ -67,7 +90,7 @@
        const retract = Math.max(0, Math.min(1, (1.2 - elapsed) / .4));
        const amount = pushProgress(elapsed) * retract;
        head.rotation.x = 0; torso.position.y = 0;
-@@ -173,7 +187,7 @@
+@@ -173,7 +188,7 @@
        const wave = brain.motion === 'idle' ? Math.sin(time * 1.3 - k * .8) * .05 : Math.sin(brain.phase * Math.PI * 2 - k * .9) * (.09 + .02 * k);
        tailYaw[k] += (wave - tailYaw[k]) * blendTo;
      });
@@ -76,3 +99,125 @@
      setTail();
      tail[0].position.set(...TAIL_AT);
    } };
+--- a/src/core/wolfBody.ts
++++ b/src/core/wolfBody.ts
+@@ -44,7 +44,7 @@
+   return { base, tip, t, n, w: [c[0] / cl, c[1] / cl, c[2] / cl] as Vec3, length: l };
+ }
+ /** Upper-jaw outline (z, centre y, half-width, half-height) in cranium space and lower-jaw outline in cranium space too; teeth and lips follow them. */
+-const UPPER_OUTLINE = [[.03, 0, .042, .036], [.01, .004, .049, .04], [-.022, .002, .043, .037], [-.035, -.0055, .031, .029], [-.048, -.0095, .027, .0255], [-.07, -.0155, .0215, .0175], [-.088, -.0175, .019, .0145], [-.099, -.0175, .0155, .0125]];
++const UPPER_OUTLINE = [[.03, 0, .042, .036], [.01, .004, .049, .04], [-.022, .002, .043, .037], [-.035, -.0055, .031, .029], [-.048, -.0095, .027, .0255], [-.07, -.0155, .0215, .0175], [-.088, -.0175, .019, .0145], [-.099, -.0175, .0175, .0138]];
+ const LOWER_OUTLINE = [[.012, -.031, .02, .014], [-.02, -.036, .0195, .0105], [-.048, -.038, .0175, .0085], [-.068, -.038, .0135, .0075], [-.086, -.0365, .0095, .0065]];
+ const outlineAt = (rings: number[][], z: number) => { for (let i = 0; i < rings.length - 1; i++) { const [a, b] = [rings[i], rings[i + 1]]; if (z <= a[0] && z >= b[0]) { const t = (a[0] - z) / (a[0] - b[0]); return a.map((v, k) => v + (b[k] - v) * t); } } return rings[rings.length - 1]; };
+ const LIP_FRACTION = .6; // how far out along the half-width the lips and teeth sit
+@@ -62,13 +62,13 @@
+   // back; fur is longest on the neck and shoulders (the ruff).
+   tubes.push({ ...palette, radial: 12, smooth: 1, lay: [0, -.3, 1], rings: [
+     { p: [0, .285, .185], rx: .03, ry: .05, w: blend(BONE.torso, BONE.tail, .15), fur: .9, saddle: .5 },
+-    { p: [0, .30, .15], rx: .048, ry: .072, w: only(BONE.torso), fur: 1, saddle: .55 },
+-    { p: [0, .31, .09], rx: .048, ry: .062, w: only(BONE.torso), fur: 1, saddle: .6 },
++    { p: [0, .304, .15], rx: .048, ry: .076, w: only(BONE.torso), fur: 1, saddle: .55 },
++    { p: [0, .314, .09], rx: .048, ry: .066, w: only(BONE.torso), fur: 1, saddle: .6 },
+     { p: [0, .315, .02], rx: .05, ry: .07, w: only(BONE.torso), fur: 1.05, saddle: .6 },
+-    { p: [0, .32, -.07], rx: .054, ry: .088, w: only(BONE.torso), fur: 1.2, saddle: .6 },
+-    { p: [0, .325, -.135], rx: .057, ry: .097, w: only(BONE.torso), fur: 1.05, saddle: .55 },
+-    { p: [0, .35, -.19], rx: .05, ry: .082, w: blend(BONE.torso, BONE.head, .2), fur: 1.28, saddle: .4 },
+-    { p: [0, .385, -.25], rx: .048, ry: .066, w: blend(BONE.torso, BONE.head, .6), fur: 1.2, saddle: .25 },
++    { p: [0, .3135, -.07], rx: .054, ry: .0815, w: only(BONE.torso), fur: 1.2, saddle: .6 },
++    { p: [0, .3165, -.135], rx: .057, ry: .0885, w: only(BONE.torso), fur: 1.05, saddle: .55 },
++    { p: [0, .345, -.19], rx: .056, ry: .092, w: blend(BONE.torso, BONE.head, .2), fur: 1.28, saddle: .4 },
++    { p: [0, .383, -.25], rx: .051, ry: .071, w: blend(BONE.torso, BONE.head, .6), fur: 1.2, saddle: .25 },
+     { p: [0, .405, -.29], rx: .044, ry: .056, w: only(BONE.head), fur: 1.2 },
+   ] });
+ 
+@@ -82,8 +82,8 @@
+     { p: H(0, -.0055, -.035), rx: .031, ry: .029, w: only(BONE.head), fur: .7, accent: .55, under: .7, sq: 2.3 }, // the stop: the forehead drops steeply here
+     { p: H(0, -.0095, -.048), rx: .027, ry: .0255, w: only(BONE.head), fur: .85, pale: .2, accent: .55, under: .9, sq: 2.7 },
+     { p: H(0, -.0155, -.07), rx: .0215, ry: .0175, w: only(BONE.head), fur: .75, pale: .4, accent: .35, under: .9, sq: 3 },
+-    { p: H(0, -.0175, -.088), rx: .019, ry: .0145, w: only(BONE.head), dark: .15, fur: .5, pale: .4, under: .9, sq: 3 },
+-    { p: H(0, -.0175, -.099), rx: .0155, ry: .0125, w: only(BONE.head), dark: .8, fur: .12, sq: 2.6 },
++    { p: H(0, -.0175, -.088), rx: .0195, ry: .0148, w: only(BONE.head), dark: .15, fur: .5, pale: .4, under: .9, sq: 3.8 },
++    { p: H(0, -.0175, -.099), rx: .0175, ry: .0138, w: only(BONE.head), dark: .8, fur: .12, sq: 3.6 },
+   ] });
+ 
+   // Lower jaw: its own mesh, hinged at the rear skull base (JAW_AT), narrower than the upper muzzle, pale underside.
+@@ -111,32 +111,32 @@
+     const at = (y: number, zz = z): Vec3 => [x, y, zz];
+     const r = (y: number, rx: number, ry: number, w: Ring['w'], dark?: number, fur?: number, pale?: number): Ring => ({ p: at(y), rx: rx * f, ry: ry * f, w, dark, fur, pale });
+     const rings: Ring[] = front ? [
+-      r(Gy, .026, .04, blend(BONE.torso, b.girdle, .5), 0, 1, 0),
+-      r((Gy + Jy) / 2, .028, .042, only(b.girdle), 0, 1.1, 0),
++      r(Gy - .025, .024, .034, blend(BONE.torso, b.girdle, .3), 0, 1, 0), // sunk into the trunk, mostly torso-weighted
++      r((Gy + Jy) / 2 - .01, .027, .04, blend(BONE.torso, b.girdle, .7), 0, 1.1, 0),
+       r(Jy, .027, .04, blend(b.girdle, b.leg, .5), 0, 1, .1),
+       r(Jy - m.upper * .5, .022, .032, only(b.leg), 0, .8, .3),
+       r(Ky, .017, .026, blend(b.leg, b.knee, .5), 0, .6, .5),
+-      r(Ky - m.lower * .5, .014, .02, only(b.knee), 0, .5, .6),
+-      r(Wy, .015, .019, blend(b.knee, b.wrist, .5), 0, .5, .6),
+-      r((Wy + Py) / 2, .013, .016, only(b.wrist), 0, .45, .6),
+-      r(Py + .014, .014, .016, blend(b.wrist, b.paw, .4), 0, .4, .6),
++      r(Ky - m.lower * .5, .0175, .023, only(b.knee), 0, .5, .6),
++      r(Wy, .018, .022, blend(b.knee, b.wrist, .5), 0, .5, .6),
++      r((Wy + Py) / 2, .0155, .0185, only(b.wrist), 0, .45, .6),
++      r(Py + .014, .016, .018, blend(b.wrist, b.paw, .4), 0, .4, .6),
+     ] : [
+-      r(Jy + .06, .03, .045, only(BONE.torso), 0, 1, 0),
++      r(Jy + .035, .03, .042, only(BONE.torso), 0, 1, 0), // sunk below the topline
+       r(Jy, .033, .05, blend(BONE.torso, b.leg, .5), 0, 1, 0),
+       r(Jy - m.upper * .45, .03, .052, only(b.leg), 0, .9, .15),
+       r(Ky, .018, .028, blend(b.leg, b.knee, .5), 0, .6, .4),
+-      r(Ky - m.lower * .5, .014, .02, only(b.knee), 0, .5, .55),
+-      r(Wy, .014, .022, blend(b.knee, b.wrist, .5), 0, .5, .55),
+-      r(Wy - m.foot * .5, .011, .015, only(b.wrist), 0, .45, .6),
+-      r(Py + .014, .012, .015, blend(b.wrist, b.paw, .4), 0, .4, .6),
++      r(Ky - m.lower * .5, .0175, .023, only(b.knee), 0, .5, .55),
++      r(Wy, .017, .024, blend(b.knee, b.wrist, .5), 0, .5, .55),
++      r(Wy - m.foot * .5, .0135, .0175, only(b.wrist), 0, .45, .6),
++      r(Py + .014, .014, .017, blend(b.wrist, b.paw, .4), 0, .4, .6),
+     ];
+     tubes.push({ ...palette, smooth: 1, lay: [0, -1, 0], rings });
+     // Paw: a long oval pointing forward, pivoting at the sole.
+     const sole = (zz: number) => at(Py + .016, zz);
+     tubes.push({ ...palette, radial: 8, lay: [0, -1, 0], rings: [
+-      { p: sole(z + .014), rx: .022 * f, ry: .016, w: only(b.paw), dark: .2, fur: .3, pale: .45 },
+-      { p: sole(z - .018), rx: .022 * f, ry: .016, w: only(b.paw), dark: .3, fur: .3, pale: .4 },
+-      { p: sole(z - .04), rx: .017 * f, ry: .012, w: only(b.paw), dark: .5, fur: .25, pale: .2 },
++      { p: sole(z + .014), rx: .022 * f, ry: .016, w: only(b.paw), dark: .2, fur: .3, pale: .45, sq: 3 },
++      { p: sole(z - .018), rx: .023 * f, ry: .016, w: only(b.paw), dark: .3, fur: .3, pale: .4, sq: 3 },
++      { p: sole(z - .04), rx: .019 * f, ry: .012, w: only(b.paw), dark: .5, fur: .25, pale: .2, sq: 2.6 },
+     ] });
+   });
+ 
+@@ -213,6 +213,32 @@
+   return tubes;
+ }
+ 
++/** Tube index of leg i's paw tube (wolfTubes order: trunk, skull, jaw, ears, then leg + paw per leg). */
++const pawTube = (i: number) => 6 + 2 * i;
++/**
++ * After buildBody: flat paw soles with toe grooves, and fur moved off the legs and belly onto the neck and back.
++ * Same vertex count (no new geometry), so the fur-card budget and the perf governor see no change.
++ */
++export function shapeBody(body: BodyData) {
++  LEG_XZ.forEach(([x, z], i) => {
++    const m = limbModel(i), Py = m.hip - m.upper - m.lower - m.foot, sole = Py + .016, floor = sole - .014;
++    for (let v = 0; v < body.tube.length; v++) {
++      if (body.tube[v] !== pawTube(i) || body.position[v * 3 + 1] >= floor) continue;
++      body.position[v * 3 + 1] = body.rest[v * 3 + 1] = floor; // flatten the sole
++    }
++    for (const t of [-1, 0, 1]) dent(body, pawTube(i), [x + t * .0085, sole + .012, z - .036], .0055, .0022); // grooves between the toes, top front
++  });
++  computeNormals(body);
++  for (let v = 0; v < body.tube.length; v++) {
++    const tube = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1];
++    if (tube >= 5 && tube < 13 && (tube - 5) % 2 === 0) { const top = limbModel((tube - 5) / 2).hip; if (y < top) body.furLen[v] *= .7 + .3 * Math.max(0, Math.min(1, (y - top + .08) / .08)); } // legs: short below the elbow / stifle
++    else if (tube === TUBE.trunk) {
++      if (ny < -.35) body.furLen[v] *= .6; // belly
++      else if (ny > .3 || z < -.17) body.furLen[v] *= 1.15; // back, neck and ruff
++    }
++  }
++}
++
+ /** Sculpts the face: a socket around each eye with a raised brow above it. Returns the places fur must stay clear of. */
+ /** Coat colours the face gradient blends between; defaults suit the timber-grey coat. */
+ type FaceCoat = { back: RGB; belly: RGB; dark: RGB };

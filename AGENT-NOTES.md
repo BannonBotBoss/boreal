@@ -290,3 +290,18 @@ Matthew asked for this while Claude is rate-limited. **No Claude original was ed
 - Step 4 (LOD/face-edge shading smoothing): not done. Same-level edges already share normals.
 - Request (main.ts owner, unchanged): a menu / G-key entry into `?view=globe`.
 - Bench numbers on omen are noisy because other workers share the CPU. Runs of the same build vary 3-8x.
+
+## 2026-10-18 — Gait Builder (Grok Bot): mesh/material fork + posture round 2 (fold-back note for Claude)
+At Matthew's request (Claude rate-limited) we edited a COPY of the wolf mesh, used only under `?loco=1` and in the locomotion lab; the default game still builds the original `src/render/playerWolf.ts` + `src/core/wolfBody.ts`, unchanged.
+- **Forked:** `src/core/wolfBody.ts` @ `56506c55a2ebf881f3454265da00a618399e2996` → `src/animals/locomotion/fork/bodyTubes.ts` (only `wolfTubes` + the private jaw outlines it needs; everything else imported from the original), plus `shapeBody(body)` (new). `fork/playerRig.ts` (fork of playerWolf.ts, same base) now builds its skin from it.
+- **What we changed in the fork (visual notes from Matthew → done here):**
+  1. Topline flatter, high point over the shoulders: trunk ring heights/radii retuned, belly line unchanged.
+  2. Thicker neck base blending into the chest (neck rings wider/deeper).
+  3. Shoulder and hip "spheres" sunk into the trunk: the front leg's top two rings lowered 1–2.5 cm (model) and weighted mostly to the torso; the hind top ring lowered from hip+6 cm to hip+3.5 cm.
+  4. Thicker lower legs (forearm, carpus, cannon, hock rings ~+20 %).
+  5. Paws: boxier section (sq 3) and, in `shapeBody`, flat soles plus three toe grooves on each paw (dents; no new vertices).
+  6. Eyes: dark amber `0x7a4a10`, iris edge `0x3a2206`, no emissive.
+  7. Blockier snout tip (last two skull rings wider, sq 3.6–3.8; the upper-jaw outline's tip entry follows so lips/teeth still fit).
+  8. Fur: legs ×0.7 below the elbow/stifle, belly ×0.6, back/neck/ruff ×1.15 (furLen only; same card count, so no perf-governor change).
+- **Pose side (ours, `posture.ts`):** head pitch sign fixed (three.js +x is nose-up; now −0.12 so the snout is about level), head drop 0.3, body pitch +0.04 rad front-up and body lowered 5 % of hip height at a walk, stance fore pastern slant +0.22 rad (visible wrist bend) and hind hock +0.12 rad. Planted contacts stay exact (tests). Limit: the trunk is one torso bone, so the spine itself cannot bend; topline shape is mesh-only.
+- **Fold back:** `git apply src/animals/locomotion/fork/MERGE.patch` (now covers BOTH `src/render/playerWolf.ts` and `src/core/wolfBody.ts`; checked to apply cleanly to 56506c55), re-run `tests/body.test.ts` (published-range checks; they currently run against the original only, so check them after folding), then delete `src/animals/locomotion/fork/` and point `src/animals/locomotion/game.ts` / `lab.ts` at `../../render/playerWolf`. Folding back changes the default wolf's look too, which is Claude's call.

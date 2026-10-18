@@ -21,6 +21,18 @@ export function sunColour(cosZ: number, haze = 1) {
   return { r: c[0] / max, g: c[1] / max, b: c[2] / max, transmittance: t[1] };
 }
 export const LUX = { efficacy: 105, fullMoon: .27, nightSky: .001, ref: 1e5 }; // ref = clear-day sun on a horizontal plane ≈ 100 klx (CIE)
+/** Base tone-mapping exposure (renderer.toneMappingExposure before photo EV). Lights are scaled so a 100 klx sun has intensity 3;
+ *  three's ACES applies a further 1/0.6 gain, so at exposure 1 a sunlit 18 % grey card plus sky fill rendered ~1 EV hot (sRGB ~175
+ *  instead of ~118) and the Preetham sky clipped to white. 0.5 is the value three.js uses for this Sky + ACES combination
+ *  (examples/webgl_shaders_sky.html, MIT) and brings the grey card back to mid-grey [game calibration, verify with a grey card]. */
+export const EXPOSURE = { base: .5 };
+/** Ambient (sky + bounce) levels relative to the sun. On a clear day the diffuse sky is ~10-20 % of global horizontal
+ *  irradiance (e.g. Erbs, Klein & Duffie 1982 diffuse fraction ~0.15 at clearness index 0.75; Perez sky models). The unscaled
+ *  Preetham-sky PMREM (env 1) plus the SH bounce probe (.6) and the hemisphere fill made ambient rival the sun, flattening and
+ *  washing out the ground (measured headless, Ultra, 11:00: ground sRGB 180,207,182 -> 116,148,114 with these values).
+ *  env = scene.environmentIntensity under IBL, probe = GI LightProbe intensity, hemiIbl = hemisphere factor while IBL is on
+ *  [game calibration against the diffuse fraction; verify with a grey card]. */
+export const AMBIENT = { env: .3, probe: .2, hemiIbl: .11 };
 export const SYNODIC = 29.530589;
 /** Lunar age (days) for a day-of-year in `year` (UT noon). */
 export function moonAge(dayOfYear: number, year = 2026) {

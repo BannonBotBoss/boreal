@@ -11,11 +11,13 @@
  *  - Material, using the NOEGTS terrain units for the Kenora / Lake of the Woods map areas (Hallett & Roed 1980, NOEGTS 36):
  *    bedrock knobs RN (bare or thin patchy drift), ground moraine MG (thin till), glaciolacustrine plains LP (clay/silt, low ground
  *    near the big lakes), organic terrain OT (peat), minor glaciofluvial outwash GO (sand):
- *      hillslope -> bedrock; plateau -> thin till, but knob tops (highest HAND) -> bedrock and seeded outwash patches -> sand;
+ *      bedrock knobs = the top share of land by a Topographic Position Index score (Weiss 2001, 'Topographic position and
+ *      landforms analysis', ESRI UC; TPI = z minus the 210 m window mean) plus HAND and slope; plateau -> thin till with seeded
+ *      outwash patches -> sand;
  *      sloped wetland -> thin till (slopewash); flat wetland -> peat where wet (TWI >= twiPeat, or a shallow filled depression),
  *      else clay if within clayBelowM of base water (Lake Agassiz / glacial Lake Kenora plains), else thin till.
  *    Bedrock exposure is calibrated to the reference: ESA WorldCover 2021 'grassland' + 'bare' (Shield outcrop with lichen/meadow)
- *    = 11.4 % of natural land in a 15 x 15 km window east of Kenora. Knob tops fill the share the hillslope rule leaves.
+ *    = 11.4 % of natural land in a 15 x 15 km window east of Kenora. The score ranks knobs, so the share is exact and the pattern speckled.
  * Thresholds marked [verify] are game choices; the Gharari values come from a 5 m DEM in Luxembourg, applied here to a 30 m grid.
  */
 import { elevationGrid, flowGrid, lakeGrid, toWorld } from './elevation';
@@ -27,7 +29,9 @@ export const SOIL = {
   bedrockFrac: .114,                // WorldCover outcrop share (see header)
   twiPeat: 9,                       // [verify] TWI (ln m) above which a flat wetland is organic terrain
   clayBelowM: 12,                   // [verify] LP plains: low ground near base water (NOEGTS 36: relief < 15 m near Lake of the Woods)
-  sandShare: .08,                   // [verify] share of plateaus on outwash (NOEGTS 36: GO 'small, thin' deposits)
+  sandShare: .08,
+  tpiRadius: 3,                     // TPI window half-size in nodes (7 x 7 = 210 m): the knob scale seen in WorldCover outcrop patches
+  handW: .5, slopeW: .5,            // [game calibration] weights of HAND and slope next to TPI in the outcrop score                   // [verify] share of plateaus on outwash (NOEGTS 36: GO 'small, thin' deposits)
 };
 export const SOIL_KINDS = ['bedrock', 'till', 'sand', 'clay', 'peat', 'water'] as const;
 export type SoilKind = typeof SOIL_KINDS[number];
@@ -63,16 +67,23 @@ export function soilGrid(seed: number): Soils {
   // Gharari landscape: 0 flat wetland, 1 sloped wetland, 2 hillslope, 3 plateau
   const land: number[] = [];
   for (let c = 0; c < N; c++) { const steep = slope[c] > SOIL.slope, high = hand[c] > SOIL.hand; landscape[c] = high ? (steep ? 2 : 3) : (steep ? 1 : 0); if (!(f.outlet[c] || L.id[c] >= 0)) land.push(c); }
-  let hill = 0; for (const c of land) if (landscape[c] === 2) hill++;
-  const knobs = Math.max(0, Math.round(SOIL.bedrockFrac * land.length) - hill), plateaus = land.filter(c => landscape[c] === 3).sort((a, b) => hand[b] - hand[a]), knob = new Uint8Array(N);
-  for (let k = 0; k < Math.min(knobs, plateaus.length); k++) knob[plateaus[k]] = 1;
+  // Bedrock knobs: Topographic Position Index (Weiss 2001; Jenness 2006 landform classes) at a 7 x 7 node (210 m) window picks the local
+  // highs that ice scoured bare, plus HAND (high above drainage) and slope (steep ground sheds till). The top SOIL.bedrockFrac of land
+  // by this score is outcrop, so the share stays calibrated and the pattern is speckled at the 50-200 m knob scale.
+  const tpi = new Float32Array(N), W = SOIL.tpiRadius;
+  for (let c = 0; c < N; c++) { const i = c % n, j = (c / n) | 0; let sum = 0; for (let dj = -W; dj <= W; dj++) for (let di = -W; di <= W; di++) sum += z[at(i + di, j + dj)]; tpi[c] = z[c] - sum / ((2 * W + 1) ** 2); }
+  const sd = (a: Float32Array) => { let m = 0, q = 0; for (const c of land) m += a[c]; m /= land.length; for (const c of land) q += (a[c] - m) ** 2; return Math.sqrt(q / land.length) || 1; };
+  const sT = sd(tpi), sH = sd(hand), sS = sd(slope), score = new Float32Array(N);
+  for (const c of land) score[c] = tpi[c] / sT + SOIL.handW * hand[c] / sH + SOIL.slopeW * slope[c] / sS;
+  const ranked = Float32Array.from(land.map(c => score[c])).sort(), cut = ranked[Math.max(0, ranked.length - Math.round(SOIL.bedrockFrac * land.length))], knob = new Uint8Array(N);
+  for (const c of land) if (score[c] >= cut) knob[c] = 1;
   const outwash = lattice(seed, 8, n), sandCut = Float32Array.from(outwash).sort()[Math.floor(SOIL.sandShare * N)], lakeLevelBase = toWorld(g, g.pw);
   for (let c = 0; c < N; c++) {
     let k: SoilKind;
     if (f.outlet[c] || L.id[c] >= 0) k = 'water';
-    else if (landscape[c] === 2 || knob[c]) k = 'bedrock';
+    else if (knob[c]) k = 'bedrock';
     else if (landscape[c] === 3) k = outwash[c] < sandCut ? 'sand' : 'till';
-    else if (landscape[c] === 1) k = 'till';
+    else if (landscape[c] === 1 || landscape[c] === 2) k = 'till'; // slopes off the knobs: thin till / slopewash
     else k = twi[c] >= SOIL.twiPeat || (f.filled[c] - g.h[c]) * g.k > .05 ? 'peat' : z[c] - lakeLevelBase < SOIL.clayBelowM ? 'clay' : 'till';
     kind[c] = SOIL_KINDS.indexOf(k);
   }

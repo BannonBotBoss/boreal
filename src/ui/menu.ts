@@ -27,7 +27,7 @@ export function tierChoice(i: number, cap: number) {
 export const moveFocus = (i: number, d: number, n: number) => n ? (i + d + n) % n : 0;
 
 export function createMenu(hooks: MenuHooks) {
-  const root = document.createElement('div'); root.id = 'start-menu'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Menu');
+  const root = document.createElement('div'); root.id = 'start-menu'; root.className = 'fade'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Menu'); // starts dismissed: ?nomenu / ?bench never call show(), which used to leave the dark gradient over the left of the view
   const panel = document.createElement('div'); panel.className = 'start-panel'; root.append(panel); document.body.append(root);
   let open = false, mode: MenuMode = 'start', stack: (() => void)[] = [], padPrev: boolean[] = [], raf = 0;
   const btn = (label: string, on: () => void, disabled = false) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.disabled = disabled; b.onclick = on; return b; };

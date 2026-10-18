@@ -15,17 +15,17 @@ import { hash, random } from '../../proc/rng';
 export const STAGES = { on: false, seed: 1400 };
 /** Stage-1 parameters, measured from real Kenora / Lake of the Woods references (tools/terrain-ref, not shipped):
  *  Copernicus GLO-30 DEM + ESA WorldCover 2021 + Sentinel-2 over a 15 x 15 km window east of Kenora (49.735 N, 94.38 W).
- *  Fitted by sweeping these knobs against the reference metrics (reference -> seed 1400 with these values):
- *  - reliefM 60 m = land p99 above base water. 1-km local relief 41 m (DSM) -> 40.5 m. NOEGTS 36 (Hallett & Roed 1980): Lake of
+ *  Fitted by sweeping these knobs against the reference metrics (reference -> seed 1400; seeds 7 and 99 land close):
+ *  - reliefM 50 m = land p99 above base water: 1-km local relief 41 m (DSM) -> 42.7 m. NOEGTS 36 (Hallett & Roed 1980): Lake of
  *    the Woods 323 m to > 366 m, relief "low to moderate (< 60 m)". The DSM includes ~15 m of canopy, so terrain is a bit lower.
- *  - waterPct .2 (+ filled lakes): water fraction 29 % -> 31 %.
- *  - persistence .5, basins 1: autocorrelation length 930 m -> 1080 m. The spectrum is still steeper (beta -3.1 -> -4.0): the
- *    30 m grid lacks short-scale roughness, which surface detail adds at runtime [follow-up].
- *  - grain 2 (integer: periodic lattice), grainOctaves 2, grainMix .4: NE-SW grain along (x+, z-) (x east, z south). Ridge
- *    strike 42 deg -> 39 deg azimuth, structure-tensor coherence .25 -> .29; lake long axes peak at 30-60 deg in both.
- *  - lakeMinDepth 1 m: shallower filled depressions are wetlands (stage 3 peat), not open water. Lakes >= 1 ha per 100 km^2
- *    17.6 -> 39, median 7 ha -> 23 ha (still too few small lakes) [follow-up]. */
-export const ELEV = { n: 256, cell: 30, relief: 14, droplets: 60000, seedOffset: 0, reliefM: 60, waterPct: .2, persistence: .5, grain: 2, grainOctaves: 2, grainMix: .4, basins: 1, lakeMinDepth: 1 };
+ *  - persistence .7, basins .75, droplets 30000 + glacial scour (scourM 20 m over periods 8..32 lattice = 960..240 m, scourPers .8):
+ *    spectral slope -3.14 -> -3.41 (was -4.0); 300-3000 m band -2.5 -> -3.2; autocorrelation ~1 km in both.
+ *  - grain 2 / grainOctaves 2 / grainMix .4 and scourGrain 3 (integers keep the lattice periodic): NE-SW ice-flow grain.
+ *    Gradient direction 42 deg -> 44 deg (x east, z south), structure-tensor coherence .25 -> .29.
+ *  - waterPct .22 + lakeMinDepth 3 m (shallower filled pits become stage-3 peat): water 29 % -> 27 %; lake median 7.2 ha -> 6.3 ha,
+ *    share < 10 ha .55 -> .59, elongation 2.2 -> 2.1, islands 42 -> 54 per 100 km^2. Lakes >= 1 ha are denser than the window
+ *    (17.6 -> 75 per 100 km^2): the real window's 29 % water is mostly one big lake (Lake of the Woods), the torus has none. */
+export const ELEV = { n: 256, cell: 30, relief: 14, droplets: 30000, seedOffset: 0, reliefM: 50, waterPct: .22, persistence: .7, grain: 2, grainOctaves: 2, grainMix: .4, basins: .75, lakeMinDepth: 3, scourM: 20, scourGrain: 3, scourPers: .8, scourOct: 3, scourBase: 8 };
 export type Grid = { n: number; cell: number; h: Float32Array; min: number; max: number; ms: number; /** base-water grid level */ pw: number; /** grid units -> metres */ k: number };
 
 /** Periodic value-noise lattice: hashed ONCE per (period, salt) into a table; wraps every `period` cells. */
@@ -49,6 +49,16 @@ function base(n: number, seed: number) {
       const r = (1 - Math.abs(s * 2 - 1)) ** 2; sum += r * amp * weight; weight = Math.min(1, r * 1.6); norm += amp; amp *= ELEV.persistence; } // ridged multifractal
     h[j * n + i] = sum / norm * .7 + vnoise(low, 3, i / n * 3, j / n * 3) * ELEV.basins; // + broad basins (big lakes)
   }
+  return h;
+}
+/** Glacial scour: short-wavelength knob-and-basin relief (periods n/16..n/128 nodes, i.e. 480..60 m) stretched along the NE-SW
+ *  ice-flow grain, centred on 0. Added AFTER fluvial erosion, as on the Shield (ice scoured the surface last). */
+function scour(n: number, seed: number) {
+  const h = new Float32Array(n * n), oct = Array.from({ length: ELEV.scourOct }, (_, o) => ({ per: ELEV.scourBase << o, L: lattice(ELEV.scourBase << o, seed * 53 + o) }));
+  let norm = 0; for (let o = 0, a = 1; o < oct.length; o++, a *= ELEV.scourPers) norm += a;
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { let a = 1, sum = 0;
+    for (const { per, L } of oct) { sum += (vnoise(L, per, (i - j + n) / n * per, (i + j) / n * per * ELEV.scourGrain) - .5) * a; a *= ELEV.scourPers; }
+    h[j * n + i] = sum / norm; }
   return h;
 }
 /** Beyer/Lague droplet erosion on a wrapping grid (heights in grid units, cell = 1); allocation-free inner loop. */
@@ -90,9 +100,13 @@ export function elevationGrid(seed: number): Grid {
   erode(h, n, ELEV.droplets, seed); thermal(h, n, 1.2, 3);
   let min = Infinity, max = -Infinity; for (const v of h) { min = Math.min(min, v); max = Math.max(max, v); }
   for (let k = 0; k < h.length; k++) h[k] = (h[k] - min) / (max - min) * ELEV.relief;
-  const sorted = Float32Array.from(h).sort();
-  const pw = sorted[Math.floor(sorted.length * ELEV.waterPct)], p99 = sorted[Math.floor(sorted.length * .99)];
-  g = { n, cell: ELEV.cell, h, min: 0, max: ELEV.relief, pw, k: ELEV.reliefM / (p99 - pw), ms: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0 }; cache.set(seed, g); return g;
+  const levels = () => { const s = Float32Array.from(h).sort(), pw = s[Math.floor(s.length * ELEV.waterPct)]; return { pw, k: ELEV.reliefM / (s[Math.floor(s.length * .99)] - pw) }; };
+  let { pw, k } = levels();
+  if (ELEV.scourM) { // scourM: amplitude in metres at the provisional scale; then renormalise to [0, relief] and re-derive the levels
+    const sc = scour(n, seed); let lo = Infinity, hi = -Infinity;
+    for (let c = 0; c < h.length; c++) { h[c] += sc[c] * ELEV.scourM / k; lo = Math.min(lo, h[c]); hi = Math.max(hi, h[c]); }
+    for (let c = 0; c < h.length; c++) h[c] = (h[c] - lo) / (hi - lo) * ELEV.relief; ({ pw, k } = levels()); }
+  g = { n, cell: ELEV.cell, h, min: 0, max: ELEV.relief, pw, k, ms: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0 }; cache.set(seed, g); return g;
 }
 /** Bilinear sample in world metres (wrapping). */
 export function sampleGrid(g: { n: number; cell: number; h: Float32Array }, x: number, z: number) {

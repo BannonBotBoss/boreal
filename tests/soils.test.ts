@@ -28,7 +28,6 @@ test('soils: HAND is 0 on drainage and never negative; classes follow Gharari th
     assert.ok(S.hand[c] >= 0); if (f.outlet[c] || L.id[c] >= 0 || R.channel[c]) assert.equal(S.dist[c], 0);
     const k = SOIL_KINDS[S.kind[c]];
     if (k === 'water') continue;
-    if (S.slope[c] > SOIL.slope && S.hand[c] > SOIL.hand) assert.equal(k, 'bedrock', 'hillslope = bedrock');
     if (k === 'peat' || k === 'clay') assert.ok(S.slope[c] <= SOIL.slope && S.hand[c] <= SOIL.hand, 'organic/clay only on flat wetland');
   }
   assert.ok(Math.abs(S.frac.bedrock - SOIL.bedrockFrac) < .01, `bedrock ${S.frac.bedrock}`);
@@ -40,4 +39,19 @@ test('soilAt is deterministic and wetness orders bedrock < till < peat', () => {
   for (let c = 0; c < S.kind.length; c += 11) { const s = soilAt(7, (c % n) * S.cell, ((c / n) | 0) * S.cell); (by[s.kind] ??= []).push(s.wet); assert.deepEqual(s, soilAt(7, (c % n) * S.cell, ((c / n) | 0) * S.cell)); }
   const m = (k: string) => by[k].reduce((a, b) => a + b, 0) / by[k].length;
   assert.ok(m('bedrock') < m('till') && m('till') < m('peat'));
+});
+test('stage 1-2b scour: many small lakes (median < 15 ha) with islands, as in the Kenora reference', () => {
+  const L = lakeGrid(1400), ha = L.bodies.map(b => b.areaHa).filter(a => a >= 1).sort((a, b) => a - b);
+  assert.ok(ha.length >= 20 && ha[ha.length >> 1] < 15, `median ${ha[ha.length >> 1]} ha of ${ha.length}`);
+  const g = elevationGrid(1400), n = g.n, land = new Int32Array(n * n).fill(-1); let comps = 0; // land components: > 1 means islands
+  for (let c = 0; c < n * n; c++) if (L.id[c] < 0 && land[c] < 0) { const st = [c]; land[c] = comps; while (st.length) { const q = st.pop()!, x = q % n, y = (q / n) | 0;
+    for (const m of [y * n + (x + 1) % n, y * n + (x + n - 1) % n, ((y + 1) % n) * n + x, ((y + n - 1) % n) * n + x]) if (L.id[m] < 0 && land[m] < 0) { land[m] = comps; st.push(m); } } comps++; }
+  assert.ok(comps > 5, `${comps - 1} islands`);
+});
+test('soils: bedrock is speckled knobs (many small patches), not a few blobs', () => {
+  const S = soilGrid(1400), n = S.n, seen = new Uint8Array(n * n), sizes: number[] = [];
+  for (let c = 0; c < n * n; c++) if (SOIL_KINDS[S.kind[c]] === 'bedrock' && !seen[c]) { const st = [c]; seen[c] = 1; let k = 0; while (st.length) { const q = st.pop()!, x = q % n, y = (q / n) | 0; k++;
+    for (const m of [y * n + (x + 1) % n, y * n + (x + n - 1) % n, ((y + 1) % n) * n + x, ((y + n - 1) % n) * n + x]) if (!seen[m] && SOIL_KINDS[S.kind[m]] === 'bedrock') { seen[m] = 1; st.push(m); } } sizes.push(k * S.cell * S.cell / 1e4); }
+  sizes.sort((a, b) => a - b); // WorldCover outcrop at 30 m: ~760 patches per 100 km^2, median 0.18 ha
+  assert.ok(sizes.length > 200 && sizes[sizes.length >> 1] < 1, `${sizes.length} patches, median ${sizes[sizes.length >> 1]} ha`);
 });

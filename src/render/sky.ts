@@ -99,14 +99,14 @@ export function createSky(scene: THREE.Scene) {
       const cu = (clouds.material as THREE.ShaderMaterial).uniforms;
       cu.uTime.value = time; cu.uDay.value = light.day; cu.uGolden.value = light.golden;
       // Weather (core/weather): cloud cover, drift, fog and precipitation come from the cell under the viewer.
-      const w = weatherAt(focus.x, focus.z), dt = Math.max(0, Math.min(.2, time - lastTime)); lastTime = time;
+      const w = weatherAt(focus.x, focus.z), dt = Math.max(0, Math.min(.2, time - lastTime)); lastTime = time; let fogV = Infinity;
       if (WEATHER.on) {
         cu.uCover.value = .62 - .4 * Math.max(w.cloud, Math.max(0, w.rh - .6)); // more condensate → lower noise threshold → more cover
         drift.x += w.wind.x * dt * 2e-4; drift.y += w.wind.z * dt * 2e-4; cu.uDrift.value.copy(drift);
         // Aerial perspective: Koschmieder visibility V = 3.912/β (Koschmieder 1924). β = clear air 3.912/30 km + fog
         // 144.7·LWC^0.88 km⁻¹ (Kunkel 1984, J. Clim. Appl. Meteorol. 23:34; LWC g/m³) + rain 0.25·R^0.63 km⁻¹ [verify].
         const lwc = w.fog * .3, beta = 3.912 / 30 + 144.7 * lwc ** .88 + .25 * w.rainMmH ** .63, V = 3912 / beta; // m
-        const f = scene.fog as THREE.Fog; f.far = Math.min(fogFar, V); f.near = Math.min(fogNear, V * .1);
+        fogV = V;
         u.turbidity.value = 2 + 6 * Math.max(w.cloud, w.rh * .5) + 4 * w.fog; // hazier with humidity/cloud (Preetham turbidity 2–10)
         const falling = w.rainMmH > .05; precip.visible = falling;
         if (falling) {
@@ -117,6 +117,10 @@ export function createSky(scene: THREE.Scene) {
           a.needsUpdate = true;
         }
       } else { precip.visible = false; cu.uDrift.value.set(time * .004, time * .0015); }
+      // Fog distances start at the ground below the camera: the 200-480 m linear fog stands for horizontal haze (and hides the
+      // streaming edge); a raised camera (photo mode, top-down) looks down through that much less boundary-layer haze, so the
+      // fog is offset by the camera's height above the focus [game calibration]. At eye height the offset is ~2 m (no change).
+      { const f = scene.fog as THREE.Fog, alt = Math.max(0, camera.position.y - focus.y); f.far = Math.min(fogFar, fogV) + alt; f.near = Math.min(fogNear, fogV * .1) + alt; }
       cu.uSunDir.value.copy(dir); cu.uSunColor.value.copy(sunLight.color);
       return { sun, light, dir };
     },

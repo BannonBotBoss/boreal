@@ -9,6 +9,7 @@ import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { EXPOSURE } from '../core/light';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { GLSL_HASH } from '../proc/glsl';
 
@@ -104,7 +105,7 @@ const bokehAperture = (focalMm: number, fstop: number) => (focalMm / 1000) ** 2 
 
 export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
   let lastW = 0, lastH = 0, settings = defaultSettings(), composer: EffectComposer | undefined, gtao: GTAOPass, aoLevel = -1, bokeh: BokehPass, bloom: UnrealBloomPass, grade: ShaderPass, sunfx: ShaderPass;
-  const baseExposure = renderer.toneMappingExposure, baseToneMap = renderer.toneMapping;
+  const baseExposure = EXPOSURE.base, baseToneMap = renderer.toneMapping; // core/light: calibrated base exposure (photo EV multiplies on top)
   const neutral = (s: PhotoSettings) => PHOTO_PARAMS.every(p => p.group === 'Lens' || p.group === 'Guides' || p.key === 'autofocus' || p.key === 'focus' || p.key === 'fstop' || s[p.key] === p.value);
   function build() {
     const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }); rt.depthTexture = new THREE.DepthTexture(1, 1); // depth for SUNFX

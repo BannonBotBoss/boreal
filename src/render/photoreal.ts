@@ -17,6 +17,7 @@ import { WEATHER, initWeather } from '../core/weather';
 import { CLOUD, SUN_UNIFORMS, setCloudField } from './pbr';
 import { LightProbeGenerator } from 'three/examples/jsm/lights/LightProbeGenerator.js';
 import { DY, NX, NY, getGrid } from '../core/weather';
+import { AMBIENT } from '../core/light';
 
 // PCSS (Fernando 2005, 'Percentage-Closer Soft Shadows'), adapted from three r180 examples/webgl_shadowmap_pcss.html (MIT,
 // spidersharma03): blocker search + Poisson PCF, injected into the shared shadow chunk behind `#ifdef PCSS` so only
@@ -77,7 +78,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     if (giCube.rt.width !== size && !giCube.busy && !giReading) { giCube.rt.dispose(); giCube = slicedCube(size, 1, .5, 200); }
     const t0 = performance.now();
     if (!giCube.busy && time - lastProbe >= (tier.gi >= 2 ? 1 : 4)) { lastProbe = time; giCube.start(camera.position); }
-    if (giCube.step(renderer, scene)) { giReading = true; LightProbeGenerator.fromCubeRenderTarget(renderer, giCube.rt).then(p => { probe.sh.copy(p.sh); probe.intensity = .6; }).catch(e => console.warn('GI probe readback', e)).finally(() => { giReading = false; }); } // async readback (r180); .6 = bounce only [game calibration]
+    if (giCube.step(renderer, scene)) { giReading = true; LightProbeGenerator.fromCubeRenderTarget(renderer, giCube.rt).then(p => { probe.sh.copy(p.sh); probe.intensity = AMBIENT.probe; }).catch(e => console.warn('GI probe readback', e)).finally(() => { giReading = false; }); } // async readback (r180); AMBIENT.probe = bounce only (core/light)
     COST.giMs = performance.now() - t0;
   }
   let lastCloud = -1e9;
@@ -157,7 +158,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
       gpuBegin();
       const sl = rig.sunLight;
       SUN_UNIFORMS.uSunView.value.copy(sunDir).transformDirection(camera.matrixWorldInverse); SUN_UNIFORMS.uSunCol.value.copy(sl.color).multiplyScalar(sl.intensity / 3);
-      if (tier.ibl) { bakeIBL(sunDir); rig.hemi.intensity *= .35; } else if (scene.environment) { scene.environment = null; }
+      if (tier.ibl) { bakeIBL(sunDir); scene.environmentIntensity = AMBIENT.env; rig.hemi.intensity *= AMBIENT.hemiIbl; } // core/light AMBIENT: sky diffuse fraction else if (scene.environment) { scene.environment = null; }
       if (tier.gi) captureGI(time); else probe.intensity = 0;
       CLOUD.uSunWorld.value.copy(sunDir); updateClouds(time);
       if (csm) {

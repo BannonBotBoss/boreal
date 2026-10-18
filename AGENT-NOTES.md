@@ -305,3 +305,18 @@ At Matthew's request (Claude rate-limited) we edited a COPY of the wolf mesh, us
   8. Fur: legs ×0.7 below the elbow/stifle, belly ×0.6, back/neck/ruff ×1.15 (furLen only; same card count, so no perf-governor change).
 - **Pose side (ours, `posture.ts`):** head pitch sign fixed (three.js +x is nose-up; now −0.12 so the snout is about level), head drop 0.3, body pitch +0.04 rad front-up and body lowered 5 % of hip height at a walk, stance fore pastern slant +0.22 rad (visible wrist bend) and hind hock +0.12 rad. Planted contacts stay exact (tests). Limit: the trunk is one torso bone, so the spine itself cannot bend; topline shape is mesh-only.
 - **Fold back:** `git apply src/animals/locomotion/fork/MERGE.patch` (now covers BOTH `src/render/playerWolf.ts` and `src/core/wolfBody.ts`; checked to apply cleanly to 56506c55), re-run `tests/body.test.ts` (published-range checks; they currently run against the original only, so check them after folding), then delete `src/animals/locomotion/fork/` and point `src/animals/locomotion/game.ts` / `lab.ts` at `../../render/playerWolf`. Folding back changes the default wolf's look too, which is Claude's call.
+
+## 2026-10-18 Grok Bot (terrain/rivers/soils): glacial scour, bedrock speckle, exposure fix, surfaceAt for Globe Builder
+- **Terrain (core/stages/elevation.ts):** after erosion, a glacial scour field is added: a periodic value-noise lattice at 240-960 m, stretched NE-SW (ice flow), 20 m amplitude, then renormalised. ELEV now uses persistence .7, droplets 30000, basins .75. Measured at seed 1400 vs the Kenora reference: spectral slope -3.41 vs -3.14; lakes median 6.3 ha vs 7.2; islands 54 vs 42 per 100 km2; elongation 2.12 vs 2.22; water 27% vs 29%. Lake count is too high: 75 vs 17.6 per 100 km2.
+- **Soils (core/stages/soils.ts):** bedrock = top 11.4% of land by a TPI score (Weiss 2001; 7x7 window, plus HAND and slope terms), so outcrops are speckled knobs: median 0.27 ha vs 0.18 in the reference. Hillslope landscape now maps to till. SOIL gains tpiRadius/handW/slopeW.
+- **Washed-out renders (it was NOT headless-specific):**
+  - (1) ui/menu.ts: under ?nomenu/?bench the #start-menu gradient sat over the view because show() never ran. The menu now starts with class `fade`.
+  - (2) render/sky.ts: fog near/far are offset by camera height above the focus, so top-down/photo views aren't fogged white. No change at eye height.
+  - (3) core/light.ts `EXPOSURE.base = .5` (three's Sky+ACES example value), used by render/post.ts.
+  - (4) core/light.ts `AMBIENT = { env: .3, probe: .2, hemiIbl: .11 }`, used by render/photoreal.ts. Sky diffuse is ~15% of global on a clear day; the unscaled PMREM sky plus the GI probe (.6) made ambient rival the sun. Ground at 11:00 on Ultra went from sRGB 180,207,182 to 116,148,114.
+- **For Globe Builder: `surfaceAt(x, z, seed = STAGES.seed)` in `src/core/stages/surfaceAt.ts`**
+  - Returns `{ height, lake: {surface, areaHa, kind:'pond'|'lake'|'open'} | null, river: {surface, order, widthM} | null, soil: SoilKind ('water' when covered), wetness 0..1 }`.
+  - DOM-free and worker-safe: imports only core/stages, core/surface, core/tuning and proc. A test guards against three/window/document.
+  - Height equals core/world heightAt on the staged path, without needing STAGES.on.
+  - Cost: the first call per seed per worker builds the grids (~0.5-1 s); after that ~<50 us per point (tested).
+  - surfaceData.ts can call it once per point instead of lakeAt + soilAt separately. That file is yours, so I didn't touch it.

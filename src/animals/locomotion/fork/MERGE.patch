@@ -169,27 +169,37 @@
  const outlineAt = (rings: number[][], z: number) => { for (let i = 0; i < rings.length - 1; i++) { const [a, b] = [rings[i], rings[i + 1]]; if (z <= a[0] && z >= b[0]) { const t = (a[0] - z) / (a[0] - b[0]); return a.map((v, k) => v + (b[k] - v) * t); } } return rings[rings.length - 1]; };
  const LIP_FRACTION = .6; // how far out along the half-width the lips and teeth sit
  
-@@ -62,13 +63,13 @@
+@@ -57,19 +58,20 @@
+   const blend = (a: number, b: number, wb: number): Array<[number, number]> => [[a, 1 - wb], [b, wb]];
+   const tubes: Tube[] = [];
+ 
++  // Pass 5: deeper chest and barrel (belly line ~2.5 cm lower), level topline (croup raised to the withers' height), thicker neck.
+   // Trunk: heavy hindquarters, a tucked-up loin behind a deep ribcage, a thick shoulder ruff, and a short massive neck
+   // rising to the head. The neck end blends from torso to head so the head turns smoothly. A dark saddle runs along the
    // back; fur is longest on the neck and shoulders (the ruff).
    tubes.push({ ...palette, radial: 12, smooth: 1, lay: [0, -.3, 1], rings: [
-     { p: [0, .285, .185], rx: .03, ry: .05, w: blend(BONE.torso, BONE.tail, .15), fur: .9, saddle: .5 },
+-    { p: [0, .285, .185], rx: .03, ry: .05, w: blend(BONE.torso, BONE.tail, .15), fur: .9, saddle: .5 },
 -    { p: [0, .30, .15], rx: .048, ry: .072, w: only(BONE.torso), fur: 1, saddle: .55 },
 -    { p: [0, .31, .09], rx: .048, ry: .062, w: only(BONE.torso), fur: 1, saddle: .6 },
-+    { p: [0, .304, .15], rx: .048, ry: .076, w: only(BONE.torso), fur: 1, saddle: .55 },
-+    { p: [0, .314, .09], rx: .048, ry: .066, w: only(BONE.torso), fur: 1, saddle: .6 },
-     { p: [0, .315, .02], rx: .05, ry: .07, w: only(BONE.torso), fur: 1.05, saddle: .6 },
+-    { p: [0, .315, .02], rx: .05, ry: .07, w: only(BONE.torso), fur: 1.05, saddle: .6 },
 -    { p: [0, .32, -.07], rx: .054, ry: .088, w: only(BONE.torso), fur: 1.2, saddle: .6 },
 -    { p: [0, .325, -.135], rx: .057, ry: .097, w: only(BONE.torso), fur: 1.05, saddle: .55 },
 -    { p: [0, .35, -.19], rx: .05, ry: .082, w: blend(BONE.torso, BONE.head, .2), fur: 1.28, saddle: .4 },
 -    { p: [0, .385, -.25], rx: .048, ry: .066, w: blend(BONE.torso, BONE.head, .6), fur: 1.2, saddle: .25 },
-+    { p: [0, .3135, -.07], rx: .054, ry: .0815, w: only(BONE.torso), fur: 1.2, saddle: .6 },
-+    { p: [0, .3165, -.135], rx: .057, ry: .0885, w: only(BONE.torso), fur: 1.05, saddle: .55 },
-+    { p: [0, .345, -.19], rx: .056, ry: .092, w: blend(BONE.torso, BONE.head, .2), fur: 1.28, saddle: .4 },
-+    { p: [0, .383, -.25], rx: .051, ry: .071, w: blend(BONE.torso, BONE.head, .6), fur: 1.2, saddle: .25 },
-     { p: [0, .405, -.29], rx: .044, ry: .056, w: only(BONE.head), fur: 1.2 },
+-    { p: [0, .405, -.29], rx: .044, ry: .056, w: only(BONE.head), fur: 1.2 },
++    { p: [0, .29, .185], rx: .032, ry: .052, w: blend(BONE.torso, BONE.tail, .15), fur: .9, saddle: .5 },
++    { p: [0, .307, .15], rx: .05, ry: .085, w: only(BONE.torso), fur: 1, saddle: .55 },
++    { p: [0, .318, .09], rx: .05, ry: .074, w: only(BONE.torso), fur: 1, saddle: .6 },
++    { p: [0, .311, .02], rx: .054, ry: .085, w: only(BONE.torso), fur: 1.05, saddle: .6 },
++    { p: [0, .304, -.07], rx: .058, ry: .096, w: only(BONE.torso), fur: 1.2, saddle: .6 },
++    { p: [0, .307, -.135], rx: .06, ry: .101, w: only(BONE.torso), fur: 1.05, saddle: .55 },
++    { p: [0, .34, -.19], rx: .062, ry: .1, w: blend(BONE.torso, BONE.head, .2), fur: 1.28, saddle: .4 },
++    { p: [0, .383, -.25], rx: .058, ry: .08, w: blend(BONE.torso, BONE.head, .6), fur: 1.2, saddle: .25 },
++    { p: [0, .405, -.29], rx: .049, ry: .062, w: only(BONE.head), fur: 1.2 },
    ] });
  
-@@ -80,20 +81,20 @@
+   // Upper skull and muzzle: broad forehead, a stop, a straight nose bridge, then a tapered blunt muzzle. The snout is fixed to the
+@@ -80,20 +82,20 @@
      { p: H(0, .004, .01), rx: .049, ry: .04, w: only(BONE.head), fur: 1.1, saddle: .35, accent: .25 },
      { p: H(0, .002, -.022), rx: .043, ry: .037, w: only(BONE.head), fur: .8, accent: .55, under: .5 },
      { p: H(0, -.0055, -.035), rx: .031, ry: .029, w: only(BONE.head), fur: .7, accent: .55, under: .7, sq: 2.3 }, // the stop: the forehead drops steeply here
@@ -218,7 +228,7 @@
    ] });
  
    // Ears: 10 cm tall, set well apart. Each is a flat shell facing forward and outward (EAR_N) with a rounded rim (sq > 2);
-@@ -111,32 +112,32 @@
+@@ -111,32 +113,32 @@
      const at = (y: number, zz = z): Vec3 => [x, y, zz];
      const r = (y: number, rx: number, ry: number, w: Ring['w'], dark?: number, fur?: number, pale?: number): Ring => ({ p: at(y), rx: rx * f, ry: ry * f, w, dark, fur, pale });
      const rings: Ring[] = front ? [
@@ -269,7 +279,7 @@
      ] });
    });
  
-@@ -213,6 +214,110 @@
+@@ -213,6 +215,121 @@
    return tubes;
  }
  
@@ -288,7 +298,7 @@
 +      if (body.tube[v] !== pawTube(i) || body.position[v * 3 + 1] >= floor) continue;
 +      body.position[v * 3 + 1] = body.rest[v * 3 + 1] = floor; // flatten the sole
 +    }
-+    for (const t of [-1, 0, 1]) { const at: Vec3 = [x + t * .0062, sole + .008, z - .024]; dent(body, pawTube(i), at, .004, .0024); toes.push(at); } // grooves between the toes, top front
++    for (const t of [-1, 0, 1]) { const at: Vec3 = [x + t * .0062, sole + .008, z - .024]; dent(body, pawTube(i), at, .0045, .0032); toes.push(at); } // grooves between the toes, top front
 +  });
 +  // Ears: shorter (×0.68 along the ear), broader and rounder toward the tip (in each ear's own frame), then set back and leaned
 +  // back from the base. Inner tufts move with them. Done after the sculpt, so the cup indent and shading come along.
@@ -310,7 +320,7 @@
 +  zoneCoat(body, coat);
 +  for (let v = 0; v < body.tube.length; v++) {
 +    const tube = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1];
-+    if (tube >= 6 && tube < 13 && (tube - 6) % 2 === 0) { body.furLen[v] *= .6; if (toes.some(q => Math.hypot(body.position[v * 3] - q[0], body.position[v * 3 + 1] - q[1], body.position[v * 3 + 2] - q[2]) < .004)) for (let k = 0; k < 3; k++) body.color[v * 3 + k] *= .55; } // short paw fur so the toes show; dark grooves
++    if (tube >= 6 && tube < 13 && (tube - 6) % 2 === 0) { body.furLen[v] *= .45; if (toes.some(q => Math.hypot(body.position[v * 3] - q[0], body.position[v * 3 + 1] - q[1], body.position[v * 3 + 2] - q[2]) < .0058)) { for (let k = 0; k < 3; k++) body.color[v * 3 + k] *= .3; body.furLen[v] *= .4; } } // very short paw fur so the toe grooves shape the paw; dark grooves
 +    else if (tube >= 5 && tube < 13 && (tube - 5) % 2 === 0) { const top = limbModel((tube - 5) / 2).hip; if (y < top) body.furLen[v] *= .9 + .1 * Math.max(0, Math.min(1, (y - top + .08) / .08)); } // legs: short below the elbow / stifle
 +    else if (tube === TUBE.trunk) {
 +      if (ny < -.35) body.furLen[v] *= .6; // belly
@@ -331,21 +341,32 @@
 +}
 +const mix3 = (c: number[], v: number, to: RGB, t: number) => { for (let k = 0; k < 3; k++) c[v * 3 + k] += (to[k] - c[v * 3 + k]) * t; };
 +const band = (a: number, b: number, x: number) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-+/** Coat zoning from the photo (vertex colours; the fur cards copy them): dark saddle over the back, pale chest, throat and belly, buff legs. */
++/** Coat zoning from the photo (vertex colours; the fur cards copy them). Pass 5: dark saddle plus a distinct dark shoulder band behind the
++ * ruff, warm tan flanks, a pale throat/chest bib, a pale cheek and muzzle mask (the top of the muzzle and the nose stay dark), buff legs, a
++ * dark tail tip, mid-tone paws. */
 +function zoneCoat(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB }) {
 +  const lerp = (a: RGB, b: RGB, t: number) => a.map((v, k) => v + (b[k] - v) * t) as RGB;
-+  const c = body.color, saddle = lerp(coat.dark, coat.back, .3), buff = lerp(coat.belly, coat.accent ?? coat.back, .2), cream = coat.belly, pawDark = lerp(coat.dark, coat.back, .35);
++  const accent = coat.accent ?? coat.back, c = body.color, saddle = lerp(coat.dark, coat.back, .18), buff = lerp(coat.belly, accent, .2), cream = coat.belly;
++  const pawTone = lerp(buff, coat.dark, .3), warm = lerp(coat.back, accent, .6), mask = lerp(coat.belly, [1, 1, 1], .15);
++  const bump = (a: number, b: number, cc: number, d: number, x: number) => band(a, b, x) * (1 - band(cc, d, x));
++  let tailLen = 0; const tailD = (v: number) => Math.hypot(body.position[v * 3] - TAIL_AT[0], body.position[v * 3 + 1] - TAIL_AT[1], body.position[v * 3 + 2] - TAIL_AT[2]);
++  for (let v = 0; v < body.tube.length; v++) if (body.tube[v] === TAIL_TUBE) tailLen = Math.max(tailLen, tailD(v));
 +  for (let v = 0; v < body.tube.length; v++) {
-+    const t = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1];
-+    if (t === TUBE.trunk) {
-+      mix3(c, v, saddle, .82 * band(.15, .6, ny) * band(-.2, -.1, z) * (1 - band(.15, .2, z)));
++    const t = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1], hz = z - HEAD_AT[2];
++    if (t === TUBE.trunk) { // trunk rings are ~6 cm apart with 12 vertices each, so the zones are ring-wide bands
++      mix3(c, v, warm, .7 * bump(-.95, -.6, -.05, .3, ny) * bump(-.13, -.08, .14, .2, z)); // warm tan flanks and lower ribs
++      mix3(c, v, saddle, .9 * band(-.15, .45, ny) * band(-.17, -.1, z) * (1 - band(.13, .19, z))); // saddle: the whole upper back
++      mix3(c, v, coat.dark, .85 * bump(-.95, -.6, .2, .5, ny) * bump(-.17, -.145, -.12, -.095, z)); // dark shoulder band down behind the ruff
 +      mix3(c, v, cream, .8 * band(-.15, -.55, ny)); // belly
-+      if (z < -.1) mix3(c, v, cream, .7 * band(.1, -.4, ny) * band(-.1, -.2, z)); // chest and throat
-+    } else if (t >= 5 && t < 13 && (t - 5) % 2 === 0) {
++      if (z < -.15) mix3(c, v, mask, .95 * band(.3, -.3, ny) * band(-.15, -.2, z)); // pale throat and chest bib
++    } else if (t === TUBE.skull) {
++      if (hz > -.092) mix3(c, v, mask, .75 * band(.35, -.25, ny) * band(.03, -.03, hz)); // pale cheeks and muzzle sides; top and nose stay dark
++    } else if (t === TUBE.jaw || t === 14 || t === 15) mix3(c, v, mask, t === TUBE.jaw ? .8 : .6); // pale lower jaw and cheek ruffs
++    else if (t >= 5 && t < 13 && (t - 5) % 2 === 0) {
 +      const top = limbModel((t - 5) / 2).hip;
 +      mix3(c, v, buff, .85 * band(top + .03, top - .06, y)); // legs pale below the body
-+    } else if (t >= 6 && t < 13 && (t - 6) % 2 === 0) mix3(c, v, pawDark, .6); // darker paws
-+    else if (t === TAIL_TUBE) mix3(c, v, saddle, .45 * band(0, .7, ny));
++    } else if (t >= 6 && t < 13 && (t - 6) % 2 === 0) mix3(c, v, pawTone, .6); // paws a shade darker than the pale legs, so the dark toe grooves read
++    else if (t === TAIL_TUBE) { mix3(c, v, saddle, .45 * band(0, .7, ny)); mix3(c, v, coat.dark, .85 * band(.72, .9, tailD(v) / tailLen)); } // dark tail tip
 +  }
 +}
 +const TAIL_TUBE = 13;

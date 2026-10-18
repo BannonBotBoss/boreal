@@ -22,6 +22,7 @@ import { TRANSITION, transitionPath, planetToGame, gameBasis, globeCameraFrom, p
 import { GLOBE_ENTRY_ALT, HANDOFF, landSpawn } from './handoff';
 import { PLANET, GLOBE_COLOURS } from './planet';
 import { setPatchFade, setPatchFar } from '../../render/fade';
+import { AO_BLEND } from '../../render/post';
 import { LOG_DEPTH } from './logDepth';
 import { GOVERNOR, resetGovernor } from '../../core/quality';
 import { INTEREST, pending, queued, STATS as JOBS } from '../../core/interest';
@@ -37,9 +38,10 @@ import { clamp01, smoothstep } from '../../proc/math';
  *  the player's chunk (readiness and the fade disc, ring x CHUNK_SIZE); jobMs: chunk job budget per frame while the descent
  *  waits for them (the sim is frozen in the band, so its time goes to the patch); prepAlt: descending over home below this
  *  (globe mode), the landing spot is chosen and its chunks start building (terrain in the chunk worker pool, 506d0aa). */
-export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .03, fadeSec: .8, bandGain: 2.6, lakeShallow: [.017, .063, .07] as [number, number, number], lakeDeep: [.012, .047, .056] as [number, number, number], ring: 2, jobMs: 10, prepAlt: 3000, haze: 1, hazeLow: 60, hazeTop: 800, occ: [15, .03] as [number, number], pop: [.55, .95] as [number, number], bandAO: 0, bandContact: 1 };
-/** bandAO: GTAO in the band (x the tier's). 0: over the far layer (cleared depth) it drew a dark square and specks around the
- *  patch at 600 m, so ambient occlusion comes on with the game (handover); contact shadows stay. */
+export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .03, fadeSec: .8, bandGain: 2.6, lakeShallow: [.017, .063, .07] as [number, number, number], lakeDeep: [.012, .047, .056] as [number, number, number], ring: 2, uploadMB: 24, jobMs: 10, prepAlt: 3000, haze: 1, hazeLow: 60, hazeTop: 800, occ: [15, .03] as [number, number], pop: [.55, .95] as [number, number], aoTop: 250, bandContact: 1 };
+/** aoTop: GTAO eases in (render/post AO_BLEND, the blend intensity) from 0 at aoTop to full at the handover height, once the
+ *  patch is fully in; above it GTAO stays off in the band (over the far layer, cleared depth, it drew a dark square and specks
+ *  around the patch at 600 m). Contact shadows stay. uploadMB: first-draw upload budget per band frame (hideForBand). */
 /** pop: what cannot dither (animals, the wolf: their materials are not opted in) appears object by object at a fade between
  *  pop[0] and pop[1] (a fixed per-object threshold), so they come in over the last part of the dither, not all at 1. */
 /** haze: the patch blends toward the globe pixel behind it (the far layer, per pixel) by haze x smoothstep(hazeLow, hazeTop,
@@ -71,12 +73,13 @@ function controller(view: View, host: InPageHost) {
   let h = 0, h0 = 1, blend = 0, fade = 0, fadeT = 0, ready = false, readySeen = false, needStart = false, placedFrame = 0, frameNo = 0, lastT = 0, cameraTouched = false;
   const start = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, end = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   const cam = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, gcam = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
-  const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), size = new THREE.Vector2(), UP = new THREE.Vector3(0, 1, 0);
+  const tmpV = new THREE.Vector3(), tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), size = new THREE.Vector2(), UP = new THREE.Vector3(0, 1, 0);
   const land = new THREE.Vector3(), off = new THREE.Vector3(), fwd = new THREE.Vector2(); // landing point, start offset from the glide path, heading
   /** camera on the 45-degree glide path h metres above the landing ground (behind it along the heading), looking at it */
   const glide = (hh: number, k: number) => { cam.p.set(land.x - fwd.x * hh + off.x * k, land.y + hh + off.y * k, land.z - fwd.y * hh + off.z * k); tmpM.lookAt(cam.p, land, UP); tmpQ.setFromRotationMatrix(tmpM); };
   const hidden = new Map<THREE.Object3D, boolean>(); let savedBg: THREE.Scene['background'] | undefined;
-  const STATS = { globeMs: 0, mode: 'game' as TransitionMode, h: 0, fade: 0, ready: false, log: [] as { t: number; mode: string; h: number; fade: number; globeMs: number }[] };
+  const DEBUG = { holdH: 0, far: 0, pose: null as null | { p: [number, number, number]; look: [number, number, number] } };
+  const STATS = { globeMs: 0, drawMs: 0, mode: 'game' as TransitionMode, h: 0, fade: 0, ready: false, log: [] as { t: number; mode: string; h: number; fade: number; globeMs: number; drawMs?: number; jobsMs?: number; cpuMs?: number }[] };
 
   async function loadGlobe() { const mod = await globeModule!; createGlobe ??= mod.createGlobe; lakeU ??= mod.GLOBE_LAKE; return ensureGlobe(); }
   function ensureGlobe() {
@@ -124,20 +127,30 @@ function controller(view: View, host: InPageHost) {
   function toGlobe() { restoreScene(); globe!.drive(null); setMode('globe'); }
   function toGame() { restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
   function restoreScene() {
-    for (const [o, v] of hidden) o.visible = v; hidden.clear();
-    if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; setPatchFade(1); setPatchFar(null); bandLook(0);
+    for (const [o, v] of hidden) o.visible = v; hidden.clear(); for (const c of unculled) c.frustumCulled = true; unculled.length = 0;
+    if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; setPatchFade(1); setPatchFar(null); bandLook(0); AO_BLEND.value = 1;
   }
   const isChunkRoot = (o: THREE.Object3D) => o.type === 'Group' && (o.children[0]?.userData.inspect as { type?: string } | undefined)?.type === 'terrain';
   const hasLight = (o: THREE.Object3D) => (o as THREE.Light).isLight || !!o.getObjectByProperty('isLight', true);
   const faded = (o: THREE.Object3D) => !!((o as THREE.Mesh).material as THREE.Material | undefined)?.userData?.patchFade;
   const dithers = new WeakMap<THREE.Object3D, boolean>(); // grass, flora, far trees: every mesh under it dithers with the patch (render/fade)
   const allFaded = (o: THREE.Object3D) => { let v = dithers.get(o); if (v === undefined) { let n = 0, ok = true; o.traverse(c => { if ((c as THREE.Mesh).isMesh) { n++; ok &&= faded(c); } }); v = ok && n > 0; dithers.set(o, v); } return v; };
+  /** Upload budget (bytes per frame) for new chunk meshes in the band. A chunk's tree/prop batch is ~5-20 MB of vertex data
+   *  that three uploads (bufferData) the first time it is not frustum-culled; from the band's height every batch instance is
+   *  past its LOD range, so the empty batches are culled until the camera is low enough and then ALL of them uploaded in one
+   *  frame as the fade starts (238 MB / 85 ms of bufferData measured, r19). So each new chunk mesh is admitted once, within the
+   *  budget, with frustum culling off for that one frame (three uploads it while drawing nothing: the patch is still at
+   *  fade 0 most of the time); the ones that do not fit yet stay hidden. */
+  const uploaded = new WeakSet<THREE.Object3D>(), sizes = new WeakMap<THREE.Object3D, number>(), unculled: THREE.Object3D[] = [];
+  const admit = (m: THREE.Object3D) => { uploaded.add(m); m.traverse(c => { if ((c as THREE.Mesh).isMesh && c.frustumCulled) { c.frustumCulled = false; unculled.push(c); } }); };
+  const bytesOf = (o: THREE.Object3D) => { let b = sizes.get(o); if (b === undefined) { b = 0; o.traverse(c => { const g = (c as THREE.Mesh).geometry; if (!g) return; for (const k in g.attributes) b! += (g.attributes[k] as THREE.BufferAttribute).array.byteLength; if (g.index) b! += g.index.array.byteLength; }); sizes.set(o, b); } return b; };
   const popAt = (o: THREE.Object3D) => { const u = (o.id * .6180339887) % 1; return INPAGE.pop[0] + (INPAGE.pop[1] - INPAGE.pop[0]) * u; };
   /** Hide what cannot dither while the patch is partly in (and the sky dome for the whole band); restore the rest. */
   function hideForBand(scene: THREE.Scene) {
-    const now = new Set<THREE.Object3D>(), partial = fade < 1;
+    const now = new Set<THREE.Object3D>(), partial = fade < 1; let budget = INPAGE.uploadMB * 1e6;
+    for (const c of unculled) c.frustumCulled = true; unculled.length = 0; // admitted last frame: uploaded by now
     for (const o of scene.children) {
-      if (isChunkRoot(o)) { if (partial) for (const m of o.children) if (!faded(m)) now.add(m); continue; }
+      if (isChunkRoot(o)) { for (const m of o.children) { if (partial && !faded(m)) { now.add(m); continue; } if (uploaded.has(m) || !m.visible && !hidden.has(m)) continue; const b = bytesOf(m); if (b <= budget || budget === INPAGE.uploadMB * 1e6) { budget -= b; admit(m); } else now.add(m); } continue; }
       if (hasLight(o) || (!(o as THREE.Mesh).isMesh && (o as THREE.Points).type !== 'Points' && !o.children.length)) continue;
       if (o.renderOrder < 0 || o.type === 'Points' || (partial && !allFaded(o) && fade < popAt(o))) now.add(o); // sky (-2), cloud dome (-1), precipitation; everything else that cannot dither while partial
     }
@@ -147,6 +160,8 @@ function controller(view: View, host: InPageHost) {
 
   const api = {
     /** dev (the check script): chunk job scheduler state */
+    /** dev (the check script): hold the descent at a height / pin the band camera (occlusion checks); ground height */
+    DEBUG, groundAt: ground, get land() { return [land.x, land.y, land.z]; },
     jobs: () => ({ q: queued(), run: JOBS.jobsRun, deferred: JOBS.deferred, lastMs: +JOBS.lastFrameMs.toFixed(1), kinds: JSON.parse(JSON.stringify(JOBS.kinds)) as unknown }),
     get mode() { return mode; }, get globe() { return globe; }, get fade() { return fade; }, get height() { return h; }, STATS, INPAGE, far,
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */
@@ -154,6 +169,7 @@ function controller(view: View, host: InPageHost) {
       if (mode !== 'game') return true;
       if (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER) return false; // Low or below now: main takes the reload path
       if (!globe) { void loadGlobe().then(() => api.ascend()); return true; } // first use before the prewarm finished
+      for (const o of view.scene.children) if (isChunkRoot(o)) for (const m of o.children) uploaded.add(m); // drawn in the game already
       const g = globe; prep = null; host.save(); hold.hold(); g.resumeWorkers(); down = false; needStart = true; lastT = performance.now(); setMode('band');
       return true;
     },
@@ -176,7 +192,7 @@ function controller(view: View, host: InPageHost) {
           renderer.toneMappingExposure = INPAGE.gain; globe.step(null); STATS.globeMs = performance.now() - t0; record(); return;
         }
       }
-      drawGame(); record();
+      const td = performance.now(); drawGame(); STATS.drawMs = performance.now() - td; record();
     },
     /** buildScene, after the rig camera is placed: in the band the transition flies the camera (game frame). */
     camera(camera: THREE.PerspectiveCamera) {
@@ -194,6 +210,7 @@ function controller(view: View, host: InPageHost) {
         if (readySeen) fadeT = Math.min(1, fadeT + dt / INPAGE.fadeSec);
         fade = Math.min(patchFade(h, readySeen), fadeT);
         if (phase === 'fly') { h = Math.max(TRANSITION.handover, h * Math.exp(-INPAGE.kDown * (readySeen ? 1 : INPAGE.waitK) * dt)); if (h <= TRANSITION.handover + 1e-3 && fade >= 1) phase = 'blend'; }
+        if (DEBUG.holdH) h = Math.max(h, DEBUG.holdH);
         glide(h, clamp01((h - TRANSITION.handover) / (h0 - TRANSITION.handover)));
         cam.q.copy(start.q).slerp(tmpQ, smoothstep(0, 1, clamp01(Math.log(h0 / h) / Math.log(1 / .6)))); // globe pose -> looking at the landing by 0.6 h0
         if (phase === 'blend') { blend = Math.min(1, blend + dt / TRANSITION.blendSec); const b = smoothstep(0, 1, blend); cam.p.lerp(end.p, b); cam.q.slerp(end.q, b); }
@@ -204,8 +221,9 @@ function controller(view: View, host: InPageHost) {
         tmpQ.setFromEuler(new THREE.Euler(-Math.atan(.08), Math.atan2(-fwd.x, -fwd.y), 0, 'YXZ')); cam.q.slerp(tmpQ, smoothstep(top * .6, top, h));
         fade = patchFade(h, true);
       }
+      if (DEBUG.pose) { const [x, y, z] = DEBUG.pose.p, [lx, ly, lz] = DEBUG.pose.look; cam.p.set(x, y, z); tmpM.lookAt(cam.p, tmpV.set(lx, ly, lz), UP); cam.q.setFromRotationMatrix(tmpM); }
       camera.position.copy(cam.p); camera.quaternion.copy(cam.q);
-      const hc = Math.max(1, cam.p.y - ground(cam.p.x, cam.p.z)); camera.near = Math.max(.2, hc * INPAGE.nearK); camera.far = Math.max(700, hc * 2 + 900);
+      const hc = Math.max(1, cam.p.y - ground(cam.p.x, cam.p.z)); camera.near = Math.max(.2, hc * INPAGE.nearK); camera.far = Math.max(700, hc * 2 + 900, DEBUG.far);
       camera.updateMatrixWorld(true);
       STATS.h = h; STATS.fade = fade; STATS.ready = ready;
       if (down && phase === 'blend' && blend >= 1) next = 'game'; else if (!down && h >= top - 1e-3) next = 'globe'; // next frame (this one still draws the band)
@@ -224,7 +242,11 @@ function controller(view: View, host: InPageHost) {
     },
     /** buildScene's screen-space effects in the band: god rays off (the far layer has no depth, so its ground would read as sky
      *  in the ray mask), ambient occlusion only once the patch is fully in (GTAO's normal pass cannot dither). */
-    fx(t: FxTier): FxTier { return mode === 'band' ? { ssao: fade >= 1 ? t.ssao * INPAGE.bandAO : 0, contact: t.contact * INPAGE.bandContact, rays: 0 } : t; },
+    fx(t: FxTier): FxTier {
+      if (mode !== 'band') return t;
+      const a = fade >= 1 ? smoothstep(INPAGE.aoTop, TRANSITION.handover, h) : 0; AO_BLEND.value = a;
+      return { ssao: a > 0 ? t.ssao : 0, contact: t.contact * INPAGE.bandContact, rays: 0 };
+    },
     /** Behind the loading screen: create the globe, compile its programs for the far layer AND the screen, build the tiles over
      *  the player at the entry altitude, compile the far-layer background program, then terminate the workers. */
     async prewarm() {
@@ -241,7 +263,7 @@ function controller(view: View, host: InPageHost) {
   return api;
   /** lake colours for the band: s = 0 the globe's calibrated lakes, 1 the game-matched ones */
   function bandLook(s: number) { if (lakeU) { const L = (u: { value: THREE.Color }, a: readonly number[], b: readonly number[]) => u.value.setRGB(a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s, a[2] + (b[2] - a[2]) * s); L(lakeU.shallow, GLOBE_COLOURS.lakeShallow, INPAGE.lakeShallow); L(lakeU.deep, GLOBE_COLOURS.lakeDeep, INPAGE.lakeDeep); } return s; }
-  function record() { const l = STATS.log; l.push({ t: performance.now(), mode, h: Math.round(h), fade: +fade.toFixed(3), globeMs: +STATS.globeMs.toFixed(2) }); if (l.length > 4000) l.splice(0, l.length - 4000); }
+  function record() { const l = STATS.log; l.push({ t: performance.now(), mode, h: Math.round(h), fade: +fade.toFixed(3), globeMs: +STATS.globeMs.toFixed(2), drawMs: +STATS.drawMs.toFixed(1), jobsMs: +JOBS.lastFrameMs.toFixed(1), cpuMs: +(performance.now() - Number(document.timeline.currentTime ?? 0)).toFixed(1) }); STATS.drawMs = 0; if (l.length > 4000) l.splice(0, l.length - 4000); }
 }
 /** buildScene hooks (no-ops on the reload path). */
 export const bandCamera = (camera: THREE.PerspectiveCamera) => ctl?.camera(camera);

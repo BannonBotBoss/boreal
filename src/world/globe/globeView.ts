@@ -20,12 +20,13 @@ import { heightAt, WORLD_SEED } from '../../core/world';
 import { INTEREST, cancel, enqueue, runJobs } from '../../core/interest';
 import { smoothstep, clamp } from '../../proc/math';
 import { children, edgeMetres, faceDir, roots, wantsSplit, centre as nodeCentre, type QNode } from './cube';
+import { renderOffset } from './origin';
 import { planetFor, toLatLon, PLANET, type Vec3 } from './planet';
 import { buildTile, globeMaterial, tileGeometry, type TileData } from './tile';
 import type { TileRequest } from './tileWorker';
 import { globeLod } from './lod';
 
-interface Tile { mesh: THREE.Mesh; used: number }
+interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3 } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
 const STATS = { warm: [] as number[], build: [] as number[], work: [] as number[], interval: [] as number[] };
 const pct = (a: number[], p: number) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
@@ -94,8 +95,8 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const pool: { w: Worker; busy: string }[] = [], ids = new Map<number, QNode>();
   const accept = (n: QNode, t: TileData) => {
     inflight.delete(n.key); STATS.build.push(t.cpu); built++;
-    const mesh = new THREE.Mesh(tileGeometry(t), material); mesh.position.set(...t.centre); mesh.matrixAutoUpdate = false; mesh.updateMatrix();
-    tiles.set(n.key, { mesh, used: frame });
+    const mesh = new THREE.Mesh(tileGeometry(t), material); mesh.matrixAutoUpdate = false;
+    tiles.set(n.key, { mesh, used: frame, centre: [t.centre[0], t.centre[1], t.centre[2]] });
   };
   try {
     for (let k = 0; k < nWorkers; k++) {
@@ -119,6 +120,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       slot.w.postMessage({ id, seed, staged: STAGES.on, stagesSeed: STAGES.seed, face: n.face, level: n.level, i: n.i, j: n.j, segments: lod.segments } satisfies TileRequest);
     }
   }
+  const offTmp: Vec3 = [0, 0, 0];
   const wanted = new Set<string>(); let drawn = 0, inView = 0, deepest = 0, culled = 0, splitK = 1;
   function want(n: QNode) {
     const t = tiles.get(n.key); if (t) { t.used = frame; return true; }
@@ -150,7 +152,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       const kids = children(n).filter(k => !hidden(k) || (culled++, false)), ok = kids.map(want).every(Boolean);
       if (ok) { for (const k of kids) visit(k); return; }
     }
-    if (ready) { group.add(tiles.get(n.key)!.mesh); drawn++; if (seen) inView++; deepest = Math.max(deepest, n.level); }
+    if (ready) { const tl = tiles.get(n.key)!; renderOffset(tl.centre, camPos, offTmp); tl.mesh.position.set(offTmp[0], offTmp[1], offTmp[2]); tl.mesh.updateMatrix(); group.add(tl.mesh); drawn++; if (seen) inView++; deepest = Math.max(deepest, n.level); }
   }
   // roots first, synchronously on this thread, so the planet is never empty
   for (const r of roots()) accept(r, (() => { const g = buildTile(r, planet, lod.segments); let x = g.next(); while (!x.done) x = g.next(); return x.value; })());
@@ -191,7 +193,8 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       const old = [...tiles.entries()].filter(([k, t]) => t.used < frame - 2 && k.split('/')[1] !== '0').sort((a, b) => a[1].used - b[1].used);
       for (const [key, t] of old.slice(0, tiles.size - lod.cache)) { t.mesh.geometry.dispose(); tiles.delete(key); }
     }
-    const tR = performance.now(); renderer.render(scene, camera);
+    // camera-relative: render from the origin (tile offsets were set from the double camera position in visit())
+    const tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); renderer.render(scene, camera); camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
     const work = performance.now() - t0; if (bench && work > 40) console.log(`SPIKE ${work.toFixed(0)}ms alt ${alt.toFixed(0)} pre-render ${(tR - t0).toFixed(0)} render ${(performance.now() - tR).toFixed(0)} calls ${renderer.info.render.calls} accepted ${built}`); STATS.work.push(work); if (prevT) STATS.interval.push(t0 - prevT);
     if (!bench) { keep(STATS.work, 600); keep(STATS.interval, 600); keep(STATS.build, 2000); }
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;

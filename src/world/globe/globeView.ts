@@ -25,7 +25,7 @@ import { createAtmosphere } from './atmosphere';
 import { across } from './cube';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
 import { gameHour, START_HOUR, sunPosition } from '../../core/timeOfDay';
-import { gameUrl, handoffTarget, HANDOFF } from './handoff';
+import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { buildTile, globeMaterial, releaseTileGeometry, stitchIndex, tileGeometry, type TileData } from './tile';
@@ -121,7 +121,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
     else if (e.key === 'h' || e.key === 'H') flyHome = 1;
     else if (e.key === 'q' || e.key === 'Q') turn(-.12); else if (e.key === 'e' || e.key === 'E') turn(.12);
-    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { const at = overHome && { ...overHome, yaw: headingYaw() }; shutdown(); location.search = gameUrl(location.search, at); } // over home: spawn right below, same heading
+    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; shutdown(); location.search = gameUrl(location.search, at); } // over home: spawn right below, same heading
   });
 
   // ---- tile builders: a worker pool (default) or budgeted main-thread jobs (?workers=0 or no Worker support)
@@ -253,7 +253,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
-    if (autoHandoff && spawn && !leaving) { leaving = true; fade.style.opacity = '1'; const at = { ...spawn, yaw: headingYaw() }; setTimeout(() => { shutdown(); location.search = gameUrl(location.search, at); }, 650); }
+    if (autoHandoff && spawn && !leaving) { leaving = true; fade.style.opacity = '1'; const at = { ...landSpawn(spawn), yaw: headingYaw() }; setTimeout(() => { shutdown(); location.search = gameUrl(location.search, at); }, 650); }
     if (flyHome) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
     if (bench) { const prev = benchT; benchT += dt;
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }

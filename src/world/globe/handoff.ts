@@ -6,6 +6,8 @@
  * Heading: game yaw (forward = (-sin yaw, -cos yaw) in x, z; +x east, -z north) = minus the compass azimuth.
  */
 import { PLANET } from './planet';
+import { STAGES } from '../../core/stages/elevation';
+import { dryStart } from '../../core/stages/surfaceAt';
 
 export const HANDOFF = { alt: 2000, margin: 250, hintAlt: 6000 }; // metres above ground; keep-out from the region edge [game calibration]
 
@@ -15,6 +17,13 @@ export function handoffTarget(s: { home: number; x: number; z: number }, alt: nu
   const lim = PLANET.home.halfSize - PLANET.home.feather - HANDOFF.margin;
   if (climbing || alt > HANDOFF.alt || s.home < 1 || Math.abs(s.x) > lim || Math.abs(s.z) > lim) return null;
   return { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 };
+}
+/** Where the player lands coming down from the globe: the nearest dry land to `at` (the game's own dryStart, which the
+ *  game skips for ?at=), so the handoff never drops the wolf in a lake. Unchanged without staged terrain or if no dry
+ *  land is within dryStart's search radius (then the game's water handling applies). */
+export function landSpawn(at: { x: number; z: number }, staged = STAGES.on) {
+  if (!staged) return at; const [x, z] = dryStart(at.x, at.z);
+  return { x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10 };
 }
 /** The game URL for a spawn: the current query minus the globe's own keys, plus `at` (x, z and, when known, yaw). */
 export function gameUrl(search: string, at: { x: number; z: number; yaw?: number } | null) {

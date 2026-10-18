@@ -320,3 +320,14 @@ test('globe clouds: edge contrast and detail follow the governor tier (uniforms 
   assert.equal((atm.dome.material as unknown as { fragmentShader: string }).fragmentShader, frag, 'tier change: same shader');
   assert.ok(frag.includes('smoothstep(c - hw, c + hw') && frag.includes(`a *= ${CLOUDS.persistence.toFixed(3)}`) && frag.includes('octD'), 'threshold + distance octave fade in the shader');
 });
+
+import { landSpawn } from '../src/world/globe/handoff';
+import { surfaceAt as surfaceAtH } from '../src/core/stages/surfaceAt';
+test('globe -> game: the arrival spot moves out of a lake to the nearest dry land (dryStart), dry spots stay', () => {
+  let wet: { x: number; z: number } | null = null;
+  for (let x = -2000; x <= 2000 && !wet; x += 40) for (let z = -2000; z <= 2000 && !wet; z += 40) if (surfaceAtH(x, z).lake) wet = { x, z };
+  assert.ok(wet, 'a lake near home');
+  const s = landSpawn(wet!, true), p = surfaceAtH(s.x, s.z);
+  assert.ok(!p.lake && !p.river && Math.hypot(s.x - wet!.x, s.z - wet!.z) <= 900, `landed at ${s.x},${s.z}`);
+  assert.deepEqual(landSpawn(s, true), s); assert.deepEqual(landSpawn(wet!, false), wet);
+});

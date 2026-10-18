@@ -16,6 +16,7 @@ import { standAt } from '../../core/stand';
 import { FAR_TREES, farTreesInTile } from '../../core/flora/stands';
 import { hash, random } from '../../proc/rng';
 import { treeGeometry } from '../trees';
+import { fadeOptIn } from '../fade';
 
 export const FAR_TREE_FX = { off: typeof location !== 'undefined' && new URLSearchParams(location.search).get('fartrees') === '0' }; // ?fartrees=0: bench A/B
 export const FAR_TREE_INFO = { instances: 0, geometries: 0, tiles: 0, refills: 0, sliceMaxMs: 0, inner: 0, outer: 0, triangles: 0 };
@@ -35,7 +36,7 @@ export function createFarTrees(scene: THREE.Scene) {
   const dry = (x: number, z: number) => heightAt(x, z) < LEVEL.shore ? 0 : 1;
   function geometryId(g: THREE.BufferGeometry, mat: THREE.Material) {
     let id = geoIds.get(g); if (id !== undefined) return id;
-    if (!bm) { bm = new THREE.BatchedMesh(FAR_TREES.maxInstances, 160000, 320000, mat); bm.castShadow = false; bm.receiveShadow = true; bm.frustumCulled = false; bm.name = 'far-trees'; scene.add(bm); }
+    if (!bm) { bm = new THREE.BatchedMesh(FAR_TREES.maxInstances, 160000, 320000, fadeOptIn(mat)); /* the shared tree material (render/batch opts it in too; idempotent) */ bm.castShadow = false; bm.receiveShadow = true; bm.frustumCulled = false; bm.name = 'far-trees'; scene.add(bm); }
     const src = g.index ? g : g.clone().setIndex([...Array(g.getAttribute('position').count).keys()]);
     try { id = bm.addGeometry(src); tris.set(id, src.index!.count / 3); } catch { id = geoIds.values().next().value ?? -1; } // full: reuse a loaded shape
     if (src !== g) src.dispose(); geoIds.set(g, id); FAR_TREE_INFO.geometries = tris.size; return id;

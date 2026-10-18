@@ -21,6 +21,7 @@
 import * as THREE from 'three';
 import { GLSL_NOISE } from '../../proc/glsl';
 import { addCloudShadow, addTranslucency } from '../pbr';
+import { addPatchFade } from '../fade';
 import { WIND_UNIFORMS } from '../trees';
 import { enqueue, cancel, pending } from '../../core/interest';
 import { RENDER } from '../../core/renderSettings';
@@ -110,6 +111,7 @@ function grassMaterial(segments: number) {
   m.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, U, MOSS_UNIFORMS, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });
     addTranslucency(shader); addCloudShadow(shader);
+    addPatchFade(shader); m!.userData.patchFade = true; // render/fade (in-page transition): uniform only, same key; BEFORE the project_vertex swap below so its world-xz line follows the custom projection
     shader.vertexShader = VERT_HEAD + shader.vertexShader
       .replace('#include <beginnormal_vertex>', `vec3 objectNormal; ${VERT_BODY}`)
       .replace('#include <begin_vertex>', 'vec3 transformed = grassPos;')

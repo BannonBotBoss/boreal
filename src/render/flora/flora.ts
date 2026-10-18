@@ -26,6 +26,7 @@ import { WEATHER } from '../../core/weather';
 import { enqueue, cancel, pending, finish } from '../../core/interest';
 import { hash, random, sample } from '../../proc/rng';
 import { addCloudShadow, addTranslucency } from '../pbr';
+import { fadeOptIn } from '../fade';
 import { WIND_UNIFORMS, treeDims } from '../trees';
 import { buildClump, buildPlant } from './plant';
 import { createMoss } from './moss';
@@ -97,7 +98,7 @@ function floraMaterial() {
       diffuseColor.rgb = mix(diffuseColor.rgb, vFall, uColour * (1. - vOrgan)); // deciduous leaves colour with the shared phenology`);
   };
   material.customProgramCacheKey = () => 'boreal-flora';
-  return material;
+  return fadeOptIn(material); // render/fade: in-page transition patch fade (uniform only, same cache key)
 }
 
 export interface Plant { species: number; variant: number; x: number; y: number; z: number; rot: number; scale: number; h: number; clump?: boolean; keep?: number }

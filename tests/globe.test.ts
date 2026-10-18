@@ -149,3 +149,16 @@ test('origin bus: a shift is velocity-neutral for a Verlet body (pos and prev tr
   bus.request([5000, 0, 0]); bus.request([5001, 0, 0]); bus.flush(); bus.flush(); off(); bus.request([9000, 0, 0]); bus.flush();
   assert.equal(calls, 1, 'one shift per tick, unsubscribe works'); assert.deepEqual(bus.origin, [14001, 0, 0]);
 });
+import { gameUrl, handoffTarget, HANDOFF } from '../src/world/globe/handoff';
+test('globe → game handoff: only below the handoff altitude, fully inside home, not while climbing; URL keeps game keys', () => {
+  const inside = { home: 1, x: 120.04, z: -340 };
+  assert.deepEqual(handoffTarget(inside, HANDOFF.alt - 1, false), { x: 120, z: -340 });
+  assert.equal(handoffTarget(inside, HANDOFF.alt + 1, false), null);
+  assert.equal(handoffTarget(inside, 500, true), null);
+  assert.equal(handoffTarget({ home: .8, x: 0, z: 0 }, 500, false), null);
+  assert.equal(handoffTarget({ home: 1, x: PLANET.home.halfSize - 10, z: 0 }, 500, false), null);
+  assert.equal(gameUrl('?view=globe&stages=1&alt=900&seed=3', { x: 1, z: -2.5 }), '?stages=1&seed=3&at=1%2C-2.5');
+  assert.equal(gameUrl('?view=globe', null), '?');
+  // the game's ?at= parser (main.ts) splits on ',' after URL decoding
+  assert.deepEqual(new URLSearchParams(gameUrl('?view=globe', { x: 1, z: -2.5 })).get('at')!.split(',').map(Number), [1, -2.5]);
+});

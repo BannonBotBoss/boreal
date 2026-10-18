@@ -21,6 +21,7 @@ import { INTEREST, cancel, enqueue, runJobs } from '../../core/interest';
 import { smoothstep, clamp } from '../../proc/math';
 import { children, edgeMetres, faceDir, roots, wantsSplit, centre as nodeCentre, type QNode } from './cube';
 import { renderOffset } from './origin';
+import { gameUrl, handoffTarget, HANDOFF } from './handoff';
 import { planetFor, toLatLon, PLANET, type Vec3 } from './planet';
 import { buildTile, globeMaterial, tileGeometry, type TileData } from './tile';
 import type { TileRequest } from './tileWorker';
@@ -77,14 +78,17 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const bench = q.get('bench') === 'zoom', benchFrom = 14e6, benchTo = 300, benchSec = 20; let benchT = -2, benchOrbit = {}; // 2 s settle at orbit, 20 s zoom, 8 s hold
   const startAlt = bench ? benchFrom : Number(q.get('alt')) || R * 2.2;
   const start = q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
-  let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0;
+  let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0, overHome: { x: number; z: number } | null = null, leaving = false;
+  const autoHandoff = !bench && !q.has('shot') && q.get('handoff') !== '0'; // screenshots and benches stay on the globe
+  if (q.get('handoff') === 'demo') targetAlt = HANDOFF.alt * .75; // ?handoff=demo&alt=4000: descend and hand off by itself
+  const fade = document.createElement('div'); Object.assign(fade.style, { position: 'fixed', inset: '0', background: '#dfe8ef', opacity: '0', transition: 'opacity .6s', pointerEvents: 'none' }); document.body.append(fade);
   camera.position.set(...start).multiplyScalar(R + alt);
   const zoom = (f: number) => { targetAlt = clamp(targetAlt * f, 40, R * 4); };
   canvas.addEventListener('wheel', e => { e.preventDefault(); zoom(Math.exp(e.deltaY * .0016)); }, { passive: false });
   addEventListener('keydown', e => {
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
     else if (e.key === 'h' || e.key === 'H') flyHome = 1;
-    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { q.delete('view'); location.search = q.toString(); }
+    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') location.search = gameUrl(location.search, overHome); // over home: spawn right below
   });
 
   // ---- tile builders: a worker pool (default) or budgeted main-thread jobs (?workers=0 or no Worker support)
@@ -163,6 +167,10 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   function tick() {
     const t0 = performance.now(), dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++;
     const dir = camera.position.clone().normalize(), s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = Math.max(s.h, s.water);
+    // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
+    overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
+    const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
+    if (autoHandoff && spawn && !leaving) { leaving = true; fade.style.opacity = '1'; setTimeout(() => { location.search = gameUrl(location.search, spawn); }, 650); }
     if (flyHome) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
     if (bench) { const prev = benchT; benchT += dt;
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }
@@ -206,7 +214,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
         `tiles drawn ${drawn} (${inView} in view, cap ${lod.draw}${splitK < 1 ? ` · split ×${splitK.toFixed(2)}` : ''}) · culled ${culled} · cached ${tiles.size} · deepest L${deepest} · queued ${queued.size + inflight.size}\n` +
         `build (${mode()}) ${built} tiles · avg ${avg(STATS.build).toFixed(1)} ms · p95 ${pct(STATS.build, .95).toFixed(1)} ms · worst frame ${Math.max(0, ...STATS.work).toFixed(1)} ms\n` +
         `tier ${LADDER[GOVERNOR.tier].name}${GOVERNOR.auto ? ' (auto)' : ''} · ${lod.segments} seg · ${fps.toFixed(0)} fps · work ${work.toFixed(1)} ms\n` +
-        `drag orbit · wheel / + - zoom · H home · G game`;
+        (overHome && alt < HANDOFF.hintAlt ? `over the home region: descend below ${HANDOFF.alt / 1000} km to enter the game\n` : '') + `drag orbit · wheel / + - zoom · H home · G game`;
     }
     requestAnimationFrame(tick);
   }

@@ -160,7 +160,7 @@ function controller(view: View, host: InPageHost) {
       globeCameraFrom(globe.planet, camera, gcam); globe.drive({ position: gcam.position, quaternion: gcam.quaternion, fov: camera.fov, aspect: camera.aspect });
       globe.step(far.target); STATS.globeMs = performance.now() - t0;
       if (savedBg === undefined) savedBg = scene.background; scene.background = far.texture; scene.backgroundIntensity = INPAGE.gain / EXPOSURE.base;
-      const p = host.player(); setPatchFade(fade, { x: p.x, z: p.z, r: INTEREST.mid }); // the streamed patch: chunks within INTEREST.mid (buildScene sync) hideForBand(scene);
+      const p = host.player(); setPatchFade(fade, { x: p.x, z: p.z, r: INTEREST.mid }); hideForBand(scene); // disc = the streamed patch: chunks within INTEREST.mid (buildScene sync)
     },
     /** buildScene's screen-space effects in the band: god rays off (the far layer has no depth, so its ground would read as sky
      *  in the ray mask), ambient occlusion only once the patch is fully in (GTAO's normal pass cannot dither). */

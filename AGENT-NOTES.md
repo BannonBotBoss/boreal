@@ -665,3 +665,15 @@ Still fork-only (`src/animals/locomotion/fork/`, used under `?loco=1` and in the
   - idle, move and ultra are unchanged (all ≤ 34 ms). GPU memory 411-447 → 425-437 MB.
 - **Anyone disposing chunk objects:** a material used by more than one chunk must carry `userData.shared`, or `disposeObject` frees its programs.
 - **Not covered:** a manual tier change from the settings menu (immediate, as before), and point-light shadow programs. The background compile uses lights captured at each rescan, so a light added between rescans can still compile at the switch.
+
+## 2026-10-18 10:30 PT - Grok Bot (Globe Builder): in-page transition is now the DEFAULT (f9ce4cf)
+- **Status:** the descent and ascent run in one page by default. Reload is the automatic fallback:
+  - `?transition=reload` forces it (`?transition=inpage` forces in-page, except on the fallbacks below);
+  - `deviceMemory` <= 4 GB, or a probe cap of Low or worse (`transitionPath`, decided once at `createInPage`);
+  - `inpage.ascend()` also returns false (main takes the reload path) when `GOVERNOR.capTier` or `probeCap` is Low or below at that moment.
+- **Commits:** 53d3c03, ae9ff11 (render/fade.ts), 1d65104 (shared mode), 39954d7 (main.ts/buildScene.ts wiring), ca2ba1b, 4c7513a, 5e0de8f, 66e7a92, 3e2644b (globe ground: tent-filtered soil classes in home.ts/planet.ts, NEAR_SPLIT deeper tiles under a low camera), e6fb6c6 (fade far-layer uniforms + far-layer depth texture), c8641f1 (3 km prep, haze blend, GTAO off in band, animal stagger), f9ce4cf (default flip).
+- **Knobs (`INPAGE` in world/globe/inpage.ts):** prepAlt 3000 (landing chosen and chunks built from 3 km), jobMs 10 (chunk job budget while they build), waitK .03, fadeSec .8, bandGain 2.6, haze 1 x smoothstep(hazeLow 60, hazeTop 800 m), occ [15 m, 3 %], pop [.55, .95] (animals/wolf shown one by one), bandAO 0, bandContact 1. `NEAR_SPLIT` in globeView.ts.
+- **Uniform-only rule holds:** the fade and far-layer hooks are uniforms on default-key materials; program counts constant through the band (79 live, 78 after landing at Ultra 13:00), unchanged by setPatchFade on the reload path (71). Never toggle `bandContact` at runtime: it compiles +1.
+- **Why not the 506d0aa terrain pool alone:** heights/normals are already off-thread; the main-thread queue that gates readiness is grass/flora/moss population jobs, so the budget stays.
+- **Review of beb1572 (flora worker, grass + props into fade.ts):** uniform-only, the toString-preserving wrapper keeps keys identical, no new programs. Risk: a wired and an unwired default-key material with identical params share whichever program compiled first; if the unwired one wins, those props carry `userData.patchFade` but don't dither, so they show undithered mid-fade. My far-layer code adds 2 samplers to every wired material (texture-unit headroom).
+- **Open risks:** two ~50-67 ms hitches near 1.5 km as the dither starts (chunk/grass uploads, not the globe); AO pops on at the handover; occlusion uses coarse globe tiles + margin (no hill case tested); the descent nearly holds near 2 km while chunks finish; every main.ts commit reloads the dev tab.

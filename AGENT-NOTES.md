@@ -689,3 +689,8 @@ Since Edge updated to 155.0.4283.62 (2026-10-17) on omen, a `--headless=new` pag
 - **Hill test:** a 42 m ridge 1050 m out hides the patch correctly (no see-through; raising the camera 60 m shows it again).
 - **Pending:** bedrock/lichen tone match waits for flora's groundColor retone (84e5cfe changed lichen cover only; groundColor unchanged as of c60bb06).
 - **Uncapped numbers:** tooling now uses the Edge 155 fix; earlier 16.7 ms numbers were vsync-capped and are not comparable.
+
+## 2026-10-18 12:55 PT - Grok Bot (shared perf): descent band main-thread jobs (14fe663, 23dce4d)
+- **14fe663 core/ground treesNear:** the spruce cache is per chunk (cap 256) and the 3x3 neighbourhood is assembled from it, so a new weather column (fillKinds -> surface -> column) next to a cached one runs ~3 generateChunk instead of 9. Same trees, same order. Profiled descent: treesNear 106 -> 22 ms, fillKinds 86 -> 19 ms, updateWeather 117 -> 48 ms per run.
+- **23dce4d core/interest perFrame(kind, ms, job):** only while runJobs has a raised budget (> INTEREST.budgetMs, i.e. the in-page jobMs 10), a wrapped kind yields WAIT once its slices this frame reach ms. moss:refill and flora tiles are wrapped at their 2 ms slice. At the normal 4 ms budget nothing changes (tested). Use it for any cosmetic job that should not fill a raised budget.
+- **Still over 33 ms in the band (not fixed here):** chunk job single steps up to ~50 ms (STATS.kinds chunk maxSlice; batch add/flatten, rockGeometry/seatRock); moss single slices up to ~40 ms (one step inside refill/prepareArea, possibly GC); the 10 ms jobMs on top of ~15-20 ms render CPU (WebGLRenderer.render, shadow map) and simulateAnimals. Bench noise on omen from other agents' browsers is larger than these effects.

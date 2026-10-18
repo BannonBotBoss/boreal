@@ -41,7 +41,7 @@ import { clamp01, smoothstep } from '../../proc/math';
  *  while the descent waits for them = max(jobMin, jobFrame - last frame's globe + draw ms) (the sim is frozen in the band,
  *  so the frame's spare time goes to the patch); prepAlt: descending over home below this
  *  (globe mode), the landing spot is chosen and its chunks start building (terrain in the chunk worker pool, 506d0aa). */
-export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .03, fadeSec: .8, bandGain: 2.6, lakeShallow: [.019, .069, .083] as [number, number, number], lakeDeep: [.013, .052, .067] as [number, number, number], ring: 2, uploadMB: 24, landTint: [.61, .74, .61] as [number, number, number], tintLow: 150, fogTop: 300, fogOut: 50, jobFrame: 16, jobMin: 2, prepAlt: 3000, haze: 1, hazeLow: 60, hazeTop: 800, occ: [15, .03] as [number, number], pop: [.55, .95] as [number, number], aoTop: 250, bandContact: 1 };
+export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .03, fadeSec: .8, bandGain: 2.6, lakeShallow: [.019, .069, .083] as [number, number, number], lakeDeep: [.013, .052, .067] as [number, number, number], ring: 2, maskWaitSec: 8, uploadMB: 24, landTint: [.61, .74, .61] as [number, number, number], tintLow: 150, fogTop: 300, fogOut: 50, jobFrame: 16, jobMin: 2, prepAlt: 3000, haze: 1, hazeLow: 60, hazeTop: 800, occ: [15, .03] as [number, number], pop: [.55, .95] as [number, number], aoTop: 250, bandContact: 1 };
 /** landTint: the globe's land (not water) is tinted toward this from fadeFull down to tintLow (globe GLOBE_LAND, a uniform):
  *  bandGain matches the patch seen from 600 m, but lower down the dark forest floor between the crowns shows and the patch reads
  *  ~2x darker and greener than the globe around it (r20, 13:00, patch mean rgb 63/89/53 vs globe 103/121/87 at 145 m). */
@@ -88,6 +88,7 @@ function controller(view: View, host: InPageHost) {
   let next: 'globe' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
   let prep: { x: number; z: number } | null = null; // landing chosen (and chunks building) while still in globe mode
   let renderMs = 0; // last frame's globe + game draw CPU (ms): the descent's chunk job budget fills the rest of jobFrame
+  let maskWait = 0, maskWarned = false, readyAt = 0; // s waited on the mask with the chunks ready (capped at INPAGE.maskWaitSec); h at first ready (STATS.readyAt)
   let h = 0, h0 = 1, blend = 0, fade = 0, fadeT = 0, ready = false, readySeen = false, needStart = false, placedFrame = 0, frameNo = 0, lastT = 0, cameraTouched = false;
   const start = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, end = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   const cam = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, gcam = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
@@ -98,7 +99,7 @@ function controller(view: View, host: InPageHost) {
   const hidden = new Map<THREE.Object3D, boolean>(); let savedBg: THREE.Scene['background'] | undefined;
   const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks (DEBUG, frame-cost log fields) only with ?inpagedev
   const DEBUG = { holdH: 0, far: 0, pose: null as null | { p: [number, number, number]; look: [number, number, number] } };
-  const STATS = { globeMs: 0, drawMs: 0, mode: 'game' as TransitionMode, h: 0, fade: 0, ready: false, log: [] as { t: number; mode: string; h: number; fade: number; globeMs: number; drawMs?: number; jobsMs?: number; cpuMs?: number }[] };
+  const STATS = { globeMs: 0, drawMs: 0, mode: 'game' as TransitionMode, h: 0, fade: 0, ready: false, readyAt: 0, log: [] as { t: number; mode: string; h: number; fade: number; globeMs: number; drawMs?: number; jobsMs?: number; cpuMs?: number }[] };
 
   async function loadGlobe() { const mod = await globeModule!; createGlobe ??= mod.createGlobe; lakeU ??= mod.GLOBE_LAKE; landU ??= mod.GLOBE_LAND; return ensureGlobe(); }
   function ensureGlobe() {
@@ -129,7 +130,7 @@ function controller(view: View, host: InPageHost) {
     else { host.place(s.x, s.z, at.yaw); placedFrame = frameNo; } prep = null;
     land.set(s.x, ground(s.x, s.z), s.z); h0 = Math.max(TRANSITION.handover + 1, pg.y - land.y); h = h0;
     off.set(start.p.x - (land.x - fwd.x * h0), start.p.y - (land.y + h0), start.p.z - (land.z - fwd.y * h0)); // decays to 0 with height
-    phase = 'fly'; blend = 0; fadeT = 0; readySeen = false; down = true; lastT = performance.now(); setMode('band');
+    phase = 'fly'; blend = 0; fadeT = 0; readySeen = false; maskWait = 0; readyAt = 0; down = true; lastT = performance.now(); setMode('band');
   }
   /** The landing ahead along the heading, one camera height away, inside the playable region, on dry land. */
   function landingFor(x: number, z: number, f: THREE.Vector2, hh: number) {
@@ -218,7 +219,8 @@ function controller(view: View, host: InPageHost) {
       if (mode !== 'band') { if (cameraTouched) { camera.near = .2; camera.far = 700; cameraTouched = false; } return; }
       cameraTouched = true;
       const now = performance.now(), dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
-      end.p.copy(camera.position); end.q.copy(camera.quaternion); ready = chunksReady() && (globe?.maskReady ?? true); readySeen ||= ready; // + the globe's shoreline mask (lakeMask.ts)
+      end.p.copy(camera.position); end.q.copy(camera.quaternion); const cr = chunksReady(), mr = globe?.maskReady ?? true; if (!cr || mr) maskWait = 0; else if ((maskWait += dt) > INPAGE.maskWaitSec && !maskWarned) { maskWarned = true; console.warn(`INPAGE shoreline mask not ready after ${INPAGE.maskWaitSec} s: landing with the per-vertex shoreline`); }
+      ready = cr && (mr || maskWait > INPAGE.maskWaitSec); if (ready && !readySeen) readyAt = Math.round(h); readySeen ||= ready; // + the globe's shoreline mask (lakeMask.ts)
       if (needStart) { // ascent: from the rig pose onto the glide path behind the player, then up it
         needStart = false; start.p.copy(end.p); start.q.copy(end.q); const p = host.player(); fwd.set(-Math.sin(p.yaw), -Math.cos(p.yaw));
         land.set(p.x, ground(p.x, p.z), p.z); h = h0 = Math.max(1, end.p.y - land.y); off.set(0, 0, 0);
@@ -244,7 +246,7 @@ function controller(view: View, host: InPageHost) {
       camera.position.copy(cam.p); camera.quaternion.copy(cam.q);
       const hc = Math.max(1, cam.p.y - ground(cam.p.x, cam.p.z)); camera.near = Math.max(.2, hc * INPAGE.nearK); camera.far = Math.max(700, hc * 2 + 900, DEV ? DEBUG.far : 0);
       camera.updateMatrixWorld(true);
-      STATS.h = h; STATS.fade = fade; STATS.ready = ready;
+      STATS.h = h; STATS.fade = fade; STATS.ready = ready; STATS.readyAt = readyAt;
       if (down && phase === 'blend' && blend >= 1) next = 'game'; else if (!down && h >= top - 1e-3) next = 'globe'; // next frame (this one still draws the band)
     },
     /** buildScene, after the sky update: the globe into the far layer, as the background; the patch fade; band visibility. */

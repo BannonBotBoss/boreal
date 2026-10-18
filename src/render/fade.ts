@@ -15,7 +15,16 @@ export function setPatchFade(opacity: number, disc?: { x: number; z: number; r: 
   PATCH_FADE.uPatchCut.value = 1 - Math.min(1, Math.max(0, opacity));
   if (disc) PATCH_FADE.uPatchDisc.value.set(disc.x, disc.z, disc.r); else PATCH_FADE.uPatchDisc.value.set(0, 0, 0);
 }
+/** The far layer behind the patch (in-page band): its colour (blend toward it by x, scaled by y = the background intensity)
+ *  and its resolved log depth (z = the globe's log-depth constant; a globe surface nearer than the fragment by more than
+ *  occ.x m + occ.y x distance hides it); w = 1 on. Off (w = 0, also when unset) costs one uniform branch. */
+export const PATCH_FAR = { uFarColor: { value: null as THREE.Texture | null }, uFarDepth: { value: null as THREE.Texture | null }, uFarMix: { value: new THREE.Vector4() }, uFarOcc: { value: new THREE.Vector2(15, .03) } };
+export function setPatchFar(o: { color: THREE.Texture; depth: THREE.Texture | null; mix: number; scale: number; logFC: number; occ: [number, number] } | null) {
+  if (!o || !o.depth) { PATCH_FAR.uFarMix.value.w = 0; return; }
+  PATCH_FAR.uFarColor.value = o.color; PATCH_FAR.uFarDepth.value = o.depth; PATCH_FAR.uFarMix.value.set(o.mix, o.scale, o.logFC, 1); PATCH_FAR.uFarOcc.value.set(o.occ[0], o.occ[1]);
+}
 const VERT = `#include <project_vertex>
+  vPatchClip = gl_Position;
   { vec4 pw = vec4(transformed, 1.0);
     #ifdef USE_BATCHING
       pw = batchingMatrix * pw;
@@ -32,13 +41,18 @@ const FRAG = `
     int bayer = ((bxy & 1) << 3) | ((by & 1) << 2) | (((bxy >> 1) & 1) << 1) | ((by >> 1) & 1);
     if ((float(bayer) + 0.5) / 16.0 >= keep) discard;
   }
+  if (uFarMix.w > 0.5) { // in-page band: globe terrain in front hides the patch; the patch blends toward the globe behind it
+    vec2 fuv = vPatchClip.xy / vPatchClip.w * 0.5 + 0.5; float fd = textureLod(uFarDepth, fuv, 0.0).r;
+    if (fd < 1.0 && vPatchClip.w > exp2(fd * 2.0 / uFarMix.z) - 1.0 + uFarOcc.x + uFarOcc.y * vPatchClip.w) discard;
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, textureLod(uFarColor, fuv, 0.0).rgb * uFarMix.y, uFarMix.x);
+  }
   #include <dithering_fragment>`; // at the end: no gradient instruction follows the discard (an early discard made ANGLE/D3D's fxc warn X3595 on the shadow loops)
 /** The source edit (exported for tests). */
 export function addPatchFade(shader: { uniforms: Record<string, THREE.IUniform>; vertexShader: string; fragmentShader: string }) {
   if (shader.fragmentShader.includes('uPatchCut')) return;
-  Object.assign(shader.uniforms, PATCH_FADE);
-  shader.vertexShader = 'varying vec2 vPatchXZ;\n' + shader.vertexShader.replace('#include <project_vertex>', VERT);
-  shader.fragmentShader = 'uniform float uPatchCut; uniform vec3 uPatchDisc; varying vec2 vPatchXZ;\n' + shader.fragmentShader.replace('#include <dithering_fragment>', FRAG);
+  Object.assign(shader.uniforms, PATCH_FADE, PATCH_FAR);
+  shader.vertexShader = 'varying vec2 vPatchXZ; varying vec4 vPatchClip;\n' + shader.vertexShader.replace('#include <project_vertex>', VERT);
+  shader.fragmentShader = 'uniform float uPatchCut; uniform vec3 uPatchDisc; varying vec2 vPatchXZ; varying vec4 vPatchClip;\nuniform sampler2D uFarColor, uFarDepth; uniform vec4 uFarMix; uniform vec2 uFarOcc;\n' + shader.fragmentShader.replace('#include <dithering_fragment>', FRAG);
 }
 const wired = new WeakSet<THREE.Material>();
 const defaultKey = THREE.Material.prototype.customProgramCacheKey;

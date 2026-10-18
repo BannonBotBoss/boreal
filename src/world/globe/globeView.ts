@@ -87,6 +87,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   const camV = new THREE.Vector3();
   const lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : null;
+  const pitchQ = q.has('pitch') ? Number(q.get('pitch')) * Math.PI / 180 : null; // ?pitch=deg from straight down (screenshots: look down at a cloud deck)
   const group = new THREE.Group(); scene.add(group);
 
   // ---- camera: OrbitControls rotates around the planet centre; altitude is ours (log zoom), tilt toward the horizon near ground
@@ -251,7 +252,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     controls.update();
     camera.position.setLength(R + ground + alt);
     camera.lookAt(0, 0, 0);
-    const tilt = (Math.PI / 2 - .12) * (1 - smoothstep(3e3, 3e5, alt)); camera.rotateX(tilt); // look toward the horizon near the ground [game calibration]
+    const tilt = pitchQ ?? (Math.PI / 2 - .12) * (1 - smoothstep(3e3, 3e5, alt)); camera.rotateX(tilt); // look toward the horizon near the ground [game calibration]
     if (lookAz !== null && alt < 3e5) { // ?look=azimuth° (0 north, 90 east): face a compass heading near the ground (screenshots)
       const up = camera.position.clone().normalize(), h = N.clone().multiplyScalar(Math.cos(lookAz)).addScaledVector(E, Math.sin(lookAz));
       camera.up.copy(up); camera.lookAt(camera.position.clone().add(h.addScaledVector(up, -.08))); }

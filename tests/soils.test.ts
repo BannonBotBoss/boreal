@@ -7,7 +7,8 @@ import { SOIL, SOIL_KINDS, soilGrid, soilAt } from '../src/core/stages/soils';
 test('stage 1 relief is real metres: land p99 = ELEV.reliefM above base water, base water at the water plane', () => {
   const g = elevationGrid(7), z = Array.from(g.h, v => toWorld(g, v)).sort((a, b) => a - b);
   assert.ok(Math.abs(z[Math.floor(z.length * .99)] - toWorld(g, g.pw) - ELEV.reliefM) < .5, 'p99 above base water');
-  assert.ok(Math.abs(z[Math.floor(z.length * ELEV.waterPct)] - toWorld(g, g.pw)) < 1e-3);
+  const below = z.filter(v => v < toWorld(g, g.pw)).length / z.length; // ELEV.waterPct of the nodes, plus the sieved islets
+  assert.ok(below >= ELEV.waterPct - 1e-4 && below < ELEV.waterPct + .002, `share below base water ${below}`);
 });
 test('stage 1 grain: gradients are oriented NE-SW (structure tensor) but not axis-aligned (lattice hash decorrelated)', () => {
   const g = elevationGrid(7), n = g.n; let xx = 0, zz = 0, xz = 0;
@@ -40,17 +41,30 @@ test('soilAt is deterministic and wetness orders bedrock < till < peat', () => {
   const m = (k: string) => by[k].reduce((a, b) => a + b, 0) / by[k].length;
   assert.ok(m('bedrock') < m('till') && m('till') < m('peat'));
 });
-test('stage 1-2b: Kenora-like water bodies (open water + perched lakes): ~10-60 per 100 km2, median < 15 ha, perched lakes, islands', () => {
-  const L = lakeGrid(1400), f = flowGrid(1400), g = elevationGrid(1400), n = g.n, wet = (c: number) => !!f.outlet[c] || L.id[c] >= 0, lab = new Int32Array(n * n).fill(-1), ha: number[] = [];
+function waterBodies(seed: number) { // >= 1 ha water bodies (open water + perched lakes), 4-connected with wrap-around
+  const L = lakeGrid(seed), f = flowGrid(seed), g = elevationGrid(seed), n = g.n, wet = (c: number) => !!f.outlet[c] || L.id[c] >= 0, lab = new Int32Array(n * n).fill(-1), ha: number[] = [];
   for (let c = 0; c < n * n; c++) if (wet(c) && lab[c] < 0) { const st = [c]; lab[c] = c; let k = 0; while (st.length) { const q = st.pop()!, x = q % n, y = (q / n) | 0; k++;
     for (const m of [y * n + (x + 1) % n, y * n + (x + n - 1) % n, ((y + 1) % n) * n + x, ((y + n - 1) % n) * n + x]) if (wet(m) && lab[m] < 0) { lab[m] = c; st.push(m); } } if (k * g.cell * g.cell / 1e4 >= 1) ha.push(k * g.cell * g.cell / 1e4); }
-  ha.sort((a, b) => a - b); const per100 = ha.length / (n * n * g.cell * g.cell / 1e6) * 100;
-  assert.ok(per100 >= 10 && per100 <= 60 && ha[ha.length >> 1] < 15, `${per100.toFixed(0)} per 100 km2, median ${ha[ha.length >> 1]} ha`);
-  assert.ok(L.bodies.filter(b => b.areaHa >= 1).length >= 3, 'perched lakes above base water');
+  return { ha, km2: n * n * g.cell * g.cell / 1e6, L, n };
+}
+test('stage 1-2b: Kenora-like water bodies over seeds 1400/7/99: ~12-30 per 100 km2 (Kenora 17.6), pooled median < 12 ha (7.2), perched lakes, islands', () => {
+  const ha: number[] = [];
+  for (const seed of [1400, 7, 99]) { const w = waterBodies(seed), per100 = w.ha.length / w.km2 * 100; ha.push(...w.ha);
+    assert.ok(per100 >= 12 && per100 <= 30, `seed ${seed}: ${per100.toFixed(0)} per 100 km2`); }
+  ha.sort((a, b) => a - b); assert.ok(ha[ha.length >> 1] < 12, `pooled median ${ha[ha.length >> 1]} ha`);
+  const { L, n } = waterBodies(1400);
+  assert.ok(L.bodies.filter(b => b.areaHa >= 1).length >= 2, 'perched lakes above base water');
   const land = new Int32Array(n * n).fill(-1); let comps = 0; // land components: > 1 means islands
   for (let c = 0; c < n * n; c++) if (L.id[c] < 0 && land[c] < 0) { const st = [c]; land[c] = comps; while (st.length) { const q = st.pop()!, x = q % n, y = (q / n) | 0;
     for (const m of [y * n + (x + 1) % n, y * n + (x + n - 1) % n, ((y + 1) % n) * n + x, ((y + n - 1) % n) * n + x]) if (L.id[m] < 0 && land[m] < 0) { land[m] = comps; st.push(m); } } comps++; }
-  assert.ok(comps > 5, `${comps - 1} islands`);
+  assert.ok(comps > 1, `${comps - 1} islands in perched lakes`);
+});
+test('islet sieve: no single-node islet left in open water (minimum mapping unit, ELEV.isletMax)', () => {
+  const g = elevationGrid(1400), n = g.n; let left = 0;
+  for (let c = 0; c < n * n; c++) { if (g.h[c] < g.pw) continue; const x = c % n, y = (c / n) | 0; let land = false;
+    for (let dy = -1; dy <= 1 && !land; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && g.h[((y + dy + n) % n) * n + (x + dx + n) % n] >= g.pw) { land = true; break; }
+    if (!land) left++; }
+  assert.equal(left, 0);
 });
 test('soils: bedrock is speckled knobs (many small patches), not a few blobs', () => {
   const S = soilGrid(1400), n = S.n, seen = new Uint8Array(n * n), sizes: number[] = [];

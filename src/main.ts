@@ -39,6 +39,7 @@ import { createMenu } from './ui/menu';
 import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, loadClock, worldSec, pauseClock, resumeClock, saveClock } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
+import { dryStart } from './core/stages/surfaceAt';
 import { DAY_OF_YEAR, START_HOUR, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -129,6 +130,7 @@ const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw:
 const renderStore = createSettingsStore(RENDER_SETTINGS);
 { const st = new URLSearchParams(location.search).get('stages'); if (st !== null) renderStore.set('world.stagedTerrain.v2', st !== '0' && st !== 'off'); } // staged terrain is the default; ?stages=0 turns it off (persisted, like the setting), ?stages=1 back on
 { const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number); if (at && at.length >= 2 && at.every(Number.isFinite)) { player.x = at[0]; player.z = at[1]; if (at.length > 2) { yaw = at[2]; player.heading = yaw; } } } // dev/screenshots: ?at=x,z[,yaw]
+if (STAGES.on && !new URLSearchParams(location.search).has('at')) [player.x, player.z] = dryStart(player.x, player.z); // the fixed default start can fall in a staged lake: nearest dry land
 let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');

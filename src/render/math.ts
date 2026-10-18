@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { column, surfaceColor } from '../core/ground';
+import type { SoilKind } from '../core/stages/soils';
 import { finish } from '../core/interest';
 import { CHUNK_SIZE, heightAt, terrainBand } from '../core/world';
 import { LEVEL } from '../core/tuning';
@@ -54,10 +55,9 @@ export function* terrainJob(cx: number, cz: number, segments = RENDER.terrainSeg
     const z = positions.getZ(i) + (cz + .5) * CHUNK_SIZE;
     const y = heightAt(x, z);
     positions.setXYZ(i, x, y, z);
-    const band = terrainBand(y, x, z), staged = band === 'bedrock' || band === 'till' || band === 'sand' || band === 'clay' || band === 'peat'; color.set(BAND_COLOR[band]);
-    if (staged) { // measured albedo (BAND_COLOR) plus a light tint from the top layer; the art tints in core/ground are read as sRGB
-      const s = groundColour && y > LEVEL.waterSurface ? surfaceColor(column(x, z)) : STAGED_TOP; // mid tier: the mean tint, so near and mid chunks match
-      color.lerp(tmp.setRGB(s[0], s[1], s[2], THREE.SRGBColorSpace), band === 'bedrock' ? .1 : .2); }
+    const band = terrainBand(y, x, z), staged = band === 'bedrock' || band === 'till' || band === 'sand' || band === 'clay' || band === 'peat';
+    if (staged) groundColor(band, color, groundColour && y > LEVEL.waterSurface ? surfaceColor(column(x, z)) : STAGED_TOP); // mid tier: the mean tint, so near and mid chunks match
+    else color.set(BAND_COLOR[band]);
     if (groundColour && y > LEVEL.waterSurface) { const c = column(x, z); if (!staged) { const s = surfaceColor(c); color.lerp(tmp.setRGB(s[0], s[1], s[2]), .55); } // top-layer composition (layered terrain)
       const top = c.layers[0]; snow[i] = top?.id === 'snow' ? Math.min(1, top.thickness / .05) : 0; wet[i] = c.layers.find(l => l.moisture !== undefined && l.id !== 'snow')?.moisture ?? 0; }
     colors.set([color.r, color.g, color.b], i * 3);
@@ -77,6 +77,16 @@ export function* terrainJob(cx: number, cz: number, segments = RENDER.terrainSeg
   geometry.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
   return geometry;
 }
-/** Mean top-layer tint (moss + fresh litter, core/ground SURFACE) for chunks that skip the per-vertex ground column. */
-const STAGED_TOP = [.39, .41, .22];
+/** Mean top-layer tint (moss + fresh litter, core/ground SURFACE, sRGB) for chunks that skip the per-vertex ground column. */
+export const STAGED_TOP: readonly number[] = [.39, .41, .22];
+const tintTmp = new THREE.Color();
+/** Ground colour of a staged soil class, exactly as the terrain mesh paints it: the Sentinel-2 albedo (BAND_COLOR, sRGB hex)
+ *  lerped 20 % (bedrock 10 %) toward the top-layer tint. `top` is an sRGB [r, g, b] tint: core/ground surfaceColor(column(x, z))
+ *  for the per-point colour, or the default STAGED_TOP (the mean tint the mid-tier chunks use). Returns linear RGB in three's
+ *  working colour space, written into `target` (no allocation when one is passed). 'water' returns the shore/water band colour.
+ *  For grass and flora: read soil with soilAt(STAGES.seed, x, z).kind and call this instead of copying constants. */
+export function groundColor(soil: SoilKind, target = new THREE.Color(), top: readonly number[] = STAGED_TOP): THREE.Color {
+  target.set(BAND_COLOR[soil]); if (soil === 'water') return target;
+  return target.lerp(tintTmp.setRGB(top[0], top[1], top[2], THREE.SRGBColorSpace), soil === 'bedrock' ? .1 : .2);
+}
 export const terrainGeometry = (cx: number, cz: number) => finish(terrainJob(cx, cz));

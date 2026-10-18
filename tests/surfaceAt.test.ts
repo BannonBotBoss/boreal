@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { surfaceAt } from '../src/core/stages/surfaceAt';
+import { dryStart, surfaceAt } from '../src/core/stages/surfaceAt';
 import { lakeGrid, elevationGrid, toWorld } from '../src/core/stages/elevation';
 import { SOIL_KINDS } from '../src/core/stages/soils';
 
@@ -20,4 +20,8 @@ test('surfaceAt: consistent fields, lakes are water, cheap after first call', ()
     assert.ok(Number.isFinite(q.height) && q.wetness >= 0 && q.wetness <= 1 && (SOIL_KINDS as readonly string[]).includes(q.soil));
     if (!q.lake && !q.river) land++; }
   assert.ok(land > 10000, 'mostly land'); assert.ok((performance.now() - t0) / 20000 < .05, 'under 50 us per point');
+});
+test('dryStart: the default start (0, 0) moves to the nearest dry land on every test seed', () => {
+  for (const seed of [1400, 7, 99]) { const [x, z] = dryStart(0, 0, seed), p = surfaceAt(x, z, seed);
+    assert.ok(!p.lake && !p.river && Math.hypot(x, z) <= 900, `seed ${seed}: (${x.toFixed(0)}, ${z.toFixed(0)})`); }
 });

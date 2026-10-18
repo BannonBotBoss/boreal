@@ -22,15 +22,20 @@ export const STAGES = { on: false, seed: 1400 }; // module default off (tests, t
  *    spectral slope -3.14 -> -3.41 (was -4.0); 300-3000 m band -2.5 -> -3.2; autocorrelation ~1 km in both.
  *  - grain 2 / grainOctaves 2 / grainMix .4 and scourGrain 3 (integers keep the lattice periodic): NE-SW ice-flow grain.
  *    Gradient direction 42 deg -> 44 deg (x east, z south), structure-tensor coherence .25 -> .29.
- *  - waterPct .25 + lakeMinDepth 8 m. Filled pits shallower than 8 m become stage-3 peat, as Shield basins infill to fens and
- *    bogs; the base water forms fewer, larger connected bodies. Lakes >= 1 ha per 100 km^2: 17.6 -> 32 (was 61; seeds 7 / 99:
- *    17 / 27). Lake median 7.2 -> 8.8 ha, p90 81 -> 32 ha, elongation 2.22 -> 2.16, share < 10 ha .55 -> .58, water 29 % -> 26 %,
- *    islands 42 -> 68 per 100 km^2 (too many). The game's lakes are counted with wrap-around (the world is a torus). 12 m reaches
- *    22 lakes per 100 km^2 but leaves only 2 perched (above-base) lakes, so 8 m (8 perched) is kept.
- *  - Land slope > 0.129: DSM 0.28 -> 0.145. The DSM figure is inflated by canopy: WorldCover tree pixels read 0.31, while
+ *  - waterPct .27 + lakeMinDepth 12 m + isletMax 1. Filled pits shallower than 12 m become stage-3 peat, as Shield basins infill
+ *    to fens and bogs. Islets: a minimum mapping unit on open water (the GDAL sieve / MMU convention): land components of a
+ *    single 30 m node (0.09 ha) fully enclosed by base water are lowered into it. Measured with wrap-around labelling for both
+ *    lakes and islands (the world is a torus; unwrapped labelling had counted seam fragments as islands, 68 -> 53 at 8 m).
+ *    Seeds 1400 / 7 / 99 vs Kenora: lakes >= 1 ha per 100 km^2 17.6 -> 20 / 19 / 19 (was 32 / 17 / 27); islands 42 -> 39 / 27 / 31
+ *    (was 53 / 27 / 44), per km^2 of water 1.44 -> 1.19 (was 1.59). Pooled over the three seeds: lake median 7.2 -> 6.5 ha (was
+ *    7.8), p90 81 -> 107 ha (was 85), share < 10 ha .55 -> .56 (was .62); elongation 2.22 -> 2.15 / 1.87 / 2.00; water 29 % -> 27 %;
+ *    land slope > 0.129 .125 -> .135. Single-node islets were 20 of 40 islands on seed 1400 (Kenora: 12 of 91) and nearly all sit
+ *    < 1.5 m above the water, so a height cut-off does not separate them. Cost: fewer perched lakes (>= 1 ha: 4 / 1 / 2, was 8 on
+ *    1400); the 12 m pits that fail become peat.
+ *  - Land slope > 0.129: DSM 0.28 -> 0.157 (seed 1400; 7 / 99: .123 / .125). The DSM figure is inflated by canopy: WorldCover tree pixels read 0.31, while
  *    canopy-free grass/bare/built pixels read 0.11-0.14, and a 1-cell Gaussian (canopy-edge suppression) gives 0.17. So the
  *    bare-earth target is ~0.12-0.17, not 0.28. */
-export const ELEV = { n: 256, cell: 30, relief: 14, droplets: 30000, seedOffset: 0, reliefM: 50, waterPct: .25, persistence: .7, grain: 2, grainOctaves: 2, grainMix: .4, basins: .75, lakeMinDepth: 8, scourM: 20, scourGrain: 3, scourPers: .8, scourOct: 3, scourBase: 8 };
+export const ELEV = { n: 256, cell: 30, relief: 14, droplets: 30000, seedOffset: 0, reliefM: 50, waterPct: .27, persistence: .7, grain: 2, grainOctaves: 2, grainMix: .4, basins: .75, lakeMinDepth: 12, scourM: 20, scourGrain: 3, scourPers: .8, scourOct: 3, scourBase: 8, isletMax: 1 };
 export type Grid = { n: number; cell: number; h: Float32Array; min: number; max: number; ms: number; /** base-water grid level */ pw: number; /** grid units -> metres */ k: number };
 
 /** Periodic value-noise lattice: hashed ONCE per (period, salt) into a table; wraps every `period` cells. */
@@ -96,6 +101,20 @@ function thermal(h: Float32Array, n: number, talus: number, passes: number) {
     for (const m of [e, s]) { const d = h[k] - h[m]; if (Math.abs(d) > talus) { const t = (Math.abs(d) - talus) * .25 * Math.sign(d); h[k] -= t; h[m] += t; } }
   }
 }
+/** Minimum mapping unit for islets in open water (GDAL sieve / MMU convention): land components (8-connected, wrapping) fully
+ *  enclosed by base water with at most `max` nodes are lowered to the mean of their water neighbours. */
+function sieveIslets(h: Float32Array, n: number, pw: number, max: number) {
+  const N = n * n, lab = new Uint8Array(N), at = (q: number, dx: number, dy: number) => (((q / n | 0) + dy + n) % n) * n + (q % n + dx + n) % n;
+  for (let c = 0; c < N; c++) if (h[c] >= pw && !lab[c]) {
+    const st = [c], comp: number[] = []; lab[c] = 1;
+    while (st.length) { const q = st.pop()!; comp.push(q);
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const m = at(q, dx, dy); if (h[m] >= pw && !lab[m]) { lab[m] = 1; st.push(m); } } }
+    if (comp.length > max) continue;
+    for (const q of comp) { let s = 0, k = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const m = at(q, dx, dy); if (h[m] < pw) { s += h[m]; k++; } }
+      h[q] = k ? s / k : pw - 1e-3; }
+  }
+}
 const cache = new Map<number, Grid>();
 /** The seed's elevation grid (metres, game scale), built once (~0.3–1 s) and cached. */
 export function elevationGrid(seed: number): Grid {
@@ -111,6 +130,7 @@ export function elevationGrid(seed: number): Grid {
     const sc = scour(n, seed); let lo = Infinity, hi = -Infinity;
     for (let c = 0; c < h.length; c++) { h[c] += sc[c] * ELEV.scourM / k; lo = Math.min(lo, h[c]); hi = Math.max(hi, h[c]); }
     for (let c = 0; c < h.length; c++) h[c] = (h[c] - lo) / (hi - lo) * ELEV.relief; ({ pw, k } = levels()); }
+  if (ELEV.isletMax) sieveIslets(h, n, pw, ELEV.isletMax);
   g = { n, cell: ELEV.cell, h, min: 0, max: ELEV.relief, pw, k, ms: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0 }; cache.set(seed, g); return g;
 }
 /** Bilinear sample in world metres (wrapping). */

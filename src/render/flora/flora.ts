@@ -28,6 +28,7 @@ import { hash, random, sample } from '../../proc/rng';
 import { addCloudShadow, addTranslucency } from '../pbr';
 import { WIND_UNIFORMS, treeDims } from '../trees';
 import { buildClump, buildPlant } from './plant';
+import { createMoss } from './moss';
 
 const PARAMS = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams(), PATCH = PARAMS.has('patch');
 type View = { x: number; y: number; z: number; yaw: number; pitch: number };
@@ -144,7 +145,7 @@ function* batchJob(): Generator<unknown, { bm: THREE.BatchedMesh; ids: Map<strin
 }
 
 export function createFlora(scene: THREE.Scene) {
-  const group = new THREE.Group(); group.name = 'flora'; scene.add(group);
+  const group = new THREE.Group(); group.name = 'flora'; scene.add(group); const moss = createMoss(); // ground layer (terrain shader), no draw calls
   let bm: THREE.BatchedMesh | undefined, cap = 0; const ids = new Map<string, number>(), waiting = new Map<string, Plant[]>(), free: number[] = [];
   type Slot = { inst: number; geo: [number, number]; p: Plant; lod: number; vis: boolean };
   const tiles = new Map<string, { plants: Plant[]; slots: Slot[] }>(), jobs = new Set<string>();
@@ -189,7 +190,7 @@ export function createFlora(scene: THREE.Scene) {
     }
     const v = FLORA_FX.view; // viewer / tooling camera: overrides the camera for this frame
     if (v) { camera.position.set(v.x, heightAt(v.x, v.z) + v.y, v.z); camera.rotation.set(v.pitch, v.yaw, 0, 'YXZ'); camera.updateMatrixWorld(true); }
-    day.value = WEATHER.day; bloomAll.value = FLORA_FX.bloomAll ? 1 : 0; group.visible = !FLORA_FX.off && foliage > 0;
+    moss(camera, foliage); day.value = WEATHER.day; bloomAll.value = FLORA_FX.bloomAll ? 1 : 0; group.visible = !FLORA_FX.off && foliage > 0;
     if (time - last < .25 && time >= last) return; last = time; // tiles + per-instance LOD 4×/s (as render/batch)
     const R = Math.min(nearRadius, 45 * Math.sqrt(foliage)), RC = R * .7, cx = camera.position.x, cz = camera.position.z, want = new Set<string>();
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * TILE - cx, 0, cx - tx * TILE - TILE), Math.max(tz * TILE - cz, 0, cz - tz * TILE - TILE));

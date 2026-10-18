@@ -25,6 +25,7 @@ import { WIND_UNIFORMS } from '../trees';
 import { enqueue, cancel, pending } from '../../core/interest';
 import { RENDER } from '../../core/renderSettings';
 import { COVER_SPECIES, GRASS, bladesJob, keepAt, type Blades } from './cover';
+import { MOSS_GLSL, MOSS_UNIFORMS } from '../flora/moss';
 
 export const GRASS_FX = { off: false }; // bench hook (cost measurement), like TREE_FX
 export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, culled: 0, tris: 0, lods: [0, 0, 0], sliceMaxMs: 0, packMaxMs: 0, packs: 0 };
@@ -32,16 +33,17 @@ export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, culled: 0, tris: 0, l
 const K = COVER_SPECIES.length;
 const U = {
   uGrass: { value: new THREE.Vector4(GRASS.lodDist, GRASS.full, GRASS.radius, 1) }, // lodDist, full, radius, foliage
-  uGround: { value: new THREE.Vector3(...GRASS.ground) }, uPlayer: { value: new THREE.Vector3() }, uCamFwd: { value: new THREE.Vector3(0, 0, -1) }, uPx: { value: .001 }, // pixel footprint per metre of distance (2·tan(fov/2) / screen height)
+  uPlayer: { value: new THREE.Vector3() }, uCamFwd: { value: new THREE.Vector3(0, 0, -1) }, uPx: { value: .001 }, // pixel footprint per metre of distance (2·tan(fov/2) / screen height)
   uShape: { value: COVER_SPECIES.map(s => new THREE.Vector4(s.width, s.profile, s.stem, s.stiff)) },
   uBase: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.base)) }, uTip: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.tip)) }, uFall: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.fall)) },
 };
 const VERT_HEAD = `#define GRASS_K ${K}
 attribute float vertIndex; attribute vec4 aBlade; attribute float aKind;
-uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer, uCamFwd, uGround; uniform float uPx;
+uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer, uCamFwd; uniform float uPx;
 uniform vec4 uShape[GRASS_K]; uniform vec3 uBase[GRASS_K]; uniform vec3 uTip[GRASS_K]; uniform vec3 uFall[GRASS_K];
 varying vec3 vGrassColour;
 ${GLSL_NOISE}
+${MOSS_GLSL}
 float easeOutG(float x, float t) { return 1.0 - pow(1.0 - x, t); }
 float easeInG(float x, float t) { return pow(x, t); }
 mat3 rotateXG(float t) { float c = cos(t), s = sin(t); return mat3(1, 0, 0, 0, c, s, 0, -s, c); }
@@ -95,7 +97,7 @@ const VERT_BODY = `
   vec3 tip = mix(uTip[k], uFall[k], fallT), base = mix(uBase[k], uFall[k] * 0.6, fallT * 0.5);
   float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
   vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.35, 1.0, easeInG(heightPercent, 2.0));
-  vGrassColour = mix(vGrassColour, uGround, smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist)); // toward the grass radius blades take the ground albedo (far normals are already up): no edge where the field ends
+  float toGround = smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist); if (toGround > 0.0) vGrassColour = mix(vGrassColour, groundLayer(soilGround(root.xz), root.xz), toGround); // toward the grass radius blades take the terrain's soil colour + moss layer (render/flora/moss) (far normals are already up): no edge where the field ends
   vec3 grassPos = root + p;
   float viewDotNormal = clamp(abs(dot(face * vec3(0.0, 0.0, 1.0), normalize(vec3(cameraPosition.x - root.x, 0.0, cameraPosition.z - root.z)))), 0.0, 1.0); // one face, seen from both sides
   float viewSpaceThickenFactor = easeOutG(1.0 - viewDotNormal, 4.0) * smoothstep(0.0, 0.2, viewDotNormal);
@@ -106,7 +108,7 @@ function grassMaterial(segments: number) {
   m = new THREE.MeshStandardMaterial({ roughness: .9, side: THREE.DoubleSide }); m.userData.shared = true; // one face (template): three flips the normal on the back
   (m as unknown as { defines: Record<string, string> }).defines = { GRASS_SEGMENTS: segments.toFixed(1), TRANSLUCENCY_MASK: '1.0' };
   m.onBeforeCompile = shader => {
-    Object.assign(shader.uniforms, U, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });
+    Object.assign(shader.uniforms, U, MOSS_UNIFORMS, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });
     addTranslucency(shader); addCloudShadow(shader);
     shader.vertexShader = VERT_HEAD + shader.vertexShader
       .replace('#include <beginnormal_vertex>', `vec3 objectNormal; ${VERT_BODY}`)

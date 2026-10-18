@@ -22,16 +22,23 @@ export const SUN_UNIFORMS = { uSunView: { value: new THREE.Vector3(0, 1, 0) }, u
 const SEED = (WORLD_SEED % 997) * .37;
 
 let terrain: THREE.MeshStandardMaterial | undefined;
+/** Extra terrain albedo layers (e.g. render/flora/moss: forest-floor mosses and lichens), applied before the noise, wet and
+ * snow response. `head` is fragment GLSL after GLSL_NOISE (world xz is `vXZ`), `body` edits `diffuseColor`. No draw calls. */
+export interface GroundLayerHook { name: string; uniforms: Record<string, THREE.IUniform>; head: string; body: string }
+const groundLayers: GroundLayerHook[] = [];
+export function addGroundLayer(l: GroundLayerHook) { groundLayers.push(l); if (terrain) terrain.needsUpdate = true; }
 /** ONE terrain material for every chunk (was one per chunk). */
 export function terrainMaterial() {
   if (terrain) return terrain;
   terrain = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }); terrain.userData.shared = true;
   terrain.onBeforeCompile = shader => {
     addCloudShadow(shader as unknown as Parameters<typeof addCloudShadow>[0]);
+    for (const l of groundLayers) Object.assign(shader.uniforms, l.uniforms);
     shader.vertexShader = 'attribute float aWet; attribute float aSnow; varying float vWet; varying float vSnow; varying vec2 vXZ;\n' +
       shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vWet = aWet; vSnow = aSnow; vXZ = (modelMatrix * vec4(position, 1.)).xz;');
-    shader.fragmentShader = `varying float vWet; varying float vSnow; varying vec2 vXZ;\n${GLSL_NOISE}\n` + shader.fragmentShader
+    shader.fragmentShader = `varying float vWet; varying float vSnow; varying vec2 vXZ;\n${GLSL_NOISE}\n${groundLayers.map(l => l.head).join('\n')}\n` + shader.fragmentShader
       .replace('#include <color_fragment>', `#include <color_fragment>
+        ${groundLayers.map(l => l.body).join('\n')}
         float n1 = fbm(vXZ * 1.7, ${SEED.toFixed(3)}), n2 = vnoise(vXZ * 9.0, ${SEED.toFixed(3)});
         diffuseColor.rgb *= (0.85 + 0.3 * n1) * (1.0 - 0.4 * vWet);
         float snow = smoothstep(0.2, 0.8, vSnow + (n2 - 0.5) * 0.4);
@@ -43,7 +50,7 @@ export function terrainMaterial() {
           float gx = fbm(p + vec2(e, 0.), s) - fbm(p - vec2(e, 0.), s), gz = fbm(p + vec2(0., e), s) - fbm(p - vec2(0., e), s);
           normal = normalize(normal - (viewMatrix * vec4(gx, 0., gz, 0.)).xyz * (1.0 - snow) * 1.5); }`);
   };
-  terrain.customProgramCacheKey = () => 'boreal-terrain-pbr';
+  terrain.customProgramCacheKey = () => ['boreal-terrain-pbr', ...groundLayers.map(l => l.name)].join(':');
   return terrain;
 }
 /** Adds needle/leaf translucency to a foliage material's shader source (called from its onBeforeCompile). */

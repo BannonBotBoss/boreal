@@ -71,9 +71,7 @@ export const coverAt = (x: number, z: number) => source(x, z);
 
 /** Grass tuning; cost scales with LADDER `foliage` (core/quality): density × foliage, radius × √foliage. [game calibration] */
 export const GRASS = { tile: CHUNK_SIZE / 4, sub: 4 /* cells per tile side: unit of distance thinning, LOD and view culling */, maxDensity: 120 /* blades/m² at Ultra */, full: 9 /* m at full density */, radius: 48,
-  lodNear: 6, lodDist: 14, segHigh: 6, segMid: 3, segLow: 1 /* far blades = one quad (card) */,
-  // ground albedo the far field fades to (linear): staged terrain's Sentinel-2 till #394838 + 20 % STAGED_TOP tint (render/math terrainJob, 24c6a0c)
-  ground: [.058, .08, .04] as [number, number, number] };
+  lodNear: 6, lodDist: 14, segHigh: 6, segMid: 3, segLow: 1 /* far blades = one quad (card) */ };
 /** Kept share of blades at distance d (density falloff): 1 inside `full`, then (full/d)² (constant blades per screen area), 0 at `radius`. */
 export function keepAt(d: number, radius: number, full = GRASS.full) { return (d <= full ? 1 : (full / d) ** 2) * (1 - smoothstep(radius * .8, radius, d)); }
 

@@ -46,11 +46,16 @@ const defaultKey = THREE.Material.prototype.customProgramCacheKey;
  *  water, trees) are wrapped: their key does not depend on the onBeforeCompile source, so the key stays exactly the same.
  *  Default-key materials (props, rocks) are skipped: three keys them by onBeforeCompile.toString() and render/photoreal's
  *  CSM chain + precompile rely on that. `userData.patchFade` is set when the edit actually compiles; world/globe/inpage.ts
- *  hides undithered chunk meshes until the patch is fully faded in. */
-export function fadeOptIn(m: THREE.Material) {
-  if (wired.has(m) || m.customProgramCacheKey === defaultKey) return m;
+ *  hides undithered chunk meshes until the patch is fully faded in.
+ *  `defaultKeyToo` (render/batch: world props such as blueberry bushes, rocks): default-key materials are wrapped as well,
+ *  with the wrapper's toString() returning the wrapped hook's source, so three's default key (onBeforeCompile.toString())
+ *  and photoreal's CSM chain / precompile keys stay byte-identical: no new program, no variant. */
+export function fadeOptIn(m: THREE.Material, defaultKeyToo = false) {
+  if (wired.has(m) || (m.customProgramCacheKey === defaultKey && !defaultKeyToo)) return m;
   wired.add(m);
   const prev = m.onBeforeCompile;
-  m.onBeforeCompile = function (shader, renderer) { prev.call(this, shader, renderer); addPatchFade(shader); m.userData.patchFade = true; };
+  const hook: THREE.Material['onBeforeCompile'] = function (this: THREE.Material, shader, renderer) { prev.call(this, shader, renderer); addPatchFade(shader); m.userData.patchFade = true; };
+  if (m.customProgramCacheKey === defaultKey) hook.toString = () => prev.toString(); // the key three derives stays what it was
+  m.onBeforeCompile = hook;
   return m;
 }

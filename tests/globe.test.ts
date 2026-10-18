@@ -211,3 +211,25 @@ test('globe far-field lakes: Shield-like water share on boreal land, none near h
     assert.notEqual(p.sampleSurface(d).kind, 'lake', 'no far-field lake near home (the local sampler here is dry)'); }
   void R;
 });
+
+import { faceNeighbour } from '../src/world/globe/cube';
+test('cube faces: every edge has one neighbour edge, symmetric, and the shared lattice points coincide (cross-face stitching)', () => {
+  const ab = (e: number, t: number): [number, number] => e === 0 ? [t, -1] : e === 1 ? [t, 1] : e === 2 ? [-1, t] : [1, t];
+  for (let f = 0; f < FACES.length; f++) for (let e = 0; e < 4; e++) {
+    const nb = faceNeighbour(f, e), back = faceNeighbour(nb.face, nb.edge);
+    assert.deepEqual([back.face, back.edge, back.flip], [f, e, nb.flip], `face ${f} edge ${e}`);
+    for (let k = 0; k <= 16; k++) { const t = -1 + k / 8, p = faceDir(f, ...ab(e, t)), q = faceDir(nb.face, ...ab(nb.edge, nb.flip ? -t : t));
+      assert.ok(Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < 1e-12, 'shared edge point'); }
+  }
+});
+import { globeLod, worldTier } from '../src/world/globe/lod';
+import { GOVERNOR } from '../src/core/quality';
+test('globe LOD follows the governor\'s HELD world tier (681c7dd): a fresh step does not change tile rows', () => {
+  const was = { auto: GOVERNOR.auto, tier: GOVERNOR.tier, worldTier: GOVERNOR.worldTier };
+  try {
+    Object.assign(GOVERNOR, { auto: true, tier: 3, worldTier: 0 });
+    assert.equal(worldTier(), 0); assert.equal(globeLod().segments, GLOBE_LOD[0].segments, 'rows wait for the tier to hold');
+    Object.assign(GOVERNOR, { worldTier: 3 }); assert.equal(globeLod().segments, GLOBE_LOD[3].segments, 'then follow');
+    Object.assign(GOVERNOR, { auto: false, tier: 4, worldTier: 0 }); assert.equal(globeLod().segments, GLOBE_LOD[4].segments, 'manual tier: immediate');
+  } finally { Object.assign(GOVERNOR, was); }
+});

@@ -14,8 +14,12 @@ export const GLOBE_LOD = [
   { name: 'Very low', segments: 24, split: 1.25, minLevel: 1, maxLevel: 16, cache: 500, draw: 70 },
   { name: 'Minimum',  segments: 16, split: 1.1, minLevel: 1, maxLevel: 15, cache: 350, draw: 50 },
 ];
-/** Knobs for the governor's current tier, with the player's LOD multiplier (renderSettings caps) folded in. */
+/** The tier the world (tile rows: resolution, split, depth, caps) follows: core/quality keeps the world on `worldTier` until
+ *  a new tier has held `worldHoldMs`, so a governor step never rebuilds every tile; manual / reset: the tier itself. */
+export const worldTier = () => GOVERNOR.auto && GOVERNOR.worldTier >= 0 ? GOVERNOR.worldTier : GOVERNOR.tier;
+/** Knobs for the governor's current tier: the tile row from the held world tier, the player's LOD multiplier and the
+ *  resolution scale from applied() (which itself holds the world knobs back the same way). */
 export function globeLod(tier = GOVERNOR.tier) {
-  const row = GLOBE_LOD[Math.max(0, Math.min(GLOBE_LOD.length - 1, tier))], t = applied(tier);
+  const t = applied(tier), wt = tier === GOVERNOR.tier ? worldTier() : tier, row = GLOBE_LOD[Math.max(0, Math.min(GLOBE_LOD.length - 1, wt))];
   return { ...row, split: row.split * t.lod, resScale: t.resScale };
 }

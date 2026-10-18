@@ -28,6 +28,22 @@ export function faceDir(face: number, a: number, b: number, o: Vec3 = [0, 0, 0])
   const { n, u, v } = FACES[face];
   return cubeToSphere(n[0] + u[0] * a + v[0] * b, n[1] + u[1] * a + v[1] * b, n[2] + u[2] * a + v[2] * b, o);
 }
+/** Edge e of a face (0 south b=-1, 1 north b=+1, 2 west a=-1, 3 east a=+1, as tile.ts EDGE bits) at edge parameter t. */
+const EDGE_AB = (e: number, t: number): [number, number] => e === 0 ? [t, -1] : e === 1 ? [t, 1] : e === 2 ? [-1, t] : [1, t];
+let NEIGHBOURS: { face: number; edge: number; flip: boolean }[][] | null = null;
+/** The face across edge `e` of `face`, which of its edges is shared, and whether the edge parameter runs reversed there.
+ *  Found numerically from faceDir once (no hand-written table to get wrong). */
+export function faceNeighbour(face: number, e: number) {
+  NEIGHBOURS ??= FACES.map((_, f) => [0, 1, 2, 3].map(ed => {
+    for (let g = 0; g < FACES.length; g++) for (let e2 = 0; e2 < 4; e2++) for (const flip of [false, true]) {
+      if (g === f) continue;
+      const same = [-.5, .3].every(t => { const p = faceDir(f, ...EDGE_AB(ed, t)), q = faceDir(g, ...EDGE_AB(e2, flip ? -t : t)); return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < 1e-9; });
+      if (same) return { face: g, edge: e2, flip };
+    }
+    throw new Error(`cube: no neighbour for face ${f} edge ${ed}`);
+  }));
+  return NEIGHBOURS[face][e];
+}
 export interface QNode { face: number; level: number; i: number; j: number; key: string }
 export const node = (face: number, level: number, i: number, j: number): QNode => ({ face, level, i, j, key: `${face}/${level}/${i}/${j}` });
 export const roots = () => FACES.map((_, f) => node(f, 0, 0, 0));

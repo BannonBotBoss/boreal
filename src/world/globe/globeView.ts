@@ -22,6 +22,7 @@ import { smoothstep, clamp } from '../../proc/math';
 import { children, edgeMetres, faceDir, roots, wantsSplit, centre as nodeCentre, type QNode } from './cube';
 import { renderOffset } from './origin';
 import { createAtmosphere } from './atmosphere';
+import { faceNeighbour } from './cube';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
 import { gameHour, START_HOUR, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, handoffTarget, HANDOFF } from './handoff';
@@ -29,11 +30,11 @@ import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { buildTile, globeMaterial, releaseTileGeometry, stitchIndex, tileGeometry, type TileData } from './tile';
 import type { TileRequest } from './tileWorker';
-import { globeLod } from './lod';
+import { globeLod, worldTier } from './lod';
 
 interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
-const STATS = { warm: [] as number[], build: [] as number[], work: [] as number[], interval: [] as number[] };
+const STATS = { warm: [] as number[], build: [] as number[], work: [] as number[], interval: [] as number[], compileMs: -1 };
 const pct = (a: number[], p: number) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
 const avg = (a: number[]) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 const keep = (a: number[], n: number) => { if (a.length > n) a.splice(0, a.length - n); };
@@ -63,7 +64,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     const probe = cachedProbe(localStorage, GOVERNOR.gpu); if (probe) GOVERNOR.probeCap = probe.cap;
     if (GOVERNOR.auto) GOVERNOR.tier = Math.max(ceiling(), tierForGpu(GOVERNOR.gpu)); }
   if (q.has('tier')) { GOVERNOR.auto = false; GOVERNOR.tier = clamp(Number(q.get('tier')) || 0, 0, LADDER.length - 1); }
-  let lod = globeLod();
+  let lod = globeLod(), lodTier = worldTier(); // tile rows follow the HELD world tier (core/quality worldTier), not every step
   const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 1e9);
   const applyRes = () => { renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5) * lod.resScale); renderer.setSize(innerWidth, innerHeight, false); };
   applyRes(); addEventListener('resize', () => { applyRes(); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
@@ -137,7 +138,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const mode = () => pool.length ? `${pool.length} workers` : 'main-thread';
   function dispatch() {
     if (!pool.length) { // fallback: sliced generators within INTEREST.budgetMs
-      for (const [key, { n, pr }] of queued) { queued.delete(key); inflight.add(key); enqueue(key, pr, buildTile(n, planet, lod.segments), t => accept(n, t)); }
+      for (const [key, { n, pr }] of queued) { queued.delete(key); inflight.add(key); enqueue(`globe:${key}`, pr, buildTile(n, planet, lod.segments), t => accept(n, t)); } // one scheduler kind ('globe') so its cost estimate learns
       runJobs(INTEREST.budgetMs); return;
     }
     const order = [...queued.values()].sort((a, b) => a.pr - b.pr);
@@ -179,8 +180,12 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     for (const n of drawnNodes) {
       const N = 1 << n.level; let flags = 0;
       if (n.level > 0) for (const [di, dj, bit] of [[0, -1, 1], [0, 1, 2], [-1, 0, 4], [1, 0, 8]] as const) {
-        const ai = n.i + di, aj = n.j + dj; if (ai < 0 || aj < 0 || ai >= N || aj >= N) continue; // cube-face edges: skirt only
-        if (drawnKeys.has(`${n.face}/${n.level - 1}/${ai >> 1}/${aj >> 1}`)) flags |= bit;
+        let f = n.face, ai = n.i + di, aj = n.j + dj;
+        if (ai < 0 || aj < 0 || ai >= N || aj >= N) { // across a cube-face edge: the same-level node on the neighbouring face
+          const nb = faceNeighbour(n.face, Math.log2(bit)), k0 = bit < 4 ? n.i : n.j, k = nb.flip ? N - 1 - k0 : k0;
+          f = nb.face; ai = nb.edge < 2 ? k : nb.edge === 2 ? 0 : N - 1; aj = nb.edge < 2 ? (nb.edge === 0 ? 0 : N - 1) : k;
+        }
+        if (drawnKeys.has(`${f}/${n.level - 1}/${ai >> 1}/${aj >> 1}`)) flags |= bit;
       }
       const t = tiles.get(n.key)!, g = t.mesh.geometry;
       if ((g.userData.stitch ?? 0) !== flags) { g.userData.stitch = flags; g.setIndex(stitchIndex(t.seg, flags)); }
@@ -221,7 +226,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }
       targetAlt = alt = benchFrom * (benchTo / benchFrom) ** clamp(benchT / benchSec, 0, 1);
       if (prev < benchSec + 8 && benchT >= benchSec + 8) console.log('BENCH ' + JSON.stringify({ mode: mode(), warm: STATS.warm.map(Math.round), tiles: STATS.build.length, buildAvg: +avg(STATS.build).toFixed(2), buildP95: +pct(STATS.build, .95).toFixed(2), buildMax: +Math.max(0, ...STATS.build).toFixed(2),
-        frames: STATS.work.length, workAvg: +avg(STATS.work).toFixed(2), workP99: +pct(STATS.work, .99).toFixed(2), workMax: +Math.max(0, ...STATS.work).toFixed(2), intervalP99: +pct(STATS.interval, .99).toFixed(1), intervalMax: +Math.max(0, ...STATS.interval).toFixed(1), cached: tiles.size, orbit: benchOrbit, ground: { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles } })); }
+        frames: STATS.work.length, compileMs: +STATS.compileMs.toFixed(0), workAvg: +avg(STATS.work).toFixed(2), workP99: +pct(STATS.work, .99).toFixed(2), workMax: +Math.max(0, ...STATS.work).toFixed(2), intervalP99: +pct(STATS.interval, .99).toFixed(1), intervalMax: +Math.max(0, ...STATS.interval).toFixed(1), cached: tiles.size, orbit: benchOrbit, ground: { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles } })); }
     else alt = Math.exp(Math.log(alt) + (Math.log(targetAlt) - Math.log(alt)) * (1 - Math.exp(-dt * 7)));
     controls.rotateSpeed = clamp(alt / R * .6, 2e-6, 1);
     camera.position.copy(dir).multiplyScalar(R + ground + alt);
@@ -245,7 +250,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     // draw cap: shrink the split distance while more tiles than the tier's cap are in view, relax it back when under
     splitK = inView > lod.draw ? Math.max(.35, splitK * .97) : inView < lod.draw * .85 ? Math.min(1, splitK * 1.01) : splitK;
     for (const key of queued.keys()) if (!wanted.has(key)) queued.delete(key);
-    if (!pool.length) for (const key of inflight) if (!wanted.has(key)) { cancel(key); inflight.delete(key); }
+    if (!pool.length) for (const key of inflight) if (!wanted.has(key)) { cancel(`globe:${key}`); inflight.delete(key); }
     for (const slot of pool) if (slot.busy && !wanted.has(slot.busy) && !tiles.has(slot.busy)) { slot.w.postMessage({ cancel: true, id: slot.id } as TileRequest); slot.busy = '~'; } // stale: the worker drops it at its next slice
     // adopt finished tiles: closest first, a few per frame within a budget
     if (ready.length) { const ta = performance.now(); for (const it of ready) { const c = it.t.centre; it.d = Math.hypot(c[0] - camPos[0], c[1] - camPos[1], c[2] - camPos[2]); } ready.sort((a, b) => a.d - b.d);
@@ -256,22 +261,28 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       for (const [key, t] of old.slice(0, tiles.size - lod.cache)) { releaseTileGeometry(t.mesh.geometry); tiles.delete(key); }
     }
     // camera-relative: render from the origin (tile offsets were set from the double camera position in visit())
-    const tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir); renderer.render(scene, camera); camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
+    const tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec()); renderer.render(scene, camera); camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
     const work = performance.now() - t0; if (bench && work > 40) console.log(`SPIKE ${work.toFixed(0)}ms alt ${alt.toFixed(0)} pre-render ${(tR - t0).toFixed(0)} render ${(performance.now() - tR).toFixed(0)} calls ${renderer.info.render.calls} accepted ${built}`); STATS.work.push(work); if (prevT) STATS.interval.push(t0 - prevT);
     if (!bench) { keep(STATS.work, 600); keep(STATS.interval, 600); keep(STATS.build, 2000); }
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;
-    if (governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); atmos?.setTier(GOVERNOR.tier); } // atmosphere sample counts follow the tier
+    if (governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); atmos?.setTier(GOVERNOR.tier); } // resolution + atmosphere samples follow the tier now (cheap uniforms)
+    if (lodTier !== worldTier()) { lodTier = worldTier(); lod = globeLod(); } // tile resolution/split/caps once the new tier has held (no rebuild per step)
     if (frame % 10 === 1) {
       const ll = toLatLon([dir.x, dir.y, dir.z]);
       hud.textContent = `Boreal planet · seed ${seed}${STAGES.on ? ' (staged)' : ''}\n` +
         `altitude ${alt >= 1e4 ? (alt / 1000).toFixed(0) + ' km' : alt.toFixed(0) + ' m'} · ground ${ground.toFixed(0)} m · ${(ll.lat * 180 / Math.PI).toFixed(2)}°, ${(ll.lon * 180 / Math.PI).toFixed(2)}°\n` +
         `tiles drawn ${drawn} (${inView} in view, cap ${lod.draw}${splitK < 1 ? ` · split ×${splitK.toFixed(2)}` : ''}) · culled ${culled} · cached ${tiles.size} · deepest L${deepest} · queued ${queued.size + inflight.size}\n` +
         `build (${mode()}) ${built} tiles (${cancelledN} cancelled, ${ready.length} waiting) · avg ${avg(STATS.build).toFixed(1)} ms · p95 ${pct(STATS.build, .95).toFixed(1)} ms · worst frame ${Math.max(0, ...STATS.work).toFixed(1)} ms\n` +
-        `tier ${LADDER[GOVERNOR.tier].name}${GOVERNOR.auto ? ' (auto)' : ''} · ${lod.segments} seg · ${fps.toFixed(0)} fps · work ${work.toFixed(1)} ms\n` +
+        `tier ${LADDER[GOVERNOR.tier].name}${GOVERNOR.auto ? ' (auto)' : ''} · ${lod.segments} seg · ${fps.toFixed(0)} fps · shaders ${STATS.compileMs >= 0 ? STATS.compileMs.toFixed(0) + ' ms async' : '…'} · work ${work.toFixed(1)} ms\n` +
         (overHome && alt < HANDOFF.hintAlt ? `over the home region: descend below ${HANDOFF.alt / 1000} km to enter the game\n` : '') + `drag orbit · wheel / + - zoom · H home · G game`;
     }
     if (!down) requestAnimationFrame(tick);
   }
-  requestAnimationFrame(tick);
+  // Compile every program (tiles + aerial perspective, sky shell + clouds) BEFORE the first frame, in parallel where the
+  // driver has KHR_parallel_shader_compile (three's compileAsync polls it), so opening the globe never freezes on a compile.
+  for (const t of tiles.values()) group.add(t.mesh);
+  const tc = performance.now();
+  renderer.compileAsync(scene, camera).catch(e => console.warn('globe: compileAsync failed, compiling on first draw', e))
+    .finally(() => { STATS.compileMs = performance.now() - tc; group.clear(); requestAnimationFrame(tick); });
   return { planet, renderer, scene, camera, tiles };
 }

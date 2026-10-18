@@ -184,12 +184,16 @@ function statsOf(rootObj: THREE.Object3D) {
     tris += (g.index ? g.index.count : n) / 3;
     for (const a of Object.values(g.attributes)) bytes += (a as THREE.BufferAttribute).array.byteLength; if (g.index) bytes += g.index.array.byteLength; });
   let casters = 0; rootObj.traverse(o => { if ((o as THREE.Mesh).isMesh && o.castShadow && o.visible) casters++; });
+  // the wolf's own textures (RGBA8; mipmapped ones × 4/3): GPU memory = buffers + textures
+  const texs = new Set<THREE.Texture>(); rootObj.traverse(o => { const m = (o as THREE.Mesh).material as THREE.Material | undefined; if (!m) return;
+    for (const v of Object.values(m)) if ((v as THREE.Texture)?.isTexture) texs.add(v as THREE.Texture); });
+  let texBytes = 0; texs.forEach(t => { const im = t.image as { width: number; height: number }; texBytes += im.width * im.height * 4 * (t.generateMipmaps ? 4 / 3 : 1); });
   // three resets renderer.info AFTER the shadow pass, so its calls never show; count both passes by hand on one extra frame:
   // total (shadow map re-rendered) and main only (shadow map frozen), then restore the defaults
   const r = renderer.info, sm = renderer.shadowMap; r.autoReset = false;
   r.reset(); renderer.render(scene, camera); const calls = r.render.calls, sceneTris = r.render.triangles;
   sm.autoUpdate = false; sm.needsUpdate = false; r.reset(); renderer.render(scene, camera); const mainCalls = r.render.calls;
   sm.autoUpdate = true; r.autoReset = true;
-  document.title = 'STATS ' + JSON.stringify({ rig: q.get('rig'), skinVerts, furCards, wolfTris: tris, wolfMeshes: meshes, wolfShadowCasters: casters, wolfBufferKB: Math.round(bytes / 1024),
+  document.title = 'STATS ' + JSON.stringify({ rig: q.get('rig'), skinVerts, furCards, wolfTris: tris, wolfMeshes: meshes, wolfShadowCasters: casters, wolfBufferKB: Math.round(bytes / 1024), wolfTextures: texs.size, wolfTextureKB: Math.round(texBytes / 1024), wolfGpuKB: Math.round((bytes + texBytes) / 1024),
     sceneCalls: calls, mainPassCalls: mainCalls, shadowPassCalls: calls - mainCalls, sceneTris, geometries: r.memory.geometries, textures: r.memory.textures });
 }

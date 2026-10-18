@@ -14,7 +14,7 @@ import { computeNormals, dent, push, type BodyData, type RGB, type Ring, type Tu
 import { BONE, EYE_AT, HEAD_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, TUBE, earFrame, legBone, limbModel } from '../../../core/wolfBody';
 import { isFrontLeg } from '../../../core/animalBehavior';
 import { random } from '../../../proc/rng';
-import type * as THREE from 'three';
+import * as THREE from 'three';
 
 /** Upper-jaw outline (z, centre y, half-width, half-height) in cranium space and lower-jaw outline in cranium space too; teeth and lips follow them. */
 const UPPER_OUTLINE = [[.03, 0, .042, .036], [.01, .004, .049, .04], [-.022, .002, .043, .037], [-.035, -.0055, .031, .029], [-.048, -.0095, .0297, .0285], [-.07, -.0155, .0237, .0196], [-.088, -.0175, .0215, .0166], [-.099, -.0175, .019, .015]];
@@ -194,7 +194,7 @@ const pawTube = (i: number) => 6 + 2 * i;
  * After buildBody: flat paw soles with toe grooves, and fur moved off the legs and belly onto the neck and back.
  * Same vertex count (no new geometry), so the fur-card budget and the perf governor see no change.
  */
-export function shapeBody(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB } = PHOTO_COAT) {
+export function shapeBody(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB } = PHOTO_COAT, trunkInMap = false) {
   const toes: Vec3[] = [];
   LEG_XZ.forEach(([x, z], i) => {
     const m = limbModel(i), Py = m.hip - m.upper - m.lower - m.foot, sole = Py + .012, floor = sole - .01;
@@ -221,7 +221,7 @@ export function shapeBody(body: BodyData, coat: { back: RGB; belly: RGB; dark: R
   // Heavier brow: push the supraorbital ridge further out and up (the sculpt already raised it a little).
   for (const side of [-1, 1]) push(body, TUBE.skull, [side * EYE_AT[0] * 1.05, HEAD_AT[1] + EYE_AT[1] + .013, HEAD_AT[2] + EYE_AT[2] + .004], .022, [side * .0012, .0018, -.004]);
   computeNormals(body);
-  zoneCoat(body, coat, toes);
+  zoneCoat(body, coat, toes, trunkInMap);
   for (let v = 0; v < body.tube.length; v++) {
     const tube = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1];
     if (tube >= 6 && tube < 13 && (tube - 6) % 2 === 0) { body.furLen[v] *= .45; if (toes.some(q => Math.hypot(body.position[v * 3] - q[0], body.position[v * 3 + 1] - q[1], body.position[v * 3 + 2] - q[2]) < .0058)) body.furLen[v] *= .4; } // very short paw fur so the toe grooves shape the paw; shorter still on the (darkened) grooves
@@ -248,8 +248,9 @@ const band = (a: number, b: number, x: number) => { const t = Math.max(0, Math.m
 /**
  * Coat layers (pass 6, Matthew): BASE coat (photo tones: warm flanks, buff legs, paws) → LIGHTEN mask (belly, throat/chest bib,
  * cheek and muzzle mask) → DARKEN mask multiplied over it (broad saddle, shoulder band, tail tip, toe lines; strength COAT.darken).
- * The fine dark guard-hair streaks are a separate per-card layer (streakCards below), because 5 mm streaks are far finer than the
- * skin's ~6 cm vertex spacing.
+ * Pass 7: on the trunk the lighten and darken masks and the fine guard-hair streaks live in a seeded procedural coat texture
+ * (coatTexture, built at load, no image files) mapped on the skin with derived UVs (coatSkin), and the fur cards sample the same
+ * masks at their root (coatCards). Head, jaw, tail, legs and paws keep their per-vertex layers.
  */
 export const COAT = {
   /** darken-mask strength, 0..2 (1 matches the photo) */ darken: 1,
@@ -258,7 +259,10 @@ export const COAT = {
   /** 0..1: seeded jitter in spacing, width, length and darkness (0 = regular stripes) */ streakJitter: .6,
 };
 const bumpF = (a: number, b: number, cc: number, d: number, x: number) => band(a, b, x) * (1 - band(cc, d, x));
-function zoneCoat(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB }, toes: Vec3[]) {
+/** Trunk masks by spine position z and height v on the trunk (+1 dorsal line, 0 midline, -1 belly). */
+const trunkLight = (z: number, v: number) => Math.max(.8 * band(-.15, -.55, v), z < -.15 ? .95 * band(.3, -.3, v) * band(-.15, -.2, z) : 0); // belly; throat and chest bib
+const trunkDark = (z: number, v: number) => Math.max(.62 * band(-.15, .45, v) * band(-.17, -.1, z) * (1 - band(.13, .19, z)), .7 * bumpF(-.95, -.6, .2, .5, v) * bumpF(-.17, -.145, -.12, -.095, z)); // saddle, shoulder band
+function zoneCoat(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB }, toes: Vec3[], trunkInMap = false) {
   const lerp = (a: RGB, b: RGB, t: number) => a.map((v, k) => v + (b[k] - v) * t) as RGB;
   const accent = coat.accent ?? coat.back, c = body.color, buff = lerp(coat.belly, accent, .2), cream = coat.belly;
   const pawTone = lerp(buff, coat.dark, .3), warm = lerp(coat.back, accent, .6), mask = lerp(coat.belly, [1, 1, 1], .15);
@@ -272,12 +276,12 @@ function zoneCoat(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; acce
     else if (leg) mix3(c, v, buff, .85 * band(limbModel((t - 5) / 2).hip + .03, limbModel((t - 5) / 2).hip - .06, y)); // pale legs below the body
     else if (paw) mix3(c, v, pawTone, .6);
     // 2. lighten mask
-    const light = trunk ? Math.max(.8 * band(-.15, -.55, ny), z < -.15 ? .95 * band(.3, -.3, ny) * band(-.15, -.2, z) : 0) // belly; throat and chest bib
+    const light = trunk ? (trunkInMap ? 0 : trunkLight(z, ny)) // belly; throat and chest bib (in the coat texture when mapped)
       : t === TUBE.skull ? (hz > -.092 ? .75 * band(.35, -.25, ny) * band(.03, -.03, hz) : 0) // cheeks and muzzle sides (top and nose stay dark)
       : t === TUBE.jaw ? .8 : t === 14 || t === 15 ? .6 : 0; // lower jaw, cheek ruffs
     mix3(c, v, light > 0 && trunk && ny < -.15 ? cream : mask, light);
     // 3. darken mask, multiplied: 1 → about the coat's dark tone
-    const dark = trunk ? Math.max(.62 * band(-.15, .45, ny) * band(-.17, -.1, z) * (1 - band(.13, .19, z)), .7 * bumpF(-.95, -.6, .2, .5, ny) * bumpF(-.17, -.145, -.12, -.095, z)) // saddle, shoulder band
+    const dark = trunk ? (trunkInMap ? 0 : trunkDark(z, ny)) // saddle, shoulder band (in the coat texture when mapped)
       : t === TAIL_TUBE ? Math.max(.35 * band(0, .7, ny), .88 * band(.72, .9, tailD(v) / tailLen)) // tail top, tail tip
       : paw && toes.some(q => Math.hypot(x - q[0], y - q[1], z - q[2]) < .0058) ? 1 : 0; // toe lines
     const f = 1 - Math.min(1, COAT.darken * dark) * .75;
@@ -306,12 +310,11 @@ function streaks(seed: number): Streak[][] {
 }
 /** Dark-streak strength 0..1 at a point: thin near-vertical slices (perpendicular to the spine) over the back and down the sides, densest
  * and darkest on the saddle and shoulders, sparse on the flanks, none on the bib, belly, legs, head or tail. */
-export function streakAt(p: P3, list: Streak[][]) {
-  const z = p[2], ax = z > .17 || z < -.23 ? undefined : trunkAxis(z); if (!ax) return 0;
-  const v = (p[1] - ax.cy) / ax.ry; if (v < -.55) return 0; // belly, legs
+function streakZV(z: number, v: number, side: number, list: Streak[][]) {
+  if (z > .17 || z < -.23 || v < -.55) return 0; // belly, legs
   if (z < -.17 && v < .2) return 0; // throat and chest bib
   let best = 0;
-  for (const s of list[p[0] < 0 ? 0 : 1]) {
+  for (const s of list[side]) {
     const dz = Math.abs(z - s.z - .003 * COAT.streakJitter * (valueNoise3(s.wob, v * 2.5, 0) - .5) * 2); if (dz > s.w) continue; // gentle waviness down the streak
     const reach = s.flank ? s.len * 1.4 : Math.min(s.len, 1); // from the dorsal line (v = 1) down; flank streaks reach below the midline
     const m = (1 - band(s.w * .3, s.w * .5, dz)) * band(1 - reach - .12, 1 - reach + .05, v) * s.dark * (v < 0 ? .7 : 1);
@@ -319,15 +322,72 @@ export function streakAt(p: P3, list: Streak[][]) {
   }
   return best;
 }
-/** Darken the fur cards in the streaks, root to tip (cards are 5 vertices: root pair, middle pair, tip). Colours only; same cards. */
-export function streakCards(g: THREE.BufferGeometry, seed = 1400) {
-  const pos = g.getAttribute('position'), col = g.getAttribute('color'), list = streaks(seed);
+/** Coat-texture layout: u runs along the spine (croup z = .185 → neck z = -.29), v around the trunk from the belly seam (left side
+ * first, dorsal line at v = .5). The first NEUTRAL columns hold 1.0 for every other tube. 512 × 128 RGBA8 = 256 KB, 341 KB with mipmaps. */
+const MAP_W = 512, MAP_H = 128, NEUTRAL = 8, Z0 = .185, Z1 = -.29;
+const mapU = (z: number) => (NEUTRAL + Math.max(0, Math.min(1, (Z0 - z) / (Z0 - Z1))) * (MAP_W - NEUTRAL)) / MAP_W;
+/** Per-channel lighten gain toward the cream belly (≤ 2, the texture's headroom). */
+const lightGain = (coat: { back: RGB; belly: RGB }) => coat.back.map((b, k) => Math.min(2, Math.max(1, coat.belly[k] / Math.max(.05, b)))) as RGB;
+/** Trunk coat multiplier at (z, v, side): lighten mask, then the darken mask and the streaks multiplied over it. */
+function trunkMul(z: number, v: number, side: number, list: Streak[][], gain: RGB, streakShare = 1): RGB {
+  const l = trunkLight(z, v), d = 1 - Math.min(1, COAT.darken * trunkDark(z, v)) * .75, s = 1 - Math.min(1, COAT.darken * streakZV(z, v, side, list)) * .92 * streakShare;
+  return gain.map(g => (1 + (g - 1) * l) * d * s) as RGB;
+}
+/** Seeded procedural coat texture (built at load from COAT and the seed; no image files): RGB = colour multiplier / 2 over the
+ * vertex-coloured skin (the skin material's colour is 2, so 128 is neutral). */
+export function coatTexture(seed: number, coat: { back: RGB; belly: RGB }) {
+  const list = streaks(seed), gain = lightGain(coat), data = new Uint8Array(MAP_W * MAP_H * 4).fill(128);
+  for (let j = 0; j < MAP_H; j++) {
+    const th = ((j + .5) / MAP_H - .5) * Math.PI * 2, v = Math.cos(th), side = th < 0 ? 0 : 1;
+    for (let i = NEUTRAL; i < MAP_W; i++) {
+      const z = Z0 - (i + .5 - NEUTRAL) / (MAP_W - NEUTRAL) * (Z0 - Z1), m = trunkMul(z, v, side, list, gain), o = (j * MAP_W + i) * 4;
+      for (let k = 0; k < 3; k++) data[o + k] = Math.round(Math.min(1, m[k] / 2) * 255);
+    }
+  }
+  for (let o = 3; o < data.length; o += 4) data[o] = 255;
+  const tex = new THREE.DataTexture(data, MAP_W, MAP_H, THREE.RGBAFormat);
+  tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.RepeatWrapping; tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.generateMipmaps = true; tex.anisotropy = 4; tex.name = 'coat'; tex.needsUpdate = true;
+  return tex;
+}
+/** Derived UVs for the skin: trunk vertices get (spine, around) coordinates, everything else the neutral corner. The belly seam is
+ * split by duplicating the few vertices of the wrapping triangles (v + 1; the texture repeats in v). Mutates the geometry. */
+export function coatSkin(g: THREE.BufferGeometry, body: BodyData) {
+  const n = body.tube.length, uv = new Float32Array(n * 2), pos = body.position;
+  for (let v = 0; v < n; v++) {
+    if (body.tube[v] !== TUBE.trunk) { uv[v * 2] = 2 / MAP_W; uv[v * 2 + 1] = .5; continue; }
+    const z = pos[v * 3 + 2], ax = trunkAxis(Math.max(Z1, Math.min(Z0, z)))!;
+    uv[v * 2] = mapU(z); uv[v * 2 + 1] = Math.atan2(pos[v * 3], pos[v * 3 + 1] - ax.cy) / (Math.PI * 2) + .5;
+  }
+  const idx = Array.from(g.getIndex()!.array), dup = new Map<number, number>(), src: number[] = [];
+  for (let t = 0; t < idx.length; t += 3) {
+    const tri = [idx[t], idx[t + 1], idx[t + 2]]; if (tri.some(v => v >= n || body.tube[v] !== TUBE.trunk)) continue;
+    const vs = tri.map(v => uv[v * 2 + 1]); if (Math.max(...vs) - Math.min(...vs) < .5) continue;
+    for (let k = 0; k < 3; k++) if (vs[k] < .5) {
+      let d = dup.get(tri[k]); if (d === undefined) { d = n + src.length; dup.set(tri[k], d); src.push(tri[k]); }
+      idx[t + k] = d;
+    }
+  }
+  for (const name of Object.keys(g.attributes)) {
+    const a = g.getAttribute(name) as THREE.BufferAttribute, w = a.itemSize, arr = new (a.array.constructor as Float32ArrayConstructor)((n + src.length) * w);
+    arr.set(a.array as Float32Array); src.forEach((s, k) => { for (let c = 0; c < w; c++) arr[(n + k) * w + c] = (a.array as Float32Array)[s * w + c]; });
+    g.setAttribute(name, new THREE.BufferAttribute(arr, w, a.normalized));
+  }
+  const uvAll = new Float32Array((n + src.length) * 2); uvAll.set(uv); src.forEach((s, k) => { uvAll[(n + k) * 2] = uv[s * 2]; uvAll[(n + k) * 2 + 1] = uv[s * 2 + 1] + 1; });
+  g.setAttribute('uv', new THREE.BufferAttribute(uvAll, 2)); g.setIndex(idx);
+  return g;
+}
+/** Fur cards sample the same coat masks at their root (cards are 5 vertices: root pair, middle pair, tip), so the streaks and zones
+ * continue from the skin onto the fur. Streaks: near-black root and middle, the tip (combed back along the spine) only half, so a
+ * streak stays a vertical slice instead of smearing backward. Colours only; same cards. */
+export function coatCards(g: THREE.BufferGeometry, seed: number, coat: { back: RGB; belly: RGB }) {
+  const pos = g.getAttribute('position'), col = g.getAttribute('color'), list = streaks(seed), gain = lightGain(coat);
   for (let card = 0; card * 5 < pos.count; card++) {
     const a = card * 5, root: P3 = [(pos.getX(a) + pos.getX(a + 1)) / 2, (pos.getY(a) + pos.getY(a + 1)) / 2, (pos.getZ(a) + pos.getZ(a + 1)) / 2];
-    const m = Math.min(1, COAT.darken * streakAt(root, list)); if (m <= 0) continue;
-    // near-black root and middle; the tip (combed back along the spine) only half, so the streak stays a vertical slice instead of
-    // smearing backward along each card
-    for (let k = a; k < a + 5; k++) { const f = 1 - m * (k === a + 4 ? .45 : .9); col.setXYZ(k, col.getX(k) * f, col.getY(k) * f, col.getZ(k) * f); }
+    const ax = root[2] > Z0 || root[2] < Z1 ? undefined : trunkAxis(root[2]); if (!ax) continue;
+    const v = (root[1] - ax.cy) / ax.ry; if (v < -1.15) continue; // upper legs below the trunk
+    const side = root[0] < 0 ? 0 : 1, full = trunkMul(root[2], v, side, list, gain), tip = trunkMul(root[2], v, side, list, gain, .5);
+    for (let k = a; k < a + 5; k++) { const m = k === a + 4 ? tip : full; col.setXYZ(k, Math.min(1, col.getX(k) * m[0]), Math.min(1, col.getY(k) * m[1]), Math.min(1, col.getZ(k) * m[2])); }
   }
   col.needsUpdate = true;
   return g;
@@ -350,12 +410,17 @@ type P3 = [number, number, number];
  * Animation and Rendering in the Nalu Demo" texture-driven fur), longer strand cards in the silhouette zones (neck ruff, tail),
  * combing (flat down the legs, back-curving over the neck, back and tail) and agouti tips on the back (banded guard hairs).
  */
+/** 0..1 on the streaked sides of the trunk (saddle and shoulders, below the dorsal ridge so the topline silhouette keeps its fur). */
+function streakSides(p: P3) {
+  const ax = p[2] > .17 || p[2] < -.23 ? undefined : trunkAxis(p[2]); if (!ax) return 0;
+  const v = (p[1] - ax.cy) / ax.ry; return band(-.5, -.2, v) * (1 - band(.55, .8, v)) * band(-.23, -.17, p[2]) * (1 - band(.11, .17, p[2]));
+}
 export function furStyle() {
   const leg = (p: P3) => p[1] < .21, tail = (p: P3) => p[2] > .19 && p[1] < .34, head = (p: P3) => p[2] < HEAD_AT[2] + .035 && p[1] > HEAD_AT[1] - .06;
   const ruff = (p: P3) => band(-.12, -.18, p[2]) * band(-.34, -.3, p[2]) * band(.3, .34, p[1]);
   return {
     tone: .3,
-    scaleAt: (p: P3) => { const n = .75 + .5 * valueNoise3(p[0] * 55, p[1] * 55, p[2] * 55); return Math.min(1.4, n * (leg(p) ? 1 : tail(p) ? 1.2 : 1 + .3 * ruff(p))); },
+    scaleAt: (p: P3) => { const n = .75 + .5 * valueNoise3(p[0] * 55, p[1] * 55, p[2] * 55); return Math.min(1.4, n * (leg(p) ? 1 : tail(p) ? 1.2 : (1 + .3 * ruff(p)) * (1 - .12 * streakSides(p)))); },
     comb: (p: P3) => head(p) ? undefined : leg(p) ? { lay: [0, -1, .15] as P3, lean: 1 } : tail(p) ? { lay: [0, -.6, 1] as P3, lean: .8 } : { lay: [0, -.25 - .5 * ruff(p), 1] as P3, lean: 1 + .3 * ruff(p) },
     tipTint: (p: P3) => p[1] > .33 && !head(p) && COAT.darken > 0 ? { color: [.12, .1, .08] as P3, amount: .3 * Math.min(1, COAT.darken) } : undefined, // agouti guard hairs end in a black band (was a pale tip that washed the saddle out)
   };

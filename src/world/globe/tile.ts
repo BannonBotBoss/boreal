@@ -104,18 +104,34 @@ export function tileGeometry(t: TileData) {
 }
 /** The globe material: vertex-colour land, per-pixel land/water contour of aH (antialiased with fwidth), water shaded
  *  shallow → deep by depth and smoother than land. Colours come from planet GLOBE_COLOURS (one table). */
-export function globeMaterial() {
+/** `debugSegments` (?seams=1): skirts drawn red and tile borders yellow, unlit, over everything else (seam hunting); the
+ *  vertex id tells skirt from surface (buildTile layout: n² grid, then 4 edges of n skirt copies). */
+export function globeMaterial(debugSegments = 0) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }), C = GLOBE_COLOURS;
+  const uSeg = { value: debugSegments }; m.userData.uSeg = uSeg;
   m.onBeforeCompile = sh => {
+    sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
     sh.uniforms.uLakeShallow = { value: new THREE.Color().setRGB(...C.lakeShallow) }; sh.uniforms.uLakeDeep = { value: new THREE.Color().setRGB(...C.lakeDeep) };
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nvarying float vH, vLake;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvH = aH; vLake = aLake;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+vH = aH; vLake = aLake;
+#ifdef DEBUG_SEAMS
+{ float n = uSeg + 1.0, id = float(gl_VertexID); vSkirt = id >= n * n ? 1.0 : 0.0;
+  if (id < n * n) vTileUV = vec2(mod(id, n), floor(id / n)) / uSeg;
+  else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
+#endif`);
+    sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; varying float vSkirt; varying vec2 vTileUV;\n#endif');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;\n#ifdef DEBUG_SEAMS\nvarying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { float fw = max(fwidth(vH), 1e-3); landMask = smoothstep(-fw, fw, vH);
     float dw = smoothstep(0.0, 150.0, -vH); vec3 water = mix(mix(uShallow, uDeep, dw), mix(uLakeShallow, uLakeDeep, dw), vLake); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }`)
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.55, roughnessFactor, landMask); // water: a soft sun glint [game calibration]');
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.55, roughnessFactor, landMask); // water: a soft sun glint [game calibration]')
+      .replace('#include <dithering_fragment>', `#include <dithering_fragment>
+#ifdef DEBUG_SEAMS
+  { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;
+    if (vSkirt > 0.001) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }
+#endif`);
   };
   return m;
 }

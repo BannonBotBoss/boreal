@@ -24,7 +24,7 @@ export function startFarLayerDemo(canvas = document.getElementById('world') as H
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const q = new URLSearchParams(location.search); if (!q.has('alt')) q.set('alt', '3000'); if (!q.has('at')) q.set('at', '72,186');
-  const far = createFarLayer({ scale: Number(q.get('farScale')) || 1 });
+  const far = createFarLayer({ scale: Number(q.get('farScale')) || undefined, samples: q.has('farSamples') ? Number(q.get('farSamples')) : undefined });
   const size = renderer.getDrawingBufferSize(new THREE.Vector2()); far.resize(size.x, size.y);
   const globe = createGlobe(renderer, { shared: true, params: q, target: far.target });
   globe.attachInput(true);
@@ -36,7 +36,7 @@ export function startFarLayerDemo(canvas = document.getElementById('world') as H
   const mat = (c: number) => new THREE.MeshStandardMaterial({ color: c, roughness: .6 });
   const boxes: [number, number, number, number, number][] = [[-1.2, -.6, -2, .5, 0xd94f3d], [1.5, -.2, -6, 1, 0xe6c34a], [-4, .5, -15, 2.5, 0x4a8fe6], [8, 1, -40, 6, 0x8a5ad9]];
   for (const [x, y, z, k, c] of boxes) { const m = new THREE.Mesh(new THREE.BoxGeometry(k, k, k), mat(c)); m.position.set(x, y, z); m.rotation.set(.4, .6, 0); rig.add(m); }
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(6, 48), mat(0x3f6b3a)); disc.position.set(0, -2.5, -7); disc.rotation.x = -Math.PI / 2 + .35; rig.add(disc);
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(3, 48), mat(0x3f6b3a)); disc.position.set(0, -2.5, -7); disc.rotation.x = -Math.PI / 2 + .35; rig.add(disc);
   let logged = false, frames = 0;
   addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight, false); });
   function frame() {
@@ -50,5 +50,6 @@ export function startFarLayerDemo(canvas = document.getElementById('world') as H
     requestAnimationFrame(frame);
   }
   void globe.compiled.then(() => requestAnimationFrame(frame));
+  (window as unknown as { __farLayer?: unknown }).__farLayer = { renderer, globe, far, scene, cam }; // dev: inspect from the console
   return { renderer, globe, far };
 }

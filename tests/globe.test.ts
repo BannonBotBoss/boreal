@@ -360,7 +360,8 @@ test('globe log depth is per material: three chunks switched on by the material,
   assert.ok(dome.vertexShader.startsWith(LOG_DEPTH_PREFIX) && dome.fragmentShader.startsWith(LOG_DEPTH_PREFIX) && dome.uniforms.uGlobeLogDepthFC === LOG_DEPTH.uniform, 'sky shell');
 });
 test('far layer: linear half-float MSAA target that follows the drawing buffer (scaled), byte count for the budget', () => {
-  const f = createFarLayer({ scale: .5 }); f.resize(2400, 1350);
+  const d = createFarLayer(); d.resize(2400, 1350); assert.deepEqual([d.target.width, d.target.height, d.target.samples, d.bytes()], [1200, 675, 2, 1200 * 675 * 32]); d.dispose();
+  const f = createFarLayer({ scale: .5, samples: 4 }); f.resize(2400, 1350);
   assert.deepEqual([f.target.width, f.target.height, f.target.samples], [1200, 675, 4]);
   assert.equal(f.texture.colorSpace, THREE_E.LinearSRGBColorSpace); assert.equal(f.target.texture.type, THREE_E.HalfFloatType);
   assert.equal(f.bytes(), 1200 * 675 * (8 + 4 * 12)); f.dispose();

@@ -7,7 +7,9 @@
  */
 import * as THREE from 'three';
 export interface FarLayerOptions { scale?: number; samples?: number }
-export function createFarLayer({ scale = 1, samples = 4 }: FarLayerOptions = {}) {
+/** Defaults from the step-0 budget (2026-10-18): half resolution, 2x MSAA = 32 B per far-layer pixel, ~26 MB at 2400x1350
+ *  (full resolution with 4x MSAA measured 82 MB at 1600x900, ~180 MB at 1.5 DPR: over the shared-mode budget). */
+export function createFarLayer({ scale = .5, samples = 2 }: FarLayerOptions = {}) {
   const target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples, depthBuffer: true, stencilBuffer: false });
   target.texture.colorSpace = THREE.LinearSRGBColorSpace; target.texture.generateMipmaps = false;
   return {

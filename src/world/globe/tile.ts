@@ -18,12 +18,13 @@ import * as THREE from 'three';
 import { bounds, edgeMetres, faceDir, type QNode } from './cube';
 import { GLOBE_COLOURS, surfaceColour, type Planet, type Vec3 } from './planet';
 
-export interface TileData { position: Float32Array; color: Float32Array; height: Float32Array; normal: Float32Array; index: Uint16Array; centre: Vec3; cpu: number }
+/** `lake`: 255 where the reference water level is above sea level (lakes and their shores), 0 at sea level: picks the lake vs ocean water colour. */
+export interface TileData { position: Float32Array; color: Float32Array; height: Float32Array; lake: Uint8Array; normal: Float32Array; index: Uint16Array; centre: Vec3; cpu: number }
 export function* buildTile(q: QNode, planet: Planet, segments: number): Generator<void, TileData> {
   let cpu = 0, t = performance.now();
   const n = segments + 1, m = n + 2, R = planet.radius, { a0, b0, s } = bounds(q), den = segments * 2 ** q.level;
   const cd = faceDir(q.face, a0 + s / 2, b0 + s / 2), centre: Vec3 = [cd[0] * R, cd[1] * R, cd[2] * R];
-  const count = n * n + 4 * n, position = new Float32Array(count * 3), color = new Float32Array(count * 3), height = new Float32Array(count), normal = new Float32Array(count * 3);
+  const count = n * n + 4 * n, position = new Float32Array(count * 3), color = new Float32Array(count * 3), height = new Float32Array(count), lake = new Uint8Array(count), normal = new Float32Array(count * 3);
   const P = new Float64Array(m * m * 3), d: Vec3 = [0, 0, 0], rgb = [0, 0, 0];
   for (let jj = 0; jj < m; jj++) { // sample rows −1 … n (the outer ring only feeds normals)
     for (let ii = 0; ii < m; ii++) {
@@ -35,7 +36,7 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
       const surf = planet.sampleSurface(d), r = R + Math.max(surf.h, surf.water), k = (jj * m + ii) * 3;
       P[k] = d[0] * r - centre[0]; P[k + 1] = d[1] * r - centre[1]; P[k + 2] = d[2] * r - centre[2];
       if (inside) {
-        const v = j * n + i; height[v] = surf.h - surf.level;
+        const v = j * n + i; height[v] = surf.h - surf.level; lake[v] = surf.level > .5 ? 255 : 0;
         surf.kind = ''; if (surf.h < surf.level) surf.h = surf.level; // the land colour this vertex would have at the shore
         surfaceColour(surf, d, rgb); color.set(rgb, v * 3);
       }
@@ -61,12 +62,12 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
     for (const src of edge) {
       const k = src * 3, x = position[k] + centre[0], y = position[k + 1] + centre[1], z = position[k + 2] + centre[2], l = Math.hypot(x, y, z), f = (l - drop) / l;
       position[v * 3] = x * f - centre[0]; position[v * 3 + 1] = y * f - centre[1]; position[v * 3 + 2] = z * f - centre[2];
-      color.copyWithin(v * 3, k, k + 3); normal.copyWithin(v * 3, k, k + 3); height[v] = height[src]; v++;
+      color.copyWithin(v * 3, k, k + 3); normal.copyWithin(v * 3, k, k + 3); height[v] = height[src]; lake[v] = lake[src]; v++;
     }
     for (let e = 0; e < n - 1; e++) { const a = edge[e], b = edge[e + 1], c = start + e, dd = start + e + 1; idx.push(a, c, b, b, c, dd, a, b, c, b, dd, c); } // both windings
   }
   cpu += performance.now() - t;
-  return { position, color, height, normal, index: Uint16Array.from(idx), centre, cpu };
+  return { position, color, height, lake, normal, index: Uint16Array.from(idx), centre, cpu };
 }
 /** Edge bits for stitchIndex: the neighbour across that edge is coarser. Row j = 0, row j = n-1, column i = 0, column i = n-1. */
 export const EDGE = { south: 1, north: 2, west: 4, east: 8 } as const;
@@ -96,7 +97,7 @@ export function releaseTileGeometry(g: THREE.BufferGeometry) { g.setIndex(null);
 export function tileGeometry(t: TileData) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(t.position, 3)); g.setAttribute('normal', new THREE.BufferAttribute(t.normal, 3));
-  g.setAttribute('color', new THREE.BufferAttribute(t.color, 3)); g.setAttribute('aH', new THREE.BufferAttribute(t.height, 1));
+  g.setAttribute('color', new THREE.BufferAttribute(t.color, 3)); g.setAttribute('aH', new THREE.BufferAttribute(t.height, 1)); g.setAttribute('aLake', new THREE.BufferAttribute(t.lake, 1, true));
   const seg = Math.round(Math.sqrt(4 + t.position.length / 3)) - 3; // count = n² + 4n
   g.setIndex(stitchIndex(seg, 0)); g.userData.stitch = 0; // shared index buffers (same triangles as t.index), never per tile
   g.computeBoundingSphere(); return g;
@@ -107,12 +108,13 @@ export function globeMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }), C = GLOBE_COLOURS;
   m.onBeforeCompile = sh => {
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH;\nvarying float vH;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvH = aH;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep;\nvarying float vH;\nfloat landMask;')
+    sh.uniforms.uLakeShallow = { value: new THREE.Color().setRGB(...C.lakeShallow) }; sh.uniforms.uLakeDeep = { value: new THREE.Color().setRGB(...C.lakeDeep) };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nvarying float vH, vLake;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvH = aH; vLake = aLake;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { float fw = max(fwidth(vH), 1e-3); landMask = smoothstep(-fw, fw, vH);
-    vec3 water = mix(uShallow, uDeep, smoothstep(0.0, 150.0, -vH)); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }`)
+    float dw = smoothstep(0.0, 150.0, -vH); vec3 water = mix(mix(uShallow, uDeep, dw), mix(uLakeShallow, uLakeDeep, dw), vLake); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.55, roughnessFactor, landMask); // water: a soft sun glint [game calibration]');
   };
   return m;

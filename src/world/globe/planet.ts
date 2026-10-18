@@ -7,7 +7,7 @@
  *  1. Planet relief: ridged multifractal (Musgrave 1989) + broad fBm basins on 3D value noise, the SAME formula family as
  *     core/stages/elevation `base()` (ridged multifractal + low basins), here evaluated on the sphere so it has no seams.
  *     Lattice values come from proc/rng (rule 1); no second hash.
- *  2. Sea level by hypsometry: the seed's noise is sampled once on a Fibonacci sphere (GonzÃ¡lez 2010) and sea level is set
+ *  2. Sea level by hypsometry: the seed's noise is sampled once on a Fibonacci sphere (González 2010) and sea level is set
  *     so the land share matches Earth's.
  *  3. Home region: the live game's playable area is one region of the planet. Around a seeded home direction the relief is
  *     lifted to the home elevation, and inside the region the game's own height function (core/world heightAt, passed in)
@@ -22,13 +22,13 @@ export const PLANET = {
   landShare: .292,               // Earth's land share of the surface, 29.2 % (ETOPO1 hypsometry, Eakins & Sharman 2012) [verify]
   maxLand: 6000,                 // m at the top of the seed's land distribution [game calibration; Everest is 8849 m]
   maxDepth: 5500,                // m at the bottom of the seed's ocean distribution [game calibration; mean ocean depth 3682 m, Charette & Smith 2010]
-  octaves: 16,                   // fixed octave count: identical at every LOD level (no level-dependent popping); top octave â‰ˆ 1 km
+  octaves: 16,                   // fixed octave count: identical at every LOD level (no level-dependent popping); top octave ≈ 1 km
   baseFreq: 1.6,                 // lattice cells per radius for the first octave [game calibration: a handful of continents]
   home: {
     latDeg: 49.77,               // Kenora, Ontario (Lake of the Woods), where the game's boreal forest is set
-    elevation: 370,              // m: Kenora town â‰ˆ 370 m a.s.l. (Lake of the Woods 323 m, Canadian Hydrographic Service) [verify]
+    elevation: 370,              // m: Kenora town ≈ 370 m a.s.l. (Lake of the Woods 323 m, Canadian Hydrographic Service) [verify]
     liftKm: 450,                 // km: e-folding radius of the lift that guarantees land around home [game calibration]
-    halfSize: 3840,              // m: half the region side = one tile of the stage-1 periodic grid (ELEV.n Ã— ELEV.cell / 2)
+    halfSize: 3840,              // m: half the region side = one tile of the stage-1 periodic grid (ELEV.n × ELEV.cell / 2)
     feather: 1200,               // m: blend from the game terrain into the planet relief at the region edge [game calibration]
   },
   /** Far-field Shield lakes: three octaves of the planet's value noise (cells ~24, 7, 1.8 km) on a domain-warped
@@ -50,7 +50,7 @@ export interface Surface {
   h: number;
   /** Water surface height (m) or -Infinity when dry. Ocean = 0; home-region lakes = the game's water plane. */
   water: number;
-  /** Reference water level here (m): sea level 0, or the game's water plane inside the home region. h âˆ’ level is the
+  /** Reference water level here (m): sea level 0, or the game's water plane inside the home region. h − level is the
    *  signed land/water field the renderer contours per pixel. */
   level: number;
   /** 'ocean' | 'lake' | '' (dry). */
@@ -70,7 +70,7 @@ export interface Surface {
 function makeNoise(seed: number) {
   const r = random(hash(`globe-v1:${seed}`)), P = new Uint8Array(512), V = new Float32Array(256);
   const p = Array.from({ length: 256 }, (_, i) => i);
-  for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; } // Fisherâ€“Yates
+  for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; } // Fisher–Yates
   for (let i = 0; i < 512; i++) P[i] = p[i & 255];
   for (let i = 0; i < 256; i++) V[i] = r();
   const off = Array.from({ length: 24 }, () => [r() * 256, r() * 256, r() * 256]);
@@ -94,7 +94,7 @@ function makeNoise(seed: number) {
     return sum / norm * .45 + basins / .9375 * 1.1;
   }
   /** Kenora-scale hills (m) for land outside the playable region: ridged noise, wavelengths ~4 km down to ~125 m, about
-   *  ï¿½40 m (staged home relief p1-p99 is ~80 m), so the far field keeps relief to the horizon. Off-region only. [game calibration] */
+   *  ±40 m (staged home relief p1-p99 is ~80 m), so the far field keeps relief to the horizon. Off-region only. [game calibration] */
   function hills(dx: number, dy: number, dz: number) {
     let amp = 1, sum = 0, norm = 0, f = PLANET.radius / 4000;
     for (let o = 0; o < 6; o++) { const s = noise(dx * f + off[8 + o][0], dy * f + off[8 + o][1], dz * f + off[8 + o][2]); sum += (1 - Math.abs(s * 2 - 1)) ** 2 * amp; norm += amp; amp *= .5; f *= 2; }
@@ -103,7 +103,7 @@ function makeNoise(seed: number) {
   return { noise, relief, hills };
 }
 
-/** Fibonacci sphere point k of n (GonzÃ¡lez 2010, "Measurement of areas on a sphere using Fibonacci and latitudeâ€“longitude lattices"). */
+/** Fibonacci sphere point k of n (González 2010, "Measurement of areas on a sphere using Fibonacci and latitude–longitude lattices"). */
 export function fibonacci(k: number, n: number): Vec3 {
   const y = 1 - (2 * k + 1) / n, r = Math.sqrt(1 - y * y), phi = k * Math.PI * (3 - Math.sqrt(5));
   return [Math.cos(phi) * r, y, Math.sin(phi) * r];
@@ -142,7 +142,7 @@ export function createPlanet(seed: number, local?: LocalHeight) {
     out.hill = 0; out.soil = ''; out.wet = -1; out.mottle = noise(d[0] * fm + 17.3, d[1] * fm + 91.7, d[2] * fm + 53.1);
     if (h > 0) { const hl = hills(d[0], d[1], d[2]); out.hill = Math.max(-1, Math.min(1, hl / 50)); h += hl * smoothstep(0, 80, h); } // far-field relief (kept off the coastline)
     out.water = h < 0 ? 0 : -Infinity; out.kind = h < 0 ? 'ocean' : ''; out.level = 0; out.home = 0; out.x = out.z = 0;
-    if (h > 0) { // far-field lakes: signed field f (< 0 under water); the contour field h âˆ’ level is min(h, f), continuous
+    if (h > 0) { // far-field lakes: signed field f (< 0 under water); the contour field h − level is min(h, f), continuous
       const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI;
       const dens = smoothstep(38, 46, lat) * (1 - smoothstep(64, 72, lat)) * (1 - smoothstep(500, 1400, h)) * smoothstep(H.halfSize * 1.45, H.halfSize * 2.2, ang * R);
       if (dens > 0) {
@@ -177,9 +177,12 @@ export function createPlanet(seed: number, local?: LocalHeight) {
  *  (see AGENT-NOTES globe reference bands): dark mottled spruce, lighter mixed stands, pink-grey bedrock outcrops on
  *  ridges, olive-brown bog and fen in wet hollows, pale sand only on outwash and beaches. [reference calibration]
  *  Inside the home region the colour follows the game's own data (stage-3 soil + wetness via surfaceAt); outside it
- *  follows the far-field hills (ridges ? outcrop, hollows ? wetland) and a fine per-point mottle. */
+ *  follows the far-field hills (ridges → outcrop, hollows → wetland) and a fine per-point mottle. */
 export const GLOBE_COLOURS = {
-  deep: [.012, .045, .11], shallow: [.022, .08, .135], // dark like Blue Marble oceans and Shield lakes from the air [reference calibration] // water: shaded per pixel by depth (tile.ts globeMaterial)
+  deep: [.012, .045, .11], shallow: [.022, .08, .135], // oceans: dark navy like Blue Marble [reference calibration] // water: shaded per pixel by depth (tile.ts globeMaterial)
+  // lakes (water above sea level): dark slate, much less saturated than the sea. In ISS052-E-12924 Shield lakes read
+  // ~20 % darker than the forest around them and nearly the same hue (tannin-dark, sky-reflecting water) [reference calibration]
+  lakeDeep: [.009, .014, .02], lakeShallow: [.016, .022, .027],
   // land: LINEAR albedo (vertex colours are linear). Boreal canopy reflects only ~3-6 % of visible light (MODIS albedo);
   // the old values were sRGB-looking numbers, 3-4x too bright, hence the pale/yellow orbit look [reference calibration]
   spruce: [.028, .045, .022], mixed: [.05, .075, .032], bog: [.085, .08, .045], rock: [.10, .095, .085], sand: [.3, .27, .19],
@@ -192,7 +195,7 @@ const mixTo = (o: number[], b: RGB, t: number) => mix([o[0], o[1], o[2]], b, t, 
 export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0]) {
   const C = GLOBE_COLOURS;
   const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = s.mottle;
-  // forest: spruce ? mixed stands by hill position and mottle; temperate south of 45ï¿½, tundra north of 62ï¿½
+  // forest: spruce ↔ mixed stands by hill position and mottle; temperate south of 45°, tundra north of 62°
   mix(C.spruce, C.mixed, Math.max(0, Math.min(1, .35 + .3 * s.hill + .5 * (m - .5))), o);
   if (lat < 45) mixTo(o, C.temperate, smoothstep(45, 38, lat)); else if (lat > 60) mixTo(o, C.tundra, smoothstep(60, 66, lat));
   if (s.home < 1) { // far field: outcrops on ridge tops, wetlands in hollows, beaches on sea coasts

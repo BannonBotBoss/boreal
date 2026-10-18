@@ -233,3 +233,16 @@ test('globe LOD follows the governor\'s HELD world tier (681c7dd): a fresh step 
     Object.assign(GOVERNOR, { auto: false, tier: 4, worldTier: 0 }); assert.equal(globeLod().segments, GLOBE_LOD[4].segments, 'manual tier: immediate');
   } finally { Object.assign(GOVERNOR, was); }
 });
+
+test('globe tiles: lake water (above sea level) gets the lake colour flag, sea water does not', () => {
+  const p = createPlanet(1400, () => 50); let lakeV = 0, seaV = 0;
+  for (const r of roots()) for (const k of children(r)) for (const n of children(k)) {
+    if (lakeV > 40 && seaV > 40) break;
+    const g = buildTile(n, p, 16); let x = g.next(); while (!x.done) x = g.next(); const t = x.value;
+    for (let v = 0; v < 17 * 17; v++) { if (t.height[v] > -20) continue;
+      const X = t.position[v * 3] + t.centre[0], Y = t.position[v * 3 + 1] + t.centre[1], Z = t.position[v * 3 + 2] + t.centre[2], l = Math.hypot(X, Y, Z);
+      const s = p.sampleSurface([X / l, Y / l, Z / l]);
+      if (s.kind === 'lake') { lakeV++; assert.equal(t.lake[v], 255, 'lake vertex'); } else if (s.kind === 'ocean') { seaV++; assert.equal(t.lake[v], 0, 'sea vertex'); } }
+  }
+  assert.ok(lakeV > 0 && seaV > 0, `lake ${lakeV} sea ${seaV}`);
+});

@@ -24,7 +24,7 @@ async function build(r: TileRequest) {
     x = gen.next();
   }
   const t = x.value; cancelled.delete(r.id);
-  post.postMessage({ id: r.id, tile: t }, [t.position.buffer, t.color.buffer, t.height.buffer, t.normal.buffer, t.index.buffer]);
+  post.postMessage({ id: r.id, tile: t }, [t.position.buffer, t.color.buffer, t.height.buffer, t.lake.buffer, t.normal.buffer, t.index.buffer]);
 }
 self.onmessage = (e: MessageEvent<TileRequest>) => {
   const r = e.data; if (r.cancel) { cancelled.add(r.id); return; }

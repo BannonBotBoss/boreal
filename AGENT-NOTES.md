@@ -630,3 +630,23 @@ Still fork-only (`src/animals/locomotion/fork/`, used under `?loco=1` and in the
   - ultra locked: 67 / 800 (2) / 67 → 33 / 267 (1, profiled) / 34, 0 long tasks.
   - tier change: 183 / 167 / 800 → 200 / 400 / 250, 4 frames >100 ms, 5-7 long tasks of ~200 ms: unchanged, because these are **shader program links** (25 links in the tier window: USE_CSM / USE_BATCHING / TRANSLUCENCY_MASK / GRASS_SEGMENTS variants).
 - applyMatrix4, columnRaw and heightAt no longer show in the main-thread profile. The top entries now are (program), getParameters, needsUpdate, getProgram (shader variants, not terrain), then surfaceDetail and rockRecipe (entity generation).
+
+## 2026-10-18 08:55 PT - Grok Bot (Globe Builder): in-page transition steps 0-2 (e390e72, 4511fd3, d2160eb); main.ts/buildScene.ts not touched yet
+- **Step 0, measured.** Headless Edge on omen, 1600x900 at DPR 1. GPU bytes come from a WebGL allocation hook (buffers, textures, renderbuffers); JS from `performance.memory` (includes typed arrays) and CDP heap usage for workers.
+  - **Game alone:** buffers 160 MB, textures 80 MB, renderbuffers 35 MB, plus the MSAA backbuffer (~55 MB, estimated): ~330 MB GPU. JS 469 MB (V8 heap 47 MB; the rest is geometry arrays). 3 workers, 18 MB.
+  - **Globe alone at 3 km:** buffers 15 MB (325 tiles, ~45 KB each), JS 47 MB, 4 workers 58 MB. At orbit: 8 MB / 20 MB / 19 MB.
+  - **Shared harness:** globe plus far layer at the new defaults (half resolution, 2x MSAA). Buffers 9.5 MB, far layer 12 MB (texture 2.7 + renderbuffers 9.6), JS 36 MB, workers 55 MB.
+  - **Shared overhead over the game:** ~115 MB at DPR 1; ~130 MB at DPR 1.5, where the far layer grows to ~26 MB. Under the 150 MB budget.
+  - **Over budget:** a full-resolution far layer with 4x MSAA measured 82 MB at DPR 1 (~180 MB at DPR 1.5).
+  - **Biggest lever:** the workers. Use 2 in shared mode, and terminate them while in game mode.
+- **Depth.** three r180 `reversedDepthBuffer` is checked and rejected: like `logarithmicDepthBuffer` it is a renderer-wide constructor flag (program define plus depth state). Instead, `logDepth.ts` switches three's own log-depth chunks on per material (tiles and sky shell) with its own uniform. No renderer flag is set, even standalone.
+- **e390e72:** `createGlobe(renderer, {shared, ownsRenderer, params, target, onLeave})` plus `globeOwnership()`.
+  - Shared mode does none of: resize, page DOM, clock load, governor feed, auto handoff, renderer dispose or context loss. Input works only while attached; every listener is removed by `dispose()`.
+  - `step(target)` = update + `renderTo(target)` + bookkeeping.
+  - `farLayer.ts` is the background target. `?view=farlayer` is the harness: the globe in its far layer, depth cleared, then a game-like linear-depth pass on top.
+  - Standalone `?view=globe` is unchanged. At 13:00 game time it showed the same 3 km view; at night it is dark because of the clock, not a bug.
+- **d2160eb:** `transition.ts` core.
+  - Flag `?transition=inpage|reload`; the default stays reload. Automatic reload when `deviceMemory` <= 4 or the probe cap is Low or worse.
+  - Mode machine, game <-> planet mapping with the single datum (`PLANET.home.elevation`; the globe surface = game height + 370 m in the home region, tested).
+  - Camera mapping, patch fade (0 until the chunks under the camera are ready), input scope, governor hold.
+- **Flora worker, one-line hook (not done yet, no grass/flora shader was touched):** the transition fade is coming as `render/fade.ts`, an opt-in helper with a dither threshold and patch centre/radius uniforms. When you want grass/flowers to fade with the game patch, call its `applyPatchFade(material)` in your onBeforeCompile.

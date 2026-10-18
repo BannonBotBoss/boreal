@@ -44,7 +44,10 @@ export type Vec3 = [number, number, number];
 /** Local surface of the playable area, game metres around LEVEL.waterSurface: a height (core/world heightAt; water is
  *  wherever it is below LEVEL.waterSurface) or { height, water } with the water surface (lakes, rivers) or null
  *  (core/stages/surfaceAt; see home.ts). */
-export type LocalHeight = (x: number, z: number) => number | { height: number; water: number | null; soil?: string; wet?: number };
+export type LocalHeight = ((x: number, z: number) => number | { height: number; water: number | null; soil?: string; wet?: number }) & { soilW?: LocalSoil };
+/** Filtered soil classes over a footprint `fp` (m, ~ the tile's vertex spacing): out = [bedrock, peat, sand] fractions and the
+ *  mean wetness (-1 unknown), so the globe colour blends across class boundaries instead of point-sampling 30 m cells. */
+export type LocalSoil = (x: number, z: number, fp: number, out: number[]) => void;
 export interface Surface {
   /** Ground height above sea level (m). */
   h: number;
@@ -61,6 +64,7 @@ export interface Surface {
   x: number; z: number;
   soil: string;  // home: stage-3 soil material ('' unknown / off-region)
   wet: number;   // home: site wetness 0..1 (-1 unknown)
+  soilW: number[]; soilB: boolean; // home: filtered [bedrock, peat, sand, wetness] over the vertex footprint (soilB), else the point class above
   mottle: number; // 0..1 stand-to-stand variation (the planet's value noise at ~150 m)
   hill: number;  // off-region hill relief, -1 (hollow) .. 1 (ridge top); drives outcrops / wet hollows in the colour
 }
@@ -133,13 +137,13 @@ export function createPlanet(seed: number, local?: LocalHeight) {
   const home = fromLatLon(H.latDeg * Math.PI / 180, (random(hash(`globe-home-v1:${seed}`))() * 2 - 1) * Math.PI);
   const east = norm(cross([0, 1, 0], home)), north = cross(home, east);
   const homeRaw = toMetres(relief(home[0], home[1], home[2])), lift = H.elevation - homeRaw, liftRad = H.liftKm * 1000 / R;
-  const out: Surface = { h: 0, water: -Infinity, level: 0, kind: '', home: 0, x: 0, z: 0, soil: '', wet: -1, hill: 0, mottle: .5 };
+  const out: Surface = { h: 0, water: -Infinity, level: 0, kind: '', home: 0, x: 0, z: 0, soil: '', wet: -1, soilW: [0, 0, 0, -1], soilB: false, hill: 0, mottle: .5 };
   /** Height + water at a unit direction. Reuses one result object (copy what you keep). */
-  function sampleSurface(d: Vec3): Surface {
+  function sampleSurface(d: Vec3, fp = 0): Surface {
     let h = toMetres(relief(d[0], d[1], d[2]));
     const c = dot(d, home), ang = Math.acos(Math.max(-1, Math.min(1, c)));
     h += lift * Math.exp(-((ang / liftRad) ** 2)); // home lift (Gaussian) so the region is land at the home elevation
-    out.hill = 0; out.soil = ''; out.wet = -1; out.mottle = noise(d[0] * fm + 17.3, d[1] * fm + 91.7, d[2] * fm + 53.1);
+    out.hill = 0; out.soil = ''; out.wet = -1; out.soilB = false; out.mottle = noise(d[0] * fm + 17.3, d[1] * fm + 91.7, d[2] * fm + 53.1);
     if (h > 0) { const hl = hills(d[0], d[1], d[2]); out.hill = Math.max(-1, Math.min(1, hl / 50)); h += hl * smoothstep(0, 80, h); } // far-field relief (kept off the coastline)
     out.water = h < 0 ? 0 : -Infinity; out.kind = h < 0 ? 'ocean' : ''; out.level = 0; out.home = 0; out.x = out.z = 0;
     if (h > 0) { // far-field lakes: signed field f (< 0 under water); the contour field h − level is min(h, f), continuous
@@ -162,6 +166,7 @@ export function createPlanet(seed: number, local?: LocalHeight) {
         const wl = typeof L === 'number' ? (g < LEVEL.waterSurface ? LEVEL.waterSurface : null) : L.water; // water surface here, if any
         h = h + (H.elevation + g - h) * w; out.home = w; out.x = x; out.z = z;
         if (typeof L !== 'number') { out.soil = L.soil ?? ''; out.wet = L.wet ?? -1; }
+        if (fp > 0 && local?.soilW) { local.soilW(x, z, fp, out.soilW); out.soilB = true; }
         if (w > .5) { const wet = wl !== null && g < wl; out.level = H.elevation + (wet ? wl : LEVEL.waterSurface); out.water = wet ? out.level : -Infinity; out.kind = wet ? 'lake' : ''; }
       }
     }
@@ -204,7 +209,11 @@ export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0]) {
     mixTo(o, C.bog, k * .55 * smoothstep(-.35, -.8, s.hill + .25 * (m - .5)));
     mixTo(o, C.beach, k * .5 * (1 - smoothstep(1, 8, s.h))); // a thin beach, not a pale rim on every coast
   }
-  if (s.home > 0 && s.soil) { // home: the game's soils
+  if (s.home > 0 && s.soilB) { // home, filtered over the vertex footprint: class fractions blend (no blocky 30 m cells)
+    const w = s.home, W = s.soilW;
+    mixTo(o, C.rock, w * W[0] * .6 * smoothstep(.4, .75, m)); mixTo(o, C.bog, w * W[1] * .7); mixTo(o, C.sand, w * W[2] * .5);
+    if (W[3] >= 0) mixTo(o, C.bog, w * .45 * smoothstep(.6, .95, W[3]));
+  } else if (s.home > 0 && s.soil) { // home: the game's soils
     const w = s.home, sc = s.soil === 'bedrock' ? C.rock : s.soil === 'peat' ? C.bog : s.soil === 'sand' ? C.sand : null;
     if (sc) mixTo(o, sc, w * (s.soil === 'bedrock' ? .6 * smoothstep(.4, .75, m) : s.soil === 'peat' ? .7 : .5)); // bedrock soil = thin cover with outcrop patches, not bare rock
     if (s.wet >= 0) mixTo(o, C.bog, w * .45 * smoothstep(.6, .95, s.wet));

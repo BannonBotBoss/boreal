@@ -33,6 +33,8 @@ import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
 import { buildTile, globeMaterial, releaseTileGeometry, stitchIndex, tileGeometry, type TileData } from './tile';
 export { GLOBE_LAKE } from './tile'; // inpage.ts (lazy): the band's lake ease
+/** Deeper tiles under a low camera: split x(1 + k) for tiles within reach x altitude, ramping in from `from` to `full` m. [game calibration] */
+export const NEAR_SPLIT = { k: 1.2, from: 3000, full: 1200, reach: 4 };
 import type { TileRequest } from './tileWorker';
 import { balancedTree, globeLod, worldTier } from './lod';
 
@@ -331,7 +333,11 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     camera.updateMatrixWorld(); frustum.setFromProjectionMatrix(projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
     group.clear(); wanted.clear(); drawnNodes.length = 0; drawn = 0; inView = 0; deepest = 0; culled = 0;
     const lodOpts = { radius: R, minLevel: lod.minLevel, maxLevel: lod.maxLevel, split: lod.split * splitK };
-    splitSet = balancedTree(roots(), n => (n.level < lod.minLevel || inFrustum(n)) && wantsSplit(n, camPos, lodOpts), n => !hidden(n)).splits;
+    // below ~3 km (the in-page descent) tiles near the camera split deeper, so the globe reads like the game where they meet;
+    // the draw cap below still shrinks the split when too many tiles are in view (per-tier caps and the governor unchanged)
+    const nb = NEAR_SPLIT.k * smoothstep(NEAR_SPLIT.from, NEAR_SPLIT.full, alt), nearOpts = { ...lodOpts, split: lodOpts.split * (1 + nb) };
+    const wants = (n: QNode) => { if (nb <= 0) return wantsSplit(n, camPos, lodOpts); const c = nodeCentre(n, R), dd = Math.hypot(camPos[0] - c[0], camPos[1] - c[1], camPos[2] - c[2]); return wantsSplit(n, camPos, dd < alt * NEAR_SPLIT.reach ? nearOpts : lodOpts); };
+    splitSet = balancedTree(roots(), n => (n.level < lod.minLevel || inFrustum(n)) && wants(n), n => !hidden(n)).splits;
     for (const r of roots()) visit(r);
   stitch();
     // draw cap: shrink the split distance while more tiles than the tier's cap are in view, relax it back when under

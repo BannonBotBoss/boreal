@@ -26,7 +26,7 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
   const n = segments + 1, m = n + 2, R = planet.radius, { a0, b0, s } = bounds(q), den = segments * 2 ** q.level;
   const cd = faceDir(q.face, a0 + s / 2, b0 + s / 2), centre: Vec3 = [cd[0] * R, cd[1] * R, cd[2] * R];
   const count = n * n + 4 * n, position = new Float32Array(count * 3), color = new Float32Array(count * 3), height = new Float32Array(count), lake = new Uint8Array(count), normal = new Float32Array(count * 3);
-  const P = new Float64Array(m * m * 3), d: Vec3 = [0, 0, 0], rgb = [0, 0, 0];
+  const P = new Float64Array(m * m * 3), d: Vec3 = [0, 0, 0], rgb = [0, 0, 0], fp = 1.6 * R / den; // fp: ~vertex spacing (m), the soil colour's filter footprint
   for (let jj = 0; jj < m; jj++) { // sample rows −1 … n (the outer ring only feeds normals)
     for (let ii = 0; ii < m; ii++) {
       const i = ii - 1, j = jj - 1, inside = i >= 0 && j >= 0 && i < n && j < n;
@@ -34,7 +34,7 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
       // children gets the SAME double (division is correctly rounded): shared vertices are bit-identical, never 1-ulp apart
       const a = -1 + 2 * (q.i * segments + i) / den, b = -1 + 2 * (q.j * segments + j) / den;
       faceDir(q.face, a, b, d);
-      const surf = planet.sampleSurface(d), r = R + Math.max(surf.h, surf.water), k = (jj * m + ii) * 3;
+      const surf = planet.sampleSurface(d, fp), r = R + Math.max(surf.h, surf.water), k = (jj * m + ii) * 3;
       P[k] = d[0] * r - centre[0]; P[k + 1] = d[1] * r - centre[1]; P[k + 2] = d[2] * r - centre[2];
       if (inside) {
         const v = j * n + i; height[v] = surf.h - surf.level; lake[v] = surf.level > .5 ? 255 : 0;

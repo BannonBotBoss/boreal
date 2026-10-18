@@ -1,4 +1,4 @@
-﻿/** Globe tile worker (Grok Bot): builds tiles off the main thread with the SAME seeded planet + home sampler (home.ts:
+/** Globe tile worker (Grok Bot): builds tiles off the main thread with the SAME seeded planet + home sampler (home.ts:
  *  core/stages/surfaceAt or core/world heightAt, all DOM-free pure functions), so worker tiles are bit-identical to
  *  main-thread ones. Loaded with Vite's `new Worker(new URL('./tileWorker.ts', import.meta.url), { type: 'module' })`.
  *  Builds are time-sliced: every few rows the worker yields to its event loop, so a `cancel` for a tile the camera has
@@ -13,8 +13,10 @@ import { buildLakeMask } from './lakeMask';
 export interface TileRequest { mask?: boolean; warm?: boolean; cancel?: boolean; id: number; seed: number; staged: boolean; stagesSeed: number; face: number; level: number; i: number; j: number; segments: number }
 const post = self as unknown as { postMessage(m: unknown, transfer: Transferable[]): void };
 const cancelled = new Set<number>(), ch = new MessageChannel();
-let wake: (() => void) | null = null; ch.port1.onmessage = () => { const w = wake; wake = null; w?.(); };
-const yieldNow = () => new Promise<void>(res => { wake = res; ch.port2.postMessage(0); });
+// one waker per pending yield (FIFO): the mask build and a tile build interleave on worker 0, and a single shared slot
+// dropped the other's wake-up (the mask then never finished and the landing waited on it)
+const wakes: (() => void)[] = []; ch.port1.onmessage = () => wakes.shift()?.();
+const yieldNow = () => new Promise<void>(res => { wakes.push(res); ch.port2.postMessage(0); });
 const ROWS_PER_SLICE = 6; // ≈ 1-3 ms of work between yields [game calibration]
 
 async function build(r: TileRequest) {

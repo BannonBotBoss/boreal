@@ -142,7 +142,8 @@ export const GLOBE_SHORE = { uShoreTex: { value: SHORE_EMPTY as THREE.Texture },
 export const SHORE = { wet: .6, shallow: 1.5, wetDark: .2, shallowMix: .4 };
 export function setLakeMask(key: string, data: Uint8Array, n: number, size: number) {
   const t = new THREE.DataTexture(data, n, n, THREE.RedFormat, THREE.UnsignedByteType, THREE.UVMapping, THREE.RepeatWrapping, THREE.RepeatWrapping, THREE.LinearFilter, THREE.LinearFilter);
-  t.generateMipmaps = false; // no mips: an averaged signed field is not a coarser shoreline (at grazing angles it read as all water) t.needsUpdate = true; const old = GLOBE_SHORE.uShoreTex.value; if (old !== SHORE_EMPTY) old.dispose();
+  t.generateMipmaps = false; // no mips: an averaged signed field is not a coarser shoreline (at grazing angles it read as all water)
+  t.needsUpdate = true; const old = GLOBE_SHORE.uShoreTex.value; if (old !== SHORE_EMPTY) old.dispose();
   GLOBE_SHORE.uShoreTex.value = t; GLOBE_SHORE.uShore.value.set(1 / size, .5 / n, 1, n); GLOBE_SHORE.key = key;
 }
 export function globeMaterial(debugSegments = 0) {

@@ -103,6 +103,9 @@ void main(){
 /** Thin-lens: blur scales with focal length² / (f-stop · focus distance). */
 const bokehAperture = (focalMm: number, fstop: number) => (focalMm / 1000) ** 2 / fstop * 10;
 
+/** GTAO blend intensity (1 = full): world/globe/inpage eases ambient occlusion in over the end of the in-page descent
+ *  instead of switching it on at the handover. A uniform of the existing blend pass, no new program. */
+export const AO_BLEND = { value: 1 };
 export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
   let lastW = 0, lastH = 0, settings = defaultSettings(), composer: EffectComposer | undefined, gtao: GTAOPass, aoLevel = -1, bokeh: BokehPass, bloom: UnrealBloomPass, grade: ShaderPass, sunfx: ShaderPass;
   const baseExposure = EXPOSURE.base, baseToneMap = renderer.toneMapping; // core/light: calibrated base exposure (photo EV multiplies on top)
@@ -135,7 +138,7 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
       const size = renderer.getDrawingBufferSize(new THREE.Vector2());
       if (size.x !== lastW || size.y !== lastH || ao !== aoLevel) { composer!.setPixelRatio(1); composer!.setSize(lastW = size.x, lastH = size.y); aoLevel = ao;
         if (ao === 1) gtao.setSize(size.x >> 1, size.y >> 1); }
-      gtao.enabled = ao > 0; sunfx.enabled = lightFx;
+      gtao.enabled = ao > 0; gtao.blendIntensity = AO_BLEND.value; sunfx.enabled = lightFx;
       if (lightFx) { const u = sunfx.uniforms as Record<string, { value: any }>, sv = fx!.sunDir.clone().transformDirection(camera.matrixWorldInverse), sp = camera.position.clone().addScaledVector(fx!.sunDir, 1000).project(camera);
         u.tDepth.value = composer!.readBuffer.depthTexture; u.uProj.value.copy(camera.projectionMatrix); u.uProjInv.value.copy(camera.projectionMatrixInverse);
         u.uSunView.value.copy(sv); u.uSunUv.value.set(sp.x * .5 + .5, sp.y * .5 + .5); u.uContact.value = fx!.contact; u.uRays.value = sp.z < 1 ? fx!.rays : 0;

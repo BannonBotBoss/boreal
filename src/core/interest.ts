@@ -49,6 +49,10 @@ export function* perFrame<T>(kind: string, ms: number, g: Generator<unknown, T>,
     const t = now(), r = g.next(); c.ms += now() - t; if (r.done) return r.value; yield r.value;
   }
 }
+/** Jobs this test accepts run before every other queued job (then by priority). The in-page descent sets it while it waits
+ *  for the patch: the chunks under the landing must not queue behind grass/flora tiles near the high camera (r25: 5 chunks
+ *  built in 27 s at ?at=-818,-490 while grass ran ~3600 slices/s). null = plain priority order. */
+export const JOB_FIRST: { test: ((key: string) => boolean) | null } = { test: null };
 export const cancel = (key: string) => jobs.delete(key);
 export const pending = (key: string) => jobs.has(key);
 export const queued = () => jobs.size;
@@ -58,7 +62,8 @@ export const queued = () => jobs.size;
 export function runJobs(budgetMs = INTEREST.budgetMs, now = () => performance.now()) {
   const t0 = now(); let ran = 0; const waiting = new Set<Job>(); frameNo++; frameBudget = budgetMs;
   while (jobs.size > waiting.size) {
-    let job: Job | undefined; for (const j of jobs.values()) if (!waiting.has(j) && (!job || j.priority < job.priority)) job = j;
+    let job: Job | undefined, jr = 0; const first = JOB_FIRST.test;
+    for (const j of jobs.values()) if (!waiting.has(j)) { const r = (first && first(j.key) ? -1e9 : 0) + j.priority; if (!job || r < jr) { job = j; jr = r; } }
     const st = kindStats(job!.key), finishing = !!job!.result;
     if (ran && now() - t0 + (finishing ? st.estDone : st.estSlice) > budgetMs) { STATS.deferred++; break; } // would overrun: next frame
     const s = now();

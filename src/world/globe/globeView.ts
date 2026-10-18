@@ -87,7 +87,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   const camV = new THREE.Vector3();
   const atYaw = Number(q.get('at')?.split(',')[2]); // from the game (handoff.ts globeUrl): keep its heading
-  const lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : q.has('at') && Number.isFinite(atYaw) && q.get('at')!.split(',').length > 2 ? -atYaw : null;
+  let lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : q.has('at') && Number.isFinite(atYaw) && q.get('at')!.split(',').length > 2 ? -atYaw : null;
   const pitchQ = q.has('pitch') ? Number(q.get('pitch')) * Math.PI / 180 : null; // ?pitch=deg from straight down (screenshots: look down at a cloud deck)
   const group = new THREE.Group(); scene.add(group);
 
@@ -103,13 +103,24 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   if (q.get('handoff') === 'demo') targetAlt = HANDOFF.alt * .75; // ?handoff=demo&alt=4000: descend and hand off by itself
   const fade = document.createElement('div'); Object.assign(fade.style, { position: 'fixed', inset: '0', background: '#dfe8ef', opacity: '0', transition: 'opacity .6s', pointerEvents: 'none' }); document.body.append(fade);
   camera.position.set(...start).multiplyScalar(R + alt);
-  const fwdTmp = new THREE.Vector3(); // game yaw of the camera heading (handoff.ts: yaw = -compass azimuth); the pinned ?look/?at heading when set
-  const headingYaw = () => lookAz !== null ? Math.round(-lookAz * 1000) / 1000 : (camera.getWorldDirection(fwdTmp), Math.round(-Math.atan2(fwdTmp.dot(E), fwdTmp.dot(N)) * 1000) / 1000);
+  const fwdTmp = new THREE.Vector3(), camUp = new THREE.Vector3(...start), nL = new THREE.Vector3(), eL = new THREE.Vector3();
+  const localNE = () => { nL.copy(N).addScaledVector(camUp, -N.dot(camUp)).normalize(); eL.copy(E).addScaledVector(camUp, -E.dot(camUp)).normalize(); }; // compass axes at the camera (home's, projected)
+  const cameraAz = () => { localNE(); camera.getWorldDirection(fwdTmp); return Math.atan2(fwdTmp.dot(eL), fwdTmp.dot(nL)); };
+  // game yaw of the camera heading (handoff.ts: yaw = -compass azimuth); the set heading (?look, ?at yaw, Q/E, right-drag) when there is one
+  const headingYaw = () => Math.round(-(lookAz ?? cameraAz()) * 1000) / 1000;
+  // turn the heading below 300 km: Q/E and right-drag (left-drag still pans over the planet)
+  const turn = (d: number) => { if (alt < 3e5) lookAz = (lookAz ?? cameraAz()) + d; };
+  controls.mouseButtons.RIGHT = null; canvas.addEventListener('contextmenu', e => e.preventDefault());
+  let turnX: number | null = null;
+  canvas.addEventListener('pointerdown', e => { if (e.button === 2) turnX = e.clientX; });
+  addEventListener('pointermove', e => { if (turnX !== null) { turn((e.clientX - turnX) * .005); turnX = e.clientX; } });
+  addEventListener('pointerup', e => { if (e.button === 2) turnX = null; });
   const zoom = (f: number) => { targetAlt = clamp(targetAlt * f, 40, R * 4); };
   canvas.addEventListener('wheel', e => { e.preventDefault(); zoom(Math.exp(e.deltaY * .0016)); }, { passive: false });
   addEventListener('keydown', e => {
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
     else if (e.key === 'h' || e.key === 'H') flyHome = 1;
+    else if (e.key === 'q' || e.key === 'Q') turn(-.12); else if (e.key === 'e' || e.key === 'E') turn(.12);
     else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { const at = overHome && { ...overHome, yaw: headingYaw() }; shutdown(); location.search = gameUrl(location.search, at); } // over home: spawn right below, same heading
   });
 
@@ -251,13 +262,13 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
         frames: STATS.work.length, compileMs: +STATS.compileMs.toFixed(0), workAvg: +avg(STATS.work).toFixed(2), workP99: +pct(STATS.work, .99).toFixed(2), workMax: +Math.max(0, ...STATS.work).toFixed(2), intervalP99: +pct(STATS.interval, .99).toFixed(1), intervalMax: +Math.max(0, ...STATS.interval).toFixed(1), cached: tiles.size, orbit: benchOrbit, ground: { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles } })); }
     else alt = Math.exp(Math.log(alt) + (Math.log(targetAlt) - Math.log(alt)) * (1 - Math.exp(-dt * 7)));
     controls.rotateSpeed = clamp(alt / R * .6, 2e-6, 1);
-    camera.position.copy(dir).multiplyScalar(R + ground + alt);
+    camera.position.copy(dir).multiplyScalar(R + ground + alt); camUp.copy(dir);
     controls.update();
     camera.position.setLength(R + ground + alt);
     camera.lookAt(0, 0, 0);
     const tilt = pitchQ ?? (Math.PI / 2 - .12) * (1 - smoothstep(3e3, 3e5, alt)); camera.rotateX(tilt); // look toward the horizon near the ground [game calibration]
     if (lookAz !== null && alt < 3e5) { // ?look=azimuth° (0 north, 90 east): face a compass heading near the ground (screenshots)
-      const up = camera.position.clone().normalize(), h = N.clone().multiplyScalar(Math.cos(lookAz)).addScaledVector(E, Math.sin(lookAz));
+      localNE(); const up = camUp.clone(), h = nL.clone().multiplyScalar(Math.cos(lookAz)).addScaledVector(eL, Math.sin(lookAz));
       camera.up.copy(up); camera.lookAt(camera.position.clone().add(h.addScaledVector(up, -.08))); }
     camera.near = clamp(alt * .02, .5, 1e5); camera.far = Math.sqrt((R + ground + alt) ** 2 - R * R) + R * 2; camera.updateProjectionMatrix();
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
@@ -300,7 +311,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
         `tiles drawn ${drawn} (${inView} in view, cap ${lod.draw}${splitK < 1 ? ` · split ×${splitK.toFixed(2)}` : ''}) · culled ${culled} · cached ${tiles.size} · deepest L${deepest} · queued ${queued.size + inflight.size}\n` +
         `build (${mode()}) ${built} tiles (${cancelledN} cancelled, ${ready.length} waiting) · avg ${avg(STATS.build).toFixed(1)} ms · p95 ${pct(STATS.build, .95).toFixed(1)} ms · worst frame ${Math.max(0, ...STATS.work).toFixed(1)} ms\n` +
         `tier ${LADDER[GOVERNOR.tier].name}${GOVERNOR.auto ? ' (auto)' : ''} · ${lod.segments} seg · ${fps.toFixed(0)} fps · shaders ${STATS.compileMs >= 0 ? STATS.compileMs.toFixed(0) + ' ms async' : '…'} · work ${work.toFixed(1)} ms\n` +
-        (overHome && alt < HANDOFF.hintAlt ? `over the home region: descend below ${HANDOFF.alt / 1000} km to enter the game\n` : '') + `drag orbit · wheel / + - zoom · H home · G game`;
+        (overHome && alt < HANDOFF.hintAlt ? `over the home region: descend below ${HANDOFF.alt / 1000} km to enter the game\n` : '') + `drag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game`;
     }
     if (!down) requestAnimationFrame(tick);
   }

@@ -283,3 +283,16 @@ test('globe clouds: cloud noise uses the integer lattice hash (vnoiseU), not the
   assert.ok(slice.includes('vnoiseU(') && !/\bvnoise\(|hash2s\(/.test(slice), 'cloud slices must sample vnoiseU');
   assert.ok(/float hash2u\(vec2 c, float s\) \{ uvec2 q = uvec2\(ivec2\(c\)\)/.test(GLSL_NOISE) && !/sin\(/.test(GLSL_NOISE.slice(GLSL_NOISE.indexOf('float hash2u'), GLSL_NOISE.indexOf('float fbm'))), 'hash2u: integer ops only');
 });
+
+import * as THREE_E from 'three';
+import { globeMaterial } from '../src/world/globe/tile';
+test('globe material: varyings used by the atmosphere and log depth are centroid-sampled (MSAA skirt slivers at tile borders shaded outside their triangle gave black samples)', () => {
+  const m = globeMaterial(); createAtmosphere(6371000).patch(m);
+  const sh = { uniforms: {}, vertexShader: THREE_E.ShaderLib.standard.vertexShader, fragmentShader: THREE_E.ShaderLib.standard.fragmentShader } as unknown as THREE_E.WebGLProgramParametersWithUniforms;
+  m.onBeforeCompile(sh, undefined as unknown as THREE_E.WebGLRenderer);
+  for (const src of [sh.vertexShader, sh.fragmentShader]) {
+    assert.ok(src.includes('centroid varying vec3 vViewPosition;') && !src.split('centroid varying vec3 vViewPosition;').join('').includes('varying vec3 vViewPosition;'), 'vViewPosition centroid');
+    assert.ok(src.includes('centroid varying float vFragDepth;') && !src.includes('#include <logdepthbuf_pars'), 'log depth varyings centroid');
+  }
+  assert.ok(sh.fragmentShader.includes('uniform float logDepthBufFC;'));
+});

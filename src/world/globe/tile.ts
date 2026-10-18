@@ -110,6 +110,13 @@ export function globeMaterial(debugSegments = 0) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }), C = GLOBE_COLOURS;
   const uSeg = { value: debugSegments }; m.userData.uSeg = uSeg;
   m.onBeforeCompile = sh => {
+    // centroid sampling for the varyings the atmosphere patch and the log depth use: with MSAA a fragment that only
+    // covers a sample is shaded at the pixel centre, OUTSIDE its triangle; for a near edge-on skirt sliver at a tile
+    // border that extrapolates vViewPosition / vFragDepth by kilometres -> wrong depth and a black (NaN/0) sample in the
+    // atmosphere maths (the dotted line along the a = 0.5 tile border from orbit; -25 % = one of 4 samples)
+    const centroid = (src: string, pars: string) => src.replace('varying vec3 vViewPosition;', 'centroid varying vec3 vViewPosition;')
+      .replace(`#include <${pars}>`, `#ifdef USE_LOGARITHMIC_DEPTH_BUFFER\n${pars.endsWith('fragment') ? 'uniform float logDepthBufFC;\n' : ''}centroid varying float vFragDepth;\ncentroid varying float vIsPerspective;\n#endif`);
+    sh.vertexShader = centroid(sh.vertexShader, 'logdepthbuf_pars_vertex'); sh.fragmentShader = centroid(sh.fragmentShader, 'logdepthbuf_pars_fragment');
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
     sh.uniforms.uLakeShallow = { value: new THREE.Color().setRGB(...C.lakeShallow) }; sh.uniforms.uLakeDeep = { value: new THREE.Color().setRGB(...C.lakeDeep) };
@@ -121,8 +128,8 @@ vH = aH; vLake = aLake;
   if (id < n * n) vTileUV = vec2(mod(id, n), floor(id / n)) / uSeg;
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
-    sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;\n#ifdef DEBUG_SEAMS\nvarying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { float fw = max(fwidth(vH), 1e-3); landMask = smoothstep(-fw, fw, vH);
     float dw = smoothstep(0.0, 150.0, -vH); vec3 water = mix(mix(uShallow, uDeep, dw), mix(uLakeShallow, uLakeDeep, dw), vLake); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }`)
@@ -130,7 +137,7 @@ vH = aH; vLake = aLake;
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
 #ifdef DEBUG_SEAMS
   { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;
-    if (vSkirt > 0.001) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }
+    if (vSkirt > 0.0) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }
 #endif`);
   };
   return m;

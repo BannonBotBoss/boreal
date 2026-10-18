@@ -40,6 +40,8 @@ const isSnag = (seed: number, x?: number, z?: number) => { if (x === undefined |
 /** Bench hook: barkOff = true disables the near-tier bark shader (cost measurement). */
 export const TREE_FX = { barkOff: false };
 const barkFar = { value: 30 }, leafColour = { value: 0 }, leafOff = { value: 0 }, wind = { value: 0 }, windDir = { value: new THREE.Vector2(1, 0) }, windAmp = { value: 1 };
+/** The trees' wind + phenology uniforms, shared as the SAME objects by other wind-driven shaders (render/grass). */
+export const WIND_UNIFORMS = { uWind: wind, uWindDir: windDir, uWindAmp: windAmp, uColour: leafColour };
 let material: THREE.MeshStandardMaterial | undefined;
 /** Procedural bark for the near tier (one function, species = parameters). Approach after Lefebvre & Neyret 2002 ("Synthesizing
  * bark", EGWR: bark as fracture/strip patterns on the trunk's (angle, height) chart), with the feature set of Blender/Substance

@@ -26,6 +26,7 @@ import { createPost } from './post';
 import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
 import { updateTreeUniforms } from './trees';
+import { createGrass } from './grass/grass';
 import { riverAt } from '../core/stages/rivers';
 import { waterMaterial, updateWaterUniforms } from './water';
 import { tiles } from '../photo/frame';
@@ -76,6 +77,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     wolf.brain.heading = old.brain.heading; wolf.brain.energy = old.brain.energy; wolf.root.userData.inspect = PLAYER_TAG; const g = looks.get(`player:${id}`); if (g) applyGenome(wolf.root, g); scene.add(wolf.root); return current;
   }
   const hares = createHares(scene); // src/animals/hare.ts
+  const grass = createGrass(scene); // render/grass: procedural blades around the camera
   const halo = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.85, 40), new THREE.MeshBasicMaterial({ color: 0xffe9a1, side: THREE.DoubleSide, transparent: true, opacity: .7, depthWrite: false }));
   halo.rotation.x = -Math.PI / 2; halo.visible = false; scene.add(halo);
   let lastBatchLod = -1;
@@ -252,7 +254,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       lod.rotation.y = Math.sin(time * .7 + entity.seed) * .07;
     }
     if (time - lastBatchLod > .25 || time < lastBatchLod) { lastBatchLod = time; for (const c of chunks.values()) c.batch.update(camera.position, 1); }
-    updateTreeUniforms(); updateWaterUniforms();
+    updateTreeUniforms(); updateWaterUniforms(); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen);
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
     const hour = photo?.hour ?? gameHour(tod, startHour); clock = formatHour(hour);

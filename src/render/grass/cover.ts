@@ -1,0 +1,128 @@
+/**
+ * Ground cover (Grok Bot): WHERE blades grow and WHICH species, as a pure function of (seed, x, z). CPU side of the grass
+ * port (render/grass/grass.ts; upstream simondevyoutube/Quick_Grass, MIT, after the Ghost of Tsushima GDC 2021 talk).
+ *  - Placement = jittered grid (Quick_Grass / GoT: "evenly spaced points plus a small random offset"), kept with the
+ *    probability of the density field, so the field alone decides coverage. Upstream samples a heightmap texture on the
+ *    GPU and hashes per blade; here every blade is drawn on the CPU from proc/rng (seeded, reproducible) and the root
+ *    height comes from heightAt on the terrain mesh's own vertex lattice + triangulation, so roots sit exactly on the mesh.
+ *  - The density field is ONE swappable function (`setCoverSource`): today it reads slope, TWI, lakes and river channels
+ *    (stages 1-2c). The soils stage (core/stages, core/ground) can replace it with soil type / moss / canopy later.
+ * Species = data rows (rule 2/3): one blade generator, shape = parameters. Kenora-area ground-cover mix and habitat after
+ * Baldwin & Sims 1997 (Field Guide to the Common Forest Plants in Northwestern Ontario, OMNR) and the NWO FEC ordination
+ * (Sims et al. 1997; moisture axis dry → wet); leaf dimensions from Flora of North America (FNA) treatments.
+ */
+import { CHUNK_SIZE, heightAt, WORLD_SEED } from '../../core/world';
+import { RENDER } from '../../core/renderSettings';
+import { LEVEL } from '../../core/tuning';
+import { STAGES, lakeAt, flowGrid } from '../../core/stages/elevation';
+import { twi } from '../../core/stages/flow';
+import { riverAt } from '../../core/stages/rivers';
+import { CELL } from '../../core/ground';
+import { hash, random, sample, type Dist } from '../../proc/rng';
+import { clamp01, smoothstep } from '../../proc/math';
+
+/** profile: 0 grass leaf (convex taper), 1 sedge leaf (straight taper, keeled/stiff), 2 sprig (stem + elliptic leaf: shrubs). */
+export interface CoverSpecies {
+  id: string; latin: string; form: 'grass' | 'sedge' | 'shrub';
+  length: Dist;          // blade/leaf-sprig length (m)
+  width: number;         // max blade/leaf width (m)
+  profile: 0 | 1 | 2; stem: number; // sprig: share of the length that is stem
+  lean: [number, number]; // curl at the tip (rad)
+  stiff: number;         // 0 = full wind response, 1 = rigid [game calibration]
+  wet: [number, number]; // niche on the site wetness axis 0 dry .. 1 saturated: optimum, tolerance (Gaussian) [verify, after the FEC ordination]
+  rock: number;          // relative weight on thin soil over bedrock (outcrop pockets)
+  base: [number, number, number]; tip: [number, number, number]; fall: [number, number, number]; // linear albedo (leaf reflectance, green peak 0.1-0.35 incl. sheen: Jacquemoud & Baret 1990 PROSPECT) [verify]
+}
+export const COVER_SPECIES: CoverSpecies[] = [
+  // Canada bluejoint: wet meadows, shores, disturbed moist forest. Leaves 10-30(-60) cm x 3-8 mm (FNA vol. 24) [verify]. Cures straw-tan in fall.
+  { id: 'bluejoint', latin: 'Calamagrostis canadensis', form: 'grass', length: { mean: .32, sd: .1, min: .12, max: .6 }, width: .006, profile: 0, stem: 0, lean: [.25, .7], stiff: .1, wet: [.72, .22], rock: .1,
+    base: [.036, .072, .018], tip: [.192, .264, .084], fall: [.525, .413, .213] },
+  // Water / beaked sedge: shores and fens. Leaves 20-80 cm x 3-8 (-12) mm, stiff, keeled (FNA vol. 23, Carex aquatilis / C. utriculata) [verify]. Blue-green.
+  { id: 'sedge', latin: 'Carex aquatilis / C. utriculata', form: 'sedge', length: { mean: .45, sd: .14, min: .2, max: .8 }, width: .006, profile: 1, stem: 0, lean: [.15, .45], stiff: .35, wet: [.95, .14], rock: 0,
+    base: [.036, .066, .036], tip: [.132, .204, .108], fall: [.45, .375, .188] },
+  // Wavy hairgrass: dry jack pine / rock outcrops. Leaves filiform, 0.3-1 mm wide, 5-20 cm (FNA vol. 24) [verify]; drawn ≥ 2 mm wide (sub-pixel otherwise) [game calibration].
+  { id: 'hairgrass', latin: 'Deschampsia flexuosa', form: 'grass', length: { mean: .13, sd: .04, min: .05, max: .22 }, width: .002, profile: 0, stem: 0, lean: [.4, 1], stiff: .05, wet: [.15, .2], rock: 1,
+    base: [.048, .072, .024], tip: [.24, .276, .108], fall: [.5, .425, .25] },
+  // Poverty oatgrass: dry sand and bedrock pockets. Leaves 6-15 cm x 1-3 mm, curling (FNA vol. 24) [verify].
+  { id: 'oatgrass', latin: 'Danthonia spicata', form: 'grass', length: { mean: .1, sd: .03, min: .05, max: .18 }, width: .0025, profile: 0, stem: 0, lean: [.7, 1.4], stiff: .15, wet: [.2, .2], rock: .8,
+    base: [.06, .078, .03], tip: [.24, .264, .12], fall: [.562, .475, .275] },
+  // Lowbush blueberry: dry-fresh jack pine and outcrops. Shrub 5-60 cm; leaves elliptic 1.5-3.5 x 0.6-1.2 cm (FNA vol. 8, Vaccinium angustifolium) [verify]. Leaves turn red in fall.
+  { id: 'blueberry', latin: 'Vaccinium angustifolium', form: 'shrub', length: { mean: .2, sd: .07, min: .07, max: .4 }, width: .011, profile: 2, stem: .7, lean: [.6, 1.2], stiff: .5, wet: [.32, .2], rock: .6,
+    base: [.144, .06, .036], tip: [.06, .132, .036], fall: [.4, .0375, .0375] },
+  // Labrador tea: wet black spruce / peatland. Shrub 30-100 cm; leaves 2-5 x 0.5-1.5 cm, revolute, evergreen (FNA vol. 8, Rhododendron groenlandicum) [verify].
+  { id: 'labradortea', latin: 'Rhododendron groenlandicum', form: 'shrub', length: { mean: .4, sd: .12, min: .2, max: .75 }, width: .01, profile: 2, stem: .78, lean: [.7, 1.1], stiff: .6, wet: [.85, .15], rock: 0,
+    base: [.12, .072, .036], tip: [.048, .084, .03], fall: [.0625, .0875, .0375] },
+];
+
+export interface Site { water: boolean; slopeDeg: number; wet: number; rock: number; h: number }
+/** The site at a point from the world stages (no state). wet: TWI (stage 2a) in staged mode, else height above the shore. */
+export function siteAt(x: number, z: number): Site {
+  const h = heightAt(x, z), e = 1, gx = (heightAt(x + e, z) - heightAt(x - e, z)) / (2 * e), gz = (heightAt(x, z + e) - heightAt(x, z - e)) / (2 * e);
+  const slopeDeg = Math.atan(Math.hypot(gx, gz)) * 180 / Math.PI;
+  let water = h < LEVEL.waterSurface + .03, wet: number;
+  if (STAGES.on) {
+    const rv = riverAt(STAGES.seed, x, z); water ||= !!lakeAt(STAGES.seed, x, z) || (!!rv && rv.d < rv.half + rv.bank * .5); // no blades in lakes or river channels (bed + inner bank)
+    const fl = flowGrid(STAGES.seed), n = fl.n, fx = x / fl.cell - .5, fz = z / fl.cell - .5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, w = (k: number) => ((k % n) + n) % n;
+    const t = (a: number, b: number) => twi(fl, w(b) * n + w(a)); // TWI bilinear between cell centres (avoids 30 m steps)
+    const T = t(i, j) * (1 - u) * (1 - v) + t(i + 1, j) * u * (1 - v) + t(i, j + 1) * (1 - u) * v + t(i + 1, j + 1) * u * v;
+    wet = smoothstep(5, 12, T); // TWI 5 (ridge) .. 12 (valley floor) mapped to the wetness axis [game calibration, verify against FEC moisture regimes]
+  } else wet = clamp01((LEVEL.shore + 2.5 - h) / 4); // same proxy as render/trees treeSpecies
+  wet = Math.max(wet, 1 - smoothstep(0, 1.2, h - LEVEL.waterSurface)); // shoreline: saturated within ~1 m above water
+  // Bedrock: upland band = Shield ridges (thin soil, outcrop); steep ground sheds soil. Talus/till repose ≈ 35° (Selby 1993, Hillslope Materials) [verify]
+  const rock = Math.max(smoothstep(LEVEL.upland - .4, LEVEL.upland + 1.2, h), smoothstep(28, 38, slopeDeg));
+  return { water, slopeDeg, wet, rock, h };
+}
+export interface Cover { density: number; weights: number[] }
+/** Default density field: 0..1 of the tier's max blade density, plus per-species weights. */
+export function defaultCover(x: number, z: number, s = siteAt(x, z)): Cover {
+  const weights = COVER_SPECIES.map(c => Math.exp(-(((s.wet - c.wet[0]) / c.wet[1]) ** 2)) * (1 - s.rock + s.rock * c.rock));
+  if (s.water) return { density: 0, weights };
+  // soil pockets on rock: a 4 m patch is bare where its hash is below the rock share (bare rock carries lichen, not grass)
+  const pocket = random(hash(`cover:${WORLD_SEED}:${Math.floor(x / 4)}:${Math.floor(z / 4)}`))();
+  const bare = s.rock > pocket ? 1 : 0;
+  // closed forest floor is feathermoss-dominated, graminoid cover peaks in wet openings/shores (Baldwin & Sims 1997) [game calibration .45]
+  const density = (1 - bare) * (.45 + .55 * smoothstep(.55, .95, s.wet)) * (1 - smoothstep(30, 40, s.slopeDeg));
+  return { density, weights };
+}
+let source: (x: number, z: number) => Cover = defaultCover;
+/** Soils stage hook: replace the density field (undefined restores the default). */
+export function setCoverSource(fn?: (x: number, z: number) => Cover) { source = fn ?? defaultCover; }
+export const coverAt = (x: number, z: number) => source(x, z);
+
+/** Grass tuning; cost scales with LADDER `foliage` (core/quality): density × foliage, radius × √foliage. [game calibration] */
+export const GRASS = { tile: CHUNK_SIZE / 4, maxDensity: 120 /* blades/m² at Ultra */, full: 9 /* m at full density */, radius: 48, lodDist: 14, segHigh: 6, segLow: 2 };
+/** Kept share of blades at distance d (density falloff): 1 inside `full`, then (full/d)² (constant blades per screen area), 0 at `radius`. */
+export function keepAt(d: number, radius: number, full = GRASS.full) { return (d <= full ? 1 : (full / d) ** 2) * (1 - smoothstep(radius * .8, radius, d)); }
+
+export interface Blades { count: number; pos: Float32Array; blade: Float32Array; kind: Float32Array; minY: number; maxY: number }
+/** One tile's blades as a sliced job (yields per row). Instances are sorted by their keep hash, so drawing the first
+ * `keep × count` instances thins the tile uniformly (distance / quality) without rebuilding. */
+export function* bladesJob(tx: number, tz: number, seed = WORLD_SEED): Generator<unknown, Blades> {
+  const T = GRASS.tile, x0 = tx * T, z0 = tz * T, step = CHUNK_SIZE / RENDER.terrainSegments, m = Math.round(T / step);
+  const H = new Float32Array((m + 1) * (m + 1));
+  for (let j = 0; j <= m; j++) { for (let i = 0; i <= m; i++) H[j * (m + 1) + i] = heightAt(x0 + i * step, z0 + j * step); if (j % 4 === 0) yield; }
+  const cm = Math.round(T / CELL), C: Cover[] = [];
+  for (let j = 0; j <= cm; j++) { for (let i = 0; i <= cm; i++) C.push(coverAt(x0 + i * CELL, z0 + j * CELL)); yield; }
+  // terrain mesh height: PlaneGeometry quads split along (ix, iz+1)-(ix+1, iz) (render/math terrainJob)
+  const ground = (x: number, z: number) => { const fx = (x - x0) / step, fz = (z - z0) / step, i = Math.min(m - 1, Math.floor(fx)), j = Math.min(m - 1, Math.floor(fz)), u = fx - i, v = fz - j;
+    const a = H[j * (m + 1) + i], d = H[j * (m + 1) + i + 1], b = H[(j + 1) * (m + 1) + i], c = H[(j + 1) * (m + 1) + i + 1];
+    return u + v <= 1 ? a + (d - a) * u + (b - a) * v : c + (b - c) * (1 - u) + (d - c) * (1 - v); };
+  const r = random(hash(`grass:${seed}:${tx}:${tz}`)), sp = 1 / Math.sqrt(GRASS.maxDensity), g = Math.round(T / sp), rows: number[][] = [];
+  for (let j = 0; j < g; j++) {
+    for (let i = 0; i < g; i++) {
+      const x = x0 + (i + r()) * sp, z = z0 + (j + r()) * sp, keep = r(); // jittered grid (GoT / Quick_Grass)
+      const fx = (x - x0) / CELL, fz = (z - z0) / CELL, ci = Math.min(cm - 1, Math.floor(fx)), cj = Math.min(cm - 1, Math.floor(fz)), u = fx - ci, v = fz - cj;
+      const q = [C[cj * (cm + 1) + ci], C[cj * (cm + 1) + ci + 1], C[(cj + 1) * (cm + 1) + ci], C[(cj + 1) * (cm + 1) + ci + 1]], wq = [(1 - u) * (1 - v), u * (1 - v), (1 - u) * v, u * v];
+      if (q.some(c => c.density === 0) || r() >= q.reduce((s, c, k) => s + c.density * wq[k], 0)) continue; // hard edge at water / bare rock
+      const w = COVER_SPECIES.map((_, s) => q.reduce((a, c, k) => a + c.weights[s] * wq[k], 0)), tot = w.reduce((a, b) => a + b, 0);
+      let pick = r() * tot, k = 0; while (k < w.length - 1 && (pick -= w[k]) > 0) k++;
+      const sp_ = COVER_SPECIES[k];
+      rows.push([x, ground(x, z) - .01, z, r() * Math.PI * 2, sample(r, sp_.length), sp_.lean[0] + r() * (sp_.lean[1] - sp_.lean[0]), keep, k]);
+    }
+    yield;
+  }
+  rows.sort((a, b) => a[6] - b[6]);
+  const n = rows.length, pos = new Float32Array(n * 3), blade = new Float32Array(n * 4), kind = new Float32Array(n); let minY = Infinity, maxY = -Infinity;
+  rows.forEach((b, i) => { pos.set(b.slice(0, 3), i * 3); blade.set(b.slice(3, 7), i * 4); kind[i] = b[7]; minY = Math.min(minY, b[1]); maxY = Math.max(maxY, b[1] + b[4]); });
+  return { count: n, pos, blade, kind, minY: n ? minY : 0, maxY: n ? maxY : 0 };
+}

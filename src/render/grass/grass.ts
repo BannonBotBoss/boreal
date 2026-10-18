@@ -1,0 +1,162 @@
+/**
+ * Procedural grass blades (Grok Bot). PORT of simondevyoutube/Quick_Grass (MIT, @6b56164; baseline in vendor/quick-grass),
+ * itself after "Procedural Grass in Ghost of Tsushima" (Eric Wohllaib, GDC 2021). Kept from upstream (names in comments):
+ * blade built in the vertex shader from a vertex ID (vertIndex, front + back faces, FrontSide), two blade LODs (segHigh /
+ * segLow) with the far half of the high LOD flattening its profile (highLODOut), per-blade lean + curve (rotateX on the
+ * height), noise wind lean around a wind axis, player push, rounded normals (two normals rotated ±0.3π, blended across the
+ * blade) mixed toward up (skyFadeIn), base-to-tip colour with base darkening (ao), and the view-space thickening hack.
+ * Changed for Boreal:
+ *  - MeshStandardMaterial via onBeforeCompile (CSM shadows, IBL, fog, cloud shadows, pbr translucency) instead of upstream's
+ *    own Phong lighting model; shared hash/noise from proc/glsl (vnoise) instead of upstream murmurHash/noise12.
+ *  - Per-blade data (root, angle, length, lean, keep hash, species) comes from the CPU (render/grass/cover: seeded rng,
+ *    density field, real species), not a GPU hash over a heightmap texture. Species shape/colour are uniform rows.
+ *  - Wind = the shared wind field + clock used by the trees (render/trees WIND_UNIFORMS: same uniform objects); the fall
+ *    colour follows the same phenology uniform.
+ *  - Tiles (GRASS.tile, aligned to chunks) are built as interest jobs; distance thinning by instanceCount on keep-sorted
+ *    instances (keepAt) with width compensation, scaled by the LADDER `foliage` knob. Upstream used fixed 10 m patches.
+ */
+import * as THREE from 'three';
+import { GLSL_NOISE } from '../../proc/glsl';
+import { addCloudShadow, addTranslucency } from '../pbr';
+import { WIND_UNIFORMS } from '../trees';
+import { enqueue, cancel, pending } from '../../core/interest';
+import { RENDER } from '../../core/renderSettings';
+import { COVER_SPECIES, GRASS, bladesJob, keepAt, type Blades } from './cover';
+
+export const GRASS_FX = { off: false }; // bench hook (cost measurement), like TREE_FX
+export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0 };
+(globalThis as { borealGrass?: unknown }).borealGrass = { info: GRASS_INFO, fx: GRASS_FX }; // dev/bench handle (survives Vite HMR module copies)
+const K = COVER_SPECIES.length;
+const U = {
+  uGrass: { value: new THREE.Vector4(GRASS.lodDist, GRASS.full, GRASS.radius, 1) }, // lodDist, full, radius, foliage
+  uPlayer: { value: new THREE.Vector3() }, uPx: { value: .001 }, // pixel footprint per metre of distance (2·tan(fov/2) / screen height)
+  uShape: { value: COVER_SPECIES.map(s => new THREE.Vector4(s.width, s.profile, s.stem, s.stiff)) },
+  uBase: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.base)) }, uTip: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.tip)) }, uFall: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.fall)) },
+};
+const VERT_HEAD = `#define GRASS_K ${K}
+attribute float vertIndex; attribute vec4 aBlade; attribute float aKind;
+uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer; uniform float uPx;
+uniform vec4 uShape[GRASS_K]; uniform vec3 uBase[GRASS_K]; uniform vec3 uTip[GRASS_K]; uniform vec3 uFall[GRASS_K];
+varying vec3 vGrassColour;
+${GLSL_NOISE}
+float easeOutG(float x, float t) { return 1.0 - pow(1.0 - x, t); }
+float easeInG(float x, float t) { return pow(x, t); }
+mat3 rotateXG(float t) { float c = cos(t), s = sin(t); return mat3(1, 0, 0, 0, c, s, 0, -s, c); }
+mat3 rotateYG(float t) { float c = cos(t), s = sin(t); return mat3(c, 0, -s, 0, 1, 0, s, 0, c); }
+vec3 rotA(vec3 v, vec3 a, float t) { return v * cos(t) + cross(a, v) * sin(t) + a * dot(a, v) * (1.0 - cos(t)); } // Rodrigues (upstream rotateAxis)
+`;
+// Upstream main(), ported. "position" = the blade root (instanced), as upstream (grassOffset).
+const VERT_BODY = `
+  vec3 root = position;
+  float dist = distance(cameraPosition, root);
+  float keep = (dist <= uGrass.y ? 1.0 : pow(uGrass.y / dist, 2.0)) * (1.0 - smoothstep(uGrass.z * 0.8, uGrass.z, dist)) * uGrass.w; // cover.keepAt × foliage
+  float alive = step(aBlade.w, keep);
+  float highLODOut = smoothstep(uGrass.x * 0.5, uGrass.x, dist);
+  int k = int(aKind + 0.5); vec4 sh = uShape[k];
+  float GRASS_VERTICES = (GRASS_SEGMENTS + 1.0) * 2.0;
+  float vertID = mod(vertIndex, GRASS_VERTICES);
+  float zSide = -(floor(vertIndex / GRASS_VERTICES) * 2.0 - 1.0); // 1 = front, -1 = back
+  float xSide = mod(vertID, 2.0);
+  float heightPercent = (vertID - xSide) / (GRASS_SEGMENTS * 2.0);
+  // width profile per species (upstream: grass only, easeOut(1 - h, 2) near / linear far)
+  float prof = sh.y < 0.5 ? mix(easeOutG(1.0 - heightPercent, 2.0), 1.0 - heightPercent, highLODOut)
+             : sh.y < 1.5 ? 1.0 - heightPercent * 0.9
+             : GRASS_SEGMENTS < 3.0 ? 0.6 * (1.0 - heightPercent * 0.8)
+             : heightPercent < sh.z ? 0.15 : pow(max(sin(3.14159 * (heightPercent - sh.z) / (1.0 - sh.z)), 0.0), 0.7);
+  float grassTotalHeight = aBlade.y * alive;
+  float grassTotalWidth = max(sh.x, 1.5 * uPx * dist) * prof * alive * min(3.0, inversesqrt(max(keep, 0.05))); // ≥ 1.5 px wide (real widths alias away), thinned blades widen to keep the coverage
+  float x = (xSide - 0.5) * grassTotalWidth, y = heightPercent * grassTotalHeight;
+  // wind: shared field direction + upstream's noise gusts; strength from the shared drag amplitude (trees: (U/4)²)
+  float windDir = atan(uWindDir.y, uWindDir.x) + (vnoise(root.xz * 0.05 + 0.05 * uWind, 7.0) - 0.5) * 1.2;
+  float windNoiseSample = vnoise(root.xz * 0.25 + uWind, 3.0) * 2.0 - 1.0;
+  float windLeanAngle = easeInG(mix(0.25, 1.0, windNoiseSample * 0.5 + 0.5), 2.0) * 1.25 * min(uWindAmp, 1.5) * (1.0 - sh.w) * heightPercent;
+  vec3 wd = vec3(cos(windDir), 0.0, sin(windDir)), windAxis = vec3(wd.z, 0.0, -wd.x); // rotA(up, windAxis, +θ) leans along wd
+  float distToPlayer = distance(root.xz, uPlayer.xz);
+  float playerLeanAngle = 0.6 * smoothstep(1.2, 0.3, distToPlayer) * step(abs(root.y - uPlayer.y), 1.5) * heightPercent; // upstream 0.2 rad over 2.5 m; wolf-sized [game calibration]
+  vec2 away = normalize(root.xz - uPlayer.xz + 1e-4); vec3 playerAxis = vec3(away.y, 0.0, -away.x);
+  float randomLean = aBlade.z + (vnoise(vec2(uWind * 0.35) + root.xz * 13.7, 5.0) - 0.5) * 0.2; // + leanAnimation
+  float easedHeight = mix(easeInG(heightPercent, 2.0), 1.0, highLODOut);
+  float curveAmount = -randomLean * easedHeight;
+  mat3 face = rotateYG(aBlade.x);
+  vec3 p = face * (rotateXG(curveAmount) * vec3(x, y, 0.0));
+  p = rotA(rotA(p, windAxis, windLeanAngle), playerAxis, playerLeanAngle);
+  vec3 n0 = rotateXG(curveAmount) * vec3(0.0, 0.0, 1.0);
+  vec3 nb = face * (rotateYG(3.14159 * 0.3 * (xSide * 2.0 - 1.0) * zSide) * n0) * zSide; // rounded normal (upstream normal1/normal2)
+  nb = rotA(rotA(nb, windAxis, windLeanAngle), playerAxis, playerLeanAngle);
+  float skyFadeIn = (1.0 - highLODOut) * 0.25; // upstream SKY_RATIO: normals mostly up, so the field shades like the ground
+  objectNormal = normalize(mix(vec3(0.0, 1.0, 0.0), nb, skyFadeIn));
+  // colour: species base → tip (easeIn 4), seeded shade, fall colour (shared phenology), base darkening (upstream ao)
+  float hs = fract(aBlade.w * 91.7), shade = mix(0.75, 1.0, fract(aBlade.w * 37.3));
+  float fallT = smoothstep(hs - 0.3, hs + 0.3, uColour);
+  vec3 tip = mix(uTip[k], uFall[k], fallT), base = mix(uBase[k], uFall[k] * 0.6, fallT * 0.5);
+  float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
+  vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.35, 1.0, easeInG(heightPercent, 2.0));
+  vec3 grassPos = root + p;
+  float viewDotNormal = clamp(dot(face * vec3(0.0, 0.0, zSide), normalize(vec3(cameraPosition.x - root.x, 0.0, cameraPosition.z - root.z))), 0.0, 1.0);
+  float viewSpaceThickenFactor = easeOutG(1.0 - viewDotNormal, 4.0) * smoothstep(0.0, 0.2, viewDotNormal);
+`;
+const materials = new Map<number, THREE.MeshStandardMaterial>();
+function grassMaterial(segments: number) {
+  let m = materials.get(segments); if (m) return m;
+  m = new THREE.MeshStandardMaterial({ roughness: .9, side: THREE.FrontSide }); m.userData.shared = true;
+  (m as unknown as { defines: Record<string, string> }).defines = { GRASS_SEGMENTS: segments.toFixed(1), TRANSLUCENCY_MASK: '1.0' };
+  m.onBeforeCompile = shader => {
+    Object.assign(shader.uniforms, U, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });
+    addTranslucency(shader); addCloudShadow(shader);
+    shader.vertexShader = VERT_HEAD + shader.vertexShader
+      .replace('#include <beginnormal_vertex>', `vec3 objectNormal; ${VERT_BODY}`)
+      .replace('#include <begin_vertex>', 'vec3 transformed = grassPos;')
+      .replace('#include <project_vertex>', `vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
+        mvPosition.x += viewSpaceThickenFactor * (xSide - 0.5) * grassTotalWidth * 0.5 * zSide; // upstream "HACK"
+        gl_Position = projectionMatrix * mvPosition;`);
+    shader.fragmentShader = 'varying vec3 vGrassColour;\n' + shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb = vGrassColour;');
+  };
+  m.customProgramCacheKey = () => `boreal-grass-${segments}`;
+  materials.set(segments, m); return m;
+}
+/** Blade template: vertex IDs + index for front and back faces (upstream #CreateGeometry_). */
+const templates = new Map<number, { id: THREE.BufferAttribute; index: THREE.BufferAttribute }>();
+function template(segments: number) {
+  let t = templates.get(segments); if (t) return t;
+  const V = (segments + 1) * 2, idx: number[] = [];
+  for (let i = 0; i < segments; i++) { const vi = i * 2, fi = V + vi; idx.push(vi, vi + 1, vi + 2, vi + 2, vi + 1, vi + 3, fi + 2, fi + 1, fi, fi + 3, fi + 1, fi + 2); }
+  t = { id: new THREE.BufferAttribute(Float32Array.from({ length: V * 2 }, (_, i) => i), 1), index: new THREE.BufferAttribute(new Uint16Array(idx), 1) };
+  templates.set(segments, t); return t;
+}
+function tileMesh(b: Blades, segments: number, attrs: Record<string, THREE.InstancedBufferAttribute>, sphere: THREE.Sphere) {
+  const g = new THREE.InstancedBufferGeometry(), t = template(segments);
+  g.setIndex(t.index); g.setAttribute('vertIndex', t.id); for (const [k, a] of Object.entries(attrs)) g.setAttribute(k, a);
+  g.instanceCount = b.count; g.boundingSphere = sphere; g.boundingBox = new THREE.Box3().setFromCenterAndSize(sphere.center, new THREE.Vector3(GRASS.tile, b.maxY - b.minY + 1, GRASS.tile));
+  const mesh = new THREE.Mesh(g, grassMaterial(segments)); mesh.userData.shadowSet = true; mesh.castShadow = false; mesh.receiveShadow = true; // photoreal: no grass shadow casters (upstream castShadow = false)
+  mesh.matrixAutoUpdate = false; return mesh;
+}
+
+/** The grass field around the camera: tiles within the radius, built by interest jobs, thinned with distance. */
+export function createGrass(scene: THREE.Scene) {
+  const group = new THREE.Group(); group.name = 'grass'; scene.add(group);
+  const tiles = new Map<string, { tx: number; tz: number; b: Blades; high: THREE.Mesh; low: THREE.Mesh }>();
+  let segs = RENDER.terrainSegments; const jobs = new Set<string>();
+  const dispose = (key: string) => { const t = tiles.get(key)!; group.remove(t.high, t.low); t.high.geometry.dispose(); t.low.geometry.dispose(); tiles.delete(key); };
+  function update(camera: THREE.Camera, player: THREE.Vector3, foliage: number, nearRadius: number) {
+    const T = GRASS.tile, cx = camera.position.x, cz = camera.position.z, R = Math.min(GRASS.radius * Math.sqrt(foliage), nearRadius); // never beyond full-res terrain (interest near tier)
+    group.visible = !GRASS_FX.off && foliage > 0;
+    if (segs !== RENDER.terrainSegments) { segs = RENDER.terrainSegments; for (const k of [...tiles.keys()]) dispose(k); } // roots follow the terrain lattice
+    U.uGrass.value.set(GRASS.lodDist, GRASS.full, R, foliage); U.uPlayer.value.copy(player); const fov = (camera as THREE.PerspectiveCamera).fov ?? 48; U.uPx.value = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, globalThis.innerHeight ?? 900);
+    const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * T - cx, 0, cx - tx * T - T), Math.max(tz * T - cz, 0, cz - tz * T - T));
+    const r = Math.ceil(R / T) + 1, ox = Math.floor(cx / T), oz = Math.floor(cz / T), want = new Set<string>();
+    for (let a = ox - r; a <= ox + r; a++) for (let b = oz - r; b <= oz + r; b++) { const d = sq(a, b), key = `${a}:${b}`; if (d > R + T / 2) continue; want.add(key); // keep a half-tile margin (no flicker at the edge)
+      if (d <= R && !tiles.has(key) && !pending(`grass:${key}`)) { jobs.add(key); enqueue(`grass:${key}`, d + 5, bladesJob(a, b), (bl: Blades) => { jobs.delete(key);
+        if (!bl.count) { tiles.set(key, { tx: a, tz: b, b: bl, high: new THREE.Mesh(), low: new THREE.Mesh() }); return; }
+        const attrs = { position: new THREE.InstancedBufferAttribute(bl.pos, 3), aBlade: new THREE.InstancedBufferAttribute(bl.blade, 4), aKind: new THREE.InstancedBufferAttribute(bl.kind, 1) };
+        const sphere = new THREE.Sphere(new THREE.Vector3((a + .5) * T, (bl.minY + bl.maxY) / 2, (b + .5) * T), Math.hypot(T / 2, T / 2, (bl.maxY - bl.minY) / 2 + .5) + 1);
+        const t = { tx: a, tz: b, b: bl, high: tileMesh(bl, GRASS.segHigh, attrs, sphere), low: tileMesh(bl, GRASS.segLow, attrs, sphere) }; group.add(t.high, t.low); tiles.set(key, t); }); } }
+    for (const key of [...tiles.keys()]) if (!want.has(key)) dispose(key);
+    for (const key of [...jobs]) if (!want.has(key)) { cancel(`grass:${key}`); jobs.delete(key); }
+    let blades = 0, drawn = 0;
+    for (const t of tiles.values()) { if (!t.b.count) continue; const d = sq(t.tx, t.tz), n = Math.min(t.b.count, Math.ceil(t.b.count * keepAt(d, R) * foliage)); blades += t.b.count;
+      const near = d < GRASS.lodDist; t.high.visible = near && n > 0; t.low.visible = !near && n > 0;
+      (t.high.geometry as THREE.InstancedBufferGeometry).instanceCount = n; (t.low.geometry as THREE.InstancedBufferGeometry).instanceCount = n; drawn += n; }
+    Object.assign(GRASS_INFO, { tiles: tiles.size, blades, drawn });
+  }
+  return { group, update, tiles: () => tiles.size };
+}

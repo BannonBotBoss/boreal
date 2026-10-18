@@ -307,3 +307,16 @@ test('game <-> globe round trip URLs: game keys survive, spot and heading go up 
   for (const k of ['view', 'alt', 'look', 'pitch']) assert.ok(!down.has(k), k);
   assert.equal(new URLSearchParams(gameUrl('?view=globe', { x: 1, z: 2 })).get('at'), '1,2'); // no heading known: x, z only
 });
+
+import { CLOUDS, ATMOS_STEPS } from '../src/world/globe/atmosphere';
+test('globe clouds: edge contrast and detail follow the governor tier (uniforms only, no recompile); finer tiers never softer', () => {
+  const rows = ATMOS_STEPS.length;
+  for (const t of [CLOUDS.octaves, CLOUDS.edgeHalf, CLOUDS.edgeCentre]) assert.equal(t.length, rows);
+  for (let i = 1; i < rows; i++) { assert.ok(CLOUDS.octaves[i] <= CLOUDS.octaves[i - 1]); assert.ok(CLOUDS.edgeHalf[i] >= CLOUDS.edgeHalf[i - 1]); }
+  const atm = createAtmosphere(6371000, 0), u = atm.uniforms;
+  const frag = (atm.dome.material as unknown as { fragmentShader: string }).fragmentShader;
+  assert.equal(u.uCloudOct.value, CLOUDS.octaves[0]); assert.equal(u.uCloudEdge.value.x, CLOUDS.edgeCentre[0]); assert.equal(u.uCloudEdge.value.y, CLOUDS.edgeHalf[0]);
+  atm.setTier(2); assert.equal(u.uCloudOct.value, CLOUDS.octaves[2]); assert.equal(u.uCloudEdge.value.y, CLOUDS.edgeHalf[2]);
+  assert.equal((atm.dome.material as unknown as { fragmentShader: string }).fragmentShader, frag, 'tier change: same shader');
+  assert.ok(frag.includes('smoothstep(c - hw, c + hw') && frag.includes(`a *= ${CLOUDS.persistence.toFixed(3)}`) && frag.includes('octD'), 'threshold + distance octave fade in the shader');
+});

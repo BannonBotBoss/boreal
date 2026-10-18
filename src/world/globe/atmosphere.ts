@@ -67,9 +67,11 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
 // sunlight colour reaching x (transmittance), 0 in the planet's shadow
 vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? vec3(0.0) : exp(-(BR * l.x + BME * l.y)); }
 ${GLSL_NOISE}
-// 3D value noise from two seeded 2D slices of the shared vnoise (proc/glsl), so the clouds have no seams on the sphere
-float cloudSlice3(vec3 p) { float z = floor(p.z), f = fract(p.z); f = f * f * (3.0 - 2.0 * f);
-  return mix(vnoise(p.xy + z * vec2(37.0, 17.0), uCloudSeed), vnoise(p.xy + (z + 1.0) * vec2(37.0, 17.0), uCloudSeed), f); }
+// 3D value noise from two seeded 2D slices of the shared vnoiseU (proc/glsl), so the clouds have no seams on the sphere.
+// vnoiseU, not vnoise: the fract(sin) hash gave dotted lines / specks along lattice planes in the clouds and their shadows
+// (the base octave's x = 0 plane is the +z face's centre tile line: the "crack" seen from orbit and at 40 km)
+float cloudSlice3(vec3 p) { float z = floor(p.z), f = p.z - z; f = f * f * (3.0 - 2.0 * f);
+  return mix(vnoiseU(p.xy + z * vec2(37.0, 17.0), uCloudSeed), vnoiseU(p.xy + (z + 1.0) * vec2(37.0, 17.0), uCloudSeed), f); }
 float cloudDensity(vec3 dir, float oct) { // dir: planet-fixed unit direction; oct: octaves (governor tier)
   dir = vec3(uCloudSpin.x * dir.x - uCloudSpin.y * dir.z, dir.y, uCloudSpin.y * dir.x + uCloudSpin.x * dir.z); // drift about the polar (+y) axis
   vec3 p = dir * (${(6371 / CLOUDS.cellKm).toFixed(3)}); float v = 0.0, a = 0.5, n = 0.0;

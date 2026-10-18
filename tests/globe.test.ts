@@ -274,3 +274,12 @@ test('globe LOD: the selected tiles are 2:1 balanced - no tile has a neighbour 2
       for (let l = n.level; l >= 0; l--) if (at.has(`${a.face}/${l}/${a.i >> (n.level - l)}/${a.j >> (n.level - l)}`)) { assert.ok(n.level - l <= 1, `${row.name}: ${n.key} edge ${e} is ${n.level - l} levels finer than its neighbour`); break; } }
   }
 });
+
+import { createAtmosphere } from '../src/world/globe/atmosphere';
+import { GLSL_NOISE } from '../src/proc/glsl';
+test('globe clouds: cloud noise uses the integer lattice hash (vnoiseU), not the fract(sin) hash that left dotted seams on lattice planes', () => {
+  const frag = (createAtmosphere(6371000).dome.material as unknown as { fragmentShader: string }).fragmentShader;
+  const slice = frag.slice(frag.indexOf('float cloudSlice3'), frag.indexOf('float cloudDensity'));
+  assert.ok(slice.includes('vnoiseU(') && !/\bvnoise\(|hash2s\(/.test(slice), 'cloud slices must sample vnoiseU');
+  assert.ok(/float hash2u\(vec2 c, float s\) \{ uvec2 q = uvec2\(ivec2\(c\)\)/.test(GLSL_NOISE) && !/sin\(/.test(GLSL_NOISE.slice(GLSL_NOISE.indexOf('float hash2u'), GLSL_NOISE.indexOf('float fbm'))), 'hash2u: integer ops only');
+});

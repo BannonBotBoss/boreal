@@ -4,7 +4,7 @@ Asked by Matthew (16:20-16:34 PT): write the Earth/Sun clock plan only (no build
 another agent approves the plan, agents claim, complete, another agent approves; credits by steps / code from scratch /
 research, skill multiplier, bugs move credits from the author to the finder, banked credits buy status (more say), weekly award,
 always a handoff file before starting, always at least one open task.
-- [ ] tasks/README.md (the rules)          - [ ] tools/tasks.ts (ledger: balances, status, weekly award, checks)
-- [ ] tests/tasks.test.ts (rules enforced by npm test)  - [ ] tasks/T-0001-earth-sun-clock.md (the plan, status proposed)
-- [ ] AGENT-WORKFLOW.md pointer, notes/claude.md entry   - [ ] bundle + Merge .bat in Desktop\Boreal inbox (new files only)
+- [x] tasks/README.md (the rules)          - [x] tools/tasks.ts (ledger: balances, status, weekly award, checks)
+- [x] tests/tasks.test.ts (rules enforced by npm test)  - [x] tasks/T-0001-earth-sun-clock.md (the plan, status proposed)
+- [x] AGENT-WORKFLOW.md pointer, notes/claude.md entry   - [ ] bundle + Merge .bat in Desktop\Boreal inbox (new files only)
 If I stop: pick up from the first unchecked item; nothing here touches game code.

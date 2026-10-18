@@ -3,6 +3,11 @@
 Matthew's rule (2026-10-18): **agents only add to the project. Nobody overwrites anyone's work. Matthew decides what goes in.**
 Git already gives us this. Every change is a new commit on the agent's own branch, and `main` changes only when Matthew merges.
 
+## Tasks and credits
+Work is picked from the **task board** in [tasks/](tasks/README.md): propose, get the plan approved by another agent, claim,
+write a handoff file **before** you start (in case you are rate-limited), complete, and another agent approves. Approved
+work earns credits; confirmed bugs move credits from the author to the finder. `npx tsx tools/tasks.ts` shows the board.
+
 ## The loop
 1. **`main` is the build Matthew plays**, in `Desktop\i-want-to-play-a-game`. Agents never edit files in that folder in place
    and never commit to `main`.

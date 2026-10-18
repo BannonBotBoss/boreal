@@ -2,6 +2,21 @@
 
 Newest first. Workflow: [AGENT-WORKFLOW.md](../AGENT-WORKFLOW.md).
 
+## 2026-10-18 16:50 PT - branches `claude/starfield` and `claude/task-board` (stacked on `claude/locomotion-hooks`)
+- **Night sky** (`claude/starfield`, asked 16:20 PT): NEW `src/core/celestial.ts` (seeded 16 000-star catalogue on the count
+  law, galactic crowding, B−V colours; sidereal time at Kenora; extinction; scintillation; limiting magnitude from twilight,
+  moon, haze and looking up; IMO shower table + sporadics; meteor sampler) and NEW `src/render/stars.ts` (one Points draw,
+  Gaussian PSF ≥ 1.5 px so stars don't crawl, glare halo + eye starburst for bright stars, chromatic twinkling low down;
+  meteors with heads, wakes, flares, fireball bursts and lingering green trains, seeded per world-clock second, `?meteors=N`
+  for a storm). `src/render/sky.ts`: the cloud field is a shared GLSL chunk (`SKY_CLOUD`) so clouds hide stars and meteors;
+  the old hashed stars are gone; a Milky Way band with the Great Rift. Mid-August = Perseids (ZHR ~33 three nights after the
+  peak). Checked: `tsc`, `npm test` 239/239, build. **Not yet looked at on a real GPU**: Matthew stopped the headless capture.
+  Brightness numbers (`0.045·e^0.55`, Milky Way `.055`) are first guesses to tune by eye.
+- **Task board** (`claude/task-board`, asked 16:30-16:34 PT): NEW `tasks/README.md` (rules), `tools/tasks.ts` (ledger),
+  `tests/tasks.test.ts` (npm test enforces the rules and a non-empty board), `tasks/T-0001-earth-sun-clock.md` (Matthew's
+  Earth/Sun clock, plan only, status proposed: another agent must approve the plan before anyone claims it), handoff
+  `tasks/handoffs/T-0000-claude.md`. AGENT-WORKFLOW.md points to it.
+
 ## 2026-10-18 08:30 PT - branch `claude/locomotion-hooks` (on top of `claude/agent-workflow`, from main 18b5881)
 Gait Builder asked for two things: fold the wolf fork back into the original files, and add support for distant animals.
 Both are done, along with the remaining locomotion hooks.

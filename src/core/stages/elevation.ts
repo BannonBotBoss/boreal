@@ -12,7 +12,7 @@
 import { hash, random } from '../../proc/rng';
 
 /** Live switch (setting world.stagedTerrain): heightAt reads the staged grid instead of the original layered terrain. */
-export const STAGES = { on: false, seed: 1400 };
+export const STAGES = { on: false, seed: 1400 }; // module default off (tests, tools); the APP default is on via the setting world.stagedTerrain.v2 (core/renderSettings), off with ?stages=0
 /** Stage-1 parameters, measured from real Kenora / Lake of the Woods references (tools/terrain-ref, not shipped):
  *  Copernicus GLO-30 DEM + ESA WorldCover 2021 + Sentinel-2 over a 15 x 15 km window east of Kenora (49.735 N, 94.38 W).
  *  Fitted by sweeping these knobs against the reference metrics (reference -> seed 1400; seeds 7 and 99 land close):
@@ -22,10 +22,15 @@ export const STAGES = { on: false, seed: 1400 };
  *    spectral slope -3.14 -> -3.41 (was -4.0); 300-3000 m band -2.5 -> -3.2; autocorrelation ~1 km in both.
  *  - grain 2 / grainOctaves 2 / grainMix .4 and scourGrain 3 (integers keep the lattice periodic): NE-SW ice-flow grain.
  *    Gradient direction 42 deg -> 44 deg (x east, z south), structure-tensor coherence .25 -> .29.
- *  - waterPct .22 + lakeMinDepth 3 m (shallower filled pits become stage-3 peat): water 29 % -> 27 %; lake median 7.2 ha -> 6.3 ha,
- *    share < 10 ha .55 -> .59, elongation 2.2 -> 2.1, islands 42 -> 54 per 100 km^2. Lakes >= 1 ha are denser than the window
- *    (17.6 -> 75 per 100 km^2): the real window's 29 % water is mostly one big lake (Lake of the Woods), the torus has none. */
-export const ELEV = { n: 256, cell: 30, relief: 14, droplets: 30000, seedOffset: 0, reliefM: 50, waterPct: .22, persistence: .7, grain: 2, grainOctaves: 2, grainMix: .4, basins: .75, lakeMinDepth: 3, scourM: 20, scourGrain: 3, scourPers: .8, scourOct: 3, scourBase: 8 };
+ *  - waterPct .25 + lakeMinDepth 8 m. Filled pits shallower than 8 m become stage-3 peat, as Shield basins infill to fens and
+ *    bogs; the base water forms fewer, larger connected bodies. Lakes >= 1 ha per 100 km^2: 17.6 -> 32 (was 61; seeds 7 / 99:
+ *    17 / 27). Lake median 7.2 -> 8.8 ha, p90 81 -> 32 ha, elongation 2.22 -> 2.16, share < 10 ha .55 -> .58, water 29 % -> 26 %,
+ *    islands 42 -> 68 per 100 km^2 (too many). The game's lakes are counted with wrap-around (the world is a torus). 12 m reaches
+ *    22 lakes per 100 km^2 but leaves only 2 perched (above-base) lakes, so 8 m (8 perched) is kept.
+ *  - Land slope > 0.129: DSM 0.28 -> 0.145. The DSM figure is inflated by canopy: WorldCover tree pixels read 0.31, while
+ *    canopy-free grass/bare/built pixels read 0.11-0.14, and a 1-cell Gaussian (canopy-edge suppression) gives 0.17. So the
+ *    bare-earth target is ~0.12-0.17, not 0.28. */
+export const ELEV = { n: 256, cell: 30, relief: 14, droplets: 30000, seedOffset: 0, reliefM: 50, waterPct: .25, persistence: .7, grain: 2, grainOctaves: 2, grainMix: .4, basins: .75, lakeMinDepth: 8, scourM: 20, scourGrain: 3, scourPers: .8, scourOct: 3, scourBase: 8 };
 export type Grid = { n: number; cell: number; h: Float32Array; min: number; max: number; ms: number; /** base-water grid level */ pw: number; /** grid units -> metres */ k: number };
 
 /** Periodic value-noise lattice: hashed ONCE per (period, salt) into a table; wraps every `period` cells. */

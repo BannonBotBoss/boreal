@@ -19,6 +19,7 @@ test('settings store applies, persists and resets over the schema', () => {
 
 test('population layer: defaults change nothing; density thins/adds trees deterministically', () => {
   const store = createSettingsStore(RENDER_SETTINGS, 'k', memory()); store.reset();
+  store.set('world.stagedTerrain.v2', false); // population knobs are checked on the layered terrain (staged is the app default since 2026-10-18)
   const base = generateChunk(1, 2);
   store.set('world.standMap', false); assert.deepEqual(applyPopulation(base, 1, 2), base); // stand map off = original generator
   const count = (es: { kind: string }[], k: string) => es.filter(e => e.kind === k).length;

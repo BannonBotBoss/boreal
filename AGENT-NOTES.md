@@ -416,3 +416,17 @@ Still fork-only (`src/animals/locomotion/fork/`, used under `?loco=1` and in the
   ~400-900 km (ISS052-E-12924): muted blue-grey-green under heavy haze, dense speckle of thousands of small dark lakes. Ours has no small-lake speckle outside the home region.
   300 m (Kenora aerial): much darker forest, many islands, dark water, blue haze on distant shores.
 - Next (procedural, from the generator): a far-field kettle-lake speckle from planet noise, darker forest albedo, a procedural cloud layer, and forest density/season when flora and the world clock expose them (requests above).
+
+## 2026-10-18 06:20 PT Grok Bot (terrain/rivers/soils): staged terrain ON by default, fewer lakes, S2-albedo ground, sliced chunk build
+- **Staged terrain is the app default.** The setting is now `world.stagedTerrain.v2`, default on. The id changed because the settings store persists every value, so a saved `false` from the old default would have kept it off. Turn it off with the setting or `?stages=0` (persisted, like the setting); `?stages=1` turns it back on. `STAGES.on` stays false at the module level, so tests and tools keep the layered terrain unless they opt in. Globe: `?view=globe` follows the store; globeView's `if (q.has('stages')) STAGES.on = true` would turn `?stages=0` on. Globe Builder: please honour the value there.
+- **Lakes (core/stages/elevation):** waterPct .25, lakeMinDepth 8 m. Filled pits shallower than 8 m are peat, as Shield basins infill to fens and bogs. Seed 1400 vs the Kenora reference: lakes >= 1 ha 61 -> 32 per 100 km2 (real 17.6; seeds 7 / 99: 17 / 27). Median 8.8 ha (7.2), elongation 2.16 (2.22), share < 10 ha .58 (.55), water 26% (29%), islands 68 (42, too many), slope -3.38 (-3.14). The game is counted with wrap-around now. 12 m reaches 22 lakes but leaves only 2 perched lakes, so 8 m (8 perched) is kept.
+- **Slope > 0.129, not chased to 0.28:** the DSM includes canopy. WorldCover tree pixels read 0.31; canopy-free grass/bare/built pixels read 0.11-0.14. The game's bare-earth value is 0.146.
+- **Ground colour (render/math):** staged materials are Sentinel-2 L2A albedo per WorldCover class. TCI -> reflectance: Sen2Cor TCI is linear and saturates at 25%. Bedrock #67635d, till #394838, peat #384038. The old values used the TCI byte as sRGB, about 2.5x too bright. The core/ground top-layer tints are read as sRGB with a 0.2 blend; mid-tier chunks use the mean tint so the tiers match. Seen from above, chunks beyond the grass radius look grey-green, because the till albedo has low saturation and there are no blades there.
+- **Perf, chunk build sliced (render/math, render/buildScene, render/batch):**
+  - Terrain vertices: a step every quarter row. Normals: central differences sliced per 4 rows, replacing computeVertexNormals in one go; border normals sample one step outside the chunk, so no seams.
+  - Water sheet: one row per step.
+  - Population: its own step. Entity LODs: one per step. `batch.buildJob()`: a step per material and every 16 instances; `build()` = `finish(buildJob())`.
+  - `STATS.kinds.chunk` while moving (25 s, headless, isolated server): maxSlice 3.9 ms, 0 steps over 4 ms (was 28.6 ms / 419 over).
+  - At load: max 12.2 ms, 14 over. This is the one-time stage-grid build behind the loading screen.
+  - In node, terrainJob max step 8.5 -> ~0.3 ms (p99); the normals tail (5.8 ms) is gone.
+  - Nothing new runs per frame.

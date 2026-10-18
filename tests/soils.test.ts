@@ -17,8 +17,8 @@ test('stage 1 grain: gradients are oriented NE-SW (structure tensor) but not axi
   assert.ok(coh > .1 && coh < .6, `coherence ${coh.toFixed(2)}`);
 });
 test('lakeAt uses grid nodes (no half-cell offset) and the shoreline contour', () => {
-  const L = lakeGrid(7), g = elevationGrid(7), n = g.n; let checked = 0;
-  for (let c = 0; c < L.id.length && checked < 200; c += 3) { if (L.id[c] < 0) continue; const x = (c % n) * g.cell, z = ((c / n) | 0) * g.cell, lk = lakeAt(7, x, z);
+  const L = lakeGrid(1400), g = elevationGrid(1400), n = g.n; let checked = 0;
+  for (let c = 0; c < L.id.length && checked < 200; c++) { if (L.id[c] < 0) continue; const x = (c % n) * g.cell, z = ((c / n) | 0) * g.cell, lk = lakeAt(1400, x, z);
     if (toWorld(g, sampleGrid(g, x, z)) < L.bodies[L.id[c]].level) { assert.ok(lk, 'a wet lake node is lake'); assert.equal(lk!.body, L.id[c]); checked++; } }
   assert.ok(checked > 10);
 });
@@ -40,10 +40,14 @@ test('soilAt is deterministic and wetness orders bedrock < till < peat', () => {
   const m = (k: string) => by[k].reduce((a, b) => a + b, 0) / by[k].length;
   assert.ok(m('bedrock') < m('till') && m('till') < m('peat'));
 });
-test('stage 1-2b scour: many small lakes (median < 15 ha) with islands, as in the Kenora reference', () => {
-  const L = lakeGrid(1400), ha = L.bodies.map(b => b.areaHa).filter(a => a >= 1).sort((a, b) => a - b);
-  assert.ok(ha.length >= 20 && ha[ha.length >> 1] < 15, `median ${ha[ha.length >> 1]} ha of ${ha.length}`);
-  const g = elevationGrid(1400), n = g.n, land = new Int32Array(n * n).fill(-1); let comps = 0; // land components: > 1 means islands
+test('stage 1-2b: Kenora-like water bodies (open water + perched lakes): ~10-60 per 100 km2, median < 15 ha, perched lakes, islands', () => {
+  const L = lakeGrid(1400), f = flowGrid(1400), g = elevationGrid(1400), n = g.n, wet = (c: number) => !!f.outlet[c] || L.id[c] >= 0, lab = new Int32Array(n * n).fill(-1), ha: number[] = [];
+  for (let c = 0; c < n * n; c++) if (wet(c) && lab[c] < 0) { const st = [c]; lab[c] = c; let k = 0; while (st.length) { const q = st.pop()!, x = q % n, y = (q / n) | 0; k++;
+    for (const m of [y * n + (x + 1) % n, y * n + (x + n - 1) % n, ((y + 1) % n) * n + x, ((y + n - 1) % n) * n + x]) if (wet(m) && lab[m] < 0) { lab[m] = c; st.push(m); } } if (k * g.cell * g.cell / 1e4 >= 1) ha.push(k * g.cell * g.cell / 1e4); }
+  ha.sort((a, b) => a - b); const per100 = ha.length / (n * n * g.cell * g.cell / 1e6) * 100;
+  assert.ok(per100 >= 10 && per100 <= 60 && ha[ha.length >> 1] < 15, `${per100.toFixed(0)} per 100 km2, median ${ha[ha.length >> 1]} ha`);
+  assert.ok(L.bodies.filter(b => b.areaHa >= 1).length >= 3, 'perched lakes above base water');
+  const land = new Int32Array(n * n).fill(-1); let comps = 0; // land components: > 1 means islands
   for (let c = 0; c < n * n; c++) if (L.id[c] < 0 && land[c] < 0) { const st = [c]; land[c] = comps; while (st.length) { const q = st.pop()!, x = q % n, y = (q / n) | 0;
     for (const m of [y * n + (x + 1) % n, y * n + (x + n - 1) % n, ((y + 1) % n) * n + x, ((y + n - 1) % n) * n + x]) if (L.id[m] < 0 && land[m] < 0) { land[m] = comps; st.push(m); } } comps++; }
   assert.ok(comps > 5, `${comps - 1} islands`);

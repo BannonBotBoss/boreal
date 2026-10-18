@@ -96,11 +96,12 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const seg = near ? 32 : 8, lg = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, seg, seg); lg.rotateX(-Math.PI / 2); const p = lg.getAttribute('position'), flow = new Float32Array(p.count * 3); let any = false;
       for (let i = 0; i < p.count; i++) { const wx = p.getX(i) + (cx + .5) * CHUNK_SIZE, wz = p.getZ(i) + (cz + .5) * CHUNK_SIZE, lk = lakeAt(STAGES.seed, wx, wz), rv = lk ? undefined : riverAt(STAGES.seed, wx, wz), inR = !!rv && rv.d < rv.half + rv.bank;
         if (lk || inR) any = true; if (inR) { flow[i * 3] = rv!.dirX * rv!.speed; flow[i * 3 + 1] = rv!.dirZ * rv!.speed; flow[i * 3 + 2] = rv!.speed; }
-        p.setY(i, lk ? lk.surface : inR ? rv!.surface : heightAt(wx, wz) - .6); }
+        p.setY(i, lk ? lk.surface : inR ? rv!.surface : heightAt(wx, wz) - .6); if (i % (seg + 1) === seg) yield; } // one row per step (core/interest budget)
       lg.setAttribute('aFlow', new THREE.BufferAttribute(flow, 3));
       if (any) { lg.translate((cx + .5) * CHUNK_SIZE, 0, (cz + .5) * CHUNK_SIZE); lg.computeVertexNormals(); const lake = new THREE.Mesh(lg, water.material); lake.userData.inspect = { type: 'terrain', key: `water:${cx}:${cz}` }; root.add(lake); } else lg.dispose();
     }
-    const entities = structuredClone(restoreEntities(applyPopulation(generateChunk(cx, cz), cx, cz), context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
+    const generated = applyPopulation(generateChunk(cx, cz), cx, cz); yield; // chunk build steps stay within the 4 ms job budget
+    const entities = structuredClone(restoreEntities(generated, context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
     for (const entity of entities) {
       if (catalog[entity.kind].objectType === 'animal') {
         const previous = animals.get(entity.key);
@@ -111,7 +112,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const ranges = (entity.kind === 'rock' ? [0, 10, 24] : [0, 55, 115]).map(r => r * RENDER.lod[entity.kind === 'rock' ? 'rocks' : entity.kind === 'spruce' ? 'trees' : 'props']);
       const y = heightAt(entity.x, entity.z);
       if (entity.kind !== 'person') { // static: batched per chunk + material (render/batch); a pushed rock becomes a live LOD (see draw)
-        const levels = [0, 1, 2].map(d => generateGeometry(entity, d));
+        const levels: THREE.Object3D[] = []; for (let d = 0; d < 3; d++) { levels.push(generateGeometry(entity, d)); if (d < 2) yield; } // one LOD per step
         batch.add(entity.key, new THREE.Vector3(entity.x, y, entity.z), levels, entity.kind === 'rock' ? [...ranges, 45 * RENDER.lod.rocks] : ranges);
         const proxy = new THREE.Object3D(); proxy.position.set(entity.x, y, entity.z); proxy.userData.inspect = { type: 'entity', key: entity.key }; objects.set(entity.key, proxy);
         yield; continue;
@@ -122,7 +123,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       lod.position.set(entity.x, y, entity.z); lod.userData.inspect = { type: 'entity', key: entity.key }; root.add(lod); objects.set(entity.key, lod);
       yield;
     }
-    for (const m of batch.build()) root.add(m);
+    for (const m of yield* batch.buildJob()) root.add(m); // sliced per material / few instances
     yield;
     scene.add(root); return { root, entities, objects, near, batch };
   }

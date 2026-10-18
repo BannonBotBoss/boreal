@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { surfaceAt } from '../src/core/stages/surfaceAt';
-import { lakeGrid, elevationGrid } from '../src/core/stages/elevation';
+import { lakeGrid, elevationGrid, toWorld } from '../src/core/stages/elevation';
 import { SOIL_KINDS } from '../src/core/stages/soils';
 
 test('surfaceAt: worker-safe imports (no three, no DOM globals)', () => {
@@ -13,7 +13,7 @@ test('surfaceAt: worker-safe imports (no three, no DOM globals)', () => {
 test('surfaceAt: consistent fields, lakes are water, cheap after first call', () => {
   const seed = 1400; surfaceAt(0, 0, seed); // build grids
   const g = elevationGrid(seed), L = lakeGrid(seed), n = g.n;
-  const c = L.id.findIndex(v => v >= 0 && L.bodies[v].areaHa > 5), p = surfaceAt((c % n) * g.cell, ((c / n) | 0) * g.cell, seed);
+  const c = L.id.findIndex(v => v >= 0 && L.bodies[v].areaHa >= 1 && toWorld(g, g.h[L.id.indexOf(v)]) < L.bodies[v].level), p = surfaceAt((c % n) * g.cell, ((c / n) | 0) * g.cell, seed);
   assert.ok(p.lake && p.soil === 'water' && p.wetness === 1 && p.height < p.lake.surface);
   const t0 = performance.now(); let land = 0;
   for (let k = 0; k < 20000; k++) { const q = surfaceAt(k * 37.3 % 7680, k * 91.7 % 7680, seed);

@@ -7,6 +7,7 @@
  */
 import * as THREE from 'three';
 import { GLSL_NOISE } from '../proc/glsl';
+import { finish } from '../core/interest';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 export const PROP_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }); PROP_MATERIAL.userData.shared = true;
@@ -51,7 +52,9 @@ export function createChunkBatch() {
     meshes,
     add(key: string, pos: THREE.Vector3, levels: THREE.Object3D[], ranges: number[]) { items.push({ key, pos: pos.clone(), levels: levels.map(flatten), ranges, shadowFar: ranges[1] }); },
     /** Build one BatchedMesh per material; returns them for the chunk root. */
-    build() {
+    build() { return finish(this.buildJob()); },
+    /** build() as a budgeted job (core/interest): yields per material and every few instances. */
+    *buildJob(): Generator<unknown, THREE.BatchedMesh[]> {
       const mats = new Set<THREE.Material>(); for (const it of items) for (const l of it.levels) for (const m of l.keys()) mats.add(m);
       for (const mat of mats) {
         let v = 0, ix = 0, n = 0;
@@ -59,14 +62,14 @@ export function createChunkBatch() {
         if (!n) continue;
         const bm = new THREE.BatchedMesh(n, Math.max(1, v), Math.max(1, ix), mat), list: { item: number; inst: number; geo: number[] }[] = [];
         bm.castShadow = bm.receiveShadow = true; bm.userData.keys = [] as string[]; bm.userData.shadowSet = true;
-        items.forEach((it, i) => {
+        for (let i = 0; i < items.length; i++) { const it = items[i];
           const geo = it.levels.map(l => { const g = l.get(mat); return g ? bm.addGeometry(g) : -1; });
-          const first = geo.find(x => x >= 0); if (first === undefined) return;
+          const first = geo.find(x => x >= 0); if (first === undefined) continue;
           const inst = bm.addInstance(first); bm.setMatrixAt(inst, new THREE.Matrix4().makeTranslation(it.pos)); (bm.userData.keys as string[])[inst] = it.key;
-          list.push({ item: i, inst, geo });
-        });
+          list.push({ item: i, inst, geo }); if (i % 16 === 15) yield;
+        } yield;
         for (const it of items) for (const l of it.levels) l.get(mat)?.dispose(); // copied into the batch
-        slots.set(bm, list); meshes.push(bm);
+        slots.set(bm, list); meshes.push(bm); yield;
       }
       level = items.map(() => -2);
       return meshes;

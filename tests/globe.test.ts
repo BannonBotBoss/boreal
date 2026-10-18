@@ -53,3 +53,26 @@ test('globe LOD table: one row per ladder tier, non-increasing down the ladder',
   assert.equal(GLOBE_LOD.length, LADDER.length);
   GLOBE_LOD.forEach((r, i) => { assert.equal(r.name, LADDER[i].name); if (i) for (const k of ['segments', 'split', 'maxLevel', 'cache'] as const) assert.ok(r[k] <= GLOBE_LOD[i - 1][k], `${k} at ${r.name}`); });
 });
+import { buildTile } from '../src/world/globe/tile';
+import { node } from '../src/world/globe/cube';
+import { finish } from '../src/core/interest';
+test('globe tiles: deterministic, shared edges match in position AND normal (no cracks or lighting seams), aH < 0 only under water', () => {
+  const p = createPlanet(1400, heightAt), seg = 16, n = seg + 1;
+  const A = finish(buildTile(node(4, 6, 20, 30), p, seg)), B = finish(buildTile(node(4, 6, 21, 30), p, seg)), A2 = finish(buildTile(node(4, 6, 20, 30), p, seg));
+  assert.deepEqual(A.position, A2.position); assert.deepEqual(A.normal, A2.normal);
+  for (let j = 0; j < n; j++) { // A's right edge (i = seg) is B's left edge (i = 0)
+    const a = j * n + seg, b = j * n;
+    for (let k = 0; k < 3; k++) {
+      assert.ok(Math.abs(A.position[a * 3 + k] + A.centre[k] - (B.position[b * 3 + k] + B.centre[k])) < .05, 'edge position');
+      assert.ok(Math.abs(A.normal[a * 3 + k] - B.normal[b * 3 + k]) < 1e-4, `edge normal j=${j}`);
+    }
+  }
+  let wet = 0;
+  for (let f = 0; f < 6 && !wet; f++) { const sea = finish(buildTile(node(f, 2, 1, 1), p, seg));
+    for (let v = 0; v < n * n; v++) if (sea.height[v] < 0) { wet++; const r = Math.hypot(sea.position[v * 3] + sea.centre[0], sea.position[v * 3 + 1] + sea.centre[1], sea.position[v * 3 + 2] + sea.centre[2]); assert.ok(Math.abs(r - PLANET.radius) < 2, 'water vertices sit on the sea surface'); } }
+  assert.ok(wet > 0, 'found ocean vertices');
+});
+test('globe tile cost: one 32-segment tile builds well under a frame budget on this machine', () => {
+  const p = createPlanet(1400, heightAt); finish(buildTile(node(2, 4, 3, 3), p, 32));
+  const t = finish(buildTile(node(2, 5, 7, 9), p, 32)); assert.ok(t.cpu < 200, `${t.cpu.toFixed(1)} ms`);
+});

@@ -41,6 +41,9 @@ export interface Surface {
   h: number;
   /** Water surface height (m) or -Infinity when dry. Ocean = 0; home-region lakes = the game's water plane. */
   water: number;
+  /** Reference water level here (m): sea level 0, or the game's water plane inside the home region. h − level is the
+   *  signed land/water field the renderer contours per pixel. */
+  level: number;
   /** 'ocean' | 'lake' | '' (dry). */
   kind: '' | 'ocean' | 'lake';
   /** Weight of the home region (1 = pure game terrain). */
@@ -110,20 +113,20 @@ export function createPlanet(seed: number, local?: LocalHeight) {
   const home = fromLatLon(H.latDeg * Math.PI / 180, (random(hash(`globe-home-v1:${seed}`))() * 2 - 1) * Math.PI);
   const east = norm(cross([0, 1, 0], home)), north = cross(home, east);
   const homeRaw = toMetres(relief(home[0], home[1], home[2])), lift = H.elevation - homeRaw, liftRad = H.liftKm * 1000 / R;
-  const out: Surface = { h: 0, water: -Infinity, kind: '', home: 0, x: 0, z: 0 };
+  const out: Surface = { h: 0, water: -Infinity, level: 0, kind: '', home: 0, x: 0, z: 0 };
   /** Height + water at a unit direction. Reuses one result object (copy what you keep). */
   function sampleSurface(d: Vec3): Surface {
     let h = toMetres(relief(d[0], d[1], d[2]));
     const c = dot(d, home), ang = Math.acos(Math.max(-1, Math.min(1, c)));
     h += lift * Math.exp(-((ang / liftRad) ** 2)); // home lift (Gaussian) so the region is land at the home elevation
-    out.water = h < 0 ? 0 : -Infinity; out.kind = h < 0 ? 'ocean' : ''; out.home = 0; out.x = out.z = 0;
+    out.water = h < 0 ? 0 : -Infinity; out.kind = h < 0 ? 'ocean' : ''; out.level = 0; out.home = 0; out.x = out.z = 0;
     if (c > 0 && ang * R < H.halfSize * 2) {
       const x = R * dot(d, east) / c, z = -R * dot(d, north) / c; // gnomonic: game +x = east, game -z = north (heading 0 faces -z)
       const w = 1 - smoothstep(H.halfSize - H.feather, H.halfSize, Math.max(Math.abs(x), Math.abs(z)));
       if (w > 0) {
         const g = local ? local(x, z) : 0;
         h = h + (H.elevation + g - h) * w; out.home = w; out.x = x; out.z = z;
-        if (w > .5 && g < LEVEL.waterSurface) { out.water = H.elevation + LEVEL.waterSurface; out.kind = 'lake'; }
+        if (w > .5) { out.level = H.elevation + LEVEL.waterSurface; out.water = g < LEVEL.waterSurface ? out.level : -Infinity; out.kind = g < LEVEL.waterSurface ? 'lake' : ''; }
       }
     }
     out.h = h; return out;
@@ -135,18 +138,17 @@ export function createPlanet(seed: number, local?: LocalHeight) {
 
 /** Surface colour (linear-ish sRGB 0..1) for a sample: a data table, game band colours inside the home region. */
 export const GLOBE_COLOURS = {
-  deep: [.03, .12, .25], shallow: [.07, .3, .45], lake: [.14, .3, .34],
+  deep: [.03, .12, .25], shallow: [.07, .3, .45], // water: shaded per pixel by depth (tile.ts globeMaterial)
   // home region: the game's terrain band colours (render/math BAND_COLOR: shore 0x929771, forest 0x788e60, upland 0x8d9582)
   shore: [.573, .592, .443], forest: [.471, .557, .376], upland: [.553, .584, .510],
   temperate: [.30, .45, .22], boreal: [.20, .32, .17], tundra: [.47, .46, .36], rock: [.45, .42, .38], snow: [.92, .93, .95], beach: [.75, .7, .52],
 } as const;
 type RGB = readonly [number, number, number];
 const mix = (a: RGB, b: RGB, t: number, o: number[]) => { o[0] = a[0] + (b[0] - a[0]) * t; o[1] = a[1] + (b[1] - a[1]) * t; o[2] = a[2] + (b[2] - a[2]) * t; return o; };
-/** Biome colour by water depth, elevation and latitude [game calibration bands]; the game's bands inside the home region. */
+/** LAND colour by elevation and latitude [game calibration bands]; the game's bands inside the home region. Water is
+ *  not coloured here: the material contours h − level per pixel and shades water by depth. */
 export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0]) {
   const C = GLOBE_COLOURS;
-  if (s.kind === 'ocean') return mix(C.shallow, C.deep, smoothstep(0, 2000, -s.h), o);
-  if (s.kind === 'lake') return mix(C.lake, C.lake, 0, o);
   const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI;
   const veg = lat < 45 ? C.temperate : lat < 62 ? C.boreal : C.tundra;
   mix(C.beach, veg, smoothstep(2, 40, s.h), o);

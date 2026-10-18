@@ -52,6 +52,8 @@ export interface GlobeOptions {
   target?: THREE.WebGLRenderTarget | null;
   /** G / Esc (and the standalone auto handoff): default = dispose and reload into the game at the spot */
   onLeave?: (at: { x: number; z: number; yaw: number } | null) => void;
+  /** tile workers (default: cores - 2, 1..4; shared mode 2). ?workers=0 = main-thread jobs */
+  workers?: number;
 }
 export function globeOwnership(o: GlobeOptions) {
   const page = !o.shared;
@@ -118,6 +120,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   const camV = new THREE.Vector3();
+  let ext: { position: THREE.Vector3; quaternion: THREE.Quaternion; fov: number; aspect: number } | null = null; // shared band: externally flown camera
   const atYaw = Number(q.get('at')?.split(',')[2]); // from the game (handoff.ts globeUrl): keep its heading
   let lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : q.has('at') && Number.isFinite(atYaw) && q.get('at')!.split(',').length > 2 ? -atYaw : null;
   const pitchQ = q.has('pitch') ? Number(q.get('pitch')) * Math.PI / 180 : null; // ?pitch=deg from straight down (screenshots: look down at a cloud deck)
@@ -163,7 +166,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const tiles = new Map<string, Tile>(), queued = new Map<string, { n: QNode; pr: number }>(), inflight = new Set<string>();
   let frame = 0, built = 0, reqId = 0, cancelledN = 0;
   const camPos: Vec3 = [0, 0, 0];
-  const nWorkers = q.get('workers') === '0' ? 0 : clamp((navigator.hardwareConcurrency || 4) - 2, 1, 4);
+  const nWorkers = q.get('workers') === '0' ? 0 : opts.workers ?? (opts.shared ? 2 : clamp((navigator.hardwareConcurrency || 4) - 2, 1, 4));
+  let suspended = false; // shared mode: workers terminated during gameplay (suspendWorkers), restarted on the way up
   const pool: { w: Worker; busy: string; id: number }[] = [], ids = new Map<number, QNode>();
   // finished tiles wait here; each frame adopts the closest few within a small main-thread budget (geometry + GPU upload
   // happen on adoption), so a burst of worker results never lands in one frame
@@ -175,7 +179,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const mesh = new THREE.Mesh(tileGeometry(t), material); mesh.matrixAutoUpdate = false;
     tiles.set(n.key, { mesh, used: frame, centre: [t.centre[0], t.centre[1], t.centre[2]], seg: Math.round(Math.sqrt(4 + t.position.length / 3)) - 3 });
   };
-  try {
+  function spawn() { try {
     for (let k = 0; k < nWorkers; k++) {
       const w = new Worker(new URL('./tileWorker.ts', import.meta.url), { type: 'module' }), slot = { w, busy: '', id: 0 };
       w.onmessage = (e: MessageEvent<{ id: number; tile?: TileData; warm?: number; cancelled?: boolean }>) => {
@@ -188,9 +192,11 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       w.postMessage({ warm: true, id: 0, seed, staged: STAGES.on, stagesSeed: STAGES.seed, face: 0, level: 0, i: 0, j: 0, segments: 0 } satisfies TileRequest);
       pool.push(slot);
     }
-  } catch (e) { console.warn('globe: no workers, main-thread jobs', e); pool.length = 0; }
+  } catch (e) { console.warn('globe: no workers, main-thread jobs', e); pool.length = 0; } }
+  spawn();
   const mode = () => pool.length ? `${pool.length} workers` : 'main-thread';
   function dispatch() {
+    if (suspended) return;
     if (!pool.length) { // fallback: sliced generators within INTEREST.budgetMs
       for (const [key, { n, pr }] of queued) { queued.delete(key); inflight.add(key); enqueue(`globe:${key}`, pr, buildTile(n, planet, lod.segments), t => accept(n, t)); } // one scheduler kind ('globe') so its cost estimate learns
       runJobs(INTEREST.budgetMs); return;
@@ -289,6 +295,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   /** Camera, LOD, builds, adoption, eviction: everything but the draw. */
   function update() {
     t0 = performance.now(); dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++;
+    if (ext) camera.position.copy(ext.position); // shared band: the transition flies the camera (drive)
     dir.copy(camera.position).normalize(); const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = Math.max(s.h, s.water);
     // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
@@ -300,7 +307,10 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       targetAlt = alt = benchFrom * (benchTo / benchFrom) ** clamp(benchT / benchSec, 0, 1);
       if (prev < benchSec + 8 && benchT >= benchSec + 8) console.log('BENCH ' + JSON.stringify({ mode: mode(), warm: STATS.warm.map(Math.round), tiles: STATS.build.length, buildAvg: +avg(STATS.build).toFixed(2), buildP95: +pct(STATS.build, .95).toFixed(2), buildMax: +Math.max(0, ...STATS.build).toFixed(2),
         frames: STATS.work.length, compileMs: +STATS.compileMs.toFixed(0), workAvg: +avg(STATS.work).toFixed(2), workP99: +pct(STATS.work, .99).toFixed(2), workMax: +Math.max(0, ...STATS.work).toFixed(2), intervalP99: +pct(STATS.interval, .99).toFixed(1), intervalMax: +Math.max(0, ...STATS.interval).toFixed(1), cached: tiles.size, orbit: benchOrbit, ground: { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles } })); }
-    else alt = Math.exp(Math.log(alt) + (Math.log(targetAlt) - Math.log(alt)) * (1 - Math.exp(-dt * 7)));
+    else if (!ext) alt = Math.exp(Math.log(alt) + (Math.log(targetAlt) - Math.log(alt)) * (1 - Math.exp(-dt * 7)));
+    if (ext) { alt = targetAlt = Math.max(1, camera.position.length() - R - ground); camUp.copy(dir); camera.quaternion.copy(ext.quaternion);
+      if (camera.fov !== ext.fov || camera.aspect !== ext.aspect) { camera.fov = ext.fov; camera.aspect = ext.aspect; } }
+    else {
     controls.rotateSpeed = clamp(alt / R * .6, 2e-6, 1);
     camera.position.copy(dir).multiplyScalar(R + ground + alt); camUp.copy(dir);
     controls.update();
@@ -310,6 +320,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (lookAz !== null && alt < 3e5) { // ?look=azimuth° (0 north, 90 east): face a compass heading near the ground (screenshots)
       localNE(); const up = camUp.clone(), h = nL.clone().multiplyScalar(Math.cos(lookAz)).addScaledVector(eL, Math.sin(lookAz));
       camera.up.copy(up); camera.lookAt(camera.position.clone().add(h.addScaledVector(up, -.08))); }
+    }
     camera.near = clamp(alt * .02, .5, 1e5); camera.far = Math.sqrt((R + ground + alt) ** 2 - R * R) + R * 2; camera.updateProjectionMatrix();
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
     sun.position.copy(sunNow()); { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = .04 + .66 * smoothstep(-.3, .12, se); hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
@@ -325,7 +336,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     // draw cap: shrink the split distance while more tiles than the tier's cap are in view, relax it back when under
     splitK = inView > lod.draw ? Math.max(.35, splitK * .97) : inView < lod.draw * .85 ? Math.min(1, splitK * 1.01) : splitK;
     for (const key of queued.keys()) if (!wanted.has(key)) queued.delete(key);
-    if (!pool.length) for (const key of inflight) if (!wanted.has(key)) { cancel(`globe:${key}`); inflight.delete(key); }
+    if (!pool.length && !suspended) for (const key of inflight) if (!wanted.has(key)) { cancel(`globe:${key}`); inflight.delete(key); }
     for (const slot of pool) if (slot.busy && !wanted.has(slot.busy) && !tiles.has(slot.busy)) { slot.w.postMessage({ cancel: true, id: slot.id } as TileRequest); slot.busy = '~'; } // stale: the worker drops it at its next slice
     // adopt finished tiles: closest first, a few per frame within a budget
     if (ready.length) { const ta = performance.now(); for (const it of ready) { const c = it.t.centre; it.d = Math.hypot(c[0] - camPos[0], c[1] - camPos[1], c[2] - camPos[2]); } ready.sort((a, b) => a.d - b.d);
@@ -340,7 +351,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
    *  double camera position in visit()). A target gets its own depth; the globe's log depth never meets the game's. */
   function renderTo(target: THREE.WebGLRenderTarget | null = null) {
     const viewH = target ? target.height : canvas.height;
-    if (target && Math.abs(camera.aspect - target.width / target.height) > 1e-6) { camera.aspect = target.width / target.height; camera.updateProjectionMatrix(); }
+    if (target && !ext && Math.abs(camera.aspect - target.width / target.height) > 1e-6) { camera.aspect = target.width / target.height; camera.updateProjectionMatrix(); }
     setLogDepthFar(camera.far);
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
@@ -378,13 +389,33 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     .finally(() => { STATS.compileMs = performance.now() - tc; group.clear(); });
   renderer.setRenderTarget(prevTarget);
   let started = false;
+  /** Compile the programs for another target too (shared mode: the far-layer target AND the screen), behind a loading screen. */
+  async function precompile(target: THREE.WebGLRenderTarget | null) {
+    await compiled; for (const t of tiles.values()) group.add(t.mesh);
+    const prevT = renderer.getRenderTarget(); renderer.setRenderTarget(target);
+    const p = renderer.compileAsync(scene, camera).catch(e => console.warn('globe: precompile failed', e)); renderer.setRenderTarget(prevT);
+    await p; group.clear();
+  }
   return {
     planet, renderer, scene, camera, tiles, ownership: own, compiled, update, renderTo, after, step, dispose,
     /** standalone loop */
     start() { if (started) return; started = true; void compiled.then(() => requestAnimationFrame(tick)); },
     /** mode-scoped input: the globe's keys, wheel and drags act only while attached */
     attachInput(on: boolean) { inputOn = on; controls.enabled = on; if (!on) turnX = null; },
-    get disposed() { return down; }, get altitude() { return alt; }, get ground() { return ground; },
+    get disposed() { return down; }, get altitude() { return alt; }, get ground() { return ground; }, precompile,
+    /** shared band: fly the camera from outside (planet-frame metres, orientation, the game camera's fov/aspect); null = the
+     *  globe's own controls take over again from where the camera is, keeping its heading */
+    drive(cam: { position: THREE.Vector3; quaternion: THREE.Quaternion; fov: number; aspect: number } | null) {
+      if (!cam && ext) { camera.position.copy(ext.position); lookAz = cameraAz(); }
+      ext = cam;
+    },
+    /** over the playable region (game-local x, z), else null; descending = zooming in */
+    get overHome() { return overHome; }, get descending() { return targetAlt < alt * .995; }, get headingYaw() { return headingYaw(); },
+    zoomTo(a: number) { targetAlt = clamp(a, 40, R * 4); }, jumpTo(a: number) { alt = targetAlt = clamp(a, 40, R * 4); },
+    /** shared mode: terminate the tile workers during gameplay (their memory goes) and restart them on demand */
+    suspendWorkers() { if (suspended || !pool.length) return; suspended = true; for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); },
+    resumeWorkers() { if (!suspended || down) return; suspended = false; spawn(); },
+    get workers() { return pool.length; },
     stats: () => ({ drawn, inView, cached: tiles.size, queued: queued.size + inflight.size, deepest, tier: GOVERNOR.tier, segments: lod.segments }),
   };
 }

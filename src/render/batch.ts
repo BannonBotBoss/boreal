@@ -22,7 +22,8 @@ ROCK_MATERIAL.onBeforeCompile = shader => {
     float grain = .82 + .3 * fbm(vRockW.xz * 4. + vRockW.y * 2., 3.);
     diffuseColor.rgb *= band * grain;`);
 };
-type Item = { key: string; pos: THREE.Vector3; levels: Map<THREE.Material, THREE.BufferGeometry>[]; ranges: number[]; shadowFar: number };
+type Item = { key: string; pos: THREE.Vector3; raw: THREE.Object3D[]; levels: Map<THREE.Material, THREE.BufferGeometry>[]; ranges: number[]; shadowFar: number };
+const SLICE_MS = 2; // buildJob yields once a step has run this long (core/interest 4 ms budget) [game calibration]
 
 const pv = new THREE.Vector3(), nmat = new THREE.Matrix3();
 /** World-placed copy of a part, written in one pass into fresh arrays (no copy() + applyMatrix4 over the copy). The per-vertex
@@ -60,7 +61,7 @@ function flatten(root: THREE.Object3D) {
     const shared = !!m.userData.shared || m.material === PROP_MATERIAL, mat = shared ? m.material as THREE.Material : m.userData.rock ? ROCK_MATERIAL : PROP_MATERIAL;
     const g = shared ? placed(m.geometry, m.matrixWorld) : placedFlat(m.geometry, m.matrixWorld, (m.material as THREE.MeshStandardMaterial).color ?? new THREE.Color(1, 1, 1));
     if (!m.userData.shared) { m.geometry.dispose(); if (!shared) (m.material as THREE.Material).dispose(); } // source parts are throwaway
-    if (!g.index) g.setIndex([...Array(g.getAttribute('position').count).keys()]);
+    if (!g.index) { const n = g.getAttribute('position').count, a = n > 65535 ? new Uint32Array(n) : new Uint16Array(n); for (let i = 0; i < n; i++) a[i] = i; g.setIndex(new THREE.BufferAttribute(a, 1)); } // same type three's setIndex(array) picks, no JS array
     (parts.get(mat) ?? parts.set(mat, []).get(mat)!).push(g);
   });
   return new Map([...parts].map(([m, gs]) => [m, gs.length === 1 ? gs[0] : mergeGeometries(gs)!] as const));
@@ -73,11 +74,14 @@ export function createChunkBatch() {
   let level: number[] = [];
   return {
     meshes,
-    add(key: string, pos: THREE.Vector3, levels: THREE.Object3D[], ranges: number[]) { items.push({ key, pos: pos.clone(), levels: levels.map(flatten), ranges, shadowFar: ranges[1] }); },
+    /** Queues an entity's LOD objects; they are flattened in buildJob (yielding every ~2 ms), not in the caller's step. */
+    add(key: string, pos: THREE.Vector3, levels: THREE.Object3D[], ranges: number[]) { items.push({ key, pos: pos.clone(), raw: levels, levels: [], ranges, shadowFar: ranges[1] }); },
     /** Build one BatchedMesh per material; returns them for the chunk root. */
     build() { return finish(this.buildJob()); },
     /** build() as a budgeted job (core/interest): yields per material and every few instances. */
     *buildJob(): Generator<unknown, THREE.BatchedMesh[]> {
+      let t = performance.now();
+      for (const it of items) { while (it.raw.length) { it.levels.push(flatten(it.raw.shift()!)); if (performance.now() - t > SLICE_MS) { yield; t = performance.now(); } } }
       const mats = new Set<THREE.Material>(); for (const it of items) for (const l of it.levels) for (const m of l.keys()) mats.add(m);
       for (const mat of mats) { fadeOptIn(mat, true); // render/fade: in-page transition patch fade (uniform only, same cache key; props' default keys kept byte-identical)
         let v = 0, ix = 0, n = 0;
@@ -90,10 +94,10 @@ export function createChunkBatch() {
           const geo = it.levels.map(l => { const g = l.get(mat); return g ? bm.addGeometry(g) : -1; });
           const first = geo.find(x => x >= 0); if (first === undefined) continue;
           const inst = bm.addInstance(first); bm.setMatrixAt(inst, new THREE.Matrix4().makeTranslation(it.pos)); (bm.userData.keys as string[])[inst] = it.key;
-          list.push({ item: i, inst, geo }); if (i % 16 === 15) yield;
-        } yield;
+          list.push({ item: i, inst, geo }); if (performance.now() - t > SLICE_MS) { yield; t = performance.now(); }
+        } yield; t = performance.now();
         for (const it of items) for (const l of it.levels) l.get(mat)?.dispose(); // copied into the batch
-        slots.set(bm, list); meshes.push(bm); yield;
+        slots.set(bm, list); meshes.push(bm); yield; t = performance.now();
       }
       level = items.map(() => -2);
       return meshes;

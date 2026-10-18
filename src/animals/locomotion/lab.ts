@@ -2,7 +2,7 @@
  * Locomotion lab (dev page tools/locomotion-lab.html). One test quadruped walks a circle over a chosen terrain, driven
  * by the locomotion layer. Params: ?terrain=flat|hills|world  ?gait=auto|walk|trot|pace|canter|gallop|bound|pronk
  * ?speed=<m/s>  ?lod=near|mid  ?rig=stick|real  ?t=<seconds to pre-simulate>  ?cam=side|follow  ?pause=1 (freeze after ?t)
- * ?seed=<n> (coat variety)  ?posture=key:value,... (override posture.ts)  ?cam=profile (eye-level side view, for comparing with reference photos)  ?hide=body,legs,feet,ik  ?raw=1 (springs off)  ?ui=0 (hide the panel)
+ * ?seed=<n> (coat variety)  ?darken=0..2 ?streakSpacing ?streakWidth ?streakJitter=0..1 (coat layers, also sliders)  ?posture=key:value,... (override posture.ts)  ?cam=profile (eye-level side view, for comparing with reference photos)  ?hide=body,legs,feet,ik  ?raw=1 (springs off)  ?ui=0 (hide the panel)
  * ?pounce=1 (a pounce at t = 1 s and every 3 s after; P key or the button pounces any time)
  */
 import * as THREE from 'three';
@@ -13,9 +13,12 @@ import { limbOf } from '../../core/animalBehavior';
 import { POSTURE } from './posture';
 import { GAIT_TABLE } from './gaits';
 import { createStickRig } from './stickRig';
+import { COAT } from './fork/bodyTubes';
 import { LEG_NAMES, type GaitId, type LegPose, type Lod, type TerrainFn } from './signals';
 
 const q = new URLSearchParams(location.search);
+// coat layers (fork/bodyTubes COAT): ?darken=0..2 ?streakSpacing ?streakWidth ?streakJitter=0..1, read before the rig is built
+for (const k of Object.keys(COAT) as Array<keyof typeof COAT>) { const v = Number(q.get(k)); if (q.has(k) && Number.isFinite(v)) COAT[k] = v; }
 // ?posture=headPitch:-.2,bodyDrop:.05 overrides POSTURE (posture.ts) for tuning
 for (const kv of (q.get('posture') ?? '').split(',')) { const [k, v] = kv.split(':'); if (k in POSTURE && Number.isFinite(Number(v))) (POSTURE as Record<string, number>)[k] = Number(v); }
 const terrainName = q.get('terrain') ?? 'flat';
@@ -107,8 +110,11 @@ const ui = document.createElement('div'); ui.id = 'ui';
 ui.innerHTML = `<b>Locomotion lab</b> · terrain ${terrainName}<label>speed <input id="sp" type="range" min="0" max="10" step=".1"> <span id="spv"></span> m/s</label>
 <label>gait <select id="ga">${['auto', ...Object.keys(GAIT_TABLE)].map(g => `<option>${g}</option>`).join('')}</select> LOD <select id="lo"><option>near</option><option>mid</option></select> <button id="pa">pause</button> <button id="po">pounce</button></label>
 <label>show ${Object.keys(layers).map(k => `<input type="checkbox" id="ly-${k}">${k === 'raw' ? 'raw (no springs)' : k === 'feet' ? 'foot markers' : k === 'ik' ? 'IK targets' : k}`).join(' ')}</label>
+<label>coat ${([['darken', 0, 2, .05], ['streakSpacing', .004, .03, .001], ['streakWidth', .001, .01, .0005], ['streakJitter', 0, 1, .05]] as const).map(([k, lo, hi, st]) => `${k} <input type="range" data-coat="${k}" min="${lo}" max="${hi}" step="${st}" value="${COAT[k]}"> <span>${COAT[k]}</span>`).join('<br>')}</label>
 <div id="ro"></div><canvas id="strip" width="260" height="56"></canvas>`;
 document.body.append(ui); if (q.get('ui') === '0') ui.style.display = 'none';
+// coat sliders rebuild the wolf by reloading with the value in the URL (the coat is baked into the skin and the cards)
+ui.querySelectorAll<HTMLInputElement>('input[data-coat]').forEach(el => { el.oninput = () => { (el.nextElementSibling as HTMLElement).textContent = el.value; }; el.onchange = () => { q.set(el.dataset.coat!, el.value); location.search = q.toString(); }; });
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const sp = $<HTMLInputElement>('sp'), ga = $<HTMLSelectElement>('ga'), lo = $<HTMLSelectElement>('lo');
 sp.value = String(state.speed); ga.value = state.gait ?? 'auto'; lo.value = state.lod;

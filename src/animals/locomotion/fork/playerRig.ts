@@ -17,7 +17,7 @@ import { AnimalBrain, quadrupedPose, WOLF_LEGS } from '../../../core/animalBehav
 import { pushProgress } from '../../../core/rocks';
 import { buildBody, wolfCoat } from '../../../core/body';
 import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth } from '../../../core/wolfBody';
-import { furStyle, photoVariant, shapeBody, wolfTubes } from './bodyTubes'; // FORK: reshaped skin, photo coat with seeded variety, fur style
+import { furStyle, photoVariant, shapeBody, streakCards, wolfTubes } from './bodyTubes'; // FORK: reshaped skin, photo coat with seeded variety, fur style
 import { buildFurCards, furCardMaterial } from '../../../render/furCards';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { LegPose } from '../signals';
@@ -90,11 +90,11 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 });
   const skins = [
     new THREE.SkinnedMesh(geometry, skinMaterial),
-    new THREE.SkinnedMesh(buildFurCards(body, portrait
+    new THREE.SkinnedMesh((portrait ? (g: THREE.BufferGeometry) => g : (g: THREE.BufferGeometry) => streakCards(g, seed) /* FORK: dark guard-hair streaks */)(buildFurCards(body, portrait
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
-      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear, ...furStyle() /* FORK: same card budget, styled */ }), furCardMaterial()),
+      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear, ...furStyle() /* FORK: same card budget, styled */ })), furCardMaterial()),
   ];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.

@@ -14,6 +14,7 @@ import { computeNormals, dent, push, type BodyData, type RGB, type Ring, type Tu
 import { BONE, EYE_AT, HEAD_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, TUBE, earFrame, legBone, limbModel } from '../../../core/wolfBody';
 import { isFrontLeg } from '../../../core/animalBehavior';
 import { random } from '../../../proc/rng';
+import type * as THREE from 'three';
 
 /** Upper-jaw outline (z, centre y, half-width, half-height) in cranium space and lower-jaw outline in cranium space too; teeth and lips follow them. */
 const UPPER_OUTLINE = [[.03, 0, .042, .036], [.01, .004, .049, .04], [-.022, .002, .043, .037], [-.035, -.0055, .031, .029], [-.048, -.0095, .0297, .0285], [-.07, -.0155, .0237, .0196], [-.088, -.0175, .0215, .0166], [-.099, -.0175, .019, .015]];
@@ -104,12 +105,12 @@ export function wolfTubes(coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB
       r(Py + .012, .0105, .013, blend(b.wrist, b.paw, .4), 0, .4, .6),
     ];
     tubes.push({ ...palette, smooth: 1, lay: [0, -1, 0], rings });
-    // Paw: a long oval pointing forward, pivoting at the sole.
+    // Paw: a long oval pointing forward, pivoting at the sole. (Pass 6: 8 % wider than round 2, back inside body.test's 7-11 cm.)
     const sole = (zz: number) => at(Py + .012, zz);
     tubes.push({ ...palette, radial: 8, lay: [0, -1, 0], rings: [
-      { p: sole(z + .008), rx: .016 * f, ry: .012, w: only(b.paw), dark: .2, fur: .3, pale: .45, sq: 3 },
-      { p: sole(z - .012), rx: .017 * f, ry: .012, w: only(b.paw), dark: .3, fur: .3, pale: .4, sq: 3 },
-      { p: sole(z - .028), rx: .013 * f, ry: .009, w: only(b.paw), dark: .5, fur: .25, pale: .2, sq: 2.6 },
+      { p: sole(z + .008), rx: .0173 * f, ry: .012, w: only(b.paw), dark: .2, fur: .3, pale: .45, sq: 3 },
+      { p: sole(z - .012), rx: .0184 * f, ry: .012, w: only(b.paw), dark: .3, fur: .3, pale: .4, sq: 3 },
+      { p: sole(z - .028), rx: .014 * f, ry: .009, w: only(b.paw), dark: .5, fur: .25, pale: .2, sq: 2.6 },
     ] });
   });
 
@@ -220,10 +221,10 @@ export function shapeBody(body: BodyData, coat: { back: RGB; belly: RGB; dark: R
   // Heavier brow: push the supraorbital ridge further out and up (the sculpt already raised it a little).
   for (const side of [-1, 1]) push(body, TUBE.skull, [side * EYE_AT[0] * 1.05, HEAD_AT[1] + EYE_AT[1] + .013, HEAD_AT[2] + EYE_AT[2] + .004], .022, [side * .0012, .0018, -.004]);
   computeNormals(body);
-  zoneCoat(body, coat);
+  zoneCoat(body, coat, toes);
   for (let v = 0; v < body.tube.length; v++) {
     const tube = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1];
-    if (tube >= 6 && tube < 13 && (tube - 6) % 2 === 0) { body.furLen[v] *= .45; if (toes.some(q => Math.hypot(body.position[v * 3] - q[0], body.position[v * 3 + 1] - q[1], body.position[v * 3 + 2] - q[2]) < .0058)) { for (let k = 0; k < 3; k++) body.color[v * 3 + k] *= .3; body.furLen[v] *= .4; } } // very short paw fur so the toe grooves shape the paw; dark grooves
+    if (tube >= 6 && tube < 13 && (tube - 6) % 2 === 0) { body.furLen[v] *= .45; if (toes.some(q => Math.hypot(body.position[v * 3] - q[0], body.position[v * 3 + 1] - q[1], body.position[v * 3 + 2] - q[2]) < .0058)) body.furLen[v] *= .4; } // very short paw fur so the toe grooves shape the paw; shorter still on the (darkened) grooves
     else if (tube >= 5 && tube < 13 && (tube - 5) % 2 === 0) { const top = limbModel((tube - 5) / 2).hip; if (y < top) body.furLen[v] *= .9 + .1 * Math.max(0, Math.min(1, (y - top + .08) / .08)); } // legs: short below the elbow / stifle
     else if (tube === TUBE.trunk) {
       if (ny < -.35) body.furLen[v] *= .6; // belly
@@ -244,33 +245,92 @@ export function photoVariant(seeded: { back: RGB; belly: RGB; dark: RGB; accent:
 }
 const mix3 = (c: number[], v: number, to: RGB, t: number) => { for (let k = 0; k < 3; k++) c[v * 3 + k] += (to[k] - c[v * 3 + k]) * t; };
 const band = (a: number, b: number, x: number) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-/** Coat zoning from the photo (vertex colours; the fur cards copy them). Pass 5: dark saddle plus a distinct dark shoulder band behind the
- * ruff, warm tan flanks, a pale throat/chest bib, a pale cheek and muzzle mask (the top of the muzzle and the nose stay dark), buff legs, a
- * dark tail tip, mid-tone paws. */
-function zoneCoat(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB }) {
+/**
+ * Coat layers (pass 6, Matthew): BASE coat (photo tones: warm flanks, buff legs, paws) → LIGHTEN mask (belly, throat/chest bib,
+ * cheek and muzzle mask) → DARKEN mask multiplied over it (broad saddle, shoulder band, tail tip, toe lines; strength COAT.darken).
+ * The fine dark guard-hair streaks are a separate per-card layer (streakCards below), because 5 mm streaks are far finer than the
+ * skin's ~6 cm vertex spacing.
+ */
+export const COAT = {
+  /** darken-mask strength, 0..2 (1 matches the photo) */ darken: 1,
+  /** mean spacing between dark streaks along the spine (model units; the rig is modelled at 1/2 size) */ streakSpacing: .015,
+  /** mean streak width */ streakWidth: .0035,
+  /** 0..1: seeded jitter in spacing, width, length and darkness (0 = regular stripes) */ streakJitter: .6,
+};
+const bumpF = (a: number, b: number, cc: number, d: number, x: number) => band(a, b, x) * (1 - band(cc, d, x));
+function zoneCoat(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB }, toes: Vec3[]) {
   const lerp = (a: RGB, b: RGB, t: number) => a.map((v, k) => v + (b[k] - v) * t) as RGB;
-  const accent = coat.accent ?? coat.back, c = body.color, saddle = lerp(coat.dark, coat.back, .18), buff = lerp(coat.belly, accent, .2), cream = coat.belly;
+  const accent = coat.accent ?? coat.back, c = body.color, buff = lerp(coat.belly, accent, .2), cream = coat.belly;
   const pawTone = lerp(buff, coat.dark, .3), warm = lerp(coat.back, accent, .6), mask = lerp(coat.belly, [1, 1, 1], .15);
-  const bump = (a: number, b: number, cc: number, d: number, x: number) => band(a, b, x) * (1 - band(cc, d, x));
   let tailLen = 0; const tailD = (v: number) => Math.hypot(body.position[v * 3] - TAIL_AT[0], body.position[v * 3 + 1] - TAIL_AT[1], body.position[v * 3 + 2] - TAIL_AT[2]);
   for (let v = 0; v < body.tube.length; v++) if (body.tube[v] === TAIL_TUBE) tailLen = Math.max(tailLen, tailD(v));
   for (let v = 0; v < body.tube.length; v++) {
-    const t = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1], hz = z - HEAD_AT[2];
-    if (t === TUBE.trunk) { // trunk rings are ~6 cm apart with 12 vertices each, so the zones are ring-wide bands
-      mix3(c, v, warm, .7 * bump(-.95, -.6, -.05, .3, ny) * bump(-.13, -.08, .14, .2, z)); // warm tan flanks and lower ribs
-      mix3(c, v, saddle, .9 * band(-.15, .45, ny) * band(-.17, -.1, z) * (1 - band(.13, .19, z))); // saddle: the whole upper back
-      mix3(c, v, coat.dark, .85 * bump(-.95, -.6, .2, .5, ny) * bump(-.17, -.145, -.12, -.095, z)); // dark shoulder band down behind the ruff
-      mix3(c, v, cream, .8 * band(-.15, -.55, ny)); // belly
-      if (z < -.15) mix3(c, v, mask, .95 * band(.3, -.3, ny) * band(-.15, -.2, z)); // pale throat and chest bib
-    } else if (t === TUBE.skull) {
-      if (hz > -.092) mix3(c, v, mask, .75 * band(.35, -.25, ny) * band(.03, -.03, hz)); // pale cheeks and muzzle sides; top and nose stay dark
-    } else if (t === TUBE.jaw || t === 14 || t === 15) mix3(c, v, mask, t === TUBE.jaw ? .8 : .6); // pale lower jaw and cheek ruffs
-    else if (t >= 5 && t < 13 && (t - 5) % 2 === 0) {
-      const top = limbModel((t - 5) / 2).hip;
-      mix3(c, v, buff, .85 * band(top + .03, top - .06, y)); // legs pale below the body
-    } else if (t >= 6 && t < 13 && (t - 6) % 2 === 0) mix3(c, v, pawTone, .6); // paws a shade darker than the pale legs, so the dark toe grooves read
-    else if (t === TAIL_TUBE) { mix3(c, v, saddle, .45 * band(0, .7, ny)); mix3(c, v, coat.dark, .85 * band(.72, .9, tailD(v) / tailLen)); } // dark tail tip
+    const t = body.tube[v], x = body.position[v * 3], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1], hz = z - HEAD_AT[2];
+    const trunk = t === TUBE.trunk, leg = t >= 5 && t < 13 && (t - 5) % 2 === 0, paw = t >= 6 && t < 13 && (t - 6) % 2 === 0;
+    // 1. base coat
+    if (trunk) mix3(c, v, warm, .7 * bumpF(-.95, -.6, -.05, .3, ny) * bumpF(-.13, -.08, .14, .2, z)); // warm tan flanks and lower ribs
+    else if (leg) mix3(c, v, buff, .85 * band(limbModel((t - 5) / 2).hip + .03, limbModel((t - 5) / 2).hip - .06, y)); // pale legs below the body
+    else if (paw) mix3(c, v, pawTone, .6);
+    // 2. lighten mask
+    const light = trunk ? Math.max(.8 * band(-.15, -.55, ny), z < -.15 ? .95 * band(.3, -.3, ny) * band(-.15, -.2, z) : 0) // belly; throat and chest bib
+      : t === TUBE.skull ? (hz > -.092 ? .75 * band(.35, -.25, ny) * band(.03, -.03, hz) : 0) // cheeks and muzzle sides (top and nose stay dark)
+      : t === TUBE.jaw ? .8 : t === 14 || t === 15 ? .6 : 0; // lower jaw, cheek ruffs
+    mix3(c, v, light > 0 && trunk && ny < -.15 ? cream : mask, light);
+    // 3. darken mask, multiplied: 1 → about the coat's dark tone
+    const dark = trunk ? Math.max(.62 * band(-.15, .45, ny) * band(-.17, -.1, z) * (1 - band(.13, .19, z)), .7 * bumpF(-.95, -.6, .2, .5, ny) * bumpF(-.17, -.145, -.12, -.095, z)) // saddle, shoulder band
+      : t === TAIL_TUBE ? Math.max(.35 * band(0, .7, ny), .88 * band(.72, .9, tailD(v) / tailLen)) // tail top, tail tip
+      : paw && toes.some(q => Math.hypot(x - q[0], y - q[1], z - q[2]) < .0058) ? 1 : 0; // toe lines
+    const f = 1 - Math.min(1, COAT.darken * dark) * .75;
+    for (let k = 0; k < 3; k++) c[v * 3 + k] *= f;
   }
+}
+/** Trunk axis (centre height and half-depth per ring), same numbers as the trunk rings in wolfTubes: streaks are placed relative to it. */
+const TRUNK_AXIS: ReadonlyArray<readonly [number, number, number]> = [[.185, .29, .052], [.15, .307, .085], [.09, .318, .074], [.02, .311, .085], [-.07, .304, .096], [-.135, .307, .101], [-.19, .34, .1], [-.25, .383, .08], [-.29, .405, .062]];
+function trunkAxis(z: number) {
+  for (let k = 1; k < TRUNK_AXIS.length; k++) { const a = TRUNK_AXIS[k - 1], b = TRUNK_AXIS[k]; if (z <= a[0] && z >= b[0]) { const t = (a[0] - z) / (a[0] - b[0]); return { cy: a[1] + (b[1] - a[1]) * t, ry: a[2] + (b[2] - a[2]) * t }; } }
+  return undefined;
+}
+interface Streak { z: number; w: number; len: number; dark: number; flank: boolean; wob: number }
+/** Seeded streak lists, one per side, from croup to neck: denser over the saddle and shoulders, sparser at the ends. */
+function streaks(seed: number): Streak[][] {
+  const { streakSpacing: sp, streakWidth: sw, streakJitter: j } = COAT;
+  return [0, 1].map(side => {
+    const r = random(seed * 7 + side * 131 + 11), out: Streak[] = [];
+    for (let z = .17 - sp * r(); z > -.23;) {
+      const zone = band(-.23, -.17, z) * (1 - band(.11, .17, z)); // saddle + shoulders
+      out.push({ z, w: sw * (1 + j * (r() - .5) * 1.4), len: (.55 + .6 * zone) * (1 + j * (r() - .5)), dark: (.55 + .45 * zone) * (1 - j * .5 * r()), flank: r() < .3 + .2 * zone, wob: r() * 9 });
+      z -= sp * (zone > .5 ? 1 : 1.7) * (1 + j * (r() - .5) * 1.6);
+    }
+    return out;
+  });
+}
+/** Dark-streak strength 0..1 at a point: thin near-vertical slices (perpendicular to the spine) over the back and down the sides, densest
+ * and darkest on the saddle and shoulders, sparse on the flanks, none on the bib, belly, legs, head or tail. */
+export function streakAt(p: P3, list: Streak[][]) {
+  const z = p[2], ax = z > .17 || z < -.23 ? undefined : trunkAxis(z); if (!ax) return 0;
+  const v = (p[1] - ax.cy) / ax.ry; if (v < -.55) return 0; // belly, legs
+  if (z < -.17 && v < .2) return 0; // throat and chest bib
+  let best = 0;
+  for (const s of list[p[0] < 0 ? 0 : 1]) {
+    const dz = Math.abs(z - s.z - .003 * COAT.streakJitter * (valueNoise3(s.wob, v * 2.5, 0) - .5) * 2); if (dz > s.w) continue; // gentle waviness down the streak
+    const reach = s.flank ? s.len * 1.4 : Math.min(s.len, 1); // from the dorsal line (v = 1) down; flank streaks reach below the midline
+    const m = (1 - band(s.w * .3, s.w * .5, dz)) * band(1 - reach - .12, 1 - reach + .05, v) * s.dark * (v < 0 ? .7 : 1);
+    if (m > best) best = m;
+  }
+  return best;
+}
+/** Darken the fur cards in the streaks, root to tip (cards are 5 vertices: root pair, middle pair, tip). Colours only; same cards. */
+export function streakCards(g: THREE.BufferGeometry, seed = 1400) {
+  const pos = g.getAttribute('position'), col = g.getAttribute('color'), list = streaks(seed);
+  for (let card = 0; card * 5 < pos.count; card++) {
+    const a = card * 5, root: P3 = [(pos.getX(a) + pos.getX(a + 1)) / 2, (pos.getY(a) + pos.getY(a + 1)) / 2, (pos.getZ(a) + pos.getZ(a + 1)) / 2];
+    const m = Math.min(1, COAT.darken * streakAt(root, list)); if (m <= 0) continue;
+    // near-black root and middle; the tip (combed back along the spine) only half, so the streak stays a vertical slice instead of
+    // smearing backward along each card
+    for (let k = a; k < a + 5; k++) { const f = 1 - m * (k === a + 4 ? .45 : .9); col.setXYZ(k, col.getX(k) * f, col.getY(k) * f, col.getZ(k) * f); }
+  }
+  col.needsUpdate = true;
+  return g;
 }
 const TAIL_TUBE = 13;
 
@@ -297,6 +357,6 @@ export function furStyle() {
     tone: .3,
     scaleAt: (p: P3) => { const n = .75 + .5 * valueNoise3(p[0] * 55, p[1] * 55, p[2] * 55); return Math.min(1.4, n * (leg(p) ? 1 : tail(p) ? 1.2 : 1 + .3 * ruff(p))); },
     comb: (p: P3) => head(p) ? undefined : leg(p) ? { lay: [0, -1, .15] as P3, lean: 1 } : tail(p) ? { lay: [0, -.6, 1] as P3, lean: .8 } : { lay: [0, -.25 - .5 * ruff(p), 1] as P3, lean: 1 + .3 * ruff(p) },
-    tipTint: (p: P3) => p[1] > .33 && !head(p) ? { color: [.12, .1, .08] as P3, amount: .3 } : undefined, // agouti guard hairs end in a black band (was a pale tip that washed the saddle out)
+    tipTint: (p: P3) => p[1] > .33 && !head(p) && COAT.darken > 0 ? { color: [.12, .1, .08] as P3, amount: .3 * Math.min(1, COAT.darken) } : undefined, // agouti guard hairs end in a black band (was a pale tip that washed the saddle out)
   };
 }

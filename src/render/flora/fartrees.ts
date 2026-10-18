@@ -59,7 +59,7 @@ export function createFarTrees(scene: THREE.Scene) {
         const e: Entity = { key: `fartree:${tx}:${tz}:${insts.length}`, kind: 'spruce', seed: Math.floor(rr() * 0xffffffff), generatorVersion: GENERATOR_VERSION, x: p.x, z: p.z, rotation: rr() * Math.PI * 2, scale: .75 + rr() * .65 };
         const shapes = geoIds.size, g = treeGeometry(e, 2), m = g.children[0] as THREE.Mesh, id = geometryId(m.geometry, m.material as THREE.Material);
         if (id >= 0) { const inst = bm!.addInstance(id); pos.set(e.x, heightAt(e.x, e.z), e.z); q.setFromAxisAngle(up, g.rotation.y); bm!.setMatrixAt(inst, mat4.compose(pos, q, g.scale)); insts.push(inst); }
-        if (geoIds.size !== shapes) yield; // a new shape (tree build + batch upload) is its own step
+        if (geoIds.size !== shapes || insts.length % 32 === 31) yield; // a new shape (tree build + batch upload) is its own step; dense tiles split every 32 trees
       }
       yield;
     }

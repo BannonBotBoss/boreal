@@ -47,3 +47,12 @@ test('far trees: Thomas tiles hit the target density, cluster at a few metres, k
   assert.equal(farTreesInTile(3, 3, 0, stems, land).length, 0);
   assert.deepEqual(farTreesInTile(5, -2, 1, stems, land), farTreesInTile(5, -2, 1, stems, land), 'pure per tile');
 });
+
+test('stand model: mature fire-origin black spruce 1300-2150 stems/ha (Rossi 2013), denser young, thinner old growth', () => {
+  for (const age of [80, 100, 120]) { const s = standStructure(age).stems; assert.ok(s >= 1300 && s <= 2150, `age ${age}: ${s.toFixed(0)}/ha`); }
+  assert.ok(standStructure(37).stems >= 2500 && standStructure(37).stems <= 3600, '36-38 yr Beardmore black spruce 2500-3400/ha');
+  for (let a = 1; a < 300; a += 7) assert.ok(standStructure(a + 7).stems < standStructure(a).stems, 'self-thinning is monotone');
+  // drawn = entities + look-only filler reaches the fill share of the mature target, under the cap
+  const s = standStructure(100).stems, drawn = drawnTreesPerHa(s, 1) + fillPerHa(s, 1);
+  assert.ok(drawn > .6 * s && drawn <= Math.min(s, FAR_TREES.stemCap) + 1e-6, `drawn ${drawn.toFixed(0)}/ha of ${s.toFixed(0)}`);
+});

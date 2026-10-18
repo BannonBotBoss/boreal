@@ -44,9 +44,12 @@ export function successionWeight(cls: 'pioneer' | 'mid' | 'late', age: number) {
 
 /** The ONE stand-structure function: everything a cell needs from stand age and site wetness (0 dry … 1 wet). */
 export function standStructure(age: number, wet = .5) {
-  // stems/ha: self-thinning from dense post-fire regeneration (~10⁴/ha) to old-growth ~600–900/ha (Reineke-type decline;
-  // boreal chronosequences, e.g. Harper et al. 2005 / Bergeron 2000) [verify]
-  const stems = 650 + 9000 * Math.exp(-age / 18);
+  // stems/ha (NW Ontario / boreal Quebec plots): dense post-fire regeneration (>7000/ha at 10 yr) self-thins to 2500-3400/ha
+  // at 36-38 yr (black spruce, Beardmore; Silva Fennica doi:10.14214/sf.128), 1300-2150/ha in fire-origin black spruce at
+  // 80-120 yr (Rossi et al. 2013, doi:10.14214/sf.973) and ~1000-1200/ha in old growth (gap phase). Two-rate Reineke-type
+  // decline: 1000 + 4200 e^(-age/60) + 8000 e^(-age/10) -> 40 yr 3300, 80 yr 2110, 120 yr 1570, 200 yr 1150.
+  // (replaces 650 + 9000 e^(-age/18): ~700/ha at 80 yr, half the measured mature density)
+  const stems = 1000 + 4200 * Math.exp(-age / 60) + 8000 * Math.exp(-age / 10);
   // canopy closure: closes by ~30 yr, opens slightly in gap-phase old growth (>150 yr) (Harper et al. 2002) [verify]
   const canopy = Math.min(.95, .92 * (1 - Math.exp(-age / 14))) - .15 * Math.min(1, Math.max(0, (age - 150) / 100));
   // DBH age factor (0 → 1): stand mean diameter growth with age, used to shift each species' DBH distribution

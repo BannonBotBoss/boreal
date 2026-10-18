@@ -121,6 +121,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
   // each material finds its program already linked (in the background with KHR_parallel_shader_compile). Not covered:
   // point-light shadow programs, materials first seen after the late pass, a target with IBL before any sky bake.
   type OBC = THREE.Material['onBeforeCompile'];
+  type Prog = THREE.WebGLProgram & { isReady(): boolean }; // three r180 WebGLProgram.isReady (KHR_parallel_shader_compile), missing from the typings
   function chain(m: THREE.Material, prev: OBC, theirs: OBC): OBC { return (s, r) => { prev.call(m, s, r); theirs.call(m, s, r); }; }
   const CHAIN_KEY = chain(new THREE.Material(), () => {}, () => {}).toString(); // = customProgramCacheKey() of every chained material
   // Both post routes are compiled for a world variant: ssao/contact/rays are not world knobs, so a step across Medium/Low
@@ -130,7 +131,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
   const offscreen = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
   function compileVia<T>(via: boolean, fn: () => T): T { const prev = renderer.getRenderTarget(); renderer.setRenderTarget(via ? offscreen : null); try { return fn(); } finally { renderer.setRenderTarget(prev); } }
   type Defines = Record<string, unknown>;
-  interface Warm { key: string; target: Tier; lit: THREE.Scene; litDepth: THREE.Scene; clones: Map<THREE.Material, THREE.Material>; depths: THREE.Material[]; seen: Set<string>; queue: { p: THREE.Object3D; via: boolean; depth?: boolean }[]; busy: THREE.Material[]; late: boolean }
+  interface Warm { key: string; target: Tier; lit: THREE.Scene; litDepth: THREE.Scene; clones: Map<THREE.Material, THREE.Material>; depths: THREE.Material[]; seen: Set<string>; queue: { p: THREE.Object3D; via: boolean; depth?: boolean }[]; busy: Prog[]; late: boolean }
   let warm: Warm | undefined;
   // Clones are disposed (their programs released) only 120 frames later: a switch and a new target can land in the same
   // frame (the world catches up as the governor steps again), and the live materials must acquire the programs first.
@@ -158,16 +159,19 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     const k = m.clone(); (k as unknown as { defines: Defines }).defines = d; k.onBeforeCompile = (s, r) => base.call(k, s, r); k.customProgramCacheKey = () => key;
     w.clones.set(m, k); return k;
   }
+  /** Stand-ins for the lights tier `t` renders with (program keys carry light and shadow counts), plus fog and env. */
+  function litFor(t: Tier, depth = false) {
+    const s = new THREE.Scene(), csmLights = new Set<THREE.Object3D>(csm?.lights ?? []);
+    if (!depth) { s.fog = scene.fog; s.environment = t.ibl ? scene.environment ?? envRT?.texture ?? null : null; }
+    scene.traverseVisible(o => { if (!(o as THREE.Light).isLight || csmLights.has(o)) return; const l = o.clone(false); if (o === rig.sunLight && !t.shadows) l.castShadow = false; s.add(l); });
+    for (let i = 0; i < t.shadows; i++) { const l = new THREE.DirectionalLight(); l.castShadow = true; s.add(l); } // CSM's cascade lights
+    return s;
+  }
   /** Queue every mesh/material pairing not yet seen for target `t` (a new target starts over). */
   function precompile(t: Tier) {
     const key = variantOf(t);
     if (warm?.key !== key) {
-      release(); const lit = new THREE.Scene(), litDepth = new THREE.Scene(), csmLights = new Set<THREE.Object3D>(csm?.lights ?? []); // litDepth: the shadow pass draws with no scene (no env, no fog)
-      lit.fog = scene.fog; lit.environment = t.ibl ? scene.environment ?? envRT?.texture ?? null : null;
-      for (const s of [lit, litDepth]) {
-        scene.traverseVisible(o => { if (!(o as THREE.Light).isLight || csmLights.has(o)) return; const l = o.clone(false); if (o === rig.sunLight && !t.shadows) l.castShadow = false; s.add(l); });
-        for (let i = 0; i < t.shadows; i++) { const l = new THREE.DirectionalLight(); l.castShadow = true; s.add(l); } // CSM's cascade lights
-      }
+      release(); const lit = litFor(t), litDepth = litFor(t, true); // litDepth: the shadow pass draws with no scene (no env, no fog)
       warm = { key, target: t, lit, litDepth, clones: new Map(), depths: [], seen: new Set(), queue: [], busy: [], late: false };
     }
     const w = warm!;
@@ -188,12 +192,53 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
    * non-blocking KHR_parallel_shader_compile status (three's isReady, as in compileAsync); without it, isReady is true. */
   function stepWarm(budgetMs: number, maxNew = 2) {
     const w = warm; if (!w) return;
-    const ready = (m: THREE.Material) => (renderer.properties.get(m) as { currentProgram?: { isReady(): boolean } }).currentProgram?.isReady() ?? true;
-    w.busy = w.busy.filter(m => !ready(m)); if (w.busy.length || !w.queue.length) return;
+    w.busy = settle(w.busy); if (w.busy.length || !w.queue.length) return;
     const t0 = performance.now(), programs = () => renderer.info.programs?.length ?? 0, n0 = programs();
-    while (w.queue.length && performance.now() - t0 < budgetMs && programs() - n0 < maxNew) { const { p, via, depth } = w.queue.pop()!;
-      for (const m of compileVia(via, () => renderer.compile({ traverse: (f: (o: THREE.Object3D) => void) => f(p), traverseVisible() {} } as unknown as THREE.Object3D, camera, depth ? w.litDepth : w.lit))) w.busy.push(m); }
+    while (w.queue.length && performance.now() - t0 < budgetMs && programs() - n0 < maxNew) { const { p, via, depth } = w.queue.pop()!; compileOne(p, via, depth ? w.litDepth : w.lit, w.busy); }
     COST.warmMs += performance.now() - t0;
+  }
+  /** Compile `o` through one post route; the programs it got go to `busy` (one per route: the material's currentProgram right after). */
+  function compileOne(o: THREE.Object3D, via: boolean, lit: THREE.Scene, busy: Prog[]) {
+    for (const m of compileVia(via, () => renderer.compile({ traverse: (f: (o: THREE.Object3D) => void) => f(o), traverseVisible() {} } as unknown as THREE.Object3D, camera, lit))) {
+      const p = (renderer.properties.get(m) as { currentProgram?: Prog }).currentProgram; if (p && !busy.includes(p)) busy.push(p); }
+  }
+  /** Programs still linking stay in the list. Linked ones get their first use now (three's onFirstUse: info logs, uniform and
+   *  attribute locations, 5-30 ms each on ANGLE/D3D11 even when the link is long done), at most 2 per frame, instead of all
+   *  at once in the switch frame. Readiness is KHR_parallel_shader_compile's non-blocking status (three's isReady). */
+  function settle(busy: Prog[]) {
+    let used = 0; return busy.filter(p => { if (!p.program) return false; if (!p.isReady()) return true; if (used >= 2) return true; used++; p.getUniforms(); p.getAttributes(); return false; });
+  }
+
+  // ---- both post routes for the LIVE world variant ------------------------------------------------------------------
+  // ssao/contact/rays are not world knobs (and the sun setting turns contact/rays off), so the post route flips at once,
+  // with no hold: every live material then needs its program for the other route (tone mapping and output colour space
+  // are part of the key). Startup compiles both routes, but meshes and materials that appeared later only ever compiled
+  // the route in use, and those links landed in the switch frame: the 200-400 ms tier-change hitch (omen bench, 506d0aa).
+  // So the live materials are compiled through both routes in the background, a few new programs at a time, which is
+  // what three does at the flip anyway, only earlier. three keeps every program of a material until the material is
+  // disposed, so nothing needs releasing. A pending world variant goes first.
+  const routed = new WeakMap<THREE.Material, Set<string>>(); let routeQ: THREE.Object3D[] = [], routeLit: THREE.Scene | undefined, routeScan = 0;
+  let routeBusy: Prog[] = [];
+  function stepRoutes() {
+    if (warm && (warm.queue.length || warm.busy.length)) return;
+    routeBusy = settle(routeBusy); if (routeBusy.length) return;
+    if (!routeQ.length) {
+      if (++routeScan < 60 || (tier.ibl && !scene.environment)) return; routeScan = 0; // a rescan every 60 frames picks up new meshes
+      routeLit = litFor(tier); const seen = new Set<string>();
+      scene.traverse(o => { const k = routeSig(o); if (k && !seen.has(k[1]) && k[0].some(m => !routed.get(m)?.has(k[2]))) { seen.add(k[1]); routeQ.push(o); } });
+      return;
+    }
+    const t0 = performance.now(), programs = () => renderer.info.programs?.length ?? 0, n0 = programs();
+    while (routeQ.length && performance.now() - t0 < 2 && programs() - n0 < 2) { const o = routeQ.pop()!, k = routeSig(o); if (!o.parent || !k) continue; // gone: the next scan finds another user
+      for (const m of k[0]) { let s = routed.get(m); if (!s) routed.set(m, s = new Set()); s.add(k[2]); }
+      compileOne(o, false, routeLit!, routeBusy); compileOne(o, true, routeLit!, routeBusy); }
+    COST.warmMs += performance.now() - t0;
+  }
+  /** [materials, key per material set, key per material]: what a program key depends on besides the material and the scene. */
+  function routeSig(o: THREE.Object3D): [THREE.Material[], string, string] | undefined {
+    const mesh = o as THREE.Mesh, mat = mesh.material, g = mesh.geometry, x = o as unknown as Record<string, unknown>; if (!mesh.isMesh || !mat || !g) return;
+    const mats = Array.isArray(mat) ? mat : [mat], sig = variantOf(tier) + '|' + Object.keys(g.attributes).join() + '|' + Object.keys(g.morphAttributes).length + [x.isBatchedMesh, x.isInstancedMesh, x.isSkinnedMesh, x.instanceColor, x._colorsTexture, mesh.receiveShadow].map(b => +!!b).join('');
+    return [mats, mats.map(m => m.uuid).join() + sig, sig];
   }
 
   // ---- image-based lighting from the sky ----------------------------------------------------------------------------
@@ -248,7 +293,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
       const pend = pendingWorld(); // the world tier waiting out its hold: compile its variants now (late pass at 3/4 of the hold for new meshes)
       if (pend && variantOf(pend) !== variantOf(tier)) { if (warm?.key !== variantOf(pend)) precompile(pend); else if (!warm.late && GOVERNOR.heldMs > GOVERNOR.worldHoldMs * .75) { warm.late = true; precompile(pend); } }
       else if (warm && warm.key === variantOf(tier)) release(); // switched: the live materials hold the programs (once drawn)
-      stepWarm(3); reap();
+      stepWarm(3); stepRoutes(); reap();
       if (tier.gi) captureGI(time); else probe.intensity = 0;
       CLOUD.uSunWorld.value.copy(sunDir); updateClouds(time);
       if (csm) {

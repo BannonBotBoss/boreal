@@ -4,7 +4,8 @@
  * Uniform only: the GLSL is always compiled in, there is no define and no new material variant, and the program cache key
  * stays exactly what it was (customProgramCacheKey is kept, or frozen to the pre-wrap value), so opting in adds no program.
  * The uniforms default to 0 = no fade (an unset uniform reads 0 too), so a material that ever shares a program unwired draws
- * normally. Dither: 4x4 ordered (Bayer) threshold on gl_FragCoord (no hash), times a radial edge at the patch disc.
+ * normally. Dither: 4x4 ordered (Bayer) threshold on gl_FragCoord (no hash), times a radial edge at the patch disc; tested at
+ * the end of the fragment shader.
  */
 import * as THREE from 'three';
 
@@ -23,20 +24,21 @@ const VERT = `#include <project_vertex>
       pw = instanceMatrix * pw;
     #endif
     vPatchXZ = (modelMatrix * pw).xz; }`;
-const FRAG = `#include <clipping_planes_fragment>
+const FRAG = `
   if (uPatchCut > 0.0 || uPatchDisc.z > 0.0) {
     float keep = 1.0 - uPatchCut;
     if (uPatchDisc.z > 0.0) keep *= 1.0 - smoothstep(0.75, 1.0, length(vPatchXZ - uPatchDisc.xy) / uPatchDisc.z);
     int bx = int(gl_FragCoord.x) & 3, by = int(gl_FragCoord.y) & 3, bxy = bx ^ by;
     int bayer = ((bxy & 1) << 3) | ((by & 1) << 2) | (((bxy >> 1) & 1) << 1) | ((by >> 1) & 1);
     if ((float(bayer) + 0.5) / 16.0 >= keep) discard;
-  }`;
+  }
+  #include <dithering_fragment>`; // at the end: no gradient instruction follows the discard (an early discard made ANGLE/D3D's fxc warn X3595 on the shadow loops)
 /** The source edit (exported for tests). */
 export function addPatchFade(shader: { uniforms: Record<string, THREE.IUniform>; vertexShader: string; fragmentShader: string }) {
   if (shader.fragmentShader.includes('uPatchCut')) return;
   Object.assign(shader.uniforms, PATCH_FADE);
   shader.vertexShader = 'varying vec2 vPatchXZ;\n' + shader.vertexShader.replace('#include <project_vertex>', VERT);
-  shader.fragmentShader = 'uniform float uPatchCut; uniform vec3 uPatchDisc; varying vec2 vPatchXZ;\n' + shader.fragmentShader.replace('#include <clipping_planes_fragment>', FRAG);
+  shader.fragmentShader = 'uniform float uPatchCut; uniform vec3 uPatchDisc; varying vec2 vPatchXZ;\n' + shader.fragmentShader.replace('#include <dithering_fragment>', FRAG);
 }
 const wired = new WeakSet<THREE.Material>();
 const defaultKey = THREE.Material.prototype.customProgramCacheKey;

@@ -73,7 +73,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
 
   // ---- camera: OrbitControls rotates around the planet centre; altitude is ours (log zoom), tilt toward the horizon near ground
   const controls = new OrbitControls(camera, canvas); controls.enableZoom = false; controls.enablePan = false; controls.enableDamping = true; controls.dampingFactor = .12;
-  const bench = q.get('bench') === 'zoom', benchFrom = 14e6, benchTo = 300, benchSec = 20; let benchT = -2; // 2 s settle at orbit, 20 s zoom, 8 s hold
+  const bench = q.get('bench') === 'zoom', benchFrom = 14e6, benchTo = 300, benchSec = 20; let benchT = -2, benchOrbit = {}; // 2 s settle at orbit, 20 s zoom, 8 s hold
   const startAlt = bench ? benchFrom : Number(q.get('alt')) || R * 2.2;
   const start = q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
   let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0;
@@ -118,7 +118,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       slot.w.postMessage({ id, seed, staged: STAGES.on, stagesSeed: STAGES.seed, face: n.face, level: n.level, i: n.i, j: n.j, segments: lod.segments } satisfies TileRequest);
     }
   }
-  const wanted = new Set<string>(); let drawn = 0, deepest = 0, culled = 0;
+  const wanted = new Set<string>(); let drawn = 0, inView = 0, deepest = 0, culled = 0, splitK = 1;
   function want(n: QNode) {
     const t = tiles.get(n.key); if (t) { t.used = frame; return true; }
     wanted.add(n.key);
@@ -135,14 +135,21 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     const extent = edgeMetres(n.level, R) / R * .8; // ≥ half-diagonal of the node (Nowell cells are ≤ 1.2 × the mean size)
     return ang - extent > Math.acos(clamp(R / D, -1, 1)) + reliefHorizon;
   }
+  // Frustum-aware LOD: below minLevel, a node wholly outside the view frustum never splits (it stays drawn coarse and
+  // three's culling skips its draw call), so detail, builds and the cache go only where the camera looks.
+  const frustum = new THREE.Frustum(), projView = new THREE.Matrix4(), ball = new THREE.Sphere();
+  function inFrustum(n: QNode) {
+    const c = nodeCentre(n, R); ball.center.set(c[0], c[1], c[2]); ball.radius = edgeMetres(n.level, R) * .8 + PLANET.maxLand * 1.6;
+    return frustum.intersectsSphere(ball);
+  }
   function visit(n: QNode) {
     if (hidden(n)) { culled++; return; }
-    const ready = want(n);
-    if (wantsSplit(n, camPos, { radius: R, minLevel: lod.minLevel, maxLevel: lod.maxLevel, split: lod.split })) {
+    const ready = want(n), seen = n.level < lod.minLevel || inFrustum(n);
+    if (seen && wantsSplit(n, camPos, { radius: R, minLevel: lod.minLevel, maxLevel: lod.maxLevel, split: lod.split * splitK })) {
       const kids = children(n).filter(k => !hidden(k) || (culled++, false)), ok = kids.map(want).every(Boolean);
       if (ok) { for (const k of kids) visit(k); return; }
     }
-    if (ready) { group.add(tiles.get(n.key)!.mesh); drawn++; deepest = Math.max(deepest, n.level); }
+    if (ready) { group.add(tiles.get(n.key)!.mesh); drawn++; if (seen) inView++; deepest = Math.max(deepest, n.level); }
   }
   // roots first, synchronously on this thread, so the planet is never empty
   for (const r of roots()) accept(r, (() => { const g = buildTile(r, planet, lod.segments); let x = g.next(); while (!x.done) x = g.next(); return x.value; })());
@@ -155,10 +162,10 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     const dir = camera.position.clone().normalize(), s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = Math.max(s.h, s.water);
     if (flyHome) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
     if (bench) { const prev = benchT; benchT += dt;
-      if (prev < 0 && benchT >= 0) STATS.build.length = STATS.work.length = STATS.interval.length = 0;
+      if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }
       targetAlt = alt = benchFrom * (benchTo / benchFrom) ** clamp(benchT / benchSec, 0, 1);
       if (prev < benchSec + 8 && benchT >= benchSec + 8) console.log('BENCH ' + JSON.stringify({ mode: mode(), tiles: STATS.build.length, buildAvg: +avg(STATS.build).toFixed(2), buildP95: +pct(STATS.build, .95).toFixed(2), buildMax: +Math.max(0, ...STATS.build).toFixed(2),
-        frames: STATS.work.length, workAvg: +avg(STATS.work).toFixed(2), workP99: +pct(STATS.work, .99).toFixed(2), workMax: +Math.max(0, ...STATS.work).toFixed(2), intervalP99: +pct(STATS.interval, .99).toFixed(1), intervalMax: +Math.max(0, ...STATS.interval).toFixed(1), cached: tiles.size, drawn })); }
+        frames: STATS.work.length, workAvg: +avg(STATS.work).toFixed(2), workP99: +pct(STATS.work, .99).toFixed(2), workMax: +Math.max(0, ...STATS.work).toFixed(2), intervalP99: +pct(STATS.interval, .99).toFixed(1), intervalMax: +Math.max(0, ...STATS.interval).toFixed(1), cached: tiles.size, orbit: benchOrbit, ground: { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles } })); }
     else alt = Math.exp(Math.log(alt) + (Math.log(targetAlt) - Math.log(alt)) * (1 - Math.exp(-dt * 7)));
     controls.rotateSpeed = clamp(alt / R * .6, 2e-6, 1);
     camera.position.copy(dir).multiplyScalar(R + ground + alt);
@@ -171,8 +178,11 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     camPos[0] = camera.position.x; camPos[1] = camera.position.y; camPos[2] = camera.position.z;
 
     // LOD selection, then hand the wanted builds to the workers (or jobs); drop builds nobody wants any more
-    group.clear(); wanted.clear(); drawn = 0; deepest = 0; culled = 0;
+    camera.updateMatrixWorld(); frustum.setFromProjectionMatrix(projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+    group.clear(); wanted.clear(); drawn = 0; inView = 0; deepest = 0; culled = 0;
     for (const r of roots()) visit(r);
+    // draw cap: shrink the split distance while more tiles than the tier's cap are in view, relax it back when under
+    splitK = inView > lod.draw ? Math.max(.35, splitK * .97) : inView < lod.draw * .85 ? Math.min(1, splitK * 1.01) : splitK;
     for (const key of queued.keys()) if (!wanted.has(key)) queued.delete(key);
     if (!pool.length) for (const key of inflight) if (!wanted.has(key)) { cancel(key); inflight.delete(key); }
     dispatch();
@@ -189,7 +199,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       const ll = toLatLon([dir.x, dir.y, dir.z]);
       hud.textContent = `Boreal planet · seed ${seed}${STAGES.on ? ' (staged)' : ''}\n` +
         `altitude ${alt >= 1e4 ? (alt / 1000).toFixed(0) + ' km' : alt.toFixed(0) + ' m'} · ground ${ground.toFixed(0)} m · ${(ll.lat * 180 / Math.PI).toFixed(2)}°, ${(ll.lon * 180 / Math.PI).toFixed(2)}°\n` +
-        `tiles drawn ${drawn} · culled ${culled} · cached ${tiles.size} · deepest L${deepest} · queued ${queued.size + inflight.size}\n` +
+        `tiles drawn ${drawn} (${inView} in view, cap ${lod.draw}${splitK < 1 ? ` · split ×${splitK.toFixed(2)}` : ''}) · culled ${culled} · cached ${tiles.size} · deepest L${deepest} · queued ${queued.size + inflight.size}\n` +
         `build (${mode()}) ${built} tiles · avg ${avg(STATS.build).toFixed(1)} ms · p95 ${pct(STATS.build, .95).toFixed(1)} ms · worst frame ${Math.max(0, ...STATS.work).toFixed(1)} ms\n` +
         `tier ${LADDER[GOVERNOR.tier].name}${GOVERNOR.auto ? ' (auto)' : ''} · ${lod.segments} seg · ${fps.toFixed(0)} fps · work ${work.toFixed(1)} ms\n` +
         `drag orbit · wheel / + - zoom · H home · G game`;

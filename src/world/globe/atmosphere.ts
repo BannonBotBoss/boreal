@@ -12,6 +12,7 @@
  * The sun is the game's: core/timeOfDay sunPosition(gameHour(world clock)) at the home region, turned into planet axes.
  */
 import * as THREE from 'three';
+import { LOG_DEPTH, LOG_DEPTH_PREFIX } from './logDepth';
 import { GLSL_NOISE } from '../../proc/glsl';
 
 /** Earth-like constants (Nishita 1993 / Bruneton 2008 values; per km). [game calibration: sunI, mieG] */
@@ -112,7 +113,7 @@ export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   const setSteps = () => { uniforms.uSteps.value.set(sn, sl, tn, tl); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = CLOUDS.octaves[row]; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
   const mat = new THREE.ShaderMaterial({
     uniforms, side: THREE.BackSide, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending,
-    vertexShader: /* glsl */`#include <common>
+    vertexShader: LOG_DEPTH_PREFIX + /* glsl */`#include <common>
 #include <logdepthbuf_pars_vertex>
 varying vec3 vView;
 void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vView = mv.xyz; gl_Position = projectionMatrix * mv;
@@ -133,7 +134,7 @@ void main() {
 #include <tonemapping_fragment>
 #include <colorspace_fragment>
 }`;
-  mat.fragmentShader = domeFrag();
+  mat.fragmentShader = LOG_DEPTH_PREFIX + domeFrag(); mat.uniforms.uGlobeLogDepthFC = LOG_DEPTH.uniform; // per-material log depth (logDepth.ts)
   const dome = new THREE.Mesh(new THREE.SphereGeometry(Ra * 1000, 96, 48), mat); dome.frustumCulled = false; dome.renderOrder = 1; dome.matrixAutoUpdate = false;
   const centre = new THREE.Vector3(), sunV = new THREE.Vector3();
   return {

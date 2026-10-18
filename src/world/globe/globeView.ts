@@ -9,6 +9,8 @@
  * split, built nor drawn. Governor: the shared quality ladder (core/quality) picks tile resolution, split distance, depth and
  * cache; frames feed governFrame like the game.
  * Dev: ?alt=<m> ?at=x,z ?seed= ?stages=1 ?tier=0..5 ?workers=0 (main-thread fallback) ?bench=zoom (logs a BENCH line).
+ * Two ways to run it: startGlobe (standalone `?view=globe`, owns page + renderer + loop; the reload path) and createGlobe
+ * (shared: borrows the game's renderer for the in-page transition and renders into a far-layer target, farLayer.ts).
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -28,6 +30,7 @@ import { gameHour, START_HOUR, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
+import { setLogDepthFar } from './logDepth';
 import { buildTile, globeMaterial, releaseTileGeometry, stitchIndex, tileGeometry, type TileData } from './tile';
 import type { TileRequest } from './tileWorker';
 import { balancedTree, globeLod, worldTier } from './lod';
@@ -39,42 +42,71 @@ const pct = (a: number[], p: number) => { if (!a.length) return 0; const s = [..
 const avg = (a: number[]) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 const keep = (a: number[], n: number) => { if (a.length > n) a.splice(0, a.length - n); };
 
-export function startGlobe(canvas = document.getElementById('world') as HTMLCanvasElement) {
-  // ---- page: hide the game's DOM (this view never starts the game loop)
-  for (const id of ['loading', 'status', 'interaction', 'notice']) { const e = document.getElementById(id); if (e) e.style.display = 'none'; }
-  for (const sel of ['header', 'footer']) { const e = document.querySelector<HTMLElement>(sel); if (e) e.style.display = 'none'; }
-  Object.assign(document.body.style, { margin: '0', overflow: 'hidden', background: '#000' });
-  Object.assign(canvas.style, { display: 'block', width: '100vw', height: '100vh' });
-  const hud = document.createElement('div');
-  Object.assign(hud.style, { position: 'absolute', left: '14px', top: '12px', font: '12px/1.6 system-ui', color: '#dfe8ef', background: '#0b1622b0', padding: '8px 12px', borderRadius: '6px', pointerEvents: 'none', whiteSpace: 'pre' });
-  document.body.append(hud);
+/** Who owns what (explicit; tests/globe.test.ts). Standalone `?view=globe` owns the page and the renderer. Shared mode (the
+ *  in-page transition) borrows the game's renderer: no resize, no page DOM, no clock load (main owns the world clock), no
+ *  governor feed (main feeds it once per frame), no auto handoff, input only while attached, and NO renderer dispose or
+ *  context loss. `ownsRenderer` sets the dispose rule explicitly. */
+export interface GlobeOptions {
+  shared: boolean; ownsRenderer?: boolean; params?: URLSearchParams;
+  /** shared mode: programs are compiled for this target (render-target programs differ from the screen's: tone mapping, colour space) */
+  target?: THREE.WebGLRenderTarget | null;
+  /** G / Esc (and the standalone auto handoff): default = dispose and reload into the game at the spot */
+  onLeave?: (at: { x: number; z: number; yaw: number } | null) => void;
+}
+export function globeOwnership(o: GlobeOptions) {
+  const page = !o.shared;
+  return { disposeRenderer: o.ownsRenderer ?? page, resize: page, pageDom: page, loadClock: page, governor: page, autoHandoff: page, inputAtStart: page };
+}
+export type Globe = ReturnType<typeof createGlobe>;
 
-  // ---- the same world the game uses: settings store (applies world.stagedTerrain + quality caps), seed from the start menu
+/** Standalone planet view (`?view=globe`): its own renderer, page and loop. */
+export function startGlobe(canvas = document.getElementById('world') as HTMLCanvasElement) {
+  // the same world the game uses: settings store (applies world.stagedTerrain + quality caps), seed from the start menu
   createSettingsStore(RENDER_SETTINGS);
   { const sd = Number(localStorage.getItem('boreal.seed.v1')); if (sd > 0) STAGES.seed = sd; }
-  const q = new URLSearchParams(location.search);
-  if (q.has('stages')) STAGES.on = true;
-  const seed = Number(q.get('seed')) || (STAGES.on ? STAGES.seed : WORLD_SEED);
-  const planet = globePlanet(seed, STAGES.on, STAGES.seed), R = PLANET.radius; // home.ts: surfaceAt (staged) or heightAt
-
-  // ---- renderer + governor start (same rules as render/photoreal: GPU string → start tier, probe cap from the cached probe)
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, logarithmicDepthBuffer: true, powerPreference: 'high-performance' });
+  // log depth is per material (logDepth.ts), not a renderer flag: the same programs as in shared mode
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  // governor start (same rules as render/photoreal: GPU string -> start tier, probe cap from the cached probe)
   { const g = renderer.getContext(), dbg = g.getExtension('WEBGL_debug_renderer_info');
     GOVERNOR.gpu = String(dbg ? g.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER));
     const probe = cachedProbe(localStorage, GOVERNOR.gpu); if (probe) GOVERNOR.probeCap = probe.cap;
     if (GOVERNOR.auto) GOVERNOR.tier = Math.max(ceiling(), tierForGpu(GOVERNOR.gpu)); }
+  const q = new URLSearchParams(location.search);
   if (q.has('tier')) { GOVERNOR.auto = false; GOVERNOR.tier = clamp(Number(q.get('tier')) || 0, 0, LADDER.length - 1); }
+  const globe = createGlobe(renderer, { shared: false, params: q });
+  globe.start(); return globe;
+}
+
+/** The globe on a given renderer. Standalone: startGlobe. Shared: the caller's loop calls step(target) each frame. */
+export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
+  const own = globeOwnership(opts), canvas = renderer.domElement, q = opts.params ?? new URLSearchParams(location.search);
+  const listeners: (() => void)[] = []; // removed by dispose()
+  const listen = (t: EventTarget, type: string, fn: (e: any) => void, o?: AddEventListenerOptions) => { t.addEventListener(type, fn, o); listeners.push(() => t.removeEventListener(type, fn, o)); };
+  // ---- page (standalone only): hide the game's DOM (this view never starts the game loop)
+  let hud: HTMLDivElement | null = null;
+  if (own.pageDom) {
+    for (const id of ['loading', 'status', 'interaction', 'notice']) { const e = document.getElementById(id); if (e) e.style.display = 'none'; }
+    for (const sel of ['header', 'footer']) { const e = document.querySelector<HTMLElement>(sel); if (e) e.style.display = 'none'; }
+    Object.assign(document.body.style, { margin: '0', overflow: 'hidden', background: '#000' });
+    Object.assign(canvas.style, { display: 'block', width: '100vw', height: '100vh' });
+    hud = document.createElement('div');
+    Object.assign(hud.style, { position: 'absolute', left: '14px', top: '12px', font: '12px/1.6 system-ui', color: '#dfe8ef', background: '#0b1622b0', padding: '8px 12px', borderRadius: '6px', pointerEvents: 'none', whiteSpace: 'pre' });
+    document.body.append(hud);
+  }
+  if (q.has('stages')) STAGES.on = true;
+  const seed = Number(q.get('seed')) || (STAGES.on ? STAGES.seed : WORLD_SEED);
+  const planet = globePlanet(seed, STAGES.on, STAGES.seed), R = PLANET.radius; // home.ts: surfaceAt (staged) or heightAt
   let lod = globeLod(), lodTier = worldTier(); // tile rows follow the HELD world tier (core/quality worldTier), not every step
   const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 1e9);
-  const applyRes = () => { renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5) * lod.resScale); renderer.setSize(innerWidth, innerHeight, false); };
-  applyRes(); addEventListener('resize', () => { applyRes(); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const applyRes = () => { if (!own.resize) return; renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5) * lod.resScale); renderer.setSize(innerWidth, innerHeight, false); };
+  applyRes(); if (own.resize) listen(window, 'resize', () => { applyRes(); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+  if (own.pageDom) renderer.toneMapping = THREE.ACESFilmicToneMapping; // shared: the game owns tone mapping (also ACES)
 
   const SPACE = new THREE.Color(0x02040a), SKY = new THREE.Color(0x8fb4d9), SKY_DAY = new THREE.Color(0x9fb8d8), SKY_DUSK = new THREE.Color(0xc9a58f);
   const scene = new THREE.Scene(); scene.background = SPACE.clone();
   // Sun: the game's world clock (core/worldClock + timeOfDay, same ?hour= start offset as the game), placed at the home
   // region and turned into planet axes (game +x = east, +y = up, −z = north). One direction for the whole planet.
-  loadClock(localStorage.getItem(CLOCK.key));
+  if (own.loadClock) loadClock(localStorage.getItem(CLOCK.key)); // shared: main already owns the clock
   const hourParam = Number(q.get('hour')), startHour = q.has('hour') && hourParam >= 0 && hourParam < 24 ? hourParam : START_HOUR;
   const E = new THREE.Vector3(...planet.east), N = new THREE.Vector3(...planet.north), U = new THREE.Vector3(...planet.home);
   const sunDir = new THREE.Vector3(), sunNow = () => { const d = sunPosition(gameHour(q.has('shot') ? 0 : worldSec(), startHour)).direction; /* screenshots: clock pinned so ?hour= is exact */ return sunDir.copy(E).multiplyScalar(d.x).addScaledVector(U, d.y).addScaledVector(N, -d.z).normalize(); };
@@ -93,15 +125,17 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
 
   // ---- camera: OrbitControls rotates around the planet centre; altitude is ours (log zoom), tilt toward the horizon near ground
   const controls = new OrbitControls(camera, canvas); controls.enableZoom = false; controls.enablePan = false; controls.enableDamping = true; controls.dampingFactor = .12;
+  let inputOn = own.inputAtStart; controls.enabled = inputOn; // input is mode-scoped: only while attached (attachInput)
   const bench = q.get('bench') === 'zoom', benchFrom = 14e6, benchTo = 300, benchSec = 20; let benchT = -2, benchOrbit = {}; // 2 s settle at orbit, 20 s zoom, 8 s hold
   const startAlt = bench ? benchFrom : Number(q.get('alt')) || R * 2.2;
   const dirQ = q.get('dir')?.split(',').map(Number); // ?dir=x,y,z: start over any planet direction (e.g. a cube-face corner, screenshots)
   const start = dirQ?.length === 3 && dirQ.every(Number.isFinite) ? new THREE.Vector3(...dirQ).normalize().toArray() as [number, number, number] : q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
   let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0, overHome: { x: number; z: number } | null = null, leaving = false;
   const shot = q.has('shot'); // screenshots: clock pinned, stays on the globe, logs seam diagnostics
-  const autoHandoff = !bench && !q.has('shot') && q.get('handoff') !== '0'; // screenshots and benches stay on the globe
+  const autoHandoff = own.autoHandoff && !bench && !q.has('shot') && q.get('handoff') !== '0'; // screenshots and benches stay on the globe
   if (q.get('handoff') === 'demo') targetAlt = HANDOFF.alt * .75; // ?handoff=demo&alt=4000: descend and hand off by itself
-  const fade = document.createElement('div'); Object.assign(fade.style, { position: 'fixed', inset: '0', background: '#dfe8ef', opacity: '0', transition: 'opacity .6s', pointerEvents: 'none' }); document.body.append(fade);
+  const fade = own.pageDom ? document.createElement('div') : null; if (fade) { Object.assign(fade.style, { position: 'fixed', inset: '0', background: '#dfe8ef', opacity: '0', transition: 'opacity .6s', pointerEvents: 'none' }); document.body.append(fade); }
+  const leave = opts.onLeave ?? ((at: { x: number; z: number; yaw: number } | null) => { dispose(); location.search = gameUrl(location.search, at); });
   camera.position.set(...start).multiplyScalar(R + alt);
   const fwdTmp = new THREE.Vector3(), camUp = new THREE.Vector3(...start), nL = new THREE.Vector3(), eL = new THREE.Vector3();
   const localNE = () => { nL.copy(N).addScaledVector(camUp, -N.dot(camUp)).normalize(); eL.copy(E).addScaledVector(camUp, -E.dot(camUp)).normalize(); }; // compass axes at the camera (home's, projected)
@@ -110,18 +144,19 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const headingYaw = () => Math.round(-(lookAz ?? cameraAz()) * 1000) / 1000;
   // turn the heading below 300 km: Q/E and right-drag (left-drag still pans over the planet)
   const turn = (d: number) => { if (alt < 3e5) lookAz = (lookAz ?? cameraAz()) + d; };
-  controls.mouseButtons.RIGHT = null; canvas.addEventListener('contextmenu', e => e.preventDefault());
+  controls.mouseButtons.RIGHT = null; listen(canvas, 'contextmenu', e => { if (inputOn) e.preventDefault(); });
   let turnX: number | null = null;
-  canvas.addEventListener('pointerdown', e => { if (e.button === 2) turnX = e.clientX; });
-  addEventListener('pointermove', e => { if (turnX !== null) { turn((e.clientX - turnX) * .005); turnX = e.clientX; } });
-  addEventListener('pointerup', e => { if (e.button === 2) turnX = null; });
+  listen(canvas, 'pointerdown', (e: PointerEvent) => { if (inputOn && e.button === 2) turnX = e.clientX; });
+  listen(window, 'pointermove', (e: PointerEvent) => { if (turnX !== null) { turn((e.clientX - turnX) * .005); turnX = e.clientX; } });
+  listen(window, 'pointerup', (e: PointerEvent) => { if (e.button === 2) turnX = null; });
   const zoom = (f: number) => { targetAlt = clamp(targetAlt * f, 40, R * 4); };
-  canvas.addEventListener('wheel', e => { e.preventDefault(); zoom(Math.exp(e.deltaY * .0016)); }, { passive: false });
-  addEventListener('keydown', e => {
+  listen(canvas, 'wheel', (e: WheelEvent) => { if (!inputOn) return; e.preventDefault(); zoom(Math.exp(e.deltaY * .0016)); }, { passive: false });
+  listen(window, 'keydown', (e: KeyboardEvent) => {
+    if (!inputOn) return;
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
     else if (e.key === 'h' || e.key === 'H') flyHome = 1;
     else if (e.key === 'q' || e.key === 'Q') turn(-.12); else if (e.key === 'e' || e.key === 'E') turn(.12);
-    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; shutdown(); location.search = gameUrl(location.search, at); } // over home: spawn right below, same heading
+    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } // over home: spawn right below, same heading
   });
 
   // ---- tile builders: a worker pool (default) or budgeted main-thread jobs (?workers=0 or no Worker support)
@@ -234,26 +269,31 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     if (ready) { const tl = tiles.get(n.key)!; renderOffset(tl.centre, camPos, offTmp); tl.mesh.position.set(offTmp[0], offTmp[1], offTmp[2]); tl.mesh.updateMatrix(); group.add(tl.mesh); drawnNodes.push(n); drawn++; if (seen) inView++; deepest = Math.max(deepest, n.level); }
   }
   // Leaving (handoff, G, closing the tab): stop the workers and free the GPU now, so nothing of the globe lingers into the game
+  // Shared mode: the renderer belongs to the game, so only the globe's own resources go (explicit owner flag).
   let down = false;
-  function shutdown() {
-    if (down) return; down = true; for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); queued.clear(); ready.length = 0;
-    for (const t of tiles.values()) releaseTileGeometry(t.mesh.geometry); tiles.clear(); material.dispose(); renderer.dispose(); renderer.forceContextLoss();
+  function dispose() {
+    if (down) return; down = true; for (const off of listeners) off(); listeners.length = 0; controls.dispose();
+    for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); queued.clear(); ready.length = 0;
+    for (const t of tiles.values()) releaseTileGeometry(t.mesh.geometry); tiles.clear(); material.dispose(); group.clear();
+    if (atmos) { atmos.dome.geometry.dispose(); (atmos.dome.material as THREE.Material).dispose(); }
+    if (own.disposeRenderer) { renderer.dispose(); renderer.forceContextLoss(); }
   }
-  addEventListener('pagehide', shutdown);
+  if (own.disposeRenderer) listen(window, 'pagehide', dispose);
   // roots first, synchronously on this thread, so the planet is never empty
   for (const r of roots()) accept(r, (() => { const g = buildTile(r, planet, lod.segments); let x = g.next(); while (!x.done) x = g.next(); return x.value; })());
   STATS.build.length = 0;
 
   // ---- loop
-  let last = performance.now(), fps = 0, prevT = 0;
-  function tick() {
-    if (down) return;
-    const t0 = performance.now(), dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++;
-    const dir = camera.position.clone().normalize(), s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = Math.max(s.h, s.water);
+  let last = performance.now(), fps = 0, prevT = 0, t0 = 0, dt = 0, tR = 0;
+  const dir = new THREE.Vector3();
+  /** Camera, LOD, builds, adoption, eviction: everything but the draw. */
+  function update() {
+    t0 = performance.now(); dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++;
+    dir.copy(camera.position).normalize(); const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = Math.max(s.h, s.water);
     // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
-    if (autoHandoff && spawn && !leaving) { leaving = true; fade.style.opacity = '1'; const at = { ...landSpawn(spawn), yaw: headingYaw() }; setTimeout(() => { shutdown(); location.search = gameUrl(location.search, at); }, 650); }
+    if (autoHandoff && spawn && !leaving) { leaving = true; if (fade) fade.style.opacity = '1'; const at = { ...landSpawn(spawn), yaw: headingYaw() }; setTimeout(() => leave(at), 650); }
     if (flyHome) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
     if (bench) { const prev = benchT; benchT += dt;
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }
@@ -295,16 +335,28 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       const old = [...tiles.entries()].filter(([k, t]) => t.used < frame - 2 && k.split('/')[1] !== '0').sort((a, b) => a[1].used - b[1].used);
       for (const [key, t] of old.slice(0, tiles.size - lod.cache)) { releaseTileGeometry(t.mesh.geometry); tiles.delete(key); }
     }
-    // camera-relative: render from the origin (tile offsets were set from the double camera position in visit())
-    const tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), canvas.height); renderer.render(scene, camera); camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
+  }
+  /** Draw into `target` (null = the screen). Camera-relative: render from the origin (tile offsets were set from the
+   *  double camera position in visit()). A target gets its own depth; the globe's log depth never meets the game's. */
+  function renderTo(target: THREE.WebGLRenderTarget | null = null) {
+    const viewH = target ? target.height : canvas.height;
+    if (target && Math.abs(camera.aspect - target.width / target.height) > 1e-6) { camera.aspect = target.width / target.height; camera.updateProjectionMatrix(); }
+    setLogDepthFar(camera.far);
+    tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
+    const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
+    camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
+  }
+  /** Stats, governor (standalone only: in shared mode main feeds it once per frame), held-tier LOD, HUD. */
+  function after() {
     const work = performance.now() - t0; if (bench && work > 40) console.log(`SPIKE ${work.toFixed(0)}ms alt ${alt.toFixed(0)} pre-render ${(tR - t0).toFixed(0)} render ${(performance.now() - tR).toFixed(0)} calls ${renderer.info.render.calls} accepted ${built}`); STATS.work.push(work); if (prevT) STATS.interval.push(t0 - prevT);
     if (!bench) { keep(STATS.work, 600); keep(STATS.interval, 600); keep(STATS.build, 2000); }
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;
     const segWas = lod.segments; if (seamsDebug) material.userData.uSeg.value = lod.segments;
-    if (governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); atmos?.setTier(GOVERNOR.tier); } // resolution + atmosphere samples follow the tier now (cheap uniforms)
+    if (own.governor && governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); }
+    if (atmos && atmos.tier !== GOVERNOR.tier) atmos.setTier(GOVERNOR.tier); // resolution + atmosphere samples follow the tier now (cheap uniforms)
     if (lodTier !== worldTier()) { lodTier = worldTier(); lod = globeLod(); } // tile resolution/split/caps once the new tier has held (no rebuild per step)
     if (shot && lod.segments !== segWas) console.log(`SEGMENTS ${segWas} -> ${lod.segments} at frame ${frame} (tier ${GOVERNOR.tier}, world tier ${GOVERNOR.worldTier})`);
-    if (frame % 10 === 1) {
+    if (hud && frame % 10 === 1) {
       const ll = toLatLon([dir.x, dir.y, dir.z]);
       hud.textContent = `Boreal planet · seed ${seed}${STAGES.on ? ' (staged)' : ''}\n` +
         `altitude ${alt >= 1e4 ? (alt / 1000).toFixed(0) + ' km' : alt.toFixed(0) + ' m'} · ground ${ground.toFixed(0)} m · ${(ll.lat * 180 / Math.PI).toFixed(2)}°, ${(ll.lon * 180 / Math.PI).toFixed(2)}°\n` +
@@ -313,13 +365,26 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
         `tier ${LADDER[GOVERNOR.tier].name}${GOVERNOR.auto ? ' (auto)' : ''} · ${lod.segments} seg · ${fps.toFixed(0)} fps · shaders ${STATS.compileMs >= 0 ? STATS.compileMs.toFixed(0) + ' ms async' : '…'} · work ${work.toFixed(1)} ms\n` +
         (overHome && alt < HANDOFF.hintAlt ? `over the home region: descend below ${HANDOFF.alt / 1000} km to enter the game\n` : '') + `drag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game`;
     }
-    if (!down) requestAnimationFrame(tick);
   }
+  /** One frame: update, draw into `target`, bookkeeping. */
+  function step(target: THREE.WebGLRenderTarget | null = null) { if (down) return; update(); renderTo(target); after(); }
+  function tick() { if (down) return; step(null); if (!down) requestAnimationFrame(tick); }
   // Compile every program (tiles + aerial perspective, sky shell + clouds) BEFORE the first frame, in parallel where the
   // driver has KHR_parallel_shader_compile (three's compileAsync polls it), so opening the globe never freezes on a compile.
   for (const t of tiles.values()) group.add(t.mesh);
-  const tc = performance.now();
-  renderer.compileAsync(scene, camera).catch(e => console.warn('globe: compileAsync failed, compiling on first draw', e))
-    .finally(() => { STATS.compileMs = performance.now() - tc; group.clear(); requestAnimationFrame(tick); });
-  return { planet, renderer, scene, camera, tiles };
+  const tc = performance.now(), prevTarget = renderer.getRenderTarget();
+  renderer.setRenderTarget(opts.target ?? null); // programs are built synchronously for the current target's tone mapping / colour space
+  const compiled = renderer.compileAsync(scene, camera).catch(e => console.warn('globe: compileAsync failed, compiling on first draw', e))
+    .finally(() => { STATS.compileMs = performance.now() - tc; group.clear(); });
+  renderer.setRenderTarget(prevTarget);
+  let started = false;
+  return {
+    planet, renderer, scene, camera, tiles, ownership: own, compiled, update, renderTo, after, step, dispose,
+    /** standalone loop */
+    start() { if (started) return; started = true; void compiled.then(() => requestAnimationFrame(tick)); },
+    /** mode-scoped input: the globe's keys, wheel and drags act only while attached */
+    attachInput(on: boolean) { inputOn = on; controls.enabled = on; if (!on) turnX = null; },
+    get disposed() { return down; }, get altitude() { return alt; }, get ground() { return ground; },
+    stats: () => ({ drawn, inView, cached: tiles.size, queued: queued.size + inflight.size, deepest, tier: GOVERNOR.tier, segments: lod.segments }),
+  };
 }

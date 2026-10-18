@@ -15,6 +15,7 @@
  * the land/water edge is an interpolated contour instead of a per-vertex colour switch (no stair steps).
  */
 import * as THREE from 'three';
+import { withLogDepth } from './logDepth';
 import { bounds, edgeMetres, faceDir, type QNode } from './cube';
 import { GLOBE_COLOURS, surfaceColour, type Planet, type Vec3 } from './planet';
 
@@ -110,6 +111,7 @@ export function globeMaterial(debugSegments = 0) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }), C = GLOBE_COLOURS;
   const uSeg = { value: debugSegments }; m.userData.uSeg = uSeg;
   m.onBeforeCompile = sh => {
+    withLogDepth(sh); // per-material log depth (logDepth.ts): no renderer flag, so it also works on the game's renderer
     // centroid sampling for the varyings the atmosphere patch and the log depth use: with MSAA a fragment that only
     // covers a sample is shaded at the pixel centre, OUTSIDE its triangle; for a near edge-on skirt sliver at a tile
     // border that extrapolates vViewPosition / vFragDepth by kilometres -> wrong depth and a black (NaN/0) sample in the

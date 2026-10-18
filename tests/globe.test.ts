@@ -331,3 +331,37 @@ test('globe -> game: the arrival spot moves out of a lake to the nearest dry lan
   assert.ok(!p.lake && !p.river && Math.hypot(s.x - wet!.x, s.z - wet!.z) <= 900, `landed at ${s.x},${s.z}`);
   assert.deepEqual(landSpawn(s, true), s); assert.deepEqual(landSpawn(wet!, false), wet);
 });
+
+import { globeOwnership } from '../src/world/globe/globeView';
+import { LOG_DEPTH, LOG_DEPTH_PREFIX, logDepthFC, setLogDepthFar, withLogDepth } from '../src/world/globe/logDepth';
+import { createFarLayer } from '../src/world/globe/farLayer';
+import { readFileSync as readSrcS1 } from 'node:fs';
+test('globe ownership is explicit: standalone owns page + renderer; shared borrows the renderer (no resize, dispose, context loss, clock, governor, auto handoff)', () => {
+  assert.deepEqual(globeOwnership({ shared: false }), { disposeRenderer: true, resize: true, pageDom: true, loadClock: true, governor: true, autoHandoff: true, inputAtStart: true });
+  assert.deepEqual(globeOwnership({ shared: true }), { disposeRenderer: false, resize: false, pageDom: false, loadClock: false, governor: false, autoHandoff: false, inputAtStart: false });
+  assert.equal(globeOwnership({ shared: true, ownsRenderer: true }).disposeRenderer, true); assert.equal(globeOwnership({ shared: false, ownsRenderer: false }).disposeRenderer, false);
+  const src = readSrcS1(new URL('../src/world/globe/globeView.ts', import.meta.url), 'utf8');
+  for (const call of ['renderer.dispose()', 'renderer.forceContextLoss()', 'renderer.setSize(', 'renderer.setPixelRatio(']) for (const line of src.split('\n').filter(l => l.includes(call)))
+    assert.ok(/own\.(disposeRenderer|resize)/.test(line) && !line.includes('function startGlobe'), `guarded: ${line.trim().slice(0, 80)}`);
+  assert.ok(!/logarithmicDepthBuffer:\s*true/.test(src), 'no renderer-wide log depth flag');
+  assert.ok(!/(^|[^.\w])addEventListener\(/m.test(src.replace(/t\.addEventListener/g, '')), 'every listener goes through listen() so dispose() removes it');
+});
+test('globe log depth is per material: three chunks switched on by the material, constant from our own uniform (2 / log2(far + 1))', () => {
+  assert.ok(Math.abs(logDepthFC(1e6) - 2 / (Math.log(1e6 + 1) / Math.LN2)) < 1e-15);
+  setLogDepthFar(12345); assert.equal(LOG_DEPTH.uniform.value, logDepthFC(12345));
+  const sh = { vertexShader: 'void main(){}', fragmentShader: 'void main(){}', uniforms: {} as Record<string, unknown> }; withLogDepth(sh); withLogDepth(sh);
+  assert.ok(sh.vertexShader.startsWith(LOG_DEPTH_PREFIX) && sh.vertexShader.split('#define logDepthBufFC').length === 2, 'once');
+  assert.ok(LOG_DEPTH_PREFIX.includes('#ifndef USE_LOGARITHMIC_DEPTH_BUFFER') && sh.uniforms.uGlobeLogDepthFC === LOG_DEPTH.uniform);
+  const m = globeMaterial(); createAtmosphere(6371000).patch(m);
+  const s2 = { uniforms: {}, vertexShader: THREE_E.ShaderLib.standard.vertexShader, fragmentShader: THREE_E.ShaderLib.standard.fragmentShader } as unknown as THREE_E.WebGLProgramParametersWithUniforms;
+  m.onBeforeCompile(s2, undefined as unknown as THREE_E.WebGLRenderer);
+  assert.ok(s2.vertexShader.startsWith(LOG_DEPTH_PREFIX) && s2.fragmentShader.startsWith(LOG_DEPTH_PREFIX) && s2.uniforms.uGlobeLogDepthFC === LOG_DEPTH.uniform, 'tiles');
+  const dome = createAtmosphere(6371000).dome.material as THREE_E.ShaderMaterial;
+  assert.ok(dome.vertexShader.startsWith(LOG_DEPTH_PREFIX) && dome.fragmentShader.startsWith(LOG_DEPTH_PREFIX) && dome.uniforms.uGlobeLogDepthFC === LOG_DEPTH.uniform, 'sky shell');
+});
+test('far layer: linear half-float MSAA target that follows the drawing buffer (scaled), byte count for the budget', () => {
+  const f = createFarLayer({ scale: .5 }); f.resize(2400, 1350);
+  assert.deepEqual([f.target.width, f.target.height, f.target.samples], [1200, 675, 4]);
+  assert.equal(f.texture.colorSpace, THREE_E.LinearSRGBColorSpace); assert.equal(f.target.texture.type, THREE_E.HalfFloatType);
+  assert.equal(f.bytes(), 1200 * 675 * (8 + 4 * 12)); f.dispose();
+});

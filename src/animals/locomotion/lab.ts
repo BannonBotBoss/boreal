@@ -63,12 +63,14 @@ let body = at();
 const loco = createLocomotion(layout, ground, body);
 const stick = createStickRig(layout); scene.add(stick.root);
 let poseReal: ((p: LegPose, a: typeof body) => void) | undefined, realMeshes: THREE.Object3D[] = [], realChains: { girdle: THREE.Object3D; upper: THREE.Object3D; lower: THREE.Object3D; foot: THREE.Object3D; paw: THREE.Object3D }[] = [];
-if (q.get('rig') === 'real') void loadReal();
+if (q.get('rig') === 'real' || q.get('rig') === 'orig') void loadReal();
 
 /** The furred wolf through the forked rig (fork/playerRig.ts): hook 2 poses legs, tilt and height exactly from our pose. */
 async function loadReal() {
-  const { createPlayerWolf } = await import('./fork/playerRig');
+  // ?rig=orig loads Claude's original rig (unposed by us) for the before/after budget numbers in ?stats=1
+  const { createPlayerWolf } = q.get('rig') === 'orig' ? await import('../../render/playerWolf') as unknown as typeof import('./fork/playerRig') : await import('./fork/playerRig');
   const wolf = createPlayerWolf(1400); scene.add(wolf.root);
+  if (q.get('stats') === '1') setTimeout(() => statsOf(wolf.root), 1500);
   wolf.root.traverse(o => { o.castShadow = true; if ((o as THREE.Mesh).isMesh) realMeshes.push(o); });
   realChains = wolf.loco.chains; stick.root.visible = false; applyLayers();
   poseReal = (p, a) => {
@@ -166,4 +168,15 @@ function frame(now: number) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-document.title = 'ready';
+if (q.get('stats') !== '1') document.title = 'ready';
+
+/** ?stats=1: the wolf's budget (skin vertices, fur cards, triangles, GPU buffer bytes, draw calls) into document.title for headless runs. */
+function statsOf(rootObj: THREE.Object3D) {
+  let skinVerts = 0, furCards = 0, tris = 0, bytes = 0, meshes = 0;
+  rootObj.traverse(o => { const m = o as THREE.Mesh; if (!m.isMesh) return; meshes++; const g = m.geometry, n = g.attributes.position.count;
+    if (o.name === 'skin') skinVerts = n; if (o.name === 'fur') furCards = n / 5;
+    tris += (g.index ? g.index.count : n) / 3;
+    for (const a of Object.values(g.attributes)) bytes += (a as THREE.BufferAttribute).array.byteLength; if (g.index) bytes += g.index.array.byteLength; });
+  const r = renderer.info;
+  document.title = 'STATS ' + JSON.stringify({ rig: q.get('rig'), skinVerts, furCards, wolfTris: tris, wolfMeshes: meshes, wolfBufferKB: Math.round(bytes / 1024), sceneCalls: r.render.calls, sceneTris: r.render.triangles, geometries: r.memory.geometries, textures: r.memory.textures });
+}

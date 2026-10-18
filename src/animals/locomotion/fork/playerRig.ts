@@ -7,15 +7,16 @@
  *   torso and leg chains hang from a `tilt` group under root (identity unless legPose sets pitch/roll/height);
  *   girdle Euler order 'ZXY' so the sideways swing (z) is applied outside the girdle pitch (x), as the IK assumes;
  *   hook 2 also reads legPose.carry (walking head and tail carry);
- *   visual fixes (Matthew, 2026-10-18): skin from fork/bodyTubes.ts (wolfTubes + shapeBody), dark amber non-emissive eyes.
+ *   visual fixes (Matthew, 2026-10-18): skin from fork/bodyTubes.ts (wolfTubes + shapeBody), dark amber non-emissive eyes;
+ *   round 2: PHOTO_COAT instead of the seeded wolfCoat, and furStyle() options for the same 13 000 fur cards.
  */
 import * as THREE from 'three';
 import { WOLF_SCALE, type WolfMode } from '../../../core/wolfModes';
 import { AnimalBrain, quadrupedPose, WOLF_LEGS } from '../../../core/animalBehavior';
 import { pushProgress } from '../../../core/rocks';
-import { buildBody, wolfCoat } from '../../../core/body';
+import { buildBody } from '../../../core/body';
 import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth } from '../../../core/wolfBody';
-import { shapeBody, wolfTubes } from './bodyTubes'; // FORK: reshaped skin
+import { PHOTO_COAT, furStyle, shapeBody, wolfTubes } from './bodyTubes'; // FORK: reshaped skin, photo coat, fur style
 import { buildFurCards, furCardMaterial } from '../../../render/furCards';
 import type { LegPose } from '../signals';
 
@@ -60,8 +61,8 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   });
 
   // Skin: built once at the straight bind pose, then bound to the skeleton. Fur cards grow from it.
-  const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : wolfCoat(seed)));
-  const coat = portrait ? PORTRAIT_COAT : wolfCoat(seed);
+  const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : PHOTO_COAT /* FORK: coat from the reference photo */));
+  const coat = portrait ? PORTRAIT_COAT : PHOTO_COAT /* FORK: coat from the reference photo */;
   const clear = sculptWolf(body, portrait ? { ...coat, belly: [.7, .66, .58] } : coat); // portrait: cream cheeks in the muzzle gradient
   shapeBody(body); // FORK: flat soles with toe grooves; fur off the legs and belly, onto the neck and back
   // Brow shelf fur: short, swept back and outward over the ridge.
@@ -89,7 +90,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
-      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear }), furCardMaterial()),
+      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear, ...furStyle() /* FORK: same card budget, styled */ }), furCardMaterial()),
   ];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.

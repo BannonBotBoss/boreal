@@ -25,7 +25,11 @@ export const ATMOS_STEPS = [[16, 6, 8, 3], [14, 5, 6, 3], [12, 4, 6, 2], [10, 4,
 export const CLOUDS = { heightKm: 2.5, coverage: .56, cellKm: 900, albedo: .8, octaves: [6, 5, 4, 3, 2, 0],
   /** drift from the world clock: an eastward wind (m/s) turns the field about the polar axis; the field also evolves
    *  (slides through the noise's 3rd axis) once per `evolveH` game hours [game calibration] */
-  windMs: 12, evolveH: 6 };
+  windMs: 12, evolveH: 6,
+  /** cloud shadows on the terrain: ONE noise lookup (the cloud field's base octave: one 3D value-noise sample) where the
+   *  sun ray leaves the shell; on while the tier draws at least `shadowMinOct` cloud octaves (off at Low / Minimum).
+   *  Cuts this share of the direct sun under full cover [game calibration] */
+  shadow: .6, shadowMinOct: 3 };
 
 // loop caps = the largest counts in the tables: ANGLE (D3D) unrolls loops to their cap, so a loose cap means a slow first
 // compile (a long main-thread frame at startup), not just dead iterations
@@ -66,10 +70,10 @@ ${GLSL_NOISE}
 // 3D value noise from two seeded 2D slices of the shared vnoise (proc/glsl), so the clouds have no seams on the sphere
 float cloudSlice3(vec3 p) { float z = floor(p.z), f = fract(p.z); f = f * f * (3.0 - 2.0 * f);
   return mix(vnoise(p.xy + z * vec2(37.0, 17.0), uCloudSeed), vnoise(p.xy + (z + 1.0) * vec2(37.0, 17.0), uCloudSeed), f); }
-float cloudDensity(vec3 dir) { // dir: planet-fixed unit direction
+float cloudDensity(vec3 dir, float oct) { // dir: planet-fixed unit direction; oct: octaves (governor tier)
   dir = vec3(uCloudSpin.x * dir.x - uCloudSpin.y * dir.z, dir.y, uCloudSpin.y * dir.x + uCloudSpin.x * dir.z); // drift about the polar (+y) axis
   vec3 p = dir * (${(6371 / CLOUDS.cellKm).toFixed(3)}); float v = 0.0, a = 0.5, n = 0.0;
-  for (int i = 0; i < ${CLOUDS.octaves[0]}; i++) { if (float(i) >= uCloudOct) break; v += a * cloudSlice3(p + vec3(0.0, 0.0, uCloudEvolve)); n += a; p = p * 2.07 + 11.3; a *= 0.5; }
+  for (int i = 0; i < ${CLOUDS.octaves[0]}; i++) { if (float(i) >= oct) break; v += a * cloudSlice3(p + vec3(0.0, 0.0, uCloudEvolve)); n += a; p = p * 2.07 + 11.3; a *= 0.5; }
   return smoothstep(${CLOUDS.coverage.toFixed(3)}, ${(CLOUDS.coverage + .16).toFixed(3)}, v / max(n, 1e-3));
 }
 // the cloud shell along a view ray (camera at the origin, km) before tEnd: rgb = lit cloud (terrain light units), a = cover
@@ -77,7 +81,7 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
   if (uCloudOct < 0.5) return vec4(0.0);
   vec2 g = atmRsi(vec3(0.0), rd, uRp + ${CLOUDS.heightKm.toFixed(2)}); float t = g.x > 0.0 ? g.x : g.y;
   if (g.x > g.y || t <= 0.0 || t > tEnd) return vec4(0.0);
-  vec3 x = rd * t, n = normalize(x - uCentre); float a = cloudDensity(normalize(uViewToWorld * n));
+  vec3 x = rd * t, n = normalize(x - uCentre); float a = cloudDensity(normalize(uViewToWorld * n), uCloudOct);
   if (a <= 0.0) return vec4(0.0);
   vec3 sunT = atmSunlight(x, nl); float lam = max(dot(n, uSun), 0.0);
   return vec4(${CLOUDS.albedo.toFixed(2)} * (sunT * (0.25 + 0.75 * lam) * 1.12 + 0.08), a * 0.9);
@@ -146,7 +150,9 @@ void main() {
           .replace('#include <opaque_fragment>', `if (uSteps.z > 0.5) { vec3 fp = -vViewPosition * 1e-3, tr; float d = length(fp); vec3 rd = fp / max(d, 1e-6);
     // only the DIRECT sun is reddened (sunset) / cut (planet shadow) on its way to the fragment (x1.12 = noon
     // transmittance^-1); sky (hemisphere) light stays, so ground facing away from a low sun is lit by the sky, not black
-    outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * 1.12 * atmSunlight(fp, int(uSteps.w)) + reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+    float cs = 1.0; if (uCloudOct > ${CLOUDS.shadowMinOct - .5}) { vec3 nU = normalize(fp - uCentre); float mu = dot(nU, uSun); // cloud shadow: one cloud-field lookup up the sun ray
+      if (mu > 0.02) cs = 1.0 - ${CLOUDS.shadow.toFixed(2)} * cloudDensity(normalize(uViewToWorld * normalize(fp + uSun * (${CLOUDS.heightKm.toFixed(2)} / mu) - uCentre)), 1.0); }
+    outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * (1.12 * cs) * atmSunlight(fp, int(uSteps.w)) + reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular + totalEmissiveRadiance;
     vec3 ins = atmScatter(rd, d, int(uSteps.z), int(uSteps.w), tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL;
     vec4 cl = atmClouds(rd, d, int(uSteps.w)); outgoingLight = mix(outgoingLight, cl.rgb * tr + ins * ATM_AERIAL, cl.a); } // clouds between camera and ground
 #include <opaque_fragment>`);

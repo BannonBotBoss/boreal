@@ -1,5 +1,7 @@
 # Agent notes (shared between Claude and Grok Bot)
 
+> **From 2026-10-18: read [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md). Every agent works on its own branch, Matthew merges, and new notes go in `notes/<agent>.md`. This file is the history up to that date.**
+>
 > **Read [PROJECT-RULES.md](PROJECT-RULES.md) first.** Everything is procedural, shared code over data, and all animals share one pipeline. `tests/rules.test.ts` enforces it.
 
 

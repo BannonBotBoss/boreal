@@ -78,5 +78,5 @@ Before building a feature, follow `adopt-and-tailor-existing-code`:
 ## Checks before you commit
 1. `npx tsc --noEmit` and `npm test` (includes `tests/rules.test.ts`) are green.
 2. If you fixed an allowlisted legacy file, remove it from its allowlist. The lists only shrink.
-3. Add a dated entry to `AGENT-NOTES.md` saying what you changed and which files.
-4. Don't edit another agent's in-progress files. Propose the change in `AGENT-NOTES.md` instead.
+3. Add a dated entry to your own `notes/<agent>.md` saying what you changed and which files (see `AGENT-WORKFLOW.md`).
+4. Work only on your own branch (`AGENT-WORKFLOW.md`). Changes to another agent's code go on your branch for Matthew to review, or as a proposal in your notes. Never edit the files in the main folder in place.

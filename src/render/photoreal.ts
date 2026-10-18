@@ -148,7 +148,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     if (shadowsChanged || !csm && next.shadows) buildShadows();
   }
   buildShadows(); applyTier();
-  let lastTraverse = 0, lastFrame = performance.now(), appliedKey = '';
+  let lastFrame = performance.now(), appliedKey = '';
   return {
     COST, INFO, renderer, get tier() { return tier; }, get gpuMs() { return gpuMs; },
     /** Before rendering: sun/IBL/shadows follow the sky; returns the render scale to use. */
@@ -163,7 +163,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
       CLOUD.uSunWorld.value.copy(sunDir); updateClouds(time);
       if (csm) {
         const t0 = performance.now();
-        if (time - lastTraverse > 1) { lastTraverse = time; setupMaterials(); }
+        setupMaterials(); // every frame (flag checks only): a new mesh gets its CSM defines before its first draw; the old 1 s poll compiled each new material twice
         csm.lightDirection.copy(sunDir).negate();
         for (const l of csm.lights) { l.color.copy(sl.color); l.intensity = sl.intensity; }
         sl.intensity = 0; // CSM's lights replace the sky's sun light
@@ -177,6 +177,8 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
       if (governFrame(workMs, gpuMs, frameMs)) applyTier();
     },
     get governor() { return GOVERNOR; },
+    /** Startup warm-up: give every material in the scene its CSM/PCSS defines now, so renderer.compileAsync builds final programs. */
+    prepare() { setupMaterials(); },
   };
 }
 export type Photoreal = ReturnType<typeof createPhotoreal>;

@@ -47,37 +47,53 @@ export const GOVERNOR = {
   lower: 1, upper: 1.35, // margin as multiples of the target: decline below target, incline above 1.35 × target (drei default 60/100 ≈ 1.67)
   window: [] as number[], windowMs: 0, averages: [] as number[], flipped: 0, lastDir: 0, locked: false,
   fps: 0, gpuMs: undefined as number | undefined,
+  /** Time hysteresis (the 2026-10-18 omen bench saw a tier change every ~2.5 s, each one rebuilding chunks or recompiling
+   * every shader): after any step no decision for cooldownMs; after a step down no step up for upHoldMs. */
+  cooldownMs: 10000, upHoldMs: 30000, cool: 0, upBlock: 0, changes: 0,
+  /** WORLD_KNOBS (radii, densities, LOD, shadows, IBL) rebuild chunks or change shader defines, so they follow `tier` only once
+   * it has held worldHoldMs; until then they stay at worldTier (-1 = follow `tier`: manual mode, after a reset). */
+  worldHoldMs: 20000, worldTier: -1, heldMs: 0,
 };
+/** Knobs whose change rebuilds chunks/tiles (radii, densities, LOD, weather grid) or recompiles programs (shadow cascades, PCSS, env map). */
+export const WORLD_KNOBS: (keyof Omit<Tier, 'name'>)[] = ['shadows', 'pcss', 'ibl', 'lod', 'near', 'mid', 'trees', 'foliage', 'weather'];
+const clampTier = (tier: number) => Math.max(ceiling(), Math.min(LADDER.length - 1, tier));
 export const MANUAL: Partial<Omit<Tier, 'name'>> = {}; // caps from the render settings
 /** The applied tier: the ladder tier with every knob capped by its manual setting. */
 export function applied(tier = GOVERNOR.tier): Tier {
-  const t = { ...LADDER[Math.max(ceiling(), Math.min(LADDER.length - 1, tier))] };
+  const t = { ...LADDER[clampTier(tier)] }, g = GOVERNOR;
+  if (g.auto && g.worldTier >= 0 && tier === g.tier) { const w = LADDER[clampTier(g.worldTier)]; for (const k of WORLD_KNOBS) t[k] = w[k]; } // world waits for a tier that holds
   for (const k of KNOBS) if (MANUAL[k] !== undefined) t[k] = Math.min(t[k], MANUAL[k]!);
   if (GOVERNOR.xr) for (const k of KNOBS) if (XR_CAPS[k] !== undefined) t[k] = Math.min(t[k], XR_CAPS[k]!);
   return t;
 }
-export function resetGovernor() { Object.assign(GOVERNOR, { window: [], windowMs: 0, averages: [], flipped: 0, lastDir: 0, locked: false }); }
+export function resetGovernor() { Object.assign(GOVERNOR, { window: [], windowMs: 0, averages: [], flipped: 0, lastDir: 0, locked: false, cool: 0, upBlock: 0, worldTier: -1, heldMs: 0 }); }
 /** Feed one frame. `workMs` = CPU work this frame, `gpuMs` = GPU time if measured, `frameMs` = wall interval (window clock).
  * Returns +1 (stepped to a cheaper tier), −1 (stepped up) or 0. */
 export function governFrame(workMs: number, gpuMs?: number, frameMs = workMs) {
   const g = GOVERNOR; if (gpuMs !== undefined) g.gpuMs = gpuMs;
   if (!g.auto || g.locked) return 0;
+  if (g.worldTier >= 0 && g.worldTier !== g.tier && (g.heldMs += frameMs) >= g.worldHoldMs) g.worldTier = g.tier; // the tier held: the world follows
+  g.upBlock = Math.max(0, g.upBlock - frameMs);
+  if (g.cool > 0) { g.cool -= frameMs; g.window = []; g.windowMs = 0; g.averages = []; return 0; } // the new tier's first seconds are not evidence
   g.window.push(Math.max(workMs, gpuMs ?? 0)); g.windowMs += frameMs;
   if (g.windowMs < g.ms) return 0;
-  const avg = g.window.reduce((a, b) => a + b, 0) / g.window.length; g.window = []; g.windowMs = 0;
+  // window MEDIAN (drei: mean): one stall (shader compile, GC, a job step) is not a reason to drop a tier, and lowering the tier
+  // does not cure it (the job budget and the shader warm-up do). Sustained cost still moves the median.
+  const avg = g.window.sort((a, b) => a - b)[g.window.length >> 1]; g.window = []; g.windowMs = 0;
   g.fps = 1000 / Math.max(avg, 1e-3); g.averages.push(g.fps); if (g.averages.length > g.iterations) g.averages.shift();
   if (g.averages.length < g.iterations) return 0;
   const lo = g.targetFps * g.lower, hi = g.targetFps * g.upper;
   const below = g.averages.filter(f => f < lo).length / g.iterations, above = g.averages.filter(f => f >= hi).length / g.iterations; // as upstream
   let dir = 0;
   if (below > g.threshold && g.tier < LADDER.length - 1) dir = 1;
-  else if (above > g.threshold && g.tier > ceiling()) dir = -1;
-  else if (above > g.threshold && g.tier === g.probeCap && g.probeCap > g.capTier) { // the probe cap binds and fps shows headroom: lift it after N windows
+  else if (above > g.threshold && g.tier > ceiling() && !g.upBlock) dir = -1;
+  else if (above > g.threshold && !g.upBlock && g.tier === g.probeCap && g.probeCap > g.capTier) { // the probe cap binds and fps shows headroom: lift it after N windows
     g.averages = []; if (++g.probeHits >= PROBE_RAISE_AFTER) { g.probeHits = 0; g.probeCap--; g.onProbeRaise?.(g.probeCap); dir = -1; } }
   if (below > g.threshold) g.probeHits = 0;
   if (!dir) return 0;
   if (g.lastDir && dir !== g.lastDir && ++g.flipped >= g.flipflops) { g.locked = true; if (dir < 0) return 0; } // fallback: stay on the cheaper tier
-  g.lastDir = dir; g.tier += dir; g.averages = [];
+  if (g.worldTier < 0) g.worldTier = g.tier; // the world stays where it is until the new tier has held
+  g.lastDir = dir; g.tier += dir; g.averages = []; g.cool = g.cooldownMs; g.heldMs = 0; g.changes++; if (dir > 0) g.upBlock = g.upHoldMs;
   return dir;
 }
 /** The best tier allowed now: the player's cap and the probe's cap, whichever is cheaper. */

@@ -432,18 +432,20 @@ test('in-page band pose: the band start reproduces the globe camera (game <-> pl
   assert.ok(out.position.distanceTo(new THREE.Vector3(...v)) < 1e-3, 'position'); assert.ok(out.quaternion.angleTo(gq) < 1e-6, 'orientation');
 });
 
-test('patch fade: world props (default-key materials) opt in through render/batch with byte-identical program keys', async () => {
+test('patch fade: world props (default-key materials) opt in through render/batch with one stable extra program key', async () => {
   const THREE = await import('three'), { fadeOptIn, PATCH_FADE } = await import('../src/render/fade');
   const plain = new THREE.MeshStandardMaterial(), key = plain.customProgramCacheKey(), hook = plain.onBeforeCompile;
   fadeOptIn(plain, true); fadeOptIn(plain, true);
-  assert.notEqual(plain.onBeforeCompile, hook); assert.equal(plain.customProgramCacheKey(), key, 'default key unchanged');
+  assert.notEqual(plain.onBeforeCompile, hook);
+  assert.notEqual(plain.customProgramCacheKey(), key, 'never shares a program with an unwired twin (which would compile without the fade)');
+  assert.equal(plain.customProgramCacheKey(), key + '|patchFade');
+  const twin = new THREE.MeshStandardMaterial({ color: 0x334455 }); fadeOptIn(twin, true);
+  assert.equal(twin.customProgramCacheKey(), plain.customProgramCacheKey(), 'constant key: one extra program, not one per material');
   const shader = { uniforms: {} as Record<string, unknown>, vertexShader: '#include <project_vertex>', fragmentShader: '#include <dithering_fragment>' };
   plain.onBeforeCompile(shader as never, undefined as never);
   assert.equal(shader.uniforms.uPatchCut, PATCH_FADE.uPatchCut); assert.ok(shader.fragmentShader.includes('uPatchCut'));
   assert.equal(plain.userData.patchFade, true);
-  // a CSM-style chain on top (render/photoreal) still keys exactly like the same chain on an unwired material
-  const chain = (prev: (s: never, r: never) => void) => function (this: unknown, s: never, r: never) { prev.call(this, s, r); };
-  const a = new THREE.MeshStandardMaterial(), b = new THREE.MeshStandardMaterial(); fadeOptIn(a, true);
-  a.onBeforeCompile = chain(a.onBeforeCompile); b.onBeforeCompile = chain(b.onBeforeCompile);
-  assert.equal(a.customProgramCacheKey(), b.customProgramCacheKey());
+  // a CSM-style chain on top (render/photoreal) leaves the key alone (as for trees; CSM varies the program by its defines)
+  const k0 = twin.customProgramCacheKey(), prev = twin.onBeforeCompile; twin.onBeforeCompile = function (s, r) { prev.call(this, s, r); };
+  assert.equal(twin.customProgramCacheKey(), k0);
 });

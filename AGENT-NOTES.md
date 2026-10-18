@@ -339,3 +339,30 @@ At Matthew's request (Claude rate-limited) we edited a COPY of the wolf mesh, us
 - **flora owner (`src/core/flora`)**: a pure, worker-safe `forestAt(seed, x, z)` returning { density 0..1, dominant: 'spruce' | 'pine' | 'birch' | 'aspen' | ... } for the globe's look from far away. If `core/flora/site` `siteAt` is meant for this, please say so and I'll wire it.
 - **world clock owner**: a pure `seasonAt(worldSec)` returning { dayOfYear, snow 0..1 } (today `DAY_OF_YEAR` is a constant), so the globe and the game share season and snow.
 - **package.json owner / Matthew (optional)**: `@takram/three-atmosphere` (Bruneton, MIT) was checked. React is optional and its LUTs can be generated at runtime, but it needs `postprocessing` (a required peer) plus `@takram/three-geospatial`, `astronomy-engine` and `react-merge-refs`. It was not adopted, so package.json is untouched. Say if you want it instead of the in-house shader.
+
+## 2026-10-18 05:20 PT - Grok Bot: grass on stage-3 soils + shared procedural ground flora (flowers, shrubs)
+- Commits: 171fb4a (grass on soils + core/flora/site), 09c88ae (vendor plant-generator baseline), d579c2b (flora).
+- core/flora/site.ts (shared by grass + flora): staged `siteAt` reads stage-3 soils (`soilAt`): wetness, bedrock share (bedrock
+  = .85 so RN 'thin patchy drift' keeps soil pockets) and depth to bedrock are bilinear between the 4 soil-grid NODES (fixes the
+  old cell-centre half-cell TWI offset), material = nearest node. Unstaged: old height proxies. Light = 1 - tree crown cover
+  (`setCanopySource`, registered by render/flora from generateChunk spruce entities + treeDims crown width).
+  Seed 1400 staged: 9 % of land bare (bedrock is 11.4 %); before, ~all staged ground read as rock (LEVEL.upland vs 60 m relief).
+  Niche suitability: Gaussian responses on wetness + light (Whittaker 1967; Austin 1985) x rock/soil affinity x slope cut.
+  Clustering: Thomas process (Thomas 1949, Biometrika 36:18; Wiegand & Moloney 2014 ch. 4) written from the paper
+  (spatstat rThomas is GPL: definition only); offspring thinned by suitability where they land.
+- core/flora/plants.ts: 13 Kenora-area species, FNA / Baldwin & Sims cited sizes [verify]: fireweed, twinflower, bunchberry, prickly
+  rose, wood lily, bluebead lily, wild strawberry, pearly everlasting; lowbush blueberry, Labrador tea, speckled alder, Bebb willow,
+  common juniper: petals, leaf arrangement, inflorescence, colours, bloom window (day of year), niche, cluster params.
+- render/flora/plant.ts: one generator petals -> flower -> inflorescence -> stems/leaves/branches, tailored from mateusdcc/
+  plant-generator (MIT, @89fe3b6; vendor/plant-generator): createBlade/createPetal profiles, Vogel 1979 golden-angle phyllotaxis,
+  raceme/umbel/cyme/corymb. 2 LODs x 4 seeded variants per species.
+- render/flora/flora.ts: 20 m interest-job tiles, a BatchedMesh per tile and shadow class (as render/batch); per-plant distance
+  culling + LOD (small plants first); radius min(near, 45 m x sqrt(LADDER foliage)); only shrubs > 1.5 m cast shadows; shared
+  wind/phenology (render/trees WIND_UNIFORMS); flowers collapse outside their bloom window (WEATHER.day). `?patch=1` = showcase
+  (all in bloom, cluster intensity x15 vs game x6). Dev handle globalThis.borealFlora {info, fx: {off, bloomAll, density, view}, densest()}.
+- Bench (omen RTX 5060 laptop, headless Edge D3D11, Ultra forced, quiet Vite on a HEAD snapshot, median of 5 on/off pairs, GPU ms):
+  staged default: flora 266-291 plants visible, +0.45 ms (noise ~±1 ms); grass ~100k blades drawn, within noise (earlier clean
+  bench +0.6 ms). ?patch=1: 660-800 plants visible, flora +2.8 ms. Tile build ~5 ms per 20 m tile (CPU, sliced per species).
+- References (tuning only, NOT shipped; box /workspace/tmp/flora-refs + SOURCES.json): Wikimedia Commons, CC BY / CC BY-SA 2.0-4.0
+  and public domain. Comparison sheet: box /workspace/tmp/boreal-patch-compare.png.
+- No hook needed from the soils owner now (site.ts imports soilAt directly); if soils gain a moisture/depth field, siteAt is the one place.

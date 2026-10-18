@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { GLSL_NOISE } from '../proc/glsl';
 import { WORLD_SEED } from '../core/world';
+import { fadeOptIn } from './fade';
 
 /** Scene illuminance (lux) and the adaptation gain derived from it (core/light). The gain is applied to
  * the sun/moon light intensities (render/sky) rather than to tone mapping, so the hand-tuned sky/cloud shaders keep their look. */
@@ -51,6 +52,7 @@ export function terrainMaterial() {
           normal = normalize(normal - (viewMatrix * vec4(gx, 0., gz, 0.)).xyz * (1.0 - snow) * 1.5); }`);
   };
   terrain.customProgramCacheKey = () => ['boreal-terrain-pbr', ...groundLayers.map(l => l.name)].join(':');
+  fadeOptIn(terrain); // render/fade: in-page transition patch fade (uniform only, same cache key)
   return terrain;
 }
 /** Adds needle/leaf translucency to a foliage material's shader source (called from its onBeforeCompile). */

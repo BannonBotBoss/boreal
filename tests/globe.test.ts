@@ -403,3 +403,23 @@ test('transition: flag + fallback, fade gated on chunks, mode machine, input sco
   h.hold(); h.hold(); assert.deepEqual([g.auto, g.worldTier, h.held], [false, 2, true]);
   h.release(); h.release(); assert.deepEqual([g.auto, g.cool, resets, h.held], [true, 10000, 1, false]);
 });
+test('patch fade (render/fade): uniform only, cache key unchanged, default-key materials skipped, unset uniforms = no fade', async () => {
+  const THREE = await import('three'), { PATCH_FADE, setPatchFade, addPatchFade, fadeOptIn } = await import('../src/render/fade');
+  const m = new THREE.MeshStandardMaterial(); m.customProgramCacheKey = () => 'boreal-test'; let theirs = 0; m.onBeforeCompile = () => { theirs++; };
+  const keyBefore = m.customProgramCacheKey(); fadeOptIn(m); fadeOptIn(m);
+  assert.equal(m.customProgramCacheKey(), keyBefore, 'same program cache key');
+  const sh = { uniforms: {} as Record<string, { value: unknown }>, vertexShader: THREE.ShaderLib.standard.vertexShader, fragmentShader: THREE.ShaderLib.standard.fragmentShader, defines: {} };
+  m.onBeforeCompile(sh as never, {} as never);
+  assert.equal(theirs, 1, 'the material\'s own hook still runs (once)'); assert.equal(m.userData.patchFade, true);
+  assert.ok(sh.vertexShader.includes('vPatchXZ = (modelMatrix * pw).xz') && sh.vertexShader.includes('batchingMatrix * pw'), 'world xz incl. batching');
+  assert.ok(sh.fragmentShader.includes('uniform float uPatchCut') && sh.fragmentShader.includes('discard'), 'dither in the fragment');
+  const defs = (s: string) => s.split('#define').length; assert.equal(defs(sh.fragmentShader), defs(THREE.ShaderLib.standard.fragmentShader), 'no define (frag)');
+  assert.equal(defs(sh.vertexShader), defs(THREE.ShaderLib.standard.vertexShader), 'no define (vert)'); assert.deepEqual(sh.defines, {}, 'no material defines');
+  assert.equal(sh.uniforms.uPatchCut, PATCH_FADE.uPatchCut, 'shared uniform objects');
+  addPatchFade(sh); assert.equal(sh.fragmentShader.split('uniform float uPatchCut').length, 2, 'idempotent');
+  const plain = new THREE.MeshStandardMaterial(), hook = plain.onBeforeCompile, key = plain.customProgramCacheKey(); fadeOptIn(plain);
+  assert.equal(plain.onBeforeCompile, hook); assert.equal(plain.customProgramCacheKey(), key, 'default-key material untouched');
+  assert.equal(PATCH_FADE.uPatchCut.value, 0, 'default: patch fully drawn');
+  setPatchFade(.25, { x: 3, z: 4, r: 180 }); assert.ok(Math.abs(PATCH_FADE.uPatchCut.value - .75) < 1e-9); assert.deepEqual(PATCH_FADE.uPatchDisc.value.toArray(), [3, 4, 180]);
+  setPatchFade(1); assert.equal(PATCH_FADE.uPatchCut.value, 0); assert.equal(PATCH_FADE.uPatchDisc.value.z, 0, 'no disc = no fade at all');
+});

@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { GLSL_NOISE } from '../proc/glsl';
 import { shaderClock } from './shaderClock';
 import { WORLD_SEED } from '../core/world';
+import { fadeOptIn } from './fade';
 
 const SEED = ((WORLD_SEED * 7) % 997) * .37, uTime = { value: 0 };
 let water: THREE.MeshStandardMaterial | undefined;
@@ -35,6 +36,7 @@ export function waterMaterial() {
         normal = normalize(normal - (viewMatrix * vec4(wg.x, 0., wg.y, 0.)).xyz * (0.6 + 0.6 * length(fl)));`);
   };
   water.customProgramCacheKey = () => 'boreal-water-flow';
+  fadeOptIn(water); // render/fade: in-page transition patch fade (uniform only, same cache key)
   return water;
 }
 /** Per frame: the shared shader clock drives the flow phases. */

@@ -21,7 +21,7 @@ test('fork without legPose poses every bone exactly like the original rig (hook 
 });
 
 test('real rig: paws land exactly on the locomotion feet (x2 scale, root-parented legs, tilt) on hills', () => {
-  const w = forked(1400), saved = SPRINGS.joint; SPRINGS.joint = 0; // springs off: compare the solved pose itself
+  const w = forked(1400), saved = SPRINGS.joint; SPRINGS.joint = 0; // springs off: compare the solved pose itself (swing legs too)
   try {
     const layout = { legs: w.loco.legs, hips: w.loco.chains.map(c => c.hipXZ) };
     let x = 0, z = 0, h = .4; const loco = createLocomotion(layout, hills, { x, z, heading: h });
@@ -39,4 +39,18 @@ test('real rig: paws land exactly on the locomotion feet (x2 scale, root-parente
     // swing paws are exact whenever the target is within reach (a leashed foot starts its step from out of reach)
     assert.ok(exact / total > .97, `paws on target in ${(100 * exact / total).toFixed(1)} % of leg-frames`);
   } finally { SPRINGS.joint = saved; }
+});
+
+test('with joint springs on, planted paws still sit exactly on their markers (planted legs snap) through a gallop and a pounce', () => {
+  const w = forked(1400), layout = { legs: w.loco.legs, hips: w.loco.chains.map(c => c.hipXZ) };
+  let x = 0, z = 0; const h = 0, loco = createLocomotion(layout, hills, { x, z, heading: h }), p = new THREE.Vector3();
+  let worst = 0, planted = 0, lag = 0;
+  for (let t = 0; t < 5; t += 1 / 120) {
+    const v = t < 1 ? 2 : 7; z -= v / 120;
+    const pose = loco.update({ x, z, heading: h, speed: v, intent: Math.abs(t - 3) < 1e-9 || (t > 3 && t - 1 / 120 < 3) ? { kind: 'pounce' } : undefined }, 1 / 120);
+    w.root.position.set(x, hills(x, z), z); w.root.rotation.y = h; w.animate(t, true, undefined, 0, 'run', undefined, pose); w.root.updateMatrixWorld(true);
+    w.loco.chains.forEach((c, i) => { c.paw.getWorldPosition(p); const d = p.distanceTo(new THREE.Vector3(pose.feet[i].x, pose.feet[i].y, pose.feet[i].z));
+      if (pose.contacts[i]) { worst = Math.max(worst, d); planted++; } else lag = Math.max(lag, d); });
+  }
+  assert.ok(planted > 400); assert.ok(worst < 1e-6, `planted paw off by ${worst} m`); assert.ok(lag > 1e-3, 'swing legs still spring-smoothed');
 });

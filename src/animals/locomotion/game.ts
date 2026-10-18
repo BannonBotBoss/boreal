@@ -20,7 +20,7 @@ const TELEPORT = 2;
 export function createLocoPlayer(): PlayerRig {
   const w = createPlayerWolf();
   const layout: LegLayout = { legs: w.loco.legs, hips: w.loco.chains.map(c => c.hipXZ) };
-  let loco: Locomotion | undefined, last = { x: NaN, z: NaN };
+  let loco: Locomotion | undefined, last = { x: NaN, z: NaN }, wasJumping = false;
   return {
     root: w.root, brain: w.brain, sensor: w.sensor,
     animate(f: AnimateFrame) {
@@ -28,7 +28,9 @@ export function createLocoPlayer(): PlayerRig {
       if (!loco || !(Math.hypot(x - last.x, z - last.z) < TELEPORT)) loco = createLocomotion(layout, gameGround, { x, z, heading });
       last = { x, z };
       const speed = b.motion === 'idle' ? 0 : (b.motion === 'back' ? -1 : 1) * b.gaitSpeed;
-      const pose = loco.update({ x, z, heading, speed }, f.dt, 'near');
+      // the brain's jump (main.ts: Space / X, launched at pounceSpeed) becomes a pounce intent on its first frame
+      const jumping = b.motion === 'jump', intent = jumping && !wasJumping ? { kind: 'pounce' as const } : undefined; wasJumping = jumping;
+      const pose = loco.update({ x, z, heading, speed, intent }, f.dt, 'near');
       w.animate(f.time, f.moving, f.action, f.elapsed, f.mode, f.push, pose);
     },
   };

@@ -3,8 +3,10 @@
  * springs. One instance per animal; all state is plain numbers (snapshot-friendly) and nothing is random.
  * LOD (PROJECT-RULES rule 8): 'near' = everything above; 'mid' = the same CPG phases driving the ideal flat
  * trajectory on the tilted body plane (2 ground samples, no foot locks, no springs). Far = no instance at all.
+ * M2: planted legs snap to their IK solution (springs smooth only swing legs, so planted paws never trail), a gallop
+ * body bounce (Claude's gallopBob on the LH phase), and the jump/pounce state machine (jump.ts) driven by `intent`.
  */
-import { WOLF_LEGS, bendsForward, isFrontLeg, limbOf } from '../../core/animalBehavior';
+import { WOLF_LEGS, bendsForward, gallopBob, isFrontLeg, limbOf } from '../../core/animalBehavior';
 import { LEG_XZ } from '../../core/wolfBody';
 import { WOLF_SCALE } from '../../core/wolfModes';
 import { createCpg, phases, stepCpg, type Cpg } from './cpg';
@@ -15,6 +17,7 @@ import { supportPlane, type Tilt } from './balance';
 import { spring, springTo, type Spring } from './spring';
 import type { LegLayout, LegPose, LocoSignals, Lod, TerrainFn, Vec3 } from './signals';
 import { smooth01 } from '../../proc/math';
+import { flightFoot, jumpFrame, type Jump, type JumpFrame } from './jump';
 
 /** The reference test body: Claude's real-size gray-wolf legs (WOLF_LEGS) and limb positions (LEG_XZ × WOLF_SCALE). Read only. */
 export const referenceLayout = (): LegLayout => ({ legs: WOLF_LEGS, hips: LEG_XZ.map(([x, z]) => [x * WOLF_SCALE, z * WOLF_SCALE] as const) });
@@ -22,10 +25,17 @@ export const referenceLayout = (): LegLayout => ({ legs: WOLF_LEGS, hips: LEG_XZ
 /** Joint and body spring half-lives (s) at a 0.55 m hip, scaled by √(hip / 0.55) (dynamic similarity; game calibration). */
 export const SPRINGS = { joint: .025, body: .08, refHip: .55 };
 const KEYS = ['girdle', 'leg', 'knee', 'wrist', 'paw', 'abduct'] as const;
+/**
+ * Full-detail radius (m): within it an animal runs the 'near' path, beyond it 'mid' (game calibration). PROJECT-RULES
+ * rule 10 wants every cost knob in core/quality.ts LADDER; quality.ts is Claude's file, so this should become a LADDER
+ * column `loco` (proposed Ultra 40 … Minimum 6) when Claude folds it in (AGENT-NOTES.md).
+ */
+export const LOCO_LOD = { nearRadius: 30 };
+export const lodAt = (distance: number): Lod => distance <= LOCO_LOD.nearRadius ? 'near' : 'mid';
 
 export interface Locomotion {
   update(s: LocoSignals, dt: number, lod?: Lod): LegPose;
-  readonly feet: FootState[]; readonly cpg: Cpg; plan(): GaitPlan;
+  readonly feet: FootState[]; readonly cpg: Cpg; plan(): GaitPlan; jumping(): boolean;
 }
 
 export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { x: number; z: number; heading: number }): Locomotion {
@@ -40,7 +50,7 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
   const feet = [0, 1, 2, 3].map(i => { const p = restWorld(start.x, start.z, start.heading, i); return footState({ x: p.x, y: ground(p.x, p.z), z: p.z }); });
   const joints = [0, 1, 2, 3].map(() => Object.fromEntries(KEYS.map(k => [k, spring()])) as Record<typeof KEYS[number], Spring>);
   const body = { height: spring(ground(start.x, start.z)), pitch: spring(), roll: spring() };
-  let first = true;
+  let first = true, jump: Jump | undefined, lastStage = '';
   const scale = Math.sqrt(legs.hip / SPRINGS.refHip);
 
   function update(s: LocoSignals, dt: number, lod: Lod = 'near'): LegPose {
@@ -55,16 +65,31 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
       const hf = ground(f.x, f.z), hb = ground(b.x, b.z); return { height: (hf + hb) / 2, pitch: Math.atan2(hf - hb, wheelbase), roll: 0 };
     })();
     const near = lod === 'near' && !first, hl = SPRINGS.body * scale;
-    const tilt = near ? { height: springTo(body.height, t.height, hl, dt), pitch: springTo(body.pitch, t.pitch, hl, dt), roll: springTo(body.roll, t.roll, hl, dt) }
+    const base = near ? { height: springTo(body.height, t.height, hl, dt), pitch: springTo(body.pitch, t.pitch, hl, dt), roll: springTo(body.roll, t.roll, hl, dt) }
       : (body.height.x = t.height, body.pitch.x = t.pitch, body.roll.x = t.roll, t);
+    // jump / pounce: an intent starts one when none is running (callers send it on the frame the jump begins)
+    if (!jump && (s.intent?.kind === 'jump' || s.intent?.kind === 'pounce')) jump = { t: 0, kind: s.intent.kind };
+    let jf: JumpFrame | undefined;
+    if (jump) { jump.t += dt; jf = jumpFrame(jump, legs.hip); if (jf.done) { jump = undefined; jf = undefined; } }
+    const bounce = !jf && moving && plan.id === 'gallop' ? gallopBob(ph[1], legs.hip, plan.duty) : 0;
+    const tilt: Tilt = { height: base.height + bounce + (jf?.heightOff ?? 0), pitch: base.pitch + (jf?.pitchOff ?? 0), roll: base.roll };
+    const stage = jf?.stage ?? '';
+    if (stage === 'flight' && lastStage !== 'flight') feet.forEach(f => { f.planted = false; f.forced = false; f.from = { ...f.at }; });
+    if (stage === 'land' && lastStage === 'flight') feet.forEach(f => { f.planted = true; f.forced = false; f.at = { x: f.at.x, y: ground(f.at.x, f.at.z), z: f.at.z }; });
+    lastStage = stage;
     const fwd = { x: -Math.sin(h), z: -Math.cos(h) };
     const pose: LegPose = { girdles: [], legs: [], knees: [], wrists: [], paws: [], abduct: [], feet: [], contacts: [], height: tilt.height, pitch: tilt.pitch, roll: tilt.roll,
       gait: plan.id, phases: ph, duty: plan.duty, cycle: plan.cycle, froude: plan.froude };
     for (let i = 0; i < 4; i++) {
       const L = limbs[i], front = isFrontLeg(i);
       let rel: Vec3, lift: number, contact: boolean;
-      if (lod === 'near') {
-        const r = stepFoot(feet[i], { phase: ph[i], duty: plan.duty, cycle: plan.cycle, lift: plan.lift, moving, reverse: plan.reverse, dt, speed: Math.abs(s.speed), rest: restWorld(s.x, s.z, h, i), fwd }, ground);
+      if (jf?.stage === 'flight' || (jf && lod !== 'near')) {
+        const restZ = restBody(i)[1] - hips[i][1];
+        const ff = jf.stage === 'flight' ? flightFoot(front, jf.air, L.hip, jump!.kind, restZ) : { x: 0, y: 0, z: restZ, lift: 0 };
+        rel = { x: ff.x, y: ff.y, z: ff.z }; lift = ff.lift; contact = jf.stage !== 'flight';
+        const w = limbToWorld(rel, s.x, s.z, h, tilt, hips[i]); pose.feet.push(w); feet[i].at = w;
+      } else if (lod === 'near') {
+        const r = stepFoot(feet[i], { phase: ph[i], duty: plan.duty, cycle: plan.cycle, lift: plan.lift, moving: moving && !jf, reverse: plan.reverse, dt, speed: Math.abs(s.speed), rest: restWorld(s.x, s.z, h, i), fwd }, ground);
         rel = worldToLimb(r.at, s.x, s.z, h, tilt, hips[i]); lift = r.lift; contact = feet[i].planted; pose.feet.push({ ...r.at });
       } else {
         // ideal distance-phased trajectory (core/animalBehavior footTarget), on the tilted body plane
@@ -77,8 +102,9 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
       }
       const raw = solveLimb(L, bendsForward(legs, i), rel, lift), a: LimbAngles = clampLimb(raw, front);
       if (lod === 'near' && contact && reachError(L, a, rel) > REACH_TOLERANCE) { forceStep(feet[i]); contact = false; } // leash
-      const j = joints[i], hj = SPRINGS.joint * scale;
-      const out = near ? Object.fromEntries(KEYS.map(k => [k, springTo(j[k], a[k], hj, dt)])) as Record<typeof KEYS[number], number>
+      const j = joints[i], hj = Math.min(SPRINGS.joint * scale, SWING_SPRING_SHARE * (moving ? (1 - plan.duty) * plan.cycle / Math.max(Math.abs(s.speed), 1e-3) : Infinity)); // lag stays a small share of the swing, so fast gaits don't trail
+      // planted legs snap (exact contact), swing legs follow through the spring ("muscle" lag only in the air)
+      const out = near && !contact ? Object.fromEntries(KEYS.map(k => [k, springTo(j[k], a[k], hj, dt)])) as Record<typeof KEYS[number], number>
         : (KEYS.forEach(k => { j[k].x = a[k]; j[k].v = 0; }), a);
       pose.girdles.push(out.girdle); pose.legs.push(out.leg); pose.knees.push(out.knee); pose.wrists.push(out.wrist); pose.paws.push(out.paw); pose.abduct.push(out.abduct);
       pose.contacts.push(contact);
@@ -86,9 +112,11 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
     first = false;
     return pose;
   }
-  return { update, feet, cpg, plan: () => plan };
+  return { update, feet, cpg, plan: () => plan, jumping: () => !!jump };
 }
 
+/** Swing-leg spring half-life is capped at this share of the swing duration. */
+export const SWING_SPRING_SHARE = .1;
 /** A planted foot further than this (m) from where the limb can reach is lifted (leash). */
 export const REACH_TOLERANCE = 1e-4;
 /** Distance between a limb target and where the solved, clamped limb actually puts the sole. */

@@ -1,7 +1,8 @@
 /**
  * Locomotion lab (dev page tools/locomotion-lab.html). One test quadruped walks a circle over a chosen terrain, driven
  * by the locomotion layer. Params: ?terrain=flat|hills|world  ?gait=auto|walk|trot|pace|canter|gallop|bound|pronk
- * ?speed=<m/s>  ?lod=near|mid  ?rig=stick|real  ?t=<seconds to pre-simulate>  ?cam=side|follow
+ * ?speed=<m/s>  ?lod=near|mid  ?rig=stick|real  ?t=<seconds to pre-simulate>  ?cam=side|follow  ?pause=1 (freeze after ?t)
+ * ?pounce=1 (a pounce at t = 1 s and every 3 s after; P key or the button pounces any time)
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -23,7 +24,7 @@ const ground = TERRAIN[terrainName] ?? TERRAIN.flat;
 const gaitParam = q.get('gait') ?? 'auto';
 const state = {
   gait: (gaitParam in GAIT_TABLE ? gaitParam : undefined) as GaitId | undefined,
-  speed: Number(q.get('speed') ?? NaN), lod: (q.get('lod') === 'mid' ? 'mid' : 'near') as Lod, paused: false,
+  speed: Number(q.get('speed') ?? NaN), lod: (q.get('lod') === 'mid' ? 'mid' : 'near') as Lod, paused: false, pounce: false, clock: 0,
 };
 const DEFAULT_SPEED: Record<string, number> = { auto: 1.2, walk: 1.2, trot: 2.6, pace: 2.6, canter: 4.5, gallop: 7, bound: 5, pronk: 3 };
 if (!Number.isFinite(state.speed)) state.speed = DEFAULT_SPEED[gaitParam] ?? 1.2;
@@ -82,7 +83,7 @@ css.textContent = `body{margin:0;overflow:hidden;font:12px system-ui;color:#1d24
 document.head.append(css);
 const ui = document.createElement('div'); ui.id = 'ui';
 ui.innerHTML = `<b>Locomotion lab</b> · terrain ${terrainName}<label>speed <input id="sp" type="range" min="0" max="10" step=".1"> <span id="spv"></span> m/s</label>
-<label>gait <select id="ga">${['auto', ...Object.keys(GAIT_TABLE)].map(g => `<option>${g}</option>`).join('')}</select> LOD <select id="lo"><option>near</option><option>mid</option></select> <button id="pa">pause</button></label>
+<label>gait <select id="ga">${['auto', ...Object.keys(GAIT_TABLE)].map(g => `<option>${g}</option>`).join('')}</select> LOD <select id="lo"><option>near</option><option>mid</option></select> <button id="pa">pause</button> <button id="po">pounce</button></label>
 <div id="ro"></div><canvas id="strip" width="260" height="56"></canvas>`;
 document.body.append(ui);
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -90,6 +91,8 @@ const sp = $<HTMLInputElement>('sp'), ga = $<HTMLSelectElement>('ga'), lo = $<HT
 sp.value = String(state.speed); ga.value = state.gait ?? 'auto'; lo.value = state.lod;
 sp.oninput = () => { state.speed = Number(sp.value); }; ga.onchange = () => { state.gait = ga.value === 'auto' ? undefined : ga.value as GaitId; }; lo.onchange = () => { state.lod = lo.value as Lod; };
 $('pa').onclick = () => { state.paused = !state.paused; };
+$('po').onclick = () => { state.pounce = true; }; addEventListener('keydown', e => { if (e.key === 'p') state.pounce = true; });
+const autoPounce = q.get('pounce') === '1';
 const strip = $<HTMLCanvasElement>('strip').getContext('2d')!, history: boolean[][] = [];
 
 function drawStrip() {
@@ -102,12 +105,17 @@ function drawStrip() {
 const DT = 1 / 120;
 let pose: LegPose = loco.update({ ...body, speed: 0, gait: state.gait }, DT, state.lod);
 function simulate(dt: number) {
-  path.a += state.speed * dt / R; body = at();
-  pose = loco.update({ ...body, speed: state.speed, gait: state.gait }, dt, state.lod);
+  const before = state.clock; state.clock += dt;
+  if (autoPounce && before < 1 && state.clock >= 1 || autoPounce && before >= 1 && Math.floor((before - 1) / 3) !== Math.floor((state.clock - 1) / 3)) state.pounce = true;
+  const intent = state.pounce && !loco.jumping() ? { kind: 'pounce' as const } : undefined; state.pounce = false;
+  const v = loco.jumping() || intent ? Math.max(state.speed, 5) : state.speed; // a pounce carries the body forward
+  path.a += v * dt / R; body = at();
+  pose = loco.update({ ...body, speed: v, gait: state.gait, intent }, dt, state.lod);
   history.push(pose.contacts.slice()); if (history.length > 240) history.shift();
 }
 const warm = Number(q.get('t') ?? 0);
 for (let t = 0; t < warm; t += DT) simulate(DT);
+if (q.get('pause') === '1') state.paused = true;
 const sideCam = q.get('cam') !== 'follow';
 function placeCamera(initial: boolean) {
   const f = { x: -Math.sin(body.heading), z: -Math.cos(body.heading) };
@@ -127,7 +135,7 @@ function frame(now: number) {
   pose.feet.forEach((f, i) => { dots[i].position.set(f.x, f.y + .02, f.z); dots[i].material = pose.contacts[i] ? green : orange; });
   placeCamera(false); controls.update(); renderer.render(scene, camera);
   $('spv').textContent = state.speed.toFixed(1);
-  $('ro').textContent = `gait ${pose.gait}  Fr ${pose.froude.toFixed(2)}  duty ${pose.duty.toFixed(2)}\nstride ${pose.cycle.toFixed(2)} m  pitch ${(pose.pitch * 57.3).toFixed(1)}°  roll ${(pose.roll * 57.3).toFixed(1)}°\n`
+  $('ro').textContent = `${loco.jumping() ? 'POUNCE  ' : ''}gait ${pose.gait}  Fr ${pose.froude.toFixed(2)}  duty ${pose.duty.toFixed(2)}\nstride ${pose.cycle.toFixed(2)} m  pitch ${(pose.pitch * 57.3).toFixed(1)}°  roll ${(pose.roll * 57.3).toFixed(1)}°\n`
     + LEG_NAMES.map((n, i) => `${n} φ ${pose.phases[i].toFixed(2)} ${pose.contacts[i] ? 'down' : 'swing'}`).join('\n');
   drawStrip();
   requestAnimationFrame(frame);

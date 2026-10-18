@@ -27,11 +27,11 @@ import { gameHour, START_HOUR, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, handoffTarget, HANDOFF } from './handoff';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
-import { buildTile, globeMaterial, tileGeometry, type TileData } from './tile';
+import { buildTile, globeMaterial, releaseTileGeometry, stitchIndex, tileGeometry, type TileData } from './tile';
 import type { TileRequest } from './tileWorker';
 import { globeLod } from './lod';
 
-interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3 } // centre: doubles, CPU only (camera-relative rendering)
+interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
 const STATS = { warm: [] as number[], build: [] as number[], work: [] as number[], interval: [] as number[] };
 const pct = (a: number[], p: number) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
@@ -118,7 +118,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const accept = (n: QNode, t: TileData) => {
     inflight.delete(n.key); STATS.build.push(t.cpu); built++;
     const mesh = new THREE.Mesh(tileGeometry(t), material); mesh.matrixAutoUpdate = false;
-    tiles.set(n.key, { mesh, used: frame, centre: [t.centre[0], t.centre[1], t.centre[2]] });
+    tiles.set(n.key, { mesh, used: frame, centre: [t.centre[0], t.centre[1], t.centre[2]], seg: Math.round(Math.sqrt(4 + t.position.length / 3)) - 3 });
   };
   try {
     for (let k = 0; k < nWorkers; k++) {
@@ -172,6 +172,20 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     const c = nodeCentre(n, R); ball.center.set(c[0], c[1], c[2]); ball.radius = edgeMetres(n.level, R) * .8 + PLANET.maxLand * 1.6;
     return frustum.intersectsSphere(ball);
   }
+  // Stitching (tile.ts stitchIndex): an edge whose same-face neighbour is drawn one level coarser gets the collapsed index
+  const drawnNodes: QNode[] = [], drawnKeys = new Set<string>();
+  function stitch() {
+    drawnKeys.clear(); for (const n of drawnNodes) drawnKeys.add(n.key);
+    for (const n of drawnNodes) {
+      const N = 1 << n.level; let flags = 0;
+      if (n.level > 0) for (const [di, dj, bit] of [[0, -1, 1], [0, 1, 2], [-1, 0, 4], [1, 0, 8]] as const) {
+        const ai = n.i + di, aj = n.j + dj; if (ai < 0 || aj < 0 || ai >= N || aj >= N) continue; // cube-face edges: skirt only
+        if (drawnKeys.has(`${n.face}/${n.level - 1}/${ai >> 1}/${aj >> 1}`)) flags |= bit;
+      }
+      const t = tiles.get(n.key)!, g = t.mesh.geometry;
+      if ((g.userData.stitch ?? 0) !== flags) { g.userData.stitch = flags; g.setIndex(stitchIndex(t.seg, flags)); }
+    }
+  }
   function visit(n: QNode) {
     if (hidden(n)) { culled++; return; }
     const ready = want(n), seen = n.level < lod.minLevel || inFrustum(n);
@@ -179,13 +193,13 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       const kids = children(n).filter(k => !hidden(k) || (culled++, false)), ok = kids.map(want).every(Boolean);
       if (ok) { for (const k of kids) visit(k); return; }
     }
-    if (ready) { const tl = tiles.get(n.key)!; renderOffset(tl.centre, camPos, offTmp); tl.mesh.position.set(offTmp[0], offTmp[1], offTmp[2]); tl.mesh.updateMatrix(); group.add(tl.mesh); drawn++; if (seen) inView++; deepest = Math.max(deepest, n.level); }
+    if (ready) { const tl = tiles.get(n.key)!; renderOffset(tl.centre, camPos, offTmp); tl.mesh.position.set(offTmp[0], offTmp[1], offTmp[2]); tl.mesh.updateMatrix(); group.add(tl.mesh); drawnNodes.push(n); drawn++; if (seen) inView++; deepest = Math.max(deepest, n.level); }
   }
   // Leaving (handoff, G, closing the tab): stop the workers and free the GPU now, so nothing of the globe lingers into the game
   let down = false;
   function shutdown() {
     if (down) return; down = true; for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); queued.clear(); ready.length = 0;
-    for (const t of tiles.values()) t.mesh.geometry.dispose(); tiles.clear(); material.dispose(); renderer.dispose(); renderer.forceContextLoss();
+    for (const t of tiles.values()) releaseTileGeometry(t.mesh.geometry); tiles.clear(); material.dispose(); renderer.dispose(); renderer.forceContextLoss();
   }
   addEventListener('pagehide', shutdown);
   // roots first, synchronously on this thread, so the planet is never empty
@@ -225,8 +239,9 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
 
     // LOD selection, then hand the wanted builds to the workers (or jobs); drop builds nobody wants any more
     camera.updateMatrixWorld(); frustum.setFromProjectionMatrix(projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
-    group.clear(); wanted.clear(); drawn = 0; inView = 0; deepest = 0; culled = 0;
+    group.clear(); wanted.clear(); drawnNodes.length = 0; drawn = 0; inView = 0; deepest = 0; culled = 0;
     for (const r of roots()) visit(r);
+  stitch();
     // draw cap: shrink the split distance while more tiles than the tier's cap are in view, relax it back when under
     splitK = inView > lod.draw ? Math.max(.35, splitK * .97) : inView < lod.draw * .85 ? Math.min(1, splitK * 1.01) : splitK;
     for (const key of queued.keys()) if (!wanted.has(key)) queued.delete(key);
@@ -238,7 +253,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     dispatch();
     if (frame % 30 === 0 && tiles.size > lod.cache) { // evict least-recently-used tiles over the tier's cache cap (never the roots)
       const old = [...tiles.entries()].filter(([k, t]) => t.used < frame - 2 && k.split('/')[1] !== '0').sort((a, b) => a[1].used - b[1].used);
-      for (const [key, t] of old.slice(0, tiles.size - lod.cache)) { t.mesh.geometry.dispose(); tiles.delete(key); }
+      for (const [key, t] of old.slice(0, tiles.size - lod.cache)) { releaseTileGeometry(t.mesh.geometry); tiles.delete(key); }
     }
     // camera-relative: render from the origin (tile offsets were set from the double camera position in visit())
     const tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir); renderer.render(scene, camera); camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();

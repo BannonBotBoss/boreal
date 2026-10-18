@@ -7,6 +7,10 @@
  * main thread through core/interest runJobs. It yields once per sample row.
  * Seams: normals come from central differences over ONE extra ring of samples beyond the tile edge, so two tiles that
  * share an edge at the same level compute identical edge normals (no lighting seam).
+ * Coarse/fine edges (stitching, as in geomipmapping): where the drawn neighbour across an edge is one level coarser, the
+ * tile swaps to a shared index buffer that collapses its odd edge vertices onto their even neighbours (stitchIndex), so
+ * that edge runs straight through the coarse tile's own vertices: no crack, no T-junction, and the skirt stays hidden.
+ * Vertex data never changes (only the index buffer), so the exactness tests still hold. Deeper steps fall back to the skirt.
  * Coastlines: each vertex carries the signed field h − level (aH); the material contours it per pixel (globeMaterial), so
  * the land/water edge is an interpolated contour instead of a per-vertex colour switch (no stair steps).
  */
@@ -64,12 +68,38 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
   cpu += performance.now() - t;
   return { position, color, height, normal, index: Uint16Array.from(idx), centre, cpu };
 }
+/** Edge bits for stitchIndex: the neighbour across that edge is coarser. Row j = 0, row j = n-1, column i = 0, column i = n-1. */
+export const EDGE = { south: 1, north: 2, west: 4, east: 8 } as const;
+const STITCH = new Map<string, THREE.BufferAttribute>();
+/** Shared index buffer for a tile of `segments` with the given coarser-neighbour edge bits (16 per segment count, built
+ *  once): the grid and skirt triangles of buildTile with each odd vertex on a flagged edge (and its skirt copy) collapsed
+ *  onto its lower even neighbour. Collapsed triangles are degenerate and rasterize nothing. */
+export function stitchIndex(segments: number, flags: number) {
+  const key = segments + '/' + flags; let a = STITCH.get(key); if (a) return a;
+  const n = segments + 1, at = (i: number, j: number) => {
+    if (j === 0 && flags & 1 && i & 1) i--; else if (j === n - 1 && flags & 2 && i & 1) i--;
+    if (i === 0 && flags & 4 && j & 1) j--; else if (i === n - 1 && flags & 8 && j & 1) j--;
+    return j * n + i;
+  };
+  const idx: number[] = [];
+  for (let j = 0; j < segments; j++) for (let i = 0; i < segments; i++) { const p = at(i, j), b = at(i + 1, j), c = at(i, j + 1), e = at(i + 1, j + 1); idx.push(p, b, e, p, e, c); }
+  const edges: [number, (k: number) => [number, number]][] = [[1, k => [k, 0]], [2, k => [k, n - 1]], [4, k => [0, k]], [8, k => [n - 1, k]]];
+  edges.forEach(([bit, ij], ei) => {
+    const start = n * n + ei * n, sk = (k: number) => start + (flags & bit && k & 1 ? k - 1 : k);
+    for (let k = 0; k < n - 1; k++) { const p = at(...ij(k)), b = at(...ij(k + 1)), c = sk(k), d = sk(k + 1); idx.push(p, c, b, b, c, d, p, b, c, b, d, c); }
+  });
+  a = new THREE.BufferAttribute(Uint16Array.from(idx), 1); STITCH.set(key, a); return a;
+}
+/** Free a tile's geometry without deleting a shared stitch index buffer from the GPU. */
+export function releaseTileGeometry(g: THREE.BufferGeometry) { g.setIndex(null); g.dispose(); }
 /** Main-thread side: wrap tile arrays (from a worker or the fallback job) in a BufferGeometry. */
 export function tileGeometry(t: TileData) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(t.position, 3)); g.setAttribute('normal', new THREE.BufferAttribute(t.normal, 3));
   g.setAttribute('color', new THREE.BufferAttribute(t.color, 3)); g.setAttribute('aH', new THREE.BufferAttribute(t.height, 1));
-  g.setIndex(new THREE.BufferAttribute(t.index, 1)); g.computeBoundingSphere(); return g;
+  const seg = Math.round(Math.sqrt(4 + t.position.length / 3)) - 3; // count = n² + 4n
+  g.setIndex(stitchIndex(seg, 0)); g.userData.stitch = 0; // shared index buffers (same triangles as t.index), never per tile
+  g.computeBoundingSphere(); return g;
 }
 /** The globe material: vertex-colour land, per-pixel land/water contour of aH (antialiased with fwidth), water shaded
  *  shallow → deep by depth and smoother than land. Colours come from planet GLOBE_COLOURS (one table). */
@@ -82,7 +112,7 @@ export function globeMaterial() {
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep;\nvarying float vH;\nfloat landMask;')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { float fw = max(fwidth(vH), 1e-3); landMask = smoothstep(-fw, fw, vH);
-    vec3 water = mix(uShallow, uDeep, smoothstep(0.0, 2000.0, -vH)); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }`)
+    vec3 water = mix(uShallow, uDeep, smoothstep(0.0, 400.0, -vH)); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.55, roughnessFactor, landMask); // water: a soft sun glint [game calibration]');
   };
   return m;

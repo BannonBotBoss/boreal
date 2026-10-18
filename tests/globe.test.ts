@@ -186,3 +186,16 @@ test('globe far field: land outside the playable region keeps Kenora-scale relie
   }
   assert.ok(n >= 3 && spread / n > 25, `mean local relief over 2.8 km patches ${n ? (spread / n).toFixed(1) : '-'} m`);
 });
+
+import { stitchIndex } from '../src/world/globe/tile';
+test('globe stitching: flags 0 is buildTile\'s own triangulation; flagged edges never use an odd edge vertex (no T-junctions)', () => {
+  const p = createPlanet(1400, heightAt), seg = 16, n = seg + 1, t = finish(buildTile(node(4, 6, 20, 30), p, seg));
+  assert.deepEqual(Array.from(stitchIndex(seg, 0).array), Array.from(t.index));
+  for (const flags of [1, 2, 4, 8, 5, 15]) {
+    const ix = stitchIndex(seg, flags).array; let live = 0;
+    const odd = (v: number) => { if (v >= n * n) { const e = Math.floor((v - n * n) / n), k = (v - n * n) % n; return !!(flags & (1 << e)) && (k & 1) === 1; }
+      const i = v % n, j = Math.floor(v / n); return ((j === 0 && flags & 1) || (j === n - 1 && flags & 2)) && (i & 1) === 1 || ((i === 0 && flags & 4) || (i === n - 1 && flags & 8)) && (j & 1) === 1; };
+    for (let k = 0; k < ix.length; k += 3) { const a = ix[k], b = ix[k + 1], c = ix[k + 2]; if (a === b || b === c || a === c) continue; live++; assert.ok(!odd(a) && !odd(b) && !odd(c), `flags ${flags}: tri uses a collapsed vertex`); }
+    assert.ok(live > seg * seg * 2 - 8 * seg, `flags ${flags}: grid still covered (${live} live tris)`);
+  }
+});

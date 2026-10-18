@@ -3,10 +3,10 @@ import { buildScene } from './render/buildScene';
 import { availableActions, consumeForage, createContext, friendCount, interact, parseContext, type Player } from './core/events';
 import { catalog } from './core/catalog';
 import type { Entity } from './core/world';
-import { AudioLibrary } from './audio';
 import { BorealSound } from './audio/borealSound';
 import { createMusic } from './audio/music';
 import { MUSIC_SAFETY, MUSIC_SETTINGS } from './audio/musicSettings';
+import { VOLUME_SETTINGS } from './audio/mixer';
 import { wolfSpeak } from './audio/wolfVoice';
 import { playerSpeed, pounceSpeed } from './core/playerTuning';
 import { HARE } from './animals/hare';
@@ -43,7 +43,7 @@ import { DAY_OF_YEAR, START_HOUR, REAL_SECONDS_PER_GAME_HOUR } from './core/time
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = element<HTMLCanvasElement>('world'), status = element('status'), actionButton = element<HTMLButtonElement>('act');
-const dialog = element<HTMLDialogElement>('info'), audio = new AudioLibrary();
+const dialog = element<HTMLDialogElement>('info');
 const SAVE_KEY = 'boreal.events.v1';
 let context = createContext(), saveBlocked = false;
 let noticeTimer: ReturnType<typeof setTimeout>;
@@ -94,8 +94,7 @@ function perform() {
     context = next; revision++;
     pushFrom = action === 'move' ? structuredClone(target) : undefined;
     playerAction = action; actionStarted = simTime;
-    audio.play(action === 'move' ? 'stone-roll' : action === 'speak' ? 'friend-chime' : 'gather-rustle');
-    sfx.action(action, target);
+    sfx.action(action, target); // (the old synth beeps on a second AudioContext doubled every action and ignored mute/volume)
     if (action === 'speak') { const t = target, a = view.audibleAnimals().find(x => x.key === t.key); wolfSpeak(sfx, t, { darkness: view.darkness(), animal: a }); }
     notice(action === 'move' ? 'Stone pushed with your snout. Its new position is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.');
   } catch (error) { notice(`Interaction not committed: ${String(error)}`); }
@@ -134,6 +133,7 @@ let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? '
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');
 const musicPanel = () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore, () => {})() as HTMLElement;
+  form.prepend(settingsPanel(VOLUME_SETTINGS, sfx.volumeStore, () => {})()); // Sound volume per bus (audio/mixer)
   const warn = document.createElement('p'); warn.className = 'note'; warn.textContent = MUSIC_SAFETY; form.prepend(warn);
   const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Next track'; skip.onclick = () => music.skip(); form.append(skip);
   const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Playlist: put audio files in public/music and list them in public/music/manifest.json (mood: day | night | storm | any). Gameplay sounds duck the music; a limiter caps its peaks; N toggles music, - / = changes music volume.'; form.append(hint);
@@ -170,11 +170,12 @@ element('photo-btn').onclick = () => enterPhoto();
 element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = view.playable.cameraHeight; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
 element('help').onclick = () => dialog.showModal();
 element('close').onclick = () => dialog.close();
-element('sound').onclick = async () => {
-  if (audio.enabled) audio.enabled = false;
-  else try { await audio.enable(); audio.play('friend-chime'); } catch { notice('Audio could not start in this browser.'); }
-  element('sound').textContent = audio.enabled ? 'Sound on' : 'Sound off';
+const soundLabel = () => { element('sound').textContent = sfx.muted ? 'Sound off' : 'Sound on'; };
+element('sound').onclick = async () => { // mutes the real mix (master bus); M does the same
+  try { await sfx.start(); sfx.setMuted(!sfx.muted); } catch { notice('Audio could not start in this browser.'); }
+  soundLabel();
 };
+soundLabel();
 element('export').onclick = () => {
   const blob = new Blob([JSON.stringify(context, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = 'boreal-events.json'; link.click();
@@ -247,7 +248,7 @@ function frame(time: number) { const frameStart = performance.now();
   if (!menuOpen() && pressed(1) && dialog.open) dialog.close();
   if (!menuOpen() && pressed(0)) {
     if (dialog.open) dialog.close();
-    else { void audio.enable().catch(() => {}); perform(); }
+    else { void sfx.start().catch(() => {}); perform(); }
   }
   previousButtons = buttons;
   // A live photo sequence keeps the world running (no player input) while photo mode renders it.

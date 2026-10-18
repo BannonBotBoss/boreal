@@ -4,6 +4,7 @@
  * Missing clips are skipped silently, so the game runs with or without them.
  * Keys: M mute all, [ / ] volume, N music on/off, - / = music volume, H howl, G growl.
  * Music (music-day/music-night) crossfades with darkness and ducks under one-shots.
+ * Mixing policy (buses, loudness trims, voice caps, distance culling, volume settings) lives in audio/mixer.ts.
  */
 import { windAt } from '../core/weather';
 import { stream } from '../proc/rng';
@@ -15,6 +16,9 @@ const soundRng = stream(1400, 'borealSound-v1');
 
 import { haptic, SOUND_HAPTICS } from '../ui/haptics';
 import { jumpArc } from '../proc/physics';
+import { BUSES, BUS_LEVEL, BUS_STATE, CULL_DISTANCE, VOICES, VOICE_TRIM_DB, admitVoice, busOf, createVolumeStore, onBusChange, priorityOf, trim, type ActiveVoice, type Bus } from './mixer';
+/** Footstep clips hold several footfalls; each gait event plays ONE footfall slice (onsets measured from the clips). */
+const STEP_SLICES: Partial<Record<string, { onsets: number[]; len: number }>> = { 'paw-walk': { onsets: [0, .61], len: .35 }, 'paw-run': { onsets: [.11, .23, .44, .73, 1.03, 1.34, 1.65], len: .2 } };
 export const SOUND_IDS = ['amb-day', 'amb-night', 'wind-pines', 'water', 'loon', 'wolf-howl', 'wolf-growl',
   'paw-walk', 'paw-run', 'deer-snort', 'deer-hooves', 'chew', 'land',
   'wolf-whine', 'herb-pluck', 'stone-roll', 'ui-click', 'ui-pause', 'wolf-pant', 'sprint-burst', 'stealth-rustle',
@@ -44,11 +48,15 @@ export interface SoundFrame {
 
 /** One-shots loud/meaningful enough to dip the music (footsteps etc. don't). */
 const DUCKERS = new Set<SoundId>(['wolf-howl', 'wolf-growl', 'deer-snort', 'wolf-whine', 'friend-chime', 'stone-roll', 'herb-pluck', 'loon', 'sprint-burst', 'dawn-chorus', 'owl']);
-const VOLUME_KEY = 'boreal.audio.v1';
 
 export class BorealSound {
   private ctx?: AudioContext;
-  private master?: GainNode; private musicBus?: GainNode; private duck?: GainNode;
+  private master?: GainNode; private duck?: GainNode; private bus = new Map<Bus, GainNode>();
+  private active: (ActiveVoice & { stop(): void })[] = [];
+  private voiceLine?: AudioBufferSourceNode; private haltTimer?: ReturnType<typeof setTimeout>;
+  private loopLevel = new Map<SoundId, number>();
+  /** Bus levels, mute and music on/off (persisted as boreal.volume.v1); the Sound panel and the keys both write here. */
+  readonly volumeStore = createVolumeStore();
   private wolfMode = 'walk'; private wasExhausted = false; private prevDark = -1; private nextBird = 15; private nextPant = 0;
   private buffers = new Map<SoundId, AudioBuffer>();
   private loops = new Map<SoundId, GainNode>();
@@ -56,14 +64,14 @@ export class BorealSound {
   private wolfPrev = { motion: 'idle', phase: 0 };
   private nextLoon = 30; private time = 0; private waterAmount = 0; private waterCheck = 0;
   private haltedNow = false;
-  volume = .8; muted = false; musicVolume = .7; musicOn = true;
+  get volume() { return BUS_LEVEL.master; } get muted() { return BUS_STATE.muted; } get musicVolume() { return BUS_LEVEL.music; } get musicOn() { return BUS_STATE.musicOn; }
   /** false = the audio/music module's source replaces the built-in music-day/night loops. */
   builtInMusic = true;
   /** Shared music input (the duck node → music bus → master); audio/music plugs its sources in here. */
   musicInput() { return this.ctx && this.duck ? { ctx: this.ctx, node: this.duck as AudioNode } : undefined; }
 
   constructor() {
-    try { const s = JSON.parse(localStorage.getItem(VOLUME_KEY) ?? '{}'); if (typeof s.volume === 'number') this.volume = s.volume; this.muted = !!s.muted; if (typeof s.musicVolume === 'number') this.musicVolume = s.musicVolume; if (typeof s.musicOn === 'boolean') this.musicOn = s.musicOn; } catch { /* defaults */ }
+    onBusChange(() => this.applyVolume());
     const start = () => { void this.start(); };
     addEventListener('pointerdown', start, { once: true }); addEventListener('keydown', start, { once: true });
     addEventListener('keydown', e => {
@@ -72,9 +80,8 @@ export class BorealSound {
       if (k === 'm') this.setMuted(!this.muted);
       else if (k === '[') this.setVolume(this.volume - .1);
       else if (k === ']') this.setVolume(this.volume + .1);
-      else if (k === 'n') { this.musicOn = !this.musicOn; this.save(); this.applyVolume(); }
-      else if (k === '-') { this.musicVolume = Math.max(0, Math.round((this.musicVolume - .1) * 10) / 10); this.musicOn = true; this.save(); this.applyVolume(); }
-      else if (k === '=') { this.musicVolume = Math.min(1, Math.round((this.musicVolume + .1) * 10) / 10); this.musicOn = true; this.save(); this.applyVolume(); }
+      else if (k === 'n') this.volumeStore.set('volume.musicOn', !this.musicOn);
+      else if (k === '-' || k === '=') { this.volumeStore.set('volume.music', Math.min(1, Math.max(0, Math.round((this.musicVolume + (k === '=' ? .1 : -.1)) * 10) / 10))); this.volumeStore.set('volume.musicOn', true); }
       else if (k === 'h') this.playAt('wolf-howl', undefined, MIX.howl);
       else if (k === 'g') this.playAt('wolf-growl', undefined, MIX.growl);
     });
@@ -86,8 +93,11 @@ export class BorealSound {
   async start() {
     if (this.ctx) return;
     const ctx = this.ctx = new AudioContext();
-    this.master = ctx.createGain(); this.master.connect(ctx.destination);
-    this.duck = ctx.createGain(); this.musicBus = ctx.createGain(); this.duck.connect(this.musicBus); this.musicBus.connect(this.master); this.applyVolume();
+    // buses → master → limiter → speakers (the limiter catches stacked one-shots; it used to clip)
+    const lim = ctx.createDynamicsCompressor(); lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = .002; lim.release.value = .15;
+    this.master = ctx.createGain(); this.master.connect(lim); lim.connect(ctx.destination);
+    for (const b of BUSES) { const g = ctx.createGain(); g.connect(this.master); this.bus.set(b, g); }
+    this.duck = ctx.createGain(); this.duck.connect(this.bus.get('music')!); this.applyVolume();
     await ctx.resume().catch(() => {});
     await Promise.all(SOUND_IDS.map(async id => {
       try {
@@ -100,22 +110,28 @@ export class BorealSound {
     this.startLoop('music-day', this.duck); this.startLoop('music-night', this.duck);
   }
 
-  setVolume(v: number) { this.volume = Math.min(1, Math.max(0, Math.round(v * 10) / 10)); this.muted = false; this.save(); this.applyVolume(); }
-  setMuted(m: boolean) { this.muted = m; this.save(); this.applyVolume(); }
-  private save() { try { localStorage.setItem(VOLUME_KEY, JSON.stringify({ volume: this.volume, muted: this.muted, musicVolume: this.musicVolume, musicOn: this.musicOn })); } catch { /* ignore */ } }
-  private applyVolume() { if (this.ctx && this.master) this.master.gain.setTargetAtTime(this.muted ? 0 : this.volume, this.ctx.currentTime, .05);
-    if (this.ctx && this.musicBus) this.musicBus.gain.setTargetAtTime(this.musicOn ? this.musicVolume : 0, this.ctx.currentTime, .3); }
+  setVolume(v: number) { this.volumeStore.set('volume.master', Math.min(1, Math.max(0, Math.round(v * 10) / 10))); this.volumeStore.set('volume.muted', false); }
+  setMuted(m: boolean) { this.volumeStore.set('volume.muted', m); }
+  private applyVolume() {
+    const ctx = this.ctx; if (!ctx || !this.master) return;
+    this.master.gain.setTargetAtTime(BUS_STATE.muted ? 0 : BUS_LEVEL.master, ctx.currentTime, .05);
+    for (const [b, g] of this.bus) g.gain.setTargetAtTime(b === 'music' ? (BUS_STATE.musicOn ? BUS_LEVEL.music : 0) : BUS_LEVEL[b], ctx.currentTime, b === 'music' ? .3 : .05);
+  }
+  /** Live one-shots (for the inspector / tests). */
+  get voiceCount() { return this.active.length; }
 
   private startLoop(id: SoundId, bus?: AudioNode) {
     const ctx = this.ctx!, buffer = this.buffers.get(id); if (!buffer) return;
-    const src = ctx.createBufferSource(), gain = ctx.createGain();
-    src.buffer = buffer; src.loop = true; gain.gain.value = 0;
-    src.connect(gain); gain.connect(bus ?? this.master!); src.start(ctx.currentTime, bus ? 0 : soundRng() * buffer.duration);
+    const src = ctx.createBufferSource(), gain = ctx.createGain(), t = ctx.createGain();
+    src.buffer = buffer; src.loop = true; gain.gain.value = 0; t.gain.value = trim(id);
+    src.connect(t); t.connect(gain); gain.connect(bus ?? this.bus.get(busOf(id))!); src.start(ctx.currentTime, bus ? 0 : soundRng() * buffer.duration);
     this.loops.set(id, gain);
   }
 
+  /** Per-frame loop level; only re-targets when it moved (was 6 new automation events every frame). */
   private setLoop(id: SoundId, level: number) {
-    const g = this.loops.get(id); if (g && this.ctx) g.gain.setTargetAtTime(level, this.ctx.currentTime, MIX.crossfadeSeconds / 3);
+    const g = this.loops.get(id), was = this.loopLevel.get(id); if (!g || !this.ctx || (was !== undefined && Math.abs(was - level) < .005)) return;
+    this.loopLevel.set(id, level); g.gain.setTargetAtTime(level, this.ctx.currentTime, MIX.crossfadeSeconds / 3);
   }
 
   /** One-shot; with a position it goes through an HRTF panner, otherwise it plays at the listener. */
@@ -123,17 +139,26 @@ export class BorealSound {
   playAt(id: SoundId, at?: { x: number; z: number }, level = 1, rate = 1, feel = true) {
     if (feel && SOUND_HAPTICS[id]) haptic(SOUND_HAPTICS[id], at ? Math.hypot(at.x - this.ear.x, at.z - this.ear.z) : 0); // same event point as the sound
     const ctx = this.ctx, buffer = this.buffers.get(id); if (!ctx || !buffer || ctx.state !== 'running') return;
-    const src = ctx.createBufferSource(), gain = ctx.createGain();
-    src.buffer = buffer; src.playbackRate.value = rate * (.94 + soundRng() * .12); gain.gain.value = level;
+    if (at && Math.hypot(at.x - this.ear.x, at.z - this.ear.z) > CULL_DISTANCE) return; // distance culling: inaudible anyway, saves an HRTF panner
+    const prio = priorityOf(id), adm = admitVoice(this.active, id, prio); if (!adm.ok) return;
+    if (adm.steal >= 0) { this.active[adm.steal].stop(); this.active.splice(adm.steal, 1); }
+    const src = ctx.createBufferSource(), gain = ctx.createGain(), now = ctx.currentTime;
+    src.buffer = buffer; src.playbackRate.value = rate * (.94 + soundRng() * .12); const g0 = level * trim(id); gain.gain.value = g0;
     let tail: AudioNode = gain; src.connect(gain);
     if (at) {
       const p = new PannerNode(ctx, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 3, maxDistance: MIX.hearingDistance, rolloffFactor: 1.2,
         positionX: at.x, positionY: heightAt(at.x, at.z) + .8, positionZ: at.z });
       gain.connect(p); tail = p;
     }
-    tail.connect(this.master!); src.start();
+    tail.connect(this.bus.get(busOf(id))!);
+    const slice = STEP_SLICES[id];
+    if (slice) { const off = slice.onsets[Math.floor(soundRng() * slice.onsets.length)], end = now + slice.len / src.playbackRate.value;
+      src.start(now, off, slice.len); gain.gain.setValueAtTime(g0, end - .04); gain.gain.linearRampToValueAtTime(0, end); }
+    else src.start();
+    const voice = { id, priority: prio, start: now, stop: () => { try { gain.gain.setTargetAtTime(0, ctx.currentTime, VOICES.stealFadeSeconds / 3); src.stop(ctx.currentTime + VOICES.stealFadeSeconds); } catch { /* already stopped */ } } };
+    this.active.push(voice);
     if (this.duck && DUCKERS.has(id)) { const t = ctx.currentTime, g = this.duck.gain; g.cancelScheduledValues(t); g.setTargetAtTime(MIX.music.duck, t, .05); g.setTargetAtTime(1, t + buffer.duration * .6, MIX.music.duckRecoverSeconds); }
-    src.onended = () => { src.disconnect(); gain.disconnect(); if (tail !== gain) tail.disconnect(); };
+    src.onended = () => { const i = this.active.indexOf(voice); if (i >= 0) this.active.splice(i, 1); src.disconnect(); gain.disconnect(); if (tail !== gain) tail.disconnect(); };
   }
 
   /** Player interaction sounds (hook from perform()). */
@@ -147,7 +172,7 @@ export class BorealSound {
     }
   }
   private voices = new Map<string, AudioBuffer | null>();
-  /** Plays public/sounds/voice/<id>.mp3 through the master bus (mute/volume apply) and ducks music; resolves to its duration. */
+  /** Plays public/sounds/voice/<id>.mp3 on the voice bus (one line at a time) and ducks music; resolves to its duration. */
   async playVoice(id: string): Promise<number | undefined> {
     const ctx = this.ctx; if (!ctx || !this.master) return undefined;
     if (!this.voices.has(id)) {
@@ -155,8 +180,9 @@ export class BorealSound {
       catch { this.voices.set(id, null); }
     }
     const buffer = this.voices.get(id); if (!buffer || ctx.state !== 'running') return undefined;
-    const src = ctx.createBufferSource(), gain = ctx.createGain(); src.buffer = buffer; gain.gain.value = MIX.voice;
-    src.connect(gain); gain.connect(this.master); src.start(); src.onended = () => { src.disconnect(); gain.disconnect(); };
+    try { this.voiceLine?.stop(); } catch { /* ended */ } // a new line replaces the one still talking
+    const src = ctx.createBufferSource(), gain = ctx.createGain(); src.buffer = buffer; gain.gain.value = MIX.voice * 10 ** (VOICE_TRIM_DB / 20);
+    src.connect(gain); gain.connect(this.bus.get('voice')!); src.start(); this.voiceLine = src; src.onended = () => { if (this.voiceLine === src) this.voiceLine = undefined; src.disconnect(); gain.disconnect(); };
     if (this.duck) { const t = ctx.currentTime, g = this.duck.gain; g.cancelScheduledValues(t); g.setTargetAtTime(MIX.music.duck * .6, t, .05); g.setTargetAtTime(1, t + buffer.duration, MIX.music.duckRecoverSeconds); }
     return buffer.duration;
   }
@@ -171,7 +197,7 @@ export class BorealSound {
 
   update(f: SoundFrame) {
     const ctx = this.ctx; if (!ctx) return;
-    if (f.halted) { if (ctx.state === 'running') setTimeout(() => { if (this.haltedNow) void ctx.suspend(); }, 400); this.haltedNow = true; return; }
+    if (f.halted) { if (ctx.state === 'running' && !this.haltTimer) this.haltTimer = setTimeout(() => { this.haltTimer = undefined; if (this.haltedNow) void ctx.suspend(); }, 400); this.haltedNow = true; return; } // one timer, not one per frame
     this.haltedNow = false;
     if (ctx.state === 'suspended') void ctx.resume();
     this.time += f.dt;

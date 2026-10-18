@@ -36,6 +36,7 @@ import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/d
 import { createLoading } from './ui/loading';
 import { settle, startup } from './render/startup';
 import { createMenu } from './ui/menu';
+import { globeUrl } from './world/globe/handoff';
 import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, loadClock, worldSec, pauseClock, resumeClock, saveClock } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
@@ -160,6 +161,8 @@ restoreLooks((k, g) => view.setAppearance(k, g));
 menu.addPanel({ id: 'appearance', title: 'Appearance', build: appearancePanel(() => view.playerLookKey, (k, g) => view.setAppearance(k, g), undefined, { root: () => view.lookup('player')?.object, handles }) });
 menu.addPanel({ id: 'photo', title: 'Photo mode (P)', build: () => { enterPhoto(); return document.createElement('div'); } });
 menu.addPanel({ id: 'inspector', title: 'Generation inspector (I)', build: () => { if (paused) menu.close(); inspector.toggle(true); return document.createElement('div'); } });
+menu.addPanel({ id: 'globe', title: 'Planet view (Shift+G)', build: () => { toGlobe(); return document.createElement('div'); } });
+function toGlobe() { if (!STAGES.on) { notice('The planet view needs staged terrain (Graphics).'); return; } saveAll(); location.search = globeUrl(location.search, player.x, player.z, yaw + lookYaw); } // up to the globe at this spot and heading; it hands back through ?at=x,z,yaw (world/globe/handoff)
 function applyPending() {
   if (pendingRegen) { view.invalidate(); pendingRegen = false; }
   if (pendingPlay) { const p = view.setPlayable(playAs); player.abilities = [...p.actions]; altitude = p.cameraHeight; pendingPlay = false; }
@@ -198,6 +201,7 @@ addEventListener('keydown', event => {
   if (!event.repeat && event.key.toLowerCase() === 'i' && !event.ctrlKey) { inspector.toggle(); if (!photo.active) clearInput(); return; }
   if (photo.active) { if (!event.repeat && (event.key === 'Escape' || event.key.toLowerCase() === 'p')) void photo.exit(); return; } // photo mode has its own keys
   if (!event.repeat && event.key.toLowerCase() === 'p') { enterPhoto(); return; }
+  if (!event.repeat && event.key === 'G' && event.shiftKey) { toGlobe(); return; } // Shift+G: planet view (plain g growls)
   if (event.code === 'Space') event.preventDefault();
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) event.preventDefault();
   keys.add(event.key.toLowerCase());

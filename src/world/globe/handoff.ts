@@ -1,7 +1,9 @@
 /**
- * Globe → game handoff (Grok Bot). Descending below HANDOFF.alt over the playable home region hands the player to the
- * game at the same spot, through the game's existing `?at=x,z` spawn (main.ts). No edits to main.ts: the game reloads
- * with that query. Heading and the return trip (game → globe on ascent) need main.ts hooks: requested in AGENT-NOTES.md.
+ * Globe <-> game handoff (Grok Bot). Descending below HANDOFF.alt over the playable home region hands the player to the
+ * game at the same spot and heading, through the game's `?at=x,z,yaw` spawn (main.ts). The game goes back up with
+ * `globeUrl` (main.ts: Shift+G or the pause-menu entry), which opens `?view=globe` over the player's spot, same heading.
+ * Both directions reload the page; the world clock and the seed carry over through localStorage (the game saves first).
+ * Heading: game yaw (forward = (-sin yaw, -cos yaw) in x, z; +x east, -z north) = minus the compass azimuth.
  */
 import { PLANET } from './planet';
 
@@ -14,10 +16,19 @@ export function handoffTarget(s: { home: number; x: number; z: number }, alt: nu
   if (climbing || alt > HANDOFF.alt || s.home < 1 || Math.abs(s.x) > lim || Math.abs(s.z) > lim) return null;
   return { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 };
 }
-/** The game URL for a spawn: the current query minus the globe's own keys, plus `at`. */
-export function gameUrl(search: string, at: { x: number; z: number } | null) {
+/** The game URL for a spawn: the current query minus the globe's own keys, plus `at` (x, z and, when known, yaw). */
+export function gameUrl(search: string, at: { x: number; z: number; yaw?: number } | null) {
   const q = new URLSearchParams(search);
-  for (const k of ['view', 'alt', 'shot', 'bench', 'workers', 'handoff']) q.delete(k);
-  if (at) q.set('at', `${at.x},${at.z}`); else q.delete('at');
+  for (const k of ['view', 'alt', 'shot', 'bench', 'workers', 'handoff', 'look', 'pitch', 'dir', 'seams']) q.delete(k);
+  if (at) q.set('at', at.yaw !== undefined && Number.isFinite(at.yaw) ? `${at.x},${at.z},${at.yaw}` : `${at.x},${at.z}`); else q.delete('at');
   const s = q.toString(); return s ? `?${s}` : '?';
+}
+/** Altitude (m above ground) the globe opens at when the game goes up: just above the handoff, so zooming in returns. */
+export const GLOBE_ENTRY_ALT = HANDOFF.alt * 1.5;
+/** The globe URL over the game spot (x, z) with the game heading `yaw`: the current query (game keys stay) plus
+ *  view=globe, at=x,z,yaw and the entry altitude. */
+export function globeUrl(search: string, x: number, z: number, yaw: number) {
+  const q = new URLSearchParams(search), r = (v: number, k: number) => Math.round(v * k) / k;
+  q.set('view', 'globe'); q.set('at', `${r(x, 10)},${r(z, 10)},${r(yaw, 1000)}`); q.set('alt', String(GLOBE_ENTRY_ALT));
+  return `?${q.toString()}`;
 }

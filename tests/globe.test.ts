@@ -296,3 +296,14 @@ test('globe material: varyings used by the atmosphere and log depth are centroid
   }
   assert.ok(sh.fragmentShader.includes('uniform float logDepthBufFC;'));
 });
+
+import { globeUrl, GLOBE_ENTRY_ALT } from '../src/world/globe/handoff';
+test('game <-> globe round trip URLs: game keys survive, spot and heading go up (globeUrl) and come back (gameUrl at=x,z,yaw)', () => {
+  const up = new URLSearchParams(globeUrl('?nomenu&hour=9&at=1,2', 12.34, -56.78, 1.23456));
+  assert.equal(up.get('view'), 'globe'); assert.equal(up.get('at'), '12.3,-56.8,1.235'); assert.equal(Number(up.get('alt')), GLOBE_ENTRY_ALT);
+  assert.ok(up.has('nomenu') && up.get('hour') === '9' && GLOBE_ENTRY_ALT > HANDOFF.alt);
+  const down = new URLSearchParams(gameUrl(`?${up}&look=30&pitch=40`, { x: 12.3, z: -56.8, yaw: 1.235 }));
+  assert.equal(down.get('at'), '12.3,-56.8,1.235'); assert.ok(down.has('nomenu') && down.get('hour') === '9');
+  for (const k of ['view', 'alt', 'look', 'pitch']) assert.ok(!down.has(k), k);
+  assert.equal(new URLSearchParams(gameUrl('?view=globe', { x: 1, z: 2 })).get('at'), '1,2'); // no heading known: x, z only
+});

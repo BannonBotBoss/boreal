@@ -86,7 +86,8 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   const camV = new THREE.Vector3();
-  const lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : null;
+  const atYaw = Number(q.get('at')?.split(',')[2]); // from the game (handoff.ts globeUrl): keep its heading
+  const lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : q.has('at') && Number.isFinite(atYaw) && q.get('at')!.split(',').length > 2 ? -atYaw : null;
   const pitchQ = q.has('pitch') ? Number(q.get('pitch')) * Math.PI / 180 : null; // ?pitch=deg from straight down (screenshots: look down at a cloud deck)
   const group = new THREE.Group(); scene.add(group);
 
@@ -102,12 +103,14 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   if (q.get('handoff') === 'demo') targetAlt = HANDOFF.alt * .75; // ?handoff=demo&alt=4000: descend and hand off by itself
   const fade = document.createElement('div'); Object.assign(fade.style, { position: 'fixed', inset: '0', background: '#dfe8ef', opacity: '0', transition: 'opacity .6s', pointerEvents: 'none' }); document.body.append(fade);
   camera.position.set(...start).multiplyScalar(R + alt);
+  const fwdTmp = new THREE.Vector3(); // game yaw of the camera heading (handoff.ts: yaw = -compass azimuth); the pinned ?look/?at heading when set
+  const headingYaw = () => lookAz !== null ? Math.round(-lookAz * 1000) / 1000 : (camera.getWorldDirection(fwdTmp), Math.round(-Math.atan2(fwdTmp.dot(E), fwdTmp.dot(N)) * 1000) / 1000);
   const zoom = (f: number) => { targetAlt = clamp(targetAlt * f, 40, R * 4); };
   canvas.addEventListener('wheel', e => { e.preventDefault(); zoom(Math.exp(e.deltaY * .0016)); }, { passive: false });
   addEventListener('keydown', e => {
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
     else if (e.key === 'h' || e.key === 'H') flyHome = 1;
-    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { shutdown(); location.search = gameUrl(location.search, overHome); } // over home: spawn right below
+    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { const at = overHome && { ...overHome, yaw: headingYaw() }; shutdown(); location.search = gameUrl(location.search, at); } // over home: spawn right below, same heading
   });
 
   // ---- tile builders: a worker pool (default) or budgeted main-thread jobs (?workers=0 or no Worker support)
@@ -239,7 +242,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
-    if (autoHandoff && spawn && !leaving) { leaving = true; fade.style.opacity = '1'; setTimeout(() => { shutdown(); location.search = gameUrl(location.search, spawn); }, 650); }
+    if (autoHandoff && spawn && !leaving) { leaving = true; fade.style.opacity = '1'; const at = { ...spawn, yaw: headingYaw() }; setTimeout(() => { shutdown(); location.search = gameUrl(location.search, at); }, 650); }
     if (flyHome) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
     if (bench) { const prev = benchT; benchT += dt;
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }

@@ -2,12 +2,16 @@
 // governor tier (manual) and fails on any page error or a world that did not build. Every tier with AO constructs and runs
 // GTAO (render/post), the shadow cascades and both post routes, so a pass that throws at one tier fails here.
 //   node tools/smoke-tiers.mjs [baseUrl=http://127.0.0.1:5173] [holdMs=8000]      exit 0 = pass, 1 = fail
+// Holds the omen bench lock (tools/bench-lock.mjs, name from BENCH_NAME) for the whole run; waits up to 60 min for it.
 // Edge 155 headless starts the page hidden (rAF ~0): Page.bringToFront + focus emulation + the backgrounding flags fix it.
 import { spawn, execSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { acquire, release } from './bench-lock.mjs';
 const base = process.argv[2] ?? 'http://127.0.0.1:5173', holdMs = Number(process.argv[3] ?? 8000), port = 9900 + Math.floor(Math.random() * 90);
+const lockName = process.env.BENCH_NAME ?? `smoke-tiers ${base}`;
+if (!await acquire(lockName)) { console.log('SMOKE FAIL bench lock busy for 60 min'); process.exit(1); }
 const edge = process.env.EDGE ?? 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', profile = mkdtempSync(join(tmpdir(), 'smoke-edge-'));
 const proc = spawn(edge, ['--headless=new', '--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--hide-scrollbars', '--window-size=1280,800',
   '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-background-timer-throttling', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
@@ -49,6 +53,7 @@ try {
 finally {
   try { execSync(`taskkill /PID ${proc.pid} /T /F`, { stdio: 'ignore' }); } catch { proc.kill(); }
   await sleep(1000); try { rmSync(profile, { recursive: true, force: true }); } catch {}
+  release(lockName);
 }
 for (const e of errors) console.log('FAIL ' + e.slice(0, 500));
 console.log(ok ? 'SMOKE PASS' : 'SMOKE FAIL'); process.exit(ok ? 0 : 1);

@@ -2,19 +2,22 @@
 // governor tier (manual) and fails on any page error or a world that did not build. Every tier with AO constructs and runs
 // GTAO (render/post), the shadow cascades and both post routes, so a pass that throws at one tier fails here.
 //   node tools/smoke-tiers.mjs [baseUrl=http://127.0.0.1:5173] [holdMs=8000]      exit 0 = pass, 1 = fail
-// Holds the omen bench lock (tools/bench-lock.mjs, name from BENCH_NAME) for the whole run; waits up to 60 min for it.
+// Holds the omen bench lock (tools/bench-lock.mjs, name from BENCH_NAME) for the whole run; waits up to 60 min for it. Logs GPU memory (nvidia-smi).
 // Edge 155 headless starts the page hidden (rAF ~0): Page.bringToFront + focus emulation + the backgrounding flags fix it.
 import { spawn, execSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { acquire, release } from './bench-lock.mjs';
+import { acquire, track, release } from './bench-lock.mjs';
 const base = process.argv[2] ?? 'http://127.0.0.1:5173', holdMs = Number(process.argv[3] ?? 8000), port = 9900 + Math.floor(Math.random() * 90);
 const lockName = process.env.BENCH_NAME ?? `smoke-tiers ${base}`;
 if (!await acquire(lockName)) { console.log('SMOKE FAIL bench lock busy for 60 min'); process.exit(1); }
 const edge = process.env.EDGE ?? 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', profile = mkdtempSync(join(tmpdir(), 'smoke-edge-'));
 const proc = spawn(edge, ['--headless=new', '--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--hide-scrollbars', '--window-size=1280,800',
   '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-background-timer-throttling', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+track(proc.pid); // release() kills it even if this script dies before its finally
+const gpuMem = () => { try { return execSync('nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader', { encoding: 'utf8', timeout: 10000 }).trim(); } catch { return 'n/a (no nvidia-smi)'; } };
+console.log('gpu at start: ' + gpuMem() + ' (used, total, util)'); // contention check: what other GPU users hold before the run
 const sleep = ms => new Promise(r => setTimeout(r, ms)), errors = [];
 let ok = false;
 try {
@@ -47,6 +50,7 @@ try {
     for (let t = 0; t < Q.LADDER.length; t++) { G.tier = t; await wait(${holdMs}); let frames = 0, sum = 0; const s = performance.now();
       while (performance.now() - s < 1000) { calls = 0; await raf(); frames++; sum += calls; } out.push({ tier: Q.LADDER[t].name, ssao: Q.LADDER[t].ssao, frames, draws: Math.round(sum / frames), gpu: G.gpuMs === undefined ? '-' : G.gpuMs.toFixed(1) }); }
     G.auto = true; return JSON.stringify(out); })()`));
+  console.log('gpu after tiers: ' + gpuMem());
   for (const r of res) console.log(`${r.tier.padEnd(9)} ssao ${r.ssao}  ${r.frames} frames/s  ${r.draws} draws/frame  gpu ${r.gpu} ms`);
   const dead = res.filter(r => r.frames < 5), empty = res[0].draws < 150; // Ultra draws ~600 with the world built, ~90 with terrain only
   if (dead.length) errors.push('not rendering at ' + dead.map(r => r.tier).join(', ') + ' (' + await ev(`document.visibilityState + ' focus=' + document.hasFocus()`) + ')');

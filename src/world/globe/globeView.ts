@@ -31,7 +31,8 @@ import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
-import { buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, stitchIndex, tileGeometry, type TileData } from './tile';
+import { GLOBE_SHORE, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, stitchIndex, tileGeometry, type TileData } from './tile';
+import { LAKE_MASK, buildLakeMask } from './lakeMask';
 export { GLOBE_LAKE } from './tile'; // inpage.ts (lazy): the band's lake ease
 /** Deeper tiles under a low camera: split x(1 + k) for tiles within reach x altitude, ramping in from `from` to `full` m. [game calibration] */
 export const NEAR_SPLIT = { k: 1.2, from: 3000, full: 1200, reach: 4 };
@@ -185,17 +186,28 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   function spawn() { try {
     for (let k = 0; k < nWorkers; k++) {
       const w = new Worker(new URL('./tileWorker.ts', import.meta.url), { type: 'module' }), slot = { w, busy: '', id: 0 };
-      w.onmessage = (e: MessageEvent<{ id: number; tile?: TileData; warm?: number; cancelled?: boolean }>) => {
+      w.onmessage = (e: MessageEvent<{ id: number; tile?: TileData; warm?: number; cancelled?: boolean; mask?: Uint8Array }>) => {
         if (e.data.warm !== undefined) { STATS.warm.push(e.data.warm); return; }
+        if (e.data.mask) { maskPending = ''; setLakeMask(maskKey, e.data.mask, LAKE_MASK.n, LAKE_MASK.size); return; }
         const n = ids.get(e.data.id); ids.delete(e.data.id); if (slot.id === e.data.id) { slot.busy = ''; slot.id = 0; }
         if (!n) return; if (e.data.cancelled || !e.data.tile) { inflight.delete(n.key); cancelledN++; return; }
         const c = e.data.tile.centre; ready.push({ n, t: e.data.tile, d: Math.hypot(c[0] - camPos[0], c[1] - camPos[1], c[2] - camPos[2]) });
       };
-      w.onerror = e => { console.warn('globe tile worker failed; using main-thread jobs', e.message); pool.length = 0; inflight.clear(); ids.clear(); };
+      w.onerror = e => { console.warn('globe tile worker failed; using main-thread jobs', e.message); pool.length = 0; inflight.clear(); ids.clear(); maskPending = ''; requestMask(); };
       w.postMessage({ warm: true, id: 0, seed, staged: STAGES.on, stagesSeed: STAGES.seed, face: 0, level: 0, i: 0, j: 0, segments: 0 } satisfies TileRequest);
       pool.push(slot);
     }
-  } catch (e) { console.warn('globe: no workers, main-thread jobs', e); pool.length = 0; } }
+  } catch (e) { console.warn('globe: no workers, main-thread jobs', e); pool.length = 0; }
+  requestMask(); }
+  // home shoreline mask (lakeMask.ts, ~1-2 s of worker time once per terrain seed): the first worker builds it between
+  // tiles; without workers it is sliced on the main thread (8 rows per macrotask)
+  const maskKey = `${STAGES.on}:${STAGES.seed}`; let maskPending = '';
+  function requestMask() {
+    if (GLOBE_SHORE.key === maskKey || maskPending === maskKey) return; maskPending = maskKey;
+    if (pool.length) { pool[0].w.postMessage({ mask: true, id: -1, seed, staged: STAGES.on, stagesSeed: STAGES.seed, face: 0, level: 0, i: 0, j: 0, segments: 0 } satisfies TileRequest); return; }
+    const gen = buildLakeMask(STAGES.on, STAGES.seed), step = () => { if (maskPending !== maskKey) return; const x = gen.next(); if (x.done) { maskPending = ''; setLakeMask(maskKey, x.value, LAKE_MASK.n, LAKE_MASK.size); } else setTimeout(step, 0); };
+    setTimeout(step, 0);
+  }
   spawn();
   const mode = () => pool.length ? `${pool.length} workers` : 'main-thread';
   function dispatch() {

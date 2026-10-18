@@ -7,9 +7,10 @@ import { STAGES } from '../../core/stages/elevation';
 import { node } from './cube';
 import { globePlanet, warmHome } from './home';
 import { buildTile } from './tile';
+import { buildLakeMask } from './lakeMask';
 
-/** `warm` builds the planet and the staged grids up front (parallel on every worker); `cancel` drops build `id`. */
-export interface TileRequest { warm?: boolean; cancel?: boolean; id: number; seed: number; staged: boolean; stagesSeed: number; face: number; level: number; i: number; j: number; segments: number }
+/** `mask` builds the home shoreline mask (lakeMask.ts), sliced like a tile. `warm` builds the planet and the staged grids up front (parallel on every worker); `cancel` drops build `id`. */
+export interface TileRequest { mask?: boolean; warm?: boolean; cancel?: boolean; id: number; seed: number; staged: boolean; stagesSeed: number; face: number; level: number; i: number; j: number; segments: number }
 const post = self as unknown as { postMessage(m: unknown, transfer: Transferable[]): void };
 const cancelled = new Set<number>(), ch = new MessageChannel();
 let wake: (() => void) | null = null; ch.port1.onmessage = () => { const w = wake; wake = null; w?.(); };
@@ -24,11 +25,17 @@ async function build(r: TileRequest) {
     x = gen.next();
   }
   const t = x.value; cancelled.delete(r.id);
-  post.postMessage({ id: r.id, tile: t }, [t.position.buffer, t.color.buffer, t.height.buffer, t.lake.buffer, t.normal.buffer, t.index.buffer]);
+  post.postMessage({ id: r.id, tile: t }, [t.position.buffer, t.color.buffer, t.height.buffer, t.lake.buffer, t.loc.buffer, t.normal.buffer, t.index.buffer]);
 }
 self.onmessage = (e: MessageEvent<TileRequest>) => {
   const r = e.data; if (r.cancel) { cancelled.add(r.id); return; }
   STAGES.on = r.staged; STAGES.seed = r.stagesSeed;
   if (r.warm) { post.postMessage({ id: r.id, warm: warmHome(r.seed, r.staged, r.stagesSeed) }, []); return; }
+  if (r.mask) { void mask(r); return; }
   void build(r);
 };
+async function mask(r: TileRequest) {
+  const gen = buildLakeMask(r.staged, r.stagesSeed); let x = gen.next();
+  while (!x.done) { await yieldNow(); x = gen.next(); }
+  post.postMessage({ id: r.id, mask: x.value }, [x.value.buffer]);
+}

@@ -54,6 +54,7 @@ export interface Surface {
   x: number; z: number;
   soil: string;  // home: stage-3 soil material ('' unknown / off-region)
   wet: number;   // home: site wetness 0..1 (-1 unknown)
+  mottle: number; // 0..1 stand-to-stand variation (the planet's value noise at ~150 m)
   hill: number;  // off-region hill relief, -1 (hollow) .. 1 (ridge top); drives outcrops / wet hollows in the colour
 }
 
@@ -114,7 +115,7 @@ export function planetFor(seed: number, local?: LocalHeight, key = '') {
   const k = `${seed}:${key}`; let p = planets.get(k); if (!p) planets.set(k, p = createPlanet(seed, local)); return p;
 }
 export function createPlanet(seed: number, local?: LocalHeight) {
-  const { relief, hills } = makeNoise(seed), R = PLANET.radius, H = PLANET.home;
+  const { relief, hills, noise } = makeNoise(seed), R = PLANET.radius, H = PLANET.home, fm = R / 150;
   // Hypsometry: sea level so `landShare` of the surface is above it (low octaves suffice for the distribution).
   const N = 6000, samples = new Float32Array(N);
   for (let k = 0; k < N; k++) { const [x, y, z] = fibonacci(k, N); samples[k] = relief(x, y, z, 8); }
@@ -125,13 +126,13 @@ export function createPlanet(seed: number, local?: LocalHeight) {
   const home = fromLatLon(H.latDeg * Math.PI / 180, (random(hash(`globe-home-v1:${seed}`))() * 2 - 1) * Math.PI);
   const east = norm(cross([0, 1, 0], home)), north = cross(home, east);
   const homeRaw = toMetres(relief(home[0], home[1], home[2])), lift = H.elevation - homeRaw, liftRad = H.liftKm * 1000 / R;
-  const out: Surface = { h: 0, water: -Infinity, level: 0, kind: '', home: 0, x: 0, z: 0, soil: '', wet: -1, hill: 0 };
+  const out: Surface = { h: 0, water: -Infinity, level: 0, kind: '', home: 0, x: 0, z: 0, soil: '', wet: -1, hill: 0, mottle: .5 };
   /** Height + water at a unit direction. Reuses one result object (copy what you keep). */
   function sampleSurface(d: Vec3): Surface {
     let h = toMetres(relief(d[0], d[1], d[2]));
     const c = dot(d, home), ang = Math.acos(Math.max(-1, Math.min(1, c)));
     h += lift * Math.exp(-((ang / liftRad) ** 2)); // home lift (Gaussian) so the region is land at the home elevation
-    out.hill = 0; out.soil = ''; out.wet = -1;
+    out.hill = 0; out.soil = ''; out.wet = -1; out.mottle = noise(d[0] * fm + 17.3, d[1] * fm + 91.7, d[2] * fm + 53.1);
     if (h > 0) { const hl = hills(d[0], d[1], d[2]); out.hill = Math.max(-1, Math.min(1, hl / 50)); h += hl * smoothstep(0, 80, h); } // far-field relief (kept off the coastline)
     out.water = h < 0 ? 0 : -Infinity; out.kind = h < 0 ? 'ocean' : ''; out.level = 0; out.home = 0; out.x = out.z = 0;
     if (c > 0 && ang * R < H.halfSize * 2) {
@@ -166,12 +167,10 @@ export const GLOBE_COLOURS = {
 type RGB = readonly [number, number, number];
 const mix = (a: RGB, b: RGB, t: number, o: number[]) => { o[0] = a[0] + (b[0] - a[0]) * t; o[1] = a[1] + (b[1] - a[1]) * t; o[2] = a[2] + (b[2] - a[2]) * t; return o; };
 const mixTo = (o: number[], b: RGB, t: number) => mix([o[0], o[1], o[2]], b, t, o);
-/** Deterministic fine mottle 0..1 for a direction (~tens of metres: stand-to-stand variation). */
-const mottle = (d: Vec3) => { const v = Math.sin(d[0] * 1.29898e6 + d[1] * 7.8233e6 + d[2] * 3.7719e6) * 43758.5453; return v - Math.floor(v); };
 /** LAND colour (water is contoured and shaded per pixel by the material). */
 export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0]) {
   const C = GLOBE_COLOURS;
-  const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = mottle(d);
+  const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = s.mottle;
   // forest: spruce ? mixed stands by hill position and mottle; temperate south of 45�, tundra north of 62�
   mix(C.spruce, C.mixed, Math.max(0, Math.min(1, .35 + .3 * s.hill + .5 * (m - .5))), o);
   if (lat < 45) mixTo(o, C.temperate, smoothstep(45, 38, lat)); else if (lat > 60) mixTo(o, C.tundra, smoothstep(60, 66, lat));

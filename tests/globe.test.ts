@@ -366,3 +366,40 @@ test('far layer: linear half-float MSAA target that follows the drawing buffer (
   assert.equal(f.texture.colorSpace, THREE_E.LinearSRGBColorSpace); assert.equal(f.target.texture.type, THREE_E.HalfFloatType);
   assert.equal(f.bytes(), 1200 * 675 * (8 + 4 * 12)); f.dispose();
 });
+
+import { TRANSITION, createGovernorHold, gameBasis, gameToPlanet, globeCameraFrom, inputOwner, nextMode, patchFade, planetToGame, simRuns, transitionPath } from '../src/world/globe/transition';
+test('transition: game <-> planet frame round trip with one constant datum; globe surface = game height + datum in the home region', () => {
+  const p = globePlanet(1400, true, 1400);
+  for (const [x, y, z] of [[0, 0, 0], [72, -1.6, 186], [-3000, 12.5, 4200]]) {
+    const v = gameToPlanet(p, x, y, z), g = planetToGame(p, v);
+    assert.ok(Math.abs(g.x - x) < 1e-6 && Math.abs(g.y - y) < 1e-6 && Math.abs(g.z - z) < 1e-6, `${x},${z}`);
+  }
+  for (const [x, z] of [[132, 186], [-500, 300], [900, -1200]]) {
+    const s = p.sampleSurface(p.fromLocal(x, z)), gh = surfaceAt(x, z, 1400).height;
+    assert.ok(s.home >= 1 && Math.abs(s.h - (gh + TRANSITION.datum)) < 1e-6, `datum at ${x},${z}: ${s.h} vs ${gh}`);
+  }
+});
+test('transition: game basis is orthonormal, up = local vertical, game -z = north; globe camera = game camera mapped', () => {
+  const p = globePlanet(1400, true, 1400), m = gameBasis(p, 500, -800), up = new THREE_E.Vector3(0, 1, 0).applyMatrix4(m), N = new THREE_E.Vector3(...p.north);
+  assert.ok(up.distanceTo(new THREE_E.Vector3(...p.fromLocal(500, -800))) < 1e-9 && Math.abs(m.determinant() - 1) < 1e-9);
+  const fwd = new THREE_E.Vector3(0, 0, -1).applyMatrix4(m); assert.ok(fwd.dot(N) > .9999 && Math.abs(fwd.dot(up)) < 1e-9, 'game -z is north');
+  const cam = new THREE_E.PerspectiveCamera(); cam.position.set(72, 300, 186); cam.rotation.set(-.3, .8, 0, 'YXZ'); cam.updateMatrixWorld();
+  const out = globeCameraFrom(p, cam, { position: new THREE_E.Vector3(), quaternion: new THREE_E.Quaternion() });
+  const g = planetToGame(p, [out.position.x, out.position.y, out.position.z]); assert.ok(Math.abs(g.y - 300) < 1e-6);
+  const dGame = new THREE_E.Vector3(0, 0, -1).applyQuaternion(cam.quaternion), dPlanet = new THREE_E.Vector3(0, 0, -1).applyQuaternion(out.quaternion);
+  assert.ok(dPlanet.distanceTo(dGame.applyMatrix4(gameBasis(p, 72, 186))) < 1e-9, 'view direction maps through the basis');
+});
+test('transition: flag + fallback, fade gated on chunks, mode machine, input scope, governor hold', () => {
+  assert.equal(transitionPath(''), 'reload'); assert.equal(transitionPath('?transition=inpage'), 'inpage'); assert.equal(transitionPath('', {}, 'inpage'), 'inpage');
+  assert.equal(transitionPath('?transition=reload', {}, 'inpage'), 'reload'); assert.equal(transitionPath('?transition=inpage', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('?transition=inpage', { probeCap: 3 }), 'reload');
+  assert.equal(patchFade(100, false), 0); assert.equal(patchFade(2500, true), 0); assert.equal(patchFade(TRANSITION.fadeFull, true), 1); assert.ok(patchFade(1300, true) > 0 && patchFade(1300, true) < 1);
+  const base = { height: 1500, overHome: true, descending: true, chunksReady: false };
+  assert.equal(nextMode({ ...base, mode: 'globe' }), 'band'); assert.equal(nextMode({ ...base, mode: 'globe', overHome: false }), 'globe');
+  assert.equal(nextMode({ ...base, mode: 'band', height: 40 }), 'band', 'no handover before the chunks are ready'); assert.equal(nextMode({ ...base, mode: 'band', height: 40, chunksReady: true }), 'game');
+  assert.equal(nextMode({ ...base, mode: 'band', descending: false, height: 2100 }), 'globe'); assert.equal(nextMode({ ...base, mode: 'game', ascend: true }), 'band'); assert.equal(nextMode({ ...base, mode: 'game' }), 'game');
+  assert.deepEqual([inputOwner('game', false), inputOwner('globe', false), inputOwner('band', true), inputOwner('band', false)], ['game', 'globe', 'globe', 'none']);
+  assert.ok(simRuns('game') && !simRuns('band') && !simRuns('globe'));
+  const g = { auto: true, worldTier: -1, tier: 2, cool: 0, cooldownMs: 10000 }; let resets = 0; const h = createGovernorHold(g, () => { resets++; });
+  h.hold(); h.hold(); assert.deepEqual([g.auto, g.worldTier, h.held], [false, 2, true]);
+  h.release(); h.release(); assert.deepEqual([g.auto, g.cool, resets, h.held], [true, 10000, 1, false]);
+});

@@ -37,6 +37,18 @@ export function enqueue<T>(key: string, priority: number, gen: Generator<unknown
 /** Yield this from a job that is waiting on something outside the frame (a worker result, an upload slot): runJobs skips the
  *  job for the rest of this frame instead of calling it again, and the step does not feed the kind's cost estimate. */
 export const WAIT = Symbol('wait');
+/** While runJobs runs with a raised budget (above INTEREST.budgetMs, e.g. the in-page descent's chunk budget), caps a sliced job
+ *  kind at about `ms` of slices per frame (shared by every job wrapped with the same `kind`): past it the job yields WAIT, so
+ *  cosmetic jobs (moss, flora) don't fill the raised budget while the chunks it is meant for wait on workers. At the normal
+ *  budget it changes nothing. One slice can still overshoot the cap by its own length. */
+const capped = new Map<string, { frame: number; ms: number }>(); let frameNo = 0, frameBudget = 0;
+export function* perFrame<T>(kind: string, ms: number, g: Generator<unknown, T>, now = () => performance.now()): Generator<unknown, T> {
+  for (;;) {
+    let c = capped.get(kind); if (!c) capped.set(kind, c = { frame: -1, ms: 0 }); if (c.frame !== frameNo) { c.frame = frameNo; c.ms = 0; }
+    if (c.ms >= ms && frameBudget > INTEREST.budgetMs) { yield WAIT; continue; }
+    const t = now(), r = g.next(); c.ms += now() - t; if (r.done) return r.value; yield r.value;
+  }
+}
 export const cancel = (key: string) => jobs.delete(key);
 export const pending = (key: string) => jobs.has(key);
 export const queued = () => jobs.size;
@@ -44,7 +56,7 @@ export const queued = () => jobs.size;
  * estimated cost (decaying max of recent steps) still fits, so one slow step is not stacked on top of others. A single
  * step slower than the budget cannot be split here: STATS.kinds names the kind so its owner can slice it finer. */
 export function runJobs(budgetMs = INTEREST.budgetMs, now = () => performance.now()) {
-  const t0 = now(); let ran = 0; const waiting = new Set<Job>();
+  const t0 = now(); let ran = 0; const waiting = new Set<Job>(); frameNo++; frameBudget = budgetMs;
   while (jobs.size > waiting.size) {
     let job: Job | undefined; for (const j of jobs.values()) if (!waiting.has(j) && (!job || j.priority < job.priority)) job = j;
     const st = kindStats(job!.key), finishing = !!job!.result;

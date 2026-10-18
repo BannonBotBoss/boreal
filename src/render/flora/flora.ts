@@ -23,7 +23,7 @@ import { CHUNK_SIZE, generateChunk, heightAt } from '../../core/world';
 import { applyPopulation } from '../../core/population';
 import { rockDiameter } from '../../core/rocks';
 import { WEATHER } from '../../core/weather';
-import { enqueue, cancel, pending, finish } from '../../core/interest';
+import { enqueue, cancel, pending, finish, perFrame } from '../../core/interest';
 import { hash, random, sample } from '../../proc/rng';
 import { addCloudShadow, addTranslucency } from '../pbr';
 import { fadeOptIn } from '../fade';
@@ -198,7 +198,7 @@ export function createFlora(scene: THREE.Scene) {
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * TILE - cx, 0, cx - tx * TILE - TILE), Math.max(tz * TILE - cz, 0, cz - tz * TILE - TILE));
     const n = Math.ceil(R / TILE) + 1, ox = Math.floor(cx / TILE), oz = Math.floor(cz / TILE);
     for (let a = ox - n; a <= ox + n; a++) for (let b = oz - n; b <= oz + n; b++) { const d = sq(a, b), k = `${a}:${b}`; if (d > R + TILE / 2) continue; want.add(k);
-      if (d <= R && !tiles.has(k) && !waiting.has(k) && !pending(`flora:${k}`)) { jobs.add(k); enqueue(`flora:${k}`, d + 8, timed(plantsJob(a, b)), (pl: Plant[]) => { jobs.delete(k); if (bm) build(k, pl); else waiting.set(k, pl); }); } }
+      if (d <= R && !tiles.has(k) && !waiting.has(k) && !pending(`flora:${k}`)) { jobs.add(k); enqueue(`flora:${k}`, d + 8, perFrame('flora', SLICE_MS, timed(plantsJob(a, b))), (pl: Plant[]) => { jobs.delete(k); if (bm) build(k, pl); else waiting.set(k, pl); }); } }
     for (const k of [...tiles.keys()]) if (!want.has(k)) dispose(k);
     for (const k of [...waiting.keys()]) if (!want.has(k)) waiting.delete(k);
     for (const k of [...jobs]) if (!want.has(k)) { cancel(`flora:${k}`); jobs.delete(k); }

@@ -13,7 +13,7 @@
 import * as THREE from 'three';
 import { GROUND_LAYERS, groundCover } from '../../core/flora/mosses';
 import { prepareArea, siteAt } from '../../core/flora/site';
-import { enqueue, pending } from '../../core/interest';
+import { enqueue, pending, perFrame } from '../../core/interest';
 import { addGroundLayer } from '../pbr';
 import { groundColor } from '../math';
 import { SOIL_KINDS } from '../../core/stages/soils';
@@ -88,7 +88,7 @@ export function createMoss() {
     const wx = Math.floor(camera.position.x / TEXEL) - N / 2, wz = Math.floor(camera.position.z / TEXEL) - N / 2;
     if (pending('moss:refill') || (lx !== undefined && Math.abs(wx - lx) < SHIFT && Math.abs(wz - lz!) < SHIFT)) return;
     const timed = (function* () { const g = refill(wx, wz, lx, lz); for (;;) { const t0 = performance.now(), r = g.next(); MOSS_INFO.sliceMaxMs = Math.max(MOSS_INFO.sliceMaxMs, performance.now() - t0); if (r.done) return r.value; yield; } })();
-    enqueue('moss:refill', 30, timed, (mean: number[]) => { // texture + window switch together (one 64 KB upload)
+    enqueue('moss:refill', 30, perFrame('moss', SLICE_MS, timed), (mean: number[]) => { // texture + window switch together (one 64 KB upload)
       lx = wx; lz = wz; tex.needsUpdate = true; MOSS_UNIFORMS.uMossWin.value.set((wx + N / 2) * TEXEL, (wz + N / 2) * TEXEL, (N / 2 - 2) * TEXEL, TEXEL);
       MOSS_UNIFORMS.uMossMean.value.set(mean[0], mean[1], mean[2]); MOSS_INFO.mean = mean; MOSS_INFO.refills++; });
   };

@@ -21,6 +21,9 @@ import { INTEREST, cancel, enqueue, runJobs } from '../../core/interest';
 import { smoothstep, clamp } from '../../proc/math';
 import { children, edgeMetres, faceDir, roots, wantsSplit, centre as nodeCentre, type QNode } from './cube';
 import { renderOffset } from './origin';
+import { createAtmosphere } from './atmosphere';
+import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
+import { gameHour, START_HOUR, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, handoffTarget, HANDOFF } from './handoff';
 import { planetFor, toLatLon, PLANET, type Vec3 } from './planet';
 import { buildTile, globeMaterial, tileGeometry, type TileData } from './tile';
@@ -67,10 +70,20 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
 
   const SPACE = new THREE.Color(0x02040a), SKY = new THREE.Color(0x8fb4d9);
   const scene = new THREE.Scene(); scene.background = SPACE.clone();
-  // Sun: fixed, from the home side so the playable region is lit [game calibration; the world clock drives it in a later step]
-  const sun = new THREE.DirectionalLight(0xfff4e0, 3.2), sunDir = new THREE.Vector3(...planet.home).add(new THREE.Vector3(...planet.east).multiplyScalar(.6)).add(new THREE.Vector3(0, .5, 0)).normalize();
-  sun.position.copy(sunDir); scene.add(sun, new THREE.HemisphereLight(0x9fb8d8, 0x202018, .35));
+  // Sun: the game's world clock (core/worldClock + timeOfDay, same ?hour= start offset as the game), placed at the home
+  // region and turned into planet axes (game +x = east, +y = up, −z = north). One direction for the whole planet.
+  loadClock(localStorage.getItem(CLOCK.key));
+  const hourParam = Number(q.get('hour')), startHour = q.has('hour') && hourParam >= 0 && hourParam < 24 ? hourParam : START_HOUR;
+  const E = new THREE.Vector3(...planet.east), N = new THREE.Vector3(...planet.north), U = new THREE.Vector3(...planet.home);
+  const sunDir = new THREE.Vector3(), sunNow = () => { const d = sunPosition(gameHour(q.has('shot') ? 0 : worldSec(), startHour)).direction; /* screenshots: clock pinned so ?hour= is exact */ return sunDir.copy(E).multiplyScalar(d.x).addScaledVector(U, d.y).addScaledVector(N, -d.z).normalize(); };
+  const sun = new THREE.DirectionalLight(0xffffff, 3.2), hemi = new THREE.HemisphereLight(0x9fb8d8, 0x202018, .35);
+  sun.position.copy(sunNow()); scene.add(sun, hemi);
   const material = globeMaterial();
+  // Atmosphere (atmosphere.ts): sky shell + aerial perspective on the tiles; ?atmos=0 for the plain look
+  const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier);
+  if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
+  const camV = new THREE.Vector3();
+  const lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : null;
   const group = new THREE.Group(); scene.add(group);
 
   // ---- camera: OrbitControls rotates around the planet centre; altitude is ours (log zoom), tilt toward the horizon near ground
@@ -184,8 +197,12 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     camera.position.setLength(R + ground + alt);
     camera.lookAt(0, 0, 0);
     const tilt = (Math.PI / 2 - .12) * (1 - smoothstep(3e3, 3e5, alt)); camera.rotateX(tilt); // look toward the horizon near the ground [game calibration]
+    if (lookAz !== null && alt < 3e5) { // ?look=azimuth° (0 north, 90 east): face a compass heading near the ground (screenshots)
+      const up = camera.position.clone().normalize(), h = N.clone().multiplyScalar(Math.cos(lookAz)).addScaledVector(E, Math.sin(lookAz));
+      camera.up.copy(up); camera.lookAt(camera.position.clone().add(h.addScaledVector(up, -.08))); }
     camera.near = clamp(alt * .02, .5, 1e5); camera.far = Math.sqrt((R + ground + alt) ** 2 - R * R) + R * 2; camera.updateProjectionMatrix();
-    (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // daytime sky below ~100 km [game calibration; no scattering yet]
+    if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
+    sun.position.copy(sunNow()); hemi.intensity = .6 * smoothstep(-.25, .05, camera.position.clone().normalize().dot(sunDir)); // sky light fades with the local sun
     camPos[0] = camera.position.x; camPos[1] = camera.position.y; camPos[2] = camera.position.z;
 
     // LOD selection, then hand the wanted builds to the workers (or jobs); drop builds nobody wants any more
@@ -202,7 +219,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       for (const [key, t] of old.slice(0, tiles.size - lod.cache)) { t.mesh.geometry.dispose(); tiles.delete(key); }
     }
     // camera-relative: render from the origin (tile offsets were set from the double camera position in visit())
-    const tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); renderer.render(scene, camera); camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
+    const tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir); renderer.render(scene, camera); camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
     const work = performance.now() - t0; if (bench && work > 40) console.log(`SPIKE ${work.toFixed(0)}ms alt ${alt.toFixed(0)} pre-render ${(tR - t0).toFixed(0)} render ${(performance.now() - tR).toFixed(0)} calls ${renderer.info.render.calls} accepted ${built}`); STATS.work.push(work); if (prevT) STATS.interval.push(t0 - prevT);
     if (!bench) { keep(STATS.work, 600); keep(STATS.interval, 600); keep(STATS.build, 2000); }
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;

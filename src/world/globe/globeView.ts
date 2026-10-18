@@ -433,7 +433,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     get overHome() { return overHome; }, get descending() { return targetAlt < alt * .995; }, get headingYaw() { return headingYaw(); },
     zoomTo(a: number) { targetAlt = clamp(a, 40, R * 4); }, jumpTo(a: number) { alt = targetAlt = clamp(a, 40, R * 4); },
     /** shared mode: terminate the tile workers during gameplay (their memory goes) and restart them on demand */
-    suspendWorkers() { if (suspended || !pool.length) return; suspended = true; for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); },
+    suspendWorkers() { if (suspended || !pool.length) return; suspended = true; for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); if (maskPending) maskPending = ''; }, // an unfinished shoreline mask is asked for again on resume
     resumeWorkers() { if (!suspended || down) return; suspended = false; spawn(); },
     get workers() { return pool.length; },
     stats: () => ({ drawn, inView, cached: tiles.size, queued: queued.size + inflight.size, deepest, tier: GOVERNOR.tier, segments: lod.segments }),

@@ -134,16 +134,16 @@ export function setGlobeDetail(cam: Vec3, alt: number, tierScale: number, seed: 
   [u.uDetO0, u.uDetO1, u.uDetO2].forEach((o, k) => { const l = DETAIL.lambda[k]; o.value.set(m(cam[0], l), m(cam[1], l), m(cam[2], l)); });
 }
 /** Home shoreline mask (lakeMask.ts): one R8 signed-field texture over the home region, shared by every globe material.
- *  uShore: x = 1 / region size, y = half a texel (texel i sits on x = i * size / n), z = 1 once the mask is loaded (until
+ *  uShore: x = 1 / region size, y = half a texel (texel i sits on x = i * size / n), w = n, z = 1 once the mask is loaded (until
  *  then, and outside the home region, the per-vertex field aH contours as before). Uniform values only, same program. */
 const SHORE_EMPTY = new THREE.DataTexture(new Uint8Array([255]), 1, 1, THREE.RedFormat); SHORE_EMPTY.needsUpdate = true;
 export const GLOBE_SHORE = { uShoreTex: { value: SHORE_EMPTY as THREE.Texture }, uShore: { value: new THREE.Vector4(1, 0, 0, 0) }, key: '' };
 /** Shore band widths (m of the field): wet ground above the waterline, shallows below it. [game calibration] */
-export const SHORE = { wet: .6, shallow: 1.5, wetDark: .35, shallowMix: .45 };
+export const SHORE = { wet: .6, shallow: 1.5, wetDark: .2, shallowMix: .4 };
 export function setLakeMask(key: string, data: Uint8Array, n: number, size: number) {
-  const t = new THREE.DataTexture(data, n, n, THREE.RedFormat, THREE.UnsignedByteType, THREE.UVMapping, THREE.RepeatWrapping, THREE.RepeatWrapping, THREE.LinearFilter, THREE.LinearMipmapLinearFilter);
-  t.generateMipmaps = true; t.needsUpdate = true; const old = GLOBE_SHORE.uShoreTex.value; if (old !== SHORE_EMPTY) old.dispose();
-  GLOBE_SHORE.uShoreTex.value = t; GLOBE_SHORE.uShore.value.set(1 / size, .5 / n, 1, 0); GLOBE_SHORE.key = key;
+  const t = new THREE.DataTexture(data, n, n, THREE.RedFormat, THREE.UnsignedByteType, THREE.UVMapping, THREE.RepeatWrapping, THREE.RepeatWrapping, THREE.LinearFilter, THREE.LinearFilter);
+  t.generateMipmaps = false; // no mips: an averaged signed field is not a coarser shoreline (at grazing angles it read as all water) t.needsUpdate = true; const old = GLOBE_SHORE.uShoreTex.value; if (old !== SHORE_EMPTY) old.dispose();
+  GLOBE_SHORE.uShoreTex.value = t; GLOBE_SHORE.uShore.value.set(1 / size, .5 / n, 1, n); GLOBE_SHORE.key = key;
 }
 export function globeMaterial(debugSegments = 0) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }), C = GLOBE_COLOURS;
@@ -172,9 +172,10 @@ vH = aH; vLake = aLake; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
-    float hm = step(0.5, vLoc.z) * uShore.z, sf = (texture2D(uShoreTex, vLoc.xy * uShore.x + uShore.y).r * 255.0 - 128.0) / 16.0;
+    vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
+    float hm = step(0.5, vLoc.z) * uShore.z * (1.0 - smoothstep(1.5, 4.0, sfp)), sf = (texture2D(uShoreTex, suv).r * 255.0 - 128.0) / 16.0; // where texels get smaller than ~1/3 pixel the per-vertex field is the better coastline
     float F = mix(vH, sf, hm), fw = max(fwidth(F), 1e-3); landMask = smoothstep(-fw, fw, F);
-    float band = hm * (1.0 - smoothstep(0.3, 1.5, fw)); // shore bands only while they are wider than a pixel
+    float band = hm * (1.0 - smoothstep(0.1, 0.4, fw)); // shore bands only while they are wider than a pixel
     float dw = smoothstep(0.0, 150.0, -vH); vec3 water = mix(mix(uShallow, uDeep, dw), mix(uLakeShallow, uLakeDeep, dw), vLake);
     water = mix(water, diffuseColor.rgb * 0.5, band * ${SHORE.shallowMix.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.shallow.toFixed(3)}, -F))); // shallows: the bed shows through
     diffuseColor.rgb *= 1.0 - band * ${SHORE.wetDark.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.wet.toFixed(3)}, F)); // wet ground at the waterline

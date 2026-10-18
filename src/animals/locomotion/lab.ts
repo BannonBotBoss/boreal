@@ -178,12 +178,12 @@ function statsOf(rootObj: THREE.Object3D) {
     tris += (g.index ? g.index.count : n) / 3;
     for (const a of Object.values(g.attributes)) bytes += (a as THREE.BufferAttribute).array.byteLength; if (g.index) bytes += g.index.array.byteLength; });
   let casters = 0; rootObj.traverse(o => { if ((o as THREE.Mesh).isMesh && o.castShadow && o.visible) casters++; });
-  const r = renderer.info, calls = r.render.calls, sceneTris = r.render.triangles;
-  // shadow-pass calls: the same frame with the shadow map frozen (not re-rendered) minus the normal frame
-  renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false;
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const mainCalls = renderer.info.render.calls; renderer.shadowMap.autoUpdate = true;
-    document.title = 'STATS ' + JSON.stringify({ rig: q.get('rig'), skinVerts, furCards, wolfTris: tris, wolfMeshes: meshes, wolfShadowCasters: casters, wolfBufferKB: Math.round(bytes / 1024),
-      sceneCalls: calls, mainPassCalls: mainCalls, shadowPassCalls: calls - mainCalls, sceneTris, geometries: r.memory.geometries, textures: r.memory.textures });
-  }));
+  // three resets renderer.info AFTER the shadow pass, so its calls never show; count both passes by hand on one extra frame:
+  // total (shadow map re-rendered) and main only (shadow map frozen), then restore the defaults
+  const r = renderer.info, sm = renderer.shadowMap; r.autoReset = false;
+  r.reset(); renderer.render(scene, camera); const calls = r.render.calls, sceneTris = r.render.triangles;
+  sm.autoUpdate = false; sm.needsUpdate = false; r.reset(); renderer.render(scene, camera); const mainCalls = r.render.calls;
+  sm.autoUpdate = true; r.autoReset = true;
+  document.title = 'STATS ' + JSON.stringify({ rig: q.get('rig'), skinVerts, furCards, wolfTris: tris, wolfMeshes: meshes, wolfShadowCasters: casters, wolfBufferKB: Math.round(bytes / 1024),
+    sceneCalls: calls, mainPassCalls: mainCalls, shadowPassCalls: calls - mainCalls, sceneTris, geometries: r.memory.geometries, textures: r.memory.textures });
 }

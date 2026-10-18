@@ -89,8 +89,8 @@
 +    place.rotation.set(t.jaw ? t.tilt : Math.PI - t.tilt, 0, 0); place.updateMatrix();
 +    (t.jaw ? arches.lower : arches.upper).push(new THREE.ConeGeometry(t.r, t.h, 7).applyMatrix4(place.matrix));
    }
-+  if (arches.upper.length) head.add(new THREE.Mesh(mergeGeometries(arches.upper), ivory));
-+  if (arches.lower.length) jaw.add(new THREE.Mesh(mergeGeometries(arches.lower), ivory));
++  const arch = (g: THREE.BufferGeometry[], bone: THREE.Bone) => { if (!g.length) return; const m = new THREE.Mesh(mergeGeometries(g), ivory); m.userData.tiny = true; bone.add(m); };
++  arch(arches.upper, head); arch(arches.lower, jaw); // tiny: each tooth is far below a shadow texel, though the merged arch is not
    const brain = new AnimalBrain(1400); brain.legs = WOLF_LEGS; const sensor = new THREE.Object3D(); sensor.name = 'head-sensor'; sensor.userData.brain = brain; head.add(sensor);
    root.add(...skins); root.updateMatrixWorld(true);
 +  // Details smaller than a shadow-map texel (eyes, nose pad, nostrils, teeth) cast no shadow. shadowSet tells
@@ -98,7 +98,7 @@
 +  root.traverse(o => { const m = o as THREE.Mesh; if (!m.isMesh || m === skins[0] || m === skins[1]) return;
 +    if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
 +    const s = new THREE.Vector3(); m.getWorldScale(s);
-+    if (m.geometry.boundingSphere!.radius * Math.max(s.x, s.y, s.z) < SHADOW_MIN_RADIUS) { m.castShadow = false; m.receiveShadow = true; m.userData.shadowSet = true; } });
++    if (m.userData.tiny || m.geometry.boundingSphere!.radius * Math.max(s.x, s.y, s.z) < SHADOW_MIN_RADIUS) { m.castShadow = false; m.receiveShadow = true; m.userData.shadowSet = true; } });
    const skeleton = new THREE.Skeleton(bones); // inverses captured now, at the bind pose
    skins.forEach(skin => skin.bind(skeleton));
  

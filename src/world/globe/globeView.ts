@@ -81,7 +81,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   sun.position.copy(sunNow()); scene.add(sun, hemi);
   const material = globeMaterial();
   // Atmosphere (atmosphere.ts): sky shell + aerial perspective on the tiles; ?atmos=0 for the plain look
-  const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier);
+  const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   const camV = new THREE.Vector3();
   const lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : null;

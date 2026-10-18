@@ -12,6 +12,7 @@
  * The sun is the game's: core/timeOfDay sunPosition(gameHour(world clock)) at the home region, turned into planet axes.
  */
 import * as THREE from 'three';
+import { GLSL_NOISE } from '../../proc/glsl';
 
 /** Earth-like constants (Nishita 1993 / Bruneton 2008 values; per km). [game calibration: sunI, mieG] */
 export const ATMOS = {
@@ -19,10 +20,17 @@ export const ATMOS = {
 };
 /** Ray-march sample counts per quality row (GLOBE_LOD order): [sky primary, sky light, terrain primary, terrain light]. */
 export const ATMOS_STEPS = [[16, 6, 8, 3], [14, 5, 6, 3], [12, 4, 6, 2], [10, 4, 4, 2], [8, 3, 3, 2], [6, 2, 0, 0]];
+/** Cloud layer: a thin shell at `heightKm`, density = octaves of the shared value noise (proc/glsl) on the planet-fixed
+ *  direction. Octaves per quality row (0 = no clouds). [game calibration: coverage, cell size; Blue Marble look] */
+export const CLOUDS = { heightKm: 2.5, coverage: .56, cellKm: 900, albedo: .8, octaves: [6, 5, 4, 3, 2, 0] };
 
+// loop caps = the largest counts in the tables: ANGLE (D3D) unrolls loops to their cap, so a loose cap means a slow first
+// compile (a long main-thread frame at startup), not just dead iterations
+const MAX_N = Math.max(...ATMOS_STEPS.map(r => Math.max(r[0], r[2]))), MAX_L = Math.max(...ATMOS_STEPS.map(r => Math.max(r[1], r[3])));
 const GLSL = /* glsl */`
 const float ATM_AERIAL = ${ATMOS.aerial.toFixed(3)}; // in-scatter in the terrain's light units: ~ sun light (3.2) / sunI (22), so haze vs lit ground matches a real sky/ground ratio [reference calibration: Blue Marble land/ocean contrast]
 uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
+uniform mat3 uViewToWorld; uniform float uCloudOct, uCloudSeed;
 const vec3 BR = vec3(${ATMOS.rayleigh.map(v => v.toExponential(4)).join(', ')});
 const float BM = ${ATMOS.mie.toExponential(4)}, BME = ${(ATMOS.mie * ATMOS.mieExt).toExponential(4)}, HR = ${ATMOS.rayleighH.toFixed(2)}, HM = ${ATMOS.mieH.toFixed(2)}, MG = ${ATMOS.mieG.toFixed(3)};
 vec2 atmRsi(vec3 ro, vec3 rd, float r) { vec3 oc = ro - uCentre; float b = dot(oc, rd), c = dot(oc, oc) - r * r, d = b * b - c; if (d < 0.0) return vec2(1e9, -1e9); d = sqrt(d); return vec2(-b - d, -b + d); }
@@ -31,7 +39,7 @@ vec2 atmDensity(vec3 x) { float h = max(length(x - uCentre) - uRp, 0.0); return 
 vec2 atmSunDepth(vec3 x, int n) {
   vec2 g = atmRsi(x, uSun, uRp - 0.5); if (g.x > 0.0 && g.x < g.y) return vec2(-1.0);
   float L = atmRsi(x, uSun, uRa).y, ds = L / float(n); vec2 od = vec2(0.0);
-  for (int j = 0; j < 16; j++) { if (j >= n) break; od += atmDensity(x + uSun * ds * (float(j) + 0.5)) * ds; }
+  for (int j = 0; j < ${MAX_L}; j++) { if (j >= n) break; od += atmDensity(x + uSun * ds * (float(j) + 0.5)) * ds; }
   return od;
 }
 // in-scattered light along the ray (camera at the origin, km) up to tEnd; trans = transmittance over the same segment
@@ -41,7 +49,7 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
   float ds = (t1 - t0) / float(n), mu = dot(rd, uSun), gg = MG * MG;
   float pR = 3.0 / (16.0 * PI) * (1.0 + mu * mu), pM = 3.0 / (8.0 * PI) * ((1.0 - gg) * (1.0 + mu * mu)) / (pow(1.0 + gg - 2.0 * mu * MG, 1.5) * (2.0 + gg));
   vec2 od = vec2(0.0); vec3 sR = vec3(0.0), sM = vec3(0.0);
-  for (int i = 0; i < 32; i++) { if (i >= n) break;
+  for (int i = 0; i < ${MAX_N}; i++) { if (i >= n) break;
     vec3 x = rd * (t0 + ds * (float(i) + 0.5)); vec2 d = atmDensity(x) * ds; od += d;
     vec2 l = atmSunDepth(x, nl); if (l.x < 0.0) continue;
     vec3 att = exp(-(BR * (od.x + l.x) + BME * (od.y + l.y))); sR += d.x * att; sM += d.y * att;
@@ -51,17 +59,36 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
 }
 // sunlight colour reaching x (transmittance), 0 in the planet's shadow
 vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? vec3(0.0) : exp(-(BR * l.x + BME * l.y)); }
+${GLSL_NOISE}
+// 3D value noise from two seeded 2D slices of the shared vnoise (proc/glsl), so the clouds have no seams on the sphere
+float cloudSlice3(vec3 p) { float z = floor(p.z), f = fract(p.z); f = f * f * (3.0 - 2.0 * f);
+  return mix(vnoise(p.xy + z * vec2(37.0, 17.0), uCloudSeed), vnoise(p.xy + (z + 1.0) * vec2(37.0, 17.0), uCloudSeed), f); }
+float cloudDensity(vec3 dir) { // dir: planet-fixed unit direction
+  vec3 p = dir * (${(6371 / CLOUDS.cellKm).toFixed(3)}); float v = 0.0, a = 0.5, n = 0.0;
+  for (int i = 0; i < ${CLOUDS.octaves[0]}; i++) { if (float(i) >= uCloudOct) break; v += a * cloudSlice3(p); n += a; p = p * 2.07 + 11.3; a *= 0.5; }
+  return smoothstep(${CLOUDS.coverage.toFixed(3)}, ${(CLOUDS.coverage + .16).toFixed(3)}, v / max(n, 1e-3));
+}
+// the cloud shell along a view ray (camera at the origin, km) before tEnd: rgb = lit cloud (terrain light units), a = cover
+vec4 atmClouds(vec3 rd, float tEnd, int nl) {
+  if (uCloudOct < 0.5) return vec4(0.0);
+  vec2 g = atmRsi(vec3(0.0), rd, uRp + ${CLOUDS.heightKm.toFixed(2)}); float t = g.x > 0.0 ? g.x : g.y;
+  if (g.x > g.y || t <= 0.0 || t > tEnd) return vec4(0.0);
+  vec3 x = rd * t, n = normalize(x - uCentre); float a = cloudDensity(normalize(uViewToWorld * n));
+  if (a <= 0.0) return vec4(0.0);
+  vec3 sunT = atmSunlight(x, nl); float lam = max(dot(n, uSun), 0.0);
+  return vec4(${CLOUDS.albedo.toFixed(2)} * (sunT * (0.25 + 0.75 * lam) * 1.12 + 0.08), a * 0.9);
+}
 `;
 
 export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3): void; patch(m: THREE.Material): void; setTier(tier: number): void }
 const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.length - 1, tier))];
 
 /** Sky shell + aerial-perspective patcher for a planet of radius `R` metres (centre at the world origin). */
-export function createAtmosphere(R: number, tier = 0): Atmosphere {
+export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   let [sn, sl, tn, tl] = stepsFor(tier), cur = tier;
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
-  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uSteps: { value: new THREE.Vector4() } };
-  const setSteps = () => uniforms.uSteps.value.set(sn, sl, tn, tl); setSteps();
+  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 } };
+  const setSteps = () => { uniforms.uSteps.value.set(sn, sl, tn, tl); uniforms.uCloudOct.value = CLOUDS.octaves[Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur))]; }; setSteps();
   const mat = new THREE.ShaderMaterial({
     uniforms, side: THREE.BackSide, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */`#include <common>
@@ -80,6 +107,7 @@ void main() {
   vec3 rd = normalize(vView), tr; vec2 g = atmRsi(vec3(0.0), rd, uRp - 0.3); if (g.x > 0.0 && g.x < g.y) discard; float tEnd = 1e9; // rays that reach the ground are the tiles' job (aerial perspective)
   vec3 c = atmScatter(rd, tEnd, int(uSteps.x), int(uSteps.y), tr);
   if (tEnd > 1e8) c += tr * smoothstep(0.99996, 0.99999, dot(rd, uSun)) * 40.0; // sun disc (0.53°), reddened by its path
+  { vec4 cl = atmClouds(rd, tEnd, int(uSteps.y)); c = mix(c, cl.rgb, cl.a); }
   gl_FragColor = vec4(c, 1.0);
 #include <tonemapping_fragment>
 #include <colorspace_fragment>
@@ -99,6 +127,7 @@ void main() {
       const rot = new THREE.Matrix4().extractRotation(camera.matrixWorldInverse);
       uniforms.uCentre.value.copy(centre).applyMatrix4(rot).multiplyScalar(1e-3);
       uniforms.uSun.value.copy(sunV.copy(sunDir).normalize()).applyMatrix4(rot).normalize();
+      uniforms.uViewToWorld.value.setFromMatrix4(camera.matrixWorld); // view-space direction → planet-fixed (camera rotation)
     },
     /** Chain aerial perspective into a lit material (keeps its own onBeforeCompile). */
     patch(m) {
@@ -111,7 +140,8 @@ void main() {
     // only the DIRECT sun is reddened (sunset) / cut (planet shadow) on its way to the fragment (x1.12 = noon
     // transmittance^-1); sky (hemisphere) light stays, so ground facing away from a low sun is lit by the sky, not black
     outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * 1.12 * atmSunlight(fp, int(uSteps.w)) + reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular + totalEmissiveRadiance;
-    vec3 ins = atmScatter(rd, d, int(uSteps.z), int(uSteps.w), tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL; }
+    vec3 ins = atmScatter(rd, d, int(uSteps.z), int(uSteps.w), tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL;
+    vec4 cl = atmClouds(rd, d, int(uSteps.w)); outgoingLight = mix(outgoingLight, cl.rgb * tr + ins * ATM_AERIAL, cl.a); } // clouds between camera and ground
 #include <opaque_fragment>`);
       };
       m.needsUpdate = true;

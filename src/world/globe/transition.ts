@@ -24,9 +24,10 @@ export const TRANSITION = {
 };
 
 export type TransitionMode = 'game' | 'band' | 'globe';
-/** In-page or the reload fallback. Default 'reload' until the in-page path is verified (then flip `fallbackDefault`).
- *  ?transition=inpage | reload forces it; low-memory machines and probe caps of Low or worse always reload. */
-export function transitionPath(search: string, env: { deviceMemory?: number; probeCap?: number } = {}, fallbackDefault: 'inpage' | 'reload' = 'reload') {
+/** In-page (the default since the r18 check) or the reload fallback. ?transition=reload | inpage forces it; low-memory
+ *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the
+ *  reload when the player or the probe has the game on Low or below at that moment). */
+export function transitionPath(search: string, env: { deviceMemory?: number; probeCap?: number } = {}, fallbackDefault: 'inpage' | 'reload' = 'inpage') {
   const q = new URLSearchParams(search).get('transition');
   if (q === 'reload') return 'reload';
   if ((env.deviceMemory ?? 8) <= 4 || (env.probeCap ?? 0) >= 3) return 'reload';

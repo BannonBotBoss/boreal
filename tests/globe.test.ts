@@ -390,7 +390,7 @@ test('transition: game basis is orthonormal, up = local vertical, game -z = nort
   assert.ok(dPlanet.distanceTo(dGame.applyMatrix4(gameBasis(p, 72, 186))) < 1e-9, 'view direction maps through the basis');
 });
 test('transition: flag + fallback, fade gated on chunks, mode machine, input scope, governor hold', () => {
-  assert.equal(transitionPath(''), 'reload'); assert.equal(transitionPath('?transition=inpage'), 'inpage'); assert.equal(transitionPath('', {}, 'inpage'), 'inpage');
+  assert.equal(transitionPath(''), 'inpage'); assert.equal(transitionPath('?transition=reload'), 'reload'); assert.equal(transitionPath('', {}, 'reload'), 'reload'); assert.equal(transitionPath('', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('', { probeCap: 3 }), 'reload'); assert.equal(transitionPath('?transition=inpage'), 'inpage');
   assert.equal(transitionPath('?transition=reload', {}, 'inpage'), 'reload'); assert.equal(transitionPath('?transition=inpage', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('?transition=inpage', { probeCap: 3 }), 'reload');
   assert.equal(patchFade(100, false), 0); assert.equal(patchFade(2500, true), 0); assert.equal(patchFade(TRANSITION.fadeFull, true), 1); assert.ok(patchFade(1300, true) > 0 && patchFade(1300, true) < 1);
   const base = { height: 1500, overHome: true, descending: true, chunksReady: false };

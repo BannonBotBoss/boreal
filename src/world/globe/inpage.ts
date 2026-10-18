@@ -37,7 +37,7 @@ import { clamp01, smoothstep } from '../../proc/math';
  *  the player's chunk (readiness and the fade disc, ring x CHUNK_SIZE); jobMs: chunk job budget per frame while the descent
  *  waits for them (the sim is frozen in the band, so its time goes to the patch); prepAlt: descending over home below this
  *  (globe mode), the landing spot is chosen and its chunks start building (terrain in the chunk worker pool, 506d0aa). */
-export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .03, fadeSec: .8, bandGain: 2.6, lakeShallow: [.017, .063, .07] as [number, number, number], lakeDeep: [.012, .047, .056] as [number, number, number], ring: 2, jobMs: 10, prepAlt: 3000, haze: .9, hazeLow: 60, hazeTop: 800, occ: [15, .03] as [number, number], pop: [.55, .95] as [number, number], bandAO: 0, bandContact: 1 };
+export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .03, fadeSec: .8, bandGain: 2.6, lakeShallow: [.017, .063, .07] as [number, number, number], lakeDeep: [.012, .047, .056] as [number, number, number], ring: 2, jobMs: 10, prepAlt: 3000, haze: 1, hazeLow: 60, hazeTop: 800, occ: [15, .03] as [number, number], pop: [.55, .95] as [number, number], bandAO: 0, bandContact: 1 };
 /** bandAO: GTAO in the band (x the tier's). 0: over the far layer (cleared depth) it drew a dark square and specks around the
  *  patch at 600 m, so ambient occlusion comes on with the game (handover); contact shadows stay. */
 /** pop: what cannot dither (animals, the wolf: their materials are not opted in) appears object by object at a fade between
@@ -60,6 +60,7 @@ export function createInPage(view: View, host: InPageHost) {
   ctl = controller(view, host); (window as unknown as { __inpage?: unknown }).__inpage = ctl; // dev: the check script reads it
   return ctl;
 }
+const LOW_TIER = 3; // core/quality LADDER: Ultra, High, Medium, Low, ...
 const ground = (x: number, z: number) => Math.max(heightAt(x, z), -.2);
 
 function controller(view: View, host: InPageHost) {
@@ -151,6 +152,7 @@ function controller(view: View, host: InPageHost) {
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */
     ascend(): boolean {
       if (mode !== 'game') return true;
+      if (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER) return false; // Low or below now: main takes the reload path
       if (!globe) { void loadGlobe().then(() => api.ascend()); return true; } // first use before the prewarm finished
       const g = globe; prep = null; host.save(); hold.hold(); g.resumeWorkers(); down = false; needStart = true; lastT = performance.now(); setMode('band');
       return true;

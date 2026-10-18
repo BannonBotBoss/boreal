@@ -18,6 +18,7 @@ import * as THREE from 'three';
 import { withLogDepth } from './logDepth';
 import { bounds, edgeMetres, faceDir, type QNode } from './cube';
 import { GLOBE_COLOURS, surfaceColour, type Planet, type Vec3 } from './planet';
+import { GLSL_NOISE } from '../../proc/glsl';
 
 /** `lake`: 255 where the reference water level is above sea level (lakes and their shores), 0 at sea level: picks the lake vs ocean water colour. */
 export interface TileData { position: Float32Array; color: Float32Array; height: Float32Array; lake: Uint8Array; normal: Float32Array; index: Uint16Array; centre: Vec3; cpu: number }
@@ -110,6 +111,25 @@ export function tileGeometry(t: TileData) {
 /** Lake colours, one uniform pair shared by every globe material (the in-page band eases them toward the game's water near
  *  the ground, inpage.ts; values only, the program is the same). */
 export const GLOBE_LAKE = { shallow: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeShallow) }, deep: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeDeep) } };
+/** High-frequency ground detail in the tile shader (the CPU makes the macro shape, the GPU adds what is finer than a vertex):
+ *  three octaves of seeded value noise on proc/glsl's hash2u, 3D in planet space (a function of position only, so it is
+ *  continuous across tiles and cube faces, with no projection stretch on slopes), as albedo variation + a derivative bump. Precision:
+ *  the shader sees camera-relative positions; the camera's planet position enters as a per-octave lattice offset taken
+ *  mod 4096 cells in doubles here. Uniforms only: x = tier scale (GLOBE_LOD.detail) x smoothstep(fadeFrom, fadeFull, alt),
+ *  0 skips the work. lambda: octave cell sizes (m); amp: bump heights (m); albedo: +- brightness. [game calibration] */
+/** proc/glsl's noise, namespaced (gd_): other patches of this material (atmosphere, the game's photoreal chain) may or may
+ *  not bring their own unguarded copy, and GLSL allows one body per name. Same code, same values. */
+const DETAIL_NOISE = GLSL_NOISE.replace(/\b(hash2s|vnoise|hash2u|vnoiseU|fbm)\b/g, 'gd_$1');
+export const DETAIL = { lambda: [40, 12, 4], amp: [3, 1.2, .4], albedo: .6, fadeFrom: 5000, fadeFull: 2500 };
+export const GLOBE_DETAIL = { uDetail: { value: new THREE.Vector4(0, DETAIL.albedo, 1, 0) }, uDetO0: { value: new THREE.Vector3() }, uDetO1: { value: new THREE.Vector3() }, uDetO2: { value: new THREE.Vector3() },
+  uDetL: { value: new THREE.Vector3(...DETAIL.lambda.map(l => 1 / l)) }, uDetAmp: { value: new THREE.Vector3(...DETAIL.amp) } };
+/** globeView, each render: the detail strength and the camera's lattice offsets (double precision in, float32 out). */
+export function setGlobeDetail(cam: Vec3, alt: number, tierScale: number, seed: number) {
+  const u = GLOBE_DETAIL, t = Math.min(1, Math.max(0, (DETAIL.fadeFrom - alt) / (DETAIL.fadeFrom - DETAIL.fadeFull)));
+  u.uDetail.value.set(tierScale * t * t * (3 - 2 * t), DETAIL.albedo, 1, seed % 65536);
+  const m = (v: number, l: number) => (((v / l) % 4096) + 4096) % 4096;
+  [u.uDetO0, u.uDetO1, u.uDetO2].forEach((o, k) => { const l = DETAIL.lambda[k]; o.value.set(m(cam[0], l), m(cam[1], l), m(cam[2], l)); });
+}
 export function globeMaterial(debugSegments = 0) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }), C = GLOBE_COLOURS;
   const uSeg = { value: debugSegments }; m.userData.uSeg = uSeg;
@@ -124,20 +144,33 @@ export function globeMaterial(debugSegments = 0) {
     sh.vertexShader = centroid(sh.vertexShader, 'logdepthbuf_pars_vertex'); sh.fragmentShader = centroid(sh.fragmentShader, 'logdepthbuf_pars_fragment');
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
-    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep;
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nvarying float vH, vLake;')
+    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; Object.assign(sh.uniforms, GLOBE_DETAIL);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nvarying float vH, vLake;\nvarying vec3 vDetW;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
-vH = aH; vLake = aLake;
+vH = aH; vLake = aLake; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
 #ifdef DEBUG_SEAMS
 { float n = uSeg + 1.0, id = float(gl_VertexID); vSkirt = id >= n * n ? 1.0 : 0.0;
   if (id < n * n) vTileUV = vec2(mod(id, n), floor(id / n)) / uSeg;
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep;\nvarying float vH, vLake;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { float fw = max(fwidth(vH), 1e-3); landMask = smoothstep(-fw, fw, vH);
-    float dw = smoothstep(0.0, 150.0, -vH); vec3 water = mix(mix(uShallow, uDeep, dw), mix(uLakeShallow, uLakeDeep, dw), vLake); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }`)
+    float dw = smoothstep(0.0, 150.0, -vH); vec3 water = mix(mix(uShallow, uDeep, dw), mix(uLakeShallow, uLakeDeep, dw), vLake); diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }
+  if (uDetail.x > 0.001) { // ground detail (DETAIL): octaves fade out where a cell is under ~2 pixels (no shimmer)
+    float a = 0.0;
+    vec3 q0 = uDetO0 + vDetW * uDetL.x, q1 = uDetO1 + vDetW * uDetL.y, q2 = uDetO2 + vDetW * uDetL.z;
+    float k0 = 1.0 - smoothstep(0.25, 0.6, length(fwidth(q0))), k1 = 1.0 - smoothstep(0.25, 0.6, length(fwidth(q1))), k2 = 1.0 - smoothstep(0.25, 0.6, length(fwidth(q2)));
+    float n0 = detN(q0, uDetail.w) - 0.5, n1 = detN(q1, uDetail.w + 1.0) - 0.5, n2 = detN(q2, uDetail.w + 2.0) - 0.5;
+    detH = (k0 * n0 * uDetAmp.x + k1 * n1 * uDetAmp.y + k2 * n2 * uDetAmp.z) * uDetail.x * uDetail.z * landMask;
+    a = k0 * n0 * 0.55 + k1 * n1 * 0.3 + k2 * n2 * 0.15;
+    diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask; }`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  if (uDetail.x > 0.001) { // derivative bump from the detail height (Mikkelsen 2010), view space
+    vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition); float dhx = dFdx(detH), dhy = dFdy(detH);
+    vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
+    normal = normalize(abs(det) * normal - sign(det) * (dhx * r1 + dhy * r2)); }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.55, roughnessFactor, landMask); // water: a soft sun glint [game calibration]')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
 #ifdef DEBUG_SEAMS

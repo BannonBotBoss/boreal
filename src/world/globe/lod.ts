@@ -7,13 +7,14 @@ import { across, children, type QNode } from './cube';
 
 export const GLOBE_LOD = [
   // segments per tile edge, split factor (× tile edge), shallowest + deepest level, tile cache cap, cap on tiles drawn
-  // inside the view (the split shrinks until the view fits; Quest-class devices sit on the bottom rows)  [game calibration]
-  { name: 'Ultra',    segments: 48, split: 1.8, minLevel: 2, maxLevel: 19, cache: 1400, draw: 160 },
-  { name: 'High',     segments: 40, split: 1.7, minLevel: 2, maxLevel: 18, cache: 1100, draw: 130 },
-  { name: 'Medium',   segments: 32, split: 1.6, minLevel: 2, maxLevel: 18, cache: 900, draw: 110 },
-  { name: 'Low',      segments: 28, split: 1.4, minLevel: 1, maxLevel: 17, cache: 700, draw: 90 },
-  { name: 'Very low', segments: 24, split: 1.25, minLevel: 1, maxLevel: 16, cache: 500, draw: 70 },
-  { name: 'Minimum',  segments: 16, split: 1.1, minLevel: 1, maxLevel: 15, cache: 350, draw: 50 },
+  // inside the view (the split shrinks until the view fits; Quest-class devices sit on the bottom rows), ground detail
+  // strength (tile.ts DETAIL, a uniform: 0 skips it)  [game calibration]
+  { name: 'Ultra',    segments: 48, split: 1.8, minLevel: 2, maxLevel: 19, cache: 1400, draw: 160, detail: 1 },
+  { name: 'High',     segments: 40, split: 1.7, minLevel: 2, maxLevel: 18, cache: 1100, draw: 130, detail: 1 },
+  { name: 'Medium',   segments: 32, split: 1.6, minLevel: 2, maxLevel: 18, cache: 900, draw: 110, detail: .8 },
+  { name: 'Low',      segments: 28, split: 1.4, minLevel: 1, maxLevel: 17, cache: 700, draw: 90, detail: .6 },
+  { name: 'Very low', segments: 24, split: 1.25, minLevel: 1, maxLevel: 16, cache: 500, draw: 70, detail: .4 },
+  { name: 'Minimum',  segments: 16, split: 1.1, minLevel: 1, maxLevel: 15, cache: 350, draw: 50, detail: 0 },
 ];
 /** The tier the world (tile rows: resolution, split, depth, caps) follows: core/quality keeps the world on `worldTier` until
  *  a new tier has held `worldHoldMs`, so a governor step never rebuilds every tile; manual / reset: the tier itself. */

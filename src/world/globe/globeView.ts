@@ -31,12 +31,12 @@ import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
-import { buildTile, globeMaterial, releaseTileGeometry, stitchIndex, tileGeometry, type TileData } from './tile';
+import { buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, stitchIndex, tileGeometry, type TileData } from './tile';
 export { GLOBE_LAKE } from './tile'; // inpage.ts (lazy): the band's lake ease
 /** Deeper tiles under a low camera: split x(1 + k) for tiles within reach x altitude, ramping in from `from` to `full` m. [game calibration] */
 export const NEAR_SPLIT = { k: 1.2, from: 3000, full: 1200, reach: 4 };
 import type { TileRequest } from './tileWorker';
-import { balancedTree, globeLod, worldTier } from './lod';
+import { GLOBE_LOD, balancedTree, globeLod, worldTier } from './lod';
 
 interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
@@ -360,6 +360,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const viewH = target ? target.height : canvas.height;
     if (target && !ext && Math.abs(camera.aspect - target.width / target.height) > 1e-6) { camera.aspect = target.width / target.height; camera.updateProjectionMatrix(); }
     setLogDepthFar(camera.far);
+    setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();

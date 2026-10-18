@@ -107,7 +107,7 @@ const bokehAperture = (focalMm: number, fstop: number) => (focalMm / 1000) ** 2 
  *  instead of switching it on at the handover. A uniform of the existing blend pass, no new program. */
 export const AO_BLEND = { value: 1 };
 export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
-  let lastW = 0, lastH = 0, settings = defaultSettings(), composer: EffectComposer | undefined, gtao: GTAOPass, aoLevel = -1, bokeh: BokehPass, bloom: UnrealBloomPass, grade: ShaderPass, sunfx: ShaderPass;
+  let lastW = 0, lastH = 0, gtaoLevel = 0, settings = defaultSettings(), composer: EffectComposer | undefined, gtao: GTAOPass, bokeh: BokehPass, bloom: UnrealBloomPass, grade: ShaderPass, sunfx: ShaderPass;
   const baseExposure = EXPOSURE.base, baseToneMap = renderer.toneMapping; // core/light: calibrated base exposure (photo EV multiplies on top)
   const neutral = (s: PhotoSettings) => PHOTO_PARAMS.every(p => p.group === 'Lens' || p.group === 'Guides' || p.key === 'autofocus' || p.key === 'focus' || p.key === 'fstop' || s[p.key] === p.value);
   function build() {
@@ -118,7 +118,9 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
     // GTAO reads the main pass's depth (the scene the RenderPass just drew) and reconstructs normals from it: no G-buffer re-draw
     // of the scene (~280 draw calls and 3-5 ms at Ultra on omen). setGBuffer(depth, no normals) = three's NORMAL_VECTOR_TYPE 0;
     // the depth texture of the composer's current read buffer is swapped in per frame as a uniform (same defines, same program).
-    composer.addPass(gtao = new GTAOPass(scene, camera, 512, 512, { depthTexture: rt.depthTexture })); // GTAO (Jiménez et al. 2016), three r180 examples/jsm, MIT
+    // (three r180's constructor cannot take the depth texture alone: setGBuffer then reads normalRenderTarget before it exists
+    // and throws, so the pass is built with its own G-buffer target and switched to the shared depth right after)
+    composer.addPass(gtao = new GTAOPass(scene, camera, 512, 512)); gtao.setGBuffer(rt.depthTexture); // GTAO (Jiménez et al. 2016), three r180 examples/jsm, MIT
     gtao.updateGtaoMaterial({ samples: 8 }); gtao.updatePdMaterial({ samples: 8 }); // bench: 16+16 samples at full res = ~43 ms; half res + 8/8 samples
     composer.addPass(bokeh = new BokehPass(scene, camera, { focus: 8, aperture: .001, maxblur: .02 }));
     composer.addPass(bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0, .4, .85));
@@ -139,8 +141,10 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
       if (!ao && !lightFx && (!active || neutral(s))) { renderer.render(scene, camera); return; }
       if (!composer) build();
       const size = renderer.getDrawingBufferSize(new THREE.Vector2());
-      if (size.x !== lastW || size.y !== lastH || ao !== aoLevel) { composer!.setPixelRatio(1); composer!.setSize(lastW = size.x, lastH = size.y); aoLevel = ao;
-        if (ao === 1) gtao.setSize(size.x >> 1, size.y >> 1); }
+      // the composer resizes only when the drawing buffer does; an AO level change only resizes GTAO's own targets, and AO
+      // switching off and back on (the in-page descent eases it in with AO_BLEND) keeps them allocated at the last level
+      const resized = size.x !== lastW || size.y !== lastH; if (resized) { composer!.setPixelRatio(1); composer!.setSize(lastW = size.x, lastH = size.y); }
+      if (ao > 0 && ao !== gtaoLevel || resized && gtaoLevel) { if (ao > 0) gtaoLevel = ao; gtao.setSize(gtaoLevel === 1 ? size.x >> 1 : size.x, gtaoLevel === 1 ? size.y >> 1 : size.y); }
       gtao.enabled = ao > 0; gtao.blendIntensity = AO_BLEND.value; sunfx.enabled = lightFx;
       if (ao > 0) { const depth = composer!.readBuffer.depthTexture; // the RenderPass draws into the read buffer: its depth is this frame's scene
         if (depth && gtao.depthTexture !== depth) { gtao.depthTexture = depth; gtao.gtaoMaterial.uniforms.tDepth.value = depth; gtao.pdMaterial.uniforms.tDepth.value = depth; } }

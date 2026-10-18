@@ -93,3 +93,16 @@ test('globe tiles: exact dyadic lattice — a vertex a child shares with its par
   }
   assert.equal(checked, 4 * 13 * 13);
 });
+import { surfaceDataAt } from '../src/world/globe/surfaceData';
+import { STAGES } from '../src/core/stages/elevation';
+import { SOIL_KINDS } from '../src/core/stages/soils';
+test('globe surface data: soils/lakes from the staged lookups, placeholders flagged, layered terrain gives nulls', () => {
+  const was = STAGES.on; STAGES.on = true;
+  try {
+    const kinds = new Set<string>(); let lakes = 0;
+    for (let k = 0; k < 400; k++) { const s = surfaceDataAt((k % 20) * 190 - 1900, Math.floor(k / 20) * 190 - 1900); kinds.add(String(s.soil)); if (s.lake) { lakes++; assert.ok(s.lake.depth >= 0); } assert.ok(s.wetness! >= 0 && s.wetness! <= 1); }
+    assert.ok([...kinds].every(k => (SOIL_KINDS as readonly string[]).includes(k)) && kinds.size >= 2, [...kinds].join());
+    const s = surfaceDataAt(0, 0); assert.deepEqual(s.placeholder, { forest: true, tree: true, season: true, snow: true });
+  } finally { STAGES.on = was; }
+  const l = surfaceDataAt(0, 0, STAGES.seed, false); assert.equal(l.soil, null); assert.equal(l.lake, null); assert.equal(l.wetness, null);
+});

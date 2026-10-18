@@ -430,3 +430,12 @@ Still fork-only (`src/animals/locomotion/fork/`, used under `?loco=1` and in the
   - At load: max 12.2 ms, 14 over. This is the one-time stage-grid build behind the loading screen.
   - In node, terrainJob max step 8.5 -> ~0.3 ms (p99); the normals tail (5.8 ms) is gone.
   - Nothing new runs per frame.
+
+## 2026-10-18 06:50 PT - Grok Bot (Globe Builder): governor/scheduler fit (681c7dd), async shader compile, larger warped lakes, cloud drift, cross-face stitching
+- Governor: globe tile rows (segments/split/depth/caps, which force rebuilds) follow the HELD `GOVERNOR.worldTier` via `lod.ts worldTier()`; resolution scale and atmosphere sample counts follow `GOVERNOR.tier` at once (uniforms, no recompile). Manual tier: immediate.
+- Scheduler: the main-thread fallback (`?workers=0`) enqueues as `globe:<face/level/i/j>`, so `STATS.kinds` keeps one 'globe' cost estimate (681c7dd keys kinds by the prefix before ':').
+- Opening the globe: `renderer.compileAsync(scene, camera)` with the root tiles in the scene compiles the tile (aerial perspective + clouds) and sky programs before the first frame (KHR_parallel_shader_compile where the driver has it). HUD shows "shaders N ms async"; worst frame after opening was 2.4 ms in a warm capture (was ~484 ms).
+- Far lakes: 3 octaves (24/7/1.8 km cells) on a domain-warped direction (40 km warp cells, +-18 km), threshold .43 -> 16.2 % of Shield-latitude land; ~3x fewer, ~2x larger, irregular lakes vs 089e83e. Still a pure function of direction (stable across LOD), none near home.
+- Clouds drift: the field turns about the polar axis at `CLOUDS.windMs` (12 m/s) and evolves through noise z once per `evolveH` (6 game hours); angle reduced on the CPU in doubles, 2 uniforms. Pinned at t=0 under `?shot`.
+- Cross-face stitching: `cube.ts faceNeighbour(face, edge)` (numerically derived, symmetric, tested); stitch() now finds coarser neighbours across cube-face edges too.
+- Note: the first headless page loads right after edits were slow (cold Vite/worker module load; zero worker tiles in 12 s), warm loads build normally. Near-home tiles still average ~75 ms in the browser (surfaceAt), unchanged by this round.

@@ -32,6 +32,7 @@ import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
 import { buildTile, globeMaterial, releaseTileGeometry, stitchIndex, tileGeometry, type TileData } from './tile';
+export { GLOBE_LAKE } from './tile'; // inpage.ts (lazy): the band's lake ease
 import type { TileRequest } from './tileWorker';
 import { balancedTree, globeLod, worldTier } from './lod';
 

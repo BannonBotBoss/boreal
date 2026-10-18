@@ -107,6 +107,9 @@ export function tileGeometry(t: TileData) {
  *  shallow → deep by depth and smoother than land. Colours come from planet GLOBE_COLOURS (one table). */
 /** `debugSegments` (?seams=1): skirts drawn red and tile borders yellow, unlit, over everything else (seam hunting); the
  *  vertex id tells skirt from surface (buildTile layout: n² grid, then 4 edges of n skirt copies). */
+/** Lake colours, one uniform pair shared by every globe material (the in-page band eases them toward the game's water near
+ *  the ground, inpage.ts; values only, the program is the same). */
+export const GLOBE_LAKE = { shallow: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeShallow) }, deep: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeDeep) } };
 export function globeMaterial(debugSegments = 0) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }), C = GLOBE_COLOURS;
   const uSeg = { value: debugSegments }; m.userData.uSeg = uSeg;
@@ -121,7 +124,7 @@ export function globeMaterial(debugSegments = 0) {
     sh.vertexShader = centroid(sh.vertexShader, 'logdepthbuf_pars_vertex'); sh.fragmentShader = centroid(sh.fragmentShader, 'logdepthbuf_pars_fragment');
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
-    sh.uniforms.uLakeShallow = { value: new THREE.Color().setRGB(...C.lakeShallow) }; sh.uniforms.uLakeDeep = { value: new THREE.Color().setRGB(...C.lakeDeep) };
+    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nvarying float vH, vLake;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
 vH = aH; vLake = aLake;

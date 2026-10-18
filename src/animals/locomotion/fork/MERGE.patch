@@ -3,18 +3,28 @@
 # (CRLF content lines, like the working-tree files on omen). Then delete src/animals/locomotion/fork/ and see AGENT-NOTES.md.
 --- a/src/render/playerWolf.ts
 +++ b/src/render/playerWolf.ts
-@@ -3,8 +3,9 @@
+@@ -3,8 +3,10 @@
  import { AnimalBrain, quadrupedPose, WOLF_LEGS } from '../core/animalBehavior';
  import { pushProgress } from '../core/rocks';
  import { buildBody, wolfCoat } from '../core/body';
 -import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
 +import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, photoVariant, furStyle, shapeBody, wolfTeeth, wolfTubes } from '../core/wolfBody';
  import { buildFurCards, furCardMaterial } from './furCards';
++import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 +import type { LegPose } from '../animals/locomotion/signals';
  
  /**
   * Procedural wolf: a low-poly base skin (tubes swept around an invisible skeleton, see core/body.ts and core/wolfBody.ts)
-@@ -28,7 +29,8 @@
+@@ -12,6 +14,8 @@
+  * real size. The IK gait (core/animalBehavior.ts) drives the leg chains; the cranium carries the jaw, hinged at the rear
+  * skull base; the tail is a four-bone chain that follows the body with a lag.
+  */
++/** Meshes with a world bounding radius below this (m) skip the shadow passes: smaller than a cascade texel. */
++export const SHADOW_MIN_RADIUS = .03;
+ /** Fur cards over the whole coat (about 3 triangles each). */
+ /** Skin under fur matches the cards' root shade (see furCards: root vertices are 0.55 × coat colour); bare skin keeps the earlier 0.72. */
+ const FUR_ROOT_SHADE = .55, BARE_SHADE = .72;
+@@ -28,7 +32,8 @@
    const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
    const torso = bones[BONE.torso], head = bones[BONE.head], jaw = bones[BONE.jaw];
    head.name = 'cranium'; jaw.name = 'jaw';
@@ -24,7 +34,7 @@
    head.position.set(...HEAD_AT); torso.add(head);
    jaw.position.set(...JAW_AT); head.add(jaw); // hinge at the rear skull base, below the ears
    const tail = TAIL_BONES.map(i => bones[i]);
-@@ -37,7 +39,7 @@
+@@ -37,7 +42,7 @@
    const chains = LEG_XZ.map(([x, z], i) => {
      const ids = legBone(i), m = limbModel(i);
      const [girdle, upper, lower, foot, paw] = [bones[ids.girdle], bones[ids.leg], bones[ids.knee], bones[ids.wrist], bones[ids.paw]];
@@ -33,7 +43,7 @@
      upper.position.y = -m.girdle; girdle.add(upper);
      lower.position.y = -m.upper; upper.add(lower);
      foot.position.y = -m.lower; lower.add(foot);
-@@ -46,9 +48,10 @@
+@@ -46,9 +51,10 @@
    });
  
    // Skin: built once at the straight bind pose, then bound to the skeleton. Fur cards grow from it.
@@ -46,7 +56,7 @@
    // Brow shelf fur: short, swept back and outward over the ridge.
    const browAt = (p: [number, number, number]) => {
      for (const side of [-1, 1]) {
-@@ -74,13 +77,13 @@
+@@ -74,13 +80,13 @@
        ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
          // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
          comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
@@ -63,7 +73,36 @@
    // Flat almond eyelid cut: a dark flat shape with an almond hole, lying in the facial plane. Pointed corners, upper lid fuller than the lower.
    const almond = (a: number, up: number, down: number) => { const sh = new THREE.Shape(); sh.moveTo(-a, 0); sh.quadraticCurveTo(-a * .1, up * 1.9, a, 0); sh.quadraticCurveTo(-a * .1, -down * 1.9, -a, 0); return sh; };
    // Upper lid droops: the opening's top edge sits low, so the lid covers roughly the top quarter of the iris.
-@@ -142,21 +145,33 @@
+@@ -123,14 +129,24 @@
+   const philtrum = new THREE.Mesh(new THREE.BoxGeometry(.0008, .0052, .0008), nostrilMaterial); philtrum.rotation.x = .35; philtrum.position.set(0, -.0188, -.1083); head.add(philtrum); // groove down the middle of the pad
+   // Dental arch (core/wolfBody.wolfTeeth): canines, incisors, premolars and molars along the jaw edges.
+   const ivory = new THREE.MeshStandardMaterial({ color: 0xe8e0c8, roughness: .35 });
++  // The teeth are baked into one mesh per bone (upper arch on the cranium, lower on the jaw), same cones and
++  // placements as before, so the dentition costs 2 draw calls instead of one per tooth.
++  const arches = { upper: [] as THREE.BufferGeometry[], lower: [] as THREE.BufferGeometry[] }, place = new THREE.Object3D();
+   for (const t of wolfTeeth()) {
+-    const mesh = new THREE.Mesh(new THREE.ConeGeometry(t.r, t.h, 7), ivory);
+-    mesh.position.set(t.at[0], t.at[1] + (t.jaw ? t.h / 2 : -t.h / 2), t.at[2]);
+-    mesh.rotation.x = t.jaw ? t.tilt : Math.PI - t.tilt;
+-    (t.jaw ? jaw : head).add(mesh);
++    place.position.set(t.at[0], t.at[1] + (t.jaw ? t.h / 2 : -t.h / 2), t.at[2]);
++    place.rotation.set(t.jaw ? t.tilt : Math.PI - t.tilt, 0, 0); place.updateMatrix();
++    (t.jaw ? arches.lower : arches.upper).push(new THREE.ConeGeometry(t.r, t.h, 7).applyMatrix4(place.matrix));
+   }
++  if (arches.upper.length) head.add(new THREE.Mesh(mergeGeometries(arches.upper), ivory));
++  if (arches.lower.length) jaw.add(new THREE.Mesh(mergeGeometries(arches.lower), ivory));
+   const brain = new AnimalBrain(1400); brain.legs = WOLF_LEGS; const sensor = new THREE.Object3D(); sensor.name = 'head-sensor'; sensor.userData.brain = brain; head.add(sensor);
+   root.add(...skins); root.updateMatrixWorld(true);
++  // Details smaller than a shadow-map texel (eyes, nose pad, nostrils, teeth) cast no shadow. shadowSet tells
++  // render/photoreal.ts to keep that choice instead of turning castShadow on for every mesh. Skin and fur still cast.
++  root.traverse(o => { const m = o as THREE.Mesh; if (!m.isMesh || m === skins[0] || m === skins[1]) return;
++    if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
++    const s = new THREE.Vector3(); m.getWorldScale(s);
++    if (m.geometry.boundingSphere!.radius * Math.max(s.x, s.y, s.z) < SHADOW_MIN_RADIUS) { m.castShadow = false; m.receiveShadow = true; m.userData.shadowSet = true; } });
+   const skeleton = new THREE.Skeleton(bones); // inverses captured now, at the bind pose
+   skins.forEach(skin => skin.bind(skeleton));
+ 
+@@ -142,21 +158,33 @@
    const tailPitch = { value: TAIL_HANG }, tailYaw = tail.map(() => 0);
    const setTail = () => tail.forEach((bone, k) => { bone.rotation.x = k === 0 ? tailPitch.value : TAIL_CURVE[k] * (1 - .6 * (TAIL_HANG - tailPitch.value) / (TAIL_HANG - TAIL_LEVEL)); bone.rotation.y = tailYaw[k]; });
    poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), 0); setTail(); // stand on the ground before the first frame
@@ -100,7 +139,7 @@
        const retract = Math.max(0, Math.min(1, (1.2 - elapsed) / .4));
        const amount = pushProgress(elapsed) * retract;
        head.rotation.x = 0; torso.position.y = 0;
-@@ -173,7 +188,7 @@
+@@ -173,7 +201,7 @@
        const wave = brain.motion === 'idle' ? Math.sin(time * 1.3 - k * .8) * .05 : Math.sin(brain.phase * Math.PI * 2 - k * .9) * (.09 + .02 * k);
        tailYaw[k] += (wave - tailYaw[k]) * blendTo;
      });
@@ -283,7 +322,7 @@
 +/** Tubes of the inner-ear tufts in wolfTubes order (trunk, skull, jaw, 2 ears, 8 leg/paw, tail, 2 cheek ruffs, 2 mouth corners, tongue, 2 lips, then 6 tufts). */
 +const EAR_TUFTS = [21, 26] as const;
 +/** Coat sampled by eye from Matthew's reference photo: brown-grey agouti back, cream belly and legs, near-black saddle and tail tip, tan accents. */
-+export const PHOTO_COAT = { back: [.46, .43, .38] as RGB, belly: [.86, .82, .74] as RGB, dark: [.14, .13, .12] as RGB, accent: [.62, .5, .36] as RGB };
++export const PHOTO_COAT = { back: [.5, .42, .32] as RGB, belly: [.86, .8, .7] as RGB, dark: [.13, .11, .09] as RGB, accent: [.68, .5, .3] as RGB }; // round 4: warmer browns
 +/** Seeded variety on the photo base: Claude's wolfCoat(seed) (archetype + jitter) pulls the photo coat 35 % of the way toward it, so every
 + * seed stays recognisably the photo's agouti pattern but shifts toward grey, tan or black like the original's variety. */
 +export function photoVariant(seeded: { back: RGB; belly: RGB; dark: RGB; accent: RGB }) {
@@ -295,11 +334,11 @@
 +/** Coat zoning from the photo (vertex colours; the fur cards copy them): dark saddle over the back, pale chest, throat and belly, buff legs. */
 +function zoneCoat(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB }) {
 +  const lerp = (a: RGB, b: RGB, t: number) => a.map((v, k) => v + (b[k] - v) * t) as RGB;
-+  const c = body.color, saddle = lerp(coat.dark, coat.back, .4), buff = lerp(coat.belly, coat.accent ?? coat.back, .2), cream = coat.belly, pawDark = lerp(coat.dark, coat.back, .35);
++  const c = body.color, saddle = lerp(coat.dark, coat.back, .3), buff = lerp(coat.belly, coat.accent ?? coat.back, .2), cream = coat.belly, pawDark = lerp(coat.dark, coat.back, .35);
 +  for (let v = 0; v < body.tube.length; v++) {
 +    const t = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1];
 +    if (t === TUBE.trunk) {
-+      mix3(c, v, saddle, .7 * band(.15, .6, ny) * band(-.2, -.1, z) * (1 - band(.15, .2, z)));
++      mix3(c, v, saddle, .82 * band(.15, .6, ny) * band(-.2, -.1, z) * (1 - band(.15, .2, z)));
 +      mix3(c, v, cream, .8 * band(-.15, -.55, ny)); // belly
 +      if (z < -.1) mix3(c, v, cream, .7 * band(.1, -.4, ny) * band(-.1, -.2, z)); // chest and throat
 +    } else if (t >= 5 && t < 13 && (t - 5) % 2 === 0) {
@@ -334,7 +373,7 @@
 +    tone: .3,
 +    scaleAt: (p: P3) => { const n = .75 + .5 * valueNoise3(p[0] * 55, p[1] * 55, p[2] * 55); return Math.min(1.4, n * (leg(p) ? 1 : tail(p) ? 1.2 : 1 + .3 * ruff(p))); },
 +    comb: (p: P3) => head(p) ? undefined : leg(p) ? { lay: [0, -1, .15] as P3, lean: 1 } : tail(p) ? { lay: [0, -.6, 1] as P3, lean: .8 } : { lay: [0, -.25 - .5 * ruff(p), 1] as P3, lean: 1 + .3 * ruff(p) },
-+    tipTint: (p: P3) => p[1] > .33 && !head(p) ? { color: [.7, .66, .58] as P3, amount: .2 } : undefined,
++    tipTint: (p: P3) => p[1] > .33 && !head(p) ? { color: [.12, .1, .08] as P3, amount: .3 } : undefined, // agouti guard hairs end in a black band (was a pale tip that washed the saddle out)
 +  };
 +}
 +

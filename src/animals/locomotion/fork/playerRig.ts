@@ -19,6 +19,7 @@ import { buildBody, wolfCoat } from '../../../core/body';
 import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth } from '../../../core/wolfBody';
 import { furStyle, photoVariant, shapeBody, wolfTubes } from './bodyTubes'; // FORK: reshaped skin, photo coat with seeded variety, fur style
 import { buildFurCards, furCardMaterial } from '../../../render/furCards';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { LegPose } from '../signals';
 
 /**
@@ -27,6 +28,8 @@ import type { LegPose } from '../signals';
  * real size. The IK gait (core/animalBehavior.ts) drives the leg chains; the cranium carries the jaw, hinged at the rear
  * skull base; the tail is a four-bone chain that follows the body with a lag.
  */
+/** Meshes with a world bounding radius below this (m) skip the shadow passes: smaller than a cascade texel. */
+export const SHADOW_MIN_RADIUS = .03;
 /** Fur cards over the whole coat (about 3 triangles each). */
 /** Skin under fur matches the cards' root shade (see furCards: root vertices are 0.55 × coat colour); bare skin keeps the earlier 0.72. */
 const FUR_ROOT_SHADE = .55, BARE_SHADE = .72;
@@ -140,14 +143,24 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const philtrum = new THREE.Mesh(new THREE.BoxGeometry(.0008, .0052, .0008), nostrilMaterial); philtrum.rotation.x = .35; philtrum.position.set(0, -.0188, -.1083); head.add(philtrum); // groove down the middle of the pad
   // Dental arch (core/wolfBody.wolfTeeth): canines, incisors, premolars and molars along the jaw edges.
   const ivory = new THREE.MeshStandardMaterial({ color: 0xe8e0c8, roughness: .35 });
+  // FORK (perf): the teeth are baked into one mesh per bone (upper arch on the cranium, lower on the jaw), same cones and
+  // placements as before, so the dentition costs 2 draw calls instead of one per tooth.
+  const arches = { upper: [] as THREE.BufferGeometry[], lower: [] as THREE.BufferGeometry[] }, place = new THREE.Object3D();
   for (const t of wolfTeeth()) {
-    const mesh = new THREE.Mesh(new THREE.ConeGeometry(t.r, t.h, 7), ivory);
-    mesh.position.set(t.at[0], t.at[1] + (t.jaw ? t.h / 2 : -t.h / 2), t.at[2]);
-    mesh.rotation.x = t.jaw ? t.tilt : Math.PI - t.tilt;
-    (t.jaw ? jaw : head).add(mesh);
+    place.position.set(t.at[0], t.at[1] + (t.jaw ? t.h / 2 : -t.h / 2), t.at[2]);
+    place.rotation.set(t.jaw ? t.tilt : Math.PI - t.tilt, 0, 0); place.updateMatrix();
+    (t.jaw ? arches.lower : arches.upper).push(new THREE.ConeGeometry(t.r, t.h, 7).applyMatrix4(place.matrix));
   }
+  if (arches.upper.length) head.add(new THREE.Mesh(mergeGeometries(arches.upper), ivory));
+  if (arches.lower.length) jaw.add(new THREE.Mesh(mergeGeometries(arches.lower), ivory));
   const brain = new AnimalBrain(1400); brain.legs = WOLF_LEGS; const sensor = new THREE.Object3D(); sensor.name = 'head-sensor'; sensor.userData.brain = brain; head.add(sensor);
   root.add(...skins); root.updateMatrixWorld(true);
+  // FORK (perf): details smaller than a shadow-map texel (eyes, nose pad, nostrils, teeth) cast no shadow. shadowSet tells
+  // render/photoreal.ts to keep that choice instead of turning castShadow on for every mesh. Skin and fur still cast.
+  root.traverse(o => { const m = o as THREE.Mesh; if (!m.isMesh || m === skins[0] || m === skins[1]) return;
+    if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
+    const s = new THREE.Vector3(); m.getWorldScale(s);
+    if (m.geometry.boundingSphere!.radius * Math.max(s.x, s.y, s.z) < SHADOW_MIN_RADIUS) { m.castShadow = false; m.receiveShadow = true; m.userData.shadowSet = true; } });
   const skeleton = new THREE.Skeleton(bones); // inverses captured now, at the bind pose
   skins.forEach(skin => skin.bind(skeleton));
 

@@ -71,7 +71,7 @@ async function loadReal() {
   const { createPlayerWolf } = q.get('rig') === 'orig' ? await import('../../render/playerWolf') as unknown as typeof import('./fork/playerRig') : await import('./fork/playerRig');
   const wolf = createPlayerWolf(Number(q.get('seed') ?? 1400)); scene.add(wolf.root); // ?seed= shows the seeded coat variety
   if (q.get('stats') === '1') setTimeout(() => statsOf(wolf.root), 1500);
-  wolf.root.traverse(o => { o.castShadow = true; if ((o as THREE.Mesh).isMesh) realMeshes.push(o); });
+  wolf.root.traverse(o => { if (!o.userData.shadowSet) o.castShadow = true; if ((o as THREE.Mesh).isMesh) realMeshes.push(o); });
   realChains = wolf.loco.chains; stick.root.visible = false; applyLayers();
   poseReal = (p, a) => {
     wolf.root.position.set(a.x, p.height, a.z); wolf.root.rotation.y = a.heading;
@@ -177,6 +177,13 @@ function statsOf(rootObj: THREE.Object3D) {
     if (o.name === 'skin') skinVerts = n; if (o.name === 'fur') furCards = n / 5;
     tris += (g.index ? g.index.count : n) / 3;
     for (const a of Object.values(g.attributes)) bytes += (a as THREE.BufferAttribute).array.byteLength; if (g.index) bytes += g.index.array.byteLength; });
-  const r = renderer.info;
-  document.title = 'STATS ' + JSON.stringify({ rig: q.get('rig'), skinVerts, furCards, wolfTris: tris, wolfMeshes: meshes, wolfBufferKB: Math.round(bytes / 1024), sceneCalls: r.render.calls, sceneTris: r.render.triangles, geometries: r.memory.geometries, textures: r.memory.textures });
+  let casters = 0; rootObj.traverse(o => { if ((o as THREE.Mesh).isMesh && o.castShadow && o.visible) casters++; });
+  const r = renderer.info, calls = r.render.calls, sceneTris = r.render.triangles;
+  // shadow-pass calls: the same frame with the shadow map frozen (not re-rendered) minus the normal frame
+  renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const mainCalls = renderer.info.render.calls; renderer.shadowMap.autoUpdate = true;
+    document.title = 'STATS ' + JSON.stringify({ rig: q.get('rig'), skinVerts, furCards, wolfTris: tris, wolfMeshes: meshes, wolfShadowCasters: casters, wolfBufferKB: Math.round(bytes / 1024),
+      sceneCalls: calls, mainPassCalls: mainCalls, shadowPassCalls: calls - mainCalls, sceneTris, geometries: r.memory.geometries, textures: r.memory.textures });
+  }));
 }

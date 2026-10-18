@@ -15,7 +15,7 @@ import { planGait, type GaitPlan } from './gaits';
 import { clampLimb, soleOf, solveLimb, type LimbAngles } from './ik';
 import { supportPlane, type Tilt } from './balance';
 import { spring, springTo, type Spring } from './spring';
-import type { LegLayout, LegPose, LocoSignals, Lod, TerrainFn, Vec3 } from './signals';
+import { LEG_NAMES, type LegLayout, type LegPose, type LocoSignals, type Lod, type TerrainFn, type Touchdown, type Vec3 } from './signals';
 import { smooth01 } from '../../proc/math';
 import { flightFoot, jumpFrame, type Jump, type JumpFrame } from './jump';
 import { POSTURE, carryWeight } from './posture';
@@ -36,6 +36,8 @@ export const lodAt = (distance: number): Lod => distance <= LOCO_LOD.nearRadius 
 
 export interface Locomotion {
   update(s: LocoSignals, dt: number, lod?: Lod): LegPose;
+  /** called once per paw touchdown (also listed in LegPose.touchdowns); returns an unsubscribe function */
+  onTouchdown(fn: (t: Touchdown) => void): () => void;
   readonly feet: FootState[]; readonly cpg: Cpg; plan(): GaitPlan; jumping(): boolean;
 }
 
@@ -52,7 +54,8 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
   const feet = [0, 1, 2, 3].map(i => { const p = restWorld(start.x, start.z, start.heading, i); return footState({ x: p.x, y: ground(p.x, p.z), z: p.z }); });
   const joints = [0, 1, 2, 3].map(() => Object.fromEntries(KEYS.map(k => [k, spring()])) as Record<typeof KEYS[number], Spring>);
   const body = { height: spring(ground(start.x, start.z)), pitch: spring(), roll: spring() };
-  let first = true, jump: Jump | undefined, lastStage = '';
+  let first = true, jump: Jump | undefined, lastStage = '', landed = false;
+  const wasDown = [true, true, true, true], listeners = new Set<(t: Touchdown) => void>();
   const scale = Math.sqrt(legs.hip / SPRINGS.refHip);
 
   function update(s: LocoSignals, dt: number, lod: Lod = 'near'): LegPose {
@@ -78,11 +81,12 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
     const tilt: Tilt = { height: base.height + bounce - crouch + (jf?.heightOff ?? 0), pitch: base.pitch + (jf ? 0 : POSTURE.bodyPitch * carryWeight(s.speed)) + (jf?.pitchOff ?? 0), roll: base.roll };
     const stage = jf?.stage ?? '';
     if (stage === 'flight' && lastStage !== 'flight') feet.forEach(f => { f.planted = false; f.forced = false; f.from = { ...f.at }; });
-    if (stage === 'land' && lastStage === 'flight') feet.forEach(f => { f.planted = true; f.forced = false; f.at = { x: f.at.x, y: ground(f.at.x, f.at.z), z: f.at.z }; });
+    landed = stage === 'land' && lastStage === 'flight';
+    if (landed) feet.forEach(f => { f.planted = true; f.forced = false; f.at = { x: f.at.x, y: ground(f.at.x, f.at.z), z: f.at.z }; });
     lastStage = stage;
     const fwd = { x: -Math.sin(h), z: -Math.cos(h) };
     const pose: LegPose = { girdles: [], legs: [], knees: [], wrists: [], paws: [], abduct: [], feet: [], contacts: [], height: tilt.height, pitch: tilt.pitch, roll: tilt.roll,
-      gait: plan.id, phases: ph, duty: plan.duty, cycle: plan.cycle, froude: plan.froude };
+      gait: plan.id, phases: ph, duty: plan.duty, cycle: plan.cycle, froude: plan.froude, touchdowns: [] };
     const cw = jf ? 0 : carryWeight(s.speed); pose.carry = { head: POSTURE.headPitch * cw, drop: POSTURE.headDrop * cw, tail: POSTURE.tailDrop * cw };
     for (let i = 0; i < 4; i++) {
       const L = limbs[i], front = isFrontLeg(i);
@@ -119,10 +123,17 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
       pose.girdles.push(out.girdle); pose.legs.push(out.leg); pose.knees.push(out.knee); pose.wrists.push(out.wrist); pose.paws.push(out.paw); pose.abduct.push(out.abduct);
       pose.contacts.push(contact);
     }
+    // touchdowns: contact rising edges (none on the first frame, which starts with all four paws down)
+    for (let i = 0; i < 4; i++) {
+      if (!first && pose.contacts[i] && !wasDown[i]) pose.touchdowns.push({ leg: i, name: LEG_NAMES[i], worldPos: { ...pose.feet[i] }, speed: Math.abs(s.speed), gait: plan.id,
+        strength: landed ? 1 : Math.min(1, .3 + .35 * Math.sqrt(plan.froude)), landing: landed });
+      wasDown[i] = pose.contacts[i];
+    }
+    pose.touchdowns.forEach(t => listeners.forEach(fn => fn(t)));
     first = false;
     return pose;
   }
-  return { update, feet, cpg, plan: () => plan, jumping: () => !!jump };
+  return { update, feet, cpg, plan: () => plan, jumping: () => !!jump, onTouchdown: fn => (listeners.add(fn), () => { listeners.delete(fn); }) };
 }
 
 /** Swing-leg spring half-life is capped at this share of the swing duration. */

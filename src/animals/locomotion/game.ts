@@ -9,13 +9,16 @@ import { heightAt } from '../../core/world';
 import type { AnimateFrame, PlayerRig } from '../../render/playables';
 import { createLocomotion, type Locomotion } from './controller';
 import { createPlayerWolf } from './fork/playerRig';
-import type { LegLayout, TerrainFn } from './signals';
+import type { LegLayout, TerrainFn, Touchdown } from './signals';
 
 export const LOCO_FLAG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('loco');
 /** Same ground the player stands on in buildScene.draw: max(heightAt, −0.2). */
 export const gameGround: TerrainFn = (x, z) => Math.max(heightAt(x, z), -.2);
 /** A jump in one frame larger than this (m) is a teleport (home button, ?at=, rewind): restart the feet there. */
 const TELEPORT = 2;
+const touchListeners = new Set<(t: Touchdown) => void>();
+/** Player paw touchdowns under ?loco=1 (footstep audio etc.); survives the controller restarting on a teleport. Returns unsubscribe. */
+export function onPlayerTouchdown(fn: (t: Touchdown) => void): () => void { touchListeners.add(fn); return () => { touchListeners.delete(fn); }; }
 
 export function createLocoPlayer(): PlayerRig {
   const w = createPlayerWolf();
@@ -31,6 +34,7 @@ export function createLocoPlayer(): PlayerRig {
       // the brain's jump (main.ts: Space / X, launched at pounceSpeed) becomes a pounce intent on its first frame
       const jumping = b.motion === 'jump', intent = jumping && !wasJumping ? { kind: 'pounce' as const } : undefined; wasJumping = jumping;
       const pose = loco.update({ x, z, heading, speed, intent }, f.dt, 'near');
+      for (const t of pose.touchdowns) touchListeners.forEach(fn => fn(t));
       w.animate(f.time, f.moving, f.action, f.elapsed, f.mode, f.push, pose);
     },
   };

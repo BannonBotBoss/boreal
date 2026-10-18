@@ -35,4 +35,12 @@ export interface LegPose {
   gait: GaitId; phases: number[]; duty: number; cycle: number; froude: number;
   /** walking carry for head and tail (posture.ts): head pitch rad, head drop as a share of the rig's head drop, tail drop rad */
   carry?: { head: number; drop: number; tail: number };
+  /** paws that touched down this frame (contact went false → true); empty on most frames */
+  touchdowns: Touchdown[];
 }
+
+/**
+ * Paw-touchdown event, for footstep audio, dust and prints. One per leg per stance (a jump landing gives one per paw).
+ * strength 0..1: 0.3 at a slow walk rising with √Froude to 1 at a fast gallop; 1 for a jump landing.
+ */
+export interface Touchdown { leg: number; /** LF, LH, RF, RH */ name: typeof LEG_NAMES[number]; worldPos: Vec3; speed: number; gait: GaitId; strength: number; landing: boolean }

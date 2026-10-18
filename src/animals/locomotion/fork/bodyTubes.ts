@@ -234,7 +234,7 @@ export function shapeBody(body: BodyData, coat: { back: RGB; belly: RGB; dark: R
 /** Tubes of the inner-ear tufts in wolfTubes order (trunk, skull, jaw, 2 ears, 8 leg/paw, tail, 2 cheek ruffs, 2 mouth corners, tongue, 2 lips, then 6 tufts). */
 const EAR_TUFTS = [21, 26] as const;
 /** Coat sampled by eye from Matthew's reference photo: brown-grey agouti back, cream belly and legs, near-black saddle and tail tip, tan accents. */
-export const PHOTO_COAT = { back: [.46, .43, .38] as RGB, belly: [.86, .82, .74] as RGB, dark: [.14, .13, .12] as RGB, accent: [.62, .5, .36] as RGB };
+export const PHOTO_COAT = { back: [.5, .42, .32] as RGB, belly: [.86, .8, .7] as RGB, dark: [.13, .11, .09] as RGB, accent: [.68, .5, .3] as RGB }; // round 4: warmer browns
 /** Seeded variety on the photo base: Claude's wolfCoat(seed) (archetype + jitter) pulls the photo coat 35 % of the way toward it, so every
  * seed stays recognisably the photo's agouti pattern but shifts toward grey, tan or black like the original's variety. */
 export function photoVariant(seeded: { back: RGB; belly: RGB; dark: RGB; accent: RGB }) {
@@ -246,11 +246,11 @@ const band = (a: number, b: number, x: number) => { const t = Math.max(0, Math.m
 /** Coat zoning from the photo (vertex colours; the fur cards copy them): dark saddle over the back, pale chest, throat and belly, buff legs. */
 function zoneCoat(body: BodyData, coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB }) {
   const lerp = (a: RGB, b: RGB, t: number) => a.map((v, k) => v + (b[k] - v) * t) as RGB;
-  const c = body.color, saddle = lerp(coat.dark, coat.back, .4), buff = lerp(coat.belly, coat.accent ?? coat.back, .2), cream = coat.belly, pawDark = lerp(coat.dark, coat.back, .35);
+  const c = body.color, saddle = lerp(coat.dark, coat.back, .3), buff = lerp(coat.belly, coat.accent ?? coat.back, .2), cream = coat.belly, pawDark = lerp(coat.dark, coat.back, .35);
   for (let v = 0; v < body.tube.length; v++) {
     const t = body.tube[v], y = body.position[v * 3 + 1], z = body.position[v * 3 + 2], ny = body.normal[v * 3 + 1];
     if (t === TUBE.trunk) {
-      mix3(c, v, saddle, .7 * band(.15, .6, ny) * band(-.2, -.1, z) * (1 - band(.15, .2, z)));
+      mix3(c, v, saddle, .82 * band(.15, .6, ny) * band(-.2, -.1, z) * (1 - band(.15, .2, z)));
       mix3(c, v, cream, .8 * band(-.15, -.55, ny)); // belly
       if (z < -.1) mix3(c, v, cream, .7 * band(.1, -.4, ny) * band(-.1, -.2, z)); // chest and throat
     } else if (t >= 5 && t < 13 && (t - 5) % 2 === 0) {
@@ -285,6 +285,6 @@ export function furStyle() {
     tone: .3,
     scaleAt: (p: P3) => { const n = .75 + .5 * valueNoise3(p[0] * 55, p[1] * 55, p[2] * 55); return Math.min(1.4, n * (leg(p) ? 1 : tail(p) ? 1.2 : 1 + .3 * ruff(p))); },
     comb: (p: P3) => head(p) ? undefined : leg(p) ? { lay: [0, -1, .15] as P3, lean: 1 } : tail(p) ? { lay: [0, -.6, 1] as P3, lean: .8 } : { lay: [0, -.25 - .5 * ruff(p), 1] as P3, lean: 1 + .3 * ruff(p) },
-    tipTint: (p: P3) => p[1] > .33 && !head(p) ? { color: [.7, .66, .58] as P3, amount: .2 } : undefined,
+    tipTint: (p: P3) => p[1] > .33 && !head(p) ? { color: [.12, .1, .08] as P3, amount: .3 } : undefined, // agouti guard hairs end in a black band (was a pale tip that washed the saddle out)
   };
 }

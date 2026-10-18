@@ -12,6 +12,8 @@ import { hash, random } from '../proc/rng';
 import { f } from '../proc/trace';
 import { CHUNK_SIZE, WORLD_SEED, heightAt, generateChunk } from './world';
 import { LEVEL } from './tuning';
+import { STAGES } from './stages/elevation';
+import { soilAt } from './stages/soils';
 import { HYDRO, WEATHER, setSurfaceSource, weatherAt } from './weather';
 
 export const CELL = 2; // m
@@ -45,6 +47,8 @@ export const MOSS_INPUT: [number, number] = [.12, .2];
 /** Mineral profile of a sandy podzol on Shield till: Ae 5–15 cm, B 20–50 cm, bulk density 1.2–1.5 g/cm³, depth to bedrock 0.5–3 m
  * (Soil Classification Working Group 1998, Canadian System of Soil Classification, 3rd ed.) [verify ranges]. SOM start: mineral C
  * 2.2–3.0 kg C/m² to 50 cm under jack pine (Norris et al. EGU 2012) → ×2 dry mass. */
+/** Peat dry bulk density (kg/m3): ~0.1 g/cm3 for Sphagnum-sedge peat (Clymo 1983, in Gore (ed.) Mires: Swamp, Bog, Fen and Moor) [verify]. */
+export const PEAT_BULK = 100;
 export const MINERAL = { ae: [.05, .15], b: [.2, .5], bulk: [1200, 1500], bedrock: [.5, 3], som0: [4.4, 6] };
 /** Bekker pressure–sinkage p = (kc/b + kφ) zⁿ (kPa, z in m, b in m). Wong, Theory of Ground Vehicles, 3rd ed. (2001), Table 2.3. */
 export const BEKKER = {
@@ -118,7 +122,8 @@ export function column(x: number, z: number, years = GROUND.years) {
 }
 function columnRaw(x: number, z: number, years: number) {
   const gx = Math.floor(x / CELL), gz = Math.floor(z / CELL), cx = gx * CELL + CELL / 2, cz = gz * CELL + CELL / 2;
-  const y = heightAt(cx, cz), wet = Math.min(1, Math.max(0, (LEVEL.shore + 1.5 - y) / 2)); // low ground is wetter
+  const y = heightAt(cx, cz), so = STAGES.on ? soilAt(STAGES.seed, cx, cz) : undefined; // staged: stage-3 material drives wetness and depth to bedrock
+  const wet = so ? so.wet : Math.min(1, Math.max(0, (LEVEL.shore + 1.5 - y) / 2)); // low ground is wetter
   const stand = standAt(cx, cz, wet), standAge = f('ground', 'stand age since fire (yr)', Math.round(stand.age)); // core/stand (Van Wagner 1978)
   f('ground', 'fire patch', stand.patch); f('ground', 'canopy closure', stand.canopy); f('ground', 'stems/ha', Math.round(stand.stems)); f('ground', 'snags/ha', Math.round(stand.snags));
   f('ground', 'CWD (kg/m²)', stand.cwd); for (const [k, v] of Object.entries(stand.cover)) f('ground', `cover: ${k}`, v as number);
@@ -140,17 +145,18 @@ function columnRaw(x: number, z: number, years: number) {
   const moist = f('ground', 'organic moisture (vol. share)', Math.min(1, (.3 + .6 * wet) * .5 + wx.soil * .5));
   if (y < LEVEL.waterSurface) push({ id: 'water', label: 'water', thickness: LEVEL.waterSurface - y, kg: (LEVEL.waterSurface - y) * 998, bulk: 998, source: 'CRC Handbook' });
   push({ id: 'cwd', label: 'coarse woody debris (down logs, area-averaged)', thickness: stand.cwd / 420, kg: stand.cwd, bulk: 420, moisture: moist, source: 'core/stand: Sturtevant et al. 1997 U-curve, k ≈ 0.03/yr (Harmon et al. 1986)' });
-  const mossT = (.02 + .04 * wet) * (.3 + .7 * (stand.cover.feathermoss + stand.cover.sphagnum)); // feathermoss/Sphagnum cover from the stand
+  const mossT = (so?.kind === 'bedrock' ? .2 : 1) * (.02 + .04 * wet) * (.3 + .7 * (stand.cover.feathermoss + stand.cover.sphagnum)); // feathermoss/Sphagnum cover from the stand
   push({ id: 'moss', label: 'live moss mat (feathermoss / Sphagnum)', thickness: mossT, kg: mossT * 20, bulk: 20, moisture: moist, source: 'Yi et al. 2009 (live horizon) [verify]' });
   POOLS.slice(0, 4).forEach((p, i) => push({ id: p.id, label: p.label, thickness: pool[i] / p.bulk, kg: pool[i], bulk: p.bulk, moisture: moist,
     age: `turnover ${(1 / k[i]).toFixed(0)} yr at ${CLIMATE.meanAnnualTempC} °C`, source: 'CBM-CFS3, Kurz et al. 2009; Yi et al. 2009' }));
+  if (so?.kind === 'peat') { const pt = lerp(so.depth, noise(gx, gz, 'peat')); push({ id: 'peat', label: 'peat (Sphagnum/sedge, fibric to humic)', thickness: pt, kg: pt * PEAT_BULK, bulk: PEAT_BULK, moisture: .9, source: 'stage-3 soils; CSSC 1998 Organic order (>= 40 cm); bulk 0.1 g/cm3 (Clymo 1983) [verify]' }); }
   let ae = lerp(MINERAL.ae, noise(gx, gz, 'ae')), b = lerp(MINERAL.b, noise(gx, gz, 'b')), bulk = lerp(MINERAL.bulk, noise(gx, gz, 'bulk'));
-  const soil = lerp(MINERAL.bedrock, noise(Math.floor(cx / 20), Math.floor(cz / 20), 'rock')) - top;
+  const soil = (so && so.kind !== 'peat' ? lerp(so.depth, noise(Math.floor(cx / 20), Math.floor(cz / 20), 'rock')) : lerp(MINERAL.bedrock, noise(Math.floor(cx / 20), Math.floor(cz / 20), 'rock'))) - top;
   if (ae + b > soil) { const s2 = Math.max(.05, soil) / (ae + b); ae *= s2; b *= s2; }
-  push({ id: 'ae', label: 'mineral Ae (eluviated sand)', thickness: ae, kg: ae * bulk, bulk, source: 'CSSC 1998 podzol' });
+  push({ id: 'ae', label: so ? `mineral Ae (${so.label})` : 'mineral Ae (eluviated sand)', thickness: ae, kg: ae * bulk, bulk, source: 'CSSC 1998 podzol' });
   push({ id: 'b', label: `mineral B (+ ${pool[4].toFixed(1)} kg/m² SOM)`, thickness: b, kg: b * bulk + pool[4], bulk, age: `SOM turnover ${(1 / k[4]).toFixed(0)} yr`, source: 'CSSC 1998; CBM-CFS3' });
   push({ id: 'bedrock', label: 'bedrock (granite)', thickness: 10, kg: 10 * 2650, bulk: 2650, source: 'Canadian Shield; Klein & Dutrow' });
-  return { cell: `${gx}:${gz}`, height: y, cover, input, pools: pool, layers, organic: layers.filter(l => /moss|Litter|fragmented|duff|humus/i.test(l.id)).reduce((s, l) => s + l.thickness, 0), wet };
+  return { cell: `${gx}:${gz}`, height: y, cover, input, pools: pool, layers, organic: layers.filter(l => /moss|Litter|fragmented|duff|humus|peat/i.test(l.id)).reduce((s, l) => s + l.thickness, 0), wet };
 }
 export type Column = ReturnType<typeof columnRaw>;
 

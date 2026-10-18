@@ -226,3 +226,29 @@ The game-loop call (`buildScene.simulateAnimals` + player animate) is one line o
 - **Seams:** normals come from central differences over one extra ring of samples past the tile edge, so neighbours at the same level share identical edge normals (tested). The skirts hide cracks between levels.
 - **Measured (omen, RTX 5060 Laptop, headless Edge, Ultra, `?bench=zoom` = 20 s log zoom from 14 000 km to 300 m + 8 s hold):** BEFORE (main-thread jobs): per tile avg 5.2–6.2 ms, p95 21–25 ms; worst main-thread frame 7.3–36.4 ms, worst rAF interval 17.5–37.9 ms. AFTER (4 workers): per tile avg 6.3–9.3 ms, p95 26–32 ms (in the worker); main-thread frame avg 0.7–0.9 ms, p99 1.3–1.9 ms, worst 1.7–3.4 ms in 3 of 4 runs and one 44 ms outlier (cold run straight after a code reload); worst rAF interval 18.1 ms in the clean runs.
 - Home-region tiles (heightAt per vertex) are the slow tail (p95). Not changed: the game terrain look at 300 m (sampled as is).
+
+## 2026-10-18 04:00 PT - Grok Bot: staged relief calibrated to real Kenora data + world stage 3 soils (behind ?stages=1)
+- References (tuning only, NOT in the game; scripts in tools/terrain-ref, data stays on the box): Copernicus GLO-30 DEM
+  (© DLR/Airbus, Copernicus licence), ESA WorldCover 2021 (CC BY 4.0), Sentinel-2 L2A 2024-07-30 (Copernicus, free),
+  Wikimedia Commons photos (Archives of Ontario OGL-ON; Q. Soloviev CC BY 4.0; A. Carrotflower CC BY-SA 4.0; R. Sylvia CC BY-SA 3.0),
+  Hallett & Roed 1980 NOEGTS 36 (Kenora terrain units). 15 x 15 km window east of Kenora (49.735 N, 94.38 W).
+- Measured (real -> game seed 1400): land above lake p50 36.5 -> 34.3 m, p99 86 -> 66 m (real is a DSM, ~15 m canopy);
+  1 km local relief 41 -> 40.5 m; gradient direction 42 -> 39 deg (NE-SW glacial grain), coherence .25 -> .29; autocorrelation
+  930 -> 1080 m; spectral slope -3.1 -> -4.0 (game too smooth); water 29 -> 31 %; lake median 7 -> 23 ha (too few small lakes).
+- core/stages/elevation.ts: relief in real metres (ELEV.reliefM 60, base water at the waterPct percentile), NE-SW grain on the
+  two lowest octaves (rotated lattice, integer stretch keeps the torus seamless), persistence .5. FIX: the value-noise lattice used
+  raw FNV-1a/2^32 (poorly mixed last chars -> E-W striping, coherence .8); now mulberry32-avalanched. All staged worlds changed.
+  lakeAt now reads the 4 grid NODES and the bilinear shoreline (fixes the half-cell outline offset); flow.ts cellAt rounds to nodes.
+  Lakes need >= 1 m fill depth (shallower fills become peat).
+- core/stages/soils.ts (new): HAND + flow distance (Renno 2008 / Nobre 2011, implemented from the papers; pysheds is GPL),
+  Gharari 2011 landscape classes (slope .129, HAND 5.9 m), mapped to NOEGTS 36 units: hillslope + highest plateaus -> bedrock
+  (calibrated to the 11 % WorldCover outcrop share), plateaus -> thin till (8 % seeded outwash sand), flat wetland -> peat
+  (TWI >= 9 or filled pit) or glaciolacustrine clay (< 12 m above base water). Seed 1400: bedrock 11.4, till 67.6, sand 4,
+  clay 7.1, peat 9.9 % of land. ~0.4 s once per seed (includes stages 1-2c).
+- Wired (staged mode only): core/ground (wetness, depth to bedrock per class, a peat layer, Ae label), render/trees (tree mix
+  wetness from soilAt), core/world terrainBand(y, x, z) -> material + inspector 'soil' rows, render/math BAND_COLOR per material
+  (bedrock = Sentinel-2 mean over WorldCover bare, #928575).
+- HOOK for the grass owner (render/grass/cover.ts, not edited by me): in staged mode `rock` comes from `LEVEL.upland` (3.3 m), but
+  staged relief is now ~60 m, so nearly all ground reads as rock. Suggest `const so = soilAt(STAGES.seed, x, z); rock = so.kind === 'bedrock' ? 1 : 0; wet = so.wet`.
+  Also the TWI bilinear uses `x / cell - .5` (cell centres); grid values sit on nodes (i*cell), so drop the -.5.
+- Bench (headless Edge, RTX 5060 laptop, ?stages=1&bench=1): Ultra gpu 7.8 ms, cpu 10.2 ms, frame 16.7 ms (vsync 60), p95 19.3 ms.

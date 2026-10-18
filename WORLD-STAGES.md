@@ -65,13 +65,14 @@ Runtime  near the player: shallow-water flow (virtual pipes), weather coupling (
   shader with an albedo/roughness table). All of it is on the quality ladder (reflection resolution, refraction on/off, FFT vs
   Gerstner, foam, caustics).
 
-## Stage 3: ground composition (Canadian Shield)
-Inputs: elevation, slope, TWI = ln(a / tan β) from stage 2, distance to water, height above nearest drainage.
-- Ridges and steep slopes → bedrock outcrop (soil depth < 0.1 m). Upper slopes → thin till over bedrock (0.1–1 m).
-- Glaciolacustrine lows near Lake of the Woods → clays/silts (Lake Agassiz deposits). Outwash → sand (jack pine sites).
-- High TWI, poorly drained lows → peat/muskeg (organic > 0.4 m), feeding the Sphagnum cover and paludification.
-- Values: Ontario FEC soil types (Sims et al. 1997, NW Ontario S-types) and the OGS surficial geology map (open data, for
-  real-map mode) [verify]. The output replaces the noise-driven `MINERAL` parameters in core/ground.
+## Stage 3: ground composition (Canadian Shield) - DONE 2026-10-18 (core/stages/soils.ts)
+Inputs: slope, TWI (stage 2a), HAND and flow distance to drainage (lake, outlet or river channel).
+- Gharari et al. 2011 landscape classes (slope .129, HAND 5.9 m): hillslope / plateau / sloped wetland / flat wetland.
+- Mapped to NOEGTS 36 (Hallett & Roed 1980) Kenora units: hillslope + highest plateaus -> bedrock knobs (share calibrated to
+  ESA WorldCover outcrop, 11 %), plateaus -> thin ground moraine (till) with seeded outwash sand patches, flat wetland -> peat
+  (TWI >= 9 or a filled pit) or Lake Agassiz glaciolacustrine clay (< 12 m above base water).
+- Output feeds core/ground (wetness, depth to bedrock, peat layer), the tree mix and the terrain colour. Calibration: tools/terrain-ref.
+- Open: Ontario FEC S-types (Sims et al. 1997) for finer moisture regimes; real-map mode from the OGS surficial geology map [verify].
 
 ## Stage 4: vegetation
 - core/stand (live): fire age per patch → structure. Site wetness then comes from stage 3 (TWI, soil type) instead of
@@ -92,5 +93,5 @@ the analytic curve. Glacier mass is conserved apart from the balance terms.
 ## Build order (live, one small commit each, with a CHANGELOG-LIVE line)
 1. Stand age (done). 2. This doc. 3. Seeded elevation on the coarse grid + erosion (toggle `world.stagedTerrain`).
 4. Priority-Flood + D8 + accumulation (inspector: flow, accumulation, TWI). 5. Lakes and ponds. 6. Rivers (DONE 2026-10-18, core/stages/rivers.ts; Strahler,
-hydraulic geometry, carved channels, water mesh). 7. Waterfalls and rapids. 8. Ground stage 3. 9. Real DEM. 10. Ocean and tides,
+hydraulic geometry, carved channels, water mesh). 7. Waterfalls and rapids. 8. Ground stage 3 (DONE 2026-10-18, core/stages/soils.ts; relief calibrated to Copernicus DEM / WorldCover / Sentinel-2 around Kenora, tools/terrain-ref). 9. Real DEM. 10. Ocean and tides,
 glaciers, lake ice, live shallow water.

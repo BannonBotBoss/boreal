@@ -6,6 +6,7 @@ import { LEVEL } from './tuning';
 import { STAGES, elevationGrid, flowGrid, lakeAt, sampleGrid, toWorld } from './stages/elevation';
 import { cellAt, twi } from './stages/flow';
 import { carve, riverAt } from './stages/rivers';
+import { soilAt, type SoilKind } from './stages/soils';
 import { f, choose, scope, tracing } from '../proc/trace';
 export const GENERATOR_VERSION = 1;
 export const WORLD_SEED = 1400;
@@ -24,7 +25,8 @@ export function heightAt(x: number, z: number) {
     const g = elevationGrid(STAGES.seed);
     if (tracing()) { const fl = flowGrid(STAGES.seed), c = cellAt(fl, x, z); f('hydrology', 'flow accumulation (cells)', fl.acc[c]); f('hydrology', 'upslope area (ha)', fl.acc[c] * fl.cell * fl.cell / 1e4);
       f('hydrology', 'fill depth (m)', fl.filled[c] - g.h[c]); f('hydrology', 'TWI ln(a/tanβ)', twi(fl, c)); f('hydrology', 'D8 receiver', fl.dir[c]); const lk = lakeAt(STAGES.seed, x, z); if (lk) { f('hydrology', 'water body', `${lk.kind} #${lk.body}`); f('hydrology', 'water area (ha)', lk.areaHa); f('hydrology', 'max depth (m)', lk.maxDepth); } f('hydrology', 'grid build (ms)', Math.round(g.ms + fl.ms));
-      const rv = riverAt(STAGES.seed, x, z); if (rv) { f('hydrology', 'river Strahler order', rv.order); f('hydrology', 'river basin (km2)', rv.areaKm2); f('hydrology', 'river width (m)', rv.half * 2); f('hydrology', 'river depth (m)', rv.depth); f('hydrology', 'river speed (m/s)', rv.speed); f('hydrology', 'distance to centreline (m)', rv.d); } }
+      const rv = riverAt(STAGES.seed, x, z); if (rv) { f('hydrology', 'river Strahler order', rv.order); f('hydrology', 'river basin (km2)', rv.areaKm2); f('hydrology', 'river width (m)', rv.half * 2); f('hydrology', 'river depth (m)', rv.depth); f('hydrology', 'river speed (m/s)', rv.speed); f('hydrology', 'distance to centreline (m)', rv.d); }
+      const so = soilAt(STAGES.seed, x, z); f('soil', 'material', so.label); f('soil', 'landscape (Gharari 2011)', so.landscape); f('soil', 'HAND (m)', so.hand); f('soil', 'slope (m/m)', so.slope); f('soil', 'TWI', so.twi); f('soil', 'flow distance to drainage (m)', so.dist); f('soil', 'site wetness', so.wet); }
     const h = f(T, 'stage1 elevation', toWorld(g, sampleGrid(g, x, z))) + f(T, 'depressions', surfaceDetail(x, z)) * .5, rv = riverAt(STAGES.seed, x, z); // stage 2c: rivers carve their channel
     return rv ? f(T, 'river carve', carve(h, rv)) : h; }
   const distance = Math.abs(x - riverCenter(z));
@@ -33,7 +35,8 @@ export function heightAt(x: number, z: number) {
   return land - layer('riverCarve', Math.exp(-(distance * distance) / 110), 5.8) + f(T, 'depressions', surfaceDetail(x, z));
 }
 /** Terrain band from the tuning thresholds (colour, water); thresholds are traced so the inspector can what-if them. */
-export function terrainBand(y: number) {
+export function terrainBand(y: number, x?: number, z?: number): 'water' | 'shore' | 'upland' | 'forest' | SoilKind {
+  if (STAGES.on && x !== undefined && z !== undefined) { if (y < LEVEL.waterSurface || lakeAt(STAGES.seed, x, z)) return 'water'; return f('biome', 'stage-3 material', soilAt(STAGES.seed, x, z).kind); } // staged: bands are materials, not heights
   return y < f('biome', 'level.waterSurface', LEVEL.waterSurface) ? 'water' : y < f('biome', 'level.shore', LEVEL.shore) ? 'shore'
     : y > f('biome', 'level.upland', LEVEL.upland) ? 'upland' : 'forest';
 }

@@ -44,4 +44,4 @@ export function twi(f: Flow, c: number) {
   for (let d = 0; d < 8; d += 2) { const m = ((y + DY[d] + n) % n) * n + (x + DX[d] + n) % n; s = Math.max(s, Math.abs(f.filled[c] - f.filled[m]) / f.cell); }
   return Math.log(f.acc[c] * f.cell / Math.max(1e-3, s));
 }
-export const cellAt = (f: { n: number; cell: number }, x: number, z: number) => { const n = f.n, i = ((Math.floor(x / f.cell) % n) + n) % n, j = ((Math.floor(z / f.cell) % n) + n) % n; return j * n + i; };
+export const cellAt = (f: { n: number; cell: number }, x: number, z: number) => { const n = f.n, i = ((Math.round(x / f.cell) % n) + n) % n, j = ((Math.round(z / f.cell) % n) + n) % n; return j * n + i; };

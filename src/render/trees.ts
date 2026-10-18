@@ -13,6 +13,8 @@ import { TREE_BY_ID, TREE_SPECIES, chapmanRichards, phenology, standTable } from
 import { hash, sample, type Dist } from '../proc/rng';
 import { GLSL_NOISE } from '../proc/glsl';
 import { LEVEL } from '../core/tuning';
+import { STAGES } from '../core/stages/elevation';
+import { soilAt } from '../core/stages/soils';
 import { WEATHER } from '../core/weather';
 import { f, choose, tracing, withTrace, type Trace } from '../proc/trace';
 import { massOf, frustum, cone } from '../core/mass';
@@ -27,7 +29,7 @@ export type TreeSpecies = string; // an id in core/treeSpecies TREE_SPECIES
 const VARIANTS = 6;
 /** Species from the Kenora stand mix weighted by site wetness (low ground → black spruce/balsam poplar, dry sand → jack pine). */
 export function treeSpecies(seed: number, x?: number, z?: number): TreeSpecies {
-  const wet = x === undefined || z === undefined ? .5 : Math.min(1, Math.max(0, (LEVEL.shore + 2.5 - heightAt(x, z)) / 4));
+  const wet = x === undefined || z === undefined ? .5 : STAGES.on ? f('stand', 'site wetness (stage-3 soil)', soilAt(STAGES.seed, x, z).wet) : Math.min(1, Math.max(0, (LEVEL.shore + 2.5 - heightAt(x, z)) / 4));
   const age = x === undefined || z === undefined || !RENDER.standMap ? undefined : f('stand', 'stand age (yr since fire)', fireAt(x, z).age);
   return choose('tree', 'species', random(seed ^ 0x9e3779b9)(), standTable(wet, age));
 }

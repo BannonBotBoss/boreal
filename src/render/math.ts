@@ -32,7 +32,9 @@ export function positionCamera(camera: THREE.PerspectiveCamera, x: number, z: nu
     camera.position.y - Math.sin(angle), camera.position.z - Math.cos(yaw + lookYaw) * Math.cos(angle));
   camera.updateMatrixWorld(true);
 }
-const BAND_COLOR = { water: 0x929771, shore: 0x929771, upland: 0x8d9582, forest: 0x788e60 };
+/** Staged materials: bedrock = Sentinel-2 TCI mean over ESA WorldCover 'bare' in the Kenora reference window (#928575); peat/clay/till/
+ *  sand are game tints in the same family (the canopy hides most mineral ground in the imagery) [verify]. */
+const BAND_COLOR = { water: 0x929771, shore: 0x929771, upland: 0x8d9582, forest: 0x788e60, bedrock: 0x928575, till: 0x788e60, sand: 0xa59a6e, clay: 0x7f8a62, peat: 0x5a6340 };
 /** Terrain mesh for a chunk, as a sliced job (yields every few rows) so building is spread over frames (core/interest).
  * `segments`/`groundColour` come from the interest tier: mid-tier chunks are coarse and skip the layered-ground colour. */
 export function* terrainJob(cx: number, cz: number, segments = RENDER.terrainSegments, groundColour = true) {
@@ -44,8 +46,8 @@ export function* terrainJob(cx: number, cz: number, segments = RENDER.terrainSeg
     const z = positions.getZ(i) + (cz + .5) * CHUNK_SIZE;
     const y = heightAt(x, z);
     positions.setXYZ(i, x, y, z);
-    color.set(BAND_COLOR[terrainBand(y)]);
-    if (groundColour && y > LEVEL.waterSurface) { const c = column(x, z), s = surfaceColor(c); color.lerp(tmp.setRGB(s[0], s[1], s[2]), .55); // top-layer composition
+    const band = terrainBand(y, x, z); color.set(BAND_COLOR[band]);
+    if (groundColour && y > LEVEL.waterSurface) { const c = column(x, z), s = surfaceColor(c); color.lerp(tmp.setRGB(s[0], s[1], s[2]), band === 'bedrock' ? .15 : .55); // top-layer composition (outcrop rock stays mostly bare)
       const top = c.layers[0]; snow[i] = top?.id === 'snow' ? Math.min(1, top.thickness / .05) : 0; wet[i] = c.layers.find(l => l.moisture !== undefined && l.id !== 'snow')?.moisture ?? 0; }
     colors.set([color.r, color.g, color.b], i * 3);
     if (i % ((segments + 1) * 2) === 0) yield;

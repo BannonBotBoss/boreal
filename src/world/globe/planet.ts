@@ -160,7 +160,7 @@ export function createPlanet(seed: number, local?: LocalHeight) {
  *  Inside the home region the colour follows the game's own data (stage-3 soil + wetness via surfaceAt); outside it
  *  follows the far-field hills (ridges ? outcrop, hollows ? wetland) and a fine per-point mottle. */
 export const GLOBE_COLOURS = {
-  deep: [.03, .12, .25], shallow: [.07, .3, .45], // water: shaded per pixel by depth (tile.ts globeMaterial)
+  deep: [.012, .045, .11], shallow: [.035, .15, .24], // dark like Blue Marble oceans and Shield lakes from the air [reference calibration] // water: shaded per pixel by depth (tile.ts globeMaterial)
   spruce: [.105, .17, .085], mixed: [.19, .27, .12], bog: [.30, .29, .17], rock: [.33, .31, .29], sand: [.62, .57, .42],
   temperate: [.24, .36, .16], tundra: [.45, .43, .33], snow: [.92, .93, .95], beach: [.70, .65, .48],
 } as const;

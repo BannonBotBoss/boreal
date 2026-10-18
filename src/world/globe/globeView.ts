@@ -27,7 +27,7 @@ import { globeLod } from './lod';
 
 interface Tile { mesh: THREE.Mesh; used: number }
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
-const STATS = { build: [] as number[], work: [] as number[], interval: [] as number[] };
+const STATS = { warm: [] as number[], build: [] as number[], work: [] as number[], interval: [] as number[] };
 const pct = (a: number[], p: number) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
 const avg = (a: number[]) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 const keep = (a: number[], n: number) => { if (a.length > n) a.splice(0, a.length - n); };
@@ -100,8 +100,9 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   try {
     for (let k = 0; k < nWorkers; k++) {
       const w = new Worker(new URL('./tileWorker.ts', import.meta.url), { type: 'module' }), slot = { w, busy: '' };
-      w.onmessage = (e: MessageEvent<{ id: number; tile: TileData }>) => { const n = ids.get(e.data.id)!; ids.delete(e.data.id); slot.busy = ''; accept(n, e.data.tile); };
+      w.onmessage = (e: MessageEvent<{ id: number; tile: TileData; warm?: number }>) => { if (e.data.warm !== undefined) { STATS.warm.push(e.data.warm); return; } const n = ids.get(e.data.id)!; ids.delete(e.data.id); slot.busy = ''; accept(n, e.data.tile); };
       w.onerror = e => { console.warn('globe tile worker failed; using main-thread jobs', e.message); pool.length = 0; inflight.clear(); ids.clear(); };
+      w.postMessage({ warm: true, id: 0, seed, staged: STAGES.on, stagesSeed: STAGES.seed, face: 0, level: 0, i: 0, j: 0, segments: 0 } satisfies TileRequest);
       pool.push(slot);
     }
   } catch (e) { console.warn('globe: no workers, main-thread jobs', e); pool.length = 0; }
@@ -164,7 +165,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     if (bench) { const prev = benchT; benchT += dt;
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }
       targetAlt = alt = benchFrom * (benchTo / benchFrom) ** clamp(benchT / benchSec, 0, 1);
-      if (prev < benchSec + 8 && benchT >= benchSec + 8) console.log('BENCH ' + JSON.stringify({ mode: mode(), tiles: STATS.build.length, buildAvg: +avg(STATS.build).toFixed(2), buildP95: +pct(STATS.build, .95).toFixed(2), buildMax: +Math.max(0, ...STATS.build).toFixed(2),
+      if (prev < benchSec + 8 && benchT >= benchSec + 8) console.log('BENCH ' + JSON.stringify({ mode: mode(), warm: STATS.warm.map(Math.round), tiles: STATS.build.length, buildAvg: +avg(STATS.build).toFixed(2), buildP95: +pct(STATS.build, .95).toFixed(2), buildMax: +Math.max(0, ...STATS.build).toFixed(2),
         frames: STATS.work.length, workAvg: +avg(STATS.work).toFixed(2), workP99: +pct(STATS.work, .99).toFixed(2), workMax: +Math.max(0, ...STATS.work).toFixed(2), intervalP99: +pct(STATS.interval, .99).toFixed(1), intervalMax: +Math.max(0, ...STATS.interval).toFixed(1), cached: tiles.size, orbit: benchOrbit, ground: { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles } })); }
     else alt = Math.exp(Math.log(alt) + (Math.log(targetAlt) - Math.log(alt)) * (1 - Math.exp(-dt * 7)));
     controls.rotateSpeed = clamp(alt / R * .6, 2e-6, 1);
@@ -190,8 +191,8 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       const old = [...tiles.entries()].filter(([k, t]) => t.used < frame - 2 && k.split('/')[1] !== '0').sort((a, b) => a[1].used - b[1].used);
       for (const [key, t] of old.slice(0, tiles.size - lod.cache)) { t.mesh.geometry.dispose(); tiles.delete(key); }
     }
-    renderer.render(scene, camera);
-    const work = performance.now() - t0; STATS.work.push(work); if (prevT) STATS.interval.push(t0 - prevT);
+    const tR = performance.now(); renderer.render(scene, camera);
+    const work = performance.now() - t0; if (bench && work > 40) console.log(`SPIKE ${work.toFixed(0)}ms alt ${alt.toFixed(0)} pre-render ${(tR - t0).toFixed(0)} render ${(performance.now() - tR).toFixed(0)} calls ${renderer.info.render.calls} accepted ${built}`); STATS.work.push(work); if (prevT) STATS.interval.push(t0 - prevT);
     if (!bench) { keep(STATS.work, 600); keep(STATS.interval, 600); keep(STATS.build, 2000); }
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;
     if (governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); }

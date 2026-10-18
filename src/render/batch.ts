@@ -84,7 +84,7 @@ export function createChunkBatch() {
         for (const it of items) { let has = false; for (const l of it.levels) { const g = l.get(mat); if (g) { v += g.getAttribute('position').count; ix += g.index!.count; has = true; } } if (has) n++; }
         if (!n) continue;
         const bm = new THREE.BatchedMesh(n, Math.max(1, v), Math.max(1, ix), mat), list: { item: number; inst: number; geo: number[] }[] = [];
-        bm.castShadow = bm.receiveShadow = true; bm.userData.keys = [] as string[]; bm.userData.shadowSet = true;
+        bm.receiveShadow = true; bm.castShadow = mat !== PROP_MATERIAL; // small props (plants, bushes, logs: PROP_MATERIAL) cast no shadow: one shadow draw per chunk per cascade saved; trees and rocks still cast bm.userData.keys = [] as string[]; bm.userData.shadowSet = true;
         for (let i = 0; i < items.length; i++) { const it = items[i];
           const geo = it.levels.map(l => { const g = l.get(mat); return g ? bm.addGeometry(g) : -1; });
           const first = geo.find(x => x >= 0); if (first === undefined) continue;

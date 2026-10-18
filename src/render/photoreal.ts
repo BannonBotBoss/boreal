@@ -97,7 +97,12 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     csm = new CSM({ camera, parent: scene, cascades: tier.shadows, maxFar: 110, // ≈ the LOD-1 range: distant LOD-2 trees cast no shadow (outside the cascades) shadowMapSize: tier.resScale >= 1 ? 2048 : 1024, // ≤ 2048 (Quest budget)
       lightDirection: new THREE.Vector3(0, -1, 0), lightIntensity: 0, mode: 'practical', shadowBias: -.0004 });
     csm.fade = true; for (const l of csm.lights) l.layers.enable(1);
+    for (let i = 1; i < csm.lights.length; i++) { csm.lights[i].shadow.autoUpdate = false; csm.lights[i].shadow.needsUpdate = true; } // far cascades: refreshed every FAR_CASCADE_EVERY frames (before())
   }
+  /** The far cascade's shadow map is re-rendered every Nth frame (staggered per cascade); the near one every frame. The sun moves
+   *  ~0.004 deg/frame and the far cascade's texels are ~5 cm+, so a 3-frame-old far map is invisible, and its casters (most of the
+   *  ~400 shadow draws at Ultra) cost a third. three uses a light's shadow.matrix from its last render, so lookups stay consistent. */
+  const FAR_CASCADE_EVERY = 3; let shadowFrame = 0;
   function setupMaterials() {
     if (!csm) return;
     scene.traverse(o => {
@@ -302,7 +307,9 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
         csm.lightDirection.copy(sunDir).negate();
         for (const l of csm.lights) { l.color.copy(sl.color); l.intensity = sl.intensity; }
         sl.intensity = 0; // CSM's lights replace the sky's sun light
-        camera.updateMatrixWorld(); csm.update(); COST.csmMs = performance.now() - t0;
+        camera.updateMatrixWorld(); csm.update(); shadowFrame++;
+        for (let i = 1; i < csm.lights.length; i++) if ((shadowFrame + i) % FAR_CASCADE_EVERY === 0) csm.lights[i].shadow.needsUpdate = true;
+        COST.csmMs = performance.now() - t0;
       }
     },
     /** After rendering: GPU query + governor. `workMs` = CPU time of this frame's update+render. */

@@ -352,7 +352,10 @@ if (new URLSearchParams(location.search).has('bench')) void (async () => {
   const wait = (ms: number) => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r));
   window.addEventListener('error', e => console.log(`BENCH error ${e.message} ${e.error?.stack}`)); window.addEventListener('unhandledrejection', e => console.log(`BENCH reject ${e.reason?.stack ?? e.reason}`));
   const M = MANUAL as Record<string, number>;
-  const sample = async (label: string) => { await settle(); await wait(3000); const ws: number[] = [], gs: number[] = [], cpu: number[] = [], drw: number[] = [], spikes: Record<string, number> = {}, t = performance.now(); let last = performance.now();
+  // background compiles (photoreal warm + route compiles, 2-30 ms links/first uses) land in the sample otherwise (the 28 ms
+  // "Medium" of the 2026-10-18 bench): wait for 2 s with none queued (two route rescans), at most 60 s
+  const compiled = async () => { const t = performance.now(); let quiet = performance.now(); while (performance.now() - t < 60000 && performance.now() - quiet < 2000) { await raf(); if (view.photoreal.compiling) quiet = performance.now(); } };
+  const sample = async (label: string) => { await settle(); await wait(3000); await compiled(); const ws: number[] = [], gs: number[] = [], cpu: number[] = [], drw: number[] = [], spikes: Record<string, number> = {}, t = performance.now(); let last = performance.now();
     while (performance.now() - t < 4000) { await raf(); const n = performance.now(); ws.push(n - last); last = n; if (GOVERNOR.gpuMs !== undefined) gs.push(GOVERNOR.gpuMs); cpu.push(view.photoreal.INFO.workMs); drw.push(view.photoreal.INFO.drawMs);
       for (const [k, v] of Object.entries(view.photoreal.COST)) spikes[k] = Math.max(spikes[k] ?? 0, v); }
     const avg = (a: number[]) => a.length ? a.reduce((p, c) => p + c, 0) / a.length : NaN, p95 = [...ws].sort((x, y) => x - y)[Math.floor(ws.length * .95)];

@@ -286,6 +286,8 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
   let lastFrame = performance.now(), appliedKey = '';
   return {
     COST, INFO, renderer, get tier() { return tier; }, get gpuMs() { return gpuMs; },
+    /** Background compiles still queued or linking (pending world variant + both post routes): 0 = none (the ?bench waits for it). */
+    get compiling() { return (warm ? warm.queue.length + warm.busy.length : 0) + routeQ.length + routeBusy.length; },
     /** Before rendering: sun/IBL/shadows follow the sky; returns the render scale to use. */
     before(sunDir: THREE.Vector3, time: number) {
       const key = JSON.stringify(applied()); if (key !== appliedKey) { appliedKey = key; applyTier(); }

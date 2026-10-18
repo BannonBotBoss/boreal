@@ -407,3 +407,12 @@ Still fork-only (`src/animals/locomotion/fork/`, used under `?loco=1` and in the
 - Triangles 0.45M → 2.1M: **not ec92a94**. The old bisect listed commits out of topological order. The jump is grass (e8e95dc). A/B at HEAD, Ultra, unstaged: 3.06M tris with grass, 0.53M with GRASS_FX.off. Grass owner: blade count × segments is the lever.
 - main.ts: `inspector.update(); handles.update();` moved out of the comment (only that hunk was committed).
 - audio/borealSound: `onPlayerTouchdown` (lazy import) → `touchdown(t)`: paw-walk for walk/trot/pace, paw-run for canter/gallop/bound/pronk, level = wolfSteps × (.35 + .65 strength). Landings keep the one thud. The half-stride timer is skipped while touchdowns arrive.
+
+## 2026-10-18 06:20 PT - Grok Bot (Globe Builder): edges, sunset light, haze, tiered atmosphere, reference bands
+- Commits: 624c9e1 (direct sun reddened only, so ground facing a low sun is lit by a warm sky; outcrops darker/smaller), ca94df4 (coarse/fine **stitching**: shared index buffers collapse odd edge vertices where the drawn same-face neighbour is one level coarser; vertex data unchanged; skirts shorter), b34fdc3 (atmosphere sample counts are **uniforms**, so governor tier changes never recompile; haze in the terrain's light units; sky shell discards 300 m under sea level, so the dashed black horizon line is gone; darker oceans/lakes).
+- Still open: cube-face edges get skirts only (no stitching across faces). The normal step between coarse and fine tiles is reduced but not zero.
+- Reference bands (photos in the bot's /workspace/globe-refs with SOURCES.md, comparison only, never shipped):
+  orbit (Blue Marble): ocean deep navy, land dark green/brown, clouds. Ours is still too pale/yellow on land, has a wide cyan shelf and no clouds.
+  ~400-900 km (ISS052-E-12924): muted blue-grey-green under heavy haze, dense speckle of thousands of small dark lakes. Ours has no small-lake speckle outside the home region.
+  300 m (Kenora aerial): much darker forest, many islands, dark water, blue haze on distant shores.
+- Next (procedural, from the generator): a far-field kettle-lake speckle from planet noise, darker forest albedo, a procedural cloud layer, and forest density/season when flora and the world clock expose them (requests above).

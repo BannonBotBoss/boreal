@@ -23,7 +23,11 @@ test('density falloff: full near, monotone, zero at the radius', () => {
 test('tiles are deterministic, keep-sorted, sit on the terrain and avoid water', () => {
   const a = finish(bladesJob(1, 2)), b = finish(bladesJob(1, 2));
   assert.deepEqual(a.pos, b.pos); assert.deepEqual(a.blade, b.blade); assert.ok(a.count > 0);
-  for (let i = 1; i < a.count; i++) assert.ok(a.blade[i * 4 + 3] >= a.blade[(i - 1) * 4 + 3], 'sorted by keep hash');
+  assert.equal(a.sub.length, GRASS.sub ** 2 + 1); assert.equal(a.sub[0], 0); assert.equal(a.sub[GRASS.sub ** 2], a.count);
+  const T = GRASS.tile, C = T / GRASS.sub, x0 = 1 * T, z0 = 2 * T;
+  for (let c = 0; c < GRASS.sub ** 2; c++) for (let i = a.sub[c]; i < a.sub[c + 1]; i++) {
+    if (i > a.sub[c]) assert.ok(a.blade[i * 4 + 3] >= a.blade[(i - 1) * 4 + 3], 'sorted by keep hash inside a cell');
+    const x = a.pos[i * 3], z = a.pos[i * 3 + 2]; assert.ok(Math.abs(x - (x0 + (c % GRASS.sub + .5) * C)) <= C / 2 + .1 && Math.abs(z - (z0 + (Math.floor(c / GRASS.sub) + .5) * C)) <= C / 2 + .1, 'blade in its cell'); }
   for (let i = 0; i < a.count; i += 97) { const x = a.pos[i * 3], y = a.pos[i * 3 + 1], z = a.pos[i * 3 + 2];
     assert.ok(Math.abs(y + .01 - heightAt(x, z)) < .08, 'root on the terrain mesh'); assert.ok(y > LEVEL.waterSurface); }
 });

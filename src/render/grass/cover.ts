@@ -70,13 +70,18 @@ export function setCoverSource(fn?: (x: number, z: number) => Cover) { source = 
 export const coverAt = (x: number, z: number) => source(x, z);
 
 /** Grass tuning; cost scales with LADDER `foliage` (core/quality): density × foliage, radius × √foliage. [game calibration] */
-export const GRASS = { tile: CHUNK_SIZE / 4, maxDensity: 120 /* blades/m² at Ultra */, full: 9 /* m at full density */, radius: 48, lodDist: 14, segHigh: 6, segLow: 2 };
+export const GRASS = { tile: CHUNK_SIZE / 4, sub: 4 /* cells per tile side: unit of distance thinning, LOD and view culling */, maxDensity: 120 /* blades/m² at Ultra */, full: 9 /* m at full density */, radius: 48,
+  lodNear: 6, lodDist: 14, segHigh: 6, segMid: 3, segLow: 1 /* far blades = one quad (card) */,
+  // ground albedo the far field fades to (linear): staged terrain's Sentinel-2 till #394838 + 20 % STAGED_TOP tint (render/math terrainJob, 24c6a0c)
+  ground: [.058, .08, .04] as [number, number, number] };
 /** Kept share of blades at distance d (density falloff): 1 inside `full`, then (full/d)² (constant blades per screen area), 0 at `radius`. */
 export function keepAt(d: number, radius: number, full = GRASS.full) { return (d <= full ? 1 : (full / d) ** 2) * (1 - smoothstep(radius * .8, radius, d)); }
 
-export interface Blades { count: number; pos: Float32Array; blade: Float32Array; kind: Float32Array; data: Float32Array /* interleaved ×8, as render/grass packs it */; minY: number; maxY: number }
-/** One tile's blades as a sliced job (yields per row). Instances are sorted by their keep hash, so drawing the first
- * `keep × count` instances thins the tile uniformly (distance / quality) without rebuilding. */
+export interface Blades { count: number; pos: Float32Array; blade: Float32Array; kind: Float32Array; data: Float32Array /* interleaved ×8, as render/grass packs it */; minY: number; maxY: number;
+  sub: Uint32Array /* GRASS.sub² cells (row-major in z): blades of cell c are [sub[c], sub[c+1]), keep-sorted inside the cell */ }
+/** One tile's blades as a sliced job (yields per row). Blades are grouped by cell (GRASS.sub² per tile) and sorted by their keep
+ * hash inside each cell, so drawing the first `keep × count` of a cell thins it uniformly (distance / quality) without rebuilding,
+ * and the renderer can thin, LOD and view-cull per 2.5 m cell instead of per 10 m tile. */
 export function* bladesJob(tx: number, tz: number, seed = WORLD_SEED): Generator<unknown, Blades> {
   const T = GRASS.tile, x0 = tx * T, z0 = tz * T, step = CHUNK_SIZE / RENDER.terrainSegments, m = Math.round(T / step);
   yield* prepareArea(x0 - 1, z0 - 1, x0 + T + 1, z0 + T + 1); // canopy + footprint caches, sliced
@@ -89,7 +94,7 @@ export function* bladesJob(tx: number, tz: number, seed = WORLD_SEED): Generator
     const a = H[j * (m + 1) + i], d = H[j * (m + 1) + i + 1], b = H[(j + 1) * (m + 1) + i], c = H[(j + 1) * (m + 1) + i + 1];
     return u + v <= 1 ? a + (d - a) * u + (b - a) * v : c + (b - c) * (1 - u) + (d - c) * (1 - v); };
   const feet = footprintsIn(x0, z0, x0 + T, z0 + T); // rocks, logs, trunks, props: no blade grows through them
-  const r = random(hash(`grass:${seed}:${tx}:${tz}`)), sp = 1 / Math.sqrt(GRASS.maxDensity), g = Math.round(T / sp), rows: number[][] = [];
+  const r = random(hash(`grass:${seed}:${tx}:${tz}`)), sp = 1 / Math.sqrt(GRASS.maxDensity), g = Math.round(T / sp), rows: number[][] = [], S = GRASS.sub, sc = T / S;
   for (let j = 0; j < g; j++) {
     for (let i = 0; i < g; i++) {
       const x = x0 + (i + r()) * sp, z = z0 + (j + r()) * sp, keep = r(); // jittered grid (GoT / Quick_Grass)
@@ -98,13 +103,15 @@ export function* bladesJob(tx: number, tz: number, seed = WORLD_SEED): Generator
       if (q.some(c => c.density === 0) || r() >= q.reduce((s, c, k) => s + c.density * wq[k], 0)) continue; // hard edge at water / bare rock
       const w = COVER_SPECIES.map((_, s) => q.reduce((a, c, k) => a + c.weights[s] * wq[k], 0)), tot = w.reduce((a, b) => a + b, 0);
       let pick = r() * tot, k = 0; while (k < w.length - 1 && (pick -= w[k]) > 0) k++;
-      const sp_ = COVER_SPECIES[k], row = [x, ground(x, z) - .01, z, r() * Math.PI * 2, sample(r, sp_.length), sp_.lean[0] + r() * (sp_.lean[1] - sp_.lean[0]), keep, k];
+      const sp_ = COVER_SPECIES[k], row = [x, ground(x, z) - .01, z, r() * Math.PI * 2, sample(r, sp_.length), sp_.lean[0] + r() * (sp_.lean[1] - sp_.lean[0]), keep, k,
+        Math.min(S - 1, Math.floor((x - x0) / sc)) + S * Math.min(S - 1, Math.floor((z - z0) / sc))]; // [8] = cell
       if (!feet.length || !covered(feet, x, z, .02)) rows.push(row); // tested after every draw, so the rng stream (the field elsewhere) is unchanged
     }
     yield;
   }
-  rows.sort((a, b) => a[6] - b[6]); yield;
+  rows.sort((a, b) => a[8] - b[8] || a[6] - b[6]); yield;
+  const sub = new Uint32Array(S * S + 1); for (const b of rows) sub[b[8] + 1]++; for (let c = 0; c < S * S; c++) sub[c + 1] += sub[c];
   const n = rows.length, pos = new Float32Array(n * 3), blade = new Float32Array(n * 4), kind = new Float32Array(n), data = new Float32Array(n * 8); let minY = Infinity, maxY = -Infinity;
   for (let i = 0; i < n; i++) { const b = rows[i]; for (let k = 0; k < 8; k++) data[i * 8 + k] = b[k]; for (let k = 0; k < 3; k++) pos[i * 3 + k] = b[k]; for (let k = 0; k < 4; k++) blade[i * 4 + k] = b[3 + k]; kind[i] = b[7]; if (b[1] < minY) minY = b[1]; if (b[1] + b[4] > maxY) maxY = b[1] + b[4]; } // no per-row allocations (perf audit)
-  return { count: n, pos, blade, kind, data, minY: n ? minY : 0, maxY: n ? maxY : 0 };
+  return { count: n, pos, blade, kind, data, sub, minY: n ? minY : 0, maxY: n ? maxY : 0 };
 }

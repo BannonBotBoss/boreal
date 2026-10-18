@@ -125,14 +125,22 @@ export function* plantsJob(tx: number, tz: number): Generator<unknown, Plant[]> 
   return out;
 }
 
-/** Geometry list for the shared BatchedMesh: species × variant × LOD, plus carpet clumps. */
+/** The shared BatchedMesh, built as a sliced job: species × variant × LOD geometries plus carpet clumps (one per slice), then
+ * the batch allocated and filled 8 geometries per slice, so its finishing step only adds it to the scene (perf audit: the
+ * finishing step had to stay under the 4 ms job budget; it was ~26 ms with the batch fill inside it). */
 const geoKey = (s: number, v: number, d: number, clump?: boolean) => `${s}:${v}:${d}:${clump ? 1 : 0}`;
-function* geometriesJob(): Generator<unknown, Map<string, THREE.BufferGeometry>> {
-  const out = new Map<string, THREE.BufferGeometry>();
+const BATCH_CAP = 8192;
+function* batchJob(): Generator<unknown, { bm: THREE.BatchedMesh; ids: Map<string, number> }> {
+  const geos = new Map<string, THREE.BufferGeometry>();
   for (let s = 0; s < FLORA.length; s++) for (let v = 0; v < VARIANTS; v++) for (const d of [0, 1]) {
-    out.set(geoKey(s, v, d), buildPlant(FLORA[s], v, d)); yield;
-    if (FLORA[s].carpet) { out.set(geoKey(s, v, d, true), buildClump(FLORA[s], v, d)); yield; } }
-  return out;
+    geos.set(geoKey(s, v, d), buildPlant(FLORA[s], v, d)); yield;
+    if (FLORA[s].carpet) { geos.set(geoKey(s, v, d, true), buildClump(FLORA[s], v, d)); yield; } }
+  let v = 0, ix = 0; for (const g of geos.values()) { v += g.getAttribute('position').count; ix += g.index!.count; }
+  const bm = new THREE.BatchedMesh(BATCH_CAP, v, ix, floraMaterial()); bm.name = 'flora-batch';
+  Object.assign(bm, { perObjectFrustumCulled: false, sortObjects: false, frustumCulled: false, castShadow: false, receiveShadow: true }); bm.userData.shadowSet = true; yield;
+  const ids = new Map<string, number>(); let n = 0;
+  for (const [k, g] of geos) { ids.set(k, bm.addGeometry(g)); g.dispose(); if (++n % 8 === 0) yield; }
+  return { bm, ids };
 }
 
 export function createFlora(scene: THREE.Scene) {
@@ -140,14 +148,12 @@ export function createFlora(scene: THREE.Scene) {
   let bm: THREE.BatchedMesh | undefined, cap = 0; const ids = new Map<string, number>(), waiting = new Map<string, Plant[]>(), free: number[] = [];
   type Slot = { inst: number; geo: [number, number]; p: Plant; lod: number; vis: boolean };
   const tiles = new Map<string, { plants: Plant[]; slots: Slot[] }>(), jobs = new Set<string>();
-  enqueue('flora:geometry', -1, geometriesJob(), (geos: Map<string, THREE.BufferGeometry>) => {
-    let v = 0, ix = 0; for (const g of geos.values()) { v += g.getAttribute('position').count; ix += g.index!.count; }
-    cap = 8192; bm = new THREE.BatchedMesh(cap, v, ix, floraMaterial()); bm.name = 'flora-batch';
-    Object.assign(bm, { perObjectFrustumCulled: false, sortObjects: false, frustumCulled: false, castShadow: false, receiveShadow: true }); bm.userData.shadowSet = true;
-    for (const [k, g] of geos) { ids.set(k, bm.addGeometry(g)); g.dispose(); }
-    group.add(bm); FLORA_INFO.geometries = geos.size;
-    for (const [k, pl] of waiting) build(k, pl); waiting.clear();
+  enqueue('flora:geometry', -1, batchJob(), (r: { bm: THREE.BatchedMesh; ids: Map<string, number> }) => {
+    bm = r.bm; cap = BATCH_CAP; for (const [k, i] of r.ids) ids.set(k, i); group.add(bm); FLORA_INFO.geometries = r.ids.size;
+    for (const [k, pl] of waiting) queueBuild(k, pl); // tiles placed before the batch existed: one budgeted finishing step each
   });
+  /** Instances of a tile placed before the batch existed, added as their own job (stays in `waiting` until built or dropped). */
+  const queueBuild = (k: string, pl: Plant[]) => enqueue(`flora:build-${k}`, 0, (function* () { return pl; })(), (p: Plant[]) => { if (waiting.get(k) === p) { waiting.delete(k); build(k, p); } });
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), scl = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
   function build(k: string, plants: Plant[]) {
     const t0 = now(), b = bm!;

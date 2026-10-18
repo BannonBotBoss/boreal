@@ -14,6 +14,9 @@
  *    colour follows the same phenology uniform.
  *  - Tiles (GRASS.tile, aligned to chunks) are built as interest jobs; distance thinning by instanceCount on keep-sorted
  *    instances (keepAt) with width compensation, scaled by the LADDER `foliage` knob. Upstream used fixed 10 m patches.
+ *  - Triangle budget (perf audit: ~2.5 M grass triangles at Ultra): one face drawn DoubleSide instead of upstream's front + back
+ *    faces; three blade LODs (6 / 3 / 1 segments, the far one a single quad card); thinning, LOD and view-cone culling per
+ *    2.5 m cell (GRASS.sub) instead of per 10 m tile, so a tile touching the camera no longer draws all its blades at full detail.
  */
 import * as THREE from 'three';
 import { GLSL_NOISE } from '../../proc/glsl';
@@ -24,18 +27,18 @@ import { RENDER } from '../../core/renderSettings';
 import { COVER_SPECIES, GRASS, bladesJob, keepAt, type Blades } from './cover';
 
 export const GRASS_FX = { off: false }; // bench hook (cost measurement), like TREE_FX
-export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, sliceMaxMs: 0, packMaxMs: 0, packs: 0 };
+export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, culled: 0, tris: 0, lods: [0, 0, 0], sliceMaxMs: 0, packMaxMs: 0, packs: 0 };
 (globalThis as { borealGrass?: unknown }).borealGrass = { info: GRASS_INFO, fx: GRASS_FX }; // dev/bench handle (survives Vite HMR module copies)
 const K = COVER_SPECIES.length;
 const U = {
   uGrass: { value: new THREE.Vector4(GRASS.lodDist, GRASS.full, GRASS.radius, 1) }, // lodDist, full, radius, foliage
-  uPlayer: { value: new THREE.Vector3() }, uCamFwd: { value: new THREE.Vector3(0, 0, -1) }, uPx: { value: .001 }, // pixel footprint per metre of distance (2·tan(fov/2) / screen height)
+  uGround: { value: new THREE.Vector3(...GRASS.ground) }, uPlayer: { value: new THREE.Vector3() }, uCamFwd: { value: new THREE.Vector3(0, 0, -1) }, uPx: { value: .001 }, // pixel footprint per metre of distance (2·tan(fov/2) / screen height)
   uShape: { value: COVER_SPECIES.map(s => new THREE.Vector4(s.width, s.profile, s.stem, s.stiff)) },
   uBase: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.base)) }, uTip: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.tip)) }, uFall: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.fall)) },
 };
 const VERT_HEAD = `#define GRASS_K ${K}
 attribute float vertIndex; attribute vec4 aBlade; attribute float aKind;
-uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer, uCamFwd; uniform float uPx;
+uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer, uCamFwd, uGround; uniform float uPx;
 uniform vec4 uShape[GRASS_K]; uniform vec3 uBase[GRASS_K]; uniform vec3 uTip[GRASS_K]; uniform vec3 uFall[GRASS_K];
 varying vec3 vGrassColour;
 ${GLSL_NOISE}
@@ -64,7 +67,7 @@ const VERT_BODY = `
              : sh.y < 1.5 ? 1.0 - heightPercent * 0.9
              : GRASS_SEGMENTS < 3.0 ? 0.6 * (1.0 - heightPercent * 0.8)
              : heightPercent < sh.z ? 0.15 : pow(max(sin(3.14159 * (heightPercent - sh.z) / (1.0 - sh.z)), 0.0), 0.7);
-  float grassTotalHeight = aBlade.y * alive;
+  float grassTotalHeight = aBlade.y * alive * (1.0 - 0.6 * smoothstep(uGrass.z * 0.6, uGrass.z, dist)); // blades settle toward the radius (no rim where the field ends)
   float grassTotalWidth = max(sh.x, 1.5 * uPx * dist) * prof * alive * min(3.0, inversesqrt(max(keep, 0.05))); // ≥ 1.5 px wide (real widths alias away), thinned blades widen to keep the coverage
   float x = (xSide - 0.5) * grassTotalWidth, y = heightPercent * grassTotalHeight;
   // wind: shared field direction + upstream's noise gusts; strength from the shared drag amplitude (trees: (U/4)²)
@@ -92,14 +95,15 @@ const VERT_BODY = `
   vec3 tip = mix(uTip[k], uFall[k], fallT), base = mix(uBase[k], uFall[k] * 0.6, fallT * 0.5);
   float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
   vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.35, 1.0, easeInG(heightPercent, 2.0));
+  vGrassColour = mix(vGrassColour, uGround, smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist)); // toward the grass radius blades take the ground albedo (far normals are already up): no edge where the field ends
   vec3 grassPos = root + p;
-  float viewDotNormal = clamp(dot(face * vec3(0.0, 0.0, zSide), normalize(vec3(cameraPosition.x - root.x, 0.0, cameraPosition.z - root.z))), 0.0, 1.0);
+  float viewDotNormal = clamp(abs(dot(face * vec3(0.0, 0.0, 1.0), normalize(vec3(cameraPosition.x - root.x, 0.0, cameraPosition.z - root.z)))), 0.0, 1.0); // one face, seen from both sides
   float viewSpaceThickenFactor = easeOutG(1.0 - viewDotNormal, 4.0) * smoothstep(0.0, 0.2, viewDotNormal);
 `;
 const materials = new Map<number, THREE.MeshStandardMaterial>();
 function grassMaterial(segments: number) {
   let m = materials.get(segments); if (m) return m;
-  m = new THREE.MeshStandardMaterial({ roughness: .9, side: THREE.FrontSide }); m.userData.shared = true;
+  m = new THREE.MeshStandardMaterial({ roughness: .9, side: THREE.DoubleSide }); m.userData.shared = true; // one face (template): three flips the normal on the back
   (m as unknown as { defines: Record<string, string> }).defines = { GRASS_SEGMENTS: segments.toFixed(1), TRANSLUCENCY_MASK: '1.0' };
   m.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, U, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });
@@ -115,13 +119,14 @@ function grassMaterial(segments: number) {
   m.customProgramCacheKey = () => `boreal-grass-${segments}`;
   materials.set(segments, m); return m;
 }
-/** Blade template: vertex IDs + index for front and back faces (upstream #CreateGeometry_). */
+/** Blade template: vertex IDs + index for ONE face (upstream #CreateGeometry_ built front + back faces for FrontSide; drawn
+ * DoubleSide here, which halves triangles and vertex work; zSide in the shader is then always 1). */
 const templates = new Map<number, { id: THREE.BufferAttribute; index: THREE.BufferAttribute }>();
 function template(segments: number) {
   let t = templates.get(segments); if (t) return t;
   const V = (segments + 1) * 2, idx: number[] = [];
-  for (let i = 0; i < segments; i++) { const vi = i * 2, fi = V + vi; idx.push(vi, vi + 1, vi + 2, vi + 2, vi + 1, vi + 3, fi + 2, fi + 1, fi, fi + 3, fi + 1, fi + 2); }
-  t = { id: new THREE.BufferAttribute(Float32Array.from({ length: V * 2 }, (_, i) => i), 1), index: new THREE.BufferAttribute(new Uint16Array(idx), 1) };
+  for (let i = 0; i < segments; i++) { const vi = i * 2; idx.push(vi, vi + 1, vi + 2, vi + 2, vi + 1, vi + 3); }
+  t = { id: new THREE.BufferAttribute(Float32Array.from({ length: V }, (_, i) => i), 1), index: new THREE.BufferAttribute(new Uint16Array(idx), 1) };
   templates.set(segments, t); return t;
 }
 /** ONE instanced mesh per blade LOD for the whole field (perf audit: was 2 meshes per 10 m tile, ~92 objects): kept blades of
@@ -148,9 +153,9 @@ const quant = (k: number) => k >= 1 ? 1 : k <= .01 ? 0 : Math.SQRT2 ** Math.ceil
 /** The grass field around the camera: tiles within the radius, built by interest jobs, thinned with distance. */
 export function createGrass(scene: THREE.Scene) {
   const group = new THREE.Group(); group.name = 'grass'; scene.add(group);
-  const tiles = new Map<string, { tx: number; tz: number; b: Blades }>(), jobs = new Set<string>();
-  const high = fieldMesh(GRASS.segHigh), low = fieldMesh(GRASS.segLow); group.add(high.mesh, low.mesh);
-  let segs = RENDER.terrainSegments, sig = '', lastPack = 0, dirty = true;
+  const tiles = new Map<string, { tx: number; tz: number; b: Blades; id: number }>(), jobs = new Set<string>();
+  const SEG = [GRASS.segHigh, GRASS.segMid, GRASS.segLow], lods = SEG.map(fieldMesh); group.add(...lods.map(l => l.mesh));
+  const sigS: number[][] = [[], [], []], sigN: number[][] = [[], [], []]; let segs = RENDER.terrainSegments, lastPack = 0, dirty = true, ids = 0;
   function update(camera: THREE.Camera, player: THREE.Vector3, foliage: number, nearRadius: number) {
     const T = GRASS.tile, cx = camera.position.x, cz = camera.position.z, R = Math.min(GRASS.radius * Math.sqrt(foliage), nearRadius); // never beyond full-res terrain (interest near tier)
     group.visible = !GRASS_FX.off && foliage > 0;
@@ -160,14 +165,28 @@ export function createGrass(scene: THREE.Scene) {
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * T - cx, 0, cx - tx * T - T), Math.max(tz * T - cz, 0, cz - tz * T - T));
     const r = Math.ceil(R / T) + 1, ox = Math.floor(cx / T), oz = Math.floor(cz / T), want = new Set<string>();
     for (let a = ox - r; a <= ox + r; a++) for (let b = oz - r; b <= oz + r; b++) { const d = sq(a, b), key = `${a}:${b}`; if (d > R + T / 2) continue; want.add(key); // keep a half-tile margin (no flicker at the edge)
-      if (d <= R && !tiles.has(key) && !pending(`grass:${key}`)) { jobs.add(key); enqueue(`grass:${key}`, d + 5, timedGrass(bladesJob(a, b)), (bl: Blades) => { jobs.delete(key); tiles.set(key, { tx: a, tz: b, b: bl }); dirty = true; }); } }
+      if (d <= R && !tiles.has(key) && !pending(`grass:${key}`)) { jobs.add(key); enqueue(`grass:${key}`, d + 5, timedGrass(bladesJob(a, b)), (bl: Blades) => { jobs.delete(key); tiles.set(key, { tx: a, tz: b, b: bl, id: ids++ }); dirty = true; }); } }
     for (const key of [...tiles.keys()]) if (!want.has(key)) { tiles.delete(key); dirty = true; }
     for (const key of [...jobs]) if (!want.has(key)) { cancel(`grass:${key}`); jobs.delete(key); }
-    let blades = 0, drawn = 0, s = ''; const hp: Float32Array[] = [], lp: Float32Array[] = []; let hn = 0, ln = 0;
-    for (const [key, t] of tiles) { if (!t.b.count) continue; const d = sq(t.tx, t.tz), n = Math.min(t.b.count, Math.ceil(t.b.count * quant(keepAt(d, R) * foliage))); blades += t.b.count; if (!n) continue;
-      const near = d < GRASS.lodDist, part = t.b.data.subarray(0, n * 8); if (near) { hp.push(part); hn += n; } else { lp.push(part); ln += n; } drawn += n; s += `${key}:${n}:${near ? 1 : 0};`; }
-    const tn = performance.now(); if (s !== sig && (dirty || tn - lastPack > 250)) { const t0 = tn; sig = s; lastPack = tn; dirty = false; /* thinning-only changes repack at most 4×/s */ high.pack(hp, hn); low.pack(lp, ln); GRASS_INFO.packMaxMs = Math.max(GRASS_INFO.packMaxMs, performance.now() - t0); GRASS_INFO.packs++; }
-    Object.assign(GRASS_INFO, { tiles: tiles.size, blades, drawn });
+    // per 2.5 m cell: distance thinning (keepAt on the cell's nearest point), blade LOD, and a horizontal view cone (half FOV + margin;
+    // off when looking steeply down). Cells within 3 m always draw (the player's own patch, camera swings).
+    const S = GRASS.sub, C = T / S, f = U.uCamFwd.value, fl = Math.hypot(f.x, f.z), aspect = (camera as THREE.PerspectiveCamera).aspect ?? 16 / 9;
+    const cone = fl > .6 ? Math.atan(Math.tan(fov * Math.PI / 360) * aspect) + .35 : Infinity;
+    let blades = 0, drawn = 0, culled = 0; const parts: Float32Array[][] = [[], [], []], cnt = [0, 0, 0], hs: number[][] = [[], [], []], hn: number[][] = [[], [], []];
+    for (const t of tiles.values()) { const bl = t.b; if (!bl.count) continue; blades += bl.count;
+      for (let c = 0; c < S * S; c++) { const a = bl.sub[c], e = bl.sub[c + 1]; if (a === e) continue;
+        const bx = t.tx * T + (c % S) * C, bz = t.tz * T + Math.floor(c / S) * C, d = Math.hypot(Math.max(bx - cx, 0, cx - bx - C), Math.max(bz - cz, 0, cz - bz - C));
+        if (d > 3 && cone < 4) { const ox = bx + C / 2 - cx, oz = bz + C / 2 - cz, oc = Math.hypot(ox, oz);
+          if (Math.acos(Math.max(-1, Math.min(1, (ox * f.x + oz * f.z) / (oc * fl)))) - Math.asin(Math.min(1, C * .75 / oc)) > cone) { culled += e - a; continue; } }
+        const n = Math.min(e - a, Math.ceil((e - a) * quant(keepAt(d, R) * foliage))); if (!n) continue;
+        const l = d < GRASS.lodNear ? 0 : d < GRASS.lodDist ? 1 : 2; parts[l].push(bl.data.subarray(a * 8, (a + n) * 8)); cnt[l] += n; drawn += n;
+        hs[l].push(t.id * 64 + c); hn[l].push(n); } } // per-LOD signatures: which cells, and how many blades of each
+    // a LOD mesh repacks at once when its set of cells changes (tiles in/out, LOD or cone crossings), thinning-only changes at most 4×/s
+    const tn = performance.now(), thin = tn - lastPack > 250; let packed = false;
+    const same = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
+    for (let l = 0; l < 3; l++) if (dirty || !same(hs[l], sigS[l]) || (thin && !same(hn[l], sigN[l]))) { sigS[l] = hs[l]; sigN[l] = hn[l]; lods[l].pack(parts[l], cnt[l]); packed = true; GRASS_INFO.lods[l] = cnt[l]; }
+    if (packed) { lastPack = tn; dirty = false; GRASS_INFO.packMaxMs = Math.max(GRASS_INFO.packMaxMs, performance.now() - tn); GRASS_INFO.packs++; GRASS_INFO.tris = GRASS_INFO.lods.reduce((s, n, l) => s + n * SEG[l] * 2, 0); }
+    Object.assign(GRASS_INFO, { tiles: tiles.size, blades, drawn, culled });
   }
   return { group, update, tiles: () => tiles.size };
 }

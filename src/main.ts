@@ -129,6 +129,7 @@ const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw:
 { const sd = Number(localStorage.getItem('boreal.seed.v1')); if (sd > 0) STAGES.seed = sd; } // seed chosen in the start menu
 const renderStore = createSettingsStore(RENDER_SETTINGS);
 if (new URLSearchParams(location.search).has('stages')) renderStore.set('world.stagedTerrain', true); // dev/bench: ?stages=1
+{ const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number); if (at && at.length >= 2 && at.every(Number.isFinite)) { player.x = at[0]; player.z = at[1]; if (at.length > 2) { yaw = at[2]; player.heading = yaw; } } } // dev/screenshots: ?at=x,z[,yaw]
 let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');

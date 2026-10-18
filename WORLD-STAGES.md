@@ -91,6 +91,6 @@ the analytic curve. Glacier mass is conserved apart from the balance terms.
 
 ## Build order (live, one small commit each, with a CHANGELOG-LIVE line)
 1. Stand age (done). 2. This doc. 3. Seeded elevation on the coarse grid + erosion (toggle `world.stagedTerrain`).
-4. Priority-Flood + D8 + accumulation (inspector: flow, accumulation, TWI). 5. Lakes and ponds. 6. Rivers (Strahler,
+4. Priority-Flood + D8 + accumulation (inspector: flow, accumulation, TWI). 5. Lakes and ponds. 6. Rivers (DONE 2026-10-18, core/stages/rivers.ts; Strahler,
 hydraulic geometry, carved channels, water mesh). 7. Waterfalls and rapids. 8. Ground stage 3. 9. Real DEM. 10. Ocean and tides,
 glaciers, lake ice, live shallow water.

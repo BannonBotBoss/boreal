@@ -60,7 +60,7 @@ export function createHares(scene: THREE.Scene) {
   function update(dt: number, wolf: WolfInfo): HareEvent[] {
     const events: HareEvent[] = []; time += dt;
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }
-    while (hares.length + pending.length < HARE.count) spawn(wolf.x, wolf.z);
+    for (let k = 0; k < HARE.count && hares.length + pending.length < HARE.count; k++) spawn(wolf.x, wolf.z); // bounded: spawn() can fail (no dry land in range) and the old while() then hung the page
     while (hares.length > HARE.count) remove(hares[hares.length - 1]); // count lowered in settings
     for (const h of [...hares]) {
       const dx = h.x - wolf.x, dz = h.z - wolf.z, d = Math.hypot(dx, dz);

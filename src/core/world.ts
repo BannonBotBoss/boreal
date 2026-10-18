@@ -5,6 +5,7 @@ import type { Kind } from './catalog';
 import { LEVEL } from './tuning';
 import { STAGES, elevationGrid, flowGrid, lakeAt, sampleGrid, toWorld } from './stages/elevation';
 import { cellAt, twi } from './stages/flow';
+import { carve, riverAt } from './stages/rivers';
 import { f, choose, scope, tracing } from '../proc/trace';
 export const GENERATOR_VERSION = 1;
 export const WORLD_SEED = 1400;
@@ -22,8 +23,10 @@ export function heightAt(x: number, z: number) {
   if (STAGES.on) { // stage 1 (core/stages/elevation): eroded coarse grid mapped so the lowest 8 % is open water and the top 15 % is upland rock (Shield ridges)
     const g = elevationGrid(STAGES.seed);
     if (tracing()) { const fl = flowGrid(STAGES.seed), c = cellAt(fl, x, z); f('hydrology', 'flow accumulation (cells)', fl.acc[c]); f('hydrology', 'upslope area (ha)', fl.acc[c] * fl.cell * fl.cell / 1e4);
-      f('hydrology', 'fill depth (m)', fl.filled[c] - g.h[c]); f('hydrology', 'TWI ln(a/tanβ)', twi(fl, c)); f('hydrology', 'D8 receiver', fl.dir[c]); const lk = lakeAt(STAGES.seed, x, z); if (lk) { f('hydrology', 'water body', `${lk.kind} #${lk.body}`); f('hydrology', 'water area (ha)', lk.areaHa); f('hydrology', 'max depth (m)', lk.maxDepth); } f('hydrology', 'grid build (ms)', Math.round(g.ms + fl.ms)); }
-    return f(T, 'stage1 elevation', toWorld(g, sampleGrid(g, x, z))) + f(T, 'depressions', surfaceDetail(x, z)) * .5; }
+      f('hydrology', 'fill depth (m)', fl.filled[c] - g.h[c]); f('hydrology', 'TWI ln(a/tanβ)', twi(fl, c)); f('hydrology', 'D8 receiver', fl.dir[c]); const lk = lakeAt(STAGES.seed, x, z); if (lk) { f('hydrology', 'water body', `${lk.kind} #${lk.body}`); f('hydrology', 'water area (ha)', lk.areaHa); f('hydrology', 'max depth (m)', lk.maxDepth); } f('hydrology', 'grid build (ms)', Math.round(g.ms + fl.ms));
+      const rv = riverAt(STAGES.seed, x, z); if (rv) { f('hydrology', 'river Strahler order', rv.order); f('hydrology', 'river basin (km2)', rv.areaKm2); f('hydrology', 'river width (m)', rv.half * 2); f('hydrology', 'river depth (m)', rv.depth); f('hydrology', 'river speed (m/s)', rv.speed); f('hydrology', 'distance to centreline (m)', rv.d); } }
+    const h = f(T, 'stage1 elevation', toWorld(g, sampleGrid(g, x, z))) + f(T, 'depressions', surfaceDetail(x, z)) * .5, rv = riverAt(STAGES.seed, x, z); // stage 2c: rivers carve their channel
+    return rv ? f(T, 'river carve', carve(h, rv)) : h; }
   const distance = Math.abs(x - riverCenter(z));
   const land = f(T, 'base', 1.8) + layer('ridgesX', Math.sin(x * .043), 1.4) + layer('ridgesZ', Math.cos(z * .038), 1.3)
     + layer('ripples', Math.sin(x * .13 + z * .09), .28);
@@ -34,6 +37,8 @@ export function terrainBand(y: number) {
   return y < f('biome', 'level.waterSurface', LEVEL.waterSurface) ? 'water' : y < f('biome', 'level.shore', LEVEL.shore) ? 'shore'
     : y > f('biome', 'level.upland', LEVEL.upland) ? 'upland' : 'forest';
 }
+/** Inside a stage-2c channel (bed or the inner bank). */
+const inRiver = (x: number, z: number) => { const r = riverAt(STAGES.seed, x, z); return !!r && r.d < r.half + 1; };
 export const chunkSeed = (cx: number, cz: number, worldSeed = WORLD_SEED) =>
   f('chunk', 'chunkSeed', hash(`${GENERATOR_VERSION}:${f('chunk', 'worldSeed', worldSeed)}:${cx}:${cz}`));
 /** Candidate roll -> kind (cumulative weights; one data table). */
@@ -46,7 +51,7 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     const x = f('draw', 'x', (cx + rng()) * CHUNK_SIZE), z = f('draw', 'z', (cz + rng()) * CHUNK_SIZE);
     const roll = rng(), seed = f('draw', 'seed', Math.floor(rng() * 0xffffffff)), rotation = f('draw', 'rotation', rng() * Math.PI * 2);
     const scale = f('draw', 'scale', .75 + rng() * .65);
-    if (heightAt(x, z) < LEVEL.shore || Math.hypot(x, z) < 13 || (STAGES.on && lakeAt(STAGES.seed, x, z))) continue; // stage 2b: nothing grows in lakes
+    if (heightAt(x, z) < LEVEL.shore || Math.hypot(x, z) < 13 || (STAGES.on && (lakeAt(STAGES.seed, x, z) || inRiver(x, z)))) continue; // stages 2b/2c: nothing grows in lakes or river channels
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
     result.push({ key: `${cx}:${cz}:${i}`, kind, seed, generatorVersion: GENERATOR_VERSION, x, z, rotation, scale });
   }

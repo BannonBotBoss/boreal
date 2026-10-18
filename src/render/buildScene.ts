@@ -26,6 +26,8 @@ import { createPost } from './post';
 import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
 import { updateTreeUniforms } from './trees';
+import { riverAt } from '../core/stages/rivers';
+import { waterMaterial, updateWaterUniforms } from './water';
 import { tiles } from '../photo/frame';
 import { applyGenome } from './appearance';
 import { entityMass, rigMass } from './mass';
@@ -84,13 +86,15 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const geometry: THREE.BufferGeometry = yield* terrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near);
     const ground = new THREE.Mesh(geometry, terrainMaterial()); ground.receiveShadow = true;
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; ground.layers.enable(1); root.add(ground); // layer 1 = GI probe capture
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), new THREE.MeshStandardMaterial({ color: 0x578d91, roughness: .32, metalness: .1 }));
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), waterMaterial());
     water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
-    if (STAGES.on) { // stage 2b lakes/ponds: a 17×17 water sheet at the filled level inside water bodies, sunk below ground elsewhere
-      const lg = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, 16, 16); lg.rotateX(-Math.PI / 2); const p = lg.getAttribute('position'); let any = false;
-      for (let i = 0; i < p.count; i++) { const wx = p.getX(i) + (cx + .5) * CHUNK_SIZE, wz = p.getZ(i) + (cz + .5) * CHUNK_SIZE, lk = lakeAt(STAGES.seed, wx, wz);
-        if (lk) any = true; p.setY(i, lk ? lk.surface : heightAt(wx, wz) - .6); }
-      if (any) { lg.translate((cx + .5) * CHUNK_SIZE, 0, (cz + .5) * CHUNK_SIZE); lg.computeVertexNormals(); const lake = new THREE.Mesh(lg, water.material); lake.userData.inspect = { type: 'terrain', key: `lake:${cx}:${cz}` }; root.add(lake); } else lg.dispose();
+    if (STAGES.on) { // stages 2b/2c: one water sheet at the lake level / river surface (with per-vertex flow for the shared water shader), sunk below ground elsewhere
+      const seg = near ? 32 : 8, lg = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, seg, seg); lg.rotateX(-Math.PI / 2); const p = lg.getAttribute('position'), flow = new Float32Array(p.count * 3); let any = false;
+      for (let i = 0; i < p.count; i++) { const wx = p.getX(i) + (cx + .5) * CHUNK_SIZE, wz = p.getZ(i) + (cz + .5) * CHUNK_SIZE, lk = lakeAt(STAGES.seed, wx, wz), rv = lk ? undefined : riverAt(STAGES.seed, wx, wz), inR = !!rv && rv.d < rv.half + rv.bank;
+        if (lk || inR) any = true; if (inR) { flow[i * 3] = rv!.dirX * rv!.speed; flow[i * 3 + 1] = rv!.dirZ * rv!.speed; flow[i * 3 + 2] = rv!.speed; }
+        p.setY(i, lk ? lk.surface : inR ? rv!.surface : heightAt(wx, wz) - .6); }
+      lg.setAttribute('aFlow', new THREE.BufferAttribute(flow, 3));
+      if (any) { lg.translate((cx + .5) * CHUNK_SIZE, 0, (cz + .5) * CHUNK_SIZE); lg.computeVertexNormals(); const lake = new THREE.Mesh(lg, water.material); lake.userData.inspect = { type: 'terrain', key: `water:${cx}:${cz}` }; root.add(lake); } else lg.dispose();
     }
     const entities = structuredClone(restoreEntities(applyPopulation(generateChunk(cx, cz), cx, cz), context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
     for (const entity of entities) {
@@ -248,7 +252,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       lod.rotation.y = Math.sin(time * .7 + entity.seed) * .07;
     }
     if (time - lastBatchLod > .25 || time < lastBatchLod) { lastBatchLod = time; for (const c of chunks.values()) c.batch.update(camera.position, 1); }
-    updateTreeUniforms();
+    updateTreeUniforms(); updateWaterUniforms();
     simulateAnimals(dt, x, z, frozen);
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
     const hour = photo?.hour ?? gameHour(tod, startHour); clock = formatHour(hour);

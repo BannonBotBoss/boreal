@@ -30,11 +30,11 @@ import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { buildTile, globeMaterial, releaseTileGeometry, stitchIndex, tileGeometry, type TileData } from './tile';
 import type { TileRequest } from './tileWorker';
-import { globeLod, worldTier } from './lod';
+import { balancedTree, globeLod, worldTier } from './lod';
 
 interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
-const STATS = { warm: [] as number[], build: [] as number[], work: [] as number[], interval: [] as number[], compileMs: -1 };
+const STATS = { warm: [] as number[], build: [] as number[], work: [] as number[], interval: [] as number[], compileMs: -1, rebuilt: 0 };
 const pct = (a: number[], p: number) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
 const avg = (a: number[]) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 const keep = (a: number[], n: number) => { if (a.length > n) a.splice(0, a.length - n); };
@@ -95,6 +95,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const dirQ = q.get('dir')?.split(',').map(Number); // ?dir=x,y,z: start over any planet direction (e.g. a cube-face corner, screenshots)
   const start = dirQ?.length === 3 && dirQ.every(Number.isFinite) ? new THREE.Vector3(...dirQ).normalize().toArray() as [number, number, number] : q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
   let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0, overHome: { x: number; z: number } | null = null, leaving = false;
+  const shot = q.has('shot'); // screenshots: clock pinned, stays on the globe, logs seam diagnostics
   const autoHandoff = !bench && !q.has('shot') && q.get('handoff') !== '0'; // screenshots and benches stay on the globe
   if (q.get('handoff') === 'demo') targetAlt = HANDOFF.alt * .75; // ?handoff=demo&alt=4000: descend and hand off by itself
   const fade = document.createElement('div'); Object.assign(fade.style, { position: 'fixed', inset: '0', background: '#dfe8ef', opacity: '0', transition: 'opacity .6s', pointerEvents: 'none' }); document.body.append(fade);
@@ -119,6 +120,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const ADOPT = { perFrame: 4, ms: 2.5 }; // [game calibration]
   const accept = (n: QNode, t: TileData) => {
     inflight.delete(n.key); STATS.build.push(t.cpu); built++;
+    const old = tiles.get(n.key); if (old) { releaseTileGeometry(old.mesh.geometry); STATS.rebuilt++; } // a rebuild at the current segment count replaces the old tile
     const mesh = new THREE.Mesh(tileGeometry(t), material); mesh.matrixAutoUpdate = false;
     tiles.set(n.key, { mesh, used: frame, centre: [t.centre[0], t.centre[1], t.centre[2]], seg: Math.round(Math.sqrt(4 + t.position.length / 3)) - 3 });
   };
@@ -152,7 +154,12 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const offTmp: Vec3 = [0, 0, 0];
   const wanted = new Set<string>(); let drawn = 0, inView = 0, deepest = 0, culled = 0, splitK = 1;
   function want(n: QNode) {
-    const t = tiles.get(n.key); if (t) { t.used = frame; return true; }
+    const t = tiles.get(n.key);
+    if (t) { // built at another tier's segment count (the governor moved the world tier): neighbours would not share
+      t.used = frame; // their edge vertices (T-junction cracks), so rebuild it at the current count; the old one draws meanwhile
+      if (t.seg !== lod.segments && !inflight.has(n.key)) { wanted.add(n.key); const c = nodeCentre(n, R); queued.set(n.key, { n, pr: 1 + n.level * 1e-3 + Math.hypot(camPos[0] - c[0], camPos[1] - c[1], camPos[2] - c[2]) / R }); }
+      return true;
+    }
     wanted.add(n.key);
     if (!inflight.has(n.key)) { const c = nodeCentre(n, R); queued.set(n.key, { n, pr: n.level * 1e-3 + Math.hypot(camPos[0] - c[0], camPos[1] - c[1], camPos[2] - c[2]) / R }); }
     return false;
@@ -186,11 +193,25 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
       const t = tiles.get(n.key)!, g = t.mesh.geometry;
       if ((g.userData.stitch ?? 0) !== flags) { g.userData.stitch = flags; g.setIndex(stitchIndex(t.seg, flags)); }
     }
+    if (shot && frame % 240 === 0) console.log('SEAMS ' + JSON.stringify(seamReport())); // screenshots: level jumps / segment mismatches across drawn edges
   }
+  /** Diagnostics: for every drawn tile edge, the level difference to the drawn neighbour (also across cube faces) and
+   *  whether both tiles have the same segment count (the stitching needs both: <= 1 level apart, same segments). */
+  function seamReport() {
+    const jumps: Record<number, number> = {}, segs: Record<number, number> = {}; let segMismatch = 0;
+    for (const n of drawnNodes) {
+      const t = tiles.get(n.key)!; segs[t.seg] = (segs[t.seg] ?? 0) + 1;
+      for (let e = 0; e < 4; e++) { const a = across(n, e);
+        for (let l = n.level; l >= 0; l--) { const k = `${a.face}/${l}/${a.i >> (n.level - l)}/${a.j >> (n.level - l)}`; if (!drawnKeys.has(k)) continue;
+          jumps[n.level - l] = (jumps[n.level - l] ?? 0) + 1; if (tiles.get(k)!.seg !== t.seg) segMismatch++; break; } }
+    }
+    return { drawn: drawnNodes.length, jumps, segs, segMismatch, lodSegments: lod.segments, rebuilt: STATS.rebuilt, tier: GOVERNOR.tier, worldTier: GOVERNOR.worldTier, changes: GOVERNOR.changes };
+  }
+  let splitSet = new Set<string>();
   function visit(n: QNode) {
     if (hidden(n)) { culled++; return; }
     const ready = want(n), seen = n.level < lod.minLevel || inFrustum(n);
-    if (seen && wantsSplit(n, camPos, { radius: R, minLevel: lod.minLevel, maxLevel: lod.maxLevel, split: lod.split * splitK })) {
+    if (splitSet.has(n.key)) { // the 2:1 balanced split set (lod.ts balancedTree): neighbours never 2+ levels apart
       const kids = children(n).filter(k => !hidden(k) || (culled++, false)), ok = kids.map(want).every(Boolean);
       if (ok) { for (const k of kids) visit(k); return; }
     }
@@ -241,6 +262,8 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     // LOD selection, then hand the wanted builds to the workers (or jobs); drop builds nobody wants any more
     camera.updateMatrixWorld(); frustum.setFromProjectionMatrix(projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
     group.clear(); wanted.clear(); drawnNodes.length = 0; drawn = 0; inView = 0; deepest = 0; culled = 0;
+    const lodOpts = { radius: R, minLevel: lod.minLevel, maxLevel: lod.maxLevel, split: lod.split * splitK };
+    splitSet = balancedTree(roots(), n => (n.level < lod.minLevel || inFrustum(n)) && wantsSplit(n, camPos, lodOpts), n => !hidden(n)).splits;
     for (const r of roots()) visit(r);
   stitch();
     // draw cap: shrink the split distance while more tiles than the tier's cap are in view, relax it back when under
@@ -261,8 +284,10 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
     const work = performance.now() - t0; if (bench && work > 40) console.log(`SPIKE ${work.toFixed(0)}ms alt ${alt.toFixed(0)} pre-render ${(tR - t0).toFixed(0)} render ${(performance.now() - tR).toFixed(0)} calls ${renderer.info.render.calls} accepted ${built}`); STATS.work.push(work); if (prevT) STATS.interval.push(t0 - prevT);
     if (!bench) { keep(STATS.work, 600); keep(STATS.interval, 600); keep(STATS.build, 2000); }
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;
+    const segWas = lod.segments;
     if (governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); atmos?.setTier(GOVERNOR.tier); } // resolution + atmosphere samples follow the tier now (cheap uniforms)
     if (lodTier !== worldTier()) { lodTier = worldTier(); lod = globeLod(); } // tile resolution/split/caps once the new tier has held (no rebuild per step)
+    if (shot && lod.segments !== segWas) console.log(`SEGMENTS ${segWas} -> ${lod.segments} at frame ${frame} (tier ${GOVERNOR.tier}, world tier ${GOVERNOR.worldTier})`);
     if (frame % 10 === 1) {
       const ll = toLatLon([dir.x, dir.y, dir.z]);
       hud.textContent = `Boreal planet · seed ${seed}${STAGES.on ? ' (staged)' : ''}\n` +

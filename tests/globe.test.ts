@@ -261,3 +261,16 @@ test('cube nodes: the node across each edge shares that whole edge, also across 
   }
   assert.equal(crossings, 6 * 4 * 2 + 6 * 4 * 8, 'every face-edge node crosses');
 });
+
+import { wantsSplit } from '../src/world/globe/cube';
+import { balancedTree } from '../src/world/globe/lod';
+test('globe LOD: the selected tiles are 2:1 balanced - no tile has a neighbour 2+ levels apart, also across cube faces (stitching handles one)', () => {
+  const R = 6371000, d = (x: number, y: number, z: number, alt: number) => { const l = Math.hypot(x, y, z); return [x / l * (R + alt), y / l * (R + alt), z / l * (R + alt)] as [number, number, number]; };
+  const cams = [d(.27, .76, .59, 14e6), d(.27, .76, .59, 9e5), d(.4, .3, .87, 4e4), d(.27, .76, .59, 300), d(-1, 1, -1, 2.5e5), d(-1, 1, -1, 300), d(1, 1e-3, 1, 50)];
+  for (const row of GLOBE_LOD) for (const cam of cams) {
+    const o = { radius: R, minLevel: row.minLevel, maxLevel: row.maxLevel, split: row.split }, leaves = [...balancedTree(roots(), n => wantsSplit(n, cam, o)).leaves.values()], at = new Set(leaves.map(n => n.key));
+    assert.ok(leaves.length >= selectLeaves(cam, o).length, 'balancing only adds tiles');
+    for (const n of leaves) for (let e = 0; e < 4; e++) { const a = across(n, e);
+      for (let l = n.level; l >= 0; l--) if (at.has(`${a.face}/${l}/${a.i >> (n.level - l)}/${a.j >> (n.level - l)}`)) { assert.ok(n.level - l <= 1, `${row.name}: ${n.key} edge ${e} is ${n.level - l} levels finer than its neighbour`); break; } }
+  }
+});

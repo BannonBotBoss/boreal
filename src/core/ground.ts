@@ -101,16 +101,22 @@ export const deerDroppingsKg = (massKg: number, days: number) => massKg * FAUNA.
 const noise = (x: number, z: number, label: string) => random(hash(`${label}:${WORLD_SEED}:${x}:${z}`))();
 const lerp = ([a, b]: readonly number[], t: number) => a + (b - a) * t;
 import { TREE_BY_ID } from './treeSpecies';
+/** Spruces per chunk (from generateChunk), shared by every 3x3 neighbourhood that includes the chunk: a new weather column or ground
+ *  cell next to a cached one regenerates ~3 chunks instead of 9 (weather fillKinds after the in-page teleport). */
 const treeCache = new Map<string, { x: number; z: number; r: number; rate: number }[]>();
 let speciesOf: (seed: number, x: number, z: number) => string = () => 'black-spruce';
 let crownOf: (seed: number, x: number, z: number) => number = () => 1.6;
 /** The render layer registers the tree species/crown functions (core stays three.js-free). */
 export function setTreeSource(species: (seed: number, x: number, z: number) => string, crown: (seed: number, x: number, z: number) => number) { speciesOf = species; crownOf = crown; treeCache.clear(); colCache.clear(); }
+function chunkTrees(a: number, b: number) {
+  const key = `${a}:${b}`; let t = treeCache.get(key); if (t) return t; t = [];
+  for (const e of generateChunk(a, b)) if (e.kind === 'spruce') { const sp = speciesOf(e.seed, e.x, e.z); t.push({ x: e.x, z: e.z, r: crownOf(e.seed, e.x, e.z) * e.scale, rate: LITTERFALL[sp] ?? TREE_BY_ID[sp]?.litterfall ?? .121 }); }
+  if (treeCache.size > 256) treeCache.delete(treeCache.keys().next().value!); treeCache.set(key, t); return t;
+}
 function treesNear(cx: number, cz: number) {
-  const key = `${cx}:${cz}`; let t = treeCache.get(key); if (t) return t; t = [];
-  for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++)
-    for (const e of generateChunk(a, b)) if (e.kind === 'spruce') { const sp = speciesOf(e.seed, e.x, e.z); t.push({ x: e.x, z: e.z, r: crownOf(e.seed, e.x, e.z) * e.scale, rate: LITTERFALL[sp] ?? TREE_BY_ID[sp]?.litterfall ?? .121 }); }
-  if (treeCache.size > 64) treeCache.delete(treeCache.keys().next().value!); treeCache.set(key, t); return t;
+  const t: { x: number; z: number; r: number; rate: number }[] = [];
+  for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++) for (const e of chunkTrees(a, b)) t.push(e);
+  return t;
 }
 export interface Layer { id: string; label: string; top: number; thickness: number; kg: number; bulk: number; moisture?: number; age?: string; source: string }
 /** The layer stack of the cell containing (x, z) at `years` since world start (plus the stand's age since fire). */

@@ -8,8 +8,9 @@
  *  - The patch dithers in under the globe (render/fade.ts, uniform only) once the chunks under the camera are ready, between
  *    TRANSITION.bandTop (2 km) and fadeFull (600 m); undithered scene parts (sky dome, animals, grass, flora, props, rocks)
  *    stay hidden until the patch is fully in. Sky + clouds stay hidden for the whole band (the far layer is the sky).
- *  - Down: the camera flies from the globe pose to the rig pose (log-height path), holds at the handover height until the
- *    chunks are ready, then blends onto the rig in TRANSITION.blendSec. Up: straight up from the rig to above bandTop.
+ *  - Down: the landing spot is ahead along the heading; the camera flies a 45-degree glide path toward it (log-height rate),
+ *    turning from the globe pose to look at it, holds at the handover height until the chunks are ready, then blends onto
+ *    the rig in TRANSITION.blendSec. Up: the same glide path backwards, turning to the globe's own pose near the top.
  *  - The governor is held from the ascent to the end of the descent (world knobs frozen); input is mode-scoped; the world
  *    clock keeps running, the sim (player, animals) is frozen outside game mode. Tile workers (2) run only while ascending,
  *    on the globe and descending; they are terminated during gameplay.
@@ -18,7 +19,8 @@ import * as THREE from 'three';
 import type { Globe } from './globeView'; // loaded on demand (only with the in-page path on), so the reload path's game bundle is unchanged
 import { createFarLayer } from './farLayer';
 import { TRANSITION, transitionPath, planetToGame, gameBasis, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
-import { GLOBE_ENTRY_ALT, landSpawn } from './handoff';
+import { GLOBE_ENTRY_ALT, HANDOFF, landSpawn } from './handoff';
+import { PLANET } from './planet';
 import { setPatchFade } from '../../render/fade';
 import { GOVERNOR, resetGovernor } from '../../core/quality';
 import { INTEREST, pending } from '../../core/interest';
@@ -51,7 +53,10 @@ function controller(view: View, host: InPageHost) {
   let h = 0, h0 = 1, blend = 0, fade = 0, ready = false, needStart = false, placedFrame = 0, frameNo = 0, lastT = 0, cameraTouched = false;
   const start = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, end = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   const cam = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, gcam = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
-  const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), size = new THREE.Vector2();
+  const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), size = new THREE.Vector2(), UP = new THREE.Vector3(0, 1, 0);
+  const land = new THREE.Vector3(), off = new THREE.Vector3(), fwd = new THREE.Vector2(); // landing point, start offset from the glide path, heading
+  /** camera on the 45-degree glide path h metres above the landing ground (behind it along the heading), looking at it */
+  const glide = (hh: number, k: number) => { cam.p.set(land.x - fwd.x * hh + off.x * k, land.y + hh + off.y * k, land.z - fwd.y * hh + off.z * k); tmpM.lookAt(cam.p, land, UP); tmpQ.setFromRotationMatrix(tmpM); };
   const hidden = new Map<THREE.Object3D, boolean>(); let savedBg: THREE.Scene['background'] | undefined;
   const STATS = { globeMs: 0, mode: 'game' as TransitionMode, h: 0, fade: 0, ready: false, log: [] as { t: number; mode: string; h: number; fade: number; globeMs: number }[] };
 
@@ -73,11 +78,17 @@ function controller(view: View, host: InPageHost) {
   }
   function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe' && m === 'globe'); }
   /** Globe -> band: the player is placed at the landing spot (dry land) under the camera, keeping the heading. */
+  /** Globe -> band. The landing spot is ahead along the heading, one camera height away (the 45-degree glide path the descent
+   *  flies, so the patch is in view the whole way down), kept inside the playable region and snapped to dry land. */
   function descend(at: { x: number; z: number; yaw: number }) {
-    const g = globe!, s = landSpawn(at); host.place(s.x, s.z, at.yaw); placedFrame = frameNo;
-    const v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]);
+    const g = globe!, v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]);
     start.p.set(pg.x, pg.y, pg.z); start.q.setFromRotationMatrix(gameBasis(g.planet, pg.x, pg.z, tmpM)).invert().multiply(g.camera.quaternion);
-    h = h0 = Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)); phase = 'fly'; blend = 0; down = true; lastT = performance.now(); setMode('band');
+    h0 = Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)); fwd.set(-Math.sin(at.yaw), -Math.cos(at.yaw));
+    const lim = PLANET.home.halfSize - PLANET.home.feather - HANDOFF.margin, clampL = (u: number) => Math.max(-lim, Math.min(lim, u));
+    const s = landSpawn({ x: clampL(pg.x + fwd.x * h0), z: clampL(pg.z + fwd.y * h0) }); host.place(s.x, s.z, at.yaw); placedFrame = frameNo;
+    land.set(s.x, ground(s.x, s.z), s.z); h0 = Math.max(TRANSITION.handover + 1, pg.y - land.y); h = h0;
+    off.set(start.p.x - (land.x - fwd.x * h0), start.p.y - (land.y + h0), start.p.z - (land.z - fwd.y * h0)); // decays to 0 with height
+    phase = 'fly'; blend = 0; down = true; lastT = performance.now(); setMode('band');
   }
   function toGlobe() { restoreScene(); globe!.drive(null); setMode('globe'); }
   function toGame() { restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
@@ -132,26 +143,29 @@ function controller(view: View, host: InPageHost) {
       cameraTouched = true;
       const now = performance.now(), dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
       end.p.copy(camera.position); end.q.copy(camera.quaternion); ready = chunksReady();
-      if (needStart) { needStart = false; start.p.copy(end.p); start.q.copy(end.q); h = h0 = Math.max(.5, end.p.y - ground(end.p.x, end.p.z)); }
-      if (down) {
+      if (needStart) { // ascent: from the rig pose onto the glide path behind the player, then up it
+        needStart = false; start.p.copy(end.p); start.q.copy(end.q); const p = host.player(); fwd.set(-Math.sin(p.yaw), -Math.cos(p.yaw));
+        land.set(p.x, ground(p.x, p.z), p.z); h = h0 = Math.max(1, end.p.y - land.y); off.set(0, 0, 0);
+      }
+      const top = TRANSITION.bandTop * 1.05;
+      if (down) { // the glide path down to the handover height (held there until the chunks are ready), then the rig
         if (phase === 'fly') { h = Math.max(TRANSITION.handover, h * Math.exp(-INPAGE.kDown * dt)); if (h <= TRANSITION.handover + 1e-3 && ready) phase = 'blend'; }
-        const e = smoothstep(0, 1, clamp01(Math.log(h0 / h) / Math.log(h0 / TRANSITION.handover)));
-        cam.p.set(start.p.x + (end.p.x - start.p.x) * e, 0, start.p.z + (end.p.z - start.p.z) * e); cam.p.y = ground(cam.p.x, cam.p.z) + h;
-        cam.q.copy(start.q).slerp(end.q, e);
+        glide(h, clamp01((h - TRANSITION.handover) / (h0 - TRANSITION.handover)));
+        cam.q.copy(start.q).slerp(tmpQ, smoothstep(0, 1, clamp01(Math.log(h0 / h) / Math.log(1 / .6)))); // globe pose -> looking at the landing by 0.6 h0
         if (phase === 'blend') { blend = Math.min(1, blend + dt / TRANSITION.blendSec); const b = smoothstep(0, 1, blend); cam.p.lerp(end.p, b); cam.q.slerp(end.q, b); }
         fade = patchFade(h, ready);
-      } else {
-        const top = TRANSITION.bandTop * 1.05; h = Math.min(top, h * Math.exp(INPAGE.kUp * dt));
-        const e = smoothstep(0, 1, clamp01(Math.log(h / h0) / Math.log(top / h0)));
-        tmpQ.setFromEuler(new THREE.Euler(-Math.atan(.08), host.player().yaw, 0, 'YXZ')); // the globe's own near-ground pose: heading, 0.08 down
-        cam.p.set(start.p.x, ground(start.p.x, start.p.z) + h, start.p.z); cam.q.copy(start.q).slerp(tmpQ, e);
+      } else { // up: rig -> glide path within the first ~30 m, up the glide path, the globe's own pose (heading, 0.08 down) near the top
+        h = Math.min(top, h * Math.exp(INPAGE.kUp * dt));
+        const a = smoothstep(h0, Math.max(h0 + 1, 30), h); glide(h, 0);
+        cam.p.lerp(start.p.clone().setY(start.p.y + h - h0), 1 - a); cam.q.copy(start.q).slerp(tmpQ, a);
+        tmpQ.setFromEuler(new THREE.Euler(-Math.atan(.08), Math.atan2(-fwd.x, -fwd.y), 0, 'YXZ')); cam.q.slerp(tmpQ, smoothstep(top * .6, top, h));
         fade = patchFade(h, true);
       }
       camera.position.copy(cam.p); camera.quaternion.copy(cam.q);
       const hc = Math.max(1, cam.p.y - ground(cam.p.x, cam.p.z)); camera.near = Math.max(.2, hc * INPAGE.nearK); camera.far = Math.max(700, hc * 2 + 900);
       camera.updateMatrixWorld(true);
       STATS.h = h; STATS.fade = fade; STATS.ready = ready;
-      if (down && phase === 'blend' && blend >= 1) next = 'game'; else if (!down && h >= TRANSITION.bandTop * 1.05 - 1e-3) next = 'globe'; // next frame (this one still draws the band)
+      if (down && phase === 'blend' && blend >= 1) next = 'game'; else if (!down && h >= top - 1e-3) next = 'globe'; // next frame (this one still draws the band)
     },
     /** buildScene, after the sky update: the globe into the far layer, as the background; the patch fade; band visibility. */
     background(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {

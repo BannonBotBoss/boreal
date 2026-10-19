@@ -56,11 +56,11 @@ After `grew` a tree leafs out; a fallen log carries on through the break. All cl
 ## Pieces
 - [x] claim event, this handoff, notes/grok.md (before any code)
 - [x] why chain extended per Matthew 07:03 (leafed, weathered, weakened, failed)
-- [ ] tests first: tests/contact.test.ts (red before the code)
-- [ ] src/core/contactBus.ts, src/core/why.ts
-- [ ] solidContact + optional RecordEntry.why + parseContext + move why in events.ts
-- [ ] buildScene log emitter (begin at chunk add, end at dispose) + main.ts listener + ?contacts=1 + inspector why
-- [ ] bench, tsc, npm test, build, smoke
+- [x] tests first: tests/contact.test.ts (red before the code)
+- [x] src/core/contactBus.ts, src/core/why.ts
+- [x] solidContact + optional RecordEntry.why + parseContext + move why in events.ts
+- [x] buildScene log emitter (begin at chunk add, end at dispose) + main.ts listener + ?contacts=1 + inspector why
+- [x] bench, tsc, npm test, build, smoke
 
 ## How to check
 `npx tsc --noEmit`, `npm test`, `npm run build`; `npx tsx tools/bench-contacts.ts`; open the worktree's own dev server with
@@ -68,3 +68,21 @@ After `grew` a tree leafs out; a fallen log carries on through the break. All cl
 
 ## Log
 - 07:00 claimed; handoff and notes first. Why reshaped as a causal chain per Matthew (06:59) before any code.
+- 07:04 tests first, red (84119ab: contactBus/why missing). 07:06 core (349df35) and wiring (725642e).
+- Checks: `npx tsc --noEmit` clean; `npm test` 277 pass, 0 fail; `npm run build` ok.
+- Bench (`npx tsx tools/bench-contacts.ts`, node, best of 5, 774 real generated logs padded to N): N=1000 begin only
+  0.15 us/log, begin + solidContact 0.55 us/log (budget 10 us: pass); N=10000 0.16 / 0.54 us/log. The pre-T-0005 ground
+  read in logContact (2 extra heightAt) is 1.8-9.3 us/log, also under 10 us; seatLog's values replace it.
+- Smoke-tiers on port 5193, GPU vsync off (grok/smoke-vsync's script run untracked, bench lock held): SMOKE PASS, Ultra 119,
+  High 125, Medium 118, Low 141, Very low 149, Minimum 240 fps, no page errors.
+- `?contacts=1` probe (headless Edge, vsync off): 44 begins at load (one per log, `chunk-build:log`), 0 begins/ends in 6 s
+  idle (nothing per frame), 25 s running forward gave 7 ends and 1 begin, 0 edge-order violations; save
+  `boreal.events.v1` stayed absent (0 bytes) throughout: generated logs never entered the save.
+- Not done: inspector screenshots of a log and a pushed rock (the inspector rows are 'why now' and 'why chain').
+
+## Open follow-ups
+- T-0005 (grok-globe): swap `logContact(entity, y)` for `logContact(entity, y, seatLog(...))` at the one call site.
+- A pushed rock never re-emits contact today (rocks are not emitters; seatRock as emitter is a follow-up).
+- Every interaction bumps `revision`, which rebuilds all chunks, so all logs end+begin once per interaction (render
+  lifetime, idempotent, but noisy under `?contacts=1`).
+- Matthew's open questions 1-3 (effects, continuous ticks, paws) are still open.

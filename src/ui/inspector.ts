@@ -15,6 +15,7 @@ import { CHUNK_SIZE, WORLD_SEED, chunkSeed, generateChunk, heightAt, terrainBand
 import { applyPopulation } from '../core/population';
 import { catalog } from '../core/catalog';
 import { SENSE_RADII } from '../core/animalBehavior';
+import { gaitReadout } from '../core/gaitReadout';
 import { HERD } from '../core/deerHerd';
 import { nearbyWater } from '../audio/borealSound';
 import { generateGeometry } from '../render/geometry';
@@ -107,6 +108,9 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       obs('brain', 'energy', b.energy), obs('brain', 'alarm', b.alarm), obs('brain', 'gaitPhase', b.phase), obs('brain', 'gaitSpeed', b.gaitSpeed),
       obs('senses', 'near (3 m)', b.near.length), obs('senses', 'middle (10 m)', b.middle.length), obs('senses', 'far (24 m)', b.far.length),
       obs('senses', 'target', b.target ? `${b.target.kind} ${b.target.key}` : '-'), obs('brain', 'seed', b.seed));
+    if (b) { const g = gaitReadout(b.motion, b.gaitSpeed, b.legs, b.phase); // T-0002 gait readout
+      out.push(obs('gait', 'gait', g.gait), obs('gait', 'Froude', +g.froude.toFixed(2)), obs('gait', 'cadence Hz', +g.hz.toFixed(2)), obs('gait', 'stride m', +g.stride.toFixed(2)),
+        obs('gait', 'duty', +g.duty.toFixed(2)), obs('gait', 'airborne', g.airborne)); }
     if (found.audible) out.push(obs('sound', 'audible', true), obs('sound', 'voice', `${found.audible.motion}/${found.audible.problem}`));
     else if (found.brain && sel?.type === 'deer') out.push(obs('sound', 'audible', false));
     { const t: Trace = { factors: [] }; withTrace(t, () => view.massOf(sel!.key)); out.push(...t.factors); }

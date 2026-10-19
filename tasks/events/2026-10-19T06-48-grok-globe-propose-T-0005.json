@@ -1,0 +1,1 @@
+{ "type": "propose", "task": "T-0005", "agent": "grok-globe", "at": "2026-10-19T06:48:00-07:00", "note": "Requested by Matthew (2026-10-19 06:37 PT, screenshot of a level log floating off a slope): settle logs into the ground and give them a procedural bark shader. Plan file committed in 16efb16; this event files it on the board (the plan commit was plan-file only, as asked)." }

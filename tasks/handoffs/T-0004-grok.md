@@ -1,7 +1,15 @@
 # T-0004 handoff (grok)
-- Branch: `grok/surface-bands` (from main 7d71892), worktree C:\dev\boreal-grok on omen. Preview: vite on 127.0.0.1:5186 (pid 15208, left running at Matthew's request).
-- Done: render/bands.ts (applySurfaceBands, wantsBands), the call in render/batch, the bark mask in render/trees.ts. Patch verified in the live shader (vBandW in 12 shader sources, PROP/ROCK keys end in '|bands').
-- Fix found: the first cut's bands were ~3 m apart along a log (frequency too low), which looked uniform. Now dot(w, (1, 1.4, .9)) * 4 with a sine: ~0.35-0.55 m bands.
-- Contrast: BANDS_AMP in bands.ts (.3 = 0.7-1.3 preview, .15 = 0.85-1.15 tasteful). `?bands=debug` (TEMP) paints banded surfaces red; remove before merge.
-- Next: unit test, npm test, smoke (vsync off, bench lock), program count, Ultra/Medium ms vs ?bands=0, captures to /workspace/bands/.
-- Check: `npx tsc --noEmit -p .`, `npm test`, open http://127.0.0.1:5186/?nomenu&hour=15&at=60.5,10.1,-1.5708 (log) and at=59.5,5.4,-1.5708 (trunk), with &bands=0 to compare.
+- Branch: `grok/surface-bands` (from main 7d71892), worktree C:\dev\boreal-grok on omen. Preview: vite on 127.0.0.1:5186 (pid 15208), left running at Matthew's request.
+- Done:
+  - render/bands.ts (`applySurfaceBands`, `wantsBands`), called from render/batch; the bark mask in render/trees.ts.
+  - tests/bands.test.ts; npm test 270/270.
+  - Smoke (vsync off) PASS at 6af44e9.
+  - Program links at load: 74, the same as main. Shader sources: 152-154 with bands on and off; 12 carry the patch (6 programs).
+- Why the first cut looked unchanged: the bands were about 3 m apart along a log. The patch was live; the band frequency was too low. Now a warped sine on dot(w, (1, 1.4, .9)) * 4 gives bands about 0.35-0.55 m apart.
+- Contrast: the preview defaults to amp .3 (0.7-1.3). At .15 (0.85-1.15) the log close-up changed by only 2/255 on average. `?bands=0.15` sets the amp, `?bands=0` turns bands off.
+- Open:
+  - Dark trunks: the bark is near-black where it meets the camera, so a multiply barely shows (6/255).
+  - trees-v2 `barkMaterial()` (conifer.ts) has no map but is not sent through render/batch. One line in trees/game.ts, `applySurfaceBands(barkMaterial())`, opts it in.
+  - Globe Builder bark (grok-globe/log-grounding-bark): when it lands, set `userData.noBands` on any bark that ships its own pattern.
+  - Frame/GPU ms: on/off runs were too noisy on the shared GPU for a 5% verdict (other agents benching in parallel).
+- Check: `npx tsc --noEmit -p .`, `npm test`. Log: http://127.0.0.1:5186/?nomenu&hour=15&at=60.5,10.1,-1.5708 (add &bands=0 to compare).

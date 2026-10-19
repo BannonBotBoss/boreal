@@ -106,3 +106,82 @@ export function canidPlan(speed: number, legLength = REF_HIP, prev?: CanidGait, 
   const v = Math.abs(speed), F = fr(Math.max(.05, v), legLength), gait = selectGait(F, prev), duty = dutyFactor(gait, F), offsets = offsetsFor(gait, lead);
   return { gait, froude: F, hz: cadence(v, legLength), stride: strideLength(Math.max(.05, v), legLength), duty, offsets, suspensions: suspensions(offsets, duty) };
 }
+/*
+ * Reach targets (T-0003 "wolf reach" contract, grok-gait). The data stride (above) needs a stance sweep of duty × stride
+ * (0.55-0.72 m) that the rig's legs alone cannot cover (today's gaitFor chord: 0.39 m at a walk or trot, 0.25 m in a gallop).
+ * The difference comes from the girdles: the shoulder blades rotate and glide on the thorax, and the pelvis rotates with
+ * the lumbar spine (Hildebrand 1959, J. Mammal. 40:481, doi:10.2307/1376265: flexing and extending the back swings the limbs
+ * further and lengthens the stride; the scapula rotates about 20° on the spine in both the cheetah and the horse, and the
+ * pelvis-to-scapula angle changes about 60° in the galloping horse and 130° in the cheetah; in both, spine motion is
+ * greatest at the pelvis). The back is flexed in the gathered suspension and extended in the extended one (Walter & Carrier
+ * 2007; Bertram & Gutmann 2009). At a walk or trot the hind legs are half a stride apart, so a shared pelvis rotation
+ * cancels and the lumbar spine barely moves (measured 3-8° in walking and trotting dogs: Vet. Sci. 2020, 7:26,
+ * doi:10.3390/vetsci7010026, Table 3).
+ *
+ * Phase convention: `phase` is the canidPlan stride phase in [0, 1) (brain.phase); leg i (LF 0, LH 1, RF 2, RH 3) is in
+ * stance while frac(phase + offsets[i]) < duty, with stance progress s = frac(phase + offsets[i]) / duty going 0 at
+ * touchdown to 1 at liftoff. Body frame: z in metres, +z is back (as footTarget in core/animalBehavior); angles in radians.
+ */
+export interface ReachBody {
+  /** Stance chord (m) the rig's limb can sweep by IK alone, per gait (input from the rig; today's gaitFor reach). */
+  legChord: Readonly<Record<CanidGait, number>>;
+  /** Shoulder-to-hip distance along the back (m). */ trunk: number;
+  /** Scapula pivot (top of the shoulder blade) to the ground (m): converts a fore girdle shift to a scapula angle. */ foreLever: number;
+  /** Hip joint to the ground (m): converts a hind girdle shift to a pelvis angle. */ hindLever: number;
+  /** Largest scapula swing from rest (rad), about 20° (Hildebrand 1959); anything beyond is a shoulder glide in metres. */ scapulaMax: number;
+}
+/** The game wolf today: legChord from gaitFor's reach (WOLF_LEGS), trunk from wolfBody LEG_XZ × WOLF_SCALE (2 × 0.27 m),
+ * fore lever = shoulder height 0.55 + shoulder blade 0.17 m, hind lever = hip height 0.56 m. */
+export const REF_BODY: ReachBody = { legChord: { walk: .39, trot: .39, gallop: .25 }, trunk: .54, foreLever: .72, hindLever: .56, scapulaMax: .35 };
+
+export interface ReachTargets {
+  /** duty × stride (m): how far each foot sweeps back relative to the body while it is down. */ sweep: number;
+  /** max(0, sweep − legChord) (m): the share the girdles must supply. */ deficit: number;
+  /** Per leg (LF, LH, RF, RH): fore-aft shift (m, +back) of the leg's top pivot that keeps the paw within ±legChord/2 of it.
+   * In stance it runs linearly from −deficit/2 at touchdown to +deficit/2 at liftoff; in swing it returns smoothly. */
+  girdle: number[];
+  /** Per fore leg [LF, RF]: scapula rotation from rest (rad, + swings the paw forward, the sign of solveLeg's hip), capped at scapulaMax. */
+  scapula: [number, number];
+  /** Per fore leg [LF, RF]: what the capped scapula leaves over, as a shoulder glide (m, +back). */
+  glide: [number, number];
+  /** Lumbar flexion (rad, + = flexed, hips swung forward): the pelvis rotation that carries both hind pivots by their mean shift. */
+  spineFlex: number;
+  /** Per hind leg [LH, RH]: what the shared pelvis cannot give that leg (m, +back); the limb (leg chord) has to absorb it. */
+  hindResidual: [number, number];
+  /** Body pitch (rad, + = front up, the sign of posture.bodyPitch): the slope between the girdles from each pair's stance vault. */
+  pitch: number;
+}
+const smoothstep = (s: number) => s * s * (3 - 2 * s);
+/** The girdle shift (m, +back) of one leg at stance-cycle position p = frac(phase + offset). */
+const girdleShift = (p: number, duty: number, deficit: number) =>
+  p < duty ? deficit * (p / duty - .5) : deficit * (.5 - smoothstep((p - duty) / (1 - duty)));
+/** Girdle height drop (m) of one stance leg pivoting over its paw: lever − √(lever² − x²), x = paw relative to the pivot. */
+const vaultDrop = (lever: number, x: number) => lever - Math.sqrt(Math.max(0, lever * lever - x * x));
+/** All reach and pitch targets at one stride phase for a canidPlan. Pure. */
+export function reachTargets(plan: CanidPlan, phase: number, body: ReachBody = REF_BODY): ReachTargets {
+  const { duty, offsets } = plan, sweep = duty * plan.stride, chord = body.legChord[plan.gait], deficit = Math.max(0, sweep - chord);
+  const at = offsets.map(o => frac(phase + o)), girdle = at.map(p => girdleShift(p, duty, deficit));
+  const fore = (i: number) => { const want = -girdle[i] / body.foreLever, rot = Math.max(-body.scapulaMax, Math.min(body.scapulaMax, want));
+    return [rot, girdle[i] + rot * body.foreLever] as const; };
+  const [lf, rf] = [fore(0), fore(2)], mean = (girdle[1] + girdle[3]) / 2;
+  // Pitch: a pair in stance holds its girdle at the vault height of its planted paws; a pair in swing does not drop.
+  const drop = (legs: number[], lever: number) => { const d = legs.filter(i => at[i] < duty).map(i => vaultDrop(lever, sweep * (at[i] / duty - .5) - girdle[i])); return d.length ? Math.max(...d) : 0; };
+  const pitch = Math.atan2(drop([1, 3], body.hindLever) - drop([0, 2], body.foreLever), body.trunk);
+  return { sweep, deficit, girdle, scapula: [lf[0], rf[0]], glide: [lf[1], rf[1]], spineFlex: -mean / body.hindLever,
+    hindResidual: [girdle[1] - mean, girdle[3] - mean], pitch };
+}
+export interface ReachRange { sweep: number; deficit: number; spineFlex: [number, number]; scapula: [number, number]; glide: [number, number];
+  hindResidual: number; pitch: [number, number]; flexAt: number; extendAt: number }
+/** Min/max of the targets over one stride (`n` samples), and the phases of peak flexion and extension. Pure. */
+export function reachRange(plan: CanidPlan, body: ReachBody = REF_BODY, n = 400): ReachRange {
+  const r: ReachRange = { sweep: 0, deficit: 0, spineFlex: [Infinity, -Infinity], scapula: [Infinity, -Infinity], glide: [Infinity, -Infinity],
+    hindResidual: 0, pitch: [Infinity, -Infinity], flexAt: 0, extendAt: 0 };
+  const grow = (m: [number, number], v: number) => { m[0] = Math.min(m[0], v); m[1] = Math.max(m[1], v); };
+  for (let k = 0; k < n; k++) {
+    const t = reachTargets(plan, k / n, body); r.sweep = t.sweep; r.deficit = t.deficit;
+    if (t.spineFlex > r.spineFlex[1]) r.flexAt = k / n; if (t.spineFlex < r.spineFlex[0]) r.extendAt = k / n;
+    grow(r.spineFlex, t.spineFlex); t.scapula.forEach(v => grow(r.scapula, v)); t.glide.forEach(v => grow(r.glide, v)); grow(r.pitch, t.pitch);
+    r.hindResidual = Math.max(r.hindResidual, ...t.hindResidual.map(Math.abs));
+  }
+  return r;
+}

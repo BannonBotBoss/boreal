@@ -10,17 +10,19 @@
  * - Hildebrand 1977 / Biancardi & Minetti 2012: rotary gallop LH → RH → RF → LF (or mirrored); gathered suspension after
  *   the fore pair lifts off (Bertram & Gutmann 2009).
  * Rows marked LIVE test the game's gaitFor (core/animalBehavior) and stay todo until it reads src/core/gaitData.ts
- * (see the contract in notes/grok-gait.md). Rows marked MODEL test gaitData itself and must pass.
+ * (see the contract in notes/grok-gait.md). They depend on T-0003 "wolf reach" (tasks/T-0003-wolf-reach.md): the data cadence
+ * needs the spine/pelvis/shoulder reach in the same change, or the paws overstep and the hind paws hover. Rows marked MODEL
+ * test gaitData itself and must pass.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { WOLF_LEGS, gaitFor, type Motion } from '../src/core/animalBehavior';
 import { gaitReadout } from '../src/core/gaitReadout';
-import { canidPlan, footfallOrder, selectGait, suspensions, type CanidGait } from '../src/core/gaitData';
+import { REF_BODY, canidPlan, footfallOrder, reachRange, reachTargets, selectGait, suspensions, type CanidGait } from '../src/core/gaitData';
 import { random } from '../src/proc/rng';
 import { gravity } from '../src/proc/physics';
 
-const TODO = { todo: 'LIVE: gaitFor still caps the stride at maxStance / duty; passes once gaitFor reads src/core/gaitData.ts' };
+const TODO = { todo: 'LIVE, depends on T-0003 (wolf reach): gaitFor still caps the stride at maxStance / duty; cadence (gaitFor reads src/core/gaitData.ts) and reach land together' };
 const within = (got: number, want: number, what: string) =>
   assert.ok(Math.abs(got - want) <= .15 * want, `${what}: ${got.toFixed(2)} vs ${want} (±15 %)`);
 const ROWS: Array<{ v: number; motion: Motion; gait?: string; hz: number; stride?: number; src: string }> = [
@@ -99,4 +101,40 @@ test('MODEL no flicker: a slow seeded-jitter speed ramp switches gait exactly on
 test('gait readout: cadence × stride = speed; walk is never airborne', () => {
   for (const v of [1.27, 2.7, 6, 10.5]) { const r = gaitReadout('run', v, WOLF_LEGS, .3); assert.ok(Math.abs(r.hz * r.stride - v) < 1e-9); }
   for (let p = 0; p < 1; p += .01) assert.equal(gaitReadout('walk', 1.27, WOLF_LEGS, p).airborne, false);
+});
+/* T-0003 "wolf reach" contract rows (MODEL: gaitData's reach targets). The rig half of T-0003 is checked by the LIVE rows
+ * above and by T-0003's acceptance criteria; see tasks/T-0003-wolf-reach.md. */
+const inWindow = (p: number, w: { from: number; to: number }, slack = .02) =>
+  [p, p + 1].some(q => q >= w.from - slack && q <= w.to + slack);
+test('MODEL reach: with the girdle shift, each fore paw stays within ±legChord/2 of its pivot through stance (no overstep)', () => {
+  for (const v of [1.27, 2.7, 4.96, 6, 10.5]) {
+    const p = canidPlan(v, WOLF_LEGS.hip), half = REF_BODY.legChord[p.gait] / 2;
+    for (let k = 0; k < 400; k++) {
+      const t = reachTargets(p, k / 400);
+      for (const i of [0, 2]) {
+        const s = ((k / 400 + p.offsets[i]) % 1) / p.duty; if (s >= 1) continue;
+        assert.ok(Math.abs(t.sweep * (s - .5) - t.girdle[i]) <= half + 1e-9, `${v} m/s leg ${i} s ${s.toFixed(2)}`);
+        assert.ok(Math.abs(t.glide[i / 2] - t.scapula[i / 2] * REF_BODY.foreLever - t.girdle[i]) < 1e-9, `${v} m/s leg ${i}: scapula + glide carry the girdle shift`);
+      }
+    }
+  }
+});
+test('MODEL reach: the girdles must supply sweep − legChord (today 0.16-0.47 m), and the scapula stays within ~20° (Hildebrand 1959)', () => {
+  for (const v of [1.27, 2.7, 4.96, 6, 9.2, 10.5]) {
+    const r = reachRange(canidPlan(v, WOLF_LEGS.hip));
+    assert.ok(r.deficit > .1, `${v} m/s deficit ${r.deficit.toFixed(3)} m: the leg chord alone cannot sweep the data stance`);
+    assert.ok(Math.max(-r.scapula[0], r.scapula[1]) <= REF_BODY.scapulaMax + 1e-9, `${v} m/s scapula`);
+  }
+});
+test('MODEL spine: flexed at the end of the gathered suspension, extended at the start of the extended one; still at a walk/trot', () => {
+  for (const v of [6, 10.5]) {
+    const p = canidPlan(v, WOLF_LEGS.hip), r = reachRange(p), find = (k: string) => p.suspensions.find(s => s.kind === k)!;
+    assert.ok(inWindow(r.flexAt, find('gathered')), `${v} m/s peak flexion at ${r.flexAt}`);
+    assert.ok(inWindow(r.extendAt, find('extended')), `${v} m/s peak extension at ${r.extendAt}`);
+    assert.ok(r.spineFlex[1] > .2 && r.spineFlex[0] < -.2, `${v} m/s flex range ${r.spineFlex.map(x => x.toFixed(2))} rad`);
+  }
+  for (const v of [1.27, 2.7]) { const r = reachRange(canidPlan(v, WOLF_LEGS.hip)); assert.ok(Math.max(-r.spineFlex[0], r.spineFlex[1]) < .07, `${v} m/s lumbar ±${r.spineFlex[1].toFixed(3)} rad (3-8° measured)`); }
+});
+test('MODEL pitch: small, finite, front up while the hind pair vaults', () => {
+  for (const v of [1.27, 2.7, 6, 10.5]) { const r = reachRange(canidPlan(v, WOLF_LEGS.hip)); assert.ok(r.pitch[0] > -.1 && r.pitch[1] < .1, `${v} m/s pitch ${r.pitch}`); }
 });

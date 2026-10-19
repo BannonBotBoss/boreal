@@ -6,6 +6,7 @@ owners: claude, codex
 scratch: false
 research: true
 skill: false
+tags: [animal, behaviour, wolf]
 ---
 # T-0003 Wolf reach
 

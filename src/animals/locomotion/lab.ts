@@ -163,7 +163,7 @@ function frame(now: number) {
   if (layers.legs && !layers.body && realChains.length) realChains.forEach((c, i) => { const v = new THREE.Vector3(); setLine(boneLines[i], [c.girdle, c.upper, c.lower, c.foot, c.paw].map(o => o.getWorldPosition(v).clone())); });
   placeCamera(false); controls.update(); renderer.render(scene, camera);
   $('spv').textContent = state.speed.toFixed(1);
-  $('ro').textContent = `${loco.jumping() ? 'POUNCE  ' : ''}gait ${pose.gait}  Fr ${pose.froude.toFixed(2)}  duty ${pose.duty.toFixed(2)}\nstride ${pose.cycle.toFixed(2)} m  pitch ${(pose.pitch * 57.3).toFixed(1)}°  roll ${(pose.roll * 57.3).toFixed(1)}°\n`
+  $('ro').textContent = `${loco.jumping() ? 'POUNCE  ' : ''}gait ${pose.gait}  Fr ${pose.froude.toFixed(2)}  duty ${pose.duty.toFixed(2)}  ${(state.speed / Math.max(1e-6, pose.cycle)).toFixed(2)} Hz  ${pose.contacts.some(c => c) ? 'ground' : 'AIRBORNE'}${TIMESCALE < 1 ? `  x${TIMESCALE}` : ''}\nstride ${pose.cycle.toFixed(2)} m  pitch ${(pose.pitch * 57.3).toFixed(1)}°  roll ${(pose.roll * 57.3).toFixed(1)}°\n`
     + LEG_NAMES.map((n, i) => `${n} φ ${pose.phases[i].toFixed(2)} ${pose.contacts[i] ? 'down' : 'swing'}`).join('\n');
   drawStrip();
   requestAnimationFrame(frame);

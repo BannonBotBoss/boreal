@@ -6,7 +6,8 @@ import { WHY_DEFAULTS, WHY_MAX, anchor, groundWhy, isWhy, nowText, whyOf, whyTex
 import { catalog, type Kind } from '../src/core/catalog';
 import { createContext, interact, parseContext, solidContact } from '../src/core/events';
 import { rockDiameter, SNOUT_REACH } from '../src/core/rocks';
-import type { Entity } from '../src/core/world';
+import { heightAt, type Entity } from '../src/core/world';
+import { logContact, LOG_SEAT_DEFAULTS } from '../src/core/logContact';
 
 const contact = (a: string, b = 'ground', source = 'test'): Contact => ({ a, b, at: [0, 0, 0], normal: [0, 1, 0], kind: 'solid-solid', source });
 const entity = (key: string, kind: Kind, extra: Partial<Entity> = {}): Entity => ({ key, kind, seed: 7, generatorVersion: 1, x: 0, z: 0, rotation: 1, scale: 1, ...extra });
@@ -129,4 +130,21 @@ test('seating inputs ride on the contact for T-0005: defaults, bounds, and solid
   assert.equal(solidContact(ctx, payload), ctx, 'generated log: still the same context');
   const deer = entity('2:2:1', 'deer'), known = interact(createContext(), { x: 0, z: 1, abilities: ['speak'] }, deer, 'speak');
   assert.deepEqual(solidContact(known, { ...contact(deer.key), sinkFraction: .9 }), solidContact(known, contact(deer.key)), 'payload does not change the why');
+});
+test('logContact: uses T-0005 logSeat when given (seated point, normal, densities, depth), else the centre sample; never seats', () => {
+  const log = entity('0:0:9', 'log', { x: 12.3, z: -4.5 }), y = heightAt(log.x, log.z), before = structuredClone(log);
+  const plain = logContact(log, y);
+  assert.equal(plain.source, 'chunk-build:log'); assert.deepEqual(plain.at, [log.x, y, log.z]);
+  assert.ok(Math.abs(Math.hypot(...plain.normal) - 1) < 1e-9 && plain.normal[1] > 0);
+  assert.equal(plain.sinkFraction, LOG_SEAT_DEFAULTS.sinkFraction); assert.equal(plain.trunkDensity, LOG_SEAT_DEFAULTS.trunkDensity);
+  let calls = 0;
+  const seat = (e: Entity) => { calls++; assert.equal(e, log); return { a: 0, pitch: .1, roll: 0, at: [1, 2, 3] as [number, number, number], normal: [0, 1, 0] as [number, number, number],
+    settle: { trunkDensity: 512, earthDensity: 1450, soil: 'till', depth: .36, onRock: false } }; };
+  const seated = logContact(log, y, seat);
+  assert.equal(calls, 1); assert.equal(seated.source, 'chunk-build:log-seat');
+  assert.deepEqual([seated.at, seated.normal, seated.trunkDensity, seated.earthDensity, seated.sinkFraction], [[1, 2, 3], [0, 1, 0], 512, 1450, .36]);
+  assert.equal(logContact(log, y, () => { throw new Error('boom'); }).source, 'chunk-build:log', 'a throwing logSeat falls back');
+  assert.equal(logContact(log, y, () => ({ at: [1, 2], normal: [0, 1, 0] })).source, 'chunk-build:log', 'a malformed seat falls back');
+  assert.equal(logContact(log, y, () => ({ at: [1, 2, 3], normal: [0, 1, 0], settle: { depth: 7 } })).sinkFraction, LOG_SEAT_DEFAULTS.sinkFraction, 'bad depth -> default');
+  assert.deepEqual(log, before, 'the entity is never changed');
 });

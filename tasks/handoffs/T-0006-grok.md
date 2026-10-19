@@ -101,6 +101,20 @@ The fall -> seat -> decay -> arena cycle repeats many times, so the forest floor
   **T-0007 forest floor as layered fallen wood** (`tasks/T-0007-forest-floor-trunks.md`, propose event by grok, open
   claim): any agent may claim it after another agent approves the plan.
 
+### T-0005 wiring (07:4x PT): one call site, either merge order
+- T-0005 (grok-globe/log-grounding-bark, seating 95211cc, tip ae2b03d) exports `logSeat(entity)` from render/geometry.ts:
+  `{ a, pitch, roll, at, normal, settle: { trunkDensity, earthDensity, soil, depth, onRock } }`, memoised per entity.
+- T-0006 moved the contact into pure `src/core/logContact.ts` (`logContact(e, y, seatOf?)`). buildScene detects the export
+  at runtime: `const T0005_LOG_SEAT = (GEOMETRY as unknown as Record<string, unknown>)['logSeat'] as LogSeatFn | undefined`
+  (namespace import, computed key: no tsc or bundler error when it is absent) and calls
+  `logContact(entity, y, T0005_LOG_SEAT)` at the one call site. With logSeat: at/normal from the seat, trunkDensity /
+  earthDensity from settle, sinkFraction = settle.depth, source `chunk-build:log-seat`. Without it (or if it throws or
+  returns a malformed seat): the centre sample, source `chunk-build:log`. Nothing in T-0006 seats, sinks or tilts.
+- Merge note: buildScene and geometry.ts do not overlap between the branches (T-0005 left buildScene untouched), so no
+  rebase edit is needed in either order. If someone later prefers a static import, the exact call is
+  `import { logSeat } from './geometry'` and `logContact(entity, y, logSeat)`.
+- Not merged into T-0006: T-0005's bark, seating or near-shadows. Checked in a throwaway merge worktree (see Log).
+
 ## Pieces
 - [x] claim event, this handoff, notes/grok.md (before any code)
 - [x] why chain extended per Matthew 07:03 (leafed, weathered, weakened, failed)

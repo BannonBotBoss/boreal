@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { generateGeometry, disposeObject } from './geometry';
+import * as GEOMETRY from './geometry';
 import { CHUNK_SIZE, generateChunk, heightAt, type Entity } from '../core/world';
 import { restoreEntities, type EventContext } from '../core/events';
-import { CONTACTS, SEAT_DEFAULTS, type Contact } from '../core/contactBus';
-import { COMPOSITIONS, density } from '../core/materials';
+import { CONTACTS, type Contact } from '../core/contactBus';
+import { logContact, type LogSeatFn } from '../core/logContact';
 import { chunkTerrainJob, positionCamera } from './math';
 import { warmTerrainWorkers } from './terrainPool';
 import { terrainMaterial } from './pbr';
@@ -46,15 +47,11 @@ import { bandBackground, bandCamera, bandFx } from '../world/globe/inpage';
 /** Photo mode: a free camera and an optional sun-hour override; the world is drawn frozen. */
 export interface PhotoView { cam: { x: number; y: number; z: number; yaw: number; pitch: number; roll: number; fov: number }; hour?: number; focalMm: number; /** false while a live sequence lets the world run */ frozen?: boolean }
 export type ForageHandler = (animal: Entity, plant: Entity) => number | undefined;
-/** T-0006: the ONE log-on-earth contact (shared call site with T-0005). Placement only reads the ground: it never seats,
- *  sinks or tilts the log. TODO(T-0005): when seatLog merges, pass its returned { at, normal } here instead of the centre
- *  height and the two forward heightAt differences below. `source` says this edge is chunk-build (render lifetime). */
-const LOG_SEAT = { trunkDensity: density(COMPOSITIONS.log.body), earthDensity: SEAT_DEFAULTS.earthDensity, sinkFraction: SEAT_DEFAULTS.sinkFraction }; // inputs for T-0005 to read
-export function logContact(e: Entity, y: number, seat?: { at: [number, number, number]; normal: [number, number, number] }): Contact {
-  if (seat) return { a: e.key, b: 'ground', at: seat.at, normal: seat.normal, kind: 'solid-solid', source: 'chunk-build:log', ...LOG_SEAT };
-  const d = .5, nx = y - heightAt(e.x + d, e.z), nz = y - heightAt(e.x, e.z + d), l = Math.hypot(nx, d, nz);
-  return { a: e.key, b: 'ground', at: [e.x, y, e.z], normal: [nx / l, d / l, nz / l], kind: 'solid-solid', source: 'chunk-build:log', ...LOG_SEAT };
-}
+/** T-0005 adapter (T-0006): grok-globe/log-grounding-bark's render/geometry.ts exports `logSeat(entity)`. Detected at
+ *  runtime through the module namespace (a computed key, so neither tsc nor the bundler needs the export), so either merge
+ *  order works: after T-0005 merges, the contact carries the seated { at, normal } and settle; before, core/logContact's
+ *  centre sample. Nothing here seats, sinks or tilts a log. */
+const T0005_LOG_SEAT = (GEOMETRY as unknown as Record<string, unknown>)['logSeat'] as LogSeatFn | undefined;
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU
   const BASE_RATIO = Math.min(devicePixelRatio, 1.5);
@@ -120,7 +117,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       }
       const ranges = (entity.kind === 'rock' ? [0, 10, 24] : [0, 55, 115]).map(r => r * RENDER.lod[entity.kind === 'rock' ? 'rocks' : entity.kind === 'spruce' ? 'trees' : 'props']);
       const y = heightAt(entity.x, entity.z);
-      if (entity.kind === 'log') contacts.push(logContact(entity, y)); // T-0006 (T-0005: seatLog's { at, normal })
+      if (entity.kind === 'log') contacts.push(logContact(entity, y, T0005_LOG_SEAT)); // T-0006: the one call site; T-0005's logSeat when present
       if (entity.kind !== 'person') { // static: batched per chunk + material (render/batch); a pushed rock becomes a live LOD (see draw)
         const levels: THREE.Object3D[] = []; for (let d = 0; d < 3; d++) { levels.push(generateGeometry(entity, d)); if (d < 2) yield; } // one LOD per step
         batch.add(entity.key, new THREE.Vector3(entity.x, y, entity.z), levels, entity.kind === 'rock' ? [...ranges, 45 * RENDER.lod.rocks] : ranges);

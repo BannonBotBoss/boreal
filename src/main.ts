@@ -1,6 +1,7 @@
 import './style.css';
 import { buildScene } from './render/buildScene';
-import { availableActions, consumeForage, createContext, friendCount, interact, parseContext, type Player } from './core/events';
+import { availableActions, consumeForage, createContext, friendCount, interact, parseContext, solidContact, type Player } from './core/events';
+import { CONTACTS } from './core/contactBus';
 import { catalog } from './core/catalog';
 import type { Entity } from './core/world';
 import { BorealSound } from './audio/borealSound';
@@ -86,6 +87,20 @@ try { view = buildScene(canvas, onForage); } catch (error) {
   status.textContent = '3D unavailable. Open this page in a browser with WebGL2 enabled.';
   throw error;
 }
+// T-0006: every solid-solid contact (core/contactBus) runs the pure solidContact transaction. Chunk build/dispose edges
+// are render lifetime ("became known", see Contact.source), so solidContact is idempotent and writes only records that
+// already exist: generated logs never enter the save. No revision++ here (that would rebuild every chunk and re-fire).
+const contactsLog = new URLSearchParams(location.search).get('contacts') === '1';
+if (contactsLog) (window as unknown as { contacts: typeof CONTACTS }).contacts = CONTACTS; // console: contacts.touching()
+CONTACTS.onContact(c => {
+  if (contactsLog) console.log(`[contacts] begin ${c.a} | ${c.b} (${c.source}) at ${c.at.map(v => v.toFixed(2)).join(',')} n ${c.normal.map(v => v.toFixed(2)).join(',')}`);
+  if (saveBlocked || !(Object.hasOwn(context.records, c.a) || Object.hasOwn(context.records, c.b))) return; // generated-only: nothing to write
+  try {
+    const next = solidContact(context, c); if (next === context) return;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(next)); context = next; // commit before exposing
+  } catch { /* storage blocked: keep the previous context */ }
+});
+if (contactsLog) CONTACTS.onSeparate((a, b, source) => console.log(`[contacts] end ${a} | ${b} (${source})`));
 function perform() {
   if(autonomous) setAutonomous(false);
   if (!target || paused || dialog.open || saveBlocked) return;

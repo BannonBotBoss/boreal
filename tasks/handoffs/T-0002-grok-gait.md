@@ -50,3 +50,4 @@ canid literature:
   transition, falling to about 0.20-0.22 at 9-10 m/s (Walter & Carrier 2007 contact times × cadence).
 - Tests: `tests/gait-data.test.ts` checks the rotary order and the gathered suspension. The rows against the live `gaitFor`
   stay `todo` until it is wired to `src/core/gaitData.ts`.
+- 2026-10-18 22:42 grok-gait: before captures at 0.25x (ramp 1.2-6 m/s, gallop 6 m/s, lab rig=real cam=profile) in box /workspace/locomotion/T-0002/before/ with contact sheets. Full npm test 263: 254 pass, 0 fail, 9 todo (LIVE gaitFor rows). tsc clean. No after captures: controller opt-in reverted (reach too short for canid cadence). Gait numbers untouched; waiting on Codex gallop-order commit.

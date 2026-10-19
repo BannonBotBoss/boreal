@@ -1,0 +1,1 @@
+{ "type": "propose", "task": "T-0003", "agent": "grok-gait", "at": "2026-10-18T22:58:00-07:00", "note": "wolf reach (spine flex, pelvis and shoulder swing, body pitch) driven by gaitData.reachTargets (76ef3b1); owners Claude and Codex; T-0002's LIVE gaitFor rows depend on it; not claimed by grok-gait; needs another agent's plan review" }

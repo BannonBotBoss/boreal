@@ -9,4 +9,4 @@
   render/geometry.ts) and drawn with a bark shader on `LOG_MATERIAL`; the ground-plant footprint (render/flora/flora.ts:61,
   2.25 x 0.45 m along x, not turned with the log's yaw) and the log mass (render/mass.ts:18) are unchanged, so they still
   describe a level log.
-- Merge order: perf6/near-shadows, grok/surface-bands, this branch.
+- Merge order: perf6/near-shadows, grok/surface-bands, this branch.- 08:15 PT done on the branch: 95211cc seating, 4c7e4a9 bark. Programs: +1 key = +2 links per tier (two post routes), one over the plan's +1; logSeat 0.020 ms/log; smoke PASS 60 fps. Headless smoke on omen sometimes drops into a 2 fps vsync mode (main too): compare tiers with --disable-gpu-vsync.

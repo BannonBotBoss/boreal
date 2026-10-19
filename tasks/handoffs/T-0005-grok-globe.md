@@ -35,10 +35,26 @@ log (static load ~2.3 kN/m), far from Matthew's third; it stays the footprint mo
 - [x] propose + claim events, this handoff, notes/grok-globe.md (before any code)
 - [x] merge perf6/near-shadows 4c8d933 (c65907e, no conflicts)
 - [x] `tests/log-seat.test.ts` (399e556; failed on main + near-shadows: -5:-5:7 floating, bury -0.14/-0.03/-0.03; -5:3:23 pitch 0.00 vs ground 4.95 deg)
-- [ ] `seatLog` + `core/settle.ts` (pitch, roll, density-settled depth from heightAt at both ends, the middle and across)
-- [ ] bark material hook on `LOG_MATERIAL` + `bark` vertex attribute, 12 sides at LOD 0, smooth normals
-- [ ] `noBands`, tier strength uniform (off on Low, Very low, Minimum), fade kept
-- [ ] budget numbers, smoke-tiers, captures
+- [x] `seatLog` + `core/settle.ts` (95211cc)
+- [x] bark hook on `LOG_MATERIAL` + `bark` attribute, 12/8/6 sides, smooth normals; `noBands`; `uBark` 0 on Low and cheaper;
+      fade kept (4c7e4a9, tests/log-bark.test.ts)
+- [x] budget numbers, smoke-tiers, captures (below)
+- [ ] not done: the 300 m in-page descent capture (checked instead: `LOG_MATERIAL.userData.patchFade` is true in the page,
+      i.e. render/fade's dither edit compiled into the log program); the noBands check ran in node against surface-bands
+      f59ad1d (`wantsBands(LOG_MATERIAL)` false, hook and key untouched; control PROP_MATERIAL true), not as a merged capture.
+
+## Budget (omen, RTX 5060 laptop, headless Edge; main = 7d71892)
+| | target | measured |
+|---|---|---|
+| programs | <= +1 per tier | **+1 material program key; it shows as +2 links** at load (76 vs 74) and per tier (Medium 30+1 vs 29, Low 53 vs 51, Very low 30 vs 28, Minimum 42 vs 40). Seat-only (95211cc) = main exactly (74/18*/51/28/40), so the +2 is the bark hook. Most likely the game compiles every material for both post routes (photoreal: "Both post routes are compiled"), so one new key = 2 programs. **Over the literal target by one link per tier.** Zero-program alternative: put the same hook on PROP_MATERIAL too (keyed identically, bark only where the attribute is present) and keep flat shading; it touches the props program and batch.ts, so not done without a decision |
+| draw calls | unchanged | unchanged by construction (logs already have their own BatchedMesh per chunk since 4c8d933; the hook adds no mesh). Smoke draws/frame are within run-to-run noise (Ultra 233 vs 219, Minimum 77 vs 76) |
+| chunk build | <= +0.05 ms/log | `logSeat` 0.020 ms/log (node, 1000 seeded logs, 11 heightAt + 1 soilAt, memoised across the 3 LODs) |
+| smoke | no new errors, no fps loss | official tools/smoke-tiers.mjs at 4c7e4a9: **PASS**, 60-61 fps every tier, no page errors. Same-mode comparison (smoke copy with `--disable-gpu-vsync`, measurement only): main 70/73/67/83/19/132 fps, branch 70/58/48/82/84/142 (Ultra..Minimum); single runs, noisy both ways (main dipped to 19 at Very low). The official smoke on main and on 95211cc hit omen's 2 fps vsync mode (GpuVSyncThread), on main too |
+
+## Captures (13:00, Ultra unless noted; log 1:0:23 at 57.55, 37 on a ~10 deg slope)
+Box `/workspace/`: `logs-before-close.jpg` (3.4 m) and `logs-before-medium.jpg` (25 m) from main 7d71892: level, faceted
+brown box floating off the slope. `logs-after-close.jpg`, `logs-after-medium.jpg` from 4c7e4a9: tilted with the slope,
+pressed in, bark plates and furrows. `logs-after-minimum-close.jpg`: Minimum tier, bark off (plain smooth log). All < 120 KB.
 
 ## How the bark data survives the batch (plan review nit 2)
 Log parts are `userData.shared` meshes on `LOG_MATERIAL`, so `render/batch.ts` `flatten` uses `placed()`, which clones every
@@ -53,3 +69,6 @@ the worktree's own dev server on a separate port.
 - 06:49 claimed; handoff and notes first.
 - 07:15 before captures (main 7d71892, log 1:0:23 at 57.55, 37 on a 10 deg slope, 13:00, Ultra): level log floating off the slope.
 - 07:35 seating on the density model; logSeat bench 0.020 ms per log (1000 logs, node); tests 5/5.
+- 08:15 bark committed (4c7e4a9), captures and budget done; worktree dev servers (:5195 branch, :5196 main) stopped, temporary
+  main worktree C:\dev\boreal-t5-base removed (git could not delete its metadata folder in the served .git: permission denied, OneDrive lock; not listed by git worktree list; not pruned).
+- Next (reviewer / Matthew): decide on the +1 link per tier (accept, or the shared-program variant); T-0006 swaps its centre sample for `logSeat(entity)` if it lands first; complete event after review.

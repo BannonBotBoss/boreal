@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Boreal task board</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#10161b;--card:#18222a;--line:#2a3742;--fg:#dde6ec;--dim:#8fa3b1;--acc:#7cc4a4}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,Segoe UI,sans-serif;background:var(--bg);color:var(--fg)}
+header{position:sticky;top:0;background:#0c1115ee;border-bottom:1px solid var(--line);padding:12px 24px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;z-index:1}
+h1{font-size:19px;margin:0}header .src{color:var(--dim);font-size:13px;flex:1}
+select{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit}
+main{max-width:1100px;margin:0 auto;padding:18px 24px 60px}
+.agents,.errors{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:14px}
+.errors{border-color:#7a4b2a;color:#f0c49a}.agents span{margin-right:18px;white-space:nowrap}
+.task{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.head{padding:14px 18px;cursor:pointer}.head h2{font-size:17px;margin:0 0 6px}.id{color:var(--acc);margin-right:8px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--dim)}.meta b{color:var(--fg);font-weight:600}
+.st{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#0c1115}
+.proposed{background:#d9c46a}.approved{background:#7fb7e6}.claimed{background:#b79cf0}.completed{background:#f0a35e}.done{background:#7cc4a4}.rejected{background:#e07a7a}
+.body{border-top:1px solid var(--line);padding:4px 18px 16px;display:none}.task.open .body{display:block}
+.tl{list-style:none;padding:0;margin:8px 0 14px;border-left:2px solid var(--line)}
+.tl li{padding:4px 0 8px 14px;position:relative}.tl li:before{content:"";position:absolute;left:-6px;top:11px;width:10px;height:10px;border-radius:50%;background:var(--acc)}
+.tl .k{font-weight:700}.tl .when,.tl .refs{color:var(--dim);font-size:13px}.tl .note{font-size:14px;white-space:pre-wrap;word-break:break-word}
+.md{font-size:14px}.md h1,.md h2,.md h3{font-size:15px;margin:16px 0 6px;color:var(--acc)}
+.md code{background:#0c1115;padding:1px 4px;border-radius:4px;font-size:13px}.md pre{background:#0c1115;padding:10px;border-radius:6px;overflow:auto}
+.md table{border-collapse:collapse;margin:8px 0;font-size:13px}.md td,.md th{border:1px solid var(--line);padding:3px 8px}
+.md a{color:#8ec9ff}details{margin:6px 0}summary{cursor:pointer;color:var(--dim)}
+.empty{color:var(--dim);text-align:center;padding:40px}
+</style></head><body>
+<header><h1>Boreal task board</h1><span class="src" id="src">loading…</span>
+<label>Status <select id="fs"><option value="">all</option></select></label>
+<label>Agent <select id="fa"><option value="">all</option></select></label></header>
+<main id="m"></main>
+<script>
+const LABEL={proposed:'proposed',approved:'approved',claimed:'claimed · in progress',completed:'completed · awaiting review',done:'done · reviewed',rejected:'rejected'};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const when=at=>new Date(at).toLocaleString('en-CA',{timeZone:'America/Vancouver',dateStyle:'medium',timeStyle:'short'})+' PT';
+function inline(s){return esc(s).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+ .replace(/(^|[\s(])\*([^*\s][^*]*)\*/g,'$1<i>$2</i>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')}
+function md(src){ // small renderer: headings, lists, checkboxes, tables, code fences, paragraphs
+ const L=src.replace(/\r/g,'').replace(/^---\n[\s\S]*?\n---\n?/,'').split('\n'),o=[];let i=0;
+ while(i<L.length){const l=L[i];
+  if(/^```/.test(l)){const b=[];while(++i<L.length&&!/^```/.test(L[i]))b.push(L[i]);i++;o.push('<pre><code>'+esc(b.join('\n'))+'</code></pre>');continue}
+  let h=/^(#{1,6})\s+(.*)/.exec(l);if(h){o.push(`<h${Math.min(3,h[1].length)}>${inline(h[2])}</h${Math.min(3,h[1].length)}>`);i++;continue}
+  if(/^\|/.test(l)){const rows=[];while(i<L.length&&/^\|/.test(L[i]))rows.push(L[i++]);
+   o.push('<table>'+rows.filter(r=>!/^\|[\s:|-]+\|$/.test(r)).map((r,n)=>'<tr>'+r.replace(/^\||\|$/g,'').split('|').map(c=>n?`<td>${inline(c.trim())}</td>`:`<th>${inline(c.trim())}</th>`).join('')+'</tr>').join('')+'</table>');continue}
+  if(/^\s*([-*]|\d+\.)\s/.test(l)){const ol=/^\s*\d+\./.test(l),it=[];
+   while(i<L.length&&(/^\s*([-*]|\d+\.)\s/.test(L[i])||(/^\s{2,}\S/.test(L[i])&&it.length))){const x=L[i++];if(/^\s*([-*]|\d+\.)\s/.test(x))it.push(x.replace(/^\s*([-*]|\d+\.)\s/,''));else it[it.length-1]+=' '+x.trim()}
+   o.push((ol?'<ol>':'<ul>')+it.map(x=>'<li>'+inline(x).replace(/^\[ \]/,'☐').replace(/^\[x\]/i,'☑')+'</li>').join('')+(ol?'</ol>':'</ul>'));continue}
+  if(!l.trim()){i++;continue}
+  const p=[];while(i<L.length&&L[i].trim()&&!/^(#|```|\||\s*([-*]|\d+\.)\s)/.test(L[i]))p.push(L[i++]);o.push('<p>'+inline(p.join(' '))+'</p>')}
+ return o.join('')}
+let B,open=new Set(decodeURIComponent(location.hash.slice(1)).split(',').filter(Boolean)); // #T-0002 opens that task
+const agentsOf=t=>new Set([t.author,t.claimant,...B.events.filter(e=>e.task===t.id).map(e=>e.agent)].filter(Boolean));
+function render(){const fs=document.getElementById('fs').value,fa=document.getElementById('fa').value;
+ const tasks=B.tasks.filter(t=>(!fs||t.state===fs)&&(!fa||agentsOf(t).has(fa))).sort((a,b)=>b.id.localeCompare(a.id));
+ let h='';
+ if(B.agents.length)h+='<div class="agents"><b>Credits</b> &nbsp; '+B.agents.map(a=>`<span>${esc(a.agent)}: <b>${a.credits}</b> cr · ${esc(a.status)}</span>`).join('')+'</div>';
+ if(B.errors.length)h+='<div class="errors"><b>Rule breaks reported by tools/tasks.ts</b><ul>'+B.errors.map(e=>`<li>${esc(e)}</li>`).join('')+'</ul></div>';
+ if(!tasks.length)h+='<div class="empty">No tasks match.</div>';
+ for(const t of tasks){const ev=B.events.filter(e=>e.task===t.id),work=[...ev].reverse().find(e=>e.branch)?.branch,
+  owners=(/^owners:\s*(.*)$/m.exec(t.markdown)||[])[1];
+  h+=`<section class="task${open.has(t.id)?' open':''}" data-id="${esc(t.id)}"><div class="head"><h2><span class="id">${esc(t.id)}</span>${esc(t.title)}</h2>
+  <div class="meta"><span class="st ${t.state}">${LABEL[t.state]||t.state}</span><span>author <b>${esc(t.author)}</b></span>
+  ${owners?`<span>owners <b>${esc(owners)}</b></span>`:''}<span>claimant <b>${esc(t.claimant||'—')}</b></span>
+  <span>award <b>${t.award} cr</b> (${t.steps} steps${t.research?', research':''}${t.scratch?', scratch':''}${t.skill?', skill':''})</span>
+  ${work?`<span>work branch <b>${esc(work)}</b></span>`:''}<span>file on <b>${esc(t.branches.join(', ')||'—')}</b></span></div></div>
+  <div class="body"><h3>Timeline</h3><ul class="tl">${ev.map(e=>`<li><span class="k">${esc(e.type)}</span> · <b>${esc(e.agent)}</b> · <span class="when">${when(e.at)}</span>
+   ${e.branch?` · branch ${esc(e.branch)}`:''}<div class="note">${esc(e.note||'')}</div><div class="refs">${esc(e.file)} — on ${esc(e.refs.join(', '))}</div></li>`).join('')||'<li>no events</li>'}</ul>
+  ${t.handoffs.map(f=>`<details><summary>Handoff: ${esc(f.file)}</summary><div class="md">${md(f.markdown)}</div></details>`).join('')}
+  <h3>Plan</h3><div class="md">${md(t.markdown)}</div></div></section>`}
+ document.getElementById('m').innerHTML=h;
+ for(const s of document.querySelectorAll('.task .head'))s.onclick=()=>{const id=s.parentNode.dataset.id;open.has(id)?open.delete(id):open.add(id);s.parentNode.classList.toggle('open')}}
+function fill(id,vals){const s=document.getElementById(id),v=s.value;s.innerHTML='<option value="">all</option>'+vals.map(x=>`<option${x===v?' selected':''}>${esc(x)}</option>`).join('')}
+async function load(){try{B=await (await fetch('/api/board',{cache:'no-store'})).json();
+ const src=B.source.mode==='all-branches'?`all ${B.source.refs.length} local branches`:B.source.mode==='ref'?'branch '+B.source.refs[0]:'folder '+B.source.dir;
+ document.getElementById('src').textContent=`read-only · ${src} · updated ${when(B.at)} · refreshes every 15 s`;
+ fill('fs',Object.keys(LABEL).filter(s=>B.tasks.some(t=>t.state===s)));
+ fill('fa',[...new Set(B.tasks.flatMap(t=>[...agentsOf(t)]))].sort());render()}catch(e){document.getElementById('src').textContent='board unavailable: '+e}}
+document.getElementById('fs').onchange=document.getElementById('fa').onchange=render;
+load();setInterval(load,15000);
+</script></body></html>

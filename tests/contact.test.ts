@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createContactBus, seatInputs, SEAT_DEFAULTS, type Contact } from '../src/core/contactBus';
 import { COMPOSITIONS, density } from '../src/core/materials';
-import { WHY_DEFAULTS, WHY_MAX, anchor, nowText, whyOf, whyText, stepText, tip, withTip, type Why } from '../src/core/why';
+import { WHY_DEFAULTS, WHY_MAX, anchor, groundWhy, isWhy, nowText, whyOf, whyText, stepText, tip, withTip, type Why } from '../src/core/why';
 import { catalog, type Kind } from '../src/core/catalog';
 import { createContext, interact, parseContext, solidContact } from '../src/core/events';
 import { rockDiameter, SNOUT_REACH } from '../src/core/rocks';
@@ -38,15 +38,17 @@ test('contact bus: touching() shows contacts made before a late subscriber; unsu
 test('why: every Kind has a derived chain; the tree chain is Matthew\'s; a record chain wins', () => {
   for (const kind of Object.keys(catalog) as Kind[]) { const w = whyOf({ kind }); assert.ok(w.length >= 1 && w.length <= WHY_MAX, kind); }
   assert.deepEqual(WHY_DEFAULTS.spruce.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew']);
-  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weathered', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing']);
-  assert.ok(!WHY_DEFAULTS.spruce.some(s => ['weathered', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing'].includes(s.step)), 'a standing tree has not failed');
+  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weathered', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried']);
+  assert.ok(!WHY_DEFAULTS.spruce.some(s => ['weathered', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried'].includes(s.step)), 'a standing tree has not failed');
   assert.ok(WHY_DEFAULTS.log.length <= WHY_MAX);
-  assert.equal(stepText(WHY_DEFAULTS.log[WHY_DEFAULTS.log.length - 12]), 'displaced the ground (the earth yields)');
-  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step).slice(-6), ['held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing']);
-  assert.equal(WHY_MAX, 24); assert.equal(WHY_DEFAULTS.log.length, 22);
+  assert.equal(stepText(WHY_DEFAULTS.log[WHY_DEFAULTS.log.length - 13]), 'displaced the ground (the earth yields)');
+  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step).slice(-7), ['held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried']);
+  assert.equal(WHY_MAX, 24); assert.equal(WHY_DEFAULTS.log.length, 23);
   assert.equal(stepText(anchor(whyOf({ kind: 'log' }))!), 'resting on the ground', 'the anchor skips ongoing steps');
-  assert.equal(stepText(tip(whyOf({ kind: 'log' }))!), 'the other side collecting debris and growing other plants');
-  assert.equal(nowText(whyOf({ kind: 'log' })), 'resting on the ground, the other side collecting debris and growing other plants');
+  assert.equal(stepText(tip(whyOf({ kind: 'log' }))!), 'becoming forest floor (one more trunk cycle)');
+  assert.equal(nowText(whyOf({ kind: 'log' })), 'resting on the ground, becoming forest floor (one more trunk cycle)');
+  assert.equal(whyText(groundWhy()), 'weathered over time \u2192 built up from many cycles of fallen trunks', 'the ground is made of trunks');
+  assert.ok(isWhy(groundWhy()) && isWhy(WHY_DEFAULTS.log));
   assert.ok(!WHY_DEFAULTS.log.some(x => (x.step as string) === 'aired'), 'oxygen is the oxidized step');
   assert.equal(nowText(whyOf({ kind: 'spruce' })), 'grew and leafed out');
   assert.equal(stepText(tip(whyOf({ kind: 'rock' }))!), 'embedded in the ground');
@@ -60,7 +62,7 @@ test('why: withTip is idempotent, replaces a same-step tip and stays within WHY_
   const w = whyOf({ kind: 'log' });
   assert.deepEqual(withTip(w, { step: 'resting', on: 'ground' }), w);
   assert.deepEqual(anchor(withTip(w, { step: 'resting', on: 'r1' })), { step: 'resting', on: 'r1' });
-  assert.deepEqual(withTip(w, { step: 'resting', on: 'r1' }).slice(-9).map(s => s.step), ['ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing'], 'ongoing steps kept after a replaced anchor');
+  assert.deepEqual(withTip(w, { step: 'resting', on: 'r1' }).slice(-10).map(s => s.step), ['ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried'], 'ongoing steps kept after a replaced anchor');
   assert.equal(tip(withTip(w, { step: 'moved', by: 'player' }))!.step, 'moved', 'a new event appends after the ongoing steps');
   assert.equal(withTip(w, { step: 'resting', on: 'r1' }).length, w.length);
   let long = w; for (let i = 0; i < 6; i++) long = withTip(withTip(long, { step: 'moved', by: 'player' }), { step: 'resting', on: `r${i}` });

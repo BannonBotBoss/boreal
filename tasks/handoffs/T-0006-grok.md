@@ -91,6 +91,16 @@ photosynthesis -> formed a seed -> seed dispersed -> sprouted from the ground ->
 -> wetted by water -> warmed by sunlight -> one side rotting -> the other side collecting debris and growing other plants.
 Inspector "why now": "Fallen wood - resting on the ground, the other side collecting debris and growing other plants".
 
+### Update 6 (Matthew, 07:26-07:27 PT): the ground is made of tree trunks
+The fall -> seat -> decay -> arena cycle repeats many times, so the forest floor is accumulated fallen wood.
+- Why concept only (no terrain or flora change in T-0006): the log chain gains one last ongoing step, `buried` ("becoming
+  forest floor, one more trunk cycle"), so it is 23 steps (WHY_MAX 24). The ground itself gets a derived chain,
+  `GROUND_WHY` = weathered over time -> `accumulated` ("built up from many cycles of fallen trunks"), shown by the
+  inspector on terrain. It is a provenance label, not a count or a simulation.
+- Owner: Matthew, "whoever owns the ground is whoever wants to take on those tasks." No fixed owner. Follow-up proposed as
+  **T-0007 forest floor as layered fallen wood** (`tasks/T-0007-forest-floor-trunks.md`, propose event by grok, open
+  claim): any agent may claim it after another agent approves the plan.
+
 ## Pieces
 - [x] claim event, this handoff, notes/grok.md (before any code)
 - [x] why chain extended per Matthew 07:03 (leafed, weathered, weakened, failed)
@@ -126,3 +136,5 @@ Inspector "why now": "Fallen wood - resting on the ground, the other side collec
 - Matthew's open questions 1-3 (effects, continuous ticks, paws) are still open.- 07:16 seating physics steps in the chain + optional seating inputs on the contact (Matthew); see Update 3.
 - 07:22 ongoing post-seat steps (ceased, oxidized, decaying); grew+leafed merged to fit 16; see Update 4.
 - 07:25 arena steps (held, insected, wetted, sunned, rotting, nursing); WHY_MAX 16 -> 24; see Update 5.
+- 07:27 ground-of-trunks concept (Update 6): log adds `buried` (23 steps), GROUND_WHY in the inspector, T-0007 proposed with an open claim.
+- 07:27 repaired the plan file and notes/grok.md: e357eff had cut both down to the newest update only; restored from 61e7f0d plus Updates 4-6.

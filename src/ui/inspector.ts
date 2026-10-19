@@ -14,7 +14,7 @@ import { stream } from '../proc/rng';
 import { CHUNK_SIZE, WORLD_SEED, chunkSeed, generateChunk, heightAt, terrainBand } from '../core/world';
 import { applyPopulation } from '../core/population';
 import { catalog } from '../core/catalog';
-import { nowText, whyOf, whyText } from '../core/why';
+import { groundWhy, nowText, whyOf, whyText } from '../core/why';
 import { SENSE_RADII } from '../core/animalBehavior';
 import { HERD } from '../core/deerHerd';
 import { nearbyWater } from '../audio/borealSound';
@@ -64,6 +64,7 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
     if (s.type === 'terrain') {
       const t: Trace = { factors: [] }; withTrace(t, () => terrainBand(heightAt(s.point.x, s.point.z)));
       out.push(...t.factors, obs('terrain', 'height', heightAt(s.point.x, s.point.z)), obs('sound', 'nearbyWater', nearbyWater(s.point.x, s.point.z)));
+      { const gw = groundWhy(); out.push(obs('why', 'now', `Ground - ${nowText(gw)}`), obs('why', 'chain', whyText(gw))); } // T-0006 (T-0007: layered fallen wood)
       const gt: Trace = { factors: [] }, col = withTrace(gt, () => column(s.point.x, s.point.z)); out.push(...gt.factors, obs('ground', 'cell', col.cell), obs('ground', 'game years elapsed', GROUND.years));
       for (const l of col.layers) out.push(obs('layers', `${(l.top * 100).toFixed(1)} cm ${l.label}`, `${(l.thickness * 100).toFixed(1)} cm · ${l.kg.toFixed(2)} kg/m² · ρ ${l.bulk} kg/m³${l.moisture !== undefined ? ` · moisture ${Math.round(l.moisture * 100)}%` : ''}${l.age ? ` · ${l.age}` : ''} — ${l.source}`));
       // Weather cell above this point (core/weather) and the persistent deltas near it (core/deltas).

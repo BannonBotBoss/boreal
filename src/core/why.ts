@@ -8,7 +8,9 @@
  * -> oxidized (transactions with oxygen and other elements transform it) -> decaying (slowly becoming fallen trunk). Then
  * the log is an arena of ongoing transactions (Matthew 07:25): held (gravity keeps it in place) -> insected (hosts insects)
  * -> wetted (water) -> sunned (sunlight) -> rotting (one side) -> nursing (the other side collects debris and lets other
- * plants grow). Oxygen is the 'oxidized' step (no separate 'aired'). Labels only: no weather, plant or seating sim here (T-0005 seats the log; see Contact.sinkFraction).
+ * plants grow). Oxygen is the 'oxidized' step (no separate 'aired'). The cycle repeats many times, so the forest floor is
+ * accumulated fallen wood (Matthew 07:26): the log ends with buried (becoming forest floor) and the ground has its own
+ * derived chain, GROUND_WHY (weathered -> accumulated). Terrain and flora follow-ups: T-0007, open claim. Labels only: no weather, plant or seating sim here (T-0005 seats the log; see Contact.sinkFraction).
  *
  * - Closed vocabulary (WHY_TAGS); `on`/`by` are short identifiers (an entity key, 'ground', 'player'), never prose.
  * - Generated objects get a DERIVED chain from their kind and are never stored (no save growth).
@@ -19,11 +21,11 @@ import type { Kind } from './catalog';
 import type { Entity } from './world';
 import type { Solid } from './contactBus';
 
-export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing'] as const;
+export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated'] as const;
 export type WhyTag = typeof WHY_TAGS[number];
 /** Ongoing steps: slow processes that follow the anchor (the last event) instead of replacing it. A contact compares
  *  against the anchor, so a decaying log still reads as resting on the ground and the same contact stays a no-op. */
-export const ONGOING: readonly WhyTag[] = ['ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing'];
+export const ONGOING: readonly WhyTag[] = ['ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated'];
 export interface WhyStep { step: WhyTag; on?: Solid; by?: string }
 export type Why = WhyStep[];
 /** Cap on chain length. Raised 16 -> 24 (Matthew 07:25) so the fallen log's origin, break, seating physics, decay and
@@ -38,12 +40,17 @@ export const WHY_DEFAULTS: Record<Kind, Why> = {
   log: [...GROWN, { step: 'weathered' }, { step: 'weakened' }, { step: 'failed' },
     { step: 'pulled' }, { step: 'tipped' }, { step: 'displaced', on: 'ground' }, { step: 'settled' }, { step: 'resting', on: 'ground' },
     { step: 'ceased' }, { step: 'oxidized' }, { step: 'decaying' },
-    { step: 'held', by: 'gravity' }, { step: 'insected' }, { step: 'wetted' }, { step: 'sunned' }, { step: 'rotting' }, { step: 'nursing' }], // 22 steps
+    { step: 'held', by: 'gravity' }, { step: 'insected' }, { step: 'wetted' }, { step: 'sunned' }, { step: 'rotting' }, { step: 'nursing' },
+    { step: 'buried', on: 'ground' }], // 23 steps
   rock: [{ step: 'weathered' }, { step: 'embedded', on: 'ground' }],
   deer: [{ step: 'born' }, { step: 'wandered' }],
   person: [{ step: 'born' }, { step: 'wandered' }],
 };
+/** The ground's own derived chain (Solid 'ground' has no entity): bedrock weathered, then built up from many cycles of
+ *  fallen trunks (fall -> seat -> decay -> arena -> buried). Provenance only; T-0007 owns any visual or ground-model work. */
+export const GROUND_WHY: Why = [{ step: 'weathered' }, { step: 'accumulated', by: 'trunk-cycles' }];
 const copy = (w: Why): Why => w.map(s => ({ ...s }));
+export const groundWhy = (): Why => copy(GROUND_WHY);
 /** The record's chain if a transaction wrote one, else the derived default for the kind. */
 export function whyOf(e: Pick<Entity, 'kind'>, record?: { why?: Why }): Why { return copy(record?.why ?? WHY_DEFAULTS[e.kind]); }
 export const tip = (w: Why): WhyStep | undefined => w[w.length - 1];
@@ -91,6 +98,8 @@ export function stepText(s: WhyStep): string {
     case 'sunned': return 'warmed by sunlight';
     case 'rotting': return 'one side rotting';
     case 'nursing': return 'the other side collecting debris and growing other plants';
+    case 'buried': return `becoming ${s.on === undefined || s.on === 'ground' ? 'forest floor' : name(s.on)} (one more trunk cycle)`;
+    case 'accumulated': return 'built up from many cycles of fallen trunks';
   }
 }
 /** What it is now: the anchor plus the latest ongoing step after it ("resting on the ground, decaying ..."). */

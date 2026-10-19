@@ -96,7 +96,7 @@ async function benchFar() {
 }
 function steps() { // dev: step times of the sliced build (the game's 'trees2' jobs must stay under ~4 ms per step)
   const out: Record<string, (number | string)[]> = {};
-  for (const [cls, age] of [[0, 25], [1, 70], [2, 130], [3, 220]]) for (let v = 0; v < 2; v++) {
+  for (const [cls, age] of [[0, 25], [1, 70], [2, 130], [3, 220]]) for (let v = 0; v < (q.has('allv') ? 4 : 2); v++) {
     const g = buildConiferSteps('black-spruce', 101 + v * 17 + cls * 1000, age), ms: number[] = [], ph: string[] = []; let r; do { const t = performance.now(); r = g.next(); ms.push(+(performance.now() - t).toFixed(2)); ph.push(BUILD_PHASE.at); } while (!r.done);
     const i = ms.indexOf(Math.max(...ms)); out[`${age}y:${v}`] = [ms[i], ms.length, +ms.reduce((a, b) => a + b, 0).toFixed(1), i, ph[i]];
   }

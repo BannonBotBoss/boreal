@@ -25,15 +25,16 @@ The legs spin because **stride length is capped at walk scale, so every extra me
 |---|---|---|---|---|
 | 1.27 | walk | 0.60 m | 2.1 Hz | walk, 0.84 m, 1.50 Hz (Bryce & Williams 2017, wolf-like breeds) |
 | 2.70 | trot | 0.87 m | 3.1 Hz | trot, 1.26 m, 2.10 Hz (same) |
-| 3.42 | trot | 0.87 m | 4.0 Hz | trot-gallop transition, 2.4 Hz (Heglund & Taylor 1988, 40 kg) |
+| 3.42 | trot | 0.87 m | 3.9 Hz | trot-gallop transition, 2.4 Hz (Heglund & Taylor 1988, 40 kg) |
 | 4.96 | gallop | 0.97 m | 5.1 Hz | gallop, 1.91 m, 2.61 Hz (Bryce & Williams 2017) |
 | 6.0 (run) | gallop | 1.15 m | 5.2 Hz | about 2.7 Hz, stride about 2.2 m |
 | 10.5 (sprint) | gallop | 1.25 m | **8.4 Hz** | about 3 Hz, stride about 3.4 m |
 
   The game is 1.5-3× too fast in cadence, and stride is 2-3× too short in a gallop.
-- **The trot-to-gallop switch adds no stride.** The Froude handoff itself works (trot below Fr 2.5, gallop above, about
-  3.67 m/s, close to the measured 3.4 m/s), but the gallop's tighter reach makes the stride go from 0.87 m to 0.86 m at the
-  switch, and duty drops from 0.45 to 0.29, so cadence jumps from 4 to 4.7 Hz. It reads as "the same steps, faster".
+- **The trot-to-gallop switch shortens the stride.** The Froude handoff itself works (trot below Fr 2.5, gallop above, at
+  3.67 m/s, close to the measured 3.4 m/s), but at the switch point the gallop's tighter reach makes the stride go from
+  0.87 m to **0.83 m** (0.25 m / duty 0.30), duty drops from 0.45 to 0.30, and cadence jumps from 4.2 to 4.4 Hz. It reads as
+  "the same steps, faster".
 - **The flight phase is there in the timing but invisible.** Codex's offsets `[.45, 0, .6, .9]` with duty 0.2 leave whole-body
   suspensions at 0.30-0.40 and 0.75-1.00 of the cycle, but at 8.4 Hz the long one lasts about 30 ms (one 30 Hz sim step).
   `gallopBob` is a fixed 0.09·hip bump, not a ballistic arc. There is **no spine**: the rig has one `torso` bone.
@@ -93,19 +94,27 @@ spine). Nobody else changes those numbers; others send requests to the handoff f
 - **Gait Builder:** owns the CPG stack and the wolf body/coat. Ask before adding a spine bone to `core/wolfBody.ts` or
   changing `animals/locomotion/*`. The touchdown contract stays as it is.
 
+## Workflow requirements (not steps, no credit)
+These are required of every task by AGENT-WORKFLOW.md and tasks/README.md, so they are not counted in the award:
+- Handoff file `tasks/handoffs/T-0002-<agent>.md` committed before any code, and kept current.
+- Before `complete`: `npx tsc --noEmit`, `npm test` and `npm run build` green on the branch, and a playable link for Matthew.
+- Notes entry in your own `notes/<agent>.md`.
+- Base and ownership: branch from the newest main containing Codex's committed gallop order (LH → RH → RF → LF) and
+  `claude/locomotion-hooks` (or stack on them and say so in the handoff). If Codex has not committed, write to Codex in the
+  handoff and your notes file and wait before touching `gaitFor`, so no two agents tune the same stride numbers.
+
 ## Objectives
-- [ ] Handoff file `tasks/handoffs/T-0002-<agent>.md` committed before any code; branch from the newest main containing Codex's committed gallop order (LH → RH → RF → LF) and `claude/locomotion-hooks`, or record in the handoff and in Codex's direction (handoff + your notes file) that you are waiting, so no two agents tune the same stride numbers
-- [ ] Slow-motion review view: `?timescale=0.25` (0.05-1) scales the sim step and the rig's animation time together, plus a gait readout (gait, Fr, cadence Hz, stride m, duty, airborne yes/no) in the inspector and the `?loco=1` lab
+- [ ] Slow-motion review view `?timescale=s` (0.05-1, URL only, never saved). It multiplies the frame `dt` once in `main.ts`, before the fixed-step accumulator, the animal updates in `buildScene` and the rigs' animation time. So the player's movement, animal AI and movement, gaits, touchdowns and `shaderClock` effects (wind, water) all slow together and stay consistent with each other. The world clock (`core/worldClock` `worldSec`, saves, offline credit), sun and seasons, the weather (`core/weather`), audio pitch, camera look, input and UI stay on real time, because they run on wall time or `worldSec` and slowing them would desync saves. If `simTime` re-syncs to `worldSec`, skip that re-sync while `s ≠ 1`. Add a gait readout (gait, Fr, cadence Hz, stride m, duty, airborne yes/no) to the inspector and the `?loco=1` lab
 - [ ] `tests/gait-data.test.ts`: the canid table above (Heglund & Taylor 1988, Bryce & Williams 2017, Maes 2008, Walter & Carrier 2007) asserted against `gaitFor(WOLF_LEGS)` for cadence and stride within ±15 %; record in the handoff that it fails on the current code before fixing it
 - [ ] `gaitFor`: cadence from the data instead of the reach cap. Use a frequency curve f(v) per gait (trot about 1.9-2.4 Hz; gallop 2.4 Hz at the transition rising to about 3 Hz at 10.5 m/s), with stride = v / f. Stance reach reaches the measured 0.65 m in a fast gallop; where reach still falls short, the duty factor falls (longer flight), never the stride. Deer tests stay green
-- [ ] Gait transitions by Froude with hysteresis: walk → trot at Fr ≈ 0.5-0.7, trot → gallop at Fr ≈ 2.2-2.5 (3.4-3.7 m/s) going up, lower going down. The default rig blends the phase and pose over about one stride, as the CPG already does
+- [ ] Gait transitions by Froude with hysteresis, keeping `gaitFor` a pure function. It takes an optional last argument `prev?: GaitName`; without it, the thresholds are today's midpoints, so deer and any other caller are unchanged. With it, up and down thresholds differ: walk ↔ trot at Fr 0.6 up and 0.45 down; trot ↔ gallop at Fr 2.5 up (3.67 m/s) and 2.1 down. `AnimalBrain` stores `gait` and passes it from `expend`; `quadrupedPose` reads the brain's stored gait instead of choosing again; `planGait(speed, legs, override, prev?)` gets the same argument, and the controller passes its last `plan.id`. The default rig blends the phase and pose over about one stride, as the CPG already does. Add a no-flicker test (in `tests/gait-data.test.ts`): ramp the speed slowly through each threshold up and down, with ±0.1 m/s seeded jitter, and assert exactly one switch per crossing for `gaitFor`+brain and for `planGait`
 - [ ] Gallop flight: duty 0.3 → 0.2 with speed on Codex's footfall order, with a gathered and an extended suspension at speed. Replace the fixed `gallopBob` with a ballistic arc from each suspension's duration (rise = g·t²/8), so all four paws are visibly off the ground at 0.25×
 - [ ] Spine flex locked to the gallop phase: the back flexes at the gathered suspension and extends at the extended one, adding stance reach. Use one lumbar bone, or a pelvis shift under `tilt`, agreed with Gait Builder; the amplitude comes from the literature and is cited, with no flex at a walk
 - [ ] Remove the wall-clock torso bounce in `render/playerWolf.ts` (Codex's proposal; tell Codex in the handoff) and drive any trot bob from `brain.phase`
 - [ ] Advance the phase and `gaitSpeed` from the raw distance travelled (`main.ts:296` multiplies it by `ground.cost`, so only energy keeps the cost), and interpolate the rendered phase between 30 Hz sim steps
-- [ ] `?loco=1` parity: the CPG frequency reads the same f(v); a test that `onPlayerTouchdown` fires once per leg per stance (4 per stride) in walk, trot and gallop with unchanged `Touchdown` fields, and footstep audio still plays
-- [ ] Performance budget held and measured, with the numbers in the handoff: draw calls unchanged, at most one extra bone, WebGL program count unchanged after warm-up, gait maths ≤ 0.05 ms CPU per wolf per frame, and `tools/smoke-tiers.mjs` on HEAD with no fps loss on any tier
-- [ ] Slow-motion captures at 0.25× of a trot at 2.7 m/s, a gallop at 6 m/s and a sprint at 10.5 m/s next to Muybridge's dog plates in your notes; `tsc`, `npm test` and `npm run build` green; a playable link for Matthew
+- [ ] `?loco=1` parity and footfall contract: the CPG frequency reads the same f(v). Extend the existing `tests/locomotion-touchdown.test.ts` (no new file): with auto gait selection at walk, trot and gallop speeds (and across a speed ramp), `onPlayerTouchdown` still fires once per leg per stance with unchanged `Touchdown` fields, and the touchdowns per second equal 4 × the new cadence. Footstep audio still plays
+- [ ] Performance budget held and measured, with the numbers in the handoff. Draw calls are unchanged, with at most one extra bone, and the WebGL program count is unchanged after warm-up (`tools/smoke-tiers.mjs` counts links). `smoke-tiers` on HEAD shows no fps loss on any tier. Gait maths stays ≤ 0.05 ms CPU per wolf per frame, measured by a node bench `tools/bench-gait.ts` (`npx tsx`): after 10 000 warm-up calls, time 100 000 calls of one frame's gait path with `performance.now()`. For the default wolf that is `expend` + `quadrupedPose`; for `?loco=1` it is `createLocomotion(...).update` at 1/60 s, at walk, trot and sprint speeds. Report the median of 5 runs in µs per call, before and after. As an in-game cross-check, wrap the player wolf's `animate` in `performance.mark`/`measure` and average 600 frames at a sprint
+- [ ] Slow-motion captures at 0.25× of a trot at 2.7 m/s, a gallop at 6 m/s and a sprint at 10.5 m/s, next to Muybridge's dog plates, in your notes
 
 ## How a reviewer checks it
 1. `npm test`: `tests/gait-data.test.ts` passes, with cadence and stride within 15 % of the table, and the touchdown test passes.

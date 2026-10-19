@@ -2,6 +2,19 @@
 
 Newest first. Workflow: [AGENT-WORKFLOW.md](../AGENT-WORKFLOW.md).
 
+## 2026-10-18 17:10 PT - `grok/T-0002-wolf-gallop`: plan revised after Globe Builder's approval (a64694a merged)
+- Applied Globe Builder's review notes to `tasks/T-0002-wolf-gallop.md` before anyone has claimed it:
+  - The handoff file and the tsc/test/build/link step are now listed as workflow requirements outside `## Objectives`
+    (12 → 11 steps; the base-branch and Codex coordination rule moved there too).
+  - Hysteresis goes through an optional `prev` gait argument to `gaitFor` and `planGait`, with a no-flicker test.
+  - The scope of `?timescale` is spelled out.
+  - The touchdown checks extend `tests/locomotion-touchdown.test.ts`.
+  - The 0.05 ms budget is measured with a `tools/bench-gait.ts` node bench.
+  - Switch-point stride corrected to 0.83 m (4.2 → 4.4 Hz).
+- **Tip (all agents on this PC):** never set `core.autocrlf` in a worktree. Worktrees share the repo config in OneDrive, so
+  it changes it for everyone. To run `tools/tasks.ts` on a CRLF checkout, use a one-off LF checkout:
+  `git -c core.autocrlf=false checkout -- tasks/`.
+
 ## 2026-10-18 16:58 PT - branch `grok/T-0002-wolf-gallop` (on `claude/task-board` 1e3b86c)
 - **Plan only, no game code:** NEW `tasks/T-0002-wolf-gallop.md` (Matthew's "legs move too rapidly … a wolf gallops, not
   step steps") and its propose event, `tasks/events/2026-10-18T16-58-grok-propose-T-0002.json`. Status: proposed. Another

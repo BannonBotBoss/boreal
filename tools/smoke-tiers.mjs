@@ -13,7 +13,11 @@ const base = process.argv[2] ?? 'http://127.0.0.1:5173', holdMs = Number(process
 const lockName = process.env.BENCH_NAME ?? `smoke-tiers ${base}`;
 if (!await acquire(lockName)) { console.log('SMOKE FAIL bench lock busy for 60 min'); process.exit(1); }
 const edge = process.env.EDGE ?? 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', profile = mkdtempSync(join(tmpdir(), 'smoke-edge-'));
-const proc = spawn(edge, ['--headless=new', '--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--hide-scrollbars', '--window-size=1280,800',
+// GPU vsync off by default (SMOKE_VSYNC=1 keeps it): on omen the GPU process's vsync thread (WinVSyncProvider, DXGI vblank wait)
+// sometimes blocks ~0.5 s per frame for a whole run (external display asleep / mode change?), so the page drew 2 fps on every
+// tier with an idle main thread and 0.2-9 ms GPU frames; a trace shows GpuVSyncThread busy 2999 of 3000 ms. Uncapped fps here.
+const vsyncFlags = process.env.SMOKE_VSYNC === '1' ? [] : ['--disable-gpu-vsync', '--disable-frame-rate-limit'];
+const proc = spawn(edge, [...vsyncFlags, '--headless=new', '--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--hide-scrollbars', '--window-size=1280,800',
   '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-background-timer-throttling', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
 track(proc.pid); // release() kills it even if this script dies before its finally
 const gpuMem = () => { try { return execSync('nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader', { encoding: 'utf8', timeout: 10000 }).trim(); } catch { return 'n/a (no nvidia-smi)'; } };
@@ -59,6 +63,7 @@ try {
     G.auto = true; return JSON.stringify(out); })()`));
   console.log('gpu after tiers: ' + gpuMem());
   for (const r of res) console.log(`${r.tier.padEnd(9)} ssao ${r.ssao}  ${r.frames} frames/s  ${r.draws} draws/frame  gpu ${r.gpu} ms  links ${r.links} (+${r.linksSampled} in the 1 s sample)`);
+  console.log(vsyncFlags.length ? '(gpu vsync off: uncapped fps)' : '(gpu vsync on)');
   const dead = res.filter(r => r.frames < 5), empty = res[0].draws < 150; // Ultra draws ~600 with the world built, ~90 with terrain only
   if (dead.length) console.log('links in the last 20 s by shader: ' + await ev(`(() => { const n = performance.now(), m = new Map(); for (const [t, k] of window.__links) if (n - t < 20000) m.set(k, (m.get(k) || 0) + 1); return JSON.stringify([...m].sort((a, b) => b[1] - a[1]).slice(0, 10)); })()`));
   if (dead.length) { // where a dead frame goes: 3 s browser trace, wall time per event name and thread (top 15)

@@ -7,12 +7,12 @@
  * Selection: opaque (not transparent, no alphaTest/alphaToCoverage), no colour map, not a sprite/line/points/shader material,
  * and not opted out (userData.noBands). A material that mixes surfaces (render/trees: bark + leaf cards in one material) sets
  * userData.bandsMask to a GLSL float expression (1 = band, 0 = keep).
- * Off with ?bands=0 (preview branch: on by default).
+ * Off with ?bands=0 (preview branch: on by default); ?bands=<amp> (e.g. 0.15) sets the contrast.
  */
 import * as THREE from 'three';
 import { GLSL_NOISE } from '../proc/glsl';
 
-const ON = typeof location === 'undefined' || new URLSearchParams(location.search).get('bands') !== '0';
+const Q = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('bands'), ON = Q !== '0';
 const defaultKey = THREE.Material.prototype.customProgramCacheKey;
 const done = new WeakSet<THREE.Material>();
 
@@ -35,7 +35,8 @@ const VERT = `#include <worldpos_vertex>
     vBandW = (modelMatrix * bw).xyz; }`;
 /** Bands along an oblique world axis (so upright trunks and lying logs both cross them), domain-warped by low-frequency
  *  noise, plus a little fBm grain. Range ~0.85-1.15. */
-export const BANDS_AMP = .15; // diffuse x 0.85-1.15 (.3 = the 0.7-1.3 visibility check)
+/** Contrast: diffuse x (1 - amp)..(1 + amp). Preview branch: .3 (0.7-1.3) so it reads on screen; ?bands=0.15 tries the tasteful 0.85-1.15. */
+export const BANDS_AMP = Q && +Q > 0 && +Q <= .5 ? +Q : .3;
 const FRAG = (mask: string) => `{ float bt = dot(vBandW, vec3(1., 1.4, .9)) * 4. + 2.2 * vnoiseU(vBandW.xz * .11 + vBandW.y * .05, 5.3);
     float bn = sin(bt * 3.14159) * (.6 + .4 * vnoiseU(vec2(bt * .5, dot(vBandW.xz, vec2(.07, -.05))), 2.9)), bg = fbm(vBandW.xz * 1.3 + vBandW.y * .9, 8.1);
     float bk = 1. + ${BANDS_AMP.toFixed(3)} * clamp(bn * .85 + (bg - .5) * .9, -1., 1.);

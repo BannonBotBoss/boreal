@@ -77,6 +77,20 @@ photosynthesis -> formed a seed -> seed dispersed -> sprouted from the ground ->
 (reacting with other elements) -> decaying into fallen trunk over a long time.
 Inspector "why now" for a log: "Fallen wood - resting on the ground, decaying into fallen trunk over a long time".
 
+### Update 5 (Matthew, 07:25 PT): the fallen log is an arena of ongoing transactions
+Insects, water, oxygen, sunlight and gravity (which keeps it in place); one side rotting, the other collecting debris and
+letting other plants grow. Closed ONGOING steps after `decaying`: `held` (by gravity) -> `insected` -> `wetted` ->
+`sunned` -> `rotting` (one side) -> `nursing` (the other side collects debris, permits other plants). Oxygen is already
+`oxidized`, so there is no separate `aired`. WHY_MAX raised 16 -> 24 so all 22 log steps fit with nothing merged or
+dropped (a stored chain stays well under 1 KB; generated logs are never stored anyway). Standing trees still end at grew.
+Final log chain (22 steps):
+photosynthesis -> formed a seed -> seed dispersed -> sprouted from the ground -> grew and leafed out -> weathered over time
+-> a weak point built up -> failed under its own mass -> pulled down by gravity -> tipped over -> displaced the ground
+(the earth yields) -> settled (forces balanced) -> resting on the ground -> no longer photosynthesizing -> oxidizing
+(oxygen and other elements) -> decaying into fallen trunk over a long time -> held in place by gravity -> hosting insects
+-> wetted by water -> warmed by sunlight -> one side rotting -> the other side collecting debris and growing other plants.
+Inspector "why now": "Fallen wood - resting on the ground, the other side collecting debris and growing other plants".
+
 ## Pieces
 - [x] claim event, this handoff, notes/grok.md (before any code)
 - [x] why chain extended per Matthew 07:03 (leafed, weathered, weakened, failed)
@@ -111,3 +125,4 @@ Inspector "why now" for a log: "Fallen wood - resting on the ground, decaying in
   lifetime, idempotent, but noisy under `?contacts=1`).
 - Matthew's open questions 1-3 (effects, continuous ticks, paws) are still open.- 07:16 seating physics steps in the chain + optional seating inputs on the contact (Matthew); see Update 3.
 - 07:22 ongoing post-seat steps (ceased, oxidized, decaying); grew+leafed merged to fit 16; see Update 4.
+- 07:25 arena steps (held, insected, wetted, sunned, rotting, nursing); WHY_MAX 16 -> 24; see Update 5.

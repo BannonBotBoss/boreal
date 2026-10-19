@@ -1,2 +1,2 @@
-- Post-seat ongoing steps (Matthew 07:22): resting -> ceased -> oxidized -> decaying; ongoing steps follow the anchor
-  (contacts compare against the last event). grew+leafed merged so the log chain is exactly 16 (WHY_MAX).
+- Arena steps (Matthew 07:25) after decaying: held (gravity) -> insected -> wetted -> sunned -> rotting (one side) ->
+  nursing (other side: debris, other plants); oxygen = oxidized. WHY_MAX 24; log chain 22 steps.

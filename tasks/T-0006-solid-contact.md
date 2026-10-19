@@ -1,13 +1,14 @@
 
-### Update 4 (Matthew, 07:22 PT): after resting, the log keeps changing
-Once down, the log can no longer photosynthesize, oxidizes (transactions with other elements transform it) and slowly
-decays into fallen trunk. Closed ONGOING steps: `ceased` -> `oxidized` -> `decaying`. Ongoing steps follow the anchor (the
-last event step) rather than replacing it: a contact compares against the anchor, so a decaying log still reads as resting
-on the ground and the same contact stays a no-op; a new event (moved) appends after them. To stay within WHY_MAX = 16
-without touching the physics, `grew` and `leafed` are merged into one step ("grew and leafed out"; `leafed` left the list).
-Standing trees still stop before failed (they end at grew). Final log chain (16 steps):
+### Update 5 (Matthew, 07:25 PT): the fallen log is an arena of ongoing transactions
+Insects, water, oxygen, sunlight and gravity (which keeps it in place); one side rotting, the other collecting debris and
+letting other plants grow. Closed ONGOING steps after `decaying`: `held` (by gravity) -> `insected` -> `wetted` ->
+`sunned` -> `rotting` (one side) -> `nursing` (the other side collects debris, permits other plants). Oxygen is already
+`oxidized`, so there is no separate `aired`. WHY_MAX raised 16 -> 24 so all 22 log steps fit with nothing merged or
+dropped (a stored chain stays well under 1 KB; generated logs are never stored anyway). Standing trees still end at grew.
+Final log chain (22 steps):
 photosynthesis -> formed a seed -> seed dispersed -> sprouted from the ground -> grew and leafed out -> weathered over time
 -> a weak point built up -> failed under its own mass -> pulled down by gravity -> tipped over -> displaced the ground
 (the earth yields) -> settled (forces balanced) -> resting on the ground -> no longer photosynthesizing -> oxidizing
-(reacting with other elements) -> decaying into fallen trunk over a long time.
-Inspector "why now" for a log: "Fallen wood - resting on the ground, decaying into fallen trunk over a long time".
+(oxygen and other elements) -> decaying into fallen trunk over a long time -> held in place by gravity -> hosting insects
+-> wetted by water -> warmed by sunlight -> one side rotting -> the other side collecting debris and growing other plants.
+Inspector "why now": "Fallen wood - resting on the ground, the other side collecting debris and growing other plants".

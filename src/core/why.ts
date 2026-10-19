@@ -5,7 +5,10 @@
  * up) -> failed (could not hold its own mass). Then the seating physics, as labels (Matthew 07:16): pulled (gravity) ->
  * tipped -> displaced (trunk density vs earth density: the earth yields) -> settled (forces equal) -> resting (flat, sunk
  * ~1/3 of the trunk width). Once down it carries on with ONGOING steps (Matthew 07:22): ceased (no longer photosynthesizing)
- * -> oxidized (transactions with other elements transform it) -> decaying (slowly becoming fallen trunk). Labels only: no weather, plant or seating sim here (T-0005 seats the log; see Contact.sinkFraction).
+ * -> oxidized (transactions with oxygen and other elements transform it) -> decaying (slowly becoming fallen trunk). Then
+ * the log is an arena of ongoing transactions (Matthew 07:25): held (gravity keeps it in place) -> insected (hosts insects)
+ * -> wetted (water) -> sunned (sunlight) -> rotting (one side) -> nursing (the other side collects debris and lets other
+ * plants grow). Oxygen is the 'oxidized' step (no separate 'aired'). Labels only: no weather, plant or seating sim here (T-0005 seats the log; see Contact.sinkFraction).
  *
  * - Closed vocabulary (WHY_TAGS); `on`/`by` are short identifiers (an entity key, 'ground', 'player'), never prose.
  * - Generated objects get a DERIVED chain from their kind and are never stored (no save growth).
@@ -16,14 +19,16 @@ import type { Kind } from './catalog';
 import type { Entity } from './world';
 import type { Solid } from './contactBus';
 
-export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying'] as const;
+export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing'] as const;
 export type WhyTag = typeof WHY_TAGS[number];
 /** Ongoing steps: slow processes that follow the anchor (the last event) instead of replacing it. A contact compares
  *  against the anchor, so a decaying log still reads as resting on the ground and the same contact stays a no-op. */
-export const ONGOING: readonly WhyTag[] = ['ceased', 'oxidized', 'decaying'];
+export const ONGOING: readonly WhyTag[] = ['ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing'];
 export interface WhyStep { step: WhyTag; on?: Solid; by?: string }
 export type Why = WhyStep[];
-export const WHY_MAX = 16;
+/** Cap on chain length. Raised 16 -> 24 (Matthew 07:25) so the fallen log's origin, break, seating physics, decay and
+ *  arena steps all fit (22) without merging or dropping any of them; still tiny (a stored chain is < 1 KB). */
+export const WHY_MAX = 24;
 const ID_MAX = 64;
 
 const GROWN: Why = [{ step: 'photosynthesized' }, { step: 'seeded' }, { step: 'dispersed' }, { step: 'sprouted' }, { step: 'grew' }]; // a standing tree or plant stops here, before failed
@@ -32,7 +37,8 @@ export const WHY_DEFAULTS: Record<Kind, Why> = {
   spruce: GROWN, plant: GROWN, forage: GROWN,
   log: [...GROWN, { step: 'weathered' }, { step: 'weakened' }, { step: 'failed' },
     { step: 'pulled' }, { step: 'tipped' }, { step: 'displaced', on: 'ground' }, { step: 'settled' }, { step: 'resting', on: 'ground' },
-    { step: 'ceased' }, { step: 'oxidized' }, { step: 'decaying' }], // 16 steps = WHY_MAX
+    { step: 'ceased' }, { step: 'oxidized' }, { step: 'decaying' },
+    { step: 'held', by: 'gravity' }, { step: 'insected' }, { step: 'wetted' }, { step: 'sunned' }, { step: 'rotting' }, { step: 'nursing' }], // 22 steps
   rock: [{ step: 'weathered' }, { step: 'embedded', on: 'ground' }],
   deer: [{ step: 'born' }, { step: 'wandered' }],
   person: [{ step: 'born' }, { step: 'wandered' }],
@@ -77,8 +83,14 @@ export function stepText(s: WhyStep): string {
     case 'displaced': return `displaced ${name(s.on ?? 'ground')} (the earth yields)`;
     case 'settled': return 'settled (forces balanced)';
     case 'ceased': return 'no longer photosynthesizing';
-    case 'oxidized': return 'oxidizing (reacting with other elements)';
+    case 'oxidized': return 'oxidizing (oxygen and other elements)';
     case 'decaying': return 'decaying into fallen trunk over a long time';
+    case 'held': return 'held in place by gravity';
+    case 'insected': return 'hosting insects';
+    case 'wetted': return 'wetted by water';
+    case 'sunned': return 'warmed by sunlight';
+    case 'rotting': return 'one side rotting';
+    case 'nursing': return 'the other side collecting debris and growing other plants';
   }
 }
 /** What it is now: the anchor plus the latest ongoing step after it ("resting on the ground, decaying ..."). */

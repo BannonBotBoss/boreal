@@ -66,6 +66,7 @@ export function* needleAtlasSteps(form: TreeForm = TREE_FORMS['black-spruce']): 
     }
     for (const [key, seg] of bins) { const [style, w] = key.split('|'); g.strokeStyle = style; g.lineWidth = +w; g.beginPath(); for (let i = 0; i < seg.length; i += 4) { g.moveTo(seg[i], seg[i + 1]); g.lineTo(seg[i + 2], seg[i + 3]); } g.stroke(); }
   };
+  g.fillStyle = hex(c.shade); g.fillRect(0, 0, 1, 1); g.clearRect(0, 0, 1, 1); flush(); yield; // canvas + context creation and the first raster in a step of their own
   for (let half = 0; half < 2; half++) {
     const ox = half * W, cx = ox + W / 2;
     for (let k = 0; k < 12; k++) { // alternate side shoots in the spray plane, longest near the base
@@ -144,32 +145,37 @@ export function crownMaterial() {
 // ---------- geometry ----------
 interface Card { a: THREE.Vector3; b: THREE.Vector3; w: number; club: boolean }
 function* cardSteps(slice: () => Generator<unknown, void>, cards: Card[], h: number, crownR: (y: number) => number, form: TreeForm, rnd: () => number, quads: number, gain = 1): Generator<unknown, THREE.BufferGeometry> {
-  let done = 0;
-  const pos: number[] = [], nor: number[] = [], uv: number[] = [], col: number[] = [], idx: number[] = [];
+  // M2: preallocated typed arrays and scratch vectors (no per-vertex garbage): the number[]/clone version caused 15-24 ms GC
+  // pauses inside a build step during page load on omen
+  const maxV = cards.length * quads * 4, pos = new Float32Array(maxV * 3), nor = new Float32Array(maxV * 3), uv = new Float32Array(maxV * 2), col = new Float32Array(maxV * 3);
+  const idx = maxV > 65535 ? new Uint32Array(cards.length * quads * 6) : new Uint16Array(cards.length * quads * 6);
+  let done = 0, nv = 0, ni = 0;
   const d = new THREE.Vector3(), s = new THREE.Vector3(), cn = new THREE.Vector3(), out = new THREE.Vector3(), q = new THREE.Quaternion(), n = new THREE.Vector3(), tint = new THREE.Color();
+  const UP = new THREE.Vector3(0, 1, 0), UP5 = new THREE.Vector3(0, .5, 0), mid = new THREE.Vector3(), side = new THREE.Vector3();
+  const put = (bx: number, by: number, bz: number, sg: number, uu: number, vv: number, u0: number) => {
+    const o3 = nv * 3, o2 = nv * 2; pos[o3] = bx + side.x * sg; pos[o3 + 1] = by + side.y * sg; pos[o3 + 2] = bz + side.z * sg;
+    nor[o3] = n.x; nor[o3 + 1] = n.y; nor[o3 + 2] = n.z; uv[o2] = u0 + uu * .5; uv[o2 + 1] = vv; col[o3] = tint.r; col[o3 + 1] = tint.g; col[o3 + 2] = tint.b; nv++; };
   for (const c of cards) {
     if (++done % 150 === 0) yield* slice();
     d.subVectors(c.b, c.a); const L = d.length(); if (L < .01) continue; d.divideScalar(L);
-    s.crossVectors(d, new THREE.Vector3(0, 1, 0)); if (s.lengthSq() < 1e-6) s.set(1, 0, 0); s.normalize();
-    const mid = c.a.clone().lerp(c.b, .5), r = Math.hypot(mid.x, mid.z), radial = Math.min(1, r / Math.max(.15, crownR(mid.y)));
+    s.crossVectors(d, UP); if (s.lengthSq() < 1e-6) s.set(1, 0, 0); s.normalize();
+    mid.copy(c.a).lerp(c.b, .5); const r = Math.hypot(mid.x, mid.z), radial = Math.min(1, r / Math.max(.15, crownR(mid.y)));
     // baked AO: inner crown and lower crown darker [game calibration, matches the fake gradient of the far crowns]
     const ao = gain * 1.5 * (.7 + .3 * radial) * (.82 + .18 * Math.min(1, mid.y / h)), jit = .85 + rnd() * .3;
     tint.setRGB(ao * jit, ao * jit * (.97 + rnd() * .06), ao * jit);
-    out.set(mid.x, 0, mid.z).normalize().multiplyScalar(.7).add(new THREE.Vector3(0, .5, 0)).normalize(); // crown normal: radial + up
+    out.set(mid.x, 0, mid.z).normalize().multiplyScalar(.7).add(UP5).normalize(); // crown normal: radial + up
     const u0 = c.club ? .5 : 0;
     for (let k = 0; k < quads; k++) {
-      q.setFromAxisAngle(d, (k / quads) * Math.PI + (rnd() - .5) * .4 - Math.PI / 4); const side = s.clone().applyQuaternion(q).multiplyScalar(c.w / 2);
+      q.setFromAxisAngle(d, (k / quads) * Math.PI + (rnd() - .5) * .4 - Math.PI / 4); side.copy(s).applyQuaternion(q).multiplyScalar(c.w / 2);
       cn.crossVectors(d, side).normalize(); n.copy(cn).multiplyScalar(cn.dot(out) < 0 ? -.35 : .35).add(out).normalize();
-      const v0 = pos.length / 3;
-      for (const [p, uu, vv] of [[c.a.clone().sub(side), 0, 0], [c.a.clone().add(side), 1, 0], [c.b.clone().add(side), 1, 1], [c.b.clone().sub(side), 0, 1]] as [THREE.Vector3, number, number][]) {
-        pos.push(p.x, p.y, p.z); nor.push(n.x, n.y, n.z); uv.push(u0 + uu * .5, vv); col.push(tint.r, tint.g, tint.b);
-      }
-      idx.push(v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3);
+      const v0 = nv;
+      put(c.a.x, c.a.y, c.a.z, -1, 0, 0, u0); put(c.a.x, c.a.y, c.a.z, 1, 1, 0, u0); put(c.b.x, c.b.y, c.b.z, 1, 1, 1, u0); put(c.b.x, c.b.y, c.b.z, -1, 0, 1, u0);
+      idx[ni++] = v0; idx[ni++] = v0 + 1; idx[ni++] = v0 + 2; idx[ni++] = v0; idx[ni++] = v0 + 2; idx[ni++] = v0 + 3;
     }
   }
   const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx);
+  g.setAttribute('position', new THREE.BufferAttribute(pos.subarray(0, nv * 3), 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor.subarray(0, nv * 3), 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv.subarray(0, nv * 2), 2)); g.setAttribute('color', new THREE.BufferAttribute(col.subarray(0, nv * 3), 3)); g.setIndex(new THREE.BufferAttribute(idx.subarray(0, ni), 1));
   return g;
 }
 /** Trunkless far crown (M2): a scraggly black-spruce spire, not a stepped cone. Up to 7 drooping 4-sided skirts with uneven,

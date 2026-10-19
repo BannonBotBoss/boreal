@@ -3,7 +3,7 @@
  * by the locomotion layer. Params: ?terrain=flat|hills|world  ?gait=auto|walk|trot|pace|canter|gallop|bound|pronk
  * ?speed=<m/s>  ?lod=near|mid  ?rig=stick|real  ?t=<seconds to pre-simulate>  ?cam=side|follow  ?pause=1 (freeze after ?t)
  * ?seed=<n> (coat variety)  ?darken=0..2 ?streakSpacing ?streakWidth ?streakJitter=0..1 (coat layers, also sliders)  ?posture=key:value,... (override posture.ts)  ?cam=profile (eye-level side view, for comparing with reference photos)  ?hide=body,legs,feet,ik  ?raw=1 (springs off)  ?ui=0 (hide the panel)
- * ?pounce=1 (a pounce at t = 1 s and every 3 s after; P key or the button pounces any time)
+ * ?pounce=1 (a pounce at t = 1 s and every 3 s after; P key or the button pounces any time)  ?timescale=0.05..1 (slow motion, T-0002)
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -11,6 +11,7 @@ import { heightAt } from '../../core/world';
 import { createLocomotion, limbToWorld, referenceLayout, SPRINGS } from './controller';
 import { limbOf } from '../../core/animalBehavior';
 import { POSTURE } from './posture';
+import { TIMESCALE } from '../../core/timescale';
 import { GAIT_TABLE } from './gaits';
 import { createStickRig } from './stickRig';
 import { COAT } from './fork/bodyTubes';
@@ -161,7 +162,7 @@ placeCamera(true);
 let last = performance.now(), acc = 0;
 function frame(now: number) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
-  if (!state.paused) { acc += dt; while (acc >= DT) { simulate(DT); acc -= DT; } }
+  if (!state.paused) { acc += dt * TIMESCALE; while (acc >= DT) { simulate(DT); acc -= DT; } }
   stick.apply(pose, body); poseReal?.(pose, body);
   pose.feet.forEach((f, i) => { dots[i].position.set(f.x, f.y + .02, f.z); dots[i].material = pose.contacts[i] ? green : orange; });
   if (layers.ik) pose.feet.forEach((f, i) => { const L = limbOf(layout.legs, i); setLine(ikLines[i], [limbToWorld({ x: 0, y: L.hip + (L.girdle ?? 0), z: 0 }, body.x, body.z, body.heading, pose, layout.hips[i]), f]); });

@@ -20,6 +20,7 @@ import { autonomousWolfStep } from './core/autonomy';
 import { createSnapshotHub } from './core/snapshot';
 import { createPhotoMode } from './photo/photoMode';
 import { shaderClock } from './render/shaderClock';
+import { TIMESCALE } from './core/timescale';
 import { RENDER_SETTINGS, createSettingsStore } from './core/renderSettings';
 import { settingsPanel } from './ui/settingsPanel';
 import { playerPanel } from './ui/playerPanel';
@@ -247,6 +248,7 @@ if (clock0.offlineSec > 0) tickGround(12 * clock0.offlineSec); // time away betw
 const deadzone = (v: number) => Math.abs(v) < .18 ? 0 : Math.sign(v) * (Math.abs(v) - .18) / .82;
 function frame(time: number) { const frameStart = performance.now();
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time;
+  const sdt = dt * TIMESCALE; // ?timescale (T-0002): sim, animals, gaits, shader effects; look, input, audio, UI and the world clock stay on real time
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');
   if (hadPad && !pad) { paused = true; pauseClock(); element('pause').textContent = 'Resume'; if (!menu.open) menu.show('pause'); notice('Controller disconnected. Reconnect and press Menu to resume.'); }
   hadPad = !!pad;
@@ -264,7 +266,7 @@ function frame(time: number) { const frameStart = performance.now();
   const active0 = !menuOpen() && !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating) && !inpage?.blocksGame(); // in-page globe/band: sim frozen, world clock runs
   const active = active0; // the world clock (pauseClock/resumeClock around the menu) freezes age and every clock field
   const pv = photo.active ? (photo.reviewing ? lastPhotoView : lastPhotoView = photo.update(dt)) : undefined;
-  if (!pv || pv.frozen === false) shaderClock.time += dt;
+  if (!pv || pv.frozen === false) shaderClock.time += sdt;
   let dx = 0, dz = 0;
   if (active) {
     dx = Number(keys.has('d')) - Number(keys.has('a')) + deadzone(pad?.axes[0] ?? 0);
@@ -277,7 +279,7 @@ function frame(time: number) { const frameStart = performance.now();
     pitch = springLookPitch(pitch, verticalLook, dt, drag && Math.abs(verticalLook) < .01 ? pitch : undefined);
     if (playerAction || photo.active) { dx = 0; dz = 0; }
     const length = Math.max(1, Math.hypot(dx, dz)); dx /= length; dz /= length;
-    accumulator += dt;
+    accumulator += sdt;
     while (accumulator >= 1 / 30) {
       modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30) : stepWolfModes(modes, Math.max(pad?.buttons[6]?.value ?? 0, Number(keys.has('c'))), Math.max(pad?.buttons[7]?.value ?? 0, Number(keys.has('shift'))), Math.abs(dz) > .01, 1 / 30);
       const brain = view.playerBrain, prevSpeed = brain.speed, speed = -dz * playerSpeed(modes.mode) * view.playable.speedScale;
@@ -325,7 +327,7 @@ function frame(time: number) { const frameStart = performance.now();
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
-  if (active) for (const ev of view.hares.update(dt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
+  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {
       view.playerBrain.energy = Math.min(100, view.playerBrain.energy + HARE.energy);

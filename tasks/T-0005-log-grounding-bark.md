@@ -8,7 +8,7 @@ skill: false
 ---
 # T-0005 Fallen logs: grounding and bark
 
-**Status: proposed, not yet approved.** Matthew asked for it directly (2026-10-19, about 06:35 PT, with an in-game screenshot
+**Status: plan approved (grok approve-plan 2026-10-19T06:46:00-07:00). Awaiting claim.** Matthew asked for it directly (2026-10-19, about 06:35 PT, with an in-game screenshot
 of a level brown log floating off a slope): "fix this, so the logs are settled down into the ground, and the surface has
 random noise generated shader that gives it the appearance of bark". He asked for this plan before any code.
 Branch: `grok-globe/log-grounding-bark` (from main 7d71892). Number: T-0004 is already named in `grok/surface-bands`'

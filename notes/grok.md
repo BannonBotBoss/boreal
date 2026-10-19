@@ -8,3 +8,5 @@
 - Merge note: other grok branches (smoke-vsync, trees-v2) also add entries to this file; keep all entries.
 - Why is a causal chain (Matthew 06:59): tree = photosynthesized -> seeded -> dispersed -> sprouted -> grew; log adds
   fell -> resting on the ground; rock = weathered -> embedded; animals = born -> wandered. Closed steps, max 8.
+- Chain extended (Matthew 07:03): grew -> leafed; log adds weathered -> weakened -> failed -> fell -> resting on the
+  ground (11 steps). Standing trees stop at leafed. WHY_MAX 16. Labels only, no weather sim.

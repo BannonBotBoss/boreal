@@ -160,3 +160,13 @@ seed -> the seed disperses -> a plant sprouts from the ground -> grows into the 
   already says that, nothing changes (idempotent). The rock push appends `moved by player` (a second push does not add a
   second step). A record stores the chain only when a transaction changed it.
 - No biology simulation: the chain is provenance structure plus per-kind defaults, deterministic from the kind.
+
+### Update 2 (Matthew, 07:03 PT): the tree-to-log chain
+After `grew` a tree leafs out; a fallen log carries on through the break. All closed steps, labels only (no weather sim):
+- leafed (green leaves, canopy), weathered (rare weather strained the structure over time), weakened (a weak point built
+  up), failed (it could not withstand its own mass), then fell, then resting on the ground.
+- Derived chains now: spruce, plant, forage = photosynthesized -> seeded -> dispersed -> sprouted -> grew -> leafed (a
+  standing tree stops before failed/fell); log = photosynthesized -> seeded -> dispersed -> sprouted -> grew -> leafed ->
+  weathered -> weakened -> failed -> fell -> resting on the ground; rock = weathered -> embedded in the ground;
+  deer, person = born -> wandered. WHY_MAX is 16 (the log default is 11 steps); over it, the first step and the newest
+  ones are kept.

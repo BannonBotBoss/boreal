@@ -14,7 +14,7 @@ import { stream } from '../proc/rng';
 import { CHUNK_SIZE, WORLD_SEED, chunkSeed, generateChunk, heightAt, terrainBand } from '../core/world';
 import { applyPopulation } from '../core/population';
 import { catalog } from '../core/catalog';
-import { stepText, tip, whyOf, whyText } from '../core/why';
+import { nowText, whyOf, whyText } from '../core/why';
 import { SENSE_RADII } from '../core/animalBehavior';
 import { HERD } from '../core/deerHerd';
 import { nearbyWater } from '../audio/borealSound';
@@ -91,7 +91,7 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       const r = regenerate(s.key, cx, cz, overrides, s.type === 'entity');
       const pm: Trace = { factors: [] }; withTrace(pm, () => view.massOf(s.key));
       out.push(...r.factors.filter(fa => fa.group !== 'terrain'), ...pm.factors, obs('entity', 'kind', found.entity.kind), obs('entity', 'title', catalog[found.entity.kind].title));
-      { const w = whyOf(found.entity, view.recordOf(s.key)); out.push(obs('why', 'now', `${catalog[found.entity.kind].title} - ${stepText(tip(w)!)}`), obs('why', 'chain', whyText(w))); } // T-0006
+      { const w = whyOf(found.entity, view.recordOf(s.key)); out.push(obs('why', 'now', `${catalog[found.entity.kind].title} - ${nowText(w)}`), obs('why', 'chain', whyText(w))); } // T-0006
       const lod = found.object as THREE.LOD | undefined;
       if (lod?.isLOD) out.push(obs('render', 'lodLevel', lod.getCurrentLevel()), obs('render', 'lodLevels', lod.levels.length));
       if (r.mesh && lod && Object.keys(overrides).length) {

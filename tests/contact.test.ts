@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createContactBus, seatInputs, SEAT_DEFAULTS, type Contact } from '../src/core/contactBus';
 import { COMPOSITIONS, density } from '../src/core/materials';
-import { WHY_DEFAULTS, WHY_MAX, whyOf, whyText, stepText, tip, withTip, type Why } from '../src/core/why';
+import { WHY_DEFAULTS, WHY_MAX, anchor, nowText, whyOf, whyText, stepText, tip, withTip, type Why } from '../src/core/why';
 import { catalog, type Kind } from '../src/core/catalog';
 import { createContext, interact, parseContext, solidContact } from '../src/core/events';
 import { rockDiameter, SNOUT_REACH } from '../src/core/rocks';
@@ -37,15 +37,18 @@ test('contact bus: touching() shows contacts made before a late subscriber; unsu
 
 test('why: every Kind has a derived chain; the tree chain is Matthew\'s; a record chain wins', () => {
   for (const kind of Object.keys(catalog) as Kind[]) { const w = whyOf({ kind }); assert.ok(w.length >= 1 && w.length <= WHY_MAX, kind); }
-  assert.deepEqual(WHY_DEFAULTS.spruce.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'leafed']);
-  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'leafed', 'weathered', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting']);
-  assert.ok(!WHY_DEFAULTS.spruce.some(s => ['failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting'].includes(s.step)), 'a standing tree has not failed');
+  assert.deepEqual(WHY_DEFAULTS.spruce.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew']);
+  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weathered', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'ceased', 'oxidized', 'decaying']);
+  assert.ok(!WHY_DEFAULTS.spruce.some(s => ['weathered', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'ceased', 'oxidized', 'decaying'].includes(s.step)), 'a standing tree has not failed');
   assert.ok(WHY_DEFAULTS.log.length <= WHY_MAX);
-  assert.equal(stepText(WHY_DEFAULTS.log[WHY_DEFAULTS.log.length - 3]), 'displaced the ground (the earth yields)');
-  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step).slice(-2), ['settled', 'resting']);
-  assert.equal(stepText(tip(whyOf({ kind: 'log' }))!), 'resting on the ground');
+  assert.equal(stepText(WHY_DEFAULTS.log[WHY_DEFAULTS.log.length - 6]), 'displaced the ground (the earth yields)');
+  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step).slice(-3), ['ceased', 'oxidized', 'decaying']);
+  assert.equal(stepText(anchor(whyOf({ kind: 'log' }))!), 'resting on the ground', 'the anchor skips ongoing steps');
+  assert.equal(stepText(tip(whyOf({ kind: 'log' }))!), 'decaying into fallen trunk over a long time');
+  assert.equal(nowText(whyOf({ kind: 'log' })), 'resting on the ground, decaying into fallen trunk over a long time');
+  assert.equal(nowText(whyOf({ kind: 'spruce' })), 'grew and leafed out');
   assert.equal(stepText(tip(whyOf({ kind: 'rock' }))!), 'embedded in the ground');
-  assert.match(whyText(whyOf({ kind: 'spruce' })), /^photosynthesis \u2192 formed a seed \u2192 seed dispersed \u2192 sprouted from the ground \u2192 grew here \u2192 leafed out$/);
+  assert.match(whyText(whyOf({ kind: 'spruce' })), /^photosynthesis \u2192 formed a seed \u2192 seed dispersed \u2192 sprouted from the ground \u2192 grew and leafed out$/);
   const mine: Why = [{ step: 'weathered' }, { step: 'moved', by: 'player' }];
   assert.deepEqual(whyOf({ kind: 'rock' }, { why: mine }), mine);
   const derived = whyOf({ kind: 'log' }); derived.push({ step: 'grew' });
@@ -54,7 +57,9 @@ test('why: every Kind has a derived chain; the tree chain is Matthew\'s; a recor
 test('why: withTip is idempotent, replaces a same-step tip and stays within WHY_MAX keeping the origin', () => {
   const w = whyOf({ kind: 'log' });
   assert.deepEqual(withTip(w, { step: 'resting', on: 'ground' }), w);
-  assert.deepEqual(tip(withTip(w, { step: 'resting', on: 'r1' })), { step: 'resting', on: 'r1' });
+  assert.deepEqual(anchor(withTip(w, { step: 'resting', on: 'r1' })), { step: 'resting', on: 'r1' });
+  assert.deepEqual(withTip(w, { step: 'resting', on: 'r1' }).slice(-3).map(s => s.step), ['ceased', 'oxidized', 'decaying'], 'ongoing steps kept after a replaced anchor');
+  assert.equal(tip(withTip(w, { step: 'moved', by: 'player' }))!.step, 'moved', 'a new event appends after the ongoing steps');
   assert.equal(withTip(w, { step: 'resting', on: 'r1' }).length, w.length);
   let long = w; for (let i = 0; i < 6; i++) long = withTip(withTip(long, { step: 'moved', by: 'player' }), { step: 'resting', on: `r${i}` });
   assert.equal(long.length, WHY_MAX); assert.equal(long[0].step, 'photosynthesized');

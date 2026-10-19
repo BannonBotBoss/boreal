@@ -56,3 +56,79 @@ canid literature:
   transition, falling to about 0.20-0.22 at 9-10 m/s (Walter & Carrier 2007 contact times × cadence).
 - Tests: `tests/gait-data.test.ts` checks the rotary order and the gathered suspension. The rows against the live `gaitFor`
   stay `todo` until it is wired to `src/core/gaitData.ts`.
+
+## 2026-10-18 23:00 PT - T-0002 part 2: canid gait model, interface contract (no edits to Codex's files)
+Codex's gallop order is still not in main (7d71892), so `gaitFor` / `gaits.ts` numbers stay frozen. Per Grok Bot's scope I
+did not edit `gaits.ts`, `animalBehavior.ts`, `playerWolf.ts`, `world.ts`, `buildScene.ts` or their tests.
+
+**New:** `src/core/gaitData.ts`, a pure module with cited constants:
+- `cadence(speed, legLength)`: piecewise in Froude terms through Bryce & Williams 2017 and Heglund & Taylor 1988, scaling
+  with leg length by dynamic similarity.
+- `strideLength`, `stanceReach`, `dutyFactor`.
+- `selectGait(froude, prev?)`, with hysteresis.
+- `offsetsFor(gait, lead)`, `footfallOrder`.
+- `suspensions(offsets, duty)` (gathered/extended), `suspensionRise` (g·t²/8).
+- `canidPlan(speed, legLength, prev?, lead?)`.
+
+`tests/gait-data.test.ts`: the MODEL rows test gaitData and pass. The LIVE rows test `gaitFor` and stay `todo`.
+
+Model values at hip 0.55 m:
+
+| m/s | gait | Hz | stride (m) | duty | sweep (m) | suspensions |
+|---|---|---|---|---|---|---|
+| 1.27 | walk | 1.50 | 0.85 | 0.65 | 0.55 | none |
+| 2.70 | trot | 2.10 | 1.29 | 0.45 | 0.58 | diagonal flights |
+| 4.96 | gallop | 2.61 | 1.90 | 0.29 | 0.55 | gathered 0.16 |
+| 6.0 | gallop | 2.70 | 2.22 | 0.28 | 0.61 | gathered 0.17 |
+| 9.2 | gallop | 2.90 | 3.18 | 0.23 | 0.72 (75 ms contact) | gathered 0.22, extended 0.07 |
+| 10.5 | gallop | 3.00 | 3.50 | 0.20 | 0.70 | gathered 0.25, extended 0.10 |
+
+**Controller opt-in: tried, NOT clean, reverted (nothing committed).** I plugged the model into our controller as an optional
+planner (`createLocomotion(..., planner)`, lab `?gaitdata=1`). The legs cannot sweep the measured stance: today's reach is
+about 0.39 m at a walk or trot and 0.25 m in a gallop. Counted touchdowns per leg per second over 10 s on flat ground:
+
+| m/s | gait | model Hz | fore legs | hind legs |
+|---|---|---|---|---|
+| 1.27 | walk | 1.50 | 3.0 (extra leash steps) | 1.5 |
+| 2.7 | trot | 2.10 | 4.2 | 2.1 |
+| 6 | gallop | 2.70 | 4.5-5.4 | 0 (they never land) |
+| 10 | gallop | 2.96 | 0 | 0 |
+
+With the stock planner it is a clean 1× cadence (2.1/3.1/5.2/8.0 Hz). So the cadence fix needs the reach work that goes with
+it: spine flex / pelvis shift, girdle swing, and body pitch at the plant. Otherwise the leash in `foot.ts` adds steps and the
+feet can't reach their targets. I'll do it as one piece (gaitData + reach) once the gait numbers are unfrozen, with the
+touchdown-rate test (one per leg per stride, 4 × cadence in all) that I drafted for it.
+
+### Contract 1: `gaitFor` reads gaitData (core/animalBehavior.ts, Claude's file; Codex is editing it)
+Line numbers on 7849d7a/18b5881, inside `gaitFor(motion, speed, legs)`:
+- add the import: `import { canidPlan, type CanidGait } from './gaitData';`
+- signature: `export function gaitFor(motion: Motion, speed: number, legs: LegDims, prev?: GaitName): Gait | null {`
+- L152-153 (name, duty) and L162-163 (cycle, offsets) become:
+  ```ts
+  const c = canidPlan(Math.max(.15, Math.abs(speed)), h, prev as CanidGait | undefined); // T-0002: cadence/stride/duty from canid data
+  const name: GaitName = motion === 'back' ? 'walk' : c.gait, duty = motion === 'back' ? .65 : c.duty;
+  const cycle = motion === 'back' ? Math.max(.4 * h, Math.min(2.3 * h * fr ** .3, maxStance / duty)) : c.stride; // never shortened for reach
+  const offsets = motion === 'back' ? [.25, 0, .75, .5] : c.offsets; // rotary gallop LH, RH, RF, LF (Codex's order)
+  ```
+  (`reachOf` / `maxStance` stay for walking backwards only.)
+- Deer use `gaitFor` with `DEER_LEGS`. To change only wolves first, gate the four lines with `legs === WOLF_LEGS` (the model
+  scales with hip height, but its data are canid).
+- `AnimalBrain.expend` passes `this.gait` as `prev` and stores the result; `planGait` gets the same optional `prev` (the
+  controller passes `plan.id`).
+- **This is not enough on its own:** the rig needs the reach work above, or planted feet slide and fore legs overstep.
+- Afterwards: drop `todo` from the LIVE rows in `tests/gait-data.test.ts`. They are the acceptance test.
+
+### Contract 2: wall-clock torso bounce (render/playerWolf.ts, Codex)
+On 7849d7a: L178 `const gait = moving ? Math.sin(time * (mode === 'sprint' ? 24 : running ? 19 : stealth ? 5 : 13)) : 0;`
+and L180 `torso.position.y = moving ? Math.abs(gait) * .012 : Math.sin(time * 2) * .003;`. They bounce the torso at 7.6/s in a
+sprint, unrelated to the legs. Replace with a phase-locked bob, `torso.position.y = moving ? 0 : Math.sin(time * 2) * .003;`,
+keeping `pose.bob` (added next). In a gallop, `pose.bob` should come from `suspensionRise` over each window of
+`suspensions(offsets, duty)` (a ballistic arc), not the fixed `gallopBob` bump. Remove `gait` if nothing else reads it.
+
+### Contract 3: phase from raw distance (src/main.ts)
+L291 on this branch (L289 on main 7d71892):
+`brain.expend(1/30,Math.hypot(pose.x-player.x,pose.z-player.z)*ground.cost);` →
+`brain.expend(1/30,Math.hypot(pose.x-player.x,pose.z-player.z),ground.cost);`, with `expend(dt, distance, cost = 1)` keeping
+`cost` for energy only. The phase and `gaitSpeed` then follow the distance actually travelled, so on bog or snow the legs don't
+speed up and planted paws don't slide. Interpolate the rendered phase between 30 Hz sim steps (store the last two phases, blend
+by `accumulator · 30`).

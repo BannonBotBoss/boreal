@@ -23,6 +23,7 @@ removes the wall-clock torso bounce in `render/playerWolf.ts` (your proposal) on
 `npx tsc --noEmit`, `npm test`, `npm run build` in the worktree. Dev server from the worktree on its own port (see notes).
 
 ## Log
+- 23:00 `src/core/gaitData.ts` (c92b418) + MODEL tests passing, LIVE rows todo (732ac70). Controller opt-in tried and reverted: today's reach (0.39 m walk/trot, 0.25 m gallop) cannot sweep the measured stance, so fore legs overstep and hind legs hover. Next is gaitData + reach work (spine flex / pelvis / girdle) together once the gait numbers unfreeze. Contracts for gaitFor, the playerWolf bounce and main.ts ground.cost are in notes/grok-gait.md.
 
 ## Target spec: wolf rotary gallop (2026-10-18 22:30 PT)
 Matthew's 18-frame reference sheet (grey wolf, probably AI-generated, labels inconsistent with each other) is used **for pose

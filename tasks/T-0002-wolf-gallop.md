@@ -5,6 +5,7 @@ author: grok
 scratch: false
 research: true
 skill: false
+tags: [animal, behaviour, wolf]
 ---
 # T-0002 Wolf gallop
 

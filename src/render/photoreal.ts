@@ -18,6 +18,16 @@ import { CLOUD, SUN_UNIFORMS, setCloudField } from './pbr';
 import { LightProbeGenerator } from 'three/examples/jsm/lights/LightProbeGenerator.js';
 import { DY, NX, NY, getGrid } from '../core/weather';
 import { AMBIENT } from '../core/light';
+import { ROCK_MATERIAL } from './batch';
+import { LOG_MATERIAL } from './geometry';
+
+/** Casters drawn into the NEAR cascade only: fallen logs and rocks (low, so their far-cascade shadows are a few texels; the
+ *  far cascade draws trees). For a farther cascade's shadow camera their BatchedMesh draws nothing (multi-draw count 0
+ *  after three's own per-camera culling): no material, define or program change. */
+const NEAR_ONLY = new Set<THREE.Material>([LOG_MATERIAL, ROCK_MATERIAL]); let nearShadowCam: THREE.Camera | undefined;
+{ const proto = THREE.BatchedMesh.prototype as unknown as { onBeforeShadow: (...a: unknown[]) => void }, base = proto.onBeforeShadow;
+  proto.onBeforeShadow = function (this: THREE.BatchedMesh & { _multiDrawCount: number }, ...a: unknown[]) { base.apply(this, a);
+    if (nearShadowCam && a[3] !== nearShadowCam && NEAR_ONLY.has(this.material as THREE.Material)) this._multiDrawCount = 0; }; }
 
 // PCSS (Fernando 2005, 'Percentage-Closer Soft Shadows'), adapted from three r180 examples/webgl_shadowmap_pcss.html (MIT,
 // spidersharma03): blocker search + Poisson PCF, injected into the shared shadow chunk behind `#ifdef PCSS` so only
@@ -92,12 +102,12 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
   // ---- cascaded shadows ----------------------------------------------------------------------------------------------
   function buildShadows() {
     for (const [m, prev] of chained) { m.onBeforeCompile = prev; const d = (m as unknown as { defines?: Record<string, unknown> }).defines; delete d?.USE_CSM; delete d?.CSM_CASCADES; delete d?.PCSS; m.needsUpdate = true; }
-    chained.clear(); csm?.remove(); csm?.dispose(); csm = undefined;
+    chained.clear(); csm?.remove(); csm?.dispose(); csm = undefined; nearShadowCam = undefined;
     if (!tier.shadows) { rig.sunLight.castShadow = false; return; }
     csm = new CSM({ camera, parent: scene, cascades: tier.shadows, maxFar: 110, // ≈ the LOD-1 range: distant LOD-2 trees cast no shadow (outside the cascades) shadowMapSize: tier.resScale >= 1 ? 2048 : 1024, // ≤ 2048 (Quest budget)
       lightDirection: new THREE.Vector3(0, -1, 0), lightIntensity: 0, mode: 'practical', shadowBias: -.0004 });
     csm.fade = true; for (const l of csm.lights) l.layers.enable(1);
-    for (let i = 1; i < csm.lights.length; i++) { csm.lights[i].shadow.autoUpdate = false; csm.lights[i].shadow.needsUpdate = true; } // far cascades: refreshed every FAR_CASCADE_EVERY frames (before())
+    for (let i = 1; i < csm.lights.length; i++) { csm.lights[i].shadow.autoUpdate = false; csm.lights[i].shadow.needsUpdate = true; } nearShadowCam = csm.lights.length > 1 ? csm.lights[0].shadow.camera : undefined; // far cascades: refreshed every FAR_CASCADE_EVERY frames (before())
   }
   /** The far cascade's shadow map is re-rendered every Nth frame (staggered per cascade); the near one every frame. The sun moves
    *  ~0.004 deg/frame and the far cascade's texels are ~5 cm+, so a 3-frame-old far map is invisible, and its casters (most of the

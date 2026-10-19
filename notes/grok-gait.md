@@ -132,3 +132,24 @@ L291 on this branch (L289 on main 7d71892):
 `cost` for energy only. The phase and `gaitSpeed` then follow the distance actually travelled, so on bog or snow the legs don't
 speed up and planted paws don't slide. Interpolate the rendered phase between 30 Hz sim steps (store the last two phases, blend
 by `accumulator · 30`).
+
+## 2026-10-18 23:00 PT - T-0003 "wolf reach" proposed; T-0002's LIVE rows depend on it
+- **Why:** the data cadence (T-0002) needs each paw to sweep duty × stride = 0.55-0.72 m; the rig's legs sweep 0.39 m (walk/trot)
+  and 0.25 m (gallop). The lab try (reverted) gave 0 hind touchdowns at 6 m/s and none at all at 10 m/s. Cadence and reach must
+  land together, so the LIVE `gaitFor` rows in `tests/gait-data.test.ts` now say "depends on T-0003" in their todo.
+- **gaitData reach targets (76ef3b1, this branch):** `reachTargets(plan, phase, body = REF_BODY)` and `reachRange(plan, body)`,
+  pure. Phase = `brain.phase` in [0, 1); leg i in stance while `frac(phase + offsets[i]) < duty`; +z back; radians.
+  Outputs: `sweep`, `deficit` (m); `girdle[4]` (m, pivot shift, −deficit/2 at touchdown → +deficit/2 at liftoff); `scapula[LF, RF]`
+  (rad, + paw forward, cap 0.35 ≈ 20°, Hildebrand 1959) and `glide` (m, 0 for REF_BODY); `spineFlex` (rad, + flexed, from the mean
+  hind shift / 0.56 m); `hindResidual[LH, RH]` (m, the limb must absorb it); `pitch` (rad, + front up, stance vault).
+  Ranges at hip 0.55: walk ±.037 rad flex, trot ±.007; gallop 6 m/s: flex ±.31 (peak at hind touchdown = end of the gathered
+  suspension, extension at hind liftoff = start of the extended one), scapula ±.25, hind residual .066 m, pitch −.020..+.026;
+  10.5 m/s: flex ±.385, scapula ±.31, residual .113 m. Full table in `tasks/T-0003-wolf-reach.md`.
+- **Where the rig consumes it** (owners Claude and Codex; grok-gait does not edit these): a lumbar/pelvis pivot under `tilt`
+  (`render/playerWolf.ts`, skin weights `core/wolfBody.ts`) ← `spineFlex`; fore `girdle` bones ← `scapula` (+ `glide`);
+  `tilt.rotation.x` and `?loco=1` `controller.ts` `tilt.pitch` ← `pitch`; `quadrupedPose`/`footTarget` and `foot.ts` solve paws
+  relative to the shifted pivots; hind chord raised (stance-varying metatarsus, no gallop ×1.1 in `reachOf`).
+- **Acceptance (T-0003):** LH and RH touch down at `canidPlan(v).hz` (2.70 Hz at 6 m/s, 2.96 Hz at 10 m/s, ±15 %) on both paths;
+  no overstep (IK targets within (upper + lower)·√0.97, planted-paw slip < 1 cm); stance sweep 0.67 m ±15 % at 9.2 m/s.
+- Proposal: `tasks/T-0003-wolf-reach.md` + propose event on branch `grok-gait/T-0003-wolf-reach` (stacked on this branch, like
+  T-0002 stacked on `claude/task-board`). Not claimed.

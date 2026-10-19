@@ -144,3 +144,19 @@ export function solidContact(context: EventContext, c: { a: Entity | 'ground'; b
 1. `npm test`: the contact, why and transaction tests pass; the save tests are unchanged.
 2. Open the branch with `?contacts=1`, look at the console near the start: one begin per log, nothing per frame.
 3. Inspect a log (why: resting on the ground) and push a small rock (why: moved by the player).
+## Design update from Matthew (2026-10-19 06:59 PT, after approval): the why is a causal chain
+Matthew: the why is a short causal chain, not one tag. His tree example: photosynthesis (a chemical reaction) -> forms a
+seed -> the seed disperses -> a plant sprouts from the ground -> grows into the tree.
+- `Why` is an ordered list of closed steps, `WhyStep { step: WhyTag; on?: Solid; by?: string }`, at most 8 steps. Still
+  no free text: `WhyTag` is a closed list and `on`/`by` are short identifiers.
+- Closed steps: `photosynthesized`, `seeded`, `dispersed`, `sprouted`, `grew`, `fell`, `resting`, `weathered`,
+  `embedded`, `moved`, `born`, `wandered`.
+- Derived defaults (generated objects, never stored):
+  - spruce, plant, forage: photosynthesized -> seeded -> dispersed -> sprouted -> grew
+  - log: photosynthesized -> seeded -> dispersed -> sprouted -> grew -> fell -> resting on the ground
+  - rock: weathered -> embedded in the ground
+  - deer, person: born -> wandered
+- Transactions write the tip: a solid contact sets the tip to `resting on <other>` (`embedded` for a rock); if the tip
+  already says that, nothing changes (idempotent). The rock push appends `moved by player` (a second push does not add a
+  second step). A record stores the chain only when a transaction changed it.
+- No biology simulation: the chain is provenance structure plus per-kind defaults, deterministic from the kind.

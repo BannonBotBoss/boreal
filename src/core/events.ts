@@ -3,7 +3,7 @@ import { GENERATOR_VERSION, WORLD_SEED, type Entity } from './world';
 import { pushContact, rockDiameter } from './rocks';
 import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './animalBehavior';
 import { isWhy, sameWhy, whyOf, withTip, type Why, type WhyStep } from './why';
-import type { Solid, Vec3 } from './contactBus';
+import type { SeatInputs, Solid, Vec3 } from './contactBus';
 export interface Player { x: number; z: number; heading?: number; abilities: Action[] }
 export interface RecordEntry { entity: Entity; relationship: 'friend' | null; removed: boolean; lastAction: Action; interactions: number; playerInteracted?: boolean;
   /** Causal chain (core/why), stored only once a transaction changed it; absent = the kind's derived chain. */ why?: Why }
@@ -63,8 +63,9 @@ export function contactStep(self: Pick<Entity, 'kind'>, other: Solid): WhyStep {
  *  context. Never moves, sinks or rotates anything (seating stays in the placement code: T-0005 seatLog, seatRock).
  *  Only records that already exist are touched: a generated log meeting the earth returns `context` itself (same object),
  *  so generated objects never enter the save. Idempotent: begin/end at chunk build/dispose are render-lifetime edges
- *  and may repeat; the same contact again gives the same context. Updates only `why` (the chain's tip). */
-export function solidContact(context: EventContext, c: { a: Solid | Entity; b: Solid | Entity; at?: Vec3; normal?: Vec3 }): EventContext {
+ *  and may repeat; the same contact again gives the same context. Updates only `why` (the chain's tip). The optional
+ *  seating inputs (trunkDensity, earthDensity, sinkFraction) ride along for T-0005 and do not change the result. */
+export function solidContact(context: EventContext, c: { a: Solid | Entity; b: Solid | Entity; at?: Vec3; normal?: Vec3 } & SeatInputs): EventContext {
   const keyOf = (s: Solid | Entity) => typeof s === 'string' ? s : s.key;
   const a = keyOf(c.a), b = keyOf(c.b);
   let next: EventContext | undefined;

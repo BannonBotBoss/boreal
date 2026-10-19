@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createContactBus, type Contact } from '../src/core/contactBus';
+import { createContactBus, seatInputs, SEAT_DEFAULTS, type Contact } from '../src/core/contactBus';
+import { COMPOSITIONS, density } from '../src/core/materials';
 import { WHY_DEFAULTS, WHY_MAX, whyOf, whyText, stepText, tip, withTip, type Why } from '../src/core/why';
 import { catalog, type Kind } from '../src/core/catalog';
 import { createContext, interact, parseContext, solidContact } from '../src/core/events';
@@ -37,9 +38,11 @@ test('contact bus: touching() shows contacts made before a late subscriber; unsu
 test('why: every Kind has a derived chain; the tree chain is Matthew\'s; a record chain wins', () => {
   for (const kind of Object.keys(catalog) as Kind[]) { const w = whyOf({ kind }); assert.ok(w.length >= 1 && w.length <= WHY_MAX, kind); }
   assert.deepEqual(WHY_DEFAULTS.spruce.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'leafed']);
-  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'leafed', 'weathered', 'weakened', 'failed', 'fell', 'resting']);
-  assert.ok(!WHY_DEFAULTS.spruce.some(s => s.step === 'failed' || s.step === 'fell'), 'a standing tree has not failed');
-  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step).slice(-2), ['fell', 'resting']);
+  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step), ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'leafed', 'weathered', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting']);
+  assert.ok(!WHY_DEFAULTS.spruce.some(s => ['failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting'].includes(s.step)), 'a standing tree has not failed');
+  assert.ok(WHY_DEFAULTS.log.length <= WHY_MAX);
+  assert.equal(stepText(WHY_DEFAULTS.log[WHY_DEFAULTS.log.length - 3]), 'displaced the ground (the earth yields)');
+  assert.deepEqual(WHY_DEFAULTS.log.map(s => s.step).slice(-2), ['settled', 'resting']);
   assert.equal(stepText(tip(whyOf({ kind: 'log' }))!), 'resting on the ground');
   assert.equal(stepText(tip(whyOf({ kind: 'rock' }))!), 'embedded in the ground');
   assert.match(whyText(whyOf({ kind: 'spruce' })), /^photosynthesis \u2192 formed a seed \u2192 seed dispersed \u2192 sprouted from the ground \u2192 grew here \u2192 leafed out$/);
@@ -107,4 +110,14 @@ test('parseContext: optional why loads, old saves without why still load, bad ch
   assert.throws(() => parseContext(bad([{ step: 'resting', on: 'x'.repeat(65) }])));
   assert.throws(() => parseContext(bad([{ step: 'resting', note: 'free text' }])));
   assert.throws(() => parseContext(bad(Array.from({ length: WHY_MAX + 1 }, () => ({ step: 'grew' })))));
+});
+test('seating inputs ride on the contact for T-0005: defaults, bounds, and solidContact ignores them', () => {
+  assert.deepEqual(seatInputs({}), { trunkDensity: undefined, earthDensity: SEAT_DEFAULTS.earthDensity, sinkFraction: 1 / 3 });
+  assert.deepEqual(seatInputs({ trunkDensity: 512, earthDensity: 1400, sinkFraction: .3 }), { trunkDensity: 512, earthDensity: 1400, sinkFraction: .3 });
+  assert.deepEqual(seatInputs({ trunkDensity: -1, earthDensity: NaN, sinkFraction: 4 }), { trunkDensity: undefined, earthDensity: SEAT_DEFAULTS.earthDensity, sinkFraction: 1 });
+  const trunk = density(COMPOSITIONS.log.body); assert.ok(trunk > 400 && trunk < SEAT_DEFAULTS.earthDensity, 'a log is lighter than the earth it presses into');
+  const ctx = createContext(), payload = { ...contact('0:0:3'), trunkDensity: trunk, earthDensity: 1300, sinkFraction: 1 / 3 };
+  assert.equal(solidContact(ctx, payload), ctx, 'generated log: still the same context');
+  const deer = entity('2:2:1', 'deer'), known = interact(createContext(), { x: 0, z: 1, abilities: ['speak'] }, deer, 'speak');
+  assert.deepEqual(solidContact(known, { ...contact(deer.key), sinkFraction: .9 }), solidContact(known, contact(deer.key)), 'payload does not change the why');
 });

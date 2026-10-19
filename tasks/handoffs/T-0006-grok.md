@@ -53,6 +53,17 @@ After `grew` a tree leafs out; a fallen log carries on through the break. All cl
   deer, person = born -> wandered. WHY_MAX is 16 (the log default is 11 steps); over it, the first step and the newest
   ones are kept.
 
+### Update 3 (Matthew, 07:16 PT): seating physics in the chain
+After `failed` the log's chain continues with the seating physics, as labels: pulled (gravity) -> tipped -> displaced
+(trunk density vs earth density; the earth yields) -> settled (forces equal) -> resting (flat, sunk ~1/3 of the trunk
+width). `fell` is gone from the closed list (pulled + tipped say it). Log default (14 steps): photosynthesized -> seeded ->
+dispersed -> sprouted -> grew -> leafed -> weathered -> weakened -> failed -> pulled -> tipped -> displaced the ground ->
+settled -> resting on the ground. Standing trees still stop at leafed.
+- The contact payload carries optional seating inputs for T-0005 to read: `trunkDensity`, `earthDensity` (kg/m3) and
+  `sinkFraction` (~1/3). `logContact` fills trunkDensity from `density(COMPOSITIONS.log.body)` (~512 kg/m3) and the
+  defaults `SEAT_DEFAULTS` (earth 1300 kg/m3 [verify], sink 1/3); `seatInputs(c)` applies defaults and bounds.
+  solidContact ignores them (the why does not depend on them). T-0006 still never seats, sinks or tilts a log.
+
 ## Pieces
 - [x] claim event, this handoff, notes/grok.md (before any code)
 - [x] why chain extended per Matthew 07:03 (leafed, weathered, weakened, failed)
@@ -85,4 +96,4 @@ After `grew` a tree leafs out; a fallen log carries on through the break. All cl
 - A pushed rock never re-emits contact today (rocks are not emitters; seatRock as emitter is a follow-up).
 - Every interaction bumps `revision`, which rebuilds all chunks, so all logs end+begin once per interaction (render
   lifetime, idempotent, but noisy under `?contacts=1`).
-- Matthew's open questions 1-3 (effects, continuous ticks, paws) are still open.
+- Matthew's open questions 1-3 (effects, continuous ticks, paws) are still open.- 07:16 seating physics steps in the chain + optional seating inputs on the contact (Matthew); see Update 3.

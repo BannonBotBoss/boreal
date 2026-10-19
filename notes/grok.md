@@ -10,3 +10,5 @@
   fell -> resting on the ground; rock = weathered -> embedded; animals = born -> wandered. Closed steps, max 8.
 - Chain extended (Matthew 07:03): grew -> leafed; log adds weathered -> weakened -> failed -> fell -> resting on the
   ground (11 steps). Standing trees stop at leafed. WHY_MAX 16. Labels only, no weather sim.
+- Seating physics as chain labels (Matthew 07:16): failed -> pulled -> tipped -> displaced -> settled -> resting (sunk
+  ~1/3 width); 'fell' dropped. Contact carries optional trunkDensity/earthDensity/sinkFraction for T-0005 (seatInputs).

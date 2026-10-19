@@ -17,7 +17,19 @@
  */
 export type Solid = string; // an entity key, or 'ground' for the earth
 export type Vec3 = [number, number, number];
-export interface Contact { a: Solid; b: Solid; at: Vec3; normal: Vec3; kind: 'solid-solid'; source: string }
+/** Optional seating inputs for whoever seats the object (T-0005 seatLog reads them; T-0006 never seats, sinks or tilts).
+ *  Densities in kg/m3 (core/materials); sinkFraction = sunk depth / trunk width (Matthew: ~1/3). */
+export interface SeatInputs { trunkDensity?: number; earthDensity?: number; sinkFraction?: number }
+export interface Contact extends SeatInputs { a: Solid; b: Solid; at: Vec3; normal: Vec3; kind: 'solid-solid'; source: string }
+/** Defaults: forest-floor mineral soil bulk density ~1.2-1.5 g/cm3 (core/ground sandy podzol note) [verify]; sink ~1/3 (Matthew). */
+export const SEAT_DEFAULTS = { earthDensity: 1300, sinkFraction: 1 / 3 } as const;
+/** Seating inputs with defaults and sane bounds (densities finite and > 0, sinkFraction in [0, 1]); trunkDensity stays
+ *  undefined when not given (the reader picks it from its own material). Pure; never moves anything. */
+export function seatInputs(c: SeatInputs): Required<Pick<SeatInputs, 'earthDensity' | 'sinkFraction'>> & Pick<SeatInputs, 'trunkDensity'> {
+  const pos = (v: number | undefined) => v !== undefined && Number.isFinite(v) && v > 0 ? v : undefined;
+  const f = c.sinkFraction !== undefined && Number.isFinite(c.sinkFraction) ? Math.min(1, Math.max(0, c.sinkFraction)) : SEAT_DEFAULTS.sinkFraction;
+  return { trunkDensity: pos(c.trunkDensity), earthDensity: pos(c.earthDensity) ?? SEAT_DEFAULTS.earthDensity, sinkFraction: f };
+}
 export type ContactListener = (c: Contact) => void;
 export type SeparateListener = (a: Solid, b: Solid, source: string) => void;
 

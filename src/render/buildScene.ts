@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { generateGeometry, disposeObject } from './geometry';
 import { CHUNK_SIZE, generateChunk, heightAt, type Entity } from '../core/world';
 import { restoreEntities, type EventContext } from '../core/events';
-import { CONTACTS, type Contact } from '../core/contactBus';
+import { CONTACTS, SEAT_DEFAULTS, type Contact } from '../core/contactBus';
+import { COMPOSITIONS, density } from '../core/materials';
 import { chunkTerrainJob, positionCamera } from './math';
 import { warmTerrainWorkers } from './terrainPool';
 import { terrainMaterial } from './pbr';
@@ -48,10 +49,11 @@ export type ForageHandler = (animal: Entity, plant: Entity) => number | undefine
 /** T-0006: the ONE log-on-earth contact (shared call site with T-0005). Placement only reads the ground: it never seats,
  *  sinks or tilts the log. TODO(T-0005): when seatLog merges, pass its returned { at, normal } here instead of the centre
  *  height and the two forward heightAt differences below. `source` says this edge is chunk-build (render lifetime). */
+const LOG_SEAT = { trunkDensity: density(COMPOSITIONS.log.body), earthDensity: SEAT_DEFAULTS.earthDensity, sinkFraction: SEAT_DEFAULTS.sinkFraction }; // inputs for T-0005 to read
 export function logContact(e: Entity, y: number, seat?: { at: [number, number, number]; normal: [number, number, number] }): Contact {
-  if (seat) return { a: e.key, b: 'ground', at: seat.at, normal: seat.normal, kind: 'solid-solid', source: 'chunk-build:log' };
+  if (seat) return { a: e.key, b: 'ground', at: seat.at, normal: seat.normal, kind: 'solid-solid', source: 'chunk-build:log', ...LOG_SEAT };
   const d = .5, nx = y - heightAt(e.x + d, e.z), nz = y - heightAt(e.x, e.z + d), l = Math.hypot(nx, d, nz);
-  return { a: e.key, b: 'ground', at: [e.x, y, e.z], normal: [nx / l, d / l, nz / l], kind: 'solid-solid', source: 'chunk-build:log' };
+  return { a: e.key, b: 'ground', at: [e.x, y, e.z], normal: [nx / l, d / l, nz / l], kind: 'solid-solid', source: 'chunk-build:log', ...LOG_SEAT };
 }
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU

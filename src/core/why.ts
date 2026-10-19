@@ -2,7 +2,9 @@
  * The why behind every object (Grok Bot, T-0006): a short causal chain of closed steps, oldest first.
  * Matthew's tree: photosynthesis -> forms a seed -> the seed disperses -> sprouts from the ground -> grows into the tree
  * -> leafs out. His fallen log carries on: weathered (rare weather strained it over time) -> weakened (a weak point built
- * up) -> failed (could not hold its own mass) -> fell -> resting on the ground. Labels only: no weather or plant sim.
+ * up) -> failed (could not hold its own mass). Then the seating physics, as labels (Matthew 07:16): pulled (gravity) ->
+ * tipped -> displaced (trunk density vs earth density: the earth yields) -> settled (forces equal) -> resting (flat, sunk
+ * ~1/3 of the trunk width). Labels only: no weather, plant or seating sim here (T-0005 seats the log; see Contact.sinkFraction).
  *
  * - Closed vocabulary (WHY_TAGS); `on`/`by` are short identifiers (an entity key, 'ground', 'player'), never prose.
  * - Generated objects get a DERIVED chain from their kind and are never stored (no save growth).
@@ -13,7 +15,7 @@ import type { Kind } from './catalog';
 import type { Entity } from './world';
 import type { Solid } from './contactBus';
 
-export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'leafed', 'weakened', 'failed', 'fell', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered'] as const;
+export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'leafed', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered'] as const;
 export type WhyTag = typeof WHY_TAGS[number];
 export interface WhyStep { step: WhyTag; on?: Solid; by?: string }
 export type Why = WhyStep[];
@@ -24,7 +26,8 @@ const GROWN: Why = [{ step: 'photosynthesized' }, { step: 'seeded' }, { step: 'd
 /** Derived chain per kind (never stored). Every catalog Kind has one. */
 export const WHY_DEFAULTS: Record<Kind, Why> = {
   spruce: GROWN, plant: GROWN, forage: GROWN,
-  log: [...GROWN, { step: 'weathered' }, { step: 'weakened' }, { step: 'failed' }, { step: 'fell' }, { step: 'resting', on: 'ground' }],
+  log: [...GROWN, { step: 'weathered' }, { step: 'weakened' }, { step: 'failed' },
+    { step: 'pulled' }, { step: 'tipped' }, { step: 'displaced', on: 'ground' }, { step: 'settled' }, { step: 'resting', on: 'ground' }],
   rock: [{ step: 'weathered' }, { step: 'embedded', on: 'ground' }],
   deer: [{ step: 'born' }, { step: 'wandered' }],
   person: [{ step: 'born' }, { step: 'wandered' }],
@@ -60,7 +63,10 @@ export function stepText(s: WhyStep): string {
     case 'failed': return 'failed under its own mass';
     case 'born': return 'born';
     case 'wandered': return 'wandered here';
-    case 'fell': return 'fell';
+    case 'pulled': return 'pulled down by gravity';
+    case 'tipped': return 'tipped over';
+    case 'displaced': return `displaced ${name(s.on ?? 'ground')} (the earth yields)`;
+    case 'settled': return 'settled (forces balanced)';
   }
 }
 /** The whole chain: "photosynthesis -> formed a seed -> ... -> resting on the ground". */

@@ -35,9 +35,10 @@ const VERT = `#include <worldpos_vertex>
     vBandW = (modelMatrix * bw).xyz; }`;
 /** Bands along an oblique world axis (so upright trunks and lying logs both cross them), domain-warped by low-frequency
  *  noise, plus a little fBm grain. Range ~0.85-1.15. */
-const FRAG = (mask: string) => `{ float bt = dot(vBandW, vec3(.55, 1.25, .4)) * 1.6 + 2.2 * vnoiseU(vBandW.xz * .11 + vBandW.y * .05, 5.3);
-    float bn = vnoiseU(vec2(bt, dot(vBandW.xz, vec2(.07, -.05))), 2.9), bg = fbm(vBandW.xz * 1.3 + vBandW.y * .9, 8.1);
-    float bk = clamp(.85 + .3 * (bn * .8 + bg * .4 - .1), .85, 1.15);
+export const BANDS_AMP = .15; // diffuse x 0.85-1.15 (.3 = the 0.7-1.3 visibility check)
+const FRAG = (mask: string) => `{ float bt = dot(vBandW, vec3(1., 1.4, .9)) * 4. + 2.2 * vnoiseU(vBandW.xz * .11 + vBandW.y * .05, 5.3);
+    float bn = sin(bt * 3.14159) * (.6 + .4 * vnoiseU(vec2(bt * .5, dot(vBandW.xz, vec2(.07, -.05))), 2.9)), bg = fbm(vBandW.xz * 1.3 + vBandW.y * .9, 8.1);
+    float bk = 1. + ${BANDS_AMP.toFixed(3)} * clamp(bn * .85 + (bg - .5) * .9, -1., 1.);
     diffuseColor.rgb *= mix(1., bk, ${mask}); }
   #include <alphamap_fragment>`;
 

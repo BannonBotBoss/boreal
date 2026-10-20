@@ -1,4 +1,5 @@
 import './style.css';
+import { createSensesHUD } from './ui/senses';
 import { buildScene } from './render/buildScene';
 import { availableActions, consumeForage, createContext, friendCount, interact, parseContext, type Player } from './core/events';
 import { catalog } from './core/catalog';
@@ -86,6 +87,7 @@ try { view = buildScene(canvas, onForage); } catch (error) {
   status.textContent = '3D unavailable. Open this page in a browser with WebGL2 enabled.';
   throw error;
 }
+const sensesHUD = createSensesHUD(view, sfx, () => context);
 function perform() {
   if(autonomous) setAutonomous(false);
   if (!target || paused || dialog.open || saveBlocked) return;
@@ -333,6 +335,7 @@ function frame(time: number) { const frameStart = performance.now();
       notice(`Caught a snowshoe hare! +${HARE.energy} energy, +${HARE.stamina} stamina.`);
     }
   }
+  sensesHUD.update(dt, menu.open || paused || photo.active || dialog.open || document.hidden || !!inpage?.blocksGame());
   const stats = view.stats();
   const animal = view.audibleAnimals().find(a => a.key === target?.key);
   const animalStatus = animal ? ` · ${animal.motion}/${animal.problem} · Energy ${Math.round(animal.energy)}` : '';

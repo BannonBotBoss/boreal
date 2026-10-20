@@ -53,6 +53,8 @@ export interface SoundFrame {
 const DUCKERS = new Set<SoundId>(['wolf-howl', 'wolf-growl', 'deer-snort', 'wolf-whine', 'friend-chime', 'stone-roll', 'herb-pluck', 'loon', 'sprint-burst', 'dawn-chorus', 'owl']);
 
 export class BorealSound {
+  /** Transient accessibility cue for an admitted positional sound; never creates a save record. */
+  onSpatialCue?: (id: SoundId, at: { x: number; z: number }, level: number) => void;
   private ctx?: AudioContext;
   private master?: GainNode; private duck?: GainNode; private bus = new Map<Bus, GainNode>();
   private active: (ActiveVoice & { stop(): void })[] = [];
@@ -146,6 +148,7 @@ export class BorealSound {
     const ctx = this.ctx, buffer = this.buffers.get(id); if (!ctx || !buffer || ctx.state !== 'running') return;
     if (at && Math.hypot(at.x - this.ear.x, at.z - this.ear.z) > CULL_DISTANCE) return; // distance culling: inaudible anyway, saves an HRTF panner
     const prio = priorityOf(id), adm = admitVoice(this.active, id, prio); if (!adm.ok) return;
+    if (at && !this.haltedNow) this.onSpatialCue?.(id, at, level);
     if (adm.steal >= 0) { this.active[adm.steal].stop(); this.active.splice(adm.steal, 1); }
     const src = ctx.createBufferSource(), gain = ctx.createGain(), now = ctx.currentTime;
     src.buffer = buffer; src.playbackRate.value = rate * (.94 + soundRng() * .12); const g0 = level * trim(id); gain.gain.value = g0;

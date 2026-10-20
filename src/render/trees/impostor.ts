@@ -430,21 +430,21 @@ export function bakeAtlas(renderer: THREE.WebGLRenderer, target: THREE.Object3D,
 }
 /** Baked-normal weight (0 = camera-facing normal). Upstream marks its baked normals TODO; .25 keeps the near LOD's soft crown
  *  shading in the viewer [game calibration]. */
-export const IMPOSTOR_FX = { normalMix: { value: .25 }, upBend: { value: .15 } }; // upBend: the camera-facing normal bent toward world up (the near LOD's crown normals lean up); .15 matches the near LOD's rendered brightness in the viewer [game calibration]
+export const IMPOSTOR_FX = { normalMix: { value: .25 }, upBend: { value: .15 }, tint: { value: new THREE.Vector3(.39, .42, .8) } }; // tint (M2): linear albedo gain; the flat impostor misses the needle cards' sky sheen, so it read yellow next to the near LOD (B/G .5 vs .72); rescaled for the lifted M2 needle colour so its median matches the near LOD [game calibration] // upBend: the camera-facing normal bent toward world up (the near LOD's crown normals lean up); .15 matches the near LOD's rendered brightness in the viewer [game calibration]
 /** Impostor material over MeshStandardMaterial (upstream createOctahedralImpostorMaterial, hemi + normal, opaque). */
 export function impostorMaterial(atlas: Atlas, spritesPerSide = 8, alphaClamp = .4) {
-  const m = new THREE.MeshStandardMaterial({ roughness: .85 }); m.userData.shared = true;
+  const m = new THREE.MeshStandardMaterial({ roughness: .7 }); m.userData.shared = true; // the near foliage's roughness (M2: .85 lost the sky sheen, a yellow cast)
   (m as unknown as { map: THREE.Texture }).map = atlas.albedo; m.normalMap = atlas.normalDepth;
-  const u = { uNormalMix: IMPOSTOR_FX.normalMix, uUpBend: IMPOSTOR_FX.upBend, spritesPerSide: { value: spritesPerSide }, alphaClamp: { value: alphaClamp }, impostorTransform: { value: atlas.transform } };
+  const u = { uNormalMix: IMPOSTOR_FX.normalMix, uUpBend: IMPOSTOR_FX.upBend, uImpTint: IMPOSTOR_FX.tint, spritesPerSide: { value: spritesPerSide }, alphaClamp: { value: alphaClamp }, impostorTransform: { value: atlas.transform } };
   m.onBeforeCompile = s => {
     s.defines = { ...s.defines, EZ_USE_HEMI_OCTAHEDRON: true, EZ_USE_NORMAL: true }; Object.assign(s.uniforms, u);
     s.vertexShader = s.vertexShader.replace('#include <clipping_planes_pars_vertex>', P_VERT).replace('#include <project_vertex>', VERT);
-    s.fragmentShader = 'uniform float uNormalMix; uniform float uUpBend;\n' + s.fragmentShader.replace('#include <map_fragment>', 'diffuseColor *= blendedColor;') // first, or it would hit the commented include inside MAP_FRAG (upstream order)
+    s.fragmentShader = 'uniform float uNormalMix; uniform float uUpBend; uniform vec3 uImpTint;\n' + s.fragmentShader.replace('#include <map_fragment>', 'diffuseColor *= blendedColor; diffuseColor.rgb *= uImpTint;') // first, or it would hit the commented include inside MAP_FRAG (upstream order)
       .replace('vec4 diffuseColor = vec4( diffuse, opacity );', `${MAP_FRAG}\n vec4 diffuseColor = vec4( diffuse, opacity );`)
       .replace('#include <clipping_planes_pars_fragment>', P_FRAG).replace('#include <normal_fragment_begin>', NRM_FRAG + '\nnormal = normalize(mix(normalize(vec3(0., 0., 1.) + uUpBend * (viewMatrix * vec4(0., 1., 0., 0.)).xyz), normal, uNormalMix)); nonPerturbedNormal = normal;')
       .replace('#include <normal_fragment_maps>', '');
   };
-  m.customProgramCacheKey = () => 'boreal-tree-impostor-v1';
+  m.customProgramCacheKey = () => 'boreal-tree-impostor-v2';
   return m;
 }
 /** One InstancedMesh of impostors (PlaneGeometry, oriented in the shader); `count` capacity. */

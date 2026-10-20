@@ -20,6 +20,7 @@ import { f, choose, tracing, withTrace, type Trace } from '../proc/trace';
 import { massOf, frustum, cone } from '../core/mass';
 import { PHYS } from '../core/tuning';
 import { icosphere } from './rocks';
+import { TREES_V2, bindWind, placeTree, v2Handles } from './trees/game';
 
 /**
  * Stylized boreal forest (Grok Bot). Every 'spruce' entity becomes one of five species picked
@@ -36,7 +37,7 @@ export function treeSpecies(seed: number, x?: number, z?: number): TreeSpecies {
 }
 /** Stand age class for the shared geometry cache (representative ages; core/stand drives the structure). */
 const AGE_CLASSES = [20, 70, 140, 260];
-const ageClass = (x?: number, z?: number) => { if (x === undefined || z === undefined || !RENDER.standMap) return 1; const a = fireAt(x, z).age; return a < 40 ? 0 : a < 100 ? 1 : a < 190 ? 2 : 3; };
+export const ageClass = (x?: number, z?: number) => { if (x === undefined || z === undefined || !RENDER.standMap) return 1; const a = fireAt(x, z).age; return a < 40 ? 0 : a < 100 ? 1 : a < 190 ? 2 : 3; };
 /** Snag (standing dead) per tree: probability = snags/ha ÷ stems/ha of the stand (core/stand). */
 const isSnag = (seed: number, x?: number, z?: number) => { if (x === undefined || z === undefined || !RENDER.standMap) return false; const st = standStructure(fireAt(x, z).age); return random(seed ^ 0x5a17)() < st.snags / (st.stems + st.snags); };
 
@@ -80,7 +81,7 @@ BarkSample barkSample(vec3 o, vec3 V, vec4 p, vec3 base, vec3 inner, vec3 len) {
 }`;
 function treeMaterial() {
   if (material) return material;
-  material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, flatShading: true }); material.userData.shared = true; // outlives chunks: the batched trees' BatchedMesh is not flagged, so disposeObject disposed this material on every chunk unload and all trees recompiled their programs
+  material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, flatShading: true }); material.userData.shared = true; material.userData.bandsMask = '(1. - step(0.5, vLeaf))'; // render/bands: bark only, not leaf cards. outlives chunks: the batched trees' BatchedMesh is not flagged, so disposeObject disposed this material on every chunk unload and all trees recompiled their programs
   material.onBeforeCompile = shader => {
     shader.uniforms.uWind = wind; shader.uniforms.uWindDir = windDir; shader.uniforms.uWindAmp = windAmp; shader.uniforms.uColour = leafColour; shader.uniforms.uOff = leafOff;
     shader.defines = { ...(shader.defines ?? {}), TRANSLUCENCY_MASK: 'step(0.5, vLeaf)' }; addTranslucency(shader); addCloudShadow(shader);
@@ -216,6 +217,10 @@ export function updateTreeUniforms() {
 export function treeGeometry(entity: Entity, detail: number): THREE.Group {
   const species = treeSpecies(entity.seed, entity.x, entity.z), variant = f('tree', 'variant', (entity.seed >>> 3) % VARIANTS), cls = ageClass(entity.x, entity.z), snag = isSnag(entity.seed, entity.x, entity.z), key = `${species}:${variant}:${cls}:${snag ? 1 : 0}:${detail}`;
   // Traced (inspector) builds bypass the shared cache so factors are reported and what-if overrides take effect.
+  if (TREES_V2.on && !snag && !tracing() && !entity.key.startsWith('fartree:') && v2Handles(species)) { // trees v2 hook (render/trees/game): drawn there, nothing here
+    if (detail === 0) { bindWind(WIND_UNIFORMS); const s = random(entity.seed)(); placeTree(entity.key, entity.x, heightAt(entity.x, entity.z), entity.z, entity.rotation, entity.scale, entity.scale * (.9 + s * .2), entity.scale, entity.seed, cls, false); }
+    return new THREE.Group();
+  }
   let geometry = tracing() ? build(species, variant, detail, cls, snag) : cache.get(key); if (!geometry) cache.set(key, geometry = build(species, variant, detail, cls, snag));
   const mesh = new THREE.Mesh(geometry, treeMaterial()); mesh.userData.shared = !tracing();
   const group = new THREE.Group(); group.add(mesh);

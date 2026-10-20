@@ -5,6 +5,13 @@ import { createDeerRig } from './animalRig';
 import { icosphere, rockGeometry } from './rocks';
 import { treeGeometry } from './trees';
 
+/** Fallen logs share one batch material with the same parameters as render/batch PROP_MATERIAL (same program key, no new
+ *  program), colour per vertex. Being a different material, the chunk batch gives logs their own BatchedMesh, which casts
+ *  shadows (render/photoreal: near cascade only), while plants and bushes (PROP_MATERIAL) cast none. */
+export const LOG_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }); LOG_MATERIAL.userData.shared = true;
+const tinted = (g: THREE.BufferGeometry, hex: number) => { const c = new THREE.Color(hex), n = g.getAttribute('position').count, a = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; } g.setAttribute('color', new THREE.BufferAttribute(a, 3)); return g; };
+
 /** Only this layer knows Three.js. No model files are loaded. */
 export function generateGeometry(entity: Entity, detail: number): THREE.Group {
   if (entity.kind === 'deer') { const rig = createDeerRig(entity.seed, detail); rig.root.scale.setScalar(entity.scale); rig.root.rotation.y = entity.rotation; return rig.root; }
@@ -21,8 +28,9 @@ export function generateGeometry(entity: Entity, detail: number): THREE.Group {
   const ellipsoid = (mat: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number) =>
     add(icosphere(detail === 0 ? 1 : 0), mat, x, y, z, sx, sy, sz);
   if (entity.kind === 'log') {
-    const log = add(new THREE.CylinderGeometry(.32, .43, 4.4, segments), wood, 0, .4, 0); log.rotation.z = Math.PI / 2;
-    const end = add(new THREE.CircleGeometry(.33, segments), pale, 2.21, .4, 0); end.rotation.y = Math.PI / 2;
+    const log = add(tinted(new THREE.CylinderGeometry(.32, .43, 4.4, segments), 0x70513b), LOG_MATERIAL, 0, .4, 0); log.rotation.z = Math.PI / 2;
+    const end = add(tinted(new THREE.CircleGeometry(.33, segments), 0xc4ab7a), LOG_MATERIAL, 2.21, .4, 0); end.rotation.y = Math.PI / 2;
+    log.userData.shared = end.userData.shared = true; // render/batch keeps a shared material as is (its own batch) instead of baking it into PROP_MATERIAL
   } else if (entity.kind === 'forage') {
     const berries = material(0x536fb7), leaves = material(0x528d40);
     for(let i=0;i<(detail===2?3:7);i++) {

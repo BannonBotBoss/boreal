@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { generateGeometry, disposeObject } from './geometry';
 import * as GEOMETRY from './geometry';
-import { CHUNK_SIZE, generateChunk, heightAt, type Entity } from '../core/world';
+import { CHUNK_SIZE, generateChunk, heightAt, isDryLand, type Entity } from '../core/world';
 import { restoreEntities, type EventContext } from '../core/events';
 import { CONTACTS, type Contact } from '../core/contactBus';
 import { logContact, type LogSeatFn } from '../core/logContact';
@@ -107,7 +107,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
     if (t.water) { const lake = new THREE.Mesh(t.water, water.material); lake.userData.inspect = { type: 'terrain', key: `water:${cx}:${cz}` }; root.add(lake); } // stages 2b/2c: lake level / river surface sheet
     const generated = applyPopulation(generateChunk(cx, cz), cx, cz); yield; // chunk build steps stay within the 4 ms job budget
-    const entities = structuredClone(restoreEntities(generated, context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key));
+    // Old remembered people bypass generation's land test. Hide invalid placements without
+    // deleting their relationship/event records or inventing a new location for them.
+    const entities = structuredClone(restoreEntities(generated, context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key) && (e.kind !== 'person' || isDryLand(e.x, e.z)));
     for (const entity of entities) {
       if (catalog[entity.kind].objectType === 'animal') {
         const previous = animals.get(entity.key);

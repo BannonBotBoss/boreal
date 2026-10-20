@@ -14,7 +14,7 @@ export const GAIT_TABLE: Record<GaitId, GaitRow> = {
   trot:   { offsets: [0, .5, .5, 0], duty: .45, lift: .15 },     // diagonal pairs (gaitFor)
   pace:   { offsets: [0, 0, .5, .5], duty: .5, lift: .15 },      // ipsilateral pairs; duty [verify], lift game calibration
   canter: { offsets: [.3, 0, .6, .3], duty: .4, lift: .18 },     // three-beat, RH+LF diagonal [verify]
-  gallop: { offsets: [.6, 0, .45, .9], duty: .3, lift: .20 },    // canid rotary gallop (gaitFor); duty falls with speed there
+  gallop: { offsets: [.45, 0, .6, .9], duty: .3, lift: .20 },    // rotary LH -> RH -> RF -> LF (Biancardi & Minetti 2012); duty falls with speed
   bound:  { offsets: [.5, 0, .5, 0], duty: .3, lift: .20 },      // fore pair / hind pair [verify]
   pronk:  { offsets: [0, 0, 0, 0], duty: .3, lift: .20 },        // all four together [verify]
 };

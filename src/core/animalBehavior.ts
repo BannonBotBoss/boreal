@@ -158,7 +158,10 @@ export function gaitFor(motion: Motion, speed: number, legs: LegDims): Gait | nu
   };
   const maxStance = Math.min(reachOf(legs), legs.hind ? reachOf(legs.hind) : Infinity);
   const cycle = Math.max(.4 * h, Math.min(2.3 * h * fr ** .3, maxStance / duty));
-  const offsets = name === 'walk' ? [.25, 0, .75, .5] : name === 'trot' ? [0, .5, .5, 0] : [.6, 0, .45, .9];
+  // Rotary order LH -> RH -> RF -> LF (offsets lead the cycle, so touchdown = 1 - offset).
+  // Biancardi & Minetti 2012, JEB 215:4144, doi:10.1242/jeb.073031, Fig. 1.
+  // Timing fractions remain game calibration; the old front-pair order was transverse.
+  const offsets = name === 'walk' ? [.25, 0, .75, .5] : name === 'trot' ? [0, .5, .5, 0] : [.45, 0, .6, .9];
   return { name, duty, cycle, lift: (name === 'walk' ? .1 : name === 'trot' ? .15 : .2) * h, offsets, reverse: motion === 'back' };
 }
 /** Leg order LF, LH, RF, RH. Front legs are even indices. */
@@ -166,7 +169,7 @@ export const isFrontLeg = (i: number) => i % 2 === 0;
 const frac = (v: number) => v - Math.floor(v);
 const smooth = (s: number) => s * s * (3 - 2 * s);
 /**
- * Gallop body lift: a bump over each flight phase. Stance windows are LH 0, RH .1, LF .4, RF .55 (+ duty);
+ * Gallop body lift: a bump over each flight phase. Stance windows are LH 0, RH .1, RF .4, LF .55 (+ duty);
  * at high speed (low duty) canids show two flights per stride, gathered (after the hind pair) and extended (after the fore pair).
  */
 export function gallopBob(phase: number, hip: number, duty = .3) {

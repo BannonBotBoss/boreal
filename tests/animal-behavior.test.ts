@@ -5,6 +5,24 @@ import {createDeerRig} from '../src/render/animalRig';
 import {depressionFormation,neighbours,MAX_DEPTH_STEP,surfaceDetail} from '../src/core/surface';
 import {disposeObject} from '../src/render/geometry';
 const origin={x:0,y:0,z:0};
+test('land placement rejects the river and accepts generated encounters', async () => {
+ const { isDryLand, riverCenter, generateChunk } = await import('../src/core/world');
+ for (let z = -80; z <= 80; z += 10) assert.equal(isDryLand(riverCenter(z), z), false);
+ let count = 0;
+ for (let cx = -2; cx <= 2; cx++) for (let cz = -2; cz <= 2; cz++)
+  for (const e of generateChunk(cx,cz).filter(e=>e.kind==='person')) { assert.ok(isDryLand(e.x,e.z)); count++; }
+ assert.ok(count > 0);
+});
+test('fast wolf gallop circles the body; trot pairs opposite legs', async () => {
+ const { gaitFor, WOLF_LEGS } = await import('../src/core/animalBehavior');
+ const g = gaitFor('run', 7, WOLF_LEGS)!;
+ const contacts = g.offsets.map((offset, leg) => ({ leg, t: (1-offset)%1 })).sort((a,b)=>a.t-b.t);
+ assert.deepEqual(contacts.map(c=>c.leg), [1,3,2,0], 'LH -> RH -> RF -> LF rotary order');
+ const trot = gaitFor('walk', 2, WOLF_LEGS)!;
+ assert.equal(trot.offsets[0], trot.offsets[3]);
+ assert.equal(trot.offsets[1], trot.offsets[2]);
+ assert.notEqual(trot.offsets[0], trot.offsets[1]);
+});
 test('earshot includes animals behind the player and energy is initialized before mesh generation', async()=>{
  const {generateChunk}=await import('../src/core/world');
  assert.ok(withinEarshot(origin,{x:0,y:0,z:39}));assert.ok(withinEarshot(origin,{x:0,y:0,z:-39}));

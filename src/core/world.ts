@@ -42,6 +42,9 @@ export function terrainBand(y: number, x?: number, z?: number): 'water' | 'shore
 }
 /** Inside a stage-2c channel (bed or the inner bank). */
 const inRiver = (x: number, z: number) => { const r = riverAt(STAGES.seed, x, z); return !!r && r.d < r.half + 1; };
+/** Revalidate land-bound encounters after restoring old events against the current terrain. */
+export const isDryLand = (x: number, z: number) => heightAt(x, z) >= LEVEL.shore
+  && !(STAGES.on && (lakeAt(STAGES.seed, x, z) || inRiver(x, z)));
 export const chunkSeed = (cx: number, cz: number, worldSeed = WORLD_SEED) =>
   f('chunk', 'chunkSeed', hash(`${GENERATOR_VERSION}:${f('chunk', 'worldSeed', worldSeed)}:${cx}:${cz}`));
 /** Candidate roll -> kind (cumulative weights; one data table). */
@@ -54,7 +57,7 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     const x = f('draw', 'x', (cx + rng()) * CHUNK_SIZE), z = f('draw', 'z', (cz + rng()) * CHUNK_SIZE);
     const roll = rng(), seed = f('draw', 'seed', Math.floor(rng() * 0xffffffff)), rotation = f('draw', 'rotation', rng() * Math.PI * 2);
     const scale = f('draw', 'scale', .75 + rng() * .65);
-    if (heightAt(x, z) < LEVEL.shore || Math.hypot(x, z) < 13 || (STAGES.on && (lakeAt(STAGES.seed, x, z) || inRiver(x, z)))) continue; // stages 2b/2c: nothing grows in lakes or river channels
+    if (!isDryLand(x, z) || Math.hypot(x, z) < 13) continue;
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
     result.push({ key: `${cx}:${cz}:${i}`, kind, seed, generatorVersion: GENERATOR_VERSION, x, z, rotation, scale });
   }
@@ -77,4 +80,3 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
   for (const entity of result) if (entity.kind === 'deer') entity.energy = ANIMAL_DEFAULT_ENERGY;
   return result;
 }
-

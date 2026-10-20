@@ -23,7 +23,9 @@ export function stepCpg(c: Cpg, offsets: readonly number[], freq: number, dt: nu
     for (let i = 0; i < 4; i++) {
       let k = 0;
       for (let j = 0; j < 4; j++) if (j !== i) k += Math.sin(TAU * ((c.theta[j] - c.theta[i]) - (offsets[j] - offsets[i])));
-      d[i] = freq + w * c.r * k / (TAU * 3);
+      // Game constraint: coupling may delay a foot during a gait transition, but
+      // must never reverse its stride (which would reverse stance/swing motion).
+      d[i] = Math.max(0, freq + w * c.r * k / (TAU * 3));
     }
     for (let i = 0; i < 4; i++) c.theta[i] += h * d[i];
   }

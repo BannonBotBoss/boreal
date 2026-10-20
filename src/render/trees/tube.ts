@@ -13,13 +13,21 @@ function tangent(p: THREE.Vector3[], i: number, out: THREE.Vector3) {
   const n = p.length; if (i === 0) out.subVectors(p[1], p[0]); else if (i === n - 1) out.subVectors(p[n - 1], p[n - 2]); else out.subVectors(p[i + 1], p[i - 1]);
   return out.lengthSq() < 1e-12 ? out.set(0, 1, 0) : out.normalize();
 }
-export function tubes(stems: Stem[], o: TubeOpts) {
-  const pos: number[] = [], nor: number[] = [], uv: number[] = [], col: number[] = [], idx: number[] = [];
+export function tubes(stems: Stem[], o: TubeOpts) { const g = tubeSteps(stems, o, function* () { yield; }); let r = g.next(); while (!r.done) r = g.next(); return r.value; }
+/** tubes() as a sliced job: calls `slice` every 48 stems (the caller decides how to yield). */
+export function* tubeSteps(stems: Stem[], o: TubeOpts, slice: () => Generator<unknown, void>): Generator<unknown, THREE.BufferGeometry> {
+  // M2: count first, then fill preallocated typed arrays (number[] growth caused GC pauses inside build steps on omen)
+  const sidesOf = (s: Stem) => Math.max(o.minSides ?? 3, Math.round(s.radialSegments * (o.radialScale ?? 1))), stride = Math.max(1, o.ringStride ?? 1);
+  const ringsOf = (s: Stem) => stride > 1 && s.points.length > 2 ? Math.ceil((s.points.length - 1) / stride) + 1 : s.points.length;
+  let NV = 0, NI = 0; for (const s of stems) if (!o.keep || o.keep(s)) { const sd = sidesOf(s), rg = ringsOf(s); NV += rg * (sd + 1); NI += (rg - 1) * sd * 6; }
+  const pos = new Float32Array(NV * 3), nor = new Float32Array(NV * 3), uv = new Float32Array(NV * 2), col = new Float32Array(NV * 3), idx = NV > 65535 ? new Uint32Array(NI) : new Uint16Array(NI);
+  let done = 0, nv = 0, ni = 0;
   const t = new THREE.Vector3(), n = new THREE.Vector3(), b = new THREE.Vector3(), rad = new THREE.Vector3();
   let base = 0;
   for (const s of stems) {
     if (o.keep && !o.keep(s)) continue;
-    const sides = Math.max(o.minSides ?? 3, Math.round(s.radialSegments * (o.radialScale ?? 1))), stride = Math.max(1, o.ringStride ?? 1);
+    if (++done % 24 === 0) yield* slice();
+    const sides = sidesOf(s);
     let P = s.points, R = s.radii;
     if (stride > 1 && P.length > 2) { const p2: THREE.Vector3[] = [], r2: number[] = []; for (let i = 0; i < P.length - 1; i += stride) { p2.push(P[i]); r2.push(R[i]); } p2.push(P[P.length - 1]); r2.push(R[R.length - 1]); P = p2; R = r2; }
     const c = o.colour(s), rings = P.length, ringV = sides + 1;
@@ -31,14 +39,16 @@ export function tubes(stems: Stem[], o: TubeOpts) {
       b.crossVectors(n, t).normalize();
       for (let j = 0; j <= sides; j++) {
         const th = j / sides * Math.PI * 2; rad.copy(n).multiplyScalar(Math.cos(th)).addScaledVector(b, Math.sin(th));
-        pos.push(P[i].x + rad.x * R[i], P[i].y + rad.y * R[i], P[i].z + rad.z * R[i]); nor.push(rad.x, rad.y, rad.z); uv.push(j / sides * uS, v / .5); col.push(c.r, c.g, c.b);
+        const o3 = nv * 3, o2 = nv * 2; pos[o3] = P[i].x + rad.x * R[i]; pos[o3 + 1] = P[i].y + rad.y * R[i]; pos[o3 + 2] = P[i].z + rad.z * R[i];
+        nor[o3] = rad.x; nor[o3 + 1] = rad.y; nor[o3 + 2] = rad.z; uv[o2] = j / sides * uS; uv[o2 + 1] = v / .5; col[o3] = c.r; col[o3 + 1] = c.g; col[o3 + 2] = c.b; nv++;
       }
     }
-    for (let i = 0; i < rings - 1; i++) for (let j = 0; j < sides; j++) { const a = base + i * ringV + j, c2 = a + ringV; idx.push(a, c2, a + 1, a + 1, c2, c2 + 1); }
+    for (let i = 0; i < rings - 1; i++) for (let j = 0; j < sides; j++) { const a = base + i * ringV + j, c2 = a + ringV; idx[ni++] = a; idx[ni++] = c2; idx[ni++] = a + 1; idx[ni++] = a + 1; idx[ni++] = c2; idx[ni++] = c2 + 1; }
     base += rings * ringV;
   }
+  if (nv !== NV || ni !== NI) throw new Error(`tubeSteps: counted ${NV}/${NI}, wrote ${nv}/${ni}`);
   const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx);
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1));
   return g;
 }

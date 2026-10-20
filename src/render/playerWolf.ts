@@ -152,6 +152,9 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   root.add(...skins); root.updateMatrixWorld(true);
   const skeleton = new THREE.Skeleton(bones); // inverses captured now, at the bind pose
   skins.forEach(skin => skin.bind(skeleton));
+  // render/bands (T-0004): animals opt out. Its pattern is in world space, so it would slide over a moving body, and the
+  // coat already has its own zones and streaks.
+  root.traverse(o => { for (const m of [(o as THREE.Mesh).material ?? []].flat()) m.userData.noBands = true; });
 
   const poseLegs = (pose: ReturnType<typeof quadrupedPose>, extra?: (i: number) => number) => poseWolfRig(tilt, chains, pose, extra);
   const tailPitch = { value: TAIL_HANG }, tailYaw = tail.map(() => 0);

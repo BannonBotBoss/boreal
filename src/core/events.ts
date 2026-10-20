@@ -2,8 +2,11 @@ import { catalog, type Action } from './catalog';
 import { GENERATOR_VERSION, WORLD_SEED, type Entity } from './world';
 import { pushContact, rockDiameter } from './rocks';
 import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './animalBehavior';
+import { isWhy, sameWhy, whyOf, withTip, type Why, type WhyStep } from './why';
+import type { SeatInputs, Solid, Vec3 } from './contactBus';
 export interface Player { x: number; z: number; heading?: number; abilities: Action[] }
-export interface RecordEntry { entity: Entity; relationship: 'friend' | null; removed: boolean; lastAction: Action; interactions: number; playerInteracted?: boolean }
+export interface RecordEntry { entity: Entity; relationship: 'friend' | null; removed: boolean; lastAction: Action; interactions: number; playerInteracted?: boolean;
+  /** Causal chain (core/why), stored only once a transaction changed it; absent = the kind's derived chain. */ why?: Why }
 export function playerRemembered(record: RecordEntry | undefined) {
   return !!record && (record.playerInteracted === true || record.relationship === 'friend' || record.lastAction !== 'forage');
 }
@@ -28,6 +31,7 @@ export function interact(context: EventContext, player: Player, target: Entity, 
     entity: structuredClone(target), playerInteracted: true, relationship: action === 'speak' ? 'friend' : previous?.relationship ?? null,
     removed: action === 'gather' || action === 'forage', lastAction: action, interactions: (previous?.interactions ?? 0) + 1,
   };
+  if (previous?.why) next.records[target.key].why = previous.why;
   if (action === 'gather') next.inventory.herb++;
   if (action === 'move') {
     const push = pushContact(player, target)!;
@@ -35,6 +39,7 @@ export function interact(context: EventContext, player: Player, target: Entity, 
     e.x += push.dx; e.z += push.dz;
     e.rollX = (e.rollX ?? 0) + push.dz / radius;
     e.rollZ = (e.rollZ ?? 0) - push.dx / radius;
+    next.records[target.key].why = withTip(whyOf(target, previous), { step: 'moved', by: 'player' }); // T-0006: the why's second writer
   }
   return next;
 }
@@ -49,6 +54,30 @@ export function consumeForage(context: EventContext, animal: Entity, plant: Enti
   next.records[animal.key]={entity:{...animal,energy:Math.min(100,(animal.energy??ANIMAL_DEFAULT_ENERGY)+FORAGE_ENERGY)},
     playerInteracted:true,relationship:previous?.relationship??null,removed:false,lastAction:'forage',interactions:(previous?.interactions??0)+1};
   return next;
+}
+/** What touching `other` means for `self`'s why tip: a rock is embedded in the ground; anything else rests on it. */
+export function contactStep(self: Pick<Entity, 'kind'>, other: Solid): WhyStep {
+  return { step: self.kind === 'rock' && other === 'ground' ? 'embedded' : 'resting', on: other };
+}
+/** Pure transaction (T-0006) for a solid-solid contact from core/contactBus; the caller persists the complete next
+ *  context. Never moves, sinks or rotates anything (seating stays in the placement code: T-0005 seatLog, seatRock).
+ *  Only records that already exist are touched: a generated log meeting the earth returns `context` itself (same object),
+ *  so generated objects never enter the save. Idempotent: begin/end at chunk build/dispose are render-lifetime edges
+ *  and may repeat; the same contact again gives the same context. Updates only `why` (the chain's tip). The optional
+ *  seating inputs (trunkDensity, earthDensity, sinkFraction) ride along for T-0005 and do not change the result. */
+export function solidContact(context: EventContext, c: { a: Solid | Entity; b: Solid | Entity; at?: Vec3; normal?: Vec3 } & SeatInputs): EventContext {
+  const keyOf = (s: Solid | Entity) => typeof s === 'string' ? s : s.key;
+  const a = keyOf(c.a), b = keyOf(c.b);
+  let next: EventContext | undefined;
+  for (const [self, other] of [[a, b], [b, a]]) {
+    if (self === 'ground' || !Object.hasOwn(context.records, self)) continue;
+    const record = context.records[self]; if (record.removed) continue;
+    const before = whyOf(record.entity, record), after = withTip(before, contactStep(record.entity, other));
+    if (sameWhy(before, after)) continue;
+    next ??= structuredClone(context);
+    next.records[self].why = after;
+  }
+  return next ?? context;
 }
 export function restoreEntities(generated: Entity[], context: EventContext, bounds: { minX: number; minZ: number; maxX: number; maxZ: number }): Entity[] {
   const pinned = Object.values(context.records).filter(r => !r.removed && r.entity.x >= bounds.minX && r.entity.x < bounds.maxX && r.entity.z >= bounds.minZ && r.entity.z < bounds.maxZ).map(r => r.entity);
@@ -68,7 +97,8 @@ export function parseContext(text: string): EventContext {
       || (e.energy !== undefined && (!Number.isFinite(e.energy) || e.energy < 0 || e.energy > 100))
       || ![e.rollX ?? 0, e.rollZ ?? 0].every(Number.isFinite)
       || !['speak', 'gather', 'move', 'forage'].includes(value.lastAction) || typeof value.removed !== 'boolean'
-      || (value.relationship !== null && value.relationship !== 'friend') || !Number.isInteger(value.interactions) || value.interactions < 1)
+      || (value.relationship !== null && value.relationship !== 'friend') || !Number.isInteger(value.interactions) || value.interactions < 1
+      || (value.why !== undefined && !isWhy(value.why)))
       throw new Error('Invalid individual record. Existing save was not replaced.');
   }
   // Legacy autonomous meals lacked player provenance; discard only those animal records.

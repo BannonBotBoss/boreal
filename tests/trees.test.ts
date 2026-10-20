@@ -29,3 +29,9 @@ test('trees: spire form: limbs near the top are shorter than at the base of the 
   const mean = (v: typeof l1) => v.reduce((a, t) => a + t.length, 0) / v.length;
   assert.ok(low.length && high.length && mean(high) < mean(low) * .6, `${mean(high)} vs ${mean(low)}`);
 });
+test('trees: M2 irregular whorls: dead lower limbs, a spread of limb lengths and a lean, all seeded', () => {
+  const s = sk(11), l1 = s.stems.filter(t => t.level === 1);
+  assert.ok(l1.some(t => t.dead) && l1.some(t => !t.dead), 'dead and live limbs');
+  const len = l1.map(t => t.length).sort((a, b) => a - b); assert.ok(len[Math.floor(len.length * .9)] > 2 * len[Math.floor(len.length * .1)], 'limb lengths vary');
+  const top = s.stems[0].points.at(-1)!; assert.ok(Math.hypot(top.x, top.z) > .05, `lean ${top.x} ${top.z}`);
+});

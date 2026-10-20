@@ -27,7 +27,7 @@ export interface Tier {
 export const LADDER: Tier[] = [
   { name: 'Ultra',   resScale: 1,    shadows: 2, ssao: 1, ibl: 1, gi: 2, pcss: 1, contact: 1, rays: 48, clouds: 1, lod: 1,   near: 100, mid: 180, trees: 1, foliage: 1, weather: 12 },
   { name: 'High',    resScale: 1,    shadows: 2, ssao: 1, ibl: 1, gi: 1, pcss: 1, contact: 1, rays: 32, clouds: 1, lod: 1,   near: 70, mid: 120, trees: 1, foliage: 1, weather: 8 },
-  { name: 'Medium',  resScale: .9,   shadows: 2, ssao: 1, ibl: 1, gi: 1, pcss: 0, contact: 1, rays: 24, clouds: 1, lod: .85, near: 60, mid: 100, trees: 1, foliage: .8, weather: 8 },
+  { name: 'Medium',  resScale: .9,   shadows: 1, ssao: 0, ibl: 1, gi: 1, pcss: 0, contact: 1, rays: 24, clouds: 1, lod: .85, near: 60, mid: 100, trees: 1, foliage: .8, weather: 8 },
   { name: 'Low',     resScale: .8,   shadows: 1, ssao: 0, ibl: 1, gi: 1, pcss: 0, contact: 0, rays: 0, clouds: 1, lod: .7,  near: 50, mid: 80, trees: .8, foliage: .6, weather: 8 },
   { name: 'Very low', resScale: .7,   shadows: 1, ssao: 0, ibl: 0, gi: 0, pcss: 0, contact: 0, rays: 0, clouds: 0, lod: .6,  near: 40, mid: 70, trees: .6, foliage: .4, weather: 6 },
   { name: 'Minimum', resScale: .5,   shadows: 0, ssao: 0, ibl: 0, gi: 0, pcss: 0, contact: 0, rays: 0, clouds: 0, lod: .5,  near: 40, mid: 60, trees: .5, foliage: .25, weather: 6 },

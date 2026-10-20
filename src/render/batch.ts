@@ -10,6 +10,7 @@ import { GLSL_NOISE } from '../proc/glsl';
 import { finish } from '../core/interest';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { fadeOptIn } from './fade';
+import { applySurfaceBands } from './bands';
 
 export const PROP_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }); PROP_MATERIAL.userData.shared = true;
 /** Rocks: the old 16×16 striped texture can't ride in a batch (one map per material), so the same look is procedural:
@@ -87,7 +88,8 @@ export function createChunkBatch() {
       for (const it of items) while (it.raw.length) it.levels.push(yield* flatten(it.raw.shift()!, clock));
       let t = clock.t;
       const mats = new Set<THREE.Material>(); for (const it of items) for (const l of it.levels) for (const m of l.keys()) mats.add(m);
-      for (const mat of mats) { fadeOptIn(mat, true); // render/fade: in-page transition patch fade (uniform only, same cache key; props' default keys kept byte-identical)
+      for (const mat of mats) { applySurfaceBands(mat); fadeOptIn(mat, true); // render/bands first: its fixed key is what fade keeps
+        // render/fade: in-page transition patch fade (uniform only, same cache key; props' default keys kept byte-identical)
         let v = 0, ix = 0, n = 0;
         for (const it of items) { let has = false; for (const l of it.levels) { const g = l.get(mat); if (g) { v += g.getAttribute('position').count; ix += g.index!.count; has = true; } } if (has) n++; }
         if (!n) continue;

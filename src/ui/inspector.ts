@@ -14,6 +14,7 @@ import { stream } from '../proc/rng';
 import { CHUNK_SIZE, WORLD_SEED, chunkSeed, generateChunk, heightAt, terrainBand } from '../core/world';
 import { applyPopulation } from '../core/population';
 import { catalog } from '../core/catalog';
+import { groundWhy, nowText, whyOf, whyText } from '../core/why';
 import { SENSE_RADII } from '../core/animalBehavior';
 import { gaitReadout } from '../core/gaitReadout';
 import { HERD } from '../core/deerHerd';
@@ -64,6 +65,7 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
     if (s.type === 'terrain') {
       const t: Trace = { factors: [] }; withTrace(t, () => terrainBand(heightAt(s.point.x, s.point.z)));
       out.push(...t.factors, obs('terrain', 'height', heightAt(s.point.x, s.point.z)), obs('sound', 'nearbyWater', nearbyWater(s.point.x, s.point.z)));
+      { const gw = groundWhy(); out.push(obs('why', 'now', `Ground - ${nowText(gw)}`), obs('why', 'chain', whyText(gw))); } // T-0006 (T-0007: layered fallen wood)
       const gt: Trace = { factors: [] }, col = withTrace(gt, () => column(s.point.x, s.point.z)); out.push(...gt.factors, obs('ground', 'cell', col.cell), obs('ground', 'game years elapsed', GROUND.years));
       for (const l of col.layers) out.push(obs('layers', `${(l.top * 100).toFixed(1)} cm ${l.label}`, `${(l.thickness * 100).toFixed(1)} cm · ${l.kg.toFixed(2)} kg/m² · ρ ${l.bulk} kg/m³${l.moisture !== undefined ? ` · moisture ${Math.round(l.moisture * 100)}%` : ''}${l.age ? ` · ${l.age}` : ''} — ${l.source}`));
       // Weather cell above this point (core/weather) and the persistent deltas near it (core/deltas).
@@ -91,6 +93,7 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       const r = regenerate(s.key, cx, cz, overrides, s.type === 'entity');
       const pm: Trace = { factors: [] }; withTrace(pm, () => view.massOf(s.key));
       out.push(...r.factors.filter(fa => fa.group !== 'terrain'), ...pm.factors, obs('entity', 'kind', found.entity.kind), obs('entity', 'title', catalog[found.entity.kind].title));
+      { const w = whyOf(found.entity, view.recordOf(s.key)); out.push(obs('why', 'now', `${catalog[found.entity.kind].title} - ${nowText(w)}`), obs('why', 'chain', whyText(w))); } // T-0006
       const lod = found.object as THREE.LOD | undefined;
       if (lod?.isLOD) out.push(obs('render', 'lodLevel', lod.getCurrentLevel()), obs('render', 'lodLevels', lod.levels.length));
       if (r.mesh && lod && Object.keys(overrides).length) {

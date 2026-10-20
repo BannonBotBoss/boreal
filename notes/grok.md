@@ -32,3 +32,7 @@ Branch only; Matthew merges. `?trees=v2` is OFF by default.
 - Smoke (tools/smoke-tiers.mjs from grok/smoke-vsync 6cb6037, GPU vsync off), 2026-10-18 ~22:30 PT, on this branch:
   ?trees=v2 PASS x2 (Ultra 137 fps, 245-250 draws), default PASS x2 (Ultra 137-138 fps, 242-248 draws). No errors; v2 links 82 programs at load vs 74 (its 3 materials + depth variants), none per tier.
   v2 could be default-on once Matthew is happy with the look; it is still opt-in.
+# Grok Bot notes
+
+## Surface bands (T-0004, render/bands.ts): contract for material owners
+- Opt out: `material.userData.noBands = true` (before the material's first compile). Opt in: send the material through `applySurfaceBands(material)` from render/bands (idempotent). Mixed materials can set `userData.bandsMask = '<GLSL float, 1 = band>'`.

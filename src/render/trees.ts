@@ -81,7 +81,7 @@ BarkSample barkSample(vec3 o, vec3 V, vec4 p, vec3 base, vec3 inner, vec3 len) {
 }`;
 function treeMaterial() {
   if (material) return material;
-  material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, flatShading: true }); material.userData.shared = true; // outlives chunks: the batched trees' BatchedMesh is not flagged, so disposeObject disposed this material on every chunk unload and all trees recompiled their programs
+  material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, flatShading: true }); material.userData.shared = true; material.userData.bandsMask = '(1. - step(0.5, vLeaf))'; // render/bands: bark only, not leaf cards. outlives chunks: the batched trees' BatchedMesh is not flagged, so disposeObject disposed this material on every chunk unload and all trees recompiled their programs
   material.onBeforeCompile = shader => {
     shader.uniforms.uWind = wind; shader.uniforms.uWindDir = windDir; shader.uniforms.uWindAmp = windAmp; shader.uniforms.uColour = leafColour; shader.uniforms.uOff = leafOff;
     shader.defines = { ...(shader.defines ?? {}), TRANSLUCENCY_MASK: 'step(0.5, vLeaf)' }; addTranslucency(shader); addCloudShadow(shader);

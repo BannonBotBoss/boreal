@@ -16,8 +16,9 @@ export interface Ev { type: string; task?: string; agent: string; at: string; fi
 export function award(t: Pick<Task, 'steps' | 'scratch' | 'research'>) {
   return Math.round(CREDITS.perStep * t.steps * (1 + (t.scratch ? CREDITS.scratch : 0) + (t.research ? CREDITS.research : 0)));
 }
-function parseTask(file: string, text: string): Task {
-  const fm = /^---\n([\s\S]*?)\n---/.exec(text)?.[1] ?? '', get = (k: string) => new RegExp(`^${k}:\\s*(.*)$`, 'm').exec(fm)?.[1].trim() ?? '';
+function parseTask(file: string, raw: string): Task {
+  const text = raw.replace(/\r\n?/g, '\n'); // CRLF checkouts (core.autocrlf on Windows) read like LF ones
+  const fm =/^---\n([\s\S]*?)\n---/.exec(text)?.[1] ?? '', get = (k: string) => new RegExp(`^${k}:\\s*(.*)$`, 'm').exec(fm)?.[1].trim() ?? '';
   const objectives = /## Objectives\n([\s\S]*?)(\n## |$)/.exec(text)?.[1] ?? '';
   const t = { id: get('id'), file, title: get('title'), author: get('author'), scratch: get('scratch') === 'true', research: get('research') === 'true',
     skill: get('skill') === 'true', steps: (objectives.match(/^- \[[ x]\]/gm) ?? []).length, state: 'proposed' as State, skillApproved: false, award: 0 };
@@ -75,6 +76,7 @@ export function ledger(root = join(process.cwd(), 'tasks')) {
         if (!t!.skill) bad('this task makes no skill'); else if (t!.state !== 'done') bad('approve the task first'); else if (e.agent === t!.claimant) bad('another agent approves the skill');
         else if (!t!.skillApproved) { t!.skillApproved = true; pay(t!.claimant!, Math.round(t!.award * (CREDITS.skill - 1)), e.at); } break;
       case 'bug': if (t!.state !== 'done') bad('bugs are filed against done tasks'); break;
+      case 'comment': break; // a note on the board (tools/board-server.ts POST /api/comment): no credits, no state change
       case 'confirm-bug': {
         const b = e.of ? bugs.get(e.of) : undefined, bt = b?.task ? tasks.get(b.task) : undefined;
         if (!b || !bt) { bad('confirm-bug needs "of": an earlier bug event file'); break; }

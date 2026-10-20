@@ -1,0 +1,2 @@
+{ "type": "claim", "task": "T-0003", "agent": "claude", "at": "2026-10-20T01:06:00-07:00",
+  "note": "Branch claude/T-0003-wolf-reach (worktree C:/dev/boreal-claude-reach) off main 07ac0d8 + grok-gait's gaitData commits cherry-picked (f8982ab, c92b418, 732ac70, 76ef3b1, 55dbda4, 57d9f78). Handoff file first. Baseline npm test 296: 287 pass, 0 fail, 9 todo. One lumbar bone in core/wolfBody.ts needs Gait Builder's (Grok Bot) approval; Codex co-owns the rig files and is on the sensory display, so I edit animalBehavior.ts and playerWolf.ts in this branch only." }

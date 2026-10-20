@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { WOLF_SCALE, type WolfMode } from '../core/wolfModes';
-import { AnimalBrain, quadrupedPose, WOLF_LEGS } from '../core/animalBehavior';
+import { AnimalBrain, pelvisShift, quadrupedPose, WOLF_LEGS } from '../core/animalBehavior';
 import { pushProgress } from '../core/rocks';
 import { buildBody, wolfCoat } from '../core/body';
 import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
@@ -22,13 +22,32 @@ const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math
 const HEAD_DROP = HEAD_AT[1] - .137;
 /** Portrait mode: a darker charcoal-and-silver coat, much finer fur over only the head and neck, eye liner and teeth. The game wolf is unchanged. */
 const PORTRAIT_COAT = { back: [.17, .18, .2] as [number, number, number], belly: [.44, .45, .45] as [number, number, number], dark: [.04, .04, .05] as [number, number, number], accent: [.5, .33, .19] as [number, number, number] };
+/** A leg chain of a wolf rig: its bones from the girdle down, limb lengths in model units, and its rest position (x, z). */
+export interface WolfChain { girdle: THREE.Bone; upper: THREE.Bone; lower: THREE.Bone; foot: THREE.Bone; paw: THREE.Bone; m: ReturnType<typeof limbModel>; x: number; z: number }
+/**
+ * T-0003: pose a wolf rig (torso and leg chains under a `tilt` group at the ground point under the body centre) from
+ * quadrupedPose: body pitch, height and pitch shift on the tilt group, hind chain tops carried by the pelvis (pelvisShift), shoulder
+ * blades and legs relative to the tilted body. Shared with the ?loco=1 fork rig, so both rigs pose every bone alike.
+ */
+export function poseWolfRig(tilt: THREE.Object3D, chains: WolfChain[], pose: ReturnType<typeof quadrupedPose>, extra?: (i: number) => number) {
+  tilt.rotation.set(pose.pitch, 0, 0); tilt.position.set(0, (pose.bob + pose.shift.y) / WOLF_SCALE, pose.shift.z / WOLF_SCALE);
+  const shift = pelvisShift(pose.spineFlex);
+  chains.forEach((c, i) => {
+    const hind = i % 2 === 1;
+    c.girdle.position.set(c.x, c.m.hip + c.m.girdle + (hind ? shift.y / WOLF_SCALE : 0), c.z + (hind ? shift.z / WOLF_SCALE : 0));
+    c.girdle.rotation.x = pose.girdles[i] - pose.pitch; c.upper.rotation.x = pose.legs[i] + (extra ? extra(i) : 0);
+    c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
+  });
+}
 export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = {}) {
   const portrait = !!options.portrait;
   const root = new THREE.Group(); root.scale.setScalar(WOLF_SCALE);
   const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
   const torso = bones[BONE.torso], head = bones[BONE.head], jaw = bones[BONE.jaw];
   head.name = 'cranium'; jaw.name = 'jaw';
-  root.add(torso);
+  // T-0003: torso and leg chains hang from a tilt group (body pitch and height; pivot: the ground point under the body centre).
+  const tilt = new THREE.Group(); tilt.name = 'tilt'; root.add(tilt);
+  tilt.add(torso);
   head.position.set(...HEAD_AT); torso.add(head);
   jaw.position.set(...JAW_AT); head.add(jaw); // hinge at the rear skull base, below the ears
   const tail = TAIL_BONES.map(i => bones[i]);
@@ -37,12 +56,12 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const chains = LEG_XZ.map(([x, z], i) => {
     const ids = legBone(i), m = limbModel(i);
     const [girdle, upper, lower, foot, paw] = [bones[ids.girdle], bones[ids.leg], bones[ids.knee], bones[ids.wrist], bones[ids.paw]];
-    girdle.position.set(x, m.hip + m.girdle, z); root.add(girdle);
+    girdle.position.set(x, m.hip + m.girdle, z); tilt.add(girdle);
     upper.position.y = -m.girdle; girdle.add(upper);
     lower.position.y = -m.upper; upper.add(lower);
     foot.position.y = -m.lower; lower.add(foot);
     paw.position.y = -m.foot; foot.add(paw); // pivots at the sole and is counter-rotated each frame to stay level
-    return { girdle, upper, lower, foot, paw, m };
+    return { girdle, upper, lower, foot, paw, m, x, z };
   });
 
   // Skin: built once at the straight bind pose, then bound to the skeleton. Fur cards grow from it.
@@ -134,25 +153,20 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const skeleton = new THREE.Skeleton(bones); // inverses captured now, at the bind pose
   skins.forEach(skin => skin.bind(skeleton));
 
-  const poseLegs = (pose: ReturnType<typeof quadrupedPose>, bob: number, extra?: (i: number) => number) => chains.forEach((c, i) => {
-    c.girdle.position.y = c.m.hip + c.m.girdle + bob;
-    c.girdle.rotation.x = pose.girdles[i]; c.upper.rotation.x = pose.legs[i] + (extra ? extra(i) : 0);
-    c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
-  });
+  const poseLegs = (pose: ReturnType<typeof quadrupedPose>, extra?: (i: number) => number) => poseWolfRig(tilt, chains, pose, extra);
   const tailPitch = { value: TAIL_HANG }, tailYaw = tail.map(() => 0);
   const setTail = () => tail.forEach((bone, k) => { bone.rotation.x = k === 0 ? tailPitch.value : TAIL_CURVE[k] * (1 - .6 * (TAIL_HANG - tailPitch.value) / (TAIL_HANG - TAIL_LEVEL)); bone.rotation.y = tailYaw[k]; });
-  poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), 0); setTail(); // stand on the ground before the first frame
+  poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0)); setTail(); // stand on the ground before the first frame
   let lastTime = 0;
   return { root, brain, sensor, animate(time: number, moving: boolean, action: 'speak' | 'gather' | 'move' | undefined, elapsed: number, mode: WolfMode = 'walk', push?: { x: number; z: number; yaw: number }) {
     const stealth = mode === 'stealth' || mode === 'super-stealth';
     const running = mode === 'run' || mode === 'sprint';
     root.scale.set(WOLF_SCALE, WOLF_SCALE * (stealth && action !== 'move' ? .72 : 1), WOLF_SCALE);
     const dt = Math.max(0, Math.min(.1, time - lastTime)); lastTime = time;
-    const pose = quadrupedPose(brain.motion, brain.phase, brain.jumpTime, WOLF_LEGS, brain.gaitSpeed), bob = pose.bob / WOLF_SCALE;
-    const gait = moving ? Math.sin(time * (mode === 'sprint' ? 24 : running ? 19 : stealth ? 5 : 13)) : 0;
-    poseLegs(pose, bob);
-    torso.position.y = moving ? Math.abs(gait) * .012 : Math.sin(time * 2) * .003;
-    torso.position.y += bob;
+    // T-0002/T-0003: the gait's own body motion (suspension arc, vault, pitch, pelvis) replaces the old wall-clock bounce.
+    const pose = quadrupedPose(brain.motion, brain.phase, brain.jumpTime, WOLF_LEGS, brain.gaitSpeed, brain.gaitName);
+    poseLegs(pose);
+    torso.position.y = moving ? 0 : Math.sin(time * 2) * .003;
     head.rotation.x = action === 'speak' ? -.45 * Math.sin(Math.min(1, elapsed / .2) * Math.PI / 2)
       : action === 'gather' ? .65 + Math.sin(elapsed * 12) * .12 : Math.sin(time * 1.4) * .035;
     head.position.set(...HEAD_AT);
@@ -163,7 +177,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
       head.position.y -= HEAD_DROP * Math.min(1, elapsed / .25) * retract;
       head.position.x += (Math.cos(push.yaw) * push.x - Math.sin(push.yaw) * push.z) * amount;
       head.position.z += (Math.sin(push.yaw) * push.x + Math.cos(push.yaw) * push.z) * amount;
-      poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), 0, i => (i % 2 ? -.15 : .15) * Math.sin(Math.PI * pushProgress(elapsed)));
+      poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), i => (i % 2 ? -.15 : .15) * Math.sin(Math.PI * pushProgress(elapsed)));
     }
     // The jaw is hinged at the rear skull base and opens only downward (rotation about x is negative = chin drops).
     jaw.rotation.x = -(action === 'speak' ? (1 + Math.sin(elapsed * 22)) * .12 : portrait ? .07 : 0); // portrait rests slightly parted (about 30% of a full open)

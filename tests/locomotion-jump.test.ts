@@ -37,11 +37,17 @@ test('pounce reaches the fore feet ahead of the shoulders before touchdown; feet
   for (const r of run) r.pose.feet.forEach(f => assert.ok(f.y >= -1e-6));
 });
 
-test('gallop bounce follows Claude\'s gallopBob on the LH phase', () => {
-  let z = 0; const loco = createLocomotion(layout, flat, { x: 0, z, heading: 0 }); let worst = 0, peak = 0;
+test('gallop body rises on a ballistic arc in each gathered flight (T-0003: suspensionBob + vault, replacing gallopBob)', () => {
+  let z = 0; const loco = createLocomotion(layout, flat, { x: 0, z, heading: 0 }); const flights: { h: number[]; lh: number }[] = []; let cur: { h: number[]; lh: number } | null = null;
   for (let t = 0; t < 4; t += DT) { z -= 8 * DT; const p = loco.update({ x: 0, z, heading: 0, speed: 8 }, DT);
-    if (t > 2) { const exp = gallopBob(p.phases[1], layout.legs.hip, p.duty); worst = Math.max(worst, Math.abs(p.height - exp)); peak = Math.max(peak, p.height); } }
-  assert.ok(peak > .02 * layout.legs.hip, `bounce ${peak}`); assert.ok(worst < 1e-3, `bounce error ${worst}`);
+    if (t > 2) { if (p.contacts.every(c => !c)) (cur ??= { h: [], lh: p.phases[1] }).h.push(p.height); else if (cur) { flights.push(cur); cur = null; } } }
+  // the gathered flight ends at the LH touchdown (LH phase about .8 at its start); the brief extended flight (about .35)
+  // is excluded: it is still descending into the fore touchdown
+  const gathered = flights.filter(w => w.lh > .6).map(w => w.h);
+  assert.ok(gathered.length >= 3, `gathered flights seen: ${gathered.length}`);
+  for (const w of gathered) { const top = Math.max(...w);
+    // ?loco=1 heights include the walking crouch (posture.ts), so the rise is measured from the flight's own ends
+    assert.ok(top > w[0] + .002 && top > w[w.length - 1], `body rises in flight: ${w.map(h => h.toFixed(4)).join(' ')}`); }
 });
 
 test('LOD radius constant picks near inside, mid outside', () => {

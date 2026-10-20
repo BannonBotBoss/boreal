@@ -116,7 +116,10 @@ test('IK gait for deer and wolf at every game speed: feet reach targets, stance 
    pose.legs.forEach((_,i)=>{const L=limbOf(legs,i),f=fk(pose,i),t=pose.feet[i],S=L.girdle??0,g=pose.girdles[i],J=pose.joints[i];
     const where=`${animal} ${motion}@${speed} leg ${i} phase ${phase}`;
     assert.ok(Math.abs(f.foot.z-t.z)<1e-6&&Math.abs(f.foot.y-t.y)<1e-6,`${where} misses target`);
-    assert.ok(Math.abs(J.z+S*Math.sin(g))<1e-9&&Math.abs(J.y-(L.hip+pose.bob+S-S*Math.cos(g)))<1e-9,`${where}: joint is on the shoulder-blade arc`);
+    // The blade hangs from the top of the chain (T-0003: the top moves with body pitch, vault and, for hind legs, the pelvis).
+    const T=pose.tops[i];
+    assert.ok(Math.abs(J.z-(T.z-S*Math.sin(g)))<1e-9&&Math.abs(J.y-(T.y-S*Math.cos(g)))<1e-9,`${where}: joint is on the shoulder-blade arc`);
+    if(motion==='idle'||animal==='deer') assert.ok(Math.abs(T.z)<1e-9&&Math.abs(T.y-(L.hip+pose.bob+S))<1e-9,`${where}: top moved without a gait reach`);
     assert.ok(f.foot.y>-1e-6&&f.carpus.y>-1e-6,`${where}: below ground`);
     assert.ok(bendsForward(legs,i)?pose.knees[i]<=1e-9:pose.knees[i]>=-1e-9,`${where}: middle joint bends the wrong way`);
     // The paw bone cancels everything above it, so the sole stays level.
@@ -156,8 +159,16 @@ test('gait follows dynamic similarity: walk, trot, gallop by Froude number; stri
 });
 test('gallop has a suspension phase with all four feet off the ground and lifts the body then',async()=>{
  const {quadrupedPose,WOLF_LEGS}=await import('../src/core/animalBehavior');
- let airborne=0;for(let k=0;k<100;k++){const p=quadrupedPose('run',k/100,0,WOLF_LEGS,7);if(p.feet.every(f=>f.y>1e-6)){airborne++;assert.ok(p.bob>0);}}
+ // T-0003: the body follows a ballistic arc in each flight (gaitData.suspensionRise, g·t²/8), measured from where it left the
+ // ground, so it rises after liftoff and peaks inside the window (no fixed bump above standing height any more).
+ let airborne=0;const windows:number[][]=[];let cur:number[]|null=null;
+ for(let k=0;k<100;k++){const p=quadrupedPose('run',k/100,0,WOLF_LEGS,7);if(p.feet.every(f=>f.y>1e-6)){airborne++;(cur??=[]).push(p.bob);}else if(cur){windows.push(cur);cur=null;}}
+ if(cur)windows.push(cur);
  assert.ok(airborne>=10&&airborne<=50,`suspension ${airborne}%`);
+ // The main (gathered) flight is the longest window: the body rises after liftoff and peaks above standing height in it.
+ // (The brief extended flight at a fast gallop is still on its way down into the hind touchdown.)
+ const main=windows.reduce((a,b)=>b.length>a.length?b:a,[] as number[]),top=Math.max(...main);
+ assert.ok(top>main[0]&&top>main[main.length-1]&&top>0,`body rises in the gathered flight: ${main.map(b=>b.toFixed(4)).join(' ')}`);
  const {DEER_LEGS,limbOf}=await import('../src/core/animalBehavior');
  const mid=quadrupedPose('jump',0,.5,DEER_LEGS,0);assert.ok(mid.feet.every(f=>f.y>.3),'legs tucked off the ground mid-jump');
  for(const legs of [DEER_LEGS,WOLF_LEGS]) for(let k=0;k<=20;k++){const p=quadrupedPose('jump',0,k/20*.85,legs,0);

@@ -1,3 +1,5 @@
+import { canidPlan, reachTargets, REF_BODY, suspensionRise, suspensions, type CanidGait, type CanidPlan, type ReachBody } from './gaitData';
+
 export const ANIMAL_DEFAULT_ENERGY = 75;
 export const FORAGE_ENERGY = 18;
 export const PLAYER_HEARING_RADIUS = 40;
@@ -16,6 +18,8 @@ export const SENSE_RADII = [3, 10, 24] as const;
 export class AnimalBrain {
   energy = ANIMAL_DEFAULT_ENERGY; motion: Motion = 'idle'; problem: Problem = 'explore';
   phase = 0; jumpTime = 0; jumpCooldown = 0; heading = 0; speed = 0;
+  /** The gait of the last step, fed back to gaitFor for Froude hysteresis (no flicker at a transition). */
+  gaitName?: GaitName;
   near: SenseItem[] = []; middle: SenseItem[] = []; far: SenseItem[] = [];
   target?: SenseItem; time = 0; avoidTime = 0;
   feedTime = 0; meal?: SenseItem; alarm = 0; lastThreat?: SenseItem;
@@ -88,7 +92,8 @@ export class AnimalBrain {
     this.energy=Math.max(0,Math.min(100,this.energy-cost+recovery));
     // Phase advances by distance over the research-based stride length at the speed actually travelled.
     this.gaitSpeed=dt>0?Math.max(0,distance)/dt:this.gaitSpeed;
-    const gait=gaitFor(this.motion,this.gaitSpeed,this.legs);
+    const gait=gaitFor(this.motion,this.gaitSpeed,this.legs,this.gaitName);
+    this.gaitName=gait?.name;
     if(gait) this.phase+=Math.max(0,distance)/gait.cycle;
   }
 }
@@ -131,8 +136,26 @@ export const DEER_LEGS: LegDims = { hip: 1.1, upper: .62, lower: .62 };
  */
 export const WOLF_LEGS: LegDims = {
   hip: .55, upper: .22, lower: .25, foot: .16, footAngle: 0, footFlex: .9, girdle: .17, girdleRest: .5, girdleSwing: .35, bend: 'back',
+  // T-0003: the fore paw rests (and its stance sweep is centred) under the shoulder joint, not under the shoulder-blade
+  // pivot: girdle·sin(girdleRest) ahead of it. A standing canid's forelimb column is vertical below the glenoid. [verify]
+  stance: .17 * Math.sin(.5),
   hind: { hip: .56, upper: .23, lower: .25, foot: .19, footAngle: .42, footFlex: 1, bend: 'forward' },
 };
+/**
+ * T-0003 reach: the game wolf's own ReachBody for gaitData.reachTargets. legChord is what its limbs sweep by IK with the
+ * stance foot angle (gaitFor's old reach rule without the gallop's ×1.1 body lift: 0.39 m), trunk and levers are REF_BODY's
+ * (2 × LEG_XZ × WOLF_SCALE = 0.54 m; shoulder 0.55 + blade 0.17 m; hip 0.56 m), scapula cap about 20° (Hildebrand 1959).
+ */
+export const WOLF_REACH: ReachBody = { ...REF_BODY, legChord: { walk: .39, trot: .39, gallop: .39 } };
+/**
+ * Lumbosacral pivot relative to each hip joint (m, +y up, +z back): the pelvis and both hind chains rotate about it by
+ * reachTargets' spineFlex. Above and in front of the acetabulum by the ilium; [verify] against a canine pelvis
+ * (Evans & de Lahunta, Miller's Anatomy of the Dog) — derived from the model's croup line, not measured.
+ */
+export const LUMBAR_PIVOT = { y: .09, z: -.11 };
+/** Fore and hind girdle positions along the body (m, +z back) from the body centre: LEG_XZ × WOLF_SCALE (core/wolfBody;
+ * kept here because wolfBody imports this module; tests/locomotion-touchdown checks they agree). */
+export const WOLF_GIRDLE_Z = [-.24, .30] as const;
 export type GaitName = 'walk' | 'trot' | 'gallop';
 export interface Gait { name: GaitName; duty: number; cycle: number; lift: number; offsets: readonly number[]; reverse: boolean }
 const G = 9.81;
@@ -144,7 +167,22 @@ const G = 9.81;
  * Offsets lead the cycle. Leg order LF, LH, RF, RH: walk is a lateral sequence; trot pairs diagonals (LF+RH, RF+LH);
  * gallop: hind pair then fore pair, then flight with all four feet off the ground (a second, gathered flight appears at high speed).
  */
-export function gaitFor(motion: Motion, speed: number, legs: LegDims): Gait | null {
+export function gaitFor(motion: Motion, speed: number, legs: LegDims, prev?: GaitName): Gait | null {
+  if (motion === 'idle' || motion === 'jump') return null;
+  const h = legs.hip, v = Math.max(.15, Math.abs(speed)), fr = v * v / (G * h);
+  // T-0002/T-0003: wolves take cadence, stride, duty and the rotary offsets from measured canid data (core/gaitData,
+  // canidPlan: Bryce & Williams 2017, Heglund & Taylor 1988, Walter & Carrier 2007), with Froude hysteresis via `prev`.
+  // The stride is never shortened for reach: the girdles and the spine supply it (quadrupedPose, reachTargets).
+  // Deer keep the Alexander stride below; walking backwards keeps it too.
+  const canid = legs === WOLF_LEGS && motion !== 'back' ? canidPlan(v, h, prev as CanidGait | undefined) : null;
+  if (canid) return { name: canid.gait, duty: canid.duty, cycle: canid.stride, lift: (canid.gait === 'walk' ? .1 : canid.gait === 'trot' ? .15 : .2) * h, offsets: canid.offsets, reverse: false };
+  return alexanderGait(motion, speed, legs);
+}
+/**
+ * The Alexander gait (dynamic similarity; Alexander 1976, Alexander & Jayes 1983) with the stride capped by leg reach:
+ * deer, walking backwards, and gaits without a reach model (the ?loco=1 pace, canter, bound and pronk overrides).
+ */
+export function alexanderGait(motion: Motion, speed: number, legs: LegDims): Gait | null {
   if (motion === 'idle' || motion === 'jump') return null;
   const h = legs.hip, v = Math.max(.15, Math.abs(speed)), fr = v * v / (G * h);
   const name: GaitName = motion === 'back' || fr < .5 ? 'walk' : fr < 2.5 ? 'trot' : 'gallop';
@@ -216,32 +254,199 @@ export const limbOf = (legs: LegDims, i: number): LimbDims => (!isFrontLeg(i) &&
 /** Does the middle joint of this limb point forward (stifle, deer carpus)? */
 export const bendsForward = (legs: LegDims, i: number) => (limbOf(legs, i).bend ?? (isFrontLeg(i) ? 'forward' : 'back')) === 'forward';
 /**
- * Full quadruped pose by IK at the animal's actual speed. Angles are scale-free; bob and feet are in world metres.
- * Per leg: `girdles` (shoulder-blade swing), `legs` (upper bone, relative to the girdle), `knees` (middle joint),
- * `wrists` (carpus/hock, only when the limb has a foot bone), `paws` (keeps the sole level), `joints` (top joint position).
- * Absolute bone angles are cumulative: upper = girdle + leg, lower = upper + knee, foot = lower + wrist, paw = foot + paw = 0.
+ * T-0003: ballistic body rise over each all-feet-off window of a canid gait (gaitData.suspensions), g·t²/8 at the top of a
+ * flight lasting t (gaitData.suspensionRise), a parabola in between. Replaces the fixed gallopBob bump for the wolf.
  */
-export function quadrupedPose(motion: Motion, phase: number, jumpTime: number, legs: LegDims, speed: number) {
-  const gait = gaitFor(motion, speed, legs);
-  const bob = motion === 'jump' ? gaitPose('jump', phase, jumpTime).bob : gait?.name === 'gallop' ? gallopBob(phase, legs.hip, gait.duty) : 0;
-  const hips: number[] = [], knees: number[] = [], feet: { z: number; y: number }[] = [], girdles: number[] = [], wrists: number[] = [], paws: number[] = [], joints: { z: number; y: number }[] = [];
-  for (let i = 0; i < 4; i++) {
-    const L = limbOf(legs, i), S = L.girdle ?? 0, M = L.foot ?? 0, front = isFrontLeg(i);
-    const f0 = footTarget(gait, motion, phase, i, bob, jumpTime, L.hip), f = { z: f0.z - (L.stance ?? 0), y: f0.y }; feet.push(f);
-    // Foot bone angle: its stance value, folding back as the paw lifts (swing) or tucks (jump).
-    const lift = gait ? Math.min(1, f.y / Math.max(1e-6, gait.lift)) : motion === 'jump' ? Math.min(1, Math.max(0, (f.y - bob) / (.35 * L.hip / DEER_LEGS.hip))) : 0;
-    const psi = (L.footAngle ?? 0) - (L.footFlex ?? 0) * lift;
-    const hz = f.z + M * Math.sin(psi), hy = f.y + M * Math.cos(psi); // the carpus/hock the two-bone IK must reach
-    // Shoulder blade: rests tilted, and swings with where the paw is (scapular glide).
-    const jointAt = (g: number) => ({ z: -S * Math.sin(g), y: L.hip + bob + S - S * Math.cos(g) });
-    let g = 0;
-    if (S) { const j0 = jointAt(L.girdleRest ?? 0); g = (L.girdleRest ?? 0) + (L.girdleSwing ?? 0) * Math.atan2(-(hz - j0.z), -(hy - j0.y)); }
-    const J = jointAt(g); joints.push(J); girdles.push(g);
-    const forward = bendsForward(legs, i);
-    const sol = solveLeg(hz - J.z, hy - J.y, L.upper, L.lower, forward);
-    hips.push(sol.hip - g); knees.push(sol.knee);
-    wrists.push(M ? psi - (sol.hip + sol.knee) : 0);
-    paws.push(M ? -psi : -(sol.hip + sol.knee));
+export function suspensionBob(phase: number, gait: Pick<Gait, 'cycle' | 'duty' | 'offsets'>, speed: number) {
+  const hz = Math.max(.05, Math.abs(speed)) / gait.cycle, p = frac(phase);
+  for (const w of suspensions(gait.offsets, gait.duty)) {
+    const span = w.to - w.from, x = (p >= w.from ? p : p + 1) - w.from;
+    if (span > 0 && x >= 0 && x < span) return suspensionRise(span, hz) * 4 * (x / span) * (1 - x / span);
   }
-  return { legs: hips, knees, wrists, paws, girdles, joints, bob, feet, gait };
+  return 0;
+}
+/** How far a limb's two IK bones may reach (m): (upper + lower)·√0.97, less a 1e-4 safety share. */
+export const ikReach = (L: LimbDims) => (L.upper + L.lower) * Math.sqrt(.97) * (1 - 1e-4);
+/** Hip joint shift (m, body frame, +z back, +y up) when the pelvis rotates by `flex` (+ flexed) about LUMBAR_PIVOT. */
+export function pelvisShift(flex: number) {
+  const ry = -LUMBAR_PIVOT.y, rz = -LUMBAR_PIVOT.z, c = Math.cos(flex), s = Math.sin(flex);
+  return { z: ry * s + rz * c - rz, y: ry * c - rz * s - ry };
+}
+/**
+ * Body offset (m, +y up, +z back, after the tilt) that turns a vault pitch about the ground point under the body centre
+ * (the rigs' tilt pivot) into one about the trunk at `pivot` height (the hip height): each girdle then drops or rises
+ * rather than also swinging fore or aft, which at a ground pivot moves a fore paw that is far ahead (or a hind paw far
+ * behind) out of reach as fast as the drop brings it in. Game calibration of the pivot.
+ */
+export const pitchShift = (pitch: number, pivot: number) => ({ y: pivot * (1 - Math.cos(pitch)), z: -pivot * Math.sin(pitch) });
+/**
+ * One limb in a sagittal frame (z back, y up, origin at the limb's ground point), shared by quadrupedPose and the ?loco=1
+ * limb IK (animals/locomotion/ik solveLimb). `top` is the chain top (blade pivot or hip joint). `blade` is the absolute
+ * shoulder-blade angle; omitted, the blade swings toward the wrist by girdleSwing (the old rule). `fit` (T-0003) turns the
+ * foot bone from its rule angle `psi0` toward the paw-to-joint line only as far as the two IK bones need to reach.
+ * Absolute angles: upper = girdle + leg, lower = upper + knee, foot = lower + wrist (= the foot angle used), paw level.
+ */
+export function solveChain(L: LimbDims, forward: boolean, foot: { z: number; y: number }, psi0: number, top: { z: number; y: number }, blade?: number, fit = false) {
+  const S = L.girdle ?? 0, M = L.foot ?? 0, rest = L.girdleRest ?? 0, r = ikReach(L);
+  const jointAt = (g: number) => ({ z: top.z - S * Math.sin(g), y: top.y - S * Math.cos(g) });
+  const wristAt = (q: number) => ({ z: foot.z + M * Math.sin(q), y: foot.y + M * Math.cos(q) });
+  const bladeFor = (h: { z: number; y: number }) => {
+    if (!S) return 0;
+    if (blade !== undefined) return blade;
+    const j0 = jointAt(rest); return rest + (L.girdleSwing ?? 0) * Math.atan2(-(h.z - j0.z), -(h.y - j0.y));
+  };
+  let psi = psi0;
+  if (fit && M) {
+    const J0 = jointAt(bladeFor(wristAt(psi0))), far = (q: number) => Math.hypot(wristAt(q).z - J0.z, wristAt(q).y - J0.y) > r;
+    if (far(psi0)) {
+      const aligned = Math.atan2(J0.z - foot.z, J0.y - foot.y); let lo = 0, hi = 1;
+      for (let k = 0; k < 16; k++) { const m = (lo + hi) / 2; if (far(psi0 + (aligned - psi0) * m)) lo = m; else hi = m; }
+      psi = psi0 + (aligned - psi0) * hi;
+    }
+  }
+  const h = wristAt(psi), g = bladeFor(h), J = jointAt(g), sol = solveLeg(h.z - J.z, h.y - J.y, L.upper, L.lower, forward);
+  return { girdle: g, leg: sol.hip - g, knee: sol.knee, wrist: M ? psi - (sol.hip + sol.knee) : 0, paw: M ? -psi : -(sol.hip + sol.knee), joint: J, psi, wristAt: h };
+}
+/** Body drop (m) a limb needs for its two IK bones to reach `wrist` from `joint` (0 if it already does). */
+export function limbDrop(L: LimbDims, joint: { z: number; y: number }, wrist: { z: number; y: number }) {
+  const dz = wrist.z - joint.z, dy = joint.y - wrist.y, r = ikReach(L);
+  return Math.abs(dz) < r ? Math.max(0, dy - Math.sqrt(r * r - dz * dz)) : 0;
+}
+/** Most each end of the body may dip (m) in one vault: twice the largest need of the data gaits (6.4 cm at 9.2 m/s);
+ * a foot still out of reach beyond it is a correction (the ?loco=1 leash steps it), not gait. Game calibration. */
+export const VAULT_MAX_DROP = .12;
+/** Share of a swing, at each end, over which a leg's vault dip eases in before touchdown and out after liftoff (game calibration). */
+export const VAULT_SWING_EDGE = .25;
+/**
+ * Vault dip (m) one leg asks of its end of the body at gait phase `at` (frac(phase + offset)): along the stance, the chord
+ * from `td` (the drop its touchdown pose needs) to `lo` (its liftoff pose); eased in over the last VAULT_SWING_EDGE of the
+ * swing and out over the first. The drop a planted paw needs grows convexly toward either end of its sweep, so the chord
+ * covers it without the body snapping down in the frame a paw runs out of reach (callers top up any residual), and a
+ * paw in mid-swing never pulls the body down in flight. Continuous at touchdown and liftoff.
+ */
+export function vaultEnvelope(at: number, duty: number, td: number, lo: number) {
+  if (at < duty) return td + (lo - td) * at / duty;
+  const e = VAULT_SWING_EDGE, s = (at - duty) / (1 - duty), ease = (x: number) => x * x * (3 - 2 * x);
+  return s < e ? lo * (1 - ease(s / e)) : s > 1 - e ? td * ease((s - (1 - e)) / e) : 0;
+}
+/** The stride phase at which leg i is at stance progress s (0 touchdown, 1 liftoff). */
+export const stancePhase = (gait: { duty: number; offsets: readonly number[] }, i: number, s: number) => frac(s * gait.duty - gait.offsets[i]);
+/** The stride a vault's stance needs are solved for: duty to 0.001 and stride to 1 cm, so one solve serves every speed that
+ * rounds alike and the result does not depend on which speed asked first (the top-up covers the rounding). */
+export const vaultPlan = <P extends { duty: number; stride: number }>(plan: P): P => ({ ...plan, duty: Math.round(plan.duty * 1e3) / 1e3, stride: Math.round(plan.stride * 100) / 100 });
+const VAULT_NEEDS = new Map<string, number[][]>();
+/**
+ * Fore and hind vault dips (m) at a stride phase: per end, the largest vaultEnvelope of its legs. `need(i, s)` is the drop
+ * of its own end that leg i's stance pose needs at stance progress s (each rig solves it with its own limbs, for a
+ * vaultPlan); the needs depend only on the gait and the body, so they are kept per `key` (a few dozen at a time).
+ */
+export function vaultDips(phase: number, gait: { duty: number; offsets: readonly number[] }, need: (i: number, s: number) => number, key: string) {
+  let needs = VAULT_NEEDS.get(key);
+  if (!needs) {
+    needs = [0, 1, 2, 3].map(i => [need(i, 0), need(i, 1)]);
+    if (VAULT_NEEDS.size >= 48) VAULT_NEEDS.delete(VAULT_NEEDS.keys().next().value!);
+    VAULT_NEEDS.set(key, needs);
+  }
+  const env = [0, 0];
+  for (let i = 0; i < 4; i++) env[i & 1] = Math.max(env[i & 1], vaultEnvelope(frac(phase + gait.offsets[i]), gait.duty, needs[i][0], needs[i][1]));
+  return env;
+}
+/** ?loco=1 (world-planted feet): seconds over which a vault dip lets go once no leg needs it (no pop at liftoff); it
+ * engages at once whenever a leg needs it, so reach is never lost. Game calibration. */
+export const VAULT_RELEASE = .04;
+/**
+ * Full quadruped pose by IK at the animal's actual speed. Angles are scale-free; bob and feet are in world metres.
+ * Per leg: `girdles` (shoulder-blade angle in the LEVEL body frame; a rig whose girdle bone hangs from the tilted body
+ * subtracts `pitch`), `legs` (upper bone, relative to the girdle), `knees` (middle
+ * joint), `wrists` (carpus/hock, only when the limb has a foot bone), `paws` (keeps the sole level), `tops` (top of the
+ * chain: blade pivot or hip joint) and `joints` (top joint), both in the level body frame relative to the leg's ground point.
+ * `pitch` (rad, + front up) tilts the body about its centre at hip height: a rig pivoting at the ground under the centre
+ * adds `shift` (pitchShift); `spineFlex` (rad, + flexed) carries the hind chain tops about LUMBAR_PIVOT (pelvisShift); `bob`
+ * is the body's height offset (m). Absolute bone angles are cumulative:
+ * upper = girdle + leg, lower = upper + knee, foot = lower + wrist, paw = foot + paw = 0.
+ *
+ * T-0003 (wolf): the shoulder blades (relative to the trunk) and the spine follow gaitData.reachTargets (Hildebrand 1959;
+ * Walter & Carrier 2007); a foot bone turns from its rule angle toward the paw-to-joint line only as far as the leg needs; the
+ * body vaults (drops and pitches) by vaultDips of each leg's touchdown and liftoff needs, topped up so planted paws always
+ * reach (this is reachTargets.pitch's stance vault solved with the rig's own limbs, and continuous, where that one steps at
+ * each touchdown); and a swing paw still out of reach has its arc pulled in toward the leg (planted paws never move).
+ * Other animals: unchanged.
+ */
+export function quadrupedPose(motion: Motion, phase: number, jumpTime: number, legs: LegDims, speed: number, prev?: GaitName) {
+  const gait = gaitFor(motion, speed, legs, prev);
+  const plan = gait && legs === WOLF_LEGS && !gait.reverse ? { gait: gait.name, duty: gait.duty, stride: gait.cycle, offsets: gait.offsets } as CanidPlan : null;
+  const reach = plan ? reachTargets(plan, phase, WOLF_REACH) : null;
+  const lift0 = motion === 'jump' ? gaitPose('jump', phase, jumpTime).bob
+    : reach ? suspensionBob(phase, gait!, speed) : gait?.name === 'gallop' ? gallopBob(phase, legs.hip, gait.duty) : 0;
+  const flex = reach?.spineFlex ?? 0, [zF, zH] = WOLF_GIRDLE_Z;
+  /** Top of leg i's chain (blade pivot or hip joint) in the level body frame, for a body height offset, pitch and spine
+   * flexion. The body pitches about its centre at hip height (pitchShift on the rigs' ground-level tilt pivot). */
+  const topOf = (i: number, height: number, pitch: number, spine = flex) => {
+    const L = limbOf(legs, i), at = isFrontLeg(i) ? zF : zH;
+    let y = L.hip + (L.girdle ?? 0), z = 0;
+    if (!isFrontLeg(i) && spine) { const sh = pelvisShift(spine); y += sh.y; z += sh.z; } // the pelvis carries the hip joint
+    if (pitch) {
+      const zz = at + z, c = Math.cos(pitch), s = Math.sin(pitch), sh = pitchShift(pitch, legs.hip);
+      [y, z] = [y * c - zz * s + sh.y, y * s + zz * c - at + sh.z];
+    }
+    return { z, y: y + height };
+  };
+  const per = [0, 1, 2, 3].map(i => {
+    const L = limbOf(legs, i);
+    const f0 = footTarget(gait, motion, phase, i, lift0, jumpTime, L.hip), f = { z: f0.z - (L.stance ?? 0), y: f0.y };
+    // Foot bone angle: its stance value, folding back as the paw lifts (swing) or tucks (jump).
+    const lift = gait ? Math.min(1, f.y / Math.max(1e-6, gait.lift)) : motion === 'jump' ? Math.min(1, Math.max(0, (f.y - lift0) / (.35 * L.hip / DEER_LEGS.hip))) : 0;
+    const planted = !!reach && frac(phase + gait!.offsets[i]) < gait!.duty;
+    return { L, f, lift, planted, psi0: (L.footAngle ?? 0) - (L.footFlex ?? 0) * lift, forward: bendsForward(legs, i) };
+  });
+  const bladeOf = (i: number, pitch: number, r = reach) => r && per[i].L.girdle ? pitch + (per[i].L.girdleRest ?? 0) + r.scapula[i >> 1] : undefined;
+  let height = lift0, pitch = 0;
+  const dropped = [0, 0], drop = (d: number[]) => {
+    const [dF, dH] = d.map((x, e) => Math.max(0, Math.min(x, VAULT_MAX_DROP - dropped[e])));
+    dropped[0] += dF; dropped[1] += dH;
+    const turn = (dH - dF) / (zH - zF); pitch += turn; height += -dF + zF * turn; // fore end drops dF, hind end dH
+    return dF + dH;
+  };
+  if (plan) {
+    /** Drop of its end that leg i's stance pose needs at touchdown (s = 0) or liftoff (s = 1), with the girdles and spine of
+     * that phase. A few passes: the drop also pitches the body, which turns the blades. */
+    const q = vaultPlan(plan), stanceNeed = (i: number, s: number) => {
+      const p = per[i], r = reachTargets(q, stancePhase(q, i, s), WOLF_REACH), sign = isFrontLeg(i) ? -1 : 1;
+      const f = { z: q.duty * q.stride * (s - .5) - (p.L.stance ?? 0), y: 0 };
+      let d = 0;
+      for (let pass = 0; pass < 4; pass++) {
+        const pitch = sign * d / (zH - zF), height = (sign < 0 ? -d : 0) + zF * pitch;
+        const c = solveChain(p.L, p.forward, f, p.L.footAngle ?? 0, topOf(i, height, pitch, r.spineFlex), bladeOf(i, pitch, r), true);
+        const n = limbDrop(p.L, c.joint, c.wristAt); if (n <= 1e-6) break;
+        d += n + 1e-5;
+      }
+      return d;
+    };
+    drop(vaultDips(phase, plan, stanceNeed, `pose ${q.gait} ${q.duty} ${q.stride}`));
+  }
+  // Planted paws always reach: top up whatever the envelope left (passes until it settles).
+  for (let pass = 0; reach && pass < 12; pass++) {
+    const need = [0, 0];
+    per.forEach((p, i) => {
+      if (!p.planted) return;
+      const c = solveChain(p.L, p.forward, p.f, p.psi0, topOf(i, height, pitch), bladeOf(i, pitch), true);
+      need[i & 1] = Math.max(need[i & 1], limbDrop(p.L, c.joint, c.wristAt));
+    });
+    if (need[0] <= 1e-7 && need[1] <= 1e-7) break;
+    if (drop(need.map(d => d > 1e-7 ? d + 1e-5 : 0)) <= 0) break;
+  }
+  const hips: number[] = [], knees: number[] = [], feet: { z: number; y: number }[] = [], girdles: number[] = [], wrists: number[] = [], paws: number[] = [];
+  const joints: { z: number; y: number }[] = [], tops: { z: number; y: number }[] = [];
+  per.forEach((p, i) => {
+    const T = topOf(i, height, pitch), M = p.L.foot ?? 0;
+    let f = p.f, c = solveChain(p.L, p.forward, f, p.psi0, T, bladeOf(i, pitch), !!reach);
+    const d = Math.hypot(c.wristAt.z - c.joint.z, c.wristAt.y - c.joint.y), r = ikReach(p.L);
+    if (reach && !p.planted && d > r) { // a swing paw out of reach: pull its arc in toward the leg (planted paws never move)
+      const h = { z: c.joint.z + (c.wristAt.z - c.joint.z) * r / d, y: c.joint.y + (c.wristAt.y - c.joint.y) * r / d };
+      f = { z: h.z - M * Math.sin(c.psi), y: h.y - M * Math.cos(c.psi) };
+      c = solveChain(p.L, p.forward, f, c.psi, T, bladeOf(i, pitch), false);
+    }
+    feet.push(f); joints.push(c.joint); tops.push(T); girdles.push(c.girdle); hips.push(c.leg); knees.push(c.knee); wrists.push(c.wrist); paws.push(c.paw);
+  });
+  return { legs: hips, knees, wrists, paws, girdles, joints, tops, bob: height, feet, gait, pitch, shift: pitchShift(pitch, legs.hip), spineFlex: flex };
 }

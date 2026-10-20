@@ -33,6 +33,10 @@ export interface LegPose {
   contacts: boolean[];
   /** body-frame origin: ground point under the body centre (world y), plus tilt */ height: number; pitch: number; roll: number;
   gait: GaitId; phases: number[]; duty: number; cycle: number; froude: number;
+  /** T-0003 body offset after the tilt (m, heading frame, +y up, +z back; core pitchShift): rigs add it to the tilt group */
+  shift?: { y: number; z: number };
+  /** T-0003 lumbar flexion (rad, + flexed): the rig carries both hind chain tops about core LUMBAR_PIVOT (pelvisShift) */
+  spineFlex?: number;
   /** walking carry for head and tail (posture.ts): head pitch rad, head drop as a share of the rig's head drop, tail drop rad */
   carry?: { head: number; drop: number; tail: number };
   /** paws that touched down this frame (contact went false → true); empty on most frames */

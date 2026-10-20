@@ -4,7 +4,7 @@
  * walk/trot/gallop rows are copied from core/animalBehavior gaitFor (Claude) so both systems agree.
  * Gait choice and stride length come from Claude's gaitFor (Froude number, Alexander & Jayes 1983); we only read it.
  */
-import { gaitFor, type LegDims } from '../../core/animalBehavior';
+import { alexanderGait, gaitFor, type GaitName, type LegDims } from '../../core/animalBehavior';
 import { gravity } from '../../proc/physics';
 import type { GaitId } from './signals';
 
@@ -28,8 +28,11 @@ export const froude = (speed: number, hip: number) => speed * speed / (gravity()
  * The gait at this speed. Auto = gaitFor's choice (walk/trot/gallop by Froude). An override keeps gaitFor's cycle but
  * shortens it if the override's longer stance would need more leg reach than gaitFor allowed.
  */
-export function planGait(speed: number, legs: LegDims, override?: GaitId): GaitPlan {
-  const g = gaitFor(speed < 0 ? 'back' : 'walk', speed, legs)!;
+export function planGait(speed: number, legs: LegDims, override?: GaitId, prev?: GaitName): GaitPlan {
+  // prev: Froude hysteresis (T-0002). Overrides without a reach model (pace, canter, bound, pronk) keep the reach-capped
+  // Alexander stride; walk/trot/gallop use gaitFor's measured canid stride, which the girdles and spine reach (T-0003).
+  const modelled = !override || override === 'walk' || override === 'trot' || override === 'gallop';
+  const g = (modelled ? gaitFor : alexanderGait)(speed < 0 ? 'back' : 'walk', speed, legs, prev)!;
   const id: GaitId = override ?? g.name;
   const row = GAIT_TABLE[id];
   const duty = override ? row.duty : g.duty;

@@ -6,10 +6,13 @@ import { stream } from '../src/proc/rng';
 
 test('solveLimb reproduces quadrupedPose exactly on flat ground (walk, trot, gallop)', () => {
   for (const [motion, v] of [['walk', .8], ['walk', 2], ['run', 4], ['run', 7]] as [Motion, number][]) for (let k = 0; k < 16; k++) {
-    const phase = k / 16, pose = quadrupedPose(motion, phase, 0, WOLF_LEGS, v), gait = gaitFor(motion, v, WOLF_LEGS)!;
+    const phase = k / 16, pose = quadrupedPose(motion, phase, 0, WOLF_LEGS, v);
     for (let i = 0; i < 4; i++) {
-      const L = limbOf(WOLF_LEGS, i), f = pose.feet[i], lift = Math.min(1, f.y / gait.lift);
-      const a = solveLimb(L, bendsForward(WOLF_LEGS, i), { x: 0, y: f.y - pose.bob, z: f.z }, lift);
+      // T-0003: hand solveLimb the same reach inputs quadrupedPose used — the moved chain top, the blade angle, and the foot
+      // angle it settled on (absolute foot angle = girdle + leg + knee + wrist, as a lift fraction of the foot rule).
+      const L = limbOf(WOLF_LEGS, i), f = pose.feet[i], psi = pose.girdles[i] + pose.legs[i] + pose.knees[i] + pose.wrists[i];
+      const lift = ((L.footAngle ?? 0) - psi) / (L.footFlex ?? 1);
+      const a = solveLimb(L, bendsForward(WOLF_LEGS, i), { x: 0, y: f.y, z: f.z }, lift, { top: pose.tops[i], blade: L.girdle ? pose.girdles[i] : undefined });
       for (const [mine, theirs] of [[a.girdle, pose.girdles[i]], [a.leg, pose.legs[i]], [a.knee, pose.knees[i]], [a.wrist, pose.wrists[i]], [a.paw, pose.paws[i]]])
         assert.ok(Math.abs(mine - theirs) < 1e-9, `${motion} ${v} phase ${phase} leg ${i}: ${mine} vs ${theirs}`);
     }

@@ -13,7 +13,8 @@
  */
 import * as THREE from 'three';
 import { WOLF_SCALE, type WolfMode } from '../../../core/wolfModes';
-import { AnimalBrain, quadrupedPose, WOLF_LEGS } from '../../../core/animalBehavior';
+import { AnimalBrain, pelvisShift, quadrupedPose, WOLF_LEGS } from '../../../core/animalBehavior';
+import { poseWolfRig } from '../../../render/playerWolf';
 import { pushProgress } from '../../../core/rocks';
 import { buildBody, wolfCoat } from '../../../core/body';
 import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth } from '../../../core/wolfBody';
@@ -61,7 +62,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
     lower.position.y = -m.upper; upper.add(lower);
     foot.position.y = -m.lower; lower.add(foot);
     paw.position.y = -m.foot; foot.add(paw); // pivots at the sole and is counter-rotated each frame to stay level
-    return { girdle, upper, lower, foot, paw, m };
+    return { girdle, upper, lower, foot, paw, m, x, z };
   });
 
   // Skin: built once at the straight bind pose, then bound to the skeleton. Fur cards grow from it.
@@ -166,21 +167,20 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const skeleton = new THREE.Skeleton(bones); // inverses captured now, at the bind pose
   skins.forEach(skin => skin.bind(skeleton));
 
-  const poseLegs = (pose: ReturnType<typeof quadrupedPose>, bob: number, extra?: (i: number) => number) => chains.forEach((c, i) => {
-    c.girdle.position.y = c.m.hip + c.m.girdle + bob;
-    c.girdle.rotation.x = pose.girdles[i]; c.upper.rotation.x = pose.legs[i] + (extra ? extra(i) : 0);
-    c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
-  });
+  const poseLegs = (pose: ReturnType<typeof quadrupedPose>, extra?: (i: number) => number) => poseWolfRig(tilt, chains, pose, extra);
   const tailPitch = { value: TAIL_HANG }, tailYaw = tail.map(() => 0);
   const setTail = () => tail.forEach((bone, k) => { bone.rotation.x = k === 0 ? tailPitch.value : TAIL_CURVE[k] * (1 - .6 * (TAIL_HANG - tailPitch.value) / (TAIL_HANG - TAIL_LEVEL)); bone.rotation.y = tailYaw[k]; });
-  poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), 0); setTail(); // stand on the ground before the first frame
+  poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0)); setTail(); // stand on the ground before the first frame
   // FORK hook 2: angles are scale-free; heights are world metres, so the tilt offset is divided by the root scale.
   const applyLegPose = (p: LegPose) => {
+    const shift = pelvisShift(p.spineFlex ?? 0); // T-0003: the pelvis carries the hind chain tops
     chains.forEach((c, i) => {
-      c.girdle.position.y = c.m.hip + c.m.girdle; c.girdle.rotation.set(p.girdles[i], 0, p.abduct[i]);
+      const hind = i % 2 === 1;
+      c.girdle.position.set(c.x, c.m.hip + c.m.girdle + (hind ? shift.y / WOLF_SCALE : 0), c.z + (hind ? shift.z / WOLF_SCALE : 0)); c.girdle.rotation.set(p.girdles[i], 0, p.abduct[i]);
       c.upper.rotation.x = p.legs[i]; c.lower.rotation.x = p.knees[i]; c.foot.rotation.x = p.wrists[i]; c.paw.rotation.x = p.paws[i];
     });
-    torso.position.y = 0; tilt.rotation.set(p.pitch, 0, p.roll); tilt.position.y = (p.height - root.position.y) / root.scale.y;
+    torso.position.y = 0; tilt.rotation.set(p.pitch, 0, p.roll);
+    tilt.position.set(0, (p.height + (p.shift?.y ?? 0) - root.position.y) / root.scale.y, (p.shift?.z ?? 0) / root.scale.z);
   };
   // FORK hook 1: what the locomotion layer needs (leg order LF, LH, RF, RH; hipXZ in world metres at WOLF_SCALE).
   const loco = { root, tilt, torso, scale: WOLF_SCALE, legs: WOLF_LEGS, chains: chains.map((c, i) => ({ girdle: c.girdle, upper: c.upper, lower: c.lower, foot: c.foot, paw: c.paw, hipXZ: [LEG_XZ[i][0] * WOLF_SCALE, LEG_XZ[i][1] * WOLF_SCALE] as const })) };
@@ -190,11 +190,10 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
     const running = mode === 'run' || mode === 'sprint';
     root.scale.set(WOLF_SCALE, WOLF_SCALE * (stealth && action !== 'move' && !legPose ? .72 : 1), WOLF_SCALE);
     const dt = Math.max(0, Math.min(.1, time - lastTime)); lastTime = time;
-    const pose = quadrupedPose(brain.motion, brain.phase, brain.jumpTime, WOLF_LEGS, brain.gaitSpeed), bob = pose.bob / WOLF_SCALE;
-    const gait = moving ? Math.sin(time * (mode === 'sprint' ? 24 : running ? 19 : stealth ? 5 : 13)) : 0;
-    poseLegs(pose, bob);
-    torso.position.y = moving ? Math.abs(gait) * .012 : Math.sin(time * 2) * .003;
-    torso.position.y += bob;
+    // T-0002/T-0003: the gait's own body motion (suspension arc, vault, pitch, pelvis) replaces the old wall-clock bounce.
+    const pose = quadrupedPose(brain.motion, brain.phase, brain.jumpTime, WOLF_LEGS, brain.gaitSpeed, brain.gaitName);
+    poseLegs(pose);
+    torso.position.y = moving ? 0 : Math.sin(time * 2) * .003;
     if (legPose) applyLegPose(legPose); // FORK hook 2: the locomotion layer drives legs, tilt and body height
     head.rotation.x = action === 'speak' ? -.45 * Math.sin(Math.min(1, elapsed / .2) * Math.PI / 2)
       : action === 'gather' ? .65 + Math.sin(elapsed * 12) * .12 : Math.sin(time * 1.4) * .035;
@@ -207,7 +206,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
       head.position.y -= HEAD_DROP * Math.min(1, elapsed / .25) * retract;
       head.position.x += (Math.cos(push.yaw) * push.x - Math.sin(push.yaw) * push.z) * amount;
       head.position.z += (Math.sin(push.yaw) * push.x + Math.cos(push.yaw) * push.z) * amount;
-      poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), 0, i => (i % 2 ? -.15 : .15) * Math.sin(Math.PI * pushProgress(elapsed)));
+      poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), i => (i % 2 ? -.15 : .15) * Math.sin(Math.PI * pushProgress(elapsed)));
     }
     // The jaw is hinged at the rear skull base and opens only downward (rotation about x is negative = chin drops).
     jaw.rotation.x = -(action === 'speak' ? (1 + Math.sin(elapsed * 22)) * .12 : portrait ? .07 : 0); // portrait rests slightly parted (about 30% of a full open)

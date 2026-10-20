@@ -4,7 +4,8 @@
  * counter-roll terms of Malbers' Quadruped Foot, reduced to closed form). Pitch > 0 raises the front (three.js
  * rotation.x), roll > 0 raises the right side (rotation.z).
  */
-export interface Tilt { height: number; pitch: number; roll: number }
+export interface Tilt { height: number; pitch: number; roll: number;
+  /** T-0003: body offset after the tilt (m, heading frame, +y up, +z back): core pitchShift, so a vault pitches about the trunk */ shift?: { y: number; z: number } }
 /** Heights in leg order LF, LH, RF, RH; `wheelbase` = front-to-hind distance, `track` = left-to-right distance. */
 export function supportPlane(h: readonly number[], wheelbase: number, track: number, maxTilt = .6): Tilt {
   const c = (v: number) => Math.max(-maxTilt, Math.min(maxTilt, v));

@@ -4,28 +4,30 @@
  * rule (stance angle folding back by footFlex as the paw lifts). Added here: a sideways hip swing (`abduct`) so feet
  * can sit off the sagittal plane on side slopes and turns (pivot at the girdle top), and a clamp to the goniometric limits (skeleton.ts R6).
  */
-import { solveLeg, type LimbDims } from '../../core/animalBehavior';
+import { solveChain, type LimbDims } from '../../core/animalBehavior';
 import { CANID_LIMB } from '../../core/skeleton';
 import type { Vec3 } from './signals';
 
 export interface LimbAngles { girdle: number; leg: number; knee: number; wrist: number; paw: number; abduct: number; joint: { z: number; y: number } }
+/** T-0003 reach inputs (core/animalBehavior solveChain): all optional; without them the limb solves exactly as before. */
+export interface LimbReach {
+  /** chain top (blade pivot or hip joint) in the limb frame; default (0, hip + girdle). The pelvis moves the hind tops. */ top?: { z: number; y: number };
+  /** absolute shoulder-blade angle (rest + reachTargets scapula); default the girdleSwing rule */ blade?: number;
+  /** turn the foot bone toward the leg only as far as the two IK bones need to reach */ fit?: boolean;
+}
 
 /**
  * `foot` is the sole relative to the limb's ground point in the body frame (x right, y up, z back). `liftFrac` 0..1 is
- * how far through its lift the paw is (folds the foot bone). The top joint sits at height L.hip.
+ * how far through its lift the paw is (folds the foot bone). The chain top sits at `reach.top` (default L.hip + girdle).
  */
-export function solveLimb(L: LimbDims, forward: boolean, foot: Vec3, liftFrac: number): LimbAngles {
-  const S = L.girdle ?? 0, M = L.foot ?? 0;
-  // Sideways swing pivots at the top of the chain (the girdle pivot, L.hip + S, where the rig's girdle bone sits), so the
-  // planar solve below happens in the swung plane and the foot lands exactly on target.
-  const top = L.hip + S, drop = Math.hypot(top - foot.y, foot.x), abduct = Math.atan2(foot.x, top - foot.y), fy = top - drop;
-  const psi = (L.footAngle ?? 0) - (L.footFlex ?? 0) * liftFrac;
-  const hz = foot.z + M * Math.sin(psi), hy = fy + M * Math.cos(psi);
-  const jointAt = (g: number) => ({ z: -S * Math.sin(g), y: L.hip + S - S * Math.cos(g) });
-  let g = 0;
-  if (S) { const j0 = jointAt(L.girdleRest ?? 0); g = (L.girdleRest ?? 0) + (L.girdleSwing ?? 0) * Math.atan2(-(hz - j0.z), -(hy - j0.y)); }
-  const J = jointAt(g), sol = solveLeg(hz - J.z, hy - J.y, L.upper, L.lower, forward);
-  return { girdle: g, leg: sol.hip - g, knee: sol.knee, wrist: M ? psi - (sol.hip + sol.knee) : 0, paw: M ? -psi : -(sol.hip + sol.knee), abduct, joint: J };
+export function solveLimb(L: LimbDims, forward: boolean, foot: Vec3, liftFrac: number, reach: LimbReach = {}): LimbAngles {
+  // Sideways swing pivots at the top of the chain (the girdle pivot, where the rig's girdle bone sits), so the planar
+  // solve below happens in the swung plane and the foot lands exactly on target.
+  const top = reach.top ?? { z: 0, y: L.hip + (L.girdle ?? 0) };
+  const drop = Math.hypot(top.y - foot.y, foot.x), abduct = Math.atan2(foot.x, top.y - foot.y), fy = top.y - drop;
+  const psi0 = (L.footAngle ?? 0) - (L.footFlex ?? 0) * liftFrac;
+  const c = solveChain(L, forward, { z: foot.z, y: fy }, psi0, top, reach.blade, !!reach.fit);
+  return { girdle: c.girdle, leg: c.leg, knee: c.knee, wrist: c.wrist, paw: c.paw, abduct, joint: c.joint };
 }
 
 /** Sole position of a solved limb (sagittal FK, before abduction), for tests and debug overlays. */

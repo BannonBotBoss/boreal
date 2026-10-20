@@ -104,13 +104,15 @@ test('sled rider camera is three metres behind at human eye height', async () =>
     close(Math.hypot(camera.position.x, camera.position.z), 3);
     close(camera.position.y - Math.max(heightAt(0, 0), -.2), 1.6); // human eye height above ground
   }
-  const base = wolf.root.children[0].rotation.clone();
+  // T-0003: the torso and the leg chains hang from the body's `tilt` group (torso first, then the four girdle bones).
+  const tilt = wolf.root.getObjectByName('tilt')!, torso = tilt.children[0];
+  const base = torso.rotation.clone();
   wolf.brain.motion = 'walk'; wolf.brain.phase = .17;
   wolf.animate(1, true, undefined, 0);
-  assert.ok(wolf.root.children.slice(1).some(part => Math.abs(part.rotation.x) > .01));
+  assert.ok(tilt.children.slice(1).some(part => Math.abs(part.rotation.x) > .01), 'walking moves the leg chains');
   for (const action of ['speak', 'gather'] as const) {
     wolf.animate(1, false, action, .4);
-    assert.ok(wolf.root.children[0].children.some(part => part instanceof THREE.Bone && Math.abs(part.rotation.x) > .1));
+    assert.ok(torso.children.some(part => part instanceof THREE.Bone && Math.abs(part.rotation.x) > .1), `${action} turns the head`);
   }
   disposeObject(wolf.root);
 });

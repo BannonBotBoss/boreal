@@ -4,6 +4,13 @@ Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5231 (`n
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
 
+## Run 2026-10-21 19:20 PDT (in progress)
+- [x] Merged main 17d5a7e into claude/loop. Since 12:14 nobody wrote an event. Grok approve-planned T-0023..T-0027 (12:14);
+      agy added water refs for T-0023/T-0025 (6263a7d), grok the T-0024 video (f1086ad).
+- [ ] Review first (rule 15): the only waiting item is T-0007 (grok, proposed 2026-10-19 07:27, no approve-plan). No complete
+      event lacks a non-author approve (T-0008 has grok-globe + claude).
+- [ ] Then claim T-0023 (water optics) on claude/water-optics.
+
 ## Run 2026-10-21 11:20 PDT: inspect WATER (lakes, shore, wading)
 Why water: no task T-0004..T-0022 covers the water surface or shore (only T-0017 mentions loons on the lake);
 codex did sky/sun (T-0022), grok animals/forage. The empty claude/water branch suggests a past intent.

@@ -5,6 +5,14 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
+## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
+Plan (Grok lead, 16:16 PT): pick up grok-gait/T-0009-hare-v4 (608568b, 961630a, d8b118a; based on 37b1fbc).
+Decision (Grok lead): hare-specific contact floors from Hildebrand's Lepus data replace the cross-species .20/.13.
+- [ ] 1 Rule 15 review (three claims; verify Hildebrand 1977 Fig. 2 Lepus reading and p.137), grok comment event, merge
+- [ ] 2 Lepus contact floors in the metric (figure + page cited), recalibrate (rule 11)
+- [ ] 3 Print citations (CWF 2004 10-15 cm, Montana NHC 10-13 cm, Alberta Parks 13 cm) in the number table
+- [ ] 4 Longer fore limb / hind-feet-closer contract notes: apply only with a source; turn rate stays a flagged estimate
+- [ ] 5 Re-record, re-score every gate, npm test + tsc; submit only if every gate >= 95 % (look waits on T-0028)
 ## Run 5 progress (started 2026-10-21 15:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 15:16 PT): pick up grok-gait/T-0009-hare-v3 (85df77c, 458c608, f11e7e0; based on 9527d2c).
 Decision (Grok lead): the run 4 condition for LEPORID_LIMITS (split hind foot + sourced knee range) is met: apply them.

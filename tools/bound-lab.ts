@@ -5,9 +5,7 @@
  * ?row=half-bound|gallop-lagomorph (default by speed)  ?ramp=<s to reach speed, default 1.5>  ?pose=sit-up|graze-crouch|scan|rest|crouch
  * ?cycle=1 (stand → graze → sit-up → run → stop, for the pose recording)  ?shot=1 (no clock: window.__lab.advance(s) steps it)
  */
-import { createBounding, selectRow, type BoundRowId, type PoseKind, type BoundFrame } from '../src/animals/locomotion/bounding';
-import { limbToWorld } from '../src/animals/locomotion/controller';
-import type { LimbDims } from '../src/core/animalBehavior';
+import { createBounding, limbPoints, type BoundRowId, type PoseKind, type BoundFrame } from '../src/animals/locomotion/bounding';
 import { planFor, HOST_GAIT } from './bound-plans';
 
 const q = new URLSearchParams(location.search), num = (k: string, d: number) => (q.has(k) && Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : d);
@@ -49,14 +47,7 @@ function draw() {
   // prints
   for (const p of prints) { g.fillStyle = p.leg % 2 ? '#f39a3c' : '#4fa3ff'; g.globalAlpha = .85; g.beginPath(); g.ellipse(X(p.z), gy + 14 + (p.leg < 2 ? 0 : 8), p.leg % 2 ? 7 : 4, 3, 0, 0, 7); g.fill(); }
   g.globalAlpha = 1;
-  const pts = (i: number) => {
-    const L: LimbDims = i % 2 === 0 ? sk.legs : sk.legs.hind, a = frame!.limbs[i], dir = (u: number) => ({ z: -Math.sin(u), y: -Math.cos(u) });
-    const a1 = a.girdle + a.leg, a2 = a1 + a.knee, a3 = a2 + a.wrist, j = a.joint, top = frame!.tops[i];
-    const k = { z: j.z + L.upper * dir(a1).z, y: j.y + L.upper * dir(a1).y }, w = { z: k.z + L.lower * dir(a2).z, y: k.y + L.lower * dir(a2).y };
-    const f = { z: w.z + (L.foot ?? 0) * dir(a3).z, y: w.y + (L.foot ?? 0) * dir(a3).y };
-    return [top, j, k, w, f].map(p => limbToWorld({ x: 0, y: p.y, z: p.z }, frame!.x, frame!.z, 0, frame!.tilt, sk.hips[i]));
-  };
-  const limbs = [0, 1, 2, 3].map(pts);
+  const limbs = [0, 1, 2, 3].map(i => limbPoints(sk, frame!, i));
   const drawLimb = (i: number, far: boolean) => {
     const P = limbs[i]; g.strokeStyle = far ? (i % 2 ? '#8a5a2c' : '#2f5f93') : (i % 2 ? '#f6a54a' : '#63b3ff'); g.lineWidth = far ? 4 : 6; g.lineCap = 'round'; g.lineJoin = 'round';
     g.beginPath(); P.forEach((p, k) => k ? g.lineTo(X(p.z), Y(p.y)) : g.moveTo(X(p.z), Y(p.y))); g.stroke();
@@ -78,7 +69,7 @@ function draw() {
   hud.textContent = [
     `t ${t.toFixed(2)} s  timescale ${ts}  plan ${planName}  row ${frame.plan.row}`,
     `speed ${Math.abs(inputs(t - 1e-6)[0]).toFixed(2)} m/s  ${frame.plan.hz.toFixed(2)} Hz  stride ${frame.plan.stride.toFixed(2)} m`,
-    `duty ${frame.plan.duty.toFixed(3)} (data ${frame.plan.dutyData.toFixed(3)})  phase ${frame.stride.toFixed(2)}`,
+    `duty hind ${frame.plan.duty.toFixed(3)} fore ${frame.plan.foreDuty.toFixed(3)} (data ${frame.plan.dutyData.toFixed(3)} / ${frame.plan.foreDutyData.toFixed(3)})  phase ${frame.stride.toFixed(2)}`,
     `contact ${frame.contact.map((c, i) => c ? LEG[i] : '··').join(' ')}  ${airborne ? (last?.kind ?? 'air').toUpperCase() + ' SUSPENSION' : ''}`,
     `spine flex ${frame.spineFlex.toFixed(2)} rad  pitch ${frame.tilt.pitch.toFixed(2)}  pose ${frame.pose}`,
     `max planted slip ${(maxSlip * 1000).toFixed(1)} mm  leash steps ${frame.leashes}`,

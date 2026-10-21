@@ -16,7 +16,7 @@
  * ground point under the hip joints, and the body pitches about the hip joint (Tilt.shift), so a sit-up rocks on the hips.
  * Leg order: LF, LH, RF, RH (the locomotion layer's); BoundGait uses LF, RF, LH, RH and is converted once in rowOffsets.
  */
-import { boundCadence, boundDuty, type BoundGait } from '../../core/agent/bound';
+import { boundCadence, boundDuty, boundForeDuty, type BoundGait } from '../../core/agent/bound';
 import type { Pose as AgentPose, Action as AgentAction } from '../../core/agent/pipeline';
 import { reachTargets, suspensions, suspensionRise, type CanidPlan, type ReachBody, type Suspension } from '../../core/gaitData';
 import type { LimbDims } from '../../core/animalBehavior';
@@ -48,9 +48,11 @@ export function boundRows(g: BoundGait): Record<BoundRowId, BoundRow> {
 }
 /** CPG offsets (LF, LH, RF, RH) of a row: a leg is in stance while frac(stride + offset) < duty, so offset = frac(1 − touchdown). */
 export const rowOffsets = (r: BoundRow): number[] => { const [lf, rf, lh, rh] = r.touchdown; return [lf, lh, rf, rh].map(t => frac(1 - t)); };
-/** Speeds (m/s) between the rows, with hysteresis: [estimate] — Bertram & Gutmann keep the (flexed-back) half-bound at speed,
- * Bramble's jackrabbits gallop; no measured switch speed was found. ?row= in the lab forces one. */
-export const ROW_SWITCH = { up: 7, down: 6.5 };
+/** Speeds (m/s) between the rows, with hysteresis. Leporids half-bound at all but the fastest speeds (Simons 1999 in
+ * Bertram & Gutmann 2009), and the escape gait of rabbits and hares is the flexed-back half-bound (Bertram & Gutmann 2009);
+ * Lepus also gallops (Hildebrand 1977 Table 1). So the gallop row is kept for the top of the range, above the hare's 8.5 m/s
+ * flight speed: up 10, down 9.5 m/s [estimate: no measured switch speed found]. ?row= in the lab forces one. */
+export const ROW_SWITCH = { up: 10, down: 9.5 };
 export const selectRow = (speed: number, prev: BoundRowId = 'half-bound'): BoundRowId =>
   prev === 'half-bound' ? (speed > ROW_SWITCH.up ? 'gallop-lagomorph' : 'half-bound') : (speed < ROW_SWITCH.down ? 'half-bound' : 'gallop-lagomorph');
 
@@ -121,8 +123,8 @@ export function reachOf(sk: Skeleton, girdle: GirdleLimits = GIRDLE): Reach {
 }
 /** Top-pivot shifts (m, +back) the girdles really give at one set of leg phases: the fore pivots as far as the capped shoulder
  * blade carries them (reachTargets' glide is not used), both hind pivots by the one pelvis (mean shift, capped at spineMax). */
-export function girdleShifts(plan: CanidPlan, legPhases: readonly number[], reach: Reach, spineUse = 0) {
-  const at: CanidPlan = { ...plan, offsets: legPhases }, tf = reachTargets(at, 0, reach.body.fore), hb = reach.body.hind;
+export function girdleShifts(plan: CanidPlan, legPhases: readonly number[], reach: Reach, spineUse = 0, foreDuty = plan.duty) {
+  const at: CanidPlan = { ...plan, offsets: legPhases }, tf = reachTargets({ ...at, duty: foreDuty }, 0, reach.body.fore), hb = reach.body.hind;
   // the back takes spineUse of the hind sweep (up to its range) even where the limb could do it alone (Bramble 1989:
   // the flexing back is part of the stride), so the hind limb's chord in reachTargets shrinks by that much
   const sweep = plan.duty * plan.stride, byBack = spineUse * Math.min(sweep, 2 * reach.girdle.spineMax * hb.hindLever);
@@ -130,16 +132,17 @@ export function girdleShifts(plan: CanidPlan, legPhases: readonly number[], reac
   const cap = reach.girdle.spineMax, spineFlex = Math.max(-cap, Math.min(cap, th.spineFlex)), hind = -spineFlex * reach.body.hind.hindLever;
   return { shift: [tf.girdle[0] - tf.glide[0], hind, tf.girdle[2] - tf.glide[1], hind], spineFlex, pitch: (tf.pitch + th.pitch) / 2 };
 }
-/** Does `duty` fit: every stance foot stays within CHORD_USE × its chord of its (shifted) pivot over the whole stride? */
-function dutyFits(base: Omit<CanidPlan, 'duty' | 'suspensions'>, duty: number, reach: Reach, spineUse: number, n = 240) {
-  const plan: CanidPlan = { ...base, duty, suspensions: [] }, sweep = duty * plan.stride;
+/** Do the duties fit (`duty` = hind, `foreDuty` = fore): every stance foot stays within CHORD_USE x its chord of its (shifted)
+ * pivot over the whole stride? */
+function dutyFits(base: Omit<CanidPlan, 'duty' | 'suspensions'>, duty: number, foreDuty: number, reach: Reach, spineUse: number, n = 240) {
+  const plan: CanidPlan = { ...base, duty, suspensions: [] };
   for (let k = 0; k < n; k++) {
-    const ph = plan.offsets.map(o => frac(k / n + o)), g = girdleShifts(plan, ph, reach, spineUse);
-    for (let i = 0; i < 4; i++) if (ph[i] < duty) {
-      // fore: the planned chord; hind: the full chord — the margin takes the shared pelvis' residual (gaitData hindResidual)
+    const ph = plan.offsets.map(o => frac(k / n + o)), g = girdleShifts(plan, ph, reach, spineUse, foreDuty);
+    for (let i = 0; i < 4; i++) { const d = FRONT(i) ? foreDuty : duty; if (ph[i] < d) {
+      // fore: the planned chord; hind: the full chord - the margin takes the shared pelvis' residual (gaitData hindResidual)
       const chord = FRONT(i) ? reach.body.fore.legChord.gallop : reach.hind.chord;
-      if (Math.abs(sweep * (ph[i] / duty - .5) - g.shift[i]) > chord / 2 + 1e-6) return false;
-    }
+      if (Math.abs(d * plan.stride * (ph[i] / d - .5) - g.shift[i]) > chord / 2 + 1e-6) return false;
+    } }
   }
   return true;
 }
@@ -147,7 +150,9 @@ function dutyFits(base: Omit<CanidPlan, 'duty' | 'suspensions'>, duty: number, r
 /* ---------------------------------------------------------------- plan */
 export interface BoundPlan {
   row: BoundRowId; speed: number; hz: number; stride: number;
-  /** duty the data asks for, and the one used: the largest ≤ data that the limbs + girdles can sweep (dutyFits) */ dutyData: number; duty: number;
+  /** HIND duty the data asks for, and the one used: the largest <= data that the limbs + girdles can sweep (dutyFits) */ dutyData: number; duty: number;
+  /** the same for the fore feet (BoundGait foreShare x hind), scaled with the hind when the limbs cannot sweep it */ foreDutyData: number; foreDuty: number;
+  /** per leg (LF, LH, RF, RH): the duties used, and the data's */ duties: number[]; dutiesData: number[];
   offsets: number[]; suspensions: Suspension[];
   /** share of the hind sweep the back carries (spineUse) */ spineUse: number;
   /** the plan in gaitData's CanidPlan shape (gait 'gallop'), for reachTargets */ canid: CanidPlan;
@@ -161,18 +166,20 @@ export function spineUse(g: BoundGait, speed: number) {
 }
 const planCache = new Map<string, number>();
 export function boundPlan(g: BoundGait, speed: number, reach: Reach, row: BoundRowId): BoundPlan {
-  const v = Math.max(.05, Math.abs(speed)), hz = boundCadence(g, v), stride = v / hz, dutyData = boundDuty(g, v), offsets = rowOffsets(boundRows(g)[row]);
+  const v = Math.max(.05, Math.abs(speed)), hz = boundCadence(g, v), stride = v / hz, dutyData = boundDuty(g, v), foreDutyData = boundForeDuty(g, v), offsets = rowOffsets(boundRows(g)[row]);
   const base = { gait: 'gallop' as const, froude: 0, hz, stride, offsets }, use = spineUse(g, v);
-  // the fitted duty, cached per 1 cm/s (bisection over a sampled stride is too slow per frame)
+  // the fitted share of the data duties (fore and hind scaled together), cached per 1 cm/s (bisection over a sampled stride
+  // is too slow per frame)
   const key = `${row}|${Math.round(v * 100)}|${reach.fore.chord}|${reach.hind.chord}|${JSON.stringify(g)}`;
-  let duty = planCache.get(key);
-  if (duty === undefined) {
-    if (dutyFits(base, dutyData, reach, use)) duty = dutyData;
-    else { let lo = .01, hi = dutyData; for (let k = 0; k < 18; k++) { const m = (lo + hi) / 2; if (dutyFits(base, m, reach, use)) lo = m; else hi = m; } duty = lo; }
-    if (planCache.size > 5000) planCache.clear(); planCache.set(key, duty);
+  let share = planCache.get(key);
+  if (share === undefined) {
+    if (dutyFits(base, dutyData, foreDutyData, reach, use)) share = 1;
+    else { let lo = .01, hi = 1; for (let k = 0; k < 18; k++) { const m = (lo + hi) / 2; if (dutyFits(base, m * dutyData, m * foreDutyData, reach, use)) lo = m; else hi = m; } share = lo; }
+    if (planCache.size > 5000) planCache.clear(); planCache.set(key, share);
   }
-  const sus = suspensions(offsets, duty);
-  return { row, speed: v, hz, stride, dutyData, duty, offsets, suspensions: sus, spineUse: use, canid: { ...base, duty, suspensions: sus } };
+  const duty = share * dutyData, foreDuty = share * foreDutyData, duties = [foreDuty, duty, foreDuty, duty], dutiesData = [foreDutyData, dutyData, foreDutyData, dutyData];
+  const sus = suspensions(offsets, duties);
+  return { row, speed: v, hz, stride, dutyData, duty, foreDutyData, foreDuty, duties, dutiesData, offsets, suspensions: sus, spineUse: use, canid: { ...base, duty, suspensions: sus } };
 }
 
 /* ---------------------------------------------------------------- pose requests (agent pipeline → body) */
@@ -234,7 +241,20 @@ export interface BoundFrame {
   /** per foot: |rendered sole − planted foot| (m), 0 in swing */ slip: number[];
   x: number; z: number; heading: number; tilt: Tilt; spineFlex: number; lift: number; pose: PoseKind; leashes: number;
 }
-export interface BoundController { update(dt: number, speed: number, heading: number, request?: PoseRequest | null, row?: BoundRowId): BoundFrame; readonly reach: Reach; readonly skeleton: Skeleton }
+export interface BoundController {
+  update(dt: number, speed: number, heading: number, request?: PoseRequest | null, row?: BoundRowId): BoundFrame;
+  /** put the body at (x, z, heading) with the feet at rest under it (a host that moves its animal itself, e.g. after a teleport) */
+  place(x: number, z: number, heading: number): void;
+  readonly reach: Reach; readonly skeleton: Skeleton;
+}
+/** World points of limb `i` in a frame: [chain top, girdle joint, knee/elbow, ankle/wrist, toe] (for drawing bones). */
+export function limbPoints(sk: Skeleton, frame: BoundFrame, i: number): Vec3[] {
+  const L: LimbDims = FRONT(i) ? sk.legs : sk.legs.hind, a = frame.limbs[i], dir = (u: number) => ({ z: -Math.sin(u), y: -Math.cos(u) });
+  const a1 = a.girdle + a.leg, a2 = a1 + a.knee, a3 = a2 + a.wrist, j = a.joint, top = frame.tops[i];
+  const k = { z: j.z + L.upper * dir(a1).z, y: j.y + L.upper * dir(a1).y }, w = { z: k.z + L.lower * dir(a2).z, y: k.y + L.lower * dir(a2).y };
+  const f = { z: w.z + (L.foot ?? 0) * dir(a3).z, y: w.y + (L.foot ?? 0) * dir(a3).y };
+  return [top, j, k, w, f].map(p => limbToWorld({ x: 0, y: p.y, z: p.z }, frame.x, frame.z, frame.heading, frame.tilt, sk.hips[i]));
+}
 /** Leash: a planted foot the clamped limb cannot reach by this much steps (counted; the score fails any). */
 export const BOUND_LEASH = .01;
 
@@ -249,7 +269,8 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
   let plan = boundPlan(gait, .05, reach, row); const cpg: Cpg = createCpg(plan.offsets);
   const pitchS: Spring = spring(0), dropS: Spring = spring(0), liftS: Spring = spring(0), moveS: Spring = spring(0);
   let wasDown = feet.map(() => true), lastPose: PoseKind = 'stand'; const ankle0 = restAnkle(sk), prevPsi: (number | undefined)[] = [undefined, sk.restFootAngle, undefined, sk.restFootAngle];
-  return { reach, skeleton: sk, update(dt, speed, h, request, force) {
+  return { reach, skeleton: sk, place(px, pz, h) { x = px; z = pz; heading = h; for (let i = 0; i < 4; i++) { const f0 = footState(restWorld(i)); Object.assign(feet[i], f0); wasDown[i] = true; } },
+  update(dt, speed, h, request, force) {
     heading = h; const v = Math.abs(speed), moving = v > .05;
     row = force ?? selectRow(v, row); plan = boundPlan(gait, v, reach, row);
     stepCpg(cpg, plan.offsets, moving ? plan.hz : 0, dt, moving ? 1 : 0);
@@ -262,7 +283,7 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     const pitchPose = springTo(pitchS, shape.pitch * w, .15, dt), drop = springTo(dropS, shape.drop * w, .15, dt);
     const foreUp = springTo(liftS, shape.foreLift ? w : 0, .12, dt); run = springTo(moveS, moving ? 1 : 0, .1, dt);
     // reach targets (spine, girdles, vault pitch), fore from the fore chord and hind from the hind chord
-    const gs = girdleShifts(plan.canid, ph, reach, plan.spineUse), shift = gs.shift.map(v2 => v2 * run), spineFlex = gs.spineFlex * run, vault = 0; // no vault pitch: the chords are measured with the pivots at rest height
+    const gs = girdleShifts(plan.canid, ph, reach, plan.spineUse, plan.foreDuty), shift = gs.shift.map(v2 => v2 * run), spineFlex = gs.spineFlex * run, vault = 0; // no vault pitch: the chords are measured with the pivots at rest height
     // ballistic lift over a suspension (g·T²/8 arc) — gaitData suspensionRise
     let lift = 0;
     for (const s of plan.suspensions) { const p = frac(stridePhase - s.from), len = s.to - s.from; if (p < len) lift = Math.max(lift, 4 * suspensionRise(len, plan.hz) * (p / len) * (1 - p / len)); }
@@ -274,7 +295,7 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     for (let i = 0; i < 4; i++) {
       const L = limbOf(i), front = FRONT(i), f = feet[i];
       if (front && foreUp > .02) { forceStep(f); f.settle = 0; }
-      const r = stepFoot(f, { phase: ph[i], duty: plan.duty, cycle: plan.stride, lift: .25 * L.hip, moving, reverse: speed < 0, dt, speed: v, rest: restWorld(i), fwd }, ground);
+      const r = stepFoot(f, { phase: ph[i], duty: plan.duties[i], cycle: plan.stride, lift: .25 * L.hip, moving, reverse: speed < 0, dt, speed: v, rest: restWorld(i), fwd }, ground);
       let target = r.at;
       if (front && foreUp > .02) { // sit-up: the fore paws come up under the chest
         const tuck = limbToWorld({ x: 0, y: .45 * L.hip, z: centre(i) - .02 }, x, z, heading, tilt, sk.hips[i]);

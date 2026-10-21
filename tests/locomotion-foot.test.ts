@@ -29,7 +29,7 @@ test('planted feet do not slip (< 1 mm) at a steady walk, trot and gallop, on fl
 });
 
 test('planted feet do not slip through gait changes, speed changes, a stop and turning', () => {
-  const gaits: GaitId[] = ['walk', 'trot', 'pace', 'canter', 'gallop', 'bound', 'pronk'];
+  const gaits: GaitId[] = ['walk', 'trot', 'pace', 'canter', 'gallop', 'half-bound', 'gallop-lagomorph', 'pronk'];
   const poses = run(hills, 14, t => t < 12 ? 1 + 5 * Math.abs(Math.sin(t * .4)) : 0, t => t < 12 ? gaits[Math.floor(t / 1.7) % gaits.length] : undefined, .3);
   assert.ok(stanceSlip(poses) < 1e-3);
   assert.ok(poses[poses.length - 1].contacts.every(Boolean), 'all four feet down after stopping');

@@ -142,3 +142,14 @@ test('relaxation habituates: a steady faint cue holds it part-way down; a strong
   for (let i = 0; i < 100; i++) updateLevels(a, .1, strong); assert.ok(a.relaxation < 10);
   a.action = 'rest'; for (let i = 0; i < 100; i++) updateLevels(a, .1, none); assert.ok(Math.abs(a.relaxation - (100 * (1 - .55 / .6) + 30)) < 1e-6, `recovers 3/s: ${a.relaxation}`);
 });
+test('alert holds ~1 s (freeze, then flee) unless the wolf is inside the 3.7 m flight distance; flight accelerates at 10 m/s^2', () => {
+  // Emmel 2024 (snowshoe hare FID mean 3.7 m; freeze then flee); hold and acceleration are flagged estimates (species.ts)
+  const p = patch(0, 0, 1.4), far = hare('hold', 0, 0, { energy: 90 }); let alertAt = -1, fleeAt = -1, t = 0;
+  run(far, () => world([p], { x: 0, z: 12, speed: 2 }), 2, 1 / 60, h => { t += 1 / 60; if (h.action === 'alert' && alertAt < 0) alertAt = t; if (h.action === 'flee' && fleeAt < 0) fleeAt = t; });
+  assert.ok(alertAt >= 0 && fleeAt - alertAt >= HARE_AGENT.timing.react - 1e-6 && fleeAt - alertAt < HARE_AGENT.timing.react + .1, `alert ${alertAt} flee ${fleeAt}`);
+  const close = hare('fid', 0, 0, { energy: 90 }); const speeds: number[] = []; let first = -1; t = 0;
+  run(close, () => world([p], { x: 0, z: 3, speed: 0 }), 1.2, 1 / 60, h => { t += 1 / 60; if (h.action === 'flee' && first < 0) first = t; if (h.action === 'flee') speeds.push(h.speed); });
+  assert.ok(first >= 0 && first < .1, `inside the flight distance: bolts at once (${first})`);
+  const A = HARE_AGENT.speed.accel!; speeds.forEach((v, i) => assert.ok(v <= A * (i + 1) / 60 + 1e-9, `speed ${v} at frame ${i}`));
+  assert.ok(Math.max(...speeds) >= HARE_AGENT.speed.flee - 1e-9 && speeds.findIndex(v => v >= HARE_AGENT.speed.flee - 1e-9) / 60 > .8, 'top speed after ~0.85 s (about 3 bounds)');
+});

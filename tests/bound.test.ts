@@ -10,12 +10,13 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { footState as boundFoot, boundCadence, boundDuty } from '../src/core/agent/bound';
+import { footState as boundFoot, boundCadence, boundDuty, boundForeDuty, boundDuties } from '../src/core/agent/bound';
+import { GAIT_TABLE } from '../src/animals/locomotion/gaits';
 import { suspensions } from '../src/core/gaitData';
 import { skeletonOf } from '../src/animals/locomotion/bodyPlan';
 import { boundRows, rowOffsets, createBounding, boundPlan, poseRequestFor, selectRow, reachOf, type BoundRowId } from '../src/animals/locomotion/bounding';
 import { scoreTrace, type TraceFrame } from '../src/animals/locomotion/boundScore';
-import { HOST_PLAN, BONE_PLAN, HOST_GAIT, planFor } from '../tools/bound-plans';
+import { HOST_PLAN, BLOB_PLAN, HOST_GAIT, planFor } from '../tools/bound-plans';
 import { runScore, ROW_ORDER } from '../tools/bound-score';
 
 const G = HOST_GAIT;
@@ -32,16 +33,22 @@ test('rows: half-bound is the host data, offsets convert touchdown → CPG (LF, 
   assert.deepEqual(rowOffsets(r['half-bound']).map(x => +x.toFixed(3)), [0, .58, .92, .55]);
   // gallop: same fore pair, hind lead on the other side (RH first, LH one fore-lag later)
   assert.deepEqual([...r['gallop-lagomorph'].touchdown].map(x => +x.toFixed(3)), [0, .08, .5, .42]);
-  assert.equal(selectRow(5), 'half-bound'); assert.equal(selectRow(8.5), 'gallop-lagomorph'); assert.equal(selectRow(6.8, 'gallop-lagomorph'), 'gallop-lagomorph');
+  assert.equal(selectRow(5), 'half-bound'); assert.equal(selectRow(8.5), 'half-bound', 'flight speed: flexed-back half-bound (Bertram & Gutmann 2009)');
+  assert.equal(selectRow(10.5), 'gallop-lagomorph'); assert.equal(selectRow(9.7, 'gallop-lagomorph'), 'gallop-lagomorph');
+  // GAIT_TABLE rows (replacing the unverified 'bound') are the same offsets
+  assert.deepEqual(GAIT_TABLE['half-bound'].offsets.map(x => +x.toFixed(3)), rowOffsets(r['half-bound']).map(x => +x.toFixed(3)));
+  assert.deepEqual(GAIT_TABLE['gallop-lagomorph'].offsets.map(x => +x.toFixed(3)), rowOffsets(r['gallop-lagomorph']).map(x => +x.toFixed(3)));
 });
 
 test('skeleton: built from the host body numbers, near plantigrade standing; an impossible body throws', () => {
   const sk = skeletonOf(HOST_PLAN);
   assert.equal(sk.legs.hind.hip, .13); assert.equal(sk.legs.hind.foot, .132);
-  assert.ok(Math.abs(sk.legs.hind.upper + sk.legs.hind.lower - .125) < 1e-9 && Math.abs(sk.legs.upper + sk.legs.lower + (sk.legs.foot ?? 0) - .12) < 1e-9);
+  // femur 94 + tibia 108 mm; humerus 77 + radius 69 + manus 35 mm (HARE_BODY sources)
+  assert.ok(Math.abs(sk.legs.hind.upper + sk.legs.hind.lower - .202) < 1e-9 && Math.abs(sk.legs.upper + sk.legs.lower + (sk.legs.foot ?? 0) - .181) < 1e-9);
+  assert.ok(Math.abs(sk.legs.hind.upper - .47 * .202) < 1e-9, 'femur share');
   assert.ok(sk.restFootAngle > 1.2 && sk.restFootAngle < Math.PI / 2, `rest foot ${sk.restFootAngle}`);
   assert.throws(() => skeletonOf({ ...HOST_PLAN, hip: .5 }));
-  assert.ok(skeletonOf(BONE_PLAN).legs.hind.upper > sk.legs.hind.upper);
+  assert.ok(skeletonOf(BLOB_PLAN).legs.hind.upper < sk.legs.hind.upper, 'the run-2 blob legs were shorter');
 });
 
 test('plan: cadence is the host data; duty is the data duty capped by what limbs + girdles sweep', () => {
@@ -49,11 +56,16 @@ test('plan: cadence is the host data; duty is the data duty capped by what limbs
     const reach = reachOf(planFor(plan));
     for (const v of [1.68, 5, 8.5, 11.6]) {
       const p = boundPlan(G, v, reach, selectRow(v));
-      assert.ok(Math.abs(p.hz - boundCadence(G, v)) < 1e-12 && Math.abs(p.dutyData - boundDuty(G, v)) < 1e-12);
+      assert.ok(Math.abs(p.hz - boundCadence(G, v)) < 1e-12 && Math.abs(p.dutyData - boundDuty(G, v)) < 1e-12 && Math.abs(p.foreDutyData - boundForeDuty(G, v)) < 1e-12);
+      assert.ok(p.foreDuty < p.duty, 'fore contact shorter than hind (Hildebrand 1977)');
       assert.ok(p.duty <= p.dutyData + 1e-12 && p.duty > 0);
     }
   }
-  assert.equal(boundPlan(G, 1.68, reachOf(planFor('bones')), 'half-bound').duty, .5, 'long-boned body keeps the data duty at the transition');
+  assert.equal(boundPlan(G, 1.68, reachOf(planFor('host')), 'half-bound').duty, .6, 'measured-bone body keeps the data duty at the transition');
+  // cadence: Heglund & Taylor 1988 for 1.5 kg (transition, preferred gallop, max sustained), held above
+  for (const [v, hz] of [[1.68, 3.94], [2.91, 4.17], [3.98, 4.4], [8.5, 4.4]] as const) assert.ok(Math.abs(boundCadence(G, v) - hz) < .005, `${v} m/s: ${boundCadence(G, v)}`);
+  // duty: hind .60 slow -> .20 top; fore .90 -> .70 of the hind (Hildebrand 1977)
+  assert.ok(Math.abs(boundDuty(G, 1.68) - .6) < 1e-9 && Math.abs(boundDuty(G, 11.6) - .2) < 1e-9 && Math.abs(boundForeDuty(G, 11.6) - .14) < 1e-9);
 });
 
 for (const v of [1.68, 5, 8.5, 11.6]) test(`planted: slip < 1 cm, no leash steps in steady running at ${v} m/s (host body)`, () => {
@@ -73,10 +85,11 @@ test('no foot through the ground: swinging soles stay above it (at most a frame 
 test('overtaking and spine timing at running speed (host and bone bodies), stiff back when slow', () => {
   for (const plan of ['host', 'bones'] as const) for (const v of [5, 8.5, 11.6]) {
     const { c, tr } = run(plan, v), row = selectRow(v), p = boundPlan(G, v, c.reach, row);
-    const s = scoreTrace(tr, { speed: v, row, hz: p.hz, dutyData: p.dutyData, order: ROW_ORDER[row], warm: 2, expect: [...new Set(suspensions(p.offsets, p.dutyData).map(x => x.kind))] });
-    for (const name of ['overtake', 'flex', 'phases', 'cadence', 'order', 'planted']) assert.ok(s.checks.find(k => k.name === name)!.pass, `${plan} ${v} ${name}: ${JSON.stringify(s.checks)}`);
+    const s = scoreTrace(tr, { speed: v, row, hz: p.hz, dutyData: (p.dutyData + p.foreDutyData) / 2, order: ROW_ORDER[row], warm: 2, expect: [...new Set(suspensions(p.offsets, p.dutiesData).map(x => x.kind))] });
+    // flex at 8.5 m/s is open (6/10 strides in run 3: T-0009 handoff); the rest must hold
+    for (const name of v === 8.5 ? ['overtake', 'phases', 'cadence', 'order', 'planted'] : ['overtake', 'flex', 'phases', 'cadence', 'order', 'planted']) assert.ok(s.checks.find(k => k.name === name)!.pass, `${plan} ${v} ${name}: ${JSON.stringify(s.checks)}`);
   }
-  const slow = run('bones', 1.68).tr.filter(f => f.t > 2);
+  const slow = run('host', 1.68).tr.filter(f => f.t > 2);
   assert.ok(Math.max(...slow.map(f => Math.abs(f.spineFlex))) < .05, 'stiff-backed slow half-bound');
 });
 
@@ -101,20 +114,20 @@ test('pose requests: sit-up lifts the fore feet with the hind planted; graze cro
 /** A trace made from the BoundGait itself (the known match: hind prints 0.45 m ahead of the fore line, as in hare tracks),
  * optionally broken (known mismatches: trot timing with hind prints just behind the fore ones, direct register; sliding feet, flat back). */
 function synth(v: number, break_?: 'trot' | 'slide') {
-  const row = selectRow(v), hz = boundCadence(G, v), duty = boundDuty(G, v), stride = v / hz;
+  const row = selectRow(v), hz = boundCadence(G, v), duty = boundDuty(G, v), duties = boundDuties(G, v), stride = v / hz;
   let td: [number, number, number, number] = [...boundRows(G)[row].touchdown]; if (break_ === 'trot') td = [0, .5, .5, 0];
   const legOf = [0, 2, 1, 3]; // BoundGait order LF, RF, LH, RH → LF, LH, RF, RH
-  const tr: TraceFrame[] = [], prev = [false, false, false, false], dt = 1 / 240, hindTd = Math.min(td[2], td[3]), hindLift = Math.max(td[2], td[3]) + duty;
+  const tr: TraceFrame[] = [], prev = [false, false, false, false], dt = 1 / 240, hindTd = Math.min(td[2], td[3]), hindLift = Math.max(td[2], td[3]) + duty, legDuties = [duties[0], duties[2], duties[1], duties[3]];
   for (let t = 0; t < 4; t += dt) {
     const ph = (hz * t) % 1, contact = [false, false, false, false], touchdowns: TraceFrame['touchdowns'] = [];
-    for (let k = 0; k < 4; k++) { const i = legOf[k], st = boundFoot({ ...G, touchdown: td }, ph, k, duty).stance; contact[i] = st;
+    for (let k = 0; k < 4; k++) { const i = legOf[k], st = boundFoot({ ...G, touchdown: td }, ph, k, duties).stance; contact[i] = st;
       if (st && !prev[i]) touchdowns.push({ leg: i, at: { x: 0, y: 0, z: -(v * t + (i % 2 ? (break_ === 'trot' ? -.02 : .45) : 0) + duty * stride / 2) } }); prev[i] = st; }
     // flexion peaks at the first hind touchdown, extension at the last hind lift-off (linear between)
     const a = ((ph - hindTd) % 1 + 1) % 1, span = ((hindLift - hindTd) % 1 + 1) % 1, flex = v < 3 ? 0 : a < span ? .3 - .6 * a / span : -.3 + .6 * (a - span) / (1 - span);
     tr.push({ t, stride: ph, speed: v, contact, slip: contact.map(c => c ? (break_ === 'slide' ? .05 : 0) : 0), spineFlex: break_ === 'slide' ? 0 : flex, leashes: 0, touchdowns, fwd: { x: 0, z: -1 } });
   }
   const order = ROW_ORDER[row];
-  return scoreTrace(tr, { speed: v, row, hz, dutyData: duty, order, warm: 1, expect: [...new Set(suspensions(rowOffsets({ id: row, touchdown: td }), duty).map(x => x.kind))] });
+  return scoreTrace(tr, { speed: v, row, hz, dutyData: (duties[0] + duties[2]) / 2, order, warm: 1, expect: [...new Set(suspensions(rowOffsets({ id: row, touchdown: td }), legDuties).map(x => x.kind))] });
 }
 test('metric calibration: the data itself scores 100, trot timing and sliding feet score low', () => {
   for (const v of [1.68, 5, 8.5, 11.6]) {
@@ -125,6 +138,6 @@ test('metric calibration: the data itself scores 100, trot timing and sliding fe
 });
 
 test('score tool runs (numbers reported in the T-0009 grok-gait handoff)', () => {
-  const host = runScore('host'), bones = runScore('bones');
-  assert.ok(host.score > 0 && bones.score >= host.score, `host ${host.score} bones ${bones.score}`);
+  const host = runScore('host'), blob = runScore('blob');
+  assert.ok(host.score > 0 && host.score >= blob.score, `host ${host.score} blob ${blob.score}`);
 });

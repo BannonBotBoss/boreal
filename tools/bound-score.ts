@@ -18,7 +18,7 @@ export function runScore(planName: string, rowOf: (v: number) => BoundRowId = v 
     for (let t = 0; t < 5; t += dt) { const sp = Math.min(v, v * t / 1.5), f = c.update(dt, sp, 0, null, row);
       tr.push({ t, stride: f.stride, speed: sp, contact: f.contact, slip: f.slip, spineFlex: f.spineFlex, leashes: f.leashes, touchdowns: f.touchdowns, fwd: { x: 0, z: -1 } }); }
     const p = boundPlan(gait, v, c.reach, row);
-    out.push(scoreTrace(tr, { speed: v, row, hz: p.hz, dutyData: p.dutyData, order: ROW_ORDER[row], warm: 2.5, expect: [...new Set(suspensions(p.offsets, p.dutyData).map(x => x.kind))] }));
+    out.push(scoreTrace(tr, { speed: v, row, hz: p.hz, dutyData: (p.dutyData + p.foreDutyData) / 2, order: ROW_ORDER[row], warm: 2.5, expect: [...new Set(suspensions(p.offsets, p.dutiesData).map(x => x.kind))] }));
   }
   return { plan: planName, speeds: out, score: out.reduce((s, x) => s + x.score, 0) / out.length };
 }

@@ -58,11 +58,15 @@ export function scoreTrace(tr: TraceFrame[], o: { speed: number; row: string; hz
   let okFlex = 0; const stiff = o.speed < 3;
   for (const s of full) {
     if (stiff) { if (Math.max(...s.map(f => Math.abs(f.spineFlex))) < .05) okFlex++; continue; }
-    let maxF = -Infinity, minF = Infinity, atMax = 0, atMin = 0, hindTd: number | null = null, hindLift: number | null = null;
+    let maxF = -Infinity, minF = Infinity, hindTd: number | null = null, hindLift: number | null = null;
     for (let k = 1; k < s.length; k++) {
-      const f = s[k]; if (f.spineFlex > maxF) { maxF = f.spineFlex; atMax = f.stride; } if (f.spineFlex < minF) { minF = f.spineFlex; atMin = f.stride; }
+      const f = s[k]; maxF = Math.max(maxF, f.spineFlex); minF = Math.min(minF, f.spineFlex);
       for (const i of [1, 3]) { if (!s[k - 1].contact[i] && f.contact[i] && hindTd === null) hindTd = f.stride; if (s[k - 1].contact[i] && !f.contact[i]) hindLift = f.stride; }
     }
+    // the peak's time = circular mean phase of the frames within 0.01 rad of the extreme: a back held at its range limit (a
+    // clipped plateau through the gathered or extended suspension, Bramble 1989) peaks at the plateau's middle (grok, run 3)
+    const peakAt = (pick: (x: number) => boolean) => { let cx = 0, cy = 0; for (const f of s.slice(1)) if (pick(f.spineFlex)) { cx += Math.cos(2 * Math.PI * f.stride); cy += Math.sin(2 * Math.PI * f.stride); } return frac(Math.atan2(cy, cx) / (2 * Math.PI)); };
+    const atMax = peakAt(x => x >= maxF - .01), atMin = peakAt(x => x <= minF + .01);
     if (hindTd !== null && hindLift !== null && maxF - minF > .02 && circ(atMax, hindTd) <= .08 && circ(atMin, hindLift) <= .08) okFlex++;
   }
   checks.push({ name: 'flex', pass: full.length > 0 && okFlex === full.length, value: `${okFlex}/${full.length} strides: ${stiff ? 'stiff back' : 'flexion peak at hind touchdown, extension at hind lift-off'}` });

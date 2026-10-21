@@ -166,14 +166,16 @@ export function stepAgent(a: Agent, w: AgentWorld, dt: number): AgentEvent[] {
   if (calmAction && s.level >= m.noticeAt) { endContact(a, events); setAction(a, 'alert', `head up: ${cueName(s)} ${s.from?.kind ?? 'something'}`, m.alert * jitter(a)); }
   switch (a.action) {
     case 'alert':
-      if (s.level >= m.fleeAt || (s.moving && s.level >= m.noticeAt && a.elapsed >= sp.timing.react)) { startFlight(a, s, events); break; }
+      // freeze first, then flee (species timing.react); a threat inside the flight initiation distance bolts it at once
+      if ((sp.flee.distance !== undefined && s.distance <= sp.flee.distance) || (a.elapsed >= sp.timing.react && (s.level >= m.fleeAt || (s.moving && s.level >= m.noticeAt)))) { startFlight(a, s, events); break; }
       if (s.from) a.heading = angleTurn(a.heading, headingTo(a, s.from.x, s.from.z), 4 * dt); // turns an ear and an eye to it
-      if (a.timer <= 0) { if (s.level >= m.noticeAt) setAction(a, 'alert', `watching ${s.from?.kind ?? 'something'}`, m.alert * jitter(a)); else decide(a, w); }
+      if (a.timer <= 0) { if (s.level >= m.noticeAt) { const held = a.elapsed; setAction(a, 'alert', `watching ${s.from?.kind ?? 'something'}`, m.alert * jitter(a)); a.elapsed = held; } else decide(a, w); } // still watching: the freeze keeps counting
       break;
     case 'flee': {
       const F = sp.flee; a.zig -= dt;
       if (a.zig <= 0 && s.from) { a.zig = F.zig[0] + a.rng() * (F.zig[1] - F.zig[0]); a.heading = awayFrom(a, s.from) + (a.rng() * 2 - 1) * F.zigAngle; }
       speed = a.elapsed < F.burstSeconds ? sp.speed.flee : sp.speed.fleeTired;
+      if (sp.speed.accel !== undefined) speed = Math.min(speed, a.speed + sp.speed.accel * dt); // accelerating over the first bounds
       if (a.stamina <= 0) setAction(a, 'hide', 'out of stamina: freezing');
       else if (a.timer <= 0) setAction(a, 'pause', 'pausing to check behind', m.pause * jitter(a));
       break; }

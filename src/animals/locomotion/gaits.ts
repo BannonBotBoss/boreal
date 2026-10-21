@@ -15,7 +15,13 @@ export const GAIT_TABLE: Record<GaitId, GaitRow> = {
   pace:   { offsets: [0, 0, .5, .5], duty: .5, lift: .15 },      // ipsilateral pairs; duty [verify], lift game calibration
   canter: { offsets: [.3, 0, .6, .3], duty: .4, lift: .18 },     // three-beat, RH+LF diagonal [verify]
   gallop: { offsets: [.45, 0, .6, .9], duty: .3, lift: .20 },    // rotary LH -> RH -> RF -> LF (Biancardi & Minetti 2012); duty falls with speed
-  bound:  { offsets: [.5, 0, .5, 0], duty: .3, lift: .20 },      // fore pair / hind pair [verify]
+  // lagomorph rows (grok, T-0009; replace the unverified 'bound' row): offsets = bounding.ts rowOffsets(boundRows(HARE_AGENT.gait))
+  // (tests/bound.test.ts checks they agree). Half-bound: hind pair near unison, fore pair staggered (Hildebrand 1977 J Mammal
+  // 58:131; Bertram & Gutmann 2009). Lagomorph gallop: rotary, hind lead on the other side [estimate: no lagomorph hind lag
+  // found]. Duty = HIND contact at a medium-fast run, .30 / .20 at the fastest (Hildebrand 1977 Fig. 2, Lepus); the speed-
+  // dependent fore/hind duties live in core/agent/bound (bounding.ts uses those). lift: game calibration as the gallop row.
+  'half-bound':       { offsets: [0, .58, .92, .55], duty: .3, lift: .20 },
+  'gallop-lagomorph': { offsets: [0, .5, .92, .58], duty: .2, lift: .20 },
   pronk:  { offsets: [0, 0, 0, 0], duty: .3, lift: .20 },        // all four together [verify]
 };
 

@@ -27,7 +27,7 @@ export interface AgentSpecies {
     relaxation: { max: number; threatDrop: number; fleeDrop: number; recover: number; panic: number };
   };
   /** typical seconds for a calm, fed animal; jitter = +- share of natural variation; react = s before a moving cue can bolt it */
-  timing: { feed: number; scan: number; alert: number; alertMin: number; react: number; flee: number; pause: number; rest: [number, number]; jitter: number };
+  timing: { feed: number; scan: number; alert: number; alertMin: number; /** s an alert animal holds (freezes) before a moving or rising cue may bolt it */ react: number; flee: number; pause: number; rest: [number, number]; jitter: number };
   /** how relaxation (calm/nerve), hunger and cue strength bend the timings and thresholds (pipeline `modulators`) */
   mood: { boutNerve: number; boutHunger: number; scanChance: [number, number]; scanHunger: number; scanNerve: number; scanHungerShort: number;
     notice: [number, number]; noticeHunger: number; bolt: [number, number]; boltHunger: number; fleeNerve: number; fleeStaminaFull: number;
@@ -36,8 +36,8 @@ export interface AgentSpecies {
   utility: { feedHere: number; approach: number; approachDistance: number; rest: number; restFull: number; restBase: number; scan: number; seek: number; seekBase: number; noise: number };
   /** m: food sensed within `food`; habitat probed at `seek`; a feeding step [min, max] and turn (rad); giveUp s for a move */
   reach: { food: number; seek: number; step: [number, number]; stepTurn: number; giveUp: number };
-  speed: { feedStep: number; approach: number; flee: number; fleeTired: number };
-  flee: { burstSeconds: number; zig: [number, number]; zigAngle: number };
+  speed: { feedStep: number; approach: number; flee: number; fleeTired: number; /** m/s^2 from a standstill into flight; omitted = instant */ accel?: number };
+  flee: { burstSeconds: number; zig: [number, number]; zigAngle: number; /** flight initiation distance (m): a threat this close bolts it at once */ distance?: number };
   /** per food kind: units eaten per eatSeconds, units per +1 energy */ diet: Record<string, { eatUnits: number; eatSeconds: number; unitsPerEnergy: number }>;
   /** asymmetric bounding gait for the host's legs (core/agent/bound); optional */ gait?: BoundGait;
 }
@@ -63,20 +63,36 @@ export const HARE_AGENT: AgentSpecies = {
     stamina: { max: 100, drainSeconds: 8, recoverSeconds: 8 },
     relaxation: { max: 100, threatDrop: 60, fleeDrop: 12, recover: 3, panic: .6 },
   },
-  timing: { feed: 3, scan: 1, alert: 1, alertMin: .3, react: .3, flee: 3, pause: 1, rest: [2, 4], jitter: .15 },
+  // react 1 s: snowshoe hares freeze first, relying on crypsis, and only then flee (Emmel 2024, UMT MSc thesis, "The Hare and
+  // the Hawk"; Chapman & Flux 2008); the ~1 s hold is read from the reference video (refs/hare/graze-alert-flight attempt 4)
+  // [estimate: no measured freeze duration found]. Inside flee.distance the hare bolts at once.
+  timing: { feed: 3, scan: 1, alert: 1, alertMin: .3, react: 1, flee: 3, pause: 1, rest: [2, 4], jitter: .15 },
   mood: { boutNerve: .6, boutHunger: 1, scanChance: [.1, .9], scanHunger: .4, scanNerve: 1.5, scanHungerShort: .3,
     notice: [.06, .3], noticeHunger: .6, bolt: [.55, .8], boltHunger: .2, fleeNerve: .3, fleeStaminaFull: 40, pauseNerve: .4, resume: .8, unhide: .25 },
   utility: { feedHere: .5, approach: .4, approachDistance: 60, rest: 1, restFull: .6, restBase: .05, scan: .8, seek: .7, seekBase: .05, noise: .05 },
   reach: { food: 20, seek: 10, step: [.25, .45], stepTurn: .5, giveUp: 25 },
-  speed: { feedStep: .35, approach: 1.2, flee: 8.5, fleeTired: 5 },
-  flee: { burstSeconds: 2.5, zig: [.45, .9], zigAngle: .35 },
+  // accel 10 m/s^2: top flight speed in ~3 bounds (0.85 s at ~4 Hz) as in the reference video; below the cheetah's measured
+  // 13 m/s^2 peak (Wilson et al. 2013, Nature 498:185) [estimate: no measured hare acceleration found; Williams et al. 2007
+  // J Anat 210:472 describe the hare pelvic limb as specialised for acceleration without a value].
+  speed: { feedStep: .35, approach: 1.2, flee: 8.5, fleeTired: 5, accel: 10 },
+  // distance 3.7 m: mean flight initiation distance of radio-collared snowshoe hares approached on foot, 224 approaches,
+  // 74 hares (Emmel 2024, UMT MSc thesis, Fig. 1: 3.97 m winter-brown, 3.02 m winter-white; less concealed hares flee earlier).
+  flee: { burstSeconds: 2.5, zig: [.45, .9], zigAngle: .35, distance: 3.7 },
   diet: { clover: { eatUnits: 4.1, eatSeconds: 3, unitsPerEnergy: 111 } },
-  /** Half-bound (the lagomorph's preferred asymmetric gait: hind pair lands near-simultaneously, the fore pair staggered;
-   *  Hildebrand 1989 via "Lagomorpha Locomotion", Encycl. Anim. Cogn. Behav. 2021, doi:10.1007/978-3-319-47829-6_1199-1).
-   *  Phase offsets read from Hildebrand-style diagrams [estimate, verify]. Duty at speed 0.17 (jackrabbit contact 16-18 % of
-   *  the stride, same source); 0.5 for slow hops [estimate]. Cadence by Heglund & Taylor 1988 (JEB 138:301) allometry for
-   *  1.5 kg (ADW: 1.43-1.55 kg): trot-gallop transition 1.54 M^0.216 = 1.68 m/s at 4.19 M^-0.150 = 3.94 Hz; max sustained gallop
-   *  4.70 M^-0.162 = 4.40 Hz, used at the 11.6 m/s top speed (26 mph, Seton 1928 via MacLulich 1937, Can. Field-Nat.);
-   *  slow hops f ~ v^0.25 (the core/gaitData convention) [estimate]. */
-  gait: { touchdown: [0, .08, .42, .45], duty: [.5, .17], cadence: { transitionSpeed: 1.68, transitionHz: 3.94, topSpeed: 11.6, topHz: 4.4, slowExp: .25 } },
+  /** Half-bound: hind pair lands near-simultaneously, the fore pair staggered; Lepus also gallops (transverse and rotary) at the
+   *  fastest speeds (Hildebrand 1977, J Mammal 58:131, Table 1: Lepus T, R, 1/2B; Simons 1999 / Bertram & Gutmann 2009, J R Soc
+   *  Interface 6:549: leporids half-bound at all but the fastest speeds, stiff-backed when slow, flexed-back when escaping).
+   *  Touchdown phases [estimate, from Hildebrand-style diagrams]: fore lead .08 is > 3x the hind lead .03, as Hildebrand 1977
+   *  gives for half-bounding rabbits.
+   *  Duty (HIND): .60 slow -> .20 at top speed: Lepus hind contact spans ~60 % (slow) to ~20 % (very fast) of the stride in
+   *  Hildebrand 1977 Fig. 2; the hind contact "approaches 20 %" in fast runners incl. the rabbit (same paper); jackrabbit
+   *  contact 16-18 % at speed (Lagomorpha Locomotion, Encycl. Anim. Cogn. Behav. 2021). Fore share .90 -> .70 of the hind:
+   *  "fore contacts drop to 70 percent or less of hind contacts for Lepus at speed" (Hildebrand 1977); ~.9 for the slow Lepus
+   *  plots in Fig. 2. Mapping Hildebrand's subjective speeds onto 1.68 / 11.6 m/s is [estimate] (he gives no m/s).
+   *  Cadence: Heglund & Taylor 1988 (JEB 138:301) allometry for 1.5 kg (ADW: 1.43-1.55 kg): trot-gallop transition
+   *  1.54 M^0.216 = 1.68 m/s at 4.19 M^-0.150 = 3.94 Hz; preferred gallop 2.78 M^0.116 = 2.91 m/s at 4.44 M^-0.156 = 4.17 Hz;
+   *  max sustained gallop 3.71 M^0.176 = 3.98 m/s at 4.70 M^-0.162 = 4.40 Hz. Above 3.98 m/s the frequency is held at 4.40 Hz
+   *  up to the 11.6 m/s top speed (26 mph, Seton 1928 via MacLulich 1937) and speed grows by stride length, as in Heglund &
+   *  Taylor's galloping animals [estimate: sprint frequency not measured in Lepus]. Slow hops f ~ v^0.25 [estimate]. */
+  gait: { touchdown: [0, .08, .42, .45], duty: [.6, .2], foreShare: [.9, .7], cadence: { transitionSpeed: 1.68, transitionHz: 3.94, topSpeed: 11.6, topHz: 4.4, slowExp: .25, points: [[2.91, 4.17], [3.98, 4.4]] } },
 };

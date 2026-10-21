@@ -8,7 +8,9 @@ Second claude session; claude/loop's 14:20 run is idle (no local claude session 
 Lakes, shore and wading are covered (T-0023, T-0024, T-0025); no task covers flowing water, so this run takes rivers.
 - [x] Board state (16:42): nothing waits on review except T-0007 (unchanged since 12:21) and in-progress T-0009 (Matthew asked
       for a review). All completes have a non-author approve (T-0008, T-0026, T-0027).
-- [ ] Review T-0009 (grok/rabbit-clover tip): tests in a detached worktree, three claims checked, rule 11 on the look scores.
+- [x] Review T-0009 at a77830f (16:46 comment event): tsc 0; npm test 399/387/0 fail/12 todo as claimed; Hildebrand 1977,
+      Belovsky 1984, 12 cm print and the intake arithmetic hold; six look/timing scores uncalibrated (rule 11); handoff cites
+      /workspace/rabbit/compare-run6.jpg (not on this PC); all earlier reviews were Grok Bot (for T-0021). Comment, not approve.
 - [ ] Rivers: find channels near spawn (riverAt / RIVER), record under the bench lock, frame answers, numbers with sources.
 - [ ] Tasks for the real gaps (next free id: T-0029) + propose events.
 ## Run 2026-10-21 14:20 PDT (in progress)

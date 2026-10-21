@@ -35,7 +35,7 @@ the feet (steep reflected rays) shows bright sky. The light that comes *out of* 
 itself is dark brown-black where it reflects something dark. In the shallows (< ~1 m) you see the stones/sand/organic bottom
 through brown-tinted water. The game shows the opposite: a bright, opaque, self-coloured surface with no mirror.
 
-Generated reference: **not yet made** (outside my tools; see the handoff `tasks/handoffs/claude-loop.md`, "Needs from
+Real reference (sourced photos, used for the calibrated mirror ratio below): refs/water/reference/real/ (5 Commons photos, SOURCES.json with author and licence). Generated reference: **not yet made** (outside my tools; see the handoff `tasks/handoffs/claude-loop.md`, "Needs from
 another agent"). The claimant must have it before the frame gate.
 
 ## Numbers (game vs nature)
@@ -45,6 +45,7 @@ Camera: wolf cameraHeight 1.6 m on ground 1.48 m at x = 30 -> eye ~3.3 m above t
 |---|---|---|---|
 | Reflectance at normal incidence | `metalness .1, roughness .32`, no environment mirror of the shore | 2.0 % (n = 1.333; Fresnel, Hecht *Optics*; three.js Water2.js default `reflectivity 0.02`) | no mirror at all |
 | Reflectance at 15 / 30 / 45 m from a 3 m eye (78.7 / 84.3 / 86.2 deg) | ~0 (no reflected image) | 30.5 / 54.1 / 66.2 % (exact Fresnel, unpolarised, n = 1.333; computed in this task's handoff) | no |
+| **Mirror ratio** = luminance(water band under the far shore) / luminance(the treeline above it); calibrated metric (rule 11, codex/loop): refs/water/shore-audit/measure-photos.mjs -> mirror-ratio.json | **5.04** (noon-0.png) | eye-level real lakes: **0.73** (Algonquin, M. Sokolov, CC BY-SA 4.0) and **0.66** (southern Finland, public domain), matching the Fresnel prediction ~0.66-0.75; photos + SOURCES.json in refs/water/reference/real/. A pond seen from above (taiga photo, 2.59) mirrors the overcast sky, not the shore: different geometry, not comparable | no (7x) |
 | Water band under the far treeline, relative luminance | 0.188 (measure.json `water_far`), 5.0x the treeline it should mirror (0.037) | ~0.66 x 0.037 + water-leaving ~0.001-0.005 = ~0.025-0.03, i.e. *darker* than the treeline | no (6-7x too bright) |
 | Body colour (light leaving the water) | base `0x578d91` (87,141,145) lit like an opaque diffuse surface | humic boreal lakes: water-leaving signal very low, CDOM absorbs blue first (Menken & Brezonik 2006, Lake Reserv. Manage. 22:179-190); in extremely brown lakes it is negligible across the visible (Kutser, Paavel & Kauer, EGU2015-13460) | no (bright teal, not dark brown) |
 | Shallow-water transparency | opaque everywhere | boreal lake Secchi depth typically ~1-4 m (claimant: cite a regional survey, e.g. Finnish/Ontario lake monitoring) | no (bottom never visible) |

@@ -2,7 +2,7 @@
  * T-0009 run 2 (grok-gait, on dfcb848): per-body joint ranges as data (ik.ts JointLimits via BodyPlan.limits), the derived
  * body pitch through the bound (bounding.ts pitchCurve), and the reach budget (tools/bound-reach.ts).
  * - Dog/wolf unchanged: clampLimb with no limits is the old FLEX_LIMIT clamp, value for value.
- * - Leporid hind ankle 66.4-137.2° and foot-to-ground 17.2-123.3° in stance (Crouch et al. 2022, PeerJ 10:e13611).
+ * - Leporid hind ankle 66.4-137.2° and foot-to-ground 17.2-123.3° in stance (Hall et al. 2022, PeerJ 10:e13611).
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';

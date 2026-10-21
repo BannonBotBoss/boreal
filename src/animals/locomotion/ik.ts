@@ -56,7 +56,7 @@ export const CANID_LIMITS: JointLimits = {
 /**
  * Leporid hind ankle and foot in stance: ankle (shank-to-metatarsus) 66.4 ± 13.4° at most dorsiflexed (38 % stance) to
  * 137.2 ± 4.8° at toe-off; foot (metatarsus-to-ground) 17.2 ± 6.3° (10 % stance) to 123.3 ± 3.6° (toe-off). Six New Zealand
- * White rabbits, 49 trials, stance 0.40 ± 0.15 s (Crouch et al. 2022, "Rabbit hindlimb kinematics and ground contact
+ * White rabbits, 49 trials, stance 0.40 ± 0.15 s (Hall et al. 2022 — Hall, Stubbs, Anderson, Greenacre & Crouch — "Rabbit hindlimb kinematics and ground contact
  * kinetics during the stance phase of gait", PeerJ 10:e13611, doi:10.7717/peerj.13611, PMC9208372; Results and Table 1,
  * checked against the paper 2026-10-21). These are the means of the measured STANCE range of slow domestic-rabbit gait, not
  * anatomical end-ranges, so they apply to the gait (bounding.ts phases them in with motion), not to a sitting body. The paper's

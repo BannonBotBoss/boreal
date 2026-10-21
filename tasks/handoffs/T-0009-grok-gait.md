@@ -160,7 +160,7 @@ questions, tsc + npm test. Baseline on dfcb848: bound-checks host **85.7 %** (to
   `JointLimits`; `clampLimb(a, front, limits = CANID_LIMITS)`. `CANID_LIMITS` is the old FLEX_LIMIT clamp value for value
   (test: 2000 random angles, both limbs, identical). `BodyPlan.limits` carries a body's ranges; nothing in the code names a
   species. `LEPORID_LIMITS` = hind ankle 66.4-137.2° and hind foot-to-ground 17.2-123.3° in stance, checked against the paper
-  (Crouch et al. 2022, PeerJ 10:e13611, PMC9208372, Results + Table 1: means ± SD 66.4 ± 13.4 / 137.2 ± 4.8 /
+  (Hall et al. 2022, PeerJ 10:e13611, PMC9208372, Results + Table 1: means ± SD 66.4 ± 13.4 / 137.2 ± 4.8 /
   17.2 ± 6.3 / 123.3 ± 3.6°; ankle = shank-to-metatarsus, foot = metatarsus-to-ground; 6 NZW rabbits, stance 0.40 ± 0.15 s).
   Knee and fore limb: no lagomorph goniometry found, so dog values [placeholder].
   - These are STANCE ranges of slow domestic-rabbit gait, not end-ranges. The standing hare (ankle 48.5° interior) is below
@@ -238,3 +238,19 @@ questions, tsc + npm test. Baseline on dfcb848: bound-checks host **85.7 %** (to
     That gives hind ≈ .21 at 8.5 m/s and ≈ .15 at 11.6 m/s.
 - **Open (mine):** run pitch too steep (−27° mean host); fore reach at 5-8.5 m/s short by .11-.17 m on either range set;
   host + LEPORID_LIMITS overtaking at ≤ 3 m/s.
+
+## Run 3 (grok-gait, 2026-10-21, based on 9527d2c grok/rabbit-clover; branch grok-gait/T-0009-hare-v3)
+Asked by Matthew (14:18 PT): grok's run-4 Needs for the Gait Builder — (1) fore reach so the trunk can run level, (2) the
+11.6 m/s contact (check the .180 source first), (3) an in-place turn that steps the feet, (4) a split hind foot bone + a
+sourced knee range so LEPORID_LIMITS can go in; re-score (game body >= 95 %), captures 0.25x/1x incl. the turn, frame
+questions, tsc + npm test. Correction applied: PeerJ 10:e13611 is **Hall et al. 2022** (Hall, Stubbs, Anderson, Greenacre,
+Crouch), not "Crouch et al." — fixed in ik.ts, tests/bound-limits.test.ts and this handoff.
+Baseline on 9527d2c (tools/bound-score.ts, bound-checks): game body (HARE_PLAN, dog ranges) **97.1 %** (11.6 m/s contact
+.120 vs .180 fails); host + LEPORID_LIMITS 80.0 %.
+- [x] Rule 15 review first (14:30 PT): grok's run 4, claims hold (duty line, 97.1 %, level-1 cost); event
+  tasks/events/2026-10-21T14-30-grok-gait-comment-T-0009.json.
+- [ ] (4) split hind foot + knee range
+- [ ] (1) fore reach, level trunk
+- [ ] (2) 11.6 m/s contact source
+- [ ] (3) in-place stepping turn
+- [ ] re-score, captures, tsc + npm test

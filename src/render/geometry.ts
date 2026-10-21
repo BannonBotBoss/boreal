@@ -9,6 +9,9 @@ import { GOVERNOR, LADDER, ceiling } from '../core/quality';
 import { createDeerRig } from './animalRig';
 import { icosphere, rockGeometry } from './rocks';
 import { treeGeometry } from './trees';
+import { FLORA_BY_ID } from '../core/flora/plants';
+import { PROP_MATERIAL } from './batch';
+import { buildClump, buildPlant } from './flora/plant';
 
 /** Fallen logs share one batch material (perf6/near-shadows 4c8d933), colour per vertex; since T-0005 it has the bark hook below and
  *  smooth shading, so its own program (+1). Being a different material, the chunk batch gives logs their own BatchedMesh, which casts
@@ -107,14 +110,39 @@ export function seatLog(group: THREE.Object3D, e: Entity, h: (x: number, z: numb
   axis.position.set(0, seat.a, 0); axis.rotation.set(seat.roll, 0, seat.pitch, 'ZYX'); // roll about the log's own axis first, then pitch
   return { at: seat.at, normal: seat.normal, settle: seat.settle }; // settle: trunk and earth densities + depth, for T-0006's why
 }
+const stripFlora = (g: THREE.BufferGeometry) => {
+  g.deleteAttribute('aFall'); g.deleteAttribute('aOrgan'); g.deleteAttribute('aBloom');
+  const n = g.getAttribute('normal') as THREE.BufferAttribute;
+  for (let i = 0; i < n.count; i++) if (Math.hypot(n.getX(i), n.getY(i), n.getZ(i)) < .5) n.setXYZ(i, 0, 1, 0);
+  return g;
+};
+// Clonal lowbush blueberry patch (Vaccinium angustifolium, Vander Kloet 1988; Hall et al. 1979): 18-35 cm branched dwarf shrub stems in a clonal mat (r ~0.38 m), 6-12 mm berries (9 mm mean) in terminal clusters.
+const FORAGE_SPEC = { ...FLORA_BY_ID.blueberry, carpet: { ...FLORA_BY_ID.blueberry.carpet!, ramets: 12, radius: .38, form: { stems: 2, branching: 3,
+  flower: { kind: 'corymb' as const, count: 6, petals: 5, petalLength: .009, petalWidth: .007, open: .35, nod: 2.2, cup: .003, colour: '#4d6bb3', centre: '#2c4178', bloom: [185, 250] as [number, number] } } } };
+const HERB_SPECS = [
+  FLORA_BY_ID.bunchberry,
+  { ...FLORA_BY_ID.bluebead, carpet: { cluster: FLORA_BY_ID.bluebead.cluster, ramets: 5, radius: .2 } },
+  { ...FLORA_BY_ID.woodlily, height: { ...FLORA_BY_ID.woodlily.height, mean: .34 }, carpet: { cluster: FLORA_BY_ID.woodlily.cluster, ramets: 4, radius: .18 } },
+  { ...FLORA_BY_ID.everlasting, height: { ...FLORA_BY_ID.everlasting.height, mean: .32 }, carpet: { cluster: FLORA_BY_ID.everlasting.cluster, ramets: 5, radius: .2 } },
+];
+const propCache = new Map<string, THREE.BufferGeometry>();
+const propFlora = (kind: 'forage' | 'plant', seed: number, detail: number) => {
+  const spec = kind === 'forage' ? FORAGE_SPEC : HERB_SPECS[(seed >>> 5) % HERB_SPECS.length], v = (seed >>> 2) & 3, k = `${kind}:${spec.id}:${v}:${detail}`;
+  let g = propCache.get(k);
+  if (!g) {
+    g = stripFlora(detail === 0 ? buildClump(spec, v, 0) : detail === 1 ? buildClump(spec, v, 1) : buildPlant({ ...spec, ...spec.carpet?.form }, v, 2));
+    propCache.set(k, g);
+  }
+  const mesh = new THREE.Mesh(g, PROP_MATERIAL); mesh.userData.shared = true; return mesh;
+};
 /** Only this layer knows Three.js. No model files are loaded. */export function generateGeometry(entity: Entity, detail: number): THREE.Group {
   if (entity.kind === 'deer') { const rig = createDeerRig(entity.seed, detail); rig.root.scale.setScalar(entity.scale); rig.root.rotation.y = entity.rotation; return rig.root; }
   if (entity.kind === 'rock') return rockGeometry(entity, detail);
   if (entity.kind === 'spruce') return treeGeometry(entity, detail); // boreal species: src/render/trees.ts
-  const group = new THREE.Group(), rng = random(entity.seed);
+  const group = new THREE.Group();
   const segments = [9, 6, 4][detail];
   const material = (color: number) => new THREE.MeshStandardMaterial({ color, roughness: .95, flatShading: true });
-  const wood = material(0x70513b), leaf = material(0x315746), pale = material(0xc4ab7a);
+  const wood = material(0x70513b), pale = material(0xc4ab7a);
   const body = material(entity.kind === 'person' ? 0x9b6650 : 0xa28055);
   const add = (geometry: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, sx = 1, sy = 1, sz = 1) => {
     const mesh = new THREE.Mesh(geometry, mat); mesh.position.set(x, y, z); mesh.scale.set(sx, sy, sz); group.add(mesh); return mesh;
@@ -129,19 +157,8 @@ export function seatLog(group: THREE.Object3D, e: Entity, h: (x: number, z: numb
     const end = add(barked(tinted(new THREE.CircleGeometry(.33, sides), 0xc4ab7a), bseed, false), LOG_MATERIAL, 2.21, 0, 0); end.rotation.y = Math.PI / 2;
     axis.add(log, end); seatLog(group, entity);
     log.userData.shared = end.userData.shared = true; // render/batch keeps a shared material as is (its own batch) instead of baking it into PROP_MATERIAL
-  } else if (entity.kind === 'forage') {
-    const berries = material(0x536fb7), leaves = material(0x528d40);
-    for(let i=0;i<(detail===2?3:7);i++) {
-      const angle=i*2.4;
-      ellipsoid(leaves,Math.cos(angle)*.28,.17,Math.sin(angle)*.28,.22,.13,.17);
-      ellipsoid(berries,Math.cos(angle)*.22,.32,Math.sin(angle)*.22,.06,.065,.06);
-    }
-  } else if (entity.kind === 'plant') {
-    for (let i = 0; i < (detail === 2 ? 2 : 5); i++) {
-      const a = i * 2.4;
-      ellipsoid(leaf, Math.cos(a) * .25, .35, Math.sin(a) * .25, .23, .5, .18);
-      ellipsoid(material(0xd9a15c), Math.cos(a) * .3, .8, Math.sin(a) * .3, .13, .15, .13);
-    }
+  } else if (entity.kind === 'forage' || entity.kind === 'plant') {
+    group.add(propFlora(entity.kind, entity.seed, detail));
   } else {
     ellipsoid(body, 0, 1.05, 0, .38, .65, .23);
     ellipsoid(pale, 0, 1.98, 0, .25, .3, .25);

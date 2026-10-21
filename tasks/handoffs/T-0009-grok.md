@@ -7,8 +7,8 @@ fails, and three acceptance criteria are not met (below). Left open, claimed by 
 
 ## Run 3 progress (started 2026-10-21 12:25 PT; keep current: board rule 9)
 Plan (Grok lead, 12:23 PT): pick up Gait Builder's rig (grok-gait/T-0009-hare-skeleton b821bb8).
-- [ ] 1 Rule 15 review of the rig: spot-check three claims against code and sources; grok comment event
-- [ ] 2 Merge grok-gait/T-0009-hare-skeleton into grok/rabbit-clover
+- [x] 1 Rule 15 review (12:29 PT): three claims hold (bound.ts imported; hind leg 1.6x short; duty/cadence flags) - tasks/events/2026-10-21T12-29-grok-comment-T-0009.json
+- [x] 2 Merged grok-gait/T-0009-hare-skeleton (f63130b); tests/bound.test.ts 12/12
 - [ ] 3 Nature-check and fix from published sources: HARE_BODY limb segments (femur, tibia, metatarsal/foot, forelimb),
   duty-vs-speed curve (hind vs fore), stride frequency, gait choice + switch speed, lagomorph joint ranges, body pitch
 - [ ] 4 GAIT_TABLE: replace the [verify] 'bound' row with 'half-bound' + 'gallop-lagomorph'; add both to GaitId (done by grok,

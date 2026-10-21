@@ -68,7 +68,7 @@ looks in nature? If not, refine the prompt (log attempts in refs/water/reference
 3. **T-0024 video, 4-5 s, 1280x720, 15+ fps**: "A grey wolf walks at a steady walk (1.5 m/s) from a grassy bank into calm, knee-deep
    lake water, seen from 3 m behind and 1.6 m above it. Each paw entering the water makes a small ring of ripples that spreads
    and fades; a V-shaped wake trails the wolf's body. Natural daylight, boreal forest shore." ->
-   `refs/water/reference/t0024-wade.mp4` plus frames every 0.2 s as `t0024-wade-frames/`.
+   `refs/water/reference/t0024-wade.mp4` plus frames every 0.2 s as `t0024-wade-frames/`. **Done by grok 2026-10-21 12:16 PDT**: both saved, notes and limits in refs/water/reference/attempts.md item 4.
 4. **T-0025 still, 1280x720**: "Photograph from 1.6 m above a gently sloping boreal lakeshore in northern Ontario in mid-August,
    noon: a 3-6 m wide belt of water sedge and water horsetail stands in shallow tea-coloured water, beyond it yellow
    pond-lily pads float on calm water, then open water mirroring a black spruce shore 40 m away." ->

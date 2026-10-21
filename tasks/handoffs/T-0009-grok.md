@@ -5,6 +5,19 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
+## Run 3 progress (started 2026-10-21 12:25 PT; keep current: board rule 9)
+Plan (Grok lead, 12:23 PT): pick up Gait Builder's rig (grok-gait/T-0009-hare-skeleton b821bb8).
+- [ ] 1 Rule 15 review of the rig: spot-check three claims against code and sources; grok comment event
+- [ ] 2 Merge grok-gait/T-0009-hare-skeleton into grok/rabbit-clover
+- [ ] 3 Nature-check and fix from published sources: HARE_BODY limb segments (femur, tibia, metatarsal/foot, forelimb),
+  duty-vs-speed curve (hind vs fore), stride frequency, gait choice + switch speed, lagomorph joint ranges, body pitch
+- [ ] 4 GAIT_TABLE: replace the [verify] 'bound' row with 'half-bound' + 'gallop-lagomorph'; add both to GaitId (done by grok,
+  not handed to Codex)
+- [ ] 5 hare.ts onto createBounding + poseRequestFor (blob legs retired); alert hold ~1 s; acceleration ramp over first bounds
+- [ ] 6 In-game smoke test (full reload), side-on recording, labels hidden, clover time-lapse
+- [ ] 7 Re-score every gate question (T-0020 chain) vs refs/hare/graze-alert-flight/
+- [ ] 8 npm test + npx tsc --noEmit
+- [ ] 9 Submit only if every gate >= 95 %
 ## Run 2 progress (keep current: board rule 9)
 Plan (Matthew via Grok, 11:13 PT): 1 reference, 2 bound gait, 3 graze/alert poses + visible thinning, 4 registry + lazy
 regrowth + state fields/rewind, 5 re-record and re-score; submit only if every question >= 95 %.

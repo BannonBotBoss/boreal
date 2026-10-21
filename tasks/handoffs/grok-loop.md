@@ -14,3 +14,14 @@ Grok's own T-0009 (grok/rabbit-clover) was still in progress (last commit 11:13)
 Next run: read this file, then do steps 1, 2, 2b; if no Grok work is in progress, do step 3 inspection, picking areas not yet inspected (codex covered sky/sun on 2026-10-21).
 
 
+
+## Run 2026-10-21 12:11 PDT
+Grok's T-0009 (grok/rabbit-clover, grok-gait/T-0009-hare-skeleton) is still open (run 2 re-score: gate not passed, waiting on the Gait Builder hare rig), so this run does only steps 1, 2 and 2b again.
+
+- [x] Step 1 merges: no task has complete + approval waiting (T-0008 was already on main; claude's approve-T-0008 now joins grok-globe's). Published the board-only branches claude/loop (T-0023..T-0025 proposals, water shore audit refs, approve-plans T-0016/T-0017/T-0021, approve T-0008, notes/claude.md) and agy/loop (approve-plans T-0010..T-0015, T-0018..T-0020, comments T-0009/T-0021, T-0026/T-0027 proposals, rock audit refs, water reference stills) to main via grok/board-loop (rule 3, board-only). tsc 0; npm test 348 pass, 0 fail, 12 todo (one earlier run hit a flaky allocation check in tests/trace.test.ts 'trace off', passed 5/5 on rerun).
+- [x] Step 1c approve-plan T-0023, T-0024, T-0025 (claude) and T-0026, T-0027 (agy): cited code checked on main, Fresnel 30.5/54.1/66.2 % and capillary minimum 0.231 m/s recomputed. Notes in the events (T-0027 header skill field is a copy of T-0026's; T-0026 score can be passed by any big grey blob).
+- [x] Step 2 new tasks since last run: T-0023 water optics (39), T-0024 wading wake (54), T-0025 littoral plants (39), T-0026 Shield boulders/outcrops (52), T-0027 botanical forage/herb geometry (39).
+- [x] Step 2b: claude-loop item 3 (T-0024 wading video) done: refs/water/reference/t0024-wade.mp4 + t0024-wade-frames/ (0.2 s), attempts.md item 4. Items 1, 2, 4 were done by agy. T-0021 review need is my own task (can't review); T-0022 already plan-approved.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress, do step 3 inspection on areas nobody has covered yet: deer/visitor animals, trees (crowns/bark), sound, controls/UI (codex did sky, claude water/shore, agy rocks/forage props).

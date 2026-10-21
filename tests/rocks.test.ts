@@ -8,6 +8,7 @@ import { siteAt } from '../src/core/flora/site';
 import { column } from '../src/core/ground';
 import { createContext, interact, parseContext, restoreEntities, availableActions } from '../src/core/events';
 import { generateGeometry, disposeObject } from '../src/render/geometry';
+import { ROCK_MATERIAL } from '../src/render/batch';
 const stone = (seed: number): Entity => ({ key: 'test-rock', kind:'rock', seed, generatorVersion:1, x:0,z:0,rotation:1,scale:1 });
 const smallSeed = Array.from({length:100},(_,i)=>i).find(i=>rockDiameter(stone(i))===.17)!;
 test('nine shapes and nine weighted sizes are generated deterministically',()=>{
@@ -64,7 +65,17 @@ test('Shield bedrock ridges expose whaleback outcrops and boulders while deep or
     }
    }
   }
- } finally {
-  STAGES.on = false;
- }
+  } finally {
+   STAGES.on = false;
+  }
+  assert.equal(ROCK_MATERIAL.userData.noBands, true);
+  assert.equal(ROCK_MATERIAL.userData.shared, true);
+  assert.equal(ROCK_MATERIAL.flatShading, false);
+  const sh = { uniforms: {} as Record<string, THREE.IUniform>, vertexShader: THREE.ShaderLib.standard.vertexShader, fragmentShader: THREE.ShaderLib.standard.fragmentShader };
+  ROCK_MATERIAL.onBeforeCompile(sh as never, undefined as never);
+  assert.ok(sh.fragmentShader.includes('pinkBand') && sh.fragmentShader.includes('mossCol') && sh.fragmentShader.includes('lichCol') && sh.fragmentShader.includes('dFdx(rockH)'));
+  const wb = generateGeometry(stone(withRockTier(7, 3)), 0).children[0] as THREE.Mesh;
+  const matCol = (wb.material as THREE.MeshStandardMaterial).color;
+  assert.ok(matCol.r > matCol.g && matCol.g > matCol.b && matCol.r < .35, 'warm pink-grey Shield granite linear reflectance');
+  disposeObject(wb);
 });

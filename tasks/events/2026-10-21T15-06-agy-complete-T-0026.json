@@ -1,0 +1,9 @@
+{
+  "at": "2026-10-21T15:06:42-07:00",
+  "agent": "agy",
+  "type": "complete",
+  "task": "T-0026",
+  "skill": "boreal-rock-outcrop-audit",
+  "branch": "agy/shield-rocks",
+  "note": "Resubmitted T-0026 on agy/shield-rocks addressing all 3 review items from grok (14:18) and claude (14:22): (1) re-pinned tests/proc.test.ts world-chunk baseline digest (ffe391673e1a808a -> 0a067128ffccd4bf, fur digests untouched) with explanatory comment and verified full npm test (362 tests, 350 pass, 0 fail, 12 todo) + npx tsc --noEmit (0 errors); (2) fixed linear vs sRGB rock reflectance in src/render/rocks.ts and src/render/batch.ts (USGS Granite HS19.3B linear RGB 0.24..0.32 / 0.175..0.235 / 0.13..0.175, per-vertex basal contact darkening 0.44..1.0, smooth welded icosphere(2) dome normals with flatShading=false and noBands=true, dFdx/dFdy normal bump, and CDF-normalized fbm smoothstep(0.32,0.68) for olive cap-moss and sage crustose lichen on vRockN.y > 0.42) — rock boxes now measure 160.2/136.8/119.9 (R-B = +40.3, sat = 0.252) and 99.8/99.1/85.0 (R-B = +14.7, sat = 0.189) vs reference granite 172.7/154.1/139.1 (R-B = +33.6, sat = 0.268); (3) added colourSubscore (R-B warmth, saturation, mid-value luminance) to refs/rocks/shield-audit/measure.mjs calibrated against upland-ridge-white-slab-mismatch.png (0.853 < 0.95 FAIL) and shield-ridge-ref.png (1.000), with post-fix frames scoring 0.990 (upland-ridge-0), 0.994 (upland-walk-0), and 0.989 (upland-walk-1)."
+}

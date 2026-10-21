@@ -33,7 +33,7 @@ import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
 import { riverAt } from '../core/stages/rivers';
-import { waterMaterial, updateWaterUniforms } from './water';
+import { waterMaterial, updateWaterUniforms, createWaterMirror } from './water';
 import { tiles } from '../photo/frame';
 import { applyGenome } from './appearance';
 import { entityMass, rigMass } from './mass';
@@ -68,6 +68,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const post = createPost(renderer, scene, camera);
   const photoreal = createPhotoreal(renderer, scene, camera, sky, BASE_RATIO); // PBR lighting, CSM, IBL, GTAO + quality governor
   const ratio = () => Math.min(BASE_RATIO, 1.5) * photoreal.tier.resScale;
+  const waterMirror = createWaterMirror(renderer); // T-0023: the open water mirrors shore and sky (tiers with IBL)
   const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.Object3D>; near: boolean; batch: import('./batch').ChunkBatch; contacts: Contact[] }>();
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
   const eatenForage = new Map<string, string>(); // plant key -> loaded chunk; never serialized
@@ -281,6 +282,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
     for (const f of beforeRender) f(time, !!photo); // overlays that follow the posed wolf (render/sensesHalo)
+    waterMirror.update(scene, camera, !!photoreal.tier.ibl);
     post.render(!!photo, photo?.focalMm ?? 0, fx.ssao, { contact: fx.contact, rays: fx.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
   }
   function forageWolf(plantKey: string) {

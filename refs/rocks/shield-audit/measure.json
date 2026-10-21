@@ -1,0 +1,68 @@
+{
+  "metric": "shieldOutcropScore = 0.5 * min(1, rockCoverShare / 0.18) + 0.5 * min(1, (largestFeatureWidthPx / wolfWithersHeightPx) / 1.0)",
+  "calibration": {
+    "knownMatch_natureReference": {
+      "rockCoverShare": 0.1743,
+      "componentCount": 180,
+      "largestFeatureWidthPx": 324,
+      "medianFeatureWidthPx": 6,
+      "largestFeatureAreaPx2": 14216,
+      "largestFeatureBox": [
+        346,
+        520,
+        668,
+        634
+      ],
+      "largestRatioToWolfWithers": 1.246,
+      "coverSubscore": 0.968,
+      "scaleSubscore": 1,
+      "calibratedScore": 0.984
+    },
+    "knownMismatch_forestFloorGame": {
+      "rockCoverShare": 0,
+      "componentCount": 0,
+      "largestFeatureWidthPx": 0,
+      "medianFeatureWidthPx": 0,
+      "largestFeatureAreaPx2": 0,
+      "largestFeatureBox": null,
+      "largestRatioToWolfWithers": 0,
+      "coverSubscore": 0,
+      "scaleSubscore": 0,
+      "calibratedScore": 0
+    }
+  },
+  "gameBedrockRidge_uplandWalk2": {
+    "rockCoverShare": 0.0002,
+    "componentCount": 3,
+    "largestFeatureWidthPx": 6,
+    "medianFeatureWidthPx": 4,
+    "largestFeatureAreaPx2": 12,
+    "largestFeatureBox": [
+      1072,
+      414,
+      1076,
+      414
+    ],
+    "largestRatioToWolfWithers": 0.028,
+    "coverSubscore": 0.001,
+    "scaleSubscore": 0.028,
+    "calibratedScore": 0.015
+  },
+  "gameBedrockRidge_uplandRidge0": {
+    "rockCoverShare": 0.0003,
+    "componentCount": 2,
+    "largestFeatureWidthPx": 6,
+    "medianFeatureWidthPx": 6,
+    "largestFeatureAreaPx2": 36,
+    "largestFeatureBox": [
+      1022,
+      406,
+      1026,
+      412
+    ],
+    "largestRatioToWolfWithers": 0.028,
+    "coverSubscore": 0.002,
+    "scaleSubscore": 0.028,
+    "calibratedScore": 0.015
+  }
+}

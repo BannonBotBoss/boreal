@@ -5,7 +5,7 @@ import type { BorealSound } from '../audio/borealSound';
 import { playerRemembered, type EventContext } from '../core/events';
 import { windAt } from '../core/weather';
 import { near as nearbyDeltas } from '../core/deltas';
-import { createSoundCues, smell, bearingTo, SENSES, type ScentSource } from '../core/senses';
+import { createSoundCues, smell, bearingTo, SENSES, type ScentSource, type ScentHit } from '../core/senses';
 
 // Small procedural pictograms: shared vocabulary, not stored animal meshes or portraits.
 const drawings: Record<string, [string, string]> = {
@@ -32,12 +32,12 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
   const el = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
   const arrows = el('.sense-arrows'), heard = el('.sense-heard'), meter = el<HTMLMeterElement>('meter'), percent = el('.sense-percent'), scentDirection = el('.sense-direction'), thoughts = el('.sense-thoughts');
   const cues = createSoundCues(), nose = new Vector3(), forward = new Vector3();
-  let tick = 0, lastThoughts = '';
+  let tick = 0, lastThoughts = '', lastHits: readonly ScentHit[] = [];
   audio.onSpatialCue = (id, at, level) => { if (!root.hidden) cues.add(id, at, level); };
   return {
     update(dt: number, hidden: boolean) {
       root.hidden = hidden;
-      if (hidden) { cues.clear(); return; }
+      if (hidden) { cues.clear(); lastHits = []; return; }
       cues.step(dt); tick += dt;
       if (tick < SENSES.updateSeconds) return; tick = 0;
       const wolf = view.lookup('player')?.object;
@@ -65,7 +65,7 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
       for (const d of nearbyDeltas(nose.x, nose.z, SENSES.range)) if (['scent', 'carcass', 'droppings'].includes(d.kind)) sources.push({
         key: `trace:${d.kind}:${d.x}:${d.z}`, kind: d.kind, x: d.x, z: d.z, potency: Math.min(1, d.m) * d.strength,
       });
-      const hits = smell(nose, sources, windAt(nose.x, .8, nose.z), heading), first = hits[0], level = first?.level ?? 0;
+      const hits = smell(nose, sources, windAt(nose.x, .8, nose.z), heading), first = hits[0], level = first?.level ?? 0; lastHits = hits;
       meter.value = level; percent.textContent = `${Math.round(level * 100)}%`;
       scentDirection.textContent = first ? `${direction(first.bearing)} · ${level > .65 ? 'strong' : level > .25 ? 'distinct' : 'faint'} scent` : 'No scent picked up';
       const signature = hits.map(h => `${h.key}:${h.remembered}:${h.friend}`).join('|');
@@ -80,5 +80,8 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
         }
       }
     },
+    /** The same live cues the panel shows, for the 3D senses halo (render/sensesHalo). */
+    sounds: () => cues.list(),
+    scents: () => lastHits,
   };
 }

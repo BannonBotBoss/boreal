@@ -1,5 +1,6 @@
 import './style.css';
 import { createSensesHUD } from './ui/senses';
+import { createSensesHalo } from './render/sensesHalo';
 import { buildScene } from './render/buildScene';
 import { availableActions, consumeForage, createContext, friendCount, interact, parseContext, solidContact, type Player } from './core/events';
 import { CONTACTS } from './core/contactBus';
@@ -108,6 +109,9 @@ CONTACTS.onContact(c => {
 });
 if (contactsLog) CONTACTS.onSeparate((a, b, source) => console.log(`[contacts] end ${a} | ${b} (${source})`));
 const sensesHUD = createSensesHUD(view, sfx, () => context);
+const HALO_KEY = 'boreal.sensesHalo', sensesHalo = createSensesHalo(view.scene); // O: the HUD's cues as beacons on a ring around the head
+try { sensesHalo.enabled = localStorage.getItem(HALO_KEY) !== '0'; } catch { /* storage blocked: default on */ }
+view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView));
 function perform() {
   if(autonomous) setAutonomous(false);
   if (!target || paused || dialog.open || saveBlocked) return;
@@ -234,6 +238,9 @@ addEventListener('keydown', event => {
   if (!event.repeat && event.key.toLowerCase() === 'p') { enterPhoto(); return; }
   if (!event.repeat && event.key === 'G' && event.shiftKey) { toGlobe(); return; } // Shift+G: planet view (plain g growls)
   if (!event.repeat && event.key.toLowerCase() === 't' && !event.ctrlKey) { chrono.toggle(); clearInput(); return; } // T: chronometer (time of day)
+  if (!event.repeat && event.key.toLowerCase() === 'o' && !event.ctrlKey) { // O: senses halo on / off (remembered)
+    sensesHalo.enabled = !sensesHalo.enabled; try { localStorage.setItem(HALO_KEY, sensesHalo.enabled ? '1' : '0'); } catch { /* storage blocked */ }
+    notice(`Senses halo ${sensesHalo.enabled ? 'on' : 'off'} (O)`); return; }
   if (chrono.open && event.key === 'Escape') { chrono.close(); clearInput(); return; }
   if (event.code === 'Space') event.preventDefault();
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) event.preventDefault();

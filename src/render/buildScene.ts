@@ -280,6 +280,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
     else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
+    for (const f of beforeRender) f(time, !!photo); // overlays that follow the posed wolf (render/sensesHalo)
     post.render(!!photo, photo?.focalMm ?? 0, fx.ssao, { contact: fx.contact, rays: fx.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
   }
   function forageWolf(plantKey: string) {
@@ -310,6 +311,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     hares: hares.snapshot,
   };
   /** Crop (screen px) + output size (px) for the video stream; undefined = normal full-screen rendering. */
+  const beforeRender: ((time: number, photo: boolean) => void)[] = [];
   let output: { crop: { x: number; y: number; w: number; h: number }; w: number; h: number } | undefined;
   /** Renders `crop` of the current view into an exact w×h output, tiled when it exceeds the GPU's limits. */
   function renderCrop(crop: { x: number; y: number; w: number; h: number }, w: number, h: number, focalMm: number, tile: { x: number; y: number; w: number; h: number }) {
@@ -363,7 +365,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
-  return { set worldTime(t: number | undefined) { worldTime = t; }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     /** The saved record for a key (undefined for generated objects), e.g. for the inspector's why. */
     recordOf: (key: string) => activeContext?.records[key],

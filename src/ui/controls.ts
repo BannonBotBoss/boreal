@@ -15,6 +15,7 @@ export const BINDINGS: { action: string; keys: string; pad: string }[] = ([
   ['Chronometer (time of day)', 'T', 'View'],
   ['Chronometer: scrub time', '← / → · drag the dial', 'D-pad ← / → · left stick'],
   ['Chronometer: close', 'T · Esc', 'B · View'],
+  ['Senses halo on / off', 'O', '—'],
   ['Pause menu', 'Esc', 'Menu'],
   ['Close panel', 'Esc', 'B'],
   ['Planet view', 'Shift+G', '—'],

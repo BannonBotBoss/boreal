@@ -52,12 +52,15 @@ export function createCloverRenderer(scene: THREE.Scene, field: CloverField) {
   const mat2 = new THREE.MeshStandardMaterial({ color: 0x6a5436, roughness: 1 }) /* run 4: bare soil brown (was olive 0x4a4a2c, lost in the grass) */, discs = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 20).rotateX(-Math.PI / 2), mat2, 2000);
   discs.count = 0; discs.receiveShadow = true; discs.frustumCulled = false; discs.name = 'clover-stolons'; scene.add(discs);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), c = new THREE.Color();
-  let lastRevision = -1, lastSig = '', wait = 0;
+  let lastRevision = -1, lastSig = '', wait = 0, cx = 0, cz = 0;
   const share = (pt: CloverPatch) => Math.max(0, Math.min(1, field.unitsOf(pt) / pt.max));
   const shown = (pt: CloverPatch) => Math.round(Math.PI * pt.r * pt.r * CLOVER_DRAW.clumpsPerM2 * share(pt));
   function rebuild() {
     let n = 0, nd = 0;
-    for (const pt of field.list()) {
+    // nearest patches first (run 4): the clump cap (CLOVER_DRAW.cap) used to fill in list order, so near patches could go
+    // undrawn and a grazed patch's freed clumps went to far ones (the drawn count never changed)
+    const list = [...field.list()].sort((a, b) => Math.hypot(a.x - cx, a.z - cz) - Math.hypot(b.x - cx, b.z - cz));
+    for (const pt of list) {
       if (nd < 2000) { p.set(pt.x, heightAt(pt.x, pt.z) + .004, pt.z); q.identity(); s.set(pt.r * .92, 1, pt.r * .92); m.compose(p, q, s); discs.setMatrixAt(nd++, m); }
       const tall = CLOVER_DRAW.stubble + (1 - CLOVER_DRAW.stubble) * share(pt);
       const total = Math.round(Math.PI * pt.r * pt.r * CLOVER_DRAW.clumpsPerM2), r = random(hash(pt.key));
@@ -74,9 +77,10 @@ export function createCloverRenderer(scene: THREE.Scene, field: CloverField) {
     mesh.count = n; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }
   return {
-    update(dt: number) {
-      wait -= dt; if (wait > 0) return; wait = CLOVER_DRAW.rebuildSeconds;
-      let sig = ''; for (const pt of field.list()) sig += shown(pt) + ',';
+    /** `x`, `z`: the viewer (the wolf), so the nearest patches get the clump budget; rebuilt when it moves 4 m */
+    update(dt: number, x = cx, z = cz) {
+      wait -= dt; if (wait > 0) return; wait = CLOVER_DRAW.rebuildSeconds; cx = x; cz = z;
+      let sig = `${Math.round(x / 4)},${Math.round(z / 4)}:`; for (const pt of field.list()) sig += shown(pt) + ',';
       if (field.revision === lastRevision && sig === lastSig) return; lastRevision = field.revision; lastSig = sig; rebuild();
     },
     get count() { return mesh.count; },

@@ -185,7 +185,7 @@ export function createHares(scene: THREE.Scene) {
   function update(dt: number, wolf: WolfInfo): HareEvent[] {
     const events: HareEvent[] = []; time += dt; lastWolf = wolf;
     const daylight = wolf.daylight ?? 1, speed = wolf.speed ?? (wolf.moving ? 2 : 0);
-    clover.ensure(wolf.x, wolf.z, HARE.cloverRadius, 1); cloverDraw.update(dt); // regrowth is lazy (core/clover sunSeconds)
+    clover.ensure(wolf.x, wolf.z, HARE.cloverRadius, 1); cloverDraw.update(dt, wolf.x, wolf.z); // regrowth is lazy (core/clover sunSeconds)
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }
     for (let k = 0; k < HARE.count && hares.length + pending.length < HARE.count; k++) spawn(wolf.x, wolf.z); // bounded: spawn() can fail (no dry land in range)
     while (hares.length > HARE.count) remove(hares[hares.length - 1]); // count lowered in settings

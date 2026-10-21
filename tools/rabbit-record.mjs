@@ -69,9 +69,12 @@ res.record = await session(async ({ go, ev }) => {
   }
   // clover time-lapse (STAGED): the hare is moved off and the same patch is set to 100 -> 0 % leaf, one still each
   await ev(`(() => { const h = borealHares.list()[0]; if (h) { h.agent.x += 30; } return 1; })()`); const lapse = [];
-  for (const f of [1, .8, .6, .4, .2, 0]) { await ev(`(() => { const q = borealHares.clover.get(${JSON.stringify(target.key)}); return borealHares.clover.stage(q.key, q.max * ${f}).units; })()`);
+  // the lapse patch: the largest one 5-10 m straight ahead of the wolf camera now (the grazed one is often behind the wolf)
+  const lapseKey = await ev(`(() => { const w = borealHares.wolf(); let best, bs = -1; for (const q of borealHares.clover.list()) { const dx = q.x - w.x, dz = q.z - w.z, d = Math.hypot(dx, dz);
+    if (d < 5 || d > 10 || dz > -3 || Math.abs(dx) > .5 * -dz) continue; const s = q.r - .05 * Math.abs(dx); if (s > bs) { bs = s; best = q; } } return (best ?? borealHares.clover.get(${JSON.stringify(target.key)})).key; })()`);
+  for (const f of [1, .8, .6, .4, .2, 0]) { await ev(`(() => { const q = borealHares.clover.get(${JSON.stringify(lapseKey)}) ?? borealHares.clover.get(${JSON.stringify(target.key)}); return borealHares.clover.stage(q.key, q.max * ${f}).units; })()`);
     await sleep(1500); const s = await (globalThis.__cdp)('Page.captureScreenshot', { format: 'jpeg', quality: 80 }); const name = `lapse-${Math.round(f * 100)}.jpg`; writeFileSync(join(outDir, name), Buffer.from(s.data, 'base64')); lapse.push(name); }
-  return { at, target, staged, frames, lapse };
+  return { at, target, staged, frames, lapse, lapseKey };
 });
 writeFileSync(join(outDir, 'rabbit-record.json'), JSON.stringify(res, null, 1));
 console.log(JSON.stringify(res.record.frames.map(f => [f.t, f.hare?.action, f.hare?.goal, f.patchFraction, f.wolf?.x, f.wolf?.z])));

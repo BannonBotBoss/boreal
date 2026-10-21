@@ -28,7 +28,7 @@ test('shallow-water reflectance: the bottom at 0 m, fading to the deep body by ~
 });
 
 test('open-water sheet: terrain grid at the water level with depth per vertex; none on a dry chunk', () => {
-  const grid = (h: (x: number) => number) => { const g = new THREE.PlaneGeometry(4, 4, 2, 2).rotateX(-Math.PI / 2); const p = g.getAttribute('position'); for (let i = 0; i < p.count; i++) p.setY(i, h(p.getX(i))); return g; };
+  const grid = (h: (x: number) => number) => { const g = new THREE.PlaneGeometry(4, 4, 2, 2).rotateX(-Math.PI / 2); /* row-major like terrainCore */ const p = g.getAttribute('position'); for (let i = 0; i < p.count; i++) p.setY(i, h(p.getX(i))); return g; };
   assert.equal(openWaterGeometry(grid(() => 1), -.25), null);
   const s = openWaterGeometry(grid(x => x * .5), -.25)!; // shore slope: x = -2 is 0.75 m deep, x = 2 is dry
   const d = s.getAttribute('aDepth'), p = s.getAttribute('position');

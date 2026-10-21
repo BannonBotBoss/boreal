@@ -72,14 +72,18 @@ export function waterMaterial() {
   fadeOptIn(water); // render/fade: in-page transition patch fade (uniform only, same cache key)
   return water;
 }
-/** T-0023: a chunk's open-water sheet = its terrain grid lifted to the water level, with the depth to the bottom per vertex
- *  (aDepth, for the shallow-water colour). Null where the whole chunk is dry (nothing to draw there; was one quad per chunk). */
-export function openWaterGeometry(terrain: THREE.BufferGeometry, level = LEVEL.waterSurface): THREE.BufferGeometry | null {
-  const p = terrain.getAttribute('position'), n = p.count, pos = new Float32Array(n * 3), depth = new Float32Array(n), up = new Float32Array(n * 3);
+/** T-0023: a chunk's open-water sheet = its terrain grid (row-major, as render/terrainCore) at the water level, every `stride`-th
+ *  vertex (~2 m: 800 triangles on a near chunk instead of 12 800; depth varies smoothly), with the depth to the bottom per
+ *  vertex (aDepth, for the shallow-water colour). Null where the whole chunk is dry (nothing to draw; was one quad per chunk). */
+export function openWaterGeometry(terrain: THREE.BufferGeometry, level = LEVEL.waterSurface, cells = 20): THREE.BufferGeometry | null {
+  const p = terrain.getAttribute('position'), row = Math.round(Math.sqrt(p.count)), seg = row - 1, k = Math.max(1, Math.floor(seg / cells)), m = Math.floor(seg / k) + 1;
+  const pos = new Float32Array(m * m * 3), depth = new Float32Array(m * m), up = new Float32Array(m * m * 3), idx: number[] = [];
   let wet = false;
-  for (let i = 0; i < n; i++) { const h = p.getY(i); if (h < level) wet = true; depth[i] = level - h; pos[i * 3] = p.getX(i); pos[i * 3 + 1] = level; pos[i * 3 + 2] = p.getZ(i); up[i * 3 + 1] = 1; }
+  for (let j = 0; j < m; j++) for (let i = 0; i < m; i++) { const v = j * m + i, src = Math.min(seg, i * k) + row * Math.min(seg, j * k), h = p.getY(src);
+    if (h < level) wet = true; depth[v] = level - h; pos[v * 3] = p.getX(src); pos[v * 3 + 1] = level; pos[v * 3 + 2] = p.getZ(src); up[v * 3 + 1] = 1; }
   if (!wet) return null;
-  const g = new THREE.BufferGeometry(); if (terrain.index) g.setIndex(terrain.index.clone());
+  for (let j = 0; j < m - 1; j++) for (let i = 0; i < m - 1; i++) { const a = i + m * j, b = i + m * (j + 1), c = i + 1 + m * (j + 1), d = i + 1 + m * j; idx.push(a, b, d, b, c, d); }
+  const g = new THREE.BufferGeometry(); g.setIndex(idx);
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(up, 3)); g.setAttribute('aDepth', new THREE.BufferAttribute(depth, 1));
   g.computeBoundingSphere(); return g;
 }

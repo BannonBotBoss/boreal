@@ -71,16 +71,24 @@ function model() {
   blob(body, brown, 0, .05, -.235, .036, .042, .055, -.5);
   // head: cranium, muzzle, eyes, nose
   blob(head, brown, 0, 0, 0, .038, .04, .05); blob(head, buff, 0, -.012, -.045, .025, .022, .025); blob(head, dark, 0, -.008, -.07, .006, .005, .004);
-  for (const s of [-1, 1]) blob(head, dark, s * .03, .012, -.02, .008, .009, .008);
+  // run 5 detail (reads in the half sit-up, head raised side-on): pale cheek and eye ring, white chin, a larger eye with a
+  // catch-light, as on snowshoe hares (buff cheek patch and pale eye ring; white chin) [estimate: drawn to the reference sheet]
+  blob(head, white, 0, -.03, -.04, .017, .009, .02);
+  for (const s of [-1, 1]) { blob(head, buff, s * .026, -.012, -.012, .014, .019, .027); blob(head, buff, s * .029, .012, -.02, .012, .013, .012);
+    blob(head, dark, s * .033, .012, -.021, .008, .01, .009); blob(head, white, s * .039, .016, -.026, .002, .002, .002); }
   const ears: THREE.Group[] = [];
   for (const s of [-1, 1]) { const e = new THREE.Group(); e.position.set(s * .017, .03, .015); e.rotation.z = -s * .12; head.add(e); ears.push(e);
-    blob(e, brown, 0, B.ear / 2, 0, .012, B.ear / 2, .02); blob(e, dark, 0, B.ear * .92, 0, .009, .008, .016); }
+    blob(e, brown, 0, B.ear / 2, 0, .012, B.ear / 2, .02); blob(e, dark, 0, B.ear * .92, 0, .009, .008, .016);
+    // run 5: pale inner ear (the opening faces forward-out) and a dark rim down the back edge [estimate: reference sheet]
+    blob(e, buff, s * .004, B.ear * .5, -.012, .008, B.ear * .4, .007); blob(e, dark, 0, B.ear * .62, .016, .005, B.ear * .3, .005); }
   // limbs: segments between the bounding rig's joints (src/animals/locomotion/bounding.ts), in root space, rig leg order
   // LF, LH, RF, RH. Thickness [estimate: drawn to the reference]: muscular thigh, slim shank, broad furred hind foot.
   const legs: Leg[] = [];
   const seg = (m: THREE.Material, r: number, w = r) => { const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), m); mesh.userData.r = [w, r]; root.add(mesh); return mesh; };
   for (let i = 0; i < 4; i++) { const hind = i % 2 === 1;
-    legs.push(hind ? { hind, from: 1, segs: [seg(brown, .03, .026), seg(buff, .014), seg(white, .011, .022), ...(B.hindToes ? [seg(white, .009, .022)] : [])] }
+    // run 5: thicker hind limb so the hind legs read as they swing past the fore legs (the reference's haunch spans most of
+    // the rear body depth; thigh .03 -> .042, shank .014 -> .019, foot .011 -> .014) [estimate: drawn to the reference]
+    legs.push(hind ? { hind, from: 1, segs: [seg(brown, .042, .034), seg(buff, .019, .017), seg(white, .014, .025), ...(B.hindToes ? [seg(white, .011, .025)] : [])] }
       : { hind, from: B.scapula ? 0 : 1, segs: [...(B.scapula ? [seg(brown, .018, .014)] : []), seg(buff, .013), seg(buff, .01), seg(white, .009, .012)] }); }
   return { root, body, head, legs, ears };
 }

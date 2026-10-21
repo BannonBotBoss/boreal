@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DAY, dayAt, hourAt, initDay, setHour, DAY_OF_YEAR, START_HOUR } from '../src/core/timeOfDay';
 import { CHRONO, dialAngle, dialHour, scrubVelocity } from '../src/ui/chronometer';
-import { BINDINGS } from '../src/ui/controls';
+import { ACTION } from '../src/core/bindings';
 const near = (a: number, b: number, e = 1e-9) => assert.ok(Math.abs(a - b) < e, `${a} vs ${b}`);
 test('setHour turns the dial (offset), not the world clock; shortest way round, date follows past midnight', () => {
   DAY.offset = 0; near(hourAt(0), START_HOUR);
@@ -28,8 +28,6 @@ test('scrub eases toward input × rate, clamps input, and settles at rest', () =
   near(scrubVelocity(0, -5, 10), -CHRONO.rate, 1e-6);
   for (let i = 0; i < 120; i++) v = scrubVelocity(v, 0, 1 / 60); assert.ok(Math.abs(v) < 1e-3);
 });
-test('controls table lists the chronometer and planet view bindings', () => {
-  const c = BINDINGS.find(b => b.action.startsWith('Chronometer (')); assert.ok(c && c.keys === 'T' && c.pad === 'View');
-  assert.ok(BINDINGS.some(b => b.keys.includes('Shift+G')));
-  assert.equal(new Set(BINDINGS.map(b => b.action)).size, BINDINGS.length);
+test('the chronometer and planet view are bindable actions (T / View, Shift+G)', () => {
+  assert.deepEqual([ACTION.chrono.keys, ACTION.chrono.pad, ACTION.planet.keys], [['k:t'], ['view'], ['k:shift+k:g']]);
 });

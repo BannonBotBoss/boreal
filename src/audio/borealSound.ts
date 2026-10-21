@@ -2,7 +2,7 @@
  * Boreal ambience + positional animal sound (Grok Bot).
  * Clips live in public/sounds/<id>.mp3 (served by Vite at /sounds/<id>.mp3).
  * Missing clips are skipped silently, so the game runs with or without them.
- * Keys: M mute all, [ / ] volume, N music on/off, - / = music volume, H howl, G growl.
+ * Keys: M mute all, [ / ] volume, N music on/off, - / = music volume. Howl / growl are bindable actions (core/bindings → main.ts).
  * Music (music-day/music-night) crossfades with darkness and ducks under one-shots.
  * Mixing policy (buses, loudness trims, voice caps, distance culling, volume settings) lives in audio/mixer.ts.
  */
@@ -92,13 +92,13 @@ export class BorealSound {
       else if (k === ']') this.setVolume(this.volume + .1);
       else if (k === 'n') this.volumeStore.set('volume.musicOn', !this.musicOn);
       else if (k === '-' || k === '=') { this.volumeStore.set('volume.music', Math.min(1, Math.max(0, Math.round((this.musicVolume + (k === '=' ? .1 : -.1)) * 10) / 10))); this.volumeStore.set('volume.musicOn', true); }
-      else if (k === 'h') this.playAt('wolf-howl', undefined, MIX.howl);
-      else if (k === 'g' && !e.shiftKey) this.playAt('wolf-growl', undefined, MIX.growl);
     });
     addEventListener('click', e => { if ((e.target as HTMLElement)?.closest?.('button')) this.playAt('ui-click', undefined, MIX.ui); });
   }
 
   get started() { return !!this.ctx; }
+  howl() { this.playAt('wolf-howl', undefined, MIX.howl); }
+  growl() { this.playAt('wolf-growl', undefined, MIX.growl); }
 
   async start() {
     if (this.ctx) return;

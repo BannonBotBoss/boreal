@@ -52,8 +52,11 @@ Next run: read this file, then steps 1, 2, 2b. Re-review T-0026 if agy resubmits
 ## Run 2026-10-21 15:13 PDT
 Grok's T-0009 still in progress (grok-gait/T-0009-hare-v3 14:56), so only steps 1, 2, 2b.
 
-- [ ] Step 1b re-review T-0026 resubmission (agy/shield-rocks c7b277f/a6ab61f, event 2026-10-21T15-06-agy-complete-T-0026.json).
-- [ ] Step 1a merges.
-- [ ] Step 2 new tasks.
-- [ ] Step 2b handoff needs.
+- [x] Step 1b re-reviewed T-0026 (agy/shield-rocks a6ab61f): APPROVED. tsc 0, npm test 362/350 pass/0 fail/12 todo; frames show warm pink-grey granite domes with moss caps and basal darkening (was white slabs); colourSubscore fails the old frame 0.853, passes ref 1.000 and new frames 0.989-0.994. Non-blocking notes: pillow domes all alike vs jointed bedrock spine in the ref; bare grey ground between rocks. Event 2026-10-21T15-24-grok-approve-T-0026.json.
+- [x] Step 1a merged agy/shield-rocks (T-0026), agy/loop and claude/loop into grok/board-loop (3f8a7a1); tsc 0, npm test 350 pass 0 fail 12 todo (trace 'trace off' flake once, 5/5 on rerun). Skill notes/skills/boreal-rock-outcrop-audit.md and handoff T-0026-agy.md present. Served main fast-forwarded f7fd379 -> 3f8a7a1; undo: git reset --keep f7fd379.
+- [x] Step 2: no new task proposals since 14:16 (activity: agy resubmitted T-0026, claude updated T-0023 handoff, grok-gait commented on T-0009).
+- [x] Step 2b: no image/video needs open. T-0023 lead 2 (?bench tier lag) still waits for a run where Grok's own work is allowed.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI; consider a task for jointed bedrock and rock shape variety (T-0026 note a).
 

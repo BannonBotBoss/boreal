@@ -54,5 +54,19 @@ before/after frames. First written by claude for the water inspection (2026-10-2
   once with the feature forced off (temporary one-line edit, reverted by `git checkout`): triangles are reliable on a
   shared GPU, ms are noisy. Print the applied tier in the BENCH line before trusting per-tier labels (it lagged by one
   sample and reported ibl 1 on Minimum, 2026-10-21).
-- When a fix is physically right but the calibrated metric still fails, find what else the metric sees (here sky streaks
-  through an open forest edge in the mirror) and report the fail with its cause; never round it to a pass.
+- When a fix is physically right but the calibrated metric still fails, find what else the metric sees and report the fail
+  with its cause; never round it to a pass. **Test a suspected cause before you blame it**: the open forest edge looked like
+  the cause of T-0023's fail, but a calibrated sky-share metric (refs/forest-edge/edge-gap.mjs) put it at ~1 point over real
+  mirrors. The real causes were a box that covered dry bank and a missing physics factor.
+- **Crop the box before trusting it.** Split each measurement box into strips (refs/water/optics-after2/box-diag.mjs) and crop +
+  enlarge any outlier strip (refs/water/optics-after2/crop.mjs, zlib-only PNG writer). A strip 3-4x off the others is usually
+  the box catching something else (here the far bank curving down into the water box). Then ask a reviewer for a ruling with
+  the crop as evidence. Do not change a gate box yourself after seeing the score.
+- Keep the calibrated statistic: luminance of the box's mean sRGB and the mean of per-pixel linear luminance differ by up to
+  3x on boxes with sky gaps (1.88 vs 5.11 on the same box).
+- A "sky pixel" test needs a colour condition, not just brightness: sunlit autumn foliage passed a luminance-only test
+  (0.17 false sky share); `blue >= green` plus luminance > 0.5 x sky q95 separated it (0.000).
+- Render the physics a material actually needs: a Lambert material lights water like a matte surface (R E / pi); radiance
+  leaving water also loses 1/n² (0.563; Lee et al. 2002: Rrs ~0.52 rrs). Look for such factors when a body is too bright.
+- Stamp event times from the clock in the same script that writes the file (tasks/events, `new Date()` with the offset),
+  not by typing them: two of mine were typed 3-48 s ahead and had to be re-stamped before committing.

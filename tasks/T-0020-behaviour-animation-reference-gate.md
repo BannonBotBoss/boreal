@@ -33,6 +33,15 @@ Behaviours are becoming need-driven (T-0009 onward), so each new state needs an 
 - `tools/anim-gate.ts` (renders the in-game animation with the existing strip tools, e.g. tools/run-strip.ts / strip-shot.mjs, at the reference's camera and frame times, and scores it)
 - `refs/` (reference frames + metadata)
 
+## Acquiring the reference (Matthew, 2026-10-21)
+The reference is not accepted on the first try. The reference agent loops:
+1. Generate the frame-by-frame image sequence from the prompt.
+2. Ask: **does this example resemble a realistic version in nature?** (anatomy, footfall order, posture and contact checked against real gait data and real photo/video sources for the species).
+3. If not, adjust the prompt (more specific pose, camera, species, phase wording) and try again. Each try and its answer is logged in refs/<species>/<behaviour>/attempts.md.
+4. **Fallback:** if images still don't give a useful reference after a few tries, generate a **3-5 second video** of the activity and sample its frames as the reference instead.
+The accepted reference (images or video frames) is saved under refs/<species>/<behaviour>/ with the prompt that produced it.
+
+The headline question of the gate is: **does my animation resemble it in both timing and position?** The question list below breaks that into checkable parts.
 ## Quality test: a series of questions (Matthew, 2026-10-21)
 The gate is a fixed list of questions, each answered pass/fail from data, asked of every animation:
 1. **Recording:** when I record my animation (in game, fixed camera matching the reference) and sample it frame by frame at the reference's frame times, do I get the same number of frames over one cycle?

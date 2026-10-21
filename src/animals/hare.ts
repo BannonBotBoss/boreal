@@ -63,6 +63,8 @@ function model() {
   // torso relative to the hip pivot: haunch, back, chest; white belly and tail
   blob(body, brown, 0, .015, .0, .075, .08, .085); blob(body, brown, 0, .03, -.09, .07, .075, .11, .1); blob(body, buff, 0, .01, -.17, .055, .06, .06);
   blob(body, white, 0, -.035, -.08, .05, .035, .1); blob(body, white, 0, .05, .085, .022, .022, .02);
+  // neck (run 4): fills the gap between the chest (z -.17) and the head (z -.3) so the head never floats off the body
+  blob(body, brown, 0, .05, -.235, .036, .042, .055, -.5);
   // head: cranium, muzzle, eyes, nose
   blob(head, brown, 0, 0, 0, .038, .04, .05); blob(head, buff, 0, -.012, -.045, .025, .022, .025); blob(head, dark, 0, -.008, -.07, .006, .005, .004);
   for (const s of [-1, 1]) blob(head, dark, s * .03, .012, -.02, .008, .009, .008);
@@ -80,11 +82,11 @@ function model() {
 /** Pose targets: body pitch about the hip (rad, + = front up), body lift (m), head pitch (+ = nose up), head drop (m), ears
  *  (rad, + = laid back), foreleg and hind leg angles (rad, + = foot forward). Read from the reference sheet
  *  (refs/hare/graze-alert-flight attempt 2): grazing crouch = hunched, chin at the clover, ears back; scan = head up from the
- *  crouch; alert = sat up on the haunches, forefeet off the ground, ears erect; rest/freeze = tucked, ears flat [estimate]. */
+ *  crouch; alert = half sit-up on all fours (front raised, head up), ears erect (run 4; was sat up on the haunches); rest/freeze = tucked, ears flat [estimate]. */
 const POSES: Record<string, readonly number[]> = {
   'head-down': [-.1, -.02, -.55, -.075, .95, .1, .45],
   scan: [.3, 0, -.35, 0, -.05, -.15, .5],
-  sit: [.95, 0, -.95, 0, -.15, -.7, .55],
+  sit: [.35, 0, -.25, 0, -.15, -.7, .55], // run 4: half sit-up (body .35 from the rig's 'half-sit'), nose a little up
   rest: [-.04, -.035, -.15, 0, .85, .25, .55],
   crouch: [-.06, -.045, -.1, 0, 1.15, .3, .6],
   move: [0, 0, -.1, 0, .5, 0, 0], run: [0, 0, .05, 0, .9, 0, 0],

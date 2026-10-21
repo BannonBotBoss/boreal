@@ -256,7 +256,7 @@ export function pitchCurve(plan: BoundPlan, sk: Skeleton, n = 200): number[] {
 export const pitchAt = (curve: number[], stridePhase: number) => { const x = frac(stridePhase) * curve.length, i = Math.floor(x), f = x - i; return curve[i % curve.length] * (1 - f) + curve[(i + 1) % curve.length] * f; };
 
 /* ---------------------------------------------------------------- pose requests (agent pipeline → body) */
-export type PoseKind = 'stand' | 'graze-crouch' | 'sit-up' | 'scan' | 'rest' | 'crouch';
+export type PoseKind = 'stand' | 'graze-crouch' | 'sit-up' | 'half-sit' | 'scan' | 'rest' | 'crouch';
 /** What the agent pipeline may ask of a standing body. `weight` 0..1 blends from 'stand' (default 1). */
 export interface PoseRequest { kind: PoseKind; weight?: number }
 /** Body shape per request: pitch (rad, + front up, about the hip), drop (m, hip lowered), fore lifted off the ground. */
@@ -266,6 +266,9 @@ export const POSE_SHAPES: Record<PoseKind, PoseShape> = {
   stand: { pitch: 0, drop: 0, foreLift: false },
   'graze-crouch': { pitch: -.1, drop: .02, foreLift: false },
   'sit-up': { pitch: .95, drop: 0, foreLift: true },
+  /** alert freeze (grok run 4): front raised ~20 deg on straight forelegs, all four feet down, the head up. REFERENCE-MATCHED
+   *  (attempt4 video 2.3-3.3 s and attempt2 panel 3: the hare raises the head on all fours, it does not stand up on the haunches). */
+  'half-sit': { pitch: .35, drop: 0, foreLift: false },
   scan: { pitch: .3, drop: 0, foreLift: false },
   rest: { pitch: -.04, drop: .035, foreLift: false },
   crouch: { pitch: -.06, drop: .045, foreLift: false },
@@ -274,7 +277,7 @@ export const POSE_SHAPES: Record<PoseKind, PoseShape> = {
 export function poseRequestFor(pose: AgentPose, action?: AgentAction): PoseRequest | null {
   switch (pose) {
     case 'head-down': return { kind: 'graze-crouch' };
-    case 'head-up': return { kind: action === 'scan' ? 'scan' : 'sit-up' };
+    case 'head-up': return { kind: action === 'scan' ? 'scan' : 'half-sit' };
     case 'rest': return { kind: 'rest' };
     case 'crouch': return { kind: 'crouch' };
     default: return null;

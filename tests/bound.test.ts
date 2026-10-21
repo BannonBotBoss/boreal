@@ -99,7 +99,10 @@ test('overtaking and spine timing at running speed (host and bone bodies), stiff
 
 test('pose requests: sit-up lifts the fore feet with the hind planted; graze crouch keeps all four down; ignored while running', () => {
   assert.deepEqual(poseRequestFor('head-down', 'feed'), { kind: 'graze-crouch' });
-  assert.deepEqual(poseRequestFor('head-up', 'alert'), { kind: 'sit-up' });
+  assert.deepEqual(poseRequestFor('head-up', 'alert'), { kind: 'half-sit' }); // run 4: half sit-up on all fours (reference)
+  { const c = createBounding(planFor('canid-limits'), G, () => 0, { x: 0, z: 0, heading: 0 }); let f = c.update(1 / 120, 0, 0, null), slip = 0;
+    for (let t = 0; t < 1.5; t += 1 / 120) { f = c.update(1 / 120, 0, 0, { kind: 'half-sit' }); slip = Math.max(slip, ...f.slip); }
+    assert.deepEqual(f.contact, [true, true, true, true]); assert.ok(f.tilt.pitch > .25 && f.tilt.pitch < .45 && slip < .01, `half-sit pitch ${f.tilt.pitch} slip ${slip}`); }
   assert.deepEqual(poseRequestFor('head-up', 'scan'), { kind: 'scan' });
   assert.equal(poseRequestFor('run', 'flee'), null);
   for (const plan of ['host', 'bones'] as const) {

@@ -5,7 +5,17 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
-## Run 3 progress (started 2026-10-21 12:25 PT; keep current: board rule 9)
+## Run 4 progress (started 2026-10-21 13:21 PT; keep current: board rule 9)
+Plan (Grok lead, 13:21 PT): pick up grok-gait/T-0009-hare-reach (5973cf7, 43f9723, db9b3b4; based on dfcb848).
+Decision (Grok lead): LEPORID_LIMITS are NOT applied to HARE_PLAN yet; held until HARE_BODY splits the foot bone
+  (Crouch et al. 2022 'foot' is a different bone from ours) and a sourced knee range exists.
+- [ ] 1 Rule 15 review (spot-check three claims, grok comment event), then merge
+- [ ] 2 Re-source the duty-vs-speed line (Walter & Carrier 2007, lagomorph data); fix the line, do not tune toward .63 m
+- [ ] 3 Resting/running posture: body pitch oscillates around a sourced or reference-matched neutral (flag if unsourced)
+- [ ] 4 Alert pose: half sit-up, head attached, no tail-down tip
+- [ ] 5 Clover thinning readable at 5-10 m
+- [ ] 6 Flaky tests/trace.test.ts allocation test: fix if small and safe, else note
+- [ ] 7 Re-record (plain + side strip), re-score every gate, npm test + tsc; submit only if every gate >= 95 %## Run 3 progress (started 2026-10-21 12:25 PT; keep current: board rule 9)
 Plan (Grok lead, 12:23 PT): pick up Gait Builder's rig (grok-gait/T-0009-hare-skeleton b821bb8).
 - [x] 1 Rule 15 review (12:29 PT): three claims hold (bound.ts imported; hind leg 1.6x short; duty/cadence flags) - tasks/events/2026-10-21T12-29-grok-comment-T-0009.json
 - [x] 2 Merged grok-gait/T-0009-hare-skeleton (f63130b); tests/bound.test.ts 12/12

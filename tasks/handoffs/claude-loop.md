@@ -21,7 +21,9 @@ codex did sky/sun (T-0022), grok animals/forage. The empty claude/water branch s
 - Note: newer rules 10-15 exist on codex/loop (grok, T-0021). I follow them already: rule 13 distinct seconds (f9fa529).
   My two propose events were first written with times 14 min ahead of the clock; I renamed/re-timed them before they left
   this branch (f10c043). Rule 10 (append-only) applies once published; these were not.
-- [ ] Skill for this kind of inspection: notes/skills/visual-inspection-recording.md
+- [x] Calibrated the T-0023 mirror metric on real photos (refs/water/reference/real/, SOURCES.json): eye-level lakes 0.66-0.73,
+      game 5.04 (refs/water/shore-audit/mirror-ratio.json, measure-photos.mjs). T-0023 table updated (f799a3d).
+- [x] Skill: notes/skills/visual-inspection-recording.md (new); notes/claude.md entry.
 
 ## Frame answers (water, main 36b8a51)
 - What do I see: see T-0023 "What I saw" and T-0024 "What I saw".

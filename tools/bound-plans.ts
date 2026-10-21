@@ -3,13 +3,16 @@
  * defaults for the bends), kept as the known-short comparison. Sources: HARE_BODY's comment and tasks/handoffs/T-0009-grok.md. */
 import { HARE_BODY as B } from '../src/animals/hare';
 import { skeletonOf, type BodyPlan } from '../src/animals/locomotion/bodyPlan';
+import { LEPORID_LIMITS } from '../src/animals/locomotion/ik';
 /** track half-widths [estimate: drawn to the reference] */
 const TRACK = { fore: .03, hind: .045 };
 export const HOST_PLAN: BodyPlan = { hip: B.hipY, hipZ: B.hipZ, shoulderZ: B.shoulderZ, track: TRACK, foreLeg: B.foreLeg, hindLeg: B.hindLeg, hindFoot: B.hindFoot,
-  upperShare: B.upperShare, manus: B.manus, foreBend: B.foreBend, hindBend: B.hindBend };
+  upperShare: B.upperShare, manus: B.manus, foreBend: B.foreBend, hindBend: B.hindBend, limits: LEPORID_LIMITS };
 export const BONE_PLAN: BodyPlan = HOST_PLAN;
+/** HOST_PLAN as the game builds it today (hare.ts HARE_PLAN names no joint limits yet: dog ranges) — the before/after comparison. */
+export const NOLIMIT_PLAN: BodyPlan = { ...HOST_PLAN, limits: undefined };
 export const BLOB_PLAN: BodyPlan = { hip: B.hipY, hipZ: B.hipZ, shoulderZ: B.shoulderZ, track: TRACK, foreLeg: .12, hindLeg: .125, hindFoot: B.hindFoot };
-export const planFor = (name: string) => skeletonOf(name === 'blob' ? BLOB_PLAN : HOST_PLAN);
+export const planFor = (name: string) => skeletonOf(name === 'blob' ? BLOB_PLAN : name === 'canid-limits' ? NOLIMIT_PLAN : HOST_PLAN);
 import { HARE_AGENT } from '../src/core/agent/species';
 import type { BoundGait } from '../src/core/agent/bound';
 /** The host's gait data (HARE_AGENT.gait, grok). */

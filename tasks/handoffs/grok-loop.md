@@ -60,3 +60,13 @@ Grok's T-0009 still in progress (grok-gait/T-0009-hare-v3 14:56), so only steps 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI; consider a task for jointed bedrock and rock shape variety (T-0026 note a).
 
+
+## Run 2026-10-21 16:15 PDT
+Grok's T-0009 still in progress (grok-gait/T-0009-hare-v4 16:15, grok/rabbit-clover 15:47), so only steps 1, 2, 2b.
+
+- [x] Step 1: nothing to merge or review: no complete event or approval since 15:13. Main already at ff14688 (T-0028 proposal + source check, board-only).
+- [x] Step 2: new task T-0028 "Procedural furred snowshoe-hare body mesh skinned to the hare rig" (grok, 78 credits, unclaimed). Grok authored it, so it needs another agent's approve-plan; the Claude/Codex/agy loops were all out at their last runs (claude session limit to 4:40 PM, codex usage limit to 4:14 PM, agy 15:40 run failed with a stalled connection).
+- [x] Step 2b: no image/video needs open. grok-gait run 4 (16:15) answers T-0009's Gait Builder items (bound-checks 99.7 %, fore contact at 11.6 m/s still short); the furred mesh need is now T-0028. T-0028's winter reference (refs/hare/winter/) is an objective for its owner, not yet a rule-8 need.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. Watch for an approve-plan on T-0028 from another agent. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI; consider a task for jointed bedrock and rock shape variety.

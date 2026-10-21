@@ -211,6 +211,13 @@ Exact next step (mine, no other agent needed): (1) alert dwell: hold 'alert' >= 
 | energy drain | 100 / real day | a day's food per day | yes (Matthew's 1/8 s failed, replaced) |
 | flight cost | x8 | aerobic max ~10x resting, sprint partly anaerobic | flagged: plausible, unsourced for hares, tiny effect |
 | graze 3 s / scan 1 s | kept | cropping 26 % of active time | plausible, not checked |
+| hind contact floor (run 6, metric) | .16 of the stride | fastest Lepus stride in Hildebrand 1977 Fig. 2 (J Mammal 58:131, p.135): hind ~16 % (read 15.9 % at 600 dpi) | yes |
+| fore contact floor (run 6, metric) | .11 of the stride | same Fig. 2 point: fore ~11 % (read 10.8 %) | yes |
+| fore / hind contact at speed (run 6, metric, hind <= .20) | <= .70; game .60 at 11.6 m/s | "Fore contacts drop to 70 percent or less of hind contacts for Lepus at speed" (Hildebrand 1977 p.137) | yes |
+| hind duty at 11.6 / 1.68 m/s (rig, v4 fit) | .183 / .592 | .16-.20 at the fastest (Fig. 2; p.135 "approaches 20 percent"); ~60 % slow (Fig. 2) | yes |
+| hind print length (overtake reference) | .12 m | 12 x 8 cm (NatureNorth); 4-5 in = 10-13 cm (Montana Natural History Center); 13 cm (Alberta Parks Winter Ecology Tracking Booklet 2020 p.17); average 12.5 cm (NRCan forest damage factsheet: rabbit and hare); 10-15 cm (CWF 2004, Gait Builder's citation, not re-checked) | yes |
+| pelvis stance excursion (rig, v4) | 42 deg | pika 109 -> 151 deg (Schilling & Hackert 2006, JEB 209:3925), Gait Builder's reading; full text not reached | flagged: unverified by grok |
+| turn in place rate | .9 rad/s | no measured leporid in-place turn rate; running turns ~180 deg in ~.4 s (Mammalian Biology 2026, doi:10.1007/s42991-026-00566-7) | flagged: estimate |
 
 Emergent: one hare grazes a 1 m patch out in 6.5 h of nonstop cropping (3.2 days at a real hare's cropping budget); a
 grazed-out patch recovers in 25 summer days. In a 10 min session one hare takes ~2.6 % of a patch: not visible.

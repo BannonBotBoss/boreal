@@ -131,9 +131,17 @@ export const CHORD_USE = .9;
  * foot under the hip below ~.20 m with the dog knee), so the rise is the one, of 0..RUN_POSE.maxRise in 5 mm steps, with the
  * longest fore + hind chords. With the dog ranges (wolf and others) the standing height already sweeps and rise stays small.
  */
-export const RUN_POSE = { maxRise: .12, step: .005 };
-/** Tilt of a body risen `rise`·t at the hips (shoulders kept), plus the bound's pitch swing `swing` about the mid-trunk. */
-export const runTilt = (sk: Skeleton, rise: number, t = 1, swing = 0): Tilt => { const p = -Math.asin(Math.min(.95, rise * t / sk.trunk)) + swing, Hh = sk.legs.hind.hip;
+/* Run 4 (grok): the trunk no longer pitches nose-down by the whole rise. `level` is the share of the hip rise the shoulders
+ * share too (1 = the whole trunk rises level) and `pitch0` the neutral trunk pitch the bound's swing oscillates about (rad,
+ * + nose up). Both are REFERENCE-MATCHED, not sourced: no measured running trunk pitch for Lepus was found; the side-on
+ * reference (refs/hare/graze-alert-flight/attempt4-video-frames-6fps.jpg, bound rows) shows the trunk about level through the
+ * extended suspension and nose-up at push-off, i.e. a near-level mean. The old shoulders-kept rule gave -16.6 deg neutral
+ * (game, dog ranges; -27 deg with LEPORID_LIMITS). level 1 (truly level) costs the fore chord (.25 -> .09 m: the shoulders lift
+ * off the fore reach) and the bound score (97.1 -> <89 %); .25 keeps both (fore .227, hind .541 m; score 97.1 %) at a
+ * -9.2 deg neutral, the swing taking it to about -19..+1 deg. A level neutral needs more fore reach: open (Gait Builder). */
+export const RUN_POSE = { maxRise: .12, step: .005, level: .25, pitch0: 0 };
+/** Tilt of a body risen `rise`·t at the hips (the shoulders by `level` of it), about the neutral pitch `pitch0`, plus the bound's pitch swing `swing` about the mid-trunk. */
+export const runTilt = (sk: Skeleton, rise: number, t = 1, swing = 0): Tilt => { const p = -Math.asin(Math.min(.95, rise * t * (1 - RUN_POSE.level) / sk.trunk)) + RUN_POSE.pitch0 * t + swing, Hh = sk.legs.hind.hip;
   return { height: rise * t - sk.trunk / 2 * Math.sin(swing), pitch: p, roll: 0, shift: { y: Hh * (1 - Math.cos(p)), z: -Hh * Math.sin(p) } }; };
 export interface Reach { fore: LimbRange; hind: LimbRange; body: { fore: ReachBody; hind: ReachBody }; girdle: GirdleLimits; /** running hip rise (m, RUN_POSE) */ rise: number }
 const reachCache = new WeakMap<Skeleton, Map<string, Reach>>();

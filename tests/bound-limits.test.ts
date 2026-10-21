@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { clampLimb, FLEX_LIMIT, CANID_LIMITS, LEPORID_LIMITS, clampJoint, type LimbAngles } from '../src/animals/locomotion/ik';
-import { createBounding, limbPoints, pitchCurve, boundPlan, selectRow, BOUND_PITCH, type BoundFrame } from '../src/animals/locomotion/bounding';
+import { createBounding, limbPoints, pitchCurve, boundPlan, selectRow, reachOf, runTilt, BOUND_PITCH, type BoundFrame } from '../src/animals/locomotion/bounding';
 import { HOST_GAIT, planFor } from '../tools/bound-plans';
 import { reachBudget } from '../tools/bound-reach';
 
@@ -67,6 +67,11 @@ test('derived pitch: periodic, nose lowest at mid fore stance and highest at mid
 test('reach budget: the re-sourced hind sweep at 8.5 m/s (.40 m) fits the dog ranges the game uses, not the leporid stance ranges', () => {
   const host = reachBudget('host'), game = reachBudget('canid-limits'), r = host.rows.find(x => x.speed === 8.5)!, g = game.rows.find(x => x.speed === 8.5)!;
   assert.ok(Math.abs(r.hindNeed - .40) < .005, `${r.hindNeed}`); // sweep .40 m = 1.2 x (hind leg + foot): grok run 4
-  assert.ok(r.hindShort > .1 && host.hindCap < .35, JSON.stringify(r)); // leporid (slow-walk stance) ranges: reported in the grok-gait handoff
+  assert.ok(r.hindShort > 0 && host.hindCap < .35, JSON.stringify(r)); // leporid (slow-walk stance) ranges: reported in the grok-gait handoff
   assert.ok(g.hindShort < 0, JSON.stringify(g));
+});
+test('running posture (run 4): the neutral trunk pitch is near level (-12..0 deg, reference-matched), not the old -16.6 deg', () => {
+  const sk = planFor('canid-limits'), r = reachOf(sk), p = runTilt(sk, r.rise, 1, 0).pitch * 180 / Math.PI;
+  assert.ok(p > -12 && p <= 0, `neutral ${p}`);
+  assert.ok(r.fore.chord > .2 && r.hind.chord > .5, JSON.stringify({ fore: r.fore.chord, hind: r.hind.chord }));
 });

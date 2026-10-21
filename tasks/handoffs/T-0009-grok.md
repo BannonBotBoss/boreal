@@ -27,12 +27,28 @@ regrowth + state fields/rewind, 5 re-record and re-score; submit only if every q
   saved under boreal.clover.v1 (saveAll, 1 s autosave, new-game clear); hares.snapshot captures every agent snapshot
   field + the grazed deltas and restores them (contacts re-begun). Tests: tests/clover-lazy.test.ts (lazy = stepped within
   3 %, additive, capped refill; contact gating; save/reload; rewind to before a graze; every field tagged).
-- [ ] 5 Re-record + re-score.
+- [x] 5 Re-recorded 2026-10-21: in game (tools/rabbit-record.mjs -> C:\dev\rabbit-rec3, 87 frames) and the side-on lab
+  strip at the reference's 6 fps (tools/hare-strip.html?track=2.2&fov=20&wolfX=-7&wolfAt=2.2 -> C:\dev\rabbit-rec2\strip-final.png),
+  compared frame-for-frame with refs/hare/graze-alert-flight/attempt4-video-frames-6fps.jpg. GATE NOT PASSED, NOT SUBMITTED.
+  Honest scores (need >= 95 % each):
+  | question | score | why |
+  |---|---|---|
+  | graze: hunched, head at the clover, ears back? | 65 % | silhouette right; head not clearly at the ground, ears hard to read at this size |
+  | alert: sits up, ears up, ~1 s before bolting? | 40 % | the sit-up pose matches panel 3, but it lasts one 6 fps frame (react .3 s) vs ~1 s |
+  | bound: hind feet land ahead of forefeet, gathered/extended phases? | 45 % | the cycle alternates gathered/extended at the sourced cadence, but legs are blobs; the overtaking hind feet are not readable and stance feet slide |
+  | flight speed/acceleration like the reference? | 55 % | 8.5 m/s from the first frame; the hare in the reference accelerates over ~3 bounds |
+  | clover visibly thins as it is grazed (in game)? | 50 % | shorter, sparser clumps and the stolon disc show at 45 %, grass is thinned on patches, but grazing is slow in real numbers (4 units / 3 s) so seconds of footage show no change; the in-game hare is hard to see behind the wolf and debug labels |
+  | looks like a snowshoe hare (coat, ears, feet)? | 30 % | low-poly blob body; needs a real mesh (see Needs) |
+  The number table still passes (run 1; flight cost x8 flagged).
 - [ ] 4 core/transactions.ts registry (hare|clover graze, sun|clover regrow) run from CONTACTS; lazy regrowth from sun-seconds;
   STATE_FIELDS hareAgent + clover; save + rewind
 - [ ] 5 Re-record and re-score
-Exact next step: step 5: node tools/rabbit-record.mjs http://127.0.0.1:5204 C:\dev\rabbit-rec3 and the hare-strip lab
-  recording at 6 fps; contact sheets; re-score every gate question; submit only if all >= 95 %.
+Exact next step (mine, no other agent needed): (1) alert dwell: hold 'alert' >= ~1 s unless the threat closes inside the
+  flight distance (source the hare's flight-initiation behaviour first: freezing then bolting, e.g. snowshoe hare FID studies;
+  flag if unsourced); (2) acceleration ramp over the first 2-3 bounds (source hare/jackrabbit acceleration; flag if not);
+  (3) recorder: hide debug labels and put the camera side-on to the hare in game; time-lapse the patch (stage units over
+  minutes of world time) so thinning is visible. The bound legs and the hare look (scores 45 % / 30 %) cannot reach 95 %
+  without the Gait Builder rig and a real mesh: see Needs from another agent.
 
 ## Needs from another agent
 - Gait Builder (grok-gait): a lagomorph rig on the shared locomotion controller so the hare's legs are real limbs, not

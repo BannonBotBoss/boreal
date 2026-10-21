@@ -16,7 +16,6 @@ import { windAt } from '../core/weather';
 import { siteAt, footprintsIn, covered } from '../core/flora/site';
 import { createCloverField, cloverSuitability, CLOVER, CLOVER_STATE, type CloverDelta } from '../core/clover';
 import { worldSec } from '../core/worldClock';
-import { defaultCover, setCoverSource } from '../render/grass/cover';
 import { cloverPatchesInTile } from '../core/clover';
 import { createAgent, stepAgent, poseOf, actionName, moods, modulators, type Agent, type Other } from '../core/agent/pipeline';
 import { HARE_AGENT } from '../core/agent/species';
@@ -137,7 +136,9 @@ export function createHares(scene: THREE.Scene) {
       if (!ps) { ps = cloverPatchesInTile(i, j, (a, b) => siteAt(a, b), blockedAt).map(p => ({ x: p.x, z: p.z, r: p.r })); if (layout.size > 4000) layout.clear(); layout.set(k, ps); }
       for (const p of ps) { const d = Math.hypot(p.x - x, p.z - z); if (d < p.r * 1.15) best = Math.max(best, 1 - Math.max(0, (d - p.r * .85) / (p.r * .3))); } }
     return best; };
-  setCoverSource((x, z) => { const c = defaultCover(x, z), p = presence(x, z); return p > 0 ? { ...c, density: c.density * (1 - .8 * p) } : c; });
+  /** Grass cover with clover patches thinned (render/buildScene installs it as the grass cover source: importing
+   *  render/grass/cover here would close an import cycle through core/renderSettings). */
+  const thinGrass = <C extends { density: number }>(x: number, z: number, c: C): C => { const p = presence(x, z); return p > 0 ? { ...c, density: c.density * (1 - .8 * p) } : c; };
   const cloverDraw = createCloverRenderer(scene, clover);
   const walkable = (x: number, z: number) => heightAt(x, z) > LEVEL.hareWater;
   const habitat = (x: number, z: number) => cloverSuitability(siteAt(x, z));
@@ -217,7 +218,7 @@ export function createHares(scene: THREE.Scene) {
       CLOVER_STATE.clear(); for (const [k, d] of shot.clover) CLOVER_STATE.set(k, { ...d }); clover.reload();
     },
   };
-  const api = { update, snapshot, list: () => hares as readonly Hare[], clover, cloverDraw, CLOVER, wolf: () => lastWolf };
+  const api = { update, snapshot, thinGrass, list: () => hares as readonly Hare[], clover, cloverDraw, CLOVER, wolf: () => lastWolf };
   (globalThis as { borealHares?: unknown }).borealHares = api; // dev handle: borealHares.list()[0].agent, borealHares.clover
   return api;
 }

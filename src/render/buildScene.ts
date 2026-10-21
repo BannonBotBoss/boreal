@@ -31,6 +31,7 @@ import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
+import { defaultCover, setCoverSource } from './grass/cover';
 import { createFlora } from './flora/flora';
 import { riverAt } from '../core/stages/rivers';
 import { waterMaterial, updateWaterUniforms } from './water';
@@ -86,6 +87,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     wolf.brain.heading = old.brain.heading; wolf.brain.energy = old.brain.energy; wolf.root.userData.inspect = PLAYER_TAG; const g = looks.get(`player:${id}`); if (g) applyGenome(wolf.root, g); scene.add(wolf.root); return current;
   }
   const hares = createHares(scene); // src/animals/hare.ts
+  setCoverSource((x, z) => hares.thinGrass(x, z, defaultCover(x, z))); // clover outcompetes grass on its patches
   const grass = createGrass(scene); // render/grass: procedural blades around the camera
   const flora = createFlora(scene); // render/flora: flowers + shrubs (shared ecology with the grass)
   const halo = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.85, 40), new THREE.MeshBasicMaterial({ color: 0xffe9a1, side: THREE.DoubleSide, transparent: true, opacity: .7, depthWrite: false }));

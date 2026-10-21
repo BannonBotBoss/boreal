@@ -49,7 +49,8 @@ import { STAGES } from './core/stages/elevation';
 import { dryStart } from './core/stages/surfaceAt';
 import { DAY, dayAt, hourAt, initDay, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
 import { createChronometer } from './ui/chronometer';
-import { controlsPanel } from './ui/controls';
+import { controlsScreen } from './ui/controls';
+import { ACTION, ACTIVE, BINDINGS_KEY, atomValues, bindingLabel, loadBindings, resolveInput, saveBindings, type Bindings } from './core/bindings';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = element<HTMLCanvasElement>('world'), status = element('status'), actionButton = element<HTMLButtonElement>('act');
@@ -130,7 +131,7 @@ function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(
 function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
 const menu = createMenu({
   hasSave: () => [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND].some(k => { try { return !!localStorage.getItem(k); } catch { return false; } }),
-  seed: () => STAGES.seed, staged: () => STAGES.on, music: () => musicPanel(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
+  seed: () => STAGES.seed, staged: () => STAGES.on, music: () => musicPanel(), controls: () => controls(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
   newWorld: o => { // fresh world: forget the per-world saves (settings, music and the probe stay)
     for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
     try { localStorage.setItem('boreal.seed.v1', String(o.seed)); } catch { /* blocked */ } renderStore.set('world.stagedTerrain.v2', o.staged); location.reload(); },
@@ -168,7 +169,6 @@ const musicPanel = () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore
   const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Next track'; skip.onclick = () => music.skip(); form.append(skip);
   const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Playlist: put audio files in public/music and list them in public/music/manifest.json (mood: day | night | storm | any). Gameplay sounds duck the music; a limiter caps its peaks; N toggles music, - / = changes music volume.'; form.append(hint);
   return form; };
-menu.addPanel({ id: 'controls', title: 'Controls', build: controlsPanel }); // every key and button (ui/controls BINDINGS)
 menu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
 let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1, sink: 0 };
@@ -203,7 +203,7 @@ actionButton.onclick = perform;
 element('pause').onclick = togglePause;
 element('photo-btn').onclick = () => enterPhoto();
 element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = view.playable.cameraHeight; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
-element('help').onclick = () => dialog.showModal();
+element('help').onclick = () => { if (!menu.open) togglePause(); menu.openControls(); }; // Controls screen (the Library text is a button there)
 element('close').onclick = () => dialog.close();
 const soundLabel = () => { element('sound').textContent = sfx.muted ? 'Sound off' : 'Sound on'; };
 element('sound').onclick = async () => { // mutes the real mix (master bus); M does the same
@@ -216,11 +216,29 @@ element('export').onclick = () => {
   const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = 'boreal-events.json'; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
-const keys = new Set<string>();
+const keys = new Set<string>(), tapped = new Set<string>(); // tapped: keys pressed since the last frame (a quick tap still fires)
+// Input goes through ONE bindings table (core/bindings): defaults = the old fixed keys; rebinding in ui/controls (Menu > Controls).
+let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem(BINDINGS_KEY); } catch { return null; } })()), inputPrev = new Set<string>(), hint = { pad: '', keys: '' };
+function setBindings(b: Bindings) { bindings = b; hint = { pad: '', keys: '' }; try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
+const controls = controlsScreen({ get: () => bindings, set: setBindings, library: () => { menu.close(); dialog.showModal(); } });
+const hintFor = (kind: 'keys' | 'pad') => { const L = (id: string) => bindingLabel(bindings[id][kind]);
+  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
+function act(id: string) { // one fired press action (keyboard or gamepad)
+  if (dialog.open) { if (id === 'back' || id === 'interact') dialog.close(); else if (id === 'pause') togglePause(); return; }
+  if (photo.active) { if (id === 'pause' || id === 'photo') void photo.exit(); else if (id === 'inspector') inspector.toggle(); return; } // photo mode has its own keys
+  if (id === 'pause') { if (chrono.open) chrono.close(); else togglePause(); clearInput(); }
+  else if (id === 'back') chrono.close();
+  else if (id === 'chrono') { if (!inpage?.blocksGame()) { chrono.toggle(); clearInput(); } }
+  else if (id === 'interact') { void sfx.start().catch(() => {}); perform(); }
+  else if (id === 'inspector') { inspector.toggle(); clearInput(); }
+  else if (id === 'photo') enterPhoto();
+  else if (id === 'planet') toGlobe();
+  else if (id === 'howl') sfx.howl(); else if (id === 'growl') sfx.growl();
+}
 let drag: { id: number; x: number; y: number } | undefined;
 const canControl = () => !menuOpen() && !paused && !dialog.open && !document.hidden && !photo.active && !inpage?.blocksGame();
 function clearInput() {
-  keys.clear();
+  keys.clear(); tapped.clear();
   if (drag && canvas.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
   drag = undefined; canvas.style.cursor = 'grab';
 }
@@ -229,17 +247,9 @@ addEventListener('keydown', event => {
   if (dialog.open) return;
   if (menu.open) return;
   if (inpage?.ownsInput()) return; // in-page globe/band: only the active scene's keymap is live
-  if (!event.repeat && event.key.toLowerCase() === 'i' && !event.ctrlKey) { inspector.toggle(); if (!photo.active) clearInput(); return; }
-  if (photo.active) { if (!event.repeat && (event.key === 'Escape' || event.key.toLowerCase() === 'p')) void photo.exit(); return; } // photo mode has its own keys
-  if (!event.repeat && event.key.toLowerCase() === 'p') { enterPhoto(); return; }
-  if (!event.repeat && event.key === 'G' && event.shiftKey) { toGlobe(); return; } // Shift+G: planet view (plain g growls)
-  if (!event.repeat && event.key.toLowerCase() === 't' && !event.ctrlKey) { chrono.toggle(); clearInput(); return; } // T: chronometer (time of day)
-  if (chrono.open && event.key === 'Escape') { chrono.close(); clearInput(); return; }
   if (event.code === 'Space') event.preventDefault();
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) event.preventDefault();
-  keys.add(event.key.toLowerCase());
-  if (!event.repeat && event.key.toLowerCase() === 'e') perform();
-  if (!event.repeat && event.key === 'Escape') { togglePause(); clearInput(); }
+  keys.add(event.key.toLowerCase()); tapped.add(event.key.toLowerCase()); // actions resolve in frame() through the bindings
 });
 addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 addEventListener('blur', clearInput);
@@ -269,57 +279,46 @@ canvas.addEventListener('lostpointercapture', () => { drag = undefined; canvas.s
 canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); inpage?.dispose(); paused = true; notice('Graphics context lost. Your committed events are saved; reload to restore the view.'); });
 canvas.addEventListener('webglcontextrestored', () => location.reload());
 let lastPhotoView: PhotoView | undefined;
-let hadPad = false, previousButtons: boolean[] = [], lastTime = 0, accumulator = 0;
+let hadPad = false, lastTime = 0, accumulator = 0;
 const clock0 = loadClock(localStorage.getItem(CLOCK.key));
 initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the chronometer's saved dial; ?hour=HH sets it exactly
 const chrono = createChronometer(worldSec); // T / gamepad View: set the time of day (ui/chronometer)
 let simTime = clock0.worldSec, lastWorld = worldSec(); // sim and clock fields share the world clock (frozen with the menu)
 try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
 if (clock0.offlineSec > 0) tickGround(12 * clock0.offlineSec); // time away between quits ages the ground/deltas
-const deadzone = (v: number) => Math.abs(v) < .18 ? 0 : Math.sign(v) * (Math.abs(v) - .18) / .82;
 function frame(time: number) { const frameStart = performance.now();
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time;
   const sdt = dt * TIMESCALE; // ?timescale (T-0002): sim, animals, gaits, shader effects; look, input, audio, UI and the world clock stay on real time
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');
   if (hadPad && !pad) { paused = true; pauseClock(); element('pause').textContent = 'Resume'; if (!menu.open) menu.show('pause'); notice('Controller disconnected. Reconnect and press Menu to resume.'); }
   hadPad = !!pad;
-  const buttons = pad?.buttons.map(b => b.pressed) ?? [];
-  const pressed = (i: number) => buttons[i] && !previousButtons[i];
-  if (menu.open) previousButtons = buttons; // the menu reads the pad itself; clock is frozen, frame is held
-  else if (pressed(9)) { if (photo.active) void photo.exit(); else togglePause(); }
-  else if (pressed(8) && !photo.active && !dialog.open && !inpage?.blocksGame()) chrono.toggle(); // View: chronometer
-  if (chrono.open && pressed(1)) chrono.close();
-  if (!menuOpen() && pressed(1) && dialog.open) dialog.close();
-  if (!menuOpen() && pressed(0)) {
-    if (dialog.open) dialog.close();
-    else { void sfx.start().catch(() => {}); perform(); }
-  }
-  previousButtons = buttons;
+  const input = resolveInput(bindings, atomValues([...keys, ...tapped], pad), inputPrev, chrono.open); inputPrev = input.active; tapped.clear();
+  if (!menu.open) for (const id of input.fired) act(id); // the menu reads the pad itself (and the keys); its presses never reach the game
+  const hold = photo.active ? resolveInput(bindings, atomValues([], pad), new Set(), chrono.open).value : input.value; // photo mode: its own keys
+  const H = (id: keyof typeof ACTION) => hold[id] ?? 0;
   // A live photo sequence keeps the world running (no player input) while photo mode renders it.
   const active0 = !menuOpen() && !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating) && !inpage?.blocksGame(); // in-page globe/band: sim frozen, world clock runs
   const active = active0; // the world clock (pauseClock/resumeClock around the menu) freezes age and every clock field
   const pv = photo.active ? (photo.reviewing ? lastPhotoView : lastPhotoView = photo.update(dt)) : undefined;
   if (!pv || pv.frozen === false) shaderClock.time += sdt;
   let dx = 0, dz = 0;
-  const free = !chrono.open; // chronometer open: arrows, d-pad and left stick scrub the hour instead of moving the wolf
-  chrono.update(dt, menu.open ? 0 : Number(keys.has('arrowright')) - Number(keys.has('arrowleft')) + Number(!!buttons[15]) - Number(!!buttons[14]) + deadzone(pad?.axes[0] ?? 0));
+  chrono.update(dt, menu.open ? 0 : H('scrubLater') - H('scrubEarlier')); // chronometer open: only its inputs and the look inputs it does not use are live (core/bindings liveActions)
   if (active) {
-    if (free) dx = Number(keys.has('d')) - Number(keys.has('a')) + deadzone(pad?.axes[0] ?? 0);
-    if (free) dz = Number(keys.has('s')) - Number(keys.has('w')) + deadzone(pad?.axes[1] ?? 0);
+    dx = H('steerRight') - H('steerLeft'); dz = H('moveBack') - H('moveForward');
     if(autonomous && (Math.abs(dx)>.01 || Math.abs(dz)>.01)) setAutonomous(false);
-    const lookInput = (free ? Number(keys.has('arrowright')) - Number(keys.has('arrowleft')) : 0) + deadzone(pad?.axes[2] ?? 0);
+    const lookInput = H('lookRight') - H('lookLeft');
     lookYaw -= lookInput * dt;
     if (!drag && Math.abs(lookInput) < .01) lookYaw *= Math.exp(-5 * dt);
-    const verticalLook = (free ? Number(keys.has('arrowdown')) - Number(keys.has('arrowup')) : 0) + deadzone(pad?.axes[3] ?? 0);
+    const verticalLook = H('lookDown') - H('lookUp');
     pitch = springLookPitch(pitch, verticalLook, dt, drag && Math.abs(verticalLook) < .01 ? pitch : undefined);
     if (playerAction || photo.active) { dx = 0; dz = 0; }
     const length = Math.max(1, Math.hypot(dx, dz)); dx /= length; dz /= length;
     accumulator += sdt;
     while (accumulator >= 1 / 30) {
       drawFrom = { x: player.x, z: player.z, yaw, sim: simTime };
-      modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30) : stepWolfModes(modes, Math.max(pad?.buttons[6]?.value ?? 0, Number(keys.has('c'))), Math.max(pad?.buttons[7]?.value ?? 0, Number(keys.has('shift'))), Math.abs(dz) > .01, 1 / 30);
+      modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30) : stepWolfModes(modes, H('stealth'), H('run'), Math.abs(dz) > .01, 1 / 30);
       const brain = view.playerBrain, prevSpeed = brain.speed, speed = -dz * playerSpeed(modes.mode) * view.playable.speedScale;
-      const jump = free && (keys.has(' ') || buttons[2]) && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
+      const jump = H('jump') > ACTIVE && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
       if(!autonomous || playerAction) brain.decide({x:player.x,y:0,z:player.z},1/30,{
         motion:jump?'jump':speed<-.01?'back':speed>.01?(modes.mode==='run'||modes.mode==='sprint'?'run':'walk'):'idle',
         heading:yaw-dx*2.2/30,speed:jump?pounceSpeed(speed):speed});
@@ -379,7 +378,7 @@ function frame(time: number) { const frameStart = performance.now();
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
   status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : modes.mode === 'super-stealth' ? 'Face an individual within 30 m to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
-  element('device').textContent = pad ? 'X jump · LS steer / forward · RS look · RT run · LT stealth · both: first trigger decides · A interact · View clock' : 'Space jump · W/S move · A/D steer · Shift run · C stealth · combine in order · mouse/arrows look · E interact · T clock';
+  { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind); if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

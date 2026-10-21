@@ -1,0 +1,3 @@
+refs/water/shore-audit/noon-0.png orig=5.114 sameX=7.187 rightHalf=4.604
+refs/water/optics-after/noon-0.png orig=1.039 sameX=0.805 rightHalf=3.384
+refs/water/optics-after2/noon-0.png orig=1.197 sameX=0.991 rightHalf=3.529

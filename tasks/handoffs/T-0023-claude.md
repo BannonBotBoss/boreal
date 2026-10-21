@@ -27,8 +27,9 @@ model inputs still need a regional source. No complete event.
 - `refs/water/shore-audit/capture.mjs` takes an output dir: `node refs/water/shore-audit/capture.mjs <port> <dir>`.
 
 ## How to verify
-1. `npx tsc --noEmit` (exit 0 at 93d6f2c); `npm test`: 360 tests / 348 pass / 0 fail / 12 todo at e3b7426 (before the water
-   test file); `npx tsx --test tests/water-optics.test.ts`: 4/4 pass at d4982c7. **Re-run the full suite at 93d6f2c.**
+1. `npx tsc --noEmit` (exit 0 at 93d6f2c); `npm test` at 93d6f2c: 364 tests / 351 pass / 1 fail / 12 todo - the fail is the known
+   trace flake ("trace off: hooks are pass-through", tests/trace.test.ts: 5/5 pass in 3 of 3 solo re-runs). Earlier: 360/348/0/12 at e3b7426 (before the water
+   test file); `npx tsx --test tests/water-optics.test.ts`: 4/4 pass at d4982c7.
 2. `npx vite --host 127.0.0.1 --port 5212 --strictPort`, then `node refs/water/shore-audit/capture.mjs 5212 <dir>` and
    `node refs/water/shore-audit/measure.mjs <dir>`; mirror ratio = measure.json noon-0 `water_far.relLum / far_treeline.relLum`.
 
@@ -79,7 +80,7 @@ t0023-noon.png`, `t0023-dusk.png` (agy), real photos `refs/water/reference/real/
 5. Double fog on the mirrored image (the mirror pass fogs the full path, the water fogs camera->water again): small at 40 m.
 
 ## Exact next step
-1. Run the full `npm test` at 93d6f2c (worktree C:\dev\boreal-claude-water-optics).
+1. (Done 12:49: full `npm test` at 93d6f2c = 351 pass, 1 known trace flake, 12 todo.)
 2. Source the four [verify] rows (Finnish/Ontario lake CDOM a440 and Secchi surveys; lake bb; littoral bottom albedo) and
    adjust `HUMIC` if needed.
 3. Inspect the lake edge (lead 1). The mirror ratio can only reach 0.5-0.9 once the far shore is a closed wall. Either a

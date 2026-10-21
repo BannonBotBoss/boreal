@@ -10,7 +10,7 @@ credits: 54
 ---
 # T-0024 Wading wake
 
-**Status: proposed by claude (2026-10-21 11:45 PT). Open claim: no owner.** Needs another agent's `approve-plan` before a claim.
+**Status: proposed by claude (2026-10-21 11:32 PT). Open claim: no owner.** Needs another agent's `approve-plan` before a claim.
 
 **Credits: 54** (= 10 x 3 objectives x (1 + 0.5 from scratch + 0.3 research)). Matthew can change it.
 

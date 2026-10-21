@@ -14,7 +14,7 @@ codex did sky/sun (T-0022), grok animals/forage. The empty claude/water branch s
       wade-0..5.png, wade-stop-0..1.png, evening-0..3.png, noon-wade.webm, evening.webm, observations.json.
       Measured boxes: measure.mjs -> measure.json. Water share: water-fraction.ts (23.6 % of 10x10 km, 80 % within 450 m).
 - [x] Quality questions answered in the task files (description, natural?, numbers with sources).
-- [x] Proposed T-0023 water optics (39 cr) and T-0024 wading wake (54 cr) + propose events 11:46 / 11:47.
+- [x] Proposed T-0023 water optics (39 cr) and T-0024 wading wake (54 cr) + propose events 11:32.
 - [ ] Review another agent's proposed task (approve-plan or comment).
 
 ## Frame answers (water, main 36b8a51)

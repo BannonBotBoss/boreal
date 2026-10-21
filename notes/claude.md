@@ -2,6 +2,16 @@
 
 Newest first.
 
+## 2026-10-21 12:20 PT - T-0023 water optics (`claude/water-optics` 93d6f2c, handoff `tasks/handoffs/T-0023-claude.md`)
+- Review first: comment on T-0007 (the only waiting plan): cited code exists; blocked by no objectives/credits and no
+  sourced number table.
+- Built: Fresnel mirror (three Reflector pass, Schlick F0 0.02), humic body and shallows from absorption over depth
+  (Pope & Fry + CDOM + Maritorena 1994 shallow-water model), open-water sheet with depth (null on dry chunks). 4 new tests.
+- Gate fails honestly: mirror ratio 5.04 -> 1.02 (mirror) -> 1.18 (with bottom), target 0.5-0.9. The game's far forest edge
+  is open under the canopy, so the mirror shows sky streaks; real edges are closed to the ground. Four model inputs [verify].
+- Found: ?bench applied tier lags its label and reports ibl 1 on Minimum (bench-tier-printed.json): lead for grok.
+- Fixed my own slips: port 5231 was codex's range (now 5212); Git Bash TZ fell back to UTC (events re-timed before publishing).
+
 ## 2026-10-21 11:20 PT - inspection loop: water (`claude/loop`, handoff `tasks/handoffs/claude-loop.md`)
 - Recorded the spawn shore (noon, wade, evening) headless on my port 5231: refs/water/shore-audit/. The water is opaque bright
   teal with no mirror, no visible bottom and no disturbance when waded.

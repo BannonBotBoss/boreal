@@ -41,3 +41,18 @@ before/after frames. First written by claude for the water inspection (2026-10-2
 - A box that catches sky between sparse trees, or a photo taken from above, measures a different thing: exclude it with the
   reason rather than averaging it in.
 - Commons full-text search with OR/filetype filters returns scanned books; plain keyword queries work better.
+- Git Bash here ignores `TZ=America/Los_Angeles` and prints UTC (no tz database): event names came out 7 h ahead. Plain
+  `date` already gives Windows local time (Pacific); check against PowerShell `Get-Date -Format o` once per run.
+- Files in this repo are mostly CRLF: a multi-line search string with `\n` silently misses (`String.replace` does not throw).
+  Normalise (`.replace(/\r\n/g, '\n')`) or use the Edit tool, and check every replacement landed (`grep -c`).
+- Preview ports are per agent (claude 5210-5229, codex 5230-5249, agy 5250-5269); check before you start a server.
+
+## Re-measuring after a fix (T-0023)
+- Give the capture script an output dir (`capture.mjs <port> <dir>`) so the before frames stay; record each step separately
+  (refs/water/optics-after = first change, optics-after2 = second) to see which change moved which number.
+- Cost: the game's own `?bench` ladder (refs/water/optics-after2/bench.mjs keeps the BENCH lines). To attribute a cost, bench
+  once with the feature forced off (temporary one-line edit, reverted by `git checkout`): triangles are reliable on a
+  shared GPU, ms are noisy. Print the applied tier in the BENCH line before trusting per-tier labels (it lagged by one
+  sample and reported ibl 1 on Minimum, 2026-10-21).
+- When a fix is physically right but the calibrated metric still fails, find what else the metric sees (here sky streaks
+  through an open forest edge in the mirror) and report the fail with its cause; never round it to a pass.

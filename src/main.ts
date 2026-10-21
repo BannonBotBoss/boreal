@@ -23,6 +23,7 @@ import { createSnapshotHub } from './core/snapshot';
 import { createPhotoMode } from './photo/photoMode';
 import { shaderClock } from './render/shaderClock';
 import { TIMESCALE } from './core/timescale';
+import { WALK_PROBE, installWalkProbe } from './dev/walkProbe';
 import { RENDER_SETTINGS, createSettingsStore } from './core/renderSettings';
 import { settingsPanel } from './ui/settingsPanel';
 import { playerPanel } from './ui/playerPanel';
@@ -163,6 +164,7 @@ const musicPanel = () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore
 menu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
 let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1, sink: 0 };
+const walkProbe = WALK_PROBE ? installWalkProbe(() => view.lookup('player')?.object, view.camera, sfx as never) : undefined;
 loadGround(localStorage.getItem(SAVE_KEY_GROUND));
 setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); } catch { /* blocked */ }
   if (paused || menu.open) return; // menu freezes the world clock; no sim work while open
@@ -341,6 +343,7 @@ function frame(time: number) { const frameStart = performance.now();
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
   // Menu open: hold the last frame (clock frozen; no age/growth/render). Playing: draw every frame.
   const drawStart = performance.now(); if (!menu.open) { if (inpage) inpage.frame(() => drawFrame(pv)); else drawFrame(pv); } view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
+  walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });

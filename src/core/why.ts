@@ -21,11 +21,11 @@ import type { Kind } from './catalog';
 import type { Entity } from './world';
 import type { Solid } from './contactBus';
 
-export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated'] as const;
+export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated', 'grazed', 'regrew'] as const;
 export type WhyTag = typeof WHY_TAGS[number];
 /** Ongoing steps: slow processes that follow the anchor (the last event) instead of replacing it. A contact compares
  *  against the anchor, so a decaying log still reads as resting on the ground and the same contact stays a no-op. */
-export const ONGOING: readonly WhyTag[] = ['ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated'];
+export const ONGOING: readonly WhyTag[] = ['ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated', 'regrew'];
 export interface WhyStep { step: WhyTag; on?: Solid; by?: string }
 export type Why = WhyStep[];
 /** Cap on chain length. Raised 16 -> 24 (Matthew 07:25) so the fallen log's origin, break, seating physics, decay and
@@ -100,6 +100,8 @@ export function stepText(s: WhyStep): string {
     case 'nursing': return 'the other side collecting debris and growing other plants';
     case 'buried': return `becoming ${s.on === undefined || s.on === 'ground' ? 'forest floor' : name(s.on)} (one more trunk cycle)`;
     case 'accumulated': return 'built up from many cycles of fallen trunks';
+    case 'grazed': return s.by ? `grazed by ${name(s.by)}` : 'grazed';
+    case 'regrew': return 'regrowing in sunlight';
   }
 }
 /** What it is now: the anchor plus the latest ongoing step after it ("resting on the ground, decaying ..."). */

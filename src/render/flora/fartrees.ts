@@ -14,6 +14,7 @@ import { RENDER } from '../../core/renderSettings';
 import { INTEREST, enqueue, pending } from '../../core/interest';
 import { standAt } from '../../core/stand';
 import { FAR_TREES, farTreesInTile } from '../../core/flora/stands';
+import { clearingAt } from '../../core/clover';
 import { hash, random } from '../../proc/rng';
 import { WIND_UNIFORMS, ageClass, treeGeometry, treeSpecies } from '../trees';
 import { bindWind, placeTree, removeTree, updateTrees, v2Handles } from '../trees/game';
@@ -35,7 +36,7 @@ export function createFarTrees(scene: THREE.Scene) {
     if (s === undefined) { if (stands.size > 4096) stands.clear(); stands.set(k, s = RENDER.standMap ? standAt((cx + .5) * CHUNK_SIZE, (cz + .5) * CHUNK_SIZE).stems : 1500); }
     return s;
   };
-  const dry = (x: number, z: number) => heightAt(x, z) < LEVEL.shore ? 0 : 1;
+  const dry = (x: number, z: number) => heightAt(x, z) < LEVEL.shore ? 0 : 1 - clearingAt(x, z); // core/clover: sunlit clearings stay open
   function geometryId(g: THREE.BufferGeometry, mat: THREE.Material) {
     let id = geoIds.get(g); if (id !== undefined) return id;
     if (!bm) { bm = new THREE.BatchedMesh(FAR_TREES.maxInstances, 160000, 320000, fadeOptIn(mat)); /* the shared tree material (render/batch opts it in too; idempotent) */ bm.castShadow = false; bm.receiveShadow = true; bm.frustumCulled = false; bm.name = 'far-trees'; scene.add(bm); }

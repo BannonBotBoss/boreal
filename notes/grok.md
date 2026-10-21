@@ -40,3 +40,15 @@ Branch only; Matthew merges. `?trees=v2` is OFF by default.
 ## T-0006 solid contact (branch grok/T-0006-solid-contact)
 - T-0005 wiring: core/logContact.ts + runtime-detected geometry.logSeat at buildScene's one call site (source
   chunk-build:log-seat when seated); no merge of T-0005 into T-0006; either merge order works.
+
+## Shared animal pipeline + clover (branch grok/rabbit-clover, 2026-10-21)
+- core/agent/pipeline.ts: species-agnostic senses (sight/hearing + core/senses scentLevel) -> levels (energy, stamina,
+  relaxation with habituation) -> goal choice (utilities) -> action/motion -> CONTACTS 'feed' edges. Every number is in a
+  species record (core/agent/species.ts); HARE_AGENT is the first. Actions 'held'/'tame' reserved for the hunting task.
+- core/clover.ts: clearingAt (gap mask used by population spruce keep, fartrees dry(), site closure), clover patches
+  (10 000 units/m^2, regrow full in 15 min of full sun x site light), graze/regrow transactions + why ('grazed'/'regrew').
+- Migration (not done): deer = a DEER_AGENT record (fear wolf/person, diet forage/plant via a FoodSource over chunk
+  entities) + host mapping actions onto animalBehavior motion/gait; wolf autonomy = a record whose 'fear' is empty and
+  whose diet includes 'hare' (prey as FoodSource / chase action to add); people = record with no diet. Movement stays host-side
+  for rigged animals (pipeline gives heading + speed + pose).
+- ?hare=debug: labels per hare (action, why, E/S/R, hunger, threat vs notice, clover units) and per nearby patch.

@@ -17,6 +17,7 @@ import { soilAt, soilGrid, type SoilKind } from '../stages/soils';
 import { standAt } from '../stand';
 import { hash, random } from '../../proc/rng';
 import { clamp01, smoothstep } from '../../proc/math';
+import { clearingAt } from '../clover';
 
 export type Soil = SoilKind;
 export interface Site { water: boolean; slopeDeg: number; wet: number; rock: number; depth: number; h: number; light: number; soil?: Soil }
@@ -68,7 +69,7 @@ export function siteAt(x: number, z: number): Site {
   // Understorey light = 1 - max(drawn crown score, stand closure). The scene draws a capped SUBSAMPLE of the stems (core/population:
   // ~130-290 trees/ha vs 650-1500/ha in the stand model), so the stand's canopy closure (core/stand, Harper et al. 2002) is the
   // background shade, thinned on rock / steep faces and halved on saturated peat (open black spruce muskeg) [game calibration .75].
-  const closure = water ? 0 : CANOPY.stand * standAt(x, z, wet).canopy * (1 - rock) * (wet > .85 ? .5 : 1);
+  const closure = water ? 0 : CANOPY.stand * standAt(x, z, wet).canopy * (1 - rock) * (wet > .85 ? .5 : 1) * (1 - clearingAt(x, z)); // core/clover clearings: gaps in the stand
   return { water, slopeDeg, wet, rock, depth, h, light: 1 - clamp01(Math.max(canopyOf?.(x, z) ?? 0, closure)), soil };
 }
 

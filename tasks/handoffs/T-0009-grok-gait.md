@@ -396,3 +396,132 @@ claim; (5) the knee floor. Re-score (no regression below 98.4 %), captures, tsc 
   Fig. 2 plots the fastest Lepus record at about hind 16 %, fore 11 % (read off the figure ±0.5 %), and p.137: "Fore
   contacts drop to 70 percent or less of hind contacts for Lepus at speed". The floors are cross-species; see (1) below.
 - tests/hare-rig.test.ts passes; the contract (HARE_BODY hindToes/scapula, LEPORID_LIMITS, HARE_RIG, root heading) is in.
+
+### Commits (branch grok-gait/T-0009-hare-v4, from 37b1fbc)
+
+- 608568b rule-15 review + this section started. 961630a code (bounding.ts, ik.ts notes, tools/bound-reach.ts doc,
+  tests/bound-v4.test.ts). This note: the next commit.
+
+### (1) Contact at 11.6 m/s — hind fixed to the metric floor, fore still short (numbers below)
+
+Do the floors apply at 11.6 m/s? Hildebrand 1977 (J Mammal 58:131) pp.135-136: hind contact "approaches 20 percent ... for
+various fast runners ... rabbit. It is less than 18 percent only for individual strides of exceptional cursors"; fore
+"approaches 16 percent ... rarely less than 13 percent for consecutive strides". These are the fastest-gait minima, so yes,
+11.6 m/s is where they bite — but they are cross-species, and the same paper puts Lepus below them: Fig. 2 plots the fastest
+Lepus record at about hind 16 %, fore 11 % (read off the figure, ±0.5 %), and p.137: "Fore contacts drop to 70 percent or
+less of hind contacts for Lepus at speed". With fore <= .70 x hind, a fore of .13 needs a hind of >= .186. I did not touch
+the floors (boundScore.ts / species.ts are grok's: contract note 1).
+
+What changed (my files):
+- boundPlan fits each pair's duty on its own (v3 scaled fore and hind by one share, so the fore cut the hind): the largest
+  common share first, then the hind raised alone, then the fore alone. Hind .158 → .183.
+- GIRDLE.spineMax .30 → .366 rad: the pika's own leading-limb pelvic excursion, touchdown 109° → lift-off 151° = 42° (cranial
+  pelvic angle against the horizontal; effective stance movement 29-44° across the small therians: Schilling & Hackert 2006,
+  JEB 209:3925, full text read). No duty gain at 11.6 m/s: the limit there is the shared pelvis — the two hind feet land .03
+  of a stride apart (gallop-lagomorph), so one pelvis cannot serve both (hindResidual). With spineMax .50 the hind reaches
+  .190; .80 gives .200 — far outside any source.
+- limbRange now takes the girdle it is given (v3 ignored a non-default girdle in the fore blade scan; no effect on GIRDLE).
+- Heel-to-toe roll on the split foot: not added. The metatarsus already rolls 17° → 123° to the ground over stance (Hall et
+  al. 2022, inside reachOf's foot scan); a toe roll on top (toes pivoting about the tip) is not supported — the phalanges
+  give -18 % to +4 % of stance length in cui and tree shrew (Schilling 2005, JEB 208:4013, Table 5), i.e. about nothing.
+- More blade swing: not adopted. The lagomorph value is the pika's 34° (Fischer et al. 2002, as quoted in Lagomorpha
+  Locomotion 2021). Larger values exist for non-lagomorphs at walk/trot — cui 42-43°, tree shrew 50-59° touchdown → lift-off
+  (Schilling 2005 Table 3), primates ~45° → ~90° (Schmidt 2008 Table 4). What-if (bound-reach + boundPlan):
+
+| blade each way | fore chord | fore duty at 11.6 m/s | hind duty |
+|---|---|---|---|
+| ±.30 rad (pika 34°, kept) | .323 m | .110 | .183 |
+| ±.366 (cui 42°) | .333 | .114 | .185 |
+| ±.42 | .336 | .115 | .185 |
+| ±.53 (tree shrew 59°) | .346 | .118 | .185 |
+
+Fore .13 needs a sweep of .13 x 2.636 = .343 m inside CHORD_USE (.9) x chord → a fore chord of .381 m, +18 % over .323; no
+sourced blade range gets there. bound-reach (hare, level 1): hind capacity .505 → .522 m vs need .527 (99 %), fore .323 vs
+.369 (88 %, short .046 m) — unchanged.
+
+### (2) Slow half-bound: hind prints a print ahead — done
+
+bound-checks 1.68 m/s overtake: mean 7.3 cm (worst 6.5) → 14.0 cm (worst 13.2) vs one 12 cm print. Mechanism: a sweep shorter
+than its chord already sat at the chord's FRONT end for the hind (v2); now the fore sweep sits at its chord's BACK end
+(foreSlack), and both slacks are taken against the full chord (the reachable interval inside the joint clamps, held over
+the stance's pitch swing) instead of CHORD_USE x it. The sweep end touches the reach edge only at the hind touchdown / fore
+lift-off; no slip or leash added in the score (planted 99 %, 0 leash steps). Track sources: snowshoe hind prints land ahead
+of the fore prints (Montana Natural History Center; Canadian Wildlife Federation 2004 "Tracking Down Winter Wildlife").
+Not found: a measured group (track pattern) length or straddle for L. americanus that pins the hind-to-fore spacing — the
+guides give print sizes and the group-to-group stride only (Alberta Parks booklet: stride 25-30 cm slow; CWF: up to 130 cm).
+12 cm print, second sources: CWF 2004 hind 10-15 cm long (fore 5.1-7.6), Montana NHC 4-5 in (10-13 cm), Alberta Parks
+13 cm — 12 cm (NatureNorth) is inside all three. Caveat: CWF notes hares put only the hind toes down when walking, so slow
+prints can be shorter than the full 12 cm.
+
+### (3) Turn rate — no source, stays [estimate]
+
+Searched rabbit/hare yaw rates and in-place turning. The only timed lagomorph turns are running pursuit turns (Mammalian
+Biology 2026, doi:10.1007/s42991-026-00566-7: ~180° in ~0.40 s, ~450°/s); its in-place gambolling turns are not timed; Walter
+2003 (JEB 206:1739) times running mice. TURN.rate .9 rad/s (52°/s) stays labelled [estimate].
+
+### (4) Fischer 2002 blade angles and blade ∥ forearm
+
+- Angle reference: Fischer et al. 2002 itself is still bot-walled. The same lab's papers with the same cineradiography
+  protocol state it: "Segment angles were calculated from the horizontal ... The scapular spine was used to indicate the
+  orientation of the shoulder blade" (Schilling 2005, JEB 208:4013), and Schmidt 2008 (JEB 211:3775) "segment angles –
+  calculated relative to the horizontal plane", forelimb pivot = proximal end of the scapular spine. So 46°/80° read as the
+  scapular spine against the horizontal — consistent with how bounding.ts uses them (34° of stance, ±.30 rad).
+- Pairing: confirmed scapula ∥ forearm (and femur ∥ tarsometatarsus): Schmidt 2008, citing Fischer & Blickhan 2006 (J Exp
+  Zool 305A:935; its abstract does not state it): "'pantograph behaviour' (parallel motion of scapula and forearm and femur
+  and tarsometatarsus, respectively)". But it is parallel MOTION in mid-support, not parallel orientation: "Throughout most
+  of the support phase, the forearm moves exactly in parallel to the scapula ... only broken at the beginning and end of the
+  support phase, when forearm excursions exceed scapula excursions", with the angles differing (scapula ~45° → ~90°, forearm
+  11-36° → 102-121°). foreLimb keeps v3's nearest-parallel-orientation cost (doc corrected): a rate-matching cost was tried
+  and flipped the elbow mid-stance, so it was dropped.
+
+### (5) Knee floor
+
+grok is right: Hildebrand et al. 2003's "150 deg of flexion" is the pinned immobilisation angle. Zhang, Liu & Zhou 2024
+rechecked (full text): disarticulated NZW knees "can be pulled to approximately 140 degrees with a torque of 0.077 Nm",
+read off a dial from an unstated zero — interior ~40° if it starts straight, ~27° if it starts at the 13° extension stop;
+the 30° floor sits inside. Second knee source looked for: Alder et al. 2025 (Tissue Eng C, doi:10.1089/ten.tec.2025.0044)
+give "160°—the normal range of motion of the rabbit knee" as the normal passive EXTENSION angle — backs the extended end
+(160-167°), not the flexed one. No second flexion source; ik.ts LEPORID_KNEE doc says so. Values unchanged.
+
+### Re-score (tools/bound-score.ts, bound-checks v2, calibration tests/bound.test.ts)
+
+| plan | 37b1fbc | run 4 |
+|---|---|---|
+| hare (game body, HARE_PLAN) | 98.4 % | 99.7 % |
+| game | 98.7 % | 99.7 % |
+
+hare per speed: 1.68 m/s 94 → 100 % (overtake 61 → 100 %); 3, 5, 8.5 m/s 100 %; 11.6 m/s 98 → 99 % (contact 86 → 92 %: hind
+.183 fore .110 vs .18/.13). Only failing check: 11.6 m/s contact, fore. tsc clean; npm test 399 tests, 387 pass, 0 fail,
+12 todo (omen). Scores before/after: /workspace/locomotion/T-0009/v4/scores/ (box).
+
+### Captures (bench lock tools/bench-lock.mjs 16:12-16:13 PT, released; headless Edge and capture Vite :5395 closed)
+
+/workspace/locomotion/T-0009/v4/ (box): hare-11.6-1x, hare-11.6-0.25x, hare-1.68-1x, hare-1.68-0.25x — frames + states.json,
+.mp4 (30 fps) and a 3x4 sheet each. Frame questions:
+- Planted feet slide? No: max slip 0.09 mm (11.6), 0.07-0.1 mm (1.68). One leash step at t 0.67 s in the 1.68 runs, during
+  the 0 → 1.68 m/s ramp (before the score's 2.5 s warm-up; the 0.25x run starts after it and carries the count).
+- Footfall order / suspensions at 11.6 m/s: LF → LF+RF → RF → airborne (gathered) → RH → LH+RH → LH → airborne (extended),
+  as gallop-lagomorph asks; 90 of 160 0.25x frames airborne.
+- Slow half-bound: no suspension (no 0000 frame), stiff back (flex 0), hind prints land ahead of the fores (capture
+  touchdowns 16.9-18.2 cm; the score's per-240 Hz count is the reference, mean 14.0 cm).
+- Trunk pitch at 11.6 m/s -10.7..+10.5° (span 21°, reference 22°); back flex -.364..+.363 rad (= ±spineMax).
+
+### Still failing / open
+
+- 11.6 m/s fore contact .110 vs .13 (the hind is .183 vs the metric's .18; grok's data .20): fore reach, not the blade, is the
+  limit (table above). Hildebrand's own Lepus record (~11 %) matches the rig's .110.
+- The turn rate is unsourced.
+
+### Contract notes (owner: grok — not applied by me)
+
+1. boundScore.ts contact floors: they are cross-species; for Lepus at top speed Hildebrand gives fore <= 70 % of hind (p.137)
+   and a plotted record of about hind 16 %, fore 11 % (Fig. 2). Options: keep .18/.13 and accept 92 % at 11.6 m/s, or add a
+   Lepus floor cited to Fig. 2 (read-off, ±0.5 %). Your call; I changed no floor.
+2. species.ts gait hind .20 at 11.6 m/s: the rig gives .183 because the two hind feet land .03 of a stride apart on one
+   pelvis (hindResidual). Nearer hind touchdowns (e.g. [.., .42, .43]) would let the hind reach its data duty, if a source
+   supports a tighter hind couplet.
+3. HARE_BODY fore limb: the fore chord (.323 m) is what limits the fore contact; if you have a sourced Lepus fore limb
+   (humerus/radius-ulna/manus lengths, e.g. Exp Anim 30(2):113 Table 1) longer than the current foreLeg, it is the lever
+   that would move the fore duty.
+4. boundScore.ts REF.overtake .12: second sources agree (CWF 10-15 cm, Montana NHC 10-13 cm, Alberta Parks 13 cm); add them
+   to the comment if you like.

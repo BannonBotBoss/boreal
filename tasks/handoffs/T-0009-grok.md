@@ -9,14 +9,29 @@ fails, and three acceptance criteria are not met (below). Left open, claimed by 
 Plan (Grok lead, 12:23 PT): pick up Gait Builder's rig (grok-gait/T-0009-hare-skeleton b821bb8).
 - [x] 1 Rule 15 review (12:29 PT): three claims hold (bound.ts imported; hind leg 1.6x short; duty/cadence flags) - tasks/events/2026-10-21T12-29-grok-comment-T-0009.json
 - [x] 2 Merged grok-gait/T-0009-hare-skeleton (f63130b); tests/bound.test.ts 12/12
-- [ ] 3 Nature-check and fix from published sources: HARE_BODY limb segments (femur, tibia, metatarsal/foot, forelimb),
-  duty-vs-speed curve (hind vs fore), stride frequency, gait choice + switch speed, lagomorph joint ranges, body pitch
-- [ ] 4 GAIT_TABLE: replace the [verify] 'bound' row with 'half-bound' + 'gallop-lagomorph'; add both to GaitId (done by grok,
-  not handed to Codex)
-- [ ] 5 hare.ts onto createBounding + poseRequestFor (blob legs retired); alert hold ~1 s; acceleration ramp over first bounds
+- [x] 3 Nature-checked from published sources (7a4be8f). Old -> new, with sources (snowshoe hare Lepus americanus unless noted):
+  | value | before | now | source |
+  |---|---|---|---|
+  | hind leg (femur+tibia) | .125 m | .202 m (femur .094, tibia .108; share .47) | femur 94 mm Illinois State Museum; tibia/femur 1.13-1.19 (Volf 2023 L. europaeus; Williams 2007 J Anat pelvic limb) |
+  | hind foot | .132 m | .132 m (kept) | hind foot 117-147 mm (ADW / Maine IFW) |
+  | fore leg (humerus+radius+manus) | .12 m | .181 m (humerus .077, radius .069, manus share .19) | Williams 2007 thoracic limb ratios; manus [estimate] |
+  | gaits used | 'bound' [verify] | half-bound (slow/escape), gallop-lagomorph (fast) | Hildebrand 1977 Lepus: half-bound, transverse + rotary gallop; Bertram & Gutmann 2009 (stiff-backed slow half-bound, flexed-back when escaping) |
+  | hind duty vs speed | .50 -> .17 (one duty for all legs) | hind .60 (slow) -> .20 (very fast); fore = .9 -> .7 x hind | Hildebrand 1977 (contact ~60 % slow to ~20 % very fast; fore <= 70 % of hind at speed); jackrabbit 16-18 % |
+  | stride frequency | 3.94 -> 4.42 Hz power law | piecewise 3.94 @ 1.68, 4.17 @ 2.91, 4.40 @ 3.98, held 4.40 to 11.6 m/s | Heglund & Taylor 1988 (1.5 kg); plateau above 3.98 m/s [estimate]. NOTE the 12:29 review event said 4.42 Hz: wrong, 4.40 |
+  | row switch speed | up 7 / down 6.5 m/s | up 10 / down 9.5 m/s (half-bound at flight speed 8.5) | Bertram & Gutmann 2009 escape half-bound; switch value [estimate] |
+  | alert hold | .3 s | 1 s (freeze, then flee) unless the threat is inside the flight distance | snowshoe FID mean 3.7 m, freeze-then-flee (Emmel 2024, U Montana thesis); 1 s [estimate from the reference video] |
+  | flight acceleration | instant 8.5 m/s | ramp 10 m/s^2 | [estimate, unsourced for hares; cheetah ~13 m/s^2, Wilson 2013] |
+  | joint ranges | canid FLEX_LIMIT in ik.ts | unchanged, FLAGGED | no published hare locomotion angles (Williams 2007 says so); rabbit ankle 66-137 deg, foot 17-123 deg (PeerJ 2022, 10.7717/peerj.13611) not yet applied |
+  | body pitch | 0 vault pitch | unchanged, FLAGGED | no source found; Gait Builder open item |
+- [x] 4 GAIT_TABLE 'bound' row replaced by 'half-bound' {0,.58,.92,.55; duty .3} and 'gallop-lagomorph' {0,.5,.92,.58; duty .2};
+  both added to GaitId (done by grok, not handed to Codex); lab, borealSound, locomotion tests updated.
+- [x] 5 hare.ts runs on createBounding + poseRequestFor (blob legs retired: three segment meshes per leg from limbPoints, body
+  pitch from the rig tilt, head/ears from POSES); alert hold 1 s measured from the first alert (re-alerts while watching keep
+  counting); flight speed ramps at 10 m/s^2. bound-checks score on HARE_BODY: 85.7 % (was 80.0 %; gate 95 %: FAIL; the
+  sourced duty needs a .63 m hind sweep at 8.5 m/s vs a .31 m hind chord, so contact fraction is short at speed).
 - [ ] 6 In-game smoke test (full reload), side-on recording, labels hidden, clover time-lapse
 - [ ] 7 Re-score every gate question (T-0020 chain) vs refs/hare/graze-alert-flight/
-- [ ] 8 npm test + npx tsc --noEmit
+- [x] 8 npx tsc --noEmit clean; npm test 379: 367 pass, 0 fail, 12 todo (7a4be8f, flaky test did not flake)
 - [ ] 9 Submit only if every gate >= 95 %
 ## Run 2 progress (keep current: board rule 9)
 Plan (Matthew via Grok, 11:13 PT): 1 reference, 2 bound gait, 3 graze/alert poses + visible thinning, 4 registry + lazy

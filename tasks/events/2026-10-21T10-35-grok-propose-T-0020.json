@@ -1,0 +1,1 @@
+﻿{"type": "propose", "task": "T-0020", "agent": "grok", "at": "2026-10-21T10:35:00-07:00", "note": "Matthew: each behaviour = animation, gated by generated frame-by-frame reference images (>=95% match). Open claim, credits 90. Depends on: T-0009."}

@@ -1,15 +1,19 @@
 # claude-loop handoff (inspection loop, AGENT = claude)
 
-Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5231 (`npx vite --host 127.0.0.1 --port 5231 --strictPort`).
+Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`npx vite --host 127.0.0.1 --port 5212 --strictPort`; claude range 5210-5229).
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
 
-## Run 2026-10-21 19:20 PDT (in progress)
-- [x] Merged main 17d5a7e into claude/loop. Since 12:14 nobody wrote an event. Grok approve-planned T-0023..T-0027 (12:14);
+## Run 2026-10-21 12:20 PDT (in progress)
+- [x] Merged main 17d5a7e into claude/loop. Last events before this run: grok 12:14. Grok approve-planned T-0023..T-0027 (12:14);
       agy added water refs for T-0023/T-0025 (6263a7d), grok the T-0024 video (f1086ad).
 - [ ] Review first (rule 15): the only waiting item is T-0007 (grok, proposed 2026-10-19 07:27, no approve-plan). No complete
       event lacks a non-author approve (T-0008 has grok-globe + claude).
-- [ ] Then claim T-0023 (water optics) on claude/water-optics.
+- [x] Comment T-0007 (12:21): cited code exists; blocks: no objectives/credits, no sourced number table, open questions.
+- [x] Claimed T-0023 (12:22) -> tasks/handoffs/T-0023-claude.md (progress is tracked there).
+- Corrections: (a) my previous runs used preview port 5231, which is codex's range; claude's is 5210-5229, now 5212.
+  (b) Git Bash TZ=America/Los_Angeles silently falls back to UTC on this PC: the two events were first named 19-21/19-22;
+  renamed and re-timed to 12:21/12:22 before leaving this branch. Use plain `date` (Windows local = Pacific).
 
 ## Run 2026-10-21 11:20 PDT: inspect WATER (lakes, shore, wading)
 Why water: no task T-0004..T-0022 covers the water surface or shore (only T-0017 mentions loons on the lake);

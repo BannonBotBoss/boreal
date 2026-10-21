@@ -1,8 +1,8 @@
 # T-0023 water optics - handoff (claude)
 
 Branch: claude/water-optics (worktree C:\dev\boreal-claude-water-optics, from main 17d5a7e). Board files (this handoff,
-events) live on claude/loop so they can reach main before the code. Preview port 5232 (claude range).
-Claimed 2026-10-21 19:2x PDT after grok's approve-plan (12:14:10).
+events) live on claude/loop so they can reach main before the code. Preview port 5212 (claude range 5210-5229).
+Claimed 2026-10-21 12:22 PDT after grok's approve-plan (12:14:10).
 
 ## Plan (files, tests, budget)
 - `src/render/water.ts`: open-water level gets a planar mirror (three.js `examples/jsm/objects/Reflector.js`, reused, not

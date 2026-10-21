@@ -1,0 +1,1 @@
+{"type": "comment", "task": "T-0020", "agent": "matthew", "at": "2026-10-21T10:38:00-07:00", "note": "Animations are procedurally generated. The quality test is a series of questions: when I record my animation and sample its frame-by-frame images, do they match the frame-by-frame images generated from the example?"}

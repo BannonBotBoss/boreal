@@ -21,7 +21,8 @@ Every behaviour an agent can be in (graze, alert/head-up, flee, trot, rest, scan
 1. The animation asks: **"What is happening?"** The behaviour emits a short, concrete description of the real-world action (species, action, phase, terrain, speed), e.g. "a snowshoe hare grazing clover with its head down, then lifting its head to scan, side view".
 2. An agent converts that description into an image-generation prompt: **"Generate a frame-by-frame sequence of reference images depicting [object behaviour description]."** (fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle).
 3. The reference frames are saved under `refs/<species>/<behaviour>/` with the prompt, tool and date.
-4. The animator uses that reference as its **quality gate**: the animation must resemble the reference by **at least 95%**.
+4. The animation itself is **procedurally generated** (driven by the gait/pose solvers and species data, no hand keyframes or baked clips). The reference is only the target it is tested against.
+5. The animator uses that reference as its **quality gate**: the animation must resemble the reference by **at least 95%**.
 
 ## Why
 Behaviours are becoming need-driven (T-0009 onward), so each new state needs an animation that reads as the real animal doing that thing. Today several states share one pose or have none (e.g. the hare is a root position plus tilt; the wolf has no crawl, pin, bite or carry pose).
@@ -32,9 +33,15 @@ Behaviours are becoming need-driven (T-0009 onward), so each new state needs an 
 - `tools/anim-gate.ts` (renders the in-game animation with the existing strip tools, e.g. tools/run-strip.ts / strip-shot.mjs, at the reference's camera and frame times, and scores it)
 - `refs/` (reference frames + metadata)
 
-## Quality measure (to make "95%" testable)
-Per frame, compare the rendered silhouette and key points (nose, ears, spine, hips, shoulders, four paws, tail) to the reference: silhouette IoU after scale and position normalisation, and PCK (fraction of key points within 5% of body length). Score = mean over frames; pass at >= 0.95. Cadence and duty factor must also match measured data where it exists (gaitData sources).
-
+## Quality test: a series of questions (Matthew, 2026-10-21)
+The gate is a fixed list of questions, each answered pass/fail from data, asked of every animation:
+1. **Recording:** when I record my animation (in game, fixed camera matching the reference) and sample it frame by frame at the reference's frame times, do I get the same number of frames over one cycle?
+2. **Overall match:** do my sampled frames match the reference frames, frame for frame? (silhouette overlap after scale and position normalisation)
+3. **Body parts:** in each frame, are the nose, ears, spine, shoulders, hips, four paws and tail where the reference has them? (fraction of key points within 5% of body length)
+4. **Order and timing:** do the phases happen in the same order and at the same points in the cycle (e.g. which paws are down, head down vs head up, airborne)?
+5. **Contact:** do feet, jaws and body touch the ground or target in the same frames as the reference?
+6. **Real data:** do cadence, stride and duty factor agree with measured data where it exists (gaitData sources)?
+Score = share of questions passed, weighted by frame; **pass at >= 0.95**. The tool prints each question with its answer and the frames that failed, next to a side-by-side strip (recording above, reference below).
 ## Size and risk
 - Size: L
 - Risk: medium (generated references can be anatomically wrong: check each set against real footage or photos before using it as a gate)
@@ -54,6 +61,6 @@ Every action an animal takes has its own animation that looks like the real anim
 ## Objectives
 - [ ] Behaviour -> animation map and "what is happening" descriptions in behaviourData
 - [ ] Reference prompt tool and refs/ layout
-- [ ] Animation gate: render, align, score (IoU + PCK), side-by-side strip
+- [ ] Animation gate: record, sample frame by frame, answer the question list, side-by-side strip
 - [ ] First animations through the gate (hare set, then wolf hunting set)
 - [ ] Tests

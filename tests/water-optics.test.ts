@@ -34,3 +34,8 @@ test('open-water sheet: terrain grid at the water level with depth per vertex; n
   const d = s.getAttribute('aDepth'), p = s.getAttribute('position');
   for (let i = 0; i < d.count; i++) { assert.equal(p.getY(i), -.25); assert.ok(Math.abs(d.getX(i) - (-.25 - p.getX(i) * .5)) < 1e-6); }
 });
+
+test('water-leaving radiance: 1/n² on exit, so above-water Rrs ~0.52-0.56 of the in-water rrs (Lee et al. 2002: 0.52)', () => {
+  assert.ok(Math.abs(HUMIC.exit - .5628) < .001);
+  assert.ok(HUMIC.exit >= .52 && HUMIC.exit <= .57);
+});

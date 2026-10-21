@@ -26,8 +26,10 @@ const SEED = ((WORLD_SEED * 7) % 997) * .37, uTime = { value: 0 };
  *  36:8710) + CDOM a440·e^(-S(λ-440)) (Bricaud, Morel & Prieur 1981); diffuse attenuation K = a / μd (μd ≈ 0.8); deep-water
  *  reflectance R∞ ≈ 0.33 bb / a (Morel & Prieur 1977); over a bottom of albedo Ab at depth H the shallow-water model
  *  R = R∞ (1 - e^(-2KH)) + Ab e^(-2KH) (Maritorena, Morel & Gentili 1994, Limnol. Oceanogr. 39:1689). So the colour is generated
- *  by absorption over depth, not picked. [verify] a440, S, bb, Ab against a regional survey (T-0023 table). */
-export const HUMIC = { a440: 5, slope: .016, bb: .02, muD: .8, bottom: [.16, .13, .09], nm: [610, 550, 465], pureWater: [.264, .0565, .0102] };
+ *  by absorption over depth, not picked. Leaving the water, that radiance spreads into a wider cone and drops by 1/n² (n² law of
+ *  radiance, Mobley 1994 *Light and Water* §4.3; above-water Rrs ≈ 0.52 rrs, Lee et al. 2002 Appl. Opt. 41:5755), so the shader
+ *  lights it as a Lambert surface times `exit`. a440, S sourced (T-0023 table); [verify] bb, Ab against a regional survey. */
+export const HUMIC = { a440: 5, slope: .016, bb: .02, muD: .8, bottom: [.16, .13, .09], nm: [610, 550, 465], pureWater: [.264, .0565, .0102], exit: 1 / 1.333 ** 2 };
 export const humicK = () => HUMIC.nm.map((nm, i) => (HUMIC.pureWater[i] + HUMIC.a440 * Math.exp(-HUMIC.slope * (nm - 440))) / HUMIC.muD);
 export const humicDeepR = () => humicK().map(k => .33 * HUMIC.bb / (k * HUMIC.muD));
 /** Irradiance reflectance just below the surface over a bottom `depth` m down (Maritorena 1994), per channel R, G, B. */
@@ -56,7 +58,7 @@ export function waterMaterial() {
         vec2 q = vWXZ * 0.35 + drift;
         vec2 wg = mix(wgrad(q - fl * p0 * 4.0 * 0.35), wgrad(q - fl * p1 * 4.0 * 0.35 + 0.37), wgt);
         vec3 wT2 = exp(-2.0 * uWaterK * (abs(vWY - uMirrorY) < .05 ? max(vDepth, 0.0) : 1e3)); // open-water sheet only (aDepth); lakes/rivers: deep
-        diffuseColor.rgb = diffuseColor.rgb * (1.0 - wT2) + uBottom * wT2; // Maritorena 1994 shallow-water reflectance
+        diffuseColor.rgb = (diffuseColor.rgb * (1.0 - wT2) + uBottom * wT2) * ${HUMIC.exit.toFixed(4)}; // Maritorena 1994 shallow-water reflectance, 1/n² on exit
         float foam = smoothstep(0.55, 0.85, fbm(vWXZ * 1.3 - fl * uWaterTime * 1.3, ${SEED.toFixed(3)}) + vFlow.z * 0.25 - 0.35) * smoothstep(0.4, 1.2, vFlow.z);
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85, 0.9, 0.9), foam);`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.7, foam);')

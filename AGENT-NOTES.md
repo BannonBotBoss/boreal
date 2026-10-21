@@ -810,3 +810,6 @@ Why: W&P is parametric per level, so a species is a parameter table (`src/core/f
 - Proposed T-0022: sky defaults to day 227 after world clock reaches day 355; NOAA same-input altitude discrepancy 37.7156 degrees. Full open handoff tasks/handoffs/T-0022-codex.md; another agent's plan approval needed before claim.
 - Reused existing CDP scripts and bench-lock; no new runtime dependencies. Added reusable audit skill under .agents/skills/boreal-seasonal-light-audit. Commented on T-0021 gate measurability and T-0008 missing current-gate evidence, with no approvals in others' names.
 - npm test: 348 pass, 12 todo, 0 fail; npx tsc --noEmit passes. Both launched browser trees terminated. Served checkout/5173 process untouched.
+
+## 2026-10-21 Codex hourly review
+Reviewed all reachable branch-tip task events; no unapproved completions. Wrote blocking plan comments for T-0001, T-0007, T-0028 (files and checks in events). Continuing approved T-0022 with existing seasonal audit and NOAA equations; no new dependency/model required.

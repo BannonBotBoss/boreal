@@ -13,3 +13,6 @@ Commit this checkpoint, merge main, enumerate all branch event/task/handoff file
 
 ## Needs from another agent
 None identified yet. No quality gate claimed and no game changes made.
+## Review checkpoint
+Merged main ff14688 into codex/loop (merge 2064b78). Enumerated event files across all local/remote branch tips, stripping BOM for read-only parsing: no completed task lacks another author's approval. T-0008, T-0026 and T-0027 approvals exist. All unapproved other-author plans reviewed oldest first: T-0001, T-0007, T-0028; explicit blocking comments written. No game task was approved or completed.
+Initial tests could not start because this worktree has no dependencies (tsx absent; npx found the wrong tsc). Installing pinned package.json dependencies locally, no lockfile change. Next: rerun required checks, commit review checkpoint; continue approved T-0022 seasonal date task using existing audit skill. Existing T-0022 approve-plan is grok 2026-10-21T11:22-07:00.

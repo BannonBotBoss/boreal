@@ -13,15 +13,41 @@ import { fadeOptIn } from './fade';
 import { applySurfaceBands } from './bands';
 
 export const PROP_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true, side: THREE.DoubleSide }); PROP_MATERIAL.userData.shared = true;
-/** Rocks: the old 16×16 striped texture can't ride in a batch (one map per material), so the same look is procedural:
- *  horizontal banding (as the old texture's rows) + fBm grain + lichen-free speckle from world position (proc/glsl). */
-export const ROCK_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true, side: THREE.DoubleSide }); ROCK_MATERIAL.userData.shared = true;
+/** Rocks: procedural Precambrian granite/gneiss mineral banding + fBm grain, with crustose lichen (Rhizocarpon/Cladonia)
+ *  and cap-moss (Hedwigia/Dicranum/Pleurozium) on upward-facing surfaces (Jesberger & Sheard 1973, Can. J. Bot. 51:185;
+ *  albedos from USGS Spectral Library Granite HS19.3B & core/flora/mosses). Smooth dome normals + derivative bump. */
+export const ROCK_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, flatShading: false, side: THREE.DoubleSide });
+ROCK_MATERIAL.userData.shared = true; ROCK_MATERIAL.userData.noBands = true;
 ROCK_MATERIAL.onBeforeCompile = shader => {
-  shader.vertexShader = 'varying vec3 vRockW;\n' + shader.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n  vec4 rw = vec4(transformed, 1.);\n  #ifdef USE_BATCHING\n    rw = batchingMatrix * rw;\n  #endif\n  vRockW = (modelMatrix * rw).xyz;');
-  shader.fragmentShader = `varying vec3 vRockW;\n${GLSL_NOISE}\n` + shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
-    float band = .9 + .1 * fract(vRockW.y * 2.3 + vnoise(vRockW.xz * 3., 7.) * .6); // old texture: brighter rows upward + jitter
-    float grain = .82 + .3 * fbm(vRockW.xz * 4. + vRockW.y * 2., 3.);
-    diffuseColor.rgb *= band * grain;`);
+  shader.vertexShader = 'varying vec3 vRockW;\nvarying vec3 vRockN;\n' + shader.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n  vec4 rw = vec4(transformed, 1.);\n  #ifdef USE_BATCHING\n    rw = batchingMatrix * rw;\n  #endif\n  vRockW = (modelMatrix * rw).xyz;\n  vRockN = normalize(mat3(modelMatrix) * objectNormal);');
+  shader.fragmentShader = `varying vec3 vRockW;\nvarying vec3 vRockN;\n${GLSL_NOISE}\n` + shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+    float warp = vnoiseU(vRockW.xz * 0.9 + vRockW.y * 0.5, 5.1) - 0.5;
+    float fol = sin(dot(vRockW, vec3(1.6, 3.4, 1.2)) + warp * 4.2);
+    float grain = vnoiseU(vRockW.xz * 12.0 + vRockW.y * 8.0, 3.7);
+    float fine = vnoiseU(vRockW.xz * 32.0 + vRockW.y * 19.0, 9.3);
+    float jv = vnoiseU(vRockW.xz * 1.8 + vRockW.y * 1.1 + warp * 0.6, 11.3);
+    float crack = smoothstep(0.055, 0.0, abs(jv - 0.5));
+    vec3 pinkBand = diffuseColor.rgb * vec3(1.16, 0.94, 0.84);
+    vec3 darkBand = diffuseColor.rgb * vec3(0.52, 0.54, 0.56);
+    vec3 rockCol = mix(diffuseColor.rgb, pinkBand, smoothstep(0.05, 0.65, fol));
+    rockCol = mix(rockCol, darkBand, smoothstep(-0.25, -0.78, fol) * 0.65);
+    rockCol *= (0.84 + 0.32 * grain) * (0.92 + 0.16 * fine) * (1.0 - 0.55 * crack);
+    float up = smoothstep(0.42, 0.78, vRockN.y);
+    float mp = smoothstep(0.32, 0.68, fbm(vRockW.xz * 0.85, 17.3));
+    float rf = vnoiseU(vRockW.xz * 4.2 + vRockW.y * 2.0, 23.1);
+    float moss = up * smoothstep(0.60, 0.75, mp + (rf - 0.5) * 0.28);
+    float mossRim = up * smoothstep(0.52, 0.60, mp + (rf - 0.5) * 0.28) * (1.0 - moss);
+    float lich = up * (1.0 - moss) * smoothstep(0.58, 0.76, (1.0 - mp) * 0.68 + rf * 0.48);
+    vec3 mossCol = mix(vec3(0.055, 0.095, 0.025), vec3(0.095, 0.105, 0.032), rf) * (0.85 + 0.30 * grain);
+    vec3 lichCol = mix(vec3(0.18, 0.20, 0.145), vec3(0.22, 0.23, 0.175), rf) * (0.88 + 0.24 * fine);
+    rockCol *= 1.0 - 0.35 * mossRim;
+    rockCol = mix(rockCol, lichCol, lich * 0.68);
+    rockCol = mix(rockCol, mossCol, moss * 0.82);
+    diffuseColor.rgb = rockCol;
+    float rockH = fol * 0.25 + grain * 0.35 + moss * 0.45 - crack * 0.9;`).replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+    { vec2 dH = vec2(dFdx(rockH), dFdy(rockH)) * 0.018; vec3 sx = dFdx(-vViewPosition), sy = dFdy(-vViewPosition);
+      vec3 r1 = cross(sy, normal), r2 = cross(normal, sx); float det = dot(sx, r1) * faceDirection;
+      normal = normalize(abs(det) * normal - sign(det) * (dH.x * r1 + dH.y * r2)); }`);
 };
 type Item = { key: string; pos: THREE.Vector3; raw: THREE.Object3D[]; levels: Map<THREE.Material, THREE.BufferGeometry>[]; ranges: number[]; shadowFar: number };
 const SLICE_MS = 2; // buildJob yields once a step has run this long (core/interest 4 ms budget) [game calibration]
@@ -44,12 +70,13 @@ function placed(src: THREE.BufferGeometry, mw: THREE.Matrix4) {
 }
 /** Prop part: non-indexed world-placed position + normal and the material colour per vertex, in one pass. */
 function placedFlat(src: THREE.BufferGeometry, mw: THREE.Matrix4, c: THREE.Color) {
-  const pos = src.getAttribute('position') as THREE.BufferAttribute, nrm = src.getAttribute('normal') as THREE.BufferAttribute | undefined, idx = src.index, n = idx ? idx.count : pos.count;
+  const pos = src.getAttribute('position') as THREE.BufferAttribute, nrm = src.getAttribute('normal') as THREE.BufferAttribute | undefined, vc = src.getAttribute('color') as THREE.BufferAttribute | undefined, idx = src.index, n = idx ? idx.count : pos.count;
   const P = new Float32Array(n * 3), N = nrm ? new Float32Array(n * 3) : null, C = new Float32Array(n * 3); nmat.getNormalMatrix(mw);
   for (let i = 0; i < n; i++) { const v = idx ? idx.getX(i) : i;
     pv.fromBufferAttribute(pos, v).applyMatrix4(mw); P[i * 3] = pv.x; P[i * 3 + 1] = pv.y; P[i * 3 + 2] = pv.z;
     if (N) { pv.fromBufferAttribute(nrm!, v).applyNormalMatrix(nmat); N[i * 3] = pv.x; N[i * 3 + 1] = pv.y; N[i * 3 + 2] = pv.z; }
-    C[i * 3] = c.r; C[i * 3 + 1] = c.g; C[i * 3 + 2] = c.b; }
+    if (vc) { C[i * 3] = vc.getX(v) * c.r; C[i * 3 + 1] = vc.getY(v) * c.g; C[i * 3 + 2] = vc.getZ(v) * c.b; }
+    else { C[i * 3] = c.r; C[i * 3 + 1] = c.g; C[i * 3 + 2] = c.b; } }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); if (N) g.setAttribute('normal', new THREE.BufferAttribute(N, 3)); g.setAttribute('color', new THREE.BufferAttribute(C, 3));
   return g;
 }
@@ -79,7 +106,7 @@ export function createChunkBatch() {
   return {
     meshes,
     /** Queues an entity's LOD objects; they are flattened in buildJob (yielding every ~2 ms), not in the caller's step. */
-    add(key: string, pos: THREE.Vector3, levels: THREE.Object3D[], ranges: number[]) { items.push({ key, pos: pos.clone(), raw: levels, levels: [], ranges, shadowFar: ranges[1] }); },
+    add(key: string, pos: THREE.Vector3, levels: THREE.Object3D[], ranges: number[]) { items.push({ key: key, pos: pos.clone(), raw: levels, levels: [], ranges, shadowFar: ranges[1] }); },
     /** Build one BatchedMesh per material; returns them for the chunk root. */
     build() { return finish(this.buildJob()); },
     /** build() as a budgeted job (core/interest): yields per material and every few instances. */

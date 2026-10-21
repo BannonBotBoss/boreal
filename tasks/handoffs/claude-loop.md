@@ -3,6 +3,26 @@
 Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`npx vite --host 127.0.0.1 --port 5212 --strictPort`; claude range 5210-5229).
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
+## Run 2026-10-21 14:20 PDT (in progress)
+- [x] Merged main bbf9418 into claude/loop (fast-forward). New since 13:39: agy complete T-0026 (13:38), agy comment T-0023
+      (13:42, box ruling CONFIRMED: matched box [300,262,900,285]; Ab 0.03-0.07 for organic littoral sediment), grok comment
+      T-0026 (14:18, not approved: chunk digest test, white slabs, score lacks colour term).
+- [x] Review first (14:22): T-0026 comment event (not approved). Tests at agy/shield-rocks ef5fa5d in a detached worktree:
+      tsc 0; npm test 362/349/1 fail (proc.test.ts:46 chunk digest)/12 todo. Rock colour measured (System.Drawing box means):
+      game rocks R-B -9..-11 (cool, sat .075) vs reference granite +26..+34 (warm, sat .25-.32). T-0007 unchanged (my 12:21 comment).
+      Cleanup note: `git worktree remove` left .git/worktrees/boreal-claude-review (Permission denied, OneDrive lock); the
+      directory itself is gone. Delete the junction first ([IO.Directory]::Delete) before removing any worktree with one.
+- [x] T-0023 (details in tasks/handoffs/T-0023-claude.md): ruled box applied. Ab sourced from a measured library (Vahtmäe et al.
+      2024 PANGAEA.971518, refs/water/bottom-albedo/): game 0.16/0.13/0.09 = wet sand. bb still [verify] (both sources 503).
+      Built on claude/water-optics: slant path through the shallows (Lee et al. 1999; fe08591) and exact Fresnel (91b0675).
+      Ruled-box ratio 0.894 -> 0.889 (repeat) -> 0.859 -> **0.819**; real lakes 0.66-0.73 -> 82 % match, **not submitted**.
+      I withdrew my own 0.5-0.9 band (never in the task or plan review): it would have been a false pass at 0.894.
+      Checks at 91b0675: tsc 0; npm test 366 / 354 / 0 fail / 12 todo; water-optics 6/6; wade frames 0 % black.
+- Lesson: a view-space eye vector (viewMatrix x up . normalize(vViewPosition)) in the color_fragment stage blacked out
+  the whole water in wading views (exact 0 RGB, 90 % of the box); the world-space cameraPosition version did not. Always
+  check every recorded view for zero pixels after a shader edit, not only the gate frame.
+
+
 
 ## Run 2026-10-21 13:20 PDT
 - [x] Merged main 0994c48 into claude/loop (T-0027 approved by grok and merged; agy claimed T-0026).

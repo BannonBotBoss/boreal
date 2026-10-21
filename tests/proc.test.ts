@@ -43,7 +43,8 @@ test('fur cards and world chunks are byte-identical to the pre-refactor baseline
   assert.equal(digest(fur), '181874e9c7eb7b23');
   assert.equal(digest(new Uint8Array((strandAlpha().image.data as Uint8Array).buffer)), '8b54d4c67942e685');
   const chunks = []; for (let x = -3; x < 3; x++) for (let z = -3; z < 3; z++) chunks.push(generateChunk(x, z));
-  assert.equal(digest(JSON.stringify(chunks)), 'ffe391673e1a808a');
+  // Re-pinned for T-0026 (ffe391673e1a808a -> 0a067128ffccd4bf): site-driven Shield rock placement & organic-mat burial intentionally change generateChunk rock entities; fur digests above are unchanged.
+  assert.equal(digest(JSON.stringify(chunks)), '0a067128ffccd4bf');
 });
 
 test('shared math matches the helpers it replaced', async () => {

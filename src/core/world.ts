@@ -7,6 +7,7 @@ import { STAGES, elevationGrid, flowGrid, lakeAt, sampleGrid, toWorld } from './
 import { cellAt, twi } from './stages/flow';
 import { carve, riverAt } from './stages/rivers';
 import { soilAt, type SoilKind } from './stages/soils';
+import { fastRockSite, placeRockSeed } from './rocks';
 import { f, choose, scope, tracing } from '../proc/trace';
 export const GENERATOR_VERSION = 1;
 export const WORLD_SEED = 1400;
@@ -43,7 +44,7 @@ export function terrainBand(y: number, x?: number, z?: number): 'water' | 'shore
 /** Inside a stage-2c channel (bed or the inner bank). */
 const inRiver = (x: number, z: number) => { const r = riverAt(STAGES.seed, x, z); return !!r && r.d < r.half + 1; };
 /** Revalidate land-bound encounters after restoring old events against the current terrain. */
-export const isDryLand = (x: number, z: number) => heightAt(x, z) >= LEVEL.shore
+export const isDryLand = (x: number, z: number, h = heightAt(x, z)) => h >= LEVEL.shore
   && !(STAGES.on && (lakeAt(STAGES.seed, x, z) || inRiver(x, z)));
 export const chunkSeed = (cx: number, cz: number, worldSeed = WORLD_SEED) =>
   f('chunk', 'chunkSeed', hash(`${GENERATOR_VERSION}:${f('chunk', 'worldSeed', worldSeed)}:${cx}:${cz}`));
@@ -55,19 +56,33 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
   for (let i = 0; i < 35; i++) {
     scope(`${cx}:${cz}:${i}`);
     const x = f('draw', 'x', (cx + rng()) * CHUNK_SIZE), z = f('draw', 'z', (cz + rng()) * CHUNK_SIZE);
-    const roll = rng(), seed = f('draw', 'seed', Math.floor(rng() * 0xffffffff)), rotation = f('draw', 'rotation', rng() * Math.PI * 2);
+    const roll = rng(), rawSeed = f('draw', 'seed', Math.floor(rng() * 0xffffffff)), rotation = f('draw', 'rotation', rng() * Math.PI * 2);
     const scale = f('draw', 'scale', .75 + rng() * .65);
-    if (!isDryLand(x, z) || Math.hypot(x, z) < 13) continue;
+    const h = heightAt(x, z);
+    if (!isDryLand(x, z, h) || Math.hypot(x, z) < 13) continue;
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
+    const seed = kind === 'rock' ? placeRockSeed(x, z, h, rawSeed, true) : rawSeed;
+    if (seed === undefined) continue;
     result.push({ key: `${cx}:${cz}:${i}`, kind, seed, generatorVersion: GENERATOR_VERSION, x, z, rotation, scale });
   }
-  // Independent detail stream preserves existing trees and encounter identities.
+  // Independent detail stream preserves existing trees and encounter identities; parent-offspring clustering on till, continuous outcrops on Shield bedrock.
   const stones = random(hash(`stones-v1:${worldSeed}:${cx}:${cz}`));
+  const parents: [number, number][] = [];
   for (let i = 0; i < 120; i++) {
     scope(`stones:${cx}:${cz}:${i}`);
-    const x = f('draw', 'x', (cx + stones()) * CHUNK_SIZE), z = f('draw', 'z', (cz + stones()) * CHUNK_SIZE);
-    const seed = f('draw', 'seed', Math.floor(stones() * 0xffffffff)), rotation = f('draw', 'rotation', stones() * Math.PI * 2);
-    if (heightAt(x, z) > LEVEL.shore) result.push({ key: `stones:${cx}:${cz}:${i}`, kind: 'rock', seed,
+    const u1 = stones(), u2 = stones();
+    let x = (cx + u1) * CHUNK_SIZE, z = (cz + u2) * CHUNK_SIZE;
+    if (i < 16) parents.push([x, z]);
+    else if (!STAGES.on || fastRockSite(x, z).rock < .35) {
+      const [px, pz] = parents[i % 16];
+      x = Math.min((cx + 1) * CHUNK_SIZE - .5, Math.max(cx * CHUNK_SIZE + .5, px + (u1 - .5) * 4));
+      z = Math.min((cz + 1) * CHUNK_SIZE - .5, Math.max(cz * CHUNK_SIZE + .5, pz + (u2 - .5) * 4));
+    }
+    x = f('draw', 'x', x); z = f('draw', 'z', z);
+    const rawSeed = f('draw', 'seed', Math.floor(stones() * 0xffffffff)), rotation = f('draw', 'rotation', stones() * Math.PI * 2);
+    const h = heightAt(x, z);
+    const seed = h > LEVEL.shore ? placeRockSeed(x, z, h, rawSeed, false) : undefined;
+    if (seed !== undefined) result.push({ key: `stones:${cx}:${cz}:${i}`, kind: 'rock', seed,
       generatorVersion: GENERATOR_VERSION, x, z, rotation, scale: 1 });
   }
   const forage = random(hash(`forage-v1:${worldSeed}:${cx}:${cz}`));

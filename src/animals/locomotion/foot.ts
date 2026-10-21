@@ -22,6 +22,7 @@ export interface FootStep {
   /** |speed| m/s, used by off-phase steps */ speed: number;
   /** ground point under this limb's rest position, world */ rest: { x: number; z: number };
   /** unit forward direction, world */ fwd: { x: number; z: number };
+  /** seconds an off-phase step takes when standing (default SETTLE_SECONDS; turning in place steps faster) */ settle?: number;
 }
 /** Seconds a foot takes to finish its step when the animal stops mid-stride (game calibration). */
 export const SETTLE_SECONDS = .25;
@@ -34,7 +35,7 @@ export function stepFoot(f: FootState, s: FootStep, ground: TerrainFn): { at: Ve
   if (!stance && f.planted) { f.planted = false; f.from = { ...f.at }; f.settle = 0; }
   if (f.planted) return { at: f.at, lift: 0 };
   const swingTime = Math.max(.1, (1 - s.duty) * s.cycle / Math.max(.05, s.speed));
-  if (!auto) f.settle = Math.min(1, f.settle + s.dt / (s.moving ? swingTime : SETTLE_SECONDS));
+  if (!auto) f.settle = Math.min(1, f.settle + s.dt / (s.moving ? swingTime : (s.settle ?? SETTLE_SECONDS)));
   const sp = auto ? (s.phase - s.duty) / (1 - s.duty) : f.settle, half = s.duty * s.cycle / 2;
   const ahead = auto ? (1 - s.phase) * s.cycle + half : s.moving ? half + s.speed * swingTime * (1 - f.settle) : 0, dir = s.reverse ? -1 : 1;
   const tx = s.rest.x + s.fwd.x * ahead * dir, tz = s.rest.z + s.fwd.z * ahead * dir, ty = ground(tx, tz);

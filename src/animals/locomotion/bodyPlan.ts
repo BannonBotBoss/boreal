@@ -23,7 +23,19 @@ export interface BodyPlan {
   /** hip-to-hock chord at rest as a share of hindLeg (knee bend standing) */ hindBend?: number;
   /** hind foot angle for solvers that hold one angle (rad from vertical, + toes ahead of the hock); bounding.ts picks it per frame (hindFoot) */ runFootAngle?: number;
   /** joint ranges of this body in gait (ik.ts JointLimits, e.g. LEPORID_LIMITS); default ik.ts CANID_LIMITS. Data, not a species switch. */ limits?: JointLimits;
+  /** split hind foot: the toes (metatarsophalangeal joint to the toe tip, m) out of hindFoot; the rest (hock to MTP) is the
+   *  metatarsus bone the IK solves and the gait's foot range applies to. The toes lie flat in stance (digitigrade). Omit = one bone. */ hindToes?: number;
+  /** shoulder blade as a fore chain segment (pivot to glenoid, m). With it the fore chain's top is the blade pivot, at the
+   *  hip-joint height (small therians: Fischer et al. 2002), the glenoid below and ahead of it at `scapulaRest`, and the shoulder
+   *  height no longer comes from `foreBend`. Omit = no blade (the shoulder joint is the top, at foreBend x foreLeg). */ scapula?: number;
+  /** blade angle at mid-stance (rad from vertical, + glenoid ahead of the pivot); default SCAPULA_REST */ scapulaRest?: number;
 }
+/**
+ * Blade at mid-stance: pika (Ochotona rufescens) scapula 46° at touchdown, 80° at lift-off (Fischer et al. 2002, JEB 205:1315,
+ * doi:10.1242/jeb.205.9.1315, read as the angle to the horizontal), mid-stance 63° to the horizontal = 27° (.47 rad) from vertical.
+ * The excursion each way is bounding.ts GIRDLE.scapulaMax (±.30 rad, same source).
+ */
+export const SCAPULA_REST = .47;
 /** Defaults for the optional shares [estimate: drawn to the reference photos; SKELETON-RULES "Body proportions ... approximate"]. */
 export const PLAN_DEFAULTS = { manus: .2, upperShare: .48, foreBend: .92, hindBend: .8, runFootAngle: .7 };
 
@@ -33,6 +45,7 @@ export interface Skeleton extends LegLayout {
   /** hind foot angle standing (rad, + toes ahead of the hock): plantigrade when near π/2 */ restFootAngle: number;
   /** shoulder joint height at rest */ shoulder: number;
   /** distance shoulder to hip along the back */ trunk: number;
+  /** split hind foot: toe length (MTP to tip, m), 0 = one foot bone (BodyPlan.hindToes) */ toes: number;
 }
 const req = <K extends keyof typeof PLAN_DEFAULTS>(p: BodyPlan, k: K) => (p[k] ?? PLAN_DEFAULTS[k]) as number;
 
@@ -46,11 +59,19 @@ export function skeletonOf(plan: BodyPlan): Skeleton {
   const shoulder = req(plan, 'foreBend') * plan.foreLeg, chord = req(plan, 'hindBend') * plan.hindLeg;
   const hockY = plan.hip - chord; // hock height standing (hip-to-hock chord vertical at rest)
   if (hockY > plan.hindFoot || hockY < 0) throw new Error(`body plan cannot stand: hock at ${hockY.toFixed(3)} m vs foot ${plan.hindFoot} m`);
-  const restFootAngle = Math.acos(hockY / plan.hindFoot);
-  const fore: LimbDims = { hip: shoulder, upper: up * foreIk, lower: (1 - up) * foreIk, foot: manus, footAngle: 0, footFlex: .6, bend: 'back' };
-  const hind: LimbDims = { hip: plan.hip, upper: up * plan.hindLeg, lower: (1 - up) * plan.hindLeg, foot: plan.hindFoot, footAngle: req(plan, 'runFootAngle'),
-    footFlex: .5, bend: 'forward', stance: plan.hindFoot * Math.sin(restFootAngle) };
-  // origin at the hip joints (the body pitches about them): hind limbs at z 0, fore limbs the trunk ahead
-  const fz = plan.shoulderZ - plan.hipZ, hips = [[-plan.track.fore, fz], [-plan.track.hind, 0], [plan.track.fore, fz], [plan.track.hind, 0]] as const;
-  return { plan, legs: { ...fore, hind }, hips, restFootAngle, shoulder, trunk: Math.abs(plan.hipZ - plan.shoulderZ) };
+  // split foot: the IK's foot bone is the metatarsus (hock to MTP); the toes lie flat ahead of the MTP standing
+  const toes = Math.max(0, plan.hindToes ?? 0), meta = plan.hindFoot - toes;
+  if (hockY > meta) throw new Error(`body plan cannot stand: hock at ${hockY.toFixed(3)} m vs metatarsus ${meta.toFixed(3)} m`);
+  const restFootAngle = Math.acos(hockY / meta);
+  // fore: with a blade (BodyPlan.scapula) the chain top is the blade pivot at hip height, the glenoid S·cos(rest) below it
+  const S = plan.scapula ?? 0, rest = plan.scapulaRest ?? SCAPULA_REST;
+  const fore: LimbDims = S > 0
+    ? { hip: plan.hip - S, girdle: S, girdleRest: rest, girdleSwing: 0, stance: S * Math.sin(rest), upper: up * foreIk, lower: (1 - up) * foreIk, foot: manus, footAngle: 0, footFlex: .6, bend: 'back' }
+    : { hip: shoulder, upper: up * foreIk, lower: (1 - up) * foreIk, foot: manus, footAngle: 0, footFlex: .6, bend: 'back' };
+  const hind: LimbDims = { hip: plan.hip, upper: up * plan.hindLeg, lower: (1 - up) * plan.hindLeg, foot: meta, footAngle: req(plan, 'runFootAngle'),
+    footFlex: .5, bend: 'forward', stance: meta * Math.sin(restFootAngle) };
+  // origin at the hip joints (the body pitches about them): hind limbs at z 0, fore limbs the trunk ahead (the blade pivot
+  // S·sin(rest) behind the glenoid, which stays at shoulderZ)
+  const fz = plan.shoulderZ - plan.hipZ + (S > 0 ? S * Math.sin(rest) : 0), hips = [[-plan.track.fore, fz], [-plan.track.hind, 0], [plan.track.fore, fz], [plan.track.hind, 0]] as const;
+  return { plan, legs: { ...fore, hind }, hips, restFootAngle, shoulder: S > 0 ? plan.hip - S * Math.cos(rest) : shoulder, trunk: Math.abs(plan.hipZ - plan.shoulderZ), toes };
 }

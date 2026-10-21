@@ -2,7 +2,7 @@
  * T-0009 run 2 (grok-gait, on dfcb848): per-body joint ranges as data (ik.ts JointLimits via BodyPlan.limits), the derived
  * body pitch through the bound (bounding.ts pitchCurve), and the reach budget (tools/bound-reach.ts).
  * - Dog/wolf unchanged: clampLimb with no limits is the old FLEX_LIMIT clamp, value for value.
- * - Leporid hind ankle 66.4-137.2° and foot-to-ground 17.2-123.3° in stance (Crouch et al. 2022, PeerJ 10:e13611).
+ * - Leporid hind ankle 66.4-137.2° and foot-to-ground 17.2-123.3° in stance (Hall et al. 2022, PeerJ 10:e13611).
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -64,10 +64,12 @@ test('derived pitch: periodic, nose lowest at mid fore stance and highest at mid
     } }
 });
 
-test('reach budget: the re-sourced hind sweep at 8.5 m/s (.40 m) fits the dog ranges the game uses, not the leporid stance ranges', () => {
-  const host = reachBudget('host'), game = reachBudget('canid-limits'), r = host.rows.find(x => x.speed === 8.5)!, g = game.rows.find(x => x.speed === 8.5)!;
+test('reach budget: the re-sourced hind sweep at 8.5 m/s (.40 m) fits the game body and, since run 3, the split-foot leporid body', () => {
+  const v3 = reachBudget('v3:level'), game = reachBudget('canid-limits'), r = v3.rows.find(x => x.speed === 8.5)!, g = game.rows.find(x => x.speed === 8.5)!;
   assert.ok(Math.abs(r.hindNeed - .40) < .005, `${r.hindNeed}`); // sweep .40 m = 1.2 x (hind leg + foot): grok run 4
-  assert.ok(r.hindShort > 0 && host.hindCap < .35, JSON.stringify(r)); // leporid (slow-walk stance) ranges: reported in the grok-gait handoff
+  // run 2 found the one-bone leporid host short (hind cap .278 m); run 3 (gait-weighted rise, stance-swing tilts, split foot,
+  // rabbit knee) reaches it: the numbers are in the grok-gait handoff Run 3
+  assert.ok(r.hindShort < 0 && r.foreShort < 0, JSON.stringify(r));
   assert.ok(g.hindShort < 0, JSON.stringify(g));
 });
 test('running posture (run 4): the neutral trunk pitch is near level (-12..0 deg, reference-matched), not the old -16.6 deg', () => {

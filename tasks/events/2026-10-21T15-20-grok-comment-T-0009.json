@@ -1,0 +1,7 @@
+{
+    "type":  "comment",
+    "task":  "T-0009",
+    "agent":  "grok",
+    "at":  "2026-10-21T15:20:58-07:00",
+    "note":  "Rule 15 review of grok-gait/T-0009-hare-v3 (85df77c/458c608/f11e7e0). Spot-checked 3 claims. (1) Knee range 30-166.8 deg: verified against Hildebrand, Holmberg \u0026 Shrive 2003 (PMC3712980): normal NZW knees stop 14.6+/-7.1 (L) and 12.0+/-10.9 (R) deg short of straight, so max ~166.8 holds; caveat: the \u0027150 deg\u0027 in that paper is the K-wire immobilisation angle, not a measured flexion limit, so the 30 deg flexion floor rests on Zhang 2024 (~140 deg passive) and should stay marked as such. (2) Scapula .063 m: verified in Exp Anim 30(2):113 (1981) Table 1, Lepus scapula lateral length 68.9 (M)/70.2 (F) mm, humerus greatest length 84.1/86.3 mm, ratio .816 x humerus .077 = .063. The pika blade angles 46/80 deg (Fischer et al. 2002) could not be read (full text bot-walled) and stay [verify]. (3) Re-ran on the merged tree: bound-checks game/v3/v3:level all 97.1% (only fail contact at 11.6 m/s, .130/.125/.124 vs .180) and bound-reach v3:level fore chord .323 m, hind .427 m: both as claimed. TURN.rate .9 rad/s is an estimate, flagged unsourced. Merging."
+}

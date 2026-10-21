@@ -160,7 +160,7 @@ questions, tsc + npm test. Baseline on dfcb848: bound-checks host **85.7 %** (to
   `JointLimits`; `clampLimb(a, front, limits = CANID_LIMITS)`. `CANID_LIMITS` is the old FLEX_LIMIT clamp value for value
   (test: 2000 random angles, both limbs, identical). `BodyPlan.limits` carries a body's ranges; nothing in the code names a
   species. `LEPORID_LIMITS` = hind ankle 66.4-137.2° and hind foot-to-ground 17.2-123.3° in stance, checked against the paper
-  (Crouch et al. 2022, PeerJ 10:e13611, PMC9208372, Results + Table 1: means ± SD 66.4 ± 13.4 / 137.2 ± 4.8 /
+  (Hall et al. 2022, PeerJ 10:e13611, PMC9208372, Results + Table 1: means ± SD 66.4 ± 13.4 / 137.2 ± 4.8 /
   17.2 ± 6.3 / 123.3 ± 3.6°; ankle = shank-to-metatarsus, foot = metatarsus-to-ground; 6 NZW rabbits, stance 0.40 ± 0.15 s).
   Knee and fore limb: no lagomorph goniometry found, so dog values [placeholder].
   - These are STANCE ranges of slow domestic-rabbit gait, not end-ranges. The standing hare (ankle 48.5° interior) is below
@@ -238,3 +238,146 @@ questions, tsc + npm test. Baseline on dfcb848: bound-checks host **85.7 %** (to
     That gives hind ≈ .21 at 8.5 m/s and ≈ .15 at 11.6 m/s.
 - **Open (mine):** run pitch too steep (−27° mean host); fore reach at 5-8.5 m/s short by .11-.17 m on either range set;
   host + LEPORID_LIMITS overtaking at ≤ 3 m/s.
+
+## Run 3 (grok-gait, 2026-10-21, based on 9527d2c grok/rabbit-clover; branch grok-gait/T-0009-hare-v3)
+Asked by Matthew (14:18 PT): grok's run-4 Needs for the Gait Builder — (1) fore reach so the trunk can run level, (2) the
+11.6 m/s contact (check the .180 source first), (3) an in-place turn that steps the feet, (4) a split hind foot bone + a
+sourced knee range so LEPORID_LIMITS can go in; re-score (game body >= 95 %), captures 0.25x/1x incl. the turn, frame
+questions, tsc + npm test. Correction applied: PeerJ 10:e13611 is **Hall et al. 2022** (Hall, Stubbs, Anderson, Greenacre,
+Crouch), not "Crouch et al." — fixed in ik.ts, tests/bound-limits.test.ts and this handoff.
+Baseline on 9527d2c (tools/bound-score.ts, bound-checks): game body (HARE_PLAN, dog ranges) **97.1 %** (11.6 m/s contact
+.120 vs .180 fails); host + LEPORID_LIMITS 80.0 %.
+- [x] Rule 15 review first (14:30 PT): grok's run 4, claims hold (duty line, 97.1 %, level-1 cost); event
+  tasks/events/2026-10-21T14-30-grok-gait-comment-T-0009.json. Committed 85df77c (with the Hall fix).
+- [x] Code (458c608): src/animals/locomotion/ik.ts, bodyPlan.ts, bounding.ts, foot.ts; tools/bound-plans.ts, bound-reach.ts,
+  bound-score.ts, bound-lab.ts; tests/bound-v3.test.ts (new, 7 tests), tests/bound-limits.test.ts. Nothing in hare.ts,
+  species.ts, bound.ts, pipeline.ts, gaits.ts or any mesh: those changes are the contract notes at the end of this section.
+- [x] Full `npx tsc --noEmit` on omen: 0 errors. `npm test`: 393 tests, 381 pass, 0 fail, 12 todo (on 458c608). Run interrupted at 15:08 PT
+  while committing this handoff; resumed 15:14 PT: no stale bench lock, capture Edge or capture Vite left (checked).
+
+### (4) Split hind foot + rabbit knee — done
+- bodyPlan.ts `BodyPlan.hindToes` (MTP to toe tip). The IK foot bone becomes the metatarsus (hock to MTP = hindFoot − toes);
+  the toes lie flat ahead of the MTP in stance (digitigrade). ik.ts `toeTarget` gives the MTP the IK must reach from the toe
+  tip; the foot state still holds the toe tip, so prints and slip are at the toe. `limbPoints` returns [top, hip, knee, hock,
+  MTP, toe tip] for a split foot (indices 1-4 unchanged, so hare.ts's three segments draw thigh/shank/metatarsus as before).
+- The paper's "foot" maps to the metatarsus: Hall et al. 2022 (PeerJ 10:e13611) define the foot segment from the ankle marker
+  to the MTP marker, and the foot angle as that segment to the ground. With the split, LEPORID_LIMITS' foot range sits on the
+  bone it was measured on. On a one-bone foot it lands on hock-to-tip (wrong bone, flagged in the ik.ts comment).
+- Split values: Lepus brachyurus bone means (Exp Anim 30(2):113, 1981, doi:10.1538/expanim1978.30.2_113, Tables 4-6, read
+  from the J-STAGE PDF 2026-10-21): talus 14.9/14.6, MT III 46.9/47.6, digit III phalanges 22.4/22.6 + 12.2/12.3 + 10.9 mm
+  (M/F). Toes = .424 of the ankle-to-tip span (talus as the tarsal span is [estimate]) → on HARE_BODY.hindFoot .132: toes
+  **.056**, metatarsus **.076 m**.
+- Knee: **interior 30-166.8°** (ik.ts LEPORID_KNEE, flex −1, the sign solveChain folds the hind knee: tested). Max extension:
+  normal NZW rabbit knees stop 14.6 ± 7.1° (L) / 12.0 ± 10.9° (R) short of straight, mean 13.2° (Hildebrand, Holmberg &
+  Shrive 2003, J Biomech Eng 125:887, PMC3712980). Flexion: immobilised "at 150 deg of flexion" (interior 30°) in the same
+  study; passive flexion ~140° at 0.077 Nm (Zhang, Liu & Zhou 2024, Glob J Ortho Res 4(4)). Hall et al. 2022 report no knee
+  angle (checked). These are passive end-ranges, not a gait range (none found for the leporid knee).
+- Bug found and fixed (mine, run 2): the stance foot range was applied with the pitch sign flipped (foot-to-ground is
+  90° − (psi + pitch), run 2 used − pitch). It showed once the trunk ran nose-up; test now reads the angle off the drawn bones.
+
+### (1) Fore reach so the trunk can run level — done
+- bodyPlan.ts `BodyPlan.scapula`: the shoulder blade as a fore chain segment. The chain top is the blade pivot at the hip-joint
+  height (Fischer et al. 2002 abstract: "a three-segmented limb with zigzag configuration ... displaced at the scapular pivot
+  or hip joint, both of which have the same vertical distance to the ground"), the glenoid below and ahead at SCAPULA_REST
+  .47 rad from vertical (pika scapula 46° → 80° to the horizontal, mid-stance 63°; the "to the horizontal" convention is how
+  I read it: full text bot-walled [verify]). Length **.063 m**: Lepus brachyurus scapula 68.9/70.2 mm vs humerus 84.1/86.3 mm
+  (same 1981 paper, Table 1) = .816 x humerus, on the snowshoe humerus .077 m.
+- bounding.ts `foreLimb`: per frame, the (blade, manus) pair that reaches, blade inside rest ± GIRDLE.scapulaMax (±.30 rad,
+  Fischer 2002), choosing the blade nearest parallel to the forearm ("two segments operate in matched motion during
+  retraction": Fischer 2002; the scapula ∥ forearm pairing is my reading [verify]). Elbow and carpus act inside the dog clamp
+  (no lagomorph fore goniometry found). The manus angle is scanned (carpal action) instead of held vertical.
+- Glide: NOT used. reachTargets' scapular glide has no lagomorph source and with the blade in the chain it would double count.
+- Two reach rules changed for every body (both derived, tested):
+  - STANCE_SWING: each pair's chord holds over the pitch its own stance sees, not the whole ±.2 rad. The pitch curve puts the
+    nose low in fore stance and high in hind stance; measured: fore stance <= +.095 rad, hind >= −.094 (1.68 m/s), from 3 m/s
+    <= −.008 / >= +.022. So the other sign's swing is capped at .5 x max (test checks every score speed, game and v3 bodies).
+  - The running rise with a gait (createBounding passes it): the rise that lets the most data duty fit (mean over 1.5-12 m/s of
+    the smaller pair's capacity/need), not the longest summed chords. The game body keeps 4.5 cm.
+- `RUN_POSE_LEVEL` (level 1, pitch0 0) is opt-in (`createBounding(..., GIRDLE, { pose: RUN_POSE_LEVEL })`); RUN_POSE (level .25,
+  grok's) stays the default so the game is unchanged until grok switches.
+- Reach (tools/bound-reach.ts, after; before = 9527d2c):
+  | body | trunk | rise | fore chord | hind chord | fore cap | hind cap | fore need/short @ 8.5 | @ 11.6 |
+  |---|---|---|---|---|---|---|---|---|
+  | game (HARE_PLAN, dog ranges), before | level .25 | 4.5 cm | .227 | .541 | .305 | .619 | .309 / +.004 | .422 / +.116 |
+  | game, level, before | level 1 | 4.5 cm | **.093** | .541 | .171 | .619 | .309 / +.138 | .422 / +.251 |
+  | game, after | level .25 | 4.5 cm | .251 | .555 | .329 | .633 | .309 / −.020 | .422 / +.092 |
+  | game, level, after | level 1 | 1.0 cm | .254 | .275 | .332 | .353 | .309 / −.022 | .422 / +.090 |
+  | game + blade, level | level 1 | 1.5 cm | .323 | .273 | .323 | .351 | .309 / −.014 | .422 / +.099 |
+  | split + LEPORID | level .25 | 2.5 cm | .261 | .414 | .339 | .492 | .309 / −.030 | .422 / +.083 |
+  | **v3 = split + blade + LEPORID, level** | level 1 | 1.5 cm | **.323** | .427 | .323 | .505 | .309 / −.014 | .422 / +.099 |
+  Level trunk on the v3 body: neutral pitch **0°** (was −9.2°), swing −10.5..+10.7° (capture states), fore chord .323 m.
+
+### (2) Contact at 11.6 m/s — **THE .180 TARGET IS NOT SOURCED**
+- .180 is the score's "data duty", the mean of hind .200 and fore .160 at 11.6 m/s. Both are clamp floors in grok's gait data
+  (bound.ts boundDuty clamps sweep/stride to [.20, .60]; HARE_AGENT.gait foreMin .16), not measurements at 11.6 m/s.
+  grok's own sweep rule (.40 m hind sweep, Walter & Carrier 2007 by dynamic similarity) gives sweep/stride = .40/2.636 =
+  **.152** there; the .20 floor overrides it. Hildebrand 1977: contact "< 18 %" only in individual strides of exceptional
+  cursors, and speed cannot be derived from contact intervals; jackrabbits "as low as 16-18 %" (Lagomorpha Locomotion 2021)
+  is a minimum with no speed and no fore/hind split. Hildebrand's Lepus fore <= 70 % of hind gives fore ~.106, not .16.
+- Not tuned toward. Rig contact at 11.6: game .120 → .130; v3 level .124 (fails the 80 %-of-data check against .180).
+- What-if (not applied, grok's data): duty floor .15 with foreMin kept → data .152, rig .115 / .110, still FAIL (the fore
+  floor .16 asks .42 m of fore sweep vs .32 m chord); duty floor .15 and no foreMin (fore = .7 x hind = .106) → 11.6 m/s
+  scores **100 %** on both the game and the v3 body. Contract note below.
+
+### (3) Turning in place — done (opt-in)
+- bounding.ts `TURN` + `BoundOptions.turnInPlace`: a standing body yaws toward the asked heading at TURN.rate and re-plants
+  a planted foot once it is > 3 cm from where it should stand for the current heading (the planted-foot / re-plant-on-
+  threshold pattern of procedural walkers, reused from the threejs-procedural-spider model foot.ts already follows). Sequence:
+  largest error first, one foot per pair at a time, so a fore and a hind foot are always down; turn steps take .15 s.
+- Turn rate **.9 rad/s (52°/s, 90° in 1.8 s) [estimate]**: no measured leporid turn-in-place rate found. Slip stays
+  <= .06 mm at .6-2.4 rad/s, so slip is not the limit; .9 keeps the planted feet within ~24-27° of sideways splay (abduction),
+  1.6 rad/s goes to 32-35°, 2.4 to 39-44°.
+- Signals: BoundFrame.heading is the body's heading (it lags the asked one while turning), plus `turning` and `turnSteps`.
+  Off by default (old behaviour, heading taken at once) because hare.ts must draw fr.heading, not a.heading: contract note.
+- Tests (tests/bound-v3.test.ts): ±90/180° turns on game and v3: rate cap every frame, a fore and a hind foot always down,
+  slip <= 1 cm, done within |angle|/rate + .6 s, >= 4 re-plants, feet end within 3 cm of their rest spots, body not moved.
+
+### Re-score (tools/bound-score.ts, bound-checks; calibration tests/bound.test.ts "metric calibration")
+| body | before (9527d2c) | after |
+|---|---|---|
+| **game (HARE_PLAN as built: dog ranges, one-bone foot, level .25)** | **97.1 %** | **97.1 %** (11.6 contact .120 → .130 vs .180) |
+| host one-bone foot + LEPORID_LIMITS | 80.0 % | 97.1 % (wrong bone for the foot range: comparison only) |
+| split foot + LEPORID_LIMITS (rabbit knee) | — | **97.1 %** |
+| split + LEPORID, level trunk | — | 97.1 % |
+| v3 = split + blade + LEPORID, level trunk (proposed) | — | **97.1 %** |
+| game, level trunk (no blade) | 85.7 % | 94.3 % (8.5 m/s flex timing 3/10) |
+| game + blade, level trunk | — | 94.3 % |
+| host one-bone + LEPORID, level | — | 85.7 % |
+Every body's only remaining failure at >= 95 %: 11.6 m/s contact vs the unsourced .180. Score files:
+/workspace/locomotion/T-0009/v3/scores/.
+
+### Captures (bench lock tools/bench-lock.mjs, 14:58-15:01 PT, released; headless Edge closed, capture Vite :5395 closed)
+/workspace/locomotion/T-0009/v3/: game-8.5-1x, game-8.5-0.25x, v3level-8.5-1x, v3level-8.5-0.25x, v3level-3-0.25x,
+v3level-11.6-1x, turn-v3level-1x (asks +120° at 1 s, back to 0 at 5 s), turn-v3level-0.25x — frames, states.json, .mp4 and
+-sheet.jpg each. Playable: http://127.0.0.1:5394/tools/bound-lab.html?plan=v3:level&speed=8.5&ts=0.25 and
+?plan=v3:level&turn=120 (omen Vite PID 37144, this worktree).
+Frame questions (rule 6):
+- Feet planted in stance? Yes: max planted slip .09 mm (v3 8.5), .06 mm (turn), 0 leashes in every capture.
+- Trunk level? v3 level: pitch mean +0.3°, −10.5..+10.7° (the derived bound swing); game: mean −9.0°, −19.7..+1.4°.
+- Hind prints ahead of the fore prints? Yes (v3level-8.5-0.25x f0080: orange hind prints right of/ahead of blue fore).
+- Split foot visible? Yes: the hind toes lie flat ahead of the MTP through stance and the metatarsus rolls up to toe-off.
+- Both suspensions? Yes at 8.5 m/s (gathered and extended: 109/200 airborne frames at 0.25x); spine flex −.30..+.29 rad.
+- Turn steps the feet? Yes: turn-v3level-0.25x 21 re-plants for 0 → 97.6° in 2 s, never fewer than 2 feet down (one fore,
+  one hind); top-view inset shows hollow = stepping, filled = planted. The side view of a turning body is foreshortened.
+- Does it look like nature? Gait timing yes; the stick body is not a hare mesh (art owner item). The turn rate is an estimate.
+
+### Still failing / open
+- 11.6 m/s contact against .180 (unsourced target, above). Hind cap .505 vs need .527, fore .323 vs .422 at that speed.
+- Fore limb ranges are still dog goniometry [placeholder]; blade/forearm pairing and scapula angle convention [verify].
+- The split's tarsal span and the turn rate are [estimate]s. Level trunk without the blade fails flex timing at 8.5 m/s.
+
+### Contract notes (owner: grok — not applied by me)
+1. hare.ts HARE_BODY: add `hindToes: .056, scapula: .063` (sources above). HARE_PLAN: add
+   `hindToes: HARE_BODY.hindToes, scapula: HARE_BODY.scapula, limits: LEPORID_LIMITS` (import from './locomotion/ik').
+   createBounding call (hare.ts:118): `createBounding(HARE_SKELETON, HARE_AGENT.gait!, groundAt, { x: a.x, z: a.z, heading:
+   a.heading }, GIRDLE, { pose: RUN_POSE_LEVEL, turnInPlace: true })` (import GIRDLE, RUN_POSE_LEVEL from './locomotion/bounding').
+   Scores 97.1 % (v3:level). The three drawn leg segments then are thigh/shank/metatarsus; P[5] (toe tip) is new: draw the
+   toes from P[4] to P[5] on the hind legs; a fore P[0] → P[1] is the blade (inside the body, need not be drawn).
+2. hare.ts:125: `h.root.rotation.y = fr.heading` (not a.heading), needed with turnInPlace so the body follows the stepped turn.
+3. pipeline.ts alertTurn: keep the HARE 0 freeze (Emmel 2024) during the alert hold; with (1)-(2) any heading change at
+   speed 0 (scan, after the hold) now turns by stepping. For the flee start, hold speed until |fr.heading − a.heading| < ~20°
+   if you want the turn stepped rather than taken in the first stride (optional).
+4. bound.ts / species.ts duty: the 11.6 m/s ".180" is the clamp floors. Suggest duty floor .15 (grok's sweep rule gives .152
+   at 11.6) and drop foreMin .16 (fore = foreShare x hind = .106, Hildebrand's fore <= 70 % of hind); what-if scores 11.6 m/s
+   100 % on both bodies. Or keep them and label .180 [estimate]. Either way the contact check should not cite it as measured.
+5. T-0009-grok.md line 11 still says "Crouch et al. 2022": Hall et al. 2022.

@@ -42,8 +42,16 @@ Plan (Grok lead, 12:23 PT): pick up Gait Builder's rig (grok-gait/T-0009-hare-sk
   | bound: hind feet ahead of forefeet, gathered/extended phases? | 45 % | 60 % | real three-segment legs alternate gathered/extended; hind overtaking is not readable; contact short of the sourced duty at speed (bound-checks 85.7 %) |
   | flight speed/acceleration like the reference? | 55 % | 75 % | 10 m/s^2 ramp over the first bounds; the reference leaves frame by 4.7 s, ours is tracked so this is judged from speed only |
   | clover visibly thins as grazed (in game)? | 50 % | 45 % | the time-lapse 100 -> 0 % is hard to tell apart at the wolf's camera distance; only the stolon disc darkens |
-  | looks like a snowshoe hare? | 30 % | 30 % | low-poly body; needs a furred mesh |- [x] 8 npx tsc --noEmit clean; npm test 379: 367 pass, 0 fail, 12 todo (7a4be8f, flaky test did not flake)
-- [ ] 9 Submit only if every gate >= 95 %
+  | looks like a snowshoe hare? | 30 % | 30 % | low-poly body; needs a furred mesh |
+- [x] 8 npx tsc --noEmit clean; npm test 379: 367 pass, 0 fail, 12 todo (7a4be8f, flaky test did not flake)
+- [ ] 9 NOT SUBMITTED: no gate is >= 95 %. Task stays open.
+Exact next steps (grok): (a) alert pose: half sit-up on all fours (head raised, forelegs straight), not the vertical
+  meerkat pose, and keep the head attached to the body pivot; (b) clover thinning: stronger read at 5-10 m (fewer clumps,
+  bare soil colour, flowers removed first), re-check with the lapse stills; (c) apply rabbit ankle 66-137 deg / foot
+  17-123 deg (PeerJ 2022) to the hind chain once ik.ts takes per-species limits; (d) re-record and re-score.
+Needs from another agent: art owner: furred snowshoe-hare mesh (~45 cm, short dark-rimmed ears, white hind feet) - caps
+  the look score; Gait Builder: body pitch through the bound (unsourced, 0 now), fore reach at speed (the sourced duty needs a
+  .63 m hind sweep at 8.5 m/s vs a .31 m chord), per-species FLEX_LIMIT in ik.ts.
 ## Run 2 progress (keep current: board rule 9)
 Plan (Matthew via Grok, 11:13 PT): 1 reference, 2 bound gait, 3 graze/alert poses + visible thinning, 4 registry + lazy
 regrowth + state fields/rewind, 5 re-record and re-score; submit only if every question >= 95 %.

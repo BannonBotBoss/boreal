@@ -54,7 +54,7 @@ res.record = await session(async ({ go, ev }) => {
   const pick = await ev(pickJs); const target = pick.best && Math.hypot(pick.best.x - p.x, pick.best.z - p.z) < 8 ? pick.best : p;
   // STAGED (stated in the handoff): the patch is set to 45 % so a part-grazed patch is on screen; at the real cropping rate
   // (20.5 mg DM/s) one hare takes ~6 h of cropping to graze a 1 m patch out, far beyond a 10 s clip.
-  await ev(`(() => { const q = borealHares.clover.get(${JSON.stringify(target.key)}); q.units = q.max * .45; return q.units; })()`);
+  await ev(`(() => { const q = borealHares.clover.get(${JSON.stringify(target.key)}); return borealHares.clover.stage(q.key, q.max * .45).units; })()`);
   const staged = await ev(stageJs(target)); const frames = []; const t0 = Date.now();
   const cdpKey = async (type) => ev(`(() => { window.dispatchEvent(new KeyboardEvent('${type}', { key: 'w', code: 'KeyW', bubbles: true })); return 1; })()`);
   let k = 0, pressed = false, released = false;

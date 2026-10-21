@@ -26,8 +26,16 @@ export const STATE_FIELDS = {
     sprintTime: 'snapshot', sprintSpent: 'snapshot', exhausted: 'snapshot' },
   /** main.ts player record */
   player: { x: 'snapshot', z: 'snapshot', heading: 'snapshot', abilities: 'snapshot', bornSec: 'clock' }, // age from world clock (frozen with the menu)
+  /** core/agent Agent (hare and every pipeline species; Grok Bot T-0009): levels and action are interaction state */
+  agent: { key: 'clock', species: 'clock', rng: 'clock', // identity + seeded behaviour stream (not rewound: a restore replays new draws)
+    x: 'snapshot', z: 'snapshot', heading: 'snapshot', action: 'snapshot', goal: 'snapshot', timer: 'snapshot', elapsed: 'snapshot',
+    energy: 'snapshot', stamina: 'snapshot', relaxation: 'snapshot', target: 'snapshot', food: 'snapshot', contact: 'snapshot',
+    zig: 'snapshot', sensed: 'snapshot', speed: 'snapshot' },
+  /** core/clover CloverPatch: shape from the seed; units/at/stolon are the grazed delta (regrowth since `at` is closed-form clock) */
+  cloverPatch: { key: 'clock', x: 'clock', z: 'clock', r: 'clock', light: 'clock', max: 'clock',
+    units: 'snapshot', at: 'snapshot', stolon: 'snapshot', why: 'snapshot' },
   /** world-wide fields */
-  world: { timeOfDay: 'clock', season: 'clock', weather: 'clock', groundYears: 'clock', deltaExpiry: 'clock', standAge: 'clock' },
+  world: { timeOfDay: 'clock', season: 'clock', weather: 'clock', groundYears: 'clock', deltaExpiry: 'clock', standAge: 'clock', cloverRegrowth: 'clock' },
 } as const satisfies Record<string, Record<string, TimeTag>>;
 export type StateGroup = keyof typeof STATE_FIELDS;
 export const tagOf = (group: StateGroup, field: string): TimeTag | undefined => (STATE_FIELDS[group] as Record<string, TimeTag>)[field];

@@ -38,6 +38,7 @@ import { appearancePanel, restoreLooks } from './ui/appearancePanel';
 import { runJobs } from './core/interest';
 import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
+import { SAVE_KEY_CLOVER, cloverStateJSON, loadCloverState } from './core/clover';
 import { createLoading } from './ui/loading';
 import { settle, startup } from './render/startup';
 import { createMenu } from './ui/menu';
@@ -127,12 +128,12 @@ function perform() {
 // ONE menu (ui/menu) for start and pause. The world clock freezes while the menu is open (Matthew): age/growth/seasons
 // hold, the renderer holds a frozen frame, and resume continues from that exact snapshot.
 function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(); return; } chrono.close(); paused = true; pauseClock(); element('pause').textContent = 'Resume'; menu.show('pause'); sfx.pauseCue(); }
-function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
+function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); localStorage.setItem(SAVE_KEY_CLOVER, cloverStateJSON()); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
 const menu = createMenu({
   hasSave: () => [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND].some(k => { try { return !!localStorage.getItem(k); } catch { return false; } }),
   seed: () => STAGES.seed, staged: () => STAGES.on, music: () => musicPanel(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
   newWorld: o => { // fresh world: forget the per-world saves (settings, music and the probe stay)
-    for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
+    for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, SAVE_KEY_CLOVER, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
     try { localStorage.setItem('boreal.seed.v1', String(o.seed)); } catch { /* blocked */ } renderStore.set('world.stagedTerrain.v2', o.staged); location.reload(); },
   warning: () => { const born = Number(localStorage.getItem('boreal.player.born') ?? worldSec()); const p = view.playable;
     return lifespanWarning(p.id, ageYears(p.id, born, worldSec()), p.label); },
@@ -182,8 +183,8 @@ setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); } catch 
     if (kg > 0) record({ kind: 'droppings', x: a.x, z: a.z, t: GROUND.years, m: kg }, 3); } // residue reaches the ground when the delta expires
   if (Math.abs(view.playerBrain.speed) > .3 && ground.sink > .002) record({ kind: 'footprint', x: player.x, z: player.z, t: GROUND.years, m: ground.sink });
   prune();
-  try { localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); } catch { /* storage blocked */ } }, 1000);
-loadWeather(localStorage.getItem(SAVE_KEY_WEATHER)); loadDeltas(localStorage.getItem(SAVE_KEY_DELTAS));
+  try { localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); localStorage.setItem(SAVE_KEY_CLOVER, cloverStateJSON()); } catch { /* storage blocked */ } }, 1000);
+loadWeather(localStorage.getItem(SAVE_KEY_WEATHER)); loadDeltas(localStorage.getItem(SAVE_KEY_DELTAS)); loadCloverState(localStorage.getItem(SAVE_KEY_CLOVER));
 const handles = createHandles(view.camera, canvas, view.scene);
 const inspector = createInspector(view, canvas, handles);
 restoreLooks((k, g) => view.setAppearance(k, g));

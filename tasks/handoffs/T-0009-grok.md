@@ -16,11 +16,23 @@ regrowth + state fields/rewind, 5 re-record and re-score; submit only if every q
   and four procedural legs (big hind feet), ears and a hip-pivot body in the hare model (HARE_BODY from ADW measurements).
   Shared pose code: poseHare() in src/animals/hare.ts, used by the game and tools/hare-strip.ts (side-on lab recording that
   runs the real pipeline at the reference's 6 fps).
-- [~] 3 Poses done (hunched graze with ears back, half sit-up scan, full sit-up alert, tucked rest); clover thinning next.
+- [x] 3 Poses (hunched graze with ears back, half sit-up scan, full sit-up alert, tucked rest). Clover thinning
+  (render/clover.ts): clumps shown = leaf share, remaining clumps shorter (stubble .35 + .65 x share), a stolon/soil disc
+  under each patch shows through; grass blades thinned to 20 % on patches (setCoverSource wrapper in animals/hare.ts,
+  seeded patch layout memoised per tile).
+- [x] 4 core/transactions.ts: registry keyed by kind pair; rows 'clover|sun' regrow (lazy) and '<eater>|clover' graze (runs
+  only while CONTACTS has the feed pair). Regrowth is closed form: CLOVER_STATE stores the grazed delta {units, at, stolon,
+  by}; unitsAt = units + k x sunSeconds(at, now) from per-game-day cumulative tables (daylight x temperature factor);
+  settle on read; no per-frame regrow loop. STATE_FIELDS groups 'agent' and 'cloverPatch' (+ world.cloverRegrowth);
+  saved under boreal.clover.v1 (saveAll, 1 s autosave, new-game clear); hares.snapshot captures every agent snapshot
+  field + the grazed deltas and restores them (contacts re-begun). Tests: tests/clover-lazy.test.ts (lazy = stepped within
+  3 %, additive, capped refill; contact gating; save/reload; rewind to before a graze; every field tagged).
+- [ ] 5 Re-record + re-score.
 - [ ] 4 core/transactions.ts registry (hare|clover graze, sun|clover regrow) run from CONTACTS; lazy regrowth from sun-seconds;
   STATE_FIELDS hareAgent + clover; save + rewind
 - [ ] 5 Re-record and re-score
-Exact next step: step 3 clover thinning (render/clover.ts: clump height x leaf share, grass cover suppressed on patches), then step 4.
+Exact next step: step 5: node tools/rabbit-record.mjs http://127.0.0.1:5204 C:\dev\rabbit-rec3 and the hare-strip lab
+  recording at 6 fps; contact sheets; re-score every gate question; submit only if all >= 95 %.
 
 ## Needs from another agent
 - Gait Builder (grok-gait): a lagomorph rig on the shared locomotion controller so the hare's legs are real limbs, not

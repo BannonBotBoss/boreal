@@ -12,9 +12,12 @@ import { heightAt, WORLD_SEED } from '../core/world';
 import { stream, range } from '../proc/rng';
 import { LEVEL } from '../core/tuning';
 import { f, scope } from '../proc/trace';
-import { windAt, climate, WEATHER } from '../core/weather';
+import { windAt } from '../core/weather';
 import { siteAt, footprintsIn, covered } from '../core/flora/site';
-import { createCloverField, cloverSuitability, CLOVER } from '../core/clover';
+import { createCloverField, cloverSuitability, CLOVER, CLOVER_STATE, type CloverDelta } from '../core/clover';
+import { worldSec } from '../core/worldClock';
+import { defaultCover, setCoverSource } from '../render/grass/cover';
+import { cloverPatchesInTile } from '../core/clover';
 import { createAgent, stepAgent, poseOf, actionName, moods, modulators, type Agent, type Other } from '../core/agent/pipeline';
 import { HARE_AGENT } from '../core/agent/species';
 import { boundCadence, boundDuty, boundLift, boundStride, footState } from '../core/agent/bound';
@@ -124,13 +127,23 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
 export function createHares(scene: THREE.Scene) {
   const hares: Hare[] = []; let nextId = 1; const pending: number[] = [];
   const spawnRng = stream(WORLD_SEED, 'hares-v1'); // seeded: one stream for placement, one per hare id for behaviour
-  const clover = createCloverField((x, z) => siteAt(x, z), (x, z, r) => covered(footprintsIn(x - r, z - r, x + r, z + r), x, z, r * .5));
+  const blockedAt = (x: number, z: number, r: number) => covered(footprintsIn(x - r, z - r, x + r, z + r), x, z, r * .5);
+  const clover = createCloverField((x, z) => siteAt(x, z), blockedAt, WORLD_SEED, () => worldSec());
+  // Clover outcompetes grass where it grows (a dense stoloniferous mat): grass blades thin to 20 % inside a patch, blended
+  // over its rim. The patch layout is seeded, so the grass packer can ask for any tile without the live field (memoised).
+  const layout = new Map<string, { x: number; z: number; r: number }[]>();
+  const presence = (x: number, z: number) => { const tx = Math.floor(x / CLOVER.tile), tz = Math.floor(z / CLOVER.tile); let best = 0;
+    for (let j = tz - 1; j <= tz + 1; j++) for (let i = tx - 1; i <= tx + 1; i++) { const k = `${i}:${j}`; let ps = layout.get(k);
+      if (!ps) { ps = cloverPatchesInTile(i, j, (a, b) => siteAt(a, b), blockedAt).map(p => ({ x: p.x, z: p.z, r: p.r })); if (layout.size > 4000) layout.clear(); layout.set(k, ps); }
+      for (const p of ps) { const d = Math.hypot(p.x - x, p.z - z); if (d < p.r * 1.15) best = Math.max(best, 1 - Math.max(0, (d - p.r * .85) / (p.r * .3))); } }
+    return best; };
+  setCoverSource((x, z) => { const c = defaultCover(x, z), p = presence(x, z); return p > 0 ? { ...c, density: c.density * (1 - .8 * p) } : c; });
   const cloverDraw = createCloverRenderer(scene, clover);
   const walkable = (x: number, z: number) => heightAt(x, z) > LEVEL.hareWater;
   const habitat = (x: number, z: number) => cloverSuitability(siteAt(x, z));
   const patchLabels: THREE.Sprite[] = [];
   function spawn(px: number, pz: number) {
-    const near = [...clover.list()].filter(p => { const d = Math.hypot(p.x - px, p.z - pz); return d > HARE.spawnMin && d < HARE.spawnMax && p.units > 0; });
+    const near = [...clover.list()].filter(p => { const d = Math.hypot(p.x - px, p.z - pz); return d > HARE.spawnMin && d < HARE.spawnMax && clover.unitsOf(p) > 0; });
     for (let tries = 0; tries < 12; tries++) {
       const a = spawnRng() * Math.PI * 2, d = range(spawnRng, [HARE.spawnMin, HARE.spawnMax]), pick = spawnRng(), onClover = near.length > 0 && spawnRng() < HARE.nearClover;
       const p = onClover ? near[Math.floor(pick * near.length)] : undefined;
@@ -154,7 +167,7 @@ export function createHares(scene: THREE.Scene) {
   function update(dt: number, wolf: WolfInfo): HareEvent[] {
     const events: HareEvent[] = []; time += dt; lastWolf = wolf;
     const daylight = wolf.daylight ?? 1, speed = wolf.speed ?? (wolf.moving ? 2 : 0);
-    clover.ensure(wolf.x, wolf.z, HARE.cloverRadius, 1); clover.regrow(dt, daylight, climate(WEATHER.day, WEATHER.hour).tC, WEATHER.day); cloverDraw.update(dt);
+    clover.ensure(wolf.x, wolf.z, HARE.cloverRadius, 1); cloverDraw.update(dt); // regrowth is lazy (core/clover sunSeconds)
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }
     for (let k = 0; k < HARE.count && hares.length + pending.length < HARE.count; k++) spawn(wolf.x, wolf.z); // bounded: spawn() can fail (no dry land in range)
     while (hares.length > HARE.count) remove(hares[hares.length - 1]); // count lowered in settings
@@ -179,21 +192,29 @@ export function createHares(scene: THREE.Scene) {
     for (const h of hares) { const a = h.agent, m = modulators(a, a.sensed.level), md = moods(a), p = a.food ? clover.get(a.food) : a.target?.key ? clover.get(a.target.key) : undefined;
       h.label!.position.set(a.x, heightAt(a.x, a.z) + 1.25, a.z);
       h.label!.userData.draw([`${actionName(a)}`, `why: ${a.goal}`.slice(0, 40), `E ${a.energy.toFixed(1)} S ${a.stamina.toFixed(0)} R ${a.relaxation.toFixed(0)} hunger ${md.hunger.toFixed(2)}`,
-        `threat ${a.sensed.level.toFixed(2)} (notice ${m.noticeAt.toFixed(2)})${p ? ` clover ${Math.round(p.units)}` : ''}`], a.action === 'flee' ? '#ffb4a0' : a.action === 'alert' ? '#ffe39a' : '#f4f1e6'); }
+        `threat ${a.sensed.level.toFixed(2)} (notice ${m.noticeAt.toFixed(2)})${p ? ` clover ${Math.round(clover.unitsOf(p))}` : ''}`], a.action === 'flee' ? '#ffb4a0' : a.action === 'alert' ? '#ffe39a' : '#f4f1e6'); }
     const near = [...clover.list()].map(p => ({ p, d: Math.hypot(p.x - wolf.x, p.z - wolf.z) })).filter(e => e.d < 14).sort((a, b) => a.d - b.d).slice(0, 6);
     while (patchLabels.length < near.length) { const s = labelSprite(); s.scale.set(2, .55, 1); scene.add(s); patchLabels.push(s); }
-    patchLabels.forEach((s, i) => { const e = near[i]; s.visible = !!e; if (!e) return; s.position.set(e.p.x, heightAt(e.p.x, e.p.z) + .45, e.p.z);
-      s.userData.draw([`${Math.round(e.p.units)}/${e.p.max} (${Math.round(100 * e.p.units / e.p.max)}%)${e.p.units <= 0 ? ' grazed out' : ''}`, `${(e.p.units * CLOVER.mgPerUnit / 1000).toFixed(0)} g leaf, stolon ${e.p.stolon.toFixed(0)} g`], '#c8f0a8'); });
+    patchLabels.forEach((s, i) => { const e = near[i]; s.visible = !!e; if (!e) return; s.position.set(e.p.x, heightAt(e.p.x, e.p.z) + .45, e.p.z); const u = clover.unitsOf(e.p);
+      s.userData.draw([`${Math.round(u)}/${e.p.max} (${Math.round(100 * u / e.p.max)}%)${u <= 0 ? ' grazed out' : ''}`, `${(u * CLOVER.mgPerUnit / 1000).toFixed(0)} g leaf, stolon ${e.p.stolon.toFixed(0)} g`], '#c8f0a8'); });
   }
-  type HareShot = [number, number, number, number, number][];
-  /** Photo-mode rewind: positions only; hares missing from a snapshot are hidden while it is shown. */
+  /** the agent fields STATE_FIELDS.agent tags 'snapshot' */
+  const AGENT_SNAP = ['x', 'z', 'heading', 'action', 'goal', 'timer', 'elapsed', 'energy', 'stamina', 'relaxation', 'target', 'food', 'contact', 'zig', 'sensed', 'speed'] as const;
+  type HareShot = { hares: { id: number; hop: number; a: Record<string, unknown> }[]; clover: [string, CloverDelta][] };
+  /** Photo-mode rewind: every hare's snapshot fields (position, action, levels, feed contact) and the clover grazed deltas;
+   *  hares missing from a snapshot are hidden while it is shown. Contacts are re-begun/ended on the bus to match. */
   const snapshot: SnapshotSource<HareShot> = {
-    capture: () => hares.map(h => [h.id, h.x, h.z, h.heading, h.hopPhase]),
+    capture: () => ({ hares: hares.map(h => ({ id: h.id, hop: h.hopPhase, a: Object.fromEntries(AGENT_SNAP.map(k => [k, structuredClone(h.agent[k])])) })),
+      clover: [...CLOVER_STATE].map(([k, d]) => [k, { ...d }]) }),
     restore(shot) {
       for (const h of hares) {
-        const s = shot.find(e => e[0] === h.id); h.root.visible = !!s; if (!s) continue;
-        [, h.x, h.z, h.heading, h.hopPhase] = s; h.root.position.set(h.x, heightAt(h.x, h.z), h.z); h.root.rotation.y = h.heading;
+        const s = shot.hares.find(e => e.id === h.id); h.root.visible = !!s; if (!s) continue;
+        if (h.agent.contact) CONTACTS.end(h.agent.key, h.agent.contact);
+        Object.assign(h.agent, structuredClone(s.a)); h.hopPhase = s.hop; h.x = h.agent.x; h.z = h.agent.z; h.heading = h.agent.heading;
+        if (h.agent.contact) CONTACTS.begin({ a: h.agent.key, b: h.agent.contact, at: [h.x, 0, h.z], normal: [0, 1, 0], kind: 'feed', source: 'agent:feed' });
+        h.root.position.set(h.x, heightAt(h.x, h.z), h.z); h.root.rotation.y = h.heading;
       }
+      CLOVER_STATE.clear(); for (const [k, d] of shot.clover) CLOVER_STATE.set(k, { ...d }); clover.reload();
     },
   };
   const api = { update, snapshot, list: () => hares as readonly Hare[], clover, cloverDraw, CLOVER, wolf: () => lastWolf };

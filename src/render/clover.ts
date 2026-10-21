@@ -2,7 +2,9 @@
  * Clover ground cover (Grok Bot, rabbit-clover): ONE InstancedMesh for every clover patch (core/clover), so the whole field is
  * one draw call. Each instance is a procedural clump of trifoliate leaves (three obovate leaflets on a petiole, a white
  * flower head in some). A patch shows clumps in proportion to its units left, so it visibly thins as it is grazed and
- * fills in as it regrows. Rebuilt at most 4x a second, only when a shown count or the patch set changed.
+ * fills in as it regrows. Grazing takes the leaf tops first, so the clumps left are also shorter (height x (0.35 + 0.65 x leaf
+ * share)), and a ground disc of runners and soil (the uneaten stolon residual) shows through as the patch thins.
+ * Rebuilt at most 4x a second, only when a shown count or the patch set changed.
  */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -10,7 +12,7 @@ import { hash, random } from '../proc/rng';
 import { heightAt } from '../core/world';
 import type { CloverField, CloverPatch } from '../core/clover';
 
-export const CLOVER_DRAW = { clumpsPerM2: 70, cap: 14000, leaves: 5, spread: .07, leaflet: .02, petiole: [.05, .09] as [number, number], flowerShare: .12, rebuildSeconds: .25 };
+export const CLOVER_DRAW = { stubble: .35, clumpsPerM2: 70, cap: 14000, leaves: 5, spread: .07, leaflet: .02, petiole: [.05, .09] as [number, number], flowerShare: .12, rebuildSeconds: .25 };
 
 function clumpGeometry(seed: number) {
   const r = random(seed), parts: THREE.BufferGeometry[] = [], green = new THREE.Color(), tmp = new THREE.Color();
@@ -37,20 +39,27 @@ export function createCloverRenderer(scene: THREE.Scene, field: CloverField) {
   const mesh = new THREE.InstancedMesh(geo, mat, CLOVER_DRAW.cap); mesh.count = 0; mesh.receiveShadow = true; mesh.castShadow = false; mesh.frustumCulled = false; mesh.name = 'clover';
   mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(CLOVER_DRAW.cap * 3), 3);
   scene.add(mesh);
+  // the stolon mat under every patch: runners on bare soil, seen where leaves were grazed off
+  const mat2 = new THREE.MeshStandardMaterial({ color: 0x4a4a2c, roughness: 1 }), discs = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 20).rotateX(-Math.PI / 2), mat2, 2000);
+  discs.count = 0; discs.receiveShadow = true; discs.frustumCulled = false; discs.name = 'clover-stolons'; scene.add(discs);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), c = new THREE.Color();
   let lastRevision = -1, lastSig = '', wait = 0;
-  const shown = (pt: CloverPatch) => Math.round(Math.PI * pt.r * pt.r * CLOVER_DRAW.clumpsPerM2 * Math.max(0, pt.units) / pt.max);
+  const share = (pt: CloverPatch) => Math.max(0, Math.min(1, field.unitsOf(pt) / pt.max));
+  const shown = (pt: CloverPatch) => Math.round(Math.PI * pt.r * pt.r * CLOVER_DRAW.clumpsPerM2 * share(pt));
   function rebuild() {
-    let n = 0;
+    let n = 0, nd = 0;
     for (const pt of field.list()) {
+      if (nd < 2000) { p.set(pt.x, heightAt(pt.x, pt.z) + .004, pt.z); q.identity(); s.set(pt.r * .92, 1, pt.r * .92); m.compose(p, q, s); discs.setMatrixAt(nd++, m); }
+      const tall = CLOVER_DRAW.stubble + (1 - CLOVER_DRAW.stubble) * share(pt);
       const total = Math.round(Math.PI * pt.r * pt.r * CLOVER_DRAW.clumpsPerM2), show = shown(pt), r = random(hash(pt.key));
       for (let i = 0; i < total && n < CLOVER_DRAW.cap; i++) {
         const a = r() * Math.PI * 2, d = Math.sqrt(r()) * pt.r, yaw = r() * Math.PI * 2, sc = .8 + r() * .5, keep = r(), tint = r(); // fixed draws per clump: thinning never moves the rest
         if (i >= show) continue;
-        const x = pt.x + Math.cos(a) * d, z = pt.z + Math.sin(a) * d; p.set(x, heightAt(x, z) - .005, z); q.setFromAxisAngle(up, yaw); s.setScalar(sc * (1 - .25 * (d / pt.r) ** 2)); // edges a little smaller
+        const x = pt.x + Math.cos(a) * d, z = pt.z + Math.sin(a) * d; p.set(x, heightAt(x, z) - .005, z); q.setFromAxisAngle(up, yaw); s.setScalar(sc * (1 - .25 * (d / pt.r) ** 2)); s.y *= tall; // edges a little smaller
         m.compose(p, q, s); mesh.setMatrixAt(n, m); c.setRGB(.85 + tint * .25, .9 + tint * .15, .85 + keep * .2); mesh.setColorAt(n, c); n++;
       }
     }
+    discs.count = nd; discs.instanceMatrix.needsUpdate = true;
     mesh.count = n; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }
   return {

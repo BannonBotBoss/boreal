@@ -6,7 +6,7 @@ import { createAgent, stepAgent, modulators, updateLevels, perceive, type Agent,
 import { HARE_AGENT } from '../src/core/agent/species';
 import { stream } from '../src/proc/rng';
 
-const patch = (x = 0, z = 0, r = 1, light = 1): CloverPatch => { const max = Math.round(Math.PI * r * r * CLOVER.unitsPerM2); return { key: `clover:t:${x}:${z}`, x, z, r, light, max, units: max, stolon: Math.PI * r * r * CLOVER.stolonGPerM2, why: CLOVER_WHY.map(w => ({ ...w })) }; };
+const patch = (x = 0, z = 0, r = 1, light = 1): CloverPatch => { const max = Math.round(Math.PI * r * r * CLOVER.unitsPerM2); return { key: `clover:t:${x}:${z}`, x, z, r, light, max, units: max, at: 0, stolon: Math.PI * r * r * CLOVER.stolonGPerM2, why: CLOVER_WHY.map(w => ({ ...w })) }; };
 const source = (ps: CloverPatch[]): FoodSource => ({
   at: (x, z, pad = 0) => ps.find(p => p.units > 0 && Math.hypot(p.x - x, p.z - z) < p.r + pad),
   nearest: (x, z, range, except) => ps.filter(p => p.units > 0 && p.key !== except && Math.hypot(p.x - x, p.z - z) < range).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))[0],

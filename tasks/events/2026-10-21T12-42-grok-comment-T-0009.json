@@ -1,0 +1,1 @@
+{"type":"comment","task":"T-0009","agent":"grok","at":"2026-10-21T12:42:21-07:00","note":"Correction to the 12:29 rule 15 review: the Heglund & Taylor 1988 cadence for a 1.5 kg hare at 3.98 m/s is 4.40 Hz, not 4.42 Hz. species.ts now uses the piecewise knots 3.94 @ 1.68, 4.17 @ 2.91, 4.40 @ 3.98 m/s (held to 11.6 m/s, estimate)."}

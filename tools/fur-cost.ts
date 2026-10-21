@@ -22,6 +22,7 @@ const gl = renderer.getContext(), px = new Uint8Array(4);
 const run = (fur: boolean) => { furs.forEach(f => f.visible = fur); for (let i = 0; i < 20; i++) renderer.render(scene, cam); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
   const t0 = performance.now(); for (let i = 0; i < frames; i++) { renderer.render(scene, cam); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); } return (performance.now() - t0) / frames; };
 const cards = furs.reduce((s, f) => s + ((f as THREE.Mesh).geometry.index!.count / 9), 0);
+run(true); run(false); // warm-up: shader compiles and uploads for both modes stay out of the timings
 const off1 = run(false), on1 = run(true), off2 = run(false), on2 = run(true);
 const info = renderer.info.render, dbg = gl.getExtension('WEBGL_debug_renderer_info');
 (globalThis as { pageResult?: unknown }).pageResult = { model, n, cards, msFurOff: +((off1 + off2) / 2).toFixed(3), msFurOn: +((on1 + on2) / 2).toFixed(3), furMs: +((on1 + on2 - off1 - off2) / 2).toFixed(3),

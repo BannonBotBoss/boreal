@@ -18,7 +18,7 @@ export const HARE_FUR = { cards: 7000, winterLength: .04319, summerLength: .0316
 export interface HareLeg { segs: THREE.Bone[]; hind: boolean; /** first limbPoints index drawn (fore 0: the blade is a segment) */ from: number; /** bind direction of each segment (root space) */ dirs: THREE.Vector3[] }
 
 interface Template { skin: THREE.BufferGeometry; fur: THREE.BufferGeometry; skinMat: THREE.Material; furMat: THREE.Material; eyeMat: THREE.Material; bind: HareBind; whiteness: number; cards: number }
-let template: Template | undefined;
+let template: Template | undefined, wanted = 0; // whiteness asked for before the first hare was built
 const SHARED = { shared: true };
 
 function buildTemplate(bind: HareBind): Template {
@@ -53,7 +53,7 @@ function buildTemplate(bind: HareBind): Template {
   const furMat = furCardMaterial(); furMat.userData = SHARED;
   const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1a0e07, roughness: .15 }); eyeMat.userData = SHARED;
   const t: Template = { skin, fur, skinMat, furMat, eyeMat, bind, whiteness: -1, cards: n / 5 };
-  applyWhiteness(t, 0);
+  applyWhiteness(t, wanted);
   return t;
 }
 
@@ -73,7 +73,7 @@ function applyWhiteness(t: Template, whole: number) {
 }
 
 /** Set every hare's coat from the world date (day of the year; core/timeOfDay dayAt). Returns the whole-coat whiteness. */
-export function setHareDay(dayOfYear: number) { const w = moultWhiteness(dayOfYear); if (template) applyWhiteness(template, w); return w; }
+export function setHareDay(dayOfYear: number) { const w = wanted = moultWhiteness(dayOfYear); if (template) applyWhiteness(template, w); return w; }
 /** Current coat state (tests, debug readout). */
 export const hareCoatState = () => template ? { whiteness: template.whiteness, cards: template.cards, visibleCards: visibleCards(template) } : undefined;
 function visibleCards(t: Template) { let n = 0; const P = t.fur.getAttribute('position').array as Float32Array, fu = t.fur.userData; for (let c = 0; c < fu.rank.length; c++) if (P[c * 15 + 12] !== fu.roots[c * 15 + 12] || P[c * 15 + 13] !== fu.roots[c * 15 + 13]) n++; return n; }

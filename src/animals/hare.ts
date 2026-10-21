@@ -17,6 +17,7 @@ import { siteAt, footprintsIn, covered } from '../core/flora/site';
 import { createCloverField, cloverSuitability, CLOVER } from '../core/clover';
 import { createAgent, stepAgent, poseOf, actionName, moods, modulators, type Agent, type Other } from '../core/agent/pipeline';
 import { HARE_AGENT } from '../core/agent/species';
+import { boundCadence, boundDuty, boundLift, boundStride, footState } from '../core/agent/bound';
 import { CONTACTS } from '../core/contactBus';
 import { createCloverRenderer } from '../render/clover';
 import type { SnapshotSource } from '../core/snapshot';
@@ -26,28 +27,62 @@ export const HARE = {
   catchContact: 1.3, catchPounce: 2.4, energy: 35, stamina: 40, cloverRadius: 48,
 };
 export type HareState = Agent['action'];
-export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Group; body: THREE.Group; rng: () => number; label?: THREE.Sprite }
+export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Group; body: THREE.Group; legs: Leg[]; ears: THREE.Group[]; rng: () => number; label?: THREE.Sprite }
+interface Leg { pivot: THREE.Group; foot: THREE.Group; length: number; hind: boolean }
 export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
 /** speed (m/s) and daylight (0..1) feed the hare's senses; `moving` is kept for older callers (speed defaults from it). */
 export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean; speed?: number; daylight?: number }
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).get('hare') === 'debug';
 
+/** Body plan in metres, snowshoe hare summer adult (ADW Lepus americanus / Colorado PW): total length 413-518 mm (tail 39-52),
+ *  hind foot 117-147 mm, ear 62-70 mm notch to tip, 1.43-1.55 kg; summer coat grizzled rusty/greyish brown, white belly, ears
+ *  brownish with black tips, hind feet densely furred (white-toed in the reference). Segment lengths between those are
+ *  drawn to the reference photos [estimate]. The hip is the body pivot, so sitting up lifts the forelegs off the ground. */
+export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.19, foreLeg: .12, hindLeg: .125, hindFoot: .132, ear: .066, headZ: -.25, headY: .085 };
 function model() {
-  const root = new THREE.Group(), body = new THREE.Group(), head = new THREE.Group(); root.add(body); body.add(head); head.position.set(0, .3, -.12);
-  const brown = new THREE.MeshStandardMaterial({ color: 0x8a6d4e, flatShading: true, roughness: 1 });
-  const white = new THREE.MeshStandardMaterial({ color: 0xf1ede4, flatShading: true, roughness: 1 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x2b2420, flatShading: true, roughness: 1 });
-  const blob = (parent: THREE.Group, m: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number, rx = 0) => {
-    const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), m); mesh.position.set(x, y, z); mesh.scale.set(sx, sy, sz); mesh.rotation.x = rx; parent.add(mesh); return mesh;
+  const B = HARE_BODY, root = new THREE.Group(), body = new THREE.Group(), head = new THREE.Group(); root.add(body); body.add(head);
+  body.position.set(0, B.hipY, B.hipZ); head.position.set(0, B.headY, B.headZ);
+  const mat = (c: number) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 1 });
+  const brown = mat(0x7d6247), buff = mat(0x9c8060), white = mat(0xeeeae0), dark = mat(0x1e1a17);
+  const blob = (parent: THREE.Object3D, m: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number, rx = 0) => {
+    const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 2), m); mesh.position.set(x, y, z); mesh.scale.set(sx, sy, sz); mesh.rotation.x = rx; parent.add(mesh); return mesh;
   };
-  blob(body, brown, 0, .2, .02, .14, .14, .22); blob(body, white, 0, .14, 0, .12, .09, .18);
-  blob(head, brown, 0, .03, -.05, .09, .09, .1); blob(head, white, 0, 0, -.13, .05, .045, .05);
-  for (const s of [-1, 1]) { blob(head, brown, s * .04, .17, -.02, .025, .1, .035, -.25); blob(head, dark, s * .04, .26, 0, .02, .03, .025); blob(head, dark, s * .055, .05, -.12, .012, .014, .012); blob(body, white, s * .07, .05, .12, .04, .05, .12); }
-  blob(body, white, 0, .24, .24, .05, .05, .05);
-  root.scale.setScalar(1.25); return { root, body, head };
+  // torso relative to the hip pivot: haunch, back, chest; white belly and tail
+  blob(body, brown, 0, .015, .0, .075, .08, .085); blob(body, brown, 0, .03, -.09, .07, .075, .11, .1); blob(body, buff, 0, .01, -.17, .055, .06, .06);
+  blob(body, white, 0, -.035, -.08, .05, .035, .1); blob(body, white, 0, .05, .085, .022, .022, .02);
+  // head: cranium, muzzle, eyes, nose
+  blob(head, brown, 0, 0, 0, .038, .04, .05); blob(head, buff, 0, -.012, -.045, .025, .022, .025); blob(head, dark, 0, -.008, -.07, .006, .005, .004);
+  for (const s of [-1, 1]) blob(head, dark, s * .03, .012, -.02, .008, .009, .008);
+  const ears: THREE.Group[] = [];
+  for (const s of [-1, 1]) { const e = new THREE.Group(); e.position.set(s * .017, .03, .015); e.rotation.z = -s * .12; head.add(e); ears.push(e);
+    blob(e, brown, 0, B.ear / 2, 0, .012, B.ear / 2, .02); blob(e, dark, 0, B.ear * .92, 0, .009, .008, .016); }
+  const legs: Leg[] = [];
+  const mk = (hind: boolean, side: number) => {
+    const pivot = new THREE.Group(), foot = new THREE.Group(), L = hind ? B.hindLeg : B.foreLeg;
+    if (hind) { pivot.position.set(side * .045, B.hipY, B.hipZ + .02); root.add(pivot); blob(pivot, brown, 0, -L * .45, .01, .028, L * .5, .035); }
+    else { pivot.position.set(side * .03, -.01, B.shoulderZ + .03); body.add(pivot); blob(pivot, buff, 0, -L * .5, 0, .014, L * .5, .016); }
+    foot.position.set(0, -L, 0); pivot.add(foot);
+    if (hind) { blob(foot, buff, 0, .008, -B.hindFoot * .3, .022, .011, B.hindFoot * .5); blob(foot, white, 0, .006, -B.hindFoot * .72, .024, .01, .03); }
+    else blob(foot, white, 0, .004, -.012, .013, .008, .02);
+    legs.push({ pivot, foot, length: L, hind });
+  };
+  mk(false, -1); mk(false, 1); mk(true, -1); mk(true, 1); // [LF, RF, LH, RH] as in core/agent/bound
+  return { root, body, head, legs, ears };
 }
-/** Pose targets per pipeline pose: body pitch (rad, + = front up), body lift (m), head pitch (+ = nose up), head drop/forward (m). */
-const POSES = { 'head-down': [-.22, -.02, -1.0, -.11, -.08], 'head-up': [.28, .03, .3, .02, 0], move: [-.05, 0, -.1, 0, 0], run: [-.1, 0, .05, 0, 0], rest: [-.05, -.04, -.15, -.02, 0], crouch: [-.08, -.06, -.25, -.05, .02] } as const;
+/** Pose targets: body pitch about the hip (rad, + = front up), body lift (m), head pitch (+ = nose up), head drop (m), ears
+ *  (rad, + = laid back), foreleg and hind leg angles (rad, + = foot forward). Read from the reference sheet
+ *  (refs/hare/graze-alert-flight attempt 2): grazing crouch = hunched, chin at the clover, ears back; scan = head up from the
+ *  crouch; alert = sat up on the haunches, forefeet off the ground, ears erect; rest/freeze = tucked, ears flat [estimate]. */
+const POSES: Record<string, readonly number[]> = {
+  'head-down': [-.1, -.02, -.55, -.075, .95, .1, .45],
+  scan: [.3, 0, -.35, 0, -.05, -.15, .5],
+  sit: [.95, 0, -.95, 0, -.15, -.7, .55],
+  rest: [-.04, -.035, -.15, 0, .85, .25, .55],
+  crouch: [-.06, -.045, -.1, 0, 1.15, .3, .6],
+  move: [0, 0, -.1, 0, .5, 0, 0], run: [0, 0, .05, 0, .9, 0, 0],
+};
+type PoseKey = 'head-down' | 'scan' | 'sit' | 'rest' | 'crouch' | 'move' | 'run';
+const poseKey = (a: Agent): PoseKey => a.action === 'alert' || a.action === 'pause' ? 'sit' : a.action === 'scan' ? 'scan' : poseOf(a) === 'head-up' ? 'scan' : poseOf(a) as PoseKey;
 
 function labelSprite() {
   const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 176;
@@ -56,6 +91,34 @@ function labelSprite() {
   s.userData.draw = (lines: string[], colour = '#f4f1e6') => { const g = canvas.getContext('2d')!; g.clearRect(0, 0, 640, 176); g.font = 'bold 30px monospace'; const w = Math.min(640, 20 + Math.max(...lines.map(l => g.measureText(l).width)));
     g.fillStyle = 'rgba(12,16,12,.78)'; g.fillRect((640 - w) / 2, 0, w, 16 + lines.length * 38); g.fillStyle = colour; lines.forEach((l, i) => g.fillText(l, (640 - w) / 2 + 10, 36 + i * 38)); tex.needsUpdate = true; };
   return s;
+}
+
+export type HareModel = Pick<Hare, 'root' | 'body' | 'head' | 'legs' | 'ears' | 'hopPhase' | 'id'>;
+export const createHareModel = model;
+/** Pose one hare model from its pipeline agent for this frame (shared by the game host and tools/hare-strip). */
+export function poseHare(h: HareModel, a: Agent, dt: number, time: number, ground: number) {
+  // pose: the half-bound (core/agent/bound, species gait data) while moving; still poses from the reference otherwise
+  const G = HARE_AGENT.gait!, moving = a.speed > .05, pose = POSES[moving ? (a.speed > 3 ? 'run' : 'move') : poseKey(a)], k = 1 - Math.exp(-dt * 10);
+  if (moving) h.hopPhase = (h.hopPhase + dt * boundCadence(G, a.speed)) % 1;
+  const duty = boundDuty(G, a.speed), stride = boundStride(G, a.speed), lift = moving ? boundLift(G, h.hopPhase, a.speed) : 0;
+  h.root.position.set(a.x, ground + lift, a.z); h.root.rotation.y = a.heading;
+  let pitch = pose[0], stanceF = false, stanceH = false;
+  h.legs.forEach((leg, i) => {
+    let ang: number = leg.hind ? pose[6] : pose[5], foot = 0;
+    if (moving) { // stance sweeps the foot back under the body, swing brings it forward; hind feet reach past the fore pair
+      const st = footState(G, h.hopPhase, i, duty), A = Math.min(.9, Math.asin(Math.min(1, duty * stride / 2 / leg.length))), reach = leg.hind ? .3 : 0;
+      const td = A + reach, lo = -A - (leg.hind ? .35 : .1); // lift-off: hind leg extended behind (push-off)
+      ang = st.stance ? td + (lo - td) * st.u : lo + (td - lo) * st.u * st.u * (3 - 2 * st.u);
+      foot = st.stance ? -ang * .8 : -ang * .3; if (st.stance) { if (leg.hind) stanceH = true; else stanceF = true; }
+    } else foot = leg.hind ? -ang : -ang * .5; // still: hind feet flat on the ground (the 'snowshoe')
+    if (!moving) { leg.pivot.rotation.x += (ang - leg.pivot.rotation.x) * k; leg.foot.rotation.x += (foot - leg.foot.rotation.x) * k; }
+    else { leg.pivot.rotation.x = ang; leg.foot.rotation.x = foot; }
+  });
+  if (moving && a.speed > .8) pitch += stanceF && !stanceH ? -.12 : stanceH && !stanceF ? .12 : 0; // nose down on the fore pair, up on the hind thrust [estimate]
+  const nibble = a.action === 'feed' ? Math.sin(time * 9 + h.id) * .04 : 0;
+  h.body.rotation.x += (pitch - h.body.rotation.x) * k; h.body.position.y += (HARE_BODY.hipY + pose[1] - h.body.position.y) * k;
+  h.head.rotation.x += (pose[2] + nibble - h.head.rotation.x) * k; h.head.position.y += (HARE_BODY.headY + pose[3] - h.head.position.y) * k;
+  for (const e of h.ears) e.rotation.x += (pose[4] - e.rotation.x) * k;
 }
 
 export function createHares(scene: THREE.Scene) {
@@ -73,10 +136,10 @@ export function createHares(scene: THREE.Scene) {
       const p = onClover ? near[Math.floor(pick * near.length)] : undefined;
       const x = p ? p.x + Math.sin(a) * p.r * .5 : px + Math.sin(a) * d, z = p ? p.z + Math.cos(a) * p.r * .5 : pz + Math.cos(a) * d;
       if (heightAt(x, z) < LEVEL.shore) continue;
-      const { root, body, head } = model(); scene.add(root);
+      const { root, body, head, legs, ears } = model(); scene.add(root);
       const id = nextId++; root.userData.inspect = { type: 'hare', key: `hare:${id}` }; const rng = stream(WORLD_SEED, `hare-v1:${id}`);
       const agent = createAgent(HARE_AGENT, `hare:${id}`, x, z, rng, { energy: 55 + rng() * 40, relaxation: 80 + rng() * 20 });
-      const h: Hare = { id, x, z, heading: agent.heading, get state() { return agent.action; }, agent, hopPhase: 0, root, body, head, rng };
+      const h: Hare = { id, x, z, heading: agent.heading, get state() { return agent.action; }, agent, hopPhase: 0, root, body, head, legs, ears, rng };
       if (DEBUG) { h.label = labelSprite(); scene.add(h.label); }
       hares.push(h); return;
     }
@@ -107,14 +170,7 @@ export function createHares(scene: THREE.Scene) {
         if ((ev.type === 'bolt' || ev.type === 'hop') && (ev.type === 'bolt' || d < 30)) events.push({ type: ev.type, x: ev.x, z: ev.z });
       h.x = a.x; h.z = a.z; h.heading = a.heading;
       scope(`hare:${h.id}`); f('hare', 'wolfDistance', d); f('hare', 'state', a.action); f('hare', 'goal', a.goal); f('hare', 'energy', a.energy); f('hare', 'stamina', a.stamina); f('hare', 'relaxation', a.relaxation); f('hare', 'threat', a.sensed.level); f('hare', 'speed', a.speed); scope('');
-      // pose: hop arc while moving, head down to graze, head up to scan / alert
-      const pose = POSES[poseOf(a)], k = 1 - Math.exp(-dt * 8);
-      h.hopPhase += a.speed > 0 ? dt * (a.speed > 3 ? 7 : a.speed > .8 ? 4.5 : 3) : 0;
-      const hop = a.speed > 0 ? Math.abs(Math.sin(h.hopPhase * Math.PI)) * (a.speed > 3 ? .28 : a.speed > .8 ? .1 : .03) : 0;
-      h.root.position.set(a.x, heightAt(a.x, a.z) + hop, a.z); h.root.rotation.y = a.heading;
-      const nibble = a.action === 'feed' ? Math.sin(time * 9 + h.id) * .05 : 0, hopPitch = a.speed > .8 ? -Math.sin(h.hopPhase * Math.PI) * .2 : 0;
-      h.body.rotation.x += (pose[0] + hopPitch - h.body.rotation.x) * k; h.body.position.y += (pose[1] - h.body.position.y) * k;
-      h.head.rotation.x += (pose[2] + nibble - h.head.rotation.x) * k; h.head.position.y += (.3 + pose[3] - h.head.position.y) * k; h.head.position.z += (-.12 + pose[4] - h.head.position.z) * k;
+      poseHare(h, a, dt, time, heightAt(a.x, a.z));
     }
     if (DEBUG && (labelWait -= dt) <= 0) { labelWait = .25; debugLabels(wolf); }
     return events;

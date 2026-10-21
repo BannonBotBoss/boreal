@@ -10,17 +10,29 @@ Plan (Matthew via Grok, 11:13 PT): 1 reference, 2 bound gait, 3 graze/alert pose
 regrowth + state fields/rewind, 5 re-record and re-score; submit only if every question >= 95 %.
 - [x] 1 Reference: 4 attempts logged in refs/hare/graze-alert-flight/attempts.md (3 stills, 1 5 s video). Accepted attempt 2
   (poses) + attempt 4 video (timing), ~85 % like nature (ears still a little long).
-- [ ] 2 Gait: shared gait code (src/animals/locomotion/gaits.ts GAIT_TABLE, core/gaitData.ts) is canid-only and drives the
-  skeleton rig; the hare is a standalone cartoon model with no legs. Plan: hare species gait data (half-bound, sourced) and
-  four procedural legs in the hare model; full rig = Needs from another agent (Gait Builder).
-- [ ] 3 Poses (hunched graze, ears back; sit-up alert) and clover thinning (shorter + fewer clumps, grass suppressed on patches)
+- [x] 2 Gait: shared gait code (src/animals/locomotion/gaits.ts GAIT_TABLE has a 'bound' row marked [verify]; core/gaitData.ts)
+  is canid-only and drives the skeleton rig, which the hare is not on. Built instead: src/core/agent/bound.ts (pure half-bound:
+  footfall phases, duty, Heglund & Taylor 1988 cadence allometry for 1.5 kg, ballistic airborne lift) + HARE_AGENT.gait data,
+  and four procedural legs (big hind feet), ears and a hip-pivot body in the hare model (HARE_BODY from ADW measurements).
+  Shared pose code: poseHare() in src/animals/hare.ts, used by the game and tools/hare-strip.ts (side-on lab recording that
+  runs the real pipeline at the reference's 6 fps).
+- [~] 3 Poses done (hunched graze with ears back, half sit-up scan, full sit-up alert, tucked rest); clover thinning next.
 - [ ] 4 core/transactions.ts registry (hare|clover graze, sun|clover regrow) run from CONTACTS; lazy regrowth from sun-seconds;
   STATE_FIELDS hareAgent + clover; save + rewind
 - [ ] 5 Re-record and re-score
-Exact next step: step 2 (hare gait data + legs in src/animals/hare.ts).
+Exact next step: step 3 clover thinning (render/clover.ts: clump height x leaf share, grass cover suppressed on patches), then step 4.
 
 ## Needs from another agent
-- Gait Builder (grok-gait): see step 2 when written.
+- Gait Builder (grok-gait): a lagomorph rig on the shared locomotion controller so the hare's legs are real limbs, not
+  rotating blobs. Exact needs: (a) skeleton for Lepus americanus from HARE_BODY (hip .13 m, fore leg .12, hind leg .125 +
+  hind foot .132 m plantigrade-at-rest, digitigrade in the bound); (b) GAIT_TABLE rows 'half-bound' and 'gallop-lagomorph'
+  using HARE_AGENT.gait (touchdown [LF .00, RF .08, LH .42, RH .45], duty .50 -> .17, cadence 3.94 Hz @ 1.68 m/s -> 4.40 Hz @
+  11.6 m/s) replacing the [verify] 'bound' row; (c) stance feet planted (no slide: today the stance sweep needs ~.34 m at
+  8.5 m/s, more than the blob legs can reach, so feet slide); (d) spine flexion between the gathered and extended
+  suspensions (Bramble 1989 four-stage jackrabbit gallop); (e) accept a pose request (sit-up, graze crouch) from the
+  pipeline's poseOf. Until then the host's procedural legs stand in.
+- Art/model owner (any agent): a hare mesh with fur shading at ~45 cm; the low-poly blob body caps resemblance to the photo
+  reference well under 95 % even with correct timing and poses.
 
 ## What was built
 - Shared animal pipeline `src/core/agent/pipeline.ts` (senses: sight/hearing/scent -> energy, stamina, relaxation -> goal ->

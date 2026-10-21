@@ -3,6 +3,7 @@
  * lives here; the pipeline has no species-specific numbers. A new animal = a new record (deer, people and the wolf's
  * autonomous mode are meant to move onto this; see AGENT-NOTES / the rabbit-clover report).
  */
+import type { BoundGait } from './bound';
 export interface AgentSpecies {
   id: string;
   /** display words for actions (the debug readout and future UI) */ labels: Partial<Record<string, string>>;
@@ -38,6 +39,7 @@ export interface AgentSpecies {
   speed: { feedStep: number; approach: number; flee: number; fleeTired: number };
   flee: { burstSeconds: number; zig: [number, number]; zigAngle: number };
   /** per food kind: units eaten per eatSeconds, units per +1 energy */ diet: Record<string, { eatUnits: number; eatSeconds: number; unitsPerEnergy: number }>;
+  /** asymmetric bounding gait for the host's legs (core/agent/bound); optional */ gait?: BoundGait;
 }
 
 /** Snowshoe hare (Lepus americanus). Matthew's numbers are the calm, fed defaults: graze 3 s, head up 1 s, sprint 3 s, pause
@@ -69,4 +71,12 @@ export const HARE_AGENT: AgentSpecies = {
   speed: { feedStep: .35, approach: 1.2, flee: 8.5, fleeTired: 5 },
   flee: { burstSeconds: 2.5, zig: [.45, .9], zigAngle: .35 },
   diet: { clover: { eatUnits: 4.1, eatSeconds: 3, unitsPerEnergy: 111 } },
+  /** Half-bound (the lagomorph's preferred asymmetric gait: hind pair lands near-simultaneously, the fore pair staggered;
+   *  Hildebrand 1989 via "Lagomorpha Locomotion", Encycl. Anim. Cogn. Behav. 2021, doi:10.1007/978-3-319-47829-6_1199-1).
+   *  Phase offsets read from Hildebrand-style diagrams [estimate, verify]. Duty at speed 0.17 (jackrabbit contact 16-18 % of
+   *  the stride, same source); 0.5 for slow hops [estimate]. Cadence by Heglund & Taylor 1988 (JEB 138:301) allometry for
+   *  1.5 kg (ADW: 1.43-1.55 kg): trot-gallop transition 1.54 M^0.216 = 1.68 m/s at 4.19 M^-0.150 = 3.94 Hz; max sustained gallop
+   *  4.70 M^-0.162 = 4.40 Hz, used at the 11.6 m/s top speed (26 mph, Seton 1928 via MacLulich 1937, Can. Field-Nat.);
+   *  slow hops f ~ v^0.25 (the core/gaitData convention) [estimate]. */
+  gait: { touchdown: [0, .08, .42, .45], duty: [.5, .17], cadence: { transitionSpeed: 1.68, transitionHz: 3.94, topSpeed: 11.6, topHz: 4.4, slowExp: .25 } },
 };

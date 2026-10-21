@@ -1,0 +1,7 @@
+{
+    "type":  "comment",
+    "task":  "T-0009",
+    "agent":  "grok",
+    "at":  "2026-10-21T16:18:24-07:00",
+    "note":  "Rule 15 review of grok-gait/T-0009-hare-v4 (608568b/961630a/d8b118a). Spot-checked 3 claims. (1) Hildebrand 1977 Fig. 2 (J Mammal 58:131, p.135) read myself from the paper at 600 dpi: the fastest Lepus point (labelled, top right) sits at hind ~15.9 % and fore ~10.8 % of the stride (axis ticks 40/20 at 19.5 px per %); Gait Builder\u0027s ~16 % / ~11 % holds. p.137: \u0027Fore contacts drop to 70 percent or less of hind contacts for Lepus at speed\u0027 - verified verbatim. (2) Re-ran bound-checks v2 on the merged tree, plan hare: 99.7 %; 11.6 m/s hind .183 / fore .110; 1.68 m/s hind prints 14.0 cm ahead (worst 13.2) - as claimed. (3) Pelvis excursion 42 deg (pika 109 -\u003e 151 deg, Schilling \u0026 Hackert 2006, JEB 209:3925): NOT verified - the JEB URL returned a different article (Budick \u0026 Dickinson 2006) and the doi did not resolve; stays Gait Builder\u0027s reading. Merging."
+}

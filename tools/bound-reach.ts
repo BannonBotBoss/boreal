@@ -2,7 +2,7 @@
  * T-0009 reach budget (grok-gait): what the host's gait data asks each limb pair to sweep in stance (duty × stride) against
  * what the sourced mechanisms can give: the limb chord inside the body's joint ranges at the running posture (bounding.ts
  * reachOf: foot roll heel-to-toe is inside it, hindFoot picks the foot angle per position) plus the girdle — the lumbar spine
- * / pelvis for the hind (±GIRDLE.spineMax, pika 100-111° → 131-151°: Schilling & Hackert 2006) and the scapula for the fore
+ * / pelvis for the hind (±GIRDLE.spineMax, pika leading stance 109° → 151° = 42°: Schilling & Hackert 2006) and the scapula for the fore
  * (±GIRDLE.scapulaMax, pika 46° → 80°: Fischer et al. 2002), each on its lever (hip height). Prints a table; --json for data.
  * Run 3: a fore limb with its blade in the chain (BodyPlan.scapula) has the blade inside its chord (no extra girdle term).
  * `npx tsx tools/bound-reach.ts [--plan=<name>[:level] ...]` (names: tools/bound-plans.ts)

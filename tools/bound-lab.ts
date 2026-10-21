@@ -1,7 +1,7 @@
 /**
  * Bound lab (T-0009, grok-gait): side view of the bounding controller (src/animals/locomotion/bounding.ts) on a limb
  * skeleton from bodyPlan.ts. Bones, spine, footprints (fore blue, hind orange: hind prints land ahead of fore prints),
- * contact dots and a readout. Params: ?speed=<m/s> (0 = standing, use ?pose=)  ?ts=<timescale, e.g. .25>  ?plan=host|bones
+ * contact dots and a readout. Params: ?speed=<m/s> (0 = standing, use ?pose=)  ?ts=<timescale, e.g. .25>  ?plan=host|bones|canid-limits|blob
  * ?row=half-bound|gallop-lagomorph (default by speed)  ?ramp=<s to reach speed, default 1.5>  ?pose=sit-up|graze-crouch|scan|rest|crouch
  * ?cycle=1 (stand → graze → sit-up → run → stop, for the pose recording)  ?shot=1 (no clock: window.__lab.advance(s) steps it)
  */
@@ -70,6 +70,7 @@ function draw() {
     `t ${t.toFixed(2)} s  timescale ${ts}  plan ${planName}  row ${frame.plan.row}`,
     `speed ${Math.abs(inputs(t - 1e-6)[0]).toFixed(2)} m/s  ${frame.plan.hz.toFixed(2)} Hz  stride ${frame.plan.stride.toFixed(2)} m`,
     `duty hind ${frame.plan.duty.toFixed(3)} fore ${frame.plan.foreDuty.toFixed(3)} (data ${frame.plan.dutyData.toFixed(3)} / ${frame.plan.foreDutyData.toFixed(3)})  phase ${frame.stride.toFixed(2)}`,
+    `pitch ${(frame.tilt.pitch * 180 / Math.PI).toFixed(1)}°  hip rise ${(ctl.reach.rise * 100).toFixed(1)} cm (derived)  chords fore ${ctl.reach.fore.chord.toFixed(3)} hind ${ctl.reach.hind.chord.toFixed(3)} m`,
     `contact ${frame.contact.map((c, i) => c ? LEG[i] : '··').join(' ')}  ${airborne ? (last?.kind ?? 'air').toUpperCase() + ' SUSPENSION' : ''}`,
     `spine flex ${frame.spineFlex.toFixed(2)} rad  pitch ${frame.tilt.pitch.toFixed(2)}  pose ${frame.pose}`,
     `max planted slip ${(maxSlip * 1000).toFixed(1)} mm  leash steps ${frame.leashes}`,

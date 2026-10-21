@@ -20,7 +20,7 @@ import { HOST_PLAN, BLOB_PLAN, HOST_GAIT, planFor } from '../tools/bound-plans';
 import { runScore, ROW_ORDER } from '../tools/bound-score';
 
 const G = HOST_GAIT;
-function run(plan: 'host' | 'bones', v: number, row?: BoundRowId, seconds = 4, dt = 1 / 240) {
+function run(plan: 'host' | 'bones' | 'canid-limits', v: number, row?: BoundRowId, seconds = 4, dt = 1 / 240) {
   const sk = planFor(plan), c = createBounding(sk, G, () => 0, { x: 0, z: 0, heading: 0 }), tr: TraceFrame[] = [];
   for (let t = 0; t < seconds; t += dt) { const sp = Math.min(v, v * t / 1.5), f = c.update(dt, sp, 0, null, row ?? selectRow(v));
     tr.push({ t, stride: f.stride, speed: sp, contact: f.contact, slip: f.slip, spineFlex: f.spineFlex, leashes: f.leashes, touchdowns: f.touchdowns, fwd: { x: 0, z: -1 } }); }
@@ -89,7 +89,9 @@ test('overtaking and spine timing at running speed (host and bone bodies), stiff
     // flex at 8.5 m/s is open (6/10 strides in run 3: T-0009 handoff); the rest must hold
     for (const name of v === 8.5 ? ['overtake', 'phases', 'cadence', 'order', 'planted'] : ['overtake', 'flex', 'phases', 'cadence', 'order', 'planted']) assert.ok(s.checks.find(k => k.name === name)!.pass, `${plan} ${v} ${name}: ${JSON.stringify(s.checks)}`);
   }
-  const slow = run('host', 1.68).tr.filter(f => f.t > 2);
+  // stiff back when slow: holds where the limbs sweep the slow stride alone (dog joint ranges); under LEPORID_LIMITS the hind
+  // chord (~.20 m) is too short even at 1.68 m/s, so the back flexes there too — reported in the T-0009 grok-gait handoff
+  const slow = run('canid-limits', 1.68).tr.filter(f => f.t > 2);
   assert.ok(Math.max(...slow.map(f => Math.abs(f.spineFlex))) < .05, 'stiff-backed slow half-bound');
 });
 
@@ -138,6 +140,7 @@ test('metric calibration: the data itself scores 100, trot timing and sliding fe
 });
 
 test('score tool runs (numbers reported in the T-0009 grok-gait handoff)', () => {
-  const host = runScore('host'), blob = runScore('blob');
-  assert.ok(host.score > 0 && host.score >= blob.score, `host ${host.score} blob ${blob.score}`);
+  // same joint ranges, longer sourced bones: at least the old blob; the host with LEPORID_LIMITS is reported, not ranked
+  const host = runScore('host'), dog = runScore('canid-limits'), blob = runScore('blob');
+  assert.ok(host.score > 0 && dog.score >= blob.score, `host ${host.score} canid-limits ${dog.score} blob ${blob.score}`);
 });

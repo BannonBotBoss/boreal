@@ -22,12 +22,13 @@ import { reachTargets, suspensions, suspensionRise, type CanidPlan, type ReachBo
 import type { LimbDims } from '../../core/animalBehavior';
 import { createCpg, stepCpg, phases, type Cpg } from './cpg';
 import { footState, forceStep, stepFoot, toWorld, type FootState } from './foot';
-import { solveLimb, clampLimb, soleOf, type LimbAngles } from './ik';
+import { solveLimb, clampLimb, soleOf, blendLimits, CANID_LIMITS, type JointLimits, type LimbAngles } from './ik';
 import { worldToLimb, limbToWorld } from './controller';
 import { springTo, spring, type Spring } from './spring';
 import type { Tilt } from './balance';
 import type { Skeleton } from './bodyPlan';
 import type { TerrainFn, Vec3 } from './signals';
+import { gravity } from '../../proc/physics';
 
 const frac = (x: number) => x - Math.floor(x);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * Math.max(0, Math.min(1, t));
@@ -63,12 +64,16 @@ export const selectRow = (speed: number, prev: BoundRowId = 'half-bound'): Bound
  * tri-segmented mammal limb: Fischer & Blickhan 2006, J Exp Zool 305A:935, doi:10.1002/jez.a.333). Rule: of the foot
  * angles that reach `sole` within the joint clamps, take the one whose ankle angle is nearest `ankle` (the standing one),
  * tie-broken toward `prev` (continuity). Returns psi (rad from vertical, + = hock behind the toes) and whether it reaches.
+ * `limits` are the body's joint ranges; when they carry a stance foot range and `pitch` (body pitch, rad, + nose up) is
+ * given, only foot angles inside it are tried: the foot-to-ground angle is 90° − (psi − pitch).
  */
 export const FOOT_SCAN = { from: -.8, to: 1.55, step: .05 };
-export function hindFoot(L: LimbDims, top: { z: number; y: number }, sole: Vec3, ankle: number, prev?: number) {
+export function hindFoot(L: LimbDims, top: { z: number; y: number }, sole: Vec3, ankle: number, prev?: number, limits: JointLimits = CANID_LIMITS, pitch?: number) {
   let best = { psi: L.footAngle ?? 0, cost: Infinity, err: Infinity, ok: false };
+  const fr = limits.hind.foot, D = Math.PI / 180, lo = fr && pitch !== undefined ? pitch + (90 - fr.max) * D : -Infinity, hi = fr && pitch !== undefined ? pitch + (90 - fr.min) * D : Infinity;
   for (let psi = FOOT_SCAN.from; psi <= FOOT_SCAN.to + 1e-9; psi += FOOT_SCAN.step) {
-    const LL = { ...L, footAngle: psi }, a = clampLimb(solveLimb(LL, true, sole, 0, { top }), false), s = soleOf(LL, a);
+    if (psi < lo - 1e-9 || psi > hi + 1e-9) continue;
+    const LL = { ...L, footAngle: psi }, a = clampLimb(solveLimb(LL, true, sole, 0, { top }), false, limits), s = soleOf(LL, a);
     const err = Math.hypot(s.z - sole.z, s.y - (top.y - Math.hypot(top.y - sole.y, sole.x))), ok = err < 1e-4;
     const cost = (a.wrist - ankle) ** 2 + (prev === undefined ? 0 : .3 * (psi - prev) ** 2);
     if (ok && (!best.ok || cost < best.cost)) best = { psi, cost, err, ok };
@@ -84,12 +89,17 @@ export function restAnkle(sk: Skeleton) {
 
 /* ---------------------------------------------------------------- reach (what the limbs can sweep) */
 export interface LimbRange { /** reachable sole interval at ground level, top at rest (m, +back) */ from: number; to: number; chord: number; centre: number }
-/** The longest interval of ground points (top at rest) the clamped limb reaches within 0.1 mm: a 2 mm scan, edges bisected. */
-export function limbRange(L: LimbDims, forward: boolean, front: boolean, ankle?: number): LimbRange {
+/** The longest interval of ground points the clamped limb reaches within 0.1 mm: a 4 mm scan, edges bisected. Without
+ * `body` the top is at rest over level ground; with it, ground point z (m, +back of the limb's hip) is seen from the limb
+ * frame of a body standing in tilt `body.tilt` (bodies that run taller and pitched: runPose), and the foot range is taken
+ * relative to the ground. */
+export function limbRange(L: LimbDims, forward: boolean, front: boolean, ankle?: number, limits: JointLimits = CANID_LIMITS, body?: { tilt: Tilt; hip: readonly [number, number] }): LimbRange {
   const span = 1.2 * (L.upper + L.lower + (L.foot ?? 0)), step = .004, top = { z: 0, y: L.hip };
-  const ok = (z: number) => { if (ankle !== undefined) return hindFoot(L, top, { x: 0, y: 0, z }, ankle).ok;
-    const a = clampLimb(solveLimb(L, forward, { x: 0, y: 0, z }, 0, { top, fit: true }), front);
-    const s = soleOf(L, a); return Math.hypot(s.z - z, s.y) < 1e-4; };
+  const at = (z: number): Vec3 => body ? worldToLimb({ x: body.hip[0], y: 0, z: body.hip[1] + z }, 0, 0, 0, body.tilt, body.hip) : { x: 0, y: 0, z };
+  const ok = (z: number) => { const rel = at(z);
+    if (ankle !== undefined) return hindFoot(L, top, rel, ankle, undefined, limits, body?.tilt.pitch ?? 0).ok;
+    const a = clampLimb(solveLimb(L, forward, rel, 0, { top, fit: true }), front, limits);
+    const s = soleOf(L, a); return Math.hypot(s.z - rel.z, s.y - (top.y - Math.hypot(top.y - rel.y, rel.x))) < 1e-4; };
   let best: [number, number] | null = null, run: number | null = null;
   for (let z = -span; z <= span + 1e-9; z += step) {
     if (ok(z)) { if (run === null) run = z; if (!best || z - run > best[1] - best[0]) best = [run, z]; } else run = null;
@@ -114,12 +124,36 @@ export interface GirdleLimits {
 export const GIRDLE: GirdleLimits = { scapulaMax: .3, spineMax: .3 };
 /** Share of each limb chord a planted foot may use (the clamp sits right at the reach edge) — game calibration. */
 export const CHORD_USE = .9;
-export interface Reach { fore: LimbRange; hind: LimbRange; body: { fore: ReachBody; hind: ReachBody }; girdle: GirdleLimits }
+/**
+ * Running posture — DERIVED: how far the hips rise above their standing height while running (`rise`, m), the shoulders
+ * staying at theirs (the body pitches nose-down about the hips by asin(rise / trunk)). A crouched sitter (hare: hip .13 m on
+ * a .33 m leg + foot) cannot sweep its hind foot through stance inside the gait's measured ankle range (LEPORID_LIMITS: no
+ * foot under the hip below ~.20 m with the dog knee), so the rise is the one, of 0..RUN_POSE.maxRise in 5 mm steps, with the
+ * longest fore + hind chords. With the dog ranges (wolf and others) the standing height already sweeps and rise stays small.
+ */
+export const RUN_POSE = { maxRise: .12, step: .005 };
+/** Tilt of a body risen `rise`·t at the hips (shoulders kept), plus the bound's pitch swing `swing` about the mid-trunk. */
+export const runTilt = (sk: Skeleton, rise: number, t = 1, swing = 0): Tilt => { const p = -Math.asin(Math.min(.95, rise * t / sk.trunk)) + swing, Hh = sk.legs.hind.hip;
+  return { height: rise * t - sk.trunk / 2 * Math.sin(swing), pitch: p, roll: 0, shift: { y: Hh * (1 - Math.cos(p)), z: -Hh * Math.sin(p) } }; };
+export interface Reach { fore: LimbRange; hind: LimbRange; body: { fore: ReachBody; hind: ReachBody }; girdle: GirdleLimits; /** running hip rise (m, RUN_POSE) */ rise: number }
+const reachCache = new WeakMap<Skeleton, Map<string, Reach>>();
 export function reachOf(sk: Skeleton, girdle: GirdleLimits = GIRDLE): Reach {
-  const H = sk.legs.hind, fore = limbRange(sk.legs, false, true), hind = limbRange(H, true, false, restAnkle(sk));
+  const key = JSON.stringify(girdle); let m = reachCache.get(sk); if (!m) reachCache.set(sk, m = new Map()); const hit = m.get(key); if (hit) return hit;
+  // the running reach: the body's gait joint ranges (BodyPlan.limits) at the running posture (RUN_POSE), relative to the ground
+  const H = sk.legs.hind, lim = sk.plan.limits ?? CANID_LIMITS, ankle = restAnkle(sk);
+  // each chord holds over the whole pitch swing (BOUND_PITCH.max each way): the interval common to the three tilts
+  const meet = (rs: LimbRange[]): LimbRange => { const from = Math.max(...rs.map(r => r.from)), to = Math.min(...rs.map(r => r.to)), chord = Math.max(0, to - from);
+    return chord > 0 ? { from, to, chord, centre: (from + to) / 2 } : { from: 0, to: 0, chord: 0, centre: 0 }; };
+  const ranges = (rise: number) => { const tilts = [0, -BOUND_PITCH.max, BOUND_PITCH.max].map(w => runTilt(sk, rise, 1, w));
+    return { fore: meet(tilts.map(tilt => limbRange(sk.legs, false, true, undefined, lim, { tilt, hip: sk.hips[0] }))),
+      hind: meet(tilts.map(tilt => limbRange(H, true, false, ankle, lim, { tilt, hip: sk.hips[1] }))) }; };
+  let best = { rise: 0, ...ranges(0) };
+  for (let r = RUN_POSE.step; r <= RUN_POSE.maxRise + 1e-9; r += RUN_POSE.step) { const c = ranges(r); if (c.fore.chord + c.hind.chord > best.fore.chord + best.hind.chord + 1e-3) best = { rise: r, ...c }; }
+  const { fore, hind, rise } = best;
   const foreLever = H.hip, hindLever = H.hip; // scapular pivot at hip height (Fischer et al. 2002)
   const body = (chord: number): ReachBody => ({ legChord: { walk: chord, trot: chord, gallop: chord }, trunk: sk.trunk, foreLever, hindLever, scapulaMax: girdle.scapulaMax });
-  return { fore, hind, body: { fore: body(CHORD_USE * fore.chord), hind: body(CHORD_USE * hind.chord) }, girdle };
+  const out: Reach = { fore, hind, body: { fore: body(CHORD_USE * fore.chord), hind: body(CHORD_USE * hind.chord) }, girdle, rise };
+  m.set(key, out); return out;
 }
 /** Top-pivot shifts (m, +back) the girdles really give at one set of leg phases: the fore pivots as far as the capped shoulder
  * blade carries them (reachTargets' glide is not used), both hind pivots by the one pelvis (mean shift, capped at spineMax). */
@@ -181,6 +215,37 @@ export function boundPlan(g: BoundGait, speed: number, reach: Reach, row: BoundR
   const sus = suspensions(offsets, duties);
   return { row, speed: v, hz, stride, dutyData, duty, foreDutyData, foreDuty, duties, dutiesData, offsets, suspensions: sus, spineUse: use, canid: { ...base, duty, suspensions: sus } };
 }
+
+/* ---------------------------------------------------------------- body pitch through the bound */
+/**
+ * Body pitch through the bound — DERIVED, not measured: no lagomorph trunk-pitch excursion was found (searched 2026-10-21:
+ * Bertram & Gutmann 2009, Schilling & Hackert 2006 and Fischer et al. 2002 give spine and girdle angles, not the trunk's pitch).
+ * Rule: the vertical ground force of each planted foot is a half-sine over its stance; per stride the feet carry the body
+ * weight, the fore and hind pairs `foreShare` / 1 − foreShare of it (equal for a centre of mass midway between the girdles,
+ * which also makes the stride's net pitching impulse zero); each pair's force acts trunk/2 ahead of / behind that centre and
+ * pitches the body (inertia m·k², k = the radius of gyration of a uniform rod `lengthPerTrunk` × the trunk long). Integrated
+ * over the stride as a steady (periodic, zero-mean) oscillation: fore support pitches the nose up, hind support down, so the
+ * nose is lowest at mid fore stance and highest at mid hind stance (falling through the extended flight, rising through the gathered one). All three numbers are
+ * [estimate]s; horizontal forces aimed at the centre of mass would reduce the swing, so it is an upper bound, capped at `max`.
+ */
+export const BOUND_PITCH = { foreShare: .5, lengthPerTrunk: 2, max: .2 };
+const pitchCache = new Map<string, number[]>();
+export function pitchCurve(plan: BoundPlan, sk: Skeleton, n = 200): number[] {
+  const key = `${plan.row}|${plan.hz}|${plan.duties.join(',')}|${plan.offsets.join(',')}|${sk.trunk}`, hit = pitchCache.get(key); if (hit) return hit;
+  const T = 1 / plan.hz, dt = T / n, L = sk.trunk / 2, k = BOUND_PITCH.lengthPerTrunk * sk.trunk / Math.sqrt(12), share = [BOUND_PITCH.foreShare, 1 - BOUND_PITCH.foreShare];
+  const om: number[] = []; let w = 0;
+  for (let s = 0; s < n; s++) {
+    let tau = 0;
+    for (let i = 0; i < 4; i++) { const d = plan.duties[i], ph = frac(s / n + plan.offsets[i]); if (ph < d && d > 0) {
+      const A = share[FRONT(i) ? 0 : 1] / 2 * gravity() * T * Math.PI / (2 * d * T); tau += (FRONT(i) ? L : -L) * A * Math.sin(Math.PI * ph / d); } }
+    w += tau / (k * k) * dt; om.push(w);
+  }
+  const wm = om.reduce((a, b) => a + b, 0) / n, th: number[] = []; let t = 0;
+  for (const o of om) { t += (o - wm) * dt; th.push(t); }
+  const tm = th.reduce((a, b) => a + b, 0) / n, out = th.map(x => Math.max(-BOUND_PITCH.max, Math.min(BOUND_PITCH.max, x - tm)));
+  if (pitchCache.size > 2000) pitchCache.clear(); pitchCache.set(key, out); return out;
+}
+export const pitchAt = (curve: number[], stridePhase: number) => { const x = frac(stridePhase) * curve.length, i = Math.floor(x), f = x - i; return curve[i % curve.length] * (1 - f) + curve[(i + 1) % curve.length] * f; };
 
 /* ---------------------------------------------------------------- pose requests (agent pipeline → body) */
 export type PoseKind = 'stand' | 'graze-crouch' | 'sit-up' | 'scan' | 'rest' | 'crouch';
@@ -262,17 +327,20 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
   const reach = reachOf(sk, girdle), H = sk.legs.hind;
   const limbOf = (i: number) => FRONT(i) ? sk.legs as LimbDims : H;
   // where a foot rests: standing (fore under the shoulder, hind toes `stance` ahead) → the centre of its running chord
-  let run = 0; const centre = (i: number) => FRONT(i) ? lerp(0, reach.fore.centre, run) : lerp(-(H.stance ?? 0), reach.hind.centre, run);
+  // a hind sweep shorter than the chord sits at the chord's front end (the hind prints land ahead: Lagomorpha Locomotion 2021)
+  let run = 0, hindSlack = 0; const centre = (i: number) => FRONT(i) ? lerp(0, reach.fore.centre, run) : lerp(-(H.stance ?? 0), reach.hind.centre - hindSlack, run);
   let x = start.x, z = start.z, heading = start.heading, row: BoundRowId = 'half-bound', leashes = 0, stridePhase = 0;
   const restWorld = (i: number, px = x, pz = z, h = heading) => { const w = toWorld(px, pz, h, sk.hips[i][0], sk.hips[i][1] + centre(i)); return { x: w.x, y: ground(w.x, w.z), z: w.z }; };
   const feet: FootState[] = [0, 1, 2, 3].map(i => footState(restWorld(i)));
   let plan = boundPlan(gait, .05, reach, row); const cpg: Cpg = createCpg(plan.offsets);
   const pitchS: Spring = spring(0), dropS: Spring = spring(0), liftS: Spring = spring(0), moveS: Spring = spring(0);
+  const gaitLimits = sk.plan.limits ?? CANID_LIMITS;
   let wasDown = feet.map(() => true), lastPose: PoseKind = 'stand'; const ankle0 = restAnkle(sk), prevPsi: (number | undefined)[] = [undefined, sk.restFootAngle, undefined, sk.restFootAngle];
   return { reach, skeleton: sk, place(px, pz, h) { x = px; z = pz; heading = h; for (let i = 0; i < 4; i++) { const f0 = footState(restWorld(i)); Object.assign(feet[i], f0); wasDown[i] = true; } },
   update(dt, speed, h, request, force) {
     heading = h; const v = Math.abs(speed), moving = v > .05;
     row = force ?? selectRow(v, row); plan = boundPlan(gait, v, reach, row);
+    hindSlack = Math.max(0, (CHORD_USE * reach.hind.chord - plan.duty * plan.stride) / 2);
     stepCpg(cpg, plan.offsets, moving ? plan.hz : 0, dt, moving ? 1 : 0);
     const ph = phases(cpg); stridePhase = frac(ph[0] - plan.offsets[0]);
     const fwd = { x: -Math.sin(heading), z: -Math.cos(heading) }; // -z is forward in the body frame
@@ -283,14 +351,20 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     const pitchPose = springTo(pitchS, shape.pitch * w, .15, dt), drop = springTo(dropS, shape.drop * w, .15, dt);
     const foreUp = springTo(liftS, shape.foreLift ? w : 0, .12, dt); run = springTo(moveS, moving ? 1 : 0, .1, dt);
     // reach targets (spine, girdles, vault pitch), fore from the fore chord and hind from the hind chord
-    const gs = girdleShifts(plan.canid, ph, reach, plan.spineUse, plan.foreDuty), shift = gs.shift.map(v2 => v2 * run), spineFlex = gs.spineFlex * run, vault = 0; // no vault pitch: the chords are measured with the pivots at rest height
+    const gs = girdleShifts(plan.canid, ph, reach, plan.spineUse, plan.foreDuty), shift = gs.shift.map(v2 => v2 * run), spineFlex = gs.spineFlex * run;
+    // derived body pitch (pitchCurve), about the mid-trunk (the hip drops trunk/2·sin when the nose comes up); reachTargets'
+    // vault pitch stays unused: its lever is the standing hip height, below this crouched body's leg reach
+    const swing = moving ? pitchAt(pitchCurve(plan, sk), stridePhase) * run : 0;
+    // the gait's joint ranges (BodyPlan.limits: stance measurements) phase in with motion; standing keeps the default
+    const lim = blendLimits(CANID_LIMITS, gaitLimits, run);
     // ballistic lift over a suspension (g·T²/8 arc) — gaitData suspensionRise
     let lift = 0;
     for (const s of plan.suspensions) { const p = frac(stridePhase - s.from), len = s.to - s.from; if (p < len) lift = Math.max(lift, 4 * suspensionRise(len, plan.hz) * (p / len) * (1 - p / len)); }
     lift *= run;
     const hipY = ground(x, z), shoY = ground(...(() => { const w2 = toWorld(x, z, heading, 0, sk.plan.shoulderZ - sk.plan.hipZ); return [w2.x, w2.z] as const; })());
-    const pitch = Math.atan2(shoY - hipY, sk.trunk) + vault + pitchPose, Hh = H.hip;
-    const tilt: Tilt = { height: hipY + lift - drop, pitch, roll: 0, shift: { y: Hh * (1 - Math.cos(pitch)), z: -Hh * Math.sin(pitch) } };
+    const rt = runTilt(sk, reach.rise, run, swing), bodyPitch = rt.pitch + pitchPose; // relative to the ground
+    const pitch = Math.atan2(shoY - hipY, sk.trunk) + bodyPitch, Hh = H.hip;
+    const tilt: Tilt = { height: hipY + lift - drop + rt.height, pitch, roll: 0, shift: { y: Hh * (1 - Math.cos(pitch)), z: -Hh * Math.sin(pitch) } };
     const out: BoundFrame = { plan, stride: stridePhase, phases: ph, limbs: [], tops: [], feet: [], soles: [], contact: [], touchdowns: [], slip: [], x, z, heading, tilt, spineFlex, lift, pose: lastPose, leashes };
     for (let i = 0; i < 4; i++) {
       const L = limbOf(i), front = FRONT(i), f = feet[i];
@@ -302,11 +376,12 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
         target = { x: lerp(r.at.x, tuck.x, foreUp), y: lerp(r.at.y, tuck.y, foreUp), z: lerp(r.at.z, tuck.z, foreUp) }; f.at = { ...target };
       }
       let rel = worldToLimb(target, x, z, heading, tilt, sk.hips[i]);
-      const top = { z: shift[i], y: L.hip };
+      // the girdle shifts carry the pivot along the ground (as dutyFits counts them), not along a pitched trunk
+      const top = { z: shift[i] * Math.cos(bodyPitch), y: L.hip + shift[i] * Math.sin(bodyPitch) };
       const solve = (r0: Vec3) => {
         // hind foot: the reaching foot angle nearest the standing ankle (hindFoot)
-        const psi = front ? 0 : hindFoot(L, top, r0, ankle0, prevPsi[i]).psi, Lp = { ...L, footAngle: psi };
-        const a = clampLimb(solveLimb(Lp, !front, r0, front && !f.planted ? r.lift : 0, { top, fit: front }), front);
+        const psi = front ? 0 : hindFoot(L, top, r0, ankle0, prevPsi[i], lim, f.planted && moving ? bodyPitch : undefined).psi, Lp = { ...L, footAngle: psi };
+        const a = clampLimb(solveLimb(Lp, !front, r0, front && !f.planted ? r.lift : 0, { top, fit: front }), front, lim);
         const s = soleOf(Lp, a), want0 = top.y - Math.hypot(top.y - r0.y, r0.x);
         const w = limbToWorld({ x: r0.x, y: s.y + (r0.y - want0), z: s.z }, x, z, heading, tilt, sk.hips[i]);
         return { psi, a, err: Math.hypot(s.z - r0.z, s.y - want0), w };

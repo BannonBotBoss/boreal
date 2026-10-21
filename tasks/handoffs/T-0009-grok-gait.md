@@ -148,3 +148,93 @@ Recording: /workspace/locomotion/T-0009/ on the box.
   at speed (is the scapula excursion enough? Fischer 2002 says the scapula gives 66 % of fore step); slow half-bound
   overtaking (hind prints land behind the fore prints at ≤ 3 m/s on the host body).
 - Rule 15 review-first: not done this run.
+
+## Run 2 (grok-gait, 2026-10-21, based on dfcb848 grok/rabbit-clover; branch grok-gait/T-0009-hare-reach)
+Asked by Matthew (12:49 PT): grok's T-0009 "Needs from another agent" — (1) body pitch through the bound, (2) fore/hind reach
+at speed with the gap quantified and the contact-time source checked, (3) per-species joint limits in ik.ts as data with
+the rabbit ankle 66-137° / foot 17-123° (PeerJ 2022), dog/wolf unchanged; re-score, captures at 0.25x and 1x, frame
+questions, tsc + npm test. Baseline on dfcb848: bound-checks host **85.7 %** (tools/bound-score.ts).
+- [x] Rule 15 review first: T-0007 (grok's proposed plan) — claims hold, not approved (no Objectives, no credits, open
+  questions); event tasks/events/*-grok-gait-comment-T-0007.json.
+- [x] (3) Joint ranges as data (43f9723). ik.ts: `JointRange` (interior angles, 180 = straight), `LimbLimits`,
+  `JointLimits`; `clampLimb(a, front, limits = CANID_LIMITS)`. `CANID_LIMITS` is the old FLEX_LIMIT clamp value for value
+  (test: 2000 random angles, both limbs, identical). `BodyPlan.limits` carries a body's ranges; nothing in the code names a
+  species. `LEPORID_LIMITS` = hind ankle 66.4-137.2° and hind foot-to-ground 17.2-123.3° in stance, checked against the paper
+  (Crouch et al. 2022, PeerJ 10:e13611, PMC9208372, Results + Table 1: means ± SD 66.4 ± 13.4 / 137.2 ± 4.8 /
+  17.2 ± 6.3 / 123.3 ± 3.6°; ankle = shank-to-metatarsus, foot = metatarsus-to-ground; 6 NZW rabbits, stance 0.40 ± 0.15 s).
+  Knee and fore limb: no lagomorph goniometry found, so dog values [placeholder].
+  - These are STANCE ranges of slow domestic-rabbit gait, not end-ranges. The standing hare (ankle 48.5° interior) is below
+    66.4°, so bounding.ts phases the gait ranges in with motion (`blendLimits` by the move spring); standing keeps dog ranges.
+  - Rig mismatch: the paper's foot is ankle-to-MTP; the rig's foot bone is hock-to-toe tip (.132 m). No metatarsus/toe split
+    in HARE_BODY, so the paper's angle is applied to the whole bone.
+- [x] (1) Body pitch: DERIVED (no measured lagomorph trunk-pitch excursion found). bounding.ts `pitchCurve`: half-sine
+  vertical force per planted foot, fore/hind pairs carry 50/50 of the weight per stride [estimate], each acting trunk/2 from
+  the centre of mass. Inertia: a rod 2 × trunk long [estimate]. Integrated as a periodic zero-mean swing about mid-trunk,
+  capped ±0.2 rad. Nose lowest at mid fore stance, highest at mid hind stance (test). Swing ±9-10° at 3-11.6 m/s. Upper
+  bound: horizontal forces aimed at the centre of mass would reduce it. Gushue et al. 2005 found larger fore than hind
+  vertical forces in hopping rabbits; that would change the 50/50 share, but no per-pair impulse was found.
+  - Running posture, DERIVED (`RUN_POSE`): the hips rise, shoulders stay, so the body pitches nose-down about the hips. The
+    rise is the one (0-12 cm, 5 mm steps) with the longest fore + hind chords, measured in the pitched frame over the whole
+    swing. Host with LEPORID_LIMITS: rise 9.5 cm, running pitch −16 to −38°. With dog ranges: 6 cm, −6 to −27°.
+  - Girdle shifts now move the pivot along the ground, as dutyFits counts them, not along the pitched trunk. Hind sweeps
+    shorter than the chord sit at its front end (hind prints ahead).
+- [x] (2) Reach budget: `npx tsx tools/bound-reach.ts`. Need = data duty × stride; capacity = chord (foot roll included:
+  hindFoot picks the foot angle per position) + girdle on its lever (hip height). Hind girdle: lumbar/pelvis ±0.30 rad
+  (Schilling & Hackert 2006). Fore girdle: scapula ±0.30 rad (Fischer et al. 2002).
+  **THE HIND SWEEP THE DATA ASKS FOR AT 8.5 m/s CANNOT BE REACHED WITHIN SOURCED RANGES.**
+  | body | hind chord | hind capacity | need @ 8.5 | short | fore chord | fore capacity | fore need @ 8.5 | short |
+  |---|---|---|---|---|---|---|---|---|
+  | host + LEPORID_LIMITS | .200 | .278 m | .628 m | **.350 m (44 %)** | .235 | .313 m | .479 m | **.166 m (65 %)** |
+  | host + dog ranges (game today) | .518 | .596 m | .628 m | .032 m (95 %) | .250 | .328 m | .479 m | **.151 m (69 %)** |
+  - Lumbar shortening of the trunk is ~2 % of the chord: negligible.
+  - Under LEPORID_LIMITS the hind chord sits behind the hip (+.001 to +.201 m back). The limit is the paper's 137° ankle
+    plus the foot range: no foot ahead of the hip in stance.
+  - Source check (contact time): the data line hind duty .60 → .20 at 11.6 m/s rests on "as low as 16-18 %" for
+    jackrabbits (Lagomorpha Locomotion 2021). That figure is a minimum, gives no speed, and does not say hind. Hildebrand
+    1977 gives 16-70 % across genera, fore shorter than hind. No measured hare hind stance time at 8.5 m/s was found.
+  - So .325 at 8.5 m/s is an interpolation, not a measurement. A sweep of 1.2 × leg + foot (dog at 9.2 m/s: Walter &
+    Carrier 2007) gives hind duty ≈ .21 at 8.5 m/s, close to what the dog-range body sweeps (.206).
+  - Recommend grok change the duty line rather than anyone tuning to .63 m (contract note below).
+- [x] Re-score (tools/bound-score.ts, bound-checks metric, calibration in tests/bound.test.ts "metric calibration"):
+  - **host (HOST_PLAN + LEPORID_LIMITS): 85.7 % → 77.1 %**. Fails:
+    - overtake at 1.68 and 3 m/s (the hind chord is behind the hip);
+    - stiff back at 1.68 (the chord is too short, so the back flexes);
+    - flex 7/10 at 8.5;
+    - contact everywhere above 3 m/s (duty .362/.224/.126/.064 vs data .512/.427/.286/.170).
+  - **canid-limits (HOST_PLAN, dog ranges = what hare.ts runs today): 94.3 %**. Fails: contact at 5 and 8.5 m/s only
+    (.293 vs .427, .182 vs .286); planted 0 leashes everywhere.
+- [x] Captures (bench lock, headless Edge, closed): /workspace/locomotion/T-0009/v2/ — host-8.5 1x and 0.25x, host-3
+  0.25x, canid-limits-8.5 1x and 0.25x, host-poses 1x (frames, states.json, .mp4, -sheet.jpg).
+- [x] tsc clean. npm test: 384 tests, 371 pass, 1 fail, 12 todo. The fail is tests/trace.test.ts "trace off: hooks are
+  pass-through" (allocation timing; not touched here). Re-ran it alone 3×: fail, pass, pass, so it is flaky.
+
+### Frame questions (rule 6), v2 captures
+1. Hind prints land ahead of the fore prints at speed?
+   - Yes at 5, 8.5 and 11.6 m/s (8.5: 22/22).
+   - Host + LEPORID_LIMITS: no at 1.68 and 3 m/s.
+   - Dog ranges: yes at every speed.
+2. Gathered and extended suspensions visible?
+   - Yes at 8.5 m/s (sheet frames 2, 5, 7, 10: extended; 6: gathered with the fore swung back and hind forward).
+   - Airborne share: host 65 %, dog ranges 53 % of frames (duty .142 / .206).
+3. Back flexes before hind touchdown and extends at lift-off? Mostly: 7/10 strides at 8.5 m/s (host), 10/10 at 11.6 m/s.
+4. Feet planted, no slide? Yes: max slip 0.07 mm running, 0 leash steps in all runs. The poses run shows up to 4.3 mm
+   during the sit-up transition.
+5. Body pitch plausible?
+   - Timing yes: nose lowest at mid fore stance, highest at mid hind stance.
+   - Mean posture no: the host runs at −16 to −38°, dog ranges at −6 to −27°. That is steeper than hares look running.
+     The derived rise maximizes reach, so the posture is reach-driven, not shape-driven.
+   - Open: cap the run pitch, or source a running hip height.
+6. Resembles to 95 %? Uncalibrated visually (2D stick lab). Calibrated metric 77.1 % host / 94.3 % dog ranges: FAIL (< 95 %).
+
+## Contract notes (run 2; changes in other owners' files, not made)
+- **grok, src/animals/hare.ts HARE_PLAN:** to run the hare on the PeerJ ranges, add
+  `limits: LEPORID_LIMITS` (import from './locomotion/ik'). Until then the game hare runs on dog ranges (94.3 % body).
+  - Adding it today costs reach: 77.1 %, hind chord .20 m behind the hip.
+  - My advice: wait for (a) a metatarsus/toe split in HARE_BODY, so the foot range applies to the metatarsus only, and
+    (b) a sourced knee range.
+- **grok, core/agent/species.ts HARE_AGENT.gait duty [.6, .2]:**
+  - The .2 at 11.6 m/s is the jackrabbit minimum "as low as 16-18 %": no speed, not hind-specific.
+  - Either source a hind stance time at speed, or derive the line from sweep ≈ 1.2 × (leg + foot) (Walter & Carrier 2007).
+    That gives hind ≈ .21 at 8.5 m/s and ≈ .15 at 11.6 m/s.
+- **Open (mine):** run pitch too steep (−27° mean host); fore reach at 5-8.5 m/s short by .11-.17 m on either range set;
+  host + LEPORID_LIMITS overtaking at ≤ 3 m/s.

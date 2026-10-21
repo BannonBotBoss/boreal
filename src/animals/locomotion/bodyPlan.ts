@@ -7,6 +7,7 @@
  */
 import type { LegDims, LimbDims } from '../../core/animalBehavior';
 import type { LegLayout } from './signals';
+import type { JointLimits } from './ik';
 
 /** Measured body: lengths in metres, z in the body frame (+z back). */
 export interface BodyPlan {
@@ -21,6 +22,7 @@ export interface BodyPlan {
   /** shoulder joint height at rest as a share of foreLeg (1 = straight leg) */ foreBend?: number;
   /** hip-to-hock chord at rest as a share of hindLeg (knee bend standing) */ hindBend?: number;
   /** hind foot angle for solvers that hold one angle (rad from vertical, + toes ahead of the hock); bounding.ts picks it per frame (hindFoot) */ runFootAngle?: number;
+  /** joint ranges of this body in gait (ik.ts JointLimits, e.g. LEPORID_LIMITS); default ik.ts CANID_LIMITS. Data, not a species switch. */ limits?: JointLimits;
 }
 /** Defaults for the optional shares [estimate: drawn to the reference photos; SKELETON-RULES "Body proportions ... approximate"]. */
 export const PLAN_DEFAULTS = { manus: .2, upperShare: .48, foreBend: .92, hindBend: .8, runFootAngle: .7 };

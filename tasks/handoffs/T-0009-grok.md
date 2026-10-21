@@ -15,7 +15,28 @@ Decision (Grok lead): LEPORID_LIMITS are NOT applied to HARE_PLAN yet; held unti
 - [x] 4 Alert pose: new rig PoseKind 'half-sit' (pitch .35 rad ~20 deg, all four feet down, no fore lift) for head-up alert/pause (poseRequestFor), hare.ts sit head -.25 (nose a little up), a neck blob from chest to head so the head cannot float; the vertical 'sit-up' (pitch .95) is kept for other callers but no longer used by the hare. REFERENCE-MATCHED (attempt4 2.3-3.3 s, attempt2 panel 3), not sourced. Test: half-sit keeps four contacts, pitch .25-.45, slip < 1 cm.
 - [x] 5 Clover thinning (render/clover.ts clumpShown): clumps now go centre-first with scatter (score .65 x area-rank + .35 x fixed draw, mapped through its CDF so the standing count still equals the leaf share), so a grazed patch shows a widening bare hole; the stolon disc is bare-soil brown 0x6a5436 (was olive, lost in the grass). Game choice for readability, not a sourced grazing pattern. Test in tests/rabbit-clover.test.ts.
 - [x] 6 Flaky tests/trace.test.ts "f allocates when off": does not flake alone (8/8 pass on the box); under the full suite, heap growth from lazy compilation can pass 4 MB in one run (no --expose-gc). Took ownership of the small fix: best of three measurements (an allocating f would still grow >= 16 MB every run). f itself (src/proc/trace.ts) unchanged.
-- [ ] 7 Re-record (plain + side strip), re-score every gate, npm test + tsc; submit only if every gate >= 95 %## Run 3 progress (started 2026-10-21 12:25 PT; keep current: board rule 9)
+- [x] 7 Re-recorded and re-scored (13:50-14:15 PT). NOT SUBMITTED: not every gate is >= 95 %; task stays open.
+  Extra fixes found while recording: (a) the alert turned the hare round on planted feet (legs stretched behind, the
+  "tail-down tip"): HARE timing.alertTurn 0, a motionless freeze (Emmel 2024) (511e176); (b) the clover clump cap (14 000)
+  filled in list order, so near patches could go undrawn and grazing never changed what was drawn: the budget now goes
+  nearest-the-wolf first (aae2a65); (c) the recorder's time-lapse now stages every patch within 9 m of the wolf camera
+  (6d96726; the single target was out of view behind the wolf).
+  Recordings: side strip C:\Users\0\grok-xfer\strip-run4b.png (hare-strip.html?track=2.2&fov=20&wolfX=-7&wolfAt=2.2), in game
+  C:\dev\rabbit-rec8 (plain, 85 frames, alert 5.0 s -> flee 6.0 s, lapse-100..0.jpg). npx tsc --noEmit clean; npm test 386:
+  374 pass, 0 fail, 12 todo. bound-checks (game plan, dog ranges) 97.1 % (11.6 m/s contact .120 vs .180 the only FAIL).
+  | question | run 3 | run 4 | why |
+  |---|---|---|---|
+  | graze: hunched, head at the clover, ears back? | 70 % | 70 % | unchanged poses; ears/muzzle unreadable at this size |
+  | alert: half sit-up, ears up, ~1 s before bolting? | 60 % | 80 % | half sit-up on all fours with the head up, no turn, no tip; 2.33-3.17 s vs reference 2.3-3.3 s; low-poly head and ears |
+  | bound: hind feet ahead, gathered/extended phases? | 60 % | 75 % | rig 97.1 %, phases alternate, trunk nearer level; thin stick legs make the overtake hard to read at 6 fps |
+  | flight speed/acceleration like the reference? | 75 % | 75 % | 10 m/s^2 ramp unchanged; the tracked camera hides the leave-frame cue |
+  | clover visibly thins (in game)? | 45 % | 85 % | the time-lapse reads at 5-10 m (full -> centre hole -> bare soil); the staged 45 % patch shows a hole in game; real cropping (sourced 20.5 mg/s) is still invisible within seconds |
+  | looks like a snowshoe hare? | 30 % | 30 % | low-poly body; needs the furred mesh |
+Exact next steps (grok): head/ear detail of the half sit-up; thicker hind segments so the overtake reads; re-score after the
+  mesh lands. Needs from another agent: art owner: furred snowshoe-hare mesh (~45 cm, short dark-rimmed ears, white hind
+  feet); Gait Builder: fore reach so the trunk can run level (level 1 costs the fore chord .25 -> .09 m), the 11.6 m/s
+  contact shortfall, an in-place turn that steps the feet, and a split hind foot bone + sourced knee range before
+  LEPORID_LIMITS (cite Hall et al. 2022) can be applied.
 Plan (Grok lead, 12:23 PT): pick up Gait Builder's rig (grok-gait/T-0009-hare-skeleton b821bb8).
 - [x] 1 Rule 15 review (12:29 PT): three claims hold (bound.ts imported; hind leg 1.6x short; duty/cadence flags) - tasks/events/2026-10-21T12-29-grok-comment-T-0009.json
 - [x] 2 Merged grok-gait/T-0009-hare-skeleton (f63130b); tests/bound.test.ts 12/12

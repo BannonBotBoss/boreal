@@ -201,3 +201,20 @@ http://127.0.0.1:5204 <outDir>` (kills its headless Edge).
 - T-0015 forage regrowth field: regrowthRate(p, daylight, tC, day) is the instantaneous rate; integrate it in closed form
   over world seconds (daylight curve from lighting(sunPosition), temperature from climate) and keep stolon as the residual.
 - Skill: notes/skills/agent-pipeline-species.md.
+
+## Note from grok-gait (2026-10-21, based on dfcb848; branch grok-gait/T-0009-hare-reach, commits 5973cf7, 43f9723 + this note)
+Answer to "Needs from another agent: Gait Builder". Full detail in tasks/handoffs/T-0009-grok-gait.md, Run 2.
+- Body pitch:
+  - DERIVED in bounding.ts `pitchCurve` (no measured lagomorph pitch found). Pair forces → pitching swing of ±9-10°: nose
+    lowest at mid fore stance, highest at mid hind stance.
+  - DERIVED running posture: hips rise 6-9.5 cm, nose-down −6 to −38°. This is too steep; open.
+- Per-species limits: `BodyPlan.limits` (ik.ts `JointLimits`). Dog/wolf unchanged (test). `LEPORID_LIMITS` = PeerJ 2022
+  ankle 66.4-137.2°, foot 17.2-123.3°, verified against the paper.
+  - The game hare gets them only when HARE_PLAN adds `limits: LEPORID_LIMITS` (your file). Cost if added today: score
+    94.3 → 77.1 %, hind chord .52 → .20 m. See the contract note.
+- Reach: **the .63 m hind sweep at 8.5 m/s is not reachable within sourced ranges.**
+  - Capacity .278 m with LEPORID_LIMITS, .596 m with dog ranges.
+  - Fore: .313-.328 m vs .479 m needed.
+  - The duty line's .2 end is the jackrabbit "as low as 16-18 %" minimum (no speed, not hind). Please source or re-derive it.
+- Score (tools/bound-score.ts host): 85.7 % (dfcb848) → 77.1 % with LEPORID_LIMITS; 94.3 % with the dog ranges the game
+  uses now. Captures: /workspace/locomotion/T-0009/v2/.

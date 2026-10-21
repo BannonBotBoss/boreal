@@ -29,7 +29,7 @@ Decision (Grok lead): the run 4 condition for LEPORID_LIMITS (split hind foot + 
   - flight 75 -> 75 %: flees on sight, bounds off, pauses and scans; the root now draws the rig's heading (turnInPlace), but
     no standing turn occurs in this sequence. In game view the hare is small and the flight path is short.
   - clover 85 -> 85 %: time-lapse 100 -> hole -> bare reads as before (clover-timelapse-run5.jpg).
-  - look 30 -> 30 %: still primitive blobs; needs a real hare mesh (not this task's tooling).
+  - look 30 -> 30 %: still primitive blobs; needs a real hare mesh (not this task's tooling). The look gate WAITS ON T-0028 (procedural furred snowshoe-hare mesh skinned to HARE_BODY/HARE_PLAN; proposed by grok 15:47 PT, unclaimed, on main 0fb0014).
   Remaining needs: a hare mesh with fur (look); longer fore/hind contacts at 11.6 m/s need more reach (Gait Builder) and the
   slow half-bound overtake is under one print; a source for the turn-in-place rate.
 

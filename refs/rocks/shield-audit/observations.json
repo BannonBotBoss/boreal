@@ -1,68 +1,67 @@
 {
   "port": "5250",
-  "commit": "3c5da10",
   "info": {
     "href": "http://127.0.0.1:5250/?nomenu&bench&hour=11&at=128.7,21.5,0",
     "w": 1280,
     "h": 720,
-    "status": "11:06 · WALK · Stamina 100/100 · Energy 99/100RT run · LT stealth0 remembered · 0 friends · 0 herbs"
+    "status": "11:08 · WALK · Stamina 100/100 · Energy 98/100RT run · LT stealth0 remembered · 0 friends · 0 herbs"
   },
   "shots": [
     {
       "f": "forest-floor-0.png",
-      "t": 1792608908835
+      "t": 1792614707864
     },
     {
       "f": "forest-floor-1.png",
-      "t": 1792608916714
+      "t": 1792614712251
     },
     {
       "f": "forest-floor-2.png",
-      "t": 1792608918625
+      "t": 1792614713746
     },
     {
       "f": "forest-walk-0.png",
-      "t": 1792608923500
+      "t": 1792614719422
     },
     {
       "f": "forest-walk-1.png",
-      "t": 1792608925011
+      "t": 1792614723151
     },
     {
       "f": "forest-walk-2.png",
-      "t": 1792608926565
+      "t": 1792614725390
     },
     {
       "f": "forest-walk-3.png",
-      "t": 1792608927944
+      "t": 1792614734401
     },
     {
       "f": "upland-ridge-0.png",
-      "t": 1792608952457
+      "t": 1792614769304
     },
     {
       "f": "upland-ridge-1.png",
-      "t": 1792608953900
+      "t": 1792614771878
     },
     {
       "f": "upland-ridge-2.png",
-      "t": 1792608955504
+      "t": 1792614773641
     },
     {
       "f": "upland-walk-0.png",
-      "t": 1792608958218
+      "t": 1792614778341
     },
     {
       "f": "upland-walk-1.png",
-      "t": 1792608959558
+      "t": 1792614779736
     },
     {
       "f": "upland-walk-2.png",
-      "t": 1792608960954
+      "t": 1792614781214
     },
     {
       "f": "upland-walk-3.png",
-      "t": 1792608962346
+      "t": 1792614782596
     }
   ],
   "errors": []

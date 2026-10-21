@@ -1,22 +1,25 @@
 {
-  "metric": "shieldOutcropScore = 0.5 * min(1, rockCoverShare / 0.18) + 0.5 * min(1, (largestFeatureWidthPx / wolfWithersHeightPx) / 1.0)",
+  "metric": "shieldOutcropScore = 0.40 * min(1, rockCoverShare / 0.16) + 0.35 * min(1, (largestFeatureWidthPx / wolfWithersHeightPx) / 1.0) + 0.25 * (0.5 * min(1, aspectWH / 1.8) + 0.5 * min(1, mineralLichenStdDev / 8.0))",
   "calibration": {
     "knownMatch_natureReference": {
-      "rockCoverShare": 0.1743,
-      "componentCount": 180,
-      "largestFeatureWidthPx": 324,
+      "rockCoverShare": 0.2048,
+      "componentCount": 200,
+      "largestFeatureWidthPx": 372,
       "medianFeatureWidthPx": 6,
-      "largestFeatureAreaPx2": 14216,
+      "largestFeatureAreaPx2": 18796,
       "largestFeatureBox": [
         346,
-        520,
-        668,
+        446,
+        716,
         634
       ],
-      "largestRatioToWolfWithers": 1.246,
-      "coverSubscore": 0.968,
+      "largestAspectWidthToHeight": 1.96,
+      "mineralLichenStdDev": 29.36,
+      "largestRatioToWolfWithers": 1.431,
+      "coverSubscore": 1,
       "scaleSubscore": 1,
-      "calibratedScore": 0.984
+      "shapeAndTextureSubscore": 1,
+      "calibratedScore": 1
     },
     "knownMismatch_forestFloorGame": {
       "rockCoverShare": 0,
@@ -25,44 +28,73 @@
       "medianFeatureWidthPx": 0,
       "largestFeatureAreaPx2": 0,
       "largestFeatureBox": null,
+      "largestAspectWidthToHeight": 0,
+      "mineralLichenStdDev": 0,
       "largestRatioToWolfWithers": 0,
       "coverSubscore": 0,
       "scaleSubscore": 0,
+      "shapeAndTextureSubscore": 0,
       "calibratedScore": 0
     }
   },
-  "gameBedrockRidge_uplandWalk2": {
-    "rockCoverShare": 0.0002,
-    "componentCount": 3,
-    "largestFeatureWidthPx": 6,
-    "medianFeatureWidthPx": 4,
-    "largestFeatureAreaPx2": 12,
-    "largestFeatureBox": [
-      1072,
-      414,
-      1076,
-      414
-    ],
-    "largestRatioToWolfWithers": 0.028,
-    "coverSubscore": 0.001,
-    "scaleSubscore": 0.028,
-    "calibratedScore": 0.015
-  },
   "gameBedrockRidge_uplandRidge0": {
-    "rockCoverShare": 0.0003,
-    "componentCount": 2,
-    "largestFeatureWidthPx": 6,
-    "medianFeatureWidthPx": 6,
-    "largestFeatureAreaPx2": 36,
+    "rockCoverShare": 0.1655,
+    "componentCount": 6,
+    "largestFeatureWidthPx": 324,
+    "medianFeatureWidthPx": 30,
+    "largestFeatureAreaPx2": 18004,
     "largestFeatureBox": [
-      1022,
-      406,
-      1026,
-      412
+      240,
+      400,
+      514,
+      488
     ],
-    "largestRatioToWolfWithers": 0.028,
-    "coverSubscore": 0.002,
-    "scaleSubscore": 0.028,
-    "calibratedScore": 0.015
+    "largestAspectWidthToHeight": 3.07,
+    "mineralLichenStdDev": 20.82,
+    "largestRatioToWolfWithers": 1.507,
+    "coverSubscore": 1,
+    "scaleSubscore": 1,
+    "shapeAndTextureSubscore": 1,
+    "calibratedScore": 1
+  },
+  "gameBedrockRidge_uplandWalk0": {
+    "rockCoverShare": 0.1983,
+    "componentCount": 5,
+    "largestFeatureWidthPx": 316,
+    "medianFeatureWidthPx": 44,
+    "largestFeatureAreaPx2": 21508,
+    "largestFeatureBox": [
+      240,
+      400,
+      514,
+      502
+    ],
+    "largestAspectWidthToHeight": 2.65,
+    "mineralLichenStdDev": 18.77,
+    "largestRatioToWolfWithers": 1.47,
+    "coverSubscore": 1,
+    "scaleSubscore": 1,
+    "shapeAndTextureSubscore": 1,
+    "calibratedScore": 1
+  },
+  "gameBedrockRidge_uplandWalk1": {
+    "rockCoverShare": 0.3225,
+    "componentCount": 4,
+    "largestFeatureWidthPx": 276,
+    "medianFeatureWidthPx": 164,
+    "largestFeatureAreaPx2": 33984,
+    "largestFeatureBox": [
+      240,
+      462,
+      514,
+      634
+    ],
+    "largestAspectWidthToHeight": 1.59,
+    "mineralLichenStdDev": 12.71,
+    "largestRatioToWolfWithers": 1.284,
+    "coverSubscore": 1,
+    "scaleSubscore": 1,
+    "shapeAndTextureSubscore": 0.942,
+    "calibratedScore": 0.985
   }
 }

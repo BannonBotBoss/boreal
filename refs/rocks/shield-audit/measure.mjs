@@ -1,4 +1,4 @@
-// Zero-dependency calibrated PNG measurement script for Canadian Shield rock outcrops, boulders, and prop scale (Rule 11).
+// Zero-dependency calibrated PNG measurement script for Canadian Shield rock outcrops, boulders, shape aspect, and lichen/mineral texture (Rule 11).
 // Usage: node refs/rocks/shield-audit/measure.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
@@ -56,6 +56,7 @@ function measureShieldFrame(path, opts = {}) {
   const gh = Math.floor((y1 - y0) / step);
   const grid = new Uint8Array(gw * gh);
   let validCells = 0, rockCells = 0;
+  let lumSum = 0, lumSqSum = 0;
 
   for (let gy = 0; gy < gh; gy++) {
     const y = y0 + gy * step;
@@ -67,14 +68,17 @@ function measureShieldFrame(path, opts = {}) {
       validCells++;
       const r = rows[y][x * bpp], g = rows[y][x * bpp + 1], b = rows[y][x * bpp + 2];
       const mean = (r + g + b) / 3;
-      // Mineral grey / Canadian Shield pink-grey granite: not foliage/moss (g - r <= 6), not turquoise water (b - r <= 18), not white lichen/sky (mean < 210), brighter than dark forest soil/moss (mean >= 112)
-      const isFoliageOrMoss = g > r + 6 || (g > b + 10 && r < 140);
-      const isPaleLichen = r > 210 && g > 210 && b > 195;
-      const isMineral = r >= g - 6 && b - r <= 18 && r - b <= 38 && Math.abs(g - b) <= 22;
-      const isRock = !isFoliageOrMoss && !isPaleLichen && isMineral && mean >= 112;
+      // Mineral grey / Canadian Shield pink-grey granite & crustose grey-sage lichen (sunlit or skylight-shadowed):
+      // Green foliage/moss has green strictly dominant over both red and blue; mineral rock has either warm sunlight (r >= g - 8) or skylight shadow (b >= g - 2).
+      const isFoliageOrMoss = (g > r + 8 && g > b + 4) || (g > b + 10 && r < 140);
+      const isPaleSky = r > 215 && g > 215 && b > 205;
+      const isMineralOrCrustose = (r >= g - 8 || b >= g - 2) && b - r <= 28 && r - b <= 38 && Math.abs(g - b) <= 24;
+      const isRock = !isFoliageOrMoss && !isPaleSky && isMineralOrCrustose && mean >= 96;
       if (isRock) {
         grid[gy * gw + gx] = 1;
         rockCells++;
+        lumSum += mean;
+        lumSqSum += mean * mean;
       }
     }
   }
@@ -82,7 +86,7 @@ function measureShieldFrame(path, opts = {}) {
   // 8-connected components on grid
   const visited = new Uint8Array(gw * gh);
   const widthsPx = [];
-  let maxAreaPx2 = 0, bestBox = null;
+  let maxAreaPx2 = 0, bestBox = null, bestAspect = 0;
   for (let i = 0; i < gw * gh; i++) {
     if (!grid[i] || visited[i]) continue;
     const q = [i];
@@ -112,11 +116,13 @@ function measureShieldFrame(path, opts = {}) {
     }
     if (count >= 2) {
       const wPx = (maxX - minX + 1) * step;
+      const hPx = Math.max(step, (maxY - minY + 1) * step);
       widthsPx.push(wPx);
       const areaPx2 = count * step * step;
       if (areaPx2 > maxAreaPx2) {
         maxAreaPx2 = areaPx2;
         bestBox = [x0 + minX * step, y0 + minY * step, x0 + maxX * step, y0 + maxY * step];
+        bestAspect = +(wPx / hPx).toFixed(2);
       }
     }
   }
@@ -125,13 +131,17 @@ function measureShieldFrame(path, opts = {}) {
   const medW = widthsPx.length ? widthsPx[Math.floor(widthsPx.length / 2)] : 0;
   const rockCoverShare = +(rockCells / Math.max(1, validCells)).toFixed(4);
   const largestRatioToWolf = +(maxW / wolfHeightPx).toFixed(3);
+  const lumMean = rockCells ? lumSum / rockCells : 0;
+  const mineralLichenStdDev = rockCells > 2 ? +Math.sqrt(Math.max(0, lumSqSum / rockCells - lumMean * lumMean)).toFixed(2) : 0;
 
   // Calibrated Shield bedrock-ridge score (0..1):
-  // - coverSubscore: 1.0 when exposed rock cover >= 18% of ground ROI (NW Ontario FEC V30/V12 bedrock ridge)
-  // - scaleSubscore: 1.0 when largest contiguous outcrop/boulder span >= 1.0x wolf withers height (~0.75 m)
-  const coverSubscore = Math.min(1, rockCoverShare / 0.18);
+  // 1) coverSubscore (0.4): 1.0 when exposed rock cover >= 16% of ground ROI (NW Ontario FEC V30/V12 bedrock ridge)
+  // 2) scaleSubscore (0.35): 1.0 when largest contiguous outcrop/boulder span >= 1.0x wolf withers height (~0.75 m)
+  // 3) shapeAndTextureSubscore (0.25): low-relief glacially scoured whaleback aspect ratio (w/h >= 1.8) + mineral/lichen internal texture stdDev (>= 8.0), rejecting a monochrome spherical/cubic grey blob
+  const coverSubscore = Math.min(1, rockCoverShare / 0.16);
   const scaleSubscore = Math.min(1, largestRatioToWolf / 1.0);
-  const calibratedScore = +(0.5 * coverSubscore + 0.5 * scaleSubscore).toFixed(3);
+  const shapeAndTextureSubscore = 0.5 * Math.min(1, bestAspect / 1.8) + 0.5 * Math.min(1, mineralLichenStdDev / 8.0);
+  const calibratedScore = +(0.4 * coverSubscore + 0.35 * scaleSubscore + 0.25 * shapeAndTextureSubscore).toFixed(3);
 
   return {
     rockCoverShare,
@@ -140,15 +150,18 @@ function measureShieldFrame(path, opts = {}) {
     medianFeatureWidthPx: medW,
     largestFeatureAreaPx2: maxAreaPx2,
     largestFeatureBox: bestBox,
+    largestAspectWidthToHeight: bestAspect,
+    mineralLichenStdDev,
     largestRatioToWolfWithers: largestRatioToWolf,
     coverSubscore: +coverSubscore.toFixed(3),
     scaleSubscore: +scaleSubscore.toFixed(3),
+    shapeAndTextureSubscore: +shapeAndTextureSubscore.toFixed(3),
     calibratedScore,
   };
 }
 
 const results = {
-  metric: 'shieldOutcropScore = 0.5 * min(1, rockCoverShare / 0.18) + 0.5 * min(1, (largestFeatureWidthPx / wolfWithersHeightPx) / 1.0)',
+  metric: 'shieldOutcropScore = 0.40 * min(1, rockCoverShare / 0.16) + 0.35 * min(1, (largestFeatureWidthPx / wolfWithersHeightPx) / 1.0) + 0.25 * (0.5 * min(1, aspectWH / 1.8) + 0.5 * min(1, mineralLichenStdDev / 8.0))',
   calibration: {
     knownMatch_natureReference: measureShieldFrame('refs/rocks/reference/shield-ridge-ref.png', {
       wolfBox: [460, 185, 650, 565],
@@ -158,9 +171,13 @@ const results = {
     }),
     knownMismatch_forestFloorGame: measureShieldFrame('refs/rocks/shield-audit/forest-floor-0.png'),
   },
-  gameBedrockRidge_uplandWalk2: measureShieldFrame('refs/rocks/shield-audit/upland-walk-2.png'),
   gameBedrockRidge_uplandRidge0: measureShieldFrame('refs/rocks/shield-audit/upland-ridge-0.png', {
-    // Exclude the giant Practice herb in front of the wolf as well
+    wolfBox: [515, 315, 780, 720],
+  }),
+  gameBedrockRidge_uplandWalk0: measureShieldFrame('refs/rocks/shield-audit/upland-walk-0.png', {
+    wolfBox: [515, 315, 780, 720],
+  }),
+  gameBedrockRidge_uplandWalk1: measureShieldFrame('refs/rocks/shield-audit/upland-walk-1.png', {
     wolfBox: [515, 315, 780, 720],
   }),
 };

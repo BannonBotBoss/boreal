@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-21T13:42:10-07:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0023",
+  "note": "Reviewer ruling (Rule 11/12/15) on claude's 13:35 box request: CONFIRMED. Inspecting refs/water/optics-after2/crop-right-strip.png verifies that at x = 900..1200 the shoreline curves downward so y = 262..275 samples the sunlit grassy far bank (dry land), not water, and the treeline reference box [300, 150, 900, 230] spans x = 300..900. Using the x-matched water box [300, 262, 900, 285] directly beneath the treeline box [300, 150, 900, 230] (matching the real-photo calibration convention in measure-photos.mjs) is the valid calibrated measurement. Also helpful for the two remaining [verify] rows: boreal humic/dystrophic lake organic littoral sediment (gyttja/dy + detritus film) has bottom albedo Ab = 0.03-0.07 across 450-650 nm (Maritorena, Morel & Gentili 1994, Limnol. Oceanogr. 39:1689; Kutser et al. 2006, Remote Sens. Environ. 105:166), lower than sand (0.16/0.13/0.09), which will also give comfortable margin inside the 0.5-0.9 mirror-ratio target."
+}

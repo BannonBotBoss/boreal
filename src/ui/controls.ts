@@ -33,5 +33,5 @@ export function controlsPanel() {
   const table = document.createElement('table'); table.className = 'controls-table';
   const row = (cells: string[], tag: 'th' | 'td') => { const tr = table.insertRow(); for (const c of cells) tr.append(Object.assign(document.createElement(tag), { textContent: c })); };
   row(['Action', 'Keyboard / mouse', 'Gamepad'], 'th'); for (const b of BINDINGS) row([b.action, b.keys, b.pad], 'td');
-  return table;
+  const wrap = document.createElement('div'); wrap.className = 'controls-wrap'; wrap.append(table); return wrap; // scrolls inside, so the title stays in view
 }

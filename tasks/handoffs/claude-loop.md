@@ -2,6 +2,13 @@
 
 Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`npx vite --host 127.0.0.1 --port 5212 --strictPort`; claude range 5210-5229).
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
+## Run 2026-10-21 14:20 PDT (in progress)
+- [x] Merged main bbf9418 into claude/loop (fast-forward). New since 13:39: agy complete T-0026 (13:38), agy comment T-0023
+      (13:42, box ruling CONFIRMED: matched box [300,262,900,285]; Ab 0.03-0.07 for organic littoral sediment), grok comment
+      T-0026 (14:18, not approved: chunk digest test, white slabs, score lacks colour term).
+- [ ] Review first: T-0026 (agy complete, no non-author approve yet) on agy/shield-rocks. T-0007 unchanged (my 12:21 comment).
+- [ ] Then T-0023: apply the ruling, source bb/Ab, re-record optics-after4, submit if the matched box passes with margin.
+
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
 
 ## Run 2026-10-21 13:20 PDT

@@ -306,7 +306,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
       gpuBegin();
       const sl = rig.sunLight;
       SUN_UNIFORMS.uSunView.value.copy(sunDir).transformDirection(camera.matrixWorldInverse); SUN_UNIFORMS.uSunCol.value.copy(sl.color).multiplyScalar(sl.intensity / 3);
-      if (tier.ibl) { if (!scene.environment && envRT) scene.environment = envRT.texture; bakeIBL(sunDir); scene.environmentIntensity = AMBIENT.env; rig.hemi.intensity *= AMBIENT.hemiIbl; } // core/light AMBIENT: sky diffuse fraction
+      if (tier.ibl) { if (!scene.environment && envRT) scene.environment = envRT.texture; bakeIBL(sunDir); scene.environmentIntensity = AMBIENT.env; const n = rig.hemi.userData.night ?? 0; rig.hemi.intensity *= AMBIENT.hemiIbl + (1 - AMBIENT.hemiIbl) * n; } // core/light AMBIENT: sky diffuse fraction
       else if (scene.environment) scene.environment = null; // (this else sat inside the comment above: Very low/Minimum kept the env map)
       const pend = pendingWorld(); // the world tier waiting out its hold: compile its variants now (late pass at 3/4 of the hold for new meshes)
       if (pend && variantOf(pend) !== variantOf(tier)) { if (warm?.key !== variantOf(pend)) precompile(pend); else if (!warm.late && GOVERNOR.heldMs > GOVERNOR.worldHoldMs * .75) { warm.late = true; precompile(pend); } }

@@ -5,7 +5,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { WORLD_SEED } from '../core/world';
 import { lighting, sunPosition } from '../core/timeOfDay';
 import { WEATHER, shortwave, weatherAt } from '../core/weather';
-import { LUX, SYNODIC, exposureFor, moonAge, moonLux, sunColour } from '../core/light';
+import { LUX, SYNODIC, darkAdapted, exposureFor, moonAge, moonLux, nightKey, nightSkyLight, sunColour, wolfEyes } from '../core/light';
 import { LIGHTING } from './pbr';
 
 /**
@@ -68,7 +68,7 @@ export function createSky(scene: THREE.Scene) {
   const moonLight = new THREE.DirectionalLight(0x9fb4e6, .35); scene.add(moonLight, moonLight.target);
   const hemi = new THREE.HemisphereLight(0xf1f5dd, 0x526753, 2.7); scene.add(hemi);
   const fogDay = new THREE.Color(0xc4d4c8), fogGolden = new THREE.Color(0xd9a47c), fogNight = new THREE.Color(0x0d1422);
-  const tmp = new THREE.Color(), tmpV = new THREE.Vector3();
+  const tmp = new THREE.Color(), tmpV = new THREE.Vector3(), keyDir = new THREE.Vector3();
   // Precipitation: one Points cloud around the camera (only drawn while it rains/snows), fall speed from Kessler V_t / snow ~1 m/s.
   const N = 1500, P = new Float32Array(N * 3), rnd = random(hash(`precip:${WORLD_SEED}`));
   for (let i = 0; i < N * 3; i++) P[i] = (rnd() - .5) * 40;
@@ -87,11 +87,17 @@ export function createSky(scene: THREE.Scene) {
       const cosZ = Math.sin(sun.elevation * Math.PI / 180), wq = weatherAt(focus.x, focus.z), haze = (u.turbidity.value as number) / 2.5;
       const sc = sunColour(cosZ, haze), age = moonAge(WEATHER.day), moon = sunPosition(hour - age / SYNODIC * 24); // moon transits ~0.8 h later per day of age
       const Esun = shortwave(cosZ, WEATHER.on ? wq.cloud : 0) * LUX.efficacy, Emoon = moonLux(age, Math.sin(moon.elevation * Math.PI / 180)) * (1 - .75 * (WEATHER.on ? wq.cloud : 0));
-      LIGHTING.lux = Esun + Emoon + LUX.nightSky; LIGHTING.gain = exposureFor(LIGHTING.lux); LIGHTING.moonAge = age; LIGHTING.Esun = Esun; LIGHTING.Emoon = Emoon;
+      LIGHTING.lux = Esun + Emoon + LUX.nightSky; LIGHTING.gain = exposureFor(LIGHTING.lux) * wolfEyes(LIGHTING.lux); LIGHTING.moonAge = age; LIGHTING.Esun = Esun; LIGHTING.Emoon = Emoon;
       sunLight.color.setRGB(sc.r, sc.g, sc.b);
       sunLight.intensity = 3 * Esun / LUX.ref * LIGHTING.gain; sunLight.position.copy(focus).addScaledVector(dir, 80); sunLight.target.position.copy(focus);
-      moonLight.intensity = 3 * Emoon / LUX.ref * LIGHTING.gain; moonLight.position.copy(focus).add(tmpV.set(moon.direction.x, moon.direction.y, moon.direction.z).multiplyScalar(80)); moonLight.target.position.copy(focus);
-      hemi.intensity = .35 + 2.35 * light.day;
+      // Moon, or with the moon down/thin an overhead skylight key from behind the viewer (core/light NIGHT.key): reuses this light so no shader recompiles.
+      const night = 1 - light.day, key = nightKey(LIGHTING.gain) * night, Emoon3 = 3 * Emoon / LUX.ref * LIGHTING.gain, wk = key / (key + Emoon3 || 1);
+      moonLight.intensity = Emoon3 + key;
+      tmpV.set(moon.direction.x, moon.direction.y, moon.direction.z).multiplyScalar(1 - wk);
+      if (wk > 0) { camera.getWorldDirection(keyDir); keyDir.y = 0; if (keyDir.lengthSq() < 1e-6) keyDir.set(0, 0, -1); keyDir.normalize().multiplyScalar(-1); keyDir.y = .75; tmpV.addScaledVector(keyDir.normalize(), wk); }
+      moonLight.position.copy(focus).add(tmpV.normalize().multiplyScalar(80)); moonLight.target.position.copy(focus);
+      hemi.intensity = 2.7 * light.day + (1 - light.day) * Math.max(.35, nightSkyLight(Emoon, LIGHTING.gain));
+      hemi.userData.night = (1 - light.day) * darkAdapted(LIGHTING.lux); // photoreal: the dark-adapted night sky is not in the IBL map, so keep this share unreduced
       hemi.color.setRGB(.25, .3, .45).lerp(tmp.set(0xf1f5dd), light.day);
       hemi.groundColor.setRGB(.05, .06, .09).lerp(tmp.set(0x526753), light.day);
       const fog = (scene.fog as THREE.Fog).color;

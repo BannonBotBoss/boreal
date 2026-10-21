@@ -47,3 +47,21 @@ export function moonLux(age: number, sinElevation: number) {
 /** Exposure gain for a scene illuminance: partial adaptation (E_ref/E)^0.85, clamped (game calibration: keeps today's
  * full-moon look; a fully adapting camera would use exponent 1). Photo-mode EV multiplies on top. */
 export const exposureFor = (lux: number) => Math.min(4e6, Math.max(1, (LUX.ref / Math.max(lux, 1e-6)) ** .85));
+/** Wolf low-light vision. A wolf's rod-rich retina and tapetum lucidum give it several times a human's sensitivity in dim
+ *  light (dogs: ~3x lower threshold, Kemp & Jacobs; tapetum reflects ~2x more light back through the rods), so on a moonless
+ *  night under canopy it still reads its legs and the ground. Below `photopic` lux the view adapts up to `wolf` x more gain,
+ *  fully by `scotopic` lux (moonless starlight ~0.001 lx); full moon (~0.25 lx) and twilight stay as before.
+ *  sky = night-sky diffuse (starlight/airglow + moonlight scattered by the sky) as a share of the gain-scaled light;
+ *  key = an overhead skylight key from behind the viewer while the moon is down (the brightest part of the night sky stands in
+ *  for the moon so the player's silhouette and gait read) [game calibration: tuned headless, ?trees=v2&hour=3.7]. */
+export const NIGHT = { wolf: 6, photopic: .3, scotopic: .003, moonDiffuse: .2, sky: 2.5, key: 1.2 };
+/** 0 in daylight/full moon .. 1 fully dark-adapted (log-lux smoothstep between NIGHT.photopic and NIGHT.scotopic). */
+export function darkAdapted(lux: number) {
+  const a = Math.log10(NIGHT.photopic), b = Math.log10(NIGHT.scotopic), t = Math.min(1, Math.max(0, (a - Math.log10(Math.max(lux, 1e-9))) / (a - b)));
+  return t * t * (3 - 2 * t);
+}
+export const wolfEyes = (lux: number) => 1 + (NIGHT.wolf - 1) * darkAdapted(lux);
+/** Hemisphere (sky) light at night for an adapted gain: starlight/airglow plus the sky-scattered share of moonlight. */
+export const nightSkyLight = (Emoon: number, gain: number) => 3 * NIGHT.sky * (LUX.nightSky + NIGHT.moonDiffuse * Emoon) / LUX.ref * gain;
+/** Overhead key from behind the viewer while the moon is down: fades out as real moonlight takes over. */
+export const nightKey = (gain: number) => 3 * NIGHT.key * LUX.nightSky / LUX.ref * gain;

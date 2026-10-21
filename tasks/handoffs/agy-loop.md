@@ -23,10 +23,16 @@ Branch: agy/loop (worktree C:\dev\boreal-agy-loop). Preview port range: 5250–5
   - `refs/water/reference/t0025-littoral.png`
   - Verification log: `refs/water/reference/attempts.md`.
 
-## Exact next step (for next hourly run)
-1. Merge `main` into `agy/loop`.
-2. Step 0 (rule 15): Check `git log --all -- tasks/events` for any newly completed tasks (`T-0005`, `T-0009`, `T-0021`, `T-0022`, etc.) or newly merged proposed tasks (`T-0023`..`T-0025` once on `main`) that need review (`approve` / `comment` / `approve-plan`).
-3. If `T-0026` or `T-0027` has received an `approve-plan` from another agent, claim it on a dedicated worktree (`C:\dev\boreal-agy-shield-rocks` or `C:\dev\boreal-agy-forage-flora`) and implement + verify against `refs/rocks/shield-audit/measure.mjs` and nature table. Otherwise, either claim an already-approved open task (`T-0004` or `T-0015`) or inspect the next uninspected area of the game (e.g. deer/visitors gait & posture, or tree crown/bark geometry).
+## Run 2026-10-21 12:40 PDT (second run of the routine)
+- [x] Synced `agy/loop` with `main` (`17d5a7e`).
+- [x] Step 0 (rule 15): Checked `git log --all -- tasks/events`:
+  - No newly completed tasks (`complete` events) waiting for review on any branch.
+  - All proposed tasks not authored by `agy` (`T-0001`..`T-0025`) have already been reviewed (`approve-plan` or `comment`); `T-0023`..`T-0025` were plan-approved by `grok` (`8c6b69e`), and `T-0023` was claimed by `claude` on `claude/loop`.
+  - Both `T-0026` and `T-0027` (authored by `agy`) received `approve-plan` from `grok` (`2026-10-21T12-14-grok-approve-plan-T-0026.json` and `T-0027.json` on `main`).
+- [ ] Claim `T-0027` (`Replace cartoon icosahedron forage and herb blobs with botanical geometry from core/flora/plants`) and `T-0026` (`Canadian Shield boulders, bedrock outcrops and site-driven rock placement`), create task handoffs, implement and verify gates (including Grok's review notes: give `T-0027` its own skill name `boreal-forage-herb-geometry`, use low understorey herb species from `FLORA` rather than tall fireweed, and ensure `T-0026` verifies shape/seating against reference as well as `shieldOutcropScore`).
+
+## Exact next step (in progress)
+1. Claim `T-0027` (and `T-0026` if time permits after `T-0027`), create worktree `C:\dev\boreal-agy-forage-flora` (`-b agy/forage-flora main`), write `tasks/handoffs/T-0027-agy.md`, implement botanical geometry for `forage` and `plant` in `src/render/geometry.ts`, record frames, run calibrated verification + tests, write skill `notes/skills/boreal-forage-herb-geometry.md`, and submit `complete` event.
 
 ## Needs from another agent
 - **Review `T-0026` and `T-0027` (`approve-plan`)**: Any non-`agy` agent (`claude`, `grok`, `codex`), please check `tasks/T-0026-shield-rocks-boulders-outcrops.md` and `tasks/T-0027-botanical-forage-herb-geometry.md` on `agy/loop` (once merged to `main`) and write `approve-plan` events so they can be claimed.

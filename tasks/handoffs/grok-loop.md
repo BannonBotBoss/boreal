@@ -25,3 +25,14 @@ Grok's T-0009 (grok/rabbit-clover, grok-gait/T-0009-hare-skeleton) is still open
 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress, do step 3 inspection on areas nobody has covered yet: deer/visitor animals, trees (crowns/bark), sound, controls/UI (codex did sky, claude water/shore, agy rocks/forage props).
+
+
+## Run 2026-10-21 13:16 PDT
+Grok's T-0009 still in progress (grok/rabbit-clover last commit 13:13), so only steps 1, 2, 2b.
+
+- [ ] Step 1b review T-0027 (agy, complete 13:02 on agy/forage-flora): tests, tsc, frames, numbers.
+- [ ] Step 2 new tasks since 12:11.
+- [ ] Step 2b handoff needs.
+
+## Next step
+Review T-0027 on agy/forage-flora (detached checkout in this worktree), then write approve or comment event on grok/board-loop.

@@ -29,14 +29,14 @@ Line numbers are for main 0d54785 (spot-check with `git show 0d54785:src/<file>`
 | 10 | Visitors sway on the spot with no needs | render/buildScene.ts:268-270 | T-0012 |
 | 11 | Tree positions uniform within a chunk; no caused gaps for light | core/world.ts:51 KIND_TABLE; core/population.ts | T-0016 (why/gaps), T-0009 (sunlit clover via siteAt light) |
 | 12 | Log why chain is labels only; insects, water, sun not transactions | core/why.ts:13, 40 | T-0018 (with T-0007) |
-| 13 | No Math.random in src/: all randomness via seeded proc/rng.ts | `git grep -n "Math.random" 0d54785 -- src` returns nothing | guard rail in plan section 4 |
+| 13 | No Math.random in src/: all randomness via seeded proc/rng.ts | `git grep -n "Math.random" 0d54785 -- src` finds only the comment at proc/rng.ts:1 | guard rail in plan section 4 |
 | 14 | Reuse: CONTACTS bus, solidContact/interact/consumeForage, why.ts, smell+windAt, siteAt().light, shortwave, thomas(), deltas, expend+footing | plan section 2 table (core/contactBus.ts, core/events.ts, core/flora/site.ts:72, core/weather.ts:76, ground.ts:180, animalBehavior.ts:95) | architecture section 3; T-0009 builds on it |
 | 15 | Hunting spec (lock, stealth, leap, pin, bite, release-friendship) | Matthew's spec 2026-10-21; main.ts:358-366 focusTarget | T-0013, T-0014 |
 
 ## How a reviewer checks it (rule 12: spot-check at least three)
 1. Pick three rows above, open `git show 0d54785:src/<file>` at the cited lines, and confirm the behaviour described.
 2. Confirm each "Became" task exists in tasks/ with matching scope.
-3. `git grep -n "Math.random" 0d54785 -- src` (row 13).
+3. `git grep -n "Math.random" 0d54785 -- src` (row 13: one hit, the comment in proc/rng.ts:1). Grok spot-checked rows 3 (autonomy.ts:8-10) and 5 (deerHerd.ts:89-93, the `s.rng() < .55` flip) on 2026-10-21 11:38 PT.
 
 ## Numbers
 The audit introduces no game numbers. The values it quotes (0.22 m, 1.8 m, 0.7 s, 4 m/s, +18, 55 %) are the code's, quoted

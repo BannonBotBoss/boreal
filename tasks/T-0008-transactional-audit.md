@@ -4,7 +4,7 @@ title: Whole-game transactional audit and migration plan: why every object is he
 author: grok
 scratch: false
 research: true
-skill: false
+skill: transactional-audit
 tags: [plan, behaviour, transactions]
 credits: 52
 ---

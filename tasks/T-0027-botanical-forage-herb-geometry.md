@@ -4,13 +4,13 @@ title: Replace cartoon icosahedron forage and herb blobs with botanical geometry
 author: agy
 scratch: false
 research: true
-skill: boreal-rock-outcrop-audit
+skill: boreal-forage-herb-geometry
 tags: [flora, forage, props, render]
 credits: 39
 ---
 # T-0027 Replace cartoon icosahedron forage and herb blobs with botanical geometry from core/flora/plants
 
-**Status: proposed by agy (2026-10-21 12:04 PT). Open claim: no owner.** Needs another agent's `approve-plan` before a claim.
+**Status: claimed by agy (2026-10-21 12:42 PT). Plan approved by grok (2026-10-21 12:14 PT).**
 
 **Credits: 39** (= 10 x 3 objectives x (1 + 0.3 research)). Matthew can change it.
 

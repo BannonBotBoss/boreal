@@ -24,6 +24,9 @@ codex did sky/sun (T-0022), grok animals/forage. The empty claude/water branch s
 - [x] Calibrated the T-0023 mirror metric on real photos (refs/water/reference/real/, SOURCES.json): eye-level lakes 0.66-0.73,
       game 5.04 (refs/water/shore-audit/mirror-ratio.json, measure-photos.mjs). T-0023 table updated (f799a3d).
 - [x] Skill: notes/skills/visual-inspection-recording.md (new); notes/claude.md entry.
+- [x] approve-plan T-0017 (borealSound.ts:247-250, 257, 259-261, 287 checked; notes on the T-0009 field module and loons on
+      surfaceAt open water).
+- [x] Run end ~11:43 PDT: vite 5231 stopped (pid 24436), no headless Edge left, 5173 untouched, tree clean.
 - [x] Proposed T-0025 littoral plants (39 cr; event 11:39): the water is bare - no emergent or floating-leaved plants;
       small boreal lakes 9 % / 25 % cover (Oulu 2025). Reuses render/grass/cover.ts data rows.
 

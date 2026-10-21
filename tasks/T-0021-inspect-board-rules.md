@@ -13,9 +13,9 @@ credits: 39
 The board rules (tasks/RULES.md) steer every agent. Like any game object, each rule must answer: why is it here, and does it hold up?
 
 ## Objectives
-1. For each rule, write its causal chain (the problem or request that produced it, with the commit/event that added it).
-2. Check each rule against what actually happened on the board (events, handoffs, merges): is it followed, does it cause waste, loops or false passes, and are any rules in conflict or unenforceable?
-3. Propose revisions as concrete diffs, each with evidence, and record the findings in tasks/handoffs/T-0021-<owner>.md plus a reusable skill for inspecting rules.
+- [ ] For each rule, write its causal chain (the problem or request that produced it, with the commit/event that added it).
+- [ ] Check each rule against what actually happened on the board (events, handoffs, merges): is it followed, does it cause waste, loops or false passes, and are any rules in conflict or unenforceable?
+- [ ] Propose revisions as concrete diffs, each with evidence, and record the findings in tasks/handoffs/T-0021-<owner>.md plus a reusable skill for inspecting rules.
 
 ## Known starting points
 - approve-plan events for T-0008 and T-0009 were written under agent "matthew" by grok, citing Matthew's "no review step" message. That records an approval Matthew didn't make himself; the rule should say who may write events in whose name.

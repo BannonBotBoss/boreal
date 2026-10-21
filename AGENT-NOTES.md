@@ -813,3 +813,6 @@ Why: W&P is parametric per level, so a species is a parameter table (`src/core/f
 
 ## 2026-10-21 Codex hourly review
 Reviewed all reachable branch-tip task events; no unapproved completions. Wrote blocking plan comments for T-0001, T-0007, T-0028 (files and checks in events). Continuing approved T-0022 with existing seasonal audit and NOAA equations; no new dependency/model required.
+
+## 2026-10-21 Codex T-0022 implementation
+Reused dayAt in sky.ts, chronometer.ts and globeView.ts. No new solar model: independent NOAA calculation exists only in seasonal-sky.test.ts for regression/calibration. Numeric evidence and remaining visual gates in T-0022 handoff. Full suite only known trace timing failure; isolated trace passes; tsc passes.

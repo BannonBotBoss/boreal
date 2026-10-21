@@ -1,0 +1,17 @@
+✔ rendered solar uniform and directional light follow date, dial and year rollover (5.1928ms)
+ℹ {"day":227,"hour":12,"elevation":54.80051654380602,"noaaElevation":54.80051654380602,"angularError":5.1453637592789486e-15}
+ℹ {"day":355,"hour":12,"elevation":17.080109593702282,"noaaElevation":17.080109593702282,"angularError":7.423137070571981e-15}
+ℹ {"day":365,"hour":12,"elevation":17.36974396659517,"noaaElevation":17.36974396659517,"angularError":7.413647922176123e-15}
+ℹ {"day":366,"hour":12,"elevation":17.441370830739537,"noaaElevation":17.44137083073954,"angularError":7.411277820244779e-15}
+ℹ {"day":1,"hour":12,"elevation":17.441370830739537,"noaaElevation":17.441370830739537,"angularError":6.6941101609603595e-15}
+ℹ {"day":0,"hour":12,"elevation":17.369743966595173,"noaaElevation":17.369743966595173,"angularError":6.696734087016363e-15}
+✔ solar angular metric calibration rejects the old fixed-August winter sun (0.1261ms)
+ℹ {"knownMatchDegrees":0,"knownMismatchDegrees":37.72040695010374,"thresholdDegrees":1e-8}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 559.7258

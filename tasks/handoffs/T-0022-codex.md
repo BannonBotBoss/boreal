@@ -53,3 +53,12 @@ Implementation, fixed-camera solar/shadow comparison, exact video sampling, inde
 
 ## Continuation 2026-10-21 hourly loop
 Active branch now codex/loop, worktree C:/dev/boreal-codex-loop, based on main ff14688. Prior audit remains historical evidence, not current validation. Plan approved by grok at 11:22; claimed after review-first checkpoint. Next: pass dayAt(world time) into sky, chronometer face/readout and globe sun, keeping photo hour overrides on the same world date; test actual sky uniforms against NOAA and calibrate against the old August-date mismatch. No new astronomy library, lunar model or save change. Visual acceptance still open.
+
+### Implementation checkpoint
+Changed src/render/sky.ts (dayAt(time) for the solar call), src/ui/chronometer.ts (date-aware readout and date-cached gradient), src/world/globe/globeView.ts (one clock sample for date/hour). Existing default helper and lunar approximation stay fixed as scoped. Added tests/seasonal-sky.test.ts and portable notes/skills/boreal-seasonal-light-audit.md.
+
+Numeric evidence: refs/sky/season-fix/verification.txt. Actual Sky material sun uniform and directional-light vector compared to independent NOAA transcription. At noon, day 227 = 54.80051654380602 deg; day 355 = 17.080109593702282 deg; both match reference to <1e-8 deg angular tolerance. Known match = 0 deg, known mismatch (old August call at winter noon) = 37.72040695010374 deg. This validates renderer input, not GPU pixels; no visual percentage claimed. Rollover days 365/366/1/0, elapsed world time and photo-hour overrides covered. NOAA source checked live 2026-10-21.
+
+Validation: npx tsc --noEmit exit 0. npm test: 364 entries, 351 pass, 1 fail (known trace timing test), 12 todo. Isolated trace rerun 5/5 pass. Seasonal tests 2/2 pass. Baseline full suite also failed only the trace timing assertion. No completion event.
+
+Next: capture own preview, check dated chronometer in-browser, record/decode frames. Legacy bench lock writes outside allowed paths; any capture must keep all its own writes under C:/dev and avoid interfering with a legacy lock holder. Existing audit recording stays historical.

@@ -1,0 +1,13 @@
+# Seasonal light propagation and verification
+
+Reuse the current `timeOfDay` helpers and Three.js Sky; no second production astronomy model. Trace the authoritative world seconds through `dayAt` and `hourAt`. Sky receives world seconds from buildScene, even when photo mode overrides the hour. Chronometer and globe must sample their clock once for both date and hour; redraw the dial gradient only when its date changes. Keep explicitly fixed-date and lunar approximation calls distinct from the live sun.
+
+Use NOAA General Solar Position Calculations, https://gml.noaa.gov/grad/solcalc/solareqns.PDF. This game's helper evaluates declination at noon, uses local solar time and 49.5 degrees N, and repeats a 365-day year. Weather's civil-time/location convention differs. Do not compare those conventions as though identical, or claim floating-point agreement is observational accuracy.
+
+Run `npx tsx --test tests/seasonal-sky.test.ts`: it builds the actual sky, reads the shader sun uniform and directional-light position, and compares to independently transcribed spherical geometry. Known-match calibration is zero degrees; the old August sun evaluated against winter is 37.72040695010374 degrees wrong. The 1e-8 degree threshold is numerical regression tolerance. Check day 227, 355, year rollover, dial offset, elapsed world time and photo-hour overrides. Run `npm test` and `npx tsc --noEmit`; distinguish trace timing failures and TODOs from passes.
+
+For visual acceptance, serve only your own worktree on your assigned preview port. Reuse `refs/sky/season-audit/capture.mjs`, changing its old 5173 URL, output path and profile path. Put the browser profile outside the Vite-watched worktree but under C:/dev. Record source commit, camera, simulation day/hour, wall timestamps and runtime errors. Decode the recorded video; snapshots taken alongside it are not decoded frames. Use matched sun/horizon or shadow geometry and calibrated measurements. Generated reference imagery is illustrative until independently checked against the same solar geometry. Do not score the whole forest from a sun-only metric.
+
+Check filesystem scope before using `tools/bench-lock.mjs`: its current default writes in TEMP, which is outside the hourly loop's allowed C:/dev paths. Do not silently relocate just one agent's lock and call that shared coordination. Resolve the shared location with the other capture users before running the existing helper. Always stop only your own preview server and browser processes. Keep the task open when recording/reference gates remain pending.
+
+Evidence: T-0022 handoff and `refs/sky/season-fix/verification.txt`. That artifact validates CPU-side renderer inputs, not GPU pixels or a completed visual gate.

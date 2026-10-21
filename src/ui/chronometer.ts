@@ -4,7 +4,7 @@
  * Sun, moon, sky, fog and light follow live: the dial only moves core/timeOfDay DAY.offset, which every hourAt reads.
  * The face is coloured from the game's own sun (lighting(sunPosition(h))), so day length shows on the dial.
  */
-import { DAY, formatHour, hourAt, lighting, setHour, sunPosition } from '../core/timeOfDay';
+import { DAY, dayAt, formatHour, hourAt, lighting, setHour, sunPosition } from '../core/timeOfDay';
 
 /** Pure: dial angle (degrees clockwise from the top) for an hour: noon at the top, midnight at the bottom. */
 export const dialAngle = (hour: number) => (hour - 12) * 15;
@@ -21,8 +21,13 @@ export function createChronometer(now: () => number) {
   const face = el('div', 'chrono-face'), time = el('b', ''), sun = el('small', '');
   root.hidden = true; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', 'Chronometer');
   const mix = (a: number[], b: number[], t: number) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
-  dial.style.background = `conic-gradient(from 180deg, ${Array.from({ length: 25 }, (_, h) => { const l = lighting(sunPosition(h).elevation);
-    return `rgb(${mix(mix([11, 26, 42], [150, 190, 220], l.day), [232, 160, 96], l.golden * .7).join(',')}) ${h * 15}deg`; }).join(', ')})`;
+  let faceDay: number | undefined;
+  function drawFace(day: number) {
+    if (day === faceDay) return;
+    faceDay = day;
+    dial.style.background = `conic-gradient(from 180deg, ${Array.from({ length: 25 }, (_, h) => { const l = lighting(sunPosition(h, day).elevation);
+      return `rgb(${mix(mix([11, 26, 42], [150, 190, 220], l.day), [232, 160, 96], l.golden * .7).join(',')}) ${h * 15}deg`; }).join(', ')})`;
+  }
   for (let h = 0; h < 24; h++) { const t = el('span', 'chrono-tick'); t.style.transform = `rotate(${dialAngle(h)}deg)`;
     if (h % 6 === 0) { const b = el('b', '', String(h).padStart(2, '0')); b.style.transform = `rotate(${-dialAngle(h)}deg)`; t.append(b); } dial.append(t); }
   hand.append(glyph); face.append(time, sun); dial.append(hand, face);
@@ -30,7 +35,8 @@ export function createChronometer(now: () => number) {
   document.body.append(root);
   let open = false, vel = 0, dragId: number | undefined;
   const save = () => { try { localStorage.setItem(DAY.key, String(DAY.offset)); } catch { /* storage blocked */ } };
-  function draw() { const h = hourAt(now()), e = sunPosition(h).elevation, a = dialAngle(h);
+  function draw() { const t = now(), day = dayAt(t), h = hourAt(t), e = sunPosition(h, day).elevation, a = dialAngle(h);
+    drawFace(day);
     hand.style.transform = `rotate(${a}deg)`; glyph.style.transform = `rotate(${-a}deg)`; glyph.textContent = e > 0 ? '☀' : '☾';
     time.textContent = formatHour(h); sun.textContent = e > 0 ? `sun ${e.toFixed(0)}° up` : `sun ${(-e).toFixed(0)}° down`; }
   const at = (e: PointerEvent) => { const r = dial.getBoundingClientRect(); setHour(dialHour(e.clientX - r.left - r.width / 2, e.clientY - r.top - r.height / 2), now()); draw(); };

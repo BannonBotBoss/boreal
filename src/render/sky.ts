@@ -3,7 +3,7 @@ import { hash, random } from '../proc/rng';
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { WORLD_SEED } from '../core/world';
-import { lighting, sunPosition } from '../core/timeOfDay';
+import { dayAt, lighting, sunPosition } from '../core/timeOfDay';
 import { WEATHER, shortwave, weatherAt } from '../core/weather';
 import { LUX, SYNODIC, darkAdapted, exposureFor, moonAge, moonLux, nightKey, nightSkyLight, sunColour, wolfEyes } from '../core/light';
 import { LIGHTING } from './pbr';
@@ -80,7 +80,7 @@ export function createSky(scene: THREE.Scene) {
     sky, sunLight, hemi,
     /** Moves the sun and recolours sky, light and fog for the hour; the sky follows the camera. */
     update(hour: number, time: number, camera: THREE.Camera, focus: THREE.Vector3) {
-      const sun = sunPosition(hour), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
+      const sun = sunPosition(hour, dayAt(time)), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
       sky.position.copy(camera.position); clouds.position.copy(camera.position);
       u.sunPosition.value.copy(dir);
       // Physical light (core/light): sun colour from spectral transmittance, illuminance in lux, adaptive exposure.

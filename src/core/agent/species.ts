@@ -27,7 +27,7 @@ export interface AgentSpecies {
     relaxation: { max: number; threatDrop: number; fleeDrop: number; recover: number; panic: number };
   };
   /** typical seconds for a calm, fed animal; jitter = +- share of natural variation; react = s before a moving cue can bolt it */
-  timing: { feed: number; scan: number; alert: number; alertMin: number; /** s an alert animal holds (freezes) before a moving or rising cue may bolt it */ react: number; flee: number; pause: number; rest: [number, number]; jitter: number };
+  timing: { feed: number; scan: number; alert: number; alertMin: number; /** s an alert animal holds (freezes) before a moving or rising cue may bolt it */ react: number; /** rad/s the body turns toward the cue while alert (default 4); 0 = a motionless freeze */ alertTurn?: number; flee: number; pause: number; rest: [number, number]; jitter: number };
   /** how relaxation (calm/nerve), hunger and cue strength bend the timings and thresholds (pipeline `modulators`) */
   mood: { boutNerve: number; boutHunger: number; scanChance: [number, number]; scanHunger: number; scanNerve: number; scanHungerShort: number;
     notice: [number, number]; noticeHunger: number; bolt: [number, number]; boltHunger: number; fleeNerve: number; fleeStaminaFull: number;
@@ -63,10 +63,11 @@ export const HARE_AGENT: AgentSpecies = {
     stamina: { max: 100, drainSeconds: 8, recoverSeconds: 8 },
     relaxation: { max: 100, threatDrop: 60, fleeDrop: 12, recover: 3, panic: .6 },
   },
+  // alertTurn 0 (run 4): the freeze is motionless (same source), so the body does not swing round to the wolf.
   // react 1 s: snowshoe hares freeze first, relying on crypsis, and only then flee (Emmel 2024, UMT MSc thesis, "The Hare and
   // the Hawk"; Chapman & Flux 2008); the ~1 s hold is read from the reference video (refs/hare/graze-alert-flight attempt 4)
   // [estimate: no measured freeze duration found]. Inside flee.distance the hare bolts at once.
-  timing: { feed: 3, scan: 1, alert: 1, alertMin: .3, react: 1, flee: 3, pause: 1, rest: [2, 4], jitter: .15 },
+  timing: { feed: 3, scan: 1, alert: 1, alertMin: .3, react: 1, alertTurn: 0, flee: 3, pause: 1, rest: [2, 4], jitter: .15 },
   mood: { boutNerve: .6, boutHunger: 1, scanChance: [.1, .9], scanHunger: .4, scanNerve: 1.5, scanHungerShort: .3,
     notice: [.06, .3], noticeHunger: .6, bolt: [.55, .8], boltHunger: .2, fleeNerve: .3, fleeStaminaFull: 40, pauseNerve: .4, resume: .8, unhide: .25 },
   utility: { feedHere: .5, approach: .4, approachDistance: 60, rest: 1, restFull: .6, restBase: .05, scan: .8, seek: .7, seekBase: .05, noise: .05 },

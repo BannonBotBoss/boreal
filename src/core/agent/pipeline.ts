@@ -168,7 +168,7 @@ export function stepAgent(a: Agent, w: AgentWorld, dt: number): AgentEvent[] {
     case 'alert':
       // freeze first, then flee (species timing.react); a threat inside the flight initiation distance bolts it at once
       if ((sp.flee.distance !== undefined && s.distance <= sp.flee.distance) || (a.elapsed >= sp.timing.react && (s.level >= m.fleeAt || (s.moving && s.level >= m.noticeAt)))) { startFlight(a, s, events); break; }
-      if (s.from) a.heading = angleTurn(a.heading, headingTo(a, s.from.x, s.from.z), 4 * dt); // turns an ear and an eye to it
+      if (s.from) a.heading = angleTurn(a.heading, headingTo(a, s.from.x, s.from.z), (sp.timing.alertTurn ?? 4) * dt); // turns an ear and an eye to it (a freezing species: not at all)
       if (a.timer <= 0) { if (s.level >= m.noticeAt) { const held = a.elapsed; setAction(a, 'alert', `watching ${s.from?.kind ?? 'something'}`, m.alert * jitter(a)); a.elapsed = held; } else decide(a, w); } // still watching: the freeze keeps counting
       break;
     case 'flee': {

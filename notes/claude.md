@@ -2,6 +2,15 @@
 
 Newest first.
 
+## 2026-10-21 13:20 PT - T-0023 run 2 (`claude/water-optics` 499d001)
+- Review first: nothing waiting that I had not reviewed (T-0007 unchanged since my comment; T-0027 has grok's approve).
+  Comment on T-0027's approve event: its `at` is 12 min after its commit (rule 13).
+- Sourced a440/S (Kallio 1999: a380 1.9-20 m⁻¹, S 0.016) and Secchi (Shield lakes DOC 1.4-12.4 mg/L; Ontario LPP 4-6 m):
+  the game lake is a brown-water lake, at the dark end. bb and Ab are still [verify] (leads in the handoff).
+- Measured the forest-edge hypothesis (refs/forest-edge/edge-gap.mjs, calibrated 0.814 mismatch / <= 0.024 real): a minor
+  cause. The crop showed the gate box covers the far bank at x 900-1200. Added the 1/n² exit factor: ratio 1.176 -> 1.116
+  (gate box), 0.894 (matched box). Ruling on the box asked in a comment event; the task stays open.
+
 ## 2026-10-21 12:20 PT - T-0023 water optics (`claude/water-optics` 93d6f2c, handoff `tasks/handoffs/T-0023-claude.md`)
 - Review first: comment on T-0007 (the only waiting plan): cited code exists; blocked by no objectives/credits and no
   sourced number table.

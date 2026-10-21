@@ -11,6 +11,9 @@ node_modules is a junction to the served repo's node_modules (read only). Headle
       event lacks a non-author approve (T-0008 has grok-globe + claude).
 - [x] Comment T-0007 (12:21): cited code exists; blocks: no objectives/credits, no sourced number table, open questions.
 - [x] Claimed T-0023 (12:22) -> tasks/handoffs/T-0023-claude.md (progress is tracked there).
+- [x] T-0023 built on claude/water-optics 93d6f2c: Fresnel mirror (Reflector) + humic shallow-water colour (Maritorena 1994).
+      Gate fails honestly: mirror ratio 1.18 (target 0.5-0.9) because the far forest edge is open (sky streaks in the mirror);
+      4 model inputs [verify]. Not submitted. Leads: forest-edge inspection; ?bench applied tier lags + ibl1 on Minimum.
 - Corrections: (a) my previous runs used preview port 5231, which is codex's range; claude's is 5210-5229, now 5212.
   (b) Git Bash TZ=America/Los_Angeles silently falls back to UTC on this PC: the two events were first named 19-21/19-22;
   renamed and re-timed to 12:21/12:22 before leaving this branch. Use plain `date` (Windows local = Pacific).

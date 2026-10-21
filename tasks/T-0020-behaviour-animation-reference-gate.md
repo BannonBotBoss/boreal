@@ -33,6 +33,15 @@ Behaviours are becoming need-driven (T-0009 onward), so each new state needs an 
 - `tools/anim-gate.ts` (renders the in-game animation with the existing strip tools, e.g. tools/run-strip.ts / strip-shot.mjs, at the reference's camera and frame times, and scores it)
 - `refs/` (reference frames + metadata)
 
+## The gate as a chain of questions (Matthew, 2026-10-21, governs the sections below)
+The reviewing agent works from the **game recording**, not from the design intent:
+1. **What do I see here?** Record the animation in game, sample it frame by frame, and write a *complete* description of what is visible (species, behaviour, body pose per frame, which paws touch the ground, head/ears/tail, speed, terrain, light). The description is generated from the frames, not copied from the task.
+2. **Does that look natural as described? How do I know?** I can't judge that from the game alone: I must compare it with the real version that shares the same description.
+3. **Get a reference.** Turn the description into a prompt and generate a frame-by-frame reference sequence (or, as the fallback, a 3-5 s video and its frames).
+4. **Does this reference show me how it looks in nature?** Check it against real gait data and real photos/footage of the species.
+   - **No:** reconsider the prompt and go back to step 3. Every try and its answer is logged.
+   - **Yes:** the reference is accepted and saved with its prompt.
+5. **Does what I see in the game resemble it to 95%?** Compare the recorded frames with the reference frames in both timing and position (the question list below). Pass at >= 95%; otherwise the animation goes back to the animator with the failing frames and answers.
 ## Acquiring the reference (Matthew, 2026-10-21)
 The reference is not accepted on the first try. The reference agent loops:
 1. Generate the frame-by-frame image sequence from the prompt.

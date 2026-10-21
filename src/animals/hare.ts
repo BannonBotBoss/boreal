@@ -1,7 +1,7 @@
 /**
  * Snowshoe hares (Grok Bot): a standalone prey animal, outside the skeleton/species system, now driven by the SHARED animal
  * pipeline (core/agent/pipeline + the HARE_AGENT record in core/agent/species). This file is only the host: spawning, the
- * cartoon model and its poses, clover (core/clover + render/clover), the catch, and the ?hare=debug readout.
+ * procedural furred mesh (T-0028: render/hareMesh.ts on animals/hareBody.ts, coat by the world date) and its poses, clover (core/clover + render/clover), the catch, and the ?hare=debug readout.
  * Behaviour (Matthew's spec): graze head-down on clover in sunlit clearings, step to the next section, lift the head to scan;
  * a sensed wolf (sight / hearing / scent) -> head up (alert); a moving wolf during the alert -> flight away from it, pause,
  * flee again while it still senses the wolf, else relax (rest, scan, trot to sensed clover, seek sunlit ground). Nothing
@@ -24,6 +24,9 @@ import { LEPORID_LIMITS } from './locomotion/ik';
 import { skeletonOf, type BodyPlan } from './locomotion/bodyPlan';
 import { CONTACTS } from '../core/contactBus';
 import { createCloverRenderer } from '../render/clover';
+import { createHareMesh, setHareDay, type HareLeg } from '../render/hareMesh';
+import type { HareBind } from './hareBody';
+import { dayAt } from '../core/timeOfDay';
 import type { SnapshotSource } from '../core/snapshot';
 
 export const HARE = {
@@ -31,9 +34,9 @@ export const HARE = {
   catchContact: 1.3, catchPounce: 2.4, energy: 35, stamina: 40, cloverRadius: 48,
 };
 export type HareState = Agent['action'];
-export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Group; body: THREE.Group; legs: Leg[]; ears: THREE.Group[]; rng: () => number; label?: THREE.Sprite; rig?: BoundController; frame?: BoundFrame }
-/** One limb drawn from the bounding rig: segments (blade, upper, lower, foot, toes as the plan has them) placed between the rig's joints each frame. */
-interface Leg { segs: THREE.Mesh[]; hind: boolean; /** first limbPoints index drawn (0 with a blade: the blade is a segment) */ from: number }
+export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Object3D; body: THREE.Object3D; legs: Leg[]; ears: THREE.Object3D[]; rng: () => number; label?: THREE.Sprite; rig?: BoundController; frame?: BoundFrame }
+/** One limb: the rig segments as bones of the skinned mesh (render/hareMesh.ts HareLeg). */
+type Leg = HareLeg;
 export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
 /** speed (m/s) and daylight (0..1) feed the hare's senses; `moving` is kept for older callers (speed defaults from it). */
 export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean; speed?: number; daylight?: number }
@@ -56,41 +59,21 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
  *    blade in the fore chain (= .816 x humerus), both from Lepus brachyurus bone means (Exp Anim 30(2):113, 1981, Tables 1
  *    and 4-6; working in tools/bound-plans.ts SPLIT / BLADE). */
 export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .181, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.3, headY: .085 };
+/** T-0028: the procedural furred mesh (render/hareMesh.ts on animals/hareBody.ts) replaces the run 1-6 blob model; the same
+ *  body / head / ears / legs handles, now bones of one skinned skin + fur, posed by poseHare from the rig. */
 function model() {
-  const B = HARE_BODY, root = new THREE.Group(), body = new THREE.Group(), head = new THREE.Group(); root.add(body); body.add(head);
-  body.position.set(0, B.hipY, 0); head.position.set(0, B.headY, B.headZ); // body = the hip pivot
-  const mat = (c: number) => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 1 });
-  const brown = mat(0x7d6247), buff = mat(0x9c8060), white = mat(0xeeeae0), dark = mat(0x1e1a17);
-  const blob = (parent: THREE.Object3D, m: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number, rx = 0) => {
-    const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 2), m); mesh.position.set(x, y, z); mesh.scale.set(sx, sy, sz); mesh.rotation.x = rx; parent.add(mesh); return mesh;
-  };
-  // torso relative to the hip pivot: haunch, back, chest; white belly and tail
-  blob(body, brown, 0, .015, .0, .075, .08, .085); blob(body, brown, 0, .03, -.09, .07, .075, .11, .1); blob(body, buff, 0, .01, -.17, .055, .06, .06);
-  blob(body, white, 0, -.035, -.08, .05, .035, .1); blob(body, white, 0, .05, .085, .022, .022, .02);
-  // neck (run 4): fills the gap between the chest (z -.17) and the head (z -.3) so the head never floats off the body
-  blob(body, brown, 0, .05, -.235, .036, .042, .055, -.5);
-  // head: cranium, muzzle, eyes, nose
-  blob(head, brown, 0, 0, 0, .038, .04, .05); blob(head, buff, 0, -.012, -.045, .025, .022, .025); blob(head, dark, 0, -.008, -.07, .006, .005, .004);
-  // run 5 detail (reads in the half sit-up, head raised side-on): pale cheek and eye ring, white chin, a larger eye with a
-  // catch-light, as on snowshoe hares (buff cheek patch and pale eye ring; white chin) [estimate: drawn to the reference sheet]
-  blob(head, white, 0, -.03, -.04, .017, .009, .02);
-  for (const s of [-1, 1]) { blob(head, buff, s * .026, -.012, -.012, .014, .019, .027); blob(head, buff, s * .029, .012, -.02, .012, .013, .012);
-    blob(head, dark, s * .033, .012, -.021, .008, .01, .009); blob(head, white, s * .039, .016, -.026, .002, .002, .002); }
-  const ears: THREE.Group[] = [];
-  for (const s of [-1, 1]) { const e = new THREE.Group(); e.position.set(s * .017, .03, .015); e.rotation.z = -s * .12; head.add(e); ears.push(e);
-    blob(e, brown, 0, B.ear / 2, 0, .012, B.ear / 2, .02); blob(e, dark, 0, B.ear * .92, 0, .009, .008, .016);
-    // run 5: pale inner ear (the opening faces forward-out) and a dark rim down the back edge [estimate: reference sheet]
-    blob(e, buff, s * .004, B.ear * .5, -.012, .008, B.ear * .4, .007); blob(e, dark, 0, B.ear * .62, .016, .005, B.ear * .3, .005); }
-  // limbs: segments between the bounding rig's joints (src/animals/locomotion/bounding.ts), in root space, rig leg order
-  // LF, LH, RF, RH. Thickness [estimate: drawn to the reference]: muscular thigh, slim shank, broad furred hind foot.
-  const legs: Leg[] = [];
-  const seg = (m: THREE.Material, r: number, w = r) => { const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), m); mesh.userData.r = [w, r]; root.add(mesh); return mesh; };
-  for (let i = 0; i < 4; i++) { const hind = i % 2 === 1;
-    // run 5: thicker hind limb so the hind legs read as they swing past the fore legs (the reference's haunch spans most of
-    // the rear body depth; thigh .03 -> .042, shank .014 -> .019, foot .011 -> .014) [estimate: drawn to the reference]
-    legs.push(hind ? { hind, from: 1, segs: [seg(brown, .042, .034), seg(buff, .019, .017), seg(white, .014, .025), ...(B.hindToes ? [seg(white, .011, .025)] : [])] }
-      : { hind, from: B.scapula ? 0 : 1, segs: [...(B.scapula ? [seg(brown, .018, .014)] : []), seg(buff, .013), seg(buff, .01), seg(white, .009, .012)] }); }
-  return { root, body, head, legs, ears };
+  const m = createHareMesh(hareBind());
+  return { root: m.root, body: m.body as THREE.Object3D, head: m.head as THREE.Object3D, legs: m.legs, ears: m.ears as THREE.Object3D[] };
+}
+let bindCache: HareBind | undefined;
+/** The bind pose: the rig standing still at the origin, heading 0 (forward -z); joints relative to the hip-joint midpoint. */
+export function hareBind(): HareBind {
+  if (bindCache) return bindCache;
+  const rig = createBounding(HARE_SKELETON, HARE_AGENT.gait!, () => 0, { x: 0, z: 0, heading: 0 }, GIRDLE, HARE_RIG);
+  let fr = rig.update(1 / 60, 0, 0, null); for (let i = 0; i < 120; i++) fr = rig.update(1 / 60, 0, 0, null);
+  const hl = limbPoints(HARE_SKELETON, fr, 1)[0], hr = limbPoints(HARE_SKELETON, fr, 3)[0], ox = (hl.x + hr.x) / 2, oz = (hl.z + hr.z) / 2;
+  const limbs = [0, 1, 2, 3].map(i => { const P = limbPoints(HARE_SKELETON, fr, i).map(p => [p.x - ox, p.y, p.z - oz] as [number, number, number]); return i % 2 ? P.slice(1) : P; });
+  return bindCache = { pivot: [0, (hl.y + hr.y) / 2, 0], head: [0, HARE_BODY.headY, HARE_BODY.headZ], ear: HARE_BODY.ear, limbs };
 }
 /** Pose targets: body pitch about the hip (rad, + = front up), body lift (m), head pitch (+ = nose up), head drop (m), ears
  *  (rad, + = laid back), foreleg and hind leg angles (rad, + = foot forward). Read from the reference sheet
@@ -127,7 +110,7 @@ export const HARE_PLAN: BodyPlan = { hip: HARE_BODY.hipY, hipZ: HARE_BODY.hipZ, 
 /** Rig options (run 5): the level-trunk running posture (needs the blade's fore reach) and turning in place by re-planting. */
 export const HARE_RIG = { pose: RUN_POSE_LEVEL, turnInPlace: true };
 const HARE_SKELETON = skeletonOf(HARE_PLAN);
-const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3();
 /** Pose one hare model from its pipeline agent for this frame (shared by the game host and tools/hare-strip). The legs, body
  *  height and pitch come from the bounding rig (planted feet, half-bound / lagomorph gallop, sit-up and graze-crouch pose
  *  requests); head and ears from the reference poses. `ground` is the terrain height function (or a flat height). */
@@ -145,10 +128,10 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
   const inv = h.root.matrixWorld.clone().invert();
   h.legs.forEach((leg, i) => {
     const P = limbPoints(HARE_SKELETON, fr, i), o = leg.from; // [top (blade pivot), girdle joint, knee/elbow, ankle/wrist, toe/MTP(, toe tip)]
-    leg.segs.forEach((m, s) => {
+    leg.segs.forEach((bone, s) => { // each segment bone sits on its upper joint, turned from its bind direction onto the rig's
       _a.set(P[s + o].x + ox, P[s + o].y, P[s + o].z + oz).applyMatrix4(inv); _b.set(P[s + o + 1].x + ox, P[s + o + 1].y, P[s + o + 1].z + oz).applyMatrix4(inv);
-      _d.subVectors(_b, _a); const len = Math.max(1e-4, _d.length()), [w, r] = m.userData.r as [number, number];
-      m.position.addVectors(_a, _b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(UP, _d.divideScalar(len)); m.scale.set(w, len / 2 + r * .6, r);
+      _d.subVectors(_b, _a); if (_d.lengthSq() < 1e-12) return;
+      bone.position.copy(_a); bone.quaternion.setFromUnitVectors(leg.dirs[s], _d.normalize());
     });
   });
   // head and ears: reference poses (sit-up for the alert and the flight pause, scan, graze, rest), smoothed
@@ -194,7 +177,7 @@ export function createHares(scene: THREE.Scene) {
     }
   }
   function remove(h: Hare) {
-    scene.remove(h.root); h.root.traverse(o => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); } });
+    scene.remove(h.root); h.root.traverse(o => { if (o instanceof THREE.Mesh) { if (!o.geometry.userData.shared) o.geometry.dispose(); if (!(o.material as THREE.Material).userData.shared) (o.material as THREE.Material).dispose(); } }); // the coat geometry and materials are shared (render/hareMesh)
     if (h.label) { scene.remove(h.label); h.label.material.map?.dispose(); h.label.material.dispose(); }
     if (h.agent.contact) CONTACTS.end(h.agent.key, h.agent.contact); // leaving the world ends its contact
     hares.splice(hares.indexOf(h), 1);
@@ -202,6 +185,7 @@ export function createHares(scene: THREE.Scene) {
   let time = 0, labelWait = 0, lastWolf: WolfInfo | undefined;
   function update(dt: number, wolf: WolfInfo): HareEvent[] {
     const events: HareEvent[] = []; time += dt; lastWolf = wolf;
+    setHareDay(dayAt(worldSec())); // T-0028: summer / moult / winter coat from the world date (no-op unless it changed)
     const daylight = wolf.daylight ?? 1, speed = wolf.speed ?? (wolf.moving ? 2 : 0);
     clover.ensure(wolf.x, wolf.z, HARE.cloverRadius, 1); cloverDraw.update(dt, wolf.x, wolf.z); // regrowth is lazy (core/clover sunSeconds)
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }

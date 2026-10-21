@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ACTIONS, assign, assignGroup, atomValues, comboValue, conflicts, createCapture, deadzone, defaults, loadBindings, resolveInput, saveBindings, tidyCombo, unbind, type PadState } from '../src/core/bindings';
+import { ACTIONS, assign, assignGroup, atomValues, comboValue, conflicts, createCapture, deadzone, defaults, groupLabel, loadBindings, resolveInput, saveBindings, tidyCombo, unbind, type PadState } from '../src/core/bindings';
 const near = (a: number, b: number, m = '') => assert.ok(Math.abs(a - b) < 1e-9, `${m} ${a} vs ${b}`);
 const padOf = (o: { b?: Record<number, number>; axes?: number[] } = {}): PadState => ({ buttons: Array.from({ length: 17 }, (_, i) => ({ value: o.b?.[i] ?? 0, pressed: (o.b?.[i] ?? 0) > .1 })), axes: o.axes ?? [0, 0, 0, 0] });
 let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -69,4 +69,10 @@ test('persistence: only changes are saved; loads back; bad saves fall back to de
   assert.deepEqual(loadBindings('not json'), defaults()); assert.deepEqual(loadBindings(null), defaults());
   assert.deepEqual(loadBindings('{"nope":{"pad":["a"]},"jump":{"pad":[3,"y"]}}').jump, { keys: ['k:space'], pad: ['y'] });
   assert.equal(new Set(ACTIONS.map(a => a.id)).size, ACTIONS.length);
+});
+test('whole-stick rows name the stick set per side, with modifiers; mixed sets list each direction', () => {
+  const d = defaults();
+  assert.deepEqual(['walk', 'look', 'scrub'].map(g => [groupLabel(d, g, 'keys'), groupLabel(d, g, 'pad')]), [['WASD', 'LS'], ['Arrows', 'RS'], ['Arrows', 'D-pad · LS']]);
+  assert.equal(groupLabel(assignGroup(d, 'walk', ['rt', 'rs.up'])!, 'walk', 'pad'), 'RT + RS');
+  assert.equal(groupLabel(assign(d, 'moveForward', ['y']), 'walk', 'pad'), '↑ Y ↓ LS ↓ ← LS ← → LS →');
 });

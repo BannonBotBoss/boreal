@@ -5,7 +5,7 @@
  * (d-pad / stick + A, B back) and the mouse. Display approach after KW-M/virtual-gamepad-lib (MIT): one element per
  * standard-mapping input, toggled from Gamepad state each frame; the picture itself is drawn here, no image assets.
  */
-import { ACTION, ACTIONS, ACTIVE, GROUPS, assign, assignGroup, atomLabel, atomValues, atomsOf, bindingLabel, comboLabel, conflicts, createCapture, defaults, tidyCombo, unbind, type Bindings } from '../core/bindings';
+import { ACTION, ACTIONS, ACTIVE, GROUPS, assign, assignGroup, atomLabel, atomValues, atomsOf, bindingLabel, comboLabel, conflicts, createCapture, defaults, groupLabel, tidyCombo, unbind, type Bindings } from '../core/bindings';
 
 const NS = 'http://www.w3.org/2000/svg';
 type Part = ['c', number, number, number] | ['r', number, number, number, number, number];
@@ -18,7 +18,7 @@ const PARTS: [string, Part, string?][] = [
   ['rs.up', ['r', 242, 140, 12, 6, 2]], ['rs.down', ['r', 242, 210, 12, 6, 2]], ['rs.left', ['r', 210, 172, 6, 12, 2]], ['rs.right', ['r', 280, 172, 6, 12, 2]],
   ['dup', ['r', 144, 150, 18, 20, 3]], ['ddown', ['r', 144, 186, 18, 20, 3]], ['dleft', ['r', 124, 169, 20, 18, 3]], ['dright', ['r', 162, 169, 20, 18, 3]],
   ['y', ['c', 290, 88, 12], 'Y'], ['a', ['c', 290, 136, 12], 'A'], ['x', ['c', 266, 112, 12], 'X'], ['b', ['c', 314, 112, 12], 'B'],
-  ['view', ['c', 176, 112, 8], '⧉'], ['menu', ['c', 224, 112, 8], '≡'], ['xbox', ['c', 200, 74, 13], 'X'],
+  ['view', ['c', 176, 112, 8], '⧉'], ['menu', ['c', 224, 112, 8], '≡'], ['xbox', ['c', 200, 74, 13]],
 ];
 const BODY = 'M70 58C120 40 280 40 330 58C372 74 396 170 382 226C372 258 330 258 310 232C290 206 268 196 200 196C132 196 110 206 90 232C70 258 28 258 18 226C4 170 28 74 70 58Z';
 
@@ -35,6 +35,9 @@ function drawPad() {
     if (label) el('text', p[0] === 'c' ? { x: p[1], y: p[2] + 4 } : { x: p[1] + p[3] / 2, y: p[2] + p[4] / 2 + 4 }, g).textContent = label;
     parts.set(atom, g);
   }
+  { const g = parts.get('xbox')!; // Guide button: the Xbox sphere logo (ring + curved X), captioned so it never reads as the X face button
+    el('path', { d: 'M200 66a8 8 0 1 0 .01 0M195 68.5Q199 74 205 79.5M205 68.5Q201 74 195 79.5', class: 'ctl-logo' }, g);
+    el('text', { x: 200, y: 98, class: 'ctl-caption' }).textContent = 'Guide'; }
   return { svg, update(v: Map<string, number>, axes: readonly number[], bound: Set<string>) {
     for (const [a, g] of parts) { g.classList.toggle('on', (v.get(a) ?? 0) > ACTIVE); g.classList.toggle('bound', bound.has(a)); }
     for (const [a, f] of fills) f.setAttribute('width', String(66 * (v.get(a) ?? 0)));
@@ -73,7 +76,7 @@ export function controlsScreen(o: ControlsHooks) {
         const r = btn('', () => start(kind, id), 'ctl-row' + (bad.has(id) ? ' clash' : '')); r.dataset.id = id;
         r.append(h('span', '', (bad.has(id) ? '⚠ ' : '') + label), h('span', 'k', keys), h('span', 'p', padL));
         const show = () => { focused = atoms; }; r.onfocus = show; r.onmouseenter = show; return r; };
-      list.replaceChildren(h('div', 'ctl-head'), ...GROUPS.map(g => row(g.id, g.label, '', 'whole stick / d-pad / arrows / WASD', 'group', Object.values(g.members).flatMap(id => b[id!].pad.flatMap(atomsOf)))),
+      list.replaceChildren(h('div', 'ctl-head'), ...GROUPS.map(g => row(g.id, g.label, groupLabel(b, g.id, 'keys'), groupLabel(b, g.id, 'pad'), 'group', Object.values(g.members).flatMap(id => b[id!].pad.flatMap(atomsOf)))),
         ...ACTIONS.map(a => row(a.id, a.label, bindingLabel(b[a.id].keys), bindingLabel(b[a.id].pad), 'action', b[a.id].pad.flatMap(atomsOf))));
       list.firstElementChild!.append(h('span', '', 'Action'), h('span', 'k', 'Keyboard'), h('span', 'p', 'Gamepad'));
       list.scrollTop = scroll;

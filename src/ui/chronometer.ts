@@ -40,6 +40,8 @@ export function createChronometer(now: () => number) {
   function close() { if (!open) return; open = false; root.hidden = true; vel = 0; save(); }
   return {
     get open() { return open; }, close,
+    /** The key/stick line under the dial (main.ts writes it from the live bindings). */
+    setHint(text: string) { (root.querySelector('.chrono-hint') as HTMLElement).textContent = text; },
     toggle() { if (open) close(); else { open = true; root.hidden = false; vel = 0; draw(); } },
     /** Each frame: `input` −1…1 (left/right) scrubs the hour; also keeps the hand on the running clock. */
     update(dt: number, input: number) { if (!open) return;

@@ -176,3 +176,14 @@ export function atomLabel(a: string) {
 }
 export const comboLabel = (c: string) => atomsOf(c).map(atomLabel).join(' + ');
 export const bindingLabel = (list: string[]) => list.length ? list.map(comboLabel).join(' · ') : '—';
+const SET_NAMES: Record<string, string> = { ls: 'LS', rs: 'RS', dpad: 'D-pad', arrows: 'Arrows', wasd: 'WASD' };
+/** A group's bindings on one side, named as a whole stick ("LS", "WASD", "RT + RS") when every member uses the same set and modifiers. */
+export function groupLabel(b: Bindings, groupId: string, side: 'keys' | 'pad') {
+  const m = Object.entries(GROUPS.find(g => g.id === groupId)!.members) as [Dir, string][], n = Math.max(...m.map(([, id]) => b[id][side].length)), out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const parts = m.map(([d, id]) => ({ d, at: b[id][side][i] ? atomsOf(b[id][side][i]) : [] })), mods = parts[0].at.slice(0, -1).join('+');
+    const set = Object.entries(STICKS).find(([, s]) => parts.every(p => p.at.length && p.at.at(-1) === s[p.d] && p.at.slice(0, -1).join('+') === mods));
+    out.push(set ? [...(mods ? atomsOf(mods).map(atomLabel) : []), SET_NAMES[set[0]]].join(' + ') : parts.map(p => `${ARROW[p.d]} ${p.at.length ? p.at.map(atomLabel).join(' + ') : '—'}`).join(' '));
+  }
+  return out.join(' · ') || '—';
+}

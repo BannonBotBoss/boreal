@@ -23,6 +23,8 @@ import { createSnapshotHub } from './core/snapshot';
 import { createPhotoMode } from './photo/photoMode';
 import { shaderClock } from './render/shaderClock';
 import { TIMESCALE } from './core/timescale';
+import { drawBetween, type DrawState } from './core/drawLerp';
+import { WALK_PROBE, installWalkProbe } from './dev/walkProbe';
 import { RENDER_SETTINGS, createSettingsStore } from './core/renderSettings';
 import { settingsPanel } from './ui/settingsPanel';
 import { playerPanel } from './ui/playerPanel';
@@ -143,7 +145,11 @@ hub.register('player', {
   capture: () => [player.x, player.z, yaw, simTime, shaderClock.time, actionStarted],
   restore: (s: number[]) => { [player.x, player.z, yaw, simTime, shaderClock.time, actionStarted] = s; player.heading = yaw; },
 });
-const drawFrame = (pv?: PhotoView) => view.draw(player.x, player.z, altitude, yaw, simTime, target, pitch, Math.abs(view.playerBrain.speed) > .01, playerAction, simTime - actionStarted, lookYaw, modes.mode, focusTarget, pushFrom, pv);
+let drawFrom: DrawState | undefined; // the player before the last fixed step (core/drawLerp); undefined = draw the latest step
+const drawFrame = (pv?: PhotoView) => {
+  const d = drawBetween(drawFrom, { x: player.x, z: player.z, yaw, sim: simTime }, accumulator * 30); view.playerBrain.drawAlpha = d.alpha;
+  return view.draw(d.x, d.z, altitude, d.yaw, d.sim, target, pitch, Math.abs(view.playerBrain.speed) > .01, playerAction, Math.max(0, d.sim - actionStarted), lookYaw, modes.mode, focusTarget, pushFrom, pv);
+};
 const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw: pv => drawFrame(pv), onExit: () => { clearInput(); accumulator = 0; document.body.classList.remove('photo-mode'); } });
 // Pause-menu panels. Anything that rebuilds the world or swaps the body waits until resume.
 { const sd = Number(localStorage.getItem('boreal.seed.v1')); if (sd > 0) STAGES.seed = sd; } // seed chosen in the start menu
@@ -163,6 +169,7 @@ const musicPanel = () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore
 menu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
 let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1, sink: 0 };
+const walkProbe = WALK_PROBE ? installWalkProbe(() => view.lookup('player')?.object, view.camera, sfx as never) : undefined;
 loadGround(localStorage.getItem(SAVE_KEY_GROUND));
 setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); } catch { /* blocked */ }
   if (paused || menu.open) return; // menu freezes the world clock; no sim work while open
@@ -298,6 +305,7 @@ function frame(time: number) { const frameStart = performance.now();
     const length = Math.max(1, Math.hypot(dx, dz)); dx /= length; dz /= length;
     accumulator += sdt;
     while (accumulator >= 1 / 30) {
+      drawFrom = { x: player.x, z: player.z, yaw, sim: simTime };
       modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30) : stepWolfModes(modes, Math.max(pad?.buttons[6]?.value ?? 0, Number(keys.has('c'))), Math.max(pad?.buttons[7]?.value ?? 0, Number(keys.has('shift'))), Math.abs(dz) > .01, 1 / 30);
       const brain = view.playerBrain, prevSpeed = brain.speed, speed = -dz * playerSpeed(modes.mode) * view.playable.speedScale;
       const jump = (keys.has(' ') || buttons[2]) && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
@@ -312,12 +320,12 @@ function frame(time: number) { const frameStart = performance.now();
       const pose = autonomous && !playerAction ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities()) : steerWolf({ x: player.x, z: player.z, heading: brain.heading }, 0, Math.sign(brain.speed), 1 / 30, Math.abs(brain.speed));
       if(!autonomous && brain.motion==='idle') brain.problem='recover';
       if(autonomous && brain.meal) view.forageWolf(brain.meal.key);
-      brain.expend(1/30,Math.hypot(pose.x-player.x,pose.z-player.z)*ground.cost); // soft ground costs more (Bekker compaction)
+      brain.expend(1/30,Math.hypot(pose.x-player.x,pose.z-player.z),ground.cost); // soft ground costs more energy (Bekker compaction); the legs follow the real distance
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
       simTime += 1 / 30; accumulator -= 1 / 30;
     }
     hub.sample(simTime);
-  } else accumulator = 0;
+  } else { accumulator = 0; drawFrom = undefined; }
   view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
   { const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow; view.worldTime = wNow; // 'clock' fields follow worldSec (frozen while the menu is open)
@@ -341,6 +349,7 @@ function frame(time: number) { const frameStart = performance.now();
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
   // Menu open: hold the last frame (clock frozen; no age/growth/render). Playing: draw every frame.
   const drawStart = performance.now(); if (!menu.open) { if (inpage) inpage.frame(() => drawFrame(pv)); else drawFrame(pv); } view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
+  walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });

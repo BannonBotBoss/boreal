@@ -20,6 +20,10 @@ export class AnimalBrain {
   phase = 0; jumpTime = 0; jumpCooldown = 0; heading = 0; speed = 0;
   /** The gait of the last step, fed back to gaitFor for Froude hysteresis (no flicker at a transition). */
   gaitName?: GaitName;
+  /** Phase before the last expend(), and how far a renderer is into the next fixed step (0..1): drawPhase interpolates
+   *  between sim steps, so a 30 Hz sim does not draw the legs in 30 Hz jumps. drawAlpha stays 1 for animals stepped per frame. */
+  prevPhase = 0; drawAlpha = 1;
+  get drawPhase() { return this.prevPhase + (this.phase - this.prevPhase) * Math.max(0, Math.min(1, this.drawAlpha)); }
   near: SenseItem[] = []; middle: SenseItem[] = []; far: SenseItem[] = [];
   target?: SenseItem; time = 0; avoidTime = 0;
   feedTime = 0; meal?: SenseItem; alarm = 0; lastThreat?: SenseItem;
@@ -86,14 +90,17 @@ export class AnimalBrain {
     this.problem='explore'; this.motion=Math.sin(this.time*.15+this.seed)>.65?'idle':'walk';
     this.heading+=Math.sin(this.time*.3+this.seed)*dt*.25;this.speed=this.motion==='walk'?.65:0;
   }
-  expend(dt:number, distance:number) {
-    const cost=.003*dt + Math.max(0,distance)*(this.motion==='run'?.18:this.motion==='jump'?.22:.08);
+  /** `effort` (>= 1 on soft ground: core/ground footing().cost) scales what a metre costs in energy. It never moves the legs:
+   *  the gait phase advances by the distance actually travelled, so planted paws do not slide (closes the T-0002 open item). */
+  expend(dt:number, distance:number, effort=1) {
+    const cost=.003*dt + Math.max(0,distance)*effort*(this.motion==='run'?.18:this.motion==='jump'?.22:.08);
     const recovery=this.motion==='idle'&&this.problem==='recover' ? dt : 0;
     this.energy=Math.max(0,Math.min(100,this.energy-cost+recovery));
     // Phase advances by distance over the research-based stride length at the speed actually travelled.
     this.gaitSpeed=dt>0?Math.max(0,distance)/dt:this.gaitSpeed;
     const gait=gaitFor(this.motion,this.gaitSpeed,this.legs,this.gaitName);
     this.gaitName=gait?.name;
+    this.prevPhase=this.phase;
     if(gait) this.phase+=Math.max(0,distance)/gait.cycle;
   }
 }
@@ -202,6 +209,18 @@ export function alexanderGait(motion: Motion, speed: number, legs: LegDims): Gai
   const offsets = name === 'walk' ? [.25, 0, .75, .5] : name === 'trot' ? [0, .5, .5, 0] : [.45, 0, .6, .9];
   return { name, duty, cycle, lift: (name === 'walk' ? .1 : name === 'trot' ? .15 : .2) * h, offsets, reverse: motion === 'back' };
 }
+/**
+ * Legs that touched down while the gait phase went from `from` to `to` (a leg lands at phase 1 - offset, mod 1, the end of
+ * its swing). Any species and gait: footstep sounds, prints. Spans longer than a stride count the last stride only.
+ */
+export function touchdownsBetween(from: number, to: number, offsets: readonly number[]): number[] {
+  if (!(to > from)) return [];
+  const a = Math.max(from, to - 1 + 1e-9);
+  return offsets.flatMap((o, i) => Math.floor(to + o) > Math.floor(a + o) ? [i] : []);
+}
+/** Touchdown strength 0..1 from the Froude number: 0.3 at a slow walk rising with its square root, 1 at a fast gallop
+ *  (footstep loudness, both player paths). */
+export const touchdownStrength = (froude: number) => Math.min(1, .3 + .35 * Math.sqrt(Math.max(0, froude)));
 /** Leg order LF, LH, RF, RH. Front legs are even indices. */
 export const isFrontLeg = (i: number) => i % 2 === 0;
 const frac = (v: number) => v - Math.floor(v);

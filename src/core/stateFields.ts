@@ -19,6 +19,7 @@ export const STATE_FIELDS = {
     heading: 'snapshot', speed: 'snapshot', near: 'snapshot', middle: 'snapshot', far: 'snapshot', target: 'snapshot', time: 'snapshot',
     avoidTime: 'snapshot', feedTime: 'snapshot', meal: 'snapshot', alarm: 'snapshot', lastThreat: 'snapshot',
     gaitName: 'snapshot', // T-0003: last gait, the Froude-hysteresis input of gaitFor
+    prevPhase: 'snapshot', drawAlpha: 'snapshot', // render interpolation between fixed sim steps (core/drawLerp)
     legs: 'clock', gaitSpeed: 'clock', seed: 'clock' }, // body build: from seed (+ age)
   /** core/wolfModes state (the player's animal) */
   modes: { stamina: 'snapshot', maxStamina: 'clock', mode: 'snapshot', first: 'snapshot', left: 'snapshot', right: 'snapshot',

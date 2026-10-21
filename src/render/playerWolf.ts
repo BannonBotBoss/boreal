@@ -167,7 +167,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
     root.scale.set(WOLF_SCALE, WOLF_SCALE * (stealth && action !== 'move' ? .72 : 1), WOLF_SCALE);
     const dt = Math.max(0, Math.min(.1, time - lastTime)); lastTime = time;
     // T-0002/T-0003: the gait's own body motion (suspension arc, vault, pitch, pelvis) replaces the old wall-clock bounce.
-    const pose = quadrupedPose(brain.motion, brain.phase, brain.jumpTime, WOLF_LEGS, brain.gaitSpeed, brain.gaitName);
+    const pose = quadrupedPose(brain.motion, brain.drawPhase, brain.jumpTime, WOLF_LEGS, brain.gaitSpeed, brain.gaitName); // drawPhase: between 30 Hz sim steps
     poseLegs(pose);
     torso.position.y = moving ? 0 : Math.sin(time * 2) * .003;
     head.rotation.x = action === 'speak' ? -.45 * Math.sin(Math.min(1, elapsed / .2) * Math.PI / 2)
@@ -187,7 +187,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
     // Tail: the root follows the gait phase and each joint lags the one before, so the sway travels down the chain.
     const lift = brain.motion === 'idle' ? 0 : Math.min(1, brain.gaitSpeed / 6), blendTo = 1 - Math.exp(-12 * dt);
     tail.forEach((_, k) => {
-      const wave = brain.motion === 'idle' ? Math.sin(time * 1.3 - k * .8) * .05 : Math.sin(brain.phase * Math.PI * 2 - k * .9) * (.09 + .02 * k);
+      const wave = brain.motion === 'idle' ? Math.sin(time * 1.3 - k * .8) * .05 : Math.sin(brain.drawPhase * Math.PI * 2 - k * .9) * (.09 + .02 * k);
       tailYaw[k] += (wave - tailYaw[k]) * blendTo;
     });
     tailPitch.value += (TAIL_HANG + (TAIL_LEVEL - TAIL_HANG) * lift - tailPitch.value) * (1 - Math.exp(-4 * dt));

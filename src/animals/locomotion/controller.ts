@@ -6,7 +6,7 @@
  * M2: planted legs snap to their IK solution (springs smooth only swing legs, so planted paws never trail), a gallop
  * body bounce (Claude's gallopBob on the LH phase), and the jump/pounce state machine (jump.ts) driven by `intent`.
  */
-import { VAULT_MAX_DROP, VAULT_RELEASE, WOLF_GIRDLE_Z, WOLF_LEGS, WOLF_REACH, bendsForward, gallopBob, isFrontLeg, limbDrop, limbOf, pelvisShift, pitchShift, solveChain, stancePhase, suspensionBob, vaultDips, vaultPlan, type GaitName } from '../../core/animalBehavior';
+import { VAULT_MAX_DROP, VAULT_RELEASE, WOLF_GIRDLE_Z, WOLF_LEGS, WOLF_REACH, bendsForward, gallopBob, isFrontLeg, limbDrop, limbOf, pelvisShift, pitchShift, solveChain, stancePhase, suspensionBob, touchdownStrength, vaultDips, vaultPlan, type GaitName } from '../../core/animalBehavior';
 import { reachTargets, type CanidPlan } from '../../core/gaitData';
 import { LEG_XZ } from '../../core/wolfBody';
 import { WOLF_SCALE } from '../../core/wolfModes';
@@ -197,7 +197,7 @@ export function createLocomotion(layout: LegLayout, ground: TerrainFn, start: { 
     // touchdowns: contact rising edges (none on the first frame, which starts with all four paws down)
     for (let i = 0; i < 4; i++) {
       if (!first && pose.contacts[i] && !wasDown[i]) pose.touchdowns.push({ leg: i, name: LEG_NAMES[i], worldPos: { ...pose.feet[i] }, speed: Math.abs(s.speed), gait: plan.id,
-        strength: landed ? 1 : Math.min(1, .3 + .35 * Math.sqrt(plan.froude)), landing: landed });
+        strength: landed ? 1 : touchdownStrength(plan.froude), landing: landed });
       wasDown[i] = pose.contacts[i];
     }
     pose.touchdowns.forEach(t => listeners.forEach(fn => fn(t)));

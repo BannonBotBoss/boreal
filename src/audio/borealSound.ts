@@ -15,8 +15,10 @@ import { RENDER } from '../core/renderSettings';
 const soundRng = stream(1400, 'borealSound-v1');
 
 import { haptic, SOUND_HAPTICS } from '../ui/haptics';
-import { jumpArc } from '../proc/physics';
+import { gravity, jumpArc } from '../proc/physics';
 import type { Touchdown } from '../animals/locomotion/signals';
+import { gaitFor, touchdownsBetween, type GaitName, type LegDims, type Motion } from '../core/animalBehavior';
+import { pawGate, pawSound, touchdownStrength } from './footsteps';
 /** Paw touchdown gaits that use the run clip (gallop family); walk/trot/pace use the walk clip. */
 const RUN_GAITS = new Set(['canter', 'gallop', 'bound', 'pronk']);
 import { BUSES, BUS_LEVEL, BUS_STATE, CULL_DISTANCE, VOICES, VOICE_TRIM_DB, admitVoice, busOf, createVolumeStore, onBusChange, priorityOf, trim, type ActiveVoice, type Bus } from './mixer';
@@ -44,7 +46,8 @@ export const MIX = {
 export interface AudibleAnimal { key: string; motion: string; problem: string; x?: number; z?: number; phase?: number }
 export interface SoundFrame {
   dt: number; halted: boolean; x: number; z: number; yaw: number; darkness: number;
-  wolf: { motion: string; phase: number };
+  /** gaitSpeed/gaitName/legs (an AnimalBrain has them): footsteps land on the gait's own touchdowns, not a fixed timer */
+  wolf: { motion: string; phase: number; gaitSpeed?: number; gaitName?: GaitName; legs?: LegDims };
   mode?: string; exhausted?: boolean; /** player mass + the default wolf mass (landing impact scaling) */ mass?: number; refMass?: number; /** core/ground footing().absorb: soft ground = quieter thud, weaker haptic */ groundAbsorb?: number;
   animals: AudibleAnimal[];
 }
@@ -66,7 +69,7 @@ export class BorealSound {
   private buffers = new Map<SoundId, AudioBuffer>();
   private loops = new Map<SoundId, GainNode>();
   private prev = new Map<string, { problem: string; motion: string; phase: number; nextChew: number }>();
-  private wolfPrev = { motion: 'idle', phase: 0 }; private lastTouch = -1e9;
+  private wolfPrev = { motion: 'idle', phase: 0 }; private lastTouch = -1e9; private pawState = { last: -1e9 }; private lastSlice = new Map<SoundId, number>();
   private nextLoon = 30; private time = 0; private waterAmount = 0; private waterCheck = 0;
   private haltedNow = false;
   get volume() { return BUS_LEVEL.master; } get muted() { return BUS_STATE.muted; } get musicVolume() { return BUS_LEVEL.music; } get musicOn() { return BUS_STATE.musicOn; }
@@ -160,8 +163,11 @@ export class BorealSound {
     }
     tail.connect(this.bus.get(busOf(id))!);
     const slice = STEP_SLICES[id];
-    if (slice) { const off = slice.onsets[Math.floor(soundRng() * slice.onsets.length)], end = now + slice.len / src.playbackRate.value;
-      src.start(now, off, slice.len); gain.gain.setValueAtTime(g0, end - .04); gain.gain.linearRampToValueAtTime(0, end); }
+    if (slice) { // a different footfall than last time; 6 ms attack and a soft exponential tail instead of a hard 40 ms cut
+      const n = slice.onsets.length, prev = this.lastSlice.get(id) ?? -1; let k = Math.floor(soundRng() * n); if (n > 1 && k === prev) k = (k + 1) % n; this.lastSlice.set(id, k);
+      const end = now + slice.len / src.playbackRate.value;
+      gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(g0, now + .006); gain.gain.setTargetAtTime(0, end - .09, .03);
+      src.start(now, slice.onsets[k], slice.len); }
     else src.start();
     const voice = { id, priority: prio, start: now, stop: () => { try { gain.gain.setTargetAtTime(0, ctx.currentTime, VOICES.stealFadeSeconds / 3); src.stop(ctx.currentTime + VOICES.stealFadeSeconds); } catch { /* already stopped */ } } };
     this.active.push(voice);
@@ -205,7 +211,12 @@ export class BorealSound {
    * gallop/landing). Jump landings keep the single impact-scaled thud in update() instead of four paw slices. */
   touchdown(t: Touchdown) {
     this.lastTouch = this.time; if (this.haltedNow || t.landing) return;
-    this.playAt(RUN_GAITS.has(t.gait) ? 'paw-run' : 'paw-walk', undefined, MIX.wolfSteps * (.35 + .65 * Math.min(1, Math.max(0, t.strength))));
+    this.paw(RUN_GAITS.has(t.gait) ? 'paw-run' : 'paw-walk', [t.leg], t.strength);
+  }
+  /** One player paw sound (audio/footsteps): merged when paws land together, pitch and level varied per step. */
+  private paw(id: SoundId, legs: number[], strength: number) {
+    if (!pawGate(this.pawState, this.time)) return;
+    const s = pawSound(legs, strength, soundRng); this.playAt(id, undefined, MIX.wolfSteps * s.level, s.rate);
   }
   pauseCue() { this.playAt('ui-pause', undefined, MIX.pause); }
 
@@ -250,11 +261,13 @@ export class BorealSound {
       if (d > .25 || this.waterAmount > .2) { const a = soundRng() * Math.PI * 2; this.playAt('loon', { x: f.x + Math.sin(a) * 30, z: f.z + Math.cos(a) * 30 }, MIX.loon); }
     }
 
-    // Player wolf: one paw sound per real touchdown (touchdown(), when the locomotion layer sends them); otherwise a paw sound each
-    // half gait cycle (fore/hind pair). Landing thud after a jump.
+    // Player wolf: one paw sound per real touchdown (touchdown(), when the ?loco=1 layer sends them); otherwise the touchdowns of
+    // the brain's own gait (paws that land together merge). Landing thud after a jump.
     const w = f.wolf, wp = this.wolfPrev;
-    if (this.time - this.lastTouch > 1 && Math.floor(w.phase * 2) !== Math.floor(wp.phase * 2) && (w.motion === 'walk' || w.motion === 'run' || w.motion === 'back'))
-      this.playAt(w.motion === 'run' ? 'paw-run' : 'paw-walk', undefined, MIX.wolfSteps);
+    if (this.time - this.lastTouch > 1 && w.legs && (w.motion === 'walk' || w.motion === 'run' || w.motion === 'back')) {
+      const g = gaitFor(w.motion as Motion, w.gaitSpeed ?? 0, w.legs, w.gaitName), legs = g ? touchdownsBetween(wp.phase, w.phase, g.offsets) : [];
+      if (g && legs.length) { const v = Math.max(.15, w.gaitSpeed ?? 0); this.paw(g.name === 'gallop' ? 'paw-run' : 'paw-walk', legs, touchdownStrength(v * v / (gravity() * w.legs.hip))); }
+    }
     if (wp.motion === 'jump' && w.motion !== 'jump') { // landing thud + haptic scale with impact energy (½ m v², proc/physics)
       const k = Math.sqrt(jumpArc(f.mass ?? 1).energy / jumpArc(f.refMass ?? f.mass ?? 1).energy) * (f.groundAbsorb ?? 1);
       this.playAt('land', undefined, MIX.land * Math.min(2, Math.max(.4, k)), 1 / Math.min(1.4, Math.max(.7, Math.sqrt(k))), false); haptic('land', 0, Math.min(1.6, k)); }

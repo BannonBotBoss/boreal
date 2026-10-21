@@ -120,8 +120,8 @@ test('pose requests: sit-up lifts the fore feet with the hind planted; graze cro
 
 /** A trace made from the BoundGait itself (the known match: hind prints 0.45 m ahead of the fore line, as in hare tracks),
  * optionally broken (known mismatches: trot timing with hind prints just behind the fore ones, direct register; sliding feet, flat back). */
-function synth(v: number, break_?: 'trot' | 'slide', o: { gap?: number; slip?: number; pitchSpan?: number } = {}) {
-  const row = selectRow(v), hz = boundCadence(G, v), duty = boundDuty(G, v), duties = boundDuties(G, v), stride = v / hz;
+function synth(v: number, break_?: 'trot' | 'slide', o: { gap?: number; slip?: number; pitchSpan?: number; dutyScale?: number } = {}) {
+  const row = selectRow(v), hz = boundCadence(G, v), duty = boundDuty(G, v) * (o.dutyScale ?? 1), duties = boundDuties(G, v).map(d => d * (o.dutyScale ?? 1)) as unknown as ReturnType<typeof boundDuties>, stride = v / hz;
   let td: [number, number, number, number] = [...boundRows(G)[row].touchdown]; if (break_ === 'trot') td = [0, .5, .5, 0];
   const legOf = [0, 2, 1, 3]; // BoundGait order LF, RF, LH, RH → LF, LH, RF, RH
   // o.gap: the hind print lands about `gap` ahead of the fore print before it (the print offset minus the travel between them)
@@ -150,6 +150,8 @@ test('metric calibration (bound-checks v2, graded): the data itself scores 100, 
     const g = (s: ReturnType<typeof synth>, n: string) => s.checks.find(c => c.name === n)!.grade;
     assert.ok(g(synth(v, undefined, { gap: .04 }), 'overtake') < g(synth(v, undefined, { gap: .12 }), 'overtake'), 'prints 4 cm ahead < 12 cm');
     assert.ok(g(synth(v, undefined, { slip: .005 }), 'planted') < g(synth(v, undefined, { slip: .0005 }), 'planted'), 'slip 5 mm < .5 mm');
+    // contact (run 6, Lepus floors): a trace far under the floors grades lower than the data's own duty
+    assert.ok(g(synth(v, undefined, { dutyScale: .2 }), 'contact') < g(synth(v), 'contact'), 'short contacts < data contacts');
     if (v >= 5) assert.ok(g(synth(v, undefined, { pitchSpan: 2 }), 'pitch') < g(synth(v, undefined, { pitchSpan: 15 }), 'pitch') && g(synth(v, undefined, { pitchSpan: 15 }), 'pitch') < 1, 'flat trunk < 15 deg < the 22 deg reference');
   }
 });

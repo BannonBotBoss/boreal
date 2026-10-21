@@ -4,7 +4,10 @@
  * reader of a side-on recording of a bounding hare checks. Each check is GRADED 0..1 (v1 was pass/fail, so it could not tell
  * good from better); a speed's score = mean grade x 100. `pass` = grade >= .95 (for reports only).
  *  1 overtake   per hind touchdown, how far it lands ahead (world, along travel) of the fore touchdown before it, as a share
- *               of REF.overtake = one hind print (.12 m: snowshoe hind print 12 x 8 cm, NatureNorth tracking guide): in hare
+ *               of REF.overtake = one hind print (.12 m: snowshoe hind print 12 x 8 cm, NatureNorth tracking guide; 4-5 in = 10-13 cm,
+ *               Montana Natural History Center "Who's been walking here?"; 13 cm, Alberta Parks Winter Ecology Tracking
+ *               Booklet 2020 p.17; average 12.5 cm, NRCan Trees, insects and diseases of Canada's forests, rabbit and hare
+ *               damage; 10-15 cm, CWF 2004 [Gait Builder's citation, not re-checked]): in hare
  *               track groups the large hind prints lie wholly ahead of the fore prints (NPS "Patterns in the Snow"; USFWS
  *               "Snow tracks"; Lagomorpha Locomotion 2021). Grade = mean of clamp(d / .12, 0, 1).
  *  2 phases     share of strides that show each suspension the row's data implies (gaitData suspensions; Bramble 1989)
@@ -15,12 +18,13 @@
  *               .25 per leash step after the warm-up
  *  5 cadence    1 within 5 % of the row's stride frequency (Heglund & Taylor 1988), falling linearly to 0 at 20 %
  *  6 order      share of strides with the row's footfall order
- *  7 contact    per pair, measured duty against Hildebrand 1977's floors (J Mammal 58:131, p.135-136): hind contact
- *               "approaches 20 percent of the cycle for various fast runners ... rabbit. It is less than 18 percent only for
- *               individual strides of exceptional cursors"; fore "approaches 16 percent ... rarely less than 13 percent for
- *               consecutive strides"; neither above 70 % in steady progression. Grade per pair = min(1, duty / floor,
- *               .70 / duty) with floors hind .18, fore .13; mean of the pairs. (v1 compared with 80 % of the mean data duty,
- *               .180 at 11.6 m/s: an unsourced target, dropped.)
+ *  7 contact    per pair, measured duty against the hare's own floors (run 6; were the cross-species .20/.13): Hildebrand
+ *               1977 (J Mammal 58:131) Fig. 2, p.135, the fastest Lepus stride plotted sits at hind ~16 %, fore ~11 % of the
+ *               stride (read at 600 dpi: 15.9 / 10.8), so floors hind .16, fore .11; neither above 70 % in steady progression
+ *               (p.136). At the fast end (measured hind duty <= .20, where Fig. 2's Lepus-at-speed points lie) also fore/hind
+ *               <= .70: "Fore contacts drop to 70 percent or less of hind contacts for Lepus at speed" (p.137). Speed is
+ *               not used to switch it: "actual speed cannot be derived from contact intervals" (p.136). Grade = mean of min(1, duty / floor, .70 / duty) per pair
+ *               (and min(1, .70 / ratio) at speed). (v1 compared with 80 % of the mean data duty, .180 at 11.6 m/s: dropped.)
  *  8 pitch      at >= 5 m/s, when the trace carries trunk pitch: the trunk pitch span (max - min over the steady run) against
  *               the reference bound (refs/hare/graze-alert-flight attempt4 frames v19-v25, back line hip to withers read at
  *               about +3 .. +25 deg nose-up, span REF.pitchSpan 22 deg, reading +-5 deg). Grade 1 within +-5 deg, falling
@@ -33,7 +37,7 @@
  * a flat trunk < the reference span.
  */
 /** Reference values of the graded checks (sources above). */
-export const REF = { overtake: .12, slip: .01, cadenceTol: .05, cadenceZero: .20, floorHind: .18, floorFore: .13, dutyMax: .70, pitchSpan: 22 * Math.PI / 180, pitchTol: 5 * Math.PI / 180, pitchFrom: 5 };
+export const REF = { overtake: .12, slip: .01, cadenceTol: .05, cadenceZero: .20, floorHind: .16, floorFore: .11, foreShareMax: .70, shareHind: .20, dutyMax: .70, pitchSpan: 22 * Math.PI / 180, pitchTol: 5 * Math.PI / 180, pitchFrom: 5 };
 export interface TraceFrame {
   t: number; stride: number; speed: number; contact: boolean[]; slip: number[]; spineFlex: number; leashes: number;
   touchdowns: { leg: number; at: { x: number; y: number; z: number } }[]; fwd: { x: number; z: number }; /** trunk pitch (rad, + nose up), optional */ pitch?: number;
@@ -104,7 +108,10 @@ export function scoreTrace(tr: TraceFrame[], o: { speed: number; row: string; hz
   let fore = 0, hind = 0; for (const f of run) { fore += (+f.contact[0] + +f.contact[2]) / 2; hind += (+f.contact[1] + +f.contact[3]) / 2; }
   fore /= Math.max(1, run.length); hind /= Math.max(1, run.length);
   const pair = (d: number, floor: number) => d > 0 ? Math.min(1, d / floor, REF.dutyMax / d) : 0;
-  checks.push(check('contact', (pair(hind, REF.floorHind) + pair(fore, REF.floorFore)) / 2, `duty hind ${hind.toFixed(3)} fore ${fore.toFixed(3)} vs floors ${REF.floorHind}/${REF.floorFore} (Hildebrand 1977)`));
+  const parts = [pair(hind, REF.floorHind), pair(fore, REF.floorFore)], ratio = hind > 0 ? fore / hind : 0;
+  const atSpeed = hind > 0 && hind <= REF.shareHind + 1e-9;
+  if (atSpeed) parts.push(ratio > 0 ? Math.min(1, REF.foreShareMax / ratio) : 0);
+  checks.push(check('contact', parts.reduce((a, b) => a + b, 0) / parts.length, `duty hind ${hind.toFixed(3)} fore ${fore.toFixed(3)} (fore/hind ${ratio.toFixed(2)}) vs Lepus floors ${REF.floorHind}/${REF.floorFore}${atSpeed ? `, ratio <= ${REF.foreShareMax}` : ''} (Hildebrand 1977 Fig. 2 p.135, p.137)`));
   // 8 pitch span vs the reference bound
   const ps = run.map(f => f.pitch).filter((p): p is number => p !== undefined);
   if (o.speed >= REF.pitchFrom && ps.length) { const span = Math.max(...ps) - Math.min(...ps), err = Math.abs(span - REF.pitchSpan), D = 180 / Math.PI;

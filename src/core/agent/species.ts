@@ -94,12 +94,16 @@ export const HARE_AGENT: AgentSpecies = {
    *  71-75 ms), about 1.2 leg lengths; the same sweep in leg lengths for the hare is dynamic similarity (Alexander & Jayes 1983,
    *  J Zool 201:135) [estimate: no lagomorph stance length vs speed found]. Gives .60 @ 1.68, .56 @ 3, .35 @ 5, .21 @ 8.5,
    *  .20 (floor) @ 11.6 m/s. Fore share .90 -> .70 of the hind: "fore contacts drop to 70 percent or less of hind contacts
-   *  for Lepus at speed" (Hildebrand 1977); ~.9 for the slow Lepus plots in Fig. 2; fore floor .16 ("the fore contact
-   *  interval approaches 16 percent of the cycle in various fast-moving mammals", same paper).
+   *  for Lepus at speed" (Hildebrand 1977); ~.9 for the slow Lepus plots in Fig. 2. Floors re-read run 5 (Hildebrand 1977 p.135-136): hind
+   *  .20 kept (the rabbit is named among the fast runners whose hind contact "approaches 20 percent"; below 18 % is only for
+   *  "individual strides of exceptional cursors", not a steady sprint); fore floor .13, was .16: 16 % is what fast mammals'
+   *  fore contact "approaches", but it is "rarely less than 13 percent for consecutive strides", and Lepus at speed puts the
+   *  fore at 70 % or less of the hind, i.e. .7 x .20 = .14 at 11.6 m/s, which a .16 floor overrode (fore = 80 % of hind, the
+   *  rodent norm, not the Lepus one). So the share sets the fore duty and .13 is only the hard floor.
    *  Cadence: Heglund & Taylor 1988 (JEB 138:301) allometry for 1.5 kg (ADW: 1.43-1.55 kg): trot-gallop transition
    *  1.54 M^0.216 = 1.68 m/s at 4.19 M^-0.150 = 3.94 Hz; preferred gallop 2.78 M^0.116 = 2.91 m/s at 4.44 M^-0.156 = 4.17 Hz;
    *  max sustained gallop 3.71 M^0.176 = 3.98 m/s at 4.70 M^-0.162 = 4.40 Hz. Above 3.98 m/s the frequency is held at 4.40 Hz
    *  up to the 11.6 m/s top speed (26 mph, Seton 1928 via MacLulich 1937) and speed grows by stride length, as in Heglund &
    *  Taylor's galloping animals [estimate: sprint frequency not measured in Lepus]. Slow hops f ~ v^0.25 [estimate]. */
-  gait: { touchdown: [0, .08, .42, .45], duty: [.6, .2], sweep: .40, foreMin: .16, foreShare: [.9, .7], cadence: { transitionSpeed: 1.68, transitionHz: 3.94, topSpeed: 11.6, topHz: 4.4, slowExp: .25, points: [[2.91, 4.17], [3.98, 4.4]] } },
+  gait: { touchdown: [0, .08, .42, .45], duty: [.6, .2], sweep: .40, foreMin: .13, foreShare: [.9, .7], cadence: { transitionSpeed: 1.68, transitionHz: 3.94, topSpeed: 11.6, topHz: 4.4, slowExp: .25, points: [[2.91, 4.17], [3.98, 4.4]] } },
 };

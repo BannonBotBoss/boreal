@@ -65,8 +65,8 @@ test('plan: cadence is the host data; duty is the data duty capped by what limbs
   // cadence: Heglund & Taylor 1988 for 1.5 kg (transition, preferred gallop, max sustained), held above
   for (const [v, hz] of [[1.68, 3.94], [2.91, 4.17], [3.98, 4.4], [8.5, 4.4]] as const) assert.ok(Math.abs(boundCadence(G, v) - hz) < .005, `${v} m/s: ${boundCadence(G, v)}`);
   // duty (run 4): hind = sweep .40 m / stride, clamped to [.20, .60] (Hildebrand 1977 bounds; Walter & Carrier 2007 sweep in leg
-  // lengths); fore .90 -> .70 of the hind with a .16 floor (Hildebrand 1977)
-  assert.ok(Math.abs(boundDuty(G, 1.68) - .6) < 1e-9 && Math.abs(boundDuty(G, 11.6) - .2) < 1e-9 && Math.abs(boundForeDuty(G, 11.6) - .16) < 1e-9);
+  // lengths); fore .90 -> .70 of the hind (Lepus <= 70 % at speed) with a hard .13 floor (Hildebrand 1977; run 5, was .16)
+  assert.ok(Math.abs(boundDuty(G, 1.68) - .6) < 1e-9 && Math.abs(boundDuty(G, 11.6) - .2) < 1e-9 && Math.abs(boundForeDuty(G, 11.6) - .14) < 1e-9 && G.foreMin === .13);
   for (const [v, d] of [[3, .559], [5, .352], [8.5, .207]] as const) assert.ok(Math.abs(boundDuty(G, v) - d) < .001, `${v} m/s hind duty ${boundDuty(G, v)}`);
 });
 
@@ -120,27 +120,37 @@ test('pose requests: sit-up lifts the fore feet with the hind planted; graze cro
 
 /** A trace made from the BoundGait itself (the known match: hind prints 0.45 m ahead of the fore line, as in hare tracks),
  * optionally broken (known mismatches: trot timing with hind prints just behind the fore ones, direct register; sliding feet, flat back). */
-function synth(v: number, break_?: 'trot' | 'slide') {
+function synth(v: number, break_?: 'trot' | 'slide', o: { gap?: number; slip?: number; pitchSpan?: number } = {}) {
   const row = selectRow(v), hz = boundCadence(G, v), duty = boundDuty(G, v), duties = boundDuties(G, v), stride = v / hz;
   let td: [number, number, number, number] = [...boundRows(G)[row].touchdown]; if (break_ === 'trot') td = [0, .5, .5, 0];
   const legOf = [0, 2, 1, 3]; // BoundGait order LF, RF, LH, RH → LF, LH, RF, RH
+  // o.gap: the hind print lands about `gap` ahead of the fore print before it (the print offset minus the travel between them)
+  const ahead = o.gap === undefined ? .45 : o.gap - v * (Math.min(td[2], td[3]) - Math.max(td[0], td[1])) / hz;
   const tr: TraceFrame[] = [], prev = [false, false, false, false], dt = 1 / 240, hindTd = Math.min(td[2], td[3]), hindLift = Math.max(td[2], td[3]) + duty, legDuties = [duties[0], duties[2], duties[1], duties[3]];
   for (let t = 0; t < 4; t += dt) {
     const ph = (hz * t) % 1, contact = [false, false, false, false], touchdowns: TraceFrame['touchdowns'] = [];
     for (let k = 0; k < 4; k++) { const i = legOf[k], st = boundFoot({ ...G, touchdown: td }, ph, k, duties).stance; contact[i] = st;
-      if (st && !prev[i]) touchdowns.push({ leg: i, at: { x: 0, y: 0, z: -(v * t + (i % 2 ? (break_ === 'trot' ? -.02 : .45) : 0) + duty * stride / 2) } }); prev[i] = st; }
+      if (st && !prev[i]) touchdowns.push({ leg: i, at: { x: 0, y: 0, z: -(v * t + (i % 2 ? (break_ === 'trot' ? -.02 : ahead) : 0) + duty * stride / 2) } }); prev[i] = st; }
     // flexion peaks at the first hind touchdown, extension at the last hind lift-off (linear between)
     const a = ((ph - hindTd) % 1 + 1) % 1, span = ((hindLift - hindTd) % 1 + 1) % 1, flex = v < 3 ? 0 : a < span ? .3 - .6 * a / span : -.3 + .6 * (a - span) / (1 - span);
-    tr.push({ t, stride: ph, speed: v, contact, slip: contact.map(c => c ? (break_ === 'slide' ? .05 : 0) : 0), spineFlex: break_ === 'slide' ? 0 : flex, leashes: 0, touchdowns, fwd: { x: 0, z: -1 } });
+    tr.push({ t, stride: ph, speed: v, contact, slip: contact.map(c => c ? (break_ === 'slide' ? .05 : o.slip ?? 0) : 0), spineFlex: break_ === 'slide' ? 0 : flex, leashes: 0, touchdowns, fwd: { x: 0, z: -1 },
+      // trunk pitch (v2 metric): a sine of the reference span (22 deg) over the stride; a flat trunk for the sliding mismatch
+      pitch: break_ === 'slide' ? 0 : (o.pitchSpan ?? 22) / 2 * Math.PI / 180 * Math.sin(2 * Math.PI * ph) });
   }
   const order = ROW_ORDER[row];
   return scoreTrace(tr, { speed: v, row, hz, dutyData: (duties[0] + duties[2]) / 2, order, warm: 1, expect: [...new Set(suspensions(rowOffsets({ id: row, touchdown: td }), legDuties).map(x => x.kind))] });
 }
-test('metric calibration: the data itself scores 100, trot timing and sliding feet score low', () => {
+test('metric calibration (bound-checks v2, graded): the data itself scores 100, trot timing and sliding feet score low, better beats good', () => {
   for (const v of [1.68, 5, 8.5, 11.6]) {
-    assert.equal(synth(v).score, 100, `${v}: ${JSON.stringify(synth(v).checks.filter(c => !c.pass))}`);
-    assert.ok(synth(v, 'trot').score <= 72, `trot ${v}: ${synth(v, 'trot').score}`);
-    assert.ok(synth(v, 'slide').score <= 86 && !synth(v, 'slide').checks.find(c => c.name === 'planted')!.pass, `slide ${v}`);
+    const match = synth(v), trot = synth(v, 'trot'), slide = synth(v, 'slide');
+    assert.equal(match.score, 100, `${v}: ${JSON.stringify(match.checks.filter(c => c.grade < 1))}`);
+    assert.ok(trot.score <= 72, `trot ${v}: ${trot.score}`);
+    assert.ok(slide.score <= (v >= 5 ? 76 : 86) && slide.checks.find(c => c.name === 'planted')!.grade === 0, `slide ${v}: ${slide.score}`);
+    // graded: tells good from better (v1 passed all of these alike)
+    const g = (s: ReturnType<typeof synth>, n: string) => s.checks.find(c => c.name === n)!.grade;
+    assert.ok(g(synth(v, undefined, { gap: .04 }), 'overtake') < g(synth(v, undefined, { gap: .12 }), 'overtake'), 'prints 4 cm ahead < 12 cm');
+    assert.ok(g(synth(v, undefined, { slip: .005 }), 'planted') < g(synth(v, undefined, { slip: .0005 }), 'planted'), 'slip 5 mm < .5 mm');
+    if (v >= 5) assert.ok(g(synth(v, undefined, { pitchSpan: 2 }), 'pitch') < g(synth(v, undefined, { pitchSpan: 15 }), 'pitch') && g(synth(v, undefined, { pitchSpan: 15 }), 'pitch') < 1, 'flat trunk < 15 deg < the 22 deg reference');
   }
 });
 

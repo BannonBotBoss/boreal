@@ -16,7 +16,7 @@ export function runScore(planName: string, rowOf: (v: number) => BoundRowId = v 
   for (const v of SCORE_SPEEDS) {
     const row = rowOf(v), c = createBounding(sk, gait, () => 0, { x: 0, z: 0, heading: 0 }, GIRDLE, { pose: poseFor(planName) }), tr: TraceFrame[] = [], dt = 1 / 240;
     for (let t = 0; t < 5; t += dt) { const sp = Math.min(v, v * t / 1.5), f = c.update(dt, sp, 0, null, row);
-      tr.push({ t, stride: f.stride, speed: sp, contact: f.contact, slip: f.slip, spineFlex: f.spineFlex, leashes: f.leashes, touchdowns: f.touchdowns, fwd: { x: 0, z: -1 } }); }
+      tr.push({ t, stride: f.stride, speed: sp, contact: f.contact, slip: f.slip, spineFlex: f.spineFlex, leashes: f.leashes, touchdowns: f.touchdowns, fwd: { x: 0, z: -1 }, pitch: f.tilt.pitch }); }
     const p = boundPlan(gait, v, c.reach, row);
     out.push(scoreTrace(tr, { speed: v, row, hz: p.hz, dutyData: (p.dutyData + p.foreDutyData) / 2, order: ROW_ORDER[row], warm: 2.5, expect: [...new Set(suspensions(p.offsets, p.dutiesData).map(x => x.kind))] }));
   }

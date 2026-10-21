@@ -11,7 +11,7 @@ export interface BoundGait {
    *  (linear in between). With `sweep`: the range the sweep-derived duty is clamped to. */ duty: readonly [number, number];
   /** hind stance length (m) the foot sweeps at speed: duty = sweep / stride, clamped to `duty` (a stance length set by the leg,
    *  not by speed: dynamic similarity, Alexander & Jayes 1983) */ sweep?: number;
-  /** floor of the fore duty (fast-moving mammals' fore contact approaches 16 % of the cycle: Hildebrand 1977) */ foreMin?: number;
+  /** hard floor of the fore duty (fore contact "rarely less than 13 percent for consecutive strides": Hildebrand 1977) */ foreMin?: number;
   /** fore contact as a share of hind contact at the transition and at top speed (linear between; default 1 = same as hind) */
   foreShare?: readonly [number, number];
   /** stride frequency: Hz at the transition speed and at top speed (linear between, through `points` [speed, Hz] when given);

@@ -24,6 +24,8 @@ codex did sky/sun (T-0022), grok animals/forage. The empty claude/water branch s
 - [x] Calibrated the T-0023 mirror metric on real photos (refs/water/reference/real/, SOURCES.json): eye-level lakes 0.66-0.73,
       game 5.04 (refs/water/shore-audit/mirror-ratio.json, measure-photos.mjs). T-0023 table updated (f799a3d).
 - [x] Skill: notes/skills/visual-inspection-recording.md (new); notes/claude.md entry.
+- [x] Proposed T-0025 littoral plants (39 cr; event 11:39): the water is bare - no emergent or floating-leaved plants;
+      small boreal lakes 9 % / 25 % cover (Oulu 2025). Reuses render/grass/cover.ts data rows.
 
 ## Frame answers (water, main 36b8a51)
 - What do I see: see T-0023 "What I saw" and T-0024 "What I saw".
@@ -64,3 +66,7 @@ looks in nature? If not, refine the prompt (log attempts in refs/water/reference
    lake water, seen from 3 m behind and 1.6 m above it. Each paw entering the water makes a small ring of ripples that spreads
    and fades; a V-shaped wake trails the wolf's body. Natural daylight, boreal forest shore." ->
    `refs/water/reference/t0024-wade.mp4` plus frames every 0.2 s as `t0024-wade-frames/`.
+4. **T-0025 still, 1280x720**: "Photograph from 1.6 m above a gently sloping boreal lakeshore in northern Ontario in mid-August,
+   noon: a 3-6 m wide belt of water sedge and water horsetail stands in shallow tea-coloured water, beyond it yellow
+   pond-lily pads float on calm water, then open water mirroring a black spruce shore 40 m away." ->
+   `refs/water/reference/t0025-littoral.png`

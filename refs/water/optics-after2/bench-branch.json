@@ -1,0 +1,12 @@
+{
+ "port": "5212",
+ "lines": [
+  "BENCH gpu-string ANGLE (NVIDIA, NVIDIA GeForce RTX 5060 Laptop GPU (0x00002D19) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "BENCH tier-Ultra gpu=7.91ms frame=16.67ms fps=60 cpu=8.7ms(draw 8.2) p95=19.1ms calls=209 tris=1355283 maxCpu={\"csmMs\":0.2,\"iblMs\":0.1,\"giMs\":1.1,\"cloudMs\":0.1,\"warmMs\":27.1}",
+  "BENCH tier-High gpu=7.84ms frame=16.67ms fps=60 cpu=8.7ms(draw 8.1) p95=19.2ms calls=288 tris=1578612 maxCpu={\"csmMs\":0.2,\"iblMs\":0.1,\"giMs\":1,\"cloudMs\":0.2,\"warmMs\":27.1}",
+  "BENCH tier-Medium gpu=8.45ms frame=16.67ms fps=60 cpu=9.2ms(draw 8.6) p95=19.2ms calls=210 tris=1355971 maxCpu={\"csmMs\":0.2,\"iblMs\":1,\"giMs\":0.9,\"cloudMs\":0.1,\"warmMs\":97.1}",
+  "BENCH tier-Low gpu=7.51ms frame=16.66ms fps=60 cpu=9.3ms(draw 8.7) p95=19.2ms calls=242 tris=1561332 maxCpu={\"csmMs\":0.2,\"iblMs\":0.1,\"giMs\":0.8,\"cloudMs\":0.1,\"warmMs\":97.1}",
+  "BENCH tier-Very low gpu=7.55ms frame=16.67ms fps=60 cpu=9.7ms(draw 9.0) p95=18.6ms calls=204 tris=1355965 maxCpu={\"csmMs\":0.2,\"iblMs\":0.1,\"giMs\":0,\"cloudMs\":0.1,\"warmMs\":163.9}",
+  "BENCH tier-Minimum gpu=7.69ms frame=16.67ms fps=60 cpu=9.5ms(draw 8.8) p95=18.6ms calls=238 tris=1558018 maxCpu={\"csmMs\":0.2,\"iblMs\":0.1,\"giMs\":0,\"cloudMs\":0.2,\"warmMs\":174.9}"
+ ]
+}

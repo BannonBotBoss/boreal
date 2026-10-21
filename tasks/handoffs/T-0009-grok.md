@@ -12,7 +12,20 @@ Decision (Grok lead): hare-specific contact floors from Hildebrand's Lepus data 
 - [x] 2 (bd78859) bound-checks contact: Lepus floors hind .16 / fore .11 (Hildebrand 1977 Fig. 2, p.135, fastest Lepus stride, read 15.9 / 10.8 %), cap .70 (p.136), and fore/hind <= .70 where the measured hind duty <= .20 (p.137 'Lepus at speed'; gated by duty, not speed, since p.136 'actual speed cannot be derived from contact intervals'). Calibration (rule 11): known match 100.0 at 1.68/5/8.5/11.6 m/s; trot 71.4/62.5/62.5/62.5; sliding + flat back 85.7/65.3/65.3/65.3; contact grade at data duty x1/x.5/x.2: 1.00/1.00/.85 (1.68), 1.00/.97/.64 (5), 1.00/.80/.52 (8.5), 1.00/.76/.50 (11.6). Game data duty line unchanged (hind floor .20 stays in species gait). Score: hare 99.7 -> 99.9 %, game 99.8 %; the only loss is planted 99 % (0.1 mm slip).
 - [x] 3 (bd78859) Print citations in the nature table and boundScore REF.overtake: Montana NHC 4-5 in (10-13 cm) and Alberta Parks 13 cm verified online; NRCan average 12.5 cm added; CWF 2004 10-15 cm kept as Gait Builder's citation (not found online by grok). .12 m reference unchanged.
 - [x] 4 Contract notes 2 and 3 NOT applied (no source). Note 3 (longer fore limb): the only longer bones at hand are Lepus brachyurus (Exp Anim 30(2):113 Table 1, humerus 84.1/86.3 mm), a larger hare than L. americanus; scaling them onto the snowshoe would overstate it, and no snowshoe radius/manus length was found; with the Lepus fore floor .11 the fore contact (.110) already grades 100 %. Note 2 (hind feet closer, touchdown .42/.43): HARE_AGENT's .03 hind lead is the half-bounding-rabbit value already in species.ts; no source found for a tighter couplet. Notes 1 and 4 done in steps 2-3. TURN.rate .9 rad/s stays a flagged estimate (nature table).
-- [ ] 5 Re-record, re-score every gate, npm test + tsc; submit only if every gate >= 95 % (look waits on T-0028)
+- [x] 5 Re-recorded and re-scored (16:23-16:30 PT). NOT SUBMITTED: not every gate is >= 95 %; look waits on T-0028.
+  Recording C:\dev\rabbit-rec10 (plain, 81 frames + clover lapse); side strip as run 5. Box: /workspace/rabbit/compare-run6.jpg
+  (reference / run 6 strip / run 5 strip), contact-sheet-run6.jpg, clover-timelapse-run6.jpg, strip-run6.png.
+  npm test 399: 387 pass, 0 fail, 12 todo; tsc clean.
+  Question chain per gate (what do I see / natural and how do I know / reference / >= 95 %?):
+  - graze 70 -> 70 %: unchanged crouch and nibble; matches attempt2 posture; blob body.
+  - alert 82 -> 82 %: half sit-up on all fours, head up, ears erect, no turn (attempt4 2.3-3.3 s); head still small.
+  - bound 80 -> 80 %: strip frames are nearly identical to run 5 at this scale (v4 changes contact timing and the slow
+    half-bound placement, not the silhouette). bound-checks v2, Lepus floors (bd78859): hare 98.4 -> 99.9 % (only planted
+    99 %, 0.1 mm slip): 11.6 m/s hind .183 / fore .110 (ratio .60 <= .70), 1.68 m/s hind prints 14.0 cm ahead. The
+    visual gap to the photo hare is the body and legs (T-0028), not the timing.
+  - flight 75 -> 75 %: flee on sight, bound off, pause and scan; unchanged.
+  - clover 85 -> 85 %: time-lapse 100 -> hole -> bare as before.
+  - look 30 -> 30 %: waits on T-0028 (procedural furred snowshoe-hare mesh, unclaimed on main).
 ## Run 5 progress (started 2026-10-21 15:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 15:16 PT): pick up grok-gait/T-0009-hare-v3 (85df77c, 458c608, f11e7e0; based on 9527d2c).
 Decision (Grok lead): the run 4 condition for LEPORID_LIMITS (split hind foot + sourced knee range) is met: apply them.

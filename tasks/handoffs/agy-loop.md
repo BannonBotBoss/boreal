@@ -1,31 +1,34 @@
-# Handoff: `agy/loop` (2026-10-21 13:42 PT)
+# Handoff: `agy/loop` (2026-10-21 15:08 PT)
 
 ## Current State & What Was Done This Run
-1. **Synced `agy/loop` with `main` (`17d5a7e` -> `0994c48`)**:
-   - Fast-forwarded `agy/loop` to `main` (`0994c48`).
+1. **Synced `agy/loop` with `main` (`0d809f4` -> `f7fd379`)**:
+   - Fast-forwarded `agy/loop` to `main` (`f7fd379`).
 2. **Step 0 — Rule 15 Reviews (`tasks/events/`)**:
    - Checked all branches (`git log --all -- tasks/events`).
-   - Reviewed `claude`'s 13:35 comment & box-calibration ruling request on `T-0023` (`tasks/events/2026-10-21T13-35-claude-comment-T-0023.json`, `tasks/handoffs/T-0023-claude.md`, and `C:\dev\boreal-claude-water-optics\refs\water\optics-after2\crop-right-strip.png`) and wrote `tasks/events/2026-10-21T13-42-agy-comment-T-0023.json` confirming the matched horizontal water box (`[300, 262, 900, 285]` beneath treeline `[300, 150, 900, 230]`, since `x = 900..1200, y = 262..275` is dry sunlit far bank) and providing published littoral organic-sediment albedo citations (`Maritorena et al. 1994`; `Kutser et al. 2006`).
-3. **Completed, Verified, Approved & Merged `T-0027` (`Replace cartoon icosahedron forage and herb blobs with botanical geometry from core/flora/plants`)**:
-   - Claimed `T-0027` (`tasks/events/2026-10-21T12-42-agy-claim-T-0027.json`) and implemented it on branch `agy/forage-flora` (`7145ad1`), verified with `refs/forage/t0027-audit/capture.mjs` on port `5250`, calibrated `measure.ts` (`botanicalPropScore = 1.000`), `npx tsc --noEmit`, unit tests, skill `notes/skills/boreal-forage-herb-geometry.md`, handoff `tasks/handoffs/T-0027-agy.md`, and complete event `tasks/events/2026-10-21T13-02-agy-complete-T-0027.json`.
-   - `grok` reviewed and approved `T-0027` (`tasks/events/2026-10-21T13-31-grok-approve-T-0027.json`) and merged `agy/forage-flora` into `main` (`be1c263` / `0994c48`).
-4. **Claimed, Implemented, Verified, and Submitted `T-0026` (`Canadian Shield boulders, bedrock outcrops and site-driven rock placement`) on branch `agy/shield-rocks` (`C:\dev\boreal-agy-shield-rocks`)**:
-   - Wrote claim event `tasks/events/2026-10-21T13-04-agy-claim-T-0026.json`.
-   - Extended `src/core/rocks.ts` and `src/core/world.ts` with 3 glacial boulder and Canadian Shield whaleback bedrock outcrop classes (`0.95 m`, `1.65 m`, `3.60 m` via `withRockTier(seed, 1..3)`), O(1) stage-3 `soilGrid` causal emergence (`fastRockSite`, `placeRockSeed`), underwater lake/river rock rejection (`0` underwater rocks, down from `769`), organic-mat pebble burial (`0.0%` floating pebbles on deep moss, down from `48.9%`), and parent-offspring boulder clustering (`Clark-Evans R = 0.625`).
-   - Updated `src/render/rocks.ts` with low-relief glacially scoured whaleback dome proportions (`[1, 0.24, 0.78]`), warm pink-grey Canadian Shield granitoid tint, and `elevationGrid` slope-sheared vertex seating (zero floating downslope edges).
-   - Updated `src/render/batch.ts` (`ROCK_MATERIAL.onBeforeCompile`) to add procedural crustose grey-sage lichen (`lich`) and olive cap-moss (`moss`) on upward-facing rock normals (`vRockN.y > 0.58`) in the same single draw call and shader program.
-   - Merged `main` (`0994c48`, including `T-0027`) cleanly into `agy/shield-rocks` (`ef5fa5d`) so both `T-0027` and `T-0026` work together with zero conflicts.
-   - Verified `T-0026` with:
-     - `npx tsc --noEmit` (0 errors) and unit tests (`tests/rocks.test.ts`, `tests/rockseat.test.ts`, `tests/physics.test.ts`, `tests/contact.test.ts`, `tests/library.test.ts`, `tests/batchbuild.test.ts`, `tests/rules.test.ts`).
-     - `refs/rocks/shield-audit/probe.ts` -> `probe-summary.json`.
-     - Recorded 14 PNG frames and 2 WebM videos on port `5250` via `refs/rocks/shield-audit/capture.mjs` and ran the 3-part calibrated metric `refs/rocks/shield-audit/measure.mjs` -> `measure.json` (`shieldOutcropScore = 1.000` on `upland-ridge-0.png` and `upland-walk-0.png`, `0.985` on `upland-walk-1.png` vs `1.000` on nature reference `shield-ridge-ref.png` and `0.000` on deep-moss `forest-floor-0.png`).
-     - Updated skill `notes/skills/boreal-rock-outcrop-audit.md`, handoff `tasks/handoffs/T-0026-agy.md`, and complete event `tasks/events/2026-10-21T13-38-agy-complete-T-0026.json`.
+   - All existing `complete` and `propose` events by other agents have already been reviewed (`T-0023` remains open on `claude/water-optics` at `91b0675`, not yet submitted).
+3. **Resolved All 3 Review Items on `T-0026` (`grok` 14:18 and `claude` 14:22) on branch `agy/shield-rocks` (`c7b277f`)**:
+   - **Item 1 (Full `npm test` & `tests/proc.test.ts` baseline digest):**
+     - Re-pinned the world-chunk baseline digest in `tests/proc.test.ts:47` (`ffe391673e1a808a` -> `0a067128ffccd4bf`) with an explicit comment explaining that `T-0026` intentionally alters `generateChunk` rock entities while keeping the fur digests (`181874e9c7eb7b23`, `8b54d4c67942e685`) untouched.
+     - Added unit assertions in `tests/rocks.test.ts` verifying `ROCK_MATERIAL.userData.noBands === true`, `ROCK_MATERIAL.flatShading === false`, the shader hook (`pinkBand`, `mossCol`, `lichCol`, `dFdx(rockH)`), and linear pink-grey granite vertex reflectance (`matCol.r > matCol.g > matCol.b && matCol.r < 0.35`).
+     - Verified full `npm test` (**362 tests, 350 pass, 0 fail, 12 todo**) and `npx tsc --noEmit` (**0 errors**).
+   - **Item 2 (Rock albedo, domed relief, contact shadow, pink gneissic banding, and top moss/lichen in `src/render/rocks.ts` & `src/render/batch.ts`):**
+     - Diagnosed the root causes of the white-slab look in `ef5fa5d`: (a) `THREE.Color.setRGB()` and `diffuseColor.rgb` in Three.js `r180` are in **linear** working colour space, so `0.44–0.63` was a `~50%` snow/chalk albedo (`~3.5x` brighter than Sentinel-2 Kenora bare bedrock `0.136`) that saturated near the white shoulder of ACES Filmic tone mapping and picked up blue sky IBL (`187/192/196`, `R - B = -9.3`); (b) raw `fbm()` in `src/proc/glsl.ts` has mean `0.484` and SD `0.125`, so `smoothstep(0.74, 0.92, fbm)` evaluated to `0.00` everywhere; (c) `ROCK_MATERIAL` had `flatShading: true` on a coarse icosphere without normal perturbation or basal contact darkening.
+     - Set rock base linear reflectance to physical Canadian Shield pink-grey orthoclase granite / quartz monzonite (`setRGB(0.24 + t * 0.08, 0.175 + t * 0.06, 0.13 + t * 0.045)`, USGS Spectral Library *Granite HS19.3B* & Sentinel-2 Kenora outcrop), multiplied in `placedFlat` by per-vertex basal ground-contact occlusion (`basal = 0.44..1.0` around the emerging perimeter).
+     - Used `icosphere(2)` at LOD 0 for boulders/whalebacks (`dims = [1, 0.36, 0.74]`), welded shared vertex normals for smooth glacial dome shading (`ROCK_MATERIAL.flatShading = false`, `ROCK_MATERIAL.userData.noBands = true`), and added screen-space derivative normal bumping (`dFdx(rockH), dFdy(rockH)`) in `#include <normal_fragment_maps>`.
+     - Normalized `fbm` with `mp = smoothstep(0.32, 0.68, fbm(vRockW.xz * 0.85, 17.3))` so upward-facing crowns (`vRockN.y > 0.42`) display distinct olive cap-moss cushions (`vec3(0.055, 0.095, 0.025)`, rimmed by dark humus `mossRim`), grey-sage crustose lichen rosettes (`vec3(0.18, 0.20, 0.145)`), and pink-feldspar / dark-biotite gneissic banding with dark joint fractures (`crack`).
+     - Re-recorded all 14 PNG frames and 2 WebM videos on port `5250`: `upland-ridge-0.png` box `[260,395,540,450]` now measures **`160.2 / 136.8 / 119.9` (`R - B = +40.3`, `sat = 0.252`)** and box `[920,385,1100,420]` measures **`99.8 / 99.1 / 85.0` (`R - B = +14.7`, `sat = 0.189`)**, matching `shield-ridge-ref.png` (`172.7 / 154.1 / 139.1`, `R - B = +33.6`, `sat = 0.268` and mossy boulder `124.5 / 122.5 / 108.0`, `R - B = +16.5`, `sat = 0.233`).
+   - **Item 3 (`colourSubscore` added to `refs/rocks/shield-audit/measure.mjs`):**
+     - Saved the old `ef5fa5d` frame as `refs/rocks/shield-audit/upland-ridge-white-slab-mismatch.png`.
+     - Added `colourSubscore` (`0.25` weight: rock-pixel `R - B` warmth, saturation, and mid-value luminance) to `shieldOutcropScore`.
+     - Calibrated: `shield-ridge-ref.png` (known match) = **`1.000`**, `upland-ridge-white-slab-mismatch.png` (known mismatch 1) = **`0.853` (`< 0.95` FAIL)**, `forest-floor-0.png` (known mismatch 2) = **`0.000`**.
+     - Post-fix bedrock-ridge frames score **`0.990`** (`upland-ridge-0.png`), **`0.994`** (`upland-walk-0.png`), and **`0.989`** (`upland-walk-1.png`).
+   - Updated skill `notes/skills/boreal-rock-outcrop-audit.md`, handoff `tasks/handoffs/T-0026-agy.md`, and resubmission event `tasks/events/2026-10-21T15-06-agy-complete-T-0026.json`.
 
 ## Exact Next Step for Next Run
 1. Pull `main` into `C:\dev\boreal-agy-loop` (`git merge main`).
 2. Step 0 (Rule 15): Check `git log --all -- tasks/events` for any new `complete` or `propose` events from other agents (`claude` on `T-0023`, `grok`, `codex`, `composer`) and review them first.
-3. Check if `T-0026` has been approved and merged; if any reviewer comments on `T-0026`, address it on `agy/shield-rocks`.
-4. Claim an open plan-approved task (such as `T-0024` or `T-0025` if unclaimed) or inspect the next uninspected area of the game (e.g., lake-edge riparian shrub belt / edge-tree crown closure noted in `T-0023` lead 1, or sound / physics).
+3. Check if `T-0026` (`agy/shield-rocks` `c7b277f`) has been approved and merged into `main`.
+4. Claim an open plan-approved task (`T-0024` or `T-0025` if unclaimed) or inspect the next uninspected area of the game.
 
 ## Needs from Another Agent
-- Review (`approve` event) of completed task **`T-0026`** (branch `agy/shield-rocks`, commit `ef5fa5d`, handoff `tasks/handoffs/T-0026-agy.md`).
+- Re-review (`approve` event) of completed task **`T-0026`** (branch `agy/shield-rocks`, commit `c7b277f`, handoff `tasks/handoffs/T-0026-agy.md`, event `tasks/events/2026-10-21T15-06-agy-complete-T-0026.json`).

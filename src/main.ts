@@ -47,7 +47,9 @@ import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, loadClock, worldSec, pauseClock, resumeClock, saveClock } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
 import { dryStart } from './core/stages/surfaceAt';
-import { DAY_OF_YEAR, START_HOUR, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
+import { DAY, dayAt, hourAt, initDay, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
+import { createChronometer } from './ui/chronometer';
+import { controlsPanel } from './ui/controls';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = element<HTMLCanvasElement>('world'), status = element('status'), actionButton = element<HTMLButtonElement>('act');
@@ -124,7 +126,7 @@ function perform() {
 }
 // ONE menu (ui/menu) for start and pause. The world clock freezes while the menu is open (Matthew): age/growth/seasons
 // hold, the renderer holds a frozen frame, and resume continues from that exact snapshot.
-function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(); return; } paused = true; pauseClock(); element('pause').textContent = 'Resume'; menu.show('pause'); sfx.pauseCue(); }
+function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(); return; } chrono.close(); paused = true; pauseClock(); element('pause').textContent = 'Resume'; menu.show('pause'); sfx.pauseCue(); }
 function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
 const menu = createMenu({
   hasSave: () => [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND].some(k => { try { return !!localStorage.getItem(k); } catch { return false; } }),
@@ -166,6 +168,7 @@ const musicPanel = () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore
   const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Next track'; skip.onclick = () => music.skip(); form.append(skip);
   const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Playlist: put audio files in public/music and list them in public/music/manifest.json (mood: day | night | storm | any). Gameplay sounds duck the music; a limiter caps its peaks; N toggles music, - / = changes music volume.'; form.append(hint);
   return form; };
+menu.addPanel({ id: 'controls', title: 'Controls', build: controlsPanel }); // every key and button (ui/controls BINDINGS)
 menu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
 let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1, sink: 0 };
@@ -230,6 +233,8 @@ addEventListener('keydown', event => {
   if (photo.active) { if (!event.repeat && (event.key === 'Escape' || event.key.toLowerCase() === 'p')) void photo.exit(); return; } // photo mode has its own keys
   if (!event.repeat && event.key.toLowerCase() === 'p') { enterPhoto(); return; }
   if (!event.repeat && event.key === 'G' && event.shiftKey) { toGlobe(); return; } // Shift+G: planet view (plain g growls)
+  if (!event.repeat && event.key.toLowerCase() === 't' && !event.ctrlKey) { chrono.toggle(); clearInput(); return; } // T: chronometer (time of day)
+  if (chrono.open && event.key === 'Escape') { chrono.close(); clearInput(); return; }
   if (event.code === 'Space') event.preventDefault();
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) event.preventDefault();
   keys.add(event.key.toLowerCase());
@@ -266,6 +271,8 @@ canvas.addEventListener('webglcontextrestored', () => location.reload());
 let lastPhotoView: PhotoView | undefined;
 let hadPad = false, previousButtons: boolean[] = [], lastTime = 0, accumulator = 0;
 const clock0 = loadClock(localStorage.getItem(CLOCK.key));
+initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the chronometer's saved dial; ?hour=HH sets it exactly
+const chrono = createChronometer(worldSec); // T / gamepad View: set the time of day (ui/chronometer)
 let simTime = clock0.worldSec, lastWorld = worldSec(); // sim and clock fields share the world clock (frozen with the menu)
 try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
 if (clock0.offlineSec > 0) tickGround(12 * clock0.offlineSec); // time away between quits ages the ground/deltas
@@ -280,6 +287,8 @@ function frame(time: number) { const frameStart = performance.now();
   const pressed = (i: number) => buttons[i] && !previousButtons[i];
   if (menu.open) previousButtons = buttons; // the menu reads the pad itself; clock is frozen, frame is held
   else if (pressed(9)) { if (photo.active) void photo.exit(); else togglePause(); }
+  else if (pressed(8) && !photo.active && !dialog.open && !inpage?.blocksGame()) chrono.toggle(); // View: chronometer
+  if (chrono.open && pressed(1)) chrono.close();
   if (!menuOpen() && pressed(1) && dialog.open) dialog.close();
   if (!menuOpen() && pressed(0)) {
     if (dialog.open) dialog.close();
@@ -292,14 +301,16 @@ function frame(time: number) { const frameStart = performance.now();
   const pv = photo.active ? (photo.reviewing ? lastPhotoView : lastPhotoView = photo.update(dt)) : undefined;
   if (!pv || pv.frozen === false) shaderClock.time += sdt;
   let dx = 0, dz = 0;
+  const free = !chrono.open; // chronometer open: arrows, d-pad and left stick scrub the hour instead of moving the wolf
+  chrono.update(dt, menu.open ? 0 : Number(keys.has('arrowright')) - Number(keys.has('arrowleft')) + Number(!!buttons[15]) - Number(!!buttons[14]) + deadzone(pad?.axes[0] ?? 0));
   if (active) {
-    dx = Number(keys.has('d')) - Number(keys.has('a')) + deadzone(pad?.axes[0] ?? 0);
-    dz = Number(keys.has('s')) - Number(keys.has('w')) + deadzone(pad?.axes[1] ?? 0);
+    if (free) dx = Number(keys.has('d')) - Number(keys.has('a')) + deadzone(pad?.axes[0] ?? 0);
+    if (free) dz = Number(keys.has('s')) - Number(keys.has('w')) + deadzone(pad?.axes[1] ?? 0);
     if(autonomous && (Math.abs(dx)>.01 || Math.abs(dz)>.01)) setAutonomous(false);
-    const lookInput = Number(keys.has('arrowright')) - Number(keys.has('arrowleft')) + deadzone(pad?.axes[2] ?? 0);
+    const lookInput = (free ? Number(keys.has('arrowright')) - Number(keys.has('arrowleft')) : 0) + deadzone(pad?.axes[2] ?? 0);
     lookYaw -= lookInput * dt;
     if (!drag && Math.abs(lookInput) < .01) lookYaw *= Math.exp(-5 * dt);
-    const verticalLook = Number(keys.has('arrowdown')) - Number(keys.has('arrowup')) + deadzone(pad?.axes[3] ?? 0);
+    const verticalLook = (free ? Number(keys.has('arrowdown')) - Number(keys.has('arrowup')) : 0) + deadzone(pad?.axes[3] ?? 0);
     pitch = springLookPitch(pitch, verticalLook, dt, drag && Math.abs(verticalLook) < .01 ? pitch : undefined);
     if (playerAction || photo.active) { dx = 0; dz = 0; }
     const length = Math.max(1, Math.hypot(dx, dz)); dx /= length; dz /= length;
@@ -308,7 +319,7 @@ function frame(time: number) { const frameStart = performance.now();
       drawFrom = { x: player.x, z: player.z, yaw, sim: simTime };
       modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30) : stepWolfModes(modes, Math.max(pad?.buttons[6]?.value ?? 0, Number(keys.has('c'))), Math.max(pad?.buttons[7]?.value ?? 0, Number(keys.has('shift'))), Math.abs(dz) > .01, 1 / 30);
       const brain = view.playerBrain, prevSpeed = brain.speed, speed = -dz * playerSpeed(modes.mode) * view.playable.speedScale;
-      const jump = (keys.has(' ') || buttons[2]) && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
+      const jump = free && (keys.has(' ') || buttons[2]) && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
       if(!autonomous || playerAction) brain.decide({x:player.x,y:0,z:player.z},1/30,{
         motion:jump?'jump':speed<-.01?'back':speed>.01?(modes.mode==='run'||modes.mode==='sprint'?'run':'walk'):'idle',
         heading:yaw-dx*2.2/30,speed:jump?pounceSpeed(speed):speed});
@@ -330,7 +341,7 @@ function frame(time: number) { const frameStart = performance.now();
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
   { const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow; view.worldTime = wNow; // 'clock' fields follow worldSec (frozen while the menu is open)
     tickGround(12 * wDt); // 1 real s = 12 game s (timeOfDay REAL_SECONDS_PER_GAME_HOUR 300)
-    const h = (START_HOUR + wNow / REAL_SECONDS_PER_GAME_HOUR); updateWeather(Math.min(wDt, .25), 3600 / REAL_SECONDS_PER_GAME_HOUR, DAY_OF_YEAR + Math.floor(h / 24), h % 24); }
+    updateWeather(Math.min(wDt, .25), 3600 / REAL_SECONDS_PER_GAME_HOUR, dayAt(wNow), hourAt(wNow)); } // hour and date include the chronometer's dial
   if (modes.mode !== 'super-stealth') focusTarget = undefined;
   else {
     const candidates = view.entities().filter(e => ['deer', 'person'].includes(e.kind) && Math.hypot(e.x - player.x, e.z - player.z) < 30);
@@ -368,7 +379,7 @@ function frame(time: number) { const frameStart = performance.now();
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
   status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : modes.mode === 'super-stealth' ? 'Face an individual within 30 m to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
-  element('device').textContent = pad ? 'X jump · LS steer / forward · RS look · RT run · LT stealth · both: first trigger decides · A interact' : 'Space jump · W/S move · A/D steer · Shift run · C stealth · combine in order · mouse/arrows look · E interact';
+  element('device').textContent = pad ? 'X jump · LS steer / forward · RS look · RT run · LT stealth · both: first trigger decides · A interact · View clock' : 'Space jump · W/S move · A/D steer · Shift run · C stealth · combine in order · mouse/arrows look · E interact · T clock';
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

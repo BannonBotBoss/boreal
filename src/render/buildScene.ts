@@ -22,7 +22,7 @@ import { seatRock } from './rocks';
 import { createSky } from './sky';
 import { shapeDeer, forgetDeer } from '../core/deerHerd';
 import { createHares } from '../animals/hare';
-import { formatHour, gameHour, START_HOUR } from '../core/timeOfDay';
+import { formatHour, hourAt } from '../core/timeOfDay';
 import { LEVEL, BLOCK } from '../core/tuning';
 import { stepForward } from '../proc/math';
 import type { SnapshotSource } from '../core/snapshot';
@@ -61,10 +61,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xc4d4c8, 200, 480);
   const sky = createSky(scene); // sun, moon, sky colour, clouds, stars and fog follow the game clock
-  // Optional ?hour=HH in the page address starts the clock at that hour (for reviewing day and night).
-  const startParam = Number(new URLSearchParams(location.search).get('hour'));
-  const startHour = Number.isFinite(startParam) && startParam >= 0 && startParam < 24 && location.search.includes('hour=') ? startParam : START_HOUR;
-  let clock = formatHour(gameHour(0, startHour)), darkness = 0;
+  // Time of day: core/timeOfDay hourAt (world clock + the chronometer's dial; ?hour=HH sets the first value, initDay in main).
+  let clock = formatHour(hourAt(0)), darkness = 0;
   let worldTime: number | undefined; // set by main from core/worldClock
   const camera = new THREE.PerspectiveCamera(48, 1, .2, 700);
   const post = createPost(renderer, scene, camera);
@@ -275,7 +273,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     updateTreeUniforms(); updateWaterUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen);
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
-    const hour = photo?.hour ?? gameHour(tod, startHour); clock = formatHour(hour);
+    const hour = photo?.hour ?? hourAt(tod); clock = formatHour(hour);
     const lit = sky.update(hour, tod, camera, wolf.root.position); darkness = lit.light.night;
     bandBackground(scene, camera); // world/globe/inpage: band = globe far layer as the background + patch fade (no-op otherwise)
     photoreal.before(lit.dir, time);

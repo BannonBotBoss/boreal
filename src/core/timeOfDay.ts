@@ -16,6 +16,23 @@ import { solar } from './weather';
 export function gameHour(simTime: number, startHour = START_HOUR) {
   return ((startHour + simTime / REAL_SECONDS_PER_GAME_HOUR) % 24 + 24) % 24;
 }
+/**
+ * Runtime time of day (ui/chronometer; ?hour= sets the first value): hours added on top of the world clock, so the hour is
+ * always gameHour(worldSec, START_HOUR + DAY.offset). Setting the hour turns the dial, never the world clock (age, growth
+ * and seasons hold). The offset stays continuous (scrubbing past midnight moves the date with it) and is persisted.
+ */
+export const DAY = { key: 'boreal.hour.v1', offset: 0 };
+export const hourAt = (worldSec: number) => gameHour(worldSec, START_HOUR + DAY.offset);
+/** Day of the year at world second `worldSec` (follows the dial past midnight). */
+export const dayAt = (worldSec: number) => DAY_OF_YEAR + Math.floor((START_HOUR + DAY.offset + worldSec / REAL_SECONDS_PER_GAME_HOUR) / 24);
+/** Make it `hour` now, by the shortest turn of the dial (never more than 12 h either way). */
+export function setHour(hour: number, worldSec: number) { DAY.offset += ((hour - hourAt(worldSec)) % 24 + 36) % 24 - 12; return hourAt(worldSec); }
+/** Load: the saved offset, then a valid ?hour=HH (0 to <24) makes it exactly that hour. */
+export function initDay(search: string, saved: string | null, worldSec: number) {
+  const o = Number(saved); DAY.offset = saved !== null && Number.isFinite(o) ? o : 0;
+  const q = new URLSearchParams(search), h = Number(q.get('hour'));
+  if (q.get('hour') && Number.isFinite(h) && h >= 0 && h < 24) setHour(h, worldSec);
+}
 export function formatHour(hour: number) {
   const h = Math.floor(hour), m = Math.floor((hour - h) * 60);
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;

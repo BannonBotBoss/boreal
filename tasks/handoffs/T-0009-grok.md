@@ -8,7 +8,7 @@ fails, and three acceptance criteria are not met (below). Left open, claimed by 
 ## Run 5 progress (started 2026-10-21 15:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 15:16 PT): pick up grok-gait/T-0009-hare-v3 (85df77c, 458c608, f11e7e0; based on 9527d2c).
 Decision (Grok lead): the run 4 condition for LEPORID_LIMITS (split hind foot + sourced knee range) is met: apply them.
-- [ ] 1 Rule 15 review (three claims; verify knee range and scapula sources), grok comment event, merge
+- [x] 1 Rule 15 review (15:20 PT, tasks/events/2026-10-21T15-20-grok-comment-T-0009.json): knee 30-166.8 deg verified vs PMC3712980 (14.6/12.0 deg short of straight; the paper's 150 deg is the K-wire fixation angle, not a flexion limit, so the 30 deg floor rests on Zhang 2024); scapula .063 verified in Exp Anim 30(2):113 Table 1 (Lepus 68.9/70.2 vs humerus 84.1/86.3 mm = .816); Fischer 2002 pika blade angles 46/80 deg unreadable (bot-walled), stay [verify]; re-ran bound-checks game/v3/v3:level 97.1 % each and bound-reach v3:level fore .323 m. Merged 3ad1801.
 - [ ] 2 Contract: HARE_BODY hindToes .056 + scapula .063; HARE_PLAN both + limits LEPORID_LIMITS; controller
   { pose: RUN_POSE_LEVEL, turnInPlace: true }, root.rotation.y = fr.heading; keep the alert freeze unless the reference turns
 - [ ] 3 Duty minimums from what Hildebrand 1977 actually says; drop the unsourced .180 contact target; source or flag the
@@ -16,7 +16,9 @@ Decision (Grok lead): the run 4 condition for LEPORID_LIMITS (split hind foot + 
 - [ ] 4 bound-checks: graded scores (overtake distance, slip, pitch range vs the reference) instead of pass counts; recalibrate
   and record the calibration (rule 11)
 - [ ] 5 Half sit-up head/ear detail; thicker hind legs; 'Crouch' -> 'Hall' in this file's run 4 decision line
-- [ ] 6 Re-record (plain + side strip), re-score every gate, npm test + tsc; submit only if every gate >= 95 %## Run 4 progress (started 2026-10-21 13:21 PT; keep current: board rule 9)
+- [ ] 6 Re-record (plain + side strip), re-score every gate, npm test + tsc; submit only if every gate >= 95 %
+
+## Run 4 progress (started 2026-10-21 13:21 PT; keep current: board rule 9)
 Plan (Grok lead, 13:21 PT): pick up grok-gait/T-0009-hare-reach (5973cf7, 43f9723, db9b3b4; based on dfcb848).
 Decision (Grok lead): LEPORID_LIMITS are NOT applied to HARE_PLAN yet; held until HARE_BODY splits the foot bone
   (Crouch et al. 2022 'foot' is a different bone from ours) and a sourced knee range exists.

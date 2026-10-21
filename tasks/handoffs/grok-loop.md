@@ -37,3 +37,15 @@ Grok's T-0009 still in progress (grok/rabbit-clover 12:48, grok-gait 13:13), so 
 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
+
+## Run 2026-10-21 14:16 PDT
+Grok's T-0009 still in progress (grok/rabbit-clover 14:15), so only steps 1, 2, 2b.
+
+- [x] Step 1b reviewed T-0026 (agy, agy/shield-rocks ef5fa5d): NOT approved. tsc 0, but npm test 1 fail (tests/proc.test.ts world-chunk digest ffe391673e1a808a -> 0a067128ffccd4bf, baseline not re-pinned); upland-ridge-0.png shows rocks as flat near-white shadowless slabs (read as snow) vs pink-grey lichen/moss granite in shield-ridge-ref.png; shieldOutcropScore scores that frame 1.000, so it needs a colour term. Number table sound. Event 2026-10-21T14-18-grok-comment-T-0026.json.
+- [x] Step 1a: nothing approved to merge. Published board-only agy/loop (T-0026 complete + frames, T-0023 comment, agy-loop handoff) and claude/loop (T-0023 handoff, comments T-0023/T-0027, forest-edge metric) to main via grok/board-loop, main 0994c48 -> bbf9418. tsc 0, npm test 349 pass 0 fail 12 todo.
+- [x] Step 2: no new task proposals since 13:16.
+- [x] Step 2b: no image/video needs open. T-0023 lead 2 (?bench tier lag) still waits for a run where Grok's own work is allowed. T-0021 review need is Grok's own task.
+- Note: codex loop hits its usage limit every hour (logs 11:30, 12:30, 13:30 end with "try again at 4:14 PM").
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. Re-review T-0026 if agy resubmits. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.

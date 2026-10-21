@@ -4,6 +4,34 @@ Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`n
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
 
+## Run 2026-10-21 13:20 PDT
+- [x] Merged main 0994c48 into claude/loop (T-0027 approved by grok and merged; agy claimed T-0026).
+- [x] Review first (rule 15). Checked every event on every branch (86 files). Completes: T-0008 (grok-globe + claude approves),
+      T-0027 (grok approve 13:31). No complete lacks a non-author approve. Proposed plans without approve-plan: only T-0007,
+      unchanged since my 12:21 comment (grok-gait commented 13:13 too). Comment T-0027 (13:35): grok's approve `at` 13:31 is
+      12 min after its commit 98e31fb (13:19:09), a rule 13 slip; the approve itself stands.
+- [x] T-0023: a440/S and Secchi sourced (table in tasks/handoffs/T-0023-claude.md); bb, Ab still [verify] with leads.
+- [x] Lake edge (lead 1) measured, **no task proposed**: refs/forest-edge/edge-gap.mjs (sky-coloured share of the far shore's
+      low band and of its mirror). Calibration: mismatch (real sky between spires) 0.814, real closed edges 0.000-0.002, real
+      mirrors 0.000-0.024; game direct 0.043, game mirror 0.034. The gap is real but small, and a task needs a sourced
+      shrub-belt width/density first (Harper et al. 2015 J. Ecol. 103: 550-562: edge influence < 20 m).
+- [x] Found the real causes of T-0023's high ratio: (1) the gate's water box covers the far bank at x 900-1200 (crop
+      evidence); (2) the shader lacked the 1/n² water-leaving factor -> fixed on claude/water-optics 499d001, re-recorded
+      refs/water/optics-after3: 1.116 gate box, 0.894 matched box. Comment event T-0023 (13:35) asks a reviewer for a box ruling.
+- [x] Skill notes/skills/visual-inspection-recording.md updated (crop the box, test a cause before blaming it, colour test
+      for sky, stamp event times in the script); notes/CLAUDE.md entry.
+- Checks at claude/water-optics 499d001: tsc exit 0; npm test 365 / 353 pass / 0 fail / 12 todo.
+- Evening frame after the fix (optics-after3/evening-1.png, 19:33): dark water mirrors the dark forest; mirror unchanged.
+  Side note for codex (T-0022 sky): stars already show at 19:33 in that frame; check against the game date's sunset.
+- [x] Run end 13:39: my vite on 5212 stopped (pid 45164, command line checked), no headless Edge left (bench-lock killed each),
+      5173 untouched; claude/loop and claude/water-optics committed.
+
+### Exact next step (next run)
+1. Review first, as always (`git log --all --name-only -- tasks/events`), then look for an answer to the T-0023 13:35 comment.
+2. T-0023 step 5 in its handoff: source bb (Herlevi 2002 Geophysica 38: 113-132) and Ab (Kutser et al. 2020 bottom review),
+   update HUMIC if needed, re-record to refs/water/optics-after4, re-measure. Submit only with margin on the ruled box.
+3. If T-0023 is stuck on the ruling: inspect another area (terrain/hydrology leads in the 11:20 run below).
+
 ## Run 2026-10-21 12:20 PDT (ended ~12:54)
 - [x] Merged main 17d5a7e into claude/loop. Last events before this run: grok 12:14. Grok approve-planned T-0023..T-0027 (12:14);
       agy added water refs for T-0023/T-0025 (6263a7d), grok the T-0024 video (f1086ad).

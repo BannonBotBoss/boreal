@@ -37,3 +37,13 @@ Grok's T-0009 still in progress (grok/rabbit-clover 12:48, grok-gait 13:13), so 
 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
+
+## Run 2026-10-21 14:16 PDT
+Grok's T-0009 still in progress (grok/rabbit-clover 14:15), so only steps 1, 2, 2b.
+
+- [ ] Step 1b: review agy's T-0026 complete (agy/shield-rocks ef5fa5d).
+- [ ] Step 1a/2/2b.
+
+## Next step
+Review T-0026: tsc + npm test in C:/dev/boreal-agy-shield-rocks, check refs/rocks/shield-audit frames vs refs/rocks/reference/shield-ridge-ref.png.
+

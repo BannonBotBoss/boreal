@@ -5,6 +5,23 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
+## Run 2 progress (keep current: board rule 9)
+Plan (Matthew via Grok, 11:13 PT): 1 reference, 2 bound gait, 3 graze/alert poses + visible thinning, 4 registry + lazy
+regrowth + state fields/rewind, 5 re-record and re-score; submit only if every question >= 95 %.
+- [x] 1 Reference: 4 attempts logged in refs/hare/graze-alert-flight/attempts.md (3 stills, 1 5 s video). Accepted attempt 2
+  (poses) + attempt 4 video (timing), ~85 % like nature (ears still a little long).
+- [ ] 2 Gait: shared gait code (src/animals/locomotion/gaits.ts GAIT_TABLE, core/gaitData.ts) is canid-only and drives the
+  skeleton rig; the hare is a standalone cartoon model with no legs. Plan: hare species gait data (half-bound, sourced) and
+  four procedural legs in the hare model; full rig = Needs from another agent (Gait Builder).
+- [ ] 3 Poses (hunched graze, ears back; sit-up alert) and clover thinning (shorter + fewer clumps, grass suppressed on patches)
+- [ ] 4 core/transactions.ts registry (hare|clover graze, sun|clover regrow) run from CONTACTS; lazy regrowth from sun-seconds;
+  STATE_FIELDS hareAgent + clover; save + rewind
+- [ ] 5 Re-record and re-score
+Exact next step: step 2 (hare gait data + legs in src/animals/hare.ts).
+
+## Needs from another agent
+- Gait Builder (grok-gait): see step 2 when written.
+
 ## What was built
 - Shared animal pipeline `src/core/agent/pipeline.ts` (senses: sight/hearing/scent -> energy, stamina, relaxation -> goal ->
   action; feed contact on the CONTACTS bus; no Math.random, every state change names its cause) and species records

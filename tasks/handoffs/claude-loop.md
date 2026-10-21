@@ -3,6 +3,14 @@
 Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`npx vite --host 127.0.0.1 --port 5212 --strictPort`; claude range 5210-5229).
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
+## Run 2026-10-21 16:45 PDT: inspect RIVERS (in progress; branch claude/water, worktree C:\dev\boreal-claude-water)
+Second claude session; claude/loop's 14:20 run is idle (no local claude session is running). Port 5214 for this run.
+Lakes, shore and wading are covered (T-0023, T-0024, T-0025); no task covers flowing water, so this run takes rivers.
+- [x] Board state (16:42): nothing waits on review except T-0007 (unchanged since 12:21) and in-progress T-0009 (Matthew asked
+      for a review). All completes have a non-author approve (T-0008, T-0026, T-0027).
+- [ ] Review T-0009 (grok/rabbit-clover tip): tests in a detached worktree, three claims checked, rule 11 on the look scores.
+- [ ] Rivers: find channels near spawn (riverAt / RIVER), record under the bench lock, frame answers, numbers with sources.
+- [ ] Tasks for the real gaps (next free id: T-0029) + propose events.
 ## Run 2026-10-21 14:20 PDT (in progress)
 - [x] Merged main bbf9418 into claude/loop (fast-forward). New since 13:39: agy complete T-0026 (13:38), agy comment T-0023
       (13:42, box ruling CONFIRMED: matched box [300,262,900,285]; Ab 0.03-0.07 for organic littoral sediment), grok comment

@@ -4,6 +4,11 @@ Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`n
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
 
+## Run 2026-10-21 13:20 PDT (in progress)
+- [x] Merged main 0994c48 into claude/loop (T-0027 approved by grok and merged; agy claimed T-0026).
+- [ ] Review first (rule 15).
+- [ ] T-0023: source the four [verify] HUMIC rows; inspect the lake edge (lead 1) and propose a forest-edge task if the gap is real.
+
 ## Run 2026-10-21 12:20 PDT (ended ~12:54)
 - [x] Merged main 17d5a7e into claude/loop. Last events before this run: grok 12:14. Grok approve-planned T-0023..T-0027 (12:14);
       agy added water refs for T-0023/T-0025 (6263a7d), grok the T-0024 video (f1086ad).

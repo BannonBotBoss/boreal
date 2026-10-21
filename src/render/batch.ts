@@ -12,7 +12,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { fadeOptIn } from './fade';
 import { applySurfaceBands } from './bands';
 
-export const PROP_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }); PROP_MATERIAL.userData.shared = true;
+export const PROP_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true, side: THREE.DoubleSide }); PROP_MATERIAL.userData.shared = true;
 /** Rocks: the old 16×16 striped texture can't ride in a batch (one map per material), so the same look is procedural:
  *  horizontal banding (as the old texture's rows) + fBm grain + lichen-free speckle from world position (proc/glsl). */
 export const ROCK_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true, side: THREE.DoubleSide }); ROCK_MATERIAL.userData.shared = true;

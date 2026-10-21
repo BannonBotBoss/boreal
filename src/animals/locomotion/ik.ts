@@ -65,10 +65,16 @@ export const CANID_LIMITS: JointLimits = {
  * foot range lands on the wrong bone. The paper gives no knee angle.
  * Knee (stifle), rabbit, interior angle 30-166.8° (flex -1: solveChain folds the hind knee negative): full extension is not
  * reached — normal New Zealand White knees stop 14.6 ± 7.1° (left) and 12.0 ± 10.9° (right) short of straight, mean 13.2°
- * (Hildebrand, Holmberg & Shrive 2003, J Biomech Eng 125:887, doi:10.1115/1.1634285, PMC3712980); flexed to "150 deg of
- * flexion" (interior 30°) in the same study's immobilisation, and passive flexion ~140° (interior ~40°) at 0.077 Nm (Zhang,
- * Liu & Zhou 2024, Glob J Ortho Res 4(4), doi:10.33552/GJOR.2024.04.000594). These are passive anatomical limits, wider than
- * a gait's stance range (none measured for the leporid knee). Fore limb: no lagomorph goniometry found, dog values [placeholder].
+ * (Hildebrand, Holmberg & Shrive 2003, J Biomech Eng 125:887, doi:10.1115/1.1634285, PMC3712980). The flexed end: the same
+ * study's "150 deg of flexion" is the angle the knee was PINNED at for immobilisation, not a measured limit (grok's run-5
+ * note), so the 30° floor rests on Zhang, Liu & Zhou 2024 (Glob J Ortho Res 4(4), doi:10.33552/GJOR.2024.04.000594) alone,
+ * rechecked run 4: disarticulated NZW knees "can be pulled to approximately 140 degrees with a torque of 0.077 Nm", read off
+ * a dial that starts at 0 with an unstated start pose — interior ~40° if it starts straight, ~27° if it starts at the 13°
+ * extension stop; 30° sits inside that. Second source looked for: Alder et al. 2025 (Tissue Eng C, doi:10.1089/ten.tec.2025.0044)
+ * use "160°—the normal range of motion of the rabbit knee" as the normal passive EXTENSION angle (hip centre-knee-tibia
+ * axis), which backs the extended end (160-167°), not the flexed one. No second flexion source found. These are passive
+ * anatomical limits, wider than a gait's stance range (none measured for the leporid knee). Fore limb: no lagomorph
+ * goniometry found, dog values [placeholder].
  */
 export const LEPORID_KNEE: JointRange = { min: 30, max: 166.8, flex: -1 };
 export const LEPORID_LIMITS: JointLimits = {

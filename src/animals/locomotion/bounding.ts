@@ -92,25 +92,31 @@ export function restAnkle(sk: Skeleton) {
 /**
  * Fore limb with the blade as a chain segment (bodyPlan.ts BodyPlan.scapula): the blade angle and the manus angle are picked
  * per frame, like hindFoot. Of the (blade, manus) pairs that reach `sole` within the joint clamps, with the blade inside
- * rest ± GIRDLE.scapulaMax (pika: Fischer et al. 2002), take the one whose blade is nearest parallel to the forearm — the
- * forelimb's "matched motion" of two segments during retraction (Fischer et al. 2002: the small-therian limb is a zigzag of
- * segments displaced at the scapular pivot, two of them moving in parallel; read from the abstract, the segment pairing as
- * scapula ∥ forearm is [verify]: full text bot-walled) — tie-broken toward `prev` and toward `psiWant` (the manus fold of a
- * lifting paw). `any`: stop at the first reaching pair (reach scans only ask whether one exists).
+ * rest ± GIRDLE.scapulaMax (pika: Fischer et al. 2002), take the one whose blade is nearest parallel to the forearm, for the
+ * forelimb's "matched motion": the
+ * pantograph pairing is scapula and forearm (Schmidt 2008, JEB 211:3775, citing Fischer & Blickhan 2006: "parallel motion of
+ * scapula and forearm and femur and tarsometatarsus"), and it is parallel MOTION, not parallel orientation: "throughout most
+ * of the support phase, the forearm moves exactly in parallel to the scapula ... only broken at the beginning and end of the
+ * support phase", while the angles themselves differ (scapula ~45° → ~90°, forearm 11-36° → 102-121° against the horizontal,
+ * Schmidt 2008 Table 4). The rule kept here is v3's nearest-parallel orientation, which gives equal angular steps wherever
+ * it holds (mid-stance); a rate-matching cost (change of blade − forearm per frame) was tried in run 4 and flipped the elbow
+ * mid-stance, so it was dropped. Tie-broken toward `prev` and toward `psiWant` (the manus fold of a lifting paw). `any`: stop
+ * at the first reaching pair (reach scans only ask whether one exists).
  */
 export const FORE_SCAN = { psiFrom: -.6, psiTo: 1.2, psiStep: .1, bladeStep: .05 };
-export function foreLimb(L: LimbDims, top: { z: number; y: number }, sole: Vec3, limits: JointLimits = CANID_LIMITS, prev?: { blade: number; psi: number }, psiWant?: number, any = false, girdle: GirdleLimits = GIRDLE) {
+export function foreLimb(L: LimbDims, top: { z: number; y: number }, sole: Vec3, limits: JointLimits = CANID_LIMITS, prev?: { blade: number; psi: number; arm?: number }, psiWant?: number, any = false, girdle: GirdleLimits = GIRDLE) {
   const rest = L.girdleRest ?? 0, want = top.y - Math.hypot(top.y - sole.y, sole.x), nb = Math.round(girdle.scapulaMax / FORE_SCAN.bladeStep);
-  let best = { blade: prev?.blade ?? rest, psi: prev?.psi ?? (L.footAngle ?? 0), cost: Infinity, err: Infinity, ok: false };
+  let best = { blade: prev?.blade ?? rest, psi: prev?.psi ?? (L.footAngle ?? 0), arm: prev?.arm ?? rest, cost: Infinity, err: Infinity, ok: false };
   for (let bi = 0; bi <= 2 * nb; bi++) {
     const blade = rest + (bi % 2 ? 1 : -1) * Math.ceil(bi / 2) * FORE_SCAN.bladeStep; // rest outward
     for (let psi = FORE_SCAN.psiFrom; psi <= FORE_SCAN.psiTo + 1e-9; psi += FORE_SCAN.psiStep) {
       const LL = { ...L, footAngle: psi }, a = clampLimb(solveLimb(LL, false, sole, 0, { top, blade }), true, limits), s = soleOf(LL, a);
       const err = Math.hypot(s.z - sole.z, s.y - want), ok = err < 1e-4;
-      if (ok && any) return { blade, psi, cost: 0, err, ok };
-      const cost = (blade - (a.girdle + a.leg + a.knee)) ** 2 + (prev ? .3 * ((blade - prev.blade) ** 2 + (psi - prev.psi) ** 2) : 0) + (psiWant === undefined ? 0 : (psi - psiWant) ** 2);
-      if (ok && (!best.ok || cost < best.cost)) best = { blade, psi, cost, err, ok };
-      else if (!ok && !best.ok && err < best.err) best = { blade, psi, cost, err, ok };
+      const arm = a.girdle + a.leg + a.knee;
+      if (ok && any) return { blade, psi, arm, cost: 0, err, ok };
+      const cost = (blade - arm) ** 2 + (prev ? .3 * ((blade - prev.blade) ** 2 + (psi - prev.psi) ** 2) : 0) + (psiWant === undefined ? 0 : (psi - psiWant) ** 2);
+      if (ok && (!best.ok || cost < best.cost)) best = { blade, psi, arm, cost, err, ok };
+      else if (!ok && !best.ok && err < best.err) best = { blade, psi, arm, cost, err, ok };
     }
   }
   return best;
@@ -124,12 +130,12 @@ export interface LimbRange { /** reachable sole interval at ground level, top at
  * `body` the top is at rest over level ground; with it, ground point z (m, +back of the limb's hip) is seen from the limb
  * frame of a body standing in tilt `body.tilt` (bodies that run taller and pitched: runPose), and the foot range is taken
  * relative to the ground. */
-export function limbRange(L: LimbDims, forward: boolean, front: boolean, ankle?: number, limits: JointLimits = CANID_LIMITS, body?: { tilt: Tilt; hip: readonly [number, number] }): LimbRange {
+export function limbRange(L: LimbDims, forward: boolean, front: boolean, ankle?: number, limits: JointLimits = CANID_LIMITS, body?: { tilt: Tilt; hip: readonly [number, number] }, girdle: GirdleLimits = GIRDLE): LimbRange {
   const span = 1.2 * (L.upper + L.lower + (L.foot ?? 0) + (L.girdle ?? 0)), step = .004, top = { z: 0, y: topY(L) };
   const at = (z: number): Vec3 => body ? worldToLimb({ x: body.hip[0], y: 0, z: body.hip[1] + z }, 0, 0, 0, body.tilt, body.hip) : { x: 0, y: 0, z };
   const ok = (z: number) => { const rel = at(z);
     if (ankle !== undefined) return hindFoot(L, top, rel, ankle, undefined, limits, body?.tilt.pitch ?? 0).ok;
-    if (front && L.girdle) return foreLimb(L, top, rel, limits, undefined, undefined, true).ok;
+    if (front && L.girdle) return foreLimb(L, top, rel, limits, undefined, undefined, true, girdle).ok;
     const a = clampLimb(solveLimb(L, forward, rel, 0, { top, fit: true }), front, limits);
     const s = soleOf(L, a); return Math.hypot(s.z - rel.z, s.y - (top.y - Math.hypot(top.y - rel.y, rel.x))) < 1e-4; };
   let best: [number, number] | null = null, run: number | null = null;
@@ -149,11 +155,16 @@ export interface GirdleLimits {
 /**
  * Small-therian girdle ranges, pika (Ochotona rufescens, the lagomorph measured by cineradiography): scapula touchdown 46°,
  * lift-off 80° (34° of stance, ±0.30 rad), scapular retraction 66 % of fore step length (Fischer et al. 2002, JEB
- * 205:1315, doi:10.1242/jeb.205.9.1315); pelvis touchdown 100-111°, lift-off 131-151° (~35° of stance, ±0.30 rad), the
- * lumbar spine giving about half the hind step length in bounds (Schilling & Hackert 2006; Fischer et al. 2002). The
+ * 205:1315, doi:10.1242/jeb.205.9.1315; angles of the scapular spine against the horizontal, the convention of the same
+ * lab: Schilling 2005, JEB 208:4013, "segment angles were calculated from the horizontal"). Run 4: the pelvis takes the
+ * pika's own leading-limb stance excursion, touchdown 109° → lift-off 151° = 42° (±0.366 rad; the cranial pelvic angle
+ * against the horizontal, effective stance movement 29-44° across the small therians: Schilling & Hackert 2006, JEB
+ * 209:3925; v3 used the ~35° middle of the tailless range), the lumbar spine giving about half the hind step length in bounds
+ * (same). The blade stays at the pika's 34°: the larger small-therian blade excursions (cui 42-43°, tree shrew 50-59°
+ * touchdown → lift-off, Schilling 2005 Table 3) are walk/trot values of a rodent and a scandentian, not a lagomorph's. The
  * scapular pivot sits at hip height (Fischer et al. 2002), so both levers are the hip height.
  */
-export const GIRDLE: GirdleLimits = { scapulaMax: .3, spineMax: .3 };
+export const GIRDLE: GirdleLimits = { scapulaMax: .3, spineMax: .366 };
 /** Share of each limb chord a planted foot may use (the clamp sits right at the reach edge) — game calibration. */
 export const CHORD_USE = .9;
 /**
@@ -202,7 +213,7 @@ export function reachOf(sk: Skeleton, girdle: GirdleLimits = GIRDLE, pose: RunPo
     return chord > 0 ? { from, to, chord, centre: (from + to) / 2 } : { from: 0, to: 0, chord: 0, centre: 0 }; };
   // run 3: each pair only over the swing its own stance sees (STANCE_SWING), not the whole ±max
   const ranges = (rise: number) => { const tilts = (lo: number, hi: number) => [lo, 0, hi].map(w => runTilt(sk, rise, 1, w, pose)), M = BOUND_PITCH.max, q = STANCE_SWING.opposite;
-    return { fore: meet(tilts(-M, q * M).map(tilt => limbRange(sk.legs, false, true, undefined, lim, { tilt, hip: sk.hips[0] }))),
+    return { fore: meet(tilts(-M, q * M).map(tilt => limbRange(sk.legs, false, true, undefined, lim, { tilt, hip: sk.hips[0] }, girdle))),
       hind: meet(tilts(-q * M, M).map(tilt => limbRange(H, true, false, ankle, lim, { tilt, hip: sk.hips[1] }))) }; };
   // the rise: with a gait, the one that lets the most of its data duty fit — mean over RISE_SPEEDS of the smaller pair's
   // capacity / need (capped at 1; capacity = CHORD_USE x chord + the girdle term, as tools/bound-reach.ts counts it), ties to
@@ -251,7 +262,7 @@ function dutyFits(base: Omit<CanidPlan, 'duty' | 'suspensions'>, duty: number, f
 export interface BoundPlan {
   row: BoundRowId; speed: number; hz: number; stride: number;
   /** HIND duty the data asks for, and the one used: the largest <= data that the limbs + girdles can sweep (dutyFits) */ dutyData: number; duty: number;
-  /** the same for the fore feet (BoundGait foreShare x hind), scaled with the hind when the limbs cannot sweep it */ foreDutyData: number; foreDuty: number;
+  /** the same for the fore feet (BoundGait foreShare x hind), fitted on its own when the limbs cannot sweep it (run 4) */ foreDutyData: number; foreDuty: number;
   /** per leg (LF, LH, RF, RH): the duties used, and the data's */ duties: number[]; dutiesData: number[];
   offsets: number[]; suspensions: Suspension[];
   /** share of the hind sweep the back carries (spineUse) */ spineUse: number;
@@ -264,20 +275,23 @@ export function spineUse(g: BoundGait, speed: number) {
   const a = g.cadence.transitionSpeed, b = Math.max(a + .1, SPINE_USE.fullAt), t = Math.max(0, Math.min(1, (Math.abs(speed) - a) / (b - a)));
   return t * t * (3 - 2 * t);
 }
-const planCache = new Map<string, number>();
+const planCache = new Map<string, [number, number]>();
 export function boundPlan(g: BoundGait, speed: number, reach: Reach, row: BoundRowId): BoundPlan {
   const v = Math.max(.05, Math.abs(speed)), hz = boundCadence(g, v), stride = v / hz, dutyData = boundDuty(g, v), foreDutyData = boundForeDuty(g, v), offsets = rowOffsets(boundRows(g)[row]);
   const base = { gait: 'gallop' as const, froude: 0, hz, stride, offsets }, use = spineUse(g, v);
-  // the fitted share of the data duties (fore and hind scaled together), cached per 1 cm/s (bisection over a sampled stride
-  // is too slow per frame)
-  const key = `${row}|${Math.round(v * 100)}|${reach.fore.chord}|${reach.hind.chord}|${JSON.stringify(g)}`;
-  let share = planCache.get(key);
-  if (share === undefined) {
-    if (dutyFits(base, dutyData, foreDutyData, reach, use)) share = 1;
-    else { let lo = .01, hi = 1; for (let k = 0; k < 18; k++) { const m = (lo + hi) / 2; if (dutyFits(base, m * dutyData, m * foreDutyData, reach, use)) lo = m; else hi = m; } share = lo; }
-    if (planCache.size > 5000) planCache.clear(); planCache.set(key, share);
+  // the fitted shares of the data duties, cached per 1 cm/s (bisection over a sampled stride is too slow per frame). Run 4:
+  // each pair is fitted on its own — first both together (the largest common share), then each pair raised alone up to its
+  // data duty with the other held — because a pair's contact is limited by its own reach (v3 cut the hind with the fore)
+  const key = `${row}|${Math.round(v * 100)}|${reach.fore.chord}|${reach.hind.chord}|${reach.girdle.spineMax}|${reach.girdle.scapulaMax}|${JSON.stringify(g)}`;
+  let shares = planCache.get(key);
+  if (shares === undefined) {
+    const fits = (h: number, f: number) => dutyFits(base, h * dutyData, f * foreDutyData, reach, use);
+    const raise = (ok: (m: number) => boolean, lo: number) => { if (ok(1)) return 1; let hi = 1; for (let k = 0; k < 18; k++) { const m = (lo + hi) / 2; if (ok(m)) lo = m; else hi = m; } return lo; };
+    if (fits(1, 1)) shares = [1, 1];
+    else { const both = fits(.01, .01) ? raise(m => fits(m, m), .01) : .01, h = raise(m => fits(m, both), both); shares = [h, raise(m => fits(h, m), both)]; }
+    if (planCache.size > 5000) planCache.clear(); planCache.set(key, shares);
   }
-  const duty = share * dutyData, foreDuty = share * foreDutyData, duties = [foreDuty, duty, foreDuty, duty], dutiesData = [foreDutyData, dutyData, foreDutyData, dutyData];
+  const duty = shares[0] * dutyData, foreDuty = shares[1] * foreDutyData, duties = [foreDuty, duty, foreDuty, duty], dutiesData = [foreDutyData, dutyData, foreDutyData, dutyData];
   const sus = suspensions(offsets, duties);
   return { row, speed: v, hz, stride, dutyData, duty, foreDutyData, foreDuty, duties, dutiesData, offsets, suspensions: sus, spineUse: use, canid: { ...base, duty, suspensions: sus } };
 }
@@ -421,8 +435,10 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
   const pose = opts.pose ?? RUN_POSE, reach = reachOf(sk, girdle, pose, gait), H = sk.legs.hind;
   const limbOf = (i: number) => FRONT(i) ? sk.legs as LimbDims : H;
   // where a foot rests: standing (fore under the glenoid, hind MTP `stance` ahead) → the centre of its running chord
-  // a hind sweep shorter than the chord sits at the chord's front end (the hind prints land ahead: Lagomorpha Locomotion 2021)
-  let run = 0, hindSlack = 0; const centre = (i: number) => FRONT(i) ? lerp(-(sk.legs.stance ?? 0), reach.fore.centre, run) : lerp(-(H.stance ?? 0), reach.hind.centre - hindSlack, run);
+  // a hind sweep shorter than the chord sits at the chord's front end (the hind prints land ahead: Lagomorpha Locomotion 2021);
+  // run 4: a fore sweep shorter than its chord sits at the chord's back end, so the fore prints fall behind the hinds (snowshoe
+  // tracks: two hind prints ahead of the two fore prints — Montana Natural History Center; Canadian Wildlife Federation 2004)
+  let run = 0, hindSlack = 0, foreSlack = 0; const centre = (i: number) => FRONT(i) ? lerp(-(sk.legs.stance ?? 0), reach.fore.centre + foreSlack, run) : lerp(-(H.stance ?? 0), reach.hind.centre - hindSlack, run);
   let x = start.x, z = start.z, heading = start.heading, row: BoundRowId = 'half-bound', leashes = 0, stridePhase = 0, turnSteps = 0;
   // the foot state holds the toe tip; a split hind foot's MTP sits `toes` behind it (BodyPlan.hindToes)
   const toeOff = (i: number) => FRONT(i) ? 0 : sk.toes;
@@ -432,7 +448,7 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
   const pitchS: Spring = spring(0), dropS: Spring = spring(0), liftS: Spring = spring(0), moveS: Spring = spring(0);
   const gaitLimits = sk.plan.limits ?? CANID_LIMITS, turnStep = [false, false, false, false];
   let wasDown = feet.map(() => true), lastPose: PoseKind = 'stand'; const ankle0 = restAnkle(sk), prevPsi: (number | undefined)[] = [undefined, sk.restFootAngle, undefined, sk.restFootAngle];
-  const prevFore: ({ blade: number; psi: number } | undefined)[] = [undefined, undefined, undefined, undefined];
+  const prevFore: ({ blade: number; psi: number; arm?: number } | undefined)[] = [undefined, undefined, undefined, undefined];
   return { reach, skeleton: sk, place(px, pz, h) { x = px; z = pz; heading = h; for (let i = 0; i < 4; i++) { const f0 = footState(restWorld(i)); Object.assign(feet[i], f0); wasDown[i] = true; turnStep[i] = false; } },
   update(dt, speed, h, request, force) {
     const v = Math.abs(speed), moving = v > .05;
@@ -440,7 +456,11 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     const herr = wrap(h - heading);
     heading = moving || !opts.turnInPlace ? h : heading + Math.max(-TURN.rate * dt, Math.min(TURN.rate * dt, herr));
     row = force ?? selectRow(v, row); plan = boundPlan(gait, v, reach, row);
-    hindSlack = Math.max(0, (CHORD_USE * reach.hind.chord - plan.duty * plan.stride) / 2);
+    // run 4: the slack is taken against the full chord (the reachable interval inside the joint clamps, held over the stance's
+    // pitch swing), not CHORD_USE x it: the end of the sweep touches the reach edge only at the hind touchdown / fore lift-off.
+    // With CHORD_USE the slow half-bound's hind prints fell 10.3 cm ahead, under one 12 cm print
+    hindSlack = Math.max(0, (reach.hind.chord - plan.duty * plan.stride) / 2);
+    foreSlack = Math.max(0, (reach.fore.chord - plan.foreDuty * plan.stride) / 2);
     stepCpg(cpg, plan.offsets, moving ? plan.hz : 0, dt, moving ? 1 : 0);
     const ph = phases(cpg); stridePhase = frac(ph[0] - plan.offsets[0]);
     const fwd = { x: -Math.sin(heading), z: -Math.cos(heading) }; // -z is forward in the body frame
@@ -493,19 +513,19 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
       // the girdle shifts carry the pivot along the ground (as dutyFits counts them), not along a pitched trunk
       const top = { z: shift[i] * Math.cos(bodyPitch), y: topY(L) + shift[i] * Math.sin(bodyPitch) };
       const solve = (r0: Vec3) => {
-        let psi = 0, blade: number | undefined;
+        let psi = 0, blade: number | undefined, arm: number | undefined;
         if (!front) psi = hindFoot(L, top, r0, ankle0, prevPsi[i], lim, f.planted && moving ? bodyPitch : undefined).psi; // the reaching foot angle nearest the standing ankle
-        else if (L.girdle) { const fl = foreLimb(L, top, r0, lim, prevFore[i], f.planted ? undefined : (L.footAngle ?? 0) - (L.footFlex ?? 0) * r.lift, false, girdle); psi = fl.psi; blade = fl.blade; }
+        else if (L.girdle) { const fl = foreLimb(L, top, r0, lim, prevFore[i], f.planted ? undefined : (L.footAngle ?? 0) - (L.footFlex ?? 0) * r.lift, false, girdle); psi = fl.psi; blade = fl.blade; arm = fl.arm; }
         const Lp = { ...L, footAngle: psi };
         const a = clampLimb(solveLimb(Lp, !front, r0, front && !L.girdle && !f.planted ? r.lift : 0, { top, fit: front && !L.girdle, blade }), front, lim);
         const s = soleOf(Lp, a), want0 = top.y - Math.hypot(top.y - r0.y, r0.x);
         const w = limbToWorld({ x: r0.x, y: s.y + (r0.y - want0), z: s.z }, x, z, heading, tilt, sk.hips[i]);
-        return { psi, blade, a, err: Math.hypot(s.z - r0.z, s.y - want0), w };
+        return { psi, blade, arm, a, err: Math.hypot(s.z - r0.z, s.y - want0), w };
       };
       let sol = solve(rel);
       // a swinging foot the limb cannot reach must not end up under the ground: raise its target until the sole clears
       for (let k = 0; k < 4 && !f.planted && sol.w.y < ground(sol.w.x, sol.w.z) - 1e-4; k++) { rel = { ...rel, y: rel.y + (ground(sol.w.x, sol.w.z) - sol.w.y) + .002 }; sol = solve(rel); }
-      if (!front) prevPsi[i] = sol.psi; else if (sol.blade !== undefined) prevFore[i] = { blade: sol.blade, psi: sol.psi };
+      if (!front) prevPsi[i] = sol.psi; else if (sol.blade !== undefined) prevFore[i] = { blade: sol.blade, psi: sol.psi, arm: sol.arm };
       const a = sol.a, err = sol.err, mtpW = sol.w, soleW = { x: mtpW.x + target.x - ik.x, y: mtpW.y + target.y - ik.y, z: mtpW.z + target.z - ik.z };
       if (f.planted && moving && err > BOUND_LEASH) { forceStep(f); leashes++; out.leashes = leashes; }
       const down = f.planted;

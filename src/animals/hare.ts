@@ -19,7 +19,8 @@ import { worldSec } from '../core/worldClock';
 import { cloverPatchesInTile } from '../core/clover';
 import { createAgent, stepAgent, poseOf, actionName, moods, modulators, type Agent, type Other } from '../core/agent/pipeline';
 import { HARE_AGENT } from '../core/agent/species';
-import { createBounding, limbPoints, poseRequestFor, type BoundController, type BoundFrame } from './locomotion/bounding';
+import { createBounding, limbPoints, poseRequestFor, GIRDLE, RUN_POSE_LEVEL, type BoundController, type BoundFrame } from './locomotion/bounding';
+import { LEPORID_LIMITS } from './locomotion/ik';
 import { skeletonOf, type BodyPlan } from './locomotion/bodyPlan';
 import { CONTACTS } from '../core/contactBus';
 import { createCloverRenderer } from '../render/clover';
@@ -31,8 +32,8 @@ export const HARE = {
 };
 export type HareState = Agent['action'];
 export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Group; body: THREE.Group; legs: Leg[]; ears: THREE.Group[]; rng: () => number; label?: THREE.Sprite; rig?: BoundController; frame?: BoundFrame }
-/** One limb drawn from the bounding rig: three segments (upper, lower, foot) placed between the rig's joints each frame. */
-interface Leg { segs: THREE.Mesh[]; hind: boolean }
+/** One limb drawn from the bounding rig: segments (blade, upper, lower, foot, toes as the plan has them) placed between the rig's joints each frame. */
+interface Leg { segs: THREE.Mesh[]; hind: boolean; /** first limbPoints index drawn (0 with a blade: the blade is a segment) */ from: number }
 export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
 /** speed (m/s) and daylight (0..1) feed the hare's senses; `moving` is kept for older callers (speed defaults from it). */
 export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean; speed?: number; daylight?: number }
@@ -50,8 +51,11 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
  *  - hindFoot .132 (hock to toe tip, in ADW's 117-147 mm hind foot range); standing hip .13 with the knee bent to
  *    hindBend .5 of the leg and the shoulder at foreBend .6 of the fore leg (crouched resting posture) [estimate: drawn to the
  *    reference photos]. Trunk (hip to shoulder joint) .21 m and head .30 m ahead of the hip (nose to tail ~.47 m, in the
- *    413-518 mm total length) [estimate: drawn to the reference]; headZ is from the hip. */
-export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .181, hindLeg: .202, hindFoot: .132, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.3, headY: .085 };
+ *    413-518 mm total length) [estimate: drawn to the reference]; headZ is from the hip.
+ *  - run 5 (grok-gait v3 contract): hindToes .056 = the toes (MTP to tip) of the .132 hind foot, scapula .063 = the shoulder
+ *    blade in the fore chain (= .816 x humerus), both from Lepus brachyurus bone means (Exp Anim 30(2):113, 1981, Tables 1
+ *    and 4-6; working in tools/bound-plans.ts SPLIT / BLADE). */
+export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .181, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.3, headY: .085 };
 function model() {
   const B = HARE_BODY, root = new THREE.Group(), body = new THREE.Group(), head = new THREE.Group(); root.add(body); body.add(head);
   body.position.set(0, B.hipY, 0); head.position.set(0, B.headY, B.headZ); // body = the hip pivot
@@ -76,7 +80,8 @@ function model() {
   const legs: Leg[] = [];
   const seg = (m: THREE.Material, r: number, w = r) => { const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), m); mesh.userData.r = [w, r]; root.add(mesh); return mesh; };
   for (let i = 0; i < 4; i++) { const hind = i % 2 === 1;
-    legs.push({ hind, segs: hind ? [seg(brown, .03, .026), seg(buff, .014), seg(white, .011, .022)] : [seg(buff, .013), seg(buff, .01), seg(white, .009, .012)] }); }
+    legs.push(hind ? { hind, from: 1, segs: [seg(brown, .03, .026), seg(buff, .014), seg(white, .011, .022), ...(B.hindToes ? [seg(white, .009, .022)] : [])] }
+      : { hind, from: B.scapula ? 0 : 1, segs: [...(B.scapula ? [seg(brown, .018, .014)] : []), seg(buff, .013), seg(buff, .01), seg(white, .009, .012)] }); }
   return { root, body, head, legs, ears };
 }
 /** Pose targets: body pitch about the hip (rad, + = front up), body lift (m), head pitch (+ = nose up), head drop (m), ears
@@ -105,9 +110,14 @@ function labelSprite() {
 
 export type HareModel = Pick<Hare, 'root' | 'body' | 'head' | 'legs' | 'ears' | 'hopPhase' | 'id' | 'rig' | 'frame'>;
 export const createHareModel = model;
-/** The hare's limb skeleton for the bounding rig, from HARE_BODY (track half-widths [estimate: drawn to the reference]). */
+/** The hare's limb skeleton for the bounding rig, from HARE_BODY (track half-widths [estimate: drawn to the reference]); run 5:
+ *  split hind foot + shoulder blade, and the leporid joint ranges (ik.ts LEPORID_LIMITS: Hall et al. 2022, rabbit knee from
+ *  Hildebrand, Holmberg & Shrive 2003). */
 export const HARE_PLAN: BodyPlan = { hip: HARE_BODY.hipY, hipZ: HARE_BODY.hipZ, shoulderZ: HARE_BODY.shoulderZ, track: { fore: .03, hind: .045 }, foreLeg: HARE_BODY.foreLeg,
-  hindLeg: HARE_BODY.hindLeg, hindFoot: HARE_BODY.hindFoot, upperShare: HARE_BODY.upperShare, manus: HARE_BODY.manus, foreBend: HARE_BODY.foreBend, hindBend: HARE_BODY.hindBend };
+  hindLeg: HARE_BODY.hindLeg, hindFoot: HARE_BODY.hindFoot, hindToes: HARE_BODY.hindToes, scapula: HARE_BODY.scapula, upperShare: HARE_BODY.upperShare, manus: HARE_BODY.manus,
+  foreBend: HARE_BODY.foreBend, hindBend: HARE_BODY.hindBend, limits: LEPORID_LIMITS };
+/** Rig options (run 5): the level-trunk running posture (needs the blade's fore reach) and turning in place by re-planting. */
+export const HARE_RIG = { pose: RUN_POSE_LEVEL, turnInPlace: true };
 const HARE_SKELETON = skeletonOf(HARE_PLAN);
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
 /** Pose one hare model from its pipeline agent for this frame (shared by the game host and tools/hare-strip). The legs, body
@@ -115,20 +125,20 @@ const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3
  *  requests); head and ears from the reference poses. `ground` is the terrain height function (or a flat height). */
 export function poseHare(h: HareModel, a: Agent, dt: number, time: number, ground: number | ((x: number, z: number) => number)) {
   const groundAt = typeof ground === 'number' ? () => ground : ground, k = 1 - Math.exp(-dt * 10);
-  if (!h.rig) h.rig = createBounding(HARE_SKELETON, HARE_AGENT.gait!, groundAt, { x: a.x, z: a.z, heading: a.heading });
+  if (!h.rig) h.rig = createBounding(HARE_SKELETON, HARE_AGENT.gait!, groundAt, { x: a.x, z: a.z, heading: a.heading }, GIRDLE, HARE_RIG);
   // the agent is authoritative: the rig integrates the same speed and heading; a jump (spawn, rewind, blocked step) re-places it
   if (h.frame && Math.hypot(h.frame.x - a.x, h.frame.z - a.z) > .5) h.rig.place(a.x, a.z, a.heading);
   const fr = h.frame = h.rig.update(Math.max(1e-4, dt), a.speed, a.heading, poseRequestFor(poseOf(a), a.action));
   const ox = a.x - fr.x, oz = a.z - fr.z; // small drift between the two integrations, drawn away
   // root at the hip joints (mid of the two hind chain tops), turned to the heading; the body pitches about it
   const hl = limbPoints(HARE_SKELETON, fr, 1)[0], hr = limbPoints(HARE_SKELETON, fr, 3)[0];
-  h.root.position.set((hl.x + hr.x) / 2 + ox, 0, (hl.z + hr.z) / 2 + oz); h.root.rotation.y = a.heading; h.root.updateMatrixWorld();
+  h.root.position.set((hl.x + hr.x) / 2 + ox, 0, (hl.z + hr.z) / 2 + oz); h.root.rotation.y = fr.heading; h.root.updateMatrixWorld(); // the rig's heading (turnInPlace yaws it at TURN.rate)
   h.body.position.set(0, (hl.y + hr.y) / 2, 0); h.body.rotation.x = fr.tilt.pitch;
   const inv = h.root.matrixWorld.clone().invert();
   h.legs.forEach((leg, i) => {
-    const P = limbPoints(HARE_SKELETON, fr, i); // [top, girdle joint, knee/elbow, ankle/wrist, toe]
+    const P = limbPoints(HARE_SKELETON, fr, i), o = leg.from; // [top (blade pivot), girdle joint, knee/elbow, ankle/wrist, toe/MTP(, toe tip)]
     leg.segs.forEach((m, s) => {
-      _a.set(P[s + 1].x + ox, P[s + 1].y, P[s + 1].z + oz).applyMatrix4(inv); _b.set(P[s + 2].x + ox, P[s + 2].y, P[s + 2].z + oz).applyMatrix4(inv);
+      _a.set(P[s + o].x + ox, P[s + o].y, P[s + o].z + oz).applyMatrix4(inv); _b.set(P[s + o + 1].x + ox, P[s + o + 1].y, P[s + o + 1].z + oz).applyMatrix4(inv);
       _d.subVectors(_b, _a); const len = Math.max(1e-4, _d.length()), [w, r] = m.userData.r as [number, number];
       m.position.addVectors(_a, _b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(UP, _d.divideScalar(len)); m.scale.set(w, len / 2 + r * .6, r);
     });

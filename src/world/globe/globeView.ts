@@ -26,7 +26,7 @@ import { renderOffset } from './origin';
 import { createAtmosphere } from './atmosphere';
 import { across } from './cube';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
-import { gameHour, START_HOUR, sunPosition } from '../../core/timeOfDay';
+import { DAY, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
@@ -112,10 +112,10 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const scene = new THREE.Scene(); scene.background = SPACE.clone();
   // Sun: the game's world clock (core/worldClock + timeOfDay, same ?hour= start offset as the game), placed at the home
   // region and turned into planet axes (game +x = east, +y = up, −z = north). One direction for the whole planet.
-  if (own.loadClock) loadClock(localStorage.getItem(CLOCK.key)); // shared: main already owns the clock
-  const hourParam = Number(q.get('hour')), startHour = q.has('hour') && hourParam >= 0 && hourParam < 24 ? hourParam : START_HOUR;
+  if (own.loadClock) { loadClock(localStorage.getItem(CLOCK.key)); initDay(location.search, localStorage.getItem(DAY.key), worldSec()); } // shared: main already owns the clock and the dial
+  const shotSec = worldSec();
   const E = new THREE.Vector3(...planet.east), N = new THREE.Vector3(...planet.north), U = new THREE.Vector3(...planet.home);
-  const sunDir = new THREE.Vector3(), sunNow = () => { const d = sunPosition(gameHour(q.has('shot') ? 0 : worldSec(), startHour)).direction; /* screenshots: clock pinned so ?hour= is exact */ return sunDir.copy(E).multiplyScalar(d.x).addScaledVector(U, d.y).addScaledVector(N, -d.z).normalize(); };
+  const sunDir = new THREE.Vector3(), sunNow = () => { const d = sunPosition(hourAt(q.has('shot') ? shotSec : worldSec())).direction; /* screenshots: clock pinned so ?hour= is exact */ return sunDir.copy(E).multiplyScalar(d.x).addScaledVector(U, d.y).addScaledVector(N, -d.z).normalize(); };
   const sun = new THREE.DirectionalLight(0xffffff, 3.2), hemi = new THREE.HemisphereLight(0x9fb8d8, 0x202018, .35);
   sun.position.copy(sunNow()); scene.add(sun, hemi);
   const seamsDebug = q.get('seams') === '1'; // ?seams=1: skirts red, tile borders yellow (tile.ts globeMaterial)

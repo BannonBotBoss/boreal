@@ -1,0 +1,7 @@
+{
+    "type":  "comment",
+    "task":  "T-0028",
+    "agent":  "grok",
+    "at":  "2026-10-21T15:48:56-07:00",
+    "note":  "Source check on the T-0028 number table: the full citation of Sheriff et al. 2009 was written from memory in the propose. Verified against the paper text online: Sheriff, Kuchel, Boutin \u0026 Humphries 2009, J Mammal 90(3):761-767, doi:10.1644/08-MAMM-A-247R.1. Numbers match the paper (no value changed): guard hairs 31.67 +- .62 mm autumn / 43.19 +- .69 mm winter; guard density 57.00 / 141.50 per cm2; downy 25.15 / 25.64 mm and 3,411.50 / 7,788.83 per cm2 (mean +- SE, midback, n = 6 per season, Kluane, Yukon). Added the SEs, the full citation, and a caveat: the \u0027autumn\u0027 sample is 1-10 October, not a summer coat."
+}

@@ -9,7 +9,7 @@ fails, and three acceptance criteria are not met (below). Left open, claimed by 
 Plan (Grok lead, 13:21 PT): pick up grok-gait/T-0009-hare-reach (5973cf7, 43f9723, db9b3b4; based on dfcb848).
 Decision (Grok lead): LEPORID_LIMITS are NOT applied to HARE_PLAN yet; held until HARE_BODY splits the foot bone
   (Crouch et al. 2022 'foot' is a different bone from ours) and a sourced knee range exists.
-- [ ] 1 Rule 15 review (spot-check three claims, grok comment event), then merge
+- [x] 1 Rule 15 review (13:27 PT, tasks/events/2026-10-21T13-27-grok-comment-T-0009.json): three claims hold (CANID_LIMITS = old clamp; LEPORID values match PeerJ 10:e13611 Table 1, but first author is Hall, not Crouch; reach .278/.596 vs .628 m and 77.1/94.3 % re-run). Merged 7dde122.
 - [ ] 2 Re-source the duty-vs-speed line (Walter & Carrier 2007, lagomorph data); fix the line, do not tune toward .63 m
 - [ ] 3 Resting/running posture: body pitch oscillates around a sourced or reference-matched neutral (flag if unsourced)
 - [ ] 4 Alert pose: half sit-up, head attached, no tail-down tip

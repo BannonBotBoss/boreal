@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { waterFresnel, humicK, humicDeepR, shallowReflectance, openWaterGeometry, HUMIC } from '../src/render/water';
+import { waterFresnel, humicK, humicDeepR, shallowReflectance, cosInWater, openWaterGeometry, HUMIC } from '../src/render/water';
 
 // T-0023 water optics: the numbers the shader uses, checked against their sources.
 test('water Fresnel: 2 % head-on, ~30-66 % at the grazing angles of a 3.3 m eye 15-45 m out, 100 % at the horizon', () => {
@@ -25,6 +25,14 @@ test('shallow-water reflectance: the bottom at 0 m, fading to the deep body by ~
   const half = shallowReflectance(.3), deep = shallowReflectance(5), r = humicDeepR();
   assert.ok(half[0] / HUMIC.bottom[0] > half[2] / HUMIC.bottom[2], 'red survives longer than blue (tea colour)');
   deep.forEach((v, i) => assert.ok(Math.abs(v - r[i]) < 1e-3));
+});
+
+test('slant view: the bottom fades faster, by 1/cos θw on the way up (Lee et al. 1999); the same looking straight down', () => {
+  assert.equal(cosInWater(1), 1);
+  assert.ok(Math.abs(cosInWater(Math.cos(85 * Math.PI / 180)) - .664) < .002, 'grazing 85 deg in air -> 48.4 deg in water');
+  assert.deepEqual(shallowReflectance(.5, 1), shallowReflectance(.5));
+  const slant = shallowReflectance(.5, Math.cos(85 * Math.PI / 180)), down = shallowReflectance(.5);
+  slant.forEach((v, i) => assert.ok(v < down[i] && v > humicDeepR()[i], `channel ${i}: ${v} between deep and straight-down`));
 });
 
 test('open-water sheet: terrain grid at the water level with depth per vertex; none on a dry chunk', () => {

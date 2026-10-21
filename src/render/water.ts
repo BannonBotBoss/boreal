@@ -25,15 +25,19 @@ const SEED = ((WORLD_SEED * 7) % 997) * .37, uTime = { value: 0 };
 /** Humic boreal water, per channel at the R/G/B centres 610/550/465 nm. Absorption a = pure water (Pope & Fry 1997, Appl. Opt.
  *  36:8710) + CDOM a440·e^(-S(λ-440)) (Bricaud, Morel & Prieur 1981); diffuse attenuation K = a / μd (μd ≈ 0.8); deep-water
  *  reflectance R∞ ≈ 0.33 bb / a (Morel & Prieur 1977); over a bottom of albedo Ab at depth H the shallow-water model
- *  R = R∞ (1 - e^(-2KH)) + Ab e^(-2KH) (Maritorena, Morel & Gentili 1994, Limnol. Oceanogr. 39:1689). So the colour is generated
+ *  R = R∞ (1 - e^(-2KH)) + Ab e^(-2KH) (Maritorena, Morel & Gentili 1994, Limnol. Oceanogr. 39:1689); seen at a slant, the light
+ *  climbs to the eye along the refracted view ray, H / cos θw, so 2KH -> KH (1 + 1/cos θw) (Lee et al. 1999, Appl. Opt. 38:3831,
+ *  D_u ∝ 1/cos θw; equal to 2KH looking straight down). So the colour is generated
  *  by absorption over depth, not picked. Leaving the water, that radiance spreads into a wider cone and drops by 1/n² (n² law of
  *  radiance, Mobley 1994 *Light and Water* §4.3; above-water Rrs ≈ 0.52 rrs, Lee et al. 2002 Appl. Opt. 41:5755), so the shader
- *  lights it as a Lambert surface times `exit`. a440, S sourced (T-0023 table); [verify] bb, Ab against a regional survey. */
+ *  lights it as a Lambert surface times `exit`. a440, S sourced (T-0023 table); Ab = wet sand, Vahtmäe et al. 2024 PANGAEA.971518; [verify] bb. */
 export const HUMIC = { a440: 5, slope: .016, bb: .02, muD: .8, bottom: [.16, .13, .09], nm: [610, 550, 465], pureWater: [.264, .0565, .0102], exit: 1 / 1.333 ** 2 };
 export const humicK = () => HUMIC.nm.map((nm, i) => (HUMIC.pureWater[i] + HUMIC.a440 * Math.exp(-HUMIC.slope * (nm - 440))) / HUMIC.muD);
 export const humicDeepR = () => humicK().map(k => .33 * HUMIC.bb / (k * HUMIC.muD));
-/** Irradiance reflectance just below the surface over a bottom `depth` m down (Maritorena 1994), per channel R, G, B. */
-export const shallowReflectance = (depth: number) => { const r = humicDeepR(); return humicK().map((k, i) => { const t = Math.exp(-2 * k * Math.max(0, depth)); return r[i] * (1 - t) + HUMIC.bottom[i] * t; }); };
+/** Cosine of the refracted (in-water) view angle for a view at cosine `cosAir` from the vertical (Snell, n = 1.333). */
+export const cosInWater = (cosAir: number) => Math.sqrt(1 - (1 - cosAir * cosAir) / 1.333 ** 2);
+/** Reflectance just below the surface over a bottom `depth` m down (Maritorena 1994), per channel R, G, B, seen at `cosAir`. */
+export const shallowReflectance = (depth: number, cosAir = 1) => { const r = humicDeepR(), u = 1 + 1 / cosInWater(cosAir); return humicK().map((k, i) => { const t = Math.exp(-u * k * Math.max(0, depth)); return r[i] * (1 - t) + HUMIC.bottom[i] * t; }); };
 const HUMIC_BODY = new THREE.Color().setRGB(...humicDeepR() as [number, number, number], THREE.LinearSRGBColorSpace);
 const MIRROR = { uMirror: { value: null as THREE.Texture | null }, uMirrorMatrix: { value: new THREE.Matrix4() }, uMirrorOn: { value: 0 },
   uMirrorY: { value: LEVEL.waterSurface }, uWaterSky: { value: new THREE.Color(0x8fa6b8) },
@@ -57,7 +61,8 @@ export function waterMaterial() {
         vec2 fl = vFlow.xy, drift = vec2(0.03, 0.02) * uWaterTime; float p0 = wPhase(0.0), p1 = wPhase(0.5), wgt = abs(0.5 - p0) * 2.0;
         vec2 q = vWXZ * 0.35 + drift;
         vec2 wg = mix(wgrad(q - fl * p0 * 4.0 * 0.35), wgrad(q - fl * p1 * 4.0 * 0.35 + 0.37), wgt);
-        vec3 wT2 = exp(-2.0 * uWaterK * (abs(vWY - uMirrorY) < .05 ? max(vDepth, 0.0) : 1e3)); // open-water sheet only (aDepth); lakes/rivers: deep
+        float wCa = clamp(dot((viewMatrix * vec4(0., 1., 0., 0.)).xyz, normalize(vViewPosition)), 0., 1.), wCw = sqrt(1. - (1. - wCa * wCa) / 1.7769); // Snell: cos θw
+        vec3 wT2 = exp(-(1.0 + 1.0 / wCw) * uWaterK * (abs(vWY - uMirrorY) < .05 ? max(vDepth, 0.0) : 1e3)); // down + slant up (Lee 1999); open-water sheet only (aDepth)
         diffuseColor.rgb = (diffuseColor.rgb * (1.0 - wT2) + uBottom * wT2) * ${HUMIC.exit.toFixed(4)}; // Maritorena 1994 shallow-water reflectance, 1/n² on exit
         float foam = smoothstep(0.55, 0.85, fbm(vWXZ * 1.3 - fl * uWaterTime * 1.3, ${SEED.toFixed(3)}) + vFlow.z * 0.25 - 0.35) * smoothstep(0.4, 1.2, vFlow.z);
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85, 0.9, 0.9), foam);`)

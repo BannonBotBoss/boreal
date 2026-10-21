@@ -6,7 +6,7 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const [base, outDir] = process.argv.slice(2); mkdirSync(outDir, { recursive: true });
+const [base, outDir, mode] = process.argv.slice(2); const dbg = mode === 'plain' ? '' : '&hare=debug'; // 'plain': no debug labels mkdirSync(outDir, { recursive: true });
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 async function session(fn) {
   const port = 9300 + Math.floor(Math.random() * 90), profile = mkdtempSync(join(tmpdir(), 'grok-rabbit-'));
@@ -50,7 +50,7 @@ const p = res.patch.best; if (!p) { console.log('no clover found'); process.exit
 const at = `${(p.x - 2.5).toFixed(1)},${(p.z + 7.6).toFixed(1)},0`;
 mkdirSync(join(outDir, 'frames'), { recursive: true });
 res.record = await session(async ({ go, ev }) => {
-  await go(`&hour=12&trees=v2&at=${at}&hare=debug`); await sleep(6000);
+  await go(`&hour=12&trees=v2&at=${at}${dbg}`); await sleep(6000);
   const pick = await ev(pickJs); const target = pick.best && Math.hypot(pick.best.x - p.x, pick.best.z - p.z) < 8 ? pick.best : p;
   // STAGED (stated in the handoff): the patch is set to 45 % so a part-grazed patch is on screen; at the real cropping rate
   // (20.5 mg DM/s) one hare takes ~6 h of cropping to graze a 1 m patch out, far beyond a 10 s clip.
@@ -67,7 +67,11 @@ res.record = await session(async ({ go, ev }) => {
     const st = (await ev(stateJs))[0], q = await ev(`(() => { const q = borealHares.clover.get(${JSON.stringify(target.key)}); return q && +(q.units / q.max).toFixed(4); })()`), w = await ev('(() => { const w = borealHares.wolf(); return w && { x: +w.x.toFixed(2), z: +w.z.toFixed(2) }; })()');
     frames.push({ name, t: +t.toFixed(2), hare: st, patchFraction: q, wolf: w, w: pressed && !released });
   }
-  return { at, target, staged, frames };
+  // clover time-lapse (STAGED): the hare is moved off and the same patch is set to 100 -> 0 % leaf, one still each
+  await ev(`(() => { const h = borealHares.list()[0]; if (h) { h.agent.x += 30; } return 1; })()`); const lapse = [];
+  for (const f of [1, .8, .6, .4, .2, 0]) { await ev(`(() => { const q = borealHares.clover.get(${JSON.stringify(target.key)}); return borealHares.clover.stage(q.key, q.max * ${f}).units; })()`);
+    await sleep(1500); const s = await (globalThis.__cdp)('Page.captureScreenshot', { format: 'jpeg', quality: 80 }); const name = `lapse-${Math.round(f * 100)}.jpg`; writeFileSync(join(outDir, name), Buffer.from(s.data, 'base64')); lapse.push(name); }
+  return { at, target, staged, frames, lapse };
 });
 writeFileSync(join(outDir, 'rabbit-record.json'), JSON.stringify(res, null, 1));
 console.log(JSON.stringify(res.record.frames.map(f => [f.t, f.hare?.action, f.hare?.goal, f.patchFraction, f.wolf?.x, f.wolf?.z])));

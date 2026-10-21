@@ -29,9 +29,20 @@ Plan (Grok lead, 12:23 PT): pick up Gait Builder's rig (grok-gait/T-0009-hare-sk
   pitch from the rig tilt, head/ears from POSES); alert hold 1 s measured from the first alert (re-alerts while watching keep
   counting); flight speed ramps at 10 m/s^2. bound-checks score on HARE_BODY: 85.7 % (was 80.0 %; gate 95 %: FAIL; the
   sourced duty needs a .63 m hind sweep at 8.5 m/s vs a .31 m hind chord, so contact fraction is short at speed).
-- [ ] 6 In-game smoke test (full reload), side-on recording, labels hidden, clover time-lapse
-- [ ] 7 Re-score every gate question (T-0020 chain) vs refs/hare/graze-alert-flight/
-- [x] 8 npx tsc --noEmit clean; npm test 379: 367 pass, 0 fail, 12 todo (7a4be8f, flaky test did not flake)
+- [x] 6 In-game smoke test (12:43-12:46 PT, full page loads on :5204, no runtime errors): `node tools/rabbit-record.mjs
+  http://127.0.0.1:5204 C:\dev\rabbit-rec4 plain` (new 'plain' mode: no ?hare=debug labels; new STAGED clover time-lapse
+  lapse-100..lapse-0.jpg, the same patch set to 100/80/60/40/20/0 % leaf). 43 frames: feed 0-5 s, step, alert 5.32 s,
+  flee 6.33 s (1.0 s hold), 9.9 m in 1.7 s, pause 10.2 s, scan. The in-game camera is the wolf's, so side-on was recorded in
+  the lab with the same code: tools/hare-strip.html?track=2.2&fov=20&wolfX=-7&wolfAt=2.2 -> C:\dev\rabbit-rec4\strip-run3.png.
+- [x] 7 Re-scored (T-0020 chain) against refs/hare/graze-alert-flight/attempt4-video-frames-6fps.jpg, frame for frame:
+  | question | run 2 | run 3 | why |
+  |---|---|---|---|
+  | graze: hunched, head at the clover, ears back? | 65 % | 70 % | crouch and head-down match rows 1-2; ears and muzzle unreadable at this size |
+  | alert: sits up, ears up, ~1 s before bolting? | 40 % | 60 % | timing now matches (alert 2.33-3.17 s, flee 3.33 s vs reference 2.3-3.3 s), but the pose goes fully vertical with the head floating above the body, and tips tail-down at 3.0-3.17 s; the reference raises the head on all fours |
+  | bound: hind feet ahead of forefeet, gathered/extended phases? | 45 % | 60 % | real three-segment legs alternate gathered/extended; hind overtaking is not readable; contact short of the sourced duty at speed (bound-checks 85.7 %) |
+  | flight speed/acceleration like the reference? | 55 % | 75 % | 10 m/s^2 ramp over the first bounds; the reference leaves frame by 4.7 s, ours is tracked so this is judged from speed only |
+  | clover visibly thins as grazed (in game)? | 50 % | 45 % | the time-lapse 100 -> 0 % is hard to tell apart at the wolf's camera distance; only the stolon disc darkens |
+  | looks like a snowshoe hare? | 30 % | 30 % | low-poly body; needs a furred mesh |- [x] 8 npx tsc --noEmit clean; npm test 379: 367 pass, 0 fail, 12 todo (7a4be8f, flaky test did not flake)
 - [ ] 9 Submit only if every gate >= 95 %
 ## Run 2 progress (keep current: board rule 9)
 Plan (Matthew via Grok, 11:13 PT): 1 reference, 2 bound gait, 3 graze/alert poses + visible thinning, 4 registry + lazy

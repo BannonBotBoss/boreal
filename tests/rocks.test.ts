@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { rockRecipe, rockDiameter, pushContact, PUSH_DISTANCE, SNOUT_REACH } from '../src/core/rocks';
+import { rockRecipe, rockDiameter, pushContact, PUSH_DISTANCE, SNOUT_REACH, withRockTier, ROCK_SHAPES } from '../src/core/rocks';
 import { generateChunk, heightAt, type Entity } from '../src/core/world';
+import { STAGES } from '../src/core/stages/elevation';
+import { siteAt } from '../src/core/flora/site';
+import { column } from '../src/core/ground';
 import { createContext, interact, parseContext, restoreEntities, availableActions } from '../src/core/events';
 import { generateGeometry, disposeObject } from '../src/render/geometry';
 const stone = (seed: number): Entity => ({ key: 'test-rock', kind:'rock', seed, generatorVersion:1, x:0,z:0,rotation:1,scale:1 });
@@ -42,4 +45,26 @@ test('rocks stay below wolf size and sit on terrain in every orientation and LOD
   disposeObject(group);
  }
 });
-
+test('Shield bedrock ridges expose whaleback outcrops and boulders while deep organic floors bury short pebbles',()=>{
+ assert.equal(rockDiameter(stone(withRockTier(7, 1))), .95);
+ assert.equal(rockDiameter(stone(withRockTier(7, 2))), 1.65);
+ assert.equal(rockDiameter(stone(withRockTier(7, 3))), 3.6);
+ STAGES.on = true;
+ try {
+  const ridgeRocks = generateChunk(3, 0).filter(e => e.kind === 'rock');
+  assert.ok(ridgeRocks.some(e => rockDiameter(e) === 3.6), 'whaleback bedrock outcrop on Shield ridge');
+  assert.ok(ridgeRocks.some(e => rockDiameter(e) === 1.65), 'coarse glacial erratic boulder on Shield ridge');
+  for (const [cx, cz] of [[0, 0], [1, 0], [3, 0]]) {
+   for (const e of generateChunk(cx, cz)) {
+    if (e.kind !== 'rock') continue;
+    const s = siteAt(e.x, e.z, false);
+    if (s.rock < .2) {
+     const rec = rockRecipe(e.seed), h = rockDiameter(e) * ROCK_SHAPES[rec.shape][1];
+     assert.ok(h > column(e.x, e.z).organic, `rock ${e.key} emerges above organic mat`);
+    }
+   }
+  }
+ } finally {
+  STAGES.on = false;
+ }
+});

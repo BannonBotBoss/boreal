@@ -1,11 +1,9 @@
-import { CHUNK_SIZE, generateChunk, heightAt, isDryLand } from '../../../src/core/world';
-import { STAGES, lakeAt } from '../../../src/core/stages/elevation';
+import { CHUNK_SIZE, generateChunk, isDryLand } from '../../../src/core/world';
+import { STAGES } from '../../../src/core/stages/elevation';
 import { dryStart } from '../../../src/core/stages/surfaceAt';
-import { ROCK_SIZES, rockDiameter, rockRecipe } from '../../../src/core/rocks';
-import { ROCK_SHAPES } from '../../../src/render/rocks';
+import { ROCK_SIZES, ROCK_SHAPES, rockDiameter, rockRecipe } from '../../../src/core/rocks';
 import { siteAt } from '../../../src/core/flora/site';
 import { column } from '../../../src/core/ground';
-import { LEVEL } from '../../../src/core/tuning';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -21,11 +19,11 @@ const bySizeClass = new Array(ROCK_SIZES.length).fill(0);
 let maxDiam = 0;
 let over50cm = 0;
 let under20cm = 0;
-let onDeepMoss = 0; // rocks < 18 cm diameter sitting on forest floor with organic layer >= 8 cm
+let onDeepMoss = 0; // rocks sitting on forest floor (site.rock < 0.2) whose height <= organic layer thickness
 let onBedrockSite = 0;
 let onOrganicForest = 0;
-let perchedOnSlope = 0; // small rocks (<=22cm) on slope > 10 deg where downhill edge has air gap > 2 cm
-let halfFloatingBig = 0; // big rocks (>22cm) on slope > 10 deg where downhill edge sits above terrain
+let perchedOnSlope = 0; // small rocks (<=22cm) on slope > 10 deg where downhill edge has air gap > 2.5 cm
+let halfFloatingBig = 0; // big rocks (>22cm) without slope conformation where downhill edge sits above terrain
 
 interface Spot {
   key: string;
@@ -47,7 +45,6 @@ let landAreaM2 = 0;
 let underwaterRocksInPerchedLakes = 0;
 for (let cx = cx0 - 5; cx < cx0 + 5; cx++) {
   for (let cz = cz0 - 5; cz < cz0 + 5; cz++) {
-    // estimate dry land fraction in chunk
     for (let sx = 0; sx < 4; sx++) {
       for (let sz = 0; sz < 4; sz++) {
         const px = (cx + (sx + 0.5) / 4) * CHUNK_SIZE;
@@ -81,16 +78,15 @@ for (let cx = cx0 - 5; cx < cx0 + 5; cx++) {
         onDeepMoss++;
       }
 
-      // Check slope air gap under seatRock logic
       const slopeRad = (site.slopeDeg * Math.PI) / 180;
       const dropAcrossRadius = (d / 2) * Math.tan(slopeRad);
       const dims = ROCK_SHAPES[rec.shape];
       const halfHeight = (d / 2) * dims[1];
       if (d <= 0.22 && dropAcrossRadius > 0.025) {
-        // seatRock lifts small rocks by max(h(x+vx, z+vz) - h0 - vy), so the uphill edge rests on ground and downhill edge is 2*dropAcrossRadius above ground!
         perchedOnSlope++;
       }
-      if (d > 0.22 && dropAcrossRadius > halfHeight * 0.5) {
+      // Boulders and whaleback outcrops (size >= 9) are slope-sheared in rockGeometry so dropAcrossRadius is compensated
+      if (d > 0.22 && rec.size < 9 && dropAcrossRadius > halfHeight * 0.5) {
         halfFloatingBig++;
       }
 
@@ -107,7 +103,7 @@ for (let cx = cx0 - 5; cx < cx0 + 5; cx++) {
 bigSpots.sort((a, b) => b.diam - a.diam || Math.hypot(a.x - startX, a.z - startZ) - Math.hypot(b.x - startX, b.z - startZ));
 uplandSpots.sort((a, b) => b.rockShare - a.rockShare || Math.hypot(a.x - startX, a.z - startZ) - Math.hypot(b.x - startX, b.z - startZ));
 
-// Cluster / pair distance check in chunk (0,0) and (1,0): nearest-neighbour distance vs Clark-Evans R=1 CSR expectation
+// Cluster / pair distance check in chunk (1,0): nearest-neighbour distance vs Clark-Evans R=1 CSR expectation
 const c0 = generateChunk(1, 0).filter(e => e.kind === 'rock');
 let nnSum = 0;
 for (const a of c0) {
@@ -135,7 +131,7 @@ const summary = {
   rocksPerHaDryLand: Math.round(totalRocks / (landAreaM2 / 10000)),
   sizeDistribution: ROCK_SIZES.map((s, i) => ({
     diameterM: s,
-    wentworthClass: s < 0.064 ? 'pebble' : s < 0.256 ? 'cobble' : 'boulder',
+    wentworthClass: s < 0.064 ? 'pebble' : s < 0.256 ? 'cobble' : s < 2.0 ? 'boulder' : 'whaleback-outcrop',
     count: bySizeClass[i],
     sharePct: +((bySizeClass[i] / totalRocks) * 100).toFixed(1),
   })),

@@ -52,7 +52,7 @@ try {
     const n = ++id;
     pending.set(n, r);
     ws.send(JSON.stringify({ id: n, method, params }));
-    setTimeout(() => { if (pending.delete(n)) j(Error(method + ' timeout')); }, 30000).unref();
+    setTimeout(() => { if (pending.delete(n)) j(Error(method + ' timeout')); }, 60000).unref();
   });
   const ev = async expression => {
     const r = await cdp('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
@@ -86,7 +86,7 @@ try {
       }
     }
     if (!ok) throw Error('not ready ' + url);
-    await sleep(4000);
+    await sleep(5500);
   };
   const rec = () => ev(`(()=>{const c=document.querySelector('canvas');window.auditChunks=[];window.auditRecorder=new MediaRecorder(c.captureStream(15),{mimeType:'video/webm'});auditRecorder.ondataavailable=e=>auditChunks.push(e.data);auditRecorder.start();})()`);
   const stop = async file => {
@@ -94,7 +94,7 @@ try {
     writeFileSync(`${out}/${file}`, Buffer.from(v, 'base64'));
   };
 
-  // 1) Forest floor on clay/till near (38.5, -1.5) facing north (yaw=0 -> -z toward (38.47, -5.45) 0.5m boulder + pebbles on moss)
+  // 1) Forest floor on clay/till near (38.5, -1.5) facing north (yaw=0 -> -z)
   await go(`http://127.0.0.1:${PORT}/?nomenu&bench&hour=11&at=38.5,-1.5,0`);
   await rec();
   await shoot('forest-floor', 3, 900);
@@ -104,7 +104,7 @@ try {
   await key('keyUp', 'w', 'KeyW', 87);
   await stop('forest-rocks.webm');
 
-  // 2) Upland Canadian Shield bedrock ridge (soil='bedrock', siteAt.rock = 0.85, h=7.2..8.8 m) at (128.7, 21.5) facing north (yaw=0 -> -z toward (128.68, 16.48))
+  // 2) Upland Canadian Shield bedrock ridge (soil='bedrock', siteAt.rock = 0.85, h=7.2..8.8 m) at (128.7, 21.5) facing north (yaw=0 -> -z)
   await go(`http://127.0.0.1:${PORT}/?nomenu&bench&hour=11&at=128.7,21.5,0`);
   await rec();
   await shoot('upland-ridge', 3, 900);
@@ -115,7 +115,7 @@ try {
   await stop('upland-ridge.webm');
 
   const info = await ev(`({href:location.href, w:innerWidth, h:innerHeight, status:document.getElementById('status')?.textContent})`);
-  writeFileSync(`${out}/observations.json`, JSON.stringify({ port: PORT, commit: '3c5da10', info, shots, errors }, null, 2));
+  writeFileSync(`${out}/observations.json`, JSON.stringify({ port: PORT, info, shots, errors }, null, 2));
   console.log(JSON.stringify({ shots: shots.length, errors }));
 } finally {
   ws?.close();

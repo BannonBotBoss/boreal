@@ -13,15 +13,20 @@ import { fadeOptIn } from './fade';
 import { applySurfaceBands } from './bands';
 
 export const PROP_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }); PROP_MATERIAL.userData.shared = true;
-/** Rocks: the old 16×16 striped texture can't ride in a batch (one map per material), so the same look is procedural:
- *  horizontal banding (as the old texture's rows) + fBm grain + lichen-free speckle from world position (proc/glsl). */
+/** Rocks: procedural Precambrian granite/gneiss mineral banding + fBm grain, with crustose lichen (Rhizocarpon/Cladonia)
+ *  and cap-moss (Hedwigia/Dicranum) on upward-facing surfaces (Jesberger & Sheard 1973, Can. J. Bot. 51:185). */
 export const ROCK_MATERIAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true, side: THREE.DoubleSide }); ROCK_MATERIAL.userData.shared = true;
 ROCK_MATERIAL.onBeforeCompile = shader => {
-  shader.vertexShader = 'varying vec3 vRockW;\n' + shader.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n  vec4 rw = vec4(transformed, 1.);\n  #ifdef USE_BATCHING\n    rw = batchingMatrix * rw;\n  #endif\n  vRockW = (modelMatrix * rw).xyz;');
-  shader.fragmentShader = `varying vec3 vRockW;\n${GLSL_NOISE}\n` + shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
-    float band = .9 + .1 * fract(vRockW.y * 2.3 + vnoise(vRockW.xz * 3., 7.) * .6); // old texture: brighter rows upward + jitter
-    float grain = .82 + .3 * fbm(vRockW.xz * 4. + vRockW.y * 2., 3.);
-    diffuseColor.rgb *= band * grain;`);
+  shader.vertexShader = 'varying vec3 vRockW;\nvarying vec3 vRockN;\n' + shader.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n  vec4 rw = vec4(transformed, 1.);\n  #ifdef USE_BATCHING\n    rw = batchingMatrix * rw;\n  #endif\n  vRockW = (modelMatrix * rw).xyz;\n  vRockN = normalize(mat3(modelMatrix) * objectNormal);');
+  shader.fragmentShader = `varying vec3 vRockW;\nvarying vec3 vRockN;\n${GLSL_NOISE}\n` + shader.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+    float band = .9 + .1 * fract(vRockW.y * 2.3 + vnoise(vRockW.xz * 3., 7.) * .6);
+    float grain = .84 + .28 * fbm(vRockW.xz * 4. + vRockW.y * 2., 3.);
+    diffuseColor.rgb *= band * grain;
+    float up = smoothstep(.58, .86, vRockN.y);
+    float lich = up * smoothstep(.52, .76, fbm(vRockW.xz * 2.1, 17.));
+    float moss = up * smoothstep(.74, .92, fbm(vRockW.xz * 1.1 + 5.3, 29.));
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.55, .56, .51) * grain, lich * .42);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.36, .41, .26), moss * .30);`);
 };
 type Item = { key: string; pos: THREE.Vector3; raw: THREE.Object3D[]; levels: Map<THREE.Material, THREE.BufferGeometry>[]; ranges: number[]; shadowFar: number };
 const SLICE_MS = 2; // buildJob yields once a step has run this long (core/interest 4 ms budget) [game calibration]
@@ -79,7 +84,7 @@ export function createChunkBatch() {
   return {
     meshes,
     /** Queues an entity's LOD objects; they are flattened in buildJob (yielding every ~2 ms), not in the caller's step. */
-    add(key: string, pos: THREE.Vector3, levels: THREE.Object3D[], ranges: number[]) { items.push({ key, pos: pos.clone(), raw: levels, levels: [], ranges, shadowFar: ranges[1] }); },
+    add(key: string, pos: THREE.Vector3, levels: THREE.Object3D[], ranges: number[]) { items.push({ key: key, pos: pos.clone(), raw: levels, levels: [], ranges, shadowFar: ranges[1] }); },
     /** Build one BatchedMesh per material; returns them for the chunk root. */
     build() { return finish(this.buildJob()); },
     /** build() as a budgeted job (core/interest): yields per material and every few instances. */

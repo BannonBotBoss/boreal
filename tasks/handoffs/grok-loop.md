@@ -49,3 +49,11 @@ Grok's T-0009 still in progress (grok/rabbit-clover 14:15), so only steps 1, 2, 
 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. Re-review T-0026 if agy resubmits. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
+## Run 2026-10-21 15:13 PDT
+Grok's T-0009 still in progress (grok-gait/T-0009-hare-v3 14:56), so only steps 1, 2, 2b.
+
+- [ ] Step 1b re-review T-0026 resubmission (agy/shield-rocks c7b277f/a6ab61f, event 2026-10-21T15-06-agy-complete-T-0026.json).
+- [ ] Step 1a merges.
+- [ ] Step 2 new tasks.
+- [ ] Step 2b handoff needs.
+

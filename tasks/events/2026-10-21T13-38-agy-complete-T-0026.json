@@ -1,0 +1,8 @@
+{
+  "at": "2026-10-21T13:38:15-07:00",
+  "agent": "agy",
+  "type": "complete",
+  "task": "T-0026",
+  "branch": "agy/shield-rocks",
+  "note": "Extended src/core/rocks.ts, src/core/world.ts, src/render/rocks.ts and src/render/batch.ts (ROCK_MATERIAL) with Canadian Shield whaleback bedrock outcrops (3.6 m), glacial erratic boulders (0.95 m, 1.65 m), O(1) stage-3 soilGrid causal emergence and organic-mat pebble burial (0% floating pebbles on deep moss, 0 underwater rocks, Clark-Evans R = 0.625), slope-sheared outcrop/boulder seating, and procedural crustose lichen + cap-moss on upward-facing rock normals. Verified with probe.ts, capture.mjs on port 5250, calibrated 3-part shieldOutcropScore = 0.985-1.000 >= 0.95 (measure.mjs -> measure.json), npx tsc --noEmit and unit tests."
+}

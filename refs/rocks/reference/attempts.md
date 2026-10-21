@@ -1,0 +1,14 @@
+# Canadian Shield rocks, boulders & forest-floor props reference log (agy, 2026-10-21 12:00 PDT)
+
+## 1. `refs/rocks/reference/shield-ridge-ref.png` (1280×720, from `shield-ridge-ref.jpg`)
+- **Description from game frames (`refs/rocks/shield-audit/upland-walk-2.png`, `upland-ridge-0.png`, `?at=128.7,21.5,0`, `soilAt().kind === 'bedrock'`, `siteAt().rock === 0.85`):**
+  Third-person view 3 m behind the adult grey wolf (`0.75 m` shoulder height) at 11:00 AM looking up a 5.5°–6.4° Canadian Shield granite bedrock ridge under a mixed canopy of trembling aspen, paper birch, and black spruce, with lowbush blueberry patches and forest herbs on the ground.
+- **Prompt:** "A realistic eye-level wildlife photograph (camera 1.6 m above the ground) in the northwestern Ontario boreal forest (Kenora / Lake of the Woods Canadian Shield) at 11:00 AM in late summer, seen from 3 metres behind a standing adult grey wolf (shoulder height 0.75 m) looking up a gentle 6-degree granite bedrock ridge under a mixed canopy of trembling aspen, paper birch, and black spruce. Low rounded Precambrian granite bedrock outcrops (whaleback ledges 2 to 5 metres wide) and glacial erratic boulders (0.5 to 1.8 metres across) emerge naturally through a carpet of green feathermoss (Pleurozium schreberi) and pale reindeer lichen (Cladonia), with crustose grey-green lichens and moss caps growing on the upper surfaces of the boulders. Lowbush blueberry shrubs (20-35 cm tall with tiny 8 mm blue berries) and bunchberry grow in the shallow soil pockets between the rock outcrops; small pebbles are buried beneath the moss mat rather than sitting loose on top of the moss. Natural overcast-bright daylight, realistic proportions, no people."
+- **Does it show how it looks in nature?** Yes (Attempt 1 accepted):
+  1. Shows a continuous low-relief Precambrian granite whaleback outcrop (`~2.5 m` wide, `324 px` in frame = `1.25×` wolf shoulder height) emerging through green feathermoss (*Pleurozium schreberi*) and pale *Cladonia* reindeer lichen mats, matching NW Ontario FEC V-types V30/V12 (Sims et al. 1997).
+  2. Shows glacial erratic boulders (`0.6–1.2 m` diameter) embedded in the slope with crustose lichens and moss caps on their upper surfaces.
+  3. Shows lowbush blueberry shrubs (`20–30 cm` tall) with natural `6–10 mm` berries in soil pockets, and small stones buried under the moss mat except at weathered outcrop margins.
+- **Calibrated metric check (`refs/rocks/shield-audit/measure.mjs`):**
+  - Known match (`shield-ridge-ref.png`): `rockCoverShare = 0.1743`, `largestRatioToWolfWithers = 1.246` -> **`calibratedScore = 0.984` (98.4%)**.
+  - Known mismatch (`forest-floor-0.png`): `rockCoverShare = 0.0000` -> **`calibratedScore = 0.000` (0.0%)**.
+  - Game on bedrock ridge (`upland-walk-2.png` / `upland-ridge-0.png`): `rockCoverShare = 0.0002–0.0003`, `largestRatioToWolfWithers = 0.028` -> **`calibratedScore = 0.015` (1.5%, FAIL)**.

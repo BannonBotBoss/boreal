@@ -1,0 +1,90 @@
+{
+ "A_small_lake_in_Algonquin_Provincial_Park.jpg": {
+  "size": [
+   1280,
+   853
+  ],
+  "treeline": {
+   "rgb": [
+    113.4,
+    103.3,
+    28.6
+   ],
+   "relLum": 0.1338
+  },
+  "water_under": {
+   "rgb": [
+    102,
+    87.7,
+    17
+   ],
+   "relLum": 0.098
+  },
+  "ratio": 0.732
+ },
+ "Lakeshore_in_southern_Finland_in_the_summer_2008_forest_and_.jpg": {
+  "size": [
+   1280,
+   960
+  ],
+  "treeline": {
+   "rgb": [
+    67.2,
+    75.1,
+    44.1
+   ],
+   "relLum": 0.0642
+  },
+  "water_under": {
+   "rgb": [
+    54.6,
+    60.4,
+    40.3
+   ],
+   "relLum": 0.0423
+  },
+  "ratio": 0.659
+ },
+ "Small_lake_in_the_depths_of_the_ta_ga.jpg": {
+  "size": [
+   1280,
+   958
+  ],
+  "treeline": {
+   "rgb": [
+    70.1,
+    74,
+    54.1
+   ],
+   "relLum": 0.0647
+  },
+  "water_under": {
+   "rgb": [
+    113.9,
+    113.9,
+    111.5
+   ],
+   "relLum": 0.1674
+  },
+  "ratio": 2.587
+ },
+ "GAME noon-0.png": {
+  "treeline": {
+   "rgb": [
+    44.3,
+    57,
+    52.9
+   ],
+   "relLum": 0.0372
+  },
+  "water_under": {
+   "rgb": [
+    91.5,
+    126,
+    128.6
+   ],
+   "relLum": 0.1875
+  },
+  "ratio": 5.04
+ }
+}

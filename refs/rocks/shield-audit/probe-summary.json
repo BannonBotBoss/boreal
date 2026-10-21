@@ -1,0 +1,261 @@
+{
+  "sampledChunks": 100,
+  "totalAreaHa": 16,
+  "dryLandAreaHa": 6.19,
+  "totalRocks": 1772,
+  "underwaterRocksInStagedLakesOrRivers": 0,
+  "candidateRocks": 74,
+  "detailStones": 1698,
+  "rocksPerHaDryLand": 286,
+  "sizeDistribution": [
+    {
+      "diameterM": 0.06,
+      "wentworthClass": "pebble",
+      "count": 241,
+      "sharePct": 13.6
+    },
+    {
+      "diameterM": 0.08,
+      "wentworthClass": "cobble",
+      "count": 74,
+      "sharePct": 4.2
+    },
+    {
+      "diameterM": 0.1,
+      "wentworthClass": "cobble",
+      "count": 53,
+      "sharePct": 3
+    },
+    {
+      "diameterM": 0.13,
+      "wentworthClass": "cobble",
+      "count": 45,
+      "sharePct": 2.5
+    },
+    {
+      "diameterM": 0.17,
+      "wentworthClass": "cobble",
+      "count": 49,
+      "sharePct": 2.8
+    },
+    {
+      "diameterM": 0.22,
+      "wentworthClass": "cobble",
+      "count": 43,
+      "sharePct": 2.4
+    },
+    {
+      "diameterM": 0.29,
+      "wentworthClass": "boulder",
+      "count": 134,
+      "sharePct": 7.6
+    },
+    {
+      "diameterM": 0.38,
+      "wentworthClass": "boulder",
+      "count": 153,
+      "sharePct": 8.6
+    },
+    {
+      "diameterM": 0.5,
+      "wentworthClass": "boulder",
+      "count": 163,
+      "sharePct": 9.2
+    },
+    {
+      "diameterM": 0.95,
+      "wentworthClass": "boulder",
+      "count": 442,
+      "sharePct": 24.9
+    },
+    {
+      "diameterM": 1.65,
+      "wentworthClass": "boulder",
+      "count": 246,
+      "sharePct": 13.9
+    },
+    {
+      "diameterM": 3.6,
+      "wentworthClass": "whaleback-outcrop",
+      "count": 129,
+      "sharePct": 7.3
+    }
+  ],
+  "maxDiameterM": 3.6,
+  "shareUnder20cmPct": 26.1,
+  "shareOver50cmPct": 46.1,
+  "sharePebblesSittingOnDeepOrganicFloorPct": 0,
+  "shareOnBedrockUplandPct": 53.5,
+  "perchedSmallRocksOnSlopeCount": 0,
+  "halfFloatingBigRocksOnSlopeCount": 6,
+  "spatialPatternChunk1_0": {
+    "rockCount": 53,
+    "meanNearestNeighbourM": 1.716,
+    "expectedCsrM": 2.747,
+    "clarkEvansR": 0.625
+  },
+  "sampleBigRocksNearSpawn": [
+    {
+      "key": "stones:2:-1:103",
+      "x": 83.78,
+      "z": -19.72,
+      "h": 6.44,
+      "diam": 3.6,
+      "slopeDeg": 7.3,
+      "rockShare": 0.44,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:-1:35",
+      "x": 80.89,
+      "z": -27.11,
+      "h": 6.21,
+      "diam": 3.6,
+      "slopeDeg": 8,
+      "rockShare": 0.53,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:1:-1:19",
+      "x": 75.92,
+      "z": -35.93,
+      "h": 4.72,
+      "diam": 3.6,
+      "slopeDeg": 11.7,
+      "rockShare": 0.45,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:0:113",
+      "x": 83.98,
+      "z": 22.74,
+      "h": 7.31,
+      "diam": 3.6,
+      "slopeDeg": 8.9,
+      "rockShare": 0.52,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:0:39",
+      "x": 87.6,
+      "z": 22.89,
+      "h": 7.81,
+      "diam": 3.6,
+      "slopeDeg": 8.2,
+      "rockShare": 0.6,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:-1:112",
+      "x": 89.42,
+      "z": -29.27,
+      "h": 7.46,
+      "diam": 3.6,
+      "slopeDeg": 6.1,
+      "rockShare": 0.81,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:0:105",
+      "x": 94.35,
+      "z": 20.85,
+      "h": 8.02,
+      "diam": 3.6,
+      "slopeDeg": 3.7,
+      "rockShare": 0.63,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:1:64",
+      "x": 82.8,
+      "z": 42.48,
+      "h": 5.83,
+      "diam": 3.6,
+      "slopeDeg": 9.7,
+      "rockShare": 0.38,
+      "soil": "bedrock"
+    }
+  ],
+  "sampleUplandRocksNearSpawn": [
+    {
+      "key": "stones:2:0:72",
+      "x": 103.02,
+      "z": 29.96,
+      "h": 8.68,
+      "diam": 0.95,
+      "slopeDeg": 0.8,
+      "rockShare": 0.85,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:-2:116",
+      "x": 90.05,
+      "z": -56.44,
+      "h": 3.21,
+      "diam": 1.65,
+      "slopeDeg": 9.3,
+      "rockShare": 0.85,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:0:119",
+      "x": 119.87,
+      "z": 12.29,
+      "h": 7.34,
+      "diam": 0.95,
+      "slopeDeg": 5.3,
+      "rockShare": 0.85,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:3:0:4",
+      "x": 121.38,
+      "z": 2.17,
+      "h": 6.37,
+      "diam": 3.6,
+      "slopeDeg": 6.3,
+      "rockShare": 0.85,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:3:0:86",
+      "x": 121.14,
+      "z": 8.07,
+      "h": 6.92,
+      "diam": 1.65,
+      "slopeDeg": 5.5,
+      "rockShare": 0.85,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:0:56",
+      "x": 117.09,
+      "z": 28.53,
+      "h": 8.76,
+      "diam": 3.6,
+      "slopeDeg": 5.1,
+      "rockShare": 0.85,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:3:0:24",
+      "x": 122.5,
+      "z": 0.83,
+      "h": 6.23,
+      "diam": 0.95,
+      "slopeDeg": 5.1,
+      "rockShare": 0.85,
+      "soil": "bedrock"
+    },
+    {
+      "key": "stones:2:0:74",
+      "x": 117.62,
+      "z": 30.02,
+      "h": 8.86,
+      "diam": 1.65,
+      "slopeDeg": 1.4,
+      "rockShare": 0.85,
+      "soil": "bedrock"
+    }
+  ]
+}

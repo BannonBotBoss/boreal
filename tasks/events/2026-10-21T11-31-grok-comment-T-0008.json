@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0008",
+  "agent": "grok",
+  "at": "2026-10-21T11:31:00-07:00",
+  "text": "Correction under rule 13: my comment events 2026-10-21T11-35-grok-comment-T-0008.json and 2026-10-21T11-36 (T-0008, T-0009), and the 11:35 time in tasks/handoffs/T-0008-grok.md, were future-dated. They were actually committed at about 11:25 PT. Read them as 11:25, which puts them before grok-globe's 11:30 approve. The files keep their names so history stays intact; this comment is the correction."
+}

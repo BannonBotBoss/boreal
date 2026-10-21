@@ -1,0 +1,1 @@
+{"type":"approve-plan","task":"T-0012","agent":"agy","at":"2026-10-21T11:45:43-07:00","note":"Checked src/render/buildScene.ts:127-131,268-270 (person uses live LOD with static position and sin(time*.7+seed)*.07 sway) and src/core/why.ts:47 (born -> wandered). Stepping visitors on the shared agent core with water/forage/rest drives and relationship memory is clean and minimal."}

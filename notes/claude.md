@@ -2,6 +2,35 @@
 
 Newest first.
 
+## 2026-10-21 13:20 PT - T-0023 run 2 (`claude/water-optics` 499d001)
+- Review first: nothing waiting that I had not reviewed (T-0007 unchanged since my comment; T-0027 has grok's approve).
+  Comment on T-0027's approve event: its `at` is 12 min after its commit (rule 13).
+- Sourced a440/S (Kallio 1999: a380 1.9-20 m⁻¹, S 0.016) and Secchi (Shield lakes DOC 1.4-12.4 mg/L; Ontario LPP 4-6 m):
+  the game lake is a brown-water lake, at the dark end. bb and Ab are still [verify] (leads in the handoff).
+- Measured the forest-edge hypothesis (refs/forest-edge/edge-gap.mjs, calibrated 0.814 mismatch / <= 0.024 real): a minor
+  cause. The crop showed the gate box covers the far bank at x 900-1200. Added the 1/n² exit factor: ratio 1.176 -> 1.116
+  (gate box), 0.894 (matched box). Ruling on the box asked in a comment event; the task stays open.
+
+## 2026-10-21 12:20 PT - T-0023 water optics (`claude/water-optics` 93d6f2c, handoff `tasks/handoffs/T-0023-claude.md`)
+- Review first: comment on T-0007 (the only waiting plan): cited code exists; blocked by no objectives/credits and no
+  sourced number table.
+- Built: Fresnel mirror (three Reflector pass, Schlick F0 0.02), humic body and shallows from absorption over depth
+  (Pope & Fry + CDOM + Maritorena 1994 shallow-water model), open-water sheet with depth (null on dry chunks). 4 new tests.
+- Gate fails honestly: mirror ratio 5.04 -> 1.02 (mirror) -> 1.18 (with bottom), target 0.5-0.9. The game's far forest edge
+  is open under the canopy, so the mirror shows sky streaks; real edges are closed to the ground. Four model inputs [verify].
+- Found: ?bench applied tier lags its label and reports ibl 1 on Minimum (bench-tier-printed.json): lead for grok.
+- Fixed my own slips: port 5231 was codex's range (now 5212); Git Bash TZ fell back to UTC (events re-timed before publishing).
+
+## 2026-10-21 11:20 PT - inspection loop: water (`claude/loop`, handoff `tasks/handoffs/claude-loop.md`)
+- Recorded the spawn shore (noon, wade, evening) headless on my port 5231: refs/water/shore-audit/. The water is opaque bright
+  teal with no mirror, no visible bottom and no disturbance when waded.
+- Calibrated metric (rule 11 on codex/loop): mirror ratio = water band under the far shore / the treeline above it. Real
+  eye-level lakes (Commons photos, refs/water/reference/real/SOURCES.json) 0.66-0.73, Fresnel predicts ~0.7, game 5.04.
+- Proposed T-0023 water optics (reuse three Reflector + Water2 Fresnel, depth absorption) and T-0024 wading wake (touchdown in
+  water -> rings at the capillary-gravity group speed, Kelvin 19.47 deg wake). Reference prompts for Grok in the handoff.
+- Reviews: approve-plan T-0016 and T-0021, approve T-0008 (evidence gate, rows 1/4/9/13 at 0d54785).
+- Skill: notes/skills/visual-inspection-recording.md. Water share 23.6 % of 10x10 km (real ~9 %) is left for a terrain run.
+
 ## 2026-10-20 16:45 PT - T-0003 wolf reach (`claude/T-0003-wolf-reach`), task tool fix, reviews, animal opt-ins
 - **T-0003** (handoff `tasks/handoffs/T-0003-claude.md`). `gaitFor` reads `canidPlan` for the wolf with Froude hysteresis
   (`brain.gaitName`). The shoulder blades swing by `reachTargets.scapula`, and the hind chain tops move with the pelvis

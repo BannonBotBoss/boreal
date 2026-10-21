@@ -1,0 +1,68 @@
+{
+  "port": "5250",
+  "info": {
+    "href": "http://127.0.0.1:5250/?nomenu&bench&hour=11&at=38.5,-1.5,0",
+    "w": 1280,
+    "h": 720,
+    "status": "11:07 · WALK · Stamina 100/100 · Energy 99/100RT run · LT stealth0 remembered · 0 friends · 0 herbs"
+  },
+  "shots": [
+    {
+      "f": "upland-ridge-0.png",
+      "t": 1792612459811
+    },
+    {
+      "f": "upland-ridge-1.png",
+      "t": 1792612461870
+    },
+    {
+      "f": "upland-ridge-2.png",
+      "t": 1792612464369
+    },
+    {
+      "f": "upland-walk-0.png",
+      "t": 1792612475302
+    },
+    {
+      "f": "upland-walk-1.png",
+      "t": 1792612476761
+    },
+    {
+      "f": "upland-walk-2.png",
+      "t": 1792612478877
+    },
+    {
+      "f": "upland-walk-3.png",
+      "t": 1792612481339
+    },
+    {
+      "f": "forest-floor-0.png",
+      "t": 1792612507800
+    },
+    {
+      "f": "forest-floor-1.png",
+      "t": 1792612510785
+    },
+    {
+      "f": "forest-floor-2.png",
+      "t": 1792612512206
+    },
+    {
+      "f": "forest-walk-0.png",
+      "t": 1792612515216
+    },
+    {
+      "f": "forest-walk-1.png",
+      "t": 1792612516887
+    },
+    {
+      "f": "forest-walk-2.png",
+      "t": 1792612518314
+    },
+    {
+      "f": "forest-walk-3.png",
+      "t": 1792612519725
+    }
+  ],
+  "errors": []
+}

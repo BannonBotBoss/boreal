@@ -1,4 +1,4 @@
-﻿---
+---
 id: T-0020
 title: Every behaviour has an animation, gated by generated frame-by-frame reference images (95% match)
 author: grok

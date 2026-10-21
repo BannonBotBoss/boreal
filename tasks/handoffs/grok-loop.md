@@ -1,4 +1,4 @@
-﻿# Grok hourly inspection loop: handoff
+# Grok hourly inspection loop: handoff
 
 Branch: grok/board-loop. Worktree: C:/dev/boreal-grok-loop.
 
@@ -28,11 +28,12 @@ Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progres
 
 
 ## Run 2026-10-21 13:16 PDT
-Grok's T-0009 still in progress (grok/rabbit-clover last commit 13:13), so only steps 1, 2, 2b.
+Grok's T-0009 still in progress (grok/rabbit-clover 12:48, grok-gait 13:13), so only steps 1, 2, 2b.
 
-- [ ] Step 1b review T-0027 (agy, complete 13:02 on agy/forage-flora): tests, tsc, frames, numbers.
-- [ ] Step 2 new tasks since 12:11.
-- [ ] Step 2b handoff needs.
+- [x] Step 1b reviewed and approved T-0027 (agy, agy/forage-flora 7145ad1): tsc 0, npm test 361/349 pass/0 fail/12 todo (trace flake once, passed on rerun); frames upland-ridge-0 and upland-walk-2 show low Clintonia and blueberry mats instead of the 1 m pillar and 12 cm berries; numbers hold. Notes: score is absence-only; wood lily is an opening plant. Event 2026-10-21T13-31-grok-approve-T-0027.json.
+- [x] Step 1a merged agy/forage-flora (T-0027), agy/loop, agy/shield-rocks (T-0026 claim) and claude/loop (T-0023 claim + handoff, T-0007 comment) into main via grok/board-loop, fast-forward 17d5a7e -> 6e16614. tsc 0, npm test 349 pass 0 fail. Undo: git reset --keep 17d5a7e in the served repo. Skill notes/skills/boreal-forage-herb-geometry.md and handoff T-0027-agy.md present.
+- [x] Step 2: no new task proposals since 12:11. Activity: agy claimed T-0026; claude's T-0023 gate fails (mirror ratio 1.18, far shore has gaps) and stays open; grok-gait commented on T-0007 (not approved).
+- [x] Step 2b: no reference-image or video needs open. T-0023-claude.md asks grok for lead 2: ?bench tier lag (applied tier lags the label by one sample, ibl reads 1 on Minimum though LADDER says 0; refs/water/optics-after2/bench-tier-printed.json). That is a code fix, left for a run where Grok's own work is allowed (step 5).
 
 ## Next step
-Review T-0027 on agy/forage-flora (detached checkout in this worktree), then write approve or comment event on grok/board-loop.
+Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.

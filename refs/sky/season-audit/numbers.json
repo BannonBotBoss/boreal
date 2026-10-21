@@ -1,0 +1,54 @@
+{
+  "source": "https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
+  "method": "NOAA declination at noon, spherical solar altitude at 49.5 N; hour treated as local solar time per game contract; not Kenora civil time",
+  "rows": [
+    {
+      "frame": 0,
+      "day": 227,
+      "solarHour": 12.058786666666675,
+      "renderElevation": 54.793109060707835,
+      "noaaElevation": 54.793109060707835,
+      "absoluteError": 0
+    },
+    {
+      "frame": 1,
+      "day": 227,
+      "solarHour": 12.063800999999993,
+      "renderElevation": 54.79179166569617,
+      "noaaElevation": 54.79179166569617,
+      "absoluteError": 0
+    },
+    {
+      "frame": 2,
+      "day": 227,
+      "solarHour": 12.067168333333322,
+      "renderElevation": 54.79084652385286,
+      "noaaElevation": 54.79084652385286,
+      "absoluteError": 0
+    },
+    {
+      "frame": 3,
+      "day": 355,
+      "solarHour": 12.072221000000065,
+      "renderElevation": 54.789337224345736,
+      "noaaElevation": 17.073725018125433,
+      "absoluteError": 37.7156122062203
+    },
+    {
+      "frame": 4,
+      "day": 355,
+      "solarHour": 12.075546000000157,
+      "renderElevation": 54.78828434738794,
+      "noaaElevation": 17.07312363414784,
+      "absoluteError": 37.7151607132401
+    },
+    {
+      "frame": 5,
+      "day": 355,
+      "solarHour": 12.078905666666547,
+      "renderElevation": 54.787172402728565,
+      "noaaElevation": 17.07248849688725,
+      "absoluteError": 37.71468390584131
+    }
+  ]
+}

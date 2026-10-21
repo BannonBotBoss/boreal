@@ -1,0 +1,200 @@
+[
+ {
+  "file": "refs/water/reference/real/A_small_lake_in_Algonquin_Provincial_Park.jpg",
+  "band": [
+   0,
+   545,
+   1050,
+   630
+  ],
+  "sky": [
+   350,
+   60,
+   850,
+   120
+  ],
+  "kind": "match: closed real edge",
+  "size": [
+   1280,
+   853
+  ],
+  "skyL": 0.5129,
+  "skyShare": 0
+ },
+ {
+  "file": "refs/water/reference/real/Lakeshore_in_southern_Finland_in_the_summer_2008_forest_and_.jpg",
+  "band": [
+   200,
+   400,
+   700,
+   490
+  ],
+  "sky": [
+   0,
+   150,
+   300,
+   300
+  ],
+  "kind": "match: closed real edge",
+  "size": [
+   1280,
+   960
+  ],
+  "skyL": 1,
+  "skyShare": 0.0021
+ },
+ {
+  "file": "refs/water/reference/real/Small_lake_in_the_depths_of_the_ta_ga.jpg",
+  "band": [
+   0,
+   400,
+   1280,
+   470
+  ],
+  "sky": [
+   0,
+   50,
+   500,
+   150
+  ],
+  "kind": "match: open taiga, low band",
+  "size": [
+   1280,
+   958
+  ],
+  "skyL": 0.9308,
+  "skyShare": 0
+ },
+ {
+  "file": "refs/water/reference/real/Small_lake_in_the_depths_of_the_ta_ga.jpg",
+  "band": [
+   0,
+   200,
+   1280,
+   260
+  ],
+  "sky": [
+   0,
+   50,
+   500,
+   150
+  ],
+  "kind": "mismatch: sky between spruce spires",
+  "size": [
+   1280,
+   958
+  ],
+  "skyL": 0.9308,
+  "skyShare": 0.8141
+ },
+ {
+  "file": "refs/water/reference/real/A_small_lake_in_Algonquin_Provincial_Park.jpg",
+  "band": [
+   100,
+   700,
+   400,
+   790
+  ],
+  "sky": [
+   350,
+   60,
+   850,
+   120
+  ],
+  "kind": "match: mirror of a closed edge",
+  "size": [
+   1280,
+   853
+  ],
+  "skyL": 0.5129,
+  "skyShare": 0
+ },
+ {
+  "file": "refs/water/reference/real/Lakeshore_in_southern_Finland_in_the_summer_2008_forest_and_.jpg",
+  "band": [
+   400,
+   560,
+   600,
+   700
+  ],
+  "sky": [
+   0,
+   150,
+   300,
+   300
+  ],
+  "kind": "match: mirror of a closed edge",
+  "size": [
+   1280,
+   960
+  ],
+  "skyL": 1,
+  "skyShare": 0.0232
+ },
+ {
+  "file": "refs/water/reference/real/Small_lake_in_the_depths_of_the_ta_ga.jpg",
+  "band": [
+   720,
+   500,
+   880,
+   580
+  ],
+  "sky": [
+   0,
+   50,
+   500,
+   150
+  ],
+  "kind": "match: mirror of open taiga",
+  "size": [
+   1280,
+   958
+  ],
+  "skyL": 0.9308,
+  "skyShare": 0.0244
+ },
+ {
+  "file": "refs/water/shore-audit/noon-0.png",
+  "band": [
+   250,
+   185,
+   1270,
+   245
+  ],
+  "sky": [
+   240,
+   100,
+   330,
+   140
+  ],
+  "kind": "GAME main far shore, low band",
+  "size": [
+   1280,
+   720
+  ],
+  "skyL": 0.7977,
+  "skyShare": 0.0428
+ },
+ {
+  "file": "C:/dev/boreal-claude-water-optics/refs/water/optics-after2/noon-0.png",
+  "band": [
+   300,
+   262,
+   1200,
+   285
+  ],
+  "sky": [
+   240,
+   100,
+   330,
+   140
+  ],
+  "kind": "GAME T-0023 93d6f2c mirror of the far shore",
+  "size": [
+   1280,
+   720
+  ],
+  "skyL": 0.7977,
+  "skyShare": 0.0339
+ }
+]

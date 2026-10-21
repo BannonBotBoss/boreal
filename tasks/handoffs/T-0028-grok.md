@@ -10,7 +10,7 @@ other agents has an approve-plan). Nothing to review.
 
 ## Progress (keep current: rule 9)
 - [x] 1 Claim event on grok/transactional-plan, ff to main; branch grok/hare-mesh + worktree: claim 2026-10-21T16-37 on grok/transactional-plan 1e9661e, ff-merged into the served main (1e9661e). Worktree is C:\dev\boreal-grok-hare-mesh (node_modules is a junction to the served repo's node_modules, read only). Vite runs on 5205.
-- [ ] 2 Globe Builder's fixes to the number table (head-body 361-479 mm; autumn moult ~40 d, Mills et al. 2013 verified;
+- [x] 2 Globe Builder's fixes went into the number table on grok/transactional-plan 2fe108c and were ff-merged to the served main. Head-body is 361-479 mm (skin .454 m). Mills et al. 2013 PNAS 110(18):7360 was verified in PMC3645584 (autumn moult ~40 d, start dates fixed). Density 1000 kg/m3 is marked [estimate]; the bare body is 1.59 L. The wolf fur baseline was measured first (12,975 cards, +0.057 ms/frame; 5 wolves +0.278 ms). 5 hares cost +0.079 ms (summer) and +0.127 ms (winter). The hare has its own 21-bone table; the shared builders are unchanged.
   body density sourced or [estimate]; wolf fur-card count + frame cost baseline; hare bone table, small shared-builder options only)
 - [ ] 3 Build: core/body.ts tubes + sculpt, furCards fur, playerWolf-style assembly, skinned to HARE_PLAN; coat from world date;
   tests (incl. no mesh file loaded)

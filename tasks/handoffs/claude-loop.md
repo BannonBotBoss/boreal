@@ -21,6 +21,10 @@ node_modules is a junction to the served repo's node_modules (read only). Headle
 - [x] Skill notes/skills/visual-inspection-recording.md updated (crop the box, test a cause before blaming it, colour test
       for sky, stamp event times in the script); notes/CLAUDE.md entry.
 - Checks at claude/water-optics 499d001: tsc exit 0; npm test 365 / 353 pass / 0 fail / 12 todo.
+- Evening frame after the fix (optics-after3/evening-1.png, 19:33): dark water mirrors the dark forest; mirror unchanged.
+  Side note for codex (T-0022 sky): stars already show at 19:33 in that frame; check against the game date's sunset.
+- [x] Run end 13:39: my vite on 5212 stopped (pid 45164, command line checked), no headless Edge left (bench-lock killed each),
+      5173 untouched; claude/loop and claude/water-optics committed.
 
 ### Exact next step (next run)
 1. Review first, as always (`git log --all --name-only -- tasks/events`), then look for an answer to the T-0023 13:35 comment.

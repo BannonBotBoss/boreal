@@ -1,4 +1,4 @@
-﻿# Grok Bot notes
+# Grok Bot notes
 
 ## 2026-10-18 16:55 PT - Grok Bot (shared perf): the intermittent "2 fps on every tier" headless runs are the GPU vsync thread
 - **Symptom:** a headless smoke/bench page loads in 140-190 s (not ~30 s), then draws ~2 fps on every tier, Minimum included. Main thread 98 % idle, GPU 0.2-9 ms/frame (timer query), no shader link churn, VRAM 5 of 8 GB. Same build alternates good/bad; the served tree and worktrees both hit it.
@@ -52,3 +52,36 @@ Branch only; Matthew merges. `?trees=v2` is OFF by default.
   whose diet includes 'hare' (prey as FoodSource / chase action to add); people = record with no diet. Movement stays host-side
   for rigged animals (pipeline gives heading + speed + pose).
 - ?hare=debug: labels per hare (action, why, E/S/R, hunger, threat vs notice, clover units) and per nearby patch.
+
+## Clover and hare numbers, nature-checked (grok/rabbit-clover, 2026-10-21 11:00 PT)
+Matthew: "how does a clover patch run out in nature?" and "do my numbers resemble nature?". Every rate below is a sourced
+figure; nothing was tuned to look good. All biology runs in world (real) seconds like the other growth fields; only the
+time-of-day dial is 12x (REAL_SECONDS_PER_GAME_HOUR = 300), so one game day of sun (2 real h) gives 2 h of growth.
+
+| value | game number | real-world figure + source | resembles nature? |
+| --- | --- | --- | --- |
+| full clover patch (edible leaf) | 10 000 units/m^2 = 150 g DM/m^2 (1 unit = 15 mg DM) | 'Kopu' white clover 1.6 t DM/ha = 160 g/m^2 standing in spring (Olykan et al. 2021, J. NZ Grasslands 83, doi:10.33584/jnzg.2021.83.3494); leaf = lamina 15-20 mg + petiole 6-11 mg (J. NZ Grasslands 83, doi:10.33584/jnzg.2021.83.3498) | yes (Matthew's density kept; unit = about half a leaf) |
+| residual (ungrazable) | stolon 50 g DM/m^2, never eaten; regrowth needs it | above-ground stolon 50-55 g/m^2 (Lincoln College stocking-rate study, hdl:10182/3015); "the stolon stays close to the ground so is rarely grazed" (DairyNZ, white clover) | yes (new) |
+| regrowth rate | 6 g DM/m^2/day at full sun, >= 20 C | white clover 10 (winter) to 70 (summer) kg DM/ha/day, irrigated swards (Aust. J. Exp. Agric. 45:1577, 2005); Kopu peak 65 kg/ha/d (Olykan 2021) | yes |
+| bare -> full | 25 days of summer (real time) | recovery 21-28 days after grazing/clipping (Miller et al. 1951, via UC SAREP white clover page) | yes; Matthew's 15 min FAILED (~2 400x too fast) and was replaced |
+| night | 0 | net growth comes from photosynthesis (daylight) | yes |
+| light | x site light (0.55-1 where clover grows) | white clover is shade-intolerant; low PAR lowers shoot DM (J. Inst. Agric. Anim. Sci. 27, doi:10.3126/jiaas.v27i0.703) | yes (linear is a simplification) |
+| temperature / season | 0 at <= 5 C, linear to 1 at 20 C (climate() normals) | development base < 4 C, optimum ~27 C (Grass Forage Sci. 2006, doi:10.1111/j.1365-2494.2006.00553.x); clover needs ~10 C soil (Teagasc tech note); optimum ~5 C above ryegrass (DairyNZ) | yes; winter (Jan noon -13 C) and frost stop growth; drought not modelled |
+| hare daily intake | energy 100 = 167 g DM = 11 133 units | snowshoe hares ate 167 +- 47 g DM/day in summer, 103 in winter (captive, Seeley Lake MT, UMT thesis); 6.4 % of body mass ad lib (Holter et al. 1974, Can. J. Zool., doi:10.1139/z74-201) | yes |
+| energy per unit | 111 units = +1 energy | follows from the line above | yes; Matthew's 100 is within 10 % |
+| energy drain | 100 per real day (1/864 per s) | the day's food is spent over a day | yes; Matthew's 1/8 per s FAILED (a day's food in 13 min) and was replaced |
+| flight cost | x8 the daily-average rate | maximal aerobic rate ~10x resting in mammals (review, J. Exp. Biol. 160:209, 1991); a 2-3 s sprint is largely anaerobic, above that | flagged: plausible, no hare figure; effect tiny (8 s of flight = 0.07 energy) |
+| cropping (bite) rate | 4.1 units per 3 s = 20.5 mg DM/s while in 'feed' | 167 g/day over 8.7 h/day of foraging x 26 % of it actually cropping (Belovsky 1984, Theor. Popul. Biol., doi:10.1016/0040-5809(84)90009-1); herbs max 2 g/min = 34 mg/s (same, Table I) | yes; Matthew's 100 units per 3 s FAILED (500 mg/s, a day's food in 5.5 min) and was replaced |
+| bout ~3 s, head up ~1 s | kept (Matthew) | Belovsky: cropping is 26 % of active time; the rest is moving, chewing, standing | plausible, not checked against a bout-length source |
+
+### How a patch runs out (the answer)
+In nature a patch runs out when the animals cropping it eat faster than its stolons regrow leaf. One hare crops at
+1.37 units/s; a 1 m patch regrows 0.025 units/s at noon in August (0.015 averaged over the day): ~55x slower.
+- one hare, cropping nonstop: grazes a 1 m patch (31 416 units, 471 g) out in 6.5 h; a 0.5 m patch in 1.6 h; 1.4 m in 12.8 h.
+- one hare at nature's time budget (2.26 h of cropping a day) on that one patch: 3.2 days (0.7 d for 0.5 m, 7.1 d for 1.4 m).
+- recovery from grazed out: 25 days of summer sun (real time), any patch size; none in winter.
+- in a 10 min play session one hare crops ~820 units (2.6 % of a 1 m patch): thinning is NOT visible in a session.
+  Visible depletion needs many grazers (later deer through the same feed contact: deer eat ~10x a hare [estimate, verify]) or hours of play.
+- Caveat: clover tiles are dropped beyond 2x the clover radius and rebuilt full when you return; state is not saved, so a
+  grazed patch only stays grazed while you stay near it. Persisting it (closed form over world seconds + grazed deltas) is
+  T-0015 / the T-0009 "closed form" criterion, not done.

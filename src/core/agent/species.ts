@@ -41,8 +41,11 @@ export interface AgentSpecies {
 }
 
 /** Snowshoe hare (Lepus americanus). Matthew's numbers are the calm, fed defaults: graze 3 s, head up 1 s, sprint 3 s, pause
- *  1 s; energy 0..100, -1/8 per s resting, x8 fleeing (-1/s); stamina emptied by 8 s of flight, refilled by 8 s of rest;
- *  clover 100 units per 3 s, 100 units = +1 energy. Senses / mood bends are game calibration. Hares are crepuscular with
+ *  1 s; stamina emptied by 8 s of flight, refilled by 8 s of rest. Energy and diet are nature-checked (notes/grok.md):
+ *  energy 100 = one summer day's food, 167 g DM (captive snowshoe hares, Seeley Lake MT, UMT thesis); spent over a real day
+ *  (100 per 86 400 s), x8 in flight [estimate: sprint vs daily-average metabolism, verify]. Clover (1 unit = 15 mg DM, core/
+ *  clover): 167 g = 11 133 units, so 111 units = +1 energy; cropping rate = 167 g over 8.7 h/day foraging x 26 % of it
+ *  actually cropping (Belovsky 1984, Theor. Popul. Biol., doi:10.1016/0040-5809(84)90009-1) = 20.5 mg/s = 4.1 units per 3 s bite bout. Senses / mood bends are game calibration. Hares are crepuscular with
  *  large eyes (good dim-light vision: night floor .45) and very mobile ears [game calibration, verify]. */
 export const HARE_AGENT: AgentSpecies = {
   id: 'hare',
@@ -54,7 +57,7 @@ export const HARE_AGENT: AgentSpecies = {
   },
   fear: { wolf: 1 },
   levels: {
-    energy: { max: 100, start: 70, drain: 1 / 8, fleeMult: 8, fed: 80, full: 97 },
+    energy: { max: 100, start: 70, drain: 100 / 86400, fleeMult: 8, fed: 80, full: 97 },
     stamina: { max: 100, drainSeconds: 8, recoverSeconds: 8 },
     relaxation: { max: 100, threatDrop: 60, fleeDrop: 12, recover: 3, panic: .6 },
   },
@@ -65,5 +68,5 @@ export const HARE_AGENT: AgentSpecies = {
   reach: { food: 20, seek: 10, step: [.25, .45], stepTurn: .5, giveUp: 25 },
   speed: { feedStep: .35, approach: 1.2, flee: 8.5, fleeTired: 5 },
   flee: { burstSeconds: 2.5, zig: [.45, .9], zigAngle: .35 },
-  diet: { clover: { eatUnits: 100, eatSeconds: 3, unitsPerEnergy: 100 } },
+  diet: { clover: { eatUnits: 4.1, eatSeconds: 3, unitsPerEnergy: 111 } },
 };

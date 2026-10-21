@@ -12,7 +12,7 @@ import { heightAt, WORLD_SEED } from '../core/world';
 import { stream, range } from '../proc/rng';
 import { LEVEL } from '../core/tuning';
 import { f, scope } from '../proc/trace';
-import { windAt } from '../core/weather';
+import { windAt, climate, WEATHER } from '../core/weather';
 import { siteAt, footprintsIn, covered } from '../core/flora/site';
 import { createCloverField, cloverSuitability, CLOVER } from '../core/clover';
 import { createAgent, stepAgent, poseOf, actionName, moods, modulators, type Agent, type Other } from '../core/agent/pipeline';
@@ -91,7 +91,7 @@ export function createHares(scene: THREE.Scene) {
   function update(dt: number, wolf: WolfInfo): HareEvent[] {
     const events: HareEvent[] = []; time += dt; lastWolf = wolf;
     const daylight = wolf.daylight ?? 1, speed = wolf.speed ?? (wolf.moving ? 2 : 0);
-    clover.ensure(wolf.x, wolf.z, HARE.cloverRadius, 1); clover.regrow(dt, daylight); cloverDraw.update(dt);
+    clover.ensure(wolf.x, wolf.z, HARE.cloverRadius, 1); clover.regrow(dt, daylight, climate(WEATHER.day, WEATHER.hour).tC, WEATHER.day); cloverDraw.update(dt);
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }
     for (let k = 0; k < HARE.count && hares.length + pending.length < HARE.count; k++) spawn(wolf.x, wolf.z); // bounded: spawn() can fail (no dry land in range)
     while (hares.length > HARE.count) remove(hares[hares.length - 1]); // count lowered in settings
@@ -127,7 +127,7 @@ export function createHares(scene: THREE.Scene) {
     const near = [...clover.list()].map(p => ({ p, d: Math.hypot(p.x - wolf.x, p.z - wolf.z) })).filter(e => e.d < 14).sort((a, b) => a.d - b.d).slice(0, 6);
     while (patchLabels.length < near.length) { const s = labelSprite(); s.scale.set(2, .55, 1); scene.add(s); patchLabels.push(s); }
     patchLabels.forEach((s, i) => { const e = near[i]; s.visible = !!e; if (!e) return; s.position.set(e.p.x, heightAt(e.p.x, e.p.z) + .45, e.p.z);
-      s.userData.draw([`${Math.round(e.p.units)}/${e.p.max} (${Math.round(100 * e.p.units / e.p.max)}%)`], '#c8f0a8'); });
+      s.userData.draw([`${Math.round(e.p.units)}/${e.p.max} (${Math.round(100 * e.p.units / e.p.max)}%)${e.p.units <= 0 ? ' grazed out' : ''}`, `${(e.p.units * CLOVER.mgPerUnit / 1000).toFixed(0)} g leaf, stolon ${e.p.stolon.toFixed(0)} g`], '#c8f0a8'); });
   }
   type HareShot = [number, number, number, number, number][];
   /** Photo-mode rewind: positions only; hares missing from a snapshot are hidden while it is shown. */

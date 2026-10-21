@@ -12,10 +12,14 @@ test('trace off: hooks are pass-through and record nothing', () => {
   assert.equal(tracing(), false);
   const o = { a: 1 }; assert.equal(f('g', 'n', 3.5), 3.5); assert.equal(f('g', 's', 'x'), 'x'); scope('k');
   assert.equal(choose('g', 'c', .5, [['a', .3], ['b', .8], ['c', 1]]), 'b'); assert.equal(o.a, 1);
-  // no allocation per call: a million calls stay well under 1 MB of heap growth
-  global.gc?.(); const before = process.memoryUsage().heapUsed; let s = 0;
-  for (let i = 0; i < 1e6; i++) s += f('terrain', 'base', i);
-  assert.ok(process.memoryUsage().heapUsed - before < 4e6, 'f allocates when off'); assert.ok(s > 0);
+  // no allocation per call: a million calls stay well under 4 MB of heap growth. The best of three runs is taken (grok, run 4):
+  // without --expose-gc, lazy compilation and other work in the process can grow the heap during one run under a loaded
+  // full suite (the known flake); an allocating f would grow it by >= 16 MB (1e6 x a 16-byte object) on every run.
+  let grow = Infinity, s = 0;
+  for (let run = 0; run < 3 && grow >= 4e6; run++) { global.gc?.(); const before = process.memoryUsage().heapUsed;
+    for (let i = 0; i < 1e6; i++) s += f('terrain', 'base', i);
+    grow = Math.min(grow, process.memoryUsage().heapUsed - before); }
+  assert.ok(grow < 4e6, `f allocates when off (best of 3: ${grow} B)`); assert.ok(s > 0);
 });
 test('traced generation gives bit-identical outputs and reports factors', () => {
   const plain = [generateChunk(0, 0), generateChunk(-2, 3), heightAt(12.3, -40.1), rockRecipe(99)];

@@ -27,4 +27,4 @@ other agents has an approve-plan). Nothing to review.
 - Fur-cost baseline (RTX 5060 laptop, ANGLE D3D11, 1280x800, 600 synced frames, 3 runs, median; raw in grok-xfer/fur-cost.txt): 1 wolf = 12,975 cards, fur +0.057 ms. 5 wolves fur +0.278 ms. 5 hares (6,995 cards each) fur +0.079 ms in summer (3,084 visible), +0.127 ms in winter.
 
 ## Next step
-Step 2: number-table fixes on the board (grok/transactional-plan), then finish step 3.
+Step 3: finish the build (look tuning), then step 4: recording (plain + strip) and the frame chain.

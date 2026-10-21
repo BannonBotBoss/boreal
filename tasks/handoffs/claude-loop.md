@@ -15,7 +15,13 @@ codex did sky/sun (T-0022), grok animals/forage. The empty claude/water branch s
       Measured boxes: measure.mjs -> measure.json. Water share: water-fraction.ts (23.6 % of 10x10 km, 80 % within 450 m).
 - [x] Quality questions answered in the task files (description, natural?, numbers with sources).
 - [x] Proposed T-0023 water optics (39 cr) and T-0024 wading wake (54 cr) + propose events 11:32.
-- [ ] Review another agent's proposed task (approve-plan or comment).
+- [x] Reviews: approve-plan T-0016 (why chains: checked why.ts:46-47, catalog.ts:1, inspector imports) and T-0021 (rule
+      inspection; evidence: one-agent dependency for generated references, hand-written event times); approve T-0008 (evidence
+      gate, rows 1, 4, 9, 13 spot-checked at 0d54785; handoff + skill on codex/loop d6eb041).
+- Note: newer rules 10-15 exist on codex/loop (grok, T-0021). I follow them already: rule 13 distinct seconds (f9fa529).
+  My two propose events were first written with times 14 min ahead of the clock; I renamed/re-timed them before they left
+  this branch (f10c043). Rule 10 (append-only) applies once published; these were not.
+- [ ] Skill for this kind of inspection: notes/skills/visual-inspection-recording.md
 
 ## Frame answers (water, main 36b8a51)
 - What do I see: see T-0023 "What I saw" and T-0024 "What I saw".

@@ -13,7 +13,25 @@ Decision (Grok lead): the run 4 condition for LEPORID_LIMITS (split hind foot + 
 - [x] 3 Duty floors (fbf5447), re-read Hildebrand 1977 p.135-136. Hind .20 KEPT (the rabbit is named among fast runners whose hind contact 'approaches 20 percent'; < 18 % is only 'individual strides of exceptional cursors', not a steady sprint). Fore hard floor .13, WAS .16: 16 % is what fast mammals 'approach', but fore contact is 'rarely less than 13 percent for consecutive strides', and 'fore contacts drop to 70 percent or less of hind contacts for Lepus at speed', so .7 x .20 = .14 at 11.6 m/s (the .16 floor forced 80 %, the rodent norm). Fore duty at 11.6 m/s .16 -> .14 (data). The .180 contact target (80 % of the mean data duty) is gone from the metric (step 4). TURN.rate .9 rad/s stays FLAGGED [estimate, unsourced]: no measured leporid turn-in-place rate found; the only timed hare turns (Mammalian Biology 2026, doi:10.1007/s42991-026-00566-7: ~180 deg in ~0.40 s) are running pursuit turns, and its three in-place (gambolling) turns are untimed. .9 is the slip-limited rate Gait Builder measured, a game choice.
 - [x] 4 bound-checks v2 (fbf5447, boundScore.ts): every check graded 0..1, score = mean x 100 (pass = >= .95, report only). overtake = mean clamp(gap / .12 m) (one snowshoe hind print, 12 x 8 cm, NatureNorth; hind prints lie wholly ahead of the fore in hare track groups, NPS/USFWS); planted = 1 - slip/1 cm - .25 per leash step; cadence 1 within 5 %, 0 at 20 %; phases/flex/order = share of strides; contact = per pair min(1, duty/floor, .70/duty), floors hind .18 / fore .13 (Hildebrand 1977); NEW pitch (>= 5 m/s) = trunk pitch span vs the reference bound (attempt4 frames v19-v25, back line read +3..+25 deg, span 22 deg, +-5 deg reading tolerance; span only, the reference is accelerating). Calibration (rule 11, tests/bound.test.ts synth): known match 100 at 1.68/5/8.5/11.6 m/s; trot 71.4/62.5/62.5/62.5; sliding + flat back 85.7/65.3/65.3/65.3; graded ranks: overtake gap .04/.08/.12 m -> .38/.72/.99 (1.68 m/s) .. .67/.83/.95 (11.6), slip .5/5 mm -> .95/.50, pitch span 2/15/22 deg -> .32/.91/1.00. Results: game (run 4 body) 97.1 -> 98.7 %; hare (v3, level) 97.1 -> 98.4 %: 1.68 m/s overtake 61 % (hind prints only 7.3 cm ahead, under one print) and 11.6 m/s contact 86 % (hind .158 / fore .110 vs .18 / .13: the reach cuts the data duty) are the graded losses.
 - [x] 5 (6d6e0eb) Half sit-up head detail: white chin, pale cheek patch and eye ring, a larger eye with a catch-light; ears get a pale inner ear and a dark back rim [estimate: drawn to the reference sheet]. Hind limb thicker so it reads as it swings past the fore legs: thigh .030 -> .042 (width .026 -> .034), shank .014 -> .019, foot .011 -> .014, toes segment .011 [estimate: drawn to the reference]. Run 4 decision line: 'Crouch et al. 2022' -> 'Hall et al. 2022'.
-- [ ] 6 Re-record (plain + side strip), re-score every gate, npm test + tsc; submit only if every gate >= 95 %
+- [x] 6 Re-recorded and re-scored (15:35-15:45 PT). NOT SUBMITTED: not every gate is >= 95 %; task stays open.
+  Recording: C:\dev\rabbit-rec9 (plain mode, 78 frames + clover lapse); side strip tools/hare-strip.html (track 2.2, fov 20,
+  wolf -7 at 2.2 s); box: /workspace/rabbit/compare-run5.jpg (reference / run 5 strip / run 4 strip), contact-sheet-run5.jpg,
+  hare-zoom-run5.jpg, clover-timelapse-run5.jpg, strip-run5.png. npm test 395: 383 pass, 0 fail, 12 todo; tsc clean.
+  Question chain per gate (what do I see / natural and how do I know / reference / >= 95 %?):
+  - graze 70 -> 70 %: hunched crouch, chin at the clover, nibble; unchanged this run. Reference attempt2 crouch matches in
+    posture; the blob body still reads as a toy next to the photo hare.
+  - alert 80 -> 82 %: half sit-up on all fours, head raised, ears erect (reference attempt4 2.3-3.3 s: head up, no turn, so
+    the freeze is kept). The new chin/cheek/eye-ring/inner-ear detail reads in the strip; the head is still small and simple.
+  - bound 75 -> 80 %: trunk now level (pitch -10.7..+10.6 deg at 11.6 m/s, span 21.3 vs the reference's ~22), thicker
+    hind legs read as they swing past the fore legs, hind prints land ahead (29-91 cm at 5-11.6 m/s). bound-checks v2 (graded)
+    'hare' 98.4 %: 1.68 m/s overtake 61 % (hind prints 7.3 cm ahead, under one 12 cm print) and 11.6 m/s contact 86 %
+    (hind .158 / fore .110 vs Hildebrand's .18 / .13). Legs are still sticks against the reference's furred limbs.
+  - flight 75 -> 75 %: flees on sight, bounds off, pauses and scans; the root now draws the rig's heading (turnInPlace), but
+    no standing turn occurs in this sequence. In game view the hare is small and the flight path is short.
+  - clover 85 -> 85 %: time-lapse 100 -> hole -> bare reads as before (clover-timelapse-run5.jpg).
+  - look 30 -> 30 %: still primitive blobs; needs a real hare mesh (not this task's tooling).
+  Remaining needs: a hare mesh with fur (look); longer fore/hind contacts at 11.6 m/s need more reach (Gait Builder) and the
+  slow half-bound overtake is under one print; a source for the turn-in-place rate.
 
 ## Run 4 progress (started 2026-10-21 13:21 PT; keep current: board rule 9)
 Plan (Grok lead, 13:21 PT): pick up grok-gait/T-0009-hare-reach (5973cf7, 43f9723, db9b3b4; based on dfcb848).

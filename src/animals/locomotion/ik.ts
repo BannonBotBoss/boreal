@@ -6,7 +6,7 @@
  */
 import { solveChain, type LimbDims } from '../../core/animalBehavior';
 import { CANID_LIMB } from '../../core/skeleton';
-import type { Vec3 } from './signals';
+import type { TerrainFn, Vec3 } from './signals';
 
 export interface LimbAngles { girdle: number; leg: number; knee: number; wrist: number; paw: number; abduct: number; joint: { z: number; y: number } }
 /** T-0003 reach inputs (core/animalBehavior solveChain): all optional; without them the limb solves exactly as before. */
@@ -60,12 +60,20 @@ export const CANID_LIMITS: JointLimits = {
  * kinetics during the stance phase of gait", PeerJ 10:e13611, doi:10.7717/peerj.13611, PMC9208372; Results and Table 1,
  * checked against the paper 2026-10-21). These are the means of the measured STANCE range of slow domestic-rabbit gait, not
  * anatomical end-ranges, so they apply to the gait (bounding.ts phases them in with motion), not to a sitting body. The paper's
- * foot is ankle-to-MTP marker; the rig's foot bone is hock-to-toe tip. Knee and fore limb: no lagomorph goniometry found, so
- * the dog values stand [placeholder].
+ * "foot" segment is ankle marker to MTP marker = the METATARSUS (the toes lie flat): use these on a body with a split hind
+ * foot (bodyPlan.ts BodyPlan.hindToes), where the rig's foot bone is hock-to-MTP; on a one-bone foot (hock to toe tip) the
+ * foot range lands on the wrong bone. The paper gives no knee angle.
+ * Knee (stifle), rabbit, interior angle 30-166.8° (flex -1: solveChain folds the hind knee negative): full extension is not
+ * reached — normal New Zealand White knees stop 14.6 ± 7.1° (left) and 12.0 ± 10.9° (right) short of straight, mean 13.2°
+ * (Hildebrand, Holmberg & Shrive 2003, J Biomech Eng 125:887, doi:10.1115/1.1634285, PMC3712980); flexed to "150 deg of
+ * flexion" (interior 30°) in the same study's immobilisation, and passive flexion ~140° (interior ~40°) at 0.077 Nm (Zhang,
+ * Liu & Zhou 2024, Glob J Ortho Res 4(4), doi:10.33552/GJOR.2024.04.000594). These are passive anatomical limits, wider than
+ * a gait's stance range (none measured for the leporid knee). Fore limb: no lagomorph goniometry found, dog values [placeholder].
  */
+export const LEPORID_KNEE: JointRange = { min: 30, max: 166.8, flex: -1 };
 export const LEPORID_LIMITS: JointLimits = {
   front: CANID_LIMITS.front,
-  hind: { knee: CANID_LIMITS.hind.knee, wrist: { min: 66.4, max: 137.2, flex: 1 }, foot: { min: 17.2, max: 123.3 } },
+  hind: { knee: LEPORID_KNEE, wrist: { min: 66.4, max: 137.2, flex: 1 }, foot: { min: 17.2, max: 123.3 } },
 };
 /** Largest flexion of the middle and lower joints: 180° − the goniometric minimum (Formenton et al. 2019 via skeleton.ts). */
 export const FLEX_LIMIT = {
@@ -90,4 +98,15 @@ export function blendLimits(a: JointLimits, b: JointLimits, t: number): JointLim
   const f = (p?: { min: number; max: number }, q?: { min: number; max: number }) => !q ? p : { min: l(p?.min ?? -90, q.min), max: l(p?.max ?? 270, q.max) };
   const limb = (p: LimbLimits, q: LimbLimits): LimbLimits => ({ knee: j(p.knee, q.knee), wrist: j(p.wrist, q.wrist), foot: f(p.foot, q.foot) });
   return { front: limb(a.front, b.front), hind: limb(a.hind, b.hind) };
+}
+/**
+ * Split hind foot (bodyPlan.ts BodyPlan.hindToes): the IK's foot bone is the metatarsus (hock to the MTP joint) and the toes
+ * lie flat on the ground ahead of the MTP in stance — rabbits stand digitigrade on the toes with the metatarsus raised (Hall
+ * et al. 2022: "foot" = ankle marker to MTP marker). Given the toe tip (world) and the unit forward direction, the MTP joint
+ * the IK must reach: `toes` behind the tip, on the ground when `ground` is given (planted), else level with the tip.
+ */
+export function toeTarget(tip: Vec3, fwd: { x: number; z: number }, toes: number, ground?: TerrainFn): Vec3 {
+  if (!(toes > 0)) return tip;
+  const x = tip.x - fwd.x * toes, z = tip.z - fwd.z * toes;
+  return { x, y: ground ? ground(x, z) : tip.y, z };
 }

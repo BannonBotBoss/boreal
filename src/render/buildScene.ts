@@ -33,7 +33,7 @@ import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
 import { riverAt } from '../core/stages/rivers';
-import { waterMaterial, updateWaterUniforms, createWaterMirror } from './water';
+import { waterMaterial, updateWaterUniforms, createWaterMirror, openWaterGeometry } from './water';
 import { tiles } from '../photo/frame';
 import { applyGenome } from './appearance';
 import { entityMass, rigMass } from './mass';
@@ -102,9 +102,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const t = yield* chunkTerrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near, STAGES.on ? (near ? 32 : 8) : 0, { worker: true, wanted: () => chunkJobs.has(`${cx}:${cz}`) });
     const ground = new THREE.Mesh(t.terrain, terrainMaterial()); ground.receiveShadow = true;
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; ground.layers.enable(1); root.add(ground); // layer 1 = GI probe capture
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), waterMaterial());
-    water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
-    if (t.water) { const lake = new THREE.Mesh(t.water, water.material); lake.userData.inspect = { type: 'terrain', key: `water:${cx}:${cz}` }; root.add(lake); } // stages 2b/2c: lake level / river surface sheet
+    const sheet = openWaterGeometry(t.terrain); if (sheet) root.add(new THREE.Mesh(sheet, waterMaterial())); // T-0023: terrain grid at the water level, depth per vertex; none on dry chunks
+    if (t.water) { const lake = new THREE.Mesh(t.water, waterMaterial()); lake.userData.inspect = { type: 'terrain', key: `water:${cx}:${cz}` }; root.add(lake); } // stages 2b/2c: lake level / river surface sheet
     const generated = applyPopulation(generateChunk(cx, cz), cx, cz); yield; // chunk build steps stay within the 4 ms job budget
     // Old remembered people bypass generation's land test. Hide invalid placements without
     // deleting their relationship/event records or inventing a new location for them.

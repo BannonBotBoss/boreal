@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { acquire, track, release } from '../../../tools/bench-lock.mjs';
-const PORT = process.argv[2] ?? '5231', name = 'claude: water shore audit', out = resolve('refs/water/shore-audit');
+const PORT = process.argv[2] ?? '5231', name = 'claude: water shore audit', out = resolve(process.argv[3] ?? 'refs/water/shore-audit'); // [port] [out dir]
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 mkdirSync(out, { recursive: true });
 if (!await acquire(name, { waitMs: 5 * 60 * 1000 })) throw Error('GPU busy');

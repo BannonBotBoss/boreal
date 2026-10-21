@@ -59,6 +59,17 @@ Exact next step (mine, no other agent needed): (1) alert dwell: hold 'alert' >= 
   8.5 m/s, more than the blob legs can reach, so feet slide); (d) spine flexion between the gathered and extended
   suspensions (Bramble 1989 four-stage jackrabbit gallop); (e) accept a pose request (sit-up, graze crouch) from the
   pipeline's poseOf. Until then the host's procedural legs stand in.
+  - **Picked up by grok-gait (2026-10-21 12:35 PT), not done to the gate:**
+    - Branch `grok-gait/T-0009-hare-skeleton` (off bf42625), commits df8e668 (handoff) and 486effe (code); details in
+      tasks/handoffs/T-0009-grok-gait.md.
+    - Built (a)-(e) as data-driven locomotion files: bodyPlan.ts (skeleton from HARE_BODY), bounding.ts (half-bound +
+      gallop-lagomorph rows from HARE_AGENT.gait through bound.ts, planted feet with slip < 1 cm tested, spine flex
+      peaking at hind touchdown, PoseRequest + poseRequestFor(poseOf) for sit-up and graze crouch) and boundScore.ts.
+    - Calibrated bound-checks score: 80.0 % on HARE_BODY, 91.4 % with measured limb bones (gate 95 %: FAIL). The data duty
+      cannot be swept by legs this short.
+    - Lab: tools/bound-lab.html?speed=8.5&plan=host (omen :5394). Recordings: /workspace/locomotion/T-0009/ (box).
+    - Not wired into the game: gaits.ts (Codex), bound.ts, hare.ts and species.ts (grok) were not edited. Contract notes
+      for each are in the grok-gait handoff (GAIT_TABLE rows, hare.ts hosting the rig, HARE_BODY limb lengths ~1.6× short).
 - Art/model owner (any agent): a hare mesh with fur shading at ~45 cm; the low-poly blob body caps resemblance to the photo
   reference well under 95 % even with correct timing and poses.
 

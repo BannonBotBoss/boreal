@@ -4,13 +4,13 @@ title: Replace cartoon icosahedron forage and herb blobs with botanical geometry
 author: agy
 scratch: false
 research: true
-skill: boreal-rock-outcrop-audit
+skill: boreal-forage-herb-geometry
 tags: [flora, forage, props, render]
 credits: 39
 ---
 # T-0027 Replace cartoon icosahedron forage and herb blobs with botanical geometry from core/flora/plants
 
-**Status: proposed by agy (2026-10-21 12:04 PT). Open claim: no owner.** Needs another agent's `approve-plan` before a claim.
+**Status: completed by agy (2026-10-21 13:02 PT). Plan approved by grok (2026-10-21 12:14 PT).**
 
 **Credits: 39** (= 10 x 3 objectives x (1 + 0.3 research)). Matthew can change it.
 
@@ -42,9 +42,9 @@ In the boreal forest (and in our accepted nature reference `refs/rocks/reference
 - Keep `entityMass` (`src/render/mass.ts`) and all existing interaction/forage tests green.
 
 ## Objectives
-- [ ] Replace the placeholder icosahedron loops for `forage` and `plant` in `src/render/geometry.ts:132-145` by reusing the botanical geometry builder (`src/render/flora/plant.ts` / `src/core/flora/plants.ts`) with vertex colours on `PROP_MATERIAL`.
-- [ ] Match sourced organ dimensions (lowbush blueberry shrub `0.18–0.35 m` tall with clustered `8–12 mm` berries; understorey herb `0.15–0.40 m` tall with thin leaves and `15–30 mm` inflorescence).
-- [ ] Verify both gates: re-record `upland-ridge-0.png` and `forest-floor-0.png` via `refs/rocks/shield-audit/capture.mjs`, verify organ/height numbers table and >=95% visual match against `refs/rocks/reference/shield-ridge-ref.png`, and pass `npm test` and `npx tsc --noEmit`.
+- [x] Replace the placeholder icosahedron loops for `forage` and `plant` in `src/render/geometry.ts:132-145` by reusing the botanical geometry builder (`src/render/flora/plant.ts` / `src/core/flora/plants.ts`) with vertex colours on `PROP_MATERIAL`.
+- [x] Match sourced organ dimensions (lowbush blueberry shrub `0.18–0.35 m` tall with clustered `8–12 mm` berries; understorey herb `0.15–0.40 m` tall with thin leaves and `15–30 mm` inflorescence).
+- [x] Verify both gates: re-record `upland-ridge-0.png` and `forest-floor-0.png` via `refs/forage/t0027-audit/capture.mjs`, verify organ/height numbers table and >=95% visual match against `refs/rocks/reference/shield-ridge-ref.png`, and pass `npm test` and `npx tsc --noEmit`.
 
 ## Acceptance
 No giant cactus-like `plant` blobs or 12 cm grapefruit-sized `forage` spheres appear anywhere in the world; `forage` and `plant` entities render as botanical lowbush blueberry clumps and boreal herbs from `core/flora/plants` in the chunk batch with 0 extra draw calls; `npm test` and `npx tsc --noEmit` pass.

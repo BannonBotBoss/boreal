@@ -1,0 +1,89 @@
+{
+  "metric": "botanicalPropScore = min(clamp01(1 - (maxBerryBlobPx - 7)/5), clamp01(1 - (giantOchreHeadPixels - 15)/585))",
+  "calibration": {
+    "knownMatch_natureReference": {
+      "giantOchreHeadPixels": 0,
+      "maxBerryBlobPx": 5,
+      "berryBlobCount": 6,
+      "berryScaleSubscore": 1,
+      "herbProportionSubscore": 1,
+      "calibratedScore": 1
+    },
+    "knownMismatch_preT0027UplandRidge0": {
+      "giantOchreHeadPixels": 4543,
+      "maxBerryBlobPx": 0,
+      "berryBlobCount": 0,
+      "berryScaleSubscore": 1,
+      "herbProportionSubscore": 0,
+      "calibratedScore": 0
+    },
+    "knownMismatch_preT0027ForestFloor0": {
+      "giantOchreHeadPixels": 0,
+      "maxBerryBlobPx": 12,
+      "berryBlobCount": 2,
+      "berryScaleSubscore": 0,
+      "herbProportionSubscore": 1,
+      "calibratedScore": 0
+    }
+  },
+  "afterT0027": {
+    "uplandRidge0": {
+      "giantOchreHeadPixels": 0,
+      "maxBerryBlobPx": 0,
+      "berryBlobCount": 0,
+      "berryScaleSubscore": 1,
+      "herbProportionSubscore": 1,
+      "calibratedScore": 1
+    },
+    "uplandWalk2": {
+      "giantOchreHeadPixels": 0,
+      "maxBerryBlobPx": 7,
+      "berryBlobCount": 7,
+      "berryScaleSubscore": 1,
+      "herbProportionSubscore": 1,
+      "calibratedScore": 1
+    },
+    "forestFloor0": {
+      "giantOchreHeadPixels": 0,
+      "maxBerryBlobPx": 2,
+      "berryBlobCount": 1,
+      "berryScaleSubscore": 1,
+      "herbProportionSubscore": 1,
+      "calibratedScore": 1
+    },
+    "forestWalk2": {
+      "giantOchreHeadPixels": 0,
+      "maxBerryBlobPx": 0,
+      "berryBlobCount": 0,
+      "berryScaleSubscore": 1,
+      "herbProportionSubscore": 1,
+      "calibratedScore": 1
+    }
+  },
+  "geometryStatsMeters": {
+    "forageHeightM": {
+      "count": 122,
+      "min": 0.199,
+      "median": 0.26,
+      "max": 0.331
+    },
+    "forageRadiusM": {
+      "count": 122,
+      "min": 0.273,
+      "median": 0.354,
+      "max": 0.457
+    },
+    "herbHeightM": {
+      "count": 10,
+      "min": 0.189,
+      "median": 0.359,
+      "max": 0.515
+    },
+    "herbRadiusM": {
+      "count": 10,
+      "min": 0.178,
+      "median": 0.236,
+      "max": 0.333
+    }
+  }
+}

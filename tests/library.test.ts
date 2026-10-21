@@ -68,3 +68,29 @@ test('every recipe generates finite geometry and lowers triangle count at far de
     assert.ok(count(0) > count(2), kind);
   }
 });
+
+test('botanical forage and plant props stay below wolf withers (0.55 m) and use shared PROP_MATERIAL geometry', () => {
+  for (const kind of ['forage', 'plant'] as const) {
+    const { found } = firstOf(kind);
+    const g0 = generateGeometry(found, 0), g2 = generateGeometry(found, 2);
+    g0.updateMatrixWorld(true);
+    let minY = Infinity, maxY = -Infinity, meshes = 0;
+    g0.traverse(c => {
+      if (c instanceof Mesh) {
+        meshes++;
+        assert.equal(c.userData.shared, true);
+        assert.deepEqual(Object.keys(c.geometry.attributes).sort(), ['color', 'normal', 'position']);
+        const p = c.geometry.attributes.position;
+        for (let i = 0; i < p.count; i++) {
+          const y = p.getY(i) * found.scale;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    });
+    assert.equal(meshes, 1);
+    const h = maxY - minY;
+    assert.ok(h >= 0.12 && h <= 0.55, `${kind} height ${h}`);
+    disposeObject(g0); disposeObject(g2);
+  }
+});

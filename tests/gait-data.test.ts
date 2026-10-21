@@ -3,8 +3,10 @@
  * - Bryce & Williams 2017, JEB 220:312, doi:10.1242/jeb.144188, Table S2 "Northern" (wolf-like) breeds: walk, trot, gallop.
  * - Heglund & Taylor 1988, JEB 138:301, doi:10.1242/jeb.138.1.301: trot-gallop transition 1.54·M^0.216 m/s at
  *   4.19·M^-0.150 Hz; for a 40 kg wolf 3.42 m/s and 2.41 Hz.
- * - Fast gallop (plan T-0002): about 2.7 Hz / 2.2 m at 6 m/s and about 3 Hz / 3.4 m at 10.5 m/s; within a gallop frequency
- *   rises only gently, so speed comes from stride (Heglund & Taylor 1988; Maes et al. 2008, JEB 211:138).
+ * - Gallop (run-gallop retune): Heglund & Taylor 1988 Table 4, 25 kg dog f = 2.27 + 0.050 v, scaled to 40 kg by M^-0.156:
+ *   2.39 Hz / 2.51 m at 6 m/s (the run key), 2.48 Hz / 3.2 m at 8 m/s, 2.60 Hz / 4.0 m at 10.5 m/s (sprint); within a gallop
+ *   frequency rises only gently, so speed comes from stride (Heglund & Taylor 1988; Maes et al. 2008, JEB 211:138).
+ *   Allometric cross-checks for 40 kg (Table 3): preferred gallop 2.50 Hz, maximum sustained gallop 2.59 Hz.
  * - Maes et al. 2008: duty factor below 0.5 above 2.0 m/s.
  * - Walter & Carrier 2007, JEB 210:208: 71-75 ms contact per limb at 9.2 m/s, a stance sweep of about 0.65-0.69 m.
  * - Hildebrand 1977 / Biancardi & Minetti 2012: rotary gallop LH → RH → RF → LF (or mirrored); gathered suspension after
@@ -30,8 +32,11 @@ const ROWS: Array<{ v: number; motion: Motion; gait?: string; hz: number; stride
   { v: 2.70, motion: 'run', gait: 'trot', hz: 2.10, stride: 1.26, src: 'Bryce & Williams 2017 trot' },
   { v: 3.42, motion: 'run', hz: 2.41, src: 'Heglund & Taylor 1988 trot-gallop transition, 40 kg' },
   { v: 4.96, motion: 'run', gait: 'gallop', hz: 2.61, stride: 1.91, src: 'Bryce & Williams 2017 gallop' },
-  { v: 6.0, motion: 'run', gait: 'gallop', hz: 2.7, stride: 2.2, src: 'fast gallop' },
-  { v: 10.5, motion: 'run', gait: 'gallop', hz: 3.0, stride: 3.4, src: 'sprint gallop' },
+  { v: 6.0, motion: 'run', gait: 'gallop', hz: 2.39, stride: 2.51, src: 'Heglund & Taylor 1988 dog gallop line at 40 kg (run key)' },
+  { v: 8.0, motion: 'run', gait: 'gallop', hz: 2.48, stride: 3.23, src: 'Heglund & Taylor 1988 dog gallop line at 40 kg' },
+  { v: 10.5, motion: 'run', gait: 'gallop', hz: 2.60, stride: 4.04, src: 'sprint gallop (dog line continued)' },
+  { v: 5.32, motion: 'run', gait: 'gallop', hz: 2.50, src: 'Heglund & Taylor 1988 Table 2/3 preferred gallop, 40 kg' },
+  { v: 7.10, motion: 'run', gait: 'gallop', hz: 2.59, src: 'Heglund & Taylor 1988 Table 2/3 maximum sustained gallop, 40 kg' },
 ];
 const LH = 1, RH = 3, RF = 2, LF = 0;
 const rotary = (o: readonly number[]) => { const f = footfallOrder(o), k = f.indexOf(LH); return [0, 1, 2, 3].map(j => f[(k + j) % 4]); };

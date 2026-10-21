@@ -25,10 +25,17 @@ export const REF_HIP = .55;
 export const CANID_CADENCE: ReadonlyArray<readonly [number, number]> = [
   [1.27, 1.50], // walk, Bryce & Williams 2017
   [2.70, 2.10], // trot, Bryce & Williams 2017
-  [3.42, 2.41], // trot-gallop transition, Heglund & Taylor 1988 (M = 40 kg)
-  [4.96, 2.61], // gallop, Bryce & Williams 2017
-  [6.0, 2.70],  // gallop (plan T-0002, between Bryce & Williams and Walter & Carrier)
-  [10.5, 3.00], // sprint gallop (Walter & Carrier 2007 contact times; Heglund & Taylor's gentle in-gait rise)
+  // Gallop (run-gallop retune, Grok Bot): Heglund & Taylor 1988 Table 4, their 25 kg dog galloping 4.17-8.25 m/s:
+  // f = 2.27 + 0.050 v Hz, scaled to a 40 kg wolf by their gallop mass exponent (Table 3: M^-0.156, x0.929):
+  // f = 2.11 + 0.046 v. Frequency is nearly flat ("about 10 % for a doubling of speed"), so a faster gallop is a longer
+  // stride, not quicker legs. Cross-checks for 40 kg: Table 3 preferred gallop 4.44 M^-0.156 = 2.50 Hz and maximum
+  // sustained gallop 4.70 M^-0.162 = 2.59 Hz; trot-gallop transition 4.19 M^-0.150 = 2.41 Hz at 3.42 m/s (the
+  // dog line there gives 2.27). Bryce & Williams 2017's >20 kg Northern breeds: 2.61 Hz at 4.96 m/s (lighter dogs).
+  [3.42, 2.27], // trot-gallop transition on the 40 kg dog gallop line (Table 3 allometry: 2.41)
+  [5.0, 2.34],  // gallop, 40 kg dog line
+  [6.0, 2.39],  // game run key: cruising gallop, stride 2.51 m
+  [8.0, 2.48],  // stride 3.2 m
+  [10.5, 2.60], // game sprint (dog line continued past 8.25 m/s): stride 4.0 m
 ];
 const fr = (v: number, h: number) => v * v / (gravity() * h);
 /** The table as (Froude, dimensionless frequency f·√(h/g)), so it scales with leg length. */
@@ -60,11 +67,14 @@ export function selectGait(froude: number, prev?: CanidGait): CanidGait {
 /** Sprint Froude for the gallop duty ramp (10.5 m/s at REF_HIP). */
 const FR_SPRINT = fr(10.5, REF_HIP);
 /** Duty factor (share of a stride each foot is down): walk 0.65, trot 0.45 (Maes et al. 2008: < 0.5 above 2 m/s), gallop
- * 0.30 at the transition falling to 0.20 at a sprint (Walter & Carrier 2007: ~0.21 at 9.2 m/s). */
+ * 0.30 at the transition falling to 0.17 at a sprint, so that at 9.2 m/s (duty 0.20, 2.54 Hz) contact is 80 ms and the stance
+ * sweep 0.74 m: Walter & Carrier 2007 measured 71-75 ms and ~0.67 m in lighter dogs (duty ~0.21); a heavier wolf with a
+ * lower cadence keeps a little longer contact. */
+export const GALLOP_DUTY = { transition: .3, sprint: .17 };
 export function dutyFactor(gait: CanidGait, froude: number) {
   if (gait === 'walk') return .65;
   if (gait === 'trot') return .45;
-  return Math.max(.2, Math.min(.3, .3 - .1 * (froude - FROUDE.trotGallopUp) / (FR_SPRINT - FROUDE.trotGallopUp)));
+  return Math.max(GALLOP_DUTY.sprint, Math.min(GALLOP_DUTY.transition, GALLOP_DUTY.transition - (GALLOP_DUTY.transition - GALLOP_DUTY.sprint) * (froude - FROUDE.trotGallopUp) / (FR_SPRINT - FROUDE.trotGallopUp)));
 }
 /** Stance sweep per foot (m) = duty × stride: about 0.67 m at 9.2 m/s (Walter & Carrier 2007). */
 export function stanceReach(speed: number, legLength = REF_HIP, gait?: CanidGait) {
@@ -134,6 +144,25 @@ export interface ReachBody {
  * fore lever = shoulder height 0.55 + shoulder blade 0.17 m, hind lever = hip height 0.56 m. */
 export const REF_BODY: ReachBody = { legChord: { walk: .39, trot: .39, gallop: .25 }, trunk: .54, foreLever: .72, hindLever: .56, scapulaMax: .35 };
 
+/**
+ * Run-gallop retune (Grok Bot): how far the legs themselves swing in a gallop. Biancardi & Minetti 2012, JEB 215:4144,
+ * doi:10.1242/jeb.073031: the maximum excursion of the hip-to-toe line in high-speed gallops is 65.7 +- 7.7 deg (transverse)
+ * and 91.1 +- 29.7 deg (rotary), rising as Fr^0.46. The game wolf's old 0.39 m stance chord swung that line only ~38 deg, so
+ * the girdles (hidden inside the body) took most of the stride and the legs pattered in a small arc. The stance takes
+ * GALLOP_STANCE_EXCURSION (52 deg, the lower end of the measured range: the swing overshoot of footTarget, gait.overshoot,
+ * carries the total to ~66 deg); the girdles and spine supply the rest of duty x stride.
+ */
+/**
+ * Swing follow-through per gait (footTarget's Gait.follow). A real paw cannot stop dead at liftoff or touchdown: it leaves
+ * the ground moving back relative to the body at running speed and, in fast gaits, swings back toward the ground just
+ * before touchdown (swing-leg retraction: Seyfarth, Geyer & Herr 2003, JEB 206:2547, doi:10.1242/jeb.00463; seen in
+ * galloping dogs and horses). Gallop keeps half the stance velocity through both ends; walk and trot keep their swing.
+ */
+export const SWING_FOLLOW: Readonly<Record<CanidGait, number>> = { walk: 0, trot: 0, gallop: .5 };
+export const swingFollow = (gait: CanidGait) => SWING_FOLLOW[gait];
+export const GALLOP_STANCE_EXCURSION = 52 * Math.PI / 180;
+/** Stance chord (m) of a leg whose top joint is `lever` above the ground swinging GALLOP_STANCE_EXCURSION. */
+export const gallopLegChord = (lever: number, excursion = GALLOP_STANCE_EXCURSION) => 2 * lever * Math.tan(excursion / 2);
 export interface ReachTargets {
   /** duty × stride (m): how far each foot sweeps back relative to the body while it is down. */ sweep: number;
   /** max(0, sweep − legChord) (m): the share the girdles must supply. */ deficit: number;

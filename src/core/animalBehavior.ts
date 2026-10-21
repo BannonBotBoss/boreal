@@ -1,4 +1,4 @@
-import { canidPlan, reachTargets, REF_BODY, suspensionRise, suspensions, type CanidGait, type CanidPlan, type ReachBody } from './gaitData';
+import { canidPlan, gallopLegChord, reachTargets, REF_BODY, swingFollow, suspensionRise, suspensions, type CanidGait, type CanidPlan, type ReachBody } from './gaitData';
 
 export const ANIMAL_DEFAULT_ENERGY = 75;
 export const FORAGE_ENERGY = 18;
@@ -164,7 +164,10 @@ export const LUMBAR_PIVOT = { y: .09, z: -.11 };
  * kept here because wolfBody imports this module; tests/locomotion-touchdown checks they agree). */
 export const WOLF_GIRDLE_Z = [-.24, .30] as const;
 export type GaitName = 'walk' | 'trot' | 'gallop';
-export interface Gait { name: GaitName; duty: number; cycle: number; lift: number; offsets: readonly number[]; reverse: boolean }
+export interface Gait { name: GaitName; duty: number; cycle: number; lift: number; offsets: readonly number[]; reverse: boolean;
+  /** Swing follow-through, 0..1 (gaitData.swingFollow; omitted = 0): the share of the stance velocity a paw keeps through
+   * liftoff and touchdown (footTarget). 0 is the old swing that stops dead at both ends. */
+  follow?: number }
 const G = 9.81;
 /**
  * Research-based gait selection and stride length (dynamic similarity; Alexander 1976, Alexander & Jayes 1983):
@@ -182,7 +185,7 @@ export function gaitFor(motion: Motion, speed: number, legs: LegDims, prev?: Gai
   // The stride is never shortened for reach: the girdles and the spine supply it (quadrupedPose, reachTargets).
   // Deer keep the Alexander stride below; walking backwards keeps it too.
   const canid = legs === WOLF_LEGS && motion !== 'back' ? canidPlan(v, h, prev as CanidGait | undefined) : null;
-  if (canid) return { name: canid.gait, duty: canid.duty, cycle: canid.stride, lift: (canid.gait === 'walk' ? .1 : canid.gait === 'trot' ? .15 : .2) * h, offsets: canid.offsets, reverse: false };
+  if (canid) return { name: canid.gait, duty: canid.duty, cycle: canid.stride, lift: (canid.gait === 'walk' ? .1 : canid.gait === 'trot' ? .15 : .2) * h, offsets: canid.offsets, reverse: false, follow: swingFollow(canid.gait) };
   return alexanderGait(motion, speed, legs);
 }
 /**
@@ -255,7 +258,11 @@ export function footTarget(gait: Gait | null, motion: Motion, phase: number, leg
   const p = frac(phase + gait.offsets[leg]);
   if (p < gait.duty) return { z: dir * stride * (p / gait.duty - .5), y: 0 };
   const s = (p - gait.duty) / (1 - gait.duty);
-  return { z: dir * stride * (.5 - smooth(s)), y: gait.lift * Math.sin(Math.PI * s) };
+  // Swing: a cubic Hermite from the liftoff point back to the touchdown point. Its end slopes are `follow` x the stance
+  // velocity (stride/duty per unit phase), so with follow > 0 the paw carries on back a little after liftoff and retracts
+  // into touchdown instead of stopping dead and snapping (swing-leg retraction); follow 0 is the old smoothstep.
+  const m = (gait.follow ?? 0) * (1 - gait.duty) / gait.duty;
+  return { z: dir * stride * (.5 - smooth(s) + m * s * (1 - s) * (1 - 2 * s)), y: gait.lift * Math.sin(Math.PI * s) };
 }
 /**
  * Analytic two-bone IK in the leg's sagittal plane. Returns the hip rotation (about x; + swings the foot forward)
@@ -337,16 +344,27 @@ export const VAULT_MAX_DROP = .12;
 /** Share of a swing, at each end, over which a leg's vault dip eases in before touchdown and out after liftoff (game calibration). */
 export const VAULT_SWING_EDGE = .25;
 /**
+ * Run-gallop retune: in a gallop the hind pair lands at the end of the gathered flight, which is ballistic (the body rises
+ * then falls under gravity). Eased in over a quarter of the (now longer) swing, the hind touchdown dip would start pulling
+ * the body down before the top of that flight; it eases in over the flight's falling half instead (half the gathered
+ * flight's share of the swing, from gaitData.suspensions). Everything else keeps VAULT_SWING_EDGE.
+ */
+export function vaultEdgeIn(gait: { duty: number; offsets: readonly number[]; gait?: string }, leg: number) {
+  if (gait.gait !== 'gallop' || isFrontLeg(leg)) return VAULT_SWING_EDGE;
+  const g = suspensions(gait.offsets, gait.duty).find(w => w.kind === 'gathered');
+  return g ? Math.min(VAULT_SWING_EDGE, (g.to - g.from) / 2 / (1 - gait.duty)) : VAULT_SWING_EDGE;
+}
+/**
  * Vault dip (m) one leg asks of its end of the body at gait phase `at` (frac(phase + offset)): along the stance, the chord
  * from `td` (the drop its touchdown pose needs) to `lo` (its liftoff pose); eased in over the last VAULT_SWING_EDGE of the
  * swing and out over the first. The drop a planted paw needs grows convexly toward either end of its sweep, so the chord
  * covers it without the body snapping down in the frame a paw runs out of reach (callers top up any residual), and a
  * paw in mid-swing never pulls the body down in flight. Continuous at touchdown and liftoff.
  */
-export function vaultEnvelope(at: number, duty: number, td: number, lo: number) {
+export function vaultEnvelope(at: number, duty: number, td: number, lo: number, eIn = VAULT_SWING_EDGE) {
   if (at < duty) return td + (lo - td) * at / duty;
   const e = VAULT_SWING_EDGE, s = (at - duty) / (1 - duty), ease = (x: number) => x * x * (3 - 2 * x);
-  return s < e ? lo * (1 - ease(s / e)) : s > 1 - e ? td * ease((s - (1 - e)) / e) : 0;
+  return s < e ? lo * (1 - ease(s / e)) : s > 1 - eIn ? td * ease((s - (1 - eIn)) / eIn) : 0;
 }
 /** The stride phase at which leg i is at stance progress s (0 touchdown, 1 liftoff). */
 export const stancePhase = (gait: { duty: number; offsets: readonly number[] }, i: number, s: number) => frac(s * gait.duty - gait.offsets[i]);
@@ -359,7 +377,7 @@ const VAULT_NEEDS = new Map<string, number[][]>();
  * of its own end that leg i's stance pose needs at stance progress s (each rig solves it with its own limbs, for a
  * vaultPlan); the needs depend only on the gait and the body, so they are kept per `key` (a few dozen at a time).
  */
-export function vaultDips(phase: number, gait: { duty: number; offsets: readonly number[] }, need: (i: number, s: number) => number, key: string) {
+export function vaultDips(phase: number, gait: { duty: number; offsets: readonly number[]; gait?: string }, need: (i: number, s: number) => number, key: string) {
   let needs = VAULT_NEEDS.get(key);
   if (!needs) {
     needs = [0, 1, 2, 3].map(i => [need(i, 0), need(i, 1)]);
@@ -367,7 +385,7 @@ export function vaultDips(phase: number, gait: { duty: number; offsets: readonly
     VAULT_NEEDS.set(key, needs);
   }
   const env = [0, 0];
-  for (let i = 0; i < 4; i++) env[i & 1] = Math.max(env[i & 1], vaultEnvelope(frac(phase + gait.offsets[i]), gait.duty, needs[i][0], needs[i][1]));
+  for (let i = 0; i < 4; i++) env[i & 1] = Math.max(env[i & 1], vaultEnvelope(frac(phase + gait.offsets[i]), gait.duty, needs[i][0], needs[i][1], vaultEdgeIn(gait, i)));
   return env;
 }
 /** ?loco=1 (world-planted feet): seconds over which a vault dip lets go once no leg needs it (no pop at liftoff); it

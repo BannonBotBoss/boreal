@@ -1,6 +1,6 @@
 // Walk probe (Grok Bot): drives the default game wolf in headless Edge (?walkprobe) and measures what is drawn.
 // node tools/walk-probe.mjs <base url> <out.json> [label] [extra query, e.g. &loco=1]. Modes: stealth (C), walk (W), run (Shift+W). Prints a summary.
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -40,7 +40,7 @@ try {
     result.modes[mode] = data;
   }
   ws.close();
-} finally { p.kill(); await sleep(1500); try { rmSync(profile, { recursive: true, force: true }); } catch {} }
+} finally { try { execSync(`taskkill /PID ${p.pid} /T /F`, { stdio: 'ignore' }); } catch { p.kill(); } /* whole Edge tree */ await sleep(1500); try { rmSync(profile, { recursive: true, force: true }); } catch {} }
 result.errors = errors;
 
 // ---- analysis ----

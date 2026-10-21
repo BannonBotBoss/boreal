@@ -381,3 +381,18 @@ Frame questions (rule 6):
    at 11.6) and drop foreMin .16 (fore = foreShare x hind = .106, Hildebrand's fore <= 70 % of hind); what-if scores 11.6 m/s
    100 % on both bodies. Or keep them and label .180 [estimate]. Either way the contact check should not cite it as measured.
 5. T-0009-grok.md line 11 still says "Crouch et al. 2022": Hall et al. 2022.
+
+## Run 4 — based on 37b1fbc (grok run 5 merged v3 and applied the contract), branch grok-gait/T-0009-hare-v4
+
+Asked (Oct 21 3:44 PM PT): (1) contact at 11.6 m/s by more reach, not by the floors, and confirm the floors apply there;
+(2) slow half-bound hind prints a print ahead; (3) a turn-rate source; (4) Fischer 2002 blade angles and the blade ∥ forearm
+claim; (5) the knee floor. Re-score (no regression below 98.4 %), captures, tsc + npm test.
+
+### Rule 15 review of grok run 5 (event tasks/events/2026-10-21T16-08-grok-gait-comment-T-0009.json)
+
+- bound-checks v2 on 37b1fbc: hare 98.4 %, game 98.7 % — re-run, as claimed. Below 100: 1.68 m/s overtake (mean 7.3 cm,
+  worst 6.5) and 11.6 m/s contact (hind .158, fore .110 vs .18/.13).
+- Hildebrand 1977 quotes (pp.135-136) checked word for word in the paper (copy at originalwisdom.com). Not in grok's note:
+  Fig. 2 plots the fastest Lepus record at about hind 16 %, fore 11 % (read off the figure ±0.5 %), and p.137: "Fore
+  contacts drop to 70 percent or less of hind contacts for Lepus at speed". The floors are cross-species; see (1) below.
+- tests/hare-rig.test.ts passes; the contract (HARE_BODY hindToes/scapula, LEPORID_LIMITS, HARE_RIG, root heading) is in.

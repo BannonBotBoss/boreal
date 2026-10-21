@@ -84,15 +84,21 @@ export const HARE_AGENT: AgentSpecies = {
    *  Interface 6:549: leporids half-bound at all but the fastest speeds, stiff-backed when slow, flexed-back when escaping).
    *  Touchdown phases [estimate, from Hildebrand-style diagrams]: fore lead .08 is > 3x the hind lead .03, as Hildebrand 1977
    *  gives for half-bounding rabbits.
-   *  Duty (HIND): .60 slow -> .20 at top speed: Lepus hind contact spans ~60 % (slow) to ~20 % (very fast) of the stride in
-   *  Hildebrand 1977 Fig. 2; the hind contact "approaches 20 %" in fast runners incl. the rabbit (same paper); jackrabbit
-   *  contact 16-18 % at speed (Lagomorpha Locomotion, Encycl. Anim. Cogn. Behav. 2021). Fore share .90 -> .70 of the hind:
-   *  "fore contacts drop to 70 percent or less of hind contacts for Lepus at speed" (Hildebrand 1977); ~.9 for the slow Lepus
-   *  plots in Fig. 2. Mapping Hildebrand's subjective speeds onto 1.68 / 11.6 m/s is [estimate] (he gives no m/s).
+   *  Duty (HIND), re-sourced run 4: duty = sweep / stride, clamped to [.20, .60]. Bounds: Lepus hind contact spans ~60 %
+   *  (slow) to ~20 % (very fast) of the stride (Hildebrand 1977 Fig. 2; the hind contact "approaches 20 percent of the cycle
+   *  for various fast runners ... to the jumping mouse and rabbit. It is less than 18 percent only for individual strides of
+   *  exceptional cursors"); Hildebrand states "actual speed cannot be derived from contact intervals", so the old linear
+   *  .60 @ 1.68 -> .20 @ 11.6 m/s mapping had no speed source and is retired. Sweep .40 m = 1.2 x (hind leg .202 + foot .132):
+   *  galloping dogs at 9.2 m/s sweep 9.2 x .073 s = .67 m in stance (Walter & Carrier 2007, JEB 210:208, Tables 1-2: contact
+   *  71-75 ms), about 1.2 leg lengths; the same sweep in leg lengths for the hare is dynamic similarity (Alexander & Jayes 1983,
+   *  J Zool 201:135) [estimate: no lagomorph stance length vs speed found]. Gives .60 @ 1.68, .56 @ 3, .35 @ 5, .21 @ 8.5,
+   *  .20 (floor) @ 11.6 m/s. Fore share .90 -> .70 of the hind: "fore contacts drop to 70 percent or less of hind contacts
+   *  for Lepus at speed" (Hildebrand 1977); ~.9 for the slow Lepus plots in Fig. 2; fore floor .16 ("the fore contact
+   *  interval approaches 16 percent of the cycle in various fast-moving mammals", same paper).
    *  Cadence: Heglund & Taylor 1988 (JEB 138:301) allometry for 1.5 kg (ADW: 1.43-1.55 kg): trot-gallop transition
    *  1.54 M^0.216 = 1.68 m/s at 4.19 M^-0.150 = 3.94 Hz; preferred gallop 2.78 M^0.116 = 2.91 m/s at 4.44 M^-0.156 = 4.17 Hz;
    *  max sustained gallop 3.71 M^0.176 = 3.98 m/s at 4.70 M^-0.162 = 4.40 Hz. Above 3.98 m/s the frequency is held at 4.40 Hz
    *  up to the 11.6 m/s top speed (26 mph, Seton 1928 via MacLulich 1937) and speed grows by stride length, as in Heglund &
    *  Taylor's galloping animals [estimate: sprint frequency not measured in Lepus]. Slow hops f ~ v^0.25 [estimate]. */
-  gait: { touchdown: [0, .08, .42, .45], duty: [.6, .2], foreShare: [.9, .7], cadence: { transitionSpeed: 1.68, transitionHz: 3.94, topSpeed: 11.6, topHz: 4.4, slowExp: .25, points: [[2.91, 4.17], [3.98, 4.4]] } },
+  gait: { touchdown: [0, .08, .42, .45], duty: [.6, .2], sweep: .40, foreMin: .16, foreShare: [.9, .7], cadence: { transitionSpeed: 1.68, transitionHz: 3.94, topSpeed: 11.6, topHz: 4.4, slowExp: .25, points: [[2.91, 4.17], [3.98, 4.4]] } },
 };

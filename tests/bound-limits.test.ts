@@ -64,8 +64,9 @@ test('derived pitch: periodic, nose lowest at mid fore stance and highest at mid
     } }
 });
 
-test('reach budget: the data hind sweep at 8.5 m/s (~.63 m) is out of reach of the sourced mechanisms under the leporid ranges', () => {
-  const host = reachBudget('host'), r = host.rows.find(x => x.speed === 8.5)!;
-  assert.ok(Math.abs(r.hindNeed - .628) < .01, `${r.hindNeed}`);
-  assert.ok(r.hindShort > .2 && host.hindCap < .35, JSON.stringify(r)); // reported in the T-0009 grok-gait handoff
+test('reach budget: the re-sourced hind sweep at 8.5 m/s (.40 m) fits the dog ranges the game uses, not the leporid stance ranges', () => {
+  const host = reachBudget('host'), game = reachBudget('canid-limits'), r = host.rows.find(x => x.speed === 8.5)!, g = game.rows.find(x => x.speed === 8.5)!;
+  assert.ok(Math.abs(r.hindNeed - .40) < .005, `${r.hindNeed}`); // sweep .40 m = 1.2 x (hind leg + foot): grok run 4
+  assert.ok(r.hindShort > .1 && host.hindCap < .35, JSON.stringify(r)); // leporid (slow-walk stance) ranges: reported in the grok-gait handoff
+  assert.ok(g.hindShort < 0, JSON.stringify(g));
 });

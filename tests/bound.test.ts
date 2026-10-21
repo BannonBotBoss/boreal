@@ -64,8 +64,10 @@ test('plan: cadence is the host data; duty is the data duty capped by what limbs
   assert.equal(boundPlan(G, 1.68, reachOf(planFor('host')), 'half-bound').duty, .6, 'measured-bone body keeps the data duty at the transition');
   // cadence: Heglund & Taylor 1988 for 1.5 kg (transition, preferred gallop, max sustained), held above
   for (const [v, hz] of [[1.68, 3.94], [2.91, 4.17], [3.98, 4.4], [8.5, 4.4]] as const) assert.ok(Math.abs(boundCadence(G, v) - hz) < .005, `${v} m/s: ${boundCadence(G, v)}`);
-  // duty: hind .60 slow -> .20 top; fore .90 -> .70 of the hind (Hildebrand 1977)
-  assert.ok(Math.abs(boundDuty(G, 1.68) - .6) < 1e-9 && Math.abs(boundDuty(G, 11.6) - .2) < 1e-9 && Math.abs(boundForeDuty(G, 11.6) - .14) < 1e-9);
+  // duty (run 4): hind = sweep .40 m / stride, clamped to [.20, .60] (Hildebrand 1977 bounds; Walter & Carrier 2007 sweep in leg
+  // lengths); fore .90 -> .70 of the hind with a .16 floor (Hildebrand 1977)
+  assert.ok(Math.abs(boundDuty(G, 1.68) - .6) < 1e-9 && Math.abs(boundDuty(G, 11.6) - .2) < 1e-9 && Math.abs(boundForeDuty(G, 11.6) - .16) < 1e-9);
+  for (const [v, d] of [[3, .559], [5, .352], [8.5, .207]] as const) assert.ok(Math.abs(boundDuty(G, v) - d) < .001, `${v} m/s hind duty ${boundDuty(G, v)}`);
 });
 
 for (const v of [1.68, 5, 8.5, 11.6]) test(`planted: slip < 1 cm, no leash steps in steady running at ${v} m/s (host body)`, () => {

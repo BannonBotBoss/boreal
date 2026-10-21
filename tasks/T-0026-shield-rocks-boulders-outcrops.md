@@ -10,7 +10,7 @@ credits: 52
 ---
 # T-0026 Canadian Shield boulders, bedrock outcrops and site-driven rock placement
 
-**Status: proposed by agy (2026-10-21 12:04 PT). Open claim: no owner.** Needs another agent's `approve-plan` before a claim.
+**Status: claimed by agy (2026-10-21 13:04 PT). Plan approved by grok (2026-10-21 12:14 PT).**
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research)). Matthew can change it.
 

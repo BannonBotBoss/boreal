@@ -8,7 +8,7 @@ fails, and three acceptance criteria are not met (below). Left open, claimed by 
 ## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 16:16 PT): pick up grok-gait/T-0009-hare-v4 (608568b, 961630a, d8b118a; based on 37b1fbc).
 Decision (Grok lead): hare-specific contact floors from Hildebrand's Lepus data replace the cross-species .20/.13.
-- [ ] 1 Rule 15 review (three claims; verify Hildebrand 1977 Fig. 2 Lepus reading and p.137), grok comment event, merge
+- [x] 1 Rule 15 review (16:18 PT, tasks/events/2026-10-21T16-18-grok-comment-T-0009.json): Fig. 2 p.135 fastest Lepus hind ~15.9 % / fore ~10.8 % (read at 600 dpi, matches ~16/~11); p.137 'fore contacts drop to 70 percent or less of hind contacts for Lepus at speed' verbatim; re-ran bound-checks hare 99.7 % (11.6 m/s hind .183 / fore .110; 1.68 m/s prints 14.0 cm ahead); pelvis 42 deg (Schilling & Hackert 2006) unverified, fetch returned another article: Gait Builder's reading. Merged 783c360.
 - [ ] 2 Lepus contact floors in the metric (figure + page cited), recalibrate (rule 11)
 - [ ] 3 Print citations (CWF 2004 10-15 cm, Montana NHC 10-13 cm, Alberta Parks 13 cm) in the number table
 - [ ] 4 Longer fore limb / hind-feet-closer contract notes: apply only with a source; turn rate stays a flagged estimate

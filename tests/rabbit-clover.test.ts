@@ -153,3 +153,14 @@ test('alert holds ~1 s (freeze, then flee) unless the wolf is inside the 3.7 m f
   const A = HARE_AGENT.speed.accel!; speeds.forEach((v, i) => assert.ok(v <= A * (i + 1) / 60 + 1e-9, `speed ${v} at frame ${i}`));
   assert.ok(Math.max(...speeds) >= HARE_AGENT.speed.flee - 1e-9 && speeds.findIndex(v => v >= HARE_AGENT.speed.flee - 1e-9) / 60 > .8, 'top speed after ~0.85 s (about 3 bounds)');
 });
+
+test('clover thinning (run 4): clumps go centre-first with scatter, and the standing share tracks the leaf share', async () => {
+  const { clumpShown } = await import('../src/render/clover');
+  let s = 1; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647, clumps = Array.from({ length: 4000 }, () => ({ rel: Math.sqrt(rnd()), keep: rnd() }));
+  for (const share of [1, .8, .6, .45, .2, 0]) {
+    const up = clumps.filter(c => clumpShown(c.rel, c.keep, share)), inner = clumps.filter(c => c.rel < .4), innerUp = inner.filter(c => clumpShown(c.rel, c.keep, share));
+    if (share === 1) assert.equal(up.length, clumps.length); if (share === 0) assert.equal(up.length, 0);
+    if (share > 0 && share < 1) { assert.ok(Math.abs(up.length / clumps.length - share) < .12, `share ${share}: ${up.length / clumps.length}`);
+      assert.ok(innerUp.length / inner.length < up.length / clumps.length, 'the centre thins first'); }
+  }
+});

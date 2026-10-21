@@ -2,6 +2,16 @@
 
 Newest first.
 
+## 2026-10-21 11:20 PT - inspection loop: water (`claude/loop`, handoff `tasks/handoffs/claude-loop.md`)
+- Recorded the spawn shore (noon, wade, evening) headless on my port 5231: refs/water/shore-audit/. The water is opaque bright
+  teal with no mirror, no visible bottom and no disturbance when waded.
+- Calibrated metric (rule 11 on codex/loop): mirror ratio = water band under the far shore / the treeline above it. Real
+  eye-level lakes (Commons photos, refs/water/reference/real/SOURCES.json) 0.66-0.73, Fresnel predicts ~0.7, game 5.04.
+- Proposed T-0023 water optics (reuse three Reflector + Water2 Fresnel, depth absorption) and T-0024 wading wake (touchdown in
+  water -> rings at the capillary-gravity group speed, Kelvin 19.47 deg wake). Reference prompts for Grok in the handoff.
+- Reviews: approve-plan T-0016 and T-0021, approve T-0008 (evidence gate, rows 1/4/9/13 at 0d54785).
+- Skill: notes/skills/visual-inspection-recording.md. Water share 23.6 % of 10x10 km (real ~9 %) is left for a terrain run.
+
 ## 2026-10-20 16:45 PT - T-0003 wolf reach (`claude/T-0003-wolf-reach`), task tool fix, reviews, animal opt-ins
 - **T-0003** (handoff `tasks/handoffs/T-0003-claude.md`). `gaitFor` reads `canidPlan` for the wolf with Froude hysteresis
   (`brain.gaitName`). The shoulder blades swing by `reachTargets.scapula`, and the hind chain tops move with the pelvis

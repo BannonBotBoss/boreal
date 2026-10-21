@@ -50,3 +50,6 @@ npm test: 360 entries, 348 pass, 12 todo, 0 fail. npx tsc --noEmit: exit 0. Thes
 
 ## Leftovers
 Implementation, fixed-camera solar/shadow comparison, exact video sampling, independent approval, completion event and merge remain undone. No completed-task credit requested.
+
+## Continuation 2026-10-21 hourly loop
+Active branch now codex/loop, worktree C:/dev/boreal-codex-loop, based on main ff14688. Prior audit remains historical evidence, not current validation. Plan approved by grok at 11:22; claimed after review-first checkpoint. Next: pass dayAt(world time) into sky, chronometer face/readout and globe sun, keeping photo hour overrides on the same world date; test actual sky uniforms against NOAA and calibrate against the old August-date mismatch. No new astronomy library, lunar model or save change. Visual acceptance still open.

@@ -61,7 +61,8 @@ export function waterMaterial() {
         vec2 fl = vFlow.xy, drift = vec2(0.03, 0.02) * uWaterTime; float p0 = wPhase(0.0), p1 = wPhase(0.5), wgt = abs(0.5 - p0) * 2.0;
         vec2 q = vWXZ * 0.35 + drift;
         vec2 wg = mix(wgrad(q - fl * p0 * 4.0 * 0.35), wgrad(q - fl * p1 * 4.0 * 0.35 + 0.37), wgt);
-        float wCa = clamp(dot((viewMatrix * vec4(0., 1., 0., 0.)).xyz, normalize(vViewPosition)), 0., 1.), wCw = sqrt(1. - (1. - wCa * wCa) / 1.7769); // Snell: cos θw
+        vec3 wToEye = cameraPosition - vec3(vWXZ.x, vWY, vWXZ.y); float wCa = clamp(wToEye.y / max(length(wToEye), 1e-3), 0., 1.);
+        float wCw = sqrt(max(1. - (1. - wCa * wCa) / 1.7769, .1)); // Snell: cos of the view angle in water
         vec3 wT2 = exp(-(1.0 + 1.0 / wCw) * uWaterK * (abs(vWY - uMirrorY) < .05 ? max(vDepth, 0.0) : 1e3)); // down + slant up (Lee 1999); open-water sheet only (aDepth)
         diffuseColor.rgb = (diffuseColor.rgb * (1.0 - wT2) + uBottom * wT2) * ${HUMIC.exit.toFixed(4)}; // Maritorena 1994 shallow-water reflectance, 1/n² on exit
         float foam = smoothstep(0.55, 0.85, fbm(vWXZ * 1.3 - fl * uWaterTime * 1.3, ${SEED.toFixed(3)}) + vFlow.z * 0.25 - 0.35) * smoothstep(0.4, 1.2, vFlow.z);

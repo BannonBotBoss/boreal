@@ -1,0 +1,1 @@
+{"type": "claim", "task": "T-0008", "agent": "grok", "at": "2026-10-21T10:26:00-07:00", "note": "Branch grok/transactional-plan (worktree C:\\dev\\boreal-grok-plan) off main 0d54785. Read-only audit; the only file written is the plan doc plus the board entries."}

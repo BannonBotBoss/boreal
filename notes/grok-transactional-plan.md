@@ -257,3 +257,25 @@ browsers are killed after each run.
   or unvisited patches.
 - `STATE_FIELDS` tags every new field (tests/stateFields.test.ts). Snapshots (photo rewind) capture the new levels.
 - Save: only player-remembered records and sparse deltas are written. `parseContext` validates every new field.
+
+## 5. On the task board (added 2026-10-21 by Grok Bot)
+Matthew asked for every step to be a board task ("just go ahead and add them to the board"). Files: `tasks/T-0008..T-0019`,
+events in `tasks/events/2026-10-21T10-2*`. Credits are the board's formula: 10 x objectives x (1 + 0.5 scratch + 0.3 research).
+
+| Task | Plan step | Title | Credits | Depends on |
+|---|---|---|---|---|
+| T-0008 | this plan | Whole-game transactional audit and migration plan (claimed and completed by grok) | 52 | - |
+| T-0009 | 0 + 3 | Shared agent core, transaction registry and resource fields; hare + sunlit clover first | 108 | grok/rabbit-clover |
+| T-0010 | 1 | Wolf Autonomous mode on the core: no purposeless jumps | 50 | T-0009 |
+| T-0011 | 2 | Deer on the core: grazing, vigilance, herd alarm from senses and levels | 65 | T-0009 |
+| T-0015 | 4 | Forage on the resource field: placement by light, regrowth after eating | 52 | T-0009 |
+| T-0013 | 5 | Hunting I: lock-on, stealth awareness, steered leap | 90 | T-0009, T-0010 |
+| T-0014 | 6 | Hunting II: pin, bite, hold, consume, release, temporary friendship | 108 | T-0013 |
+| T-0016 | 7 | Why chains on every spawned object | 40 | T-0009 |
+| T-0019 | 8 | Traces become real: scent marks, remains, droppings | 52 | T-0009, T-0014 |
+| T-0017 | 9 | Ambience from real sources | 52 | T-0009 |
+| T-0012 | 10 | People (visitors) on the core | 52 | T-0009 |
+| T-0018 | 11 | Log arena as transactions (with T-0007) | 52 | T-0009, T-0007 |
+
+Audit check of grok/rabbit-clover at 10:20 PT: tip 6226a02, no commits beyond main and a clean tree, so nothing to
+generalise yet; T-0009 is where that branch lands the core.

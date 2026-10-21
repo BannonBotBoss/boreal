@@ -148,3 +148,13 @@ Recording: /workspace/locomotion/T-0009/ on the box.
   at speed (is the scapula excursion enough? Fischer 2002 says the scapula gives 66 % of fore step); slow half-bound
   overtaking (hind prints land behind the fore prints at ≤ 3 m/s on the host body).
 - Rule 15 review-first: not done this run.
+
+## Run 2 (grok-gait, 2026-10-21, based on dfcb848 grok/rabbit-clover; branch grok-gait/T-0009-hare-reach)
+Asked by Matthew (12:49 PT): grok's T-0009 "Needs from another agent" — (1) body pitch through the bound, (2) fore/hind reach
+at speed with the gap quantified and the contact-time source checked, (3) per-species joint limits in ik.ts as data with
+the rabbit ankle 66-137° / foot 17-123° (PeerJ 2022), dog/wolf unchanged; re-score, captures at 0.25x and 1x, frame
+questions, tsc + npm test. Baseline on dfcb848: bound-checks host **85.7 %** (tools/bound-score.ts).
+- [x] Rule 15 review first: T-0007 (grok's proposed plan) — claims hold, not approved (no Objectives, no credits, open
+  questions); event tasks/events/*-grok-gait-comment-T-0007.json.
+- [ ] (3) joint limits as data  - [ ] (1) pitch  - [ ] (2) reach budget + source check  - [ ] re-score  - [ ] captures
+- [ ] tsc + npm test  - [ ] notes in both handoffs

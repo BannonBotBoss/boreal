@@ -5,10 +5,10 @@ import { waterFresnel, humicK, humicDeepR, shallowReflectance, cosInWater, openW
 
 // T-0023 water optics: the numbers the shader uses, checked against their sources.
 test('water Fresnel: 2 % head-on, ~30-66 % at the grazing angles of a 3.3 m eye 15-45 m out, 100 % at the horizon', () => {
-  assert.equal(waterFresnel(1), .02);
-  assert.equal(waterFresnel(0), 1);
-  const at = (d: number) => waterFresnel(Math.cos(Math.atan2(d, 3.3))); // exact Fresnel (n = 1.333): 30.5 / 54.1 / 66.2 %
-  assert.ok(Math.abs(at(15) - .305) < .06 && Math.abs(at(30) - .541) < .06 && Math.abs(at(45) - .662) < .06, `${at(15)} ${at(30)} ${at(45)}`);
+  assert.ok(Math.abs(waterFresnel(1) - .0204) < 1e-4, 'head-on ((n-1)/(n+1))^2');
+  assert.ok(Math.abs(waterFresnel(0) - 1) < 1e-9);
+  const at = (d: number) => waterFresnel(Math.cos(Math.atan2(d, 3))); // T-0023 table, 3 m eye (78.7 / 84.3 / 86.2 deg): 30.5 / 54.1 / 66.2 %
+  assert.ok(Math.abs(at(15) - .305) < .005 && Math.abs(at(30) - .541) < .005 && Math.abs(at(45) - .662) < .005, `${at(15)} ${at(30)} ${at(45)}`);
 });
 
 test('humic water absorbs blue first; deep water leaves ~1 % or less, brown; implied Secchi depth 1-4 m', () => {

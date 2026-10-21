@@ -7,8 +7,8 @@
  * get the slow ripple drift.
  * Optics (T-0023): calm water is a mirror split by Fresnel, not a coloured surface. The open-water level y = LEVEL.waterSurface
  * is mirrored with three.js examples/jsm/objects/Reflector.js (MIT, r180, reused as is: we only call its mirror-camera pass and
- * sample its target), so the far shore and the sky appear upside down in it; the split is Schlick F = 0.02 + 0.98 (1 - cos)^5
- * (Water2.js, n = 1.333). What leaves the water body is humic-brown, about 1 % or less (R/G/B 1.1/0.7/0.2 %; Kutser, Paavel &
+ * sample its target), so the far shore and the sky appear upside down in it; the split is the exact unpolarised Fresnel
+ * reflectance of n = 1.333 (Hecht, *Optics*; Schlick's 0.02 + 0.98 (1 - cos)^5 of Water2.js runs ~3 points high at grazing angles). What leaves the water body is humic-brown, about 1 % or less (R/G/B 1.1/0.7/0.2 %; Kutser, Paavel &
  * Kauer, EGU2015-13460: negligible across the visible in very brown boreal lakes), and over shallow ground the bottom shows
  * through by depth absorption (HUMIC below). Lakes at other levels and the tiers without IBL reflect the horizon colour (fog)
  * by the same Fresnel instead of the mirror; uniforms only, so no new program.
@@ -42,8 +42,10 @@ const HUMIC_BODY = new THREE.Color().setRGB(...humicDeepR() as [number, number, 
 const MIRROR = { uMirror: { value: null as THREE.Texture | null }, uMirrorMatrix: { value: new THREE.Matrix4() }, uMirrorOn: { value: 0 },
   uMirrorY: { value: LEVEL.waterSurface }, uWaterSky: { value: new THREE.Color(0x8fa6b8) },
   uWaterK: { value: new THREE.Vector3(...humicK()) }, uBottom: { value: new THREE.Vector3(...HUMIC.bottom) } };
-/** Schlick's Fresnel for water (n = 1.333, F0 = 0.02), as in the shader: share of light reflected at a view angle with cosine c. */
-export const waterFresnel = (c: number) => .02 + .98 * Math.pow(1 - Math.min(1, Math.max(0, c)), 5);
+/** Exact unpolarised Fresnel reflectance of water (n = 1.333; Hecht, *Optics*), as in the shader: share of light reflected at a
+ *  view angle with cosine c (mean of the s and p amplitudes squared). */
+export const waterFresnel = (c: number) => { c = Math.min(1, Math.max(0, c)); const t = Math.sqrt(1 - (1 - c * c) / 1.333 ** 2),
+  rs = (c - 1.333 * t) / (c + 1.333 * t), rp = (1.333 * c - t) / (1.333 * c + t); return (rs * rs + rp * rp) / 2; };
 let water: THREE.MeshStandardMaterial | undefined;
 export function waterMaterial() {
   if (water) return water;
@@ -70,7 +72,8 @@ export function waterMaterial() {
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.7, foam);')
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
         normal = normalize(normal - (viewMatrix * vec4(wg.x, 0., wg.y, 0.)).xyz * (0.6 + 0.6 * length(fl)));`)
-      .replace('#include <opaque_fragment>', `float wF = 0.02 + 0.98 * pow(1. - clamp(dot(normal, normalize(vViewPosition)), 0., 1.), 5.); // Schlick, F0 = 0.02
+      .replace('#include <opaque_fragment>', `float wC = clamp(dot(normal, normalize(vViewPosition)), 0., 1.), wCt = sqrt(1. - (1. - wC * wC) / 1.7769); // exact Fresnel, n = 1.333 (waterFresnel)
+        float wRs = (wC - 1.333 * wCt) / (wC + 1.333 * wCt), wRp = (1.333 * wC - wCt) / (1.333 * wC + wCt), wF = .5 * (wRs * wRs + wRp * wRp);
         vec4 mc = uMirrorMatrix * vec4(vWXZ.x, vWY, vWXZ.y, 1.);
         vec3 wSky = uMirrorOn > .5 && abs(vWY - uMirrorY) < .05 ? texture2D(uMirror, mc.xy / mc.w + wg * .04).rgb : uWaterSky;
         outgoingLight = mix(totalDiffuse, wSky, wF) + reflectedLight.directSpecular + totalEmissiveRadiance; // the IBL specular is replaced by the mirror

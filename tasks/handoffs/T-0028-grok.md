@@ -114,6 +114,9 @@ Evidence folder for this brief: `C:\dev\hare-mesh-rec4\` (compare `compare-mesh2
   `<base> <out> <mode> <fov> <dist> <side>`; telephoto recording `C:\dev\hare-mesh-rec4\game\` (fov 16, 6.5 m behind, 1.1 m
   side; frames f000-f086 + rabbit-record.json). Sizes `C:\dev\hare-mesh-rec4\rec4g-sizes.md`: graze ~119-127 x 46-52 px, alert
   105 x 88, flee start 117 x 100 (> 100 px wide), end-on at 4.4-4.9 s only 56-62 px; the hare leaves frame after ~6.8 s.
+- Board (grok/transactional-plan, ff-merged into the served main): 9c14a01 number table (head-body .446 m, bare 1.878 L,
+  9000 x .009 cards, dorsal line / rims / eyelids modelled, draw cost re-measured); ebbc897 skill lessons. RULES.md re-checked
+  on main 7a3b27c/ebbc897 at 18:25 PT: no cross-family reviewer rule.
 - Checks: PC `npm test` 407 tests, 395 pass, 0 fail, 12 todo (C:\dev\hare-mesh-rec4\npmtest.txt); `npx tsc --noEmit` exit 0
   (C:\dev\hare-mesh-rec4\tsc.txt).
 

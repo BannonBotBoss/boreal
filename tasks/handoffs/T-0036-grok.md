@@ -168,3 +168,27 @@ mapped to the template speeds; (4) the predator-awareness cue: `strongestThreat`
 animal exist, but the HUD/halo wiring waits for an embodied prey (plan: push relayed alarms as sound cues into the existing senses halo,
 no new ring; auto-focus radius stays invisible); (5) NPC wolves in the rendered world (core/sim has them; no renderer adapter yet).
 No recording of a chase yet (needs scripted input in the recorder); the headless sim table above is the evidence.
+
+## Part 3: branch health + evidence (2026-10-22 02:23-02:36 PT, off-screen Edge on the PC GPU, own Vite :5180)
+Merged main 850158d (trace.test fix) and then 5fdadb3 (T-0034) into the branch: clean. `npm test` 406 tests, 393 pass,
+0 fail, 13 todo; `npx tsc --noEmit` exit 0. Recorder: `tools/hunt-record.mjs` (copy in `refs/T-0036/record.mjs`), reads a
+read-only `?rec` probe (`window.__boreal.hares()/player()` in src/main.ts; nothing is written through it).
+
+| check | main (:5173) | branch (:5180) |
+|---|---|---|
+| fps (8 s rAF, 1280x800, off-screen Edge) | 60.0 | 60.1 |
+| console errors / exceptions | 0 | 0 |
+| hares spawned | (no probe on main) | 5, linked 2-4 mates each |
+| hare states over 20 s (200 samples) | - | nibble 158, hop 42 (graze/hop cycle runs) |
+| walk (not stalk) at the nearest hare for 8 s | - | 5 of 5 fled (alarm relayed through the group) |
+
+Evidence (full-size on the box `/workspace/hydration/`; 960 px copies in `refs/T-0036/`, real-time from frame timestamps):
+- `chase-catch.mp4` (22.6 s): stalk at 16.9 m -> target bolts at 5.2 m; its 4 linked mates freeze on the thump
+  (`chase-15s-bolt-group-freezes.jpg`), then scatter in divergent directions (+z, -z, +x; `chase-17s-scatter.jpg`) ->
+  sprint, pounce at 2.7 m (`chase-19s-pounce.jpg`) -> caught and eaten (`chase-19s-caught-eat.jpg`, notice
+  "Caught a snowshoe hare!"): Energy 29.9 -> 81.6, Water 39.9 -> 60.0, Stamina +40.
+- Tries: the scripted (bot) hunter caught on attempt 2 of 2; attempt 1 bolted at 4.7 m, pounced 3x at 2.9-3.2 m and the
+  hare escaped by jinking. Matches the headless tuning (skilled ~1 in 3); stealth balance unchanged (Matthew deciding).
+- `thought-low.mp4` (24.1 s, Water 25 %): faint water-drop bubble floats up and fades about every 10 s (`thought-low-water.jpg`).
+- `thought-critical.mp4` (24.0 s, Water 8 %): red-ringed pulsing alert repeating about every 3 s (`thought-critical-1/2.jpg`).
+- `hunt-frames.json`: per-frame status line, hare positions/states/links and the health report.

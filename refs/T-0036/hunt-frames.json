@@ -1,0 +1,9499 @@
+{
+"report": {
+"chase": [
+{
+"attempt": 0,
+"caught": false,
+"events": [
+{
+"t": 15035,
+"e": "bolt at 4.9 m",
+"linked": 4
+},
+{
+"t": 17276,
+"e": "pounce at 3.1 m"
+},
+{
+"t": 18957,
+"e": "pounce at 3.1 m"
+},
+{
+"t": 21554,
+"e": "pounce at 3.0 m"
+},
+{
+"t": 35297,
+"e": "escaped"
+}
+],
+"before": {
+"x": 29.999999950397548,
+"z": 1.3588660812956868e-07,
+"yaw": -0.35,
+"energy": 29.878908297659592,
+"water": 39.952194005012245,
+"mode": "walk"
+},
+"after": {
+"x": 37.82624463320462,
+"z": -20.988590130720553,
+"yaw": -3.8457301542762203,
+"energy": 25.221081459577036,
+"water": 39.297697784560775,
+"mode": "walk"
+},
+"frames": 364
+},
+{
+"attempt": 1,
+"caught": false,
+"events": [
+{
+"t": 14989,
+"e": "bolt at 4.7 m",
+"linked": 4
+},
+{
+"t": 17636,
+"e": "pounce at 2.9 m"
+},
+{
+"t": 19837,
+"e": "pounce at 3.2 m"
+},
+{
+"t": 21454,
+"e": "pounce at 2.9 m"
+},
+{
+"t": 40488,
+"e": "escaped"
+}
+],
+"before": {
+"x": 29.999999954586766,
+"z": 1.2440977830101005e-07,
+"yaw": -0.35,
+"energy": 29.88898178416278,
+"water": 39.95617093353809,
+"mode": "walk"
+},
+"after": {
+"x": 53.06343663545802,
+"z": -39.387490749769164,
+"yaw": -7.423690467080175,
+"energy": 25.085146070447315,
+"water": 39.24403162572732,
+"mode": "walk"
+},
+"frames": 406
+},
+{
+"attempt": 2,
+"caught": true,
+"events": [
+{
+"t": 15618,
+"e": "bolt at 5.2 m",
+"linked": 4
+},
+{
+"t": 18750,
+"e": "pounce at 2.7 m"
+},
+{
+"t": 19198,
+"e": "target gone (caught?)"
+}
+],
+"before": {
+"x": 29.999999939813232,
+"z": 1.648823225729399e-07,
+"yaw": -0.35,
+"energy": 29.851625938380124,
+"water": 39.94142315692142,
+"mode": "walk"
+},
+"after": {
+"x": 20.737155307447633,
+"z": -16.52554285286092,
+"yaw": 1.547137563573179,
+"energy": 81.58498773657901,
+"water": 59.9994740002107,
+"mode": "walk"
+},
+"frames": 186
+}
+]
+},
+"errors": [],
+"frames": [
+{
+"shot": "chase2",
+"frame": "chase2-0000.jpg",
+"t": 1792661278831,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 16.862367958991168,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.8,
+-19.4,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0001.jpg",
+"t": 1792661278997,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 16.70814157531505,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0002.jpg",
+"t": 1792661279127,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 16.63286498015545,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0003.jpg",
+"t": 1792661279222,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 16.53458496472109,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0004.jpg",
+"t": 1792661279344,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 16.478069612490792,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0005.jpg",
+"t": 1792661279443,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 16.37153069844844,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0006.jpg",
+"t": 1792661279567,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 16.29162755912393,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0007.jpg",
+"t": 1792661279678,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 16.18509146027142,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0008.jpg",
+"t": 1792661279810,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 16.10519046889147,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0009.jpg",
+"t": 1792661279915,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.998657283783894,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0010.jpg",
+"t": 1792661280024,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.918758515949413,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0011.jpg",
+"t": 1792661280119,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.83886072521869,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0012.jpg",
+"t": 1792661280241,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.758963926392546,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0013.jpg",
+"t": 1792661280343,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.652436430506825,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0014.jpg",
+"t": 1792661280460,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.572542005578793,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0015.jpg",
+"t": 1792661280569,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.492648624316274,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0016.jpg",
+"t": 1792661280674,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.386125767611158,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"freeze",
+true
+],
+[
+3,
+53.2,
+4.5,
+"freeze",
+true
+],
+[
+4,
+61.4,
+-3.2,
+"freeze",
+true
+],
+[
+5,
+49,
+-1.9,
+"freeze",
+true
+],
+[
+6,
+53.5,
+-19.6,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0017.jpg",
+"t": 1792661280769,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.306234885324955,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0018.jpg",
+"t": 1792661280872,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.226345102139165,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0019.jpg",
+"t": 1792661280968,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.146456435367305,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0020.jpg",
+"t": 1792661281075,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 15.066568902889289,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0021.jpg",
+"t": 1792661281174,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.98668252282297,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0022.jpg",
+"t": 1792661281271,
+"status": "08:30 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.906797313674634,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0023.jpg",
+"t": 1792661281370,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.826913294370474,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0024.jpg",
+"t": 1792661281469,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.747030484164714,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0025.jpg",
+"t": 1792661281590,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.667148902918115,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0026.jpg",
+"t": 1792661281688,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.587268570842545,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0027.jpg",
+"t": 1792661281785,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.507389508527272,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0028.jpg",
+"t": 1792661281897,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.427511737062696,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0029.jpg",
+"t": 1792661282002,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.347635277928177,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0030.jpg",
+"t": 1792661282106,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.241135412154915,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0031.jpg",
+"t": 1792661282211,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.161262101955426,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0032.jpg",
+"t": 1792661282321,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.081390179593377,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0033.jpg",
+"t": 1792661282421,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 14.00151966879244,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0034.jpg",
+"t": 1792661282525,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.92165059382075,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0035.jpg",
+"t": 1792661282625,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.841782979633045,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0036.jpg",
+"t": 1792661282719,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.76191685163948,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0037.jpg",
+"t": 1792661282824,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.682052235843381,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0038.jpg",
+"t": 1792661282924,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.602189158881135,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0039.jpg",
+"t": 1792661283019,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.522327647932308,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0040.jpg",
+"t": 1792661283127,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.44246773104226,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+49,
+-1.9,
+"nibble",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0041.jpg",
+"t": 1792661283223,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.362609436766594,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+48.9,
+-1.9,
+"hop",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0042.jpg",
+"t": 1792661283341,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.282752794347491,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+48.8,
+-2,
+"hop",
+false
+],
+[
+6,
+53.5,
+-19.6,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0043.jpg",
+"t": 1792661283440,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.176279892559037,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+48.7,
+-2.1,
+"hop",
+false
+],
+[
+6,
+53.4,
+-19.6,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0044.jpg",
+"t": 1792661283536,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.096427222213833,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+48.6,
+-2.2,
+"hop",
+false
+],
+[
+6,
+53.3,
+-19.6,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0045.jpg",
+"t": 1792661283638,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 13.016576306579514,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+48.5,
+-2.2,
+"hop",
+false
+],
+[
+6,
+53.1,
+-19.6,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0046.jpg",
+"t": 1792661283740,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.936727178077422,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.2,
+"nibble",
+false
+],
+[
+5,
+48.4,
+-2.3,
+"hop",
+false
+],
+[
+6,
+53,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0047.jpg",
+"t": 1792661283836,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.85687987000513,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3.1,
+"hop",
+false
+],
+[
+5,
+48.3,
+-2.4,
+"hop",
+false
+],
+[
+6,
+52.9,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0048.jpg",
+"t": 1792661283960,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.777034416462426,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.4,
+-3,
+"hop",
+false
+],
+[
+5,
+48.3,
+-2.5,
+"hop",
+false
+],
+[
+6,
+52.8,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0049.jpg",
+"t": 1792661284071,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.697190852406601,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.5,
+-2.9,
+"hop",
+false
+],
+[
+5,
+48.2,
+-2.5,
+"hop",
+false
+],
+[
+6,
+52.7,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0050.jpg",
+"t": 1792661284168,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.590735768497648,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.5,
+-2.7,
+"hop",
+false
+],
+[
+5,
+48,
+-2.6,
+"hop",
+false
+],
+[
+6,
+52.5,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0051.jpg",
+"t": 1792661284274,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.51089675453883,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.6,
+-2.6,
+"hop",
+false
+],
+[
+5,
+47.9,
+-2.7,
+"hop",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0052.jpg",
+"t": 1792661284381,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.431059753298454,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"nibble",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.6,
+-2.5,
+"hop",
+false
+],
+[
+5,
+47.9,
+-2.8,
+"hop",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0053.jpg",
+"t": 1792661284493,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.355804200479074,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.1,
+-9.3,
+"hop",
+false
+],
+[
+3,
+53.2,
+4.5,
+"nibble",
+false
+],
+[
+4,
+61.6,
+-2.4,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0054.jpg",
+"t": 1792661284591,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.290547817097963,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.2,
+-9.2,
+"hop",
+false
+],
+[
+3,
+53.2,
+4.5,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.3,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0055.jpg",
+"t": 1792661284689,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.226566596243023,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.2,
+-9.1,
+"hop",
+false
+],
+[
+3,
+53.1,
+4.4,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0056.jpg",
+"t": 1792661284792,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.186984345519162,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-9,
+"hop",
+false
+],
+[
+3,
+53,
+4.4,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0057.jpg",
+"t": 1792661284885,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.125167402353544,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.4,
+-8.9,
+"hop",
+false
+],
+[
+3,
+52.8,
+4.3,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0058.jpg",
+"t": 1792661284985,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.064433660121782,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.5,
+-8.8,
+"hop",
+false
+],
+[
+3,
+52.7,
+4.3,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0059.jpg",
+"t": 1792661285091,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 12.004799558946981,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.5,
+-8.7,
+"hop",
+false
+],
+[
+3,
+52.6,
+4.3,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0060.jpg",
+"t": 1792661285192,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.946281566677166,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+52.5,
+4.2,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0061.jpg",
+"t": 1792661285289,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.866302967007996,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+52.4,
+4.2,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0062.jpg",
+"t": 1792661285398,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.786324597641013,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+52.3,
+4.1,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0063.jpg",
+"t": 1792661285514,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.706346463272464,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+52.2,
+4.1,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0064.jpg",
+"t": 1792661285631,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.599709324709469,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+52,
+4,
+"hop",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0065.jpg",
+"t": 1792661285734,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.493072624555056,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0066.jpg",
+"t": 1792661285839,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.413095394481807,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0067.jpg",
+"t": 1792661285938,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.333118423251026,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0068.jpg",
+"t": 1792661286050,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.253141716308154,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0069.jpg",
+"t": 1792661286151,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.17316527942425,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0070.jpg",
+"t": 1792661286259,
+"status": "08:31 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.093189118461044,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0071.jpg",
+"t": 1792661286380,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 11.013213239386637,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0072.jpg",
+"t": 1792661286476,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.906579183165745,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0073.jpg",
+"t": 1792661286580,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.826603986126873,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0074.jpg",
+"t": 1792661286681,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.746629092362504,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0075.jpg",
+"t": 1792661286777,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.666654508670753,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0076.jpg",
+"t": 1792661286879,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.58668024205564,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0077.jpg",
+"t": 1792661286977,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.506706299757687,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0078.jpg",
+"t": 1792661287079,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.426732689161925,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0079.jpg",
+"t": 1792661287177,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.346759418061682,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0080.jpg",
+"t": 1792661287279,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.266786494412774,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0081.jpg",
+"t": 1792661287386,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.186813926352071,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0082.jpg",
+"t": 1792661287502,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.106841722320603,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0083.jpg",
+"t": 1792661287613,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 10.000212698228658,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0084.jpg",
+"t": 1792661287730,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.920241377924736,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0085.jpg",
+"t": 1792661287835,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.840270451816396,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0086.jpg",
+"t": 1792661287946,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.733643180287807,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0087.jpg",
+"t": 1792661288043,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.65367321212343,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0088.jpg",
+"t": 1792661288145,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.57370367164379,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0089.jpg",
+"t": 1792661288245,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.493734569778413,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0090.jpg",
+"t": 1792661288344,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.413765917635173,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0091.jpg",
+"t": 1792661288444,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.333797726773252,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0092.jpg",
+"t": 1792661288544,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.253830009124055,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0093.jpg",
+"t": 1792661288643,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.173862777035719,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0094.jpg",
+"t": 1792661288743,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 9.09389604342202,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.6,
+"hop",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0095.jpg",
+"t": 1792661288846,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 8.929743682385318,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.5,
+"hop",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0096.jpg",
+"t": 1792661288946,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 8.766391204923714,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.6,
+-8.4,
+"hop",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0097.jpg",
+"t": 1792661289047,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 8.603884170684578,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.5,
+-8.3,
+"hop",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0098.jpg",
+"t": 1792661289143,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 8.442271402061484,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.5,
+-8.2,
+"hop",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0099.jpg",
+"t": 1792661289244,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 8.281605253245267,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.5,
+-8,
+"hop",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0100.jpg",
+"t": 1792661289349,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 8.121941901765243,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.4,
+-7.9,
+"hop",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0101.jpg",
+"t": 1792661289469,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.963341665460278,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.4,
+-7.8,
+"hop",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0102.jpg",
+"t": 1792661289587,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.753641113037922,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0103.jpg",
+"t": 1792661289700,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.673802507752785,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0104.jpg",
+"t": 1792661289811,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.5673561912292,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0105.jpg",
+"t": 1792661289928,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.487525459158763,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0106.jpg",
+"t": 1792661290024,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.4076982835317216,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.7,
+-2.2,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0107.jpg",
+"t": 1792661290138,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.327874780547621,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.8,
+-2.1,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0108.jpg",
+"t": 1792661290245,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.221449366728827,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.9,
+-2,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0109.jpg",
+"t": 1792661290347,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.1416349145917515,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+61.9,
+-1.9,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0110.jpg",
+"t": 1792661290463,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 7.061824561122959,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62,
+-1.8,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0111.jpg",
+"t": 1792661290579,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.955417376064515,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.1,
+-1.7,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0112.jpg",
+"t": 1792661290684,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.875617143945023,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.2,
+-1.6,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0113.jpg",
+"t": 1792661290796,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.795821504964977,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.3,
+-1.5,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.4,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0114.jpg",
+"t": 1792661290902,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.716030622816027,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.3,
+-1.4,
+"hop",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.3,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0115.jpg",
+"t": 1792661291014,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.609650477177141,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52.1,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0116.jpg",
+"t": 1792661291138,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.529871375960387,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"nibble",
+false
+],
+[
+6,
+52,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0117.jpg",
+"t": 1792661291247,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.423507616479637,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+47.8,
+-2.8,
+"hop",
+false
+],
+[
+6,
+51.8,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0118.jpg",
+"t": 1792661291347,
+"status": "08:32 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.343741341877097,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+47.7,
+-2.8,
+"hop",
+false
+],
+[
+6,
+51.7,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0119.jpg",
+"t": 1792661291461,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.263980915359802,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+47.6,
+-2.9,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"hop",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0120.jpg",
+"t": 1792661291561,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.184226563203002,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+47.5,
+-2.9,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0121.jpg",
+"t": 1792661291681,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.104478523431475,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+47.3,
+-2.9,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0122.jpg",
+"t": 1792661291797,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.998158058277445,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+47.2,
+-3,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0123.jpg",
+"t": 1792661291914,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.941657653337893,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+47.1,
+-3,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0124.jpg",
+"t": 1792661292032,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.8353036185608715,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+46.9,
+-3,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0125.jpg",
+"t": 1792661292148,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.728960989154703,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"nibble",
+false
+],
+[
+3,
+51.9,
+4,
+"nibble",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+46.8,
+-3.1,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0126.jpg",
+"t": 1792661292263,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.649211889338111,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.8,
+4,
+"hop",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+46.7,
+-3.1,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0127.jpg",
+"t": 1792661292380,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.569469859311919,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.7,
+4,
+"hop",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+46.5,
+-3.1,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0128.jpg",
+"t": 1792661292479,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.494268006996705,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.6,
+4,
+"hop",
+false
+],
+[
+4,
+62.4,
+-1.3,
+"nibble",
+false
+],
+[
+5,
+46.4,
+-3.2,
+"hop",
+false
+],
+[
+6,
+51.6,
+-19.7,
+"nibble",
+false
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0129.jpg",
+"t": 1792661292598,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.43776907070004,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0130.jpg",
+"t": 1792661292728,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.357804026436837,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0131.jpg",
+"t": 1792661292834,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.2511854143097825,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0132.jpg",
+"t": 1792661292947,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.14456855004532,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0133.jpg",
+"t": 1792661293045,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.0646071152527234,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0134.jpg",
+"t": 1792661293146,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.984646776111279,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0135.jpg",
+"t": 1792661293270,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.90468758618376,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0136.jpg",
+"t": 1792661293381,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.798077220090655,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0137.jpg",
+"t": 1792661293502,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.718120940759461,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0138.jpg",
+"t": 1792661293635,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.611514688714031,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0139.jpg",
+"t": 1792661293770,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.504911017577824,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0140.jpg",
+"t": 1792661293903,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.398310115219161,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0141.jpg",
+"t": 1792661294032,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.291712187855915,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0142.jpg",
+"t": 1792661294168,
+"status": "08:33 \u00b7 STEALTH \u00b7 Stamina 100/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.185117462787143,
+"phase": "stalk",
+"hares": [
+[
+2,
+44.3,
+-7.7,
+"freeze",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0143.jpg",
+"t": 1792661294430,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 99/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.16154694691983,
+"phase": "sprint",
+"hares": [
+[
+2,
+45.2,
+-8.4,
+"flee",
+true
+],
+[
+3,
+51.5,
+4,
+"freeze",
+true
+],
+[
+4,
+62.4,
+-1.3,
+"freeze",
+true
+],
+[
+5,
+46.3,
+-3.2,
+"freeze",
+true
+],
+[
+6,
+51.6,
+-19.7,
+"freeze",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0144.jpg",
+"t": 1792661294535,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 98/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 6.122335702318765,
+"phase": "sprint",
+"hares": [
+[
+2,
+46.3,
+-10,
+"flee",
+true
+],
+[
+3,
+52.9,
+5.4,
+"flee",
+true
+],
+[
+4,
+64.2,
+-0.6,
+"flee",
+true
+],
+[
+5,
+47.7,
+-1.8,
+"flee",
+true
+],
+[
+6,
+51.9,
+-21.6,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0145.jpg",
+"t": 1792661294640,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 97/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.8861836268474335,
+"phase": "sprint",
+"hares": [
+[
+2,
+46.4,
+-11.1,
+"flee",
+true
+],
+[
+3,
+53.7,
+6.3,
+"flee",
+true
+],
+[
+4,
+65.3,
+-0.1,
+"flee",
+true
+],
+[
+5,
+47.9,
+-0.7,
+"flee",
+true
+],
+[
+6,
+51.5,
+-22.6,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0146.jpg",
+"t": 1792661294767,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 96/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.542870471863955,
+"phase": "sprint",
+"hares": [
+[
+2,
+46.1,
+-11.9,
+"flee",
+true
+],
+[
+3,
+54.3,
+6.9,
+"flee",
+true
+],
+[
+4,
+66.1,
+0.2,
+"flee",
+true
+],
+[
+5,
+47.7,
+0.2,
+"flee",
+true
+],
+[
+6,
+50.9,
+-23.2,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0147.jpg",
+"t": 1792661294880,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 95/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 5.073070014933706,
+"phase": "sprint",
+"hares": [
+[
+2,
+45.5,
+-12.8,
+"flee",
+true
+],
+[
+3,
+55,
+7.7,
+"flee",
+true
+],
+[
+4,
+67.1,
+0.7,
+"flee",
+true
+],
+[
+5,
+47.1,
+1.1,
+"flee",
+true
+],
+[
+6,
+50.2,
+-24.1,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0148.jpg",
+"t": 1792661294996,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 94/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.816104360404976,
+"phase": "sprint",
+"hares": [
+[
+2,
+45,
+-13.5,
+"flee",
+true
+],
+[
+3,
+55.6,
+8.4,
+"flee",
+true
+],
+[
+4,
+67.9,
+1,
+"flee",
+true
+],
+[
+5,
+47,
+2,
+"flee",
+true
+],
+[
+6,
+49.6,
+-24.8,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0149.jpg",
+"t": 1792661295109,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 93/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.653807446889241,
+"phase": "sprint",
+"hares": [
+[
+2,
+44.3,
+-14.4,
+"flee",
+true
+],
+[
+3,
+55.8,
+9.4,
+"flee",
+true
+],
+[
+4,
+69,
+1,
+"flee",
+true
+],
+[
+5,
+47.1,
+3.1,
+"flee",
+true
+],
+[
+6,
+48.9,
+-25.7,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0150.jpg",
+"t": 1792661295211,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 92/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.631778323814749,
+"phase": "sprint",
+"hares": [
+[
+2,
+43.8,
+-15.1,
+"flee",
+true
+],
+[
+3,
+55.8,
+10.3,
+"flee",
+true
+],
+[
+4,
+69.8,
+1,
+"flee",
+true
+],
+[
+5,
+47.3,
+3.9,
+"flee",
+true
+],
+[
+6,
+48.4,
+-26.3,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0151.jpg",
+"t": 1792661295329,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 91/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.6630235104194515,
+"phase": "sprint",
+"hares": [
+[
+2,
+43.3,
+-15.8,
+"flee",
+true
+],
+[
+3,
+55.8,
+11.1,
+"flee",
+true
+],
+[
+4,
+70.7,
+1,
+"flee",
+true
+],
+[
+5,
+47.4,
+4.8,
+"flee",
+true
+],
+[
+6,
+47.9,
+-27,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0152.jpg",
+"t": 1792661295438,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 90/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.782975077256411,
+"phase": "sprint",
+"hares": [
+[
+2,
+42.8,
+-16.8,
+"flee",
+true
+],
+[
+3,
+55.8,
+12.3,
+"flee",
+true
+],
+[
+4,
+71.8,
+1,
+"flee",
+true
+],
+[
+5,
+47.6,
+5.9,
+"flee",
+true
+],
+[
+6,
+47.2,
+-27.9,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0153.jpg",
+"t": 1792661295543,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 90/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.867733032941997,
+"phase": "sprint",
+"hares": [
+[
+2,
+42.4,
+-17.5,
+"flee",
+true
+],
+[
+3,
+55.8,
+13.1,
+"flee",
+true
+],
+[
+4,
+72.7,
+1,
+"flee",
+true
+],
+[
+5,
+47.7,
+6.7,
+"flee",
+true
+],
+[
+6,
+46.8,
+-28.6,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0154.jpg",
+"t": 1792661295641,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 89/100 \u00b7 Energy 30/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.670544277294026,
+"phase": "sprint",
+"hares": [
+[
+2,
+41.7,
+-18,
+"flee",
+true
+],
+[
+3,
+55.5,
+13.9,
+"flee",
+true
+],
+[
+4,
+73.5,
+1,
+"flee",
+true
+],
+[
+5,
+47.9,
+7.5,
+"flee",
+true
+],
+[
+6,
+46.6,
+-29.4,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0155.jpg",
+"t": 1792661295751,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 88/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.267880104729063,
+"phase": "sprint",
+"hares": [
+[
+2,
+40.9,
+-18.3,
+"flee",
+true
+],
+[
+3,
+55.1,
+14.6,
+"flee",
+true
+],
+[
+4,
+74.4,
+1,
+"flee",
+false
+],
+[
+5,
+48.2,
+8.3,
+"flee",
+true
+],
+[
+6,
+46.7,
+-30.3,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0156.jpg",
+"t": 1792661295862,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 87/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 3.9765762964259657,
+"phase": "sprint",
+"hares": [
+[
+2,
+40.1,
+-18.3,
+"flee",
+true
+],
+[
+3,
+54.7,
+15.4,
+"flee",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+48.6,
+9.1,
+"flee",
+true
+],
+[
+6,
+46.9,
+-31.1,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0157.jpg",
+"t": 1792661295963,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 86/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 3.769494018084719,
+"phase": "sprint",
+"hares": [
+[
+2,
+39.3,
+-18.1,
+"flee",
+true
+],
+[
+3,
+54.3,
+16.2,
+"flee",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+48.9,
+9.9,
+"flee",
+true
+],
+[
+6,
+47.1,
+-31.9,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0158.jpg",
+"t": 1792661296061,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 85/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 3.6502376066058373,
+"phase": "sprint",
+"hares": [
+[
+2,
+38.5,
+-17.7,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+49.3,
+10.6,
+"flee",
+true
+],
+[
+6,
+47.2,
+-32.8,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0159.jpg",
+"t": 1792661296167,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 84/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 3.543582715604582,
+"phase": "sprint",
+"hares": [
+[
+2,
+37.9,
+-17.2,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+49.6,
+11.4,
+"flee",
+true
+],
+[
+6,
+47.4,
+-33.6,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0160.jpg",
+"t": 1792661296290,
+"status": "08:33 \u00b7 SPRINT \u00b7 Stamina 83/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 3.681587385290574,
+"phase": "sprint",
+"hares": [
+[
+2,
+37,
+-16.4,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+12.4,
+"flee",
+true
+],
+[
+6,
+47.6,
+-34.7,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0161.jpg",
+"t": 1792661296388,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 83/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 3.925045420679873,
+"phase": "sprint",
+"hares": [
+[
+2,
+36.4,
+-15.8,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+13.3,
+"flee",
+true
+],
+[
+6,
+47.9,
+-35.5,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0162.jpg",
+"t": 1792661296494,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 82/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.209315855581288,
+"phase": "sprint",
+"hares": [
+[
+2,
+35.8,
+-15.2,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+14.1,
+"flee",
+true
+],
+[
+6,
+48.4,
+-36.2,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0163.jpg",
+"t": 1792661296597,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 81/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.48643482950068,
+"phase": "sprint",
+"hares": [
+[
+2,
+35.2,
+-14.7,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15,
+"flee",
+true
+],
+[
+6,
+49.1,
+-36.6,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0164.jpg",
+"t": 1792661296699,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 80/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.6149498928420485,
+"phase": "sprint",
+"hares": [
+[
+2,
+34.4,
+-14.5,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+true
+],
+[
+6,
+50,
+-36.8,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0165.jpg",
+"t": 1792661296811,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 79/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.422044955840663,
+"phase": "sprint",
+"hares": [
+[
+2,
+33.2,
+-14.6,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+true
+],
+[
+6,
+51.1,
+-36.5,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0166.jpg",
+"t": 1792661296913,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 78/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 4.03651067218245,
+"phase": "sprint",
+"hares": [
+[
+2,
+32.5,
+-15,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+true
+],
+[
+6,
+51.9,
+-36.5,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0167.jpg",
+"t": 1792661297011,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 77/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 3.595247242602536,
+"phase": "sprint",
+"hares": [
+[
+2,
+31.9,
+-15.6,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+true
+],
+[
+6,
+52.7,
+-36.8,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0168.jpg",
+"t": 1792661297113,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 76/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 3.326518523957751,
+"phase": "sprint",
+"hares": [
+[
+2,
+31.4,
+-16.3,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+true
+],
+[
+6,
+53.4,
+-37.2,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0169.jpg",
+"t": 1792661297228,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 76/100 \u00b7 Energy 29/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 3.2290389386668172,
+"phase": "sprint",
+"hares": [
+[
+2,
+30.8,
+-16.9,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+true
+],
+[
+6,
+54.1,
+-37.7,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0170.jpg",
+"t": 1792661297411,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 74/100 \u00b7 Energy 28/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 2.738607721795947,
+"phase": "sprint",
+"hares": [
+[
+2,
+30.5,
+-16.4,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+true
+],
+[
+6,
+54.8,
+-38.2,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0171.jpg",
+"t": 1792661297514,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 73/100 \u00b7 Energy 28/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 1.8905693459990485,
+"phase": "sprint",
+"hares": [
+[
+2,
+29.1,
+-15.5,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+true
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+true
+],
+[
+6,
+56.2,
+-39.1,
+"flee",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0172.jpg",
+"t": 1792661297631,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 72/100 \u00b7 Energy 28/100 \u00b7 Water 40% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 1.707618097399258,
+"phase": "sprint",
+"hares": [
+[
+2,
+28.3,
+-15.2,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+false
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+false
+],
+[
+6,
+56.6,
+-39.5,
+"nibble",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0173.jpg",
+"t": 1792661297759,
+"status": "08:34 \u00b7 SPRINT \u00b7 Stamina 99/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"d": 1.218884189328406,
+"phase": "sprint",
+"hares": [
+[
+2,
+27.5,
+-15.3,
+"flee",
+true
+],
+[
+3,
+54.1,
+16.7,
+"nibble",
+false
+],
+[
+4,
+74.6,
+1,
+"nibble",
+false
+],
+[
+5,
+50.1,
+15.5,
+"nibble",
+false
+],
+[
+6,
+56.6,
+-39.5,
+"nibble",
+true
+]
+],
+"target": 2
+},
+{
+"shot": "chase2",
+"frame": "chase2-0174.jpg",
+"t": 1792661297880,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0175.jpg",
+"t": 1792661298207,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0176.jpg",
+"t": 1792661298521,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0177.jpg",
+"t": 1792661298835,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0178.jpg",
+"t": 1792661299139,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0179.jpg",
+"t": 1792661299451,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0180.jpg",
+"t": 1792661299745,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0181.jpg",
+"t": 1792661300045,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0182.jpg",
+"t": 1792661300354,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0183.jpg",
+"t": 1792661300653,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0184.jpg",
+"t": 1792661300945,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "chase2",
+"frame": "chase2-0185.jpg",
+"t": 1792661301245,
+"status": "08:34 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 82/100 \u00b7 Water 60% \u00b7 Rest 95%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs",
+"after": true
+},
+{
+"shot": "low",
+"frame": "low-0000.jpg",
+"t": 1792661325610,
+"status": "08:39 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0001.jpg",
+"t": 1792661325841,
+"status": "08:39 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0002.jpg",
+"t": 1792661326058,
+"status": "08:39 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0003.jpg",
+"t": 1792661326292,
+"status": "08:39 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0004.jpg",
+"t": 1792661326507,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0005.jpg",
+"t": 1792661326741,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0006.jpg",
+"t": 1792661326976,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0007.jpg",
+"t": 1792661327209,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0008.jpg",
+"t": 1792661327440,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0009.jpg",
+"t": 1792661327674,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0010.jpg",
+"t": 1792661327978,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0011.jpg",
+"t": 1792661328209,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0012.jpg",
+"t": 1792661328442,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0013.jpg",
+"t": 1792661328659,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0014.jpg",
+"t": 1792661328892,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0015.jpg",
+"t": 1792661329127,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0016.jpg",
+"t": 1792661329356,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0017.jpg",
+"t": 1792661329573,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0018.jpg",
+"t": 1792661329792,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0019.jpg",
+"t": 1792661330008,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0020.jpg",
+"t": 1792661330241,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0021.jpg",
+"t": 1792661330477,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0022.jpg",
+"t": 1792661330707,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0023.jpg",
+"t": 1792661330940,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0024.jpg",
+"t": 1792661331157,
+"status": "08:40 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0025.jpg",
+"t": 1792661331390,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0026.jpg",
+"t": 1792661331624,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0027.jpg",
+"t": 1792661331861,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0028.jpg",
+"t": 1792661332091,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0029.jpg",
+"t": 1792661332323,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0030.jpg",
+"t": 1792661332559,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0031.jpg",
+"t": 1792661332793,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0032.jpg",
+"t": 1792661333024,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0033.jpg",
+"t": 1792661333257,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0034.jpg",
+"t": 1792661333489,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0035.jpg",
+"t": 1792661333727,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0036.jpg",
+"t": 1792661333957,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0037.jpg",
+"t": 1792661334173,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0038.jpg",
+"t": 1792661334407,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0039.jpg",
+"t": 1792661334627,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0040.jpg",
+"t": 1792661334858,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0041.jpg",
+"t": 1792661335089,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0042.jpg",
+"t": 1792661335306,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0043.jpg",
+"t": 1792661335539,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0044.jpg",
+"t": 1792661335774,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0045.jpg",
+"t": 1792661336007,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0046.jpg",
+"t": 1792661336241,
+"status": "08:41 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0047.jpg",
+"t": 1792661336478,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0048.jpg",
+"t": 1792661336707,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0049.jpg",
+"t": 1792661336920,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0050.jpg",
+"t": 1792661337158,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0051.jpg",
+"t": 1792661337392,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0052.jpg",
+"t": 1792661337621,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0053.jpg",
+"t": 1792661337860,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0054.jpg",
+"t": 1792661338093,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0055.jpg",
+"t": 1792661338327,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0056.jpg",
+"t": 1792661338558,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0057.jpg",
+"t": 1792661338791,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0058.jpg",
+"t": 1792661339027,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0059.jpg",
+"t": 1792661339261,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0060.jpg",
+"t": 1792661339494,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0061.jpg",
+"t": 1792661339727,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0062.jpg",
+"t": 1792661339957,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0063.jpg",
+"t": 1792661340190,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0064.jpg",
+"t": 1792661340422,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0065.jpg",
+"t": 1792661340653,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0066.jpg",
+"t": 1792661340890,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0067.jpg",
+"t": 1792661341122,
+"status": "08:42 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 96%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0068.jpg",
+"t": 1792661341357,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0069.jpg",
+"t": 1792661341587,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0070.jpg",
+"t": 1792661341823,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0071.jpg",
+"t": 1792661342054,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0072.jpg",
+"t": 1792661342288,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0073.jpg",
+"t": 1792661342523,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0074.jpg",
+"t": 1792661342759,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0075.jpg",
+"t": 1792661342988,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0076.jpg",
+"t": 1792661343222,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0077.jpg",
+"t": 1792661343458,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0078.jpg",
+"t": 1792661343687,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0079.jpg",
+"t": 1792661343923,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0080.jpg",
+"t": 1792661344156,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0081.jpg",
+"t": 1792661344388,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0082.jpg",
+"t": 1792661344624,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0083.jpg",
+"t": 1792661344856,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0084.jpg",
+"t": 1792661345088,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0085.jpg",
+"t": 1792661345321,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0086.jpg",
+"t": 1792661345558,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0087.jpg",
+"t": 1792661345788,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0088.jpg",
+"t": 1792661346004,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0089.jpg",
+"t": 1792661346241,
+"status": "08:43 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0090.jpg",
+"t": 1792661346472,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0091.jpg",
+"t": 1792661346704,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0092.jpg",
+"t": 1792661346940,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0093.jpg",
+"t": 1792661347155,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0094.jpg",
+"t": 1792661347373,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0095.jpg",
+"t": 1792661347605,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0096.jpg",
+"t": 1792661347839,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0097.jpg",
+"t": 1792661348071,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0098.jpg",
+"t": 1792661348307,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0099.jpg",
+"t": 1792661348541,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0100.jpg",
+"t": 1792661348772,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0101.jpg",
+"t": 1792661349006,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0102.jpg",
+"t": 1792661349239,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "low",
+"frame": "low-0103.jpg",
+"t": 1792661349475,
+"status": "08:44 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 25% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0000.jpg",
+"t": 1792661366896,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0001.jpg",
+"t": 1792661367112,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0002.jpg",
+"t": 1792661367329,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0003.jpg",
+"t": 1792661367552,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0004.jpg",
+"t": 1792661367776,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0005.jpg",
+"t": 1792661367993,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0006.jpg",
+"t": 1792661368209,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0007.jpg",
+"t": 1792661368427,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 97%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0008.jpg",
+"t": 1792661368650,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0009.jpg",
+"t": 1792661368859,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0010.jpg",
+"t": 1792661369091,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0011.jpg",
+"t": 1792661369311,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0012.jpg",
+"t": 1792661369540,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0013.jpg",
+"t": 1792661369769,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0014.jpg",
+"t": 1792661369998,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0015.jpg",
+"t": 1792661370209,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0016.jpg",
+"t": 1792661370436,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0017.jpg",
+"t": 1792661370645,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0018.jpg",
+"t": 1792661370859,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0019.jpg",
+"t": 1792661371082,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0020.jpg",
+"t": 1792661371297,
+"status": "08:48 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0021.jpg",
+"t": 1792661371509,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0022.jpg",
+"t": 1792661371727,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0023.jpg",
+"t": 1792661371944,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0024.jpg",
+"t": 1792661372159,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0025.jpg",
+"t": 1792661372376,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0026.jpg",
+"t": 1792661372603,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0027.jpg",
+"t": 1792661372828,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0028.jpg",
+"t": 1792661373043,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0029.jpg",
+"t": 1792661373264,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0030.jpg",
+"t": 1792661373485,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0031.jpg",
+"t": 1792661373717,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0032.jpg",
+"t": 1792661373945,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0033.jpg",
+"t": 1792661374166,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0034.jpg",
+"t": 1792661374395,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0035.jpg",
+"t": 1792661374618,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0036.jpg",
+"t": 1792661374847,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0037.jpg",
+"t": 1792661375066,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0038.jpg",
+"t": 1792661375279,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0039.jpg",
+"t": 1792661375509,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0040.jpg",
+"t": 1792661375728,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0041.jpg",
+"t": 1792661375946,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0042.jpg",
+"t": 1792661376159,
+"status": "08:49 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0043.jpg",
+"t": 1792661376383,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0044.jpg",
+"t": 1792661376611,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0045.jpg",
+"t": 1792661376833,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0046.jpg",
+"t": 1792661377050,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0047.jpg",
+"t": 1792661377257,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0048.jpg",
+"t": 1792661377459,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0049.jpg",
+"t": 1792661377676,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0050.jpg",
+"t": 1792661377900,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0051.jpg",
+"t": 1792661378129,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0052.jpg",
+"t": 1792661378347,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0053.jpg",
+"t": 1792661378557,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0054.jpg",
+"t": 1792661378781,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0055.jpg",
+"t": 1792661379000,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0056.jpg",
+"t": 1792661379213,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0057.jpg",
+"t": 1792661379437,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0058.jpg",
+"t": 1792661379661,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0059.jpg",
+"t": 1792661379883,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0060.jpg",
+"t": 1792661380096,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0061.jpg",
+"t": 1792661380310,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0062.jpg",
+"t": 1792661380529,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0063.jpg",
+"t": 1792661380759,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0064.jpg",
+"t": 1792661380979,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0065.jpg",
+"t": 1792661381195,
+"status": "08:50 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0066.jpg",
+"t": 1792661381410,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0067.jpg",
+"t": 1792661381627,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0068.jpg",
+"t": 1792661381846,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0069.jpg",
+"t": 1792661382061,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0070.jpg",
+"t": 1792661382284,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0071.jpg",
+"t": 1792661382504,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0072.jpg",
+"t": 1792661382709,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0073.jpg",
+"t": 1792661382927,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0074.jpg",
+"t": 1792661383144,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0075.jpg",
+"t": 1792661383378,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0076.jpg",
+"t": 1792661383611,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0077.jpg",
+"t": 1792661383827,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0078.jpg",
+"t": 1792661384050,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0079.jpg",
+"t": 1792661384259,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0080.jpg",
+"t": 1792661384478,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0081.jpg",
+"t": 1792661384697,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0082.jpg",
+"t": 1792661384924,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0083.jpg",
+"t": 1792661385143,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0084.jpg",
+"t": 1792661385359,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0085.jpg",
+"t": 1792661385576,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0086.jpg",
+"t": 1792661385803,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0087.jpg",
+"t": 1792661386029,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0088.jpg",
+"t": 1792661386248,
+"status": "08:51 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0089.jpg",
+"t": 1792661386483,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0090.jpg",
+"t": 1792661386708,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0091.jpg",
+"t": 1792661386926,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0092.jpg",
+"t": 1792661387146,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0093.jpg",
+"t": 1792661387367,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0094.jpg",
+"t": 1792661387594,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0095.jpg",
+"t": 1792661387810,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0096.jpg",
+"t": 1792661388036,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0097.jpg",
+"t": 1792661388270,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0098.jpg",
+"t": 1792661388500,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0099.jpg",
+"t": 1792661388727,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0100.jpg",
+"t": 1792661388946,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0101.jpg",
+"t": 1792661389162,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0102.jpg",
+"t": 1792661389377,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0103.jpg",
+"t": 1792661389595,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0104.jpg",
+"t": 1792661389820,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0105.jpg",
+"t": 1792661390026,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0106.jpg",
+"t": 1792661390243,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0107.jpg",
+"t": 1792661390465,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+},
+{
+"shot": "critical",
+"frame": "critical-0108.jpg",
+"t": 1792661390678,
+"status": "08:52 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 81/100 \u00b7 Water 8% \u00b7 Rest 98%\nRT run \u00b7 LT stealth \u00b7 LB focus\n0 remembered \u00b7 0 friends \u00b7 0 herbs"
+}
+]
+}

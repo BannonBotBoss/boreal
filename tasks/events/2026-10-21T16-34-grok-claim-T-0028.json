@@ -1,0 +1,7 @@
+{
+    "type":  "claim",
+    "task":  "T-0028",
+    "agent":  "grok",
+    "at":  "2026-10-21T16:34:28-07:00",
+    "note":  "Claimed after grok-globe\u0027s approve-plan (16:32 PT). Work on branch grok/hare-mesh (from grok/rabbit-clover a77830f, which holds the hare rig and refs/hare/), handoff tasks/handoffs/T-0028-grok.md. Globe Builder\u0027s non-blocking fixes go into the number table first."
+}

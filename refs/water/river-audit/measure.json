@@ -1,0 +1,164 @@
+{
+ "FOAM": {
+  "lum": 0.45,
+  "sat": 0.18
+ },
+ "out": {
+  "fast1/across-0.png": {
+   "left": {
+    "rgb": [
+     184,
+     196.6,
+     201.2
+    ],
+    "relLum": 0.5417,
+    "foamShare": 0.842,
+    "px": 32400
+   },
+   "right": {
+    "rgb": [
+     189.5,
+     201.4,
+     207.2
+    ],
+    "relLum": 0.5736,
+    "foamShare": 0.905,
+    "px": 32400
+   }
+  },
+  "fast1/across-2.png": {
+   "left": {
+    "rgb": [
+     184.3,
+     197.1,
+     202
+    ],
+    "relLum": 0.5447,
+    "foamShare": 0.852,
+    "px": 32400
+   },
+   "right": {
+    "rgb": [
+     185.9,
+     199.1,
+     205.1
+    ],
+    "relLum": 0.5573,
+    "foamShare": 0.872,
+    "px": 32400
+   }
+  },
+  "order2/across-0.png": {
+   "left": {
+    "rgb": [
+     150.2,
+     162.2,
+     164
+    ],
+    "relLum": 0.3509,
+    "foamShare": 0.708,
+    "px": 22400
+   }
+  },
+  "slow1/across-0.png": {
+   "left": {
+    "rgb": [
+     98.5,
+     149.5,
+     162.5
+    ],
+    "relLum": 0.269,
+    "foamShare": 0,
+    "px": 18450
+   },
+   "right": {
+    "rgb": [
+     103.4,
+     152.1,
+     164.2
+    ],
+    "relLum": 0.2808,
+    "foamShare": 0,
+    "px": 15500
+   }
+  },
+  "slow1/downstream-0.png": {
+   "near": {
+    "rgb": [
+     100.4,
+     149.7,
+     162.2
+    ],
+    "relLum": 0.2707,
+    "foamShare": 0,
+    "px": 43200
+   }
+  },
+  "reference/real-0.png": {
+   "water": {
+    "rgb": [
+     186.6,
+     189.7,
+     195.9
+    ],
+    "relLum": 0.5119,
+    "foamShare": 0.647,
+    "px": 27900
+   },
+   "pool": {
+    "rgb": [
+     60.7,
+     69.7,
+     38.4
+    ],
+    "relLum": 0.0547,
+    "foamShare": 0.015,
+    "px": 17000
+   }
+  },
+  "reference/real-1.png": {
+   "water": {
+    "rgb": [
+     211.9,
+     210.5,
+     210.2
+    ],
+    "relLum": 0.6499,
+    "foamShare": 0.896,
+    "px": 33600
+   },
+   "runout": {
+    "rgb": [
+     195.6,
+     195.8,
+     195.5
+    ],
+    "relLum": 0.5503,
+    "foamShare": 0.791,
+    "px": 66000
+   },
+   "calm": {
+    "rgb": [
+     72.8,
+     74.5,
+     74.1
+    ],
+    "relLum": 0.0687,
+    "foamShare": 0.031,
+    "px": 60500
+   }
+  },
+  "reference/real-2.png": {
+   "water": {
+    "rgb": [
+     76.3,
+     113.5,
+     149.5
+    ],
+    "relLum": 0.1566,
+    "foamShare": 0.004,
+    "px": 8100
+   }
+  }
+ }
+}

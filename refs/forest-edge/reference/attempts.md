@@ -1,0 +1,7 @@
+# T-0032 generated reference (rule 8, fulfilled by grok loop 2026-10-21 19:20 PDT)
+
+Requested in tasks/T-0032-forest-trunk-zone-closed.md and claude/loop:tasks/handoffs/T-0032-claude.md ("Needs from another agent").
+
+## t0032-closed-edge.png (1280x720)
+- Prompt: "Realistic eye-level photograph from 3 m above the shore of a calm boreal lake in northern Ontario, noon in August, natural daylight, looking straight across 50 m of dark humic water at the far shore: a dense, closed forest edge of black spruce whose lowest branches sweep down to touch the ground, young spruce and speckled alder shrubs filling every gap between trunks, trembling aspen behind; no sky is visible between the trunks below the crowns, the edge reads as a continuous dark green wall from waterline to crown tops. The whole edge is mirrored upside-down in the dark water as a dark band. Grassy foreground shore. No people, no boats, no text."
+- Does it show how it looks in nature? Yes (attempt 1 accepted): spruce skirts reach the ground, a shrub layer closes the gaps along the bank, lighter deciduous crowns stand behind, no sky shows anywhere in the trunk zone, and the edge is mirrored as a dark band in tea-dark water. Limits: the camera is closer to the water than 3 m and the shot is cropped above the crown tops, so there is no sky at all in frame; for the sky-share metric use only the trunk-zone band, and check it against the real closed-edge photos (0.000 / 0.002) since a generated image is not a measurement (rule 11).

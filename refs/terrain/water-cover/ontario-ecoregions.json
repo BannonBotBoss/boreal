@@ -1,0 +1,108 @@
+{
+ "fetched": "2026-10-22T00:37:29.704Z",
+ "source": "https://services.arcgis.com/lGOekm0RsNxYnT3j/ArcGIS/rest/services/National_ecological_framework_of_Canada_ecoregions/FeatureServer/3",
+ "rows": [
+  {
+   "id": 89,
+   "name": "Hayes River Upland",
+   "total_ha": 2630220,
+   "water_pct": 14.6
+  },
+  {
+   "id": 90,
+   "name": "Lac Seul Upland",
+   "total_ha": 10780113,
+   "water_pct": 15.7
+  },
+  {
+   "id": 91,
+   "name": "Lake of the Woods",
+   "total_ha": 3028984,
+   "water_pct": 24.3
+  },
+  {
+   "id": 92,
+   "name": "Rainy River",
+   "total_ha": 345890,
+   "water_pct": 15.7
+  },
+  {
+   "id": 93,
+   "name": "Thunder Bay-Quetico",
+   "total_ha": 2682360,
+   "water_pct": 19.6
+  },
+  {
+   "id": 94,
+   "name": "Lake Nipigon",
+   "total_ha": 9380887,
+   "water_pct": 26.6
+  },
+  {
+   "id": 95,
+   "name": "Big Trout Lake",
+   "total_ha": 11063907,
+   "water_pct": 13.8
+  },
+  {
+   "id": 96,
+   "name": "Abitibi Plains",
+   "total_ha": 11785547,
+   "water_pct": 15.3
+  },
+  {
+   "id": 97,
+   "name": "Lac Temiscamingue Lowland",
+   "total_ha": 8274625,
+   "water_pct": 24.3
+  },
+  {
+   "id": 98,
+   "name": "Algonquin-Lake Nipissing",
+   "total_ha": 7412616,
+   "water_pct": 28
+  },
+  {
+   "id": 132,
+   "name": "St. Lawrence Lowlands",
+   "total_ha": 1351609,
+   "water_pct": 5.8
+  },
+  {
+   "id": 133,
+   "name": "Frontenac Axis",
+   "total_ha": 105203,
+   "water_pct": 27.6
+  },
+  {
+   "id": 134,
+   "name": "Manitoulin-Lake Simcoe",
+   "total_ha": 8166422,
+   "water_pct": 45.6
+  },
+  {
+   "id": 135,
+   "name": "Lake Erie Lowland",
+   "total_ha": 4091716,
+   "water_pct": 40.7
+  },
+  {
+   "id": 215,
+   "name": "Coastal Hudson Bay Lowland",
+   "total_ha": 3399550,
+   "water_pct": 6.2
+  },
+  {
+   "id": 216,
+   "name": "Hudson Bay Lowland",
+   "total_ha": 8980970,
+   "water_pct": 7.2
+  },
+  {
+   "id": 217,
+   "name": "James Bay Lowlands",
+   "total_ha": 13895839,
+   "water_pct": 5.7
+  }
+ ]
+}

@@ -8,7 +8,7 @@ Branch `grok/system-properties`, worktree `C:\dev\boreal-grok-sysprops` (from ma
 ## Merge with T-0035 (02:02 PT)
 - main (91281b7 T-0035, e528e1a T-0038) merged into the branch as b841168. One add/add conflict, src/config/systemProperties.ts: kept every group (autoFocus first, targetGlow after sensesHalo, alphabetical), removed both from PENDING_GROUPS (needsThoughts stays for T-0036), added PROPERTY_META for autoFocus (readers core/focusLock, core/bindings, render/buildScene, main) and targetGlow (render/targetGlow) with units + sources, added core/focusLock + render/targetGlow to SYSTEM_MAP.interaction modules, updated the camera / controls / interaction still-in-code notes. npm run system-map regenerated docs/system-map.md. npm test 373: 361 pass, 0 fail, 12 todo; tsc clean.
 - Flaky, unrelated: tests/trace.test.ts 'trace off ... f allocates when off' (heap growth < 4 MB) failed once in the full run before the T-0035 merge and passes alone and in the next full run.
-- Noticed: main.ts:302 controls help text says 'within \ m'; Matthew said 'i dont need the exact distance told' - left for the T-0035 owner.
+- Noticed: main.ts:302 controls help text says 'within ${FOCUS.radius} m' (it states the 4.5 m); Matthew said 'i dont need the exact distance told' - left for the T-0035 owner.
 
 ## Doing now (before merge)
 01:50 PT: handoff with the evidence table. Next: wait for approve-plan; then claim + complete event.

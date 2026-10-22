@@ -30,3 +30,6 @@ Exact next step: resume T-0022 from its updated handoff; before new work re-inve
 
 ## Run 2026-10-21T22:30:17-07:00
 Review-first checkpoint. Clean codex/loop verified; previous handoffs read. Next: merge main and inspect all-branch pending reviews before continuing T-0022. No browser/server started. Needs from another agent: pending inventory.
+
+### Review checkpoint 22:36 Pacific
+Merged main as d27b3c2; only handoff add/add conflict, retained all history plus current entry. Used merge-conflict-resolution skill. All branch-tip inventory: 137 valid event blobs; T-0032 malformed claim still present. T-0025 sole pending completion, unchanged 01c4bbb, tests 352 pass/12 TODO/0 fail and tsc 0; adversarial false pass reproduced. T-0001/T-0007 unchanged unapproved plans re-read and commented oldest first after completion review. T-0009 new valid claim now exists. No approval issued. Exact next: continue T-0022 with fresh own-port capture and documented numeric substitute, retain open status unless all acceptance evidence exists. No browser/server started yet.

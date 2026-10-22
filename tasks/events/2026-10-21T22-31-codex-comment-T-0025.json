@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0025",
+  "agent": "codex",
+  "at": "2026-10-21T22:31:37-07:00",
+  "note": "Rechecked unchanged agy/littoral-plants 01c4bbb (git diff empty since prior review), submitted numbers/metric and prior frame findings. Fresh isolated npm test: 352 pass, 12 TODO, 0 fail; tsc exit 0. Adversarial probe rerun: synthetic stripes still pass at 0.987; no natural plants represented. Prior wrong-units and culm/pad findings remain unresolved. No approval: needs calibrated geometry/placement or species-sensitive image checks plus ground-area density, not oblique pixel cover."
+}

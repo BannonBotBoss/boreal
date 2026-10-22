@@ -8,11 +8,11 @@
  *    (2 - cos): near and centred wins; the pick is kept while held and in range, dropped when it leaves the radius;
  *  - steer: only while moving forward and not steering by hand, the heading turns toward the target at the player's own
  *    turn rate (main.ts: 2.2 rad/s at full stick), clamped per step, so it never snaps; speed and gait stay with the player.
- * Radius, cone, turn rate and binding: config/systemProperties (focus).
+ * Radius, cone, turn rate and binding: config/systemProperties (autoFocus).
  */
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
-const P = SYSTEM_PROPERTIES.focus;
-/** Figures live in config/systemProperties (focus). */
+const P = SYSTEM_PROPERTIES.autoFocus;
+/** Figures live in config/systemProperties (autoFocus). */
 export const FOCUS = { radius: P.radius, cone: P.cone, turnRate: P.turnRateRadS };
 /** Kinds the focus can lock: everything with a player interaction except pebbles (move only at nose contact, dozens per patch). */
 export const FOCUS_KINDS = ['plant', 'deer', 'person', 'forage'].filter(k => !(P.excludeKinds as readonly string[]).includes(k));

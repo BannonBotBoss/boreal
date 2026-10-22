@@ -15,7 +15,7 @@ test('focus engages only while the button is held', () => {
 
 test('focus needs an interactable object within the radius, in front', () => {
   assert.equal(pickFocus(true, undefined, P, [far]), undefined, '20 m is out of range');
-  assert.equal(FOCUS.radius, SYSTEM_PROPERTIES.focus.radius, 'the radius comes from the system properties file');
+  assert.equal(FOCUS.radius, SYSTEM_PROPERTIES.autoFocus.radius, 'the radius comes from the system properties file');
   assert.equal(pickFocus(true, undefined, P, [behind]), undefined, 'behind the wolf is outside the cone');
   assert.equal(pickFocus(true, undefined, P, [{ key: 'r', kind: 'rock', x: 0, z: -2 }]), undefined, 'pebbles are not focus targets');
   const edge = { key: 'e', kind: 'plant', x: 0, z: -FOCUS.radius + .1 };

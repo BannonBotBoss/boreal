@@ -7,7 +7,7 @@
  */
 export const SYSTEM_PROPERTIES = {
   /** Held focus (core/focusLock, T-0035): hold the button to lock the wolf's attention on an object; keep within the radius to keep it. */
-  focus: {
+  autoFocus: {
     /** Engage and keep-lock radius, metres. From Matthew's red guideline ring (screenshot 01M5HB26..., 2026-10-22): its widest
      *  lateral extent projected onto the ground with the game camera (1.6 m up, 3 m back, 10 deg pitch, 48 deg fov) = 4.5 m. */
     radius: 4.5,

@@ -41,7 +41,7 @@ Branch: `grok/interact-outline` (worktree C:\dev\boreal-grok-outline, from main 
 ## Numbers
 | value | game number | real figure + source | resemble? |
 |---|---|---|---|
-| focus radius | 4.5 m (config/systemProperties focus.radius) | N/A: game-feel distance; from Matthew's red guideline ring (screenshot 01M5HB26..., widest lateral extent projected with the game camera) | N/A |
+| focus radius | 4.5 m (config/systemProperties autoFocus.radius) | N/A: game-feel distance; from Matthew's red guideline ring (screenshot 01M5HB26..., widest lateral extent projected with the game camera) | N/A |
 | focus turn rate | 2.2 rad/s (the existing full-stick steer rate) | N/A: reused game constant, not new | N/A |
 | glow cost | 0.41 ms median (IQR 0.26-0.52), 1280x720, RTX 5060 Laptop (tools/glow-bench.mjs, 30 interleaved on/off samples); 0 with no target | N/A: performance, not nature | N/A |
 | glow | UI overlay, no world quantity | N/A: a UI highlight is not a natural object (rule 11: unmeasurable, no nature figure applies) | N/A |

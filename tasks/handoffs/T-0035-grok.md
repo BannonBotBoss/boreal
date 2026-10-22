@@ -13,9 +13,9 @@ Built and verified; NOT submitted: waiting for an approve-plan (claude, codex or
   interactable object (not pebbles) within the radius in the view cone; dropped on release or when out of radius; while
   locked, forward movement steers toward it at the stick's own 2.2 rad/s (clamped per step, no snap), hand steering wins.
   Super stealth no longer auto-focuses. Camera look-at + fov ease in/out (no snap).
-- 30cd7b1 src/config/systemProperties.ts: focus + targetGlow sections, read by focusLock, bindings, targetGlow, buildScene,
+- 30cd7b1 src/config/systemProperties.ts: autoFocus + targetGlow sections, read by focusLock, bindings, targetGlow, buildScene,
   main. Focus radius 4.5 m from Matthew's red guideline ring (it was a hand-drawn annotation, not game code: no red ring
-  exists on any branch). Senses halo hidden while a target is locked (focus.hideSensesHalo).
+  exists on any branch). Senses halo hidden while a target is locked (autoFocus.hideSensesHalo).
 - Shots (PC GPU, headless, off-screen): before/after herb, deer, focus-held herb and deer -> box /workspace/outline/.
 - Glow cost: tools/glow-bench.mjs -> 0.41 ms median (IQR 0.26-0.52) at 1280x720 on the RTX 5060; nothing with no target.
   In-game A/B (?glow=0) was swamped by PC load (17-38 ms frame swings), so the isolated bench is the number.

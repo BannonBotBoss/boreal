@@ -35,7 +35,7 @@ export const ACTIONS: ActionDef[] = [
   A('lookDown', 'Look down', 'hold', 'play', ['arrowdown'], ['rs.down'], { sum: true, keepInChrono: true }),
   A('run', 'Run (then stealth: sprint)', 'hold', 'play', ['shift'], ['rt']),
   A('stealth', 'Stealth (then run: super stealth)', 'hold', 'play', ['c'], ['lt']),
-  A('focus', 'Focus (hold): lock the nearest object ahead; moving steers toward it', 'hold', 'play', [...SYSTEM_PROPERTIES.focus.binding.keys], [...SYSTEM_PROPERTIES.focus.binding.pad]),
+  A('focus', 'Focus (hold): lock the nearest object ahead; moving steers toward it', 'hold', 'play', [...SYSTEM_PROPERTIES.autoFocus.binding.keys], [...SYSTEM_PROPERTIES.autoFocus.binding.pad]),
   A('jump', 'Jump / pounce', 'hold', 'play', ['space'], ['x']),
   A('interact', 'Interact', 'press', 'play', ['e'], ['a']),
   A('howl', 'Howl', 'press', 'play', ['h'], []),

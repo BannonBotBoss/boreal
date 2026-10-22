@@ -114,7 +114,7 @@ if (contactsLog) CONTACTS.onSeparate((a, b, source) => console.log(`[contacts] e
 const sensesHUD = createSensesHUD(view, sfx, () => context);
 const HALO_KEY = 'boreal.sensesHalo', sensesHalo = createSensesHalo(view.scene); // O: the HUD's cues as beacons on a ring around the head
 try { sensesHalo.enabled = localStorage.getItem(HALO_KEY) !== '0'; } catch { /* storage blocked: default on */ }
-view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView || (!!focusTarget && SYSTEM_PROPERTIES.focus.hideSensesHalo))); // T-0035: the locked target's glow is the only cue
+view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView || (!!focusTarget && SYSTEM_PROPERTIES.autoFocus.hideSensesHalo))); // T-0035: the locked target's glow is the only cue
 function perform() {
   if(autonomous) setAutonomous(false);
   if (!target || paused || dialog.open || saveBlocked) return;
@@ -359,7 +359,7 @@ function frame(time: number) { const frameStart = performance.now();
     tickGround(12 * wDt); // 1 real s = 12 game s (timeOfDay REAL_SECONDS_PER_GAME_HOUR 300)
     updateWeather(Math.min(wDt, .25), 3600 / REAL_SECONDS_PER_GAME_HOUR, dayAt(wNow), hourAt(wNow)); } // hour and date include the chronometer's dial
   { // T-0035 held focus (core/focusLock): only while Focus (LB / F) is held and an interactable object is within FOCUS.radius
-    const kinds = (Object.keys(catalog) as (keyof typeof catalog)[]).filter(k => !(SYSTEM_PROPERTIES.focus.excludeKinds as readonly string[]).includes(k) && (catalog[k].interactions ?? []).some(a => player.abilities.includes(a)));
+    const kinds = (Object.keys(catalog) as (keyof typeof catalog)[]).filter(k => !(SYSTEM_PROPERTIES.autoFocus.excludeKinds as readonly string[]).includes(k) && (catalog[k].interactions ?? []).some(a => player.abilities.includes(a)));
     focusTarget = pickFocus(active && !autonomous && H('focus') > ACTIVE, focusTarget, { x: player.x, z: player.z, view: yaw + lookYaw }, view.entities().filter(e => !context.records[e.key]?.removed), kinds);
   }
   target = view.entities().filter(e => availableActions(player, e, context).length).sort((a, b) => Math.hypot(player.x - a.x, player.z - a.z) - Math.hypot(player.x - b.x, player.z - b.z))[0];

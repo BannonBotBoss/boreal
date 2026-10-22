@@ -92,6 +92,7 @@ crouch 32.0, sit 66.0, gather 64.8, push uncalibrated, stretch 37.3. Coat summer
 91.5 / 96.0 / 93.8 / 100 / 97.6. T-0009 gates: look (mean shape + coat summer) 75.6 (run start 59.3); graze (summer crouch) 34.8
 (35.7, within noise); alert (summer sit) 52.3 (0). Holding the look back: the graze crouch (body rides high on the legs,
 poseReach .46) and the gathered stance silhouette (trunk / mesh, not chest turn or gait).
+T-0028 gates (the mesh, same renders, recorded HERE because this brief touches only grok/rabbit-clover; grok/hare-mesh's handoff not edited): shape summer 62.7 / winter 79.4, coat summer 88.4 / winter 95.8 (lookscore v1.3; was v1.2 46.2 / 73.7 / 86.4 / 95.5 at run 7). Only coat winter >= 95 %: not submitted.
 ## Run 7 progress (started 2026-10-21 18:30 PT; keep current: board rule 9; branches grok/rabbit-clover + grok/hare-mesh)
 Plan (Matthew via Grok lead, 18:23 PT brief): grok/hare-mesh (T-0028 mesh + calibrated lookscore v1) merged in first, then fix
 the poses lookscore says hold shape back, per pose vs the references: an UPRIGHT alert sit-up as in refs/hare/graze-alert-flight

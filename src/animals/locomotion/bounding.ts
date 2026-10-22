@@ -367,6 +367,36 @@ export function heightCurve(plan: BoundPlan, n = 200): number[] {
  * .25 / .5 flat). A swinging foot also rides with the ballistic body (heightCurve) in flight instead of reaching back down.
  */
 export const SWING = { fold: { fore: .25, hind: .8 } };
+/**
+ * v6 (T-0009 run 6, grok-gait): late-swing fore reach. Late in swing the fore target (stepFoot: the landing point ahead plus the
+ * swing arc's clearance plus the ballistic body lift) lies beyond what the limb reaches (8.5 m/s hare: 205-255 mm from the
+ * glenoid, limb .187 m), and the IK then points the straightened limb at it: the paw ends on the ray from the glenoid, ~30 mm
+ * ABOVE the swing's own height. Since BodyPlan.girdleTop (b774a5e: the hare's blade pivot .17 m, the glenoid ~40 mm higher)
+ * that ray put the reaching paws 45-58 mm above the ground in the extended flight (probe, handoff run 6), higher under the
+ * body than the stretch references (lookscore v1.3 overlays: game fore legs above the reference fore legs). Fix: from `from`
+ * to `full` of the swing (fraction, 0 lift-off .. 1 touchdown) an unreachable fore target is pulled back, at its own height,
+ * onto the reach circle (`reach` x the straight limb) about the protracted glenoid (blade at rest + GIRDLE.scapulaMax), held to
+ * `hold`, then let go by touchdown: the paw keeps the swing's ground clearance and reaches as far forward as the limb allows.
+ * It depends on the body's own glenoid (girdleTop, scapula) and limb lengths, not on a fixed angle. Timing [estimate]: after
+ * the gathered and push-off cells (v5: protraction from stride .7 wrecked gather / push); `reach` .995 [estimate: the IK's
+ * straight-limb tolerance]. SOURCE CHECK: the resulting forearm lies 34-44 deg below the horizontal (probe), past the 11-36 deg
+ * measured at fore touchdown in small therians (Schmidt 2008 JEB 211:3775 Table 4; pika 33 deg, Fischer et al. 2002 JEB
+ * 205:1315) - no hare forelimb swing kinematics were found; flagged in the handoff.
+ */
+export const FORE_REACH = { from: .6, full: .7, hold: .92, reach: .995 };
+/** Weight of the late-swing fore reach at swing fraction `sp` (0 lift-off .. 1 touchdown). */
+export function foreReachWeight(sp: number, r = FORE_REACH) {
+  const ss = (x: number) => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
+  return sp <= r.from || sp >= 1 ? 0 : sp < r.full ? ss((sp - r.from) / (r.full - r.from)) : sp <= r.hold ? 1 : 1 - ss((sp - r.hold) / (1 - r.hold));
+}
+/** FORE_REACH: an out-of-reach fore target (limb frame, +z back) pulled back at its own height onto the reach circle about the
+ *  protracted glenoid of a limb whose chain top is `top`; a reachable target is returned unchanged. */
+export function foreReachTarget(L: LimbDims, top: { z: number; y: number }, rel: Vec3, girdle: GirdleLimits = GIRDLE, r = FORE_REACH): Vec3 {
+  const b = (L.girdleRest ?? 0) + girdle.scapulaMax, gz = top.z - (L.girdle ?? 0) * Math.sin(b), gy = top.y - (L.girdle ?? 0) * Math.cos(b);
+  const R = r.reach * (L.upper + L.lower + (L.foot ?? 0)), dy = Math.hypot(rel.y - gy, rel.x), dz = rel.z - gz;
+  if (dz >= 0 || dy >= R || Math.hypot(dz, dy) <= R) return rel;
+  return { ...rel, z: gz - Math.sqrt(R * R - dy * dy) };
+}
 
 /* ---------------------------------------------------------------- pose requests (agent pipeline → body) */
 export type PoseKind = 'stand' | 'graze-crouch' | 'sit-up' | 'half-sit' | 'scan' | 'rest' | 'crouch';
@@ -578,6 +608,12 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
       let rel = worldToLimb(ik, x, z, heading, tilt, sk.hips[i]);
       // the girdle shifts carry the pivot along the ground (as dutyFits counts them), not along a pitched trunk
       const top = { z: shift[i] * Math.cos(bodyPitch), y: topY(L) + shift[i] * Math.sin(bodyPitch) };
+      // v6: late-swing fore reach (FORE_REACH): keep the swing's height, reach no further than the limb does; not in a leash /
+      // stop step or a sit-up
+      if (front && L.girdle && moving && !f.planted && !f.forced && foreUp <= .02 && ph[i] >= plan.duties[i]) {
+        const w = foreReachWeight((ph[i] - plan.duties[i]) / (1 - plan.duties[i])) * run;
+        if (w > 0) { const t2 = foreReachTarget(L, top, rel, girdle); rel = { ...rel, z: rel.z + w * (t2.z - rel.z) }; }
+      }
       const solve = (r0: Vec3) => {
         let psi = 0, blade: number | undefined, arm: number | undefined;
         if (!front) psi = hindFoot(L, top, r0, ankle0, prevPsi[i], lim, f.planted && moving ? bodyPitch : undefined).psi; // the reaching foot angle nearest the standing ankle

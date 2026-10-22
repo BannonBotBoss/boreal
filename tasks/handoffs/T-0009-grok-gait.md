@@ -647,3 +647,116 @@ score scripts). Capture Vite :5395 is mine (left running for re-checks; other se
 - heightCurve's half-sine force shape is an assumption (as pitchCurve's).
 
 **Id note (grok, run 8, 20:23 PT):** the 'naming clash' above is not one: main's T-0009-agent-core-transactions is this hare + clover task (claim 10:50 PT names grok/rabbit-clover); see tasks/events/2026-10-21T20-23-grok-comment-T-0009.json. No renumbering.
+
+## Run 6 (v6) — based on 524caea (grok run 10/11: BodyPlan.girdleTop .17, anatomy check), branch grok-gait/T-0009-fore-reach
+
+Asked (Grok Bot, Oct 21 10:49 PM PT): since b774a5e the stretch's fore paws "point down instead of far forward" (lookscore v1.3
+stretch summer 100 -> 85.1, winter 86.7 -> 81.3); add forward reach to the fore swing / extension in bounding.ts so stretch
+matches again without hurting crouch / sit / gather; keep LEPORID_LIMITS, posePlausibility (check 9), mass, bound-checks >= 99.7,
+npm test, tsc. Branch: the brief said gait/<topic>; I used `grok-gait/T-0009-fore-reach` (the grok-gait/ prefix of all my
+branches). Notes go here, NOT in T-0009-grok.md (grok's file; it exists and is untouched). Worktree `C:\dev\boreal-grok-hare6`
+off 524caea (b774a5e is an ancestor), node_modules junction to the served folder's (read-only); capture Vite :5395 (mine;
+the v5 server on that port, also mine, was stopped first). C:\dev\rabbit-rec13 / rec14 read only (copied out, not written).
+
+### Rule 15: review of grok run 10 (45d0439..524caea) — CORRECT, kept as is
+- bodyPlan.ts `girdleTop`: with a blade the fore `hip` is gTop - S and the glenoid gTop - S cos(rest); `topY(L)` = hip + girdle =
+  gTop, so standError / poseReach / limbRange / foreLimb and the controller all use the raised pivot (no stale default GIRDLE
+  height anywhere: checked every topY / L.hip use in bounding.ts). Standing elbow 71 deg, 27 mm below the glenoid (grok's grid-run10).
+- boundScore.ts `posePlausibility` / check 9: soles (limbPoints from index 4) vs P[1] = the hip / the glenoid, joints vs the
+  wider of CANID and the body's ranges - matches its comment and lookscore v1.3's gate.
+- bounding.ts PoseShape.ahead / graze re-plant / sit-up tuck .35 x hip: standing only (`moving ? 0 : ahead`), no effect on the bound.
+- My v5 nit still stands (standError / poseReach cache per skeleton with the default GIRDLE); harmless for the hare.
+- Board items awaiting review on main a436a9d: T-0008 (grok, needs an approve), T-0025 (review), T-0026 (agy), T-0027 (agy).
+  Not reviewed here (gait-only brief; I do not commit to main).
+
+### Baseline reproduced (lookscore v1.3 = grok's /workspace/rc7/look/lookscore13.py, copied to /workspace/hare6/lk, data path only)
+grok's pc11 strips and my own PC GPU capture at 524caea (~23:00 PT, bench lock, strip-shot.mjs `&log=1`) both give exactly
+grok's run 10 numbers: summer crouch 50.9, sit 56.4, gather 48.1, push 87.0, stretch 85.1; winter 64.3, 83.5, 51.9, 100,
+81.3; end-on crouch 86.2, sit 66.8, gather 77.5, push uncalibrated, stretch 38.9; no zeroed cells. bound-checks at 524caea:
+hare 99.7 %, host 99.1 % (host FAIL overtake 69 % as before).
+
+### Diagnosis — the paws were too HIGH, not too steep
+- Probe (tools/_probe6.ts, scratch, not committed): 8.5 m/s hare, one steady stride. In the extended flight (LF phase .73-.97)
+  the fore limb is straight (elbow at its 176 deg clamp), blade at rest + scapulaMax (44 deg), and the swing target lies
+  205-255 mm ahead of / 123-127 mm below the glenoid, beyond the limb (.187 m). The IK points the straight limb AT the far
+  target, so the paw sits on that ray, ~30 mm above the swing's own height: forearm 27-35 deg below forward, paw 45-58 mm
+  above the ground. With girdleTop undefined (= run 9 geometry) the same rule gives forearm 19-26 deg but the glenoid is
+  ~40 mm lower, so the paw is ~15-20 mm lower above the ground.
+- lookscore overlays (norm frame, /workspace/locomotion/T-0009/v6/compare-stretch.jpg): run 9's best stretch cell lays the fore
+  legs along the reference's; run 10's fore legs run ABOVE the reference fore legs. So the cost is paw height under the body.
+- Confirmed by grid (below): raising the paws toward the horizontal (what "more forward reach" by angle means) LOWERS the score
+  (summer 83-85, winter 73-79); lowering them raises it monotonically.
+- Root cause: the ground-referenced swing target (stepFoot arc + v5 body lift) is unreachable late in swing, and the
+  "point at the unreachable target" fallback puts the paw ~30 mm above the swing arc; the raised glenoid (girdleTop) turned that
+  into paws 45-58 mm off the ground. standError / poseReach / swing already use girdleTop (topY), so that suspicion was wrong.
+
+### What changed (src/animals/locomotion/bounding.ts; tests/bound-v6.test.ts new)
+- `FORE_REACH = { from: .6, full: .7, hold: .92, reach: .995 }`, `foreReachWeight(sp)`, `foreReachTarget(L, top, rel)`: from swing
+  fraction .6 to .7 (0 lift-off .. 1 touchdown; LF phase ~.66-.75 at 8.5 m/s) an unreachable swinging fore target is pulled
+  back AT ITS OWN HEIGHT onto the reach circle (.995 x the straight limb) about the protracted glenoid (blade rest + scapulaMax,
+  computed from the body's own girdleTop / scapula), held to .92, released by touchdown (smoothstep). The paw keeps the swing's
+  ground clearance and reaches as far forward as the limb allows. No fixed angle; reachable targets unchanged; stance feet,
+  sit-up tuck, leash / stop steps untouched.
+- Result (probe): extended flight paw 22-32 mm above the ground (was 45-58), 137-142 mm ahead of the glenoid (was 150-163),
+  forearm 35-40 deg below forward, elbow 170-176, manus 39-54 deg below forward (droops 5-15 deg past the forearm: the reachable
+  target is met with a slightly bent wrist; a psiWant unfold toward the forearm line gave byte-identical renders, so it was
+  dropped).
+- Timing [estimate, grid]: starts after the gathered (stride .17 / .20 / .50) and push-off (.64 / .67) cells (v5's early
+  protraction from .7 of the stride wrecked gather / push); F55 (start .45) cost summer push 87.0 -> 84.1.
+
+### Grid (lookscore v1.3, my PC GPU captures, ss / sw / se re-shot per variant, gs / gw / ge from the baseline; full scores
+/workspace/locomotion/T-0009/v6/grid/grid-scores.txt). stretch summer / winter; every other pose unchanged unless noted:
+| variant | rule | stretch s / w |
+|---|---|---|
+| before (524caea) | - | 85.1 / 81.3 |
+| A19 / A26 / A35 | raise to 11 / 15 / 20 deg below forward (more "forward") | 83.2 / 74.7, 83.9 / 72.9, 84.7 / 76.1 (end gather 74.9, end stretch 33.3) |
+| A00 | raise to the horizontal | 85.5 / 76.1, bound-checks 93.9 % |
+| D45 / D55 / D63 | set 26 / 31.5 / 36 deg, from .62 | 84.6 / 77.9, 84.3 / 79.7, 85.0 / 79.8 |
+| S65 / S75 / S85 / S95 / S105 | set 37 / 43 / 49 / 54 / 60 deg, from .6 | 85.4 / 79.6, 87.7 / 83.4, 89.4 / 85.1, 93.9 / 87.9, 95.9 / 88.9 (push s 90.9) |
+| **G1 (shipped)** | reach clamp at the swing height, .6 / .7 / .92 | **93.9 / 89.1** |
+| G2 / G3 | .62 / .72 / .95; .58 / .66 / .92 reach .98 | 93.9 / 89.0; 91.5 / 87.2 |
+S105 scores ~2 points more but only by pushing the paws onto the ground before touchdown (ground clamp); G1 is parameter-free
+geometry and stays clear of the ground, so G1 ships.
+
+### Scores (rule 11), before (524caea) -> after (v6), lookscore v1.3, noise SD shape summer 0.6, winter 0.5, end-on 1.1 (grok)
+| pose | summer | winter | end-on |
+|---|---|---|---|
+| crouch | 50.9 -> 50.9 | 64.3 -> 64.3 | 86.2 -> 86.2 |
+| sit | 56.4 -> 56.4 | 83.5 -> 83.5 | 66.8 -> 66.8 |
+| gather | 48.1 -> 48.1 | 51.9 -> 51.9 | 77.5 -> 77.5 |
+| push | 87.0 -> 87.0 | 100 -> 100 | uncal. -> uncal. |
+| stretch | **85.1 -> 93.9** | **81.3 -> 89.1** | 38.9 -> 38.9 |
+Zeroed cells: none before or after (all 180 cells posePlausibility ok; highest sole 29.9 mm below its own joint in both).
+Stretch is +8.8 / +7.8 (15 / 16 SD); summer still under run 9's 100, winter now above run 9's 86.7. End-on stretch picks a
+fore-stance cell (stride .14), which this change does not touch.
+- bound-checks: hare 99.7 % (5 speeds 100 / 100 / 100 / 100 / 99; check 9 anatomy 100 %, highest sole 10 mm below its joint at
+  11.6 m/s), host 99.1 % (unchanged, the old host overtake FAIL). Mass: no mesh / body change (grok's 1.921 L stands).
+- `npx tsc --noEmit` 0 errors; `npm test` 419 tests, 407 pass, 0 fail, 12 todo (524caea: 415 / 403; +4 in bound-v6.test.ts).
+  Logs in /workspace/locomotion/T-0009/v6/after/ (tsc.txt, npmtest.txt, bound-hare.txt, bound-host.txt).
+- LEPORID_LIMITS untouched (hind only; the fore uses CANID_LIMITS, elbow at its clamp as before).
+
+### Sources and flags (rule 6)
+- GIRDLE.scapulaMax .3 (pika +-17 deg, Fischer et al. 2002 JEB 205:1315) and SCAPULA_REST unchanged; the reach circle uses them.
+- **Flag (loud):** the shipped forearm (35-40 deg below the horizontal in late swing) lies at / past the top of the 11-36 deg
+  measured AT fore touchdown in small therians (Schmidt 2008 JEB 211:3775 Table 4; pika 33 deg, Fischer et al. 2002, summarised
+  in Lagomorpha Locomotion 2021 - which also says the pika scapula starts retracting in late swing, i.e. a late-swing forearm
+  is, if anything, shallower than at touchdown). No hare / jackrabbit fore swing kinematics were found. So the angle is a
+  CONSEQUENCE of the geometry (girdleTop .17 [grok's estimate] + fore limb .187 m + swing clearance), not a sourced value; the
+  paw height it buys is REFERENCE-MATCHED. Inside the sourced forearm range (D45-D63, S65) nothing beats the baseline.
+- Timing (.6 / .7 / .92) and reach .995 are estimates (grid).
+
+### Contract notes (other owners' files; not changed)
+- grok (hare.ts HARE_BODY): the stretch ceiling is geometric - a .187 m fore limb from a glenoid ~40 mm higher cannot reach
+  both as far and as low as run 9's. If girdleTop .17 stays, a sourced longer manus / forearm, or girdleTop just under .17, would
+  let the paw reach low without the forearm passing 36 deg. Measure against v6, not 524caea.
+- grok (tools/hare-strip.ts): nothing needed; `&log=1` per-cell plausibility worked as documented.
+- Claude (core/animalBehavior solveChain, reached through ik.ts solveLimb): when a fore target is out of reach the solver points the straight limb at it
+  (ray rule), which lifts the paw above its swing arc; v6 avoids that in late swing only. A generic "keep height, clamp
+  reach" rule in the solver would make it hold for any body - proposal, not made.
+
+### Captures (box /workspace/locomotion/T-0009/v6/)
+before/ (524caea) and after/ (v6): gs / gw / ge timed strips, ss / sw / se stride sheets (8.5 m/s, 30 cells, end-on = se / ge),
+each with .log.json (per-cell plausibility) and s13 / e13 lookscore outputs. compare-stretch.jpg (run 9 / before / after
+overlays + stride cells), compare-{ss,sw,se,gs,gw,ge}.jpg (before above after), grid/grid-scores.txt.
+Exact next step: grok re-scores v6 on the merged tip and decides whether the forearm-angle flag is acceptable or the fore
+limb / girdleTop should change (contract note above); then gather (~50) stays the weakest silhouette (grok's run 11 plan).

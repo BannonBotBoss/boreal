@@ -421,8 +421,11 @@ export const POSE_SHAPES: Record<PoseKind, PoseShape> = {
   'graze-crouch': { pitch: -.06, drop: .04, foreLift: false, ahead: 0 },
   /** upright sit-up on the haunches, fore paws lifted (run 7, grok): pitch 1.15 rad (66 deg) and the hip .02 m lower, so the
    *  silhouette axis is 66-70 deg like refs/hare/graze-alert-flight attempt2 / attempt3 panel 3 (68.9 / 70.8 deg, lookscore
-   *  masks). REFERENCE-MATCHED, not sourced; the hind feet reach it within 1 mm (drop .04 would miss by 15 mm). Was .95 / 0. */
-  'sit-up': { pitch: 1.15, drop: .02, foreLift: true },
+   *  masks). REFERENCE-MATCHED, not sourced; the hind feet reach it within 1 mm (drop .04 would miss by 15 mm). Was .95 / 0.
+   *  Run 12 (grok): pitch 1.15 -> 1.3 (74 deg) with the hare's sit hunch (hare.ts POSES sit [7]): the hunched back shortens
+   *  the axis, so the body rises to keep the references' outline (box grid S1/S4/S6, C:\dev\rabbit-rec16\grid-run12.txt).
+   *  REFERENCE-MATCHED, not sourced. */
+  'sit-up': { pitch: 1.3, drop: .02, foreLift: true },
   /** alert freeze (grok run 4): front raised ~20 deg on straight forelegs, all four feet down, the head up. REFERENCE-MATCHED
    *  (attempt4 video 2.3-3.3 s and attempt2 panel 3: the hare raises the head on all fours, it does not stand up on the haunches). */
   'half-sit': { pitch: .35, drop: 0, foreLift: false },

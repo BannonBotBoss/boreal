@@ -74,8 +74,9 @@ export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .187,
  *   guard hairs and reads as a solid layer, so the skin is drawn ~25 mm out on the trunk, thinner on head and limbs.
  * - Coat detail (ADW): summer blackish mid-dorsal line (ring `saddle`, none in winter), ears brownish with black tips and
  *   white / creamy borders (ear `rim`); winter almost all white except black eyelids (`eyelid`) and blackened ear tips.
- *   Winter body rounder: the pelt x1.5 as a morph target of the summer skin + fur [estimate: refs/hare/winter; hair density
- *   x2.28-2.48 in winter, Sheriff 2009]; winter skin under the cards shaded .8 (the dense coat hides the dusky bases).
+ *   Winter body rounder: the pelt x1.72 as a morph target of the summer skin + fur (run 12, grok: winter guard hair 43.19 mm over
+ *   the 25.15 mm underfur the summer pelt is drawn to, Sheriff 2009; was x1.5 [estimate]; box P1: winter crouch 67.9 -> 74.9; hair density
+ *   x2.28-2.48 in winter, Sheriff 2009); winter skin under the cards shaded .8 (the dense coat hides the dusky bases).
  * - Coats: summer grizzled rusty / greyish brown back, white belly, brownish ears with black tips (ADW), hind feet keep white
  *   patches (Hinterland Who's Who); winter white but the black ear tips. Shades [estimate: read from refs/hare/].
  * - Moult: Mills et al. 2013 PNAS 110(18):7360 (doi:10.1073/pnas.1222724110): initiation fixed by day length ~10 Oct (day 283)
@@ -107,7 +108,7 @@ export const HARE_SKIN: SkinSpec = {
   fore: { r: [[.022, .021], [.015, .014], [.011, .011], [.008, .009], [.006, .011]], fur: [[0, .5], [3, .45]], pale: [[0, 0], [3.5, .45]] },
   hind: { r: [[.034, .024], [.022, .016], [.011, .012], [.008, .02], [.006, .017]], fur: [[0, .75], [1.5, .5], [2.5, .55]], pale: [[0, 0], [2, .3], [2.5, .75]] },
   pelt: { body: .025, head: .012, limb: .012, ear: .0015 },
-  eye: [.0365, .011, -.014], eyeClear: .013, eyelid: { radius: .015, amount: .85 }, winterPelt: 1.5, cheek: { at: [.022, -.011, -.022], radius: .018, offset: [.003, -.002, 0] },
+  eye: [.0365, .011, -.014], eyeClear: .013, eyelid: { radius: .015, amount: .85 }, winterPelt: 1.72, cheek: { at: [.022, -.011, -.022], radius: .018, offset: [.003, -.002, 0] },
   summer: { back: [.4, .29, .16], belly: [.86, .84, .8], dark: [.07, .06, .055], accent: [.55, .45, .33], tip: [.1, .08, .06], tipAmount: .35 },
   winter: { back: [.9, .9, .88], belly: [.93, .93, .91], dark: [.06, .055, .05], accent: [.9, .89, .86], tip: [.96, .96, .95], tipAmount: 0, saddle: 0, rootShade: .8 },
   moult: { autumnStart: 283, autumnDays: 40, springStart: 100, springDays: 40, spread: .6, height: .24 },
@@ -121,9 +122,22 @@ export const hareCoatState = () => coatState(HARE_SKIN);
 /** T-0028: the procedural furred mesh replaces the run 1-6 blob model; the same body / head / ears / legs handles, now bones
  *  of one skinned skin + fur, posed by poseHare from the rig. */
 function model() {
-  const m = createRigSkin(hareBind(), HARE_SKIN);
-  return { root: m.root, body: m.body as THREE.Object3D, chest: m.chest as THREE.Object3D, head: m.head as THREE.Object3D, legs: m.legs, ears: m.ears as THREE.Object3D[] };
+  const m = createRigSkin(hareBind(), HARE_SKIN), head = m.head as THREE.Object3D;
+  // run 12 (T-0009 eating): a small pale lower jaw / chin under the muzzle, hinged behind the cheek; closed it sits inside the
+  // muzzle fur, open (CHEW.gape) the chin drops ~3.5 mm. Placed from the head rings z -.040 / -.054 [estimate: drawn to them].
+  const jaw = new THREE.Group(); jaw.name = 'jaw'; jaw.position.set(0, CHEW.pivot[0], CHEW.pivot[1]);
+  const chin = new THREE.Mesh(JAW_GEO, JAW_MAT); chin.name = 'chin'; chin.position.set(0, CHEW.chin[0] - CHEW.pivot[0], CHEW.chin[1] - CHEW.pivot[1]); chin.scale.set(...CHEW.r);
+  jaw.add(chin); head.add(jaw);
+  return { root: m.root, body: m.body as THREE.Object3D, chest: m.chest as THREE.Object3D, head, legs: m.legs, ears: m.ears as THREE.Object3D[] };
 }
+/** Run 12 (T-0009 eating). Chewing cadence: rabbits chew at ~4 Hz, independent of food (hay, pellets, carrot; Ravosa, Scott,
+ *  Ross et al. 2015, "Chewed out", PeerJ 3:e1345, doi:10.7717/peerj.1345, PMC4636421: "averaging about 4 Hz", 60 fps video),
+ *  so the jaw opens and the head bobs once per 1/4 s while feeding and through the head-up scans (subtle vigilance keeps
+ *  chewing: Monclus & Rodel 2008, Ethology 114:287). Bob .035 rad pitch + 1.5 mm, gape .16 rad and the crop tug every 8 chews
+ *  (a short nose-up pull, the clover torn off) [estimate: drawn so the motion reads at 6-8 m; no measured leporid amplitude found]. */
+export const CHEW = { hz: 4, bob: .035, lift: .0015, gape: .16, tugEvery: 8, tug: .09, pivot: [-.026, -.018] as const, chin: [-.037, -.043] as const, r: [.0095, .0055, .014] as [number, number, number] };
+const JAW_GEO = new THREE.SphereGeometry(1, 12, 8), JAW_MAT = new THREE.MeshStandardMaterial({ color: new THREE.Color(.84, .82, .78), roughness: 1 });
+const chewState = new WeakMap<HareModel, { amp: number; pitch: number; y: number; jaw?: THREE.Object3D }>();
 let bindCache: RigBind | undefined;
 /** The bind pose: the rig standing still at the origin, heading 0 (forward -z); joints relative to the hip-joint midpoint. */
 export function hareBind(): RigBind {
@@ -144,7 +158,7 @@ export function hareBind(): RigBind {
 export const POSES: Record<string, number[]> = {
   'head-down': [-.1, -.04, -.85, -.08, 1.5, .1, .45], // run 7: head -.55 -> -.85 (nose to the clover, refs attempt2 panel 1); run 11: ears .95 -> 1.5 (laid flat along the neck), drop -.075 -> -.08 (fur at the ground, test 'head pose (run 11)') - grid C:\dev\rabbit-rec15\grid-run11.txt W10-W12: winter crouch 64.4 -> 68.1, summer 51.3 -> 54.3; lower heads scored higher only with the muzzle in the ground (W5-W8, rejected), REFERENCE-MATCHED
   scan: [.3, 0, -.35, 0, -.05, -.15, .5],
-  sit: [1.15, 0, -.8, -.025, -.15, -.7, .55], // run 7: upright sit-up (body .95 from the rig's 'sit-up'), head turned back level, nose a little up
+  sit: [1.15, 0, -.8, -.025, -.15, -.7, .55, .4], // run 7: upright sit-up (body .95 from the rig's 'sit-up'), head turned back level, nose a little up; run 12: back hunched .4 rad (23 deg of lumbar flexion, inside the rabbit's passive 73-122 deg over 7 +- 1 joints, Grauer 2000) - box grid S3-S6 (C:\dev\rabbit-rec16\grid-run12.txt): sit 55.1 / 81.6 -> 61.6 / 92.9, end-on 65.5 -> 64.4 (noise)
   rest: [-.04, -.035, -.15, 0, .85, .25, .55],
   crouch: [-.06, -.045, -.1, 0, 1.15, .3, .6],
   move: [0, 0, -.1, 0, .5, 0, 0],
@@ -187,8 +201,13 @@ const HARE_SKELETON = skeletonOf(HARE_PLAN);
  *  passive lumbar range too (Grauer, Erulkar, Patel & Panjabi 2000, Eur Spine J, doi:10.1007/s005860000141, NZW L4-L7 in vitro: 12.1 / 12.4 / 15.2 deg flexion and
  *  5.9 / 5.6 / 6.1 deg extension per joint, over the 7 +- 1 bending presacral joints of Schilling & Hackert). Extension
  *  takes .44 of it: the rabbit's lumbar joints extend 17.6 deg for every 39.7 deg they flex (Grauer, same L4-L7 sums). Was .6 both ways [estimate]. */
-export const SPINE_BEND = { flex: 1, extend: .44 };
+// Run 12 (grok, T-0009, Matthew: "sourced spine flexion (the Grauer 2000 range)"): flex 1 -> 1.6, so the gathered chest turns up to
+// .585 rad (33.5 deg) against the rump: beyond the pika LOCOMOTOR excursion cap above (.366) but well inside the rabbit's passive
+// lumbar flexion (12.1-15.2 deg x 7 +- 1 joints = 73-122 deg, Grauer 2000). Box grid F1/F2/F3 (C:\dev\rabbit-rec16\grid-run12.txt):
+// gather 63.9 / 61.9 -> 65.7 / 65.8 at 1.6 (2.0: 66.3 / 67.2, diminishing), end-on gather 69.0 -> 69.1. FLAGGED: past the locomotor cap.
+export const SPINE_BEND = { flex: 1.6, extend: .44 };
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3();
+const hunch = new WeakMap<HareModel, number>();
 /** Pose one hare model from its pipeline agent for this frame (shared by the game host and tools/hare-strip). The legs, body
  *  height and pitch come from the bounding rig (planted feet, half-bound / lagomorph gallop, sit-up and graze-crouch pose
  *  requests); head and ears from the reference poses. `ground` is the terrain height function (or a flat height). */
@@ -213,7 +232,9 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
     const fl = limbPoints(HARE_SKELETON, fr, 0)[0], frt = limbPoints(HARE_SKELETON, fr, 2)[0];
     h.body.updateMatrixWorld(); _a.set((fl.x + frt.x) / 2 + ox, (fl.y + frt.y) / 2, (fl.z + frt.z) / 2 + oz); h.body.worldToLocal(_a);
     const ang = (y: number, z: number) => Math.atan2(y, -z), want = ang(_a.y, _a.z) - ang(c0[1], c0[2]);
-    h.chest.position.copy(_a); h.chest.rotation.x = want - (fr.spineFlex > 0 ? SPINE_BEND.flex : SPINE_BEND.extend) * fr.spineFlex;
+    // run 12: a standing pose may hunch the back (POSES [7], rad of lumbar flexion, inside the Grauer 2000 passive range), smoothed
+    const hw = (POSES[a.speed > .05 ? (a.speed > 3 ? 'run' : 'move') : poseKey(a)][7] ?? 0), hs = (hunch.get(h) ?? 0) + (hw - (hunch.get(h) ?? 0)) * k; hunch.set(h, hs);
+    h.chest.position.copy(_a); h.chest.rotation.x = want - (fr.spineFlex > 0 ? SPINE_BEND.flex : SPINE_BEND.extend) * fr.spineFlex - hs;
   }
   h.legs.forEach((leg, i) => {
     const P = limbPoints(HARE_SKELETON, fr, i), o = leg.from; // [top (blade pivot), girdle joint, knee/elbow, ankle/wrist, toe/MTP(, toe tip)]
@@ -225,8 +246,15 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
   });
   // head and ears: reference poses (sit-up for the alert and the flight pause, scan, graze, rest), smoothed
   const moving = a.speed > .05, pose = POSES[moving ? (a.speed > 3 ? 'run' : 'move') : poseKey(a)];
-  const nibble = a.action === 'feed' ? Math.sin(time * 9 + h.id) * .04 : 0;
-  h.head.rotation.x += (pose[2] + nibble - h.head.rotation.x) * k; h.head.position.y += (HARE_BODY.headY - (h.chest ? c0[1] : 0) + pose[3] - h.head.position.y) * k;
+  // run 12: chewing (CHEW) rides on top of the smoothed pose, so the 4 Hz motion is not filtered away; was a 1.4 Hz nibble [estimate]
+  let cw = chewState.get(h); if (!cw) chewState.set(h, cw = { amp: 0, pitch: 0, y: 0, jaw: h.head.getObjectByName('jaw') });
+  const basePitch = h.head.rotation.x - cw.pitch, baseY = h.head.position.y - cw.y;
+  cw.amp += ((!moving && (a.action === 'feed' || a.action === 'scan') ? 1 : 0) - cw.amp) * k;
+  const ph = time * CHEW.hz * Math.PI * 2 + h.id * 1.7, s = Math.sin(ph), cyc = Math.floor(ph / (Math.PI * 2));
+  const tug = a.action === 'feed' && (cyc + h.id) % CHEW.tugEvery === 0 ? Math.max(0, s) * CHEW.tug : 0;
+  cw.pitch = (s * CHEW.bob + tug) * cw.amp; cw.y = Math.max(0, s) * CHEW.lift * cw.amp;
+  h.head.rotation.x = basePitch + (pose[2] - basePitch) * k + cw.pitch; h.head.position.y = baseY + (HARE_BODY.headY - (h.chest ? c0[1] : 0) + pose[3] - baseY) * k + cw.y;
+  if (cw.jaw) cw.jaw.rotation.x = -Math.max(0, -s) * CHEW.gape * cw.amp;
   for (const e of h.ears) e.rotation.x += (pose[4] - e.rotation.x) * k;
 }
 

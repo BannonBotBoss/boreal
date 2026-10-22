@@ -10,7 +10,7 @@ import { createAgent, stepAgent, type FoodSource, type AgentWorld } from '../src
 import { HARE_AGENT } from '../src/core/agent/species';
 import { CLOVER, CLOVER_WHY, grazeTransaction, type CloverPatch } from '../src/core/clover';
 import { stream } from '../src/proc/rng';
-import { setHareDay, HARE_SKIN, POSES } from '../src/animals/hare';
+import { setHareDay, HARE_SKIN, POSES, SPINE_BEND } from '../src/animals/hare';
 import { SWING, POSE_SHAPES } from '../src/animals/locomotion/bounding';
 import { posePlausibility } from '../src/animals/locomotion/boundScore';
 const q = new URLSearchParams(location.search), wolfAt = Number(q.get('wolfAt') ?? 2.1), fps = Number(q.get('fps') ?? 6), dur = Number(q.get('dur') ?? 5), seed = q.get('seed') ?? 'strip';
@@ -19,6 +19,7 @@ const q = new URLSearchParams(location.search), wolfAt = Number(q.get('wolfAt') 
 if (q.get('chest')) { const s = Number(q.get('chest')), wx = Number(q.get('chestw') ?? 1); for (const r of HARE_SKIN.trunk) { const c = (r as { chest?: number }).chest ?? 0, d = r.ry * (s - 1) * c; r.ry += d; r.y -= d; r.rx *= 1 + (wx - 1) * c; } }
 if (q.get('runears')) POSES.run[4] = Number(q.get('runears'));
 if (q.get('pose')) for (const e of q.get('pose')!.split(';')) { const [k, i, v] = e.split(':'); POSES[k][Number(i)] = Number(v); } // run 11 grid hook: pose=run:2:-.2;head-down:4:1.2
+if (q.get('wpelt')) (HARE_SKIN as { winterPelt?: number }).winterPelt = Number(q.get('wpelt')); // run 12: winter fur volume
 if (q.get('headsize')) { const s = Number(q.get('headsize')); for (const r of HARE_SKIN.head) { r.rx *= s; r.ry *= s; r.z *= s; r.y *= s; } }
 const CW = 424, CH = 240, COLS = 6, N = Math.round(fps * dur), ROWS = Math.ceil(N / COLS), W = CW * COLS, H = CH * ROWS;
 const canvas = document.getElementById('c') as HTMLCanvasElement;
@@ -57,6 +58,8 @@ const END = q.get('view') === 'end';
 // from pageResult (tools/strip-shot.mjs prints it)
 if (q.get('fold')) SWING.fold.hind = Number(q.get('fold'));
 // run 9: ?graze=pitch,drop,ahead overrides the rig's graze-crouch shape (grid search against the graze references)
+if (q.get('spineflex')) SPINE_BEND.flex = Number(q.get('spineflex')); // run 12 grid hooks
+if (q.get('shape')) for (const e of q.get('shape')!.split(';')) { const [k, p, d] = e.split(':'); Object.assign(POSE_SHAPES[k as keyof typeof POSE_SHAPES], { pitch: Number(p), drop: Number(d) }); }
 if (q.get('graze')) { const [p, d, a] = q.get('graze')!.split(',').map(Number); POSE_SHAPES['graze-crouch'] = { pitch: p, drop: d, foreLift: false, ahead: a }; }
 const plaus = () => { const f = hare.frame, sk = hare.rig?.skeleton; if (!f || !sk) return { above: null, joint: 0, ok: true };
   const p = posePlausibility(sk, f); return { above: +(p.soleOverHip * 1000).toFixed(1), joint: +p.jointOut.toFixed(2), ok: p.ok }; };

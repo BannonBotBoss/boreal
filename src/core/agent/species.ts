@@ -67,6 +67,11 @@ export const HARE_AGENT: AgentSpecies = {
   // react 1 s: snowshoe hares freeze first, relying on crypsis, and only then flee (Emmel 2024, UMT MSc thesis, "The Hare and
   // the Hawk"; Chapman & Flux 2008); the ~1 s hold is read from the reference video (refs/hare/graze-alert-flight attempt 4)
   // [estimate: no measured freeze duration found]. Inside flee.distance the hare bolts at once.
+  // Sourcing check (grok, T-0009 run 12): a feeding leporid's head-up scan between bites lasts 3.6 s on average (subtle
+  // vigilance, head above the shoulder in the feeding posture, still chewing; 95 per hour; overt upright vigilance 12.3 s,
+  // 20 per hour: European rabbits, Monclus & Rodel 2008, Ethology 114:287, Fig. 2, read from the bars). Matthew's feed 3 s
+  // and calm scanChance .1 give a mean interscan of ~30 s, inside that study's 26-38 s; his 1 s scan is shorter than the
+  // sourced 3.6 s and is kept (his spec, pinned by tests/rabbit-clover.test.ts) until he decides.
   timing: { feed: 3, scan: 1, alert: 1, alertMin: .3, react: 1, alertTurn: 0, flee: 3, pause: 1, rest: [2, 4], jitter: .15 },
   mood: { boutNerve: .6, boutHunger: 1, scanChance: [.1, .9], scanHunger: .4, scanNerve: 1.5, scanHungerShort: .3,
     notice: [.06, .3], noticeHunger: .6, bolt: [.55, .8], boltHunger: .2, fleeNerve: .3, fleeStaminaFull: 40, pauseNerve: .4, resume: .8, unhide: .25 },

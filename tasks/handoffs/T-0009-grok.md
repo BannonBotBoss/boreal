@@ -5,6 +5,13 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
+## Run 11 progress (started 2026-10-21 22:49 PT; keep current: board rule 9; grok/rabbit-clover + board via grok/transactional-plan after merging main a436a9d+)
+Plan (22:49 PT brief): stretch / forward-reach swing fix is WITH GAIT BUILDER (owner); grok does not touch the swing code. Grok: outline mismatch analysis vs the references first (overlay13), then gathered outline (~50 both seasons) and winter crouch (72.9 -> 64.3) by body, head and ear pose only, without repeating rejected tries (head flex x.6/x1.2, head x1.15, ears up in the run, deeper chest without narrowing, graze drop .06, level drops); keep plausibility, mass, bound checks; re-score v1.3, npm test + tsc, compare-run11.jpg. Evidence C:\dev\rabbit-rec15\. Complete only if every gate >= 95 %.
+- [ ] 1 Outline mismatch analysis (gather, winter crouch) + body / head / ear pose fixes
+- [ ] 2 Plausibility, mass, bound checks
+- [ ] 3 Re-score v1.3, npm test + tsc, compare-run11.jpg; complete only if every gate >= 95 %
+- Needs from another agent: Gait Builder - extended-flight stretch / fore forward reach in the swing code (run 10: stretch summer 100 -> 85.1, winter 86.7 -> 81.3 after the girdle raise).
+
 ## Run 10 progress (started 2026-10-21 22:13 PT; keep current: board rule 9; grok/rabbit-clover + board via grok/transactional-plan)
 - [x] 1 Codex's approve-plan event on main: tasks/events/2026-10-21T21-32-codex-approve-plan-T-0009.json taken alone from codex/loop ece2756 (git checkout of that one file, blob 9d59b8e identical, valid JSON, no BOM; no codex code), grok/transactional-plan 11f8268, main ff'd to 11f8268. Codex's other unmerged events (T-0001/0007/0022/0025/0028/0032 comments and claim) left for their own owners.
 - [x] 2 Codex's conditions met on the board (grok/transactional-plan, main ff'd to d5abe8b): (a) a43e010 tasks/T-0009-agent-core-transactions.md reconciled with this handoff - status (approved by codex, claimed by grok), the sourced nature table governs the numbers (spec values that failed listed), files as built, the rule 6/11 animation gate added to the acceptance criteria; (b) header skill: agent-pipeline-species + a 'Skill: notes/skills/agent-pipeline-species.md' line, and the draft skill file brought to the board (board-only notes/skills); (c) d5abe8b new claim tasks/events/2026-10-21T22-14-grok-claim-T-0009.json (at 22:14 PT, after codex's 21:32:41).

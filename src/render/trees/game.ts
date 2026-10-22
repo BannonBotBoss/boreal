@@ -64,6 +64,8 @@ function materialise(t: Tree) {
   t.lod = 2;
 }
 const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), p3 = new THREE.Vector3(), s3 = new THREE.Vector3();
+/** The far crown geometry a placed tree of this seed/age class draws, once its variant is built (else undefined). T-0032: render/flora/fartrees measures its blocking width. */
+export function v2Crown(seed: number, cls: number) { return variants.get(Math.max(0, Math.min(3, cls)) * VARIANTS + ((seed >>> 5) % VARIANTS))?.lods.crown; }
 /** Place one tree (idempotent by key). `cls` = render/trees age class 0-3; `seed` picks the variant. */
 export function placeTree(key: string, x: number, y: number, z: number, rotY: number, sx: number, sy: number, sz: number, seed: number, cls: number, far: boolean) {
   if (trees.has(key)) return;

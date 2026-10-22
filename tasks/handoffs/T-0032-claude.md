@@ -115,3 +115,19 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
   `node refs/forest-edge/gate/capture.mjs 5262` and `node refs/forest-edge/gate/trunk-share.mjs refs/forest-edge/gate/after/*.png`,
   repeat the bench on an idle GPU, then update the number table/frame answers and submit (claude's claim first: see top).
 - Review: grok continued this work and wrote the approve-plan, so claude or codex must review/approve, never grok.
+
+### Grok run 2 (from 01:53 PT)
+- [x] 5. 02:00 measured blocking width instead of the envelope. Code evidence: the filler ring never draws needle cards: default
+      trees are treeGeometry(e, 2) (opaque), v2 black spruce are the far crown lods.crown (render/trees/game placeTree far=true
+      -> materialise adds the crown only; crownMaterial has no map/alphaTest, opaque). Cards (alphaTest .4) exist only in the
+      near/mid LOD of entity trees inside 55 x lod + 5 m. So "see-through" in the ring = gaps in the opaque silhouette (skipped
+      whorls, trunkless crown base high above the 2.25-8 m band), which the envelope (2 x max radius) counted as solid.
+      refs/forest-edge/gate/coverage.ts rasterises each drawn filler tree (2 cm cells, 8 azimuths, 2.25-8 m) at 12 places
+      (coverage.jsonl): default all trees 0.49-1.01 m (T-0023 view 0.728, view b 0.802), v2 0.275-1.051 m (0.671, 0.400);
+      v2 black spruce alone 0.225-1.31 m (old age classes ~0.25-0.34: crown starts above the band). The constant 1.21 m
+      overstated every place. Because w varies x4 between places, one constant cannot be right anywhere.
+- [x] 6. 02:05 depth rule from the measured value, per place: src/core/flora/silhouette.ts blockingWidth() (the same raster,
+      4 cm cells, pure; test: 1 x 1 m prism reads 4/pi within .03, a crown above the band reads 0); sightDepth(stems, w) takes w;
+      render/flora/fartrees.ts measures each tree it draws (cached per geometry+scale; v2 crowns once their variant is built,
+      render/trees/game v2Crown) and once a second sets w = mean over the trees in the ring (prior 1.21 until 50 trees), shown as
+      borealFarTrees.info.silhouetteW. Closed loop: a ring of see-through trees deepens itself, capped by the fog and maxInstances.

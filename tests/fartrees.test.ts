@@ -72,3 +72,12 @@ test('far trees: the ring reaches as deep as a line of sight into the stand (Poi
   assert.ok(sightDepth(600) > sightDepth(1059) && sightDepth(1059) > sightDepth(2150)); // denser stands close the view sooner
   assert.ok(sightDepth(1059) > 60 && sightDepth(1059) < 100); // the T-0032 lake view stand: the probe closes 60-80 m behind the shore
 });
+test('blocking width: rasterised silhouette, calibrated on known shapes (T-0032 grok)', async () => {
+  const THREE = await import('three'); const { blockingWidth } = await import('../src/core/flora/silhouette');
+  const box = new THREE.BoxGeometry(1, 10, 1).translate(0, 5, 0); // square prism: mean projected width over azimuths = 4/pi
+  const w = blockingWidth(box.getAttribute('position').array, box.index!.array, 1, 1);
+  assert.ok(Math.abs(w - 4 / Math.PI) < .03, `prism ${w.toFixed(3)}`);
+  const high = new THREE.BoxGeometry(1, 2, 1).translate(0, 9, 0); // all above the 2.25-8 m band: blocks nothing there
+  assert.equal(blockingWidth(high.getAttribute('position').array, high.index!.array, 1, 1), 0);
+  assert.ok(Math.abs(sightDepth(1059, .5) / sightDepth(1059, 1) - 2) < 1e-9); // half the measured width -> twice the depth
+});

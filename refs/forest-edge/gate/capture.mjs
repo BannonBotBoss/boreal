@@ -26,7 +26,7 @@ try {
   const go = async (url) => { await cdp('Page.navigate', { url }); let ok = false; for (let i = 0; i < 120; i++) { await sleep(1000); if (await ev("document.readyState==='complete' && !document.getElementById('loading')")) { ok = true; break; } } if (!ok) throw Error('not ready ' + url); await sleep(8000); };
   for (const [tag, at, extra] of VIEWS) {
     const url = `http://127.0.0.1:${PORT}/?nomenu&bench&hour=12&at=${at}${extra}`; await go(url);
-    const info = await ev("JSON.stringify(window.__FAR_TREE_INFO ?? null)").catch(() => null);
+    const info = await ev("JSON.stringify(window.borealFarTrees?.info ?? null)").catch(() => null);
     for (let i = 0; i < 3; i++) { const s = await cdp('Page.captureScreenshot', { format: 'png' }); const f = `${tag}-${i}.png`; writeFileSync(`${out}/${f}`, Buffer.from(s.data, 'base64')); shots.push({ f, url, t: Date.now(), info }); await sleep(1000); }
   }
   writeFileSync(`${out}/observations.json`, JSON.stringify({ port: PORT, shots, errors }, null, 2)); console.log(JSON.stringify({ shots: shots.length, errors }));

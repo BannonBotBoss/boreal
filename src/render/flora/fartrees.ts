@@ -16,18 +16,27 @@ import { standAt } from '../../core/stand';
 import { FAR_TREES, farTreesInTile, sightDepth } from '../../core/flora/stands';
 import { hash, random } from '../../proc/rng';
 import { WIND_UNIFORMS, ageClass, treeGeometry, treeSpecies } from '../trees';
-import { bindWind, placeTree, removeTree, updateTrees, v2Handles } from '../trees/game';
+import { bindWind, placeTree, removeTree, updateTrees, v2Crown, v2Handles } from '../trees/game';
+import { blockingWidth } from '../../core/flora/silhouette';
 import { fadeOptIn } from '../fade';
 
 export const FAR_TREE_FX = { off: typeof location !== 'undefined' && new URLSearchParams(location.search).get('fartrees') === '0' }; // ?fartrees=0: bench A/B
-export const FAR_TREE_INFO = { instances: 0, geometries: 0, tiles: 0, refills: 0, sliceMaxMs: 0, inner: 0, outer: 0, triangles: 0 };
+export const FAR_TREE_INFO = { instances: 0, geometries: 0, tiles: 0, refills: 0, sliceMaxMs: 0, inner: 0, outer: 0, triangles: 0, silhouetteW: 0 };
 (globalThis as { borealFarTrees?: unknown }).borealFarTrees = { info: FAR_TREE_INFO, fx: FAR_TREE_FX }; // dev/bench handle
 
 export function createFarTrees(scene: THREE.Scene) {
   let bm: THREE.BatchedMesh | undefined;
   const v2keys = new Map<string, string[]>(); // trees v2 (render/trees/game): far black spruce as ragged crowns, per tile
   const tiles = new Map<string, number[]>(), geoIds = new Map<THREE.BufferGeometry, number>(), tris = new Map<number, number>(), stands = new Map<string, number>();
-  let lx: number | undefined, lz = 0, lDensity = -1, lInner = 0, lOuter = 0;
+  let lx: number | undefined, lz = 0, lDensity = -1, lInner = 0, lOuter = 0, wRing = FAR_TREES.silhouetteW, wAt = -1e9;
+  // T-0032: measured blocking width (core/flora/silhouette) of the trees this ring draws, per tile: [sum of default-tree widths, count,
+  // v2 crowns as [seed, age class, sx, sy] measured once their variant is built]; the ring depth uses the mean over the drawn trees
+  const tileW = new Map<string, { sum: number; n: number; v2: number[][] }>(), wCache = new Map<string, number>();
+  const widthOf = (key: string, g: THREE.BufferGeometry, sx: number, sy: number) => { const k = key + ':' + sx.toFixed(2) + ':' + sy.toFixed(2); let w = wCache.get(k);
+    if (w === undefined) { w = blockingWidth(g.getAttribute('position').array, g.index ? g.index.array : null, sx, sy); wCache.set(k, w); } return w; };
+  const ringWidth = () => { let s = 0, n = 0; for (const tw of tileW.values()) { s += tw.sum; n += tw.n;
+      for (const [seed, cls, sx, sy] of tw.v2) { const g = v2Crown(seed, cls); if (g) { s += widthOf(g.uuid, g, sx, sy); n++; } } }
+    return n >= 50 ? s / n : FAR_TREES.silhouetteW; }; // until 50 trees are drawn: the default-tree prior
   const mat4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), pos = new THREE.Vector3();
   /** Stand stems/ha per 40 m chunk centre (the same sample core/population uses). */
   const stemsAt = (x: number, z: number) => {
@@ -48,23 +57,23 @@ export function createFarTrees(scene: THREE.Scene) {
     const d2 = (tx: number, tz: number) => { const dx = (tx + .5) * T - cx, dz = (tz + .5) * T - cz; return dx * dx + dz * dz; };
     for (const [k, insts] of tiles) {
       const [a, b] = k.split(',').map(Number), d = d2(a, b);
-      if (reset || d < in2 || d > out2) { for (const i of insts) if (i >= 0) bm!.deleteInstance(i); tiles.delete(k); for (const key of v2keys.get(k) ?? []) removeTree(key); v2keys.delete(k); }
+      if (reset || d < in2 || d > out2) { for (const i of insts) if (i >= 0) bm!.deleteInstance(i); tiles.delete(k); tileW.delete(k); for (const key of v2keys.get(k) ?? []) removeTree(key); v2keys.delete(k); }
     }
     yield;
     const r = Math.ceil(outer / T), ox = Math.floor(cx / T), oz = Math.floor(cz / T);
     for (let tz = oz - r; tz <= oz + r; tz++) for (let tx = ox - r; tx <= ox + r; tx++) {
       const k = `${tx},${tz}`, d = d2(tx, tz); if (d < in2 || d > out2 || tiles.has(k)) continue;
-      const insts: number[] = []; tiles.set(k, insts);
+      const insts: number[] = [], tw = { sum: 0, n: 0, v2: [] as number[][] }; tiles.set(k, insts); tileW.set(k, tw);
       for (const p of farTreesInTile(tx, tz, density, stemsAt, dry)) {
         if (bm && bm.instanceCount >= FAR_TREES.maxInstances) break;
         const rr = random(hash(`fartree-v2:${WORLD_SEED}:${Math.floor(p.r * 0xffffffff)}`));
         const e: Entity = { key: `fartree:${tx}:${tz}:${insts.length}`, kind: 'spruce', seed: Math.floor(rr() * 0xffffffff), generatorVersion: GENERATOR_VERSION, x: p.x, z: p.z, rotation: rr() * Math.PI * 2, scale: .75 + rr() * .65 };
         if (v2Handles(treeSpecies(e.seed, e.x, e.z))) { // trees v2: a crown instance in render/trees/game (built there in sliced jobs)
-          bindWind(WIND_UNIFORMS); const s = random(e.seed)(); placeTree(e.key, e.x, heightAt(e.x, e.z), e.z, e.rotation, e.scale, e.scale * (.9 + s * .2), e.scale, e.seed, ageClass(e.x, e.z), true);
+          bindWind(WIND_UNIFORMS); const s = random(e.seed)(), cls = ageClass(e.x, e.z); placeTree(e.key, e.x, heightAt(e.x, e.z), e.z, e.rotation, e.scale, e.scale * (.9 + s * .2), e.scale, e.seed, cls, true); tw.v2.push([e.seed, cls, e.scale, e.scale * (.9 + s * .2)]);
           (v2keys.get(k) ?? v2keys.set(k, []).get(k)!).push(e.key); insts.push(-1); continue;
         }
         const shapes = geoIds.size, g = treeGeometry(e, 2), m = g.children[0] as THREE.Mesh, id = geometryId(m.geometry, m.material as THREE.Material);
-        if (id >= 0) { const inst = bm!.addInstance(id); pos.set(e.x, heightAt(e.x, e.z), e.z); q.setFromAxisAngle(up, g.rotation.y); bm!.setMatrixAt(inst, mat4.compose(pos, q, g.scale)); insts.push(inst); }
+        if (id >= 0) { tw.sum += widthOf(m.geometry.uuid, m.geometry, g.scale.x, g.scale.y); tw.n++; const inst = bm!.addInstance(id); pos.set(e.x, heightAt(e.x, e.z), e.z); q.setFromAxisAngle(up, g.rotation.y); bm!.setMatrixAt(inst, mat4.compose(pos, q, g.scale)); insts.push(inst); }
         if (geoIds.size !== shapes || insts.length % 32 === 31) yield; // a new shape (tree build + batch upload) is its own step; dense tiles split every 32 trees
       }
       yield;
@@ -74,9 +83,10 @@ export function createFarTrees(scene: THREE.Scene) {
     updateTrees(scene, camera); // trees v2 LOD + pruning (no-op unless ?trees=v2)
     if (bm) bm.visible = !FAR_TREE_FX.off && RENDER.treeDensity > 0;
     const x = camera.position.x, z = camera.position.z, density = RENDER.treeDensity, inner = 55 * RENDER.lod.trees + 5, T = FAR_TREES.tile;
+    const now = performance.now(); if (now - wAt > 1000 && !pending('fartrees:refill')) { wAt = now; wRing = ringWidth(); FAR_TREE_INFO.silhouetteW = +wRing.toFixed(3); } // measured w, once a second
     // the forest is drawn as deep behind the last instantiated edge (INTEREST.mid) as a line of sight sees into it (core/flora/stands
     // sightDepth), no further than the fog hides; whole tiles, so the ring moves in tile steps (incremental refill, no reset)
-    const fogFar = (scene.fog as THREE.Fog | null)?.far ?? Infinity, outer = Math.max(inner, Math.min(fogFar, Math.ceil((INTEREST.mid + sightDepth(stemsAt(x, z))) / T) * T));
+    const fogFar = (scene.fog as THREE.Fog | null)?.far ?? Infinity, outer = Math.max(inner, Math.min(fogFar, Math.ceil((INTEREST.mid + sightDepth(stemsAt(x, z), wRing)) / T) * T));
     const reset = density !== lDensity || Math.abs(inner - lInner) > 1;
     if (pending('fartrees:refill') || (!reset && lx !== undefined && Math.hypot(x - lx, z - lz) < T / 2 && Math.abs(outer - lOuter) <= 1)) return;
     lx = x; lz = z; lDensity = density; lInner = inner; lOuter = outer; Object.assign(FAR_TREE_INFO, { inner, outer });

@@ -29,8 +29,8 @@ export const FAR_TREES = { stemCap: 2150, fill: .6, tile: 32, mu: 4, sigma: 2.5,
 /** How deep the drawn forest must reach behind any edge so a level line of sight into it ends on a tree with probability
  *  1 - sightEps: Poisson gaps, P(clear over L) = exp(-lambda w L) (Nilson 1971, Agric. Meteorol. 8: 25-38), lambda = the
  *  trees/m² drawn at the stand (entities + fill, full density: lower tiers thin trees, not deepen the ring). Pure. */
-export function sightDepth(stems: number) {
-  return Math.log(1 / FAR_TREES.sightEps) / ((drawnTreesPerHa(stems) + fillPerHa(stems)) / 1e4 * FAR_TREES.silhouetteW);
+export function sightDepth(stems: number, w: number = FAR_TREES.silhouetteW) { // w: measured blocking width of the drawn trees (core/flora/silhouette; render/flora/fartrees passes the running mean)
+  return Math.log(1 / FAR_TREES.sightEps) / ((drawnTreesPerHa(stems) + fillPerHa(stems)) / 1e4 * Math.max(.05, w));
 }
 /** Look-only trees/ha added at a stand: toward min(stems, cap) x density, minus what the entities already draw. Pure. */
 export function fillPerHa(stems: number, density = 1) {

@@ -1,4 +1,38 @@
 {
-  "note": "Drop audio files (mp3/ogg/wav) in public/music and list them here. mood: day | night | storm | any (used by 'Music follows weather/time').",
-  "tracks": []
+  "note": "Background music. The Music panel's Track picker plays these (src/audio/music.ts GUITAR_TRACKS, kept in step by tests/music.test.ts); ?tones also exposes the shuffled Playlist source over this list. mood: day | night | storm | any.",
+  "tracks": [
+    {
+      "file": "guitar-fingerpicked.mp3",
+      "title": "Fingerpicked",
+      "mood": "any",
+      "seconds": 180,
+      "source": "ElevenLabs Music, model eleven_music_v2_5, flow fI7QII9n5wxJcOQiFx1Q, generation 880VQT1hnjJMHL056hwG, generated 2026-10-22 by Grok Bot on Matthew Bannon's ElevenLabs account",
+      "licence": "AI-generated for this project on Matthew's ElevenLabs account; use is governed by the ElevenLabs Terms of Service for that plan (not CC0).",
+      "prompt": "Sparse fingerpicked solo acoustic guitar folk instrumental, understated and unsentimental, dry close-miked steel-string, slow steady tempo around 72 bpm, minor-leaning open chords with plenty of space between phrases, no vocals, no strings, no piano, no build-up or climax, even energy throughout for 3 minutes so it can loop.",
+      "processing": "ffmpeg loudnorm to -20 LUFS (measured -19.6 LUFS integrated, true peak <= -5.5 dBFS), 1.5 s fade in, 5 s fade out, 96 kb/s MP3 44.1 kHz stereo",
+      "vocalCheck": "faster-whisper small, 10 s windows: no segment under no_speech 0.45 (calibration: a real voice line mixed at -6 dB over guitar scored 0.04)"
+    },
+    {
+      "file": "guitar-opentuning.mp3",
+      "title": "Open tuning",
+      "mood": "any",
+      "seconds": 180,
+      "source": "ElevenLabs Music, model eleven_music_v2_5, flow fI7QII9n5wxJcOQiFx1Q, generation v6hkMM1AzZ8kRrC56MAy, generated 2026-10-22 by Grok Bot on Matthew Bannon's ElevenLabs account",
+      "licence": "AI-generated for this project on Matthew's ElevenLabs account; use is governed by the ElevenLabs Terms of Service for that plan (not CC0).",
+      "prompt": "Slow ambient solo acoustic guitar in an open D tuning, instrumental, spacious and restrained, ringing drones and harmonics with occasional low melodic notes, very slow tempo around 60 bpm, natural room reverb, no vocals, no other instruments, no swells or emotional climax, steady calm energy for 3 minutes so it can loop.",
+      "processing": "ffmpeg loudnorm to -20 LUFS (measured -20.5 LUFS integrated, true peak <= -5.5 dBFS), 1.5 s fade in, 5 s fade out, 96 kb/s MP3 44.1 kHz stereo",
+      "vocalCheck": "faster-whisper small, 10 s windows: no segment under no_speech 0.45 (calibration: a real voice line mixed at -6 dB over guitar scored 0.04)"
+    },
+    {
+      "file": "guitar-campfire.mp3",
+      "title": "Campfire",
+      "mood": "any",
+      "seconds": 180,
+      "source": "ElevenLabs Music, model eleven_music_v2_5, flow fI7QII9n5wxJcOQiFx1Q, generation TmiXMOIYvOqePiNBcSdf, generated 2026-10-22 by Grok Bot on Matthew Bannon's ElevenLabs account",
+      "licence": "AI-generated for this project on Matthew's ElevenLabs account; use is governed by the ElevenLabs Terms of Service for that plan (not CC0).",
+      "prompt": "Quiet relaxed campfire strumming on a worn acoustic guitar, instrumental, loose unhurried rhythm around 84 bpm, soft palm-muted strums mixed with simple bass-note picking, earthy and plain rather than sweet, slightly bluesy folk feel, no vocals, no percussion, no other instruments, no big chorus or climax, consistent low energy for 3 minutes so it can loop.",
+      "processing": "ffmpeg loudnorm to -20 LUFS (measured -20.0 LUFS integrated, true peak <= -5.5 dBFS), 1.5 s fade in, 5 s fade out, 96 kb/s MP3 44.1 kHz stereo",
+      "vocalCheck": "faster-whisper small, 10 s windows: no segment under no_speech 0.45 (calibration: a real voice line mixed at -6 dB over guitar scored 0.04)"
+    }
+  ]
 }

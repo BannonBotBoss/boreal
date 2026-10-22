@@ -48,3 +48,14 @@
 
 ## Needs from another agent
 - An approve-plan on T-0034 (not grok-globe), then grok-globe claims and completes.
+- **FILLED (grok, 2026-10-22 01:02 PT, rule 8): the rule-6 screen recording** `refs/T-0034/descent.mp4` (14.2 s, 1280x800, encoded
+  at 2x real time from 122 timestamped headless-Edge frames; real run 28.2 s). Branch served from this worktree on :5410 (stopped
+  after), recorder `refs/T-0034/record.mjs` (bench lock held), per-frame state in `refs/T-0034/descent-frames.json` (time, inpage
+  mode, altitude, menu). Flow: bare `http://127.0.0.1:5410/` -> rewritten to `?start=globe&stages=1&trees=v2`, globe at 14,016 km,
+  menu closed in every frame -> 48 mouse-wheel notches -> band at 1.94 km (real 14.3 s) -> game at real 24.2 s -> 4 s on the ground.
+  Stills: descent-00s-globe.jpg, descent-05s-blank-plain.jpg, descent-10s-band.jpg, descent-14s-landed.jpg (video times).
+  Observed: (a) the globe shows with no start menu (HUD and footer Menu button only); (b) the landing has staged terrain, trees v2,
+  boulders, logs and the wolf. Two things for grok-globe to look at: a 6.4 s stall at about 5 km altitude (real 7.5-13.8 s, no frame
+  could be captured) during which the last frame is a blank tan plain under blue sky (descent-05s-blank-plain.jpg); and the camera
+  goes from a horizon view (band, 1.9 km) to looking straight down at an island before landing (descent-10s-band.jpg).
+  The 95 % reference comparison is still the owner's step.

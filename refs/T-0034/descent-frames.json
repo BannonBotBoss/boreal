@@ -1,0 +1,1222 @@
+[
+ {
+  "f": "f000.jpg",
+  "t": 0.23,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f001.jpg",
+  "t": 0.36,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f002.jpg",
+  "t": 0.49,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f003.jpg",
+  "t": 0.61,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f004.jpg",
+  "t": 0.78,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f005.jpg",
+  "t": 0.89,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f006.jpg",
+  "t": 1,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f007.jpg",
+  "t": 1.1,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f008.jpg",
+  "t": 1.24,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f009.jpg",
+  "t": 1.36,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f010.jpg",
+  "t": 1.48,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f011.jpg",
+  "t": 1.58,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f012.jpg",
+  "t": 1.7,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f013.jpg",
+  "t": 1.83,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f014.jpg",
+  "t": 1.96,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f015.jpg",
+  "t": 2.1,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f016.jpg",
+  "t": 2.21,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f017.jpg",
+  "t": 2.33,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f018.jpg",
+  "t": 2.46,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f019.jpg",
+  "t": 2.58,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f020.jpg",
+  "t": 2.71,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f021.jpg",
+  "t": 2.83,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f022.jpg",
+  "t": 2.94,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f023.jpg",
+  "t": 3.05,
+  "phase": "globe",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f024.jpg",
+  "t": 3.16,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 14016200,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f025.jpg",
+  "t": 3.43,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 9179798,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f026.jpg",
+  "t": 3.7,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 5352913,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f027.jpg",
+  "t": 4.03,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 2893289,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f028.jpg",
+  "t": 4.3,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 1691388,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f029.jpg",
+  "t": 4.55,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 979751,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f030.jpg",
+  "t": 4.89,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 500448,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f031.jpg",
+  "t": 5.31,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 267494,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f032.jpg",
+  "t": 5.59,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 165705,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f033.jpg",
+  "t": 5.9,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 92702,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f034.jpg",
+  "t": 6.18,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 53357,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f035.jpg",
+  "t": 6.51,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 29283,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f036.jpg",
+  "t": 6.79,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 16697,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f037.jpg",
+  "t": 7.08,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 9524,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f038.jpg",
+  "t": 7.46,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 4947,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f039.jpg",
+  "t": 13.84,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "globe",
+  "alt": 2613,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f040.jpg",
+  "t": 14.25,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1943,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f041.jpg",
+  "t": 14.39,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1937,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f042.jpg",
+  "t": 14.6,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1931,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f043.jpg",
+  "t": 14.7,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1925,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f044.jpg",
+  "t": 14.87,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1919,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f045.jpg",
+  "t": 15.11,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1910,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f046.jpg",
+  "t": 15.25,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1904,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f047.jpg",
+  "t": 15.41,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1897,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f048.jpg",
+  "t": 15.62,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1889,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f049.jpg",
+  "t": 15.76,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1884,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f050.jpg",
+  "t": 15.89,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1878,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f051.jpg",
+  "t": 16,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1873,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f052.jpg",
+  "t": 16.12,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1869,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f053.jpg",
+  "t": 16.24,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1864,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f054.jpg",
+  "t": 16.37,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1859,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f055.jpg",
+  "t": 16.52,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1853,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f056.jpg",
+  "t": 16.66,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1848,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f057.jpg",
+  "t": 16.82,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1842,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f058.jpg",
+  "t": 16.97,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1836,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f059.jpg",
+  "t": 17.17,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1828,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f060.jpg",
+  "t": 17.35,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1821,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f061.jpg",
+  "t": 17.51,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1816,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f062.jpg",
+  "t": 17.64,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1810,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f063.jpg",
+  "t": 17.78,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1805,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f064.jpg",
+  "t": 17.99,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1799,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f065.jpg",
+  "t": 18.15,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1792,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f066.jpg",
+  "t": 18.31,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1620,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f067.jpg",
+  "t": 18.45,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1458,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f068.jpg",
+  "t": 18.58,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1329,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f069.jpg",
+  "t": 18.77,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1169,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f070.jpg",
+  "t": 18.9,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 1065,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f071.jpg",
+  "t": 19,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 994,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f072.jpg",
+  "t": 19.14,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 905,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f073.jpg",
+  "t": 19.29,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 812,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f074.jpg",
+  "t": 19.43,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 734,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f075.jpg",
+  "t": 19.83,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 568,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f076.jpg",
+  "t": 20.01,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 496,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f077.jpg",
+  "t": 20.15,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 445,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f078.jpg",
+  "t": 20.32,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 400,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f079.jpg",
+  "t": 20.46,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 361,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f080.jpg",
+  "t": 20.6,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 325,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f081.jpg",
+  "t": 20.74,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 296,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f082.jpg",
+  "t": 20.87,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 270,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f083.jpg",
+  "t": 21,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 246,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f084.jpg",
+  "t": 21.14,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 224,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f085.jpg",
+  "t": 21.27,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 205,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f086.jpg",
+  "t": 21.4,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 187,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f087.jpg",
+  "t": 21.54,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 170,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f088.jpg",
+  "t": 21.85,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 138,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f089.jpg",
+  "t": 21.99,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 125,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f090.jpg",
+  "t": 22.13,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 114,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f091.jpg",
+  "t": 22.32,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 99,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f092.jpg",
+  "t": 22.54,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 85,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f093.jpg",
+  "t": 22.7,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 76,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f094.jpg",
+  "t": 22.87,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 68,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f095.jpg",
+  "t": 23.01,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 62,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f096.jpg",
+  "t": 23.33,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 48,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f097.jpg",
+  "t": 23.55,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 30,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f098.jpg",
+  "t": 23.74,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 14,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f099.jpg",
+  "t": 23.89,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "band",
+  "alt": 5,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f100.jpg",
+  "t": 24.18,
+  "phase": "descent",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f101.jpg",
+  "t": 24.43,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f102.jpg",
+  "t": 24.55,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f103.jpg",
+  "t": 24.73,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f104.jpg",
+  "t": 25,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f105.jpg",
+  "t": 25.18,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f106.jpg",
+  "t": 25.32,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f107.jpg",
+  "t": 25.45,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f108.jpg",
+  "t": 25.62,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f109.jpg",
+  "t": 25.75,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f110.jpg",
+  "t": 25.93,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f111.jpg",
+  "t": 26.11,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f112.jpg",
+  "t": 26.23,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f113.jpg",
+  "t": 26.43,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f114.jpg",
+  "t": 26.7,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f115.jpg",
+  "t": 27.27,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f116.jpg",
+  "t": 27.41,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f117.jpg",
+  "t": 27.57,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f118.jpg",
+  "t": 27.74,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f119.jpg",
+  "t": 27.89,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f120.jpg",
+  "t": 28.05,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ },
+ {
+  "f": "f121.jpg",
+  "t": 28.23,
+  "phase": "ground",
+  "search": "?start=globe&stages=1&trees=v2",
+  "mode": "game",
+  "alt": 2,
+  "menu": false,
+  "loading": false
+ }
+]

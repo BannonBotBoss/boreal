@@ -76,8 +76,37 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   - Flee-following camera: render/buildScene.ts ?watch=hare (dev/recording only, off by default): the follow camera, still
     behind the wolf, turns smoothly to the nearest hare within 60 m; tools/rabbit-record.mjs 7th argument `watch` passes it.
     Also fixed rabbit-record.mjs line 10, where a trailing // comment had swallowed `mkdirSync(outDir)`.
-- [ ] 8 Re-record, re-score T-0009 and T-0028, compare /workspace/rabbit/compare-poses.jpg
-## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
+- [x] 8 Re-recorded and re-scored (18:55-19:03 PT, code c7c2682). NOT SUBMITTED: every gate is below 95 %.
+  - In game, `node tools/rabbit-record.mjs http://127.0.0.1:5204 C:\dev\rabbit-rec11\game plain 16 6.5 1.1 hare` (fov 16,
+    watch camera): 79 frames, no page errors; feed 0-5.0 s, alert 5.05-5.9 s, flee 6.0-10.9 s. With ?watch=hare the hare
+    stays in frame through the flight (run 6 / T-0028 rec4: left frame after ~6.8 s); read at f049-f063 (6.9-20.7 m), but past
+    ~23 m (f067+) it is a few pixels behind grass and logs and cannot be judged, and at f078 (31 m) the view swings toward the
+    lake. Sheet C:\dev\rabbit-rec11\g11-sheet.jpg. Look cannot be scored in game at these sizes (metric needs the matte strip).
+  - Strips on the PC GPU (tools/strip-shot.mjs, EDGE_FLAGS of smoke-tiers, port 5204): look\gs-pc8 / gw-pc8 (6 fps), ss-pc8 /
+    sw-pc8 (stride 8.5 m/s), ge-pc8 / se-pc8 (end-on). Scores: look\score-pc8.json (v1), score12-pc8.json (v1.2),
+    endscore-pc8.json; zoom C:\dev\rabbit-rec11\z12-pc8.jpg; compare C:\dev\rabbit-rec11\compare-poses.jpg (box
+    /workspace/rabbit/compare-poses.jpg). Checks: npm test 408 tests, 396 pass, 0 fail, 12 todo (C:\dev\rabbit-rec11\npmtest.txt);
+    tsc 0 (tsc.txt). Rule 15 re-check 19:03 PT: no complete event awaits review (new since 18:20: claude claim T-0032, comment
+    T-0025). RULES.md on main ebbc897: no cross-family reviewer rule.
+
+### Calibrated gates, run 7 (rule 11). Metric lookscore v1 / v1.2 (C:\dev\rabbit-rec11\look\lookscore.py) and endscore
+(end-on); known match = an independent second drawing (summer attempt3, winter attempt4 [v1.2] / attempt1 hand polygons [v1],
+end-on attempt1), known mismatch = the same ref's other pose classes (shape) / other season (coat).
+| gate | run start (box, v1) | run 7 PC GPU v1 | run 7 PC GPU v1.2 |
+|---|---|---|---|
+| shape summer (5 poses) | 28.8 | 36.9 | 46.2 |
+| shape winter | 53.2 | 64.0 | 73.7 |
+| coat summer | 87.7 (crouch, sit) | 88.3 (crouch, sit) | 86.4 (all 5 poses) |
+| coat winter | 90.2 | 91.7 | 95.5 (all 5) |
+| end-on shape (4 calibrated poses) | - | - | 39.9 (push uncalibrated) |
+| end-on coat | - | - | 85.5 |
+Per pose v1.2: summer crouch 32.8, sit 52.1, gather 33.6, push 49.2, stretch 63.3; winter 71.1, 81.8, 37.9, 100 (narrow anchor
+.651/.504), 77.8. Coat summer 85.5 / 91.2 / 92.7 / 77.9 / 84.7, winter 91.6 / 96.6 / 91.6 / 100 / 97.9. End-on crouch 23.9, sit
+70.8, gather 35.6, stretch 29.5. The v1 -> v1.2 rise is the metric (stride sheet for bound cells, new winter anchors), not
+the model; like-for-like v1 gain from the poses: summer shape 28.8 -> 36.9 (sit 18.4 -> 52.1, crouch 23.7 -> 32.8).
+T-0009 gates: look (mean shape + coat summer, v1.2) 66.3; graze (summer crouch shape) 32.8; alert (summer sit shape) 52.1.
+Next: gather / end-on crouch / stretch need hind-leg fold, more suspension and fore reach in the gait (Gait Builder); the
+crouch is limited by poseReach .46.## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 16:16 PT): pick up grok-gait/T-0009-hare-v4 (608568b, 961630a, d8b118a; based on 37b1fbc).
 Decision (Grok lead): hare-specific contact floors from Hildebrand's Lepus data replace the cross-species .20/.13.
 - [x] 1 Rule 15 review (16:18 PT, tasks/events/2026-10-21T16-18-grok-comment-T-0009.json): Fig. 2 p.135 fastest Lepus hind ~15.9 % / fore ~10.8 % (read at 600 dpi, matches ~16/~11); p.137 'fore contacts drop to 70 percent or less of hind contacts for Lepus at speed' verbatim; re-ran bound-checks hare 99.7 % (11.6 m/s hind .183 / fore .110; 1.68 m/s prints 14.0 cm ahead); pelvis 42 deg (Schilling & Hackert 2006) unverified, fetch returned another article: Gait Builder's reading. Merged 783c360.

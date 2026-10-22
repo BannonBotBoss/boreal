@@ -24,6 +24,8 @@ export const STATE_FIELDS = {
   /** core/wolfModes state (the player's animal) */
   modes: { stamina: 'snapshot', maxStamina: 'clock', mode: 'snapshot', first: 'snapshot', left: 'snapshot', right: 'snapshot',
     sprintTime: 'snapshot', sprintSpent: 'snapshot', exhausted: 'snapshot' },
+  /** core/needs NeedsState (T-0036; Energy stays on the brain) */
+  needs: { water: 'snapshot', rest: 'snapshot' },
   /** main.ts player record */
   player: { x: 'snapshot', z: 'snapshot', heading: 'snapshot', abilities: 'snapshot', bornSec: 'clock' }, // age from world clock (frozen with the menu)
   /** world-wide fields */

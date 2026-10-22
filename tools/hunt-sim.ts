@@ -1,0 +1,2 @@
+import { simulateHunt, STYLES } from '../tests/huntSim';
+for (const [name, s] of Object.entries(STYLES)) { const r = simulateHunt(s, 120, 0, 0, 20000); console.log(name, 'ambush', r.ambush, 'gap', r.gap.toFixed(1), r.caught, '/', r.tries, 'catches', (r.rate * 100).toFixed(0) + '%', 'tries per catch', (r.tries / Math.max(1, r.caught)).toFixed(1), Math.round(r.seconds) + ' s', 'catch at s: p25/50/75', [.25, .5, .75].map(q => r.when[Math.floor(q * r.when.length)]?.toFixed(1)).join('/')); }

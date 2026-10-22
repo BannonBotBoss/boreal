@@ -7,22 +7,23 @@
 import * as THREE from 'three';
 import { heightAt, WORLD_SEED } from '../core/world';
 import { stream, range } from '../proc/rng';
-import { stepForward } from '../proc/math';
 import { LEVEL } from '../core/tuning';
 import { f, scope } from '../proc/trace';
 import type { SnapshotSource } from '../core/snapshot';
+import { createAnimal, createWorld, removeAnimal, takeEvents, tick, type SimAnimal } from '../core/sim';
+import { playerSpeed } from '../core/playerTuning';
+import type { WolfMode } from '../core/wolfModes';
 
 export const HARE = {
   count: 5, spawnMin: 18, spawnMax: 45, despawn: 70, respawnSeconds: [25, 45] as [number, number],
-  notice: { walk: 14, run: 18, stealth: 7, 'super-stealth': 3.5 } as Record<string, number>,
-  freezeSeconds: [.6, 1.6] as [number, number], bolt: { walk: 5, run: 7, stealth: 2.5, 'super-stealth': 1.8 } as Record<string, number>,
-  burstSpeed: 8.5, burstSeconds: 2.5, tiredSpeed: 5, zigEvery: [.45, .9] as [number, number], zigAngle: .9, safeDistance: 35,
-  catchContact: 1.3, catchPounce: 2.4, energy: 35, stamina: 40,
+  // T-0036: notice/bolt come from the template senses + flight distance, flight from behaviour.evasion (core/needs/diet),
+  // catch radii and safe distance from SYSTEM_PROPERTIES.hunt, the meal from diet.foods.hare.
+  freezeSeconds: [.6, 1.6] as [number, number], stamina: 40,
 };
 export type HareState = 'nibble' | 'hop' | 'freeze' | 'flee';
-export interface Hare { id: number; x: number; z: number; heading: number; state: HareState; timer: number; flee: number; zig: number; hopPhase: number; root: THREE.Group; rng: () => number }
+export interface Hare { sim: SimAnimal; id: number; x: number; z: number; heading: number; state: HareState; timer: number; flee: number; zig: number; hopPhase: number; root: THREE.Group; rng: () => number }
 export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
-export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean }
+export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean; daylight?: number; wind?: { x: number; z: number } }
 
 function model() {
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
@@ -40,56 +41,51 @@ function model() {
 }
 
 export function createHares(scene: THREE.Scene) {
-  const hares: Hare[] = []; let nextId = 1; const pending: number[] = [];
-  const spawnRng = stream(WORLD_SEED, 'hares-v1'); // seeded: one stream for placement, one per hare id for behaviour
+  // T-0036: the hares' brains run headless in core/sim (template senses, shared vigilance, evasion, diet); this is the thin
+  // render adapter: spawn/despawn around the player, write the embodied wolf into the sim, read positions/states back.
+  const world = createWorld({ seed: WORLD_SEED, passable: (x, z) => heightAt(x, z) > LEVEL.hareWater });
+  const wolfAnimal = createAnimal(world, 'wolf', { x: 0, z: 0 }, { controlled: true });
+  const hares: Hare[] = []; const pending: number[] = [];
+  const spawnRng = stream(WORLD_SEED, 'hares-v1'); // seeded placement
   function spawn(px: number, pz: number) {
     for (let tries = 0; tries < 12; tries++) {
       const a = spawnRng() * Math.PI * 2, d = range(spawnRng, [HARE.spawnMin, HARE.spawnMax]), x = px + Math.sin(a) * d, z = pz + Math.cos(a) * d;
       if (heightAt(x, z) < LEVEL.shore) continue;
       const { root } = model(); scene.add(root);
-      const id = nextId++; root.userData.inspect = { type: 'hare', key: `hare:${id}` }; const rng = stream(WORLD_SEED, `hare-v1:${id}`);
-      hares.push({ id, x, z, heading: rng() * 6.3, state: 'nibble', timer: range(rng, [1, 4]), flee: 0, zig: 0, hopPhase: 0, root, rng });
+      const sim = createAnimal(world, 'hare', { x, z });
+      root.userData.inspect = { type: 'hare', key: `hare:${sim.id}` };
+      hares.push({ id: sim.id, sim, x, z, heading: sim.heading, state: 'nibble', timer: sim.timer, flee: 0, zig: 0, hopPhase: 0, root, rng: sim.rng });
       return;
     }
   }
-  function remove(h: Hare) {
+  function remove(h: Hare, fromSim = true) {
     scene.remove(h.root); h.root.traverse(o => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); } });
-    hares.splice(hares.indexOf(h), 1);
+    hares.splice(hares.indexOf(h), 1); if (fromSim) removeAnimal(world, h.sim);
   }
+  const STATE: Record<string, HareState> = { graze: 'nibble', move: 'hop', freeze: 'freeze', flee: 'flee' };
   let time = 0;
   function update(dt: number, wolf: WolfInfo): HareEvent[] {
     const events: HareEvent[] = []; time += dt;
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }
-    for (let k = 0; k < HARE.count && hares.length + pending.length < HARE.count; k++) spawn(wolf.x, wolf.z); // bounded: spawn() can fail (no dry land in range) and the old while() then hung the page
+    for (let k = 0; k < HARE.count && hares.length + pending.length < HARE.count; k++) spawn(wolf.x, wolf.z); // bounded: spawn() can fail (no dry land in range)
     while (hares.length > HARE.count) remove(hares[hares.length - 1]); // count lowered in settings
-    for (const h of [...hares]) {
-      const dx = h.x - wolf.x, dz = h.z - wolf.z, d = Math.hypot(dx, dz);
-      if (d > HARE.despawn) { remove(h); continue; }
-      if (d < HARE.catchContact || (wolf.pouncing && d < HARE.catchPounce)) {
-        events.push({ type: 'caught', x: h.x, z: h.z }); remove(h); pending.push(time + range(h.rng, HARE.respawnSeconds)); continue;
-      }
-      scope(`hare:${h.id}`); f('hare', 'wolfDistance', d);
-      const noticeAt = f('hare', 'noticeAt', HARE.notice[wolf.mode] ?? 14), boltAt = f('hare', 'boltAt', HARE.bolt[wolf.mode] ?? 5);
-      let speed = 0; h.timer -= dt; const rand = (a: number, b: number) => range(h.rng, [a, b]);
-      if (h.state !== 'flee' && h.state !== 'freeze' && d < noticeAt && (wolf.moving || d < boltAt)) { h.state = 'freeze'; h.timer = rand(...HARE.freezeSeconds); }
-      // A stalking (stealth) wolf keeps a hare frozen, trusting its camouflage, until it is very close.
-      const stalking = wolf.mode.includes('stealth');
-      if (h.state === 'freeze' && (d < boltAt || h.timer <= 0 && d < noticeAt && !stalking)) { h.state = 'flee'; h.flee = 0; h.zig = 0; h.heading = Math.atan2(dx, dz) + Math.PI; events.push({ type: 'bolt', x: h.x, z: h.z }); }
-      else if (h.state === 'freeze' && h.timer <= 0 && d >= noticeAt) { h.state = 'nibble'; h.timer = rand(2, 5); }
-      if (h.state === 'flee') {
-        h.flee += dt; h.zig -= dt;
-        if (h.zig <= 0) { h.zig = rand(...HARE.zigEvery); h.heading = Math.atan2(dx, dz) + Math.PI + (h.rng() < .5 ? -1 : 1) * HARE.zigAngle * h.rng(); }
-        speed = h.flee < HARE.burstSeconds ? HARE.burstSpeed : HARE.tiredSpeed;
-        if (d > HARE.safeDistance) { h.state = 'nibble'; h.timer = rand(3, 6); }
-      } else if (h.state === 'hop') { speed = 1.6; if (h.timer <= 0) { h.state = 'nibble'; h.timer = rand(2, 6); } }
-      else if (h.state === 'nibble' && h.timer <= 0) { h.state = 'hop'; h.timer = rand(.6, 1.4); h.heading += rand(-1.2, 1.2); if (d < 30) events.push({ type: 'hop', x: h.x, z: h.z }); }
-      // Move (hares turn back from water and steep ground), then animate the hop.
-      const { x: nx, z: nz } = stepForward(h.x, h.z, h.heading, speed, dt);
-      if (speed > 0) { if (heightAt(nx, nz) > LEVEL.hareWater) { h.x = nx; h.z = nz; } else h.heading += Math.PI * .6; }
-      h.hopPhase += speed > 0 ? dt * (speed > 3 ? 7 : 4) : 0;
+    for (const h of [...hares]) if (Math.hypot(h.sim.x - wolf.x, h.sim.z - wolf.z) > HARE.despawn) remove(h);
+    // the embodied wolf: the adapter writes its pose/gait; the sim senses it and tests captures
+    Object.assign(wolfAnimal, { x: wolf.x, z: wolf.z, mode: wolf.mode, speed: wolf.moving ? playerSpeed(wolf.mode as WolfMode) : 0, crouched: wolf.mode.includes('stealth'), pouncing: wolf.pouncing });
+    world.daylight = () => wolf.daylight ?? 1; world.wind = () => wolf.wind ?? { x: 0, z: 0 };
+    tick(world, dt);
+    for (const ev of takeEvents(world)) {
+      const h = hares.find(x => x.id === ev.id); if (!h) continue;
+      if (ev.type === 'caught') { events.push({ type: 'caught', x: ev.x, z: ev.z }); remove(h, false); pending.push(time + range(spawnRng, HARE.respawnSeconds)); }
+      else if (ev.type === 'bolt') events.push({ type: 'bolt', x: ev.x, z: ev.z });
+    }
+    for (const h of hares) {
+      const a = h.sim, prev = h.state; h.x = a.x; h.z = a.z; h.heading = a.heading; h.state = STATE[a.state] ?? 'nibble';
+      if (h.state === 'hop' && prev !== 'hop' && Math.hypot(a.x - wolf.x, a.z - wolf.z) < 30) events.push({ type: 'hop', x: a.x, z: a.z });
+      scope(`hare:${h.id}`); f('hare', 'state', h.state); f('hare', 'perceived', a.level); f('hare', 'knows', a.knowsAt ?? -1); f('hare', 'linked', a.linked); f('hare', 'speed', a.speed); scope('');
+      const speed = a.speed; h.hopPhase += speed > 0 ? dt * (speed > 3 ? 7 : 4) : 0;
       const hop = speed > 0 ? Math.abs(Math.sin(h.hopPhase * Math.PI)) * (speed > 3 ? .28 : .12) : 0;
       h.root.position.set(h.x, heightAt(h.x, h.z) + hop, h.z); h.root.rotation.y = h.heading;
-      f('hare', 'state', h.state); f('hare', 'timer', h.timer); f('hare', 'speed', speed); f('hare', 'fleeTime', h.flee); f('hare', 'zigTimer', h.zig); scope('');
       const body = h.root.children[0]; body.rotation.x = h.state === 'nibble' ? Math.sin(time * 9 + h.id) * .03 + .12 : h.state === 'freeze' ? -.05 : -Math.sin(h.hopPhase * Math.PI) * .2;
     }
     return events;
@@ -101,7 +97,7 @@ export function createHares(scene: THREE.Scene) {
     restore(shot) {
       for (const h of hares) {
         const s = shot.find(e => e[0] === h.id); h.root.visible = !!s; if (!s) continue;
-        [, h.x, h.z, h.heading, h.hopPhase] = s; h.root.position.set(h.x, heightAt(h.x, h.z), h.z); h.root.rotation.y = h.heading;
+        [, h.x, h.z, h.heading, h.hopPhase] = s; Object.assign(h.sim, { x: h.x, z: h.z, heading: h.heading }); h.root.position.set(h.x, heightAt(h.x, h.z), h.z); h.root.rotation.y = h.heading;
       }
     },
   };

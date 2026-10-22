@@ -139,7 +139,7 @@ flowchart LR
 | [Sky](#sky) | Sky dome, sun and moon discs, clouds drawn from the weather cells. | - | clock, lighting, weather | - | - |
 | [Stamina and energy](#stamina) | Run / sprint stamina, exhaustion and refill; energy spent by distance and ground cost. | - | controls, needs | locomotion, player, ui | - |
 | [Terrain and stages](#terrain) | Staged terrain: eroded elevation, soils, rivers and lakes; chunks, ground layers and rocks. | - | quality, save, physics | behaviour, camera, globe, locomotion, player, vegetation, water, weather | 2 |
-| [UI, HUD and menus](#ui) | Start / pause menu, settings panel, HUD status line, loading screen, chronometer, inspector, photo mode. | `loading` | clock, stamina, needs, quality, audio, controls, save | - | 1 |
+| [UI, HUD and menus](#ui) | Start / pause menu, settings panel, HUD status line, loading screen, chronometer, inspector, photo mode. | `links`, `loading` | clock, stamina, needs, quality, audio, controls, save | - | 1 |
 | [Trees and vegetation](#vegetation) | Stands and fire history, procedural trees (v2), far trees, flora, mosses and grass. | - | terrain, water, quality, clock | behaviour | 5 |
 | [Water](#water) | Lake plane, river planform and flow, shore bands and water optics. | - | terrain, weather, clock | needs, vegetation | - |
 | [Weather](#weather) | A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain from station normals. | - | clock, terrain | audio, lighting, needs, senses, sky, water | - |
@@ -815,6 +815,14 @@ Start / pause menu, settings panel, HUD status line, loading screen, chronometer
 - Depends on: clock, stamina, needs, quality, audio, controls, save
 - Feeds: nothing (a leaf)
 - Modules: `src/ui/menu.ts`, `src/ui/settingsPanel.ts`, `src/ui/loading.ts`, `src/ui/chronometer.ts`, `src/ui/inspector.ts`, `src/photo/photoMode.ts`, `src/main.ts`
+
+### `SYSTEM_PROPERTIES.links`
+
+Read by: `src/ui/menu.ts`
+
+| Figure | Value | Units | What | Source |
+|---|---|---|---|---|
+| `board` | 'https://github.com/Bannon-github/boreal/issues' | URL | Start menu "Board" button (opens in a new tab). Matthew 2026-10-22 01:51 PT chose the GitHub project board. Until that project exists (it needs `gh auth refresh -s project` once) this opens the repo's Issues, one per open task, mirrored by tools/board-github.ts. Then swap in the project URL that `npx tsx tools/board-github.ts project` prints. | Matthew (start menu Board link opens the GitHub board, 2026-10-22 01:51 PT) |
 
 ### `SYSTEM_PROPERTIES.loading`
 

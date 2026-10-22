@@ -96,6 +96,13 @@ export const SYSTEM_PROPERTIES = {
     /** crouch depth (fraction of hip height) */ depth: .15,
     /** fore-paw reach ahead in a pounce (fraction of hip height) */ reach: .35,
   },
+  /** Outside links from the menus (ui/menu). */
+  links: {
+    /** Start menu "Board" button (opens in a new tab). Matthew 2026-10-22 01:51 PT chose the GitHub project board. Until that
+     *  project exists (it needs `gh auth refresh -s project` once) this opens the repo's Issues, one per open task, mirrored by
+     *  tools/board-github.ts. Then swap in the project URL that `npx tsx tools/board-github.ts project` prints. */
+    board: 'https://github.com/Bannon-github/boreal/issues',
+  },
   /** Loading screen (ui/loading). */
   loading: {
     /** seconds each fact card shows */ cardSeconds: 7,
@@ -223,6 +230,7 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
   jump: { readers: ['src/animals/locomotion/jump.ts'], keys: {
     crouch: ['share', 'Claude gaitPose jump (game calibration)'], flight: ['share', 'Claude gaitPose jump (game calibration)'],
     land: ['share', 'Claude gaitPose jump (game calibration)'], depth: ['x hip height', EST], reach: ['x hip height', EST] } },
+  links: { readers: ['src/ui/menu.ts'], keys: { board: ['URL', 'Matthew (start menu Board link opens the GitHub board, 2026-10-22 01:51 PT)'] } },
   loading: { readers: ['src/ui/loading.ts'], keys: { cardSeconds: ['s', EST], fadeMs: ['ms', EST] } },
   movement: { readers: ['src/core/playerTuning.ts'], keys: {
     speedScale: ['x', 'run 6 m/s, sprint 10.5 m/s: inside wolf travel ~2.2-2.5 m/s and chase up to ~15-17 m/s (Mech 1970; Mech & Boitani 2003)'],
@@ -376,7 +384,7 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
       'src/core/ground.ts#BEKKER': 'soil bearing (Bekker)', 'src/core/rocks.ts#ROCK_SIZES': 'rock size classes', 'src/render/terrainCore.ts#BAND_COLOR': 'terrain band colours' }, remaining: [] },
   ui: { title: 'UI, HUD and menus', what: 'Start / pause menu, settings panel, HUD status line, loading screen, chronometer, inspector, photo mode.',
     modules: ['src/ui/menu.ts', 'src/ui/settingsPanel.ts', 'src/ui/loading.ts', 'src/ui/chronometer.ts', 'src/ui/inspector.ts', 'src/photo/photoMode.ts', 'src/main.ts'],
-    groups: ['loading'], dependsOn: ['clock', 'stamina', 'needs', 'quality', 'audio', 'controls', 'save'],
+    groups: ['links', 'loading'], dependsOn: ['clock', 'stamina', 'needs', 'quality', 'audio', 'controls', 'save'],
     flags: { nomenu: 'skip the start menu (main.ts)' },
     tables: { 'src/ui/loading.ts#FALLBACK_CARDS': 'built-in loading facts' }, remaining: ['main.ts notice duration and HUD text'] },
   vegetation: { title: 'Trees and vegetation', what: 'Stands and fire history, procedural trees (v2), far trees, flora, mosses and grass.',

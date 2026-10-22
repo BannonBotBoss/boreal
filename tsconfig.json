@@ -4,5 +4,5 @@
     "strict": true, "noEmit": true, "lib": ["ES2022", "DOM"],
     "skipLibCheck": true, "allowImportingTsExtensions": true
   },
-  "include": ["src", "tests"]
+  "include": ["src", "tests", "tools"]
 }

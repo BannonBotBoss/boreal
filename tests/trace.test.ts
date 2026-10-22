@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import v8 from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import { f, choose, scope, tracing, withTrace, setLiveTrace, type Trace } from '../src/proc/trace.ts';
 import { generateChunk, heightAt, chunkSeed, terrainBand } from '../src/core/world.ts';
 import { rockRecipe } from '../src/core/rocks.ts';
@@ -13,9 +15,19 @@ test('trace off: hooks are pass-through and record nothing', () => {
   const o = { a: 1 }; assert.equal(f('g', 'n', 3.5), 3.5); assert.equal(f('g', 's', 'x'), 'x'); scope('k');
   assert.equal(choose('g', 'c', .5, [['a', .3], ['b', .8], ['c', 1]]), 'b'); assert.equal(o.a, 1);
   // no allocation per call: a million calls stay well under 1 MB of heap growth
-  global.gc?.(); const before = process.memoryUsage().heapUsed; let s = 0;
-  for (let i = 0; i < 1e6; i++) s += f('terrain', 'base', i);
-  assert.ok(process.memoryUsage().heapUsed - before < 4e6, 'f allocates when off'); assert.ok(s > 0);
+  // Robust under load: a real GC before each sample (v8 flag + vm, so no change to the npm script),
+  // then the MINIMUM of 5 samples. An allocating f allocates in every sample, so min still catches it, while
+  // GC timing / JIT warm-up noise only inflates some samples. The counter stays a small int (no boxed doubles from the
+  // harness itself, which is what pushed earlier runs over the limit). Same 1e6 calls and same 4e6 limit.
+  v8.setFlagsFromString('--expose-gc'); const gc = runInNewContext('gc') as () => void;
+  let s = 0; const growth: number[] = [];
+  for (let r = 0; r < 5; r++) {
+    gc(); const before = process.memoryUsage().heapUsed;
+    for (let i = 0; i < 1e6; i++) if (f('terrain', 'base', i) > 0) s++;
+    growth.push(process.memoryUsage().heapUsed - before);
+  }
+  growth.sort((x, y) => x - y);
+  assert.ok(growth[0] < 4e6, `f allocates when off (heap growth per 1e6 calls: ${growth.join(', ')} B)`); assert.ok(s > 0);
 });
 test('traced generation gives bit-identical outputs and reports factors', () => {
   const plain = [generateChunk(0, 0), generateChunk(-2, 3), heightAt(12.3, -40.1), rockRecipe(99)];

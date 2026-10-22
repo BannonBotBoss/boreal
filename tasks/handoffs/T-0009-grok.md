@@ -16,8 +16,16 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   grok board loop, 76211ee). RULES.md: no cross-family reviewer rule.
 - [x] 1 Merged grok/hare-mesh 8edcad8 into grok/rabbit-clover (fast-forward). Box baseline of lookscore v1 on this code
   (swiftshader, within 0.5 of the PC render): shape summer 28.8 / winter 53.2, coat summer 87.7 / winter 90.2.
-- [ ] 2 Upright alert sit-up
-- [ ] 3 Graze crouch
+- [x] 2 Upright alert sit-up (hare.ts poseHare: alert + pause request the rig's 'sit-up'; bounding.ts 'sit-up' pitch .95 -> 1.15
+  rad, hip drop 0 -> .02 m; hare.ts POSES.sit body 1.15, head -.8 back toward level, -.025 lower). REFERENCE-MATCHED: the
+  silhouette axis of the game sit cells is 66-70 deg vs the refs' 68.9 / 70.8 / 70.0 deg (attempt2 / attempt3 / winter
+  attempt2, lookscore masks); not sourced. Found on the way (shared code fix, bounding.ts standError): a fore limb with a
+  blade was solved as a bare two-bone leg and missed the ground by 33 mm, so poseReach was 0 for every four-foot pose and the
+  graze crouch / rest / crouch requests never moved the body; now solved with foreLimb as the controller does (graze-crouch
+  reach 0 -> .64, rest .70, crouch .52). Tests: bound + hare-rig 14/14 on the PC. lookscore v1 (box): sit summer 18.4 -> 52.3,
+  winter 32.0 -> 73.6; crouch summer 23.7 -> 29.9 (the standError fix); evidence C:\dev\rabbit-rec11\look\ (score-s3.json,
+  zoom-s3-sit.jpg: red = ref only, green = game only). Left: the fore paws stick out ahead of the chest and the neck shows a
+  seam when the head turns back level.- [ ] 3 Graze crouch
 - [ ] 4 Bound phases
 - [ ] 5 Coat on the bound poses (lookscore v1.1)
 - [ ] 6 Winter push-off reference (prompt loop)

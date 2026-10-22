@@ -337,7 +337,10 @@ export interface PoseShape { pitch: number; drop: number; foreLift: boolean }
 export const POSE_SHAPES: Record<PoseKind, PoseShape> = {
   stand: { pitch: 0, drop: 0, foreLift: false },
   'graze-crouch': { pitch: -.1, drop: .02, foreLift: false },
-  'sit-up': { pitch: .95, drop: 0, foreLift: true },
+  /** upright sit-up on the haunches, fore paws lifted (run 7, grok): pitch 1.15 rad (66 deg) and the hip .02 m lower, so the
+   *  silhouette axis is 66-70 deg like refs/hare/graze-alert-flight attempt2 / attempt3 panel 3 (68.9 / 70.8 deg, lookscore
+   *  masks). REFERENCE-MATCHED, not sourced; the hind feet reach it within 1 mm (drop .04 would miss by 15 mm). Was .95 / 0. */
+  'sit-up': { pitch: 1.15, drop: .02, foreLift: true },
   /** alert freeze (grok run 4): front raised ~20 deg on straight forelegs, all four feet down, the head up. REFERENCE-MATCHED
    *  (attempt4 video 2.3-3.3 s and attempt2 panel 3: the hare raises the head on all fours, it does not stand up on the haunches). */
   'half-sit': { pitch: .35, drop: 0, foreLift: false },
@@ -364,6 +367,9 @@ export function standError(sk: Skeleton, pitch: number, drop: number, foreLift: 
     const front = FRONT(i); if (front && foreLift) continue;
     const L = front ? sk.legs as LimbDims : H, foot = { x: sk.hips[i][0], y: 0, z: sk.hips[i][1] - (L.stance ?? 0) };
     const rel = worldToLimb(foot, 0, 0, 0, tilt, sk.hips[i]), top = { z: 0, y: topY(L) };
+    // run 7 (grok): a fore limb with its blade in the chain is solved as the controller solves it (foreLimb), not as a bare
+    // two-bone leg, which missed the ground by 33 mm on the hare and so zeroed poseReach for every four-foot pose
+    if (front && L.girdle) { worst = Math.max(worst, foreLimb(L, top, rel).err); continue; }
     const LL = front ? L : { ...L, footAngle: hindFoot(L, top, rel, ankle).psi }, a = clampLimb(solveLimb(LL, !front, rel, 0, { top, fit: true }), front), s = soleOf(LL, a);
     worst = Math.max(worst, Math.hypot(s.z - rel.z, s.y - (top.y - Math.hypot(top.y - rel.y, rel.x))));
   }

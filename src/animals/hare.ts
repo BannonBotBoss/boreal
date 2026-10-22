@@ -128,11 +128,12 @@ export function hareBind(): RigBind {
 /** Pose targets: body pitch about the hip (rad, + = front up), body lift (m), head pitch (+ = nose up), head drop (m), ears
  *  (rad, + = laid back), foreleg and hind leg angles (rad, + = foot forward). Read from the reference sheet
  *  (refs/hare/graze-alert-flight attempt 2): grazing crouch = hunched, chin at the clover, ears back; scan = head up from the
- *  crouch; alert = half sit-up on all fours (front raised, head up), ears erect (run 4; was sat up on the haunches); rest/freeze = tucked, ears flat [estimate]. */
+ *  crouch; alert / pause = upright sit-up on the haunches, fore paws lifted, ears erect (run 7, Matthew 18:23 PT, reference panel 3;
+ *  run 4-6 used a half sit-up on all fours); rest/freeze = tucked, ears flat [estimate]. */
 const POSES: Record<string, readonly number[]> = {
   'head-down': [-.1, -.02, -.55, -.075, .95, .1, .45],
   scan: [.3, 0, -.35, 0, -.05, -.15, .5],
-  sit: [.35, 0, -.25, 0, -.15, -.7, .55], // run 4: half sit-up (body .35 from the rig's 'half-sit'), nose a little up
+  sit: [1.15, 0, -.8, -.025, -.15, -.7, .55], // run 7: upright sit-up (body .95 from the rig's 'sit-up'), head turned back level, nose a little up
   rest: [-.04, -.035, -.15, 0, .85, .25, .55],
   crouch: [-.06, -.045, -.1, 0, 1.15, .3, .6],
   move: [0, 0, -.1, 0, .5, 0, 0], run: [0, 0, .05, 0, .9, 0, 0],
@@ -169,7 +170,9 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
   if (!h.rig) h.rig = createBounding(HARE_SKELETON, HARE_AGENT.gait!, groundAt, { x: a.x, z: a.z, heading: a.heading }, GIRDLE, HARE_RIG);
   // the agent is authoritative: the rig integrates the same speed and heading; a jump (spawn, rewind, blocked step) re-places it
   if (h.frame && Math.hypot(h.frame.x - a.x, h.frame.z - a.z) > .5) h.rig.place(a.x, a.z, a.heading);
-  const fr = h.frame = h.rig.update(Math.max(1e-4, dt), a.speed, a.heading, poseRequestFor(poseOf(a), a.action));
+  // run 7 (Matthew, 18:23 PT): the alert and the flight pause sit UP on the haunches, fore paws lifted (refs/hare/graze-alert-flight
+  // attempt2 panel 3), not run 4's half sit-up on all fours
+  const fr = h.frame = h.rig.update(Math.max(1e-4, dt), a.speed, a.heading, a.action === 'alert' || a.action === 'pause' ? { kind: 'sit-up' } : poseRequestFor(poseOf(a), a.action));
   const ox = a.x - fr.x, oz = a.z - fr.z; // small drift between the two integrations, drawn away
   // root at the hip joints (mid of the two hind chain tops), turned to the heading; the body pitches about it
   const hl = limbPoints(HARE_SKELETON, fr, 1)[0], hr = limbPoints(HARE_SKELETON, fr, 3)[0];

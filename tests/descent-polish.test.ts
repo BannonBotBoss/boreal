@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { CLOUD_OPEN, cloudClear } from '../src/world/globe/transition';
+import { CLOUDS } from '../src/world/globe/atmosphere';
 import { LANDING_VIEW, landSpawn, viewBlocked } from '../src/world/globe/handoff';
 import { solidsAround, treesAround } from '../src/core/ground';
 import { isDry } from '../src/core/stages/surfaceAt';
@@ -24,6 +25,27 @@ test('descent polish: cloud cover fades smoothly over log altitude (no switch be
   assert.ok(!src.includes('mix(uCloudEdge.x, 1.1, uCloudClear)'), 'no threshold switch');
   assert.ok(src.includes('a * 0.9 * (1.0 - uCloudClear)'), 'cover alpha fades');
   assert.ok(src.includes('* (1.0 - uCloudClear) * cloudDensity('), 'shadows fade with it');
+  assert.ok(src.includes('uCloudEdge.x + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear') && src.includes('${CLOUDS.shadowCentre.toFixed(3)} + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear'), 'cover and shadows share the threshold lift');
+});
+
+// T-0041 follow-up: the view sits inside one 900 km cell whose density spans only ~.62-.71 (refs/T-0041 sweep: luminance of the
+// central crop vs the coverage threshold at 300/450/600 km). Fading alpha alone leaves a flat translucent sheet (the cell is
+// fully covered); a small threshold lift with the fade breaks the deck into clouds and holes on the way down, still smooth.
+test('descent polish: the threshold lift breaks the deck up at 450-256 km and keeps every 60 fps frame under 2 %', () => {
+  const sw = JSON.parse(readFileSync('refs/T-0041/sweep-300-450-600km.json', 'utf8')) as Record<string, { edge: number | null; lum: number }[]>;
+  const f = JSON.parse(readFileSync('refs/T-0034/descent-frames.json', 'utf8')) as { t: number; alt: number }[];
+  let rate = 0; for (let i = 1; i < f.length; i++) { const a = f[i - 1], b = f[i]; if (a.alt <= 7e5 && b.alt >= 1.5e5 && b.alt < a.alt) rate = Math.max(rate, Math.log(a.alt / b.alt) / (b.t - a.t)); }
+  const c0 = CLOUDS.edgeCentre[0], lift = CLOUDS.clearLift; assert.ok(lift > 0 && lift <= .12, `lift ${lift}`);
+  for (const [label, rows] of Object.entries(sw)) {
+    const clear = rows.find(r => r.edge === null)!.lum, pts = rows.filter(r => r.edge !== null) as { edge: number; lum: number }[];
+    const cov = (e: number) => { for (let i = 1; i < pts.length; i++) if (e <= pts[i].edge) { const a = pts[i - 1], b = pts[i]; return a.lum + (b.lum - a.lum) * (e - a.edge) / (b.edge - a.edge); } return pts[pts.length - 1].lum; };
+    const lum = (alt: number) => { const k = cloudClear(alt); return clear + (cov(c0 + lift * k) - clear) * (1 - k); };
+    const full = cov(c0) - clear, part = (alt: number) => (cov(c0 + lift * cloudClear(alt)) - clear) / full; // cover share before the alpha fade
+    let max = 0; const step = rate / 60; for (let a = 6e5; a > 2e5; a *= Math.exp(-step)) max = Math.max(max, Math.abs(lum(a * Math.exp(-step)) - lum(a)) / 255);
+    assert.ok(max <= .02, `${label}: luminance change per 60 fps frame ${(100 * max).toFixed(2)} % <= 2 %`);
+    for (const alt of [4.5e5, 3.66e5]) assert.ok(part(alt) > .15 && part(alt) < .85, `${label}: broken deck at ${alt / 1e3} km (cover share ${part(alt).toFixed(2)})`);
+    assert.ok(part(2.56e5) < .5, `${label}: mostly open by 256 km (${part(2.56e5).toFixed(2)})`);
+  }
 });
 
 // T-0041 (2): the landing spot keeps the wolf in clear view of the follow camera (no tree, boulder or log between them).

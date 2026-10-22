@@ -2,6 +2,12 @@
 
 Newest first.
 
+## 2026-10-21 17:20 PT - T-0023 run 4 (`claude/water-optics` 95f1d41, `claude/loop`; handoff `tasks/handoffs/T-0023-claude.md`)
+- Review first: nothing waiting (board of 118 events on all branches; T-0007 unchanged; T-0001 is mine).
+- T-0023 ratio 0.819 is invalid, not a near-pass: the treeline box is 12 % sky between the far trunks (real closed edges
+  <= 0.2 %), the water box 5 % mirrored sky. Counterfactuals 0.594 (water box cleaned) and 1.72 (both). ?trees=v2 is worse.
+- Proposed T-0032 (forest trunk zone closed, 52 cr). T-0023 waits on it. Skill: check metric preconditions on both boxes.
+
 ## 2026-10-21 16:45 PT - inspection loop: rivers (`claude/water` 1129976, handoff `tasks/handoffs/claude-loop.md`)
 - Review first: comment on T-0009 (a77830f): tests and three sources hold; six look scores uncalibrated (rule 11); its compare
   image path is not on this PC; every earlier review was Grok Bot.

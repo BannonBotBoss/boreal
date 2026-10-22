@@ -1,0 +1,122 @@
+{
+  "metric": "littoralMacrophyteScore = openWaterGate * (0.30 * emergentCoverSubscore + 0.25 * floatingCoverSubscore + 0.25 * interleavedWaterSubscore + 0.20 * verticalCulmSubscore)",
+  "calibration": {
+    "knownMatch_natureReference": {
+      "emergentCoverShare": 0.6948,
+      "floatingCoverShare": 0.5353,
+      "openWaterShare": 0.2657,
+      "interleavedColumnShare": 1,
+      "verticalCulmRatio": 1.188,
+      "yellowFlowerCells": 401,
+      "emergentCoverSubscore": 1,
+      "floatingCoverSubscore": 1,
+      "interleavedWaterSubscore": 1,
+      "verticalCulmSubscore": 1,
+      "calibratedScore": 1
+    },
+    "knownMismatch_preFixBareWaterNoon0": {
+      "emergentCoverShare": 0.0074,
+      "floatingCoverShare": 0.0099,
+      "openWaterShare": 0.9767,
+      "interleavedColumnShare": 0.1861,
+      "verticalCulmRatio": 0.218,
+      "yellowFlowerCells": 0,
+      "emergentCoverSubscore": 0.018,
+      "floatingCoverSubscore": 0.062,
+      "interleavedWaterSubscore": 0.219,
+      "verticalCulmSubscore": 0,
+      "calibratedScore": 0.076
+    },
+    "knownMismatch_preFixBareWaterWade2": {
+      "emergentCoverShare": 0.002,
+      "floatingCoverShare": 0.0022,
+      "openWaterShare": 0.9961,
+      "interleavedColumnShare": 0.026,
+      "verticalCulmRatio": 0.993,
+      "yellowFlowerCells": 0,
+      "emergentCoverSubscore": 0.005,
+      "floatingCoverSubscore": 0.014,
+      "interleavedWaterSubscore": 0.031,
+      "verticalCulmSubscore": 0.905,
+      "calibratedScore": 0.194
+    },
+    "knownMismatch_inlandUplandRidge": {
+      "emergentCoverShare": 0.4557,
+      "floatingCoverShare": 0.4585,
+      "openWaterShare": 0.0059,
+      "interleavedColumnShare": 0,
+      "verticalCulmRatio": 0.677,
+      "yellowFlowerCells": 0,
+      "emergentCoverSubscore": 1,
+      "floatingCoverSubscore": 1,
+      "interleavedWaterSubscore": 0,
+      "verticalCulmSubscore": 0.378,
+      "calibratedScore": 0
+    }
+  },
+  "gameLittoral_noon0": {
+    "emergentCoverShare": 0.6907,
+    "floatingCoverShare": 0.2833,
+    "openWaterShare": 0.4797,
+    "interleavedColumnShare": 0.8634,
+    "verticalCulmRatio": 1.428,
+    "yellowFlowerCells": 0,
+    "emergentCoverSubscore": 1,
+    "floatingCoverSubscore": 1,
+    "interleavedWaterSubscore": 1,
+    "verticalCulmSubscore": 1,
+    "calibratedScore": 1
+  },
+  "gameLittoral_wade2": {
+    "emergentCoverShare": 0.6458,
+    "floatingCoverShare": 0.168,
+    "openWaterShare": 0.4211,
+    "interleavedColumnShare": 0.7293,
+    "verticalCulmRatio": 1.534,
+    "yellowFlowerCells": 0,
+    "emergentCoverSubscore": 1,
+    "floatingCoverSubscore": 1,
+    "interleavedWaterSubscore": 0.858,
+    "verticalCulmSubscore": 1,
+    "calibratedScore": 0.965
+  },
+  "gameLittoral_wade4": {
+    "emergentCoverShare": 0.4975,
+    "floatingCoverShare": 0.3089,
+    "openWaterShare": 0.4452,
+    "interleavedColumnShare": 0.7749,
+    "verticalCulmRatio": 1.475,
+    "yellowFlowerCells": 2,
+    "emergentCoverSubscore": 1,
+    "floatingCoverSubscore": 1,
+    "interleavedWaterSubscore": 0.912,
+    "verticalCulmSubscore": 1,
+    "calibratedScore": 0.978
+  },
+  "gameLittoral_wadeStop0": {
+    "emergentCoverShare": 0.5319,
+    "floatingCoverShare": 0.4307,
+    "openWaterShare": 0.4607,
+    "interleavedColumnShare": 0.8268,
+    "verticalCulmRatio": 1.007,
+    "yellowFlowerCells": 39,
+    "emergentCoverSubscore": 1,
+    "floatingCoverSubscore": 1,
+    "interleavedWaterSubscore": 0.973,
+    "verticalCulmSubscore": 0.928,
+    "calibratedScore": 0.979
+  },
+  "gameLittoral_littoralClose0": {
+    "emergentCoverShare": 0.4052,
+    "floatingCoverShare": 0.2489,
+    "openWaterShare": 0.4529,
+    "interleavedColumnShare": 0.7879,
+    "verticalCulmRatio": 1.194,
+    "yellowFlowerCells": 3,
+    "emergentCoverSubscore": 1,
+    "floatingCoverSubscore": 1,
+    "interleavedWaterSubscore": 0.927,
+    "verticalCulmSubscore": 1,
+    "calibratedScore": 0.982
+  }
+}

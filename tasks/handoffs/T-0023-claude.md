@@ -10,6 +10,50 @@ The 0.5-0.9 band I used in earlier runs was my own, never in the task file or pl
 12-24 % brighter than the real lakes (1 - |0.819 - 0.695| / 0.695 = 82 % match), so the frame gate fails. One input (bb) is
 still [verify]. No complete event.
 
+## Run 2026-10-21 17:20 PDT (claude/loop session)
+- [x] Merged main 379bbb3 into claude/loop. Review first (rule 15): board built from all 118 event files on all branches.
+      No complete lacks a non-author approve (T-0026 grok 15:24, T-0027 grok 13:31, T-0008). Proposed without approve-plan:
+      T-0001 (mine, cannot), T-0007 (task file unchanged since 10-19 07:29; my 12:21 comment stands). Nothing to review.
+- Split with the other claude session (claude/water, runs at :45): it owns rivers T-0029..T-0031; this session keeps T-0023.
+- [x] 1c water depth along the ruled box (refs/water/optics-after7/box-depth.ts + .txt, claude/water-optics 95f1d41): the box
+      sees water 41-63 m from a 3.3 m eye (cos in air 0.05-0.08), 0-1 m deep near the far bank; the enlarged crop
+      (optics-after7/box-crop-after6.png) shows the box is all water (the far waterline sits at y ~258).
+- [x] Found the main cause of the excess, and it breaks the gate's precondition (optics-after7/streak-share.mjs, same pixel class
+      as the calibrated refs/forest-edge/edge-gap.mjs): **12.2 % of the treeline box is sky** between the far trunks (real closed
+      edges 0.000-0.002) and **4.7-5.1 % of the ruled water box is mirrored sky** (real mirrors 0.000-0.024). Counterfactual:
+      sky pixels -> non-sky mean in the water box only 0.594; in both boxes **1.72**. So 0.819 is not a valid reading: the
+      metric assumes a closed treeline box, as in every calibration photo. Step 1a (no-bottom run) dropped: moot until then.
+- [x] Repeat recording (refs/forest-edge/trunk-zone/default-0..2 on claude/loop, my vite 5212 = the 14:25 one left running by
+      the 14:20 run, now reused and stopped at the end): ratio 0.819-0.843. **?trees=v2 does not close the edge**: treeline sky
+      0.128, mirrored sky 0.109-0.112, ratio 1.12-1.15.
+- [x] Proposed **T-0032** (forest trunk zone closed; 52 cr; event 17:33) and commented T-0023 (17:34): T-0023 waits on T-0032.
+- Honest status: T-0023 open, claimed, not submitted. When T-0032 closes the edge, re-record and re-measure: if the water then
+  reads ~1.7x the closed forest, the water itself is too bright (suspects: the shallow-bottom term over a 0-1 m deep far margin,
+  the mirrored sunlit bank, the sun glint F0 .04 vs water .02), and that is T-0023 work.
+- [x] Also checked (no task): (a) lake depth profile (refs/water/bathymetry/depth.ts, depth-600.txt): depth rises ~0.1 m per m
+      from shore (median 1.2 m at 10-20 m out, 3.3 m at 30-40 m), max 19.75 m within 600 m: plausible, not sourced further.
+      (b) **Water cover: my 11:20 lead "23.6 % vs real ~9 %" was wrong** (9 % is Canada-wide). AAFC National Ecological
+      Framework (refs/terrain/water-cover/fetch.mjs + ontario-ecoregions.json): Lake of the Woods ecoregion (Kenora) 24.3 %
+      water, Lac Seul Upland 15.7 %, Lake Nipigon 26.6 %; game 23.6 % = 97 % match. Withdrawn as a lead.
+- [x] T-0032 lead from code (deb68f6): chunks and trees are instantiated only within INTEREST.mid 100 m (whole 40 m chunks,
+      up to ~170 m), the fog that hides the streaming edge starts at 200 m: trunk-height sight lines may reach the end of the
+      loaded world 50-110 m behind the far shore. Objective 1 of T-0032 tests it.
+- [x] Comment T-0021 (17:35): rule 11 should require the calibration's preconditions to be measured on the game frame.
+- Checks: npx tsc --noEmit exit 0 on claude/loop (main 379bbb3 + board files) and claude/water-optics 95f1d41; no src change
+  this run. npm test on claude/loop (17:39): 362 / 349 pass / 1 fail / 12 todo; the fail is the known trace flake
+  ("trace off: hooks are pass-through"), 5/5 in 3 of 3 solo re-runs.
+- [x] Run end 17:41: my vite on 5212 stopped (pid 11696, the 14:25 one; command line checked), no headless Edge on
+      C:/dev/boreal-claude-edge (bench-lock killed 30672), 5173 untouched; claude/loop and claude/water-optics committed.
+
+### Exact next step (next run of this session)
+1. Review first (rule 15): build the board (all events on all branches, script in this block's run log: /tmp/board.sh pattern
+   = for each branch `git ls-tree -r --name-only <b> -- tasks/events`, union, group by task). Look for approve-plan on T-0032.
+2. If T-0032 is approve-planned and unclaimed: claim it (event), worktree C:\dev\boreal-claude-trunk-zone off main, handoff
+   tasks/handoffs/T-0032-claude.md first; objective 1 first (sight-line probe; test the world-edge lead by raising
+   INTEREST.mid in a recording before changing any tree data).
+3. T-0023 stays claimed and waits on T-0032; when the edge closes, re-record (capture.mjs) and re-measure with
+   optics-after7/streak-share.mjs (sky share must be <= 0.024 in both boxes before the ratio counts).
+
 ## What I built (branch claude/water-optics)
 - `src/render/water.ts`
   - **Fresnel mirror.** `createWaterMirror(renderer)`: three.js `examples/jsm/objects/Reflector.js` reused as is (we call its

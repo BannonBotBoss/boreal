@@ -1,0 +1,199 @@
+{
+  "port": "5250",
+  "info": {
+    "href": "http://127.0.0.1:5250/?nomenu&bench&hour=19.5&at=30,0,1.571",
+    "w": 1280,
+    "h": 720,
+    "status": "19:38 · WALK · Stamina 100/100 · Energy 100/100RT run · LT stealth0 remembered · 0 friends · 0 herbs"
+  },
+  "statsNoon30": {
+    "grass": {
+      "tiles": 92,
+      "blades": 408479,
+      "drawn": 31223,
+      "culled": 231450,
+      "tris": 150782,
+      "lods": [
+        5214,
+        9049,
+        16960
+      ],
+      "sliceMaxMs": 2.5,
+      "packMaxMs": 0.3999999985098839,
+      "packs": 81
+    },
+    "flora": {
+      "tiles": 26,
+      "plants": 21405,
+      "visible": 3732,
+      "clumps": 8708,
+      "clumpsVisible": 2764,
+      "bySpecies": {
+        "twinflower": 405,
+        "bunchberry": 726,
+        "bluebead": 174,
+        "labradortea": 29,
+        "horsetail": 499,
+        "bulrush": 867,
+        "pond-lily": 1029,
+        "alder": 3
+      },
+      "sliceMaxMs": 3.899999998509884,
+      "buildMaxMs": 1.6000000014901161,
+      "geometries": 176
+    }
+  },
+  "statsWadeStop": {
+    "grass": {
+      "tiles": 96,
+      "blades": 459632,
+      "drawn": 15131,
+      "culled": 336486,
+      "tris": 89658,
+      "lods": [
+        5836,
+        259,
+        9036
+      ],
+      "sliceMaxMs": 3.5,
+      "packMaxMs": 2.1999999955296516,
+      "packs": 394
+    },
+    "flora": {
+      "tiles": 32,
+      "plants": 24923,
+      "visible": 5889,
+      "clumps": 9945,
+      "clumpsVisible": 3859,
+      "bySpecies": {
+        "twinflower": 4,
+        "bunchberry": 165,
+        "labradortea": 16,
+        "horsetail": 1159,
+        "bluebead": 27,
+        "bulrush": 1524,
+        "pond-lily": 2989,
+        "alder": 5
+      },
+      "sliceMaxMs": 3.899999998509884,
+      "buildMaxMs": 1.9000000059604645,
+      "geometries": 176
+    }
+  },
+  "statsClose": {
+    "grass": {
+      "tiles": 88,
+      "blades": 418162,
+      "drawn": 32097,
+      "culled": 281726,
+      "tris": 210468,
+      "lods": [
+        8755,
+        14681,
+        8661
+      ],
+      "sliceMaxMs": 2.600000001490116,
+      "packMaxMs": 0.3999999985098839,
+      "packs": 71
+    },
+    "flora": {
+      "tiles": 30,
+      "plants": 23523,
+      "visible": 5307,
+      "clumps": 9499,
+      "clumpsVisible": 3491,
+      "bySpecies": {
+        "twinflower": 191,
+        "bunchberry": 510,
+        "bluebead": 103,
+        "labradortea": 18,
+        "horsetail": 936,
+        "bulrush": 1281,
+        "pond-lily": 2263,
+        "alder": 5
+      },
+      "sliceMaxMs": 2.899999998509884,
+      "buildMaxMs": 1.5,
+      "geometries": 176
+    }
+  },
+  "shots": [
+    {
+      "f": "noon-0.png",
+      "t": 1792628914066
+    },
+    {
+      "f": "noon-1.png",
+      "t": 1792628925609
+    },
+    {
+      "f": "noon-2.png",
+      "t": 1792628928083
+    },
+    {
+      "f": "noon-3.png",
+      "t": 1792628930587
+    },
+    {
+      "f": "wade-0.png",
+      "t": 1792628934333
+    },
+    {
+      "f": "wade-1.png",
+      "t": 1792628936383
+    },
+    {
+      "f": "wade-2.png",
+      "t": 1792628937719
+    },
+    {
+      "f": "wade-3.png",
+      "t": 1792628938998
+    },
+    {
+      "f": "wade-4.png",
+      "t": 1792628940675
+    },
+    {
+      "f": "wade-5.png",
+      "t": 1792628942689
+    },
+    {
+      "f": "wade-stop-0.png",
+      "t": 1792628946600
+    },
+    {
+      "f": "wade-stop-1.png",
+      "t": 1792628948484
+    },
+    {
+      "f": "littoral-close-0.png",
+      "t": 1792628984769
+    },
+    {
+      "f": "littoral-close-1.png",
+      "t": 1792628997966
+    },
+    {
+      "f": "littoral-close-2.png",
+      "t": 1792629000648
+    },
+    {
+      "f": "evening-0.png",
+      "t": 1792629038074
+    },
+    {
+      "f": "evening-1.png",
+      "t": 1792629040421
+    },
+    {
+      "f": "evening-2.png",
+      "t": 1792629042804
+    },
+    {
+      "f": "evening-3.png",
+      "t": 1792629044603
+    }
+  ],
+  "errors": []
+}

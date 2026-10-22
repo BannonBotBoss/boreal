@@ -1,3 +1,5 @@
+import { FOCUS, focusSteer, pickFocus } from './core/focusLock';
+import { SYSTEM_PROPERTIES } from './config/systemProperties';
 import './style.css';
 import { createSensesHUD } from './ui/senses';
 import { createSensesHalo } from './render/sensesHalo';
@@ -8,7 +10,7 @@ import { catalog } from './core/catalog';
 import type { Entity } from './core/world';
 import { BorealSound } from './audio/borealSound';
 import { createMusic } from './audio/music';
-import { MUSIC_SAFETY, MUSIC_SETTINGS } from './audio/musicSettings';
+import { MUSIC_PANEL, MUSIC_SAFETY, MUSIC_SETTINGS, TONES } from './audio/musicSettings';
 import { VOLUME_SETTINGS } from './audio/mixer';
 import { wolfSpeak } from './audio/wolfVoice';
 import { playerSpeed, pounceSpeed } from './core/playerTuning';
@@ -113,7 +115,7 @@ if (contactsLog) CONTACTS.onSeparate((a, b, source) => console.log(`[contacts] e
 const sensesHUD = createSensesHUD(view, sfx, () => context);
 const HALO_KEY = 'boreal.sensesHalo', sensesHalo = createSensesHalo(view.scene); // O: the HUD's cues as beacons on a ring around the head
 try { sensesHalo.enabled = localStorage.getItem(HALO_KEY) !== '0'; } catch { /* storage blocked: default on */ }
-view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView));
+view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView || (!!focusTarget && SYSTEM_PROPERTIES.autoFocus.hideSensesHalo))); // T-0035: the locked target's glow is the only cue
 function perform() {
   if(autonomous) setAutonomous(false);
   if (!target || paused || dialog.open || saveBlocked) return;
@@ -169,11 +171,16 @@ if (STAGES.on && !new URLSearchParams(location.search).has('at')) [player.x, pla
 let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');
-const musicPanel = () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore, () => {})() as HTMLElement;
-  form.prepend(settingsPanel(VOLUME_SETTINGS, sfx.volumeStore, () => {})()); // Sound volume per bus (audio/mixer)
-  const warn = document.createElement('p'); warn.className = 'note'; warn.textContent = MUSIC_SAFETY; form.prepend(warn);
-  const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Next track'; skip.onclick = () => music.skip(); form.append(skip);
-  const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Playlist: put audio files in public/music and list them in public/music/manifest.json (mood: day | night | storm | any). Gameplay sounds duck the music; a limiter caps its peaks; N toggles music, - / = changes music volume.'; form.append(hint);
+const musicPanel = () => { const form = settingsPanel(MUSIC_PANEL, musicStore, () => {})() as HTMLElement; // Track picker (guitar tracks + Off)
+  const vol = settingsPanel(VOLUME_SETTINGS, sfx.volumeStore, () => {})() as HTMLElement; // Sound volume per bus (audio/mixer), Music first
+  const musicOnBox = () => Array.from(vol.querySelectorAll('label')).find(l => l.textContent?.startsWith('Music on'))?.querySelector('input');
+  form.querySelector('select')?.addEventListener('input', e => { // picking a track turns music on; Off turns it off (the bus fades)
+    const on = (e.target as HTMLSelectElement).value !== 'Off'; sfx.volumeStore.set('volume.musicOn', on); const box = musicOnBox(); if (box) box.checked = on; });
+  for (const el of Array.from(vol.querySelectorAll('p:not(.note), button'))) el.remove(); form.querySelector('p:not(.note)')?.remove(); // no world-regen settings here: drop both '* applies when you resume' legends and the inner Reset
+  form.querySelector('label')?.after(vol);
+  const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Acoustic guitar tracks (ElevenLabs Music). The track repeats with a crossfade; gameplay sounds duck it. N toggles music, - / = changes music volume.'; form.append(hint);
+  if (TONES) { const warn = document.createElement('p'); warn.className = 'note'; warn.textContent = MUSIC_SAFETY; form.prepend(warn);
+    const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Next track'; skip.onclick = () => music.skip(); form.append(skip); }
   return form; };
 menu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus
@@ -229,7 +236,7 @@ let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem
 function setBindings(b: Bindings) { bindings = b; hint = { pad: '', keys: '' }; bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
 const controls = controlsScreen({ get: () => bindings, set: setBindings, library: () => { menu.close(); dialog.showModal(); } });
 const hintFor = (kind: 'keys' | 'pad') => { const L = (id: string) => bindingLabel(bindings[id][kind]);
-  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
+  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
 function act(id: string) { // one fired press action (keyboard or gamepad)
   if (dialog.open) { if (id === 'back' || id === 'interact') dialog.close(); else if (id === 'pause') togglePause(); return; }
   if (photo.active) { if (id === 'pause' || id === 'photo') void photo.exit(); else if (id === 'inspector') inspector.toggle(); return; } // photo mode has its own keys
@@ -296,7 +303,7 @@ initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the
 const chrono = createChronometer(worldSec); // T / gamepad View: set the time of day (ui/chronometer)
 function bindingTexts() { // help dialog and chronometer lines written from the live bindings (Controls screen rebinding updates them)
   const L = (id: string, k: 'keys' | 'pad') => bindingLabel(bindings[id][k]), G = (id: string, k: 'keys' | 'pad') => groupLabel(bindings, id, k);
-  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth with target focus. Release both to choose a new combination. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} chronometer, ${L('pause', k)} pause`;
+  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} chronometer, ${L('pause', k)} pause`;
   element('help-binds').textContent = `Xbox: ${tell('pad')}, ${L('back', 'pad')} close this panel. Keyboard: ${tell('keys')}, ${L('photo', 'keys')} photo mode (free camera, rewind, capture). Rebind any of these under ${L('pause', 'keys')} → Controls.`;
   const close = [...bindings.chrono.keys, ...bindings.back.keys, ...bindings.chrono.pad, ...bindings.back.pad].map(comboLabel).join(' / ');
   chrono.setHint(`${G('scrub', 'keys')} or ${G('scrub', 'pad')}: scrub time · drag the dial · ${close}: close`);
@@ -340,7 +347,7 @@ function frame(time: number) { const frameStart = performance.now();
       const jump = H('jump') > ACTIVE && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
       if(!autonomous || playerAction) brain.decide({x:player.x,y:0,z:player.z},1/30,{
         motion:jump?'jump':speed<-.01?'back':speed>.01?(modes.mode==='run'||modes.mode==='sprint'?'run':'walk'):'idle',
-        heading:yaw-dx*2.2/30,speed:jump?pounceSpeed(speed):speed});
+        heading:yaw+(focusSteer(yaw,player,focusTarget,-dz,dx,1/30)??-dx*2.2/30),speed:jump?pounceSpeed(speed):speed});
       // Inertia: walking/running speed changes are capped at force/mass (heavier = slower); jumps are impulses.
       if(!autonomous && brain.motion!=='jump') brain.speed=approach(prevSpeed,brain.speed,accelLimit(playerMass,view.wolfMass),1/30);
       { // wind drag through the shared field: relative air velocity on the frontal area (∝ m^(2/3), 0.15 m² for a 40 kg wolf [verify])
@@ -360,14 +367,9 @@ function frame(time: number) { const frameStart = performance.now();
   { const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow; view.worldTime = wNow; // 'clock' fields follow worldSec (frozen while the menu is open)
     tickGround(12 * wDt); // 1 real s = 12 game s (timeOfDay REAL_SECONDS_PER_GAME_HOUR 300)
     updateWeather(Math.min(wDt, .25), 3600 / REAL_SECONDS_PER_GAME_HOUR, dayAt(wNow), hourAt(wNow)); } // hour and date include the chronometer's dial
-  if (modes.mode !== 'super-stealth') focusTarget = undefined;
-  else {
-    const candidates = view.entities().filter(e => ['deer', 'person'].includes(e.kind) && Math.hypot(e.x - player.x, e.z - player.z) < 30);
-    if (focusTarget && !candidates.some(e => e.key === focusTarget!.key)) focusTarget = undefined;
-    focusTarget ??= candidates.filter(e => {
-      const dx = e.x - player.x, dz = e.z - player.z, distance = Math.hypot(dx, dz);
-      return distance > .1 && (-Math.sin(yaw + lookYaw) * dx - Math.cos(yaw + lookYaw) * dz) / distance > .4;
-    }).sort((a, b) => Math.hypot(a.x - player.x, a.z - player.z) - Math.hypot(b.x - player.x, b.z - player.z))[0];
+  { // T-0035 held focus (core/focusLock): only while Focus (LB / F) is held and an interactable object is within FOCUS.radius
+    const kinds = (Object.keys(catalog) as (keyof typeof catalog)[]).filter(k => !(SYSTEM_PROPERTIES.autoFocus.excludeKinds as readonly string[]).includes(k) && (catalog[k].interactions ?? []).some(a => player.abilities.includes(a)));
+    focusTarget = pickFocus(active && !autonomous && H('focus') > ACTIVE, focusTarget, { x: player.x, z: player.z, view: yaw + lookYaw }, view.entities().filter(e => !context.records[e.key]?.removed), kinds);
   }
   target = view.entities().filter(e => availableActions(player, e, context).length).sort((a, b) => Math.hypot(player.x - a.x, player.z - a.z) - Math.hypot(player.x - b.x, player.z - b.z))[0];
   const action = target && availableActions(player, target, context)[0];
@@ -396,7 +398,7 @@ function frame(time: number) { const frameStart = performance.now();
   const animalStatus = animal ? ` · ${animal.motion}/${animal.problem} · Energy ${Math.round(animal.energy)}` : '';
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
-  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : modes.mode === 'super-stealth' ? 'Face an individual within 30 m to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
+  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth · LB focus'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind); if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
   requestAnimationFrame(frame);
 }

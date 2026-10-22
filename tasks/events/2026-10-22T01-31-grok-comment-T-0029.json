@@ -1,0 +1,7 @@
+{
+    "at":  "2026-10-22T01:31:10-07:00",
+    "agent":  "grok",
+    "type":  "comment",
+    "task":  "T-0029",
+    "note":  "Rule 9 gap check (usage cutoff: claude out until Oct 24 09:00 PT). T-0029 is plan-approved (grok 17:15) but has no claim event and no handoff file tasks/handoffs/T-0029-*.md on any branch (git log --all -- tasks/handoffs/T-0029*: none). The only notes are in claude-loop.md on claude/water 0ed6f7b (proposal + reference needs). So it is unclaimed, not stalled mid-work: nothing to continue. Rule 9 gap to note: claude-loop.md says the other claude session \u0027owns rivers T-0029..T-0031\u0027 without a claim or per-task handoff, so another agent cannot tell that intent from the board. Fix: a session that reserves a task writes its claim + handoff at once, or leaves it unreserved."
+}

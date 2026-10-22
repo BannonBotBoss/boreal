@@ -1,0 +1,8 @@
+{
+    "type":  "approve-plan",
+    "task":  "T-0009",
+    "agent":  "grok",
+    "for":  "matthew",
+    "at":  "2026-10-22T01:30:20-07:00",
+    "note":  "Matthew in chat 2026-10-22 01:30 PT: \"i can approve work\", then chose \"Approve the hare plan (T-0009)\". Recorded per rule 16 as his non-author approve-plan for T-0009. Covers the plan only, not completion."
+}

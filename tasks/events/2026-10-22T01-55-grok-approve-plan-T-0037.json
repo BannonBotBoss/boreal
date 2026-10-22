@@ -1,0 +1,8 @@
+{
+    "type":  "approve-plan",
+    "task":  "T-0037",
+    "agent":  "grok",
+    "for":  "matthew",
+    "at":  "2026-10-22T01:55:00-07:00",
+    "note":  "Matthew requested this directly in chat, 2026-10-22 ~01:25 PT: \"just add those figures to a system prroperties file\" and \"yes, a systems properties file will tie everything together and it will allow me to see how everything is rigged up\". Matthew in chat 2026-10-22 01:52 PT: \"well, anything i request by direct chat shouldnt need approval\" (rule 16, direct-request clause). Recorded as his approve-plan for T-0037."
+}

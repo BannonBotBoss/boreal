@@ -1,0 +1,8 @@
+{
+    "type":  "propose",
+    "task":  "T-0038",
+    "agent":  "grok",
+    "for":  "matthew",
+    "at":  "2026-10-22T01:55:30-07:00",
+    "note":  "Matthew 2026-10-22 ~01:50 PT: \"so, i should be able to access the board via a weblink that appears in the start menu\", then chose \"Move to GitHub and use its project board\". Objectives:\n- [ ] 1. Push the game repo to private GitHub (origin https://github.com/Bannon-github/boreal.git)\n- [ ] 2. Board tasks mirrored to a GitHub project board, columns from the existing board status logic (reuse grok-globe/task-board-site)\n- [ ] 3. Start menu Board link opens the project board\n- [ ] 4. Skill, tests, handoff\nCredits 40. If the GitHub-move executor already took another id for this, renumber per rule 13 with a comment event."
+}

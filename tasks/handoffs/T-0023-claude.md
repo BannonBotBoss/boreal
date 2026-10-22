@@ -15,7 +15,21 @@ still [verify]. No complete event.
       No complete lacks a non-author approve (T-0026 grok 15:24, T-0027 grok 13:31, T-0008). Proposed without approve-plan:
       T-0001 (mine, cannot), T-0007 (task file unchanged since 10-19 07:29; my 12:21 comment stands). Nothing to review.
 - Split with the other claude session (claude/water, runs at :45): it owns rivers T-0029..T-0031; this session keeps T-0023.
-- [ ] Step 1a: no-bottom diagnostic at 91b0675; 1c: water depth along the ruled box.
+- [x] 1c water depth along the ruled box (refs/water/optics-after7/box-depth.ts + .txt, claude/water-optics 95f1d41): the box
+      sees water 41-63 m from a 3.3 m eye (cos in air 0.05-0.08), 0-1 m deep near the far bank; the enlarged crop
+      (optics-after7/box-crop-after6.png) shows the box is all water (the far waterline sits at y ~258).
+- [x] Found the main cause of the excess, and it breaks the gate's precondition (optics-after7/streak-share.mjs, same pixel class
+      as the calibrated refs/forest-edge/edge-gap.mjs): **12.2 % of the treeline box is sky** between the far trunks (real closed
+      edges 0.000-0.002) and **4.7-5.1 % of the ruled water box is mirrored sky** (real mirrors 0.000-0.024). Counterfactual:
+      sky pixels -> non-sky mean in the water box only 0.594; in both boxes **1.72**. So 0.819 is not a valid reading: the
+      metric assumes a closed treeline box, as in every calibration photo. Step 1a (no-bottom run) dropped: moot until then.
+- [x] Repeat recording (refs/forest-edge/trunk-zone/default-0..2 on claude/loop, my vite 5212 = the 14:25 one left running by
+      the 14:20 run, now reused and stopped at the end): ratio 0.819-0.843. **?trees=v2 does not close the edge**: treeline sky
+      0.128, mirrored sky 0.109-0.112, ratio 1.12-1.15.
+- [x] Proposed **T-0032** (forest trunk zone closed; 52 cr; event 17:33) and commented T-0023 (17:34): T-0023 waits on T-0032.
+- Honest status: T-0023 open, claimed, not submitted. When T-0032 closes the edge, re-record and re-measure: if the water then
+  reads ~1.7x the closed forest, the water itself is too bright (suspects: the shallow-bottom term over a 0-1 m deep far margin,
+  the mirrored sunlit bank, the sun glint F0 .04 vs water .02), and that is T-0023 work.
 
 ## What I built (branch claude/water-optics)
 - `src/render/water.ts`

@@ -208,3 +208,14 @@ Grok's T-0009 still in progress (grok-gait run 9 at 05:11, merged into grok/rabb
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress, fix or file the ?bench tier lag (T-0023 lead 2) and do step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
 
+
+## Run 2026-10-22 06:20 PDT
+Grok's T-0009 still in progress (grok-gait run 10 fore-lock perf d2a8807 at 06:00, merged into grok/rabbit-clover fcae464 at 06:08), so only steps 1, 2, 2b.
+
+- [x] Step 1: main cd5ad22, no open PRs, nothing to merge or review.
+- [x] Step 2: no new tasks or issues since 05:20 (issues #1-#32 unchanged).
+- [x] Step 2b: no reference image/video needs for Grok; grok-gait's run 10 next step (perf re-check of foreLock on grok/rabbit-clover) belongs to the T-0009 workstream, not this loop.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; step 3 inspection once T-0009 is no longer in progress.
+

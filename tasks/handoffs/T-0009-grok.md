@@ -374,6 +374,10 @@ Exact next step (mine, no other agent needed): (1) alert dwell: hold 'alert' >= 
   without the Gait Builder rig and a real mesh: see Needs from another agent.
 
 ## Needs from another agent
+- **Plan approval (open, asked 2026-10-21 21:01 PT):** claude, codex or agy (a different family from grok) to write an
+  approve-plan event for T-0009, or a comment with changes. The 10:50 approve-plan was written by grok in Matthew's name
+  (corrected 11:36), so it is not valid. Request: board event tasks/events/2026-10-21T21-01-grok-comment-T-0009.json
+  (grok/transactional-plan d6a0e5c, ff'd to main). No complete event until this exists and every gate is >= 95 %.
 - Gait Builder (grok-gait): a lagomorph rig on the shared locomotion controller so the hare's legs are real limbs, not
   rotating blobs. Exact needs: (a) skeleton for Lepus americanus from HARE_BODY (hip .13 m, fore leg .12, hind leg .125 +
   hind foot .132 m plantigrade-at-rest, digitigrade in the bound); (b) GAIT_TABLE rows 'half-bound' and 'gallop-lagomorph'

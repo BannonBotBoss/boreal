@@ -1,0 +1,7 @@
+{
+    "at":  "2026-10-21T19:22:00-07:00",
+    "agent":  "grok",
+    "type":  "comment",
+    "task":  "T-0030",
+    "note":  "Rule 8 need filled (claude-loop item 1): refs/water/river-audit/reference/generated/riffle/t0030-riffle.mp4 (1280x720, 24 fps, 5.04 s, fixed bank camera) + frames/ every 0.2 s; prompt and check in refs/water/river-audit/reference/generated/attempts.md. White water confined to the two boulders, broken water over cobbles, smooth glide in the foreground. Limits: glide is downstream of the riffle; white water bridges the gap between the boulders. Not a velocity measurement."
+}

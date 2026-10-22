@@ -92,3 +92,15 @@ Started. Grok's T-0028 (grok/hare-mesh, last 17:32, not submitted) still open, s
 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. Re-review T-0025 when agy resubmits. Matthew still to decide claude's T-0021 finding 1 (reviewer independence). If Grok work is not in progress: fix ?bench tier lag (T-0023 lead 2), fix T-0009 compare image path, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
+
+
+## Run 2026-10-21 19:16 PDT
+Grok's T-0028 (grok/hare-mesh 19:04) and T-0009 (grok/rabbit-clover 19:03) still in progress, so steps 1, 2, 2b only.
+
+- [x] Step 1: no complete or approve events since 18:12 (agy has not resubmitted T-0025; claude's 18:39 comment agrees it fails). Nothing to merge or approve; no new proposals to plan-check. main had moved to ebbc897 (grok T-0028 task-file number table + skill notes, board-only).
+- [x] Step 2: no new tasks. Activity: claude commented T-0025 and claimed T-0032 (claude/forest-edge, probe v0).
+- [x] Step 2b: three generated references that earlier runs had missed, all from claude: T-0032 refs/forest-edge/reference/t0032-closed-edge.png; T-0030 refs/water/river-audit/reference/generated/riffle/t0030-riffle.mp4 + frames; T-0029 refs/water/river-audit/reference/generated/pond-outlet/pond-outlet-1.png. Prompts and realism checks in the attempts.md beside each; comment events 2026-10-21T19-22-grok-comment-T-0029/T-0030/T-0032.json.
+- [x] Published claude/loop, agy/loop and these refs to main via grok/board-loop.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. Re-review T-0025 when agy resubmits. Matthew still to decide claude's T-0021 finding 1 (reviewer independence). If Grok work is not in progress: fix ?bench tier lag (T-0023 lead 2), fix T-0009 compare image path, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.

@@ -10,7 +10,25 @@ fails, and three acceptance criteria are not met (below). Left open, claimed by 
 - [x] 2 Graze crouch (bounding.ts POSE_SHAPES 'graze-crouch' + PoseShape.ahead): cause found - with the fore paw under the glenoid the bladed fore limb is already at its elbow clamp (CANID elbow min 50 deg) when standing, so the rig reached only .43 of the asked crouch (pitch -.043, hip -17 mm). Now the fore paws re-plant 6 cm ahead first (one at a time, TURN.step; turnInPlace or not), then the body lowers the full pitch -.06 / drop .04: hip about 23 mm lower, fore paws under the chin, every joint in its clamp, 0 implausible frames. Grid of 12 shapes vs lookscore v1.3 graze strips (C:\dev\rabbit-rec13\look\grid-run9.txt, gs/gw/ge-g0..g9 + s13/e13 jsons): chosen g1 = summer crouch 35.0 -> 36.5, winter 70.5 -> 71.2 (crouch noise +-0), end-on crouch 31.4 -> 53.4; drop .06 gets zeroed (fore paw over the shoulder), level drops lift the chest bone and score lower. REFERENCE-MATCHED, not sourced. Test tests/anatomy.test.ts 'graze crouch (run 9)'; focused tests 24/24 (C:\dev\rabbit-rec13\test-step2.txt), tsc 0. tools/hare-strip.ts gains ?graze= / ?chest= / ?headsize= / ?runears= grid hooks.
 - [x] 3 Gathered-pose outline (src/animals/hare.ts HARE_SKIN chest rings): the gather mismatch (look\overlay13.py) is a too-shallow chest - the references' gathered hare is nearly as deep as long. Chest rings 1.5x deeper downward and narrower (rx x 1 - .4 chest weight) so the bare body stays inside the T-0028 mass check (1.877 -> 1.914 L, limit 1.94; deeper without narrowing = 2.01 L, fails). Box v1.3 (F0 -> F3): summer gather 47.3 -> 50.5 (noise +-1.5), winter gather 52.5 -> 54.6 (+-0.9), summer crouch 36.5 -> 41.0, summer stretch 92.3 -> 100, end-on stretch 37.2 -> 41.6; cost winter stretch 93.6 -> 87.0. Tried and dropped: head pitch following the spine flex (x.6 / x1.2: gather -0.4 / -2.1), head x1.15 (summer gather 42.8), ears up in the run (gather 43.2). REFERENCE-MATCHED [estimate]. Grid C:\dev\rabbit-rec13\look\grid-run9.txt (+ F0-F4 strips, logs, s13/e13). hare-mesh + hare-rig tests 11/11 (test-step3.txt).
 - [x] 4 grok/rabbit-clover dd4b8b0 merged into grok/hare-mesh (80fac59, clean); T-0028 handoff section 'Re-score with lookscore v1.3' committed there (db55c98): PC GPU pc10 shape 66.4 / 78.8, coat 89.0 / 96.2, end-on 57.8 / 79.5; not submitted.
-- [ ] 5 Re-score (lookscore v1.3), npm test + tsc; complete events only if every gate >= 95 % AND a valid plan approve exists; compare-run9.jpg
+- [x] 5 Re-scored 22:00-22:11 PT on dd4b8b0 (PC GPU Edge d3d11, C:\dev\rabbit-rec13\look\{gs,gw,ss,sw,ge,se}-pc10.png + .log.json, 0 implausible cells; s13-pc10.json / e13-pc10.json). NOT SUBMITTED: gates < 95 %.
+  Plan approval: codex wrote tasks/events/2026-10-21T21-32-codex-approve-plan-T-0009.json (codex/loop 54d46f0, not on main yet; a different family). Codex asks the author to write a new claim after it, reconcile the task text with this handoff and name notes/skills/agent-pipeline-species.md in the skill header before completion: still to do (not done in run 9, outside its brief).
+  RULES.md on main d6a0e5c: no cross-family reviewer rule. Rule 15 re-check 22:11 PT: no events on any branch since codex's 21:32 set.
+  Checks: npm test 414 tests, 402 pass, 0 fail, 12 todo (C:\dev\rabbit-rec13\npmtest.txt); tsc 0 (tsc.txt); bound-checks hare 99.9 % (bound-score.txt).
+  Compare C:\dev\rabbit-rec13\compare-run9.jpg (box /workspace/rabbit/compare-run9.jpg; script look\compare_run9.py).
+
+### Calibrated gates, run 9 (rule 11): lookscore v1.3 as run 8 (known match = independent second drawing, known mismatch = other pose classes / other season; noise SD shape summer 0.6, winter 0.5, end-on 1.1)
+| gate | run 8 (pc9, 97101ec) | run 9 (pc10, dd4b8b0) |
+|---|---|---|
+| shape summer | 62.7 | 66.4 |
+| shape winter | 79.4 | 78.8 |
+| coat summer | 88.4 | 89.0 |
+| coat winter | 95.8 | 96.2 |
+| end-on shape / coat | 50.0 / 77.5 | 57.8 / 79.5 |
+Per pose run 9: summer crouch 40.9, sit 53.2, gather 50.4, push 87.7, stretch 100; winter 72.9, 80.3, 54.1, 100, 86.7; end-on crouch
+55.9, sit 66.8, gather 66.9, push uncalibrated, stretch 41.7. T-0009 gates: look (mean shape + coat summer) 77.7 (run 8 75.6);
+graze (summer crouch) 40.9 (34.8); alert (summer sit) 53.2 (52.3, within noise). T-0028: 66.4 / 78.8 / 89.0 / 96.2 (grok/hare-mesh db55c98).
+Next: the fore limb stands Z-folded (elbow ~30 mm ABOVE the glenoid at rest, elbow at its clamp), because the fore chain (.186 m)
+is 2.5x the glenoid height (.074 m); a higher fore girdle (blade pivot over the hip line) would let the crouch fold naturally.
 ## Run 8 progress (started 2026-10-21 19:55 PT; keep current: board rule 9; only grok/rabbit-clover + board via grok/transactional-plan)
 Plan (Grok lead, 19:54 PT brief): review + merge Gait Builder's grok-gait/T-0009-hare-v5 (f2ee669 ballistic flight arc, swing
 feet ride the body, hind swing fold .8 x hip; bc7c55a handoff); harden the metric (lookscore v1.3: anatomical plausibility

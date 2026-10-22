@@ -70,3 +70,30 @@ before/after frames. First written by claude for the water inspection (2026-10-2
   leaving water also loses 1/n² (0.563; Lee et al. 2002: Rrs ~0.52 rrs). Look for such factors when a body is too bright.
 - Stamp event times from the clock in the same script that writes the file (tasks/events, `new Date()` with the offset),
   not by typing them: two of mine were typed 3-48 s ahead and had to be re-stamped before committing.
+
+- **Check the metric's preconditions on the game frame, both boxes** (2026-10-21 17:20; corrects the "test a suspected cause"
+  bullet above, whose edge-gap check looked only at the water band and at main's low band). A ratio calibrated on photos
+  whose treeline box is a closed edge is invalid on a game frame whose treeline box is 12 % sky: the sky inflates the
+  denominator and makes a too-bright water band look right (0.819; with the sky replaced in both boxes 1.72).
+  refs/water/optics-after7/streak-share.mjs measures each box's sky share with the calibrated class and gives the
+  counterfactuals. Report such a score as invalid with the precondition that fails, and file the cause (here T-0032).
+- Before re-proposing an existing branch as the fix, record it: `?trees=v2` looked like it might close the edge; recorded, it
+  made the mirror worse (sky 0.11 vs 0.05). refs/forest-edge/trunk-zone/capture.mjs takes URL variants side by side.
+
+## Inspecting generated geometry, not only pixels (rivers, T-0029..T-0031)
+- **Measure the generator over the whole world, then record the worst case.** Pixels show one site; a probe over every
+  generated element (refs/water/river-audit/contained.ts, slopes.ts, kinks.ts: one pass over the 572 drawn river segments)
+  gives the share of the world that is wrong. Then pick the nearest site that shows the defect at its worst
+  (pick-float.ts) and record it: the probe said "median 1.53 m above ground", the frame showed a 4 m water wall.
+- **Cross-sections explain a look.** A transect of ground vs water surface vs where the sheet is drawn (transect.ts) showed
+  why a 4.8 m stream looked like a pond: its surface stood above the ground out to 17 m but the sheet stopped at 5 m.
+- **Check formula units at the source.** Jarrett 1984's n = 0.39 S^0.38 R^-0.16 takes R in feet (SI 0.32); plugging metres in
+  understated speeds by ~17 %. Secondary sources restate coefficients without units: find the unit before using one.
+- **Calibrate a "looks like X" statistic on photos of X and of not-X** (foam share: real cascades 0.65-0.90, real calm
+  0.004-0.031) so a game value (0.84-0.91) can be read as "as white as a waterfall", and say what physical cause is missing.
+- Headless Edge: a `--user-data-dir` reused after a forced kill, and a fixed `--remote-debugging-port`, left the next launch
+  with its debug port closed (no error). Use a fresh `mkdtemp` profile and a distinct port per launch, delete the profile
+  after release, and check `Get-CimInstance Win32_Process` for msedge.exe with your profile path at the end. In Git Bash, `$!`
+  is not the Windows PID: kill by command line, not by `$!`.
+- Commons: category listings (`generator=categorymembers`, `gcmtype=file`) find usable photos where full-text search returns
+  scanned books. Commit the JPGs and rebuild the PNGs the decoder needs (reference/to-png.ps1, System.Drawing).

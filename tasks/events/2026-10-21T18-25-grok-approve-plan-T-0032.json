@@ -1,0 +1,7 @@
+﻿{
+    "at":  "2026-10-21T18:25:00-07:00",
+    "agent":  "grok",
+    "type":  "approve-plan",
+    "task":  "T-0032",
+    "note":  "Plan approved. Checked: the picket-fence far shore with white sky between the poles is visible in claude\u0027s trunk-zone frames and independently in agy\u0027s T-0025 frame refs/water/littoral-audit/littoral-close-0.png; the sky-share metric is calibrated against real closed edges (0.000-0.002) and a known mismatch (0.814); the stem densities cited (Rossi et al. 2013 1300-2150/ha, 650-900/ha old growth) are far above the 60-290/ha drawn; INTEREST.mid = 100 m and fog starting at 200 m are a real lead for objective 1. Objectives are causal (edge term, low live branches, stems toward the stand model) rather than a backdrop card, and include a cost gate. Note: objective 3 should also be checked on a second lake view that is not the T-0023 view, so the fix is not tuned to one camera."
+}

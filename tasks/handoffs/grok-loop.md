@@ -60,3 +60,35 @@ Grok's T-0009 still in progress (grok-gait/T-0009-hare-v3 14:56), so only steps 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI; consider a task for jointed bedrock and rock shape variety (T-0026 note a).
 
+
+## Run 2026-10-21 16:15 PDT
+Grok's T-0009 still in progress (grok-gait/T-0009-hare-v4 16:15, grok/rabbit-clover 15:47), so only steps 1, 2, 2b.
+
+- [x] Step 1: nothing to merge or review: no complete event or approval since 15:13. Main already at ff14688 (T-0028 proposal + source check, board-only).
+- [x] Step 2: new task T-0028 "Procedural furred snowshoe-hare body mesh skinned to the hare rig" (grok, 78 credits, unclaimed). Grok authored it, so it needs another agent's approve-plan; the Claude/Codex/agy loops were all out at their last runs (claude session limit to 4:40 PM, codex usage limit to 4:14 PM, agy 15:40 run failed with a stalled connection).
+- [x] Step 2b: no image/video needs open. grok-gait run 4 (16:15) answers T-0009's Gait Builder items (bound-checks 99.7 %, fore contact at 11.6 m/s still short); the furred mesh need is now T-0028. T-0028's winter reference (refs/hare/winter/) is an objective for its owner, not yet a rule-8 need.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. Watch for an approve-plan on T-0028 from another agent. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI; consider a task for jointed bedrock and rock shape variety.
+
+## Run 2026-10-21 17:13 PDT
+Grok's T-0028 in progress (grok/hare-mesh 17:09), so only steps 1, 2, 2b.
+- [x] Step 1c approve-plan T-0029 (water contained), T-0030 (hydraulics/whitewater), T-0031 (curved planform), all claude, 52 credits each: float/across-0 shows the teal water wall above dry meadow, order2/across-0 the white straight band; contained.json 61.5 %; riverAt/terrainCore code confirmed; Jarrett SI conversion 0.32 checked. Events 2026-10-21T17-15-grok-approve-plan-T-0029..31.json.
+- [x] Merged main, claude/water (rivers audit refs, T-0029..31, T-0009/T-0021 comments) and agy/loop (T-0025 claim) into grok/board-loop; tsc 0, npm test 350 pass 0 fail 12 todo. codex/loop not merged (holds unfinished T-0022 code).
+- [x] Step 2 new tasks: T-0029, T-0030, T-0031 (claude). Activity: agy claimed T-0025, codex claimed T-0022 and commented T-0001/T-0007/T-0028, claude commented T-0009 (look scores uncalibrated, compare image path /workspace/rabbit/compare-run6.jpg missing on omen) and T-0021 (reviews only by Grok roles = same agent family; loop handoff merge conflicts; evidence paths must exist on omen).
+- [x] Step 2b: no image/video needs open.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. Matthew to decide claude's T-0021 finding 1 (approvals from a different agent family); T-0028 plan approval came from grok-globe. If Grok work is not in progress: fix ?bench tier lag (T-0023 lead 2), fix T-0009 compare image path, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
+
+
+## Run 2026-10-21 18:12 PDT
+Started. Grok's T-0028 (grok/hare-mesh, last 17:32, not submitted) still open, so steps 1, 2, 2b only. Plan: review agy's T-0025 (complete 17:39), approve-plan check claude's T-0032 (proposed 17:33).
+
+- [x] Step 1b reviewed T-0025 (agy, agy/littoral-plants b072dfd): NOT approved. tsc 0, npm test 352 pass 0 fail 12 todo, numbers sourced; fails frames: culms near-black thin lines (wade-stop-0, littoral-close-0) vs green/grey-green in ref; Nuphar pads merge into a continuous sheet with dense flowers vs discrete pads with open water; score needs open-water-between-pads and culm-colour terms. Event 2026-10-21T18-24-grok-comment-T-0025.json.
+- [x] Step 1c approve-plan T-0032 (claude, forest trunk zone closed, 52 credits): picket-fence far shore confirmed also in agy's littoral-close-0.png; metric calibrated; densities sourced. Event 2026-10-21T18-25-grok-approve-plan-T-0032.json.
+- [x] Step 1a nothing approved to merge. Published board-only claude/loop (T-0032 proposal + refs, T-0023/T-0021 comments, handoffs) and agy/loop (T-0025 complete + evidence) to main via grok/board-loop; tsc 0, npm test 350 pass 0 fail 12 todo.
+- [x] Step 2 new tasks: T-0032 (claude). Step 2b: no image/video needs open (T-0025 asks only for review).
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. Re-review T-0025 when agy resubmits. Matthew still to decide claude's T-0021 finding 1 (reviewer independence). If Grok work is not in progress: fix ?bench tier lag (T-0023 lead 2), fix T-0009 compare image path, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.

@@ -27,3 +27,4 @@ Use when asked to review the rules that steer agents (a RULES/README file, an ag
 - Writing a rule the tooling cannot see (e.g. a credits override the ledger never reads) without noting the tooling gap.
 - PowerShell: a backtick in a double-quoted string is an escape (`a became a bell character); `R` is an alias of Invoke-History.
 - Applying a validator that fails the test suite on today's history without a grandfather clause.
+- Exception (rule 16): work Matthew requests directly in chat is pre-approved at plan and completion. Grok records approve-plan and approve as `"agent": "grok", "for": "matthew"` quoting his request and his 2026-10-22 01:52 PT words ("well, anything i request by direct chat shouldnt need approval"). When inspecting, check the quoted request really was his and names this work; agent-started work still needs a non-author review.

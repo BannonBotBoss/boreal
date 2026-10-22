@@ -1,6 +1,6 @@
 /**
  * Mirror the task board (tasks/*.md + tasks/events) onto GitHub: one Issue per open task, and the "Boreal board" project.
- * State comes from Claude's ledger() (tools/tasks.ts on claude/tasks-crlf-comment); this file adds no state logic.
+ * State comes from Claude's ledger() (tools/tasks.ts); this file adds no state logic. Done / rejected tasks close their Issue.
  *
  *   npx tsx tools/board-github.ts issues    # repo scope only: create missing Issues, refresh state/agent labels
  *   npx tsx tools/board-github.ts project   # needs `gh auth refresh -s project` once: create/link the project, add items, set Status
@@ -16,7 +16,7 @@ import { pathToFileURL } from 'node:url';
 
 const REPO = process.env.BOREAL_REPO ?? 'Bannon-github/boreal', OWNER = REPO.split('/')[0];
 const TASKS = resolve(process.env.BOREAL_TASKS ?? 'tasks');
-const LEDGER = resolve(process.env.BOREAL_LEDGER ?? (existsSync('tools/tasks.ts') ? 'tools/tasks.ts' : 'C:/dev/boreal-claude-tasks/tools/tasks.ts'));
+const LEDGER = resolve(process.env.BOREAL_LEDGER ?? 'tools/tasks.ts'); // Claude's ledger, on main since grok/ledger-rule16
 const PROJECT_TITLE = 'Boreal board';
 const STATUS: Record<string, string> = { proposed: 'Proposed', approved: 'Plan approved', claimed: 'In progress',
   completed: 'Waiting for approval', done: 'Done', rejected: 'Rejected' };
@@ -56,19 +56,23 @@ function ensureLabel(name: string, color: string, existing: Set<string>) {
 const LABEL_COLOR: Record<string, string> = { proposed: 'bbbbbb', approved: '1f6feb', claimed: 'd4a72c', completed: 'fb8f44', done: '2da44e', rejected: 'cf222e' };
 
 async function issues() {
-  const tasks = (await board()).filter(t => OPEN.has(t.state));
+  const tasks = await board();
   const labels = new Set<string>((ghJson('label', 'list', '-R', REPO, '--limit', '500', '--json', 'name') as any[]).map(l => l.name));
-  const have = ghJson('issue', 'list', '-R', REPO, '--state', 'all', '--limit', '1000', '--json', 'number,title,url,labels') as any[];
+  const have = ghJson('issue', 'list', '-R', REPO, '--state', 'all', '--limit', '1000', '--json', 'number,title,url,labels,state') as any[];
   const out: any[] = [];
   for (const t of tasks) {
     const want = [`state:${t.state}`, `agent:${t.owner}`];
     ensureLabel(want[0], LABEL_COLOR[t.state], labels); ensureLabel(want[1], 'ededed', labels);
     const prev = have.find(i => i.title.startsWith(t.id + ':'));
+    if (!OPEN.has(t.state) && !prev) continue; // done / rejected before the mirror existed: no Issue
     if (prev) {
       const stale = prev.labels.map((l: any) => l.name).filter((n: string) => /^(state|agent):/.test(n) && !want.includes(n));
       const missing = want.filter(n => !prev.labels.some((l: any) => l.name === n));
       if (stale.length || missing.length) gh('issue', 'edit', String(prev.number), '-R', REPO, ...missing.flatMap(n => ['--add-label', n]), ...stale.flatMap((n: string) => ['--remove-label', n]));
-      console.log(`exists  ${t.id} #${prev.number} ${t.state}`); out.push({ ...t, url: prev.url, created: false }); continue;
+      const closed = prev.state === 'CLOSED';
+      if (!OPEN.has(t.state) && !closed) gh('issue', 'close', String(prev.number), '-R', REPO, '--reason', t.state === 'done' ? 'completed' : 'not planned', '--comment', `Ledger state: ${STATUS[t.state]}.`);
+      if (OPEN.has(t.state) && closed) gh('issue', 'reopen', String(prev.number), '-R', REPO, '--comment', `Ledger state: ${STATUS[t.state]}.`);
+      console.log(`exists  ${t.id} #${prev.number} ${t.state}${!OPEN.has(t.state) && !closed ? ' (closed)' : ''}`); out.push({ ...t, url: prev.url, created: false }); continue;
     }
     const url = gh('issue', 'create', '-R', REPO, '--title', `${t.id}: ${t.title}`, '--body', body(t), ...want.flatMap(n => ['--label', n]));
     console.log(`created ${t.id} ${url} ${t.state}`); out.push({ ...t, url, created: true });

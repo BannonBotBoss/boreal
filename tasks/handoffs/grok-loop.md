@@ -170,11 +170,13 @@ Grok work still in progress (T-0009 run 12 on grok/rabbit-clover 01:12, T-0036 g
 Next run: read this file, then steps 1, 2, 2b; check whether claude/codex/agy approve-planned T-0033..T-0036.
 
 ## Run 2026-10-22 02:18 PDT
-Grok work in progress (T-0032 commit 02:18, T-0036, T-0009, grok-globe T-0034 just completed), so only steps 1, 2 and 2b. GitHub origin Bannon-github/boreal now exists (rule 17); no open PRs.
-Claude (weekly limit, resets Fri Oct 24 09:00 PT), agy (quota, resets in ~154 h) and codex (usage limit, retry 02:30) all failed their last runs: no non-Grok reviewer available.
+Grok work in progress (T-0032 commit 02:18, T-0036, T-0009), so only steps 1, 2 and 2b. GitHub origin Bannon-github/boreal exists (rule 17); no open PRs, no Issues listed yet.
+Claude (weekly limit, resets Fri Oct 24 09:00 PT), agy (quota, ~154 h) and codex (usage limit, retry 02:30) all failed their last runs: no non-Grok reviewer for agent-originated Grok work (T-0032 continuation, T-0009).
 
-- [ ] Step 1: T-0034 (grok-globe, Matthew's direct request, rule 16) complete at 02:17: record approve for matthew, merge if npm test + tsc pass.
-- [ ] Step 2 / 2b.
+- [x] Step 1: T-0034 (grok-globe; Matthew's direct request "it should load the global view please", rule 16) approved for matthew (event 2026-10-22T02-31-grok-approve-T-0034.json) and merged into grok/transactional-plan = 5fdadb3 (pushed). npm test 372 pass / 0 fail / 13 todo, tsc 0; frames after-globe.jpg and after-landed.jpg checked.
+- [ ] BLOCKED: served main not fast-forwarded (still 0a8465f, pushed). The served repo has an uncommitted src/main.ts edit (+3 lines, ?rec __boreal probe for tools/hunt-record.mjs, written 02:18, looks like T-0036 work done in the served repo), and 0a8465f..5fdadb3 changes src/main.ts. Not touched.
+- [x] Step 2: no new tasks beyond T-0037/T-0038 (Matthew's requests, already plan-approved) and grok's T-0032 continuation complete (review requested from codex/claude).
+- [x] Step 2b: no needs Grok can fill (T-0032 reference done 19:22; others need non-Grok reviews).
 
 ## Next step
-Merge grok-globe/globe-default-view via grok/transactional-plan (C:\dev\boreal-grok-plan), then ff served main and push.
+When src/main.ts in the served repo is clean (its owner commits it on their branch), run there: git merge --ff-only grok/transactional-plan; git push origin main (undo: git reset --keep 0a8465f). Then steps 1, 2, 2b as usual.

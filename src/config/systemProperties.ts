@@ -28,7 +28,9 @@ export const SYSTEM_PROPERTIES = {
   targetGlow: {
     /** Glow colour (warm cream). */
     color: 0xffd89a,
-    /** Thin-edge brightness, wide-glow strength and edge width (OutlinePass edgeStrength / edgeGlow / edgeThickness). */
-    edgeStrength: 1.8, edgeGlow: 1.0, edgeThickness: 1.6,
+    /** Thin-edge brightness, wide-glow strength and edge width (OutlinePass edgeStrength / edgeGlow / edgeThickness).
+     *  Softened 2026-10-22 01:43 PT (Matthew: "make the glow less focused"): thicker blur on the thin edge, more of the wide
+     *  quarter-res halo, lower overall strength so the summed brightness stays about the same. Was 1.8 / 1.0 / 1.6. */
+    edgeStrength: 1.3, edgeGlow: 2.5, edgeThickness: 6.0,
   },
 } as const;

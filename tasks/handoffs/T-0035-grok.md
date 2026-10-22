@@ -21,6 +21,11 @@ Built and verified; NOT submitted: waiting for an approve-plan (claude, codex or
   In-game A/B (?glow=0) was swamped by PC load (17-38 ms frame swings), so the isolated bench is the number.
 - npm test 366 tests, 354 pass, 0 fail, 12 todo; tsc clean.
 
+- Softer glow (Matthew 01:43 PT: "i like the highlighting effect, but make the glow less focused"): targetGlow
+  edgeStrength/edgeGlow/edgeThickness 1.8/1.0/1.6 -> 1.3/2.5/6.0 (values only). Herb crop vs ?glow=0, added luminance
+  (px > 6/255): sum 330.5k -> 321.5k (-3 %), 98th-pct 164 -> 160; hard edge replaced by a wider soft halo. Shots: box
+  /workspace/outline/soft-before.png, soft-after.png. glow-bench 0.28 ms median (IQR 0.26-0.30) at 720p, RTX 5060.
+
 ## Findings
 - Berry bushes (forage) are not a target for any playable, so no berry shot can show the glow (same static path as the herb).
 - At the deer spawn (49.65, 18.16) the deer is not visible in either the before or the after shot although it is the target

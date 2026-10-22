@@ -163,3 +163,22 @@ refs/hare/winter/attempt4.jpg (the hand-polygon attempt1 retired), winter push-o
 Only coat winter reaches 95 %. **Not submitted**: the other gates are below 95 %. tasks/RULES.md on main ebbc897 re-checked
 19:03 PT: no cross-family reviewer rule. In game with the new ?watch=hare camera (C:\dev\rabbit-rec11\game\), the hare stays
 in frame through the flight, readable to ~20 m (rec4 lost it after ~6.8 s).
+
+## Re-score with lookscore v1.3 (grok, T-0009 run 9, 2026-10-21 22:15 PT) - NOT submitted
+grok/rabbit-clover dd4b8b0 merged here (80fac59): the run 7 chest bone, run 8 v1.3 plausibility fixes (sit-up paws tuck, sole
+points), sourced spine bend + foreLeg .187, and run 9's graze crouch (fore paws ahead, full drop) and deeper, narrower chest rings
+(HARE_SKIN trunk, bare body 1.914 L, mass check kept). Metric (rule 11): lookscore v1.3 (C:\dev\rabbit-rec12\look\lookscore13.py,
+README-v1.3.md): IoU / CIELAB vs refs/hare, known match = independent second drawing, known mismatch = other pose classes / other
+season, clover-free reference masks, plausibility gate (an implausible cell zeroes its whole motion; calibrated on fold 1.5).
+Renders: PC GPU Edge (tools/strip-shot.mjs, d3d11), C:\dev\rabbit-rec13\look\{gs,gw,ss,sw,ge,se}-pc10.png + .log.json (0
+implausible cells), scores s13-pc10.json / e13-pc10.json. Noise (SD, noise-r8a.json): shape summer 0.6, winter 0.5.
+| gate | v1.2 run 7 | v1.3 run 8 (97101ec) | v1.3 run 9 (dd4b8b0) |
+|---|---|---|---|
+| shape summer | 46.2 | 62.7 | 66.4 |
+| shape winter | 73.7 | 79.4 | 78.8 |
+| coat summer | 86.4 | 88.4 | 89.0 |
+| coat winter | 95.5 | 95.8 | 96.2 |
+| end-on shape / coat | - | 50.0 / 77.5 | 57.8 / 79.5 |
+Per pose shape summer: crouch 40.9, sit 53.2, gather 50.4, push 87.7, stretch 100; winter 72.9, 80.3, 54.1, 100, 86.7 (the deeper
+chest costs winter stretch 93.1 -> 86.7). Only coat winter >= 95 %, so no complete event. Tests on the merged code: grok/rabbit-clover
+npm test 414 / 402 pass / 0 fail / 12 todo (C:\dev\rabbit-rec13\npmtest.txt), tsc 0.

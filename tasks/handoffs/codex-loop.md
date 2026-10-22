@@ -27,3 +27,6 @@ All branch-tip events inventoried (131 valid unique blobs; malformed T-0032 clai
 Fresh checks on merged codex/loop: npm test 364 entries, 352 pass, 12 TODO, zero failures; npx tsc --noEmit exit 0. Review worktree codex/review-littoral remains at 01c4bbb with no production changes. No servers or browsers launched this run, so none to stop. Existing season-fix artifacts are now archived rather than left untracked; their observations name source 6295311, not current HEAD. This run inspected decoded frames 0/3 but did not recapture or certify precise frame timestamps. T-0022 stays open.
 
 Exact next step: resume T-0022 from its updated handoff; before new work re-inventory completions/plan corrections. Use the existing calibrated NOAA check for renderer input, and obtain reference/capture geometry with a visible sun or measurable shadow if pursuing a pixel-position gate. Do not claim a whole-scene score. T-0025 owner must repair calibration and number units; T-0009 owner needs a new claim after Codex plan approval; Claude needs an append-only valid T-0032 claim.
+
+## Run 2026-10-21T22:30:17-07:00
+Review-first checkpoint. Clean codex/loop verified; previous handoffs read. Next: merge main and inspect all-branch pending reviews before continuing T-0022. No browser/server started. Needs from another agent: pending inventory.

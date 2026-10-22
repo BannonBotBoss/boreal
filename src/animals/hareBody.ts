@@ -69,10 +69,11 @@ const lerp3 = (a: Vec3, b: Vec3, t: number): Vec3 => [a[0] + (b[0] - a[0]) * t, 
 const HIND_R: Array<[number, number]> = [[.03, .02], [.021, .014], [.011, .012], [.008, .02], [.006, .017]];
 const FORE_R: Array<[number, number]> = [[.022, .02], [.014, .013], [.01, .01], [.008, .009], [.006, .011]];
 
-/** Pelt: the dense downy underfur (25 mm, Sheriff et al. 2009) lying at ~45 deg reads as a solid layer ~18 mm deep over the
- *  body [estimate: 25 mm x sin 45]; the skin is drawn at that surface and the guard-hair cards rise from it. pelt 0 = the bare
- *  body, whose volume is the mass check. Thinner on the head and limbs, none on the nose and ears. */
-export const PELT = { body: .018, head: .008, limb: .007, ear: .0015 };
+/** Pelt: the dense downy underfur, 25.15 mm (autumn) / 25.64 mm (winter) long (Sheriff et al. 2009), stands nearly upright
+ *  under the guard hairs and reads as a solid layer, so the skin is drawn ~25 mm out from the body on the trunk [estimate:
+ *  underfur upright], thinner on the head and limbs, none on the nose and ears; the guard-hair cards rise from it.
+ *  pelt 0 = the bare body, whose volume is the mass check. */
+export const PELT = { body: .025, head: .012, limb: .012, ear: .0015 };
 export function hareTubes(bind: HareBind, coat: HareCoat = HARE_SUMMER, pelt = 1): Tube[] {
   const tubes = rawTubes(bind, coat, pelt), kind = (i: number) => i <= HARE_TUBE.neck || i === HARE_TUBE.tail ? PELT.body : i === HARE_TUBE.head ? PELT.head : i <= HARE_TUBE.earR ? PELT.ear : PELT.limb;
   return tubes.map((t, i) => ({ ...t, rings: t.rings.map(r => (r.fur ?? 1) < .03 ? r : { ...r, rx: r.rx + kind(i) * pelt, ry: r.ry + kind(i) * pelt }) }));
@@ -85,10 +86,10 @@ function rawTubes(bind: HareBind, coat: HareCoat, pelt: number): Tube[] {
   // Trunk: round rump behind the hip, the haunch over the hip joints (the back arches highest over the loins), tapering to a
   // narrow chest between the forelegs. Nose (head z -.05) to rump end +.07 = .42 m head-body.
   tubes.push({ ...palette, radial: 16, smooth: 1, lay: [0, -.1, 1], rings: [
-    { p: T(.075, .02), rx: 0.014, ry: 0.019, w: only(B.body), fur: 1 },
-    { p: T(.05, .022), rx: 0.025, ry: 0.036, w: only(B.body), fur: 1 },
-    { p: T(.0, .022), rx: 0.026, ry: 0.040, w: only(B.body), fur: 1 },
-    { p: T(-.07, .016), rx: 0.021, ry: 0.035, w: only(B.body), fur: 1 },
+    { p: T(.075, 0.026), rx: 0.014, ry: 0.025, w: only(B.body), fur: 1 },
+    { p: T(.05, 0.030), rx: 0.025, ry: 0.044, w: only(B.body), fur: 1 },
+    { p: T(.0, 0.030), rx: 0.026, ry: 0.048, w: only(B.body), fur: 1 },
+    { p: T(-.07, 0.020), rx: 0.021, ry: 0.039, w: only(B.body), fur: 1 },
     { p: T(-.14, -.008), rx: 0.020, ry: 0.036, w: only(B.body), fur: 1 },
     { p: T(-.2, -.004), rx: 0.017, ry: 0.033, w: only(B.body), fur: 1 },
     { p: T(-.235, .02), rx: 0.012, ry: 0.019, w: blend(B.body, B.head, .2), fur: .95 },
@@ -154,7 +155,7 @@ function rawTubes(bind: HareBind, coat: HareCoat, pelt: number): Tube[] {
   return tubes;
 }
 /** Eye sockets and the cheek bulge; returns the fur clear zones (eyes). Eye relative to the head bone [estimate: reference]. */
-export const HARE_EYE_AT: Vec3 = [.0325, .011, -.014]; // on the pelted head surface (rx .030 + pelt .008)
+export const HARE_EYE_AT: Vec3 = [.0365, .011, -.014]; // on the pelted head surface (rx .030 + pelt .012)
 export function sculptHare(body: BodyData, bind: HareBind): Array<{ center: Vec3; radius: number }> {
   const clear: Array<{ center: Vec3; radius: number }> = [];
   const head = (v: Vec3): Vec3 => [v[0], bind.pivot[1] + bind.head[1] + v[1], bind.pivot[2] + bind.head[2] + v[2]];

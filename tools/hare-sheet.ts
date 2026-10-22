@@ -2,7 +2,7 @@
 // ?day=<n> overrides the summer cells' day. Same createHareModel the game uses (no mesh file).
 import * as THREE from 'three';
 import { createHareModel } from '../src/animals/hare';
-import { setHareDay } from '../src/render/hareMesh';
+import { setHareDay } from '../src/animals/hare';
 const q = new URLSearchParams(location.search), CW = 520, CH = 400, W = CW * 3, H = CH * 2;
 const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c') as HTMLCanvasElement, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1); renderer.setSize(W, H); renderer.setScissorTest(true);

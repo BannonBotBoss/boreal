@@ -1,7 +1,7 @@
 /**
  * Snowshoe hares (Grok Bot): a standalone prey animal, outside the skeleton/species system, now driven by the SHARED animal
  * pipeline (core/agent/pipeline + the HARE_AGENT record in core/agent/species). This file is only the host: spawning, the
- * procedural furred mesh (T-0028: render/hareMesh.ts on animals/hareBody.ts, coat by the world date) and its poses, clover (core/clover + render/clover), the catch, and the ?hare=debug readout.
+ * procedural furred mesh (T-0028: the HARE_SKIN spec fed to the shared core/rigBody.ts + render/rigSkin.ts, coat by the world date) and its poses, clover (core/clover + render/clover), the catch, and the ?hare=debug readout.
  * Behaviour (Matthew's spec): graze head-down on clover in sunlit clearings, step to the next section, lift the head to scan;
  * a sensed wolf (sight / hearing / scent) -> head up (alert); a moving wolf during the alert -> flight away from it, pause,
  * flee again while it still senses the wolf, else relax (rest, scan, trot to sensed clover, seek sunlit ground). Nothing
@@ -24,8 +24,8 @@ import { LEPORID_LIMITS } from './locomotion/ik';
 import { skeletonOf, type BodyPlan } from './locomotion/bodyPlan';
 import { CONTACTS } from '../core/contactBus';
 import { createCloverRenderer } from '../render/clover';
-import { createHareMesh, setHareDay, type HareLeg } from '../render/hareMesh';
-import type { HareBind } from './hareBody';
+import { createRigSkin, setCoatDay, coatState, type RigLeg } from '../render/rigSkin';
+import { rigTubes, type CoatPalette, type RigBind, type SkinSpec } from '../core/rigBody';
 import { dayAt } from '../core/timeOfDay';
 import type { SnapshotSource } from '../core/snapshot';
 
@@ -35,8 +35,8 @@ export const HARE = {
 };
 export type HareState = Agent['action'];
 export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Object3D; body: THREE.Object3D; legs: Leg[]; ears: THREE.Object3D[]; rng: () => number; label?: THREE.Sprite; rig?: BoundController; frame?: BoundFrame }
-/** One limb: the rig segments as bones of the skinned mesh (render/hareMesh.ts HareLeg). */
-type Leg = HareLeg;
+/** One limb: the rig segments as bones of the skinned mesh (render/rigSkin.ts RigLeg). */
+type Leg = RigLeg;
 export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
 /** speed (m/s) and daylight (0..1) feed the hare's senses; `moving` is kept for older callers (speed defaults from it). */
 export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean; speed?: number; daylight?: number }
@@ -59,15 +59,61 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
  *    blade in the fore chain (= .816 x humerus), both from Lepus brachyurus bone means (Exp Anim 30(2):113, 1981, Tables 1
  *    and 4-6; working in tools/bound-plans.ts SPLIT / BLADE). */
 export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .181, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.3, headY: .085 };
-/** T-0028: the procedural furred mesh (render/hareMesh.ts on animals/hareBody.ts) replaces the run 1-6 blob model; the same
- *  body / head / ears / legs handles, now bones of one skinned skin + fur, posed by poseHare from the rig. */
+/**
+ * T-0028 skin + fur spec (data for the shared core/rigBody.ts + render/rigSkin.ts; tasks/T-0028 number table). No mesh file:
+ * every vertex comes from these rings around the rig's bind pose (hareBind). Model space = the hare root (feet y 0, forward -z).
+ * - Dimensions: head-body 361-479 mm (ADW total 413-518 minus tail 39-52), modelled nose to rump ~.47 m; tail 45 mm; ear
+ *   66 mm (HARE_BODY.ear); hind foot = the rig's .132 m; prints fore ~5 x 3 cm, hind 12 x 8 cm (NatureNorth); bare volume
+ *   1.07-1.94 L = 1.43-1.55 kg at 740-1340 kg/m3 [estimate: band around water density]. Girths, head, legs [estimate: drawn to
+ *   refs/hare/]. Leg r = [sagittal, lateral] half-widths at each drawn joint (fore: blade pivot, glenoid, elbow, wrist, toe;
+ *   hind: hip, knee, hock, MTP, toe tip): muscular thigh, slim shank, broad furred snowshoe hind foot; slim forelimb.
+ * - Pelt: the downy underfur 25.15 / 25.64 mm (Sheriff, Kuchel, Boutin & Humphries 2009, J Mammal 90:761) stands under the
+ *   guard hairs and reads as a solid layer, so the skin is drawn ~25 mm out on the trunk, thinner on head and limbs.
+ * - Coats: summer grizzled rusty / greyish brown back, white belly, brownish ears with black tips (ADW), hind feet keep white
+ *   patches (Hinterland Who's Who); winter white but the black ear tips. Shades [estimate: read from refs/hare/].
+ * - Moult: Mills et al. 2013 PNAS 110(18):7360 (doi:10.1073/pnas.1222724110): initiation fixed by day length ~10 Oct (day 283)
+ *   and ~10 Apr (day 100); autumn brown-to-white ~40 d; spring plastic 30-50 d, modelled at 40. Low parts turn first and stay
+ *   white longest (spread .6 over .24 m) [estimate: Hinterland Who's Who].
+ * - Fur: guard hair 31.67 mm (autumn coat) -> 43.19 mm (winter); hair density x2.28-2.48 in winter (Sheriff 2009), so summer
+ *   shows .44 of the winter cards. 7000 cards from the wolf baseline (tasks/T-0028 draw-cost row).
+ */
+const T = (z: number, y: number, rx: number, ry: number, fur: number, o: Partial<SkinSpec['trunk'][number]> = {}) => ({ at: 'trunk' as const, z, y, rx, ry, fur, ...o });
+const Hd = (z: number, y: number, rx: number, ry: number, fur: number, o: Partial<SkinSpec['trunk'][number]> = {}) => ({ at: 'head' as const, z, y, rx, ry, fur, ...o });
+export const HARE_SKIN: SkinSpec = {
+  name: 'hare',
+  // round rump behind the hip, the haunch over the hip joints, tapering to a narrow chest between the forelegs
+  trunk: [T(.075, .026, .014, .025, 1), T(.05, .03, .025, .044, 1), T(0, .03, .026, .048, 1), T(-.07, .02, .021, .039, 1),
+    T(-.14, -.008, .02, .036, 1), T(-.2, -.004, .017, .033, 1), T(-.235, .02, .012, .019, .95, { head: .2 })],
+  neck: [T(-.225, .02, .018, .023, .95), Hd(.045, -.02, .016, .019, .85, { head: .6 }), Hd(.025, -.005, .015, .017, .8)],
+  // rounded cranium, puffy buff cheeks, blunt muzzle, dark-brown bare nose leather (fur < .03 grows no cards)
+  head: [Hd(.0336, .0022, .0246, .0269, .7), Hd(.009, .0045, .0302, .0325, .6, { accent: .25 }), Hd(-.0202, -.0022, .028, .0291, .5, { accent: .55 }),
+    Hd(-.0403, -.0101, .0213, .0224, .4, { accent: .5 }), Hd(-.0538, -.0146, .0134, .0146, .3, { accent: .3, pale: .2 }), Hd(-.0605, -.0146, .0067, .0067, .02, { dark: .8 })],
+  tail: [T(.06, .03, .014, .014, 1, { tail: .5 }), T(.085, .035, .016, .015, .7, { tail: 1, pale: .3 }), T(.1, .033, .01, .01, .6, { tail: 1, pale: .5 })],
+  ear: { base: [.014, .02, .012], lean: .004, rings: [{ t: 0, rx: .009, ry: .007, fur: .5 }, { t: .25, rx: .016, ry: .0045, fur: .4 },
+    { t: .6, rx: .017, ry: .004, fur: .35, dark: .1 }, { t: .85, rx: .013, ry: .0035, fur: .35, dark: .7 }, { t: 1, rx: .006, ry: .003, fur: .3, dark: 1 }] },
+  fore: { r: [[.022, .02], [.014, .013], [.01, .01], [.008, .009], [.006, .011]], fur: [[0, .5], [3, .45]], pale: [[0, 0], [3.5, .45]] },
+  hind: { r: [[.03, .02], [.021, .014], [.011, .012], [.008, .02], [.006, .017]], fur: [[0, .75], [1.5, .5], [2.5, .55]], pale: [[0, 0], [2, .3], [2.5, .75]] },
+  pelt: { body: .025, head: .012, limb: .012, ear: .0015 },
+  eye: [.0365, .011, -.014], eyeClear: .013, cheek: { at: [.022, -.011, -.022], radius: .018, offset: [.003, -.002, 0] },
+  summer: { back: [.36, .27, .18], belly: [.86, .84, .8], dark: [.07, .06, .055], accent: [.55, .45, .33], tip: [.1, .08, .06], tipAmount: .35 },
+  winter: { back: [.9, .9, .88], belly: [.93, .93, .91], dark: [.06, .055, .05], accent: [.9, .89, .86], tip: [.96, .96, .95], tipAmount: 0 },
+  moult: { autumnStart: 283, autumnDays: 40, springStart: 100, springDays: 40, spread: .6, height: .24 },
+  fur: { cards: 7000, winterLength: .04319, summerLength: .03167, width: .013, summerDensity: .44, lean: .3, tone: .3, rootShade: .55, bareShade: .75, seed: 911 },
+};
+/** The hare's tubes in one coat (pelt 0 = bare body for the mass check). */
+export const hareTubes = (bind: RigBind, coat: CoatPalette = HARE_SKIN.summer, pelt = 1) => rigTubes(bind, HARE_SKIN, coat, pelt);
+/** Every hare's coat from the world date (day of the year); returns the whole-coat whiteness. */
+export const setHareDay = (dayOfYear: number) => setCoatDay(HARE_SKIN, dayOfYear);
+export const hareCoatState = () => coatState(HARE_SKIN);
+/** T-0028: the procedural furred mesh replaces the run 1-6 blob model; the same body / head / ears / legs handles, now bones
+ *  of one skinned skin + fur, posed by poseHare from the rig. */
 function model() {
-  const m = createHareMesh(hareBind());
+  const m = createRigSkin(hareBind(), HARE_SKIN);
   return { root: m.root, body: m.body as THREE.Object3D, head: m.head as THREE.Object3D, legs: m.legs, ears: m.ears as THREE.Object3D[] };
 }
-let bindCache: HareBind | undefined;
+let bindCache: RigBind | undefined;
 /** The bind pose: the rig standing still at the origin, heading 0 (forward -z); joints relative to the hip-joint midpoint. */
-export function hareBind(): HareBind {
+export function hareBind(): RigBind {
   if (bindCache) return bindCache;
   const rig = createBounding(HARE_SKELETON, HARE_AGENT.gait!, () => 0, { x: 0, z: 0, heading: 0 }, GIRDLE, HARE_RIG);
   let fr = rig.update(1 / 60, 0, 0, null); for (let i = 0; i < 120; i++) fr = rig.update(1 / 60, 0, 0, null);
@@ -177,7 +223,7 @@ export function createHares(scene: THREE.Scene) {
     }
   }
   function remove(h: Hare) {
-    scene.remove(h.root); h.root.traverse(o => { if (o instanceof THREE.Mesh) { if (!o.geometry.userData.shared) o.geometry.dispose(); if (!(o.material as THREE.Material).userData.shared) (o.material as THREE.Material).dispose(); } }); // the coat geometry and materials are shared (render/hareMesh)
+    scene.remove(h.root); h.root.traverse(o => { if (o instanceof THREE.Mesh) { if (!o.geometry.userData.shared) o.geometry.dispose(); if (!(o.material as THREE.Material).userData.shared) (o.material as THREE.Material).dispose(); } }); // the coat geometry and materials are shared (render/rigSkin)
     if (h.label) { scene.remove(h.label); h.label.material.map?.dispose(); h.label.material.dispose(); }
     if (h.agent.contact) CONTACTS.end(h.agent.key, h.agent.contact); // leaving the world ends its contact
     hares.splice(hares.indexOf(h), 1);

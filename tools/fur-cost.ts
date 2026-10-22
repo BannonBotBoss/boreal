@@ -1,10 +1,10 @@
 // Fur draw-cost bench (Grok Bot, T-0028 draw-cost row): n copies of the player wolf (render/playerWolf, 13000 cards) or the
-// procedural hare (render/hareMesh) in view, each frame rendered and synced (1-px readPixels, so vsync and rAF don't pace it),
+// procedural hare (the hare's rig skin (HARE_SKIN)) in view, each frame rendered and synced (1-px readPixels, so vsync and rAF don't pace it),
 // with the fur on and off. ?model=wolf|hare&n=5&frames=240&day=227. Result in globalThis.pageResult (tools/strip-shot.mjs prints it).
 import * as THREE from 'three';
 import { createPlayerWolf } from '../src/render/playerWolf';
 import { createHareModel } from '../src/animals/hare';
-import { setHareDay, hareCoatState } from '../src/render/hareMesh';
+import { setHareDay, hareCoatState } from '../src/animals/hare';
 const q = new URLSearchParams(location.search), model = q.get('model') ?? 'wolf', n = Number(q.get('n') ?? 1), frames = Number(q.get('frames') ?? 240);
 const W = 1280, H = 800, canvas = document.getElementById('c') as HTMLCanvasElement;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); renderer.setPixelRatio(1); renderer.setSize(W, H);

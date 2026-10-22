@@ -7,9 +7,9 @@ import { join } from 'node:path';
 import * as THREE from 'three';
 import { buildBody } from '../src/core/body';
 import { BONE_COUNT as WOLF_BONE_COUNT } from '../src/core/wolfBody';
-import { HARE_BONE, HARE_BONE_COUNT, HARE_TUBE, hareTubes, hareLegTube, moultWhiteness, localWhiteness, unionVolume, MOULT } from '../src/animals/hareBody';
-import { HARE_BODY, createHareModel, hareBind, poseHare, type HareModel } from '../src/animals/hare';
-import { HARE_FUR, setHareDay, hareCoatState } from '../src/render/hareMesh';
+import { RIG_BONE as HARE_BONE, RIG_BONE_COUNT as HARE_BONE_COUNT, RIG_TUBE as HARE_TUBE, rigLegTube as hareLegTube, seasonalWhiteness, localWhiteness as rigLocal, unionVolume } from '../src/core/rigBody';
+import { HARE_BODY, HARE_SKIN, createHareModel, hareBind, hareTubes, poseHare, setHareDay, hareCoatState, type HareModel } from '../src/animals/hare';
+const HARE_FUR = HARE_SKIN.fur, MOULT = HARE_SKIN.moult, moultWhiteness = (d: number) => seasonalWhiteness(d, MOULT), localWhiteness = (w: number, y: number) => rigLocal(w, y, MOULT);
 import { createAgent } from '../src/core/agent/pipeline';
 import { HARE_AGENT } from '../src/core/agent/species';
 import { stream } from '../src/proc/rng';
@@ -86,7 +86,7 @@ test('skinned to the rig: every leg-segment bone sits on its rig joint and point
 });
 
 test('no mesh file: the hare is built from code, nothing is fetched or loaded', () => {
-  const src = ['src/animals/hare.ts', 'src/animals/hareBody.ts', 'src/render/hareMesh.ts', 'src/render/furCards.ts', 'src/core/body.ts'].map(f => readFileSync(f, 'utf8')).join('\n');
+  const src = ['src/animals/hare.ts', 'src/core/rigBody.ts', 'src/render/rigSkin.ts', 'src/render/furCards.ts', 'src/core/body.ts'].map(f => readFileSync(f, 'utf8')).join('\n');
   assert.doesNotMatch(src, /GLTFLoader|OBJLoader|FBXLoader|ColladaLoader|PLYLoader|STLLoader|\.(glb|gltf|fbx|obj|dae|ply|stl)['"`]|TextureLoader|new URL\(/);
   const walk = (d: string): string[] => !existsSync(d) ? [] : readdirSync(d).flatMap(f => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
   assert.deepEqual(walk('public').filter(f => /hare|rabbit|lepus/i.test(f) && /\.(glb|gltf|fbx|obj|dae|ply|stl|png|jpg|ktx2)$/i.test(f)), []);

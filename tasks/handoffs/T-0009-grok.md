@@ -11,7 +11,24 @@ Plan (22:49 PT brief): stretch / forward-reach swing fix is WITH GAIT BUILDER (o
 - [x] 1b (23:39 PT addition) Reviewed (rule 15) and merged Gait Builder's grok-gait/T-0009-fore-reach (ee1ad20 FORE_REACH late-swing fore reach, ce5f741 handoff) into grok/rabbit-clover: f430a23 (clean; bounding.ts + tests/bound-v6.test.ts + T-0009-grok-gait.md). Box v1.3 on the merged tip with run 11 poses (M17): shape summer 72.7, winter 81.1, stretch 93.7 / 100.
 - [x] 1c Forearm within the sourced 11-36 deg (Schmidt 2008 JEB 211:3775 Table 4): girdleTop .17 -> .157 (hare.ts). Probe (box tools/_fa.ts, copy C:\dev\rabbit-rec15\look\_fa.ts): forearm (elbow -> wrist) below the horizontal while FORE_REACH holds (swing .7-.92), fore legs 0 / 2, max at 5 / 8.5 / 11.6 m/s: .17 39.0 / 37.8 / 38.5 (past 36); .16 36.0 / 34.0 / 36.6; .157 34.7 / 33.3 / 35.9; .155 33.8 / 32.8 / 35.2; .15 31.8 / 31.3 / 32.3. Standing elbow / graze fold: .157 11 mm below the glenoid at 69 deg, poseReach 1 (no Z); .155 reach .97; .15 4 mm, 55 deg, reach .88 (Z returns). No sourced longer L. americanus forearm or manus (UWBM-21111 radius 70.1 mm; metacarpals not measured online); an unsourced manus .22 only moves the forearm ~0.5 deg. Box v1.3 full renders: M17 (.17) shape 72.7 / 81.1, end-on 67.7; M157 (.157) 72.4 / 81.5, 66.0 (side within noise, end-on -1.7 > noise 1.1); M155 72.6 / 81.2 / 65.3; M15 72.4 / 81.4 / 63.8. Chosen .157 = best with the forearm <= 36 deg; it ties the merged .17 on every T-0009 gate within noise (cost end-on 1.7). New test tests/forearm.test.ts (<= 36 deg at 5 / 8.5 / 11.6 m/s); girdle test now on the fore legs 0 / 2 (it read 0 / 1, a hind leg) with the elbow > 5 mm below the glenoid. Grid C:\dev\rabbit-rec15\grid-run11.txt section 4. FLAG kept: touchdown forearm under 11 deg at 11.6 m/s (also at .17, pre-existing; Gait Builder).
 - [x] 2 Plausibility, mass, bound checks on the merged tip + girdle .157: focused tests 40/40 incl. bound-v6, forearm, head pose, hare-mesh mass check, posePlausibility (C:\dev\rabbit-rec15\test-step2.txt), bound-checks hare 99.8 % (bound-score-step2.txt), tsc 0 (tsc-step2.txt); box renders 0 zeroed cells.
-- [ ] 3 Re-score v1.3, npm test + tsc, compare-run11.jpg; complete only if every gate >= 95 %
+- [x] 3 Re-scored 00:21-00:22 PT on 95e7c7c (PC GPU Edge d3d11, C:\dev\rabbit-rec15\look\{gs,gw,ss,sw,ge,se}-pc12.png + .log.json, 0 implausible cells; s13-pc12.json / e13-pc12.json). NOT SUBMITTED: gates < 95 %.
+  Checks: npm test 421 tests, 409 pass, 0 fail, 12 todo (C:\dev\rabbit-rec15\npmtest.txt); tsc 0 (tsc.txt); bound-checks hare 99.8 % (bound-score.txt).
+  RULES (tasks/RULES.md on main a436a9d, last changed 9dce12c): no cross-family reviewer rule. Rule 15 re-check 00:25 PT: no new events on any branch since 22:47. No board change this run (no fast-forward needed).
+  Compare C:\dev\rabbit-rec15\compare-run11.jpg (box /workspace/rabbit/compare-run11.jpg; script look\compare_run11.py): run 10 pc11 vs run 11 pc12.
+
+### Calibrated gates, run 11 (rule 11): lookscore v1.3 as run 8-10 (noise SD shape summer 0.6, winter 0.5, end-on 1.1)
+| gate | run 10 (pc11, b774a5e) | run 11 (pc12, 95e7c7c) |
+|---|---|---|
+| shape summer | 65.5 | 72.6 |
+| shape winter | 76.2 | 81.5 |
+| coat summer | 88.5 | 89.5 |
+| coat winter | 96.3 | 95.5 |
+| end-on shape / coat | 67.3 / 78.5 | 66.1 / 80.0 |
+| fore forearm in late swing (max, 5 / 8.5 / 11.6 m/s; sourced 11-36 deg) | - (no fore reach) | 34.7 / 33.3 / 35.9 deg |
+Per pose run 11: summer crouch 54.5, sit 55.1, gather 64.1, push 93.1, stretch 96.2; winter 67.8, 81.6, 61.9, 96.0, 100; end-on crouch 86.2, sit 65.5, gather 69.0, push uncalibrated, stretch 43.8.
+T-0009 gates: look (mean shape + coat summer) 81.1 (run 10 77.0); graze (summer crouch) 54.5 (50.9); alert (summer sit) 55.1 (56.4: -1.3, beyond the 0.6 noise; the lower girdle).
+Winter crouch 64.3 -> 67.8: NOT back to run 9's 72.9 within plausibility (lower heads that scored higher buried the muzzle). Merged .17 (no forearm fix) scored the same within noise on the box (M17 72.7 / 81.1 / 67.7) but its forearm is 37.8-39.0 deg: not kept.
+Next: winter crouch and sit need body changes beyond head / ear pose (the reference is shorter: skin length or graze body shape); end-on gather 77.5 -> 69.0 after the girdle drop; Gait Builder: touchdown forearm under 11 deg at 11.6 m/s (pre-existing).
 - Needs from another agent: Gait Builder - extended-flight stretch / fore forward reach in the swing code (run 10: stretch summer 100 -> 85.1, winter 86.7 -> 81.3 after the girdle raise).
 
 ## Run 10 progress (started 2026-10-21 22:13 PT; keep current: board rule 9; grok/rabbit-clover + board via grok/transactional-plan)

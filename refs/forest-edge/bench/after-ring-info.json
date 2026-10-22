@@ -1,0 +1,78 @@
+{
+  "port": "5262",
+  "shots": [
+    {
+      "f": "default-0.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=30,0,1.571",
+      "t": 1792659750240,
+      "info": "{\"instances\":3988,\"geometries\":168,\"tiles\":144,\"refills\":4,\"sliceMaxMs\":2.7000000029802322,\"inner\":60,\"outer\":224,\"triangles\":249904,\"silhouetteW\":0.783}"
+    },
+    {
+      "f": "default-1.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=30,0,1.571",
+      "t": 1792659751534,
+      "info": "{\"instances\":3988,\"geometries\":168,\"tiles\":144,\"refills\":4,\"sliceMaxMs\":2.7000000029802322,\"inner\":60,\"outer\":224,\"triangles\":249904,\"silhouetteW\":0.783}"
+    },
+    {
+      "f": "default-2.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=30,0,1.571",
+      "t": 1792659752813,
+      "info": "{\"instances\":3988,\"geometries\":168,\"tiles\":144,\"refills\":4,\"sliceMaxMs\":2.7000000029802322,\"inner\":60,\"outer\":224,\"triangles\":249904,\"silhouetteW\":0.783}"
+    },
+    {
+      "f": "v2-0.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=30,0,1.571&trees=v2",
+      "t": 1792659781230,
+      "info": "{\"instances\":3776,\"geometries\":140,\"tiles\":244,\"refills\":2,\"sliceMaxMs\":2.2000000029802322,\"inner\":60,\"outer\":288,\"triangles\":276992,\"silhouetteW\":0.565}"
+    },
+    {
+      "f": "v2-1.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=30,0,1.571&trees=v2",
+      "t": 1792659782518,
+      "info": "{\"instances\":3776,\"geometries\":140,\"tiles\":244,\"refills\":2,\"sliceMaxMs\":2.2000000029802322,\"inner\":60,\"outer\":288,\"triangles\":276992,\"silhouetteW\":0.565}"
+    },
+    {
+      "f": "v2-2.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=30,0,1.571&trees=v2",
+      "t": 1792659783803,
+      "info": "{\"instances\":3776,\"geometries\":140,\"tiles\":244,\"refills\":2,\"sliceMaxMs\":2.2000000029802322,\"inner\":60,\"outer\":288,\"triangles\":276992,\"silhouetteW\":0.565}"
+    },
+    {
+      "f": "b-default-0.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=272,-832,-1.571",
+      "t": 1792659807175,
+      "info": "{\"instances\":2771,\"geometries\":120,\"tiles\":186,\"refills\":2,\"sliceMaxMs\":1.699999988079071,\"inner\":60,\"outer\":256,\"triangles\":193752,\"silhouetteW\":0.652}"
+    },
+    {
+      "f": "b-default-1.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=272,-832,-1.571",
+      "t": 1792659808458,
+      "info": "{\"instances\":2771,\"geometries\":120,\"tiles\":186,\"refills\":2,\"sliceMaxMs\":1.699999988079071,\"inner\":60,\"outer\":256,\"triangles\":193752,\"silhouetteW\":0.652}"
+    },
+    {
+      "f": "b-default-2.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=272,-832,-1.571",
+      "t": 1792659809729,
+      "info": "{\"instances\":2771,\"geometries\":120,\"tiles\":186,\"refills\":2,\"sliceMaxMs\":1.699999988079071,\"inner\":60,\"outer\":256,\"triangles\":193752,\"silhouetteW\":0.652}"
+    },
+    {
+      "f": "b-v2-0.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=272,-832,-1.571&trees=v2",
+      "t": 1792659839868,
+      "info": "{\"instances\":708,\"geometries\":107,\"tiles\":100,\"refills\":1,\"sliceMaxMs\":2.1000000089406967,\"inner\":60,\"outer\":288,\"triangles\":55684,\"silhouetteW\":0.537}"
+    },
+    {
+      "f": "b-v2-1.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=272,-832,-1.571&trees=v2",
+      "t": 1792659841132,
+      "info": "{\"instances\":708,\"geometries\":107,\"tiles\":100,\"refills\":1,\"sliceMaxMs\":2.1000000089406967,\"inner\":60,\"outer\":288,\"triangles\":55684,\"silhouetteW\":0.537}"
+    },
+    {
+      "f": "b-v2-2.png",
+      "url": "http://127.0.0.1:5262/?nomenu&bench&hour=12&at=272,-832,-1.571&trees=v2",
+      "t": 1792659842382,
+      "info": "{\"instances\":708,\"geometries\":107,\"tiles\":100,\"refills\":1,\"sliceMaxMs\":2.1000000089406967,\"inner\":60,\"outer\":288,\"triangles\":55684,\"silhouetteW\":0.537}"
+    }
+  ],
+  "errors": []
+}

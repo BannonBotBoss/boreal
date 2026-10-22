@@ -23,7 +23,7 @@ try {
   const ev = async expression => { const r = await cdp('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }); if (r.exceptionDetails) throw Error(JSON.stringify(r.exceptionDetails)); return r.result?.value; };
   await cdp('Runtime.enable'); await cdp('Page.enable'); await cdp('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
   const shots = [];
-  const go = async (url) => { await cdp('Page.navigate', { url }); let ok = false; for (let i = 0; i < 120; i++) { await sleep(1000); if (await ev("document.readyState==='complete' && !document.getElementById('loading')")) { ok = true; break; } } if (!ok) throw Error('not ready ' + url); await sleep(8000); };
+  const go = async (url) => { await cdp('Page.navigate', { url }); let ok = false; for (let i = 0; i < 120; i++) { await sleep(1000); if (await ev("document.readyState==='complete' && !document.getElementById('loading')")) { ok = true; break; } } if (!ok) throw Error('not ready ' + url); await sleep(15000); }; // 15 s: the ring re-measures w once a second and refills in slices
   for (const [tag, at, extra] of VIEWS) {
     const url = `http://127.0.0.1:${PORT}/?nomenu&bench&hour=12&at=${at}${extra}`; await go(url);
     const info = await ev("JSON.stringify(window.borealFarTrees?.info ?? null)").catch(() => null);

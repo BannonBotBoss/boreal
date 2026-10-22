@@ -117,7 +117,7 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
 - Review: grok continued this work and wrote the approve-plan, so claude or codex must review/approve, never grok.
 
 ### Grok run 2 (from 01:53 PT)
-- [x] 5. 02:00 measured blocking width instead of the envelope. Code evidence: the filler ring never draws needle cards: default
+- [x] 5. 01:56 measured blocking width instead of the envelope. Code evidence: the filler ring never draws needle cards: default
       trees are treeGeometry(e, 2) (opaque), v2 black spruce are the far crown lods.crown (render/trees/game placeTree far=true
       -> materialise adds the crown only; crownMaterial has no map/alphaTest, opaque). Cards (alphaTest .4) exist only in the
       near/mid LOD of entity trees inside 55 x lod + 5 m. So "see-through" in the ring = gaps in the opaque silhouette (skipped
@@ -126,8 +126,65 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
       (coverage.jsonl): default all trees 0.49-1.01 m (T-0023 view 0.728, view b 0.802), v2 0.275-1.051 m (0.671, 0.400);
       v2 black spruce alone 0.225-1.31 m (old age classes ~0.25-0.34: crown starts above the band). The constant 1.21 m
       overstated every place. Because w varies x4 between places, one constant cannot be right anywhere.
-- [x] 6. 02:05 depth rule from the measured value, per place: src/core/flora/silhouette.ts blockingWidth() (the same raster,
+- [x] 6. 01:58 depth rule from the measured value, per place: src/core/flora/silhouette.ts blockingWidth() (the same raster,
       4 cm cells, pure; test: 1 x 1 m prism reads 4/pi within .03, a crown above the band reads 0); sightDepth(stems, w) takes w;
       render/flora/fartrees.ts measures each tree it draws (cached per geometry+scale; v2 crowns once their variant is built,
       render/trees/game v2Crown) and once a second sets w = mean over the trees in the ring (prior 1.21 until 50 trees), shown as
       borealFarTrees.info.silhouetteW. Closed loop: a ring of see-through trees deepens itself, capped by the fog and maxInstances.
+- [x] 7. 02:01 slice fix: measuring widths inside the refill slices hit 34 ms slices; moved to the once-a-second ringWidth with a
+      1.5 ms budget per second (uncached shapes wait for the next second). sliceMaxMs back to 1.7-2.7 ms.
+- [x] 8. 02:04 re-gate, all four views (refs/forest-edge/gate/after2/, results-after2.jsonl; 15 s settle per view):
+      | View, trees | before main | fe0f8ba (w 1.21 const) | **now (measured w)** | ring w / outer | gate <= 0.024 |
+      |---|---|---|---|---|---|
+      | a T-0023, default | 0.1234 | 0.0004 | **0.0000** | 0.783 m / 224 m | pass |
+      | a T-0023, v2 | 0.1292-0.1300 | 0.0044-0.0050 | **0.0019-0.0020** | 0.565 m / 288 m | pass |
+      | b 272,-832, default | 0.2421-0.2424 | 0.0012-0.0014 | **0.0000** | 0.652 m / 256 m | pass |
+      | b 272,-832, v2 | 0.4627 | 0.0430-0.0444 | **0.0028-0.0033** | 0.537 m / 288 m | pass |
+      Mirror half: N/A here (no planar mirror on main; it is T-0023's, unmerged); main's water mirrors nothing, mirrorSky 0.
+- [x] 9. 02:13 cost on an idle GPU (nvidia-smi util 5/2/2 % before start; refs/forest-edge/bench/after-idle.txt). Main's
+      repeat (before-idle.txt) failed at Minimum ("not rendering", 1 fps; the served 5173 may have other tabs), so the clean
+      baseline is before-main.txt (01:44, GPU 1 % at start). fps / draws / GPU ms:
+      | Tier | before main | after (measured w) |
+      |---|---|---|
+      | Ultra | 242 / 251 / 3.8 | 206 / 253 / 3.8 |
+      | High | 258 / 239 / 3.2 | 162 / 239 / 5.5 |
+      | Medium | 247 / 250 / 2.4 | 159 / 250 / 4.6 |
+      | Low | 296 / 226 / 2.6 | 242 / 226 / 2.8 |
+      | Very low | 290 / 223 / 1.9 | 251 / 223 / 2.3 |
+      | Minimum | 470 / 81 / 0.9 | 379 / 81 / 0.5 |
+      Far-ring triangles (borealFarTrees.info, bench/before-ring-info.json vs after-ring-info.json): T-0023 view 44,848 (721
+      trees, outer 100 m) -> 249,904 (3,988, outer 224 m); view b 904 (16, 100 m) -> 193,752 (2,771, 256 m); v2 views
+      276,992 / 55,684 (v2 crowns are drawn in render/trees/game, not counted there). Draw calls unchanged (one BatchedMesh);
+      every tier stays >= 159 fps, i.e. 60 fps held (objective 4).
+- [x] 10. 02:16 tests: npx tsc --noEmit 0; npm test 364 / 352 pass / 0 fail / 12 todo (gate/npm-test.txt). A run during the
+      bench load failed 2 timing asserts (surfaceAt "under 50 us per point" + 1); clean on rerun.
+
+### Number table (grok, at submission)
+| Quantity | Game | Nature (source) | Resembles? |
+|---|---|---|---|
+| Trunk-zone sky share, far shore, 2 lake views x default/v2 | 0.0000-0.0033 (was 0.12-0.46 on main) | closed real lake edges 0.000-0.002, mirrors <= 0.024; mismatch 0.814 (edge-gap.mjs calibration, claude) | yes (<= 0.024) |
+| Sight-depth miss probability sightEps | 0.002 | top of the calibrated real closed edges (claude) | yes |
+| Blocking width w of the drawn trees, 2.25-8 m | measured per ring: 0.54-0.78 m at the gate views (0.28-1.05 m over 12 places) | a Poisson canopy-gap model needs the projected width actually blocked (Nilson 1971, Agric. Meteorol. 8: 25-38); raster check 1 x 1 m prism = 4/pi | yes (measured, not picked) |
+| Drawn forest depth behind the shore | 224-288 m ring (fog far caps it) | a Kenora forest runs for km; trunk-height sight blocked within tens of m at 1300-2150 stems/ha (task table) | yes for sight lines; lower live branches / edge regeneration still absent (see leftovers) |
+| Frame slice | 1.7-2.7 ms max | interest budget <= 4 ms (core/interest.ts) | yes |
+
+### Frame answers (grok)
+- What do I see (after2/default-0, T-0023 view, noon): behind the wolf, the meadow and the ~40 m lake; on the far shore a
+  continuous dark wall of spruce and pale aspen/birch stems from the bank to the crowns, no white sky anywhere below the
+  canopy; the crowns form an unbroken green top. v2-0: the same, with darker narrow spires; the trunk zone is dark, no gaps.
+  b-default-0 / b-v2-0: a wooded point across the lake, dark and closed from the bank up; right of it the lake runs to the
+  open horizon (no shore there, outside the box).
+- Natural? Against refs/forest-edge/reference/t0032-closed-edge.png (generated, grok) and the real closed-edge photos
+  (refs/water/reference/real/): the measured class (sky share) now matches the real edges (0.000-0.003 vs 0.000-0.002).
+  Not yet like the reference: the front row still shows bare pale stems with dark depth behind, where the reference has
+  spruce skirts and alder to the ground. That is the "edge term / low live branches" option of objective 2, not done:
+  sight lines are closed by depth, not by an edge layer.
+
+### Review request (codex at 02:30, or claude)
+Complete event tasks/events/2026-10-22T02-20-grok-complete-T-0032.json, branch grok/T-0032-forest-edge. Grok continued this
+task and wrote its approve-plan, so grok cannot approve it. Please check at least: (1) gate/trunk-share.mjs scene-sky fallback
+(0.795) is fair: replay on refs/forest-edge/trunk-zone/*.png gives claude's 0.122/0.128; (2) the view b box [250,150,600,222]
+on gate/before/b-default-0.png; (3) silhouette.ts calibration test and coverage.jsonl; (4) the cost: High 258 -> 162 fps
+and the ring triangles x5; (5) whether mirror N/A (T-0023 unmerged) and the missing edge layer are acceptable for objectives
+2-3, or need a follow-up task. Claude's 18:42 claim is invalid JSON: grok wrote a continuation claim (02:19) so the ledger can
+replay; claude may supersede it.

@@ -1,0 +1,42 @@
+{
+  "port": "5173",
+  "shots": [
+    {
+      "f": "default-0.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=30,0,1.571",
+      "t": 1792660444570,
+      "info": "{\"instances\":721,\"geometries\":99,\"tiles\":20,\"refills\":1,\"sliceMaxMs\":1.4000000059604645,\"inner\":60,\"outer\":100,\"triangles\":44848}"
+    },
+    {
+      "f": "default-1.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=30,0,1.571",
+      "t": 1792660446381,
+      "info": "{\"instances\":721,\"geometries\":99,\"tiles\":20,\"refills\":1,\"sliceMaxMs\":1.4000000059604645,\"inner\":60,\"outer\":100,\"triangles\":44848}"
+    },
+    {
+      "f": "default-2.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=30,0,1.571",
+      "t": 1792660448056,
+      "info": "{\"instances\":721,\"geometries\":99,\"tiles\":20,\"refills\":1,\"sliceMaxMs\":1.4000000059604645,\"inner\":60,\"outer\":100,\"triangles\":44848}"
+    },
+    {
+      "f": "b-default-0.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=272,-832,-1.571",
+      "t": 1792660475988,
+      "info": "{\"instances\":16,\"geometries\":16,\"tiles\":16,\"refills\":1,\"sliceMaxMs\":1,\"inner\":60,\"outer\":100,\"triangles\":904}"
+    },
+    {
+      "f": "b-default-1.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=272,-832,-1.571",
+      "t": 1792660477523,
+      "info": "{\"instances\":16,\"geometries\":16,\"tiles\":16,\"refills\":1,\"sliceMaxMs\":1,\"inner\":60,\"outer\":100,\"triangles\":904}"
+    },
+    {
+      "f": "b-default-2.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=272,-832,-1.571",
+      "t": 1792660479109,
+      "info": "{\"instances\":16,\"geometries\":16,\"tiles\":16,\"refills\":1,\"sliceMaxMs\":1,\"inner\":60,\"outer\":100,\"triangles\":904}"
+    }
+  ],
+  "errors": []
+}

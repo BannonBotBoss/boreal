@@ -31,11 +31,13 @@ export function createFarTrees(scene: THREE.Scene) {
   let lx: number | undefined, lz = 0, lDensity = -1, lInner = 0, lOuter = 0, wRing = FAR_TREES.silhouetteW, wAt = -1e9;
   // T-0032: measured blocking width (core/flora/silhouette) of the trees this ring draws, per tile: [sum of default-tree widths, count,
   // v2 crowns as [seed, age class, sx, sy] measured once their variant is built]; the ring depth uses the mean over the drawn trees
-  const tileW = new Map<string, { sum: number; n: number; v2: number[][] }>(), wCache = new Map<string, number>();
-  const widthOf = (key: string, g: THREE.BufferGeometry, sx: number, sy: number) => { const k = key + ':' + sx.toFixed(2) + ':' + sy.toFixed(2); let w = wCache.get(k);
-    if (w === undefined) { w = blockingWidth(g.getAttribute('position').array, g.index ? g.index.array : null, sx, sy); wCache.set(k, w); } return w; };
-  const ringWidth = () => { let s = 0, n = 0; for (const tw of tileW.values()) { s += tw.sum; n += tw.n;
-      for (const [seed, cls, sx, sy] of tw.v2) { const g = v2Crown(seed, cls); if (g) { s += widthOf(g.uuid, g, sx, sy); n++; } } }
+  const tileW = new Map<string, { geo: [THREE.BufferGeometry, number, number][]; v2: number[][] }>(), wCache = new Map<string, number>();
+  let budget = 0; // ms left this second for new width measurements (each new shape+scale is measured once, outside the refill slices)
+  const widthOf = (g: THREE.BufferGeometry, sx: number, sy: number) => { const k = g.uuid + ':' + sx.toFixed(2) + ':' + sy.toFixed(2); let w = wCache.get(k);
+    if (w === undefined && budget > 0) { const t0 = performance.now(); w = blockingWidth(g.getAttribute('position').array, g.index ? g.index.array : null, sx, sy); wCache.set(k, w); budget -= performance.now() - t0; } return w; };
+  const ringWidth = () => { let s = 0, n = 0; budget = 1.5; const add = (w: number | undefined) => { if (w !== undefined) { s += w; n++; } };
+    for (const tw of tileW.values()) { for (const [g, sx, sy] of tw.geo) add(widthOf(g, sx, sy));
+      for (const [seed, cls, sx, sy] of tw.v2) { const g = v2Crown(seed, cls); if (g) add(widthOf(g, sx, sy)); } }
     return n >= 50 ? s / n : FAR_TREES.silhouetteW; }; // until 50 trees are drawn: the default-tree prior
   const mat4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), pos = new THREE.Vector3();
   /** Stand stems/ha per 40 m chunk centre (the same sample core/population uses). */
@@ -63,7 +65,7 @@ export function createFarTrees(scene: THREE.Scene) {
     const r = Math.ceil(outer / T), ox = Math.floor(cx / T), oz = Math.floor(cz / T);
     for (let tz = oz - r; tz <= oz + r; tz++) for (let tx = ox - r; tx <= ox + r; tx++) {
       const k = `${tx},${tz}`, d = d2(tx, tz); if (d < in2 || d > out2 || tiles.has(k)) continue;
-      const insts: number[] = [], tw = { sum: 0, n: 0, v2: [] as number[][] }; tiles.set(k, insts); tileW.set(k, tw);
+      const insts: number[] = [], tw = { geo: [] as [THREE.BufferGeometry, number, number][], v2: [] as number[][] }; tiles.set(k, insts); tileW.set(k, tw);
       for (const p of farTreesInTile(tx, tz, density, stemsAt, dry)) {
         if (bm && bm.instanceCount >= FAR_TREES.maxInstances) break;
         const rr = random(hash(`fartree-v2:${WORLD_SEED}:${Math.floor(p.r * 0xffffffff)}`));
@@ -73,7 +75,7 @@ export function createFarTrees(scene: THREE.Scene) {
           (v2keys.get(k) ?? v2keys.set(k, []).get(k)!).push(e.key); insts.push(-1); continue;
         }
         const shapes = geoIds.size, g = treeGeometry(e, 2), m = g.children[0] as THREE.Mesh, id = geometryId(m.geometry, m.material as THREE.Material);
-        if (id >= 0) { tw.sum += widthOf(m.geometry.uuid, m.geometry, g.scale.x, g.scale.y); tw.n++; const inst = bm!.addInstance(id); pos.set(e.x, heightAt(e.x, e.z), e.z); q.setFromAxisAngle(up, g.rotation.y); bm!.setMatrixAt(inst, mat4.compose(pos, q, g.scale)); insts.push(inst); }
+        if (id >= 0) { tw.geo.push([m.geometry, g.scale.x, g.scale.y]); const inst = bm!.addInstance(id); pos.set(e.x, heightAt(e.x, e.z), e.z); q.setFromAxisAngle(up, g.rotation.y); bm!.setMatrixAt(inst, mat4.compose(pos, q, g.scale)); insts.push(inst); }
         if (geoIds.size !== shapes || insts.length % 32 === 31) yield; // a new shape (tree build + batch upload) is its own step; dense tiles split every 32 trees
       }
       yield;

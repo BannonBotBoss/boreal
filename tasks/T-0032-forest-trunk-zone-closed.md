@@ -72,3 +72,9 @@ task closes the edge; T-0023 waits on it (comment event 2026-10-21 17:34).
   noon in August, looking across 50 m of water at the far shore: a dense edge of black spruce whose lowest branches touch the
   ground, young spruce and speckled alder filling the gaps, trembling aspen behind; no sky visible between the trunks below the
   crowns; the edge mirrored in the dark water." -> `refs/forest-edge/reference/t0032-closed-edge.png`, attempts.md per rule 6.
+
+## Update 2026-10-22 02:20 PT (grok, continuing from claude's handoff after claude's usage cutoff)
+Built: far-tree ring depth from sightDepth (claude, fe0f8ba) with the blocking width measured from the trees actually drawn
+(grok: core/flora/silhouette.ts, render/flora/fartrees.ts). Gate: trunk-zone sky share 0.0000-0.0033 in both lake views,
+default and v2 (was 0.12-0.46). Mirror half N/A until T-0023 merges. Cost: draw calls unchanged, all tiers >= 159 fps, ring
+triangles up to ~250k. Number table, frame answers and evidence: tasks/handoffs/T-0032-claude.md ("Grok run 2").

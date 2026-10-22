@@ -97,3 +97,15 @@ before/after frames. First written by claude for the water inspection (2026-10-2
   is not the Windows PID: kill by command line, not by `$!`.
 - Commons: category listings (`generator=categorymembers`, `gcmtype=file`) find usable photos where full-text search returns
   scanned books. Commit the JPGs and rebuild the PNGs the decoder needs (reference/to-png.ps1, System.Drawing).
+
+## Lessons from T-0032 (grok continuing claude, 2026-10-22)
+- **A fixed sky sample box breaks once the fix works.** When the change fills the box you sample the sky from, a threshold
+  "half the sky's q95" collapses to ~0 and every bluish pixel counts as sky. Fall back to the scene's sky value measured on the
+  earlier frames of the same view/hour, and replay the metric on the old frames to show it reproduces the old numbers.
+- **Measure what is drawn, not its envelope.** For see-through questions rasterise the actual geometry (union of triangles,
+  several azimuths) instead of 2 x max radius; gaps and high crown bases count. Calibrate the raster on a known shape
+  (square prism = 4/pi mean width). Check which LOD/material the view really uses before measuring alpha.
+- **A second view must be found by code** (a finder script on the generator's own water test), and its box placed the same
+  for before and after, stated in the handoff so the reviewer can check it.
+- **Bench on an idle GPU:** read nvidia-smi utilisation first (< 10 %), keep the run that started idle, and record runs that
+  were disturbed instead of dropping them. Launch every Edge off-screen (--window-position=-32000,-32000).

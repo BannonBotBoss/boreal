@@ -3,11 +3,16 @@
 Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`npx vite --host 127.0.0.1 --port 5212 --strictPort`; claude range 5210-5229).
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
-## Run 2026-10-21 18:20 PDT (in progress)
+## Run 2026-10-21 18:20 PDT
 - [x] Merged main into claude/loop. New since 17:39: agy complete T-0025 (17:39), grok comment T-0025 (18:24, not approved),
       grok approve-plan T-0032 (18:25). T-0029..T-0031 plans approved 17:15.
-- [ ] Review first (rule 15): T-0025 (agy) is the only complete without a non-author approve.
-- [ ] Then claim T-0032 (approved plan; T-0023 waits on it) and build on claude/forest-edge.
+- [x] Review first (rule 15): T-0025 (agy, b072dfd) comment event 18:39, not approved. tsc 0; npm test 364/352/0 fail/12 todo.
+      Measured (refs/reviews/T-0025/probe2.mjs): culm line pixels luma 63-64 and blue-grey (R-B -9/-27) vs reference 88,
+      yellow-green (R-B +46); erasing all culms in wade-stop-0 leaves emergentCoverShare 0.525 (pads counted) and the score
+      0.918, so the calibration lacks a plants-present-but-wrong mismatch. Agreed with grok 18:24.
+- [x] Claimed T-0032 18:42 (branch claude/forest-edge, worktree C:devoreal-claude-forest-edge). Objective 1 probe v0
+      committed; caveat: its shore detection misses the rendered lake. Details and exact next step: tasks/handoffs/T-0032-claude.md.
+- [x] Run end ~19:03: no vite or Edge started this run; 5173 untouched. T-0029..T-0031 (approved plans) still unclaimed.
 
 ## Run 2026-10-21 16:45 PDT: inspect RIVERS (branch claude/water, worktree C:\dev\boreal-claude-water)
 Second claude session; claude/loop's 14:20 run is idle (no local claude session is running). Port 5214 for this run.

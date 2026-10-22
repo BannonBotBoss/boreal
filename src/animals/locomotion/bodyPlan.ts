@@ -29,6 +29,8 @@ export interface BodyPlan {
    *  hip-joint height (small therians: Fischer et al. 2002), the glenoid below and ahead of it at `scapulaRest`, and the shoulder
    *  height no longer comes from `foreBend`. Omit = no blade (the shoulder joint is the top, at foreBend x foreLeg). */ scapula?: number;
   /** blade angle at mid-stance (rad from vertical, + glenoid ahead of the pivot); default SCAPULA_REST */ scapulaRest?: number;
+  /** run 9/10 (grok): height of the blade pivot (the scapula's vertebral border) standing, m; default `hip` (the old rule, which
+   *  left a small hare's glenoid so low that its fore leg stood Z-folded with the elbow above the shoulder joint) */ girdleTop?: number;
 }
 /**
  * Blade at mid-stance: pika (Ochotona rufescens) scapula 46° at touchdown, 80° at lift-off (Fischer et al. 2002, JEB 205:1315,
@@ -64,14 +66,14 @@ export function skeletonOf(plan: BodyPlan): Skeleton {
   if (hockY > meta) throw new Error(`body plan cannot stand: hock at ${hockY.toFixed(3)} m vs metatarsus ${meta.toFixed(3)} m`);
   const restFootAngle = Math.acos(hockY / meta);
   // fore: with a blade (BodyPlan.scapula) the chain top is the blade pivot at hip height, the glenoid S·cos(rest) below it
-  const S = plan.scapula ?? 0, rest = plan.scapulaRest ?? SCAPULA_REST;
+  const S = plan.scapula ?? 0, rest = plan.scapulaRest ?? SCAPULA_REST, gTop = plan.girdleTop ?? plan.hip;
   const fore: LimbDims = S > 0
-    ? { hip: plan.hip - S, girdle: S, girdleRest: rest, girdleSwing: 0, stance: S * Math.sin(rest), upper: up * foreIk, lower: (1 - up) * foreIk, foot: manus, footAngle: 0, footFlex: .6, bend: 'back' }
+    ? { hip: gTop - S, girdle: S, girdleRest: rest, girdleSwing: 0, stance: S * Math.sin(rest), upper: up * foreIk, lower: (1 - up) * foreIk, foot: manus, footAngle: 0, footFlex: .6, bend: 'back' }
     : { hip: shoulder, upper: up * foreIk, lower: (1 - up) * foreIk, foot: manus, footAngle: 0, footFlex: .6, bend: 'back' };
   const hind: LimbDims = { hip: plan.hip, upper: up * plan.hindLeg, lower: (1 - up) * plan.hindLeg, foot: meta, footAngle: req(plan, 'runFootAngle'),
     footFlex: .5, bend: 'forward', stance: meta * Math.sin(restFootAngle) };
   // origin at the hip joints (the body pitches about them): hind limbs at z 0, fore limbs the trunk ahead (the blade pivot
   // S·sin(rest) behind the glenoid, which stays at shoulderZ)
   const fz = plan.shoulderZ - plan.hipZ + (S > 0 ? S * Math.sin(rest) : 0), hips = [[-plan.track.fore, fz], [-plan.track.hind, 0], [plan.track.fore, fz], [plan.track.hind, 0]] as const;
-  return { plan, legs: { ...fore, hind }, hips, restFootAngle, shoulder: S > 0 ? plan.hip - S * Math.cos(rest) : shoulder, trunk: Math.abs(plan.hipZ - plan.shoulderZ), toes };
+  return { plan, legs: { ...fore, hind }, hips, restFootAngle, shoulder: S > 0 ? gTop - S * Math.cos(rest) : shoulder, trunk: Math.abs(plan.hipZ - plan.shoulderZ), toes };
 }

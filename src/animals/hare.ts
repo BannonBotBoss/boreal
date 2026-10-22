@@ -61,7 +61,7 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
  *  - run 5 (grok-gait v3 contract): hindToes .056 = the toes (MTP to tip) of the .132 hind foot, scapula .063 = the shoulder
  *    blade in the fore chain (= .816 x humerus), both from Lepus brachyurus bone means (Exp Anim 30(2):113, 1981, Tables 1
  *    and 4-6; working in tools/bound-plans.ts SPLIT / BLADE). */
-export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .187, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.27, headY: .085 };
+export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .187, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, girdleTop: .17, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.27, headY: .085 };
 /**
  * T-0028 skin + fur spec (data for the shared core/rigBody.ts + render/rigSkin.ts; tasks/T-0028 number table). No mesh file:
  * every vertex comes from these rings around the rig's bind pose (hareBind). Model space = the hare root (feet y 0, forward -z).
@@ -168,7 +168,7 @@ export const createHareModel = model;
  *  Hildebrand, Holmberg & Shrive 2003). */
 export const HARE_PLAN: BodyPlan = { hip: HARE_BODY.hipY, hipZ: HARE_BODY.hipZ, shoulderZ: HARE_BODY.shoulderZ, track: { fore: .03, hind: .045 }, foreLeg: HARE_BODY.foreLeg,
   hindLeg: HARE_BODY.hindLeg, hindFoot: HARE_BODY.hindFoot, hindToes: HARE_BODY.hindToes, scapula: HARE_BODY.scapula, upperShare: HARE_BODY.upperShare, manus: HARE_BODY.manus,
-  foreBend: HARE_BODY.foreBend, hindBend: HARE_BODY.hindBend, limits: LEPORID_LIMITS };
+  foreBend: HARE_BODY.foreBend, hindBend: HARE_BODY.hindBend, limits: LEPORID_LIMITS, girdleTop: HARE_BODY.girdleTop };
 /** Rig options (run 5): the level-trunk running posture (needs the blade's fore reach) and turning in place by re-planting. */
 export const HARE_RIG = { pose: RUN_POSE_LEVEL, turnInPlace: true };
 const HARE_SKELETON = skeletonOf(HARE_PLAN);

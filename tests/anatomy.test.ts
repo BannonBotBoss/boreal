@@ -32,7 +32,7 @@ test('bound-checks v3 anatomy check: grade 1 with soles below the hip, 0 at 2 cm
   assert.equal(g(-.02)?.grade, 1); assert.equal(g(.02)?.grade, 0); assert.ok(Math.abs((g(.01)?.grade ?? 0) - .5) < 1e-9); assert.equal(g(undefined), undefined);
 });
 
-test('graze crouch (run 9): the fore paws step ahead, then the body lowers the whole asked pitch and drop, plausible, feet planted', () => {
+test('graze crouch (run 9/10): with the raised girdle the body lowers the whole asked pitch and drop, plausible, feet planted', () => {
   for (const turnInPlace of [false, true]) {
     const sk = planFor('hare'), c = createBounding(sk, HOST_GAIT, () => 0, { x: 0, z: 0, heading: 0 }, GIRDLE, { pose: poseFor('hare'), turnInPlace });
     assert.equal(poseReach(sk, 'graze-crouch'), 1);
@@ -41,7 +41,19 @@ test('graze crouch (run 9): the fore paws step ahead, then the body lowers the w
     for (let t = 0; t < 2; t += 1 / 120) { f = c.update(1 / 120, 0, 0, { kind: 'graze-crouch' }); slip = Math.max(slip, f.slip[1], f.slip[3]); if (!posePlausibility(sk, f).ok) bad++; }
     const hip = limbPoints(sk, f, 1)[1].y;
     assert.deepEqual(f.contact, [true, true, true, true]); assert.equal(bad, 0, `implausible frames ${bad}`);
-    assert.ok(hip0 - hip > .03, `hip lowered ${hip0 - hip}`); assert.ok(paw0 - f.soles[0].z > .04, `fore paw ahead ${paw0 - f.soles[0].z}`);
+    assert.ok(hip0 - hip > .03, `hip lowered ${hip0 - hip}`); assert.ok(Math.abs(paw0 - f.soles[0].z) < .01, `fore paw stays put ${paw0 - f.soles[0].z}`);
     assert.ok(slip < .01 && Math.max(...f.slip) < .002, `slip ${slip} / ${f.slip}`);
+  }
+});
+
+test('shoulder girdle (run 10): standing, the hare fore limb is not folded in a Z (elbow below the glenoid, off its clamp)', () => {
+  const sk = planFor('hare'), c = createBounding(sk, HOST_GAIT, () => 0, { x: 0, z: 0, heading: 0 }, GIRDLE, { pose: poseFor('hare') });
+  let f = c.update(1 / 120, 0, 0, null); for (let t = 0; t < .5; t += 1 / 120) f = c.update(1 / 120, 0, 0, null);
+  for (const i of [0, 1]) {
+    const [, j, k, w] = limbPoints(sk, f, i);
+    assert.ok(j.y - k.y > .015, `elbow ${(j.y - k.y).toFixed(3)} m below the glenoid`);
+    const ux = j.x - k.x, uy = j.y - k.y, uz = j.z - k.z, vx = w.x - k.x, vy = w.y - k.y, vz = w.z - k.z;
+    const deg = Math.acos((ux * vx + uy * vy + uz * vz) / Math.hypot(ux, uy, uz) / Math.hypot(vx, vy, vz)) * 180 / Math.PI;
+    assert.ok(deg > 60, `elbow interior ${deg.toFixed(1)} deg`);
   }
 });

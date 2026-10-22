@@ -383,8 +383,12 @@ export const POSE_SHAPES: Record<PoseKind, PoseShape> = {
    *  chin, refs/hare/graze-alert-flight attempt2 panel 1), then the body lowers the full pitch -.06 / drop .04 with every joint
    *  inside its clamp and every sole below its own hip / shoulder (posePlausibility). Grid (box, lookscore v1.3 graze strips,
    *  C:\dev\rabbit-rec13\look\grid-graze.txt): ahead 0 / .05 / .06 / .07 x pitch 0 .. -.1 x drop .02 .. .06; drop .06 zeroes
-   *  (fore paw over the shoulder), level drops lift the chest bone and score lower. REFERENCE-MATCHED, not sourced. */
-  'graze-crouch': { pitch: -.06, drop: .04, foreLift: false, ahead: .06 },
+   *  (fore paw over the shoulder), level drops lift the chest bone and score lower. REFERENCE-MATCHED, not sourced.
+   *  Run 10 (grok): the shoulder girdle is raised (BodyPlan.girdleTop .17, hare.ts), so the fore limb stands with its elbow
+   *  27 mm below the glenoid at 71 deg interior instead of folded in a Z at its 50 deg clamp, and it folds the full pitch / drop
+   *  with the paws where they stand: `ahead` back to 0 (box grid C:\dev\rabbit-rec14\grid-run10.txt, G1 ahead .06 vs G3 ahead 0
+   *  within noise; G2 drop .05 lost winter crouch). */
+  'graze-crouch': { pitch: -.06, drop: .04, foreLift: false, ahead: 0 },
   /** upright sit-up on the haunches, fore paws lifted (run 7, grok): pitch 1.15 rad (66 deg) and the hip .02 m lower, so the
    *  silhouette axis is 66-70 deg like refs/hare/graze-alert-flight attempt2 / attempt3 panel 3 (68.9 / 70.8 deg, lookscore
    *  masks). REFERENCE-MATCHED, not sourced; the hind feet reach it within 1 mm (drop .04 would miss by 15 mm). Was .95 / 0. */

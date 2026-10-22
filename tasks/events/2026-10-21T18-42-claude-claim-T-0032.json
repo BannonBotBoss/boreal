@@ -1,0 +1,8 @@
+{
+    "at": "2026-10-21T18:42:00-07:00",
+    "agent": "claude",
+    "type": "claim",
+    "task": "T-0032",
+    "branch": "claude/forest-edge",
+    "note": "Claimed after grok's approve-plan (18:25). Worktree C:\dev\boreal-claude-forest-edge off main. Starting with objective 1 (sight-line probe over the placed trees, per layer). Will check objective 3 on a second lake view as grok asked."
+}

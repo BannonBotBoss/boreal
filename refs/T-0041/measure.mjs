@@ -1,7 +1,8 @@
 // T-0041 measure (grok-globe): node refs/T-0041/measure.mjs <out> clouds|land label=url ... (holds the bench lock).
 // clouds: jumpTo through 1200 -> 150 km (36 geometric steps), cream-pixel fraction and mean luminance (0-255) of the central crop per still.
 // land: the bare-load descent landing (still, spot, line of sight). seeds: spawn at each raw / chosen landing spot of seeds.json
-// (node: landSpawn without / with the heading), still + raycast from the game camera to the wolf. Holds the bench lock.
+// (node: landSpawn without / with the heading), still + raycast from the game camera to the wolf. sweep: label s300 = jump to 300 km,
+// hold the cloud fade at 0 and step the coverage threshold (deck density calibration). Holds the bench lock.
 import { spawn, execSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -42,7 +43,15 @@ try {
     const from = cam.getWorldPosition(new T.Vector3()), dir = wolf.clone().sub(from), L = dir.length(); dir.normalize(); const rc = new T.Raycaster(from, dir, 0, L - .6);
     const seen = new Set(); const hits = rc.intersectObjects(sc.children, true).filter(hh => { let o = hh.object; for (; o; o = o.parent) if (o.visible === false) return false; return true; });
     return JSON.stringify({ camDist: +L.toFixed(2), blocked: hits.length > 0, hits: hits.filter(hh => !seen.has(hh.object.uuid) && seen.add(hh.object.uuid)).slice(0, 5).map(hh => ({ d: +hh.distance.toFixed(2), type: hh.object.type, name: hh.object.name, mat: (Array.isArray(hh.object.material) ? hh.object.material[0] : hh.object.material)?.name ?? '' })) }); })()`));  for (const [label, base] of bases) {
-    if (what === 'clouds') {
+    if (what === 'sweep') { // the deck's density at one altitude: hold clear at 0 and raise the coverage threshold (uCloudEdge.x) step by step
+      const alt = +label.slice(1) * 1000; /* label s300 = 300 km */ await load(`${base}/`); await sleep(6000); await ev(`window.__inpage.globe.jumpTo(${alt})`); await sleep(1500);
+      await ev(`(() => { const d = window.__inpage.globe.scene.children.find(o => o.material?.uniforms?.uCloudClear); window.__dome = d.material.uniforms;
+        Object.defineProperty(d.material.uniforms.uCloudClear, 'value', { get: () => window.__clear ?? 0, set: () => {} }); return true; })()`);
+      const rows = []; for (const e of [null, .60, .613, .62, .63, .64, .65, .66, .67, .68, .69, .70, .71, .72, .74, .78, .9]) {
+        if (e === null) await ev('window.__clear = 1'); else await ev(`window.__clear = 0; window.__dome.uCloudEdge.value.x = ${e}`); await sleep(700);
+        const b = await snap(), [fr, lum] = await cream(b); rows.push({ edge: e, lum: +lum.toFixed(2) }); writeFileSync(join(outDir, `${label}-sweep-${e ?? 'clear'}.jpg`), Buffer.from(b, 'base64')); }
+      results[label] = rows; console.log(label + ' sweep ' + JSON.stringify(rows));
+    } else if (what === 'clouds') {
       await load(`${base}/`); await sleep(6000); const rows = [];
       for (let k = 0; k < 36; k++) { const a = 1.2e6 * Math.pow(1.5e5 / 1.2e6, k / 35); await ev(`window.__inpage.globe.jumpTo(${a})`); await sleep(700);
         const b = await snap(), [f, lum] = await cream(b), alt = JSON.parse(await state()).alt; rows.push({ target: Math.round(a), alt, cream: +f.toFixed(4), lum: +lum.toFixed(2) });

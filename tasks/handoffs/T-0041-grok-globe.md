@@ -2,7 +2,7 @@
 
 - **Doing:** cloud deck fade + clear landing view (tasks/T-0041-descent-polish.md). Requested by Matthew via Grok Bot.
 - **Branch:** grok-globe/descent-polish, worktree C:\dev\boreal-grok-descent-polish (from origin/main b441f1d).
-- **Status:** proposed 1c4a9e7 (03:00 PT); test + code + evidence on the pushed branch; NOT claimed, completed or PR'd: no approve-plan exists yet (checked all fetched branches at 03:37 PT). Next owner step: approve-plan (rule 16b by Grok for Matthew, or another agent) -> claim -> skill update -> complete -> PR.
+- **Status:** completed. Proposed 1c4a9e7 (03:00 PT); approve-plan by grok for matthew 03:52 PT (ceb790f on main, rule 16); origin/main merged (029fbce); claimed 3034208; follow-ups (rocks/logs, haze) b104ede..68c3c8e; complete event + PR. Review via tools/agent-review.mjs; not merged.
 
 ## Built (tests first 49053b9; code 145f01d, de97849)
 - **Cloud deck** (`transition.ts` cloudClear, `atmosphere.ts`): the in-page descent no longer raises the coverage threshold
@@ -51,8 +51,46 @@
   cut. Reference: the T-0034 oblique reference (refs/T-0034/reference-oblique.jpg) is what to look for at the end (clear ground, haze at
   the horizon). 95 % gate: N/A (a transition timing fix); substituted the calibrated luminance-jump and raycast checks above.
 
+## Follow-ups after the approve (Matthew via Grok Bot, 03:53 PT)
+### Rocks and logs in the view check (tests b104ede, code 0fccabc)
+- `core/ground.solidsAround(x, z)`: rocks and logs from the same generateChunk entities (3x3 chunks, per-chunk cache like treesAround).
+  Rock = disc r = d/2, top 0.7 d (core/rocks rockDiameter x entity scale). Log = segment +-2.2 m x scale along the yaw-turned axis
+  (render/geometry 4.4 m log), r .43 x scale, top .85 x scale.
+- `viewBlocked(x, z, yaw, trees, solids)` is 2.5D for solids: blocked when one reaches within r + .15 m of the camera-wolf line AND
+  stands taller than the line there (0.5 m at the wolf -> rider height 1.6 m at the camera). Pebbles, cobbles and logs near the
+  camera pass under the line. Trees unchanged.
+- Node, 400 seeded landings: raw spots blocked by a tree 29, by only a rock/log 23; after 0/400 blocked, max shift 4.46 m.
+  Test (200 landings): 8 tree + 11 rock/log raw blocks -> 0, all dry, <= 12 m.
+- Browser, the 3 first rock/log-only seeds (refs/T-0041/rock-seed*.jpg, seeds-rocklog*.json): the body raycast (0.5 m) reads all six
+  spots clear, but the stills show seed 86 raw: a log across the wolf's legs and lower body -> chosen: wolf clear; seed 102 raw: a
+  foreground boulder over the legs -> chosen: clear; seed 75: a big boulder beside the wolf, not over it (false positive, 1.5 m
+  shift, harmless). So the check is a little conservative; it catches leg/lower-body occlusion the centre raycast misses.
+
+### The 366-256 km haze (tests e6758fc, code 68c3c8e)
+- **Cause:** the home view sits inside one 900 km cloud cell whose density only spans ~.62-.71. measure.mjs sweep mode holds clear at 0
+  and raises the threshold at 300/450/600 km: luminance 196 (.62) -> 140 (.66) -> 63 (.70) -> ground 59-64 (sweep-300-450-600km.json,
+  s300-sweep-*.jpg). At the calibrated threshold (.613) the whole view is covered, so the alpha-only fade showed one flat
+  translucent sheet over everything (no holes, no texture) until ~150 km.
+- **Fix:** the shader also lifts the coverage threshold by `CLOUDS.clearLift` (.08) x cloudClear (cover and shadows), with the
+  alpha fade still bringing it to 0 at 150 km. The deck breaks into clouds and holes from ~600 km and is mostly open by 256 km.
+- **Numbers** (clouds mode, central-crop luminance, per frame at 2.40 ln-alt/s through 600-200 km):
+
+| run | max / 60 fps frame | / 30 fps | lum 554 / 366 / 256 / 150 km |
+|---|---|---|---|
+| before (main threshold switch) | 16.97 % | 33.95 % | 186 / 195 / 183 / 59 |
+| fade only (de97849) | 1.78 % | 3.57 % | 157 / 144 / 121 / 59 |
+| fade + lift .08 (68c3c8e) | **1.20 %** | 2.40 % | 130 / 103 / 81 / 60 |
+
+  The test models the same thing from the sweep curves (all three altitudes): <= 2 % per 60 fps frame, cover share between 15 and
+  85 % at 450 and 366 km (broken, not flat), < 50 % by 256 km. Lift .1 modelled 1.57 %, opens a bit early; .08 kept margin.
+- Stills: lift-cloud-*.jpg; grid-clouds.jpg rows = before / fade only / final at 703, 554, 366, 256, 227, 150 km. The before and
+  fade-only rows were shot before T-0039 (HUD visible); the final row is on merged main (HUD hidden on the globe).
+
+### Checks (after the follow-ups, on main + branch)
+- npm test 401 pass / 0 fail (414 incl. 13 todo); tsc --noEmit clean; smoke-tiers PASS on :5185 (Ultra 126 fps 265 draws, High 127,
+  Medium 117, Low 140, Very low 143, Minimum 241 fps).
+
 ## Leftovers
-- Rocks and logs are not in the view check (after-descent-land.jpg: a boulder covers the wolf's legs); trees only, as scoped.
-- The haze between ~550 and 250 km is uniform (a 900 km cell is the whole view); a cloud texture that breaks up would need the
-  threshold again, ramped per pixel (bigger change).
+- The solid check uses footprint radii and a flat-ground line height; terrain slope between camera and wolf is ignored.
+- The clouds-mode luminance includes the terrain getting closer; the per-frame figure is an upper bound on the cloud part.
 - Vite worktrees share node_modules/.vite through the junction: two dev servers starting together collided on .vite/deps (restart fixed it).

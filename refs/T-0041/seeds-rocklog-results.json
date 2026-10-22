@@ -1,0 +1,76 @@
+{
+ "rock": [
+  {
+   "i": 75,
+   "k": "raw",
+   "spot": {
+    "x": -296,
+    "z": 1512
+   },
+   "yaw": 1.836,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 75,
+   "k": "chosen",
+   "spot": {
+    "x": -294.5,
+    "z": 1512
+   },
+   "yaw": 1.836,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 86,
+   "k": "raw",
+   "spot": {
+    "x": 361.1,
+    "z": 1389.1
+   },
+   "yaw": 1.687,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 86,
+   "k": "chosen",
+   "spot": {
+    "x": 361.1,
+    "z": 1390.6
+   },
+   "yaw": 1.687,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 102,
+   "k": "raw",
+   "spot": {
+    "x": 634,
+    "z": 1823
+   },
+   "yaw": 3.754,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 102,
+   "k": "chosen",
+   "spot": {
+    "x": 637,
+    "z": 1823
+   },
+   "yaw": 3.754,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  }
+ ]
+}

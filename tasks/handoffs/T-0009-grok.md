@@ -66,7 +66,32 @@ C:\dev\rabbit-rec12\. Submit only if every gate >= 95 % and after re-checking RU
     another species). tests/bound.test.ts limb sum .187. sbB (with the spine change): summer 62.8 / winter 79.5 shape (winter
     gather 52.5, +3.9), end-on stretch 37.2 (-2.1) and end-on coat 77.8 (-2.3) a little worse; everything else inside the noise.
     bound-checks hare 99.9 %. Box tests hare-mesh + bound + anatomy + hare-rig + bound-v5 28/28; PC tsc 0.
-- [ ] 5 Re-score T-0009 / T-0028 with v1.3, tests + tsc, RULES.md re-check, compare-run8.jpg
+- [x] 5 Re-scored (20:50-20:59 PT, code 97101ec). NOT SUBMITTED: not every gate is >= 95 %; also T-0009 still lacks another
+  agent's approve-plan (step 3). RULES.md on main e29e7ec: no cross-family reviewer rule. Rule 15 re-check 20:59 PT: no new
+  complete event since 19:50 (only grok's own two comments).
+  - PC GPU strips with per-cell logs (tools/strip-shot.mjs, smoke-tiers EDGE_FLAGS, ...&log=1, port 5204):
+    C:\dev\rabbit-rec12\look\{gs,gw,ss,sw,ge,se}-pc9.png + .log.json, 0 implausible cells; scores s13-pc9.json / e13-pc9.json.
+    Run-start baseline (box, 02e1ebc code + the run 8 log tools): *-base8.png, s13-base8.json / e13-base8.json.
+  - Compare C:\dev\rabbit-rec12\compare-run8.jpg (box /workspace/rabbit/compare-run8.jpg): clover-free refs, run start vs
+    run 8 per pose, end-on, Gait Builder's fold-1.5 cells zeroed, noise band.
+  - Checks: npm test 413 tests, 401 pass, 0 fail, 12 todo (C:\dev\rabbit-rec12\npmtest.txt); tsc 0 (tsc.txt); bound-checks v3
+    hare 99.9 % (bound-score.txt).
+
+### Calibrated gates, run 8 (rule 11): metric lookscore v1.3 (C:\dev\rabbit-rec12\look\lookscore13.py, README-v1.3.md);
+known match = independent second drawing, known mismatch = other pose classes / other season, anchors on clover-free masks;
+plausibility gate calibrated on fold 1.5 (v1.2 100 -> v1.3 0). Noise: 2 SD of noise-r8a.json.
+| gate | run start (box, v1.3) | run 8 (PC GPU, v1.3) | noise (SD) |
+|---|---|---|---|
+| shape summer | 47.8 (sit 0: paws above the shoulder) | 62.7 | 0.6 |
+| shape winter | 56.9 (sit 0) | 79.4 | 0.5 |
+| coat summer | 70.7 (sit 0) | 88.4 | 0.1 |
+| coat winter | 75.8 (sit 0) | 95.8 | 0.2 |
+| end-on shape / coat | 27.0 / 62.2 | 50.0 / 77.5 | 1.1 / 0.7 |
+Per pose run 8: summer crouch 34.8, sit 52.3, gather 47.3, push 87.2, stretch 92.0; winter 70.1, 81.2, 52.6, 100, 93.1; end-on
+crouch 32.0, sit 66.0, gather 64.8, push uncalibrated, stretch 37.3. Coat summer 85.0 / 92.6 / 93.5 / 84.2 / 86.9, winter
+91.5 / 96.0 / 93.8 / 100 / 97.6. T-0009 gates: look (mean shape + coat summer) 75.6 (run start 59.3); graze (summer crouch) 34.8
+(35.7, within noise); alert (summer sit) 52.3 (0). Holding the look back: the graze crouch (body rides high on the legs,
+poseReach .46) and the gathered stance silhouette (trunk / mesh, not chest turn or gait).
 ## Run 7 progress (started 2026-10-21 18:30 PT; keep current: board rule 9; branches grok/rabbit-clover + grok/hare-mesh)
 Plan (Matthew via Grok lead, 18:23 PT brief): grok/hare-mesh (T-0028 mesh + calibrated lookscore v1) merged in first, then fix
 the poses lookscore says hold shape back, per pose vs the references: an UPRIGHT alert sit-up as in refs/hare/graze-alert-flight

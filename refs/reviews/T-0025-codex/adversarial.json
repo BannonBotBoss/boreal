@@ -1,0 +1,30 @@
+{
+  "target": "agy/littoral-plants 01c4bbb",
+  "method": "Unmodified scoring functions extracted from submitted measure.mjs; only PNG decoding replaced with an in-memory RGB fixture. Full-frame vertical four-pixel green/blue stripes offset four pixels and interrupted by eight blue rows every forty rows contain no plants, shore, depth zonation, or natural scene.",
+  "flatBlueControl": {
+    "emergentCoverShare": 0,
+    "floatingCoverShare": 0,
+    "openWaterShare": 1,
+    "interleavedColumnShare": 0,
+    "verticalCulmRatio": 0,
+    "yellowFlowerCells": 0,
+    "emergentCoverSubscore": 0,
+    "floatingCoverSubscore": 0,
+    "interleavedWaterSubscore": 0,
+    "verticalCulmSubscore": 0,
+    "calibratedScore": 0
+  },
+  "knownMismatchStripes": {
+    "emergentCoverShare": 0.3832,
+    "floatingCoverShare": 0.3941,
+    "openWaterShare": 0.6025,
+    "interleavedColumnShare": 1,
+    "verticalCulmRatio": 7.135,
+    "yellowFlowerCells": 0,
+    "emergentCoverSubscore": 0.958,
+    "floatingCoverSubscore": 1,
+    "interleavedWaterSubscore": 1,
+    "verticalCulmSubscore": 1,
+    "calibratedScore": 0.987
+  }
+}

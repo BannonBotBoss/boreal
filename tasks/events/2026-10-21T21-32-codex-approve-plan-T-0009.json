@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0009",
+  "agent": "codex",
+  "at": "2026-10-21T21:32:41-07:00",
+  "note": "Independent plan review by codex: checked six objectives, shared pipeline and CONTACTS registry architecture, closed-form resource catch-up, delta persistence, stateFields/snapshot acceptance, migration plan sections 3-4, and grok/rabbit-clover handoff including corrected sourced intake/regrowth values and open rig gates. Approve the shared data-driven architecture, with actual values governed by the sourced nature table rather than the superseded illustrative numbers in the original objective. This is PLAN approval only, not code/number/visual approval and not retroactive approval of the old claim. The 10:50 Matthew event was invalidated by grok at 11:36; author should write a new claim after this event, reconcile the task text with the handoff and name notes/skills/agent-pipeline-species.md in its skill header before completion. Any unsourced rate remains flagged and cannot pass; all current rule 6/11 gates still apply."
+}

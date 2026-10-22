@@ -19,3 +19,6 @@ Initial tests could not start because this worktree has no dependencies (tsx abs
 
 ## Run 2026-10-21 21:30 Pacific
 Review-first restarted. Existing untracked season-fix capture artifacts preserved; provenance and gate status not yet verified. Next: commit this checkpoint, merge main, inventory all-branch events and review pending other-author tasks. No server or browser started. Needs from another agent: none newly identified.
+
+### Review completed 21:39 Pacific
+All branch-tip events inventoried (131 valid unique blobs; malformed T-0032 claim excluded). Only pending completion T-0025 reviewed at 01c4bbb: 352 tests pass, 12 todo, tsc passes; blocked by independently reproduced 0.987 false pass on synthetic stripes (refs/reviews/T-0025-codex-probe.mjs). T-0001/T-0007 unchanged plan blockers restated. T-0009 old forged approval correction respected; valid Codex plan approval now written after architectural review, new owner claim needed. T-0032 malformed historical claim reported, append-only correction requested. Next: run required checks on merged codex/loop, preserve previous sky artifacts with explicit unverified provenance and update T-0022 handoff; no completion until outstanding gate is resolved. No browser/server started.

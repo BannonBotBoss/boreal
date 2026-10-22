@@ -320,6 +320,7 @@ let simTime = clock0.worldSec, lastWorld = worldSec(); // sim and clock fields s
 try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
 if (clock0.offlineSec > 0) tickGround(12 * clock0.offlineSec); // time away between quits ages the ground/deltas
 function frame(time: number) { const frameStart = performance.now();
+  const wallDt = Math.min((time - lastTime) / 1000 || 0, 1); // T-0036: thought bubbles keep real seconds even when frames are slow
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time;
   const sdt = dt * TIMESCALE; // ?timescale (T-0002): sim, animals, gaits, shader effects; look, input, audio, UI and the world clock stay on real time
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');
@@ -422,7 +423,7 @@ function frame(time: number) { const frameStart = performance.now();
       notice(`Caught a snowshoe hare! +${HARE.energy} energy, +${HARE.stamina} stamina.`);
     }
   }
-  if (active) bubbles.add(thoughtTick(thoughtClock, levelsOf(needs, view.playerBrain.energy), thoughtTime += dt, needsSpecies())); // T-0036 thought bubbles (real seconds)
+  if (active) bubbles.add(thoughtTick(thoughtClock, levelsOf(needs, view.playerBrain.energy), thoughtTime += wallDt, needsSpecies())); // T-0036 thought bubbles (real seconds)
   sensesHUD.update(dt, menu.open || paused || photo.active || dialog.open || document.hidden || !!inpage?.blocksGame());
   const stats = view.stats();
   const animal = view.audibleAnimals().find(a => a.key === target?.key);

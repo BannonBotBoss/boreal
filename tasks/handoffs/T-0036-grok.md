@@ -1,6 +1,6 @@
 # T-0036 handoff (grok)
 
-Status: IN PROGRESS. Plan not yet approved (needs an approve-plan from claude, codex or agy before claim / main).
+Status: BUILT, recorded; NOT submitted. Plan not yet approved (needs an approve-plan from claude, codex or agy before claim / main).
 Branch `grok/wolf-hydration`, worktree `C:\dev\boreal-grok-hydration` (from main a436a9d). Built on the box in
 /workspace/hydration/repo and applied as a patch.
 
@@ -60,11 +60,34 @@ Branch `grok/wolf-hydration`, worktree `C:\dev\boreal-grok-hydration` (from main
 Emergent: wolf walking 100 -> 30 % water in 21.4 game h = 1.8 real h; standing ~4x longer; sprinting ~3x faster.
 Drinking 30 -> 100 % in ~37 real s. Energy walking 100 -> 30 % in ~8.4 game h = 42 real min (only food restores it).
 
+## Recording (box headless Chrome, SwiftShader; one PC run off-screen before the rule)
+Tool: `tools/needs-record.mjs` (CDP; fresh profile; on the box run with `node --experimental-websocket` and Chrome
+`--headless=new --use-angle=swiftshader`). Frames + per-frame HUD/act text: box /workspace/hydration/frames3 (drink, low,
+stagger) and /workspace/hydration/frames (alert, PC). Picked shots: /workspace/hydration/shot-*.jpg.
+- low (`?needs=water:25`): a pale, semi-transparent drop rises above the head and fades; the next one ~10 s later.
+- alert (`?needs=water:6`): a red-ringed drop, more opaque, rises and fades in ~1.5 s (shot-alert-sequence.jpg, 5 frames).
+- stagger (`?needs=water:20,energy:15,rest:25`): meat (energy, lowest) in lane 0, drop in lane 1 higher, offset in time.
+- drink (`?at=14.37,7.53,2.02&needs=water:22`, staged terrain): prompt "E / click · drink", click -> "Drinking. Move to stop.",
+  HUD `DRINKING`, water 22 -> 26 % over the burst (sim runs slow under software GL).
+
+## Frame answers
+1. What do I see? The wolf from behind on a meadow by a lake; a round icon (drop / meat) floats up from just above its head,
+   semi-transparent, fading out; when critical, a red-ringed drop, brighter, repeating faster; two needs show two icons,
+   one above the other, at different moments; at the shore the action button offers drink and the HUD says DRINKING.
+2. Natural? It is UI, not nature: the gate question is "does it match Matthew's description" (semi-transparent icons
+   floating up from the head, fading in 1-2 s, every 10 s; alert pulsing faster near critical). Timing is tested in
+   tests/needs.test.ts (10 s / 3 s / 1.75 s / 1.5 s / 3 Hz pulse); the frames confirm placement, transparency and style.
+3. Reference: none generated (UI element; no nature reference applies) -> uncalibrated visual score; the measured
+   timing tests are the gate evidence. A reviewer may want a short real-GPU video at 60 fps to see the pulse.
+4. No drinking pose (head stays up while drinking): leftover for Gait Builder (head-down lap pose).
+
 ## Next step
-Apply patch on the PC, full npm test + tsc, screenshots (third person low / alert / stagger, first person, drink prompt)
-to /workspace/hydration/, frame answers, then ask claude/codex/agy for approve-plan + review.
+Ask claude/codex/agy for approve-plan, then claim, then complete + review.
 
 ## Leftovers / flags
+- First person: the game has no first-person camera today; the renderer's fallback (bubbles in the upper view when the
+  camera is within 0.9 m of the head) is untested.
+- Drinking pose (head down, lapping) not animated; the sim's needs run on the fixed step, so slow frames slow drinking too.
 - Autonomous wolf keeps AnimalBrain.expend's idle 'recover' energy refill (its forage loop depends on it; unsourced).
 - NPC hares: the T-0009 agent pipeline (core/agent, grok/rabbit-clover) is not on main yet; `agentLevels(HARE_NEEDS)` equals
   HARE_AGENT's levels (test), so when T-0009 lands HARE_AGENT should read stamina/energy from the template and its decide

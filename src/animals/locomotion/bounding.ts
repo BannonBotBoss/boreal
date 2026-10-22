@@ -18,7 +18,7 @@
  */
 import { boundCadence, boundDuty, boundForeDuty, type BoundGait } from '../../core/agent/bound';
 import type { Pose as AgentPose, Action as AgentAction } from '../../core/agent/pipeline';
-import { reachTargets, suspensions, suspensionRise, type CanidPlan, type ReachBody, type Suspension } from '../../core/gaitData';
+import { reachTargets, suspensions, type CanidPlan, type ReachBody, type Suspension } from '../../core/gaitData';
 import type { LimbDims } from '../../core/animalBehavior';
 import { createCpg, stepCpg, phases, type Cpg } from './cpg';
 import { footState, forceStep, stepFoot, toWorld, type FootState } from './foot';
@@ -327,6 +327,47 @@ export function pitchCurve(plan: BoundPlan, sk: Skeleton, n = 200): number[] {
 }
 export const pitchAt = (curve: number[], stridePhase: number) => { const x = frac(stridePhase) * curve.length, i = Math.floor(x), f = x - i; return curve[i % curve.length] * (1 - f) + curve[(i + 1) % curve.length] * f; };
 
+/**
+ * Body height through the bound — DERIVED (T-0009 v5, grok-gait). The same half-sine vertical ground forces as pitchCurve (each
+ * pair carries foreShare / 1 − foreShare of the body weight per stride), minus g, integrated twice as a steady periodic
+ * oscillation (zero-mean vertical velocity; height 0 = the lowest point while a foot is down). Between footfalls the body is ballistic, so
+ * every suspension is a g·t²/8 parabola (gaitData suspensionRise), joined to the dip the same forces give in stance: the CoM
+ * is highest in the flight and lowest in support, as in any bouncing gait (Cavagna, Heglund & Taylor 1977, Am J Physiol
+ * 233:R243; force shape: Alexander & Jayes 1978, J Zool 185:27, shape factor 0 = half-sine [assumption, as pitchCurve]).
+ * v4 drew only a g·t²/8 hump inside each suspension and nothing in stance (hare 8.5 m/s: 7.5 mm); with the stance part the
+ * stride's span at 8.5 m/s is ~16 mm. The span is physics, not a choice: Hildebrand 1977's hare duties leave ~120 ms of flight
+ * per stride at 4.4 Hz, and a body moving 8.5 m/s with that flight time cannot rise further.
+ */
+const heightCache = new Map<string, number[]>();
+export function heightCurve(plan: BoundPlan, n = 200): number[] {
+  const key = `${plan.row}|${plan.hz}|${plan.duties.join(',')}|${plan.offsets.join(',')}`, hit = heightCache.get(key); if (hit) return hit;
+  const T = 1 / plan.hz, dt = T / n, share = [BOUND_PITCH.foreShare, 1 - BOUND_PITCH.foreShare], g = gravity(), vel: number[] = []; let v = 0;
+  for (let s = 0; s < n; s++) {
+    let a = -g;
+    for (let i = 0; i < 4; i++) { const d = plan.duties[i], ph = frac(s / n + plan.offsets[i]); if (ph < d && d > 0) a += share[FRONT(i) ? 0 : 1] / 2 * g * Math.PI / (2 * d) * Math.sin(Math.PI * ph / d); }
+    v += a * dt; vel.push(v);
+  }
+  const vm = vel.reduce((p, q) => p + q, 0) / n, y: number[] = []; let h = 0;
+  for (const u of vel) { h += (u - vm) * dt; y.push(h); }
+  // zero: the lowest the body sinks while a foot is down, so a stance limb never has to fold further than at the running rise
+  // reachOf picked (a zero-mean curve sank the body 7 mm in stance and the limbs hit their flexion ends: up to 6.5 mm slip)
+  let low = Infinity; for (let s = 0; s < n; s++) if (plan.offsets.some((o, i) => frac(s / n + o) < plan.duties[i])) low = Math.min(low, y[s]);
+  const out = y.map(q => q - (low < Infinity ? low : 0));
+  if (heightCache.size > 2000) heightCache.clear(); heightCache.set(key, out); return out;
+}
+/**
+ * Swing feet while moving (T-0009 v5). `fold` = peak clearance of the swing-foot target as a share of the limb's hip height
+ * (v4: .25 for both pairs). The hind target now rises .8 x the hip height at mid-swing, so the hind limb folds deeply in
+ * swing - the knee and ankle reach the measured flexion ends the clamped IK enforces (BodyPlan.limits = LEPORID_LIMITS:
+ * knee 30 deg, Hildebrand, Holmberg & Shrive 2003 / Zhang 2024; ankle 66.4 deg, Hall et al. 2022 PeerJ 10:e13611) - trailing
+ * in the extended suspension and drawn up and forward under the trunk into the gathered one (Bramble 1989, Am Zool 29:171).
+ * .8 is the largest fold at which no hind sole rises above its own hip joint at 5-11.6 m/s (tests/bound-v5.test.ts): with no
+ * measured hip-extension limit, .9 and up drove the folded foot over the rump and 1.2+ onto the back (lookscore v1.2
+ * rewarded that - see the T-0009 grok-gait handoff v5). [estimate, bounded by that geometric rule]. Fore: .25 kept (grid .1 /
+ * .25 / .5 flat). A swinging foot also rides with the ballistic body (heightCurve) in flight instead of reaching back down.
+ */
+export const SWING = { fold: { fore: .25, hind: .8 } };
+
 /* ---------------------------------------------------------------- pose requests (agent pipeline → body) */
 export type PoseKind = 'stand' | 'graze-crouch' | 'sit-up' | 'half-sit' | 'scan' | 'rest' | 'crouch';
 /** What the agent pipeline may ask of a standing body. `weight` 0..1 blends from 'stand' (default 1). */
@@ -496,10 +537,8 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     const swing = moving ? pitchAt(pitchCurve(plan, sk), stridePhase) * run : 0;
     // the gait's joint ranges (BodyPlan.limits: stance measurements) phase in with motion; standing keeps the default
     const lim = blendLimits(CANID_LIMITS, gaitLimits, run);
-    // ballistic lift over a suspension (g·T²/8 arc) — gaitData suspensionRise
-    let lift = 0;
-    for (const s of plan.suspensions) { const p = frac(stridePhase - s.from), len = s.to - s.from; if (p < len) lift = Math.max(lift, 4 * suspensionRise(len, plan.hz) * (p / len) * (1 - p / len)); }
-    lift *= run;
+    // v5: the body's height from the stride's ground forces (heightCurve: g·t²/8 flights + the stance dip), not flights only
+    const lift = moving ? pitchAt(heightCurve(plan), stridePhase) * run : 0;
     const hipY = ground(x, z), shoY = ground(...(() => { const w2 = toWorld(x, z, heading, 0, sk.plan.shoulderZ - sk.plan.hipZ); return [w2.x, w2.z] as const; })());
     const rt = runTilt(sk, reach.rise, run, swing, pose), bodyPitch = rt.pitch + pitchPose; // relative to the ground
     const pitch = Math.atan2(shoY - hipY, sk.trunk) + bodyPitch, Hh = H.hip;
@@ -508,9 +547,10 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     for (let i = 0; i < 4; i++) {
       const L = limbOf(i), front = FRONT(i), f = feet[i];
       if (front && foreUp > .02) { forceStep(f); f.settle = 0; }
-      const r = stepFoot(f, { phase: ph[i], duty: plan.duties[i], cycle: plan.stride, lift: .25 * L.hip, moving, reverse: speed < 0, dt, speed: v, rest: restWorld(i), fwd, settle: turnStep[i] ? TURN.step : undefined }, ground);
+      const r = stepFoot(f, { phase: ph[i], duty: plan.duties[i], cycle: plan.stride, lift: (moving ? (front ? SWING.fold.fore : SWING.fold.hind) : .25) * L.hip, moving, reverse: speed < 0, dt, speed: v, rest: restWorld(i), fwd, settle: turnStep[i] ? TURN.step : undefined }, ground);
       if (turnStep[i] && f.planted) turnStep[i] = false;
-      let target = r.at;
+      // v5: in flight a swinging foot rides with the ballistic body (heightCurve) rather than reaching back to the ground
+      let target = !f.planted && moving && lift > 0 ? { ...r.at, y: r.at.y + lift * r.lift } : r.at;
       if (front && foreUp > .02) { // sit-up: the fore paws come up under the chest
         const tuck = limbToWorld({ x: 0, y: .45 * L.hip, z: centre(i) - .02 }, x, z, heading, tilt, sk.hips[i]);
         target = { x: lerp(r.at.x, tuck.x, foreUp), y: lerp(r.at.y, tuck.y, foreUp), z: lerp(r.at.z, tuck.z, foreUp) }; f.at = { ...target };

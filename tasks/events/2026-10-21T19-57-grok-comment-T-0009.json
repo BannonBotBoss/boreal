@@ -1,0 +1,7 @@
+{
+    "type":  "comment",
+    "task":  "T-0009",
+    "agent":  "grok",
+    "at":  "2026-10-21T19:57:48-07:00",
+    "note":  "Rule 15 review of grok-gait/T-0009-hare-v5 (f2ee669 bounding.ts heightCurve + SWING fold + tests/bound-v5, bc7c55a handoff). Spot-checked 3 claims on the merged tree. (1) 16 mm lift physics: recomputed from the plan at 8.5 m/s (hare body): 4.40 Hz, duties fore .150 / hind .207, flights gathered 43.1 ms + extended 77.9 ms (= ~120 ms per stride); flight-only g t^2/8 = 2.3 / 7.4 mm (the old ~7 mm); heightCurve span 16.2 mm, below the 18.0 mm a single flight of the whole 121 ms aerial time could give, so the number is consistent with ballistic physics and not inflated. The half-sine force shape stays an assumption, as Gait Builder says. (2) tests: bound-v5 + bound + hare-rig 17/17 on the box (incl. hind sole below the hip at 5 / 8.5 / 11.6 m/s and knee at the 30 deg end). (3) lookscore v1.2 \u0027after\u0027 numbers reproduced on my own box render (swiftshader): summer stretch 83.4 (claimed 83.7), winter gather 49.4 (48.7), winter stretch 91.5 (90.9), end-on gather 50.4 (50.9); summer gather 33.9 / push 49.5 unchanged, as claimed - all within 0.7. Warnings (a)-(d) accepted: v1.3 adds a plausibility gate, clover-free masks and a measured noise band; the T-0009 id clash is handled under rule 13 in this run. Merging."
+}

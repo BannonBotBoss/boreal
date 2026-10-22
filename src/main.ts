@@ -399,12 +399,13 @@ function frame(time: number) { const frameStart = performance.now();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+let startupDone: Promise<unknown> = Promise.resolve(); // ?bench waits for it: startup restores GOVERNOR.auto when it ends (render/startup.ts:56)
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).then(() => inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { pauseClock(); menu.show('start'); } }); }
+  void (startupDone = startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e))).then(() => inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { pauseClock(); menu.show('start'); } }); }
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {
-  const { GOVERNOR, MANUAL, LADDER } = await import('./core/quality'), { TREE_FX } = await import('./render/trees');
+  const { GOVERNOR, MANUAL, LADDER, applied } = await import('./core/quality'), { TREE_FX } = await import('./render/trees');
   const wait = (ms: number) => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(r));
   window.addEventListener('error', e => console.log(`BENCH error ${e.message} ${e.error?.stack}`)); window.addEventListener('unhandledrejection', e => console.log(`BENCH reject ${e.reason?.stack ?? e.reason}`));
   const M = MANUAL as Record<string, number>;
@@ -415,7 +416,10 @@ if (new URLSearchParams(location.search).has('bench')) void (async () => {
     while (performance.now() - t < 4000) { await raf(); const n = performance.now(); ws.push(n - last); last = n; if (GOVERNOR.gpuMs !== undefined) gs.push(GOVERNOR.gpuMs); cpu.push(view.photoreal.INFO.workMs); drw.push(view.photoreal.INFO.drawMs);
       for (const [k, v] of Object.entries(view.photoreal.COST)) spikes[k] = Math.max(spikes[k] ?? 0, v); }
     const avg = (a: number[]) => a.length ? a.reduce((p, c) => p + c, 0) / a.length : NaN, p95 = [...ws].sort((x, y) => x - y)[Math.floor(ws.length * .95)];
-    console.log(`BENCH ${label} gpu=${avg(gs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms fps=${(1000 / avg(ws)).toFixed(0)} cpu=${avg(cpu).toFixed(1)}ms(draw ${avg(drw).toFixed(1)}) p95=${p95?.toFixed(1)}ms calls=${view.photoreal.INFO.calls} tris=${view.photoreal.INFO.tris} maxCpu=${JSON.stringify(Object.fromEntries(Object.entries(spikes).map(([k, v]) => [k, +v.toFixed(2)])))}`); };
+    console.log(`BENCH ${label} applied=${view.photoreal.tier.name}:ibl${view.photoreal.tier.ibl}:sh${view.photoreal.tier.shadows} gov=${GOVERNOR.tier}:auto${+GOVERNOR.auto}:now=${applied().name} gpu=${avg(gs).toFixed(2)}ms frame=${avg(ws).toFixed(2)}ms fps=${(1000 / avg(ws)).toFixed(0)} cpu=${avg(cpu).toFixed(1)}ms(draw ${avg(drw).toFixed(1)}) p95=${p95?.toFixed(1)}ms calls=${view.photoreal.INFO.calls} tris=${view.photoreal.INFO.tris} maxCpu=${JSON.stringify(Object.fromEntries(Object.entries(spikes).map(([k, v]) => [k, +v.toFixed(2)])))}`); };
+  // take the governor only after startup has handed it back: startup saves auto, sets it false for the loading stalls and restores it at the end;
+  // the bench used to set auto=false 3 s in, startup then turned Auto back on, and the governor/world hold moved the tier under the samples (labels lagged one tier, ibl 1 at Minimum)
+  await startupDone.catch(() => undefined);
   GOVERNOR.auto = false; GOVERNOR.capTier = 0; GOVERNOR.probeCap = 0; const rr = view.photoreal.renderer; if (rr) rr.info.autoReset = false; // count every pass
   await wait(3000); console.log(`BENCH gpu-string ${GOVERNOR.gpu}`);
   for (let i = 0; i < LADDER.length; i++) { GOVERNOR.tier = i; await sample(`tier-${LADDER[i].name}`); }

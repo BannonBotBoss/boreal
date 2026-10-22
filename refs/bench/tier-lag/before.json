@@ -1,0 +1,22 @@
+{
+ "port": "5263",
+ "lines": [
+  "BENCH gpu-string ANGLE (NVIDIA, NVIDIA GeForce RTX 5060 Laptop GPU (0x00002D19) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "BENCH tier-Ultra applied=Ultra:ibl1:sh2 gpu=3.89ms frame=5.11ms fps=196 cpu=4.5ms(draw 4.2) p95=7.5ms calls=376 tris=962961 maxCpu={\"csmMs\":0.5,\"iblMs\":0.1,\"giMs\":1.4,\"cloudMs\":0,\"warmMs\":37.2}",
+  "BENCH tier-High applied=Ultra:ibl1:sh2 gpu=4.55ms frame=6.20ms fps=161 cpu=5.5ms(draw 5.2) p95=8.5ms calls=230 tris=848260 maxCpu={\"csmMs\":0.2,\"iblMs\":0.1,\"giMs\":1,\"cloudMs\":0.1,\"warmMs\":37.2}",
+  "BENCH tier-Medium applied=High:ibl1:sh2 gpu=4.32ms frame=5.77ms fps=173 cpu=5.2ms(draw 4.8) p95=8.8ms calls=333 tris=960797 maxCpu={\"csmMs\":0.3,\"iblMs\":0.1,\"giMs\":0.6,\"cloudMs\":0.1,\"warmMs\":95.5}",
+  "BENCH tier-Low applied=Medium:ibl1:sh2 gpu=4.19ms frame=6.40ms fps=156 cpu=5.7ms(draw 5.3) p95=8.9ms calls=320 tris=959737 maxCpu={\"csmMs\":0.3,\"iblMs\":0.1,\"giMs\":0.8,\"cloudMs\":0,\"warmMs\":95.5}",
+  "BENCH tier-Very low applied=Very low:ibl1:sh2 gpu=3.22ms frame=4.80ms fps=208 cpu=4.3ms(draw 4.0) p95=6.4ms calls=305 tris=959463 maxCpu={\"csmMs\":0.5,\"iblMs\":0.1,\"giMs\":0,\"cloudMs\":0.1,\"warmMs\":150.6}",
+  "BENCH tier-Minimum applied=Very low:ibl1:sh2 gpu=4.49ms frame=7.50ms fps=133 cpu=6.8ms(draw 6.3) p95=10.1ms calls=180 tris=843954 maxCpu={\"csmMs\":0.3,\"iblMs\":0.1,\"giMs\":0,\"cloudMs\":0.1,\"warmMs\":177.6}",
+  "BENCH ultra-without-bark applied=Ultra:ibl1:sh2 gpu=5.68ms frame=9.02ms fps=111 cpu=8.1ms(draw 7.6) p95=11.7ms calls=318 tris=960557 maxCpu={\"csmMs\":1.1,\"iblMs\":0.1,\"giMs\":1.3,\"cloudMs\":0.1,\"warmMs\":177.6}",
+  "BENCH ultra-without-ssao applied=Ultra:ibl1:sh2 gpu=5.10ms frame=8.04ms fps=124 cpu=7.2ms(draw 6.8) p95=10.9ms calls=334 tris=962349 maxCpu={\"csmMs\":0.6,\"iblMs\":0.1,\"giMs\":1.3,\"cloudMs\":0.1,\"warmMs\":177.6}",
+  "BENCH ultra-without-shadows applied=Ultra:ibl1:sh0 gpu=2.12ms frame=4.72ms fps=212 cpu=4.1ms(draw 3.8) p95=6.4ms calls=124 tris=773375 maxCpu={\"csmMs\":0.1,\"iblMs\":0.1,\"giMs\":1,\"cloudMs\":0.1,\"warmMs\":209.2}",
+  "BENCH ultra-without-pcss applied=Ultra:ibl1:sh2 gpu=4.66ms frame=7.07ms fps=141 cpu=6.4ms(draw 6.0) p95=11.7ms calls=342 tris=1008105 maxCpu={\"csmMs\":1.4,\"iblMs\":0.1,\"giMs\":1.7,\"cloudMs\":0,\"warmMs\":229.5}",
+  "BENCH ultra-without-contact applied=Ultra:ibl1:sh2 gpu=6.47ms frame=9.68ms fps=103 cpu=8.7ms(draw 8.1) p95=12.6ms calls=203 tris=858780 maxCpu={\"csmMs\":0.3,\"iblMs\":0.1,\"giMs\":1.3,\"cloudMs\":0.1,\"warmMs\":229.5}",
+  "BENCH ultra-without-rays applied=Ultra:ibl1:sh2 gpu=4.77ms frame=6.44ms fps=155 cpu=5.8ms(draw 5.4) p95=8.8ms calls=189 tris=858468 maxCpu={\"csmMs\":0.4,\"iblMs\":0.1,\"giMs\":0.9,\"cloudMs\":0.1,\"warmMs\":229.5}",
+  "BENCH ultra-without-gi applied=Ultra:ibl1:sh2 gpu=4.33ms frame=6.01ms fps=166 cpu=5.4ms(draw 5.0) p95=8.0ms calls=302 tris=1008861 maxCpu={\"csmMs\":0.5,\"iblMs\":0.1,\"giMs\":0,\"cloudMs\":0.1,\"warmMs\":229.5}",
+  "BENCH ultra-without-ibl applied=Ultra:ibl0:sh2 gpu=3.75ms frame=5.98ms fps=167 cpu=5.3ms(draw 5.0) p95=8.0ms calls=163 tris=854068 maxCpu={\"csmMs\":0.3,\"iblMs\":0,\"giMs\":1,\"cloudMs\":0.1,\"warmMs\":249.1}",
+  "BENCH ultra-without-clouds applied=Ultra:ibl1:sh2 gpu=4.53ms frame=6.37ms fps=157 cpu=5.7ms(draw 5.3) p95=9.1ms calls=163 tris=853924 maxCpu={\"csmMs\":0.5,\"iblMs\":0.1,\"giMs\":1.1,\"cloudMs\":0.1,\"warmMs\":249.1}",
+  "BENCH done"
+ ]
+}

@@ -70,3 +70,9 @@ Grok's T-0009 still in progress (grok-gait/T-0009-hare-v4 16:15, grok/rabbit-clo
 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. Watch for an approve-plan on T-0028 from another agent. If T-0009 is no longer in progress: fix or file the ?bench tier lag for claude's T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI; consider a task for jointed bedrock and rock shape variety.
+
+## Run 2026-10-21 17:13 PDT
+Grok's T-0028 in progress (grok/hare-mesh 17:09), so only steps 1, 2, 2b.
+- [ ] Step 1c: review claude's T-0029/T-0030/T-0031 plans (claude/water 1129976)
+- [ ] Merge board-only main, claude/water, agy/loop into grok/board-loop, test, fast-forward served main
+

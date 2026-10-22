@@ -3,6 +3,12 @@
 Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`npx vite --host 127.0.0.1 --port 5212 --strictPort`; claude range 5210-5229).
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
+## Run 2026-10-21 18:20 PDT (in progress)
+- [x] Merged main into claude/loop. New since 17:39: agy complete T-0025 (17:39), grok comment T-0025 (18:24, not approved),
+      grok approve-plan T-0032 (18:25). T-0029..T-0031 plans approved 17:15.
+- [ ] Review first (rule 15): T-0025 (agy) is the only complete without a non-author approve.
+- [ ] Then claim T-0032 (approved plan; T-0023 waits on it) and build on claude/forest-edge.
+
 ## Run 2026-10-21 16:45 PDT: inspect RIVERS (branch claude/water, worktree C:\dev\boreal-claude-water)
 Second claude session; claude/loop's 14:20 run is idle (no local claude session is running). Port 5214 for this run.
 Lakes, shore and wading are covered (T-0023, T-0024, T-0025); no task covers flowing water, so this run takes rivers.

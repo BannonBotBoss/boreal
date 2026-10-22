@@ -4,12 +4,24 @@
  * Adopt-first: native Web Audio nodes only (OscillatorNode, GainNode, BiquadFilter, ChannelMerger, DynamicsCompressor,
  * MediaElementSource). Tone.js (MIT) was considered, but every generator here is 2–6 native nodes, so it would add ~150 kB
  * for nothing. Pink noise: Paul Kellet's refined filter (public domain, musicdsp.org); brown noise: leaky integrated white.
- * Sources: built-in day/night loops | isochronic tones | binaural beats | playlist (public/music/manifest.json).
+ * Sources: acoustic guitar tracks (default; Matthew 2026-10-22: "a couple options to choose from, nothing too sappy, but
+ * acoustic guitar is good") | Off; behind ?tones also built-in day/night loops | isochronic tones | binaural beats | playlist.
+ * A picked track repeats on the same two-deck crossfade the playlist uses; switching tracks or Off fades over `crossfade` s.
  */
 import { hash, random } from '../proc/rng';
+/** Acoustic guitar tracks in public/music (ElevenLabs Music eleven_music_v2_5, 180 s each, generated 2026-10-22;
+ * public/music/manifest.json lists the same files with their prompts and licence; tests/music.test.ts keeps the two in step). */
+export const GUITAR_TRACKS = [
+  { title: 'Fingerpicked', file: 'guitar-fingerpicked.mp3' },
+  { title: 'Open tuning', file: 'guitar-opentuning.mp3' },
+  { title: 'Campfire', file: 'guitar-campfire.mp3' },
+] as const;
+export const TRACK_TITLES: string[] = GUITAR_TRACKS.map(t => t.title);
+export const EXTRA_SOURCES = ['Built-in ambient', 'Isochronic tones', 'Binaural beats', 'Playlist'] as const;
+export type MusicSource = typeof GUITAR_TRACKS[number]['title'] | typeof EXTRA_SOURCES[number] | 'Off';
 export const PULSE_PRESETS: Record<string, number> = { 'Gamma 40 Hz': 40, 'Alpha 10 Hz': 10, 'Theta 6 Hz': 6, 'Delta 2 Hz': 2 };
 export const MUSIC = {
-  source: 'Built-in ambient' as 'Built-in ambient' | 'Isochronic tones' | 'Binaural beats' | 'Playlist' | 'Off',
+  source: 'Fingerpicked' as MusicSource,
   pulse: 40, carrier: 300, shape: 'Smooth' as 'Smooth' | 'Sharp', level: .35,
   bed: 'None' as 'None' | 'Brown noise' | 'Pink noise' | 'Drone', bedLevel: .25,
   shuffle: true, crossfade: 4, followWorld: false,
@@ -31,7 +43,7 @@ function noiseBuffer(ctx: AudioContext, kind: 'brown' | 'pink') {
 const shuffleRng = random(hash(`music:${Date.now()}`)); // per session (not world state)
 export function createMusic(input: () => { ctx: AudioContext; node: AudioNode } | undefined, setBuiltIn: (on: boolean) => void) {
   let out: { ctx: AudioContext; master: GainNode } | undefined, nodes: AudioNode[] = [], stops: (() => void)[] = [];
-  let tracks: Track[] = [], deck: { el: HTMLAudioElement; g: GainNode } | undefined, order: number[] = [], pos = 0, mood: Track['mood'] = 'day', key = '';
+  let tracks: Track[] = [], deck: { el: HTMLAudioElement; g: GainNode; file: string } | undefined, order: number[] = [], pos = 0, mood: Track['mood'] = 'day', key = '';
   /** Output chain: source gain → brick-wall-ish limiter (DynamicsCompressor −10 dBFS, 20:1) → music bus. */
   function ensure() {
     if (out) return out; const i = input(); if (!i) return undefined;
@@ -67,21 +79,35 @@ export function createMusic(input: () => { ctx: AudioContext; node: AudioNode } 
     const pool = tracks.map((t, i) => [t, i] as const).filter(([t]) => !MUSIC.followWorld || !t.mood || t.mood === 'any' || t.mood === mood).map(([, i]) => i);
     const r = shuffleRng; order = MUSIC.shuffle ? pool.map(i => [r(), i] as const).sort((a, b) => a[0] - b[0]).map(x => x[1]) : pool; pos = 0; // presentation-only shuffle
   }
-  /** Crossfading playlist: two decks; the next track fades in over `crossfade` s while the current fades out. */
-  function playNext() {
-    const o = out; if (!o) return; if (pos >= order.length) pickOrder(); if (!order.length) return;
-    const t = tracks[order[pos++]], el = new Audio(`music/${t.file}`); el.crossOrigin = 'anonymous';
-    const src = o.ctx.createMediaElementSource(el), g = o.ctx.createGain(), now = o.ctx.currentTime, xf = MUSIC.crossfade;
+  const picked = () => GUITAR_TRACKS.find(t => t.title === MUSIC.source);
+  /** Fade the current deck out over `xf` s and drop it (switching track, Off, or another source). */
+  function fadeOut(xf: number) {
+    const o = out, d = deck; if (!o || !d) return; deck = undefined; d.el.ontimeupdate = null; d.el.onended = null;
+    const now = o.ctx.currentTime; d.g.gain.cancelScheduledValues(now); d.g.gain.setValueAtTime(d.g.gain.value, now); d.g.gain.linearRampToValueAtTime(0, now + xf);
+    setTimeout(() => { d.el.pause(); d.g.disconnect(); }, xf * 1000 + 100);
+  }
+  /** Two decks: `file` fades in over `crossfade` s while the current deck fades out; near its end the next one is queued. */
+  function play(file: string) {
+    const o = out; if (!o) return; const xf = MUSIC.crossfade;
+    const el = new Audio(`music/${file}`); el.crossOrigin = 'anonymous';
+    const src = o.ctx.createMediaElementSource(el), g = o.ctx.createGain(), now = o.ctx.currentTime;
     g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(1, now + xf); src.connect(g); g.connect(o.master);
-    if (deck) { const d = deck; d.g.gain.cancelScheduledValues(now); d.g.gain.setValueAtTime(d.g.gain.value, now); d.g.gain.linearRampToValueAtTime(0, now + xf); setTimeout(() => { d.el.pause(); d.g.disconnect(); }, xf * 1000 + 100); }
-    deck = { el, g }; let queued = false;
-    el.ontimeupdate = () => { if (!queued && el.duration && el.currentTime > el.duration - xf) { queued = true; playNext(); } };
-    el.onended = () => { if (!queued) playNext(); }; void el.play().catch(() => {});
+    fadeOut(xf); deck = { el, g, file }; let queued = false;
+    el.ontimeupdate = () => { if (!queued && el.duration && el.currentTime > el.duration - xf) { queued = true; advance(); } };
+    el.onended = () => { if (!queued) advance(); }; void el.play().catch(() => {});
+  }
+  /** What follows the current deck: a picked guitar track repeats itself; the playlist moves on. */
+  function advance() { const t = picked(); if (t) play(t.file); else if (MUSIC.source === 'Playlist') playNext(); }
+  function playNext() {
+    if (!out) return; if (pos >= order.length) pickOrder(); if (!order.length) return;
+    play(tracks[order[pos++]].file);
   }
   function rebuild() {
     const o = ensure(); if (!o) return; clear(); setBuiltIn(MUSIC.source === 'Built-in ambient');
-    o.master.gain.value = MUSIC.source === 'Playlist' ? MUSIC.level * 2 : 1; // playlist level; generators carry their own
-    if (MUSIC.source !== 'Playlist' && deck) { deck.el.pause(); deck.g.disconnect(); deck = undefined; }
+    const t = picked(); // tracks and playlist use the level; generators carry their own
+    o.master.gain.setTargetAtTime(t || MUSIC.source === 'Playlist' ? MUSIC.level * 2 : 1, o.ctx.currentTime, .1);
+    if (t) { if (deck?.file !== t.file) play(t.file); return; } // same track: a level change must not restart it
+    if (MUSIC.source !== 'Playlist' || deck) fadeOut(MUSIC.crossfade); // a guitar deck yields to the playlist too
     if (MUSIC.source === 'Isochronic tones') { isochronic(o.ctx, o.master); bed(o.ctx, o.master); }
     else if (MUSIC.source === 'Binaural beats') { binaural(o.ctx, o.master); bed(o.ctx, o.master); }
     else if (MUSIC.source === 'Playlist') { void loadManifest().then(() => { pickOrder(); if (!deck) playNext(); }); }

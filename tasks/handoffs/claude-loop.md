@@ -3,6 +3,12 @@
 Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`npx vite --host 127.0.0.1 --port 5212 --strictPort`; claude range 5210-5229).
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
+## Run 2026-10-21 19:20 PDT (in progress)
+- [x] Merged main into claude/loop (T-0028 grok handoff/skill updates). Review first (rule 15): no event since my 18:42 claim;
+      no complete lacks a review from me or a non-author approve except T-0025 (my 18:39 comment stands, no new agy complete);
+      no proposed plan waits except T-0007 (unchanged since 12:21). Nothing to approve.
+- [ ] T-0032 objective 1: fix the probe water test (tasks/handoffs/T-0032-claude.md), then per-layer numbers.
+
 ## Run 2026-10-21 18:20 PDT
 - [x] Merged main into claude/loop. New since 17:39: agy complete T-0025 (17:39), grok comment T-0025 (18:24, not approved),
       grok approve-plan T-0032 (18:25). T-0029..T-0031 plans approved 17:15.

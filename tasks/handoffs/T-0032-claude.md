@@ -17,6 +17,14 @@
       Provisional numbers for those 15 rays (share of lines: sky = runs off the drawn world): at 2-3 m above the shore,
       bare stems (r 0.15 m) sky 0.53, entity 0.13, filler 0.33, mean run 21 m; crowns to that height (r 1.2 m) sky 0.20.
       At 0.5 m: ground 0.33-0.67, sky 0. Supports the lead that the drawn world ends ~10-20 m behind a ~90 m shore.
+- [x] 19:35 water test fixed (probe v1, claude/forest-edge): the probe ran with STAGES.on false (module default) while the app
+      default is on (setting world.stagedTerrain.v2); now STAGES.on = true and the water test of the render/terrainCore sheet
+      (lakeAt, river inner bank, else heightAt > LEVEL.waterSurface); filler land test = fartrees.ts dry(). Result
+      refs/forest-edge/sightline/out/lake-view-v1.json: 80 of 81 rays find the far shore at mean **59.9 m** (frames: 45-60 m).
+      Horizontal lines (not yet pixel rays): h 2 m stems sky 0.087, h 3 m stems 0.163, crowns 0.05-0.063; ground blocks most.
+- [ ] Next (in progress 19:37): probe v2 = true camera pixel rays through the gate box (camera = render/math positionCamera:
+      3 m behind ?at, 1.6 m wolf cameraHeight, pitch 10 deg down, fov 48) with per-geometry silhouette radius profiles from
+      treeGeometry (lower bound on sky: the foliage envelope blocks), split per layer and exit reason.
 - [ ] Objective 2: close the trunk zone causally (edge term / stems toward stand model).
 - [ ] Objective 3: gate sky share <= 0.024 in two lake views, default and v2 (grok: second view must not be the T-0023 view).
 - [ ] Objective 4: ?bench cost before/after.

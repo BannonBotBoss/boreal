@@ -1,0 +1,78 @@
+{
+  "port": "5173",
+  "shots": [
+    {
+      "f": "default-0.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=30,0,1.571",
+      "t": 1792658260121,
+      "info": "null"
+    },
+    {
+      "f": "default-1.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=30,0,1.571",
+      "t": 1792658261384,
+      "info": "null"
+    },
+    {
+      "f": "default-2.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=30,0,1.571",
+      "t": 1792658262661,
+      "info": "null"
+    },
+    {
+      "f": "v2-0.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=30,0,1.571&trees=v2",
+      "t": 1792658284087,
+      "info": "null"
+    },
+    {
+      "f": "v2-1.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=30,0,1.571&trees=v2",
+      "t": 1792658285359,
+      "info": "null"
+    },
+    {
+      "f": "v2-2.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=30,0,1.571&trees=v2",
+      "t": 1792658286615,
+      "info": "null"
+    },
+    {
+      "f": "b-default-0.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=272,-832,-1.571",
+      "t": 1792658305964,
+      "info": "null"
+    },
+    {
+      "f": "b-default-1.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=272,-832,-1.571",
+      "t": 1792658307233,
+      "info": "null"
+    },
+    {
+      "f": "b-default-2.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=272,-832,-1.571",
+      "t": 1792658308500,
+      "info": "null"
+    },
+    {
+      "f": "b-v2-0.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=272,-832,-1.571&trees=v2",
+      "t": 1792658325923,
+      "info": "null"
+    },
+    {
+      "f": "b-v2-1.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=272,-832,-1.571&trees=v2",
+      "t": 1792658327167,
+      "info": "null"
+    },
+    {
+      "f": "b-v2-2.png",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=272,-832,-1.571&trees=v2",
+      "t": 1792658328427,
+      "info": "null"
+    }
+  ],
+  "errors": []
+}

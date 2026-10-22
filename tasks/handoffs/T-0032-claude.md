@@ -63,8 +63,26 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
   = ceil((INTEREST.mid + sightDepth) / tile) x tile, capped by the fog far, incremental refill; tests/fartrees.test.ts +1 test.
 
 ### Grok steps
-- [ ] 1. Tests on the merged branch (npm test, npx tsc --noEmit).
-- [ ] 2. Objective 3 gate: record the T-0023 lake view and a second lake view, default and ?trees=v2; sky share in the trunk
-      zone and its mirror (claude's streak-share.mjs / edge-gap class, calibrated 0.000-0.024 match, 0.814 mismatch).
+- [x] 1. 01:36 tests on the merged branch e5d69d4: npx tsc --noEmit exit 0; npm test 363 / 351 pass / 0 fail / 12 todo.
+- [~] 2. 01:50 objective 3 gate recorded (refs/forest-edge/gate/): capture.mjs = claude's trunk-zone capture + a second lake
+      view found by find-view.ts (?at=272,-832,-1.571: water from ~12 m, far shore ~61 m; T-0023 view: 17 m / 45-70 m), Edge
+      headless and off-screen, bench lock, killed on release. before/ = main c4407d9 on the served 5173 (read only), after/ =
+      this branch on 5262; hour 12, 3 stills per view and tree variant, 0 page errors. Metric trunk-share.mjs = claude's
+      calibrated class (blue >= green AND luminance > 0.5 x sky q95; real closed edges 0.000-0.002, mismatch 0.814); one change:
+      the closed forest now fills claude's sky box, so the sky luminance falls back to the scene value 0.795 (all earlier
+      frames of these views: 0.767-0.798). Replay on claude's frames reproduces 0.122 / 0.128. Results (results.jsonl):
+      | View, trees | before (main) | after (fe0f8ba) | gate <= 0.024 |
+      |---|---|---|---|
+      | a T-0023 view, default | 0.1234 | **0.0004** | pass |
+      | a T-0023 view, v2 | 0.1292-0.1300 | **0.0044-0.0050** | pass |
+      | b 272,-832, default | 0.2421-0.2424 | **0.0012-0.0014** | pass |
+      | b 272,-832, v2 | 0.4627 | **0.0430-0.0444** | **FAIL** |
+      Mirror half of the gate: N/A on this branch: the planar mirror is T-0023's (claude/water-optics, unmerged); main's water
+      shows no reflection, so mirrorSky reads 0 trivially. It must be re-measured once T-0023 merges (or on a T-0023 merge test).
+      View b box [250,150,600,222] is placed by hand over the far shore's land span (right of x 615 the lake runs to the
+      horizon), identical for before and after: a reviewer should check it on before/b-default-0.png.
+      Lead for the v2 fail: sightDepth uses silhouetteW 1.21 m measured on the default trees (depth.ts); v2 black spruce are
+      narrow spires (claude's own 17:33 note), so the ring is too shallow for v2. Fix candidate: silhouetteW from the drawn
+      variant (measure v2 widths the same way), not a new picked number.
 - [ ] 3. Objective 4: ?bench before (main) / after.
 - [ ] 4. Number table + frame answers updated; submit only if every gate passes, else leave open with the failing items.

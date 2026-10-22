@@ -106,7 +106,8 @@ Per pose v1.2: summer crouch 32.8, sit 52.1, gather 33.6, push 49.2, stretch 63.
 the model; like-for-like v1 gain from the poses: summer shape 28.8 -> 36.9 (sit 18.4 -> 52.1, crouch 23.7 -> 32.8).
 T-0009 gates: look (mean shape + coat summer, v1.2) 66.3; graze (summer crouch shape) 32.8; alert (summer sit shape) 52.1.
 Next: gather / end-on crouch / stretch need hind-leg fold, more suspension and fore reach in the gait (Gait Builder); the
-crouch is limited by poseReach .46.## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
+crouch is limited by poseReach .46.
+## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 16:16 PT): pick up grok-gait/T-0009-hare-v4 (608568b, 961630a, d8b118a; based on 37b1fbc).
 Decision (Grok lead): hare-specific contact floors from Hildebrand's Lepus data replace the cross-species .20/.13.
 - [x] 1 Rule 15 review (16:18 PT, tasks/events/2026-10-21T16-18-grok-comment-T-0009.json): Fig. 2 p.135 fastest Lepus hind ~15.9 % / fore ~10.8 % (read at 600 dpi, matches ~16/~11); p.137 'fore contacts drop to 70 percent or less of hind contacts for Lepus at speed' verbatim; re-ran bound-checks hare 99.7 % (11.6 m/s hind .183 / fore .110; 1.68 m/s prints 14.0 cm ahead); pelvis 42 deg (Schilling & Hackert 2006) unverified, fetch returned another article: Gait Builder's reading. Merged 783c360.

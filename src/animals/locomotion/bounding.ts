@@ -551,8 +551,9 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
       if (turnStep[i] && f.planted) turnStep[i] = false;
       // v5: in flight a swinging foot rides with the ballistic body (heightCurve) rather than reaching back to the ground
       let target = !f.planted && moving && lift > 0 ? { ...r.at, y: r.at.y + lift * r.lift } : r.at;
-      if (front && foreUp > .02) { // sit-up: the fore paws come up under the chest
-        const tuck = limbToWorld({ x: 0, y: .45 * L.hip, z: centre(i) - .02 }, x, z, heading, tilt, sk.hips[i]);
+      if (front && foreUp > .02) { // sit-up: the fore paws come up under the chest; run 8: .35 x hip (was .45, which held the paws 25 mm ABOVE the shoulder joint -
+        // bound-checks v3 / posePlausibility; the reference sit-ups hang the paws in front of the chest, below the shoulder)
+        const tuck = limbToWorld({ x: 0, y: .35 * L.hip, z: centre(i) - .02 }, x, z, heading, tilt, sk.hips[i]);
         target = { x: lerp(r.at.x, tuck.x, foreUp), y: lerp(r.at.y, tuck.y, foreUp), z: lerp(r.at.z, tuck.z, foreUp) }; f.at = { ...target };
       }
       // split hind foot: the IK reaches the MTP joint, the toes lying flat ahead of it to the toe tip (ik.ts toeTarget)

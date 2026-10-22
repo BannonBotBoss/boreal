@@ -17,7 +17,31 @@ C:\dev\rabbit-rec12\. Submit only if every gate >= 95 % and after re-checking RU
   16.2 mm (< 18.0 mm for one flight of the whole 121 ms aerial time: consistent, not inflated); (2) bound-v5 + bound + hare-rig
   17/17 (box); (3) lookscore v1.2 after-numbers reproduced on a box render within 0.7 (summer stretch 83.4, winter gather 49.4,
   winter stretch 91.5, end-on gather 50.4). Box v1.2 at 45d0439: shape summer 50.4 / winter 78.9, coat 86.1 / 95.9, end-on 44.5 / 83.5.
-- [ ] 2 lookscore v1.3 (plausibility, clover-free masks, noise, recalibration) + boundScore sole-above-hip
+- [x] 2 lookscore v1.3 + bound-checks v3 (evidence C:\dev\rabbit-rec12\, README C:\dev\rabbit-rec12\look\README-v1.3.md).
+  - Shared plausibility: boundScore.ts `posePlausibility(sk, frame)` = highest sole (paw / toe tip / MTP) above its OWN hip or
+    shoulder joint, and how far any knee / wrist lies outside the wider of CANID_LIMITS and the body's limits. bound-checks v3
+    check 9 'anatomy' (when the trace carries soleOverHip): 1 at <= 0, 0 at 2 cm above. tools/bound-score.ts feeds it.
+    Calibration (tests/anatomy.test.ts): shipped fold .8 highest sole -23..-58 mm below (grade 1), fold .9 +4..+16 mm, 1.2 / 1.5
+    +107..+134 mm (grade 0); bound-checks hare 99.9 % (fold .8) vs 94.7 (.9) / 88.2 (1.2, 1.5). No leporid hip-extension range
+    found (searched: rabbit hip goniometry; only knee - Hildebrand 2003 - and lumbar - Grauer 2000 - ranges exist), so the rule
+    stays geometric.
+  - Found by the new check, FIXED: the alert sit-up held the fore paws 25 mm ABOVE the shoulder joint (bounding.ts sit-up tuck
+    .45 x hip); now .35 x hip, paws 31 mm below (the reference sit-ups hang the paws in front of the chest). Timed strip: 0
+    implausible cells (was 2, the alert cells).
+  - lookscore v1.3 (look\lookscore13.py + declover.py; tools/hare-strip.ts logs per-cell plausibility in <pre id="strip-log"> /
+    ?log=1 pageResult; ?phase0= / ?fold= for noise and mismatch renders): (1) an implausible cell zeroes every cell of its
+    action in that sheet (one stride = one motion). Calibration: Gait Builder's fold 1.5 render: v1.2 summer stretch 100, end-on
+    gather 100, end-on stretch 87.4 -> v1.3 0 / 0 / 0 (13 of 30 stride cells implausible, s12-k15 / s13-k15); shipped rig: no
+    implausible cell. (2) Clover out of the reference masks (declover.jpg / declover.txt): summer 2-28 % removed (push 28 %, the
+    clover under the belly), end-on .3-20 %, winter < 1 %; anchors recomputed. (3) Noise: repeated renders are BIT-IDENTICAL
+    (md5, deterministic sim + swiftshader), so the band comes from 5 variants (6 fps ?seed=n1..n5, stride sheets ?phase0=0..0.8
+    cell): crouch / sit +-0 (held poses), gather +-1.5 / push +-0.9 / stretch +-0.7 summer, winter +-0.9 / 1.8 / 0.9, end-on gather
+    +-4.0, stretch +-1.0; means shape summer 63.0 +- 0.6, winter 77.6 +- 0.5, coat 88.6 / 95.4, end-on 50.1 +- 1.1 / 79.2 (noise-r8a.json).
+    Gait Builder's +-10 is parameter sensitivity (one best cell flips between near-identical settings), not measurement noise.
+  - v1.3 box scores at 45d0439 + tuck (s13-r8a / e13-r8a): shape summer 62.7 (crouch 35.7, sit 52.5, gather 47.9, push 85.7,
+    stretch 91.5), winter 78.0 (71.0, 80.9, 47.4, 100, 90.8); coat 88.5 / 95.4; end-on shape 50.4 (31.1, 66.0, 65.2, push
+    uncalibrated, 39.3), coat 80.0. The summer push jump (v1.2 49.5 -> 85.7) is the clover leaving its reference mask.
+  - PC: tsc 0; anatomy + bound + bound-v5 + hare-rig + hare-mesh 28/28 (C:\dev\rabbit-rec12\test-step2.txt); bound-checks hare 99.9 %.
 - [x] 3 Id question (rule 13): NO clash, no renumbering. main's tasks/T-0009-agent-core-transactions.md IS this task: title
   "Shared agent core, transaction registry and resource fields, with the snowshoe hare and sunlit clover as the first species",
   tags hare / clover, "Depends on: grok/rabbit-clover (build there; this task files it)", and its claim event (10:50 PT) names

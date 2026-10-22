@@ -11,6 +11,8 @@ import { HARE_AGENT } from '../src/core/agent/species';
 import { CLOVER, CLOVER_WHY, grazeTransaction, type CloverPatch } from '../src/core/clover';
 import { stream } from '../src/proc/rng';
 import { setHareDay } from '../src/animals/hare';
+import { SWING } from '../src/animals/locomotion/bounding';
+import { posePlausibility } from '../src/animals/locomotion/boundScore';
 const q = new URLSearchParams(location.search), wolfAt = Number(q.get('wolfAt') ?? 2.1), fps = Number(q.get('fps') ?? 6), dur = Number(q.get('dur') ?? 5), seed = q.get('seed') ?? 'strip';
 const CW = 424, CH = 240, COLS = 6, N = Math.round(fps * dur), ROWS = Math.ceil(N / COLS), W = CW * COLS, H = CH * ROWS;
 const canvas = document.getElementById('c') as HTMLCanvasElement;
@@ -43,14 +45,22 @@ let t = 0, next = 0; const dt = 1 / 120;
 const STRIDE = Number(q.get('stride') ?? 0);
 // run 7: ?view=end = the tracking camera END-ON from behind (on the hare's path, the wolf's side), as the wolf sees a fleeing hare
 const END = q.get('view') === 'end';
+// run 8 (lookscore v1.3): ?phase0=<0..1> shifts the stride sheet's first cell by that share of one cell (noise runs);
+// ?fold=<x> = SWING.fold.hind for a known-mismatch render (Gait Builder's foot-over-back 1.5); every cell logs the rig's
+// anatomical plausibility (boundScore posePlausibility), read by lookscore v1.3 from <pre id="strip-log"> or, with ?log=1,
+// from pageResult (tools/strip-shot.mjs prints it)
+if (q.get('fold')) SWING.fold.hind = Number(q.get('fold'));
+const plaus = () => { const f = hare.frame, sk = hare.rig?.skeleton; if (!f || !sk) return { above: null, joint: 0, ok: true };
+  const p = posePlausibility(sk, f); return { above: +(p.soleOverHip * 1000).toFixed(1), joint: +p.jointOut.toFixed(2), ok: p.ok }; };
 if (STRIDE > 0) { a.action = 'flee'; a.speed = STRIDE; a.heading = -Math.PI / 2; for (; t < 2; t += dt) { a.x += STRIDE * dt; poseHare(hare, a, dt, t, 0); } }
 const strideDt = STRIDE > 0 ? 1 / (hare.frame!.plan.hz * N) : 0;
+if (STRIDE > 0 && Number(q.get('phase0') ?? 0) > 0) { const s0 = Number(q.get('phase0')) * strideDt, sub = Math.max(1, Math.round(s0 / dt)), h = s0 / sub; for (let k = 0; k < sub; k++) { a.x += STRIDE * h; poseHare(hare, a, h, t, 0); t += h; } }
 for (let f = 0; f < N && STRIDE > 0; f++) {
   const sub = Math.max(1, Math.round(strideDt / dt)), h = strideDt / sub; for (let k = 0; k < sub; k++) { a.x += STRIDE * h; poseHare(hare, a, h, t, 0); t += h; }
   const col = f % COLS, row = Math.floor(f / COLS), x = col * CW, y = H - (row + 1) * CH;
   const dz = Number(q.get('track') ?? 2.2); if (END) cam.position.set(a.x - dz, .25, a.z); else cam.position.set(a.x, .25, a.z + dz); cam.lookAt(a.x, .15, a.z);
   renderer.setViewport(x, y, CW, CH); renderer.setScissor(x, y, CW, CH); renderer.render(scene, cam);
-  log.push({ t: +t.toFixed(3), action: 'flee', x: +a.x.toFixed(3), speed: STRIDE, phase: +hare.frame!.stride.toFixed(3) });
+  log.push({ t: +t.toFixed(3), action: 'flee', x: +a.x.toFixed(3), speed: STRIDE, phase: +hare.frame!.stride.toFixed(3), ...plaus() });
 }
 for (let f = 0; f < N && !(STRIDE > 0); f++) {
   const at = f / fps;
@@ -59,6 +69,7 @@ for (let f = 0; f < N && !(STRIDE > 0); f++) {
   if (q.get('track')) { const dz = Number(q.get('track')); if (END) cam.position.set(a.x - dz, .25, a.z); else cam.position.set(a.x, .25, a.z + dz); cam.lookAt(a.x, .15, a.z); }
   renderer.setViewport(x, y, CW, CH); renderer.setScissor(x, y, CW, CH); renderer.render(scene, cam);
   const d = document.createElement('div'); d.className = 'c'; d.style.left = `${x + 4}px`; d.style.top = `${row * CH + 3}px`; d.textContent = `${at.toFixed(2)}s ${a.action}`; if (!MATTE) labels.append(d);
-  log.push({ t: +at.toFixed(3), action: a.action, x: +a.x.toFixed(3), speed: +a.speed.toFixed(2), phase: +hare.hopPhase.toFixed(3) }); next++;
+  log.push({ t: +at.toFixed(3), action: a.action, x: +a.x.toFixed(3), speed: +a.speed.toFixed(2), phase: +hare.hopPhase.toFixed(3), ...plaus() }); next++;
 }
-(globalThis as { stripLog?: unknown; pageResult?: unknown }).stripLog = log; (globalThis as { pageResult?: unknown }).pageResult = log.map(l => (l as { action: string }).action).join(','); document.title = 'ready';
+(globalThis as { stripLog?: unknown; pageResult?: unknown }).stripLog = log; (globalThis as { pageResult?: unknown }).pageResult = q.get('log') ? JSON.stringify(log) : log.map(l => (l as { action: string }).action).join(',');
+{ const pre = document.createElement('pre'); pre.id = 'strip-log'; pre.style.display = 'none'; pre.textContent = JSON.stringify(log); document.body.append(pre); } document.title = 'ready';

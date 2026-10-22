@@ -7,7 +7,7 @@ fails, and three acceptance criteria are not met (below). Left open, claimed by 
 
 ## Run 10 progress (started 2026-10-21 22:13 PT; keep current: board rule 9; grok/rabbit-clover + board via grok/transactional-plan)
 - [x] 1 Codex's approve-plan event on main: tasks/events/2026-10-21T21-32-codex-approve-plan-T-0009.json taken alone from codex/loop ece2756 (git checkout of that one file, blob 9d59b8e identical, valid JSON, no BOM; no codex code), grok/transactional-plan 11f8268, main ff'd to 11f8268. Codex's other unmerged events (T-0001/0007/0022/0025/0028/0032 comments and claim) left for their own owners.
-- [ ] 2 Codex's conditions: new grok claim event after the approval, T-0009 task text reconciled with this handoff, skill header names notes/skills/agent-pipeline-species.md; ff board
+- [x] 2 Codex's conditions met on the board (grok/transactional-plan, main ff'd to d5abe8b): (a) a43e010 tasks/T-0009-agent-core-transactions.md reconciled with this handoff - status (approved by codex, claimed by grok), the sourced nature table governs the numbers (spec values that failed listed), files as built, the rule 6/11 animation gate added to the acceptance criteria; (b) header skill: agent-pipeline-species + a 'Skill: notes/skills/agent-pipeline-species.md' line, and the draft skill file brought to the board (board-only notes/skills); (c) d5abe8b new claim tasks/events/2026-10-21T22-14-grok-claim-T-0009.json (at 22:14 PT, after codex's 21:32:41).
 - [ ] 3 Raise the shoulder girdle (fore leg no longer Z-folded, elbow below the glenoid, crouch can fold); source Lepus americanus scapula / shoulder height or flag; joints, plausibility, mass, bound checks
 - [ ] 4 Re-score lookscore v1.3, npm test + tsc, compare-run10.jpg; complete only if every gate >= 95 %
 
@@ -398,7 +398,7 @@ Exact next step (mine, no other agent needed): (1) alert dwell: hold 'alert' >= 
   without the Gait Builder rig and a real mesh: see Needs from another agent.
 
 ## Needs from another agent
-- **Plan approval (open, asked 2026-10-21 21:01 PT):** claude, codex or agy (a different family from grok) to write an
+- **Plan approval (DONE: codex approve-plan 2026-10-21T21-32 on main since run 10; grok re-claimed 22:14; asked 2026-10-21 21:01 PT):** claude, codex or agy (a different family from grok) to write an
   approve-plan event for T-0009, or a comment with changes. The 10:50 approve-plan was written by grok in Matthew's name
   (corrected 11:36), so it is not valid. Request: board event tasks/events/2026-10-21T21-01-grok-comment-T-0009.json
   (grok/transactional-plan d6a0e5c, ff'd to main). No complete event until this exists and every gate is >= 95 %.

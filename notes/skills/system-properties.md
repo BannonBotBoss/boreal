@@ -6,7 +6,7 @@ everything is rigged up in docs/system-map.md.
 ## The file
 `src/config/systemProperties.ts`, pure data (imports nothing, so workers, tools and tests can read it):
 - `SYSTEM_PROPERTIES`: one top-level key per group, alphabetical, `/** one-line comment */ key: value`, `as const`.
-  Same shape on every branch (T-0035 focus/targetGlow, T-0036 needsThoughts), so parallel groups merge as whole sections.
+  Same shape on every branch (T-0035 autoFocus/targetGlow, T-0036 needsThoughts), so parallel groups merge as whole sections.
 - `PROPERTY_META[group]`: `readers` (modules that read the group) and `keys[key] = [units, source]`; source is a citation,
   "Matthew" (his spec), "design", or "estimate (game calibration)". Never leave a real-world number as an estimate if a source
   exists (rule 6): look it up, cite it, and add it to the task's number table.

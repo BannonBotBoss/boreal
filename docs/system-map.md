@@ -123,7 +123,7 @@ flowchart LR
 | [Time and clock](#clock) | The one world clock (frozen in menus), game hour, date and sun position; chronometer offset. | `clock`, `chronometer` | save | audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 2 |
 | [Player controls and gamepad](#controls) | One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics. | `haptics` | save | camera, interaction, player, stamina, ui | - |
 | [Globe (planet view)](#globe) | Cube-sphere planet, atmosphere, far layer and the descent from orbit to the ground. | - | terrain, clock, lighting, quality, save | - | 19 |
-| [Interaction, focus and target glow](#interaction) | Picking the interaction target, held focus lock and steering, the glowing outline. | `focus` (pending), `targetGlow` (pending) | controls, player, behaviour, camera | camera | 1 |
+| [Interaction, focus and target glow](#interaction) | Picking the interaction target, held focus lock and steering, the glowing outline. | `autoFocus` (pending), `targetGlow` (pending) | controls, player, behaviour, camera | camera | 1 |
 | [Lighting](#lighting) | Physical sun/moon illuminance, exposure, ambient and night vision. | - | clock, weather, quality | globe, sky | - |
 | [Animals and locomotion](#locomotion) | Gaits, central pattern generator, IK, posture, jumps and the rigs that draw them. | `jump` | behaviour, stamina, physics, terrain | audio, needs | 2 |
 | [Needs (water, energy, rest)](#needs) | Species needs drained at real-world rates, thought bubbles and alerts, needs-driven goals. | `needsThoughts` (pending) | clock, locomotion, water, weather | behaviour, stamina, ui | 1 |
@@ -392,7 +392,7 @@ Picking the interaction target, held focus lock and steering, the glowing outlin
 - Feeds: camera
 - Modules: `src/render/buildScene.ts`, `src/main.ts`
 
-### `focus` (pending: arrives with grok/interact-outline (T-0035))
+### `autoFocus` (pending: arrives with grok/interact-outline (T-0035))
 
 ### `targetGlow` (pending: arrives with grok/interact-outline (T-0035))
 
@@ -404,7 +404,7 @@ Picking the interaction target, held focus lock and steering, the glowing outlin
 
 **Still in code** (not moved yet)
 
-- focus and targetGlow groups arrive with grok/interact-outline (T-0035)
+- autoFocus and targetGlow groups arrive with grok/interact-outline (T-0035)
 
 <a id="lighting"></a>
 ## Lighting (`lighting`)

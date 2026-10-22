@@ -5,7 +5,7 @@
  * Three parts, all pure data (this file imports nothing, so any module, worker or tool can read it):
  *  1. SYSTEM_PROPERTIES - the adjustable figures, one top-level key per group (alphabetical), `/** comment *\/ key: value`.
  *     Code reads from here: change a figure here, not at the call site. Readers keep their old export names (CHRONO, FEEL ...).
- *     Same shape as T-0035 (focus, targetGlow) and T-0036 (needsThoughts), so their groups merge in as whole sections.
+ *     Same shape as T-0035 (autoFocus, targetGlow) and T-0036 (needsThoughts), so their groups merge in as whole sections.
  *  2. PROPERTY_META - per group: the modules that read it, and per figure its units and source ('estimate' when it is game
  *     calibration rather than a measurement).
  *  3. SYSTEM_MAP - per system: what it is, its modules, its groups here, what it depends on (the "feeds" direction is derived),
@@ -116,7 +116,7 @@ export const SYSTEM_PROPERTIES = {
 export type SystemGroup = keyof typeof SYSTEM_PROPERTIES;
 /** Groups other branches add to SYSTEM_PROPERTIES; listed in SYSTEM_MAP now so the wiring is complete before they land. */
 export const PENDING_GROUPS: Record<string, string> = {
-  focus: 'grok/interact-outline (T-0035)', targetGlow: 'grok/interact-outline (T-0035)', needsThoughts: 'grok/wolf-hydration (T-0036)',
+  autoFocus: 'grok/interact-outline (T-0035)', targetGlow: 'grok/interact-outline (T-0035)', needsThoughts: 'grok/wolf-hydration (T-0036)',
 };
 
 /** Units + source per figure. Source: a citation, "Matthew" (his spec), or "estimate" (game calibration, no measurement). */
@@ -215,9 +215,9 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
       'src/world/globe/globeView.ts#NEAR_SPLIT': 'near/far camera split', 'src/world/globe/tile.ts#DETAIL': 'close-up detail noise' },
     remaining: ['globe figures (T-0034 is changing globeView / inpage; move after it merges)'] },
   interaction: { title: 'Interaction, focus and target glow', what: 'Picking the interaction target, held focus lock and steering, the glowing outline.',
-    modules: ['src/render/buildScene.ts', 'src/main.ts'], groups: ['focus', 'targetGlow'], dependsOn: ['controls', 'player', 'behaviour', 'camera'],
+    modules: ['src/render/buildScene.ts', 'src/main.ts'], groups: ['autoFocus', 'targetGlow'], dependsOn: ['controls', 'player', 'behaviour', 'camera'],
     flags: { glow: '=0 turns the target glow off for A/B (grok/interact-outline, T-0035)' }, tables: {},
-    remaining: ['focus and targetGlow groups arrive with grok/interact-outline (T-0035)'] },
+    remaining: ['autoFocus and targetGlow groups arrive with grok/interact-outline (T-0035)'] },
   lighting: { title: 'Lighting', what: 'Physical sun/moon illuminance, exposure, ambient and night vision.',
     modules: ['src/core/light.ts', 'src/render/pbr.ts', 'src/render/post.ts', 'src/render/photoreal.ts'], groups: [], dependsOn: ['clock', 'weather', 'quality'],
     flags: {}, tables: { 'src/core/light.ts#LUX': 'illuminance figures (CIE)', 'src/core/light.ts#EXPOSURE': 'exposure base',

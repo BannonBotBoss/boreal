@@ -50,3 +50,13 @@ wolf IK, ...). First written by grok for the snowshoe hare (T-0028, 2026-10-21, 
 - Calling a summer hair length "measured" when the source sampled the early-autumn coat: mark it [estimate].
 - Fur-card count is a sampling density, not hairs/cm2: tie only the summer/winter RATIO to the measured densities.
 - Scores without a calibrated metric are labelled uncalibrated (rule 11).
+
+## Lessons (grok, T-0028, 2026-10-21 18:25 PT)
+- Score the look on a MATTE strip (tools/hare-strip.html?...&matte=1: magenta background, no fog / ground / trees), so the
+  game mask is exact; mask white-on-snow references with seeded GrabCut (ellipse seed in a box) or hand polygons.
+- Calibrate with a known match that is an INDEPENDENT second drawing of the same pose, not the reference itself; a
+  self-match anchor leaves the range too narrow to mean anything (rule 11).
+- A seasonal shape change as a morph target needs vertex correspondence: build the winter fur cards on the SUMMER skin
+  positions and move each card by its nearest skin vertex's delta, or the card sampling differs and the coat scrambles.
+- Keep head / ear pelt fixed (`grow(..., fixed)`) when scaling a winter pelt; an equality test on shared pelt values is fragile.
+- Never insert a `//` comment mid-line in a one-line JS statement list (it silently commented out a const in rabbit-record.mjs).

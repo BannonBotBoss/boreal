@@ -195,6 +195,14 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       const g = globe; prep = null; host.save(); hold.hold(); g.resumeWorkers(); down = false; needStart = true; lastT = performance.now(); setMode('band');
       return true;
     },
+    /** Page load (world/globe/startView): straight into globe mode over the player at the standalone globe's opening
+     *  altitude (globeView startAlt, 2.2 R: the whole disc), no rise; the ascent's hold and workers. False = take the reload path. */
+    enter(): boolean {
+      if (mode !== 'game') return true;
+      if (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER) return false;
+      if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
+      prep = null; hold.hold(); globe.resumeWorkers(); globe.jumpTo(PLANET.radius * 2.2); toGlobe(); return true;
+    },
     blocksGame: () => mode !== 'game',
     /** main's runJobs budget: undefined = the default; larger while the descent waits for the patch chunks */
     jobBudgetMs: () => { const w = (mode === 'band' && down && !readySeen) || (mode === 'globe' && !!prep && !chunksReady()); JOB_FIRST.test = w ? chunkFirst : null; return w ? Math.max(INPAGE.jobMin, INPAGE.jobFrame - renderMs) : undefined; }, /* + the patch chunks run before grass/flora (core/interest JOB_FIRST) */

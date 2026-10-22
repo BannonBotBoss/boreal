@@ -163,7 +163,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
     else if (e.key === 'h' || e.key === 'H') flyHome = 1;
     else if (e.key === 'q' || e.key === 'Q') turn(-.12); else if (e.key === 'e' || e.key === 'E') turn(.12);
-    else if (e.key === 'g' || e.key === 'G' || e.key === 'Escape') { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } // over home: spawn right below, same heading
+    else if (e.key === 'g' || e.key === 'G' || (e.key === 'Escape' && own.pageDom)) { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } // over home: spawn right below, same heading; shared (in-page): Esc opens the game menu instead (main.ts)
   });
 
   // ---- tile builders: a worker pool (default) or budgeted main-thread jobs (?workers=0 or no Worker support)

@@ -43,6 +43,7 @@ import { createLoading } from './ui/loading';
 import { settle, startup } from './render/startup';
 import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
+import { startView } from './world/globe/startView';
 import { createInPage } from './world/globe/inpage';
 import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, loadClock, worldSec, pauseClock, resumeClock, saveClock } from './core/worldClock';
@@ -144,6 +145,7 @@ const menu = createMenu({
   quitToMenu: () => { paused = false; element('pause').textContent = 'Pause'; }, // clock stays frozen: start page keeps it paused
   close: mode => { resumeClock(); if (mode === 'pause') { paused = false; applyPending(); element('pause').textContent = 'Pause'; sfx.pauseCue(); } else lookYaw = 0; clearInput(); canvas.focus({ preventScroll: true }); },
 });
+const openStart = () => { pauseClock(); menu.show('start'); }; // load (ground start), Esc on the globe, the Menu button
 const menuOpen = () => menu.open && menu.mode === 'start'; // start page: camera drift, no game input
 // Rewind history: every system registers its own snapshot source; photo mode never touches systems directly.
 const hub = createSnapshotHub(600); // 60 s at 10 Hz
@@ -205,6 +207,7 @@ const inpage = createInPage(view, { player: () => ({ x: player.x, z: player.z, y
 function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
 actionButton.onclick = perform;
 element('pause').onclick = togglePause;
+element('menu-btn').onclick = () => { if (!menu.open) openStart(); };
 element('photo-btn').onclick = () => enterPhoto();
 element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = view.playable.cameraHeight; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
 element('help').onclick = () => { if (!menu.open) togglePause(); menu.openControls(); }; // Controls screen (the Library text is a button there)
@@ -250,6 +253,7 @@ addEventListener('keydown', event => {
   if (event.target instanceof HTMLElement && (event.target.isContentEditable || event.target.matches('input,textarea,select'))) return;
   if (dialog.open) return;
   if (menu.open) return;
+  if (event.key === 'Escape' && inpage?.mode === 'globe') { openStart(); return; } // the menu over the globe (its own Esc only leaves in the standalone page)
   if (inpage?.ownsInput()) return; // in-page globe/band: only the active scene's keymap is live
   if (!event.repeat && event.key.toLowerCase() === 'o' && !event.ctrlKey) { // O: senses halo on / off (remembered)
     sensesHalo.enabled = !sensesHalo.enabled; try { localStorage.setItem(HALO_KEY, sensesHalo.enabled ? '1' : '0'); } catch { /* storage blocked */ }
@@ -398,7 +402,7 @@ function frame(time: number) { const frameStart = performance.now();
 }
 requestAnimationFrame(frame);
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).then(() => inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { pauseClock(); menu.show('start'); } }); }
+  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') }).catch(e => console.warn('startup', e)).then(() => inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { if (startView(location.search) === 'globe') { if (!inpage?.enter()) toGlobe(); } else openStart(); } }); } // bare load: the planet, no menu over it (T-0034)
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

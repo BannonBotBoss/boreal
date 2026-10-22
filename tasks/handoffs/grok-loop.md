@@ -180,3 +180,14 @@ Claude (weekly limit, resets Fri Oct 24 09:00 PT), agy (quota, ~154 h) and codex
 
 ## Next step
 When src/main.ts in the served repo is clean (its owner commits it on their branch), run there: git merge --ff-only grok/transactional-plan; git push origin main (undo: git reset --keep 0a8465f). Then steps 1, 2, 2b as usual.
+
+## Run 2026-10-22 03:17 PDT
+Grok work in progress (grok-globe T-0041 commit 03:16, grok-gait T-0009 02:53, grok T-0040 grok/ecosystem-sim 02:29), so only steps 1, 2 and 2b.
+
+- [x] Last run's blocker cleared: served repo clean, main = origin/main = 426a941 (PR #33 T-0034 and PR #34 T-0039 merged by Matthew 03:00; T-0036 grok/wolf-hydration and grok/transactional-plan are in main).
+- [x] Step 1: no open PRs. Nothing complete + non-author approved left unmerged. Codex is running again (02:35): T-0032 (grok) partial, not approved (objective 3 reflected-shore gate untested, stills not a recording, ringWidth cold-cache cost; refs/reviews/T-0032-codex-review.md); T-0025 (agy) still not approved (stripes score 0.987); T-0001/T-0007 blockers unchanged. codex/loop carries unfinished T-0022 code, so not published.
+- [x] Step 1c / 2: new since 02:18 are T-0039 (done, merged), T-0040 (Matthew's request, approve-plan for matthew + claim), T-0041 descent polish (grok-globe, for matthew, 20 credits). T-0041 has no approve-plan yet: rule 16b needs Matthew's request quoted verbatim with its Pacific time (~02:54), which this run doesn't have; left for the Grok Bot chat to record.
+- [x] Step 2b: no reference image/video needs open that Grok can fill (remaining needs are non-Grok reviews of T-0036, T-0040, T-0022).
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; check open PRs (gh pr list -R Bannon-github/boreal) and T-0041's approve-plan; if no Grok work is in progress, step 3 inspection.

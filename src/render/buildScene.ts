@@ -181,7 +181,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       return;
     }
   }
-  let previousTime = 0;
+  let previousTime = 0, focusBlend = 0, lastFocus: Entity | undefined; const focusQ = new THREE.Quaternion();
   const headPoint = new THREE.Vector3();
   const audibleAnimals: {key:string; energy:number; motion:string; problem:string; x:number; z:number; phase:number}[] = [];
   function simulateAnimals(dt:number, x:number,z:number, frozen=false) {
@@ -240,14 +240,15 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const pushVector = pushed && pushFrom ? { x: pushed.x - pushFrom.x, z: pushed.z - pushFrom.z, yaw } : undefined;
     wolf.animate({ time, dt: photo && photo.frozen !== false ? 0 : Math.max(0, Math.min(.1, time - previousTime)), moving, action, elapsed: actionElapsed, mode, push: pushVector });
     positionCamera(camera, x, z, altitude, yaw, pitch, lookYaw);
-    const focused = mode === 'super-stealth' && !photo ? focus : undefined;
+    const focused = !photo ? focus : undefined; // T-0035: held focus (core/focusLock), any mode
     const frozen = !!photo && photo.frozen !== false;
     const dt = frozen ? 0 : Math.max(0, Math.min(.1, time - previousTime)); if (!frozen) previousTime = time;
-    camera.fov += ((focused ? 30 : 48) - camera.fov) * (1 - Math.exp(-8 * dt));
+    camera.fov += ((focused ? 36 : 48) - camera.fov) * (1 - Math.exp(-8 * dt));
+    focusBlend += ((focused ? 1 : 0) - focusBlend) * (1 - Math.exp(-8 * dt)); if (focused) lastFocus = focused; // eased, so engaging / releasing never snaps the view
     if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
     bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
     camera.updateProjectionMatrix();
-    if (focused) camera.lookAt(focused.x, heightAt(focused.x, focused.z) + (focused.kind === 'deer' ? 1.5 : 1), focused.z);
+    if (lastFocus && focusBlend > .002 && !photo) { const f = lastFocus; focusQ.copy(camera.quaternion); camera.lookAt(f.x, heightAt(f.x, f.z) + (f.kind === 'deer' ? 1.2 : f.kind === 'person' ? 1.4 : .3), f.z); camera.quaternion.slerpQuaternions(focusQ, camera.quaternion.clone(), focusBlend); camera.updateMatrixWorld(true); }
     const highlighted = photo ? undefined : focused ?? target;
     highlight(highlighted);
 

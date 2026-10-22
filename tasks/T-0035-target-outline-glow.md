@@ -34,8 +34,13 @@ Branch: `grok/interact-outline` (worktree C:\dev\boreal-grok-outline, from main 
 - [ ] 1. Ring removed; the highlighted entity (herb, berry bush, deer, rock, log, person) gets a glow tracing its silhouette
 - [ ] 2. Frame-time cost measured (?bench or the perf HUD) with and without a target; under 0.5 ms on omen
 - [ ] 3. Before/after screenshots of herb, berry bush and deer; tests, tsc, handoff, skill
+- [ ] 4. Held focus (scope addition, Matthew ~01:00 PT): focus engages only while gamepad LB (keyboard F) is held and an
+      interactable object is within 12 m ahead; moving forward steers the wolf toward it at the 2.2 rad/s turn rate (no snap);
+      leaving the radius or releasing drops it; the glow marks the focused object. Super stealth no longer auto-focuses.
 
 ## Numbers
 | value | game number | real figure + source | resemble? |
 |---|---|---|---|
+| focus radius | 12 m (core/focusLock FOCUS.radius) | N/A: game-feel distance, 2 x the 6 m interaction reach (core/events) | N/A |
+| focus turn rate | 2.2 rad/s (the existing full-stick steer rate, main.ts) | N/A: reused game constant, not new | N/A |
 | glow | UI overlay, no world quantity | N/A: a UI highlight is not a natural object (rule 11: unmeasurable, no nature figure applies) | N/A |

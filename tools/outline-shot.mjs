@@ -23,12 +23,19 @@ try {
     await cdp('Page.navigate', { url: `${base}/?nomenu&at=${at}${extra}` });
     for (let i = 0; i < +(process.env.MAXWAIT ?? 180); i++) { await sleep(1000); if (await ev(`document.readyState === 'complete' && !document.getElementById('loading')`)) break; }
     await sleep(7000);
+    // HOLD=f[,w]:secs : hold keys (focus, forward) before the shot; records the heading change while held
+    const hold = process.env.HOLD ? process.env.HOLD.split(':') : null, held = hold ? hold[0].split(',') : [];
+    const KEY = { f: ['f', 'KeyF', 70], w: ['w', 'KeyW', 87] }; let statusHeld;
+    for (const k of held) await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: KEY[k][0], code: KEY[k][1], windowsVirtualKeyCode: KEY[k][2] });
+    if (hold) { await sleep(+hold[1] * 1000); statusHeld = await ev(`document.getElementById('status')?.innerText`); }
     const s = await cdp('Page.captureScreenshot', { format: 'png' }); writeFileSync(join(outDir, `${label}.png`), Buffer.from(s.data, 'base64'));
+    for (const k of held) await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: KEY[k][0], code: KEY[k][1], windowsVirtualKeyCode: KEY[k][2] });
+    const statusAfter = hold ? await ev(`new Promise(r => setTimeout(() => r(document.getElementById('status')?.innerText), 500))`) : undefined;
     await ev(`(() => { window.__ft = []; let last = performance.now(); const loop = t => { window.__ft.push(t - last); last = t; requestAnimationFrame(loop); }; requestAnimationFrame(loop); })()`);
     await sleep(+secs * 1000);
     const d = await ev(`({ ft: window.__ft.slice(), target: document.getElementById('target')?.textContent })`);
     const ft = d.ft.slice(2).sort((a, b) => a - b), q = k => +ft[Math.floor(k * (ft.length - 1))].toFixed(2);
-    out.push({ label, at, target: d.target, n: ft.length, p50: q(.5), p90: q(.9), mean: +(ft.reduce((a, b) => a + b, 0) / ft.length).toFixed(2) });
+    out.push({ label, at, target: d.target, statusHeld: hold ? statusHeld : undefined, statusAfter, n: ft.length, p50: q(.5), p90: q(.9), mean: +(ft.reduce((a, b) => a + b, 0) / ft.length).toFixed(2) });
   }
   ws.close();
 } finally { try { execSync(`taskkill /PID ${p.pid} /T /F`, { stdio: 'ignore' }); } catch {} await sleep(1500); try { rmSync(profile, { recursive: true, force: true }); } catch {} }

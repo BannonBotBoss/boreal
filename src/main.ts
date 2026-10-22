@@ -1,3 +1,4 @@
+import { FOCUS, focusSteer, pickFocus } from './core/focusLock';
 import './style.css';
 import { createSensesHUD } from './ui/senses';
 import { createSensesHalo } from './render/sensesHalo';
@@ -226,7 +227,7 @@ let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem
 function setBindings(b: Bindings) { bindings = b; hint = { pad: '', keys: '' }; bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
 const controls = controlsScreen({ get: () => bindings, set: setBindings, library: () => { menu.close(); dialog.showModal(); } });
 const hintFor = (kind: 'keys' | 'pad') => { const L = (id: string) => bindingLabel(bindings[id][kind]);
-  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
+  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
 function act(id: string) { // one fired press action (keyboard or gamepad)
   if (dialog.open) { if (id === 'back' || id === 'interact') dialog.close(); else if (id === 'pause') togglePause(); return; }
   if (photo.active) { if (id === 'pause' || id === 'photo') void photo.exit(); else if (id === 'inspector') inspector.toggle(); return; } // photo mode has its own keys
@@ -292,7 +293,7 @@ initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the
 const chrono = createChronometer(worldSec); // T / gamepad View: set the time of day (ui/chronometer)
 function bindingTexts() { // help dialog and chronometer lines written from the live bindings (Controls screen rebinding updates them)
   const L = (id: string, k: 'keys' | 'pad') => bindingLabel(bindings[id][k]), G = (id: string, k: 'keys' | 'pad') => groupLabel(bindings, id, k);
-  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth with target focus. Release both to choose a new combination. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} chronometer, ${L('pause', k)} pause`;
+  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object ahead within ${FOCUS.radius} m (it glows); moving forward then steers toward it. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} chronometer, ${L('pause', k)} pause`;
   element('help-binds').textContent = `Xbox: ${tell('pad')}, ${L('back', 'pad')} close this panel. Keyboard: ${tell('keys')}, ${L('photo', 'keys')} photo mode (free camera, rewind, capture). Rebind any of these under ${L('pause', 'keys')} → Controls.`;
   const close = [...bindings.chrono.keys, ...bindings.back.keys, ...bindings.chrono.pad, ...bindings.back.pad].map(comboLabel).join(' / ');
   chrono.setHint(`${G('scrub', 'keys')} or ${G('scrub', 'pad')}: scrub time · drag the dial · ${close}: close`);
@@ -336,7 +337,7 @@ function frame(time: number) { const frameStart = performance.now();
       const jump = H('jump') > ACTIVE && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
       if(!autonomous || playerAction) brain.decide({x:player.x,y:0,z:player.z},1/30,{
         motion:jump?'jump':speed<-.01?'back':speed>.01?(modes.mode==='run'||modes.mode==='sprint'?'run':'walk'):'idle',
-        heading:yaw-dx*2.2/30,speed:jump?pounceSpeed(speed):speed});
+        heading:yaw+(focusSteer(yaw,player,focusTarget,-dz,dx,1/30)??-dx*2.2/30),speed:jump?pounceSpeed(speed):speed});
       // Inertia: walking/running speed changes are capped at force/mass (heavier = slower); jumps are impulses.
       if(!autonomous && brain.motion!=='jump') brain.speed=approach(prevSpeed,brain.speed,accelLimit(playerMass,view.wolfMass),1/30);
       { // wind drag through the shared field: relative air velocity on the frontal area (∝ m^(2/3), 0.15 m² for a 40 kg wolf [verify])
@@ -356,14 +357,9 @@ function frame(time: number) { const frameStart = performance.now();
   { const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow; view.worldTime = wNow; // 'clock' fields follow worldSec (frozen while the menu is open)
     tickGround(12 * wDt); // 1 real s = 12 game s (timeOfDay REAL_SECONDS_PER_GAME_HOUR 300)
     updateWeather(Math.min(wDt, .25), 3600 / REAL_SECONDS_PER_GAME_HOUR, dayAt(wNow), hourAt(wNow)); } // hour and date include the chronometer's dial
-  if (modes.mode !== 'super-stealth') focusTarget = undefined;
-  else {
-    const candidates = view.entities().filter(e => ['deer', 'person'].includes(e.kind) && Math.hypot(e.x - player.x, e.z - player.z) < 30);
-    if (focusTarget && !candidates.some(e => e.key === focusTarget!.key)) focusTarget = undefined;
-    focusTarget ??= candidates.filter(e => {
-      const dx = e.x - player.x, dz = e.z - player.z, distance = Math.hypot(dx, dz);
-      return distance > .1 && (-Math.sin(yaw + lookYaw) * dx - Math.cos(yaw + lookYaw) * dz) / distance > .4;
-    }).sort((a, b) => Math.hypot(a.x - player.x, a.z - player.z) - Math.hypot(b.x - player.x, b.z - player.z))[0];
+  { // T-0035 held focus (core/focusLock): only while Focus (LB / F) is held and an interactable object is within FOCUS.radius
+    const kinds = (Object.keys(catalog) as (keyof typeof catalog)[]).filter(k => k !== 'rock' && (catalog[k].interactions ?? []).some(a => player.abilities.includes(a)));
+    focusTarget = pickFocus(active && !autonomous && H('focus') > ACTIVE, focusTarget, { x: player.x, z: player.z, view: yaw + lookYaw }, view.entities().filter(e => !context.records[e.key]?.removed), kinds);
   }
   target = view.entities().filter(e => availableActions(player, e, context).length).sort((a, b) => Math.hypot(player.x - a.x, player.z - a.z) - Math.hypot(player.x - b.x, player.z - b.z))[0];
   const action = target && availableActions(player, target, context)[0];
@@ -392,7 +388,7 @@ function frame(time: number) { const frameStart = performance.now();
   const animalStatus = animal ? ` · ${animal.motion}/${animal.problem} · Energy ${Math.round(animal.energy)}` : '';
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
-  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : modes.mode === 'super-stealth' ? 'Face an individual within 30 m to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
+  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? `Nothing to focus within ${FOCUS.radius} m ahead` : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth · LB focus'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind); if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
   requestAnimationFrame(frame);
 }

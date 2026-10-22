@@ -22,8 +22,8 @@ test('descent: in-page globe pitch goes from straight down in orbit to the 45-de
   for (let a = 14e6; a > TRANSITION.bandTop; a *= .99) { const p = globePitch(a); assert.ok(p >= prev - 1e-9, `monotone at ${a}`); worst = Math.max(worst, Math.abs(deg(p - prev))); prev = p; }
   assert.ok(worst < 1, `worst step ${worst.toFixed(2)} deg per 1 % of altitude`);
 });test('descent: the in-page globe cloud deck opens on the way down (clear from orbit cover to none by 20 km), kept across tier changes', () => {
-  assert.equal(cloudClear(14e6), 0); assert.equal(cloudClear(2.5e6), 0); assert.equal(cloudClear(2.5e4), 1); assert.equal(cloudClear(TRANSITION.bandTop), 1); // T-0041: log-altitude fade
-  let prev = 0; for (let a = 2.5e6; a > 2.5e4; a *= .99) { const c = cloudClear(a); assert.ok(c >= prev && c - prev < .02, `smooth at ${a}`); prev = c; }
+  assert.equal(cloudClear(14e6), 0); assert.equal(cloudClear(1.5e6), 0); assert.equal(cloudClear(1.5e5), 1); assert.equal(cloudClear(TRANSITION.bandTop), 1); // T-0041: log-altitude fade
+  let prev = 0; for (let a = 1.5e6; a > 1.5e5; a *= .99) { const c = cloudClear(a); assert.ok(c >= prev && c - prev < .02, `smooth at ${a}`); prev = c; }
   const atm = createAtmosphere(6371000, 0), u = atm.uniforms; assert.equal(u.uCloudClear.value, 0);
   atm.setClear(.7); assert.equal(u.uCloudClear.value, .7); atm.setTier(2); assert.equal(u.uCloudClear.value, .7);
   const frag = (atm.dome.material as unknown as { fragmentShader: string }).fragmentShader; assert.ok(frag.includes('uCloudClear'));

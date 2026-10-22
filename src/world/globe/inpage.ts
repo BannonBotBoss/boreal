@@ -188,6 +188,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** dev (the check script): chunk job scheduler state */
     /** dev (the check script): hold the descent at a height / pin the band camera (occlusion checks); ground height */
     DEBUG, groundAt: ground, get land() { return [land.x, land.y, land.z]; },
+    /** dev (refs/T-0041/measure.mjs): the game view (scene, camera) and the player spot, for the landing line-of-sight raycast */
+    get view() { return view; }, player: () => host.player(),
     jobs: () => ({ q: queued(), run: JOBS.jobsRun, deferred: JOBS.deferred, lastMs: +JOBS.lastFrameMs.toFixed(1), kinds: JSON.parse(JSON.stringify(JOBS.kinds)) as unknown }),
     get mode() { return mode; }, get globe() { return globe; }, get fade() { return fade; }, get height() { return h; }, STATS, INPAGE, far,
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */

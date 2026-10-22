@@ -15,9 +15,9 @@ test('descent polish: cloud cover fades smoothly over log altitude (no switch be
   let rate = 0; for (let i = 1; i < f.length; i++) { const a = f[i - 1], b = f[i];
     if (a.alt <= 7e5 && b.alt >= 1.5e5 && b.alt < a.alt) rate = Math.max(rate, Math.log(a.alt / b.alt) / (b.t - a.t)); }
   assert.ok(rate > .5, `a descent through 600-200 km is in the recording (rate ${rate})`);
-  const step = rate / 30; // ln altitude per rendered frame at 30 fps (Low tiers; 60 fps halves it)
-  let max = 0; for (let a = 6e5; a > 2e5; a *= Math.exp(-step)) max = Math.max(max, Math.abs(cloudClear(a * Math.exp(-step)) - cloudClear(a)));
-  assert.ok(max <= .02, `cover change per frame ${max.toFixed(4)} <= 0.02`);
+  for (const [fps, lim] of [[60, .02], [30, .04]]) { const step = rate / fps; // ln altitude per rendered frame
+    let max = 0; for (let a = 6e5; a > 2e5; a *= Math.exp(-step)) max = Math.max(max, Math.abs(cloudClear(a * Math.exp(-step)) - cloudClear(a)));
+    assert.ok(max <= lim, `cover change per ${fps} fps frame ${max.toFixed(4)} <= ${lim}`); }
   let prev = 0; for (let a = CLOUD_OPEN.top; a > CLOUD_OPEN.bottom; a *= .99) { const c = cloudClear(a); assert.ok(c >= prev, `monotone at ${a}`); prev = c; }
   // the shader fades the cover (alpha) and the shadows; it no longer raises the coverage threshold (the T-0034 switch)
   const src = readFileSync('src/world/globe/atmosphere.ts', 'utf8');

@@ -85,3 +85,10 @@ Next run: read this file, then steps 1, 2, 2b. Matthew to decide claude's T-0021
 ## Run 2026-10-21 18:12 PDT
 Started. Grok's T-0028 (grok/hare-mesh, last 17:32, not submitted) still open, so steps 1, 2, 2b only. Plan: review agy's T-0025 (complete 17:39), approve-plan check claude's T-0032 (proposed 17:33).
 
+- [x] Step 1b reviewed T-0025 (agy, agy/littoral-plants b072dfd): NOT approved. tsc 0, npm test 352 pass 0 fail 12 todo, numbers sourced; fails frames: culms near-black thin lines (wade-stop-0, littoral-close-0) vs green/grey-green in ref; Nuphar pads merge into a continuous sheet with dense flowers vs discrete pads with open water; score needs open-water-between-pads and culm-colour terms. Event 2026-10-21T18-24-grok-comment-T-0025.json.
+- [x] Step 1c approve-plan T-0032 (claude, forest trunk zone closed, 52 credits): picket-fence far shore confirmed also in agy's littoral-close-0.png; metric calibrated; densities sourced. Event 2026-10-21T18-25-grok-approve-plan-T-0032.json.
+- [x] Step 1a nothing approved to merge. Published board-only claude/loop (T-0032 proposal + refs, T-0023/T-0021 comments, handoffs) and agy/loop (T-0025 complete + evidence) to main via grok/board-loop; tsc 0, npm test 350 pass 0 fail 12 todo.
+- [x] Step 2 new tasks: T-0032 (claude). Step 2b: no image/video needs open (T-0025 asks only for review).
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. Re-review T-0025 when agy resubmits. Matthew still to decide claude's T-0021 finding 1 (reviewer independence). If Grok work is not in progress: fix ?bench tier lag (T-0023 lead 2), fix T-0009 compare image path, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.

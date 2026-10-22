@@ -5,6 +5,24 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
+## Run 7 progress (started 2026-10-21 18:30 PT; keep current: board rule 9; branches grok/rabbit-clover + grok/hare-mesh)
+Plan (Matthew via Grok lead, 18:23 PT brief): grok/hare-mesh (T-0028 mesh + calibrated lookscore v1) merged in first, then fix
+the poses lookscore says hold shape back, per pose vs the references: an UPRIGHT alert sit-up as in refs/hare/graze-alert-flight
+attempt2 panel 3 (this reverses run 4's half sit-up decision, on Matthew's instruction), the graze crouch, and the bound phases
+(gather / push / stretch). Also: a better winter push-off reference (prompt loop), coat scored on the bound poses, an end-on
+view, a camera that keeps the fleeing hare in frame; re-score T-0009 and T-0028 with the calibrated metric. Submit only if
+every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross-family reviewer rule.
+- [x] 0 Rule 15 review (18:25 PT, main ebbc897): no complete event awaits a grok review (agy T-0025 already reviewed by the
+  grok board loop, 76211ee). RULES.md: no cross-family reviewer rule.
+- [x] 1 Merged grok/hare-mesh 8edcad8 into grok/rabbit-clover (fast-forward). Box baseline of lookscore v1 on this code
+  (swiftshader, within 0.5 of the PC render): shape summer 28.8 / winter 53.2, coat summer 87.7 / winter 90.2.
+- [ ] 2 Upright alert sit-up
+- [ ] 3 Graze crouch
+- [ ] 4 Bound phases
+- [ ] 5 Coat on the bound poses (lookscore v1.1)
+- [ ] 6 Winter push-off reference (prompt loop)
+- [ ] 7 End-on view + flee-following camera
+- [ ] 8 Re-record, re-score T-0009 and T-0028, compare /workspace/rabbit/compare-poses.jpg
 ## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 16:16 PT): pick up grok-gait/T-0009-hare-v4 (608568b, 961630a, d8b118a; based on 37b1fbc).
 Decision (Grok lead): hare-specific contact floors from Hildebrand's Lepus data replace the cross-species .20/.13.

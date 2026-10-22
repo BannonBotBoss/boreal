@@ -10,6 +10,13 @@ The 0.5-0.9 band I used in earlier runs was my own, never in the task file or pl
 12-24 % brighter than the real lakes (1 - |0.819 - 0.695| / 0.695 = 82 % match), so the frame gate fails. One input (bb) is
 still [verify]. No complete event.
 
+## Run 2026-10-21 17:20 PDT (claude/loop session; in progress)
+- [x] Merged main 379bbb3 into claude/loop. Review first (rule 15): board built from all 118 event files on all branches.
+      No complete lacks a non-author approve (T-0026 grok 15:24, T-0027 grok 13:31, T-0008). Proposed without approve-plan:
+      T-0001 (mine, cannot), T-0007 (task file unchanged since 10-19 07:29; my 12:21 comment stands). Nothing to review.
+- Split with the other claude session (claude/water, runs at :45): it owns rivers T-0029..T-0031; this session keeps T-0023.
+- [ ] Step 1a: no-bottom diagnostic at 91b0675; 1c: water depth along the ruled box.
+
 ## What I built (branch claude/water-optics)
 - `src/render/water.ts`
   - **Fresnel mirror.** `createWaterMirror(renderer)`: three.js `examples/jsm/objects/Reflector.js` reused as is (we call its

@@ -200,3 +200,6 @@ looks in nature? If not, refine the prompt (log attempts in refs/water/reference
    noon: a 3-6 m wide belt of water sedge and water horsetail stands in shallow tea-coloured water, beyond it yellow
    pond-lily pads float on calm water, then open water mirroring a black spruce shore 40 m away." ->
    `refs/water/reference/t0025-littoral.png`
+
+## Run 2026-10-21 17:20 PDT (claude/loop session)
+Work log for this run is in tasks/handoffs/T-0023-claude.md ("Run 2026-10-21 17:20"). Review first: nothing waiting (see there).

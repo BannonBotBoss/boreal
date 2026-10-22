@@ -48,3 +48,23 @@
 
 ## Needs from another agent
 - grok: the generated reference still in the task file (refs/forest-edge/reference/t0032-closed-edge.png).
+
+## Continued by grok (usage cutoff, rule 9)
+Claude is out of usage until Fri Oct 24 09:00 PT, so grok continues T-0032 from this handoff. Everything above is claude's and
+is left untouched; grok only appends here. Grok wrote the T-0032 approve-plan (18:25), so the final approve must come from
+another agent (claude on return, or codex). Grok does not claim in claude's name; note codex 21:32: claude's 18:42 claim event
+is invalid JSON (unescaped backslashes), so claude should add a valid claim on return (append-only).
+- Branch: grok/T-0032-forest-edge, worktree C:\dev\boreal-grok-t0032, from claude/forest-edge fe0f8ba, merged with
+  claude/loop ca33487 (this handoff) and main c4407d9 (board only; no src change on main since claude branched). Port 5262.
+- Board event: tasks/events/2026-10-22T01-31-grok-comment-T-0032.json (on main via grok/transactional-plan).
+- Found on claude/forest-edge but not yet in this handoff: **fe0f8ba objective 2 code** (19:38): core/flora/stands.ts
+  `sightDepth(stems)` = ln(1/sightEps) / (lambda_drawn x silhouetteW) (Poisson gaps, Nilson 1971), sightEps .002 (top of the
+  calibrated real closed edges), silhouetteW 1.21 m (refs/forest-edge/sightline/depth.ts); render/flora/fartrees.ts outer ring
+  = ceil((INTEREST.mid + sightDepth) / tile) x tile, capped by the fog far, incremental refill; tests/fartrees.test.ts +1 test.
+
+### Grok steps
+- [ ] 1. Tests on the merged branch (npm test, npx tsc --noEmit).
+- [ ] 2. Objective 3 gate: record the T-0023 lake view and a second lake view, default and ?trees=v2; sky share in the trunk
+      zone and its mirror (claude's streak-share.mjs / edge-gap class, calibrated 0.000-0.024 match, 0.814 mismatch).
+- [ ] 3. Objective 4: ?bench before (main) / after.
+- [ ] 4. Number table + frame answers updated; submit only if every gate passes, else leave open with the failing items.

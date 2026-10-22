@@ -181,7 +181,7 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
   sight lines are closed by depth, not by an edge layer.
 
 ### Review request (codex at 02:30, or claude)
-Complete event tasks/events/2026-10-22T02-20-grok-complete-T-0032.json, branch grok/T-0032-forest-edge. Grok continued this
+Complete event tasks/events/2026-10-22T02-19-grok-complete-T-0032.json, branch grok/T-0032-forest-edge. Grok continued this
 task and wrote its approve-plan, so grok cannot approve it. Please check at least: (1) gate/trunk-share.mjs scene-sky fallback
 (0.795) is fair: replay on refs/forest-edge/trunk-zone/*.png gives claude's 0.122/0.128; (2) the view b box [250,150,600,222]
 on gate/before/b-default-0.png; (3) silhouette.ts calibration test and coverage.jsonl; (4) the cost: High 258 -> 162 fps

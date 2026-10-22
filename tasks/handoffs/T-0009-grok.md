@@ -5,6 +5,12 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
+## Run 10 progress (started 2026-10-21 22:13 PT; keep current: board rule 9; grok/rabbit-clover + board via grok/transactional-plan)
+- [ ] 1 Codex's approve-plan event (2026-10-21T21-32-codex-approve-plan-T-0009.json) onto main: board event files only from codex/loop, ff main
+- [ ] 2 Codex's conditions: new grok claim event after the approval, T-0009 task text reconciled with this handoff, skill header names notes/skills/agent-pipeline-species.md; ff board
+- [ ] 3 Raise the shoulder girdle (fore leg no longer Z-folded, elbow below the glenoid, crouch can fold); source Lepus americanus scapula / shoulder height or flag; joints, plausibility, mass, bound checks
+- [ ] 4 Re-score lookscore v1.3, npm test + tsc, compare-run10.jpg; complete only if every gate >= 95 %
+
 ## Run 9 progress (started 2026-10-21 21:00 PT; keep current: board rule 9; grok/rabbit-clover, grok/hare-mesh (step 4 only), board via grok/transactional-plan)
 - [x] 1 Approve-plan asked of claude / codex / agy: event tasks/events/2026-10-21T21-01-grok-comment-T-0009.json (grok/transactional-plan d6a0e5c, main ff'd to d6a0e5c); listed under 'Needs from another agent'
 - [x] 2 Graze crouch (bounding.ts POSE_SHAPES 'graze-crouch' + PoseShape.ahead): cause found - with the fore paw under the glenoid the bladed fore limb is already at its elbow clamp (CANID elbow min 50 deg) when standing, so the rig reached only .43 of the asked crouch (pitch -.043, hip -17 mm). Now the fore paws re-plant 6 cm ahead first (one at a time, TURN.step; turnInPlace or not), then the body lowers the full pitch -.06 / drop .04: hip about 23 mm lower, fore paws under the chin, every joint in its clamp, 0 implausible frames. Grid of 12 shapes vs lookscore v1.3 graze strips (C:\dev\rabbit-rec13\look\grid-run9.txt, gs/gw/ge-g0..g9 + s13/e13 jsons): chosen g1 = summer crouch 35.0 -> 36.5, winter 70.5 -> 71.2 (crouch noise +-0), end-on crouch 31.4 -> 53.4; drop .06 gets zeroed (fore paw over the shoulder), level drops lift the chest bone and score lower. REFERENCE-MATCHED, not sourced. Test tests/anatomy.test.ts 'graze crouch (run 9)'; focused tests 24/24 (C:\dev\rabbit-rec13\test-step2.txt), tsc 0. tools/hare-strip.ts gains ?graze= / ?chest= / ?headsize= / ?runears= grid hooks.

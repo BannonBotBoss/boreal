@@ -144,3 +144,22 @@ reviewer rule.
 3. Coat metric on the bound poses too (only crouch + sit now); add an end-on (rear) view to the strip and a ref for it.
 4. In-game: the end-on flee view is ~60 px; a side offset > 1.1 m or a follow camera in rabbit-record for flight.
 5. Before any complete event: re-read tasks/RULES.md on main for a cross-family reviewer rule (Matthew deciding).
+
+## Re-score with the calibrated metric (grok, 19:05 PT, from the T-0009 run 7 brief of 18:23 PT)
+Code measured: grok/rabbit-clover 02e1ebc = this branch 8edcad8 (fast-forwarded in) + T-0009 run 7 poses + a shared CHEST bone
+(core/rigBody.ts RIG_BONE.chest 21, RIG_BONE_COUNT 22; render/rigSkin.ts head parented to the chest; HARE_SKIN chest weights).
+This branch is not changed in code; merge grok/rabbit-clover here if T-0028 should carry the chest bone. Evidence (PC GPU strips,
+tools/strip-shot.mjs on 5204): C:\dev\rabbit-rec11\look\ (gs/gw/ss/sw/ge/se-pc8.png, score-pc8.json, score12-pc8.json,
+endscore-pc8.json), compare C:\dev\rabbit-rec11\compare-poses.jpg. Metric lookscore v1.2 (C:\dev\rabbit-rec11\look\lookscore.py,
+README.md): v1 + bound poses from a stride phase sheet (?stride=8.5), coat on all 5 poses, winter known match = independent
+refs/hare/winter/attempt4.jpg (the hand-polygon attempt1 retired), winter push-off vs attempt4 panel 5 with attempt5 as match.
+| gate | rec4 (v1, 17:33 brief) | run 7 (v1, PC GPU) | run 7 (v1.2, PC GPU) |
+|---|---|---|---|
+| shape summer | 29.0 | 36.9 | 46.2 |
+| shape winter | 53.0 | 64.0 | 73.7 |
+| coat summer | 87.7 | 88.3 | 86.4 |
+| coat winter | 90.4 | 91.7 | 95.5 |
+| end-on shape / coat (endscore, new) | - | - | 39.9 / 85.5 |
+Only coat winter reaches 95 %. **Not submitted**: the other gates are below 95 %. tasks/RULES.md on main ebbc897 re-checked
+19:03 PT: no cross-family reviewer rule. In game with the new ?watch=hare camera (C:\dev\rabbit-rec11\game\), the hare stays
+in frame through the flight, readable to ~20 m (rec4 lost it after ~6.8 s).

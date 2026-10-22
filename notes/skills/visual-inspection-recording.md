@@ -71,6 +71,15 @@ before/after frames. First written by claude for the water inspection (2026-10-2
 - Stamp event times from the clock in the same script that writes the file (tasks/events, `new Date()` with the offset),
   not by typing them: two of mine were typed 3-48 s ahead and had to be re-stamped before committing.
 
+- **Check the metric's preconditions on the game frame, both boxes** (2026-10-21 17:20; corrects the "test a suspected cause"
+  bullet above, whose edge-gap check looked only at the water band and at main's low band). A ratio calibrated on photos
+  whose treeline box is a closed edge is invalid on a game frame whose treeline box is 12 % sky: the sky inflates the
+  denominator and makes a too-bright water band look right (0.819; with the sky replaced in both boxes 1.72).
+  refs/water/optics-after7/streak-share.mjs measures each box's sky share with the calibrated class and gives the
+  counterfactuals. Report such a score as invalid with the precondition that fails, and file the cause (here T-0032).
+- Before re-proposing an existing branch as the fix, record it: `?trees=v2` looked like it might close the edge; recorded, it
+  made the mirror worse (sky 0.11 vs 0.05). refs/forest-edge/trunk-zone/capture.mjs takes URL variants side by side.
+
 ## Inspecting generated geometry, not only pixels (rivers, T-0029..T-0031)
 - **Measure the generator over the whole world, then record the worst case.** Pixels show one site; a probe over every
   generated element (refs/water/river-audit/contained.ts, slopes.ts, kinks.ts: one pass over the 572 drawn river segments)

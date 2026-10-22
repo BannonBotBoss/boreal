@@ -25,13 +25,15 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   reach 0 -> .64, rest .70, crouch .52). Tests: bound + hare-rig 14/14 on the PC. lookscore v1 (box): sit summer 18.4 -> 52.3,
   winter 32.0 -> 73.6; crouch summer 23.7 -> 29.9 (the standError fix); evidence C:\dev\rabbit-rec11\look\ (score-s3.json,
   zoom-s3-sit.jpg: red = ref only, green = game only). Left: the fore paws stick out ahead of the chest and the neck shows a
-  seam when the head turns back level.- [x] 3 Graze crouch: bounding.ts 'graze-crouch' drop .02 -> .04 (the hare reaches .46 of the shape: pitch -.046 rad, hip -.018 m),
+  seam when the head turns back level.
+- [x] 3 Graze crouch: bounding.ts 'graze-crouch' drop .02 -> .04 (the hare reaches .46 of the shape: pitch -.046 rad, hip -.018 m),
   hare.ts POSES head-down head -.55 -> -.85 (nose to the clover). Grid pitch -.1/-.25 x drop .02/.04 x head -.55/-.85 vs lookscore
   v1: crouch summer 29.9 -> 33.1, winter 53.6 -> 53.4 (flat). REFERENCE-MATCHED, not sourced. Why it stays low: the head-to-rump
   height profile already matches within ~.05 of the width (ref .47-.55, game .49-.59); the losses are the hind foot standing out
   behind the rump and the body riding higher on the legs than the photo hare (C:\dev\rabbit-rec11\look\crouch-detail-c1.jpg,
   zoom-c1-crouch.jpg) - the leg reach limits the drop (poseReach .46), so a deeper crouch needs a hind-leg fold the rig allows
-  (Gait Builder) rather than more pose numbers.- [x] 4 Bound phases. Found: the rig's fore and hind girdle tops move .133 -> .227 m apart through a stride at 8.5 m/s (spine
+  (Gait Builder) rather than more pose numbers.
+- [x] 4 Bound phases. Found: the rig's fore and hind girdle tops move .133 -> .227 m apart through a stride at 8.5 m/s (spine
   flex +-.36 rad, DERIVED in bounding.ts), but the skin trunk was one rigid bone, so it could neither gather nor stretch.
   Built (shared, data-driven): a chest bone in core/rigBody.ts RIG_BONE (index 21, after the legs so older indices hold;
   RIG_BONE_COUNT 22) + SpecRing.chest weights + RigBind.chest; render/rigSkin.ts parents the head to the chest; hare.ts
@@ -46,12 +48,14 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   57.3; score11-nochest.json). Evidence C:\dev\rabbit-rec11\look\ (ss-b3.png / sw-b3.png phase sheets, score11-b3.json,
   zoom11-b3.jpg). What still differs from the reference (zoom): the game hare barely leaves the ground (suspension lift ~7 mm
   at 8.5 m/s) and its legs stay under the body; the reference's gathered ball (hind feet far ahead) and full stretch need
-  more limb reach / suspension in the gait - Gait Builder, not pose numbers.- [x] 5 Coat on the bound poses: lookscore v1.1 (C:\dev\rabbit-rec11\look\lookscore.py + README.md; v1 output unchanged with 3
+  more limb reach / suspension in the gait - Gait Builder, not pose numbers.
+- [x] 5 Coat on the bound poses: lookscore v1.1 (C:\dev\rabbit-rec11\look\lookscore.py + README.md; v1 output unchanged with 3
   arguments). Coat is scored on all five poses, bound poses from the stride sheet; calibration as v1 (known match = second
   drawing, known mismatch = other season): summer match dE 2.8-3.9 / mismatch 38.7-42.1, winter match .7-2.6 / mismatch
   38.7-42.1. Box scores (code 3dcac42): coat summer crouch 85.4, sit 91.3, gather 92.7, push 78.1, stretch 84.7 (mean 86.4);
   winter 84.2, 98.5, 88.0, 91.8, 92.7 (mean 91.0). The summer push cell is the weakest (dE 13.5: the extended belly and
-  inner legs show more pale than the photo's).- [x] 6 Winter push-off reference (prompt loop, refs/hare/winter/attempts.md rows 3-5): attempt 3 (with attempt 2 as image
+  inner legs show more pale than the photo's).
+- [x] 6 Winter push-off reference (prompt loop, refs/hare/winter/attempts.md rows 3-5): attempt 3 (with attempt 2 as image
   reference) came out a near-copy of attempt 2, so not independent: rejected as an anchor. Attempt 4 (no image reference, dark
   forest edge so GrabCut masks the white hare, refmask-winter4.jpg) has a clear push-off (panel 5, both hind feet on the snow);
   attempt 5 is a single independent push-off photo. Finding: winter attempt 2's 'push' cell is closer to an extended reach
@@ -60,7 +64,8 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   sit .738 / .334, gather .858 / .573, stretch .751 / .446), and the push-off is scored against attempt 4 panel 5 with attempt
   5 as its known match (.651 / .504). Box, code 3dcac42: winter shape crouch 71.2, sit 82.5, gather 38.3, push 100 (raw .660
   >= the .651 match: the game's best stride cell matches the push-off as well as a second drawing does; the anchor range is
-  narrow, .15), stretch 78.0, mean 74.0; winter coat 95.3. Summer unchanged (46.2 / 86.4).- [x] 7 End-on view + flee-following camera (code; recording in step 8).
+  narrow, .15), stretch 78.0, mean 74.0; winter coat 95.3. Summer unchanged (46.2 / 86.4).
+- [x] 7 End-on view + flee-following camera (code; recording in step 8).
   - End-on: tools/hare-strip.html ?view=end (tracking camera behind the hare, on its path, as the wolf sees a fleeing hare),
     works with the 6 fps strip and ?stride=. References refs/hare/end-on/ attempt 1-2 (+ attempts.md; attempt 1 rejected
     ~65 %: padded soles, big white tail). Calibrated end-on score C:\dev\rabbit-rec11\look\endscore.py (lookscore v1.2 shape
@@ -70,7 +75,8 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
     other-season ref). Evidence endscore-e1.json, ge-e1.png, se-e1.png, refmask-end*.jpg.
   - Flee-following camera: render/buildScene.ts ?watch=hare (dev/recording only, off by default): the follow camera, still
     behind the wolf, turns smoothly to the nearest hare within 60 m; tools/rabbit-record.mjs 7th argument `watch` passes it.
-    Also fixed rabbit-record.mjs line 10, where a trailing // comment had swallowed `mkdirSync(outDir)`.- [ ] 8 Re-record, re-score T-0009 and T-0028, compare /workspace/rabbit/compare-poses.jpg
+    Also fixed rabbit-record.mjs line 10, where a trailing // comment had swallowed `mkdirSync(outDir)`.
+- [ ] 8 Re-record, re-score T-0009 and T-0028, compare /workspace/rabbit/compare-poses.jpg
 ## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 16:16 PT): pick up grok-gait/T-0009-hare-v4 (608568b, 961630a, d8b118a; based on 37b1fbc).
 Decision (Grok lead): hare-specific contact floors from Hildebrand's Lepus data replace the cross-species .20/.13.

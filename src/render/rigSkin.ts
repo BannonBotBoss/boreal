@@ -14,29 +14,32 @@ import { stream } from '../proc/rng';
  */
 export interface RigLeg { segs: THREE.Bone[]; hind: boolean; /** first limbPoints index drawn (fore 0: the blade is a segment) */ from: number; /** bind direction of each segment (root space) */ dirs: THREE.Vector3[] }
 
-interface Template { spec: SkinSpec; skin: THREE.BufferGeometry; fur: THREE.BufferGeometry; skinMat: THREE.Material; furMat: THREE.Material; eyeMat: THREE.Material; whiteness: number; cards: number }
+interface Template { spec: SkinSpec; skin: THREE.BufferGeometry; fur: THREE.BufferGeometry; skinMat: THREE.Material; furMat: THREE.Material; eyeMat: THREE.Material; whiteness: number; cards: number; /** shared by every mesh of the spec: [winter morph] */ influence: number[] }
 const templates = new Map<string, Template>(), wanted = new Map<string, number>(); // whiteness asked for before the first build
 const SHARED = { shared: true };
 
 function buildTemplate(bind: RigBind, spec: SkinSpec): Template {
   const bodyS = buildBody(rigTubes(bind, spec, spec.summer)), clear = sculptRig(bodyS, bind, spec);
-  const bodyW = buildBody(rigTubes(bind, spec, spec.winter)); sculptRig(bodyW, bind, spec);
-  const F = spec.fur, shade = (furLen: number) => furLen >= .03 ? F.rootShade : F.bareShade;
+  const bodyW = buildBody(rigTubes(bind, spec, spec.winter, spec.winterPelt ?? 1)); sculptRig(bodyW, bind, spec); // same topology, rounder
+  const F = spec.fur, shade = (furLen: number, coat: CoatPalette = spec.summer) => furLen >= .03 ? coat.rootShade ?? F.rootShade : F.bareShade;
   const skin = new THREE.BufferGeometry();
   skin.setAttribute('position', new THREE.Float32BufferAttribute(bodyS.position, 3));
   skin.setAttribute('normal', new THREE.Float32BufferAttribute(bodyS.normal, 3));
-  const sCol = bodyS.color.map((c, i) => c * shade(bodyS.furLen[Math.floor(i / 3)])), wCol = bodyW.color.map((c, i) => c * shade(bodyW.furLen[Math.floor(i / 3)]));
+  const sCol = bodyS.color.map((c, i) => c * shade(bodyS.furLen[Math.floor(i / 3)])), wCol = bodyW.color.map((c, i) => c * shade(bodyW.furLen[Math.floor(i / 3)], spec.winter));
   skin.setAttribute('color', new THREE.Float32BufferAttribute(sCol.slice(), 3));
   skin.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(bodyS.skinIndex, 4));
   skin.setAttribute('skinWeight', new THREE.Float32BufferAttribute(bodyS.skinWeight, 4));
   skin.setIndex(bodyS.index);
+  const delta = (a: ArrayLike<number>, b: ArrayLike<number>) => { const o = new Float32Array(a.length); for (let i = 0; i < a.length; i++) o[i] = b[i] - a[i]; return o; };
+  skin.morphAttributes.position = [new THREE.Float32BufferAttribute(delta(bodyS.position, bodyW.position), 3)]; skin.morphTargetsRelative = true;
   skin.userData = { summer: sCol, winter: wCol, ...SHARED };
   // fur: the same seed, skin and filters give the same cards (tipTint always answers, so the random sequence matches); only the colours differ
   const head = bind.pivot[1] + bind.head[1], footY = .03;
   const tint = (coat: CoatPalette) => (p: Vec3) => ({ color: coat.tip, amount: p[1] > footY && p[1] < head + .045 ? coat.tipAmount : 0 });
   const comb = (p: Vec3) => p[1] < footY && p[2] > bind.pivot[2] - .16 ? { lay: [0, 0, -1] as Vec3, lean: .5 } : undefined; // foot fur combs toward the toes
   const cards = (coat: CoatPalette, body: typeof bodyS) => buildFurCards(body, { count: F.cards, length: F.winterLength, width: F.width, seed: F.seed, clear, lean: F.lean, tone: F.tone, tipTint: tint(coat), comb });
-  const fur = cards(spec.summer, bodyS), furW = cards(spec.winter, bodyW);
+  // winter cards: the same cards (same surface, seed and filters) in the winter colours; the rounder winter shape is the morph below
+  const fur = cards(spec.summer, bodyS), furW = cards(spec.winter, { ...bodyW, position: bodyS.position, normal: bodyS.normal, rest: bodyS.rest });
   const n = fur.getAttribute('position').count, base = (fur.getAttribute('position').array as Float32Array).slice();
   const roots = new Float32Array(n * 3), rank = new Float32Array(n / 5), rnd = stream(F.seed, `${spec.name}-coat-rank`);
   for (let c = 0; c < n / 5; c++) {
@@ -44,18 +47,29 @@ function buildTemplate(bind: RigBind, spec: SkinSpec): Template {
     rank[c] = rnd(); // which cards a summer coat keeps
   }
   fur.userData = { ...fur.userData, summer: (fur.getAttribute('color').array as Float32Array).slice(), winter: (furW.getAttribute('color').array as Float32Array).slice(), base, roots, rank, ...SHARED };
+  // each card moves with the skin vertex nearest its root (summer -> winter pelt), so the winter fur sits on the rounder skin
+  const sd = delta(bodyS.position, bodyW.position), sp = bodyS.position, cell = .01, grid = new Map<string, number[]>(), key = (x: number, y: number, z: number) => `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)}`;
+  for (let v = 0; v < sp.length / 3; v++) { const k = key(sp[v * 3], sp[v * 3 + 1], sp[v * 3 + 2]); (grid.get(k) ?? grid.set(k, []).get(k)!).push(v); }
+  const fd = new Float32Array(n * 3);
+  for (let c = 0; c < n / 5; c++) {
+    const rx = roots[c * 15], ry = roots[c * 15 + 1], rz = roots[c * 15 + 2]; let best = -1, bd = Infinity;
+    for (let r = 1; best < 0 && r < 6; r++) for (let i = -r; i <= r; i++) for (let j = -r; j <= r; j++) for (let k = -r; k <= r; k++) for (const v of grid.get(key(rx + i * cell, ry + j * cell, rz + k * cell)) ?? []) {
+      const d = (sp[v * 3] - rx) ** 2 + (sp[v * 3 + 1] - ry) ** 2 + (sp[v * 3 + 2] - rz) ** 2; if (d < bd) { bd = d; best = v; } }
+    if (best >= 0) for (let q = 0; q < 5; q++) for (let k = 0; k < 3; k++) fd[(c * 5 + q) * 3 + k] = sd[best * 3 + k];
+  }
+  fur.morphAttributes.position = [new THREE.Float32BufferAttribute(fd, 3)]; fur.morphTargetsRelative = true;
   furW.dispose();
   const skinMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 }); skinMat.userData = SHARED;
   const furMat = furCardMaterial(); furMat.userData = SHARED;
   const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1a0e07, roughness: .15 }); eyeMat.userData = SHARED;
-  const t: Template = { spec, skin, fur, skinMat, furMat, eyeMat, whiteness: -1, cards: n / 5 };
+  const t: Template = { spec, skin, fur, skinMat, furMat, eyeMat, whiteness: -1, cards: n / 5, influence: [0] };
   applyWhiteness(t, wanted.get(spec.name) ?? 0);
   return t;
 }
 
 /** Recolour and re-length the shared coat for a whole-coat whiteness (0 summer .. 1 winter); a no-op when unchanged. */
 function applyWhiteness(t: Template, whole: number) {
-  const W = Math.round(whole * 64) / 64; if (W === t.whiteness) return; t.whiteness = W;
+  const W = Math.round(whole * 64) / 64; if (W === t.whiteness) return; t.whiteness = W; t.influence[0] = W;
   const F = t.spec.fur, M = t.spec.moult, sp = t.skin.getAttribute('position').array as Float32Array, sc = t.skin.getAttribute('color'), su = t.skin.userData;
   for (let v = 0; v < sc.count; v++) { const w = localWhiteness(W, sp[v * 3 + 1], M); for (let k = 0; k < 3; k++) (sc.array as Float32Array)[v * 3 + k] = su.summer[v * 3 + k] + (su.winter[v * 3 + k] - su.summer[v * 3 + k]) * w; }
   sc.needsUpdate = true;
@@ -92,7 +106,7 @@ export function createRigSkin(bind: RigBind, spec: SkinSpec) {
     return { segs, hind: leg % 2 === 1, from: leg % 2 === 1 ? 1 : 0, dirs };
   });
   const skins = [new THREE.SkinnedMesh(t.skin, t.skinMat), new THREE.SkinnedMesh(t.fur, t.furMat)];
-  skins.forEach((s, k) => { s.frustumCulled = false; s.name = k ? 'fur' : 'skin'; s.userData = SHARED; root.add(s); });
+  skins.forEach((s, k) => { s.frustumCulled = false; s.name = k ? 'fur' : 'skin'; s.userData = SHARED; s.morphTargetInfluences = t!.influence; root.add(s); });
   root.updateMatrixWorld(true);
   const skeleton = new THREE.Skeleton(bones); skins.forEach(s => s.bind(skeleton));
   for (const side of [-1, 1]) { // eyes: large, dark, on the side of the head, just proud of the socket

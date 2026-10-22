@@ -53,6 +53,8 @@ export type ForageHandler = (animal: Entity, plant: Entity) => number | undefine
  *  order works: after T-0005 merges, the contact carries the seated { at, normal } and settle; before, core/logContact's
  *  centre sample. Nothing here seats, sinks or tilts a log. */
 const T0005_LOG_SEAT = (GEOMETRY as unknown as Record<string, unknown>)['logSeat'] as LogSeatFn | undefined;
+/** Dev / recording: `?fov=<deg>` narrows the follow camera (a telephoto for recordings of small animals, T-0028); default 48. */
+const VIEW_FOV = (() => { const v = typeof location !== 'undefined' ? Number(new URLSearchParams(location.search).get('fov')) : NaN; return v > 5 && v < 120 ? v : 48; })();
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU
   const BASE_RATIO = Math.min(devicePixelRatio, 1.5);
@@ -243,7 +245,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const focused = mode === 'super-stealth' && !photo ? focus : undefined;
     const frozen = !!photo && photo.frozen !== false;
     const dt = frozen ? 0 : Math.max(0, Math.min(.1, time - previousTime)); if (!frozen) previousTime = time;
-    camera.fov += ((focused ? 30 : 48) - camera.fov) * (1 - Math.exp(-8 * dt));
+    camera.fov += ((focused ? 30 : VIEW_FOV) - camera.fov) * (1 - Math.exp(-8 * dt));
     if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
     bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
     camera.updateProjectionMatrix();

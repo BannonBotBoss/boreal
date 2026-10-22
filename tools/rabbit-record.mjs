@@ -6,7 +6,8 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const [base, outDir, mode] = process.argv.slice(2); const dbg = mode === 'plain' ? '' : '&hare=debug'; // 'plain': no debug labels mkdirSync(outDir, { recursive: true });
+// dist: wolf start distance behind the patch (m), default 7.6 (T-0028 telephoto recording)
+const [base, outDir, mode, fov, dist, side] = process.argv.slice(2); const START = Number(dist ?? 7.6), SIDE = Number(side ?? 2.5); /* side: wolf offset to the left (m) */ const dbg = (mode === 'plain' ? '' : '&hare=debug') + (fov ? `&fov=${fov}` : ''); // fov: telephoto follow camera (T-0028) // 'plain': no debug labels mkdirSync(outDir, { recursive: true });
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 async function session(fn) {
   const port = 9300 + Math.floor(Math.random() * 90), profile = mkdtempSync(join(tmpdir(), 'grok-rabbit-'));
@@ -47,7 +48,7 @@ const spot = res.find.spots?.[0]; if (!spot) { console.log('no clearing found');
 res.patch = await session(async ({ go, ev }) => { await go(`&hour=12&trees=v2&at=${spot.x},${spot.z},0`); await sleep(8000); return ev(pickJs); });
 console.log(JSON.stringify(res.patch));
 const p = res.patch.best; if (!p) { console.log('no clover found'); process.exit(1); }
-const at = `${(p.x - 2.5).toFixed(1)},${(p.z + 7.6).toFixed(1)},0`;
+const at = `${(p.x - SIDE).toFixed(1)},${(p.z + START).toFixed(1)},0`;
 mkdirSync(join(outDir, 'frames'), { recursive: true });
 res.record = await session(async ({ go, ev }) => {
   await go(`&hour=12&trees=v2&at=${at}${dbg}`); await sleep(6000);

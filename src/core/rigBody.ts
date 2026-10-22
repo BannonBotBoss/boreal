@@ -20,9 +20,9 @@ export const rigLegTube = (leg: number) => 6 + leg;
 /** Bind pose: the body pivot (hip joints), the head bone relative to the pivot, ear length, and each leg's drawn joints in root
  *  space (fore: blade pivot, glenoid, elbow, wrist, toe; hind: hip, knee, hock, MTP, toe tip). */
 export interface RigBind { pivot: Vec3; head: Vec3; ear: number; limbs: Vec3[][] }
-export interface CoatPalette { back: RGB; belly: RGB; dark: RGB; accent: RGB; tip: RGB; tipAmount: number }
+export interface CoatPalette { back: RGB; belly: RGB; dark: RGB; accent: RGB; tip: RGB; tipAmount: number; /** scales the rings' dorsal `saddle` (0 = none in this coat) */ saddle?: number; /** skin shade under the cards in this coat (default fur.rootShade) */ rootShade?: number }
 /** A ring of the spec: `at` trunk (z, y from the pivot) or head (z, y from the head bone); `head` / `tail` = weight toward that bone. */
-export interface SpecRing { at: 'trunk' | 'head'; z: number; y: number; rx: number; ry: number; fur: number; head?: number; tail?: number; accent?: number; pale?: number; dark?: number }
+export interface SpecRing { at: 'trunk' | 'head'; z: number; y: number; rx: number; ry: number; fur: number; head?: number; tail?: number; accent?: number; pale?: number; dark?: number; saddle?: number }
 export interface Moult { autumnStart: number; autumnDays: number; springStart: number; springDays: number; /** order spread over the body height */ spread: number; height: number }
 /** Leg girths [sagittal, lateral] half-widths at each drawn joint; fur / pale as steps along the chain: the value of the last
  *  [fromK, value] whose fromK <= k (k = joint index, .5 = mid-segment). */
@@ -31,11 +31,15 @@ export interface SkinSpec {
   name: string;
   trunk: SpecRing[]; neck: SpecRing[]; head: SpecRing[]; tail: SpecRing[];
   /** ear: base (head-bone space, x mirrored), rings along it at t (0 base .. 1 tip of `bind.ear`) */
-  ear: { base: Vec3; lean: number; rings: Array<{ t: number; rx: number; ry: number; fur: number; dark?: number }> };
+  ear: { base: Vec3; lean: number; rings: Array<{ t: number; rx: number; ry: number; fur: number; dark?: number; rim?: number }> };
   /** leg girths [sagittal, lateral] half-widths at each drawn joint, and fur / pale per joint (mid rings average) */
   fore: LegSpec; hind: LegSpec;
   pelt: { body: number; head: number; limb: number; ear: number };
   eye: Vec3; eyeClear: number; cheek?: { at: Vec3; radius: number; offset: Vec3 };
+  /** dark eyelid ring: skin within `radius` of the eye blends `amount` toward the dark colour */
+  eyelid?: { radius: number; amount: number };
+  /** winter pelt multiplier (the winter skin + fur are a morph target of the summer one: a rounder winter body) */
+  winterPelt?: number;
   summer: CoatPalette; winter: CoatPalette; moult: Moult;
   fur: { cards: number; winterLength: number; summerLength: number; width: number; summerDensity: number; lean: number; tone: number; rootShade: number; bareShade: number; seed: number };
 }
@@ -62,20 +66,21 @@ export function rigTubes(bind: RigBind, spec: SkinSpec, coat: CoatPalette = spec
   const B = RIG_BONE, [, py, pz] = bind.pivot, P = spec.pelt, tubes: Tube[] = [];
   const palette = { back: coat.back, belly: coat.belly, dark: coat.dark, accent: coat.accent };
   const H = (x: number, y: number, z: number): Vec3 => [x, py + bind.head[1] + y, pz + bind.head[2] + z];
-  const grow = (r: number, fur: number, by: number) => fur < .03 ? r : r + by * pelt;
-  const ring = (s: SpecRing, by: number): Ring => {
+  // pelt > 1 (the winter morph) thickens the body and limbs only: the head and ears keep their size so the eyes stay on the surface
+  const grow = (r: number, fur: number, by: number, fixed = false) => fur < .03 ? r : r + by * (fixed ? Math.min(1, pelt) : pelt);
+  const ring = (s: SpecRing, by: number, fixed = false): Ring => {
     const p: Vec3 = s.at === 'trunk' ? [0, py + s.y, pz + s.z] : H(0, s.y, s.z);
     const w: Ring['w'] = s.head ? blend(B.body, B.head, s.head) : s.tail ? (s.tail >= 1 ? only(B.tail) : blend(B.body, B.tail, s.tail)) : s.at === 'head' ? only(B.head) : only(B.body);
-    return { p, rx: grow(s.rx, s.fur, by), ry: grow(s.ry, s.fur, by), w, fur: s.fur, accent: s.accent, pale: s.pale, dark: s.dark };
+    return { p, rx: grow(s.rx, s.fur, by, fixed), ry: grow(s.ry, s.fur, by, fixed), w, fur: s.fur, accent: s.accent, pale: s.pale, dark: s.dark, saddle: (s.saddle ?? 0) * (coat.saddle ?? 1) };
   };
   tubes.push({ ...palette, radial: 16, smooth: 1, lay: [0, -.1, 1], rings: spec.trunk.map(s => ring(s, P.body)) });
   tubes.push({ ...palette, radial: 12, smooth: 1, lay: [0, -.2, 1], rings: spec.neck.map(s => ring(s, P.body)) });
-  tubes.push({ ...palette, radial: 14, smooth: 1, rings: spec.head.map(s => ring(s, P.head)) });
+  tubes.push({ ...palette, radial: 14, smooth: 1, rings: spec.head.map(s => ring(s, P.head, true)) });
   for (const side of [-1, 1]) { // ears: flat leaves standing from the crown, opening forward and out (ref)
     const b = side < 0 ? B.earL : B.earR, E = bind.ear, base = H(side * spec.ear.base[0], spec.ear.base[1], spec.ear.base[2]);
     tubes.push({ ...palette, radial: 10, smooth: 1, lay: [0, 1, 0], ref: [side * .8, 0, -.6], rings: spec.ear.rings.map((e, i) => ({
-      p: [base[0], base[1] + E * e.t, base[2] + spec.ear.lean * e.t] as Vec3, rx: grow(e.rx, e.fur, P.ear), ry: grow(e.ry, e.fur, P.ear),
-      w: i === 0 ? blend(B.head, b, .5) : only(b), fur: e.fur, dark: e.dark })) });
+      p: [base[0], base[1] + E * e.t, base[2] + spec.ear.lean * e.t] as Vec3, rx: grow(e.rx, e.fur, P.ear, true), ry: grow(e.ry, e.fur, P.ear, true),
+      w: i === 0 ? blend(B.head, b, .5) : only(b), fur: e.fur, dark: e.dark, rim: e.rim })) });
   }
   tubes.push({ ...palette, radial: 10, lay: [0, .3, 1], rings: spec.tail.map(s => ring(s, P.body)) });
   // Legs: one smooth tube through the rig's joints, a ring at each joint (blending the two bones) and mid-segment; rx is the
@@ -112,6 +117,10 @@ export function sculptRig(body: BodyData, bind: RigBind, spec: SkinSpec): Array<
   for (const side of [-1, 1]) {
     const eye = head([side * spec.eye[0], spec.eye[1], spec.eye[2]]);
     dent(body, RIG_TUBE.head, eye, .012, .004);
+    if (spec.eyelid) { const { radius, amount } = spec.eyelid, dk = spec.summer.dark; // the dark of either coat: near-black
+      for (let v = 0; v < body.tube.length; v++) { if (body.tube[v] !== RIG_TUBE.head) continue;
+        const d = Math.hypot(body.position[v * 3] - eye[0], body.position[v * 3 + 1] - eye[1], body.position[v * 3 + 2] - eye[2]);
+        const w = amount * Math.max(0, Math.min(1, (radius - d) / (radius * .5))); for (let k = 0; k < 3; k++) body.color[v * 3 + k] += (dk[k] - body.color[v * 3 + k]) * w; } }
     if (spec.cheek) push(body, RIG_TUBE.head, head([side * spec.cheek.at[0], spec.cheek.at[1], spec.cheek.at[2]]), spec.cheek.radius, [side * spec.cheek.offset[0], spec.cheek.offset[1], spec.cheek.offset[2]]);
     clear.push({ center: eye, radius: spec.eyeClear });
   }

@@ -95,3 +95,24 @@ test('no mesh file: the hare is built from code, nothing is fetched or loaded', 
   try { createHareModel(); } finally { g.fetch = saved[0]; g.XMLHttpRequest = saved[1]; }
   assert.equal(calls, 0);
 });
+
+test('coat detail: dark dorsal line in summer only, pale ear rims, dark eyelids, rounder winter body (morph), finer cards', () => {
+  const summer = buildBody(hareTubes(bind)), winter = buildBody(hareTubes(bind, HARE_SKIN.winter, HARE_SKIN.winterPelt));
+  const lum = (b: typeof summer, v: number) => b.color[v * 3] + b.color[v * 3 + 1] + b.color[v * 3 + 2];
+  const trunk = (b: typeof summer, pick: (y: number, ny: number) => boolean) => { let s = 0, k = 0; for (let v = 0; v < b.tube.length; v++) if (b.tube[v] === HARE_TUBE.trunk) {
+    const y = b.position[v * 3 + 1], ny = b.normal[v * 3 + 1]; if (pick(y, ny)) { s += lum(b, v); k++; } } return s / k; };
+  assert.ok(trunk(summer, (_y, ny) => ny > .9) < trunk(summer, (_y, ny) => ny > .3 && ny < .6) - .03, 'summer: darker along the top of the back');
+  assert.ok(Math.abs(trunk(winter, (_y, ny) => ny > .9) - trunk(winter, (_y, ny) => ny > .3 && ny < .6)) < .03, 'winter: no dorsal line');
+  const ear = (b: typeof summer, edge: boolean) => { let s = 0, k = 0; const R = 10, base = b.tube.indexOf(HARE_TUBE.earL);
+    for (let v = base; v < b.tube.length; v++) if (b.tube[v] === HARE_TUBE.earL) { const j = (v - base) % R, c = Math.abs(Math.cos(j / R * Math.PI * 2)); if (edge ? c > .95 : c < .35) { s += lum(b, v); k++; } } return s / k; };
+  assert.ok(ear(summer, true) > ear(summer, false) + .1, 'summer ears: pale rims');
+  const hare = createHareModel(), skin = hare.root.getObjectByName('skin') as THREE.SkinnedMesh, eye = HARE_SKIN.eye;
+  const C = skin.geometry.userData.winter as number[], P = skin.geometry.getAttribute('position').array as Float32Array;
+  const ex = bind.pivot[0] + eye[0], ey = bind.pivot[1] + bind.head[1] + eye[1], ez = bind.pivot[2] + bind.head[2] + eye[2]; let lid = 9, far = 0;
+  for (let v = 0; v < P.length / 3; v++) { const d = Math.hypot(P[v * 3] - ex, P[v * 3 + 1] - ey, P[v * 3 + 2] - ez), l = C[v * 3] + C[v * 3 + 1] + C[v * 3 + 2]; if (d < HARE_SKIN.eyelid!.radius) lid = Math.min(lid, l); else if (d > .02 && d < .03) far = Math.max(far, l); }
+  assert.ok(lid < .5 * far && far > 1.5, `winter eyelids dark (${lid.toFixed(2)}) on a white head (${far.toFixed(2)})`);
+  const morph = skin.geometry.morphAttributes.position?.[0]; assert.ok(morph, 'winter morph target');
+  let up = 0; for (let v = 0; v < P.length / 3; v++) if (summer.tube[v] === HARE_TUBE.trunk && summer.normal[v * 3 + 1] > .9) up += morph.getY(v);
+  assert.ok(up > 0, 'the winter pelt is thicker over the back'); assert.ok(HARE_SKIN.winterPelt! > 1);
+  assert.ok(HARE_FUR.width < .013 && HARE_FUR.cards > 7000, 'finer, denser cards than T-0028 v1 (.013 m x 7000)');
+});

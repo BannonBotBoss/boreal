@@ -41,12 +41,14 @@ let t = 0, next = 0; const dt = 1 / 120;
 // action) for 2 s, then the N cells sample ONE stride evenly (cell k at phase k / N), so lookscore can find the gathered,
 // push-off and extended phases however the 6 fps sequence aliases them
 const STRIDE = Number(q.get('stride') ?? 0);
+// run 7: ?view=end = the tracking camera END-ON from behind (on the hare's path, the wolf's side), as the wolf sees a fleeing hare
+const END = q.get('view') === 'end';
 if (STRIDE > 0) { a.action = 'flee'; a.speed = STRIDE; a.heading = -Math.PI / 2; for (; t < 2; t += dt) { a.x += STRIDE * dt; poseHare(hare, a, dt, t, 0); } }
 const strideDt = STRIDE > 0 ? 1 / (hare.frame!.plan.hz * N) : 0;
 for (let f = 0; f < N && STRIDE > 0; f++) {
   const sub = Math.max(1, Math.round(strideDt / dt)), h = strideDt / sub; for (let k = 0; k < sub; k++) { a.x += STRIDE * h; poseHare(hare, a, h, t, 0); t += h; }
   const col = f % COLS, row = Math.floor(f / COLS), x = col * CW, y = H - (row + 1) * CH;
-  const dz = Number(q.get('track') ?? 2.2); cam.position.set(a.x, .25, a.z + dz); cam.lookAt(a.x, .15, a.z);
+  const dz = Number(q.get('track') ?? 2.2); if (END) cam.position.set(a.x - dz, .25, a.z); else cam.position.set(a.x, .25, a.z + dz); cam.lookAt(a.x, .15, a.z);
   renderer.setViewport(x, y, CW, CH); renderer.setScissor(x, y, CW, CH); renderer.render(scene, cam);
   log.push({ t: +t.toFixed(3), action: 'flee', x: +a.x.toFixed(3), speed: STRIDE, phase: +hare.frame!.stride.toFixed(3) });
 }
@@ -54,7 +56,7 @@ for (let f = 0; f < N && !(STRIDE > 0); f++) {
   const at = f / fps;
   while (t < at - 1e-9) { if (t >= wolfAt) { wolf.speed = 1.6; wolf.x += 1.6 * dt; } stepAgent(a, world(), dt); poseHare(hare, a, dt, t, 0); t += dt; }
   const col = f % COLS, row = Math.floor(f / COLS), x = col * CW, y = H - (row + 1) * CH;
-  if (q.get('track')) { const dz = Number(q.get('track')); cam.position.set(a.x, .25, a.z + dz); cam.lookAt(a.x, .15, a.z); }
+  if (q.get('track')) { const dz = Number(q.get('track')); if (END) cam.position.set(a.x - dz, .25, a.z); else cam.position.set(a.x, .25, a.z + dz); cam.lookAt(a.x, .15, a.z); }
   renderer.setViewport(x, y, CW, CH); renderer.setScissor(x, y, CW, CH); renderer.render(scene, cam);
   const d = document.createElement('div'); d.className = 'c'; d.style.left = `${x + 4}px`; d.style.top = `${row * CH + 3}px`; d.textContent = `${at.toFixed(2)}s ${a.action}`; if (!MATTE) labels.append(d);
   log.push({ t: +at.toFixed(3), action: a.action, x: +a.x.toFixed(3), speed: +a.speed.toFixed(2), phase: +hare.hopPhase.toFixed(3) }); next++;

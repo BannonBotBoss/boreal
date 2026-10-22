@@ -60,8 +60,17 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   sit .738 / .334, gather .858 / .573, stretch .751 / .446), and the push-off is scored against attempt 4 panel 5 with attempt
   5 as its known match (.651 / .504). Box, code 3dcac42: winter shape crouch 71.2, sit 82.5, gather 38.3, push 100 (raw .660
   >= the .651 match: the game's best stride cell matches the push-off as well as a second drawing does; the anchor range is
-  narrow, .15), stretch 78.0, mean 74.0; winter coat 95.3. Summer unchanged (46.2 / 86.4).- [ ] 7 End-on view + flee-following camera
-- [ ] 8 Re-record, re-score T-0009 and T-0028, compare /workspace/rabbit/compare-poses.jpg
+  narrow, .15), stretch 78.0, mean 74.0; winter coat 95.3. Summer unchanged (46.2 / 86.4).- [x] 7 End-on view + flee-following camera (code; recording in step 8).
+  - End-on: tools/hare-strip.html ?view=end (tracking camera behind the hare, on its path, as the wolf sees a fleeing hare),
+    works with the 6 fps strip and ?stride=. References refs/hare/end-on/ attempt 1-2 (+ attempts.md; attempt 1 rejected
+    ~65 %: padded soles, big white tail). Calibrated end-on score C:\dev\rabbit-rec11\look\endscore.py (lookscore v1.2 shape
+    metric; primary attempt 2, known match attempt 1, mismatch = other classes): box, code 3dcac42 + view: crouch 24.1, sit
+    71.1, gather 34.7, push UNCALIBRATED (anchor range .013: end-on push-off and the other end-on poses have the same round
+    rump-and-feet outline), stretch 27.5; shape mean 39.3; coat 85.8 (coat mismatch = the winter side-on pose, the only
+    other-season ref). Evidence endscore-e1.json, ge-e1.png, se-e1.png, refmask-end*.jpg.
+  - Flee-following camera: render/buildScene.ts ?watch=hare (dev/recording only, off by default): the follow camera, still
+    behind the wolf, turns smoothly to the nearest hare within 60 m; tools/rabbit-record.mjs 7th argument `watch` passes it.
+    Also fixed rabbit-record.mjs line 10, where a trailing // comment had swallowed `mkdirSync(outDir)`.- [ ] 8 Re-record, re-score T-0009 and T-0028, compare /workspace/rabbit/compare-poses.jpg
 ## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 16:16 PT): pick up grok-gait/T-0009-hare-v4 (608568b, 961630a, d8b118a; based on 37b1fbc).
 Decision (Grok lead): hare-specific contact floors from Hildebrand's Lepus data replace the cross-species .20/.13.

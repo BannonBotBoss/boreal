@@ -1,0 +1,79 @@
+[
+ {
+  "file": "real-0.png",
+  "title": "File:Cascades sur ruisseau Bouchard.jpg",
+  "page": "https://commons.wikimedia.org/wiki/File:Cascades_sur_ruisseau_Bouchard.jpg",
+  "author": "Fralambert",
+  "licence": "CC BY-SA 4.0",
+  "bytes": 528052,
+  "box": [
+   330,
+   430,
+   640,
+   520
+  ],
+  "what": "bedrock-slab sheet flow (steep, shallow) on a small Shield stream, La Mauricie NP",
+  "extra": {
+   "pool": [
+    920,
+    580,
+    1090,
+    680
+   ]
+  }
+ },
+ {
+  "file": "real-1.png",
+  "title": "File:Baldhead Rapids 2.JPG",
+  "page": "https://commons.wikimedia.org/wiki/File:Baldhead_Rapids_2.JPG",
+  "author": "Fungus Guy",
+  "licence": "CC BY-SA 3.0",
+  "bytes": 454404,
+  "box": [
+   380,
+   300,
+   620,
+   440
+  ],
+  "what": "step cascade over bedrock and boulders, Baldhead River, Lake Superior PP (Shield)",
+  "extra": {
+   "runout": [
+    700,
+    560,
+    1250,
+    680
+   ],
+   "calm": [
+    700,
+    830,
+    1250,
+    940
+   ]
+  }
+ },
+ {
+  "file": "real-2.png",
+  "title": "File:Ruisseau Ponton - panoramio (1).jpg",
+  "page": "https://commons.wikimedia.org/wiki/File:Ruisseau_Ponton_-_panoramio_(1).jpg",
+  "author": "Mario Hains",
+  "licence": "CC BY-SA 3.0",
+  "bytes": 331794,
+  "box": [
+   570,
+   500,
+   660,
+   590
+  ],
+  "what": "calm cobble brook (glide), Quebec"
+ },
+ {
+  "file": "real-3.png",
+  "title": "File:Dorman brook - panoramio.jpg",
+  "page": "https://commons.wikimedia.org/wiki/File:Dorman_brook_-_panoramio.jpg",
+  "author": "Mario Hains",
+  "licence": "CC BY-SA 3.0",
+  "bytes": 379487,
+  "box": null,
+  "what": "EXCLUDED: water barely visible behind brush"
+ }
+]

@@ -1,0 +1,46 @@
+{
+  "site": "float",
+  "river": {
+    "x": -1875,
+    "z": -255,
+    "order": 1,
+    "widthM": 4.02,
+    "speed": 0.06,
+    "surface": 24.68,
+    "groundBeyond": 20.62,
+    "dir": [
+      0.7071067811865475,
+      -0.7071067811865475
+    ]
+  },
+  "urlAcross": "http://127.0.0.1:5214/?nomenu&hour=12&at=-1866.2,-246.2,0.785",
+  "urlDown": "http://127.0.0.1:5214/?nomenu&hour=12&at=-1866.2,-246.2,-0.785",
+  "info": {
+    "w": 1280,
+    "h": 720,
+    "status": "12:06 · WALK · Stamina 100/100 · Energy 100/100RT run · LT stealth0 remembered · 0 friends · 0 herbs"
+  },
+  "shots": [
+    {
+      "f": "across-0.png",
+      "at": "2026-10-22T00:07:36.503Z"
+    },
+    {
+      "f": "across-1.png",
+      "at": "2026-10-22T00:07:37.901Z"
+    },
+    {
+      "f": "across-2.png",
+      "at": "2026-10-22T00:07:39.371Z"
+    },
+    {
+      "f": "downstream-0.png",
+      "at": "2026-10-22T00:08:19.437Z"
+    },
+    {
+      "f": "downstream-1.png",
+      "at": "2026-10-22T00:08:20.830Z"
+    }
+  ],
+  "errors": []
+}

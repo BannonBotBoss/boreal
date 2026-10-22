@@ -172,6 +172,7 @@ const musicPanel = () => { const form = settingsPanel(MUSIC_PANEL, musicStore, (
   const musicOnBox = () => Array.from(vol.querySelectorAll('label')).find(l => l.textContent?.startsWith('Music on'))?.querySelector('input');
   form.querySelector('select')?.addEventListener('input', e => { // picking a track turns music on; Off turns it off (the bus fades)
     const on = (e.target as HTMLSelectElement).value !== 'Off'; sfx.volumeStore.set('volume.musicOn', on); const box = musicOnBox(); if (box) box.checked = on; });
+  for (const el of Array.from(vol.querySelectorAll('p:not(.note), button'))) el.remove(); form.querySelector('p:not(.note)')?.remove(); // no world-regen settings here: drop both '* applies when you resume' legends and the inner Reset
   form.querySelector('label')?.after(vol);
   const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Acoustic guitar tracks (ElevenLabs Music). The track repeats with a crossfade; gameplay sounds duck it. N toggles music, - / = changes music volume.'; form.append(hint);
   if (TONES) { const warn = document.createElement('p'); warn.className = 'note'; warn.textContent = MUSIC_SAFETY; form.prepend(warn);

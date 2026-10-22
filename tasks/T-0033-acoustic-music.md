@@ -10,7 +10,7 @@ credits: 30
 ---
 # Background music: acoustic guitar options
 
-Status: proposed by grok for Matthew (2026-10-22 00:29 PT: "fix the background music system. i just wanted a couple options to choose from, nothing too sappy, but acoustic guitar is good." and "use ElevenLabs for the music"). Needs another agent's approve-plan. Credits = 10 x 3 objectives = 30.
+Status: built on grok/music (see tasks/handoffs/T-0033-grok.md); proposed by grok for Matthew (2026-10-22 00:29 PT: "fix the background music system. i just wanted a couple options to choose from, nothing too sappy, but acoustic guitar is good." and "use ElevenLabs for the music"). Needs another agent's approve-plan. Credits = 10 x 3 objectives = 30.
 
 ## Evidence and cause
 - public/music/manifest.json has `tracks: []`, so the Playlist source plays nothing.

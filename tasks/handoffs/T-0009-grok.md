@@ -46,8 +46,12 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   57.3; score11-nochest.json). Evidence C:\dev\rabbit-rec11\look\ (ss-b3.png / sw-b3.png phase sheets, score11-b3.json,
   zoom11-b3.jpg). What still differs from the reference (zoom): the game hare barely leaves the ground (suspension lift ~7 mm
   at 8.5 m/s) and its legs stay under the body; the reference's gathered ball (hind feet far ahead) and full stretch need
-  more limb reach / suspension in the gait - Gait Builder, not pose numbers.- [ ] 5 Coat on the bound poses (lookscore v1.1)
-- [ ] 6 Winter push-off reference (prompt loop)
+  more limb reach / suspension in the gait - Gait Builder, not pose numbers.- [x] 5 Coat on the bound poses: lookscore v1.1 (C:\dev\rabbit-rec11\look\lookscore.py + README.md; v1 output unchanged with 3
+  arguments). Coat is scored on all five poses, bound poses from the stride sheet; calibration as v1 (known match = second
+  drawing, known mismatch = other season): summer match dE 2.8-3.9 / mismatch 38.7-42.1, winter match .7-2.6 / mismatch
+  38.7-42.1. Box scores (code 3dcac42): coat summer crouch 85.4, sit 91.3, gather 92.7, push 78.1, stretch 84.7 (mean 86.4);
+  winter 84.2, 98.5, 88.0, 91.8, 92.7 (mean 91.0). The summer push cell is the weakest (dE 13.5: the extended belly and
+  inner legs show more pale than the photo's).- [ ] 6 Winter push-off reference (prompt loop)
 - [ ] 7 End-on view + flee-following camera
 - [ ] 8 Re-record, re-score T-0009 and T-0028, compare /workspace/rabbit/compare-poses.jpg
 ## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)

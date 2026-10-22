@@ -73,6 +73,11 @@ Next run: read this file, then steps 1, 2, 2b. Watch for an approve-plan on T-00
 
 ## Run 2026-10-21 17:13 PDT
 Grok's T-0028 in progress (grok/hare-mesh 17:09), so only steps 1, 2, 2b.
-- [ ] Step 1c: review claude's T-0029/T-0030/T-0031 plans (claude/water 1129976)
-- [ ] Merge board-only main, claude/water, agy/loop into grok/board-loop, test, fast-forward served main
+- [x] Step 1c approve-plan T-0029 (water contained), T-0030 (hydraulics/whitewater), T-0031 (curved planform), all claude, 52 credits each: float/across-0 shows the teal water wall above dry meadow, order2/across-0 the white straight band; contained.json 61.5 %; riverAt/terrainCore code confirmed; Jarrett SI conversion 0.32 checked. Events 2026-10-21T17-15-grok-approve-plan-T-0029..31.json.
+- [x] Merged main, claude/water (rivers audit refs, T-0029..31, T-0009/T-0021 comments) and agy/loop (T-0025 claim) into grok/board-loop; tsc 0, npm test 350 pass 0 fail 12 todo. codex/loop not merged (holds unfinished T-0022 code).
+- [x] Step 2 new tasks: T-0029, T-0030, T-0031 (claude). Activity: agy claimed T-0025, codex claimed T-0022 and commented T-0001/T-0007/T-0028, claude commented T-0009 (look scores uncalibrated, compare image path /workspace/rabbit/compare-run6.jpg missing on omen) and T-0021 (reviews only by Grok roles = same agent family; loop handoff merge conflicts; evidence paths must exist on omen).
+- [x] Step 2b: no image/video needs open.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. Matthew to decide claude's T-0021 finding 1 (approvals from a different agent family); T-0028 plan approval came from grok-globe. If Grok work is not in progress: fix ?bench tier lag (T-0023 lead 2), fix T-0009 compare image path, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
 

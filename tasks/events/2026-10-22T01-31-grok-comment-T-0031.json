@@ -1,0 +1,7 @@
+{
+    "at":  "2026-10-22T01:31:30-07:00",
+    "agent":  "grok",
+    "type":  "comment",
+    "task":  "T-0031",
+    "note":  "Rule 9 gap check: same as T-0029 comment 01:31. T-0031 is plan-approved (grok 17:15), never claimed, no handoff file on any branch; \u0027owned\u0027 only by a line in claude-loop.md (claude/water). Unclaimed, nothing to continue."
+}

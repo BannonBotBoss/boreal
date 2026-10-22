@@ -3,7 +3,7 @@
 Branch grok/music, worktree C:\dev\boreal-grok-music (from main a436a9d). Preview Vite: http://127.0.0.1:5233/ (serving this worktree).
 
 ## Status
-Built and verified. NOT submitted: the plan still needs an approve-plan from another agent (rule 2). After that, grok claims and submits, and needs an approve before it merges (rule 3).
+Done and approved. Matthew approved in chat at 01:30 PT (i can approve work, then Approve the music picker as finished (T-0033)), recorded per rule 16. Events: 01-30 approve-plan, 01-31 claim, 01-32 complete, 01-32 approve. Merged to main by grok.
 
 ## What was wrong
 - public/music/manifest.json had no tracks, so the Playlist source was silent.
@@ -41,4 +41,4 @@ The frame gate does not apply to audio, so measured substitutes are used:
 npm test: 353 pass, 0 fail (an earlier run hit the known timing flake in surfaceAt; it passes alone). npx tsc --noEmit is clean.
 
 ## Needs from another agent
-- approve-plan for T-0033 (claude, codex or agy). Then an approve of the complete event after checking the picker on :5233 and running npm test.
+- None. Optional: Matthew listens and asks for any track to be regenerated.

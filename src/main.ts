@@ -8,7 +8,7 @@ import { catalog } from './core/catalog';
 import type { Entity } from './core/world';
 import { BorealSound } from './audio/borealSound';
 import { createMusic } from './audio/music';
-import { MUSIC_SAFETY, MUSIC_SETTINGS } from './audio/musicSettings';
+import { MUSIC_PANEL, MUSIC_SAFETY, MUSIC_SETTINGS, TONES } from './audio/musicSettings';
 import { VOLUME_SETTINGS } from './audio/mixer';
 import { wolfSpeak } from './audio/wolfVoice';
 import { playerSpeed, pounceSpeed } from './core/playerTuning';
@@ -167,11 +167,16 @@ if (STAGES.on && !new URLSearchParams(location.search).has('at')) [player.x, pla
 let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');
-const musicPanel = () => { const form = settingsPanel(MUSIC_SETTINGS, musicStore, () => {})() as HTMLElement;
-  form.prepend(settingsPanel(VOLUME_SETTINGS, sfx.volumeStore, () => {})()); // Sound volume per bus (audio/mixer)
-  const warn = document.createElement('p'); warn.className = 'note'; warn.textContent = MUSIC_SAFETY; form.prepend(warn);
-  const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Next track'; skip.onclick = () => music.skip(); form.append(skip);
-  const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Playlist: put audio files in public/music and list them in public/music/manifest.json (mood: day | night | storm | any). Gameplay sounds duck the music; a limiter caps its peaks; N toggles music, - / = changes music volume.'; form.append(hint);
+const musicPanel = () => { const form = settingsPanel(MUSIC_PANEL, musicStore, () => {})() as HTMLElement; // Track picker (guitar tracks + Off)
+  const vol = settingsPanel(VOLUME_SETTINGS, sfx.volumeStore, () => {})() as HTMLElement; // Sound volume per bus (audio/mixer), Music first
+  const musicOnBox = () => Array.from(vol.querySelectorAll('label')).find(l => l.textContent?.startsWith('Music on'))?.querySelector('input');
+  form.querySelector('select')?.addEventListener('input', e => { // picking a track turns music on; Off turns it off (the bus fades)
+    const on = (e.target as HTMLSelectElement).value !== 'Off'; sfx.volumeStore.set('volume.musicOn', on); const box = musicOnBox(); if (box) box.checked = on; });
+  for (const el of Array.from(vol.querySelectorAll('p:not(.note), button'))) el.remove(); form.querySelector('p:not(.note)')?.remove(); // no world-regen settings here: drop both '* applies when you resume' legends and the inner Reset
+  form.querySelector('label')?.after(vol);
+  const hint = document.createElement('p'); hint.className = 'note'; hint.textContent = 'Acoustic guitar tracks (ElevenLabs Music). The track repeats with a crossfade; gameplay sounds duck it. N toggles music, - / = changes music volume.'; form.append(hint);
+  if (TONES) { const warn = document.createElement('p'); warn.className = 'note'; warn.textContent = MUSIC_SAFETY; form.prepend(warn);
+    const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Next track'; skip.onclick = () => music.skip(); form.append(skip); }
   return form; };
 menu.addPanel({ id: 'player', title: 'Player', build: playerPanel(() => playAs, id => { playAs = id; pendingPlay = true; try { localStorage.setItem('boreal.player.v1', id); } catch { /* storage blocked */ } }) });
 setThunk(s => sfx.playAt('ui-pause', undefined, .5 * s, .55, false)); // low thunk on the existing sound bus

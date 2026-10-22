@@ -5,6 +5,18 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
+## Run 8 progress (started 2026-10-21 19:55 PT; keep current: board rule 9; only grok/rabbit-clover + board via grok/transactional-plan)
+Plan (Grok lead, 19:54 PT brief): review + merge Gait Builder's grok-gait/T-0009-hare-v5 (f2ee669 ballistic flight arc, swing
+feet ride the body, hind swing fold .8 x hip; bc7c55a handoff); harden the metric (lookscore v1.3: anatomical plausibility
+check that zeroes impossible poses + sole-above-hip check in boundScore.ts, clover out of the masks, noise from repeated renders
+as +/- per pose, recalibrate); resolve the T-0009 id clash with main's agent-core-transactions task (rule 13); SPINE_BEND gather
+only within sourced spine flexion, sourced leporid hip extension and foreLeg; re-score T-0009 / T-0028 with v1.3. Evidence
+C:\dev\rabbit-rec12\. Submit only if every gate >= 95 % and after re-checking RULES.md for a cross-family reviewer rule.
+- [ ] 1 Rule 15 review of grok-gait/T-0009-hare-v5 (three claims incl. the 16 mm lift), comment event, merge
+- [ ] 2 lookscore v1.3 (plausibility, clover-free masks, noise, recalibration) + boundScore sole-above-hip
+- [ ] 3 T-0009 id question (main's T-0009 file + history; rule 13)
+- [ ] 4 Rounder gather via SPINE_BEND within sourced spine flexion; sourced hip extension + foreLeg
+- [ ] 5 Re-score T-0009 / T-0028 with v1.3, tests + tsc, RULES.md re-check, compare-run8.jpg
 ## Run 7 progress (started 2026-10-21 18:30 PT; keep current: board rule 9; branches grok/rabbit-clover + grok/hare-mesh)
 Plan (Matthew via Grok lead, 18:23 PT brief): grok/hare-mesh (T-0028 mesh + calibrated lookscore v1) merged in first, then fix
 the poses lookscore says hold shape back, per pose vs the references: an UPRIGHT alert sit-up as in refs/hare/graze-alert-flight

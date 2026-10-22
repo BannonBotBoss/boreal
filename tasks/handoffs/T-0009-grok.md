@@ -5,6 +5,202 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
+## Run 9 progress (started 2026-10-21 21:00 PT; keep current: board rule 9; grok/rabbit-clover, grok/hare-mesh (step 4 only), board via grok/transactional-plan)
+- [x] 1 Approve-plan asked of claude / codex / agy: event tasks/events/2026-10-21T21-01-grok-comment-T-0009.json (grok/transactional-plan d6a0e5c, main ff'd to d6a0e5c); listed under 'Needs from another agent'
+- [x] 2 Graze crouch (bounding.ts POSE_SHAPES 'graze-crouch' + PoseShape.ahead): cause found - with the fore paw under the glenoid the bladed fore limb is already at its elbow clamp (CANID elbow min 50 deg) when standing, so the rig reached only .43 of the asked crouch (pitch -.043, hip -17 mm). Now the fore paws re-plant 6 cm ahead first (one at a time, TURN.step; turnInPlace or not), then the body lowers the full pitch -.06 / drop .04: hip about 23 mm lower, fore paws under the chin, every joint in its clamp, 0 implausible frames. Grid of 12 shapes vs lookscore v1.3 graze strips (C:\dev\rabbit-rec13\look\grid-run9.txt, gs/gw/ge-g0..g9 + s13/e13 jsons): chosen g1 = summer crouch 35.0 -> 36.5, winter 70.5 -> 71.2 (crouch noise +-0), end-on crouch 31.4 -> 53.4; drop .06 gets zeroed (fore paw over the shoulder), level drops lift the chest bone and score lower. REFERENCE-MATCHED, not sourced. Test tests/anatomy.test.ts 'graze crouch (run 9)'; focused tests 24/24 (C:\dev\rabbit-rec13\test-step2.txt), tsc 0. tools/hare-strip.ts gains ?graze= / ?chest= / ?headsize= / ?runears= grid hooks.
+- [x] 3 Gathered-pose outline (src/animals/hare.ts HARE_SKIN chest rings): the gather mismatch (look\overlay13.py) is a too-shallow chest - the references' gathered hare is nearly as deep as long. Chest rings 1.5x deeper downward and narrower (rx x 1 - .4 chest weight) so the bare body stays inside the T-0028 mass check (1.877 -> 1.914 L, limit 1.94; deeper without narrowing = 2.01 L, fails). Box v1.3 (F0 -> F3): summer gather 47.3 -> 50.5 (noise +-1.5), winter gather 52.5 -> 54.6 (+-0.9), summer crouch 36.5 -> 41.0, summer stretch 92.3 -> 100, end-on stretch 37.2 -> 41.6; cost winter stretch 93.6 -> 87.0. Tried and dropped: head pitch following the spine flex (x.6 / x1.2: gather -0.4 / -2.1), head x1.15 (summer gather 42.8), ears up in the run (gather 43.2). REFERENCE-MATCHED [estimate]. Grid C:\dev\rabbit-rec13\look\grid-run9.txt (+ F0-F4 strips, logs, s13/e13). hare-mesh + hare-rig tests 11/11 (test-step3.txt).
+- [ ] 4 Merge grok/rabbit-clover into grok/hare-mesh; T-0028 handoff gets the v1.3 mesh scores
+- [ ] 5 Re-score (lookscore v1.3), npm test + tsc; complete events only if every gate >= 95 % AND a valid plan approve exists; compare-run9.jpg
+## Run 8 progress (started 2026-10-21 19:55 PT; keep current: board rule 9; only grok/rabbit-clover + board via grok/transactional-plan)
+Plan (Grok lead, 19:54 PT brief): review + merge Gait Builder's grok-gait/T-0009-hare-v5 (f2ee669 ballistic flight arc, swing
+feet ride the body, hind swing fold .8 x hip; bc7c55a handoff); harden the metric (lookscore v1.3: anatomical plausibility
+check that zeroes impossible poses + sole-above-hip check in boundScore.ts, clover out of the masks, noise from repeated renders
+as +/- per pose, recalibrate); resolve the T-0009 id clash with main's agent-core-transactions task (rule 13); SPINE_BEND gather
+only within sourced spine flexion, sourced leporid hip extension and foreLeg; re-score T-0009 / T-0028 with v1.3. Evidence
+C:\dev\rabbit-rec12\. Submit only if every gate >= 95 % and after re-checking RULES.md for a cross-family reviewer rule.
+- [x] 1 Rule 15 review of grok-gait/T-0009-hare-v5, comment event tasks/events/2026-10-21T19-57-grok-comment-T-0009.json, merged
+  45d0439. Checked: (1) lift: 8.5 m/s plan 4.40 Hz, flights 43.1 + 77.9 ms, flight-only g t^2/8 2.3 / 7.4 mm, heightCurve span
+  16.2 mm (< 18.0 mm for one flight of the whole 121 ms aerial time: consistent, not inflated); (2) bound-v5 + bound + hare-rig
+  17/17 (box); (3) lookscore v1.2 after-numbers reproduced on a box render within 0.7 (summer stretch 83.4, winter gather 49.4,
+  winter stretch 91.5, end-on gather 50.4). Box v1.2 at 45d0439: shape summer 50.4 / winter 78.9, coat 86.1 / 95.9, end-on 44.5 / 83.5.
+- [x] 2 lookscore v1.3 + bound-checks v3 (evidence C:\dev\rabbit-rec12\, README C:\dev\rabbit-rec12\look\README-v1.3.md).
+  - Shared plausibility: boundScore.ts `posePlausibility(sk, frame)` = highest sole (paw / toe tip / MTP) above its OWN hip or
+    shoulder joint, and how far any knee / wrist lies outside the wider of CANID_LIMITS and the body's limits. bound-checks v3
+    check 9 'anatomy' (when the trace carries soleOverHip): 1 at <= 0, 0 at 2 cm above. tools/bound-score.ts feeds it.
+    Calibration (tests/anatomy.test.ts): shipped fold .8 highest sole -23..-58 mm below (grade 1), fold .9 +4..+16 mm, 1.2 / 1.5
+    +107..+134 mm (grade 0); bound-checks hare 99.9 % (fold .8) vs 94.7 (.9) / 88.2 (1.2, 1.5). No leporid hip-extension range
+    found (searched: rabbit hip goniometry; only knee - Hildebrand 2003 - and lumbar - Grauer 2000 - ranges exist), so the rule
+    stays geometric.
+  - Found by the new check, FIXED: the alert sit-up held the fore paws 25 mm ABOVE the shoulder joint (bounding.ts sit-up tuck
+    .45 x hip); now .35 x hip, paws 31 mm below (the reference sit-ups hang the paws in front of the chest). Timed strip: 0
+    implausible cells (was 2, the alert cells).
+  - lookscore v1.3 (look\lookscore13.py + declover.py; tools/hare-strip.ts logs per-cell plausibility in <pre id="strip-log"> /
+    ?log=1 pageResult; ?phase0= / ?fold= for noise and mismatch renders): (1) an implausible cell zeroes every cell of its
+    action in that sheet (one stride = one motion). Calibration: Gait Builder's fold 1.5 render: v1.2 summer stretch 100, end-on
+    gather 100, end-on stretch 87.4 -> v1.3 0 / 0 / 0 (13 of 30 stride cells implausible, s12-k15 / s13-k15); shipped rig: no
+    implausible cell. (2) Clover out of the reference masks (declover.jpg / declover.txt): summer 2-28 % removed (push 28 %, the
+    clover under the belly), end-on .3-20 %, winter < 1 %; anchors recomputed. (3) Noise: repeated renders are BIT-IDENTICAL
+    (md5, deterministic sim + swiftshader), so the band comes from 5 variants (6 fps ?seed=n1..n5, stride sheets ?phase0=0..0.8
+    cell): crouch / sit +-0 (held poses), gather +-1.5 / push +-0.9 / stretch +-0.7 summer, winter +-0.9 / 1.8 / 0.9, end-on gather
+    +-4.0, stretch +-1.0; means shape summer 63.0 +- 0.6, winter 77.6 +- 0.5, coat 88.6 / 95.4, end-on 50.1 +- 1.1 / 79.2 (noise-r8a.json).
+    Gait Builder's +-10 is parameter sensitivity (one best cell flips between near-identical settings), not measurement noise.
+  - v1.3 box scores at 45d0439 + tuck (s13-r8a / e13-r8a): shape summer 62.7 (crouch 35.7, sit 52.5, gather 47.9, push 85.7,
+    stretch 91.5), winter 78.0 (71.0, 80.9, 47.4, 100, 90.8); coat 88.5 / 95.4; end-on shape 50.4 (31.1, 66.0, 65.2, push
+    uncalibrated, 39.3), coat 80.0. The summer push jump (v1.2 49.5 -> 85.7) is the clover leaving its reference mask.
+  - PC: tsc 0; anatomy + bound + bound-v5 + hare-rig + hare-mesh 28/28 (C:\dev\rabbit-rec12\test-step2.txt); bound-checks hare 99.9 %.
+- [x] 3 Id question (rule 13): NO clash, no renumbering. main's tasks/T-0009-agent-core-transactions.md IS this task: title
+  "Shared agent core, transaction registry and resource fields, with the snowshoe hare and sunlit clover as the first species",
+  tags hare / clover, "Depends on: grok/rabbit-clover (build there; this task files it)", and its claim event (10:50 PT) names
+  "Hare + clover on the shared pipeline, grok/rabbit-clover c56f7aa". The rig / gait / pose / look work is its rule 6 frame gate
+  for the hare; the furred mesh is T-0028. No other T-0009 task file on any branch (git log --all -- 'tasks/T-0009*').
+  Board comment tasks/events/2026-10-21T20-23-grok-comment-T-0009.json (grok/transactional-plan e29e7ec, ff-merged into the
+  served main). Still open (11:36 PT note): the plan approve was written by grok in Matthew's name, so T-0009 needs another
+  agent's approve-plan before any complete event.
+- [x] 4 Spine bend, hip extension, foreLeg (box renders, lookscore v1.3; evidence C:\dev\rabbit-rec12\look\ s13/e13-sb10, -sbA, -sbB).
+  - SPINE_BEND (hare.ts): the skin's rump does not turn with the rig's spine flex, so the chest's turn relative to the body IS
+    the shown lumbar bend; the sourced cap is the rig's +-.366 rad pelvic movement (Schilling & Hackert 2006). Measured chest bend
+    (look\chest-bend.ts): .6 -> .196 rad, 1.0 -> .335 / .339, 1.1 -> .370 (over). Symmetric 1.0 (sb10): gathers unchanged (summer
+    47.6, winter 48.6, inside the noise band) and winter stretch 90.8 -> 85.6 (worse than 2 SD). Shipped: flexion 1.0 / extension
+    .44 = the rabbit's lumbar extension-to-flexion ratio 17.6 / 39.7 deg over L4-L7 (Grauer, Erulkar, Patel & Panjabi 2000, Eur
+    Spine J, doi:10.1007/s005860000141, in vitro); bend -.335 / +.137 rad (sbA): summer gather 47.6 (noise), winter gather 48.6
+    (+2.2), winter stretch 93.3 (+2.1). The gather is NOT measurably rounder: the stance-cell silhouette is set by the trunk
+    mesh and leg positions, not the chest turn.
+  - Hip extension: no sourced leporid hip range found (searched rabbit hip goniometry / ROM; only knee - Hildebrand 2003 - and
+    lumbar - Grauer 2000 - exist). The swing fold stays bounded by the geometric 'sole below its own hip' rule (bound-checks v3).
+  - foreLeg .181 -> .187 (HARE_BODY): radius = humerus x .969, the snowshoe hare's own ratio (L. americanus UWBM-21111, Burke
+    Museum, humerus 72.36 / radius 70.12 mm, specimens.iri.isu.edu id 79; one specimen, only its ratio used; was x .90 from
+    another species). tests/bound.test.ts limb sum .187. sbB (with the spine change): summer 62.8 / winter 79.5 shape (winter
+    gather 52.5, +3.9), end-on stretch 37.2 (-2.1) and end-on coat 77.8 (-2.3) a little worse; everything else inside the noise.
+    bound-checks hare 99.9 %. Box tests hare-mesh + bound + anatomy + hare-rig + bound-v5 28/28; PC tsc 0.
+- [x] 5 Re-scored (20:50-20:59 PT, code 97101ec). NOT SUBMITTED: not every gate is >= 95 %; also T-0009 still lacks another
+  agent's approve-plan (step 3). RULES.md on main e29e7ec: no cross-family reviewer rule. Rule 15 re-check 20:59 PT: no new
+  complete event since 19:50 (only grok's own two comments).
+  - PC GPU strips with per-cell logs (tools/strip-shot.mjs, smoke-tiers EDGE_FLAGS, ...&log=1, port 5204):
+    C:\dev\rabbit-rec12\look\{gs,gw,ss,sw,ge,se}-pc9.png + .log.json, 0 implausible cells; scores s13-pc9.json / e13-pc9.json.
+    Run-start baseline (box, 02e1ebc code + the run 8 log tools): *-base8.png, s13-base8.json / e13-base8.json.
+  - Compare C:\dev\rabbit-rec12\compare-run8.jpg (box /workspace/rabbit/compare-run8.jpg): clover-free refs, run start vs
+    run 8 per pose, end-on, Gait Builder's fold-1.5 cells zeroed, noise band.
+  - Checks: npm test 413 tests, 401 pass, 0 fail, 12 todo (C:\dev\rabbit-rec12\npmtest.txt); tsc 0 (tsc.txt); bound-checks v3
+    hare 99.9 % (bound-score.txt).
+
+### Calibrated gates, run 8 (rule 11): metric lookscore v1.3 (C:\dev\rabbit-rec12\look\lookscore13.py, README-v1.3.md);
+known match = independent second drawing, known mismatch = other pose classes / other season, anchors on clover-free masks;
+plausibility gate calibrated on fold 1.5 (v1.2 100 -> v1.3 0). Noise: 2 SD of noise-r8a.json.
+| gate | run start (box, v1.3) | run 8 (PC GPU, v1.3) | noise (SD) |
+|---|---|---|---|
+| shape summer | 47.8 (sit 0: paws above the shoulder) | 62.7 | 0.6 |
+| shape winter | 56.9 (sit 0) | 79.4 | 0.5 |
+| coat summer | 70.7 (sit 0) | 88.4 | 0.1 |
+| coat winter | 75.8 (sit 0) | 95.8 | 0.2 |
+| end-on shape / coat | 27.0 / 62.2 | 50.0 / 77.5 | 1.1 / 0.7 |
+Per pose run 8: summer crouch 34.8, sit 52.3, gather 47.3, push 87.2, stretch 92.0; winter 70.1, 81.2, 52.6, 100, 93.1; end-on
+crouch 32.0, sit 66.0, gather 64.8, push uncalibrated, stretch 37.3. Coat summer 85.0 / 92.6 / 93.5 / 84.2 / 86.9, winter
+91.5 / 96.0 / 93.8 / 100 / 97.6. T-0009 gates: look (mean shape + coat summer) 75.6 (run start 59.3); graze (summer crouch) 34.8
+(35.7, within noise); alert (summer sit) 52.3 (0). Holding the look back: the graze crouch (body rides high on the legs,
+poseReach .46) and the gathered stance silhouette (trunk / mesh, not chest turn or gait).
+T-0028 gates (the mesh, same renders, recorded HERE because this brief touches only grok/rabbit-clover; grok/hare-mesh's handoff not edited): shape summer 62.7 / winter 79.4, coat summer 88.4 / winter 95.8 (lookscore v1.3; was v1.2 46.2 / 73.7 / 86.4 / 95.5 at run 7). Only coat winter >= 95 %: not submitted.
+## Run 7 progress (started 2026-10-21 18:30 PT; keep current: board rule 9; branches grok/rabbit-clover + grok/hare-mesh)
+Plan (Matthew via Grok lead, 18:23 PT brief): grok/hare-mesh (T-0028 mesh + calibrated lookscore v1) merged in first, then fix
+the poses lookscore says hold shape back, per pose vs the references: an UPRIGHT alert sit-up as in refs/hare/graze-alert-flight
+attempt2 panel 3 (this reverses run 4's half sit-up decision, on Matthew's instruction), the graze crouch, and the bound phases
+(gather / push / stretch). Also: a better winter push-off reference (prompt loop), coat scored on the bound poses, an end-on
+view, a camera that keeps the fleeing hare in frame; re-score T-0009 and T-0028 with the calibrated metric. Submit only if
+every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross-family reviewer rule.
+- [x] 0 Rule 15 review (18:25 PT, main ebbc897): no complete event awaits a grok review (agy T-0025 already reviewed by the
+  grok board loop, 76211ee). RULES.md: no cross-family reviewer rule.
+- [x] 1 Merged grok/hare-mesh 8edcad8 into grok/rabbit-clover (fast-forward). Box baseline of lookscore v1 on this code
+  (swiftshader, within 0.5 of the PC render): shape summer 28.8 / winter 53.2, coat summer 87.7 / winter 90.2.
+- [x] 2 Upright alert sit-up (hare.ts poseHare: alert + pause request the rig's 'sit-up'; bounding.ts 'sit-up' pitch .95 -> 1.15
+  rad, hip drop 0 -> .02 m; hare.ts POSES.sit body 1.15, head -.8 back toward level, -.025 lower). REFERENCE-MATCHED: the
+  silhouette axis of the game sit cells is 66-70 deg vs the refs' 68.9 / 70.8 / 70.0 deg (attempt2 / attempt3 / winter
+  attempt2, lookscore masks); not sourced. Found on the way (shared code fix, bounding.ts standError): a fore limb with a
+  blade was solved as a bare two-bone leg and missed the ground by 33 mm, so poseReach was 0 for every four-foot pose and the
+  graze crouch / rest / crouch requests never moved the body; now solved with foreLimb as the controller does (graze-crouch
+  reach 0 -> .64, rest .70, crouch .52). Tests: bound + hare-rig 14/14 on the PC. lookscore v1 (box): sit summer 18.4 -> 52.3,
+  winter 32.0 -> 73.6; crouch summer 23.7 -> 29.9 (the standError fix); evidence C:\dev\rabbit-rec11\look\ (score-s3.json,
+  zoom-s3-sit.jpg: red = ref only, green = game only). Left: the fore paws stick out ahead of the chest and the neck shows a
+  seam when the head turns back level.
+- [x] 3 Graze crouch: bounding.ts 'graze-crouch' drop .02 -> .04 (the hare reaches .46 of the shape: pitch -.046 rad, hip -.018 m),
+  hare.ts POSES head-down head -.55 -> -.85 (nose to the clover). Grid pitch -.1/-.25 x drop .02/.04 x head -.55/-.85 vs lookscore
+  v1: crouch summer 29.9 -> 33.1, winter 53.6 -> 53.4 (flat). REFERENCE-MATCHED, not sourced. Why it stays low: the head-to-rump
+  height profile already matches within ~.05 of the width (ref .47-.55, game .49-.59); the losses are the hind foot standing out
+  behind the rump and the body riding higher on the legs than the photo hare (C:\dev\rabbit-rec11\look\crouch-detail-c1.jpg,
+  zoom-c1-crouch.jpg) - the leg reach limits the drop (poseReach .46), so a deeper crouch needs a hind-leg fold the rig allows
+  (Gait Builder) rather than more pose numbers.
+- [x] 4 Bound phases. Found: the rig's fore and hind girdle tops move .133 -> .227 m apart through a stride at 8.5 m/s (spine
+  flex +-.36 rad, DERIVED in bounding.ts), but the skin trunk was one rigid bone, so it could neither gather nor stretch.
+  Built (shared, data-driven): a chest bone in core/rigBody.ts RIG_BONE (index 21, after the legs so older indices hold;
+  RIG_BONE_COUNT 22) + SpecRing.chest weights + RigBind.chest; render/rigSkin.ts parents the head to the chest; hare.ts
+  HARE_SKIN front trunk rings chest .2 / .55 / .85 / 1 and the neck on the chest; poseHare puts the chest on the rig's fore
+  girdle tops and turns it by the hip-to-shoulder line minus SPINE_BEND .6 x spine flex [estimate; grid 0 / .6 / 1.2 / 1.8 is
+  flat within ~2 points]. New tools/hare-strip.html ?stride=8.5: a bound PHASE sheet (30 cells over one steady stride), because
+  the 6 fps sequence has only ~10 flee cells, mostly the accelerating start. tests/hare-mesh.test.ts: bone count 22 + new test
+  9 (front trunk chest weight > .7, rump < .01, chest travels > 5 cm over a stride). PC: hare-mesh + rules + hare-rig + bound
+  30/30, tsc 0. Scores (lookscore v1.1 = bound poses from the stride sheet, box): gather / push / stretch summer 33.6 / 49.2 /
+  63.1, winter 42.9 / 100 (suspect anchor) / 68.4; v1 (6 fps cells) 15.1 / 44.4 / 46.0 before vs 12.4 / 43.3 / 43.2 after: so
+  most of the bound gain is the stride sheet (metric), the chest bone alone is small and mixed (v1.1 without it: 32.1 / 54.3 /
+  57.3; score11-nochest.json). Evidence C:\dev\rabbit-rec11\look\ (ss-b3.png / sw-b3.png phase sheets, score11-b3.json,
+  zoom11-b3.jpg). What still differs from the reference (zoom): the game hare barely leaves the ground (suspension lift ~7 mm
+  at 8.5 m/s) and its legs stay under the body; the reference's gathered ball (hind feet far ahead) and full stretch need
+  more limb reach / suspension in the gait - Gait Builder, not pose numbers.
+- [x] 5 Coat on the bound poses: lookscore v1.1 (C:\dev\rabbit-rec11\look\lookscore.py + README.md; v1 output unchanged with 3
+  arguments). Coat is scored on all five poses, bound poses from the stride sheet; calibration as v1 (known match = second
+  drawing, known mismatch = other season): summer match dE 2.8-3.9 / mismatch 38.7-42.1, winter match .7-2.6 / mismatch
+  38.7-42.1. Box scores (code 3dcac42): coat summer crouch 85.4, sit 91.3, gather 92.7, push 78.1, stretch 84.7 (mean 86.4);
+  winter 84.2, 98.5, 88.0, 91.8, 92.7 (mean 91.0). The summer push cell is the weakest (dE 13.5: the extended belly and
+  inner legs show more pale than the photo's).
+- [x] 6 Winter push-off reference (prompt loop, refs/hare/winter/attempts.md rows 3-5): attempt 3 (with attempt 2 as image
+  reference) came out a near-copy of attempt 2, so not independent: rejected as an anchor. Attempt 4 (no image reference, dark
+  forest edge so GrabCut masks the white hare, refmask-winter4.jpg) has a clear push-off (panel 5, both hind feet on the snow);
+  attempt 5 is a single independent push-off photo. Finding: winter attempt 2's 'push' cell is closer to an extended reach
+  (IoU .671 with attempt 4's stretch, .525 with its push-off). lookscore v1.2 (C:\dev\rabbit-rec11\look\lookscore.py, 6th
+  argument 'v1.2'): winter known match = attempt 4 for every pose (was the hand-traced attempt 1; anchors crouch .828 / .577,
+  sit .738 / .334, gather .858 / .573, stretch .751 / .446), and the push-off is scored against attempt 4 panel 5 with attempt
+  5 as its known match (.651 / .504). Box, code 3dcac42: winter shape crouch 71.2, sit 82.5, gather 38.3, push 100 (raw .660
+  >= the .651 match: the game's best stride cell matches the push-off as well as a second drawing does; the anchor range is
+  narrow, .15), stretch 78.0, mean 74.0; winter coat 95.3. Summer unchanged (46.2 / 86.4).
+- [x] 7 End-on view + flee-following camera (code; recording in step 8).
+  - End-on: tools/hare-strip.html ?view=end (tracking camera behind the hare, on its path, as the wolf sees a fleeing hare),
+    works with the 6 fps strip and ?stride=. References refs/hare/end-on/ attempt 1-2 (+ attempts.md; attempt 1 rejected
+    ~65 %: padded soles, big white tail). Calibrated end-on score C:\dev\rabbit-rec11\look\endscore.py (lookscore v1.2 shape
+    metric; primary attempt 2, known match attempt 1, mismatch = other classes): box, code 3dcac42 + view: crouch 24.1, sit
+    71.1, gather 34.7, push UNCALIBRATED (anchor range .013: end-on push-off and the other end-on poses have the same round
+    rump-and-feet outline), stretch 27.5; shape mean 39.3; coat 85.8 (coat mismatch = the winter side-on pose, the only
+    other-season ref). Evidence endscore-e1.json, ge-e1.png, se-e1.png, refmask-end*.jpg.
+  - Flee-following camera: render/buildScene.ts ?watch=hare (dev/recording only, off by default): the follow camera, still
+    behind the wolf, turns smoothly to the nearest hare within 60 m; tools/rabbit-record.mjs 7th argument `watch` passes it.
+    Also fixed rabbit-record.mjs line 10, where a trailing // comment had swallowed `mkdirSync(outDir)`.
+- [x] 8 Re-recorded and re-scored (18:55-19:03 PT, code c7c2682). NOT SUBMITTED: every gate is below 95 %.
+  - In game, `node tools/rabbit-record.mjs http://127.0.0.1:5204 C:\dev\rabbit-rec11\game plain 16 6.5 1.1 hare` (fov 16,
+    watch camera): 79 frames, no page errors; feed 0-5.0 s, alert 5.05-5.9 s, flee 6.0-10.9 s. With ?watch=hare the hare
+    stays in frame through the flight (run 6 / T-0028 rec4: left frame after ~6.8 s); read at f049-f063 (6.9-20.7 m), but past
+    ~23 m (f067+) it is a few pixels behind grass and logs and cannot be judged, and at f078 (31 m) the view swings toward the
+    lake. Sheet C:\dev\rabbit-rec11\g11-sheet.jpg. Look cannot be scored in game at these sizes (metric needs the matte strip).
+  - Strips on the PC GPU (tools/strip-shot.mjs, EDGE_FLAGS of smoke-tiers, port 5204): look\gs-pc8 / gw-pc8 (6 fps), ss-pc8 /
+    sw-pc8 (stride 8.5 m/s), ge-pc8 / se-pc8 (end-on). Scores: look\score-pc8.json (v1), score12-pc8.json (v1.2),
+    endscore-pc8.json; zoom C:\dev\rabbit-rec11\z12-pc8.jpg; compare C:\dev\rabbit-rec11\compare-poses.jpg (box
+    /workspace/rabbit/compare-poses.jpg). Checks: npm test 408 tests, 396 pass, 0 fail, 12 todo (C:\dev\rabbit-rec11\npmtest.txt);
+    tsc 0 (tsc.txt). Rule 15 re-check 19:03 PT: no complete event awaits review (new since 18:20: claude claim T-0032, comment
+    T-0025). RULES.md on main ebbc897: no cross-family reviewer rule.
+
+### Calibrated gates, run 7 (rule 11). Metric lookscore v1 / v1.2 (C:\dev\rabbit-rec11\look\lookscore.py) and endscore
+(end-on); known match = an independent second drawing (summer attempt3, winter attempt4 [v1.2] / attempt1 hand polygons [v1],
+end-on attempt1), known mismatch = the same ref's other pose classes (shape) / other season (coat).
+| gate | run start (box, v1) | run 7 PC GPU v1 | run 7 PC GPU v1.2 |
+|---|---|---|---|
+| shape summer (5 poses) | 28.8 | 36.9 | 46.2 |
+| shape winter | 53.2 | 64.0 | 73.7 |
+| coat summer | 87.7 (crouch, sit) | 88.3 (crouch, sit) | 86.4 (all 5 poses) |
+| coat winter | 90.2 | 91.7 | 95.5 (all 5) |
+| end-on shape (4 calibrated poses) | - | - | 39.9 (push uncalibrated) |
+| end-on coat | - | - | 85.5 |
+Per pose v1.2: summer crouch 32.8, sit 52.1, gather 33.6, push 49.2, stretch 63.3; winter 71.1, 81.8, 37.9, 100 (narrow anchor
+.651/.504), 77.8. Coat summer 85.5 / 91.2 / 92.7 / 77.9 / 84.7, winter 91.6 / 96.6 / 91.6 / 100 / 97.9. End-on crouch 23.9, sit
+70.8, gather 35.6, stretch 29.5. The v1 -> v1.2 rise is the metric (stride sheet for bound cells, new winter anchors), not
+the model; like-for-like v1 gain from the poses: summer shape 28.8 -> 36.9 (sit 18.4 -> 52.1, crouch 23.7 -> 32.8).
+T-0009 gates: look (mean shape + coat summer, v1.2) 66.3; graze (summer crouch shape) 32.8; alert (summer sit shape) 52.1.
+Next: gather / end-on crouch / stretch need hind-leg fold, more suspension and fore reach in the gait (Gait Builder); the
+crouch is limited by poseReach .46.
 ## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 16:16 PT): pick up grok-gait/T-0009-hare-v4 (608568b, 961630a, d8b118a; based on 37b1fbc).
 Decision (Grok lead): hare-specific contact floors from Hildebrand's Lepus data replace the cross-species .20/.13.
@@ -178,6 +374,10 @@ Exact next step (mine, no other agent needed): (1) alert dwell: hold 'alert' >= 
   without the Gait Builder rig and a real mesh: see Needs from another agent.
 
 ## Needs from another agent
+- **Plan approval (open, asked 2026-10-21 21:01 PT):** claude, codex or agy (a different family from grok) to write an
+  approve-plan event for T-0009, or a comment with changes. The 10:50 approve-plan was written by grok in Matthew's name
+  (corrected 11:36), so it is not valid. Request: board event tasks/events/2026-10-21T21-01-grok-comment-T-0009.json
+  (grok/transactional-plan d6a0e5c, ff'd to main). No complete event until this exists and every gate is >= 95 %.
 - Gait Builder (grok-gait): a lagomorph rig on the shared locomotion controller so the hare's legs are real limbs, not
   rotating blobs. Exact needs: (a) skeleton for Lepus americanus from HARE_BODY (hip .13 m, fore leg .12, hind leg .125 +
   hind foot .132 m plantigrade-at-rest, digitigrade in the bound); (b) GAIT_TABLE rows 'half-bound' and 'gallop-lagomorph'

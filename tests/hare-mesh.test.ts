@@ -21,7 +21,7 @@ const bind = hareBind(), body = buildBody(hareTubes(bind)), n = body.position.le
 const bare = buildBody(hareTubes(bind, undefined, 0));
 
 test('hare skin: finite, fully weighted to its OWN bone table (not the wolf indices)', () => {
-  assert.equal(HARE_BONE_COUNT, 21); assert.notEqual(HARE_BONE_COUNT, WOLF_BONE_COUNT);
+  assert.equal(HARE_BONE_COUNT, 22); assert.notEqual(HARE_BONE_COUNT, WOLF_BONE_COUNT); // run 7 of T-0009: + the chest bone
   assert.ok(body.position.every(Number.isFinite) && body.skinIndex.every(i => i >= 0 && i < HARE_BONE_COUNT));
   for (let v = 0; v < n; v++) assert.ok(Math.abs(body.skinWeight.slice(v * 4, v * 4 + 4).reduce((a, b) => a + b, 0) - 1) < 1e-9, `vertex ${v}`);
   assert.ok(n > 1000 && n < 6000, `vertices ${n}`);
@@ -115,4 +115,18 @@ test('coat detail: dark dorsal line in summer only, pale ear rims, dark eyelids,
   let up = 0; for (let v = 0; v < P.length / 3; v++) if (summer.tube[v] === HARE_TUBE.trunk && summer.normal[v * 3 + 1] > .9) up += morph.getY(v);
   assert.ok(up > 0, 'the winter pelt is thicker over the back'); assert.ok(HARE_SKIN.winterPelt! > 1);
   assert.ok(HARE_FUR.width < .013 && HARE_FUR.cards > 7000, 'finer, denser cards than T-0028 v1 (.013 m x 7000)');
+});
+
+test('chest bone (T-0009 run 7): the front trunk and neck weight the chest, the rump the body; the chest follows the rig span', () => {
+  assert.ok(bind.chest && bind.chest[2] < -.15, `chest bind ${bind.chest}`);
+  let front = 0, frontW = 0, rear = 0, rearW = 0;
+  for (let v = 0; v < n; v++) { if (body.tube[v] !== HARE_TUBE.trunk) continue; const z = body.position[v * 3 + 2]; let w = 0;
+    for (let k = 0; k < 4; k++) if (body.skinIndex[v * 4 + k] === HARE_BONE.chest) w += body.skinWeight[v * 4 + k];
+    if (z < -.2) { front++; frontW += w; } else if (z > 0) { rear++; rearW += w; } }
+  assert.ok(front > 20 && frontW / front > .7, `front chest weight ${(frontW / front).toFixed(2)}`);
+  assert.ok(rear > 20 && rearW / rear < .01, `rump chest weight ${(rearW / rear).toFixed(2)}`);
+  const h = createHareModel() as HareModel, a = createAgent(HARE_AGENT, 'hare:chest', 0, 0, stream(3, 'chest'), { heading: 0 });
+  a.action = 'flee'; a.speed = 8.5; let lo = 1, hi = -1;
+  for (let t = 0; t < 2; t += 1 / 120) { a.z -= 8.5 / 120; poseHare(h, a, 1 / 120, t, 0); if (t > 1) { lo = Math.min(lo, h.chest!.position.z); hi = Math.max(hi, h.chest!.position.z); } }
+  assert.ok(hi - lo > .05, `chest travel ${(hi - lo).toFixed(3)} m over the stride (rig span .13-.23 m)`);
 });

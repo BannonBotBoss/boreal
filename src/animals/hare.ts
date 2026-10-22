@@ -34,7 +34,7 @@ export const HARE = {
   catchContact: 1.3, catchPounce: 2.4, energy: 35, stamina: 40, cloverRadius: 48,
 };
 export type HareState = Agent['action'];
-export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Object3D; body: THREE.Object3D; legs: Leg[]; ears: THREE.Object3D[]; rng: () => number; label?: THREE.Sprite; rig?: BoundController; frame?: BoundFrame }
+export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Object3D; body: THREE.Object3D; /** run 7: fore trunk bone (parent of the head) */ chest?: THREE.Object3D; legs: Leg[]; ears: THREE.Object3D[]; rng: () => number; label?: THREE.Sprite; rig?: BoundController; frame?: BoundFrame }
 /** One limb: the rig segments as bones of the skinned mesh (render/rigSkin.ts RigLeg). */
 type Leg = RigLeg;
 export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
@@ -49,8 +49,11 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
  *  - hindLeg .202 = femur 94 mm (L. americanus, Illinois State Museum Larson collection) + tibia 108 mm = femur x 1.13-1.19
  *    (L. europaeus tibia/femur: Volf 2023 Lynx 54:193, means 147.3/130.7 mm; Williams et al. 2007 J Anat 210:472 Table 4,
  *    137/115 mm) [scaled]; upperShare .47 = femur / (femur + tibia).
- *  - foreLeg .181 = humerus 77 mm (femur x .80, Volf 2023 means 104.8/130.7) + radius 69 mm (humerus x .90, Williams et al.
- *    2007 J Anat 211:475 Table 4, 101.5/113) [scaled] + manus 35 mm [estimate: drawn to the reference]; manus share .19.
+ *  - foreLeg .187 (run 8; was .181) = humerus 77 mm (femur x .80, Volf 2023 means 104.8/130.7) + radius 74.6 mm (humerus x
+ *    .969, the snowshoe hare's own ratio: L. americanus adult female UWBM-21111, Burke Museum, humerus 72.36 / radius 70.12 mm,
+ *    Idaho Virtual Zooarchaeology specimens.iri.isu.edu id 79 - one specimen, a small Pacific-Northwest hare, so only its ratio is
+ *    used; was x .90 from Williams et al. 2007 J Anat 211:475 Table 4, 101.5/113, another species) + manus 35 mm [estimate:
+ *    drawn to the reference] = 151.6 mm / (1 - .19); manus share .19.
  *  - hindFoot .132 (hock to toe tip, in ADW's 117-147 mm hind foot range); standing hip .13 with the knee bent to
  *    hindBend .5 of the leg and the shoulder at foreBend .6 of the fore leg (crouched resting posture) [estimate: drawn to the
  *    reference photos]. Trunk (hip to shoulder joint) .21 m and head .30 m ahead of the hip (nose to tail ~.47 m, in the
@@ -58,7 +61,7 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
  *  - run 5 (grok-gait v3 contract): hindToes .056 = the toes (MTP to tip) of the .132 hind foot, scapula .063 = the shoulder
  *    blade in the fore chain (= .816 x humerus), both from Lepus brachyurus bone means (Exp Anim 30(2):113, 1981, Tables 1
  *    and 4-6; working in tools/bound-plans.ts SPLIT / BLADE). */
-export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .181, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.27, headY: .085 };
+export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .187, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.27, headY: .085 };
 /**
  * T-0028 skin + fur spec (data for the shared core/rigBody.ts + render/rigSkin.ts; tasks/T-0028 number table). No mesh file:
  * every vertex comes from these rings around the rig's bind pose (hareBind). Model space = the hare root (feet y 0, forward -z).
@@ -87,8 +90,14 @@ export const HARE_SKIN: SkinSpec = {
   name: 'hare',
   // round rump behind the hip, the haunch over the hip joints, tapering to a narrow chest between the forelegs
   trunk: [T(.088, .032, .008, .017, 1), T(.075, .036, .016, .038, 1), T(.05, .042, .021, .054, 1, { saddle: .2 }), T(0, .044, .022, .057, 1, { saddle: .3 }),
-    T(-.07, .03, .019, .046, 1, { saddle: .3 }), T(-.13, .002, .018, .039, 1, { saddle: .25 }), T(-.185, -.002, .016, .034, 1, { saddle: .2 }), T(-.215, .02, .012, .019, .95, { head: .2, saddle: .15 })],
-  neck: [T(-.205, .02, .018, .023, .95), Hd(.045, -.02, .016, .019, .85, { head: .6 }), Hd(.025, -.005, .015, .017, .8)],
+    // run 9 (grok, gathered-pose outline): the chest rings 1.5x deeper downward by their chest weight c (ry += .5 c ry, top kept)
+    // and narrower (rx x 1 - .4 c), so the bare body stays inside the mass check (1.877 -> 1.914 L, limit 1.94; 1.5x deeper without
+    // narrowing = 2.01 L fails it). Was T(-.07, .03, .019, .046), T(-.13, .002, .018, .039), T(-.185, -.002, .016, .034),
+    // T(-.215, .02, .012, .019). The references' gather and crouch carry a deep chest (refs/hare/graze-alert-flight attempt2
+    // panels 1 + 4, winter attempt2). REFERENCE-MATCHED [estimate]: grid ?chest= / ?chestw= vs lookscore v1.3
+    // (C:\dev\rabbit-rec13\look\grid-run9.txt): summer gather 47.3 -> 50.5, crouch, push, stretch up; winter stretch 93.6 -> 87.0.
+    T(-.07, .0254, .01748, .0506, 1, { saddle: .3, chest: .2 }), T(-.13, -.008725, .01404, .049725, 1, { saddle: .25, chest: .55 }), T(-.185, -.01645, .01056, .04845, 1, { saddle: .2, chest: .85 }), T(-.215, .0105, .0072, .0285, .95, { head: .2, saddle: .15, chest: 1 })],
+  neck: [T(-.205, .02, .018, .023, .95, { chest: 1 }), Hd(.045, -.02, .016, .019, .85, { head: .6, chest: 1 }), Hd(.025, -.005, .015, .017, .8)],
   // rounded cranium, puffy buff cheeks, blunt muzzle, dark-brown bare nose leather (fur < .03 grows no cards)
   head: [Hd(.0336, .0022, .0246, .0269, .7), Hd(.009, .0045, .0302, .0325, .6, { accent: .25 }), Hd(-.0202, -.0022, .028, .0291, .5, { accent: .55 }),
     Hd(-.0403, -.0101, .0213, .0224, .4, { accent: .5 }), Hd(-.0538, -.0146, .0134, .0146, .3, { accent: .3, pale: .2 }), Hd(-.0605, -.0146, .0067, .0067, .02, { dark: .8 })],
@@ -113,7 +122,7 @@ export const hareCoatState = () => coatState(HARE_SKIN);
  *  of one skinned skin + fur, posed by poseHare from the rig. */
 function model() {
   const m = createRigSkin(hareBind(), HARE_SKIN);
-  return { root: m.root, body: m.body as THREE.Object3D, head: m.head as THREE.Object3D, legs: m.legs, ears: m.ears as THREE.Object3D[] };
+  return { root: m.root, body: m.body as THREE.Object3D, chest: m.chest as THREE.Object3D, head: m.head as THREE.Object3D, legs: m.legs, ears: m.ears as THREE.Object3D[] };
 }
 let bindCache: RigBind | undefined;
 /** The bind pose: the rig standing still at the origin, heading 0 (forward -z); joints relative to the hip-joint midpoint. */
@@ -123,16 +132,19 @@ export function hareBind(): RigBind {
   let fr = rig.update(1 / 60, 0, 0, null); for (let i = 0; i < 120; i++) fr = rig.update(1 / 60, 0, 0, null);
   const hl = limbPoints(HARE_SKELETON, fr, 1)[0], hr = limbPoints(HARE_SKELETON, fr, 3)[0], ox = (hl.x + hr.x) / 2, oz = (hl.z + hr.z) / 2;
   const limbs = [0, 1, 2, 3].map(i => { const P = limbPoints(HARE_SKELETON, fr, i).map(p => [p.x - ox, p.y, p.z - oz] as [number, number, number]); return i % 2 ? P.slice(1) : P; });
-  return bindCache = { pivot: [0, (hl.y + hr.y) / 2, 0], head: [0, HARE_BODY.headY, HARE_BODY.headZ], ear: HARE_BODY.ear, limbs };
+  // run 7: the chest bone at the fore girdle tops (blade pivots), from the pivot
+  const py = (hl.y + hr.y) / 2, chest: [number, number, number] = [0, (limbs[0][0][1] + limbs[2][0][1]) / 2 - py, (limbs[0][0][2] + limbs[2][0][2]) / 2];
+  return bindCache = { pivot: [0, py, 0], head: [0, HARE_BODY.headY, HARE_BODY.headZ], ear: HARE_BODY.ear, limbs, chest };
 }
 /** Pose targets: body pitch about the hip (rad, + = front up), body lift (m), head pitch (+ = nose up), head drop (m), ears
  *  (rad, + = laid back), foreleg and hind leg angles (rad, + = foot forward). Read from the reference sheet
  *  (refs/hare/graze-alert-flight attempt 2): grazing crouch = hunched, chin at the clover, ears back; scan = head up from the
- *  crouch; alert = half sit-up on all fours (front raised, head up), ears erect (run 4; was sat up on the haunches); rest/freeze = tucked, ears flat [estimate]. */
-const POSES: Record<string, readonly number[]> = {
-  'head-down': [-.1, -.02, -.55, -.075, .95, .1, .45],
+ *  crouch; alert / pause = upright sit-up on the haunches, fore paws lifted, ears erect (run 7, Matthew 18:23 PT, reference panel 3;
+ *  run 4-6 used a half sit-up on all fours); rest/freeze = tucked, ears flat [estimate]. */
+export const POSES: Record<string, number[]> = {
+  'head-down': [-.1, -.04, -.85, -.075, .95, .1, .45], // run 7: head -.55 -> -.85 (nose to the clover, refs attempt2 panel 1)
   scan: [.3, 0, -.35, 0, -.05, -.15, .5],
-  sit: [.35, 0, -.25, 0, -.15, -.7, .55], // run 4: half sit-up (body .35 from the rig's 'half-sit'), nose a little up
+  sit: [1.15, 0, -.8, -.025, -.15, -.7, .55], // run 7: upright sit-up (body .95 from the rig's 'sit-up'), head turned back level, nose a little up
   rest: [-.04, -.035, -.15, 0, .85, .25, .55],
   crouch: [-.06, -.045, -.1, 0, 1.15, .3, .6],
   move: [0, 0, -.1, 0, .5, 0, 0], run: [0, 0, .05, 0, .9, 0, 0],
@@ -149,7 +161,7 @@ function labelSprite() {
   return s;
 }
 
-export type HareModel = Pick<Hare, 'root' | 'body' | 'head' | 'legs' | 'ears' | 'hopPhase' | 'id' | 'rig' | 'frame'>;
+export type HareModel = Pick<Hare, 'root' | 'body' | 'chest' | 'head' | 'legs' | 'ears' | 'hopPhase' | 'id' | 'rig' | 'frame'>;
 export const createHareModel = model;
 /** The hare's limb skeleton for the bounding rig, from HARE_BODY (track half-widths [estimate: drawn to the reference]); run 5:
  *  split hind foot + shoulder blade, and the leporid joint ranges (ik.ts LEPORID_LIMITS: Hall et al. 2022, rabbit knee from
@@ -160,6 +172,15 @@ export const HARE_PLAN: BodyPlan = { hip: HARE_BODY.hipY, hipZ: HARE_BODY.hipZ, 
 /** Rig options (run 5): the level-trunk running posture (needs the blade's fore reach) and turning in place by re-planting. */
 export const HARE_RIG = { pose: RUN_POSE_LEVEL, turnInPlace: true };
 const HARE_SKELETON = skeletonOf(HARE_PLAN);
+/** Share of the rig's spine flex (rad) the chest bone turns by (front down when gathered, up when extended). Run 8: 1.0, the
+ *  largest share that keeps the chest-to-rump bend inside the SOURCED spine range: the rig's flex is the pelvic movement the
+ *  lumbar spine makes, capped at +-.366 rad (GIRDLE.spineMax: pika leading-limb stance excursion 109 -> 151 deg, Schilling &
+ *  Hackert 2006 JEB 209:3925), and the skin's rump (body bone) does not turn with it, so the chest's turn relative to the body
+ *  IS the shown lumbar bend: measured .335 / .339 rad at 1.0 (1.1: .370 / .375, over the cap). Both sides are inside the rabbit's
+ *  passive lumbar range too (Grauer, Erulkar, Patel & Panjabi 2000, Eur Spine J, doi:10.1007/s005860000141, NZW L4-L7 in vitro: 12.1 / 12.4 / 15.2 deg flexion and
+ *  5.9 / 5.6 / 6.1 deg extension per joint, over the 7 +- 1 bending presacral joints of Schilling & Hackert). Extension
+ *  takes .44 of it: the rabbit's lumbar joints extend 17.6 deg for every 39.7 deg they flex (Grauer, same L4-L7 sums). Was .6 both ways [estimate]. */
+export const SPINE_BEND = { flex: 1, extend: .44 };
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3();
 /** Pose one hare model from its pipeline agent for this frame (shared by the game host and tools/hare-strip). The legs, body
  *  height and pitch come from the bounding rig (planted feet, half-bound / lagomorph gallop, sit-up and graze-crouch pose
@@ -169,13 +190,24 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
   if (!h.rig) h.rig = createBounding(HARE_SKELETON, HARE_AGENT.gait!, groundAt, { x: a.x, z: a.z, heading: a.heading }, GIRDLE, HARE_RIG);
   // the agent is authoritative: the rig integrates the same speed and heading; a jump (spawn, rewind, blocked step) re-places it
   if (h.frame && Math.hypot(h.frame.x - a.x, h.frame.z - a.z) > .5) h.rig.place(a.x, a.z, a.heading);
-  const fr = h.frame = h.rig.update(Math.max(1e-4, dt), a.speed, a.heading, poseRequestFor(poseOf(a), a.action));
+  // run 7 (Matthew, 18:23 PT): the alert and the flight pause sit UP on the haunches, fore paws lifted (refs/hare/graze-alert-flight
+  // attempt2 panel 3), not run 4's half sit-up on all fours
+  const fr = h.frame = h.rig.update(Math.max(1e-4, dt), a.speed, a.heading, a.action === 'alert' || a.action === 'pause' ? { kind: 'sit-up' } : poseRequestFor(poseOf(a), a.action));
   const ox = a.x - fr.x, oz = a.z - fr.z; // small drift between the two integrations, drawn away
   // root at the hip joints (mid of the two hind chain tops), turned to the heading; the body pitches about it
   const hl = limbPoints(HARE_SKELETON, fr, 1)[0], hr = limbPoints(HARE_SKELETON, fr, 3)[0];
   h.root.position.set((hl.x + hr.x) / 2 + ox, 0, (hl.z + hr.z) / 2 + oz); h.root.rotation.y = fr.heading; h.root.updateMatrixWorld(); // the rig's heading (turnInPlace yaws it at TURN.rate)
   h.body.position.set(0, (hl.y + hr.y) / 2, 0); h.body.rotation.x = fr.tilt.pitch;
   const inv = h.root.matrixWorld.clone().invert();
+  // run 7: the chest bone sits on the rig's fore girdle tops (the trunk span changes .13-.23 m through the bound) and turns by
+  // the rig's spine flex (front down when flexed / gathered) on top of the hip-to-shoulder line, so the skin gathers and stretches
+  const bind = hareBind(), c0 = bind.chest ?? [0, 0, 0];
+  if (h.chest && bind.chest) {
+    const fl = limbPoints(HARE_SKELETON, fr, 0)[0], frt = limbPoints(HARE_SKELETON, fr, 2)[0];
+    h.body.updateMatrixWorld(); _a.set((fl.x + frt.x) / 2 + ox, (fl.y + frt.y) / 2, (fl.z + frt.z) / 2 + oz); h.body.worldToLocal(_a);
+    const ang = (y: number, z: number) => Math.atan2(y, -z), want = ang(_a.y, _a.z) - ang(c0[1], c0[2]);
+    h.chest.position.copy(_a); h.chest.rotation.x = want - (fr.spineFlex > 0 ? SPINE_BEND.flex : SPINE_BEND.extend) * fr.spineFlex;
+  }
   h.legs.forEach((leg, i) => {
     const P = limbPoints(HARE_SKELETON, fr, i), o = leg.from; // [top (blade pivot), girdle joint, knee/elbow, ankle/wrist, toe/MTP(, toe tip)]
     leg.segs.forEach((bone, s) => { // each segment bone sits on its upper joint, turned from its bind direction onto the rig's
@@ -187,7 +219,7 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
   // head and ears: reference poses (sit-up for the alert and the flight pause, scan, graze, rest), smoothed
   const moving = a.speed > .05, pose = POSES[moving ? (a.speed > 3 ? 'run' : 'move') : poseKey(a)];
   const nibble = a.action === 'feed' ? Math.sin(time * 9 + h.id) * .04 : 0;
-  h.head.rotation.x += (pose[2] + nibble - h.head.rotation.x) * k; h.head.position.y += (HARE_BODY.headY + pose[3] - h.head.position.y) * k;
+  h.head.rotation.x += (pose[2] + nibble - h.head.rotation.x) * k; h.head.position.y += (HARE_BODY.headY - (h.chest ? c0[1] : 0) + pose[3] - h.head.position.y) * k;
   for (const e of h.ears) e.rotation.x += (pose[4] - e.rotation.x) * k;
 }
 

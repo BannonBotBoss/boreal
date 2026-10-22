@@ -44,7 +44,7 @@ test('skeleton: built from the host body numbers, near plantigrade standing; an 
   const sk = skeletonOf(HOST_PLAN);
   assert.equal(sk.legs.hind.hip, .13); assert.equal(sk.legs.hind.foot, .132);
   // femur 94 + tibia 108 mm; humerus 77 + radius 69 + manus 35 mm (HARE_BODY sources)
-  assert.ok(Math.abs(sk.legs.hind.upper + sk.legs.hind.lower - .202) < 1e-9 && Math.abs(sk.legs.upper + sk.legs.lower + (sk.legs.foot ?? 0) - .181) < 1e-9);
+  assert.ok(Math.abs(sk.legs.hind.upper + sk.legs.hind.lower - .202) < 1e-9 && Math.abs(sk.legs.upper + sk.legs.lower + (sk.legs.foot ?? 0) - .187) < 1e-9);
   assert.ok(Math.abs(sk.legs.hind.upper - .47 * .202) < 1e-9, 'femur share');
   assert.ok(sk.restFootAngle > 1.2 && sk.restFootAngle < Math.PI / 2, `rest foot ${sk.restFootAngle}`);
   assert.throws(() => skeletonOf({ ...HOST_PLAN, hip: .5 }));

@@ -54,6 +54,10 @@ export type ForageHandler = (animal: Entity, plant: Entity) => number | undefine
  *  centre sample. Nothing here seats, sinks or tilts a log. */
 const T0005_LOG_SEAT = (GEOMETRY as unknown as Record<string, unknown>)['logSeat'] as LogSeatFn | undefined;
 /** Dev / recording: `?fov=<deg>` narrows the follow camera (a telephoto for recordings of small animals, T-0028); default 48. */
+/** T-0009 run 7 (grok, dev/recording): `?watch=hare` turns the follow camera (still behind the wolf) to the nearest hare within
+ *  60 m, smoothed, so a recording keeps a fleeing hare in frame; off by default, ignored in photo mode and super-stealth focus. */
+const WATCH_HARE = typeof location !== 'undefined' && new URLSearchParams(location.search).get('watch') === 'hare';
+let watchAt: THREE.Vector3 | undefined;
 const VIEW_FOV = (() => { const v = typeof location !== 'undefined' ? Number(new URLSearchParams(location.search).get('fov')) : NaN; return v > 5 && v < 120 ? v : 48; })();
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU
@@ -249,6 +253,11 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
     bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
     camera.updateProjectionMatrix();
+    if (WATCH_HARE && !focused && !photo) {
+      const hs = (globalThis as { borealHares?: { list(): Array<{ agent: { x: number; z: number } }> } }).borealHares?.list() ?? [];
+      let best: { x: number; z: number } | undefined, bd = 60; for (const h of hs) { const d = Math.hypot(h.agent.x - x, h.agent.z - z); if (d < bd) { bd = d; best = h.agent; } }
+      if (best) { const want = new THREE.Vector3(best.x, heightAt(best.x, best.z) + .15, best.z); watchAt = watchAt ? watchAt.lerp(want, 1 - Math.exp(-6 * dt)) : want; camera.lookAt(watchAt); }
+    }
     if (focused) camera.lookAt(focused.x, heightAt(focused.x, focused.z) + (focused.kind === 'deer' ? 1.5 : 1), focused.z);
     const highlighted = focused ?? target;
     halo.visible = !!highlighted && !photo;

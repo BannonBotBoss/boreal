@@ -7,7 +7,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 // dist: wolf start distance behind the patch (m), default 7.6 (T-0028 telephoto recording)
-const [base, outDir, mode, fov, dist, side] = process.argv.slice(2); const START = Number(dist ?? 7.6), SIDE = Number(side ?? 2.5); /* side: wolf offset to the left (m) */ const dbg = (mode === 'plain' ? '' : '&hare=debug') + (fov ? `&fov=${fov}` : ''); // fov: telephoto follow camera (T-0028) // 'plain': no debug labels mkdirSync(outDir, { recursive: true });
+// side: wolf offset to the left (m); fov: telephoto follow camera (T-0028); mode 'plain': no debug labels; watch 'hare' (T-0009
+// run 7): the follow camera turns to the nearest hare (buildScene ?watch=hare) so the flight stays in frame
+const [base, outDir, mode, fov, dist, side, watch] = process.argv.slice(2); const START = Number(dist ?? 7.6), SIDE = Number(side ?? 2.5);
+const dbg = (mode === 'plain' ? '' : '&hare=debug') + (fov ? `&fov=${fov}` : '') + (watch ? `&watch=${watch}` : '');
+mkdirSync(outDir, { recursive: true });
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 async function session(fn) {
   const port = 9300 + Math.floor(Math.random() * 90), profile = mkdtempSync(join(tmpdir(), 'grok-rabbit-'));

@@ -9,20 +9,23 @@ import { stream } from '../proc/rng';
  * assembles the skinned skin + fur. Pure (no THREE). Model space = the animal root: metres, feet at y 0, forward -z, origin on
  * the ground under the hip joints.
  */
-export const RIG_BONE = { body: 0, head: 1, earL: 2, earR: 3, tail: 4 } as const;
 export const RIG_LEG_SEGS = 4;
+/** chest (run 7 of T-0009, grok): a second trunk bone at the fore girdle (the blade pivots), parent of the head, so the skin
+ *  follows the rig's trunk span (fore and hind girdle tops move apart and together through the bound: .13-.23 m on the hare)
+ *  and its spine flex; it comes after the leg bones so the older indices hold. */
+export const RIG_BONE = { body: 0, head: 1, earL: 2, earR: 3, tail: 4, chest: 5 + 4 * RIG_LEG_SEGS } as const;
 export const rigLegBone = (leg: number, seg: number) => 5 + leg * RIG_LEG_SEGS + seg;
-export const RIG_BONE_COUNT = 5 + 4 * RIG_LEG_SEGS;
+export const RIG_BONE_COUNT = 6 + 4 * RIG_LEG_SEGS;
 /** Tube order: trunk, neck, head, ears, tail, then one tube per leg (LF, LH, RF, RH), then the fore upper-arm tubes. */
 export const RIG_TUBE = { trunk: 0, neck: 1, head: 2, earL: 3, earR: 4, tail: 5 } as const;
 export const rigLegTube = (leg: number) => 6 + leg;
 
 /** Bind pose: the body pivot (hip joints), the head bone relative to the pivot, ear length, and each leg's drawn joints in root
  *  space (fore: blade pivot, glenoid, elbow, wrist, toe; hind: hip, knee, hock, MTP, toe tip). */
-export interface RigBind { pivot: Vec3; head: Vec3; ear: number; limbs: Vec3[][] }
+export interface RigBind { pivot: Vec3; head: Vec3; ear: number; limbs: Vec3[][]; /** chest bone, from the pivot (default: no chest, all trunk on the body bone) */ chest?: Vec3 }
 export interface CoatPalette { back: RGB; belly: RGB; dark: RGB; accent: RGB; tip: RGB; tipAmount: number; /** scales the rings' dorsal `saddle` (0 = none in this coat) */ saddle?: number; /** skin shade under the cards in this coat (default fur.rootShade) */ rootShade?: number }
 /** A ring of the spec: `at` trunk (z, y from the pivot) or head (z, y from the head bone); `head` / `tail` = weight toward that bone. */
-export interface SpecRing { at: 'trunk' | 'head'; z: number; y: number; rx: number; ry: number; fur: number; head?: number; tail?: number; accent?: number; pale?: number; dark?: number; saddle?: number }
+export interface SpecRing { at: 'trunk' | 'head'; z: number; y: number; rx: number; ry: number; fur: number; head?: number; tail?: number; /** weight toward the chest bone (RIG_BONE.chest); with `head`, the head blends from the chest when >= .5 */ chest?: number; accent?: number; pale?: number; dark?: number; saddle?: number }
 export interface Moult { autumnStart: number; autumnDays: number; springStart: number; springDays: number; /** order spread over the body height */ spread: number; height: number }
 /** Leg girths [sagittal, lateral] half-widths at each drawn joint; fur / pale as steps along the chain: the value of the last
  *  [fromK, value] whose fromK <= k (k = joint index, .5 = mid-segment). */
@@ -63,14 +66,16 @@ const lerp3 = (a: Vec3, b: Vec3, t: number): Vec3 => [a[0] + (b[0] - a[0]) * t, 
 
 /** The spec's tubes over a bind pose in one coat; `pelt` 0 = the bare body (mass check), 1 = drawn with the underfur layer. */
 export function rigTubes(bind: RigBind, spec: SkinSpec, coat: CoatPalette = spec.summer, pelt = 1): Tube[] {
-  const B = RIG_BONE, [, py, pz] = bind.pivot, P = spec.pelt, tubes: Tube[] = [];
+  const B = RIG_BONE, [, py, pz] = bind.pivot, P = spec.pelt, tubes: Tube[] = [], chest = !!bind.chest;
   const palette = { back: coat.back, belly: coat.belly, dark: coat.dark, accent: coat.accent };
   const H = (x: number, y: number, z: number): Vec3 => [x, py + bind.head[1] + y, pz + bind.head[2] + z];
   // pelt > 1 (the winter morph) thickens the body and limbs only: the head and ears keep their size so the eyes stay on the surface
   const grow = (r: number, fur: number, by: number, fixed = false) => fur < .03 ? r : r + by * (fixed ? Math.min(1, pelt) : pelt);
   const ring = (s: SpecRing, by: number, fixed = false): Ring => {
     const p: Vec3 = s.at === 'trunk' ? [0, py + s.y, pz + s.z] : H(0, s.y, s.z);
-    const w: Ring['w'] = s.head ? blend(B.body, B.head, s.head) : s.tail ? (s.tail >= 1 ? only(B.tail) : blend(B.body, B.tail, s.tail)) : s.at === 'head' ? only(B.head) : only(B.body);
+    const base = chest && (s.chest ?? 0) >= .5 ? B.chest : B.body;
+    const w: Ring['w'] = s.head ? blend(base, B.head, s.head) : s.tail ? (s.tail >= 1 ? only(B.tail) : blend(B.body, B.tail, s.tail)) : s.at === 'head' ? only(B.head)
+      : chest && s.chest ? (s.chest >= 1 ? only(B.chest) : blend(B.body, B.chest, s.chest)) : only(B.body);
     return { p, rx: grow(s.rx, s.fur, by, fixed), ry: grow(s.ry, s.fur, by, fixed), w, fur: s.fur, accent: s.accent, pale: s.pale, dark: s.dark, saddle: (s.saddle ?? 0) * (coat.saddle ?? 1) };
   };
   tubes.push({ ...palette, radial: 16, smooth: 1, lay: [0, -.1, 1], rings: spec.trunk.map(s => ring(s, P.body)) });
@@ -94,7 +99,7 @@ export function rigTubes(bind: RigBind, spec: SkinSpec, coat: CoatPalette = spec
     const upper: Ring[] = [];
     if (hind) rings.push(mk(J[0], L.r[0], blend(B.body, bone(0), .5), 0));
     else { // the fore chain folds ~150 deg at the elbow: blade + upper arm are their own short tube inside the chest
-      upper.push(mk(lerp3(J[0], J[1], .55), L.r[0], blend(B.body, bone(0), .6), 0), mk(J[1], L.r[1], blend(bone(0), bone(1), .5), 1),
+      upper.push(mk(lerp3(J[0], J[1], .55), L.r[0], blend(chest ? B.chest : B.body, bone(0), .6), 0), mk(J[1], L.r[1], blend(bone(0), bone(1), .5), 1),
         mk(lerp3(J[1], J[2], .5), L.r[1], only(bone(1)), 1.5), mk(J[2], L.r[2], blend(bone(1), bone(2), .5), 2));
       rings.push(mk(J[2], L.r[2], blend(bone(1), bone(2), .5), 2));
     }

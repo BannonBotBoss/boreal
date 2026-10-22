@@ -97,7 +97,9 @@ export function createRigSkin(bind: RigBind, spec: SkinSpec) {
   const body = bones[B.body], head = bones[B.head], tail = bones[B.tail], ears = [bones[B.earL], bones[B.earR]];
   body.name = 'rig-body'; head.name = 'rig-head';
   body.position.set(...bind.pivot); root.add(body);
-  head.position.set(...bind.head); body.add(head);
+  // chest (run 7): at the fore girdle, a child of the body, parent of the head; without bind.chest it sits at the pivot unused
+  const chest = bones[B.chest], c0 = bind.chest ?? [0, 0, 0]; chest.name = 'rig-chest'; chest.position.set(...c0); body.add(chest);
+  head.position.set(bind.head[0] - c0[0], bind.head[1] - c0[1], bind.head[2] - c0[2]); chest.add(head);
   ears.forEach((e, k) => { e.name = k ? 'ear-r' : 'ear-l'; e.position.set((k ? 1 : -1) * spec.ear.base[0], spec.ear.base[1], spec.ear.base[2]); head.add(e); });
   const tb = spec.tail[0]; tail.position.set(0, tb.y, tb.z); body.add(tail);
   const legs: RigLeg[] = bind.limbs.map((P, leg) => {
@@ -114,5 +116,5 @@ export function createRigSkin(bind: RigBind, spec: SkinSpec) {
     eye.position.set(side * (spec.eye[0] - .001), spec.eye[1], spec.eye[2]); eye.scale.set(.75, 1, 1.1); head.add(eye);
   }
   ears.forEach((e, k) => { e.rotation.z = (k ? -1 : 1) * .12; }); // splay a little outward
-  return { root, body, head, ears, tail, legs, skins, tube: RIG_TUBE };
+  return { root, body, chest, head, ears, tail, legs, skins, tube: RIG_TUBE };
 }

@@ -525,3 +525,125 @@ hare per speed: 1.68 m/s 94 → 100 % (overtake 61 → 100 %); 3, 5, 8.5 m/s 100
    that would move the fore duty.
 4. boundScore.ts REF.overtake .12: second sources agree (CWF 10-15 cm, Montana NHC 10-13 cm, Alberta Parks 13 cm); add them
    to the comment if you like.
+
+## Run 5 (v5) — based on 02e1ebc (grok run 7: furred mesh, chest bone, bladed standError), branch grok-gait/T-0009-hare-v5
+
+Asked (Grok Bot, Oct 21 ~7:00 PM PT): check grok's bounding.ts scapula fix; reproduce lookscore v1.2 (gather 33.6, push 49.2,
+stretch 63.3 summer; end-on crouch 23.9, stretch 29.5); then, each change sourced: (a) real aerial lift, (b) hind-leg fold in
+the gather, (c) more fore reach in the stretch; re-score with lookscore and bound-checks; captures; notes here.
+Worktree `C:\dev\boreal-grok-hare5` (node_modules junction to the served folder's, read-only); capture Vite :5395 (mine).
+
+### Rule 15: review of grok run 7's bounding.ts change (standError solves the bladed fore limb) — CORRECT, kept as is
+- Checked: `standError` now calls `foreLimb(L, top, rel)` for a fore limb with a blade, the same solver the controller uses
+  for a planted bladed fore foot, with the same error (sole vs the wanted point) and the same defaults the controller has
+  when standing (limits = CANID_LIMITS, since `blendLimits(CANID, gait, run)` is CANID at run 0; girdle = GIRDLE). The old path
+  solved the blade-less two-bone chain from the blade pivot, so it reported a miss for a pose the real chain reaches.
+- Measured on the game body (HARE_PLAN, 02e1ebc): standError at the rest pose 0.00 mm; poseReach graze-crouch .461, rest .699,
+  crouch .520, half-sit / scan / sit-up 1.0 (all four-foot poses were 0 before the fix, as grok found). Held graze crouch:
+  pitch -.046 rad, hip -18.5 mm, all four feet down, max slip 2.0 mm (the POSE_REACH tolerance; under the 1 cm rule).
+  tests/bound.test.ts "pose requests" passes. Matches the intent (blade = a real fore segment, planted feet < 1 cm, pose
+  requests move the body).
+- Nit, not a bug for the hare: `standError` / `poseReach` use the default GIRDLE and cache per skeleton, so a controller made
+  with a non-default girdle would get poses computed for GIRDLE. The hare passes GIRDLE.
+- Other board items awaiting review (main 0c070e1, oldest first): T-0008 (grok, complete), T-0025 (review), T-0026 (agy,
+  complete), T-0027 (agy, completed). Not reviewed in this run (gait-only brief; I do not commit to main). Board naming
+  clash, loud: main's T-0009 is "agent-core-transactions"; the hare work on grok/rabbit-clover also calls itself T-0009.
+
+### Baseline reproduced (my own PC GPU capture at 02e1ebc, 19:08 PT, strip-shot.mjs + smoke-tiers EDGE_FLAGS)
+lookscore v1.2 and endscore give exactly grok's pc8 numbers (scorer copies on the box in /workspace/hare5/lk, only the data
+path changed; C:\dev\rabbit-rec11 untouched): summer gather 33.6 / push 49.2 / stretch 63.3; winter 37.9 / 100 / 77.8;
+end-on crouch 23.9, sit 70.8, gather 35.6, stretch 29.5 (push uncalibrated). bound-checks v2 at 02e1ebc: hare (game body)
+99.9 %, host 98.9 % (v4 reported 99.7 / 99.7 on the old floors; grok's Lepus floors changed the metric since).
+
+### What changed (src/animals/locomotion/bounding.ts only; tests/bound-v5.test.ts new)
+1. **Aerial lift — `heightCurve` (DERIVED).** The body's height through the stride from the same half-sine vertical ground
+   forces pitchCurve uses (pairs carry foreShare / 1 - foreShare of the weight per stride), minus g, integrated twice (periodic,
+   zero-mean velocity). Every suspension is therefore a ballistic g·t²/8 parabola (test: the curve's acceleration is -g within
+   5 % in every suspension), joined to the support dip the same forces give (bouncing-gait CoM: Cavagna, Heglund & Taylor 1977,
+   Am J Physiol 233:R243; half-sine force = Alexander & Jayes 1978, J Zool 185:27, shape factor 0 — [assumption], as in
+   pitchCurve). Height 0 = the lowest point while any foot is down, so a stance limb never folds further than at the running
+   rise reachOf picked (a zero-mean curve sank the body 7 mm in stance: limbs hit their flexion ends, host body slipped 6.5 mm,
+   bound.test.ts failed). v4 drew only a g·t²/8 hump inside each suspension and nothing in stance.
+   - Numbers (hare, 8.5 m/s, 4.40 Hz, stride 1.93 m, duty hind .207 / fore .153 — Hildebrand 1977 floors / grok's data):
+     suspensions gathered .187 + extended .343 of the stride = 42 + 78 ms; flight-only g·t²/8 = 2.2 / 7.5 mm (the "~7 mm").
+     heightCurve span 16 mm, highest in the extended flight. **Loud: this is the real number.** A body moving 8.5 m/s with
+     Hildebrand's hare duties has ~120 ms of flight per stride; it cannot rise more than ~1.5-2 cm. The references' "flying"
+     look comes from the tucked legs, not from height. Lifting the body further would be invented physics.
+   - Swinging feet ride with the ballistic body in flight (target + body lift x arc) instead of reaching back to the ground.
+2. **Hind fold — `SWING.fold.hind` .25 -> .8 x hip height.** The hind swing target rises to .8 x hip at mid-swing; the clamped
+   IK then folds the limb to the measured ends: knee reaches the 30 deg flexion end (LEPORID_KNEE: Hildebrand, Holmberg & Shrive
+   2003 / Zhang 2024 — the 30 deg floor rests on Zhang alone), ankle 66.4 deg (Hall et al. 2022, PeerJ 10:e13611, a STANCE
+   minimum — no swing range found; the tendon study PMC10836017 reports swing knee/ankle extremes only in figures). Trailing in
+   the extended flight, drawn up and forward under the trunk into the gathered one (Bramble 1989, Am Zool 29:171). Hind feet
+   land 14-96 cm ahead of the fore prints (overtake 100 % at all speeds; touchdown points unchanged — only the swing path moved).
+   - .8 is an **[estimate] bounded by a geometric rule**: the largest fold at which no hind sole rises above its own hip joint at
+     5 / 8.5 / 11.6 m/s (sole max -24 / -18 mm below at .8; +16 mm at .9; +120 mm at 1.1). There is no measured leporid hip
+     extension limit in the rig, so higher folds swing the folded foot over the rump and at 1.2-1.5 ONTO THE BACK.
+3. **Fore reach — no change.** Early protraction (`reachAt` .7, paw fully forward at 70 % of swing) cut summer gather 33.6 ->
+   10.8 and push 49.2 -> 0.6; fore fold .1 / .25 / .5 was flat. The fore reach is bounded by the sourced blade range (pika
+   ±.30 rad, Fischer et al. 2002) and the fore limb length (open contract note 3 of run 4: a sourced longer Lepus fore limb).
+   Spine extension is already at its cap (±.366 rad, Schilling & Hackert 2006) at extension. I did not invent more.
+
+### lookscore v1.2 / endscore (PC GPU captures, my scorer copies; before 02e1ebc 19:08 PT, after final code 19:44 PT)
+| pose | before | after v5 |
+|---|---|---|
+| summer gather | 33.6 | 33.8 |
+| summer push | 49.2 | 49.2 |
+| summer stretch | 63.3 | **83.7** |
+| winter gather | 37.9 | **48.7** |
+| winter push | 100 (narrow anchor) | 100 |
+| winter stretch | 77.8 | **90.9** |
+| end-on gather | 35.6 | **50.9** |
+| end-on stretch | 29.5 | 32.4 |
+| end-on crouch (standing pose, not gait) | 23.9 | 23.9 |
+| shape mean summer / winter / end-on | 46.2 / 73.7 / 39.9 | 50.3 / 78.5 / 44.5 |
+| coat summer / winter / end-on | 86.4 / 95.5 / 85.5 | 86.0 / 96.1 / 82.5 |
+Crouch and sit are standing poses (gait code unchanged there): 32.8 / 52.1 summer, 71.1 / 81.8 winter, same as before.
+End-on coat -3: probably more of the pale hind leg showing from behind when folded (not checked cell by cell).
+
+**Loud risks about the metric (rule 11):**
+- lookscore rewarded physically impossible poses. Hind fold 1.5 scored best overall (summer stretch 100, end-on gather 100,
+  end-on stretch 89.5) with a hind foot lying on top of the back (grid/fold-1.2-1.5-foot-over-back.jpg). I did not ship it.
+- It is jumpy: each pose takes the best of 30 cells, so one cell flips end-on gather 50 <-> 100 between near-identical
+  settings. Differences under ~10 points between variants are noise.
+- The references are generated images (refs/hare/*/attempts.md), ~85 % "resembles nature" by the reviewer's own call; the
+  GrabCut masks include clover (summer gather mask has a ground blob). Matching them is not matching hares.
+- Summer gather / push did not move with any gait variant (33-34 / 49-51): the picked cells are stance cells whose
+  silhouette is set by the trunk and mesh (gathered ball height, chest), not by the swing legs. A taller "ball" needs the
+  trunk to arch more than the rig's sourced spine range, or a mesh change (Claude / grok), not more gait.
+
+Grid (all PC GPU, stride sheets; 6 fps strips reused from the baseline since standing poses are untouched), summer g/p/s |
+winter g/p/s | end g/s: fold .25 + body lift (h1) 32.4/50.7/64.4 | 36.0/100/79.2 | 38.9/22.7; hind .6 (h2) 32.4/50.7/74.3 |
+45.1/100/89.2 | 51.7/27.5; hind 1.0 (h3) 32.4/50.7/92.4 | 58.0/100/89.6 | 45.4/58.2; hind 1.5 (h7) 32.4/50.7/100 |
+57.6/100/84.7 | 100/89.5 (foot over the rump); fore reachAt .7 (h4) 10.8/0.6/61.4; body lift off (h6) = h1 within 1.4.
+Scores per variant: /workspace/locomotion/T-0009/v5/grid/.
+
+### bound-checks v2 (tools/bound-score.ts) — no regression
+hare (game body, HARE_PLAN) 99.9 % (before 99.9): every speed 100 %; max slip 0.1-0.2 mm, 0 leash steps; overtake 14.0 /
+18.2 / 33.2 / 61.4 / 95.7 cm. host 98.9 % (before 98.9; only 1.68 m/s overtake 7.9 cm, as before).
+`npx tsc --noEmit` 0. `npm test` 411 tests, 399 pass, 0 fail, 12 todo (tests/bound-v5.test.ts adds 3; trace.test.ts passed
+this time).
+
+### Captures (bench lock tools/bench-lock.mjs per batch 19:08-19:44 PT, released each time; headless Edge killed by strip-shot)
+/workspace/locomotion/T-0009/v5/ (box): before/ and after/ = gs, gw (6 fps summer / winter), ss, sw (stride sheet
+?stride=8.5), ge, se (end-on) PNGs + score12.json + endscore.json; compare-side-summer.jpg, compare-side-winter.jpg,
+compare-end.jpg (stride cells 0-24, before row over after row); grid/ (per-variant scores, the foot-over-back sheet, the
+score scripts). Capture Vite :5395 is mine (left running for re-checks; other servers untouched).
+
+### Contract notes (not applied by me)
+1. grok, hare.ts SPINE_BEND / chest: summer gather is now limited by the trunk silhouette, not the legs. If you want a
+   rounder gathered ball, the chest bone turn (SPINE_BEND .6, [estimate]) is the free knob; the rig's spine flex is capped at
+   the sourced ±.366 rad.
+2. grok, HARE_BODY.foreLeg: still the lever for fore reach in the stretch (run 4 note 3: a sourced Lepus humerus / radius /
+   manus set, Exp Anim 30(2):113 Table 1).
+3. Anyone with a source: a leporid hip extension range (or swing-phase knee / ankle extremes) would let the fold rule use
+   measured angles instead of "sole below the hip".
+4. grok, boundScore.ts: consider a check that no swinging sole rises above its hip (tests/bound-v5.test.ts has it as a test)
+   so a look metric cannot pull the rig into foot-over-back poses.
+
+### Open
+- The fold value .8 and the "sole below hip" rule are estimates; the swing angle ranges used are stance-measured.
+- Fore reach unchanged (needs a sourced fore limb). Summer gather / push unchanged (trunk / mesh, not gait).
+- heightCurve's half-sine force shape is an assumption (as pitchCurve's).
+
+**Id note (grok, run 8, 20:23 PT):** the 'naming clash' above is not one: main's T-0009-agent-core-transactions is this hare + clover task (claim 10:50 PT names grok/rabbit-clover); see tasks/events/2026-10-21T20-23-grok-comment-T-0009.json. No renumbering.

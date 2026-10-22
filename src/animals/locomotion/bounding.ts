@@ -18,7 +18,7 @@
  */
 import { boundCadence, boundDuty, boundForeDuty, type BoundGait } from '../../core/agent/bound';
 import type { Pose as AgentPose, Action as AgentAction } from '../../core/agent/pipeline';
-import { reachTargets, suspensions, suspensionRise, type CanidPlan, type ReachBody, type Suspension } from '../../core/gaitData';
+import { reachTargets, suspensions, type CanidPlan, type ReachBody, type Suspension } from '../../core/gaitData';
 import type { LimbDims } from '../../core/animalBehavior';
 import { createCpg, stepCpg, phases, type Cpg } from './cpg';
 import { footState, forceStep, stepFoot, toWorld, type FootState } from './foot';
@@ -327,17 +327,68 @@ export function pitchCurve(plan: BoundPlan, sk: Skeleton, n = 200): number[] {
 }
 export const pitchAt = (curve: number[], stridePhase: number) => { const x = frac(stridePhase) * curve.length, i = Math.floor(x), f = x - i; return curve[i % curve.length] * (1 - f) + curve[(i + 1) % curve.length] * f; };
 
+/**
+ * Body height through the bound — DERIVED (T-0009 v5, grok-gait). The same half-sine vertical ground forces as pitchCurve (each
+ * pair carries foreShare / 1 − foreShare of the body weight per stride), minus g, integrated twice as a steady periodic
+ * oscillation (zero-mean vertical velocity; height 0 = the lowest point while a foot is down). Between footfalls the body is ballistic, so
+ * every suspension is a g·t²/8 parabola (gaitData suspensionRise), joined to the dip the same forces give in stance: the CoM
+ * is highest in the flight and lowest in support, as in any bouncing gait (Cavagna, Heglund & Taylor 1977, Am J Physiol
+ * 233:R243; force shape: Alexander & Jayes 1978, J Zool 185:27, shape factor 0 = half-sine [assumption, as pitchCurve]).
+ * v4 drew only a g·t²/8 hump inside each suspension and nothing in stance (hare 8.5 m/s: 7.5 mm); with the stance part the
+ * stride's span at 8.5 m/s is ~16 mm. The span is physics, not a choice: Hildebrand 1977's hare duties leave ~120 ms of flight
+ * per stride at 4.4 Hz, and a body moving 8.5 m/s with that flight time cannot rise further.
+ */
+const heightCache = new Map<string, number[]>();
+export function heightCurve(plan: BoundPlan, n = 200): number[] {
+  const key = `${plan.row}|${plan.hz}|${plan.duties.join(',')}|${plan.offsets.join(',')}`, hit = heightCache.get(key); if (hit) return hit;
+  const T = 1 / plan.hz, dt = T / n, share = [BOUND_PITCH.foreShare, 1 - BOUND_PITCH.foreShare], g = gravity(), vel: number[] = []; let v = 0;
+  for (let s = 0; s < n; s++) {
+    let a = -g;
+    for (let i = 0; i < 4; i++) { const d = plan.duties[i], ph = frac(s / n + plan.offsets[i]); if (ph < d && d > 0) a += share[FRONT(i) ? 0 : 1] / 2 * g * Math.PI / (2 * d) * Math.sin(Math.PI * ph / d); }
+    v += a * dt; vel.push(v);
+  }
+  const vm = vel.reduce((p, q) => p + q, 0) / n, y: number[] = []; let h = 0;
+  for (const u of vel) { h += (u - vm) * dt; y.push(h); }
+  // zero: the lowest the body sinks while a foot is down, so a stance limb never has to fold further than at the running rise
+  // reachOf picked (a zero-mean curve sank the body 7 mm in stance and the limbs hit their flexion ends: up to 6.5 mm slip)
+  let low = Infinity; for (let s = 0; s < n; s++) if (plan.offsets.some((o, i) => frac(s / n + o) < plan.duties[i])) low = Math.min(low, y[s]);
+  const out = y.map(q => q - (low < Infinity ? low : 0));
+  if (heightCache.size > 2000) heightCache.clear(); heightCache.set(key, out); return out;
+}
+/**
+ * Swing feet while moving (T-0009 v5). `fold` = peak clearance of the swing-foot target as a share of the limb's hip height
+ * (v4: .25 for both pairs). The hind target now rises .8 x the hip height at mid-swing, so the hind limb folds deeply in
+ * swing - the knee and ankle reach the measured flexion ends the clamped IK enforces (BodyPlan.limits = LEPORID_LIMITS:
+ * knee 30 deg, Hildebrand, Holmberg & Shrive 2003 / Zhang 2024; ankle 66.4 deg, Hall et al. 2022 PeerJ 10:e13611) - trailing
+ * in the extended suspension and drawn up and forward under the trunk into the gathered one (Bramble 1989, Am Zool 29:171).
+ * .8 is the largest fold at which no hind sole rises above its own hip joint at 5-11.6 m/s (tests/bound-v5.test.ts): with no
+ * measured hip-extension limit, .9 and up drove the folded foot over the rump and 1.2+ onto the back (lookscore v1.2
+ * rewarded that - see the T-0009 grok-gait handoff v5). [estimate, bounded by that geometric rule]. Fore: .25 kept (grid .1 /
+ * .25 / .5 flat). A swinging foot also rides with the ballistic body (heightCurve) in flight instead of reaching back down.
+ */
+export const SWING = { fold: { fore: .25, hind: .8 } };
+
 /* ---------------------------------------------------------------- pose requests (agent pipeline → body) */
 export type PoseKind = 'stand' | 'graze-crouch' | 'sit-up' | 'half-sit' | 'scan' | 'rest' | 'crouch';
 /** What the agent pipeline may ask of a standing body. `weight` 0..1 blends from 'stand' (default 1). */
 export interface PoseRequest { kind: PoseKind; weight?: number }
 /** Body shape per request: pitch (rad, + front up, about the hip), drop (m, hip lowered), fore lifted off the ground. */
-export interface PoseShape { pitch: number; drop: number; foreLift: boolean }
+export interface PoseShape { pitch: number; drop: number; foreLift: boolean; /** run 9: fore feet re-planted this far (m) ahead of their standing place (a grazing hare reaches its fore paws forward under the chin) */ ahead?: number }
 /** Values from the host's hare.ts POSES (grok, [estimate] there: drawn to photos); 'stand' is the rest skeleton. */
 export const POSE_SHAPES: Record<PoseKind, PoseShape> = {
   stand: { pitch: 0, drop: 0, foreLift: false },
-  'graze-crouch': { pitch: -.1, drop: .02, foreLift: false },
-  'sit-up': { pitch: .95, drop: 0, foreLift: true },
+  /** run 7 (grok): drop .02 -> .04 asked; the hare's limbs reached only .43 of it (pitch -.043, hip -.017 m): with the fore paw
+   *  under the glenoid the bladed fore limb is already at its elbow clamp (CANID elbow min 50 deg) standing, so it cannot fold
+   *  further. Run 9 (grok): the fore paws step 6 cm ahead first (`ahead`; a grazing hare reaches its fore paws forward under the
+   *  chin, refs/hare/graze-alert-flight attempt2 panel 1), then the body lowers the full pitch -.06 / drop .04 with every joint
+   *  inside its clamp and every sole below its own hip / shoulder (posePlausibility). Grid (box, lookscore v1.3 graze strips,
+   *  C:\dev\rabbit-rec13\look\grid-graze.txt): ahead 0 / .05 / .06 / .07 x pitch 0 .. -.1 x drop .02 .. .06; drop .06 zeroes
+   *  (fore paw over the shoulder), level drops lift the chest bone and score lower. REFERENCE-MATCHED, not sourced. */
+  'graze-crouch': { pitch: -.06, drop: .04, foreLift: false, ahead: .06 },
+  /** upright sit-up on the haunches, fore paws lifted (run 7, grok): pitch 1.15 rad (66 deg) and the hip .02 m lower, so the
+   *  silhouette axis is 66-70 deg like refs/hare/graze-alert-flight attempt2 / attempt3 panel 3 (68.9 / 70.8 deg, lookscore
+   *  masks). REFERENCE-MATCHED, not sourced; the hind feet reach it within 1 mm (drop .04 would miss by 15 mm). Was .95 / 0. */
+  'sit-up': { pitch: 1.15, drop: .02, foreLift: true },
   /** alert freeze (grok run 4): front raised ~20 deg on straight forelegs, all four feet down, the head up. REFERENCE-MATCHED
    *  (attempt4 video 2.3-3.3 s and attempt2 panel 3: the hare raises the head on all fours, it does not stand up on the haunches). */
   'half-sit': { pitch: .35, drop: 0, foreLift: false },
@@ -357,13 +408,16 @@ export function poseRequestFor(pose: AgentPose, action?: AgentAction): PoseReque
 }
 
 /** Worst sole error (m) of the planted feet of a standing body at pitch `pitch` (about the hip) and hip drop `drop`. */
-export function standError(sk: Skeleton, pitch: number, drop: number, foreLift: boolean) {
+export function standError(sk: Skeleton, pitch: number, drop: number, foreLift: boolean, ahead = 0) {
   const H = sk.legs.hind, tilt: Tilt = { height: -drop, pitch, roll: 0, shift: { y: H.hip * (1 - Math.cos(pitch)), z: -H.hip * Math.sin(pitch) } }, ankle = restAnkle(sk);
   let worst = 0;
   for (let i = 0; i < 4; i++) {
     const front = FRONT(i); if (front && foreLift) continue;
-    const L = front ? sk.legs as LimbDims : H, foot = { x: sk.hips[i][0], y: 0, z: sk.hips[i][1] - (L.stance ?? 0) };
+    const L = front ? sk.legs as LimbDims : H, foot = { x: sk.hips[i][0], y: 0, z: sk.hips[i][1] - (L.stance ?? 0) - (front ? ahead : 0) };
     const rel = worldToLimb(foot, 0, 0, 0, tilt, sk.hips[i]), top = { z: 0, y: topY(L) };
+    // run 7 (grok): a fore limb with its blade in the chain is solved as the controller solves it (foreLimb), not as a bare
+    // two-bone leg, which missed the ground by 33 mm on the hare and so zeroed poseReach for every four-foot pose
+    if (front && L.girdle) { worst = Math.max(worst, foreLimb(L, top, rel).err); continue; }
     const LL = front ? L : { ...L, footAngle: hindFoot(L, top, rel, ankle).psi }, a = clampLimb(solveLimb(LL, !front, rel, 0, { top, fit: true }), front), s = soleOf(LL, a);
     worst = Math.max(worst, Math.hypot(s.z - rel.z, s.y - (top.y - Math.hypot(top.y - rel.y, rel.x))));
   }
@@ -375,7 +429,7 @@ export const POSE_REACH = .002;
 const poseCache = new WeakMap<Skeleton, Map<PoseKind, number>>();
 export function poseReach(sk: Skeleton, kind: PoseKind) {
   let m = poseCache.get(sk); if (!m) poseCache.set(sk, m = new Map()); const hit = m.get(kind); if (hit !== undefined) return hit;
-  const sh = POSE_SHAPES[kind], err = (w: number) => standError(sk, sh.pitch * w, sh.drop * w, sh.foreLift);
+  const sh = POSE_SHAPES[kind], err = (w: number) => standError(sk, sh.pitch * w, sh.drop * w, sh.foreLift, sh.ahead ?? 0); // the fore feet step `ahead` first, then the body lowers
   let w = 1; if (err(1) > POSE_REACH) { let lo = 0, hi = 1; for (let k = 0; k < 16; k++) { const c = (lo + hi) / 2; if (err(c) <= POSE_REACH) lo = c; else hi = c; } w = lo; }
   m.set(kind, w); return w;
 }
@@ -438,7 +492,8 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
   // a hind sweep shorter than the chord sits at the chord's front end (the hind prints land ahead: Lagomorpha Locomotion 2021);
   // run 4: a fore sweep shorter than its chord sits at the chord's back end, so the fore prints fall behind the hinds (snowshoe
   // tracks: two hind prints ahead of the two fore prints — Montana Natural History Center; Canadian Wildlife Federation 2004)
-  let run = 0, hindSlack = 0, foreSlack = 0; const centre = (i: number) => FRONT(i) ? lerp(-(sk.legs.stance ?? 0), reach.fore.centre + foreSlack, run) : lerp(-(H.stance ?? 0), reach.hind.centre - hindSlack, run);
+  // run 9: a standing pose may set the fore feet `ahead` (PoseShape.ahead, m forward = -z): they re-plant there (below)
+  let run = 0, hindSlack = 0, foreSlack = 0, foreAhead = 0; const centre = (i: number) => FRONT(i) ? lerp(-(sk.legs.stance ?? 0) - foreAhead, reach.fore.centre + foreSlack, run) : lerp(-(H.stance ?? 0), reach.hind.centre - hindSlack, run);
   let x = start.x, z = start.z, heading = start.heading, row: BoundRowId = 'half-bound', leashes = 0, stridePhase = 0, turnSteps = 0;
   // the foot state holds the toe tip; a split hind foot's MTP sits `toes` behind it (BodyPlan.hindToes)
   const toeOff = (i: number) => FRONT(i) ? 0 : sk.toes;
@@ -470,6 +525,13 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     lastPose = want.kind;
     const pitchPose = springTo(pitchS, shape.pitch * w, .15, dt), drop = springTo(dropS, shape.drop * w, .15, dt);
     const foreUp = springTo(liftS, shape.foreLift ? w : 0, .12, dt); run = springTo(moveS, moving ? 1 : 0, .1, dt);
+    foreAhead = moving ? 0 : shape.ahead ?? 0;
+    // run 9: pose re-plant (bodies without turnInPlace too): a planted fore foot further than TURN.replant from where the pose
+    // stands it steps there in TURN.step, one fore at a time (the other fore and both hinds stay down)
+    if (!moving && !opts.turnInPlace && foreUp <= .02) for (const i of [0, 2]) {
+      const f = feet[i], o = feet[2 - i]; if (!f.planted || !o.planted || turnStep[2 - i]) continue;
+      const r0 = restWorld(i); if (Math.hypot(f.at.x - r0.x, f.at.z - r0.z) > TURN.replant) { forceStep(f); turnStep[i] = true; break; }
+    }
     // turning / settling in place: re-plant the planted foot furthest from where it should stand, one per pair at a time
     let turning = !!opts.turnInPlace && !moving && Math.abs(wrap(h - heading)) > 1e-3;
     if (!moving && opts.turnInPlace) {
@@ -480,7 +542,7 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
       }
       if (pick >= 0 && feet.filter(f => !f.planted).length < 2) { forceStep(feet[pick]); turnStep[pick] = true; turnSteps++; turning = true; }
       if (turnStep.some((t, i) => t && !feet[i].planted)) turning = true;
-    } else turnStep.fill(false);
+    } else if (moving) turnStep.fill(false);
     // reach targets (spine, girdles, vault pitch), fore from the fore chord and hind from the hind chord
     const gs = girdleShifts(plan.canid, ph, reach, plan.spineUse, plan.foreDuty), shift = gs.shift.map(v2 => v2 * run), spineFlex = gs.spineFlex * run;
     // derived body pitch (pitchCurve), about the mid-trunk (the hip drops trunk/2·sin when the nose comes up); reachTargets'
@@ -488,10 +550,8 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     const swing = moving ? pitchAt(pitchCurve(plan, sk), stridePhase) * run : 0;
     // the gait's joint ranges (BodyPlan.limits: stance measurements) phase in with motion; standing keeps the default
     const lim = blendLimits(CANID_LIMITS, gaitLimits, run);
-    // ballistic lift over a suspension (g·T²/8 arc) — gaitData suspensionRise
-    let lift = 0;
-    for (const s of plan.suspensions) { const p = frac(stridePhase - s.from), len = s.to - s.from; if (p < len) lift = Math.max(lift, 4 * suspensionRise(len, plan.hz) * (p / len) * (1 - p / len)); }
-    lift *= run;
+    // v5: the body's height from the stride's ground forces (heightCurve: g·t²/8 flights + the stance dip), not flights only
+    const lift = moving ? pitchAt(heightCurve(plan), stridePhase) * run : 0;
     const hipY = ground(x, z), shoY = ground(...(() => { const w2 = toWorld(x, z, heading, 0, sk.plan.shoulderZ - sk.plan.hipZ); return [w2.x, w2.z] as const; })());
     const rt = runTilt(sk, reach.rise, run, swing, pose), bodyPitch = rt.pitch + pitchPose; // relative to the ground
     const pitch = Math.atan2(shoY - hipY, sk.trunk) + bodyPitch, Hh = H.hip;
@@ -500,11 +560,13 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     for (let i = 0; i < 4; i++) {
       const L = limbOf(i), front = FRONT(i), f = feet[i];
       if (front && foreUp > .02) { forceStep(f); f.settle = 0; }
-      const r = stepFoot(f, { phase: ph[i], duty: plan.duties[i], cycle: plan.stride, lift: .25 * L.hip, moving, reverse: speed < 0, dt, speed: v, rest: restWorld(i), fwd, settle: turnStep[i] ? TURN.step : undefined }, ground);
+      const r = stepFoot(f, { phase: ph[i], duty: plan.duties[i], cycle: plan.stride, lift: (moving ? (front ? SWING.fold.fore : SWING.fold.hind) : .25) * L.hip, moving, reverse: speed < 0, dt, speed: v, rest: restWorld(i), fwd, settle: turnStep[i] ? TURN.step : undefined }, ground);
       if (turnStep[i] && f.planted) turnStep[i] = false;
-      let target = r.at;
-      if (front && foreUp > .02) { // sit-up: the fore paws come up under the chest
-        const tuck = limbToWorld({ x: 0, y: .45 * L.hip, z: centre(i) - .02 }, x, z, heading, tilt, sk.hips[i]);
+      // v5: in flight a swinging foot rides with the ballistic body (heightCurve) rather than reaching back to the ground
+      let target = !f.planted && moving && lift > 0 ? { ...r.at, y: r.at.y + lift * r.lift } : r.at;
+      if (front && foreUp > .02) { // sit-up: the fore paws come up under the chest; run 8: .35 x hip (was .45, which held the paws 25 mm ABOVE the shoulder joint -
+        // bound-checks v3 / posePlausibility; the reference sit-ups hang the paws in front of the chest, below the shoulder)
+        const tuck = limbToWorld({ x: 0, y: .35 * L.hip, z: centre(i) - .02 }, x, z, heading, tilt, sk.hips[i]);
         target = { x: lerp(r.at.x, tuck.x, foreUp), y: lerp(r.at.y, tuck.y, foreUp), z: lerp(r.at.z, tuck.z, foreUp) }; f.at = { ...target };
       }
       // split hind foot: the IK reaches the MTP joint, the toes lying flat ahead of it to the toe tip (ik.ts toeTarget)

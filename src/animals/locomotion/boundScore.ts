@@ -30,6 +30,11 @@
  *               about +3 .. +25 deg nose-up, span REF.pitchSpan 22 deg, reading +-5 deg). Grade 1 within +-5 deg, falling
  *               linearly to 0 at +-27 deg. Only the span is compared: the reference is the first bounds out of a stand
  *               (accelerating, nose up), the score runs are steady.
+ *  9 anatomy  (v3, grok, T-0009 run 8) when the trace carries `soleOverHip`: the highest any sole (toe tip / paw) rises above
+ *               its OWN limb's hip or shoulder joint over the steady run (posePlausibility). Grade 1 at <= 0 (a sole never
+ *               above its hip: no leporid swing reaches over its own joint; Bramble 1989's gathered hind feet come up under
+ *               the trunk, not over it), falling linearly to 0 at REF.soleAbove (2 cm). Added after Gait Builder's v5 grid: a hind
+ *               fold of 1.2-1.5 x hip put the foot ON the back and scored best on lookscore v1.2 (warning (b), run 8).
  * Tool: scoreTrace() over a trace of frames (the controller's BoundFrame subset below); tools/bound-score.ts runs it.
  * Calibration (tests/bound.test.ts, recorded in tasks/handoffs/T-0009-grok.md run 5): known match = a trace synthesised from
  * the BoundGait itself (planted feet, spine timing, hind prints .45 m ahead, 22 deg pitch span) scores 100; known mismatches
@@ -37,13 +42,17 @@
  * a flat trunk < the reference span.
  */
 /** Reference values of the graded checks (sources above). */
-export const REF = { overtake: .12, slip: .01, cadenceTol: .05, cadenceZero: .20, floorHind: .16, floorFore: .11, foreShareMax: .70, shareHind: .20, dutyMax: .70, pitchSpan: 22 * Math.PI / 180, pitchTol: 5 * Math.PI / 180, pitchFrom: 5 };
+export const REF = { overtake: .12, slip: .01, cadenceTol: .05, cadenceZero: .20, floorHind: .16, floorFore: .11, foreShareMax: .70, shareHind: .20, dutyMax: .70, pitchSpan: 22 * Math.PI / 180, pitchTol: 5 * Math.PI / 180, pitchFrom: 5, soleAbove: .02 };
 export interface TraceFrame {
   t: number; stride: number; speed: number; contact: boolean[]; slip: number[]; spineFlex: number; leashes: number;
   touchdowns: { leg: number; at: { x: number; y: number; z: number } }[]; fwd: { x: number; z: number }; /** trunk pitch (rad, + nose up), optional */ pitch?: number;
+  /** v3: highest sole above its own hip / shoulder joint this frame (m, posePlausibility), optional */ soleOverHip?: number;
 }
 export interface CheckResult { name: string; pass: boolean; value: string; /** 0..1 */ grade: number }
 export interface SpeedScore { speed: number; row: string; checks: CheckResult[]; score: number }
+import { limbPoints, type BoundFrame } from './bounding';
+import { clampJoint, CANID_LIMITS, type JointRange } from './ik';
+import type { Skeleton } from './bodyPlan';
 const LEGS = ['LF', 'LH', 'RF', 'RH'];
 const frac = (x: number) => x - Math.floor(x);
 const circ = (a: number, b: number) => { const d = frac(a - b); return Math.min(d, 1 - d); };
@@ -116,5 +125,29 @@ export function scoreTrace(tr: TraceFrame[], o: { speed: number; row: string; hz
   const ps = run.map(f => f.pitch).filter((p): p is number => p !== undefined);
   if (o.speed >= REF.pitchFrom && ps.length) { const span = Math.max(...ps) - Math.min(...ps), err = Math.abs(span - REF.pitchSpan), D = 180 / Math.PI;
     checks.push(check('pitch', err <= REF.pitchTol ? 1 : 1 - (err - REF.pitchTol) / REF.pitchSpan, `trunk pitch ${(Math.min(...ps) * D).toFixed(1)}..${(Math.max(...ps) * D).toFixed(1)} deg, span ${(span * D).toFixed(1)} vs reference ${(REF.pitchSpan * D).toFixed(0)} deg`)); }
+  // 9 anatomy: no sole above its own hip / shoulder joint
+  const so = run.map(f => f.soleOverHip).filter((p): p is number => p !== undefined);
+  if (so.length) { const top = Math.max(...so); checks.push(check('anatomy', top <= 0 ? 1 : 1 - top / REF.soleAbove, `highest sole ${(top * 1000).toFixed(0)} mm ${top <= 0 ? 'below' : 'ABOVE'} its own hip / shoulder joint`)); }
   return { speed: o.speed, row: o.row, checks, score: 100 * checks.reduce((a, c) => a + c.grade, 0) / checks.length };
+}
+
+/**
+ * Anatomical plausibility of one rig frame (v3, grok, T-0009 run 8; shared by bound-checks check 9 and lookscore v1.3 through
+ * tools/hare-strip): `soleOverHip` = the highest sole (the paw / toe tip and, on a split hind foot, the MTP: limbPoints from index 4) above its own hip / shoulder joint (m;
+ * <= 0 plausible); `jointOut` = how far (deg) any knee / wrist angle lies outside the WIDER of the default (CANID_LIMITS)
+ * and the body's own ranges (BodyPlan.limits): the controller blends between them with speed, so either end is a pose it may
+ * hold. `ok` = soleOverHip <= 0 and jointOut <= .5 deg.
+ */
+export function posePlausibility(sk: Skeleton, frame: BoundFrame): { soleOverHip: number; jointOut: number; ok: boolean } {
+  let above = -Infinity, out = 0; const own = sk.plan.limits ?? CANID_LIMITS;
+  for (let i = 0; i < 4; i++) {
+    const P = limbPoints(sk, frame, i); above = Math.max(above, ...P.slice(4).map(q => q.y - P[1].y));
+    const front = i % 2 === 0, a = frame.limbs[i];
+    for (const j of ['knee', 'wrist'] as const) {
+      const r1 = (front ? CANID_LIMITS.front : CANID_LIMITS.hind)[j], r2 = (front ? own.front : own.hind)[j];
+      const wide: JointRange = { min: Math.min(r1.min, r2.min), max: Math.max(r1.max, r2.max), flex: r2.flex ?? r1.flex };
+      out = Math.max(out, Math.abs(clampJoint(a[j], wide) - a[j]) * 180 / Math.PI);
+    }
+  }
+  return { soleOverHip: above, jointOut: out, ok: above <= 0 && out <= .5 };
 }

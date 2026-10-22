@@ -19,3 +19,14 @@ Mistakes to avoid
 - Treating "any query" as globe: agents' capture URLs (?hour=, ?trees=v2, ...) expect the ground.
 - The globe's own Esc handler runs on window keydown too: gate it (standalone only) before giving Esc another meaning.
 - A trailing // comment after `{` swallows the rest of a one-line block.
+Descent lessons (T-0034 follow-up)
+- Never run a search (dry-land ring search, spawn search) synchronously on the descent: make it a generator (*Steps) and
+  drain it under a per-frame budget (inpage stepSearch, 3 ms); keep the sync wrapper (drain) for tests and the reload path.
+  Test: the generator's result equals the sync one (tests/descent.test.ts).
+- Camera pitch over a mode change must come from one function of altitude (transition.ts globePitch: straight down in orbit
+  -> the 45 deg glide at the band top) used by globe, band and ascent; test it is monotone and < 1 deg per 1 % altitude.
+- A "blank plain" from above can be the cloud shell, not missing terrain: A/B with ?atmos=0 before touching terrain code.
+  The in-page descent opens the deck with cloudClear (atmosphere uCloudClear, 300 km -> 20 km).
+- Measure with a rAF log in the page (dt, mode, alt, pitch) plus a CPU profile of the busiest stretch, not capture intervals:
+  CDP screenshot gaps also come from other agents' benches. A headed Edge window behind other windows is throttled to 1 Hz
+  (dt ~1000 ms every frame): that run is invalid, not a freeze.

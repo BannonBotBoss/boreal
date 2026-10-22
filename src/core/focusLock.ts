@@ -8,12 +8,14 @@
  *    (2 - cos): near and centred wins; the pick is kept while held and in range, dropped when it leaves the radius;
  *  - steer: only while moving forward and not steering by hand, the heading turns toward the target at the player's own
  *    turn rate (main.ts: 2.2 rad/s at full stick), clamped per step, so it never snaps; speed and gait stay with the player.
- * Radius 12 m: twice the 6 m interaction reach (core/events availableActions), so a target can be locked while still a few
- * strides away and walked into reach; a game-feel distance, not a natural quantity.
+ * Radius, cone, turn rate and binding: config/systemProperties (focus).
  */
-export const FOCUS = { radius: 12, cone: .4, turnRate: 2.2 };
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
+const P = SYSTEM_PROPERTIES.focus;
+/** Figures live in config/systemProperties (focus). */
+export const FOCUS = { radius: P.radius, cone: P.cone, turnRate: P.turnRateRadS };
 /** Kinds the focus can lock: everything with a player interaction except pebbles (move only at nose contact, dozens per patch). */
-export const FOCUS_KINDS = ['plant', 'deer', 'person', 'forage'];
+export const FOCUS_KINDS = ['plant', 'deer', 'person', 'forage'].filter(k => !(P.excludeKinds as readonly string[]).includes(k));
 export interface FocusItem { key: string; kind: string; x: number; z: number }
 const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 /** Forward unit vector for a heading (core: forward = (-sin h, -cos h)). */

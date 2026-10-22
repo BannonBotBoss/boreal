@@ -13,8 +13,9 @@
 import * as THREE from 'three';
 import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
 
-/** Look (tuned on omen screenshots, 2026-10-22): a thin warm edge plus a wider soft glow, no pulse. */
-export const TARGET_GLOW = { color: 0xffd89a, edgeStrength: 1.8, edgeGlow: 1.0, edgeThickness: 1.6 };
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
+/** Look: config/systemProperties (targetGlow). */
+export const TARGET_GLOW = SYSTEM_PROPERTIES.targetGlow;
 
 type Follow = { proxy: THREE.Mesh; source: THREE.Object3D };
 

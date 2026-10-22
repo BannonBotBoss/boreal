@@ -28,6 +28,7 @@ import { stepForward } from '../proc/math';
 import type { SnapshotSource } from '../core/snapshot';
 import { createPost } from './post';
 import { createTargetGlow } from './targetGlow';
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
 import { updateTreeUniforms } from './trees';
@@ -243,8 +244,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const focused = !photo ? focus : undefined; // T-0035: held focus (core/focusLock), any mode
     const frozen = !!photo && photo.frozen !== false;
     const dt = frozen ? 0 : Math.max(0, Math.min(.1, time - previousTime)); if (!frozen) previousTime = time;
-    camera.fov += ((focused ? 36 : 48) - camera.fov) * (1 - Math.exp(-8 * dt));
-    focusBlend += ((focused ? 1 : 0) - focusBlend) * (1 - Math.exp(-8 * dt)); if (focused) lastFocus = focused; // eased, so engaging / releasing never snaps the view
+    camera.fov += ((focused ? SYSTEM_PROPERTIES.focus.cameraFovDeg : 48) - camera.fov) * (1 - Math.exp(-SYSTEM_PROPERTIES.focus.cameraEase * dt));
+    focusBlend += ((focused ? 1 : 0) - focusBlend) * (1 - Math.exp(-SYSTEM_PROPERTIES.focus.cameraEase * dt)); if (focused) lastFocus = focused; // eased, so engaging / releasing never snaps the view
     if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
     bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
     camera.updateProjectionMatrix();

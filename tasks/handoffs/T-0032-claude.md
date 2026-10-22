@@ -22,7 +22,17 @@
       (lakeAt, river inner bank, else heightAt > LEVEL.waterSurface); filler land test = fartrees.ts dry(). Result
       refs/forest-edge/sightline/out/lake-view-v1.json: 80 of 81 rays find the far shore at mean **59.9 m** (frames: 45-60 m).
       Horizontal lines (not yet pixel rays): h 2 m stems sky 0.087, h 3 m stems 0.163, crowns 0.05-0.063; ground blocks most.
-- [ ] Next (in progress 19:37): probe v2 = true camera pixel rays through the gate box (camera = render/math positionCamera:
+- [x] 19:31 probe v2 (refs/forest-edge/sightline/pixels.ts + placed.ts, claude/forest-edge): camera pixel rays through the
+      gate box [300,150,900,230], 2 px grid (12000 rays), silhouettes from triangle cross-sections of each tree's own
+      treeGeometry (first try binned vertices: low-poly cones have vertices only at base and apex -> see-through; fixed).
+      Live state read from the page (refs/forest-edge/live/state.json via vite module URLs): INTEREST mid 100, lod 1,
+      density 1, tier Ultra (world High), far trees 721 instances / 20 tiles / inner 60 / outer 100 = the probe exactly.
+      Box shares (default trees): filler crown 0.666, filler stem 0.113, entity crown 0.092, entity stem 0.046, ground 0.016,
+      **sky 0.067, all of it through the end of the drawn world** (median exit 117 m from the camera), 0 above the canopy.
+      Lower bound (envelopes fill foliage gaps): the frame metric reads 0.12. Class map out/box-map.png vs out/box-frame.png.
+      **Filler ring outer radius (env OUTER): 100 m -> sky 0.067; 140 m -> 0.001; 180, 220 m -> 0.000.** The leak is the
+      forest's drawn depth behind the shore (filler stops at INTEREST.mid), not the spacing of the trees that are drawn.
+- [ ] (superseded) probe v2 = true camera pixel rays through the gate box (camera = render/math positionCamera:
       3 m behind ?at, 1.6 m wolf cameraHeight, pitch 10 deg down, fov 48) with per-geometry silhouette radius profiles from
       treeGeometry (lower bound on sky: the foliage envelope blocks), split per layer and exit reason.
 - [ ] Objective 2: close the trunk zone causally (edge term / stems toward stand model).

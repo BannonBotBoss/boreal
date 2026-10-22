@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "system-map": "tsx tools/system-map.ts"
   },
   "dependencies": { "three": "0.180.0" },
   "devDependencies": { "@types/three": "0.180.0", "typescript": "5.9.3", "vite": "7.1.12", "tsx": "4.20.6", "@types/node": "24.7.0" }

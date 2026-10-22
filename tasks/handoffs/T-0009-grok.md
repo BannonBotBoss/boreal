@@ -25,8 +25,13 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   reach 0 -> .64, rest .70, crouch .52). Tests: bound + hare-rig 14/14 on the PC. lookscore v1 (box): sit summer 18.4 -> 52.3,
   winter 32.0 -> 73.6; crouch summer 23.7 -> 29.9 (the standError fix); evidence C:\dev\rabbit-rec11\look\ (score-s3.json,
   zoom-s3-sit.jpg: red = ref only, green = game only). Left: the fore paws stick out ahead of the chest and the neck shows a
-  seam when the head turns back level.- [ ] 3 Graze crouch
-- [ ] 4 Bound phases
+  seam when the head turns back level.- [x] 3 Graze crouch: bounding.ts 'graze-crouch' drop .02 -> .04 (the hare reaches .46 of the shape: pitch -.046 rad, hip -.018 m),
+  hare.ts POSES head-down head -.55 -> -.85 (nose to the clover). Grid pitch -.1/-.25 x drop .02/.04 x head -.55/-.85 vs lookscore
+  v1: crouch summer 29.9 -> 33.1, winter 53.6 -> 53.4 (flat). REFERENCE-MATCHED, not sourced. Why it stays low: the head-to-rump
+  height profile already matches within ~.05 of the width (ref .47-.55, game .49-.59); the losses are the hind foot standing out
+  behind the rump and the body riding higher on the legs than the photo hare (C:\dev\rabbit-rec11\look\crouch-detail-c1.jpg,
+  zoom-c1-crouch.jpg) - the leg reach limits the drop (poseReach .46), so a deeper crouch needs a hind-leg fold the rig allows
+  (Gait Builder) rather than more pose numbers.- [ ] 4 Bound phases
 - [ ] 5 Coat on the bound poses (lookscore v1.1)
 - [ ] 6 Winter push-off reference (prompt loop)
 - [ ] 7 End-on view + flee-following camera

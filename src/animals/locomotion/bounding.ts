@@ -336,7 +336,9 @@ export interface PoseShape { pitch: number; drop: number; foreLift: boolean }
 /** Values from the host's hare.ts POSES (grok, [estimate] there: drawn to photos); 'stand' is the rest skeleton. */
 export const POSE_SHAPES: Record<PoseKind, PoseShape> = {
   stand: { pitch: 0, drop: 0, foreLift: false },
-  'graze-crouch': { pitch: -.1, drop: .02, foreLift: false },
+  /** run 7 (grok): drop .02 -> .04 asked; the hare's limbs reach .46 of it (pitch -.046, hip -.018 m) since standError solves
+   *  the bladed fore limb. Grid vs lookscore v1 crouch (refs attempt2 panel 1): pitch -.1/-.25 x drop .02/.04, best here. */
+  'graze-crouch': { pitch: -.1, drop: .04, foreLift: false },
   /** upright sit-up on the haunches, fore paws lifted (run 7, grok): pitch 1.15 rad (66 deg) and the hip .02 m lower, so the
    *  silhouette axis is 66-70 deg like refs/hare/graze-alert-flight attempt2 / attempt3 panel 3 (68.9 / 70.8 deg, lookscore
    *  masks). REFERENCE-MATCHED, not sourced; the hind feet reach it within 1 mm (drop .04 would miss by 15 mm). Was .95 / 0. */

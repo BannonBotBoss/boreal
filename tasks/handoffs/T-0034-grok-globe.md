@@ -3,7 +3,7 @@
 - **Doing:** bare load -> globe view (task file tasks/T-0034-globe-default-view.md). Requested by Matthew via Grok Bot.
 - **Branch:** grok-globe/globe-default-view, worktree C:\dev\boreal-grok-globe-default (from main a436a9d).
   Commits: 5582c23 propose + handoff, 2bd9252 startView test (failing first), 1520277 code, then this board commit.
-- **Status:** built and verified on the branch; NOT claimed or completed (no approve-plan yet; rule 2). Waiting on an approve-plan.
+- **Status:** approve-plan by grok 00:55:41 PT, claimed 01:02 PT (d118bc7), descent fixes done, completed 2026-10-22 ~02:20 PT (see the last section). Waiting on approve.
 
 ## What was built
 - `src/world/globe/startView.ts` (new): `startView(search)` and `bareStart(search)`. Bare query or `?start=globe` = globe;
@@ -64,4 +64,48 @@
 - Claimed (d118bc7) after grok's approve-plan 00:55:41. Main fb396e4 merged (7263f5a).
 - Causes found: (1) the landing's dry-land search (core/stages dryStart) ran synchronously in inpage prepare() AND again in descend(): up to 1.4 s per call at a lake point (node, seed 1400, (0, 1992)); (2) the in-page globe aimed at the horizon below 300 km whenever it had a heading (?at yaw from the game): an 85.3 deg pitch step in ONE frame at 300 km, then the band swung back down to the 45 deg glide; (3) the 'blank tan plain' is the globe's 2.5 km cloud shell (900 km cells) over home seen from above: with ?atmos=0 the same altitudes show the ground (refs/T-0034 alt stills).
 - Fixes: 8904436 dryStartSteps/landSpawnSteps run 3 ms per frame, descend reuses the prepared spot; globePitch (straight down in orbit -> 45 deg glide at the band top, ascent top matches). Next commit: cloudClear (deck opens 300 km -> 20 km, in-page only).
-- Next step: altitude stills, smoke, commit, record.mjs, headed check, reference gate, complete.
+- ffa36b2 cloudClear committed (the step above).
+
+## Completion (2026-10-22 01:55-02:20 PT, grok-globe)
+Commits after the claim: 0ff8abf descent test (failing first), 8904436 budgeted landing search + globePitch, e26f9d0 cloud-clear
+test (failing first), ffa36b2 cloudClear, 7ed2fcd skill, 02cb0b3 refs (recording, stills, profiles). grok/music: `git merge-tree`
+with this branch is clean (menu-btn and the music panel both kept), nothing to pre-resolve.
+
+### Checks
+- npm test 355 pass / 0 fail (367 tests incl. skips) at ffa36b2; `npx tsc --noEmit` clean; smoke-tiers PASS on :5182
+  (Ultra 125 fps, 252 draws).
+- In-page rAF profile (refs/T-0034/profile.mjs: logs every rAF dt, inpage mode, altitude, camera pitch, plus a CPU profile of the
+  busiest 2 s; headless Edge, bench lock held). Thresholds: rAF gap <= 200 ms during the descent, pitch step <= 2 deg per frame.
+
+| run | max rAF gap in descent | max pitch step / frame | file |
+|---|---|---|---|
+| before (7263f5a) | 103.7 ms (headless; grok's capture: 6.38 s stall, intermittent at a lake landing) | **85.3 deg** (-89.8 -> -4.6 at 300 km) | profile-before (json in %TEMP%) |
+| after 8904436 headless x2 | 68.4 / 64.2 ms | 1.1 / 0.9 deg | |
+| after 8904436 headed Edge | 83.2 ms (216.8 ms on the first orbit frame after load, before the descent) | 1.8 deg | profile-headed.log |
+| after ffa36b2 headless | 142.8 ms (first orbit frame after load; descent below that) | 0.8 deg | profile-after4.log |
+| after ffa36b2 headed (invalid) | 1000 ms every frame: the window was behind others and Edge throttled it to 1 Hz | 0.7 deg | profile-headed2.log |
+
+  Calibration: grok's pre-fix recording (known bad: 6.38 s stall, 85 deg snap) fails both; the after runs pass. A contended run
+  (another agent's bench in parallel) gave 549 ms band gaps, and a recording run during the T-0032 gate had a 5.16 s capture gap
+  while the page's own altitude kept falling (1848 -> 109 m): the capture stalled, not the page. Retaken clean.
+- Recording `refs/T-0034/descent.mp4` (20.6 s, real time, 1280x800, 159 headless-Edge frames, record.mjs, frames in
+  descent-frames.json): bare load -> globe 14,016 km -> band at 7.3 s (1957 m) -> game at 15.6 s; max capture interval 0.27 s.
+  Grok's pre-fix recording kept as descent-before.mp4 / descent-before-frames.json.
+
+### Frame answers (rule 6)
+- What I see (after-grid.jpg; after-globe, -175km, -17km, -5km, -band, -band-1km, -landed): the planet disc with clouds; at
+  175 km a dark-green forested coast with lakes, seen steeply from above; at 17 km and 5.5 km the same lakes larger, lower
+  pitch, haze; band at 1.96 km: lake shores and forest at the 45 deg glide; at 990 m a blue lake with a forested island; landed:
+  the wolf on staged ground with trees v2, logs and boulders. No beige/blank frame, no jump from horizon to straight down.
+- Natural? A descent from orbit sees the ground through the clouds, gets lower in pitch as you come down, and the horizon hazes
+  (compare ISS/airliner descents). Reference: refs/T-0034/reference-oblique.jpg (generated, "boreal lakes from 1.5 km, 45 deg
+  oblique, haze at the horizon"): it shows what to look for, it is not a certificate (rule 11).
+- 95 % gate: **N/A** for the look (this task changes start flow, landing search and camera pitch; the globe and ground looks are
+  their own tasks' gates). Substituted calibrated numeric checks: the rAF gap and pitch-step table above (known bad fails, after passes).
+
+### Leftovers / risks
+- Chunk build jobs (createChunk, rockGeometry; up to ~0.5 s total in the busiest 2 s) can still spike frames when the machine is
+  contended; they are spread by runJobs but not budgeted per frame.
+- The 140-220 ms first orbit frame right after load (shader compile/upload), before any input.
+- stages=1 persistence and the HUD over the globe (above) are unchanged.
+- The headed check after ffa36b2 needs a foreground window; the valid headed run is before ffa36b2 (cloudClear only changes a uniform).

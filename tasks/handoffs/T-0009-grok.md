@@ -51,8 +51,16 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   drawing, known mismatch = other season): summer match dE 2.8-3.9 / mismatch 38.7-42.1, winter match .7-2.6 / mismatch
   38.7-42.1. Box scores (code 3dcac42): coat summer crouch 85.4, sit 91.3, gather 92.7, push 78.1, stretch 84.7 (mean 86.4);
   winter 84.2, 98.5, 88.0, 91.8, 92.7 (mean 91.0). The summer push cell is the weakest (dE 13.5: the extended belly and
-  inner legs show more pale than the photo's).- [ ] 6 Winter push-off reference (prompt loop)
-- [ ] 7 End-on view + flee-following camera
+  inner legs show more pale than the photo's).- [x] 6 Winter push-off reference (prompt loop, refs/hare/winter/attempts.md rows 3-5): attempt 3 (with attempt 2 as image
+  reference) came out a near-copy of attempt 2, so not independent: rejected as an anchor. Attempt 4 (no image reference, dark
+  forest edge so GrabCut masks the white hare, refmask-winter4.jpg) has a clear push-off (panel 5, both hind feet on the snow);
+  attempt 5 is a single independent push-off photo. Finding: winter attempt 2's 'push' cell is closer to an extended reach
+  (IoU .671 with attempt 4's stretch, .525 with its push-off). lookscore v1.2 (C:\dev\rabbit-rec11\look\lookscore.py, 6th
+  argument 'v1.2'): winter known match = attempt 4 for every pose (was the hand-traced attempt 1; anchors crouch .828 / .577,
+  sit .738 / .334, gather .858 / .573, stretch .751 / .446), and the push-off is scored against attempt 4 panel 5 with attempt
+  5 as its known match (.651 / .504). Box, code 3dcac42: winter shape crouch 71.2, sit 82.5, gather 38.3, push 100 (raw .660
+  >= the .651 match: the game's best stride cell matches the push-off as well as a second drawing does; the anchor range is
+  narrow, .15), stretch 78.0, mean 74.0; winter coat 95.3. Summer unchanged (46.2 / 86.4).- [ ] 7 End-on view + flee-following camera
 - [ ] 8 Re-record, re-score T-0009 and T-0028, compare /workspace/rabbit/compare-poses.jpg
 ## Run 6 progress (started 2026-10-21 16:17 PT; keep current: board rule 9; only grok/rabbit-clover is touched)
 Plan (Grok lead, 16:16 PT): pick up grok-gait/T-0009-hare-v4 (608568b, 961630a, d8b118a; based on 37b1fbc).

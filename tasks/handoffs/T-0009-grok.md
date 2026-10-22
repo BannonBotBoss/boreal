@@ -12,7 +12,11 @@ check that zeroes impossible poses + sole-above-hip check in boundScore.ts, clov
 as +/- per pose, recalibrate); resolve the T-0009 id clash with main's agent-core-transactions task (rule 13); SPINE_BEND gather
 only within sourced spine flexion, sourced leporid hip extension and foreLeg; re-score T-0009 / T-0028 with v1.3. Evidence
 C:\dev\rabbit-rec12\. Submit only if every gate >= 95 % and after re-checking RULES.md for a cross-family reviewer rule.
-- [ ] 1 Rule 15 review of grok-gait/T-0009-hare-v5 (three claims incl. the 16 mm lift), comment event, merge
+- [x] 1 Rule 15 review of grok-gait/T-0009-hare-v5, comment event tasks/events/2026-10-21T19-57-grok-comment-T-0009.json, merged
+  45d0439. Checked: (1) lift: 8.5 m/s plan 4.40 Hz, flights 43.1 + 77.9 ms, flight-only g t^2/8 2.3 / 7.4 mm, heightCurve span
+  16.2 mm (< 18.0 mm for one flight of the whole 121 ms aerial time: consistent, not inflated); (2) bound-v5 + bound + hare-rig
+  17/17 (box); (3) lookscore v1.2 after-numbers reproduced on a box render within 0.7 (summer stretch 83.4, winter gather 49.4,
+  winter stretch 91.5, end-on gather 50.4). Box v1.2 at 45d0439: shape summer 50.4 / winter 78.9, coat 86.1 / 95.9, end-on 44.5 / 83.5.
 - [ ] 2 lookscore v1.3 (plausibility, clover-free masks, noise, recalibration) + boundScore sole-above-hip
 - [ ] 3 T-0009 id question (main's T-0009 file + history; rule 13)
 - [ ] 4 Rounder gather via SPINE_BEND within sourced spine flexion; sourced hip extension + foreLeg

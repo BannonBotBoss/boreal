@@ -5,7 +5,7 @@
  * Three parts, all pure data (this file imports nothing, so any module, worker or tool can read it):
  *  1. SYSTEM_PROPERTIES - the adjustable figures, one top-level key per group (alphabetical), `/** comment *\/ key: value`.
  *     Code reads from here: change a figure here, not at the call site. Readers keep their old export names (CHRONO, FEEL ...).
- *     Same shape as T-0035 (autoFocus, targetGlow) and T-0036 (needsThoughts), so their groups merge in as whole sections.
+ *     T-0035's groups (autoFocus, targetGlow) merged in as whole sections; T-0036 (needsThoughts) will do the same.
  *  2. PROPERTY_META - per group: the modules that read it, and per figure its units and source ('estimate' when it is game
  *     calibration rather than a measurement).
  *  3. SYSTEM_MAP - per system: what it is, its modules, its groups here, what it depends on (the "feeds" direction is derived),
@@ -14,6 +14,24 @@
  * How to add a system or a figure: notes/skills/system-properties.md.
  */
 export const SYSTEM_PROPERTIES = {
+  /** Held focus (core/focusLock, T-0035): hold the button to lock the wolf's attention on an object; keep within the radius to keep it. */
+  autoFocus: {
+    /** Engage and keep-lock radius, metres. From Matthew's red guideline ring (screenshot 01M5HB26..., 2026-10-22): its widest
+     *  lateral extent projected onto the ground with the game camera (1.6 m up, 3 m back, 10 deg pitch, 48 deg fov) = 4.5 m. */
+    radius: 4.5,
+    /** View cone for picking a target: cosine of the angle off the view direction (0.4 = about 66 deg either side). */
+    cone: .4,
+    /** Auto-steer turn rate, rad/s: the player's own full-stick steering rate (main.ts), so focus never turns faster than the stick. */
+    turnRateRadS: 2.2,
+    /** Default binding (rebindable in Menu > Controls): gamepad LB (not otherwise bound), keyboard F. */
+    binding: { keys: ['f'], pad: ['lb'] },
+    /** Object kinds that can never be focused (pebbles: interactable only at nose contact, dozens per patch). */
+    excludeKinds: ['rock'],
+    /** Camera while locked: field of view (deg) and how fast it eases in / out (1/s); no snap. */
+    cameraFovDeg: 36, cameraEase: 8,
+    /** Hide the senses halo ring while a target is locked, so the target's glow is the only cue. */
+    hideSensesHalo: true,
+  },
   /** Animal behaviour pipeline (core/animalBehavior AnimalBrain): energy, feeding and threat memory. */
   behaviour: {
     /** energy an animal starts with, 0-100 */ defaultEnergy: 75,
@@ -111,18 +129,32 @@ export const SYSTEM_PROPERTIES = {
     /** halo gone at or above this ground speed (m/s) */ fadeTo: 4,
     /** smoothing time of the speed it fades by (s) */ speedEase: .35,
   },
+  /** Target glow (render/targetGlow, T-0035): soft outline tracing the interaction / focus target (three r180 OutlinePass). */
+  targetGlow: {
+    /** Glow colour (warm cream). */
+    color: 0xffd89a,
+    /** Thin-edge brightness, wide-glow strength and edge width (OutlinePass edgeStrength / edgeGlow / edgeThickness).
+     *  Softened 2026-10-22 01:43 PT (Matthew: "make the glow less focused"): thicker blur on the thin edge, more of the wide
+     *  quarter-res halo, lower overall strength so the summed brightness stays about the same. Was 1.8 / 1.0 / 1.6. */
+    edgeStrength: 1.3, edgeGlow: 2.5, edgeThickness: 6.0,
+  },
 } as const;
 
 export type SystemGroup = keyof typeof SYSTEM_PROPERTIES;
 /** Groups other branches add to SYSTEM_PROPERTIES; listed in SYSTEM_MAP now so the wiring is complete before they land. */
 export const PENDING_GROUPS: Record<string, string> = {
-  autoFocus: 'grok/interact-outline (T-0035)', targetGlow: 'grok/interact-outline (T-0035)', needsThoughts: 'grok/wolf-hydration (T-0036)',
+  needsThoughts: 'grok/wolf-hydration (T-0036)',
 };
 
 /** Units + source per figure. Source: a citation, "Matthew" (his spec), or "estimate" (game calibration, no measurement). */
 export interface GroupMeta { readers: string[]; keys: Record<string, [unit: string, source: string]> }
 const EST = 'estimate (game calibration)';
 export const PROPERTY_META: Record<string, GroupMeta> = {
+  autoFocus: { readers: ['src/core/focusLock.ts', 'src/core/bindings.ts', 'src/render/buildScene.ts', 'src/main.ts'], keys: {
+    radius: ['m', "Matthew (his red guideline ring, projected with the game camera; T-0035)"], cone: ['cos(angle)', EST],
+    turnRateRadS: ['rad/s', 'the player\'s own full-stick steer rate (main.ts)'], binding: ['keys / pad inputs', 'Matthew (hold a gamepad button; LB / F)'],
+    excludeKinds: ['object kinds', 'design (pebbles interact at nose contact only)'], cameraFovDeg: ['deg', EST], cameraEase: ['1/s', EST],
+    hideSensesHalo: ['on/off', 'design'] } },
   behaviour: { readers: ['src/core/animalBehavior.ts'], keys: {
     defaultEnergy: ['0-100', EST], forageEnergy: ['0-100', EST], playerHearingRadius: ['m', EST], feedDuration: ['s', EST],
     feedReach: ['m', EST], threatMemory: ['s', EST], senseRadii: ['m', EST] } },
@@ -155,6 +187,9 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
   senses: { readers: ['src/core/senses.ts'], keys: {
     range: ['m', EST], threshold: ['0-1', EST], cueLife: ['s', EST], cueCap: ['count', EST], thoughtCap: ['count', EST], updateSeconds: ['s', EST] } },
   sensesHalo: { readers: ['src/core/senseBeacons.ts'], keys: { radius: ['m', EST], fadeFrom: ['m/s', 'stealth speed 0.8 m/s (core/wolfModes)'], fadeTo: ['m/s', EST], speedEase: ['s', EST] } },
+  targetGlow: { readers: ['src/render/targetGlow.ts'], keys: {
+    color: ['sRGB hex', 'design (warm cream)'], edgeStrength: ['x', "Matthew (01:43 PT: \"make the glow less focused\"; estimate)"],
+    edgeGlow: ['x', "Matthew (01:43 PT softer glow; estimate)"], edgeThickness: ['px blur', "Matthew (01:43 PT softer glow; estimate)"] } },
 };
 
 export type SystemId = 'audio' | 'behaviour' | 'camera' | 'clock' | 'controls' | 'globe' | 'interaction' | 'lighting' | 'locomotion' | 'needs'
@@ -189,7 +224,7 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
   camera: { title: 'Camera', what: 'Third-person follow camera behind the wolf: pitch spring, look-around and rider distance.',
     modules: ['src/render/math.ts', 'src/render/buildScene.ts'], groups: ['camera'], dependsOn: ['player', 'controls', 'terrain', 'interaction'],
     flags: { at: '=x,z[,yaw] start position (main.ts)', fov: 'field of view override (grok/rabbit-clover, T-0009)' }, tables: {},
-    remaining: ['main.ts mouse-drag look sensitivity and look-yaw return rate', 'render/buildScene field of view (T-0035 is changing the focus camera there)'] },
+    remaining: ['main.ts mouse-drag look sensitivity and look-yaw return rate', 'render/buildScene base field of view (48 deg; the focus field of view is autoFocus.cameraFovDeg)'] },
   clock: { title: 'Time and clock', what: 'The one world clock (frozen in menus), game hour, date and sun position; chronometer offset.',
     modules: ['src/core/timeOfDay.ts', 'src/core/worldClock.ts', 'src/core/timescale.ts', 'src/ui/chronometer.ts'], groups: ['clock', 'chronometer'], dependsOn: ['save'],
     flags: { hour: '=HH sets the time of day (core/timeOfDay)', timescale: 'speeds the simulation, not the clock (core/timescale)' },
@@ -198,7 +233,7 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
     modules: ['src/core/bindings.ts', 'src/ui/controls.ts', 'src/ui/haptics.ts'], groups: ['haptics'], dependsOn: ['save'], flags: {},
     tables: { 'src/core/bindings.ts#ACTIONS': 'every action and its default keys / pad inputs', 'src/core/bindings.ts#DEADZONE': 'stick dead zone',
       'src/core/bindings.ts#ACTIVE': 'press threshold for analog inputs', 'src/ui/haptics.ts#HAPTIC_EVENTS': 'rumble pattern per event' },
-    remaining: ['core/bindings DEADZONE / ACTIVE (T-0035 adds the Focus binding in the same file; move after it merges)', 'core/wolfModes trigger thresholds'] },
+    remaining: ['core/bindings DEADZONE / ACTIVE (the Focus binding default is autoFocus.binding)', 'core/wolfModes trigger thresholds'] },
   globe: { title: 'Globe (planet view)', what: 'Cube-sphere planet, atmosphere, far layer and the descent from orbit to the ground.',
     modules: ['src/world/globe/globeView.ts', 'src/world/globe/planet.ts', 'src/world/globe/inpage.ts', 'src/world/globe/transition.ts', 'src/world/globe/handoff.ts', 'src/world/globe/atmosphere.ts', 'src/world/globe/tile.ts', 'src/world/globe/lod.ts'],
     groups: [], dependsOn: ['terrain', 'clock', 'lighting', 'quality', 'save'],
@@ -215,9 +250,9 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
       'src/world/globe/globeView.ts#NEAR_SPLIT': 'near/far camera split', 'src/world/globe/tile.ts#DETAIL': 'close-up detail noise' },
     remaining: ['globe figures (T-0034 is changing globeView / inpage; move after it merges)'] },
   interaction: { title: 'Interaction, focus and target glow', what: 'Picking the interaction target, held focus lock and steering, the glowing outline.',
-    modules: ['src/render/buildScene.ts', 'src/main.ts'], groups: ['autoFocus', 'targetGlow'], dependsOn: ['controls', 'player', 'behaviour', 'camera'],
+    modules: ['src/core/focusLock.ts', 'src/render/targetGlow.ts', 'src/render/buildScene.ts', 'src/main.ts'], groups: ['autoFocus', 'targetGlow'], dependsOn: ['controls', 'player', 'behaviour', 'camera'],
     flags: { glow: '=0 turns the target glow off for A/B (grok/interact-outline, T-0035)' }, tables: {},
-    remaining: ['autoFocus and targetGlow groups arrive with grok/interact-outline (T-0035)'] },
+    remaining: ['main.ts interaction reach and the 48 deg base field of view the focus camera eases back to'] },
   lighting: { title: 'Lighting', what: 'Physical sun/moon illuminance, exposure, ambient and night vision.',
     modules: ['src/core/light.ts', 'src/render/pbr.ts', 'src/render/post.ts', 'src/render/photoreal.ts'], groups: [], dependsOn: ['clock', 'weather', 'quality'],
     flags: {}, tables: { 'src/core/light.ts#LUX': 'illuminance figures (CIE)', 'src/core/light.ts#EXPOSURE': 'exposure base',

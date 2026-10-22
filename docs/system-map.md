@@ -15,7 +15,7 @@ flowchart LR
   clock["Time and clock"]
   controls["Player controls and gamepad"]
   globe("Globe (planet view)")
-  interaction("Interaction, focus and target glow")
+  interaction["Interaction, focus and target glow"]
   lighting("Lighting")
   locomotion["Animals and locomotion"]
   needs("Needs (water, energy, rest)")
@@ -100,7 +100,6 @@ flowchart LR
   weather --> sky
   weather --> water
   style globe stroke-dasharray: 4 3
-  style interaction stroke-dasharray: 4 3
   style lighting stroke-dasharray: 4 3
   style needs stroke-dasharray: 4 3
   style physics stroke-dasharray: 4 3
@@ -123,7 +122,7 @@ flowchart LR
 | [Time and clock](#clock) | The one world clock (frozen in menus), game hour, date and sun position; chronometer offset. | `clock`, `chronometer` | save | audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 2 |
 | [Player controls and gamepad](#controls) | One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics. | `haptics` | save | camera, interaction, player, stamina, ui | - |
 | [Globe (planet view)](#globe) | Cube-sphere planet, atmosphere, far layer and the descent from orbit to the ground. | - | terrain, clock, lighting, quality, save | - | 19 |
-| [Interaction, focus and target glow](#interaction) | Picking the interaction target, held focus lock and steering, the glowing outline. | `autoFocus` (pending), `targetGlow` (pending) | controls, player, behaviour, camera | camera | 1 |
+| [Interaction, focus and target glow](#interaction) | Picking the interaction target, held focus lock and steering, the glowing outline. | `autoFocus`, `targetGlow` | controls, player, behaviour, camera | camera | 1 |
 | [Lighting](#lighting) | Physical sun/moon illuminance, exposure, ambient and night vision. | - | clock, weather, quality | globe, sky | - |
 | [Animals and locomotion](#locomotion) | Gaits, central pattern generator, IK, posture, jumps and the rigs that draw them. | `jump` | behaviour, stamina, physics, terrain | audio, needs | 2 |
 | [Needs (water, energy, rest)](#needs) | Species needs drained at real-world rates, thought bubbles and alerts, needs-driven goals. | `needsThoughts` (pending) | clock, locomotion, water, weather | behaviour, stamina, ui | 1 |
@@ -258,7 +257,7 @@ Read by: `src/render/math.ts`
 **Still in code** (not moved yet)
 
 - main.ts mouse-drag look sensitivity and look-yaw return rate
-- render/buildScene field of view (T-0035 is changing the focus camera there)
+- render/buildScene base field of view (48 deg; the focus field of view is autoFocus.cameraFovDeg)
 
 <a id="clock"></a>
 ## Time and clock (`clock`)
@@ -330,7 +329,7 @@ Read by: `src/ui/haptics.ts`, `src/core/renderSettings.ts`
 
 **Still in code** (not moved yet)
 
-- core/bindings DEADZONE / ACTIVE (T-0035 adds the Focus binding in the same file; move after it merges)
+- core/bindings DEADZONE / ACTIVE (the Focus binding default is autoFocus.binding)
 - core/wolfModes trigger thresholds
 
 <a id="globe"></a>
@@ -390,11 +389,33 @@ Picking the interaction target, held focus lock and steering, the glowing outlin
 
 - Depends on: controls, player, behaviour, camera
 - Feeds: camera
-- Modules: `src/render/buildScene.ts`, `src/main.ts`
+- Modules: `src/core/focusLock.ts`, `src/render/targetGlow.ts`, `src/render/buildScene.ts`, `src/main.ts`
 
-### `autoFocus` (pending: arrives with grok/interact-outline (T-0035))
+### `SYSTEM_PROPERTIES.autoFocus`
 
-### `targetGlow` (pending: arrives with grok/interact-outline (T-0035))
+Read by: `src/core/focusLock.ts`, `src/core/bindings.ts`, `src/render/buildScene.ts`, `src/main.ts`
+
+| Figure | Value | Units | What | Source |
+|---|---|---|---|---|
+| `radius` | 4.5 | m | Engage and keep-lock radius, metres. From Matthew's red guideline ring (screenshot 01M5HB26..., 2026-10-22): its widest lateral extent projected onto the ground with the game camera (1.6 m up, 3 m back, 10 deg pitch, 48 deg fov) = 4.5 m. | Matthew (his red guideline ring, projected with the game camera; T-0035) |
+| `cone` | 0.4 | cos(angle) | View cone for picking a target: cosine of the angle off the view direction (0.4 = about 66 deg either side). | estimate (game calibration) |
+| `turnRateRadS` | 2.2 | rad/s | Auto-steer turn rate, rad/s: the player's own full-stick steering rate (main.ts), so focus never turns faster than the stick. | the player's own full-stick steer rate (main.ts) |
+| `binding` | {"keys": ["f"], "pad": ["lb"]} | keys / pad inputs | Default binding (rebindable in Menu > Controls): gamepad LB (not otherwise bound), keyboard F. | Matthew (hold a gamepad button; LB / F) |
+| `excludeKinds` | ["rock"] | object kinds | Object kinds that can never be focused (pebbles: interactable only at nose contact, dozens per patch). | design (pebbles interact at nose contact only) |
+| `cameraFovDeg` | 36 | deg | Camera while locked: field of view (deg) and how fast it eases in / out (1/s); no snap. | estimate (game calibration) |
+| `cameraEase` | 8 | 1/s | Camera while locked: field of view (deg) and how fast it eases in / out (1/s); no snap. | estimate (game calibration) |
+| `hideSensesHalo` | true | on/off | Hide the senses halo ring while a target is locked, so the target's glow is the only cue. | design |
+
+### `SYSTEM_PROPERTIES.targetGlow`
+
+Read by: `src/render/targetGlow.ts`
+
+| Figure | Value | Units | What | Source |
+|---|---|---|---|---|
+| `color` | 16767130 | sRGB hex | Glow colour (warm cream). | design (warm cream) |
+| `edgeStrength` | 1.3 | x | Thin-edge brightness, wide-glow strength and edge width (OutlinePass edgeStrength / edgeGlow / edgeThickness). Softened 2026-10-22 01:43 PT (Matthew: "make the glow less focused"): thicker blur on the thin edge, more of the wide quarter-res halo, lower overall strength so the summed brightness stays about the same. Was 1.8 / 1.0 / 1.6. | Matthew (01:43 PT: "make the glow less focused"; estimate) |
+| `edgeGlow` | 2.5 | x | Thin-edge brightness, wide-glow strength and edge width (OutlinePass edgeStrength / edgeGlow / edgeThickness). Softened 2026-10-22 01:43 PT (Matthew: "make the glow less focused"): thicker blur on the thin edge, more of the wide quarter-res halo, lower overall strength so the summed brightness stays about the same. Was 1.8 / 1.0 / 1.6. | Matthew (01:43 PT softer glow; estimate) |
+| `edgeThickness` | 6 | px blur | Thin-edge brightness, wide-glow strength and edge width (OutlinePass edgeStrength / edgeGlow / edgeThickness). Softened 2026-10-22 01:43 PT (Matthew: "make the glow less focused"): thicker blur on the thin edge, more of the wide quarter-res halo, lower overall strength so the summed brightness stays about the same. Was 1.8 / 1.0 / 1.6. | Matthew (01:43 PT softer glow; estimate) |
 
 **URL flags**
 
@@ -404,7 +425,7 @@ Picking the interaction target, held focus lock and steering, the glowing outlin
 
 **Still in code** (not moved yet)
 
-- autoFocus and targetGlow groups arrive with grok/interact-outline (T-0035)
+- main.ts interaction reach and the 48 deg base field of view the focus camera eases back to
 
 <a id="lighting"></a>
 ## Lighting (`lighting`)

@@ -228,6 +228,9 @@ function applyPending() {
 }
 applyPending();
 const inpage = createInPage(view, { player: () => ({ x: player.x, z: player.z, yaw: yaw + lookYaw }), place: (x, z, y) => { player.x = x; player.z = z; yaw = y; player.heading = y; lookYaw = 0; }, save: saveAll }); // ?transition=inpage: world/globe/inpage (null = the reload path)
+if (new URLSearchParams(location.search).has('rec')) (window as unknown as Record<string, unknown>).__boreal = { // ?rec: read-only probe for the recorders (tools/hunt-record.mjs)
+  hares: () => view.hares.list().map(h => ({ id: h.id, x: h.x, z: h.z, state: h.state, linked: h.sim.linked, knows: h.sim.knowsAt !== undefined })),
+  player: () => ({ x: player.x, z: player.z, yaw, energy: view.playerBrain.energy, water: needs.water, mode: modes.mode }) };
 function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
 actionButton.onclick = perform;
 element('pause').onclick = togglePause;

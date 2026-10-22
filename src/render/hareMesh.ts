@@ -100,7 +100,7 @@ export function createHareMesh(bind: HareBind) {
   const skeleton = new THREE.Skeleton(bones); skins.forEach(s => s.bind(skeleton));
   // eyes: large, dark, set on the side of the head (wide field of view), just proud of the socket
   for (const side of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(.0075, 12, 10), t.eyeMat); eye.name = 'eye';
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.0082, 12, 10), t.eyeMat); eye.name = 'eye';
     eye.position.set(side * (HARE_EYE_AT[0] - .001), HARE_EYE_AT[1], HARE_EYE_AT[2]); eye.scale.set(.75, 1, 1.1); head.add(eye);
   }
   ears.forEach((e, k) => { e.rotation.z = (k ? -1 : 1) * .12; }); // splay a little outward

@@ -2,7 +2,7 @@
  *  world date (Mills et al. 2013), Sheriff et al. 2009 fur length and density, skinned to the bounding rig, no mesh file. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import * as THREE from 'three';
 import { buildBody } from '../src/core/body';
@@ -88,7 +88,7 @@ test('skinned to the rig: every leg-segment bone sits on its rig joint and point
 test('no mesh file: the hare is built from code, nothing is fetched or loaded', () => {
   const src = ['src/animals/hare.ts', 'src/animals/hareBody.ts', 'src/render/hareMesh.ts', 'src/render/furCards.ts', 'src/core/body.ts'].map(f => readFileSync(f, 'utf8')).join('\n');
   assert.doesNotMatch(src, /GLTFLoader|OBJLoader|FBXLoader|ColladaLoader|PLYLoader|STLLoader|\.(glb|gltf|fbx|obj|dae|ply|stl)['"`]|TextureLoader|new URL\(/);
-  const walk = (d: string): string[] => readdirSync(d).flatMap(f => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
+  const walk = (d: string): string[] => !existsSync(d) ? [] : readdirSync(d).flatMap(f => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
   assert.deepEqual(walk('public').filter(f => /hare|rabbit|lepus/i.test(f) && /\.(glb|gltf|fbx|obj|dae|ply|stl|png|jpg|ktx2)$/i.test(f)), []);
   const g = globalThis as { fetch?: unknown; XMLHttpRequest?: unknown }, saved = [g.fetch, g.XMLHttpRequest]; let calls = 0;
   g.fetch = () => { calls++; throw new Error('fetch'); }; g.XMLHttpRequest = function () { calls++; throw new Error('xhr'); };

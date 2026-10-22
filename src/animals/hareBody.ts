@@ -66,7 +66,7 @@ const lerp3 = (a: Vec3, b: Vec3, t: number): Vec3 => [a[0] + (b[0] - a[0]) * t, 
 
 /** Leg girths (half-widths, m) at each drawn joint: [sagittal, lateral]. Muscular thigh in the haunch, slim shank, broad furred
  *  snowshoe hind foot; slim forelimb [estimate: drawn to the reference photos]. Hind foot width ~ the 8 cm print less its fur. */
-const HIND_R: Array<[number, number]> = [[.026, .016], [.02, .013], [.011, .012], [.008, .02], [.006, .017]];
+const HIND_R: Array<[number, number]> = [[.03, .02], [.021, .014], [.011, .012], [.008, .02], [.006, .017]];
 const FORE_R: Array<[number, number]> = [[.022, .02], [.014, .013], [.01, .01], [.008, .009], [.006, .011]];
 
 /** Pelt: the dense downy underfur (25 mm, Sheriff et al. 2009) lying at ~45 deg reads as a solid layer ~18 mm deep over the
@@ -101,12 +101,12 @@ function rawTubes(bind: HareBind, coat: HareCoat, pelt: number): Tube[] {
   ] });
   // Head: rounded cranium, puffy buff cheeks, blunt muzzle, dark-brown nose leather (bare: fur < .03 grows no cards).
   tubes.push({ ...palette, radial: 14, smooth: 1, rings: [
-    { p: H(0, .002, .03), rx: .022, ry: .024, w: only(B.head), fur: .7 },
-    { p: H(0, .004, .008), rx: .027, ry: .029, w: only(B.head), fur: .6, accent: .25 },
-    { p: H(0, -.002, -.018), rx: .025, ry: .026, w: only(B.head), fur: .5, accent: .55 },
-    { p: H(0, -.009, -.036), rx: .019, ry: .02, w: only(B.head), fur: .4, accent: .5 },
-    { p: H(0, -.013, -.048), rx: .012, ry: .013, w: only(B.head), fur: .3, accent: .3, pale: .2 },
-    { p: H(0, -.013, -.054), rx: .006, ry: .006, w: only(B.head), fur: .02, dark: .8 },
+    { p: H(0, 0.0022, 0.0336), rx: 0.0246, ry: 0.0269, w: only(B.head), fur: .7 },
+    { p: H(0, 0.0045, 0.0090), rx: 0.0302, ry: 0.0325, w: only(B.head), fur: .6, accent: .25 },
+    { p: H(0, -0.0022, -0.0202), rx: 0.0280, ry: 0.0291, w: only(B.head), fur: .5, accent: .55 },
+    { p: H(0, -0.0101, -0.0403), rx: 0.0213, ry: 0.0224, w: only(B.head), fur: .4, accent: .5 },
+    { p: H(0, -0.0146, -0.0538), rx: 0.0134, ry: 0.0146, w: only(B.head), fur: .3, accent: .3, pale: .2 },
+    { p: H(0, -0.0146, -0.0605), rx: 0.0067, ry: 0.0067, w: only(B.head), fur: .02, dark: .8 },
   ] });
   // Ears: flat leaves, opening forward (ref), standing from the crown; brownish with black tips in summer, black tips in winter.
   for (const side of [-1, 1]) {
@@ -114,9 +114,9 @@ function rawTubes(bind: HareBind, coat: HareCoat, pelt: number): Tube[] {
     const at = (t: number): Vec3 => [base[0], base[1] + E * t, base[2] + .004 * t];
     tubes.push({ ...palette, radial: 10, smooth: 1, lay: [0, 1, 0], ref: [side * .8, 0, -.6], rings: [
       { p: at(0), rx: .009, ry: .007, w: blend(B.head, b, .5), fur: .5 },
-      { p: at(.25), rx: .014, ry: .0045, w: only(b), fur: .4 },
-      { p: at(.6), rx: .015, ry: .004, w: only(b), fur: .35, dark: .1 },
-      { p: at(.85), rx: .012, ry: .0035, w: only(b), fur: .35, dark: .7 },
+      { p: at(.25), rx: .016, ry: .0045, w: only(b), fur: .4 },
+      { p: at(.6), rx: .017, ry: .004, w: only(b), fur: .35, dark: .1 },
+      { p: at(.85), rx: .013, ry: .0035, w: only(b), fur: .35, dark: .7 },
       { p: at(1), rx: .006, ry: .003, w: only(b), fur: .3, dark: 1 },
     ] });
   }
@@ -154,15 +154,15 @@ function rawTubes(bind: HareBind, coat: HareCoat, pelt: number): Tube[] {
   return tubes;
 }
 /** Eye sockets and the cheek bulge; returns the fur clear zones (eyes). Eye relative to the head bone [estimate: reference]. */
-export const HARE_EYE_AT: Vec3 = [.022, .009, -.012];
+export const HARE_EYE_AT: Vec3 = [.0325, .011, -.014]; // on the pelted head surface (rx .030 + pelt .008)
 export function sculptHare(body: BodyData, bind: HareBind): Array<{ center: Vec3; radius: number }> {
   const clear: Array<{ center: Vec3; radius: number }> = [];
   const head = (v: Vec3): Vec3 => [v[0], bind.pivot[1] + bind.head[1] + v[1], bind.pivot[2] + bind.head[2] + v[2]];
   for (const side of [-1, 1]) {
     const eye = head([side * HARE_EYE_AT[0], HARE_EYE_AT[1], HARE_EYE_AT[2]]);
     dent(body, HARE_TUBE.head, eye, .012, .004);
-    push(body, HARE_TUBE.head, head([side * .02, -.01, -.02]), .016, [side * .003, -.002, 0]); // cheek
-    clear.push({ center: eye, radius: .0095 });
+    push(body, HARE_TUBE.head, head([side * .022, -.011, -.022]), .018, [side * .003, -.002, 0]); // cheek
+    clear.push({ center: eye, radius: .013 }); // the winter guard hairs (43 mm) would lean over a smaller clearing
   }
   return clear;
 }

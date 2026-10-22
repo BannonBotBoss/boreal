@@ -1,0 +1,73 @@
+{
+ "eye": [
+  30,
+  0,
+  1.571
+ ],
+ "rays": 15,
+ "inner": 60,
+ "outer": 100,
+ "chunks": 32,
+ "fillerTiles": 20,
+ "entityTrees": 220,
+ "fillerTrees": 629,
+ "shoreDistM": 92,
+ "result": {
+  "h0.5_r0.15": {
+   "sky": 0,
+   "ground": 0.667,
+   "entity": 0.067,
+   "filler": 0.267,
+   "meanRunM": 14.1
+  },
+  "h0.5_r1.2": {
+   "sky": 0,
+   "ground": 0.333,
+   "entity": 0.267,
+   "filler": 0.4,
+   "meanRunM": 6.9
+  },
+  "h1_r0.15": {
+   "sky": 0.333,
+   "ground": 0.2,
+   "entity": 0.133,
+   "filler": 0.333,
+   "meanRunM": 20.3
+  },
+  "h1_r1.2": {
+   "sky": 0.133,
+   "ground": 0.067,
+   "entity": 0.4,
+   "filler": 0.4,
+   "meanRunM": 9.1
+  },
+  "h2_r0.15": {
+   "sky": 0.533,
+   "ground": 0,
+   "entity": 0.133,
+   "filler": 0.333,
+   "meanRunM": 21
+  },
+  "h2_r1.2": {
+   "sky": 0.2,
+   "ground": 0,
+   "entity": 0.4,
+   "filler": 0.4,
+   "meanRunM": 9.3
+  },
+  "h3_r0.15": {
+   "sky": 0.533,
+   "ground": 0,
+   "entity": 0.133,
+   "filler": 0.333,
+   "meanRunM": 21
+  },
+  "h3_r1.2": {
+   "sky": 0.2,
+   "ground": 0,
+   "entity": 0.4,
+   "filler": 0.4,
+   "meanRunM": 9.3
+  }
+ }
+}

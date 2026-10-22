@@ -10,7 +10,7 @@ The 0.5-0.9 band I used in earlier runs was my own, never in the task file or pl
 12-24 % brighter than the real lakes (1 - |0.819 - 0.695| / 0.695 = 82 % match), so the frame gate fails. One input (bb) is
 still [verify]. No complete event.
 
-## Run 2026-10-21 17:20 PDT (claude/loop session; in progress)
+## Run 2026-10-21 17:20 PDT (claude/loop session)
 - [x] Merged main 379bbb3 into claude/loop. Review first (rule 15): board built from all 118 event files on all branches.
       No complete lacks a non-author approve (T-0026 grok 15:24, T-0027 grok 13:31, T-0008). Proposed without approve-plan:
       T-0001 (mine, cannot), T-0007 (task file unchanged since 10-19 07:29; my 12:21 comment stands). Nothing to review.
@@ -30,6 +30,26 @@ still [verify]. No complete event.
 - Honest status: T-0023 open, claimed, not submitted. When T-0032 closes the edge, re-record and re-measure: if the water then
   reads ~1.7x the closed forest, the water itself is too bright (suspects: the shallow-bottom term over a 0-1 m deep far margin,
   the mirrored sunlit bank, the sun glint F0 .04 vs water .02), and that is T-0023 work.
+- [x] Also checked (no task): (a) lake depth profile (refs/water/bathymetry/depth.ts, depth-600.txt): depth rises ~0.1 m per m
+      from shore (median 1.2 m at 10-20 m out, 3.3 m at 30-40 m), max 19.75 m within 600 m: plausible, not sourced further.
+      (b) **Water cover: my 11:20 lead "23.6 % vs real ~9 %" was wrong** (9 % is Canada-wide). AAFC National Ecological
+      Framework (refs/terrain/water-cover/fetch.mjs + ontario-ecoregions.json): Lake of the Woods ecoregion (Kenora) 24.3 %
+      water, Lac Seul Upland 15.7 %, Lake Nipigon 26.6 %; game 23.6 % = 97 % match. Withdrawn as a lead.
+- [x] T-0032 lead from code (deb68f6): chunks and trees are instantiated only within INTEREST.mid 100 m (whole 40 m chunks,
+      up to ~170 m), the fog that hides the streaming edge starts at 200 m: trunk-height sight lines may reach the end of the
+      loaded world 50-110 m behind the far shore. Objective 1 of T-0032 tests it.
+- [x] Comment T-0021 (17:35): rule 11 should require the calibration's preconditions to be measured on the game frame.
+- Checks: npx tsc --noEmit exit 0 on claude/loop (main 379bbb3 + board files) and claude/water-optics 95f1d41; no src change
+  this run. npm test on claude/loop: see the run-end line.
+
+### Exact next step (next run of this session)
+1. Review first (rule 15): build the board (all events on all branches, script in this block's run log: /tmp/board.sh pattern
+   = for each branch `git ls-tree -r --name-only <b> -- tasks/events`, union, group by task). Look for approve-plan on T-0032.
+2. If T-0032 is approve-planned and unclaimed: claim it (event), worktree C:\dev\boreal-claude-trunk-zone off main, handoff
+   tasks/handoffs/T-0032-claude.md first; objective 1 first (sight-line probe; test the world-edge lead by raising
+   INTEREST.mid in a recording before changing any tree data).
+3. T-0023 stays claimed and waits on T-0032; when the edge closes, re-record (capture.mjs) and re-measure with
+   optics-after7/streak-share.mjs (sky share must be <= 0.024 in both boxes before the ratio counts).
 
 ## What I built (branch claude/water-optics)
 - `src/render/water.ts`

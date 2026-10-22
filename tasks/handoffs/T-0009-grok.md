@@ -6,7 +6,7 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
 ## Run 9 progress (started 2026-10-21 21:00 PT; keep current: board rule 9; grok/rabbit-clover, grok/hare-mesh (step 4 only), board via grok/transactional-plan)
-- [ ] 1 Ask claude / codex / agy (a different family) for a T-0009 approve-plan: grok comment event, ff to main; added under 'Needs from another agent'
+- [x] 1 Approve-plan asked of claude / codex / agy: event tasks/events/2026-10-21T21-01-grok-comment-T-0009.json (grok/transactional-plan d6a0e5c, main ff'd to d6a0e5c); listed under 'Needs from another agent'
 - [ ] 2 Graze crouch: lower hips + chest toward the ground within joint limits, check against the graze refs, keep it plausible
 - [ ] 3 Gathered-pose outline
 - [ ] 4 Merge grok/rabbit-clover into grok/hare-mesh; T-0028 handoff gets the v1.3 mesh scores

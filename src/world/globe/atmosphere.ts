@@ -46,6 +46,7 @@ const GLSL = /* glsl */`
 const float ATM_AERIAL = ${ATMOS.aerial.toFixed(3)}; // in-scatter in the terrain's light units: ~ sun light (3.2) / sunI (22), so haze vs lit ground matches a real sky/ground ratio [reference calibration: Blue Marble land/ocean contrast]
 uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
 uniform mat3 uViewToWorld; uniform float uCloudOct, uCloudSeed, uCloudEvolve; uniform vec2 uCloudSpin; // spin = (cos, sin) of the drift angle
+uniform float uCloudClear; // 0 = the field as calibrated .. 1 = no clouds (thresholds raised past the noise; in-page descent, T-0034)
 uniform vec3 uCloudEdge; // threshold centre, half width (governor tier), pixel angle (rad per px: octave fade by distance)
 const vec3 BR = vec3(${ATMOS.rayleigh.map(v => v.toExponential(4)).join(', ')});
 const float BM = ${ATMOS.mie.toExponential(4)}, BME = ${(ATMOS.mie * ATMOS.mieExt).toExponential(4)}, HR = ${ATMOS.rayleighH.toFixed(2)}, HM = ${ATMOS.mieH.toFixed(2)}, MG = ${ATMOS.mieG.toFixed(3)};
@@ -95,21 +96,21 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
   if (g.x > g.y || t <= 0.0 || t > tEnd) return vec4(0.0);
   // octaves whose cells are under ~2 px at this distance fade out (octave i: cell ${CLOUDS.cellKm} km / 2.07^i)
   float octD = 1.0 + log2(${CLOUDS.cellKm.toFixed(1)} / max(2.0 * t * uCloudEdge.z, 1e-6)) / log2(2.07);
-  vec3 x = rd * t, n = normalize(x - uCentre); float a = cloudDensity(normalize(uViewToWorld * n), clamp(octD, 1.0, uCloudOct), uCloudEdge.x, uCloudEdge.y);
+  vec3 x = rd * t, n = normalize(x - uCentre); float a = cloudDensity(normalize(uViewToWorld * n), clamp(octD, 1.0, uCloudOct), mix(uCloudEdge.x, 1.1, uCloudClear), uCloudEdge.y);
   if (a <= 0.0) return vec4(0.0);
   vec3 sunT = atmSunlight(x, nl); float lam = max(dot(n, uSun), 0.0);
   return vec4(${CLOUDS.albedo.toFixed(2)} * (sunT * (0.25 + 0.75 * lam) * 1.12 + 0.08), a * 0.9);
 }
 `;
 
-export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void }
+export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void }
 const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.length - 1, tier))];
 
 /** Sky shell + aerial-perspective patcher for a planet of radius `R` metres (centre at the world origin). */
 export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   let [sn, sl, tn, tl] = stepsFor(tier), cur = tier;
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
-  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) } };
+  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 } };
   const setSteps = () => { uniforms.uSteps.value.set(sn, sl, tn, tl); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = CLOUDS.octaves[row]; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
   const mat = new THREE.ShaderMaterial({
     uniforms, side: THREE.BackSide, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending,
@@ -141,6 +142,8 @@ void main() {
     dome, uniforms, get tier() { return cur; },
     /** Governor tier changed: new ray-march sample counts. Uniforms only (loops break at the count), so no shader
      *  recompile and no hitch when the governor moves. */
+    /** 0..1: open the cloud deck (holes grow as the coverage threshold rises; shadows go with it). Uniform only. */
+    setClear(k) { uniforms.uCloudClear.value = k; },
     setTier(t) { if (t === cur) return; cur = t; [sn, sl, tn, tl] = stepsFor(t); setSteps(); },
     /** Per frame, after the camera is placed (camera-relative: camera renders from the origin, `camPos` is its double
      *  world position): planet centre and sun in view space, km. */
@@ -166,7 +169,7 @@ void main() {
     // only the DIRECT sun is reddened (sunset) / cut (planet shadow) on its way to the fragment (x1.12 = noon
     // transmittance^-1); sky (hemisphere) light stays, so ground facing away from a low sun is lit by the sky, not black
     float cs = 1.0; if (uCloudOct > ${CLOUDS.shadowMinOct - .5}) { vec3 nU = normalize(fp - uCentre); float mu = dot(nU, uSun); // cloud shadow: one cloud-field lookup up the sun ray
-      if (mu > 0.02) cs = 1.0 - ${CLOUDS.shadow.toFixed(2)} * cloudDensity(normalize(uViewToWorld * normalize(fp + uSun * (${CLOUDS.heightKm.toFixed(2)} / mu) - uCentre)), 1.0, ${CLOUDS.shadowCentre.toFixed(3)}, ${CLOUDS.shadowHalf.toFixed(3)}); }
+      if (mu > 0.02) cs = 1.0 - ${CLOUDS.shadow.toFixed(2)} * cloudDensity(normalize(uViewToWorld * normalize(fp + uSun * (${CLOUDS.heightKm.toFixed(2)} / mu) - uCentre)), 1.0, mix(${CLOUDS.shadowCentre.toFixed(3)}, 1.2, uCloudClear), ${CLOUDS.shadowHalf.toFixed(3)}); }
     outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * (1.12 * cs) * atmSunlight(fp, int(uSteps.w)) + reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular + totalEmissiveRadiance;
     vec3 ins = atmScatter(rd, d, int(uSteps.z), int(uSteps.w), tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL;
     vec4 cl = atmClouds(rd, d, int(uSteps.w)); outgoingLight = mix(outgoingLight, cl.rgb * tr + ins * ATM_AERIAL, cl.a); } // clouds between camera and ground

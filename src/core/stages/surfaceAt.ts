@@ -41,11 +41,16 @@ export function surfaceAt(x: number, z: number, seed = STAGES.seed): SurfacePoin
 /** Nearest dry, walkable start to (x, z) on the staged terrain: a ring search in 15 m steps out to `maxR` metres for a
  *  point with no lake/river and ground at least `margin` m above the water plane. Returns (x, z) unchanged if already dry
  *  (or nothing dry was found). Used for the default player start, which is a fixed point and can fall in a lake. */
-export function dryStart(x: number, z: number, seed = STAGES.seed, maxR = 900, margin = .6): [number, number] {
+export function dryStart(x: number, z: number, seed = STAGES.seed, maxR = 900, margin = .6): [number, number] { return drain(dryStartSteps(x, z, seed, maxR, margin)); }
+/** Run a resumable search (dryStartSteps, world/globe handoff landSpawnSteps) to the end in one call. */
+export function drain<T>(g: Generator<unknown, T>): T { let r = g.next(); while (!r.done) r = g.next(); return r.value; }
+/** dryStart as resumable steps: yields after every candidate point, so a caller with a frame budget (world/globe/inpage, the
+ *  descent) spreads a long lake search (up to ~1.4 s in one call, T-0034) over frames. Same points, same order, same result. */
+export function* dryStartSteps(x: number, z: number, seed = STAGES.seed, maxR = 900, margin = .6): Generator<void, [number, number]> {
   const dry = (px: number, pz: number) => { const p = surfaceAt(px, pz, seed); return !p.lake && !p.river && p.height > LEVEL.waterSurface + margin; };
   if (dry(x, z)) return [x, z];
   for (let r = 15; r <= maxR; r += 15) { const k = Math.max(8, Math.round(2 * Math.PI * r / 15));
     for (let i = 0; i < k; i++) { const a = i / k * 2 * Math.PI, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r;
-      if (dry(px, pz) && dry(px + 6, pz) && dry(px - 6, pz) && dry(px, pz + 6) && dry(px, pz - 6)) return [px, pz]; } }
+      if (dry(px, pz) && dry(px + 6, pz) && dry(px - 6, pz) && dry(px, pz + 6) && dry(px, pz - 6)) return [px, pz]; yield; } }
   return [x, z];
 }

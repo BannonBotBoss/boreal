@@ -10,6 +10,7 @@ import { createAgent, stepAgent, type FoodSource, type AgentWorld } from '../src
 import { HARE_AGENT } from '../src/core/agent/species';
 import { CLOVER, CLOVER_WHY, grazeTransaction, type CloverPatch } from '../src/core/clover';
 import { stream } from '../src/proc/rng';
+import { setHareDay } from '../src/render/hareMesh';
 const q = new URLSearchParams(location.search), wolfAt = Number(q.get('wolfAt') ?? 2.1), fps = Number(q.get('fps') ?? 6), dur = Number(q.get('dur') ?? 5), seed = q.get('seed') ?? 'strip';
 const CW = 424, CH = 240, COLS = 6, N = Math.round(fps * dur), ROWS = Math.ceil(N / COLS), W = CW * COLS, H = CH * ROWS;
 const canvas = document.getElementById('c') as HTMLCanvasElement;
@@ -20,6 +21,9 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 40), new THREE.MeshSta
 const leaf = new THREE.InstancedMesh(new THREE.CircleGeometry(.03, 6).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x3f7a2a }), 4000);
 const r = stream(7, 'strip-clover'), m4 = new THREE.Matrix4(); for (let i = 0; i < 4000; i++) { m4.makeTranslation((r() - .5) * 30, .01 + r() * .03, (r() - .5) * 8 - 1); leaf.setMatrixAt(i, m4); } scene.add(leaf);
 for (let i = 0; i < 26; i++) { const t = new THREE.Mesh(new THREE.CylinderGeometry(.12, .16, 9, 6), new THREE.MeshStandardMaterial({ color: 0x2b2418 })); t.position.set(-14 + i * 1.2 + r(), 4.5, -6 - r() * 3); scene.add(t); }
+// T-0028: ?day=<day of year> picks the coat (render/hareMesh moult), ?snow=1 a snow ground for the winter gate
+if (q.get('day')) setHareDay(Number(q.get('day')));
+if (q.get('snow')) { scene.background = new THREE.Color(0xc9d2da); scene.fog = new THREE.Fog(0xc9d2da, 8, 30); (ground.material as THREE.MeshStandardMaterial).color.set(0xf4f6f8); leaf.visible = false; }
 const hare = { ...createHareModel(), hopPhase: 0, id: 1 }; scene.add(hare.root);
 const max = Math.round(Math.PI * CLOVER.unitsPerM2); const patch: CloverPatch = { key: 'clover:strip', x: -1.2, z: 0, r: 1, light: 1, max, units: max, stolon: 50 * Math.PI, why: CLOVER_WHY.map(w => ({ ...w })) };
 const src: FoodSource = { at: (x, z, pad = 0) => Math.hypot(patch.x - x, patch.z - z) < patch.r + pad && patch.units > 0 ? patch : undefined,

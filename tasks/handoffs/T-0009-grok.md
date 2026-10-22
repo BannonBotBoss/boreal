@@ -50,7 +50,22 @@ C:\dev\rabbit-rec12\. Submit only if every gate >= 95 % and after re-checking RU
   Board comment tasks/events/2026-10-21T20-23-grok-comment-T-0009.json (grok/transactional-plan e29e7ec, ff-merged into the
   served main). Still open (11:36 PT note): the plan approve was written by grok in Matthew's name, so T-0009 needs another
   agent's approve-plan before any complete event.
-- [ ] 4 Rounder gather via SPINE_BEND within sourced spine flexion; sourced hip extension + foreLeg
+- [x] 4 Spine bend, hip extension, foreLeg (box renders, lookscore v1.3; evidence C:\dev\rabbit-rec12\look\ s13/e13-sb10, -sbA, -sbB).
+  - SPINE_BEND (hare.ts): the skin's rump does not turn with the rig's spine flex, so the chest's turn relative to the body IS
+    the shown lumbar bend; the sourced cap is the rig's +-.366 rad pelvic movement (Schilling & Hackert 2006). Measured chest bend
+    (look\chest-bend.ts): .6 -> .196 rad, 1.0 -> .335 / .339, 1.1 -> .370 (over). Symmetric 1.0 (sb10): gathers unchanged (summer
+    47.6, winter 48.6, inside the noise band) and winter stretch 90.8 -> 85.6 (worse than 2 SD). Shipped: flexion 1.0 / extension
+    .44 = the rabbit's lumbar extension-to-flexion ratio 17.6 / 39.7 deg over L4-L7 (Grauer, Erulkar, Patel & Panjabi 2000, Eur
+    Spine J, doi:10.1007/s005860000141, in vitro); bend -.335 / +.137 rad (sbA): summer gather 47.6 (noise), winter gather 48.6
+    (+2.2), winter stretch 93.3 (+2.1). The gather is NOT measurably rounder: the stance-cell silhouette is set by the trunk
+    mesh and leg positions, not the chest turn.
+  - Hip extension: no sourced leporid hip range found (searched rabbit hip goniometry / ROM; only knee - Hildebrand 2003 - and
+    lumbar - Grauer 2000 - exist). The swing fold stays bounded by the geometric 'sole below its own hip' rule (bound-checks v3).
+  - foreLeg .181 -> .187 (HARE_BODY): radius = humerus x .969, the snowshoe hare's own ratio (L. americanus UWBM-21111, Burke
+    Museum, humerus 72.36 / radius 70.12 mm, specimens.iri.isu.edu id 79; one specimen, only its ratio used; was x .90 from
+    another species). tests/bound.test.ts limb sum .187. sbB (with the spine change): summer 62.8 / winter 79.5 shape (winter
+    gather 52.5, +3.9), end-on stretch 37.2 (-2.1) and end-on coat 77.8 (-2.3) a little worse; everything else inside the noise.
+    bound-checks hare 99.9 %. Box tests hare-mesh + bound + anatomy + hare-rig + bound-v5 28/28; PC tsc 0.
 - [ ] 5 Re-score T-0009 / T-0028 with v1.3, tests + tsc, RULES.md re-check, compare-run8.jpg
 ## Run 7 progress (started 2026-10-21 18:30 PT; keep current: board rule 9; branches grok/rabbit-clover + grok/hare-mesh)
 Plan (Matthew via Grok lead, 18:23 PT brief): grok/hare-mesh (T-0028 mesh + calibrated lookscore v1) merged in first, then fix

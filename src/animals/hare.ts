@@ -49,8 +49,11 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
  *  - hindLeg .202 = femur 94 mm (L. americanus, Illinois State Museum Larson collection) + tibia 108 mm = femur x 1.13-1.19
  *    (L. europaeus tibia/femur: Volf 2023 Lynx 54:193, means 147.3/130.7 mm; Williams et al. 2007 J Anat 210:472 Table 4,
  *    137/115 mm) [scaled]; upperShare .47 = femur / (femur + tibia).
- *  - foreLeg .181 = humerus 77 mm (femur x .80, Volf 2023 means 104.8/130.7) + radius 69 mm (humerus x .90, Williams et al.
- *    2007 J Anat 211:475 Table 4, 101.5/113) [scaled] + manus 35 mm [estimate: drawn to the reference]; manus share .19.
+ *  - foreLeg .187 (run 8; was .181) = humerus 77 mm (femur x .80, Volf 2023 means 104.8/130.7) + radius 74.6 mm (humerus x
+ *    .969, the snowshoe hare's own ratio: L. americanus adult female UWBM-21111, Burke Museum, humerus 72.36 / radius 70.12 mm,
+ *    Idaho Virtual Zooarchaeology specimens.iri.isu.edu id 79 - one specimen, a small Pacific-Northwest hare, so only its ratio is
+ *    used; was x .90 from Williams et al. 2007 J Anat 211:475 Table 4, 101.5/113, another species) + manus 35 mm [estimate:
+ *    drawn to the reference] = 151.6 mm / (1 - .19); manus share .19.
  *  - hindFoot .132 (hock to toe tip, in ADW's 117-147 mm hind foot range); standing hip .13 with the knee bent to
  *    hindBend .5 of the leg and the shoulder at foreBend .6 of the fore leg (crouched resting posture) [estimate: drawn to the
  *    reference photos]. Trunk (hip to shoulder joint) .21 m and head .30 m ahead of the hip (nose to tail ~.47 m, in the
@@ -58,7 +61,7 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
  *  - run 5 (grok-gait v3 contract): hindToes .056 = the toes (MTP to tip) of the .132 hind foot, scapula .063 = the shoulder
  *    blade in the fore chain (= .816 x humerus), both from Lepus brachyurus bone means (Exp Anim 30(2):113, 1981, Tables 1
  *    and 4-6; working in tools/bound-plans.ts SPLIT / BLADE). */
-export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .181, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.27, headY: .085 };
+export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .187, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.27, headY: .085 };
 /**
  * T-0028 skin + fur spec (data for the shared core/rigBody.ts + render/rigSkin.ts; tasks/T-0028 number table). No mesh file:
  * every vertex comes from these rings around the rig's bind pose (hareBind). Model space = the hare root (feet y 0, forward -z).
@@ -163,9 +166,15 @@ export const HARE_PLAN: BodyPlan = { hip: HARE_BODY.hipY, hipZ: HARE_BODY.hipZ, 
 /** Rig options (run 5): the level-trunk running posture (needs the blade's fore reach) and turning in place by re-planting. */
 export const HARE_RIG = { pose: RUN_POSE_LEVEL, turnInPlace: true };
 const HARE_SKELETON = skeletonOf(HARE_PLAN);
-/** Share of the rig's spine flex (rad) the chest bone turns by (front down when gathered, up when extended) [estimate: drawn to
- *  refs/hare/graze-alert-flight attempt2 panels 4-6 against lookscore v1; the rig's flex is DERIVED (bounding.ts), not measured]. */
-export const SPINE_BEND = .6;
+/** Share of the rig's spine flex (rad) the chest bone turns by (front down when gathered, up when extended). Run 8: 1.0, the
+ *  largest share that keeps the chest-to-rump bend inside the SOURCED spine range: the rig's flex is the pelvic movement the
+ *  lumbar spine makes, capped at +-.366 rad (GIRDLE.spineMax: pika leading-limb stance excursion 109 -> 151 deg, Schilling &
+ *  Hackert 2006 JEB 209:3925), and the skin's rump (body bone) does not turn with it, so the chest's turn relative to the body
+ *  IS the shown lumbar bend: measured .335 / .339 rad at 1.0 (1.1: .370 / .375, over the cap). Both sides are inside the rabbit's
+ *  passive lumbar range too (Grauer, Erulkar, Patel & Panjabi 2000, Eur Spine J, doi:10.1007/s005860000141, NZW L4-L7 in vitro: 12.1 / 12.4 / 15.2 deg flexion and
+ *  5.9 / 5.6 / 6.1 deg extension per joint, over the 7 +- 1 bending presacral joints of Schilling & Hackert). Extension
+ *  takes .44 of it: the rabbit's lumbar joints extend 17.6 deg for every 39.7 deg they flex (Grauer, same L4-L7 sums). Was .6 both ways [estimate]. */
+export const SPINE_BEND = { flex: 1, extend: .44 };
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3();
 /** Pose one hare model from its pipeline agent for this frame (shared by the game host and tools/hare-strip). The legs, body
  *  height and pitch come from the bounding rig (planted feet, half-bound / lagomorph gallop, sit-up and graze-crouch pose
@@ -191,7 +200,7 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
     const fl = limbPoints(HARE_SKELETON, fr, 0)[0], frt = limbPoints(HARE_SKELETON, fr, 2)[0];
     h.body.updateMatrixWorld(); _a.set((fl.x + frt.x) / 2 + ox, (fl.y + frt.y) / 2, (fl.z + frt.z) / 2 + oz); h.body.worldToLocal(_a);
     const ang = (y: number, z: number) => Math.atan2(y, -z), want = ang(_a.y, _a.z) - ang(c0[1], c0[2]);
-    h.chest.position.copy(_a); h.chest.rotation.x = want - SPINE_BEND * fr.spineFlex;
+    h.chest.position.copy(_a); h.chest.rotation.x = want - (fr.spineFlex > 0 ? SPINE_BEND.flex : SPINE_BEND.extend) * fr.spineFlex;
   }
   h.legs.forEach((leg, i) => {
     const P = limbPoints(HARE_SKELETON, fr, i), o = leg.from; // [top (blade pivot), girdle joint, knee/elbow, ankle/wrist, toe/MTP(, toe tip)]

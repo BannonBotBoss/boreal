@@ -30,3 +30,12 @@ Descent lessons (T-0034 follow-up)
 - Measure with a rAF log in the page (dt, mode, alt, pitch) plus a CPU profile of the busiest stretch, not capture intervals:
   CDP screenshot gaps also come from other agents' benches. A headed Edge window behind other windows is throttled to 1 Hz
   (dt ~1000 ms every frame): that run is invalid, not a freeze.
+
+HUD over the globe (T-0039)
+- Hide screen chrome per mode with ONE body class set from the single mode hook (inpage.ts setMode -> body.on-globe via
+  src/world/globe/hud.ts), and one CSS line next to the existing body.photo-mode rule; keep #menu-btn (and Esc) reachable.
+- Verify with a capture that logs which HUD elements have client rects in each mode (refs/T-0039/capture.mjs, cycle.mjs):
+  globe, Esc menu, Menu button, band, landing, ascent back to the globe, a second landing.
+- Worktree files are checked out CRLF (global autocrlf): before `git -c core.autocrlf=false add`, write edited files with LF
+  and check `git -c core.autocrlf=false diff --stat` - otherwise every touched file shows as a whole-file rewrite. Add exact
+  paths, never a whole folder. PowerShell's .NET calls ([IO.File]) do not follow `cd`: use absolute paths.

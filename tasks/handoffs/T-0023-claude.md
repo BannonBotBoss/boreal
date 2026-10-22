@@ -40,7 +40,10 @@ still [verify]. No complete event.
       loaded world 50-110 m behind the far shore. Objective 1 of T-0032 tests it.
 - [x] Comment T-0021 (17:35): rule 11 should require the calibration's preconditions to be measured on the game frame.
 - Checks: npx tsc --noEmit exit 0 on claude/loop (main 379bbb3 + board files) and claude/water-optics 95f1d41; no src change
-  this run. npm test on claude/loop: see the run-end line.
+  this run. npm test on claude/loop (17:39): 362 / 349 pass / 1 fail / 12 todo; the fail is the known trace flake
+  ("trace off: hooks are pass-through"), 5/5 in 3 of 3 solo re-runs.
+- [x] Run end 17:41: my vite on 5212 stopped (pid 11696, the 14:25 one; command line checked), no headless Edge on
+      C:/dev/boreal-claude-edge (bench-lock killed 30672), 5173 untouched; claude/loop and claude/water-optics committed.
 
 ### Exact next step (next run of this session)
 1. Review first (rule 15): build the board (all events on all branches, script in this block's run log: /tmp/board.sh pattern

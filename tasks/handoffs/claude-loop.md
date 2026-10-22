@@ -203,3 +203,6 @@ looks in nature? If not, refine the prompt (log attempts in refs/water/reference
 
 ## Run 2026-10-21 17:20 PDT (claude/loop session)
 Work log for this run is in tasks/handoffs/T-0023-claude.md ("Run 2026-10-21 17:20"). Review first: nothing waiting (see there).
+Result: T-0023 ratio 0.819 is invalid (treeline box 12 % sky between the far trunks, real closed edges <= 0.2 %); proposed
+T-0032 (forest trunk zone closed, event 17:33); comment T-0023 (17:34) and T-0021 (17:35, rule 11 preconditions); water-cover lead
+withdrawn (Lake of the Woods ecoregion 24.3 % vs game 23.6 %). Ended 17:41, vite 5212 stopped, no Edge left.

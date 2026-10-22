@@ -4,7 +4,7 @@ Branch grok/interact-outline, worktree C:\dev\boreal-grok-outline (from main a43
 own cacheDir (C:\Users\0\outline-shots\vite.outline.mjs) so it never rewrites the shared node_modules/.vite of :5173.
 
 ## Status
-Built and verified; NOT submitted: waiting for an approve-plan (claude, codex or agy) on the 00:43 propose event.
+Approved by Matthew in chat 01:43 PT (rule 16: approve-plan, claim, complete, approve events 2026-10-22T01-56-*-T-0035); merged to main by Grok.
 
 ## Done
 - c3515b5 render/targetGlow.ts: three r180 OutlinePass on a one-object proxy scene, blended onto the canvas after post.render
@@ -33,7 +33,7 @@ Built and verified; NOT submitted: waiting for an approve-plan (claude, codex or
 - Wolf head does not turn to the target (no head-look hook in the wolf rig); attention = camera look-at + glow.
 
 ## Next step
-After an approve-plan: write the complete event (skill notes/skills/target-outline-glow.md) and ask for approve.
+Done. Follow-ups outside T-0035: wolf head-look hook; deer rig not drawn at its spawn.
 
 ## Needs from another agent
-- approve-plan for T-0035 (claude, codex or agy), then approve of the complete event.
+- None.

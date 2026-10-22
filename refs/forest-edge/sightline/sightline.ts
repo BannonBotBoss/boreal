@@ -16,11 +16,13 @@ import { standAt } from '../../../src/core/stand';
 import { LEVEL } from '../../../src/core/tuning';
 import { RENDER } from '../../../src/core/renderSettings';
 import { STAGES, lakeAt } from '../../../src/core/stages/elevation';
+import { riverAt } from '../../../src/core/stages/rivers';
 
 const [ex, ez, yaw] = process.argv.length >= 5 ? process.argv.slice(2, 5).map(Number) : [30, 0, 1.571];
+STAGES.on = true; // the app default (setting world.stagedTerrain.v2, core/renderSettings); the module default is off
 setInterestCentre(ex, ez);
-// the same water test core/flora/site uses for lakes (staged kettle lakes sit above base level)
-const dryAt = (x: number, z: number) => heightAt(x, z) >= LEVEL.shore && !lakeAt(STAGES.seed, x, z);
+// the water sheet render/terrainCore draws: a lake cell or a river bed (inner bank), else the base water plane
+const dryAt = (x: number, z: number) => { if (lakeAt(STAGES.seed, x, z)) return false; const rv = riverAt(STAGES.seed, x, z); return !(rv && rv.d < rv.half + rv.bank) && heightAt(x, z) > LEVEL.waterSurface; };
 type Tree = { x: number; z: number; layer: 'entity' | 'filler' };
 const trees: Tree[] = [];
 // Chunks the game instantiates around the centre (render/buildScene sync, ground level).
@@ -40,7 +42,7 @@ const r = Math.ceil(outer / T), ox = Math.floor(ex / T), oz = Math.floor(ez / T)
 for (let tz = oz - r; tz <= oz + r; tz++) for (let tx = ox - r; tx <= ox + r; tx++) {
   const d = Math.hypot((tx + .5) * T - ex, (tz + .5) * T - ez); if (d < inner || d > outer) continue;
   tileSet.add(`${tx},${tz}`);
-  for (const p of farTreesInTile(tx, tz, RENDER.treeDensity, stemsAt, (x, z) => dryAt(x, z) ? 1 : 0)) trees.push({ x: p.x, z: p.z, layer: 'filler' });
+  for (const p of farTreesInTile(tx, tz, RENDER.treeDensity, stemsAt, (x, z) => heightAt(x, z) < LEVEL.shore ? 0 : 1)) trees.push({ x: p.x, z: p.z, layer: 'filler' }); // fartrees.ts dry()
 }
 const drawn = (x: number, z: number) => chunkSet.has(`${Math.floor(x / CHUNK_SIZE)}:${Math.floor(z / CHUNK_SIZE)}`) || tileSet.has(`${Math.floor(x / T)},${Math.floor(z / T)}`);
 

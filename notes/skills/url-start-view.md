@@ -26,7 +26,7 @@ Descent lessons (T-0034 follow-up)
 - Camera pitch over a mode change must come from one function of altitude (transition.ts globePitch: straight down in orbit
   -> the 45 deg glide at the band top) used by globe, band and ascent; test it is monotone and < 1 deg per 1 % altitude.
 - A "blank plain" from above can be the cloud shell, not missing terrain: A/B with ?atmos=0 before touching terrain code.
-  The in-page descent opens the deck with cloudClear (atmosphere uCloudClear, 300 km -> 20 km).
+  The in-page descent opens the deck with cloudClear (atmosphere uCloudClear, 1500 km -> 150 km, linear in log altitude, T-0041).
 - Measure with a rAF log in the page (dt, mode, alt, pitch) plus a CPU profile of the busiest stretch, not capture intervals:
   CDP screenshot gaps also come from other agents' benches. A headed Edge window behind other windows is throttled to 1 Hz
   (dt ~1000 ms every frame): that run is invalid, not a freeze.
@@ -39,3 +39,15 @@ HUD over the globe (T-0039)
 - Worktree files are checked out CRLF (global autocrlf): before `git -c core.autocrlf=false add`, write edited files with LF
   and check `git -c core.autocrlf=false diff --stat` - otherwise every touched file shows as a whole-file rewrite. Add exact
   paths, never a whole folder. PowerShell's .NET calls ([IO.File]) do not follow `cd`: use absolute paths.
+
+Cloud deck and landing view (T-0041)
+- Never fade a cloud layer by threshold alone (the cell's density spans ~.1, so it snaps in a few frames) nor by alpha alone (a
+  fully covered view thins as one flat sheet). Fade alpha over log altitude AND lift the threshold a little (CLOUDS.clearLift).
+  Calibrate first: hold the fade and sweep the threshold in the browser (refs/T-0041/measure.mjs sweep), then bound the
+  per-frame luminance change at the fastest recorded descent rate (<= 2 % per 60 fps frame).
+- Cream-pixel counts are a bad cloud metric (a half-faded cloud is grey); use the mean luminance of a central crop.
+- Landing view: clearViewSteps moves the spot (heading kept) until the follow camera -> wolf line clears trees (crown radius)
+  and rocks/logs that stand taller than the line (core/ground treesAround / solidsAround). A centre raycast to the wolf misses
+  leg occlusion: always look at the stills too.
+- ?at=x,z,yaw spawns exactly (no dry search); use it to check computed spots in the browser. The ascend + zoomTo path from an ?at
+  load does not descend, and a bare load always descends near home.

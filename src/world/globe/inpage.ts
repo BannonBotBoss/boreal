@@ -129,7 +129,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     start.p.set(pg.x, pg.y, pg.z); start.q.setFromRotationMatrix(gameBasis(g.planet, pg.x, pg.z, tmpM)).invert().multiply(g.camera.quaternion);
     h0 = Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)); fwd.set(-Math.sin(at.yaw), -Math.cos(at.yaw));
     const c = landingPoint(pg.x, pg.z, fwd, h0); let s = prep;
-    if (!s || Math.hypot(c.x - s.x, c.z - s.z) >= 2 * CHUNK_SIZE) { s = landSpawn(c); host.place(s.x, s.z, at.yaw); placedFrame = frameNo; } // else the spot prepared on the way down (chunks already building); no second search
+    if (!s || Math.hypot(c.x - s.x, c.z - s.z) >= 2 * CHUNK_SIZE) { s = landSpawn(c, undefined, at.yaw); host.place(s.x, s.z, at.yaw); placedFrame = frameNo; } // else the spot prepared on the way down (chunks already building); no second search
     prep = null; search = null;
     land.set(s.x, ground(s.x, s.z), s.z); h0 = Math.max(TRANSITION.handover + 1, pg.y - land.y); h = h0;
     off.set(start.p.x - (land.x - fwd.x * h0), start.p.y - (land.y + h0), start.p.z - (land.z - fwd.y * h0)); // decays to 0 with height
@@ -144,7 +144,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
    *  the player there now, so the patch chunks build during the last of the globe zoom. */
   function prepare(yaw: number) { // starts the dry-land search; step() finishes it within INPAGE.searchMs per frame, then places the player
     const g = globe!, v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]), f = new THREE.Vector2(-Math.sin(yaw), -Math.cos(yaw));
-    search = { steps: landSpawnSteps(landingPoint(pg.x, pg.z, f, Math.min(TRANSITION.bandTop, Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z))))), yaw };
+    search = { steps: landSpawnSteps(landingPoint(pg.x, pg.z, f, Math.min(TRANSITION.bandTop, Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)))), undefined, yaw), yaw };
   }
   function stepSearch() {
     if (!search) return; const t0 = performance.now(); let r = search.steps.next();
@@ -189,6 +189,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** dev (the check script): chunk job scheduler state */
     /** dev (the check script): hold the descent at a height / pin the band camera (occlusion checks); ground height */
     DEBUG, groundAt: ground, get land() { return [land.x, land.y, land.z]; },
+    /** dev (refs/T-0041/measure.mjs): the game view (scene, camera) and the player spot, for the landing line-of-sight raycast */
+    get view() { return view; }, player: () => host.player(),
     jobs: () => ({ q: queued(), run: JOBS.jobsRun, deferred: JOBS.deferred, lastMs: +JOBS.lastFrameMs.toFixed(1), kinds: JSON.parse(JSON.stringify(JOBS.kinds)) as unknown }),
     get mode() { return mode; }, get globe() { return globe; }, get fade() { return fade; }, get height() { return h; }, STATS, INPAGE, far,
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */

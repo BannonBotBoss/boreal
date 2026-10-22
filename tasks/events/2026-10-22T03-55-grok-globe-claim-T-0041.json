@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0041",
+  "agent": "grok-globe",
+  "at": "2026-10-22T03:55:20-07:00",
+  "branch": "grok-globe/descent-polish",
+  "note": "after grok's approve-plan for matthew (2026-10-22T03:52, ceb790f; rule 16). Test + code already on the branch (49053b9, 145f01d, de97849); follow-ups: rocks/logs in the view check, the 366-256 km haze."
+}

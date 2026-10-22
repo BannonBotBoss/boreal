@@ -1,0 +1,155 @@
+{
+ "after": [
+  {
+   "i": 9,
+   "k": "raw",
+   "spot": {
+    "x": -602.4,
+    "z": 2373.8
+   },
+   "yaw": 2.734,
+   "camDist": 3.2,
+   "blocked": true,
+   "hits": [
+    {
+     "d": 0.56,
+     "type": "Mesh",
+     "name": "",
+     "mat": ""
+    }
+   ]
+  },
+  {
+   "i": 9,
+   "k": "chosen",
+   "spot": {
+    "x": -600.9,
+    "z": 2373.8
+   },
+   "yaw": 2.734,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 38,
+   "k": "raw",
+   "spot": {
+    "x": -797,
+    "z": 1926.4
+   },
+   "yaw": 1.768,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 38,
+   "k": "chosen",
+   "spot": {
+    "x": -795.9,
+    "z": 1927.5
+   },
+   "yaw": 1.768,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 0,
+   "k": "raw",
+   "spot": {
+    "x": 574.1,
+    "z": 1859.5
+   },
+   "yaw": 0,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 0,
+   "k": "chosen",
+   "spot": {
+    "x": 574.1,
+    "z": 1859.5
+   },
+   "yaw": 0,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 1,
+   "k": "raw",
+   "spot": {
+    "x": -590.2,
+    "z": 2466
+   },
+   "yaw": 1.7,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 1,
+   "k": "chosen",
+   "spot": {
+    "x": -590.2,
+    "z": 2466
+   },
+   "yaw": 1.7,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 2,
+   "k": "raw",
+   "spot": {
+    "x": 78,
+    "z": 1372
+   },
+   "yaw": 3.4,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 2,
+   "k": "chosen",
+   "spot": {
+    "x": 78,
+    "z": 1372
+   },
+   "yaw": 3.4,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 3,
+   "k": "raw",
+   "spot": {
+    "x": 489.1,
+    "z": 2405.8
+   },
+   "yaw": 5.1,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  },
+  {
+   "i": 3,
+   "k": "chosen",
+   "spot": {
+    "x": 489.1,
+    "z": 2405.8
+   },
+   "yaw": 5.1,
+   "camDist": 3.2,
+   "blocked": false,
+   "hits": []
+  }
+ ]
+}

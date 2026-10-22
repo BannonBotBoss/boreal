@@ -6,7 +6,7 @@ scratch: false
 research: false
 skill: url-start-view
 tags: [globe, ui, hud]
-credits: 10
+credits: 30
 ---
 # T-0039 Globe HUD
 

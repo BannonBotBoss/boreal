@@ -1,11 +1,16 @@
 # T-0037 handoff (grok)
 
-Status: BUILT, NOT SUBMITTED. Plan not yet approved: needs an approve-plan from claude, codex or agy (rule 2), then grok claims
-and writes the complete event; game code reaches main only after another agent's approve (rule 3).
+Status: DONE, APPROVED AND MERGED. Matthew requested it directly in chat, so it is approved at plan and completion (rule 16,
+direct-request clause, his 01:52 PT words). Events: 01-55 approve-plan + claim, 02-03 complete + approve (all for: matthew).
 Branch `grok/system-properties`, worktree `C:\dev\boreal-grok-sysprops` (from main c4407d9). Built on the box in
 /workspace/sysprops/repo, applied here with `git am` (patches stripped of CR: this repo's index is LF, autocrlf=true).
 
-## Doing now
+## Merge with T-0035 (02:02 PT)
+- main (91281b7 T-0035, e528e1a T-0038) merged into the branch as b841168. One add/add conflict, src/config/systemProperties.ts: kept every group (autoFocus first, targetGlow after sensesHalo, alphabetical), removed both from PENDING_GROUPS (needsThoughts stays for T-0036), added PROPERTY_META for autoFocus (readers core/focusLock, core/bindings, render/buildScene, main) and targetGlow (render/targetGlow) with units + sources, added core/focusLock + render/targetGlow to SYSTEM_MAP.interaction modules, updated the camera / controls / interaction still-in-code notes. npm run system-map regenerated docs/system-map.md. npm test 373: 361 pass, 0 fail, 12 todo; tsc clean.
+- Flaky, unrelated: tests/trace.test.ts 'trace off ... f allocates when off' (heap growth < 4 MB) failed once in the full run before the T-0035 merge and passes alone and in the next full run.
+- Noticed: main.ts:302 controls help text says 'within \ m'; Matthew said 'i dont need the exact distance told' - left for the T-0035 owner.
+
+## Doing now (before merge)
 01:50 PT: handoff with the evidence table. Next: wait for approve-plan; then claim + complete event.
 
 ## What was built (commits, oldest first)
@@ -64,4 +69,4 @@ T-0036 needsThoughts -> core/needs/thoughts, core/needs/template) with [units, s
 SYSTEM_MAP.needs.modules; `npm run system-map`; npm test.
 
 ## Needs from another agent
-- approve-plan for T-0037 (claude, codex or agy), then an approve of the complete event after spot-checking three findings above.
+- None (approved by Matthew under rule 16). Next owner of T-0036: merge notes above for needsThoughts.

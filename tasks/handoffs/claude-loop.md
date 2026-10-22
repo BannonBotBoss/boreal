@@ -3,6 +3,62 @@
 Branch: claude/loop (worktree C:\dev\boreal-claude-loop). Preview port: 5212 (`npx vite --host 127.0.0.1 --port 5212 --strictPort`; claude range 5210-5229).
 node_modules is a junction to the served repo's node_modules (read only). Headless Edge profile: C:\dev\boreal-claude-edge
 (outside the worktree: inside it, vite's watcher crashed on the locked Cookies file). No python on this PC: use node scripts.
+## Run 2026-10-21 16:45 PDT: inspect RIVERS (branch claude/water, worktree C:\dev\boreal-claude-water)
+Second claude session; claude/loop's 14:20 run is idle (no local claude session is running). Port 5214 for this run.
+Lakes, shore and wading are covered (T-0023, T-0024, T-0025); no task covers flowing water, so this run takes rivers.
+- [x] Board state (16:42): nothing waits on review except T-0007 (unchanged since 12:21) and in-progress T-0009 (Matthew asked
+      for a review). All completes have a non-author approve (T-0008, T-0026, T-0027).
+- [x] Review T-0009 at a77830f (16:46 comment event): tsc 0; npm test 399/387/0 fail/12 todo as claimed; Hildebrand 1977,
+      Belovsky 1984, 12 cm print and the intake arithmetic hold; six look/timing scores uncalibrated (rule 11); handoff cites
+      /workspace/rabbit/compare-run6.jpg (not on this PC); all earlier reviews were Grok Bot (for T-0021). Comment, not approve.
+- [x] Rivers found from the generator (refs/water/river-audit/find-river.ts, pick-views.ts, pick-float.ts -> views.json): the
+      59 km2 torus has 17.2 km of drawn river, Strahler orders 1-2 only; nearest reach 633 m from spawn. Sites: slow1 (0.06 m/s),
+      fast1 (3 m/s cap), order2, float (surface 4.06 m above the ground beside it).
+- [x] Recorded under the bench lock (capture.mjs; 4 sites x 5 stills + 6 s webm, 0 page errors; release killed each Edge).
+- [x] Measured (rule 11): foam share (measure.mjs) calibrated on 3 sourced Commons photos (real whitewater 0.65-0.90, real calm
+      0.004-0.031); containment (contained.ts), slope classes vs Jarrett 1984 (slopes.ts), D8 turn angles (kinks.ts), transects.
+- [x] Proposed T-0029 (water contained), T-0030 (hydraulics + whitewater), T-0031 (curved planform), 52 cr each, events 17:12.
+- [x] Committed 1129976.
+
+### Frame answers (rivers, main 1e9661e, noon)
+- **What do I see?** fast1/order2: a dead-straight band 5-7 m wide, almost uniformly white with pale teal blotches, flush with
+  grassy banks, no rocks or steps, turning a sharp corner downstream; it reads as a snowy road. slow1: a wide flat opaque
+  pale-teal sheet with tree shadows, pond-like. float: a ~4 m teal wall standing over a meadow, running off as a glassy slab.
+- **Natural? How I know:** no. Water cannot stand above unconfined ground (61.5 % of river length does, median edge 1.53 m);
+  whitewater needs roughness (the game's smooth trough reads 0.84-0.91 foam share, as white as the real Baldhead cascade 0.90);
+  natural bends have radii of 2-3 widths (Williams 1986) while 40.6 % of game nodes turn at zero radius.
+- **Reference:** sourced real photos (refs/water/river-audit/reference/, SOURCES.json; real-3 excluded, water hidden by brush).
+  Generated reference: not made (outside my tools), see Needs below.
+- **95 %?** No, by the calibrated metrics: calm reaches match (foam 0.000 vs real 0.004-0.031), fast reaches fail (0.84-0.91 on a
+  smooth channel), containment fails (38.5 % of length passes), planform fails (59.4 % of nodes pass). Not rounded.
+
+### Numbers (detail in the task files)
+| value | game | nature + source | yes/no |
+|---|---|---|---|
+| speed, pool-riffle / step-pool / cascade | 1.29 / 2.77 / 3.00 m/s | 0.70 / 0.84 / 1.02 (Jarrett 1984, R in feet) | no |
+| uncontained water | 61.5 % of length | 0 % (hydrostatics) | no |
+| bend radius at nodes | 0 at 40.6 % of nodes | modal 2-3 widths (Williams 1986) | no |
+| bankfull width at 0.5-5 km2 | 3.4-6.8 m (Bieger 2015 extrapolated below its 16.6 km2 fit) | [verify]: no small-basin curve found (Faustini 2009 tables walled) | lead, no task |
+| drainage density | 0.29 km/km2 (init area 0.5 km2) | 2-12 km/km2 at fine mapping scale (NetMap guide, Abrahams 1972); no Shield figure found | lead, no task |
+
+### Needs from another agent (rule 8)
+- **Grok (generated references):** (1) T-0030: a 3-5 s video, fixed camera on the bank, 1.5 m eye height, of "a small boreal
+  Canadian Shield stream about 5 m wide and 30 cm deep in summer, a smooth dark glide above a short riffle over cobbles and two
+  boulders, white water only behind the boulders, spruce and birch on both banks, overcast noon", saved to
+  refs/water/river-audit/reference/generated/riffle/ with the prompt. (2) T-0029: stills of "a small boreal stream entering a
+  beaver pond at the same water level: the pond spreads over a flat sedge meadow to the treeline, the stream leaves at a rock
+  sill", saved to refs/water/river-audit/reference/generated/pond-outlet/. Each with attempts.md (realistic in nature? per rule 6).
+
+- [x] Rule 7: comment T-0021 (agent-family independence, loop handoff name for two sessions, evidence paths on omen).
+- [x] Skill notes/skills/visual-inspection-recording.md updated (generator probes, transects, units, Edge relaunch); notes entry.
+- [x] Run end 17:16: my vite on 5214 stopped (pid 27620, command line checked), no headless Edge left (bench-lock released each,
+      leftovers checked by profile path), 5173 untouched; npx tsc --noEmit exit 0 (no src change on claude/water).
+
+### Exact next step
+1. Review first (rule 15). Then wait for approve-plan on T-0029..T-0031; if T-0029 is approved, claim it (event) and build on a
+   new branch claude/river-contained (worktree C:\dev\boreal-claude-river-contained off main).
+2. Lead not filed: small-basin width curve and drainage density need a source before any task.
+
 ## Run 2026-10-21 14:20 PDT (in progress)
 - [x] Merged main bbf9418 into claude/loop (fast-forward). New since 13:39: agy complete T-0026 (13:38), agy comment T-0023
       (13:42, box ruling CONFIRMED: matched box [300,262,900,285]; Ab 0.03-0.07 for organic littoral sediment), grok comment

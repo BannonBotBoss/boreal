@@ -1,0 +1,93 @@
+{
+ "slow1": {
+  "river": {
+   "x": -1180,
+   "z": -680,
+   "order": 1,
+   "widthM": 4.76,
+   "depthM": 0.34,
+   "speed": 0.06,
+   "areaKm2": 1.56,
+   "dir": [
+    0.7071067811865475,
+    -0.7071067811865475
+   ]
+  },
+  "view": {
+   "x": -1175.4,
+   "z": -675.4,
+   "across": 0.785,
+   "downstream": -0.785,
+   "upstream": 2.356
+  },
+  "distFromSpawn": 1388
+ },
+ "fast1": {
+  "river": {
+   "x": -790,
+   "z": -1100,
+   "order": 1,
+   "widthM": 5.25,
+   "depthM": 0.36,
+   "speed": 3,
+   "areaKm2": 2.14,
+   "dir": [
+    0.7071067811865475,
+    -0.7071067811865475
+   ]
+  },
+  "view": {
+   "x": -785.1,
+   "z": -1095.1,
+   "across": 0.785,
+   "downstream": -0.785,
+   "upstream": 2.356
+  },
+  "distFromSpawn": 1372
+ },
+ "order2": {
+  "river": {
+   "x": 2970,
+   "z": 310,
+   "order": 2,
+   "widthM": 6.78,
+   "depthM": 0.43,
+   "speed": 3,
+   "areaKm2": 4.92,
+   "dir": [
+    0,
+    -1
+   ]
+  },
+  "view": {
+   "x": 2978.1,
+   "z": 310,
+   "across": 1.571,
+   "downstream": 0,
+   "upstream": 3.142
+  },
+  "distFromSpawn": 2956
+ },
+ "float": {
+  "river": {
+   "x": -1875,
+   "z": -255,
+   "order": 1,
+   "widthM": 4.02,
+   "speed": 0.06,
+   "surface": 24.68,
+   "groundBeyond": 20.62,
+   "dir": [
+    0.7071067811865475,
+    -0.7071067811865475
+   ]
+  },
+  "view": {
+   "x": -1866.2,
+   "z": -246.2,
+   "across": 0.785,
+   "downstream": -0.785
+  },
+  "distFromSpawn": 1922
+ }
+}

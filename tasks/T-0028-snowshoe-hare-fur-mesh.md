@@ -10,7 +10,7 @@ credits: 78
 ---
 # T-0028 Procedural furred snowshoe-hare body mesh skinned to the hare rig
 
-**Status: proposed by grok (2026-10-21 15:47 PT). Open claim: no owner.** Needs another agent's approve-plan before a claim (RULES 2). Any agent may take it.
+**Status: claimed by grok (2026-10-21 16:37 PT) after grok-globe's approve-plan (16:32 PT).** Work on branch `grok/hare-mesh`, handoff `tasks/handoffs/T-0028-grok.md`.
 
 **Credits: 78** (= 10 x 6 objectives x (1 + 0.3 research); not from scratch: it reuses the wolf body and fur builders). Matthew can change it.
 
@@ -39,13 +39,13 @@ but nothing on the board owns a real hare body, so the look gate cannot pass. Th
 ## Numbers (to build; the handoff fills the game column and the yes/no)
 | Quantity | Game | Real figure + source | Resembles? |
 |---|---|---|---|
-| Total length nose to tail tip | to build (rig: ~.47 m nose-tail) | 413-518 mm, of which tail 39-52 mm (ADW *Lepus americanus*, Shefferly; Banfield 1981) | - |
-| Head-body length (~45 cm) | to build | 413-518 minus 39-52 mm tail = ~360-470 mm (ADW, same) | - |
+| Total length nose to tail tip | skin .475 m (tail tube ~50 mm from its base, 21 mm past the rump fur line) | 413-518 mm, of which tail 39-52 mm (ADW *Lepus americanus*, Shefferly; Banfield 1981) | yes |
+| Head-body length | skin nose to rump .454 m with the pelt; tests/hare-mesh.test.ts holds it to 361-479 mm | 413 - 52 = 361 to 518 - 39 = 479 mm (ADW, same; arithmetic corrected per grok-globe 16:32 review) | yes |
 | Ear length, notch to tip | `HARE_BODY.ear` .066 | 62-70 mm (ADW) | - |
 | Hind foot length | `HARE_BODY.hindFoot` .132 (toes .056) | 117-147 mm (ADW); toes .424 of the ankle-to-tip span (Exp Anim 30(2):113, 1981, Tables 4-6) | - |
 | Hind foot print / spread | to build | hind print 12 x 8 cm, fore 5 x 3 cm (NatureNorth tracking guide); four long toes spread widely in soft snow (Environment Canada, Hinterland Who's Who: Snowshoe hare, CW69-4-44-2003) | - |
 | Limb bones | rig (femur .094, tibia .108, humerus .077, radius .069, scapula .063) | `HARE_BODY` comment (Larson collection; Volf 2023; Williams et al. 2007; Exp Anim 1981) | - |
-| Mass (for girth) | to build (volume x ~1000 kg/m3) | 1.43-1.55 kg (ADW); 1.4-1.8 kg (ADF&G species profile) | - |
+| Mass (for girth) | bare body (no pelt) 1.59 L by Monte Carlo union of the closed tubes = 1.59 kg at 1000 kg/m3; test band 1.07-1.94 L | 1.43-1.55 kg (ADW); 1.4-1.8 kg (ADF&G species profile); density ~1000 kg/m3 is **[estimate]** (water; mammal soft tissue ~1.0-1.1 g/cm3, no hare-specific source found), so girth is sourced to +-25 % only | yes (estimate density) |
 | Guard hair length | to build (`furLen`) | autumn 31.67 +- .62 mm, winter 43.19 +- .69 mm (mean +- SE), midback, 6 hares per season, Kluane, Yukon; "autumn" = 1-10 Oct, so it is the early-autumn coat, not a measured summer coat (Sheriff, Kuchel, Boutin & Humphries 2009, Seasonal metabolic acclimatization in a northern population of free-ranging snowshoe hares, Lepus americanus, J Mammal 90(3):761-767, doi:10.1644/08-MAMM-A-247R.1; verified 2026-10-21 against the paper text: Results, and the abstract's "36 % longer" = 43.19 / 31.67); 30-40 mm (Adorjan & Kolenosky 1969) | - |
 | Underfur length | to build | downy hairs 25.15 +- 1.02 (autumn) / 25.64 +- .38 mm (winter), no significant change (Sheriff et al. 2009, verified); 15-20 mm (Alaska Fur ID Project) | - |
 | Fur density (card count) | to build | guard 57.00 +- 5.34 (autumn) / 141.50 +- 21.42 (winter) per cm2; downy 3,411.50 +- 169.41 / 7,788.83 +- 266.63 per cm2 (Sheriff et al. 2009, verified; abstract: 148 % and 128 % denser in winter): winter coat visibly fuller | - |
@@ -53,8 +53,9 @@ but nothing on the board owns a real hare body, so the look gate cannot pass. Th
 | Ears (summer) | to build | brownish with black tips and white or creamy borders (ADW) | - |
 | Winter coat colour | to build | almost entirely white except black eyelids and blackened ear tips (ADW); hairs dusky at the base, grey underfur (ADF&G) | - |
 | Hind feet | to build | densely furred soles, stiff hairs forming the snowshoe (ADW); hind feet keep white patches into summer (Hinterland Who's Who) | - |
-| Moult timing | to build (from the world date) | twice a year, starting Aug-Sep and Mar-Apr, triggered by day length (Hinterland Who's Who); ~72 days to complete, separate white and brown follicles (ADW) | - |
-| Draw cost | to build | budget: 5 hares (`HARE.count`) within the wolf's fur-card frame cost share (measured, not a source) | - |
+| Moult timing | animals/hareBody.ts `moultWhiteness(day)` from the world date (`timeOfDay.dayAt(worldSec())`): autumn from day 283 over 40 d, spring from day 100 over 40 d; low parts whiten first (`localWhiteness`, [estimate] order) | Mills, Zimova, Oyler, Running, Abatzoglou & Lukacs 2013, Camouflage mismatch in seasonal coat color due to decreased snow duration, PNAS 110(18):7360-7365, doi:10.1073/pnas.1222724110 (verified 2026-10-21 in the PMC text PMC3645584): initiation dates fixed (~10 Oct / ~10 Apr, Science news summary of the paper), autumn brown-to-white "about 40 d each year", spring rate plastic (30-50 d); twice a year Aug-Sep / Mar-Apr by day length (Hinterland Who's Who); ADW's ~72 d is the general figure | yes |
+| Draw cost | 5 hares x 6,995 cards (summer shows 3,084 each): fur +0.079 ms/frame summer, +0.127 ms winter | **baseline measured first** (tools/fur-cost.html, RTX 5060 laptop, ANGLE D3D11, 1280x800, 600 synced frames, median of 3): player wolf 12,975 cards, fur +0.057 ms; 5 wolves +0.278 ms. Budget: 5 hares <= 5 wolves' fur cost (measured, not a source) | yes (0.127 <= 0.278 ms) |
+| Bone table | own table `HARE_BONE` (animals/hareBody.ts): body, head, 2 ears, tail + 4 rig segments per leg = 21 bones (the wolf's `BONE`/`legBone` pattern, not its 27 indices); shared builders body.ts / furCards.ts unchanged, no hare copies | grok-globe 16:32 review note (e) | yes |
 
 ## Objectives
 - [ ] Number table complete: every length, girth, ear, foot, hair length, density and colour above has the game value, a real source and yes/no; nothing left [estimate] without a reason (RULES 6).

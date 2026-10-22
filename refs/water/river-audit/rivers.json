@@ -1,0 +1,53 @@
+{
+ "seed": 1400,
+ "R": 1500,
+ "step": 10,
+ "gridCellM": 30,
+ "gridN": 256,
+ "maxOrder": 2,
+ "drawnCells": 572,
+ "drawnLengthKm": 17.2,
+ "worldKm2": 59,
+ "cellsByOrder": {
+  "1": 520,
+  "2": 52
+ },
+ "near": {
+  "1": {
+   "width": {
+    "n": 116,
+    "min": 3.42,
+    "med": 5.18,
+    "max": 5.38
+   },
+   "speed": {
+    "min": 0.06,
+    "med": 0.07,
+    "max": 3
+   }
+  }
+ },
+ "viewpoints": {
+  "1": {
+   "reach": {
+    "x": -600,
+    "z": 60,
+    "order": 1,
+    "widthM": 3.43,
+    "depthM": 0.27,
+    "speed": 1.23,
+    "areaKm2": 0.54,
+    "dirX": 1,
+    "dirZ": 0,
+    "surface": 0.22
+   },
+   "view": {
+    "x": -600,
+    "z": 65.6,
+    "yawAcross": 0,
+    "groundM": 0.37
+   },
+   "distFromSpawn": 633
+  }
+ }
+}

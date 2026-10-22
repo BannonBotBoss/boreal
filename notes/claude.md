@@ -2,6 +2,14 @@
 
 Newest first.
 
+## 2026-10-21 16:45 PT - inspection loop: rivers (`claude/water` 1129976, handoff `tasks/handoffs/claude-loop.md`)
+- Review first: comment on T-0009 (a77830f): tests and three sources hold; six look scores uncalibrated (rule 11); its compare
+  image path is not on this PC; every earlier review was Grok Bot.
+- Rivers measured over the whole network (refs/water/river-audit/): 61.5 % of length has water above dry ground (a 4 m teal
+  wall recorded at float/), speed 1.8-3.3x Jarrett 1984, foam share 0.84-0.91 on a smooth trough (calibrated on Commons
+  photos), 40.6 % of nodes turn at zero radius. Proposed T-0029, T-0030, T-0031 (52 cr each).
+- Skill visual-inspection-recording.md: probe the generator over the world first, transects, formula units, Edge relaunch.
+
 ## 2026-10-21 13:20 PT - T-0023 run 2 (`claude/water-optics` 499d001)
 - Review first: nothing waiting that I had not reviewed (T-0007 unchanged since my comment; T-0027 has grok's approve).
   Comment on T-0027's approve event: its `at` is 12 min after its commit (rule 13).

@@ -11,6 +11,7 @@ import { standAt } from './stand';
 import { hash, random } from '../proc/rng';
 import { f } from '../proc/trace';
 import { CHUNK_SIZE, WORLD_SEED, heightAt, generateChunk } from './world';
+import { rockDiameter } from './rocks';
 import { LEVEL } from './tuning';
 import { STAGES } from './stages/elevation';
 import { soilAt } from './stages/soils';
@@ -120,6 +121,24 @@ function treesNear(cx: number, cz: number) {
 }
 /** Tree placements (x, z, crown radius r in m) in the 3x3 chunks around (x, z) (world/globe handoff: the landing view, T-0041). */
 export function treesAround(x: number, z: number) { return treesNear(Math.floor(x / CHUNK_SIZE), Math.floor(z / CHUNK_SIZE)); }
+/** Low solids (T-0041 landing view): rocks as discs (core/rocks diameter x entity scale: r = d/2, top ~0.7 d above the ground) and
+ *  logs as a segment +-(hx, hz) (render/geometry: 4.4 m long, r .43, axis x turned by the entity yaw, x scale; top ~.85 x scale). */
+export interface Solid { x: number; z: number; r: number; top: number; hx: number; hz: number }
+const solidCache = new Map<string, Solid[]>();
+function chunkSolids(a: number, b: number) {
+  const key = `${a}:${b}`; let s = solidCache.get(key); if (s) return s; s = [];
+  for (const e of generateChunk(a, b)) {
+    if (e.kind === 'rock') { const d = rockDiameter(e) * e.scale; s.push({ x: e.x, z: e.z, r: d / 2, top: .7 * d, hx: 0, hz: 0 }); }
+    else if (e.kind === 'log') s.push({ x: e.x, z: e.z, r: .43 * e.scale, top: .85 * e.scale, hx: Math.cos(e.rotation) * 2.2 * e.scale, hz: -Math.sin(e.rotation) * 2.2 * e.scale });
+  }
+  if (solidCache.size > 256) solidCache.delete(solidCache.keys().next().value!); solidCache.set(key, s); return s;
+}
+/** Rocks and logs in the 3x3 chunks around (x, z), like treesAround. */
+export function solidsAround(x: number, z: number) {
+  const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE), s: Solid[] = [];
+  for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++) for (const e of chunkSolids(a, b)) s.push(e);
+  return s;
+}
 export interface Layer { id: string; label: string; top: number; thickness: number; kg: number; bulk: number; moisture?: number; age?: string; source: string }
 /** The layer stack of the cell containing (x, z) at `years` since world start (plus the stand's age since fire). */
 const colCache = new Map<string, ReturnType<typeof columnRaw>>();

@@ -8,7 +8,7 @@
 import { PLANET } from './planet';
 import { STAGES } from '../../core/stages/elevation';
 import { drain, dryStartSteps, isDry } from '../../core/stages/surfaceAt';
-import { treesAround } from '../../core/ground';
+import { solidsAround, treesAround, type Solid } from '../../core/ground';
 import { SYSTEM_PROPERTIES } from '../../config/systemProperties';
 
 export const HANDOFF = { alt: 2000, margin: 250, hintAlt: 6000 }; // metres above ground; keep-out from the region edge [game calibration]
@@ -30,21 +30,29 @@ export function* landSpawnSteps(at: { x: number; z: number }, staged = STAGES.on
   const spot = staged ? { x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10 } : at;
   return yaw === undefined ? spot : yield* clearViewSteps(spot, yaw, staged ? (px, pz) => isDry(px, pz) : () => true);
 }
-/** T-0041: the follow camera sits ack m behind the wolf (rider distance + margin); a tree within clear(r) of that line hides
- *  the wolf on landing (trunk plus the lower crown; r = crown radius from core/ground). The spot may move up to maxShift m. */
-export const LANDING_VIEW = { back: SYSTEM_PROPERTIES.camera.riderDistance + .5, clear: (r: number) => Math.max(.6, .45 * r), step: 1.5, maxShift: 12 };
-export function viewBlocked(x: number, z: number, yaw: number, trees: readonly { x: number; z: number; r: number }[]) {
+/** T-0041: the follow camera sits `back` m behind the wolf (rider distance + margin) and `eye` m up; a tree within clear(r) of the
+ *  camera-wolf line hides the wolf on landing (trunk plus the lower crown; r = crown radius from core/ground). Rocks and logs (core/ground
+ *  solidsAround) hide it when they reach the line within `pad` m and stand taller than the line there (it runs from `aim` m up at
+ *  the wolf to the camera), so pebbles and low logs beside the wolf's feet do not count. The spot may move up to maxShift m. */
+export const LANDING_VIEW = { back: SYSTEM_PROPERTIES.camera.riderDistance + .5, eye: SYSTEM_PROPERTIES.camera.riderHeight, aim: .5, pad: .15,
+  clear: (r: number) => Math.max(.6, .45 * r), step: 1.5, maxShift: 12 };
+export function viewBlocked(x: number, z: number, yaw: number, trees: readonly { x: number; z: number; r: number }[], solids: readonly Solid[] = []) {
   const cx = x + Math.sin(yaw) * LANDING_VIEW.back, cz = z + Math.cos(yaw) * LANDING_VIEW.back, dx = cx - x, dz = cz - z, L2 = dx * dx + dz * dz;
-  for (const t of trees) { const k = Math.max(0, Math.min(1, ((t.x - x) * dx + (t.z - z) * dz) / L2));
-    if (Math.hypot(t.x - (x + k * dx), t.z - (z + k * dz)) < LANDING_VIEW.clear(t.r)) return true; }
+  const near = (px: number, pz: number) => { const k = Math.max(0, Math.min(1, ((px - x) * dx + (pz - z) * dz) / L2)); return [Math.hypot(px - (x + k * dx), pz - (z + k * dz)), k]; };
+  for (const t of trees) if (near(t.x, t.z)[0] < LANDING_VIEW.clear(t.r)) return true;
+  for (const s of solids) for (let i = -4; i <= 4; i++) { // a log is sampled along its axis (9 points); a rock is one point
+    if (i !== 0 && s.hx === 0 && s.hz === 0) continue;
+    const [d, k] = near(s.x + s.hx * i / 4, s.z + s.hz * i / 4);
+    if (d < s.r + LANDING_VIEW.pad && s.top > LANDING_VIEW.aim + k * (LANDING_VIEW.eye - LANDING_VIEW.aim)) return true; }
   return false;
 }
+const blockedAt = (x: number, z: number, yaw: number) => viewBlocked(x, z, yaw, treesAround(x, z), solidsAround(x, z));
 /** The nearest spot (rings of step m out to maxShift) that is dry and has a clear camera-wolf line; the heading is kept. */
 export function* clearViewSteps(s: { x: number; z: number }, yaw: number, dry: (x: number, z: number) => boolean): Generator<void, { x: number; z: number }> {
-  if (!viewBlocked(s.x, s.z, yaw, treesAround(s.x, s.z))) return s;
+  if (!blockedAt(s.x, s.z, yaw)) return s;
   for (let r = LANDING_VIEW.step; r <= LANDING_VIEW.maxShift; r += LANDING_VIEW.step) { const k = Math.max(8, Math.round(2 * Math.PI * r / LANDING_VIEW.step));
     for (let i = 0; i < k; i++) { const a = i / k * 2 * Math.PI, x = Math.round((s.x + Math.cos(a) * r) * 10) / 10, z = Math.round((s.z + Math.sin(a) * r) * 10) / 10;
-      if (!viewBlocked(x, z, yaw, treesAround(x, z)) && dry(x, z)) return { x, z }; }
+      if (!blockedAt(x, z, yaw) && dry(x, z)) return { x, z }; }
     yield; }
   return s;
 }

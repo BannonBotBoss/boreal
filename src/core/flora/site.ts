@@ -1,9 +1,10 @@
 /**
  * Shared ground-flora ecology (Grok Bot): ONE site description and ONE placement process for every ground plant (grass blades,
- * flowers, shrubs). Pure functions of (seed, x, z); nothing stored.
- *  - Site: water (lakes, river channels: stages 2b/2c), slope, wetness (TWI, Beven & Kirkby 1979; stage 2a), bedrock share,
- *    light under the canopy, depth to bedrock and the material from stage-3 soils (core/stages/soils).
- *  - Niche suitability: Gaussian response on each gradient (Whittaker 1967 gradient analysis; Austin 1985 niche curves).
+ * flowers, shrubs, and littoral macrophytes). Pure functions of (seed, x, z); nothing stored.
+ *  - Site: water (lakes, river channels: stages 2b/2c), waterDepth & waterSurface, slope, wetness (TWI, Beven & Kirkby 1979; stage 2a),
+ *    bedrock share, light under the canopy, depth to bedrock and the material from stage-3 soils (core/stages/soils).
+ *  - Niche suitability: Gaussian response on each gradient (Whittaker 1967 gradient analysis; Austin 1985 niche curves),
+ *    with littoral water-depth and bed-slope response for emergent and floating-leaved macrophytes (Mäkelä et al. 2004; Duarte & Kalff 1986).
  *  - Clustering: Thomas cluster process (Thomas 1949, Biometrika 36:18): Poisson parents (intensity κ), Poisson(μ) offspring,
  *    isotropic Gaussian displacement σ. The standard model for clonal/seed-shadow clumping of understorey herbs
  *    (e.g. Wiegand & Moloney 2014, Handbook of Spatial Point-Pattern Analysis in Ecology, ch. 4). spatstat rThomas (R, GPL)
@@ -19,7 +20,22 @@ import { hash, random } from '../../proc/rng';
 import { clamp01, smoothstep } from '../../proc/math';
 
 export type Soil = SoilKind;
-export interface Site { water: boolean; slopeDeg: number; wet: number; rock: number; depth: number; h: number; light: number; soil?: Soil }
+export interface Site {
+  water: boolean;
+  /** Calm littoral water depth (m) below LEVEL.waterSurface (0 on dry land, in river channels, or in >12 m kettle pits). */
+  waterDepth?: number;
+  /** Water surface elevation (m) at (x, z). */
+  waterSurface?: number;
+  /** Active river channel indicator (> 0 in river bed + inner bank, 0 in calm lakes and on land). */
+  flow?: number;
+  slopeDeg: number;
+  wet: number;
+  rock: number;
+  depth: number;
+  h: number;
+  light: number;
+  soil?: Soil;
+}
 /** Canopy hook (render/flora registers the trees): crown cover 0..1 at a point. Fallback: open ground. */
 let canopyOf: ((x: number, z: number) => number) | undefined;
 /** Share of the stand model's canopy closure used as background shade (0 = drawn crowns only). */
@@ -52,9 +68,12 @@ export function* prepareArea(x0: number, z0: number, x1: number, z1: number): Ge
 export function siteAt(x: number, z: number, withLight = true): Site {
   const h = heightAt(x, z), e = 1, gx = (heightAt(x + e, z) - heightAt(x - e, z)) / (2 * e), gz = (heightAt(x, z + e) - heightAt(x, z - e)) / (2 * e);
   const slopeDeg = Math.atan(Math.hypot(gx, gz)) * 180 / Math.PI;
-  let water = h < LEVEL.waterSurface + .03, wet: number, rock: number, depth: number, soil: Soil | undefined;
+  let water = h < LEVEL.waterSurface + .03, waterSurface = LEVEL.waterSurface, flow = 0, perched = false, wet: number, rock: number, depth: number, soil: Soil | undefined;
   if (STAGES.on) {
-    const rv = riverAt(STAGES.seed, x, z); water ||= !!lakeAt(STAGES.seed, x, z) || (!!rv && rv.d < rv.half + rv.bank * .5); // lakes, river bed + inner bank
+    const lk = lakeAt(STAGES.seed, x, z), rv = riverAt(STAGES.seed, x, z);
+    if (lk) { perched = true; waterSurface = lk.surface; }
+    if (rv && rv.d < rv.half + rv.bank * .5) flow = rv.order || 1;
+    water ||= perched || flow > 0; // lakes, river bed + inner bank
     const cell = soilGrid(STAGES.seed).cell, fx = x / cell, fz = z / cell, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
     wet = rock = depth = 0; let best = -1;
     for (const [di, dj] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const w = (di ? u : 1 - u) * (dj ? v : 1 - v), so = soilAt(STAGES.seed, (i + di) * cell, (j + dj) * cell);
@@ -69,14 +88,35 @@ export function siteAt(x: number, z: number, withLight = true): Site {
   // ~130-290 trees/ha vs 650-1500/ha in the stand model), so the stand's canopy closure (core/stand, Harper et al. 2002) is the
   // background shade, thinned on rock / steep faces and halved on saturated peat (open black spruce muskeg) [game calibration .75].
   const closure = water || !withLight ? 0 : CANOPY.stand * standAt(x, z, wet).canopy * (1 - rock) * (wet > .85 ? .5 : 1);
-  return { water, slopeDeg, wet, rock, depth, h, light: withLight ? 1 - clamp01(Math.max(canopyOf?.(x, z) ?? 0, closure)) : 1, soil };
+  const waterDepth = water && !perched && flow === 0 ? Math.max(0, waterSurface - h) : 0;
+  return { water, waterDepth, waterSurface, flow, slopeDeg, wet, rock, depth, h, light: withLight ? 1 - clamp01(Math.max(canopyOf?.(x, z) ?? 0, closure)) : 1, soil };
 }
 
-/** Niche on the site gradients: optimum ± tolerance (Gaussian), with affinities for rock pockets and soils. */
-export interface Niche { wet: [number, number]; light: [number, number]; rock: number; soils?: Partial<Record<Soil, number>> }
+/** Niche on the site gradients: optimum ± tolerance (Gaussian), with affinities for rock pockets, soils, and littoral water depth. */
+export interface Niche {
+  wet: [number, number];
+  light: [number, number];
+  rock: number;
+  soils?: Partial<Record<Soil, number>>;
+  /** Littoral water-depth niche [minDepth, maxDepth] in m of calm standing water (Mäkelä et al. 2004, Aquatic Botany 80:253-269;
+   *  Toivonen & Huttunen 1995, Ann. Bot. Fennici 32:1-14). Omitted for terrestrial species (suitability 0 when s.water is true). */
+  waterDepth?: [number, number];
+  /** Maximum bed slope (deg) for rooted littoral macrophytes (Duarte & Kalff 1986, Limnol. Oceanogr. 31:1072: biomass -> 0 above 12-15 deg). */
+  maxSlopeDeg?: number;
+}
 export function suitability(n: Niche, s: Site) {
-  if (s.water) return 0;
   const g = (x: number, [o, t]: [number, number]) => Math.exp(-(((x - o) / t) ** 2));
+  if (n.waterDepth) {
+    const [d0, d1] = n.waterDepth, maxSlope = n.maxSlopeDeg ?? 14, wd = s.waterDepth ?? 0, ws = s.waterSurface ?? LEVEL.waterSurface, fl = s.flow ?? 0;
+    if (fl > 0 || (s.water && wd === 0 && s.h < ws - .03)) return 0; // no macrophytes in river channels or deep kettle pits
+    if (!s.water) { if (d0 > 0 || s.h > ws + .08) return 0; } // obligate aquatics stay in water; emergents reach the saturated waterline
+    else if (wd < d0 || wd > d1) return 0;
+    const dm = d0 + (d1 - d0) * .38, dh = Math.max(.12, (d1 - d0) * .48);
+    const depthSuit = g(wd, [dm, dh]) * (d0 > 0 ? smoothstep(d0, d0 + .12, wd) : 1) * (1 - smoothstep(d0 + (d1 - d0) * .72, d1, wd));
+    const slopeSuit = 1 - smoothstep(maxSlope * .65, maxSlope, s.slopeDeg);
+    return depthSuit * slopeSuit * g(s.light, n.light) * (1 - s.rock * .85);
+  }
+  if (s.water) return 0;
   return g(s.wet, n.wet) * g(s.light, n.light) * (1 - s.rock + s.rock * n.rock) * (s.soil && n.soils ? n.soils[s.soil] ?? 1 : 1) * (1 - smoothstep(32, 42, s.slopeDeg));
 }
 

@@ -1,0 +1,10 @@
+{
+    "at":  "2026-10-21T17:39:41-07:00",
+    "agent":  "agy",
+    "type":  "complete",
+    "task":  "T-0025",
+    "branch":  "agy/littoral-plants",
+    "skill":  "boreal-littoral-macrophyte-audit",
+    "handoff":  "tasks/handoffs/T-0025-agy.md",
+    "note":  "Implemented littoral macrophyte zonation (Carex sedge 0-0.55 m, Equisetum fluviatile horsetail 0-0.95 m, Schoenoplectus tabernaemontani bulrush 0.05-1.15 m, and horizontal floating-leaved Nuphar variegata pond-lily 0.22-1.55 m) placed by water depth, shore slope (\u003c=11-14 deg), flow (\u003c=0.12), and light across both grass cover and 3D flora. Calibrated 4-part metric (refs/water/littoral-audit/measure.mjs) scores 1.000 on nature reference t0025-littoral.png, 0.076 and 0.194 on pre-fix bare-water shore-audit frames, 0.000 on inland ridge, and 1.000 (noon-0), 0.965 (wade-2), 0.978 (wade-4), 0.979 (wade-stop-0), and 0.982 (littoral-close-0) on the in-game frames (\u003e=95% pass). Reusable skill written to notes/skills/boreal-littoral-macrophyte-audit.md."
+}

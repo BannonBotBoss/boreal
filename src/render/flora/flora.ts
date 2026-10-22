@@ -20,6 +20,7 @@ import * as THREE from 'three';
 import { FLORA } from '../../core/flora/plants';
 import { covered, footprintsIn, prepareArea, setAreaPrefetch, setCanopySource, setFootprintSource, siteAt, suitability, thomas, type Footprint, type Site } from '../../core/flora/site';
 import { CHUNK_SIZE, generateChunk, heightAt } from '../../core/world';
+import { LEVEL } from '../../core/tuning';
 import { applyPopulation } from '../../core/population';
 import { rockDiameter } from '../../core/rocks';
 import { WEATHER } from '../../core/weather';
@@ -114,15 +115,21 @@ export function* plantsJob(tx: number, tz: number): Generator<unknown, Plant[]> 
   for (let s = 0; s < FLORA.length; s++) {
     const sp = FLORA[s], c = { ...sp.cluster, kappa: sp.cluster.kappa * FLORA_FX.density }, r = random(hash(`flora-plant:${sp.id}:${tx}:${tz}`));
     for (const p of thomas(sp.id, tx, tz, TILE, c, (x, z) => suitability(sp.niche, site(x, z)))) {
-      const h = sample(r, sp.height), variant = Math.floor(r() * VARIANTS), rot = r() * Math.PI * 2; // every draw first: masking never shifts the stream
-      if (!covered(feet, p.x, p.z, Math.min(.5, .04 + .3 * h))) out.push({ species: s, variant, x: p.x, y: heightAt(p.x, p.z), z: p.z, rot, scale: h / sp.height.mean, h }); }
+      const h = sample(r, sp.height), variant = Math.floor(r() * VARIANTS), rot = r() * Math.PI * 2, scale = h / sp.height.mean; // every draw first: masking never shifts the stream
+      const yBed = heightAt(p.x, p.z), ws = site(p.x, p.z).waterSurface ?? LEVEL.waterSurface;
+      const y = sp.floating ? ws + .012 : sp.niche.waterDepth ? Math.max(yBed, ws - .12 * scale) : yBed;
+      const visH = sp.floating ? Math.max(h, sp.leaf.length * 4.5 * scale) : h;
+      if (!covered(feet, p.x, p.z, Math.min(.5, .04 + .3 * h))) out.push({ species: s, variant, x: p.x, y, z: p.z, rot, scale, h: visH }); }
     yield;
   }
-  for (let s = 0; s < FLORA.length; s++) { // understorey carpets: clonal mats (Thomas clusters) of merged ramet clumps, by the same niche (light = crown score)
+  for (let s = 0; s < FLORA.length; s++) { // understorey carpets & clonal littoral stands: Thomas clusters of merged ramet clumps
     const sp = FLORA[s], cp = sp.carpet; if (!cp || !FLORA_FX.carpet) continue; const r = random(hash(`flora-carpet:${sp.id}:${tx}:${tz}`));
     for (const p of thomas(`carpet:${sp.id}`, tx, tz, TILE, { ...cp.cluster, kappa: cp.cluster.kappa * FLORA_FX.carpet }, (x, z) => suitability(sp.niche, site(x, z)))) {
       const variant = Math.floor(r() * VARIANTS), rot = r() * Math.PI * 2, scale = .85 + .3 * r();
-      if (!covered(feet, p.x, p.z, cp.radius * .8)) out.push({ species: s, variant, x: p.x, y: heightAt(p.x, p.z), z: p.z, rot, scale, h: sp.height.mean * scale, clump: true, keep: p.r }); }
+      const yBed = heightAt(p.x, p.z), ws = site(p.x, p.z).waterSurface ?? LEVEL.waterSurface;
+      const y = sp.floating ? ws + .012 : sp.niche.waterDepth ? Math.max(yBed, ws - .12 * scale) : yBed;
+      const visH = sp.floating ? cp.radius * 1.4 * scale : sp.height.mean * scale;
+      if (!covered(feet, p.x, p.z, cp.radius * .8)) out.push({ species: s, variant, x: p.x, y, z: p.z, rot, scale, h: visH, clump: true, keep: p.r }); }
     yield;
   }
   return out;
@@ -194,7 +201,7 @@ export function createFlora(scene: THREE.Scene) {
     if (v) { camera.position.set(v.x, heightAt(v.x, v.z) + v.y, v.z); camera.rotation.set(v.pitch, v.yaw, 0, 'YXZ'); camera.updateMatrixWorld(true); }
     moss(camera, foliage); farTrees(camera); day.value = WEATHER.day; bloomAll.value = FLORA_FX.bloomAll ? 1 : 0; group.visible = !FLORA_FX.off && foliage > 0;
     if (time - last < .25 && time >= last) return; last = time; // tiles + per-instance LOD 4×/s (as render/batch)
-    const R = Math.min(nearRadius, 45 * Math.sqrt(foliage)), RC = R * .7, cx = camera.position.x, cz = camera.position.z, want = new Set<string>();
+    const R = Math.min(nearRadius, 45 * (.68 + .32 * Math.sqrt(foliage))), RC = R * .75, cx = camera.position.x, cz = camera.position.z, want = new Set<string>();
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * TILE - cx, 0, cx - tx * TILE - TILE), Math.max(tz * TILE - cz, 0, cz - tz * TILE - TILE));
     const n = Math.ceil(R / TILE) + 1, ox = Math.floor(cx / TILE), oz = Math.floor(cz / TILE);
     for (let a = ox - n; a <= ox + n; a++) for (let b = oz - n; b <= oz + n; b++) { const d = sq(a, b), k = `${a}:${b}`; if (d > R + TILE / 2) continue; want.add(k);
@@ -205,7 +212,8 @@ export function createFlora(scene: THREE.Scene) {
     if (!bm) return;
     let plants = 0, visible = 0, clumps = 0, clumpsVisible = 0; const by: Record<string, number> = {};
     for (const t of tiles.values()) for (const s of t.slots) { const p = s.p, d = Math.hypot(p.x - cx, p.z - cz); let vis: boolean, lod: number;
-      if (p.clump) { clumps++; vis = d < RC && (d < CLUMP_FULL || p.keep! < (CLUMP_FULL / d) ** 1.5); lod = d > CLUMP_NEAR ? 1 : 0; if (vis) clumpsVisible++; } // far mats thin with distance
+      const isLit = !!FLORA[p.species].niche.waterDepth;
+      if (p.clump) { clumps++; const cMax = isLit ? R : RC, cFull = isLit ? CLUMP_FULL * 2.2 : CLUMP_FULL; vis = d < cMax && (d < cFull || p.keep! < (cFull / d) ** 1.5); lod = d > CLUMP_NEAR ? 1 : 0; if (vis) clumpsVisible++; } // far mats thin with distance; littoral stands on open water stay visible across the bay
       else { plants++; vis = d < R * Math.min(1, .25 + p.h * .5); lod = d > LOD_DIST * (.5 + p.h) ? 1 : 0; if (vis) { visible++; by[FLORA[p.species].id] = (by[FLORA[p.species].id] ?? 0) + 1; } } // small plants drop out and simplify first
       if (vis !== s.vis) { bm.setVisibleAt(s.inst, vis); s.vis = vis; }
       if (lod !== s.lod) { bm.setGeometryIdAt(s.inst, s.geo[lod]); s.lod = lod; } }

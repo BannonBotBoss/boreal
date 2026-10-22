@@ -1,12 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FLORA } from '../src/core/flora/plants';
+import { FLORA, FLORA_BY_ID } from '../src/core/flora/plants';
 import { siteAt, suitability, thomas } from '../src/core/flora/site';
 import { buildPlant } from '../src/render/flora/plant';
 import { plantsJob } from '../src/render/flora/flora';
 import { finish } from '../src/core/interest';
 import { STAGES, lakeAt } from '../src/core/stages/elevation';
 import { soilAt } from '../src/core/stages/soils';
+import { LEVEL } from '../src/core/tuning';
 
 test('species rows are physical, flowers bloom inside the year', () => {
   for (const s of FLORA) {
@@ -45,5 +46,30 @@ test('staged world: site reads stage-3 soils; no plants in lakes; bedrock thins'
     assert.ok(n > 200, `${n} plants`);
     for (let i = 0; i < 300; i++) { const x = i * 31.7 - 4000, z = i * 17.3 - 2000, s = siteAt(x, z); if (s.water) { assert.equal(suitability(FLORA[0].niche, s), 0); continue; }
       const so = soilAt(STAGES.seed, x, z); if (so.kind === 'peat') wet++, assert.ok(s.wet > .5, 'peat is wet'); }
+  } finally { STAGES.on = false; }
+});
+
+test('littoral macrophytes (horsetail, bulrush, pond-lily): depth zonation, slope limit, and surface floating placement', () => {
+  const ht = FLORA_BY_ID['horsetail'], br = FLORA_BY_ID['bulrush'], pl = FLORA_BY_ID['pond-lily'];
+  assert.ok(ht && br && pl && pl.floating);
+  const plGeom = buildPlant(pl, 0, 2), plNorm = plGeom.getAttribute('normal'), plOrgan = plGeom.getAttribute('aOrgan');
+  let leafVerts = 0, flatLeafVerts = 0;
+  for (let i = 0; i < plNorm.count; i++) if (plOrgan.getX(i) < .5 && plNorm.getX(i) ** 2 + plNorm.getY(i) ** 2 + plNorm.getZ(i) ** 2 > .5) { leafVerts++; if (Math.abs(plNorm.getY(i)) > .95) flatLeafVerts++; }
+  assert.ok(leafVerts > 0 && flatLeafVerts / leafVerts > .9, 'floating pond-lily pads lie horizontally on the water surface');
+  const shallow = { water: true, waterDepth: .35, waterSurface: -.25, flow: 0, slopeDeg: 5, wet: 1, rock: 0, depth: 1.5, h: -.6, light: 1 };
+  const outer = { water: true, waterDepth: 1.1, waterSurface: -.25, flow: 0, slopeDeg: 4, wet: 1, rock: 0, depth: 1.5, h: -1.35, light: 1 };
+  const deep = { water: true, waterDepth: 2.1, waterSurface: -.25, flow: 0, slopeDeg: 3, wet: 1, rock: 0, depth: 1.5, h: -2.35, light: 1 };
+  const steep = { water: true, waterDepth: .5, waterSurface: -.25, flow: 0, slopeDeg: 16, wet: 1, rock: 0, depth: 1, h: -.75, light: 1 };
+  assert.ok(suitability(ht.niche, shallow) > .5 && suitability(br.niche, shallow) > .5 && suitability(pl.niche, shallow) > .2);
+  assert.ok(suitability(pl.niche, outer) > suitability(ht.niche, outer), 'floating-leaved pond-lily dominates deeper littoral water beyond horsetail');
+  assert.equal(suitability(ht.niche, deep), 0); assert.equal(suitability(br.niche, deep), 0); assert.equal(suitability(pl.niche, deep), 0);
+  assert.equal(suitability(ht.niche, steep), 0); assert.equal(suitability(br.niche, steep), 0); assert.equal(suitability(pl.niche, steep), 0);
+  STAGES.on = true;
+  try {
+    const shore = finish(plantsJob(0, 0)); // x = 0..20, z = 0..20 spans the shoreline at x ~ 13.5 and littoral zone x = 0..13.5
+    const lilies = shore.filter(p => FLORA[p.species].id === 'pond-lily');
+    const emergents = shore.filter(p => FLORA[p.species].id === 'horsetail' || FLORA[p.species].id === 'bulrush');
+    assert.ok(lilies.length > 0 && emergents.length > 0, `lilies=${lilies.length}, emergents=${emergents.length}`);
+    for (const l of lilies) assert.ok(Math.abs(l.y - (LEVEL.waterSurface + .012)) < 1e-4, 'pond-lily floats at the water surface');
   } finally { STAGES.on = false; }
 });

@@ -98,7 +98,7 @@ const VERT_BODY = `
   vec3 tip = mix(uTip[k], uFall[k], fallT), base = mix(uBase[k], uFall[k] * 0.6, fallT * 0.5);
   float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
   vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.35, 1.0, easeInG(heightPercent, 2.0));
-  float toGround = smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist); if (toGround > 0.0) vGrassColour = mix(vGrassColour, groundLayer(soilGround(root.xz), root.xz), toGround); // toward the grass radius blades take the terrain's soil colour + moss layer (render/flora/moss) (far normals are already up): no edge where the field ends
+  float toGround = smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist) * step(-0.22, root.y); if (toGround > 0.0) vGrassColour = mix(vGrassColour, groundLayer(soilGround(root.xz), root.xz), toGround); // toward the grass radius land blades take the terrain's soil colour + moss layer; emergent littoral blades in water keep their foliage colour
   vec3 grassPos = root + p;
   float viewDotNormal = clamp(abs(dot(face * vec3(0.0, 0.0, 1.0), normalize(vec3(cameraPosition.x - root.x, 0.0, cameraPosition.z - root.z)))), 0.0, 1.0); // one face, seen from both sides
   float viewSpaceThickenFactor = easeOutG(1.0 - viewDotNormal, 4.0) * smoothstep(0.0, 0.2, viewDotNormal);
@@ -161,7 +161,7 @@ export function createGrass(scene: THREE.Scene) {
   const SEG = [GRASS.segHigh, GRASS.segMid, GRASS.segLow], lods = SEG.map(fieldMesh); group.add(...lods.map(l => l.mesh));
   const sigS: number[][] = [[], [], []], sigN: number[][] = [[], [], []]; let segs = RENDER.terrainSegments, lastPack = 0, dirty = true, ids = 0;
   function update(camera: THREE.Camera, player: THREE.Vector3, foliage: number, nearRadius: number) {
-    const T = GRASS.tile, cx = camera.position.x, cz = camera.position.z, R = Math.min(GRASS.radius * Math.sqrt(foliage), nearRadius); // never beyond full-res terrain (interest near tier)
+    const T = GRASS.tile, cx = camera.position.x, cz = camera.position.z, R = Math.min(GRASS.radius * (.68 + .32 * Math.sqrt(foliage)), nearRadius); // never beyond full-res terrain (interest near tier)
     group.visible = !GRASS_FX.off && foliage > 0;
     if (segs !== RENDER.terrainSegments) { segs = RENDER.terrainSegments; tiles.clear(); } // roots follow the terrain lattice
     U.uGrass.value.set(GRASS.lodDist, GRASS.full, R, foliage); U.uPlayer.value.copy(player); const fov = (camera as THREE.PerspectiveCamera).fov ?? 48; U.uPx.value = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, globalThis.innerHeight ?? 900);

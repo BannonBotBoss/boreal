@@ -6,19 +6,20 @@
  *    GPU and hashes per blade; here every blade is drawn on the CPU from proc/rng (seeded, reproducible) and the root
  *    height comes from heightAt on the terrain mesh's own vertex lattice + triangulation, so roots sit exactly on the mesh.
  *  - The density field is ONE swappable function (`setCoverSource`): today it reads slope, TWI, lakes and river channels
- *    (stages 1-2c). The soils stage (core/stages, core/ground) can replace it with soil type / moss / canopy later.
+ *    (stages 1-2c), including the shallow littoral emergent zone (0-1.15 m water depth on gentle shores, Mäkelä et al. 2004).
  * Species = data rows (rule 2/3): one blade generator, shape = parameters. Kenora-area ground-cover mix and habitat after
  * Baldwin & Sims 1997 (Field Guide to the Common Forest Plants in Northwestern Ontario, OMNR) and the NWO FEC ordination
  * (Sims et al. 1997; moisture axis dry → wet); leaf dimensions from Flora of North America (FNA) treatments.
  */
 import { CHUNK_SIZE, heightAt, WORLD_SEED } from '../../core/world';
+import { LEVEL } from '../../core/tuning';
 import { RENDER } from '../../core/renderSettings';
 import { covered, footprintsIn, prepareArea, siteAt, type Site } from '../../core/flora/site';
 import { CELL } from '../../core/ground';
 import { hash, random, sample, type Dist } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 
-/** profile: 0 grass leaf (convex taper), 1 sedge leaf (straight taper, keeled/stiff), 2 sprig (stem + elliptic leaf: shrubs). */
+/** profile: 0 grass leaf (convex taper), 1 sedge/rush/horsetail culm (straight taper, keeled/stiff), 2 sprig (stem + elliptic leaf: shrubs). */
 export interface CoverSpecies {
   id: string; latin: string; form: 'grass' | 'sedge' | 'shrub';
   length: Dist;          // blade/leaf-sprig length (m)
@@ -28,14 +29,16 @@ export interface CoverSpecies {
   stiff: number;         // 0 = full wind response, 1 = rigid [game calibration]
   wet: [number, number]; // niche on the site wetness axis 0 dry .. 1 saturated: optimum, tolerance (Gaussian) [verify, after the FEC ordination]
   rock: number;          // relative weight on thin soil over bedrock (outcrop pockets)
+  /** Littoral standing-water depth niche [minDepth, maxDepth] in m (Mäkelä et al. 2004, Aquatic Botany 80:253-269). Undefined = land only. */
+  depth?: [number, number];
   base: [number, number, number]; tip: [number, number, number]; fall: [number, number, number]; // linear albedo (leaf reflectance, green peak 0.1-0.35 incl. sheen: Jacquemoud & Baret 1990 PROSPECT) [verify]
 }
 export const COVER_SPECIES: CoverSpecies[] = [
   // Canada bluejoint: wet meadows, shores, disturbed moist forest. Leaves 10-30(-60) cm x 3-8 mm (FNA vol. 24) [verify]. Cures straw-tan in fall.
   { id: 'bluejoint', latin: 'Calamagrostis canadensis', form: 'grass', length: { mean: .32, sd: .1, min: .12, max: .6 }, width: .006, profile: 0, stem: 0, lean: [.25, .7], stiff: .1, wet: [.72, .22], rock: .1,
     base: [.036, .072, .018], tip: [.192, .264, .084], fall: [.525, .413, .213] },
-  // Water / beaked sedge: shores and fens. Leaves 20-80 cm x 3-8 (-12) mm, stiff, keeled (FNA vol. 23, Carex aquatilis / C. utriculata) [verify]. Blue-green.
-  { id: 'sedge', latin: 'Carex aquatilis / C. utriculata', form: 'sedge', length: { mean: .45, sd: .14, min: .2, max: .8 }, width: .006, profile: 1, stem: 0, lean: [.15, .45], stiff: .35, wet: [.95, .14], rock: 0,
+  // Water / beaked sedge: shores, fens, and shallow littoral water (0-55 cm depth, USFS FEIS Carex aquatilis / C. utriculata). Leaves 20-80 cm x 3-8 (-12) mm, stiff, keeled (FNA vol. 23). Blue-green.
+  { id: 'sedge', latin: 'Carex aquatilis / C. utriculata', form: 'sedge', length: { mean: .45, sd: .14, min: .2, max: .8 }, width: .006, profile: 1, stem: 0, lean: [.15, .45], stiff: .35, wet: [.95, .14], rock: 0, depth: [0, .55],
     base: [.036, .066, .036], tip: [.132, .204, .108], fall: [.45, .375, .188] },
   // Wavy hairgrass: dry jack pine / rock outcrops. Leaves filiform, 0.3-1 mm wide, 5-20 cm (FNA vol. 24) [verify]; drawn ≥ 2 mm wide (sub-pixel otherwise) [game calibration].
   { id: 'hairgrass', latin: 'Deschampsia flexuosa', form: 'grass', length: { mean: .13, sd: .04, min: .05, max: .22 }, width: .002, profile: 0, stem: 0, lean: [.4, 1], stiff: .05, wet: [.15, .2], rock: 1,
@@ -49,14 +52,38 @@ export const COVER_SPECIES: CoverSpecies[] = [
   // Labrador tea: wet black spruce / peatland. Shrub 30-100 cm; leaves 2-5 x 0.5-1.5 cm, revolute, evergreen (FNA vol. 8, Rhododendron groenlandicum) [verify].
   { id: 'labradortea', latin: 'Rhododendron groenlandicum', form: 'shrub', length: { mean: .4, sd: .12, min: .2, max: .75 }, width: .01, profile: 2, stem: .78, lean: [.7, 1.1], stiff: .6, wet: [.85, .15], rock: 0,
     base: [.12, .072, .036], tip: [.048, .084, .03], fall: [.0625, .0875, .0375] },
+  // Water horsetail: emergent littoral stands in 0-0.95 m calm water and saturated shores. Erect hollow fluted stems 30-100 cm x 3-8 mm (FNA vol. 2, Equisetum fluviatile; Mäkelä et al. 2004).
+  { id: 'horsetail', latin: 'Equisetum fluviatile', form: 'sedge', length: { mean: .72, sd: .15, min: .38, max: 1.05 }, width: .0055, profile: 1, stem: 0, lean: [.04, .16], stiff: .65, wet: [1, .08], rock: 0, depth: [0, .95],
+    base: [.028, .062, .024], tip: [.085, .175, .065], fall: [.36, .31, .16] },
+  // Softstem / hardstem bulrush: emergent littoral culms in 0.05-1.15 m calm water. Terete olive-green culms 0.6-1.18 m x 4-10 mm (FNA vol. 23, Schoenoplectus tabernaemontani; Shay & Shay 1986).
+  { id: 'bulrush', latin: 'Schoenoplectus tabernaemontani', form: 'sedge', length: { mean: .96, sd: .14, min: .6, max: 1.18 }, width: .0075, profile: 1, stem: 0, lean: [.08, .28], stiff: .55, wet: [1, .05], rock: 0, depth: [.05, 1.15],
+    base: [.032, .064, .038], tip: [.095, .165, .092], fall: [.44, .35, .19] },
 ];
 
 export { siteAt, type Site } from '../../core/flora/site';
 export interface Cover { density: number; weights: number[] }
 /** Default density field: 0..1 of the tier's max blade density, plus per-species weights. */
 export function defaultCover(x: number, z: number, s = siteAt(x, z)): Cover {
-  const weights = COVER_SPECIES.map(c => Math.exp(-(((s.wet - c.wet[0]) / c.wet[1]) ** 2)) * (1 - s.rock + s.rock * c.rock));
-  if (s.water) return { density: 0, weights };
+  const wd = s.waterDepth ?? 0, ws = s.waterSurface ?? LEVEL.waterSurface, fl = s.flow ?? 0;
+  if (s.water) {
+    // Littoral emergent belt: calm lakeshores within 0-1.15 m water depth and slope <= 15 deg (Mäkelä et al. 2004; Duarte & Kalff 1986).
+    // Active river channels (fl > 0), deep >12 m kettle pits, and open water > 1.15 m deep have density 0.
+    if (fl > 0 || (wd === 0 && s.h < ws - .03) || wd > 1.15 || s.slopeDeg > 15) {
+      return { density: 0, weights: COVER_SPECIES.map(() => 0) };
+    }
+    const weights = COVER_SPECIES.map(c => {
+      if (!c.depth || wd < c.depth[0] || wd > c.depth[1]) return 0;
+      const [d0, d1] = c.depth, dm = d0 + (d1 - d0) * .35, dh = Math.max(.15, (d1 - d0) * .48);
+      return Math.exp(-(((wd - dm) / dh) ** 2)) * (1 - smoothstep(d1 * .75, d1, wd)) * (1 - s.rock * .85);
+    });
+    const density = .85 * (1 - smoothstep(10, 15, s.slopeDeg)) * (1 - smoothstep(.35, .75, wd)) * (.4 + .6 * s.light) * (1 - s.rock * .85);
+    return { density, weights };
+  }
+  const weights = COVER_SPECIES.map(c => {
+    if (c.depth && c.depth[0] > 0) return 0; // obligate standing-water emergent (bulrush)
+    if (c.id === 'horsetail' && s.h > ws + .12) return 0; // water horsetail stays in water and saturated waterline fringe
+    return Math.exp(-(((s.wet - c.wet[0]) / c.wet[1]) ** 2)) * (1 - s.rock + s.rock * c.rock);
+  });
   // soil pockets on rock: a 4 m patch is bare where its hash is below the rock share (bare rock carries lichen, not grass)
   const pocket = random(hash(`cover:${WORLD_SEED}:${Math.floor(x / 4)}:${Math.floor(z / 4)}`))();
   const bare = s.rock > pocket ? 1 : 0;
@@ -98,10 +125,22 @@ export function* bladesJob(tx: number, tz: number, seed = WORLD_SEED): Generator
       const x = x0 + (i + r()) * sp, z = z0 + (j + r()) * sp, keep = r(); // jittered grid (GoT / Quick_Grass)
       const fx = (x - x0) / CELL, fz = (z - z0) / CELL, ci = Math.min(cm - 1, Math.floor(fx)), cj = Math.min(cm - 1, Math.floor(fz)), u = fx - ci, v = fz - cj;
       const q = [C[cj * (cm + 1) + ci], C[cj * (cm + 1) + ci + 1], C[(cj + 1) * (cm + 1) + ci], C[(cj + 1) * (cm + 1) + ci + 1]], wq = [(1 - u) * (1 - v), u * (1 - v), (1 - u) * v, u * v];
-      if (q.some(c => c.density === 0) || r() >= q.reduce((s, c, k) => s + c.density * wq[k], 0)) continue; // hard edge at water / bare rock
-      const w = COVER_SPECIES.map((_, s) => q.reduce((a, c, k) => a + c.weights[s] * wq[k], 0)), tot = w.reduce((a, b) => a + b, 0);
-      let pick = r() * tot, k = 0; while (k < w.length - 1 && (pick -= w[k]) > 0) k++;
-      const sp_ = COVER_SPECIES[k], row = [x, ground(x, z) - .01, z, r() * Math.PI * 2, sample(r, sp_.length), sp_.lean[0] + r() * (sp_.lean[1] - sp_.lean[0]), keep, k,
+      if (q.some(c => c.density === 0) || r() >= q.reduce((s, c, k) => s + c.density * wq[k], 0)) continue; // hard edge at deep water / bare rock
+      const y0 = ground(x, z), wd = Math.max(0, LEVEL.waterSurface - y0);
+      const w = COVER_SPECIES.map((sp, s) => {
+        if (wd > .02 && (!sp.depth || wd < sp.depth[0] || wd > sp.depth[1])) return 0;
+        if (wd <= .02 && sp.depth && sp.depth[0] > 0) return 0;
+        return q.reduce((a, c, k) => a + c.weights[s] * wq[k], 0);
+      });
+      let tot = w.reduce((a, b) => a + b, 0);
+      if (tot <= 0 && wd > .02 && wd <= .95) { w[6] = 1; tot = 1; } // shoreline transition cell: water horsetail fallback in shallow water
+      const pick0 = r(), ang = r() * Math.PI * 2;
+      let pick = pick0 * tot, k = 0; while (k < w.length - 1 && (pick -= w[k]) > 0) k++;
+      const sp_ = COVER_SPECIES[k], baseLen = sample(r, sp_.length), lean = sp_.lean[0] + r() * (sp_.lean[1] - sp_.lean[0]);
+      if (tot <= 0) continue;
+      // Emergent culms rooted on the shallow lakebed elongate through the water column so their photosynthetic shoot stands above water (Grace 1989).
+      const len = wd > 0 ? Math.min(1.55, Math.max(baseLen, wd + baseLen * .85 + .05)) : baseLen;
+      const row = [x, y0 - .01, z, ang, len, lean, keep, k,
         Math.min(S - 1, Math.floor((x - x0) / sc)) + S * Math.min(S - 1, Math.floor((z - z0) / sc))]; // [8] = cell
       if (!feet.length || !covered(feet, x, z, .02)) rows.push(row); // tested after every draw, so the rng stream (the field elsewhere) is unchanged
     }

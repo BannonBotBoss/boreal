@@ -4,7 +4,8 @@
  * plant = a new row.
  * Sources (dimensions, organ counts, phyllotaxis, bloom): Flora of North America (FNA, efloras.org) treatments; habitats:
  * Baldwin & Sims 1997 (Field Guide to the Common Forest Plants in Northwestern Ontario, OMNR) and the NWO FEC ordination
- * (Sims et al. 1997); bloom windows: Ontario/Manitoba iNaturalist phenology (research-grade, NW Ontario) [verify];
+ * (Sims et al. 1997); littoral macrophyte zonation: Mäkelä, Karttunen & Kairesalo 2004 (Aquatic Botany 80:253-269) and
+ * Duarte & Kalff 1986 (Limnol. Oceanogr. 31:1072); bloom windows: Ontario/Manitoba iNaturalist phenology (research-grade, NW Ontario) [verify];
  * colours sampled from CC-licensed reference photos (Wikimedia Commons, list in AGENT-NOTES) - tuning only, never shipped.
  * Values from memory of those treatments are tagged [verify] until checked line by line.
  */
@@ -16,6 +17,8 @@ export type Arrangement = 'alternate' | 'opposite' | 'whorled' | 'basal';
 export type Inflorescence = 'solitary' | 'raceme' | 'umbel' | 'cyme' | 'corymb' | 'pair';
 export interface FloraSpec {
   id: string; latin: string; form: 'herb' | 'shrub'; evergreen?: boolean;
+  /** Floating-leaved aquatic habit (Nuphar variegata): basal leaves float flat on the water surface, flower emerges just above water. */
+  floating?: boolean;
   height: Dist;                     // m, mature
   stems: number; branching: number; // shrubs: stems from the base, side branches per stem (0 = unbranched herb)
   stemColour: string; stemRadius: number;
@@ -97,5 +100,23 @@ export const FLORA: FloraSpec[] = [
   { id: 'juniper', latin: 'Juniperus communis var. depressa', form: 'shrub', evergreen: true, height: { mean: .5, sd: .15, min: .25, max: .9 }, stems: 6, branching: 4, stemColour: '#6a4b36', stemRadius: .006,
     leaf: { shape: 'needle', arrangement: 'whorled', perNode: 3, nodes: 9, length: .012, width: .0015, colour: '#3f5f43', droop: .2 },
     niche: { wet: [.15, .2], light: [.9, .3], rock: 1.2, soils: { bedrock: 1.5, sand: 1.2 } }, cluster: { kappa: .0008, mu: 2, sigma: 1.5 } },
+  // Water horsetail: erect hollow fluted stems 30-100 cm x 3-8 mm, whorls of slender ascending branchlets, terminal strobilus 1-2 cm; Jun-Aug; shallow water 0-0.95 m and muddy shores (FNA vol. 2; Mäkelä et al. 2004)
+  { id: 'horsetail', latin: 'Equisetum fluviatile', form: 'herb', ...HERB, height: { mean: .72, sd: .16, min: .35, max: 1.05 }, stemColour: '#2d5c28', stemRadius: .003,
+    leaf: { shape: 'needle', arrangement: 'whorled', perNode: 8, nodes: 7, length: .032, width: .0018, colour: '#356b2c', fall: '#6e6232', droop: -.35 },
+    flower: { kind: 'solitary', count: 1, petals: 6, petalLength: .014, petalWidth: .005, open: .2, nod: 0, cup: .002, colour: '#6e5232', centre: '#4f3a22', bloom: [150, 235] },
+    niche: { wet: [1, .1], light: [.85, .35], rock: 0, waterDepth: [0, .95], maxSlopeDeg: 13 }, cluster: { kappa: .022, mu: 16, sigma: 1.1 },
+    carpet: { cluster: { kappa: .045, mu: 24, sigma: 1.3 }, ramets: 9, radius: .38 } },
+  // Softstem bulrush: terete glaucous olive-green culms 0.8-2.0 m x 4-10 mm, basal blade-bearing sheaths, compact nodding terminal cluster of rusty-brown spikelets; Jun-Sep; standing water 0.05-1.2 m (FNA vol. 23; Shay & Shay 1986; Mäkelä et al. 2004)
+  { id: 'bulrush', latin: 'Schoenoplectus tabernaemontani', form: 'herb', ...HERB, height: { mean: 1.15, sd: .22, min: .7, max: 1.65 }, stemColour: '#345e3a', stemRadius: .0045,
+    leaf: { shape: 'linear', arrangement: 'basal', perNode: 3, nodes: 1, length: .28, width: .008, colour: '#38633d', fall: '#8c723e', droop: -.2 },
+    flower: { kind: 'solitary', count: 1, petals: 5, petalLength: .018, petalWidth: .007, open: .35, nod: .45, cup: .002, colour: '#7a5230', centre: '#5c3b20', bloom: [165, 255] },
+    niche: { wet: [1, .08], light: [.9, .35], rock: 0, waterDepth: [.05, 1.2], maxSlopeDeg: 12 }, cluster: { kappa: .016, mu: 12, sigma: 1.2 },
+    carpet: { cluster: { kappa: .032, mu: 18, sigma: 1.4 }, ramets: 8, radius: .42 } },
+  // Yellow pond-lily / spatterdock: floating broadly ovate-orbicular leaf blades 10-25 cm x 8-21 cm on calm water 0.25-1.65 m deep, solitary subglobose 6-sepaled yellow flower 2.5-4.5 cm; Jun-Aug (FNA vol. 3; Baldwin & Sims 1997; Mäkelä et al. 2004)
+  { id: 'pond-lily', latin: 'Nuphar variegata', form: 'herb', ...HERB, floating: true, height: { mean: .055, sd: .012, min: .035, max: .08 }, stemColour: '#486b28', stemRadius: .004,
+    leaf: { shape: 'round', arrangement: 'basal', perNode: 7, nodes: 1, length: .22, width: .18, colour: '#588a2c', fall: '#7d6e24', droop: 0 },
+    flower: { kind: 'solitary', count: 1, petals: 6, petalLength: .024, petalWidth: .02, open: .85, nod: 0, cup: .007, colour: '#ebd034', centre: '#9c3b22', bloom: [155, 245] },
+    niche: { wet: [1, .05], light: [.95, .3], rock: 0, waterDepth: [.22, 1.55], maxSlopeDeg: 11 }, cluster: { kappa: .028, mu: 16, sigma: 1.5 },
+    carpet: { cluster: { kappa: .065, mu: 26, sigma: 1.5 }, ramets: 8, radius: .95 } },
 ];
 export const FLORA_BY_ID = Object.fromEntries(FLORA.map(f => [f.id, f])) as Record<string, FloraSpec>;

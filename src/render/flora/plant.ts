@@ -77,7 +77,8 @@ export function buildPlant(spec: FloraSpec, variant: number, detail: number) {
   function flower(at: THREE.Vector3, axis: THREE.Vector3, scale = 1) {
     const F = fl!, ax = F.nod ? tilted(axis, F.nod, r() * Math.PI * 2) : axis.clone(), c = col(F.colour), cc = col(F.centre), spin = r() * Math.PI;
     for (let k = 0; k < F.petals; k++) { const az = spin + k / F.petals * Math.PI * 2, d = tilted(ax, F.open + (r() - .5) * .12, az);
-      B.blade(frame(at, d, az + Math.PI / 2), F.petalLength * scale, F.petalWidth * scale, PROFILE.petal, t => F.cup * scale * t * t, petalSegs, t => cc.clone().lerp(c, Math.min(1, t * 3)), c, 1, bloom); } // upstream createPetal
+      B.blade(frame(at, d, az + Math.PI 
+        / 2), F.petalLength * scale, F.petalWidth * scale, PROFILE.petal, t => F.cup * scale * t * t, petalSegs, t => cc.clone().lerp(c, Math.min(1, t * 3)), c, 1, bloom); } // upstream createPetal
     if (!lo) B.tube(at, at.clone().addScaledVector(ax, F.petalLength * scale * .35), F.petalLength * scale * .12, F.petalLength * scale * .08, cc, 3, 1, bloom);
   }
   /** upstream createInflorescence, on the axis from `top` along `axis` (stem tip). */
@@ -110,7 +111,20 @@ export function buildPlant(spec: FloraSpec, variant: number, detail: number) {
   }
   const pt = (pts: THREE.Vector3[], t: number) => { const f = t * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(f)); return pts[i].clone().lerp(pts[i + 1], f - i); };
   const origin = new THREE.Vector3();
-  if (spec.form === 'herb') {
+  if (spec.floating) {
+    // Floating-leaved aquatic rosette (Nuphar variegata): flat ovate-round pads resting horizontally on the water surface (spin = -pi/2 - az -> normal +Y), cup flower emerging 3-6 cm above water.
+    const L = spec.leaf, shade = (t: number) => leafC.clone().multiplyScalar(.82 + .28 * t);
+    for (let k = 0; k < L.perNode; k++) {
+      const az = k * GOLDEN_ANGLE + (r() - .5) * .35, rad = (.05 + .22 * r()) * grow, yPad = .018 + .004 * (k % 3);
+      const padAt = new THREE.Vector3(Math.cos(az) * rad, yPad, Math.sin(az) * rad);
+      const len = L.length * grow * (.85 + .3 * r()), wid = L.width * grow * (lo ? 1.25 : 1);
+      const dir = new THREE.Vector3(Math.cos(az), .01, Math.sin(az)).normalize();
+      if (!lo) B.tube(origin, padAt, spec.stemRadius * .7, spec.stemRadius * .5, stemC, 3);
+      B.blade(frame(padAt, dir, -Math.PI / 2 - az), len, wid, PROFILE[L.shape], t => .003 * Math.sin(Math.PI * t), leafSegs, shade, leafFall);
+    }
+    const pts = axisWith(origin, tilted(UP, r() * .1, r() * 6.28), H, spec.stemRadius, 0, 1, 0);
+    if (fl) inflorescence(pts[pts.length - 1], UP, pts);
+  } else if (spec.form === 'herb') {
     const L = spec.leaf, stemLen = H;
     if (L.arrangement === 'basal') for (let k = 0; k < L.perNode; k++) leaf(origin, UP, k * GOLDEN_ANGLE + r(), 1);
     const pts = axisWith(origin, tilted(UP, r() * .15, r() * 6.28), stemLen, spec.stemRadius, L.nodes, 1, 0);

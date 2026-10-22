@@ -34,7 +34,7 @@ export const HARE = {
   catchContact: 1.3, catchPounce: 2.4, energy: 35, stamina: 40, cloverRadius: 48,
 };
 export type HareState = Agent['action'];
-export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Object3D; body: THREE.Object3D; legs: Leg[]; ears: THREE.Object3D[]; rng: () => number; label?: THREE.Sprite; rig?: BoundController; frame?: BoundFrame }
+export interface Hare { id: number; x: number; z: number; heading: number; readonly state: HareState; agent: Agent; hopPhase: number; root: THREE.Group; head: THREE.Object3D; body: THREE.Object3D; /** run 7: fore trunk bone (parent of the head) */ chest?: THREE.Object3D; legs: Leg[]; ears: THREE.Object3D[]; rng: () => number; label?: THREE.Sprite; rig?: BoundController; frame?: BoundFrame }
 /** One limb: the rig segments as bones of the skinned mesh (render/rigSkin.ts RigLeg). */
 type Leg = RigLeg;
 export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
@@ -87,8 +87,8 @@ export const HARE_SKIN: SkinSpec = {
   name: 'hare',
   // round rump behind the hip, the haunch over the hip joints, tapering to a narrow chest between the forelegs
   trunk: [T(.088, .032, .008, .017, 1), T(.075, .036, .016, .038, 1), T(.05, .042, .021, .054, 1, { saddle: .2 }), T(0, .044, .022, .057, 1, { saddle: .3 }),
-    T(-.07, .03, .019, .046, 1, { saddle: .3 }), T(-.13, .002, .018, .039, 1, { saddle: .25 }), T(-.185, -.002, .016, .034, 1, { saddle: .2 }), T(-.215, .02, .012, .019, .95, { head: .2, saddle: .15 })],
-  neck: [T(-.205, .02, .018, .023, .95), Hd(.045, -.02, .016, .019, .85, { head: .6 }), Hd(.025, -.005, .015, .017, .8)],
+    T(-.07, .03, .019, .046, 1, { saddle: .3, chest: .2 }), T(-.13, .002, .018, .039, 1, { saddle: .25, chest: .55 }), T(-.185, -.002, .016, .034, 1, { saddle: .2, chest: .85 }), T(-.215, .02, .012, .019, .95, { head: .2, saddle: .15, chest: 1 })],
+  neck: [T(-.205, .02, .018, .023, .95, { chest: 1 }), Hd(.045, -.02, .016, .019, .85, { head: .6, chest: 1 }), Hd(.025, -.005, .015, .017, .8)],
   // rounded cranium, puffy buff cheeks, blunt muzzle, dark-brown bare nose leather (fur < .03 grows no cards)
   head: [Hd(.0336, .0022, .0246, .0269, .7), Hd(.009, .0045, .0302, .0325, .6, { accent: .25 }), Hd(-.0202, -.0022, .028, .0291, .5, { accent: .55 }),
     Hd(-.0403, -.0101, .0213, .0224, .4, { accent: .5 }), Hd(-.0538, -.0146, .0134, .0146, .3, { accent: .3, pale: .2 }), Hd(-.0605, -.0146, .0067, .0067, .02, { dark: .8 })],
@@ -113,7 +113,7 @@ export const hareCoatState = () => coatState(HARE_SKIN);
  *  of one skinned skin + fur, posed by poseHare from the rig. */
 function model() {
   const m = createRigSkin(hareBind(), HARE_SKIN);
-  return { root: m.root, body: m.body as THREE.Object3D, head: m.head as THREE.Object3D, legs: m.legs, ears: m.ears as THREE.Object3D[] };
+  return { root: m.root, body: m.body as THREE.Object3D, chest: m.chest as THREE.Object3D, head: m.head as THREE.Object3D, legs: m.legs, ears: m.ears as THREE.Object3D[] };
 }
 let bindCache: RigBind | undefined;
 /** The bind pose: the rig standing still at the origin, heading 0 (forward -z); joints relative to the hip-joint midpoint. */
@@ -123,7 +123,9 @@ export function hareBind(): RigBind {
   let fr = rig.update(1 / 60, 0, 0, null); for (let i = 0; i < 120; i++) fr = rig.update(1 / 60, 0, 0, null);
   const hl = limbPoints(HARE_SKELETON, fr, 1)[0], hr = limbPoints(HARE_SKELETON, fr, 3)[0], ox = (hl.x + hr.x) / 2, oz = (hl.z + hr.z) / 2;
   const limbs = [0, 1, 2, 3].map(i => { const P = limbPoints(HARE_SKELETON, fr, i).map(p => [p.x - ox, p.y, p.z - oz] as [number, number, number]); return i % 2 ? P.slice(1) : P; });
-  return bindCache = { pivot: [0, (hl.y + hr.y) / 2, 0], head: [0, HARE_BODY.headY, HARE_BODY.headZ], ear: HARE_BODY.ear, limbs };
+  // run 7: the chest bone at the fore girdle tops (blade pivots), from the pivot
+  const py = (hl.y + hr.y) / 2, chest: [number, number, number] = [0, (limbs[0][0][1] + limbs[2][0][1]) / 2 - py, (limbs[0][0][2] + limbs[2][0][2]) / 2];
+  return bindCache = { pivot: [0, py, 0], head: [0, HARE_BODY.headY, HARE_BODY.headZ], ear: HARE_BODY.ear, limbs, chest };
 }
 /** Pose targets: body pitch about the hip (rad, + = front up), body lift (m), head pitch (+ = nose up), head drop (m), ears
  *  (rad, + = laid back), foreleg and hind leg angles (rad, + = foot forward). Read from the reference sheet
@@ -150,7 +152,7 @@ function labelSprite() {
   return s;
 }
 
-export type HareModel = Pick<Hare, 'root' | 'body' | 'head' | 'legs' | 'ears' | 'hopPhase' | 'id' | 'rig' | 'frame'>;
+export type HareModel = Pick<Hare, 'root' | 'body' | 'chest' | 'head' | 'legs' | 'ears' | 'hopPhase' | 'id' | 'rig' | 'frame'>;
 export const createHareModel = model;
 /** The hare's limb skeleton for the bounding rig, from HARE_BODY (track half-widths [estimate: drawn to the reference]); run 5:
  *  split hind foot + shoulder blade, and the leporid joint ranges (ik.ts LEPORID_LIMITS: Hall et al. 2022, rabbit knee from
@@ -161,6 +163,9 @@ export const HARE_PLAN: BodyPlan = { hip: HARE_BODY.hipY, hipZ: HARE_BODY.hipZ, 
 /** Rig options (run 5): the level-trunk running posture (needs the blade's fore reach) and turning in place by re-planting. */
 export const HARE_RIG = { pose: RUN_POSE_LEVEL, turnInPlace: true };
 const HARE_SKELETON = skeletonOf(HARE_PLAN);
+/** Share of the rig's spine flex (rad) the chest bone turns by (front down when gathered, up when extended) [estimate: drawn to
+ *  refs/hare/graze-alert-flight attempt2 panels 4-6 against lookscore v1; the rig's flex is DERIVED (bounding.ts), not measured]. */
+export const SPINE_BEND = .6;
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3();
 /** Pose one hare model from its pipeline agent for this frame (shared by the game host and tools/hare-strip). The legs, body
  *  height and pitch come from the bounding rig (planted feet, half-bound / lagomorph gallop, sit-up and graze-crouch pose
@@ -179,6 +184,15 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
   h.root.position.set((hl.x + hr.x) / 2 + ox, 0, (hl.z + hr.z) / 2 + oz); h.root.rotation.y = fr.heading; h.root.updateMatrixWorld(); // the rig's heading (turnInPlace yaws it at TURN.rate)
   h.body.position.set(0, (hl.y + hr.y) / 2, 0); h.body.rotation.x = fr.tilt.pitch;
   const inv = h.root.matrixWorld.clone().invert();
+  // run 7: the chest bone sits on the rig's fore girdle tops (the trunk span changes .13-.23 m through the bound) and turns by
+  // the rig's spine flex (front down when flexed / gathered) on top of the hip-to-shoulder line, so the skin gathers and stretches
+  const bind = hareBind(), c0 = bind.chest ?? [0, 0, 0];
+  if (h.chest && bind.chest) {
+    const fl = limbPoints(HARE_SKELETON, fr, 0)[0], frt = limbPoints(HARE_SKELETON, fr, 2)[0];
+    h.body.updateMatrixWorld(); _a.set((fl.x + frt.x) / 2 + ox, (fl.y + frt.y) / 2, (fl.z + frt.z) / 2 + oz); h.body.worldToLocal(_a);
+    const ang = (y: number, z: number) => Math.atan2(y, -z), want = ang(_a.y, _a.z) - ang(c0[1], c0[2]);
+    h.chest.position.copy(_a); h.chest.rotation.x = want - SPINE_BEND * fr.spineFlex;
+  }
   h.legs.forEach((leg, i) => {
     const P = limbPoints(HARE_SKELETON, fr, i), o = leg.from; // [top (blade pivot), girdle joint, knee/elbow, ankle/wrist, toe/MTP(, toe tip)]
     leg.segs.forEach((bone, s) => { // each segment bone sits on its upper joint, turned from its bind direction onto the rig's
@@ -190,7 +204,7 @@ export function poseHare(h: HareModel, a: Agent, dt: number, time: number, groun
   // head and ears: reference poses (sit-up for the alert and the flight pause, scan, graze, rest), smoothed
   const moving = a.speed > .05, pose = POSES[moving ? (a.speed > 3 ? 'run' : 'move') : poseKey(a)];
   const nibble = a.action === 'feed' ? Math.sin(time * 9 + h.id) * .04 : 0;
-  h.head.rotation.x += (pose[2] + nibble - h.head.rotation.x) * k; h.head.position.y += (HARE_BODY.headY + pose[3] - h.head.position.y) * k;
+  h.head.rotation.x += (pose[2] + nibble - h.head.rotation.x) * k; h.head.position.y += (HARE_BODY.headY - (h.chest ? c0[1] : 0) + pose[3] - h.head.position.y) * k;
   for (const e of h.ears) e.rotation.x += (pose[4] - e.rotation.x) * k;
 }
 

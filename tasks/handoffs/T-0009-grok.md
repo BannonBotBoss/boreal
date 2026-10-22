@@ -31,8 +31,22 @@ every gate >= 95 % and only after re-checking tasks/RULES.md on main for a cross
   height profile already matches within ~.05 of the width (ref .47-.55, game .49-.59); the losses are the hind foot standing out
   behind the rump and the body riding higher on the legs than the photo hare (C:\dev\rabbit-rec11\look\crouch-detail-c1.jpg,
   zoom-c1-crouch.jpg) - the leg reach limits the drop (poseReach .46), so a deeper crouch needs a hind-leg fold the rig allows
-  (Gait Builder) rather than more pose numbers.- [ ] 4 Bound phases
-- [ ] 5 Coat on the bound poses (lookscore v1.1)
+  (Gait Builder) rather than more pose numbers.- [x] 4 Bound phases. Found: the rig's fore and hind girdle tops move .133 -> .227 m apart through a stride at 8.5 m/s (spine
+  flex +-.36 rad, DERIVED in bounding.ts), but the skin trunk was one rigid bone, so it could neither gather nor stretch.
+  Built (shared, data-driven): a chest bone in core/rigBody.ts RIG_BONE (index 21, after the legs so older indices hold;
+  RIG_BONE_COUNT 22) + SpecRing.chest weights + RigBind.chest; render/rigSkin.ts parents the head to the chest; hare.ts
+  HARE_SKIN front trunk rings chest .2 / .55 / .85 / 1 and the neck on the chest; poseHare puts the chest on the rig's fore
+  girdle tops and turns it by the hip-to-shoulder line minus SPINE_BEND .6 x spine flex [estimate; grid 0 / .6 / 1.2 / 1.8 is
+  flat within ~2 points]. New tools/hare-strip.html ?stride=8.5: a bound PHASE sheet (30 cells over one steady stride), because
+  the 6 fps sequence has only ~10 flee cells, mostly the accelerating start. tests/hare-mesh.test.ts: bone count 22 + new test
+  9 (front trunk chest weight > .7, rump < .01, chest travels > 5 cm over a stride). PC: hare-mesh + rules + hare-rig + bound
+  30/30, tsc 0. Scores (lookscore v1.1 = bound poses from the stride sheet, box): gather / push / stretch summer 33.6 / 49.2 /
+  63.1, winter 42.9 / 100 (suspect anchor) / 68.4; v1 (6 fps cells) 15.1 / 44.4 / 46.0 before vs 12.4 / 43.3 / 43.2 after: so
+  most of the bound gain is the stride sheet (metric), the chest bone alone is small and mixed (v1.1 without it: 32.1 / 54.3 /
+  57.3; score11-nochest.json). Evidence C:\dev\rabbit-rec11\look\ (ss-b3.png / sw-b3.png phase sheets, score11-b3.json,
+  zoom11-b3.jpg). What still differs from the reference (zoom): the game hare barely leaves the ground (suspension lift ~7 mm
+  at 8.5 m/s) and its legs stay under the body; the reference's gathered ball (hind feet far ahead) and full stretch need
+  more limb reach / suspension in the gait - Gait Builder, not pose numbers.- [ ] 5 Coat on the bound poses (lookscore v1.1)
 - [ ] 6 Winter push-off reference (prompt loop)
 - [ ] 7 End-on view + flee-following camera
 - [ ] 8 Re-record, re-score T-0009 and T-0028, compare /workspace/rabbit/compare-poses.jpg

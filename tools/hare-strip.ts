@@ -37,7 +37,20 @@ const world = (): AgentWorld => ({ others: [wolf], wind: { x: -1, z: 0 }, daylig
 const cam = new THREE.PerspectiveCamera(Number(q.get('fov') ?? 16), CW / CH, .1, 80); cam.position.set(0, .45, 6); cam.lookAt(0, .2, 0);
 const labels = document.getElementById('labels')!, log: unknown[] = [];
 let t = 0, next = 0; const dt = 1 / 120;
-for (let f = 0; f < N; f++) {
+// run 7 (T-0009): ?stride=<m/s> = a bound PHASE sheet instead of the timed sequence: the hare runs at that steady speed (flee
+// action) for 2 s, then the N cells sample ONE stride evenly (cell k at phase k / N), so lookscore can find the gathered,
+// push-off and extended phases however the 6 fps sequence aliases them
+const STRIDE = Number(q.get('stride') ?? 0);
+if (STRIDE > 0) { a.action = 'flee'; a.speed = STRIDE; a.heading = -Math.PI / 2; for (; t < 2; t += dt) { a.x += STRIDE * dt; poseHare(hare, a, dt, t, 0); } }
+const strideDt = STRIDE > 0 ? 1 / (hare.frame!.plan.hz * N) : 0;
+for (let f = 0; f < N && STRIDE > 0; f++) {
+  const sub = Math.max(1, Math.round(strideDt / dt)), h = strideDt / sub; for (let k = 0; k < sub; k++) { a.x += STRIDE * h; poseHare(hare, a, h, t, 0); t += h; }
+  const col = f % COLS, row = Math.floor(f / COLS), x = col * CW, y = H - (row + 1) * CH;
+  const dz = Number(q.get('track') ?? 2.2); cam.position.set(a.x, .25, a.z + dz); cam.lookAt(a.x, .15, a.z);
+  renderer.setViewport(x, y, CW, CH); renderer.setScissor(x, y, CW, CH); renderer.render(scene, cam);
+  log.push({ t: +t.toFixed(3), action: 'flee', x: +a.x.toFixed(3), speed: STRIDE, phase: +hare.frame!.stride.toFixed(3) });
+}
+for (let f = 0; f < N && !(STRIDE > 0); f++) {
   const at = f / fps;
   while (t < at - 1e-9) { if (t >= wolfAt) { wolf.speed = 1.6; wolf.x += 1.6 * dt; } stepAgent(a, world(), dt); poseHare(hare, a, dt, t, 0); t += dt; }
   const col = f % COLS, row = Math.floor(f / COLS), x = col * CW, y = H - (row + 1) * CH;

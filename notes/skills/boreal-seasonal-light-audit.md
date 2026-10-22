@@ -11,3 +11,5 @@ For visual acceptance, serve only your own worktree on your assigned preview por
 Check filesystem scope before using `tools/bench-lock.mjs`: its current default writes in TEMP, which is outside the hourly loop's allowed C:/dev paths. Do not silently relocate just one agent's lock and call that shared coordination. Resolve the shared location with the other capture users before running the existing helper. Always stop only your own preview server and browser processes. Keep the task open when recording/reference gates remain pending.
 
 Evidence: T-0022 handoff and `refs/sky/season-fix/verification.txt`. That artifact validates CPU-side renderer inputs, not GPU pixels or a completed visual gate.
+
+Recovery of interrupted capture runs: preserve raw files and recorded source revision before further capture. Browser video seeks to wall-clock offsets are approximate samples, not evidence of encoded presentation times. Record that limitation and never relabel inherited captures as fresh verification. A valid numeric substitute must state whether it checks renderer inputs or pixels.

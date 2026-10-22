@@ -1,0 +1,176 @@
+{
+  "url": "http://127.0.0.1:5230/?nomenu&bench&hour=12",
+  "observations": [
+    {
+      "frame": 0,
+      "wallMs": 56494.79999999702,
+      "videoSec": 22.0635,
+      "chrono": "12:10sun 55° up",
+      "gradient": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(186, 146, 110) 75deg, rgb(185, 177, 167) 90deg, rgb(150, 190, 220) 105deg, rgb(150, 190, 220) 120deg, rgb(150, 190, 220) 135deg, rgb(150, 190, 220) 150deg, rgb(150, 190, 220) 165deg, rgb(150, 190, 220) 180deg, rgb(150, 190, 220) 195deg, rgb(150, 190, 220) 210deg, rgb(150, 190, 220) 225deg, rgb(150, 190, 220) 240deg, rgb(150, 190, 220) 255deg, rgb(185, 177, 167) 270deg, rgb(186, 146, 110) 285deg, rgb(11, 26, 42) 300deg, rgb(11, 26, 42) 315deg, rgb(11, 26, 42) 330deg, rgb(11, 26, 42) 345deg, rgb(11, 26, 42) 360deg)",
+      "day": 227,
+      "hour": 12.176186666666663,
+      "datedSun": {
+        "elevation": 54.73403922021858,
+        "azimuth": 184.43831708633502,
+        "direction": {
+          "x": -0.04468044459565912,
+          "y": 0.816480749205275,
+          "z": 0.5756412459578684
+        }
+      },
+      "status": "12:10 · WALK · Stamina 100/100 · Energy 100/100RT run · LT stealth0 remembered · 0 friends · 0 herbs",
+      "diagnosticSun": {
+        "elevation": 54.73403922021858,
+        "azimuth": 184.43831708633502,
+        "direction": {
+          "x": -0.04468044459565912,
+          "y": 0.816480749205275,
+          "z": 0.5756412459578684
+        }
+      }
+    },
+    {
+      "frame": 1,
+      "wallMs": 62899,
+      "videoSec": 28.46770000000298,
+      "chrono": "12:11sun 55° up",
+      "gradient": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(186, 146, 110) 75deg, rgb(185, 177, 167) 90deg, rgb(150, 190, 220) 105deg, rgb(150, 190, 220) 120deg, rgb(150, 190, 220) 135deg, rgb(150, 190, 220) 150deg, rgb(150, 190, 220) 165deg, rgb(150, 190, 220) 180deg, rgb(150, 190, 220) 195deg, rgb(150, 190, 220) 210deg, rgb(150, 190, 220) 225deg, rgb(150, 190, 220) 240deg, rgb(150, 190, 220) 255deg, rgb(185, 177, 167) 270deg, rgb(186, 146, 110) 285deg, rgb(11, 26, 42) 300deg, rgb(11, 26, 42) 315deg, rgb(11, 26, 42) 330deg, rgb(11, 26, 42) 345deg, rgb(11, 26, 42) 360deg)",
+      "day": 227,
+      "hour": 12.198289333333298,
+      "datedSun": {
+        "elevation": 54.71633620753215,
+        "azimuth": 184.99378047558434,
+        "direction": {
+          "x": -0.050280863911271484,
+          "y": 0.8163023160221015,
+          "z": 0.5754323275427696
+        }
+      },
+      "status": "12:11 · WALK · Stamina 100/100 · Energy 100/100RT run · LT stealth0 remembered · 0 friends · 0 herbs",
+      "diagnosticSun": {
+        "elevation": 54.71633620753215,
+        "azimuth": 184.99378047558434,
+        "direction": {
+          "x": -0.050280863911271484,
+          "y": 0.8163023160221015,
+          "z": 0.5754323275427696
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "wallMs": 65423.89999999851,
+      "videoSec": 30.99260000000149,
+      "chrono": "12:12sun 55° up",
+      "gradient": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(186, 146, 110) 75deg, rgb(185, 177, 167) 90deg, rgb(150, 190, 220) 105deg, rgb(150, 190, 220) 120deg, rgb(150, 190, 220) 135deg, rgb(150, 190, 220) 150deg, rgb(150, 190, 220) 165deg, rgb(150, 190, 220) 180deg, rgb(150, 190, 220) 195deg, rgb(150, 190, 220) 210deg, rgb(150, 190, 220) 225deg, rgb(150, 190, 220) 240deg, rgb(150, 190, 220) 255deg, rgb(185, 177, 167) 270deg, rgb(186, 146, 110) 285deg, rgb(11, 26, 42) 300deg, rgb(11, 26, 42) 315deg, rgb(11, 26, 42) 330deg, rgb(11, 26, 42) 345deg, rgb(11, 26, 42) 360deg)",
+      "day": 227,
+      "hour": 12.206756666666669,
+      "datedSun": {
+        "elevation": 54.70900346605221,
+        "azimuth": 185.2064525854256,
+        "direction": {
+          "x": -0.052425898511377696,
+          "y": 0.8162283846236476,
+          "z": 0.5753457649969674
+        }
+      },
+      "status": "12:12 · WALK · Stamina 100/100 · Energy 100/100RT run · LT stealth0 remembered · 0 friends · 0 herbs",
+      "diagnosticSun": {
+        "elevation": 54.70900346605221,
+        "azimuth": 185.2064525854256,
+        "direction": {
+          "x": -0.052425898511377696,
+          "y": 0.8162283846236476,
+          "z": 0.5753457649969674
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "wallMs": 70569.59999999404,
+      "videoSec": 36.13829999999702,
+      "chrono": "12:13sun 17° up",
+      "gradient": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(11, 26, 42) 75deg, rgb(11, 26, 42) 90deg, rgb(11, 26, 42) 105deg, rgb(144, 121, 102) 120deg, rgb(202, 170, 139) 135deg, rgb(177, 180, 179) 150deg, rgb(160, 187, 206) 165deg, rgb(155, 188, 212) 180deg, rgb(160, 187, 206) 195deg, rgb(177, 180, 179) 210deg, rgb(202, 170, 139) 225deg, rgb(144, 121, 102) 240deg, rgb(11, 26, 42) 255deg, rgb(11, 26, 42) 270deg, rgb(11, 26, 42) 285deg, rgb(11, 26, 42) 300deg, rgb(11, 26, 42) 315deg, rgb(11, 26, 42) 330deg, rgb(11, 26, 42) 345deg, rgb(11, 26, 42) 360deg)",
+      "day": 355,
+      "hour": 12.223580333333432,
+      "datedSun": {
+        "elevation": 17.018945369581754,
+        "azimuth": 183.21820824257884,
+        "direction": {
+          "x": -0.053680371679108004,
+          "y": 0.29268789958181946,
+          "z": 0.9547000634412756
+        }
+      },
+      "status": "12:13 · WALK · Stamina 100/100 · Energy 100/100RT run · LT stealth0 remembered · 0 friends · 0 herbs",
+      "diagnosticSun": {
+        "elevation": 17.018945369581754,
+        "azimuth": 183.21820824257884,
+        "direction": {
+          "x": -0.053680371679108004,
+          "y": 0.29268789958181946,
+          "z": 0.9547000634412756
+        }
+      }
+    },
+    {
+      "frame": 4,
+      "wallMs": 77617.09999999404,
+      "videoSec": 43.18579999999702,
+      "chrono": "12:14sun 17° up",
+      "gradient": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(11, 26, 42) 75deg, rgb(11, 26, 42) 90deg, rgb(11, 26, 42) 105deg, rgb(144, 121, 102) 120deg, rgb(202, 170, 139) 135deg, rgb(177, 180, 179) 150deg, rgb(160, 187, 206) 165deg, rgb(155, 188, 212) 180deg, rgb(160, 187, 206) 195deg, rgb(177, 180, 179) 210deg, rgb(202, 170, 139) 225deg, rgb(144, 121, 102) 240deg, rgb(11, 26, 42) 255deg, rgb(11, 26, 42) 270deg, rgb(11, 26, 42) 285deg, rgb(11, 26, 42) 300deg, rgb(11, 26, 42) 315deg, rgb(11, 26, 42) 330deg, rgb(11, 26, 42) 345deg, rgb(11, 26, 42) 360deg)",
+      "day": 355,
+      "hour": 12.246079999999893,
+      "datedSun": {
+        "elevation": 17.006022648547816,
+        "azimuth": 183.54178908462552,
+        "direction": {
+          "x": -0.05907528095405204,
+          "y": 0.29247222512654464,
+          "z": 0.9544475410988954
+        }
+      },
+      "status": "12:14 · WALK · Stamina 100/100 · Energy 100/100RT run · LT stealth0 remembered · 0 friends · 0 herbs",
+      "diagnosticSun": {
+        "elevation": 17.006022648547816,
+        "azimuth": 183.54178908462552,
+        "direction": {
+          "x": -0.05907528095405204,
+          "y": 0.29247222512654464,
+          "z": 0.9544475410988954
+        }
+      }
+    },
+    {
+      "frame": 5,
+      "wallMs": 79868.39999999851,
+      "videoSec": 45.43710000000149,
+      "chrono": "12:15sun 17° up",
+      "gradient": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(11, 26, 42) 75deg, rgb(11, 26, 42) 90deg, rgb(11, 26, 42) 105deg, rgb(144, 121, 102) 120deg, rgb(202, 170, 139) 135deg, rgb(177, 180, 179) 150deg, rgb(160, 187, 206) 165deg, rgb(155, 188, 212) 180deg, rgb(160, 187, 206) 195deg, rgb(177, 180, 179) 210deg, rgb(202, 170, 139) 225deg, rgb(144, 121, 102) 240deg, rgb(11, 26, 42) 255deg, rgb(11, 26, 42) 270deg, rgb(11, 26, 42) 285deg, rgb(11, 26, 42) 300deg, rgb(11, 26, 42) 315deg, rgb(11, 26, 42) 330deg, rgb(11, 26, 42) 345deg, rgb(11, 26, 42) 360deg)",
+      "day": 355,
+      "hour": 12.254494666666817,
+      "datedSun": {
+        "elevation": 17.000872234262474,
+        "azimuth": 183.66278517261367,
+        "direction": {
+          "x": -0.06109241038926497,
+          "y": 0.29238626286016794,
+          "z": 0.9543468922166062
+        }
+      },
+      "status": "12:15 · WALK · Stamina 100/100 · Energy 100/100RT run · LT stealth0 remembered · 0 friends · 0 herbs",
+      "diagnosticSun": {
+        "elevation": 17.000872234262474,
+        "azimuth": 183.66278517261367,
+        "direction": {
+          "x": -0.06109241038926497,
+          "y": 0.29238626286016794,
+          "z": 0.9543468922166062
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "sourceCommit": "6295311",
+  "measurementNote": "diagnosticSun is a recomputation, not GPU readback. Video samples are browser seeks to recorded wall-time offsets, not asserted exact encoded-frame presentation timestamps. Screenshot and observation times differ. No performance benchmark."
+}

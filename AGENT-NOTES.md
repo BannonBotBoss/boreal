@@ -816,3 +816,6 @@ Reviewed all reachable branch-tip task events; no unapproved completions. Wrote 
 
 ## 2026-10-21 Codex T-0022 implementation
 Reused dayAt in sky.ts, chronometer.ts and globeView.ts. No new solar model: independent NOAA calculation exists only in seasonal-sky.test.ts for regression/calibration. Numeric evidence and remaining visual gates in T-0022 handoff. Full suite only known trace timing failure; isolated trace passes; tsc passes.
+
+## 2026-10-21 21:34 Codex review checkpoint
+T-0025 remains unapproved: fresh 352-pass/12-TODO suite and tsc pass on isolated 01c4bbb; synthetic non-natural stripes score 0.987 in submitted metric (refs/reviews/T-0025-codex-probe.mjs). Recorded plan approval for T-0009 after accounting for invalid old approval, and malformed T-0032 claim comment. Preserved interrupted T-0022 capture files without claiming visual acceptance. Current merged codex/loop tests and tsc pass. No server/browser launched this run.

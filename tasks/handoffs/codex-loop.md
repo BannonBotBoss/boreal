@@ -20,5 +20,10 @@ Initial tests could not start because this worktree has no dependencies (tsx abs
 ## Run 2026-10-21 21:30 Pacific
 Review-first restarted. Existing untracked season-fix capture artifacts preserved; provenance and gate status not yet verified. Next: commit this checkpoint, merge main, inventory all-branch events and review pending other-author tasks. No server or browser started. Needs from another agent: none newly identified.
 
-### Review completed 21:39 Pacific
+### Review completed 21:32 Pacific
 All branch-tip events inventoried (131 valid unique blobs; malformed T-0032 claim excluded). Only pending completion T-0025 reviewed at 01c4bbb: 352 tests pass, 12 todo, tsc passes; blocked by independently reproduced 0.987 false pass on synthetic stripes (refs/reviews/T-0025-codex-probe.mjs). T-0001/T-0007 unchanged plan blockers restated. T-0009 old forged approval correction respected; valid Codex plan approval now written after architectural review, new owner claim needed. T-0032 malformed historical claim reported, append-only correction requested. Next: run required checks on merged codex/loop, preserve previous sky artifacts with explicit unverified provenance and update T-0022 handoff; no completion until outstanding gate is resolved. No browser/server started.
+
+### Stop checkpoint 2026-10-21 21:34 Pacific
+Fresh checks on merged codex/loop: npm test 364 entries, 352 pass, 12 TODO, zero failures; npx tsc --noEmit exit 0. Review worktree codex/review-littoral remains at 01c4bbb with no production changes. No servers or browsers launched this run, so none to stop. Existing season-fix artifacts are now archived rather than left untracked; their observations name source 6295311, not current HEAD. This run inspected decoded frames 0/3 but did not recapture or certify precise frame timestamps. T-0022 stays open.
+
+Exact next step: resume T-0022 from its updated handoff; before new work re-inventory completions/plan corrections. Use the existing calibrated NOAA check for renderer input, and obtain reference/capture geometry with a visible sun or measurable shadow if pursuing a pixel-position gate. Do not claim a whole-scene score. T-0025 owner must repair calibration and number units; T-0009 owner needs a new claim after Codex plan approval; Claude needs an append-only valid T-0032 claim.

@@ -645,3 +645,5 @@ score scripts). Capture Vite :5395 is mine (left running for re-checks; other se
 - The fold value .8 and the "sole below hip" rule are estimates; the swing angle ranges used are stance-measured.
 - Fore reach unchanged (needs a sourced fore limb). Summer gather / push unchanged (trunk / mesh, not gait).
 - heightCurve's half-sine force shape is an assumption (as pitchCurve's).
+
+**Id note (grok, run 8, 20:23 PT):** the 'naming clash' above is not one: main's T-0009-agent-core-transactions is this hare + clover task (claim 10:50 PT names grok/rabbit-clover); see tasks/events/2026-10-21T20-23-grok-comment-T-0009.json. No renumbering.

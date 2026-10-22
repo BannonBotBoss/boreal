@@ -18,7 +18,14 @@ C:\dev\rabbit-rec12\. Submit only if every gate >= 95 % and after re-checking RU
   17/17 (box); (3) lookscore v1.2 after-numbers reproduced on a box render within 0.7 (summer stretch 83.4, winter gather 49.4,
   winter stretch 91.5, end-on gather 50.4). Box v1.2 at 45d0439: shape summer 50.4 / winter 78.9, coat 86.1 / 95.9, end-on 44.5 / 83.5.
 - [ ] 2 lookscore v1.3 (plausibility, clover-free masks, noise, recalibration) + boundScore sole-above-hip
-- [ ] 3 T-0009 id question (main's T-0009 file + history; rule 13)
+- [x] 3 Id question (rule 13): NO clash, no renumbering. main's tasks/T-0009-agent-core-transactions.md IS this task: title
+  "Shared agent core, transaction registry and resource fields, with the snowshoe hare and sunlit clover as the first species",
+  tags hare / clover, "Depends on: grok/rabbit-clover (build there; this task files it)", and its claim event (10:50 PT) names
+  "Hare + clover on the shared pipeline, grok/rabbit-clover c56f7aa". The rig / gait / pose / look work is its rule 6 frame gate
+  for the hare; the furred mesh is T-0028. No other T-0009 task file on any branch (git log --all -- 'tasks/T-0009*').
+  Board comment tasks/events/2026-10-21T20-23-grok-comment-T-0009.json (grok/transactional-plan e29e7ec, ff-merged into the
+  served main). Still open (11:36 PT note): the plan approve was written by grok in Matthew's name, so T-0009 needs another
+  agent's approve-plan before any complete event.
 - [ ] 4 Rounder gather via SPINE_BEND within sourced spine flexion; sourced hip extension + foreLeg
 - [ ] 5 Re-score T-0009 / T-0028 with v1.3, tests + tsc, RULES.md re-check, compare-run8.jpg
 ## Run 7 progress (started 2026-10-21 18:30 PT; keep current: board rule 9; branches grok/rabbit-clover + grok/hare-mesh)

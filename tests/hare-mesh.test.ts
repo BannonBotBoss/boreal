@@ -130,3 +130,15 @@ test('chest bone (T-0009 run 7): the front trunk and neck weight the chest, the 
   for (let t = 0; t < 2; t += 1 / 120) { a.z -= 8.5 / 120; poseHare(h, a, 1 / 120, t, 0); if (t > 1) { lo = Math.min(lo, h.chest!.position.z); hi = Math.max(hi, h.chest!.position.z); } }
   assert.ok(hi - lo > .05, `chest travel ${(hi - lo).toFixed(3)} m over the stride (rig span .13-.23 m)`);
 });
+
+test('head pose (run 11): the lowered graze and run heads stay out of the ground (every head ring, posed, minus its radius and pelt)', () => {
+  for (const [action, speed] of [['feed', 0], ['flee', 8.5]] as const) {
+    const hare: HareModel = { ...createHareModel(), hopPhase: 0, id: 1 }, a = createAgent(HARE_AGENT, 'hare:test', 0, 0, stream(1, 't'), { energy: 60, relaxation: 95 });
+    let low = Infinity; const w = new THREE.Vector3();
+    for (let i = 0; i < 240; i++) { (a as { action: string }).action = action; a.speed = speed; a.x += speed / 60; poseHare(hare, a, 1 / 60, i / 60, 0);
+      if (i > 60) { hare.root.updateMatrixWorld(true);
+        for (const r of HARE_SKIN.head) { hare.head.localToWorld(w.set(0, r.y, r.z)); low = Math.min(low, w.y - Math.max(r.rx, r.ry) - HARE_SKIN.pelt.head); } } }
+    // a grazing hare's mouth reaches the clover: the fur may brush the ground (5 mm), the head may not sink into it
+    assert.ok(low > -.005, `${action}: lowest head surface ${low.toFixed(3)} m`);
+  }
+});

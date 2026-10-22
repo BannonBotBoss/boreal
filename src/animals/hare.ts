@@ -142,12 +142,13 @@ export function hareBind(): RigBind {
  *  crouch; alert / pause = upright sit-up on the haunches, fore paws lifted, ears erect (run 7, Matthew 18:23 PT, reference panel 3;
  *  run 4-6 used a half sit-up on all fours); rest/freeze = tucked, ears flat [estimate]. */
 export const POSES: Record<string, number[]> = {
-  'head-down': [-.1, -.04, -.85, -.075, .95, .1, .45], // run 7: head -.55 -> -.85 (nose to the clover, refs attempt2 panel 1)
+  'head-down': [-.1, -.04, -.85, -.08, 1.5, .1, .45], // run 7: head -.55 -> -.85 (nose to the clover, refs attempt2 panel 1); run 11: ears .95 -> 1.5 (laid flat along the neck), drop -.075 -> -.08 (fur at the ground, test 'head pose (run 11)') - grid C:\dev\rabbit-rec15\grid-run11.txt W10-W12: winter crouch 64.4 -> 68.1, summer 51.3 -> 54.3; lower heads scored higher only with the muzzle in the ground (W5-W8, rejected), REFERENCE-MATCHED
   scan: [.3, 0, -.35, 0, -.05, -.15, .5],
   sit: [1.15, 0, -.8, -.025, -.15, -.7, .55], // run 7: upright sit-up (body .95 from the rig's 'sit-up'), head turned back level, nose a little up
   rest: [-.04, -.035, -.15, 0, .85, .25, .55],
   crouch: [-.06, -.045, -.1, 0, 1.15, .3, .6],
-  move: [0, 0, -.1, 0, .5, 0, 0], run: [0, 0, .05, 0, .9, 0, 0],
+  move: [0, 0, -.1, 0, .5, 0, 0],
+  run: [0, 0, -.55, -.06, .9, 0, 0], // run 11: head .05 -> -.55 (nose down), drop 0 -> -.06: the references' gathered hare carries its head low in front of the chest (grid R1-R13, gather 48 / 52 -> 64 / 62), REFERENCE-MATCHED
 };
 type PoseKey = 'head-down' | 'scan' | 'sit' | 'rest' | 'crouch' | 'move' | 'run';
 const poseKey = (a: Agent): PoseKey => a.action === 'alert' || a.action === 'pause' ? 'sit' : a.action === 'scan' ? 'scan' : poseOf(a) === 'head-up' ? 'scan' : poseOf(a) as PoseKey;

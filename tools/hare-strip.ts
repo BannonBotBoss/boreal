@@ -18,6 +18,7 @@ const q = new URLSearchParams(location.search), wolfAt = Number(q.get('wolfAt') 
 // ?headsize=<s> scales the head rings (before the model is built)
 if (q.get('chest')) { const s = Number(q.get('chest')), wx = Number(q.get('chestw') ?? 1); for (const r of HARE_SKIN.trunk) { const c = (r as { chest?: number }).chest ?? 0, d = r.ry * (s - 1) * c; r.ry += d; r.y -= d; r.rx *= 1 + (wx - 1) * c; } }
 if (q.get('runears')) POSES.run[4] = Number(q.get('runears'));
+if (q.get('pose')) for (const e of q.get('pose')!.split(';')) { const [k, i, v] = e.split(':'); POSES[k][Number(i)] = Number(v); } // run 11 grid hook: pose=run:2:-.2;head-down:4:1.2
 if (q.get('headsize')) { const s = Number(q.get('headsize')); for (const r of HARE_SKIN.head) { r.rx *= s; r.ry *= s; r.z *= s; r.y *= s; } }
 const CW = 424, CH = 240, COLS = 6, N = Math.round(fps * dur), ROWS = Math.ceil(N / COLS), W = CW * COLS, H = CH * ROWS;
 const canvas = document.getElementById('c') as HTMLCanvasElement;

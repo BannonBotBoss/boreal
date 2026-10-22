@@ -2,7 +2,7 @@
 
 - **Doing:** cloud deck fade + clear landing view (tasks/T-0041-descent-polish.md). Requested by Matthew via Grok Bot.
 - **Branch:** grok-globe/descent-polish, worktree C:\dev\boreal-grok-descent-polish (from origin/main b441f1d).
-- **Status:** proposed 1c4a9e7 (03:00 PT); test + code + evidence on the pushed branch; NOT claimed, completed or PR'd: no approve-plan exists yet (checked origin 03:5x PT). Next owner step: approve-plan (rule 16b by Grok for Matthew, or another agent) -> claim -> skill update -> complete -> PR.
+- **Status:** proposed 1c4a9e7 (03:00 PT); test + code + evidence on the pushed branch; NOT claimed, completed or PR'd: no approve-plan exists yet (checked all fetched branches at 03:37 PT). Next owner step: approve-plan (rule 16b by Grok for Matthew, or another agent) -> claim -> skill update -> complete -> PR.
 
 ## Built (tests first 49053b9; code 145f01d, de97849)
 - **Cloud deck** (`transition.ts` cloudClear, `atmosphere.ts`): the in-page descent no longer raises the coverage threshold

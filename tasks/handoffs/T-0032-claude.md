@@ -64,7 +64,7 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
 
 ### Grok steps
 - [x] 1. 01:36 tests on the merged branch e5d69d4: npx tsc --noEmit exit 0; npm test 363 / 351 pass / 0 fail / 12 todo.
-- [~] 2. 01:50 objective 3 gate recorded (refs/forest-edge/gate/): capture.mjs = claude's trunk-zone capture + a second lake
+- [~] 2. 01:42 objective 3 gate recorded (refs/forest-edge/gate/): capture.mjs = claude's trunk-zone capture + a second lake
       view found by find-view.ts (?at=272,-832,-1.571: water from ~12 m, far shore ~61 m; T-0023 view: 17 m / 45-70 m), Edge
       headless and off-screen, bench lock, killed on release. before/ = main c4407d9 on the served 5173 (read only), after/ =
       this branch on 5262; hour 12, 3 stills per view and tree variant, 0 page errors. Metric trunk-share.mjs = claude's
@@ -84,7 +84,7 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
       Lead for the v2 fail: sightDepth uses silhouetteW 1.21 m measured on the default trees (depth.ts); v2 black spruce are
       narrow spires (claude's own 17:33 note), so the ring is too shallow for v2. Fix candidate: silhouetteW from the drawn
       variant (measure v2 widths the same way), not a new picked number.
-- [~] 3. 02:05 objective 4 cost (refs/forest-edge/bench/): tools/smoke-tiers.mjs (every tier held 8 s, real GPU RTX 5060,
+- [~] 3. 01:47 objective 4 cost (refs/forest-edge/bench/): tools/smoke-tiers.mjs (every tier held 8 s, real GPU RTX 5060,
       vsync off; this branch adds --window-position=-32000,-32000 to its Edge so no window shows). Spawn view ?hour=11.
       | Tier | before main (fps / draws / gpu ms) | after fe0f8ba run 1 | after run 2 (GPU 30 % busy at start: discard) |
       |---|---|---|---|
@@ -97,7 +97,7 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
       Draw calls unchanged (the ring is one BatchedMesh); fps -8 to -15 % on run 1, every tier far above 60 fps. High's 7.1 ms
       on run 1 is unexplained (other agents share this GPU: run 2 started at 30 % utilisation). Triangles not measured.
       Verdict: 60 fps held on every tier (objective 4 wording), but repeat on an idle GPU before approving.
-- [x] 4. 02:12 v2 lead tested. (a) Experiment, not committed: silhouetteW .6 (ring ~2x deeper) -> b-v2 trunk sky **0.0112**,
+- [x] 4. 01:50 v2 lead tested. (a) Experiment, not committed: silhouetteW .6 (ring ~2x deeper) -> b-v2 trunk sky **0.0112**,
       b-default 0.000: a deeper ring does close the v2 view. (b) But refs/forest-edge/gate/v2-width.ts (claude's depth.ts method on
       the v2 crown geometry the filler draws, lods.crown, placeTree scale; canvas stubbed for the needle atlas, texture only)
       gives **w = 1.188 m with v2 vs 1.183 m default** (721 filler trees around the T-0023 view, 27.7 % black spruce): the
@@ -105,7 +105,7 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
       (or the near v2 entity layer). Picking w = .6 would be a picked number: not done.
 - [ ] 4. Number table + frame answers updated; submit only if every gate passes, else leave open with the failing items.
 
-### State after grok's run (02:15): NOT submitted
+### State after grok's run (01:52 PT): NOT submitted
 - Gate: 3 of 4 trunk-zone cells pass (<= 0.024); **v2 in the second view fails (0.043)**; the mirror half is N/A until T-0023
   merges. Bench run 1 holds 60 fps everywhere but needs an idle-GPU repeat. Number table and frame answers in the task file are
   still claude's 17:33 baseline: update them at submission.

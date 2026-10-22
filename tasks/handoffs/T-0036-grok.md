@@ -97,3 +97,74 @@ Ask claude/codex/agy for approve-plan, then claim, then complete + review.
 
 ## Needs from another agent
 - approve-plan for T-0036 (claude, codex or agy), then review of the complete event.
+
+## Part 2 (2026-10-22 01:41-01:57 PT additions): diets, senses, groups, vigilance, headless sim
+
+Separate commit set on top of the T-0036 needs work (branch `grok/hunt-senses` = `grok/wolf-hydration` + this commit;
+`grok/wolf-hydration` fast-forwarded to it). Scope as recorded in Matthew's T-0036 approve-plan event (01:55).
+
+### Public module path (stable): `src/core/sim`
+Headless, no Three.js (test walks the imports): `createWorld(opts)`, `createAnimal(world, speciesId, {x, z, heading?}, {controlled?})`,
+`addFood(world, kind, x, z, kg)`, `tick(world, dt)` (fixed sub-steps of `world.step`; coarse ticks: raise `step`),
+`nearbyAnimals / nearbyFood / nearbyWater`, `takeEvents` (`caught`, `bolt`, `ate`), `removeAnimal`.
+An embodied animal is `controlled`: the adapter writes x/z/heading/speed/mode/pouncing, the sim senses it and tests captures.
+`animals/hare.ts` is now only the render adapter (spawn/despawn, meshes, hop animation) over a `core/sim` world.
+Pure modules it uses: `core/needs/senses` (perceive: sight in FOV, hearing of footfalls, smell via `core/senses` scentLevel),
+`core/needs/diet` (one `DietModule` interface: carnivore / herbivore / omnivore; meal energy + water; capture test; Howland jink evasion),
+`core/needs/social` (link-distance shared detections, scatter, vigilance group-size effect).
+System properties groups (main's file, alphabetical, with PROPERTY_META + SYSTEM_MAP system `animalSim`): `hunt`, `perception`, `sim`, `social`.
+
+### Template additions (every species, sourced; `_template.ts` updated)
+| field | wolf | hare | source / flag |
+|---|---|---|---|
+| sight range / FOV | 60 m / 250 deg | 26 m / 360 deg | dogs 240-250 deg (Miller & Murphy 1995); leporid panoramic ~360 deg (rabbit, Hughes 1971); ranges game calibration |
+| hearing range | 40 m | 22 m | game calibration (HARE_AGENT for the hare) |
+| smell potency | 1.0 | 0.8 | wolves scent prey ~2.4 km downwind (Mech 1970), relative scale |
+| diet | carnivore: hare 6000 kJ/kg x .9, 650 mL/kg, 1.5 kg | herbivore: clover 3128 kJ/kg wet x .36, 830 mL/kg, bite .362 g / 3 s | prey energy estimate; clover GE 18.4 MJ/kg DM x 17 % DM (Feedipedia); hare assimilation derived to close FMR 1113 kJ/d on 167 g DM/d |
+| top / tired flight speed | 15.5 / 2.4 m/s real | 12.5 / 11.2 m/s real | wolf 56-64 km/h (Mech & Boitani 2003); hare 45 km/h (ECCC Hinterland Who's Who); hare tired speed estimate (tuned) |
+| burst length | stamina sprint 12 s | stamina sprint 8 s | same stamina field for player and NPC (one engine) |
+| lateral grip | 13 m/s2 | 30 m/s2 | cheetah 13 m/s2 (Wilson et al. 2013) as bound; hare value an estimate (small prey out-turn predators, Howland 1974) |
+| group size / spacing | 2-8 / 5 m | 1-4 / 20 m | packs 5-8 (Mech & Boitani); hares usually solitary, loose feeding aggregations (Behav Processes 1997; ADW); 5-10 hares/ha peak -> 16-22 m nearest neighbour (Keith 1990) |
+| link distance / relay | 40 m / .5 s | 22 m / .3 s | hare: hind-foot thump is the alarm, mates freeze (ADW, EALT); link = hearing range (estimate) |
+| vigilance lone share / exponent | .1 / 0 | .3 / .3 | Roberts 1996; Monaghan & Metcalfe 1985 (brown hares feed more, corporate vigilance rises with group); Marboutin & Aebischer 1996 r = -0.32 (weak); estimates |
+| scatter | 0 | .6 rad | confusion effect (Krause & Ruxton 2002), angle estimate |
+
+What the sources say about snowshoe hare groups: usually solitary with overlapping home ranges (ADW); they aggregate
+temporarily at rich feeding sites (windfalls), and arrivals/departures are independent of group size, i.e. food-driven
+aggregation, not a social group (Behav Processes 1997). Densities cycle from <0.1 to 5-10 hares/ha (Keith 1990). Main signal:
+hind-foot thumping; others freeze. No herd values were invented: group max 4 at a patch is flagged as an estimate.
+
+### Behaviour now
+- Hare (NPC): own detection from senses -> freeze (react 1 s x jitter) -> bolt inside flight distance 3.7 m x (.5 + 1.5 x perception) or
+  when the freeze ends and the wolf is not stalking; flee = Howland jink inside the pursuer's turning radius + zig-zag, grip-limited turns,
+  scatter away from linked mates. Linked mates (<= 22 m, chains count) share the detection after .3 s per link; out of link, no relay.
+  Graze bouts lengthen with linked mates (vigilance), so grouped hares feed longer and still detect earlier.
+- Wolf (NPC, in core/sim): behaviour model goal; hunt = stalk (crouched, .2 x walk) the best-perceived hare, chase on its bolt, pounce at 3 m.
+- Embodied wolf: a capture runs the carnivore diet module (+54 Energy, +20 % hydration from a 1.5 kg hare).
+
+### Capture tuning (tools/hunt-sim.ts: headless, 120 chases per style, keys steer 2.2 rad/s as main.ts)
+| style | approach | catch rate | tries per catch |
+|---|---|---|---|
+| super-stealth stalk, react .2 s, pounce at 3 m | bolt gap 4.4 m | 37 % | 2.7 |
+| stealth stalk, react .3 s, pounce at 3 m | bolt gap 4.4 m | 59 % | 1.7 |
+| walk straight in, react .45 s, contact only | bolt gap 13.9 m | 46 % | 2.2 |
+Field reference: coyote 36.9 %, lynx 28.7 % of chases on snowshoe hares (O'Donoghue et al. 1998, Oikos 82:169; older coyote reports 6-10 %).
+So a catch takes about 2-3 tries. Caveat: the 12 s sprint (Matthew's >= 10 s) outlasts the hare's 8 s burst, so endurance, not stalking,
+decides most chases (catches cluster at 5-10 s); stalking closer does not raise the rate in this model. Levers if it should reward stealth more:
+grip-limit the player's turns while sprinting (wolf 13 m/s2 -> 1.2 rad/s at 10.5 m/s), cover the hare can reach, or a shorter wolf sprint.
+
+### Tests (tests/sim.test.ts, node, no renderer)
+every species defines needs/senses/stamina/diet/social (sourced, finite); stamina wolf >= 10/30 s, hare burst shorter; FOV (hare sees behind,
+wolf not) and stealth hides a slow crouched body; both diets refill Energy + hydration; relay inside link distance, none outside (+ chain);
+vigilance: linked hare grazes a larger share and detects a stalking wolf no later; scatter outward; 200 hares + 5 wolves x 10 sim min
+(~8-11 s wall at .1 s steps); no Three.js import under core/sim; capture rate within 10-75 % for skilled and naive.
+npm test on the branch: 381 pass, 1 fail = tests/trace.test.ts "trace off: hooks are pass-through" (allocation check, passes alone; flaky under load).
+
+### Playing as a hare: what is missing
+The data and sim plug in (template, senses, herbivore diet, stamina, group awareness all generic). Missing: (1) a playable hare body/rig in
+the Play-as list (`view.playable` only has the wolf here; T-0009's bounding rig on grok/rabbit-clover); (2) the clover patches are on
+grok/rabbit-clover (T-0009), not main: the adapter must `addFood(world, 'clover', ...)` from them; (3) controls for hare gaits (hop/bound)
+mapped to the template speeds; (4) the predator-awareness cue: `strongestThreat` + `threatCue` (core/needs/senses) and `relayed` on the sim
+animal exist, but the HUD/halo wiring waits for an embodied prey (plan: push relayed alarms as sound cues into the existing senses halo,
+no new ring; auto-focus radius stays invisible); (5) NPC wolves in the rendered world (core/sim has them; no renderer adapter yet).
+No recording of a chase yet (needs scripted input in the recorder); the headless sim table above is the evidence.

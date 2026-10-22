@@ -41,7 +41,6 @@ export interface SpeciesTemplate {
       /** body-water deficit (share of body mass) at hydration 0 % (critical) */ criticalDeficit: Sourced;
       /** mL drunk per GAME second while drinking at water */ drinkMlPerS: Sourced;
       /** extra water loss per degC above `heatAboveC` (share of the base rate) */ heatPerC: Sourced; heatAboveC: Sourced;
-      /** preformed water per kg of each food eaten (mL/kg wet mass) */ foodWaterMlPerKg: Record<string, Sourced>;
     };
     energy: {
       /** what 100 Energy means; the host owns the value (AnimalBrain.energy / Agent.energy) */ meaning: string;
@@ -52,7 +51,39 @@ export interface SpeciesTemplate {
       /** GAME hours of rest (still) from 0 to 100 */ restHoursToFull: Sourced;
     };
   };
+  /** Senses (T-0036): one shape for every species; core/needs/senses perceives with it (sight in the field of view, hearing of
+   *  footfalls, smell through core/senses scentLevel). Same fields as core/agent AgentSpecies.senses plus the field of view. */
+  senses: {
+    sight: { /** m a moving body is seen at */ rangeM: Sourced; /** total visual field (deg) */ fovDeg: Sourced; /** vision floor in the dark 0..1 */ night: Sourced;
+      /** speed band (m/s): not moving .. clearly moving */ motion: Sourced<[number, number]>; /** m a still body is seen at */ presenceM: Sourced; /** presence factor of a crouched body */ crouched: Sourced };
+    hearing: { /** m footfalls are heard at */ rangeM: Sourced; /** speed band (m/s) silent .. loud footfalls */ loud: Sourced<[number, number]> };
+    smell: { /** scent strength at this nose (scentLevel potency) */ potency: Sourced };
+  };
+  /** Diet (T-0036): one interface for every diet kind (core/needs/diet). Food rows are per kg WET mass. */
+  diet: {
+    kind: 'carnivore' | 'herbivore' | 'omnivore';
+    foods: Record<string, { /** gross energy kJ per kg wet */ kJPerKg: Sourced; /** share of it assimilated */ assimilation: Sourced;
+      /** preformed water mL per kg wet */ waterMlPerKg: Sourced; /** kg taken per eat action (a whole prey, or one bite bout) */ biteKg: Sourced; /** s one eat action takes */ eatSeconds: Sourced }>;
+  };
+  /** Social / group (T-0036, core/needs/social): group size and spacing, shared vigilance (an alarm passes to group mates through
+   *  THEIR senses: a heard signal or the sight of a fleeing neighbour) and scatter on alarm (the confusion effect). */
+  social: {
+    /** animals usually together (min, max); 1 = solitary */ groupSize: Sourced<[number, number]>;
+    /** m to the nearest neighbour at a typical density */ spacingM: Sourced;
+    /** m: mates closer than this are LINKED and share detections, so the group's awareness is the union of the linked members'
+     *  own sense ranges; walking out of it loses the shared alarms (Matthew 01:47) */ linkM: Sourced;
+    /** s an alarm takes to pass one link (signal + reaction) */ relaySeconds: Sourced;
+    /** Group-size effect on vigilance (Roberts 1996): each animal's share of time scanning = loneShare x (1 + linked mates)^-exponent;
+     *  the group still detects earlier (corporate vigilance 1 - (1 - share)^n, Monaghan & Metcalfe 1985). */
+    vigilance: { /** share of time a lone animal scans */ loneShare: Sourced; /** decline exponent with group size */ exponent: Sourced };
+    /** alarm signal mates can hear: kind and how loud as a footfall-equivalent speed (m/s, read by hearing.loud) */ alarm: { signal: 'thump' | 'bark' | 'none'; loudness: Sourced };
+    /** what a mate does on hearing the signal (snowshoe hares freeze) and on seeing a mate flee */ onSignal: 'freeze' | 'flee'; onFleeSeen: 'freeze' | 'flee';
+    /** rad a fleeing mate bends away from the group centre (0 = no scatter) */ scatter: Sourced;
+  };
   behaviour: {
+    /** Flight: speeds and turns when fleeing (core/needs/diet evadeStep). */
+    evasion: { /** m/s REAL (core/needs/diet scales to game speed by the player wolf's sprint) */ burstSpeed: Sourced; /** m/s after the burst */ tiredSpeed: Sourced;
+      /** s between direction changes */ zigEvery: Sourced<[number, number]>; /** rad of a direction change */ zigAngle: Sourced; /** m/s^2 sideways grip: turn rate = a / v */ lateralAccel: Sourced };
     activity: { pattern: ActivityPattern; /** share of the day active */ activeShare: Sourced; /** day share outside the peaks that is still active (0..1) */ offPeak: Sourced };
     /** need -> goal: below `seekBelow` (%) the NPC goes for it; the lowest relative level wins */
     drives: Record<NeedId, { goal: Goal; seekBelow: Sourced }>;

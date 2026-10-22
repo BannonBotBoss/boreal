@@ -23,6 +23,7 @@ import { createWolfModes, stepWolfModes, modeSpeed } from './core/wolfModes';
 import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './core/animalBehavior';
 import { autonomousWolfStep } from './core/autonomy';
 import { NEEDS_SPECIES, WOLF_NEEDS, HARE_NEEDS } from './core/needs/species';
+import { dietOf } from './core/needs/diet';
 import { eatWater, levelsOf, parseNeeds, stepNeeds, type NeedsState } from './core/needs/engine';
 import { chooseGoal, sunTimes } from './core/needs/behaviour';
 import { createThoughtClock, thoughtTick } from './core/needs/thoughts';
@@ -416,13 +417,13 @@ function frame(time: number) { const frameStart = performance.now();
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
-  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump' })) {
+  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) })) {
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {
-      view.playerBrain.energy = Math.min(100, view.playerBrain.energy + HARE.energy);
+      // T-0036: the carnivore diet module turns the whole prey into Energy + hydration (template diet.foods.hare).
+      const ate = dietOf(needsSpecies()).eat(needsSpecies(), needs, view.playerBrain.energy, 'hare'); needs = ate.state; view.playerBrain.energy = ate.energy;
       modes = { ...modes, stamina: Math.min(modes.maxStamina ?? 100, modes.stamina + HARE.stamina) };
-      needs = eatWater(needsSpecies(), needs, 'hare', HARE_NEEDS.body.massKg.v); // T-0036: the prey's body water
-      notice(`Caught a snowshoe hare! +${HARE.energy} energy, +${HARE.stamina} stamina.`);
+      notice(`Caught a snowshoe hare! +${ate.meal.energy.toFixed(0)} energy, +${ate.meal.water.toFixed(0)} hydration, +${HARE.stamina} stamina.`);
     }
   }
   if (active) bubbles.add(thoughtTick(thoughtClock, levelsOf(needs, view.playerBrain.energy), thoughtTime += wallDt, needsSpecies())); // T-0036 thought bubbles (real seconds)

@@ -44,7 +44,7 @@ export function stepNeeds(sp: SpeciesTemplate, st: NeedsState, i: NeedsStep): { 
 }
 /** Eating `kg` of food `kind`: its preformed water (Energy is added by the host's existing food transaction). */
 export function eatWater(sp: SpeciesTemplate, st: NeedsState, kind: string, kg: number): NeedsState {
-  const w = sp.needs.water.foodWaterMlPerKg[kind]?.v ?? 0;
+  const w = sp.diet.foods[kind]?.waterMlPerKg.v ?? 0;
   return { ...st, water: clamp(st.water + w * kg * percentPerMl(sp)) };
 }
 /** Stamina meter rates (% per REAL second) for the controls (core/wolfModes) and agents. */

@@ -18,12 +18,19 @@ export const TEMPLATE_SPECIES: SpeciesTemplate = {
       turnoverMlPerDay: S(NaN, TODO), // measured water flux; else Nagy & Peterson 1988 eutherian 0.326 g^0.818 mL/d
       criticalDeficit: S(NaN, TODO), // body-mass share lost at 0 % (AAHA 2024 dogs: >12 % = shock)
       drinkMlPerS: S(NaN, TODO), heatPerC: S(NaN, TODO), heatAboveC: S(NaN, TODO),
-      foodWaterMlPerKg: {}, // per food kind it eats
     },
     energy: { meaning: '100 = one day of FMR', fullSeconds: S(86400, 'convention shared by every species (one day of food)') },
     rest: { activeHoursToEmpty: S(NaN, TODO), restHoursToFull: S(NaN, TODO) },
   },
+  senses: {
+    sight: { rangeM: S(NaN, TODO), fovDeg: S(NaN, TODO), night: S(NaN, TODO), motion: S<[number, number]>([NaN, NaN], TODO), presenceM: S(NaN, TODO), crouched: S(NaN, TODO) },
+    hearing: { rangeM: S(NaN, TODO), loud: S<[number, number]>([NaN, NaN], TODO) },
+    smell: { potency: S(NaN, TODO) },
+  },
+  diet: { kind: 'herbivore', foods: {} }, // rows: { kJPerKg, assimilation, waterMlPerKg, biteKg, eatSeconds } per food kind
+  social: { groupSize: S<[number, number]>([NaN, NaN], TODO), spacingM: S(NaN, TODO), linkM: S(NaN, TODO), relaySeconds: S(NaN, TODO), vigilance: { loneShare: S(NaN, TODO), exponent: S(NaN, TODO) }, alarm: { signal: 'none', loudness: S(NaN, TODO) }, onSignal: 'freeze', onFleeSeen: 'flee', scatter: S(NaN, TODO) },
   behaviour: {
+    evasion: { burstSpeed: S(NaN, TODO), tiredSpeed: S(NaN, TODO), zigEvery: S<[number, number]>([NaN, NaN], TODO), zigAngle: S(NaN, TODO), lateralAccel: S(NaN, TODO) },
     activity: { pattern: 'cathemeral', activeShare: S(NaN, TODO), offPeak: S(NaN, TODO) },
     drives: { water: { goal: 'drink', seekBelow: S(NaN, TODO) }, energy: { goal: 'forage', seekBelow: S(NaN, TODO) }, rest: { goal: 'bed-down', seekBelow: S(NaN, TODO) } },
     gaitAt: S<[number, number]>([NaN, NaN], TODO),

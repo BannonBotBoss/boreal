@@ -45,3 +45,6 @@ embodies it or it runs as an NPC. No engine code changes: a creature is one data
 - Mixing clocks: metabolism on the game clock, stamina and bubble timing on real seconds.
 - Bubble timing in a float accumulator in tests (t += .05 drifts); use integer steps.
 - Reporting Matthew's minimum (10 s sprint) as nature: real wolves chase for minutes; say it is game design.
+
+## Senses, diet, social, evasion (part 2)
+Every template also fills `senses` (sight range/FOV/night/motion/presence, hearing, smell), `diet` (kind + food rows per kg wet: kJ, assimilation, water, bite, eat time), `social` (group size, spacing, link distance, relay delay, vigilance, alarm, scatter) and `behaviour.evasion` (real top / tired speed, zig, lateral grip). The burst length is `stamina.sprintSeconds` (one stamina engine for player and NPC). Run the animal headless with `src/core/sim` (createWorld / createAnimal / tick / nearby*); renderers only read it. tests/sim.test.ts checks every species defines all of it.

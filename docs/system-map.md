@@ -9,6 +9,7 @@ all at their call sites (see each section's links and "still in code").
 
 ```mermaid
 flowchart LR
+  animalSim["Headless animal simulation"]
   audio["Audio and music"]
   behaviour["Agent and behaviour pipeline"]
   camera["Camera"]
@@ -37,6 +38,7 @@ flowchart LR
   behaviour --> locomotion
   behaviour --> senses
   camera --> interaction
+  clock --> animalSim
   clock --> audio
   clock --> behaviour
   clock --> globe
@@ -57,12 +59,14 @@ flowchart LR
   lighting --> sky
   locomotion --> audio
   locomotion --> needs
+  needs --> animalSim
   needs --> behaviour
   needs --> stamina
   needs --> ui
   physics --> locomotion
   physics --> player
   physics --> terrain
+  player --> animalSim
   player --> audio
   player --> camera
   player --> interaction
@@ -78,6 +82,7 @@ flowchart LR
   save --> quality
   save --> terrain
   save --> ui
+  senses --> animalSim
   senses --> behaviour
   stamina --> locomotion
   stamina --> player
@@ -115,21 +120,22 @@ flowchart LR
 
 | System | What it does | Groups in the file | Depends on | Feeds | URL flags |
 |---|---|---|---|---|---|
+| [Headless animal simulation](#animalSim) | Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters. | `hunt`, `perception`, `sim`, `social` | needs, senses, player, clock | - | - |
 | [Audio and music](#audio) | Ambience, animal calls, footsteps, wolf voice, music decks and the bus mixer. | `footsteps` | clock, weather, locomotion, behaviour, player | ui | 1 |
 | [Agent and behaviour pipeline](#behaviour) | Animal brains: senses -> problem (explore, escape, feed ...) -> motion intent; deer herds, hares, people. | `behaviour` | senses, needs, terrain, clock, vegetation | audio, interaction, locomotion, senses | 2 |
 | [Camera](#camera) | Third-person follow camera behind the wolf: pitch spring, look-around and rider distance. | `camera` | player, controls, terrain, interaction | interaction | 2 |
-| [Time and clock](#clock) | The one world clock (frozen in menus), game hour, date and sun position; chronometer offset. | `clock`, `chronometer` | save | audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 2 |
+| [Time and clock](#clock) | The one world clock (frozen in menus), game hour, date and sun position; chronometer offset. | `clock`, `chronometer` | save | animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 2 |
 | [Player controls and gamepad](#controls) | One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics. | `haptics` | save | camera, interaction, player, stamina, ui | - |
 | [Globe (planet view)](#globe) | Cube-sphere planet, atmosphere, far layer and the descent from orbit to the ground. | - | terrain, clock, lighting, quality, save | - | 19 |
 | [Interaction, focus and target glow](#interaction) | Picking the interaction target, held focus lock and steering, the glowing outline. | `autoFocus`, `targetGlow` | controls, player, behaviour, camera | camera | 1 |
 | [Lighting](#lighting) | Physical sun/moon illuminance, exposure, ambient and night vision. | - | clock, weather, quality | globe, sky | - |
 | [Animals and locomotion](#locomotion) | Gaits, central pattern generator, IK, posture, jumps and the rigs that draw them. | `jump` | behaviour, stamina, physics, terrain | audio, needs | 2 |
-| [Needs (water, energy, rest)](#needs) | Species needs drained at real-world rates, thought bubbles and alerts, needs-driven goals. | `needsThoughts` | clock, locomotion, water, weather | behaviour, stamina, ui | 1 |
+| [Needs (water, energy, rest)](#needs) | Species needs drained at real-world rates, thought bubbles and alerts, needs-driven goals. | `needsThoughts` | clock, locomotion, water, weather | animalSim, behaviour, stamina, ui | 1 |
 | [Physics and materials](#physics) | Gravity from G and Earth, densities and compositions, contact seating. | - | - | locomotion, player, terrain | - |
-| [Player wolf](#player) | Embodied wolf movement: mode speeds, pounce and the move/steer step. | `movement` | controls, stamina, physics, terrain | audio, camera, interaction, senses | - |
+| [Player wolf](#player) | Embodied wolf movement: mode speeds, pounce and the move/steer step. | `movement` | controls, stamina, physics, terrain | animalSim, audio, camera, interaction, senses | - |
 | [Graphics tiers and performance](#quality) | One quality ladder, the governor that steps it, render settings caps and the interest radius. | `quality` | save | globe, lighting, terrain, ui, vegetation | 2 |
 | [Save and load](#save) | localStorage keys: clock, hour offset, ground, weather, deltas, bindings, settings, seed, player. | - | - | clock, controls, globe, quality, terrain, ui | - |
-| [Senses](#senses) | Hearing and smell: scent plumes, sound cues, the senses HUD and the halo ring. | `senses`, `sensesHalo` | weather, player, behaviour | behaviour | - |
+| [Senses](#senses) | Hearing and smell: scent plumes, sound cues, the senses HUD and the halo ring. | `senses`, `sensesHalo` | weather, player, behaviour | animalSim, behaviour | - |
 | [Sky](#sky) | Sky dome, sun and moon discs, clouds drawn from the weather cells. | - | clock, lighting, weather | - | - |
 | [Stamina and energy](#stamina) | Run / sprint stamina, exhaustion and refill; energy spent by distance and ground cost. | - | controls, needs | locomotion, player, ui | - |
 | [Terrain and stages](#terrain) | Staged terrain: eroded elevation, soils, rivers and lakes; chunks, ground layers and rocks. | - | quality, save, physics | behaviour, camera, globe, locomotion, player, vegetation, water, weather | 2 |
@@ -137,6 +143,75 @@ flowchart LR
 | [Trees and vegetation](#vegetation) | Stands and fire history, procedural trees (v2), far trees, flora, mosses and grass. | - | terrain, water, quality, clock | behaviour | 5 |
 | [Water](#water) | Lake plane, river planform and flow, shore bands and water optics. | - | terrain, weather, clock | needs, vegetation | - |
 | [Weather](#weather) | A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain from station normals. | - | clock, terrain | audio, lighting, needs, senses, sky, water | - |
+
+<a id="animalSim"></a>
+## Headless animal simulation (`animalSim`)
+
+Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters.
+
+- Depends on: needs, senses, player, clock
+- Feeds: nothing (a leaf)
+- Modules: `src/core/sim/index.ts`, `src/core/needs/senses.ts`, `src/core/needs/diet.ts`, `src/core/needs/social.ts`, `src/animals/hare.ts`
+
+### `SYSTEM_PROPERTIES.hunt`
+
+Read by: `src/core/needs/diet.ts`
+
+| Figure | Value | Units | What | Source |
+|---|---|---|---|---|
+| `catchContact` | 0.9 | m | m body contact that catches (~ half a wolf + half a hare); m a landing pounce catches within (+ jaw reach) | half a wolf (head-body 1.0-1.3 m, Mech & Boitani 2003) + half a hare; tuned by tools/hunt-sim |
+| `catchPounce` | 1.2 | m | m body contact that catches (~ half a wolf + half a hare); m a landing pounce catches within (+ jaw reach) | catchContact + jaw reach; estimate (game calibration) |
+| `boltBase` | 0.5 | x flight distance | flight starts when the predator is inside flight.distanceM x (boltBase + boltPerLevel x perception) | estimate (game calibration) |
+| `boltPerLevel` | 1.5 | x flight distance per perception | flight starts when the predator is inside flight.distanceM x (boltBase + boltPerLevel x perception) | estimate (game calibration) |
+| `safeDistance` | 35 | m | m from the predator at which a fleeing prey calms down | estimate (game calibration) |
+| `minZig` | 0.2 | s | s a prey commits to a zig before it may re-aim (turns are grip-limited, see evasion.lateralAccel) | estimate (game calibration) |
+| `jinkRadii` | 1 | x pursuer turning radius | jink (Howland 1974): when the pursuer is within jinkRadii x its turning radius v^2/a, turn jinkAngle rad off the straight-away line (pi/2 = Howland's optimum, perpendicular), at most every jinkEvery s | Howland 1974 (J Theor Biol 47:333): turn when the pursuer is about one turning radius away |
+| `jinkAngle` | 1.57 | rad | jink (Howland 1974): when the pursuer is within jinkRadii x its turning radius v^2/a, turn jinkAngle rad off the straight-away line (pi/2 = Howland's optimum, perpendicular), at most every jinkEvery s | Howland 1974: the optimal evasive turn is perpendicular |
+| `jinkEvery` | 1 | s | jink (Howland 1974): when the pursuer is within jinkRadii x its turning radius v^2/a, turn jinkAngle rad off the straight-away line (pi/2 = Howland's optimum, perpendicular), at most every jinkEvery s | estimate (game calibration) |
+
+### `SYSTEM_PROPERTIES.perception`
+
+Read by: `src/core/needs/senses.ts`
+
+| Figure | Value | Units | What | Source |
+|---|---|---|---|---|
+| `notice` | 0.25 | 0-1 | perception level (0..1) at which an animal notices another | estimate (game calibration) |
+| `cueAt` | 0.15 | 0-1 | embodied-player predator cue: level at which it shows; s it lingers after the predator is lost | estimate (game calibration) |
+| `cueLinger` | 2 | s | embodied-player predator cue: level at which it shows; s it lingers after the predator is lost | estimate (game calibration) |
+
+### `SYSTEM_PROPERTIES.sim`
+
+Read by: `src/core/sim/index.ts`
+
+| Figure | Value | Units | What | Source |
+|---|---|---|---|---|
+| `step` | 0.03333333333333333 | s | s fixed sub-step (coarse ecosystem ticks may raise it); game s per sim s (the world clock: 300 real s per game hour = x12) | design (30 Hz like the player sim) |
+| `timeScale` | 12 | game s / sim s | s fixed sub-step (coarse ecosystem ticks may raise it); game s per sim s (the world clock: 300 real s per game hour = x12) | clock.realSecondsPerGameHour 300 -> 3600/300 = 12 |
+| `cell` | 25 | m | m spatial-grid cell; m scent search radius (as senses.range) | estimate (game calibration) |
+| `scentRange` | 40 | m | m spatial-grid cell; m scent search radius (as senses.range) | senses.range |
+| `biteReach` | 0.6 | m | m a grazer reaches food from; Energy % above which it stops seeking food | estimate (game calibration) |
+| `fullAt` | 90 | 0-100 | m a grazer reaches food from; Energy % above which it stops seeking food | estimate (game calibration) |
+| `waterStep` | 2 | m | m ring step of the water search | estimate (game calibration) |
+| `chaseAt` | 6 | m | NPC predator: m it breaks from stalk to chase; stalk speed x walk; m it pounces from; s pounce, s cooldown, speed carry (as movement) | estimate (game calibration) |
+| `stalkSpeed` | 0.2 | x walk | NPC predator: m it breaks from stalk to chase; stalk speed x walk; m it pounces from; s pounce, s cooldown, speed carry (as movement) | estimate (game calibration) |
+| `pounceAt` | 3 | m | NPC predator: m it breaks from stalk to chase; stalk speed x walk; m it pounces from; s pounce, s cooldown, speed carry (as movement) | estimate (game calibration) |
+| `pounceSeconds` | 0.85 | s | NPC predator: m it breaks from stalk to chase; stalk speed x walk; m it pounces from; s pounce, s cooldown, speed carry (as movement) | core/animalBehavior jump length |
+| `pounceCooldown` | 1.5 | s | NPC predator: m it breaks from stalk to chase; stalk speed x walk; m it pounces from; s pounce, s cooldown, speed carry (as movement) | core/animalBehavior jump cooldown |
+| `pounceCarry` | 1.15 | x speed | NPC predator: m it breaks from stalk to chase; stalk speed x walk; m it pounces from; s pounce, s cooldown, speed carry (as movement) | movement.pounceCarry |
+| `restBout` | 60 | s | s of one NPC rest bout | estimate (game calibration) |
+
+### `SYSTEM_PROPERTIES.social`
+
+Read by: `src/core/needs/social.ts`, `src/core/sim/index.ts`
+
+| Figure | Value | Units | What | Source |
+|---|---|---|---|---|
+| `maxHops` | 6 | links | most links an alarm passes along a chain of mates (bounds the relay) | estimate (game calibration) |
+| `memorySeconds` | 2 | s | s a detection stays "known" after the animal last perceived the predator | estimate (game calibration) |
+
+**Linked data tables** (kept in their own module)
+
+- `NEEDS_SPECIES` in `src/core/needs/species/index.ts`: species templates: senses, diet, social, evasion
 
 <a id="audio"></a>
 ## Audio and music (`audio`)
@@ -264,7 +339,7 @@ Read by: `src/render/math.ts`
 The one world clock (frozen in menus), game hour, date and sun position; chronometer offset.
 
 - Depends on: save
-- Feeds: audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather
+- Feeds: animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather
 - Modules: `src/core/timeOfDay.ts`, `src/core/worldClock.ts`, `src/core/timescale.ts`, `src/ui/chronometer.ts`
 
 ### `SYSTEM_PROPERTIES.clock`
@@ -495,7 +570,7 @@ Read by: `src/animals/locomotion/jump.ts`
 Species needs drained at real-world rates, thought bubbles and alerts, needs-driven goals.
 
 - Depends on: clock, locomotion, water, weather
-- Feeds: behaviour, stamina, ui
+- Feeds: animalSim, behaviour, stamina, ui
 - Modules: `src/core/needs/engine.ts`, `src/core/needs/template.ts`, `src/core/needs/species/index.ts`, `src/core/needs/behaviour.ts`, `src/core/needs/thoughts.ts`, `src/core/needs/water.ts`, `src/render/thoughtBubbles.ts`, `src/core/animalBehavior.ts`, `src/main.ts`
 
 ### `SYSTEM_PROPERTIES.needsThoughts`
@@ -554,7 +629,7 @@ Gravity from G and Earth, densities and compositions, contact seating.
 Embodied wolf movement: mode speeds, pounce and the move/steer step.
 
 - Depends on: controls, stamina, physics, terrain
-- Feeds: audio, camera, interaction, senses
+- Feeds: animalSim, audio, camera, interaction, senses
 - Modules: `src/core/playerTuning.ts`, `src/core/wolfModes.ts`, `src/main.ts`
 
 ### `SYSTEM_PROPERTIES.movement`
@@ -651,7 +726,7 @@ localStorage keys: clock, hour offset, ground, weather, deltas, bindings, settin
 Hearing and smell: scent plumes, sound cues, the senses HUD and the halo ring.
 
 - Depends on: weather, player, behaviour
-- Feeds: behaviour
+- Feeds: animalSim, behaviour
 - Modules: `src/core/senses.ts`, `src/core/senseBeacons.ts`, `src/ui/senses.ts`, `src/render/sensesHalo.ts`
 
 ### `SYSTEM_PROPERTIES.senses`

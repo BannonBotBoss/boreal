@@ -21,7 +21,7 @@ test('every number in every species template has a source; the copy-me template 
     assert.ok(s.src && s.src.length > 8 && !/TODO/.test(s.src), `${sp.id}.${path} unsourced`);
     if (typeof s.v === 'number') assert.ok(Number.isFinite(s.v), `${sp.id}.${path}`);
   }
-  assert.deepEqual(sourcedEntries(TEMPLATE_SPECIES).map(e => e[0]).sort(), sourcedEntries(WOLF_NEEDS).map(e => e[0]).filter(p => !p.startsWith('needs.water.foodWaterMlPerKg.')).sort());
+  assert.deepEqual(sourcedEntries(TEMPLATE_SPECIES).map(e => e[0]).sort(), sourcedEntries(WOLF_NEEDS).map(e => e[0]).filter(p => !p.startsWith('diet.foods.')).sort());
   for (const sp of Object.values(NEEDS_SPECIES)) assert.equal(MAMMALS.find(r => r[0] === sp.name)?.[3], sp.body.massKg.v, `${sp.id} mass = core/species row`);
 });
 test('sourced derivations: Nagy & Peterson 1988 water flux, Nagy et al. 1999 FMR, Taylor et al. 1982 cost of transport', () => {

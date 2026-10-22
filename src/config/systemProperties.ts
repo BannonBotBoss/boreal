@@ -79,6 +79,15 @@ export const SYSTEM_PROPERTIES = {
     /** rumble strength 0-1 (also the editor-limit thunk level) */ intensity: .6,
     /** play a soft thunk when an editor input hits its limit */ editorSound: true,
   },
+  /** Hunting (core/needs/diet, T-0036): capture test, flight start, Howland jink. Matthew: "a capture is achievable with skill but is not trivial". */
+  hunt: {
+    /** m body contact that catches (~ half a wolf + half a hare); m a landing pounce catches within (+ jaw reach) */ catchContact: 0.9, catchPounce: 1.2,
+    /** flight starts when the predator is inside flight.distanceM x (boltBase + boltPerLevel x perception) */ boltBase: .5, boltPerLevel: 1.5,
+    /** m from the predator at which a fleeing prey calms down */ safeDistance: 35,
+    /** s a prey commits to a zig before it may re-aim (turns are grip-limited, see evasion.lateralAccel) */ minZig: .2,
+    /** jink (Howland 1974): when the pursuer is within jinkRadii x its turning radius v^2/a, turn jinkAngle rad off the
+     *  straight-away line (pi/2 = Howland's optimum, perpendicular), at most every jinkEvery s */ jinkRadii: 1, jinkAngle: 1.57, jinkEvery: 1,
+  },
   /** Jump / pounce stages (animals/locomotion/jump), shares of the jump duration and fractions of hip height. */
   jump: {
     /** share of the jump spent crouching */ crouch: .18,
@@ -115,6 +124,11 @@ export const SYSTEM_PROPERTIES = {
     /** Hz of the alert's size pulse; +- share of size */ pulseHz: 3, pulseDepth: .2,
     /** m above the head-sensor where bubbles start; sprite size m */ above: .38, size: .34,
   },
+  /** Shared perception (core/needs/senses, T-0036): thresholds over the species template senses. */
+  perception: {
+    /** perception level (0..1) at which an animal notices another */ notice: .25,
+    /** embodied-player predator cue: level at which it shows; s it lingers after the predator is lost */ cueAt: .15, cueLinger: 2,
+  },
   /** Adaptive quality governor (core/quality GOVERNOR): how it measures and steps the quality ladder. */
   quality: {
     /** frame rate the governor holds (fps; also the Target frame rate setting's default) */ targetFps: 60,
@@ -145,6 +159,21 @@ export const SYSTEM_PROPERTIES = {
     /** halo fully visible at or below this ground speed (m/s) */ fadeFrom: .9,
     /** halo gone at or above this ground speed (m/s) */ fadeTo: 4,
     /** smoothing time of the speed it fades by (s) */ speedEase: .35,
+  },
+  /** Headless animal simulation (core/sim, T-0036): game calibration, not species data. */
+  sim: {
+    /** s fixed sub-step (coarse ecosystem ticks may raise it); game s per sim s (the world clock: 300 real s per game hour = x12) */ step: 1 / 30, timeScale: 12,
+    /** m spatial-grid cell; m scent search radius (as senses.range) */ cell: 25, scentRange: 40,
+    /** m a grazer reaches food from; Energy % above which it stops seeking food */ biteReach: .6, fullAt: 90,
+    /** m ring step of the water search */ waterStep: 2,
+    /** NPC predator: m it breaks from stalk to chase; stalk speed x walk; m it pounces from; s pounce, s cooldown, speed carry (as movement) */
+    chaseAt: 6, stalkSpeed: .2, pounceAt: 3, pounceSeconds: .85, pounceCooldown: 1.5, pounceCarry: 1.15,
+    /** s of one NPC rest bout */ restBout: 60,
+  },
+  /** Group awareness (core/needs/social, T-0036). Link distance and relay delay are per species (template.social). */
+  social: {
+    /** most links an alarm passes along a chain of mates (bounds the relay) */ maxHops: 6,
+    /** s a detection stays "known" after the animal last perceived the predator */ memorySeconds: 2,
   },
   /** Target glow (render/targetGlow, T-0035): soft outline tracing the interaction / focus target (three r180 OutlinePass). */
   targetGlow: {
@@ -186,6 +215,11 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
     foreRate: ['x', 'fore legs carry ~60 % of a dog\'s weight (Lee et al. 1999, J Exp Biol 202:3565)'],
     hindRate: ['x', 'Lee et al. 1999 (as foreRate)'], pairBoost: ['share', EST] } },
   haptics: { readers: ['src/ui/haptics.ts', 'src/core/renderSettings.ts'], keys: { on: ['on/off', 'design'], intensity: ['0-1', EST], editorSound: ['on/off', 'design'] } },
+  hunt: { readers: ['src/core/needs/diet.ts'], keys: {
+    catchContact: ['m', 'half a wolf (head-body 1.0-1.3 m, Mech & Boitani 2003) + half a hare; tuned by tools/hunt-sim'], catchPounce: ['m', 'catchContact + jaw reach; ' + EST],
+    boltBase: ['x flight distance', EST], boltPerLevel: ['x flight distance per perception', EST], safeDistance: ['m', EST], minZig: ['s', EST],
+    jinkRadii: ['x pursuer turning radius', 'Howland 1974 (J Theor Biol 47:333): turn when the pursuer is about one turning radius away'],
+    jinkAngle: ['rad', 'Howland 1974: the optimal evasive turn is perpendicular'], jinkEvery: ['s', EST] } },
   jump: { readers: ['src/animals/locomotion/jump.ts'], keys: {
     crouch: ['share', 'Claude gaitPose jump (game calibration)'], flight: ['share', 'Claude gaitPose jump (game calibration)'],
     land: ['share', 'Claude gaitPose jump (game calibration)'], depth: ['x hip height', EST], reach: ['x hip height', EST] } },
@@ -198,6 +232,7 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
     criticalEvery: ['s', 'Matthew ("faster frequency"); 3 s chosen'], fade: ['s', 'Matthew ("a second or two")'], alertFade: ['s', EST], fadeIn: ['s', EST],
     lowOpacity: ['0-1', 'Matthew ("semi transparent")'], alertOpacity: ['0-1', EST], rise: ['m', EST], laneSpacing: ['m', EST], stagger: ['s', EST],
     pulseHz: ['Hz', EST], pulseDepth: ['share', EST], above: ['m', EST], size: ['m', EST] } },
+  perception: { readers: ['src/core/needs/senses.ts'], keys: { notice: ['0-1', EST], cueAt: ['0-1', EST], cueLinger: ['s', EST] } },
   quality: { readers: ['src/core/quality.ts'], keys: {
     targetFps: ['fps', 'desktop 60 Hz displays; Quest 72/90 Hz (Meta performance guidance)'], startTier: ['tier', 'design'],
     windowMs: ['ms', 'drei PerformanceMonitor default (pmndrs/drei)'], iterations: ['count', 'drei PerformanceMonitor default'],
@@ -207,12 +242,17 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
   senses: { readers: ['src/core/senses.ts'], keys: {
     range: ['m', EST], threshold: ['0-1', EST], cueLife: ['s', EST], cueCap: ['count', EST], thoughtCap: ['count', EST], updateSeconds: ['s', EST] } },
   sensesHalo: { readers: ['src/core/senseBeacons.ts'], keys: { radius: ['m', EST], fadeFrom: ['m/s', 'stealth speed 0.8 m/s (core/wolfModes)'], fadeTo: ['m/s', EST], speedEase: ['s', EST] } },
+  sim: { readers: ['src/core/sim/index.ts'], keys: {
+    step: ['s', 'design (30 Hz like the player sim)'], timeScale: ['game s / sim s', 'clock.realSecondsPerGameHour 300 -> 3600/300 = 12'], cell: ['m', EST], scentRange: ['m', 'senses.range'],
+    biteReach: ['m', EST], fullAt: ['0-100', EST], waterStep: ['m', EST], chaseAt: ['m', EST], stalkSpeed: ['x walk', EST], pounceAt: ['m', EST],
+    pounceSeconds: ['s', 'core/animalBehavior jump length'], pounceCooldown: ['s', 'core/animalBehavior jump cooldown'], pounceCarry: ['x speed', 'movement.pounceCarry'], restBout: ['s', EST] } },
+  social: { readers: ['src/core/needs/social.ts', 'src/core/sim/index.ts'], keys: { maxHops: ['links', EST], memorySeconds: ['s', EST] } },
   targetGlow: { readers: ['src/render/targetGlow.ts'], keys: {
     color: ['sRGB hex', 'design (warm cream)'], edgeStrength: ['x', "Matthew (01:43 PT: \"make the glow less focused\"; estimate)"],
     edgeGlow: ['x', "Matthew (01:43 PT softer glow; estimate)"], edgeThickness: ['px blur', "Matthew (01:43 PT softer glow; estimate)"] } },
 };
 
-export type SystemId = 'audio' | 'behaviour' | 'camera' | 'clock' | 'controls' | 'globe' | 'interaction' | 'lighting' | 'locomotion' | 'needs'
+export type SystemId = 'animalSim' | 'audio' | 'behaviour' | 'camera' | 'clock' | 'controls' | 'globe' | 'interaction' | 'lighting' | 'locomotion' | 'needs'
   | 'physics' | 'player' | 'quality' | 'save' | 'senses' | 'sky' | 'stamina' | 'terrain' | 'ui' | 'vegetation' | 'water' | 'weather';
 export interface SystemWiring {
   title: string; what: string;
@@ -224,6 +264,10 @@ export interface SystemWiring {
   /** tunables still at their call site (not yet moved) */ remaining: string[];
 }
 export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
+  animalSim: { title: 'Headless animal simulation', what: 'Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters.',
+    modules: ['src/core/sim/index.ts', 'src/core/needs/senses.ts', 'src/core/needs/diet.ts', 'src/core/needs/social.ts', 'src/animals/hare.ts'],
+    groups: ['hunt', 'perception', 'sim', 'social'], dependsOn: ['needs', 'senses', 'player', 'clock'], flags: {},
+    tables: { 'src/core/needs/species/index.ts#NEEDS_SPECIES': 'species templates: senses, diet, social, evasion' }, remaining: [] },
   audio: { title: 'Audio and music', what: 'Ambience, animal calls, footsteps, wolf voice, music decks and the bus mixer.',
     modules: ['src/audio/borealSound.ts', 'src/audio/footsteps.ts', 'src/audio/mixer.ts', 'src/audio/music.ts', 'src/audio/musicSettings.ts', 'src/audio/wolfVoice.ts'],
     groups: ['footsteps'], dependsOn: ['clock', 'weather', 'locomotion', 'behaviour', 'player'],

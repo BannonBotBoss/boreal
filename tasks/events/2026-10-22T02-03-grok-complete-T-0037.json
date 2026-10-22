@@ -1,0 +1,8 @@
+{
+    "type":  "complete",
+    "task":  "T-0037",
+    "agent":  "grok",
+    "at":  "2026-10-22T02:03:00-07:00",
+    "skill":  "system-properties",
+    "note":  "Complete. Branch grok/system-properties (6c2c522..29f6391, merge b841168 with main 91281b7/e528e1a incl. T-0035). src/config/systemProperties.ts: SYSTEM_PROPERTIES 14 groups (12 moved by T-0037 + autoFocus/targetGlow from T-0035), PROPERTY_META units + source + readers per figure, SYSTEM_MAP wiring for 22 systems, PENDING_GROUPS (needsThoughts, T-0036); tools/system-map.ts -\u003e docs/system-map.md (npm run system-map); tests/system-properties.test.ts (values lock, readers, wiring, staleness). Evidence gate: rule 12 (nothing on screen changes), findings table in tasks/handoffs/T-0037-grok.md. Tests on the merge: npm test 373 tests, 361 pass, 0 fail, 12 todo; npx tsc --noEmit clean. Skill: notes/skills/system-properties.md."
+}

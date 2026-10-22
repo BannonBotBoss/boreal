@@ -12,7 +12,7 @@ export type Bus = 'music' | 'ambience' | 'sfx' | 'ui' | 'voice';
 export const BUSES: readonly Bus[] = ['music', 'ambience', 'sfx', 'ui', 'voice'];
 /** Linear bus levels (0..1), set from the Sound volume panel and the M / [ ] / N / - = keys. */
 export const BUS_LEVEL: Record<Bus | 'master', number> = { master: .8, music: .7, ambience: 1, sfx: 1, ui: 1, voice: 1 };
-export const BUS_STATE = { muted: false, musicOn: false };
+export const BUS_STATE = { muted: false, musicOn: true }; // on: the music is now a picked guitar track (T-0033), Off lives in the picker
 
 /** Loudness trims (dB) so every clip starts near −20 LUFS before MIX applies its intent. Measured with ffmpeg ebur128 on
  * public/sounds (2026-10-18): the raw ElevenLabs clips spanned −5 LUFS (howl, owl) to −56 LUFS (ui-click), a 51 dB
@@ -73,7 +73,7 @@ export const VOLUME_SETTINGS: SettingDef[] = [
   slider('master', 'Master'), slider('music', 'Music'), slider('ambience', 'Ambience (wind, water, birds)'),
   slider('sfx', 'Effects (animals, footsteps, actions)'), slider('voice', 'Wolf voice'), slider('ui', 'Interface'),
   { id: 'volume.muted', label: 'Mute everything (M)', group: 'Volume', type: 'toggle', default: false, apply: v => { BUS_STATE.muted = !!v; onChange?.(); } },
-  { id: 'volume.musicOn', label: 'Music on (N)', group: 'Volume', type: 'toggle', default: false, apply: v => { BUS_STATE.musicOn = !!v; onChange?.(); } },
+  { id: 'volume.musicOn', label: 'Music on (N)', group: 'Volume', type: 'toggle', default: true, apply: v => { BUS_STATE.musicOn = !!v; onChange?.(); } },
 ];
 const VOLUME_KEY = 'boreal.volume.v1', OLD_KEY = 'boreal.audio.v1';
 /** One-time carry-over of the old master/music levels (keys saved them under boreal.audio.v1). */

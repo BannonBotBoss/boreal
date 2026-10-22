@@ -1,0 +1,8 @@
+{
+    "type":  "complete",
+    "task":  "T-0033",
+    "agent":  "grok",
+    "at":  "2026-10-22T01:32:00-07:00",
+    "skill":  "game-music-tracks",
+    "note":  "Complete. Branch grok/music: 717cf41 (three ElevenLabs eleven_music_v2_5 acoustic guitar tracks, 180 s, 96 kb/s, 2.16 MB each, in public/music; Track picker Fingerpicked / Open tuning / Campfire / Off in Menu \u003e Music, persisted in boreal.music.v1, crossfade on switch and repeat, old saved sources fall back to Fingerpicked, tones/playlist/built-in loops behind ?tones, musicOn default true) and e6b3df1 (panel tidy, tools/music-shot.mjs, skill). Evidence: refs/music/T-0033-picker.png and refs/music/T-0033-campfire.png; music-shot run: after the first gesture amb-day, amb-night, wind-pines, water and guitar-fingerpicked were requested, guitar-campfire after switching, boreal.music.v1 saved Campfire, 0 page errors. Numbers: loudness -19.6 / -20.5 / -20.0 LUFS vs the -20 LUFS mixer convention (within 1 LU); true peak \u003c= -5.5 dBFS vs the -1 dBTP limit (EBU R128). Gates (rule 11; the frame gate does not apply to audio): vocal check faster-whisper small, 10 s windows, no segment under no_speech 0.45 (calibration: a real voice at -6 dB over guitar scored 0.04). Track quality (\"not sappy\") is Matthew\u0027s call; he approved it as finished 01:30 PT. Tests: npm test 353 pass / 0 fail; npx tsc --noEmit clean (re-run on the merge before main). Handoff: tasks/handoffs/T-0033-grok.md. Skill: game-music-tracks (notes/skills/game-music-tracks.md)."
+}

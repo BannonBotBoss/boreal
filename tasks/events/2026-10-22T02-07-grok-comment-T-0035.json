@@ -1,0 +1,7 @@
+{
+    "type":  "comment",
+    "task":  "T-0035",
+    "agent":  "grok",
+    "at":  "2026-10-22T02:07:20-07:00",
+    "note":  "Focus text fix on grok/focus-text-fix 74bd973, per Matthew \u0027i dont need the exact distance told\u0027 (direct request, rule 16): main.ts controls help no longer states the radius (\u0027close enough ahead\u0027); status hint now \u0027Nothing close enough to focus\u0027. git grep finds no other player-facing radius text. Also hardened tests/trace.test.ts \u0027f allocates when off\u0027 (gc before each of 5 samples, min growth, int counter; same limit). npm test x3 0 fail, tsc clean."
+}

@@ -1,20 +1,21 @@
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { canidPlan, gallopLegChord, reachTargets, REF_BODY, swingFollow, suspensionRise, suspensions, type CanidGait, type CanidPlan, type ReachBody } from './gaitData';
 
-export const ANIMAL_DEFAULT_ENERGY = 75;
-export const FORAGE_ENERGY = 18;
-export const PLAYER_HEARING_RADIUS = 40;
+export const ANIMAL_DEFAULT_ENERGY: number = SYSTEM_PROPERTIES.behaviour.defaultEnergy;
+export const FORAGE_ENERGY: number = SYSTEM_PROPERTIES.behaviour.forageEnergy;
+export const PLAYER_HEARING_RADIUS: number = SYSTEM_PROPERTIES.behaviour.playerHearingRadius;
 /** Seconds an animal spends eating at a forage patch before it is consumed. */
-export const FEED_DURATION = 2;
+export const FEED_DURATION: number = SYSTEM_PROPERTIES.behaviour.feedDuration;
 /** Distance (m) from a forage patch at which an animal stops to eat. */
-export const FEED_REACH = 1;
+export const FEED_REACH: number = SYSTEM_PROPERTIES.behaviour.feedReach;
 /** Seconds a sensed threat is remembered after leaving the senses; stops flip-flopping at the 24 m edge. */
-export const THREAT_MEMORY = 3;
+export const THREAT_MEMORY: number = SYSTEM_PROPERTIES.behaviour.threatMemory;
 export function withinEarshot(player: Point, animal: Point) { return Math.hypot(player.x-animal.x,player.y-animal.y,player.z-animal.z) <= PLAYER_HEARING_RADIUS; }
 export type Motion = 'idle' | 'walk' | 'run' | 'back' | 'jump';
 export type Problem = 'explore' | 'escape' | 'avoid' | 'feed' | 'recover' | 'player';
 export interface SenseItem { key: string; x: number; y: number; z: number; kind: 'threat' | 'food' | 'obstacle' | 'animal'; low?: boolean }
 export interface Point { x: number; y: number; z: number }
-export const SENSE_RADII = [3, 10, 24] as const;
+export const SENSE_RADII = SYSTEM_PROPERTIES.behaviour.senseRadii;
 export class AnimalBrain {
   energy = ANIMAL_DEFAULT_ENERGY; motion: Motion = 'idle'; problem: Problem = 'explore';
   phase = 0; jumpTime = 0; jumpCooldown = 0; heading = 0; speed = 0;

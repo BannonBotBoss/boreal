@@ -1,12 +1,13 @@
 /**
  * ONE menu screen for start and pause (Grok Bot; replaces ui/pauseMenu). Mode 'start' (after the loading screen):
- * Continue, New world, Music, Graphics, Quit. Mode 'pause' (Esc / gamepad Menu): Resume, Save, Music, Graphics, More
+ * Continue, New world, Controls, Music, Graphics, Board (the GitHub task board, new tab), Quit. Mode 'pause' (Esc / gamepad Menu): Resume, Save, Music, Graphics, More
  * (registered panels: player, appearance, inspector, photo), Quit to menu (autosaves first). While either mode is open the
  * world clock is frozen (core/worldClock.pauseClock) and the renderer holds its last frame.
  * Keyboard: ↑/↓ (or Tab) move, Enter/Space choose, Escape back. Gamepad (standard mapping): d-pad / left stick move,
  * A choose, B back. Sub-pages reuse the shared settings panels (ui/settingsPanel) passed in by main.
  */
 import { GOVERNOR, LADDER, resetGovernor } from '../core/quality';
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 export type MenuMode = 'start' | 'pause';
 export interface MenuPanel { id: string; title: string; build(): HTMLElement }
 export interface MenuHooks {
@@ -39,10 +40,12 @@ export function createMenu(hooks: MenuHooks) {
   const backBtn = () => btn('Back', back);
   const panels: MenuPanel[] = [];
   const music = () => btn('Music', () => sub(() => page('Music', hooks.music(), backBtn())));
+  /** Board: the task board on GitHub in a new tab (SYSTEM_PROPERTIES.links.board); the game stays paused behind it. */
+  const board = () => { const b = btn('Board \u2197', () => { window.open(SYSTEM_PROPERTIES.links.board, '_blank', 'noopener'); }); b.title = SYSTEM_PROPERTIES.links.board; return b; };
   const controls = () => page('Controls', hooks.controls!(), backBtn()), controlsBtn = () => hooks.controls ? [btn('Controls', () => sub(controls))] : [];
   function main() { stack = [];
     if (mode === 'start') {
-      page('Boreal', btn('Continue', close, !hooks.hasSave()), btn('New world', () => sub(newWorld)), ...controlsBtn(), music(), btn('Graphics', () => sub(graphics)), btn('Quit', quit));
+      page('Boreal', btn('Continue', close, !hooks.hasSave()), btn('New world', () => sub(newWorld)), ...controlsBtn(), music(), btn('Graphics', () => sub(graphics)), board(), btn('Quit', quit));
       if (!hooks.hasSave()) (panel.querySelectorAll('button')[1] as HTMLElement).focus();
     } else page('Paused', ...(hooks.warning?.() ? [Object.assign(document.createElement('p'), { className: 'note', textContent: hooks.warning!() })] : []), btn('Resume', close), ...controlsBtn(), btn('Save', () => { hooks.save(); saved.textContent = `Saved ${new Date().toLocaleTimeString()}`; }), music(), btn('Graphics', () => sub(graphics)),
       ...(panels.length ? [btn('More', () => sub(more))] : []), btn('Quit to menu', () => { hooks.save(); hooks.quitToMenu?.(); show('start'); }), saved);

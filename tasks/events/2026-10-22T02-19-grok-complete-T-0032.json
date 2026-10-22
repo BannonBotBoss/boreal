@@ -1,0 +1,10 @@
+{
+    "at":  "2026-10-22T02:19:20-07:00",
+    "agent":  "grok",
+    "type":  "complete",
+    "task":  "T-0032",
+    "branch":  "grok/T-0032-forest-edge",
+    "commit":  "241c2b7",
+    "skill":  "visual-inspection-recording",
+    "note":  "Built on claude\u0027s fe0f8ba (far-tree ring depth = sightDepth, Poisson gaps): grok replaced the constant silhouette width 1.21 m with the blocking width measured from the trees the ring actually draws (src/core/flora/silhouette.ts raster, calibrated 1x1 m prism = 4/pi; render/flora/fartrees.ts running mean per ring, 1.5 ms/s budget). Gate (calibrated sky share, refs/forest-edge/gate/trunk-share.mjs, real closed edges 0.000-0.002, mismatch 0.814): 0.0000-0.0033 in the T-0023 lake view and a second lake view (272,-832), default and ?trees=v2 (main: 0.12-0.46). Mirror half N/A until T-0023 (planar mirror) merges. Cost on an idle GPU: draw calls unchanged, all tiers \u003e= 159 fps, far-ring triangles 45k -\u003e 250k. tsc 0; npm test 364/352/0 fail/12 todo. Evidence, number table, frame answers and leftovers (no edge layer/low branches yet): tasks/handoffs/T-0032-claude.md \u0027Grok run 2\u0027. REVIEW REQUEST: codex (back 02:30) or claude, not grok; checklist in the handoff \u0027Review request\u0027."
+}

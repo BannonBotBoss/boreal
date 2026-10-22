@@ -4,6 +4,8 @@
  * Sun, moon, sky, fog and light follow live: the dial only moves core/timeOfDay DAY.offset, which every hourAt reads.
  * The face is coloured from the game's own sun (lighting(sunPosition(h))), so day length shows on the dial.
  */
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
+import { live } from '../config/live';
 import { DAY, formatHour, hourAt, lighting, setHour, sunPosition } from '../core/timeOfDay';
 
 /** Pure: dial angle (degrees clockwise from the top) for an hour: noon at the top, midnight at the bottom. */
@@ -11,7 +13,7 @@ export const dialAngle = (hour: number) => (hour - 12) * 15;
 /** Pure: hour (0–24) for a point (dx right, dy down) from the dial centre. */
 export const dialHour = (dx: number, dy: number) => ((12 + Math.atan2(dx, -dy) / Math.PI * 12) % 24 + 24) % 24;
 /** Scrub: game hours per real second at full input, and how fast the speed eases toward it (1/s). */
-export const CHRONO = { rate: 3, ease: 8 };
+export const CHRONO = live(SYSTEM_PROPERTIES.chronometer);
 /** Pure: eased scrub speed (game h per real s) toward input (−1…1) × rate. */
 export const scrubVelocity = (v: number, input: number, dt: number) => v + (Math.max(-1, Math.min(1, input)) * CHRONO.rate - v) * (1 - Math.exp(-CHRONO.ease * dt));
 

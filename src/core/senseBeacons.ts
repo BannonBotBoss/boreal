@@ -1,9 +1,11 @@
 /** Senses halo (render/sensesHalo): pure mapping from the senses HUD's live cues to beacons on a ring around the head. */
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { bearingTo, SENSES, type SensePoint, type SoundCue, type ScentHit } from './senses';
 
 export type BeaconKind = 'sound' | 'scent';
 export interface Beacon { kind: BeaconKind; x: number; z: number; strength: number; fresh: number; id: string }
-export const HALO = { radius: .62, maxBeacons: SENSES.cueCap + SENSES.thoughtCap, fadeFrom: .9, fadeTo: 4, speedEase: .35 };
+const H = SYSTEM_PROPERTIES.sensesHalo;
+export const HALO = { radius: H.radius as number, maxBeacons: SENSES.cueCap + SENSES.thoughtCap, fadeFrom: H.fadeFrom as number, fadeTo: H.fadeTo as number, speedEase: H.speedEase as number };
 /** Halo visibility from ground speed (m/s): 1 standing / stealth (0.8), about 0.7 at the 2 m/s walk, 0 at run (6) and sprint (core/wolfModes). */
 export function haloFade(speed: number) {
   const t = Math.min(1, Math.max(0, (speed - HALO.fadeFrom) / (HALO.fadeTo - HALO.fadeFrom))); return 1 - t * t * (3 - 2 * t);

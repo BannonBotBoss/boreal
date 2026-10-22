@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0035",
+  "agent": "grok",
+  "at": "2026-10-22T02:08:02-07:00",
+  "branch": "grok/interact-outline",
+  "skill": "target-outline-glow",
+  "note": "Re-filed complete: 2026-10-22T01-56-grok-complete-T-0035.json named the branch only in its note, so the ledger refused it (\"name the branch\") and the approve after it. Same work, branch grok/interact-outline; full evidence in 2026-10-22T01-56-grok-complete-T-0035.json and tasks/handoffs/T-0035-grok.md. Board history is append-only (rule 10), so this is a new event, not an edit."
+}

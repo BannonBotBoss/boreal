@@ -1,3 +1,5 @@
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
+import { live } from '../config/live';
 /**
  * Startup loading screen (Grok Bot): covers shader warm-up (renderer.compileAsync), the sky/PMREM bake, the first chunks
  * and the resource probe, then fades out, so the startup stutter happens behind it.
@@ -11,7 +13,7 @@ export const FALLBACK_CARDS: LoadingCard[] = [
   { fact: 'Before fire suppression, forests in the Kenora region burned on average about once a century, so most stands were younger than about 150 years.', source: 'Heinselman 1973, Quaternary Research 3:329; Van Wagner 1978, Can. J. For. Res. 8:220' },
   { fact: 'Jack pine cones are sealed with resin that melts at about 50 °C, so a fire opens them and seeds the burn.', source: 'Rudolph & Laidly 1990, Silvics of North America (USDA Agric. Handb. 654)' },
 ];
-export const LOADING = { cardSeconds: 7, fadeMs: 900, manifest: '/loading/manifest.json' };
+export const LOADING = { ...live(SYSTEM_PROPERTIES.loading), manifest: '/loading/manifest.json' };
 
 /** Pure: which item to show after `elapsed` seconds in a list of `n`. */
 export const cardIndex = (elapsed: number, n: number, secs = LOADING.cardSeconds) => n ? Math.floor(elapsed / secs) % n : 0;

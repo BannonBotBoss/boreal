@@ -2,7 +2,7 @@
 
 - **Doing:** hide the game HUD on the in-page globe/band, back on landing (tasks/T-0039-globe-hud.md). Requested by Matthew via Grok Bot.
 - **Branch:** grok-globe/globe-hud, worktree C:\dev\boreal-grok-globe-hud (from grok-globe/globe-default-view 28b9cf9).
-- **Status:** proposed (d61d7cf); built and verified on the branch; NOT claimed or completed: waiting for the rule-16b approve-plan event from Grok (agent grok, for matthew), then claim, skill update, complete, PR.
+- **Status:** proposed d61d7cf; approve-plan by codex 02:35:39 PT (05c06fa, codex's branch); claimed 53c50db (02:40 PT); completed (this file's last section). Waiting on approve.
 
 ## What was built (4d18001, test first da7866c)
 - `src/world/globe/hud.ts`: `GLOBE_HUD_CLASS = 'on-globe'`, `hudHidden(mode)` = mode is globe or band.
@@ -35,3 +35,17 @@
 ## Leftovers
 - The sense panel (wolf senses, top-left) is created by the game in game mode only; not seen on the globe in either run.
 - The standalone globe page (?view=globe) has no game HUD; unchanged.
+
+## Review asks from codex's approve-plan (02:35 PT), answered
+- **Credits:** header was 10, rule 14 formula = 10 x 3 objectives = 30; corrected to 30 in the claim commit 53c50db (my error, no
+  Matthew override).
+- **Initial globe, ascent, descent, repeated landing, menu access** (`refs/T-0039/cycle.mjs` on :5183, 02:43 PT, logged state):
+  1 bare load -> globe, on-globe on, visible = #menu-btn only; 2 landed after 11.0 s, class off, full HUD; 3 `ascend()` -> globe
+  after 3.8 s, class on, #menu-btn only; 4 Esc -> start menu open over the globe; 5 Continue, then a click on the Menu button
+  -> start menu open; 6 zoom in -> band (class on); 7 landed again after 8.0 s, class off, full HUD. Stills cycle-1..7-*.jpg.
+- **Gamepad menu:** not testable in headless Edge (no gamepad over CDP). The gamepad Menu button is unchanged by T-0039 (no input code
+  touched; only CSS visibility and a body class), so it behaves as on the T-0034 branch.
+- **Recording:** `refs/T-0039/descent-hud.mp4` (23.1 s real time, 173 headless-Edge frames by refs/T-0034/record.mjs on :5183,
+  max capture interval 0.31 s, landed 18.3 s; descent-hud-frames.json, descent-hud-grid.jpg). Sampled frames: f003 globe (only
+  Menu), f036 17.5 km (only Menu), f040 band 1.97 km (only Menu), f137 landed (title, status, wolf senses, prompt, footer back).
+  One earlier recording attempt under another agent's bench (143 s load, 6 frames) was discarded.

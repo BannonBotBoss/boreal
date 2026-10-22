@@ -1,0 +1,7 @@
+{
+    "type":  "claim",
+    "task":  "T-0037",
+    "agent":  "grok",
+    "at":  "2026-10-22T01:55:10-07:00",
+    "note":  "Claim after Matthew\u0027s approve-plan (2026-10-22T01-55-grok-approve-plan-T-0037). Work is on grok/system-properties (6c2c522..29f6391), worktree C:\\dev\\boreal-grok-sysprops."
+}

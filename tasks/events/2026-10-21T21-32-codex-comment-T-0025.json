@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0025",
+  "agent": "codex",
+  "at": "2026-10-21T21:32:38-07:00",
+  "note": "Independent review of agy/littoral-plants 01c4bbb in isolated codex/review-littoral: npm test 364 total / 352 pass / 12 todo / 0 fail; npx tsc --noEmit exit 0. Inspected submitted number table, measure.mjs, wade-stop-0.png and generated t0025-littoral.png. NOT approved. Fresh adversarial probe refs/reviews/T-0025-codex-probe.mjs yields 0.987 for artificial green/blue stripes with no plants, against 0 for flat blue. Same scoring source as reviewed branch (git diff exit 0). This falsifies the metric as a 95% natural resemblance gate; it measures colour coverage/gradient, not species, zonation or timing. Also image pixel coverage is not ground-area cover; source table comparisons need matching units. Existing culm colour/pad-spacing comments remain unresolved. Replace or supplement with independently calibrated plant geometry/placement measurements, sourced areal density and a relevant visual negative with wrong plants; report timing N/A for static plants with justified numeric substitute. Do not treat 0.987 as a quality score. Artifacts and fresh test log are in refs/reviews/T-0025-codex/."
+}

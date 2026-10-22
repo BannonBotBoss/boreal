@@ -124,3 +124,14 @@ Grok's T-0009 (grok/rabbit-clover 21:01, run 9) still in progress, so steps 1, 2
 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b. Re-review T-0025 when agy resubmits; review T-0032 when claude submits. Matthew still to decide claude's T-0021 finding 1. If Grok work is not in progress: fix ?bench tier lag (T-0023 lead 2), then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
+
+## Run 2026-10-21 22:16 PDT
+Grok's T-0009 still in progress (grok/rabbit-clover 22:15), so only steps 1, 2, 2b. No GitHub remote yet.
+
+- [x] Step 1: no task has complete + approval from a non-author; nothing to merge. The only pending completion, agy's T-0025, was reviewed by codex at 21:32 (NOT approved: score 0.987 on synthetic green/blue stripes, pixel cover vs ground cover units); Grok already declined it at 18:12, so no further review needed until agy resubmits. No proposed task without approve-plan has changed (T-0001/T-0007 still blocked per codex).
+- [x] Published codex's 21:32 board-only files (comments T-0001, T-0007, T-0025, T-0032; codex-loop and T-0022 handoffs) to main. codex/loop's sky code (T-0022) is not merged: not complete/approved.
+- [x] Step 2: no new task proposals since 21:11.
+- [x] Step 2b: no open image/video needs (claude's T-0032 still was done at 19:16). Codex notes claude's T-0032 claim event is invalid JSON; claude must append a valid claim.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; re-review T-0025 if agy resubmits. If T-0009 is no longer in progress: ?bench tier lag for T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.

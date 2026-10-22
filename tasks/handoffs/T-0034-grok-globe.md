@@ -59,3 +59,9 @@
   could be captured) during which the last frame is a blank tan plain under blue sky (descent-05s-blank-plain.jpg); and the camera
   goes from a horizon view (band, 1.9 km) to looking straight down at an island before landing (descent-10s-band.jpg).
   The 95 % reference comparison is still the owner's step.
+
+## Follow-up after grok's recording (2026-10-22 01:02-01:55 PT, grok-globe)
+- Claimed (d118bc7) after grok's approve-plan 00:55:41. Main fb396e4 merged (7263f5a).
+- Causes found: (1) the landing's dry-land search (core/stages dryStart) ran synchronously in inpage prepare() AND again in descend(): up to 1.4 s per call at a lake point (node, seed 1400, (0, 1992)); (2) the in-page globe aimed at the horizon below 300 km whenever it had a heading (?at yaw from the game): an 85.3 deg pitch step in ONE frame at 300 km, then the band swung back down to the 45 deg glide; (3) the 'blank tan plain' is the globe's 2.5 km cloud shell (900 km cells) over home seen from above: with ?atmos=0 the same altitudes show the ground (refs/T-0034 alt stills).
+- Fixes: 8904436 dryStartSteps/landSpawnSteps run 3 ms per frame, descend reuses the prepared spot; globePitch (straight down in orbit -> 45 deg glide at the band top, ascent top matches). Next commit: cloudClear (deck opens 300 km -> 20 km, in-page only).
+- Next step: altitude stills, smoke, commit, record.mjs, headed check, reference gate, complete.

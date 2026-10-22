@@ -17,7 +17,7 @@ const edge = process.env.EDGE ?? 'C:\\Program Files (x86)\\Microsoft\\Edge\\Appl
 // sometimes blocks ~0.5 s per frame for a whole run (external display asleep / mode change?), so the page drew 2 fps on every
 // tier with an idle main thread and 0.2-9 ms GPU frames; a trace shows GpuVSyncThread busy 2999 of 3000 ms. Uncapped fps here.
 const vsyncFlags = process.env.SMOKE_VSYNC === '1' ? [] : ['--disable-gpu-vsync', '--disable-frame-rate-limit'];
-const proc = spawn(edge, [...vsyncFlags, '--headless=new', '--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--hide-scrollbars', '--window-size=1280,800',
+const proc = spawn(edge, [...vsyncFlags, '--headless=new', '--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--hide-scrollbars', '--window-size=1280,800', '--window-position=-32000,-32000', // off-screen (Matthew 2026-10-22: no windows on his screen)
   '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-background-timer-throttling', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
 track(proc.pid); // release() kills it even if this script dies before its finally
 const gpuMem = () => { try { return execSync('nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv,noheader', { encoding: 'utf8', timeout: 10000 }).trim(); } catch { return 'n/a (no nvidia-smi)'; } };

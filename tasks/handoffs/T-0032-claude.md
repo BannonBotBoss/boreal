@@ -84,5 +84,34 @@ is invalid JSON (unescaped backslashes), so claude should add a valid claim on r
       Lead for the v2 fail: sightDepth uses silhouetteW 1.21 m measured on the default trees (depth.ts); v2 black spruce are
       narrow spires (claude's own 17:33 note), so the ring is too shallow for v2. Fix candidate: silhouetteW from the drawn
       variant (measure v2 widths the same way), not a new picked number.
-- [ ] 3. Objective 4: ?bench before (main) / after.
+- [~] 3. 02:05 objective 4 cost (refs/forest-edge/bench/): tools/smoke-tiers.mjs (every tier held 8 s, real GPU RTX 5060,
+      vsync off; this branch adds --window-position=-32000,-32000 to its Edge so no window shows). Spawn view ?hour=11.
+      | Tier | before main (fps / draws / gpu ms) | after fe0f8ba run 1 | after run 2 (GPU 30 % busy at start: discard) |
+      |---|---|---|---|
+      | Ultra | 242 / 251 / 3.8 | 218 / 250 / 4.2 | 96 / 239 / 18.8 |
+      | High | 258 / 239 / 3.2 | 119 / 239 / 7.1 | 49 / 226 / 133.5 |
+      | Medium | 247 / 250 / 2.4 | 210 / 250 / 2.6 | 109 / 248 / 3.3 |
+      | Low | 296 / 226 / 2.6 | 274 / 226 / 2.4 | 122 / 226 / 2.2 |
+      | Very low | 290 / 223 / 1.9 | 271 / 223 / 2.1 | 117 / 223 / 4.2 |
+      | Minimum | 470 / 81 / 0.9 | 397 / 81 / 1.1 | 214 / 87 / 2.9 |
+      Draw calls unchanged (the ring is one BatchedMesh); fps -8 to -15 % on run 1, every tier far above 60 fps. High's 7.1 ms
+      on run 1 is unexplained (other agents share this GPU: run 2 started at 30 % utilisation). Triangles not measured.
+      Verdict: 60 fps held on every tier (objective 4 wording), but repeat on an idle GPU before approving.
+- [x] 4. 02:12 v2 lead tested. (a) Experiment, not committed: silhouetteW .6 (ring ~2x deeper) -> b-v2 trunk sky **0.0112**,
+      b-default 0.000: a deeper ring does close the v2 view. (b) But refs/forest-edge/gate/v2-width.ts (claude's depth.ts method on
+      the v2 crown geometry the filler draws, lods.crown, placeTree scale; canvas stubbed for the needle atlas, texture only)
+      gives **w = 1.188 m with v2 vs 1.183 m default** (721 filler trees around the T-0023 view, 27.7 % black spruce): the
+      envelopes are the same width. So the v2 gap is not envelope width; it is the porosity of v2's alpha-tested needle cards
+      (or the near v2 entity layer). Picking w = .6 would be a picked number: not done.
 - [ ] 4. Number table + frame answers updated; submit only if every gate passes, else leave open with the failing items.
+
+### State after grok's run (02:15): NOT submitted
+- Gate: 3 of 4 trunk-zone cells pass (<= 0.024); **v2 in the second view fails (0.043)**; the mirror half is N/A until T-0023
+  merges. Bench run 1 holds 60 fps everywhere but needs an idle-GPU repeat. Number table and frame answers in the task file are
+  still claude's 17:33 baseline: update them at submission.
+- Exact next step (claude on return, or any agent): measure the effective opacity of a v2 stand (e.g. render one variant's crown
+  and mid LOD against a white background in the box browser, share of covered pixels per height band), use w_eff = w x opacity
+  per drawn variant in sightDepth (a parameter, so fartrees passes the v2 value when v2Handles('black-spruce')), re-run
+  `node refs/forest-edge/gate/capture.mjs 5262` and `node refs/forest-edge/gate/trunk-share.mjs refs/forest-edge/gate/after/*.png`,
+  repeat the bench on an idle GPU, then update the number table/frame answers and submit (claude's claim first: see top).
+- Review: grok continued this work and wrote the approve-plan, so claude or codex must review/approve, never grok.

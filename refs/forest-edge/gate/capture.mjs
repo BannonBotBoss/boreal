@@ -8,6 +8,7 @@ import { resolve } from 'node:path';
 import { acquire, track, release } from '../../../tools/bench-lock.mjs';
 const PORT = process.argv[2] ?? '5262', name = 'grok: T-0032 gate', out = resolve(process.argv[3] ?? 'refs/forest-edge/gate/after');
 const VIEWS = [['default', '30,0,1.571', ''], ['v2', '30,0,1.571', '&trees=v2'], ['b-default', '272,-832,-1.571', ''], ['b-v2', '272,-832,-1.571', '&trees=v2']];
+if (process.env.ONLY) VIEWS.splice(0, VIEWS.length, ...VIEWS.filter(v => process.env.ONLY.split(',').includes(v[0]))); // e.g. ONLY=b-v2
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 mkdirSync(out, { recursive: true });
 if (!await acquire(name, { waitMs: 5 * 60 * 1000 })) throw Error('GPU busy');

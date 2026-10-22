@@ -7,7 +7,9 @@
  */
 import { PLANET } from './planet';
 import { STAGES } from '../../core/stages/elevation';
-import { drain, dryStartSteps } from '../../core/stages/surfaceAt';
+import { drain, dryStartSteps, isDry } from '../../core/stages/surfaceAt';
+import { treesAround } from '../../core/ground';
+import { SYSTEM_PROPERTIES } from '../../config/systemProperties';
 
 export const HANDOFF = { alt: 2000, margin: 250, hintAlt: 6000 }; // metres above ground; keep-out from the region edge [game calibration]
 
@@ -21,11 +23,30 @@ export function handoffTarget(s: { home: number; x: number; z: number }, alt: nu
 /** Where the player lands coming down from the globe: the nearest dry land to `at` (the game's own dryStart, which the
  *  game skips for ?at=), so the handoff never drops the wolf in a lake. Unchanged without staged terrain or if no dry
  *  land is within dryStart's search radius (then the game's water handling applies). */
-export function landSpawn(at: { x: number; z: number }, staged = STAGES.on) { return drain(landSpawnSteps(at, staged)); }
+export function landSpawn(at: { x: number; z: number }, staged = STAGES.on, yaw?: number) { return drain(landSpawnSteps(at, staged, yaw)); }
 /** landSpawn as resumable steps (core/stages dryStartSteps): the in-page descent runs it within a frame budget (inpage.ts). */
-export function* landSpawnSteps(at: { x: number; z: number }, staged = STAGES.on): Generator<void, { x: number; z: number }> {
-  if (!staged) return at; const [x, z] = yield* dryStartSteps(at.x, at.z);
-  return { x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10 };
+export function* landSpawnSteps(at: { x: number; z: number }, staged = STAGES.on, yaw?: number): Generator<void, { x: number; z: number }> {
+  const [x, z] = staged ? yield* dryStartSteps(at.x, at.z) : [at.x, at.z];
+  const spot = staged ? { x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10 } : at;
+  return yaw === undefined ? spot : yield* clearViewSteps(spot, yaw, staged ? (px, pz) => isDry(px, pz) : () => true);
+}
+/** T-0041: the follow camera sits ack m behind the wolf (rider distance + margin); a tree within clear(r) of that line hides
+ *  the wolf on landing (trunk plus the lower crown; r = crown radius from core/ground). The spot may move up to maxShift m. */
+export const LANDING_VIEW = { back: SYSTEM_PROPERTIES.camera.riderDistance + .5, clear: (r: number) => Math.max(.6, .45 * r), step: 1.5, maxShift: 12 };
+export function viewBlocked(x: number, z: number, yaw: number, trees: readonly { x: number; z: number; r: number }[]) {
+  const cx = x + Math.sin(yaw) * LANDING_VIEW.back, cz = z + Math.cos(yaw) * LANDING_VIEW.back, dx = cx - x, dz = cz - z, L2 = dx * dx + dz * dz;
+  for (const t of trees) { const k = Math.max(0, Math.min(1, ((t.x - x) * dx + (t.z - z) * dz) / L2));
+    if (Math.hypot(t.x - (x + k * dx), t.z - (z + k * dz)) < LANDING_VIEW.clear(t.r)) return true; }
+  return false;
+}
+/** The nearest spot (rings of step m out to maxShift) that is dry and has a clear camera-wolf line; the heading is kept. */
+export function* clearViewSteps(s: { x: number; z: number }, yaw: number, dry: (x: number, z: number) => boolean): Generator<void, { x: number; z: number }> {
+  if (!viewBlocked(s.x, s.z, yaw, treesAround(s.x, s.z))) return s;
+  for (let r = LANDING_VIEW.step; r <= LANDING_VIEW.maxShift; r += LANDING_VIEW.step) { const k = Math.max(8, Math.round(2 * Math.PI * r / LANDING_VIEW.step));
+    for (let i = 0; i < k; i++) { const a = i / k * 2 * Math.PI, x = Math.round((s.x + Math.cos(a) * r) * 10) / 10, z = Math.round((s.z + Math.sin(a) * r) * 10) / 10;
+      if (!viewBlocked(x, z, yaw, treesAround(x, z)) && dry(x, z)) return { x, z }; }
+    yield; }
+  return s;
 }
 /** The game URL for a spawn: the current query minus the globe's own keys, plus `at` (x, z and, when known, yaw). */
 export function gameUrl(search: string, at: { x: number; z: number; yaw?: number } | null) {

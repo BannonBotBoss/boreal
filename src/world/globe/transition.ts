@@ -31,7 +31,11 @@ export const GLOBE_PITCH = { orbitAlt: 3e5, glide: -Math.PI / 4, down: -Math.PI 
 /** In-page globe cloud clearing by altitude (T-0034): the 2.5 km cloud shell (atmosphere CLOUDS, 900 km cells) can sit over
  *  the whole home region, so diving in looked into a flat lit cloud top from ~300 km to the band (the 'blank plain'). The deck
  *  opens from 300 km (orbit look kept) to none by 20 km, so the descent always sees the ground it lands on. */
-export const cloudClear = (alt: number) => 1 - smoothstep(2e4, GLOBE_PITCH.orbitAlt, alt);
+/** T-0041: the in-page descent fades the cloud cover out between these altitudes (m), linearly in log altitude (a constant
+ *  rate on the descent's near-exponential fall: the fastest recorded descent changes the cover by < 2 % per 30 fps frame;
+ *  a smoothstep peaks 1.5x steeper). T-0034's coverage-threshold switch snapped from solid cloud to clear ground. */
+export const CLOUD_OPEN = { top: 2.5e6, bottom: 2.5e4 };
+export const cloudClear = (alt: number) => Math.min(1, Math.max(0, Math.log(CLOUD_OPEN.top / Math.max(alt, 1)) / Math.log(CLOUD_OPEN.top / CLOUD_OPEN.bottom)));
 export function globePitch(alt: number) { return GLOBE_PITCH.down + (GLOBE_PITCH.glide - GLOBE_PITCH.down) * (1 - smoothstep(TRANSITION.bandTop, GLOBE_PITCH.orbitAlt, alt)); }
 /** In-page (the default since the r18 check) or the reload fallback. ?transition=reload | inpage forces it; low-memory
  *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the

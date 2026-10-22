@@ -46,8 +46,10 @@ export function dryStart(x: number, z: number, seed = STAGES.seed, maxR = 900, m
 export function drain<T>(g: Generator<unknown, T>): T { let r = g.next(); while (!r.done) r = g.next(); return r.value; }
 /** dryStart as resumable steps: yields after every candidate point, so a caller with a frame budget (world/globe/inpage, the
  *  descent) spreads a long lake search (up to ~1.4 s in one call, T-0034) over frames. Same points, same order, same result. */
+/** Dry land at (x, z): no lake or river and margin m above the water surface (dryStart's test, T-0041 landing view). */
+export function isDry(x: number, z: number, seed = STAGES.seed, margin = .6) { const p = surfaceAt(x, z, seed); return !p.lake && !p.river && p.height > LEVEL.waterSurface + margin; }
 export function* dryStartSteps(x: number, z: number, seed = STAGES.seed, maxR = 900, margin = .6): Generator<void, [number, number]> {
-  const dry = (px: number, pz: number) => { const p = surfaceAt(px, pz, seed); return !p.lake && !p.river && p.height > LEVEL.waterSurface + margin; };
+  const dry = (px: number, pz: number) => isDry(px, pz, seed, margin);
   if (dry(x, z)) return [x, z];
   for (let r = 15; r <= maxR; r += 15) { const k = Math.max(8, Math.round(2 * Math.PI * r / 15));
     for (let i = 0; i < k; i++) { const a = i / k * 2 * Math.PI, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r;

@@ -118,6 +118,8 @@ function treesNear(cx: number, cz: number) {
   for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++) for (const e of chunkTrees(a, b)) t.push(e);
   return t;
 }
+/** Tree placements (x, z, crown radius r in m) in the 3x3 chunks around (x, z) (world/globe handoff: the landing view, T-0041). */
+export function treesAround(x: number, z: number) { return treesNear(Math.floor(x / CHUNK_SIZE), Math.floor(z / CHUNK_SIZE)); }
 export interface Layer { id: string; label: string; top: number; thickness: number; kg: number; bulk: number; moisture?: number; age?: string; source: string }
 /** The layer stack of the cell containing (x, z) at `years` since world start (plus the stand's age since fire). */
 const colCache = new Map<string, ReturnType<typeof columnRaw>>();

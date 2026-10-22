@@ -128,7 +128,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     start.p.set(pg.x, pg.y, pg.z); start.q.setFromRotationMatrix(gameBasis(g.planet, pg.x, pg.z, tmpM)).invert().multiply(g.camera.quaternion);
     h0 = Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)); fwd.set(-Math.sin(at.yaw), -Math.cos(at.yaw));
     const c = landingPoint(pg.x, pg.z, fwd, h0); let s = prep;
-    if (!s || Math.hypot(c.x - s.x, c.z - s.z) >= 2 * CHUNK_SIZE) { s = landSpawn(c); host.place(s.x, s.z, at.yaw); placedFrame = frameNo; } // else the spot prepared on the way down (chunks already building); no second search
+    if (!s || Math.hypot(c.x - s.x, c.z - s.z) >= 2 * CHUNK_SIZE) { s = landSpawn(c, undefined, at.yaw); host.place(s.x, s.z, at.yaw); placedFrame = frameNo; } // else the spot prepared on the way down (chunks already building); no second search
     prep = null; search = null;
     land.set(s.x, ground(s.x, s.z), s.z); h0 = Math.max(TRANSITION.handover + 1, pg.y - land.y); h = h0;
     off.set(start.p.x - (land.x - fwd.x * h0), start.p.y - (land.y + h0), start.p.z - (land.z - fwd.y * h0)); // decays to 0 with height
@@ -143,7 +143,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
    *  the player there now, so the patch chunks build during the last of the globe zoom. */
   function prepare(yaw: number) { // starts the dry-land search; step() finishes it within INPAGE.searchMs per frame, then places the player
     const g = globe!, v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]), f = new THREE.Vector2(-Math.sin(yaw), -Math.cos(yaw));
-    search = { steps: landSpawnSteps(landingPoint(pg.x, pg.z, f, Math.min(TRANSITION.bandTop, Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z))))), yaw };
+    search = { steps: landSpawnSteps(landingPoint(pg.x, pg.z, f, Math.min(TRANSITION.bandTop, Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)))), undefined, yaw), yaw };
   }
   function stepSearch() {
     if (!search) return; const t0 = performance.now(); let r = search.steps.next();

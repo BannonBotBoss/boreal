@@ -116,3 +116,13 @@ test('needs save round-trips and are tagged snapshot', () => {
   assert.deepEqual(parseNeeds('garbage'), createNeeds()); assert.deepEqual(parseNeeds(JSON.stringify({ water: 400 })), { water: 100, rest: 100 });
   assert.deepEqual(untagged('needs', createNeeds()), []);
 });
+import { nearestWater, waterAhead, waterAt } from '../src/core/needs/water';
+test('drinking needs visible water within muzzle reach (0.6-1.8 m ahead), not shore mud', () => {
+  const w = nearestWater(0, 0); assert.ok(w && waterAt(w.x, w.z));
+  const d = Math.hypot(w!.x, w!.z), ux = w!.x / d, uz = w!.z / d, h = Math.atan2(-ux, -uz);
+  let x = w!.x - ux * 1.2, z = w!.z - uz * 1.2; // back off until dry, then stand 1 m from the edge
+  while (waterAt(x, z)) { x -= ux * .5; z -= uz * .5; }
+  assert.ok(waterAhead(x - ux * .0, z - uz * .0, h) || waterAhead(x + ux * .5, z + uz * .5, h));
+  assert.equal(waterAhead(x - ux * 6, z - uz * 6, h), false, '6 m back: out of reach');
+  assert.equal(waterAhead(x, z, h + Math.PI), false, 'facing away');
+});

@@ -25,7 +25,7 @@ import { eatWater, levelsOf, parseNeeds, stepNeeds, type NeedsState } from './co
 import { chooseGoal, sunTimes } from './core/needs/behaviour';
 import { createThoughtClock, thoughtTick } from './core/needs/thoughts';
 import { createThoughtBubbles } from './render/thoughtBubbles';
-import { isDryLand } from './core/world';
+import { nearestWater, waterAhead } from './core/needs/water';
 import { createSnapshotHub } from './core/snapshot';
 import { createPhotoMode } from './photo/photoMode';
 import { shaderClock } from './render/shaderClock';
@@ -126,15 +126,7 @@ let needs: NeedsState = parseNeeds((() => { try { return localStorage.getItem(NE
 const needsSpecies = () => NEEDS_SPECIES[view.playable.id] ?? WOLF_NEEDS; // the creature the player embodies (wolf until others are playable)
 const thoughtClock = createThoughtClock(), bubbles = createThoughtBubbles(view.scene);
 const saveNeeds = () => { try { localStorage.setItem(NEEDS_KEY, JSON.stringify({ ...needs, energy: view.playerBrain.energy })); } catch { /* blocked */ } };
-/** Water (lake, river or below the water surface) within reach of the muzzle: points 0.6-1.8 m ahead and to the sides. */
-const waterAhead = (x: number, z: number, h: number) => [.6, 1.2, 1.8].some(d => [-.5, 0, .5].some(a => !isDryLand(x - Math.sin(h + a) * d, z - Math.cos(h + a) * d)));
-let waterGoal: { x: number; z: number } | undefined;
-/** Nearest water for an animal whose behaviour model chose 'drink' (rings out to 400 m, cached until reached). */
-function findWater(x: number, z: number) {
-  for (let r = 4; r <= 400; r += 4) { const k = Math.max(12, Math.round(2 * Math.PI * r / 6));
-    for (let i = 0; i < k; i++) { const a = i / k * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (!isDryLand(px, pz)) return { x: px, z: pz }; } }
-  return undefined;
-}
+let waterGoal: { x: number; z: number } | undefined; // the autonomous wolf's chosen water (core/needs/water nearestWater)
 view.onBeforeRender((time, photoView) => bubbles.update(view.lookup('player')?.object, view.camera, thoughtTime, photoView));
 view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView));
 function perform() {
@@ -373,7 +365,7 @@ function frame(time: number) { const frameStart = performance.now();
       const choice = autonomous && !playerAction ? chooseGoal(sp, levelsOf(needs, brain.energy), { hour: hourAt(wNow), ...sun }) : undefined;
       if (choice?.goal === 'drink' && !drinking) {
         if (waterAhead(player.x, player.z, yaw)) { drinking = true; waterGoal = undefined; }
-        else { waterGoal ??= findWater(player.x, player.z); if (waterGoal) { brain.heading = Math.atan2(-(waterGoal.x - player.x), -(waterGoal.z - player.z)); brain.motion = choice.gait === 'walk' ? 'walk' : 'run'; brain.speed = brain.motion === 'run' ? 4 : 1; brain.problem = 'explore'; } }
+        else { waterGoal ??= nearestWater(player.x, player.z); if (waterGoal) { brain.heading = Math.atan2(-(waterGoal.x - player.x), -(waterGoal.z - player.z)); brain.motion = choice.gait === 'walk' ? 'walk' : 'run'; brain.speed = brain.motion === 'run' ? 4 : 1; brain.problem = 'explore'; } }
       }
       if (drinking || choice?.goal === 'bed-down' || choice?.goal === 'rest') { brain.motion = 'idle'; brain.speed = 0; brain.problem = 'recover'; }
       const steerOnly = !!choice && (drinking || choice.goal !== 'explore' && choice.goal !== 'hunt' && choice.goal !== 'forage');

@@ -8,9 +8,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const [base, outDir] = process.argv.slice(2); mkdirSync(outDir, { recursive: true });
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const SHOTS = [
-  ['drink', '?nomenu&stages=0&at=33.5,-10.4,-0.355&needs=water:22', 6000, true],
-  ['low', '?nomenu&stages=0&needs=water:25', 40000],
-  ['stagger', '?nomenu&stages=0&needs=water:20,energy:15,rest:25', 40000],
+  ['drink', '?nomenu&at=14.37,7.53,2.02&needs=water:22', 8000, true],
+  ['low', '?nomenu&needs=water:25', 40000],
+  ['stagger', '?nomenu&needs=water:20,energy:15,rest:25', 40000],
 ];
 const only = process.argv[4]; if (only) SHOTS.splice(0, SHOTS.length, ...SHOTS.filter(s => only.split(',').includes(s[0])));
 const port = 9400 + Math.floor(Math.random() * 90), profile = mkdtempSync(join(tmpdir(), 'grok-needs-'));

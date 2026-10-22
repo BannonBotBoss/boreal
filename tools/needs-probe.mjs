@@ -7,9 +7,10 @@ try { let t; for (let i = 0; i < 60; i++) { try { t = await (await fetch(`http:/
   ws.onmessage = m => { const d = JSON.parse(m.data); if (d.id && pend.has(d.id)) { pend.get(d.id)(d.result ?? d); pend.delete(d.id); } };
   const cdp = (method, params = {}) => new Promise(r => { const i = ++id; pend.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
   await cdp('Page.enable'); await cdp('Page.navigate', { url }); await sleep(25000);
-  const r = await cdp('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => { const w = await import('/src/core/world.ts'); const e = await import('/src/core/stages/elevation.ts'); const t = await import('/src/core/tuning.ts');
-    const out = { staged: e.STAGES.on, seed: e.STAGES.seed, shore: t.LEVEL.shore, ws: t.LEVEL.waterSurface, pts: [] };
-    for (const d of [0, .6, 1.2, 1.8, 3, 5]) { const x = 33.5 - Math.sin(-0.355) * d, z = -10.4 - Math.cos(-0.355) * d; out.pts.push([d, +w.heightAt(x, z).toFixed(2), w.isDryLand(x, z)]); }
-    out.status = document.getElementById('status').innerText; return out; })()` });
+  const r = await cdp('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => { const W = await import('/src/core/needs/water.ts'); const e = await import('/src/core/stages/elevation.ts'); const sa = await import('/src/core/stages/surfaceAt.ts');
+    const [sx, sz] = e.STAGES.on ? sa.dryStart(0, 0) : [0, 0]; const w = W.nearestWater(sx, sz, 600); if (!w) return { staged: e.STAGES.on, none: true };
+    const d = Math.hypot(w.x - sx, w.z - sz), ux = (w.x - sx) / d, uz = (w.z - sz) / d, h = Math.atan2(-ux, -uz); let x = w.x, z = w.z;
+    while (W.waterAt(x, z)) { x -= ux * .25; z -= uz * .25; } x -= ux * .4; z -= uz * .4;
+    return { staged: e.STAGES.on, start: [sx, sz], water: [w.x, w.z], at: [+x.toFixed(2), +z.toFixed(2), +h.toFixed(3)], ahead: W.waterAhead(x, z, h), act: document.getElementById('act').textContent }; })()` });
   console.log(JSON.stringify(r.result?.value ?? r, null, 0));
 } finally { p.kill(); await sleep(500); try { rmSync(profile, { recursive: true, force: true }); } catch {} }

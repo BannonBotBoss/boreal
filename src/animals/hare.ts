@@ -61,7 +61,7 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
  *  - run 5 (grok-gait v3 contract): hindToes .056 = the toes (MTP to tip) of the .132 hind foot, scapula .063 = the shoulder
  *    blade in the fore chain (= .816 x humerus), both from Lepus brachyurus bone means (Exp Anim 30(2):113, 1981, Tables 1
  *    and 4-6; working in tools/bound-plans.ts SPLIT / BLADE). */
-export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .187, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, girdleTop: .17, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.27, headY: .085 };
+export const HARE_BODY = { hipY: .13, hipZ: .09, shoulderZ: -.12, foreLeg: .187, hindLeg: .202, hindFoot: .132, hindToes: .056, scapula: .063, girdleTop: .157, upperShare: .47, manus: .19, foreBend: .6, hindBend: .5, ear: .066, headZ: -.27, headY: .085 };
 /**
  * T-0028 skin + fur spec (data for the shared core/rigBody.ts + render/rigSkin.ts; tasks/T-0028 number table). No mesh file:
  * every vertex comes from these rings around the rig's bind pose (hareBind). Model space = the hare root (feet y 0, forward -z).
@@ -170,6 +170,12 @@ export const createHareModel = model;
 export const HARE_PLAN: BodyPlan = { hip: HARE_BODY.hipY, hipZ: HARE_BODY.hipZ, shoulderZ: HARE_BODY.shoulderZ, track: { fore: .03, hind: .045 }, foreLeg: HARE_BODY.foreLeg,
   hindLeg: HARE_BODY.hindLeg, hindFoot: HARE_BODY.hindFoot, hindToes: HARE_BODY.hindToes, scapula: HARE_BODY.scapula, upperShare: HARE_BODY.upperShare, manus: HARE_BODY.manus,
   foreBend: HARE_BODY.foreBend, hindBend: HARE_BODY.hindBend, limits: LEPORID_LIMITS, girdleTop: HARE_BODY.girdleTop };
+/* girdleTop (grok): run 10 .17 [estimate from the 20-22 cm shoulder height, Prescott & Richard 2004 via fr.wikipedia, secondary];
+ * run 11 .157: with Gait Builder's late-swing fore reach (bounding.ts FORE_REACH) the forearm held 39.0 / 37.8 / 38.5 deg below the
+ * horizontal at 5 / 8.5 / 11.6 m/s at .17, past the 11-36 deg fore touchdown range of small therians (Schmidt 2008, JEB 211:3775,
+ * Table 4); .157 holds 34.7 / 33.3 / 35.9 deg while the standing elbow stays 11 mm below the glenoid at 69 deg and the graze folds
+ * fully (poseReach 1); .155 / .15 lose the graze fold (.97 / .88). Box v1.3: shape 72.4 / 81.5 vs 72.7 / 81.1 at .17 (noise),
+ * end-on 66.0 vs 67.7. C:\dev\rabbit-rec15\grid-run11.txt. */
 /** Rig options (run 5): the level-trunk running posture (needs the blade's fore reach) and turning in place by re-planting. */
 export const HARE_RIG = { pose: RUN_POSE_LEVEL, turnInPlace: true };
 const HARE_SKELETON = skeletonOf(HARE_PLAN);

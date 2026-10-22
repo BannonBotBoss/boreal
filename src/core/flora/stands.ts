@@ -21,7 +21,17 @@ export function drawnTreesPerHa(stems: number | undefined, density = 1) {
   return ENTITY_TREES.candidates * ENTITY_TREES.share * treeMult(stems, density) * 1e4 / (CHUNK_SIZE * CHUNK_SIZE);
 }
 /** stemCap: stems/ha target ceiling; fill: share of the gap drawn; tile: placement tile (m); cluster: Thomas offspring. [game calibration] */
-export const FAR_TREES = { stemCap: 2150, fill: .6, tile: 32, mu: 4, sigma: 2.5, maxInstances: 9000, sliceMs: 2 };
+export const FAR_TREES = { stemCap: 2150, fill: .6, tile: 32, mu: 4, sigma: 2.5, maxInstances: 9000, sliceMs: 2,
+  /** sightEps: share of level sight lines into the forest that may still reach the sky (top of the real closed lake edges,
+   *  T-0032 calibration, refs/forest-edge/edge-gap.mjs); silhouetteW: mean drawn tree width 2-8 m above the base (m, from
+   *  the trees' own triangles, refs/forest-edge/sightline/depth.ts). */
+  sightEps: .002, silhouetteW: 1.21 };
+/** How deep the drawn forest must reach behind any edge so a level line of sight into it ends on a tree with probability
+ *  1 - sightEps: Poisson gaps, P(clear over L) = exp(-lambda w L) (Nilson 1971, Agric. Meteorol. 8: 25-38), lambda = the
+ *  trees/m² drawn at the stand (entities + fill, full density: lower tiers thin trees, not deepen the ring). Pure. */
+export function sightDepth(stems: number) {
+  return Math.log(1 / FAR_TREES.sightEps) / ((drawnTreesPerHa(stems) + fillPerHa(stems)) / 1e4 * FAR_TREES.silhouetteW);
+}
 /** Look-only trees/ha added at a stand: toward min(stems, cap) x density, minus what the entities already draw. Pure. */
 export function fillPerHa(stems: number, density = 1) {
   return Math.max(0, Math.min(stems, FAR_TREES.stemCap) * density - drawnTreesPerHa(stems, density)) * FAR_TREES.fill;

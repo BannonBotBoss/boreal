@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { applyPopulation } from '../src/core/population';
 import { RENDER } from '../src/core/renderSettings';
 import { CHUNK_SIZE, type Entity } from '../src/core/world';
-import { ENTITY_TREES, FAR_TREES, drawnTreesPerHa, farTreesInTile, fillPerHa } from '../src/core/flora/stands';
+import { ENTITY_TREES, FAR_TREES, drawnTreesPerHa, farTreesInTile, fillPerHa, sightDepth } from '../src/core/flora/stands';
 import { standStructure, speciesStems, standStems, STEM_CURVES } from '../src/core/stand';
 
 test('far trees: the entity baseline is ~131 trees/ha at the reference stand, clamped like core/population', () => {
@@ -63,4 +63,12 @@ test('stand model: mature fire-origin black spruce 1300-2150 stems/ha (Rossi 201
   // drawn = entities + look-only filler reaches the fill share of the mature target, under the cap
   const s = standStructure(100).stems, drawn = drawnTreesPerHa(s, 1) + fillPerHa(s, 1);
   assert.ok(drawn > .6 * s && drawn <= Math.min(s, FAR_TREES.stemCap) + 1e-6, `drawn ${drawn.toFixed(0)}/ha of ${s.toFixed(0)}`);
+});
+test('far trees: the ring reaches as deep as a line of sight into the stand (Poisson gaps, T-0032)', () => {
+  for (const stems of [600, 1059, 2150]) { // P(clear over the depth) = exp(-lambda w L) = sightEps at the drawn density
+    const lam = (drawnTreesPerHa(stems) + fillPerHa(stems)) / 1e4;
+    assert.ok(Math.abs(Math.exp(-lam * FAR_TREES.silhouetteW * sightDepth(stems)) - FAR_TREES.sightEps) < 1e-9);
+  }
+  assert.ok(sightDepth(600) > sightDepth(1059) && sightDepth(1059) > sightDepth(2150)); // denser stands close the view sooner
+  assert.ok(sightDepth(1059) > 60 && sightDepth(1059) < 100); // the T-0032 lake view stand: the probe closes 60-80 m behind the shore
 });

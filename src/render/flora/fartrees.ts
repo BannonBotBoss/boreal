@@ -13,7 +13,7 @@ import { LEVEL } from '../../core/tuning';
 import { RENDER } from '../../core/renderSettings';
 import { INTEREST, enqueue, pending } from '../../core/interest';
 import { standAt } from '../../core/stand';
-import { FAR_TREES, farTreesInTile } from '../../core/flora/stands';
+import { FAR_TREES, farTreesInTile, sightDepth } from '../../core/flora/stands';
 import { hash, random } from '../../proc/rng';
 import { WIND_UNIFORMS, ageClass, treeGeometry, treeSpecies } from '../trees';
 import { bindWind, placeTree, removeTree, updateTrees, v2Handles } from '../trees/game';
@@ -73,9 +73,12 @@ export function createFarTrees(scene: THREE.Scene) {
   return (camera: THREE.Camera) => {
     updateTrees(scene, camera); // trees v2 LOD + pruning (no-op unless ?trees=v2)
     if (bm) bm.visible = !FAR_TREE_FX.off && RENDER.treeDensity > 0;
-    const x = camera.position.x, z = camera.position.z, density = RENDER.treeDensity, inner = 55 * RENDER.lod.trees + 5, outer = Math.max(inner, INTEREST.mid);
-    const reset = density !== lDensity || Math.abs(inner - lInner) > 1 || Math.abs(outer - lOuter) > 1;
-    if (pending('fartrees:refill') || (!reset && lx !== undefined && Math.hypot(x - lx, z - lz) < FAR_TREES.tile / 2)) return;
+    const x = camera.position.x, z = camera.position.z, density = RENDER.treeDensity, inner = 55 * RENDER.lod.trees + 5, T = FAR_TREES.tile;
+    // the forest is drawn as deep behind the last instantiated edge (INTEREST.mid) as a line of sight sees into it (core/flora/stands
+    // sightDepth), no further than the fog hides; whole tiles, so the ring moves in tile steps (incremental refill, no reset)
+    const fogFar = (scene.fog as THREE.Fog | null)?.far ?? Infinity, outer = Math.max(inner, Math.min(fogFar, Math.ceil((INTEREST.mid + sightDepth(stemsAt(x, z))) / T) * T));
+    const reset = density !== lDensity || Math.abs(inner - lInner) > 1;
+    if (pending('fartrees:refill') || (!reset && lx !== undefined && Math.hypot(x - lx, z - lz) < T / 2 && Math.abs(outer - lOuter) <= 1)) return;
     lx = x; lz = z; lDensity = density; lInner = inner; lOuter = outer; Object.assign(FAR_TREE_INFO, { inner, outer });
     const g = refill(x, z, inner, outer, density, reset);
     const timed = (function* () { // tiles are small: run several per slice up to the slice budget

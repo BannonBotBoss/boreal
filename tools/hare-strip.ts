@@ -14,9 +14,9 @@ import { setHareDay, HARE_SKIN, POSES } from '../src/animals/hare';
 import { SWING, POSE_SHAPES } from '../src/animals/locomotion/bounding';
 import { posePlausibility } from '../src/animals/locomotion/boundScore';
 const q = new URLSearchParams(location.search), wolfAt = Number(q.get('wolfAt') ?? 2.1), fps = Number(q.get('fps') ?? 6), dur = Number(q.get('dur') ?? 5), seed = q.get('seed') ?? 'strip';
-// run 9 (gather outline grid): ?chest=<s> deepens the chest rings downward (ry x 1 + (s - 1) x chest weight, top kept);
+// run 9 (gather outline grid): ?chest=<s> deepens the chest rings downward (ry x 1 + (s - 1) x chest weight, top kept; ?chestw=<w> narrows rx the same way);
 // ?headsize=<s> scales the head rings (before the model is built)
-if (q.get('chest')) { const s = Number(q.get('chest')); for (const r of HARE_SKIN.trunk) { const c = (r as { chest?: number }).chest ?? 0, d = r.ry * (s - 1) * c; r.ry += d; r.y -= d; } }
+if (q.get('chest')) { const s = Number(q.get('chest')), wx = Number(q.get('chestw') ?? 1); for (const r of HARE_SKIN.trunk) { const c = (r as { chest?: number }).chest ?? 0, d = r.ry * (s - 1) * c; r.ry += d; r.y -= d; r.rx *= 1 + (wx - 1) * c; } }
 if (q.get('runears')) POSES.run[4] = Number(q.get('runears'));
 if (q.get('headsize')) { const s = Number(q.get('headsize')); for (const r of HARE_SKIN.head) { r.rx *= s; r.ry *= s; r.z *= s; r.y *= s; } }
 const CW = 424, CH = 240, COLS = 6, N = Math.round(fps * dur), ROWS = Math.ceil(N / COLS), W = CW * COLS, H = CH * ROWS;

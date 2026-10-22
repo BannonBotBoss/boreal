@@ -90,7 +90,13 @@ export const HARE_SKIN: SkinSpec = {
   name: 'hare',
   // round rump behind the hip, the haunch over the hip joints, tapering to a narrow chest between the forelegs
   trunk: [T(.088, .032, .008, .017, 1), T(.075, .036, .016, .038, 1), T(.05, .042, .021, .054, 1, { saddle: .2 }), T(0, .044, .022, .057, 1, { saddle: .3 }),
-    T(-.07, .03, .019, .046, 1, { saddle: .3, chest: .2 }), T(-.13, .002, .018, .039, 1, { saddle: .25, chest: .55 }), T(-.185, -.002, .016, .034, 1, { saddle: .2, chest: .85 }), T(-.215, .02, .012, .019, .95, { head: .2, saddle: .15, chest: 1 })],
+    // run 9 (grok, gathered-pose outline): the chest rings 1.5x deeper downward by their chest weight c (ry += .5 c ry, top kept)
+    // and narrower (rx x 1 - .4 c), so the bare body stays inside the mass check (1.877 -> 1.914 L, limit 1.94; 1.5x deeper without
+    // narrowing = 2.01 L fails it). Was T(-.07, .03, .019, .046), T(-.13, .002, .018, .039), T(-.185, -.002, .016, .034),
+    // T(-.215, .02, .012, .019). The references' gather and crouch carry a deep chest (refs/hare/graze-alert-flight attempt2
+    // panels 1 + 4, winter attempt2). REFERENCE-MATCHED [estimate]: grid ?chest= / ?chestw= vs lookscore v1.3
+    // (C:\dev\rabbit-rec13\look\grid-run9.txt): summer gather 47.3 -> 50.5, crouch, push, stretch up; winter stretch 93.6 -> 87.0.
+    T(-.07, .0254, .01748, .0506, 1, { saddle: .3, chest: .2 }), T(-.13, -.008725, .01404, .049725, 1, { saddle: .25, chest: .55 }), T(-.185, -.01645, .01056, .04845, 1, { saddle: .2, chest: .85 }), T(-.215, .0105, .0072, .0285, .95, { head: .2, saddle: .15, chest: 1 })],
   neck: [T(-.205, .02, .018, .023, .95, { chest: 1 }), Hd(.045, -.02, .016, .019, .85, { head: .6, chest: 1 }), Hd(.025, -.005, .015, .017, .8)],
   // rounded cranium, puffy buff cheeks, blunt muzzle, dark-brown bare nose leather (fur < .03 grows no cards)
   head: [Hd(.0336, .0022, .0246, .0269, .7), Hd(.009, .0045, .0302, .0325, .6, { accent: .25 }), Hd(-.0202, -.0022, .028, .0291, .5, { accent: .55 }),

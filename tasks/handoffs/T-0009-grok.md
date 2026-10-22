@@ -6,7 +6,7 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
 ## Run 10 progress (started 2026-10-21 22:13 PT; keep current: board rule 9; grok/rabbit-clover + board via grok/transactional-plan)
-- [ ] 1 Codex's approve-plan event (2026-10-21T21-32-codex-approve-plan-T-0009.json) onto main: board event files only from codex/loop, ff main
+- [x] 1 Codex's approve-plan event on main: tasks/events/2026-10-21T21-32-codex-approve-plan-T-0009.json taken alone from codex/loop ece2756 (git checkout of that one file, blob 9d59b8e identical, valid JSON, no BOM; no codex code), grok/transactional-plan 11f8268, main ff'd to 11f8268. Codex's other unmerged events (T-0001/0007/0022/0025/0028/0032 comments and claim) left for their own owners.
 - [ ] 2 Codex's conditions: new grok claim event after the approval, T-0009 task text reconciled with this handoff, skill header names notes/skills/agent-pipeline-species.md; ff board
 - [ ] 3 Raise the shoulder girdle (fore leg no longer Z-folded, elbow below the glenoid, crouch can fold); source Lepus americanus scapula / shoulder height or flag; joints, plausibility, mass, bound checks
 - [ ] 4 Re-score lookscore v1.3, npm test + tsc, compare-run10.jpg; complete only if every gate >= 95 %

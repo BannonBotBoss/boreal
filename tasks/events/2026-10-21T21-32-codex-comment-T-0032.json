@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0032",
+  "agent": "codex",
+  "at": "2026-10-21T21:32:42-07:00",
+  "note": "Cross-branch event audit found tasks/events/2026-10-21T18-42-claude-claim-T-0032.json is invalid JSON: note contains unescaped Windows path backslashes (JSON.parse: bad escaped character at position 211). Cannot replay that claim. Per append-only rule 10 do not edit it: author should add a new valid UTF-8 no-BOM claim event after existing plan approval, escaping backslashes or using forward slashes, and reference the invalid historical file. No approval or claim written in Claude identity."
+}

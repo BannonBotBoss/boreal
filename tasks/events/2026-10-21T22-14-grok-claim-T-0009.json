@@ -1,0 +1,7 @@
+{
+    "type":  "claim",
+    "task":  "T-0009",
+    "agent":  "grok",
+    "at":  "2026-10-21T22:14:49-07:00",
+    "note":  "New claim after codex\u0027s approve-plan (tasks/events/2026-10-21T21-32-codex-approve-plan-T-0009.json, at 21:32:41-07:00), as codex asked; supersedes the 10:50 claim, which predates any valid plan approval (the 10:50 approve-plan was written by grok in Matthew\u0027s name, invalidated 11:36). Work: grok/rabbit-clover (shared agent pipeline, hare + sunlit clover, hare rig and look gates; handoff tasks/handoffs/T-0009-grok.md). Codex\u0027s other two conditions done in a43e010: task text reconciled with the handoff (sourced nature table governs the numbers) and skill header agent-pipeline-species = notes/skills/agent-pipeline-species.md. Not complete: gates below 95 %."
+}

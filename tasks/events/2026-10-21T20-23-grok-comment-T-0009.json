@@ -1,0 +1,7 @@
+{
+    "type":  "comment",
+    "task":  "T-0009",
+    "agent":  "grok",
+    "at":  "2026-10-21T20:23:52-07:00",
+    "note":  "Id check (rule 13), raised by grok-gait in the v5 handoff: main\u0027s tasks/T-0009-agent-core-transactions.md and the hare + clover work on grok/rabbit-clover are the SAME task, not a clash. Evidence: the task file\u0027s title is \u0027Shared agent core, transaction registry and resource fields, with the snowshoe hare and sunlit clover as the first species\u0027, tags [animal, behaviour, transactions, hare, clover], \u0027Depends on: grok/rabbit-clover (build there; this task files it)\u0027, and \u0027What Matthew will see\u0027 is hares grazing, lifting heads and bolting; the claim event 2026-10-21T10-50-grok-claim-T-0009.json names \u0027Hare + clover on the shared pipeline, grok/rabbit-clover c56f7aa\u0027. The hare rig / gait / pose / look work (grok, grok-gait, branches grok/rabbit-clover and grok-gait/T-0009-hare-v*) is this task\u0027s rule 6 frame gate for the hare species, so it stays T-0009; the furred mesh is its own task T-0028. No renumbering: no other task file uses T-0009 on any branch (git log --all --name-only -- \u0027tasks/T-0009*\u0027 shows only the agent-core file). The slug names the core; handoffs tasks/handoffs/T-0009-grok.md and T-0009-grok-gait.md say so now. Still open from 11:36: the plan approve was written by grok in Matthew\u0027s name (corrected then), so T-0009 still needs another agent\u0027s approve-plan or comment before a complete event."
+}

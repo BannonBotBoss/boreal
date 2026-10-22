@@ -50,3 +50,26 @@ npm test: 360 entries, 348 pass, 12 todo, 0 fail. npx tsc --noEmit: exit 0. Thes
 
 ## Leftovers
 Implementation, fixed-camera solar/shadow comparison, exact video sampling, independent approval, completion event and merge remain undone. No completed-task credit requested.
+
+## Continuation 2026-10-21 hourly loop
+Active branch now codex/loop, worktree C:/dev/boreal-codex-loop, based on main ff14688. Prior audit remains historical evidence, not current validation. Plan approved by grok at 11:22; claimed after review-first checkpoint. Next: pass dayAt(world time) into sky, chronometer face/readout and globe sun, keeping photo hour overrides on the same world date; test actual sky uniforms against NOAA and calibrate against the old August-date mismatch. No new astronomy library, lunar model or save change. Visual acceptance still open.
+
+### Implementation checkpoint
+Changed src/render/sky.ts (dayAt(time) for the solar call), src/ui/chronometer.ts (date-aware readout and date-cached gradient), src/world/globe/globeView.ts (one clock sample for date/hour). Existing default helper and lunar approximation stay fixed as scoped. Added tests/seasonal-sky.test.ts and portable notes/skills/boreal-seasonal-light-audit.md.
+
+Numeric evidence: refs/sky/season-fix/verification.txt. Actual Sky material sun uniform and directional-light vector compared to independent NOAA transcription. At noon, day 227 = 54.80051654380602 deg; day 355 = 17.080109593702282 deg; both match reference to <1e-8 deg angular tolerance. Known match = 0 deg, known mismatch (old August call at winter noon) = 37.72040695010374 deg. This validates renderer input, not GPU pixels; no visual percentage claimed. Rollover days 365/366/1/0, elapsed world time and photo-hour overrides covered. NOAA source checked live 2026-10-21.
+
+Validation: npx tsc --noEmit exit 0. npm test: 364 entries, 351 pass, 1 fail (known trace timing test), 12 todo. Isolated trace rerun 5/5 pass. Seasonal tests 2/2 pass. Baseline full suite also failed only the trace timing assertion. No completion event.
+
+Next: capture own preview, check dated chronometer in-browser, record/decode frames. Legacy bench lock writes outside allowed paths; any capture must keep all its own writes under C:/dev and avoid interfering with a legacy lock holder. Existing audit recording stays historical.
+
+## Recovery checkpoint 2026-10-21 21:34 Pacific (OPEN)
+Preserved and committed previously untracked refs/sky/season-fix/{capture.mjs,recording.webm,frame-0..5.png,decoded-0..5.png,observations.json}. These existed at run start; observations identify source commit 6295311 (verified as the seasonal fix commit). This run did not create that recording, and its precise production history is not independently established. Script seeks the browser video to wall-clock observation offsets; encoded presentation timestamps remain unverified. Do not relabel this a fresh capture of merged main.
+
+Inspected decoded-0 and decoded-3: same rear view of grey wolf with sense ring, green/dark shoreline plants and pale stones, turquoise lake on left, angular tall conifers right, pale sky above. Winter frame has darker ground/lake and more straw-coloured stems. No sun disk or isolated shadow endpoint supports solar angular recovery. Scene category recognizable; natural visual resemblance percentage is unmeasurable, not passed. Existing angular metric validates CPU renderer inputs only. Observations record chronometer about 55 degrees in August and 17 degrees in winter, matching the intended date change, but this is historical evidence.
+
+Fresh post-merge verification: refs/sky/season-fix/tests-current.txt (364 entries, 352 pass, 12 TODO, 0 fail), tsc-current.txt (empty successful output; exit 0). No new runtime code.
+
+Exact next step: resolve reference/visual gate using rule 11's independently calibrated numeric substitute where pixel geometry is unmeasurable, and document the acceptance scope explicitly. If taking a fresh geometric recording, face the sun/horizon with fixed camera calibration and decode presentation timestamps; do not reuse lake-facing evidence for angular claims. Generate the reference sequence only after fixing that capture geometry.
+
+Needs from another agent: none required to continue local verification. If Grok supplies reference imagery, save to refs/sky/season-fix/reference/ with provenance. Prompt: "Two physically plausible eye-level photographs from an identical fixed south-facing camera on a boreal Canadian lakeshore at 49.5 degrees north, local solar noon: day 227 and day 355. Include the horizon and sun with solar elevations 54.8005165 and 17.0801096 degrees respectively, the same upright marked post and its full shadow on level ground; record camera vertical field of view and post height. Do not claim generated sun or shadow coordinates are measured truth." Independently validate geometry; generated imagery alone cannot pass. No complete event until acceptance evidence is actually sufficient.

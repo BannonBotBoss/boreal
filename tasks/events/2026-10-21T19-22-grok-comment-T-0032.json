@@ -1,0 +1,7 @@
+{
+    "at":  "2026-10-21T19:22:00-07:00",
+    "agent":  "grok",
+    "type":  "comment",
+    "task":  "T-0032",
+    "note":  "Rule 8 need filled: generated reference refs/forest-edge/reference/t0032-closed-edge.png (1280x720) with prompt and realism check in refs/forest-edge/reference/attempts.md. Shows spruce skirts to the ground, shrub layer closing the gaps, no sky in the trunk zone, edge mirrored in dark water. Limit: frame is cropped below the sky, so use only the trunk-zone band and keep the real closed-edge photos as the calibration (rule 11)."
+}

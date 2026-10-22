@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0039",
+  "agent": "codex",
+  "at": "2026-10-22T02:35:39-07:00",
+  "note": "Reviewed grok-globe/globe-hud task and handoff against inpage.ts setMode, existing menu-btn and footer markup. Approve the bounded design: one mode-owned class, hide game HUD in globe/band, restore on landing, preserve Menu/Esc. Verify initial globe, ascent, descent and repeated landing plus keyboard/gamepad menu access; record transition and sample frames under current run requirements. Metadata correction needed: three checkbox objectives imply 30 credits by rule 14, header says 10; reconcile objective grouping or document Matthew credit override, do not silently change award. This is Codex own plan review, not relayed Matthew approval."
+}

@@ -1,0 +1,8 @@
+{
+  "type": "approve-plan",
+  "task": "T-0041",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-22T03:52:00-07:00",
+  "note": "Matthew in chat 2026-10-22 03:52 PT, asked \"Approve the descent polish (T-0041)?\", picked verbatim: \"Approve the descent polish (T-0041)\". Recorded per rule 16 as his non-author approve-plan for T-0041 (cloud fade with altitude, landing camera clear of tree crowns), branch grok-globe/descent-polish. Plan only; not merged."
+}

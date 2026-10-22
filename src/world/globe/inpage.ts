@@ -18,6 +18,7 @@
 import * as THREE from 'three';
 import type { Globe } from './globeView'; // loaded on demand (only with the in-page path on), so the reload path's game bundle is unchanged
 import { createFarLayer } from './farLayer';
+import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { TRANSITION, globePitch, transitionPath, planetToGame, gameBasis, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
 import { GLOBE_ENTRY_ALT, HANDOFF, landSpawn, landSpawnSteps } from './handoff';
 import { PLANET, GLOBE_COLOURS } from './planet';
@@ -119,7 +120,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     const k = INPAGE.ring; for (let a = cx - k; a <= cx + k; a++) for (let b = cz - k; b <= cz + k; b++) if (pending(`chunk:${a}:${b}`)) return false;
     return true;
   }
-  function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe' && m === 'globe'); }
+  function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe' && m === 'globe'); if (typeof document !== 'undefined') document.body.classList.toggle(GLOBE_HUD_CLASS, hudHidden(m)); }
   /** Globe -> band: the player is placed at the landing spot (dry land) under the camera, keeping the heading. */
   /** Globe -> band. The landing spot is ahead along the heading, one camera height away (the 45-degree glide path the descent
    *  flies, so the patch is in view the whole way down), kept inside the playable region and snapped to dry land. */

@@ -28,6 +28,10 @@ export type TransitionMode = 'game' | 'band' | 'globe';
  *  orbit, easing to the descent's 45-degree glide path (inpage glide) by the band top, so globe -> band -> game never swings
  *  the pitch (it used to snap from straight down to the horizon at 300 km, then swing back down in the band). */
 export const GLOBE_PITCH = { orbitAlt: 3e5, glide: -Math.PI / 4, down: -Math.PI / 2 + .01 };
+/** In-page globe cloud clearing by altitude (T-0034): the 2.5 km cloud shell (atmosphere CLOUDS, 900 km cells) can sit over
+ *  the whole home region, so diving in looked into a flat lit cloud top from ~300 km to the band (the 'blank plain'). The deck
+ *  opens from 300 km (orbit look kept) to none by 20 km, so the descent always sees the ground it lands on. */
+export const cloudClear = (alt: number) => 1 - smoothstep(2e4, GLOBE_PITCH.orbitAlt, alt);
 export function globePitch(alt: number) { return GLOBE_PITCH.down + (GLOBE_PITCH.glide - GLOBE_PITCH.down) * (1 - smoothstep(TRANSITION.bandTop, GLOBE_PITCH.orbitAlt, alt)); }
 /** In-page (the default since the r18 check) or the reload fallback. ?transition=reload | inpage forces it; low-memory
  *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the

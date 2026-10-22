@@ -28,7 +28,7 @@ import { across } from './cube';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
 import { DAY, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
-import { globePitch } from './transition';
+import { cloudClear, globePitch } from './transition';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
@@ -385,6 +385,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;
     const segWas = lod.segments; if (seamsDebug) material.userData.uSeg.value = lod.segments;
     if (own.governor && governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); }
+    if (atmos && opts.shared) atmos.setClear(cloudClear(alt)); // in-page: the cloud deck opens on the way down (standalone keeps it)
     if (atmos && atmos.tier !== GOVERNOR.tier) atmos.setTier(GOVERNOR.tier); // resolution + atmosphere samples follow the tier now (cheap uniforms)
     if (lodTier !== worldTier()) { lodTier = worldTier(); lod = globeLod(); } // tile resolution/split/caps once the new tier has held (no rebuild per step)
     if (shot && lod.segments !== segWas) console.log(`SEGMENTS ${segWas} -> ${lod.segments} at frame ${frame} (tier ${GOVERNOR.tier}, world tier ${GOVERNOR.worldTier})`);

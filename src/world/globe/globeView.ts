@@ -28,6 +28,7 @@ import { across } from './cube';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
 import { DAY, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
+import { globePitch } from './transition';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
@@ -332,9 +333,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     camera.position.setLength(R + ground + alt);
     camera.lookAt(0, 0, 0);
     const tilt = pitchQ ?? (Math.PI / 2 - .12) * (1 - smoothstep(3e3, 3e5, alt)); camera.rotateX(tilt); // look toward the horizon near the ground [game calibration]
-    if (lookAz !== null && alt < 3e5) { // ?look=azimuth° (0 north, 90 east): face a compass heading near the ground (screenshots)
+    if (lookAz !== null && (opts.shared || alt < 3e5)) { // shared (in-page): the heading at every altitude, pitch from globePitch (no snap at 300 km) // ?look=azimuth° (0 north, 90 east): face a compass heading near the ground (screenshots)
       localNE(); const up = camUp.clone(), h = nL.clone().multiplyScalar(Math.cos(lookAz)).addScaledVector(eL, Math.sin(lookAz));
-      camera.up.copy(up); camera.lookAt(camera.position.clone().add(h.addScaledVector(up, -.08))); }
+      camera.up.copy(up); const el = opts.shared ? globePitch(alt) : -Math.atan(.08); camera.lookAt(camera.position.clone().add(h.multiplyScalar(Math.cos(el)).addScaledVector(up, Math.sin(el)))); }
     }
     camera.near = clamp(alt * .02, .5, 1e5); camera.far = Math.sqrt((R + ground + alt) ** 2 - R * R) + R * 2; camera.updateProjectionMatrix();
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km

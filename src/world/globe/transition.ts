@@ -24,6 +24,11 @@ export const TRANSITION = {
 };
 
 export type TransitionMode = 'game' | 'band' | 'globe';
+/** In-page globe camera elevation (radians, negative = below the horizon) by altitude above ground (T-0034): straight down in
+ *  orbit, easing to the descent's 45-degree glide path (inpage glide) by the band top, so globe -> band -> game never swings
+ *  the pitch (it used to snap from straight down to the horizon at 300 km, then swing back down in the band). */
+export const GLOBE_PITCH = { orbitAlt: 3e5, glide: -Math.PI / 4, down: -Math.PI / 2 + .01 };
+export function globePitch(alt: number) { return GLOBE_PITCH.down + (GLOBE_PITCH.glide - GLOBE_PITCH.down) * (1 - smoothstep(TRANSITION.bandTop, GLOBE_PITCH.orbitAlt, alt)); }
 /** In-page (the default since the r18 check) or the reload fallback. ?transition=reload | inpage forces it; low-memory
  *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the
  *  reload when the player or the probe has the game on Low or below at that moment). */

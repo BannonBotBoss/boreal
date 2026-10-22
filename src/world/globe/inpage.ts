@@ -18,8 +18,8 @@
 import * as THREE from 'three';
 import type { Globe } from './globeView'; // loaded on demand (only with the in-page path on), so the reload path's game bundle is unchanged
 import { createFarLayer } from './farLayer';
-import { TRANSITION, transitionPath, planetToGame, gameBasis, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
-import { GLOBE_ENTRY_ALT, HANDOFF, landSpawn } from './handoff';
+import { TRANSITION, globePitch, transitionPath, planetToGame, gameBasis, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
+import { GLOBE_ENTRY_ALT, HANDOFF, landSpawn, landSpawnSteps } from './handoff';
 import { PLANET, GLOBE_COLOURS } from './planet';
 import { setPatchFade, setPatchFar } from '../../render/fade';
 import { AO_BLEND } from '../../render/post';
@@ -41,7 +41,7 @@ import { clamp01, smoothstep } from '../../proc/math';
  *  while the descent waits for them = max(jobMin, jobFrame - last frame's globe + draw ms) (the sim is frozen in the band,
  *  so the frame's spare time goes to the patch); prepAlt: descending over home below this
  *  (globe mode), the landing spot is chosen and its chunks start building (terrain in the chunk worker pool, 506d0aa). */
-export const INPAGE = { gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .03, fadeSec: .8, bandGain: 2.6, lakeShallow: [.024, .076, .093] as [number, number, number], lakeDeep: [.016, .057, .075] as [number, number, number], ring: 2, maskWaitSec: 8, readyMaxSec: 15, capH: 300, lakeRough: .32, duskLake: [1.29, 1.76, 2.24] as [number, number, number], duskSin: [.08, .4] as [number, number], uploadMB: 24, landTint: [.22, .34, .24] as [number, number, number], landTintDusk: [.55, .76, .55] as [number, number, number], tintLow: 150, fogTop: 300, fogOut: 50, jobFrame: 16, jobMin: 2, prepAlt: 3000, haze: 1, hazeLow: 60, hazeTop: 800, occ: [15, .03] as [number, number], pop: [.55, .95] as [number, number], aoTop: 250, bandContact: 1 };
+export const INPAGE = { searchMs: 3, gain: 1, kDown: .7, kUp: 1.7, nearK: .01, prebuildMs: 5000, waitK: .03, fadeSec: .8, bandGain: 2.6, lakeShallow: [.024, .076, .093] as [number, number, number], lakeDeep: [.016, .057, .075] as [number, number, number], ring: 2, maskWaitSec: 8, readyMaxSec: 15, capH: 300, lakeRough: .32, duskLake: [1.29, 1.76, 2.24] as [number, number, number], duskSin: [.08, .4] as [number, number], uploadMB: 24, landTint: [.22, .34, .24] as [number, number, number], landTintDusk: [.55, .76, .55] as [number, number, number], tintLow: 150, fogTop: 300, fogOut: 50, jobFrame: 16, jobMin: 2, prepAlt: 3000, haze: 1, hazeLow: 60, hazeTop: 800, occ: [15, .03] as [number, number], pop: [.55, .95] as [number, number], aoTop: 250, bandContact: 1 };
 /** landTint (day) / landTintDusk, blended by the dusk factor (r25 bedrock (-818,-490) and forest at 145 m: day globe land read ~2x the patch, dusk ~1.1x): the globe's land (not water) is tinted toward this from fadeFull down to tintLow (globe GLOBE_LAND, a uniform):
  *  bandGain matches the patch seen from 600 m, but lower down the dark forest floor between the crowns shows and the patch reads
  *  ~2x darker and greener than the globe around it (r20, 13:00, patch mean rgb 63/89/53 vs globe 103/121/87 at 145 m). */
@@ -86,7 +86,7 @@ function controller(view: View, host: InPageHost) {
   const renderer = view.photoreal.renderer, far = createFarLayer(), hold = createGovernorHold(GOVERNOR, resetGovernor);
   let globe: Globe | null = null, mode: TransitionMode = 'game', down = true, phase: 'fly' | 'blend' = 'fly';
   let next: 'globe' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
-  let prep: { x: number; z: number } | null = null; // landing chosen (and chunks building) while still in globe mode
+  let prep: { x: number; z: number } | null = null; let search: { steps: Generator<void, { x: number; z: number }>; yaw: number } | null = null; // the landing's dry-land search, INPAGE.searchMs per frame // landing chosen (and chunks building) while still in globe mode
   let renderMs = 0; // last frame's globe + game draw CPU (ms): the descent's chunk job budget fills the rest of jobFrame
   let bandT = 0; /* s since the descent started (the ready safety cap) */ const chunkFirst = (k: string) => k.startsWith('chunk:');
   let maskWait = 0, maskWarned = false, readyAt = 0, dusk = 0; // s waited on the mask with the chunks ready (capped at INPAGE.maskWaitSec); h at first ready (STATS.readyAt)
@@ -127,24 +127,28 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     const g = globe!, v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]);
     start.p.set(pg.x, pg.y, pg.z); start.q.setFromRotationMatrix(gameBasis(g.planet, pg.x, pg.z, tmpM)).invert().multiply(g.camera.quaternion);
     h0 = Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)); fwd.set(-Math.sin(at.yaw), -Math.cos(at.yaw));
-    let s = landingFor(pg.x, pg.z, fwd, h0);
-    if (prep && Math.hypot(s.x - prep.x, s.z - prep.z) < 2 * CHUNK_SIZE) s = prep; // the spot prepared on the way down (chunks already building)
-    else { host.place(s.x, s.z, at.yaw); placedFrame = frameNo; } prep = null;
+    const c = landingPoint(pg.x, pg.z, fwd, h0); let s = prep;
+    if (!s || Math.hypot(c.x - s.x, c.z - s.z) >= 2 * CHUNK_SIZE) { s = landSpawn(c); host.place(s.x, s.z, at.yaw); placedFrame = frameNo; } // else the spot prepared on the way down (chunks already building); no second search
+    prep = null; search = null;
     land.set(s.x, ground(s.x, s.z), s.z); h0 = Math.max(TRANSITION.handover + 1, pg.y - land.y); h = h0;
     off.set(start.p.x - (land.x - fwd.x * h0), start.p.y - (land.y + h0), start.p.z - (land.z - fwd.y * h0)); // decays to 0 with height
     phase = 'fly'; blend = 0; fadeT = 0; readySeen = false; maskWait = 0; bandT = 0; readyAt = 0; down = true; lastT = performance.now(); setMode('band');
   }
   /** The landing ahead along the heading, one camera height away, inside the playable region, on dry land. */
-  function landingFor(x: number, z: number, f: THREE.Vector2, hh: number) {
+  function landingPoint(x: number, z: number, f: THREE.Vector2, hh: number) {
     const lim = PLANET.home.halfSize - PLANET.home.feather - HANDOFF.margin, clampL = (u: number) => Math.max(-lim, Math.min(lim, u));
-    return landSpawn({ x: clampL(x + f.x * hh), z: clampL(z + f.y * hh) });
+    return { x: clampL(x + f.x * hh), z: clampL(z + f.y * hh) };
   }
   /** Globe mode, descending over home below prepAlt: choose the landing the descent will use (from the band top) and place
    *  the player there now, so the patch chunks build during the last of the globe zoom. */
-  function prepare(yaw: number) {
+  function prepare(yaw: number) { // starts the dry-land search; step() finishes it within INPAGE.searchMs per frame, then places the player
     const g = globe!, v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]), f = new THREE.Vector2(-Math.sin(yaw), -Math.cos(yaw));
-    const s = landingFor(pg.x, pg.z, f, Math.min(TRANSITION.bandTop, Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z))));
-    host.place(s.x, s.z, yaw); placedFrame = frameNo; prep = { x: s.x, z: s.z };
+    search = { steps: landSpawnSteps(landingPoint(pg.x, pg.z, f, Math.min(TRANSITION.bandTop, Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z))))), yaw };
+  }
+  function stepSearch() {
+    if (!search) return; const t0 = performance.now(); let r = search.steps.next();
+    while (!r.done && performance.now() - t0 < INPAGE.searchMs) r = search.steps.next();
+    if (r.done) { host.place(r.value.x, r.value.z, search.yaw); placedFrame = frameNo; prep = { x: r.value.x, z: r.value.z }; search = null; }
   }
   function toGlobe() { restoreScene(); globe!.drive(null); setMode('globe'); }
   function toGame() { restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
@@ -213,9 +217,10 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (next) { if (next === 'globe') toGlobe(); else toGame(); next = null; }
       if (mode === 'globe' && globe) {
         const o = globe.overHome;
-        if (o && globe.descending && globe.altitude < INPAGE.prepAlt && !prep) prepare(globe.headingYaw);
-        else if (prep && globe.altitude > INPAGE.prepAlt * 1.5) prep = null; // climbed away: choose again next time
-        if (o && globe.descending && globe.altitude < TRANSITION.bandTop) descend({ ...o, yaw: globe.headingYaw });
+        if (o && globe.descending && globe.altitude < INPAGE.prepAlt && !prep && !search) prepare(globe.headingYaw);
+        else if ((prep || search) && globe.altitude > INPAGE.prepAlt * 1.5) prep = search = null; // climbed away: choose again next time
+        stepSearch();
+        if (o && globe.descending && globe.altitude < TRANSITION.bandTop && !search) descend({ ...o, yaw: globe.headingYaw }); // waits (still zooming on the globe) until the landing search is done
         else {
           const t0 = performance.now(), w = renderer.domElement.width, hh = renderer.domElement.height;
           if (Math.abs(globe.camera.aspect - w / hh) > 1e-6) { globe.camera.aspect = w / hh; globe.camera.updateProjectionMatrix(); }
@@ -251,7 +256,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
         h = Math.min(top, h * Math.exp(INPAGE.kUp * dt));
         const a = smoothstep(h0, Math.max(h0 + 1, 30), h); glide(h, 0);
         cam.p.lerp(start.p.clone().setY(start.p.y + h - h0), 1 - a); cam.q.copy(start.q).slerp(tmpQ, a);
-        tmpQ.setFromEuler(new THREE.Euler(-Math.atan(.08), Math.atan2(-fwd.x, -fwd.y), 0, 'YXZ')); cam.q.slerp(tmpQ, smoothstep(top * .6, top, h));
+        tmpQ.setFromEuler(new THREE.Euler(globePitch(top), Math.atan2(-fwd.x, -fwd.y), 0, 'YXZ')); cam.q.slerp(tmpQ, smoothstep(top * .6, top, h));
         fade = patchFade(h, true);
       }
       if (DEV && DEBUG.pose) { const [x, y, z] = DEBUG.pose.p, [lx, ly, lz] = DEBUG.pose.look; cam.p.set(x, y, z); tmpM.lookAt(cam.p, tmpV.set(lx, ly, lz), UP); cam.q.setFromRotationMatrix(tmpM); }

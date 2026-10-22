@@ -7,7 +7,7 @@ import { join } from 'node:path';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const [base, outDir, spec, secs = '5', extra = ''] = process.argv.slice(2); mkdirSync(outDir, { recursive: true });
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', port = 9300 + Math.floor(Math.random() * 90), profile = mkdtempSync(join(tmpdir(), 'grok-outline-'));
-const p = spawn(edge, ['--headless=new', '--disable-gpu-vsync', '--disable-frame-rate-limit', '--window-size=1280,720', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-background-timer-throttling', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+const p = spawn(edge, ['--headless=new', '--window-position=-32000,-32000', '--disable-gpu-vsync', '--disable-frame-rate-limit', '--window-size=1280,720', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-background-timer-throttling', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
 let id = 0; const pending = new Map(), errors = [], out = [];
 try {
   let t; for (let i = 0; i < 60; i++) { try { t = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); if (t.find(x => x.type === 'page')) break; } catch {} await sleep(500); }

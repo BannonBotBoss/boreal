@@ -35,12 +35,13 @@ Branch: `grok/interact-outline` (worktree C:\dev\boreal-grok-outline, from main 
 - [ ] 2. Frame-time cost measured (?bench or the perf HUD) with and without a target; under 0.5 ms on omen
 - [ ] 3. Before/after screenshots of herb, berry bush and deer; tests, tsc, handoff, skill
 - [ ] 4. Held focus (scope addition, Matthew ~01:00 PT): focus engages only while gamepad LB (keyboard F) is held and an
-      interactable object is within 12 m ahead; moving forward steers the wolf toward it at the 2.2 rad/s turn rate (no snap);
+      interactable object is within the focus radius ahead; moving forward steers the wolf toward it at the 2.2 rad/s turn rate (no snap);
       leaving the radius or releasing drops it; the glow marks the focused object. Super stealth no longer auto-focuses.
 
 ## Numbers
 | value | game number | real figure + source | resemble? |
 |---|---|---|---|
-| focus radius | 12 m (core/focusLock FOCUS.radius) | N/A: game-feel distance, 2 x the 6 m interaction reach (core/events) | N/A |
-| focus turn rate | 2.2 rad/s (the existing full-stick steer rate, main.ts) | N/A: reused game constant, not new | N/A |
+| focus radius | 4.5 m (config/systemProperties focus.radius) | N/A: game-feel distance; from Matthew's red guideline ring (screenshot 01M5HB26..., widest lateral extent projected with the game camera) | N/A |
+| focus turn rate | 2.2 rad/s (the existing full-stick steer rate) | N/A: reused game constant, not new | N/A |
+| glow cost | 0.41 ms median (IQR 0.26-0.52), 1280x720, RTX 5060 Laptop (tools/glow-bench.mjs, 30 interleaved on/off samples); 0 with no target | N/A: performance, not nature | N/A |
 | glow | UI overlay, no world quantity | N/A: a UI highlight is not a natural object (rule 11: unmeasurable, no nature figure applies) | N/A |

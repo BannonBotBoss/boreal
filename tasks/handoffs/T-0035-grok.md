@@ -3,23 +3,32 @@
 Branch grok/interact-outline, worktree C:\dev\boreal-grok-outline (from main a436a9d). Test Vite: 127.0.0.1:5411 with its
 own cacheDir (C:\Users\0\outline-shots\vite.outline.mjs) so it never rewrites the shared node_modules/.vite of :5173.
 
-## Doing now
-Screenshots (herb / deer / person, focus held while walking) and the ?glow=0 A/B frame-time runs.
+## Status
+Built and verified; NOT submitted: waiting for an approve-plan (claude, codex or agy) on the 00:43 propose event.
 
 ## Done
-- 00:43 PT: found the ring (render/buildScene.ts:91, 249-254) and the target kinds; task file + propose event.
-- 01:05 PT c3515b5: render/targetGlow.ts = three r180 OutlinePass on a one-object proxy scene, blended onto the canvas after
-  post.render (no composer, no full-scene depth pass); ring removed; ?glow=0 for A/B. Verified: herb glow traces the leaves.
-- 01:20 PT: core/focusLock.ts (pickFocus / focusSteer) + tests/focusLock.test.ts (4 pass); Focus binding LB / F; main.ts
-  uses it (old super-stealth auto focus removed); buildScene eases the focus look-at; tsc clean.
+- c3515b5 render/targetGlow.ts: three r180 OutlinePass on a one-object proxy scene, blended onto the canvas after post.render
+  (no composer, no full-scene depth pass); ground ring removed; ?glow=0 turns it off.
+- da3481d core/focusLock.ts + tests/focusLock.test.ts: held focus (Focus binding LB / F). Engages only while held with an
+  interactable object (not pebbles) within the radius in the view cone; dropped on release or when out of radius; while
+  locked, forward movement steers toward it at the stick's own 2.2 rad/s (clamped per step, no snap), hand steering wins.
+  Super stealth no longer auto-focuses. Camera look-at + fov ease in/out (no snap).
+- 30cd7b1 src/config/systemProperties.ts: focus + targetGlow sections, read by focusLock, bindings, targetGlow, buildScene,
+  main. Focus radius 4.5 m from Matthew's red guideline ring (it was a hand-drawn annotation, not game code: no red ring
+  exists on any branch). Senses halo hidden while a target is locked (focus.hideSensesHalo).
+- Shots (PC GPU, headless, off-screen): before/after herb, deer, focus-held herb and deer -> box /workspace/outline/.
+- Glow cost: tools/glow-bench.mjs -> 0.41 ms median (IQR 0.26-0.52) at 1280x720 on the RTX 5060; nothing with no target.
+  In-game A/B (?glow=0) was swamped by PC load (17-38 ms frame swings), so the isolated bench is the number.
+- npm test 366 tests, 354 pass, 0 fail, 12 todo; tsc clean.
 
 ## Findings
-- Berry bushes (forage) are not a player target for any playable (wolf: speak/gather/move; deer: speak; bear: speak/move), so
-  no berry screenshot can show the glow; the static-proxy path that draws it is the same one the herb uses.
+- Berry bushes (forage) are not a target for any playable, so no berry shot can show the glow (same static path as the herb).
+- At the deer spawn (49.65, 18.16) the deer is not visible in either the before or the after shot although it is the target
+  (pre-existing; the rig glow path draws nothing when the rig draws nothing). Worth a look by whoever owns deer rendering.
+- Wolf head does not turn to the target (no head-look hook in the wolf rig); attention = camera look-at + glow.
 
 ## Next step
-Shots + A/B, npm test, commit, then the skill notes/skills/target-outline-glow.md and the complete event (only after an
-approve-plan exists).
+After an approve-plan: write the complete event (skill notes/skills/target-outline-glow.md) and ask for approve.
 
 ## Needs from another agent
 - approve-plan for T-0035 (claude, codex or agy), then approve of the complete event.

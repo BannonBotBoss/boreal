@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { NEEDS_SPECIES, WOLF_NEEDS, HARE_NEEDS } from '../src/core/needs/species';
 import { TEMPLATE_SPECIES } from '../src/core/needs/species/_template';
-import { sourcedEntries, THOUGHT_RULES } from '../src/core/needs/template';
+import { sourcedEntries } from '../src/core/needs/template';
+import { SYSTEM_PROPERTIES } from '../src/config/systemProperties';
 import { activityFactor, agentLevels, createNeeds, eatWater, levelsOf, needRates, parseNeeds, percentPerMl, stepNeeds, staminaRates } from '../src/core/needs/engine';
 import { activityAt, chooseGoal, sunTimes } from '../src/core/needs/behaviour';
-import { createThoughtClock, thoughtLook, thoughtTick, STAGGER } from '../src/core/needs/thoughts';
+import { createThoughtClock, thoughtLook, thoughtTick, STAGGER, THOUGHT_RULES } from '../src/core/needs/thoughts';
 import { MAMMALS } from '../src/core/species';
 import { untagged } from '../src/core/stateFields';
 
@@ -82,6 +83,11 @@ test('thresholds and timing: below 30 % every 10 s, fading to 0 within 1.5-2 s; 
   // low -> critical switches style at once
   const s = createThoughtClock(); thoughtTick(s, { water: 20, energy: 80, rest: 80 }, 0); assert.equal(thoughtTick(s, { water: 9, energy: 80, rest: 80 }, .1)[0]?.style, 'alert');
   assert.equal(thoughtTick(s, { water: 60, energy: 80, rest: 80 }, 50).length, 0, 'recovered: no thoughts');
+});
+test('thought figures live in the system properties file (Matthew: one place for gameplay figures)', () => {
+  assert.equal(THOUGHT_RULES, SYSTEM_PROPERTIES.needsThoughts);
+  assert.deepEqual([THOUGHT_RULES.low, THOUGHT_RULES.critical, THOUGHT_RULES.lowEvery, THOUGHT_RULES.criticalEvery], [30, 10, 10, 3]);
+  assert.ok(THOUGHT_RULES.lowOpacity < 1 && THOUGHT_RULES.alertOpacity < 1, 'semi-transparent');
 });
 test('several low needs are staggered in time and stacked in lanes, most urgent first', () => {
   const c = createThoughtClock(), seen: { t: number; need: string; lane: number }[] = [];

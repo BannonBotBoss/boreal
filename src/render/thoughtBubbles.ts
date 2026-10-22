@@ -5,7 +5,7 @@
  * is at the head (first person), the bubbles float in the upper view instead so they stay visible. Unlit, no fog, on top.
  */
 import * as THREE from 'three';
-import { ICON, thoughtLook, type Thought, type ThoughtStyle } from '../core/needs/thoughts';
+import { ICON, THOUGHT_RULES, thoughtLook, type Thought, type ThoughtStyle } from '../core/needs/thoughts';
 import type { NeedId } from '../core/needs/template';
 function iconCanvas(need: NeedId, style: ThoughtStyle) {
   const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d')!, col = ICON[need].color;
@@ -37,9 +37,9 @@ export function createThoughtBubbles(scene: THREE.Scene) {
       for (let i = live.length - 1; i >= 0; i--) {
         const { th, sprite } = live[i], look = thoughtLook(th, t);
         if (!look) { root.remove(sprite); sprite.material.dispose(); live.splice(i, 1); continue; }
-        const size = .34 * look.scale; sprite.material.opacity = look.alpha;
+        const size = THOUGHT_RULES.size * look.scale; sprite.material.opacity = look.alpha;
         if (firstPerson) { sprite.position.copy(camera.position).addScaledVector(fwd, 1.6); sprite.position.y += .32 + look.rise * .5; sprite.scale.setScalar(size * .6); }
-        else { sprite.position.set(head.x, head.y + .38 + look.rise, head.z); sprite.scale.setScalar(size); }
+        else { sprite.position.set(head.x, head.y + THOUGHT_RULES.above + look.rise, head.z); sprite.scale.setScalar(size); }
       }
     },
   };

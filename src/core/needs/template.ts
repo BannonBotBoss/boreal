@@ -63,9 +63,8 @@ export interface SpeciesTemplate {
   thoughts?: Partial<Record<NeedId, { /** % below which bubbles float */ low?: number; /** % at/below which the alert pulses */ critical?: number }>>;
 }
 
-/** Thought rules (Matthew 2026-10-22 00:5x): below 30 % a bubble every 10 s fading over ~1.75 s; at/below 10 % a pulsing
- *  alert every 3 s. Species may override `low`/`critical` per need (none do yet). */
-export const THOUGHT_RULES = { low: 30, critical: 10, lowEvery: 10, criticalEvery: 3, fade: 1.75, alertFade: 1.5, rise: .55 };
+/** Thought-bubble timings and opacities are system properties, not species data: src/config/systemProperties.ts
+ *  SYSTEM_PROPERTIES.needsThoughts. A species may override `low`/`critical` per need via `thoughts`. */
 /** Every Sourced value inside a template, with its path (for the source test and the number table). */
 export function sourcedEntries(o: unknown, path = ''): [string, Sourced<unknown>][] {
   if (!o || typeof o !== 'object') return [];

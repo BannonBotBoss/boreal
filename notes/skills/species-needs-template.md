@@ -10,6 +10,9 @@ embodies it or it runs as an NPC. No engine code changes: a creature is one data
 - `src/core/needs/engine.ts`: generic drain/restore (`stepNeeds`, `eatWater`, `staminaRates`, `agentLevels`).
 - `src/core/needs/behaviour.ts`: needs + activity pattern + threat -> goal + gait (`chooseGoal`, `activityAt`, `sunTimes`).
 - `src/core/needs/thoughts.ts` + `src/render/thoughtBubbles.ts`: the bubble schedule and its sprites.
+- `src/config/systemProperties.ts` `SYSTEM_PROPERTIES.needsThoughts`: every non-species gameplay figure of the bubbles
+  (30 % / 10 % thresholds, 10 s / 3 s repeats, fades, opacities, stagger, pulse). Species numbers never go there, and
+  system figures never go in a species record. Add a new system as its own group so parallel branches merge cleanly.
 - `tests/needs.test.ts`: the source check and the same-engine-on-both-species tests.
 
 ## Steps

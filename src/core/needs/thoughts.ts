@@ -4,13 +4,16 @@
  * in time (first bubble offset by STAGGER s per lane) and stacked in lanes (most urgent lowest), so they stay readable.
  * Pure: the renderer (render/thoughtBubbles) draws what this schedules. Times are REAL seconds (what the player sees).
  */
-import { THOUGHT_RULES, type NeedId, type SpeciesTemplate } from './template';
+import type { NeedId, SpeciesTemplate } from './template';
+import { SYSTEM_PROPERTIES } from '../../config/systemProperties';
+/** The thought-bubble system properties (src/config/systemProperties.ts). */
+export const THOUGHT_RULES = SYSTEM_PROPERTIES.needsThoughts;
 import type { NeedLevels } from './engine';
 export type ThoughtStyle = 'low' | 'alert';
 export interface Thought { need: NeedId; style: ThoughtStyle; born: number; lane: number }
 export interface ThoughtClock { next: Partial<Record<NeedId, number>>; style: Partial<Record<NeedId, ThoughtStyle>> }
 export const createThoughtClock = (): ThoughtClock => ({ next: {}, style: {} });
-export const STAGGER = 1.2;
+export const STAGGER = THOUGHT_RULES.stagger;
 export const ICON: Record<NeedId, { glyph: string; color: string; label: string }> = {
   water: { glyph: 'drop', color: '#5ab8ff', label: 'thirsty' },
   energy: { glyph: 'meat', color: '#ffb05a', label: 'hungry' },
@@ -38,6 +41,6 @@ export function thoughtTick(clock: ThoughtClock, levels: NeedLevels, t: number, 
 export function thoughtLook(th: Thought, t: number) {
   const fade = th.style === 'alert' ? THOUGHT_RULES.alertFade : THOUGHT_RULES.fade, age = t - th.born;
   if (age < 0 || age >= fade) return undefined;
-  const k = age / fade, base = th.style === 'alert' ? .85 : .6, fadeIn = Math.min(1, age / .15);
-  return { alpha: base * fadeIn * (1 - k) ** 1.5, rise: THOUGHT_RULES.rise * Math.sqrt(k) + th.lane * .3, scale: th.style === 'alert' ? 1.1 + .2 * Math.sin(age * Math.PI * 2 * 3) : 1 };
+  const R = THOUGHT_RULES, k = age / fade, base = th.style === 'alert' ? R.alertOpacity : R.lowOpacity, fadeIn = Math.min(1, age / R.fadeIn);
+  return { alpha: base * fadeIn * (1 - k) ** 1.5, rise: R.rise * Math.sqrt(k) + th.lane * R.laneSpacing, scale: th.style === 'alert' ? 1 + R.pulseDepth / 2 + R.pulseDepth * Math.sin(age * Math.PI * 2 * R.pulseHz) : 1 };
 }

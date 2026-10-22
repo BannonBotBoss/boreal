@@ -20,6 +20,11 @@ Branch `grok/wolf-hydration`, worktree `C:\dev\boreal-grok-hydration` (from main
   is within 0.6-1.8 m of the muzzle (toggle; moving stops), hare caught adds its body water, `?needs=water:25,energy:8,rest:50`
   debug flag, autonomous wolf follows chooseGoal (walks/runs to the nearest water and drinks; beds down; rests off-peak).
 - `src/core/stateFields.ts`: `needs` group tagged snapshot. Tests: `tests/needs.test.ts` (9), `tests/wolf-modes.test.ts` updated.
+- `src/config/systemProperties.ts` (new; Matthew 01:2x: gameplay figures in one system properties file): group `needsThoughts`
+  holds the bubble thresholds, repeat intervals, fades, opacities, stagger and pulse. No central file existed (core/tuning.ts
+  is world terrain thresholds); grok/interact-outline creates the same file with an `autoFocus` group: an add/add conflict at
+  merge, resolved by keeping both groups.
+- Recorder: `tools/needs-record.mjs` (headless Edge CDP, fresh profile, drink/low/stagger shots), `tools/needs-probe.mjs`.
 - Skill: `notes/skills/species-needs-template.md`.
 
 ## Number table (value | game | real figure + source | nature?)

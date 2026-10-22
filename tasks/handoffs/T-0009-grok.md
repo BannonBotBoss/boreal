@@ -5,6 +5,12 @@ Preview: http://127.0.0.1:5204/?trees=v2&hour=12&at=-91.9,28.4,0 (add `&hare=deb
 **Status: NOT submitted as complete.** The number table passes (one flagged exception), but the animation gate (RULES 6)
 fails, and three acceptance criteria are not met (below). Left open, claimed by grok.
 
+## Run 9 progress (started 2026-10-21 21:00 PT; keep current: board rule 9; grok/rabbit-clover, grok/hare-mesh (step 4 only), board via grok/transactional-plan)
+- [ ] 1 Ask claude / codex / agy (a different family) for a T-0009 approve-plan: grok comment event, ff to main; added under 'Needs from another agent'
+- [ ] 2 Graze crouch: lower hips + chest toward the ground within joint limits, check against the graze refs, keep it plausible
+- [ ] 3 Gathered-pose outline
+- [ ] 4 Merge grok/rabbit-clover into grok/hare-mesh; T-0028 handoff gets the v1.3 mesh scores
+- [ ] 5 Re-score (lookscore v1.3), npm test + tsc; complete events only if every gate >= 95 % AND a valid plan approve exists; compare-run9.jpg
 ## Run 8 progress (started 2026-10-21 19:55 PT; keep current: board rule 9; only grok/rabbit-clover + board via grok/transactional-plan)
 Plan (Grok lead, 19:54 PT brief): review + merge Gait Builder's grok-gait/T-0009-hare-v5 (f2ee669 ballistic flight arc, swing
 feet ride the body, hind swing fold .8 x hip; bc7c55a handoff); harden the metric (lookscore v1.3: anatomical plausibility

@@ -1,3 +1,4 @@
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 /**
  * The ONE world clock (Grok Bot). While the game is playing it ticks in real seconds (performance.now, monotonic).
  * While the start/pause menu is open the clock is FROZEN (Matthew): age, growth, ripeness, decay, seasons and every
@@ -6,7 +7,7 @@
  * the wall clock moved forwards and is capped at CLOCK.maxOfflineSec, so setting the system clock back or far ahead
  * cannot rewind or fast-forward the world (menu pause itself does not write the epoch forward).
  */
-export const CLOCK = { key: 'boreal.clock.v1', maxOfflineSec: 3 * 86400 };
+export const CLOCK = { key: 'boreal.clock.v1', maxOfflineSec: SYSTEM_PROPERTIES.clock.maxOfflineSec as number };
 type Saved = { worldSec: number; wallMs: number };
 const S = { baseSec: 0, perfAt: 0, frozen: false };
 /** Pure: offline seconds to credit for a saved epoch, rejecting backwards and capping forward jumps. */

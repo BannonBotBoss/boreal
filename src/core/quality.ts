@@ -1,3 +1,4 @@
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 /**
  * Adaptive quality governor (Grok Bot), PROJECT-RULES rule 10. ONE ordered ladder of tiers (best → cheapest) and ONE
  * controller that measures frame time (CPU frame interval, or GPU time from EXT_disjoint_timer_query_webgl2 when available,
@@ -42,20 +43,20 @@ export const KNOBS = Object.keys(LADDER[0]).filter(k => k !== 'name') as (keyof 
  * work time instead of wall fps; the cap tier bounds inclines. Input is frame WORK time (CPU frame cost, or GPU time from
  * EXT_disjoint_timer_query_webgl2 when available, whichever is larger) so headroom is visible even under v-sync. */
 export const GOVERNOR = {
-  auto: true, targetFps: 60, tier: 1, /** best tier the player allows (Auto never climbs above it) */ capTier: 0, /** best tier this machine may use (core/probe, startup resource probe): Auto and the player both stay at or below it */ probeCap: 0, probeHits: 0, /** called when sustained headroom lifts the probe cap (persists it) */ onProbeRaise: undefined as ((cap: number) => void) | undefined, xr: false, gpu: '',
-  ms: 250, iterations: 10, threshold: .75, flipflops: 6,
-  lower: .92, upper: 1.35, // margin as multiples of the target: decline below 0.92 × target (55 fps: slack under 16.7 ms, so vsync jitter around 60 is not a decline), incline above 1.35 × target (drei default 60/100 ≈ 1.67)
+  auto: true, targetFps: SYSTEM_PROPERTIES.quality.targetFps as number, tier: SYSTEM_PROPERTIES.quality.startTier as number, /** best tier the player allows (Auto never climbs above it) */ capTier: 0, /** best tier this machine may use (core/probe, startup resource probe): Auto and the player both stay at or below it */ probeCap: 0, probeHits: 0, /** called when sustained headroom lifts the probe cap (persists it) */ onProbeRaise: undefined as ((cap: number) => void) | undefined, xr: false, gpu: '',
+  ms: SYSTEM_PROPERTIES.quality.windowMs as number, iterations: SYSTEM_PROPERTIES.quality.iterations as number, threshold: SYSTEM_PROPERTIES.quality.threshold as number, flipflops: SYSTEM_PROPERTIES.quality.flipflops as number,
+  lower: SYSTEM_PROPERTIES.quality.lower as number, upper: SYSTEM_PROPERTIES.quality.upper as number, // margin as multiples of the target: decline below 0.92 × target (55 fps: slack under 16.7 ms, so vsync jitter around 60 is not a decline), incline above 1.35 × target (drei default 60/100 ≈ 1.67)
   window: [] as number[], windowMs: 0, averages: [] as number[], flipped: 0, lastDir: 0, locked: false,
   fps: 0, gpuMs: undefined as number | undefined,
   /** Time hysteresis (the 2026-10-18 omen bench saw a tier change every ~2.5 s, each one rebuilding chunks or recompiling
    * every shader): after any step no decision for cooldownMs; after a step down no step up for upHoldMs. */
-  cooldownMs: 10000, upHoldMs: 30000, cool: 0, upBlock: 0, changes: 0,
+  cooldownMs: SYSTEM_PROPERTIES.quality.cooldownMs as number, upHoldMs: SYSTEM_PROPERTIES.quality.upHoldMs as number, cool: 0, upBlock: 0, changes: 0,
   /** A tier left for being over budget is not climbed back into for rememberMs (the 2026-10-18 uncapped bench bounced
    *  High/Medium <-> Low every ~40 s, a 30-50 ms hitch each time): `slow[t]` = governor clock when tier t was left. */
-  rememberMs: 60000, clock: 0, slow: [] as number[],
+  rememberMs: SYSTEM_PROPERTIES.quality.rememberMs as number, clock: 0, slow: [] as number[],
   /** WORLD_KNOBS (radii, densities, LOD, shadows, IBL) rebuild chunks or change shader defines, so they follow `tier` only once
    * it has held worldHoldMs; until then they stay at worldTier (-1 = follow `tier`: manual mode, after a reset). */
-  worldHoldMs: 20000, worldTier: -1, heldMs: 0,
+  worldHoldMs: SYSTEM_PROPERTIES.quality.worldHoldMs as number, worldTier: -1, heldMs: 0,
 };
 /** Knobs whose change rebuilds chunks/tiles (radii, densities, LOD, weather grid) or recompiles programs (shadow cascades, PCSS, env map). */
 export const WORLD_KNOBS: (keyof Omit<Tier, 'name'>)[] = ['shadows', 'pcss', 'ibl', 'lod', 'near', 'mid', 'trees', 'foliage', 'weather'];

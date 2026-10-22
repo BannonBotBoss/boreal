@@ -1,3 +1,4 @@
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 /**
  * Wall feedback (Grok Bot): ONE module for every editor input. `softWall` (pure) gives the soft-resistance + hard-stop
  * value; `createWallFeedback` fires haptics + an optional audio thunk ONCE when an input reaches a wall (debounced per
@@ -16,7 +17,7 @@ export function softWall(raw: number, min: number, max: number, zone = .1) {
   return { value: raw, wall: false, push: 0 };
 }
 export interface HapticTargets { gamepads?(): (Gamepad | null)[]; vibrate?(ms: number): unknown; xr?(): { inputSources?: Iterable<XRInputSource> } | undefined; thunk?(strength: number): void }
-export const FEEL = { haptics: true, intensity: .6, sound: true };
+export const FEEL: { haptics: boolean; intensity: number; sound: boolean } = { haptics: SYSTEM_PROPERTIES.haptics.on, intensity: SYSTEM_PROPERTIES.haptics.intensity, sound: SYSTEM_PROPERTIES.haptics.editorSound };
 /** Editor wall hit: the 'wall' table entry through the shared dispatcher, scaled by how hard you push, + audio thunk. */
 export function pulse(strength: number, t: HapticTargets) {
   const s = Math.min(1, Math.max(.1, strength)); haptic('wall', 0, s); if (FEEL.sound) t.thunk?.(s * FEEL.intensity);

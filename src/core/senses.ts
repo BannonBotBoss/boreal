@@ -1,9 +1,11 @@
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
+import { live } from '../config/live';
 /** Transient sensory math: no world records are created by hearing or smelling. */
 export interface SensePoint { x: number; z: number }
 export interface ScentSource extends SensePoint { key: string; kind: string; potency: number; remembered?: boolean; friend?: boolean }
 export interface ScentHit extends ScentSource { level: number; bearing: number; distance: number }
 // Detection ranges, plume width and HUD lifetimes are game calibration, not wolf measurements.
-export const SENSES = { range: 40, threshold: .025, cueLife: 3, cueCap: 6, thoughtCap: 3, updateSeconds: .15 };
+export const SENSES = live(SYSTEM_PROPERTIES.senses);
 /** Clockwise angle from forward; world forward is -Z, positive heading turns toward -X. */
 export function bearingTo(origin: SensePoint, target: SensePoint, heading: number) {
   const dx = target.x - origin.x, dz = target.z - origin.z;

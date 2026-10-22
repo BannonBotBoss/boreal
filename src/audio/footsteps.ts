@@ -1,3 +1,5 @@
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
+import { live } from '../config/live';
 /**
  * Paw footstep timing and variation (Grok Bot, wolf walk). Pure (no DOM/audio) so it is testable and shared by both player
  * paths: the default game wolf (touchdowns found from its gait phase, core/animalBehavior touchdownsBetween) and the ?loco=1
@@ -6,7 +8,7 @@
  */
 /** minGap: paws landing closer than this (s) merge into one sound (trot pairs, gallop hind pair). Rates: fore paws a little
  *  lower than hind (heavier forequarters carry ~60 % of a dog's weight; Lee et al. 1999 JEB 202:3565). Jitter is per step. */
-export const PAW = { minGap: .09, pitchJitter: .05, gainJitter: .25, foreRate: .96, hindRate: 1.04, pairBoost: .2 };
+export const PAW = live(SYSTEM_PROPERTIES.footsteps);
 export { touchdownStrength } from '../core/animalBehavior';
 /** Playback rate and level (0..~1.2) for one paw sound: `legs` are the leg indices (LF 0, LH 1, RF 2, RH 3) landing together. */
 export function pawSound(legs: readonly number[], strength: number, rng: () => number) {

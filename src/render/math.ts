@@ -1,3 +1,4 @@
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import * as THREE from 'three';
 import { CELL, column, surfaceColor, type Column } from '../core/ground';
 import type { SoilKind } from '../core/stages/soils';
@@ -10,8 +11,8 @@ import { LEVEL } from '../core/tuning';
 import { RENDER } from '../core/renderSettings';
 
 // Aim slightly above the wolf's centre so it appears below screen centre.
-export const DEFAULT_PITCH = 10 * Math.PI / 180;
-export const LOOK_PITCH_RANGE = 30 * Math.PI / 180;
+export const DEFAULT_PITCH = SYSTEM_PROPERTIES.camera.defaultPitchDeg * Math.PI / 180;
+export const LOOK_PITCH_RANGE = SYSTEM_PROPERTIES.camera.lookPitchRangeDeg * Math.PI / 180;
 export function clampLookPitch(pitch: number) {
   return THREE.MathUtils.clamp(pitch, DEFAULT_PITCH - LOOK_PITCH_RANGE, DEFAULT_PITCH + LOOK_PITCH_RANGE);
 }
@@ -20,12 +21,12 @@ export function springLookPitch(pitch: number, input: number, dt: number, heldPi
   const target = heldPitch === undefined
     ? DEFAULT_PITCH + THREE.MathUtils.clamp(input, -1, 1) * LOOK_PITCH_RANGE
     : clampLookPitch(heldPitch);
-  return clampLookPitch(target + (pitch - target) * Math.exp(-14 * Math.max(0, dt)));
+  return clampLookPitch(target + (pitch - target) * Math.exp(-SYSTEM_PROPERTIES.camera.lookSpringRate * Math.max(0, dt)));
 }
-export const RIDER_HEIGHT = 1.6;
-export const RIDER_DISTANCE = 3;
+export const RIDER_HEIGHT: number = SYSTEM_PROPERTIES.camera.riderHeight;
+export const RIDER_DISTANCE: number = SYSTEM_PROPERTIES.camera.riderDistance;
 // Positive pitch looks down; negative pitch looks above the horizon.
-export function clampPitch(pitch: number) { return THREE.MathUtils.clamp(pitch, -Math.PI * 80 / 180, Math.PI * 89 / 180); }
+export function clampPitch(pitch: number) { return THREE.MathUtils.clamp(pitch, Math.PI * SYSTEM_PROPERTIES.camera.pitchMinDeg / 180, Math.PI * SYSTEM_PROPERTIES.camera.pitchMaxDeg / 180); }
 export function positionCamera(camera: THREE.PerspectiveCamera, x: number, z: number, altitude: number, yaw: number, pitch = DEFAULT_PITCH, lookYaw = 0) {
   const ground = Math.max(heightAt(x, z), -.2);
   const horizontalDistance = altitude * RIDER_DISTANCE / RIDER_HEIGHT;

@@ -3,13 +3,14 @@
  * The sun follows standard solar geometry for Northwest Ontario: declination (Cooper's formula) and hour angle
  * on local solar time. World axes: −z is north, +x is east, y is up.
  */
-export const REAL_SECONDS_PER_GAME_HOUR = 300;
+export const REAL_SECONDS_PER_GAME_HOUR: number = SYSTEM_PROPERTIES.clock.realSecondsPerGameHour;
 /** Northwest Ontario (Thunder Bay 48.4°N, Kenora 49.8°N). */
-export const LATITUDE = 49.5;
+export const LATITUDE: number = SYSTEM_PROPERTIES.clock.latitudeDeg;
 /** Season: mid-August (day 227). Change to move the game through the year. */
-export const DAY_OF_YEAR = 227;
-export const START_HOUR = 8;
+export const DAY_OF_YEAR: number = SYSTEM_PROPERTIES.clock.dayOfYear;
+export const START_HOUR: number = SYSTEM_PROPERTIES.clock.startHour;
 const RAD = Math.PI / 180;
+import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { solar } from './weather';
 
 /** Hour of day (0–24) after `simTime` seconds of unpaused play. */

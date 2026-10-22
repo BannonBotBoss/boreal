@@ -5,12 +5,14 @@
  * (18 % crouch, 65 % air, 17 % landing). The arc is ballistic with g from proc/physics gravity() (rule 4), the same
  * model as proc/physics jumpArc: y(τ) = v₀τ − ½gτ², v₀ = g·T_air/2, apex = g·T_air²/8.
  */
+import { SYSTEM_PROPERTIES } from '../../config/systemProperties';
+import { live } from '../../config/live';
 import { gravity } from '../../proc/physics';
 import { PHYS } from '../../core/tuning';
 import { smooth01 } from '../../proc/math';
 
 /** Stage shares (Claude's gaitPose), crouch depth and pounce reach as fractions of hip height (game calibration). */
-export const JUMP = { crouch: .18, flight: .65, land: .17, depth: .15, reach: .35 };
+export const JUMP = live(SYSTEM_PROPERTIES.jump);
 export type JumpKind = 'jump' | 'pounce';
 export type JumpStage = 'crouch' | 'flight' | 'land';
 export interface Jump { t: number; kind: JumpKind }

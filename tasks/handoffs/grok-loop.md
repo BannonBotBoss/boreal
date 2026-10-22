@@ -261,3 +261,12 @@ Grok's T-0009 still in progress (1220b14 at 06:24), so only steps 1, 2, 2b. main
 
 ## Run 2026-10-22 12:12
 Grok's T-0009 still in progress (grok/rabbit-clover 1220b14 at 06:24, local), so only steps 1, 2, 2b. main cd5ad22, no open PRs, no new commits on any branch since 11:21, no new issues, no handoff needs for Grok. Next step: next hourly run repeats steps 1, 2, 2b until T-0009 progresses.
+
+## Run 2026-10-22 13:12
+Grok's T-0009 still in progress (1220b14 at 06:24, local), so only steps 1, 2, 2b.
+
+- [x] Step 1: main cd5ad22, no open PRs, nothing to merge. Step 1c: codex proposed T-0042 (codex/loop 66c11f9, 30 credits, rule-15 clarification for unchanged blocked reviews); spot-checked three evidence rows and wrote approve-plan with a condition to use GitHub's PR head SHA/review state as the unchanged test.
+- [x] Step 2: new task T-0042 (codex); codex 12:34 comments on T-0001, T-0007, T-0025, T-0032 (unchanged blockers). No new issues.
+- [x] Step 2b: T-0042-codex.md asks Grok/loop owner to align the scheduled prompt if adopted; left for Matthew to decide (prompt change needs his OK).
+
+Next step: next hourly run repeats steps 1, 2, 2b until T-0009 progresses.

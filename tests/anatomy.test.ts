@@ -5,7 +5,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createBounding, selectRow, GIRDLE, SWING } from '../src/animals/locomotion/bounding';
+import { createBounding, selectRow, GIRDLE, SWING, poseReach, limbPoints } from '../src/animals/locomotion/bounding';
 import { posePlausibility, scoreTrace, type TraceFrame } from '../src/animals/locomotion/boundScore';
 import { HOST_GAIT, planFor, poseFor } from '../tools/bound-plans';
 
@@ -30,4 +30,18 @@ test('bound-checks v3 anatomy check: grade 1 with soles below the hip, 0 at 2 cm
   const tr = (above?: number): TraceFrame[] => Array.from({ length: 200 }, (_, k) => ({ t: k / 100, stride: (k / 20) % 1, speed: 5, contact: [false, false, false, false], slip: [0, 0, 0, 0], spineFlex: 0, leashes: 0, touchdowns: [], fwd: { x: 0, z: -1 }, soleOverHip: above }));
   const g = (above?: number) => scoreTrace(tr(above), { speed: 5, row: 'half-bound', hz: 5, dutyData: .3, order: [0, 2, 1, 3], warm: 0, expect: [] }).checks.find(c => c.name === 'anatomy');
   assert.equal(g(-.02)?.grade, 1); assert.equal(g(.02)?.grade, 0); assert.ok(Math.abs((g(.01)?.grade ?? 0) - .5) < 1e-9); assert.equal(g(undefined), undefined);
+});
+
+test('graze crouch (run 9): the fore paws step ahead, then the body lowers the whole asked pitch and drop, plausible, feet planted', () => {
+  for (const turnInPlace of [false, true]) {
+    const sk = planFor('hare'), c = createBounding(sk, HOST_GAIT, () => 0, { x: 0, z: 0, heading: 0 }, GIRDLE, { pose: poseFor('hare'), turnInPlace });
+    assert.equal(poseReach(sk, 'graze-crouch'), 1);
+    let f = c.update(1 / 120, 0, 0, null); for (let t = 0; t < .5; t += 1 / 120) f = c.update(1 / 120, 0, 0, null);
+    const hip0 = limbPoints(sk, f, 1)[1].y, paw0 = f.soles[0].z; let slip = 0, bad = 0;
+    for (let t = 0; t < 2; t += 1 / 120) { f = c.update(1 / 120, 0, 0, { kind: 'graze-crouch' }); slip = Math.max(slip, f.slip[1], f.slip[3]); if (!posePlausibility(sk, f).ok) bad++; }
+    const hip = limbPoints(sk, f, 1)[1].y;
+    assert.deepEqual(f.contact, [true, true, true, true]); assert.equal(bad, 0, `implausible frames ${bad}`);
+    assert.ok(hip0 - hip > .03, `hip lowered ${hip0 - hip}`); assert.ok(paw0 - f.soles[0].z > .04, `fore paw ahead ${paw0 - f.soles[0].z}`);
+    assert.ok(slip < .01 && Math.max(...f.slip) < .002, `slip ${slip} / ${f.slip}`);
+  }
 });

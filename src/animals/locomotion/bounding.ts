@@ -373,13 +373,18 @@ export type PoseKind = 'stand' | 'graze-crouch' | 'sit-up' | 'half-sit' | 'scan'
 /** What the agent pipeline may ask of a standing body. `weight` 0..1 blends from 'stand' (default 1). */
 export interface PoseRequest { kind: PoseKind; weight?: number }
 /** Body shape per request: pitch (rad, + front up, about the hip), drop (m, hip lowered), fore lifted off the ground. */
-export interface PoseShape { pitch: number; drop: number; foreLift: boolean }
+export interface PoseShape { pitch: number; drop: number; foreLift: boolean; /** run 9: fore feet re-planted this far (m) ahead of their standing place (a grazing hare reaches its fore paws forward under the chin) */ ahead?: number }
 /** Values from the host's hare.ts POSES (grok, [estimate] there: drawn to photos); 'stand' is the rest skeleton. */
 export const POSE_SHAPES: Record<PoseKind, PoseShape> = {
   stand: { pitch: 0, drop: 0, foreLift: false },
-  /** run 7 (grok): drop .02 -> .04 asked; the hare's limbs reach .46 of it (pitch -.046, hip -.018 m) since standError solves
-   *  the bladed fore limb. Grid vs lookscore v1 crouch (refs attempt2 panel 1): pitch -.1/-.25 x drop .02/.04, best here. */
-  'graze-crouch': { pitch: -.1, drop: .04, foreLift: false },
+  /** run 7 (grok): drop .02 -> .04 asked; the hare's limbs reached only .43 of it (pitch -.043, hip -.017 m): with the fore paw
+   *  under the glenoid the bladed fore limb is already at its elbow clamp (CANID elbow min 50 deg) standing, so it cannot fold
+   *  further. Run 9 (grok): the fore paws step 6 cm ahead first (`ahead`; a grazing hare reaches its fore paws forward under the
+   *  chin, refs/hare/graze-alert-flight attempt2 panel 1), then the body lowers the full pitch -.06 / drop .04 with every joint
+   *  inside its clamp and every sole below its own hip / shoulder (posePlausibility). Grid (box, lookscore v1.3 graze strips,
+   *  C:\dev\rabbit-rec13\look\grid-graze.txt): ahead 0 / .05 / .06 / .07 x pitch 0 .. -.1 x drop .02 .. .06; drop .06 zeroes
+   *  (fore paw over the shoulder), level drops lift the chest bone and score lower. REFERENCE-MATCHED, not sourced. */
+  'graze-crouch': { pitch: -.06, drop: .04, foreLift: false, ahead: .06 },
   /** upright sit-up on the haunches, fore paws lifted (run 7, grok): pitch 1.15 rad (66 deg) and the hip .02 m lower, so the
    *  silhouette axis is 66-70 deg like refs/hare/graze-alert-flight attempt2 / attempt3 panel 3 (68.9 / 70.8 deg, lookscore
    *  masks). REFERENCE-MATCHED, not sourced; the hind feet reach it within 1 mm (drop .04 would miss by 15 mm). Was .95 / 0. */
@@ -403,12 +408,12 @@ export function poseRequestFor(pose: AgentPose, action?: AgentAction): PoseReque
 }
 
 /** Worst sole error (m) of the planted feet of a standing body at pitch `pitch` (about the hip) and hip drop `drop`. */
-export function standError(sk: Skeleton, pitch: number, drop: number, foreLift: boolean) {
+export function standError(sk: Skeleton, pitch: number, drop: number, foreLift: boolean, ahead = 0) {
   const H = sk.legs.hind, tilt: Tilt = { height: -drop, pitch, roll: 0, shift: { y: H.hip * (1 - Math.cos(pitch)), z: -H.hip * Math.sin(pitch) } }, ankle = restAnkle(sk);
   let worst = 0;
   for (let i = 0; i < 4; i++) {
     const front = FRONT(i); if (front && foreLift) continue;
-    const L = front ? sk.legs as LimbDims : H, foot = { x: sk.hips[i][0], y: 0, z: sk.hips[i][1] - (L.stance ?? 0) };
+    const L = front ? sk.legs as LimbDims : H, foot = { x: sk.hips[i][0], y: 0, z: sk.hips[i][1] - (L.stance ?? 0) - (front ? ahead : 0) };
     const rel = worldToLimb(foot, 0, 0, 0, tilt, sk.hips[i]), top = { z: 0, y: topY(L) };
     // run 7 (grok): a fore limb with its blade in the chain is solved as the controller solves it (foreLimb), not as a bare
     // two-bone leg, which missed the ground by 33 mm on the hare and so zeroed poseReach for every four-foot pose
@@ -424,7 +429,7 @@ export const POSE_REACH = .002;
 const poseCache = new WeakMap<Skeleton, Map<PoseKind, number>>();
 export function poseReach(sk: Skeleton, kind: PoseKind) {
   let m = poseCache.get(sk); if (!m) poseCache.set(sk, m = new Map()); const hit = m.get(kind); if (hit !== undefined) return hit;
-  const sh = POSE_SHAPES[kind], err = (w: number) => standError(sk, sh.pitch * w, sh.drop * w, sh.foreLift);
+  const sh = POSE_SHAPES[kind], err = (w: number) => standError(sk, sh.pitch * w, sh.drop * w, sh.foreLift, sh.ahead ?? 0); // the fore feet step `ahead` first, then the body lowers
   let w = 1; if (err(1) > POSE_REACH) { let lo = 0, hi = 1; for (let k = 0; k < 16; k++) { const c = (lo + hi) / 2; if (err(c) <= POSE_REACH) lo = c; else hi = c; } w = lo; }
   m.set(kind, w); return w;
 }
@@ -487,7 +492,8 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
   // a hind sweep shorter than the chord sits at the chord's front end (the hind prints land ahead: Lagomorpha Locomotion 2021);
   // run 4: a fore sweep shorter than its chord sits at the chord's back end, so the fore prints fall behind the hinds (snowshoe
   // tracks: two hind prints ahead of the two fore prints — Montana Natural History Center; Canadian Wildlife Federation 2004)
-  let run = 0, hindSlack = 0, foreSlack = 0; const centre = (i: number) => FRONT(i) ? lerp(-(sk.legs.stance ?? 0), reach.fore.centre + foreSlack, run) : lerp(-(H.stance ?? 0), reach.hind.centre - hindSlack, run);
+  // run 9: a standing pose may set the fore feet `ahead` (PoseShape.ahead, m forward = -z): they re-plant there (below)
+  let run = 0, hindSlack = 0, foreSlack = 0, foreAhead = 0; const centre = (i: number) => FRONT(i) ? lerp(-(sk.legs.stance ?? 0) - foreAhead, reach.fore.centre + foreSlack, run) : lerp(-(H.stance ?? 0), reach.hind.centre - hindSlack, run);
   let x = start.x, z = start.z, heading = start.heading, row: BoundRowId = 'half-bound', leashes = 0, stridePhase = 0, turnSteps = 0;
   // the foot state holds the toe tip; a split hind foot's MTP sits `toes` behind it (BodyPlan.hindToes)
   const toeOff = (i: number) => FRONT(i) ? 0 : sk.toes;
@@ -519,6 +525,13 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     lastPose = want.kind;
     const pitchPose = springTo(pitchS, shape.pitch * w, .15, dt), drop = springTo(dropS, shape.drop * w, .15, dt);
     const foreUp = springTo(liftS, shape.foreLift ? w : 0, .12, dt); run = springTo(moveS, moving ? 1 : 0, .1, dt);
+    foreAhead = moving ? 0 : shape.ahead ?? 0;
+    // run 9: pose re-plant (bodies without turnInPlace too): a planted fore foot further than TURN.replant from where the pose
+    // stands it steps there in TURN.step, one fore at a time (the other fore and both hinds stay down)
+    if (!moving && !opts.turnInPlace && foreUp <= .02) for (const i of [0, 2]) {
+      const f = feet[i], o = feet[2 - i]; if (!f.planted || !o.planted || turnStep[2 - i]) continue;
+      const r0 = restWorld(i); if (Math.hypot(f.at.x - r0.x, f.at.z - r0.z) > TURN.replant) { forceStep(f); turnStep[i] = true; break; }
+    }
     // turning / settling in place: re-plant the planted foot furthest from where it should stand, one per pair at a time
     let turning = !!opts.turnInPlace && !moving && Math.abs(wrap(h - heading)) > 1e-3;
     if (!moving && opts.turnInPlace) {
@@ -529,7 +542,7 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
       }
       if (pick >= 0 && feet.filter(f => !f.planted).length < 2) { forceStep(feet[pick]); turnStep[pick] = true; turnSteps++; turning = true; }
       if (turnStep.some((t, i) => t && !feet[i].planted)) turning = true;
-    } else turnStep.fill(false);
+    } else if (moving) turnStep.fill(false);
     // reach targets (spine, girdles, vault pitch), fore from the fore chord and hind from the hind chord
     const gs = girdleShifts(plan.canid, ph, reach, plan.spineUse, plan.foreDuty), shift = gs.shift.map(v2 => v2 * run), spineFlex = gs.spineFlex * run;
     // derived body pitch (pitchCurve), about the mid-trunk (the hip drops trunk/2·sin when the nose comes up); reachTargets'

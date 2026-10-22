@@ -135,7 +135,7 @@ export function hareBind(): RigBind {
  *  (refs/hare/graze-alert-flight attempt 2): grazing crouch = hunched, chin at the clover, ears back; scan = head up from the
  *  crouch; alert / pause = upright sit-up on the haunches, fore paws lifted, ears erect (run 7, Matthew 18:23 PT, reference panel 3;
  *  run 4-6 used a half sit-up on all fours); rest/freeze = tucked, ears flat [estimate]. */
-const POSES: Record<string, readonly number[]> = {
+export const POSES: Record<string, number[]> = {
   'head-down': [-.1, -.04, -.85, -.075, .95, .1, .45], // run 7: head -.55 -> -.85 (nose to the clover, refs attempt2 panel 1)
   scan: [.3, 0, -.35, 0, -.05, -.15, .5],
   sit: [1.15, 0, -.8, -.025, -.15, -.7, .55], // run 7: upright sit-up (body .95 from the rig's 'sit-up'), head turned back level, nose a little up

@@ -20,6 +20,12 @@ import { steerWolf } from './core/locomotion';
 import { createWolfModes, stepWolfModes, modeSpeed } from './core/wolfModes';
 import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './core/animalBehavior';
 import { autonomousWolfStep } from './core/autonomy';
+import { NEEDS_SPECIES, WOLF_NEEDS, HARE_NEEDS } from './core/needs/species';
+import { eatWater, levelsOf, parseNeeds, stepNeeds, type NeedsState } from './core/needs/engine';
+import { chooseGoal, sunTimes } from './core/needs/behaviour';
+import { createThoughtClock, thoughtTick } from './core/needs/thoughts';
+import { createThoughtBubbles } from './render/thoughtBubbles';
+import { isDryLand } from './core/world';
 import { createSnapshotHub } from './core/snapshot';
 import { createPhotoMode } from './photo/photoMode';
 import { shaderClock } from './render/shaderClock';
@@ -56,7 +62,7 @@ import { ACTION, ACTIVE, BINDINGS_KEY, atomValues, bindingLabel, comboLabel, gro
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = element<HTMLCanvasElement>('world'), status = element('status'), actionButton = element<HTMLButtonElement>('act');
 const dialog = element<HTMLDialogElement>('info');
-const SAVE_KEY = 'boreal.events.v1';
+const SAVE_KEY = 'boreal.events.v1', NEEDS_KEY = 'boreal.needs.v1'; // T-0036: the embodied animal's needs (water, rest, energy)
 let context = createContext(), saveBlocked = false;
 let noticeTimer: ReturnType<typeof setTimeout>;
 function notice(message: string) {
@@ -112,11 +118,31 @@ if (contactsLog) CONTACTS.onSeparate((a, b, source) => console.log(`[contacts] e
 const sensesHUD = createSensesHUD(view, sfx, () => context);
 const HALO_KEY = 'boreal.sensesHalo', sensesHalo = createSensesHalo(view.scene); // O: the HUD's cues as beacons on a ring around the head
 try { sensesHalo.enabled = localStorage.getItem(HALO_KEY) !== '0'; } catch { /* storage blocked: default on */ }
+// T-0036 needs: one generic engine (core/needs) over the embodied species' template; Energy is the brain's existing stat.
+let needs: NeedsState = parseNeeds((() => { try { return localStorage.getItem(NEEDS_KEY); } catch { return null; } })()), drinking = false, thoughtTime = 0;
+{ try { const e = Number(JSON.parse(localStorage.getItem(NEEDS_KEY) ?? '{}').energy); if (Number.isFinite(e) && e >= 0 && e <= 100) view.playerBrain.energy = e; } catch { /* none saved */ } }
+{ const q = new URLSearchParams(location.search).get('needs'); if (q) for (const kv of q.split(',')) { const [k, v] = kv.split(':'), n = Math.max(0, Math.min(100, Number(v))); // dev/screenshots: ?needs=water:25,energy:8,rest:50
+  if (!Number.isFinite(n)) continue; if (k === 'water' || k === 'rest') needs = { ...needs, [k]: n }; else if (k === 'energy') view.playerBrain.energy = n; } }
+const needsSpecies = () => NEEDS_SPECIES[view.playable.id] ?? WOLF_NEEDS; // the creature the player embodies (wolf until others are playable)
+const thoughtClock = createThoughtClock(), bubbles = createThoughtBubbles(view.scene);
+const saveNeeds = () => { try { localStorage.setItem(NEEDS_KEY, JSON.stringify({ ...needs, energy: view.playerBrain.energy })); } catch { /* blocked */ } };
+/** Water (lake, river or below the water surface) within reach of the muzzle: points 0.6-1.8 m ahead and to the sides. */
+const waterAhead = (x: number, z: number, h: number) => [.6, 1.2, 1.8].some(d => [-.5, 0, .5].some(a => !isDryLand(x - Math.sin(h + a) * d, z - Math.cos(h + a) * d)));
+let waterGoal: { x: number; z: number } | undefined;
+/** Nearest water for an animal whose behaviour model chose 'drink' (rings out to 400 m, cached until reached). */
+function findWater(x: number, z: number) {
+  for (let r = 4; r <= 400; r += 4) { const k = Math.max(12, Math.round(2 * Math.PI * r / 6));
+    for (let i = 0; i < k; i++) { const a = i / k * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (!isDryLand(px, pz)) return { x: px, z: pz }; } }
+  return undefined;
+}
+view.onBeforeRender((time, photoView) => bubbles.update(view.lookup('player')?.object, view.camera, thoughtTime, photoView));
 view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView));
 function perform() {
   if(autonomous) setAutonomous(false);
-  if (!target || paused || dialog.open || saveBlocked) return;
-  if (playerAction) return;
+  if (paused || dialog.open || playerAction) return;
+  const targetAction = target && availableActions(player, target, context)[0];
+  if ((!targetAction || targetAction === 'forage') && waterAhead(player.x, player.z, yaw)) { drinking = !drinking; notice(drinking ? 'Drinking. Move to stop.' : 'Stopped drinking.'); return; } // T-0036
+  if (!target || saveBlocked) return;
   const action = availableActions(player, target, context)[0]; if (!action || action === 'forage') return;
   try {
     const next = interact(context, player, target, action);
@@ -132,12 +158,12 @@ function perform() {
 // ONE menu (ui/menu) for start and pause. The world clock freezes while the menu is open (Matthew): age/growth/seasons
 // hold, the renderer holds a frozen frame, and resume continues from that exact snapshot.
 function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(); return; } chrono.close(); paused = true; pauseClock(); element('pause').textContent = 'Resume'; menu.show('pause'); sfx.pauseCue(); }
-function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
+function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); saveNeeds(); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
 const menu = createMenu({
   hasSave: () => [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND].some(k => { try { return !!localStorage.getItem(k); } catch { return false; } }),
   seed: () => STAGES.seed, staged: () => STAGES.on, music: () => musicPanel(), controls: () => controls(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
   newWorld: o => { // fresh world: forget the per-world saves (settings, music and the probe stay)
-    for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
+    for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, NEEDS_KEY, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
     try { localStorage.setItem('boreal.seed.v1', String(o.seed)); } catch { /* blocked */ } renderStore.set('world.stagedTerrain.v2', o.staged); location.reload(); },
   warning: () => { const born = Number(localStorage.getItem('boreal.player.born') ?? worldSec()); const p = view.playable;
     return lifespanWarning(p.id, ageYears(p.id, born, worldSec()), p.label); },
@@ -185,7 +211,7 @@ setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); } catch 
   for (const a of view.audibleAnimals()) if (a.x !== undefined && a.z !== undefined && /deer/.test(a.key)) { const kg = deerDroppingsKg(view.massOf(a.key) ?? 0, 12 * GROUND.speed / 86400);
     if (kg > 0) record({ kind: 'droppings', x: a.x, z: a.z, t: GROUND.years, m: kg }, 3); } // residue reaches the ground when the delta expires
   if (Math.abs(view.playerBrain.speed) > .3 && ground.sink > .002) record({ kind: 'footprint', x: player.x, z: player.z, t: GROUND.years, m: ground.sink });
-  prune();
+  prune(); saveNeeds();
   try { localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); } catch { /* storage blocked */ } }, 1000);
 loadWeather(localStorage.getItem(SAVE_KEY_WEATHER)); loadDeltas(localStorage.getItem(SAVE_KEY_DELTAS));
 const handles = createHandles(view.camera, canvas, view.scene);
@@ -328,7 +354,7 @@ function frame(time: number) { const frameStart = performance.now();
     pitch = springLookPitch(pitch, verticalLook, dt, drag && Math.abs(verticalLook) < .01 ? pitch : undefined);
     if (playerAction || photo.active) { dx = 0; dz = 0; }
     const length = Math.max(1, Math.hypot(dx, dz)); dx /= length; dz /= length;
-    accumulator += sdt;
+    accumulator += sdt; const airC = weatherAt(player.x, player.z).tC;
     while (accumulator >= 1 / 30) {
       drawFrom = { x: player.x, z: player.z, yaw, sim: simTime };
       modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30) : stepWolfModes(modes, H('stealth'), H('run'), Math.abs(dz) > .01, 1 / 30);
@@ -342,10 +368,26 @@ function frame(time: number) { const frameStart = performance.now();
       { // wind drag through the shared field: relative air velocity on the frontal area (∝ m^(2/3), 0.15 m² for a 40 kg wolf [verify])
         const fx = -Math.sin(yaw), fz = -Math.cos(yaw), F = airDrag({ x: fx * brain.speed, z: fz * brain.speed }, windAt(player.x, .6, player.z), .15 * (playerMass / 40) ** (2 / 3));
         brain.speed += (F.x * fx + F.z * fz) / playerMass / 30; }
-      const pose = autonomous && !playerAction ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities()) : steerWolf({ x: player.x, z: player.z, heading: brain.heading }, 0, Math.sign(brain.speed), 1 / 30, Math.abs(brain.speed));
+      // T-0036: the autonomous wolf runs its species behaviour model (thirst -> water, tired -> bed down); otherwise the old step.
+      const sp = needsSpecies(), wNow = worldSec(), sun = sunTimes(dayAt(wNow));
+      const choice = autonomous && !playerAction ? chooseGoal(sp, levelsOf(needs, brain.energy), { hour: hourAt(wNow), ...sun }) : undefined;
+      if (choice?.goal === 'drink' && !drinking) {
+        if (waterAhead(player.x, player.z, yaw)) { drinking = true; waterGoal = undefined; }
+        else { waterGoal ??= findWater(player.x, player.z); if (waterGoal) { brain.heading = Math.atan2(-(waterGoal.x - player.x), -(waterGoal.z - player.z)); brain.motion = choice.gait === 'walk' ? 'walk' : 'run'; brain.speed = brain.motion === 'run' ? 4 : 1; brain.problem = 'explore'; } }
+      }
+      if (drinking || choice?.goal === 'bed-down' || choice?.goal === 'rest') { brain.motion = 'idle'; brain.speed = 0; brain.problem = 'recover'; }
+      const steerOnly = !!choice && (drinking || choice.goal !== 'explore' && choice.goal !== 'hunt' && choice.goal !== 'forage');
+      const pose = autonomous && !playerAction && !steerOnly ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities()) : steerWolf({ x: player.x, z: player.z, heading: brain.heading }, 0, Math.sign(brain.speed), 1 / 30, Math.abs(brain.speed));
       if(!autonomous && brain.motion==='idle') brain.problem='recover';
       if(autonomous && brain.meal) view.forageWolf(brain.meal.key);
-      brain.expend(1/30,Math.hypot(pose.x-player.x,pose.z-player.z),ground.cost); // soft ground costs more energy (Bekker compaction); the legs follow the real distance
+      const e0 = brain.energy, moved = Math.hypot(pose.x-player.x,pose.z-player.z);
+      brain.expend(1/30,moved,ground.cost); // soft ground costs more energy (Bekker compaction); the legs follow the real distance
+      // T-0036: Energy drains at the template's sourced rate (needs engine) instead of expend's per-metre cost; the autonomous
+      // brain's idle 'recover' refill is kept (its forage loop depends on it; flagged in the T-0036 handoff).
+      if (!(autonomous && brain.problem === 'recover')) brain.energy = e0;
+      if (drinking && (Math.abs(dz) > .01 || needs.water >= 99.5)) { drinking = false; if (needs.water >= 99.5) notice('Thirst quenched.'); }
+      const nx = stepNeeds(sp, needs, { dtGame: 3600 / REAL_SECONDS_PER_GAME_HOUR / 30, speed: moved * 30, tC: airC, drinking, energy: brain.energy });
+      needs = nx.state; brain.energy = nx.energy;
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
       simTime += 1 / 30; accumulator -= 1 / 30;
     }
@@ -368,9 +410,10 @@ function frame(time: number) { const frameStart = performance.now();
   target = view.entities().filter(e => availableActions(player, e, context).length).sort((a, b) => Math.hypot(player.x - a.x, player.z - a.z) - Math.hypot(player.x - b.x, player.z - b.z))[0];
   const action = target && availableActions(player, target, context)[0];
   element('target').textContent = target ? catalog[target.kind].title : 'Explore';
-  const actionLabel = action ? `${pad ? 'A / E' : 'E / click'} · ${action}` : 'Approach an individual';
+  const canDrink = (!action || action === 'forage') && waterAhead(player.x, player.z, yaw);
+  const actionLabel = canDrink ? `${pad ? 'A / E' : 'E / click'} · ${drinking ? 'stop drinking' : 'drink'}` : action ? `${pad ? 'A / E' : 'E / click'} · ${action}` : 'Approach an individual';
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;
-  actionButton.disabled = !action || paused || saveBlocked || !!playerAction;
+  actionButton.disabled = canDrink ? paused : !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
   // Menu open: hold the last frame (clock frozen; no age/growth/render). Playing: draw every frame.
   const drawStart = performance.now(); if (!menu.open) { if (inpage) inpage.frame(() => drawFrame(pv)); else drawFrame(pv); } view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
@@ -383,16 +426,18 @@ function frame(time: number) { const frameStart = performance.now();
     if (ev.type === 'caught') {
       view.playerBrain.energy = Math.min(100, view.playerBrain.energy + HARE.energy);
       modes = { ...modes, stamina: Math.min(modes.maxStamina ?? 100, modes.stamina + HARE.stamina) };
+      needs = eatWater(needsSpecies(), needs, 'hare', HARE_NEEDS.body.massKg.v); // T-0036: the prey's body water
       notice(`Caught a snowshoe hare! +${HARE.energy} energy, +${HARE.stamina} stamina.`);
     }
   }
+  if (active) bubbles.add(thoughtTick(thoughtClock, levelsOf(needs, view.playerBrain.energy), thoughtTime += dt, needsSpecies())); // T-0036 thought bubbles (real seconds)
   sensesHUD.update(dt, menu.open || paused || photo.active || dialog.open || document.hidden || !!inpage?.blocksGame());
   const stats = view.stats();
   const animal = view.audibleAnimals().find(a => a.key === target?.key);
   const animalStatus = animal ? ` · ${animal.motion}/${animal.problem} · Energy ${Math.round(animal.energy)}` : '';
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
-  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : modes.mode === 'super-stealth' ? 'Face an individual within 30 m to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
+  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : modes.mode === 'super-stealth' ? 'Face an individual within 30 m to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind); if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
   requestAnimationFrame(frame);
 }

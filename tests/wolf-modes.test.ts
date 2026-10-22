@@ -14,12 +14,13 @@ test('trigger order selects sprint or super stealth and remains latched until re
   assert.equal(left.first, null);
   assert.equal(stepWolfModes(left, 1, 1, false, .1).mode, 'super-stealth');
 });
-test('sprint expires, cannot be retriggered by holding, and running exhausts stamina', () => {
+test('T-0036: sprint lasts at least 10 s from full, cannot be retriggered by holding, and exhaustion needs a breather', () => {
   let state = stepWolfModes(createWolfModes(), 0, 1, true, .1);
-  for (let i = 0; i < 17; i++) state = stepWolfModes(state, 1, 1, true, .1);
-  assert.equal(state.mode, 'run'); assert.ok(state.sprintSpent);
-  for (let i = 0; i < 200; i++) state = stepWolfModes(state, 1, 1, true, .1);
-  assert.equal(state.mode, 'walk'); assert.ok(state.exhausted); assert.ok(state.stamina >= 0);
+  let sprinted = 0;
+  for (let i = 0; i < 400 && !state.exhausted; i++) { state = stepWolfModes(state, 1, 1, true, .1); if (state.mode === 'sprint') sprinted += .1; }
+  assert.ok(sprinted >= 10, `sprint ${sprinted.toFixed(1)} s`); assert.ok(Math.abs(sprinted - 12) < .25);
+  assert.equal(state.mode, 'walk'); assert.ok(state.exhausted); assert.ok(state.sprintSpent); assert.ok(state.stamina >= 0);
+  state = stepWolfModes(state, 1, 1, true, .1); assert.equal(state.mode, 'walk'); // held triggers: still a breather
   for (let i = 0; i < 100; i++) state = stepWolfModes(state, 0, 0, false, .1);
   assert.equal(state.stamina, 100); assert.equal(state.exhausted, false);
   assert.equal(stepWolfModes(state, 0, 1, true, .1).mode, 'run');
@@ -31,12 +32,11 @@ test('idle running drains no stamina and trigger thresholds resist jitter', () =
   assert.equal(stepWolfModes(state, 0, .1, false, .1).mode, 'walk');
 });
 
-test('running lasts fourteen seconds from full stamina with unchanged recovery', () => {
-  let state = createWolfModes();
-  for (let i=0;i<140;i++) state=stepWolfModes(state,0,1,true,.1);
-  assert.equal(state.mode,'run'); assert.ok(Math.abs(state.stamina-2)<1e-8);
-  for (let i=0;i<3;i++) state=stepWolfModes(state,0,1,true,.1);
-  assert.equal(state.exhausted,true);
-  state=stepWolfModes(state,0,0,false,1);
-  assert.equal(state.stamina,10);
+test('T-0036: running lasts at least 30 s (36 s) from full stamina; recovery refills in 10 s', () => {
+  let state = createWolfModes(), ran = 0;
+  for (let i = 0; i < 1000 && !state.exhausted; i++) { state = stepWolfModes(state, 0, 1, true, .1); if (state.mode === 'run') ran += .1; }
+  assert.ok(ran >= 30, `run ${ran.toFixed(1)} s`); assert.ok(Math.abs(ran - 36) < .25);
+  assert.equal(state.exhausted, true);
+  state = stepWolfModes(state, 0, 0, false, 1);
+  assert.equal(state.stamina, 10);
 });

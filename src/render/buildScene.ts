@@ -27,6 +27,7 @@ import { LEVEL, BLOCK } from '../core/tuning';
 import { stepForward } from '../proc/math';
 import type { SnapshotSource } from '../core/snapshot';
 import { createPost } from './post';
+import { createTargetGlow } from './targetGlow';
 import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
 import { updateTreeUniforms } from './trees';
@@ -52,6 +53,8 @@ export type ForageHandler = (animal: Entity, plant: Entity) => number | undefine
  *  order works: after T-0005 merges, the contact carries the seated { at, normal } and settle; before, core/logContact's
  *  centre sample. Nothing here seats, sinks or tilts a log. */
 const T0005_LOG_SEAT = (GEOMETRY as unknown as Record<string, unknown>)['logSeat'] as LogSeatFn | undefined;
+/** ?glow=0: target glow off (A/B frame-time measurement, T-0035). */
+const GLOW_ON = typeof location === 'undefined' || new URLSearchParams(location.search).get('glow') !== '0';
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU
   const BASE_RATIO = Math.min(devicePixelRatio, 1.5);
@@ -88,8 +91,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const hares = createHares(scene); // src/animals/hare.ts
   const grass = createGrass(scene); // render/grass: procedural blades around the camera
   const flora = createFlora(scene); // render/flora: flowers + shrubs (shared ecology with the grass)
-  const halo = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.85, 40), new THREE.MeshBasicMaterial({ color: 0xffe9a1, side: THREE.DoubleSide, transparent: true, opacity: .7, depthWrite: false }));
-  halo.rotation.x = -Math.PI / 2; halo.visible = false; scene.add(halo);
+  const glow = createTargetGlow(renderer, camera); // render/targetGlow (T-0035): outline glow on the interaction target (replaces the ground ring)
   let lastBatchLod = -1;
   let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
   const CHUNK_ADDS_PER_FRAME = 2; let frameNo = 0; const adds = { frame: -1, n: 0 }; // upload pacing (see createChunk)
@@ -246,12 +248,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
     camera.updateProjectionMatrix();
     if (focused) camera.lookAt(focused.x, heightAt(focused.x, focused.z) + (focused.kind === 'deer' ? 1.5 : 1), focused.z);
-    const highlighted = focused ?? target;
-    halo.visible = !!highlighted && !photo;
-    if (highlighted) {
-      halo.position.set(highlighted.x, heightAt(highlighted.x, highlighted.z) + .02, highlighted.z);
-      halo.scale.setScalar(highlighted.kind === 'rock' ? (rockDiameter(highlighted) / 2 + .05) / 1.6 : 1);
-    }
+    const highlighted = photo ? undefined : focused ?? target;
+    highlight(highlighted);
+
     for (const chunk of chunks.values()) for (const entity of chunk.entities) {
       if (entity.kind === 'rock' && pushFrom?.key === entity.key) {
         let lod = chunk.objects.get(entity.key) as THREE.LOD;
@@ -282,6 +281,20 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
     for (const f of beforeRender) f(time, !!photo); // overlays that follow the posed wolf (render/sensesHalo)
     post.render(!!photo, photo?.focalMm ?? 0, fx.ssao, { contact: fx.contact, rays: fx.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
+    if (GLOW_ON) glow.render(); // after the frame is on the canvas (additive overlay; nothing while there is no target)
+  }
+  /** T-0035: the glow's proxy for the highlighted entity. Deer = the live rig; a person / pushed rock = its LOD; batched
+   *  statics = their LOD-0 geometry (what render/batch flattens) placed at the entity. Eaten / removed = no glow. */
+  function highlight(e: Entity | undefined) {
+    if (!e) { glow.set(undefined); return; }
+    const animal = animals.get(e.key);
+    if (animal) { glow.set(e.key, animal.rig.root); return; }
+    let live: THREE.Object3D | undefined, known = false;
+    for (const c of chunks.values()) { const o = c.objects.get(e.key); if (o) { known = true; if ((o as THREE.LOD).isLOD) live = (o as THREE.LOD).levels[0]?.object; break; } }
+    if (!known) { glow.set(undefined); return; }
+    const key = live ? e.key + ':live' : e.key;
+    if (live) { glow.set(key, live); return; }
+    glow.set(key, undefined, () => { const o = generateGeometry(e, 0); o.position.set(e.x, heightAt(e.x, e.z), e.z); return o; });
   }
   function forageWolf(plantKey: string) {
     for(const chunk of chunks.values()) {

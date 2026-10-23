@@ -20,7 +20,7 @@ import type { Touchdown } from '../animals/locomotion/signals';
 import { gaitFor, touchdownsBetween, type GaitName, type LegDims, type Motion } from '../core/animalBehavior';
 import { pawGate, pawSound, touchdownStrength } from './footsteps';
 /** Paw touchdown gaits that use the run clip (gallop family); walk/trot/pace use the walk clip. */
-const RUN_GAITS = new Set(['canter', 'gallop', 'bound', 'pronk']);
+const RUN_GAITS = new Set(['canter', 'gallop', 'half-bound', 'gallop-lagomorph', 'pronk']);
 import { BUSES, BUS_LEVEL, BUS_STATE, CULL_DISTANCE, VOICES, VOICE_TRIM_DB, admitVoice, busOf, createVolumeStore, onBusChange, priorityOf, trim, type ActiveVoice, type Bus } from './mixer';
 /** Footstep clips hold several footfalls; each gait event plays ONE footfall slice (onsets measured from the clips). */
 const STEP_SLICES: Partial<Record<string, { onsets: number[]; len: number }>> = { 'paw-walk': { onsets: [0, .61], len: .35 }, 'paw-run': { onsets: [.11, .23, .44, .73, 1.03, 1.34, 1.65], len: .2 } };

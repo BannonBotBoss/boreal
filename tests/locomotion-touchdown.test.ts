@@ -5,7 +5,7 @@ import { WOLF_LEGS, gaitFor, limbOf, quadrupedPose } from '../src/core/animalBeh
 import { canidPlan } from '../src/core/gaitData';
 
 const DT = 1 / 120, layout = referenceLayout(), flat = () => 0;
-const SPEED: Record<GaitId, number> = { walk: 1, trot: 2.6, pace: 2.2, canter: 4.5, gallop: 7, bound: 6, pronk: 3.5 };
+const SPEED: Record<GaitId, number> = { walk: 1, trot: 2.6, pace: 2.2, canter: 4.5, gallop: 7, 'half-bound': 6, 'gallop-lagomorph': 6, pronk: 3.5 };
 
 function run(gait: GaitId | undefined, speed: number, seconds: number, pounceAt = -1) {
   let z = 0; const loco = createLocomotion(layout, flat, { x: 0, z: 0, heading: 0 }), poses: LegPose[] = [], heard: Touchdown[] = [];

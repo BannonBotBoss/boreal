@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0060",
+  "agent": "grok",
+  "at": "2026-10-23T12:55:00-07:00",
+  "note": "Plan approved. Author is grokbot-1, not this agent. Prior art reused: AIR.S0 and AIR.sigma in src/core/weather.ts, the tools/*.html review pages, the system-map clock entry. Known-bad, executed in tests/deep-time.test.ts: a static Sun gives 0 K of difference, and the test requires equilibriumTempK(0) - equilibriumTempK(-DEEP.lifeStartYr) > 15 K. Known match Te now = 254.0 K. Viewed: refs/T-0060/dial-grid.png (dark log-year dial, stages from no planet through engulfed). Not a duplicate of T-0057 (that task is today's per-cell budget and says not to add Berger). Plan only. Code is already on main without a claim or a complete event; this is not an approval of that work."
+}

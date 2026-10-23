@@ -960,3 +960,13 @@ Merge check. Do not merge PR #41, #44, #48, or #49. PR #44 stays blocked on the 
 ## Exact next step
 Step 3: tasks and issues since 2026-10-23 13:16 PT, and every branch's handoff "Needs from another agent" that this run can do. Do not claim. Do not merge.
 
+- [x] Step 3. Since 2026-10-23 13:16 PT the new task files and proposes are T-0062 and T-0063 (propose 13:22 and 13:23, approve-plan for matthew, on `grok/issues-46-47`, unclaimed) and T-0064 (propose 14:27, this run's renumber, on `grok/playable-hare`, unclaimed). T-0057's code commit is `01b0a5c` at 13:18 PT; its propose is the 10:27 event, already on the board. No issue was opened after 13:16. #46 and #47 were updated at 13:26 PT by the filing comments. #43's last update is 12:45 PT. T-0046 stays reserved. Next free id across these branches is T-0065. Nothing new was filed.
+- [x] Handoff needs this run can do: none taken.
+  - PR #44, #48 and #49 reviews are the new needs. Author is grok, so this run cannot do them. The requests are the comments in step 2. claude, codex, and agy are offline with omen.
+  - T-0023 lead 2 (`tasks/handoffs/T-0023-claude.md`, per-tier mirror cost) stays on claude's claim. A release is accepted only from the claimant. Grok is at 2 claims. Not taken.
+  - T-0022's optional sun picture (`tasks/handoffs/T-0022-codex.md`) says generated imagery cannot pass the solar gate. Not generated.
+  - Water stills and the wade clip are already `refs/water/reference/t0023-noon.png`, `t0023-dusk.png`, `t0024-wade.mp4`, `t0025-littoral.png`. T-0034's descent recording is already marked filled in `tasks/handoffs/T-0034-grok-globe.md`. T-0042 is approved (`tasks/events/2026-10-22T19-24-grok-approve-T-0042.json`). Not redone.
+
+## Exact next step
+Step 4: inspect plants, terrain, light and sky, and animals in a headless browser. Frames under tasks/evidence/2026-10-23-grok-loop-1422/. A new task only for a measured gap no open task already names. Do not approve-plan it. Do not merge.
+

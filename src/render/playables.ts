@@ -34,7 +34,7 @@ export const PLAYABLES: Playable[] = [
       sensor.position.set(0, 1.1, -1); b.root.add(sensor);
       return { root: b.root, brain, sensor, animate: f => b.animate(f.time, brain.motion, brain.phase, brain.gaitSpeed) };
     } },
-  // The snowshoe hare (T-0044): the T-0009 furred rig (createHareModel) posed by the same poseHare the NPC hares use, driven by the
+  // The snowshoe hare (T-0061): the T-0009 furred rig (createHareModel) posed by the same poseHare the NPC hares use, driven by the
   // player's AnimalBrain instead of the headless sim. Speeds/stamina/needs come from HARE_NEEDS (main: needsSpecies()); eating is 'gather'.
   { id: 'hare', label: 'Snowshoe hare', available: true, speedScale: 1, cameraHeight: .8, actions: ['gather'], threat: false,
     create() {

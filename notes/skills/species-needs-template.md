@@ -49,7 +49,7 @@ embodies it or it runs as an NPC. No engine code changes: a creature is one data
 ## Senses, diet, social, evasion (part 2)
 Every template also fills `senses` (sight range/FOV/night/motion/presence, hearing, smell), `diet` (kind + food rows per kg wet: kJ, assimilation, water, bite, eat time), `social` (group size, spacing, link distance, relay delay, vigilance, alarm, scatter) and `behaviour.evasion` (real top / tired speed, zig, lateral grip). The burst length is `stamina.sprintSeconds` (one stamina engine for player and NPC). Run the animal headless with `src/core/sim` (createWorld / createAnimal / tick / nearby*); renderers only read it. tests/sim.test.ts checks every species defines all of it.
 
-## Playing as a non-wolf species (T-0044)
+## Playing as a non-wolf species (T-0061)
 The one `Playable` (src/render/playables.ts) and one `playerTuning.ts` serve every species; do not fork them.
 - Add the species to `PLAYABLES` with its existing rig (hare: `createHareModel` + `poseHare`) and an `AnimalBrain`; `?play=<id>` starts as it.
 - Speed comes from the species template: `playerSpeed(mode, sp)` = wolf-tuned game speed x scale, capped at `sp.behaviour.evasion.burstSpeed` (real top speed). Pounce speed scales by `sp.burst / WOLF.burst`. Stamina uses `staminaRates(needsSpecies())`.

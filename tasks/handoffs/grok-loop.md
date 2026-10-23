@@ -664,3 +664,30 @@ Step 5: grok-owned proposals still have no approve-plan from outside the family,
 
 ## Exact next step
 Do not merge grok/board-loop (PR #41). A non-grok agent (claude, codex or agy) approve-plans T-0054 and T-0055, and the older grok proposals (T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051, T-0052, T-0053). T-0054 replaces the `-0.2` foot clamp in `draw` and `positionCamera` with the bed while the water is no deeper than a 0.80 m shoulder, and the water surface minus 0.80 m after that. T-0024 keeps the wake. T-0055 puts `autonomousWolfStep`'s spruce/person stop (`BLOCK.wolf.trunk` 0.7 m) on the player branch and does not copy the water stop or the slope stop. The slope and the sunset horizon produced no task. T-0022 owns the date pin. T-0040 is not redone. Expired claims, unchanged: T-0005 release or complete against the seating on main; T-0023 the rest of the mirror excess; T-0027 a new complete that names agy/forage-flora. T-0002 and T-0003 stay off this board. T-0046 stays reserved.
+
+## Run 2026-10-23 08:21 PT
+Matthew's PC omen is offline. Heartbeat clock 2026-10-23 08:21:00 PT (15:21Z). Fetched origin. main is 57a3d48 (committer 2026-10-23 04:55:04 PT). This branch is f37a6da (committer 2026-10-23 07:46:39 PT). PR #41 is the only open PR, head f37a6da, check `test` SUCCESS. Copilot review is the quota comment, not a verdict. No PR comments. Left open. Do not merge it. No issue updated at or after 2026-10-23 14:46Z.
+
+- [x] Step 0 heartbeat. Ledger replay (`npx tsx tools/tasks.ts`): claimed and not complete are T-0005, T-0023, T-0027. No grok or grok-gait claim is open (grok holds 0 of the 2-claim cap). Hours are `git log -1` committer time on `origin/<branch>` to 08:21:00 PT. No new stall or expiry event. Same SHA and same EXPIRED band as the 00:30 comments. Handoffs already name the next step, so they were not rewritten.
+  - T-0005 grok-globe, grok-globe/log-grounding-bark 2b4d462, committer 2026-10-19 11:03:32 PT, 93.29 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-01-grok-comment-T-0005.json stands. Next step stays: release the claim or complete against the seating already on main. Do not open a second grounding branch. Not Grok-owned. Not taken.
+  - T-0023 claude, claude/water-optics 95f1d41, committer 2026-10-21 17:34:13 PT, 38.78 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-03-grok-comment-T-0023.json stands. Next step stays tasks/handoffs/T-0023-claude.md exact next step 1 (the rest of the mirror excess). The ledger claim stays claude's until a release. Not taken.
+  - T-0027 agy, agy/forage-flora 7145ad1, committer 2026-10-21 13:02:57 PT, 43.30 h, still the no-branch complete. Comment tasks/events/2026-10-23T00-30-04-grok-comment-T-0027.json stands. Next step stays the 03:14 line in tasks/handoffs/T-0027-agy.md. Not taken.
+  - T-0002 grok-gait, grok-gait/T-0002-wolf-gallop 5a85c1e, committer 2026-10-19 07:32:39 PT, 96.81 h, EXPIRED, task file not on this board. No new event. Not taken.
+  - T-0003 claude, claude/T-0003-wolf-reach abbf637, committer 2026-10-20 16:40:54 PT, 63.67 h, EXPIRED, task file not on this board. No new event. Not taken.
+  - T-0040 is approved for matthew and unclaimed. origin/grok/ecosystem-sim does not exist. Omen was not checked. Not claimed. Not redone.
+- [x] Matthew requests. The three open quotes still map to T-0044, T-0040 and T-0038. No new quote since 07:17. Nothing unmapped.
+
+## Exact next step
+Step 1: open PRs and events since 2026-10-23 14:46:39Z. Do not approve grok-family work. Do not merge PR #41.
+
+- [x] Step 1. No propose or complete by claude, codex or agy since 14:46:39Z (`git log --all --since=2026-10-23T14:46:39Z` is only f37a6da). PR #41 head is still f37a6da, author prefix grok, so this run writes no agent-review (the tool refuses a review by the branch author). No blocking review to set. Proposed and still without approve-plan, all author grok: T-0007 (no objectives), T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051, T-0052, T-0053, T-0054, T-0055. Methods unchanged from the 07:17 run. Not approve-planned here.
+- [x] Unchanged blocked submission, cited and not re-reviewed (rule 15). T-0025 head `01c4bbb` (origin/agy/littoral-plants, committer 2026-10-21 18:41:42 PT). Blocking review: `tasks/events/2026-10-21T21-32-codex-comment-T-0025.json`. No new commit. T-0021, T-0028 and T-0032 are completed by grok; this run does not review them.
+
+## Exact next step
+Step 2: tasks and issues since 2026-10-23 14:46:39Z, and handoff needs this run can fill. Then recheck T-0055. Do not merge PR #41.
+
+- [x] Step 2. No new task file, propose event, or issue since 14:46:39Z. T-0046 stays reserved. Next free id is T-0056.
+  - Needs checked on this board and the handoffs already merged. T-0032's generated reference is already `refs/forest-edge/reference/t0032-closed-edge.png`. T-0023's noon still is already `refs/water/reference/t0023-noon.png`. T-0022's optional sun-and-post pair is not on disk (`refs/sky/season-fix/reference/` is absent). That prompt says a generated picture cannot pass the solar gate, so this run does not generate one. T-0023 lead 2 is the mirror's per-tier cost, a code change on claude's claim, not taken. T-0021, T-0025 and T-0027 ask for a review or a complete this agent cannot write.
+
+## Exact next step
+Recheck T-0055. `applyPopulation` drops jack pine `3:4:1` (keep roll 0.952 against treeMult 0.45 at 1069 stems/ha). The 07:17 walk measured that unplaced point and the frames show the rock `stones:3:4:52` 2.06 m to the north. Produce a side-camera frame of the wolf against a tree that is actually placed (jack pine `3:4:10` at 141.900, 196.983, base radius 0.153 m), or show the body does not meet the trunk. Evidence under tasks/evidence/2026-10-23-grok-loop-0817/. Then confirm the task with that frame and the corrected species, or withdraw it with a comment event. Do not merge PR #41.

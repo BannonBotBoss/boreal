@@ -1,0 +1,144 @@
+/** T-0028 (grok): the procedural furred snowshoe-hare mesh - own bone table, sourced dimensions, mass check, the moult by
+ *  world date (Mills et al. 2013), Sheriff et al. 2009 fur length and density, skinned to the bounding rig, no mesh file. */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import * as THREE from 'three';
+import { buildBody } from '../src/core/body';
+import { BONE_COUNT as WOLF_BONE_COUNT } from '../src/core/wolfBody';
+import { RIG_BONE as HARE_BONE, RIG_BONE_COUNT as HARE_BONE_COUNT, RIG_TUBE as HARE_TUBE, rigLegTube as hareLegTube, seasonalWhiteness, localWhiteness as rigLocal, unionVolume } from '../src/core/rigBody';
+import { HARE_BODY, HARE_SKIN, createHareModel, hareBind, hareTubes, poseHare, setHareDay, hareCoatState, type HareModel } from '../src/animals/hare';
+const HARE_FUR = HARE_SKIN.fur, MOULT = HARE_SKIN.moult, moultWhiteness = (d: number) => seasonalWhiteness(d, MOULT), localWhiteness = (w: number, y: number) => rigLocal(w, y, MOULT);
+import { type HareBody } from '../src/animals/hare';
+/** what poseHare reads from a sim hare (hare.ts hareBody) */
+const body0 = (o: Partial<HareBody> = {}): HareBody => ({ x: 0, z: 0, heading: 0, speed: 0, action: 'feed', ...o });
+import { limbPoints } from '../src/animals/locomotion/bounding';
+import { skeletonOf } from '../src/animals/locomotion/bodyPlan';
+import { HARE_PLAN } from '../src/animals/hare';
+
+const bind = hareBind(), body = buildBody(hareTubes(bind)), n = body.position.length / 3;
+const bare = buildBody(hareTubes(bind, undefined, 0));
+
+test('hare skin: finite, fully weighted to its OWN bone table (not the wolf indices)', () => {
+  assert.equal(HARE_BONE_COUNT, 22); assert.notEqual(HARE_BONE_COUNT, WOLF_BONE_COUNT); // run 7 of T-0009: + the chest bone
+  assert.ok(body.position.every(Number.isFinite) && body.skinIndex.every(i => i >= 0 && i < HARE_BONE_COUNT));
+  for (let v = 0; v < n; v++) assert.ok(Math.abs(body.skinWeight.slice(v * 4, v * 4 + 4).reduce((a, b) => a + b, 0) - 1) < 1e-9, `vertex ${v}`);
+  assert.ok(n > 1000 && n < 6000, `vertices ${n}`);
+});
+
+test('dimensions: head-body 361-479 mm, ear 62-70 mm, hind foot 117-147 mm (ADW), feet on the ground', () => {
+  let nose = 1, rump = -1, minY = 1;
+  for (let v = 0; v < n; v++) { const t = body.tube[v], z = body.position[v * 3 + 2]; minY = Math.min(minY, body.position[v * 3 + 1]);
+    if (t !== HARE_TUBE.tail && t < 6) { nose = Math.min(nose, z); rump = Math.max(rump, z); } }
+  const hb = (rump - nose) * 1000; assert.ok(hb >= 361 && hb <= 479, `head-body ${hb.toFixed(0)} mm`);
+  assert.ok(bind.ear >= .062 && bind.ear <= .07, `ear ${bind.ear}`);
+  const H = bind.limbs[1], foot = Math.hypot(H[3][1] - H[2][1], H[3][2] - H[2][2]) + Math.hypot(H[4][1] - H[3][1], H[4][2] - H[3][2]);
+  assert.ok(foot >= .117 && foot <= .147, `hind foot ${foot}`); assert.equal(HARE_BODY.hindFoot, .132);
+  assert.ok(minY > -.002 && minY < .002, `lowest skin point ${minY}`);
+});
+
+test('mass check: bare body (no pelt) holds 1.43-1.55 kg at ~1000 kg/m3 [estimate], within 25 %', () => {
+  const litres = unionVolume(bare, 30000) * 1000;
+  assert.ok(litres > 1.43 * .75 && litres < 1.55 * 1.25, `bare body ${litres.toFixed(2)} L`);
+  assert.ok(unionVolume(body, 30000) > unionVolume(bare, 30000), 'the pelt adds volume');
+});
+
+test('moult from the world date (Mills et al. 2013): autumn from ~10 Oct over 40 d, spring from ~10 Apr', () => {
+  assert.equal(MOULT.autumnStart, 283); assert.equal(MOULT.autumnDays, 40);
+  for (const [day, w] of [[227, 0], [283, 0], [303, .5], [323, 1], [15, 1], [100, 1], [120, .5], [140, 0], [227 + 365, 0], [303 - 365, .5]] as const)
+    assert.ok(Math.abs(moultWhiteness(day) - w) < 1e-9, `day ${day}: ${moultWhiteness(day)} vs ${w}`);
+  assert.ok(localWhiteness(.3, .01) > localWhiteness(.3, .2), 'feet whiten before the back');
+  assert.equal(localWhiteness(1, .25), 1); assert.equal(localWhiteness(0, 0), 0);
+});
+
+test('coat: summer shows .44 of the cards at 31.67/43.19 of the winter length (Sheriff et al. 2009); winter all', () => {
+  const hare = createHareModel(); assert.ok(hare.root);
+  setHareDay(15); const winter = hareCoatState()!; assert.equal(winter.whiteness, 1); assert.equal(winter.visibleCards, winter.cards);
+  const fur = hare.root.getObjectByName('fur') as THREE.SkinnedMesh, len = () => { const P = fur.geometry.getAttribute('position').array as Float32Array, R = fur.geometry.userData.roots as Float32Array; let s = 0, k = 0;
+    for (let c = 0; c < R.length / 15; c++) { const d = Math.hypot(P[c * 15 + 12] - R[c * 15 + 12], P[c * 15 + 13] - R[c * 15 + 13], P[c * 15 + 14] - R[c * 15 + 14]); if (d > 0) { s += d; k++; } } return s / k; };
+  const lw = len(); setHareDay(227); const summer = hareCoatState()!;
+  assert.equal(summer.whiteness, 0);
+  assert.ok(Math.abs(summer.visibleCards / summer.cards - HARE_FUR.summerDensity) < .03, `summer share ${summer.visibleCards / summer.cards}`);
+  assert.ok(Math.abs(len() / lw - 31.67 / 43.19) < .01, `length ratio ${len() / lw}`);
+  assert.ok(winter.cards > 3000 && winter.cards <= HARE_FUR.cards, `cards ${winter.cards}`);
+  // colour: the winter back is near white, the summer back brown
+  const C = fur.geometry.getAttribute('color').array as Float32Array; let r = 0; for (let i = 0; i < C.length; i += 3) r += C[i]; const summerMean = r / (C.length / 3);
+  setHareDay(15); r = 0; for (let i = 0; i < C.length; i += 3) r += C[i]; assert.ok(r / (C.length / 3) > summerMean + .2, 'winter coat lighter');
+  setHareDay(227);
+});
+
+test('skinned to the rig: every leg-segment bone sits on its rig joint and points at the next, posed by poseHare', () => {
+  const hare: HareModel = { ...createHareModel(), hopPhase: 0, id: 1 }, sk = skeletonOf(HARE_PLAN);
+  const skins = hare.root.children.filter(o => (o as THREE.SkinnedMesh).isSkinnedMesh) as THREE.SkinnedMesh[];
+  assert.equal(skins.length, 2); assert.equal(skins[0].skeleton, skins[1].skeleton); assert.equal(skins[0].skeleton.bones.length, HARE_BONE_COUNT);
+  const a = body0();
+  for (let i = 0; i < 90; i++) { a.speed = i > 30 ? 6 : 0; poseHare(hare, a, 1 / 60, i / 60, 0); }
+  hare.root.updateMatrixWorld(true);
+  const w = new THREE.Vector3(), d = new THREE.Vector3();
+  hare.legs.forEach((leg, i) => { const P = limbPoints(sk, hare.frame!, i);
+    leg.segs.forEach((bone, s) => { bone.getWorldPosition(w); const p = P[s + leg.from], q = P[s + leg.from + 1], ox = a.x - hare.frame!.x, oz = a.z - hare.frame!.z;
+      assert.ok(Math.hypot(w.x - p.x - ox, w.y - p.y, w.z - p.z - oz) < 1e-6, `leg ${i} seg ${s} off its joint`);
+      d.copy(leg.dirs[s]).transformDirection(bone.matrixWorld); const e = new THREE.Vector3(q.x - p.x, q.y - p.y, q.z - p.z).normalize();
+      assert.ok(d.dot(e) > .9999, `leg ${i} seg ${s} direction`); }); });
+  assert.ok(Math.abs(hare.body.rotation.x - hare.frame!.tilt.pitch) < 1e-12);
+  assert.equal(HARE_BONE.head, 1); assert.equal(hareLegTube(0), 6);
+});
+
+test('no mesh file: the hare is built from code, nothing is fetched or loaded', () => {
+  const src = ['src/animals/hare.ts', 'src/core/rigBody.ts', 'src/render/rigSkin.ts', 'src/render/furCards.ts', 'src/core/body.ts'].map(f => readFileSync(f, 'utf8')).join('\n');
+  assert.doesNotMatch(src, /GLTFLoader|OBJLoader|FBXLoader|ColladaLoader|PLYLoader|STLLoader|\.(glb|gltf|fbx|obj|dae|ply|stl)['"`]|TextureLoader|new URL\(/);
+  const walk = (d: string): string[] => !existsSync(d) ? [] : readdirSync(d).flatMap(f => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
+  assert.deepEqual(walk('public').filter(f => /hare|rabbit|lepus/i.test(f) && /\.(glb|gltf|fbx|obj|dae|ply|stl|png|jpg|ktx2)$/i.test(f)), []);
+  const g = globalThis as { fetch?: unknown; XMLHttpRequest?: unknown }, saved = [g.fetch, g.XMLHttpRequest]; let calls = 0;
+  g.fetch = () => { calls++; throw new Error('fetch'); }; g.XMLHttpRequest = function () { calls++; throw new Error('xhr'); };
+  try { createHareModel(); } finally { g.fetch = saved[0]; g.XMLHttpRequest = saved[1]; }
+  assert.equal(calls, 0);
+});
+
+test('coat detail: dark dorsal line in summer only, pale ear rims, dark eyelids, rounder winter body (morph), finer cards', () => {
+  const summer = buildBody(hareTubes(bind)), winter = buildBody(hareTubes(bind, HARE_SKIN.winter, HARE_SKIN.winterPelt));
+  const lum = (b: typeof summer, v: number) => b.color[v * 3] + b.color[v * 3 + 1] + b.color[v * 3 + 2];
+  const trunk = (b: typeof summer, pick: (y: number, ny: number) => boolean) => { let s = 0, k = 0; for (let v = 0; v < b.tube.length; v++) if (b.tube[v] === HARE_TUBE.trunk) {
+    const y = b.position[v * 3 + 1], ny = b.normal[v * 3 + 1]; if (pick(y, ny)) { s += lum(b, v); k++; } } return s / k; };
+  assert.ok(trunk(summer, (_y, ny) => ny > .9) < trunk(summer, (_y, ny) => ny > .3 && ny < .6) - .03, 'summer: darker along the top of the back');
+  assert.ok(Math.abs(trunk(winter, (_y, ny) => ny > .9) - trunk(winter, (_y, ny) => ny > .3 && ny < .6)) < .03, 'winter: no dorsal line');
+  const ear = (b: typeof summer, edge: boolean) => { let s = 0, k = 0; const R = 10, base = b.tube.indexOf(HARE_TUBE.earL);
+    for (let v = base; v < b.tube.length; v++) if (b.tube[v] === HARE_TUBE.earL) { const j = (v - base) % R, c = Math.abs(Math.cos(j / R * Math.PI * 2)); if (edge ? c > .95 : c < .35) { s += lum(b, v); k++; } } return s / k; };
+  assert.ok(ear(summer, true) > ear(summer, false) + .1, 'summer ears: pale rims');
+  const hare = createHareModel(), skin = hare.root.getObjectByName('skin') as THREE.SkinnedMesh, eye = HARE_SKIN.eye;
+  const C = skin.geometry.userData.winter as number[], P = skin.geometry.getAttribute('position').array as Float32Array;
+  const ex = bind.pivot[0] + eye[0], ey = bind.pivot[1] + bind.head[1] + eye[1], ez = bind.pivot[2] + bind.head[2] + eye[2]; let lid = 9, far = 0;
+  for (let v = 0; v < P.length / 3; v++) { const d = Math.hypot(P[v * 3] - ex, P[v * 3 + 1] - ey, P[v * 3 + 2] - ez), l = C[v * 3] + C[v * 3 + 1] + C[v * 3 + 2]; if (d < HARE_SKIN.eyelid!.radius) lid = Math.min(lid, l); else if (d > .02 && d < .03) far = Math.max(far, l); }
+  assert.ok(lid < .5 * far && far > 1.5, `winter eyelids dark (${lid.toFixed(2)}) on a white head (${far.toFixed(2)})`);
+  const morph = skin.geometry.morphAttributes.position?.[0]; assert.ok(morph, 'winter morph target');
+  let up = 0; for (let v = 0; v < P.length / 3; v++) if (summer.tube[v] === HARE_TUBE.trunk && summer.normal[v * 3 + 1] > .9) up += morph.getY(v);
+  assert.ok(up > 0, 'the winter pelt is thicker over the back'); assert.ok(HARE_SKIN.winterPelt! > 1);
+  assert.ok(HARE_FUR.width < .013 && HARE_FUR.cards > 7000, 'finer, denser cards than T-0028 v1 (.013 m x 7000)');
+});
+
+test('chest bone (T-0009 run 7): the front trunk and neck weight the chest, the rump the body; the chest follows the rig span', () => {
+  assert.ok(bind.chest && bind.chest[2] < -.15, `chest bind ${bind.chest}`);
+  let front = 0, frontW = 0, rear = 0, rearW = 0;
+  for (let v = 0; v < n; v++) { if (body.tube[v] !== HARE_TUBE.trunk) continue; const z = body.position[v * 3 + 2]; let w = 0;
+    for (let k = 0; k < 4; k++) if (body.skinIndex[v * 4 + k] === HARE_BONE.chest) w += body.skinWeight[v * 4 + k];
+    if (z < -.2) { front++; frontW += w; } else if (z > 0) { rear++; rearW += w; } }
+  assert.ok(front > 20 && frontW / front > .7, `front chest weight ${(frontW / front).toFixed(2)}`);
+  assert.ok(rear > 20 && rearW / rear < .01, `rump chest weight ${(rearW / rear).toFixed(2)}`);
+  const h = createHareModel() as HareModel, a = body0();
+  a.action = 'flee'; a.speed = 8.5; let lo = 1, hi = -1;
+  for (let t = 0; t < 2; t += 1 / 120) { a.z -= 8.5 / 120; poseHare(h, a, 1 / 120, t, 0); if (t > 1) { lo = Math.min(lo, h.chest!.position.z); hi = Math.max(hi, h.chest!.position.z); } }
+  assert.ok(hi - lo > .05, `chest travel ${(hi - lo).toFixed(3)} m over the stride (rig span .13-.23 m)`);
+});
+
+test('head pose (run 11): the lowered graze and run heads stay out of the ground (every head ring, posed, minus its radius and pelt)', () => {
+  for (const [action, speed] of [['feed', 0], ['flee', 8.5]] as const) {
+    const hare: HareModel = { ...createHareModel(), hopPhase: 0, id: 1 }, a = body0();
+    let low = Infinity; const w = new THREE.Vector3();
+    for (let i = 0; i < 240; i++) { a.action = action; a.speed = speed; a.x += speed / 60; poseHare(hare, a, 1 / 60, i / 60, 0);
+      if (i > 60) { hare.root.updateMatrixWorld(true);
+        for (const r of HARE_SKIN.head) { hare.head.localToWorld(w.set(0, r.y, r.z)); low = Math.min(low, w.y - Math.max(r.rx, r.ry) - HARE_SKIN.pelt.head); } } }
+    // a grazing hare's mouth reaches the clover: the fur may brush the ground (5 mm), the head may not sink into it
+    assert.ok(low > -.005, `${action}: lowest head surface ${low.toFixed(3)} m`);
+  }
+});

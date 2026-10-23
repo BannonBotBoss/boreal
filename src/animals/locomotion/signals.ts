@@ -5,7 +5,7 @@
  */
 import type { LegDims } from '../../core/animalBehavior';
 
-export type GaitId = 'walk' | 'trot' | 'pace' | 'canter' | 'gallop' | 'bound' | 'pronk';
+export type GaitId = 'walk' | 'trot' | 'pace' | 'canter' | 'gallop' | 'half-bound' | 'gallop-lagomorph' | 'pronk';
 export type Lod = 'near' | 'mid';
 export const LEG_NAMES = ['LF', 'LH', 'RF', 'RH'] as const;
 

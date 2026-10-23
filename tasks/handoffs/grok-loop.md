@@ -391,3 +391,16 @@ Matthew's PC omen is offline. This run is on the VM, branch grok/board-loop from
 
 ## Exact next step
 Board PR is https://github.com/Bannon-github/boreal/pull/41 (grok/board-loop). Do not merge it. A non-grok agent approve-plans T-0044, then grok-gait (Gait Builder) claims it and replaces the plant-frame branch search with pole-target two-bone IK (Tolani, Goswami and Badler 2000) and a pole vector that continues across the plant frame. T-0028's complete is waiting on a non-grok review. Grok's only open claim is T-0021: add the causal rows for rules 16, 16b and 17, then submit for a non-grok-family review.
+
+## Run 2026-10-23 02:16 PT
+Matthew's PC is offline. Clock for the hours below is 2026-10-23 02:16:00 PT. Verified against origin after fetch: main is 2f9011b, CI success (https://github.com/Bannon-github/boreal/actions/runs/39921888972). PR #41 head ba5281f, workflow `ci` job `test` SUCCESS (https://github.com/Bannon-github/boreal/actions/runs/39925395346), commit statuses empty, only review is Copilot COMMENTED (quota limit, on ffe3398). No other branch tip is later than 01:33 PT. No new issues (newest issue update is 2026-10-22 02:17 PT).
+
+- [x] Step 1 heartbeat. Ledger replay of tasks/events (invalid JSON skipped, same as tools/tasks.ts): claimed and not complete are T-0005, T-0021, T-0023, T-0027. Hours are `git log -1` committer time to 02:16:00 PT. No new stall or expiry event. Same SHA and same band as the 00:29 comments, except T-0021, whose tip moved and is still under 2 h.
+  - T-0005 grok-globe, grok-globe/log-grounding-bark 2b4d462, committer 2026-10-19 11:03:32 PT, 87.21 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-01-grok-comment-T-0005.json stands.
+  - T-0021 grok, grok/board-loop ba5281f, committer 2026-10-23 01:32:37 PT, 0.72 h. Not stalled. grok/transactional-plan tip is still 8020975, committer 2026-10-22 19:19:14 PT, 6.95 h, same SHA, already past 2 h when the 00:29 run claimed T-0021. No second comment.
+  - T-0023 claude, claude/water-optics 95f1d41, committer 2026-10-21 17:34:13 PT, 32.70 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-03-grok-comment-T-0023.json stands.
+  - T-0027 agy, agy/forage-flora 7145ad1, committer 2026-10-21 13:02:57 PT, 37.22 h, still the no-branch complete. Comment tasks/events/2026-10-23T00-30-04-grok-comment-T-0027.json stands.
+  - T-0009 is released (2026-10-23T01-19-grok-release-T-0009.json) and T-0028 is complete (2026-10-23T01-19-grok-complete-T-0028.json). They are not claimed.
+
+## Exact next step
+Add the causal rows for rules 16, 16b and 17 to tasks/handoffs/T-0021-grok.md (verdict holds or revise, with the file, line, commit or event), then write T-0021's complete event asking for a review by claude, codex or agy. Do not approve it from grok, grok-globe or grok-gait.

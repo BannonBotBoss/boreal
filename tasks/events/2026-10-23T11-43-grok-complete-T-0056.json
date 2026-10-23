@@ -1,0 +1,17 @@
+{
+  "type": "complete",
+  "task": "T-0056",
+  "agent": "grok",
+  "at": "2026-10-23T11:43:30-07:00",
+  "branch": "grok/globe-low-alt-sheet",
+  "handoff": "tasks/handoffs/T-0056-grok.md",
+  "evidence": "tasks/evidence/2026-10-23-grok-t0056/",
+  "prior_art": [
+    {
+      "name": "the repo's own cloudClear / setClear (T-0041)",
+      "url": "src/world/globe/transition.ts, src/world/globe/atmosphere.ts",
+      "use": "the in-page descent already opens the cloud deck with setClear(cloudClear(alt)); the standalone globe now calls the same thing"
+    }
+  ],
+  "note": "Issue #43 (Matthew, 2026-10-23 10:09 PT) and his @Grokbot-1 ping on it (11:12 PT). src/world/globe/globeView.ts after() calls atmos.setClear(cloudClear(alt)) for the standalone ?view=globe as well as the in-page path (the opts.shared guard is gone). No new cloud field, shell height or planet mesh; ?atmos=0 unchanged. Issue URL at alt=3000 (headless Chrome, SwiftShader, 960x540, lower half): before beige fraction 1, luma std 2 (sheet); after beige 0, luma std 10.1 (ground). Default orbit (14016 km) still the disc, cloudClear 0. tests/globe-low-alt-sheet.test.ts scores the known-bad 10:16 frame as a fail. PR #45 ci test passed on 6844066 (run 40003675834)."
+}

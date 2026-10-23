@@ -803,3 +803,20 @@ Measure `?view=globe&alt=3000` against `?atmos=0` and against Minimum (0 cloud o
 
 ## Exact next step
 File T-0056, T-0057, T-0058 and T-0059 for issue #43. Approve-plan each for matthew with his verbatim issue text and the 2026-10-22 01:52 PT sentence. Do not claim them. T-0046 stays reserved. Do not merge PR #41.
+
+- [x] Step 4. Four tasks. T-0046 stays reserved. Approve-plan for matthew on each (issue #43 is the direct request). Not claimed. Grok holds 0 of 2 claims.
+  - T-0056 blank low-altitude globe. `tasks/T-0056-globe-low-alt-sheet.md`. Propose `tasks/events/2026-10-23T10-26-grok-propose-T-0056.json` at 2026-10-23T10:26:00-07:00. Approve-plan `tasks/events/2026-10-23T10-26-grok-approve-plan-T-0056.json` at 10:26:10. Credits 30 = 10 × 3. Method: `setClear(cloudClear(alt))` on the standalone path, the call `globeView.ts` 404 already makes when `opts.shared`. Known mismatch: `alt3000.png` beige 1.000, luma std 2.0. Known match: `alt3000-atmos0.png` std 15.9 and `alt3000-tier5.png` std 15.7.
+  - T-0057 solar budget. `tasks/T-0057-planet-solar-budget.md`. Propose 10:27:00, approve-plan 10:27:10. Credits 39 = 10 × 3 × 1.3. Method: `solar()`, `shortwave()`, and the longwave term in `surfaceBalance`. Not Berger. Not a zonal Budyko–Sellers model. T-0022 keeps the sky call.
+  - T-0058 hydrosphere and surface. `tasks/T-0058-planet-hydro-surface.md`. Propose 10:28:00, approve-plan 10:28:10. Credits 39. Method: Manabe bucket (`HYDRO.bucketMm` 150), `qsat`, `SURFACE`, `sampleSurface`. Continents stay `planet.ts`. No spin-up.
+  - T-0059 atmosphere. `tasks/T-0059-planet-atmosphere-budget.md`. Propose 10:29:00, approve-plan 10:29:10. Credits 39. Method: hydrostatic `climate()` pressure, geostrophic `|∇p| / (ρ f)` with `f = 2 Ω sin φ`, cloud fraction into the existing `CLOUDS` shell. Stam and Kessler stay the near grid.
+  - No continent task. `planet.ts` already builds the relief. No Rust. Comment on issue #43: https://github.com/Bannon-github/boreal/issues/43#issuecomment-6370807967
+
+## Exact next step
+Step 5: run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not claim T-0056..T-0059. Do not merge PR #41. Stop Vite and any headless Chrome. No second inspection this hour: the globe frames are the check, and UI (05:22) and sky (08:21) already have open tasks.
+
+- [x] Step 5. No grok-owned proposal was claimed. T-0056..T-0059 are approved for matthew and unclaimed. T-0055 stays proposed. The 09:26 follow frames still do not show the bole through the chest, so it was not re-raised. Grok holds 0 of 2 claims. T-0040 stays approved and unclaimed. Omen was not checked. No game code.
+- [x] Tests. `npx tsc --noEmit` exit 0. `npm test` 493 pass, 0 fail, 13 todo (506 tests). `npx tsx tools/tasks.ts` lists T-0056 approved at 30, T-0057 T-0058 T-0059 approved at 39. Rule breaks are still the existing 20. The todo `task board: every event follows tasks/RULES.md` is that legacy count. Vite on 5173 was stopped. No Chrome was left.
+- [x] Issue comment posted before this commit, naming the four tasks and the frames.
+
+## Exact next step
+Do not merge grok/board-loop (PR #41). T-0056 calls `setClear(cloudClear(alt))` on the standalone globe. T-0057..T-0059 add seeded planet-cell budgets on `solar` / the Manabe bucket / `SURFACE` / hydrostatic pressure and geostrophic wind, drawn only while `CLOUDS.octaves` is above 0. A non-grok agent does not need to approve-plan these four (they are for matthew). They are unclaimed. Older grok proposals (T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051, T-0052, T-0053, T-0054, T-0055) still need a non-grok approve-plan. T-0055 stays unconfirmed as a picture: the follow frames do not show the trunk through the chest. Expired claims, unchanged: T-0005 release or complete against the seating on main; T-0023 the rest of the mirror excess; T-0027 a new complete that names agy/forage-flora. T-0002 and T-0003 stay off this board. T-0046 stays reserved. T-0040 is not redone.

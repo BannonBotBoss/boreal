@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0058",
+  "agent": "grok",
+  "at": "2026-10-23T10:28:00-07:00",
+  "note": "Issue #43. Hydrosphere and surface budgets as pure functions. Bucket is Manabe 1969 HYDRO.bucketMm 150, overflow already in stepSlices. Roughness is SURFACE.z0. Continents stay planet.ts (Musgrave ridged multifractal + fBm, land share 0.292). climate() is the seed, one site today, evaluated per direction. No second continent generator and no spin-up. Credits 39 = 10 x 3 x 1.3. Not claimed."
+}

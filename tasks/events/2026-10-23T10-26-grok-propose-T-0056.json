@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0056",
+  "agent": "grok",
+  "at": "2026-10-23T10:26:00-07:00",
+  "note": "Issue #43, Matthew 2026-10-23 10:09 PT. Standalone ?view=globe leaves uCloudClear at 0 (globeView.ts 404 runs setClear only when opts.shared). At alt=3000 the 2.5 km / 900 km cloud shell fills the ground half: alt3000.png lower-half beige fraction 1.000, luma std 2.0, mean RGB 200.7, 197.4, 188.8. ?atmos=0 at the same pose is mean 33.7, 40.8, 34.8, luma std 15.9 (alt3000-atmos0.png). Minimum, 0 cloud octaves, matches that open ground (alt3000-tier5.png, std 15.7). cloudClear(3000) is already 1. T-0041 owns the in-page fade only. Credits 30 = 10 x 3. Not claimed."
+}

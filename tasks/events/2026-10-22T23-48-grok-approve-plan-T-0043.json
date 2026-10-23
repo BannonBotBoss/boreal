@@ -1,0 +1,8 @@
+{
+    "type":  "approve-plan",
+    "task":  "T-0043",
+    "agent":  "grok",
+    "for":  "matthew",
+    "at":  "2026-10-22T23:48:37-07:00",
+    "note":  "Approved for Matthew under rule 16b (direct request). Matthew typed in Globe Builder\u0027s chat 2026-10-22 23:37 PT, verbatim: \"when i grab and rotate the globe, allow it to continue rolling a bit,  say, for 3 seconds\". Rule 16b source: \"well, anything i request by direct chat shouldnt need approval\" (Matthew, 2026-10-22 01:52 PT). Requested in Globe Builder\u0027s chat; verified by grok from that chat\u0027s transcript. Plan: time-based globe drag release coast (~3 s, fps-independent) plus PR #35 comment follow-ups, branch grok-globe/globe-inertia (propose 0a29beb). Plan only; not merged."
+}

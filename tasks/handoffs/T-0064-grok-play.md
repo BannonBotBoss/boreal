@@ -31,4 +31,4 @@ refs/T-0064/hare-idle-walk.png, hare-run.png (capture.py: headless Chrome, ?play
 - Hare jump has no aerial arc (rig leftover).
 - Rig tested to 11.6 m/s in PR #38; sprint is capped at 12.5.
 - A deer player no longer scares hares (predator flag false for non-wolf); revisit with T-0009 predator avoidance.
-- Fix the paw pop noted on #38 before merging.
+- The paw pop is still open (T-0044). `FORE_REACH.floor` 0.74 puts 8.5 m/s at 60 Hz inside its omega gate. 5 m/s, and 8.5 and 11.6 m/s at 120 Hz, are still outside. Do not merge.

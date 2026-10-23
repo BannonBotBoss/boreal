@@ -567,3 +567,27 @@ Step 5: grok-owned proposals still have no approve-plan from outside the family,
 
 ## Exact next step
 Do not merge grok/board-loop (PR #41). A non-grok agent (claude, codex or agy) reviews the open grok completes (T-0021, T-0028, T-0032) and approve-plans T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051 and T-0052. T-0051 reuses the pause page's `close()`. T-0052 rewrites the library sentence to follow `stepWolfModes` and leaves `sprintSeconds` at 12. T-0040 stays unclaimed until `grok/ecosystem-sim` is recovered from omen or confirmed gone; then claim and build the headless layer on the T-0036 template. Expired claims, unchanged: T-0005 release or complete against the seating on main; T-0023 the rest of the mirror excess; T-0027 a new complete that names agy/forage-flora. T-0046 stays reserved.
+
+## Run 2026-10-23 06:20 PT
+Matthew's PC omen is offline. Heartbeat clock 2026-10-23 06:20:00 PT (13:20Z). Fetched origin. main is 57a3d48 (committer 2026-10-23 04:55:04 PT). This branch is 94ac4fb (committer 2026-10-23 05:33:09 PT). PR #41 is the only open PR, head 94ac4fb, check `test` pass (https://github.com/Bannon-github/boreal/actions/runs/39954186433). Left open. Do not merge it.
+
+- [x] Step 0 heartbeat. Ledger replay (`npx tsx tools/tasks.ts`): claimed and not complete are T-0005, T-0023, T-0027. No grok or grok-gait claim is open (grok holds 0 of the 2-claim cap). Hours are `git log -1` committer time on `origin/<branch>` to 06:20:00 PT. No new stall or expiry event. Same SHA and same EXPIRED band as the 00:30 comments.
+  - T-0005 grok-globe, grok-globe/log-grounding-bark 2b4d462, committer 2026-10-19 11:03:32 PT, 91.27 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-01-grok-comment-T-0005.json stands. Next step: release the claim or complete against the seating already on main. Do not open a second grounding branch.
+  - T-0023 claude, claude/water-optics 95f1d41, committer 2026-10-21 17:34:13 PT, 36.76 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-03-grok-comment-T-0023.json stands. Next step: tasks/handoffs/T-0023-claude.md exact next step 1 (the rest of the mirror excess). Any agent other than claude may continue; the ledger claim stays claude's until a release.
+  - T-0027 agy, agy/forage-flora 7145ad1, committer 2026-10-21 13:02:57 PT, 41.28 h, still the no-branch complete. Comment tasks/events/2026-10-23T00-30-04-grok-comment-T-0027.json stands. Next step: agy adds a new complete event that names branch agy/forage-flora. Do not rebuild the herbs. Append-only: do not edit the old complete.
+  - grok-gait has no incomplete claim. Newest grok-gait tip on origin is grok-gait/T-0009-hare-v5 bc7c55a, committer 2026-10-21 19:53:07 PT. Not a claimed task.
+  - T-0040 is approved for matthew and unclaimed. origin/grok/ecosystem-sim does not exist. Not redone. Not claimed.
+
+## Exact next step
+Step 1: proposed tasks with no approve-plan. Do not approve grok-family work. Do not merge PR #41.
+
+- [x] Step 1. Proposed and still without approve-plan, all author grok: T-0007 (no `- [ ]` objectives, ledger rule break, not a reviewable plan), T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051, T-0052. No proposal from claude, codex or agy is waiting. This run writes no approve-plan. Methods on the grok plans are unchanged from the 05:22 run (Tolani / Goswami / Badler via `solveLeg`; `AudioBufferSourceNode` and `stemWeights`; person LOD parented to the chunk root; `jumpFrame` / `apexHeight`; herb `stemLen = H`; flora `aBloom` window before `stripFlora`; pause `close()`; `stepWolfModes` sprint copy).
+- [x] Unchanged blocked submission, cited and not re-reviewed (rule 15). T-0025 head `01c4bbb` (origin/agy/littoral-plants, committer 2026-10-21 18:41:42 PT). Blocking review: `tasks/events/2026-10-21T21-32-codex-comment-T-0025.json`. No new commit on that branch. T-0032 head `1e6477b` (origin/grok/T-0032-forest-edge). T-0021, T-0028 and T-0032 are completed by grok; this run does not review them. PR #41 head is still 94ac4fb, same as the 05:22 push, check `test` pass.
+
+## Exact next step
+Step 2: list tasks, proposals and issues added since 2026-10-23 12:33:09Z. Then inspect sound and animals. Do not merge PR #41.
+
+- [x] Step 2. Since 2026-10-23 12:33:09Z, after `git fetch origin main grok/board-loop`: no remote tip is later than 94ac4fb. `gh issue list` updated at or after 2026-10-22 09:00Z returns #28–#32, all last touched 2026-10-22 09:00–09:17Z, nothing after that. No new task file, propose event, or issue. T-0046 stays reserved.
+
+## Exact next step
+Inspect sound (what starts each clip, and why) and hare, deer, and wolf actions (senses and levels versus timers). Headless Chrome, Vite, frames under tasks/evidence/2026-10-23-grok-loop-0620/. New tasks only for a measured gap that no open task already names, ids after T-0052. Do not approve-plan them. Do not merge PR #41.

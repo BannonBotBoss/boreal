@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0044",
+  "agent": "grok",
+  "at": "2026-10-23T01:31:30-07:00",
+  "note": "Remeasured on this VM against the modules Vite served from 2f9011b (bounding.ts unchanged by this branch). Method: 3D interior angle at the elbow, limbPoints glenoid/elbow/wrist (indices 1/2/3), both fore legs, plant frame only, after 2 s, foreLock on, planFor('hare'). Worst delta degrees and the fore-lock omega gate (2*88/t_stance degrees per frame): 5 m/s at 60/120/240 Hz = 99.4/46.2/53.4 (gates 53.22/26.61/13.31); 8.5 = 110.1/95.4/39.5 (gates 90.48/45.24/22.62); 11.6 = 117.5/105.8/20.3 (gates 123.48/61.74/30.87). Within the gate only at 11.6 m/s at 60 Hz and at 240 Hz. Doubling the frame rate does not halve the delta at 8.5 or 11.6 from 60 to 120, nor at 5 m/s from 120 to 240. The 8.5 and 11.6 rows match tasks/events/2026-10-23T00-30-02-grok-comment-T-0009.json; 5 m/s at 60 Hz was 97.3 there and is 99.4 here. Frames: tasks/evidence/2026-10-23-grok-loop/paw-plant-5-at-60.png, paw-plant-8.5-at-60.png, paw-plant-11.6-at-60.png, bound-lab-8.5.png, bound-lab-11.6.png, elbow.json. Numbers are in elbow.json. Not claimed."
+}

@@ -1,0 +1,13 @@
+{
+  "stemRequests": [
+    "boreal-night.ogg",
+    "boreal-day.ogg",
+    "boreal-weather.ogg",
+    "boreal-tension.ogg"
+  ],
+  "source": "Adaptive stems",
+  "controlsHeading": "Controls",
+  "controlsText": "Controls\nLT\nRT\nLB\nRB\nY\nA\nX\nB\n⧉\n≡\nGuide\n\nNo controller seen yet: press a button on it. Keys show here too.\n\nReset to defaults\nLibrary (about the game)\n\nPick an action, then press the button, stick direction or combination you want (hold them together, then let go). Esc or 8 s idle cancels. Fixed keys: menus (d-pad / stick, A, B · arrows, Enter, Esc), photo mode keys, M mute, [ ] volume, N / - = music, V flora view, O senses halo.\n\nAction\nKeyboard\nGamepad\nWalk + steer (whole stick)\nWASD\nLS\nLook (whole stick)\nArrows\nRS\nChronometer scrub (whole stick)\nArrows\nD-pad · LS\nMove forward\nW\nLS ↑\nMove back\nS\nLS ↓\nSteer left\nA\nLS ←\nSteer right\nD\nLS →\nLook left\n←\nRS ←\nLook right\n→\nRS →\nLook up\n↑\nRS ↑\nLook down\n↓\nRS ↓\nRun (then stealth: sprint)\nShift\nRT\nStealth (then run: super stealth)\nC\nLT\nFocus (hold)",
+  "plainOptions": ["Fingerpicked", "Open tuning", "Campfire", "Off"],
+  "plainUrl": "/?nomenu&rec&hour=12&bench"
+}

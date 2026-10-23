@@ -502,13 +502,16 @@ Run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not merge PR #4
 Do not merge grok/board-loop (PR #41). A non-grok agent (claude, codex or agy) reviews the T-0021 complete and the other grok completes still waiting (T-0028, T-0032). Another agent approve-plans T-0044, T-0045, T-0047, T-0048, T-0049 and T-0050. T-0049 uses the herb stem length already in `buildPlant`. T-0050 applies the flora shader's bloom window inside `propFlora` before `stripFlora`. grok-globe claims T-0043 on grok-globe/globe-inertia. Expired claims, unchanged: T-0005 release or complete against the seating on main; T-0023 the rest of the mirror excess; T-0027 a new complete that names agy/forage-flora. T-0046 stays reserved.
 
 ## Matthew requests
-Open until the named task is merged. A row is here only when the quote is in an event, a task file, or the codex snapshot of an unpushed branch.
+Open until the named task is merged. A row is here only when the quote is in an event, a task file, an issue body, or the codex snapshot of an unpushed branch.
 
-- 2026-10-22 23:25 PT, "Fix the paw pop before merging" → T-0044, proposed, not merged. PR #38 merged without the fix (4cecdf2).
-- 2026-10-22 01:57 PT, "siince the ecosystem depend on a lot more animals, they should be implemented without needing a visual rendering" → T-0040. The files were only on unpushed grok/ecosystem-sim. Restored this run (propose + approve-plan for matthew). Not merged. Not claimed here.
-- 2026-10-22 ~01:50 PT, "so, i should be able to access the board via a weblink that appears in the start menu" → T-0038, approved, not complete. The menu Board button opens `SYSTEM_PROPERTIES.links.board`, which is the GitHub issues URL. Mapped. No second task.
+- 2026-10-22 23:25 PT, "Fix the paw pop before merging" → T-0044, claimed by grok at 12:54 PT, not merged. PR #38 merged without the fix (4cecdf2). PR #44 stays blocked on the pop.
+- 2026-10-22 01:57 PT, "siince the ecosystem depend on a lot more animals, they should be implemented without needing a visual rendering" → T-0040, approved for matthew, unclaimed. origin/grok/ecosystem-sim does not exist. Not redone.
+- 2026-10-22 ~01:50 PT, "so, i should be able to access the board via a weblink that appears in the start menu" → T-0038, approved, not complete. Issue #32. The menu Board button opens `SYSTEM_PROPERTIES.links.board`. Mapped. No second task.
+- Issue #43, opened 2026-10-23 10:09 PT, title "game startup" → T-0056 (done, PR #45 merged as 5bc3dc1), T-0057 (claimed, PR #48), T-0058 and T-0059 (approved for matthew, unclaimed). grokbot-1's "i want to use rust for the game" is T-0061 on main (proposed; the 12:45:30 comment says that quote is not an approve-plan).
+- Issue #46, 2026-10-23 12:27:56 PT, the planet_fundamentals tree → T-0062, approve-plan for matthew at 13:22:30 on grok/issues-46-47, unclaimed, PR #49.
+- Issue #47, 2026-10-23 12:29:54 PT, the boot list ending in "Render globe" → T-0063, approve-plan for matthew at 13:23:30 on grok/issues-46-47, unclaimed, PR #49.
 
-Merged, so closed on this list: T-0033 music, T-0034 globe load (PR #33), T-0035 outline, T-0036 needs, T-0037 system properties, T-0039 globe HUD, T-0041 descent (PR #35), T-0043 globe coast (PR #42, main 57a3d48, 2026-10-23 04:55 PT).
+Merged, so closed on this list: T-0033 music, T-0034 globe load (PR #33), T-0035 outline, T-0036 needs, T-0037 system properties, T-0039 globe HUD, T-0041 descent (PR #35), T-0043 globe coast (PR #42, main 57a3d48, 2026-10-23 04:55 PT), T-0056 globe sheet (PR #45, main 5bc3dc1).
 
 ## Run 2026-10-23 05:22 PT
 Matthew's PC omen is offline. Heartbeat clock 2026-10-23 05:22:00 PT. Fetched origin. main is 57a3d48 (Matthew merged PR #42, T-0043, 2026-10-23 04:55:04 PT). This branch was merged with origin/main so the ledger sees that complete. PR #41 stays open. Do not merge it.
@@ -921,4 +924,22 @@ Push grok/board-loop, grok/playable-hare, and grok/planet-solar-budget. Update P
 
 ## Exact next step
 Wait for claude, codex, or agy to review PR #48 (T-0057) and PR #44 (T-0061). Do not approve either. Do not wire the pole into `foreLimb` until a plant-frame delta halves and stays inside the omega gate without leaving the 11–36° forearm. Do not merge PR #41, PR #44, or PR #48.
+
+## Run 2026-10-23 14:22 PT
+Matthew's PC omen is offline. Heartbeat clock 2026-10-23 14:22:21 PT (21:22:21Z). Fetched origin. main is fd65b8d (committer 2026-10-23 12:44:50 PT), T-0061 Rust planet budgets pushed straight to main by grokbot-1, no PR. Merged origin/main into grok/board-loop so the ledger sees that task file. This branch was 128d025 (committer 2026-10-23 13:19:30 PT). Open PRs, check `test` SUCCESS on each: #41 grok/board-loop (was 128d025), #44 grok/playable-hare head 899ed1f, #48 grok/planet-solar-budget head 05f6328, #49 grok/issues-46-47 head 5415704. Do not merge any of them. No new Matthew comment since 13:10 PT. Issue comments at 13:26 PT on #46 and #47 are the grok/issues-46-47 filing notes, posted on the shared login.
+
+- [x] Step 0 heartbeat. Ledger replay (`npx tsx tools/tasks.ts`) after the main merge. Claimed and not complete: T-0005, T-0023, T-0027, T-0044, T-0057. Grok holds 2 of 2 (T-0044, T-0057). No third claim, so nothing was released. Hours are `git log -1` committer time on `origin/<branch>` to 14:22:21 PT. No claim is in the 2 h STALLED band. No new expiry event. The 00:30 expiry comments still name the next step, and a release is accepted only from the claimant (`tools/tasks.ts`), so a second claim would be a rule break. Not taken.
+  - T-0044 grok, grok/playable-hare 899ed1f, committer 2026-10-23 13:01:38 PT, 1.35 h. Under 2 h. Not stalled. Paw pop still open; that work is step 1.
+  - T-0057 grok, grok/planet-solar-budget 05f6328, committer 2026-10-23 13:19:30 PT, 1.05 h. Under 2 h. Not stalled. Not completed. Not approved.
+  - T-0005 grok-globe, grok-globe/log-grounding-bark 2b4d462, committer 2026-10-19 11:03:32 PT, 99.31 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-01-grok-comment-T-0005.json stands. Next step stays: release the claim or complete against the seating already on main. Not taken.
+  - T-0023 claude, claude/water-optics 95f1d41, committer 2026-10-21 17:34:13 PT, 44.80 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-03-grok-comment-T-0023.json stands. Next step stays tasks/handoffs/T-0023-claude.md exact next step 1 (the rest of the mirror excess). Not taken.
+  - T-0027 agy, agy/forage-flora 7145ad1, committer 2026-10-21 13:02:57 PT, 49.32 h, still the no-branch complete. Comment tasks/events/2026-10-23T00-30-04-grok-comment-T-0027.json stands. Next step stays the 03:14 line in tasks/handoffs/T-0027-agy.md. Not taken.
+  - T-0002 grok-gait, grok-gait/T-0002-wolf-gallop 5a85c1e, committer 2026-10-19 07:32:39 PT, 102.83 h, EXPIRED, task file not on this board. No new event. Not taken.
+  - T-0003 claude, claude/T-0003-wolf-reach abbf637, committer 2026-10-20 16:40:54 PT, 69.69 h, EXPIRED, task file not on this board. No new event. Not taken.
+  - T-0062 and T-0063 are approved for matthew on origin/grok/issues-46-47 (5415704, committer 2026-10-23 13:26:59 PT, 0.92 h) and are not claimed. Not taken: Grok is at the 2-claim cap.
+  - T-0040 stays approved for matthew and unclaimed. origin/grok/ecosystem-sim does not exist. Not claimed. Not redone.
+- [x] Matthew requests. Every row in the list above maps to a task or a PR. Nothing unmapped. T-0021 is completed, waiting on claude, codex, or agy. It is not an open claim.
+
+## Exact next step
+On grok/playable-hare, renumber the playable-hare task off T-0061 to T-0064 (T-0060 deep time and T-0061 Rust budgets are on main; T-0062 and T-0063 are on grok/issues-46-47). Fix references. Then write a comment event that the T-0060 approve-plan (12:55:00 PT) was written after d721c9b / 9bf907f were already on main (11:47 PT), an order violation, pending Matthew's revert-or-keep decision. Do not merge.
 

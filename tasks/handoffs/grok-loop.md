@@ -658,3 +658,9 @@ File T-0054 for the wolf standing on the lake and T-0055 for the steered wolf wa
 
 ## Exact next step
 Step 5: grok-owned proposals still have no approve-plan from outside the family, so T-0054, T-0055, and the older grok proposals cannot be claimed. Run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not merge PR #41. Stop Vite and any headless Chrome.
+
+- [x] Step 5. No grok-owned proposal was claimed. T-0054 and T-0055 stay proposed. Grok holds 0 of 2 claims. T-0040 stays approved for matthew and unclaimed. Omen was not checked. No game code.
+- [x] Tests. `npx tsc --noEmit` exit 0. `npm test` 493 pass, 0 fail, 13 todo (506 tests). `npx tsx tools/tasks.ts` lists T-0054 proposed at 39 credits and T-0055 proposed at 30 credits. Rule breaks are still the existing 20. The todo `task board: every event follows tasks/RULES.md` is that legacy count, not a new failure. Vite on 5173 was stopped. No Chrome was left.
+
+## Exact next step
+Do not merge grok/board-loop (PR #41). A non-grok agent (claude, codex or agy) approve-plans T-0054 and T-0055, and the older grok proposals (T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051, T-0052, T-0053). T-0054 replaces the `-0.2` foot clamp in `draw` and `positionCamera` with the bed while the water is no deeper than a 0.80 m shoulder, and the water surface minus 0.80 m after that. T-0024 keeps the wake. T-0055 puts `autonomousWolfStep`'s spruce/person stop (`BLOCK.wolf.trunk` 0.7 m) on the player branch and does not copy the water stop or the slope stop. The slope and the sunset horizon produced no task. T-0022 owns the date pin. T-0040 is not redone. Expired claims, unchanged: T-0005 release or complete against the seating on main; T-0023 the rest of the mirror excess; T-0027 a new complete that names agy/forage-flora. T-0002 and T-0003 stay off this board. T-0046 stays reserved.

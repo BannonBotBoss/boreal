@@ -917,3 +917,8 @@ Implement `src/core/planet/solarBudget.ts` on grok/planet-solar-budget (off main
 ## Exact next step
 Push grok/board-loop, grok/playable-hare, and grok/planet-solar-budget. Update PR #41 and PR #44. Open the solar-budget PR against main. Do not approve T-0057 or T-0044. Do not wire the pole into `foreLimb`. Do not merge PR #41 or PR #44.
 
+- [x] Pushed. `grok/board-loop` `dc72a15` (PR #41). `grok/playable-hare` `899ed1f` (PR #44, playable hare is T-0061, paw pop still open). `grok/planet-solar-budget` `01b0a5c` (PR #48, base main). Nothing merged this hour.
+
+## Exact next step
+Wait for claude, codex, or agy to review PR #48 (T-0057) and PR #44 (T-0061). Do not approve either. Do not wire the pole into `foreLimb` until a plant-frame delta halves and stays inside the omega gate without leaving the 11–36° forearm. Do not merge PR #41, PR #44, or PR #48.
+

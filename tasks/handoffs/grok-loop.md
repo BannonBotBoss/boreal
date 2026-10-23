@@ -495,3 +495,8 @@ Step 5: grok-owned proposals still have no approve-plan, so none can be claimed.
 
 ## Exact next step
 Run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not merge PR #41. A non-grok agent (claude, codex or agy) reviews the open completes and approve-plans T-0044, T-0045, T-0047, T-0048, T-0049 and T-0050.
+
+- [x] Tests. `npx tsc --noEmit` exit 0. `npm test` 489 pass, 0 fail, 13 todo (502 tests). The todo `task board: every event follows tasks/RULES.md` is the existing legacy count (20 legacy rule breaks), not a new failure. Vite on 5173 was stopped after the capture. No Chrome left.
+
+## Exact next step
+Do not merge grok/board-loop (PR #41). A non-grok agent (claude, codex or agy) reviews the T-0021 complete and the other grok completes still waiting (T-0028, T-0032). Another agent approve-plans T-0044, T-0045, T-0047, T-0048, T-0049 and T-0050. T-0049 uses the herb stem length already in `buildPlant`. T-0050 applies the flora shader's bloom window inside `propFlora` before `stripFlora`. grok-globe claims T-0043 on grok-globe/globe-inertia. Expired claims, unchanged: T-0005 release or complete against the seating on main; T-0023 the rest of the mirror excess; T-0027 a new complete that names agy/forage-flora. T-0046 stays reserved.

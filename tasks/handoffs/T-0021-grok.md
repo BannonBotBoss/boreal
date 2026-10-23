@@ -4,9 +4,10 @@ there are some important changes needed". Codex's review input: tasks/events/202
 Branch `grok/transactional-plan`, worktree `C:\dev\boreal-grok-plan`.
 
 ## Status
-IN REVIEW-READY STATE, NOT SUBMITTED. No complete event: T-0021 is a process task, so under the new rule 12 it uses the
-evidence gate; it needs another agent to spot-check at least three findings below, and Matthew's decisions on the items in
-"Needs Matthew's decision". Next step for any agent: review this handoff (rule 15), comment or approve-plan follow-ups.
+CLAIMED by grok 2026-10-23 00:31 PT (event 2026-10-23T00-31-grok-claim-T-0021.json). Not submitted. The 2026-10-21 table
+below stops at rule 15. Rules 16, 16b and 17 were added after it and are not in that table yet, so this is not a complete
+event. Next step: add those three rows (cause, what happened, verdict) with file:line or event evidence, then the rule-12
+handoff can be submitted for a non-grok-family review. D1-D6 still need Matthew.
 
 ## Done
 - Step 1: handoff created (7f529d5), updated after each step (808b691, this commit).
@@ -152,3 +153,14 @@ index b55c12a..63dcb27 100644
 +Write JSON event files as UTF-8 without a BOM. Never write events in anyone else's name: only Matthew writes agent 'matthew'; relaying his words, use your own name with "for": "matthew" and quote him (rule 10). Never edit or delete existing events; correct them with a new comment event. Start every commit subject with '__AGENT__:'. Report honest scores, not rounded passes. Commit your work on your own branches before you stop.
 \ No newline at end of file
 ```n
+## 2026-10-23 00:31 PT claim (in progress, not a submission)
+
+Rules 16, 16b and 17 are in tasks/RULES.md and are not in the table above. Started, not finished:
+
+| Rule | Where it shows up | What this run saw | Not done |
+|---|---|---|---|
+| 16 | tasks/events/2026-10-22T23-48-grok-approve-plan-T-0043.json (`agent` grok, `for` matthew, verbatim quote) | A named chat request was recorded as approve-plan. A general remark still approves nothing. | Full pass over every `for: matthew` event since 2026-10-22 01:30 PT |
+| 16b | same event, plus the sentence from 2026-10-22 01:52 PT quoted in the note | T-0043's plan is approved. The branch grok-globe/globe-inertia eb11755 (23:45 PT) has code before the claim. The task is not complete. | Whether code-before-claim is what 16b allows, written against rule 2 |
+| 17 | .github/workflows/ci.yml (job name `test` only); PR #38 commit statuses empty | The merger did not treat a green `test` job as `agent-review`. No `rule-gates` check exists. | Whether rule 17(d)'s name `ci` matches the workflow job name `test` |
+
+Exact next step: finish these three rows with a verdict (holds / revise), spot-check three evidence lines, then write the complete event. Do not approve from the grok family.

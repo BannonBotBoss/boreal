@@ -345,3 +345,24 @@ Next run: read this file, steps 1, 2, 2b; finish T-0009 (complete event on PR #3
 
 
 - 2026-10-22 23:18 run: T-0009 still in progress (PR #38, unchanged since 19:55); steps 1, 2, 2b only. main 8020975, no new commits, PRs, issues, tasks or handoff needs. Next step: next hourly run repeats steps 1, 2, 2b until PR #38 gets a non-author review or Matthew approves.
+
+## Run 2026-10-23 00:29 PT
+Matthew's PC is offline; this run is the hourly loop. gh auth is the cursor login; `gh pr view` / `gh api` against Bannon-github/boreal succeeded.
+
+- [x] Step 0 heartbeat, clock 2026-10-23 00:29 PT. Claimed and not complete:
+  - T-0005 grok-globe, grok-globe/log-grounding-bark 2b4d462, 85.44 h, EXPIRED. seatLog is already on main. Comment only; not taken.
+  - T-0009 grok, grok/hare-rig-port 708a1ae, 4.59 h, STALLED. Did the next step up to a measured failure (below). Not merged.
+  - T-0023 claude, claude/water-optics 95f1d41, 30.92 h, EXPIRED. Comment reassigns the continuation; claim stays claude's until a release.
+  - T-0027 agy, agy/forage-flora 7145ad1, 35.44 h on the clock. Work is on main; the complete event has no branch so the ledger never left `claimed`. Comment says do not rebuild.
+  - T-0028 grok, grok/hare-mesh db55c98, 26.38 h, EXPIRED. Grok keeps it. Skin is already in PR #38. No second branch.
+- [x] Step 1. Open PR: #38 only, head 708a1ae, MERGEABLE, ci job `test` SUCCESS, commit statuses empty (no agent-review), no rule-gates job. Not merged. Nothing else completed since the blocking reviews:
+  - T-0025 agy/littoral-plants still 01c4bbb. Cite tasks/events/2026-10-21T21-32-codex-comment-T-0025.json (stripes score 0.987). No new review.
+  - T-0032 grok/T-0032-forest-edge still 1e6477b, completed by grok. Same reviewer family; not approved. Codex's 21:32 comment is about the invalid claim file, which predates this complete. Still waiting on claude, codex or agy.
+- [x] T-0009 pop. Matthew 2026-10-22 23:25 PT: "Fix the paw pop before merging". grok-gait/T-0009-touchdown-pop does not exist on origin and has no commits. On 708a1ae the plant-frame elbow interior jumps 97 to 117 deg at 60 Hz (5 / 8.5 / 11.6 m/s) and stays about 95 to 106 deg at 120 Hz. A pole-target two-bone attempt (Tolani, Goswami and Badler 2000) did not get 8.5 m/s at 60 Hz under the fore-lock omega gate. Not committed. Evidence frames were not recorded; PR #38 stays open.
+- [x] Step 2. New since 23:18: T-0043 (grok-globe propose 23:46, grok approve-plan for matthew 23:48, on main f4f3f58). No new issues. grok-globe/globe-inertia eb11755 is the test-first commit, 0.54 h, not stalled, not claimed, not complete.
+- [x] Step 2b. T-0043 handoff asks for the approve-plan, which is already on main. No new reference-image need. grok/bench-tier-lag d4e7646 still holds the ?bench tier fix for T-0023 and is not on main; it is game code, so it was not merged from this loop.
+- [ ] Step 3/4. Not run. The hour went to the stalled pop measurement. Least recently inspected area is still deer/visitor animals, trees, sound, controls/UI.
+- [x] Step 5. T-0021 was approved and unclaimed. Claimed (2026-10-23T00-31-grok-claim-T-0021.json). Handoff status updated. Rules 16, 16b and 17 are started and not finished. No complete event.
+
+## Exact next step
+On grok/hare-rig-port, keep the previous fore scapula and manus across the plant frame when that pair still reaches, pick the solveLeg branch whose elbow is nearer the previous elbow, and do not commit it unless the plant-frame interior delta at 5, 8.5 and 11.6 m/s and 60, 120 and 240 Hz is within the fore-lock omega gate and foreContacts exact stays inside 11-36 deg. Then record evidence frames. Do not merge PR #38 before that. After that, finish T-0021 rules 16, 16b and 17 and submit it for a non-grok-family review.

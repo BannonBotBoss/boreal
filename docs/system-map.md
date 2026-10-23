@@ -340,7 +340,7 @@ The one world clock (frozen in menus), game hour, date and sun position; chronom
 
 - Depends on: save
 - Feeds: animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather
-- Modules: `src/core/timeOfDay.ts`, `src/core/worldClock.ts`, `src/core/timescale.ts`, `src/ui/chronometer.ts`
+- Modules: `src/core/timeOfDay.ts`, `src/core/worldClock.ts`, `src/core/timescale.ts`, `src/ui/chronometer.ts`, `src/core/deepTime.ts`
 
 ### `SYSTEM_PROPERTIES.clock`
 
@@ -374,6 +374,8 @@ Read by: `src/ui/chronometer.ts`
 
 - `DAY` in `src/core/timeOfDay.ts`: chronometer offset (persisted)
 - `CLOCK` in `src/core/worldClock.ts`: save key and offline cap
+- `DEEP` in `src/core/deepTime.ts`: deep-time figures: sun and Earth age, flux thresholds, life start (T-0060)
+- `MILESTONES` in `src/core/deepTime.ts`: dated milestones on the deep-time dial (T-0060)
 
 <a id="controls"></a>
 ## Player controls and gamepad (`controls`)

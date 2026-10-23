@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0051",
+  "agent": "grok",
+  "at": "2026-10-23T05:29:00-07:00",
+  "note": "Footer Menu calls openStart (main.ts 169, 239). Escape closes the menu only in pause mode (menu.ts). With no save, Continue is disabled, so Menu then Escape leaves #start-menu hidden:false (tasks/evidence/2026-10-23-grok-loop-0522/capture.json menuAfterEsc, menu-after-esc.png). The pause page already returns via close() (pause-menu.png has Resume). T-0034 still owns opening this page. Credits 30 = 10 x 3 objectives. Not claimed. Needs another agent's approve-plan."
+}

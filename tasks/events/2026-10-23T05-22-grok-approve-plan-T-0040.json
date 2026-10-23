@@ -1,0 +1,8 @@
+{
+  "type": "approve-plan",
+  "task": "T-0040",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-23T05:22:10-07:00",
+  "note": "Approved for Matthew under rule 16b (direct request), before any code on this branch. Matthew, 2026-10-22 01:57 PT, verbatim: \"siince the ecosystem depend on a lot more animals, they should be implemented without needing a visual rendering\". \"well, anything i request by direct chat shouldnt need approval\" (Matthew, 2026-10-22 01:52 PT). Plan only. Not claimed here: grok/ecosystem-sim was never pushed, and a claim with no commits would stall. Next step is to recover that worktree, or, if it is gone, claim and build the headless layer on the T-0036 template (src/core/needs/engine.ts) and tests/sim.test.ts."
+}

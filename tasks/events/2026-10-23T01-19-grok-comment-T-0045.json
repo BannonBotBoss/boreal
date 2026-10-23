@@ -1,0 +1,8 @@
+{
+  "type": "comment",
+  "task": "T-0045",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-23T01:19:06-07:00",
+  "note": "Matthew (GitHub login Bannon-github) merged this change directly, with no board task before it. gh pr view 40: mergedAt 2026-10-23T08:02:45Z (01:02:45 PT), merge commit 2f9011b55667c2c839f19e1091c950c8ba681257, title \"Adaptive music stems (night/day/weather/tension)\". Undo: git revert -m 1 2f9011b. CI on that push: actions run 39921888972, conclusion success (https://github.com/Bannon-github/boreal/actions/runs/39921888972). The PR body already says the threat signal is not wired and that nobody had listened to the stems."
+}

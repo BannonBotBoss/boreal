@@ -1,0 +1,75 @@
+{
+  "chunk": 40,
+  "stemsHa": 1069.706571447255,
+  "treeMult": 0.45,
+  "target": {
+    "key": "3:4:10",
+    "kind": "spruce",
+    "species": "jack-pine",
+    "x": 141.9,
+    "z": 196.983,
+    "scale": 1.284,
+    "trunkRadius": 0.11896199461051185,
+    "baseRadius": 0.153,
+    "height": 15.705156587200298,
+    "kept": true,
+    "keepRoll": 0.054
+  },
+  "targetKept": true,
+  "placedSpruce": 14,
+  "rawSpruce": 21,
+  "near": [
+    {
+      "key": "3:4:10",
+      "kind": "spruce",
+      "species": "jack-pine",
+      "x": 141.9,
+      "z": 196.983,
+      "scale": 1.284,
+      "trunkRadius": 0.11896199461051185,
+      "baseRadius": 0.153,
+      "height": 15.705156587200298,
+      "kept": true,
+      "keepRoll": 0.054
+    },
+    {
+      "key": "3:4:17",
+      "kind": "spruce",
+      "species": "white-spruce",
+      "x": 143.75,
+      "z": 192.549,
+      "scale": 0.826,
+      "trunkRadius": 0.0635305773578019,
+      "baseRadius": 0.052,
+      "height": 9.87125984418671,
+      "kept": true,
+      "keepRoll": 0.081
+    },
+    {
+      "key": "3:4:29",
+      "kind": "spruce",
+      "species": "trembling-aspen",
+      "x": 133.386,
+      "z": 189.234,
+      "scale": 1.037,
+      "trunkRadius": 0.17037311380427753,
+      "baseRadius": 0.177,
+      "height": 23.47735994097556,
+      "kept": true,
+      "keepRoll": 0.089
+    },
+    {
+      "key": "3:4:31",
+      "kind": "spruce",
+      "species": "trembling-aspen",
+      "x": 139.954,
+      "z": 197.055,
+      "scale": 1.168,
+      "trunkRadius": 0.17037311380427753,
+      "baseRadius": 0.199,
+      "height": 23.47735994097556,
+      "kept": true,
+      "keepRoll": 0.105
+    }
+  ]
+}

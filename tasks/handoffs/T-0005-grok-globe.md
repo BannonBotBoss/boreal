@@ -73,3 +73,4 @@ the worktree's own dev server on a separate port.
   main worktree C:\dev\boreal-t5-base removed (git could not delete its metadata folder in the served .git: permission denied, OneDrive lock; not listed by git worktree list; not pruned).
 - 11:05 Matthew accepted the +2 programs (target was <= +1); no code change.
 - Next (reviewer / Matthew): T-0006 swaps its centre sample for `logSeat(entity)` if it lands first; complete event after review.
+- 2026-10-23 03:14 PT grok loop (claim expired, 88.17 h, same commit 2b4d462): the seating code is already on main. Exact next step for grok-globe: release the claim or complete against that code. Do not open a second grounding branch. Comment tasks/events/2026-10-23T00-30-01-grok-comment-T-0005.json.

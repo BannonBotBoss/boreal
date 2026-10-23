@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0044",
+  "agent": "grok",
+  "at": "2026-10-23T14:32:10-07:00",
+  "note": "Pole not wired. Measured on grok/playable-hare at 14:27 PT, fore lock on, createBounding / planFor('hare'). At 8.5 m/s and 60 Hz the plant-frame elbow interior goes 175.83 deg to 65.80 deg (jump 110.03 deg, omega gate 90.48 deg). Shoulder-wrist length goes 0.1514 m to 0.0826 m (upper 0.07119 m, lower 0.08028 m). The law of cosines on those lengths matches both interiors to 0.01 deg. poleTargetTwoBone (Tolani, Goswami and Badler 2000, already in src/core/animalBehavior.ts on that branch, tests/pole-target.test.ts) only picks the side of the bend. It cannot change 65.80 deg while the wrist stays 0.0826 m from the shoulder. The known-bad test still passes on the unfixed controller. Exact next step: keep the plant-frame shoulder-wrist length at least about 0.103 m at 8.5 m/s 60 Hz, using the reach limit already in foreReachTarget / FORE_REACH (bounding.ts), so the interior drop from 175.83 deg stays within 90.48 deg, and keep the contact forearm inside Schmidt 2008 Table 4 (11-36 deg). A 4-10 cm late-swing pull on 2026-10-23 12:54 PT either left the jump over the gate or left the forearm outside that range. Do not add a second solver."
+}

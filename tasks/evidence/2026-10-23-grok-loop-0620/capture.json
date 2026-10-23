@@ -1,0 +1,1220 @@
+{
+  "commit": "f9555f8",
+  "viewport": [
+    960,
+    540
+  ],
+  "shots": [
+    "noon-shore",
+    "hare-bolt",
+    "night-shore",
+    "noon-inland",
+    "deer-spot",
+    "deer-playable"
+  ],
+  "pages": {
+    "noon": {
+      "player": {
+        "x": 199.999999997241,
+        "z": 250.00000000005068,
+        "yaw": -1.553,
+        "energy": 74.9611751041023,
+        "water": 99.98467225463997,
+        "mode": "walk"
+      },
+      "hares": [
+        {
+          "id": 2,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 3.25,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 25.51,
+          "x": 202.3,
+          "z": 224.6
+        },
+        {
+          "id": 3,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 0.99,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 22.28,
+          "x": 217.3,
+          "z": 235.9
+        },
+        {
+          "id": 4,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 0.15,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 27.97,
+          "x": 205.4,
+          "z": 222.6
+        },
+        {
+          "id": 5,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 1.94,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 28.93,
+          "x": 190.7,
+          "z": 222.6
+        },
+        {
+          "id": 6,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 2.38,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 29.98,
+          "x": 170.6,
+          "z": 244.3
+        }
+      ],
+      "fps": 3.7,
+      "starts": [
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "amb-day",
+          "loop": true,
+          "offset": 3.51004418451339,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "amb-night",
+          "loop": true,
+          "offset": 8.994058920070529,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "wind-pines",
+          "loop": true,
+          "offset": 14.353433669311926,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "water",
+          "loop": true,
+          "offset": 10.035614424850792,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "music-day",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "music-night",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        }
+      ],
+      "levels": [
+        {
+          "t": 40035.09999999998,
+          "kind": "level",
+          "id": "amb-day",
+          "value": 0.5
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "amb-night",
+          "value": 0
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "wind-pines",
+          "value": 0.128
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "water",
+          "value": 0.257
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "music-day",
+          "value": 0
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "music-night",
+          "value": 0
+        }
+      ],
+      "pans": [],
+      "href": "http://127.0.0.1:5173/?nomenu&bench&hour=12&rec&stages=1&at=200,250,-1.553",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs"
+    },
+    "approach": {
+      "bolted": {
+        "id": 2,
+        "d": 18.461039217972317,
+        "state": "flee",
+        "sim": "flee",
+        "level": 0.30074164741625486,
+        "err": 0.24123671023813126,
+        "x": 201.68534330526603,
+        "z": 242.89813811738142
+      },
+      "player": {
+        "x": 201.71612583109214,
+        "z": 242.768423746646,
+        "yaw": -0.23300000000000023,
+        "energy": 74.85264801904091,
+        "water": 99.94182666585009,
+        "mode": "walk"
+      },
+      "hares": [
+        {
+          "id": 2,
+          "state": "flee",
+          "sim": "flee",
+          "timer": -0.08,
+          "level": 0.284,
+          "speed": 8.47,
+          "energy": 100,
+          "d": 18.87,
+          "x": 201.4,
+          "z": 223.9
+        },
+        {
+          "id": 3,
+          "state": "flee",
+          "sim": "flee",
+          "timer": -0.06,
+          "level": 0.295,
+          "speed": 8.47,
+          "energy": 100,
+          "d": 18.61,
+          "x": 218.4,
+          "z": 234.4
+        },
+        {
+          "id": 4,
+          "state": "freeze",
+          "sim": "freeze",
+          "timer": 0.26,
+          "level": 0.193,
+          "speed": 0,
+          "energy": 100,
+          "d": 20.98,
+          "x": 206.6,
+          "z": 222.4
+        },
+        {
+          "id": 5,
+          "state": "freeze",
+          "sim": "freeze",
+          "timer": 0.4,
+          "level": 0.118,
+          "speed": 0,
+          "energy": 100,
+          "d": 22.93,
+          "x": 190,
+          "z": 223
+        },
+        {
+          "id": 6,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 4.75,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 31.4,
+          "x": 170.3,
+          "z": 242.9
+        }
+      ],
+      "fps": 2.4,
+      "starts": [
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "amb-day",
+          "loop": true,
+          "offset": 3.51004418451339,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "amb-night",
+          "loop": true,
+          "offset": 8.994058920070529,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "wind-pines",
+          "loop": true,
+          "offset": 14.353433669311926,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "water",
+          "loop": true,
+          "offset": 10.035614424850792,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "music-day",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        },
+        {
+          "t": 39960,
+          "kind": "start",
+          "id": "music-night",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        },
+        {
+          "t": 43407,
+          "kind": "start",
+          "id": "hare-hop",
+          "loop": false,
+          "offset": null,
+          "duration": null
+        },
+        {
+          "t": 53773,
+          "kind": "start",
+          "id": "hare-hop",
+          "loop": false,
+          "offset": null,
+          "duration": null
+        },
+        {
+          "t": 56264,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0,
+          "duration": 0.35
+        },
+        {
+          "t": 60257,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0.61,
+          "duration": 0.35
+        },
+        {
+          "t": 65417,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0,
+          "duration": 0.35
+        },
+        {
+          "t": 67637,
+          "kind": "start",
+          "id": "hare-hop",
+          "loop": false,
+          "offset": null,
+          "duration": null
+        },
+        {
+          "t": 69956,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0.61,
+          "duration": 0.35
+        },
+        {
+          "t": 73802,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0,
+          "duration": 0.35
+        },
+        {
+          "t": 78593,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0.61,
+          "duration": 0.35
+        },
+        {
+          "t": 82018,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0,
+          "duration": 0.35
+        },
+        {
+          "t": 84900,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0.61,
+          "duration": 0.35
+        },
+        {
+          "t": 85464,
+          "kind": "start",
+          "id": "hare-hop",
+          "loop": false,
+          "offset": null,
+          "duration": null
+        },
+        {
+          "t": 89937,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0,
+          "duration": 0.35
+        },
+        {
+          "t": 89939,
+          "kind": "start",
+          "id": "hare-hop",
+          "loop": false,
+          "offset": null,
+          "duration": null
+        },
+        {
+          "t": 94605,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0.61,
+          "duration": 0.35
+        },
+        {
+          "t": 99236,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0,
+          "duration": 0.35
+        },
+        {
+          "t": 103667,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0.61,
+          "duration": 0.35
+        },
+        {
+          "t": 109162,
+          "kind": "start",
+          "id": "hare-squeak",
+          "loop": false,
+          "offset": null,
+          "duration": null
+        },
+        {
+          "t": 109163,
+          "kind": "start",
+          "id": "hare-hop",
+          "loop": false,
+          "offset": null,
+          "duration": null
+        },
+        {
+          "t": 109179,
+          "kind": "start",
+          "id": "paw-walk",
+          "loop": false,
+          "offset": 0,
+          "duration": 0.35
+        },
+        {
+          "t": 109182,
+          "kind": "start",
+          "id": "hare-squeak",
+          "loop": false,
+          "offset": null,
+          "duration": null
+        },
+        {
+          "t": 109182,
+          "kind": "start",
+          "id": "hare-hop",
+          "loop": false,
+          "offset": null,
+          "duration": null
+        }
+      ],
+      "levels": [
+        {
+          "t": 40035.09999999998,
+          "kind": "level",
+          "id": "amb-day",
+          "value": 0.5
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "amb-night",
+          "value": 0
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "wind-pines",
+          "value": 0.128
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "water",
+          "value": 0.257
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "music-day",
+          "value": 0
+        },
+        {
+          "t": 40037.5,
+          "kind": "level",
+          "id": "music-night",
+          "value": 0
+        },
+        {
+          "t": 84322.69999999995,
+          "kind": "level",
+          "id": "water",
+          "value": 0.298
+        }
+      ],
+      "pans": [
+        {
+          "t": 43407,
+          "kind": "pan",
+          "x": 205.4119536098252,
+          "z": 222.55773512988998
+        },
+        {
+          "t": 53773,
+          "kind": "pan",
+          "x": 217.2965568371388,
+          "z": 235.90619203596785
+        },
+        {
+          "t": 67637,
+          "kind": "pan",
+          "x": 190.70986207833647,
+          "z": 222.60488731491995
+        },
+        {
+          "t": 85464,
+          "kind": "pan",
+          "x": 202.31894714665185,
+          "z": 224.59864388137171
+        },
+        {
+          "t": 89939,
+          "kind": "pan",
+          "x": 206.19679259099573,
+          "z": 222.40437819048924
+        },
+        {
+          "t": 109162,
+          "kind": "pan",
+          "x": 201.56834576312454,
+          "z": 224.71779740858196
+        },
+        {
+          "t": 109163,
+          "kind": "pan",
+          "x": 201.56834576312454,
+          "z": 224.71779740858196
+        },
+        {
+          "t": 109182,
+          "kind": "pan",
+          "x": 217.81553429309008,
+          "z": 234.60593729161414
+        },
+        {
+          "t": 109182,
+          "kind": "pan",
+          "x": 217.81553429309008,
+          "z": 234.60593729161414
+        }
+      ],
+      "href": "http://127.0.0.1:5173/?nomenu&bench&hour=12&rec&stages=1&at=200,250,-1.553",
+      "status": "12:21 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs"
+    },
+    "night": {
+      "player": {
+        "x": 199.9999999867603,
+        "z": 250.00000000023542,
+        "yaw": -1.553,
+        "energy": 74.81619650996112,
+        "water": 99.92743591382758,
+        "mode": "walk"
+      },
+      "hares": [
+        {
+          "id": 2,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 3.89,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 25.51,
+          "x": 202.3,
+          "z": 224.6
+        },
+        {
+          "id": 3,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 1.62,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 22.28,
+          "x": 217.3,
+          "z": 235.9
+        },
+        {
+          "id": 4,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 0.79,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 27.97,
+          "x": 205.4,
+          "z": 222.6
+        },
+        {
+          "id": 5,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 2.58,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 28.93,
+          "x": 190.7,
+          "z": 222.6
+        },
+        {
+          "id": 6,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 3.02,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 29.98,
+          "x": 170.6,
+          "z": 244.3
+        }
+      ],
+      "fps": 3.7,
+      "starts": [
+        {
+          "t": 37635,
+          "kind": "start",
+          "id": "amb-day",
+          "loop": true,
+          "offset": 3.51004418451339,
+          "duration": null
+        },
+        {
+          "t": 37635,
+          "kind": "start",
+          "id": "amb-night",
+          "loop": true,
+          "offset": 8.994058920070529,
+          "duration": null
+        },
+        {
+          "t": 37635,
+          "kind": "start",
+          "id": "wind-pines",
+          "loop": true,
+          "offset": 14.353433669311926,
+          "duration": null
+        },
+        {
+          "t": 37635,
+          "kind": "start",
+          "id": "water",
+          "loop": true,
+          "offset": 10.035614424850792,
+          "duration": null
+        },
+        {
+          "t": 37635,
+          "kind": "start",
+          "id": "music-day",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        },
+        {
+          "t": 37635,
+          "kind": "start",
+          "id": "music-night",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        }
+      ],
+      "levels": [
+        {
+          "t": 37974.70000000007,
+          "kind": "level",
+          "id": "amb-day",
+          "value": 0
+        },
+        {
+          "t": 37974.80000000005,
+          "kind": "level",
+          "id": "amb-night",
+          "value": 0.45
+        },
+        {
+          "t": 37974.80000000005,
+          "kind": "level",
+          "id": "wind-pines",
+          "value": 0.149
+        },
+        {
+          "t": 37974.80000000005,
+          "kind": "level",
+          "id": "water",
+          "value": 0.257
+        },
+        {
+          "t": 37974.80000000005,
+          "kind": "level",
+          "id": "music-day",
+          "value": 0
+        },
+        {
+          "t": 37974.80000000005,
+          "kind": "level",
+          "id": "music-night",
+          "value": 0
+        }
+      ],
+      "pans": [],
+      "href": "http://127.0.0.1:5173/?nomenu&bench&hour=22&rec&stages=1&at=200,250,-1.553",
+      "status": "22:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs"
+    },
+    "inland": {
+      "player": {
+        "x": 148,
+        "z": 64.00000004125563,
+        "yaw": 0,
+        "energy": 74.78030971429351,
+        "water": 99.91326810595426,
+        "mode": "walk"
+      },
+      "hares": [
+        {
+          "id": 2,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 3.95,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 25.51,
+          "x": 150.3,
+          "z": 38.6
+        },
+        {
+          "id": 3,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 1.69,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 22.28,
+          "x": 165.3,
+          "z": 49.9
+        },
+        {
+          "id": 4,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 0.85,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 27.97,
+          "x": 153.4,
+          "z": 36.6
+        },
+        {
+          "id": 5,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 2.64,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 28.93,
+          "x": 138.7,
+          "z": 36.6
+        },
+        {
+          "id": 6,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 3.38,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 22.94,
+          "x": 169.8,
+          "z": 71.3
+        }
+      ],
+      "fps": 3.5,
+      "starts": [
+        {
+          "t": 39368,
+          "kind": "start",
+          "id": "amb-day",
+          "loop": true,
+          "offset": 3.51004418451339,
+          "duration": null
+        },
+        {
+          "t": 39368,
+          "kind": "start",
+          "id": "amb-night",
+          "loop": true,
+          "offset": 8.994058920070529,
+          "duration": null
+        },
+        {
+          "t": 39369,
+          "kind": "start",
+          "id": "wind-pines",
+          "loop": true,
+          "offset": 14.353433669311926,
+          "duration": null
+        },
+        {
+          "t": 39369,
+          "kind": "start",
+          "id": "water",
+          "loop": true,
+          "offset": 10.035614424850792,
+          "duration": null
+        },
+        {
+          "t": 39369,
+          "kind": "start",
+          "id": "music-day",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        },
+        {
+          "t": 39369,
+          "kind": "start",
+          "id": "music-night",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        }
+      ],
+      "levels": [
+        {
+          "t": 39411.90000000002,
+          "kind": "level",
+          "id": "amb-day",
+          "value": 0.5
+        },
+        {
+          "t": 39411.90000000002,
+          "kind": "level",
+          "id": "amb-night",
+          "value": 0
+        },
+        {
+          "t": 39411.90000000002,
+          "kind": "level",
+          "id": "wind-pines",
+          "value": 0.128
+        },
+        {
+          "t": 39411.90000000002,
+          "kind": "level",
+          "id": "water",
+          "value": 0
+        },
+        {
+          "t": 39411.90000000002,
+          "kind": "level",
+          "id": "music-day",
+          "value": 0
+        },
+        {
+          "t": 39411.90000000002,
+          "kind": "level",
+          "id": "music-night",
+          "value": 0
+        }
+      ],
+      "pans": [],
+      "href": "http://127.0.0.1:5173/?nomenu&bench&hour=12&rec&stages=1&at=148,64,0",
+      "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs"
+    },
+    "deerSpot": {
+      "player": {
+        "x": 66.27,
+        "z": 27.00000003891757,
+        "yaw": 0,
+        "energy": 74.7444229186259,
+        "water": 99.89910029808094,
+        "mode": "walk"
+      },
+      "hares": [
+        {
+          "id": 2,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 3.99,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 25.51,
+          "x": 68.6,
+          "z": 1.6
+        },
+        {
+          "id": 3,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 1.72,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 22.28,
+          "x": 83.6,
+          "z": 12.9
+        },
+        {
+          "id": 4,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 0.89,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 27.97,
+          "x": 71.7,
+          "z": -0.4
+        },
+        {
+          "id": 5,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 2.68,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 28.93,
+          "x": 57,
+          "z": -0.4
+        },
+        {
+          "id": 6,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 3.42,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 22.94,
+          "x": 88,
+          "z": 34.3
+        }
+      ],
+      "fps": 3.5,
+      "starts": [
+        {
+          "t": 40115,
+          "kind": "start",
+          "id": "amb-day",
+          "loop": true,
+          "offset": 3.51004418451339,
+          "duration": null
+        },
+        {
+          "t": 40115,
+          "kind": "start",
+          "id": "amb-night",
+          "loop": true,
+          "offset": 8.994058920070529,
+          "duration": null
+        },
+        {
+          "t": 40115,
+          "kind": "start",
+          "id": "wind-pines",
+          "loop": true,
+          "offset": 14.353433669311926,
+          "duration": null
+        },
+        {
+          "t": 40115,
+          "kind": "start",
+          "id": "water",
+          "loop": true,
+          "offset": 10.035614424850792,
+          "duration": null
+        },
+        {
+          "t": 40115,
+          "kind": "start",
+          "id": "music-day",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        },
+        {
+          "t": 40115,
+          "kind": "start",
+          "id": "music-night",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        }
+      ],
+      "levels": [],
+      "pans": [],
+      "href": "http://127.0.0.1:5173/?nomenu&bench&hour=12&rec&stages=1&at=66.27,27,0",
+      "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs"
+    },
+    "asDeer": {
+      "player": {
+        "x": 200,
+        "z": 250.00000002303906,
+        "yaw": 0,
+        "energy": 74.703919108311,
+        "water": 99.88310875092057,
+        "mode": "walk"
+      },
+      "hares": [
+        {
+          "id": 2,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 3.15,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 25.51,
+          "x": 202.3,
+          "z": 224.6
+        },
+        {
+          "id": 3,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 0.89,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 22.28,
+          "x": 217.3,
+          "z": 235.9
+        },
+        {
+          "id": 4,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 0.05,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 27.97,
+          "x": 205.4,
+          "z": 222.6
+        },
+        {
+          "id": 5,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 1.84,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 28.93,
+          "x": 190.7,
+          "z": 222.6
+        },
+        {
+          "id": 6,
+          "state": "nibble",
+          "sim": "graze",
+          "timer": 2.28,
+          "level": 0,
+          "speed": 0,
+          "energy": 100,
+          "d": 29.98,
+          "x": 170.6,
+          "z": 244.3
+        }
+      ],
+      "fps": 4.3,
+      "starts": [
+        {
+          "t": 36922,
+          "kind": "start",
+          "id": "amb-day",
+          "loop": true,
+          "offset": 3.51004418451339,
+          "duration": null
+        },
+        {
+          "t": 36922,
+          "kind": "start",
+          "id": "amb-night",
+          "loop": true,
+          "offset": 8.994058920070529,
+          "duration": null
+        },
+        {
+          "t": 36922,
+          "kind": "start",
+          "id": "wind-pines",
+          "loop": true,
+          "offset": 14.353433669311926,
+          "duration": null
+        },
+        {
+          "t": 36922,
+          "kind": "start",
+          "id": "water",
+          "loop": true,
+          "offset": 10.035614424850792,
+          "duration": null
+        },
+        {
+          "t": 36922,
+          "kind": "start",
+          "id": "music-day",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        },
+        {
+          "t": 36922,
+          "kind": "start",
+          "id": "music-night",
+          "loop": true,
+          "offset": 0,
+          "duration": null
+        }
+      ],
+      "levels": [
+        {
+          "t": 37034.19999999995,
+          "kind": "level",
+          "id": "amb-day",
+          "value": 0.5
+        },
+        {
+          "t": 37034.19999999995,
+          "kind": "level",
+          "id": "amb-night",
+          "value": 0
+        },
+        {
+          "t": 37034.30000000005,
+          "kind": "level",
+          "id": "wind-pines",
+          "value": 0.128
+        },
+        {
+          "t": 37034.30000000005,
+          "kind": "level",
+          "id": "water",
+          "value": 0.257
+        },
+        {
+          "t": 37034.30000000005,
+          "kind": "level",
+          "id": "music-day",
+          "value": 0
+        },
+        {
+          "t": 37034.30000000005,
+          "kind": "level",
+          "id": "music-night",
+          "value": 0
+        }
+      ],
+      "pans": [],
+      "href": "http://127.0.0.1:5173/?nomenu&bench&hour=12&rec&stages=1&at=200,250,0",
+      "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs"
+    },
+    "video": "/workspace/tasks/evidence/2026-10-23-grok-loop-0620/51560c8e58e61965ab4203bc3f393d2b.webm"
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

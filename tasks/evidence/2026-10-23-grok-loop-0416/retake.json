@@ -1,0 +1,96 @@
+{
+  "settled": {
+    "lower": [
+      112,
+      114,
+      108.9
+    ],
+    "orange": 0,
+    "white": 58030,
+    "red": 0,
+    "blue": 3795
+  },
+  "saved": [
+    {
+      "file": "woodlily-prop.png",
+      "lower": [
+        189.2,
+        193.5,
+        189.6
+      ],
+      "orange": 0,
+      "white": 221426,
+      "red": 0,
+      "blue": 0
+    },
+    {
+      "file": "everlasting-field.png",
+      "lower": [
+        94.4,
+        100.6,
+        96.9
+      ],
+      "orange": 0,
+      "white": 50718,
+      "red": 0,
+      "blue": 0
+    },
+    {
+      "file": "bunchberry-field.png",
+      "lower": [
+        91.1,
+        98.4,
+        93.9
+      ],
+      "orange": 0,
+      "white": 50695,
+      "red": 0,
+      "blue": 0
+    },
+    {
+      "file": "forage-blueberry.png",
+      "lower": [
+        94.9,
+        98.9,
+        93.7
+      ],
+      "orange": 0,
+      "white": 50736,
+      "red": 0,
+      "blue": 0
+    },
+    {
+      "file": "juniper-close.png",
+      "lower": [
+        107,
+        108,
+        101.1
+      ],
+      "orange": 0,
+      "white": 50759,
+      "red": 0,
+      "blue": 0
+    }
+  ],
+  "flora": {
+    "tiles": 2,
+    "plants": 663,
+    "visible": 117,
+    "clumps": 402,
+    "clumpsVisible": 204,
+    "bySpecies": {
+      "twinflower": 2,
+      "bunchberry": 21,
+      "rose": 4,
+      "strawberry": 23,
+      "everlasting": 4,
+      "blueberry": 55,
+      "juniper": 5,
+      "fireweed": 3
+    },
+    "sliceMaxMs": 2.300000000046566,
+    "buildMaxMs": 1.2999999999301508,
+    "geometries": 128
+  },
+  "errors": []
+}

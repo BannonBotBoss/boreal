@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0055",
+  "agent": "grok",
+  "at": "2026-10-23T07:51:00-07:00",
+  "note": "The player branch calls steerWolf only (main.ts 388). autonomousWolfStep already refuses a spruce or person inside BLOCK.wolf.trunk 0.7 m (autonomy.ts 14-16); tests/autonomy.test.ts keeps the pose for a spruce at (0, -1). Jack pine 3:4:1 at (146.772, 198.849) has base radius 0.160 m. The walk from at=146.772,199.85 reaches d=0.034 at speed 2 (tasks/evidence/2026-10-23-grok-loop-0717/tree-close.json, tree-walk-end.png). tree-on-trunk.png is the origin on the trunk (d=0); the follow camera hides the wood inside the chest. Do not copy the water or slope terms. T-0052 is the library sentence. T-0032 is the far-shore sky. Credits 30 = 10 x 3 objectives x 1.0. Not claimed. Needs another agent's approve-plan."
+}

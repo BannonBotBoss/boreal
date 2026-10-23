@@ -1,0 +1,714 @@
+{
+  "pine": {
+    "key": "3:4:10",
+    "x": 141.8997,
+    "z": 196.983,
+    "r": 0.153
+  },
+  "shots": [
+    {
+      "name": "pine-start",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 198.28300003655553,
+      "yaw": 0,
+      "d": 1.3,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.439,
+        "z": 198.283,
+        "cx": 141.9,
+        "cy": 6.039,
+        "cz": 201.283,
+        "speed": 6.990887868596474e-9,
+        "phase": 0
+      }
+    },
+    {
+      "name": "pine-overlap-follow",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.0164962243764,
+      "yaw": 0,
+      "d": 0.033,
+      "insideWood": true,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.391,
+        "z": 197.033,
+        "cx": 141.9,
+        "cy": 5.991,
+        "cz": 200.033,
+        "speed": 0.9996903019288084,
+        "phase": 1.095675199671566
+      }
+    },
+    {
+      "name": "pine-overlap-above",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.01649622962373,
+      "yaw": 0,
+      "d": 0.033,
+      "insideWood": true,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.391,
+        "z": 197.016,
+        "cx": 141.9,
+        "cy": 5.991,
+        "cz": 200.016,
+        "speed": 6.835705335106468e-9,
+        "phase": 1.095675199671566
+      }
+    },
+    {
+      "name": "pine-beside-follow",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:22 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 142.4644198460416,
+      "z": 196.9772355340173,
+      "yaw": -0.19852116395368005,
+      "d": 0.565,
+      "insideWood": false,
+      "drawn": {
+        "x": 142.464,
+        "y": 4.455,
+        "z": 196.977,
+        "cx": 141.767,
+        "cy": 6.055,
+        "cz": 199.895,
+        "speed": 6.515178139667571e-9,
+        "phase": 1.593250135834472
+      }
+    },
+    {
+      "name": "pine-beside-side",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:24 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 142.46441984504577,
+      "z": 196.97723553896662,
+      "yaw": -0.19852116395368005,
+      "d": 0.565,
+      "insideWood": false,
+      "drawn": {
+        "x": 142.464,
+        "y": 4.455,
+        "z": 196.977,
+        "cx": 141.873,
+        "cy": 6.055,
+        "cz": 199.918,
+        "speed": 6.582233365576843e-9,
+        "phase": 1.593250135834472
+      }
+    },
+    {
+      "name": "pine-beside-above",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:30 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 142.46441984415966,
+      "z": 196.9772355455819,
+      "yaw": 0.02147883604631995,
+      "d": 0.565,
+      "insideWood": false,
+      "drawn": {
+        "x": 142.464,
+        "y": 4.455,
+        "z": 196.977,
+        "cx": 142.529,
+        "cy": 6.055,
+        "cz": 199.977,
+        "speed": 7.290151515578554e-9,
+        "phase": 1.593250135834472
+      }
+    },
+    {
+      "name": "pine-axis-side",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:39 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.86514100458814,
+      "z": 196.9880770332002,
+      "yaw": 4.0333333333333306,
+      "d": 0.035,
+      "insideWood": true,
+      "drawn": {
+        "x": 141.865,
+        "y": 4.386,
+        "z": 196.988,
+        "cx": 139.531,
+        "cy": 5.986,
+        "cz": 195.104,
+        "speed": 4.226194102540839e-9,
+        "phase": 2.090824251187982
+      }
+    },
+    {
+      "name": "pine-axis-above",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:41 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.8651410071799,
+      "z": 196.98807703529187,
+      "yaw": 4.0333333333333306,
+      "d": 0.035,
+      "insideWood": true,
+      "drawn": {
+        "x": 141.865,
+        "y": 4.386,
+        "z": 196.988,
+        "cx": 139.531,
+        "cy": 5.986,
+        "cz": 195.104,
+        "speed": 4.1098083718028284e-9,
+        "phase": 2.090824251187982
+      }
+    }
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "photo": [],
+  "start": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 141.9,
+    "z": 198.28300003655553,
+    "yaw": 0,
+    "d": 1.3,
+    "insideWood": false,
+    "drawn": {
+      "x": 141.9,
+      "y": 4.439,
+      "z": 198.283,
+      "cx": 141.9,
+      "cy": 6.039,
+      "cz": 201.283,
+      "speed": 6.990887868596474e-9,
+      "phase": 0
+    }
+  },
+  "placed": {
+    "kept": true,
+    "tree": {
+      "key": "3:4:10",
+      "species": "jack-pine",
+      "x": 141.89987828023732,
+      "z": 196.9830065406859,
+      "scale": 1.2836833519861104,
+      "baseRadius": 0.15270953200057544
+    }
+  },
+  "walk": [
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 198.28300003655553,
+      "yaw": 0,
+      "d": 1.3,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.439,
+        "z": 198.283,
+        "cx": 141.9,
+        "cy": 6.039,
+        "cz": 201.283,
+        "speed": 6.990887868596474e-9,
+        "phase": 0
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 198.18301245046513,
+      "yaw": 0,
+      "d": 1.2,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.434,
+        "z": 198.254,
+        "cx": 141.9,
+        "cy": 6.037,
+        "cz": 201.249,
+        "speed": 1.9996902694154528,
+        "phase": 0.10277165045693434,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 198.18301245046513,
+      "yaw": 0,
+      "d": 1.2,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.434,
+        "z": 198.254,
+        "cx": 141.9,
+        "cy": 6.037,
+        "cz": 201.249,
+        "speed": 1.9996902694154528,
+        "phase": 0.10277165045693434,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 198.11635402605754,
+      "yaw": 0,
+      "d": 1.133,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.429,
+        "z": 198.153,
+        "cx": 141.9,
+        "cy": 6.031,
+        "cz": 201.149,
+        "speed": 1.999752732227762,
+        "phase": 0.16117774155997075,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.98303717724244,
+      "yaw": 0,
+      "d": 1,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.425,
+        "z": 198.052,
+        "cx": 141.9,
+        "cy": 6.026,
+        "cz": 201.049,
+        "speed": 1.9997527322260567,
+        "phase": 0.2779899237660075,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.91637875283493,
+      "yaw": 0,
+      "d": 0.933,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.42,
+        "z": 197.951,
+        "cx": 141.9,
+        "cy": 6.021,
+        "cz": 200.95,
+        "speed": 1.999752732225204,
+        "phase": 0.3363960148690079,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.78306190402,
+      "yaw": 0,
+      "d": 0.8,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.416,
+        "z": 197.85,
+        "cx": 141.9,
+        "cy": 6.017,
+        "cz": 200.85,
+        "speed": 1.9997527322234987,
+        "phase": 0.45320819707497256,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.71640347961258,
+      "yaw": 0,
+      "d": 0.733,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.411,
+        "z": 197.755,
+        "cx": 141.9,
+        "cy": 6.013,
+        "cz": 200.75,
+        "speed": 1.999752732222646,
+        "phase": 0.5116142881779369,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.58308663079782,
+      "yaw": 0,
+      "d": 0.6,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.407,
+        "z": 197.654,
+        "cx": 141.9,
+        "cy": 6.009,
+        "cz": 200.65,
+        "speed": 1.9997527322209407,
+        "phase": 0.6284264703838295,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.5164282063905,
+      "yaw": 0,
+      "d": 0.533,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.404,
+        "z": 197.553,
+        "cx": 141.9,
+        "cy": 6.006,
+        "cz": 200.55,
+        "speed": 1.999752732220088,
+        "phase": 0.6868325614867578,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.38311135764425,
+      "yaw": 0,
+      "d": 0.4,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.401,
+        "z": 197.418,
+        "cx": 141.9,
+        "cy": 6.002,
+        "cz": 200.416,
+        "speed": 1.9997527311807062,
+        "phase": 0.803644743663685,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.2497945083603,
+      "yaw": 0,
+      "d": 0.267,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.399,
+        "z": 197.317,
+        "cx": 141.9,
+        "cy": 5.999,
+        "cz": 200.316,
+        "speed": 1.9997527392467873,
+        "phase": 0.9204569260679017,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.1831360837196,
+      "yaw": 0,
+      "d": 0.2,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.395,
+        "z": 197.22,
+        "cx": 141.9,
+        "cy": 5.997,
+        "cz": 200.216,
+        "speed": 1.9997527392212078,
+        "phase": 0.9788630172694756,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.1831360837196,
+      "yaw": 0,
+      "d": 0.2,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.395,
+        "z": 197.22,
+        "cx": 141.9,
+        "cy": 5.997,
+        "cz": 200.216,
+        "speed": 1.9997527392212078,
+        "phase": 0.9788630172694756,
+        "gait": "trot"
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+      "photo": false,
+      "x": 141.9,
+      "z": 197.0498192344407,
+      "yaw": 0,
+      "d": 0.067,
+      "insideWood": true,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.391,
+        "z": 197.121,
+        "cx": 141.9,
+        "cy": 5.994,
+        "cz": 200.116,
+        "speed": 1.9997527391709014,
+        "phase": 1.095675199671566,
+        "gait": "trot"
+      }
+    }
+  ],
+  "overlapRear": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 141.9,
+    "z": 197.0164962243764,
+    "yaw": 0,
+    "d": 0.033,
+    "insideWood": true,
+    "drawn": {
+      "x": 141.9,
+      "y": 4.391,
+      "z": 197.033,
+      "cx": 141.9,
+      "cy": 5.991,
+      "cz": 200.033,
+      "speed": 0.9996903019288084,
+      "phase": 1.095675199671566
+    }
+  },
+  "overlapAbove": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 141.9,
+    "z": 197.01649622962373,
+    "yaw": 0,
+    "d": 0.033,
+    "insideWood": true,
+    "drawn": {
+      "x": 141.9,
+      "y": 4.391,
+      "z": 197.016,
+      "cx": 141.9,
+      "cy": 5.991,
+      "cz": 200.016,
+      "speed": 6.835705335106468e-9,
+      "phase": 1.095675199671566
+    }
+  },
+  "beside": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:19 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 142.43135925029156,
+    "z": 196.98141020209056,
+    "yaw": -1.5185211639536798,
+    "d": 0.532,
+    "insideWood": false,
+    "drawn": {
+      "x": 142.36,
+      "y": 4.44,
+      "z": 196.985,
+      "cx": 139.369,
+      "cy": 6.043,
+      "cz": 197.142,
+      "speed": 1.9997551314958486,
+      "phase": 1.593250135834472,
+      "gait": "trot"
+    }
+  },
+  "besideRear": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:22 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 142.4644198460416,
+    "z": 196.9772355340173,
+    "yaw": -0.19852116395368005,
+    "d": 0.565,
+    "insideWood": false,
+    "drawn": {
+      "x": 142.464,
+      "y": 4.455,
+      "z": 196.977,
+      "cx": 141.767,
+      "cy": 6.055,
+      "cz": 199.895,
+      "speed": 6.515178139667571e-9,
+      "phase": 1.593250135834472
+    }
+  },
+  "besideSide": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:24 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 142.46441984504577,
+    "z": 196.97723553896662,
+    "yaw": -0.19852116395368005,
+    "d": 0.565,
+    "insideWood": false,
+    "drawn": {
+      "x": 142.464,
+      "y": 4.455,
+      "z": 196.977,
+      "cx": 141.873,
+      "cy": 6.055,
+      "cz": 199.918,
+      "speed": 6.582233365576843e-9,
+      "phase": 1.593250135834472
+    }
+  },
+  "besideAbove": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:30 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 142.46441984415966,
+    "z": 196.9772355455819,
+    "yaw": 0.02147883604631995,
+    "d": 0.565,
+    "insideWood": false,
+    "drawn": {
+      "x": 142.464,
+      "y": 4.455,
+      "z": 196.977,
+      "cx": 142.529,
+      "cy": 6.055,
+      "cz": 199.977,
+      "speed": 7.290151515578554e-9,
+      "phase": 1.593250135834472
+    }
+  },
+  "returnAxis": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:37 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 141.89824070609194,
+    "z": 196.98422449725936,
+    "yaw": 1.613333333333333,
+    "d": 0.002,
+    "insideWood": true,
+    "drawn": {
+      "x": 141.969,
+      "y": 4.394,
+      "z": 196.981,
+      "cx": 144.961,
+      "cy": 5.997,
+      "cz": 196.854,
+      "speed": 1.9997554936605415,
+      "phase": 2.090824251187982,
+      "gait": "trot"
+    }
+  },
+  "axisSide": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:39 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 141.86514100458814,
+    "z": 196.9880770332002,
+    "yaw": 4.0333333333333306,
+    "d": 0.035,
+    "insideWood": true,
+    "drawn": {
+      "x": 141.865,
+      "y": 4.386,
+      "z": 196.988,
+      "cx": 139.531,
+      "cy": 5.986,
+      "cz": 195.104,
+      "speed": 4.226194102540839e-9,
+      "phase": 2.090824251187982
+    }
+  },
+  "axisAbove": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+    "status": "12:41 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "photo": false,
+    "x": 141.8651410071799,
+    "z": 196.98807703529187,
+    "yaw": 4.0333333333333306,
+    "d": 0.035,
+    "insideWood": true,
+    "drawn": {
+      "x": 141.865,
+      "y": 4.386,
+      "z": 196.988,
+      "cx": 139.531,
+      "cy": 5.986,
+      "cz": 195.104,
+      "speed": 4.1098083718028284e-9,
+      "phase": 2.090824251187982
+    }
+  },
+  "url": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.283,0",
+  "video": "walk.webm"
+}

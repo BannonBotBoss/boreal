@@ -1,0 +1,18 @@
+{
+  "url": "http://127.0.0.1:5173/?nomenu&bench&stages=1&hour=7&at=144,236,-1.6031",
+  "status": "07:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+  "sun": {
+    "elevation": 22.152480046557606,
+    "azimuth": 93.78628533189044,
+    "direction": {
+      "x": 0.9241620619421248,
+      "y": 0.3770727587340358,
+      "z": 0.061160590968235055
+    }
+  },
+  "yaw": -1.6031,
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

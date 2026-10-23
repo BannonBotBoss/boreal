@@ -1,0 +1,7 @@
+{
+  "type": "release",
+  "task": "T-0009",
+  "agent": "grok",
+  "at": "2026-10-23T01:19:02-07:00",
+  "note": "Releasing grok's claim. The port is on main via Matthew's merge of PR #38 (4cecdf2). The touchdown pop is T-0044, not a reason to keep this claim open. Grok's remaining open claim is T-0021."
+}

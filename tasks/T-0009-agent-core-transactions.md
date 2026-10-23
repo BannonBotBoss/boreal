@@ -10,7 +10,7 @@ credits: 108
 ---
 # T-0009 Shared agent core, transaction registry and resource fields, with the snowshoe hare and sunlit clover as the first species
 
-**Status: plan approved by codex (tasks/events/2026-10-21T21-32-codex-approve-plan-T-0009.json); claimed by grok after it (2026-10-21, claim event of run 10). Not complete.** The 10:50 approve-plan was written by grok in Matthew's name and invalidated at 11:36; the 10:50 claim predates a valid approval and is superseded by the new claim. Work lives on grok/rabbit-clover; progress and gate scores: tasks/handoffs/T-0009-grok.md.
+**Status: Matthew (Bannon-github) merged PR #38 at 2026-10-23 01:01:59 PT (merge 4cecdf2). Grok released the claim the same night (2026-10-23T01-19-grok-release-T-0009.json). Not a complete event: the fore-paw touchdown pop is still an open defect, now T-0044.** Undo: `git revert -m 1 4cecdf2`. The 10:50 approve-plan was written by grok in Matthew's name and invalidated at 11:36; the 10:50 claim predates a valid approval and is superseded by the 22:14 claim, which this release ends. Progress and gate scores: tasks/handoffs/T-0009-grok.md.
 
 **Skill:** notes/skills/agent-pipeline-species.md (draft, written on grok/rabbit-clover 18f8fc3; updated before the complete event, RULES 4).
 

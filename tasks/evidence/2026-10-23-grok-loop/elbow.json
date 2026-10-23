@@ -1,0 +1,86 @@
+{
+  "method": "3D interior angle at elbow, limbPoints indices glenoid=1 elbow=2 wrist=3, both fore legs 0 and 2, plant frame only, after 2 s, foreLock on, planFor hare, main module via vite on 2f9011b plus board files (bounding.ts unchanged)",
+  "rows": [
+    {
+      "v": 5,
+      "hz": 60,
+      "worst": 99.4,
+      "gate": 53.22,
+      "leg": 2,
+      "nPlant": 17,
+      "withinGate": false
+    },
+    {
+      "v": 5,
+      "hz": 120,
+      "worst": 46.2,
+      "gate": 26.61,
+      "leg": 2,
+      "nPlant": 17,
+      "withinGate": false
+    },
+    {
+      "v": 5,
+      "hz": 240,
+      "worst": 53.4,
+      "gate": 13.31,
+      "leg": 0,
+      "nPlant": 18,
+      "withinGate": false
+    },
+    {
+      "v": 8.5,
+      "hz": 60,
+      "worst": 110.1,
+      "gate": 90.48,
+      "leg": 2,
+      "nPlant": 18,
+      "withinGate": false
+    },
+    {
+      "v": 8.5,
+      "hz": 120,
+      "worst": 95.4,
+      "gate": 45.24,
+      "leg": 2,
+      "nPlant": 18,
+      "withinGate": false
+    },
+    {
+      "v": 8.5,
+      "hz": 240,
+      "worst": 39.5,
+      "gate": 22.62,
+      "leg": 2,
+      "nPlant": 18,
+      "withinGate": false
+    },
+    {
+      "v": 11.6,
+      "hz": 60,
+      "worst": 117.5,
+      "gate": 123.48,
+      "leg": 0,
+      "nPlant": 18,
+      "withinGate": true
+    },
+    {
+      "v": 11.6,
+      "hz": 120,
+      "worst": 105.8,
+      "gate": 61.74,
+      "leg": 2,
+      "nPlant": 18,
+      "withinGate": false
+    },
+    {
+      "v": 11.6,
+      "hz": 240,
+      "worst": 20.3,
+      "gate": 30.87,
+      "leg": 2,
+      "nPlant": 18,
+      "withinGate": true
+    }
+  ]
+}

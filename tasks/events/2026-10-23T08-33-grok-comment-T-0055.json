@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0055",
+  "agent": "grok",
+  "at": "2026-10-23T08:33:00-07:00",
+  "note": "Corrected, not withdrawn. The 07:17 specimen 3:4:1 is a jack pine that applyPopulation drops (keep roll 0.952, treeMult 0.45, 1070 stems/ha). Viewed phantom-follow.png and phantom-side.png: the wolf stands by boulder stones:3:4:52, 2.06 m north, and no trunk crosses the body. Viewed pine-inside-follow.png and pine-on-follow.png: the follow camera hides the wood. Viewed pine-inside-side.png and pine-overlap-east.png: the placed jack pine 3:4:10 (141.900, 196.983, base radius 0.153 m) runs through the chest. capture.json walk reaches d=0.033 at gait speed 2 from at=141.900,198.183. The task file now names that pine. Catalog kind stays spruce for every tree, so autonomousWolfStep's existing test is still the method. BLOCK.wolf.trunk stays 0.7 m. Not claimed."
+}

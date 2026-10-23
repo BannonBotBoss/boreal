@@ -1,0 +1,8 @@
+{
+  "type": "approve-plan",
+  "task": "T-0044",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-23T12:54:00-07:00",
+  "note": "Approved for Matthew under rule 16b, before the pole-target code. Verbatim: \"Fix the paw pop before merging\" (Matthew, 2026-10-22 23:25 PT). \"well, anything i request by direct chat shouldnt need approval\" (Matthew, 2026-10-22 01:52 PT). Plan only. The technique is the pole-target two-bone already named in the task (Tolani, Goswami and Badler 2000)."
+}

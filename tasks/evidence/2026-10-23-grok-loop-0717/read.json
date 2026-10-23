@@ -1,0 +1,36 @@
+{
+  "commit": "6019f21",
+  "viewport": [960, 540],
+  "note": "Pixel samples are the world, not the pale UI. The upper-right band (about x=640-920, y=60-100) and the bottom strip (y>=450) stay near RGB 210 in the noon, dusk, and night frames, so they are chrome. The capture probe's sunEl calls sunPosition(hourAt(0)) and is not the live hour. Esun, lux, and gain are LIGHTING, which the sky update sets from the clock the HUD shows.",
+  "liveSun": {
+    "source": "sunPosition and lighting at the HUD hour, day 227, 49.5 N",
+    "sunsetHud": { "clock": "19:17", "hour": 19.283, "el": -1.126, "az": 293.79, "day": 0.279 },
+    "civilHud": { "clock": "19:58", "hour": 19.967, "el": -7.011, "az": 301.82, "day": 0.0 },
+    "nightHud": { "clock": "22:07", "hour": 22.117, "el": -21.502, "az": 330.46, "day": 0.0 }
+  },
+  "pixels": {
+    "duskSunsetCenter": {
+      "y20": [67, 71, 68],
+      "y140": [110, 72, 43]
+    },
+    "civilCenterY20": [9, 14, 29],
+    "nightCenterY20": [9, 14, 29],
+    "meanAbsRgb": { "sunsetVsCivil": 10.031, "civilVsNight": 0.924, "nightVsNightUp": 3.749 }
+  },
+  "waterEnd": { "x": 179.583, "h": -0.977, "waterY": -0.25, "depth": 0.727, "drawnY": -0.202, "speed": 2 },
+  "waterStart": { "h": -0.01, "drawnY": -0.01, "depth": 0, "speed": 0 },
+  "slope": {
+    "grade": 0.165,
+    "samples0to4drawnMinusH": [-0.006, -0.008, -0.002, -0.008, -0.007],
+    "cameraStayedAboveGround": true
+  },
+  "trunk": {
+    "key": "3:4:1",
+    "species": "jack-pine",
+    "baseRadiusM": 0.160,
+    "blockM": 0.7,
+    "spawnD": 0,
+    "walkEndD": 0.034,
+    "walkEndSpeed": 2
+  }
+}

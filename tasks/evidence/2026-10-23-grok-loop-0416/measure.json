@@ -1,0 +1,507 @@
+{
+  "day": 227,
+  "chunk": 40,
+  "heights": [
+    {
+      "id": "fireweed",
+      "mean": 1.1,
+      "min": 0.5,
+      "max": 1.8,
+      "meshY": 1.117,
+      "bloom": [
+        190,
+        245
+      ],
+      "inBloomOn227": true,
+      "flower": "#c8408f"
+    },
+    {
+      "id": "twinflower",
+      "mean": 0.08,
+      "min": 0.05,
+      "max": 0.12,
+      "meshY": 0.101,
+      "bloom": [
+        165,
+        200
+      ],
+      "inBloomOn227": false,
+      "flower": "#f2b3c6"
+    },
+    {
+      "id": "bunchberry",
+      "mean": 0.14,
+      "min": 0.08,
+      "max": 0.22,
+      "meshY": 0.172,
+      "bloom": [
+        155,
+        190
+      ],
+      "inBloomOn227": false,
+      "flower": "#f3f1e4"
+    },
+    {
+      "id": "rose",
+      "mean": 0.7,
+      "min": 0.3,
+      "max": 1.2,
+      "meshY": 0.715,
+      "bloom": [
+        160,
+        195
+      ],
+      "inBloomOn227": false,
+      "flower": "#de5f8e"
+    },
+    {
+      "id": "woodlily",
+      "mean": 0.45,
+      "min": 0.3,
+      "max": 0.65,
+      "meshY": 0.497,
+      "bloom": [
+        175,
+        205
+      ],
+      "inBloomOn227": false,
+      "flower": "#e3521f"
+    },
+    {
+      "id": "bluebead",
+      "mean": 0.28,
+      "min": 0.15,
+      "max": 0.4,
+      "meshY": 0.309,
+      "bloom": [
+        150,
+        180
+      ],
+      "inBloomOn227": false,
+      "flower": "#d9d66e"
+    },
+    {
+      "id": "strawberry",
+      "mean": 0.1,
+      "min": 0.05,
+      "max": 0.16,
+      "meshY": 0.127,
+      "bloom": [
+        140,
+        172
+      ],
+      "inBloomOn227": false,
+      "flower": "#f6f5ee"
+    },
+    {
+      "id": "everlasting",
+      "mean": 0.45,
+      "min": 0.2,
+      "max": 0.8,
+      "meshY": 0.452,
+      "bloom": [
+        200,
+        260
+      ],
+      "inBloomOn227": true,
+      "flower": "#f4f2e7"
+    },
+    {
+      "id": "blueberry",
+      "mean": 0.25,
+      "min": 0.1,
+      "max": 0.45,
+      "meshY": 0.291,
+      "bloom": null,
+      "inBloomOn227": false,
+      "flower": null
+    },
+    {
+      "id": "labradortea",
+      "mean": 0.55,
+      "min": 0.3,
+      "max": 0.9,
+      "meshY": 0.664,
+      "bloom": null,
+      "inBloomOn227": false,
+      "flower": null
+    },
+    {
+      "id": "alder",
+      "mean": 2.8,
+      "min": 1.5,
+      "max": 4.5,
+      "meshY": 3.37,
+      "bloom": null,
+      "inBloomOn227": false,
+      "flower": null
+    },
+    {
+      "id": "willow",
+      "mean": 2.2,
+      "min": 1,
+      "max": 4,
+      "meshY": 2.62,
+      "bloom": null,
+      "inBloomOn227": false,
+      "flower": null
+    },
+    {
+      "id": "juniper",
+      "mean": 0.5,
+      "min": 0.25,
+      "max": 0.9,
+      "meshY": 1.205,
+      "bloom": null,
+      "inBloomOn227": false,
+      "flower": null
+    }
+  ],
+  "props": {
+    "bunchberry": {
+      "before": {
+        "n": 168,
+        "verts": 1022,
+        "hasOrgan": true,
+        "hasBloom": true,
+        "bloom": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "n": 168,
+        "verts": 1022,
+        "hasOrgan": false,
+        "hasBloom": false,
+        "bloom": null
+      },
+      "bloom": [
+        155,
+        190
+      ],
+      "inBloomOn227": false
+    },
+    "bluebead": {
+      "before": {
+        "n": 270,
+        "verts": 378,
+        "hasOrgan": true,
+        "hasBloom": true,
+        "bloom": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "n": 270,
+        "verts": 378,
+        "hasOrgan": false,
+        "hasBloom": false,
+        "bloom": null
+      },
+      "bloom": [
+        150,
+        180
+      ],
+      "inBloomOn227": false
+    },
+    "woodlily": {
+      "before": {
+        "n": 36,
+        "verts": 282,
+        "hasOrgan": true,
+        "hasBloom": true,
+        "bloom": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "n": 36,
+        "verts": 282,
+        "hasOrgan": false,
+        "hasBloom": false,
+        "bloom": null
+      },
+      "bloom": [
+        175,
+        205
+      ],
+      "inBloomOn227": false
+    },
+    "everlasting": {
+      "before": {
+        "n": 840,
+        "verts": 1496,
+        "hasOrgan": true,
+        "hasBloom": true,
+        "bloom": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "n": 840,
+        "verts": 1496,
+        "hasOrgan": false,
+        "hasBloom": false,
+        "bloom": null
+      },
+      "bloom": [
+        200,
+        260
+      ],
+      "inBloomOn227": true
+    },
+    "forageBlueberry": {
+      "before": {
+        "n": 1440,
+        "verts": 15216,
+        "hasOrgan": true,
+        "hasBloom": true,
+        "bloom": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "n": 1440,
+        "verts": 15216,
+        "hasOrgan": false,
+        "hasBloom": false,
+        "bloom": null
+      },
+      "bloom": [
+        185,
+        250
+      ],
+      "inBloomOn227": true
+    }
+  },
+  "plantEntities": 260,
+  "woodlily": [
+    {
+      "key": "2:0:6",
+      "kind": "plant",
+      "herb": "woodlily",
+      "x": 119.58,
+      "z": 5.17,
+      "y": 6.7,
+      "seed": 2207119302
+    },
+    {
+      "key": "3:0:29",
+      "kind": "plant",
+      "herb": "woodlily",
+      "x": 155.04,
+      "z": 36.62,
+      "y": 5.66,
+      "seed": 3227811266
+    },
+    {
+      "key": "3:2:24",
+      "kind": "plant",
+      "herb": "woodlily",
+      "x": 123.26,
+      "z": 84.65,
+      "y": 3.76,
+      "seed": 2792246977
+    },
+    {
+      "key": "3:2:30",
+      "kind": "plant",
+      "herb": "woodlily",
+      "x": 129.81,
+      "z": 92.92,
+      "y": 3.63,
+      "seed": 954795866
+    },
+    {
+      "key": "4:1:17",
+      "kind": "plant",
+      "herb": "woodlily",
+      "x": 185.4,
+      "z": 41.71,
+      "y": 1.65,
+      "seed": 1743115343
+    }
+  ],
+  "bunchberry": [
+    {
+      "key": "3:0:22",
+      "kind": "plant",
+      "herb": "bunchberry",
+      "x": 124.78,
+      "z": 38.52,
+      "y": 7.57,
+      "seed": 2167404050
+    },
+    {
+      "key": "3:1:17",
+      "kind": "plant",
+      "herb": "bunchberry",
+      "x": 120.82,
+      "z": 47.46,
+      "y": 6.66,
+      "seed": 1397190424
+    },
+    {
+      "key": "3:3:6",
+      "kind": "plant",
+      "herb": "bunchberry",
+      "x": 155.17,
+      "z": 142.79,
+      "y": 3.65,
+      "seed": 3919188489
+    },
+    {
+      "key": "3:3:9",
+      "kind": "plant",
+      "herb": "bunchberry",
+      "x": 147.27,
+      "z": 121.71,
+      "y": 4.27,
+      "seed": 471076484
+    },
+    {
+      "key": "4:0:6",
+      "kind": "plant",
+      "herb": "bunchberry",
+      "x": 162.69,
+      "z": 14.5,
+      "y": 4.17,
+      "seed": 1145483029
+    }
+  ],
+  "forage": [
+    {
+      "key": "forage:2:0:0",
+      "kind": "forage",
+      "herb": "forage-blueberry",
+      "x": 108.5,
+      "z": 39.25,
+      "y": 7.5,
+      "seed": 2664273294
+    },
+    {
+      "key": "forage:2:0:1",
+      "kind": "forage",
+      "herb": "forage-blueberry",
+      "x": 107.19,
+      "z": 13.34,
+      "y": 7.52,
+      "seed": 4279193710
+    },
+    {
+      "key": "forage:2:0:2",
+      "kind": "forage",
+      "herb": "forage-blueberry",
+      "x": 99.58,
+      "z": 0.84,
+      "y": 6.71,
+      "seed": 2424555485
+    },
+    {
+      "key": "forage:2:0:3",
+      "kind": "forage",
+      "herb": "forage-blueberry",
+      "x": 95.34,
+      "z": 17.25,
+      "y": 7.79,
+      "seed": 174717754
+    },
+    {
+      "key": "forage:2:0:4",
+      "kind": "forage",
+      "herb": "forage-blueberry",
+      "x": 105.68,
+      "z": 30.58,
+      "y": 8.66,
+      "seed": 1316553753
+    },
+    {
+      "key": "forage:2:0:5",
+      "kind": "forage",
+      "herb": "forage-blueberry",
+      "x": 119.96,
+      "z": 27.95,
+      "y": 8.74,
+      "seed": 852972121
+    }
+  ],
+  "field": [
+    {
+      "name": "flat",
+      "x": 148,
+      "z": 64,
+      "tile": [
+        7,
+        3
+      ],
+      "n": 1299,
+      "perM2": 3.248,
+      "by": {
+        "twinflower": 383,
+        "bunchberry": 631,
+        "bluebead": 98,
+        "twinflower:clump": 88,
+        "bunchberry:clump": 98,
+        "blueberry:clump": 1
+      },
+      "site": {
+        "water": false,
+        "wet": 0.44,
+        "light": 0.31,
+        "rock": 0,
+        "soil": "till"
+      },
+      "stand": {
+        "canopy": 0.92,
+        "stems": 1059,
+        "bunchberry": 0.10401546172687831
+      },
+      "wind": {
+        "x": -0.19,
+        "z": 2.16,
+        "u": 2.17
+      }
+    },
+    {
+      "name": "shore",
+      "x": 200,
+      "z": 250,
+      "tile": [
+        10,
+        12
+      ],
+      "n": 416,
+      "perM2": 1.04,
+      "by": {
+        "twinflower": 109,
+        "bunchberry": 118,
+        "bluebead": 52,
+        "labradortea": 23,
+        "twinflower:clump": 76,
+        "bunchberry:clump": 38
+      },
+      "site": {
+        "water": false,
+        "wet": 0.74,
+        "light": 0.31,
+        "rock": 0,
+        "soil": "clay"
+      },
+      "stand": {
+        "canopy": 0.92,
+        "stems": 1058,
+        "bunchberry": 0.10401704364985134
+      },
+      "wind": {
+        "x": -0.19,
+        "z": 2.16,
+        "u": 2.17
+      }
+    }
+  ]
+}

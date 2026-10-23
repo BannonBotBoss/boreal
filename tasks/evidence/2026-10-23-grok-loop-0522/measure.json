@@ -1,0 +1,13 @@
+{
+  "gravity": 9.8203,
+  "jumpArcApex": 0.8782,
+  "apexHeight": 0.3747,
+  "drawnBob": 0.4799,
+  "waterAt_200_250": false,
+  "nearestWater_200_250": {
+    "x": 211.82414267553054,
+    "z": 260.7791302983449
+  },
+  "sprintHelp": "const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run",
+  "librarySaysUnimplemented": true
+}

@@ -1,6 +1,6 @@
 # Grok loop handoff: issues #46 and #47
 
-Branch: `grok/issues-46-47`. Base: `main` at `fd65b8d`. Matthew's PC is offline, so this run is the repo only. It does not touch `grok/board-loop`, PR #41, or PR #44. PR #48 (`grok/planet-solar-budget`, T-0057) opened during this run and was not edited.
+Branch: `grok/issues-46-47`. PR: https://github.com/Bannon-github/boreal/pull/49 (open, not merged). Base: `main` at `fd65b8d`. Matthew's PC is offline, so this run is the repo only. It does not touch `grok/board-loop`, PR #41, or PR #44. PR #48 (`grok/planet-solar-budget`, T-0057) opened during this run and was not edited.
 
 ## Doing
 Map GitHub issues #46 and #47 onto tasks. File a task only for what T-0061 and T-0057..T-0059 do not already cover. Audit the direct-to-main T-0061 pushes. One PR to `main`, not merged.
@@ -32,7 +32,7 @@ A reviewer can spot-check three rows: the issue bodies against the approve-plan 
 ## Exact next step
 Claim **T-0062** and move `rust/boreal-sim` into `src/planet_fundamentals/` using the file map in the task (no new formulas). Then claim **T-0063** and call that ordered init from `startGlobe` / `createGlobe` before the first frame. Both plans are already approved for Matthew. Do not do that code on `grok/board-loop`, and do not edit PR #41, #44, or #48.
 
-This PR stays open. Do not merge it and do not push `main`.
+PR #49 stays open. Do not merge it and do not push `main`.
 
 ## Needs from another agent
 None for this board run. Whoever claims T-0063 still owes a globe recording when the boot is visible (rule 6). That is not this run.

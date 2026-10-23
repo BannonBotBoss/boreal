@@ -444,3 +444,16 @@ Inspect terrain, light and sky, and physics/controls. Headless Chrome, Vite, rec
 
 ## Exact next step
 Do not merge grok/board-loop (PR #41). Do not approve T-0048 or T-0021 from the grok family. A non-grok agent (claude, codex or agy) reviews the T-0021 complete. Another agent approve-plans T-0048, then someone claims it and drives the drawn jump height from `jumpFrame` so the probe score is between 0.95 and 1.05. T-0046 stays reserved. T-0047 still needs an approve-plan. The expired claims are unchanged: T-0005 release or complete against the seating on main; T-0023 continue the mirror excess; T-0027 a new complete that names agy/forage-flora.
+
+## Run 2026-10-23 04:16 PT
+Matthew's PC omen is offline. This run is on the VM, branch grok/board-loop, head 0790cef (PR #41). Heartbeat clock 2026-10-23 04:16:00 PT. Fetched origin: no branch tip is later than 0790cef (committer 2026-10-23 03:45:48 PT). main is still 2f9011b. PR #41 workflow job `test` SUCCESS. Only review is Copilot COMMENTED. Left open.
+
+- [x] Step 0 heartbeat. Ledger replay (`npx tsx tools/tasks.ts`): claimed and not complete are T-0005, T-0023, T-0027. No grok or grok-gait claim is open. Hours are `git log -1` committer time on `origin/<branch>` to 04:16:00 PT. No new stall or expiry event. Same SHA and same EXPIRED band as the 00:30 comments, so those comments stay the record (board convention from the 01:19, 02:16 and 03:14 runs: do not file a second comment when the SHA and the band have not changed).
+  - T-0005 grok-globe, grok-globe/log-grounding-bark 2b4d462, committer 2026-10-19 11:03:32 PT, 89.21 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-01-grok-comment-T-0005.json stands. Next step: release the claim or complete against the seating already on main. Do not open a second grounding branch.
+  - T-0023 claude, claude/water-optics 95f1d41, committer 2026-10-21 17:34:13 PT, 34.70 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-03-grok-comment-T-0023.json stands. Next step: tasks/handoffs/T-0023-claude.md exact next step 1 (the rest of the mirror excess). Any agent other than claude may continue; the ledger claim stays claude's until a release.
+  - T-0027 agy, agy/forage-flora 7145ad1, committer 2026-10-21 13:02:57 PT, 39.22 h, still the no-branch complete. Comment tasks/events/2026-10-23T00-30-04-grok-comment-T-0027.json stands. Next step: agy adds a new complete event that names branch agy/forage-flora. Do not rebuild the herbs. Append-only: do not edit the old complete.
+  - grok-globe/globe-inertia eb11755, committer 2026-10-22 23:45:06 PT, 4.51 h idle. T-0043 is approved and unclaimed, so this is not a claimed-task stall and gets no stall event. Next step for grok-globe: claim T-0043 (approve-plan for matthew is already on the board) and finish the coast on that branch. This loop does not touch grok-globe/globe-inertia.
+  - grok/transactional-plan 8020975 is 8.95 h idle and is not a claimed task's branch.
+
+## Exact next step
+Step 1: proposed tasks with no approve-plan. Check evidence and name the library or method each one reuses. Do not approve-plan grok, grok-globe or grok-gait work. Do not merge PR #41.

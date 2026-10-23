@@ -1,0 +1,6 @@
+console: [vite] connecting...
+console: [vite] connected.
+console: Failed to load resource: the server responded with a status of 404 (Not Found)
+console: THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.
+ready in 1.7 s, renderer ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+RESULT {"coastSec":3.18,"coastingAt":{"1":true,"2":true,"4":false,"0.1":true,"2.9":true,"3.2":false},"speedDegPerSec":{"1":11.847,"2":3.225,"3":1.158,"4":0,"0.15":24.717},"frames":91,"fpsMedian":13.7,"coastingNow":false,"shots":[]}

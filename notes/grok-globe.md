@@ -13,3 +13,9 @@
 - 2026-10-19 11:05 PT: Matthew accepted T-0005's +2 shader programs (target was <= +1); smooth bark kept as built, no code change. Merge order unchanged: near-shadows, surface-bands, log-grounding-bark.
 - 2026-10-22 00:50 PT T-0034 (branch grok-globe/globe-default-view): a bare load opens the in-page globe at 2.2 R (`?start=globe&stages=1&trees=v2`); `?view=ground` / `?at=` / any flag keep the ground; Esc on the globe and the footer Menu button open the start menu. Waiting on an approve-plan.
 - 2026-10-22 02:17 PT T-0034 completed: descent stall = sync dry-land search (now generator, 3 ms/frame), pitch snap = horizon aim below 300 km (now globePitch), blank plain = cloud deck (cloudClear). Measure with rAF logs, not capture gaps; headed Edge behind other windows runs at 1 Hz.
+- 2026-10-23 04:05 PT T-0043 (branch grok-globe/globe-inertia, done on the box: omen offline): the globe coasts ~3 s after a drag with
+  three's `MathUtils.damp` (https://threejs.org/docs/#api/en/math/MathUtils.damp), OrbitControls damping off (1:1 drag). Config
+  `GLOBE_COAST` in transition.ts; stops on grab/click/H/descent/auto handoff/detach. camera-controls (yomotsu) considered, not a
+  dependency. Box captures: Playwright-core + /usr/bin/google-chrome with SwiftShader (`--use-angle=swiftshader --enable-unsafe-swiftshader`),
+  `window.__globe` is the standalone handle; page ready = `__globe.stats().drawn > 0 && queued === 0` (~2 s). Handoff:
+  tasks/handoffs/T-0043-grok-globe.md.

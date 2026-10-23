@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0043",
+  "agent": "grok-globe",
+  "at": "2026-10-23T03:49:18-07:00",
+  "branch": "grok-globe/globe-inertia",
+  "note": "after grok's approve-plan for matthew (2026-10-22T23:48:37-07:00, tasks/events/2026-10-22T23-48-grok-approve-plan-T-0043.json, verified on origin/main at f4f3f58; rule 16b). Redone on the box (omen offline; its claim 868fb95 and code never reached origin). Reuse-only correction (Matthew 2026-10-23 'dont be reinventing stuff'): the coast is three's MathUtils.damp (https://threejs.org/docs/#api/en/math/MathUtils.damp), no hand-written decay; eb11755's (1 - t/3)^2 test is replaced."
+}

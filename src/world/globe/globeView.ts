@@ -3,7 +3,7 @@
  * (cube.ts, tailored from SimonDev ProceduralTerrain_Part10, MIT), sampled from the seeded planet function (planet.ts),
  * whose home region IS the live game's terrain (core/world heightAt, same seed and stage switch).
  * Controls: drag = orbit (three OrbitControls, MIT, examples/jsm, unmodified; its zoom is replaced by a logarithmic altitude
- * zoom), wheel/+/- = zoom, H = fly home, G or Esc = back to the game.
+ * zoom; on release the globe coasts ~3 s with three's MathUtils.damp, T-0043), wheel/+/- = zoom, H = fly home, G or Esc = back to the game.
  * Perf: tiles build in a small pool of Web Workers (tileWorker.ts; SimonDev part 7 threads the same way), falling back to
  * budgeted core/interest jobs if workers are unavailable. Nodes beyond the horizon (planet + highest relief) are neither
  * split, built nor drawn. Governor: the shared quality ladder (core/quality) picks tile resolution, split distance, depth and
@@ -28,7 +28,7 @@ import { across } from './cube';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
 import { DAY, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
-import { cloudClear, globePitch } from './transition';
+import { GLOBE_COAST, cloudClear, coastLambda, globePitch } from './transition';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
@@ -81,6 +81,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   const q = new URLSearchParams(location.search);
   if (q.has('tier')) { GOVERNOR.auto = false; GOVERNOR.tier = clamp(Number(q.get('tier')) || 0, 0, LADDER.length - 1); }
   const globe = createGlobe(renderer, { shared: false, params: q });
+  (window as unknown as { __globe?: unknown }).__globe = globe; // dev: the check scripts read it (globe.coasting)
   globe.start(); return globe;
 }
 
@@ -132,8 +133,16 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const group = new THREE.Group(); scene.add(group);
 
   // ---- camera: OrbitControls rotates around the planet centre; altitude is ours (log zoom), tilt toward the horizon near ground
-  const controls = new OrbitControls(camera, canvas); controls.enableZoom = false; controls.enablePan = false; controls.enableDamping = true; controls.dampingFactor = .12;
+  const controls = new OrbitControls(camera, canvas); controls.enableZoom = false; controls.enablePan = false; controls.enableDamping = false; // 1:1 drag; the release coast below replaces its per-frame damping
   let inputOn = own.inputAtStart; controls.enabled = inputOn; // input is mode-scoped: only while attached (attachInput)
+  // Release coast (T-0043): OrbitControls' damping is per frame (its tail halves at 2x the frame rate, and a longer tail lags
+  // every drag), so it is off and three's frame-rate-independent MathUtils.damp carries the drag's rate on after release
+  // (GLOBE_COAST, transition.ts). The rate is read in OrbitControls' own spherical angles (its frame is world +y up: camera.up
+  // at construction) per unit rotateSpeed, so the coast slows with altitude like the drag. coastT: s since release, -1 = none.
+  const coastV = new THREE.Vector2(), coastPrev = new THREE.Vector2(), coastS = new THREE.Spherical(); let dragging = false, coastT = -1;
+  const stopCoast = () => { coastT = -1; coastV.set(0, 0); };
+  controls.addEventListener('start', () => { stopCoast(); dragging = true; coastPrev.set(controls.getAzimuthalAngle(), controls.getPolarAngle()); }); // a new grab
+  controls.addEventListener('end', () => { if (dragging) coastT = 0; dragging = false; });
   const bench = q.get('bench') === 'zoom', benchFrom = 14e6, benchTo = 300, benchSec = 20; let benchT = -2, benchOrbit = {}; // 2 s settle at orbit, 20 s zoom, 8 s hold
   const startAlt = bench ? benchFrom : Number(q.get('alt')) || R * 2.2;
   const dirQ = q.get('dir')?.split(',').map(Number); // ?dir=x,y,z: start over any planet direction (e.g. a cube-face corner, screenshots)
@@ -154,7 +163,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const turn = (d: number) => { if (alt < 3e5) lookAz = (lookAz ?? cameraAz()) + d; };
   controls.mouseButtons.RIGHT = null; listen(canvas, 'contextmenu', e => { if (inputOn) e.preventDefault(); });
   let turnX: number | null = null;
-  listen(canvas, 'pointerdown', (e: PointerEvent) => { if (inputOn && e.button === 2) turnX = e.clientX; });
+  listen(canvas, 'pointerdown', (e: PointerEvent) => { if (!inputOn) return; stopCoast(); if (e.button === 2) turnX = e.clientX; }); // any click on the globe stops the coast
   listen(window, 'pointermove', (e: PointerEvent) => { if (turnX !== null) { turn((e.clientX - turnX) * .005); turnX = e.clientX; } });
   listen(window, 'pointerup', (e: PointerEvent) => { if (e.button === 2) turnX = null; });
   const zoom = (f: number) => { targetAlt = clamp(targetAlt * f, 40, R * 4); };
@@ -162,7 +171,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   listen(window, 'keydown', (e: KeyboardEvent) => {
     if (!inputOn) return;
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
-    else if (e.key === 'h' || e.key === 'H') flyHome = 1;
+    else if (e.key === 'h' || e.key === 'H') { flyHome = 1; stopCoast(); }
     else if (e.key === 'q' || e.key === 'Q') turn(-.12); else if (e.key === 'e' || e.key === 'E') turn(.12);
     else if (e.key === 'g' || e.key === 'G' || (e.key === 'Escape' && own.pageDom)) { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } // over home: spawn right below, same heading; shared (in-page): Esc opens the game menu instead (main.ts)
   });
@@ -316,7 +325,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
-    if (autoHandoff && spawn && !leaving) { leaving = true; if (fade) fade.style.opacity = '1'; const at = { ...landSpawn(spawn), yaw: headingYaw() }; setTimeout(() => leave(at), 650); }
+    if (autoHandoff && spawn && !leaving) { leaving = true; stopCoast(); if (fade) fade.style.opacity = '1'; const at = { ...landSpawn(spawn), yaw: headingYaw() }; setTimeout(() => leave(at), 650); }
     if (flyHome) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
     if (bench) { const prev = benchT; benchT += dt;
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }
@@ -324,6 +333,13 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       if (prev < benchSec + 8 && benchT >= benchSec + 8) console.log('BENCH ' + JSON.stringify({ mode: mode(), warm: STATS.warm.map(Math.round), tiles: STATS.build.length, buildAvg: +avg(STATS.build).toFixed(2), buildP95: +pct(STATS.build, .95).toFixed(2), buildMax: +Math.max(0, ...STATS.build).toFixed(2),
         frames: STATS.work.length, compileMs: +STATS.compileMs.toFixed(0), workAvg: +avg(STATS.work).toFixed(2), workP99: +pct(STATS.work, .99).toFixed(2), workMax: +Math.max(0, ...STATS.work).toFixed(2), intervalP99: +pct(STATS.interval, .99).toFixed(1), intervalMax: +Math.max(0, ...STATS.interval).toFixed(1), cached: tiles.size, orbit: benchOrbit, ground: { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles } })); }
     else if (!ext) alt = Math.exp(Math.log(alt) + (Math.log(targetAlt) - Math.log(alt)) * (1 - Math.exp(-dt * 7)));
+    if (ext || leaving) stopCoast(); // the in-page descent flies the camera (band), the standalone auto handoff fades out
+    else if (dragging && dt > 0) { const az = controls.getAzimuthalAngle(), po = controls.getPolarAngle(), rs = controls.rotateSpeed, k = 1 / GLOBE_COAST.track; // drag rate (rad/s per unit rotateSpeed), damp-smoothed
+      coastV.set(THREE.MathUtils.damp(coastV.x, Math.atan2(Math.sin(az - coastPrev.x), Math.cos(az - coastPrev.x)) / dt / rs, k, dt), THREE.MathUtils.damp(coastV.y, (po - coastPrev.y) / dt / rs, k, dt)); coastPrev.set(az, po); }
+    else if (coastT >= 0) { const rs = controls.rotateSpeed, vx = coastV.x, vy = coastV.y; coastT += dt; // coast: speed damped toward 0, angle by the trapezoid
+      coastV.set(THREE.MathUtils.damp(vx, 0, coastLambda, dt), THREE.MathUtils.damp(vy, 0, coastLambda, dt));
+      coastS.setFromVector3(dir); coastS.theta += (vx + coastV.x) / 2 * dt * rs; coastS.phi += (vy + coastV.y) / 2 * dt * rs; coastS.makeSafe(); dir.setFromSpherical(coastS);
+      if (coastT >= GLOBE_COAST.sec) stopCoast(); }
     if (ext) { alt = targetAlt = Math.max(1, camera.position.length() - R - ground); camUp.copy(dir); camera.quaternion.copy(ext.quaternion);
       if (camera.fov !== ext.fov || camera.aspect !== ext.aspect) { camera.fov = ext.fov; camera.aspect = ext.aspect; } }
     else {
@@ -423,8 +439,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     /** standalone loop */
     start() { if (started) return; started = true; void compiled.then(() => requestAnimationFrame(tick)); },
     /** mode-scoped input: the globe's keys, wheel and drags act only while attached */
-    attachInput(on: boolean) { inputOn = on; controls.enabled = on; if (!on) turnX = null; },
-    get disposed() { return down; }, get altitude() { return alt; }, get ground() { return ground; }, precompile,
+    attachInput(on: boolean) { inputOn = on; controls.enabled = on; if (!on) { turnX = null; dragging = false; stopCoast(); } },
+    get disposed() { return down; }, /** dev: the release coast is running (T-0043) */ get coasting() { return coastT >= 0; }, get altitude() { return alt; }, get ground() { return ground; }, precompile,
     /** shared band: fly the camera from outside (planet-frame metres, orientation, the game camera's fov/aspect); null = the
      *  globe's own controls take over again from where the camera is, keeping its heading */
     drive(cam: { position: THREE.Vector3; quaternion: THREE.Quaternion; fov: number; aspect: number } | null) {

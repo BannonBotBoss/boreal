@@ -135,3 +135,177 @@ Grok's T-0009 still in progress (grok/rabbit-clover 22:15), so only steps 1, 2, 
 
 ## Next step
 Next run: read this file, then steps 1, 2, 2b; re-review T-0025 if agy resubmits. If T-0009 is no longer in progress: ?bench tier lag for T-0023, then step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
+
+## Run 2026-10-21 23:18 PDT
+Grok's T-0009 still in progress (grok/rabbit-clover run 11 plan 22:49), so only steps 1, 2, 2b.
+
+- [x] Step 1: no complete+approval pairs; nothing to merge. Only new board activity is codex/loop 22:31 comments on T-0001, T-0007, T-0025 repeating its earlier not-approved findings (no new approvals). No new completions to review, no plans needing approve-plan beyond those codex already blocked.
+- [x] Step 2: no new tasks (claude and agy branches unchanged since 21:01 / 18:42).
+- [x] Step 2b: no new Needs from another agent items for Grok.
+- Still no GitHub remote on the served repo.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; if T-0009 is done, step 3 inspection (deer/visitor animals, trees, sound, controls/UI).
+
+## Run 2026-10-22 00:13 PDT
+Grok's T-0009 still in progress (grok/rabbit-clover run 11 at 00:09, grok-gait fore reach 23:37), so only steps 1, 2, 2b.
+
+- [x] Step 1: no commits from claude, codex or agy since 23:18; nothing complete+approved, nothing to review or plan-approve.
+- [x] Step 2: no new tasks.
+- [x] Step 2b: no new handoff needs.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; if T-0009 is done, the ?bench tier lag for T-0023 and step 3 inspection.
+
+
+
+## Run 2026-10-22 01:16 PDT
+Grok work still in progress (T-0009 run 12 on grok/rabbit-clover 01:12, T-0036 grok/wolf-hydration 01:06, T-0035 grok/interact-outline 01:15, T-0033 grok/music, grok-globe T-0034 claimed 01:02), so only steps 1, 2 and 2b.
+
+- [x] Step 1: no task has complete + non-author approval; nothing to merge or review. No commits from claude, codex or agy since 22:31.
+- [x] Step 2: new since 00:13 are T-0033 (acoustic music), T-0034 (globe default view, grok-globe, claimed), T-0035 (target outline glow), T-0036 (species needs template); all Grok-role proposals from Matthew's chat requests, so Grok can't approve-plan them; they wait for claude/codex/agy reviews.
+- [x] Step 2b: no new reference needs I can fill (T-0034 rule-8 recording already done at 01:00).
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; check whether claude/codex/agy approve-planned T-0033..T-0036.
+
+## Run 2026-10-22 02:18 PDT
+Grok work in progress (T-0032 commit 02:18, T-0036, T-0009), so only steps 1, 2 and 2b. GitHub origin Bannon-github/boreal exists (rule 17); no open PRs, no Issues listed yet.
+Claude (weekly limit, resets Fri Oct 24 09:00 PT), agy (quota, ~154 h) and codex (usage limit, retry 02:30) all failed their last runs: no non-Grok reviewer for agent-originated Grok work (T-0032 continuation, T-0009).
+
+- [x] Step 1: T-0034 (grok-globe; Matthew's direct request "it should load the global view please", rule 16) approved for matthew (event 2026-10-22T02-31-grok-approve-T-0034.json) and merged into grok/transactional-plan = 5fdadb3 (pushed). npm test 372 pass / 0 fail / 13 todo, tsc 0; frames after-globe.jpg and after-landed.jpg checked.
+- [ ] BLOCKED: served main not fast-forwarded (still 0a8465f, pushed). The served repo has an uncommitted src/main.ts edit (+3 lines, ?rec __boreal probe for tools/hunt-record.mjs, written 02:18, looks like T-0036 work done in the served repo), and 0a8465f..5fdadb3 changes src/main.ts. Not touched.
+- [x] Step 2: no new tasks beyond T-0037/T-0038 (Matthew's requests, already plan-approved) and grok's T-0032 continuation complete (review requested from codex/claude).
+- [x] Step 2b: no needs Grok can fill (T-0032 reference done 19:22; others need non-Grok reviews).
+
+## Next step
+When src/main.ts in the served repo is clean (its owner commits it on their branch), run there: git merge --ff-only grok/transactional-plan; git push origin main (undo: git reset --keep 0a8465f). Then steps 1, 2, 2b as usual.
+
+## Run 2026-10-22 03:17 PDT
+Grok work in progress (grok-globe T-0041 commit 03:16, grok-gait T-0009 02:53, grok T-0040 grok/ecosystem-sim 02:29), so only steps 1, 2 and 2b.
+
+- [x] Last run's blocker cleared: served repo clean, main = origin/main = 426a941 (PR #33 T-0034 and PR #34 T-0039 merged by Matthew 03:00; T-0036 grok/wolf-hydration and grok/transactional-plan are in main).
+- [x] Step 1: no open PRs. Nothing complete + non-author approved left unmerged. Codex is running again (02:35): T-0032 (grok) partial, not approved (objective 3 reflected-shore gate untested, stills not a recording, ringWidth cold-cache cost; refs/reviews/T-0032-codex-review.md); T-0025 (agy) still not approved (stripes score 0.987); T-0001/T-0007 blockers unchanged. codex/loop carries unfinished T-0022 code, so not published.
+- [x] Step 1c / 2: new since 02:18 are T-0039 (done, merged), T-0040 (Matthew's request, approve-plan for matthew + claim), T-0041 descent polish (grok-globe, for matthew, 20 credits). T-0041 has no approve-plan yet: rule 16b needs Matthew's request quoted verbatim with its Pacific time (~02:54), which this run doesn't have; left for the Grok Bot chat to record.
+- [x] Step 2b: no reference image/video needs open that Grok can fill (remaining needs are non-Grok reviews of T-0036, T-0040, T-0022).
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; check open PRs (gh pr list -R Bannon-github/boreal) and T-0041's approve-plan; if no Grok work is in progress, step 3 inspection.
+
+## 2026-10-22 04:18 run
+- Grok work in progress (grok-globe T-0041 commits to 04:17 on grok-globe/descent-polish), so only steps 1, 2, 2b.
+- Main ceb790f (T-0041 approve-plan for matthew recorded 03:52). No open PRs; nothing to merge or review. No new tasks or issues since 03:17.
+- No 'Needs from another agent' items. claude out until Oct 24 09:00, agy ~152 h; codex no new log.
+- Next step: next hourly run; when T-0041 PR opens, it's a Matthew-requested task (rule 16b), merge once tests pass and evidence is recorded.
+
+## Run 2026-10-22 05:20 PDT
+Grok's T-0009 still in progress (grok-gait run 9 at 05:11, merged into grok/rabbit-clover 05:12), so only steps 1, 2, 2b.
+
+- [x] Step 1: main cd5ad22 (= origin/main), no open PRs on Bannon-github/boreal; nothing to merge or review. No new approvals waiting.
+- [x] Step 2: no new task proposals, task files or issues since 04:18.
+- [x] Step 2b: T-0009-grok-gait.md run 9 adds a touchdown-pop contract note for Claude; no reference image/video needs for Grok.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. If T-0009 is no longer in progress, fix or file the ?bench tier lag (T-0023 lead 2) and do step 3 inspection of deer/visitor animals, trees, sound, controls/UI.
+
+
+## Run 2026-10-22 06:20 PDT
+Grok's T-0009 still in progress (grok-gait run 10 fore-lock perf d2a8807 at 06:00, merged into grok/rabbit-clover fcae464 at 06:08), so only steps 1, 2, 2b.
+
+- [x] Step 1: main cd5ad22, no open PRs, nothing to merge or review.
+- [x] Step 2: no new tasks or issues since 05:20 (issues #1-#32 unchanged).
+- [x] Step 2b: no reference image/video needs for Grok; grok-gait's run 10 next step (perf re-check of foreLock on grok/rabbit-clover) belongs to the T-0009 workstream, not this loop.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; step 3 inspection once T-0009 is no longer in progress.
+
+
+## 07:16 run
+T-0009 (grok/rabbit-clover, last commit 1220b14 06:24) still in progress, so steps 1, 2, 2b only. main cd5ad22, no open PRs, no new commits on any branch since 06:24, no new issues or handoff needs. Next: next hourly run; continue T-0009 touchdown pop and port onto main's core/sim hare adapter.
+
+
+## Run 2026-10-22 08:19 PDT
+Grok's T-0009 still in progress (grok/rabbit-clover 1220b14 at 06:24, local; port onto main's core/sim hare adapter pending), so only steps 1, 2, 2b.
+
+- [x] Step 1: main cd5ad22, no open PRs, no new commits on any branch since 07:16; nothing to merge or review.
+- [x] Step 2: no new issues or task files since last run (no issue updated after 07:00 PDT).
+- [x] Step 2b: no new handoff needs for Grok.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. When T-0009 is finished or parked, resume step 3 inspection (deer/visitor animals, trees, sound, controls/UI).
+
+
+## Run 2026-10-22 09:17 PDT
+Grok's T-0009 still in progress (grok/rabbit-clover 1220b14 at 06:24, local; port onto main's core/sim hare adapter pending), so only steps 1, 2, 2b.
+
+- [x] Step 1: main cd5ad22, no open PRs; only new commit is codex/loop fa20e8c (08:30 review-start checkpoint, handoff only); nothing to merge or review.
+- [x] Step 2: no new issues or task files since last run (no issue updated after 08:15 PDT).
+- [x] Step 2b: codex-loop.md 08:30 lists 'pending review inventory' as its own run checkpoint, nothing for Grok to do.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b. When T-0009 is finished or parked, resume step 3 inspection (deer/visitor animals, trees, sound, controls/UI).
+
+## Run 2026-10-22 10:18 PDT
+Grok's T-0009 still in progress (grok/rabbit-clover 1220b14 at 06:24), so only steps 1, 2, 2b.
+
+- [x] Step 1: main cd5ad22, no open PRs, no new commits on any branch since the 09:17 run; nothing to merge or review.
+- [x] Step 2: no new tasks or issues.
+- [x] Step 2b: no handoff changes, so no new needs.
+
+## Next step
+Next run: read this file, do steps 1, 2, 2b; if T-0009 is done, do step 3 inspection.
+
+
+## 2026-10-22 11:20 run
+Grok's T-0009 still in progress (1220b14 at 06:24), so only steps 1, 2, 2b. main cd5ad22, no open PRs, no new commits, issues or PR activity since 10:18; no handoff needs. Next step: next hourly run repeats steps 1, 2, 2b until T-0009 is submitted.
+
+## Run 2026-10-22 12:12
+Grok's T-0009 still in progress (grok/rabbit-clover 1220b14 at 06:24, local), so only steps 1, 2, 2b. main cd5ad22, no open PRs, no new commits on any branch since 11:21, no new issues, no handoff needs for Grok. Next step: next hourly run repeats steps 1, 2, 2b until T-0009 progresses.
+
+## Run 2026-10-22 13:12
+Grok's T-0009 still in progress (1220b14 at 06:24, local), so only steps 1, 2, 2b.
+
+- [x] Step 1: main cd5ad22, no open PRs, nothing to merge. Step 1c: codex proposed T-0042 (codex/loop 66c11f9, 30 credits, rule-15 clarification for unchanged blocked reviews); spot-checked three evidence rows and wrote approve-plan with a condition to use GitHub's PR head SHA/review state as the unchanged test.
+- [x] Step 2: new task T-0042 (codex); codex 12:34 comments on T-0001, T-0007, T-0025, T-0032 (unchanged blockers). No new issues.
+- [x] Step 2b: T-0042-codex.md asks Grok/loop owner to align the scheduled prompt if adopted; left for Matthew to decide (prompt change needs his OK).
+
+Next step: next hourly run repeats steps 1, 2, 2b until T-0009 progresses.
+
+## 2026-10-22 14:21 run (PDT)
+- T-0009 still in progress, so steps 1, 2, 2b only.
+- main now 38ee309 (Matthew added matts_vision.md); served repo fast-forwarded cd5ad22 to 38ee309.
+- PR #36 (Copilot, draft, T-0007): only adds package-lock.json, no implementation; review comment posted listing what fails. Not merged.
+- No new issues, no new handoff needs.
+- Next step: next hourly run, re-check PR #36 and T-0042 (codex).
+
+
+## Run 2026-10-22 15:16 PDT
+- Grok's T-0009 still in progress, so only steps 1, 2, 2b.
+- main 38ee309 (served repo in sync), only open PR is Copilot draft #36 (T-0007), unchanged since my 14:21 review comment.
+- No new commits on any branch, no new issues, no new handoff needs.
+
+## Next step
+- Next run: re-check PR #36 for new pushes and review if implemented; continue T-0009 when resumed.
+
+
+## Run 2026-10-22 16:12 PDT
+T-0009 still in progress (grok/rabbit-clover last commit 1220b14 at 06:24), so steps 1, 2, 2b only.
+- [x] Step 1: main 38ee309 unchanged; only open PR is Copilot draft #36 (unchanged since my 14:21 review comment); nothing to merge or review. Remote branch grok-globe/descent-polish deleted after PR #35 merge.
+- [x] Step 2: no new commits, task files or issues since 15:16.
+- [x] Step 2b: no handoff changes on any branch.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; step 3 only once T-0009 is done.
+
+
+- 2026-10-22 17:12 run: T-0009 still in progress, steps 1, 2, 2b only. main 38ee309; only open PR is Copilot draft #36 (unchanged since 14:21); no new commits, issues or handoff needs. Next step: next hourly run repeats steps 1, 2, 2b until T-0009 completes.
+
+## Run 2026-10-22 18:16 PDT
+Grok's T-0009 still in progress, so steps 1, 2, 2b only.
+- [x] Step 1: main 38ee309; only open PR is Copilot draft #36 (unchanged since 14:21, my review comment stands); nothing to merge or review; no proposals awaiting approve-plan.
+- [x] Step 2: no new commits on any branch since 17:12, no new issues.
+- [x] Step 2b: no new handoff needs.
+
+## Next step
+Next run: read this file, then steps 1, 2, 2b; step 3 inspection once T-0009 is done.
+

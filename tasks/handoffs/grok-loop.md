@@ -334,3 +334,12 @@ T-0009 still in progress (PR #38, grok/hare-rig-port, no complete event or for-m
 ## Next step
 Next run: read this file, steps 1, 2, 2b; finish T-0009 (complete event on PR #38) before step 3.
 
+## Run 2026-10-22 22:19 PDT
+T-0009 still in progress (PR #38 unchanged since 19:55), so steps 1, 2, 2b only.
+- [x] Step 1: main 8020975, only open PR #38; nothing to merge or review.
+- [x] Step 2: no new commits, task files or issues since the 21:18 run.
+- [x] Step 2b: no new handoff needs.
+
+## Next step
+Next run: read this file, steps 1, 2, 2b; finish T-0009 (complete event on PR #38) before step 3.
+

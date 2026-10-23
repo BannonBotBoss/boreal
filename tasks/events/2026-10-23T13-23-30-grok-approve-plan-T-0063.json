@@ -1,0 +1,8 @@
+{
+  "type": "approve-plan",
+  "task": "T-0063",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-23T13:23:30-07:00",
+  "note": "Matthew, GitHub issue #47 \"order\", 2026-10-23 12:29:54 PT (https://github.com/Bannon-github/boreal/issues/47). His direct request is the plan approval for T-0063. Verbatim:\n\nThis is the order Boreal should run when the game boots into the globe:\n\nGenerate land/sea mask\n\nGenerate elevation + roughness\n\nSeed climate bands\n\nSeed SST + soil moisture + humidity\n\nSeed cloud fraction + optical depth\n\nCompute solar budget\n\nCompute surface absorption\n\nCompute pressure\n\nCompute wind\n\nCompute hydrosphere flows (evap, precip)\n\nCompute atmosphere updates (clouds, humidity)\n\nFinalize world state\n\nRender globe\n\"well, anything i request by direct chat shouldnt need approval\" (Matthew, 2026-10-22 01:52 PT)."
+}

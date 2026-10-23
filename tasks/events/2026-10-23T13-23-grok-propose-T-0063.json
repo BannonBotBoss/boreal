@@ -1,0 +1,8 @@
+{
+  "type": "propose",
+  "task": "T-0063",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-23T13:23:00-07:00",
+  "note": "Issue #47 (Matthew, Bannon-github, 2026-10-23 12:29:54 PT) is the globe boot order. T-0061 seeds in a different order and does not start the globe. T-0057..T-0059 own drawing the layers. This task calls the existing functions in his order before the first frame. Credits 30 (10 x 3 objectives, not from scratch, not research). His request, verbatim:\n\nThis is the order Boreal should run when the game boots into the globe:\n\nGenerate land/sea mask\n\nGenerate elevation + roughness\n\nSeed climate bands\n\nSeed SST + soil moisture + humidity\n\nSeed cloud fraction + optical depth\n\nCompute solar budget\n\nCompute surface absorption\n\nCompute pressure\n\nCompute wind\n\nCompute hydrosphere flows (evap, precip)\n\nCompute atmosphere updates (clouds, humidity)\n\nFinalize world state\n\nRender globe"
+}

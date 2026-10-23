@@ -1,0 +1,8 @@
+{
+  "type": "propose",
+  "task": "T-0062",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-23T13:22:00-07:00",
+  "note": "Issue #46 (Matthew, Bannon-github, 2026-10-23 12:27:56 PT) asks for the planet_fundamentals layout. T-0061's flat rust/boreal-sim modules and T-0057..T-0059's TypeScript layers do not build that tree. This task moves and splits the existing port of core/weather.ts. Credits 30 (10 x 3 objectives, not from scratch, not research). His request, verbatim:\n\n/planet_fundamentals\n    /energy\n        solar_budget.rs\n        albedo.rs\n        longwave.rs\n        energy_update.rs\n\n    /hydrosphere\n        evaporation.rs\n        precipitation.rs\n        humidity_column.rs\n        sst.rs\n        soil_moisture.rs\n        ice_fraction.rs\n\n    /atmosphere\n        pressure.rs\n        wind.rs\n        instability.rs\n        cloud_fraction.rs\n        cloud_optical_depth.rs\n\n    /surface\n        land_sea_mask.rs\n        heat_capacity.rs\n        roughness.rs\n        elevation.rs\n        vegetation_fraction.rs   // later\n\n    climate_seed.rs\n    planet_initialization.rs\n    planet_update.rs\n"
+}

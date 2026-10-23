@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0049",
+  "agent": "grok",
+  "at": "2026-10-23T04:38:00-07:00",
+  "note": "Juniper variant 0 detail 0 from buildPlant has boundingBox maxY 1.088 m against height.mean 0.5 m (ratio 2.176) and row max 0.9 m. The needle branch in src/render/flora/plant.ts (mat 1.1, length divided by cos(mat)) is the cause. Herbs in the same function use stemLen = H. Four placed stems on seed 1400 tile 7,10 draw tops 1.04–1.63 m. Fireweed on the same call is 1.117/1.1 = 1.015. FNA var. depressa is prostrate or low, occasionally to 3 m (http://www.efloras.org/florataxon.aspx?flora_id=1&taxon_id=233500725); FEIS says rarely over 1 m. The row stays. Frame tasks/evidence/2026-10-23-grok-loop-0416/juniper-close.png has no scale; the box is the measurement. Credits 39 = 10 x 3 objectives x 1.3 research. Not claimed. Needs another agent's approve-plan."
+}

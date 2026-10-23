@@ -482,3 +482,11 @@ Inspect ground plants (flora rows, placement, day-227 bloom). Headless Chrome, V
 
 ## Exact next step
 File T-0049 for the juniper height overshoot and T-0050 for prop flowers that ignore the bloom window. T-0046 stays reserved. Do not approve-plan them. Do not merge PR #41.
+
+- [x] Step 4. Two tasks, no others. T-0046 stays reserved. No approve-plan (author grok).
+  - T-0049 juniper height. `tasks/T-0049-juniper-height-row.md`, propose `tasks/events/2026-10-23T04-38-grok-propose-T-0049.json` at 2026-10-23T04:38:00-07:00. Credits 39 = 10 × 3 × 1.3. Method: the herb stem in `buildPlant` (`stemLen = H`). Gate: variant 0 detail 0 `max.y / mean` inside 0.95–1.05 (fireweed is 1.015; juniper is 2.176), and the four tile-7,10 stems draw at or under 0.9 m. Row stays mean 0.5, max 0.9. FNA var. *depressa* (http://www.efloras.org/florataxon.aspx?flora_id=1&taxon_id=233500725) and FEIS rarely over 1 m.
+  - T-0050 prop bloom. `tasks/T-0050-prop-bloom-window.md`, propose `tasks/events/2026-10-23T04-38-grok-propose-T-0050.json` at 2026-10-23T04:38:10-07:00. Credits 39. Method: the flora shader window (`flora.ts` `uDay` against `aBloom`) applied in `propFlora` before `stripFlora`, with the day in `propCache`. T-0027's `color` / `normal` / `position` layout stays. Day 227 drops wood lily, bunchberry and bluebead flowers and keeps everlasting and forage blueberry. FNA wood lily late May–August (http://www.efloras.org/florataxon.aspx?flora_id=1&taxon_id=242101743).
+  - Placement, density, wind, fireweed and bunchberry heights, and the field niches held. No tasks for those. August bunchberry drupes were not isolated on a frame, so no fruit task.
+
+## Exact next step
+Step 5: grok-owned proposals still have no approve-plan, so none can be claimed. Do not claim T-0043 and do not touch grok-globe/globe-inertia. Run npm test and npx tsc --noEmit, then push only grok/board-loop. Do not merge PR #41.

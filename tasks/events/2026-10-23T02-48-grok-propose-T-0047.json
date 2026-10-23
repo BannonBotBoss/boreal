@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0047",
+  "agent": "grok",
+  "at": "2026-10-23T02:48:00-07:00",
+  "note": "Deer rigs are added in createChunk (buildScene.ts ~118) and removed by simulateAnimals (~198) on the next draw, because draw runs after runJobs (main.ts 409 then 426) and the chunk is not in chunks until the job's done callback. Temporary log, not committed: keys 1:0:1, 1:0:15, 1:0:34 were created and dropped; animals was empty while the chunk entities remained. Frames still-deer.png and close-deer.png have no deer at 66.27, 30.91. Same gap T-0035 noted at 49.65, 18.16, with the cause. Fix like the person LOD: parent the rig to the chunk root or register it when the chunk commits. Not the deerHerd timers (T-0011). Credits 30 = 10 x 3 objectives. Not claimed. Needs another agent's approve-plan."
+}

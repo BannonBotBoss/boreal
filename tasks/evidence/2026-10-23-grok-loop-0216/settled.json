@@ -1,0 +1,82 @@
+{
+  "commit": "8be743c",
+  "viewport": [
+    960,
+    540
+  ],
+  "waitMsAfterLoading": 10000,
+  "shots": [
+    {
+      "name": "settled-deer",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&at=66.27,24.5,3.14159&trees=v2",
+      "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-0216/settled-deer.png",
+      "player": {
+        "x": 66.27,
+        "z": 24.500000042780588,
+        "yaw": 3.14159,
+        "energy": 74.96390334003024,
+        "water": 99.98574933944906,
+        "mode": "walk"
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "name": "settled-person",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&at=68.57,23,3.14159&trees=v2",
+      "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-0216/settled-person.png",
+      "player": {
+        "x": 68.57,
+        "z": 23.000000040201293,
+        "yaw": 3.14159,
+        "energy": 74.92927573017553,
+        "water": 99.97207864764147,
+        "mode": "walk"
+      },
+      "errors": []
+    },
+    {
+      "name": "settled-bark",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&at=65.86,32.36,-1.5708&trees=v2",
+      "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-0216/settled-bark.png",
+      "player": {
+        "x": 65.85999999900832,
+        "z": 32.36,
+        "yaw": -1.5708,
+        "energy": 74.89611717043587,
+        "water": 99.95898792457723,
+        "mode": "walk"
+      },
+      "errors": []
+    },
+    {
+      "name": "settled-stand",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&at=67.4,8,3.14159&trees=v2",
+      "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-0216/settled-stand.png",
+      "player": {
+        "x": 67.4,
+        "z": 8.000000045259796,
+        "yaw": 3.14159,
+        "energy": 74.85666268163172,
+        "water": 99.94341162118434,
+        "mode": "walk"
+      },
+      "errors": []
+    },
+    {
+      "name": "settled-stand-default",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&at=67.4,8,3.14159",
+      "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-0216/settled-stand-default.png",
+      "player": {
+        "x": 67.4,
+        "z": 8.000000044465441,
+        "yaw": 3.14159,
+        "energy": 74.81762792143186,
+        "water": 99.92800102314669,
+        "mode": "walk"
+      },
+      "errors": []
+    }
+  ]
+}

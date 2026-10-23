@@ -1035,3 +1035,8 @@ Step 3: inspect sound, physics, controls and UI in a headless browser, and retry
 
 ## Exact next step
 Step 4: file T-0065 only for a measured gap no open task already names. Do not approve-plan it. Do not merge.
+
+- [x] Step 4. No new task. T-0065 is unused. T-0046 stays reserved. The gaps measured this hour already have ids: bird and loon timers T-0017, hare thump T-0053, jump arc 0.480 m versus 0.375 m T-0048, start-menu return T-0051, the 1.5 s sprint sentence T-0052, the paw pop T-0044. Grok still holds 2 of 2 claims (T-0044, T-0057). Not claimed. Not approved.
+
+## Exact next step
+Step 5: on grok/playable-hare, hold the 8.5 m/s 60 Hz plant-frame shoulder-wrist at or above about 0.103 m with the existing `foreReachTarget` / `FORE_REACH` floor, contact forearm inside Schmidt 2008 Table 4 (11–36°). Do not add a second solver. Run `npm test` and `npx tsc --noEmit`. Push that branch. Do not merge. Do not complete T-0044.

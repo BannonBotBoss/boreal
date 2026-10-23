@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0060",
+  "agent": "grok",
+  "at": "2026-10-23T14:32:00-07:00",
+  "note": "Order violation, pending Matthew's revert-or-keep decision. d721c9b and 9bf907f (both committer 2026-10-23 11:47:13 PT) are ancestors of main fd65b8d. They add src/core/deepTime.ts, tests/deep-time.test.ts, tools/deep-time.html, the task file, notes/skills/deep-time-model.md, and tasks/handoffs/T-0060-grokbot-1.md. No claim event and no complete event exist. The approve-plan tasks/events/2026-10-23T12-55-00-grok-approve-plan-T-0060.json is at 12:55:00 PT, after that code was already on main. Rule 2 is plan approval, then claim, then code. That approve-plan is not an approval of the code, and this comment is not one either. Viewed refs/T-0060/dial-grid.png (dark log-year dial, stages from no planet through engulfed). Nothing reverted. If Matthew wants it off main, revert 9bf907f and d721c9b (later commits, including the T-0056 merge 5bc3dc1 and the T-0061 pushes, sit above them, so this is a revert, not a reset)."
+}

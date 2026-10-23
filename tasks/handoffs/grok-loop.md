@@ -635,3 +635,8 @@ Step 1: proposed and completed tasks by claude, codex or agy since 2026-10-23 13
 
 ## Exact next step
 Step 2: list tasks, proposals and issues added since 2026-10-23 13:41:26Z. Then inspect collision, slopes, water entry, and dusk/night light. Do not merge PR #41.
+
+- [x] Step 2. Since 2026-10-23 13:41:26Z, after `git fetch origin --prune`: no remote tip is later than 74f96a2. `gh issue list` updated at or after 2026-10-23T13:41:00Z is empty. No new task file or propose event from another agent. T-0053 is the previous run's proposal, already in 74f96a2. T-0046 stays reserved. Next free id is T-0054.
+
+## Exact next step
+Inspect collision, slopes, water entry, and dusk/night light. Headless Chrome, Vite, frames under tasks/evidence/2026-10-23-grok-loop-0717/. New tasks only for a measured gap, ids from T-0054. Do not approve-plan them. Do not merge PR #41.

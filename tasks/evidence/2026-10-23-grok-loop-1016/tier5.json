@@ -1,0 +1,12 @@
+{
+  "hud": "Boreal planet · seed 1400 (staged)\naltitude 3000 m · ground 371 m · 49.77°, 65.54°\ntiles drawn 44 (19 in view, cap 50) · culled 52 · cached 74 · deepest L7 · queued 0\nbuild (2 workers) 74 tiles (0 cancelled, 0 waiting) · avg 1.0 ms · p95 2.8 ms · worst frame 283.7 ms\ntier Minimum · 16 seg · 37 fps · shaders 20 ms async · work 0.5 ms\nover the home region: descend below 2 km to enter the game\ndrag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game",
+  "lower": {
+    "mean": [
+      33.4,
+      40.4,
+      34.6
+    ],
+    "stdL": 15.7,
+    "beige": 0
+  }
+}

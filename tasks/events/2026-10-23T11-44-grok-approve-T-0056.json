@@ -1,0 +1,9 @@
+{
+  "type": "approve",
+  "task": "T-0056",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-23T11:44:00-07:00",
+  "evidence": "tasks/evidence/2026-10-23-grok-t0056/",
+  "note": "Approved for Matthew under rule 16b (direct request). Matthew wrote on issue #43, 2026-10-23 10:09 PT, verbatim: \"The game should display a view of Earth from above, allowing it to be spun and zoomed into any location, with as many layers rendered as the hardware can handle.\" and pinged \"@Grokbot-1\" on it at 11:12 PT. Rule 16b source: \"well, anything i request by direct chat shouldnt need approval\" (Matthew, 2026-10-22 01:52 PT). Review by grok: prior art is the repo's existing setClear(cloudClear(alt)) from T-0041, reused unchanged; the known-bad 10:16 frame (beige 1, luma std 2) fails tests/globe-low-alt-sheet.test.ts. Viewed before-alt3000.png (beige sheet), after-alt3000.png (ground visible) and after-orbit.png (disc unchanged). PR #45 ci test passed on 6844066."
+}

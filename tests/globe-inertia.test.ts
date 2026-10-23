@@ -1,48 +1,59 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { INERTIA, coastSpeed, createCoast } from '../src/world/globe/inertia';
+import { MathUtils } from 'three';
+import { GLOBE_COAST, coastLambda } from '../src/world/globe/transition';
 
-/** drag at `rate` rad/s for 0.5 s, let go, then run frames at `fps` until the coast ends; returns distance and stop time */
-function run(fps: number, rate = 1) {
-  const c = createCoast(), dt = 1 / fps;
-  for (let i = 0; i < fps / 2; i++) c.track(rate * dt, -rate * dt / 2, dt);
-  c.release(); let d = 0, time = 0, atOne = 0;
-  for (let i = 0; i < fps * 5; i++) { const s = c.step(dt); if (!s) break; d += s[0]; time += dt; if (Math.abs(time - 1) < dt / 2) atOne = s[0] / dt; }
-  return { d, time, atOne };
+// T-0043: the release coast is three's frame-rate-independent MathUtils.damp (https://threejs.org/docs/#api/en/math/MathUtils.damp)
+// configured by GLOBE_COAST; these tests run that exact call the way globeView does (speed damped to 0, distance by the trapezoid).
+function coast(fps: number) {
+  const dt = 1 / fps; let v = 1, t = 0, d = 0; const at: Record<number, number> = {};
+  while (t < GLOBE_COAST.sec - 1e-9) { const v0 = v; v = MathUtils.damp(v, 0, coastLambda, dt); d += (v0 + v) / 2 * dt; t += dt;
+    for (const s of [1, 2, 3]) if (Math.abs(t - s) < dt / 2) at[s] = v; }
+  return { d, t, at };
 }
 
-test('globe inertia: the coast lasts 3 s and comes to rest smoothly', () => {
-  assert.equal(INERTIA.sec, 3);
-  assert.equal(coastSpeed(0), 1); assert.equal(coastSpeed(3), 0); assert.equal(coastSpeed(4), 0);
-  assert.ok(coastSpeed(1) > .4 && coastSpeed(2) > .1, 'still visibly rolling at 1 s and 2 s');
-  assert.ok(coastSpeed(2.9) < .002, 'near rest just before 3 s');
+test('globe coast: 3 s, 2 % of the release speed at 3 s', () => {
+  assert.equal(GLOBE_COAST.sec, 3); assert.equal(GLOBE_COAST.rest, .02);
+  assert.ok(Math.abs(coastLambda - Math.log(50) / 3) < 1e-12);
+  const r = coast(60);
+  assert.ok(Math.abs(r.at[3] - .02) < 1e-6, `speed at 3 s ${r.at[3]}`);
+  assert.ok(r.at[1] > .25 && r.at[2] > .07, `still visibly rolling at 1 s (${r.at[1]}) and 2 s (${r.at[2]})`);
 });
 
-test('globe inertia: same distance and same stop time at 60, 144 and 240 fps', () => {
-  const r = [60, 144, 240].map(f => run(f));
-  for (const x of r) {
-    assert.ok(Math.abs(x.d - 1) < .01, `distance ${x.d} = release rate x 1 s (sec/3)`);
-    assert.ok(Math.abs(x.time - 3) < 1 / 50, `stops at ${x.time} s`);
-    assert.ok(Math.abs(x.atOne - 4 / 9) < .02, `speed at 1 s ${x.atOne}`);
+test('globe coast: same speed at 1, 2, 3 s and same distance at 60, 144 and 240 fps', () => {
+  const [a, ...rest] = [60, 144, 240].map(coast);
+  for (const b of rest) {
+    for (const s of [1, 2, 3]) assert.ok(Math.abs(a.at[s] - b.at[s]) < 1e-9, `speed at ${s} s: ${a.at[s]} vs ${b.at[s]}`);
+    assert.ok(Math.abs(a.d - b.d) / a.d < 1e-3, `distance ${a.d} vs ${b.d}`);
   }
+  const exact = (1 - GLOBE_COAST.rest) / coastLambda; // continuous: integral of e^(-lambda t) to 3 s
+  assert.ok(Math.abs(a.d - exact) / exact < 2e-3, `distance ${a.d} vs ${exact}`);
 });
 
-test('globe inertia: a new drag or click stops the coast at once; holding still before letting go leaves no coast', () => {
-  const c = createCoast(), dt = 1 / 60;
-  for (let i = 0; i < 30; i++) c.track(.02, 0, dt);
-  c.release(); assert.ok(c.step(dt)); assert.ok(c.active);
-  c.stop(); assert.equal(c.step(dt), null); assert.equal(c.active, false);
-  for (let i = 0; i < 30; i++) c.track(.02, 0, dt);
-  for (let i = 0; i < 30; i++) c.track(0, 0, dt); // held still for 0.5 s
-  c.release(); const s = c.step(dt); assert.ok(!s || Math.abs(s[0]) < 1e-5);
+test('globe coast: drag-rate tracking forgets a hold (no coast after holding still before letting go)', () => {
+  const dt = 1 / 60; let v = 0;
+  for (let i = 0; i < 30; i++) v = MathUtils.damp(v, 1, 1 / GLOBE_COAST.track, dt);
+  assert.ok(v > .99, `tracks the drag within 0.5 s (${v})`);
+  for (let i = 0; i < 30; i++) v = MathUtils.damp(v, 0, 1 / GLOBE_COAST.track, dt);
+  assert.ok(v < 1e-3, `held still 0.5 s leaves ${v}`);
 });
 
-test('globe inertia: globeView feeds the coast from OrbitControls and stops it on input, descent and detach', () => {
+test('globe coast: globeView wiring (OrbitControls damping off, MathUtils.damp, every stop)', () => {
   const src = readFileSync('src/world/globe/globeView.ts', 'utf8');
   assert.match(src, /controls\.enableDamping = false/);
-  assert.match(src, /addEventListener\('start'[^\n]*coast\.stop\(\)/);
-  assert.match(src, /addEventListener\('end'[^\n]*coast\.release\(\)/);
-  assert.match(src, /if \(ext\)[^\n]*coast\.stop\(\)/); // the in-page descent (band) flies the camera: no coast
-  assert.match(src, /attachInput\(on: boolean\)[^\n]*coast\.stop\(\)/);
+  assert.doesNotMatch(src, /dampingFactor/);
+  assert.match(src, /MathUtils\.damp\([^\n]*1 \/ GLOBE_COAST\.track/, 'drag rate damp-smoothed');
+  assert.match(src, /MathUtils\.damp\([^\n]*coastLambda/, 'coast via MathUtils.damp');
+  assert.match(src, /getAzimuthalAngle\(\)[^\n]*getPolarAngle\(\)/, "OrbitControls' own angles");
+  assert.match(src, /\/ rs/, 'per unit rotateSpeed');
+  assert.match(src, /controls\.addEventListener\('start'[^\n]*stopCoast\(\)/, 'a new grab');
+  assert.match(src, /controls\.addEventListener\('end'/, 'release starts the coast');
+  assert.match(src, /'pointerdown'[^\n]*stopCoast\(\)/, 'any click on the globe');
+  assert.match(src, /'H'\) \{ flyHome = 1; stopCoast\(\)/, 'H (fly home)');
+  assert.match(src, /if \(ext \|\| leaving\) stopCoast\(\)/, 'in-page descent flies the camera / auto handoff');
+  assert.match(src, /leaving = true; stopCoast\(\)/, 'standalone auto handoff');
+  assert.match(src, /attachInput\(on: boolean\)[^\n]*stopCoast\(\)/, 'detached input');
+  assert.match(src, /get coasting\(\)/, 'dev getter');
+  assert.match(src, /coastT >= GLOBE_COAST\.sec\) stopCoast\(\)/, 'the coast ends at 3 s');
 });

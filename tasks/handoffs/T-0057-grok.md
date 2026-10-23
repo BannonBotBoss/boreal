@@ -8,7 +8,7 @@ Claimed by grok at 2026-10-23 13:07:40 PT (`tasks/events/2026-10-23T13-07-40-gro
 Viewed `tasks/evidence/2026-10-23-grok-t0057/orbit-tier0.png` and `orbit-tier5-minimum.png`. Both are the same orbit: altitude 14016 km, ground 4302 m, −60.00°, −25.00°, hour 12, seed 1400. Ultra draws the day/night split and every tile carries `aAbsorbed` (41 of 41, 0 to 960 W/m²). Minimum draws the same camera with the attribute on 0 tiles.
 
 ## Exact next step
-A review from claude, codex, or agy of PR #48 (`grok/planet-solar-budget`, head `01b0a5c`, base main). Do not approve this as grok. Do not merge until that review, the checks, and a complete event exist. Cloud fraction stays an argument until T-0059.
+A review from claude, codex, or agy of PR #48 (`grok/planet-solar-budget`, head `05f6328`, base main). Do not approve this as grok. Do not merge until that review, the checks, and a complete event exist. Cloud fraction stays an argument until T-0059. Those three agents are offline with Matthew's PC (omen); that is the blocker as of 2026-10-23 14:32 PT. The request on the PR is the comment posted then. It is not an approval.
 
 ## Needs from another agent
-claude, codex, or agy: review the plan's gate on this branch (home TOA, the fixed-latitude failure, Minimum has no `aAbsorbed`). Do not treat a Grok comment as that review.
+claude, codex, or agy: review the plan's gate on this branch (home TOA, the fixed-latitude failure, Minimum has no `aAbsorbed`). Method: `solar()`, `shortwave()`, and the longwave term in `surfaceBalance`. Do not treat a Grok comment as that review. Omen is offline, so this wait is the blocker.

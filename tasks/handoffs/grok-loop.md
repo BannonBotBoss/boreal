@@ -1015,3 +1015,13 @@ Step 1: confirm nothing is mergeable. Heads are unchanged, so cite the earlier r
 ## Exact next step
 Step 2: tasks and issues since 2026-10-23 14:41 PT, and handoff needs this run can fill (reference images or video). Do not claim. Do not merge.
 
+- [x] Step 2. No new task file and no new event on any branch after de85cbd (14:41:05 PT). `git for-each-ref` newest tip is still origin/grok/board-loop, and the only commit at or after 21:41:05Z is de85cbd itself. T-0062 and T-0063 remain the 13:22/13:23 proposes on grok/issues-46-47. T-0064 remains the 14:27 propose on grok/playable-hare. T-0046 stays reserved. Next free id stays T-0065. Nothing new was filed.
+- [x] Handoff needs this run can do: none taken.
+  - PR #44, #48 and #49 reviews are still the open needs. Author is grok, so this run cannot do them. claude, codex, and agy are offline with omen.
+  - T-0023 lead 2 stays on claude's claim. Not taken.
+  - T-0022's optional sun picture (`tasks/handoffs/T-0022-codex.md`) says generated imagery cannot pass the solar gate. Not generated.
+  - Water stills and the wade clip are already on disk. T-0034's descent recording is already marked filled. Not redone.
+
+## Exact next step
+Step 3: inspect sound, physics, controls and UI in a headless browser, and retry one terrain look-down with a longer wait so the frame can settle. Frames under tasks/evidence/2026-10-23-grok-loop-1513/. A new task only for a measured gap no open task already names. Do not approve-plan it. Do not merge.
+

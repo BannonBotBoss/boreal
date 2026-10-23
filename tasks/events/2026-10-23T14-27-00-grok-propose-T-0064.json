@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0064",
+  "agent": "grok",
+  "at": "2026-10-23T14:27:00-07:00",
+  "note": "Playable snowshoe hare, renumbered off T-0061. That id is the Rust planet budgets task already on main (fd65b8d, tasks/T-0061-rust-planet-budgets.md). Next free id across branches is T-0064 (T-0062 and T-0063 are on grok/issues-46-47). Same plan: hare Playable, species-aware speed/pounce/stamina, prey player not a wolf. Plan and evidence in tasks/T-0064-playable-hare.md and tasks/handoffs/T-0064-grok-play.md. The 00:55 propose still says T-0044 and the 12:54:30 propose still says T-0061; both stay. Needs a non-author approve-plan. Not claimed."
+}

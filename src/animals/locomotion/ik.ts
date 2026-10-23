@@ -14,6 +14,7 @@ export interface LimbReach {
   /** chain top (blade pivot or hip joint) in the limb frame; default (0, hip + girdle). The pelvis moves the hind tops. */ top?: { z: number; y: number };
   /** absolute shoulder-blade angle (rest + reachTargets scapula); default the girdleSwing rule */ blade?: number;
   /** turn the foot bone toward the leg only as far as the two IK bones need to reach */ fit?: boolean;
+  /** previous elbow, in the limb plane (T-0044). The plant frame bends toward that point instead of picking a new branch. */ pole?: { z: number; y: number };
 }
 
 /**
@@ -26,7 +27,7 @@ export function solveLimb(L: LimbDims, forward: boolean, foot: Vec3, liftFrac: n
   const top = reach.top ?? { z: 0, y: L.hip + (L.girdle ?? 0) };
   const drop = Math.hypot(top.y - foot.y, foot.x), abduct = Math.atan2(foot.x, top.y - foot.y), fy = top.y - drop;
   const psi0 = (L.footAngle ?? 0) - (L.footFlex ?? 0) * liftFrac;
-  const c = solveChain(L, forward, { z: foot.z, y: fy }, psi0, top, reach.blade, !!reach.fit);
+  const c = solveChain(L, forward, { z: foot.z, y: fy }, psi0, top, reach.blade, !!reach.fit, reach.pole);
   return { girdle: c.girdle, leg: c.leg, knee: c.knee, wrist: c.wrist, paw: c.paw, abduct, joint: c.joint };
 }
 

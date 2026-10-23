@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0044",
+  "agent": "grok",
+  "at": "2026-10-23T00:55:00-07:00",
+  "note": "Playable snowshoe hare on top of PR #38 (rig port): hare Playable, species-aware speed/pounce/stamina via existing playerTuning, prey player not a wolf in sim. Requested by Matthew for an embodied/playable hare. Plan, reuse list and evidence in tasks/T-0044-playable-hare.md and tasks/handoffs/T-0044-grok-play.md. Needs non-author approve-plan before claim."
+}

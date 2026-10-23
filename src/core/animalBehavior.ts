@@ -276,6 +276,24 @@ export function solveLeg(tz: number, ty: number, upper: number, lower: number, f
   const bend = Math.PI - Math.acos(Math.max(-1, Math.min(1, (upper * upper + lower * lower - d * d) / (2 * upper * lower))));
   return front ? { hip: aim + alpha, knee: -bend } : { hip: aim - alpha, knee: bend };
 }
+/**
+ * Two-bone IK with a pole (Tolani, Goswami and Badler 2000, Graphical Models 62:353, the two-segment case; the same
+ * construction as Unity's TwoBoneIKConstraint). The law of cosines fixes the bend from the bone lengths and the
+ * shoulder-wrist distance. The pole is a point the elbow bends toward, so there is one elbow on one side of the
+ * shoulder-wrist axis. No second branch is generated and none is searched.
+ */
+export function poleTargetTwoBone(shoulder: { z: number; y: number }, wrist: { z: number; y: number }, upper: number, lower: number, pole: { z: number; y: number }) {
+  const dz = wrist.z - shoulder.z, dy = wrist.y - shoulder.y, reach = Math.hypot(dz, dy) || 1e-6;
+  const dist = Math.max(Math.abs(upper - lower) + 1e-4, Math.min(upper + lower - 1e-4, reach));
+  const dirZ = dz / reach, dirY = dy / reach;
+  const pz = pole.z - shoulder.z, py = pole.y - shoulder.y, along = pz * dirZ + py * dirY;
+  let perpZ = pz - along * dirZ, perpY = py - along * dirY, pl = Math.hypot(perpZ, perpY);
+  if (pl < 1e-5) { perpZ = -dirY; perpY = dirZ; pl = 1; } // previous elbow was on the axis: keep a defined side
+  perpZ /= pl; perpY /= pl;
+  const cosA = Math.max(-1, Math.min(1, (upper * upper + dist * dist - lower * lower) / (2 * upper * dist)));
+  const sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
+  return { z: shoulder.z + upper * (cosA * dirZ + sinA * perpZ), y: shoulder.y + upper * (cosA * dirY + sinA * perpY) };
+}
 /** The limb dimensions for leg i (rear legs use `hind` when the animal has it). */
 export const limbOf = (legs: LegDims, i: number): LimbDims => (!isFrontLeg(i) && legs.hind) ? legs.hind : legs;
 /** Does the middle joint of this limb point forward (stifle, deer carpus)? */
@@ -313,7 +331,7 @@ export const pitchShift = (pitch: number, pivot: number) => ({ y: pivot * (1 - M
  * foot bone from its rule angle `psi0` toward the paw-to-joint line only as far as the two IK bones need to reach.
  * Absolute angles: upper = girdle + leg, lower = upper + knee, foot = lower + wrist (= the foot angle used), paw level.
  */
-export function solveChain(L: LimbDims, forward: boolean, foot: { z: number; y: number }, psi0: number, top: { z: number; y: number }, blade?: number, fit = false) {
+export function solveChain(L: LimbDims, forward: boolean, foot: { z: number; y: number }, psi0: number, top: { z: number; y: number }, blade?: number, fit = false, pole?: { z: number; y: number }) {
   const S = L.girdle ?? 0, M = L.foot ?? 0, rest = L.girdleRest ?? 0, r = ikReach(L);
   const jointAt = (g: number) => ({ z: top.z - S * Math.sin(g), y: top.y - S * Math.cos(g) });
   const wristAt = (q: number) => ({ z: foot.z + M * Math.sin(q), y: foot.y + M * Math.cos(q) });
@@ -331,7 +349,11 @@ export function solveChain(L: LimbDims, forward: boolean, foot: { z: number; y: 
       psi = psi0 + (aligned - psi0) * hi;
     }
   }
-  const h = wristAt(psi), g = bladeFor(h), J = jointAt(g), sol = solveLeg(h.z - J.z, h.y - J.y, L.upper, L.lower, forward);
+  const h = wristAt(psi), g = bladeFor(h), J = jointAt(g);
+  let sol = solveLeg(h.z - J.z, h.y - J.y, L.upper, L.lower, forward);
+  // `pole` is a point in this same plane (the previous elbow). It picks the bend side; it is not added to J.
+  if (pole) { const e = poleTargetTwoBone(J, h, L.upper, L.lower, pole);
+    const a1 = Math.atan2(-(e.z - J.z), -(e.y - J.y)), a2 = Math.atan2(-(h.z - e.z), -(h.y - e.y)); sol = { hip: a1, knee: a2 - a1 }; }
   return { girdle: g, leg: sol.hip - g, knee: sol.knee, wrist: M ? psi - (sol.hip + sol.knee) : 0, paw: M ? -psi : -(sol.hip + sol.knee), joint: J, psi, wristAt: h };
 }
 /** Body drop (m) a limb needs for its two IK bones to reach `wrist` from `joint` (0 if it already does). */

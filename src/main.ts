@@ -24,7 +24,7 @@ import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './core/animalBehavior';
 import { autonomousWolfStep } from './core/autonomy';
 import { NEEDS_SPECIES, WOLF_NEEDS, HARE_NEEDS } from './core/needs/species';
 import { dietOf } from './core/needs/diet';
-import { eatWater, levelsOf, parseNeeds, stepNeeds, type NeedsState } from './core/needs/engine';
+import { eatWater, levelsOf, staminaRates, parseNeeds, stepNeeds, type NeedsState } from './core/needs/engine';
 import { chooseGoal, sunTimes } from './core/needs/behaviour';
 import { createThoughtClock, thoughtTick } from './core/needs/thoughts';
 import { createThoughtBubbles } from './render/thoughtBubbles';
@@ -187,7 +187,7 @@ const renderStore = createSettingsStore(RENDER_SETTINGS);
 { const st = new URLSearchParams(location.search).get('stages'); if (st !== null) renderStore.set('world.stagedTerrain.v2', st !== '0' && st !== 'off'); } // staged terrain is the default; ?stages=0 turns it off (persisted, like the setting), ?stages=1 back on
 { const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number); if (at && at.length >= 2 && at.every(Number.isFinite)) { player.x = at[0]; player.z = at[1]; if (at.length > 2) { yaw = at[2]; player.heading = yaw; } } } // dev/screenshots: ?at=x,z[,yaw]
 if (STAGES.on && !new URLSearchParams(location.search).has('at')) [player.x, player.z] = dryStart(player.x, player.z); // the fixed default start can fall in a staged lake: nearest dry land
-let pendingRegen = false, playAs = localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf';
+let pendingRegen = false, playAs = new URLSearchParams(location.search).get('play') ?? localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf'; // ?play=hare: open as that animal for this visit (links, screenshots); the menu's Player panel still saves a choice
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');
 const musicPanel = () => { const form = settingsPanel(MUSIC_PANEL, musicStore, () => {})() as HTMLElement; // Track picker (guitar tracks + Off)
@@ -365,12 +365,12 @@ function frame(time: number) { const frameStart = performance.now();
     accumulator += sdt; const airC = weatherAt(player.x, player.z).tC;
     while (accumulator >= 1 / 30) {
       drawFrom = { x: player.x, z: player.z, yaw, sim: simTime };
-      modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30) : stepWolfModes(modes, H('stealth'), H('run'), Math.abs(dz) > .01, 1 / 30);
-      const brain = view.playerBrain, prevSpeed = brain.speed, speed = -dz * playerSpeed(modes.mode) * view.playable.speedScale;
+      modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30,staminaRates(needsSpecies())) : stepWolfModes(modes, H('stealth'), H('run'), Math.abs(dz) > .01, 1 / 30, staminaRates(needsSpecies()));
+      const brain = view.playerBrain, prevSpeed = brain.speed, speed = -dz * playerSpeed(modes.mode, needsSpecies()) * view.playable.speedScale;
       const jump = H('jump') > ACTIVE && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
       if(!autonomous || playerAction) brain.decide({x:player.x,y:0,z:player.z},1/30,{
         motion:jump?'jump':speed<-.01?'back':speed>.01?(modes.mode==='run'||modes.mode==='sprint'?'run':'walk'):'idle',
-        heading:yaw+(focusSteer(yaw,player,focusTarget,-dz,dx,1/30)??-dx*2.2/30),speed:jump?pounceSpeed(speed):speed});
+        heading:yaw+(focusSteer(yaw,player,focusTarget,-dz,dx,1/30)??-dx*2.2/30),speed:jump?pounceSpeed(speed, needsSpecies()):speed});
       // Inertia: walking/running speed changes are capped at force/mass (heavier = slower); jumps are impulses.
       if(!autonomous && brain.motion!=='jump') brain.speed=approach(prevSpeed,brain.speed,accelLimit(playerMass,view.wolfMass),1/30);
       { // wind drag through the shared field: relative air velocity on the frontal area (∝ m^(2/3), 0.15 m² for a 40 kg wolf [verify])
@@ -424,7 +424,7 @@ function frame(time: number) { const frameStart = performance.now();
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
-  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) })) {
+  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) })) {
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {
       // T-0036: the carnivore diet module turns the whole prey into Energy + hydration (template diet.foods.hare).

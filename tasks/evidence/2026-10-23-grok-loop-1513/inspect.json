@@ -1,0 +1,908 @@
+{
+  "base": "http://127.0.0.1:5173/",
+  "url": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+  "profile": "/tmp/grok-loop-1513-PmqTNf",
+  "commit": "fd65b8d game via board-loop",
+  "apexHeight": 0.3747135814931627,
+  "heightAtSpawn": 0.681852787357203,
+  "shots": [
+    {
+      "name": "ui-settled",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:29 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/ui-settled.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            112.6,
+            123.2,
+            108.5
+          ],
+          "green": 0.4889,
+          "white": 0,
+          "lumaSd": 86.65
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            74.7,
+            88.3,
+            67.7
+          ],
+          "green": 0.6969,
+          "white": 0,
+          "lumaSd": 71.87
+        }
+      }
+    },
+    {
+      "name": "sound-toggle",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:30 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound off\nExport events\nLibrary / controls",
+      "sound": "Sound off",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/sound-toggle.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            112.8,
+            123.5,
+            108.7
+          ],
+          "green": 0.4888,
+          "white": 0.0005,
+          "lumaSd": 86.93
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            75.2,
+            88.8,
+            68
+          ],
+          "green": 0.6967,
+          "white": 0.0009,
+          "lumaSd": 72.77
+        }
+      }
+    },
+    {
+      "name": "terrain-down-4s",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:31 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/terrain-down-4s.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            67.6,
+            81.8,
+            59
+          ],
+          "green": 0.7818,
+          "white": 0.0005,
+          "lumaSd": 66.47
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            74,
+            87.6,
+            66.2
+          ],
+          "green": 0.6939,
+          "white": 0.0009,
+          "lumaSd": 72.61
+        }
+      }
+    },
+    {
+      "name": "terrain-down",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:33 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/terrain-down.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            67.7,
+            81.9,
+            59.1
+          ],
+          "green": 0.7823,
+          "white": 0.0005,
+          "lumaSd": 66.46
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            74,
+            87.7,
+            66.2
+          ],
+          "green": 0.6943,
+          "white": 0.0009,
+          "lumaSd": 72.58
+        }
+      }
+    },
+    {
+      "name": "terrain-return",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:34 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/terrain-return.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            114.6,
+            123.8,
+            107.6
+          ],
+          "green": 0.4944,
+          "white": 0.0005,
+          "lumaSd": 86.57
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            77.9,
+            89.1,
+            66.5
+          ],
+          "green": 0.6823,
+          "white": 0.0009,
+          "lumaSd": 72.72
+        }
+      }
+    },
+    {
+      "name": "walk",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:35 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/walk.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            115.9,
+            124.7,
+            108.5
+          ],
+          "green": 0.4816,
+          "white": 0.0005,
+          "lumaSd": 86.49
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            78.8,
+            89.3,
+            66.4
+          ],
+          "green": 0.6716,
+          "white": 0.0009,
+          "lumaSd": 72.71
+        }
+      }
+    },
+    {
+      "name": "jump-180",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:35 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/jump-180.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            116.9,
+            124.9,
+            108.6
+          ],
+          "green": 0.4774,
+          "white": 0.0005,
+          "lumaSd": 86.31
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            79.7,
+            88.8,
+            65.2
+          ],
+          "green": 0.6739,
+          "white": 0.0009,
+          "lumaSd": 72.36
+        }
+      }
+    },
+    {
+      "name": "jump-580",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:35 · WALK · Stamina 100/100 · Energy 73/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/jump-580.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            117.8,
+            125.6,
+            110.1
+          ],
+          "green": 0.4622,
+          "white": 0.0005,
+          "lumaSd": 85.87
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            77.1,
+            86.7,
+            63.8
+          ],
+          "green": 0.6799,
+          "white": 0.0009,
+          "lumaSd": 72.27
+        }
+      }
+    },
+    {
+      "name": "controls",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "PAUSED · 10:36 · WALK · Stamina 100/100 · Energy 73/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nResume\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/controls.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            101.7,
+            109,
+            99.5
+          ],
+          "green": 0.4962,
+          "white": 0,
+          "lumaSd": 72.22
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            101.3,
+            108.2,
+            96.3
+          ],
+          "green": 0.3396,
+          "white": 0,
+          "lumaSd": 81.36
+        }
+      }
+    },
+    {
+      "name": "library",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:36 · WALK · Stamina 100/100 · Energy 73/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/library.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            154.1,
+            160.3,
+            148.1
+          ],
+          "green": 0.4878,
+          "white": 0.0006,
+          "lumaSd": 81.62
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            142.1,
+            148.9,
+            134
+          ],
+          "green": 0.5065,
+          "white": 0.0011,
+          "lumaSd": 92
+        }
+      }
+    },
+    {
+      "name": "menu",
+      "href": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+      "status": "10:37 · WALK · Stamina 100/100 · Energy 73/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+      "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+      "sound": "Sound on",
+      "stats": {
+        "file": "/workspace/tasks/evidence/2026-10-23-grok-loop-1513/menu.png",
+        "width": 960,
+        "height": 540,
+        "full": {
+          "n": 518400,
+          "meanRGB": [
+            127.6,
+            133.4,
+            119.3
+          ],
+          "green": 0.4324,
+          "white": 0.0006,
+          "lumaSd": 79.22
+        },
+        "lower": {
+          "n": 259200,
+          "meanRGB": [
+            105,
+            113.3,
+            94.4
+          ],
+          "green": 0.5545,
+          "white": 0.0013,
+          "lumaSd": 82.56
+        }
+      }
+    }
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "samples": [
+    {
+      "t": 2,
+      "pale": false,
+      "green": 0.6969,
+      "lumaSd": 71.87,
+      "meanRGB": [
+        74.7,
+        88.3,
+        67.7
+      ]
+    }
+  ],
+  "landed": "http://127.0.0.1:5173/?nomenu&stages=1&hour=10&at=144,236,0&rec&walkprobe",
+  "settledBeforeInput": {
+    "green": 0.6969,
+    "pale": false
+  },
+  "audioBeforeGesture": {
+    "n": 0,
+    "head": [],
+    "tail": [],
+    "buf": 0,
+    "created": false
+  },
+  "audioAfterSoundClick": {
+    "n": 8,
+    "head": [
+      {
+        "t": 149866.70000000007,
+        "ev": "new",
+        "state": "running"
+      },
+      {
+        "t": 149867.30000000005,
+        "ev": "resume",
+        "state": "running"
+      },
+      {
+        "t": 150278.20000000007,
+        "ev": "buf",
+        "dur": 20,
+        "off": 3.51004418451339
+      },
+      {
+        "t": 150278.30000000005,
+        "ev": "buf",
+        "dur": 20,
+        "off": 8.994058920070529
+      },
+      {
+        "t": 150279.5,
+        "ev": "buf",
+        "dur": 15,
+        "off": 14.353433669311926
+      },
+      {
+        "t": 150279.6000000001,
+        "ev": "buf",
+        "dur": 15,
+        "off": 10.035614424850792
+      },
+      {
+        "t": 150279.6000000001,
+        "ev": "buf",
+        "dur": 60.082,
+        "off": 0
+      },
+      {
+        "t": 150279.6000000001,
+        "ev": "buf",
+        "dur": 60.082,
+        "off": 0
+      }
+    ],
+    "tail": [
+      {
+        "t": 150278.20000000007,
+        "ev": "buf",
+        "dur": 20,
+        "off": 3.51004418451339
+      },
+      {
+        "t": 150278.30000000005,
+        "ev": "buf",
+        "dur": 20,
+        "off": 8.994058920070529
+      },
+      {
+        "t": 150279.5,
+        "ev": "buf",
+        "dur": 15,
+        "off": 14.353433669311926
+      },
+      {
+        "t": 150279.6000000001,
+        "ev": "buf",
+        "dur": 15,
+        "off": 10.035614424850792
+      },
+      {
+        "t": 150279.6000000001,
+        "ev": "buf",
+        "dur": 60.082,
+        "off": 0
+      },
+      {
+        "t": 150279.6000000001,
+        "ev": "buf",
+        "dur": 60.082,
+        "off": 0
+      }
+    ],
+    "buf": 6,
+    "created": true
+  },
+  "soundLabelAfterUnmute": "Sound on",
+  "probeLookDown": {
+    "n": 386,
+    "steps": [],
+    "last": {
+      "t": 169207.90000000002,
+      "sim": 15.566666666666622,
+      "bx": 144,
+      "by": 3.613963309335657,
+      "bz": 236.0000001280249,
+      "cx": 144,
+      "cy": 5.213963309335657,
+      "cz": 239.0000001280249,
+      "phase": 0,
+      "speed": 7.36349647922907e-9,
+      "cost": 1.4851417958368944
+    },
+    "tail": [
+      {
+        "t": 168395.40000000002,
+        "sim": 15.43333333333329,
+        "bx": 144,
+        "by": 3.613963309418027,
+        "bz": 236.00000012691928,
+        "cx": 144,
+        "cy": 5.213963309418027,
+        "cz": 239.00000012691928,
+        "phase": 0,
+        "speed": 7.396749879262643e-9,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 168664.5,
+        "sim": 15.466666666666622,
+        "bx": 144,
+        "by": 3.613963309390516,
+        "bz": 236.00000012728856,
+        "cx": 144,
+        "cy": 5.213963309390516,
+        "cz": 239.00000012728856,
+        "phase": 0,
+        "speed": 7.36349647922907e-9,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 168939.5,
+        "sim": 15.533333333333289,
+        "bx": 144,
+        "by": 3.6139633093630827,
+        "bz": 236.00000012765673,
+        "cx": 144,
+        "cy": 5.213963309363082,
+        "cz": 239.00000012765673,
+        "phase": 0,
+        "speed": 7.36349647922907e-9,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 169207.90000000002,
+        "sim": 15.566666666666622,
+        "bx": 144,
+        "by": 3.613963309335657,
+        "bz": 236.0000001280249,
+        "cx": 144,
+        "cy": 5.213963309335657,
+        "cz": 239.0000001280249,
+        "phase": 0,
+        "speed": 7.36349647922907e-9,
+        "cost": 1.4851417958368944
+      }
+    ],
+    "player": {
+      "x": 144,
+      "z": 236.00000012814715,
+      "yaw": 0,
+      "energy": 74.90199337089607,
+      "water": 99.96130779955064,
+      "mode": "walk"
+    }
+  },
+  "probeWalk": {
+    "n": 14,
+    "steps": [
+      {
+        "t": 175026.80000000005,
+        "id": "paw-walk",
+        "level": 0.2963456156704336
+      }
+    ],
+    "last": {
+      "t": 177742.30000000005,
+      "sim": 16.799999999999994,
+      "bx": 144,
+      "by": 3.6829270281222453,
+      "bz": 235.20010532291712,
+      "cx": 144,
+      "cy": 5.282927028122245,
+      "cz": 238.20010532291712,
+      "phase": 0.6868325475966607,
+      "speed": 7.332801033044234e-9,
+      "cost": 1.4851417958368944
+    },
+    "tail": [
+      {
+        "t": 176055.30000000005,
+        "sim": 16.56666666666665,
+        "bx": 144,
+        "by": 3.6815770290124394,
+        "bz": 235.21670017835623,
+        "cx": 144,
+        "cy": 5.281577029012439,
+        "cz": 238.21670017835623,
+        "phase": 0.6868325475966607,
+        "speed": 0.9996901750415077,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 176718.1000000001,
+        "sim": 16.63333333333332,
+        "bx": 144,
+        "by": 3.682927028221134,
+        "bz": 235.20010532169547,
+        "cx": 144,
+        "cy": 5.282927028221135,
+        "cz": 238.20010532169547,
+        "phase": 0.6868325475966607,
+        "speed": 7.332801033044234e-9,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 176727.5,
+        "sim": 16.63333333333332,
+        "bx": 144,
+        "by": 3.6829270282112763,
+        "bz": 235.2001053218172,
+        "cx": 144,
+        "cy": 5.282927028211276,
+        "cz": 238.2001053218172,
+        "phase": 0.6868325475966607,
+        "speed": 7.332801033044234e-9,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 177067.20000000007,
+        "sim": 16.69999999999999,
+        "bx": 144,
+        "by": 3.682927028181597,
+        "bz": 235.20010532218384,
+        "cx": 144,
+        "cy": 5.2829270281815965,
+        "cz": 238.20010532218384,
+        "phase": 0.6868325475966607,
+        "speed": 7.332801033044234e-9,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 177398.20000000007,
+        "sim": 16.733333333333324,
+        "bx": 144,
+        "by": 3.682927028151925,
+        "bz": 235.20010532255048,
+        "cx": 144,
+        "cy": 5.282927028151925,
+        "cz": 238.20010532255048,
+        "phase": 0.6868325475966607,
+        "speed": 7.332801033044234e-9,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 177742.30000000005,
+        "sim": 16.799999999999994,
+        "bx": 144,
+        "by": 3.6829270281222453,
+        "bz": 235.20010532291712,
+        "cx": 144,
+        "cy": 5.282927028122245,
+        "cz": 238.20010532291712,
+        "phase": 0.6868325475966607,
+        "speed": 7.332801033044234e-9,
+        "cost": 1.4851417958368944
+      }
+    ],
+    "player": {
+      "x": 144,
+      "z": 235.20010532316155,
+      "yaw": 0,
+      "energy": 74.88571049457722,
+      "water": 99.95487945567051,
+      "mode": "walk"
+    }
+  },
+  "probeJump": {
+    "n": 14,
+    "steps": [],
+    "last": {
+      "t": 182347.90000000002,
+      "sim": 17.50000000000003,
+      "bx": 144,
+      "by": 4.0431513567363835,
+      "bz": 229.8940799260017,
+      "cx": 144,
+      "cy": 5.624228500939001,
+      "cz": 232.8940799260017,
+      "phase": 0.6868325475966607,
+      "speed": 7.9183682808019284,
+      "cost": 1.4851417958368944
+    },
+    "tail": [
+      {
+        "t": 178109.90000000002,
+        "sim": 16.83333333333333,
+        "bx": 144,
+        "by": 3.6616476224918073,
+        "bz": 235.06683741198893,
+        "cx": 144,
+        "cy": 5.293259694544785,
+        "cz": 238.06683741198893,
+        "phase": 0.6868325475966607,
+        "speed": 7.996074670344626,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 178451.80000000005,
+        "sim": 16.9,
+        "bx": 144,
+        "by": 3.674539230171481,
+        "bz": 234.66716439536822,
+        "cx": 144,
+        "cy": 5.3188303682103335,
+        "cz": 237.66716439536822,
+        "phase": 0.6868325475966607,
+        "speed": 7.988235496799234,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 178790.80000000005,
+        "sim": 16.933333333333334,
+        "bx": 144,
+        "by": 3.7204203270990037,
+        "bz": 234.2678178506,
+        "cx": 144,
+        "cy": 5.340067083129172,
+        "cz": 237.2678178506,
+        "phase": 0.6868325475966607,
+        "speed": 7.984321692494802,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 179134.20000000007,
+        "sim": 17.000000000000004,
+        "bx": 144,
+        "by": 3.9127891467580374,
+        "bz": 233.8687320984874,
+        "cx": 144,
+        "cy": 5.363352992707138,
+        "cz": 236.8687320984874,
+        "phase": 0.6868325475966607,
+        "speed": 7.976505565089553,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 179496.40000000002,
+        "sim": 17.03333333333334,
+        "bx": 144,
+        "by": 4.028908205559669,
+        "bz": 233.46997185913835,
+        "cx": 144,
+        "cy": 5.390331643518215,
+        "cz": 236.46997185913835,
+        "phase": 0.6868325475966607,
+        "speed": 7.972603230765287,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 179825.30000000005,
+        "sim": 17.10000000000001,
+        "bx": 144,
+        "by": 4.191930865243096,
+        "bz": 233.07147164834015,
+        "cx": 144,
+        "cy": 5.417005470595157,
+        "cz": 236.07147164834015,
+        "phase": 0.6868325475966607,
+        "speed": 7.964809992898836,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 180162.80000000005,
+        "sim": 17.133333333333344,
+        "bx": 144,
+        "by": 4.261192029533625,
+        "bz": 232.67329599727358,
+        "cx": 144,
+        "cy": 5.439058210269755,
+        "cz": 235.67329599727358,
+        "phase": 0.6868325475966607,
+        "speed": 7.960919078197151,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 180493.5,
+        "sim": 17.200000000000014,
+        "bx": 144,
+        "by": 4.332703491661963,
+        "bz": 232.27537961400705,
+        "cx": 144,
+        "cy": 5.458084806540856,
+        "cz": 235.27537961400705,
+        "phase": 0.6868325475966607,
+        "speed": 7.9531486294476395,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 180801.80000000005,
+        "sim": 17.23333333333335,
+        "bx": 144,
+        "by": 4.361483497806302,
+        "bz": 231.87778684162032,
+        "cx": 144,
+        "cy": 5.4815883714438876,
+        "cz": 234.87778684162032,
+        "phase": 0.6868325475966607,
+        "speed": 7.949269084309378,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 181095.20000000007,
+        "sim": 17.30000000000002,
+        "bx": 144,
+        "by": 4.363180170722863,
+        "bz": 231.48045257961678,
+        "cx": 144,
+        "cy": 5.514664145252459,
+        "cz": 234.48045257961678,
+        "phase": 0.6868325475966607,
+        "speed": 7.941521324856069,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 181414.80000000005,
+        "sim": 17.333333333333353,
+        "bx": 144,
+        "by": 4.3647513047752415,
+        "bz": 231.08344098379635,
+        "cx": 144,
+        "cy": 5.5528908214381545,
+        "cz": 234.08344098379635,
+        "phase": 0.6868325475966607,
+        "speed": 7.9376530995145345,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 181711.1000000001,
+        "sim": 17.400000000000023,
+        "bx": 144,
+        "by": 4.283108996911994,
+        "bz": 230.6866871449719,
+        "cx": 144,
+        "cy": 5.586491581216165,
+        "cz": 233.6866871449719,
+        "phase": 0.6868325475966607,
+        "speed": 7.9299278872392165,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 182003.5,
+        "sim": 17.43333333333336,
+        "bx": 144,
+        "by": 4.227841761542502,
+        "bz": 230.29025503304564,
+        "cx": 144,
+        "cy": 5.609811871354614,
+        "cz": 233.29025503304564,
+        "phase": 0.6868325475966607,
+        "speed": 7.926070941097123,
+        "cost": 1.4851417958368944
+      },
+      {
+        "t": 182347.90000000002,
+        "sim": 17.50000000000003,
+        "bx": 144,
+        "by": 4.0431513567363835,
+        "bz": 229.8940799260017,
+        "cx": 144,
+        "cy": 5.624228500939001,
+        "cz": 232.8940799260017,
+        "phase": 0.6868325475966607,
+        "speed": 7.9183682808019284,
+        "cost": 1.4851417958368944
+      }
+    ],
+    "player": {
+      "x": 144,
+      "z": 229.63013431664186,
+      "yaw": 0,
+      "energy": 73.32198999520413,
+      "water": 99.92972313352217,
+      "mode": "walk"
+    }
+  },
+  "jumpWallMs": 4743,
+  "controlsText": "PAUSED · 10:36 · WALK · Stamina 100/100 · Energy 73/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs\nExplore\nApproach an individual\nW / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nResume\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls\nControls\nLT\nRT\nLB\nRB\nY\nA\nX\nB\n⧉\n≡\nGuide\n\nNo controller seen yet: press a button on it. Keys show here too.\n\nReset to defaults\nLibrary (about the game)\n\nPick an action, then press the button, stick direction or combination you want (hold them together, then let go). Esc or 8 s idle cancels. Fixed keys: menus (d-pad / stick, A, B · arrows, Enter, Esc), photo mode keys, M mute, [ ] volume, N / - = music, V flora view, O senses halo.\n\nAction\nKeyboard\nGamepad\nWalk + steer (whole stick)\nWASD\nLS\nLook (whole stick)\nArrows\nRS\nChronometer scrub (whole stick)\nArrows\nD-pad · LS\nMove forward\nW\nLS ↑\nMove back\nS\nLS ↓\nSteer left\nA\nLS ←\nSteer right\nD\nLS →\nLook left\n←\nRS ←\nLook right\n→\nRS →\nLook up\n↑\nRS ↑\nLook down\n↓\nRS ↓\nRun (then stealth: sprint)\nShift\nRT\nStealth (then run: super stealth)\nC\nLT\nFocus (hold): lock the nearest object ahead; moving steers toward it\nF\nLB\nJump / pounce\nSpace\nX\nInteract\nE\nA\nHowl\nH\n—\nGrowl\nG\n—\nChronometer (time of day)\nT\nView\nChronometer: earlier\n←\nD-pad ← · LS ←\nChronometer: later\n→\nD-pad → · LS →\nClose (chronometer / panel)\n—\nB\nPause menu\nEsc\nMenu\nPhoto mode\nP\n—\nGeneration inspector\nI\n—\nPlanet view\nShift + G\n—\nBack",
+  "libraryText": "",
+  "menuText": "Boreal\nContinue\nNew world\nControls\nMusic\nGraphics\nBoard ↗\nQuit"
+}

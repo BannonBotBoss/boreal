@@ -297,3 +297,5 @@ T-0009 still in progress (grok/rabbit-clover last commit 1220b14 at 06:24), so s
 ## Next step
 Next run: read this file, then steps 1, 2, 2b; step 3 only once T-0009 is done.
 
+
+- 2026-10-22 17:12 run: T-0009 still in progress, steps 1, 2, 2b only. main 38ee309; only open PR is Copilot draft #36 (unchanged since 14:21); no new commits, issues or handoff needs. Next step: next hourly run repeats steps 1, 2, 2b until T-0009 completes.

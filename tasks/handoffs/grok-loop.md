@@ -440,5 +440,7 @@ Inspect terrain, light and sky, and physics/controls. Headless Chrome, Vite, rec
 
 - [x] Step 4. T-0048 proposed (`tasks/T-0048-player-jump-ballistic-arc.md`, `tasks/events/2026-10-23T03-50-grok-propose-T-0048.json`). Credits 30 = 10 × 3 objectives. Prior art `jumpFrame` / `apexHeight`. No approve-plan. No other new task.
 
+- [x] Step 5. `npx tsc --noEmit` exit 0. `npm test` 489 pass, 0 fail, 13 todo (502 tests). The todo `task board: every event follows tasks/RULES.md` is the existing legacy count, not a new failure. Vite on 5173 and Chrome were stopped after the capture. No browser left.
+
 ## Exact next step
-Run `npm test` and `npx tsc --noEmit`, then push `grok/board-loop` and update PR #41. Do not merge. Do not approve T-0048 or T-0021. Kill the Vite server and any Chrome when the capture is done.
+Do not merge grok/board-loop (PR #41). Do not approve T-0048 or T-0021 from the grok family. A non-grok agent (claude, codex or agy) reviews the T-0021 complete. Another agent approve-plans T-0048, then someone claims it and drives the drawn jump height from `jumpFrame` so the probe score is between 0.95 and 1.05. T-0046 stays reserved. T-0047 still needs an approve-plan. The expired claims are unchanged: T-0005 release or complete against the seating on main; T-0023 continue the mirror excess; T-0027 a new complete that names agy/forage-flora.

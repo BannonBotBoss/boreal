@@ -50,7 +50,7 @@ export interface Hare { sim: SimAnimal; id: number; x: number; z: number; headin
 /** One limb: the rig segments as bones of the skinned mesh (render/rigSkin.ts RigLeg). */
 type Leg = RigLeg;
 export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
-export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean; daylight?: number; wind?: { x: number; z: number } }
+export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean; /** false: the player is not a wolf-like predator (an embodied hare, deer): the hares do not sense or flee it; default true */ predator?: boolean; daylight?: number; wind?: { x: number; z: number } }
 
 /** Body plan in metres, snowshoe hare summer adult (ADW Lepus americanus / Colorado PW): total length 413-518 mm (tail 39-52),
  *  hind foot 117-147 mm, ear 62-70 mm notch to tip, 1.43-1.55 kg; summer coat grizzled rusty/greyish brown, white belly, ears
@@ -147,6 +147,7 @@ function model() {
  *  (a short nose-up pull, the clover torn off) [estimate: drawn so the motion reads at 6-8 m; no measured leporid amplitude found]. */
 export const CHEW = { hz: 4, bob: .035, lift: .0015, gape: .16, tugEvery: 8, tug: .09, pivot: [-.026, -.018] as const, chin: [-.037, -.043] as const, r: [.0095, .0055, .014] as [number, number, number] };
 const JAW_GEO = new THREE.SphereGeometry(1, 12, 8), JAW_MAT = new THREE.MeshStandardMaterial({ color: new THREE.Color(.84, .82, .78), roughness: 1 });
+JAW_GEO.userData.shared = true; JAW_MAT.userData.shared = true; // module-level: render/geometry disposeObject must not free them when the player swaps hare bodies
 const chewState = new WeakMap<HareModel, { amp: number; pitch: number; y: number; jaw?: THREE.Object3D }>();
 let bindCache: RigBind | undefined;
 /** The bind pose: the rig standing still at the origin, heading 0 (forward -z); joints relative to the hip-joint midpoint. */
@@ -308,6 +309,9 @@ export function createHares(scene: THREE.Scene) {
     while (hares.length > HARE.count) remove(hares[hares.length - 1]); // count lowered in settings
     for (const h of [...hares]) if (Math.hypot(h.sim.x - wolf.x, h.sim.z - wolf.z) > HARE.despawn) remove(h);
     // the embodied wolf: the adapter writes its pose/gait; the sim senses it and tests captures
+    // an embodied hare (or any non-predator body) is not the wolf animal the sim's hares fear: take it out of the sim world, put it back for a predator
+    const present = world.animals.includes(wolfAnimal);
+    if (wolf.predator === false && present) world.animals.splice(world.animals.indexOf(wolfAnimal), 1); else if (wolf.predator !== false && !present) world.animals.push(wolfAnimal);
     Object.assign(wolfAnimal, { x: wolf.x, z: wolf.z, mode: wolf.mode, speed: wolf.moving ? playerSpeed(wolf.mode as WolfMode) : 0, crouched: wolf.mode.includes('stealth'), pouncing: wolf.pouncing });
     world.daylight = () => wolf.daylight ?? 1; world.wind = () => wolf.wind ?? { x: 0, z: 0 };
     tick(world, dt);

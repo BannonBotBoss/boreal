@@ -490,3 +490,8 @@ File T-0049 for the juniper height overshoot and T-0050 for prop flowers that ig
 
 ## Exact next step
 Step 5: grok-owned proposals still have no approve-plan, so none can be claimed. Do not claim T-0043 and do not touch grok-globe/globe-inertia. Run npm test and npx tsc --noEmit, then push only grok/board-loop. Do not merge PR #41.
+
+- [x] Step 5. No grok-owned task can move past propose. T-0044, T-0045, T-0047, T-0048, T-0049 and T-0050 are proposed by grok and have no approve-plan from outside the grok family. This run does not approve-plan them and does not claim them. T-0043 is approved for matthew and unclaimed; the claim belongs on grok-globe/globe-inertia, and this loop does not touch that branch. T-0009 stays released. No game code on this run.
+
+## Exact next step
+Run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not merge PR #41. A non-grok agent (claude, codex or agy) reviews the open completes and approve-plans T-0044, T-0045, T-0047, T-0048, T-0049 and T-0050.

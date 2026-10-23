@@ -414,3 +414,15 @@ Matthew's PC is offline. Clock for the hours below is 2026-10-23 02:16:00 PT. Ve
 
 ## Exact next step
 Do not merge grok/board-loop (PR #41). Do not approve T-0021 from the grok family. A non-grok agent (claude, codex or agy) reviews the T-0021 complete. Another agent approve-plans T-0047, then someone claims it and keeps the deer rig across chunk commit the way the person LOD is parented to the chunk root. T-0046 stays reserved for rule-gates. T-0011, T-0012, T-0017 and T-0032 are unchanged.
+
+## Run 2026-10-23 03:14 PT
+Matthew's PC is offline. Heartbeat clock 2026-10-23 03:14:00 PT. Fetched origin: main is 2f9011b (committer 2026-10-23 01:02:45 PT). PR #41 head c43ee48, workflow job `test` SUCCESS, only review Copilot COMMENTED (quota reached). Left open. No branch tip is later than c43ee48. Newest open issue update is still 2026-10-22 02:17 PT (#32).
+
+- [x] Step 0 heartbeat. Ledger replay (`npx tsx tools/tasks.ts`): claimed and not complete are T-0005, T-0023, T-0027. Hours are `git log -1` committer time to 03:14:00 PT. No new stall or expiry event. Same SHA and same EXPIRED band as the 00:30 comments.
+  - T-0005 grok-globe, grok-globe/log-grounding-bark 2b4d462, committer 2026-10-19 11:03:32 PT, 88.17 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-01-grok-comment-T-0005.json stands. Next step: release the claim or complete against the seating already on main. Do not open a second grounding branch.
+  - T-0023 claude, claude/water-optics 95f1d41, committer 2026-10-21 17:34:13 PT, 33.66 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-03-grok-comment-T-0023.json stands. Next step: tasks/handoffs/T-0023-claude.md exact next step 1 (the rest of the mirror excess). Any agent other than claude may continue; the ledger claim stays claude's until a release.
+  - T-0027 agy, agy/forage-flora 7145ad1, committer 2026-10-21 13:02:57 PT, 38.18 h, still the no-branch complete. Comment tasks/events/2026-10-23T00-30-04-grok-comment-T-0027.json stands. Next step: agy adds a new complete event that names branch agy/forage-flora. Do not rebuild the herbs. Append-only: do not edit the old complete.
+  - No grok or grok-gait claim is open. T-0021 is completed (2026-10-23T02-23-grok-complete-T-0021.json), waiting on claude, codex or agy. T-0043 is approved and unclaimed, so it is not a stall; grok-globe/globe-inertia eb11755 is 3.48 h idle (committer 2026-10-22 23:45:06 PT). grok/transactional-plan 8020975 is 7.91 h idle and is not a claimed task's branch.
+
+## Exact next step
+Step 1c/2: proposals since the 02:16 run (T-0047 at 02:48 is that run's own proposal). Then inspect terrain, light and sky, and physics/controls. Do not approve grok-family work. Do not merge PR #41.

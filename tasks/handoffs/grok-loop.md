@@ -532,3 +532,13 @@ Step 1: list proposed tasks with no approve-plan, including T-0049 and T-0050. D
 
 ## Exact next step
 Step 2: list tasks, proposals and issues added since 2026-10-23 11:40Z. Then inspect controls, UI, water, animal behaviour and physics. Do not merge PR #41.
+
+- [x] Step 2. Since 2026-10-23 11:40:00Z, after `git fetch origin --prune`:
+  - main 57a3d48, PR #42 merged (T-0043 already on the board; the new files are the claim, complete, approve for matthew, handoff and the coast code). Not a new task.
+  - grok-globe/globe-inertia 5b80dfd is that approve, committer 11:42Z. Not a new proposal.
+  - This run's T-0040 propose and approve-plan (05:22 PT) are the only new task. Recorded in step 0. No second copy.
+  - `gh issue list` with `updated:>=2026-10-23T11:40:00Z` is empty.
+  - No other branch tip is a new propose. T-0046 stays reserved.
+
+## Exact next step
+Inspect controls, UI, water, animal behaviour and physics. Headless Chrome, `npm ci`, vite build and preview, SwiftShader. Frames under tasks/evidence/2026-10-23-grok-loop-0522/. New tasks only for a measured gap, ids after T-0050. T-0046 stays reserved. Do not approve-plan them. Do not merge PR #41.

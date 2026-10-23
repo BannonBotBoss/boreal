@@ -1,0 +1,134 @@
+{
+  "profile": "/tmp/grok-loop-1016-fwEjcL",
+  "shots": [
+    {
+      "name": "alt3000",
+      "search": "?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&alt=3000",
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&alt=3000",
+      "hud": "",
+      "ms": 28809,
+      "lower": {
+        "n": 233280,
+        "mean": [
+          200.7,
+          197.4,
+          188.8
+        ],
+        "stdL": 2,
+        "beige": 1
+      },
+      "upper": {
+        "n": 144960,
+        "mean": [
+          103.2,
+          130.2,
+          152.6
+        ],
+        "stdL": 58.1,
+        "beige": 0.029
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "name": "alt3000-atmos0",
+      "search": "?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&alt=3000&atmos=0",
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&alt=3000&atmos=0",
+      "hud": "",
+      "ms": 27643,
+      "lower": {
+        "n": 233280,
+        "mean": [
+          33.7,
+          40.8,
+          34.8
+        ],
+        "stdL": 15.9,
+        "beige": 0
+      },
+      "upper": {
+        "n": 144960,
+        "mean": [
+          101.2,
+          128,
+          154.8
+        ],
+        "stdL": 54,
+        "beige": 0.025
+      },
+      "errors": []
+    },
+    {
+      "name": "orbit",
+      "search": "?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35",
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35",
+      "hud": "",
+      "ms": 27953,
+      "lower": {
+        "n": 233280,
+        "mean": [
+          19.3,
+          25,
+          32.7
+        ],
+        "stdL": 41.9,
+        "beige": 0.023
+      },
+      "upper": {
+        "n": 144960,
+        "mean": [
+          17.6,
+          23.5,
+          32
+        ],
+        "stdL": 39.9,
+        "beige": 0.028
+      },
+      "errors": []
+    },
+    {
+      "name": "orbit-atmos0",
+      "search": "?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&atmos=0",
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&atmos=0",
+      "hud": "",
+      "ms": 27257,
+      "lower": {
+        "n": 233280,
+        "mean": [
+          9,
+          14.9,
+          24.2
+        ],
+        "stdL": 22.6,
+        "beige": 0
+      },
+      "upper": {
+        "n": 144960,
+        "mean": [
+          13.9,
+          19.9,
+          29.3
+        ],
+        "stdL": 36.6,
+        "beige": 0.024
+      },
+      "errors": []
+    }
+  ],
+  "errors": [],
+  "hudAlt3000": "Boreal planet · seed 1400 (staged)\naltitude 3000 m · ground 371 m · 49.77°, 65.54°\ntiles drawn 44 (19 in view, cap 50) · culled 52 · cached 74 · deepest L7 · queued 0\nbuild (2 workers) 74 tiles (0 cancelled, 0 waiting) · avg 0.8 ms · p95 2.2 ms · worst frame 283.4 ms\ntier Very low (auto) · 16 seg · 53 fps · shaders 18 ms async · work 0.5 ms\nover the home region: descend below 2 km to enter the game\ndrag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game",
+  "tier5": {
+    "hud": "Boreal planet · seed 1400 (staged)\naltitude 3000 m · ground 371 m · 49.77°, 65.54°\ntiles drawn 44 (19 in view, cap 50) · culled 52 · cached 74 · deepest L7 · queued 0\nbuild (2 workers) 74 tiles (0 cancelled, 0 waiting) · avg 1.0 ms · p95 2.8 ms · worst frame 283.7 ms\ntier Minimum · 16 seg · 37 fps · shaders 20 ms async · work 0.5 ms\nover the home region: descend below 2 km to enter the game\ndrag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game",
+    "lower": {
+      "mean": [
+        33.4,
+        40.4,
+        34.6
+      ],
+      "stdL": 15.7,
+      "beige": 0
+    }
+  },
+  "note": "Canvas screenshots. #status is hidden on the standalone globe; the HUD is an untagged div. SwiftShader auto-tiered to Very low (CLOUDS.octaves 2). Matthew issue #43 screenshot is Medium, 140 tiles, same beige sheet. Minimum (tier 5, 0 cloud octaves) matches the open ground."
+}

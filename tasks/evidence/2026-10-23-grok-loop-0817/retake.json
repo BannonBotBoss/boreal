@@ -1,0 +1,53 @@
+{
+  "pine": {
+    "key": "3:4:10",
+    "x": 141.8997,
+    "z": 196.983,
+    "r": 0.153,
+    "species": "jack-pine"
+  },
+  "shots": [
+    "pine-on-follow",
+    "pine-overlap-east"
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "onTrunk": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,196.983,0",
+    "status": "12:08 · WALK · Stamina 100/100 · Energy ",
+    "px": 141.9,
+    "pz": 196.98300004196125,
+    "yaw": 0,
+    "d": 0,
+    "by": 4.39,
+    "cx": 141.9,
+    "cy": 5.99,
+    "cz": 199.983
+  },
+  "eastCam": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,196.983,0",
+    "status": "PHOTO · 12:14 · WALK · Stamina 100/100 ·",
+    "px": 141.9,
+    "pz": 196.9830000456414,
+    "yaw": 0,
+    "d": 0,
+    "by": 4.39,
+    "cx": 149.6,
+    "cy": 5.732,
+    "cz": 197.324
+  },
+  "eastAfterLook": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,196.983,0",
+    "status": "PHOTO · 12:23 · WALK · Stamina 100/100 ·",
+    "px": 141.9,
+    "pz": 196.9830000456414,
+    "yaw": 0,
+    "d": 0,
+    "by": 4.39,
+    "cx": 149.6,
+    "cy": 5.732,
+    "cz": 197.324
+  }
+}

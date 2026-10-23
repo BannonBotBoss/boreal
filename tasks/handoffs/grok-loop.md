@@ -691,3 +691,12 @@ Step 2: tasks and issues since 2026-10-23 14:46:39Z, and handoff needs this run 
 
 ## Exact next step
 Recheck T-0055. `applyPopulation` drops jack pine `3:4:1` (keep roll 0.952 against treeMult 0.45 at 1069 stems/ha). The 07:17 walk measured that unplaced point and the frames show the rock `stones:3:4:52` 2.06 m to the north. Produce a side-camera frame of the wolf against a tree that is actually placed (jack pine `3:4:10` at 141.900, 196.983, base radius 0.153 m), or show the body does not meet the trunk. Evidence under tasks/evidence/2026-10-23-grok-loop-0817/. Then confirm the task with that frame and the corrected species, or withdraw it with a comment event. Do not merge PR #41.
+
+- [x] Step 3. T-0055 confirmed and corrected. Not withdrawn. Dev server `npm run dev` in tmux `boreal-vite`, http://127.0.0.1:5173/. Headless Chrome (Playwright core 1.49.1, system Chrome, SwiftShader), isolated profile, viewport 960×540. Bench locks `grok: loop 0817 tree` and `grok: loop 0817 retake`, both released. Evidence `tasks/evidence/2026-10-23-grok-loop-0817/` (`capture.mjs`, `capture.json`, `retake.mjs`, `retake.json`, stills).
+  - Viewed `phantom-follow.png` and `phantom-side.png`. The wolf at (146.772, 198.849) has no trunk through the body. The mass ahead is the rock. `3:4:1` is absent after `applyPopulation`.
+  - Viewed `pine-inside-follow.png` and `pine-on-follow.png`. Follow camera, wolf's back, the trunk is not readable. This is why the 07:17 stills missed it.
+  - Viewed `pine-inside-side.png` and `pine-overlap-east.png`. Jack pine `3:4:10`, base radius 0.153 m. The east camera is at (149.6, 5.732, 197.324), 7.7 m from the axis (`retake.json`). The trunk occupies the chest, with the body on both sides of the wood. `capture.json` walk from `at=141.900,198.183` reaches d = 0.033 at gait speed 2.00.
+  - Species is jack pine, not spruce. Catalog kind is still `spruce` for every tree, so the autonomous stop already covers this pine. Comment `tasks/events/2026-10-23T08-33-grok-comment-T-0055.json`. Task file renamed in the title only; the filename stays `T-0055-player-spruce-stop.md`. No approve-plan.
+
+## Exact next step
+Inspect terrain, light and sky, and plants (the areas last measured at 03:14 and 04:16, before controls, sound and collision). Headless Chrome, frames under tasks/evidence/2026-10-23-grok-loop-0817/. New tasks only for a measured gap that no open task already names, ids from T-0056. T-0046 stays reserved. Do not approve-plan them. Do not merge PR #41.

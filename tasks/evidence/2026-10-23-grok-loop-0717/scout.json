@@ -1,0 +1,257 @@
+{
+  "water": {
+    "start": {
+      "x": 171.85,
+      "z": 272.45,
+      "hdg": 3.534,
+      "h": 1.059
+    },
+    "deep": {
+      "d": 21,
+      "h": -1.061,
+      "waterY": -0.25,
+      "depth": 0.811,
+      "lake": "open",
+      "x": 179.89,
+      "z": 291.85
+    },
+    "samples": [
+      {
+        "d": 0,
+        "h": 1.059,
+        "waterY": null,
+        "depth": 0,
+        "lake": null
+      },
+      {
+        "d": 2,
+        "h": 0.837,
+        "waterY": null,
+        "depth": 0,
+        "lake": null
+      },
+      {
+        "d": 4,
+        "h": 0.618,
+        "waterY": null,
+        "depth": 0,
+        "lake": null
+      },
+      {
+        "d": 6,
+        "h": 0.397,
+        "waterY": null,
+        "depth": 0,
+        "lake": null
+      },
+      {
+        "d": 8,
+        "h": 0.196,
+        "waterY": null,
+        "depth": 0,
+        "lake": null
+      },
+      {
+        "d": 10,
+        "h": -0.01,
+        "waterY": null,
+        "depth": 0,
+        "lake": null
+      },
+      {
+        "d": 12,
+        "h": -0.211,
+        "waterY": null,
+        "depth": 0,
+        "lake": null
+      },
+      {
+        "d": 14,
+        "h": -0.429,
+        "waterY": -0.25,
+        "depth": 0.179,
+        "lake": "open"
+      },
+      {
+        "d": 16,
+        "h": -0.593,
+        "waterY": -0.25,
+        "depth": 0.343,
+        "lake": "open"
+      },
+      {
+        "d": 18,
+        "h": -0.776,
+        "waterY": -0.25,
+        "depth": 0.526,
+        "lake": "open"
+      },
+      {
+        "d": 20,
+        "h": -0.961,
+        "waterY": -0.25,
+        "depth": 0.711,
+        "lake": "open"
+      },
+      {
+        "d": 22,
+        "h": -1.131,
+        "waterY": -0.25,
+        "depth": 0.881,
+        "lake": "open"
+      },
+      {
+        "d": 24,
+        "h": -1.233,
+        "waterY": -0.25,
+        "depth": 0.983,
+        "lake": "open"
+      },
+      {
+        "d": 26,
+        "h": -1.33,
+        "waterY": -0.25,
+        "depth": 1.08,
+        "lake": "open"
+      },
+      {
+        "d": 28,
+        "h": -1.438,
+        "waterY": -0.25,
+        "depth": 1.188,
+        "lake": "open"
+      }
+    ]
+  },
+  "spruce": {
+    "x": 146.77,
+    "z": 198.85,
+    "scale": 1.346,
+    "key": "3:4:1",
+    "h": 5.126,
+    "start": {
+      "x": 146.77,
+      "z": 203.85,
+      "heading": 0
+    },
+    "trunkClearance": 0.7
+  },
+  "steep": {
+    "grade": 0.165,
+    "x": 144,
+    "z": 236,
+    "hdg": -1.571,
+    "dh": 0.329
+  },
+  "treesSeen": 206,
+  "block": {
+    "deer": {
+      "step": 0.35,
+      "trunk": 0.6
+    },
+    "wolf": {
+      "step": 0.45,
+      "trunk": 0.7
+    }
+  },
+  "level": {
+    "waterSurface": -0.25,
+    "shore": 0.5,
+    "wolfWater": 0.2
+  },
+  "sun": [
+    {
+      "hour": 12,
+      "gameEl": 54.801,
+      "gameAz": 180,
+      "spencerEl": 54.801,
+      "deltaDeg": 0,
+      "weatherZenith": 35.781,
+      "weatherEl": 54.219,
+      "declGame": 14.301,
+      "declSpencer": 14.301
+    },
+    {
+      "hour": 18,
+      "gameEl": 10.826,
+      "gameAz": 279.4,
+      "spencerEl": 10.826,
+      "deltaDeg": 0,
+      "weatherZenith": 75.621,
+      "weatherEl": 14.379,
+      "declGame": 14.301,
+      "declSpencer": 14.301
+    },
+    {
+      "hour": 19,
+      "gameEl": 1.429,
+      "gameAz": 290.56,
+      "spencerEl": 1.429,
+      "deltaDeg": 0,
+      "weatherZenith": 85.131,
+      "weatherEl": 4.869,
+      "declGame": 14.301,
+      "declSpencer": 14.301
+    },
+    {
+      "hour": 19.5,
+      "gameEl": -3.038,
+      "gameAz": 296.3,
+      "spencerEl": -3.038,
+      "deltaDeg": 0,
+      "weatherZenith": 89.71,
+      "weatherEl": 0.29,
+      "declGame": 14.301,
+      "declSpencer": 14.301
+    },
+    {
+      "hour": 20,
+      "gameEl": -7.287,
+      "gameAz": 302.22,
+      "spencerEl": -7.287,
+      "deltaDeg": 0,
+      "weatherZenith": 94.107,
+      "weatherEl": -4.107,
+      "declGame": 14.301,
+      "declSpencer": 14.301
+    },
+    {
+      "hour": 20.5,
+      "gameEl": -11.261,
+      "gameAz": 308.38,
+      "spencerEl": -11.261,
+      "deltaDeg": 0,
+      "weatherZenith": 98.273,
+      "weatherEl": -8.273,
+      "declGame": 14.301,
+      "declSpencer": 14.301
+    },
+    {
+      "hour": 21,
+      "gameEl": -14.902,
+      "gameAz": 314.84,
+      "spencerEl": -14.902,
+      "deltaDeg": 0,
+      "weatherZenith": 102.151,
+      "weatherEl": -12.151,
+      "declGame": 14.301,
+      "declSpencer": 14.301
+    },
+    {
+      "hour": 22,
+      "gameEl": -20.927,
+      "gameAz": 328.75,
+      "spencerEl": -20.927,
+      "deltaDeg": 0,
+      "weatherZenith": 108.799,
+      "weatherEl": -18.799,
+      "declGame": 14.301,
+      "declSpencer": 14.301
+    }
+  ],
+  "sunsetHourLocalSolar": 19.16,
+  "civilTwilightHour": 19.85,
+  "chunk": 40,
+  "note": "Player steerWolf does not read BLOCK or LEVEL. Autonomous wolf does. Drawn y is max(heightAt, -0.2); the water mesh is at waterSurface -0.25.",
+  "stepLimitGrade": 0.9
+}

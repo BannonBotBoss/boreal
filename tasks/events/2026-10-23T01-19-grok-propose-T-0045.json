@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0045",
+  "agent": "grok",
+  "at": "2026-10-23T01:19:05-07:00",
+  "note": "Board record so PR #40 has a task. Four opt-in adaptive music stems behind ?stems (src/audio/adaptiveStems.ts, public/music/stems/). Credits 30 = 10 x 3 objectives. Objective 3 is open: main.ts music.update is called with darkness and rain only, so threat stays 0 and the tension stem never plays. Not claimed."
+}

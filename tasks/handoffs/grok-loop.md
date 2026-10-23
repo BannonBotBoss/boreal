@@ -366,3 +366,24 @@ Matthew's PC is offline; this run is the hourly loop. gh auth is the cursor logi
 
 ## Exact next step
 On grok/hare-rig-port, keep the previous fore scapula and manus across the plant frame when that pair still reaches, pick the solveLeg branch whose elbow is nearer the previous elbow, and do not commit it unless the plant-frame interior delta at 5, 8.5 and 11.6 m/s and 60, 120 and 240 Hz is within the fore-lock omega gate and foreContacts exact stays inside 11-36 deg. Then record evidence frames. Do not merge PR #38 before that. After that, finish T-0021 rules 16, 16b and 17 and submit it for a non-grok-family review.
+
+## Run 2026-10-23 01:19 PT
+Matthew's PC omen is offline. This run is on the VM, branch grok/board-loop from origin/main 2f9011b. The 00:29 next step (homemade elbow-branch search, do not merge PR #38) is superseded: Matthew already merged #38, and the follow-up must be pole-target two-bone IK, not that branch search.
+
+- [x] Step 1 CI, checked with `gh run view` at 01:18 PT. All three main pushes succeeded. Nothing to revert.
+  - PR #38 merge 4cecdf2cd57ef92a9162381519de226679c6e0fe, run 39921800758, conclusion success. https://github.com/Bannon-github/boreal/actions/runs/39921800758
+  - PR #39 merge f65b77e53ce3f94fdc6cfc06e468e073744ef229, run 39921861256, conclusion success. https://github.com/Bannon-github/boreal/actions/runs/39921861256
+  - PR #40 merge 2f9011b55667c2c839f19e1091c950c8ba681257, run 39921888972, conclusion success. https://github.com/Bannon-github/boreal/actions/runs/39921888972
+- [x] Step 2. T-0009 comment + release (Matthew merged #38; touchdown pop stays open as T-0044). T-0028 complete on the shipment in #38; that complete is what ends the open claim (a release event after complete would replay the task back to approved). T-0044 proposed for the pop. Grok's only open claim after these events is T-0021.
+- [x] Step 3. T-0045 proposed for the adaptive stems that landed in #40 with no board task, plus a comment that Matthew merged it. Threat is still unwired (`main.ts` calls `music.update` with two arguments); that is an open objective on T-0045, not a second task.
+- [x] Step 4 heartbeat, clock 2026-10-23 01:20 PT. Recomputed hours from `git log -1` committer time. No new stall comment: same SHAs and same STALLED/EXPIRED band as the 00:29 comments in 47e0184, except T-0009 and T-0028 whose state changed and is recorded above.
+  - T-0005 grok-globe, grok-globe/log-grounding-bark 2b4d462, 86.27 h, still EXPIRED. Comment 2026-10-23T00-30-01 stands.
+  - T-0021 grok, last handoff commit on grok/board-loop 47e0184 at 00:30:52 PT (0.82 h). Not stalled. Next step unchanged: causal rows for rules 16, 16b and 17, then a complete event for a non-grok-family review. grok/transactional-plan tip is still 8020975 (6.01 h) and was already past 2 h when the 00:29 run claimed it; no new commit, so no second comment.
+  - T-0023 claude, claude/water-optics 95f1d41, 31.76 h, still EXPIRED. Comment 2026-10-23T00-30-03 stands.
+  - T-0027 agy, agy/forage-flora 7145ad1, 36.28 h, still the no-branch complete. Comment 2026-10-23T00-30-04 stands.
+  - T-0025 and T-0032 are completed, not claimed. Heads unchanged (01c4bbb, 1e6477b). No new review.
+- [ ] Step 5 inspection. Not started.
+- [ ] Step 6 npm test and tsc. Not started.
+
+## Exact next step
+Inspect on this VM: `?stems` music picker, and the merged hare rig at a running speed for the fore-paw pop (bound lab and, if the game will show one, the furred hare). Capture small PNGs under tasks/evidence/2026-10-23-grok-loop/. File a task only for a gap that is not already T-0044 or T-0045. Then run npm test and npx tsc --noEmit on this branch (main 2f9011b plus these board files) and open one PR from grok/board-loop. Do not merge.

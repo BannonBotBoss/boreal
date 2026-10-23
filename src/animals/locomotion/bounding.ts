@@ -443,7 +443,11 @@ export const SWING = { fold: { fore: .25, hind: .8 } };
  * measured at fore touchdown in small therians (Schmidt 2008 JEB 211:3775 Table 4; pika 33 deg, Fischer et al. 2002 JEB
  * 205:1315) - no hare forelimb swing kinematics were found; flagged in the handoff.
  */
-export const FORE_REACH = { from: .6, full: .7, hold: .92, reach: .995 };
+export const FORE_REACH = { from: .6, full: .7, hold: .92, reach: .995,
+  /** Plant-frame minimum reach, fraction of the straight limb (fore lock only). [estimate] Smallest 0.02 step on the
+   *  2026-10-23 15:13 grid that keeps the 8.5 m/s 60 Hz plant shoulder-wrist at or above ~0.103 m, so the interior drop
+   *  from 175.83 deg stays within the 90.48 deg omega gate, while exact-contact forearm stays in Schmidt 2008 Table 4
+   *  (11-36 deg). 0.72 still left the wrist at 0.102 m. Swing passes floor 0. */ floor: .74 };
 /**
  * v7 (T-0009 run 7, grok-gait): fore touchdown. The fore stance sweep (foreDuty x stride, .276 m for the hare at every speed)
  * sits at the back end of the fore chord (run 4: fore prints behind the hinds), so a fore paw lands ~95-120 mm ahead of and
@@ -471,12 +475,17 @@ export function foreReachWeight(sp: number, r = FORE_REACH) {
   return sp <= r.from || sp >= 1 ? 0 : sp < r.full ? ss((sp - r.from) / (r.full - r.from)) : sp <= r.hold ? 1 : 1 - ss((sp - r.hold) / (1 - r.hold));
 }
 /** FORE_REACH: an out-of-reach fore target (limb frame, +z back) pulled back at its own height onto the reach circle about the
- *  protracted glenoid of a limb whose chain top is `top`; a reachable target is returned unchanged. */
+ *  protracted glenoid of a limb whose chain top is `top`; a reachable target is returned unchanged. A `floor` above 0
+ *  pushes a target inside that smaller circle forward onto it, same height, same glenoid. That is the plant-frame
+ *  limit (the body step at 60 Hz otherwise closes the shoulder-wrist). Not a second IK solve. */
 export function foreReachTarget(L: LimbDims, top: { z: number; y: number }, rel: Vec3, girdle: GirdleLimits = GIRDLE, r = FORE_REACH): Vec3 {
   const b = (L.girdleRest ?? 0) + girdle.scapulaMax, gz = top.z - (L.girdle ?? 0) * Math.sin(b), gy = top.y - (L.girdle ?? 0) * Math.cos(b);
-  const R = r.reach * (L.upper + L.lower + (L.foot ?? 0)), dy = Math.hypot(rel.y - gy, rel.x), dz = rel.z - gz;
-  if (dz >= 0 || dy >= R || Math.hypot(dz, dy) <= R) return rel;
-  return { ...rel, z: gz - Math.sqrt(R * R - dy * dy) };
+  const len = L.upper + L.lower + (L.foot ?? 0), R = r.reach * len, dy = Math.hypot(rel.y - gy, rel.x), dz = rel.z - gz;
+  let z = rel.z;
+  if (!(dz >= 0 || dy >= R || Math.hypot(dz, dy) <= R)) z = gz - Math.sqrt(Math.max(0, R * R - dy * dy));
+  const Rf = (r.floor ?? 0) * len;
+  if (Rf > 0) { const h = Math.hypot(z - gz, dy); if (dy < Rf && h < Rf - 1e-9) z = gz - Math.sqrt(Math.max(0, Rf * Rf - dy * dy)); }
+  return z === rel.z ? rel : { ...rel, z };
 }
 
 /* ---------------------------------------------------------------- pose requests (agent pipeline → body) */
@@ -705,9 +714,13 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
       const top = { z: shift[i] * Math.cos(bodyPitch), y: topY(L) + shift[i] * Math.sin(bodyPitch) };
       // v6: late-swing fore reach (FORE_REACH): keep the swing's height, reach no further than the limb does; not in a leash /
       // stop step or a sit-up
+      // Plant frame (fore lock on): the swing let the reach go, and one 60 Hz body step closes the paw. Hold it on
+      // FORE_REACH.floor with the same circle. Swing below is unchanged (floor forced off).
+      const planting = front && L.girdle && moving && f.planted && !wasDown[i] && !f.forced && foreUp <= .02 && lockOn && FORE_LOCK.on && (FORE_REACH.floor ?? 0) > 0;
+      if (planting) { const t2 = foreReachTarget(L, top, rel, girdle); rel = { ...rel, z: t2.z }; }
       if (front && L.girdle && moving && !f.planted && !f.forced && foreUp <= .02 && ph[i] >= plan.duties[i]) {
         const w = foreReachWeight((ph[i] - plan.duties[i]) / (1 - plan.duties[i])) * run;
-        if (w > 0) { const t2 = foreReachTarget(L, top, rel, girdle, foreTouch > 0 ? { ...FORE_REACH, reach: FORE_REACH.reach - FORE_TOUCH.reachCut * foreTouch / FORE_TOUCH.ahead } : FORE_REACH); rel = { ...rel, z: rel.z + w * (t2.z - rel.z) }; }
+        if (w > 0) { const t2 = foreReachTarget(L, top, rel, girdle, foreTouch > 0 ? { ...FORE_REACH, floor: 0, reach: FORE_REACH.reach - FORE_TOUCH.reachCut * foreTouch / FORE_TOUCH.ahead } : { ...FORE_REACH, floor: 0 }); rel = { ...rel, z: rel.z + w * (t2.z - rel.z) }; }
       }
       const solve = (r0: Vec3) => {
         let psi = 0, blade: number | undefined, arm: number | undefined;

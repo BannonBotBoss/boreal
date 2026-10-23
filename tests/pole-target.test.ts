@@ -1,8 +1,8 @@
 /**
  * T-0044: pole-target two-bone (Tolani, Goswami and Badler 2000, Graphical Models 62:353).
- * The known-bad is executed: the hare's plant frame, fore lock on, still folds the elbow by more than the
- * fore-lock omega gate. Wiring the pole into that frame is the open work; this test fails closed if someone
- * claims the pop is gone without the plant delta dropping under the gate.
+ * The pole only picks the side of the bend. The plant-frame length is the FORE_REACH floor in bounding.ts.
+ * This test checks one cell: 8.5 m/s at 60 Hz, fore lock on, shoulder-wrist at or above 0.103 m and the
+ * interior drop inside that cell's omega gate. The other speeds and rates are still outside their gates.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,16 +31,22 @@ function interior(P: { x: number; y: number; z: number }[]) {
   return Math.acos(Math.max(-1, Math.min(1, (ax * bx + ay * by + az * bz) / (Math.hypot(ax, ay, az) * Math.hypot(bx, by, bz))))) * 180 / Math.PI;
 }
 
-test('T-0044 known-bad: 8.5 m/s at 60 Hz, the plant-frame elbow exceeds the fore-lock omega gate', () => {
+const span = (P: { x: number; y: number; z: number }[]) => Math.hypot(P[3].x - P[1].x, P[3].y - P[1].y, P[3].z - P[1].z);
+
+test('T-0044: 8.5 m/s at 60 Hz, the plant frame keeps shoulder-wrist at or above 0.103 m', () => {
   const sk = planFor('hare'), hz = 60, v = 8.5;
   const c = createBounding(sk, HOST_GAIT, () => 0, { x: 0, z: 0, heading: 0 }, GIRDLE, { pose: poseFor('hare'), foreLock: true });
-  let last: any, plant = 0, gate = 0;
+  let last: any, plant = 0, gate = 0, swMin = Infinity;
   for (let n = 0; n / hz < 3.5; n++) {
     const f: any = c.update(1 / hz, Math.min(v, v * n / hz / 1.5), 0, null, selectRow(v));
     gate = 2 * 88 / (f.plan.duties[0] / f.plan.hz) / hz;
-    if (last && n / hz > 2) for (const i of [0, 2]) if (f.contact[i] && !last.contact[i])
-      plant = Math.max(plant, Math.abs(interior(limbPoints(sk, f, i)) - interior(limbPoints(sk, last, i))));
+    if (last && n / hz > 2) for (const i of [0, 2]) if (f.contact[i] && !last.contact[i]) {
+      const B = limbPoints(sk, f, i);
+      plant = Math.max(plant, Math.abs(interior(B) - interior(limbPoints(sk, last, i))));
+      swMin = Math.min(swMin, span(B));
+    }
     last = f;
   }
-  assert.ok(plant > gate, `plant ${plant.toFixed(1)} deg should still exceed the ${gate.toFixed(1)} deg gate until the pole is wired`);
+  assert.ok(swMin >= 0.103, `shoulder-wrist ${swMin.toFixed(4)} m`);
+  assert.ok(plant <= gate, `plant ${plant.toFixed(2)} deg, gate ${gate.toFixed(2)}`);
 });

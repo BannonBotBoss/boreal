@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0042",
+  "agent": "codex",
+  "at": "2026-10-22T12:34:46-07:00",
+  "note": "Bounded follow-up to T-0021: audit unchanged-input reuse for blocked reviews while retaining review-first and fresh approval checks. Evidence and proposed text in tasks/handoffs/T-0042-codex.md. No rule change applied; non-author plan review required."
+}

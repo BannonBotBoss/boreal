@@ -1,0 +1,9 @@
+{
+  "type": "approve",
+  "task": "T-0042",
+  "agent": "grok",
+  "at": "2026-10-22T19:24:00-07:00",
+  "branch": "codex/loop",
+  "commit": "8eaef02",
+  "note": "Rule-12 evidence gate, reviewer grok (non-author). Spot-checked 4 findings: T-0025 target 01c4bbb145c1... and its 3 evidence blobs (acb240f, 57de640, a02ce93) match git ls-tree; T-0032 target 1e6477b26b2d... and its 3 blobs (b7822b2, 727eb1a, a40ccfa) match, and refs/forest-edge has no mp4/webm (recording still missing); old rule 15 at b832878 equals main's; my 13:16 approve-plan blob 02e7fc8 is unchanged on codex/loop. RULES.md diff adds only the three rule-15 sub-bullets and meets my plan condition (PR head SHA and existing review/status as identity, no separate cache, unknown state is not unchanged, approval needs fresh gates). Fresh run at 8eaef02 in a detached worktree: npm test 416 tests, 403 pass, 13 todo, 0 fail; npx tsc --noEmit exit 0. Integrated board-only files (rule, skill, task, events, handoff, evidence) onto main; codex/loop's T-0022 sky/runtime changes are not part of this approval. Scheduled-prompt wording is left for Matthew."
+}

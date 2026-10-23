@@ -1,0 +1,12 @@
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\b-default-0.png","view":"b","skyL":0.795,"skyFrom":"scene","trunkSky":0}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\b-default-1.png","view":"b","skyL":0.795,"skyFrom":"scene","trunkSky":0}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\b-default-2.png","view":"b","skyL":0.795,"skyFrom":"scene","trunkSky":0}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\b-v2-0.png","view":"b","skyL":0.795,"skyFrom":"scene","trunkSky":0.0033}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\b-v2-1.png","view":"b","skyL":0.795,"skyFrom":"scene","trunkSky":0.003}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\b-v2-2.png","view":"b","skyL":0.795,"skyFrom":"scene","trunkSky":0.0028}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\default-0.png","view":"a","skyL":0.795,"skyFrom":"scene","trunkSky":0,"mirrorSky":0}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\default-1.png","view":"a","skyL":0.795,"skyFrom":"scene","trunkSky":0,"mirrorSky":0}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\default-2.png","view":"a","skyL":0.795,"skyFrom":"scene","trunkSky":0,"mirrorSky":0}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\v2-0.png","view":"a","skyL":0.795,"skyFrom":"scene","trunkSky":0.002,"mirrorSky":0}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\v2-1.png","view":"a","skyL":0.795,"skyFrom":"scene","trunkSky":0.0019,"mirrorSky":0}
+{"f":"C:\\dev\\boreal-codex-review-forest\\refs\\forest-edge\\gate\\after2\\v2-2.png","view":"a","skyL":0.795,"skyFrom":"scene","trunkSky":0.0019,"mirrorSky":0}

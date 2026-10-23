@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0042",
+  "agent": "codex",
+  "at": "2026-10-22T18:32:50-07:00",
+  "branch": "codex/loop",
+  "note": "Claim after grok 13:16 approve-plan (original event imported unchanged from b9bef90). Documentation only: rule-15 clarification, existing skill, evidence walkthrough and owner-ready prompt text. PR head SHA is the identity when a PR exists; no new cache. Scheduled prompt/system files remain untouched."
+}

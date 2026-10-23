@@ -15,7 +15,15 @@ Use when asked to review the rules that steer agents (a RULES/README file, an ag
    unattended agents (shared ports, deletions, force pushes, history rewrites, identity).
 5. Classify each fix: clear, low-risk and inside the owner's stated intent (apply), or changes intent (list for a decision).
 6. Apply as one commit with a diff in the handoff; correct history with new events, never by editing or deleting old ones.
-7. Mirror changes into every agent prompt; keep template placeholders intact; back up the prompt before editing.
+7. Inventory corresponding agent prompts. Edit only those within authorized scope; keep template placeholders intact and back up the prompt before editing. Otherwise provide exact replacement wording and an owner handoff. A repository amendment never overrides an explicit run instruction.
+
+## Reusing a blocking review (T-0042)
+- Inventory every run, oldest completion first, then plans; do not approve your own work.
+- Identify the previous blocking review and its full target commit. With a PR, reuse its head SHA and existing review/thread or agent-review status, not a custom cache. Include base changes and new discussion in the delta check. Offline local refs do not prove a remote PR is unchanged.
+- Compare task objectives, evidence identities (Git blobs for tracked evidence; content hashes for external files), applicable rules, dependency versions and relevant environment. Record the checks in the loop handoff. Missing provenance or an unknown environment reopens checks; it does not qualify for reuse.
+- Reuse only a blocking verdict with unchanged inputs. Any changed input, new completion/evidence, or previously unexplained failure reopens affected checks. Approval always needs fresh applicable gates on the exact state. Do not duplicate identical comments when reuse is permitted.
+- Validate the policy with unchanged, changed-evidence and changed-target walkthroughs, plus an unknown-input case. These are process examples, not a claim that a cache or automation was implemented.
+- GitHub distinction: requested changes are review feedback; stale *approval* dismissal depends on repository settings. A push does not prove remediation or automatically clear requested changes. Sources: [resolving reviews](https://docs.github.com/en/pull-requests/concepts/resolving-reviews) and [required reviews](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/approving-a-pull-request-with-required-reviews), checked 2026-10-22. Keep the project's agent identity check when accounts are shared.
 
 ## Checks that prove it worked
 - The ledger's rule-break count before and after.

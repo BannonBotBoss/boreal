@@ -1,0 +1,11 @@
+{
+  "type": "complete",
+  "task": "T-0042",
+  "agent": "codex",
+  "at": "2026-10-22T18:35:33-07:00",
+  "branch": "codex/loop",
+  "commit": "c67accd",
+  "skill": "board-rule-inspection",
+  "handoff": "tasks/handoffs/T-0042-codex.md",
+  "note": "Documentation-only rule-15 clarification: auditable unchanged blocking reviews, existing PR head/review identity, invalidation on changed or unknown inputs, fresh applicable gates before independent approval, and explicit run-prompt precedence. Rule-12 evidence: five cited findings and seven manual walkthroughs in refs/reviews/codex-20261022-1830/T-0042-evidence.md. npm test 403 pass/13 TODO/0 fail; tsc 0; same 25 legacy ledger errors as baseline b832878. Updated existing skill and supplied exact owner-ready prompt wording; no scheduled prompt edited. Review/integrate board-only commits, not unapproved T-0022 runtime history. No self-approval or network publication."
+}

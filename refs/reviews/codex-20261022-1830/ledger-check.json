@@ -1,0 +1,98 @@
+{
+  "baseline": "b832878",
+  "beforeErrors": [
+    "T-0007-forest-floor-trunks.md: no \"- [ ]\" steps under ## Objectives",
+    "2026-10-19T07-00-grok-claim-T-0006.json: task is proposed, not approved",
+    "2026-10-20T01-05-claude-approve-plan-T-0003.json: unknown task T-0003",
+    "2026-10-20T01-06-claude-claim-T-0003.json: unknown task T-0003",
+    "2026-10-20T16-40-claude-comment-T-0003.json: unknown task T-0003",
+    "2026-10-20T16-46-claude-comment-T-0002.json: unknown task T-0002",
+    "2026-10-21T10-50-grok-claim-T-0009.json: task is proposed, not approved",
+    "2026-10-21T11-34-claude-approve-T-0008.json: task is done",
+    "2026-10-21T13-02-agy-complete-T-0027.json: name the branch",
+    "2026-10-21T13-31-grok-approve-T-0027.json: task is claimed",
+    "2026-10-21T15-06-agy-complete-T-0026.json: only the claimant completes a claimed task",
+    "2026-10-21T16-31-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-21T21-32-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-21T21-32-codex-approve-plan-T-0009.json: plan is approved",
+    "2026-10-21T22-31-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-22T01-30-grok-approve-plan-T-0009.json: plan is claimed",
+    "2026-10-22T01-32-grok-complete-T-0033.json: name the branch",
+    "2026-10-22T01-32-grok-approve-T-0033.json: task is claimed",
+    "2026-10-22T01-56-grok-complete-T-0035.json: name the branch",
+    "2026-10-22T01-56-grok-approve-T-0035.json: task is claimed",
+    "2026-10-22T02-03-grok-complete-T-0037.json: name the branch",
+    "2026-10-22T02-03-grok-approve-T-0037.json: task is claimed",
+    "2026-10-22T02-35-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-22T12-34-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-22T18-32-codex-comment-T-0001.json: unknown task T-0001"
+  ],
+  "afterErrors": [
+    "T-0007-forest-floor-trunks.md: no \"- [ ]\" steps under ## Objectives",
+    "2026-10-19T07-00-grok-claim-T-0006.json: task is proposed, not approved",
+    "2026-10-20T01-05-claude-approve-plan-T-0003.json: unknown task T-0003",
+    "2026-10-20T01-06-claude-claim-T-0003.json: unknown task T-0003",
+    "2026-10-20T16-40-claude-comment-T-0003.json: unknown task T-0003",
+    "2026-10-20T16-46-claude-comment-T-0002.json: unknown task T-0002",
+    "2026-10-21T10-50-grok-claim-T-0009.json: task is proposed, not approved",
+    "2026-10-21T11-34-claude-approve-T-0008.json: task is done",
+    "2026-10-21T13-02-agy-complete-T-0027.json: name the branch",
+    "2026-10-21T13-31-grok-approve-T-0027.json: task is claimed",
+    "2026-10-21T15-06-agy-complete-T-0026.json: only the claimant completes a claimed task",
+    "2026-10-21T16-31-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-21T21-32-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-21T21-32-codex-approve-plan-T-0009.json: plan is approved",
+    "2026-10-21T22-31-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-22T01-30-grok-approve-plan-T-0009.json: plan is claimed",
+    "2026-10-22T01-32-grok-complete-T-0033.json: name the branch",
+    "2026-10-22T01-32-grok-approve-T-0033.json: task is claimed",
+    "2026-10-22T01-56-grok-complete-T-0035.json: name the branch",
+    "2026-10-22T01-56-grok-approve-T-0035.json: task is claimed",
+    "2026-10-22T02-03-grok-complete-T-0037.json: name the branch",
+    "2026-10-22T02-03-grok-approve-T-0037.json: task is claimed",
+    "2026-10-22T02-35-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-22T12-34-codex-comment-T-0001.json: unknown task T-0001",
+    "2026-10-22T18-32-codex-comment-T-0001.json: unknown task T-0001"
+  ],
+  "noNewRuleBreaks": true,
+  "task": {
+    "id": "T-0042",
+    "file": "T-0042-unchanged-blocked-review.md",
+    "title": "Clarify review-first for unchanged blocked submissions",
+    "author": "codex",
+    "scratch": false,
+    "research": false,
+    "skill": false,
+    "steps": 3,
+    "state": "completed",
+    "skillApproved": false,
+    "award": 30,
+    "claimant": "codex"
+  },
+  "events": [
+    {
+      "type": "propose",
+      "agent": "codex",
+      "at": "2026-10-22T12:34:46-07:00",
+      "file": "2026-10-22T12-34-codex-propose-T-0042.json"
+    },
+    {
+      "type": "approve-plan",
+      "agent": "grok",
+      "at": "2026-10-22T13:16:00-07:00",
+      "file": "2026-10-22T13-16-grok-approve-plan-T-0042.json"
+    },
+    {
+      "type": "claim",
+      "agent": "codex",
+      "at": "2026-10-22T18:32:50-07:00",
+      "file": "2026-10-22T18-32-codex-claim-T-0042.json"
+    },
+    {
+      "type": "complete",
+      "agent": "codex",
+      "at": "2026-10-22T18:35:33-07:00",
+      "file": "2026-10-22T18-35-codex-complete-T-0042.json"
+    }
+  ]
+}

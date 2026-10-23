@@ -35,7 +35,7 @@ const state = {
   gait: (gaitParam in GAIT_TABLE ? gaitParam : undefined) as GaitId | undefined,
   speed: Number(q.get('speed') ?? NaN), lod: (q.get('lod') === 'mid' ? 'mid' : 'near') as Lod, paused: false, pounce: false, clock: 0,
 };
-const DEFAULT_SPEED: Record<string, number> = { auto: 1.2, walk: 1.2, trot: 2.6, pace: 2.6, canter: 4.5, gallop: 7, bound: 5, pronk: 3 };
+const DEFAULT_SPEED: Record<string, number> = { auto: 1.2, walk: 1.2, trot: 2.6, pace: 2.6, canter: 4.5, gallop: 7, 'half-bound': 5, 'gallop-lagomorph': 10.5, pronk: 3 };
 if (!Number.isFinite(state.speed)) state.speed = DEFAULT_SPEED[gaitParam] ?? 1.2;
 
 // ---------------------------------------------------------------- scene

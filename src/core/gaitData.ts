@@ -99,10 +99,11 @@ export const footfallOrder = (offsets: readonly number[]) => offsets.map((o, i) 
 export interface Suspension { from: number; to: number; kind: 'gathered' | 'extended' }
 /** Windows of the stride (phase fractions) when all four feet are off the ground. Gathered = it starts when a fore foot lifts
  * off (legs tucked under, back flexed); extended = it starts when a hind foot lifts off (legs stretched, back extended). */
-export function suspensions(offsets: readonly number[], duty: number): Suspension[] {
-  const touch = offsets.map(o => frac(1 - o)), down = (t: number) => offsets.some(o => frac(t + o) < duty), out: Suspension[] = [];
+export function suspensions(offsets: readonly number[], duty: number | readonly number[]): Suspension[] {
+  const d = (i: number) => typeof duty === 'number' ? duty : duty[i]; // one duty, or one per leg (LF, LH, RF, RH: e.g. lagomorph fore < hind)
+  const touch = offsets.map(o => frac(1 - o)), down = (t: number) => offsets.some((o, i) => frac(t + o) < d(i)), out: Suspension[] = [];
   offsets.forEach((o, i) => {
-    const t = frac(1 - o + duty); if (down(t + 1e-9) || out.some(w => Math.abs(w.from - t) < 1e-9)) return; // a foot is still down, or a pair lifted together
+    const t = frac(1 - o + d(i)); if (down(t + 1e-9) || out.some(w => Math.abs(w.from - t) < 1e-9)) return; // a foot is still down, or a pair lifted together
     out.push({ from: t, to: t + Math.min(...touch.map(d => frac(d - t) || 1)), kind: i % 2 === 0 ? 'gathered' : 'extended' }); // `to` may pass 1
   });
   return out.sort((x, y) => x.from - y.from);

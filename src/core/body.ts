@@ -24,6 +24,8 @@ export interface Ring {
   saddle?: number;
   /** 0–1 blend toward the tube's `accent` colour (rust-tan brows, cheeks and bridge). */
   accent?: number;
+  /** 0–1 blend toward the belly colour along the two side edges of the ring (|side| > .7): pale rims of flat ears. */
+  rim?: number;
   /** 0–1 blend toward the tube's `lining` colour on the upper (top) or lower (under) surface: mouth roof, gums, jaw floor. */
   top?: number; under?: number;
   /** Squareness of the ring's cross-section: 2 is an ellipse, 3 a rounded box with a flat top (muzzle bridge). Default 2. */
@@ -89,7 +91,7 @@ function smoothed(rings: Ring[], n: number): Ring[] {
         p: [0, 1, 2].map(c => catmull(p0.p[c], a.p[c], b.p[c], p3.p[c], t)) as Vec3,
         rx: Math.max(1e-4, catmull(p0.rx, a.rx, b.rx, p3.rx, t)), ry: Math.max(1e-4, catmull(p0.ry, a.ry, b.ry, p3.ry, t)),
         w: [...weights.entries()].sort((x, y) => y[1] - x[1]).slice(0, 4),
-        dark: lerp(a.dark, b.dark), fur: mix(a.fur ?? 1, b.fur ?? 1, t), pale: lerp(a.pale, b.pale), saddle: lerp(a.saddle, b.saddle), accent: lerp(a.accent, b.accent), top: lerp(a.top, b.top), under: lerp(a.under, b.under), sq: mix(a.sq ?? 2, b.sq ?? 2, t),
+        dark: lerp(a.dark, b.dark), fur: mix(a.fur ?? 1, b.fur ?? 1, t), pale: lerp(a.pale, b.pale), saddle: lerp(a.saddle, b.saddle), accent: lerp(a.accent, b.accent), rim: lerp(a.rim, b.rim), top: lerp(a.top, b.top), under: lerp(a.under, b.under), sq: mix(a.sq ?? 2, b.sq ?? 2, t),
       });
     }
   }
@@ -121,6 +123,7 @@ export function buildBody(tubes: Tube[]): BodyData {
           col = mix(col, tube.belly[k], ring.pale ?? 0);
           col = mix(col, (tube.accent ?? tube.back)[k], ring.accent ?? 0);
           col = mix(col, tube.dark[k], (ring.saddle ?? 0) * upper * upper);
+          if (ring.rim) col = mix(col, tube.belly[k], ring.rim * clamp01((Math.abs(c) - .7) / .3));
           if (tube.lining) col = mix(mix(col, tube.lining[k], (ring.top ?? 0) * upper * upper), tube.lining[k], (ring.under ?? 0) * down * down);
           d.color.push(mix(col, tube.dark[k], dark));
         }

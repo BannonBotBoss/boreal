@@ -3,6 +3,7 @@
  * (PROJECT-RULES: no species-specific source files). Add a creature: copy _template.ts's record here, fill it, register it.
  */
 import { S, type SpeciesTemplate } from '../template';
+import type { BoundGait } from '../bound';
 
 /** Gray wolf (Canis lupus), the player's default body. Every number sourced; `est` marks estimates. Number table:
  *  tasks/handoffs/T-0036-grok.md. Derived values are computed in tests/needs.test.ts from the formulas named here. */
@@ -148,5 +149,34 @@ export const HARE_NEEDS: SpeciesTemplate = {
     flight: { fears: ['wolf'], distanceM: S(3.7, 'mean flight initiation distance, 224 approaches (Emmel 2024, UMT MSc, Fig. 1)') },
   },
 };
+
+/** Snowshoe hare limb gait (T-0009, ported from grok/rabbit-clover HARE_AGENT.gait): read only by the rendered rig
+ *  (animals/locomotion/bounding.ts); the headless sim never needs it. */
+/** Half-bound: hind pair lands near-simultaneously, the fore pair staggered; Lepus also gallops (transverse and rotary) at the
+ *  fastest speeds (Hildebrand 1977, J Mammal 58:131, Table 1: Lepus T, R, 1/2B; Simons 1999 / Bertram & Gutmann 2009, J R Soc
+ *  Interface 6:549: leporids half-bound at all but the fastest speeds, stiff-backed when slow, flexed-back when escaping).
+ *  Touchdown phases [estimate, from Hildebrand-style diagrams]: fore lead .08 is > 3x the hind lead .03, as Hildebrand 1977
+ *  gives for half-bounding rabbits.
+ *  Duty (HIND), re-sourced run 4: duty = sweep / stride, clamped to [.20, .60]. Bounds: Lepus hind contact spans ~60 %
+ *  (slow) to ~20 % (very fast) of the stride (Hildebrand 1977 Fig. 2; the hind contact "approaches 20 percent of the cycle
+ *  for various fast runners ... to the jumping mouse and rabbit. It is less than 18 percent only for individual strides of
+ *  exceptional cursors"); Hildebrand states "actual speed cannot be derived from contact intervals", so the old linear
+ *  .60 @ 1.68 -> .20 @ 11.6 m/s mapping had no speed source and is retired. Sweep .40 m = 1.2 x (hind leg .202 + foot .132):
+ *  galloping dogs at 9.2 m/s sweep 9.2 x .073 s = .67 m in stance (Walter & Carrier 2007, JEB 210:208, Tables 1-2: contact
+ *  71-75 ms), about 1.2 leg lengths; the same sweep in leg lengths for the hare is dynamic similarity (Alexander & Jayes 1983,
+ *  J Zool 201:135) [estimate: no lagomorph stance length vs speed found]. Gives .60 @ 1.68, .56 @ 3, .35 @ 5, .21 @ 8.5,
+ *  .20 (floor) @ 11.6 m/s. Fore share .90 -> .70 of the hind: "fore contacts drop to 70 percent or less of hind contacts
+ *  for Lepus at speed" (Hildebrand 1977); ~.9 for the slow Lepus plots in Fig. 2. Floors re-read run 5 (Hildebrand 1977 p.135-136): hind
+ *  .20 kept (the rabbit is named among the fast runners whose hind contact "approaches 20 percent"; below 18 % is only for
+ *  "individual strides of exceptional cursors", not a steady sprint); fore floor .13, was .16: 16 % is what fast mammals'
+ *  fore contact "approaches", but it is "rarely less than 13 percent for consecutive strides", and Lepus at speed puts the
+ *  fore at 70 % or less of the hind, i.e. .7 x .20 = .14 at 11.6 m/s, which a .16 floor overrode (fore = 80 % of hind, the
+ *  rodent norm, not the Lepus one). So the share sets the fore duty and .13 is only the hard floor.
+ *  Cadence: Heglund & Taylor 1988 (JEB 138:301) allometry for 1.5 kg (ADW: 1.43-1.55 kg): trot-gallop transition
+ *  1.54 M^0.216 = 1.68 m/s at 4.19 M^-0.150 = 3.94 Hz; preferred gallop 2.78 M^0.116 = 2.91 m/s at 4.44 M^-0.156 = 4.17 Hz;
+ *  max sustained gallop 3.71 M^0.176 = 3.98 m/s at 4.70 M^-0.162 = 4.40 Hz. Above 3.98 m/s the frequency is held at 4.40 Hz
+ *  up to the 11.6 m/s top speed (26 mph, Seton 1928 via MacLulich 1937) and speed grows by stride length, as in Heglund &
+ *  Taylor's galloping animals [estimate: sprint frequency not measured in Lepus]. Slow hops f ~ v^0.25 [estimate]. */
+export const HARE_GAIT: BoundGait = { touchdown: [0, .08, .42, .45], duty: [.6, .2], sweep: .40, foreMin: .13, foreShare: [.9, .7], cadence: { transitionSpeed: 1.68, transitionHz: 3.94, topSpeed: 11.6, topHz: 4.4, slowExp: .25, points: [[2.91, 4.17], [3.98, 4.4]] } };
 
 export const NEEDS_SPECIES: Record<string, SpeciesTemplate> = { wolf: WOLF_NEEDS, hare: HARE_NEEDS };

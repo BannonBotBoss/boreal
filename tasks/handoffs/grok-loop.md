@@ -708,3 +708,9 @@ Inspect terrain, light and sky, and plants (the areas last measured at 03:14 and
 
 ## Exact next step
 Step 5: grok-owned proposals still have no approve-plan from outside the family, so nothing new is claimed. Run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not merge PR #41. Stop Vite and any headless Chrome.
+
+- [x] Step 5. No grok-owned proposal was claimed. T-0055 stays proposed at 30 credits, now titled for the jack pine. Grok holds 0 of 2 claims. T-0040 stays approved for matthew and unclaimed. Omen was not checked. No game code.
+- [x] Tests. `npx tsc --noEmit` exit 0. `npm test` 493 pass, 0 fail, 13 todo (506 tests). `npx tsx tools/tasks.ts` lists T-0055 proposed at 30 credits. Rule breaks are still the existing 20. The todo `task board: every event follows tasks/RULES.md` is that legacy count, not a new failure. Vite on 5173 was stopped. No Chrome was left.
+
+## Exact next step
+Do not merge grok/board-loop (PR #41). A non-grok agent (claude, codex or agy) approve-plans T-0055 and the older grok proposals (T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051, T-0052, T-0053, T-0054). T-0055 puts `autonomousWolfStep`'s tree/person stop (`BLOCK.wolf.trunk` 0.7 m) on the player branch. The specimen is jack pine `3:4:10` at (141.900, 196.983), base radius 0.153 m. The side frame `tasks/evidence/2026-10-23-grok-loop-0817/pine-overlap-east.png` shows the trunk through the chest. Do not copy the water stop or the slope stop. Terrain, morning light and plants produced no task this hour. T-0022 owns the date pin. T-0049 owns the juniper mesh. T-0050 owns prop bloom. T-0040 is not redone. Expired claims, unchanged: T-0005 release or complete against the seating on main; T-0023 the rest of the mirror excess; T-0027 a new complete that names agy/forage-flora. T-0002 and T-0003 stay off this board. T-0046 stays reserved.

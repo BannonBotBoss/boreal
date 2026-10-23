@@ -43,7 +43,7 @@ test('globe coast: globeView wiring (OrbitControls damping off, MathUtils.damp, 
   const src = readFileSync('src/world/globe/globeView.ts', 'utf8');
   assert.match(src, /controls\.enableDamping = false/);
   assert.doesNotMatch(src, /dampingFactor/);
-  assert.match(src, /MathUtils\.damp\([^\n]*1 \/ GLOBE_COAST\.track/, 'drag rate damp-smoothed');
+  assert.match(src, /k = 1 \/ GLOBE_COAST\.track[^\n]*\n[^\n]*MathUtils\.damp\(coastV\.x, [^\n]*, k, dt\)/, 'drag rate damp-smoothed');
   assert.match(src, /MathUtils\.damp\([^\n]*coastLambda/, 'coast via MathUtils.damp');
   assert.match(src, /getAzimuthalAngle\(\)[^\n]*getPolarAngle\(\)/, "OrbitControls' own angles");
   assert.match(src, /\/ rs/, 'per unit rotateSpeed');

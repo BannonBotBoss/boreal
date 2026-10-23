@@ -142,10 +142,11 @@ void main() {
   const centre = new THREE.Vector3(), sunV = new THREE.Vector3();
   return {
     dome, uniforms, get tier() { return cur; },
+    /** 0..1: open the cloud deck (T-0041, was a threshold switch): the cover and its shadows fade out, and the coverage
+     *  threshold rises by CLOUDS.clearLift x k, so the deck breaks into clouds and holes instead of thinning as one sheet. Uniform only. */
+    setClear(k) { uniforms.uCloudClear.value = k; },
     /** Governor tier changed: new ray-march sample counts. Uniforms only (loops break at the count), so no shader
      *  recompile and no hitch when the governor moves. */
-    /** 0..1: open the cloud deck (the cover and its shadows fade out evenly; T-0041, was a threshold switch). Uniform only. */
-    setClear(k) { uniforms.uCloudClear.value = k; },
     setTier(t) { if (t === cur) return; cur = t; [sn, sl, tn, tl] = stepsFor(t); setSteps(); },
     /** Per frame, after the camera is placed (camera-relative: camera renders from the origin, `camPos` is its double
      *  world position): planet centre and sun in view space, km. */

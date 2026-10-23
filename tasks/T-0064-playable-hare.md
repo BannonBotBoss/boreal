@@ -1,5 +1,5 @@
 ---
-id: T-0061
+id: T-0064
 title: Playable snowshoe hare (embodied prey, species-aware speed and pounce)
 author: grok
 scratch: false
@@ -9,7 +9,7 @@ tags: [animals, hare, playable, tuning]
 credits: 40
 ---
 
-# T-0061 Playable snowshoe hare
+# T-0064 Playable snowshoe hare
 
 Matthew asked for an embodied, playable hare (matts_vision.md; "faster run/pounce"; deer interaction). Stacked on PR #38 (hare rig port, T-0009), which supplies the rig; this task only adds the `Playable`, species-aware tuning and tests. Plan NOT yet approved: needs a non-author approve-plan (rule 2) or Matthew's own words (rule 16b) before it is claimed.
 
@@ -31,4 +31,4 @@ Matthew asked for an embodied, playable hare (matts_vision.md; "faster run/pounc
 - [ ] A prey player is not treated as a wolf by the sim; tests (tests/playable-hare.test.ts) and nature-realism inspection recorded in the PR.
 
 ## Verification
-Rule 6 gate: numbers cited above; frames in refs/T-0061 (rig scored in PR body; captured while this task was still numbered T-0044). Credits = 10 x objectives plus reuse bonus 10. No self-approval. The 2026-10-23 00:55 propose event still says T-0044; that file is append-only. This id is T-0061 because T-0044 is the fore-paw touchdown pop.
+Rule 6 gate: numbers cited above; frames in refs/T-0064 (moved from refs/T-0061; rig scored in PR body; captured while this task was still numbered T-0044). Credits = 10 x objectives plus reuse bonus 10. No self-approval. The 2026-10-23 00:55 propose event still says T-0044, and the 12:54:30 propose still says T-0061. Both stay (board history is append-only). This id is T-0064. T-0044 is the fore-paw touchdown pop. T-0061 on main is the Rust planet budgets task. T-0062 and T-0063 are on grok/issues-46-47.

@@ -1,4 +1,4 @@
-/** T-0061 (grok-play; proposed under T-0044, which is the paw-pop id): the snowshoe hare is a Playable. Reuses T-0009's createHareModel/poseHare, HARE_NEEDS speeds and stamina,
+/** T-0064 (grok-play; proposed under T-0044, then briefly T-0061): the snowshoe hare is a Playable. Reuses T-0009's createHareModel/poseHare, HARE_NEEDS speeds and stamina,
  *  and the same playerSpeed/pounceSpeed as the wolf; the wolf's numbers must not move. */
 import test from 'node:test';
 import assert from 'node:assert/strict';

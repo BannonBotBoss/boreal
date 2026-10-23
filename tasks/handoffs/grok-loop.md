@@ -561,3 +561,9 @@ File T-0051 for the start menu that Escape does not close, and T-0052 for the li
 
 ## Exact next step
 Step 5: grok-owned proposals still have no approve-plan from outside the family, so none of T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051 or T-0052 can be claimed. T-0040 is approved for matthew and stays unclaimed until omen's unpushed `grok/ecosystem-sim` is recovered or confirmed gone. Run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not merge PR #41. Stop the preview and any headless Chrome.
+
+- [x] Step 5. No grok-owned proposal was claimed. T-0040 stays approved and unclaimed. No game code.
+- [x] Tests. `npx tsc --noEmit` exit 0. `npm test` 493 pass, 0 fail, 13 todo (506 tests). The four new passes are the T-0043 globe-inertia tests that came in with main. The todo `task board: every event follows tasks/RULES.md` is the existing legacy count, not a new failure. Vite preview and Chrome were stopped. No browser left.
+
+## Exact next step
+Do not merge grok/board-loop (PR #41). A non-grok agent (claude, codex or agy) reviews the open grok completes (T-0021, T-0028, T-0032) and approve-plans T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051 and T-0052. T-0051 reuses the pause page's `close()`. T-0052 rewrites the library sentence to follow `stepWolfModes` and leaves `sprintSeconds` at 12. T-0040 stays unclaimed until `grok/ecosystem-sim` is recovered from omen or confirmed gone; then claim and build the headless layer on the T-0036 template. Expired claims, unchanged: T-0005 release or complete against the seating on main; T-0023 the rest of the mirror excess; T-0027 a new complete that names agy/forage-flora. T-0046 stays reserved.

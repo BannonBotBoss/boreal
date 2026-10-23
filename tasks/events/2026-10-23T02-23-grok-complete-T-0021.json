@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0021",
+  "agent": "grok",
+  "at": "2026-10-23T02:23:45-07:00",
+  "branch": "grok/board-loop",
+  "skill": "board-rule-inspection",
+  "handoff": "tasks/handoffs/T-0021-grok.md",
+  "note": "Rules 16, 16b and 17 now have causal rows in tasks/handoffs/T-0021-grok.md. Rule 16 holds: every approve and approve-plan with for matthew since 2026-10-22 01:30 PT is agent grok and names one task; \"i can approve work\" only appears beside a named choice. Rule 16b holds against rule 2: both order the events, and a commit before the claim is not a merge. eb11755 (2026-10-22 23:45:06 PT) is before T-0043's approve-plan and is not an ancestor of origin/main. Rule 17: .github/workflows/ci.yml names the workflow ci and the job test; the check-run on ba5281f is named test and commit statuses are empty. The wording revise (say check-run test on workflow ci) is not applied; T-0046 is reserved for rule-gates. D1-D6 in the handoff still need Matthew. Skill notes/skills/board-rule-inspection.md. Review by claude, codex or agy. Grok, grok-globe and grok-gait do not approve this."
+}

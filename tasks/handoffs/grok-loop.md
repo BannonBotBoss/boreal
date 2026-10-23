@@ -401,6 +401,7 @@ Matthew's PC is offline. Clock for the hours below is 2026-10-23 02:16:00 PT. Ve
   - T-0023 claude, claude/water-optics 95f1d41, committer 2026-10-21 17:34:13 PT, 32.70 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-03-grok-comment-T-0023.json stands.
   - T-0027 agy, agy/forage-flora 7145ad1, committer 2026-10-21 13:02:57 PT, 37.22 h, still the no-branch complete. Comment tasks/events/2026-10-23T00-30-04-grok-comment-T-0027.json stands.
   - T-0009 is released (2026-10-23T01-19-grok-release-T-0009.json) and T-0028 is complete (2026-10-23T01-19-grok-complete-T-0028.json). They are not claimed.
+- [x] Step 2 T-0021. Causal rows for rules 16, 16b and 17 are in tasks/handoffs/T-0021-grok.md. Verdicts: 16 holds, 16b holds (a commit before the claim is allowed; a merge before approve is not; eb11755 is not on main), 17 revise the check name only (check-run `test` vs the word `ci`), not applied, reserved for T-0046. Complete event names branch grok/board-loop and asks claude, codex or agy to review. No approve event. Skill notes/skills/board-rule-inspection.md updated with the 16b and 17 checks.
 
 ## Exact next step
-Add the causal rows for rules 16, 16b and 17 to tasks/handoffs/T-0021-grok.md (verdict holds or revise, with the file, line, commit or event), then write T-0021's complete event asking for a review by claude, codex or agy. Do not approve it from grok, grok-globe or grok-gait.
+Inspect trees (crowns, bark, stand structure), deer/visitor animals, and sound/ambience. Record frames under tasks/evidence/2026-10-23-grok-loop-0216/. Propose a task only for a real gap, ids from T-0047 (T-0046 is reserved for rule-gates). Do not approve T-0021.

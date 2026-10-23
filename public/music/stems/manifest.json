@@ -1,0 +1,16 @@
+{
+  "note": "Adaptive music stems (src/audio/adaptiveStems.ts). Four seamless loops, ?stems adds 'Adaptive stems' to the Music picker. Not part of public/music/manifest.json (that list is the guitar tracks and the Playlist).",
+  "key": "A minor pentatonic (A C D E G)",
+  "tempo_bpm": 90,
+  "loop": "32 bars = 85.333 s = exactly 3,763,200 frames at 44.1 kHz; loop point on a bar line, tails wrapped circularly so the seam is continuous",
+  "format": "Ogg Vorbis, quality 4 (about 128 kb/s), 44.1 kHz stereo",
+  "loudness": "about -20 LUFS integrated each (same as the guitar tracks), true peak -5.9 to -7.3 dBTP, lows mono under 120 Hz",
+  "source": "Original synthesis from Matthew's sample-lab skill chains (github.com/Bannon-github/skill-library, sample-lab/), rendered 2026-10-23 by Grok Bot. No samples, presets or third-party audio. No ElevenLabs.",
+  "licence": "Original work generated for this project; Matthew owns it.",
+  "stems": [
+    { "id": "night", "file": "boreal-night.ogg", "system": "drone-wavetable-artifact-drone", "skills": ["ambient-organic-pluck-pad-ladder-chorus-space", "traveler-walkthrough-stereo-ladder-lf-width", "reverb-pads-type-choice-and-send-setup", "shimmer-reverb-pitchshift-plus12-feedback", "unison-odd-even-detune-width-clean-supersaw"], "driver": "darkness", "note": "dark, sparse dyads A/E, D/A, C/G, G/D every 8 bars; 4.2 kHz low-pass" },
+    { "id": "day", "file": "boreal-day.ogg", "system": "pad-wide-supersaw-chord-pad", "skills": ["warm-heavenly-supersaw-pad-keytrack-fx", "unison-odd-even-detune-width-clean-supersaw", "traveler-walkthrough-stereo-ladder-lf-width"], "driver": "darkness", "note": "warm open chord pad, a chord every 4 bars; 7.5 kHz roll-off" },
+    { "id": "weather", "file": "boreal-weather.ogg", "system": "swell-multi-envelope-morph-swell", "skills": ["cinematic-multi-envelope-osc-level-morph", "traveler-walkthrough-stereo-ladder-lf-width", "keysol-venus-high-wt-artifact-pulse-layer", "chorus-ensemble-classic-vibrato-pad-modes", "stereo-delay-pingpong-dual-parallel-two-tap", "mix-pads-role-eq-width-clarity", "traveler-walkthrough-super-unison-wide-lead", "unison-odd-even-detune-width-clean-supersaw"], "driver": "rain", "note": "slow swell, low-passed at 2.6 kHz so it sounds muted" },
+    { "id": "tension", "file": "boreal-tension.ogg", "system": "gated-fifth-swell-trance-gate", "skills": ["evolving-pad-unison-filter-swell-fifth", "trance-gate-sidechain-chop-texture", "traveler-walkthrough-stereo-ladder-lf-width", "traveler-walkthrough-super-unison-wide-lead", "traveler-walkthrough-fx-eq-chorus-delay-reverb"], "driver": "threat", "note": "gate on a 6 Hz grid, pattern 1-1-1-0 (about 4.5 pulses/s), gate floor -12 dB, 3.3 kHz low-pass; a layer under the other stems" }
+  ]
+}

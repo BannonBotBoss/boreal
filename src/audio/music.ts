@@ -9,6 +9,7 @@
  * A picked track repeats on the same two-deck crossfade the playlist uses; switching tracks or Off fades over `crossfade` s.
  */
 import { hash, random } from '../proc/rng';
+import { startStems, type Stems } from './adaptiveStems';
 /** Acoustic guitar tracks in public/music (ElevenLabs Music eleven_music_v2_5, 180 s each, generated 2026-10-22;
  * public/music/manifest.json lists the same files with their prompts and licence; tests/music.test.ts keeps the two in step). */
 export const GUITAR_TRACKS = [
@@ -17,7 +18,7 @@ export const GUITAR_TRACKS = [
   { title: 'Campfire', file: 'guitar-campfire.mp3' },
 ] as const;
 export const TRACK_TITLES: string[] = GUITAR_TRACKS.map(t => t.title);
-export const EXTRA_SOURCES = ['Built-in ambient', 'Isochronic tones', 'Binaural beats', 'Playlist'] as const;
+export const EXTRA_SOURCES = ['Built-in ambient', 'Isochronic tones', 'Binaural beats', 'Playlist', 'Adaptive stems'] as const;
 export type MusicSource = typeof GUITAR_TRACKS[number]['title'] | typeof EXTRA_SOURCES[number] | 'Off';
 export const PULSE_PRESETS: Record<string, number> = { 'Gamma 40 Hz': 40, 'Alpha 10 Hz': 10, 'Theta 6 Hz': 6, 'Delta 2 Hz': 2 };
 export const MUSIC = {
@@ -43,7 +44,7 @@ function noiseBuffer(ctx: AudioContext, kind: 'brown' | 'pink') {
 const shuffleRng = random(hash(`music:${Date.now()}`)); // per session (not world state)
 export function createMusic(input: () => { ctx: AudioContext; node: AudioNode } | undefined, setBuiltIn: (on: boolean) => void) {
   let out: { ctx: AudioContext; master: GainNode } | undefined, nodes: AudioNode[] = [], stops: (() => void)[] = [];
-  let tracks: Track[] = [], deck: { el: HTMLAudioElement; g: GainNode; file: string } | undefined, order: number[] = [], pos = 0, mood: Track['mood'] = 'day', key = '';
+  let stems: Stems | undefined, tracks: Track[] = [], deck: { el: HTMLAudioElement; g: GainNode; file: string } | undefined, order: number[] = [], pos = 0, mood: Track['mood'] = 'day', key = '';
   /** Output chain: source gain → brick-wall-ish limiter (DynamicsCompressor −10 dBFS, 20:1) → music bus. */
   function ensure() {
     if (out) return out; const i = input(); if (!i) return undefined;
@@ -104,12 +105,14 @@ export function createMusic(input: () => { ctx: AudioContext; node: AudioNode } 
   }
   function rebuild() {
     const o = ensure(); if (!o) return; clear(); setBuiltIn(MUSIC.source === 'Built-in ambient');
+    if (MUSIC.source !== 'Adaptive stems' && stems) { stems.stop(MUSIC.crossfade); stems = undefined; } // switching away: fade the stems out
     const t = picked(); // tracks and playlist use the level; generators carry their own
     o.master.gain.setTargetAtTime(t || MUSIC.source === 'Playlist' ? MUSIC.level * 2 : 1, o.ctx.currentTime, .1);
     if (t) { if (deck?.file !== t.file) play(t.file); return; } // same track: a level change must not restart it
     if (MUSIC.source !== 'Playlist' || deck) fadeOut(MUSIC.crossfade); // a guitar deck yields to the playlist too
     if (MUSIC.source === 'Isochronic tones') { isochronic(o.ctx, o.master); bed(o.ctx, o.master); }
     else if (MUSIC.source === 'Binaural beats') { binaural(o.ctx, o.master); bed(o.ctx, o.master); }
+    else if (MUSIC.source === 'Adaptive stems') { if (!stems) stems = startStems(o.ctx, o.master); } // opt-in (?stems): darkness / rain / threat drive 4 looping stems, see audio/adaptiveStems.ts
     else if (MUSIC.source === 'Playlist') { void loadManifest().then(() => { pickOrder(); if (!deck) playNext(); }); }
   }
   return {
@@ -118,10 +121,11 @@ export function createMusic(input: () => { ctx: AudioContext; node: AudioNode } 
     skip() { if (MUSIC.source === 'Playlist') playNext(); },
     get tracks() { return tracks; },
     /** Per frame (cheap): lazily start once audio is up; 'follow world' re-targets mood / preset from darkness + rain. */
-    update(darkness: number, rain: number) {
+    update(darkness: number, rain: number, threat = 0) {
+      stems?.update(darkness, rain, threat); // threat 0..1 is optional; nothing in the game feeds it yet
       if (MUSIC.followWorld) {
         const m: Track['mood'] = rain > .3 ? 'storm' : darkness > .5 ? 'night' : 'day';
-        if (m !== mood) { mood = m; if (MUSIC.source === 'Playlist') { pickOrder(); playNext(); } else if (MUSIC.source !== 'Built-in ambient') { MUSIC.pulse = m === 'night' ? 6 : m === 'storm' ? 10 : MUSIC.pulse; key = ''; } }
+        if (m !== mood) { mood = m; if (MUSIC.source === 'Playlist') { pickOrder(); playNext(); } else if (MUSIC.source !== 'Built-in ambient' && MUSIC.source !== 'Adaptive stems') { MUSIC.pulse = m === 'night' ? 6 : m === 'storm' ? 10 : MUSIC.pulse; key = ''; } }
       }
       const k = JSON.stringify(MUSIC); if (k !== key && input()) { key = k; rebuild(); }
     },

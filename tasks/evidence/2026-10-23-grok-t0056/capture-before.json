@@ -1,0 +1,65 @@
+{
+  "tag": "before",
+  "profile": "/tmp/grok-t0056-l5NmNk",
+  "shots": [
+    {
+      "name": "alt3000",
+      "file": "/tmp/t0056/tasks/evidence/2026-10-23-grok-t0056/before-alt3000.png",
+      "search": "?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&alt=3000",
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&alt=3000",
+      "hud": "Boreal planet · seed 1400 (staged)\naltitude 3000 m · ground 371 m · 49.77°, 65.54°\ntiles drawn 44 (19 in view, cap 50) · culled 52 · cached 74 · deepest L7 · queued 0\nbuild (2 workers) 74 tiles (0 cancelled, 0 waiting) · avg 1.2 ms · p95 4.2 ms · worst frame 280.2 ms\ntier Very low (auto) · 16 seg · 41 fps · shaders 18 ms async · work 0.7 ms\nover the home region: descend below 2 km to enter the game\ndrag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game",
+      "ms": 8977,
+      "lower": {
+        "n": 233280,
+        "mean": [
+          200.1,
+          196.9,
+          188.2
+        ],
+        "stdL": 2,
+        "beige": 1
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "name": "alt3000-atmos0",
+      "file": "/tmp/t0056/tasks/evidence/2026-10-23-grok-t0056/before-alt3000-atmos0.png",
+      "search": "?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&alt=3000&atmos=0",
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35&alt=3000&atmos=0",
+      "hud": "Boreal planet · seed 1400 (staged)\naltitude 3000 m · ground 371 m · 49.77°, 65.54°\ntiles drawn 44 (19 in view, cap 50) · culled 52 · cached 74 · deepest L7 · queued 0\nbuild (2 workers) 74 tiles (0 cancelled, 0 waiting) · avg 0.8 ms · p95 2.5 ms · worst frame 272.7 ms\ntier Very low (auto) · 16 seg · 31 fps · shaders 17 ms async · work 2.3 ms\nover the home region: descend below 2 km to enter the game\ndrag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game",
+      "ms": 4551,
+      "lower": {
+        "n": 233280,
+        "mean": [
+          33.3,
+          40.4,
+          34.5
+        ],
+        "stdL": 15.7,
+        "beige": 0
+      },
+      "errors": []
+    },
+    {
+      "name": "orbit",
+      "file": "/tmp/t0056/tasks/evidence/2026-10-23-grok-t0056/before-orbit.png",
+      "search": "?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35",
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&view=globe&at=30,0,-0.35",
+      "hud": "Boreal planet · seed 1400 (staged)\naltitude 14016 km · ground 371 m · 49.77°, 65.54°\ntiles drawn 17 (17 in view, cap 50) · culled 7 · cached 23 · deepest L1 · queued 0\nbuild (2 workers) 23 tiles (0 cancelled, 0 waiting) · avg 1.2 ms · p95 3.3 ms · worst frame 335.4 ms\ntier Low (auto) · 16 seg · 41 fps · shaders 17 ms async · work 0.7 ms\ndrag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game",
+      "ms": 27816,
+      "lower": {
+        "n": 233280,
+        "mean": [
+          19.3,
+          25,
+          32.7
+        ],
+        "stdL": 41.9,
+        "beige": 0.023
+      },
+      "errors": []
+    }
+  ]
+}

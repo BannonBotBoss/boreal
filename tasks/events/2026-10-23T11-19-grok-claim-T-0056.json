@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0056",
+  "agent": "grok",
+  "at": "2026-10-23T11:19:00-07:00",
+  "note": "Claimed after the approve-plan for matthew at 2026-10-23T10:26:10-07:00. Branch grok/globe-low-alt-sheet off main 57a3d48. Standalone ?view=globe calls the existing setClear(cloudClear(alt)) that the in-page path already runs (globeView.ts, T-0041). No new cloud field. Not submitted."
+}

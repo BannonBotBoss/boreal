@@ -30,7 +30,7 @@ export type TransitionMode = 'game' | 'band' | 'globe';
 export const GLOBE_PITCH = { orbitAlt: 3e5, glide: -Math.PI / 4, down: -Math.PI / 2 + .01 };
 /** In-page globe cloud clearing by altitude (T-0034): the 2.5 km cloud shell (atmosphere CLOUDS, 900 km cells) can sit over
  *  the whole home region, so diving in looked into a flat lit cloud top from ~300 km to the band (the 'blank plain'). The deck
- *  opens from 300 km (orbit look kept) to none by 20 km, so the descent always sees the ground it lands on. */
+ *  opens from 1500 km (orbit look kept) to none by 150 km (CLOUD_OPEN, T-0041), so the descent always sees the ground it lands on. */
 /** T-0041: the in-page descent fades the cloud cover out between these altitudes (m), linearly in log altitude (a constant
  *  rate on the descent's near-exponential fall; a smoothstep peaks 1.5x steeper): about 1 s on the fastest recorded descent,
  *  < 2 % cover per 60 fps frame (< 4 % at 30 fps). A wider range (2500 -> 25 km) left a long uniform haze (T-0041 stills);
@@ -38,6 +38,13 @@ export const GLOBE_PITCH = { orbitAlt: 3e5, glide: -Math.PI / 4, down: -Math.PI 
  *  a little with the fade (atmosphere CLOUDS.clearLift), so the deck breaks up instead of thinning as one flat sheet. */
 export const CLOUD_OPEN = { top: 1.5e6, bottom: 1.5e5 };
 export const cloudClear = (alt: number) => Math.min(1, Math.max(0, Math.log(CLOUD_OPEN.top / Math.max(alt, 1)) / Math.log(CLOUD_OPEN.top / CLOUD_OPEN.bottom)));
+/** Globe drag release coast (T-0043; Matthew 2026-10-22 23:37 PT: "allow it to continue rolling a bit, say, for 3 seconds"),
+ *  run in globeView with three's frame-rate-independent MathUtils.damp (https://threejs.org/docs/#api/en/math/MathUtils.damp):
+ *  the drag's rate falls to `rest` of the release speed at `sec` s, where the coast stops. While dragging, the rate is
+ *  damp-smoothed with time constant `track` s (mouse events and frames do not line up). [game calibration: Matthew's 3 s] */
+export const GLOBE_COAST = { sec: 3, rest: .02, track: .05 };
+/** MathUtils.damp lambda (1/s) for the coast: e^(-lambda sec) = rest */
+export const coastLambda = Math.log(1 / GLOBE_COAST.rest) / GLOBE_COAST.sec;
 export function globePitch(alt: number) { return GLOBE_PITCH.down + (GLOBE_PITCH.glide - GLOBE_PITCH.down) * (1 - smoothstep(TRANSITION.bandTop, GLOBE_PITCH.orbitAlt, alt)); }
 /** In-page (the default since the r18 check) or the reload fallback. ?transition=reload | inpage forces it; low-memory
  *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the

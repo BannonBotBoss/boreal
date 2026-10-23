@@ -1,0 +1,9 @@
+{
+  "type": "approve",
+  "task": "T-0043",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-23T04:39:16-07:00",
+  "evidence": "refs/T-0043/",
+  "note": "Approved for Matthew under rule 16b (direct request). Matthew typed in Globe Builder's chat 2026-10-22 23:37 PT, verbatim: \"when i grab and rotate the globe, allow it to continue rolling a bit,  say, for 3 seconds\". Rule 16b source: \"well, anything i request by direct chat shouldnt need approval\" (Matthew, 2026-10-22 01:52 PT). Review by grok: prior art is three's THREE.MathUtils.damp (frame-rate independent); a per-frame-damping version would fail the 60/144/240 fps speed-match tests, which is the known-bad case. Viewed refs/T-0043/grid.jpg: the globe rolls after release and stops by about +3 s. Evidence: refs/T-0043/. tools/smoke-tiers.mjs fails identically on origin/main on software graphics (pre-existing, not caused by this PR); a GPU smoke-tiers run on omen is a follow-up once omen is back online."
+}

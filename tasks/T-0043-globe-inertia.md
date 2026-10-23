@@ -18,6 +18,10 @@ The globe drag is three's OrbitControls (globeView.ts) with `enableDamping` and 
 tail after release lasts ~0.5 s at 60 fps and half that at 144 fps, and it only spends the drag's leftover (it is lag, not
 momentum). A smaller factor would lengthen the tail but make every drag lag by the same amount.
 
+**Reuse correction (2026-10-23, Matthew: "dont be reinventing stuff"):** the coast is three's own frame-rate-independent
+`THREE.MathUtils.damp` (https://threejs.org/docs/#api/en/math/MathUtils.damp) in globeView.ts, configured by `GLOBE_COAST`
+(transition.ts), not a hand-written (1 - t/3 s)^2 curve or a new inertia.ts. camera-controls (yomotsu) was considered, not added.
+
 ## Objectives
 - [ ] Release coast (new src/world/globe/inertia.ts, fed from globeView): track the drag's rotation rate in OrbitControls'
       own angles (per unit rotateSpeed, so it slows with altitude like the drag), and on release coast with speed

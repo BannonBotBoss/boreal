@@ -44,10 +44,10 @@ export function surfaceAt(x: number, z: number, seed = STAGES.seed): SurfacePoin
 export function dryStart(x: number, z: number, seed = STAGES.seed, maxR = 900, margin = .6): [number, number] { return drain(dryStartSteps(x, z, seed, maxR, margin)); }
 /** Run a resumable search (dryStartSteps, world/globe handoff landSpawnSteps) to the end in one call. */
 export function drain<T>(g: Generator<unknown, T>): T { let r = g.next(); while (!r.done) r = g.next(); return r.value; }
-/** dryStart as resumable steps: yields after every candidate point, so a caller with a frame budget (world/globe/inpage, the
- *  descent) spreads a long lake search (up to ~1.4 s in one call, T-0034) over frames. Same points, same order, same result. */
 /** Dry land at (x, z): no lake or river and margin m above the water surface (dryStart's test, T-0041 landing view). */
 export function isDry(x: number, z: number, seed = STAGES.seed, margin = .6) { const p = surfaceAt(x, z, seed); return !p.lake && !p.river && p.height > LEVEL.waterSurface + margin; }
+/** dryStart as resumable steps: yields after every candidate point, so a caller with a frame budget (world/globe/inpage, the
+ *  descent) spreads a long lake search (up to ~1.4 s in one call, T-0034) over frames. Same points, same order, same result. */
 export function* dryStartSteps(x: number, z: number, seed = STAGES.seed, maxR = 900, margin = .6): Generator<void, [number, number]> {
   const dry = (px: number, pz: number) => isDry(px, pz, seed, margin);
   if (dry(x, z)) return [x, z];

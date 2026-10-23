@@ -19,6 +19,8 @@ import { withLogDepth } from './logDepth';
 import { bounds, edgeMetres, faceDir, type QNode } from './cube';
 import { GLOBE_COLOURS, surfaceColour, type Planet, type Vec3 } from './planet';
 import { GLSL_NOISE } from '../../proc/glsl';
+import { CLOUDS } from './atmosphere';
+import { absorbedAttribute } from '../../core/planet/solarBudget';
 
 /** `lake`: 255 where the reference water level is above sea level (lakes and their shores), 0 at sea level: picks the lake vs ocean water colour. */
 /** `loc`: game-local x, z (gnomonic, m) and the home weight per vertex: where the shader reads the home shoreline mask (lakeMask.ts). */
@@ -149,6 +151,28 @@ export function setLakeMask(key: string, data: Uint8Array, n: number, size: numb
   t.needsUpdate = true; const old = GLOBE_SHORE.uShoreTex.value; if (old !== SHORE_EMPTY) old.dispose();
   GLOBE_SHORE.uShoreTex.value = t; GLOBE_SHORE.uShore.value.set(1 / size, .5 / n, 1, n); GLOBE_SHORE.key = key;
 }
+/** T-0057: the solar-budget layer is on for a quality row whose cloud-octave count is above 0, and off at Minimum
+ *  (CLOUDS.octaves ends at 0). Same rows the cloud shell already uses. No second ladder. */
+export function solarLayerOn(tier: number) {
+  const i = Math.max(0, Math.min(CLOUDS.octaves.length - 1, tier | 0));
+  return CLOUDS.octaves[i] > 0;
+}
+/** The gate: the absorbed attribute is present exactly when the tier draws the layer. A fixed "always off" or a
+ *  missing attribute at Ultra fails. `hasAbsorbed` is geometry.getAttribute('aAbsorbed') != null. */
+export function solarLayerGate(hasAbsorbed: boolean, tier: number) { return hasAbsorbed === solarLayerOn(tier); }
+/** Shared uniforms (one program). uSolarLayer is 0 at Minimum, so the fragment keeps the terrain colour. */
+export const SOLAR_DRAW = { uSolarLayer: { value: 0 }, uQScale: { value: 900 } };
+export function setSolarLayer(on: boolean) { SOLAR_DRAW.uSolarLayer.value = on ? 1 : 0; }
+/** Write Q_absorbed onto the tile, or remove it when the tier drops the layer. Returns whether the layer is on. */
+export function applySolarAttribute(g: THREE.BufferGeometry, centre: Vec3, day: number, hour: number, tier: number, cloud = 0) {
+  if (!solarLayerOn(tier)) { if (g.getAttribute('aAbsorbed')) g.deleteAttribute('aAbsorbed'); return false; }
+  const pos = g.getAttribute('position').array, col = g.getAttribute('color').array, h = g.getAttribute('aH').array;
+  const arr = absorbedAttribute(pos, col, h, centre, day, hour, cloud);
+  const prev = g.getAttribute('aAbsorbed') as THREE.BufferAttribute | undefined;
+  if (prev && prev.array.length === arr.length) { (prev.array as Float32Array).set(arr); prev.needsUpdate = true; }
+  else g.setAttribute('aAbsorbed', new THREE.BufferAttribute(arr, 1));
+  return true;
+}
 export function globeMaterial(debugSegments = 0) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }), C = GLOBE_COLOURS;
   const uSeg = { value: debugSegments }; m.userData.uSeg = uSeg;
@@ -163,17 +187,17 @@ export function globeMaterial(debugSegments = 0) {
     sh.vertexShader = centroid(sh.vertexShader, 'logdepthbuf_pars_vertex'); sh.fragmentShader = centroid(sh.fragmentShader, 'logdepthbuf_pars_fragment');
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
-    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore;
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying vec3 vDetW, vLoc;')
+    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
-vH = aH; vLake = aLake; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
+vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
 #ifdef DEBUG_SEAMS
 { float n = uSeg + 1.0, id = float(gl_VertexID); vSkirt = id >= n * n ? 1.0 : 0.0;
   if (id < n * n) vTileUV = vec2(mod(id, n), floor(id / n)) / uSeg;
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep; uniform float uLakeRough;\nvarying float vH, vLake;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep; uniform float uLakeRough;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -192,7 +216,10 @@ vH = aH; vLake = aLake; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.
     detH = (k0 * n0 * uDetAmp.x + k1 * n1 * uDetAmp.y + k2 * n2 * uDetAmp.z) * uDetail.x * uDetail.z * landMask;
     a = k0 * n0 * ${DETAIL.weight[0].toFixed(3)} + k1 * n1 * ${DETAIL.weight[1].toFixed(3)} + k2 * n2 * ${DETAIL.weight[2].toFixed(3)};
     diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask; }
-  diffuseColor.rgb *= mix(vec3(1.0), uLandTint, landMask); // in-page band: land matched to the game patch near the handover (GLOBE_LAND)`)
+  diffuseColor.rgb *= mix(vec3(1.0), uLandTint, landMask); // in-page band: land matched to the game patch near the handover (GLOBE_LAND)
+  if (uSolarLayer > 0.5) { // T-0057: Q_absorbed on this vertex. Night (0) cools and dims; a sunlit cell stays warm. Off when the uniform is 0.
+    float qn = clamp(vAbsorbed / max(uQScale, 1.0), 0.0, 1.0);
+    diffuseColor.rgb *= mix(vec3(0.22, 0.26, 0.40), vec3(1.12, 1.04, 0.92), qn); }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   if (uDetail.x > 0.001) { // derivative bump from the detail height (Mikkelsen 2010), view space
     vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition); float dhx = dFdx(detH), dhy = dFdy(detH);

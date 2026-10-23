@@ -26,13 +26,13 @@ import { renderOffset } from './origin';
 import { createAtmosphere } from './atmosphere';
 import { across } from './cube';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
-import { DAY, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
+import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { GLOBE_COAST, cloudClear, coastLambda, globePitch } from './transition';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
-import { GLOBE_SHORE, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, stitchIndex, tileGeometry, type TileData } from './tile';
+import { GLOBE_SHORE, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
 export { GLOBE_LAKE, GLOBE_LAND, GLOBE_SHORE } from './tile'; // inpage.ts (lazy): the band's lake ease
 /** Deeper tiles under a low camera: split x(1 + k) for tiles within reach x altitude, ramping in from `from` to `full` m. [game calibration] */
@@ -40,7 +40,7 @@ export const NEAR_SPLIT = { k: 1.2, from: 3000, full: 1200, reach: 4 };
 import type { TileRequest } from './tileWorker';
 import { GLOBE_LOD, balancedTree, globeLod, worldTier } from './lod';
 
-interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number } // centre: doubles, CPU only (camera-relative rendering)
+interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number; solarBucket: string } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
 const STATS = { warm: [] as number[], build: [] as number[], work: [] as number[], interval: [] as number[], compileMs: -1, rebuilt: 0 };
 const pct = (a: number[], p: number) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
@@ -191,8 +191,17 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     inflight.delete(n.key); STATS.build.push(t.cpu); built++;
     const old = tiles.get(n.key); if (old) { releaseTileGeometry(old.mesh.geometry); STATS.rebuilt++; } // a rebuild at the current segment count replaces the old tile
     const mesh = new THREE.Mesh(tileGeometry(t), material); mesh.matrixAutoUpdate = false;
-    tiles.set(n.key, { mesh, used: frame, centre: [t.centre[0], t.centre[1], t.centre[2]], seg: Math.round(Math.sqrt(4 + t.position.length / 3)) - 3 });
+    const tile: Tile = { mesh, used: frame, centre: [t.centre[0], t.centre[1], t.centre[2]], seg: Math.round(Math.sqrt(4 + t.position.length / 3)) - 3, solarBucket: '' };
+    tiles.set(n.key, tile);
+    const sec = q.has('shot') ? shotSec : worldSec(); stampSolar(tile, dayAt(sec), hourAt(sec)); // T-0057: Q_absorbed at the clock this tile was adopted
   };
+  /** Refresh a tile's absorbed attribute when the hour bucket or the tier changes. Four tiles a frame, so a clock step does not rebuild the mesh. */
+  function stampSolar(t: Tile, day: number, hour: number) {
+    const bucket = solarLayerOn(worldTier()) ? `${Math.floor(day)}:${hour.toFixed(1)}` : 'off';
+    if (t.solarBucket === bucket) return;
+    applySolarAttribute(t.mesh.geometry, t.centre, day, hour, worldTier());
+    t.solarBucket = bucket;
+  }
   function spawn() { try {
     for (let k = 0; k < nWorkers; k++) {
       const w = new Worker(new URL('./tileWorker.ts', import.meta.url), { type: 'module' }), slot = { w, busy: '', id: 0 };
@@ -320,6 +329,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   /** Camera, LOD, builds, adoption, eviction: everything but the draw. */
   function update() {
     t0 = performance.now(); dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++;
+    const sunSec = q.has('shot') ? shotSec : worldSec(), sunDay = dayAt(sunSec), sunHour = hourAt(sunSec);
+    let stamped = 0;
+    for (const t of tiles.values()) { if (stamped >= 4) break; const before = t.solarBucket; stampSolar(t, sunDay, sunHour); if (t.solarBucket !== before) stamped++; }
     if (ext) camera.position.copy(ext.position); // shared band: the transition flies the camera (drive)
     dir.copy(camera.position).normalize(); const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = Math.max(s.h, s.water);
     // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
@@ -390,6 +402,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (target && !ext && Math.abs(camera.aspect - target.width / target.height) > 1e-6) { camera.aspect = target.width / target.height; camera.updateProjectionMatrix(); }
     setLogDepthFar(camera.far);
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
+    setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();

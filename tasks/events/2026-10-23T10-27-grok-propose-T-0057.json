@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0057",
+  "agent": "grok",
+  "at": "2026-10-23T10:27:00-07:00",
+  "note": "Issue #43. Per-cell solar budget from weather.ts solar() and shortwave() (NOAA / Spencer 1971, Kopp & Lean S0, Meinel transmittance, Kasten & Czeplak) and the longwave term already in surfaceBalance. Not Berger 1978 (the clock is a day of year). Not a Budyko-Sellers zonal EBM; the column balance is the one to extend. T-0022 keeps sunPosition(hour) on the sky. Layer drops when CLOUDS.octaves is 0. Credits 39 = 10 x 3 x 1.3. Not claimed."
+}

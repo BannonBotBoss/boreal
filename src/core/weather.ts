@@ -155,9 +155,16 @@ function fillKinds(max: number) { for (const key of pendingKinds) { if (max-- <=
 /** Surface energy balance for one column (W/m²). Rn = (1−α)S↓ + (ε_a − ε_s)σT⁴ (net longwave with T_s ≈ T_a; Brutsaert 1975
  * clear-sky ε_a = 1.24 (e/T)^(1/7), e in hPa, raised toward 1 by cloud: Crawford & Duchon 1999), G = 0.1 Rn by day / 0.5 by night
  * (FAO-56 eq. 45–46), λE from Penman–Monteith (Monteith 1965; FAO-56 eq. 3) limited by bucket water β = W/W_fc, H = residual. */
+/** Upward longwave and the net term inside `surfaceBalance` (Brutsaert 1975 clear-sky emissivity, Crawford & Duchon 1999 cloud,
+ *  surface emissivity 0.98). One formula, so a globe cell and a Kenora column cannot drift apart. */
+export function columnLongwave(tC: number, q: number, p: number, cloud: number) {
+  const T = tC + 273.15, e = q * p / .622 / 100;
+  const ea = Math.min(1, 1.24 * (e / T) ** (1 / 7) * (1 - cloud) + cloud);
+  const up = .98 * AIR.sigma * T ** 4;
+  return { ea, up, net: (ea - .98) * AIR.sigma * T ** 4 };
+}
 export function surfaceBalance(kind: SurfaceKind, sw: number, tC: number, q: number, p: number, wind: number, cloud: number, beta: number) {
-  const s = SURFACE[kind], T = tC + 273.15, e = q * p / .622 / 100, albedo = f('weather', 'albedo', s.albedo);
-  const ea = Math.min(1, 1.24 * (e / T) ** (1 / 7) * (1 - cloud) + cloud), Lnet = (ea - .98) * AIR.sigma * T ** 4;
+  const s = SURFACE[kind], T = tC + 273.15, e = q * p / .622 / 100, albedo = f('weather', 'albedo', s.albedo), lw = columnLongwave(tC, q, p, cloud), Lnet = lw.net;
   const Rn = (1 - albedo) * sw + Lnet, G = Rn * (sw > 0 ? .1 : .5);
   const ra = Math.log(10 / s.z0) ** 2 / (AIR.kappa ** 2 * Math.max(.5, wind)); // neutral aerodynamic resistance, s/m (FAO-56 eq. 4, simplified)
   const D = 4098 * esat(tC) / (tC + 237.3) ** 2, vpd = Math.max(0, esat(tC) - e * 100), rho = p / (AIR.Rd * T);

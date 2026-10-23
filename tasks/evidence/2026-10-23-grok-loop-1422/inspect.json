@@ -1,0 +1,48 @@
+{
+  "base": "http://127.0.0.1:5173/",
+  "profile": "/tmp/grok-loop-1422-Ez7kSJ",
+  "shots": [
+    {
+      "name": "stand",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&stages=1&hour=10&at=144,236,0",
+      "status": "10:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "name": "plants-down",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&stages=1&hour=10&at=144,236,0",
+      "status": "10:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "name": "terrain-ahead",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&stages=1&hour=10&at=144,236,0",
+      "status": "10:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "name": "walk",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&stages=1&hour=10&at=144,236,0",
+      "status": "10:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "name": "sun-up",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&stages=1&hour=7&at=144,236,0",
+      "status": "07:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs"
+    }
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "sun": {
+    "elevation": 20.53057575105323,
+    "azimuth": 91.85354650708916,
+    "direction": {
+      "x": 0.9359951700918967,
+      "y": 0.3507071841673121,
+      "z": 0.03029046942647872
+    }
+  },
+  "commit": "fd65b8d game via board-loop",
+  "standUrl": "http://127.0.0.1:5173/?nomenu&bench&stages=1&hour=10&at=144,236,0",
+  "sunUrl": "http://127.0.0.1:5173/?nomenu&bench&stages=1&hour=7&at=144,236,0"
+}

@@ -1,0 +1,51 @@
+{
+  "commit": "50de315",
+  "url": "http://127.0.0.1:4173/?nomenu&bench&hour=12&rec&stages=1&needs=water:40,energy:70,rest:80&at=200,250,-1.553",
+  "viewport": [
+    960,
+    540
+  ],
+  "hud": {
+    "status": "12:07 · WALK · Stamina 100/100 · Energy 70/100 · Water 40% · Rest 80%RT run · LT stealth · LB focus0 remembered · 0 friends · 0 herbs",
+    "help": "Xbox: LS: up/down moves forward/backward, left/right steers the wolf; camera follows behind. RS: look around and tilt. RT runs, LT enters stealth; RT then LT sprints for 1.5 seconds; LT then RT enters super stealth. Release both to choose a new combination. Hold LB to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. X jump, A interact, View chronometer, Menu pause, B close this panel. Keyboard: WASD: up/down moves forward/backward, left/right steers the wolf; camera follows behind. Arrows: look around and tilt. Shift runs, C enters stealth; Shift then C sprints for 1.5 seconds; C then Shift enters super stealth. Release both to choose a new combination. Hold F to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Space jump, E interact, T chronometer, Esc pause, P photo mode (free camera, rewind, capture). Rebind any of these under Esc → Controls.",
+    "library": "The script libraryEverything visible is generated geometry. No stored 3D model files.buildScene.ts assembles the view. geometry.ts builds shapes. world.ts generates temporary individuals. events.ts remembers interactions.Move near the deer or the visitor and choose speak. This is a fictional capability demonstration, not a claim about animal language or a specific culture. Gathering the orange plant records its removal. Face a stone of 22 cm or less and bring your snout close: A / E / click activates move. Six contact sectors determine its rolling direction; the new position is remembered. Stones range from 6 to 50 cm, with smaller sizes more common.Xbox: LS: up/down moves forward/backward, left/right steers the wolf; camera follows behind. RS: look around and tilt. RT runs, LT enters stealth; RT then LT sprints for 1.5 seconds; LT then RT enters super stealth. Release both to choose a new combination. Hold LB to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. X jump, A interact, View chronometer, Menu pause, B close this panel. Keyboard: WASD: up/down moves forward/backward, left/right steers the wolf; camera follows behind. Arrows: look around and tilt. Shift runs, C enters stealth; Shift then C sprints for 1.5 seconds; C then Shift enters super stealth. Release both to choose a new combination. Hold F to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Space jump, E interact, T chronometer, Esc pause, P photo mode (free camera, rewind, capture). Rebind any of these under Esc → Controls. Mouse: hold left or right button on the landscape and drag horizontally to orbit or vertically to tilt; manual zoom is disabled. Click the action button to interact. Tab and Enter operate menus. This is a terrain and interaction laboratory; collision, hunting, trading and construction are not implemented.Unvisited chunks are not held in memory. Only interacted-with individuals are saved. The terrain is an illustrative river basin, not a historical map or full hydrology simulation.Back to the land",
+    "device": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls",
+    "probe": {
+      "x": 199.9999999975511,
+      "z": 250.0000000000451,
+      "yaw": -1.553,
+      "energy": 69.96432306863454,
+      "water": 39.9859150448043,
+      "mode": "walk"
+    },
+    "href": "http://127.0.0.1:4173/?nomenu&bench&hour=12&rec&stages=1&needs=water:40,energy:70,rest:80&at=200,250,-1.553"
+  },
+  "dialog": {
+    "help": "Xbox: LS: up/down moves forward/backward, left/right steers the wolf; camera follows behind. RS: look around and tilt. RT runs, LT enters stealth; RT then LT sprints for 1.5 seconds; LT then RT enters super stealth. Release both to choose a new combination. Hold LB to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. X jump, A interact, View chronometer, Menu pause, B close this panel. Keyboard: WASD: up/down moves forward/backward, left/right steers the wolf; camera follows behind. Arrows: look around and tilt. Shift runs, C enters stealth; Shift then C sprints for 1.5 seconds; C then Shift enters super stealth. Release both to choose a new combination. Hold F to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Space jump, E interact, T chronometer, Esc pause, P photo mode (free camera, rewind, capture). Rebind any of these under Esc → Controls.",
+    "info": "The script library\n\nEverything visible is generated geometry. No stored 3D model files.\n\nbuildScene.ts assembles the view. geometry.ts builds shapes. world.ts generates temporary individuals. events.ts remembers interactions.\n\nMove near the deer or the visitor and choose speak. This is a fictional capability demonstration, not a claim about animal language or a specific culture. Gathering the orange plant records its removal. Face a stone of 22 cm or less and bring your snout close: A / E / click activates move. Six contact sectors determine its rolling direction; the new position is remembered. Stones range from 6 to 50 cm, with smaller sizes more common.\n\nXbox: LS: up/down moves forward/backward, left/right steers the wolf; camera follows behind. RS: look around and tilt. RT runs, LT enters stealth; RT then LT sprints for 1.5 seconds; LT then RT enters super stealth. Release both to choose a new combination. Hold LB to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. X jump, A interact, View chronometer, Menu pause, B close this panel. Keyboard: WASD: up/down moves forward/backward, left/right steers the wolf; camera follows behind. Arrows: look around and tilt. Shift runs, C enters stealth; Shift then C sprints for 1.5 seconds; C then Shift enters super stealth. Release both to choose a new combination. Hold F to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Space jump, E interact, T chronometer, Esc pause, P photo mode (free camera, rewind, capture). Rebind any of these under Esc → Controls. Mouse: hold left or right button on the landscape and drag horizontally to orbit or vertically to tilt; manual zoom is disabled. Click the action button to interact. Tab and Enter operate menus. This is a terrain and interaction laboratory; collision, hunting, trading and construction are not implemented.\n\nUnvisited chunks are not held in memory. Only interacted-with individuals are saved. The terrain is an illustrative river basin, not a historical map or full hydrology simulation.\n\nBack to the land"
+  },
+  "chrono": {
+    "open": false,
+    "time": "00",
+    "sun": ""
+  },
+  "menuAfterEsc": {
+    "hidden": false,
+    "className": "",
+    "text": "Boreal\nContinue\nNew world\nControls\nMusic\nGraphics\nBoard ↗\nQuit"
+  },
+  "shots": [
+    "hud-noon",
+    "pause-menu",
+    "controls",
+    "library",
+    "chrono",
+    "water",
+    "menu",
+    "menu-after-esc"
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

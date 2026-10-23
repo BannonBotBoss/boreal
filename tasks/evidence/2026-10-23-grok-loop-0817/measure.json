@@ -1,0 +1,93 @@
+{
+  "day": 227,
+  "lat": 49.5,
+  "phenology227": {
+    "colour": 0,
+    "off": 0
+  },
+  "phenology260": {
+    "colour": 0.21739130434782608,
+    "off": 0
+  },
+  "sun": {
+    "7": {
+      "gameEl": 20.531,
+      "gameAz": 91.854,
+      "spencerNoonDeclEl": 20.531,
+      "civilEl": 16.962,
+      "civilDecl": 14.365
+    },
+    "12": {
+      "gameEl": 54.801,
+      "gameAz": 180,
+      "spencerNoonDeclEl": 54.801,
+      "civilEl": 54.219,
+      "civilDecl": 14.301
+    },
+    "19.16": {
+      "gameEl": -0.021,
+      "gameAz": 292.381,
+      "spencerNoonDeclEl": -0.021,
+      "civilEl": 3.387,
+      "civilDecl": 14.208
+    }
+  },
+  "slope": {
+    "n": 1427,
+    "p50": 0.108,
+    "p90": 0.16,
+    "p99": 0.188,
+    "shareAbove0129": 0.318,
+    "shareAbove017": 0.059,
+    "spot": {
+      "x": 144,
+      "z": 236,
+      "h": 3.614,
+      "east2": 3.943
+    }
+  },
+  "plants": {
+    "fireweed": {
+      "maxY": 1.117,
+      "mean": 1.1,
+      "rowMax": 1.8,
+      "ratio": 1.015,
+      "insideRow": true
+    },
+    "blueberry": {
+      "maxY": 0.29,
+      "mean": 0.25,
+      "rowMax": 0.45,
+      "ratio": 1.161,
+      "insideRow": true
+    },
+    "rose": {
+      "maxY": 0.713,
+      "mean": 0.7,
+      "rowMax": 1.2,
+      "ratio": 1.019,
+      "insideRow": true
+    },
+    "alder": {
+      "maxY": 3.359,
+      "mean": 2.8,
+      "rowMax": 4.5,
+      "ratio": 1.2,
+      "insideRow": true
+    },
+    "juniper": {
+      "maxY": 1.088,
+      "mean": 0.5,
+      "rowMax": 0.9,
+      "ratio": 2.176,
+      "insideRow": false
+    },
+    "bunchberry": {
+      "maxY": 0.172,
+      "mean": 0.14,
+      "rowMax": 0.22,
+      "ratio": 1.231,
+      "insideRow": true
+    }
+  }
+}

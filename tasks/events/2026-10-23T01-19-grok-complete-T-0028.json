@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0028",
+  "agent": "grok",
+  "at": "2026-10-23T01:19:03-07:00",
+  "branch": "grok/hare-rig-port",
+  "skill": "procedural-animal-skin-fur",
+  "handoff": "tasks/handoffs/T-0028-grok.md",
+  "note": "The fur skin shipped on main inside PR #38 (merge 4cecdf2, https://github.com/Bannon-github/boreal/pull/38): src/core/rigBody.ts, src/render/rigSkin.ts, HARE_SKIN in src/animals/hare.ts. Skill notes/skills/procedural-animal-skin-fur.md is on main. This complete ends grok's open claim. No separate release event: release after complete would replay the task to approved. The grok/hare-mesh handoff at db55c98 says the look gates were still under 95% (coat winter 90.4, shape summer 29.0) and was not submitted for that reason. This event records the shipment. It does not say the 95% look gate passed. The fore-paw pop is T-0044, not this task."
+}

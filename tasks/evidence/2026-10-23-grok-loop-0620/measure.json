@@ -1,0 +1,395 @@
+{
+  "hareFlight": {
+    "publishedMeanM": 3.7,
+    "source": "Emmel 2024, UMT MSc, Fig. 1, mean of 224 approaches (already HARE_NEEDS.behaviour.flight.distanceM)",
+    "boltDistance": [
+      {
+        "level": 0,
+        "m": 1.85
+      },
+      {
+        "level": 0.25,
+        "m": 3.238
+      },
+      {
+        "level": 0.5,
+        "m": 4.625
+      },
+      {
+        "level": 1,
+        "m": 7.4
+      }
+    ],
+    "note": "boltDistance = 3.7 * (0.5 + 1.5 * perception). Perception 1 bolts at 7.4 m."
+  },
+  "hareStillFar": {
+    "label": "wolf still at 15 m",
+    "rows": [
+      {
+        "t": 0,
+        "state": "graze",
+        "d": 15,
+        "level": 0,
+        "speed": 0,
+        "timer": 3.661
+      },
+      {
+        "t": 3.667,
+        "state": "move",
+        "d": 15,
+        "level": 0,
+        "speed": 0,
+        "timer": 1.381
+      },
+      {
+        "t": 5.067,
+        "state": "graze",
+        "d": 16.38,
+        "level": 0,
+        "speed": 1.2,
+        "timer": 3.772
+      }
+    ]
+  },
+  "hareWalk15": {
+    "label": "wolf walk 2 m/s at 15 m",
+    "rows": [
+      {
+        "t": 0,
+        "state": "freeze",
+        "d": 15,
+        "level": 0.423,
+        "speed": 0,
+        "timer": 1.577
+      },
+      {
+        "t": 1.6,
+        "state": "flee",
+        "d": 15.28,
+        "level": 0.423,
+        "speed": 8.47,
+        "timer": -0.023
+      },
+      {
+        "t": 4.433,
+        "state": "graze",
+        "d": 35.39,
+        "level": 0,
+        "speed": 8.47,
+        "timer": 4.71
+      }
+    ]
+  },
+  "hareStill3": {
+    "label": "wolf still at 3 m",
+    "rows": [
+      {
+        "t": 0,
+        "state": "flee",
+        "d": 3.28,
+        "level": 0.559,
+        "speed": 8.47,
+        "timer": 1.577
+      },
+      {
+        "t": 4.233,
+        "state": "graze",
+        "d": 35.52,
+        "level": 0,
+        "speed": 8.47,
+        "timer": 4.05
+      }
+    ]
+  },
+  "hareGraze": {
+    "label": "wolf 80 m still, graze cycle",
+    "rows": [
+      {
+        "t": 0,
+        "state": "graze",
+        "d": 80,
+        "level": 0,
+        "speed": 0,
+        "timer": 3.661
+      },
+      {
+        "t": 3.667,
+        "state": "move",
+        "d": 80,
+        "level": 0,
+        "speed": 0,
+        "timer": 1.381
+      },
+      {
+        "t": 5.067,
+        "state": "graze",
+        "d": 81.36,
+        "level": 0,
+        "speed": 1.2,
+        "timer": 3.772
+      },
+      {
+        "t": 8.867,
+        "state": "move",
+        "d": 81.36,
+        "level": 0,
+        "speed": 0,
+        "timer": 1.396
+      },
+      {
+        "t": 10.267,
+        "state": "graze",
+        "d": 81.66,
+        "level": 0,
+        "speed": 1.2,
+        "timer": 2.227
+      },
+      {
+        "t": 12.5,
+        "state": "move",
+        "d": 81.66,
+        "level": 0,
+        "speed": 0,
+        "timer": 0.929
+      },
+      {
+        "t": 13.433,
+        "state": "graze",
+        "d": 82.76,
+        "level": 0,
+        "speed": 1.2,
+        "timer": 5.684
+      },
+      {
+        "t": 19.133,
+        "state": "move",
+        "d": 82.76,
+        "level": 0,
+        "speed": 0,
+        "timer": 1.396
+      },
+      {
+        "t": 20.533,
+        "state": "graze",
+        "d": 84.23,
+        "level": 0,
+        "speed": 1.2,
+        "timer": 5.665
+      },
+      {
+        "t": 26.2,
+        "state": "move",
+        "d": 84.23,
+        "level": 0,
+        "speed": 0,
+        "timer": 1.044
+      },
+      {
+        "t": 27.267,
+        "state": "graze",
+        "d": 85.24,
+        "level": 0,
+        "speed": 1.2,
+        "timer": 2.585
+      },
+      {
+        "t": 29.867,
+        "state": "move",
+        "d": 85.24,
+        "level": 0,
+        "speed": 0,
+        "timer": 1.069
+      },
+      {
+        "t": 30.967,
+        "state": "graze",
+        "d": 86.56,
+        "level": 0,
+        "speed": 1.2,
+        "timer": 3.083
+      },
+      {
+        "t": 34.067,
+        "state": "move",
+        "d": 86.56,
+        "level": 0,
+        "speed": 0,
+        "timer": 0.68
+      },
+      {
+        "t": 34.767,
+        "state": "graze",
+        "d": 87.14,
+        "level": 0,
+        "speed": 1.2,
+        "timer": 3.109
+      },
+      {
+        "t": 37.9,
+        "state": "move",
+        "d": 87.14,
+        "level": 0,
+        "speed": 0,
+        "timer": 0.904
+      },
+      {
+        "t": 38.833,
+        "state": "graze",
+        "d": 88.15,
+        "level": 0,
+        "speed": 1.2,
+        "timer": 2.638
+      }
+    ]
+  },
+  "deer": {
+    "at40": {
+      "dist": 40,
+      "fleeSpeedCap": 4.2,
+      "senseDrop": 24,
+      "rows": [
+        {
+          "t": 0,
+          "posture": "graze",
+          "speed": 0,
+          "motion": "idle",
+          "d": 40
+        },
+        {
+          "t": 6.633,
+          "posture": "scan",
+          "speed": 0,
+          "motion": "idle",
+          "d": 40
+        }
+      ]
+    },
+    "at20": {
+      "dist": 20,
+      "fleeSpeedCap": 4.2,
+      "senseDrop": 24,
+      "rows": [
+        {
+          "t": 0,
+          "posture": "alert",
+          "speed": 0,
+          "motion": "idle",
+          "d": 20
+        },
+        {
+          "t": 1.067,
+          "posture": "flee",
+          "speed": 0,
+          "motion": "idle",
+          "d": 20
+        },
+        {
+          "t": 1.1,
+          "posture": "flee",
+          "speed": 4.2,
+          "motion": "jump",
+          "d": 20.14
+        },
+        {
+          "t": 7.233,
+          "posture": "scan",
+          "speed": 0,
+          "motion": "idle",
+          "d": 45.02
+        }
+      ]
+    },
+    "at8": {
+      "dist": 8,
+      "fleeSpeedCap": 4.2,
+      "senseDrop": 24,
+      "rows": [
+        {
+          "t": 0,
+          "posture": "alert",
+          "speed": 0,
+          "motion": "idle",
+          "d": 8
+        },
+        {
+          "t": 1.067,
+          "posture": "flee",
+          "speed": 0,
+          "motion": "idle",
+          "d": 8
+        },
+        {
+          "t": 1.1,
+          "posture": "flee",
+          "speed": 4.2,
+          "motion": "jump",
+          "d": 8.14
+        }
+      ]
+    },
+    "calm": {
+      "grazeBand": [
+        5,
+        14
+      ],
+      "scanBand": [
+        1.5,
+        3.5
+      ],
+      "walkBand": [
+        3,
+        9
+      ],
+      "bouts": [
+        {
+          "posture": "graze",
+          "t0": 0,
+          "t1": 7.03
+        },
+        {
+          "posture": "scan",
+          "t0": 7.03,
+          "t1": 10.4
+        },
+        {
+          "posture": "walk",
+          "t0": 10.4,
+          "t1": 17.6
+        },
+        {
+          "posture": "graze",
+          "t0": 17.6,
+          "t1": 23
+        },
+        {
+          "posture": "scan",
+          "t0": 23,
+          "t1": 26.37
+        },
+        {
+          "posture": "graze",
+          "t0": 26.37,
+          "t1": 31.97
+        },
+        {
+          "posture": "scan",
+          "t0": 31.97,
+          "t1": 35.07
+        },
+        {
+          "posture": "graze",
+          "t0": 35.07,
+          "t1": 40
+        }
+      ]
+    },
+    "publishedFid": {
+      "medianM": 69.1,
+      "rangeM": [
+        0,
+        368.1
+      ],
+      "source": "Blackwell, Seamans, DeVault, Lima, Pfeiffer, Fernandez-Juricic 2014, PLOS ONE 9(10):e109988, white-tailed deer FID to a vehicle, n=63 approaches, median 69.1 m"
+    }
+  }
+}

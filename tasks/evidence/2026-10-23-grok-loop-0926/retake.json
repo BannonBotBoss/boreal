@@ -1,0 +1,9 @@
+{
+  "pine": {
+    "x": 141.89987828023732,
+    "z": 196.9830065406859,
+    "r": 0.153
+  },
+  "shots": [],
+  "error": "Error: spawnSync ffmpeg ENOBUFS"
+}

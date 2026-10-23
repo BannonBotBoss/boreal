@@ -27,11 +27,25 @@ test('foreReachWeight: 0 through lift-off, gather and push (swing < from), 1 fro
 
 test('foreReachTarget: a reachable target is unchanged; an unreachable one keeps its height and lands on the reach circle', () => {
   const sk = planFor('hare'), L = sk.legs, top = { z: 0, y: L.hip + (L.girdle ?? 0) };
-  const near = { x: 0, y: .05, z: -.05 }; assert.deepEqual(foreReachTarget(L, top, near), near);
-  const far = { x: .01, y: .04, z: -.3 }, t = foreReachTarget(L, top, far), b = (L.girdleRest ?? 0) + GIRDLE.scapulaMax;
+  const swing = { ...FORE_REACH, floor: 0 };
+  const near = { x: 0, y: .05, z: -.05 }; assert.deepEqual(foreReachTarget(L, top, near, GIRDLE, swing), near);
+  const far = { x: .01, y: .04, z: -.3 }, t = foreReachTarget(L, top, far, GIRDLE, swing), b = (L.girdleRest ?? 0) + GIRDLE.scapulaMax;
   const gz = top.z - (L.girdle ?? 0) * Math.sin(b), gy = top.y - (L.girdle ?? 0) * Math.cos(b), R = FORE_REACH.reach * (L.upper + L.lower + (L.foot ?? 0));
   assert.equal(t.y, far.y); assert.equal(t.x, far.x); assert.ok(t.z > far.z && t.z < gz);
   assert.ok(Math.abs(Math.hypot(t.z - gz, t.y - gy, t.x) - R) < 1e-9);
+});
+
+test('foreReachTarget floor: a target inside the floor circle is pushed forward onto that circle', () => {
+  const sk = planFor('hare'), L = sk.legs, top = { z: 0, y: L.hip + (L.girdle ?? 0) };
+  const near = { x: 0, y: .05, z: -.02 }, b = (L.girdleRest ?? 0) + GIRDLE.scapulaMax;
+  const gz = top.z - (L.girdle ?? 0) * Math.sin(b), gy = top.y - (L.girdle ?? 0) * Math.cos(b);
+  const Rf = FORE_REACH.floor * (L.upper + L.lower + (L.foot ?? 0));
+  const held = foreReachTarget(L, top, near);
+  const dy = Math.hypot(near.y - gy, near.x);
+  assert.ok(dy < Rf && Math.hypot(near.z - gz, dy) < Rf, 'fixture sits inside the floor circle');
+  assert.equal(held.y, near.y); assert.equal(held.x, near.x);
+  assert.ok(held.z < near.z, 'pushed forward (−z)');
+  assert.ok(Math.abs(Math.hypot(held.z - gz, held.y - gy, held.x) - Rf) < 1e-9);
 });
 
 test('hare at 8.5 m/s: in the extended flight the reaching fore paws ride lower (keep the swing clearance), never above the glenoid, no implausible frame', () => {

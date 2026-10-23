@@ -1,0 +1,266 @@
+{
+  "wait": "poll 2s x up to 12 for a near or mid v2 tree",
+  "shots": [
+    {
+      "name": "still-deer",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&timescale=0.05&at=66.27,24.5,3.14159&trees=v2",
+      "trees": {
+        "on": true,
+        "nearM": 28,
+        "trees": 7,
+        "near": 0,
+        "mid": 0,
+        "crown": 0,
+        "far": 0,
+        "variants": 0,
+        "full": 0,
+        "list": [
+          [
+            48,
+            10,
+            -1
+          ],
+          [
+            65,
+            3,
+            -1
+          ],
+          [
+            52,
+            33,
+            -1
+          ],
+          [
+            67,
+            38,
+            -1
+          ],
+          [
+            50,
+            10,
+            -1
+          ],
+          [
+            62,
+            5,
+            -1
+          ],
+          [
+            69,
+            32,
+            -1
+          ]
+        ]
+      },
+      "player": {
+        "x": 66.27,
+        "z": 24.500000002731422,
+        "yaw": 3.14159,
+        "energy": 74.99769149267635,
+        "water": 99.99908862054616,
+        "mode": "walk"
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    {
+      "name": "still-person",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&timescale=0.05&at=68.57,23,3.14159&trees=v2",
+      "trees": {
+        "on": true,
+        "nearM": 28,
+        "trees": 7,
+        "near": 0,
+        "mid": 0,
+        "crown": 0,
+        "far": 0,
+        "variants": 0,
+        "full": 0,
+        "list": [
+          [
+            48,
+            10,
+            -1
+          ],
+          [
+            65,
+            3,
+            -1
+          ],
+          [
+            52,
+            33,
+            -1
+          ],
+          [
+            67,
+            38,
+            -1
+          ],
+          [
+            50,
+            10,
+            -1
+          ],
+          [
+            62,
+            5,
+            -1
+          ],
+          [
+            69,
+            32,
+            -1
+          ]
+        ]
+      },
+      "player": {
+        "x": 68.57,
+        "z": 23.000000002391666,
+        "yaw": 3.14159,
+        "energy": 74.99559284965486,
+        "water": 99.99826009376994,
+        "mode": "walk"
+      },
+      "errors": []
+    },
+    {
+      "name": "still-bark",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&timescale=0.05&at=69.36,32.36,-1.5708&trees=v2",
+      "trees": {
+        "on": true,
+        "nearM": 28,
+        "trees": 8,
+        "near": 0,
+        "mid": 0,
+        "crown": 0,
+        "far": 0,
+        "variants": 0,
+        "full": 0,
+        "list": [
+          [
+            48,
+            10,
+            -1
+          ],
+          [
+            65,
+            3,
+            -1
+          ],
+          [
+            52,
+            33,
+            -1
+          ],
+          [
+            67,
+            38,
+            -1
+          ],
+          [
+            50,
+            10,
+            -1
+          ],
+          [
+            62,
+            5,
+            -1
+          ],
+          [
+            69,
+            32,
+            -1
+          ],
+          [
+            64,
+            45,
+            -1
+          ]
+        ]
+      },
+      "player": {
+        "x": 69.35999999993122,
+        "z": 32.36,
+        "yaw": -1.5708,
+        "energy": 74.99328434233121,
+        "water": 99.9973487143161,
+        "mode": "walk"
+      },
+      "errors": []
+    },
+    {
+      "name": "still-stand",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&timescale=0.05&at=67.4,8,3.14159&trees=v2",
+      "trees": {
+        "on": true,
+        "nearM": 28,
+        "trees": 9,
+        "near": 0,
+        "mid": 0,
+        "crown": 0,
+        "far": 0,
+        "variants": 0,
+        "full": 0,
+        "list": [
+          [
+            48,
+            10,
+            -1
+          ],
+          [
+            65,
+            3,
+            -1
+          ],
+          [
+            52,
+            33,
+            -1
+          ],
+          [
+            67,
+            38,
+            -1
+          ],
+          [
+            50,
+            10,
+            -1
+          ],
+          [
+            62,
+            5,
+            -1
+          ],
+          [
+            69,
+            32,
+            -1
+          ],
+          [
+            44,
+            -23,
+            -1
+          ],
+          [
+            48,
+            -1,
+            -1
+          ]
+        ]
+      },
+      "player": {
+        "x": 67.4,
+        "z": 8.00000000237575,
+        "yaw": 3.14159,
+        "energy": 74.99118569930971,
+        "water": 99.99652018753989,
+        "mode": "walk"
+      },
+      "errors": []
+    }
+  ]
+}

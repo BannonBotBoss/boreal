@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0044",
+  "agent": "grok",
+  "at": "2026-10-23T12:54:10-07:00",
+  "note": "Claimed after the approve-plan for matthew at 2026-10-23T12:54:00-07:00. Branch grok/playable-hare. poleTargetTwoBone is in src/core/animalBehavior.ts. The plant frame in foreLimb is not rewired yet: a rewire that held the previous elbow either left the plant jump over the omega gate or moved the touchdown forearm outside 11-36 deg. Not submitted."
+}

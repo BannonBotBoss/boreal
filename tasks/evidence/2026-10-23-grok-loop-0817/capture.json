@@ -1,0 +1,444 @@
+{
+  "phantom": {
+    "key": "3:4:1",
+    "x": 146.7723066918552,
+    "z": 198.8493807706982,
+    "species": "jack-pine",
+    "placed": false,
+    "r": 0.16015470691130818
+  },
+  "pine": {
+    "key": "3:4:10",
+    "x": 141.8997,
+    "z": 196.983,
+    "species": "jack-pine",
+    "placed": true,
+    "r": 0.153
+  },
+  "shots": [
+    "phantom-follow",
+    "phantom-side",
+    "pine-start",
+    "pine-inside-follow",
+    "pine-inside-side"
+  ],
+  "note": "3:4:1 is removed by applyPopulation (keep roll 0.952 > treeMult 0.45). 3:4:10 is the placed jack pine.",
+  "phantomFollow": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,198.849,0",
+    "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+    "x": 146.772,
+    "z": 198.84900004214686,
+    "yaw": 0,
+    "d": 0,
+    "insideWood": true,
+    "drawn": {
+      "x": 146.772,
+      "y": 5.126,
+      "z": 198.849,
+      "cx": 146.772,
+      "cy": 6.726,
+      "cz": 201.849,
+      "speed": 6.930349627509713e-9
+    }
+  },
+  "phantomToPine": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,198.849,0",
+    "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+    "x": 146.772,
+    "z": 198.84900004214686,
+    "yaw": 0,
+    "d": 5.217,
+    "insideWood": false,
+    "drawn": {
+      "x": 146.772,
+      "y": 5.126,
+      "z": 198.849,
+      "cx": 146.772,
+      "cy": 6.726,
+      "cz": 201.849,
+      "speed": 6.930349627509713e-9
+    }
+  },
+  "phantomSideCam": {
+    "px": 146.772,
+    "pz": 198.84900004514472,
+    "cx": 151.57200000000017,
+    "cy": 6.239933385560656,
+    "cz": 199.0913413749345
+  },
+  "phantomSide": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,198.849,0",
+    "status": "PHOTO · 12:18 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%R",
+    "x": 146.772,
+    "z": 198.84900004514472,
+    "yaw": 0,
+    "d": 0,
+    "insideWood": true,
+    "drawn": {
+      "x": 146.772,
+      "y": 5.126,
+      "z": 198.849,
+      "cx": 151.572,
+      "cy": 6.24,
+      "cz": 199.091,
+      "speed": 6.8902750172128435e-9
+    }
+  },
+  "pineStart": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+    "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+    "x": 141.9,
+    "z": 198.18300003649387,
+    "yaw": 0,
+    "d": 1.2,
+    "insideWood": false,
+    "drawn": {
+      "x": 141.9,
+      "y": 4.433,
+      "z": 198.183,
+      "cx": 141.9,
+      "cy": 6.033,
+      "cz": 201.183,
+      "speed": 6.924381068529328e-9
+    }
+  },
+  "walk": [
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 198.18300003649387,
+      "yaw": 0,
+      "d": 1.2,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.433,
+        "z": 198.183,
+        "cx": 141.9,
+        "cy": 6.033,
+        "cz": 201.183,
+        "speed": 6.924381068529328e-9
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 198.18300003925685,
+      "yaw": 0,
+      "d": 1.2,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.433,
+        "z": 198.183,
+        "cx": 141.9,
+        "cy": 6.033,
+        "cz": 201.183,
+        "speed": 6.889422365929931e-9
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 198.14966878849881,
+      "yaw": 0,
+      "d": 1.167,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "cx": 141.9,
+        "cy": 6.031,
+        "cz": 201.15,
+        "speed": 0.9999375227411633
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 198.0163540216259,
+      "yaw": 0,
+      "d": 1.033,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.424,
+        "z": 198.055,
+        "cx": 141.9,
+        "cy": 6.026,
+        "cz": 201.051,
+        "speed": 1.9997527340387933
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 198.0163540216259,
+      "yaw": 0,
+      "d": 1.033,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.424,
+        "z": 198.055,
+        "cx": 141.9,
+        "cy": 6.026,
+        "cz": 201.051,
+        "speed": 1.9997527340387933
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.94969559715798,
+      "yaw": 0,
+      "d": 0.967,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.42,
+        "z": 197.954,
+        "cx": 141.9,
+        "cy": 6.021,
+        "cz": 200.951,
+        "speed": 1.999752734037088
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.81637874822243,
+      "yaw": 0,
+      "d": 0.833,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.416,
+        "z": 197.853,
+        "cx": 141.9,
+        "cy": 6.017,
+        "cz": 200.851,
+        "speed": 1.999752734031972
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.7497203237548,
+      "yaw": 0,
+      "d": 0.767,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.412,
+        "z": 197.752,
+        "cx": 141.9,
+        "cy": 6.013,
+        "cz": 200.751,
+        "speed": 1.9997527340294141
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.7497203237548,
+      "yaw": 0,
+      "d": 0.767,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.412,
+        "z": 197.752,
+        "cx": 141.9,
+        "cy": 6.013,
+        "cz": 200.751,
+        "speed": 1.9997527340294141
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.6164034748544,
+      "yaw": 0,
+      "d": 0.633,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.407,
+        "z": 197.656,
+        "cx": 141.9,
+        "cy": 6.009,
+        "cz": 200.651,
+        "speed": 1.9997527335007703
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.54974505013536,
+      "yaw": 0,
+      "d": 0.567,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.403,
+        "z": 197.555,
+        "cx": 141.9,
+        "cy": 6.006,
+        "cz": 200.551,
+        "speed": 1.9997527415711147
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.4164282006983,
+      "yaw": 0,
+      "d": 0.433,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.401,
+        "z": 197.454,
+        "cx": 141.9,
+        "cy": 6.003,
+        "cz": 200.451,
+        "speed": 1.999752741550651
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.3497697759803,
+      "yaw": 0,
+      "d": 0.367,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.399,
+        "z": 197.353,
+        "cx": 141.9,
+        "cy": 6,
+        "cz": 200.351,
+        "speed": 1.9997527415404193
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.21645292654526,
+      "yaw": 0,
+      "d": 0.233,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.397,
+        "z": 197.252,
+        "cx": 141.9,
+        "cy": 5.998,
+        "cz": 200.251,
+        "speed": 1.9997527415208083
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.14979450182824,
+      "yaw": 0,
+      "d": 0.167,
+      "insideWood": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.394,
+        "z": 197.153,
+        "cx": 141.9,
+        "cy": 5.995,
+        "cz": 200.151,
+        "speed": 1.9997527415105765
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+      "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+      "x": 141.9,
+      "z": 197.01647765239522,
+      "yaw": 0,
+      "d": 0.033,
+      "insideWood": true,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.389,
+        "z": 197.056,
+        "cx": 141.9,
+        "cy": 5.992,
+        "cz": 200.051,
+        "speed": 1.9997527414901128
+      }
+    }
+  ],
+  "pineInside": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+    "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · ",
+    "x": 141.9,
+    "z": 197.01647765239522,
+    "yaw": 0,
+    "d": 0.033,
+    "insideWood": true,
+    "drawn": {
+      "x": 141.9,
+      "y": 4.389,
+      "z": 197.056,
+      "cx": 141.9,
+      "cy": 5.992,
+      "cz": 200.051,
+      "speed": 1.9997527414901128
+    }
+  },
+  "pineSideCam": {
+    "px": 141.9,
+    "pz": 196.91649622182112,
+    "cx": 145.99920000000012,
+    "cy": 5.5010145298989,
+    "cz": 197.15883755183117
+  },
+  "pineSide": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0",
+    "status": "PHOTO · 12:27 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%R",
+    "x": 141.9,
+    "z": 196.91649622182112,
+    "yaw": 0,
+    "d": 0.067,
+    "insideWood": true,
+    "drawn": {
+      "x": 141.9,
+      "y": 4.387,
+      "z": 196.916,
+      "cx": 145.999,
+      "cy": 5.501,
+      "cz": 197.159,
+      "speed": 6.795630724809598e-9
+    }
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "url": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=141.900,198.183,0"
+}

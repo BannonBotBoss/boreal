@@ -1,0 +1,7 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Planet layers</title><style>
+body{margin:0;background:#0b1220;color:#dfe8f5;font:14px system-ui;padding:16px}h1{margin:0 0 4px;font-size:20px}small{color:#8aa0bd}
+select,button,input{background:#22314d;color:#dfe8f5;border:0;padding:5px 8px;border-radius:6px;margin:6px 6px 6px 0}canvas{display:block;width:min(100%,1080px);image-rendering:pixelated;border-radius:8px;background:#000}#info{margin-top:6px;color:#8aa0bd}
+</style></head><body><h1>Planet layers (issue #43)</h1><small>rust/boreal-sim (wasm) over the globe's own continents (planet.ts). Solar, hydrosphere, atmosphere and surface budgets for every cell.</small><br>
+<select id="layer"></select> day <input id="day" type="number" min="1" max="365" value="172" style="width:64px"> <button id="step">step 1 day</button> <button id="reseed">reseed</button> <span id="status"></span>
+<canvas id="map" width="360" height="180"></canvas><div id="info"></div>
+<script type="module" src="./planet-layers.ts"></script></body></html>

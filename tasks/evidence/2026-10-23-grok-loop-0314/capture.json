@@ -1,0 +1,32 @@
+{
+  "commit": "1471497",
+  "viewport": [
+    960,
+    540
+  ],
+  "clock": "2026-10-23 03:14 PT inspection",
+  "note": "?bench skips the SwiftShader probe. Shots are 10 s after #loading leaves. Sun yaw -1.553 faces azimuth 89 deg.",
+  "shots": [
+    "terrain-noon",
+    "terrain-down",
+    "sun-low",
+    "sun-low-level",
+    "stand-flat",
+    "move-walk",
+    "move-run",
+    "jump-air",
+    "jump-land"
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "consoleLog": [
+    "BENCH gpu-string ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "BENCH gpu-string ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "BENCH gpu-string ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "BENCH tier-Ultra gpu=684.87ms frame=695.46ms fps=1 cpu=8.7ms(draw 5.6) p95=2673.8ms calls=157 tris=529537 maxCpu={\"csmMs\":0.1,\"iblMs\":0.1,\"giMs\":0,\"cloudMs\":0,\"warmMs\":12.2}"
+  ]
+}

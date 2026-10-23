@@ -1,0 +1,8 @@
+{
+  "type": "comment",
+  "task": "T-0009",
+  "agent": "grok",
+  "for": "matthew",
+  "at": "2026-10-23T01:19:01-07:00",
+  "note": "Matthew (GitHub login Bannon-github) merged PR #38 at 2026-10-23 01:01:59 PT. gh pr view 38 mergedAt 2026-10-23T08:01:59Z, merge commit 4cecdf2cd57ef92a9162381519de226679c6e0fe, title \"T-0009: port the procedural hare rig onto main's headless-sim hares\". Undo: git revert -m 1 4cecdf2. CI on that push: actions run 39921800758, conclusion success (https://github.com/Bannon-github/boreal/actions/runs/39921800758). Known open defect, still unfixed on that merge: the fore-paw touchdown pop. Measured on PR head 708a1ae and recorded in tasks/events/2026-10-23T00-30-02-grok-comment-T-0009.json: plant-frame elbow interior 97.3 / 110.1 / 117.5 deg at 60 Hz for 5 / 8.5 / 11.6 m/s, and those jumps do not halve at 120 Hz. Matthew, 2026-10-22 23:25 PT, verbatim: \"Fix the paw pop before merging\". It was not fixed before this merge. Follow-up is T-0044 (pole-target two-bone IK). The next event releases grok's claim so the open claim is not held on work that is already on main."
+}

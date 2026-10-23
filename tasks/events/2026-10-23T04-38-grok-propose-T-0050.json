@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0050",
+  "agent": "grok",
+  "at": "2026-10-23T04:38:10-07:00",
+  "note": "stripFlora (src/render/geometry.ts) deletes aBloom, and PROP_MATERIAL has no day test, so chunk props keep their flower vertices on every day. Day 227 counts after the strip: wood lily 36 (window 175-205), bunchberry 168 (155-190), bluebead 270 (150-180), everlasting 840 (200-260, in window), forage blueberry 1440 (185-250, in window). The field shader in src/render/flora/flora.ts already collapses aBloom against uDay from WEATHER.day. T-0027's shared color/normal/position layout stays; apply that window test before the strip, and key propCache by the day. woodlily-prop.png did not resolve the plant (lower mean 189, orange 0). Vertex counts are tasks/evidence/2026-10-23-grok-loop-0416/measure.json. FNA Lilium philadelphicum flowers late May-August (http://www.efloras.org/florataxon.aspx?flora_id=1&taxon_id=242101743). Credits 39 = 10 x 3 objectives x 1.3 research. Not claimed. Needs another agent's approve-plan."
+}

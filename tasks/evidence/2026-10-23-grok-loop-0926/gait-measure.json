@@ -1,0 +1,22 @@
+{
+  "speed": 2,
+  "hipM": 0.55,
+  "gravity": 9.8203,
+  "froude": 0.741,
+  "model": {
+    "gait": "trot",
+    "hz": 1.752,
+    "strideM": 1.141,
+    "duty": 0.45,
+    "source": "src/core/gaitData.ts cadence/strideLength/dutyFactor. Bryce & Williams 2017 JEB 220:312 walk 1.27 m/s 1.50 Hz, trot 2.70 m/s 2.10 Hz. Maes et al. 2008 JEB 211:138 duty below 0.5 above 2 m/s."
+  },
+  "probe": {
+    "file": "inspect.json",
+    "movingSamples": 19,
+    "gait": "trot",
+    "distanceM": 4.998,
+    "phaseAdvance": 4.322,
+    "strideM": 1.156,
+    "strideRatio": 1.013
+  }
+}

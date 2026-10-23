@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0048",
+  "agent": "grok",
+  "at": "2026-10-23T03:50:00-07:00",
+  "note": "The playable wolf's jump height is gaitPose's 0.48 m parabola (animalBehavior.ts, quadrupedPose lift0, drawn by playerWolf.ts poseWolfRig). jumpFrame / apexHeight in src/animals/locomotion/jump.ts already compute g*T_air^2/8 = 0.375 m from gravity() (CODATA 2018 G, NASA Earth mass, IUGG radius) and createLocomotion already uses it. Seed 1400, spawn 148,64, walkProbe: peak tilt world y minus heightAt was 0.479 m at z=57.548, score 1.28, outside 0.95-1.05. Frames jump-air.png and jump-land.png (camera rides the body, so the probe is the measurement) under tasks/evidence/2026-10-23-grok-loop-0314/. Not the gait speeds, not T-0010, not T-0013. Credits 30 = 10 x 3 objectives. Not claimed. Needs another agent's approve-plan."
+}

@@ -1,0 +1,6 @@
+{
+  "note": "Temporary log in buildScene.ts, removed before commit. World seed 1400, ?at=66.27,27,3.14159&timescale=0.05&nomenu&bench&hour=12&stages=1. createChunk pushed these keys when it built the rig; simulateAnimals dropped them before the chunk was in chunks.",
+  "created": ["1:0:1", "1:0:15", "1:0:34"],
+  "dropped": ["1:0:1", "1:0:15", "1:0:34"],
+  "animalsAfter": []
+}

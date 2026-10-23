@@ -1,0 +1,23 @@
+{
+  "audioBefore": [],
+  "footer": {
+    "footer": "PROCEDURAL WORLD / 01\nBoreal\n\nA landscape made from instructions.\n\n12:06 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs\nExplore\nApproach an individual\nW / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls\nWolf senses\n◉\nListening\nQuiet nearby\nScent\n0%\nN",
+    "sound": "Sound on"
+  },
+  "soundAfter": {
+    "label": "Sound off",
+    "log": [
+      {
+        "t": 34983,
+        "kind": "new",
+        "state": "running"
+      },
+      {
+        "t": 34983,
+        "kind": "resume",
+        "state": "running"
+      }
+    ]
+  },
+  "errors": []
+}

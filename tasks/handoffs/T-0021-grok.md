@@ -4,10 +4,10 @@ there are some important changes needed". Codex's review input: tasks/events/202
 Branch `grok/transactional-plan`, worktree `C:\dev\boreal-grok-plan`.
 
 ## Status
-CLAIMED by grok 2026-10-23 00:31 PT (event 2026-10-23T00-31-grok-claim-T-0021.json). Not submitted. The 2026-10-21 table
-below stops at rule 15. Rules 16, 16b and 17 were added after it and are not in that table yet, so this is not a complete
-event. Next step: add those three rows (cause, what happened, verdict) with file:line or event evidence, then the rule-12
-handoff can be submitted for a non-grok-family review. D1-D6 still need Matthew.
+SUBMITTED by grok 2026-10-23 02:16 PT run (complete event tasks/events/2026-10-23T02-23-grok-complete-T-0021.json, branch
+grok/board-loop). The causal table now includes rules 16, 16b and 17. Not approved. A review has to come from claude, codex
+or agy (rule 12: spot-check at least three rows). Grok, grok-globe and grok-gait do not approve this. D1-D6 still need Matthew.
+The rule 17(d) name clarification is not applied; it is reserved for T-0046 (rule-gates), which this run does not file.
 
 ## Done
 - Step 1: handoff created (7f529d5), updated after each step (808b691, this commit).
@@ -39,6 +39,9 @@ handoff can be submitted for a non-grok-family review. D1-D6 still need Matthew.
 | Credits header | grok's task files (03b27f8) | Matthew wants to adjust credits to prioritise | The ledger ignores `credits:`; it computes 10 x steps x (...). T-0021 had numbered objectives, so it computed 0 credits. "matthew" became Agent of the Week (4 cr) from the approve-plans grok wrote in his name. | Rule 14 (header is the override, only Matthew changes it); ledger change pending (D1) |
 | Who writes in whose name | none | - | Grok wrote approve-plan T-0008/T-0009 and three T-0020 comments as "matthew". Comments relay his words (harmless); approvals claimed a decision he didn't make. README reserves agent "matthew" for veto. | Rule 10; correction comments recorded |
 | Unattended prompt | C:\dev\boreal-agents\prompt.md (11:16) | hourly claude/codex/agy, full auto-approve | Consistent with RULES 1-9, but: shared port range 5210-5299 (two agents can pick the same port), no review-first step (so nobody approves), all commits carry Matthew's git identity (agent not visible in `git log`). | Per-agent port ranges, step 0 review first, commit subject prefix, rules 10-15 mirrored |
+| 16 | ebb6561 (2026-10-22 01:31:30 PT), tasks/RULES.md:25 | Matthew, 2026-10-22 01:30 PT: "i can approve work", then a named choice. A general remark must not approve a task, and no event uses `"agent": "matthew"`. | Every approve and approve-plan with `"for": "matthew"` and `at` >= 2026-10-22 01:30 PT is `agent` grok and names one task. "i can approve work" appears only beside a named choice (T-0009 approve-plan, T-0033 approve-plan and approve). Comments that also set `for` (T-0009, T-0032, T-0045) do not change ledger state. The five `"agent": "matthew"` files are all 2026-10-21, before this rule, and already have correction comments. | Holds |
+| 16b | 38e6f28 (2026-10-22 01:55:53 PT), tasks/RULES.md:26 | Matthew, 2026-10-22 01:52 PT: "well, anything i request by direct chat shouldnt need approval". A direct request is pre-approved at plan and completion. Grok records approve-plan before the claim, and approve after complete. | T-0043's approve-plan (tasks/events/2026-10-22T23-48-grok-approve-plan-T-0043.json) quotes his 23:37 PT sentence and the 01:52 sentence. grok-globe/globe-inertia eb11755 is committer 2026-10-22 23:45:06 PT, before that event, and there is no claim. `git merge-base --is-ancestor eb11755 origin/main` exits 1. T-0036's claim note and T-0041's claim note already say the code was on the branch before the claim event, and both claims' `at` are after their approve-plan. Rule 2 and rule 16 order those events. They do not forbid the commit, and they do not allow the merge. | Holds |
+| 17 | e528e1a (2026-10-22 01:59:28 PT), tasks/RULES.md:27, for T-0038 | Push every branch. The merger checks CI and `agent-review`, because a free private repo does not enforce required checks. | .github/workflows/ci.yml:3 is `name: ci` and the only job is `test` (line 10). On ba5281f the check-run name is `test` (success) and commit statuses are empty (`state` pending). The 00:29 run did not treat that green job as `agent-review` and did not merge PR #38. Rule 17(d) says the PR's `ci` check, which matches the workflow name and the file, and does not match the check-run name `test`. | Revise the name only. Not applied. Reserved for T-0046. |
 
 ## Changes applied
 - 9dce12c tasks/RULES.md: rules 2, 3, 4, 7 clarified; rules 10-15 added; line breaks restored; T-0021 objectives as `- [ ]`.
@@ -68,7 +71,7 @@ handoff can be submitted for a non-grok-family review. D1-D6 still need Matthew.
 - A board check script (filename format, `at` order, unknown tasks, own-name) run by the hourly loop.
 
 ## Needs from another agent
-- Review (rule 12/15): spot-check at least three rows of the table above against the cited commits/events and comment.
+- Review (rule 12): claude, codex or agy spot-checks at least three rows of the table, including one of rules 16, 16b or 17, against the cited commit or event. Grok, grok-globe and grok-gait do not approve this. The 2026-10-21 review request is the same review; it now covers the three rows added on 2026-10-23.
 
 ## How to verify
 - `git show 9dce12c -- tasks/RULES.md`; `git log --all --format="%h %s" -- tasks/events`; run the ledger:
@@ -153,14 +156,24 @@ index b55c12a..63dcb27 100644
 +Write JSON event files as UTF-8 without a BOM. Never write events in anyone else's name: only Matthew writes agent 'matthew'; relaying his words, use your own name with "for": "matthew" and quote him (rule 10). Never edit or delete existing events; correct them with a new comment event. Start every commit subject with '__AGENT__:'. Report honest scores, not rounded passes. Commit your work on your own branches before you stop.
 \ No newline at end of file
 ```n
-## 2026-10-23 00:31 PT claim (in progress, not a submission)
+## 2026-10-23 02:16 PT rows for rules 16, 16b and 17
 
-Rules 16, 16b and 17 are in tasks/RULES.md and are not in the table above. Started, not finished:
+The three rows are in the table above. Spot-check (done on this run, for the reviewer to repeat):
 
-| Rule | Where it shows up | What this run saw | Not done |
-|---|---|---|---|
-| 16 | tasks/events/2026-10-22T23-48-grok-approve-plan-T-0043.json (`agent` grok, `for` matthew, verbatim quote) | A named chat request was recorded as approve-plan. A general remark still approves nothing. | Full pass over every `for: matthew` event since 2026-10-22 01:30 PT |
-| 16b | same event, plus the sentence from 2026-10-22 01:52 PT quoted in the note | T-0043's plan is approved. The branch grok-globe/globe-inertia eb11755 (23:45 PT) has code before the claim. The task is not complete. | Whether code-before-claim is what 16b allows, written against rule 2 |
-| 17 | .github/workflows/ci.yml (job name `test` only); PR #38 commit statuses empty | The merger did not treat a green `test` job as `agent-review`. No `rule-gates` check exists. | Whether rule 17(d)'s name `ci` matches the workflow job name `test` |
+1. Rule 16's commit. `git blame -L 25,25 tasks/RULES.md` names ebb6561, 2026-10-22 01:31:30 PT. `git show ebb6561 --stat` is the rule 16 commit.
+2. Rule 16b against rule 2, T-0043. Approve-plan `at` is 2026-10-22T23:48:37-07:00 and the note quotes both sentences. `git log -1 --format='%h %ci' eb11755` is 2026-10-22 23:45:06 -0700. No tasks/events/*claim*T-0043* file. `git merge-base --is-ancestor eb11755 origin/main` exits 1, so the early commit is not on main.
+3. Rule 17's check name. `.github/workflows/ci.yml` line 3 `name: ci`, line 10 job `test`. `gh api repos/Bannon-github/boreal/commits/ba5281f/check-runs` returns one run, name `test`, conclusion success. `.../commits/ba5281f/status` returns `statuses: []`.
 
-Exact next step: finish these three rows with a verdict (holds / revise), spot-check three evidence lines, then write the complete event. Do not approve from the grok family.
+What each finding became:
+
+- Rule 16 holds. Nothing to change.
+- Rule 16b holds. A commit before the claim is what the event order allows. T-0043 stays unmerged until a claim, a complete and an approve. Nothing to change.
+- Rule 17's check-run name does not match the word `ci` in 17(d). Not applied on this branch. T-0046 is reserved for the rule-gates work, so this run does not take that id and does not edit RULES.md. Concrete diff for that owner:
+
+```diff
+- (d) Before merging, check that the PR's `ci` check (npm test + npx tsc --noEmit, .github/workflows/ci.yml) passed and `agent-review` is green:
++ (d) Before merging, check that the check-run named `test` on workflow `ci` (npm test + npx tsc --noEmit, .github/workflows/ci.yml; GitHub reports the job name, not the workflow name) passed and the commit status `agent-review` is green:
+```
+
+## Exact next step
+A non-grok-family reviewer writes an approve or a comment on T-0021. Do not merge grok/board-loop on the strength of this complete event.

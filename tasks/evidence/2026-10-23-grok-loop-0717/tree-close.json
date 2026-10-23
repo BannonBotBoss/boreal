@@ -1,0 +1,125 @@
+{
+  "tree": {
+    "x": 146.7723066918552,
+    "z": 198.8493807706982,
+    "r": 0.16015470691130818
+  },
+  "blockTrunk": 0.7,
+  "shots": [
+    "tree-on-trunk",
+    "tree-walk-start",
+    "tree-walk-end"
+  ],
+  "onTrunk": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,198.849,0",
+    "status": "12:06 · WALK · Stamina 1",
+    "x": 146.772,
+    "z": 198.84900003597173,
+    "yaw": 0,
+    "d": 0,
+    "inside": true,
+    "drawn": {
+      "x": 146.772,
+      "y": 5.126,
+      "z": 198.849,
+      "speed": 6.967013632674934e-9
+    }
+  },
+  "walkStart": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,199.85,0",
+    "status": "12:06 · WALK · Stamina 1",
+    "x": 146.772,
+    "z": 199.8500000339929,
+    "yaw": 0,
+    "d": 1.001,
+    "inside": false,
+    "drawn": {
+      "x": 146.772,
+      "y": 5.2,
+      "z": 199.85,
+      "speed": 6.959339771128725e-9
+    }
+  },
+  "walk": [
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,199.85,0",
+      "status": "12:06 · WALK · Stamina 1",
+      "x": 146.772,
+      "z": 199.8500000339929,
+      "yaw": 0,
+      "d": 1.001,
+      "inside": false,
+      "drawn": {
+        "x": 146.772,
+        "y": 5.2,
+        "z": 199.85,
+        "speed": 6.959339771128725e-9
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,199.85,0",
+      "status": "12:06 · WALK · Stamina 1",
+      "x": 146.772,
+      "z": 199.4833787465734,
+      "yaw": 0,
+      "d": 0.634,
+      "inside": false,
+      "drawn": {
+        "x": 146.772,
+        "y": 5.173,
+        "z": 199.486,
+        "speed": 1.999752726405859
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,199.85,0",
+      "status": "12:07 · WALK · Stamina 1",
+      "x": 146.772,
+      "z": 199.08342820129783,
+      "yaw": 0,
+      "d": 0.234,
+      "inside": false,
+      "drawn": {
+        "x": 146.772,
+        "y": 5.141,
+        "z": 199.088,
+        "speed": 1.9997527262719927
+      }
+    },
+    {
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,199.85,0",
+      "status": "12:07 · WALK · Stamina 1",
+      "x": 146.772,
+      "z": 198.88345292788182,
+      "yaw": 0,
+      "d": 0.034,
+      "inside": true,
+      "drawn": {
+        "x": 146.772,
+        "y": 5.128,
+        "z": 198.886,
+        "speed": 1.999752734159017
+      }
+    }
+  ],
+  "walkEnd": {
+    "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=146.772,199.85,0",
+    "status": "12:07 · WALK · Stamina 1",
+    "x": 146.772,
+    "z": 198.88345292788182,
+    "yaw": 0,
+    "d": 0.034,
+    "inside": true,
+    "drawn": {
+      "x": 146.772,
+      "y": 5.128,
+      "z": 198.886,
+      "speed": 1.999752734159017
+    }
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

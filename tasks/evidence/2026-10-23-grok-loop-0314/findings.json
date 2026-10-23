@@ -1,0 +1,30 @@
+{
+  "run": "2026-10-23 03:14 PT",
+  "commitAtCapture": "1471497",
+  "viewport": "960x540",
+  "gpu": "SwiftShader via Playwright channel chrome",
+  "urls": {
+    "noon": "?nomenu&bench&hour=12&at=200,250,-1.553",
+    "low": "?nomenu&bench&hour=6.75&at=200,250,-1.553",
+    "move": "?nomenu&bench&walkprobe&rec&hour=12&at=148,64,0"
+  },
+  "jumpClearance": {
+    "peakM": 0.479,
+    "at": { "x": 148, "z": 57.548, "by": 5.311, "ground": 4.832 },
+    "apexHeightM": 0.375,
+    "score": 1.28
+  },
+  "sunDisc": {
+    "file": "sun-low.png",
+    "componentPx": 101,
+    "centroid": [495.6, 259.9],
+    "bbox": { "x0": 490, "y0": 255, "x1": 501, "y1": 265 },
+    "note": "Pitch was not read from the camera. A settled look-up is pitch -20 deg (centre ray elevation +20 deg). The blob sits about 0.95 deg above centre. sunPosition at hour 6.75 is elevation 18.1 deg, which would sit about 1.9 deg below centre. Residual about 2.8 deg, uncalibrated, not a gate."
+  },
+  "frameMeans": {
+    "terrain-noon": { "mean": [206, 210, 208], "groundStd": 71.6, "note": "post-load wash" },
+    "sun-low-level": { "mean": [146, 151, 143], "groundMean": [77, 85, 73], "groundStd": 53.8 },
+    "move-walk": { "mean": [114, 128, 119], "groundMean": [54, 75, 62], "groundStd": 47.6 },
+    "jump-air": { "mean": [115, 129, 119], "groundMean": [54, 76, 63], "groundStd": 46.7 }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "type": "comment",
+  "task": "T-0055",
+  "agent": "grok",
+  "at": "2026-10-23T09:45:00-07:00",
+  "viewed": [
+    "tasks/evidence/2026-10-23-grok-loop-0817/pine-overlap-east.png",
+    "tasks/evidence/2026-10-23-grok-loop-0817/pine-inside-side.png",
+    "tasks/evidence/2026-10-23-grok-loop-0926/pine-overlap-follow.png",
+    "tasks/evidence/2026-10-23-grok-loop-0926/pine-overlap-above.png",
+    "tasks/evidence/2026-10-23-grok-loop-0926/pine-axis-side.png",
+    "tasks/evidence/2026-10-23-grok-loop-0926/pine-beside-follow.png"
+  ],
+  "note": "Picture confirmation withdrawn. The task stays proposed, not withdrawn: the position still enters the wood. Viewed pine-overlap-east.png and pine-inside-side.png from the 08:21 run: both are photo mode. The east frame is boulders and water, no wolf and no trunk. The side frame has the wolf in a corner and no trunk through the body. Rechecked with the follow camera only (P was not pressed; status has no PHOTO). Dev server http://127.0.0.1:5173/, headless Chrome, SwiftShader, ?nomenu&bench&rec&stages=1&walkprobe&hour=12. Jack pine 3:4:10 is placed (keep roll 0.054, treeMult 0.45, base radius 0.153 m). Walking north from at=141.900,198.283 reaches d=0.033 at gait speed 2.00; drawn body (141.900, 197.033). That is inside the wood. Viewed pine-overlap-follow.png: same pose, canvas mean luma 206, not a readable trunk. Viewed pine-overlap-above.png: ArrowDown, follow camera, d=0.033, the wolf is low in the frame and a trunk stands ahead of it, not through the chest. Viewed pine-axis-side.png: follow camera from the side, d=0.035, wolf and a trunk are both in frame, and the bole does not cross the torso. Viewed pine-beside-follow.png: d=0.565, outside the wood, wolf beside a trunk. Evidence tasks/evidence/2026-10-23-grok-loop-0926/. Not claimed. Not approve-planned."
+}

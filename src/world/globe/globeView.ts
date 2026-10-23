@@ -32,6 +32,7 @@ import { GLOBE_COAST, cloudClear, coastLambda, globePitch } from './transition';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
+import { setLayerCamera, startPlanetLayers } from './planetLayers';
 import { GLOBE_SHORE, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
 export { GLOBE_LAKE, GLOBE_LAND, GLOBE_SHORE } from './tile'; // inpage.ts (lazy): the band's lake ease
@@ -124,6 +125,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const material = globeMaterial(seamsDebug ? lod.segments : 0);
   // Atmosphere (atmosphere.ts): sky shell + aerial perspective on the tiles; ?atmos=0 for the plain look
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
+  // planet budget layers (planetLayers.ts, issue #43): snow, sea ice, wet soil from rust/boreal-sim; count and grid follow the tier; ?layers=0 off
+  const layerDay = Number(q.get('day')) || Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 864e5);
+  let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; if (layerTier >= 0) void startPlanetLayers(planet, layerTier, layerDay);
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   const camV = new THREE.Vector3();
   let ext: { position: THREE.Vector3; quaternion: THREE.Quaternion; fov: number; aspect: number } | null = null; // shared band: externally flown camera
@@ -401,6 +405,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const viewH = target ? target.height : canvas.height;
     if (target && !ext && Math.abs(camera.aspect - target.width / target.height) > 1e-6) { camera.aspect = target.width / target.height; camera.updateProjectionMatrix(); }
     setLogDepthFar(camera.far);
+    setLayerCamera(camPos);
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
@@ -415,6 +420,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const segWas = lod.segments; if (seamsDebug) material.userData.uSeg.value = lod.segments;
     if (own.governor && governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); }
     if (atmos) atmos.setClear(cloudClear(alt)); // T-0041 fade: in-page and standalone (T-0056). Orbit stays closed; 3000 m is already open.
+    if (layerTier >= 0 && layerTier !== GOVERNOR.tier) { layerTier = GOVERNOR.tier; void startPlanetLayers(planet, layerTier, layerDay); }
     if (atmos && atmos.tier !== GOVERNOR.tier) atmos.setTier(GOVERNOR.tier); // resolution + atmosphere samples follow the tier now (cheap uniforms)
     if (lodTier !== worldTier()) { lodTier = worldTier(); lod = globeLod(); } // tile resolution/split/caps once the new tier has held (no rebuild per step)
     if (shot && lod.segments !== segWas) console.log(`SEGMENTS ${segWas} -> ${lod.segments} at frame ${frame} (tier ${GOVERNOR.tier}, world tier ${GOVERNOR.worldTier})`);

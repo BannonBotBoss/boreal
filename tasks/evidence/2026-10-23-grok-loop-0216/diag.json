@@ -1,0 +1,148 @@
+[
+  {
+    "name": "close-deer",
+    "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&timescale=0.05&at=66.27,27,3.14159",
+    "animals": [
+      {
+        "kind": "deer",
+        "key": "1:0:1",
+        "x": 62.16,
+        "z": 7.44,
+        "ox": null,
+        "oy": null,
+        "oz": null,
+        "visible": null
+      },
+      {
+        "kind": "person",
+        "key": "1:0:6",
+        "x": 68.57,
+        "z": 29.07,
+        "ox": 68.57,
+        "oy": 5.7,
+        "oz": 29.07,
+        "visible": true
+      },
+      {
+        "kind": "deer",
+        "key": "1:0:15",
+        "x": 49.65,
+        "z": 18.16,
+        "ox": null,
+        "oy": null,
+        "oz": null,
+        "visible": null
+      },
+      {
+        "kind": "deer",
+        "key": "1:0:34",
+        "x": 66.27,
+        "z": 30.91,
+        "ox": null,
+        "oy": null,
+        "oz": null,
+        "visible": null
+      }
+    ],
+    "player": {
+      "x": 66.27,
+      "z": 27.000000002015113,
+      "yaw": 3.14159,
+      "energy": 74.9983210855828,
+      "water": 99.99933717857903,
+      "mode": "walk"
+    },
+    "queued": 152,
+    "jobsRun": 488,
+    "kinds": {
+      "flora": {
+        "slices": 146,
+        "maxSlice": 10.3,
+        "dones": 1
+      },
+      "chunk": {
+        "slices": 332,
+        "maxSlice": 25.3,
+        "dones": 1
+      },
+      "grass": {
+        "slices": 8,
+        "maxSlice": 5.6,
+        "dones": 0
+      }
+    }
+  },
+  {
+    "name": "side-deer",
+    "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&stages=1&rec&timescale=0.05&at=62.27,28.91,-1.5708",
+    "animals": [
+      {
+        "kind": "deer",
+        "key": "1:0:1",
+        "x": 62.16,
+        "z": 7.44,
+        "ox": null,
+        "oy": null,
+        "oz": null,
+        "visible": null
+      },
+      {
+        "kind": "person",
+        "key": "1:0:6",
+        "x": 68.57,
+        "z": 29.07,
+        "ox": 68.57,
+        "oy": 5.7,
+        "oz": 29.07,
+        "visible": true
+      },
+      {
+        "kind": "deer",
+        "key": "1:0:15",
+        "x": 49.65,
+        "z": 18.16,
+        "ox": null,
+        "oy": null,
+        "oz": null,
+        "visible": null
+      },
+      {
+        "kind": "deer",
+        "key": "1:0:34",
+        "x": 66.27,
+        "z": 30.91,
+        "ox": null,
+        "oy": null,
+        "oz": null,
+        "visible": null
+      }
+    ],
+    "player": {
+      "x": 62.269999999950365,
+      "z": 28.91,
+      "yaw": -1.5708,
+      "energy": 74.99643230686345,
+      "water": 99.99859150448043,
+      "mode": "walk"
+    },
+    "queued": 145,
+    "jobsRun": 486,
+    "kinds": {
+      "flora": {
+        "slices": 146,
+        "maxSlice": 7.9,
+        "dones": 1
+      },
+      "chunk": {
+        "slices": 333,
+        "maxSlice": 11.1,
+        "dones": 1
+      },
+      "grass": {
+        "slices": 5,
+        "maxSlice": 6,
+        "dones": 0
+      }
+    }
+  }
+]

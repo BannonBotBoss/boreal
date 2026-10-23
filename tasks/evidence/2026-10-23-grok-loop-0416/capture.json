@@ -1,0 +1,100 @@
+{
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "shots": [
+    "lily-stand.png",
+    "lily-close.png",
+    "bunchberry-close.png",
+    "juniper-stand.png",
+    "juniper-close.png"
+  ],
+  "pages": [
+    {
+      "name": "woodlily",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=155.04,40.2,0",
+      "flora": {
+        "info": {
+          "tiles": 0,
+          "plants": 0,
+          "visible": 0,
+          "clumps": 0,
+          "clumpsVisible": 0,
+          "bySpecies": {},
+          "sliceMaxMs": 0,
+          "buildMaxMs": 0,
+          "geometries": 128
+        },
+        "view": {
+          "x": 155.04,
+          "y": 0.7,
+          "z": 38.419999999999995,
+          "yaw": 0,
+          "pitch": -0.5
+        },
+        "density": 6,
+        "bloomAll": false
+      }
+    },
+    {
+      "name": "bunchberry",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=124.78,42.2,0",
+      "flora": {
+        "info": {
+          "tiles": 0,
+          "plants": 0,
+          "visible": 0,
+          "clumps": 0,
+          "clumpsVisible": 0,
+          "bySpecies": {},
+          "sliceMaxMs": 0,
+          "buildMaxMs": 0,
+          "geometries": 128
+        },
+        "view": {
+          "x": 124.78,
+          "y": 0.55,
+          "z": 40.02,
+          "yaw": 0,
+          "pitch": -0.55
+        },
+        "density": 6,
+        "bloomAll": false
+      }
+    },
+    {
+      "name": "juniper",
+      "url": "http://127.0.0.1:5173/?nomenu&bench&hour=12&at=145.16,212.5,0",
+      "flora": {
+        "info": {
+          "tiles": 1,
+          "plants": 81,
+          "visible": 73,
+          "clumps": 17,
+          "clumpsVisible": 11,
+          "bySpecies": {
+            "twinflower": 2,
+            "bunchberry": 14,
+            "rose": 2,
+            "strawberry": 11,
+            "everlasting": 4,
+            "blueberry": 35,
+            "juniper": 5
+          },
+          "sliceMaxMs": 3.599999999976717,
+          "buildMaxMs": 0.30000000004656613,
+          "geometries": 128
+        },
+        "view": {
+          "x": 145.16,
+          "y": 1.15,
+          "z": 210.89000000000001,
+          "yaw": 0,
+          "pitch": -0.4
+        },
+        "density": 6,
+        "bloomAll": false
+      }
+    }
+  ]
+}

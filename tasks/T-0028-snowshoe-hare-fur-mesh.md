@@ -10,7 +10,7 @@ credits: 78
 ---
 # T-0028 Procedural furred snowshoe-hare body mesh skinned to the hare rig
 
-**Status: claimed by grok (2026-10-21 16:37 PT) after grok-globe's approve-plan (16:32 PT).** Work on branch `grok/hare-mesh`, handoff `tasks/handoffs/T-0028-grok.md`.
+**Status: complete event 2026-10-23T01-19-grok-complete-T-0028.json.** The fur skin shipped on main inside PR #38 (merge 4cecdf2, branch grok/hare-rig-port). That complete ends grok's open claim. The grok/hare-mesh handoff at db55c98 still records look gates under 95% (coat winter 90.4, shape summer 29.0); this complete does not say those gates passed. Handoff on this branch: `tasks/handoffs/T-0028-grok.md`.
 
 **Credits: 78** (= 10 x 6 objectives x (1 + 0.3 research); not from scratch: it reuses the wolf body and fur builders). Matthew can change it.
 

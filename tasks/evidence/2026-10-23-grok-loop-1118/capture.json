@@ -1,0 +1,12 @@
+{
+  "status": "12:00 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus\n0 remembered · 0 friends · 0 herbs",
+  "footer": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls",
+  "buttons": "W / S move · A / D steer · Shift run · C stealth · F focus · Space jump · E interact · T clock · Controls: Esc → Controls\nMenu\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls",
+  "menu": "Boreal\nContinue\nNew world\nControls\nMusic\nGraphics\nBoard ↗\nQuit",
+  "photoOn": "PHOTO MODE · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · wheel zoom · click focus · , . step · K play · L live · F photo · R video · B sequence · H panel · P/Esc exit",
+  "photoHints": "PHOTO MODE · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · wheel zoom · click focus · , . step · K play · L live · F photo · R video · B sequence · H panel · P/Esc exit",
+  "playMad": 118.584,
+  "photoMad": 2.462,
+  "ms": 70266,
+  "errors": []
+}

@@ -1,0 +1,252 @@
+{
+  "seed": 1400,
+  "grid": {
+    "n": 256,
+    "cell": 30,
+    "worldM": 7680,
+    "reliefM": 50,
+    "k": 8.0477,
+    "water": -0.25
+  },
+  "terrain": {
+    "landFrac": 0.729,
+    "slopeMean": 0.0779,
+    "slopeP50": 0.0701,
+    "slopeP90": 0.1451,
+    "slopeP99": 0.2069,
+    "fracSteeperThan0129": 0.154,
+    "landP99AboveWater": 51.42,
+    "localRelief1kmP50": 46.02,
+    "localRelief1kmP90": 60.95,
+    "residualRm": 0.0113,
+    "residualP05": -0.0193,
+    "residualP95": 0.019,
+    "fineSlopeDegP50": 2.25,
+    "coarseSlopeDegP50": 2.2,
+    "samples": {
+      "flat": {
+        "x": 148,
+        "z": 64,
+        "y": 4.54,
+        "deg": 1.03
+      },
+      "slopeView": {
+        "x": 68,
+        "z": 40,
+        "y": 4.37,
+        "deg": 10.18
+      },
+      "shore": {
+        "x": 40,
+        "z": 56,
+        "y": -0.09,
+        "deg": 5.95
+      }
+    }
+  },
+  "sun": {
+    "day": 227,
+    "lat": 49.5,
+    "site": {
+      "lat": 49.79,
+      "lon": -94.36,
+      "tz": -6,
+      "elevation": 410
+    },
+    "declGame": 14.301,
+    "declSpencer": 14.301,
+    "noonGame": 54.801,
+    "noonIndep": 54.801,
+    "noonPinnedDay227": 54.801,
+    "winterDay355Game": 17.08,
+    "winterDay355Spencer": 17.08,
+    "lowSun": {
+      "hour": 6.75,
+      "el": 18.1,
+      "az": 89
+    },
+    "hours": [
+      {
+        "hour": 5,
+        "gameEl": 1.43,
+        "indepEl": 1.43,
+        "az": 69.4,
+        "civilZenith": 91.73,
+        "civilEl": -1.73,
+        "sunRgb": [
+          1,
+          0.164,
+          0.003
+        ],
+        "shortwave": 1.9
+      },
+      {
+        "hour": 6,
+        "gameEl": 10.83,
+        "indepEl": 10.83,
+        "az": 80.6,
+        "civilZenith": 82.6,
+        "civilEl": 7.4,
+        "sunRgb": [
+          1,
+          0.708,
+          0.33
+        ],
+        "shortwave": 94.6
+      },
+      {
+        "hour": 7,
+        "gameEl": 20.53,
+        "indepEl": 20.53,
+        "az": 91.9,
+        "civilZenith": 73.04,
+        "civilEl": 16.96,
+        "sunRgb": [
+          1,
+          0.86,
+          0.616
+        ],
+        "shortwave": 254.9
+      },
+      {
+        "hour": 8,
+        "gameEl": 30.16,
+        "indepEl": 30.16,
+        "az": 103.9,
+        "civilZenith": 63.4,
+        "civilEl": 26.6,
+        "sunRgb": [
+          1,
+          0.922,
+          0.771
+        ],
+        "shortwave": 426.4
+      },
+      {
+        "hour": 9,
+        "gameEl": 39.26,
+        "indepEl": 39.26,
+        "az": 117.8,
+        "civilZenith": 54.11,
+        "civilEl": 35.89,
+        "sunRgb": [
+          1,
+          0.954,
+          0.858
+        ],
+        "shortwave": 582.8
+      },
+      {
+        "hour": 12,
+        "gameEl": 54.8,
+        "indepEl": 54.8,
+        "az": 180,
+        "civilZenith": 35.78,
+        "civilEl": 54.22,
+        "sunRgb": [
+          1,
+          0.982,
+          0.943
+        ],
+        "shortwave": 812.9
+      },
+      {
+        "hour": 16,
+        "gameEl": 30.16,
+        "indepEl": 30.16,
+        "az": 256.1,
+        "civilZenith": 56.5,
+        "civilEl": 33.5,
+        "sunRgb": [
+          1,
+          0.922,
+          0.771
+        ],
+        "shortwave": 426.4
+      },
+      {
+        "hour": 18,
+        "gameEl": 10.83,
+        "indepEl": 10.83,
+        "az": 279.4,
+        "civilZenith": 75.62,
+        "civilEl": 14.38,
+        "sunRgb": [
+          1,
+          0.708,
+          0.33
+        ],
+        "shortwave": 94.6
+      },
+      {
+        "hour": 19,
+        "gameEl": 1.43,
+        "indepEl": 1.43,
+        "az": 290.6,
+        "civilZenith": 85.13,
+        "civilEl": 4.87,
+        "sunRgb": [
+          1,
+          0.164,
+          0.003
+        ],
+        "shortwave": 1.9
+      },
+      {
+        "hour": 20,
+        "gameEl": -7.29,
+        "indepEl": -7.29,
+        "az": 302.2,
+        "civilZenith": 94.11,
+        "civilEl": -4.11,
+        "sunRgb": [
+          1,
+          0.04,
+          0
+        ],
+        "shortwave": 0
+      }
+    ]
+  },
+  "physics": {
+    "g": 9.8203,
+    "speeds": [
+      {
+        "mode": "walk",
+        "v": 2,
+        "froude": 0.741,
+        "gait": "trot",
+        "duty": 0.45
+      },
+      {
+        "mode": "run",
+        "v": 6,
+        "froude": 6.665,
+        "gait": "gallop",
+        "duty": 0.27
+      },
+      {
+        "mode": "sprint",
+        "v": 10.5,
+        "froude": 20.412,
+        "gait": "gallop",
+        "duty": 0.17
+      },
+      {
+        "mode": "stealth",
+        "v": 0.8,
+        "froude": 0.118,
+        "gait": "walk",
+        "duty": 0.65
+      }
+    ],
+    "jump": {
+      "seconds": 0.85,
+      "air": 0.552,
+      "apex": 0.375,
+      "arcApex": 0.878,
+      "launch": 4.174
+    },
+    "hip": 0.55
+  }
+}

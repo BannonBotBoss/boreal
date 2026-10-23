@@ -51,3 +51,11 @@ Cloud deck and landing view (T-0041)
   leg occlusion: always look at the stills too.
 - ?at=x,z,yaw spawns exactly (no dry search); use it to check computed spots in the browser. The ascend + zoomTo path from an ?at
   load does not descend, and a bare load always descends near home.
+
+Globe drag inertia (T-0043)
+- Time-based easing must be frame-rate independent: use three's `THREE.MathUtils.damp(x, target, lambda, dt)`, not a controls'
+  per-frame `dampingFactor` (its tail halves at 2x fps and lags every drag) and never a hand-written decay. lambda = ln(1/rest)/sec.
+- Read the drag in OrbitControls' own angles (`getAzimuthalAngle/getPolarAngle`, wrap the azimuth difference) per unit
+  `rotateSpeed`, mark grab/release with its `start`/`end` events, and stop the coast on every other input path.
+- Verify on any machine with a headless browser: log a dev getter (`globe.coasting`) and the camera direction every rAF, then
+  compare speed ratios with the unit-tested damp curve; screenshots stall frames, so time the coast in a pass without them.

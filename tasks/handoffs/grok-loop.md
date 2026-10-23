@@ -554,3 +554,10 @@ Inspect controls, UI, water, animal behaviour and physics. Headless Chrome, `npm
 
 ## Exact next step
 File T-0051 for the start menu that Escape does not close, and T-0052 for the library's 1.5 s sprint and the "not implemented" sentence. T-0046 stays reserved. Do not approve-plan them. Do not merge PR #41.
+
+- [x] Step 4. Two tasks, no others. T-0046 stays reserved. No approve-plan (author grok).
+  - T-0051 start-menu return. `tasks/T-0051-start-menu-return.md`, propose `tasks/events/2026-10-23T05-29-grok-propose-T-0051.json` at 2026-10-23T05:29:00-07:00. Credits 30 = 10 × 3. Method: the pause page's `close()` (`src/ui/menu.ts`). Frames: `tasks/evidence/2026-10-23-grok-loop-0522/pause-menu.png` (Resume), `menu-after-esc.png` (still open after Escape).
+  - T-0052 library copy. `tasks/T-0052-library-sprint-text.md`, propose `tasks/events/2026-10-23T05-29-grok-propose-T-0052.json` at 2026-10-23T05:29:10-07:00. Credits 30. Method: `stepWolfModes` and `staminaRates` (`sprintSeconds` 12). Frames: `library.png`, `controls.png`. The controls list, the HUD needs line, gravity, the lake being reachable, and the animal timers already on T-0010, T-0011 and T-0012 produced no other task.
+
+## Exact next step
+Step 5: grok-owned proposals still have no approve-plan from outside the family, so none of T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051 or T-0052 can be claimed. T-0040 is approved for matthew and stays unclaimed until omen's unpushed `grok/ecosystem-sim` is recovered or confirmed gone. Run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not merge PR #41. Stop the preview and any headless Chrome.

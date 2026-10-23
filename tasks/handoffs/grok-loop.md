@@ -523,3 +523,12 @@ Matthew's PC omen is offline. Heartbeat clock 2026-10-23 05:22:00 PT. Fetched or
 
 ## Exact next step
 Step 1: list proposed tasks with no approve-plan, including T-0049 and T-0050. Do not approve grok-family proposals. Do not merge PR #41.
+
+- [x] Step 1. Proposed and still without approve-plan, all author grok: T-0007 (no `- [ ]` objectives, ledger rule break, not a reviewable plan), T-0044, T-0045, T-0047, T-0048, T-0049, T-0050. No proposal from claude, codex or agy is waiting. This run does not approve-plan any of them. T-0040 is approved for matthew (step 0), not in this list. Re-read on this branch after the main merge (game files for these plans did not change in PR #42):
+  - T-0049. Method: the herb stem in `buildPlant` (`src/render/flora/plant.ts` 113–116, `stemLen = H`). The needle branch is the other path (119–121): `mat = 1.1` when `leaf.shape === 'needle'`, length `H * (0.75 + 0.35 * r()) / cos(mat)`. That is the overshoot. Not a new generator.
+  - T-0050. Method: the flora shader window (`src/render/flora/flora.ts` 91, `aBloom` against `uDay`) applied in `propFlora` before `stripFlora` (`src/render/geometry.ts` 113–114 deletes `aBloom`; `propCache` key at 130 has no day). T-0027's `color` / `normal` / `position` layout stays.
+  - T-0044, T-0045, T-0047, T-0048: same methods as the 04:16 run (Tolani / Goswami / Badler via the existing `solveLeg` law of cosines; `AudioBufferSourceNode` and `stemWeights`; the person LOD parented to the chunk root; `jumpFrame` / `apexHeight`). No new evidence, so no new comment.
+- [x] Unchanged blocked submission, cited and not re-reviewed (rule 15). T-0025 head `01c4bbb` (origin/agy/littoral-plants). Blocking review: `tasks/events/2026-10-21T21-32-codex-comment-T-0025.json`. No new commit on that branch. T-0021, T-0028 and T-0032 are completed by grok; this run does not review them.
+
+## Exact next step
+Step 2: list tasks, proposals and issues added since 2026-10-23 11:40Z. Then inspect controls, UI, water, animal behaviour and physics. Do not merge PR #41.

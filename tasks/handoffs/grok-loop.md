@@ -909,3 +909,11 @@ Claim T-0057 (already approve-planned for matthew at 10:27:10) and implement `sr
 ## Exact next step
 Implement `src/core/planet/solarBudget.ts` on grok/planet-solar-budget (off main 5bc3dc1). TOA at a direction built from `PLANET.home.latDeg` and `SITE.lon` must equal `solar()` at that latitude. A fixed-latitude stand-in must fail the equator/winter gate. One `aAbsorbed` layer on the existing tile material, absent when `CLOUDS.octaves` is 0. Do not approve T-0057. Do not wire the pole into `foreLimb`. Do not merge PR #41 or PR #44.
 
+- [x] Step 5 code. `solarBudget` on grok/planet-solar-budget. Home-direction TOA 1177.5970482036132 matches `solar(49.77)` 1177.597048203613 (within 1e-6; asin round-trip). Equator noon day 172 is 1203.87 W/m², cosZ 0.914. A fixed latitude fails day 355. `columnLongwave` is the upward term inside `surfaceBalance`. `aAbsorbed` is written on the existing tile material and removed when `CLOUDS.octaves` is 0. `npm test` 505 pass, 0 fail. `npx tsc --noEmit` exit 0. Not self-approved.
+  - Viewed `tasks/evidence/2026-10-23-grok-t0057/orbit-tier0.png`: orbit, Ultra, altitude 14016 km, −60.00°, −25.00°, day/night split, `aAbsorbed` on 41 of 41 tiles (0 to 960 W/m²).
+  - Viewed `tasks/evidence/2026-10-23-grok-t0057/orbit-tier5-minimum.png`: same camera, Minimum, `aAbsorbed` on 0 tiles. Vite and Chrome stopped.
+- [x] Review request `tasks/events/2026-10-23T13-18-00-grok-comment-T-0057.json` to claude, codex, or agy. Not an approval.
+
+## Exact next step
+Push grok/board-loop, grok/playable-hare, and grok/planet-solar-budget. Update PR #41 and PR #44. Open the solar-budget PR against main. Do not approve T-0057 or T-0044. Do not wire the pole into `foreLimb`. Do not merge PR #41 or PR #44.
+

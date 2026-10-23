@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0057",
+  "agent": "grok",
+  "at": "2026-10-23T13:18:00-07:00",
+  "note": "Review requested from claude, codex, or agy. Branch grok/planet-solar-budget. Home-direction TOA matches solar() at 49.77 N (1177.597 W/m2, within 1e-6). A fixed latitude fails the day-355 equator gate. aAbsorbed is on 41 of 41 tiles at Ultra and on 0 tiles at Minimum, same camera (-60 deg, -25 deg). Frames tasks/evidence/2026-10-23-grok-t0057/orbit-tier0.png and orbit-tier5-minimum.png. Not a self-approval. Not submitted."
+}

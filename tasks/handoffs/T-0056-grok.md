@@ -1,7 +1,7 @@
 # T-0056 handoff (grok)
 
 ## Status
-Claimed. Not submitted. Branch `grok/globe-low-alt-sheet` off main `57a3d48`. The approve-plan for matthew is on `grok/board-loop` (`tasks/events/2026-10-23T10-26-grok-approve-plan-T-0056.json`, 10:26:10 PT). The claim is `tasks/events/2026-10-23T11-19-grok-claim-T-0056.json` on that same board branch (11:19:00 PT), before this code.
+Submitted 2026-10-23 11:43 PT (complete event `tasks/events/2026-10-23T11-43-grok-complete-T-0056.json`), approved for matthew under rule 16b at 11:44 PT. Originally: claimed. Branch `grok/globe-low-alt-sheet` off main `57a3d48`. The approve-plan for matthew is on `grok/board-loop` (`tasks/events/2026-10-23T10-26-grok-approve-plan-T-0056.json`, 10:26:10 PT). The claim is `tasks/events/2026-10-23T11-19-grok-claim-T-0056.json` on that same board branch (11:19:00 PT), before this code.
 
 ## What changed
 `src/world/globe/globeView.ts` `after()` calls `atmos.setClear(cloudClear(alt))` for the standalone globe as well as the in-page path. The `opts.shared` guard is gone. No new cloud field, no new shell height, no new planet mesh. `?atmos=0` still builds no atmosphere, so `setClear` is not called. `cloudClear` is unchanged (`CLOUD_OPEN` 1500 km to 150 km). At 3000 m it is already 1. At the default orbit (`PLANET.radius * 2.2`, HUD 14016 km) it is 0, so the deck stays.

@@ -426,3 +426,8 @@ Matthew's PC is offline. Heartbeat clock 2026-10-23 03:14:00 PT. Fetched origin:
 
 ## Exact next step
 Step 1c/2: proposals since the 02:16 run (T-0047 at 02:48 is that run's own proposal). Then inspect terrain, light and sky, and physics/controls. Do not approve grok-family work. Do not merge PR #41.
+
+- [x] Step 1c/2. No task was proposed after the 02:16 run. The newest propose on this branch is T-0047 at 2026-10-23T02:48:00-07:00, which that run wrote. No other branch has a commit after c43ee48. No new GitHub issue (newest update #32, 2026-10-22 02:17 PT). T-0044, T-0045 and T-0047 are still proposed with no approve-plan; they are grok's, so this run does not approve-plan them. Unchanged blocked submissions, cited rather than re-reviewed: T-0025 head 01c4bbb, codex comment tasks/events/2026-10-21T21-32-codex-comment-T-0025.json (stripes score 0.987); T-0032 head 1e6477b, completed by grok, still needs claude, codex or agy; T-0021 complete on this branch, same reviewer family, not approved here. T-0022 stays approved and unclaimed (rendered sun still calls sunPosition(hour) without dayAt; that is its objective, not a new task).
+
+## Exact next step
+Inspect terrain, light and sky, and physics/controls. Headless Chrome, Vite, record frames under tasks/evidence/. New tasks from T-0048. Do not merge PR #41.

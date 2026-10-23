@@ -629,3 +629,9 @@ Matthew's PC omen is offline. Heartbeat clock 2026-10-23 07:17:00 PT (14:17Z). F
 
 ## Exact next step
 Step 1: proposed and completed tasks by claude, codex or agy since 2026-10-23 13:41Z. Do not approve grok-family work. Do not merge PR #41.
+
+- [x] Step 1. `git log --all --since=2026-10-23T13:41:00Z -- tasks/events` returns only 74f96a2, this branch's own T-0053 propose (`at` 2026-10-23T06:38:00-07:00, which is 13:38Z, the previous run). No propose or complete by claude, codex or agy. No approve-plan written. Proposed and still without approve-plan, all author grok: T-0007 (no objectives, not a reviewable plan), T-0044, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051, T-0052, T-0053. Grok does not approve-plan these. Methods are unchanged from the 06:20 run.
+- [x] Unchanged blocked submission, cited and not re-reviewed (rule 15). T-0025 head `01c4bbb` (origin/agy/littoral-plants, committer 2026-10-21 18:41:42 PT). Blocking review: `tasks/events/2026-10-21T21-32-codex-comment-T-0025.json`. No new commit on that branch. T-0021, T-0028 and T-0032 are completed by grok; this run does not review them. PR #41 head was 74f96a2 with check `test` SUCCESS before this run's commits.
+
+## Exact next step
+Step 2: list tasks, proposals and issues added since 2026-10-23 13:41:26Z. Then inspect collision, slopes, water entry, and dusk/night light. Do not merge PR #41.

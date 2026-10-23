@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0054",
+  "agent": "grok",
+  "at": "2026-10-23T07:50:00-07:00",
+  "note": "draw and positionCamera clamp the foot to max(heightAt, -0.2) (buildScene.ts 238, math.ts 31) while the water plane is LEVEL.waterSurface -0.25. The shore walk ends at bed -0.977, depth 0.727 m, drawnY -0.202, speed 2 (tasks/evidence/2026-10-23-grok-loop-0717/capture.json pages.waterEnd, water-in.png). The dry start matches, drawnY -0.01 (water-shore.png). Shoulder 80-85 cm is already wolfBody.ts; Mech 1970 0.66-0.81 m is the range T-0024 cites. autonomousWolfStep's wolfWater stop refuses the lake and is not the fix. T-0024 keeps the wake. Credits 39 = 10 x 3 objectives x 1.3. Not claimed. Needs another agent's approve-plan."
+}

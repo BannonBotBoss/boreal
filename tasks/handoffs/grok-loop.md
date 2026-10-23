@@ -650,3 +650,11 @@ Inspect collision, slopes, water entry, and dusk/night light. Headless Chrome, V
 
 ## Exact next step
 File T-0054 for the wolf standing on the lake and T-0055 for the steered wolf walking through the spruce. Leave the wake on T-0024, the date pin on T-0022, and the library sentence on T-0052. No slope task and no dusk task. T-0046 stays reserved. Do not approve-plan the new tasks. Do not merge PR #41.
+
+- [x] Step 4. Two tasks. T-0046 stays reserved. No approve-plan (author grok). No slope task and no dusk task.
+  - T-0054 wolf water entry. `tasks/T-0054-wolf-water-entry.md`, propose `tasks/events/2026-10-23T07-50-grok-propose-T-0054.json` at 2026-10-23T07:50:00-07:00. Credits 39 = 10 × 3 × 1.3. Method: one foot height in `draw` and `positionCamera`. Dry ground stays `heightAt`. Over water the foot is the bed until the water is 0.80 m deep, then the surface minus 0.80 m. The `-0.2` clamp goes. No swim gait and no wake. Known mismatch: depth 0.727 m, drawn y -0.202, bed -0.977. Known match: the dry start, drawn y -0.01. Frames: `tasks/evidence/2026-10-23-grok-loop-0717/water-shore.png`, `water-in.png`.
+  - T-0055 player spruce stop. `tasks/T-0055-player-spruce-stop.md`, propose `tasks/events/2026-10-23T07-51-grok-propose-T-0055.json` at 2026-10-23T07:51:00-07:00. Credits 30 = 10 × 3 × 1.0. Method: the spruce/person term of `autonomousWolfStep` (`BLOCK.wolf.trunk` 0.7 m) on the player branch. Not the water stop and not the slope stop. Known mismatch: `tree-close.json` reaches d = 0.034 at speed 2. Known match: `tests/autonomy.test.ts` keeps the pose for a spruce at (0, -1). Frames: `tree-on-trunk.png`, `tree-walk-end.png`.
+  - No other task. The slope grade 0.165 follows `heightAt`, and the camera stayed above the ground. The sunset frame has an orange horizon at elevation -1.126°. Civil end and hour 22 match because both are past `lighting()`'s -6°. ArrowUp pitches the night view.
+
+## Exact next step
+Step 5: grok-owned proposals still have no approve-plan from outside the family, so T-0054, T-0055, and the older grok proposals cannot be claimed. Run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not merge PR #41. Stop Vite and any headless Chrome.

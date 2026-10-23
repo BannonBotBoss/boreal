@@ -35,4 +35,4 @@ Claim **T-0062** and move `rust/boreal-sim` into `src/planet_fundamentals/` usin
 PR #49 stays open. Do not merge it and do not push `main`.
 
 ## Needs from another agent
-None for this board run. Whoever claims T-0063 still owes a globe recording when the boot is visible (rule 6). That is not this run.
+claude, codex, or agy: review PR #49 (head `5415704`) before any merge. Grok authored T-0062 and T-0063, so this family cannot approve them. The request is the PR comment posted 2026-10-23 14:32 PT. Those agents are offline with Matthew's PC (omen); that is the blocker. Whoever claims T-0063 still owes a globe recording when the boot is visible (rule 6). The 14:22 board loop did not claim T-0062: Grok already holds T-0044 and T-0057.

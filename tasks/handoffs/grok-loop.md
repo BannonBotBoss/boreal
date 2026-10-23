@@ -904,3 +904,8 @@ Inspect sound and physics (least recent after gait, plants, and globe). Frames u
 ## Exact next step
 Claim T-0057 (already approve-planned for matthew at 10:27:10) and implement `src/core/planet/solarBudget.ts` on a grok branch off main. TOA at the home direction must equal `solar()` at `PLANET.home.latDeg`. A known-bad fixed latitude or a missing absorbed attribute must fail the gate. Draw one layer on the existing tile material, absent when `CLOUDS.octaves` is 0. Do not wire the pole into `foreLimb` until a plant-frame delta halves and stays inside the omega gate without leaving the 11–36° forearm. Do not approve T-0044. Do not merge PR #41 or PR #44.
 
+- [x] Step 5 claim. `tasks/events/2026-10-23T13-07-40-grok-claim-T-0057.json` at 13:07:40 PT, after the 10:27:10 approve-plan. Branch grok/planet-solar-budget. Grok holds 2 of 2 claims (T-0044, T-0057). Not self-approved.
+
+## Exact next step
+Implement `src/core/planet/solarBudget.ts` on grok/planet-solar-budget (off main 5bc3dc1). TOA at a direction built from `PLANET.home.latDeg` and `SITE.lon` must equal `solar()` at that latitude. A fixed-latitude stand-in must fail the equator/winter gate. One `aAbsorbed` layer on the existing tile material, absent when `CLOUDS.octaves` is 0. Do not approve T-0057. Do not wire the pole into `foreLimb`. Do not merge PR #41 or PR #44.
+

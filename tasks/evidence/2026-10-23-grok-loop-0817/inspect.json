@@ -1,0 +1,107 @@
+{
+  "shots": [
+    {
+      "name": "terrain-ahead",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=144,236,-1.571",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 fr",
+      "x": 143.9999999982024,
+      "z": 236,
+      "yaw": -1.571,
+      "cam": {
+        "x": 141,
+        "y": 5.214,
+        "z": 235.999
+      },
+      "body": {
+        "y": 3.614
+      }
+    },
+    {
+      "name": "terrain-down",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=144,236,-1.571",
+      "status": "12:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 fr",
+      "x": 143.99999999809634,
+      "z": 236,
+      "yaw": -1.571,
+      "cam": {
+        "x": 141,
+        "y": 5.214,
+        "z": 235.999
+      },
+      "body": {
+        "y": 3.614
+      }
+    },
+    {
+      "name": "plants-outcrop",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=152,208,0",
+      "status": "12:08 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 fr",
+      "x": 152,
+      "z": 208.00000004028445,
+      "yaw": 0,
+      "cam": {
+        "x": 152,
+        "y": 7.475,
+        "z": 211
+      },
+      "body": {
+        "y": 5.875
+      }
+    },
+    {
+      "name": "plants-forest",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=12&at=148,64,0",
+      "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 fr",
+      "x": 148,
+      "z": 64.00000004302707,
+      "yaw": 0,
+      "cam": {
+        "x": 148,
+        "y": 6.14,
+        "z": 67
+      },
+      "body": {
+        "y": 4.54
+      }
+    },
+    {
+      "name": "sun-level",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=7&at=200,250,-1.6031",
+      "status": "07:09 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 fr",
+      "x": 199.9999999976249,
+      "z": 249.99999999992247,
+      "yaw": -1.6031,
+      "cam": {
+        "x": 197.002,
+        "y": 2.112,
+        "z": 249.903
+      },
+      "body": {
+        "y": 0.512
+      }
+    },
+    {
+      "name": "sun-up",
+      "href": "http://127.0.0.1:5173/?nomenu&bench&rec&stages=1&walkprobe&hour=7&at=200,250,-1.6031",
+      "status": "07:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus0 remembered · 0 fr",
+      "x": 199.99999999721973,
+      "z": 249.9999999999094,
+      "yaw": -1.6031,
+      "cam": {
+        "x": 197.002,
+        "y": 2.112,
+        "z": 249.903
+      },
+      "body": {
+        "y": 0.512
+      }
+    }
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

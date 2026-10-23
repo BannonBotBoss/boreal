@@ -1,0 +1,29 @@
+{
+  "sourceCommit": "f37a6da",
+  "note": "Board commits after f37a6da do not change src. Canvas screenshots exclude the HTML HUD. Status clocks are the DOM text in inspect.json. No date jump. ?hour= sets the dial (initDay) and the world then runs.",
+  "viewport": [960, 540],
+  "fovDeg": { "vertical": 48, "horizontal": 76.724 },
+  "day": 227,
+  "latitude": 49.5,
+  "convention": "sunPosition is local solar hour, Spencer 1971 declination at noon, 49.5 N. weather.solar is civil time. sky.update passes hour only, so the rendered sun stays on DAY_OF_YEAR (T-0022).",
+  "pixels": {
+    "terrain-ahead": { "lowerGreen": 0.01, "lowerOrange": 0.01, "core250": null },
+    "terrain-down": { "lowerGreen": 0.666, "lowerOrange": 0.01, "lowerWhite240": 0, "core250": null },
+    "plants-outcrop": { "lowerGreen": 0.037, "lowerOrange": 0.045, "core250": null },
+    "plants-forest": { "lowerGreen": 0.557, "lowerOrange": 0.013, "core250": null },
+    "sun-level": { "lowerGreen": 0.027, "core250": null },
+    "sun-up": { "lowerGreen": 0.025, "core250": { "n": 100, "cx": 499.1, "cy": 245.5, "peak": [497, 241] } }
+  },
+  "madRgb": { "terrainAheadVsDown": 124.088, "sunLevelVsUp": 57.543 },
+  "sunGate": {
+    "metric": "centroid of canvas pixels with min(R,G,B)>=250, versus the screen point from sunPosition at the HUD minute, yaw fixed at the hour-7 azimuth, look elevation +20 deg after a full ArrowUp, vertical FOV 48 deg",
+    "hud": "07:10",
+    "hour": 7.1667,
+    "localSolar": { "elevation": 22.152, "azimuth": 93.786 },
+    "aimAzimuth": 91.854,
+    "predicted": { "x": 504.2, "y": 245.8 },
+    "observed": { "x": 499.1, "y": 245.5, "n": 100 },
+    "errorDeg": { "azimuth": -0.405, "elevation": 0.026 },
+    "knownMismatch": "weather.solar civil elevation 18.574 deg at the same minute would sit near y=286, 40 px below the core. That core would miss. Luminance in cd/m2 is not scored: the frame is tonemapped sRGB."
+  }
+}

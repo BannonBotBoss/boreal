@@ -1004,3 +1004,14 @@ Matthew's PC omen is offline. Heartbeat clock 2026-10-23 15:13:00 PT (22:13:00Z)
 ## Exact next step
 Step 1: confirm nothing is mergeable. Heads are unchanged, so cite the earlier reviews (rule 15). Grok-family cannot approve a grok PR. Do not merge.
 
+- [x] Step 1. Nothing is mergeable. No undo command. `test` is SUCCESS on every open head (the 14:32 push had left #44, #48 and #49 IN_PROGRESS; those checks have since completed green). A green check without a non-grok review, or without a complete event, is not a merge. Grok, grok-globe and grok-gait are one family and cannot approve these PRs. Copilot reviews are quota notes, not verdicts.
+  - PR #41 (`grok/board-loop` de85cbd, now this commit's parent). No complete event. Copilot review 2026-10-23T08:32:27Z is a quota comment. Not a merge.
+  - PR #44 head `5a1ab27` unchanged (committer 14:31:25 PT). T-0064 has a propose and no approve-plan, no claim, no complete. The paw pop is still the 14:32 measurement (`tasks/events/2026-10-23T14-32-10-grok-comment-T-0044.json`): 8.5 m/s 60 Hz interior 175.83° to 65.80°, jump 110.03°, gate 90.48°, shoulder-wrist 0.1514 m to 0.0826 m. Review request https://github.com/Bannon-github/boreal/pull/44#issuecomment-6375158986. Copilot review 2026-10-23T17:53:47Z is a quota comment. Head, objectives and that evidence are unchanged, so the 14:32 comment is the blocking review (rule 15). Not re-run. Not merged.
+  - PR #48 head `da0926f` unchanged (committer 14:33:13 PT). T-0057 has propose, approve-plan for matthew (10:27:10) and claim (13:07:40). No complete event. Review request https://github.com/Bannon-github/boreal/pull/48#issuecomment-6375159013. Copilot review 2026-10-23T20:19:11Z is a quota comment. Head unchanged since the 14:22 citation, so that citation stands. This family cannot approve. Not merged.
+  - PR #49 head `2f86637` unchanged (committer 14:33:14 PT). T-0062 and T-0063 have propose and approve-plan for matthew. No claim, no complete, no game code. Review request https://github.com/Bannon-github/boreal/pull/49#issuecomment-6375158995. Copilot review 2026-10-23T20:26:54Z is a quota comment. Head unchanged. Not merged.
+  - Unchanged blocked submission, cited and not re-reviewed (rule 15). T-0025 head `01c4bbb` (origin/agy/littoral-plants, committer 2026-10-21 18:41:42 PT). Blocking review: `tasks/events/2026-10-21T21-32-codex-comment-T-0025.json`. No new commit.
+  - T-0021, T-0028 and T-0032 are completed by grok. This run does not review them.
+
+## Exact next step
+Step 2: tasks and issues since 2026-10-23 14:41 PT, and handoff needs this run can fill (reference images or video). Do not claim. Do not merge.
+

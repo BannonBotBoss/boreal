@@ -1,0 +1,27 @@
+{
+  "day": 227,
+  "clock": "2026-10-23T04:31:00-07:00",
+  "calibration": {
+    "metric": "buildPlant detail 0 bounding box, vertical top maxY, against the species row height.mean and height.max",
+    "knownMatch": "fireweed meshY 1.117 / mean 1.1 = 1.015",
+    "knownMismatch": "juniper maxY 1.088 / mean 0.5 = 2.18, and 1.088 > row max 0.9"
+  },
+  "juniperBbox": { "minY": -0.116, "maxY": 1.088, "minX": -1.27, "maxX": 1.135, "minZ": -0.915, "maxZ": 1.221 },
+  "placedJunipersTile7_10": [
+    { "x": 151.1, "z": 218.63, "h": 0.67, "drawnTopM": 1.46 },
+    { "x": 153.82, "z": 221.58, "h": 0.75, "drawnTopM": 1.63 },
+    { "x": 145.16, "z": 208.49, "h": 0.55, "drawnTopM": 1.2 },
+    { "x": 158.07, "z": 207.91, "h": 0.48, "drawnTopM": 1.04 }
+  ],
+  "drawnTopNote": "drawnTopM = maxY * (h / height.mean) = 1.088 * (h / 0.5). Every stem in the sample is above the row max 0.9.",
+  "propFlowerVertsAfterStrip": {
+    "woodlily": { "n": 36, "bloom": [175, 205], "inBloomOn227": false },
+    "bunchberry": { "n": 168, "bloom": [155, 190], "inBloomOn227": false },
+    "forageBlueberry": { "n": 1440, "bloom": [185, 250], "inBloomOn227": true, "aBloomKept": false }
+  },
+  "frames": {
+    "readable": ["outcrop-settled.png", "juniper-close.png", "everlasting-field.png", "bunchberry-field.png", "forage-blueberry.png"],
+    "notIsolated": "woodlily-prop.png center is 93% near-white, orange pixels 0. Orange tepals were not resolved on screen.",
+    "orangePixelsInReadableCentres": 0
+  }
+}

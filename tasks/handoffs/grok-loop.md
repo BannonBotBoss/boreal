@@ -500,3 +500,26 @@ Run npm test and npx tsc --noEmit. Push only grok/board-loop. Do not merge PR #4
 
 ## Exact next step
 Do not merge grok/board-loop (PR #41). A non-grok agent (claude, codex or agy) reviews the T-0021 complete and the other grok completes still waiting (T-0028, T-0032). Another agent approve-plans T-0044, T-0045, T-0047, T-0048, T-0049 and T-0050. T-0049 uses the herb stem length already in `buildPlant`. T-0050 applies the flora shader's bloom window inside `propFlora` before `stripFlora`. grok-globe claims T-0043 on grok-globe/globe-inertia. Expired claims, unchanged: T-0005 release or complete against the seating on main; T-0023 the rest of the mirror excess; T-0027 a new complete that names agy/forage-flora. T-0046 stays reserved.
+
+## Matthew requests
+Open until the named task is merged. A row is here only when the quote is in an event, a task file, or the codex snapshot of an unpushed branch.
+
+- 2026-10-22 23:25 PT, "Fix the paw pop before merging" → T-0044, proposed, not merged. PR #38 merged without the fix (4cecdf2).
+- 2026-10-22 01:57 PT, "siince the ecosystem depend on a lot more animals, they should be implemented without needing a visual rendering" → T-0040. The files were only on unpushed grok/ecosystem-sim. Restored this run (propose + approve-plan for matthew). Not merged. Not claimed here.
+- 2026-10-22 ~01:50 PT, "so, i should be able to access the board via a weblink that appears in the start menu" → T-0038, approved, not complete. The menu Board button opens `SYSTEM_PROPERTIES.links.board`, which is the GitHub issues URL. Mapped. No second task.
+
+Merged, so closed on this list: T-0033 music, T-0034 globe load (PR #33), T-0035 outline, T-0036 needs, T-0037 system properties, T-0039 globe HUD, T-0041 descent (PR #35), T-0043 globe coast (PR #42, main 57a3d48, 2026-10-23 04:55 PT).
+
+## Run 2026-10-23 05:22 PT
+Matthew's PC omen is offline. Heartbeat clock 2026-10-23 05:22:00 PT. Fetched origin. main is 57a3d48 (Matthew merged PR #42, T-0043, 2026-10-23 04:55:04 PT). This branch was merged with origin/main so the ledger sees that complete. PR #41 stays open. Do not merge it.
+
+- [x] Step 0 heartbeat. Ledger replay (`npx tsx tools/tasks.ts`) after the merge: claimed and not complete are T-0005, T-0023, T-0027. No grok or grok-gait claim is open. T-0043 is done (claim 03:49, complete 04:37, approve for matthew 04:39, all on main). Hours are `git log -1` committer time on `origin/<branch>` to 05:22:00 PT. No new stall or expiry event. Same SHA and same EXPIRED band as the 00:30 comments.
+  - T-0005 grok-globe, grok-globe/log-grounding-bark 2b4d462, committer 2026-10-19 11:03:32 PT, 90.31 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-01-grok-comment-T-0005.json stands. Next step: release the claim or complete against the seating already on main. Do not open a second grounding branch.
+  - T-0023 claude, claude/water-optics 95f1d41, committer 2026-10-21 17:34:13 PT, 35.80 h, still EXPIRED. Comment tasks/events/2026-10-23T00-30-03-grok-comment-T-0023.json stands. Next step: tasks/handoffs/T-0023-claude.md exact next step 1 (the rest of the mirror excess). Any agent other than claude may continue; the ledger claim stays claude's until a release.
+  - T-0027 agy, agy/forage-flora 7145ad1, committer 2026-10-21 13:02:57 PT, 40.32 h, still the no-branch complete. Comment tasks/events/2026-10-23T00-30-04-grok-comment-T-0027.json stands. Next step: agy adds a new complete event that names branch agy/forage-flora. Do not rebuild the herbs. Append-only: do not edit the old complete.
+  - grok-gait has no incomplete claim on the ledger. The 2026-10-18 T-0002 claim event names a task file that is not on the board (unknown-task rule break, already in the legacy count).
+  - T-0043 grok-globe, grok-globe/globe-inertia 5b80dfd, committer 2026-10-23 04:42:00 PT, 0.67 h, and the task is done, so it is not a stall.
+- [x] Matthew requests. The handoff had no list. The three open quotes above now map to T-0044, T-0040 and T-0038. Nothing else quoted in the events was missing a task or a PR. T-0040's approve-plan is for matthew (rule 16b), written before any code. Not claimed.
+
+## Exact next step
+Step 1: list proposed tasks with no approve-plan, including T-0049 and T-0050. Do not approve grok-family proposals. Do not merge PR #41.

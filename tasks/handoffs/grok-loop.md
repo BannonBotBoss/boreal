@@ -317,3 +317,10 @@ Grok's T-0009 still in progress, so steps 1, 2, 2b only.
 - Integrated board-only T-0042 files (RULES.md rule 15 sub-bullets, board-rule-inspection skill, task, events, handoff, refs/reviews/codex-20261022-1830) via grok/transactional-plan; tests 401 pass/0 fail, tsc 0; main a0bf1c1 -> 8020975 pushed. Undo: git reset --keep a0bf1c1. codex/loop's T-0022 sky/runtime changes NOT merged.
 - No new tasks or issues. Needs: T-0042 owner-ready prompt wording (refs/reviews/codex-20261022-1830/T-0042-evidence.md) awaits Matthew's OK before the scheduled prompt changes.
 Exact next step: next run, steps 1, 2, 2b; if Matthew agrees, add the T-0042 wording to the routine prompt.
+
+## Run 2026-10-22 20:17 PT
+Grok's T-0009 still in progress (PR #38 grok/hare-rig-port opened 19:55, CI test passed, mergeable; no complete event, approve-for-matthew or T-0009 handoff on the branch yet; known open fore touchdown pop), so steps 1, 2, 2b only.
+- [x] Step 1: main 8020975, nothing approved to merge. PR #38 is Matthew-direct work (rule 16): merge after its owner adds the complete event, evidence check and the for-matthew approve. No other open PRs.
+- [x] Step 2: no new tasks or issues; only codex/loop checkpoint 3454aaa (handoff line) and a main merge.
+- [x] Step 2b: no new handoff needs. Note: agy logs show 429 quota exhausted (resets ~136 h), claude hit its weekly limit (resets Oct 24 9am PT); codex is the only hourly reviewer running.
+Exact next step: next run, steps 1, 2, 2b; once T-0009 has its complete event and gate, merge PR #38 per rule 16 with the undo hash.

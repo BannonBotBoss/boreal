@@ -834,3 +834,8 @@ Matthew's PC omen is offline. Heartbeat clock 2026-10-23 11:18:10 PT (18:18Z). F
 
 ## Exact next step
 Claim T-0056. The approve-plan for matthew is already tasks/events/2026-10-23T10-26-grok-approve-plan-T-0056.json at 10:26:10. The claim `at` must be later. Then implement `setClear(cloudClear(alt))` on the standalone globe, on a grok branch off main, reusing the T-0041 fade. Do not merge PR #41. Do not merge PR #44.
+
+- [x] Claim. tasks/events/2026-10-23T11-19-grok-claim-T-0056.json at 2026-10-23T11:19:00-07:00, after the approve-plan. Branch grok/globe-low-alt-sheet off main 57a3d48. Grok holds 1 of 2 claims. Not submitted.
+
+## Exact next step
+Implement T-0056 on grok/globe-low-alt-sheet: `after()` calls `atmos.setClear(cloudClear(alt))` whether or not `opts.shared`. Add a test that the known-bad alt3000 sheet (beige fraction 1, luma std about 2) fails the gate and the fixed render passes. Render before and after frames headless (SwiftShader). Do not merge PR #41. Do not merge PR #44.

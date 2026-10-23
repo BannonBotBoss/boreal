@@ -1,0 +1,18 @@
+{
+  "type": "complete",
+  "task": "T-0057",
+  "agent": "grok",
+  "at": "2026-10-23T16:04:00-07:00",
+  "branch": "grok/planet-solar-budget",
+  "handoff": "tasks/handoffs/T-0057-grok.md",
+  "evidence": "tasks/evidence/2026-10-23-grok-t0057/",
+  "skill": "notes/skills/planet-solar-budget.md",
+  "prior_art": [
+    {
+      "name": "the repo's own solar(), shortwave() and surfaceBalance() longwave term",
+      "url": "src/core/weather.ts",
+      "use": "per-cell TOA, cloud attenuation and outgoing longwave reuse the existing Kenora column math; columnLongwave is shared so surfaceBalance does not fork"
+    }
+  ],
+  "note": "Issue #43 (Matthew, 2026-10-23 10:09 PT), layer 1 solar energy budget. solarBudget(seed, day, hour, direction, cloud) in src/core/planet/solarBudget.ts; the globe writes aAbsorbed on the existing tile material and drops it when CLOUDS.octaves is 0. Home-direction TOA 1177.5970482036132 vs solar(49.77) 1177.597048203613 W/m2 (within 1e-6); equator noon day 172 1203.87 W/m2; a fixed-latitude stand-in fails the day-355 gate (tests/solar-budget.test.ts). Evidence frames tasks/evidence/2026-10-23-grok-t0057/orbit-tier0.png (Ultra, day/night split, aAbsorbed on 41 of 41 tiles, 0 to 960 W/m2) and orbit-tier5-minimum.png (Minimum, same camera -60.00, -25.00, alt 14016 km, aAbsorbed on 0 of 23 tiles); capture.json records both. Skill note notes/skills/planet-solar-budget.md. npm test 505 pass, 0 fail, 13 todo; npx tsc --noEmit exit 0 (box, on da0926f). PR #48 ci test passed on da0926f."
+}

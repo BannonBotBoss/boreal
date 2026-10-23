@@ -1,0 +1,28 @@
+{
+  "look": "0.4532,-0.8660,-0.2113",
+  "shots": [
+    {
+      "tier": 0,
+      "name": "orbit-tier0.png",
+      "hud": "Boreal planet · seed 1400 (staged)\naltitude 14016 km · ground 4302 m · -60.00°, -25.00°\ntiles drawn 26 (26 in view, cap 160) · culled 9 · cached 40 · deepest L2 · queued 13\nbuild (main-thread) 40 tiles (0 cancelled, 0 waiting) · avg 4.5 ms · p95 8.9 ms · worst frame 20.8 ms\ntier Ultra · 48 seg · 19 fps · shaders 208 ms async · work 5.5 ms\ndrag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game",
+      "attr": {
+        "tiles": 41,
+        "withAttr": 41,
+        "min": 0,
+        "max": 959.8134765625
+      }
+    },
+    {
+      "tier": 5,
+      "name": "orbit-tier5-minimum.png",
+      "hud": "Boreal planet · seed 1400 (staged)\naltitude 14016 km · ground 4302 m · -60.00°, -25.00°\ntiles drawn 17 (17 in view, cap 50) · culled 7 · cached 23 · deepest L1 · queued 0\nbuild (main-thread) 23 tiles (0 cancelled, 0 waiting) · avg 0.6 ms · p95 1.3 ms · worst frame 87.8 ms\ntier Minimum · 16 seg · 37 fps · shaders 217 ms async · work 0.3 ms\ndrag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game",
+      "attr": {
+        "tiles": 23,
+        "withAttr": 0,
+        "min": null,
+        "max": null
+      }
+    }
+  ],
+  "errors": []
+}

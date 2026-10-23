@@ -1,0 +1,28 @@
+{
+  "type": "complete",
+  "task": "T-0043",
+  "agent": "grok-globe",
+  "at": "2026-10-23T04:37:20-07:00",
+  "branch": "grok-globe/globe-inertia",
+  "skill": "url-start-view",
+  "handoff": "tasks/handoffs/T-0043-grok-globe.md",
+  "evidence": "refs/T-0043/",
+  "prior_art": [
+    {
+      "name": "three THREE.MathUtils.damp",
+      "url": "https://threejs.org/docs/#api/en/math/MathUtils.damp",
+      "use": "the whole release coast and the drag-rate smoothing (frame-rate independent)"
+    },
+    {
+      "name": "three OrbitControls",
+      "url": "https://threejs.org/docs/#examples/en/controls/OrbitControls",
+      "use": "the existing drag: getAzimuthalAngle/getPolarAngle, start/end events; its per-frame damping turned off"
+    },
+    {
+      "name": "camera-controls (yomotsu)",
+      "url": "https://github.com/yomotsu/camera-controls",
+      "use": "considered, not a dependency (would replace OrbitControls and the globe's zoom/heading for a feature three already has)"
+    }
+  ],
+  "note": "Matthew, direct chat 2026-10-22 23:37 PT: \"when i grab and rotate the globe, allow it to continue rolling a bit,  say, for 3 seconds\". Done on the box (omen offline). OrbitControls enableDamping off (drag 1:1); three's MathUtils.damp carries the drag rate (OrbitControls' angles per unit rotateSpeed) after release, GLOBE_COAST {sec 3, rest .02, track .05}, lambda ln(50)/3; no hand-written decay. Stops on grab, any click, H, in-page descent, standalone auto handoff, attachInput(false). Measured (box headless Chrome, SwiftShader, ~14 fps, ?view=globe drag-release): globe.coasting true 3.18 s wall = 2.95 s of globe time; speed ratio 2 s/1 s 0.272 vs 0.271 expected. Unit: same speed at 1/2/3 s and distance at 60/144/240 fps, 2 % at 3 s. PR #35 comment follow-ups done. npm test 493 pass / 0 fail, tsc clean. smoke-tiers on the box FAIL on branch and identically on main (software GL; a globeView dynamic-import fetch failure in both); needs an omen GPU run. Risk: drag is now 1:1 with no lag."
+}

@@ -50,7 +50,11 @@ in 0.6 s released while moving; every rAF logs `globe.coasting` and the camera d
 
 ## Checks
 - npm test 493 pass / 0 fail (506 incl. todo/skip); `npx tsc --noEmit` clean.
-- smoke-tiers on the box: see the complete event (software GL; the tool's GPU check fails by design there).
+- smoke-tiers on the box (headless Chrome + SwiftShader via a wrapper that drops the Windows-only --use-angle=d3d11; Node 20 needs
+  --experimental-websocket): **FAIL on the branch and identically on origin/main 2f9011b** (refs/T-0043/smoke-box-*.log): "not on the
+  GPU" (software GL, by design), Ultra/High 2 fps, and one "Failed to fetch dynamically imported module .../globeView.ts" in both runs
+  (the in-page prewarm import; a separate load of the same page logged `INPAGE prewarm` fine at 135 s). Every tier built the world
+  (89-193 draws). Box fps are NOT comparable with omen; re-run smoke-tiers on omen's GPU before merge if the merger wants a PASS.
 
 ## Frame answers (rule 6)
 - grid.jpg / coast-*.jpg: before the drag the lit planet with home's green continent at centre; at release the globe has turned east

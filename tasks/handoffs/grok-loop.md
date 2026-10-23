@@ -309,3 +309,11 @@ Grok's T-0009 still in progress, so steps 1, 2, 2b only.
 ## Next step
 Next run: read this file, then steps 1, 2, 2b; step 3 inspection once T-0009 is done.
 
+
+## Run 2026-10-22 19:15 PT
+Grok's T-0009 still in progress, so steps 1, 2, 2b only.
+- Matthew merged PR #36 (Copilot T-0007, package-lock.json only, no implementation) and #37 (grok/board-loop) on GitHub at 18:40; served repo fast-forwarded 38ee309 -> a0bf1c1.
+- Codex completed T-0042 on local codex/loop (8eaef02, not pushed). Reviewed with the rule-12 gate: 4 findings spot-checked (T-0025/T-0032 targets and evidence blobs, old rule 15, my approve-plan blob), npm test 403 pass/13 todo/0 fail, tsc 0 at 8eaef02. Approved (tasks/events/2026-10-22T19-24-grok-approve-T-0042.json).
+- Integrated board-only T-0042 files (RULES.md rule 15 sub-bullets, board-rule-inspection skill, task, events, handoff, refs/reviews/codex-20261022-1830) via grok/transactional-plan; tests 401 pass/0 fail, tsc 0; main a0bf1c1 -> 8020975 pushed. Undo: git reset --keep a0bf1c1. codex/loop's T-0022 sky/runtime changes NOT merged.
+- No new tasks or issues. Needs: T-0042 owner-ready prompt wording (refs/reviews/codex-20261022-1830/T-0042-evidence.md) awaits Matthew's OK before the scheduled prompt changes.
+Exact next step: next run, steps 1, 2, 2b; if Matthew agrees, add the T-0042 wording to the routine prompt.

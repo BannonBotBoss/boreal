@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0055",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:53:55-07:00",
+  "note": "Approve-plan. The player branch calls steerWolf, which does not read entities (src/main.ts:393, src/core/locomotion.ts). autonomousWolfStep refuses a spruce or a person inside BLOCK.wolf.trunk 0.7 m (src/core/autonomy.ts:14-15, src/core/tuning.ts). The jack pine walk was not replayed. npx tsc --noEmit exit 0. npm test on ae4ecbe: 628 tests, 614 pass, 0 fail, 14 todo, exit 0. Frame gate N/A (plan, no new pixels)."
+}

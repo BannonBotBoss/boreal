@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0065",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:53:56-07:00",
+  "note": "Approve-plan of the research plan, not a completion (no complete event). docs/deep-time-causes.md sections 1-20 and src/data/deepTimeCauses.json are on main, with author-year citations. Credits header is 39. The formula is 54 (10 x 3 objectives x (1+0.5+0.3)). The header was not changed. Papers were not re-fetched. npx tsc --noEmit exit 0. npm test on ae4ecbe: 628 tests, 614 pass, 0 fail, 14 todo, exit 0. Frame gate N/A (plan, no new pixels)."
+}

@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0051",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:53:51-07:00",
+  "note": "Approve-plan. openStart is menu.show('start') (src/main.ts:172) and the Menu button calls it (line 242). Escape closes the menu only when mode is pause (src/ui/menu.ts:89). Continue is disabled when hasSave() is false (menu.ts:48). Frames were not re-shot. npx tsc --noEmit exit 0. npm test on ae4ecbe: 628 tests, 614 pass, 0 fail, 14 todo, exit 0. Frame gate N/A (plan, no new pixels)."
+}

@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0067",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:53:57-07:00",
+  "note": "Not approve-plan. The checkbox lines are not under ## Objectives, so the ledger counts 0 steps (T-0067-order-chaos-mercury-venus.md: no \"- [ ]\" steps under ## Objectives) and the credits header 39 does not match that count. docs/deep-time-causes.md sections 25-29 exist. Add the ## Objectives heading and set the header to the formula before a plan approval."
+}

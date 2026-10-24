@@ -116,7 +116,15 @@ export function tileGeometry(t: TileData) {
  *  vertex id tells skirt from surface (buildTile layout: nÂ² grid, then 4 edges of n skirt copies). */
 /** Lake colours, one uniform pair shared by every globe material (the in-page band eases them toward the game's water near
  *  the ground, inpage.ts; values only, the program is the same). */
-export const GLOBE_LAKE = { shallow: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeShallow) }, deep: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeDeep) }, rough: { value: .55 } }; // rough: water roughness (inpage eases it to the game water's .32 in the band)
+/** Sun glint on water, physical: Fresnel reflectance at normal incidence F0 = ((n-1)/(n+1))², n = 1.33 -> 0.020 (three's default
+ *  dielectric 0.04 doubled the glint and the milky haze over the whole ocean); roughness from the Cox & Munk (1954, JOSA 44:838)
+ *  mean-square wave slope σ² = 0.003 + 0.00512 W (W wind at 12.5 m, m/s). GGX α ≈ rms slope σ (Walter et al. 2007), three's
+ *  roughness r = sqrt(α) -> r = σ²^¼. W = 7 m/s: global-mean ocean surface wind ~7 m/s (Wentz et al. 2007, Science 317:233; SSM/I) [verify]. */
+export const GLINT = { n: 1.33, windMs: 7 };
+export const fresnelF0 = (n = GLINT.n) => ((n - 1) / (n + 1)) ** 2;
+export const coxMunkSigma2 = (w = GLINT.windMs) => 0.003 + 0.00512 * w;
+export const glintRoughness = (w = GLINT.windMs) => coxMunkSigma2(w) ** 0.25;
+export const GLOBE_LAKE = { shallow: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeShallow) }, deep: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeDeep) }, rough: { value: glintRoughness() } }; // rough: water roughness (inpage eases it to the game water's .32 in the band)
 /** High-frequency ground detail in the tile shader (the CPU makes the macro shape, the GPU adds what is finer than a vertex):
  *  three octaves of seeded value noise on proc/glsl's hash2u, 3D in planet space (a function of position only, so it is
  *  continuous across tiles and cube faces, with no projection stretch on slopes), as albedo variation + a derivative bump. Precision:
@@ -226,7 +234,8 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition); float dhx = dFdx(detH), dhy = dFdy(detH);
     vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
     normal = normalize(abs(det) * normal - sign(det) * (dhx * r1 + dhy * r2)); }`)
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(uLakeRough, roughnessFactor, landMask); // water: a soft sun glint (.55) [game calibration], eased to the game water in the band')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(uLakeRough, roughnessFactor, landMask); // water: Cox-Munk roughness (GLINT), eased to the game water in the band')
+      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
 #ifdef DEBUG_SEAMS
   { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;

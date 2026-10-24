@@ -35,7 +35,7 @@ pub fn update_energy(g: &mut Grid, dt: f64) {
             let hb = b.rho * CP * (ts - ta) / b.ra;
             let new_ts = ts + h * (b.rn - b.le - hb) / cs.heatcap;
             g.pm(TS)[i] = new_ts.clamp(-90.0, 70.0);
-            g.pm(ICE)[i] = if land < 0.5 { ice_fraction(new_ts) } else { 0.0 };
+            g.pm(ICE)[i] = if land < 0.5 { ice_fraction_subgrid(new_ts, std::f64::consts::PI * 6371.0 / g.nlat as f64) } else { 0.0 };
             if land < 0.5 { g.pm(SST)[i] = new_ts; }
             // diagnostics at the last substep
             if left <= SUBSTEP_S + 1e-9 {

@@ -45,7 +45,7 @@ impl Grid {
             let s = seed_cell(day, lat, land, elev, t_bar);
             self.pm(TS)[i] = s.t_air; self.pm(TAIR)[i] = s.t_air; self.pm(SOIL)[i] = s.soil_mm; self.pm(SNOW)[i] = s.snow_mm; self.pm(Q)[i] = s.q;
             self.pm(SST)[i] = if land < 0.5 { s.t_air } else { -999.0 };
-            self.pm(ICE)[i] = if land < 0.5 { crate::hydrosphere_budget::ice_fraction(s.t_air) } else { 0.0 };
+            self.pm(ICE)[i] = if land < 0.5 { crate::hydrosphere_budget::ice_fraction_subgrid(s.t_air, std::f64::consts::PI * 6371.0 / self.nlat as f64) } else { 0.0 };
         }
         crate::update_clouds::update_clouds(self);
         crate::update_wind::update_wind(self);

@@ -26,6 +26,15 @@ export const ATMOS = {
  *  (Greer et al. 1986, Planet. Space Sci. 34:771 (ETON); Roach & Gordon 1973 "The light of the night sky": 100-400 R typical).
  *  1 R = 1e10/(4 pi) photons s^-1 m^-2 sr^-1; luminance = photons x h c / lambda x K_cd x V(557.7) (CIE 1924 V = 0.998).
  *  Dome units: the sun's TOA illuminance (TSI x 93 lm/W, solar luminous efficacy above the air) is ATMOS.sunI. */
+/** Aurora emission geometry and brightness (oval position from core/geodynamo.auroraFromSolarWind on OMNI hours).
+ *  Green OI 557.7 peaks ~110 km (sigma 10), red OI 630.0 ~250 km (sigma 40); red/green ~0.2 in typical aurora, more in storms
+ *  (Chamberlain 1961 "Physics of the aurora and airglow"; Solomon et al. 1988). Brightness: International Brightness Coefficient
+ *  I-IV = 1, 10, 100, 1000 kR of 557.7; kR = 10 x relBrightness (Phi_D / 50 kV) [approx]. Dipole pole 80.7 N, 72.7 W (IGRF-13, 2020). */
+export const AURORA = { greenKm: 110, greenSigmaKm: 10, redKm: 250, redSigmaKm: 40, redPerGreen: 0.2, kRPerRel: 10, poleLatDeg: 80.7, poleLonDeg: -72.7 };
+/** Planet-fixed unit vector of the geomagnetic north pole (planet.fromLatLon convention). */
+export const auroraPole = (): [number, number, number] => { const la = AURORA.poleLatDeg * Math.PI / 180, lo = AURORA.poleLonDeg * Math.PI / 180;
+  return [Math.cos(la) * Math.cos(lo), Math.sin(la), Math.cos(la) * Math.sin(lo)]; };
+export const auroraKR = (rel: number) => AURORA.kRPerRel * Math.max(0, rel);
 export const AIRGLOW = (() => { const peakKm = 95, sigmaKm = 4, zenithR = 250, lambda = 557.7e-9;
   const zenithCd = zenithR * 1e10 / (4 * Math.PI) * K.h * K.c / lambda * K.K_cd * 0.998, sunLux = K.TSI * 93;
   return { peakKm, sigmaKm, zenithR, zenithCd, sunLux, zenithUnits: zenithCd * 22 / sunLux }; })();
@@ -56,7 +65,7 @@ export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .8, octaves: [8, 6, 
 const MAX_N = Math.max(...ATMOS_STEPS.map(r => Math.max(r[0], r[2]))), MAX_L = Math.max(...ATMOS_STEPS.map(r => Math.max(r[1], r[3])));
 const GLSL = /* glsl */`
 const float ATM_AERIAL = ${ATMOS.aerial.toFixed(3)}; // in-scatter in the terrain's light units: ~ sun light (3.2) / sunI (22), so haze vs lit ground matches a real sky/ground ratio [reference calibration: Blue Marble land/ocean contrast]
-uniform float uAirglow; uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
+uniform float uAirglow; uniform vec4 uAurora; uniform vec3 uDipole; uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
 uniform mat3 uViewToWorld; uniform float uCloudOct, uCloudSeed, uCloudEvolve; uniform vec2 uCloudSpin; // spin = (cos, sin) of the drift angle
 uniform float uCloudClear; // 0 = the field as calibrated .. 1 = no clouds (in-page descent, T-0034/T-0041): cover and shadows fade AND the threshold lifts by clearLift, so the deck breaks into clouds and holes instead of a flat sheet
 uniform sampler2D uCloudTex; uniform vec4 uCloudSim; // planetLayers texture: A = sim cloud fraction (rust update_clouds), w = loaded
@@ -85,6 +94,24 @@ vec3 atmRefracted(vec3 x) {
   if (hg - D0 * exp(-hg / HR) * D - hl > 1.0) return vec3(0.0); // deeper than the largest bend reaches
   float cR = exp(-hg / HR) * sqrt(2.0 * PI * uRp * HR), cM = exp(-hg / HM) * sqrt(2.0 * PI * uRp * HM);
   return exp(-((BR + BO) * cR + BME * cM)) / (1.0 + D * D0 / HR * exp(-hg / HR));
+}
+// Emission shells along a ray from the camera (origin) to tEnd: OI 557.7 airglow (AIRGLOW) and the aurora (AURORA: oval from
+// geodynamo.auroraFromSolarWind, green 557.7 at ~110 km and red 630.0 at ~250 km). Path length through the shells gives the limb
+// brightening; looking down from orbit the column is ~ the zenith value. Units: AIRGLOW.zenithUnits per 250 R.
+vec3 atmEmission(vec3 rd, float tEnd) {
+  vec3 c = vec3(0.0); if (uAirglow < 0.5 && uAurora.w < 0.5) return c;
+  vec2 o = atmRsi(vec3(0.0), rd, uRp + 400.0); float t0 = max(o.x, 0.0), t1 = min(o.y, tEnd);
+  vec2 gp = atmRsi(vec3(0.0), rd, uRp); if (gp.x > 0.0 && gp.x < gp.y) t1 = min(t1, gp.x);
+  if (t1 <= t0) return c; float ds = (t1 - t0) / 64.0, ag = 0.0, gr = 0.0, rd6 = 0.0;
+  for (int i = 0; i < 64; i++) { vec3 x = rd * (t0 + ds * (float(i) + 0.5)) - uCentre; float r = length(x), h = r - uRp;
+    float ha = h - ${AIRGLOW.peakKm.toFixed(1)}; ag += exp(-ha * ha / ${(2 * AIRGLOW.sigmaKm ** 2).toFixed(1)});
+    if (uAurora.w > 0.5) { float ml = abs(degrees(asin(clamp(dot(x / r, uDipole), -1.0, 1.0)))), dm = (ml - uAurora.x) / uAurora.y, oval = exp(-dm * dm);
+      float hg = (h - ${AURORA.greenKm.toFixed(1)}) / ${AURORA.greenSigmaKm.toFixed(1)}, hr = (h - ${AURORA.redKm.toFixed(1)}) / ${AURORA.redSigmaKm.toFixed(1)};
+      gr += oval * exp(-0.5 * hg * hg); rd6 += oval * exp(-0.5 * hr * hr); } }
+  float u = ${(AIRGLOW.zenithUnits / AIRGLOW.zenithR).toExponential(4)} * ds; // per rayleigh, per km of a unit-peak shell x ds
+  c += uAirglow * vec3(0.32, 1.0, 0.12) * ${(AIRGLOW.zenithR / (AIRGLOW.sigmaKm * Math.sqrt(2 * Math.PI))).toExponential(4)} * ag * u;
+  c += uAurora.w * uAurora.z * u * (vec3(0.32, 1.0, 0.12) * gr / ${(AURORA.greenSigmaKm * Math.sqrt(2 * Math.PI)).toFixed(3)} + ${AURORA.redPerGreen.toFixed(2)} * vec3(1.0, 0.05, 0.03) * rd6 / ${(AURORA.redSigmaKm * Math.sqrt(2 * Math.PI)).toFixed(3)});
+  return c; // colours: 557.7 and 630.0 nm in linear sRGB [approx], unit luminance
 }
 // in-scattered light along the ray (camera at the origin, km) up to tEnd; trans = transmittance over the same segment
 vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
@@ -140,14 +167,14 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
 }
 `;
 
-export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void; setLayers(clouds: boolean, air: boolean, airglow?: boolean): void }
+export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void; setLayers(clouds: boolean, air: boolean, airglow?: boolean): void; setAurora(a: { ocbMlat: number; ovalEqMlat: number; relBrightness: number } | null): void }
 const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.length - 1, tier))];
 
 /** Sky shell + aerial-perspective patcher for a planet of radius `R` metres (centre at the world origin). */
 export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   let [sn, sl, tn, tl] = stepsFor(tier), cur = tier;
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
-  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uAirglow: { value: 1 }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
+  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uAirglow: { value: 1 }, uAurora: { value: new THREE.Vector4() }, uDipole: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
   let cloudsOn = true, airOn = true; // layer panel (layerPanel.ts): off = 0 octaves / 0 ray-march steps, the shader skips the work
   const setSteps = () => { if (airOn) uniforms.uSteps.value.set(sn, sl, tn, tl); else uniforms.uSteps.value.set(0, 0, 0, 0); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = cloudsOn ? CLOUDS.octaves[row] : 0; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
   const mat = new THREE.ShaderMaterial({
@@ -174,12 +201,7 @@ void main() {
     vec3 oc = -uCentre; float b = dot(oc, rd), ht = length(oc - rd * b) - uRp;
     if (b < 0.0 && ht > 0.0 && ht < 60.0) { float dl = ${(2 * 34.5 / 60 * Math.PI / 180).toFixed(5)} * exp(-ht / HR), a = acos(clamp(dot(rd, uSun), -1.0, 1.0));
       if (abs(a - dl) < 0.00466) c += 40.0 * exp(-((BR + BO) * exp(-ht / HR) * sqrt(2.0 * PI * uRp * HR) + BME * exp(-ht / HM) * sqrt(2.0 * PI * uRp * HM))); } }
-  if (uAirglow > 0.5) { // airglow: emission integrated along the ray through the shell (limb brightening falls out of the path length)
-    vec2 o = atmRsi(vec3(0.0), rd, uRp + ${(AIRGLOW.peakKm + 4 * AIRGLOW.sigmaKm).toFixed(1)}); float t0 = max(o.x, 0.0), t1 = o.y;
-    vec2 gp = atmRsi(vec3(0.0), rd, uRp); if (gp.x > 0.0 && gp.x < gp.y) t1 = min(t1, gp.x);
-    if (t1 > t0) { float ds = (t1 - t0) / 48.0, s2 = 0.0;
-      for (int i = 0; i < 48; i++) { float h = length(rd * (t0 + ds * (float(i) + 0.5)) - uCentre) - uRp - ${AIRGLOW.peakKm.toFixed(1)}; s2 += exp(-h * h / ${(2 * AIRGLOW.sigmaKm ** 2).toFixed(1)}); }
-      c += vec3(0.32, 1.0, 0.12) * ${(AIRGLOW.zenithUnits / (AIRGLOW.sigmaKm * Math.sqrt(2 * Math.PI))).toExponential(4)} * s2 * ds; } } // 557.7 nm in linear sRGB (green) [approx], unit luminance
+  c += atmEmission(rd, 1e9);
   { vec4 cl = atmClouds(rd, tEnd, int(uSteps.y)); c = mix(c, cl.rgb, cl.a); }
   gl_FragColor = vec4(c, 1.0);
 #include <tonemapping_fragment>
@@ -187,12 +209,15 @@ void main() {
 }`;
   mat.fragmentShader = LOG_DEPTH_PREFIX + domeFrag(); mat.uniforms.uGlobeLogDepthFC = LOG_DEPTH.uniform; // per-material log depth (logDepth.ts)
   const dome = new THREE.Mesh(new THREE.SphereGeometry(Ra * 1000, 96, 48), mat); dome.frustumCulled = false; dome.renderOrder = 1; dome.matrixAutoUpdate = false;
-  const centre = new THREE.Vector3(), sunV = new THREE.Vector3();
+  const centre = new THREE.Vector3(), sunV = new THREE.Vector3(), dipoleW = new THREE.Vector3(...auroraPole());
   return {
     dome, uniforms, get tier() { return cur; },
     /** 0..1: open the cloud deck (T-0041, was a threshold switch): the cover and its shadows fade out, and the coverage
      *  threshold rises by CLOUDS.clearLift x k, so the deck breaks into clouds and holes instead of thinning as one sheet. Uniform only. */
     setClear(k) { uniforms.uCloudClear.value = k; },
+    /** Aurora oval for one OMNI hour (geodynamo.auroraFromSolarWind), or null to hide. */
+    setAurora(a: { ocbMlat: number; ovalEqMlat: number; relBrightness: number } | null) { const u = uniforms.uAurora.value;
+      if (!a) { u.w = 0; return; } u.set((a.ocbMlat + a.ovalEqMlat) / 2, Math.max(1, (a.ocbMlat - a.ovalEqMlat) / 2), auroraKR(a.relBrightness) * 1000, 1); },
     setLayers(c, a, glow = true) { uniforms.uAirglow.value = glow && a ? 1 : 0; if (c === cloudsOn && a === airOn) return; cloudsOn = c; airOn = a; dome.visible = a || c; setSteps(); },
     /** Governor tier changed: new ray-march sample counts. Uniforms only (loops break at the count), so no shader
      *  recompile and no hitch when the governor moves. */
@@ -208,6 +233,7 @@ void main() {
       const rot = new THREE.Matrix4().extractRotation(camera.matrixWorldInverse);
       uniforms.uCentre.value.copy(centre).applyMatrix4(rot).multiplyScalar(1e-3);
       uniforms.uSun.value.copy(sunV.copy(sunDir).normalize()).applyMatrix4(rot).normalize();
+      uniforms.uDipole.value.copy(dipoleW).applyMatrix4(rot).normalize();
       uniforms.uViewToWorld.value.setFromMatrix4(camera.matrixWorld); // view-space direction → planet-fixed (camera rotation)
     },
     /** Chain aerial perspective into a lit material (keeps its own onBeforeCompile). */
@@ -225,7 +251,7 @@ void main() {
     float skyF = atmSkyF(dot(normalize(fp - uCentre), uSun)); // sky light is local (atmSkyF)
     outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * (1.12 * cs) * atmSunlight(fp, int(uSteps.w)) + (reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular) * skyF + totalEmissiveRadiance;
     vec3 ins = atmScatter(rd, d, int(uSteps.z), int(uSteps.w), tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL;
-    vec4 cl = atmClouds(rd, d, int(uSteps.w)); outgoingLight = mix(outgoingLight, cl.rgb * tr + ins * ATM_AERIAL, cl.a); } // clouds between camera and ground
+    vec4 cl = atmClouds(rd, d, int(uSteps.w)); outgoingLight = mix(outgoingLight, cl.rgb * tr + ins * ATM_AERIAL, cl.a); outgoingLight += atmEmission(rd, d) * ATM_AERIAL; } // clouds between camera and ground
 #include <opaque_fragment>`);
       };
       m.needsUpdate = true;

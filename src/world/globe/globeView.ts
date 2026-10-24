@@ -32,7 +32,9 @@ import { GLOBE_COAST, cloudClear, coastLambda, globePitch } from './transition';
 import { globePlanet } from './home';
 import { toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar } from './logDepth';
-import { setLayerCamera, startPlanetLayers } from './planetLayers';
+import { setLayerCamera, setSnowIceShown, startPlanetLayers } from './planetLayers';
+import * as layerPanelPure from './layerPanel';
+import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
 import { GLOBE_SHORE, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
 export { GLOBE_LAKE, GLOBE_LAND, GLOBE_SHORE } from './tile'; // inpage.ts (lazy): the band's lake ease
@@ -129,6 +131,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const layerDay = Number(q.get('day')) || Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 864e5);
   let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; if (layerTier >= 0) void startPlanetLayers(planet, layerTier, layerDay);
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
+  let shown = {} as Record<LayerId, LayerState>; const isOn = (id: LayerId) => shown[id]?.on ?? true;
+  const panel = q.get('panel') === '0' || q.has('shot') && !q.has('panel') ? null : mountLayerPanel(location.search, (st) => { shown = st; });
+  if (!panel) { const { layerStates, parseHidden, deepOffset } = { ...layerPanelPure }; shown = layerStates(parseHidden(location.search, null), deepOffset(location.search)); }
   const camV = new THREE.Vector3();
   let ext: { position: THREE.Vector3; quaternion: THREE.Quaternion; fov: number; aspect: number } | null = null; // shared band: externally flown camera
   const atYaw = Number(q.get('at')?.split(',')[2]); // from the game (handoff.ts globeUrl): keep its heading
@@ -319,6 +324,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (down) return; down = true; for (const off of listeners) off(); listeners.length = 0; controls.dispose();
     for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); queued.clear(); ready.length = 0;
     for (const t of tiles.values()) releaseTileGeometry(t.mesh.geometry); tiles.clear(); material.dispose(); group.clear();
+    panel?.dispose();
     if (atmos) { atmos.dome.geometry.dispose(); (atmos.dome.material as THREE.Material).dispose(); }
     if (own.disposeRenderer) { renderer.dispose(); renderer.forceContextLoss(); }
   }
@@ -371,7 +377,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     }
     camera.near = clamp(alt * .02, .5, 1e5); camera.far = Math.sqrt((R + ground + alt) ** 2 - R * R) + R * 2; camera.updateProjectionMatrix();
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
-    sun.position.copy(sunNow()); { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = .04 + .66 * smoothstep(-.3, .12, se); hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
+    sun.position.copy(sunNow()); sun.intensity = isOn('sunlight') ? 3.2 : 0; if (atmos) atmos.setLayers(isOn('clouds'), isOn('atmosphere')); setSnowIceShown(isOn('snowIce'));
+    { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = isOn('sunlight') ? .04 + .66 * smoothstep(-.3, .12, se) : 1; hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
     camPos[0] = camera.position.x; camPos[1] = camera.position.y; camPos[2] = camera.position.z;
 
     // LOD selection, then hand the wanted builds to the workers (or jobs); drop builds nobody wants any more

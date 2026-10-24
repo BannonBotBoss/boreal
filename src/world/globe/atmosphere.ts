@@ -112,7 +112,7 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
 }
 `;
 
-export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void }
+export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void; setLayers(clouds: boolean, air: boolean): void }
 const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.length - 1, tier))];
 
 /** Sky shell + aerial-perspective patcher for a planet of radius `R` metres (centre at the world origin). */
@@ -120,7 +120,8 @@ export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   let [sn, sl, tn, tl] = stepsFor(tier), cur = tier;
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
   const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
-  const setSteps = () => { uniforms.uSteps.value.set(sn, sl, tn, tl); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = CLOUDS.octaves[row]; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
+  let cloudsOn = true, airOn = true; // layer panel (layerPanel.ts): off = 0 octaves / 0 ray-march steps, the shader skips the work
+  const setSteps = () => { if (airOn) uniforms.uSteps.value.set(sn, sl, tn, tl); else uniforms.uSteps.value.set(0, 0, 0, 0); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = cloudsOn ? CLOUDS.octaves[row] : 0; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
   const mat = new THREE.ShaderMaterial({
     uniforms, side: THREE.BackSide, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending,
     vertexShader: LOG_DEPTH_PREFIX + /* glsl */`#include <common>
@@ -152,6 +153,7 @@ void main() {
     /** 0..1: open the cloud deck (T-0041, was a threshold switch): the cover and its shadows fade out, and the coverage
      *  threshold rises by CLOUDS.clearLift x k, so the deck breaks into clouds and holes instead of thinning as one sheet. Uniform only. */
     setClear(k) { uniforms.uCloudClear.value = k; },
+    setLayers(c, a) { if (c === cloudsOn && a === airOn) return; cloudsOn = c; airOn = a; dome.visible = a || c; setSteps(); },
     /** Governor tier changed: new ray-march sample counts. Uniforms only (loops break at the count), so no shader
      *  recompile and no hitch when the governor moves. */
     setTier(t) { if (t === cur) return; cur = t; [sn, sl, tn, tl] = stepsFor(t); setSteps(); },

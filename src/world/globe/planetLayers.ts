@@ -48,13 +48,15 @@ export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: n
   GLOBE_LAYERS.uLayers.value.set(tierOn[0], tierOn[1], tierOn[2], 1);
   return true;
 }
-let tierOn = [0, 0, 0];
+let tierOn = [0, 0, 0], snowIceOn = 1;
+/** layer panel: snow/ice off (still simulated: the budget needs its albedo; only the drawing stops) */
+export function setSnowIceShown(on: boolean) { snowIceOn = on ? 1 : 0; }
 /** Camera + physical visibility gate (visibility.ts): each layer's weight = its characteristic size in pixels at the camera's
  *  range to the surface (nadir altitude), so wet soil (~2 km) only appears below ~1300 km at 1080p / 45 deg. Uniform only. */
 export function setLayerCamera(cam: Vec3, fovDeg = 45, hPx = 1080) {
   GLOBE_LAYERS.uCamP.value.set(cam[0], cam[1], cam[2]);
   const range = Math.max(1, Math.hypot(cam[0], cam[1], cam[2]) - PLANET.radius), u = GLOBE_LAYERS.uLayers.value;
-  u.x = tierOn[0] * visibleWeight('snowCover', range, fovDeg, hPx); u.y = tierOn[1] * visibleWeight('seaIceEdge', range, fovDeg, hPx); u.z = tierOn[2] * visibleWeight('soilMoisture', range, fovDeg, hPx);
+  u.x = snowIceOn * tierOn[0] * visibleWeight('snowCover', range, fovDeg, hPx); u.y = snowIceOn * tierOn[1] * visibleWeight('seaIceEdge', range, fovDeg, hPx); u.z = tierOn[2] * visibleWeight('soilMoisture', range, fovDeg, hPx);
 }
 
 /** Fragment code (after the land/water mix in globeMaterial). Planet direction = camera-relative world position + camera;

@@ -40,7 +40,7 @@ export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: n
   tierOn = [0, 0, 0]; GLOBE_LAYERS.uLayers.value.set(0, 0, 0, 0); if (!t.nlat || !t.layers.length) return false;
   sim = sim ?? await loadPlanetSim(); if (!sim) return false;
   sim.init(t.nlat, t.nlat * 2).setLand((lat, lon) => { const s = planet.sampleSurface(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180)); return { land: s.h > 0 ? 1 : 0, elev: Math.max(0, s.h) }; }).seed(day, 0);
-  for (let i = 0; i < SPINUP.steps; i++) sim.step(SPINUP.dtS); // humidity -> cloud needs time: the seed has none (cloud 0); 48 h: RH + convective + stratocumulus + frontal cloud (update_clouds.rs) global (MODIS 0.67, King et al. 2013: low, SH winter storm tracks missing; July 30-90N 0.56-0.77 matches)
+  for (let i = 0; i < SPINUP.steps; i++) sim.step(SPINUP.dtS); // humidity -> cloud needs time: the seed has none (cloud 0); 48 h: RH + convective + stratocumulus + frontal + free-troposphere upglide cloud (update_clouds.rs) global (MODIS 0.67, King et al. 2013: low, SH winter storm tracks missing; July 30-90N 0.56-0.77 matches)
   const tex = new THREE.DataTexture(bakeLayers(sim), t.nlat * 2, t.nlat, THREE.RGBAFormat, THREE.UnsignedByteType, THREE.UVMapping, THREE.RepeatWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter);
   tex.generateMipmaps = false; tex.needsUpdate = true;
   const old = GLOBE_LAYERS.uLayerTex.value; if (old !== EMPTY) old.dispose(); GLOBE_LAYERS.uLayerTex.value = tex;

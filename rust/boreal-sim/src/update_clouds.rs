@@ -18,6 +18,8 @@ pub fn low_cloud_lts(lts_k: f64) -> f64 { (0.057 * lts_k - 0.557).clamp(0.0, 1.0
 /// Cloud-field memory: the diagnosed cover is the cloud that forms; existing cloud decays over its lifetime rather than
 /// vanishing in one step. Cloud-system lifetimes are hours to ~1 day (Houze 2004; ISCCP tracking, Machado & Rossow 1993) [approx]: 6 h.
 pub const CLOUD_TAU_S: f64 = 21600.0;
+/// Share of a baroclinic wave that is ascending: w is sinusoidal in a linear Eady wave, so half the area rises (Holton 2004 §8.4).
+pub const ASCENT_SHARE: f64 = 0.5;
 pub const SYNOPTIC_LIFT_S: f64 = 86400.0;
 pub fn conv_cloud(p_mm_day: f64) -> f64 { if p_mm_day < 0.14 { 0.0 } else { (0.245 + 0.125 * p_mm_day.ln()).clamp(0.0, 0.8) } }
 
@@ -44,6 +46,16 @@ pub fn update_clouds(g: &mut Grid, dt: f64) {
             let a = -(g.p(U)[i] * (t[e] - t[w]) / dx + g.p(V)[i] * (t[nn] - t[ss]) / dyy);
             if a > 0.0 { let tk = t[i] + 273.15; let wz = a / (0.0098 - LAPSE); let dz = (wz * SYNOPTIC_LIFT_S).min(3000.0);
                 lift[i] = (dz * (LV * 0.0098 / (RV * tk * tk) - gravity() / (RD * tk))).exp(); } } }
+    // Free-troposphere (700 hPa) cloud by isentropic upglide: in baroclinic zones boundary-layer air from lower latitudes slides up
+    // its isentrope (warm conveyor belts, Harrold 1973; Browning 1990) and arrives at 700 hPa over row r if its surface theta matches
+    // theta_700(r). It keeps its specific humidity, so RH_700 = q_src / qsat(T700, 700 hPa); cloud from Sundqvist on RH_700.
+    // T700 = zonal-mean surface air - Gamma x 3 km (ICAO lapse; 700 hPa ~ 3 km, Wallace & Hobbs 2006). Searches the same hemisphere equatorward.
+    let zm = |k: usize, r: usize| g.p(k)[r * nlon..(r + 1) * nlon].iter().sum::<f64>() / nlon as f64;
+    let ft: Vec<f64> = (0..nlat).map(|r| { let t7 = zm(TAIR, r) - LAPSE * 3000.0; let th7 = (t7 + 273.15) * (P0 / 7.0e4).powf(RD / CP);
+        let lat = g.p(LAT)[r * nlon]; let mut best = None;
+        let rows: Vec<usize> = if lat >= 0.0 { (0..r).rev().filter(|&s| g.p(LAT)[s * nlon] >= 0.0).collect() } else { (r + 1..nlat).filter(|&s| g.p(LAT)[s * nlon] < 0.0).collect() };
+        for s in rows { if zm(TAIR, s) + 273.15 >= th7 { best = Some(s); break; } }
+        best.map_or(0.0, |s| ASCENT_SHARE * cloud_fraction((zm(Q, s) / qsat(t7, 7.0e4)).min(1.0))) }).collect();
     for i in 0..g.n {
         let (ta, q) = (g.p(TAIR)[i], g.p(Q)[i]);
         let p = surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
@@ -51,7 +63,7 @@ pub fn update_clouds(g: &mut Grid, dt: f64) {
         let lat = g.p(LAT)[i]; let t7 = match t7trop { Some(t) if lat.abs() < 25.0 => t, _ => t7row[i / nlon] };
         let cst = if g.p(LAND)[i] < 0.5 { low_cloud_lts(lts(t7, ta)) } else { 0.0 };
         let cfront = cloud_fraction((rh * lift[i]).min(1.0)) - cloud_fraction(rh); // the extra cloud the ascent makes
-        let c = 1.0 - (1.0 - cloud_fraction(rh)) * (1.0 - cfront.max(0.0)) * (1.0 - conv_cloud(g.p(PMEAN)[i])) * (1.0 - cst);
+        let c = 1.0 - (1.0 - cloud_fraction(rh)) * (1.0 - cfront.max(0.0)) * (1.0 - ft[i / nlon]) * (1.0 - conv_cloud(g.p(PMEAN)[i])) * (1.0 - cst);
         let c = keep * g.p(CLOUD)[i] + (1.0 - keep) * c; g.pm(RH)[i] = rh; g.pm(CLOUD)[i] = c; g.pm(COT)[i] = cloud_optical_depth(c);
     }
 }
@@ -75,6 +87,6 @@ mod tests {
             { use super::*; let mut h=[0.0;4]; let mut ps=vec![]; for i in 0..g.n { let w=g.p(LAT)[i].to_radians().cos(); h[0]+=w*cloud_fraction(g.p(RH)[i]); h[1]+=w*conv_cloud(g.p(PMEAN)[i]); h[3]+=w; ps.push(g.p(PMEAN)[i]); }
               ps.sort_by(|a,b|a.partial_cmp(b).unwrap()); eprintln!("rh-part {:.2} conv-part {:.2} precip p50 {:.2} p90 {:.2} mean {:.2}", h[0]/h[3], h[1]/h[3], ps[ps.len()/2], ps[ps.len()*9/10], ps.iter().sum::<f64>()/ps.len() as f64); }
             eprintln!("day {day}: global {gl:.2}  SO {so:.2}  S-subtrop {st:.2}  NH 45-65 {nh:.2}  tropics {tr:.2}");
-            assert!(gl > 0.48 && gl < 0.78, "global cloud {gl:.2} vs MODIS 0.67 (open gap: no mid/high-level cloud layer yet)"); if day < 100.0 { assert!(so > 0.6, "Southern Ocean summer {so:.2}"); } /* winter storm tracks (SO July, NH Jan ~0.3) stay too clear: open gap */ }
+            assert!((gl - 0.67).abs() < 0.08, "global cloud {gl:.2} vs MODIS 0.67"); assert!(so > 0.55 && nh > 0.55, "storm tracks SO {so:.2} NH {nh:.2} vs MODIS ~0.7-0.8"); }
     }
 }

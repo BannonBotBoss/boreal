@@ -13,6 +13,7 @@ pub mod update_moisture;
 pub mod update_clouds;
 pub mod column_budget;
 pub mod update_wind;
+pub mod sun_spectrum;
 
 use grid::Grid;
 use std::cell::RefCell;

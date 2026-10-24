@@ -8,8 +8,8 @@ import { join } from 'node:path';
 
 export const STATUS = [['Member', 0], ['Contributor', 100], ['Trusted', 250], ['Senior', 500], ['Lead', 1000]] as const;
 export const CREDITS = { perStep: 10, scratch: .5, research: .3, skill: 1.5, bugPerSeverity: 5, review: 2, weekly: 25 };
-/** Agents that record Matthew's chat approvals with "for": "matthew" (rules 16/16b). grokbot-1 and grokbot-2 have their own GitHub accounts (T-0069). */
-export const RELAYS_MATTHEW: readonly string[] = ['grok', 'grokbot-1', 'grokbot-2'];
+/** Agents that record Matthew's chat approvals with "for": "matthew" (rules 16/16b). grokbot-1, grokbot-2 and grokbot-3 have their own GitHub accounts (T-0069, T-0071). */
+export const RELAYS_MATTHEW: readonly string[] = ['grok', 'grokbot-1', 'grokbot-2', 'grokbot-3'];
 export type State = 'proposed' | 'approved' | 'claimed' | 'completed' | 'done' | 'rejected';
 export interface Task { id: string; file: string; title: string; author: string; scratch: boolean; research: boolean; skill: boolean; steps: number;
   state: State; claimant?: string; skillApproved: boolean; award: number }
@@ -68,7 +68,7 @@ export function ledger(root = join(process.cwd(), 'tasks')) {
     }
     if (e.type === 'bug') { if (!(e.severity! >= 1 && e.severity! <= 3)) bad('severity 1-3'); bugs.set(e.file, e); }
     const t = e.task ? tasks.get(e.task) : undefined;
-    // Rules 16/16b: Matthew's approval in chat, recorded by a Grok bot (grok, grokbot-1, grokbot-2; T-0069) with "for": "matthew"
+    // Rules 16/16b: Matthew's approval in chat, recorded by a Grok bot (grok, grokbot-1, grokbot-2, grokbot-3; T-0069, T-0071) with "for": "matthew"
     // and his words quoted in the note, is a non-author review even on that bot's own tasks. It pays no review credits (the bot
     // did not review), and needs the quote.
     const forMatthew = RELAYS_MATTHEW.includes(e.agent) && e.for === 'matthew' && (e.type === 'approve-plan' || e.type === 'approve');

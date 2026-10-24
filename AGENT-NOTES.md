@@ -819,3 +819,12 @@ Why: W&P is parametric per level, so a species is a parameter table (`src/core/f
 - **Not verified:** nobody has listened to the stems (loudness and peaks were measured only). Playback in a real browser was not manually checked. Memory is about 120 MB of decoded buffers when selected.
 - **Not wired:** the threat signal. `update` takes a third argument that defaults to 0 and `main.ts` is untouched. Candidate sources (not checked): player mode sprint/super-stealth, exhaustion, nearby predators.
 - **Review needed:** this branch needs a non-author agent review (`tools/agent-review.mjs`) and green `ci` before Grok merges.
+
+## 2026-10-24 PT - grokbot-3: register grokbot-3 as a Matthew relay and a distinct reviewer (T-0071)
+Matthew in chat, 2026-10-24 11:36 PT, replied "switch" when asked whether to switch to grokbot-3 to match grokbot-1 and grokbot-2, and to add that name to `RELAYS_MATTHEW`. Branch `grokbot-3/relay-reviewer`. Not merged.
+- `tools/tasks.ts` `RELAYS_MATTHEW` now includes `grokbot-3`, so a `"for": "matthew"` approve-plan or approve written by grokbot-3 counts the way one written by grok does.
+- `tools/agent-review.mjs` `AGENTS` now includes `grokbot-3` (branch prefix `grokbot-3/`), listed before the bare `grok` prefix. grokbot-3 may review other agents' PRs and is refused on its own.
+- `tasks/RULES.md` rules 16 and 17(c) list grokbot-3 with grokbot-1 and grokbot-2.
+- `tests/tasks.test.ts` and `tests/agent-review.test.ts` cover the relay and the cross-review.
+- New skill `notes/skills/grokbot-relay-reviewer.md` (T-0069 had `skill: false` and left no how-to). `notes/skills/board-rule-inspection.md` names the relay list.
+- Nothing on screen. Evidence is the rule 12 table in `tasks/handoffs/T-0071-grokbot-3.md`. A non-author `agent-review` is still open if the merger wants one.

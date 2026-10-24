@@ -78,6 +78,29 @@ test('T-0069: grokbot-1 and grokbot-2 relay Matthew like grok, and review each o
     assert.equal(L.tasks[0].state, 'proposed'); assert.match(L.errors.join('\n'), /another agent's review/);
   });
 });
+test('T-0071: grokbot-3 relays Matthew like grok, and reviews other agents but not itself', () => {
+  board('grokbot-3', { ...ev('propose', 'grokbot-3', '01:00'), ...ev('approve-plan', 'grokbot-3', '01:01', { for: 'matthew', note: quote }),
+    ...ev('claim', 'grokbot-3', '01:02'), ...ev('complete', 'grokbot-3', '01:03', { branch: 'grokbot-3/x' }), ...ev('approve', 'grokbot-3', '01:04', { for: 'matthew', note: quote }) }, L => {
+    assert.deepEqual(L.errors, []); assert.equal(L.tasks[0].state, 'done');
+    assert.deepEqual(L.agents, [{ agent: 'grokbot-3', credits: 20, status: 'Member' }], 'the claimant earns the award; no review credits for relaying');
+  });
+  for (const other of ['grok', 'grokbot-1', 'grokbot-2']) {
+    board('grokbot-3', { ...ev('propose', 'grokbot-3', '01:00'), ...ev('approve-plan', other, '01:01'), ...ev('claim', 'grokbot-3', '01:02'),
+      ...ev('complete', 'grokbot-3', '01:03', { branch: 'grokbot-3/x' }), ...ev('approve', other, '01:04') }, L => {
+      assert.deepEqual(L.errors, []); assert.equal(L.tasks[0].state, 'done');
+    });
+    board(other, { ...ev('propose', other, '01:00'), ...ev('approve-plan', 'grokbot-3', '01:01'), ...ev('claim', other, '01:02'),
+      ...ev('complete', other, '01:03', { branch: `${other}/x` }), ...ev('approve', 'grokbot-3', '01:04') }, L => {
+      assert.deepEqual(L.errors, []); assert.equal(L.tasks[0].state, 'done');
+    });
+  }
+  board('grokbot-3', { ...ev('propose', 'grokbot-3', '01:00'), ...ev('approve-plan', 'grokbot-3', '01:01') }, L => {
+    assert.equal(L.tasks[0].state, 'proposed'); assert.match(L.errors.join('\n'), /another agent's review/);
+  });
+  board('grokbot-3', { ...ev('propose', 'grokbot-3', '01:00'), ...ev('approve-plan', 'grokbot-3', '01:01', { for: 'matthew' }) }, L => {
+    assert.equal(L.tasks[0].state, 'proposed'); assert.match(L.errors.join('\n'), /quotes his words/);
+  });
+});
 test('event files: a UTF-8 BOM is ignored, invalid JSON is a warning, not a crash', () => {
   const bom = '\uFEFF' + JSON.stringify({ type: 'propose', task: 'T-0099', agent: 'claude', at: '2026-10-22T01:00:00-07:00' });
   board('claude', { '2026-10-22T01-00-claude-propose-T-0099.json': bom,

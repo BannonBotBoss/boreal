@@ -1,9 +1,10 @@
+import { createVenus, dayOfYearOf, skyDate } from './venusSky';
 import { GLSL_NOISE } from '../proc/glsl';
 import { hash, random } from '../proc/rng';
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { WORLD_SEED } from '../core/world';
-import { lighting, sunPosition } from '../core/timeOfDay';
+import { DAY_OF_YEAR, lighting, sunPosition } from '../core/timeOfDay';
 import { WEATHER, shortwave, weatherAt } from '../core/weather';
 import { LUX, SYNODIC, darkAdapted, exposureFor, moonAge, moonLux, nightKey, nightSkyLight, sunColour, wolfEyes } from '../core/light';
 import { LIGHTING } from './pbr';
@@ -55,6 +56,8 @@ void main() {
 }`;
 
 export function createSky(scene: THREE.Scene) {
+  const search = typeof location === 'undefined' ? '' : location.search, hasDate = new URLSearchParams(search).has('date');
+  const date = skyDate(search, DAY_OF_YEAR), doy = hasDate ? dayOfYearOf(date) : DAY_OF_YEAR, venus = createVenus(scene, search); // ?date= moves the Sun and the planets together
   const sky = new Sky(); sky.scale.setScalar(600); sky.layers.enable(1); scene.add(sky); // layer 1 = GI probe capture
   const u = sky.material.uniforms;
   u.turbidity.value = 2.5; u.rayleigh.value = 2.2; u.mieCoefficient.value = .004; u.mieDirectionalG.value = .8;
@@ -80,7 +83,7 @@ export function createSky(scene: THREE.Scene) {
     sky, sunLight, hemi,
     /** Moves the sun and recolours sky, light and fog for the hour; the sky follows the camera. */
     update(hour: number, time: number, camera: THREE.Camera, focus: THREE.Vector3) {
-      const sun = sunPosition(hour), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
+      const sun = sunPosition(hour, doy), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
       sky.position.copy(camera.position); clouds.position.copy(camera.position);
       u.sunPosition.value.copy(dir);
       // Physical light (core/light): sun colour from spectral transmittance, illuminance in lux, adaptive exposure.
@@ -128,6 +131,7 @@ export function createSky(scene: THREE.Scene) {
       // fog is offset by the camera's height above the focus [game calibration]. At eye height the offset is ~2 m (no change).
       { const f = scene.fog as THREE.Fog, alt = Math.max(0, camera.position.y - focus.y); f.far = Math.min(fogFar, fogV) + alt; f.near = Math.min(fogNear, fogV * .1) + alt; }
       cu.uSunDir.value.copy(dir); cu.uSunColor.value.copy(sunLight.color);
+      venus.update(date, hour, camera.position);
       return { sun, light, dir };
     },
   };

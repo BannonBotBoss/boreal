@@ -35,3 +35,15 @@ export function venusAt(date: Date) {
   const west = (Math.atan2(g[1], g[0]) - Math.atan2(sunG[1], sunG[0]) + 3 * Math.PI) % (2 * Math.PI) - Math.PI < 0; // west of the Sun = morning star
   return { jd, ra, dec, delta, r, elong, alpha, mag: venusMag(r, delta, alpha), morning: west, illum: (1 + Math.cos(alpha * D)) / 2, eqUnit: eq.map(x => x / delta) as [number, number, number] };
 }
+
+/** Geocentric Sun RA/Dec (deg) from the same Earth elements */
+export function sunAt(date: Date) { const e = helio(ELEMENTS.earth, jdFromDate(date)), g = [-e[0], -e[1], -e[2]], r = Math.hypot(...g);
+  const eq = [g[0], g[1] * Math.cos(OBLIQ) - g[2] * Math.sin(OBLIQ), g[1] * Math.sin(OBLIQ) + g[2] * Math.cos(OBLIQ)];
+  return { ra: ((Math.atan2(eq[1], eq[0]) / D) + 360) % 360, dec: Math.asin(eq[2] / r) / D }; }
+/** Alt/az of RA/Dec for an observer; local sidereal time from GMST (IAU 1982, Meeus 12.4). Same direction convention as timeOfDay.sunPosition. */
+export function altAz(ra: number, dec: number, date: Date, latDeg: number, lonDeg: number) {
+  const T = (jdFromDate(date) - 2451545), gmst = (280.46061837 + 360.98564736629 * T) % 360, ha = (gmst + lonDeg - ra) * D, d = dec * D, p = latDeg * D;
+  const el = Math.asin(Math.sin(p) * Math.sin(d) + Math.cos(p) * Math.cos(d) * Math.cos(ha));
+  const az = Math.atan2(Math.sin(ha), Math.cos(ha) * Math.sin(p) - Math.tan(d) * Math.cos(p)) + Math.PI;
+  return { elevation: el / D, azimuth: ((az / D) % 360 + 360) % 360, direction: { x: Math.cos(el) * Math.sin(az), y: Math.sin(el), z: -Math.cos(el) * Math.cos(az) } };
+}

@@ -15,12 +15,20 @@ import * as THREE from 'three';
 import { LOG_DEPTH, LOG_DEPTH_PREFIX } from './logDepth';
 import { GLSL_NOISE } from '../../proc/glsl';
 import { GLOBE_LAYERS } from './planetLayers';
+import { K } from '../../core/constants';
 import { COMPOSITION, rayleighPerKm, scaleHeightKm, ozoneEquivPerKm } from './composition';
 
 /** Earth-like constants (Nishita 1993 / Bruneton 2008 values; per km). [game calibration: sunI, mieG] */
 export const ATMOS = {
   heightKm: 100, /** derived from the gas mix (composition.ts): was Bruneton's [5.802, 13.558, 33.1]e-3 and H 8 */ rayleigh: COMPOSITION.wavelengthsNm.map(rayleighPerKm), rayleighH: scaleHeightKm(), ozone: ozoneEquivPerKm(), mie: 3.996e-3, mieExt: 1.11, mieH: 1.2, mieG: .76, sunI: 22, aerial: .16,
 };
+/** OI 557.7 nm green-line airglow: a Gaussian emission shell, peak 95 km, sigma 4 km (FWHM ~9 km), 250 R seen at zenith
+ *  (Greer et al. 1986, Planet. Space Sci. 34:771 (ETON); Roach & Gordon 1973 "The light of the night sky": 100-400 R typical).
+ *  1 R = 1e10/(4 pi) photons s^-1 m^-2 sr^-1; luminance = photons x h c / lambda x K_cd x V(557.7) (CIE 1924 V = 0.998).
+ *  Dome units: the sun's TOA illuminance (TSI x 93 lm/W, solar luminous efficacy above the air) is ATMOS.sunI. */
+export const AIRGLOW = (() => { const peakKm = 95, sigmaKm = 4, zenithR = 250, lambda = 557.7e-9;
+  const zenithCd = zenithR * 1e10 / (4 * Math.PI) * K.h * K.c / lambda * K.K_cd * 0.998, sunLux = K.TSI * 93;
+  return { peakKm, sigmaKm, zenithR, zenithCd, sunLux, zenithUnits: zenithCd * 22 / sunLux }; })();
 /** Ray-march sample counts per quality row (GLOBE_LOD order): [sky primary, sky light, terrain primary, terrain light]. */
 export const ATMOS_STEPS = [[16, 6, 8, 3], [14, 5, 6, 3], [12, 4, 6, 2], [10, 4, 4, 2], [8, 3, 3, 2], [6, 2, 0, 0]];
 /** Cloud layer: a thin shell at `heightKm`, density = octaves of the shared value noise (proc/glsl) on the planet-fixed
@@ -48,7 +56,7 @@ export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .8, octaves: [8, 6, 
 const MAX_N = Math.max(...ATMOS_STEPS.map(r => Math.max(r[0], r[2]))), MAX_L = Math.max(...ATMOS_STEPS.map(r => Math.max(r[1], r[3])));
 const GLSL = /* glsl */`
 const float ATM_AERIAL = ${ATMOS.aerial.toFixed(3)}; // in-scatter in the terrain's light units: ~ sun light (3.2) / sunI (22), so haze vs lit ground matches a real sky/ground ratio [reference calibration: Blue Marble land/ocean contrast]
-uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
+uniform float uAirglow; uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
 uniform mat3 uViewToWorld; uniform float uCloudOct, uCloudSeed, uCloudEvolve; uniform vec2 uCloudSpin; // spin = (cos, sin) of the drift angle
 uniform float uCloudClear; // 0 = the field as calibrated .. 1 = no clouds (in-page descent, T-0034/T-0041): cover and shadows fade AND the threshold lifts by clearLift, so the deck breaks into clouds and holes instead of a flat sheet
 uniform sampler2D uCloudTex; uniform vec4 uCloudSim; // planetLayers texture: A = sim cloud fraction (rust update_clouds), w = loaded
@@ -65,6 +73,19 @@ vec2 atmSunDepth(vec3 x, int n) {
   for (int j = 0; j < ${MAX_L}; j++) { if (j >= n) break; od += atmDensity(x + uSun * ds * (float(j) + 0.5)) * ds; }
   return od;
 }
+// Sunlight refracted round the limb into the geometric shadow (Link 1933, lunar-eclipse theory): a ray grazing at tangent height
+// hg is bent by d(hg) = D0 exp(-hg/HR), D0 = twice the horizontal refraction 34.5' (Bennett 1982), so a shadowed point a distance
+// D past the tangent still sees the Sun when its straight-line tangent height is hg - d(hg) D. That ray crosses the full grazing
+// chord (Chapman: column = n(hg) sqrt(2 pi R H)), which reddens it (Rayleigh) and shapes it (ozone Chappuis), and the bending
+// gradient spreads it (dilution 1 / (1 + D dd/dh)). Gives the red-orange ring over the night limb and the eclipse-red terminator.
+vec3 atmRefracted(vec3 x) {
+  vec3 oc = x - uCentre; float b = dot(oc, uSun); if (b >= 0.0) return vec3(0.0);
+  float D = -b, hl = length(oc - uSun * b) - uRp, D0 = ${(2 * 34.5 / 60 * Math.PI / 180).toFixed(5)}, hg = max(hl, 0.0);
+  for (int k = 0; k < 5; k++) { float e = D0 * exp(-hg / HR) * D, f = hg - e - hl, df = 1.0 + e / HR; hg = max(0.0, hg - f / df); }
+  if (hg - D0 * exp(-hg / HR) * D - hl > 1.0) return vec3(0.0); // deeper than the largest bend reaches
+  float cR = exp(-hg / HR) * sqrt(2.0 * PI * uRp * HR), cM = exp(-hg / HM) * sqrt(2.0 * PI * uRp * HM);
+  return exp(-((BR + BO) * cR + BME * cM)) / (1.0 + D * D0 / HR * exp(-hg / HR));
+}
 // in-scattered light along the ray (camera at the origin, km) up to tEnd; trans = transmittance over the same segment
 vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
   trans = vec3(1.0); vec2 p = atmRsi(vec3(0.0), rd, uRa); float t0 = max(p.x, 0.0), t1 = min(p.y, tEnd);
@@ -74,14 +95,16 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
   vec2 od = vec2(0.0); vec3 sR = vec3(0.0), sM = vec3(0.0);
   for (int i = 0; i < ${MAX_N}; i++) { if (i >= n) break;
     vec3 x = rd * (t0 + ds * (float(i) + 0.5)); vec2 d = atmDensity(x) * ds; od += d;
-    vec2 l = atmSunDepth(x, nl); if (l.x < 0.0) continue;
-    vec3 att = exp(-((BR + BO) * (od.x + l.x) + BME * (od.y + l.y))); sR += d.x * att; sM += d.y * att;
+    vec2 l = atmSunDepth(x, nl); vec3 att;
+    if (l.x < 0.0) { att = atmRefracted(x) * exp(-((BR + BO) * od.x + BME * od.y)); if (dot(att, att) < 1e-12) continue; }
+    else att = exp(-((BR + BO) * (od.x + l.x) + BME * (od.y + l.y)));
+    sR += d.x * att; sM += d.y * att;
   }
   trans = exp(-((BR + BO) * od.x + BME * od.y));
   return uSunI * (pR * BR * sR + pM * BM * sM);
 }
 // sunlight colour reaching x (transmittance), 0 in the planet's shadow
-vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? vec3(0.0) : exp(-((BR + BO) * l.x + BME * l.y)); }
+vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? atmRefracted(x) : exp(-((BR + BO) * l.x + BME * l.y)); }
 // Local sky (diffuse) light relative to clear noon, from the Sun's altitude h at a point (mu = sin h): the hemisphere light stands
 // for the clear-noon diffuse sky (~20 klx, CIE); sin h / sin 30 deg by day [approx], floor 960/20000 at h = 0 and Schaefer's 0.4 dex
 // per degree of depression below (core/skyVisibility twilightIlluminance), so the night side gets ~0 (night floor ~1e-3 lx)
@@ -117,14 +140,14 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
 }
 `;
 
-export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void; setLayers(clouds: boolean, air: boolean): void }
+export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void; setLayers(clouds: boolean, air: boolean, airglow?: boolean): void }
 const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.length - 1, tier))];
 
 /** Sky shell + aerial-perspective patcher for a planet of radius `R` metres (centre at the world origin). */
 export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   let [sn, sl, tn, tl] = stepsFor(tier), cur = tier;
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
-  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
+  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uAirglow: { value: 1 }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
   let cloudsOn = true, airOn = true; // layer panel (layerPanel.ts): off = 0 octaves / 0 ray-march steps, the shader skips the work
   const setSteps = () => { if (airOn) uniforms.uSteps.value.set(sn, sl, tn, tl); else uniforms.uSteps.value.set(0, 0, 0, 0); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = cloudsOn ? CLOUDS.octaves[row] : 0; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
   const mat = new THREE.ShaderMaterial({
@@ -145,6 +168,18 @@ void main() {
   vec3 rd = normalize(vView), tr; vec2 g = atmRsi(vec3(0.0), rd, uRp - 0.3); if (g.x > 0.0 && g.x < g.y) discard; float tEnd = 1e9; // rays that reach the ground are the tiles' job (aerial perspective)
   vec3 c = atmScatter(rd, tEnd, int(uSteps.x), int(uSteps.y), tr);
   if (tEnd > 1e8) c += tr * smoothstep(0.99996, 0.99999, dot(rd, uSun)) * 40.0; // sun disc (0.53°), reddened by its path
+  { // the Sun's refracted image round the limb (atmRefracted's bending): a view ray grazing at tangent height ht is bent by
+    // D0 exp(-ht/HR); where that bend equals the ray's angle to the Sun (within the Sun's 0.267 deg radius) the ray ends on the
+    // Sun's disc, radiance kept but reddened by the grazing chord: the bright red-orange ring seen with the Sun behind the Earth
+    vec3 oc = -uCentre; float b = dot(oc, rd), ht = length(oc - rd * b) - uRp;
+    if (b < 0.0 && ht > 0.0 && ht < 60.0) { float dl = ${(2 * 34.5 / 60 * Math.PI / 180).toFixed(5)} * exp(-ht / HR), a = acos(clamp(dot(rd, uSun), -1.0, 1.0));
+      if (abs(a - dl) < 0.00466) c += 40.0 * exp(-((BR + BO) * exp(-ht / HR) * sqrt(2.0 * PI * uRp * HR) + BME * exp(-ht / HM) * sqrt(2.0 * PI * uRp * HM))); } }
+  if (uAirglow > 0.5) { // airglow: emission integrated along the ray through the shell (limb brightening falls out of the path length)
+    vec2 o = atmRsi(vec3(0.0), rd, uRp + ${(AIRGLOW.peakKm + 4 * AIRGLOW.sigmaKm).toFixed(1)}); float t0 = max(o.x, 0.0), t1 = o.y;
+    vec2 gp = atmRsi(vec3(0.0), rd, uRp); if (gp.x > 0.0 && gp.x < gp.y) t1 = min(t1, gp.x);
+    if (t1 > t0) { float ds = (t1 - t0) / 48.0, s2 = 0.0;
+      for (int i = 0; i < 48; i++) { float h = length(rd * (t0 + ds * (float(i) + 0.5)) - uCentre) - uRp - ${AIRGLOW.peakKm.toFixed(1)}; s2 += exp(-h * h / ${(2 * AIRGLOW.sigmaKm ** 2).toFixed(1)}); }
+      c += vec3(0.32, 1.0, 0.12) * ${(AIRGLOW.zenithUnits / (AIRGLOW.sigmaKm * Math.sqrt(2 * Math.PI))).toExponential(4)} * s2 * ds; } } // 557.7 nm in linear sRGB (green) [approx], unit luminance
   { vec4 cl = atmClouds(rd, tEnd, int(uSteps.y)); c = mix(c, cl.rgb, cl.a); }
   gl_FragColor = vec4(c, 1.0);
 #include <tonemapping_fragment>
@@ -158,7 +193,7 @@ void main() {
     /** 0..1: open the cloud deck (T-0041, was a threshold switch): the cover and its shadows fade out, and the coverage
      *  threshold rises by CLOUDS.clearLift x k, so the deck breaks into clouds and holes instead of thinning as one sheet. Uniform only. */
     setClear(k) { uniforms.uCloudClear.value = k; },
-    setLayers(c, a) { if (c === cloudsOn && a === airOn) return; cloudsOn = c; airOn = a; dome.visible = a || c; setSteps(); },
+    setLayers(c, a, glow = true) { uniforms.uAirglow.value = glow && a ? 1 : 0; if (c === cloudsOn && a === airOn) return; cloudsOn = c; airOn = a; dome.visible = a || c; setSteps(); },
     /** Governor tier changed: new ray-march sample counts. Uniforms only (loops break at the count), so no shader
      *  recompile and no hitch when the governor moves. */
     setTier(t) { if (t === cur) return; cur = t; [sn, sl, tn, tl] = stepsFor(t); setSteps(); },

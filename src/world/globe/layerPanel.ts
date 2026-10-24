@@ -4,9 +4,9 @@
  *  localStorage 'boreal.globe.hide.v1' (persists); ?deep=<years, negative = past> picks the epoch. */
 import { layerExistence, type Existence } from '../../core/layerExistence';
 
-export const LAYERS = ['clouds', 'sunlight', 'atmosphere', 'aurora', 'snowIce', 'vegetation', 'ocean', 'fieldLines', 'plates', 'venus'] as const;
+export const LAYERS = ['clouds', 'sunlight', 'atmosphere', 'aurora', 'snowIce', 'vegetation', 'ocean', 'fieldLines', 'plates', 'venus', 'airglow'] as const;
 export type LayerId = typeof LAYERS[number];
-const EXISTS_AS: Partial<Record<LayerId, keyof ReturnType<typeof layerExistence>>> = { venus: 'atmosphere', clouds: 'clouds', atmosphere: 'atmosphere', aurora: 'aurora', snowIce: 'snowIce', vegetation: 'vegetation', ocean: 'ocean', fieldLines: 'aurora', plates: 'plates' };
+const EXISTS_AS: Partial<Record<LayerId, keyof ReturnType<typeof layerExistence>>> = { venus: 'atmosphere', airglow: 'atmosphere', clouds: 'clouds', atmosphere: 'atmosphere', aurora: 'aurora', snowIce: 'snowIce', vegetation: 'vegetation', ocean: 'ocean', fieldLines: 'aurora', plates: 'plates' };
 /** off unless asked: the overlays (field lines, plate boundaries) are diagnostics, not what an eye in orbit sees */
 export const DEFAULT_HIDDEN: LayerId[] = ['fieldLines', 'plates'];
 export const STORE_KEY = 'boreal.globe.hide.v1';
@@ -26,7 +26,7 @@ export function layerStates(hidden: Set<LayerId>, offsetYr = 0): Record<LayerId,
   }
   return out;
 }
-const LABEL: Record<LayerId, string> = { clouds: 'Clouds', sunlight: 'Sunlight', atmosphere: 'Atmosphere', aurora: 'Aurora', snowIce: 'Snow / ice', vegetation: 'Vegetation', ocean: 'Ocean', fieldLines: 'Field lines', plates: 'Plates', venus: 'Venus' };
+const LABEL: Record<LayerId, string> = { airglow: 'Airglow (OI 557.7)', clouds: 'Clouds', sunlight: 'Sunlight', atmosphere: 'Atmosphere', aurora: 'Aurora', snowIce: 'Snow / ice', vegetation: 'Vegetation', ocean: 'Ocean', fieldLines: 'Field lines', plates: 'Plates', venus: 'Venus' };
 export function stateText(s: LayerState) { return s.exists === 'present' ? '' : s.exists === 'not-yet-formed' ? 'not yet formed' : 'gone'; }
 
 /** DOM panel (top-right). onChange gets the new states; persists to localStorage unless ?hide= fixed them for this visit. */

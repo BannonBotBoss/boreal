@@ -53,6 +53,7 @@ import { createLoading } from './ui/loading';
 import { settle, startup } from './render/startup';
 import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
+import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
 import { startView } from './world/globe/startView';
 import { createInPage } from './world/globe/inpage';
 import { ageYears, lifespanWarning } from './core/lifespan';
@@ -70,6 +71,7 @@ const dialog = element<HTMLDialogElement>('info');
 const SAVE_KEY = 'boreal.events.v1', NEEDS_KEY = 'boreal.needs.v1'; // T-0036: the embodied animal's needs (water, rest, energy)
 let context = createContext(), saveBlocked = false;
 let noticeTimer: ReturnType<typeof setTimeout>;
+const padRouter = createPadRouter({ act: id => act(id), notice: m => notice(m), globe: () => inpage?.mode === 'globe', reloadBindings: () => { try { bindings = loadBindings(localStorage.getItem(BINDINGS_KEY)); bindingTexts(); } catch { /* blocked */ } } });
 function notice(message: string) {
   const node = element('notice'); node.textContent = message; node.style.display = 'block';
   clearTimeout(noticeTimer); noticeTimer = setTimeout(() => node.style.display = 'none', 6000);
@@ -256,11 +258,12 @@ element('export').onclick = () => {
 const keys = new Set<string>(), tapped = new Set<string>(); // tapped: keys pressed since the last frame (a quick tap still fires)
 // Input goes through ONE bindings table (core/bindings): defaults = the old fixed keys; rebinding in ui/controls (Menu > Controls).
 let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem(BINDINGS_KEY); } catch { return null; } })()), inputPrev = new Set<string>(), hint = { pad: '', keys: '' };
-function setBindings(b: Bindings) { bindings = b; hint = { pad: '', keys: '' }; bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
+function setBindings(b: Bindings) { bindings = b; padRouter?.setBindings(b); hint = { pad: '', keys: '' }; bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
 const controls = controlsScreen({ get: () => bindings, set: setBindings, library: () => { menu.close(); dialog.showModal(); } });
 const hintFor = (kind: 'keys' | 'pad') => { const L = (id: string) => bindingLabel(bindings[id][kind]);
   return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
 function act(id: string) { // one fired press action (keyboard or gamepad)
+  if (padRouter.act(id)) return;
   if (dialog.open) { if (id === 'back' || id === 'interact') dialog.close(); else if (id === 'pause') togglePause(); return; }
   if (photo.active) { if (id === 'pause' || id === 'photo') void photo.exit(); else if (id === 'inspector') inspector.toggle(); return; } // photo mode has its own keys
   if (id === 'pause') { if (chrono.open) chrono.close(); else togglePause(); clearInput(); }
@@ -342,9 +345,10 @@ function frame(time: number) { const frameStart = performance.now();
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');
   if (hadPad && !pad) { paused = true; pauseClock(); element('pause').textContent = 'Resume'; if (!menu.open) menu.show('pause'); notice('Controller disconnected. Reconnect and press Menu to resume.'); }
   hadPad = !!pad;
-  const input = resolveInput(bindings, atomValues([...keys, ...tapped], pad), inputPrev, chrono.open); inputPrev = input.active; tapped.clear();
+  const padOwned = padRouter.frame(pad ?? undefined, time, dt);
+  const input = resolveInput(bindings, atomValues([...keys, ...tapped], padOwned ? undefined : pad), inputPrev, chrono.open); inputPrev = input.active; tapped.clear();
   if (!menu.open) for (const id of input.fired) act(id); // the menu reads the pad itself (and the keys); its presses never reach the game
-  const hold = photo.active ? resolveInput(bindings, atomValues([], pad), new Set(), chrono.open).value : input.value; // photo mode: its own keys
+  const hold = photo.active ? resolveInput(bindings, atomValues([], padOwned ? undefined : pad), new Set(), chrono.open).value : input.value; // photo mode: its own keys
   const H = (id: keyof typeof ACTION) => hold[id] ?? 0;
   // A live photo sequence keeps the world running (no player input) while photo mode renders it.
   const active0 = !menuOpen() && !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating) && !inpage?.blocksGame(); // in-page globe/band: sim frozen, world clock runs

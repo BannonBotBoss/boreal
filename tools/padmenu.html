@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Boreal · Pad menu harness</title><style>body{margin:0;background:radial-gradient(#203048,#06090f);height:100vh;color:#ddd;font:16px system-ui}</style></head>
+<body><div style="padding:16px">Pad menu harness: Menu = pad menu, View = controls help, Y = camera mode (hold: filter wheel), RS click = shutter.</div>
+<script type="module">
+import { mountCameraPanel, stateFromSearch } from '../src/ui/cameraPanel.ts';
+import { FILTERS } from '../src/camera/filters.ts';
+import { startStandaloneRouter } from '../src/input/padRouter.ts';
+const filters = FILTERS.map(f => ({ id: f.id, label: f.label }));
+mountCameraPanel(stateFromSearch(location.search, filters), () => {}, () => '', { filters, open: true });
+window.padRouter = startStandaloneRouter({ notice: t => console.log('notice', t) });
+</script></body></html>

@@ -13,6 +13,7 @@
  * (shared: borrows the game's renderer for the in-page transition and renders into a far-layer target, farLayer.ts).
  */
 import * as THREE from 'three';
+import { registerPadTarget } from '../../input/padTargets';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { mountViewfinder } from '../../camera/gameCamera';
 import { GOVERNOR, LADDER, ceiling, governFrame, tierForGpu } from '../../core/quality';
@@ -186,6 +187,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     else if (e.key === 'q' || e.key === 'Q') turn(-.12); else if (e.key === 'e' || e.key === 'E') turn(.12);
     else if (e.key === 'g' || e.key === 'G' || (e.key === 'Escape' && own.pageDom)) { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } // over home: spawn right below, same heading; shared (in-page): Esc opens the game menu instead (main.ts)
   });
+  listeners.push(registerPadTarget('globe', { active: () => inputOn, orbit: (dx, dy) => { if (!dx && !dy) return; stopCoast(); const r = controls as unknown as { _rotateLeft(a: number): void; _rotateUp(a: number): void }; r._rotateLeft(dx * controls.rotateSpeed * 3); r._rotateUp(dy * controls.rotateSpeed * 3); controls.update(); }, zoom, turn, home: () => { flyHome = 1; stopCoast(); }, land: () => { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } })); // Grok Bot: gamepad (input/padRouter)
 
   // ---- tile builders: a worker pool (default) or budgeted main-thread jobs (?workers=0 or no Worker support)
   const tiles = new Map<string, Tile>(), queued = new Map<string, { n: QNode; pr: number }>(), inflight = new Set<string>();

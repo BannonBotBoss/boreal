@@ -1,5 +1,6 @@
 import { createVenus, dayOfYearOf, skyDate } from './venusSky';
 import { SITE as VENUS_SITE } from '../core/weather'; // the Sun and the planets share the observer (Kenora) so twilight and Venus agree
+import { SKY, TWILIGHT_B0, skyLuminance, twilightIlluminance } from '../core/skyVisibility';
 import { GLSL_NOISE } from '../proc/glsl';
 import { hash, random } from '../proc/rng';
 import * as THREE from 'three';
@@ -22,7 +23,8 @@ void main() {
   gl_Position = p.xyww; // always at the far plane, behind the world
 }`;
 const CLOUD_FRAG = /* glsl */`
-uniform float uTime, uSeed, uCover, uDay, uGolden;
+uniform float uTime, uSeed, uCover, uDay, uGolden, uSunAlt, uTwB0, uTwK, uTwGain;
+uniform vec3 uTwTint;
 uniform vec2 uDrift;
 uniform vec3 uSunDir, uSunColor;
 varying vec3 vDir;
@@ -46,7 +48,14 @@ void main() {
   float star = step(0.9972, hash(cell)) * (0.6 + 0.4 * sin(uTime * 3.0 + hash(cell + 3.0) * 40.0));
   // Layers, back to front: night darkening over the scattering sky, then stars, then clouds.
   float night = 1.0 - uDay;
-  vec3 c = vec3(0.015, 0.025, 0.06); float a = night * 0.9;
+  // Twilight glow: the same Schaefer (1993) sky luminance the Venus threshold uses (core/skyVisibility skyLuminance, h <= 0),
+  // cd/m² -> scene units by the lights' scale (3 per LUX.ref lux, Lambert 1/pi folded: L = E/pi) and the eye's gain.
+  float zd = degrees(acos(clamp(d.y, 0.0, 1.0))), rho = max(1.0, degrees(acos(clamp(dot(d, uSunDir), -1.0, 1.0))));
+  float X = 1.0 / (cos(radians(min(zd, 90.0))) + 0.025 * exp(-11.0 * cos(radians(min(zd, 90.0)))));
+  float L = uTwB0 * pow(10.0, 0.4 * (min(uSunAlt, 0.0) + zd / (360.0 * uTwK))) * (100.0 / rho) * (1.0 - pow(10.0, -0.4 * uTwK * X));
+  // colour: reddened toward the Sun's horizon (sunlight's grazing transmittance), ozone-blue (Chappuis band, Hulburt 1953) overhead [approx]
+  vec3 tint = mix(vec3(0.62, 0.74, 1.0), uTwTint, exp(-rho / 40.0) * (1.0 - d.y)); tint /= dot(tint, vec3(0.2126, 0.7152, 0.0722));
+  vec3 c = tint * L * uTwGain; float a = uSunAlt < 0.0 ? 1.0 : night * 0.9;
   float sa = star * night * smoothstep(0.05, 0.3, d.y);
   c = mix(c * a, vec3(0.92, 0.94, 1.0), sa); a = sa + a * (1.0 - sa);
   float ca = cloud * 0.95;
@@ -65,7 +74,8 @@ export function createSky(scene: THREE.Scene) {
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(550, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.ShaderMaterial({
     vertexShader: CLOUD_VERT, fragmentShader: CLOUD_FRAG, side: THREE.BackSide, transparent: true, depthWrite: false, fog: false,
     uniforms: { uTime: { value: 0 }, uSeed: { value: (WORLD_SEED % 997) * .37 }, uCover: { value: .47 }, uDrift: { value: new THREE.Vector2() }, uDay: { value: 1 }, uGolden: { value: 0 },
-      uSunDir: { value: new THREE.Vector3() }, uSunColor: { value: new THREE.Color() } },
+      uSunDir: { value: new THREE.Vector3() }, uSunColor: { value: new THREE.Color() },
+      uSunAlt: { value: 0 }, uTwB0: { value: TWILIGHT_B0 }, uTwK: { value: SKY.k }, uTwGain: { value: 0 }, uTwTint: { value: new THREE.Color(1, .55, .3) } },
   }));
   clouds.renderOrder = -1; sky.renderOrder = -2; scene.add(clouds);
   const sunLight = new THREE.DirectionalLight(0xffebc3, 3); scene.add(sunLight, sunLight.target);
@@ -91,7 +101,8 @@ export function createSky(scene: THREE.Scene) {
       const cosZ = Math.sin(sun.elevation * Math.PI / 180), wq = weatherAt(focus.x, focus.z), haze = (u.turbidity.value as number) / 2.5;
       const sc = sunColour(cosZ, haze), age = moonAge(WEATHER.day), moon = sunPosition(hour - age / SYNODIC * 24); // moon transits ~0.8 h later per day of age
       const Esun = shortwave(cosZ, WEATHER.on ? wq.cloud : 0) * LUX.efficacy, Emoon = moonLux(age, Math.sin(moon.elevation * Math.PI / 180)) * (1 - .75 * (WEATHER.on ? wq.cloud : 0));
-      LIGHTING.lux = Esun + Emoon + LUX.nightSky; LIGHTING.gain = exposureFor(LIGHTING.lux) * wolfEyes(LIGHTING.lux); LIGHTING.moonAge = age; LIGHTING.Esun = Esun; LIGHTING.Emoon = Emoon;
+      const Etw = sun.elevation < 0 ? twilightIlluminance(sun.elevation) : 0; // diffuse sky after sunset (core/skyVisibility), so the eye adapts to it
+      LIGHTING.lux = Esun + Emoon + Etw + LUX.nightSky; LIGHTING.gain = exposureFor(LIGHTING.lux) * wolfEyes(LIGHTING.lux); LIGHTING.moonAge = age; LIGHTING.Esun = Esun; LIGHTING.Emoon = Emoon;
       sunLight.color.setRGB(sc.r, sc.g, sc.b);
       sunLight.intensity = 3 * Esun / LUX.ref * LIGHTING.gain; sunLight.position.copy(focus).addScaledVector(dir, 80); sunLight.target.position.copy(focus);
       // Moon, or with the moon down/thin an overhead skylight key from behind the viewer (core/light NIGHT.key): reuses this light so no shader recompiles.
@@ -100,14 +111,19 @@ export function createSky(scene: THREE.Scene) {
       tmpV.set(moon.direction.x, moon.direction.y, moon.direction.z).multiplyScalar(1 - wk);
       if (wk > 0) { camera.getWorldDirection(keyDir); keyDir.y = 0; if (keyDir.lengthSq() < 1e-6) keyDir.set(0, 0, -1); keyDir.normalize().multiplyScalar(-1); keyDir.y = .75; tmpV.addScaledVector(keyDir.normalize(), wk); }
       moonLight.position.copy(focus).add(tmpV.normalize().multiplyScalar(80)); moonLight.target.position.copy(focus);
-      hemi.intensity = 2.7 * light.day + (1 - light.day) * Math.max(.35, nightSkyLight(Emoon, LIGHTING.gain));
+      hemi.intensity = 2.7 * light.day + (1 - light.day) * Math.max(.35, nightSkyLight(Emoon, LIGHTING.gain)) + (1 - light.day) * 3 * Etw / LUX.ref * LIGHTING.gain; // + the twilight sky's own diffuse light on the ground (same units as the sun: 3 per LUX.ref lux)
       hemi.userData.night = (1 - light.day) * darkAdapted(LIGHTING.lux); // photoreal: the dark-adapted night sky is not in the IBL map, so keep this share unreduced
       hemi.color.setRGB(.25, .3, .45).lerp(tmp.set(0xf1f5dd), light.day);
       hemi.groundColor.setRGB(.05, .06, .09).lerp(tmp.set(0x526753), light.day);
       const fog = (scene.fog as THREE.Fog).color;
       fog.copy(fogNight).lerp(fogDay, light.day).lerp(fogGolden, light.golden * .5);
+      if (sun.elevation < 0) { // twilight: haze takes the horizon sky's own luminance (skyLuminance at Z = 88 deg, 90 deg from the Sun), not a fixed night blue
+        const Lh = skyLuminance(sun.elevation, 88, 90) * 3 / LUX.ref * LIGHTING.gain, g = sunColour(.01, haze);
+        tmp.setRGB(.5 * (.62 + g.r), .5 * (.74 + g.g), .5 * (1 + g.b)); tmp.multiplyScalar(Lh / (.2126 * tmp.r + .7152 * tmp.g + .0722 * tmp.b));
+        if (tmp.r + tmp.g + tmp.b > fog.r + fog.g + fog.b) fog.copy(tmp); }
       const cu = (clouds.material as THREE.ShaderMaterial).uniforms;
-      cu.uTime.value = time; cu.uDay.value = light.day; cu.uGolden.value = light.golden;
+      cu.uTime.value = time; cu.uDay.value = light.day; cu.uSunAlt.value = sun.elevation; cu.uTwGain.value = 3 / LUX.ref * LIGHTING.gain; // scene radiance = (3 / LUX.ref) x real luminance (Lambert: L = aE/pi on both sides)
+      { const g = sunColour(.01, haze); (cu.uTwTint.value as THREE.Color).setRGB(g.r, g.g, g.b); } cu.uGolden.value = light.golden;
       // Weather (core/weather): cloud cover, drift, fog and precipitation come from the cell under the viewer.
       const w = weatherAt(focus.x, focus.z), dt = Math.max(0, Math.min(.2, time - lastTime)); lastTime = time; let fogV = Infinity;
       if (WEATHER.on) {

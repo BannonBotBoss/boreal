@@ -1,0 +1,5 @@
+{ "source": "JPL Horizons API, COMMAND=299, CENTER=500@399 (geocentric), QUANTITIES=1,9,23 (astrometric RA/Dec ICRF, APmag, S-O-T), fetched 2026-10-23",
+  "rows": [
+    { "utc": "2025-03-23T00:00:00Z", "ra": 358.76970, "dec": 8.64334, "mag": -4.220, "elong": 8.4151, "note": "near inferior conjunction" },
+    { "utc": "2025-06-01T00:00:00Z", "ra": 23.55805, "dec": 7.52060, "mag": -4.411, "elong": 45.8829, "note": "greatest western elongation (morning)" },
+    { "utc": "2025-08-15T00:00:00Z", "ra": 108.29090, "dec": 21.58957, "mag": -3.949, "elong": 35.1233, "note": "morning" } ] }

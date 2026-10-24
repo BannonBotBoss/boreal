@@ -19,3 +19,9 @@ Proposal: https://github.com/BannonBotBoss/boreal-/discussions/1#discussioncomme
 - Globe colour (`planet.ts` surfaceColour) replaces the fixed 1200 m rock / 4200-3600 m snow line; `surfaceData.ts` gets `zone`.
 - Game: `generateChunk` drops spruce/plant/log above the tree line; `flora/site` suitability is 0 there (grass, flowers, shrubs).
 - Computed: Kenora (49.77 N) tree line 865 m, ice line 1850 m; equator 3472 m and 4457 m.
+
+## Objectives
+- [x] Cited data file and core module for tree line and ice line
+- [x] Globe tile colour uses the computed lines
+- [x] No trees, plants or logs above the tree line in the game
+- [x] Tests (tests/altitude-zones.test.ts)

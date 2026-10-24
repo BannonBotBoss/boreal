@@ -12,8 +12,12 @@ pub const OLR_A: f64 = 203.3;
 pub const OLR_B: f64 = 2.09;
 /// Meridional transport as relaxation to the global mean, C = 3.87 W/m²/K (Budyko 1969, Tellus 21:611, as used by North 1975) [verify].
 pub const TRANSPORT_C: f64 = 3.87;
-/// Planetary albedo: 0.32 ice-free, 0.62 where T < −10 °C (Budyko 1969).
-pub fn planetary_albedo(t_c: f64) -> f64 { if t_c < -10.0 { 0.62 } else { 0.32 } }
+/// Planetary albedo: 0.62 where T < −10 °C (Budyko 1969); ice-free it rises with latitude, α = A0 + A2·P2(sin φ) (the Legendre
+/// fit of North, Cahalan & Coakley 1981, Rev. Geophys. 19:91; ERBE zonal means: ~0.25 in the tropics, ~0.35-0.4 at 60°).
+/// A constant 0.32 left the tropics ~5 K cold. A0, A2 [calibrated: chosen within the ERBE zonal range so the annual mean is 14.3 °C (Jones 1999: 14.0) and the equator 26.8 °C]
+pub const ALB_A0: f64 = 0.285; pub const ALB_A2: f64 = 0.05;
+pub fn planetary_albedo_at(t_c: f64, lat: f64) -> f64 { if t_c < -10.0 { 0.62 } else { let x = lat.to_radians().sin(); ALB_A0 + ALB_A2 * 0.5 * (3.0 * x * x - 1.0) } }
+pub fn planetary_albedo(t_c: f64) -> f64 { planetary_albedo_at(t_c, 30.0) }
 /// Initial relative humidity: global-mean near-surface RH ≈ 0.75 (Peixoto & Oort 1996, Physics of Climate) [verify].
 pub const RH_SEED: f64 = 0.75;
 
@@ -26,7 +30,7 @@ pub fn global_mean_t(day: f64) -> f64 {
         let w = (lat * std::f64::consts::PI / 180.0).cos();
         let q = daily_toa(day, lat);
         let t0 = (0.68 * q - OLR_A) / OLR_B; // zero-order, α = 0.32
-        sq += (1.0 - planetary_albedo(t0)) * q * w; sw += w;
+        sq += (1.0 - planetary_albedo_at(t0, lat)) * q * w; sw += w;
     }
     (sq / sw - OLR_A) / OLR_B
 }
@@ -34,7 +38,7 @@ pub fn global_mean_t(day: f64) -> f64 {
 pub fn seed_temperature(day: f64, lat: f64, t_bar: f64) -> f64 {
     let q = daily_toa(day, lat);
     let t0 = (0.68 * q - OLR_A + TRANSPORT_C * t_bar) / (OLR_B + TRANSPORT_C);
-    (((1.0 - planetary_albedo(t0)) * q - OLR_A + TRANSPORT_C * t_bar) / (OLR_B + TRANSPORT_C)).max(-60.0)
+    (((1.0 - planetary_albedo_at(t0, lat)) * q - OLR_A + TRANSPORT_C * t_bar) / (OLR_B + TRANSPORT_C)).max(-60.0)
 }
 
 /// Seasonal response of a column with heat capacity `c` (J/m²/K): a first-order system C dT/dt = −(B + C_tr)(T − T_eq) + forcing responds to the
@@ -66,6 +70,10 @@ pub const SNOW_SEED_MM: f64 = 30.0; // game calibration
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test] fn tropics_and_mean_match_observed() { // Jones et al. 1999 (Rev. Geophys. 37:173): global 14 °C (1961-90); tropical (±10°) zonal mean ~26-27 °C (Peixoto & Oort 1992)
+        let tb = annual_global_t(); let eq = (0..12).map(|k| seed_temperature(15.0 + 30.4 * k as f64, 0.0, tb)).sum::<f64>() / 12.0;
+        eprintln!("annual mean {tb:.2} equator {eq:.2}"); assert!((tb - 14.5).abs() < 2.0, "mean {tb}"); assert!((eq - 26.0).abs() < 2.0, "equator {eq}");
+    }
     #[test] fn global_mean_is_earthlike() { let t = global_mean_t(80.0); assert!(t > 8.0 && t < 20.0, "T̄ {}", t); }
     #[test] fn equator_warm_poles_cold() {
         let tb = global_mean_t(80.0);

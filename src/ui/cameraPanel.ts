@@ -1,8 +1,8 @@
 /** Camera panel (T-0067/T-0068): the viewfinder controls shared by globe, game and sun viewer. Auto exposure and the shutter
- *  are free; manual exposure (aperture/shutter/ISO/ND/comp) and filters are badge-gated per control (camera/badges.ts).
+ *  are free; manual exposure (aperture/shutter/ISO/ND/comp) and filters are badge-gated per control (core/badges.ts canUse; auto + shutter need no badge).
  *  Collapsed by default (clean viewfinder); the "Camera" button or C opens it. */
 import { defaultCamera, ev100FromSettings, type CameraSettings } from '../render/exposure';
-import { hasBadge } from '../camera/badges';
+import { canUse } from '../core/badges';
 
 export interface FilterOption { id: string; label: string; disabled?: boolean; note?: string }
 export interface CameraPanelState { cam: CameraSettings; band: string }
@@ -13,7 +13,7 @@ export function stateFromSearch(search: string, filters: FilterOption[] = []): C
 }
 export interface PanelOpts { filters: FilterOption[]; focal?: boolean; onPhoto?: () => void; onGallery?: () => void; open?: boolean }
 export function mountCameraPanel(st: CameraPanelState, onChange: () => void, readout: () => string, opts: PanelOpts) {
-  const okExp = hasBadge('camera.exposure'), okFil = hasBadge('camera.filters');
+  const okExp = canUse('camera.exposure'), okFil = canUse('camera.filters');
   if (!okExp) st.cam.auto = true; if (!okFil) st.band = opts.filters[0].id;
   const wrap = document.createElement('div'); wrap.id = 'camera-panel'; wrap.dataset.ui = 'camera';
   wrap.style.cssText = 'position:fixed;bottom:8px;right:8px;z-index:30;background:#000a;color:#ddd;font:12px system-ui;padding:6px 8px;border-radius:6px;line-height:1.7;min-width:220px';

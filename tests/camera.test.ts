@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addTextChunks, readTextChunks, crc32 } from '../src/camera/png';
 import { FILTERS, filter, filterStops, applyFilter, reaches } from '../src/camera/filters';
-import { hasBadge } from '../src/camera/badges';
+import { canUse, setUnlockAll, useStorage } from '../src/core/badges';
 
 // smallest valid PNG: 1x1 grey (signature, IHDR, IDAT, IEND)
 const PNG = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR4nGNgAAAAAgABSK+kcQAAAABJRU5ErkJggg==', 'base64'));
@@ -19,9 +19,7 @@ test('filters are linear light operations; atmosphere blocks UV/EUV/X-ray at the
   for (const id of ['uv', 'euv', 'xray'] as const) { assert.equal(reaches(filter(id), false), false); assert.equal(filterStops(filter(id)), Infinity); }
   assert.equal(FILTERS.some(f => /polar|infra/i.test(f.label)), false, 'polarizer/IR stay TODO until causal');
 });
-test('badges: auto + shutter free, gated controls allowed by stub, unlockAll', () => {
-  assert.equal(hasBadge('camera.shutter', ''), true); assert.equal(hasBadge('camera.exposure', ''), true);
-  (globalThis as any).borealBadges = { has: () => false };
-  assert.equal(hasBadge('camera.filters', ''), false); assert.equal(hasBadge('camera.filters', '?unlockAll=1'), true); assert.equal(hasBadge('camera.auto', ''), true);
-  delete (globalThis as any).borealBadges;
+test('camera controls gate through core/badges canUse (auto + shutter are not gated)', () => {
+  useStorage(); assert.equal(canUse('camera.exposure'), false); assert.equal(canUse('camera.filters'), false);
+  setUnlockAll(true); assert.equal(canUse('camera.filters'), true); setUnlockAll(false);
 });

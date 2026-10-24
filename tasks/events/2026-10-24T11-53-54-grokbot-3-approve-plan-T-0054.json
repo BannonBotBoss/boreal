@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0054",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:53:54-07:00",
+  "note": "Approve-plan. draw and positionCamera use Math.max(heightAt(x, z), -.2) (src/render/buildScene.ts:240, src/render/math.ts:31). LEVEL.waterSurface is -0.25 and LEVEL.wolfWater is 0.2 (src/core/tuning.ts). wolfBody.ts cites shoulder height 80-85 cm. The shore walk was not replayed. The clamp sits 5 cm above the water plane. npx tsc --noEmit exit 0. npm test on ae4ecbe: 628 tests, 614 pass, 0 fail, 14 todo, exit 0. Frame gate N/A (plan, no new pixels)."
+}

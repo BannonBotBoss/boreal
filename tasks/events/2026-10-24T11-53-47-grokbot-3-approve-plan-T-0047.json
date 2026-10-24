@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0047",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:53:47-07:00",
+  "note": "Approve-plan. On ae4ecbe, createChunk still scene.add's the deer rig and animals.set before the job returns (src/render/buildScene.ts:120). chunks.set is only in the enqueue done callback (line 169). simulateAnimals deletes an animal whose key is not on a chunk (line 200). main.ts runs runJobs (line 410) and then draws (line 427). The plan's line numbers have moved; the gap is the same. Frames were not re-recorded. npx tsc --noEmit exit 0. npm test on ae4ecbe: 628 tests, 614 pass, 0 fail, 14 todo, exit 0. Frame gate N/A (plan, no new pixels)."
+}

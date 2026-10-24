@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0050",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:53:50-07:00",
+  "note": "Approve-plan. stripFlora deletes aFall, aOrgan and aBloom (src/render/geometry.ts:114). Bloom windows in src/core/flora/plants.ts match the plan: wood lily 175-205, bunchberry 155-190, bluebead 150-180, everlasting 200-260. Day 227 is outside the first three and inside everlasting. Flower vertex counts were not re-counted. npx tsc --noEmit exit 0. npm test on ae4ecbe: 628 tests, 614 pass, 0 fail, 14 todo, exit 0. Frame gate N/A (plan, no new pixels)."
+}

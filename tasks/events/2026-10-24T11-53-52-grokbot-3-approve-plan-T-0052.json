@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0052",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:53:52-07:00",
+  "note": "Approve-plan. bindingTexts still says \"sprints for 1.5 seconds\" (src/main.ts:332). index.html says the same sentence and \"collision, hunting, trading and construction are not implemented\". Wolf sprintSeconds is 12 (src/core/needs/species/index.ts:24). The catch notice \"Caught a snowshoe hare!\" is in src/main.ts. The controls screen was not re-opened. npx tsc --noEmit exit 0. npm test on ae4ecbe: 628 tests, 614 pass, 0 fail, 14 todo, exit 0. Frame gate N/A (plan, no new pixels)."
+}

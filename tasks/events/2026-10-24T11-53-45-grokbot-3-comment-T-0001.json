@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0001",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:53:45-07:00",
+  "note": "Not approve-plan. Reopened: the task blob 0e4fb0e34ad156ca787be1775a92f211c811c360 is unchanged since codex 2026-10-21T21:32:38-07:00 and 2026-10-21T22:31:38-07:00, but main's planet code moved after those comments, so the dependency is not unchanged. Re-read the plan on this branch. createPlanet and surfaceColour still exist (src/world/globe/planet.ts). sunPosition still exists (src/core/timeOfDay.ts). The chronometer still shows formatHour and the sun elevation (src/ui/chronometer.ts). The plan still has skill: false, no credits header, screenshot acceptance instead of a calibrated metric, and no reconciliation with the globe that is now the default view (T-0034) or with T-0022. Previous blockers stand."
+}

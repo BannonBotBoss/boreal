@@ -32,8 +32,8 @@ import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { GLOBE_COAST, cloudClear, coastLambda, globePitch } from './transition';
 import { globePlanet } from './home';
-import { toLatLon, PLANET, type Vec3 } from './planet';
-import { setLogDepthFar } from './logDepth';
+import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
+import { setLogDepthFar, withLogDepth } from './logDepth';
 import { setLayerCamera, setSnowIceShown, startPlanetLayers } from './planetLayers';
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
@@ -154,7 +154,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   // Dipole field lines r = L cos^2(mlat) (geodynamo.fieldLineR) for L = 1.5..8 at 12 magnetic longitudes, planet-fixed frame
   const fieldLines = new THREE.Group(); fieldLines.visible = false; scene.add(fieldLines); fieldLines.renderOrder = 2;
   { const m = new THREE.Vector3(...auroraPole()), e1 = new THREE.Vector3(0, 1, 0).cross(m).normalize(), e2 = m.clone().cross(e1);
-    const mat = new THREE.LineBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.5, toneMapped: false });
+    const mat = new THREE.LineBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.5, toneMapped: false }); mat.onBeforeCompile = withLogDepth; // same log depth as the tiles, so the globe hides the far side of each line
     for (const L of [1.5, 2, 3, 4, 6, 8]) for (let k = 0; k < 12; k++) { const ph = k * Math.PI / 6, pts: THREE.Vector3[] = [], lim = Math.acos(Math.sqrt(1 / L));
       for (let i = 0; i <= 64; i++) { const ml = -lim + 2 * lim * i / 64, r = fieldLineR(L, ml * 180 / Math.PI) * R;
         pts.push(new THREE.Vector3().addScaledVector(e1, Math.cos(ml) * Math.cos(ph) * r).addScaledVector(e2, Math.cos(ml) * Math.sin(ph) * r).addScaledVector(m, Math.sin(ml) * r)); }
@@ -174,7 +174,12 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const bench = q.get('bench') === 'zoom', benchFrom = 14e6, benchTo = 300, benchSec = 20; let benchT = -2, benchOrbit = {}; // 2 s settle at orbit, 20 s zoom, 8 s hold
   const startAlt = bench ? benchFrom : Number(q.get('alt')) || R * 2.2;
   const dirQ = q.get('dir')?.split(',').map(Number); // ?dir=x,y,z: start over any planet direction (e.g. a cube-face corner, screenshots)
-  const start = q.get('dir') === 'antisun' ? sunNow().clone().negate().normalize().toArray() as [number, number, number] : dirQ?.length === 3 && dirQ.every(Number.isFinite) ? new THREE.Vector3(...dirQ).normalize().toArray() as [number, number, number] : q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
+  // ?latlon=lat,lon (deg; lon may be 'antisun' = local midnight): start over a geographic point, e.g. a polar night-side view.
+  // ?at= stays game-local x,z metres (handoff.ts), so it cannot carry lat/lon.
+  const ll = q.get('latlon')?.split(','), llStart = ll && ll.length === 2 && Number.isFinite(Number(ll[0])) ? (() => {
+    const lon = ll[1] === 'antisun' ? toLatLon(sunNow().clone().negate().normalize().toArray() as [number, number, number]).lon : Number(ll[1]) * Math.PI / 180;
+    return fromLatLon(Number(ll[0]) * Math.PI / 180, Number.isFinite(lon) ? lon : 0); })() : null;
+  const start = llStart ? llStart : q.get('dir') === 'antisun' ? sunNow().clone().negate().normalize().toArray() as [number, number, number] : dirQ?.length === 3 && dirQ.every(Number.isFinite) ? new THREE.Vector3(...dirQ).normalize().toArray() as [number, number, number] : q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
   let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0, overHome: { x: number; z: number } | null = null, leaving = false;
   const shot = q.has('shot'); // screenshots: clock pinned, stays on the globe, logs seam diagnostics
   const autoHandoff = own.autoHandoff && !bench && !q.has('shot') && q.get('handoff') !== '0'; // screenshots and benches stay on the globe

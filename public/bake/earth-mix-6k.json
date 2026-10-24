@@ -1,0 +1,1 @@
+{"source":"cargo run --release --bin differentiate 6000 20000 0.05 out.bin (bulk mix, cold Tillotson, SPH summation density)","n":6000,"steps":20000,"t_s":254313,"r_vol":5831000,"inv_f":402,"j2":7.746e-4,"j2_range_last_10k_steps":[6.5e-4,7.8e-4],"moi":0.2976,"g_eq":11.685,"g_pole":11.734,"rho_centre":22969,"separation":1.000,"cmb":2937000}

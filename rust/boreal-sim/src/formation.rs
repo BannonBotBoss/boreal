@@ -249,4 +249,10 @@ mod tests { use super::*;
     #[test] fn iron_sinks_from_the_mix() { // gravity alone (no layer radii) must start moving iron inward
         let (p, rho) = form_mix_ic(2000, 7); let mut s = State::from_mix(p, C::omega_earth, rho); let b0 = boundaries(&s).separation; s.relax(400, 0.05);
         let b1 = boundaries(&s).separation; assert!(b1 > b0 + 0.08, "separation {b0} -> {b1}"); }
+    /// The committed bulk-mix bake (public/bake/earth-mix-6k.bin): fully differentiated by gravity alone, mass conserved,
+    /// and an emergent core-mantle boundary (verified against PREM's 3480 km only loosely: cold Tillotson over-compresses).
+    #[test] fn mix_bake_differentiated() { let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../public/bake/earth-mix-6k.bin");
+        let bytes = std::fs::read(path).expect("bake"); let b: Vec<f32> = bytes.chunks(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
+        let s = from_bake(&b, C::omega_earth); let bd = boundaries(&s); assert!(bd.separation > 0.98, "sep {}", bd.separation);
+        assert!(bd.cmb > 2.5e6 && bd.cmb < 3.6e6, "cmb {}", bd.cmb); let f = measure(&s); assert!(f.com < 1e4, "com {}", f.com); }
 }

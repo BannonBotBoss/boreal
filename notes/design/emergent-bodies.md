@@ -75,3 +75,41 @@ Full licence table with links: `tasks/T-0070-bodies-from-density-fields.md`.
 ## Budgets
 - Live view: ≤ 4e6 splatted particles, ≤ 2e5 live SPH, < 1.5 GB VRAM (8 GB card), 60 FPS target (current globe perf test unchanged).
 - Offline formation: 1e5–1e6 particles, native Rust.
+
+## Core pass (2026-10-24, Matthew t242u "let's figure out this core"; boundaries rule t245u/t246u)
+
+Rule: every boundary (inner/outer core, core-mantle, crust, ocean, air, surface) must come out of physics. No parcel is
+seeded by PREM layer radius; PREM / WGS84 / US76 are for verification only.
+
+Cause found (stage 6 bake): the density estimator was Shepard-normalised, rho_i = sum m_j W / sum (m_j/rho_j) W. Any
+uniform field is a fixed point of that, so it only smoothed the starting PREM density and never responded to compression:
+the bake's SPH density is flat 11106 kg/m3 through the whole core and 4632 through the outer mantle, while the actual
+mass per shell volume reaches ~15000 in the core. Pressure therefore did not resist squeezing, so the body came out too
+small (R -1.2 %), too centrally condensed (C/MR2 0.301) and with g +2.4 %. Fixed: standard summation density with h
+iterated to consistency (Price 2012). The old 48-fold stratified start also put parcels in tight shells (summation read
+~40 % high on it); the new start uses the SEAGen method (Kegerreis 2019, reimplemented, not their GPL code).
+
+Core-mantle separation (done): start = a uniform mix, 32.5 % iron by mass (McDonough 2003), rest silicate, in a sphere
+of the mix's uncompressed volume; cold Tillotson iron / basalt (Melosh 1989 table; data/earth/materials.json). Gravity
+alone sorts it: separation index 0.32 -> 1.00 within ~1000 steps (~3.5 h simulated). Emergent core-mantle boundary
+2937 km (PREM 3480 km). Bake: public/bake/earth-mix-6k.bin (6000 parcels, 20000 steps).
+
+Why the numbers are off, in order of size:
+1. Cold EOS: Tillotson at zero thermal energy has no thermal pressure, so iron squeezes to ~23000 kg/m3 at the centre
+   (PREM 13088) and the planet to 5831 km. Next: carry specific energy u per parcel (gravitational energy released by
+   differentiation + accretion heat, then an adiabat) and use Tillotson's full form; later ANEOS-class tables (methods only).
+2. Basalt Tillotson is too soft for the lower mantle (A = 2.67e10 Pa vs PREM K ~ 2-6e11): needs a cited high-pressure
+   silicate (forsterite/perovskite) parameter set.
+3. Interface gap: plain summation across the iron/silicate jump over-reads silicate density next to iron and pushes it
+   away, leaving an empty band at ~2700-3200 km. Fix with a published interface treatment (Ruiz-Bonilla et al. 2022,
+   MNRAS 512:4660, or density-independent SPH, Saitoh & Makino 2013), methods only.
+4. Resolution: 6000 parcels leaves the mantle as ~4 parcel shells; J2 still wobbles 6.5-7.8e-4 between outputs.
+
+Rest of the boundaries (plan, not done):
+- Inner core: temperature per parcel from u (above) and the iron melting curve of Anzellini et al. 2013 (in materials.json);
+  parcels with T < T_m(P) freeze (solid flag / denser phase). The inner-core boundary is where the adiabat crosses T_m.
+- Crust: partial melting of the silicate where T exceeds a cited peridotite solidus (Hirschmann 2000) makes a light melt
+  fraction that rises; needs a lighter material class.
+- Ocean, air: volatiles (ocean 1.4e21 kg, air 5.15e18 kg, cited in materials.json) are below one parcel at <= 48k parcels;
+  they need a lighter tier (split parcels / a separate fluid shell computed from the outgassed mass), with surface
+  temperature from the existing energy budget to decide liquid vs vapour.

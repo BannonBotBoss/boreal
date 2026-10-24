@@ -13,6 +13,8 @@ pub mod update_energy;
 pub mod update_moisture;
 pub mod update_clouds;
 pub mod column_budget;
+pub mod rt;
+pub mod emergent;
 pub mod update_wind;
 pub mod sun_spectrum;
 pub mod interior;
@@ -55,3 +57,25 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
 /// Emergent figure (interior.rs): out = [surface radius km, C/MR^2, flattening f, equatorial a km, polar c km].
 #[no_mangle] pub extern "C" fn earth_figure(out: *mut f64) { let (f, a, c) = interior::figure();
     let o = unsafe { std::slice::from_raw_parts_mut(out, 5) }; o.copy_from_slice(&[interior::surface_radius_km(), interior::moi_factor(), f, a, c]); }
+/// Normal gravity of the rotating figure at r m, geocentric latitude deg (gas.rs gravity).
+#[no_mangle] pub extern "C" fn figure_gravity(r_m: f64, lat_deg: f64) -> f64 { gas::gravity(r_m, lat_deg) }
+/// Column above h km (gas.rs): out = [n_col m^-2, O3 DU, pw mm, mass kg/m2, thermal layer index].
+#[no_mangle] pub extern "C" fn gas_above(h_km: f64, q_surf: f64, co2_ppm: f64, out: *mut f64) { let a = gas::column_above(h_km, q_surf, co2_ppm);
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 5) }; o.copy_from_slice(&[a.n_col, a.o3_du, a.pw_mm, a.mass, gas::atmos_layer(h_km) as f64]); }
+/// Shortwave column at a point (rt.rs, gas-fed): surf 0 ocean 1 sea ice 2 snow 3 land (land albedo given);
+/// out = [toa, reflected by atmosphere+cloud, reflected by surface, absorbed atmosphere, absorbed surface, surface albedo, glint BRF, TSI].
+#[no_mangle] pub extern "C" fn rt_point(year: f64, cos_z: f64, cos_v: f64, phi: f64, wind: f64, cloud: f64, tau: f64, surf: u32, land_albedo: f64, h_km: f64, q_surf: f64, co2_ppm: f64, out: *mut f64) {
+    let s = match surf { 1 => rt::Surf::SeaIce, 2 => rt::Surf::Snow, 3 => rt::Surf::Land, _ => rt::Surf::Ocean }; let al = rt::surface_albedo(s, cos_z, land_albedo);
+    let tsi = rt::tsi(year); let g = rt::gas_inputs(h_km, q_surf, co2_ppm); let k = rt::point(tsi * cos_z.max(0.0), cos_z, cloud, tau, al, &g);
+    let gl = if s == rt::Surf::Ocean { rt::glint(cos_z, cos_v, phi, wind) } else { 0.0 };
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 8) }; o.copy_from_slice(&[k.toa, k.refl_atm, k.refl_surf, k.abs_atm, k.abs_surf, al, gl, tsi]); }
+/// Emergent-object demo (emergent.rs) on PREM-sampled particles: mode 0 relaxed Earth, 1 the same particles unbound (3 v_esc),
+/// 2 Earth + a 37-particle Moon at 384,400 km. out = [count, mass kg, com x y z m, spin z, members, trusted, extent m,
+/// layers, secondary inside Hill, secondary outside Roche].
+#[no_mangle] pub extern "C" fn emergent_demo(n: u32, mode: u32, out: *mut f64) { let n = n as usize; let mut p = emergent::sample_prem_earth(n, 7, if mode == 0 { constants::omega_earth } else { 0.0 });
+    let mut r = emergent::Rng::new(3); let vesc = (2.0 * constants::GM_earth / constants::R_earth_mean).sqrt();
+    if mode == 1 { for v in p.vel.iter_mut() { let d = r.dir(); *v = [3.0 * vesc * d[0], 3.0 * vesc * d[1], 3.0 * vesc * d[2]]; } }
+    if mode == 2 { let k = (0.0123 * n as f64).round() as usize; let (dist, m) = (3.844e8, p.mass[0]); let vo = (constants::GM_earth / dist).sqrt();
+        for _ in 0..k { let d = r.dir(); let a = 1.7374e6 * r.f().cbrt(); p.pos.push([dist + d[0] * a, d[1] * a, d[2] * a]); p.vel.push([0.0, vo, 0.0]); p.mass.push(m); p.mat.push(2); } }
+    let o = emergent::find_objects(&p, emergent::earth_link(n)); let t = emergent::tidal(&o); let out = unsafe { std::slice::from_raw_parts_mut(out, 13) }; out.fill(0.0); out[0] = o.len() as f64;
+    if let Some(e) = o.first() { out[1..12].copy_from_slice(&[e.mass, e.com[0], e.com[1], e.com[2], e.spin[2], e.members.len() as f64, e.trusted as u8 as f64, e.extent, e.layers.len() as f64, t.first().map_or(0.0, |x| x.inside_hill as u8 as f64), t.first().map_or(0.0, |x| x.outside_roche as u8 as f64)]); } }

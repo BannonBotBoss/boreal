@@ -7,7 +7,8 @@
  */
 import * as THREE from 'three';
 import type { PlanetSim } from '../../core/planetBudget';
-import { INTERIOR_LAYERS } from '../../core/planetBudget';
+import { INTERIOR_LAYERS, ATM_LAYERS, GAS_SPECIES } from '../../core/planetBudget';
+import { earthFigure } from './figure';
 import { altitudeAt, axisPoint, parseAxisDir } from './radial';
 import { toLatLon, fromLatLon, type Vec3 } from './planet';
 import { withLogDepth } from './logDepth';
@@ -19,28 +20,54 @@ export function createAxis(o: { q: URLSearchParams; scene: THREE.Scene; R: numbe
   let u: Vec3 = parseAxisDir(o.q.get('dir'), o.sunDir) ?? [0, 1, 0], rKm = Number(o.q.get('r') ?? R / 1000); if (!Number.isFinite(rKm)) rKm = R / 1000;
   const R_MAX = 12 * R / 1000; // km: past the dayside magnetopause (~10 R_E, Shue 1998)
   const group = new THREE.Group(); group.renderOrder = 3; o.scene.add(group);
-  const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, toneMapped: false }); lineMat.onBeforeCompile = withLogDepth;
-  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), lineMat); line.frustumCulled = false; group.add(line);
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, toneMapped: false, depthTest: false }) // the axis lies in the cut plane: draw over the face; lineMat.onBeforeCompile = withLogDepth;
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), lineMat); line.frustumCulled = false; line.renderOrder = 9; group.add(line);
   const ptMat = new THREE.PointsMaterial({ color: 0xffee55, size: 9, sizeAttenuation: false, toneMapped: false, depthTest: false });
   const pt = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3)), ptMat); pt.frustumCulled = false; pt.renderOrder = 10; group.add(pt);
-  // cut face: a disc of radius R in the clip plane, coloured by layer at each radius (a 1D lookup filled from the wasm profile)
+  // cut face: the section of the hydrostatic figure (figure.ts: a, c; spin axis +y) in the clip plane. Interior coloured per
+  // PREM layer at the homologous radius s = |(x/a, y/c, z/a)| (a 1D lookup from the wasm profile); a ring to the highest
+  // terrain (+9 km) closes the cut against the clipped tiles; with gas layers on, the air to H_ATM km by thermal layer (gas.rs)
+  const FIG = earthFigure(), H_ATM = 600e3, H_TOP = 9e3;
   const N = 512, lut = new Uint8Array(N * 4), tex = new THREE.DataTexture(lut, N, 1); tex.magFilter = THREE.NearestFilter; tex.needsUpdate = true;
-  const discMat = new THREE.ShaderMaterial({ uniforms: { uLut: { value: tex } }, side: THREE.DoubleSide,
-    vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'uniform sampler2D uLut; varying vec2 vP; void main(){ float r = length(vP); if (r > 1.0) discard; gl_FragColor = vec4(texture2D(uLut, vec2(r, .5)).rgb, 1.0); }' });
+  const NA = 256, alut = new Uint8Array(NA * 4), atex = new THREE.DataTexture(alut, NA, 1); atex.magFilter = THREE.NearestFilter; atex.needsUpdate = true;
+  const discMat = new THREE.ShaderMaterial({ uniforms: { uLut: { value: tex }, uAtmLut: { value: atex }, uA: { value: FIG.a }, uC: { value: FIG.c }, uTop: { value: H_TOP }, uAtm: { value: 0 }, uHAtm: { value: H_ATM } }, side: THREE.DoubleSide,
+    // three's log-depth chunks (switched on by withLogDepth) so the cut face depth-tests against the log-depth tiles
+    vertexShader: '#include <common>\n#include <logdepthbuf_pars_vertex>\nvarying vec3 vP; void main(){ vP = mat3(modelMatrix) * position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n#include <logdepthbuf_vertex>\n}',
+    fragmentShader: `#include <common>
+#include <logdepthbuf_pars_fragment>
+uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varying vec3 vP;
+      void main(){ vec3 q = vP / vec3(uA, uC, uA); float s = length(q); float h = (s - 1.0) * length(vP) / s; // height above the figure
+        vec3 c; if (s <= 1.0) c = texture2D(uLut, vec2(s, .5)).rgb; else if (h < uTop) c = texture2D(uLut, vec2(.999, .5)).rgb;
+        else if (uAtm > .5 && h < uHAtm) c = texture2D(uAtmLut, vec2(h / uHAtm, .5)).rgb; else discard; gl_FragColor = vec4(c, 1.0);
+#include <logdepthbuf_fragment>
+}` });
   discMat.onBeforeCompile = withLogDepth;
-  const disc = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), discMat); disc.frustumCulled = false; disc.scale.setScalar(R * 1.0005); group.add(disc);
+  const disc = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), discMat); disc.frustumCulled = false; group.add(disc);
+  const setDiscScale = () => disc.scale.setScalar(FIG.a + (gasLayers ? H_ATM : H_TOP) * 1.01);
+  const ATM_RGB = [[.35, .6, 1], [.55, .75, 1], [.4, .45, .85], [.75, .35, .6], [.3, .2, .35]];
+  let gasLayers = o.q.get('gaslayers') === '1', showGas = o.q.get('gas') === '1' || gasLayers, showRT = o.q.get('rt') === '1', bodies = Number(o.q.get('bodies') ?? -1);
+  let bodyInfo = '';
+  const comPt = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3)), new THREE.PointsMaterial({ color: 0x55ffee, size: 11, sizeAttenuation: false, toneMapped: false, depthTest: false }));
+  comPt.frustumCulled = false; comPt.renderOrder = 11; comPt.visible = false; group.add(comPt);
   const clip = new THREE.Plane(); o.renderer.localClippingEnabled = true;
   const ui = document.createElement('div'); ui.style.cssText = 'position:absolute;left:12px;bottom:12px;z-index:20;font:12px/1.4 system-ui;color:#eee;background:rgba(0,0,0,.6);padding:8px 10px;border-radius:6px;min-width:260px;display:none';
-  ui.innerHTML = '<div><b>Axis</b> <button data-a=sun>û → Sun</button> <button data-a=off>×</button></div><input type=range min=-1 max=1 step=0.0005 style="width:100%"><pre style="margin:4px 0 0;font:11px ui-monospace"></pre>';
+  ui.innerHTML = '<div><b>Axis</b> <button data-a=sun>û → Sun</button> <button data-a=gas>Gas</button> <button data-a=layers>Layers</button> <button data-a=rt>RT</button> <button data-a=bodies>Bodies</button> <button data-a=off>×</button></div><input type=range min=-1 max=1 step=0.0005 style="width:100%"><pre style="margin:4px 0 0;font:11px ui-monospace"></pre>';
   o.mount.appendChild(ui); const slider = ui.querySelector('input')!, pre = ui.querySelector('pre')!;
   // slider: linear through the planet (|s| ≤ .5 → |r| ≤ R), logarithmic outside to R_MAX
   const toR = (s: number) => { const a = Math.abs(s), R0 = R / 1000; return Math.sign(s) * (a <= .5 ? a * 2 * R0 : R0 * (R_MAX / R0) ** ((a - .5) * 2)); };
   const toS = (r: number) => { const a = Math.abs(r), R0 = R / 1000; return Math.sign(r) * (a <= R0 ? a / R0 / 2 : .5 + Math.log(a / R0) / Math.log(R_MAX / R0) / 2); };
   slider.oninput = () => { rKm = toR(Number(slider.value)); };
-  ui.onclick = e => { const a = (e.target as HTMLElement).dataset.a; if (a === 'sun') u = o.sunDir(); if (a === 'off') api.toggle(false); };
+  ui.onclick = e => { const a = (e.target as HTMLElement).dataset.a; if (a === 'sun') u = o.sunDir(); if (a === 'off') api.toggle(false); if (a === 'gas') api.gas(); if (a === 'layers') api.layers(); if (a === 'rt') api.rt(); if (a === 'bodies') api.bodies(); };
   o.sim.then(s => { sim = s; if (!s) return; for (let i = 0; i < N; i++) { const L = s.radialProfile((i + .5) / N * R / 1000).layer | 0, c = LAYER_RGB[L] ?? [1, 1, 1];
-    lut.set([c[0] * 255, c[1] * 255, c[2] * 255, 255], i * 4); } tex.needsUpdate = true; });
+    lut.set([c[0] * 255, c[1] * 255, c[2] * 255, 255], i * 4); } tex.needsUpdate = true;
+    for (let i = 0; i < NA; i++) { const L = s.gasAbove((i + .5) / NA * H_ATM / 1000).layer | 0, c = ATM_RGB[L]; alut.set([c[0] * 255, c[1] * 255, c[2] * 255, 255], i * 4); } atex.needsUpdate = true;
+    if (bodies >= 0) runBodies(); });
+  const runBodies = () => { if (!sim || bodies < 0) { bodyInfo = ''; comPt.visible = false; return; } const e = sim.emergentDemo(2000, bodies);
+    const modes = ['relaxed PREM Earth', 'same particles, 3 v_esc', 'Earth + Moon (37 p)'];
+    bodyInfo = `\nbodies [${modes[bodies]}]: ${e.count} object${e.count === 1 ? '' : 's'} (FoF b 0.2 + unbinding)` + (e.count ? `\n  M ${e.mass.toExponential(4)} kg  ${e.members} p ${e.trusted ? 'trusted' : 'untrusted'}\n  COM offset ${(Math.hypot(...e.com) / 1000).toFixed(1)} km  L_z ${e.spinZ.toExponential(3)}  layers ${e.layers}` +
+      (bodies === 2 ? `\n  Moon inside Hill ${e.insideHill}  outside Roche ${e.outsideRoche}` : '') : '');
+    // the object's centre of mass is its radial-axis origin: marker there (sampler frame +z spin -> globe +y)
+    (comPt.geometry.getAttribute('position') as THREE.BufferAttribute).set([e.com[0], e.com[2], -e.com[1]]); comPt.geometry.getAttribute('position').needsUpdate = true; comPt.visible = e.count > 0; };
   const fmt = (x: number, d = 3) => Math.abs(x) >= 1e5 || (Math.abs(x) < 1e-2 && x !== 0) ? x.toExponential(d - 1) : x.toFixed(d);
   const api = {
     get on() { return on; }, get u() { return u; }, get rKm() { return rKm; },
@@ -48,6 +75,10 @@ export function createAxis(o: { q: URLSearchParams; scene: THREE.Scene; R: numbe
     aim(dLat: number, dLon: number) { const ll = toLatLon(u); u = fromLatLon(Math.max(-Math.PI / 2, Math.min(Math.PI / 2, ll.lat + dLat)), ll.lon + dLon); },
     move(f: number) { slider.value = String(Math.max(-1, Math.min(1, toS(rKm) + f))); rKm = toR(Number(slider.value)); },
     pick(d: Vec3) { u = d; },
+    gas(v = !showGas) { showGas = v; },
+    layers(v = !gasLayers) { gasLayers = v; discMat.uniforms.uAtm.value = v ? 1 : 0; if (v) showGas = true; setDiscScale(); },
+    rt(v = !showRT) { showRT = v; },
+    bodies() { bodies = bodies >= 2 ? -1 : bodies + 1; runBodies(); },
     /** per frame, camera at the render origin: planet centre at −camPos */
     update(camPos: Vec3) {
       if (!on) return; group.position.set(-camPos[0], -camPos[1], -camPos[2]);
@@ -60,12 +91,26 @@ export function createAxis(o: { q: URLSearchParams; scene: THREE.Scene; R: numbe
       disc.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
       if (!sim) { pre.textContent = 'loading profile…'; return; }
       const r = Math.abs(rKm), w: Vec3 = rKm >= 0 ? u : [-u[0], -u[1], -u[2]], a = altitudeAt(o.planet, r * 1000, w), hk = a.h / 1000, p = sim.radialProfile(hk >= 0 ? 6371 + hk : r * 6371 / (r - hk)); // map onto the 1-D PREM/US76 column: same h above the local surface, same fractional radius below
-      const ll = toLatLon(u); slider.value = String(toS(rKm));
-      pre.textContent = `û  lat ${(ll.lat * 180 / Math.PI).toFixed(2)}°  lon ${(ll.lon * 180 / Math.PI).toFixed(2)}°\n` +
+      const ll = toLatLon(u), lat = Math.asin(Math.max(-1, Math.min(1, w[1]))) * 180 / Math.PI; slider.value = String(toS(rKm));
+      // gravity: PREM (spherical) inside; outside, the rotating oblate figure (J2 + centrifugal, gas.rs gravity) at the true r
+      const g = hk >= 0 ? sim.figureGravity(r * 1000, lat) : p.g;
+      let txt = `û  lat ${(ll.lat * 180 / Math.PI).toFixed(2)}°  lon ${(ll.lon * 180 / Math.PI).toFixed(2)}°\n` +
         `r  ${rKm.toFixed(1)} km   ${a.h < 0 ? 'depth' : 'altitude'} ${(Math.abs(a.h) / 1000).toFixed(2)} km\n` +
         `   above sea ${(a.hSea / 1000).toFixed(2)} km, above mean R ${(a.hMean / 1000).toFixed(2)} km\n` +
-        `layer ${INTERIOR_LAYERS[p.layer | 0]}\nρ ${fmt(p.rho)} kg/m³   T ${fmt(p.T, 4)} K\nP ${fmt(p.P)} Pa   g ${p.g.toFixed(3)} m/s²`;
+        `layer ${INTERIOR_LAYERS[(p.layer | 0) === 4 && a.hSea > 0 ? 3 : p.layer | 0] /* below land above sea level: crust, not the 1-D ocean shell */}${hk >= 0 ? ' · ' + ATM_LAYERS[sim.gasAbove(hk).layer | 0] : ''}\nρ ${fmt(p.rho)} kg/m³   T ${fmt(p.T, 4)} K\nP ${fmt(p.P)} Pa   g ${g.toFixed(3)} m/s²${hk >= 0 ? ' (figure)' : ' (PREM)'}`;
+      if (showGas && hk >= 0) { const gc = sim.gasColumn(hk, 0, 0.0115), ab = sim.gasAbove(hk, 0.0115), top = gc.x.map((x, i) => [x, i] as [number, number]).sort((A, B) => B[0] - A[0]).slice(0, 4);
+        txt += `\ngas  n ${fmt(gc.n)} m⁻³  ` + top.map(([x, i]) => `${GAS_SPECIES[i]} ${x >= .01 ? (x * 100).toFixed(2) + '%' : (x * 1e6).toFixed(1) + 'ppm'}`).join(' ') +
+          `\nabove: ${fmt(ab.mass)} kg/m²  O₃ ${ab.o3DU.toFixed(1)} DU  H₂O ${ab.pwMm.toFixed(2)} mm`; }
+      if (showRT) { const su = o.sunDir(), sn = Math.hypot(...su), sd = su.map(x => x / sn), cz = sd[0] * w[0] + sd[1] * w[1] + sd[2] * w[2];
+        const P0 = w.map(x => x * r * 1000), vv = camPos.map((x, i) => x - P0[i]), cl = Math.hypot(...vv), cv0 = vv.map(x => x / cl), cosV = (cv0[0] * w[0] + cv0[1] * w[1] + cv0[2] * w[2]);
+        const proj = (v: number[]) => { const d = v[0] * w[0] + v[1] * w[1] + v[2] * w[2]; return v.map((x, i) => x - d * w[i]); }, ps = proj(sd), pv = proj(cv0), nps = Math.hypot(...ps), npv = Math.hypot(...pv);
+        const phi = nps > 1e-9 && npv > 1e-9 ? Math.acos(Math.max(-1, Math.min(1, -(ps[0] * pv[0] + ps[1] * pv[1] + ps[2] * pv[2]) / nps / npv))) : Math.PI;
+        const sf = o.planet.sampleSurface(w), ocean = sf.water > sf.h, kind = ocean ? (Math.abs(lat) > 70 ? 1 : 0) : (Math.abs(lat) > 65 || sf.h > 4500 ? 2 : 3);
+        const k = sim.rtPoint({ year: 1970 + Date.now() / 3.15576e10, cosZ: cz, cosV, phi, surf: kind, hKm: ocean ? 0 : Math.max(0, sf.h / 1000) });
+        txt += `\nRT  TSI ${k.tsi.toFixed(1)}  μ☉ ${cz.toFixed(3)}  surface ${['ocean', 'sea ice', 'snow', 'land'][kind]} α ${k.albedo.toFixed(3)}` +
+          (cz > 0 ? `\n  in ${k.toa.toFixed(1)}  refl atm ${k.reflAtm.toFixed(1)} surf ${k.reflSurf.toFixed(1)}  abs atm ${k.absAtm.toFixed(1)} surf ${k.absSurf.toFixed(1)} W/m²` + (kind === 0 ? `  glint BRF ${k.glint.toFixed(3)}` : '') : '\n  night side: no shortwave'); }
+      pre.textContent = txt + bodyInfo;
     },
   };
-  api.toggle(on); return api;
+  api.toggle(on); api.layers(gasLayers); return api;
 }

@@ -16,12 +16,15 @@ pub fn a_wv(y: f64) -> f64 { 2.9 * y / ((1.0 + 141.5 * y).powf(0.635) + 5.925 * 
 pub fn a_oz(x: f64) -> f64 { 0.02118 * x / (1.0 + 0.042 * x + 0.000323 * x * x) + 1.082 * x / (1.0 + 138.6 * x).powf(0.805) + 0.0658 * x / (1.0 + (103.6 * x).powi(3)) }
 pub fn cloud_albedo(tau: f64) -> f64 { let s = 3f64.sqrt() / 2.0 * (1.0 - G_ASYM); s * tau / (1.0 + s * tau) }
 /// toa: W/m2 on a horizontal surface; mu: cos zenith; cloud 0..1; tau cloud optical depth; pw_mm precipitable water; alpha surface albedo
-pub fn column(toa: f64, mu: f64, cloud: f64, tau: f64, pw_mm: f64, alpha: f64) -> Column {
+pub fn column(toa: f64, mu: f64, cloud: f64, tau: f64, pw_mm: f64, alpha: f64) -> Column { column_with(toa, mu, cloud, tau, pw_mm, alpha, OZONE_CM, 1.0) }
+/// Same, with the ozone column (atm-cm) and the Rayleigh optical depth relative to the standard column (n_col / n_col,0)
+/// supplied by the gas field (rt.rs feeds them from gas.rs); Rayleigh reflection scales with optical depth (thin limit).
+pub fn column_with(toa: f64, mu: f64, cloud: f64, tau: f64, pw_mm: f64, alpha: f64, ozone_cm: f64, ray: f64) -> Column {
     if toa <= 0.0 || mu <= 0.0 { return Column::default(); }
     let m = magnification(mu);
-    let oz = a_oz(OZONE_CM * m) * toa;                 // stratospheric ozone, above everything
+    let oz = a_oz(ozone_cm * m) * toa;                 // stratospheric ozone, above everything
     let s1 = toa - oz;
-    let rr = rayleigh_refl(mu) * s1;                   // clear-air (Rayleigh) back-scatter
+    let rr = rayleigh_refl(mu) * ray * s1;                   // clear-air (Rayleigh) back-scatter
     let aer = (1.0 - (-AOD * (1.0 - AER_SSA) / mu.max(0.05)).exp()) * (s1 - rr); // aerosol absorption on the slant path
     let s2 = s1 - rr - aer;
     let rc = cloud * cloud_albedo(tau) * s2;           // cloud tops

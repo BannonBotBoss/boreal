@@ -44,6 +44,10 @@ interface Exports {
   radial_profile(rKm: number, mpRe: number, out: number): void;
   gas_column(body: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
   earth_figure(out: number): void;
+  figure_gravity(rM: number, latDeg: number): number;
+  gas_above(hKm: number, qSurf: number, co2ppm: number, out: number): void;
+  rt_point(year: number, cosZ: number, cosV: number, phi: number, wind: number, cloud: number, tau: number, surf: number, landAlbedo: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
+  emergent_demo(n: number, mode: number, out: number): void;
 }
 
 export class PlanetSim {
@@ -76,6 +80,18 @@ export class PlanetSim {
   }
   /** Emergent figure (interior.rs): surface radius km, C/MR², flattening f, equatorial a km, polar c km. */
   earthFigure() { const p = this.buf(); this.x.earth_figure(p); const o = new Float64Array(this.x.memory.buffer, p, 5); return { rSurfKm: o[0], moi: o[1], f: o[2], aKm: o[3], cKm: o[4] }; }
+  /** Normal gravity of the rotating oblate figure (J2 + centrifugal) at r m, geocentric latitude deg; outside the body. */
+  figureGravity(rM: number, latDeg: number) { return this.x.figure_gravity(rM, latDeg); }
+  /** Column above h km: number column m^-2, ozone DU, precipitable water mm, air mass kg/m², thermal layer (ATM_LAYERS). */
+  gasAbove(hKm: number, qSurf = 0, co2ppm = 422.8) { const p = this.buf(); this.x.gas_above(hKm, qSurf, co2ppm, p); const o = new Float64Array(this.x.memory.buffer, p, 5);
+    return { nCol: o[0], o3DU: o[1], pwMm: o[2], mass: o[3], layer: o[4] }; }
+  /** Gas-fed shortwave column at a point (rt.rs); surf 0 ocean 1 sea ice 2 snow 3 land. */
+  rtPoint(a: { year: number; cosZ: number; cosV: number; phi: number; wind?: number; cloud?: number; tau?: number; surf: number; landAlbedo?: number; hKm: number; qSurf?: number; co2ppm?: number }) {
+    const p = this.buf(); this.x.rt_point(a.year, a.cosZ, a.cosV, a.phi, a.wind ?? 7, a.cloud ?? 0, a.tau ?? 9, a.surf, a.landAlbedo ?? .2, a.hKm, a.qSurf ?? .0115, a.co2ppm ?? 422.8, p);
+    const o = new Float64Array(this.x.memory.buffer, p, 8); return { toa: o[0], reflAtm: o[1], reflSurf: o[2], absAtm: o[3], absSurf: o[4], albedo: o[5], glint: o[6], tsi: o[7] }; }
+  /** Emergent-object finder demo (emergent.rs): mode 0 relaxed PREM Earth, 1 unbound, 2 Earth + Moon. */
+  emergentDemo(n: number, mode: number) { const p = this.buf(); this.x.emergent_demo(n, mode, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));
+    return { count: o[0], mass: o[1], com: [o[2], o[3], o[4]], spinZ: o[5], members: o[6], trusted: o[7] > 0, extent: o[8], layers: o[9], insideHill: o[10] > 0, outsideRoche: o[11] > 0 }; }
   /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */
   gasColumn(hKm: number, body = 0, qSurf = 0, co2ppm = 422.8) {
     const p = this.buf(); this.x.gas_column(body, hKm, qSurf, co2ppm, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));
@@ -83,6 +99,7 @@ export class PlanetSim {
   }
 }
 export const INTERIOR_LAYERS = ['inner core', 'outer core', 'mantle', 'crust', 'ocean', 'atmosphere', 'magnetosphere', 'solar wind'] as const;
+export const ATM_LAYERS = ['troposphere', 'stratosphere', 'mesosphere', 'thermosphere', 'exosphere'];
 export const GAS_SPECIES = ['N2', 'O2', 'Ar', 'CO2', 'H2O', 'O3', 'O', 'Na', 'He'] as const;
 
 /** Instantiate the wasm. `bytes` is for tests and workers; in the browser it fetches `<base>wasm/boreal_sim.wasm`. Resolves null on any failure. */

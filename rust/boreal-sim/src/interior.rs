@@ -5,9 +5,7 @@
 //! pressure integrated from them (dP/dr = -rho g, g = G M(r)/r^2). Geotherm: piecewise linear through cited anchors [approx]:
 //! surface 288 K; lithosphere base 100 km 1600 K (Turcotte & Schubert 2014); 410 km 1760 K and 660 km 1900 K (Katsura et al. 2010);
 //! top of D'' 2740 km 2500 K; CMB 2891 km 4000 K (Lay et al. 2008, 3500-4400); ICB 5150 km 6000 K (Anzellini et al. 2013, 6230+-500);
-//! centre 6300 K. Atmosphere: U.S. Standard Atmosphere 1976 layers to 86 km, then 186.87 K to 91 km, linear to 240 K at 110 km,
-//! +12 K/km to 360 K at 120 km, then T = 1000 - 640 exp(-0.01875 (z-120)) (US76 thermosphere); molar mass held at 28.96 g/mol
-//! above 86 km [approx]. Magnetosphere (above the exobase ~500 km to the magnetopause): plasmasphere n = 1390 (3/L)^4.83 cm^-3 to
+//! centre 6300 K. Atmosphere: the gas column (gas.rs: US76 with per-species diffusion above 86 km). Magnetosphere (above the exobase ~500 km to the magnetopause): plasmasphere n = 1390 (3/L)^4.83 cm^-3 to
 //! the plasmapause L 4.5 then 1 cm^-3 (Carpenter & Anderson 1992, JGR 97:1097), 1 eV inside / 1 keV outside [approx]; solar wind
 //! beyond, 5 cm^-3, 1e5 K (OMNI typical).
 use crate::consts::*;
@@ -39,6 +37,8 @@ fn tab() -> &'static Tab { static T: OnceLock<Tab> = OnceLock::new(); T.get_or_i
     Tab { m, p } }) }
 fn geotherm(depth_km: f64) -> f64 { const A: [(f64, f64); 8] = [(0.0, 288.0), (100.0, 1600.0), (410.0, 1760.0), (660.0, 1900.0), (2740.0, 2500.0), (2891.0, 4000.0), (5150.0, 6000.0), (6371.0, 6300.0)];
     for w in A.windows(2) { if depth_km <= w[1].0 { let f = (depth_km - w[0].0) / (w[1].0 - w[0].0); return w[0].1 + f * (w[1].1 - w[0].1); } } 6300.0 }
+/// Mass enclosed within r km (kg), from the PREM table.
+pub fn enclosed_mass(r_km: f64) -> f64 { let t = tab(); let f = (r_km.max(0.0) * 1000.0 / STEP_M).min((t.m.len() - 1) as f64); let i = f as usize; let j = (i + 1).min(t.m.len() - 1); t.m[i] + (t.m[j] - t.m[i]) * (f - i as f64) }
 const MAIR: f64 = 0.0289644; const RGAS: f64 = 8.31446; const KB: f64 = 1.380649e-23; const MP: f64 = 1.67262e-27;
 /// Atmosphere comes from the single gas column (gas.rs).
 pub const EXOBASE_KM: f64 = 500.0; // ~500 km (Chamberlain 1963) [approx]

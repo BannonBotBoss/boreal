@@ -2,7 +2,7 @@
 //! One source for T, p, rho, number density and species mixing ratios; g(r) = G M / r^2 with G from constants.rs (CODATA)
 //! and M = GM / G (JPL DE440 GM values), so G stays upstream. Hydrostatic balance with the local scale height H = kT/(m g).
 //! Earth: U.S. Standard Atmosphere 1976 (NOAA/NASA/USAF, public domain): T on geopotential height to 86 km (7 layers),
-//! 86-91 km 186.87 K, linear to 240 K at 110 km [approx for the US76 ellipse], +12 K/km to 360 K at 120 km, then
+//! 86-91 km 186.87 K, the US76 eq. 27 ellipse (Tc 263.1905, A -76.3232, a -19.9429 km) to 240 K at 110 km, +12 K/km to 360 K at 120 km, then
 //! T = 1000 - 640 exp(-0.01875 (z - 120)) (US76 eq. 31, T_inf = 1000 K). Well mixed (N2 .78084, O2 .209476, Ar .00934, CO2 seed)
 //! below the homopause; above 86 km each species follows its own scale height (diffusive separation, US76 sec. 1.3; thermal
 //! diffusion and eddy mixing neglected [approx]); atomic O from 86 km (8.6e16 m^-3, US76 Table VIII) rising to 4.4e17 at 97 km
@@ -34,7 +34,7 @@ const R0_US76: f64 = 6356.766; // km, US76 geopotential reference radius
 /// Earth temperature (K) at geometric altitude z km.
 pub fn t_earth(z: f64) -> f64 {
     if z < 86.0 { let hp = R0_US76 * z / (R0_US76 + z); let b = US76.iter().rev().find(|b| hp >= b.0).unwrap_or(&US76[0]); return b.1 + b.2 * (hp - b.0); }
-    if z < 91.0 { 186.87 } else if z < 110.0 { 186.87 + (240.0 - 186.87) * (z - 91.0) / 19.0 } else if z < 120.0 { 240.0 + 12.0 * (z - 110.0) } else { 1000.0 - 640.0 * (-0.01875 * (z - 120.0)).exp() }
+    if z < 91.0 { 186.87 } else if z < 110.0 { 263.1905 - 76.3232 * (1.0 - ((z - 91.0) / 19.9429).powi(2)).max(0.0).sqrt() /* US76 eq. 27 ellipse */ } else if z < 120.0 { 240.0 + 12.0 * (z - 110.0) } else { 1000.0 - 640.0 * (-0.01875 * (z - 120.0)).exp() }
 }
 const VIRA: [(f64, f64); 11] = [(0.0, 735.3), (10.0, 658.2), (20.0, 580.7), (30.0, 496.9), (40.0, 417.6), (50.0, 350.5), (60.0, 262.8), (70.0, 229.8), (80.0, 197.1), (90.0, 169.4), (100.0, 175.4)];
 pub fn t_venus(z: f64) -> f64 { for w in VIRA.windows(2) { if z <= w[1].0 { let f = ((z - w[0].0) / (w[1].0 - w[0].0)).max(0.0); return w[0].1 + f * (w[1].1 - w[0].1); } } 175.4 }
@@ -47,11 +47,24 @@ fn earth_tab() -> &'static Tab { static T: OnceLock<Tab> = OnceLock::new(); T.ge
     let mut lnp = 101325.0f64.ln() /* US76 sea-level standard */; let mut ni = [0.0f64; 9];
     for k in 0..=steps { let z = k as f64 * DZ; let t = t_earth(z);
         if z <= 86.0 { let n = lnp.exp() / (C::k_B * t); let s: f64 = xs.iter().sum(); for j in 0..4 { ni[j] = n * xs[j] / s; }
+            ni[8] = n * 5.24e-6; // He, well mixed 5.24 ppmv (US76 Table 3), carried in the diffusion above 86 km
             ni[6] = if z > 80.0 { 8.6e16 * ((z - 80.0) / 6.0) } else { 0.0 };
             let zm = z + DZ / 2.0; lnp -= mbar * g_at(Body::Earth, zm * 1e3) / (C::R * t_earth(zm)) * DZ * 1e3; }
         else { let zm = z - DZ / 2.0; let tm = t_earth(zm); let dlnt = t.ln() - t_earth(z - DZ).ln(); let g = g_at(Body::Earth, zm * 1e3);
-            for j in [0usize, 1, 2, 3, 6] { ni[j] *= (-(AMU[j] * 1e-3 * g / (C::R * tm)) * DZ * 1e3 - dlnt).exp(); }
-            if z <= 97.0 { ni[6] = 8.6e16 * (4.4e17f64 / 8.6e16).powf((z - 86.0) / 11.0); } }
+            // US76 sec. 1.3.2 (eq. 36 without the O/H flux terms): each species relaxes from the eddy-mixed gradient (mean
+            // molar mass M) to its own diffusive one with weight D_i/(D_i + K); K(z) US76 eq. 37-38, D_i = a_i/n (T/273.15)^b_i (Table 6)
+            let nt: f64 = ni.iter().sum(); let mm: f64 = (0..9).map(|j| ni[j] * AMU[j]).sum::<f64>() / nt * 1e-3;
+            let k_eddy = if zm < 95.0 { 120.0 } else if zm < 115.0 { 120.0 * (1.0 - 400.0 / (400.0 - (zm - 95.0).powi(2))).exp() } else { 0.0 };
+            let mix = -(mm * g / (C::R * tm)) * DZ * 1e3 - dlnt;
+            for j in [0usize, 1, 2, 3, 6, 8] { let (a, b) = match j { 1 => (4.863e20, 0.75), 2 => (4.487e20, 0.87), 6 => (6.986e20, 0.75), 8 => (1.7e21, 0.691), _ => (3.3e20, 0.75) /* N2, CO2: US76 has N2 as the background; O2-like value [approx] */ };
+                let d = a / nt * (tm / 273.15).powf(b); let w = d / (d + k_eddy);
+                let alpha = if j == 8 { -0.4 } else { 0.0 }; // thermal diffusion factor (US76 Table 6)
+                ni[j] *= (w * (-(AMU[j] * 1e-3 * g / (C::R * tm)) * DZ * 1e3 - (1.0 + alpha) * dlnt) + (1.0 - w) * mix).exp(); }
+            if z <= 97.0 { ni[6] = 8.6e16 * (4.4e17f64 / 8.6e16).powf((z - 86.0) / 11.0); }
+            // 97-120 km: O photochemistry and the downward O/O2 fluxes (US76 eq. 36 flux terms, not modelled) set O and O2; tie them
+            // log-linearly to US76 Table VIII at 120 km (O 9.275e16, O2 4.395e16 m^-3); pure diffusion above (K = 0 above 115 km)
+            else if z <= 120.0 { let f = (z - 97.0) / 23.0; ni[6] = 4.4e17 * (9.275e16f64 / 4.4e17).powf(f);
+                if (z - 120.0).abs() < DZ / 2.0 { ni[1] = 4.395e16; } } }
         out.push(ni); }
     Tab { n: out } }) }
 /// Gas column at altitude h (km above mean radius). `q_surf` kg/kg from the sim, `co2_ppm` from the climate seed.
@@ -73,6 +86,22 @@ pub fn column(b: Body, h: f64, q_surf: f64, co2_ppm: f64) -> Col {
             let p = n * C::k_B * t; Col { t, p, rho: (na * AMU[7] + he * AMU[8]) * 1e-3 / C::N_A, n, x } }
     }
 }
+
+/// Normal gravity of the rotating oblate Earth at radius r (m) and geocentric latitude (deg): G M / r^2 with the J2 term and
+/// the centrifugal term (same model as g_eff_earth, which it reproduces on the WGS84 ellipsoid). Valid outside the body.
+pub fn gravity(r_m: f64, lat_deg: f64) -> f64 { let p = lat_deg.to_radians(); let s2 = p.sin().powi(2); let a = C::wgs84_a;
+    C::GM_earth / (r_m * r_m) * (1.0 - 1.5 * C::J2_earth * (a / r_m).powi(2) * (3.0 * s2 - 1.0)) - C::omega_earth.powi(2) * r_m * p.cos().powi(2) }
+/// Thermal layer from the US76 temperature structure (geometric h km): 0 troposphere (below the 11 km geopotential tropopause),
+/// 1 stratosphere (to the 47 km stratopause), 2 mesosphere (to the 86 km mesopause), 3 thermosphere (to the exobase,
+/// interior::EXOBASE_KM), 4 exosphere.
+pub const ATM_LAYERS: [&str; 5] = ["troposphere", "stratosphere", "mesosphere", "thermosphere", "exosphere"];
+pub fn atmos_layer(h: f64) -> usize { let hp = R0_US76 * h / (R0_US76 + h); if hp < 11.0 { 0 } else if hp < 47.0 { 1 } else if h < 86.0 { 2 } else if h < crate::interior::EXOBASE_KM { 3 } else { 4 } }
+/// Column above altitude h km (to 1000 km): total number column (m^-2), ozone (Dobson units, 2.687e20 m^-2 each),
+/// precipitable water (mm = kg/m^2) and air mass (kg/m^2).
+#[derive(Clone, Copy, Debug)] pub struct Above { pub n_col: f64, pub o3_du: f64, pub pw_mm: f64, pub mass: f64 }
+pub fn column_above(h: f64, q_surf: f64, co2_ppm: f64) -> Above { let dz = 0.05; let mut z = h.max(0.0); let mut a = Above { n_col: 0.0, o3_du: 0.0, pw_mm: 0.0, mass: 0.0 };
+    while z < ZTOP { let c = column(Body::Earth, z + dz / 2.0, q_surf, co2_ppm); let d = dz * 1e3;
+        a.n_col += c.n * d; a.o3_du += c.x[5] * c.n * d / 2.687e20; a.pw_mm += c.x[4] * c.n * d * AMU[4] * 1e-3 / C::N_A; a.mass += c.rho * d; z += dz; } a }
 #[cfg(test)]
 mod tests { use super::*;
     #[test] fn gravity_from_gm() { let g0 = g_at(Body::Earth, 0.0); assert!((g0 - 9.82).abs() < 0.005, "g(R_mean) {g0}"); assert!((g0 - C::g_earth_mean).abs() < 1e-9);
@@ -86,6 +115,15 @@ mod tests { use super::*;
         (32.0, 228.49, 889.06, 0.013555), (50.0, 270.65, 79.779, 1.0269e-3), (70.0, 219.58, 5.2209, 8.2829e-5), (86.0, 186.87, 0.37338, 6.958e-6)];
     #[test] fn ussa76_table() { for (z, t, p, rho) in TAB { let c = column(Body::Earth, z, 0.0, 420.0);
         assert!((c.t - t).abs() < 0.6, "T {z} {} vs {t}", c.t); assert!((c.p / p - 1.0).abs() < 0.02, "p {z} {} vs {p}", c.p); assert!((c.rho / rho - 1.0).abs() < 0.02, "rho {z} {} vs {rho}", c.rho); } }
+    /// US76 Table I above 86 km (z, p Pa, rho kg/m3)
+    #[test] fn ussa76_upper() { for (z, p, rho) in [(100.0, 3.2011e-2, 5.604e-7), (120.0, 2.5381e-3, 2.222e-8), (150.0, 4.5422e-4, 2.076e-9), (200.0, 8.4736e-5, 2.541e-10), (300.0, 8.7704e-6, 1.916e-11), (500.0, 3.0236e-7, 5.215e-13)] {
+        let c = column(Body::Earth, z, 0.0, 420.0); assert!((c.p / p - 1.0).abs() < 0.04 && (c.rho / rho - 1.0).abs() < 0.04, "{z} km: p {:+.1}% rho {:+.1}%", (c.p / p - 1.0) * 100.0, (c.rho / rho - 1.0) * 100.0); } }
+    #[test] fn gravity_layers_columns() { for l in [0.0f64, 45.0, 89.9] { let p = l.to_radians(); let (a, b) = (C::wgs84_a, C::wgs84_a * (1.0 - C::wgs84_f));
+            let r = ((a * a * p.cos()).powi(2) + (b * b * p.sin()).powi(2)).sqrt() / ((a * p.cos()).powi(2) + (b * p.sin()).powi(2)).sqrt();
+            let gc = (b * b / (a * a) * p.tan()).atan().to_degrees(); assert!((gravity(r, gc) - g_eff_earth(l)).abs() < 0.003, "{l}: {} {}", gravity(r, gc), g_eff_earth(l)); }
+        assert_eq!(atmos_layer(5.0), 0); assert_eq!(atmos_layer(30.0), 1); assert_eq!(atmos_layer(70.0), 2); assert_eq!(atmos_layer(300.0), 3); assert_eq!(atmos_layer(700.0), 4);
+        let a = column_above(0.0, 0.0115, C::CO2_ppm_present); // mass = p0/g (10332 kg/m2), O3 ~264 DU, pw ~25 mm (Trenberth et al. 2005 global mean)
+        assert!((a.mass * C::g_earth_mean / 101325.0 - 1.0).abs() < 0.01, "mass {}", a.mass); assert!((a.o3_du - 264.0).abs() < 15.0, "DU {}", a.o3_du); assert!((a.pw_mm - 25.0).abs() < 4.0, "pw {}", a.pw_mm); }
     #[test] fn thermosphere_and_separation() { let c = column(Body::Earth, 300.0, 0.0, 420.0); // US76: rho(300 km) 1.916e-11, O dominant
         assert!(c.rho > 0.5 * 1.916e-11 && c.rho < 2.0 * 1.916e-11, "rho300 {}", c.rho); assert!(c.x[6] > c.x[0] && c.x[6] > 0.5, "O {}", c.x[6]);
         let lo = column(Body::Earth, 50.0, 0.0, 420.0); assert!((lo.x[0] - 0.7808).abs() < 0.002); }

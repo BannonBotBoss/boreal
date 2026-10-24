@@ -73,6 +73,10 @@ export const ACTIONS: ActionDef[] = [
   A('axisAimDown', 'Axis: aim south', 'hold', 'axis', ['s'], ['ls.down'], { sum: true }),
   A('axisOut', 'Axis: move out along û', 'hold', 'axis', ['='], ['rt'], { sum: true }),
   A('axisIn', 'Axis: move in along û', 'hold', 'axis', ['-'], ['lt'], { sum: true }),
+  A('axisGas', 'Axis: gas readout on/off (stage 3)', 'press', 'axis', ['h'], ['lb']),
+  A('axisLayers', 'Axis: gas layers in the cut on/off', 'press', 'axis', ['l'], ['dleft']),
+  A('axisRT', 'Axis: shortwave column readout on/off (stage 4)', 'press', 'axis', ['j'], ['a']),
+  A('axisBodies', 'Axis: emergent-object demo, next mode (stage 5)', 'press', 'axis', ['n'], ['rb']),
   A('axisExit', 'Axis: leave axis mode', 'press', 'axis', ['r'], ['dright']),
   // camera adjust mode: pick a setting, triggers change it
   A('camPrev', 'Camera: previous setting', 'press', 'camera', ['arrowleft'], ['dleft', 'lb']),

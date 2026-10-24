@@ -133,6 +133,7 @@ export function createPadRouter(host: RouterHost) {
       if (ax?.on) { const r = resolveContext(b, v, prevAxis, 'axis'); prevAxis = r.active; const V = r.value;
         ax.aim(((V.axisAimUp ?? 0) - (V.axisAimDown ?? 0)) * .8 * dt, ((V.axisAimRight ?? 0) - (V.axisAimLeft ?? 0)) * 1.2 * dt);
         const m = (V.axisOut ?? 0) - (V.axisIn ?? 0); if (Math.abs(m) > .02) ax.move(m * .25 * dt);
+        if (r.fired.has('axisGas')) ax.gas(); if (r.fired.has('axisLayers')) ax.layers(); if (r.fired.has('axisRT')) ax.rt(); if (r.fired.has('axisBodies')) ax.bodies();
         if (r.fired.has('axisExit') || r.fired.has('back')) ax.toggle(false); return false; }
       if (g?.active() && (standalone || host.globe())) { const r = resolveContext(b, v, prevGlobe, 'globe'); prevGlobe = r.active; const V = r.value;
         g.orbit(((V.globeOrbitRight ?? 0) - (V.globeOrbitLeft ?? 0)) * 1.6 * dt, ((V.globeOrbitDown ?? 0) - (V.globeOrbitUp ?? 0)) * 1.2 * dt);

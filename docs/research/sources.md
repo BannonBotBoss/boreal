@@ -1,0 +1,65 @@
+# Sources and reading list
+
+- [Domain warping](https://iquilezles.org/articles/warp) — Inigo Quilez
+- [fBm](https://iquilezles.org/articles/fbm/) — Inigo Quilez
+- [Making maps with noise functions](https://www.redblobgames.com/maps/terrain-from-noise/) — Red Blob Games
+- [Map generation misc notes: noise vs physical modeling](https://www.redblobgames.com/articles/noise/noise-vs-other.html) — Red Blob Games
+- [Improving Noise](https://mrl.cs.nyu.edu/~perlin/paper445.pdf) — Ken Perlin
+- [Simplex noise demystified](https://www.itn.liu.se/~stegu76/simplexnoise/simplexnoise.pdf) — Stefan Gustavson
+- [A Cellular Texture Basis Function](https://cedric.cnam.fr/~cubaud/PROCEDURAL/worley.pdf) — Steven Worley
+- [Cellular noise](https://thebookofshaders.com/12/) — The Book of Shaders
+- [Hydraulic-Erosion (droplet implementation)](https://github.com/SebLague/Hydraulic-Erosion) — GitHub, Sebastian Lague
+- [Fast Hydraulic Erosion Simulation and Visualization on GPU](https://nlpr.ia.ac.cn/2007papers/gjhy/gh116.pdf) — Mei et al., 2007
+- [HeightField Erode Thermal](https://www.sidefx.com/docs/houdini/nodes/sop/heightfield_erode_thermal.html) — SideFX Houdini docs
+- [The Algorithmic Beauty of Plants](https://algorithmicbotany.org/papers/abop/abop.pdf) — Algorithmic Botany
+- [Procedural Modeling of Buildings](https://peterwonka.net/Publications/pdfs/2006.SG.Mueller.ProceduralModelingOfBuildings.final.pdf) — Muller et al., 2006
+- [Cellular Automata Method for Generating Random Cave-Like Levels](https://www.roguebasin.com/index.php/Cellular_Automata_Method_for_Generating_Random_Cave-Like_Levels) — RogueBasin
+- [Constructive Generation Methods for Dungeons and Levels](https://antoniosliapis.com/articles/pcgbook_dungeons.php) — Antonios Liapis, PCG book
+- [Adventures in level design: generating missions and spaces](https://pcgworkshop.com/archive/dormans2010adventures.pdf) — Dormans, 2010
+- [Dungeon Generation in Unexplored](https://www.boristhebrave.com/2021/04/10/dungeon-generation-in-unexplored/) — Boris the Brave
+- [Speaking about Spelunky](http://devmag.org.za/2009/04/02/speaking-about-spelunky/) — Dev.Mag
+- [Wave Function Collapse Explained](https://www.boristhebrave.com/2020/04/13/wave-function-collapse-explained/) — Boris the Brave
+- [WaveFunctionCollapse is constraint solving in the wild](https://dl.acm.org/doi/10.1145/3102071.3110566) — Karth and Smith, FDG 2017
+- [How Townscaper Works](https://www.gamedeveloper.com/game-platforms/how-townscaper-works-a-story-four-games-in-the-making) — Game Developer
+- [Editable WFC](https://www.boristhebrave.com/2022/04/25/editable-wfc/) — Boris the Brave
+- [Fast Poisson Disk Sampling in Arbitrary Dimensions](https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf) — Robert Bridson
+- [Polygonal Map Generation for Games](http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/) — Amit Patel
+- [Generating Complex Procedural Terrains Using the GPU](https://developer.nvidia.com/gpugems/gpugems3/part-i-geometry/chapter-1-generating-complex-procedural-terrains-using-gpu) — GPU Gems 3, NVIDIA
+- [Hash Functions for GPU Rendering](https://www.jcgt.org/published/0009/03/02/) — Jarzynski and Olano, JCGT
+- [Continuous Distance-Dependent Level of Detail for Rendering Heightmaps](https://aggrobird.com/files/cdlod_latest.pdf) — Strugar
+- [Noise router (Minecraft 1.18 worldgen)](https://minecraft.wiki/w/Noise_router) — Minecraft Wiki
+- [Continuous World Generation in No Man's Sky](https://www.gdcvault.com/play/1024265/Continuous_World_Generation_in__No_Man_s_Sky_) — GDC Vault
+- [Floating Point Determinism](https://gafferongames.com/post/floating_point_determinism/) — Gaffer On Games
+- [Procedural Content Generation via Machine Learning (PCGML)](https://arxiv.org/abs/1702.00539) — arXiv, Summerville et al.
+- [Procedural Content Generation in Games](https://www.pcgbook.com/) — pcgbook.com
+- [Terrestrial planet formation](https://www.pnas.org/doi/10.1073/pnas.1013480108) — PNAS
+- [Why Are Planets Round?](https://spaceplace.nasa.gov/planets-round/) — NASA Space Place
+- [Earth's oblateness and its temporal variations](https://comptes-rendus.academie-sciences.fr/geoscience/articles/10.1016/j.crte.2006.09.014/) — Comptes Rendus Geoscience
+- [Isotopes as clues to the earliest differentiation of the Earth](https://royalsocietypublishing.org/doi/10.1098/rsta.2008.0174) — Royal Society
+- [Building of a Habitable Planet](https://www.oca.eu/images/LAGRANGE/pages_perso/morby/papers/EMP2.pdf) — Martin et al.
+- [Ancient zircons and plate tectonics by 3.35 Ga](https://www.caltech.edu/about/news/ancient-zircon-crystals-provide-a-window-into-early-earth-history) — Caltech
+- [Lifespan of mountain ranges](https://www.nature.com/articles/nature12218) — Nature
+- [Snowball Earth climate dynamics](https://www.science.org/doi/10.1126/sciadv.1600983) — Science Advances
+- [Glaciers and sea level at the Last Glacial Maximum](https://www.usgs.gov/faqs/how-does-present-glacier-extent-and-sea-level-compare-extent-glaciers-and-global-sea-level) — USGS
+- [Procedural map generation on a sphere](https://www.redblobgames.com/x/1843-planet-generation/) — Red Blob Games
+- [Plate Tectonics experiment](https://worlds.kenny.wtf/experiments/tectonics) — Hello Worlds
+- [planet_heightmap_generation](https://github.com/raguilar011095/planet_heightmap_generation) — GitHub
+- [Coding Adventure: Procedural Moons and Planets](https://www.youtube.com/watch?v=lctXaT9pxA0) — Sebastian Lague, YouTube
+- [Solar-System (source)](https://www.github.com/SebLague/Solar-System) — GitHub, Sebastian Lague
+- [A hierarchical O(N log N) force-calculation algorithm](https://www.nature.com/articles/324446a0) — Barnes and Hut, Nature 1986
+- [A short course on fast multipole methods](https://math.nyu.edu/~greengar/shortcourse_fmm.pdf) — Beatson and Greengard
+- [A Practical Comparison of N-Body Algorithms](https://www.cs.cmu.edu/~scandal/papers/dimacs-nbody.html) — CMU
+- [Fast N-Body Simulation with CUDA](https://developer.nvidia.com/gpugems/gpugems3/part-v-physics-simulation/chapter-31-fast-n-body-simulation-cuda) — GPU Gems 3, NVIDIA
+- [REBOUND IAS15 integrator](https://rebound.hanno-rein.de/integrators/ias15/) — REBOUND docs
+- [REBOUND collisions](https://rebound.hanno-rein.de/collisions/) — REBOUND docs
+- [Immediate Origin of the Moon as a Post-impact Satellite (SWIFT)](https://iopscience.iop.org/article/10.3847/2041-8213/ac8d96) — Kegerreis et al. 2022
+- [Simulating cosmic structure formation with GADGET-4](https://academic.oup.com/mnras/article/506/2/2871/6312509) — MNRAS
+- [Rapid growth of gas-giant cores by pebble accretion](https://www.aanda.org/articles/aa/full_html/2012/08/aa19127-12/aa19127-12.html) — Lambrechts and Johansen 2012
+- [Late-stage planetary accretion with hit-and-run and fragmentation](https://www.sciencedirect.com/science/article/abs/pii/S0019103513000754) — Chambers 2013, Icarus
+- [SPH Fluid Simulation devlog](https://universesandbox.com/blog/2019/12/sph-devlog-1/) — Universe Sandbox
+- [Gravity: all-pairs N-body on WebGPU](https://hammyasf.github.io/gravity.html) — hammyasf
+- [WebGPU Galaxy (Three.js TSL)](https://github.com/dgreenheck/webgpu-galaxy) — GitHub, dgreenheck
+
+---
+
+*Research compiled 2026-10-24 by Grok Bot (read-only review of the repo; recommendations are judgement unless sourced). Full reading list: [sources.md](sources.md). Index: [README.md](README.md).*

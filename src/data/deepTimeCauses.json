@@ -3,7 +3,8 @@
  "task": "T-0065",
  "request": [
   "but then , how did all those events come to be? research and find real numbers",
-  "the moon will need to come from the earliest times, so it would be programmed as a probability: earth's very reason for forming came with the probability of a collision."
+  "the moon will need to come from the earliest times, so it would be programmed as a probability: earth's very reason for forming came with the probability of a collision.",
+  "and for all version that are measured, narrows the possible set of timelines to those that equate to a planet with favorable living conditions, as the dimension regarding chemical rules, depends on special conditions, for the probability of the formation and transactions between the molecular structures needed for the replicating behaviour to emerge"
  ],
  "notes": "Distributions: mean, spread (1-sigma or half-range), unit, dist, source. referenceSeed values reproduce our Earth (seed 0). Ages in years before present.",
  "referenceSeed": 0,
@@ -1282,5 +1283,378 @@
     "Schroder & Smith 2008"
    ]
   }
+ ],
+ "conditioning": {
+  "task": "T-0066",
+  "modes": [
+   "earth",
+   "habitable",
+   "any"
+  ],
+  "observables": {
+   "planetMass": {
+    "value": 5.972e+24,
+    "unit": "kg",
+    "epsStart": 0.2,
+    "epsFinal": 0.05,
+    "source": "NASA fact sheet"
+   },
+   "moonMass": {
+    "value": 0.0123,
+    "unit": "M_E",
+    "epsStart": 0.5,
+    "epsFinal": 0.1,
+    "source": "NASA"
+   },
+   "moonDistance": {
+    "value": 384400,
+    "unit": "km",
+    "epsStart": 0.2,
+    "epsFinal": 0.02,
+    "source": "LLR"
+   },
+   "dayLength": {
+    "value": 24.0,
+    "unit": "h",
+    "epsStart": 3,
+    "epsFinal": 0.5,
+    "absolute": true
+   },
+   "obliquity": {
+    "value": 23.44,
+    "unit": "deg",
+    "epsStart": 5,
+    "epsFinal": 1,
+    "absolute": true,
+    "source": "IAU"
+   },
+   "oceanMass": {
+    "value": 1.4e+21,
+    "unit": "kg",
+    "epsStart": 2.0,
+    "epsFinal": 0.3,
+    "source": "NOAA/USGS"
+   },
+   "age": {
+    "value": 4540000000.0,
+    "unit": "yr",
+    "eps": 50000000.0,
+    "source": "Dalrymple 2001"
+   }
+  },
+  "habitability": {
+   "HZconservativeAU": [
+    0.99,
+    1.7
+   ],
+   "HZ_KastingAU": [
+    0.95,
+    1.67
+   ],
+   "source": "Kopparapu 2013 ApJ 765:131 (verified live)",
+   "liquidWaterK": [
+    273,
+    373
+   ],
+   "minHabitableYears": 1000000000.0,
+   "waterOceans": [
+    0.1,
+    10
+   ],
+   "waterSource": "Cowan & Abbot 2014",
+   "dynamoByYearsAgo": 3500000000.0,
+   "carbonCycle": "plates or stagnant-lid outgassing (Foley & Smye 2018, disputed)"
+  },
+  "acceptance": {
+   "earth": {
+    "mean": 3e-05,
+    "spread": "1e-5 to 1e-4",
+    "unit": "fraction",
+    "dist": "loguniform",
+    "source": "derived estimate"
+   },
+   "habitable": {
+    "mean": 0.2,
+    "spread": 0.1,
+    "unit": "fraction",
+    "dist": "normal",
+    "source": "derived estimate"
+   }
+  },
+  "cheapening": [
+   "stagewise rejection",
+   "precomputed data/acceptedSeeds.json ~1000 per mode",
+   "importance-sample last impact",
+   "seed 0 always accepted"
+  ]
+ },
+ "prebiotic": {
+  "task": "T-0066",
+  "settings": {
+   "alkalineVent": {
+    "T": {
+     "mean": 65,
+     "spread": 25,
+     "unit": "C",
+     "dist": "normal",
+     "source": "Kelley 2005"
+    },
+    "deltaPH": {
+     "mean": 4,
+     "spread": 1,
+     "unit": "pH units",
+     "dist": "normal",
+     "source": "Russell & Martin 2004; Lane & Martin 2012"
+    },
+    "H2": {
+     "mean": 8,
+     "spread": 7,
+     "unit": "mM",
+     "dist": "normal",
+     "source": "Kelley 2005"
+    }
+   },
+   "blackSmoker": {
+    "T": {
+     "mean": 375,
+     "spread": 25,
+     "unit": "C",
+     "dist": "normal",
+     "source": "Martin 2008"
+    },
+    "pH": {
+     "mean": 3,
+     "spread": 1,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Martin 2008"
+    }
+   },
+   "warmLittlePond": {
+    "T": {
+     "mean": 40,
+     "spread": 35,
+     "unit": "C",
+     "dist": "normal",
+     "source": "Pearce 2017"
+    },
+    "timeToRNA": {
+     "mean": 2,
+     "spread": 2,
+     "unit": "yr (1 to a few wet-dry cycles)",
+     "dist": "normal",
+     "source": "Pearce 2017 PNAS 114:11327 (verified live)"
+    },
+    "RNAbyYearsAgo": 4170000000.0
+   },
+   "cyanosulfidic": {
+    "UVnm": [
+     200,
+     280
+    ],
+    "source": "Patel 2015 Nat Chem 7:301; Powner 2009"
+   }
+  },
+  "feedstocks": {
+   "HCNrainout": {
+    "mean": 3e-11,
+    "spread": "1e-12 to 1e-9",
+    "unit": "mol/cm2/yr",
+    "dist": "loguniform",
+    "source": "Pearce 2022; Zahnle 2020",
+    "disputed": true
+   },
+   "phosphateSodaLakeMax": {
+    "mean": 1.0,
+    "spread": 0.5,
+    "unit": "M",
+    "dist": "normal",
+    "source": "Toner & Catling 2020 PNAS"
+   },
+   "phosphateApatite": {
+    "mean": 1e-06,
+    "spread": 0,
+    "unit": "M",
+    "dist": "normal",
+    "source": "-"
+   },
+   "meteoriticOrganics": {
+    "mean": 10000000.0,
+    "spread": "1e6 to 1e8",
+    "unit": "kg/yr",
+    "dist": "loguniform",
+    "source": "Chyba & Sagan 1992",
+    "disputed": true
+   },
+   "murchisonNucleobases": {
+    "mean": 0.35,
+    "spread": 0.15,
+    "unit": "ppm",
+    "dist": "normal",
+    "source": "Callahan 2011"
+   },
+   "millerUreyAAyieldReducing": {
+    "mean": 0.02,
+    "spread": 0.02,
+    "unit": "fraction C",
+    "dist": "normal",
+    "source": "Miller 1953; Johnson 2008"
+   },
+   "millerUreyAAyieldNeutral": {
+    "mean": 0.001,
+    "spread": 0.001,
+    "unit": "fraction C",
+    "dist": "normal",
+    "source": "Cleaves 2008",
+    "disputed": true
+   }
+  },
+  "energyFlux": {
+   "UVlt200": {
+    "mean": 3,
+    "spread": 1,
+    "unit": "J/m2/s",
+    "dist": "normal",
+    "source": "Chyba & Sagan 1992"
+   },
+   "lightning": {
+    "mean": 0.004,
+    "spread": 0.002,
+    "unit": "J/m2/s",
+    "dist": "normal",
+    "source": "Chyba & Sagan 1992"
+   },
+   "shocks": {
+    "mean": 0.001,
+    "spread": 0.0005,
+    "unit": "J/m2/s",
+    "dist": "normal",
+    "source": "Chyba & Sagan 1992"
+   }
+  },
+  "polymer": {
+   "nonEnzymaticMax": {
+    "mean": 15,
+    "spread": 5,
+    "unit": "nt",
+    "dist": "normal",
+    "source": "Szostak 2012"
+   },
+   "mineralMax": {
+    "mean": 45,
+    "spread": 5,
+    "unit": "nt",
+    "dist": "normal",
+    "source": "Ferris 2006"
+   },
+   "tripletPolymerase": {
+    "product": 52,
+    "unit": "nt",
+    "source": "Attwater 2018 eLife 7:e35255 (verified live)"
+   },
+   "classIPolymerase": {
+    "length": 190,
+    "hardTemplateFidelity": 0.83,
+    "source": "Tjhung 2020 PNAS 117:2906 (verified live)"
+   },
+   "longestRibozymeProduct": {
+    "value": 206,
+    "unit": "nt",
+    "source": "Wochner 2011"
+   },
+   "minReplicatorLen": {
+    "mean": 120,
+    "spread": 80,
+    "unit": "nt",
+    "dist": "uniform[40,200]",
+    "source": "40-200; Joyce & Szostak 2018"
+   },
+   "eigen": "Lmax=ln(sigma)/(1-q); sigma=10: q=0.99->230, 0.95->46, 0.83->13 (Eigen 1971)",
+   "RAFcatalysisPerMolecule": {
+    "mean": 1.5,
+    "spread": 0.5,
+    "unit": "reactions",
+    "dist": "normal",
+    "source": "Hordijk & Steel 2004"
+   },
+   "vesicleCVC": {
+    "mean": 40,
+    "spread": 20,
+    "unit": "mM decanoate",
+    "dist": "normal",
+    "source": "Hanczyc 2003"
+   },
+   "rnaHydrolysisHalfLife25C": {
+    "mean": 1,
+    "spread": 0.5,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Li & Breaker 1999"
+   }
+  }
+ },
+ "abiogenesis": {
+  "task": "T-0066",
+  "status": "unconstrained",
+  "evidenceWindowGa": [
+   4.1,
+   3.48
+  ],
+  "habitableSinceGa": 4.4,
+  "kipping2020": {
+   "bayesFactorFastVsSlow": [
+    2.8,
+    8.7
+   ],
+   "mlDelayMyr": [
+    190,
+    46
+   ],
+   "source": "Kipping 2020 PNAS 117:11995 (verified live)"
+  },
+  "spiegelTurner2012": "PNAS 109:395: selection effect; data can't exclude rare life",
+  "log10RatePerGyrPriors": {
+   "optimistic": {
+    "mean": 1.0,
+    "spread": 0.5,
+    "unit": "log10 /Gyr",
+    "dist": "normal",
+    "source": "Kipping 2020"
+   },
+   "agnostic": {
+    "mean": -0.5,
+    "spread": 2.5,
+    "unit": "log10 /Gyr",
+    "dist": "uniform[-3,2]",
+    "source": "Spiegel & Turner 2012"
+   },
+   "rare": {
+    "mean": -2,
+    "spread": 1,
+    "unit": "log10 /Gyr",
+    "dist": "normal",
+    "source": "assumption"
+   }
+  },
+  "default": "agnostic",
+  "referenceSeed": {
+   "lifeOnsetGa": {
+    "mean": 3.9,
+    "spread": 0.2,
+    "unit": "Ga",
+    "dist": "normal",
+    "source": "Nutman 2016; Bell 2015",
+    "disputed": true
+   }
+  },
+  "rule": "P(life by T)=1-exp(-lambda*f_hab*T), gated by prebiotic conditions"
+ },
+ "transactionRules": [
+  "synthesis",
+  "polymerisation",
+  "catalysis(RAF)",
+  "templateReplication(q)",
+  "selection(+compartments)",
+  "lifeThreshold"
  ]
 }

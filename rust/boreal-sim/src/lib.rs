@@ -20,6 +20,7 @@ pub mod sun_spectrum;
 pub mod interior;
 pub mod gas;
 pub mod formation;
+pub mod differentiation;
 
 use grid::Grid;
 use std::cell::RefCell;

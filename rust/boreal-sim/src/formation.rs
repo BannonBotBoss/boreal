@@ -32,14 +32,16 @@ pub const ETA: f64 = 1.2;
 const KMAX: f64 = 1.5e12;
 
 /// Material class: 0 core (PREM layers 0, 1), 1 silicate + ocean (2, 3, 4).
-pub fn class_of(prem_layer: u8) -> usize { if prem_layer <= 1 || prem_layer == MAT_IRON { 0 } else { 1 } }
+pub fn class_of(prem_layer: u8) -> usize { if prem_layer <= 1 || prem_layer == MAT_IRON || prem_layer == MAT_IRON_SOLID { 0 } else { 1 } }
+/// Iron parcel colder than the iron melting curve at its pressure (set by differentiation.rs; the inner core).
+pub const MAT_IRON_SOLID: u8 = 12;
 /// Materials of the bulk-mix start (not PREM layers): iron (class 0) and silicate (class 1).
 pub const MAT_IRON: u8 = 10; pub const MAT_SILICATE: u8 = 11;
 
 /// Cited material data (data/earth/materials.json): bulk composition and Tillotson parameters.
 pub const MATERIALS_JSON: &str = include_str!("../../../data/earth/materials.json");
 /// Number after `"key":` inside the object that follows `"section"` (or at top level if section is empty).
-pub fn material_num(section: &str, key: &str) -> f64 { let s = if section.is_empty() { MATERIALS_JSON } else { let i = MATERIALS_JSON.find(&format!("\"{section}\"")).expect(section); &MATERIALS_JSON[i..] };
+pub fn material_num(section: &str, key: &str) -> f64 { let s = if section.is_empty() { MATERIALS_JSON } else { let i = MATERIALS_JSON.find(&format!("\"{section}\": {{")).expect(section); &MATERIALS_JSON[i..] };
     let i = s.find(&format!("\"{key}\"")).expect(key); let r = &s[i + key.len() + 2..]; let r = r.trim_start_matches(|c: char| c == ':' || c.is_whitespace());
     let e = r.find(|c: char| !(c.is_ascii_digit() || "+-.eE".contains(c))).unwrap(); r[..e].parse().unwrap() }
 
@@ -85,8 +87,10 @@ pub fn form_ic(nbase: usize, seed: u64) -> Particles { let mut r = Rng::new(seed
 /// (Kegerreis et al. 2019, MNRAS 487:5029: concentric shells one inter-particle spacing thick, each with ~uniform points,
 /// randomly rotated) - method only, using golden-spiral points per shell (Gonzalez 2010, Math. Geosci. 42:49) in place
 /// of SEAGen's equal-area regions. Returns (parcels, uniform start density).
-pub fn form_mix_ic(n_target: usize, seed: u64) -> (Particles, f64) { let mut r = Rng::new(seed); let m_tot = C::M_earth; let fe = material_num("", "bulk_core_mass_fraction");
-    let rho_mix = 1.0 / (fe / material_num("iron", "rho0") + (1.0 - fe) / material_num("basalt", "rho0"));
+pub fn form_mix_ic(n_target: usize, seed: u64) -> (Particles, f64) { form_mix_ic_with(n_target, seed, "basalt") }
+/// As form_mix_ic with the silicate material named (its rho0 sets the uncompressed volume).
+pub fn form_mix_ic_with(n_target: usize, seed: u64, silicate: &str) -> (Particles, f64) { let mut r = Rng::new(seed); let m_tot = C::M_earth; let fe = material_num("", "bulk_core_mass_fraction");
+    let rho_mix = 1.0 / (fe / material_num("iron", "rho0") + (1.0 - fe) / material_num(silicate, "rho0"));
     let r_out = (3.0 * m_tot / (4.0 * std::f64::consts::PI * rho_mix)).cbrt(); let dr = r_out * (4.0 * std::f64::consts::PI / 3.0 / n_target as f64).cbrt();
     let nsh = (r_out / dr).round() as usize; let dr = r_out / nsh as f64; let mut pos: Vec<V3> = vec![];
     for k in 0..nsh { let rad = (k as f64 + 0.5) * dr; let nk = ((4.0 * std::f64::consts::PI * rad * rad * dr) / (dr * dr * dr)).round().max(1.0) as usize;
@@ -99,18 +103,18 @@ pub fn form_mix_ic(n_target: usize, seed: u64) -> (Particles, f64) { let mut r =
     for i in (1..n).rev() { let j = (r.f() * (i + 1) as f64) as usize % (i + 1); mat.swap(i, j); }
     let mut p = Particles::default(); for i in 0..n { p.pos.push(pos[i]); p.vel.push([0.0; 3]); p.mass.push(m_tot / n as f64); p.mat.push(mat[i]); } (p, rho_mix) }
 
-fn w(r: f64, h: f64) -> f64 { let q = r / h; let s = 1.0 / (std::f64::consts::PI * h * h * h); if q < 1.0 { s * (1.0 - 1.5 * q * q + 0.75 * q * q * q) } else if q < 2.0 { s * 0.25 * (2.0 - q).powi(3) } else { 0.0 } }
-fn dw(r: f64, h: f64) -> f64 { let q = r / h; let s = 1.0 / (std::f64::consts::PI * h.powi(4)); if q < 1.0 { s * (-3.0 * q + 2.25 * q * q) } else if q < 2.0 { -s * 0.75 * (2.0 - q).powi(2) } else { 0.0 } }
-fn d2(a: V3, b: V3) -> f64 { (a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2) }
+pub(crate) fn w(r: f64, h: f64) -> f64 { let q = r / h; let s = 1.0 / (std::f64::consts::PI * h * h * h); if q < 1.0 { s * (1.0 - 1.5 * q * q + 0.75 * q * q * q) } else if q < 2.0 { s * 0.25 * (2.0 - q).powi(3) } else { 0.0 } }
+pub(crate) fn dw(r: f64, h: f64) -> f64 { let q = r / h; let s = 1.0 / (std::f64::consts::PI * h.powi(4)); if q < 1.0 { s * (-3.0 * q + 2.25 * q * q) } else if q < 2.0 { -s * 0.75 * (2.0 - q).powi(2) } else { 0.0 } }
+pub(crate) fn d2(a: V3, b: V3) -> f64 { (a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2) }
 
 /// Neighbours within 2 max(h_i, h_j) via a uniform grid (h_j bounded by the cell search radius).
-fn neighbours(pos: &[V3], h: &[f64]) -> Vec<Vec<usize>> { let n = pos.len(); let hmax = h.iter().cloned().fold(0.0, f64::max).max(1.0);
+pub(crate) fn neighbours(pos: &[V3], h: &[f64]) -> Vec<Vec<usize>> { let n = pos.len(); let hmax = h.iter().cloned().fold(0.0, f64::max).max(1.0);
     let cell = 2.0 * hmax; let key = |x: V3| [(x[0] / cell).floor() as i64, (x[1] / cell).floor() as i64, (x[2] / cell).floor() as i64];
     let mut grid: std::collections::HashMap<[i64; 3], Vec<usize>> = Default::default(); for (i, &x) in pos.iter().enumerate() { grid.entry(key(x)).or_default().push(i); }
     par_map(n, |i| { let k = key(pos[i]); let mut c = vec![]; for a in -1..=1 { for b in -1..=1 { for e in -1..=1 { if let Some(v) = grid.get(&[k[0] + a, k[1] + b, k[2] + e]) {
         for &j in v { let s = 2.0 * h[i].max(h[j]); if d2(pos[i], pos[j]) < s * s { c.push(j); } } } } } } c }) }
 
-fn par_map<T: Send, F: Fn(usize) -> T + Sync>(n: usize, f: F) -> Vec<T> { let th = std::thread::available_parallelism().map(|x| x.get()).unwrap_or(1).min(16); let chunk = n.div_ceil(th).max(1); if th == 1 { return (0..n).map(f).collect(); } // wasm32: no threads
+pub(crate) fn par_map<T: Send, F: Fn(usize) -> T + Sync>(n: usize, f: F) -> Vec<T> { let th = std::thread::available_parallelism().map(|x| x.get()).unwrap_or(1).min(16); let chunk = n.div_ceil(th).max(1); if th == 1 { return (0..n).map(f).collect(); } // wasm32: no threads
     let mut out: Vec<Vec<T>> = vec![]; std::thread::scope(|s| { let hs: Vec<_> = (0..th).map(|t| { let f = &f; s.spawn(move || ((t * chunk)..((t + 1) * chunk).min(n)).map(f).collect::<Vec<T>>()) }).collect();
         for h in hs { out.push(h.join().unwrap()); } }); out.into_iter().flatten().collect() }
 
@@ -217,6 +221,9 @@ pub fn boundaries(s: &State) -> Boundaries { let p = &s.p; let n = p.pos.len(); 
 pub fn bake(s: &State) -> Vec<f32> { let f = measure(s); let _ = f; let p = &s.p; let n = p.pos.len(); let m: f64 = p.mass.iter().sum();
     let mut com = [0.0; 3]; for i in 0..n { for k in 0..3 { com[k] += p.mass[i] * p.pos[i][k] / m; } }
     let mut o = Vec::with_capacity(n * 6); for i in 0..n { for k in 0..3 { o.push((p.pos[i][k] - com[k]) as f32); } o.push(p.mat[i] as f32); o.push(s.rho[i] as f32); o.push(s.h[i] as f32); } o }
+
+/// A State from raw fields (for measuring bodies evolved elsewhere, e.g. differentiation.rs).
+pub(crate) fn raw_state(p: Particles, h: Vec<f64>, rho: Vec<f64>, omega: f64) -> State { let n = p.pos.len(); State { p, h, rho, pres: vec![0.0; n], nb: vec![], eos: [Eos::prem(0), Eos::prem(1)], omega } }
 
 /// Rebuild a State from a bake (equal masses M_PREM / n) to re-measure it.
 pub fn from_bake(b: &[f32], omega: f64) -> State { let n = b.len() / 6; let mt = enclosed_mass(6371.0); let mut p = Particles::default();

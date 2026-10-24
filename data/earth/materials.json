@@ -1,13 +1,57 @@
 {
-  "_sources": {
-    "bulk": "McDonough 2003, Treatise on Geochemistry 2:547 (Compositional model for the Earth's core), core = 32.5 wt% of Earth; McDonough & Sun 1995, Chem. Geol. 120:223 (pyrolite silicate Earth). Volatiles: ocean 1.4e21 kg (Charette & Smith 2010, Oceanography 23:112), atmosphere 5.15e18 kg (Trenberth & Smith 2005, J. Climate 18:864).",
-    "tillotson": "Tillotson 1962 (GA-3216); parameter table of Melosh 1989, Impact Cratering, Appendix II (Table AII.3): iron and basalt.",
-    "iron_melting": "Anzellini et al. 2013, Science 340:464, Simon-Glatzel fit T_m = T0 ((P - P0)/a + 1)^(1/c)."
-  },
-  "bulk_core_mass_fraction": 0.325,
-  "ocean_mass_kg": 1.4e21,
-  "atmosphere_mass_kg": 5.15e18,
-  "iron":   { "rho0": 7800, "A": 1.28e11, "B": 1.05e11, "E0": 9.5e6,  "a": 0.5, "b": 1.5 },
-  "basalt": { "rho0": 2700, "A": 2.67e10, "B": 2.67e10, "E0": 4.87e8, "a": 0.5, "b": 1.5 },
-  "iron_melting": { "T0_K": 1991, "P0_Pa": 5.2e9, "a_Pa": 27.39e9, "c": 2.38 }
+ "_sources": {
+  "bulk": "McDonough 2003, Treatise on Geochemistry 2:547 (Compositional model for the Earth's core), core = 32.5 wt% of Earth; McDonough & Sun 1995, Chem. Geol. 120:223 (pyrolite silicate Earth). Volatiles: ocean 1.4e21 kg (Charette & Smith 2010, Oceanography 23:112), atmosphere 5.15e18 kg (Trenberth & Smith 2005, J. Climate 18:864).",
+  "tillotson": "Tillotson 1962 (GA-3216). Iron: Melosh 1989, Impact Cratering, App. II table (rho0, A, B, E0, EIV, ECV, a, b, alpha, beta). Basalt: same table (kept for the cold pass, superseded). Dunite/olivine (mantle): Marinova, Aharonson & Asphaug 2011, Icarus 211:960 (also tabulated in pyKO docs). cv: iron 449 J/kg/K (CRC Handbook, 298 K), dunite 830 J/kg/K (Marinova 2011).",
+  "iron_melting": "Anzellini et al. 2013, Science 340:464, Simon-Glatzel fit T_m = T0 ((P - P0)/a + 1)^(1/c).",
+  "initial_heat": "Initial uniform temperature = present mantle potential temperature 1600 K (Katsura et al. 2010, PEPI 183:212) as a lower bound for the end of accretion; differentiation heat is then computed, not given."
+ },
+ "bulk_core_mass_fraction": 0.325,
+ "ocean_mass_kg": 1.4e+21,
+ "atmosphere_mass_kg": 5.15e+18,
+ "iron": {
+  "rho0": 7800,
+  "A": 128000000000.0,
+  "B": 105000000000.0,
+  "E0": 9500000.0,
+  "a": 0.5,
+  "b": 1.5,
+  "EIV": 2400000.0,
+  "ECV": 8670000.0,
+  "alpha": 5,
+  "beta": 5,
+  "cv": 449
+ },
+ "basalt": {
+  "rho0": 2700,
+  "A": 26700000000.0,
+  "B": 26700000000.0,
+  "E0": 487000000.0,
+  "a": 0.5,
+  "b": 1.5,
+  "EIV": 4720000.0,
+  "ECV": 18200000.0,
+  "alpha": 5,
+  "beta": 5,
+  "cv": 840
+ },
+ "iron_melting": {
+  "T0_K": 1991,
+  "P0_Pa": 5200000000.0,
+  "a_Pa": 27390000000.0,
+  "c": 2.38
+ },
+ "dunite": {
+  "rho0": 3500,
+  "A": 131000000000.0,
+  "B": 49000000000.0,
+  "E0": 550000000.0,
+  "EIV": 4500000.0,
+  "ECV": 14500000.0,
+  "a": 0.5,
+  "b": 1.4,
+  "alpha": 5,
+  "beta": 5,
+  "cv": 830
+ },
+ "initial_temperature_K": 1600
 }

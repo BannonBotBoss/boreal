@@ -1,0 +1,414 @@
+{
+ "_doc": "Control 'constant.G' test pool. Problems adapted from OpenStax University Physics Volume 1, ch. 13 Problems (Ling, Sanny, Moebs et al., 2016), CC BY 4.0, https://openstax.org/books/university-physics-volume-1/pages/1-introduction. Changes: given data stated inline, single-part. Answers computed from core/constants (answerExpr) and checked within tol. Hints: nudge (which idea), clue (formula; from the section's own worked examples, linked by 'learn'), walkthrough (numbers plugged in). Revealing the walkthrough means that question doesn't count toward the pass.",
+ "license": "CC BY 4.0",
+ "attribution": "Access for free at openstax.org. OpenStax University Physics Volume 1, Ling, Sanny & Moebs, CC BY 4.0.",
+ "pass": 0.7,
+ "perAttempt": 10,
+ "questions": [
+  {
+   "id": "osup1-13-13",
+   "q": "Magnitude of the gravitational force between two 5-kg steel balls 15 cm apart (centre to centre)? (answer in N)",
+   "answerExpr": "G*5*5/0.15**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-1-newtons-law-of-universal-gravitation",
+   "problem": 13,
+   "explainer": "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+   "hints": [
+    "This is Newton's law of gravitation: two masses pulling on each other.",
+    "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+    "Plug the numbers in: G*5*5/0.15^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-14",
+   "q": "Gravitational force between two sumo wrestlers of 220 kg and 240 kg whose centres are 1.2 m apart? (answer in N)",
+   "answerExpr": "G*220*240/1.2**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-1-newtons-law-of-universal-gravitation",
+   "problem": 14,
+   "explainer": "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+   "hints": [
+    "This is Newton's law of gravitation: two masses pulling on each other.",
+    "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+    "Plug the numbers in: G*220*240/1.2^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-15",
+   "q": "Gravitational force on a 4.20-kg baby from a 100-kg father 0.200 m away? (answer in N)",
+   "answerExpr": "G*4.2*100/0.2**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-1-newtons-law-of-universal-gravitation",
+   "problem": 15,
+   "explainer": "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+   "hints": [
+    "This is Newton's law of gravitation: two masses pulling on each other.",
+    "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+    "Plug the numbers in: G*4.2*100/0.2^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-17",
+   "q": "Force on a 150-kg suited astronaut 20 m from the centre of mass of the 370,000-kg ISS? (answer in N)",
+   "answerExpr": "G*370000*150/20**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-1-newtons-law-of-universal-gravitation",
+   "problem": 17,
+   "explainer": "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+   "hints": [
+    "This is Newton's law of gravitation: two masses pulling on each other.",
+    "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+    "Plug the numbers in: G*370000*150/20^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-18",
+   "q": "Asteroid Toutatis (5.0e13 kg) passed Earth at four times the Moon's distance (Moon distance 3.84e8 m). Force on Earth (M = 5.972e24 kg)? (answer in N)",
+   "answerExpr": "G*5e13*5.972e24/(4*3.84e8)**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-1-newtons-law-of-universal-gravitation",
+   "problem": 18,
+   "explainer": "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+   "hints": [
+    "This is Newton's law of gravitation: two masses pulling on each other.",
+    "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+    "Plug the numbers in: G*5e13*5.972e24/(4*3.84e8)^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-19",
+   "q": "Acceleration of Earth caused by Toutatis (5.0e13 kg) at 4 × 3.84e8 m? (answer in m/s²)",
+   "answerExpr": "G*5e13/(4*3.84e8)**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-1-newtons-law-of-universal-gravitation",
+   "problem": 19,
+   "explainer": "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+   "hints": [
+    "This is Newton's law of gravitation: two masses pulling on each other.",
+    "Every two masses pull on each other: F = G·m₁·m₂ / r². Multiply the masses, divide by the distance squared, times G (6.674e-11). Calculator is fine.",
+    "Plug the numbers in: G*5e13/(4*3.84e8)^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-20",
+   "q": "Earth's mass, given g = 9.832 m/s² at the North Pole and polar radius 6356 km? (answer in kg)",
+   "answerExpr": "9.832*6.356e6**2/G",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-2-gravitation-near-earths-surface",
+   "problem": 20,
+   "explainer": "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+   "hints": [
+    "This is about surface gravity: how hard a planet pulls at its surface.",
+    "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+    "Plug the numbers in: 9.832*6.356e6^2/G (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-21",
+   "q": "Acceleration due to gravity on Mars (mass 6.418e23 kg, radius 3.38e6 m)? (answer in m/s²)",
+   "answerExpr": "G*6.418e23/3.38e6**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-2-gravitation-near-earths-surface",
+   "problem": 21,
+   "explainer": "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+   "hints": [
+    "This is about surface gravity: how hard a planet pulls at its surface.",
+    "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+    "Plug the numbers in: G*6.418e23/3.38e6^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-22",
+   "q": "Acceleration due to gravity at the Sun's surface (M = 1.989e30 kg, R = 6.96e8 m)? (answer in m/s²)",
+   "answerExpr": "G*1.989e30/6.96e8**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-2-gravitation-near-earths-surface",
+   "problem": 22,
+   "explainer": "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+   "hints": [
+    "This is about surface gravity: how hard a planet pulls at its surface.",
+    "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+    "Plug the numbers in: G*1.989e30/6.96e8^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-24",
+   "q": "A planet of radius 1.2e7 m has g = 18 m/s². Its mass? (answer in kg)",
+   "answerExpr": "18*1.2e7**2/G",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-2-gravitation-near-earths-surface",
+   "problem": 24,
+   "explainer": "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+   "hints": [
+    "This is about surface gravity: how hard a planet pulls at its surface.",
+    "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+    "Plug the numbers in: 18*1.2e7^2/G (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-25",
+   "q": "Saturn: mean diameter 1.2e8 m, mean density 0.69 g/cm³. Surface g? (answer in m/s²)",
+   "answerExpr": "4/3*PI*G*690*6e7",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-2-gravitation-near-earths-surface",
+   "problem": 25,
+   "explainer": "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+   "hints": [
+    "This is about surface gravity: how hard a planet pulls at its surface.",
+    "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+    "Plug the numbers in: 4/3*π*G*690*6e7 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-26",
+   "q": "Mercury: mean diameter 4.88e6 m, surface g = 3.78 m/s². Its mass? (answer in kg)",
+   "answerExpr": "3.78*2.44e6**2/G",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-2-gravitation-near-earths-surface",
+   "problem": 26,
+   "explainer": "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+   "hints": [
+    "This is about surface gravity: how hard a planet pulls at its surface.",
+    "Surface gravity g = G·M / R². Flip it to weigh a planet: M = g·R² / G.",
+    "Plug the numbers in: 3.78*2.44e6^2/G (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-29",
+   "q": "Escape speed from Mars (mass 6.418e23 kg, radius 3.38e6 m)? (answer in m/s)",
+   "answerExpr": "Math.sqrt(2*G*6.418e23/3.38e6)",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-3-gravitational-potential-energy-and-total-energy",
+   "problem": 29,
+   "explainer": "Escape speed v = √(2·G·M / r). Potential energy between two masses U = −G·m₁·m₂ / r.",
+   "hints": [
+    "This is about energy and escaping a planet's pull.",
+    "Escape speed v = √(2·G·M / r). Potential energy between two masses U = −G·m₁·m₂ / r.",
+    "Plug the numbers in: √(2*G*6.418e23/3.38e6) (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-30",
+   "q": "Escape speed from Jupiter (mass 1.898e27 kg, radius 7.149e7 m)? (answer in m/s)",
+   "answerExpr": "Math.sqrt(2*G*1.898e27/7.149e7)",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-3-gravitational-potential-energy-and-total-energy",
+   "problem": 30,
+   "explainer": "Escape speed v = √(2·G·M / r). Potential energy between two masses U = −G·m₁·m₂ / r.",
+   "hints": [
+    "This is about energy and escaping a planet's pull.",
+    "Escape speed v = √(2·G·M / r). Potential energy between two masses U = −G·m₁·m₂ / r.",
+    "Plug the numbers in: √(2*G*1.898e27/7.149e7) (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-31",
+   "q": "Escape speed from Earth (5.972e24 kg) at the Moon's orbital radius, 3.84e8 m? (answer in m/s)",
+   "answerExpr": "Math.sqrt(2*G*5.972e24/3.84e8)",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-3-gravitational-potential-energy-and-total-energy",
+   "problem": 31,
+   "explainer": "Escape speed v = √(2·G·M / r). Potential energy between two masses U = −G·m₁·m₂ / r.",
+   "hints": [
+    "This is about energy and escaping a planet's pull.",
+    "Escape speed v = √(2·G·M / r). Potential energy between two masses U = −G·m₁·m₂ / r.",
+    "Plug the numbers in: √(2*G*5.972e24/3.84e8) (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-32",
+   "q": "Gravitational potential energy of two 5.00-kg balls 15.0 cm apart? (answer in J)",
+   "answerExpr": "-G*25/0.15",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-3-gravitational-potential-energy-and-total-energy",
+   "problem": 32,
+   "explainer": "Escape speed v = √(2·G·M / r). Potential energy between two masses U = −G·m₁·m₂ / r.",
+   "hints": [
+    "This is about energy and escaping a planet's pull.",
+    "Escape speed v = √(2·G·M / r). Potential energy between two masses U = −G·m₁·m₂ / r.",
+    "Plug the numbers in: -G*25/0.15 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-36",
+   "q": "A planet with 1.5 times Earth's mass travels in Earth's orbit. Its period, in years? (answer in yr)",
+   "answerExpr": "1",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-4-satellite-orbits-and-energy",
+   "problem": 36,
+   "explainer": "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+   "hints": [
+    "This is about circular orbits: period, radius and the mass in the middle.",
+    "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+    "Plug the numbers in: 1 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-37",
+   "q": "Two planets in circular orbits around a star have speeds v and 2v. Ratio of the orbital radius of the slower to the faster? (answer in 1)",
+   "answerExpr": "4",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-4-satellite-orbits-and-energy",
+   "problem": 37,
+   "explainer": "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+   "hints": [
+    "This is about circular orbits: period, radius and the mass in the middle.",
+    "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+    "Plug the numbers in: 4 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-38",
+   "q": "Centripetal acceleration of Earth around the Sun (a = 1.496e11 m, T = 3.156e7 s)? (answer in m/s²)",
+   "answerExpr": "4*PI**2*1.496e11/3.156e7**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-4-satellite-orbits-and-energy",
+   "problem": 38,
+   "explainer": "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+   "hints": [
+    "This is about circular orbits: period, radius and the mass in the middle.",
+    "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+    "Plug the numbers in: 4*π^2*1.496e11/3.156e7^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-39",
+   "q": "Orbital radius of an Earth satellite (M = 5.972e24 kg) with period 1.00 h? (answer in m)",
+   "answerExpr": "Math.cbrt(G*5.972e24*3600**2/(4*PI**2))",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-4-satellite-orbits-and-energy",
+   "problem": 39,
+   "explainer": "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+   "hints": [
+    "This is about circular orbits: period, radius and the mass in the middle.",
+    "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+    "Plug the numbers in: ∛(G*5.972e24*3600^2/(4*π^2)) (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-40",
+   "q": "Mass of the Sun from Earth's orbit (a = 1.496e11 m, T = 3.156e7 s)? (answer in kg)",
+   "answerExpr": "4*PI**2*1.496e11**3/(G*3.156e7**2)",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-4-satellite-orbits-and-energy",
+   "problem": 40,
+   "explainer": "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+   "hints": [
+    "This is about circular orbits: period, radius and the mass in the middle.",
+    "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+    "Plug the numbers in: 4*π^2*1.496e11^3/(G*3.156e7^2) (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-41",
+   "q": "Mass of Jupiter from Io: orbital radius 421,700 km, period 1.77 days? (answer in kg)",
+   "answerExpr": "4*PI**2*4.217e8**3/(G*(1.77*86400)**2)",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-4-satellite-orbits-and-energy",
+   "problem": 41,
+   "explainer": "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+   "hints": [
+    "This is about circular orbits: period, radius and the mass in the middle.",
+    "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+    "Plug the numbers in: 4*π^2*4.217e8^3/(G*(1.77*86400)^2) (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-43",
+   "q": "A satellite orbits an asteroid with period 3.02 h at radius 2.0 km. Mass of the asteroid? (answer in kg)",
+   "answerExpr": "4*PI**2*2000**3/(G*(3.02*3600)**2)",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-4-satellite-orbits-and-energy",
+   "problem": 43,
+   "explainer": "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+   "hints": [
+    "This is about circular orbits: period, radius and the mass in the middle.",
+    "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+    "Plug the numbers in: 4*π^2*2000^3/(G*(3.02*3600)^2) (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-46",
+   "q": "Radius of a geosynchronous orbit (period 1 day = 86,400 s; Earth 5.972e24 kg)? (answer in m)",
+   "answerExpr": "Math.cbrt(G*5.972e24*86400**2/(4*PI**2))",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-4-satellite-orbits-and-energy",
+   "problem": 46,
+   "explainer": "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+   "hints": [
+    "This is about circular orbits: period, radius and the mass in the middle.",
+    "For a circular orbit, T² = 4π²·r³ / (G·M). So you can weigh the thing being orbited from r and T: M = 4π²·r³ / (G·T²).",
+    "Plug the numbers in: ∛(G*5.972e24*86400^2/(4*π^2)) (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-50",
+   "q": "Halley's comet: perihelion 0.586 AU, aphelion 17.8 AU, speed at perihelion 55 km/s. Speed at aphelion? (answer in km/s)",
+   "answerExpr": "55*0.586/17.8",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-5-keplers-laws-of-planetary-motion",
+   "problem": 50,
+   "explainer": "Kepler: speed × distance is the same at perihelion and aphelion; period in years = (semi-major axis in AU)^1.5.",
+   "hints": [
+    "This is Kepler's laws for elliptical orbits.",
+    "Kepler: speed × distance is the same at perihelion and aphelion; period in years = (semi-major axis in AU)^1.5.",
+    "Plug the numbers in: 55*0.586/17.8 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-53",
+   "q": "Eros: perihelion 1.13 AU, aphelion 1.78 AU. Orbital period, in years? (answer in yr)",
+   "answerExpr": "((1.13+1.78)/2)**1.5",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-5-keplers-laws-of-planetary-motion",
+   "problem": 53,
+   "explainer": "Kepler: speed × distance is the same at perihelion and aphelion; period in years = (semi-major axis in AU)^1.5.",
+   "hints": [
+    "This is Kepler's laws for elliptical orbits.",
+    "Kepler: speed × distance is the same at perihelion and aphelion; period in years = (semi-major axis in AU)^1.5.",
+    "Plug the numbers in: ((1.13+1.78)/2)^1.5 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  },
+  {
+   "id": "osup1-13-57",
+   "q": "Schwarzschild radius of a black hole of 4 million solar masses (1 solar mass = 1.989e30 kg)? (answer in m)",
+   "answerExpr": "2*G*4e6*1.989e30/c**2",
+   "tol": 0.08,
+   "source": "https://openstax.org/books/university-physics-volume-1/pages/13-problems",
+   "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-7-einsteins-theory-of-gravity",
+   "problem": 57,
+   "explainer": "Schwarzschild radius r = 2·G·M / c²: squeeze a mass inside this and not even light escapes.",
+   "hints": [
+    "This is about black holes and how small a mass must be squeezed.",
+    "Schwarzschild radius r = 2·G·M / c²: squeeze a mass inside this and not even light escapes.",
+    "Plug the numbers in: 2*G*4e6*1.989e30/c^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
+   ]
+  }
+ ]
+}

@@ -6,12 +6,13 @@
  * white-tailed deer ~20 y (Ditchkoff 2011, in Biology and Management of White-tailed Deer); grizzly bear ~30 y
  * (McLellan 2015, J. Wildl. Manage. 79:749); snowshoe hare ~5 y (Krebs et al. 2001). Players start as young adults.
  */
+import { K } from './constants';
 import { REAL_SECONDS_PER_GAME_HOUR } from './timeOfDay';
 export const LIFESPAN: Record<string, { maxYears: number; startYears: number }> = {
   wolf: { maxYears: 13, startYears: 2 }, deer: { maxYears: 20, startYears: 2 }, bear: { maxYears: 30, startYears: 5 }, hare: { maxYears: 5, startYears: 1 },
 };
 export const WARN_FRACTION = .9; // pause screen warns from 90 % of the species' maximum
-const REAL_SEC_PER_GAME_YEAR = 365.25 * 24 * REAL_SECONDS_PER_GAME_HOUR;
+const REAL_SEC_PER_GAME_YEAR = K.julian_year_d * 24 * REAL_SECONDS_PER_GAME_HOUR;
 export const ageYears = (species: string, bornSec: number, worldSec: number) => (LIFESPAN[species]?.startYears ?? 1) + Math.max(0, worldSec - bornSec) / REAL_SEC_PER_GAME_YEAR;
 /** Warning text when the animal is near its species' maximum lifespan, else ''. */
 export function lifespanWarning(species: string, age: number, label = species) {

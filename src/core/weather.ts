@@ -10,6 +10,7 @@
  *  - ONE wind field: `windAt(x, y, z)` is sampled by trees, grass, fur, water, particles, sound and physics drag.
  * Every constant cites its source; [verify] = from memory, still to be checked against the original.
  */
+import { K } from './constants';
 import { hash, random } from '../proc/rng';
 import { f } from '../proc/trace';
 import { gravity } from '../proc/physics';
@@ -19,8 +20,8 @@ import { INTEREST } from './interest';
 
 // ---- constants ---------------------------------------------------------------------------------------------------
 export const AIR = {
-  S0: 1361,            // total solar irradiance, W/m² (Kopp & Lean 2011, GRL 38:L01706)
-  sigma: 5.670374e-8,  // Stefan–Boltzmann, W/m²/K⁴ (CODATA 2018)
+  get S0() { return K.TSI; },  // total solar irradiance, W/m² (core/constants: IAU 2015 nominal; Kopp & Lean 2011)
+  get sigma() { return K.sigma; }, // Stefan–Boltzmann, derived 2π⁵k⁴/(15h³c²) in core/constants
   cp: 1004,            // specific heat of dry air at constant pressure, J/kg/K (Wallace & Hobbs 2006, Atmospheric Science, 2nd ed.)
   Rd: 287.05,          // gas constant dry air, J/kg/K (Wallace & Hobbs 2006)
   Rv: 461.5,           // gas constant water vapour, J/kg/K (Wallace & Hobbs 2006)
@@ -28,7 +29,7 @@ export const AIR = {
   p0: 101325,          // sea-level standard pressure, Pa (ISO 2533:1975 standard atmosphere)
   lapse: .0065,        // environmental lapse rate, K/m (ICAO/ISO 2533 standard atmosphere)
   kappa: .41,          // von Kármán constant (Högström 1996, Bound.-Layer Meteor. 78:215)
-  omega: 7.2921e-5,    // Earth rotation rate, rad/s (IERS Conventions 2010)
+  get omega() { return K.omega_earth; }, // Earth rotation rate, rad/s (core/constants, WGS84/IERS 2010)
   gamma: 66.5,         // psychrometric constant at ~100 kPa, Pa/K (Allen et al. 1998, FAO-56 Table 2.2) [verify]
 };
 /** Site: Kenora, Ontario (boreal Shield). Matches the ground climate in core/ground.ts. Configurable. */

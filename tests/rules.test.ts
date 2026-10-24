@@ -38,3 +38,8 @@ guard('no new hand-built LOD or blob-geometry sites', t => /addLevel\(|Icosahedr
 guard('no literal gravity outside proc/physics.ts', t => /(^|[^\d.])9\.8\d*(?!\d)/m.test(t), ['core/animalBehavior.ts'], ['proc/physics.ts']); // Claude's Froude G = 9.81 (AGENT-NOTES)
 // Rule 4b: masses are derived from composition x generated volume; no typed mass values in source.
 guard('no literal mass values', t => /\bmass\w*\s*[:=]\s*[\d.]+\s*[,;}\n]/i.test(t) || /\bmass\(\s*[\d.]+\s*\)/.test(t), ['core/species.ts']); // Claude: massKg per archetype -> derive (AGENT-NOTES)
+// Constants live in src/data/constants.json via core/constants.ts (Matt 2026-10-23: "make sure the entire mathematical
+// constants are plugged in"). No literal copies of known constants anywhere else. Allowlist only shrinks.
+const KNOWN = /6\.674\d*e-11|5\.67\d*e-8|299792458|2\.99792\d*e8|(^|[^\d.])1361(?![\d.])|3\.14159|6\.28318|1\.380649e-23|6\.62607\d*e-34|8\.31446|1\.495978707|7\.2921|5\.972\d*e24|2451545|1\.6726\d*e-27|9\.109\d*e-31/m;
+guard('no literal copies of known constants outside core/constants.ts', t => KNOWN.test(t),
+  ['render/bands.ts', 'render/grass/grass.ts', 'world/globe/atmosphere.ts', 'world/globe/planetLayers.ts'], ['core/constants.ts']); // GLSL pi literals; globe files are mid-edit by the globe worker

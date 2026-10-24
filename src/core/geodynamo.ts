@@ -7,6 +7,7 @@
  *  Coupling: Newell et al. 2007 (JGR 112, A01206); dayside reconnection voltage Milan et al. 2012 (JGR 117, A03226);
  *  polar-cap saturation Hill-Siscoe (Siscoe et al. 2002); open flux expanding/contracting polar cap (Milan 2007, GRL 34).
  *  Aurora emissions: O(1S) 557.7 nm ~100-150 km, O(1D) 630.0 nm > ~200 km, N2+ 427.8 nm blue (NASA/NOAA SWPC aurora pages). */
+import { K } from './constants';
 export const INTERIOR = {
   innerCore: { radiusKm: 1221.5, state: 'solid', composition: 'Fe ~85 %, Ni 5-10 %, light elements', T_K: [5200, 5700], P_GPa: [330, 364], rho: [12.8, 13.1] },
   outerCore: { depthKm: [2891, 5150], state: 'liquid', composition: 'Fe-Ni + ~10 % light (S, O, Si, H)', T_K: [4000, 5000], rho: [9.9, 12.2] },
@@ -16,7 +17,7 @@ export const INTERIOR = {
 export const FIELD = { dipoleMoment: 7.8e22, tiltDeg: 9.7, mu0: 4e-7 * Math.PI, lastReversalKa: 773, meanReversalKyr: [200, 300],
   dynamoEvidenceGa: [3.5, 4.2] /* Tarduno et al. 2015 Science 349, 521 (4.2 Ga zircons disputed); 3.5 Ga Barberton Tarduno 2010 */,
   innerCoreNucleationGa: [0.5, 1.5] /* DISPUTED: Biggin et al. 2015 Nature 526, 245 (~1-1.5 Ga) vs Bono et al. 2019 Nat. Geosci. (~0.565 Ga) */ };
-export const SOLAR_WIND = { v: [350, 800], n1AU: 5, imfNT: 5, sunOmega: 2.865e-6 /* rad/s, 25.38 d sidereal */, auKm: 1.495978707e8, mp: 1.6726e-27 };
+export const SOLAR_WIND = { v: [350, 800], n1AU: 5, imfNT: 5, sunOmega: 2.865e-6 /* rad/s, 25.38 d sidereal */, get auKm() { return K.AU_km; }, get mp() { return K.m_p; } };
 const R_E = INTERIOR.earthRadiusKm * 1e3, RAD = Math.PI / 180;
 /** equatorial surface field (T): mu0 m / (4 pi R^3) ~ 30 uT */
 export const B0 = () => FIELD.mu0 * FIELD.dipoleMoment / (4 * Math.PI * R_E ** 3);

@@ -3,6 +3,7 @@
  *  RA/Dec, elongation, phase angle and apparent V magnitude (Mallama & Hilton 2018, Astron. Comput. 25:10, Venus eq. for phase
  *  angle < 163.7 deg). Nothing is placed by hand: where and how bright the dot is comes from these numbers; whether you see it
  *  comes from the sky brightness + extinction of the atmosphere shader. */
+import { K } from './constants';
 import { eccentricAnomaly, trueFromE } from './orbit';
 type El = [number, number]; // value at J2000, rate per Julian century
 export interface Elements { a: El; e: El; I: El; L: El; peri: El; node: El }
@@ -14,7 +15,7 @@ const D = Math.PI / 180, OBLIQ = 23.43928 * D; // J2000 mean obliquity (IAU 2006
 export const jdFromDate = (d: Date) => d.getTime() / 86400000 + 2440587.5;
 /** heliocentric J2000 ecliptic xyz (AU) */
 export function helio(p: Elements, jd: number): [number, number, number] {
-  const T = (jd - 2451545) / 36525, v = (x: El) => x[0] + x[1] * T;
+  const T = (jd - K.J2000_JD) / 36525, v = (x: El) => x[0] + x[1] * T;
   const a = v(p.a), e = v(p.e), I = v(p.I) * D, L = v(p.L), w = v(p.peri), O = v(p.node) * D;
   const M = ((L - w) % 360 + 540) % 360 - 180, E = eccentricAnomaly(M * D, e), nu = trueFromE(E, e), r = a * (1 - e * Math.cos(E));
   const u = nu + (w * D - O); // argument of latitude

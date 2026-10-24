@@ -69,14 +69,14 @@ mod tests {
     // Golden values from weather.ts under tsx: surfaceBalance('forest', 600, 20, .010, 100000, 4, .3, .7) and ('water', 400, 15, .008, 101000, 6, .5, 1); qsat(20, 1e5).
     #[test] fn matches_typescript_forest() {
         let b = surface_balance(0.1, 100.0, 1.5, false, 600.0, 20.0, 0.010, 100000.0, 4.0, 0.3, 0.7);
-        assert!((b.rn - 495.32432918444186).abs() < 1e-6, "{}", b.rn);
-        assert!((b.le - 109.33662088425943).abs() < 1e-6, "{}", b.le);
-        assert!((b.h - 336.45527538173826).abs() < 1e-6);
+        assert!((b.rn - 495.3243258817769).abs() < 1e-6, "{}", b.rn);
+        assert!((b.le - 109.33662067719023).abs() < 1e-6, "{}", b.le);
+        assert!((b.h - 336.45527261640893).abs() < 1e-6);
     }
     #[test] fn matches_typescript_water() {
         let b = surface_balance(0.06, 0.0, 0.0002, true, 400.0, 15.0, 0.008, 101000.0, 6.0, 0.5, 1.0);
-        assert!((b.rn - 344.02468049184967).abs() < 1e-6, "{}", b.rn);
-        assert!((b.le - 217.04748901449912).abs() < 1e-6);
+        assert!((b.rn - 344.0246781280627).abs() < 1e-6, "{}", b.rn);
+        assert!((b.le - 217.0474876899853).abs() < 1e-6);
     }
     #[test] fn qsat_matches() { assert!((qsat(20.0, 100000.0) - 0.014665359912689224).abs() < 1e-12); }
     #[test] fn bucket_overflows() { assert_eq!(bucket_step(140.0, 30.0, 0.0), (150.0, 20.0)); assert_eq!(bucket_step(5.0, 0.0, 10.0).0, 0.0); }

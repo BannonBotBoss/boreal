@@ -19,8 +19,9 @@ export const COMPOSITION = {
   ozonePeakPerKm: [0.65e-3, 1.881e-3, 0.085e-3], ozoneWidthKm: 30,
   wavelengthsNm: [680, 550, 440],
 };
+import { K } from '../../core/constants';
 import { gravity } from '../../proc/physics';
-const R_GAS = 8.314462618, KB = 1.380649e-23;
+const R_GAS = K.R, KB = K.k_B; // core/constants (R = N_A k_B, exact)
 /** density scale height H = R T / (M g), km (~8.4 km at 288 K) */
 export const scaleHeightKm = (T = COMPOSITION.seaLevel.T) => R_GAS * T / (COMPOSITION.seaLevel.M * gravity()) / 1000;
 /** number density at sea level, m^-3 */

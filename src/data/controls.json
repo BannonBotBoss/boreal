@@ -1,0 +1,16 @@
+{
+  "_doc": "Every gated control (Matt: 'only what you understand shall you have control'). A control's badge is earned by passing its own test (quiz pool in src/data/quizzes/<id>.json, about the physics that control governs), or bought with credits / a platform purchase; every path needs all prerequisite badges first. 'quiz': 'todo' = no openly licensed question pool sourced yet (test path closed; credits still work). constant.G is the capstone: its prereqs are every other control (core/badges.ts derives them).",
+  "credits": { "rates": { "look": 1, "toggle": 1, "answer": 5, "minutePlayed": 2 }, "capPerMinute": { "look": 6, "toggle": 6, "answer": 60, "minutePlayed": 2 } },
+  "controls": {
+    "layer.atmosphere":   { "subject": "atmospheric composition and radiation", "prereqs": [], "cost": 50, "quiz": "todo", "learn": "https://openstax.org/books/astronomy-2e/pages/8-3-earths-atmosphere" },
+    "layer.clouds":       { "subject": "cloud formation and albedo", "prereqs": ["layer.atmosphere"], "cost": 60, "quiz": "todo", "learn": "https://openstax.org/books/astronomy-2e/pages/8-3-earths-atmosphere" },
+    "layer.magnetosphere":{ "subject": "the geodynamo and magnetosphere", "prereqs": [], "cost": 60, "quiz": "todo", "learn": "https://openstax.org/books/astronomy-2e/pages/8-1-the-global-perspective" },
+    "layer.aurora":       { "subject": "solar wind and the magnetosphere", "prereqs": ["layer.magnetosphere"], "cost": 80, "quiz": "todo", "learn": "https://openstax.org/books/astronomy-2e/pages/15-4-space-weather" },
+    "layer.plates":       { "subject": "plate tectonics", "prereqs": [], "cost": 60, "quiz": "todo", "learn": "https://openstax.org/books/astronomy-2e/pages/8-2-earths-crust" },
+    "camera.exposure":    { "subject": "light, exposure and the solar spectrum", "prereqs": [], "cost": 50, "quiz": "todo", "learn": "https://openstax.org/books/astronomy-2e/pages/5-2-the-electromagnetic-spectrum" },
+    "camera.filters":     { "subject": "wavelength filters (UV, EUV, X-ray)", "prereqs": ["camera.exposure"], "cost": 80, "quiz": "todo", "learn": "https://openstax.org/books/astronomy-2e/pages/5-2-the-electromagnetic-spectrum" },
+    "time.rate":          { "subject": "orbital and deep-time scales", "prereqs": [], "cost": 60, "quiz": "todo", "learn": "https://openstax.org/books/astronomy-2e/pages/3-1-the-laws-of-planetary-motion" },
+    "deeptime.seed":      { "subject": "formation history and the Moon-forming impact", "prereqs": ["time.rate"], "cost": 120, "quiz": "todo", "learn": "https://openstax.org/books/astronomy-2e/pages/7-4-origin-of-the-solar-system" },
+    "constant.G":         { "subject": "gravity and how G is measured", "prereqs": "*", "cost": 500, "quiz": "constant.G", "learn": "https://openstax.org/books/university-physics-volume-1/pages/13-1-newtons-law-of-universal-gravitation" }
+  }
+}

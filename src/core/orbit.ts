@@ -2,10 +2,11 @@
  *  Meeus 1998, Astronomical Algorithms ch. 25 & 30; IAU 2012 au; Laskar et al. 2004 (A&A 428, 261) periods/ranges.
  *  core/weather.ts sunPosition (NOAA) stays the day-of-year sun for the sim; this module gives distance, speed and the
  *  1/r^2 factor, and deep-time orbital variation. Nothing here replaced existing code (no orbit code existed). */
+import { K } from './constants';
 export const ORBIT = {
-  aKm: 1.495978707e8, e: 0.0167086, siderealYearD: 365.25636, tropicalYearD: 365.24219, siderealDayS: 86164.1, obliquityDeg: 23.4393,
+  get aKm() { return K.AU_km; }, e: 0.0167086, siderealYearD: 365.25636, tropicalYearD: 365.24219, siderealDayS: 86164.1, obliquityDeg: 23.4393,
   /** Sun's geocentric ecliptic longitude at perihelion (Earth's longitude of perihelion 102.937 + 180), J2000 (Meeus table 31.a) */
-  perihelionSunLonDeg: 282.937, perihelionDoy: 3, GM_sun: 1.32712440018e11, // km^3/s^2
+  perihelionSunLonDeg: 282.937, perihelionDoy: 3, get GM_sun() { return K.GM_sun / 1e9; }, // km^3/s^2 (core/constants, IAU 2015 nominal)
 };
 const RAD = Math.PI / 180;
 /** Solve Kepler M = E - e sin E (Newton) */

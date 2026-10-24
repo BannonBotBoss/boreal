@@ -26,7 +26,7 @@ One pipeline: **species spec → skeleton (`skeleton.ts`/`species.ts`) → body 
 - Rewind/photo: each system registers one snapshot source. No per-animal snapshot code.
 
 ## 4. Everything has mass; gravity comes from G
-- Constants live in `core/tuning.ts` `PHYS`: G = 6.674e-11, Earth mass 5.972e24 kg, Earth radius 6.371e6 m. `g = G·M/r²` comes from `proc/physics.ts` `gravity()`. **No literal 9.8 / 9.81** anywhere else. *(guarded)*
+- Constants live in `src/data/constants.json` (core/constants.ts `K`, docs/constants.md); `core/tuning.ts` `PHYS` G/Earth mass/radius read from it. `g = G·M/r²` comes from `proc/physics.ts` `gravity()`. **No literal 9.8 / 9.81** anywhere else. *(guarded)*
 - **Never assign a mass** to an animal or any object. *(guarded)* Mass = Σ over regions/parts (torso, neck, head, legs, tail; trunk, crown; rock body) of **volume from the generated geometry** × that region's **composition-weighted density**.
 - Materials (bone, muscle, fat, organ, blood, keratin, air, heartwood, sapwood, bark, needles, quartz, feldspar…) live ONCE in `core/materials.ts` `MATERIALS`. Compositions reference them by id with volume fractions that sum to 1 *(tested)*; fur = keratin + trapped air.
 - So mass follows size (×2 size → ×8 mass, tested), and appearance edits change mass automatically. The inspector shows the region breakdown.

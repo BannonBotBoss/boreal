@@ -3,6 +3,7 @@
  * Generic: every view is a list of traced factors (proc/trace.ts) from the generators' own code, plus a few observed
  * values for systems without trace hooks yet. One panel renderer, one gizmo set, one what-if path (overrides by name).
  */
+import { K } from '../core/constants';
 import * as THREE from 'three';
 import { GROUND, column } from '../core/ground';
 import { WEATHER, qsat, shortwave, solar, surfaceBalance, weatherAt, type SurfaceKind } from '../core/weather';
@@ -71,7 +72,7 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       // Weather cell above this point (core/weather) and the persistent deltas near it (core/deltas).
       const wt: Trace = { factors: [] }, w = weatherAt(s.point.x, s.point.z), sun = solar(WEATHER.day, WEATHER.hour);
       const sb = withTrace(wt, () => surfaceBalance(c2s(col), shortwave(sun.cosZ, w.cloud), w.tC, w.rh * qsat(w.tC, 96000), 96000, Math.hypot(w.wind.x, w.wind.z), w.cloud, Math.min(1, w.soil / .75)));
-      out.push(...wt.factors, obs('weather', 'date', `day ${WEATHER.day} ${WEATHER.hour.toFixed(2)} h`), obs('weather', 'sun zenith ° (NOAA)', +sun.zenith.toFixed(2)), obs('weather', 'TOA W/m² (S0 1361)', +sun.toa.toFixed(0)),
+      out.push(...wt.factors, obs('weather', 'date', `day ${WEATHER.day} ${WEATHER.hour.toFixed(2)} h`), obs('weather', 'sun zenith ° (NOAA)', +sun.zenith.toFixed(2)), obs('weather', `TOA W/m² (S0 ${K.TSI})`, +sun.toa.toFixed(0)),
         obs('weather', 'air °C', +w.tC.toFixed(1)), obs('weather', 'RH', +w.rh.toFixed(2)), obs('weather', 'cloud fraction', +w.cloud.toFixed(2)), obs('weather', 'rain mm/h (Kessler)', +w.rainMmH.toFixed(2)),
         obs('weather', 'wind 10 m (m/s)', `${w.wind.x.toFixed(1)}, ${w.wind.y.toFixed(2)}, ${w.wind.z.toFixed(1)}`), obs('weather', 'soil bucket (Manabe)', +w.soil.toFixed(2)), obs('weather', 'snow SWE mm', +w.sweMm.toFixed(1)),
         obs('energy', 'Rn W/m²', +sb.Rn.toFixed(0)), obs('energy', 'λE Penman–Monteith', +sb.LE.toFixed(0)), obs('energy', 'H (residual)', +sb.H.toFixed(0)), obs('energy', 'G', +sb.G.toFixed(0)));

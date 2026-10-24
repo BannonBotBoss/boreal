@@ -4,6 +4,7 @@
  * kind's model), is dropped once expired, and its residue merges into the math layer that owns it (carcass and droppings
  * mass → ground decay chain via `addDeposit`). Everything else regenerates from seed.
  */
+import { K } from './constants';
 import { addDeposit, GROUND } from './ground';
 import { weatherAt } from './weather';
 
@@ -24,7 +25,7 @@ export const DELTA_KINDS: Record<string, { tau: number; until: number; residue?:
   felledTree: { tau: 3650, until: .05, residue: { pool: 2, kgPerM: 1 }, source: 'snag/log fall ~decades (Kurz et al. 2009) [verify]' },
 };
 export const DELTAS = { log: [] as Delta[], cap: 1500 };
-const DAY = 1 / 365.25;
+const DAY = 1 / K.julian_year_d;
 /** Current strength 0..1 of a delta at game time `now` (closed form; rain speeds up track loss). */
 export function strength(d: Delta, now = GROUND.years) {
   const k = DELTA_KINDS[d.kind]; if (!k) return 0;

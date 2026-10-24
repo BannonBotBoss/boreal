@@ -7,6 +7,7 @@
  * Softness uses Bekker pressure–sinkage; appearance comes from the top-layer composition.
  * Every constant has a citation (PROJECT-RULES rule 5); [verify] = from memory or derived, still to be checked.
  */
+import { K } from './constants';
 import { standAt } from './stand';
 import { hash, random } from '../proc/rng';
 import { f } from '../proc/trace';
@@ -94,7 +95,7 @@ export interface Deposit { x: number; z: number; year: number; pool: number; kg:
 export const GROUND = { years: 0, speed: 1, deposits: [] as Deposit[] }; // game years since world start (persisted by main); speed = flow/decay ×
 export const SAVE_KEY_GROUND = 'boreal.ground.v1';
 /** Advance the ground clock by `gameSeconds` × the flow/decay multiplier. Nothing is stepped: columns are closed-form in `years`. */
-export function tickGround(gameSeconds: number) { GROUND.years += gameSeconds * GROUND.speed / (365.25 * 86400); }
+export function tickGround(gameSeconds: number) { GROUND.years += gameSeconds * GROUND.speed / K.julian_year_s; }
 export const saveGround = () => JSON.stringify({ years: GROUND.years, deposits: GROUND.deposits });
 export function loadGround(json: string | null) { try { const s = JSON.parse(json ?? ''); GROUND.years = +s.years || 0; GROUND.deposits = Array.isArray(s.deposits) ? s.deposits : []; } catch { /* fresh world */ } }
 /** Expected deer droppings (dry kg) over `days`: intake × (1 − digestibility) (FAUNA). Pellet groups: 12.7/day (Neff 1968). */
@@ -143,7 +144,7 @@ export interface Layer { id: string; label: string; top: number; thickness: numb
 /** The layer stack of the cell containing (x, z) at `years` since world start (plus the stand's age since fire). */
 const colCache = new Map<string, ReturnType<typeof columnRaw>>();
 export function column(x: number, z: number, years = GROUND.years) {
-  years = Math.round(years * 365.25) / 365.25; // resolve to one game day: decay is invisible below that and the cache stays warm
+  years = Math.round(years * K.julian_year_d) / K.julian_year_d; // resolve to one game day: decay is invisible below that and the cache stays warm
   const key = `${Math.floor(x / CELL)}:${Math.floor(z / CELL)}:${years}:${WEATHER.steps >> 6}`; let c = colCache.get(key); // weather (moisture/snow) refreshes every 64 steps
   if (!c) { c = columnRaw(x, z, years); if (colCache.size > 20000) colCache.clear(); colCache.set(key, c); } return c;
 }

@@ -1,6 +1,7 @@
 //! boreal-sim: the planet budgets of issue #43 (solar, hydrosphere, atmosphere, surface) as WebAssembly for the Three.js app.
 //! Plain `extern "C"` exports, no wasm-bindgen: the host calls `grid_init`, fills the LAND and ELEV planes through the pointer it
 //! gets back, calls `grid_seed` and `grid_step`, and reads any plane as a `Float64Array` over the module's memory.
+pub mod constants;
 pub mod consts;
 pub mod solar_budget;
 pub mod surface_budget;

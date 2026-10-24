@@ -157,3 +157,131 @@ Outputs feed `deepTime` stages, tides layer, day length and the Milankovitch for
 
 ## Sources
 All are cited inline (author year journal). Numbers marked [disputed] have ranges in the JSON.
+
+---
+# Part II (T-0066): conditioning timelines and the chemistry of replication
+
+Matt (2026-10-23): "and for all version that are measured, narrows the possible set of timelines to those that equate to a planet with favorable living conditions, as the dimension regarding chemical rules, depends on special conditions, for the probability of the formation and transactions between the molecular structures needed for the replicating behaviour to emerge"
+
+Live-verified this run (2026-10-23): Kopparapu 2013, Kipping 2020, Pearce 2017, Attwater 2018, Tjhung 2020 (abstracts read from ApJ/arXiv, PNAS and eLife). Everything else is cited from the literature and not re-checked.
+
+## 21. Conditioning the seeded timelines
+Two filters run on top of the §20 sampler. **Observational:** the timeline must reproduce what we measure (this is approximate Bayesian computation, ABC). **Habitability:** it must allow liquid water over a long window. The mode is a user setting: `earth` (both filters, tight tolerances), `habitable` (habitability only) or `any` (no filter).
+
+| Observable | Value | ABC tolerance ε (start → final) | Source |
+|---|---|---|---|
+| Planet mass | 5.972e24 kg | ±20% → ±5% | NASA fact sheet |
+| Moon mass | 0.0123 M_E (7.35e22 kg) | ±50% → ±10% | NASA |
+| Moon distance | 384,400 km (60.3 R_E) | ±20% → ±2% | LLR |
+| Day | 24 h (23.934 h sidereal) | ±3 h → ±0.5 h | — |
+| Obliquity | 23.44° | ±5° → ±1° | IAU |
+| Ocean mass | 1.4e21 kg (2.3e-4 M_E) | ±factor 3 → ±30% | NOAA/USGS |
+| Age | 4.54 ± 0.05 Gyr | fixed time of "now" | Dalrymple 2001 |
+
+**Habitability filters:**
+- Semi-major axis inside the HZ. Kopparapu 2013 (ApJ 765:131): conservative 0.99–1.70 AU (water loss to maximum greenhouse); the older Kasting estimate is 0.95–1.67 AU. Make Sun-like brightness a function of time so the HZ migrates outward.
+- Liquid water: mean surface T between 273 and 373 K (or brine down to ~250 K) for ≥1 Gyr continuous.
+- A dynamo present by ~3.5 Ga, and a carbon cycle: plate tectonics, or stagnant-lid outgassing high enough that weathering balance is reached (Foley & Smye 2018: stagnant-lid planets can be habitable for 1–4 Gyr given enough radiogenic heat) [disputed].
+- Water inventory 0.1–10 ocean masses (too little gives dry, too much no exposed land; Cowan & Abbot 2014).
+
+**Acceptance-rate estimates (order of magnitude, derived from the §20 distributions):**
+- Mass within 5%: ~0.1 (N-body scatter of final masses ~±50%).
+- Has a Moon: ~0.08 (2–20%).
+- Moon mass and distance within 10% / 2%, given a Moon: ~0.1 (distance is tied to tidal Q and LOD, so it's correlated).
+- LOD within 0.5 h and obliquity within 1°, given the above: ~0.05.
+- Ocean mass within 30%: ~0.2.
+- Combined `earth` mode: roughly **1e-5 to 1e-4**. `habitable` mode: ~0.1–0.3 (Earth-mass planets near 1 AU usually pass).
+
+**Keeping it cheap:**
+1. Run a stage-wise (sequential) ABC: reject at the cheapest stage first (mass → Moon → tides → ocean), so most seeds die before tidal integration.
+2. Precompute offline with a few million seeds (~1 s per thousand cheap rejections in Rust). Store the accepted seeds as `data/acceptedSeeds.json` (target ~1,000 per mode, with each one's summary). The game picks one; seed 0 = our Earth is always accepted, by construction.
+3. Importance sampling: draw the last impact from the canonical/fast-spin posterior instead of the prior, and record the weight.
+4. When the user scrubs, reuse the timeline; never resample during play.
+
+```
+function acceptedTimeline(seed, mode):
+  t = sampleStage1(seed)            # disk, impacts -> mass, spin
+  if mode=='earth' and |M-1|>0.05: return reject
+  t = sampleMoon(t);   if mode=='earth' and !moonOK(t): return reject
+  t = tidalEvolve(t);  if mode=='earth' and !(LOD,obliquity,a OK): return reject
+  t = volatiles(t);    if !habitable(t, HZ, water, dynamo, carbonCycle): return reject
+  t = chemistry(t, seed)   # §22-23: may or may not produce life
+  return t
+```
+Note: conditioning on "life must appear" is a separate, optional filter (`requireLife`). Without it, many habitable timelines stay sterile, which is the honest outcome.
+
+## 22. Prebiotic chemistry: settings and numbers
+| Setting | Conditions | Strengths | Problems | Sources |
+|---|---|---|---|---|
+| Alkaline hydrothermal vents (Lost City type) | 40–90 °C, vent fluid pH 9–11 against Hadean ocean pH 5–7, so a **ΔpH of ~3–5** across thin Fe-Ni-S walls; H2 1–15 mM | Natural proton gradient like the one in chemiosmosis; H2 + CO2 → formate/pyruvate | Dilution; no wet-dry cycles; polymer hydrolysis | Russell & Martin 2004; Lane & Martin 2012; Kelley 2005; Preiner 2020 |
+| Black smokers | 350–400 °C, pH 2–4 | Energy, metals | Too hot for RNA (hydrolysis half-life of minutes to hours) | Martin 2008 |
+| Warm little ponds | 5–80 °C, wet-dry cycles; meteorite nucleobases | Concentration; polymerisation on drying; Pearce et al. 2017 PNAS: RNA polymers form within 1 to a few wet-dry cycles (< a few years) of deposition, likely before 4.17 Ga | Needs exposed land; UV damage; seepage | Pearce 2017; Damer & Deamer 2020 |
+| Cyanosulfidic surface chemistry | UV 200–280 nm, HCN, H2S, Cu, phosphate | Patel et al. 2015 Nat. Chem. 7:301: precursors of nucleotides, amino acids and lipids from HCN + H2S with UV; Powner 2009 pyrimidine ribonucleotides | Needs many separate pools and steps (Sutherland "flow chemistry") | Patel 2015; Powner 2009; Sutherland 2016 |
+
+**Feedstocks:**
+- HCN: made by lightning or impacts in reducing (H2/CH4-rich) atmospheres. Rain-out ~1e-12 to 1e-9 mol/cm²/yr; pond concentrations μM to mM after concentration (Pearce 2022 ApJ; Zahnle 2020 post-impact H2 atmospheres) [disputed].
+- Phosphate: the phosphate problem; apatite is insoluble (μM). Solutions: schreibersite (meteoritic phosphide, Pasek 2005), and carbonate-rich lakes reaching ~1 M phosphate (Toner & Catling 2020 PNAS).
+- Formamide: forms from HCN hydrolysis; concentrates by evaporation (Saladino 2012).
+- Delivery of organics by carbonaceous meteorites ~1e6–1e8 kg/yr in the Hadean (Chyba & Sagan 1992); Murchison holds ~0.25–0.5 ppm nucleobases (Callahan 2011).
+- Miller–Urey: spark in CH4/NH3/H2/H2O gives a few % of carbon as amino acids (glycine ~2%, Miller 1953/Johnson 2008), but yields drop below ~0.1% in neutral CO2/N2 atmospheres (Cleaves 2008) unless nitrite or ferrous iron is added.
+
+**Energy fluxes for prebiotic synthesis (Miller & Urey 1959; Chyba & Sagan 1992):**
+- UV < 200 nm: ~3 J/m²/s globally.
+- Lightning: ~4e-3 J/m²/s.
+- Shock waves: ~1e-3 J/m²/s.
+- Hydrothermal: ~1e-3 J/m²/s heat, local.
+
+**Polymerisation and information thresholds:**
+- Non-enzymatic copying: up to ~10–20 nt; fidelity ~80–95% per base (Szostak 2012).
+- Mineral (montmorillonite) RNA chain growth: up to ~40–50 mers (Ferris 1996, 2006).
+- Ribozyme polymerases:
+  - Wochner 2011: 206 nt synthesised.
+  - Attwater et al. 2018 (eLife 7:e35255): a triplet-based heterodimer polymerase copies structured templates and made both strands of a 52-nt aptamer; it synthesises its own catalytic subunit in segments.
+  - Tjhung et al. 2020 (PNAS 117:2906): a class I polymerase synthesised its ancestor ligase (in 3 fragments), but fidelity fell to about 83% per position on hard templates, so few products were active. **Fidelity is the bottleneck.**
+- Minimal replicator: ~40–60 nt for a functional ribozyme (ligase ~ 50 nt); a self-copying polymerase is ~150–200 nt (the class I is ~190 nt).
+- Eigen error threshold: L_max ≈ ln(σ)/(1−q), where q = per-base fidelity and σ = selective superiority. With σ = 10 and q = 0.99, L_max ≈ 230 nt; with q = 0.95, ~46 nt; with q = 0.83, ~13 nt (Eigen 1971). This is the "Eigen paradox" (no high fidelity without long enzymes).
+- Concentration needed: ~mM nucleotides for template copying; ≥1 μM templates.
+- Autocatalytic sets: Kauffman 1986; RAF (reflexively autocatalytic, food-generated) theory, Hordijk & Steel 2004. If each molecule catalyses about **1–2 reactions on average** (linear in system size), RAF sets appear with high probability, even with polymers up to length n (Hordijk & Steel 2004; Mossel & Steel 2005). Real example: the Ashkenasy/Lehman network of Azoarcus ribozyme fragments forms cooperative cycles (Vaidya et al. 2012 Nature 491:72).
+- Compartments: fatty-acid vesicles form above the critical concentration ~mM (decanoic acid, ~40 mM); growth and division by feeding (Hanczyc 2003; Zhu & Szostak 2009).
+
+**Timescales:**
+- Pearce 2017: RNA polymers within years of meteorite deposition.
+- RNA hydrolysis half-life ~1 yr at 25 °C neutral pH, to minutes at 100 °C (Li & Breaker 1999).
+- Nucleotide accumulation: years to thousands of years per pond.
+- Overall abiogenesis: unknown (see §23).
+
+## 23. Probability of abiogenesis (unconstrained)
+- **Evidence window:**
+  - Oceans by ~4.4 Ga.
+  - Possible biogenic graphite at 4.1 Ga (Bell 2015) [disputed].
+  - Isua at 3.7 Ga (Nutman 2016) [disputed].
+  - Firm by 3.48–3.43 Ga (Dresser, Strelley Pool).
+  - LUCA ~4.2 Ga by molecular clock (Moody 2024) [disputed].
+  - So life appeared within ~0.1–0.7 Gyr of habitability.
+- **Spiegel & Turner 2012 (PNAS 109:395):** because we exist (selection effect), an early start is weak evidence. With an uninformative prior over the rate λ, the posterior allows λ ≪ 1/Gyr. The data can't rule out life being rare.
+- **Kipping 2020 (PNAS 117:11995):** objective Bayesian analysis with intelligence's timescale also inferred. Fast abiogenesis is favoured over slow by **Bayes factor ≥2.8** (microfossils) or **8.7** (with the disputed 4.1 Ga zircons). Maximum-likelihood time to life is **~190 Myr** after habitability (taken as 4.21 Ga), or 46 Myr with the zircons. Intelligence is 3:2 likely rare.
+- **Representation (seed and user parameter):**
+  - Life appears as a Poisson process with rate λ per habitable site and time, gated by the setting's chemical conditions (§22).
+  - log10(λ / Gyr⁻¹) ~ a user-selectable prior:
+    - `optimistic`: Normal(1.0, 0.5) (fast, Kipping ML ~5 per Gyr).
+    - `agnostic`: Uniform(−3, 2) (Spiegel & Turner log-uniform).
+    - `rare`: Normal(−2, 1).
+  - Default `agnostic`; the seed picks λ. Seed 0 = Earth: life appears at 3.9 ± 0.2 Ga, consistent with the record.
+  - The probability that life appears at all within window T = 1 − exp(−λ·f_habitable·T).
+
+## 24. Mapping onto Boreal's transactional rules
+Boreal's core primitive: objects trade values, and trades become state changes. At a coarse grain, the chemistry becomes:
+- **Objects:** pools (a grid cell or vent site) holding *species counts*, not atoms: feedstock (HCN, PO4, formamide, H2, CO2), monomers (nucleotides), polymers binned by length and by a short "sequence class" (say 2^8 classes), and vesicles.
+- **Values traded:** energy (J per tick from UV, lightning, ΔpH × proton flux, wet-dry cycle), mass (monomers), and information (sequence class).
+- **Rules (transactions):**
+  1. *Synthesis:* feedstock + energy → monomer at rate k_syn(setting, T, UV). Monomers decay at k_hyd(T).
+  2. *Polymerisation:* monomer + polymer(n) → polymer(n+1), boosted ×10–100 on drying cycles or on minerals; hydrolysis is the reverse (Arrhenius in T).
+  3. *Catalysis:* polymer class c catalyses reaction r with probability p_cat (RAF: ~1–2 reactions per molecule, so the set emerges by itself when the class network crosses the threshold).
+  4. *Template replication:* polymer(L, c) with a catalyst present → a copy with per-base fidelity q. Mutation changes the class with probability 1 − q^L. Eigen's limit emerges: classes with L > ln σ/(1−q) dissolve.
+  5. *Selection:* class fitness = replication rate − decay; a class's share grows in proportion (replicator dynamics). Compartments (vesicles) make catalysts and templates share a fate, which prevents parasites (Szathmáry & Demeter 1987, stochastic corrector).
+  6. *Life threshold:* a vesicle lineage holding a self-copying set (RAF + template replicator, L ≥ ~50 effective nt, q ≥ 1 − ln σ/L) for ≥ N generations counts as **life**, and the timeline records the moment.
+- **Lightweight:**
+  - Run chemistry only in cells where gating conditions hold (liquid water, energy source, feedstock above threshold).
+  - Use per-cell counts with tau-leaping (Gillespie 2001) and ~10–50 species classes.
+  - In deep-time fast-forward, replace the detail with the §23 Poisson hazard. Run the explicit rules only when the player enters the microscopic world (T-0060 stage "microbial seas"), so what they see there is the same process, at a playable scale, and its rates are what the hazard summarises.
+- **Inspectable:** every replicator's history is a log of trades (where its monomers, energy and catalysis came from), which matches the vision that a creature's code shows exactly how it came to behave that way.

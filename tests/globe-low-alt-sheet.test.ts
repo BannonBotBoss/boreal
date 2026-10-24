@@ -97,6 +97,6 @@ test('T-0056: the known-bad 3000 m sheet fails the gate and the fixed render pas
   assert.equal(cloudClear(3000), 1);
   assert.equal(cloudClear(PLANET.radius * 2.2), 0);
   const src = readFileSync('src/world/globe/globeView.ts', 'utf8');
-  assert.match(src, /if \(atmos\) atmos\.setClear\(cloudClear\(alt\)\)/);
+  assert.match(src, /if \(atmos\) atmos\.setClear\(localClouds\?\.mesh\.visible \? cloudClear\(alt\) : 0\)/); // T-0073: the shell opens only where the local column draws
   assert.equal(/opts\.shared\)\s*atmos\.setClear/.test(src), false);
 });

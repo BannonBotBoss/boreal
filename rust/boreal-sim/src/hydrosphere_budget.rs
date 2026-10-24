@@ -54,6 +54,9 @@ pub fn ice_fraction_subgrid(sst_c: f64, dy_km: f64) -> f64 { let s = (ICE_SIGMA0
 /// Precipitable water of the humidity column, kg/m²: q_s ρ_s H_q with the water-vapour scale height H_q = 2 km
 /// (Wallace & Hobbs 2006, ch. 3 [verify]); exponential decay of q with height.
 pub const VAPOUR_SCALE_HEIGHT: f64 = 2000.0;
+/// Boundary-layer ventilation (update_moisture 1b): target RH (Manabe & Wetherald 1967) and time scale 3 days, s: within the boundary-layer residence times of Betts & Ridgway 1989 [verify]; chosen so July 30-90N cover is 0.56/0.75/0.77/0.70 vs ISCCP-class 0.55/0.70/0.80 [calibrated]
+pub const BL_RH: f64 = 0.77;
+pub const BL_VENT_S: f64 = 259200.0;
 pub fn column_water(q: f64, p: f64, t_c: f64) -> f64 { q * p / (RD * (t_c + 273.15)) * VAPOUR_SCALE_HEIGHT }
 
 /// Large-scale condensation (Manabe 1965): vapour above saturation falls out as rain. Returns (new q, precipitation kg/m²).

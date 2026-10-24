@@ -13,6 +13,15 @@ pub fn update_moisture(g: &mut Grid, dt: f64) {
         let e = g.p(EVAP)[i] / 86400.0;
         g.pm(Q)[i] += e * dt / (rho * VAPOUR_SCALE_HEIGHT);
     }
+    // 1b. boundary-layer ventilation: entrainment of drier free-tropospheric air and shallow convection export vapour, relaxing q
+    //     toward the observed mean boundary-layer RH (Manabe & Wetherald 1967 fixed-RH profile, 0.77 at the surface) on the
+    //     ventilation time scale BL_VENT_S (3 d; Betts & Ridgway 1989, J. Atmos. Sci. 46:2621 [verify]). Only dries; evaporation can still
+    //     hold a cell above it (steady rh = 0.77 + E tau / (rho H qsat)).
+    for i in 0..n {
+        let ta = g.p(TAIR)[i]; let p = crate::atmosphere_budget::surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
+        let qe = BL_RH * qsat(ta, p); let q = g.p(Q)[i];
+        if q > qe { g.pm(Q)[i] = qe + (q - qe) * (-dt / BL_VENT_S).exp(); }
+    }
     // 2. upwind advection, sub-stepped to Courant ≤ 0.5
     let dphi = std::f64::consts::PI / nlat as f64;
     let dlam = 2.0 * std::f64::consts::PI / nlon as f64;

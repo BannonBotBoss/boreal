@@ -3,7 +3,8 @@
   "bulk": "McDonough 2003, Treatise on Geochemistry 2:547 (Compositional model for the Earth's core), core = 32.5 wt% of Earth; McDonough & Sun 1995, Chem. Geol. 120:223 (pyrolite silicate Earth). Volatiles: ocean 1.4e21 kg (Charette & Smith 2010, Oceanography 23:112), atmosphere 5.15e18 kg (Trenberth & Smith 2005, J. Climate 18:864).",
   "tillotson": "Tillotson 1962 (GA-3216). Iron: Melosh 1989, Impact Cratering, App. II table (rho0, A, B, E0, EIV, ECV, a, b, alpha, beta). Basalt: same table (kept for the cold pass, superseded). Dunite/olivine (mantle): Marinova, Aharonson & Asphaug 2011, Icarus 211:960 (also tabulated in pyKO docs). cv: iron 449 J/kg/K (CRC Handbook, 298 K), dunite 830 J/kg/K (Marinova 2011).",
   "iron_melting": "Anzellini et al. 2013, Science 340:464, Simon-Glatzel fit T_m = T0 ((P - P0)/a + 1)^(1/c).",
-  "initial_heat": "Initial uniform temperature = present mantle potential temperature 1600 K (Katsura et al. 2010, PEPI 183:212) as a lower bound for the end of accretion; differentiation heat is then computed, not given."
+  "initial_heat": "Initial uniform temperature = present mantle potential temperature 1600 K (Katsura et al. 2010, PEPI 183:212) as a lower bound for the end of accretion; differentiation heat is then computed, not given.",
+  "cmb_boundary_layer": "Thermal boundary layer temperature contrast at the base of the mantle 1000 +- 500 K (Lay, Williams & Garnero 1998, Nature 392:461; 500-1800 K in Lay, Hernlund & Buffett 2008, Nat. Geosci. 1:25)."
  },
  "bulk_core_mass_fraction": 0.325,
  "ocean_mass_kg": 1.4e+21,
@@ -53,5 +54,6 @@
   "beta": 5,
   "cv": 830
  },
- "initial_temperature_K": 1600
+ "initial_temperature_K": 1600,
+ "cmb_tbl_contrast_K": 1000
 }

@@ -111,10 +111,20 @@ impl Hot {
     /// Cooling phase (time-compressed): the hot run keeps every joule (no radiation), but Earth lost most accretion and core
     /// formation heat over ~4.5 Gyr. This relaxes each parcel's temperature a fraction `frac` per step toward the adiabat
     /// T = T_p (rho/rho0)^Gamma, Gamma = a + b (Tillotson's low-energy Grueneisen parameter; dlnT/dlnrho = Gamma on an
-    /// isentrope), anchored at the cited mantle potential temperature (materials.json, Katsura et al. 2010). The heat
+    /// isentrope), anchored at the cited mantle potential temperature (materials.json, Katsura et al. 2010); the core's adiabat
+    /// starts above the mantle's bottom by the cited boundary-layer contrast (Lay et al. 1998). The heat
     /// removed is counted in `heat_removed`. The time scale is not physical; only the end state is used.
-    pub fn cool_toward_adiabat(&mut self, frac: f64) { let tp = material_num("", "initial_temperature_K");
-        for i in 0..self.p.pos.len() { let m = &self.mats[F::class_of(self.p.mat[i])]; let tt = tp * (self.rho[i] / m.rho0).max(1.0).powf(m.a + m.b);
+    pub fn cool_toward_adiabat(&mut self, frac: f64) { let tp = material_num("", "initial_temperature_K"); let dt_tbl = material_num("", "cmb_tbl_contrast_K"); let n = self.p.pos.len();
+        // mantle: T = T_p (rho/rho0)^Gamma from the surface down. Core: the core cools only through the base of the mantle,
+        // so its adiabat starts at the mantle-bottom temperature plus the cited boundary-layer contrast, at the top-of-core
+        // density, both read from the parcels (90th-percentile silicate density, 10th-percentile iron density).
+        let pct = |mut v: Vec<f64>, q: f64| -> f64 { if v.is_empty() { return 0.0; } v.sort_by(|a, b| a.partial_cmp(b).unwrap()); v[((v.len() - 1) as f64 * q) as usize] };
+        let (fe, si) = (&self.mats[0], &self.mats[1]); let g = |m: &Till| m.a + m.b;
+        let rho_si_bot = pct((0..n).filter(|&i| F::class_of(self.p.mat[i]) == 1).map(|i| self.rho[i]).collect(), 0.9);
+        let rho_fe_top = pct((0..n).filter(|&i| F::class_of(self.p.mat[i]) == 0).map(|i| self.rho[i]).collect(), 0.1).max(fe.rho0);
+        let t_top = tp * (rho_si_bot / si.rho0).max(1.0).powf(g(si)) + dt_tbl;
+        for i in 0..n { let c = F::class_of(self.p.mat[i]); let m = &self.mats[c];
+            let tt = if c == 0 { t_top * (self.rho[i] / rho_fe_top).max(1.0).powf(g(fe)) } else { tp * (self.rho[i] / m.rho0).max(1.0).powf(g(si)) };
             let target = m.e_cold(self.rho[i]) + m.cv * tt; let du = frac * (target - self.u[i]); if du < 0.0 { self.u[i] += du; self.heat_removed -= du * self.p.mass[i]; } } }
     pub fn as_state(&self) -> F::State { F::raw_state(self.p.clone(), self.h.clone(), self.rho.clone(), self.omega) }
     pub fn measure(&self) -> Figure { F::measure(&self.as_state()) }

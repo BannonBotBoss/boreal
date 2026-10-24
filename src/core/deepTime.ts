@@ -42,9 +42,12 @@ export const DEEP = {
 export const MILESTONES: { id: string; label: string; yr: number; src: string }[] = [
   { id: 'earth', label: 'Earth forms', yr: -DEEP.earthAgeYr, src: 'Dalrymple 2001, Geol. Soc. London Spec. Pub. 190:205 (4.54 +- 0.05 Gyr)' },
   { id: 'life', label: 'Microbial life (Isua stromatolites)', yr: -DEEP.lifeStartYr, src: 'Nutman et al. 2016, Nature 537:535 (3,700 Ma)' },
+  { id: 'dynamo', label: 'Geodynamo running (oldest palaeomagnetic record)', yr: -3.5e9, src: 'Tarduno et al. 2010, Science 327:1238 (3.45 Ga Barberton); 4.2 Ga zircons disputed (Tarduno 2015)' },
   { id: 'oxygen', label: 'Great Oxidation Event', yr: -2.4e9, src: 'Bekker et al. 2004, Nature 427:117 (~2.45-2.32 Ga) [verify]' },
+  { id: 'innercore', label: 'Inner core starts to freeze [DISPUTED 0.5-1.5 Ga]', yr: -1.0e9, src: 'Biggin et al. 2015, Nature 526:245 (~1-1.5 Ga) vs Bono et al. 2019, Nat. Geosci. 12:143 (~0.565 Ga)' },
   { id: 'animals', label: 'Cambrian: animals with shells and eyes', yr: -DEEP.animalsYr, src: 'ICS chart v2026-06 (538.8 +- 0.6 Ma)' },
   { id: 'kpg', label: 'Non-bird dinosaurs end (K-Pg)', yr: -66.043e6, src: 'Renne et al. 2013, Science 339:684 (66.043 Ma) [verify the +-0.043]' },
+  { id: 'brunhes', label: 'Last magnetic reversal (Brunhes-Matuyama)', yr: -773e3, src: 'Singer et al. 2019, Sci. Adv. 5:eaaw4621 (773 ka)' },
   { id: 'sapiens', label: 'Earliest Homo sapiens (Jebel Irhoud)', yr: -315e3, src: 'Richter et al. 2017, Nature 546:293 (315 +- 34 ka)' },
   { id: 'now', label: 'Now', yr: 0, src: 'the game clock' },
 ];

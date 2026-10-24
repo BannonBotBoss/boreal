@@ -1,0 +1,10 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { layerExistence } from '../src/core/layerExistence';
+const L = (yr: number) => layerExistence(yr);
+test('4.5 Ga: molten surface, no ocean/clouds/aurora/ozone', () => { const l = L(-4.5e9); assert.equal(l.ocean.e, 'not-yet-formed'); assert.equal(l.clouds.e, 'not-yet-formed'); assert.equal(l.aurora.e, 'not-yet-formed'); assert.ok(l.state.moltenSurface); });
+test('3.0 Ga: oceans, clouds, dynamo/aurora, anoxic, no ozone, no plants', () => { const l = L(-3.0e9); assert.equal(l.ocean.e, 'present'); assert.equal(l.aurora.e, 'present'); assert.equal(l.ozone.e, 'not-yet-formed'); assert.equal(l.vegetation.e, 'not-yet-formed'); assert.match(l.atmosphere.why, /anoxic/); });
+test('700 Ma: snowball, no ozone shield yet, no plants', () => { const l = L(-700e6); assert.ok(l.state.snowball); assert.equal(l.ozone.e, 'not-yet-formed'); assert.equal(l.vegetation.e, 'not-yet-formed'); });
+test('300 Ma: ozone, plants, forests', () => { const l = L(-300e6); for (const k of ['ozone', 'vegetation', 'forests', 'ocean'] as const) assert.equal(l[k].e, 'present'); });
+test('now: everything present', () => { const l = L(0); for (const k of ['atmosphere', 'ocean', 'clouds', 'snowIce', 'ozone', 'aurora', 'vegetation', 'forests', 'plates'] as const) assert.equal(l[k].e, 'present', k); });
+test('+2 Gyr: oceans and weather gone', () => { const l = L(2e9); assert.equal(l.ocean.e, 'gone'); assert.equal(l.clouds.e, 'gone'); assert.equal(l.vegetation.e, 'gone'); });

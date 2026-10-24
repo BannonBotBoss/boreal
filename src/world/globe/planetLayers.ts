@@ -5,7 +5,8 @@
  *  cost is one texture fetch per pixel and nlat x 2 nlat x 4 bytes of VRAM (at most 64 KB). Uniform values only, same program. */
 import * as THREE from 'three';
 import { loadPlanetSim, type PlanetSim } from '../../core/planetBudget';
-import { fromLatLon, type Vec3 } from './planet';
+import { fromLatLon, PLANET, type Vec3 } from './planet';
+import { visibleWeight } from './visibility';
 
 /** Per governor tier (0 Ultra .. 5 Minimum): grid rows and layers drawn. snow: snow cover on land, ice: sea ice,
  *  soil: wet soil darkening. Minimum draws none (tiles as before). [game calibration] */
@@ -16,16 +17,19 @@ export const LAYER_TIERS: { nlat: number; layers: ('snow' | 'ice' | 'soil')[] }[
  *  reflectance at saturation (Lobell & Asner 2002), so soil darkens by up to 0.4. soilSat: bucket capacity (mm), as weather.ts. */
 export const LAYER_LOOK = { snow: [0.86, 0.88, 0.92], ice: [0.62, 0.68, 0.74], soilDark: 0.4, soilSat: 150 };
 
+/** cloud spin-up after the seed (update_moisture -> update_clouds) [measured: 8 x 6 h, 128x256 grid ~3 s with setLand in Node] */
+export const SPINUP = { steps: 8, dtS: 21600 };
 const EMPTY = new THREE.DataTexture(new Uint8Array(4), 1, 1); EMPTY.needsUpdate = true;
 /** uLayers: x snow on, y ice on, z soil on, w 0/1 texture loaded. uCamP: camera planet position (tiles are camera-relative). */
 export const GLOBE_LAYERS = { uLayerTex: { value: EMPTY as THREE.Texture }, uLayers: { value: new THREE.Vector4() }, uCamP: { value: new THREE.Vector3() },
   uSnowC: { value: new THREE.Color().setRGB(...(LAYER_LOOK.snow as [number, number, number])) }, uIceC: { value: new THREE.Color().setRGB(...(LAYER_LOOK.ice as [number, number, number])) } };
 
-/** Bake the sim's planes into RGBA bytes: R snow fraction, G sea-ice fraction, B soil wetness (0..1), A land. */
+/** Bake the sim's planes into RGBA bytes: R snow fraction, G sea-ice fraction, B soil wetness (0..1), A cloud fraction
+ *  (update_clouds.rs: humidity + instability; drives the cloud shell's cover in atmosphere.ts, causal, not a texture). */
 export function bakeLayers(sim: PlanetSim): Uint8Array {
-  const n = sim.n, out = new Uint8Array(n * 4), sf = sim.plane('snowfrac'), ice = sim.plane('ice'), soil = sim.plane('soil'), land = sim.plane('land');
+  const n = sim.n, out = new Uint8Array(n * 4), sf = sim.plane('snowfrac'), ice = sim.plane('ice'), soil = sim.plane('soil'), cl = sim.plane('cloud');
   const b = (v: number) => Math.round(255 * Math.min(1, Math.max(0, v > -900 ? v : 0)));
-  for (let i = 0; i < n; i++) { out[i * 4] = b(sf[i]); out[i * 4 + 1] = b(ice[i]); out[i * 4 + 2] = b(soil[i] / LAYER_LOOK.soilSat); out[i * 4 + 3] = b(land[i]); }
+  for (let i = 0; i < n; i++) { out[i * 4] = b(sf[i]); out[i * 4 + 1] = b(ice[i]); out[i * 4 + 2] = b(soil[i] / LAYER_LOOK.soilSat); out[i * 4 + 3] = b(cl[i]); }
   return out;
 }
 
@@ -33,16 +37,25 @@ export function bakeLayers(sim: PlanetSim): Uint8Array {
  *  when the tier draws nothing or the wasm is missing. Call again when the tier changes. */
 export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: number } }, tier: number, day: number, sim?: PlanetSim | null): Promise<boolean> {
   const t = LAYER_TIERS[Math.max(0, Math.min(LAYER_TIERS.length - 1, tier))];
-  GLOBE_LAYERS.uLayers.value.set(0, 0, 0, 0); if (!t.nlat || !t.layers.length) return false;
+  tierOn = [0, 0, 0]; GLOBE_LAYERS.uLayers.value.set(0, 0, 0, 0); if (!t.nlat || !t.layers.length) return false;
   sim = sim ?? await loadPlanetSim(); if (!sim) return false;
   sim.init(t.nlat, t.nlat * 2).setLand((lat, lon) => { const s = planet.sampleSurface(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180)); return { land: s.h > 0 ? 1 : 0, elev: Math.max(0, s.h) }; }).seed(day, 0);
+  for (let i = 0; i < SPINUP.steps; i++) sim.step(SPINUP.dtS); // humidity -> cloud needs time: the seed has none (cloud 0); 48 h gives ~0.68 global cover (MODIS 0.67, King et al. 2013)
   const tex = new THREE.DataTexture(bakeLayers(sim), t.nlat * 2, t.nlat, THREE.RGBAFormat, THREE.UnsignedByteType, THREE.UVMapping, THREE.RepeatWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter);
   tex.generateMipmaps = false; tex.needsUpdate = true;
   const old = GLOBE_LAYERS.uLayerTex.value; if (old !== EMPTY) old.dispose(); GLOBE_LAYERS.uLayerTex.value = tex;
-  GLOBE_LAYERS.uLayers.value.set(+t.layers.includes('snow'), +t.layers.includes('ice'), +t.layers.includes('soil'), 1);
+  tierOn = [+t.layers.includes('snow'), +t.layers.includes('ice'), +t.layers.includes('soil')];
+  GLOBE_LAYERS.uLayers.value.set(tierOn[0], tierOn[1], tierOn[2], 1);
   return true;
 }
-export function setLayerCamera(cam: Vec3) { GLOBE_LAYERS.uCamP.value.set(cam[0], cam[1], cam[2]); }
+let tierOn = [0, 0, 0];
+/** Camera + physical visibility gate (visibility.ts): each layer's weight = its characteristic size in pixels at the camera's
+ *  range to the surface (nadir altitude), so wet soil (~2 km) only appears below ~1300 km at 1080p / 45 deg. Uniform only. */
+export function setLayerCamera(cam: Vec3, fovDeg = 45, hPx = 1080) {
+  GLOBE_LAYERS.uCamP.value.set(cam[0], cam[1], cam[2]);
+  const range = Math.max(1, Math.hypot(cam[0], cam[1], cam[2]) - PLANET.radius), u = GLOBE_LAYERS.uLayers.value;
+  u.x = tierOn[0] * visibleWeight('snowCover', range, fovDeg, hPx); u.y = tierOn[1] * visibleWeight('seaIceEdge', range, fovDeg, hPx); u.z = tierOn[2] * visibleWeight('soilMoisture', range, fovDeg, hPx);
+}
 
 /** Fragment code (after the land/water mix in globeMaterial). Planet direction = camera-relative world position + camera;
  *  lat/lon as planet.ts toLatLon (lat = asin y, lon = atan2(z, x)); u = (lon + pi) / 2pi matches the sim's -180..180 columns. */

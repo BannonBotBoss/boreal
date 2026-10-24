@@ -14,10 +14,12 @@
 import * as THREE from 'three';
 import { LOG_DEPTH, LOG_DEPTH_PREFIX } from './logDepth';
 import { GLSL_NOISE } from '../../proc/glsl';
+import { GLOBE_LAYERS } from './planetLayers';
+import { COMPOSITION, rayleighPerKm, scaleHeightKm, ozoneEquivPerKm } from './composition';
 
 /** Earth-like constants (Nishita 1993 / Bruneton 2008 values; per km). [game calibration: sunI, mieG] */
 export const ATMOS = {
-  heightKm: 100, rayleigh: [5.802e-3, 13.558e-3, 33.1e-3], rayleighH: 8, mie: 3.996e-3, mieExt: 1.11, mieH: 1.2, mieG: .76, sunI: 22, aerial: .16,
+  heightKm: 100, /** derived from the gas mix (composition.ts): was Bruneton's [5.802, 13.558, 33.1]e-3 and H 8 */ rayleigh: COMPOSITION.wavelengthsNm.map(rayleighPerKm), rayleighH: scaleHeightKm(), ozone: ozoneEquivPerKm(), mie: 3.996e-3, mieExt: 1.11, mieH: 1.2, mieG: .76, sunI: 22, aerial: .16,
 };
 /** Ray-march sample counts per quality row (GLOBE_LOD order): [sky primary, sky light, terrain primary, terrain light]. */
 export const ATMOS_STEPS = [[16, 6, 8, 3], [14, 5, 6, 3], [12, 4, 6, 2], [10, 4, 4, 2], [8, 3, 3, 2], [6, 2, 0, 0]];
@@ -49,8 +51,10 @@ const float ATM_AERIAL = ${ATMOS.aerial.toFixed(3)}; // in-scatter in the terrai
 uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
 uniform mat3 uViewToWorld; uniform float uCloudOct, uCloudSeed, uCloudEvolve; uniform vec2 uCloudSpin; // spin = (cos, sin) of the drift angle
 uniform float uCloudClear; // 0 = the field as calibrated .. 1 = no clouds (in-page descent, T-0034/T-0041): cover and shadows fade AND the threshold lifts by clearLift, so the deck breaks into clouds and holes instead of a flat sheet
+uniform sampler2D uCloudTex; uniform vec4 uCloudSim; // planetLayers texture: A = sim cloud fraction (rust update_clouds), w = loaded
 uniform vec3 uCloudEdge; // threshold centre, half width (governor tier), pixel angle (rad per px: octave fade by distance)
 const vec3 BR = vec3(${ATMOS.rayleigh.map(v => v.toExponential(4)).join(', ')});
+const vec3 BO = vec3(${ATMOS.ozone.map(v => v.toExponential(4)).join(', ')}); // ozone Chappuis absorption (extinction only, no scattering)
 const float BM = ${ATMOS.mie.toExponential(4)}, BME = ${(ATMOS.mie * ATMOS.mieExt).toExponential(4)}, HR = ${ATMOS.rayleighH.toFixed(2)}, HM = ${ATMOS.mieH.toFixed(2)}, MG = ${ATMOS.mieG.toFixed(3)};
 vec2 atmRsi(vec3 ro, vec3 rd, float r) { vec3 oc = ro - uCentre; float b = dot(oc, rd), c = dot(oc, oc) - r * r, d = b * b - c; if (d < 0.0) return vec2(1e9, -1e9); d = sqrt(d); return vec2(-b - d, -b + d); }
 vec2 atmDensity(vec3 x) { float h = max(length(x - uCentre) - uRp, 0.0); return vec2(exp(-h / HR), exp(-h / HM)); }
@@ -71,13 +75,13 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
   for (int i = 0; i < ${MAX_N}; i++) { if (i >= n) break;
     vec3 x = rd * (t0 + ds * (float(i) + 0.5)); vec2 d = atmDensity(x) * ds; od += d;
     vec2 l = atmSunDepth(x, nl); if (l.x < 0.0) continue;
-    vec3 att = exp(-(BR * (od.x + l.x) + BME * (od.y + l.y))); sR += d.x * att; sM += d.y * att;
+    vec3 att = exp(-((BR + BO) * (od.x + l.x) + BME * (od.y + l.y))); sR += d.x * att; sM += d.y * att;
   }
-  trans = exp(-(BR * od.x + BME * od.y));
+  trans = exp(-((BR + BO) * od.x + BME * od.y));
   return uSunI * (pR * BR * sR + pM * BM * sM);
 }
 // sunlight colour reaching x (transmittance), 0 in the planet's shadow
-vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? vec3(0.0) : exp(-(BR * l.x + BME * l.y)); }
+vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? vec3(0.0) : exp(-((BR + BO) * l.x + BME * l.y)); }
 ${GLSL_NOISE}
 // 3D value noise from two seeded 2D slices of the shared vnoiseU (proc/glsl), so the clouds have no seams on the sphere.
 // vnoiseU, not vnoise: the fract(sin) hash gave dotted lines / specks along lattice planes in the clouds and their shadows
@@ -85,6 +89,9 @@ ${GLSL_NOISE}
 float cloudSlice3(vec3 p) { float z = floor(p.z), f = p.z - z; f = f * f * (3.0 - 2.0 * f);
   return mix(vnoiseU(p.xy + z * vec2(37.0, 17.0), uCloudSeed), vnoiseU(p.xy + (z + 1.0) * vec2(37.0, 17.0), uCloudSeed), f); }
 float cloudDensity(vec3 dir, float oct, float c, float hw) { // dir: planet-fixed unit direction; oct: octaves (tier and distance, fractional = fade); c, hw: threshold
+  if (uCloudSim.w > 0.5) { // causal cover: the sim's cloud fraction f at this lat/lon sets the threshold so P(noise > c) ~ f (noise sd ~.113, logistic probit)
+    float f = clamp(texture2D(uCloudTex, vec2(atan(dir.z, dir.x) / 6.2831853 + 0.5, asin(clamp(dir.y, -1.0, 1.0)) / 3.1415927 + 0.5)).a * 0.75, 0.02, 0.98); // x .75: optically thin cirrus (~1/4 of cover, ISCCP Rossow & Schiffer 1999) barely shows from orbit
+    c += 0.5 + 0.113 * log((1.0 - f) / f) / 1.7 - ${CLOUDS.edgeCentre[0].toFixed(3)}; }
   dir = vec3(uCloudSpin.x * dir.x - uCloudSpin.y * dir.z, dir.y, uCloudSpin.y * dir.x + uCloudSpin.x * dir.z); // drift about the polar (+y) axis
   vec3 p = dir * (${(6371 / CLOUDS.cellKm).toFixed(3)}); float v = 0.0, a = 0.5, n = 0.0;
   for (int i = 0; i < ${CLOUDS.octaves[0]}; i++) { float w = clamp(oct - float(i), 0.0, 1.0); if (w <= 0.0) break;
@@ -112,7 +119,7 @@ const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.
 export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   let [sn, sl, tn, tl] = stepsFor(tier), cur = tier;
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
-  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 } };
+  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
   const setSteps = () => { uniforms.uSteps.value.set(sn, sl, tn, tl); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = CLOUDS.octaves[row]; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
   const mat = new THREE.ShaderMaterial({
     uniforms, side: THREE.BackSide, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending,

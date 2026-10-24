@@ -405,7 +405,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const viewH = target ? target.height : canvas.height;
     if (target && !ext && Math.abs(camera.aspect - target.width / target.height) > 1e-6) { camera.aspect = target.width / target.height; camera.updateProjectionMatrix(); }
     setLogDepthFar(camera.far);
-    setLayerCamera(camPos);
+    setLayerCamera(camPos, camera.fov, viewH);
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);

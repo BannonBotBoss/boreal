@@ -35,7 +35,7 @@ mod tests { use super::*; use crate::solar_budget::solar;
     #[test] fn ocean_and_glint() { assert!((ocean_albedo(1.0) - 0.0296).abs() < 0.001); assert!(ocean_albedo(0.2) > 0.12); // Taylor 1996 Fig.
         let spec = glint(0.8, 0.8, std::f64::consts::PI, 5.0); let off = glint(0.8, 0.8, 0.0, 5.0); assert!(spec > 0.2 && off < 1e-3, "glint {spec} {off}");
         assert!((fresnel(1.0, 1.34) - 0.0211).abs() < 5e-4); }
-    #[test] fn gas_fed_inputs() { let g = gas_inputs(0.0, 0.0115, crate::constants::CO2_ppm_present); assert!((g.ozone_cm - 0.264).abs() < 0.015 && (g.ray - 1.0).abs() < 0.01 && (g.pw_mm - 25.0).abs() < 4.0, "{g:?}");
+    #[test] fn gas_fed_inputs() { let g = gas_inputs(0.0, 0.0115, crate::constants::CO2_ppm_present); assert!((g.ozone_cm - 0.345).abs() < 0.015 && (g.ray - 1.0).abs() < 0.01 && (g.pw_mm - 25.0).abs() < 4.0, "{g:?}");
         let hi = gas_inputs(5.0, 0.0115, 422.8); assert!((hi.ray - 0.53).abs() < 0.03, "ray at 5 km {}", hi.ray); }
     /// Global annual mean from gas-fed inputs, a surface mix by latitude (ocean 71 %, land 29 %; snow/ice poleward of 70 deg)
     /// and climatological cloud (0.67, tau 3.6 as column_budget's test): Trenberth et al. 2009 / CERES EBAF within 10 %.

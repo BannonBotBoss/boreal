@@ -7,7 +7,7 @@
 //! below the homopause; above 86 km each species follows its own scale height (diffusive separation, US76 sec. 1.3; thermal
 //! diffusion and eddy mixing neglected [approx]); atomic O from 86 km (8.6e16 m^-3, US76 Table VIII) rising to 4.4e17 at 97 km
 //! [approx], diffusive above. H2O: surface q from the sim, e-folding 2 km (Weaver & Ramanathan 1995) to a 4 ppmv stratospheric
-//! floor (SPARC 2000). O3: 5e18 m^-3 peak at 22 km, Gaussian 1/e half-width 8 km (Krueger & Minzner 1976 mid-latitude) = 264 DU.
+//! floor (SPARC 2000). O3: AFGL U.S. Standard mixing-ratio profile (Anderson et al. 1986, AFGL-TR-86-0110, 0-120 km), log-interpolated.
 //! NRLMSIS 2.0 is not used: its licence forbids modification and non-academic use (NRL-SOF-014-1).
 //! Venus: VIRA (Seiff et al. 1985, Adv. Space Res. 5:3) temperatures, 92.1 bar surface, CO2 .965 / N2 .035.
 //! Mercury: surface-bounded exosphere, Na 1e10 m^-3 / He 6e9 m^-3 at the surface (Killen et al. 2007, Space Sci. Rev. 132:433) [approx].
@@ -39,6 +39,11 @@ pub fn t_earth(z: f64) -> f64 {
 const VIRA: [(f64, f64); 11] = [(0.0, 735.3), (10.0, 658.2), (20.0, 580.7), (30.0, 496.9), (40.0, 417.6), (50.0, 350.5), (60.0, 262.8), (70.0, 229.8), (80.0, 197.1), (90.0, 169.4), (100.0, 175.4)];
 pub fn t_venus(z: f64) -> f64 { for w in VIRA.windows(2) { if z <= w[1].0 { let f = ((z - w[0].0) / (w[1].0 - w[0].0)).max(0.0); return w[0].1 + f * (w[1].1 - w[0].1); } } 175.4 }
 
+/// AFGL-TR-86-0110 U.S. Standard ozone volume mixing ratio (ppmv) at z km (Anderson et al. 1986).
+const O3_AFGL: [(f64, f64); 40] = [(0.0, 2.66e-2), (1.0, 2.93e-2), (2.0, 3.24e-2), (3.0, 3.32e-2), (4.0, 3.39e-2), (5.0, 3.77e-2), (6.0, 4.11e-2), (7.0, 5.01e-2), (8.0, 5.97e-2), (9.0, 9.17e-2),
+    (10.0, 1.31e-1), (11.0, 2.15e-1), (12.0, 3.10e-1), (13.0, 3.85e-1), (14.0, 5.03e-1), (15.0, 6.51e-1), (16.0, 8.70e-1), (17.0, 1.19), (18.0, 1.59), (19.0, 2.03), (20.0, 2.58), (21.0, 3.03), (22.0, 3.65), (23.0, 4.17), (24.0, 4.63), (25.0, 5.12),
+    (27.5, 5.80), (30.0, 6.55), (32.5, 7.21), (35.0, 7.84), (37.5, 7.70), (40.0, 6.30), (42.5, 5.36), (45.0, 4.45), (47.5, 3.82), (50.0, 3.26), (60.0, 1.29), (70.0, 0.27), (80.0, 0.075), (100.0, 3.2e-3)];
+pub fn o3_vmr(z: f64) -> f64 { if z >= 100.0 { return 0.0; } for w in O3_AFGL.windows(2) { if z <= w[1].0 { let f = ((z - w[0].0) / (w[1].0 - w[0].0)).max(0.0); return 1e-6 * (w[0].1.ln() * (1.0 - f) + w[1].1.ln() * f).exp(); } } 0.0 }
 const DZ: f64 = 0.05; const ZTOP: f64 = 1000.0; // km
 struct Tab { n: Vec<[f64; 9]> } // number densities per DZ for the dry, CO2 = 420 ppm reference
 fn earth_tab() -> &'static Tab { static T: OnceLock<Tab> = OnceLock::new(); T.get_or_init(|| {
@@ -75,7 +80,7 @@ pub fn column(b: Body, h: f64, q_surf: f64, co2_ppm: f64) -> Col {
             let j = (i + 1).min(tb.n.len() - 1); let mut ni = [0.0f64; 9]; for s in 0..9 { ni[s] = if tb.n[i][s] > 0.0 && tb.n[j][s] > 0.0 { (tb.n[i][s].ln() * (1.0 - a) + tb.n[j][s].ln() * a).exp() } else { tb.n[i][s] }; }
             ni[3] *= co2_ppm / C::CO2_ppm_present;
             let nd: f64 = ni.iter().sum(); let vmr_w = (q_surf * 28.9644 / 18.0153 * (-h / 2.0).exp()).max(if h > 12.0 && h < 86.0 { 4e-6 } else { 0.0 });
-            ni[4] = nd * vmr_w; ni[5] = 5e18 * (-((h - 22.0) / 8.0).powi(2)).exp();
+            ni[4] = nd * vmr_w; ni[5] = nd * o3_vmr(h);
             let n: f64 = ni.iter().sum(); for s in 0..9 { x[s] = ni[s] / n; }
             let m: f64 = (0..9).map(|s| x[s] * AMU[s]).sum::<f64>() * 1e-3; let p = n * C::k_B * t; Col { t, p, rho: p * m / (C::R * t), n, x } }
         Body::Venus => { let m = (0.965 * AMU[3] + 0.035 * AMU[0]) * 1e-3; let steps = (h / DZ).ceil() as usize; let dz = if steps > 0 { h / steps as f64 } else { 0.0 };
@@ -122,13 +127,13 @@ mod tests { use super::*;
             let r = ((a * a * p.cos()).powi(2) + (b * b * p.sin()).powi(2)).sqrt() / ((a * p.cos()).powi(2) + (b * p.sin()).powi(2)).sqrt();
             let gc = (b * b / (a * a) * p.tan()).atan().to_degrees(); assert!((gravity(r, gc) - g_eff_earth(l)).abs() < 0.003, "{l}: {} {}", gravity(r, gc), g_eff_earth(l)); }
         assert_eq!(atmos_layer(5.0), 0); assert_eq!(atmos_layer(30.0), 1); assert_eq!(atmos_layer(70.0), 2); assert_eq!(atmos_layer(300.0), 3); assert_eq!(atmos_layer(700.0), 4);
-        let a = column_above(0.0, 0.0115, C::CO2_ppm_present); // mass = p0/g (10332 kg/m2), O3 ~264 DU, pw ~25 mm (Trenberth et al. 2005 global mean)
-        assert!((a.mass * C::g_earth_mean / 101325.0 - 1.0).abs() < 0.01, "mass {}", a.mass); assert!((a.o3_du - 264.0).abs() < 15.0, "DU {}", a.o3_du); assert!((a.pw_mm - 25.0).abs() < 4.0, "pw {}", a.pw_mm); }
+        let a = column_above(0.0, 0.0115, C::CO2_ppm_present); // mass = p0/g (10332 kg/m2), O3 ~345 DU (AFGL US Std), pw ~25 mm (Trenberth et al. 2005 global mean)
+        assert!((a.mass * C::g_earth_mean / 101325.0 - 1.0).abs() < 0.01, "mass {}", a.mass); assert!((a.o3_du - 345.0).abs() < 15.0, "DU {}", a.o3_du); assert!((a.pw_mm - 25.0).abs() < 4.0, "pw {}", a.pw_mm); }
     #[test] fn thermosphere_and_separation() { let c = column(Body::Earth, 300.0, 0.0, 420.0); // US76: rho(300 km) 1.916e-11, O dominant
         assert!(c.rho > 0.5 * 1.916e-11 && c.rho < 2.0 * 1.916e-11, "rho300 {}", c.rho); assert!(c.x[6] > c.x[0] && c.x[6] > 0.5, "O {}", c.x[6]);
         let lo = column(Body::Earth, 50.0, 0.0, 420.0); assert!((lo.x[0] - 0.7808).abs() < 0.002); }
     #[test] fn ozone_water_venus_mercury() { let mut s = 0.0; let mut z = 0.0; while z < 80.0 { s += column(Body::Earth, z, 0.0, 420.0).x[5] * column(Body::Earth, z, 0.0, 420.0).n * 100.0; z += 0.1; }
-        let du = s / 2.687e20; assert!(du > 220.0 && du < 340.0, "O3 {du} DU");
+        let du = s / 2.687e20; assert!((du - 345.0).abs() < 15.0, "O3 {du} DU (AFGL US Standard ~345 DU)");
         assert!((column(Body::Earth, 0.0, 0.01, 420.0).x[4] - 0.0158).abs() < 0.002);
         let v = column(Body::Venus, 0.0, 0.0, 0.0); assert!((v.rho - 65.0).abs() < 5.0, "Venus rho0 {}", v.rho); let v50 = column(Body::Venus, 50.0, 0.0, 0.0); assert!(v50.p > 0.7e5 && v50.p < 1.4e5, "Venus p50 {}", v50.p);
         assert!(column(Body::Mercury, 0.0, 0.0, 0.0).p < 1e-8); }

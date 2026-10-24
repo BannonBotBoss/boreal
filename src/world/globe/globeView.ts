@@ -140,7 +140,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
   // planet budget layers (planetLayers.ts, issue #43): snow, sea ice, wet soil from rust/boreal-sim; count and grid follow the tier; ?layers=0 off
   const layerDay = Number(q.get('day')) || Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 864e5);
-  let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; if (layerTier >= 0) void startPlanetLayers(planet, layerTier, layerDay);
+  let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; const simP = loadPlanetSim(); // one instance: the layers seed and step it, the axis reads its live cells
+  if (layerTier >= 0) void simP.then(s => startPlanetLayers(planet, layerTier, layerDay, s));
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   let shown = {} as Record<LayerId, LayerState>; const isOn = (id: LayerId) => shown[id]?.on ?? true;
   const panel = q.get('panel') === '0' || q.has('shot') && !q.has('panel') || q.get('view') !== 'globe' && q.get('start') !== 'globe' ? null : mountLayerPanel(location.search, (st) => { shown = st; });
@@ -174,7 +175,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat); ln.frustumCulled = false; fieldLines.add(ln); } }
 
   // Through-planet axis (axisView.ts): ?dir=lat,lon|body:sun, ?r=km, slider, pad, cutaway; dblclick sets û to the view centre
-  const axis = createAxis({ q, scene, R, planet, material, renderer, sunDir: () => sunNow().clone().toArray() as Vec3, sim: loadPlanetSim(), mount: document.body });
+  const axis = createAxis({ q, scene, R, planet, material, renderer, sunDir: () => sunNow().clone().toArray() as Vec3, sim: simP, mount: document.body });
   canvas.addEventListener('dblclick', () => { if (axis.on) axis.pick([dir.x, dir.y, dir.z]); });
   // ---- camera: OrbitControls rotates around the planet centre; altitude is ours (log zoom), tilt toward the horizon near ground
   const controls = new OrbitControls(camera, canvas); controls.enableZoom = false; controls.enablePan = false; controls.enableDamping = false; // 1:1 drag; the release coast below replaces its per-frame damping
@@ -468,7 +469,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const segWas = lod.segments; if (seamsDebug) material.userData.uSeg.value = lod.segments;
     if (own.governor && governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); }
     if (atmos) atmos.setClear(cloudClear(alt)); // T-0041 fade: in-page and standalone (T-0056). Orbit stays closed; 3000 m is already open.
-    if (layerTier >= 0 && layerTier !== GOVERNOR.tier) { layerTier = GOVERNOR.tier; void startPlanetLayers(planet, layerTier, layerDay); }
+    if (layerTier >= 0 && layerTier !== GOVERNOR.tier) { layerTier = GOVERNOR.tier; void simP.then(s => startPlanetLayers(planet, layerTier, layerDay, s)); }
     if (atmos && atmos.tier !== GOVERNOR.tier) atmos.setTier(GOVERNOR.tier); // resolution + atmosphere samples follow the tier now (cheap uniforms)
     if (lodTier !== worldTier()) { lodTier = worldTier(); lod = globeLod(); } // tile resolution/split/caps once the new tier has held (no rebuild per step)
     if (shot && lod.segments !== segWas) console.log(`SEGMENTS ${segWas} -> ${lod.segments} at frame ${frame} (tier ${GOVERNOR.tier}, world tier ${GOVERNOR.worldTier})`);

@@ -62,6 +62,11 @@ uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varyin
     lut.set([c[0] * 255, c[1] * 255, c[2] * 255, 255], i * 4); } tex.needsUpdate = true;
     for (let i = 0; i < NA; i++) { const L = s.gasAbove((i + .5) / NA * H_ATM / 1000).layer | 0, c = ATM_RGB[L]; alut.set([c[0] * 255, c[1] * 255, c[2] * 255, 255], i * 4); } atex.needsUpdate = true;
     if (bodies >= 0) runBodies(); });
+  // live grid cell (the same PlanetSim instance planetLayers.ts seeds and steps): humidity, cloud fraction, cloud optical depth
+  const YEAR = Number(o.q.get('year')) || new Date().getUTCFullYear();
+  const liveCell = (latDeg: number, lonDeg: number) => { if (!sim || !sim.n) return null; const i = Math.min(sim.nlat - 1, Math.max(0, Math.floor((latDeg + 90) / 180 * sim.nlat))),
+    j = Math.min(sim.nlon - 1, Math.max(0, Math.floor((((lonDeg + 180) % 360 + 360) % 360) / 360 * sim.nlon))), c = i * sim.nlon + j;
+    return { q: sim.plane('q')[c], cloud: sim.plane('cloud')[c], cot: sim.plane('cot')[c] }; };
   const runBodies = () => { if (!sim || bodies < 0) { bodyInfo = ''; comPt.visible = false; return; } const e = sim.emergentDemo(2000, bodies);
     const modes = ['relaxed PREM Earth', 'same particles, 3 v_esc', 'Earth + Moon (37 p)'];
     bodyInfo = `\nbodies [${modes[bodies]}]: ${e.count} object${e.count === 1 ? '' : 's'} (FoF b 0.2 + unbinding)` + (e.count ? `\n  M ${e.mass.toExponential(4)} kg  ${e.members} p ${e.trusted ? 'trusted' : 'untrusted'}\n  COM offset ${(Math.hypot(...e.com) / 1000).toFixed(1)} km  L_z ${e.spinZ.toExponential(3)}  layers ${e.layers}` +
@@ -90,14 +95,19 @@ uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varyin
       n.normalize(); clip.normal.copy(n).negate(); clip.constant = -n.dot(C); // render space x = p − C: keeps −n·p ≥ 0 (far half; three clips negative distance)
       disc.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
       if (!sim) { pre.textContent = 'loading profile…'; return; }
-      const r = Math.abs(rKm), w: Vec3 = rKm >= 0 ? u : [-u[0], -u[1], -u[2]], a = altitudeAt(o.planet, r * 1000, w), hk = a.h / 1000, p = sim.radialProfile(hk >= 0 ? 6371 + hk : r * 6371 / (r - hk)); // map onto the 1-D PREM/US76 column: same h above the local surface, same fractional radius below
+      const r = Math.abs(rKm), w: Vec3 = rKm >= 0 ? u : [-u[0], -u[1], -u[2]], a = altitudeAt(o.planet, r * 1000, w), hk = a.h / 1000, sf0 = o.planet.sampleSurface(w), onLand = sf0.water <= sf0.h;
+      // map onto the 1-D PREM/US76 column: same h above the local surface; under land the column starts at the top of PREM's
+      // upper crust (6368 km, skipping its 3 km ocean shell) to the base of the crust (24.4 km, Moho), with the overburden of
+      // that shell removed so P = 1 atm at the land surface; deeper (and under the sea) the same fractional radius
+      const crust = onLand && hk < 0 && -hk < 24.4, P_SHELL = crust ? sim.radialProfile(6367.999).P - 101325 : 0;
+      const p0 = sim.radialProfile(hk >= 0 ? 6371 + hk : crust ? 6367.999 + hk : r * 6371 / (r - hk)), p = { ...p0, P: p0.P - P_SHELL, T: crust ? p0.T + (288 - sim.radialProfile(6367.999).T) : p0.T };
       const ll = toLatLon(u), lat = Math.asin(Math.max(-1, Math.min(1, w[1]))) * 180 / Math.PI; slider.value = String(toS(rKm));
       // gravity: PREM (spherical) inside; outside, the rotating oblate figure (J2 + centrifugal, gas.rs gravity) at the true r
       const g = hk >= 0 ? sim.figureGravity(r * 1000, lat) : p.g;
       let txt = `û  lat ${(ll.lat * 180 / Math.PI).toFixed(2)}°  lon ${(ll.lon * 180 / Math.PI).toFixed(2)}°\n` +
         `r  ${rKm.toFixed(1)} km   ${a.h < 0 ? 'depth' : 'altitude'} ${(Math.abs(a.h) / 1000).toFixed(2)} km\n` +
         `   above sea ${(a.hSea / 1000).toFixed(2)} km, above mean R ${(a.hMean / 1000).toFixed(2)} km\n` +
-        `layer ${INTERIOR_LAYERS[(p.layer | 0) === 4 && a.hSea > 0 ? 3 : p.layer | 0] /* below land above sea level: crust, not the 1-D ocean shell */}${hk >= 0 ? ' · ' + ATM_LAYERS[sim.gasAbove(hk).layer | 0] : ''}\nρ ${fmt(p.rho)} kg/m³   T ${fmt(p.T, 4)} K\nP ${fmt(p.P)} Pa   g ${g.toFixed(3)} m/s²${hk >= 0 ? ' (figure)' : ' (PREM)'}`;
+        `layer ${INTERIOR_LAYERS[p.layer | 0]}${hk >= 0 ? ' · ' + ATM_LAYERS[sim.gasAbove(hk).layer | 0] : ''}\nρ ${fmt(p.rho)} kg/m³   T ${fmt(p.T, 4)} K\nP ${fmt(p.P)} Pa   g ${g.toFixed(3)} m/s²${hk >= 0 ? ' (figure)' : ' (PREM)'}`;
       if (showGas && hk >= 0) { const gc = sim.gasColumn(hk, 0, 0.0115), ab = sim.gasAbove(hk, 0.0115), top = gc.x.map((x, i) => [x, i] as [number, number]).sort((A, B) => B[0] - A[0]).slice(0, 4);
         txt += `\ngas  n ${fmt(gc.n)} m⁻³  ` + top.map(([x, i]) => `${GAS_SPECIES[i]} ${x >= .01 ? (x * 100).toFixed(2) + '%' : (x * 1e6).toFixed(1) + 'ppm'}`).join(' ') +
           `\nabove: ${fmt(ab.mass)} kg/m²  O₃ ${ab.o3DU.toFixed(1)} DU  H₂O ${ab.pwMm.toFixed(2)} mm`; }
@@ -106,7 +116,9 @@ uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varyin
         const proj = (v: number[]) => { const d = v[0] * w[0] + v[1] * w[1] + v[2] * w[2]; return v.map((x, i) => x - d * w[i]); }, ps = proj(sd), pv = proj(cv0), nps = Math.hypot(...ps), npv = Math.hypot(...pv);
         const phi = nps > 1e-9 && npv > 1e-9 ? Math.acos(Math.max(-1, Math.min(1, -(ps[0] * pv[0] + ps[1] * pv[1] + ps[2] * pv[2]) / nps / npv))) : Math.PI;
         const sf = o.planet.sampleSurface(w), ocean = sf.water > sf.h, kind = ocean ? (Math.abs(lat) > 70 ? 1 : 0) : (Math.abs(lat) > 65 || sf.h > 4500 ? 2 : 3);
-        const k = sim.rtPoint({ year: 1970 + Date.now() / 3.15576e10, cosZ: cz, cosV, phi, surf: kind, hKm: ocean ? 0 : Math.max(0, sf.h / 1000) });
+        const live = liveCell(lat, ll.lon * 180 / Math.PI), year = YEAR + ((live ? sim.day : 0) - 1) / 365.25;
+        const k = sim.rtPoint({ year, cosZ: cz, cosV, phi, surf: kind, hKm: ocean ? 0 : Math.max(0, sf.h / 1000), ...(live ? { qSurf: live.q, cloud: live.cloud, tau: live.cot > 0 ? live.cot : 9 } : {}) });
+        txt += live ? `\n  sim day ${sim.day.toFixed(0)} ${sim.hour.toFixed(1)} h  q ${(live.q * 1e3).toFixed(2)} g/kg  cloud ${live.cloud.toFixed(2)} τ ${live.cot.toFixed(1)}` : '\n  (no live grid: climatological q, clear sky)';
         txt += `\nRT  TSI ${k.tsi.toFixed(1)}  μ☉ ${cz.toFixed(3)}  surface ${['ocean', 'sea ice', 'snow', 'land'][kind]} α ${k.albedo.toFixed(3)}` +
           (cz > 0 ? `\n  in ${k.toa.toFixed(1)}  refl atm ${k.reflAtm.toFixed(1)} surf ${k.reflSurf.toFixed(1)}  abs atm ${k.absAtm.toFixed(1)} surf ${k.absSurf.toFixed(1)} W/m²` + (kind === 0 ? `  glint BRF ${k.glint.toFixed(3)}` : '') : '\n  night side: no shortwave'); }
       pre.textContent = txt + bodyInfo;

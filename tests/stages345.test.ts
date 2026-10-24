@@ -2,8 +2,8 @@
 import { test } from 'node:test'; import assert from 'node:assert/strict'; import { readFileSync, existsSync } from 'node:fs';
 import { loadPlanetSim, ATM_LAYERS } from '../src/core/planetBudget';
 const w = new URL('../public/wasm/boreal_sim.wasm', import.meta.url), sim = existsSync(w) ? await loadPlanetSim(readFileSync(w)) : null;
-test('stage 3: column above sea level = p0/g, ~264 DU, layer names; upper air within 4 % of US76', { skip: !sim }, () => {
-  const a = sim!.gasAbove(0, .0115); assert.ok(Math.abs(a.mass * 9.82 / 101325 - 1) < .01 && Math.abs(a.o3DU - 264) < 15 && Math.abs(a.pwMm - 25) < 4);
+test('stage 3: column above sea level = p0/g, ~345 DU, layer names; upper air within 4 % of US76', { skip: !sim }, () => {
+  const a = sim!.gasAbove(0, .0115); assert.ok(Math.abs(a.mass * 9.82 / 101325 - 1) < .01 && Math.abs(a.o3DU - 345) < 15 && Math.abs(a.pwMm - 25) < 4);
   assert.equal(ATM_LAYERS[sim!.gasAbove(30).layer], 'stratosphere'); assert.equal(ATM_LAYERS[sim!.gasAbove(300).layer], 'thermosphere');
   assert.ok(Math.abs(sim!.gasColumn(120).p / 2.5381e-3 - 1) < .04 && Math.abs(sim!.gasColumn(300).rho / 1.916e-11 - 1) < .04);
   assert.ok(Math.abs(sim!.figureGravity(6378137, 0) - 9.780) < .003 && Math.abs(sim!.figureGravity(6356752, 90) - 9.832) < .003);

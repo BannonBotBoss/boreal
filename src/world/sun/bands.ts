@@ -1,3 +1,4 @@
+import { K } from '../../core/constants';
 /** Wavelength filters (T-0067): what the Sun emits in each passband, from where it forms.
  *  Formation temperatures: Lemen et al. 2012 (Sol. Phys. 275, 17, AIA Table 1); GOES XRS 1-8 A (Hanser & Sellers 1996).
  *  Thick bands (visible, H-alpha, UV continuum) show the disc with limb darkening; optically thin coronal lines (EUV, X-ray)
@@ -8,7 +9,7 @@
  *  Spot regions: dark in photospheric bands (cool umbra), bright plage/loops in chromospheric and coronal bands. */
 export type BandId = 'visible' | 'halpha' | 'uv1600' | 'uv1700' | 'euv304' | 'euv171' | 'euv193' | 'xray';
 export interface Band { id: BandId; label: string; nm: number; T: number; thin: boolean; spot: number; ar: number; quiet: number; colour: [number, number, number]; source: string }
-const kB = 1.380649e-23, mp = 1.67262192e-27, G_SUN = 274, R_SUN = 695_700e3;
+const kB = K.k_B, mp = K.m_p, G_SUN = 274, R_SUN = 695_700e3;
 /** coronal scale height as a fraction of R_sun */
 export const scaleHeight = (T: number) => kB * T / (.6 * mp * G_SUN) / R_SUN;
 export const BANDS: Band[] = [

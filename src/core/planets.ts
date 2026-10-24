@@ -43,7 +43,7 @@ export function sunAt(date: Date) { const e = helio(ELEMENTS.earth, jdFromDate(d
   return { ra: ((Math.atan2(eq[1], eq[0]) / D) + 360) % 360, dec: Math.asin(eq[2] / r) / D }; }
 /** Alt/az of RA/Dec for an observer; local sidereal time from GMST (IAU 1982, Meeus 12.4). Same direction convention as timeOfDay.sunPosition. */
 export function altAz(ra: number, dec: number, date: Date, latDeg: number, lonDeg: number) {
-  const T = (jdFromDate(date) - 2451545), gmst = (280.46061837 + 360.98564736629 * T) % 360, ha = (gmst + lonDeg - ra) * D, d = dec * D, p = latDeg * D;
+  const T = (jdFromDate(date) - K.J2000_JD), gmst = (280.46061837 + 360.98564736629 * T) % 360 /* GMST, Meeus 1998 eq. 12.4 */, ha = (gmst + lonDeg - ra) * D, d = dec * D, p = latDeg * D;
   const el = Math.asin(Math.sin(p) * Math.sin(d) + Math.cos(p) * Math.cos(d) * Math.cos(ha));
   const az = Math.atan2(Math.sin(ha), Math.cos(ha) * Math.sin(p) - Math.tan(d) * Math.cos(p)) + Math.PI;
   return { elevation: el / D, azimuth: ((az / D) % 360 + 360) % 360, direction: { x: Math.cos(el) * Math.sin(az), y: Math.sin(el), z: -Math.cos(el) * Math.cos(az) } };

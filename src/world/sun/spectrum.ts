@@ -6,10 +6,11 @@
  *    power-law fit to Neckel & Labs 1994 disc-centre-to-limb data.
  *  - Air: reuses core/light.ts rayleighTau (Bucholtz-type fit), aerosolTau (Angstrom) and airMass (Kasten & Young 1989).
  *  Honest result: from space the disc is white (x,y ~ 0.32,0.33); it goes yellow-orange only through air. */
+import { K } from '../../core/constants';
 import { aerosolTau, airMass, rayleighTau } from '../../core/light';
 
-export const SUN = { Teff: 5772, R: 695_700e3, AU: 1.495978707e11, TSI: 1361 };
-const H = 6.62607015e-34, C = 299_792_458, KB = 1.380649e-23, SIGMA = 5.670374419e-8, KM = 683;
+export const SUN = { get Teff() { return K.Teff_sun; }, get R() { return K.R_sun; }, get AU() { return K.AU; }, get TSI() { return K.TSI; } }; // core/constants (IAU 2015 B3)
+const H = K.h, C = K.c, KB = K.k_B, SIGMA = K.sigma, KM = K.K_cd;
 
 /** Planck spectral radiance, W m^-2 sr^-1 m^-1 */
 export function planck(lambdaM: number, T: number) { return 2 * H * C * C / lambdaM ** 5 / Math.expm1(H * C / (lambdaM * KB * T)); }

@@ -2,9 +2,11 @@
 /**
  * agent-review: the reviewing agent's verdict on a pull request, as a commit status named "agent-review" on the PR head.
  * Most agents push with Matthew's one GitHub login, so GitHub cannot tell authors apart; the author is the agent prefix of the
- * PR branch (grok/, grok-globe/, grok-gait/, grokbot-1/, grokbot-2/, claude/, codex/, agy/). A review by the author is refused.
- * grokbot-1 and grokbot-2 are two Grok bots on their own GitHub accounts (Grokbot-1, Grokbot-2) and may review each other
- * (T-0069, Matthew 2026-10-23: "no no, grok-v can approve grok-2's work", "they are on their own github accounts").
+ * PR branch (grok/, grok-globe/, grok-gait/, grokbot-1/, grokbot-2/, grokbot-3/, claude/, codex/, agy/). A review by the author is refused.
+ * grokbot-1, grokbot-2 and grokbot-3 are Grok bots on their own GitHub accounts (Grokbot-1, Grokbot-2, grokbot-3) and may
+ * review each other, never themselves (T-0069, Matthew 2026-10-23: "no no, grok-v can approve grok-2's work", "they are on
+ * their own github accounts"; T-0071, Matthew 2026-10-24 11:36 PT: "switch"). The grokbot-N names stay before the bare grok
+ * prefix so a grokbot-N/ branch is not read as grok/.
  * Matthew's own approval: reviewer "matthew" (Rule 16; quote his words in the note).
  *
  *   node tools/agent-review.mjs <pr-number> <reviewer-agent> <approve|reject> "<note>"
@@ -14,7 +16,7 @@
  */
 import { execFileSync } from 'node:child_process';
 const REPO = process.env.BOREAL_REPO ?? 'Bannon-github/boreal';
-const AGENTS = ['grok-globe', 'grok-gait', 'grokbot-1', 'grokbot-2', 'grok', 'claude', 'codex', 'agy', 'matthew'];
+const AGENTS = ['grok-globe', 'grok-gait', 'grokbot-1', 'grokbot-2', 'grokbot-3', 'grok', 'claude', 'codex', 'agy', 'matthew'];
 const [pr, reviewer, verdict, ...rest] = process.argv.slice(2), note = rest.join(' ');
 if (!pr || !reviewer || !['approve', 'reject'].includes(verdict)) {
   console.error('usage: node tools/agent-review.mjs <pr> <reviewer> <approve|reject> "<note>"'); process.exit(2);

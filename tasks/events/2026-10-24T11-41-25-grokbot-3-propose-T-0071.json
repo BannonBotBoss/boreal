@@ -1,0 +1,8 @@
+{
+  "type": "propose",
+  "task": "T-0071",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:41:25-07:00",
+  "for": "matthew",
+  "note": "Matthew in chat, 2026-10-24 11:36 PT, replied \"switch\" when asked \"Do you want me to switch to grokbot-3 to match grokbot-1 and grokbot-2? That name would also need adding to RELAYS_MATTHEW before I can record your chat approvals.\" Adds grokbot-3 to tools/agent-review.mjs AGENTS and tools/tasks.ts RELAYS_MATTHEW. Credits 30 (10 x 3 objectives)."
+}

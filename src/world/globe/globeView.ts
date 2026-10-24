@@ -41,6 +41,7 @@ import { GLOBE_SHORE, applySolarAttribute, buildTile, globeMaterial, releaseTile
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
 import { auroraFromSolarWind, fieldLineR } from '../../core/geodynamo';
 import { auroraPole } from './atmosphere';
+import { buildPlates, boundaries } from './plates';
 import omniQuiet from '../../../data/omni/quiet-2024-04-27.json';
 import omniGannon from '../../../data/omni/gannon-2024-05-10.json';
 export { GLOBE_LAKE, GLOBE_LAND, GLOBE_SHORE } from './tile'; // inpage.ts (lazy): the band's lake ease
@@ -147,6 +148,15 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : q.has('at') && Number.isFinite(atYaw) && q.get('at')!.split(',').length > 2 ? -atYaw : null;
   const pitchQ = q.has('pitch') ? Number(q.get('pitch')) * Math.PI / 180 : null; // ?pitch=deg from straight down (screenshots: look down at a cloud deck)
   const group = new THREE.Group(); scene.add(group);
+  // Plate boundaries (plates.ts: seeded outlines, NNR-MORVEL56 motions), built on first show; red divergent, blue convergent, green transform
+  const plateLayer = new THREE.Group(); plateLayer.visible = false; scene.add(plateLayer); let platesBuilt = false;
+  const showPlates = (on: boolean) => { plateLayer.visible = on; if (!on || platesBuilt) return; platesBuilt = true;
+    const pl = buildPlates(seed), b = boundaries(pl, R, 0.4), pos = new Float32Array(b.length * 3), col = new Float32Array(b.length * 3);
+    const C = { divergent: [1, 0.25, 0.2], convergent: [0.3, 0.5, 1], transform: [0.3, 1, 0.4] };
+    b.forEach((x, i) => { pos.set([x.p[0] * R * 1.002, x.p[1] * R * 1.002, x.p[2] * R * 1.002], i * 3); col.set(C[x.kind], i * 3); });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const m = new THREE.PointsMaterial({ size: 2, sizeAttenuation: false, vertexColors: true, toneMapped: false }); m.onBeforeCompile = withLogDepth;
+    const pts = new THREE.Points(g, m); pts.frustumCulled = false; plateLayer.add(pts); };
   // Aurora: oval from measured solar wind (?omni=quiet|gannon, ?omniHour=i; default the hour of peak reconnection voltage)
   const omniRun = auroraFromSolarWind((q.get('omni') === 'gannon' ? omniGannon : omniQuiet).hours);
   const omniPeak = omniRun.reduce((b, h, i) => h.phiKV > omniRun[b].phiKV ? i : b, 0);
@@ -402,7 +412,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     }
     camera.near = clamp(alt * .02, .5, 1e5); camera.far = Math.sqrt((R + ground + alt) ** 2 - R * R) + R * 2; camera.updateProjectionMatrix();
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
-    sun.position.copy(sunNow()); sun.intensity = isOn('sunlight') ? 3.2 : 0; if (atmos) atmos.setLayers(isOn('clouds'), isOn('atmosphere'), isOn('airglow')); if (atmos) atmos.setAurora(isOn('aurora') ? { ocbMlat: omniNow.ocbMlat, ovalEqMlat: omniNow.ovalEqMlat, relBrightness: omniNow.emission.relBrightness } : null); fieldLines.visible = isOn('fieldLines'); setSnowIceShown(isOn('snowIce'));
+    sun.position.copy(sunNow()); sun.intensity = isOn('sunlight') ? 3.2 : 0; if (atmos) atmos.setLayers(isOn('clouds'), isOn('atmosphere'), isOn('airglow')); if (atmos) atmos.setAurora(isOn('aurora') ? { ocbMlat: omniNow.ocbMlat, ovalEqMlat: omniNow.ovalEqMlat, relBrightness: omniNow.emission.relBrightness } : null); fieldLines.visible = isOn('fieldLines'); showPlates(isOn('plates')); setSnowIceShown(isOn('snowIce'));
     { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = isOn('sunlight') ? (atmos ? .7 : .04 + .66 * smoothstep(-.3, .12, se)) : 1; /* with the atmosphere the sky light is gated per fragment by the local Sun altitude (atmosphere.ts skyF) */ hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
     camPos[0] = camera.position.x; camPos[1] = camera.position.y; camPos[2] = camera.position.z;
 
@@ -440,7 +450,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setLayerCamera(camPos, camera.fov, viewH);
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
-    tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
+    tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
   }

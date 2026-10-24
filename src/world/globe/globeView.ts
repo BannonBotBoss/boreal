@@ -132,7 +132,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; if (layerTier >= 0) void startPlanetLayers(planet, layerTier, layerDay);
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   let shown = {} as Record<LayerId, LayerState>; const isOn = (id: LayerId) => shown[id]?.on ?? true;
-  const panel = q.get('panel') === '0' || q.has('shot') && !q.has('panel') ? null : mountLayerPanel(location.search, (st) => { shown = st; });
+  const panel = q.get('panel') === '0' || q.has('shot') && !q.has('panel') || q.get('view') !== 'globe' && q.get('start') !== 'globe' ? null : mountLayerPanel(location.search, (st) => { shown = st; });
   if (!panel) { const { layerStates, parseHidden, deepOffset } = { ...layerPanelPure }; shown = layerStates(parseHidden(location.search, null), deepOffset(location.search)); }
   const camV = new THREE.Vector3();
   let ext: { position: THREE.Vector3; quaternion: THREE.Quaternion; fov: number; aspect: number } | null = null; // shared band: externally flown camera

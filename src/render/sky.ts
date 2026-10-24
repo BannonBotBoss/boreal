@@ -1,4 +1,5 @@
 import { createVenus, dayOfYearOf, skyDate } from './venusSky';
+import { SITE as VENUS_SITE } from '../core/weather'; // the Sun and the planets share the observer (Kenora) so twilight and Venus agree
 import { GLSL_NOISE } from '../proc/glsl';
 import { hash, random } from '../proc/rng';
 import * as THREE from 'three';
@@ -83,7 +84,7 @@ export function createSky(scene: THREE.Scene) {
     sky, sunLight, hemi,
     /** Moves the sun and recolours sky, light and fog for the hour; the sky follows the camera. */
     update(hour: number, time: number, camera: THREE.Camera, focus: THREE.Vector3) {
-      const sun = sunPosition(hour, doy), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
+      const sun = sunPosition(hour, doy, VENUS_SITE.lat), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
       sky.position.copy(camera.position); clouds.position.copy(camera.position);
       u.sunPosition.value.copy(dir);
       // Physical light (core/light): sun colour from spectral transmittance, illuminance in lux, adaptive exposure.
@@ -131,7 +132,7 @@ export function createSky(scene: THREE.Scene) {
       // fog is offset by the camera's height above the focus [game calibration]. At eye height the offset is ~2 m (no change).
       { const f = scene.fog as THREE.Fog, alt = Math.max(0, camera.position.y - focus.y); f.far = Math.min(fogFar, fogV) + alt; f.near = Math.min(fogNear, fogV * .1) + alt; }
       cu.uSunDir.value.copy(dir); cu.uSunColor.value.copy(sunLight.color);
-      venus.update(date, hour, camera.position);
+      venus.update(date, hour, camera.position, camera);
       return { sun, light, dir };
     },
   };

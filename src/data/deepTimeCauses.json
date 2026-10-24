@@ -1,0 +1,1286 @@
+{
+ "schema": "boreal.deepTimeCauses.v1",
+ "task": "T-0065",
+ "request": [
+  "but then , how did all those events come to be? research and find real numbers",
+  "the moon will need to come from the earliest times, so it would be programmed as a probability: earth's very reason for forming came with the probability of a collision."
+ ],
+ "notes": "Distributions: mean, spread (1-sigma or half-range), unit, dist, source. referenceSeed values reproduce our Earth (seed 0). Ages in years before present.",
+ "referenceSeed": 0,
+ "events": [
+  {
+   "id": "nebula_sun",
+   "onsetYearsAgo": {
+    "mean": 4567300000.0,
+    "spread": 160000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Connelly 2012 Science 338:651"
+   },
+   "mechanism": "cloud-core collapse; KH contraction to ZAMS",
+   "inputs": {
+    "L0_over_Lnow": {
+     "mean": 0.71,
+     "spread": 0.01,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Gough 1981; Bahcall 2001"
+    },
+    "diskLifetime": {
+     "mean": 4000000.0,
+     "spread": 1000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Haisch 2001; Wang 2017"
+    }
+   },
+   "simRule": "L(t)=L0/(1+0.4(1-t/4.57Gyr))",
+   "onsetCondition": "t>=t0",
+   "sources": [
+    "Connelly 2012",
+    "Gough 1981"
+   ]
+  },
+  {
+   "id": "accretion",
+   "onsetYearsAgo": {
+    "mean": 4500000000.0,
+    "spread": 30000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Chambers 2001; Kokubo & Genda 2010"
+   },
+   "mechanism": "streaming-instability planetesimals -> runaway/oligarchic embryos -> giant impacts",
+   "inputs": {
+    "planetesimalDiameter": {
+     "mean": 100,
+     "spread": 50,
+     "unit": "km",
+     "dist": "lognormal",
+     "source": "Johansen 2015; Morbidelli 2009"
+    },
+    "sizeIndexQ": {
+     "mean": 2.0,
+     "spread": 0.6,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Simon 2016; Johansen 2015"
+    },
+    "SigmaSolid1AU": {
+     "mean": 7,
+     "spread": 3.5,
+     "unit": "g/cm2",
+     "dist": "lognormal",
+     "source": "Hayashi 1981"
+    },
+    "embryoMass": {
+     "mean": 0.05,
+     "spread": 0.04,
+     "unit": "M_E",
+     "dist": "loguniform",
+     "source": "Kokubo & Ida 2000"
+    },
+    "embryoSpacing": {
+     "mean": 10,
+     "spread": 3,
+     "unit": "mutual Hill radii",
+     "dist": "normal",
+     "source": "Kokubo & Ida 1998"
+    },
+    "nGiantImpacts": {
+     "mean": 10,
+     "spread": 4,
+     "unit": "count",
+     "dist": "poisson",
+     "source": "Kokubo & Genda 2010 ApJL 714:L21"
+    },
+    "massRatioGamma": {
+     "mean": 0.15,
+     "spread": 1.0,
+     "unit": "-(lognormal sigma_ln)",
+     "dist": "lognormal",
+     "source": "Kokubo & Genda 2010; Stewart & Leinhardt 2012"
+    },
+    "vImpOverVesc": {
+     "mean": 1.15,
+     "spread": 0.15,
+     "unit": "-",
+     "dist": "triangular[1.0,1.4]",
+     "source": "Kokubo & Genda 2010; Chambers 2013"
+    },
+    "impactAngle": {
+     "mean": 45,
+     "spread": 0,
+     "unit": "deg",
+     "dist": "sin2theta",
+     "source": "Shoemaker 1962"
+    },
+    "hitAndRunFraction": {
+     "mean": 0.5,
+     "spread": 0.15,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Asphaug 2010; Stewart & Leinhardt 2012"
+    },
+    "accretionDuration": {
+     "mean": 100000000.0,
+     "spread": 50000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Chambers 2001; Raymond 2009"
+    },
+    "earth63pctGrowth": {
+     "mean": 20000000.0,
+     "spread": 10000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Yin 2002; Kleine 2009",
+     "disputed": true
+    }
+   },
+   "simRule": "N-body or seeded Monte Carlo of impacts",
+   "onsetCondition": "embryos present, gas dispersed",
+   "sources": [
+    "Chambers 2001 Icarus 152:205",
+    "Raymond 2009",
+    "Kokubo & Genda 2010"
+   ]
+  },
+  {
+   "id": "moon_impact",
+   "onsetYearsAgo": {
+    "mean": 4510000000.0,
+    "spread": 40000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Barboni 2017; Borg 2015 (4.42-4.47)",
+    "disputed": true
+   },
+   "mechanism": "giant impact ejects disk that accretes a satellite",
+   "inputs": {
+    "canonical": {
+     "gamma": {
+      "mean": 0.11,
+      "spread": 0.02,
+      "unit": "-",
+      "dist": "normal",
+      "source": "Canup & Asphaug 2001 Nature 412:708"
+     },
+     "angle": {
+      "mean": 45,
+      "spread": 7,
+      "unit": "deg",
+      "dist": "normal",
+      "source": "Canup 2004"
+     },
+     "v": {
+      "mean": 1.0,
+      "spread": 0.1,
+      "unit": "v_esc",
+      "dist": "normal",
+      "source": "Canup 2004"
+     },
+     "L": {
+      "mean": 1.1,
+      "spread": 0.1,
+      "unit": "L_EM",
+      "dist": "normal",
+      "source": "Canup 2004"
+     }
+    },
+    "fastSpin": {
+     "gamma": {
+      "mean": 0.06,
+      "spread": 0.04,
+      "unit": "-",
+      "dist": "normal",
+      "source": "Cuk & Stewart 2012 Science 338:1047"
+     },
+     "v": {
+      "mean": 20,
+      "spread": 3,
+      "unit": "km/s",
+      "dist": "normal",
+      "source": "Cuk & Stewart 2012"
+     },
+     "protoEarthPeriod": {
+      "mean": 2.5,
+      "spread": 0.2,
+      "unit": "h",
+      "dist": "normal",
+      "source": "Cuk & Stewart 2012"
+     },
+     "L": {
+      "mean": 2.5,
+      "spread": 0.5,
+      "unit": "L_EM",
+      "dist": "normal",
+      "source": "Cuk & Stewart 2012"
+     }
+    },
+    "halfEarths": {
+     "gamma": {
+      "mean": 0.45,
+      "spread": 0.05,
+      "unit": "-",
+      "dist": "normal",
+      "source": "Canup 2012"
+     }
+    },
+    "synestia": {
+     "L": {
+      "mean": 2.5,
+      "spread": 1.0,
+      "unit": "L_EM",
+      "dist": "normal",
+      "source": "Lock 2018 JGR 123:910"
+     }
+    },
+    "multiImpact": {
+     "nImpacts": {
+      "mean": 20,
+      "spread": 8,
+      "unit": "count",
+      "dist": "normal",
+      "source": "Rufu 2017 Nat Geo 10:89"
+     },
+     "gamma": {
+      "mean": 0.05,
+      "spread": 0.04,
+      "unit": "-",
+      "dist": "normal",
+      "source": "Rufu 2017"
+     },
+     "pMoonletPerImpact": {
+      "mean": 0.2,
+      "spread": 0.1,
+      "unit": "-",
+      "dist": "normal",
+      "source": "Rufu 2017"
+     }
+    },
+    "L_EM": {
+     "mean": 3.5e+34,
+     "spread": 0.0,
+     "unit": "kg m2/s",
+     "dist": "normal",
+     "source": "Canup 2004",
+     "referenceSeed": 3.5e+34
+    },
+    "impactEnergy": {
+     "mean": 3e+31,
+     "spread": 2e+31,
+     "unit": "J",
+     "dist": "lognormal",
+     "source": "derived 0.5mv^2; Canup 2004"
+    },
+    "magmaOceanDepth": {
+     "mean": 1500,
+     "spread": 1000,
+     "unit": "km",
+     "dist": "normal",
+     "source": "Tonks & Melosh 1993; Nakajima & Stevenson 2015",
+     "disputed": true
+    },
+    "pDiskPerImpact": {
+     "mean": 0.2,
+     "spread": 0.1,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Canup 2004; Rufu 2017",
+     "disputed": true
+    },
+    "pMoonPerPlanet": {
+     "mean": 0.08,
+     "spread": 0.06,
+     "unit": "-",
+     "dist": "lognormal",
+     "source": "Elser, Moore & Stadel 2011 Icarus 214:357",
+     "disputed": true
+    },
+    "moonMass": {
+     "mean": 0.0123,
+     "spread": 0.0,
+     "unit": "M_E",
+     "dist": "normal",
+     "source": "NASA fact sheet",
+     "referenceSeed": 0.0123
+    },
+    "accretionEfficiency": {
+     "mean": 0.4,
+     "spread": 0.1,
+     "unit": "M_moon/M_disk",
+     "dist": "normal",
+     "source": "Ida, Canup & Stewart 1997"
+    },
+    "initialA": {
+     "mean": 4,
+     "spread": 0.6,
+     "unit": "R_E",
+     "dist": "uniform[3,5]",
+     "source": "Ida 1997; Salmon & Canup 2012"
+    },
+    "rocheLimit": {
+     "mean": 2.9,
+     "spread": 0,
+     "unit": "R_E",
+     "dist": "normal",
+     "source": "Canup 2004"
+    }
+   },
+   "simRule": "see doc section 20",
+   "onsetCondition": "last giant impact with disk mass>=M_moon",
+   "sources": [
+    "Canup & Asphaug 2001",
+    "Cuk & Stewart 2012",
+    "Lock 2018",
+    "Rufu 2017",
+    "Elser 2011"
+   ]
+  },
+  {
+   "id": "tidal_evolution",
+   "onsetYearsAgo": {
+    "mean": 4510000000.0,
+    "spread": 40000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "follows moon_impact"
+   },
+   "mechanism": "tidal torque transfers Earth spin to lunar orbit",
+   "inputs": {
+    "recessionNow": {
+     "mean": 3.83,
+     "spread": 0.009,
+     "unit": "cm/yr",
+     "dist": "normal",
+     "source": "Dickey 1994 Science 265:482; Williams & Boggs 2016",
+     "referenceSeed": 3.83
+    },
+    "dissipationNow": {
+     "mean": 3.7,
+     "spread": 0.1,
+     "unit": "TW",
+     "dist": "normal",
+     "source": "Egbert & Ray 2000"
+    },
+    "LOD_620Ma": {
+     "mean": 21.9,
+     "spread": 0.4,
+     "unit": "h",
+     "dist": "normal",
+     "source": "Williams 2000 Rev Geophys 38:37"
+    },
+    "a_620Ma": {
+     "mean": 0.965,
+     "spread": 0.005,
+     "unit": "a_now",
+     "dist": "normal",
+     "source": "Williams 2000"
+    },
+    "meanRecessionSince620Ma": {
+     "mean": 2.17,
+     "spread": 0.31,
+     "unit": "cm/yr",
+     "dist": "normal",
+     "source": "Williams 2000"
+    },
+    "LOD_1400Ma": {
+     "mean": 18.7,
+     "spread": 0.5,
+     "unit": "h",
+     "dist": "normal",
+     "source": "Meyers & Malinverno 2018 PNAS"
+    },
+    "LOD_post_impact": {
+     "mean": 5,
+     "spread": 1,
+     "unit": "h",
+     "dist": "normal",
+     "source": "Canup 2004 (canonical); 2-3 h Cuk & Stewart",
+     "disputed": true
+    },
+    "LOD_stall_2.0_1.0Ga": {
+     "mean": 19,
+     "spread": 0.5,
+     "unit": "h",
+     "dist": "normal",
+     "source": "Zahnle & Walker 1987; Mitchell & Kirscher 2023",
+     "disputed": true
+    },
+    "obliquityRangeWithMoon": {
+     "mean": 23.3,
+     "spread": 1.2,
+     "unit": "deg",
+     "dist": "normal",
+     "source": "Laskar 1993; Berger 1978"
+    },
+    "obliquityRangeNoMoon": {
+     "mean": 42,
+     "spread": 42,
+     "unit": "deg",
+     "dist": "uniform[0,85]",
+     "source": "Laskar, Joutel & Robutel 1993 Nature 361:615 (0-85); Lissauer 2012 (10-20 swing)",
+     "disputed": true
+    }
+   },
+   "simRule": "da/dt=3(k2/Q)(m/M)(R/a)^5 n a; conserve L; Q(t) calibrated to seed 0",
+   "onsetCondition": "Moon exists",
+   "sources": [
+    "Williams 2000",
+    "Dickey 1994",
+    "Laskar 1993"
+   ]
+  },
+  {
+   "id": "core_formation",
+   "onsetYearsAgo": {
+    "mean": 4537000000.0,
+    "spread": 20000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Kleine 2002 Nature 418:952; Yin 2002",
+    "disputed": true
+   },
+   "mechanism": "Fe-metal segregation through magma ocean",
+   "inputs": {
+    "Hf182HalfLife": {
+     "mean": 8900000.0,
+     "spread": 90000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Vockenhuber 2004"
+    },
+    "coreMassFraction": {
+     "mean": 0.325,
+     "spread": 0.003,
+     "unit": "-",
+     "dist": "normal",
+     "source": "PREM"
+    },
+    "energyReleased": {
+     "mean": 1.5e+31,
+     "spread": 5e+30,
+     "unit": "J",
+     "dist": "normal",
+     "source": "Flasar & Birch 1973"
+    }
+   },
+   "simRule": "differentiation rate \u221d melt fraction",
+   "onsetCondition": "T>Fe-FeS eutectic",
+   "sources": [
+    "Kleine 2002",
+    "Yin 2002"
+   ]
+  },
+  {
+   "id": "magma_ocean_cooling",
+   "onsetYearsAgo": {
+    "mean": 4500000000.0,
+    "spread": 30000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Elkins-Tanton 2008"
+   },
+   "mechanism": "radiative cooling through steam/CO2 atmosphere",
+   "inputs": {
+    "runawayOLRlimit": {
+     "mean": 282,
+     "spread": 10,
+     "unit": "W/m2",
+     "dist": "normal",
+     "source": "Goldblatt 2013 Nat Geo"
+    },
+    "solidificationTime": {
+     "mean": 2000000.0,
+     "spread": 1500000.0,
+     "unit": "yr",
+     "dist": "lognormal",
+     "source": "Abe 1997; Elkins-Tanton 2008; Lebrun 2013"
+    },
+    "oldestZircon": {
+     "mean": 4404000000.0,
+     "spread": 8000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Wilde 2001 Nature 409:175"
+    },
+    "hadeanHeatFlowFactor": {
+     "mean": 4,
+     "spread": 1,
+     "unit": "x present",
+     "dist": "normal",
+     "source": "Korenaga 2008"
+    }
+   },
+   "simRule": "C dT/dt = absorbed - OLR(T,atm)",
+   "onsetCondition": "post-impact",
+   "sources": [
+    "Elkins-Tanton 2008",
+    "Wilde 2001"
+   ]
+  },
+  {
+   "id": "water_oceans",
+   "onsetYearsAgo": {
+    "mean": 4400000000.0,
+    "spread": 50000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Mojzsis 2001; Wilde 2001"
+   },
+   "mechanism": "outgassing of accreted chondritic water, condensation below critical T",
+   "inputs": {
+    "DH_ocean": {
+     "mean": 0.000156,
+     "spread": 0,
+     "unit": "-",
+     "dist": "normal",
+     "source": "VSMOW"
+    },
+    "DH_carbonaceous": {
+     "mean": 0.00016,
+     "spread": 2e-05,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Alexander 2012 Science 337:721"
+    },
+    "DH_comets": {
+     "mean": 0.0003,
+     "spread": 0.00015,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Altwegg 2015; Hartogh 2011"
+    },
+    "cometFractionMax": {
+     "mean": 0.1,
+     "spread": 0.05,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Morbidelli 2000"
+    },
+    "oceanMass": {
+     "mean": 1.4e+21,
+     "spread": 0,
+     "unit": "kg",
+     "dist": "normal",
+     "source": "USGS/NOAA"
+    },
+    "enstatiteOceans": {
+     "mean": 10,
+     "spread": 7,
+     "unit": "ocean masses",
+     "dist": "normal",
+     "source": "Piani 2020 Science 369:1110",
+     "disputed": true
+    }
+   },
+   "simRule": "condense when T_surf<T_sat(p), T<647 K",
+   "onsetCondition": "magma ocean solid, OLR>absorbed",
+   "sources": [
+    "Alexander 2012",
+    "Piani 2020"
+   ]
+  },
+  {
+   "id": "faint_sun_greenhouse",
+   "onsetYearsAgo": {
+    "mean": 4000000000.0,
+    "spread": 0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "window 4.0-2.5 Ga"
+   },
+   "mechanism": "high CO2/CH4 offset 25-30% dimmer Sun; carbonate-silicate thermostat",
+   "inputs": {
+    "S_4Ga": {
+     "mean": 0.75,
+     "spread": 0.01,
+     "unit": "S0",
+     "dist": "normal",
+     "source": "Gough 1981"
+    },
+    "pCO2_4Ga": {
+     "mean": 0.3,
+     "spread": 0.5,
+     "unit": "bar",
+     "dist": "loguniform[0.03,1.5]",
+     "source": "Krissansen-Totton 2018 PNAS; Catling & Zahnle 2020",
+     "disputed": true
+    },
+    "pCO2_2.5Ga": {
+     "mean": 0.05,
+     "spread": 0.1,
+     "unit": "bar",
+     "dist": "loguniform[0.01,0.3]",
+     "source": "Sheldon 2006; Driese 2011",
+     "disputed": true
+    },
+    "CH4_archean": {
+     "mean": 1000.0,
+     "spread": 3000.0,
+     "unit": "ppm",
+     "dist": "loguniform[1e2,1e4]",
+     "source": "Pavlov 2000",
+     "disputed": true
+    },
+    "weatheringTe": {
+     "mean": 13.7,
+     "spread": 3,
+     "unit": "K",
+     "dist": "normal",
+     "source": "Walker, Hays & Kasting 1981"
+    },
+    "weatheringBeta": {
+     "mean": 0.4,
+     "spread": 0.1,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Berner 2004"
+    },
+    "outgassingNow": {
+     "mean": 8000000000000.0,
+     "spread": 2000000000000.0,
+     "unit": "mol CO2/yr",
+     "dist": "normal",
+     "source": "Marty & Tolstikhin 1998; Burton 2013"
+    }
+   },
+   "simRule": "dpCO2/dt=outgas-W; W=W0 exp(dT/Te)(pCO2/p0)^beta",
+   "onsetCondition": "oceans + land",
+   "sources": [
+    "Walker 1981",
+    "Kasting 1987"
+   ]
+  },
+  {
+   "id": "geodynamo",
+   "onsetYearsAgo": {
+    "mean": 3700000000.0,
+    "spread": 400000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Tarduno 2010/2015; Nichols 2024",
+    "disputed": true
+   },
+   "mechanism": "thermal then compositional convection in outer core",
+   "inputs": {
+    "Q_adiabatic": {
+     "mean": 10,
+     "spread": 5,
+     "unit": "TW",
+     "dist": "normal",
+     "source": "Pozzo 2012 (~13); Konopkova 2016 (~4-6)",
+     "disputed": true
+    },
+    "Q_CMB_now": {
+     "mean": 11,
+     "spread": 6,
+     "unit": "TW",
+     "dist": "normal",
+     "source": "Lay 2008"
+    },
+    "innerCoreAge": {
+     "mean": 1000000000.0,
+     "spread": 500000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Labrosse 2015; Biggin 2015; Bono 2019",
+     "disputed": true
+    },
+    "fieldNow": {
+     "mean": 45,
+     "spread": 20,
+     "unit": "uT",
+     "dist": "normal",
+     "source": "IGRF"
+    }
+   },
+   "simRule": "dynamo on if Q_CMB>Q_ad or inner core growing; B \u221d F^(1/3)",
+   "onsetCondition": "core liquid, Q_CMB>Q_ad",
+   "sources": [
+    "Christensen & Aubert 2006",
+    "Tarduno 2015"
+   ]
+  },
+  {
+   "id": "radiogenic_plates",
+   "onsetYearsAgo": {
+    "mean": 3000000000.0,
+    "spread": 500000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Cawood 2018; Shirey & Richardson 2011",
+    "disputed": true
+   },
+   "mechanism": "mantle convection stresses exceed lithosphere yield",
+   "inputs": {
+    "heatFlowNow": {
+     "mean": 46,
+     "spread": 3,
+     "unit": "TW",
+     "dist": "normal",
+     "source": "Jaupart 2007; Davies & Davies 2010"
+    },
+    "radiogenicNow": {
+     "mean": 20,
+     "spread": 9,
+     "unit": "TW",
+     "dist": "normal",
+     "source": "KamLAND 2011; Borexino 2020"
+    },
+    "U238": {
+     "halfLife": {
+      "mean": 4468000000.0,
+      "spread": 0,
+      "unit": "yr",
+      "dist": "normal",
+      "source": "NNDC"
+     },
+     "powerNow": {
+      "mean": 7.7,
+      "spread": 1,
+      "unit": "TW",
+      "dist": "normal",
+      "source": "McDonough & Sun 1995"
+     }
+    },
+    "U235": {
+     "halfLife": {
+      "mean": 704000000.0,
+      "spread": 0,
+      "unit": "yr",
+      "dist": "normal",
+      "source": "NNDC"
+     },
+     "powerNow": {
+      "mean": 0.33,
+      "spread": 0.05,
+      "unit": "TW",
+      "dist": "normal",
+      "source": "McDonough & Sun 1995"
+     }
+    },
+    "Th232": {
+     "halfLife": {
+      "mean": 14050000000.0,
+      "spread": 0,
+      "unit": "yr",
+      "dist": "normal",
+      "source": "NNDC"
+     },
+     "powerNow": {
+      "mean": 8.3,
+      "spread": 1,
+      "unit": "TW",
+      "dist": "normal",
+      "source": "McDonough & Sun 1995"
+     }
+    },
+    "K40": {
+     "halfLife": {
+      "mean": 1248000000.0,
+      "spread": 0,
+      "unit": "yr",
+      "dist": "normal",
+      "source": "NNDC"
+     },
+     "powerNow": {
+      "mean": 3.3,
+      "spread": 0.7,
+      "unit": "TW",
+      "dist": "normal",
+      "source": "McDonough & Sun 1995"
+     }
+    },
+    "mantleTpNow": {
+     "mean": 1350,
+     "spread": 50,
+     "unit": "C",
+     "dist": "normal",
+     "source": "Herzberg 2010"
+    },
+    "mantleTpPeak": {
+     "mean": 1550,
+     "spread": 50,
+     "unit": "C",
+     "dist": "normal",
+     "source": "Herzberg 2010"
+    },
+    "plateSpeed": {
+     "mean": 5,
+     "spread": 3,
+     "unit": "cm/yr",
+     "dist": "normal",
+     "source": "DeMets 2010"
+    }
+   },
+   "simRule": "H(t)=sum P_i exp(ln2 t/T_i); plates when Tp<T_crit and lithosphere hydrated",
+   "onsetCondition": "",
+   "sources": [
+    "McDonough & Sun 1995",
+    "Herzberg 2010"
+   ]
+  },
+  {
+   "id": "origin_of_life",
+   "onsetYearsAgo": {
+    "mean": 3800000000.0,
+    "spread": 200000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Djokic 2017 (3.48); Nutman 2016 (3.7); Bell 2015 (4.1)",
+    "disputed": true
+   },
+   "mechanism": "abiogenesis at vents/pools (unknown)",
+   "inputs": {
+    "hazardDelayAfterOceans": {
+     "mean": 200000000.0,
+     "spread": 150000000.0,
+     "unit": "yr",
+     "dist": "lognormal",
+     "source": "unconstrained; assumption",
+     "disputed": true
+    }
+   },
+   "simRule": "stochastic emergence",
+   "onsetCondition": "liquid water + redox gradients",
+   "sources": [
+    "Nutman 2016",
+    "Bell 2015",
+    "Moody 2024"
+   ]
+  },
+  {
+   "id": "GOE",
+   "onsetYearsAgo": {
+    "mean": 2430000000.0,
+    "spread": 50000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Gumsley 2017; Poulton 2021"
+   },
+   "mechanism": "O2 source (organic burial) exceeds reductant sink; CH4 collapse",
+   "inputs": {
+    "oxygenicPhotosynthesisOnset": {
+     "mean": 2900000000.0,
+     "spread": 200000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Anbar 2007; Planavsky 2014",
+     "disputed": true
+    },
+    "pO2_pre": {
+     "mean": 1e-05,
+     "spread": 0,
+     "unit": "PAL max",
+     "dist": "normal",
+     "source": "Pavlov & Kasting 2002"
+    },
+    "orgCBurialNow": {
+     "mean": 10000000000000.0,
+     "spread": 3000000000000.0,
+     "unit": "mol/yr",
+     "dist": "normal",
+     "source": "Holland 2002"
+    },
+    "KoxyThreshold": {
+     "mean": 1,
+     "spread": 0,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Catling & Claire 2005"
+    },
+    "huronianGlaciation": {
+     "mean": 2330000000.0,
+     "spread": 120000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Bekker 2014; Kopp 2005"
+    }
+   },
+   "simRule": "dO2/dt=burial - reductant flux; bistable (Goldblatt 2006)",
+   "onsetCondition": "cyanobacteria present",
+   "sources": [
+    "Holland 2009",
+    "Goldblatt 2006"
+   ]
+  },
+  {
+   "id": "ozone",
+   "onsetYearsAgo": {
+    "mean": 2400000000.0,
+    "spread": 100000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "follows GOE"
+   },
+   "mechanism": "Chapman photochemistry",
+   "inputs": {
+    "columnNow": {
+     "mean": 300,
+     "spread": 30,
+     "unit": "DU",
+     "dist": "normal",
+     "source": "WMO"
+    },
+    "pO2forShield": {
+     "mean": 0.003,
+     "spread": 0.003,
+     "unit": "PAL",
+     "dist": "loguniform[1e-3,1e-2]",
+     "source": "Kasting & Donahue 1980; Segura 2003"
+    }
+   },
+   "simRule": "O3 column=f(pO2) lookup (Gebauer 2017)",
+   "onsetCondition": "pO2>1e-3 PAL",
+   "sources": [
+    "Chapman 1930"
+   ]
+  },
+  {
+   "id": "snowball",
+   "onsetYearsAgo": {
+    "mean": 717400000.0,
+    "spread": 1000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Macdonald 2010; Rooney 2015; Hoffman 2017"
+   },
+   "mechanism": "ice-albedo runaway; exit via CO2 accumulation",
+   "inputs": {
+    "end": {
+     "mean": 635200000.0,
+     "spread": 600000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Hoffman 2017"
+    },
+    "iceLineRunaway": {
+     "mean": 28,
+     "spread": 5,
+     "unit": "deg lat",
+     "dist": "normal",
+     "source": "Budyko 1969; North 1975"
+    },
+    "seaIceAlbedo": {
+     "mean": 0.65,
+     "spread": 0.15,
+     "unit": "-",
+     "dist": "normal",
+     "source": "Warren 2002"
+    },
+    "exitPCO2": {
+     "mean": 0.15,
+     "spread": 0.1,
+     "unit": "bar",
+     "dist": "loguniform[0.01,0.3]",
+     "source": "Pierrehumbert 2004; Abbot 2012",
+     "disputed": true
+    },
+    "buildUpTime": {
+     "mean": 5000000.0,
+     "spread": 3000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Hoffman 1998"
+    }
+   },
+   "simRule": "EBM + CO2 cycle hysteresis",
+   "onsetCondition": "low-latitude continents, low pCO2",
+   "sources": [
+    "Hoffman 2017 Sci Adv"
+   ]
+  },
+  {
+   "id": "NOE_cambrian",
+   "onsetYearsAgo": {
+    "mean": 538800000.0,
+    "spread": 200000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "ICS 2023; Linnemann 2019"
+   },
+   "mechanism": "oxygenation enables large animals",
+   "inputs": {
+    "pO2_NOE": {
+     "mean": 0.3,
+     "spread": 0.3,
+     "unit": "PAL",
+     "dist": "loguniform[0.1,1]",
+     "source": "Lyons 2014 Nature 506:307",
+     "disputed": true
+    },
+    "spongeO2": {
+     "mean": 0.02,
+     "spread": 0.015,
+     "unit": "PAL",
+     "dist": "normal",
+     "source": "Mills 2014"
+    },
+    "predatorO2": {
+     "mean": 0.1,
+     "spread": 0.05,
+     "unit": "PAL",
+     "dist": "normal",
+     "source": "Sperling 2013"
+    }
+   },
+   "simRule": "animal emergence when pO2 > threshold",
+   "onsetCondition": "pO2>0.1 PAL",
+   "sources": [
+    "Lyons 2014"
+   ]
+  },
+  {
+   "id": "land_plants",
+   "onsetYearsAgo": {
+    "mean": 470000000.0,
+    "spread": 10000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Wellman 2003; Rubinstein 2010"
+   },
+   "mechanism": "plants enhance silicate weathering, bury C",
+   "inputs": {
+    "forests": {
+     "mean": 385000000.0,
+     "spread": 5000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Stein 2007/2019"
+    },
+    "weatheringEnhancement": {
+     "mean": 5,
+     "spread": 3,
+     "unit": "x",
+     "dist": "normal",
+     "source": "Berner 1997"
+    },
+    "CO2_devonian": {
+     "mean": 3000,
+     "spread": 1000,
+     "unit": "ppm",
+     "dist": "normal",
+     "source": "Foster 2017; Berner 2001"
+    },
+    "CO2_lateCarb": {
+     "mean": 400,
+     "spread": 100,
+     "unit": "ppm",
+     "dist": "normal",
+     "source": "Foster 2017"
+    }
+   },
+   "simRule": "W multiplier by vegetation",
+   "onsetCondition": "land + O3 shield",
+   "sources": [
+    "Berner 1997",
+    "Foster 2017"
+   ]
+  },
+  {
+   "id": "mass_extinctions",
+   "onsetYearsAgo": null,
+   "mechanism": "LIPs and impacts",
+   "inputs": {
+    "endPermian": {
+     "age": {
+      "mean": 251902000.0,
+      "spread": 24000.0,
+      "unit": "yr",
+      "dist": "normal",
+      "source": "Burgess 2014 PNAS"
+     },
+     "magma": {
+      "mean": 3500000.0,
+      "spread": 1000000.0,
+      "unit": "km3",
+      "dist": "normal",
+      "source": "Burgess 2017"
+     },
+     "lossMarine": {
+      "mean": 0.85,
+      "spread": 0.05,
+      "unit": "-",
+      "dist": "normal",
+      "source": "Stanley 2016"
+     }
+    },
+    "KPg": {
+     "age": {
+      "mean": 66040000.0,
+      "spread": 30000.0,
+      "unit": "yr",
+      "dist": "normal",
+      "source": "Renne 2013"
+     },
+     "energy": {
+      "mean": 3e+23,
+      "spread": 2e+23,
+      "unit": "J",
+      "dist": "lognormal",
+      "source": "Schulte 2010 Science 327:1214"
+     },
+     "impactorDiam": {
+      "mean": 11,
+      "spread": 1.5,
+      "unit": "km",
+      "dist": "normal",
+      "source": "Schulte 2010"
+     },
+     "craterDiam": {
+      "mean": 180,
+      "spread": 10,
+      "unit": "km",
+      "dist": "normal",
+      "source": "Schulte 2010"
+     }
+    },
+    "impactRate10km": {
+     "mean": 1.5e-08,
+     "spread": 5e-09,
+     "unit": "per yr",
+     "dist": "poisson",
+     "source": "Stuart & Binzel 2004"
+    }
+   },
+   "simRule": "Poisson impacts; plume-driven LIPs",
+   "onsetCondition": "",
+   "sources": [
+    "Burgess 2014",
+    "Schulte 2010"
+   ]
+  },
+  {
+   "id": "supercontinents_milankovitch",
+   "onsetYearsAgo": {
+    "mean": 335000000.0,
+    "spread": 15000000.0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "Pangaea assembly; Torsvik & Cocks 2017"
+   },
+   "mechanism": "mantle convection cycle; orbital forcing",
+   "inputs": {
+    "supercontinentPeriod": {
+     "mean": 500000000.0,
+     "spread": 100000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Nance & Murphy 2014"
+    },
+    "pangaeaRift": {
+     "mean": 200000000.0,
+     "spread": 10000000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Torsvik & Cocks 2017"
+    },
+    "obliquityPeriod": {
+     "mean": 41000,
+     "spread": 0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Laskar 2004"
+    },
+    "precessionPeriods": [
+     19000,
+     23000
+    ],
+    "eccentricityPeriods": [
+     95000,
+     125000,
+     405000
+    ],
+    "eccentricityRange": [
+     0.0,
+     0.06
+    ],
+    "NHglaciationOnset": {
+     "mean": 2700000.0,
+     "spread": 100000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Haug 2005"
+    },
+    "MPT": {
+     "mean": 1000000.0,
+     "spread": 200000.0,
+     "unit": "yr",
+     "dist": "normal",
+     "source": "Clark 2006"
+    }
+   },
+   "simRule": "plates kinematics + Laskar 2004 orbital solution",
+   "onsetCondition": "CO2 < ~400 ppm for glacial cycles",
+   "sources": [
+    "Laskar 2004",
+    "Hays 1976"
+   ]
+  },
+  {
+   "id": "future",
+   "onsetYearsAgo": {
+    "mean": -600000000.0,
+    "spread": 0,
+    "unit": "yr",
+    "dist": "normal",
+    "source": "negative = future"
+   },
+   "mechanism": "solar brightening drives CO2 starvation, moist greenhouse, ocean loss, red giant",
+   "inputs": {
+    "brighteningRate": {
+     "mean": 0.009,
+     "spread": 0.001,
+     "unit": "per 100 Myr fraction (~1%/110 Myr)",
+     "dist": "normal",
+     "source": "Gough 1981; Caldeira & Kasting 1992"
+    },
+    "C3floor": {
+     "mean": 750000000.0,
+     "spread": 150000000.0,
+     "unit": "yr ahead",
+     "dist": "normal",
+     "source": "Caldeira & Kasting 1992; Lenton & von Bloh 2001"
+    },
+    "C4floor": {
+     "mean": 1050000000.0,
+     "spread": 150000000.0,
+     "unit": "yr ahead",
+     "dist": "normal",
+     "source": "Caldeira & Kasting 1992"
+    },
+    "O2collapse": {
+     "mean": 1080000000.0,
+     "spread": 140000000.0,
+     "unit": "yr ahead",
+     "dist": "normal",
+     "source": "Ozaki & Reinhard 2021"
+    },
+    "moistGreenhouse": {
+     "mean": 1500000000.0,
+     "spread": 300000000.0,
+     "unit": "yr ahead",
+     "dist": "normal",
+     "source": "Kasting 1988; Wolf & Toon 2015"
+    },
+    "redGiantTip": {
+     "mean": 7590000000.0,
+     "spread": 100000000.0,
+     "unit": "yr ahead",
+     "dist": "normal",
+     "source": "Schroder & Smith 2008",
+     "disputed": true
+    }
+   },
+   "simRule": "L(t) drives EBM; thresholds on S",
+   "onsetCondition": "",
+   "sources": [
+    "Caldeira & Kasting 1992",
+    "Wolf & Toon 2015",
+    "Schroder & Smith 2008"
+   ]
+  }
+ ]
+}

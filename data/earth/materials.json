@@ -1,0 +1,13 @@
+{
+  "_sources": {
+    "bulk": "McDonough 2003, Treatise on Geochemistry 2:547 (Compositional model for the Earth's core), core = 32.5 wt% of Earth; McDonough & Sun 1995, Chem. Geol. 120:223 (pyrolite silicate Earth). Volatiles: ocean 1.4e21 kg (Charette & Smith 2010, Oceanography 23:112), atmosphere 5.15e18 kg (Trenberth & Smith 2005, J. Climate 18:864).",
+    "tillotson": "Tillotson 1962 (GA-3216); parameter table of Melosh 1989, Impact Cratering, Appendix II (Table AII.3): iron and basalt.",
+    "iron_melting": "Anzellini et al. 2013, Science 340:464, Simon-Glatzel fit T_m = T0 ((P - P0)/a + 1)^(1/c)."
+  },
+  "bulk_core_mass_fraction": 0.325,
+  "ocean_mass_kg": 1.4e21,
+  "atmosphere_mass_kg": 5.15e18,
+  "iron":   { "rho0": 7800, "A": 1.28e11, "B": 1.05e11, "E0": 9.5e6,  "a": 0.5, "b": 1.5 },
+  "basalt": { "rho0": 2700, "A": 2.67e10, "B": 2.67e10, "E0": 4.87e8, "a": 0.5, "b": 1.5 },
+  "iron_melting": { "T0_K": 1991, "P0_Pa": 5.2e9, "a_Pa": 27.39e9, "c": 2.38 }
+}

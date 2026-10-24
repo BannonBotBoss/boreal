@@ -95,7 +95,8 @@ export async function startSunView(root: HTMLElement, search = location.search) 
     // meter: fractions of the frame covered by disc / corona / sky (analytic, same numbers the shader draws)
     const discFrac = Math.min(1, Math.PI * pxRho * pxRho / (W * Hh)), Ldisc = vis ? Lcentre * limbMean(550) : k * (thin ? b.quiet * 2 + b.ar * .3 * Math.min(1, groups.length / 5) : 1), Lpeak = vis ? Lcentre : k * (thin ? b.quiet * 2 * Math.sqrt(Math.PI / H) + b.ar : 1.3);
     const Lavg = logAverage([[discFrac, Ldisc], [1 - discFrac, u.uSkyL.value + (thin ? k * b.quiet * .05 : 0) + 1e-3]]);
-    const target = targetEV(Lavg, Lpeak, st.cam.comp); if (st.band !== lastBand) { if (lastBand) ev = target; lastBand = st.band; } // a filter swap is a new metering, not a dark adaptation ev = Number.isNaN(ev) ? (q.has('settled') ? target : ev100FromLuminance(Lavg)) : adapt(ev, target, dt, st.cam.adaptSpeed);
+    const target = targetEV(Lavg, Lpeak, st.cam.comp); if (st.band !== lastBand) { if (lastBand) ev = target; lastBand = st.band; } // a filter swap is a new metering, not a dark adaptation
+    ev = Number.isNaN(ev) ? (q.has('settled') ? target : ev100FromLuminance(Lavg)) : adapt(ev, target, dt, st.cam.adaptSpeed);
     const evUsed = cameraEV(st.cam, ev); u.uExpo.value = exposureFromEV100(evUsed);
     const spotPx = groups.length ? Math.max(...groups.map(g => 2 * radiusFrac(g.areaMSH))) * pxRho : 0;
     info = `${isoDay(date)}  SILSO R=${R ?? '-'}  groups=${groups.length} (R/12.08=${R === undefined ? '-' : (R / 12.08).toFixed(1)})\n${b.label}: ${b.source}\n${space ? 'above the atmosphere' : `sun elevation ${elevQ} deg`}  disc ${(2 * pxRho).toFixed(0)} px\nlargest spot ${spotPx.toFixed(1)} px ${spotPx < 2 ? '(< 2 px: not resolved)' : ''}\nL disc centre ${Lcentre.toExponential(2)} cd/m2\nEV100 ${evUsed.toFixed(1)} ${st.cam.auto ? `(auto, target ${target.toFixed(1)})` : '(manual)'}`;

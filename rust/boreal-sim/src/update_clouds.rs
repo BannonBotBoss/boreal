@@ -15,6 +15,9 @@ pub fn lts(t700_c: f64, ts_c: f64) -> f64 { (t700_c + 273.15) * (P0 / 7.0e4).pow
 pub fn low_cloud_lts(lts_k: f64) -> f64 { (0.057 * lts_k - 0.557).clamp(0.0, 1.0) }
 /// Convective cloud from the precipitation rate: 0.245 + 0.125 ln P (P mm/day), ≤ 0.8 (Slingo 1987, QJRMS 113:899 [verify]).
 /// Duration of synoptic ascent ahead of a warm front, ~half a baroclinic wave period (2-4 d; Holton 2004) [approx]: 1 day.
+/// Cloud-field memory: the diagnosed cover is the cloud that forms; existing cloud decays over its lifetime rather than
+/// vanishing in one step. Cloud-system lifetimes are hours to ~1 day (Houze 2004; ISCCP tracking, Machado & Rossow 1993) [approx]: 6 h.
+pub const CLOUD_TAU_S: f64 = 21600.0;
 pub const SYNOPTIC_LIFT_S: f64 = 86400.0;
 pub fn conv_cloud(p_mm_day: f64) -> f64 { if p_mm_day < 0.14 { 0.0 } else { (0.245 + 0.125 * p_mm_day.ln()).clamp(0.0, 0.8) } }
 
@@ -22,7 +25,8 @@ pub fn conv_cloud(p_mm_day: f64) -> f64 { if p_mm_day < 0.14 { 0.0 } else { (0.2
 /// convection (precipitation), and inversion-capped marine stratocumulus (LTS). The free-troposphere 700 hPa temperature is
 /// horizontally uniform in the tropics (weak temperature gradient, Sobel & Bretherton 2000): the moist adiabat of the band's
 /// warmest-decile ocean air sets it within ±25°; poleward it follows each latitude row's zonal-mean moist adiabat.
-pub fn update_clouds(g: &mut Grid) {
+pub fn update_clouds(g: &mut Grid, dt: f64) {
+    let keep = if dt > 0.0 { (-dt / CLOUD_TAU_S).exp() } else { 0.0 };
     let (nlat, nlon) = (g.nlat, g.nlon);
     let mut t7row = vec![0.0; nlat]; let mut trop: Vec<f64> = Vec::new();
     for r in 0..nlat { let mut s = 0.0; for c in 0..nlon { let i = r * nlon + c; let t = t700_moist(g.p(TAIR)[i], g.p(Q)[i]); s += t;
@@ -48,7 +52,7 @@ pub fn update_clouds(g: &mut Grid) {
         let cst = if g.p(LAND)[i] < 0.5 { low_cloud_lts(lts(t7, ta)) } else { 0.0 };
         let cfront = cloud_fraction((rh * lift[i]).min(1.0)) - cloud_fraction(rh); // the extra cloud the ascent makes
         let c = 1.0 - (1.0 - cloud_fraction(rh)) * (1.0 - cfront.max(0.0)) * (1.0 - conv_cloud(g.p(PMEAN)[i])) * (1.0 - cst);
-        g.pm(RH)[i] = rh; g.pm(CLOUD)[i] = c; g.pm(COT)[i] = cloud_optical_depth(c);
+        let c = keep * g.p(CLOUD)[i] + (1.0 - keep) * c; g.pm(RH)[i] = rh; g.pm(CLOUD)[i] = c; g.pm(COT)[i] = cloud_optical_depth(c);
     }
 }
 
@@ -60,6 +64,8 @@ mod tests {
         for i in 0..g.n { let (lat, lon) = (g.p(LAT)[i], g.p(LON)[i]); let land = ((lon + 180.0) % 120.0 < 40.0 && lat.abs() < 70.0) || lat < -70.0;
             g.pm(LAND)[i] = if land { 1.0 } else { 0.0 }; g.pm(ELEV)[i] = if land { 400.0 } else { 0.0 }; }
         g.seed(day, 0.0); for _ in 0..10 * 8 { g.step(3.0 * 3600.0); } g }
+    #[test] fn cloud_field_has_memory() { let mut g = spun(196.0); let a = g.p(CLOUD).to_vec(); g.step(3.0 * 3600.0);
+        let d = a.iter().zip(g.p(CLOUD)).map(|(x, y)| (x - y).abs()).sum::<f64>() / a.len() as f64; eprintln!("mean |dC| per 3 h step {d:.4}"); assert!(d < 0.015, "instantaneous diagnosis gave 0.0226"); }
     fn band(g: &Grid, a: f64, b: f64) -> f64 { let (mut s, mut w) = (0.0, 0.0); for i in 0..g.n { let l = g.p(LAT)[i]; if l >= a && l < b { let c = l.to_radians().cos(); s += g.p(CLOUD)[i] * c; w += c; } } s / w }
     #[test] fn cloud_cover_vs_modis() {
         // MODIS (King et al. 2013, IEEE TGRS 51:3826) annual global cloud fraction 0.67; zonal means ~0.8 in the Southern Ocean storm

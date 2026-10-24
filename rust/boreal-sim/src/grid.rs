@@ -48,7 +48,7 @@ impl Grid {
             self.pm(SST)[i] = if land < 0.5 { s.t_air } else { -999.0 };
             self.pm(ICE)[i] = if land < 0.5 { crate::hydrosphere_budget::ice_fraction_subgrid(s.t_air, std::f64::consts::PI * 6371.0 / self.nlat as f64) } else { 0.0 };
         }
-        crate::update_clouds::update_clouds(self);
+        crate::update_clouds::update_clouds(self, 0.0);
         crate::update_wind::update_wind(self);
         crate::update_energy::update_energy(self, 1.0); // fills the diagnostics without moving the state
         crate::update_moisture::update_moisture(self, 0.0);
@@ -58,7 +58,7 @@ impl Grid {
         crate::update_energy::update_energy(self, dt);
         crate::update_wind::update_wind(self);
         crate::update_moisture::update_moisture(self, dt);
-        crate::update_clouds::update_clouds(self);
+        crate::update_clouds::update_clouds(self, dt);
         let t = self.hour + dt / 3600.0; self.day = (self.day + (t / 24.0).floor() - 1.0).rem_euclid(365.0) + 1.0; self.hour = t.rem_euclid(24.0);
     }
 }

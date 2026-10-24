@@ -46,9 +46,11 @@ pub const EXOBASE_KM: f64 = 500.0; // ~500 km (Chamberlain 1963) [approx]
 /// `mp_re` = magnetopause standoff in Earth radii (core/geodynamo.ts shueR0).
 pub fn profile(r_km: f64, mp_re: f64) -> [f64; 5] {
     let r = r_km.abs(); let re = EARTH_RADIUS / 1000.0;
-    if r <= PREM_R { let t = tab(); let i = ((r * 1000.0 / STEP_M) as usize).min(t.p.len() - 1); let (rho, l) = prem_density(r);
-        let g = if r > 0.0 { G_CONST * t.m[i] / (r * 1000.0).powi(2) } else { 0.0 };
-        return [l as f64, rho * 1000.0, if l == 4 { 277.0 } else { geotherm(PREM_R - r) }, t.p[i], g]; } // ocean mean 4 C (Levitus) [approx]
+    if r <= PREM_R { let t = tab(); let (rho, l) = prem_density(r); // linear within the 100 m cell (dP = rho g dr), not the cell floor
+        let f = (r * 1000.0 / STEP_M).min((t.p.len() - 1) as f64); let i = f as usize; let j = (i + 1).min(t.p.len() - 1); let w = f - i as f64;
+        let m = t.m[i] + (t.m[j] - t.m[i]) * w; let p = t.p[i] + (t.p[j] - t.p[i]) * w;
+        let g = if r > 0.0 { G_CONST * m / (r * 1000.0).powi(2) } else { 0.0 };
+        return [l as f64, rho * 1000.0, if l == 4 { 277.0 } else { geotherm(PREM_R - r) }, p, g]; } // ocean mean 4 C (Levitus) [approx]
     let z = r - re.max(PREM_R); let g = G_CONST * EARTH_MASS / (r * 1000.0).powi(2);
     if z < EXOBASE_KM { let c = crate::gas::column(crate::gas::Body::Earth, z, 0.0, 420.0); return [5.0, c.rho, c.t, c.p, g]; }
     let l_shell = r / re;
@@ -66,6 +68,9 @@ mod tests { use super::*;
     #[test] fn us76_atmosphere() { let re = EARTH_RADIUS / 1000.0;
         let a = |z: f64| profile(re + z, 10.0); assert!((a(0.0)[3] - 101325.0).abs() < 1.0); assert!((a(11.0)[3] / 22700.0 - 1.0).abs() < 0.01, "{}", a(11.0)[3]);
         assert!((a(11.0)[2] - 216.77).abs() < 0.05); assert!((a(0.0)[1] - 1.225).abs() < 0.005); assert!(a(300.0)[2] > 900.0 && a(300.0)[3] < 1e-3); }
+    #[test] fn shallow_crust_rho_g_h() { // 80 m into the upper crust: dP = rho g h = 2600 * 9.82 * 80 ~ 2.04 MPa
+        let d = profile(6367.92, 10.0)[3] - profile(6367.999, 10.0)[3]; let e = 2600.0 * profile(6368.0, 10.0)[4] * 79.0;
+        assert!((d / e - 1.0).abs() < 0.03, "dP {d} vs rho g h {e}"); }
     #[test] fn layers_in_order() { let re = EARTH_RADIUS / 1000.0; let l: Vec<f64> = [0.0, 2000.0, 5000.0, 6360.0, 6370.0, re + 10.0, re * 3.0, re * 20.0].iter().map(|&r| profile(r, 10.0)[0]).collect();
         assert_eq!(l, vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]); }
 }

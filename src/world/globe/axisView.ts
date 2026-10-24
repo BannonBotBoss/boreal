@@ -14,7 +14,7 @@ import { toLatLon, fromLatLon, type Vec3 } from './planet';
 import { withLogDepth } from './logDepth';
 
 const LAYER_RGB: number[][] = [[1, .85, .5], [1, .55, .15], [.75, .3, .15], [.45, .38, .32], [.1, .3, .7], [.55, .75, 1], [.6, .4, 1], [1, .9, .3]];
-interface Surf { sampleSurface(d: Vec3, fp?: number): { h: number; water: number } }
+interface Surf { sampleSurface(d: Vec3, fp?: number): { h: number; water: number; kind?: string } }
 export function createAxis(o: { q: URLSearchParams; scene: THREE.Scene; R: number; planet: Surf; material: THREE.Material; renderer: THREE.WebGLRenderer; sunDir: () => Vec3; sim: Promise<PlanetSim | null>; mount: HTMLElement }) {
   const { R } = o; let sim: PlanetSim | null = null; let on = o.q.has('r') || parseAxisDir(o.q.get('dir')) !== null;
   let u: Vec3 = parseAxisDir(o.q.get('dir'), o.sunDir) ?? [0, 1, 0], rKm = Number(o.q.get('r') ?? R / 1000); if (!Number.isFinite(rKm)) rKm = R / 1000;
@@ -117,9 +117,9 @@ uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varyin
         const phi = nps > 1e-9 && npv > 1e-9 ? Math.acos(Math.max(-1, Math.min(1, -(ps[0] * pv[0] + ps[1] * pv[1] + ps[2] * pv[2]) / nps / npv))) : Math.PI;
         const sf = o.planet.sampleSurface(w), ocean = sf.water > sf.h, kind = ocean ? (Math.abs(lat) > 70 ? 1 : 0) : (Math.abs(lat) > 65 || sf.h > 4500 ? 2 : 3);
         const live = liveCell(lat, ll.lon * 180 / Math.PI), year = YEAR + ((live ? sim.day : 0) - 1) / 365.25;
-        const k = sim.rtPoint({ year, cosZ: cz, cosV, phi, surf: kind, hKm: ocean ? 0 : Math.max(0, sf.h / 1000), ...(live ? { qSurf: live.q, cloud: live.cloud, tau: live.cot > 0 ? live.cot : 9 } : {}) });
-        txt += live ? `\n  sim day ${sim.day.toFixed(0)} ${sim.hour.toFixed(1)} h  q ${(live.q * 1e3).toFixed(2)} g/kg  cloud ${live.cloud.toFixed(2)} τ ${live.cot.toFixed(1)}` : '\n  (no live grid: climatological q, clear sky)';
-        txt += `\nRT  TSI ${k.tsi.toFixed(1)}  μ☉ ${cz.toFixed(3)}  surface ${['ocean', 'sea ice', 'snow', 'land'][kind]} α ${k.albedo.toFixed(3)}` +
+        const k = sim.rtPoint({ year, cosZ: cz, cosV, phi, surf: kind, hKm: Math.max(0, (ocean ? sf.water : sf.h) / 1000) /* lake: its own surface height */, ...(live ? { qSurf: live.q, cloud: live.cloud, tau: live.cot > 0 ? live.cot : 9 } : {}) });
+        txt += live ? `\n  sim day ${sim.day.toFixed(0)} ${sim.hour.toFixed(1)} h UTC  q ${(live.q * 1e3).toFixed(2)} g/kg  cloud ${live.cloud.toFixed(2)} τ ${live.cot.toFixed(1)}` : '\n  (no live grid: climatological q, clear sky)';
+        txt += `\nRT  TSI ${k.tsi.toFixed(1)}  μ☉ ${cz.toFixed(3)}  surface ${kind === 0 && (sf.kind === 'lake' || sf.h > 0) ? 'lake' : ['ocean', 'sea ice', 'snow', 'land'][kind] /* water standing above sea level is a lake */} α ${k.albedo.toFixed(3)}` +
           (cz > 0 ? `\n  in ${k.toa.toFixed(1)}  refl atm ${k.reflAtm.toFixed(1)} surf ${k.reflSurf.toFixed(1)}  abs atm ${k.absAtm.toFixed(1)} surf ${k.absSurf.toFixed(1)} W/m²` + (kind === 0 ? `  glint BRF ${k.glint.toFixed(3)}` : '') : '\n  night side: no shortwave'); }
       pre.textContent = txt + bodyInfo;
     },

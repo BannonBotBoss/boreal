@@ -52,3 +52,6 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
 #[no_mangle] pub extern "C" fn gas_column(body: u32, h_km: f64, q_surf: f64, co2_ppm: f64, out: *mut f64) {
     let b = match body { 1 => gas::Body::Venus, 2 => gas::Body::Mercury, _ => gas::Body::Earth }; let c = gas::column(b, h_km, q_surf, co2_ppm);
     let o = unsafe { std::slice::from_raw_parts_mut(out, 13) }; o[..4].copy_from_slice(&[c.t, c.p, c.rho, c.n]); o[4..].copy_from_slice(&c.x); }
+/// Emergent figure (interior.rs): out = [surface radius km, C/MR^2, flattening f, equatorial a km, polar c km].
+#[no_mangle] pub extern "C" fn earth_figure(out: *mut f64) { let (f, a, c) = interior::figure();
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 5) }; o.copy_from_slice(&[interior::surface_radius_km(), interior::moi_factor(), f, a, c]); }

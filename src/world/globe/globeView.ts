@@ -49,6 +49,7 @@ export { GLOBE_LAKE, GLOBE_LAND, GLOBE_SHORE } from './tile'; // inpage.ts (lazy
 export const NEAR_SPLIT = { k: 1.2, from: 3000, full: 1200, reach: 4 };
 import type { TileRequest } from './tileWorker';
 import { GLOBE_LOD, balancedTree, globeLod, worldTier } from './lod';
+import { figureRadius } from './figure';
 
 interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number; solarBucket: string } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
@@ -378,7 +379,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     let stamped = 0;
     for (const t of tiles.values()) { if (stamped >= 4) break; const before = t.solarBucket; stampSolar(t, sunDay, sunHour); if (t.solarBucket !== before) stamped++; }
     if (ext) camera.position.copy(ext.position); // shared band: the transition flies the camera (drive)
-    dir.copy(camera.position).normalize(); const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = Math.max(s.h, s.water);
+    dir.copy(camera.position).normalize(); const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = figureRadius([dir.x, dir.y, dir.z]) - R + Math.max(s.h, s.water); // figure.ts: hydrostatic figure, not a sphere
     // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);

@@ -45,6 +45,7 @@ pub const J2000_JD: f64 = 2.4515450000000000e+6; // d; IAU J2000.0 epoch (2000-0
 pub const x_N2_dry: f64 = 7.8083999999999998e-1; // mol/mol; Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics
 pub const x_O2_dry: f64 = 2.0946000000000001e-1; // mol/mol; Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics
 pub const x_Ar_dry: f64 = 9.3399999999999993e-3; // mol/mol; Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics
+pub const earth_moi_prem: f64 = 3.3079900000000001e-1; // 1; C/(M R^2) integrated from PREM (Dziewonski & Anderson 1981) in rust interior.rs moi_factor(); test-locked to it
 pub const CO2_ppm_present: f64 = 4.2280000000000001e+2; // ppm; NOAA GML global marine surface annual mean 2024 (Lan et al.); overridden by the climate seed in deep time
 pub const hbar: f64 = 1.0545718176461565e-34; // J s; = h/(2*PI)
 pub const R: f64 = 8.3144626181532395e+0; // J/(mol K); = N_A*k_B

@@ -33,6 +33,7 @@
     "x_N2_dry": { "value": 0.78084, "unit": "mol/mol", "uncertainty": 0, "source": "Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics" },
     "x_O2_dry": { "value": 0.20946, "unit": "mol/mol", "uncertainty": 0, "source": "Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics" },
     "x_Ar_dry": { "value": 0.00934, "unit": "mol/mol", "uncertainty": 0, "source": "Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics" },
+    "earth_moi_prem": { "value": 0.330799, "unit": "1", "uncertainty": 1e-5, "source": "C/(M R^2) integrated from PREM (Dziewonski & Anderson 1981) in rust interior.rs moi_factor(); test-locked to it" },
     "CO2_ppm_present": { "value": 422.8, "unit": "ppm", "uncertainty": 0.1, "source": "NOAA GML global marine surface annual mean 2024 (Lan et al.); overridden by the climate seed in deep time" }
   },
   "math": {

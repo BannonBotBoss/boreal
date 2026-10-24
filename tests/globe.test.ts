@@ -1,3 +1,4 @@
+import { figureRadius } from '../src/world/globe/figure';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createPlanet, fibonacci, PLANET } from '../src/world/globe/planet';
@@ -70,7 +71,7 @@ test('globe tiles: deterministic, shared edges match in position AND normal (no 
   let wet = 0;
   for (let f = 0; f < 6 && !wet; f++) { const sea = finish(buildTile(node(f, 2, 1, 1), p, seg));
     for (let v = 0; v < n * n; v++) if (sea.height[v] < 0) { wet++; const r = Math.hypot(sea.position[v * 3] + sea.centre[0], sea.position[v * 3 + 1] + sea.centre[1], sea.position[v * 3 + 2] + sea.centre[2]); const vx = sea.position[v * 3] + sea.centre[0], vy = sea.position[v * 3 + 1] + sea.centre[1], vz = sea.position[v * 3 + 2] + sea.centre[2]; if (p.sampleSurface([vx / r, vy / r, vz / r]).kind !== 'ocean') continue; // far-field lakes sit at their own level
-      assert.ok(Math.abs(r - PLANET.radius) < 2, 'water vertices sit on the sea surface'); } }
+      assert.ok(Math.abs(r - figureRadius([vx / r, vy / r, (sea.position[v * 3 + 2] + sea.centre[2]) / r])) < 2, 'water vertices sit on the sea surface (the hydrostatic figure)'); } }
   assert.ok(wet > 0, 'found ocean vertices');
 });
 test('globe tile cost: one 32-segment tile builds well under a frame budget on this machine', () => {
@@ -115,10 +116,10 @@ test('camera-relative rendering: vertex error under 1 mm at 300 m and at 2 m alt
     let q = roots().sort((x, y) => near(x) - near(y))[0];
     while (q.level < level) q = children(q).sort((x, y) => near(x) - near(y))[0];
     const t = finish(buildTile(q, p, seg)), den = seg * 2 ** q.level, n = seg + 1, cd = faceDir(q.face, 0, 0);
-    const s0 = p.sampleSurface(p.home), cam = p.home.map(v => v * (R + Math.max(s0.h, s0.water) + alt)) as [number, number, number];
+    const s0 = p.sampleSurface(p.home), cam = p.home.map(v => v * (figureRadius(p.home) + Math.max(s0.h, s0.water) + alt)) as [number, number, number];
     const off = renderOffset(t.centre, cam); let worst = 0, naive = 0;
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
-      const d = faceDir(q.face, -1 + 2 * (q.i * seg + i) / den, -1 + 2 * (q.j * seg + j) / den, cd), s = p.sampleSurface(d), r = R + Math.max(s.h, s.water);
+      const d = faceDir(q.face, -1 + 2 * (q.i * seg + i) / den, -1 + 2 * (q.j * seg + j) / den, cd), s = p.sampleSurface(d), r = figureRadius(d) + Math.max(s.h, s.water);
       const ref = [d[0] * r - cam[0], d[1] * r - cam[1], d[2] * r - cam[2]], g = gpuRelative(off, t.position, (j * n + i) * 3);
       worst = Math.max(worst, Math.hypot(g[0] - ref[0], g[1] - ref[1], g[2] - ref[2]));
       naive = Math.max(naive, Math.hypot(...[0, 1, 2].map(k => Math.fround(Math.fround(d[k] * r) - Math.fround(cam[k])) - ref[k]) as [number, number, number]));

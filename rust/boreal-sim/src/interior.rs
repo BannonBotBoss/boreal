@@ -15,7 +15,7 @@ use std::sync::OnceLock;
 
 pub const LAYERS: [&str; 8] = ["inner core", "outer core", "mantle", "crust", "ocean", "atmosphere", "magnetosphere", "solar wind"];
 const PREM_R: f64 = 6371.0; // km, PREM normalising radius
-/// PREM density (g/cm3) and layer index at radius r km (0..=6371).
+/// Material density field (g/cm3) and layer index at radius r km: PREM inside, the gas column outside, one continuous field.
 pub fn prem_density(r: f64) -> (f64, usize) {
     let x = r / PREM_R;
     if r < 1221.5 { (13.0885 - 8.8381 * x * x, 0) }
@@ -25,7 +25,8 @@ pub fn prem_density(r: f64) -> (f64, usize) {
     else if r < 5971.0 { (11.2494 - 8.0298 * x, 2) }
     else if r < 6151.0 { (7.1089 - 3.8045 * x, 2) }
     else if r < 6346.6 { (2.6910 + 0.6924 * x, 2) }
-    else if r < 6356.0 { (2.900, 3) } else if r < 6368.0 { (2.600, 3) } else { (1.020, 4) }
+    else if r < 6356.0 { (2.900, 3) } else if r < 6368.0 { (2.600, 3) } else if r <= PREM_R { (1.020, 4) }
+    else { (crate::gas::column(crate::gas::Body::Earth, r - PREM_R, 0.0, crate::constants::CO2_ppm_present).rho / 1000.0, 5) } // above: gas (gas.rs)
 }
 struct Tab { m: Vec<f64>, p: Vec<f64> } // per 100 m from the centre: enclosed mass (kg), pressure (Pa)
 const STEP_M: f64 = 100.0;
@@ -67,4 +68,26 @@ mod tests { use super::*;
         assert!((a(11.0)[2] - 216.77).abs() < 0.05); assert!((a(0.0)[1] - 1.225).abs() < 0.005); assert!(a(300.0)[2] > 900.0 && a(300.0)[3] < 1e-3); }
     #[test] fn layers_in_order() { let re = EARTH_RADIUS / 1000.0; let l: Vec<f64> = [0.0, 2000.0, 5000.0, 6360.0, 6370.0, re + 10.0, re * 3.0, re * 20.0].iter().map(|&r| profile(r, 10.0)[0]).collect();
         assert_eq!(l, vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]); }
+}
+
+/// Figure of the Earth from its own material field, not a declared sphere (Matthew: "that is how it should be generated").
+/// Surface radius = outermost radius where the condensed (solid/liquid, rho > 0.5 g/cc) PREM density meets gas.
+pub fn surface_radius_km() -> f64 { let mut r = PREM_R + 50.0; while r > 0.0 && prem_density(r).0 < 0.5 { r -= 0.001; } r + 0.0005 }
+/// Polar moment factor C/(M R^2) = (8 pi/3) int rho r^4 dr / (M R^2), integrated from PREM.
+pub fn moi_factor() -> f64 { let t = tab(); let m = *t.m.last().unwrap(); let n = t.m.len() - 1; let mut c = 0.0;
+    for i in 0..n { let r = (i as f64 + 0.5) * STEP_M; c += 8.0 * std::f64::consts::PI / 3.0 * prem_density(r / 1000.0).0 * 1000.0 * r.powi(4) * STEP_M; }
+    let rs = surface_radius_km() * 1000.0; c / (m * rs * rs) }
+/// Hydrostatic flattening with spin from Darwin–Radau (Jeffreys 1976 §4.03; Bullen 1975):
+/// f = (5m/2) / (1 + (25/4)(1 - 3C/(2Ma^2))^2), m = omega^2 a^3 / GM; a from the volume-equivalent radius, a = R (1-f)^(-1/3).
+/// Returns (f, a_km, c_km). GM, omega from the constants graph.
+pub fn figure() -> (f64, f64, f64) { let rs = surface_radius_km() * 1000.0; let k = moi_factor(); let mut f: f64 = 0.0;
+    for _ in 0..20 { let a = rs * (1.0 - f).powf(-1.0 / 3.0); let m = crate::constants::omega_earth.powi(2) * a.powi(3) / crate::constants::GM_earth;
+        let ka = k * (rs / a).powi(2); f = 2.5 * m / (1.0 + 6.25 * (1.0 - 1.5 * ka).powi(2)); }
+    let a = rs * (1.0 - f).powf(-1.0 / 3.0); (f, a / 1000.0, a * (1.0 - f) / 1000.0) }
+#[cfg(test)]
+mod figure_tests { use super::*;
+    #[test] fn emergent_figure() { let r = surface_radius_km(); assert!((r - 6371.0).abs() < 0.01, "surface {r}");
+        let k = moi_factor(); assert!((k - 0.3308).abs() < 0.002, "C/MR^2 {k}"); // PREM 0.3308 (Dziewonski & Anderson 1981)
+        let (f, a, c) = figure(); assert!((1.0 / f - 298.257).abs() / 298.257 < 0.01, "1/f {}", 1.0 / f); // WGS84 1/298.257223563
+        assert!((a - 6378.137).abs() < 1.0 && (c - 6356.752).abs() < 1.0, "a {a} c {c}"); }
 }

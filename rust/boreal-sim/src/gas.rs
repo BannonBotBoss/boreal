@@ -49,7 +49,7 @@ fn earth_tab() -> &'static Tab { static T: OnceLock<Tab> = OnceLock::new(); T.ge
         if z <= 86.0 { let n = lnp.exp() / (C::k_B * t); let s: f64 = xs.iter().sum(); for j in 0..4 { ni[j] = n * xs[j] / s; }
             ni[6] = if z > 80.0 { 8.6e16 * ((z - 80.0) / 6.0) } else { 0.0 };
             let zm = z + DZ / 2.0; lnp -= mbar * g_at(Body::Earth, zm * 1e3) / (C::R * t_earth(zm)) * DZ * 1e3; }
-        else { let zm = z - DZ / 2.0; let tm = t_earth(zm); let dlnt = (t.ln() - t_earth(z - DZ).ln()); let g = g_at(Body::Earth, zm * 1e3);
+        else { let zm = z - DZ / 2.0; let tm = t_earth(zm); let dlnt = t.ln() - t_earth(z - DZ).ln(); let g = g_at(Body::Earth, zm * 1e3);
             for j in [0usize, 1, 2, 3, 6] { ni[j] *= (-(AMU[j] * 1e-3 * g / (C::R * tm)) * DZ * 1e3 - dlnt).exp(); }
             if z <= 97.0 { ni[6] = 8.6e16 * (4.4e17f64 / 8.6e16).powf((z - 86.0) / 11.0); } }
         out.push(ni); }

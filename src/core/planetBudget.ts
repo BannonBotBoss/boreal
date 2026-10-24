@@ -43,6 +43,7 @@ interface Exports {
   solar_cell(day: number, hour: number, lat: number, lon: number, cloud: number, albedo: number, tC: number, ePa: number, out: number): void;
   radial_profile(rKm: number, mpRe: number, out: number): void;
   gas_column(body: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
+  earth_figure(out: number): void;
 }
 
 export class PlanetSim {
@@ -73,6 +74,8 @@ export class PlanetSim {
     const p = this.buf(); this.x.radial_profile(rKm, magnetopauseRe, p); const o = new Float64Array(this.x.memory.buffer, p, 5);
     return { layer: o[0], rho: o[1], T: o[2], P: o[3], g: o[4] };
   }
+  /** Emergent figure (interior.rs): surface radius km, C/MR², flattening f, equatorial a km, polar c km. */
+  earthFigure() { const p = this.buf(); this.x.earth_figure(p); const o = new Float64Array(this.x.memory.buffer, p, 5); return { rSurfKm: o[0], moi: o[1], f: o[2], aKm: o[3], cKm: o[4] }; }
   /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */
   gasColumn(hKm: number, body = 0, qSurf = 0, co2ppm = 422.8) {
     const p = this.buf(); this.x.gas_column(body, hKm, qSurf, co2ppm, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));

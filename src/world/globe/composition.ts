@@ -11,7 +11,7 @@ export const COMPOSITION = {
   /** water vapour 0..4 % by volume, from the sim's humidity (planetBudget 'q'); its effect on Rayleigh is < 1 % (Bucholtz 1995),
    *  so it is not drawn as scattering: it acts through clouds (update_clouds.rs). */
   h2oVolumeRange: [0, 0.04],
-  seaLevel: { T: 288.15, p: 101325, g: 9.80665, M: 0.0289644 }, // K, Pa, m/s2, kg/mol (US Std Atm 1976)
+  seaLevel: { T: 288.15, p: 101325, M: 0.0289644 }, // K, Pa, kg/mol (US Std Atm 1976); g from proc/physics (GM/R^2)
   kingFactor: 1.048,
   /** layer tops, km (US Std Atm 1976; tropopause ~8 km at the poles to ~17 km in the tropics, NOAA JetStream) */
   layers: { troposphereKm: [8, 17], stratosphereKm: 50, mesosphereKm: 85 },
@@ -19,9 +19,10 @@ export const COMPOSITION = {
   ozonePeakPerKm: [0.65e-3, 1.881e-3, 0.085e-3], ozoneWidthKm: 30,
   wavelengthsNm: [680, 550, 440],
 };
+import { gravity } from '../../proc/physics';
 const R_GAS = 8.314462618, KB = 1.380649e-23;
 /** density scale height H = R T / (M g), km (~8.4 km at 288 K) */
-export const scaleHeightKm = (T = COMPOSITION.seaLevel.T) => R_GAS * T / (COMPOSITION.seaLevel.M * COMPOSITION.seaLevel.g) / 1000;
+export const scaleHeightKm = (T = COMPOSITION.seaLevel.T) => R_GAS * T / (COMPOSITION.seaLevel.M * gravity()) / 1000;
 /** number density at sea level, m^-3 */
 export const numberDensity = () => COMPOSITION.seaLevel.p / (KB * COMPOSITION.seaLevel.T);
 /** (n - 1) of standard dry air at 15 C, 101325 Pa (Peck & Reeder 1972), lambda in nm */

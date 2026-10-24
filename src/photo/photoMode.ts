@@ -9,7 +9,7 @@ import type { SnapshotHub, Snapshot } from '../core/snapshot';
 import type { buildScene, PhotoView } from '../render/buildScene';
 import { PHOTO_PARAMS, PRESETS, defaultSettings, type PhotoSettings } from '../render/post';
 import { ASPECTS, RESOLUTIONS, clampVideo, cropRect, fitOutput } from './frame';
-import { createGallery, type Capture, type ExportOptions, type Frame } from './gallery';
+import { sharedGallery, type Capture, type ExportOptions, type Frame } from './gallery';
 
 type View = ReturnType<typeof buildScene>;
 const STORE = 'boreal.photo.v1';
@@ -148,7 +148,7 @@ export function createPhotoMode(host: PhotoHost) {
     settings = e.keep.settings; capture.aspect = e.keep.aspect; hour = e.keep.hour; view.post.set(settings);
     root.classList.remove('editing'); root.hidden = true; reviewing = true; e.done();
   }
-  const gallery = createGallery({ render: renderFrame, edit, thumb: c => thumbFor(c) }, host.notice);
+  const gallery = sharedGallery(host.notice, { render: renderFrame, edit, thumb: c => thumbFor(c) });
   let recorder: MediaRecorder | undefined;
   async function record() {
     if (recorder) { recorder.stop(); return; }

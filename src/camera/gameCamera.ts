@@ -11,7 +11,8 @@ import { EXRExporter } from 'three/examples/jsm/exporters/EXRExporter.js';
 import { mountCameraPanel, stateFromSearch, type CameraPanelState, type FilterOption } from '../ui/cameraPanel';
 import { FILTERS, filter, filterStops, reaches, type FilterId } from './filters';
 import { addTextChunks } from './png';
-import { addPhoto, deletePhoto, listPhotos, type Photo, type PhotoMeta } from './gallery';
+import { addPhoto, type PhotoMeta } from '../photo/store';
+import { sharedGallery } from '../photo/gallery';
 import { ev100FromSettings, fovFromFocal } from '../render/exposure';
 
 export const EV_CALIB = 15; // EV100 at which the views' auto exposure sits for full daylight (sunny-16 rule, LUX.ref)
@@ -73,7 +74,7 @@ export function mountViewfinder(renderer: THREE.WebGLRenderer, view: 'game' | 'g
     if (hdr && lastScene && lastCam) { const size = renderer.getDrawingBufferSize(new THREE.Vector2()), f = new THREE.WebGLRenderTarget(size.x, size.y, { type: THREE.FloatType }), tm = renderer.toneMapping;
       inner = true; renderer.toneMapping = THREE.NoToneMapping; renderer.setRenderTarget(f); orig(lastScene, lastCam); renderer.setRenderTarget(null); renderer.toneMapping = tm; inner = false;
       exr = new Blob([await new EXRExporter().parse(renderer, f) as BlobPart], { type: 'image/x-exr' }); f.dispose(); }
-    const id = await addPhoto({ png, exr, thumb: th.toDataURL('image/jpeg', .8), meta: m }); flash(); return id;
+    const photo = { png, exr, thumb: th.toDataURL('image/jpeg', .8), meta: m }, id = await addPhoto(photo); sharedGallery().addShot({ ...photo, id }); flash(); return id;
   }
   const flash = () => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;background:#fff;opacity:.5;z-index:99;pointer-events:none;transition:opacity .3s'; document.body.append(d); requestAnimationFrame(() => { d.style.opacity = '0'; }); setTimeout(() => d.remove(), 400); };
   const shoot = (hdr = new URLSearchParams(search).get('hdr') === '1') => { pending = { hdr }; };
@@ -95,18 +96,5 @@ function installViewfinderCss() {
   document.head.append(s);
 }
 
-export async function showGallery() {
-  document.getElementById('photo-gallery')?.remove();
-  const g = document.createElement('div'); g.id = 'photo-gallery'; g.style.cssText = 'position:fixed;inset:5%;z-index:50;background:#111e;color:#ddd;font:12px system-ui;border-radius:8px;padding:12px;overflow:auto;display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start';
-  const close = document.createElement('button'); close.textContent = '✕ Close'; close.onclick = () => g.remove(); close.style.cssText = 'position:sticky;top:0;flex-basis:100%;max-width:80px'; g.append(close);
-  const photos: Photo[] = await listPhotos(); if (!photos.length) g.append('No photos yet: press P.');
-  for (const p of photos.reverse()) { const c = document.createElement('div'); c.style.cssText = 'background:#222;border-radius:6px;padding:6px;width:240px';
-    const m = p.meta, img = new Image(); img.src = p.thumb; img.style.width = '240px';
-    const info = document.createElement('div'); info.style.cssText = 'font:11px ui-monospace;color:#aaa;white-space:pre-wrap';
-    info.textContent = `${m.view} ${m.takenWall.slice(0, 19).replace('T', ' ')}\ngame ${m.gameTime} ${m.location}\n${m.auto ? 'auto' : 'manual'} f/${m.N.toFixed(1)} ${m.t < 1 ? '1/' + Math.round(1 / m.t) : m.t + 's'} ISO ${m.iso} ND ${m.nd} ${m.focalMm}mm EV100 ${m.ev100.toFixed(1)}\nfilter ${m.filter}  seed ${m.seed}`;
-    const dl = (b: Blob, ext: string) => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `boreal-${p.id}.${ext}`; a.click(); };
-    const bt = (t: string, f: () => void) => { const e = document.createElement('button'); e.textContent = t; e.onclick = f; e.style.marginRight = '4px'; return e; };
-    c.append(img, info, bt('PNG', () => dl(p.png, 'png'))); if (p.exr) c.append(bt('EXR', () => dl(p.exr!, 'exr')));
-    c.append(bt('Delete', async () => { await deletePhoto(p.id!); c.remove(); })); g.append(c); }
-  document.body.append(g);
-}
+/** The one gallery (src/photo/gallery.ts): viewfinder shots + photo-mode captures. */
+export const showGallery = () => sharedGallery().review();

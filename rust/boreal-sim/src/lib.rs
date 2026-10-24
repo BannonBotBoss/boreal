@@ -11,6 +11,7 @@ pub mod grid;
 pub mod update_energy;
 pub mod update_moisture;
 pub mod update_clouds;
+pub mod column_budget;
 pub mod update_wind;
 
 use grid::Grid;
@@ -18,7 +19,7 @@ use std::cell::RefCell;
 thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) }; }
 
 /// Version of the plane layout; bump when `grid::NAMES` changes.
-#[no_mangle] pub extern "C" fn layout_version() -> u32 { 1 }
+#[no_mangle] pub extern "C" fn layout_version() -> u32 { 2 }
 #[no_mangle] pub extern "C" fn plane_count() -> u32 { grid::PLANES as u32 }
 /// Allocate an nlat × nlon grid; returns a pointer to plane 0 (planes are n f64 apart, n = nlat·nlon).
 #[no_mangle] pub extern "C" fn grid_init(nlat: u32, nlon: u32) -> *mut f64 {

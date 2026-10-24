@@ -25,3 +25,6 @@ aurora-spolar.jpg (south-polar oval), plates-off-on.jpg, july-v3-v4.jpg, airglow
 
 ## Leftovers
 plate outlines are seeded (planet is procedural), only the motions are measured.
+
+## State (2026-10-24 01:35 PT)
+Approved by Matthew in chat ("approve T-0068", 01:34 PT); approve-plan, claim, complete, approve recorded. Open: frame scores uncalibrated; recording + calibrated reference comparison still needed.

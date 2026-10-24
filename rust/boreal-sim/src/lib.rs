@@ -19,6 +19,7 @@ pub mod update_wind;
 pub mod sun_spectrum;
 pub mod interior;
 pub mod gas;
+pub mod formation;
 
 use grid::Grid;
 use std::cell::RefCell;

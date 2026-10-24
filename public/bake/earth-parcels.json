@@ -1,0 +1,20 @@
+{
+ "n": 48000,
+ "steps": 2000,
+ "t_s": 14404,
+ "mass": 5.973176947686711e+24,
+ "com_m": 0.0008854915390865261,
+ "r_vol": 6297190,
+ "a": 6303326,
+ "c": 6284936,
+ "j2": 0.0008314665617925825,
+ "f_clairaut": 0.002917425652911923,
+ "f_shape": 0.00432431118438122,
+ "moi": 0.3007,
+ "g_eq": 10.0129,
+ "g_pole": 10.0674,
+ "rho_centre": 11106,
+ "vmax": 568.0,
+ "com_note": "centre of mass of the baked parcels (the bake is written relative to it; 45 m drift before recentring)",
+ "method": "rust/boreal-sim/src/formation.rs: PREM-sampled equal-mass parcels (48-fold symmetric), SPH (M4, Shepard per class) + Barnes-Hut gravity + spin, damped 0.05/step"
+}

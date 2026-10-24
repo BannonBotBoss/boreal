@@ -1,0 +1,6 @@
+use boreal_sim::formation::*; use boreal_sim::constants as C;
+fn main() { let a: Vec<String> = std::env::args().collect(); let nb: usize = a[1].parse().unwrap(); let steps: usize = a[2].parse().unwrap(); let damp: f64 = a[3].parse().unwrap();
+  let mut s = State::new(form_ic(nb, 5), C::omega_earth); let mut t = 0.0; let f = measure(&s); println!("t 0 {:?}", f);
+  for k in 0..steps { t += s.step(damp); if k % (steps / 10).max(1) == 0 || k == steps - 1 { let f = measure(&s); println!("t {:.0} s  rvol {:.1} km a {:.1} c {:.1} 1/f_cl {:.1} 1/f_sh {:.1} J2 {:.3e} moi {:.4} geq {:.3} gp {:.3} rhoc {:.0} vmax {:.1}", t, f.r_vol/1e3, f.a/1e3, f.c/1e3, 1.0/f.f_clairaut, 1.0/f.f_shape, f.j2, f.moi, f.g_eq, f.g_pole, f.rho_centre, f.vmax); } }
+  if a.len() > 4 { let b = bake(&s); let bytes: Vec<u8> = b.iter().flat_map(|x| x.to_le_bytes()).collect(); std::fs::write(&a[4], bytes).unwrap(); let f = measure(&s);
+    std::fs::write(format!("{}.json", a[4].trim_end_matches(".bin")), format!("{{\"n\":{},\"steps\":{},\"t_s\":{:.0},\"mass\":{:e},\"com_m\":{:e},\"r_vol\":{:.0},\"a\":{:.0},\"c\":{:.0},\"j2\":{:e},\"f_clairaut\":{:e},\"f_shape\":{:e},\"moi\":{:.4},\"g_eq\":{:.4},\"g_pole\":{:.4},\"rho_centre\":{:.0},\"vmax\":{:.1}}}", f.n, steps, t, f.mass, f.com, f.r_vol, f.a, f.c, f.j2, f.f_clairaut, f.f_shape, f.moi, f.g_eq, f.g_pole, f.rho_centre, f.vmax)).unwrap(); } }

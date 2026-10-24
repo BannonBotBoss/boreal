@@ -48,6 +48,28 @@ Full licence table with links: `tasks/T-0070-bodies-from-density-fields.md`.
 4. Radiative transfer: `column_budget.rs` fed from `gas.rs` (O3 column, H2O path, Rayleigh optical depth from n(z)); TSI 1361 plus the solar cycle; Cox–Munk glint; CERES check.
 5. Emergent objects: FoF + unbinding + count ≥ 20/100 + Hill/Roche; centre of mass gives the radial axis origin.
 6. Particle formation (offline SPH, baked): relax to a hydrostatic Earth whose figure must reproduce stage 1; impacts.
+   - **First pass (approved by Matthew 04:37 PT, 2026-10-24).** Built in `formation.rs`, baked to `public/bake/earth-parcels.{bin,json}`, and drawn by `parcels.ts` (Axis → Parcels, key k, pad X).
+   - Parcels: 48,000 equal-mass parcels from PREM's mass distribution. SPH uses the M4 kernel, Shepard per material class, and a PREM barotrope. Gravity is a Barnes–Hut tree, with spin. The run is damped for 2,000 steps (4.0 h simulated).
+   - Measured vs real:
+
+     | Quantity | Measured | Real | Error |
+     |---|---|---|---|
+     | M | 5.9732e24 kg | | +0.02 % |
+     | R_vol | 6297.2 km | | −1.16 % |
+     | J2 | 8.31e-4 | 1.0826e-3 | −23 % |
+     | 1/f | 342.8 | 298.257 | |
+     | C/MR² | 0.3007 | 0.3307 | |
+     | g equator / pole | 10.013 / 10.067 m/s² | 9.780 / 9.832 m/s² | +2.4 % |
+     | COM | 0.9 mm from the centre point | | |
+
+   - Open:
+     - J2 was still rising when the run stopped. Fix: a longer run or a lower-noise (glass) start.
+     - Residual SPH density bias, which gives a smaller, more centrally condensed body. Fix: more parcels, Barnes–Hut quadrupoles, and an integral kernel-gradient scheme.
+     - The ocean and atmosphere are not resolved at this parcel mass (about 11 ocean parcels).
+     - Tiles still come from figure.ts, not from the bake.
+     - Impacts and Tillotson EOS.
+     - Chunk detail conditioned on the bake.
+     - Live GPU parcels (WebGPU).
 7. Other bodies; Transvoxel near chunks; atmosphere dome replaced.
 
 ## Budgets

@@ -12,6 +12,7 @@ import { earthFigure } from './figure';
 import { altitudeAt, axisPoint, parseAxisDir } from './radial';
 import { toLatLon, fromLatLon, type Vec3 } from './planet';
 import { withLogDepth } from './logDepth';
+import { loadParcels, parcelPoints, parcelReadout } from './parcels';
 
 const LAYER_RGB: number[][] = [[1, .85, .5], [1, .55, .15], [.75, .3, .15], [.45, .38, .32], [.1, .3, .7], [.55, .75, 1], [.6, .4, 1], [1, .9, .3]];
 interface Surf { sampleSurface(d: Vec3, fp?: number): { h: number; water: number; kind?: string } }
@@ -46,18 +47,18 @@ uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varyin
   const setDiscScale = () => disc.scale.setScalar(FIG.a + (gasLayers ? H_ATM : H_TOP) * 1.01);
   const ATM_RGB = [[.35, .6, 1], [.55, .75, 1], [.4, .45, .85], [.75, .35, .6], [.3, .2, .35]];
   let gasLayers = o.q.get('gaslayers') === '1', showGas = o.q.get('gas') === '1' || gasLayers, showRT = o.q.get('rt') === '1', bodies = Number(o.q.get('bodies') ?? -1);
-  let bodyInfo = '';
+  let bodyInfo = '', parcelInfo = '', parcelsOn = o.q.get('parcels') === '1', parcels: THREE.Points | null = null;
   const comPt = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3)), new THREE.PointsMaterial({ color: 0x55ffee, size: 11, sizeAttenuation: false, toneMapped: false, depthTest: false }));
   comPt.frustumCulled = false; comPt.renderOrder = 11; comPt.visible = false; group.add(comPt);
   const clip = new THREE.Plane(); o.renderer.localClippingEnabled = true;
   const ui = document.createElement('div'); ui.style.cssText = 'position:absolute;left:12px;bottom:12px;z-index:20;font:12px/1.4 system-ui;color:#eee;background:rgba(0,0,0,.6);padding:8px 10px;border-radius:6px;min-width:260px;display:none';
-  ui.innerHTML = '<div><b>Axis</b> <button data-a=sun>û → Sun</button> <button data-a=gas>Gas</button> <button data-a=layers>Layers</button> <button data-a=rt>RT</button> <button data-a=bodies>Bodies</button> <button data-a=off>×</button></div><input type=range min=-1 max=1 step=0.0005 style="width:100%"><pre style="margin:4px 0 0;font:11px ui-monospace"></pre>';
+  ui.innerHTML = '<div><b>Axis</b> <button data-a=sun>û → Sun</button> <button data-a=gas>Gas</button> <button data-a=layers>Layers</button> <button data-a=rt>RT</button> <button data-a=bodies>Bodies</button> <button data-a=parcels>Parcels</button> <button data-a=off>×</button></div><input type=range min=-1 max=1 step=0.0005 style="width:100%"><pre style="margin:4px 0 0;font:11px ui-monospace"></pre>';
   o.mount.appendChild(ui); const slider = ui.querySelector('input')!, pre = ui.querySelector('pre')!;
   // slider: linear through the planet (|s| ≤ .5 → |r| ≤ R), logarithmic outside to R_MAX
   const toR = (s: number) => { const a = Math.abs(s), R0 = R / 1000; return Math.sign(s) * (a <= .5 ? a * 2 * R0 : R0 * (R_MAX / R0) ** ((a - .5) * 2)); };
   const toS = (r: number) => { const a = Math.abs(r), R0 = R / 1000; return Math.sign(r) * (a <= R0 ? a / R0 / 2 : .5 + Math.log(a / R0) / Math.log(R_MAX / R0) / 2); };
   slider.oninput = () => { rKm = toR(Number(slider.value)); };
-  ui.onclick = e => { const a = (e.target as HTMLElement).dataset.a; if (a === 'sun') u = o.sunDir(); if (a === 'off') api.toggle(false); if (a === 'gas') api.gas(); if (a === 'layers') api.layers(); if (a === 'rt') api.rt(); if (a === 'bodies') api.bodies(); };
+  ui.onclick = e => { const a = (e.target as HTMLElement).dataset.a; if (a === 'sun') u = o.sunDir(); if (a === 'off') api.toggle(false); if (a === 'gas') api.gas(); if (a === 'layers') api.layers(); if (a === 'rt') api.rt(); if (a === 'bodies') api.bodies(); if (a === 'parcels') api.parcels(); };
   o.sim.then(s => { sim = s; if (!s) return; for (let i = 0; i < N; i++) { const L = s.radialProfile((i + .5) / N * R / 1000).layer | 0, c = LAYER_RGB[L] ?? [1, 1, 1];
     lut.set([c[0] * 255, c[1] * 255, c[2] * 255, 255], i * 4); } tex.needsUpdate = true;
     for (let i = 0; i < NA; i++) { const L = s.gasAbove((i + .5) / NA * H_ATM / 1000).layer | 0, c = ATM_RGB[L]; alut.set([c[0] * 255, c[1] * 255, c[2] * 255, 255], i * 4); } atex.needsUpdate = true;
@@ -67,6 +68,12 @@ uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varyin
   const liveCell = (latDeg: number, lonDeg: number) => { if (!sim || !sim.n) return null; const i = Math.min(sim.nlat - 1, Math.max(0, Math.floor((latDeg + 90) / 180 * sim.nlat))),
     j = Math.min(sim.nlon - 1, Math.max(0, Math.floor((((lonDeg + 180) % 360 + 360) % 360) / 360 * sim.nlon))), c = i * sim.nlon + j;
     return { q: sim.plane('q')[c], cloud: sim.plane('cloud')[c], cot: sim.plane('cot')[c] }; };
+  // stage 6: the Earth built from relaxed SPH parcels (formation.rs bake); the cut plane clips them like the tiles
+  const runParcels = async () => { if (!parcelsOn) { if (parcels) parcels.visible = false; parcelInfo = ''; return; }
+    if (!parcels) { const b = await loadParcels(); if (!b) { parcelInfo = '\nparcels: no bake (public/bake/earth-parcels.bin)'; return; } parcels = parcelPoints(b.buf, clip); group.add(parcels); parcelInfo = '\n' + parcelReadout(b.meta); }
+    parcels.visible = true; };
+  const parcelFrame = () => { disc.visible = !(parcelsOn && parcels); if (parcels) ((parcels.material as THREE.ShaderMaterial).uniforms.uH.value = o.renderer.getDrawingBufferSize(new THREE.Vector2()).y / 2); };
+  void runParcels();
   const runBodies = () => { if (!sim || bodies < 0) { bodyInfo = ''; comPt.visible = false; return; } const e = sim.emergentDemo(2000, bodies);
     const modes = ['relaxed PREM Earth', 'same particles, 3 v_esc', 'Earth + Moon (37 p)'];
     bodyInfo = `\nbodies [${modes[bodies]}]: ${e.count} object${e.count === 1 ? '' : 's'} (FoF b 0.2 + unbinding)` + (e.count ? `\n  M ${e.mass.toExponential(4)} kg  ${e.members} p ${e.trusted ? 'trusted' : 'untrusted'}\n  COM offset ${(Math.hypot(...e.com) / 1000).toFixed(1)} km  L_z ${e.spinZ.toExponential(3)}  layers ${e.layers}` +
@@ -84,9 +91,10 @@ uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varyin
     layers(v = !gasLayers) { gasLayers = v; discMat.uniforms.uAtm.value = v ? 1 : 0; if (v) showGas = true; setDiscScale(); },
     rt(v = !showRT) { showRT = v; },
     bodies() { bodies = bodies >= 2 ? -1 : bodies + 1; runBodies(); },
+    parcels(v = !parcelsOn) { parcelsOn = v; void runParcels(); },
     /** per frame, camera at the render origin: planet centre at −camPos */
     update(camPos: Vec3) {
-      if (!on) return; group.position.set(-camPos[0], -camPos[1], -camPos[2]);
+      if (!on) return; group.position.set(-camPos[0], -camPos[1], -camPos[2]); parcelFrame(); // with parcels on, the cut shows them instead of the PREM disc
       const U = new THREE.Vector3(...u), surf = R; const out = Math.max(Math.abs(rKm) * 1000, surf) * 1.05;
       (line.geometry as THREE.BufferGeometry).setFromPoints([U.clone().multiplyScalar(-out), U.clone().multiplyScalar(out)]);
       const P = axisPoint(u, rKm); (pt.geometry.getAttribute('position') as THREE.BufferAttribute).set(P); pt.geometry.getAttribute('position').needsUpdate = true;
@@ -121,7 +129,7 @@ uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varyin
         txt += live ? `\n  sim day ${sim.day.toFixed(0)} ${sim.hour.toFixed(1)} h UTC  q ${(live.q * 1e3).toFixed(2)} g/kg  cloud ${live.cloud.toFixed(2)} τ ${live.cot.toFixed(1)}` : '\n  (no live grid: climatological q, clear sky)';
         txt += `\nRT  TSI ${k.tsi.toFixed(1)}  μ☉ ${cz.toFixed(3)}  surface ${kind === 0 && (sf.kind === 'lake' || sf.h > 0) ? 'lake' : ['ocean', 'sea ice', 'snow', 'land'][kind] /* water standing above sea level is a lake */} α ${k.albedo.toFixed(3)}` +
           (cz > 0 ? `\n  in ${k.toa.toFixed(1)}  refl atm ${k.reflAtm.toFixed(1)} surf ${k.reflSurf.toFixed(1)}  abs atm ${k.absAtm.toFixed(1)} surf ${k.absSurf.toFixed(1)} W/m²` + (kind === 0 ? `  glint BRF ${k.glint.toFixed(3)}` : '') : '\n  night side: no shortwave'); }
-      pre.textContent = txt + bodyInfo;
+      pre.textContent = txt + bodyInfo + (parcelsOn ? parcelInfo : '');
     },
   };
   api.toggle(on); api.layers(gasLayers); return api;

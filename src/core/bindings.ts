@@ -77,6 +77,7 @@ export const ACTIONS: ActionDef[] = [
   A('axisLayers', 'Axis: gas layers in the cut on/off', 'press', 'axis', ['l'], ['dleft']),
   A('axisRT', 'Axis: shortwave column readout on/off (stage 4)', 'press', 'axis', ['j'], ['a']),
   A('axisBodies', 'Axis: emergent-object demo, next mode (stage 5)', 'press', 'axis', ['n'], ['rb']),
+  A('axisParcels', 'Axis: Earth from particles on/off (stage 6)', 'press', 'axis', ['k'], ['x']),
   A('axisExit', 'Axis: leave axis mode', 'press', 'axis', ['r'], ['dright']),
   // camera adjust mode: pick a setting, triggers change it
   A('camPrev', 'Camera: previous setting', 'press', 'camera', ['arrowleft'], ['dleft', 'lb']),

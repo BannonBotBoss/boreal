@@ -29,7 +29,11 @@
     "J2_earth": { "value": 1.08263e-3, "unit": "1", "uncertainty": 0, "source": "WGS84 / EGM2008 dynamic form factor" },
     "julian_year_d": { "value": 365.25, "unit": "d", "uncertainty": 0, "source": "IAU definition" },
     "day_s":    { "value": 86400, "unit": "s", "uncertainty": 0, "source": "SI" },
-    "J2000_JD": { "value": 2451545.0, "unit": "d", "uncertainty": 0, "source": "IAU J2000.0 epoch (2000-01-01 12:00 TT)" }
+    "J2000_JD": { "value": 2451545.0, "unit": "d", "uncertainty": 0, "source": "IAU J2000.0 epoch (2000-01-01 12:00 TT)" },
+    "x_N2_dry": { "value": 0.78084, "unit": "mol/mol", "uncertainty": 0, "source": "Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics" },
+    "x_O2_dry": { "value": 0.20946, "unit": "mol/mol", "uncertainty": 0, "source": "Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics" },
+    "x_Ar_dry": { "value": 0.00934, "unit": "mol/mol", "uncertainty": 0, "source": "Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics" },
+    "CO2_ppm_present": { "value": 422.8, "unit": "ppm", "uncertainty": 0.1, "source": "NOAA GML global marine surface annual mean 2024 (Lan et al.); overridden by the climate seed in deep time" }
   },
   "math": {
     "PI": "Math.PI", "TAU": "2*Math.PI", "E": "Math.E", "PHI": "(1+Math.sqrt(5))/2", "SQRT2": "Math.SQRT2", "LN2": "Math.LN2",
@@ -56,6 +60,7 @@
     "M_jup":  { "formula": "GM_jup/G", "unit": "kg", "source": "GM_jup fixed" },
     "wgs84_f":{ "formula": "1/wgs84_invf", "unit": "1", "source": "WGS84" },
     "julian_year_s": { "formula": "julian_year_d*day_s", "unit": "s", "source": "IAU" },
-    "AU_km":  { "formula": "AU/1000", "unit": "km", "source": "IAU 2012" }
+    "AU_km":  { "formula": "AU/1000", "unit": "km", "source": "IAU 2012" },
+    "g_earth_mean": { "formula": "GM_earth/R_earth_mean**2", "unit": "m/s^2", "source": "Newtonian surface gravity at the mean radius (no rotation)" }
   }
 }

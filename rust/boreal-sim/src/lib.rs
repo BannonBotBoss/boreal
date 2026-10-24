@@ -15,6 +15,8 @@ pub mod update_clouds;
 pub mod column_budget;
 pub mod update_wind;
 pub mod sun_spectrum;
+pub mod interior;
+pub mod gas;
 
 use grid::Grid;
 use std::cell::RefCell;
@@ -43,3 +45,10 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
 }
 /// Memory helpers for hosts that need scratch space.
 #[no_mangle] pub extern "C" fn alloc_f64(n: u32) -> *mut f64 { let mut v = vec![0.0f64; n as usize]; let p = v.as_mut_ptr(); std::mem::forget(v); p }
+/// Radial profile along any outward vector (interior.rs): out[0..5] = layer, density kg/m3, temperature K, pressure Pa, gravity m/s2.
+#[no_mangle] pub extern "C" fn radial_profile(r_km: f64, magnetopause_re: f64, out: *mut f64) {
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 5) }; o.copy_from_slice(&interior::profile(r_km, magnetopause_re)); }
+/// Gas column (gas.rs) at altitude h km: out = [T, p, rho, n, x_N2, x_O2, x_Ar, x_CO2, x_H2O, x_O3, x_O, x_Na, x_He].
+#[no_mangle] pub extern "C" fn gas_column(body: u32, h_km: f64, q_surf: f64, co2_ppm: f64, out: *mut f64) {
+    let b = match body { 1 => gas::Body::Venus, 2 => gas::Body::Mercury, _ => gas::Body::Earth }; let c = gas::column(b, h_km, q_surf, co2_ppm);
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 13) }; o[..4].copy_from_slice(&[c.t, c.p, c.rho, c.n]); o[4..].copy_from_slice(&c.x); }

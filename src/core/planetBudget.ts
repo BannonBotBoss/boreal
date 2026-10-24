@@ -41,6 +41,8 @@ interface Exports {
   grid_init(nlat: number, nlon: number): number; grid_seed(day: number, hour: number): void; grid_step(dt: number): void;
   grid_day(): number; grid_hour(): number; alloc_f64(n: number): number;
   solar_cell(day: number, hour: number, lat: number, lon: number, cloud: number, albedo: number, tC: number, ePa: number, out: number): void;
+  radial_profile(rKm: number, mpRe: number, out: number): void;
+  gas_column(body: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
 }
 
 export class PlanetSim {
@@ -64,7 +66,21 @@ export class PlanetSim {
     const p = this.x.alloc_f64(7); this.x.solar_cell(day, utcHour, lat, lon, cloud, albedo, tC, ePa, p);
     return Array.from(new Float64Array(this.x.memory.buffer, p, 7));
   }
+  private scratch = 0;
+  private buf() { if (!this.scratch) this.scratch = this.x.alloc_f64(16); return this.scratch; }
+  /** Through-planet profile at signed radius r km (interior.rs): layer index (INTERIOR_LAYERS), density kg/m³, T K, P Pa, g m/s². */
+  radialProfile(rKm: number, magnetopauseRe = 10) {
+    const p = this.buf(); this.x.radial_profile(rKm, magnetopauseRe, p); const o = new Float64Array(this.x.memory.buffer, p, 5);
+    return { layer: o[0], rho: o[1], T: o[2], P: o[3], g: o[4] };
+  }
+  /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */
+  gasColumn(hKm: number, body = 0, qSurf = 0, co2ppm = 422.8) {
+    const p = this.buf(); this.x.gas_column(body, hKm, qSurf, co2ppm, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));
+    return { T: o[0], p: o[1], rho: o[2], n: o[3], x: o.slice(4) };
+  }
 }
+export const INTERIOR_LAYERS = ['inner core', 'outer core', 'mantle', 'crust', 'ocean', 'atmosphere', 'magnetosphere', 'solar wind'] as const;
+export const GAS_SPECIES = ['N2', 'O2', 'Ar', 'CO2', 'H2O', 'O3', 'O', 'Na', 'He'] as const;
 
 /** Instantiate the wasm. `bytes` is for tests and workers; in the browser it fetches `<base>wasm/boreal_sim.wasm`. Resolves null on any failure. */
 export async function loadPlanetSim(bytes?: BufferSource): Promise<PlanetSim | null> {

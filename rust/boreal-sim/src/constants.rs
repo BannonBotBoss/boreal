@@ -42,6 +42,10 @@ pub const J2_earth: f64 = 1.0826300000000000e-3; // 1; WGS84 / EGM2008 dynamic f
 pub const julian_year_d: f64 = 3.6525000000000000e+2; // d; IAU definition
 pub const day_s: f64 = 8.6400000000000000e+4; // s; SI
 pub const J2000_JD: f64 = 2.4515450000000000e+6; // d; IAU J2000.0 epoch (2000-01-01 12:00 TT)
+pub const x_N2_dry: f64 = 7.8083999999999998e-1; // mol/mol; Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics
+pub const x_O2_dry: f64 = 2.0946000000000001e-1; // mol/mol; Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics
+pub const x_Ar_dry: f64 = 9.3399999999999993e-3; // mol/mol; Dry air by volume, NOAA / CRC Handbook of Chemistry and Physics
+pub const CO2_ppm_present: f64 = 4.2280000000000001e+2; // ppm; NOAA GML global marine surface annual mean 2024 (Lan et al.); overridden by the climate seed in deep time
 pub const hbar: f64 = 1.0545718176461565e-34; // J s; = h/(2*PI)
 pub const R: f64 = 8.3144626181532395e+0; // J/(mol K); = N_A*k_B
 pub const F: f64 = 9.6485332123310014e+4; // C/mol; = N_A*e
@@ -61,3 +65,4 @@ pub const M_jup: f64 = 1.8981245973360505e+27; // kg; = GM_jup/G
 pub const wgs84_f: f64 = 3.3528106647474805e-3; // 1; = 1/wgs84_invf
 pub const julian_year_s: f64 = 3.1557600000000000e+7; // s; = julian_year_d*day_s
 pub const AU_km: f64 = 1.4959787069999999e+8; // km; = AU/1000
+pub const g_earth_mean: f64 = 9.8202233585047587e+0; // m/s^2; = GM_earth/R_earth_mean**2

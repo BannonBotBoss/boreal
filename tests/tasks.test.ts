@@ -65,6 +65,19 @@ test('rule 16: without "for": "matthew", or without his quoted words, Grok still
     assert.equal(L.tasks[0].state, 'approved', 'only Grok records for matthew; codex here is an ordinary non-author review');
   });
 });
+test('T-0069: grokbot-1 and grokbot-2 relay Matthew like grok, and review each other as separate agents', () => {
+  for (const bot of ['grokbot-1', 'grokbot-2']) board(bot, { ...ev('propose', bot, '01:00'), ...ev('approve-plan', bot, '01:01', { for: 'matthew', note: quote }),
+    ...ev('claim', bot, '01:02'), ...ev('complete', bot, '01:03', { branch: `${bot}/x` }), ...ev('approve', bot, '01:04', { for: 'matthew', note: quote }) }, L => {
+    assert.deepEqual(L.errors, []); assert.equal(L.tasks[0].state, 'done');
+  });
+  board('grokbot-2', { ...ev('propose', 'grokbot-2', '01:00'), ...ev('approve-plan', 'grokbot-1', '01:01'), ...ev('claim', 'grokbot-2', '01:02'),
+    ...ev('complete', 'grokbot-2', '01:03', { branch: 'grokbot-2/x' }), ...ev('approve', 'grokbot-1', '01:04') }, L => {
+    assert.deepEqual(L.errors, []); assert.equal(L.tasks[0].state, 'done');
+  });
+  board('grokbot-1', { ...ev('propose', 'grokbot-1', '01:00'), ...ev('approve-plan', 'grokbot-1', '01:01') }, L => {
+    assert.equal(L.tasks[0].state, 'proposed'); assert.match(L.errors.join('\n'), /another agent's review/);
+  });
+});
 test('event files: a UTF-8 BOM is ignored, invalid JSON is a warning, not a crash', () => {
   const bom = '\uFEFF' + JSON.stringify({ type: 'propose', task: 'T-0099', agent: 'claude', at: '2026-10-22T01:00:00-07:00' });
   board('claude', { '2026-10-22T01-00-claude-propose-T-0099.json': bom,

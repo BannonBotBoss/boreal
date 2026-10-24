@@ -1,6 +1,6 @@
 // T-0070 stage 6: the Earth bake made of relaxed SPH parcels (formation.rs) and its view (parcels.ts).
 import { test } from 'node:test'; import assert from 'node:assert/strict'; import { readFileSync } from 'node:fs';
-import { STRIDE, toGlobe, parcelReadout, REAL, type ParcelBake } from '../src/world/globe/parcels';
+import { STRIDE, toGlobe, parcelReadout, REAL, invF, type ParcelBake } from '../src/world/globe/parcels';
 import { ACTION, actionsIn } from '../src/core/bindings';
 const buf = new Float32Array(readFileSync(new URL('../public/bake/earth-parcels.bin', import.meta.url)).buffer.slice(0));
 const meta: ParcelBake = JSON.parse(readFileSync(new URL('../public/bake/earth-parcels.json', import.meta.url), 'utf8'));
@@ -11,7 +11,7 @@ test('bake: count, centre of mass at the origin, no parcel outside 1.3 R, core, 
 });
 test('measured vs real Earth: mass 0.2 %, radius 2 %, 1/f 25 %, g 4 %, pole g > equator g', () => {
   assert.ok(Math.abs(meta.mass / REAL.mass - 1) < .002 && Math.abs(meta.r_vol / REAL.rMean - 1) < .02);
-  assert.ok(Math.abs(1 / meta.f_clairaut / REAL.invF - 1) < .25 && meta.c < meta.a);
+  assert.ok(Math.abs(invF(meta) / REAL.invF - 1) < .25 && meta.c! < meta.a!);
   assert.ok(Math.abs(meta.g_eq / REAL.gEq - 1) < .04 && Math.abs(meta.g_pole / REAL.gPole - 1) < .04 && meta.g_pole > meta.g_eq);
   assert.match(parcelReadout(meta), /J2 .* 1\/f .*real 298\.257/s);
 });

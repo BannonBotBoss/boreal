@@ -70,7 +70,7 @@ uniform sampler2D uLut, uAtmLut; uniform float uA, uC, uTop, uAtm, uHAtm; varyin
     return { q: sim.plane('q')[c], cloud: sim.plane('cloud')[c], cot: sim.plane('cot')[c] }; };
   // stage 6: the Earth built from relaxed SPH parcels (formation.rs bake); the cut plane clips them like the tiles
   const runParcels = async () => { if (!parcelsOn) { if (parcels) parcels.visible = false; parcelInfo = ''; return; }
-    if (!parcels) { const b = await loadParcels(); if (!b) { parcelInfo = '\nparcels: no bake (public/bake/earth-parcels.bin)'; return; } parcels = parcelPoints(b.buf, clip); group.add(parcels); parcelInfo = '\n' + parcelReadout(b.meta); }
+    if (!parcels) { const b = await loadParcels(); if (!b) { parcelInfo = '\nparcels: no bake (public/bake/earth-hot.bin)'; return; } parcels = parcelPoints(b.buf, clip); group.add(parcels); parcelInfo = '\n' + parcelReadout(b.meta); }
     parcels.visible = true; };
   const parcelFrame = () => { disc.visible = !(parcelsOn && parcels); if (parcels) ((parcels.material as THREE.ShaderMaterial).uniforms.uH.value = o.renderer.getDrawingBufferSize(new THREE.Vector2()).y / 2); };
   void runParcels();

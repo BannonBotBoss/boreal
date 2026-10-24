@@ -1,5 +1,16 @@
 {
-  "_sources": "mass/rMean/a/c/invF: IUGG/WGS84 (NIMA TR8350.2, Moritz 2000 GRS80); j2: EGM2008 (Pavlis+2012); moi C/MR^2: Williams 1994 / Chen 2015; gEq/gPole: WGS84 normal gravity (Somigliana)",
-  "mass": 5.9722e24, "rMean": 6371008.8, "a": 6378137, "c": 6356752.3, "invF": 298.257,
-  "j2": 1.08263e-3, "moi": 0.3307, "gEq": 9.7803, "gPole": 9.8322
+ "_sources": "mass/rMean/a/c/invF: IUGG/WGS84 (NIMA TR8350.2, Moritz 2000 GRS80); j2: EGM2008 (Pavlis+2012); moi C/MR^2: Williams 1994 / Chen 2015; gEq/gPole: WGS84 normal gravity (Somigliana); cmbKm/icbKm/rhoCentre/pCentreGPa: PREM (Dziewonski & Anderson 1981)",
+ "mass": 5.9722e+24,
+ "rMean": 6371008.8,
+ "a": 6378137,
+ "c": 6356752.3,
+ "invF": 298.257,
+ "j2": 0.00108263,
+ "moi": 0.3307,
+ "gEq": 9.7803,
+ "gPole": 9.8322,
+ "cmbKm": 3480,
+ "icbKm": 1221.5,
+ "rhoCentre": 13088,
+ "pCentreGPa": 364
 }

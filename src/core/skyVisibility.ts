@@ -21,7 +21,7 @@ export function skyLuminance(hSunDeg: number, zDeg: number, rhoDeg: number) {
 export function visibility(m: number, zDeg: number, hSunDeg: number, rhoDeg: number) {
   if (zDeg >= 90) return { ratio: 0, mObs: Infinity, skyCd: 0 };
   const mObs = m + SKY.k * airmass(zDeg), B = skyLuminance(hSunDeg, zDeg, rhoDeg), nL = B / 3.183e-6;
-  const [C, K] = nL < 1479 ? [10 ** -9.8, 10 ** -1.9] : [10 ** -8.35, 10 ** -5.9];
+  const [C, K] = nL < 1479 ? [10 ** (-98 / 10), 10 ** (-19 / 10)] : [10 ** -8.35, 10 ** -5.9];
   const Ith = C * (1 + Math.sqrt(K * nL)) ** 2, I = 10 ** (-0.4 * (mObs + 16.57));
   return { ratio: I / Ith, mObs, skyCd: B };
 }

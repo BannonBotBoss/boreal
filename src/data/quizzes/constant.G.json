@@ -1,7 +1,7 @@
 {
- "_doc": "Control 'constant.G' test pool. Problems adapted from OpenStax University Physics Volume 1, ch. 13 Problems (Ling, Sanny, Moebs et al., 2016), CC BY 4.0, https://openstax.org/books/university-physics-volume-1/pages/1-introduction. Changes: given data stated inline, single-part. Answers computed from core/constants (answerExpr) and checked within tol. Hints: nudge (which idea), clue (formula; from the section's own worked examples, linked by 'learn'), walkthrough (numbers plugged in). Revealing the walkthrough means that question doesn't count toward the pass.",
- "license": "CC BY 4.0",
- "attribution": "Access for free at openstax.org. OpenStax University Physics Volume 1, Ling, Sanny & Moebs, CC BY 4.0.",
+ "_doc": "Control 'constant.G' test pool. Problems adapted from OpenStax University Physics Volume 1, ch. 13 Problems (Ling, Sanny, Moebs et al., 2016), CC BY-NC-SA 4.0, https://openstax.org/books/university-physics-volume-1/pages/1-introduction. Changes: given data stated inline, single-part. Answers computed from core/constants (answerExpr) and checked within tol. Hints: nudge (which idea), clue (formula; from the section's own worked examples, linked by 'learn'), walkthrough (numbers plugged in). Revealing the walkthrough means that question doesn't count toward the pass.",
+ "license": "CC BY-NC-SA 4.0",
+ "attribution": "Access for free at openstax.org. OpenStax University Physics Volume 1, Ling, Sanny & Moebs, CC BY-NC-SA 4.0 (noncommercial; derivatives under the same licence).",
  "pass": 0.7,
  "perAttempt": 10,
  "questions": [
@@ -410,5 +410,6 @@
     "Plug the numbers in: 2*G*4e6*1.989e30/c^2 (G = 6.674e-11, c = 3.00e8 m/s). Type that into a calculator."
    ]
   }
- ]
+ ],
+ "licenseNote": "Checked 2026-10-23 on the book page: CC BY-NC-SA (not CC BY as first recorded) and OpenStax requires prior written permission for use in generative-AI offerings or commercial use. Do not ship in a paid build without OpenStax permission or replacement questions."
 }

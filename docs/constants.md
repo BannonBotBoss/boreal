@@ -33,5 +33,5 @@ need every prerequisite badge first: pass the test, redeem credits (append-only 
   by 1 (min 1); opening the walkthrough means that question can't count toward the pass.
 - Credits: look 1, toggle 1, answer 5, minute played 2; caps per minute 6/6/60/2 (anti-farm).
 - Dev: `?unlockAll=1` in dev builds only.
-- Pools: `constant.G` = 27 problems adapted from OpenStax University Physics Vol. 1 ch. 13 (CC BY 4.0, attribution in the file).
+- Pools: `constant.G` = 27 problems adapted from OpenStax University Physics Vol. 1 ch. 13 (CC BY-NC-SA 4.0, attribution in the file; OpenStax also requires permission for AI or commercial use, so this pool cannot ship in a paid build as is).
   Other controls are **todo**: no sourced pool yet (to come from OpenStax High School Physics / Astronomy 2e). Never invent questions.

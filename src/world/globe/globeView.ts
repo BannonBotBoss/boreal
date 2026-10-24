@@ -382,7 +382,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     camera.near = clamp(alt * .02, .5, 1e5); camera.far = Math.sqrt((R + ground + alt) ** 2 - R * R) + R * 2; camera.updateProjectionMatrix();
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
     sun.position.copy(sunNow()); sun.intensity = isOn('sunlight') ? 3.2 : 0; if (atmos) atmos.setLayers(isOn('clouds'), isOn('atmosphere')); setSnowIceShown(isOn('snowIce'));
-    { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = isOn('sunlight') ? .04 + .66 * smoothstep(-.3, .12, se) : 1; hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
+    { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = isOn('sunlight') ? (atmos ? .7 : .04 + .66 * smoothstep(-.3, .12, se)) : 1; /* with the atmosphere the sky light is gated per fragment by the local Sun altitude (atmosphere.ts skyF) */ hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
     camPos[0] = camera.position.x; camPos[1] = camera.position.y; camPos[2] = camera.position.z;
 
     // LOD selection, then hand the wanted builds to the workers (or jobs); drop builds nobody wants any more

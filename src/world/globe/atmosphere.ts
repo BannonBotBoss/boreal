@@ -82,6 +82,11 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
 }
 // sunlight colour reaching x (transmittance), 0 in the planet's shadow
 vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? vec3(0.0) : exp(-((BR + BO) * l.x + BME * l.y)); }
+// Local sky (diffuse) light relative to clear noon, from the Sun's altitude h at a point (mu = sin h): the hemisphere light stands
+// for the clear-noon diffuse sky (~20 klx, CIE); sin h / sin 30 deg by day [approx], floor 960/20000 at h = 0 and Schaefer's 0.4 dex
+// per degree of depression below (core/skyVisibility twilightIlluminance), so the night side gets ~0 (night floor ~1e-3 lx)
+float atmSkyF(float mu) { float h = degrees(asin(clamp(mu, -1.0, 1.0)));
+  return h >= 0.0 ? clamp(max(0.048, mu / 0.5), 0.0, 1.0) : 0.048 * pow(10.0, 0.4 * max(h, -30.0)); }
 ${GLSL_NOISE}
 // 3D value noise from two seeded 2D slices of the shared vnoiseU (proc/glsl), so the clouds have no seams on the sphere.
 // vnoiseU, not vnoise: the fract(sin) hash gave dotted lines / specks along lattice planes in the clouds and their shadows
@@ -108,7 +113,7 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
   vec3 x = rd * t, n = normalize(x - uCentre); float a = cloudDensity(normalize(uViewToWorld * n), clamp(octD, 1.0, uCloudOct), uCloudEdge.x + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, uCloudEdge.y);
   if (a <= 0.0) return vec4(0.0);
   vec3 sunT = atmSunlight(x, nl); float lam = max(dot(n, uSun), 0.0);
-  return vec4(${CLOUDS.albedo.toFixed(2)} * (sunT * (0.25 + 0.75 * lam) * 1.12 + 0.08), a * 0.9 * (1.0 - uCloudClear));
+  return vec4(${CLOUDS.albedo.toFixed(2)} * (sunT * (0.25 + 0.75 * lam) * 1.12 + 0.08 * atmSkyF(dot(n, uSun))), a * 0.9 * (1.0 - uCloudClear));
 }
 `;
 
@@ -182,7 +187,8 @@ void main() {
     // transmittance^-1); sky (hemisphere) light stays, so ground facing away from a low sun is lit by the sky, not black
     float cs = 1.0; if (uCloudOct > ${CLOUDS.shadowMinOct - .5}) { vec3 nU = normalize(fp - uCentre); float mu = dot(nU, uSun); // cloud shadow: one cloud-field lookup up the sun ray
       if (mu > 0.02) cs = 1.0 - ${CLOUDS.shadow.toFixed(2)} * (1.0 - uCloudClear) * cloudDensity(normalize(uViewToWorld * normalize(fp + uSun * (${CLOUDS.heightKm.toFixed(2)} / mu) - uCentre)), 1.0, ${CLOUDS.shadowCentre.toFixed(3)} + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, ${CLOUDS.shadowHalf.toFixed(3)}); }
-    outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * (1.12 * cs) * atmSunlight(fp, int(uSteps.w)) + reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular + totalEmissiveRadiance;
+    float skyF = atmSkyF(dot(normalize(fp - uCentre), uSun)); // sky light is local (atmSkyF)
+    outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * (1.12 * cs) * atmSunlight(fp, int(uSteps.w)) + (reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular) * skyF + totalEmissiveRadiance;
     vec3 ins = atmScatter(rd, d, int(uSteps.z), int(uSteps.w), tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL;
     vec4 cl = atmClouds(rd, d, int(uSteps.w)); outgoingLight = mix(outgoingLight, cl.rgb * tr + ins * ATM_AERIAL, cl.a); } // clouds between camera and ground
 #include <opaque_fragment>`);

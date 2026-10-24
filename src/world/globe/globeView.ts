@@ -49,7 +49,9 @@ export { GLOBE_LAKE, GLOBE_LAND, GLOBE_SHORE } from './tile'; // inpage.ts (lazy
 export const NEAR_SPLIT = { k: 1.2, from: 3000, full: 1200, reach: 4 };
 import type { TileRequest } from './tileWorker';
 import { GLOBE_LOD, balancedTree, globeLod, worldTier } from './lod';
-import { figureRadius } from './figure';
+import { surfaceRadius } from './radial';
+import { createAxis } from './axisView';
+import { loadPlanetSim } from '../../core/planetBudget';
 
 interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number; solarBucket: string } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
@@ -171,6 +173,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
         pts.push(new THREE.Vector3().addScaledVector(e1, Math.cos(ml) * Math.cos(ph) * r).addScaledVector(e2, Math.cos(ml) * Math.sin(ph) * r).addScaledVector(m, Math.sin(ml) * r)); }
       const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat); ln.frustumCulled = false; fieldLines.add(ln); } }
 
+  // Through-planet axis (axisView.ts): ?dir=lat,lon|body:sun, ?r=km, slider, pad, cutaway; dblclick sets û to the view centre
+  const axis = createAxis({ q, scene, R, planet, material, renderer, sunDir: () => sunNow().clone().toArray() as Vec3, sim: loadPlanetSim(), mount: document.body });
+  canvas.addEventListener('dblclick', () => { if (axis.on) axis.pick([dir.x, dir.y, dir.z]); });
   // ---- camera: OrbitControls rotates around the planet centre; altitude is ours (log zoom), tilt toward the horizon near ground
   const controls = new OrbitControls(camera, canvas); controls.enableZoom = false; controls.enablePan = false; controls.enableDamping = false; // 1:1 drag; the release coast below replaces its per-frame damping
   let inputOn = own.inputAtStart; controls.enabled = inputOn; // input is mode-scoped: only while attached (attachInput)
@@ -219,7 +224,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     else if (e.key === 'q' || e.key === 'Q') turn(-.12); else if (e.key === 'e' || e.key === 'E') turn(.12);
     else if (e.key === 'g' || e.key === 'G' || (e.key === 'Escape' && own.pageDom)) { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } // over home: spawn right below, same heading; shared (in-page): Esc opens the game menu instead (main.ts)
   });
-  listeners.push(registerPadTarget('globe', { active: () => inputOn, orbit: (dx, dy) => { if (!dx && !dy) return; stopCoast(); const r = controls as unknown as { _rotateLeft(a: number): void; _rotateUp(a: number): void }; r._rotateLeft(dx * controls.rotateSpeed * 3); r._rotateUp(dy * controls.rotateSpeed * 3); controls.update(); }, zoom, turn, home: () => { flyHome = 1; stopCoast(); }, land: () => { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } })); // Grok Bot: gamepad (input/padRouter)
+  listeners.push(registerPadTarget('globe', { active: () => inputOn, orbit: (dx, dy) => { if (!dx && !dy) return; stopCoast(); const r = controls as unknown as { _rotateLeft(a: number): void; _rotateUp(a: number): void }; r._rotateLeft(dx * controls.rotateSpeed * 3); r._rotateUp(dy * controls.rotateSpeed * 3); controls.update(); }, zoom, turn, home: () => { flyHome = 1; stopCoast(); }, axis: () => axis, land: () => { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } })); // Grok Bot: gamepad (input/padRouter)
 
   // ---- tile builders: a worker pool (default) or budgeted main-thread jobs (?workers=0 or no Worker support)
   const tiles = new Map<string, Tile>(), queued = new Map<string, { n: QNode; pr: number }>(), inflight = new Set<string>();
@@ -379,7 +384,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     let stamped = 0;
     for (const t of tiles.values()) { if (stamped >= 4) break; const before = t.solarBucket; stampSolar(t, sunDay, sunHour); if (t.solarBucket !== before) stamped++; }
     if (ext) camera.position.copy(ext.position); // shared band: the transition flies the camera (drive)
-    dir.copy(camera.position).normalize(); const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = figureRadius([dir.x, dir.y, dir.z]) - R + Math.max(s.h, s.water); // figure.ts: hydrostatic figure, not a sphere
+    dir.copy(camera.position).normalize(); const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = surfaceRadius(planet, [dir.x, dir.y, dir.z]) - R; // radial.ts: the single altitude source (figure + terrain/water)
     // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
@@ -451,7 +456,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setLayerCamera(camPos, camera.fov, viewH);
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
-    tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
+    tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
   }

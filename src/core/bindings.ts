@@ -21,7 +21,7 @@ export const deadzone = (v: number) => Math.abs(v) < DEADZONE ? 0 : Math.sign(v)
 
 /** play: normal game · chrono: while the chronometer is open · globe: the planet view · camera: camera-adjust mode ·
  *  menu: any pad overlay (pad menu, settings, quiz) · any: always (except menus, which own the pad). hold = value each frame, press = fires once. */
-export type Context = 'play' | 'chrono' | 'globe' | 'camera' | 'menu' | 'any';
+export type Context = 'play' | 'chrono' | 'globe' | 'axis' | 'camera' | 'menu' | 'any';
 export const CONTEXTS: { id: Context; label: string }[] = [{ id: 'play', label: 'Game' }, { id: 'chrono', label: 'Chronometer' }, { id: 'globe', label: 'Globe' }, { id: 'camera', label: 'Camera' }, { id: 'menu', label: 'Menus' }, { id: 'any', label: 'Everywhere' }];
 export interface ActionDef { id: string; label: string; kind: 'hold' | 'press'; context: Context; keys: string[]; pad: string[]; sum?: boolean; keepInChrono?: boolean }
 const A = (id: string, label: string, kind: 'hold' | 'press', context: Context, keys: string[], pad: string[], o: Partial<ActionDef> = {}): ActionDef => ({ id, label, kind, context, keys: keys.map(k => 'k:' + k), pad, ...o });
@@ -65,6 +65,15 @@ export const ACTIONS: ActionDef[] = [
   A('globeTurnRight', 'Globe: turn heading right', 'hold', 'globe', ['e'], ['rb', 'rs.right'], { sum: true }),
   A('globeHome', 'Globe: fly home', 'press', 'globe', ['h'], ['x']),
   A('globeLand', 'Globe: land (back to the game)', 'press', 'globe', ['g'], ['a']),
+  A('globeAxis', 'Globe: through-planet axis on/off', 'press', 'globe', ['r'], ['dright']),
+  // axis mode (radial frame): left stick aims the vector û, triggers move r along it
+  A('axisAimLeft', 'Axis: aim west', 'hold', 'axis', ['a'], ['ls.left'], { sum: true }),
+  A('axisAimRight', 'Axis: aim east', 'hold', 'axis', ['d'], ['ls.right'], { sum: true }),
+  A('axisAimUp', 'Axis: aim north', 'hold', 'axis', ['w'], ['ls.up'], { sum: true }),
+  A('axisAimDown', 'Axis: aim south', 'hold', 'axis', ['s'], ['ls.down'], { sum: true }),
+  A('axisOut', 'Axis: move out along û', 'hold', 'axis', ['='], ['rt'], { sum: true }),
+  A('axisIn', 'Axis: move in along û', 'hold', 'axis', ['-'], ['lt'], { sum: true }),
+  A('axisExit', 'Axis: leave axis mode', 'press', 'axis', ['r'], ['dright']),
   // camera adjust mode: pick a setting, triggers change it
   A('camPrev', 'Camera: previous setting', 'press', 'camera', ['arrowleft'], ['dleft', 'lb']),
   A('camNext', 'Camera: next setting', 'press', 'camera', ['arrowright'], ['dright', 'rb']),

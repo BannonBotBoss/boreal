@@ -30,7 +30,7 @@ export function buttonMap(b: Bindings) {
 
 export function createPadRouter(host: RouterHost) {
   ensureCss();
-  let b = readBindings(), settingsOpen = false, helpOpen = false, camMode = false, camSel = 0, camAcc = 0, prevCam = new Set<string>(), prevGlobe = new Set<string>();
+  let b = readBindings(), settingsOpen = false, helpOpen = false, camMode = false, camSel = 0, camAcc = 0, prevCam = new Set<string>(), prevGlobe = new Set<string>(), prevAxis = new Set<string>();
   let yDownAt = -1, radial: { items: Item[]; sel: number } | undefined, hintEl: HTMLDivElement | undefined, camEl: HTMLDivElement | undefined;
   const reader = createPadReader();
   const menu = createPadMenu({ act: id => host.act(id), shutter: () => shutter(), settings: () => openSettings(), help: () => toggleHelp(true), close: () => {}, notice: host.notice });
@@ -129,11 +129,16 @@ export function createPadRouter(host: RouterHost) {
         if (Math.abs(d) > .05 && !locked) { camAcc += dt * (2 + 10 * Math.abs(d)); if (camAcc >= 1 || r.fired.size === 0 && camAcc === dt * (2 + 10 * Math.abs(d))) { cur.adjust?.(Math.sign(d)); camAcc = Math.max(0, camAcc - 1); } } else camAcc = .99;
         drawCam(); return true; }
       const g = padTarget('globe');
+      const ax = g?.active() && (standalone || host.globe()) ? g.axis?.() : undefined;
+      if (ax?.on) { const r = resolveContext(b, v, prevAxis, 'axis'); prevAxis = r.active; const V = r.value;
+        ax.aim(((V.axisAimUp ?? 0) - (V.axisAimDown ?? 0)) * .8 * dt, ((V.axisAimRight ?? 0) - (V.axisAimLeft ?? 0)) * 1.2 * dt);
+        const m = (V.axisOut ?? 0) - (V.axisIn ?? 0); if (Math.abs(m) > .02) ax.move(m * .25 * dt);
+        if (r.fired.has('axisExit') || r.fired.has('back')) ax.toggle(false); return false; }
       if (g?.active() && (standalone || host.globe())) { const r = resolveContext(b, v, prevGlobe, 'globe'); prevGlobe = r.active; const V = r.value;
         g.orbit(((V.globeOrbitRight ?? 0) - (V.globeOrbitLeft ?? 0)) * 1.6 * dt, ((V.globeOrbitDown ?? 0) - (V.globeOrbitUp ?? 0)) * 1.2 * dt);
         const z = (V.globeZoomIn ?? 0) - (V.globeZoomOut ?? 0); if (Math.abs(z) > .02) g.zoom(Math.exp(-z * 1.6 * dt));
         const t = (V.globeTurnRight ?? 0) - (V.globeTurnLeft ?? 0); if (Math.abs(t) > .02) g.turn(t * 1.2 * dt);
-        if (r.fired.has('globeHome')) g.home(); if (r.fired.has('globeLand')) g.land();
+        if (r.fired.has('globeAxis')) g.axis?.().toggle(true); if (r.fired.has('globeHome')) g.home(); if (r.fired.has('globeLand')) g.land();
         if (r.fired.has('inspector')) host.act('inspector');
         return false; }
       return false;

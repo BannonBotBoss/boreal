@@ -8,12 +8,13 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { SUN, angularRadius, discXYZ, xyzToRgb, limbAlpha, limbMean, contrast } from './spectrum';
-import { band, quietBrightness, scaleHeight } from './bands';
+import { band, quietBrightness, scaleHeight, type BandId } from './bands';
 import { SPOT, groupsOn, parseSilso, radiusFrac, isoDay, type Group } from './sunspots';
 import { adapt, cameraEV, exposureFromEV100, fovFromFocal, logAverage, pixelsFor, targetEV, ev100FromLuminance } from '../../render/exposure';
-import { mountCameraPanel, stateFromSearch } from '../../ui/cameraPanel';
+import { mountViewfinder } from '../../camera/gameCamera';
+import { BANDS } from './bands';
 
-const MAXG = 48, SEGS = 8, LOOPS = 3, BAND_SCALE = 2e4; // BAND_SCALE: non-visible bands in relative units x this, so the meter works the same way
+const MAXG = 48, SEGS = 8, LOOPS = 3, BAND_SCALE = 2e9; // BAND_SCALE: non-visible bands in relative units x this, so the meter works the same way
 const FRAG = /* glsl */`
 precision highp float; varying vec2 vUv;
 uniform vec2 uRes; uniform float uPxRho, uExpo, uSkyL, uLimbR, uLimbG, uLimbB, uThin, uQuiet, uLimbMax, uH, uSpotK, uArK, uUmbra, uPen, uAlphaBand;
@@ -43,7 +44,7 @@ void main(){
 }`;
 
 export async function startSunView(root: HTMLElement, search = location.search) {
-  const q = new URLSearchParams(search), st = stateFromSearch(search);
+  const q = new URLSearchParams(search);
   const date = new Date((q.get('date') ?? isoDay(new Date(Date.now() - 30 * 864e5))) + 'T12:00:00Z'), elevQ = q.get('elev') ?? '60', space = elevQ === 'space';
   const cosZ = space ? null : Math.sin(Number(elevQ) * Math.PI / 180), distAU = Number(q.get('au') ?? 1);
   const silso = parseSilso(await (await fetch(new URL('../../../public/data/silso/SN_d_tot_V2.0.csv', import.meta.url))).text());
@@ -80,10 +81,12 @@ export async function startSunView(root: HTMLElement, search = location.search) 
         if (prev && (pt.z > 0 || Math.hypot(pt.x, pt.y) > 1)) { sd.set([prev.x, prev.y, pt.x, pt.y], ns * 4); sd.set([1, Math.max(.004, sepR * .06), 0, 0], rowB + ns * 4); ns++; } prev = pt; } } }
   segTex.needsUpdate = true; u.uNseg.value = ns;
 
-  let ev = NaN, last = performance.now(), info = '';
-  const panel = mountCameraPanel(st, () => {}, () => info);
+  let ev = NaN, lastBand = '', last = performance.now(), info = '';
+  const vf = mountViewfinder(renderer, 'sun', { search, ownsExposure: true, autoEV: () => ev, readout: () => info,
+    filters: BANDS.map(b => ({ id: b.id, label: b.label, disabled: !space && b.nm < 300, note: 'absorbed by the atmosphere' })),
+    meta: () => ({ gameTime: isoDay(date), location: space ? `above the atmosphere, ${distAU} AU` : `ground, sun elevation ${elevQ} deg`, seed: 0 }) }), st = vf.state;
   function frame(now: number) {
-    const dt = Math.min(.1, (now - last) / 1000); last = now; const W = innerWidth, Hh = innerHeight, fov = fovFromFocal(st.cam.focalMm), b = band(st.band);
+    const dt = Math.min(.1, (now - last) / 1000); last = now; const W = innerWidth, Hh = innerHeight, fov = fovFromFocal(st.cam.focalMm), b = band(st.band as BandId);
     const pxRho = pixelsFor(sunR, fov, Hh); u.uRes.value.set(W, Hh); u.uPxRho.value = pxRho;
     const thin = b.thin ? 1 : 0, H = scaleHeight(b.T), vis = b.id === 'visible', k = vis ? 1 : BAND_SCALE * (cosZ === null || b.nm > 300 ? 1 : 0); // EUV/X-ray never reach the ground
     u.uThin.value = thin; u.uH.value = H; u.uLimbMax.value = 2 * Math.sqrt(Math.PI / H); u.uQuiet.value = b.quiet; u.uSpotK.value = b.spot; u.uArK.value = b.ar; u.uAlphaBand.value = vis ? 0 : Math.max(.05, limbAlpha(Math.max(b.nm, 300)));
@@ -92,11 +95,11 @@ export async function startSunView(root: HTMLElement, search = location.search) 
     // meter: fractions of the frame covered by disc / corona / sky (analytic, same numbers the shader draws)
     const discFrac = Math.min(1, Math.PI * pxRho * pxRho / (W * Hh)), Ldisc = vis ? Lcentre * limbMean(550) : k * (thin ? b.quiet * 2 + b.ar * .3 * Math.min(1, groups.length / 5) : 1), Lpeak = vis ? Lcentre : k * (thin ? b.quiet * 2 * Math.sqrt(Math.PI / H) + b.ar : 1.3);
     const Lavg = logAverage([[discFrac, Ldisc], [1 - discFrac, u.uSkyL.value + (thin ? k * b.quiet * .05 : 0) + 1e-3]]);
-    const target = targetEV(Lavg, Lpeak, st.cam.comp); ev = Number.isNaN(ev) ? (q.has('settled') ? target : ev100FromLuminance(Lavg)) : adapt(ev, target, dt, st.cam.adaptSpeed);
+    const target = targetEV(Lavg, Lpeak, st.cam.comp); if (st.band !== lastBand) { if (lastBand) ev = target; lastBand = st.band; } // a filter swap is a new metering, not a dark adaptation ev = Number.isNaN(ev) ? (q.has('settled') ? target : ev100FromLuminance(Lavg)) : adapt(ev, target, dt, st.cam.adaptSpeed);
     const evUsed = cameraEV(st.cam, ev); u.uExpo.value = exposureFromEV100(evUsed);
     const spotPx = groups.length ? Math.max(...groups.map(g => 2 * radiusFrac(g.areaMSH))) * pxRho : 0;
     info = `${isoDay(date)}  SILSO R=${R ?? '-'}  groups=${groups.length} (R/12.08=${R === undefined ? '-' : (R / 12.08).toFixed(1)})\n${b.label}: ${b.source}\n${space ? 'above the atmosphere' : `sun elevation ${elevQ} deg`}  disc ${(2 * pxRho).toFixed(0)} px\nlargest spot ${spotPx.toFixed(1)} px ${spotPx < 2 ? '(< 2 px: not resolved)' : ''}\nL disc centre ${Lcentre.toExponential(2)} cd/m2\nEV100 ${evUsed.toFixed(1)} ${st.cam.auto ? `(auto, target ${target.toFixed(1)})` : '(manual)'}`;
-    panel.update(); (window as any).__sun = { ev: evUsed, target, Lavg, Lpeak, groups: groups.length, R, spotPx, discPx: 2 * pxRho };
+    (window as any).__sun = { ev: evUsed, target, Lavg, Lpeak, groups: groups.length, R, spotPx, discPx: 2 * pxRho };
     composer.render(); requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

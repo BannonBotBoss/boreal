@@ -14,6 +14,7 @@
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { mountViewfinder } from '../../camera/gameCamera';
 import { GOVERNOR, LADDER, ceiling, governFrame, tierForGpu } from '../../core/quality';
 import { cachedProbe } from '../../core/probe';
 import { RENDER_SETTINGS, createSettingsStore } from '../../core/renderSettings';
@@ -76,6 +77,7 @@ export function startGlobe(canvas = document.getElementById('world') as HTMLCanv
   { const sd = Number(localStorage.getItem('boreal.seed.v1')); if (sd > 0) STAGES.seed = sd; }
   // log depth is per material (logDepth.ts), not a renderer flag: the same programs as in shared mode
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  mountViewfinder(renderer, 'globe', { aboveAir: () => true, meta: () => ({ seed: WORLD_SEED, gameTime: new Date().toISOString().slice(0, 10), location: 'orbit' }) }); // T-0068: the view is a camera
   // governor start (same rules as render/photoreal: GPU string -> start tier, probe cap from the cached probe)
   { const g = renderer.getContext(), dbg = g.getExtension('WEBGL_debug_renderer_info');
     GOVERNOR.gpu = String(dbg ? g.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER));
@@ -102,7 +104,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     Object.assign(canvas.style, { display: 'block', width: '100vw', height: '100vh' });
     hud = document.createElement('div');
     Object.assign(hud.style, { position: 'absolute', left: '14px', top: '12px', font: '12px/1.6 system-ui', color: '#dfe8ef', background: '#0b1622b0', padding: '8px 12px', borderRadius: '6px', pointerEvents: 'none', whiteSpace: 'pre' });
-    document.body.append(hud);
+    document.body.append(hud); hud.dataset.debug = '1'; // T-0068: hidden in the clean viewfinder, ` shows it
   }
   if (q.has('stages')) STAGES.on = true;
   const seed = Number(q.get('seed')) || (STAGES.on ? STAGES.seed : WORLD_SEED);

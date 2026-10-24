@@ -1,4 +1,5 @@
 import { FOCUS, focusSteer, pickFocus } from './core/focusLock';
+import { activeViewfinder } from './camera/gameCamera';
 import { SYSTEM_PROPERTIES } from './config/systemProperties';
 import './style.css';
 import { createSensesHUD } from './ui/senses';
@@ -267,7 +268,7 @@ function act(id: string) { // one fired press action (keyboard or gamepad)
   else if (id === 'chrono') { if (!inpage?.blocksGame()) { chrono.toggle(); clearInput(); } }
   else if (id === 'interact') { void sfx.start().catch(() => {}); perform(); }
   else if (id === 'inspector') { inspector.toggle(); clearInput(); }
-  else if (id === 'photo') enterPhoto();
+  else if (id === 'photo') { const vf = activeViewfinder(); if (vf) vf.shoot(); else enterPhoto(); } // T-0068: P = shutter on the live view; freeze & compose stays on the Photo button / menu
   else if (id === 'planet') toGlobe();
   else if (id === 'howl') sfx.howl(); else if (id === 'growl') sfx.growl();
 }

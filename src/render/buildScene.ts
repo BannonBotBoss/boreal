@@ -23,6 +23,7 @@ import { createSky } from './sky';
 import { shapeDeer, forgetDeer } from '../core/deerHerd';
 import { createHares } from '../animals/hare';
 import { formatHour, hourAt } from '../core/timeOfDay';
+import { mountViewfinder } from '../camera/gameCamera';
 import { LEVEL, BLOCK } from '../core/tuning';
 import { stepForward } from '../proc/math';
 import type { SnapshotSource } from '../core/snapshot';
@@ -58,6 +59,7 @@ const T0005_LOG_SEAT = (GEOMETRY as unknown as Record<string, unknown>)['logSeat
 const GLOW_ON = typeof location === 'undefined' || new URLSearchParams(location.search).get('glow') !== '0';
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU
+  mountViewfinder(renderer, 'game', { meta: () => ({ gameTime: formatHour(hourAt(0)), location: `x ${camera.position.x.toFixed(0)} z ${camera.position.z.toFixed(0)}`, seed: STAGES.seed }) }); // T-0068: the view is a camera
   const BASE_RATIO = Math.min(devicePixelRatio, 1.5);
   renderer.setPixelRatio(BASE_RATIO);
   renderer.setClearColor(0xc4d4c8);

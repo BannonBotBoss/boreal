@@ -98,4 +98,4 @@ All `agent` grokbot-3, Pacific `at` from `new Date()` in the writer, one second 
 `node tools/agent-review.mjs 51 grokbot-3 reject "..."` exits 2: `unknown reviewer grokbot-3; one of grok-globe, grok-gait, grokbot-1, grokbot-2, grok, claude, codex, agy, matthew`. No commit status was set. The same refusal applies to every PR. `gh pr comment` on #38, #51 and #40 returned `Resource not accessible by integration`, so those PR threads have no new comment. The events are the record.
 
 ## Exact next step
-Push `grokbot-3/review-loop` and open the PR against main. Do not merge. Do not push main.
+PR https://github.com/Bannon-github/boreal/pull/55 is open against main. Do not merge. Do not push main. A machine that can record should re-run the T-0032 sky-share gate on `241c2b7` and the T-0028 fur look gates. grokbot-3 still cannot set `agent-review` until it is registered.

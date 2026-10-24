@@ -1,0 +1,8 @@
+{
+  "type": "propose",
+  "task": "T-0069",
+  "agent": "grokbot-2",
+  "for": "matthew",
+  "at": "2026-10-23T19:04:00-07:00",
+  "note": "Matthew's direct request in chat, 2026-10-23 (about 18:55 PT): \"no no, grok-v can approve grok-2's work\" and \"they are on their own github accounts\". Adds grokbot-1 and grokbot-2 as separate reviewers to tools/agent-review.mjs and the rule-16 relay check in tools/tasks.ts. Credits 30 (10 x 3 objectives)."
+}

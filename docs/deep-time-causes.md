@@ -285,3 +285,89 @@ Boreal's core primitive: objects trade values, and trades become state changes. 
   - Use per-cell counts with tau-leaping (Gillespie 2001) and ~10–50 species classes.
   - In deep-time fast-forward, replace the detail with the §23 Poisson hazard. Run the explicit rules only when the player enters the microscopic world (T-0060 stage "microbial seas"), so what they see there is the same process, at a playable scale, and its rates are what the hazard summarises.
 - **Inspectable:** every replicator's history is a log of trades (where its monomers, energy and catalysis came from), which matches the vision that a creature's code shows exactly how it came to behave that way.
+
+---
+# Part III (T-0067): order against chaos, Mercury, Venus, and planet outcomes
+Matt (2026-10-23): "the golden ratio ties into order against chaos", "mercury", "and venus".
+Live-verified this run: Laskar & Gastineau 2009 (Nature 459:817, including its supplementary table) and Way et al. 2016 (GRL 43:8376). Everything else is cited from the literature and not re-checked.
+
+## 25. Order against chaos: KAM and the golden mean
+**Established:**
+- **KAM theorem** (Kolmogorov 1954, Arnold 1963, Moser 1962): in a weakly perturbed integrable system, most invariant tori survive. The survivors are those whose frequency ratio ω is "sufficiently irrational" (Diophantine: |ω − p/q| > c/q^τ).
+- **Resonances drive chaos:** a simple rational ratio p/q (1:1, 2:1, 3:2...) is where small perturbations add up coherently. Tori there break into island chains plus chaotic layers. When neighbouring resonance islands overlap, motion becomes widely chaotic (Chirikov 1979, the resonance-overlap criterion).
+- **The golden mean is the "most irrational" number.** Its continued fraction is [1;1,1,1,…], so its rational approximants (Fibonacci ratios F_{n+1}/F_n) converge slowest (Hurwitz's theorem: the constant √5 is the best possible).
+- **The standard map:** p' = p + K sin θ, θ' = θ + p'. Greene 1979 (J. Math. Phys. 20:1183) found that the last surviving rotational KAM torus has winding number related to the golden mean, (√5−1)/2. It breaks at **K_c ≈ 0.971635**. Above K_c, global chaos (unbounded diffusion in p) is possible. "Noble" numbers, whose continued fractions end in all 1s, are locally the most robust tori (MacKay 1983; Percival).
+
+**Speculative or no evidence:**
+- No evidence that φ drives the origin of life, chemistry, or planet formation.
+- Solar-system period ratios near Fibonacci ratios (e.g., Venus–Earth 13:8) are numerical coincidences. There's no demonstrated causal role, see §27.
+- Claims that phyllotaxis-style φ patterns arise from KAM are unrelated. Phyllotaxis comes from growth-packing dynamics (Douady & Couder 1992), which also produce the golden angle 137.5°. That *is* a real case of φ emerging from rules, but in biology, not in orbits.
+- Robustness near noble ratios is a statement about *perturbed tori*. It doesn't mean real planets prefer φ ratios. Observed exoplanet period ratios show no φ peak (Fabrycky et al. 2014 Kepler).
+
+## 26. A lightweight stability diagnostic for seeded systems
+The cheapest ways to test for chaos, in order (use them as a stage of the §21 rejection, before any long integration):
+1. **Mutual Hill spacing:** Δ = (a2 − a1)/R_H,mutual, with R_H = ((m1+m2)/3M*)^(1/3) (a1+a2)/2. For multi-planet systems, instability time follows log10(t/yr) ≈ b Δ + c, with b ≈ 1.0–1.2 (Chambers, Wetherill & Boss 1996; Smith & Lissauer 2009). Require Δ ≳ 8–10 for 5 Gyr survival of terrestrial systems [ranges]. Two planets are Hill-stable if Δ > 2√3 ≈ 3.46 (Gladman 1993).
+2. **Mean-motion resonance overlap:** Wisdom 1980 showed resonances overlap (chaos) for |a2−a1|/a < 1.3 μ^(2/7). Deck et al. 2013 refined this to ≈ 1.46 μ^(2/7) for eccentric orbits. Cheap and analytic.
+3. **Secular resonances:** flag when a planet's precession frequency g_i or s_i comes within a resonance width of a giant planet's (e.g., g1 ≈ g5 for Mercury). Use Laplace–Lagrange secular theory (O(N²) eigenproblem).
+4. **MEGNO / Lyapunov proxy** (Cincotta & Simó 2000): integrate a short (≤10⁵–10⁶ orbits) symplectic run (WHFast, Rein & Tamayo 2015) with variational equations. ⟨Y⟩ → 2 means quasi-periodic, and ⟨Y⟩ growing like λt/2 means chaotic. Rust cost: ~ms per configuration at 10⁴ steps.
+5. **Spin and moon:** the moon must sit inside ~0.49 of the planet's Hill radius (prograde; Domingos et al. 2006) and outside the Roche limit. Obliquity is chaotic if the spin precession frequency overlaps s_i (Laskar & Robutel 1993, see §4).
+6. **Learning shortcut:** SPOCK (Tamayo et al. 2020 PNAS) classifies 10⁹-orbit stability from a 10⁴-orbit run with ~10⁵× speed-up. It's an option for offline precomputation of acceptedSeeds.json.
+
+Rule in the sim: compute 1–3 analytically for every seed. Run 4 only for survivors. Store λ (Lyapunov time) per seed so the game can show "this solar system is chaotic on a ~5 Myr timescale."
+
+## 27. Mercury
+- **Orbit (J2000, JPL):** a = 0.387098 AU, e = 0.205630, i = 7.005°. Period 87.969 d. Mass 3.301e23 kg (0.0553 M_E). Radius 2,440 km. Core ~85% of radius (Hauck 2013).
+- **3:2 spin-orbit resonance:** spin 58.646 d = 2/3 of the orbit (Pettengill & Dyce 1965 radar; Colombo 1965). The solar day is 176 d. Capture into 3:2 rather than 1:1 is favoured by the high eccentricity and core-mantle friction (Correia & Laskar 2004 Nature 429:848: capture probability ~55.4% with chaotic e evolution).
+- **Perihelion precession:** 574"/century observed, of which GR adds 42.98"/century (Einstein 1915).
+- **Long-term stability (Laskar & Gastineau 2009, verified live):**
+  - 2,501 orbits with GR and the Moon, 5 Gyr: **~1%** reach e > 0.9, enough to collide with Venus or the Sun. Supplementary table: 9 per 1,000 reach e_max > 0.7 within 5 Gyr.
+  - In one run, the terrestrial planets destabilise ~3.34 Gyr from now, with possible collisions of Mercury, Mars or Venus with Earth.
+  - **Without GR (Newtonian, no Moon): ~60%** of 201 solutions exceed e = 0.9. GR's extra perihelion precession detunes the g1 ≈ g5 resonance (Mercury's perihelion against Jupiter's).
+  - Divergence: nearby solutions separate ×10 every ~10 Myr. Lyapunov time ~5 Myr for the inner planets (Laskar 1989, 1994; Sussman & Wisdom 1992: 4–5 Myr).
+  - Batygin & Laughlin 2008; Zeebe 2015 ApJ 811:9 agree, ~1% (range 0.5–2%).
+- **Sim:** Mercury instability is a hazard of ~0.2% per Gyr, ramping after ~1 Gyr (from the table), seeded. Its divergence sets the horizon beyond which orbits must be sampled, not predicted.
+
+## 28. Venus
+- **Orbit:** a = 0.723332 AU, e = 0.006772, i = 3.39°. Sidereal period 224.701 d. Mass 4.867e24 kg (0.815 M_E). Radius 6,051.8 km.
+- **Rotation:** retrograde, 243.02 d sidereal (obliquity 177.4°). Solar day 116.75 d. Explained as a balance of solid-body and atmospheric thermal tides (Gold & Soter 1969; Correia & Laskar 2001 Nature 411:767: either spin-down or spin flip, both reachable from many initial states).
+- **The 13:8 near-resonance and pentagram:**
+  - 8 Earth years ≈ 13 Venus years (8 × 365.256 = 2922.05 d; 13 × 224.701 = 2921.11 d, mismatch ~0.9 d).
+  - Five synodic periods (583.92 d) ≈ 8 years, so the inferior conjunctions trace a near-pentagram that slips ~2.4° per 8 years.
+  - 13/8 = 1.625 is a Fibonacci ratio, close to φ = 1.618.
+  - **Status: numerical coincidence.** It's not a true mean-motion resonance: the resonant argument circulates rather than librates, and the terms are 5th order and weak, ∝ e⁵ (Bazsó et al. 2010 MNRAS 404:1529, "is Venus in resonance with Earth?" found no libration). There's no argued dynamical significance beyond being near a weak resonance. And φ isn't involved dynamically.
+- **Atmosphere:**
+  - Surface pressure 92 bar; 96.5% CO2, 3.5% N2.
+  - Surface temperature 737 K (464 °C).
+  - H2SO4 clouds at 48–70 km; Bond albedo 0.76 (NASA fact sheet; Haus 2016: 0.76 ± 0.01). So Venus absorbs *less* sunlight than Earth (~163 vs ~240 W/m²), and its heat comes from the greenhouse effect, not from absorbed sunlight.
+- **Magnetic field:** no intrinsic field (Pioneer Venus: < 1e-5 of Earth's dipole; Russell 1980). The likely reasons are no inner-core growth and/or a stable stratified core with weak CMB heat flux, without plates (Stevenson 1983; Nimmo 2002) [disputed]. Slow rotation alone isn't sufficient. An induced magnetosphere forms from the solar wind.
+- **History:**
+  - D/H = **150 ± 30 × Earth** (Donahue et al. 1982, 1997; verified via Way 2016) implies substantial water loss.
+  - Present water: 6e15 kg of H2O, versus 1.4e21 kg in Earth's surface inventory.
+  - Paleo-ocean estimates: 4–525 m global equivalent (Donahue & Russell 1997).
+  - Way et al. 2016 (verified): with slow rotation (prograde slower than ~16 d), dayside clouds kept moderate temperatures despite 46–70% more sunlight than Earth. Habitable conditions possibly lasted until at least 0.715 Ga.
+  - Alternative: Hamano 2013 says water was lost in the first ~100 Myr because the magma ocean never condensed oceans. Turbet 2021 (Nature 598:276) agrees oceans may *never* have condensed (nightside clouds warming) [disputed].
+  - Resurfacing ~300–750 Ma (crater statistics; Strom 1994) erased the record.
+- **Why no moon:**
+  - Stochastic: by §3, P(Moon) is only ~8%.
+  - Venus is close to the Sun: its Hill radius is ~1.0e6 km (vs 1.5e6 km for Earth), and solar tides drag inward. Moons of a slowly spinning planet (spin slower than the orbit) migrate *inward* and crash (Ward & Reid 1973; Burns 1973).
+  - Alemi & Stevenson 2006 (AAS DPS abstract): a moon from an early impact, followed by a second impact that reversed the spin and made the moon spiral in [speculative].
+
+## 29. Earth, Venus and Mars: what seeded conditions lead where
+| Property | Venus | Earth | Mars | Effect in sim |
+|---|---|---|---|---|
+| a (AU) | 0.723 | 1.000 | 1.524 | flux 1.91 / 1.00 / 0.43 S⊕ |
+| Mass (M_E) | 0.815 | 1.000 | 0.107 | heat budget, outgassing, atmosphere retention |
+| Spin | −243 d | 1 d | 1.026 d | climate circulation, cloud feedback (Way 2016) |
+| Obliquity | 177.4° | 23.44° (stable, Moon) | 25.2° (chaotic 0–60°+, Laskar 2004) | climate stability |
+| Moon | none | 0.0123 M_E | Phobos, Deimos (tiny, 1.1e16 kg) | obliquity, tides |
+| Magnetic field | none | ~25–65 μT | none now; crustal remnants, dynamo ended ~4.1–3.9 Ga (Acuña 1999; Lillis 2008) | atmosphere escape shielding (debated: Gunell 2018) |
+| Plate tectonics | no (stagnant/episodic lid) | yes | no (stagnant lid) | carbon cycle |
+| Surface P, T | 92 bar, 737 K | 1 bar, 288 K | 0.006 bar, 210 K | |
+| Bond albedo | 0.76 | 0.29–0.31 | 0.25 | |
+| Water | 6e15 kg vapor, D/H ×150 | 1.4e21 kg | ice ~2–3e18 kg (polar, ~20–35 m GEL; Carr & Head 2015), D/H ×5–6 | |
+
+**Outcome rules for the habitable filter (§21):**
+- **Venus-like** if absorbed flux > runaway limit (~1.06–1.1 S⊕ for an Earth-mass planet with fast spin; Kopparapu 2013 inner edge 0.99 AU), or water is lost early (Hamano type I/II, a < ~0.8 AU). Slow rotation can push the limit up to ~1.5–1.9 S⊕ through dayside clouds (Yang 2014; Way 2016) [disputed]. Brightening Sun moves Earth here in ~1–1.5 Gyr (§19).
+- **Mars-like** if M < ~0.3 M_E. Then the interior cools fast, the dynamo dies, and atmosphere loss to sputtering and escape wins (Jakosky 2017 MAVEN: ~66% of argon lost). Also if flux < ~0.35–0.5 S⊕ without a thick CO2/H2 greenhouse.
+- **Earth-like** if: in the HZ (0.99–1.70 AU, conservative); M of 0.5–2 M_E (Raymond 2006; Noack 2014 plates more likely at 1–5 M_E [disputed]); water of 0.1–10 oceans; dynamo active; plates or a carbon cycle; obliquity stable (a large Moon, or the luck of the seed).
+- A seeded system also must pass §26 (Mercury-type secular chaos and Δ spacing).

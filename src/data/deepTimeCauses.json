@@ -4,7 +4,10 @@
  "request": [
   "but then , how did all those events come to be? research and find real numbers",
   "the moon will need to come from the earliest times, so it would be programmed as a probability: earth's very reason for forming came with the probability of a collision.",
-  "and for all version that are measured, narrows the possible set of timelines to those that equate to a planet with favorable living conditions, as the dimension regarding chemical rules, depends on special conditions, for the probability of the formation and transactions between the molecular structures needed for the replicating behaviour to emerge"
+  "and for all version that are measured, narrows the possible set of timelines to those that equate to a planet with favorable living conditions, as the dimension regarding chemical rules, depends on special conditions, for the probability of the formation and transactions between the molecular structures needed for the replicating behaviour to emerge",
+  "the golden ratio ties into order against chaos",
+  "mercury",
+  "and venus"
  ],
  "notes": "Distributions: mean, spread (1-sigma or half-range), unit, dist, source. referenceSeed values reproduce our Earth (seed 0). Ages in years before present.",
  "referenceSeed": 0,
@@ -1656,5 +1659,355 @@
   "templateReplication(q)",
   "selection(+compartments)",
   "lifeThreshold"
- ]
+ ],
+ "orderChaos": {
+  "task": "T-0067",
+  "standardMapKc": {
+   "mean": 0.971635,
+   "spread": 1e-06,
+   "unit": "-",
+   "dist": "normal",
+   "source": "Greene 1979 J Math Phys 20:1183"
+  },
+  "lastTorusWinding": "golden mean (sqrt5-1)/2; noble numbers most robust (MacKay 1983)",
+  "chirikovOverlap": "chaos when sum of half-widths > resonance spacing (Chirikov 1979)",
+  "established": [
+   "KAM survival of Diophantine tori",
+   "resonances seed chaos",
+   "golden mean last torus in standard map"
+  ],
+  "speculative": [
+   "phi role in origin of life: no evidence",
+   "Fibonacci period ratios in solar system: coincidence",
+   "no phi peak in Kepler period ratios (Fabrycky 2014)"
+  ],
+  "diagnostics": {
+   "hillSpacingMin5Gyr": {
+    "mean": 9,
+    "spread": 1,
+    "unit": "mutual Hill radii",
+    "dist": "normal",
+    "source": "Chambers 1996; Smith & Lissauer 2009"
+   },
+   "hillStableTwoPlanet": {
+    "value": 3.46,
+    "source": "Gladman 1993"
+   },
+   "instabilityLawSlopeB": {
+    "mean": 1.1,
+    "spread": 0.1,
+    "unit": "log10 yr per Hill radius",
+    "dist": "normal",
+    "source": "Chambers 1996"
+   },
+   "wisdomOverlapCoeff": {
+    "mean": 1.3,
+    "spread": 0.1,
+    "unit": "x mu^(2/7)",
+    "dist": "normal",
+    "source": "Wisdom 1980; Deck 2013 (1.46)"
+   },
+   "megnoQuasiPeriodic": 2.0,
+   "megnoSource": "Cincotta & Simo 2000",
+   "moonHillFractionProgradeMax": {
+    "mean": 0.49,
+    "spread": 0.02,
+    "unit": "R_Hill",
+    "dist": "normal",
+    "source": "Domingos 2006"
+   },
+   "spock": "Tamayo 2020 PNAS"
+  }
+ },
+ "mercury": {
+  "task": "T-0067",
+  "a": {
+   "mean": 0.387098,
+   "spread": 0,
+   "unit": "AU",
+   "dist": "normal",
+   "source": "JPL"
+  },
+  "e": {
+   "mean": 0.20563,
+   "spread": 0,
+   "unit": "-",
+   "dist": "normal",
+   "source": "JPL"
+  },
+  "i": {
+   "mean": 7.005,
+   "spread": 0,
+   "unit": "deg",
+   "dist": "normal",
+   "source": "JPL"
+  },
+  "period": {
+   "mean": 87.969,
+   "spread": 0,
+   "unit": "d",
+   "dist": "normal",
+   "source": "NASA"
+  },
+  "mass": {
+   "mean": 3.301e+23,
+   "spread": 0,
+   "unit": "kg",
+   "dist": "normal",
+   "source": "NASA"
+  },
+  "spin": {
+   "mean": 58.646,
+   "spread": 0,
+   "unit": "d (3:2)",
+   "dist": "normal",
+   "source": "Pettengill & Dyce 1965"
+  },
+  "p32capture": {
+   "mean": 0.554,
+   "spread": 0.05,
+   "unit": "-",
+   "dist": "normal",
+   "source": "Correia & Laskar 2004 Nature 429:848"
+  },
+  "grPrecession": {
+   "mean": 42.98,
+   "spread": 0.04,
+   "unit": "arcsec/century",
+   "dist": "normal",
+   "source": "Einstein 1915"
+  },
+  "pHighE_5Gyr_GR": {
+   "mean": 0.01,
+   "spread": 0.005,
+   "unit": "fraction (e>0.9)",
+   "dist": "normal",
+   "source": "Laskar & Gastineau 2009 Nature 459:817 (verified live; 2501 orbits)"
+  },
+  "pHighE_5Gyr_noGR": {
+   "mean": 0.6,
+   "spread": 0.05,
+   "unit": "fraction",
+   "dist": "normal",
+   "source": "Laskar & Gastineau 2009 (201 orbits, no GR/Moon)"
+  },
+  "suppTableGR_emax0.7_per1000": {
+   "1Gyr": 0,
+   "2Gyr": 1,
+   "3Gyr": 1,
+   "4Gyr": 4,
+   "5Gyr": 9
+  },
+  "terrestrialDestabilisationExample": {
+   "mean": 3340000000.0,
+   "spread": 0,
+   "unit": "yr ahead (single run)",
+   "dist": "normal",
+   "source": "Laskar & Gastineau 2009"
+  },
+  "lyapunovTime": {
+   "mean": 5000000.0,
+   "spread": 1000000.0,
+   "unit": "yr",
+   "dist": "normal",
+   "source": "Laskar 1989; Sussman & Wisdom 1992"
+  },
+  "divergence": "x10 per 10 Myr (Laskar & Gastineau 2009)",
+  "mechanism": "g1-g5 secular resonance"
+ },
+ "venus": {
+  "task": "T-0067",
+  "a": {
+   "mean": 0.723332,
+   "spread": 0,
+   "unit": "AU",
+   "dist": "normal",
+   "source": "JPL"
+  },
+  "e": {
+   "mean": 0.006772,
+   "spread": 0,
+   "unit": "-",
+   "dist": "normal",
+   "source": "JPL"
+  },
+  "i": {
+   "mean": 3.39,
+   "spread": 0,
+   "unit": "deg",
+   "dist": "normal",
+   "source": "JPL"
+  },
+  "period": {
+   "mean": 224.701,
+   "spread": 0,
+   "unit": "d",
+   "dist": "normal",
+   "source": "NASA"
+  },
+  "mass": {
+   "mean": 4.867e+24,
+   "spread": 0,
+   "unit": "kg",
+   "dist": "normal",
+   "source": "NASA"
+  },
+  "rotation": {
+   "mean": -243.02,
+   "spread": 0,
+   "unit": "d (retrograde)",
+   "dist": "normal",
+   "source": "NASA"
+  },
+  "obliquity": {
+   "mean": 177.4,
+   "spread": 0,
+   "unit": "deg",
+   "dist": "normal",
+   "source": "NASA"
+  },
+  "solarDay": {
+   "mean": 116.75,
+   "spread": 0,
+   "unit": "d",
+   "dist": "normal",
+   "source": "NASA"
+  },
+  "res13_8": {
+   "mismatchDays": 0.94,
+   "status": "numerical coincidence; argument circulates, 5th order (Bazs\u00f3 2010 MNRAS 404:1529)",
+   "phiRole": "none"
+  },
+  "surfaceP": {
+   "mean": 92,
+   "spread": 0,
+   "unit": "bar",
+   "dist": "normal",
+   "source": "NASA"
+  },
+  "surfaceT": {
+   "mean": 737,
+   "spread": 3,
+   "unit": "K",
+   "dist": "normal",
+   "source": "NASA"
+  },
+  "CO2": 0.965,
+  "bondAlbedo": {
+   "mean": 0.76,
+   "spread": 0.01,
+   "unit": "-",
+   "dist": "normal",
+   "source": "NASA; Haus 2016"
+  },
+  "intrinsicField": "none (<1e-5 Earth dipole, Russell 1980)",
+  "DH_vs_Earth": {
+   "mean": 150,
+   "spread": 30,
+   "unit": "x",
+   "dist": "normal",
+   "source": "Donahue 1982/1997 via Way 2016 (verified live)"
+  },
+  "waterNow": {
+   "mean": 6000000000000000.0,
+   "spread": 0,
+   "unit": "kg",
+   "dist": "normal",
+   "source": "Way 2016"
+  },
+  "paleoOceanGEL": {
+   "mean": 100,
+   "spread": "4-525",
+   "unit": "m",
+   "dist": "loguniform",
+   "source": "Donahue & Russell 1997",
+   "disputed": true
+  },
+  "habitableUntil": {
+   "mean": 715000000.0,
+   "spread": 0,
+   "unit": "yr ago (at least, if oceans existed)",
+   "dist": "normal",
+   "source": "Way 2016 GRL 43:8376 (verified live)",
+   "disputed": true
+  },
+  "neverOceans": "Hamano 2013; Turbet 2021 Nature 598:276 (disputed)",
+  "slowRotationCloudLimitDays": 16,
+  "resurfacingAge": {
+   "mean": 500000000.0,
+   "spread": 200000000.0,
+   "unit": "yr",
+   "dist": "normal",
+   "source": "Strom 1994"
+  },
+  "noMoon": [
+   "P(moon)~0.08 stochastic",
+   "slow spin -> tidal inspiral (Ward & Reid 1973)",
+   "double-impact spin reversal (Alemi & Stevenson 2006, speculative)"
+  ]
+ },
+ "planetOutcomes": {
+  "task": "T-0067",
+  "venusLike": {
+   "fluxAboveSearth": {
+    "mean": 1.08,
+    "spread": 0.03,
+    "unit": "S_earth (fast spin)",
+    "dist": "normal",
+    "source": "Kopparapu 2013"
+   },
+   "fluxAboveSlowSpin": {
+    "mean": 1.7,
+    "spread": 0.2,
+    "unit": "S_earth",
+    "dist": "normal",
+    "source": "Yang 2014; Way 2016",
+    "disputed": true
+   },
+   "earlyLossBelowAU": 0.8
+  },
+  "marsLike": {
+   "massBelowME": {
+    "mean": 0.3,
+    "spread": 0.1,
+    "unit": "M_E",
+    "dist": "normal",
+    "source": "Jakosky 2017; Noack 2014",
+    "disputed": true
+   },
+   "fluxBelowSearth": {
+    "mean": 0.42,
+    "spread": 0.08,
+    "unit": "S_earth",
+    "dist": "normal",
+    "source": "Kopparapu 2013"
+   }
+  },
+  "earthLike": {
+   "aAU": [
+    0.99,
+    1.7
+   ],
+   "massME": [
+    0.5,
+    2.0
+   ],
+   "waterOceans": [
+    0.1,
+    10
+   ],
+   "requires": [
+    "dynamo",
+    "plates or carbon cycle",
+    "stable obliquity"
+   ]
+  },
+  "marsDynamoEnd": {
+   "mean": 4000000000.0,
+   "spread": 100000000.0,
+   "unit": "yr ago",
+   "dist": "normal",
+   "source": "Lillis 2008; Acuna 1999"
+  }
+ }
 }

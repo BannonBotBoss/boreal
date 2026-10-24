@@ -113,3 +113,11 @@ Rest of the boundaries (plan, not done):
 - Ocean, air: volatiles (ocean 1.4e21 kg, air 5.15e18 kg, cited in materials.json) are below one parcel at <= 48k parcels;
   they need a lighter tier (split parcels / a separate fluid shell computed from the outgassed mass), with surface
   temperature from the existing energy budget to decide liquid vs vapour.
+
+## Core pass 2 results (2026-10-24, 6k parcels, hot.rs: 6000 hot + 6000 cooling steps)
+Measured (PREM for checking only): R_vol 6532 km (6371), CMB 3541 km (3480), ICB 3117 km (1221.5), centre 14274 kg/m3 (13088), 375 GPa (364), 5650 K;
+C/MR2 0.316 (0.3307), 1/f 328 (298.3), g_eq 9.30 (9.78), separation 0.993. The mean SPH density follows PREM through the mantle; the core is 0-15 % dense.
+Inner core too big: this is pure iron (no light elements), so its melting point at the CMB (~4100 K, Anzellini 2013) is above our core-top T
+(mantle bottom + 1000 K boundary layer, Lay 1998). Real outer core is liquid because S/O/Si lower the melting point (Alfè et al. 2002), not yet modelled.
+Open: light-element melting depression, GDF f_i term, time-compressed cooling, escaping surface parcels (vmax ~1.5 km/s), COM drift 19 km, latent heat,
+no phase changes in Tillotson, crust/ocean/air not differentiated yet; 24k run in progress.

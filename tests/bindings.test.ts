@@ -31,7 +31,7 @@ test('press actions fire once on the edge; Shift+G is planet view, not also a gr
   r = step(['shift', 'g']); assert.ok(r.fired.has('planet') && !r.fired.has('growl'));
   assert.ok(step(['g']).fired.has('growl'));
   assert.equal(step(['control', 'i']).fired.size, 0); assert.ok(step(['i']).fired.has('inspector'));
-  assert.deepEqual([...step([], padOf({ b: { 8: 1 } })).fired], ['chrono']); assert.deepEqual([...step([], padOf({ b: { 9: 1 } })).fired], ['pause']);
+  assert.deepEqual([...step([], padOf({ b: { 12: 1 } })).fired], ['chrono']); assert.deepEqual([...step([], padOf({ b: { 9: 1 } })).fired], ['padMenu']); assert.deepEqual([...step([], padOf({ b: { 8: 1 } })).fired], ['padHelp']);
   assert.ok(step(['escape']).fired.has('pause') && step([], padOf({ b: { 1: 1 } })).fired.has('back'));
   assert.equal(step(['e'], undefined, new Set(), true).fired.size, 0, 'chronometer open: interact is not live');
 });

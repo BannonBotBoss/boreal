@@ -19,8 +19,10 @@ export const STICKS: Record<string, Record<Dir, string>> = {
 export const DEADZONE = .18, ACTIVE = .25;
 export const deadzone = (v: number) => Math.abs(v) < DEADZONE ? 0 : Math.sign(v) * (Math.abs(v) - DEADZONE) / (1 - DEADZONE);
 
-/** play: normal game · chrono: while the chronometer is open · any: always. hold = value each frame, press = fires once. */
-export type Context = 'play' | 'chrono' | 'any';
+/** play: normal game · chrono: while the chronometer is open · globe: the planet view · camera: camera-adjust mode ·
+ *  menu: any pad overlay (pad menu, settings, quiz) · any: always (except menus, which own the pad). hold = value each frame, press = fires once. */
+export type Context = 'play' | 'chrono' | 'globe' | 'camera' | 'menu' | 'any';
+export const CONTEXTS: { id: Context; label: string }[] = [{ id: 'play', label: 'Game' }, { id: 'chrono', label: 'Chronometer' }, { id: 'globe', label: 'Globe' }, { id: 'camera', label: 'Camera' }, { id: 'menu', label: 'Menus' }, { id: 'any', label: 'Everywhere' }];
 export interface ActionDef { id: string; label: string; kind: 'hold' | 'press'; context: Context; keys: string[]; pad: string[]; sum?: boolean; keepInChrono?: boolean }
 const A = (id: string, label: string, kind: 'hold' | 'press', context: Context, keys: string[], pad: string[], o: Partial<ActionDef> = {}): ActionDef => ({ id, label, kind, context, keys: keys.map(k => 'k:' + k), pad, ...o });
 /** Defaults = the game's controls before rebinding existed (2026-10-21). */
@@ -40,15 +42,49 @@ export const ACTIONS: ActionDef[] = [
   A('interact', 'Interact', 'press', 'play', ['e'], ['a']),
   A('howl', 'Howl', 'press', 'play', ['h'], []),
   A('growl', 'Growl', 'press', 'play', ['g'], []),
-  A('chrono', 'Chronometer (time of day)', 'press', 'any', ['t'], ['view']),
+  A('chrono', 'Chronometer (time of day)', 'press', 'any', ['t'], ['dup']),
   A('scrubEarlier', 'Chronometer: earlier', 'hold', 'chrono', ['arrowleft'], ['dleft', 'ls.left'], { sum: true }),
   A('scrubLater', 'Chronometer: later', 'hold', 'chrono', ['arrowright'], ['dright', 'ls.right'], { sum: true }),
   A('back', 'Close (chronometer / panel)', 'press', 'any', [], ['b']),
-  A('pause', 'Pause menu', 'press', 'any', ['escape'], ['menu']),
+  A('pause', 'Pause menu', 'press', 'any', ['escape'], []),
+  A('padMenu', 'Pad menu (Layers, Camera, Time, Badges, Gallery, Settings)', 'press', 'any', ['tab'], ['menu']),
+  A('padHelp', 'Controls help overlay', 'press', 'any', ['f1'], ['view']),
   A('photo', 'Photo mode', 'press', 'play', ['p'], []),
-  A('inspector', 'Generation inspector', 'press', 'any', ['i'], []),
+  A('shutter', 'Take a photo (shutter)', 'press', 'any', ['enter'], ['rs.click']),
+  A('cameraMode', 'Camera adjust mode (tap) / filter wheel (hold)', 'press', 'any', ['v'], ['y']),
+  A('inspector', 'Debug HUD / generation inspector', 'press', 'any', ['i'], ['ddown']),
   A('planet', 'Planet view', 'press', 'play', ['shift+k:g'], []),
+  // globe (planet view): orbit, zoom, turn, home, land
+  A('globeOrbitLeft', 'Globe: orbit left', 'hold', 'globe', ['a'], ['ls.left'], { sum: true }),
+  A('globeOrbitRight', 'Globe: orbit right', 'hold', 'globe', ['d'], ['ls.right'], { sum: true }),
+  A('globeOrbitUp', 'Globe: orbit up', 'hold', 'globe', ['w'], ['ls.up'], { sum: true }),
+  A('globeOrbitDown', 'Globe: orbit down', 'hold', 'globe', ['s'], ['ls.down'], { sum: true }),
+  A('globeZoomIn', 'Globe: zoom in', 'hold', 'globe', ['='], ['rt', 'rs.up'], { sum: true }),
+  A('globeZoomOut', 'Globe: zoom out', 'hold', 'globe', ['-'], ['lt', 'rs.down'], { sum: true }),
+  A('globeTurnLeft', 'Globe: turn heading left', 'hold', 'globe', ['q'], ['lb', 'rs.left'], { sum: true }),
+  A('globeTurnRight', 'Globe: turn heading right', 'hold', 'globe', ['e'], ['rb', 'rs.right'], { sum: true }),
+  A('globeHome', 'Globe: fly home', 'press', 'globe', ['h'], ['x']),
+  A('globeLand', 'Globe: land (back to the game)', 'press', 'globe', ['g'], ['a']),
+  // camera adjust mode: pick a setting, triggers change it
+  A('camPrev', 'Camera: previous setting', 'press', 'camera', ['arrowleft'], ['dleft', 'lb']),
+  A('camNext', 'Camera: next setting', 'press', 'camera', ['arrowright'], ['dright', 'rb']),
+  A('camDown', 'Camera: decrease setting', 'hold', 'camera', ['arrowdown'], ['lt'], { sum: true }),
+  A('camUp', 'Camera: increase setting', 'hold', 'camera', ['arrowup'], ['rt'], { sum: true }),
+  A('camAuto', 'Camera: auto / manual exposure', 'press', 'camera', ['a'], ['x']),
+  // menus (pad menu, settings page, quiz)
+  A('menuUp', 'Menu: up', 'press', 'menu', ['arrowup'], ['dup', 'ls.up']),
+  A('menuDown', 'Menu: down', 'press', 'menu', ['arrowdown'], ['ddown', 'ls.down']),
+  A('menuLeft', 'Menu: left / decrease', 'press', 'menu', ['arrowleft'], ['dleft', 'ls.left']),
+  A('menuRight', 'Menu: right / increase', 'press', 'menu', ['arrowright'], ['dright', 'ls.right']),
+  A('menuSelect', 'Menu: select', 'press', 'menu', ['enter'], ['a']),
+  A('menuBack', 'Menu: back / close', 'press', 'menu', ['escape'], ['b']),
+  A('menuTabPrev', 'Menu: previous tab', 'press', 'menu', ['['], ['lb']),
+  A('menuTabNext', 'Menu: next tab', 'press', 'menu', [']'], ['rb']),
+  A('menuAlt', 'Menu: hint / secondary', 'press', 'menu', ['h'], ['x']),
+  A('menuAlt2', 'Menu: retry / tertiary', 'press', 'menu', ['r'], ['y']),
 ];
+/** Actions per context, for the settings page tabs. */
+export const actionsIn = (c: Context) => ACTIONS.filter(a => a.context === c);
 export const ACTION = Object.fromEntries(ACTIONS.map(a => [a.id, a])) as Record<string, ActionDef>;
 /** "Whole stick" rows: one capture fills every direction (a stick, the d-pad, the arrows or WASD; modifiers kept). */
 export const GROUPS: { id: string; label: string; members: Partial<Record<Dir, string>> }[] = [
@@ -127,7 +163,30 @@ export function conflicts(b: Bindings) {
   for (const e of seen.values()) { const ids = e.ids.filter(i => e.ids.some(j => j !== i && together(ACTION[i].context, ACTION[j].context))); if (ids.length > 1) out.push({ combo: e.combo, ids }); }
   return out;
 }
-const together = (x: Context, y: Context) => x === y || x === 'any' || y === 'any';
+/** Two contexts can be live at once: same context, or 'any' with anything but a menu (menus own the pad), or chrono over play-look actions. */
+export const together = (x: Context, y: Context) => x === y || (x === 'any' && y !== 'menu') || (y === 'any' && x !== 'menu');
+/** Actions that would clash with `combo` if it were bound to `id` (same input set, contexts live together). */
+export function clashesWith(b: Bindings, id: string, combo: string) {
+  const k = [...atomsOf(combo)].sort().join('+');
+  return ACTIONS.filter(a => a.id !== id && together(a.context, ACTION[id].context) && combos(b, a.id).some(c => [...atomsOf(c)].sort().join('+') === k)).map(a => a.id);
+}
+/** Bind `combo` to `id` and give each clashing action `id`'s old binding on that side (the swap prompt's "Swap"). */
+export function swapAssign(b: Bindings, id: string, atoms: string[]): Bindings {
+  const combo = tidyCombo(atoms), side = atomsOf(combo).every(isKeyAtom) ? 'keys' : 'pad', old = b[id][side], others = clashesWith(b, id, combo);
+  let out = assign(b, id, atoms);
+  for (const o of others) out = { ...out, [o]: { ...out[o], [side]: [...out[o][side].filter(c => !same(c, combo)), ...old.filter(c => !out[o][side].includes(c))] } };
+  return out;
+}
+/** Hold values and press edges for one non-game context (globe, camera, menu): its own actions plus 'any' (not in menus). */
+export function resolveContext(b: Bindings, v: Map<string, number>, prev: ReadonlySet<string>, ctx: Exclude<Context, 'any'>): Resolved {
+  const value: Record<string, number> = {}, fired = new Set<string>(), active = new Set<string>();
+  for (const a of ACTIONS) { if (!(a.context === ctx || (a.context === 'any' && ctx !== 'menu'))) continue; let total = 0;
+    for (const c of combos(b, a.id)) { const x = comboValue(c, v);
+      if (a.kind === 'hold') total = a.sum ? total + x : Math.max(total, x);
+      else if (x > ACTIVE) { const key = a.id + '|' + c; active.add(key); if (!prev.has(key)) fired.add(a.id); } }
+    value[a.id] = total; }
+  return { value, fired, active };
+}
 const same = (c: string, d: string) => [...atomsOf(c)].sort().join('+') === [...atomsOf(d)].sort().join('+');
 /** Remove `combo` (any order) from an action (conflict resolution: keep it on the other one). */
 export function unbind(b: Bindings, id: string, combo: string): Bindings {
@@ -170,7 +229,7 @@ const assignRaw = (b: Bindings, id: string, combo: string) => atomsOf(combo).eve
 
 const NAMES: Record<string, string> = { a: 'A', b: 'B', x: 'X', y: 'Y', lb: 'LB', rb: 'RB', lt: 'LT', rt: 'RT', view: 'View', menu: 'Menu', 'ls.click': 'LS click', 'rs.click': 'RS click',
   dup: 'D-pad ↑', ddown: 'D-pad ↓', dleft: 'D-pad ←', dright: 'D-pad →', xbox: 'Xbox', ls: 'LS (any way)', rs: 'RS (any way)',
-  'k:space': 'Space', 'k:arrowup': '↑', 'k:arrowdown': '↓', 'k:arrowleft': '←', 'k:arrowright': '→', 'k:escape': 'Esc', 'k:plus': '+', 'k:control': 'Ctrl' };
+  'k:space': 'Space', 'k:tab': 'Tab', 'k:enter': 'Enter', 'k:f1': 'F1', 'k:arrowup': '↑', 'k:arrowdown': '↓', 'k:arrowleft': '←', 'k:arrowright': '→', 'k:escape': 'Esc', 'k:plus': '+', 'k:control': 'Ctrl' };
 const ARROW: Record<string, string> = { up: '↑', down: '↓', left: '←', right: '→' };
 export function atomLabel(a: string) {
   if (NAMES[a]) return NAMES[a]; const s = /^(ls|rs)\.(\w+)$/.exec(a); if (s) return `${s[1].toUpperCase()} ${ARROW[s[2]]}`;

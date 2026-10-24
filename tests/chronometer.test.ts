@@ -28,6 +28,6 @@ test('scrub eases toward input × rate, clamps input, and settles at rest', () =
   near(scrubVelocity(0, -5, 10), -CHRONO.rate, 1e-6);
   for (let i = 0; i < 120; i++) v = scrubVelocity(v, 0, 1 / 60); assert.ok(Math.abs(v) < 1e-3);
 });
-test('the chronometer and planet view are bindable actions (T / View, Shift+G)', () => {
-  assert.deepEqual([ACTION.chrono.keys, ACTION.chrono.pad, ACTION.planet.keys], [['k:t'], ['view'], ['k:shift+k:g']]);
+test('the chronometer and planet view are bindable actions (T / D-pad up, Shift+G; View is the help overlay)', () => {
+  assert.deepEqual([ACTION.chrono.keys, ACTION.chrono.pad, ACTION.planet.keys], [['k:t'], ['dup'], ['k:shift+k:g']]);
 });

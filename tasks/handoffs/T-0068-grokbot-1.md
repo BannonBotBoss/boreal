@@ -12,8 +12,8 @@ Branch: main (commits listed in the task file). Verify: `npx tsc --noEmit`, `npm
 | plate areas | fitted to <10 % | NNR-MORVEL56 Table 1, Argus 2011 | yes |
 | plate rates | literal NNR-MORVEL56 omega | Argus 2011 | yes |
 | global precip | 2.04 mm/day | 2.7 mm/day, Trenberth 2007 | ~ |
-| global cloud | 0.51 Jan / 0.53 Jul | 0.67, King et al. 2013 MODIS | no (open) |
-| Southern Ocean July cloud | 0.24 | ~0.8 MODIS | no (open) |
+| global cloud | 0.62 Jan / 0.65 Jul | 0.67, King et al. 2013 MODIS | yes (±0.08) |
+| Southern Ocean July cloud | 0.63 | ~0.8 MODIS | ~ (low) |
 | cloud step change | 0.0109 per 3 h | lifetime hours-1 day, Machado & Rossow 1993 | yes |
 
 ## Frames (uncalibrated - RULES.md 11: no calibrated metric yet)
@@ -24,4 +24,4 @@ aurora-spolar.jpg (south-polar oval), plates-off-on.jpg, july-v3-v4.jpg, airglow
 - Screen recording of the globe running and a reference-image comparison with a calibrated metric (RULES.md 6, 11).
 
 ## Leftovers
-Free-troposphere cloud for the winter storm tracks (in progress); plate outlines are seeded (planet is procedural), only the motions are measured.
+plate outlines are seeded (planet is procedural), only the motions are measured.

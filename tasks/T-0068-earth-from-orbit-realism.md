@@ -19,4 +19,4 @@ Requested directly in chat, so pre-approved under RULES.md 16; grok to record th
 - [x] Aurora from OMNI solar wind + dipole field lines; polar camera ?latlon; depth-tested lines - e3cbae3, 7d4d30b
 - [x] MORVEL plates (NNR-MORVEL56 rates, seeded area-fitted outlines) - bf9f909
 - [x] Multi-cause cloud cover + precipitation memory - d002317; cloud time-averaging - 7dbf19b
-- [ ] Free-troposphere cloud closing the winter storm-track gap; tighten cloud_cover_vs_modis
+- [x] Free-troposphere cloud (isentropic upglide) closing the winter storm-track gap; cloud_cover_vs_modis tightened - 16cdf3f

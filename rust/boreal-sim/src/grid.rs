@@ -11,10 +11,11 @@ pub const EVAP: usize = 17; pub const PRECIP: usize = 18; pub const PW: usize = 
 pub const U: usize = 22; pub const V: usize = 23; pub const COT: usize = 24; pub const INSTAB: usize = 25; pub const ALBEDO: usize = 26;
 pub const SST: usize = 27; pub const RH: usize = 28; pub const HEATCAP: usize = 29; pub const ROUGH: usize = 30; pub const SNOWFRAC: usize = 31; pub const SEAFRAC: usize = 32;
 pub const REFLSW: usize = 33; pub const ABSATM: usize = 34; pub const OLR: usize = 35; // column_budget.rs: reflected to space, absorbed by the air, OLR
-pub const PLANES: usize = 36;
+pub const PMEAN: usize = 36; // precipitation running mean, mm/day (update_moisture.rs, PRECIP_TAU_S)
+pub const PLANES: usize = 37;
 /// Plane names in index order (exported so TypeScript can check its copy of the table).
 pub const NAMES: [&str; PLANES] = ["lat", "lon", "land", "elev", "ts", "tair", "soil", "snow", "q", "cloud", "ice", "qabs", "qrefl", "lwout", "lwnet", "swdown", "toa",
-    "evap", "precip", "pw", "pressure", "psl", "u", "v", "cot", "instab", "albedo", "sst", "rh", "heatcap", "rough", "snowfrac", "seafrac", "reflsw", "absatm", "olr"];
+    "evap", "precip", "pw", "pressure", "psl", "u", "v", "cot", "instab", "albedo", "sst", "rh", "heatcap", "rough", "snowfrac", "seafrac", "reflsw", "absatm", "olr", "pmean"];
 
 pub struct Grid { pub nlat: usize, pub nlon: usize, pub n: usize, pub day: f64, pub hour: f64, pub data: Vec<f64>,
     /// Climatological sea-level air temperature per row for land and ocean columns at the current day (climate_seed::damped_seed).

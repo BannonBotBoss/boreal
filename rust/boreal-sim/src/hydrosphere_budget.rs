@@ -86,3 +86,7 @@ mod tests {
     #[test] fn condense_conserves_water() { let (q, p) = condense(0.03, 20.0, 100000.0); assert!(q < 0.03 && p > 0.0); assert_eq!(condense(0.001, 20.0, 100000.0).1, 0.0); }
     #[test] fn ice_below_freezing() { assert_eq!(ice_fraction(-5.0), 1.0); assert_eq!(ice_fraction(10.0), 0.0); }
 }
+
+/// Precipitating-convection memory for the cloud it leaves (anvils, stratiform shields): mesoscale convective systems live
+/// 6-12 h and their anvils outlast the rain (Houze 2004, Rev. Geophys. 42:RG4003); e-folding 12 h.
+pub const PRECIP_TAU_S: f64 = 43200.0;

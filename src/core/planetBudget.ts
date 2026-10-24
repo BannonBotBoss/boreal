@@ -11,9 +11,9 @@ import { AIR, SURFACE, shortwave, solar } from './weather';
 
 /** Plane order of `rust/boreal-sim/src/grid.rs` (NAMES). `layout_version()` and `plane_count()` are checked at load. */
 export const PLANE_NAMES = ['lat', 'lon', 'land', 'elev', 'ts', 'tair', 'soil', 'snow', 'q', 'cloud', 'ice', 'qabs', 'qrefl', 'lwout', 'lwnet', 'swdown', 'toa',
-  'evap', 'precip', 'pw', 'pressure', 'psl', 'u', 'v', 'cot', 'instab', 'albedo', 'sst', 'rh', 'heatcap', 'rough', 'snowfrac', 'seafrac', 'reflsw', 'absatm', 'olr'] as const;
+  'evap', 'precip', 'pw', 'pressure', 'psl', 'u', 'v', 'cot', 'instab', 'albedo', 'sst', 'rh', 'heatcap', 'rough', 'snowfrac', 'seafrac', 'reflsw', 'absatm', 'olr', 'pmean'] as const;
 export type PlaneName = typeof PLANE_NAMES[number];
-export const LAYOUT_VERSION = 2;
+export const LAYOUT_VERSION = 3;
 
 /** What each plane is, for UI legends: unit and the issue #43 budget it belongs to. */
 export const PLANE_INFO: Record<PlaneName, { unit: string; budget: 'input' | 'state' | 'solar' | 'hydrosphere' | 'atmosphere' | 'surface'; label: string }> = {
@@ -33,7 +33,7 @@ export const PLANE_INFO: Record<PlaneName, { unit: string; budget: 'input' | 'st
   albedo: { unit: '0..1', budget: 'surface', label: 'surface albedo' }, sst: { unit: '°C', budget: 'hydrosphere', label: 'sea-surface temperature (−999 on land)' },
   rh: { unit: '0..1', budget: 'atmosphere', label: 'relative humidity' }, heatcap: { unit: 'J/m²/K', budget: 'surface', label: 'surface heat capacity' },
   rough: { unit: 'm', budget: 'surface', label: 'roughness length' }, snowfrac: { unit: '0..1', budget: 'surface', label: 'snow fraction' }, seafrac: { unit: '0..1', budget: 'surface', label: 'sea fraction' },
-  reflsw: { unit: 'W/m²', budget: 'solar', label: 'shortwave reflected to space' }, absatm: { unit: 'W/m²', budget: 'atmosphere', label: 'shortwave absorbed by the air' }, olr: { unit: 'W/m²', budget: 'atmosphere', label: 'outgoing longwave (Budyko A + B T)' },
+  reflsw: { unit: 'W/m²', budget: 'solar', label: 'shortwave reflected to space' }, absatm: { unit: 'W/m²', budget: 'atmosphere', label: 'shortwave absorbed by the air' }, pmean: { unit: 'mm/day', budget: 'hydrosphere', label: 'precipitation, 12 h running mean' }, olr: { unit: 'W/m²', budget: 'atmosphere', label: 'outgoing longwave (Budyko A + B T)' },
 };
 
 interface Exports {

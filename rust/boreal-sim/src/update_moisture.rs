@@ -13,6 +13,7 @@ pub fn update_moisture(g: &mut Grid, dt: f64) {
         let e = g.p(EVAP)[i] / 86400.0;
         g.pm(Q)[i] += e * dt / (rho * VAPOUR_SCALE_HEIGHT);
     }
+    let mut vent = vec![0.0f64; n];
     // 1b. boundary-layer ventilation: entrainment of drier free-tropospheric air and shallow convection export vapour, relaxing q
     //     toward the observed mean boundary-layer RH (Manabe & Wetherald 1967 fixed-RH profile, 0.77 at the surface) on the
     //     ventilation time scale BL_VENT_S (3 d; Betts & Ridgway 1989, J. Atmos. Sci. 46:2621 [verify]). Only dries; evaporation can still
@@ -20,8 +21,11 @@ pub fn update_moisture(g: &mut Grid, dt: f64) {
     for i in 0..n {
         let ta = g.p(TAIR)[i]; let p = crate::atmosphere_budget::surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
         let qe = BL_RH * qsat(ta, p); let q = g.p(Q)[i];
-        if q > qe { g.pm(Q)[i] = qe + (q - qe) * (-dt / BL_VENT_S).exp(); }
+        if q > qe { let qn = qe + (q - qe) * (-dt / BL_VENT_S).exp(); g.pm(Q)[i] = qn;
+            let rho = p / (RD * (ta + 273.15)); vent[i] = (q - qn) * rho * VAPOUR_SCALE_HEIGHT; } // kg/m² = mm lifted out of the BL
     }
+    // The exported vapour condenses aloft and rains out in the same column (deep column-local condensation; in steady state
+    // global precipitation = evaporation, Trenberth et al. 2007 ~2.7 mm/day). It is added to the large-scale rain in step 3.
     // 2. upwind advection, sub-stepped to Courant ≤ 0.5
     let dphi = std::f64::consts::PI / nlat as f64;
     let dlam = 2.0 * std::f64::consts::PI / nlon as f64;
@@ -45,9 +49,10 @@ pub fn update_moisture(g: &mut Grid, dt: f64) {
     // 3. condensation, rain onto the bucket / snow store, melt
     for i in 0..n {
         let ta = g.p(TAIR)[i]; let p = crate::atmosphere_budget::surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
-        let (q, rain) = condense(g.p(Q)[i], ta, p); g.pm(Q)[i] = q;
+        let (q, rain0) = condense(g.p(Q)[i], ta, p); g.pm(Q)[i] = q; let rain = rain0 + vent[i];
         let land = g.p(LAND)[i] > 0.5; let evap_mm = g.p(EVAP)[i] / 86400.0 * dt;
         g.pm(PRECIP)[i] = if dt > 0.0 { rain / dt * 86400.0 } else { 0.0 };
+        if dt > 0.0 { let k = 1.0 - (-dt / PRECIP_TAU_S).exp(); let pr = g.p(PRECIP)[i]; g.pm(PMEAN)[i] += (pr - g.p(PMEAN)[i]) * k; }
         g.pm(PW)[i] = column_water(q, p, ta);
         if land {
             let (mut soil, mut swe) = (g.p(SOIL)[i], g.p(SNOW)[i]);

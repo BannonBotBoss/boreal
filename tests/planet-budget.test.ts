@@ -23,7 +23,7 @@ test('weather.ts surface rows the Rust crate mirrors are unchanged', () => {
   assert.deepEqual([SURFACE_ROWS.water.albedo, SURFACE_ROWS.water.z0, SURFACE_ROWS.forest.albedo, SURFACE_ROWS.forest.rs, SURFACE_ROWS.forest.z0, SURFACE_ROWS.snow.albedo, SURFACE_ROWS.snow.z0],
     [.06, .0002, .1, 100, 1.5, .8, .001]);
 });
-test('wasm layout matches the TypeScript plane table', { skip }, () => { assert.ok(sim); assert.equal(PLANE_NAMES.length, 36); });
+test('wasm layout matches the TypeScript plane table', { skip }, () => { assert.ok(sim); assert.equal(PLANE_NAMES.length, 37); });
 test('wasm solar budget equals weather.ts solar() and shortwave() to 1e-9', { skip }, () => {
   let worst = 0;
   for (let k = 0; k < 400; k++) {

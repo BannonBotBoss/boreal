@@ -7,6 +7,7 @@ use crate::constants as C;
 pub const S0: f64 = C::TSI; // total solar irradiance, W/m² (Kopp & Lean 2011, GRL 38:L01706)
 pub const SIGMA: f64 = C::sigma; // Stefan–Boltzmann, W/m²/K⁴ (CODATA 2018)
 pub const CP: f64 = 1004.0; // dry air cp, J/kg/K (Wallace & Hobbs 2006, Atmospheric Science, 2nd ed.)
+pub const RV: f64 = 461.5; // gas constant water vapour, J/kg/K (Wallace & Hobbs 2006)
 pub const RD: f64 = 287.05; // gas constant dry air, J/kg/K (Wallace & Hobbs 2006)
 pub const LV: f64 = 2.501e6; // latent heat of vaporisation at 0 °C, J/kg (Wallace & Hobbs 2006)
 pub const P0: f64 = 101325.0; // sea-level standard pressure, Pa (ISO 2533:1975)

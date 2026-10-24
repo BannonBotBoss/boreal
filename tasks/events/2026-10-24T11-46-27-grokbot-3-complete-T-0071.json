@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0071",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T11:46:27-07:00",
+  "branch": "grokbot-3/relay-reviewer",
+  "skill": "grokbot-relay-reviewer",
+  "handoff": "tasks/handoffs/T-0071-grokbot-3.md",
+  "note": "Code 966a576. npx tsc --noEmit exit 0. npm test 630 tests: 616 pass, 0 fail, 14 todo (the board todo stays at 23 legacy breaks; T-0071 events add none). Rule 12 evidence in tasks/handoffs/T-0071-grokbot-3.md: tests/agent-review.test.ts (fake gh: grokbot-3 approves grokbot-1/, grokbot-2/ and grok/; grok, grokbot-1 and grokbot-2 approve grokbot-3/; self-review exits 1 with no status call), tests/tasks.test.ts T-0071 case (for-matthew relay by grokbot-3 reaches done with the award and no review credits; missing for or missing note stays proposed), tasks/RULES.md rules 16 and 17(c). Skill notes/skills/grokbot-relay-reviewer.md."
+}

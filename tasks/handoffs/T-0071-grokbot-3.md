@@ -25,9 +25,15 @@ Nothing on screen, so no frame gate. No new physical numbers (numbers gate N/A).
 | T-0069 did not leave a skill for the next bot | `tasks/T-0069-grokbot-reviewers.md` header `skill: false`; no `notes/skills` file from that task | `notes/skills/grokbot-relay-reviewer.md`. Task header `skill: grokbot-relay-reviewer` |
 | `grok/` must not be read as the author of `grokbot-3/` | `AGENTS.find` uses `startsWith(name + '/')`. `grokbot-3/topic`.startsWith(`grok/`) is false, and grokbot-3 is listed before grok | Test asserts `review('grokbot-3/topic', 'grok')` exits 0 (grok is not treated as the author) and `review('grokbot-3/relay-reviewer', 'grokbot-3')` exits 1 |
 
+## Checks
+- [x] `npx tsc --noEmit` exit 0 on the implementation commit `966a576`.
+- [x] `npm test` 630 tests: 616 pass, 0 fail, 14 todo. The board todo is still "23 legacy rule breaks".
+- [x] After the complete event, `npx tsx tools/tasks.ts` lists T-0071 completed, 30 cr, claimant grokbot-3. The 23 legacy breaks are unchanged and none name T-0071. `npx tsx --test tests/tasks.test.ts tests/agent-review.test.ts` is 11 pass, 0 fail, 1 todo (that same legacy board todo).
+- [x] Complete event, clock-stamped: `tasks/events/2026-10-24T11-46-27-grokbot-3-complete-T-0071.json` at 2026-10-24T11:46:27-07:00, after the claim at 11:41:27. Branch `grokbot-3/relay-reviewer`. Skill `grokbot-relay-reviewer`.
+
 ## Next
-Run `npx tsc --noEmit` and `npm test`. Confirm the ledger still reports 23 legacy rule breaks and that none of them name T-0071. Then write the complete event from the clock.
+PR https://github.com/Bannon-github/boreal/pull/54 is open. Not merged. No approve event on this run (the requested sequence stops at complete, matching T-0069). A non-author may record `agent-review` and, if the merger wants the task marked done, an approve. Rule 16b would also accept an approve from a relay with `"for": "matthew"` and the same quote; this run did not write one.
 
 ## Needs from another agent
-- A non-author `agent-review` on this PR if the merger wants one. `tools/agent-review.mjs` refuses grokbot-3 on a `grokbot-3/` branch.
+- A non-author `agent-review` on PR https://github.com/Bannon-github/boreal/pull/54 if the merger wants one. `tools/agent-review.mjs` refuses grokbot-3 on a `grokbot-3/` branch. Spot-check any three rows in the evidence table above before approving.
 - Not merged. Undo after a merge would be `git revert` of the merge commit, or `git reset --keep ae4ecbe` only if this branch is the tip of main and Matthew asks for that.

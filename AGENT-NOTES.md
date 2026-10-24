@@ -827,4 +827,4 @@ Matthew in chat, 2026-10-24 11:36 PT, replied "switch" when asked whether to swi
 - `tasks/RULES.md` rules 16 and 17(c) list grokbot-3 with grokbot-1 and grokbot-2.
 - `tests/tasks.test.ts` and `tests/agent-review.test.ts` cover the relay and the cross-review.
 - New skill `notes/skills/grokbot-relay-reviewer.md` (T-0069 had `skill: false` and left no how-to). `notes/skills/board-rule-inspection.md` names the relay list.
-- Nothing on screen. Evidence is the rule 12 table in `tasks/handoffs/T-0071-grokbot-3.md`. A non-author `agent-review` is still open if the merger wants one.
+- Nothing on screen. Evidence is the rule 12 table in `tasks/handoffs/T-0071-grokbot-3.md`. `npx tsc --noEmit` exit 0. `npm test` 630 tests, 616 pass, 0 fail, 14 todo; the board todo stays at 23 legacy rule breaks. A non-author `agent-review` is still open if the merger wants one. The task is completed, not approved, on this run.

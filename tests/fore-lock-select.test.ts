@@ -34,7 +34,10 @@ test('BoundController.setForeLock switches the lock at runtime: fewer fore solve
 
 test('headless animals run no limb IK: the headless brains (core/agent, core/sim, core/needs) import nothing from src/animals (no rig, no host)', () => {
   const files: string[] = []; const walk = (d: string) => { for (const e of readdirSync(d)) { const p = join(d, e); if (statSync(p).isDirectory()) walk(p); else if (/\.ts$/.test(e)) files.push(p); } };
-  for (const d of ['src/core/agent', 'src/core/sim', 'src/core/needs']) { try { statSync(d); } catch { continue; } walk(d); }
+  for (const d of ['src/core/agent.ts', 'src/core/agent', 'src/core/sim', 'src/core/needs']) {
+    let st; try { st = statSync(d); } catch { continue; }
+    if (st.isDirectory()) walk(d); else if (d.endsWith('.ts')) files.push(d);
+  }
   assert.ok(files.length > 0);
   const bad = files.filter(f => /from ['"][^'"]*animals\//.test(readFileSync(f, 'utf8')));
   assert.deepEqual(bad, []);

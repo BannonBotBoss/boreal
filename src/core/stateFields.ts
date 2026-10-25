@@ -28,8 +28,17 @@ export const STATE_FIELDS = {
   needs: { water: 'snapshot', rest: 'snapshot' },
   /** main.ts player record */
   player: { x: 'snapshot', z: 'snapshot', heading: 'snapshot', abilities: 'snapshot', bornSec: 'clock' }, // age from world clock (frozen with the menu)
+  /** core/agent Agent (T-0009). Species and the seeded rng are identity; levels and the plan are vitals. */
+  agent: { key: 'clock', species: 'clock', rng: 'clock',
+    x: 'snapshot', z: 'snapshot', heading: 'snapshot', action: 'snapshot', goal: 'snapshot', timer: 'snapshot', elapsed: 'snapshot',
+    energy: 'snapshot', stamina: 'snapshot', relaxation: 'snapshot', target: 'snapshot', food: 'snapshot', contact: 'snapshot',
+    zig: 'snapshot', sensed: 'snapshot', speed: 'snapshot' },
+  /** core/fields CloverPatch. Place and capacity come from the seed; units, the grazed clock, stolon and why change when eaten. */
+  cloverPatch: { key: 'clock', x: 'clock', z: 'clock', r: 'clock', light: 'clock', max: 'clock',
+    units: 'snapshot', at: 'snapshot', stolon: 'snapshot', why: 'snapshot' },
   /** world-wide fields */
-  world: { timeOfDay: 'clock', season: 'clock', weather: 'clock', groundYears: 'clock', deltaExpiry: 'clock', standAge: 'clock' },
+  world: { timeOfDay: 'clock', season: 'clock', weather: 'clock', groundYears: 'clock', deltaExpiry: 'clock', standAge: 'clock',
+    cloverRegrowth: 'clock' },
 } as const satisfies Record<string, Record<string, TimeTag>>;
 export type StateGroup = keyof typeof STATE_FIELDS;
 export const tagOf = (group: StateGroup, field: string): TimeTag | undefined => (STATE_FIELDS[group] as Record<string, TimeTag>)[field];

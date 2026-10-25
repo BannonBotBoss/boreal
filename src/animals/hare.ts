@@ -31,7 +31,7 @@ export const HARE = {
   count: 5, spawnMin: 18, spawnMax: 45, despawn: 70, respawnSeconds: [25, 45] as [number, number],
   // T-0036: notice/bolt come from the template senses + flight distance, flight from behaviour.evasion (core/needs/diet),
   // catch radii and safe distance from SYSTEM_PROPERTIES.hunt, the meal from diet.foods.hare.
-  freezeSeconds: [.6, 1.6] as [number, number], stamina: 40,
+  stamina: 40,
   /** T-0009 run 10: rendered hares (besides an embodied one) that run the fore-stance lock, nearest the interest centre */ foreLockNearest: 3,
 };
 export type HareState = 'nibble' | 'hop' | 'freeze' | 'flee';

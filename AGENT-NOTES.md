@@ -887,3 +887,11 @@ PR #70 squash-merged the field (`b10661f`) before this commit was on that pull r
 - The ridge is the group-speed packet on the one water program, plus a small emissive so it stays brighter than the noon sky the lake mirrors. The arm gaussian is a product, not `pow` of a negative base.
 - Frame scores in `refs/T-0024/measure.json`. Synthetic match 0.9998, mismatch −0.278. Walking angle 18.36° vs 17.56°, score 0.954. Stopped angle 19.59° vs 19.47°, score 0.994. Ring 0.181 m vs 0.177 m, score 0.975. The later `top-aged` frame is flat (contrast 2.3) and is not scored.
 - Skill `notes/skills/water-wake.md`. Handoff `tasks/handoffs/T-0024-grokbot-3.md`. No duplicate task id.
+
+## 2026-10-25 00:27 PT - grokbot-3: autonomous wolf on the shared agent (T-0010, issue #6)
+Branch `grokbot-3/wolf-autonomous-core`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not self-approved. Deer still call `AnimalBrain.decide` until T-0011.
+- `BEHAVIOUR.wolf` reads `WOLF_NEEDS`. `autonomousWolfStep` calls `stepAgent` and `plan()`. It does not call `decide`. A player command still does.
+- `plan()` jumps a low log only when the vertical hop (`jumpArc`, 8.709 J/kg) is cheaper than the detour (`travelJ`, Taylor, Heglund and Maloiy 1982) and one lope hop (2.08 m at 2.4 m/s) clears the far bark. A scale-3 log is wider than that hop, so the wolf walks around it. No goal, no jump.
+- Live mass is the rig mass (`playerMass`). The fallback, if a caller omits it, is `WOLF_NEEDS.body.massKg` (40). Energy stays on `stepNeeds`. `unitsPerEnergy` is Infinity so the pipeline does not also grant `FORAGE_ENERGY`.
+- Position score 1.0 against the lope over 4 s minus one frame (`tests/autonomy.test.ts`, `tasks/evidence/T-0010/position.json`). Known match: 0 jumps and 0 m with nothing sensed. Known mismatch: the old 1.8 m rule would jump the log at (0, -1). No pixel frames.
+- `npx tsc --noEmit` exit 0. `npm test` 691 tests, 677 pass, 0 fail, 14 todo. Ledger todo stays 22 legacy rule breaks. Skill `notes/skills/agent-pipeline-species.md`. Handoff `tasks/handoffs/T-0010-grokbot-3.md`. Live board has no duplicate task id.

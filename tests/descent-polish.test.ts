@@ -68,25 +68,27 @@ test('descent polish: seeded landings leave no tree, boulder or log between the 
 });
 
 test('descent polish: viewBlocked sees a trunk on the camera-wolf line and ignores one beside it or behind the wolf', () => {
-  const back = LANDING_VIEW.back; // yaw 0: camera at +z behind the wolf at the origin
-  assert.equal(viewBlocked(0, 0, 0, [{ x: 0, z: back / 2, r: 1.6 }]), true);
-  assert.equal(viewBlocked(0, 0, 0, [{ x: 4, z: back / 2, r: 1.6 }]), false);
+  const back = LANDING_VIEW.back, on = (z: number) => LANDING_VIEW.flank * z / back; // yaw 0: camera is behind and to the left
+  assert.equal(viewBlocked(0, 0, 0, [{ x: on(back / 2), z: back / 2, r: 1.6 }]), true);
+  assert.equal(viewBlocked(0, 0, 0, [{ x: on(back / 2) + 4, z: back / 2, r: 1.6 }]), false);
   assert.equal(viewBlocked(0, 0, 0, [{ x: 0, z: -4, r: 1.6 }]), false);
   assert.equal(viewBlocked(0, 0, 0, []), false);
 });
 
 test('descent polish: viewBlocked counts boulders and logs that reach the line, not pebbles, low or side ones', () => {
-  const back = LANDING_VIEW.back, disc = (x: number, z: number, d: number) => ({ x, z, r: d / 2, top: .7 * d, hx: 0, hz: 0 });
-  assert.equal(viewBlocked(0, 0, 0, [], [disc(0, back / 2, 1.65)]), true, 'erratic boulder mid-line');
-  assert.equal(viewBlocked(0, 0, 0, [], [disc(0, .4, .95)]), true, 'small boulder right in front of the wolf');
-  assert.equal(viewBlocked(0, 0, 0, [], [disc(0, 1.5, .95)]), false, 'small boulder further back: the line passes over it');
-  assert.equal(viewBlocked(0, 0, 0, [], [disc(0, back / 2, .29)]), false, 'cobble under the line');
+  const back = LANDING_VIEW.back, on = (z: number) => LANDING_VIEW.flank * z / back, disc = (x: number, z: number, d: number) => ({ x, z, r: d / 2, top: .7 * d, hx: 0, hz: 0 });
+  assert.equal(viewBlocked(0, 0, 0, [], [disc(on(back / 2), back / 2, 1.65)]), true, 'erratic boulder mid-line');
+  assert.equal(viewBlocked(0, 0, 0, [], [disc(on(.4), .4, .95)]), true, 'small boulder right in front of the wolf');
+  assert.equal(viewBlocked(0, 0, 0, [], [disc(on(1.5), 1.5, .95)]), false, 'small boulder further back: the line passes over it');
+  assert.equal(viewBlocked(0, 0, 0, [], [disc(on(back / 2), back / 2, .29)]), false, 'cobble under the line');
   assert.equal(viewBlocked(0, 0, 0, [], [disc(2.5, back / 2, 1.65)]), false, 'boulder beside the line');
   assert.equal(viewBlocked(0, 0, 0, [], [disc(0, -3, 3.6)]), false, 'outcrop behind the wolf');
   const log = (x: number, z: number, rot: number, s = 1) => ({ x, z, r: .43 * s, top: .85 * s, hx: Math.cos(rot) * 2.2 * s, hz: -Math.sin(rot) * 2.2 * s });
   assert.equal(viewBlocked(0, 0, 0, [], [log(1.5, .6, 0)]), true, 'log across the line just behind the wolf (its end reaches the line)');
   assert.equal(viewBlocked(0, 0, 0, [], [log(0, back * .8, 0, .75)]), false, 'small log across the line near the camera: under the line');
-  assert.equal(viewBlocked(0, 0, 0, [], [log(1.6, 1.5, Math.PI / 2)]), false, 'log parallel to the line, beside it');
+  const along = Math.hypot(LANDING_VIEW.flank, back), side = 2.4; // beside the rear three-quarter, parallel to it
+  const beside = { x: -back / along * side, z: LANDING_VIEW.flank / along * side, r: .43, top: .85, hx: LANDING_VIEW.flank / along * 2.2, hz: back / along * 2.2 };
+  assert.equal(viewBlocked(0, 0, 0, [], [beside]), false, 'log parallel to the line, beside it');
   // real placements: rocks and logs come from the same chunks the scene draws
   const s = solidsAround(600, -2066); assert.ok(s.length > 20 && s.some(e => e.hx !== 0 || e.hz !== 0) && s.some(e => e.hx === 0 && e.top > .6), `rocks and logs near home (${s.length})`);
 });

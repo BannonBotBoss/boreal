@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { positionCamera, terrainGeometry, clampPitch } from '../src/render/math';
+import { positionCamera, terrainGeometry, clampPitch, RIDER_DISTANCE, RIDER_FLANK, RIDER_HEIGHT } from '../src/render/math';
 import { CHUNK_SIZE, heightAt } from '../src/core/world';
 import { generateGeometry, disposeObject } from '../src/render/geometry';
 import { catalog } from '../src/core/catalog';
 import type { Entity } from '../src/core/world';
 const close = (actual: number, expected: number, epsilon = 1e-5) => assert.ok(Math.abs(actual - expected) < epsilon, `${actual} != ${expected}`);
+const riderSlant = Math.hypot(RIDER_DISTANCE, RIDER_FLANK);
 
 test('camera can look down, across horizon and up without changing position', () => {
   const camera = new THREE.PerspectiveCamera(48, 1.5, .2, 700);
@@ -15,7 +16,7 @@ test('camera can look down, across horizon and up without changing position', ()
     const pitch = degrees * Math.PI / 180;
     positionCamera(camera, 0, 0, 50, .7, pitch);
     close(camera.position.y - ground, 50);
-    close(Math.hypot(camera.position.x, camera.position.z), 93.75);
+    close(Math.hypot(camera.position.x, camera.position.z), 50 * Math.hypot(RIDER_DISTANCE, RIDER_FLANK) / RIDER_HEIGHT);
     const direction = camera.getWorldDirection(new THREE.Vector3());
     close(Math.asin(-direction.y), pitch);
     assert.ok(camera.matrixWorld.elements.every(Number.isFinite));
@@ -32,7 +33,7 @@ test('chased wolf projects below screen centre through zoom, turns and aspect ch
     close(center.x, 0); assert.ok(center.y < -.2 && center.y > -.9);
     assert.ok(center.z > -1 && center.z < 1, 'target must lie between clipping planes');
     close(camera.position.y - ground, altitude);
-    close(camera.position.distanceTo(new THREE.Vector3(23, ground, -41)), altitude * Math.hypot(1, 1.875));
+    close(camera.position.distanceTo(new THREE.Vector3(23, ground, -41)), altitude * Math.hypot(1, Math.hypot(RIDER_DISTANCE, RIDER_FLANK) / RIDER_HEIGHT));
   }
 });
 test('camera projection matches independent perspective formula', () => {
@@ -100,9 +101,9 @@ test('sled rider camera is three metres behind at human eye height', async () =>
   assert.ok(bounds.max.y >= .5 * WOLF_SCALE - .001 && bounds.max.y < .5 * WOLF_SCALE + .06, `ear tips at ${bounds.max.y}`); // real wolf: ears ~1 m, plus ear fur
   const camera = new THREE.PerspectiveCamera();
   for (const yaw of [0, Math.PI / 2, Math.PI]) {
-    positionCamera(camera, 0, 0, 1.6, yaw);
-    close(Math.hypot(camera.position.x, camera.position.z), 3);
-    close(camera.position.y - Math.max(heightAt(0, 0), -.2), 1.6); // human eye height above ground
+    positionCamera(camera, 0, 0, RIDER_HEIGHT, yaw);
+    close(Math.hypot(camera.position.x, camera.position.z), riderSlant); // behind and to the left, not dead astern
+    close(camera.position.y - Math.max(heightAt(0, 0), -.2), RIDER_HEIGHT); // just above the withers
   }
   // T-0003: the torso and the leg chains hang from the body's `tilt` group (torso first, then the four girdle bones).
   const tilt = wolf.root.getObjectByName('tilt')!, torso = tilt.children[0];

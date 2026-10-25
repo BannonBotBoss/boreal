@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0075",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T17:24:43-07:00",
+  "note": "Issue #52 wolf view (Matthew, Bannon-github). No other task, branch or open PR claims it. Next free id is T-0075: T-0074 is tasks/T-0074-land-orphan-task-files.md on grokbot-3/fix-duplicate-t0071 (PR 61) and the title of grokbot-1/wolf-jump-ballistic (PR 60)."
+}

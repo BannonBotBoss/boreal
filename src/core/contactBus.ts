@@ -20,7 +20,8 @@ export type Vec3 = [number, number, number];
 /** Optional seating inputs for whoever seats the object (T-0005 seatLog reads them; T-0006 never seats, sinks or tilts).
  *  Densities in kg/m3 (core/materials); sinkFraction = sunk depth / trunk width (Matthew: ~1/3). */
 export interface SeatInputs { trunkDensity?: number; earthDensity?: number; sinkFraction?: number }
-export interface Contact extends SeatInputs { a: Solid; b: Solid; at: Vec3; normal: Vec3; kind: 'solid-solid'; source: string }
+/** solid-solid is a body against a body or the ground. feed is an eater against a food patch (core/agent beginContact, T-0009). */
+export interface Contact extends SeatInputs { a: Solid; b: Solid; at: Vec3; normal: Vec3; kind: 'solid-solid' | 'feed'; source: string }
 /** Defaults: forest-floor mineral soil bulk density ~1.2-1.5 g/cm3 (core/ground sandy podzol note) [verify]; sink ~1/3 (Matthew). */
 export const SEAT_DEFAULTS = { earthDensity: 1300, sinkFraction: 1 / 3 } as const;
 /** Seating inputs with defaults and sane bounds (densities finite and > 0, sinkFraction in [0, 1]); trunkDensity stays

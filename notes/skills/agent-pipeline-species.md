@@ -4,8 +4,14 @@ Use when adding an animal (or a food it eats) that should behave from senses + l
 transactions, with no random actions or bare timers.
 
 ## Steps
-1. Reuse first: read the pipeline (core/agent/pipeline.ts), the species records (core/agent/species.ts), an existing food
-   source (core/clover.ts) and their tests. Search core/ for climate, season, daylight and clock helpers before writing any.
+1. Reuse first: read the pipeline (`src/core/agent.ts`), the behaviour rows (`BEHAVIOUR` in `src/core/species.ts`; the hare is
+   `HARE_AGENT`), the transaction registry (`src/core/transactions.ts`), and the clover field (`src/core/fields.ts`). Tests
+   are `tests/agent.test.ts`. Search core/ for climate, season, daylight and clock helpers before writing any.
+   Do not replace `core/sim` `stepPrey`: the live herd still uses it, and `tests/sim.test.ts` pins those bouts. A new species
+   sits on `AgentSpecies` and `stepAgent`. The hare bound gait is `HARE_GAIT` in `core/needs/species`, not a second copy.
+   `groundLight` is site shade times solar shortwave (W/m² at one instant). Clover's closed-form sun tables stay on
+   `lighting().day`. Do not feed shortwave into `sunSeconds`. Flight cost ×8 and the 8 s stamina window are flagged
+   (Matthew's spec, pinned by the tests); do not silently replace them with a sourced figure or the tests fail.
 2. Ask "why is it here?" and "what gives?": write the causal chain (why steps) and every transaction as a pair
    (eater <-> food while in contact; food <-> sunlight; animal <-> threat by senses).
 3. Pick units that map to a real quantity (g dry matter, kcal) and write the mapping in the file header.

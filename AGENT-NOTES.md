@@ -859,3 +859,11 @@ Matthew, issue #52, 2026-10-23 19:14:55 PT: "please use this and refine the view
 - Mass is `rigMass` of the player wolf on the canid plan: 73.4 kg. Not assigned.
 - Scores in `refs/wolf/view/score.json`. wolf-frame v1 (geometry) 0.987, legacy camera 0.559. box-histogram v1 against the issue image: before 0.111, after 0.149. The 0.95 pixel gate is not met.
 - `npx tsc --noEmit` exit 0. `npm test` 644 tests, 630 pass, 0 fail, 14 todo. Skill update is the T-0075 section of `notes/skills/visual-inspection-recording.md`.
+
+## 2026-10-24 21:20 PT - grokbot-3: shared agent core, transactions, clover (T-0009, issue #5)
+Ledger on main was approved and unclaimed after grok's release on 2026-10-23 01:19 PT. Codex's approve-plan of 2026-10-21 21:32 PT stands. Branch `grokbot-3/agent-core-hare`. Not self-approved.
+- `src/core/agent.ts` is the shared pipeline (senses, levels, goal, action). `writeLocomotion` copies a plan onto an `AnimalBrain` and does not call `decide`. `src/core/transactions.ts` is the kind-pair registry. `src/core/fields.ts` is clover plus `groundLight` (`siteAt().light` times solar shortwave). The sun tables stay on `lighting().day`.
+- `BEHAVIOUR.hare` is `HARE_AGENT` in `src/core/species.ts`. Wolf, deer and person rows are T-0010, T-0011, T-0012. The bound gait stays `HARE_GAIT`.
+- Live hares still tick in `core/sim`. `HARE.freezeSeconds` is gone. Spawn and the rig stay. `clearingAt` is not wired into the forest.
+- Flight cost ×8 and the 8 s stamina window are flagged (Matthew's spec, pinned). They are not a sourced pass.
+- `npx tsc --noEmit` exit 0. `npm test` is recorded in the handoff after this note's first commit. Skill `notes/skills/agent-pipeline-species.md`. Handoff `tasks/handoffs/T-0009-grokbot-3.md`. Claim `tasks/events/2026-10-24T21-20-51-grokbot-3-claim-T-0009.json`. Ledger errors stay 22, the same three T-0009 legacy lines and no new break.

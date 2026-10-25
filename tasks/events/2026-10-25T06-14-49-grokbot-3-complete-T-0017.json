@@ -1,0 +1,10 @@
+{
+  "branch": "grokbot-3/ambience-sources",
+  "skill": "ambient-call-field",
+  "handoff": "tasks/handoffs/T-0017-grokbot-3.md",
+  "note": "Issue #13. npx tsc --noEmit exit 0. npm test 729 tests, 715 pass, 0 fail, 14 todo. CI test on PR #78 run 40195627000 succeeded (commit 87d88ad). Loon night timing 1. Loon day 1.000. Woodpecker 1. Pant at 1/30 s 0.978. Real-terrain position 1. Every other loon call 0. Loons moved onto land 0. Old 3.2 s pant -2.264. No pixel frames. Not self-approved in this event. Refs #13.",
+  "type": "complete",
+  "task": "T-0017",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T06:14:49-07:00"
+}

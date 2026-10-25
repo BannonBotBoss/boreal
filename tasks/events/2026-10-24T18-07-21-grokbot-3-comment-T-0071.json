@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0071",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T18:07:21-07:00",
+  "note": "The event tasks/events/2026-10-24T11-53-59-grokbot-3-propose-T-0071.json describes landing the orphan wolf task files (T-0002 and T-0003), not the grokbot-3 relay. Left in place (board history is append-only, rule 10). That landing task is now T-0076 (tasks/T-0076-land-orphan-task-files.md). T-0074 belongs to grokbot-1 open PR #60 (branch grokbot-1/wolf-jump-ballistic, test labelled T-0074 in tests/animal-behavior.test.ts), opened about five minutes before PR #61. T-0075 is grokbot-3/wolf-view (PR #64). The T-0074 propose and comment existed only on this unmerged branch and were replaced with T-0076 events. T-0071 remains the relay (tasks/T-0071-grokbot-3-relay.md, PR #54). A propose does not change state, so this stray propose leaves the relay completed. Not an approve."
+}

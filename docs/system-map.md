@@ -151,11 +151,11 @@ Every animal as pure data + logic on a fixed tick (no renderer): species templat
 
 - Depends on: needs, senses, player, clock
 - Feeds: nothing (a leaf)
-- Modules: `src/core/sim/index.ts`, `src/core/needs/senses.ts`, `src/core/needs/diet.ts`, `src/core/needs/social.ts`, `src/animals/hare.ts`, `src/core/hunt.ts`
+- Modules: `src/core/sim/index.ts`, `src/core/needs/senses.ts`, `src/core/needs/diet.ts`, `src/core/needs/social.ts`, `src/animals/hare.ts`, `src/core/hunt.ts`, `src/core/huntHold.ts`
 
 ### `SYSTEM_PROPERTIES.hunt`
 
-Read by: `src/core/needs/diet.ts`, `src/core/hunt.ts`
+Read by: `src/core/needs/diet.ts`, `src/core/hunt.ts`, `src/core/huntHold.ts`
 
 | Figure | Value | Units | What | Source |
 |---|---|---|---|---|
@@ -172,6 +172,10 @@ Read by: `src/core/needs/diet.ts`, `src/core/hunt.ts`
 | `lockHalfDeg` | 30 | deg | degrees either side of the view. 60° is the upper end of the dog's behavioural binocular overlap (Miller & Murphy 1995, JAVMA 207:1623: 30–60°). Half of that overlap is 30°. | Miller & Murphy 1995, JAVMA 207:1623: dog binocular overlap 30–60°, upper end, half either side of the view |
 | `lockRadius` | 30 | m | m. A stalking approach still alerts white-tailed deer inside 30 m (Lingle & Wilson 2001, Ethology 107:125). The lock uses that distance for any prey: beyond it, holding aim does not commit. | Lingle & Wilson 2001, Ethology 107:125: stalking attacks alerted deer under 30 m |
 | `leapGrip` | 13 | m/s^2 | m/s² ceiling on the leap's turn (v²/r). Wilson et al. 2013, Nature 498:185: cheetah hunts often exceed 13 m/s² below 17 m/s. No wolf lateral acceleration was found; a wolf is not allowed to turn harder than that. | Wilson et al. 2013, Nature 498:185: cheetah lateral acceleration often above 13 m/s^2 below 17 m/s; used as a ceiling |
+| `friendTau` | 180 | play s | Play seconds a released prey treats the wolf as a friend. Matthew 2026-10-21: about 3 min. The game clock is 12x, so this is play time, not world time (180 world-seconds would feel like 15 s). Inside the tonic-immobility range (seconds to several minutes: Whishaw, Flannigan & Barnsley 1979, Dev Psychobiol 12:595). | Matthew 2026-10-21: friendship about 3 min. Whishaw, Flannigan & Barnsley 1979, Dev Psychobiol 12:595: tonic immobility lasts seconds to several minutes |
+| `friendFloor` | 0.36787944117144233 | share of strength | Strength exp(-t/tau) is still a friend at exactly one e-folding, and not after. | exp(-1): the memory is live through one e-folding and gone after it |
+| `gutA` | 0.096 | kg / kg^gutB | Wet stomach + caecum + upper colon = gutA * mass^gutB (kg, kg). Belovsky 1984, Theor. Popul. Biol. 25:235, n=6, r^2=0.99. Read as kilograms (~10 % at 1.5 kg). Mendel & Mendel 1909, J Exp Med 11:36, rabbit stomach+cecum ~10 % of body weight. If the 1984 fit was in grams, this reading is high. | Belovsky 1984, Theor. Popul. Biol. 25:235: wet stomach+caecum+upper colon = 0.096*W^1.03 (n=6, r^2=0.99). Unit read as kg; Mendel & Mendel 1909 J Exp Med 11:36 is the ~10% check |
+| `gutB` | 1.03 | exponent | Wet stomach + caecum + upper colon = gutA * mass^gutB (kg, kg). Belovsky 1984, Theor. Popul. Biol. 25:235, n=6, r^2=0.99. Read as kilograms (~10 % at 1.5 kg). Mendel & Mendel 1909, J Exp Med 11:36, rabbit stomach+cecum ~10 % of body weight. If the 1984 fit was in grams, this reading is high. | Belovsky 1984, Theor. Popul. Biol. 25:235 (same fit) |
 
 ### `SYSTEM_PROPERTIES.perception`
 
@@ -217,6 +221,7 @@ Read by: `src/core/needs/social.ts`, `src/core/sim/index.ts`
 
 - `NEEDS_SPECIES` in `src/core/needs/species/index.ts`: species templates: senses, diet, social, evasion
 - `HUNT_LOCK` in `src/core/hunt.ts`: aim dwell, binocular cone, lock radius, leap turn ceiling
+- `HUNT_HOLD` in `src/core/huntHold.ts`: friend memory, gut allometry, pin and carry pose figures
 
 <a id="audio"></a>
 ## Audio and music (`audio`)

@@ -39,6 +39,10 @@ export const ACTIONS: ActionDef[] = [
   A('stealth', 'Stealth (then run: super stealth)', 'hold', 'play', ['c'], ['lt']),
   A('focus', 'Focus (hold): lock the nearest object ahead; moving steers toward it', 'hold', 'play', [...SYSTEM_PROPERTIES.autoFocus.binding.keys], [...SYSTEM_PROPERTIES.autoFocus.binding.pad]),
   A('lock', 'Lock prey (hold): aim inside the binocular cone; a leap then steers onto it', 'hold', 'play', ['q'], ['rb']),
+  // Eat is X, not A: keyboard A is steer. Release is B on the keyboard only: pad B is Close (context any, live during play).
+  // Both are rebindable. Matthew's A/B labels are the ones a player can swap to.
+  A('eatPrey', 'Eat held prey', 'press', 'play', ['x'], []),
+  A('releasePrey', 'Release held prey', 'press', 'play', ['b'], []),
   A('jump', 'Jump / pounce', 'hold', 'play', ['space'], ['x']),
   A('interact', 'Interact', 'press', 'play', ['e'], ['a']),
   A('howl', 'Howl', 'press', 'play', ['h'], []),

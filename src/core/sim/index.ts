@@ -19,6 +19,7 @@ import { perceive, SENSE_RULES, type Body } from '../needs/senses';
 import { notices, perceive as agentPerceive } from '../agent';
 import { HARE_AGENT } from '../species';
 import { boltDistance, captured, dietOf, evadeStep, gameSpeed, HUNT, startEvade, type EvadeState } from '../needs/diet';
+import { consumeHold, emptyBag, engageHold, friendLive, preyOf, releaseHold, carryPlace, type HoldBag } from '../huntHold';
 import { scatterBend, vigilance } from '../needs/social';
 import { chooseGoal } from '../needs/behaviour';
 import { stream } from '../../proc/rng';
@@ -31,21 +32,26 @@ export interface SimAnimal {
   state: SimState; timer: number; needs: NeedsState; energy: number; stamina: number; alive: boolean;
   /** embodied by the player: the adapter moves it; the sim only senses/feeds/captures */ controlled?: boolean;
   mode?: string; pouncing?: boolean; crouched?: boolean; /** 0 open .. 1 canopy hiding this body (sight only; core/agent perceive) */ cover?: number;
+  /** Set while a handling capture is holding this prey in the jaws (T-0014). The id is the wolf's. */
+  heldBy?: number; /** Wolf id this prey was released by, and the sim time of that release. */ friendOf?: number; friendAt?: number;
   ev?: EvadeState; level: number; /** s: start of the current own detection; last time it perceived the predator */ seenAt?: number; lastSeen?: number; knowsAt?: number; relayed: boolean; linked: number;
   targetId?: number; pounce: number; pounceCool: number; bite: number; rng: () => number;
 }
 export interface Food { id: number; kind: string; x: number; z: number; kg: number }
-export interface SimEvent { type: 'caught' | 'bolt' | 'ate' | 'relay'; by?: number; id: number; x: number; z: number; food?: string }
+export interface SimEvent { type: 'caught' | 'bolt' | 'ate' | 'relay' | 'pinned'; by?: number; id: number; x: number; z: number; food?: string }
 export interface SimWorld {
   time: number; step: number; /** game seconds per sim second (core/timeOfDay clock) */ timeScale: number; seed: number;
   animals: SimAnimal[]; food: Food[]; events: SimEvent[]; nextId: number; acc: number;
   passable: (x: number, z: number) => boolean; water: (x: number, z: number) => boolean;
   daylight: () => number; wind: () => { x: number; z: number }; hour: () => number;
+  /** Player captures pin instead of deleting the prey. NPC captures still remove and eat. */ handling: boolean;
+  /** The player's pin/bite/hold bag. One set of jaws. */ hold: HoldBag;
 }
-export interface WorldOptions { seed?: number; step?: number; timeScale?: number; passable?: SimWorld['passable']; water?: SimWorld['water']; daylight?: SimWorld['daylight']; wind?: SimWorld['wind']; hour?: SimWorld['hour'] }
+export interface WorldOptions { seed?: number; step?: number; timeScale?: number; passable?: SimWorld['passable']; water?: SimWorld['water']; daylight?: SimWorld['daylight']; wind?: SimWorld['wind']; hour?: SimWorld['hour']; handling?: boolean }
 export function createWorld(o: WorldOptions = {}): SimWorld {
   return { time: 0, step: o.step ?? SIM.step, timeScale: o.timeScale ?? SIM.timeScale, seed: o.seed ?? 1, animals: [], food: [], events: [], nextId: 1, acc: 0,
-    passable: o.passable ?? (() => true), water: o.water ?? (() => false), daylight: o.daylight ?? (() => 1), wind: o.wind ?? (() => ({ x: 0, z: 0 })), hour: o.hour ?? (() => 12) };
+    passable: o.passable ?? (() => true), water: o.water ?? (() => false), daylight: o.daylight ?? (() => 1), wind: o.wind ?? (() => ({ x: 0, z: 0 })), hour: o.hour ?? (() => 12),
+    handling: !!o.handling, hold: emptyBag() };
 }
 export function createAnimal(w: SimWorld, species: string, pos: { x: number; z: number; heading?: number }, init: Partial<Pick<SimAnimal, 'controlled' | 'energy' | 'needs'>> = {}): SimAnimal {
   const sp = NEEDS_SPECIES[species]; if (!sp) throw new Error(`unknown species ${species}`);
@@ -121,6 +127,15 @@ function stepWorld(w: SimWorld, dt: number) {
     // 4. capture by any predator (NPC or embodied): body contact or a landing pounce
     if (a.sp.diet.kind !== 'herbivore') for (const b of around(g, a.x, a.z, HUNT.catchPounce)) {
       if (!b.alive || b === a || !eatsAnimal(a, b) || !captured(Math.hypot(b.x - a.x, b.z - a.z), !!a.pouncing)) continue;
+      if (a.controlled && w.handling && b.species === 'hare') {
+        if (b.heldBy === a.id) continue;
+        if (w.animals.some(o => o.heldBy === a.id)) continue;
+        if (b.friendOf === a.id && b.friendAt !== undefined && friendLive(b.friendAt, w.time)) continue;
+        b.heldBy = a.id; b.speed = 0; b.state = 'rest'; b.ev = undefined; b.targetId = undefined;
+        engageHold(`wolf:${a.id}`, `hare:${b.id}`, preyOf(b.id, b.x, b.z), w.time, w.hold);
+        w.events.push({ type: 'pinned', by: a.id, id: b.id, x: b.x, z: b.z });
+        continue;
+      }
       removeAnimal(w, b); w.events.push({ type: 'caught', by: a.id, id: b.id, x: b.x, z: b.z });
       if (!a.controlled) { const r = dietOf(a.sp).eat(a.sp, a.needs, a.energy, b.species); a.needs = r.state; a.energy = r.energy; a.state = 'eat'; a.timer = r.meal.seconds; a.targetId = undefined; }
     }
@@ -130,6 +145,7 @@ function stepWorld(w: SimWorld, dt: number) {
     const st = staminaRates(a.sp), sprinting = a.state === 'flee' || a.state === 'chase';
     a.stamina = Math.max(0, Math.min(100, a.stamina + (sprinting && a.speed > 0 ? -st.sprint : st.recover) * dt));
   }
+  placeHeld(w);
 }
 function move(w: SimWorld, a: SimAnimal, dt: number) {
   if (a.speed <= 0) return;
@@ -138,7 +154,36 @@ function move(w: SimWorld, a: SimAnimal, dt: number) {
 }
 const toward = (a: SimAnimal, x: number, z: number) => Math.atan2(x - a.x, z - a.z) + Math.PI;
 /** Prey (herbivore with fears): graze bouts (longer with linked mates), freeze on a known predator, bolt, evade, scatter. */
+function placeHeld(w: SimWorld) {
+  if (!w.handling) return;
+  for (const b of w.animals) {
+    if (b.heldBy === undefined) continue;
+    const wolf = w.animals.find(a => a.id === b.heldBy);
+    if (!wolf) { b.heldBy = undefined; continue; }
+    const p = carryPlace({ x: wolf.x, z: wolf.z, heading: wolf.heading });
+    b.x = p.hip.x; b.z = p.hip.z; b.speed = 0; b.heading = wolf.heading;
+  }
+}
+/** Drop the jaws and write the friend memory. The render adapter calls this; tests can too. */
+export function releasePrey(w: SimWorld, prey: SimAnimal, wolfId: number) {
+  releaseHold(w.hold, preyOf(prey.id, prey.x, prey.z), w.time);
+  const bond = w.hold.bond;
+  prey.heldBy = undefined; prey.friendOf = wolfId; prey.friendAt = w.time; prey.speed = 0; prey.state = 'graze'; prey.ev = undefined; prey.targetId = undefined;
+  return bond;
+}
+/** Eat the held prey: tissue becomes energy on the bag, gut contents become a carcass delta, the prey leaves the world. */
+export function consumePrey(w: SimWorld, prey: SimAnimal, _wolfId: number) {
+  consumeHold(w.hold, preyOf(prey.id, prey.x, prey.z), w.time);
+  const meal = { energy: w.hold.energy, water: w.hold.water, remainsKg: w.hold.remainsKg };
+  prey.heldBy = undefined; removeAnimal(w, prey);
+  return meal;
+}
 function stepPrey(w: SimWorld, a: SimAnimal, dt: number, g: Grid) {
+  if (a.heldBy !== undefined) { a.speed = 0; a.state = 'rest'; return; }
+  if (a.friendOf !== undefined) {
+    if (a.friendAt === undefined || !friendLive(a.friendAt, w.time)) { a.friendOf = undefined; a.friendAt = undefined; }
+    else if (a.targetId === a.friendOf) { a.targetId = undefined; a.level = 0; }
+  }
   const threat = a.targetId !== undefined ? w.animals.find(b => b.id === a.targetId) : undefined;
   const d = threat ? Math.hypot(a.x - threat.x, a.z - threat.z) : Infinity, known = a.knowsAt !== undefined && !!threat;
   const stalking = !!threat?.crouched, rand = (lo: number, hi: number) => lo + (hi - lo) * a.rng();

@@ -211,6 +211,8 @@ export class BorealSound {
     if (this.duck) { const t = ctx.currentTime, g = this.duck.gain; g.cancelScheduledValues(t); g.setTargetAtTime(MIX.music.duck * .6, t, .05); g.setTargetAtTime(1, t + buffer.duration, MIX.music.duckRecoverSeconds); }
     return buffer.duration;
   }
+  /** One squeal from the bite row (T-0014). Not the caught path: that one also schedules a chew. */
+  squeal(at: { x: number; z: number }) { this.playAt('hare-squeak', at, MIX.hareSqueak); }
   /** Hare events from src/animals/hare.ts. */
   hare(type: 'caught' | 'bolt' | 'hop', at: { x: number; z: number }) {
     if (type === 'bolt') { this.playAt('hare-squeak', at, MIX.hareSqueak * .5); this.playAt('hare-hop', at, MIX.hareHop); }

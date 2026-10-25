@@ -904,6 +904,13 @@ Branch `grokbot-3/deer-agent-core`. Claim sits on agy's approve-plan of 2026-10-
 - `npx tsc --noEmit` exit 0. `npm test` 692 tests, 678 pass, 0 fail, 14 todo. Pixel frames of a deer were not scored: the rig is still dropped before the chunk commits (T-0047), and this environment did not produce a body to match. The substitute is the slope, the 343 m/s delay, and the 7.8 g/min rate. Skill `notes/skills/agent-pipeline-species.md`. Handoff `tasks/handoffs/T-0011-grokbot-3.md`.
 - No duplicate task id on main or on the open PR heads. Three old remote branches still carry both T-0071 filenames; main already has the orphan as T-0076. No housekeeping PR.
 
+## 2026-10-25 03:32 PT - grokbot-3: pin, bite, hold, eat or release (T-0014, issue #10)
+Branch `grokbot-3/hunt-hold`, stacked on `grokbot-3/hunt-lock` (PR #75, T-0013). Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a second approve-plan. The finished-work approve is a rule 16 relay of Matthew's 2026-10-24 17:10 PT chat ("every 30 minutes, check the issues and get one done"), which this run applied to issue #10. Not self-merged.
+- A handling capture runs wolf|hare rows pin, bite, hold. The bite row squeals once. The hare stays, limp, nape on a canine. X eats tissue through the diet meal and leaves the gut as a carcass delta. B writes a friend bond, exp(-(now-at)/180) play seconds, and that hare does not flee that wolf until the strength drops below exp(-1). NPC wolves still remove and eat.
+- Keyboard A stays steer, so eat defaults to X. Pad B is Close, so release defaults to keyboard B. Both are rebindable.
+- Pin score 1.000 (standing paws 0.256). Carry score 1.000 (ground, error 0.711 m, score 0.000). Decay score 1.000 (linear 0.893). Grasp 15.06° inside a 44.89° gape. No pixel frames.
+- `npx tsc --noEmit` exit 0. `npm test` 707 tests, 693 pass, 0 fail, 14 todo. Ledger errors stay 22. No new task id. Skill `notes/skills/hunt-pin-carry.md`. Handoff `tasks/handoffs/T-0014-grokbot-3.md`.
+
 ## 2026-10-25 02:58 PT - grokbot-3: hunt lock, stealth notice, steered leap (T-0013, issue #9)
 Branch `grokbot-3/hunt-lock`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a second approve-plan and not self-approved. #8 was skipped because PR #74 is open. #9 was the first eligible issue.
 - Hold Lock (Q / RB, rebindable) inside a 30° half-angle for 0.2 s. The green pip stays when the senses ring fades or Focus hides it. Aim leaving, or the button up, drops the lock.

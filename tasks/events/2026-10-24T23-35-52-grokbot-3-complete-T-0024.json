@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0024",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T23:35:52-07:00",
+  "branch": "grokbot-3/wading-wake",
+  "skill": "water-wake",
+  "handoff": "tasks/handoffs/T-0024-grokbot-3.md",
+  "note": "Issue #20. npx tsc --noEmit exit 0. npm test 662 tests: 648 pass, 0 fail, 14 todo. Frame gate refs/T-0024/measure.ts: synthetic match 0.9998, mismatch -0.278. Walking half-angle 18.36 deg vs 17.56 deg, score 0.954. Stopped half-angle 19.59 deg vs 19.47 deg, score 0.994. Ring front 0.181 m vs 0.177 m at age 0.833 s (0.217 m/s vs group speed 0.212 m/s), score 0.975. top-aged contrast 2.3, unmeasurable, not scored. Skill notes/skills/water-wake.md. Not self-approved."
+}

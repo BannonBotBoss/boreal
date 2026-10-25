@@ -40,7 +40,10 @@ export function waterMaterial() {
         float foam = smoothstep(0.55, 0.85, fbm(vWXZ * 1.3 - fl * uWaterTime * 1.3, ${SEED.toFixed(3)}) + vFlow.z * 0.25 - 0.35) * smoothstep(0.4, 1.2, vFlow.z);
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85, 0.9, 0.9), foam);
         vec4 wk = wakeField(vWXZ); float crest = wk.w;
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95), crest * 0.92);`)
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95), crest * 0.92);
+        // The lake mirrors the noon sky, so an albedo change alone disappears once the eye has adapted
+        // (render/exposure). A small diffuse glow keeps the ridge brighter than that mirror.
+        totalEmissiveRadiance += vec3(0.55) * crest;`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.7, foam);\n roughnessFactor = mix(roughnessFactor, 0.9, crest);')
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
         vec4 wkN = wakeField(vWXZ);

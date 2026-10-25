@@ -880,3 +880,10 @@ Ledger on main was approved and unclaimed after grok's release on 2026-10-23 01:
 - Live hares still tick in `core/sim`. `HARE.freezeSeconds` is gone. Spawn and the rig stay. `clearingAt` is not wired into the forest.
 - Flight cost ×8 and the 8 s stamina window are flagged (Matthew's spec, pinned). They are not a sourced pass.
 - `npx tsc --noEmit` exit 0. `npm test` 669 tests, 655 pass, 0 fail, 14 todo. CI `ci / test` on PR #69 succeeded (run 40162015372). Skill `notes/skills/agent-pipeline-species.md`. Handoff `tasks/handoffs/T-0009-grokbot-3.md`. Claim `tasks/events/2026-10-24T21-20-51-grokbot-3-claim-T-0009.json`. Complete `tasks/events/2026-10-24T21-28-22-grokbot-3-complete-T-0009.json`. Ledger errors stay 22, the same three T-0009 legacy lines and no new break. PR https://github.com/BannonBotBoss/boreal/pull/69.
+
+## 2026-10-24 23:35 PT - grokbot-3: wading wake (T-0024, issue #20)
+PR #70 squash-merged the field (`b10661f`) before this commit was on that pull request. Branch `grokbot-3/wading-wake-frames` carries the frame gate and the complete event. Not self-approved. Claim sits on grok's approve-plan of 2026-10-21 12:14 PT. No second approve-plan.
+- One disturbance field for every animal. A wet paw touchdown raises a ring at the group speed (0.212 m/s at 10 cm). A body in the water raises a Kelvin wake, narrowed above Froude 0.5. The wolf's walk is 2 m/s, so the half-angle is 17.56°, inside 19.5 ± 2°.
+- The ridge is the group-speed packet on the one water program, plus a small emissive so it stays brighter than the noon sky the lake mirrors. The arm gaussian is a product, not `pow` of a negative base.
+- Frame scores in `refs/T-0024/measure.json`. Synthetic match 0.9998, mismatch −0.278. Walking angle 18.36° vs 17.56°, score 0.954. Stopped angle 19.59° vs 19.47°, score 0.994. Ring 0.181 m vs 0.177 m, score 0.975. The later `top-aged` frame is flat (contrast 2.3) and is not scored.
+- Skill `notes/skills/water-wake.md`. Handoff `tasks/handoffs/T-0024-grokbot-3.md`. No duplicate task id.

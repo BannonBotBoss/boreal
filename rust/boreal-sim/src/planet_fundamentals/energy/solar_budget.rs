@@ -1,7 +1,9 @@
 //! Solar energy budget per surface cell (issue #43, item 1). Ported line for line from `solar()`, `shortwave()` and the
 //! longwave term of `surfaceBalance()` in `src/core/weather.ts`; `tests/planet-budget.test.ts` checks the wasm against the
-//! TypeScript to 1e-9 so the two cannot drift.
+//! TypeScript to 1e-9 so the two cannot drift. Longwave helpers live in `longwave.rs` (T-0062).
 use crate::consts::*;
+pub use super::longwave::atmospheric_emissivity;
+use super::longwave::{longwave_net, surface_emission};
 
 const RAD: f64 = std::f64::consts::PI / 180.0;
 
@@ -36,19 +38,11 @@ pub fn shortwave(cos_z: f64, cloud: f64, s0r: f64) -> f64 {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct SolarBudget { pub toa: f64, pub sw_down: f64, pub q_absorbed: f64, pub q_reflected: f64, pub q_longwave_out: f64, pub lw_net: f64 }
 
-/// Brutsaert (1975) clear-sky atmospheric emissivity ε_a = 1.24 (e/T)^(1/7), e in hPa, raised toward 1 by cloud
-/// (Crawford & Duchon 1999), exactly as `surfaceBalance` in weather.ts. `e_pa` is the vapour pressure in Pa.
-pub fn atmospheric_emissivity(e_pa: f64, t_k: f64, cloud: f64) -> f64 {
-    (1.24 * (e_pa / 100.0 / t_k).powf(1.0 / 7.0) * (1.0 - cloud) + cloud).min(1.0)
-}
-
-/// Q_absorbed = (1−α) S↓, Q_reflected = α S↓, Q_longwave_out = ε σ T_s⁴ (surface emission), lw_net = (ε_a − ε_s) σ T⁴ (negative).
+/// Q_absorbed = (1−α) S↓, Q_reflected = α S↓. Longwave terms are `longwave.rs`.
 pub fn budget(sun: &Sun, cloud: f64, albedo: f64, t_surface_c: f64, e_pa: f64) -> SolarBudget {
-    let t = t_surface_c + 273.15;
     let sw = shortwave(sun.cos_z, cloud, S0);
-    let ea = atmospheric_emissivity(e_pa, t, cloud);
     SolarBudget { toa: sun.toa, sw_down: sw, q_absorbed: (1.0 - albedo) * sw, q_reflected: albedo * sw,
-        q_longwave_out: EMISS_SURFACE * SIGMA * t.powi(4), lw_net: (ea - EMISS_SURFACE) * SIGMA * t.powi(4) }
+        q_longwave_out: surface_emission(t_surface_c), lw_net: longwave_net(e_pa, t_surface_c, cloud) }
 }
 
 /// Daily-mean top-of-atmosphere insolation (Berger 1978; Hartmann 1994, Global Physical Climatology, eq. 2.3):

@@ -956,6 +956,14 @@ Branch `grokbot-3/log-arena`. Claim sits on agy's approve-plan of 2026-10-21 11:
 - Timing scores 1 and 1 (19 yr, 100 yr). Position 1 (12/12). Known mismatches 0.19 and 0.78395. Pixels unmeasurable (mesh unchanged). Skill `notes/skills/log-arena-decay.md`. Handoff `tasks/handoffs/T-0018-grokbot-3.md`. Scores `refs/T-0018/score.json`.
 - `npx tsc --noEmit` exit 0. `npm test` 734 tests, 720 pass, 0 fail, 14 todo. CI `test` on PR #80 succeeded (run 40197795189, commit `dd859b4`). No new task id. Duplicate task-id scan on this branch: 72 files, 72 ids, 0 duplicates. No housekeeping PR. Complete event 2026-10-25 06:43 PT. Not self-approved.
 
+## 2026-10-25 11:09 PT - grokbot-3: planet_fundamentals layout (T-0062, issue #46)
+Branch `grokbot-3/planet-fundamentals`. Claim sits on grok's approve-plan for Matthew of 2026-10-23 13:22 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why the run took #46. It is not a quoted approval of this result.
+Skipped #27 (claimed by grok), #29 (T-0034 already on main), #32 (GitHub project create is FORBIDDEN for this token), #43 (T-0058 and T-0059 still open).
+- Budget formulas moved into `rust/boreal-sim/src/planet_fundamentals/` to match issue #46. `lib.rs` re-exports the old module names. One definition each of `solar`, `bucket_step`, and `surface_pressure`. `vegetation_fraction.rs` is the later stub. Land and elevation stay host inputs. `Grid::seed` and `Grid::step` delegate without a new order. `layout_version` stays 3.
+- `public/wasm/boreal_sim.wasm` rebuilt (129905 bytes). Skill `notes/skills/rust-wasm-planet-budgets.md`. Handoff `tasks/handoffs/T-0062-grokbot-3.md`.
+- Frame gate N/A (no rendered change). Numeric substitute: wasm versus `weather.ts` under 1e-9, and the Rust solar golden within 1e-12. Both passed.
+- `npx tsc --noEmit` exit 0. `npm test` 758 tests, 744 pass, 0 fail, 14 todo. `cargo test` 70 passed, 0 failed. Duplicate task-id scan: 72 files, 72 ids, gap T-0046 reserved. No new task id. Not self-approved.
+
 ## 2026-10-25 08:14 PT - grokbot-3: river water stays inside the banks (T-0029, issue #24)
 Branch `grokbot-3/river-banks`. Claim sits on grok's approve-plan of 2026-10-21 17:15 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why the run took #24. It is not a quoted approval of this result. Issue #17 was already claimed and completed by grok.
 - Channel pits deeper than the 0.12 m freeboard pond at the spill (`filled -> ponded -> spilled`). Off-channel pits stay peat. Drawn segments that remain are capped at the unconfined bank. The sheet meets the ground. `GENERATOR_VERSION` stays 1.

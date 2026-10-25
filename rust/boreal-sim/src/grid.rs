@@ -19,7 +19,7 @@ pub const NAMES: [&str; PLANES] = ["lat", "lon", "land", "elev", "ts", "tair", "
 
 pub struct Grid { pub nlat: usize, pub nlon: usize, pub n: usize, pub day: f64, pub hour: f64, pub data: Vec<f64>,
     /// Climatological sea-level air temperature per row for land and ocean columns at the current day (climate_seed::damped_seed).
-    pub row_land: Vec<f64>, pub row_sea: Vec<f64>, row_day: f64, pub t_bar: f64 }
+    pub row_land: Vec<f64>, pub row_sea: Vec<f64>, pub(crate) row_day: f64, pub t_bar: f64 }
 impl Grid {
     pub fn new(nlat: usize, nlon: usize) -> Grid {
         let n = nlat * nlon; let mut g = Grid { nlat, nlon, n, day: 80.0, hour: 12.0, data: vec![0.0; n * PLANES], row_land: vec![0.0; nlat], row_sea: vec![0.0; nlat], row_day: -1.0, t_bar: annual_global_t() };
@@ -38,28 +38,14 @@ impl Grid {
             self.row_sea[r] = damped_seed(self.day, lat, crate::surface_budget::OCEAN_HEATCAP, self.t_bar); }
     }
     /// Climate seed: fills the state planes from LAND and ELEV (which the caller has set) for `day`.
+    /// The body is `planet_initialization::initialize` (T-0062). The call order is the one this method had.
     pub fn seed(&mut self, day: f64, hour: f64) {
-        self.day = day; self.hour = hour; self.row_day = -1.0;
-        let t_bar = self.t_bar;
-        for i in 0..self.n {
-            let (lat, land, elev) = (self.p(LAT)[i], self.p(LAND)[i], self.p(ELEV)[i]);
-            let s = seed_cell(day, lat, land, elev, t_bar);
-            self.pm(TS)[i] = s.t_air; self.pm(TAIR)[i] = s.t_air; self.pm(SOIL)[i] = s.soil_mm; self.pm(SNOW)[i] = s.snow_mm; self.pm(Q)[i] = s.q;
-            self.pm(SST)[i] = if land < 0.5 { s.t_air } else { -999.0 };
-            self.pm(ICE)[i] = if land < 0.5 { crate::hydrosphere_budget::ice_fraction_subgrid(s.t_air, std::f64::consts::PI * 6371.0 / self.nlat as f64) } else { 0.0 };
-        }
-        crate::update_clouds::update_clouds(self, 0.0);
-        crate::update_wind::update_wind(self);
-        crate::update_energy::update_energy(self, 1.0); // fills the diagnostics without moving the state
-        crate::update_moisture::update_moisture(self, 0.0);
+        crate::planet_fundamentals::planet_initialization::initialize(self, day, hour);
     }
     /// Advance `dt` seconds: energy, wind, moisture, clouds, in that order (each reads the previous step's other fields).
+    /// The body is `planet_update::advance` (T-0062).
     pub fn step(&mut self, dt: f64) {
-        crate::update_energy::update_energy(self, dt);
-        crate::update_wind::update_wind(self);
-        crate::update_moisture::update_moisture(self, dt);
-        crate::update_clouds::update_clouds(self, dt);
-        let t = self.hour + dt / 3600.0; self.day = (self.day + (t / 24.0).floor() - 1.0).rem_euclid(365.0) + 1.0; self.hour = t.rem_euclid(24.0);
+        crate::planet_fundamentals::planet_update::advance(self, dt);
     }
 }
 

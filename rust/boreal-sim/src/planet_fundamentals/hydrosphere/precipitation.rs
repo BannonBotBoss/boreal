@@ -1,14 +1,31 @@
-//! Moisture update (issue #43): evaporation into the humidity column, upwind advection by the surface wind, large-scale condensation,
-//! then the Manabe bucket and degree-day snow. Cells share water through the wind only; latent-heat release is not fed back to temperature.
+//! Condensation and rain split from `hydrosphere_budget.rs` and `update_moisture.rs` (T-0062, issue #46).
+//! Large-scale condensation is Manabe 1965. Degree-day melt is Hock 2003. The near field remains Kessler 1969 in weather.ts.
 use crate::consts::*;
 use crate::grid::*;
-use crate::hydrosphere_budget::*;
+use super::humidity_column::{column_water, qsat, BL_RH, BL_VENT_S, VAPOUR_SCALE_HEIGHT};
+use super::soil_moisture::bucket_step;
+use crate::planet_fundamentals::atmosphere::pressure::surface_pressure;
 
+/// Degree-day snow melt (Hock 2003): mm w.e. per second when air is above 0 °C.
+pub fn melt_rate(t_c: f64) -> f64 { DDF * t_c.max(0.0) / 86400.0 }
+
+/// Large-scale condensation (Manabe 1965): vapour above saturation falls out as rain. Returns (new q, precipitation kg/m²).
+pub fn condense(q: f64, t_c: f64, p: f64) -> (f64, f64) {
+    let qs = qsat(t_c, p);
+    if q <= qs { return (q, 0.0); }
+    (qs, (q - qs) * p / (RD * (t_c + 273.15)) * VAPOUR_SCALE_HEIGHT)
+}
+
+/// Precipitating-convection memory for the cloud it leaves (anvils, stratiform shields): mesoscale convective systems live
+/// 6-12 h and their anvils outlast the rain (Houze 2004, Rev. Geophys. 42:RG4003); e-folding 12 h.
+pub const PRECIP_TAU_S: f64 = 43200.0;
+
+/// Moisture update: evaporation into the humidity column, upwind advection, large-scale condensation, then the bucket and snow.
 pub fn update_moisture(g: &mut Grid, dt: f64) {
     let (nlat, nlon, n) = (g.nlat, g.nlon, g.n);
     // 1. evaporation (mm/day diagnostic → kg/m²/s) raises the column humidity: dq = E dt / (ρ Hq)
     for i in 0..n {
-        let ta = g.p(TAIR)[i]; let p = crate::atmosphere_budget::surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
+        let ta = g.p(TAIR)[i]; let p = surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
         let rho = p / (RD * (ta + 273.15));
         let e = g.p(EVAP)[i] / 86400.0;
         g.pm(Q)[i] += e * dt / (rho * VAPOUR_SCALE_HEIGHT);
@@ -19,7 +36,7 @@ pub fn update_moisture(g: &mut Grid, dt: f64) {
     //     ventilation time scale BL_VENT_S (3 d; Betts & Ridgway 1989, J. Atmos. Sci. 46:2621 [verify]). Only dries; evaporation can still
     //     hold a cell above it (steady rh = 0.77 + E tau / (rho H qsat)).
     for i in 0..n {
-        let ta = g.p(TAIR)[i]; let p = crate::atmosphere_budget::surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
+        let ta = g.p(TAIR)[i]; let p = surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
         let qe = BL_RH * qsat(ta, p); let q = g.p(Q)[i];
         if q > qe { let qn = qe + (q - qe) * (-dt / BL_VENT_S).exp(); g.pm(Q)[i] = qn;
             let rho = p / (RD * (ta + 273.15)); vent[i] = (q - qn) * rho * VAPOUR_SCALE_HEIGHT; } // kg/m² = mm lifted out of the BL
@@ -48,7 +65,7 @@ pub fn update_moisture(g: &mut Grid, dt: f64) {
     }
     // 3. condensation, rain onto the bucket / snow store, melt
     for i in 0..n {
-        let ta = g.p(TAIR)[i]; let p = crate::atmosphere_budget::surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
+        let ta = g.p(TAIR)[i]; let p = surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
         let (q, rain0) = condense(g.p(Q)[i], ta, p); g.pm(Q)[i] = q; let rain = rain0 + vent[i];
         let land = g.p(LAND)[i] > 0.5; let evap_mm = g.p(EVAP)[i] / 86400.0 * dt;
         g.pm(PRECIP)[i] = if dt > 0.0 { rain / dt * 86400.0 } else { 0.0 };
@@ -63,4 +80,10 @@ pub fn update_moisture(g: &mut Grid, dt: f64) {
             g.pm(SOIL)[i] = soil; g.pm(SNOW)[i] = swe;
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test] fn condense_conserves_water() { let (q, p) = condense(0.03, 20.0, 100000.0); assert!(q < 0.03 && p > 0.0); assert_eq!(condense(0.001, 20.0, 100000.0).1, 0.0); }
 }

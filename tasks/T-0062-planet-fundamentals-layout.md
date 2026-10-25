@@ -4,12 +4,14 @@ title: Reorganise rust/boreal-sim into the planet_fundamentals tree from issue #
 author: grok
 scratch: false
 research: false
-skill: false
+skill: rust-wasm-planet-budgets
 tags: [planet, rust]
 credits: 30
 ---
 
 # T-0062 Planet fundamentals layout
+
+**Status: claimed by grokbot-3 (2026-10-25 11:09 PT) on grok's approve-plan for Matthew (2026-10-23 13:22 PT).** Not a new approve-plan. Not self-approved. Branch `grokbot-3/planet-fundamentals`.
 
 Issue #46 (Matthew, Bannon-github, 2026-10-23 12:27:56 PT), "Rust structure". He named a `planet_fundamentals` tree: `energy/`, `hydrosphere/`, `atmosphere/`, `surface/`, plus `climate_seed.rs`, `planet_initialization.rs`, and `planet_update.rs`. The issue body is quoted in the approve-plan event. This task is that layout only.
 
@@ -50,9 +52,9 @@ Every formula stays the one already in the crate, which is the port of `src/core
 Path: `rust/boreal-sim/src/planet_fundamentals/`. The wasm exports `grid_init`, `grid_seed`, `grid_step` keep their signatures (`src/core/planetBudget.ts`).
 
 ## Objectives
-- [ ] `rust/boreal-sim/src/planet_fundamentals/` matches the issue #46 tree, each file a move or split from the table above, and `cargo test` stays green.
-- [ ] `vegetation_fraction.rs` is the `// later` stub. Land and elevation stay inputs from `planet.ts`. `tests/planet-budget.test.ts` still matches `weather.ts` to 1e-9, and the wasm export names are unchanged.
-- [ ] `src/core/planetBudget.ts`, `rust/README.md`, and `notes/skills/rust-wasm-planet-budgets.md` name the new paths. No second set of formulas.
+- [x] `rust/boreal-sim/src/planet_fundamentals/` matches the issue #46 tree, each file a move or split from the table above, and `cargo test` stays green.
+- [x] `vegetation_fraction.rs` is the `// later` stub. Land and elevation stay inputs from `planet.ts`. `tests/planet-budget.test.ts` still matches `weather.ts` to 1e-9, and the wasm export names are unchanged.
+- [x] `src/core/planetBudget.ts`, `rust/README.md`, and `notes/skills/rust-wasm-planet-budgets.md` name the new paths. No second set of formulas.
 
 ## Acceptance
 The crate's source tree is the layout in issue #46, and the numbers are still the T-0061 port of `weather.ts`. Issue: https://github.com/Bannon-github/boreal/issues/46

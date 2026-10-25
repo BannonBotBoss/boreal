@@ -1,24 +1,27 @@
-//! Surface budget (issue #43, item 4): land/sea mix, albedo, roughness, heat capacity, snow cover.
+//! Surface budget (issue #43, item 4), split across this folder (T-0062, issue #46).
+//! Albedo, roughness and heat capacity live in their own files. This module still mixes one cell, because a cell is one surface.
 //! Albedo and z0 rows are the `SURFACE` table of `src/core/weather.ts` (Oke 1987; Stull 1988; Raupach 1994).
+pub mod land_sea_mask;
+pub mod heat_capacity;
+pub mod roughness;
+pub mod elevation;
+pub mod vegetation_fraction;
+
+pub use heat_capacity::{mixed_heatcap, LAND_HEATCAP, OCEAN_HEATCAP};
+pub use roughness::{mixed_z0, BARE_Z0, FOREST_Z0, SNOW_Z0, WATER_Z0};
+pub use crate::planet_fundamentals::energy::albedo::{mixed_albedo, BARE_ALBEDO, FOREST_ALBEDO, SEA_ICE_ALBEDO, SNOW_ALBEDO, WATER_ALBEDO};
+
 use crate::consts::*;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Surf { pub albedo: f64, pub rs: f64, pub z0: f64 }
-pub const WATER: Surf = Surf { albedo: 0.06, rs: 0.0, z0: 0.0002 };  // Oke 1987 Table 1.1; z0 Stull 1988 Fig 9.6
-pub const FOREST: Surf = Surf { albedo: 0.10, rs: 100.0, z0: 1.5 };  // Oke 1987; Kelliher et al. 1995; Raupach 1994 [verify]
-pub const SNOW_SURF: Surf = Surf { albedo: 0.80, rs: 0.0, z0: 0.001 };    // fresh snow .80–.95 (Oke 1987)
+pub const WATER: Surf = Surf { albedo: WATER_ALBEDO, rs: 0.0, z0: WATER_Z0 };  // Oke 1987 Table 1.1; z0 Stull 1988 Fig 9.6
+pub const FOREST: Surf = Surf { albedo: FOREST_ALBEDO, rs: 100.0, z0: FOREST_Z0 };  // Oke 1987; Kelliher et al. 1995; Raupach 1994 [verify]
+pub const SNOW_SURF: Surf = Surf { albedo: SNOW_ALBEDO, rs: 0.0, z0: SNOW_Z0 };    // fresh snow .80–.95 (Oke 1987)
 /// Bare dry ground: desert albedo .20–.45 (Oke 1987, Table 1.1) → .30 [verify]; rs and z0 are game calibration (the TS has no desert row).
-pub const BARE: Surf = Surf { albedo: 0.30, rs: 200.0, z0: 0.01 };
-/// Snow-free sea ice albedo .5–.7 (Brandt et al. 2005, J. Climate 18:3606) → .6 [verify].
-pub const SEA_ICE_ALBEDO: f64 = 0.6;
+pub const BARE: Surf = Surf { albedo: BARE_ALBEDO, rs: 200.0, z0: BARE_Z0 };
 /// Snow covers a cell fully above this depth, mm w.e. (game calibration; smooth ramp so the albedo never steps).
 pub const SNOW_FULL_MM: f64 = 20.0;
-
-/// Volumetric heat capacity of sea water, 4.18e6 J/m³/K (Wallace & Hobbs 2006) × mixed-layer depth 50 m (Levitus 1982; Kara et al. 2003 give
-/// 20–100 m, global mean ~ 50–60 m) [verify]. Land: wet mineral soil ≈ 2.0e6 J/m³/K (Oke 1987, Table 2.1) × a 0.5 m daily-to-weekly active
-/// layer (game calibration).
-pub const OCEAN_HEATCAP: f64 = 4.18e6 * 50.0;
-pub const LAND_HEATCAP: f64 = 2.0e6 * 0.5;
 
 /// Snow-cover fraction from snow water equivalent (smooth, 0..1).
 pub fn snow_fraction(swe_mm: f64) -> f64 { (swe_mm / SNOW_FULL_MM).clamp(0.0, 1.0) }
@@ -32,14 +35,10 @@ pub fn land_kind(soil_mm: f64) -> Surf { if beta(soil_mm) < 0.2 { BARE } else { 
 pub struct CellSurface { pub albedo: f64, pub rs: f64, pub z0: f64, pub heatcap: f64, pub snow: f64, pub sea_fraction: f64 }
 pub fn cell_surface(land: f64, soil_mm: f64, swe_mm: f64, ice: f64) -> CellSurface {
     let l = land.clamp(0.0, 1.0);
-    let sea = 1.0 - l;
     let snow = snow_fraction(swe_mm);
     let lk = land_kind(soil_mm);
-    let land_a = lk.albedo * (1.0 - snow) + SNOW_SURF.albedo * snow;
-    let sea_a = WATER.albedo * (1.0 - ice) + SEA_ICE_ALBEDO * ice;
-    // roughness: the area-weighted log keeps z0 positive (effective roughness is geometric, Stull 1988)
-    let z0 = (l * (lk.z0 * (1.0 - snow) + SNOW_SURF.z0 * snow).ln() + sea * WATER.z0.ln()).exp();
-    CellSurface { albedo: l * land_a + sea * sea_a, rs: l * lk.rs, z0, heatcap: l * LAND_HEATCAP + sea * OCEAN_HEATCAP, snow: l * snow, sea_fraction: sea }
+    CellSurface { albedo: mixed_albedo(l, lk.albedo, snow, ice), rs: l * lk.rs, z0: mixed_z0(l, lk.z0, snow),
+        heatcap: mixed_heatcap(l), snow: l * snow, sea_fraction: 1.0 - l }
 }
 
 #[cfg(test)]

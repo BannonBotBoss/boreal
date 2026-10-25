@@ -1,5 +1,6 @@
 /**
  * Planet budgets (issue #43; solar, hydrosphere, atmosphere, surface) — the TypeScript side of the Rust crate `rust/boreal-sim`.
+ * The Rust formulas live under `rust/boreal-sim/src/planet_fundamentals/` (issue #46). `lib.rs` re-exports the old module names.
  * The Rust compiled to WebAssembly owns the per-cell maths; this file loads it, hands it the land mask from the existing
  * `world/globe/planet.ts` (continents are not regenerated in Rust) and exposes each layer as a `Float64Array` over wasm memory.
  * No second climate: the formulas are ports of `weather.ts` (`solar`, `shortwave`, `surfaceBalance`, `qsat`, the Manabe bucket) and

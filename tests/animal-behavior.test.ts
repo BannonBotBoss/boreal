@@ -174,3 +174,14 @@ test('gallop has a suspension phase with all four feet off the ground and lifts 
  for(const legs of [DEER_LEGS,WOLF_LEGS]) for(let k=0;k<=20;k++){const p=quadrupedPose('jump',0,k/20*.85,legs,0);
   p.feet.forEach((f,i)=>{const L=limbOf(legs,i);assert.ok(Math.hypot(f.z,f.y-(L.hip+p.bob))<=L.upper+L.lower+(L.foot??0)+(L.girdle??0),'jump tuck within leg reach');});}
 });
+
+test('T-0074: the jump body arc is ballistic from gravity and continuous (no extra bounce)',async()=>{
+ const { gravity } = await import('../src/proc/physics'); const { PHYS } = await import('../src/core/tuning');
+ const T=PHYS.jumpSeconds,Ta=.65*T,apex=gravity()*Ta*Ta/8;let max=-1,prev=gaitPose('jump',0,0),d0=0,rebounds=0;
+ for(let k=1;k<=2000;k++){const p=gaitPose('jump',0,k/2000*T);max=Math.max(max,p.bob);
+  assert.ok(Math.abs(p.bob-prev.bob)<.01,'body height continuous');p.legs.forEach((a,i)=>assert.ok(Math.abs(a-prev.legs[i])<.02,'legs continuous'));
+  const d=p.bob-prev.bob;if(Math.abs(d)>1e-9){if(d>0&&d0<0)rebounds++;d0=d;}prev=p;}
+ assert.ok(max<=apex+1e-6&&max>apex-.05,`apex ${max} vs g·Ta²/8 ${apex} (launched from a 5 cm crouch)`);
+ assert.ok(rebounds<=2,`crouch-rise and land-rise only, no bounce (${rebounds})`);
+ assert.ok(Math.abs(gaitPose('jump',0,T).bob)<1e-8&&gaitPose('jump',0,T).legs.every(a=>Math.abs(a)<1e-8),'ends standing');
+});

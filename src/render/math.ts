@@ -10,7 +10,7 @@ import { requestTerrain, terrainWorkers } from './terrainPool';
 import { LEVEL } from '../core/tuning';
 import { RENDER } from '../core/renderSettings';
 
-// Aim slightly above the wolf's centre so it appears below screen centre.
+// Resting pitch looks a little above the wolf, so the animal sits below screen centre (T-0075).
 export const DEFAULT_PITCH = SYSTEM_PROPERTIES.camera.defaultPitchDeg * Math.PI / 180;
 export const LOOK_PITCH_RANGE = SYSTEM_PROPERTIES.camera.lookPitchRangeDeg * Math.PI / 180;
 export function clampLookPitch(pitch: number) {
@@ -25,16 +25,21 @@ export function springLookPitch(pitch: number, input: number, dt: number, heldPi
 }
 export const RIDER_HEIGHT: number = SYSTEM_PROPERTIES.camera.riderHeight;
 export const RIDER_DISTANCE: number = SYSTEM_PROPERTIES.camera.riderDistance;
+export const RIDER_FLANK: number = SYSTEM_PROPERTIES.camera.flank;
 // Positive pitch looks down; negative pitch looks above the horizon.
 export function clampPitch(pitch: number) { return THREE.MathUtils.clamp(pitch, Math.PI * SYSTEM_PROPERTIES.camera.pitchMinDeg / 180, Math.PI * SYSTEM_PROPERTIES.camera.pitchMaxDeg / 180); }
 export function positionCamera(camera: THREE.PerspectiveCamera, x: number, z: number, altitude: number, yaw: number, pitch = DEFAULT_PITCH, lookYaw = 0) {
   const ground = Math.max(heightAt(x, z), -.2);
-  const horizontalDistance = altitude * RIDER_DISTANCE / RIDER_HEIGHT;
-  camera.position.set(x + Math.sin(yaw) * horizontalDistance, ground + altitude, z + Math.cos(yaw) * horizontalDistance);
+  const scale = altitude / RIDER_HEIGHT;
+  const back = RIDER_DISTANCE * scale, flank = RIDER_FLANK * scale;
+  // Behind the animal (sin yaw, cos yaw) and to its left (cos yaw, -sin yaw): a rear three-quarter, not dead astern.
+  camera.position.set(x + Math.sin(yaw) * back + Math.cos(yaw) * flank, ground + altitude, z + Math.cos(yaw) * back - Math.sin(yaw) * flank);
   const angle = clampPitch(pitch);
-  // Aim independently of the player; no division by tan(pitch) at the horizon.
-  camera.lookAt(camera.position.x - Math.sin(yaw + lookYaw) * Math.cos(angle),
-    camera.position.y - Math.sin(angle), camera.position.z - Math.cos(yaw + lookYaw) * Math.cos(angle));
+  // Look through the animal so the flank offset does not shove it off the vertical centre. Flank 0 keeps the old yaw.
+  const dist = Math.hypot(back, flank) || 1;
+  const aimYaw = Math.atan2((Math.sin(yaw) * back + Math.cos(yaw) * flank) / dist, (Math.cos(yaw) * back - Math.sin(yaw) * flank) / dist) + lookYaw;
+  camera.lookAt(camera.position.x - Math.sin(aimYaw) * Math.cos(angle),
+    camera.position.y - Math.sin(angle), camera.position.z - Math.cos(aimYaw) * Math.cos(angle));
   camera.updateMatrixWorld(true);
 }
 /** Chunk terrain as a sliced job (core/interest). With `worker`, heights/normals/positions/water sheet come from a terrain

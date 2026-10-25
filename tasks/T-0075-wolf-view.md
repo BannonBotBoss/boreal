@@ -19,7 +19,7 @@ Matthew on GitHub issue #52, 2026-10-23 19:14:55 PT, attached a reference and wr
 - Mass stays `rigMass`: volume from the generated rig times `canid` density. Do not assign a mass.
 
 ## Objectives
-- [ ] Rear three-quarter follow camera just above the withers, wolf below screen centre, matching the issue #52 framing
-- [ ] Gray-wolf coat and guard-hair lengths inside the published ranges (back 6–7 cm, shoulders 9–13 cm), grizzle on the existing fur cards
-- [ ] Numbers table and a calibrated frame score against the issue image (metric, tool, known match and known mismatch)
-- [ ] Tests for the framing score, the guard-hair lengths, and the camera still centring the animal
+- [x] Rear three-quarter follow camera just above the withers, wolf below screen centre, matching the issue #52 framing
+- [x] Gray-wolf coat and guard-hair lengths inside the published ranges (back 6–7 cm, shoulders 9–13 cm), grizzle on the existing fur cards
+- [x] Numbers table and a calibrated frame score against the issue image (metric, tool, known match and known mismatch)
+- [x] Tests for the framing score, the guard-hair lengths, and the camera still centring the animal

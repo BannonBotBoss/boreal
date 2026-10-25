@@ -42,13 +42,22 @@ export const SYSTEM_PROPERTIES = {
     /** seconds a sensed threat is remembered after leaving the senses (stops flip-flopping at the outer ring) */ threatMemory: 3,
     /** sense rings (m): touch, near, far */ senseRadii: [3, 10, 24] as const,
   },
-  /** Follow camera (render/math): rider height/distance behind the wolf and the look-pitch spring. */
+  /** Follow camera (render/math): a rear three-quarter just above the wolf (T-0075, issue #52). */
   camera: {
-    /** default downward pitch (deg): aims a little above the wolf so it sits below screen centre */ defaultPitchDeg: 10,
+    /** resting pitch (deg). Negative looks above the horizon. -5 puts the mid-body near the measured
+     *  issue #52 centroid (image y 0.74, NDC y -0.48) when the lens is riderHeight. Game calibration of the angle. */
+    defaultPitchDeg: -5,
     /** how far the look stick tilts up or down from the default (deg) */ lookPitchRangeDeg: 30,
     /** look-pitch spring return rate (1/s): 98 % settled in 0.3 s, no overshoot */ lookSpringRate: 14,
-    /** camera height above ground at the start (m) */ riderHeight: 1.6,
-    /** camera distance behind at riderHeight (m); scales with height */ riderDistance: 3,
+    /** metres above the ground. Gray-wolf withers are 80–85 cm (Mech 1970, The Wolf; Wikipedia "Wolf" restates it).
+     *  The lens sits 20 cm above an 85 cm withers, so the view is the animal's, not a standing person's. */
+    riderHeight: 1.05,
+    /** metres behind the hips along the trail, at riderHeight. Scales with height. Game calibration so an 85 cm
+     *  wolf is about a quarter of a 48° frame, the way the animal sits in issue #52. */
+    riderDistance: 3.6,
+    /** metres to the animal's left, at riderHeight. atan2(flank, riderDistance) is 32°, inside a rear three-quarter
+     *  (25–45° off the tail; 0° is dead astern, 90° is side-on). Game calibration of that angle. */
+    flank: 2.25,
     /** hard pitch limits (deg): negative looks above the horizon */ pitchMinDeg: -80, pitchMaxDeg: 89,
   },
   /** Chronometer dial (ui/chronometer): scrubbing the time of day. */
@@ -210,8 +219,9 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
     defaultEnergy: ['0-100', EST], forageEnergy: ['0-100', EST], playerHearingRadius: ['m', EST], feedDuration: ['s', EST],
     feedReach: ['m', EST], threatMemory: ['s', EST], senseRadii: ['m', EST] } },
   camera: { readers: ['src/render/math.ts'], keys: {
-    defaultPitchDeg: ['deg', EST], lookPitchRangeDeg: ['deg', EST], lookSpringRate: ['1/s', EST], riderHeight: ['m', EST],
-    riderDistance: ['m', EST], pitchMinDeg: ['deg', EST], pitchMaxDeg: ['deg', EST] } },
+    defaultPitchDeg: ['deg', EST], lookPitchRangeDeg: ['deg', EST], lookSpringRate: ['1/s', EST],
+    riderHeight: ['m', 'withers 80–85 cm (Mech 1970, The Wolf) plus 20 cm, so the lens is just above the back'],
+    riderDistance: ['m', EST], flank: ['m', EST], pitchMinDeg: ['deg', EST], pitchMaxDeg: ['deg', EST] } },
   chronometer: { readers: ['src/ui/chronometer.ts'], keys: { rate: ['game h / real s', 'Matthew (chronometer design)'], ease: ['1/s', EST] } },
   clock: { readers: ['src/core/timeOfDay.ts', 'src/core/worldClock.ts'], keys: {
     realSecondsPerGameHour: ['s', 'design (2 real h per game day)'],
@@ -293,7 +303,7 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
       'src/core/lifespan.ts#LIFESPAN': 'maximum and starting ages', 'src/core/why.ts#WHY_DEFAULTS': 'why-chains per object kind',
       'src/core/tuning.ts#BLOCK': 'step height and trunk clearance per animal' },
     remaining: ['core/autonomy autonomous wolf figures', 'animals/hare HARE (T-0009 is changing it)'] },
-  camera: { title: 'Camera', what: 'Third-person follow camera behind the wolf: pitch spring, look-around and rider distance.',
+  camera: { title: 'Camera', what: 'Third-person follow camera: a rear three-quarter just above the wolf, pitch spring and look-around.',
     modules: ['src/render/math.ts', 'src/render/buildScene.ts'], groups: ['camera'], dependsOn: ['player', 'controls', 'terrain', 'interaction'],
     flags: { at: '=x,z[,yaw] start position (main.ts)', fov: 'field of view override (grok/rabbit-clover, T-0009)' }, tables: {},
     remaining: ['main.ts mouse-drag look sensitivity and look-yaw return rate', 'render/buildScene base field of view (48 deg; the focus field of view is autoFocus.cameraFovDeg)'] },

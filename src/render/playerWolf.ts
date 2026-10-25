@@ -15,7 +15,7 @@ import { buildFurCards, furCardMaterial } from './furCards';
 /** Fur cards over the whole coat (about 3 triangles each). */
 /** Skin under fur matches the cards' root shade (see furCards: root vertices are 0.55 × coat colour); bare skin keeps the earlier 0.72. */
 const FUR_ROOT_SHADE = .55, BARE_SHADE = .72;
-const FUR_CARDS = 13000, FUR_LENGTH = .03, FUR_WIDTH = .009; // wider than before: the strand texture cuts away about half of each card
+export const FUR_CARDS = 18000, FUR_LENGTH = .03, FUR_WIDTH = .009; // wider than before: the strand texture cuts away about half of each card. 18000 is game calibration so the grizzle covers the skin.
 /** Tail hangs about 40° below horizontal at rest and lifts toward level as the wolf speeds up; the extra bend per joint curves it. */
 const TAIL_HANG = .7, TAIL_LEVEL = .2, TAIL_CURVE = [0, .16, .12, -.08];
 const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -93,7 +93,9 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
-      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear }), furCardMaterial()),
+      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear,
+        // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
+        tipTint: (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furCardMaterial()),
   ];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.

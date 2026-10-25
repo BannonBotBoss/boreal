@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { steerWolf } from '../src/core/locomotion';
-import { positionCamera } from '../src/render/math';
+import { positionCamera, RIDER_DISTANCE, RIDER_FLANK, RIDER_HEIGHT } from '../src/render/math';
 import { PerspectiveCamera } from 'three';
 
 test('left stick steers wolf and chase camera remains behind its heading', () => {
@@ -14,7 +14,7 @@ test('left stick steers wolf and chase camera remains behind its heading', () =>
   const camera = new PerspectiveCamera();
   positionCamera(camera, moved.x, moved.z, 1.6, moved.heading);
   const backX = camera.position.x - moved.x, backZ = camera.position.z - moved.z;
-  assert.ok(Math.abs(Math.hypot(backX, backZ) - 3) < 1e-8);
+  assert.ok(Math.abs(Math.hypot(backX, backZ) - 1.6 * Math.hypot(RIDER_DISTANCE, RIDER_FLANK) / RIDER_HEIGHT) < 1e-8);
   assert.ok(backX * (moved.x - turned.x) + backZ * (moved.z - turned.z) < 0);
   assert.deepEqual(steerWolf(moved, 0, 0, 1), moved);
 });

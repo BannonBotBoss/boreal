@@ -828,3 +828,11 @@ Matthew in chat, 2026-10-24 11:36 PT, replied "switch" when asked whether to swi
 - `tests/tasks.test.ts` and `tests/agent-review.test.ts` cover the relay and the cross-review.
 - New skill `notes/skills/grokbot-relay-reviewer.md` (T-0069 had `skill: false` and left no how-to). `notes/skills/board-rule-inspection.md` names the relay list.
 - Nothing on screen. Evidence is the rule 12 table in `tasks/handoffs/T-0071-grokbot-3.md`. `npx tsc --noEmit` exit 0. `npm test` 630 tests, 616 pass, 0 fail, 14 todo; the board todo stays at 23 legacy rule breaks. A non-author `agent-review` is still open if the merger wants one. The task is completed, not approved, on this run.
+
+## 2026-10-24 17:40 PT - grokbot-3: wolf follow view (T-0075, issue #52)
+Matthew, issue #52, 2026-10-23 19:14:55 PT: "please use this and refine the view of the wolf, as well as the wolf itself". Branch `grokbot-3/wolf-view`. Not merged, not self-approved.
+- Adopted the existing follow camera and the existing tube wolf. `positionCamera` now stands 1.05 m up, 3.6 m behind and 2.25 m to the wolf's left (32°), pitch −5°. Wolf `cameraHeight` reads that eye height. The landing clearance line uses the same flank.
+- Timber-grey stops are a darker gray with a cream belly (Gipson, Bangs et al. 2002 for the grey morph; the RGB triples are [verify]). Shoulder guard hair 10.5 cm, inside 9–13 cm (Wikipedia "Wolf"). Back stays 6–7.2 cm. Tail plume ~12 cm [verify: no separate table]. Pale tips on the upper-body cards (Young and Goldman 1944 [verify page]). Game fur cards 18000. The fork rig was left at 13000.
+- Mass is `rigMass` of the player wolf on the canid plan: 73.4 kg. Not assigned.
+- Scores in `refs/wolf/view/score.json`. wolf-frame v1 (geometry) 0.987, legacy camera 0.559. box-histogram v1 against the issue image: before 0.111, after 0.149. The 0.95 pixel gate is not met.
+- `npx tsc --noEmit` exit 0. `npm test` 644 tests, 630 pass, 0 fail, 14 todo. Skill update is the T-0075 section of `notes/skills/visual-inspection-recording.md`.

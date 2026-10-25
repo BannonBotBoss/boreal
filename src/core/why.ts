@@ -27,13 +27,14 @@ import { heightAt, LEGACY_RIVER_FOLD2, riverCenter, type Entity } from './world'
 import { LEVEL } from './tuning';
 import { STAGES } from './stages/elevation';
 import { riverAt } from './stages/rivers';
+import { channelStepAt } from './stages/channelRough';
 import { CANOPY, siteAt } from './flora/site';
 import { FIRE, standAt, standStructure } from './stand';
 import { arenaOf, fallFraction, logYears } from './logDecay';
 import { NEEDS_SPECIES } from './needs/species';
 import type { Solid } from './contactBus';
 
-export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated', 'grazing', 'fleeing', 'alerting', 'drinking', 'recovering', 'exploring', 'seeking', 'steered', 'grazed', 'regrew'] as const;
+export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'exposed', 'scoured', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated', 'grazing', 'fleeing', 'alerting', 'drinking', 'recovering', 'exploring', 'seeking', 'steered', 'grazed', 'regrew'] as const;
 export type WhyTag = typeof WHY_TAGS[number];
 /** Ongoing steps: slow processes that follow the anchor (the last event) instead of replacing it. A contact compares
  *  against the anchor, so a decaying log still reads as resting on the ground and the same contact stays a no-op. */
@@ -91,7 +92,11 @@ export function placementCause(x: number, z: number): Placement {
 function place(w: Why, kind: Kind, x: number, z: number, seed?: number): Why {
   const p = placementCause(x, z);
   if (kind === 'deer' || kind === 'person') return w.map(s => s.step === 'born' ? { ...s, by: 'birth' } : s.step === 'wandered' && p.cause === 'flow' ? { ...s, by: 'flow' } : { ...s });
-  if (kind === 'rock') return p.cause === 'flow' ? w.map(s => s.step === 'embedded' ? { ...s, by: 'flow' } : { ...s }) : w;
+  if (kind === 'rock') {
+    // A step boulder is ice-exposed bedrock or an erratic the stream has scoured clear (T-0030), not a till-embedded stone.
+    if (STAGES.on && channelStepAt(STAGES.seed, x, z)) return [{ step: 'exposed', by: 'flow' }, { step: 'scoured', by: 'flow' }];
+    return p.cause === 'flow' ? w.map(s => s.step === 'embedded' ? { ...s, by: 'flow' } : { ...s }) : w;
+  }
   const by = p.cause === 'flow' ? 'flow' : p.cause === 'sunlit-gap' ? `sunlit-gap:${p.age}` : `stand:${p.age}`;
   const placed = w.map(s => s.step === 'grew' ? { ...s, by } : { ...s });
   if (kind !== 'log') return placed;
@@ -186,6 +191,8 @@ export function stepText(s: WhyStep): string {
   switch (s.step) {
     case 'resting': return `resting on ${name(s.on ?? 'ground')}`;
     case 'embedded': return s.by === 'flow' ? 'embedded in the channel' : `embedded in ${name(s.on ?? 'ground')}`;
+    case 'exposed': return s.by === 'flow' ? 'exposed by the flow' : 'exposed';
+    case 'scoured': return s.by === 'flow' ? 'scoured by the flow' : 'scoured';
     case 'moved': return s.by ? `moved by ${name(s.by)}` : 'moved';
     case 'grew': return s.by === 'flow' ? 'grew in the channel'
       : s.by?.startsWith('sunlit-gap:') ? `grew in a sunlit gap (stand ${s.by.slice(11)} years since fire)`

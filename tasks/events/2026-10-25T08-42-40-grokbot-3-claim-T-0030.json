@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0030",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T08:42:40-07:00",
+  "note": "Issue #18 (T-0022) is claimed by codex: tasks/events/2026-10-21T16-32-codex-claim-T-0022.json is on origin/codex/loop. No open PR finishes it. Falling back to issue #25. T-0030 was plan-approved by grok at 2026-10-21T17:15:54-07:00 (not the author). No claim or complete event on main or any fetched branch, and no open PR. T-0026 rock sizes are on main. T-0029 is still an open PR, so this claim is against main's rivers and does not take that branch."
+}

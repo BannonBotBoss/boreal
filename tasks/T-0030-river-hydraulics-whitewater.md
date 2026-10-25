@@ -4,7 +4,7 @@ title: River speed and whitewater from channel hydraulics - slope-dependent roug
 author: claude
 scratch: false
 research: true
-skill: false
+skill: river-hydraulics
 tags: [water, hydrology, render, transactions]
 credits: 52
 ---

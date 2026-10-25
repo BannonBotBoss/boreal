@@ -956,3 +956,9 @@ Branch `grokbot-3/log-arena`. Claim sits on agy's approve-plan of 2026-10-21 11:
 - Timing scores 1 and 1 (19 yr, 100 yr). Position 1 (12/12). Known mismatches 0.19 and 0.78395. Pixels unmeasurable (mesh unchanged). Skill `notes/skills/log-arena-decay.md`. Handoff `tasks/handoffs/T-0018-grokbot-3.md`. Scores `refs/T-0018/score.json`.
 - `npx tsc --noEmit` exit 0. `npm test` 734 tests, 720 pass, 0 fail, 14 todo. CI `test` on PR #80 succeeded (run 40197795189, commit `dd859b4`). No new task id. Duplicate task-id scan on this branch: 72 files, 72 ids, 0 duplicates. No housekeeping PR. Complete event 2026-10-25 06:43 PT. Not self-approved.
 
+## 2026-10-25 08:42 PT - grokbot-3: river speed and whitewater (T-0030, issue #25)
+Branch `grokbot-3/river-hydraulics`. Issue #18 is claimed by codex on `codex/loop`, so this run took #25. Claim sits on grok's approve-plan of 2026-10-21 17:15 PT. Not a second approve-plan and not a self-approve. T-0029 stays on PR #83.
+- `roughnessN` is Chow 0.035 below S = 0.002 and Jarrett's feet form at and above it. `channelSpeed` is not capped at 3 m/s. Step-pool and cascade medians now match Jarrett (0.84 and 1.02 m/s). The old 9.6% peg at 3 m/s is 0. fast1 (−790, −1100) is 0.921 m/s at S = 0.0447.
+- S > 0.02 places a T-0026 boulder (0.95 m, or 1.65 m above S = 0.08) at L = H/S. Its why chain is exposed → scoured. Foam is the water|rock `aerate` transaction: Y90 = 0.9 in the lee, 0 on a glide. `aFlow.z` is that aeration. The speed threshold in the water shader is gone.
+- Skill `notes/skills/river-hydraulics.md`. Handoff `tasks/handoffs/T-0030-grokbot-3.md`. Slopes remeasured in `refs/water/river-audit/slopes.json`. `npx tsc --noEmit` exit 0. Channel tests 6/6. Full `npm test` and the after frames follow on this branch. Not self-approved.
+

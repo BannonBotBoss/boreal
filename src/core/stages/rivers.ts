@@ -10,8 +10,9 @@
  *  - Bankfull hydraulic geometry from drainage area, Laurentian Upland (the US side of the Canadian Shield, incl. the BWCA next
  *    to Kenora): w = 4.15 A^0.308 m, d = 0.31 A^0.202 m, A in km^2 (Bieger, Rathjens, Allen & Arnold 2015, JAWRA 51(3):842,
  *    via FluvialGeomorph/RegionalCurve regional_curve_equations.csv). Fitted on 16.6-366 km^2; smaller basins extrapolate [verify].
- *  - Velocity: Manning v = R^(2/3) S^(1/2) / n with R ~ d and n = 0.035 (clean winding natural channel; Chow 1959, Table 5-6),
- *    S from the filled surface in game metres. It drives the shader's flow scrolling and foam only.
+ *  - Velocity: Manning v = R^(2/3) S^(1/2) / n with R ~ d (wide shallow channel). n is Chow's 0.035 below
+ *    Jarrett's range and Jarrett's high-gradient n at and above it (channelSpeed). No speed cap. The speed
+ *    scrolls the water texture. Foam is not this speed: it is the water×rock transaction in channelRough.ts.
  *  - Carving is consistent with Priority-Flood: the water surface follows the FILLED surface (strictly decreasing downstream
  *    along D8, flow.ts), so every river runs downhill and meets its lake at the lake's own level. The terrain is only ever
  *    lowered (min), as a parabolic bed inside the banks and a sloped bank blended back to the original surface.
@@ -26,7 +27,9 @@ export const RIVER = {
   /** Channel initiation area (km^2): ~0.5 km^2 for humid boreal Shield terrain (WORLD-STAGES.md) [verify]. */
   initKm2: .5,
   wA: 4.15, wB: .308, dA: .31, dB: .202, // Bieger et al. 2015, Laurentian Upland
-  manningN: .035,                        // Chow 1959
+  manningN: .035,                        // Chow 1959, Table 5-6: clean, winding, some pools and shoals (quoted range 0.033–0.045). Used only below Jarrett's fit.
+  /** Jarrett 1984, J. Hydraulic Eng. 110(11):1519: n = 0.39 S^0.38 R_ft^-0.16, fitted for S > 0.002. 1 ft = 0.3048 m. */
+  jarrettMinS: .002, jarrettA: .39, jarrettB: .38, jarrettC: -.16, footM: .3048,
   /** Water surface sits this far below the filled surface (game m) so banks show. */
   freeboard: .12,
   /** Bank: carved slope (rise/run) and width as a multiple of the half-width (min 2 m). */
@@ -59,24 +62,54 @@ export function riverGrid(seed: number): Rivers {
   let R = cache.get(seed); if (R) return R;
   const L = lakeGrid(seed); cache.set(seed, R = extractRivers(flowGrid(seed), c => L.id[c] >= 0)); return R;
 }
-export type RiverHit = { d: number; half: number; bank: number; surface: number; depth: number; order: number; dirX: number; dirZ: number; speed: number; areaKm2: number };
+export type RiverHit = {
+  d: number; half: number; bank: number; surface: number; depth: number; order: number; dirX: number; dirZ: number;
+  speed: number; areaKm2: number; slope: number; along: number; len: number; ax: number; az: number;
+};
+/** One drawn D8 segment at unwrapped grid node (i, j). Slope and the node position are the same ones riverAt uses. */
+export function segmentGeom(seed: number, i: number, j: number) {
+  const R = riverGrid(seed), f = flowGrid(seed), g = elevationGrid(seed), n = R.n, s = R.cell;
+  const c = ((j % n) + n) % n * n + ((i % n) + n) % n; if (!R.drawn[c]) return undefined;
+  const r = f.dir[c]; if (r < 0) return undefined;
+  const ox = ((r % n) - (c % n) + n + 1) % n - 1, oz = (((r / n) | 0) - ((c / n) | 0) + n + 1) % n - 1;
+  const ax = i * s, az = j * s, ex = ox * s, ez = oz * s, len2 = ex * ex + ez * ez; if (!(len2 > 0)) return undefined;
+  const len = Math.sqrt(len2), surface0 = toWorld(g, f.filled[c]), surface1 = toWorld(g, f.filled[r]);
+  return {
+    c, ax, az, ex, ez, len, dirX: ex / len, dirZ: ez / len,
+    slope: Math.max(1e-5, (surface0 - surface1) / len), surface0, surface1,
+    depth0: R.depth[c], depth1: R.channel[r] ? R.depth[r] : R.depth[c],
+    width0: R.width[c], width1: R.channel[r] ? R.width[r] : R.width[c],
+    order: R.order[c], areaKm2: R.areaKm2[c], drawnR: !!R.drawn[r],
+  };
+}
+/** Manning n. Chow's low-gradient value below S = 0.002; Jarrett's high-gradient n at and above it (R in feet). */
+export function roughnessN(slope: number, depth: number): number {
+  if (!(slope >= RIVER.jarrettMinS) || !(depth > 0)) return RIVER.manningN;
+  return RIVER.jarrettA * slope ** RIVER.jarrettB * (depth / RIVER.footM) ** RIVER.jarrettC;
+}
+/** Manning velocity (m/s). Wide-channel R ~ depth. Not capped: Jarrett's streams are not limited at 3 m/s. */
+export function channelSpeed(depth: number, slope: number): number {
+  const n = roughnessN(depth > 0 ? slope : 0, depth);
+  if (!(n > 0) || !(depth > 0) || !(slope > 0)) return 0;
+  return depth ** (2 / 3) * Math.sqrt(slope) / n;
+}
 /** Nearest river segment influencing (x, z) (game metres), or undefined. The bank zone is d in [half, half + bank]. */
 export function riverAt(seed: number, x: number, z: number): RiverHit | undefined {
-  const R = riverGrid(seed), g = elevationGrid(seed), f = flowGrid(seed), n = R.n, s = R.cell, fi = Math.floor(x / s), fj = Math.floor(z / s);
+  const R = riverGrid(seed), s = R.cell, fi = Math.floor(x / s), fj = Math.floor(z / s);
   let best: RiverHit | undefined, bestEdge = Infinity;
   for (let dj = -1; dj <= 2; dj++) for (let di = -1; di <= 2; di++) {
-    const i = fi + di, j = fj + dj, c = ((j % n) + n) % n * n + ((i % n) + n) % n; if (!R.drawn[c]) continue;
-    const r = f.dir[c]; if (r < 0) continue;
-    const ox = ((r % n) - (c % n) + n + 1) % n - 1, oz = (((r / n) | 0) - ((c / n) | 0) + n + 1) % n - 1; // wrapped D8 offset in {-1,0,1}
-    const ax = i * s, az = j * s, ex = ox * s, ez = oz * s, len2 = ex * ex + ez * ez;
-    const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / len2)), px = x - ax - t * ex, pz = z - az - t * ez, d = Math.hypot(px, pz);
-    const wr = R.channel[r] ? R.width[r] : R.width[c], half = Math.min(.4 * s, (R.width[c] + (wr - R.width[c]) * t) / 2);
+    const seg = segmentGeom(seed, fi + di, fj + dj); if (!seg) continue;
+    const t = Math.max(0, Math.min(1, ((x - seg.ax) * seg.ex + (z - seg.az) * seg.ez) / (seg.len * seg.len)));
+    const px = x - seg.ax - t * seg.ex, pz = z - seg.az - t * seg.ez, d = Math.hypot(px, pz);
+    const half = Math.min(.4 * s, (seg.width0 + (seg.width1 - seg.width0) * t) / 2);
     const bank = Math.min(.5 * s, Math.max(2, half * RIVER.bankK)), edge = d - half; if (edge > bank || edge >= bestEdge) continue;
-    const sc = toWorld(g, f.filled[c]), sr = toWorld(g, f.filled[r]), len = Math.sqrt(len2), depth = R.depth[c] + ((R.channel[r] ? R.depth[r] : R.depth[c]) - R.depth[c]) * t;
-    const slope = Math.max(1e-5, (sc - sr) / len);
-    const fb = RIVER.freeboard * (1 - t + (R.drawn[r] ? t : 0)); // taper to 0 where the river enters a lake/open water so the surfaces meet
-    bestEdge = edge; best = { d, half, bank, surface: sc + (sr - sc) * t - fb, depth, order: R.order[c], dirX: ex / len, dirZ: ez / len,
-      speed: Math.min(3, depth ** (2 / 3) * Math.sqrt(slope) / RIVER.manningN), areaKm2: R.areaKm2[c] };
+    const depth = seg.depth0 + (seg.depth1 - seg.depth0) * t;
+    const fb = RIVER.freeboard * (1 - t + (seg.drawnR ? t : 0)); // taper to 0 where the river enters a lake/open water so the surfaces meet
+    bestEdge = edge; best = {
+      d, half, bank, surface: seg.surface0 + (seg.surface1 - seg.surface0) * t - fb, depth, order: seg.order,
+      dirX: seg.dirX, dirZ: seg.dirZ, speed: channelSpeed(depth, seg.slope), areaKm2: seg.areaKm2, slope: seg.slope,
+      along: t * seg.len, len: seg.len, ax: seg.ax, az: seg.az,
+    };
   }
   return best;
 }

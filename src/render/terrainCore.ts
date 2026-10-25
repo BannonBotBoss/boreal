@@ -14,6 +14,7 @@ import { CHUNK_SIZE, heightAt, terrainBand } from '../core/world';
 import { LEVEL } from '../core/tuning';
 import { STAGES, lakeAt } from '../core/stages/elevation';
 import { riverAt } from '../core/stages/rivers';
+import { surfaceAeration } from '../core/stages/channelRough';
 import type { SoilKind } from '../core/stages/soils';
 
 /** Staged materials as ALBEDO (sRGB-encoded hex; three decodes to linear). Sentinel-2 L2A (30 Jul 2024, Kenora window) median per
@@ -93,7 +94,13 @@ export function* terrainCore(r: TerrainRequest): Generator<void, TerrainData> {
     const seg = r.waterSeg, wr = seg + 1, wn = wr * wr, wp = new Float32Array(wn * 3), flow = new Float32Array(wn * 3); let any = false;
     for (let i = 0; i < wn; i++) {
       const xr = gridRel(i % wr, seg), zr = gridRel((i / wr) | 0, seg), wx = xr + ox, wz = zr + oz, lk = lakeAt(STAGES.seed, wx, wz), rv = lk ? undefined : riverAt(STAGES.seed, wx, wz), inR = !!rv && rv.d < rv.half + rv.bank;
-      if (lk || inR) any = true; if (inR) { flow[i * 3] = rv!.dirX * rv!.speed; flow[i * 3 + 1] = rv!.dirZ * rv!.speed; flow[i * 3 + 2] = rv!.speed; }
+      if (lk || inR) any = true;
+      // xy scrolls at the channel speed. z is the water×rock free-surface aeration (0 on a glide), not the speed.
+      if (inR) {
+        const sample = (CHUNK_SIZE / seg) * Math.SQRT2 / 2;
+        flow[i * 3] = rv!.dirX * rv!.speed; flow[i * 3 + 1] = rv!.dirZ * rv!.speed;
+        flow[i * 3 + 2] = surfaceAeration(STAGES.seed, wx, wz, sample, rv);
+      }
       // the old path stored the relative position (float32), set y, then translated: x' = fround(xr + ox)
       wp[i * 3] = xr + ox; wp[i * 3 + 1] = Math.fround(lk ? lk.surface : inR ? rv!.surface : heightAt(wx, wz) - .6); wp[i * 3 + 2] = zr + oz;
       if (i % wr === seg) yield;

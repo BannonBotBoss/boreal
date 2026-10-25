@@ -10,6 +10,7 @@ import { activityFactor, agentLevels } from './needs/engine';
 import { WOLF_NEEDS } from './needs/species';
 import { REAL_SECONDS_PER_GAME_HOUR } from './timeOfDay';
 import { browseCellKey, browseGrams, takePatch } from './fields';
+import { DEER_TRACE_RANGE_M, WOLF_SCENT_RANGE_M } from './traces';
 
 const M = (o: Omit<MammalPlan, 'kind' | 'provisional'> & { provisional?: boolean }): MammalPlan => ({ kind: 'mammal', provisional: true, ...o });
 /** Mammal body plans. Ratios are to shoulder height. */
@@ -132,7 +133,15 @@ export const HARE_AGENT: AgentSpecies = {
   senses: {
     sight: { range: 26, night: .45, motion: [.5, 2], presence: 4, crouched: .5, movingAt: .25 }, // .5 m/s = slow stealth: slower is not "moving"
     hearing: { range: 22, loud: [1.5, 7], movingAt: .08 },
-    scent: { potency: .8 },
+    // range 2 m [verify: no Lepus detection distance found]. Same fine-scale cutoff as deer scat
+    // (van Ginkel et al. 2019, PLoS ONE 14(11):e0223248, Kuijper "circa two meters").
+    scent: { potency: .8, range: DEER_TRACE_RANGE_M },
+  },
+  // Droppings: 167 g DM/day and assimilation 0.36 give the faeces; 576 pellets/day summer (Rivera 2005, UMT thesis, 576±108).
+  // One clover unit is 15 mg DM (CLOVER.mgPerUnit). Fresh clover ~17% DM, so unitsPerWetKg converts a sim bite (wet kg).
+  traces: {
+    response: { scent: -1, carcass: -1, droppings: 0 },
+    droppings: { groupG: 167 * (1 - 0.36) / 576, fecesGPerUnit: 0.015 * (1 - 0.36), unitsPerWetKg: 0.17 / 0.015 * 1000 },
   },
   fear: { wolf: 1 },
   levels: {
@@ -177,7 +186,16 @@ export const DEER_AGENT: AgentSpecies = {
     sight: { range: 80, night: .35, motion: [.4, 2], presence: 30, crouched: .5, movingAt: .3 },
     // range 60 m [estimate]. loud band is a walk-to-run footfall.
     hearing: { range: 60, loud: [1.2, 6], movingAt: .1 },
-    scent: { potency: .7 }, // [estimate]
+    // range 2 m: deer leave wolf scat within about 2 m (Kuijper, via van Ginkel et al. 2019, PLoS ONE 14(11):e0223248).
+    // That paper's urine response was inside 0.5 m. One cutoff is the scat distance; urine uses the same 2 m.
+    scent: { potency: .7, range: DEER_TRACE_RANGE_M },
+  },
+  // Pellet group: dry faeces = 70 kg * 0.022 * (1-0.55) per day (FAUNA, Ullrey et al. 1970 digestibility).
+  // 34.4 groups/day, July-August, free-ranging Minnesota (Rogers 1987, J. Wildl. Manage. 51:330). Summer rate only.
+  // fecesGPerUnit uses the 0.35 dry fraction already flagged on the diet row. FAUNA's penned-winter 12.7 is not this rate.
+  traces: {
+    response: { scent: -1, carcass: -1, droppings: 0 },
+    droppings: { groupG: 70 * 0.022 * (1 - 0.55) * 1000 / 34.4, fecesGPerUnit: 0.35 * (1 - 0.55) },
   },
   fear: { wolf: 1 },
   levels: {
@@ -264,8 +282,12 @@ export const WOLF_AGENT: AgentSpecies = {
   senses: {
     sight: { range: WOLF_S.sight.rangeM.v, night: WOLF_S.sight.night.v, motion: WOLF_S.sight.motion.v, presence: WOLF_S.sight.presenceM.v, crouched: WOLF_S.sight.crouched.v, movingAt: .25 },
     hearing: { range: WOLF_S.hearing.rangeM.v, loud: WOLF_S.hearing.loud.v, movingAt: .08 },
-    scent: { potency: WOLF_S.smell.potency.v },
+    // range 2400 m: Mech 1970, The Wolf, the same ~2.4 km already on WOLF_NEEDS.senses.smell. Body odor stays on the HUD range.
+    scent: { potency: WOLF_S.smell.potency.v, range: WOLF_SCENT_RANGE_M },
   },
+  // A carcass is investigated (fear scale +1). Own marks and droppings are smelled and not followed. No wolf scat row:
+  // a kill's gut is the carcass writer, and wolf faeces are not a separate delta.
+  traces: { response: { carcass: 1, scent: 0, droppings: 0 } },
   fear: { person: 1 },
   levels: {
     energy: { max: 100, start: 70, drain: WOLF_L.energy.drain, fleeMult: activityFactor(WOLF_NEEDS, WOLF_NEEDS.body.speeds.sprint.v), fed: WOLF_NEEDS.behaviour.drives.energy.seekBelow.v, full: 90 },
@@ -332,8 +354,10 @@ export const PERSON_AGENT: AgentSpecies = {
     sight: { range: 40, night: .2, motion: [.4, 1.8], presence: 8, crouched: .5, movingAt: .3 },
     // range 30 m [estimate]. loud band is a walk-to-fast-walk footfall.
     hearing: { range: 30, loud: [1.2, 2.5], movingAt: .15 },
-    scent: { potency: .2 }, // [estimate] people are poor at scent; sight does the noticing
+    // range 2 m [estimate: no measured human trace-avoidance distance; the deer scat cutoff, same fine scale].
+    scent: { potency: .2, range: DEER_TRACE_RANGE_M }, // [estimate] people are poor at scent; sight does the noticing
   },
+  traces: { response: { scent: -1, carcass: -1 } },
   fear: { wolf: 1 },
   levels: {
     // 100 energy = one reference day (PERSON_KCAL_DAY), spent over one game day (PERSON_DAY_S), not 86400 wall seconds.

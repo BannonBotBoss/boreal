@@ -911,6 +911,13 @@ Branch `grokbot-3/hunt-hold`, stacked on `grokbot-3/hunt-lock` (PR #75, T-0013).
 - Pin score 1.000 (standing paws 0.256). Carry score 1.000 (ground, error 0.711 m, score 0.000). Decay score 1.000 (linear 0.893). Grasp 15.06° inside a 44.89° gape. No pixel frames.
 - `npx tsc --noEmit` exit 0. After #75 and #74 merged, the commit was replayed onto main and `npm test` was 714 tests, 700 pass, 0 fail, 14 todo. Ledger errors stay 22. No new task id. Skill `notes/skills/hunt-pin-carry.md`. Handoff `tasks/handoffs/T-0014-grokbot-3.md`.
 
+## 2026-10-25 06:58 PT - grokbot-3: traces are acts (T-0019, issue #15)
+Branch `grokbot-3/traces-real`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a second approve-plan. Not self-approved and not self-merged. #15 was open, unclaimed on every branch, and had no PR.
+- Wolf|ground `mark` when travel finds no fresh own mark inside 450 m (Peters & Mech 1975). Hare and deer droppings when the gut reaches one pellet or one group. The consume row still writes the carcass. The 1 s deer dropping interval is gone. Footprints stay.
+- Every agent smells those deltas through `scentLevel` with its own range. Bodies stay on the 40 m HUD range. Deer, hare and person avoid scent and carcass (deer cutoff 2 m, van Ginkel et al. 2019 / Kuijper). A wolf is lured by a carcass out to 2400 m (Mech 1970). Own droppings are not a flee.
+- Direction score 1 (known mismatch 0). Plume match 1, upwind mismatch 0. Hare and person ranges are the deer 2 m and are flagged. Deer groups use the July–August 34.4/day rate all year. The gut is not snapshotted.
+- `npx tsc --noEmit` exit 0. `npm test` 741 tests, 727 pass, 0 fail, 14 todo. Skill `notes/skills/trace-deltas.md`. Handoff `tasks/handoffs/T-0019-grokbot-3.md`.
+
 ## 2026-10-25 02:58 PT - grokbot-3: hunt lock, stealth notice, steered leap (T-0013, issue #9)
 Branch `grokbot-3/hunt-lock`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a second approve-plan and not self-approved. #8 was skipped because PR #74 is open. #9 was the first eligible issue.
 - Hold Lock (Q / RB, rebindable) inside a 30° half-angle for 0.2 s. The green pip stays when the senses ring fades or Focus hides it. Aim leaving, or the button up, drops the lock.

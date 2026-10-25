@@ -18,6 +18,7 @@ import { createNeeds, levelsOf, staminaRates, stepNeeds, type NeedsState } from 
 import { perceive, SENSE_RULES, type Body } from '../needs/senses';
 import { notices, perceive as agentPerceive } from '../agent';
 import { HARE_AGENT } from '../species';
+import { addFeces, bestAvoid, traceHits } from '../traces';
 import { boltDistance, captured, dietOf, evadeStep, gameSpeed, HUNT, startEvade, type EvadeState } from '../needs/diet';
 import { consumeHold, emptyBag, engageHold, friendLive, preyOf, releaseHold, carryPlace, type HoldBag } from '../huntHold';
 import { scatterBend, vigilance } from '../needs/social';
@@ -123,7 +124,7 @@ function stepWorld(w: SimWorld, dt: number) {
   // 3. act
   for (const a of [...w.animals]) {
     if (!a.alive) continue;
-    if (!a.controlled) { if (a.sp.behaviour.flight.fears.length && a.sp.diet.kind === 'herbivore') stepPrey(w, a, dt, g); else stepPredator(w, a, dt, g, env); }
+    if (!a.controlled) { if (a.sp.behaviour.flight.fears.length && a.sp.diet.kind === 'herbivore') stepPrey(w, a, dt, g, env); else stepPredator(w, a, dt, g, env); }
     // 4. capture by any predator (NPC or embodied): body contact or a landing pounce
     if (a.sp.diet.kind !== 'herbivore') for (const b of around(g, a.x, a.z, HUNT.catchPounce)) {
       if (!b.alive || b === a || !eatsAnimal(a, b) || !captured(Math.hypot(b.x - a.x, b.z - a.z), !!a.pouncing)) continue;
@@ -178,7 +179,7 @@ export function consumePrey(w: SimWorld, prey: SimAnimal, _wolfId: number) {
   prey.heldBy = undefined; removeAnimal(w, prey);
   return meal;
 }
-function stepPrey(w: SimWorld, a: SimAnimal, dt: number, g: Grid) {
+function stepPrey(w: SimWorld, a: SimAnimal, dt: number, g: Grid, env: { daylight: number; wind: { x: number; z: number } }) {
   if (a.heldBy !== undefined) { a.speed = 0; a.state = 'rest'; return; }
   if (a.friendOf !== undefined) {
     if (a.friendAt === undefined || !friendLive(a.friendAt, w.time)) { a.friendOf = undefined; a.friendAt = undefined; }
@@ -206,12 +207,26 @@ function stepPrey(w: SimWorld, a: SimAnimal, dt: number, g: Grid) {
     if (food && a.energy < SIM.fullAt) {
       a.bite += dt * vigilance(a.sp, a.linked).grazeShare / (1 - a.sp.social.vigilance.loneShare.v) ; // more mates: more time head-down
       const F = a.sp.diet.foods[food.kind];
-      if (a.bite >= F.eatSeconds.v) { a.bite = 0; const kg = Math.min(food.kg, F.biteKg.v), r = dietOf(a.sp).eat(a.sp, a.needs, a.energy, food.kind, kg); food.kg -= kg; a.needs = r.state; a.energy = r.energy; w.events.push({ type: 'ate', id: a.id, x: a.x, z: a.z, food: food.kind }); }
+      if (a.bite >= F.eatSeconds.v) {
+        a.bite = 0; const kg = Math.min(food.kg, F.biteKg.v), r = dietOf(a.sp).eat(a.sp, a.needs, a.energy, food.kind, kg); food.kg -= kg; a.needs = r.state; a.energy = r.energy;
+        w.events.push({ type: 'ate', id: a.id, x: a.x, z: a.z, food: food.kind });
+        const perKg = a.species === 'hare' ? HARE_AGENT.traces.droppings?.unitsPerWetKg : undefined;
+        if (perKg) addFeces(HARE_AGENT, `hare:${a.id}`, a.x, a.z, kg * perKg);
+      }
     }
     if (a.timer <= 0) {
       a.state = 'move'; a.timer = rand(.6, 1.4);
       const seen = a.energy < SIM.fullAt ? nearbyFood(w, a.x, a.z, a.sp.senses.sight.rangeM.v).find(f => a.sp.diet.foods[f.kind] && Math.hypot(f.x - a.x, f.z - a.z) > SIM.biteReach) : undefined;
       a.heading = seen ? toward(a, seen.x, seen.z) : a.heading + rand(-1.2, 1.2);
+    }
+  }
+  // A trace is a cause only when one is smelled. An empty log leaves the bout timers alone. A known predator outranks it.
+  if (!known && a.species === 'hare') {
+    const hit = bestAvoid(traceHits(HARE_AGENT, a, env.wind, a.heading), HARE_AGENT.mood.notice[0]);
+    if (hit) {
+      a.heading = Math.atan2(hit.x - a.x, hit.z - a.z);
+      a.speed = hit.level >= HARE_AGENT.mood.bolt[0] ? HARE_AGENT.speed.flee : HARE_AGENT.speed.approach;
+      a.state = 'move';
     }
   }
   move(w, a, dt);

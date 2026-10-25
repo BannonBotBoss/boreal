@@ -1,0 +1,10 @@
+{
+  "branch": "grokbot-3/traces-real",
+  "skill": "trace-deltas",
+  "handoff": "tasks/handoffs/T-0019-grokbot-3.md",
+  "note": "Issue #15. npx tsc --noEmit exit 0. npm test 741 tests, 727 pass, 0 fail, 14 todo. awayScore known match 1, known mismatch 0. Deer path score 1. Wolf toward score 1.000. Plume match 1, upwind mismatch 0. No pixel frames; those scores are the rule 11 substitute. Not self-approved in this event.",
+  "type": "complete",
+  "task": "T-0019",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T06:59:55-07:00"
+}

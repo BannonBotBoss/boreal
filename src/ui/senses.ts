@@ -4,7 +4,8 @@ import type { buildScene } from '../render/buildScene';
 import type { BorealSound } from '../audio/borealSound';
 import { playerRemembered, type EventContext } from '../core/events';
 import { windAt } from '../core/weather';
-import { near as nearbyDeltas } from '../core/deltas';
+import { deltaSources } from '../core/traces';
+import { WOLF_AGENT } from '../core/species';
 import { createSoundCues, smell, bearingTo, SENSES, type ScentSource, type ScentHit } from '../core/senses';
 
 // Small procedural pictograms: shared vocabulary, not stored animal meshes or portraits.
@@ -62,9 +63,8 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
         remembered: playerRemembered(context.records[e.key]), friend: context.records[e.key]?.relationship === 'friend',
       }));
       for (const h of view.hares.list()) if (h.root.visible) sources.push({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: potency.hare });
-      for (const d of nearbyDeltas(nose.x, nose.z, SENSES.range)) if (['scent', 'carcass', 'droppings'].includes(d.kind)) sources.push({
-        key: `trace:${d.kind}:${d.x}:${d.z}`, kind: d.kind, x: d.x, z: d.z, potency: Math.min(1, d.m) * d.strength,
-      });
+      // Bodies keep the HUD range. A mark, carcass or dropping uses the wolf nose (Mech 1970, 2.4 km) inside deltaSources.
+      sources.push(...deltaSources(nose.x, nose.z, WOLF_AGENT.senses.scent.range));
       const hits = smell(nose, sources, windAt(nose.x, .8, nose.z), heading), first = hits[0], level = first?.level ?? 0; lastHits = hits;
       meter.value = level; percent.textContent = `${Math.round(level * 100)}%`;
       scentDirection.textContent = first ? `${direction(first.bearing)} · ${level > .65 ? 'strong' : level > .25 ? 'distinct' : 'faint'} scent` : 'No scent picked up';

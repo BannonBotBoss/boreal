@@ -16,6 +16,7 @@
  *  - Reserved actions 'held' and 'tame' (the hunting task: pin/bite/hold/release, temporary friendship) are inert here.
  */
 import { scentLevel, type SensePoint } from './senses';
+import { addFeces, bestAvoid, traceHits, type TraceHit } from './traces';
 import { CONTACTS } from './contactBus';
 import { clamp01, smoothstep, wrapAngle, angleTurn, stepForward } from '../proc/math';
 import { f, scope } from '../proc/trace';
@@ -31,7 +32,7 @@ export interface AgentSpecies {
     sight: { range: number; night: number; motion: [number, number]; presence: number; crouched: number; movingAt: number };
     /** range m; loud = speed band (m/s) from silent to loud footfalls; movingAt = sound level that counts as moving */
     hearing: { range: number; loud: [number, number]; movingAt: number };
-    /** potency of an other's scent at this nose (core/senses scentLevel plume) */ scent: { potency: number };
+    /** potency of an other's body odor; range (m) is this nose's cutoff for a trace delta (T-0019) */ scent: { potency: number; range: number };
   };
   /** how much each kind of other is feared (0 = ignored) */ fear: Record<string, number>;
   levels: {
@@ -56,6 +57,14 @@ export interface AgentSpecies {
   speed: { feedStep: number; approach: number; flee: number; fleeTired: number; /** m/s^2 from a standstill into flight; omitted = instant */ accel?: number };
   flee: { burstSeconds: number; zig: [number, number]; zigAngle: number; /** flight initiation distance (m): a threat this close bolts it at once */ distance?: number };
   /** per food kind: units eaten per eatSeconds, units per +1 energy */ diet: Record<string, { eatUnits: number; eatSeconds: number; unitsPerEnergy: number }>;
+  /**
+   * Trace response (T-0019). `response` uses the fear scale: -1 avoids that delta kind, +1 is attracted, 0 only smells it.
+   * Droppings, when present, turn eaten units into faeces. The gut writes a delta at one pellet or one pellet group.
+   */
+  traces: {
+    response: Partial<Record<'scent' | 'carcass' | 'droppings', number>>;
+    droppings?: { /** dry grams of one deposit */ groupG: number; /** dry faeces grams added per eat unit */ fecesGPerUnit: number; /** sim bite is wet kg; clover units in one wet kg (hare) */ unitsPerWetKg?: number };
+  };
   /**
    * Herd row (T-0011). Absent on the hare, and every branch below stays off without it, so the hare path does not call these
    * numbers. Vigilance share, alarm delay, cohesion and the bite that fires a chew. No dice: bout lengths are `herdBouts`.
@@ -397,13 +406,35 @@ function socialScan(a: Agent, w: AgentWorld, f: ReturnType<typeof foodFor>) {
   else decide(a, w);
 }
 
+/** Positive trace responses become lures. An avoid is handled before the bout, so it is not also a lure. */
+function attractWorld(a: Agent, w: AgentWorld, hits: readonly TraceHit[]): AgentWorld {
+  if ((a.species.utility.investigate ?? 0) <= 0) return w;
+  const extra = hits.filter(h => h.weight > 0 && h.level > 0).map(h => ({ key: h.key, kind: h.kind, x: h.x, z: h.z, level: h.level * h.weight }));
+  return extra.length ? { ...w, lures: [...(w.lures ?? []), ...extra] } : w;
+}
 /** One step of the pipeline. Moves the agent and returns events (sound cues, contact edges). */
 export function stepAgent(a: Agent, w: AgentWorld, dt: number): AgentEvent[] {
   const events: AgentEvent[] = [], sp = a.species, s = senseNow(a, w); a.sensed = s;
   if (a.action === 'held' || a.action === 'tame') { a.speed = 0; updateLevels(a, dt, s); return events; }
-  const m = modulators(a, s.level), f = foodFor(a, w), social = sp.social; a.timer -= dt; a.elapsed += dt; let speed = 0, eaten = 0;
+  const m = modulators(a, s.level), social = sp.social; a.timer -= dt; a.elapsed += dt; let speed = 0, eaten = 0;
+  const hits = traceHits(a.species, a, w.wind, a.heading);
+  // A live body outranks a trace. Otherwise a fresh mark or carcass is the cause of leaving, and a carcass can be a lure.
+  const avoid = s.level < m.noticeAt ? bestAvoid(hits, m.noticeAt) : undefined;
+  if (!avoid) w = attractWorld(a, w, hits);
+  const f = foodFor(a, w);
   // threat interrupts (any calm action). A herd animal does not roll the freeze length.
   const calmAction = a.action !== 'alert' && a.action !== 'flee' && a.action !== 'pause' && a.action !== 'hide';
+  if (avoid) {
+    if (a.contact) endContact(a, events);
+    a.target = undefined;
+    // The odor is the direction. Heading 0 faces -z, and this is the same away-heading as a live threat.
+    a.heading = awayFrom(a, avoid);
+    const hot = avoid.level >= m.fleeAt;
+    speed = hot ? sp.speed.flee : sp.speed.approach;
+    const goal = `avoiding ${avoid.kind}`;
+    if (a.goal !== goal) setAction(a, hot ? 'flee' : 'approach', goal);
+    else a.action = hot ? 'flee' : 'approach';
+  } else {
   if (calmAction && s.level >= m.noticeAt) { endContact(a, events); setAction(a, 'alert', `head up: ${cueName(s)} ${s.from?.kind ?? 'something'}`, social ? 0 : m.alert * jitter(a)); }
   switch (a.action) {
     case 'alert':
@@ -462,14 +493,16 @@ export function stepAgent(a: Agent, w: AgentWorld, dt: number): AgentEvent[] {
       else if (a.elapsed > sp.reach.giveUp) { a.target = undefined; decide(a, w); speed = 0; }
       break; }
   }
-  // A calm herd animal that has drifted past cohesionAt turns back toward the group. Flight and the alert freeze do not.
-  if (social && a.action !== 'flee' && a.action !== 'alert' && a.action !== 'pause' && w.mates?.length) {
+  }
+  // A calm herd animal that has drifted past cohesionAt turns back toward the group. Flight, the alert freeze and a trace avoid do not.
+  if (!avoid && social && a.action !== 'flee' && a.action !== 'alert' && a.action !== 'pause' && w.mates?.length) {
     const yaw = herdYaw(a, w); if (yaw !== undefined) a.heading = angleTurn(a.heading, yaw, social.cohesion * dt);
   }
   // motion (turns back from unwalkable ground)
   if (speed > 0) { const n = stepForward(a.x, a.z, a.heading, speed, dt); if (!w.walkable || w.walkable(n.x, n.z)) { a.x = n.x; a.z = n.z; } else a.heading = wrapAngle(a.heading + Math.PI * .6); }
   a.speed = speed;
   updateLevels(a, dt, s, eaten, f?.diet.unitsPerEnergy);
+  if (eaten > 0) addFeces(sp, a.key, a.x, a.z, eaten);
   return events;
 }
 export const poseOf = (a: Pick<Agent, 'action'>): Pose => ({ feed: 'head-down', step: 'head-down', approach: 'move', seek: 'move', scan: 'head-up', alert: 'head-up', pause: 'head-up', flee: 'run', rest: 'rest', hide: 'crouch', held: 'crouch', tame: 'rest' } as const)[a.action];

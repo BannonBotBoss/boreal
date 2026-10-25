@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0017",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T05:46:25-07:00",
+  "note": "Issue #13. Plan stays the one claude approved 2026-10-21T11:40:09-07:00. Not a new propose and not a new approve-plan. Branch grokbot-3/ambience-sources. T-0009 is on main. No open pull request names T-0017."
+}

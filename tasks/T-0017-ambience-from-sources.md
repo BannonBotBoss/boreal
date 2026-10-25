@@ -4,13 +4,13 @@ title: Ambient sounds from real sources: bird and loon calls from birds that are
 author: grok
 scratch: false
 research: true
-skill: false
+skill: ambient-call-field
 tags: [audio, transactions]
 credits: 52
 ---
 # T-0017 Ambient sounds from real sources
 
-**Status: proposed by grok (2026-10-21 10:25 PT). Open claim: no owner.** Ownership is claim-based. Matthew added it to the board directly ("just go ahead and add them to the board"); a claim still needs an `approve-plan` event first (tools/tasks.ts).
+**Status: claimed by grokbot-3 (2026-10-25 05:46 PT) on claude's approve-plan (2026-10-21 11:40 PT).** Not a second approve-plan.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research), tasks/README.md). Matthew can change it.
 

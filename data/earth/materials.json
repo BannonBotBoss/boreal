@@ -4,6 +4,7 @@
   "tillotson": "Tillotson 1962 (GA-3216). Iron: Melosh 1989, Impact Cratering, App. II table (rho0, A, B, E0, EIV, ECV, a, b, alpha, beta). Basalt: same table (kept for the cold pass, superseded). Dunite/olivine (mantle): Marinova, Aharonson & Asphaug 2011, Icarus 211:960 (also tabulated in pyKO docs). cv: iron 449 J/kg/K (CRC Handbook, 298 K), dunite 830 J/kg/K (Marinova 2011).",
   "iron_melting": "Anzellini et al. 2013, Science 340:464, Simon-Glatzel fit T_m = T0 ((P - P0)/a + 1)^(1/c).",
   "initial_heat": "Initial uniform temperature = present mantle potential temperature 1600 K (Katsura et al. 2010, PEPI 183:212) as a lower bound for the end of accretion; differentiation heat is then computed, not given.",
+  "core_light_elements": "Freezing-point depression of the core alloy (Fe with S/O/Si) relative to pure iron at inner-core pressures ~700 K (Alfe, Gillan & Price 2002, EPSL 195:91); the inner core freezes where T falls below the alloy liquidus, not the pure-iron curve.",
   "cmb_boundary_layer": "Thermal boundary layer temperature contrast at the base of the mantle 1000 +- 500 K (Lay, Williams & Garnero 1998, Nature 392:461; 500-1800 K in Lay, Hernlund & Buffett 2008, Nat. Geosci. 1:25)."
  },
  "bulk_core_mass_fraction": 0.325,
@@ -40,6 +41,9 @@
   "P0_Pa": 5200000000.0,
   "a_Pa": 27390000000.0,
   "c": 2.38
+ },
+ "core_light_elements": {
+  "melting_depression_K": 700
  },
  "dunite": {
   "rho0": 3500,

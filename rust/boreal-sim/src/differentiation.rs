@@ -58,6 +58,10 @@ impl Till {
 pub fn iron_melting_t(p: f64) -> f64 { let g = |k: &str| material_num("iron_melting", k); let (t0, p0, a, c) = (g("T0_K"), g("P0_Pa"), g("a_Pa"), g("c"));
     t0 * ((p - p0).max(0.0) / a + 1.0).powf(1.0 / c) }
 
+/// Core alloy liquidus: the pure-iron curve lowered by the light-element freezing-point depression (Alfe, Gillan & Price 2002;
+/// constant in materials.json). Pure iron froze the whole CMB solid because its ~4100 K melting point there sits above the core-top T.
+pub fn core_liquidus_t(p: f64) -> f64 { iron_melting_t(p) - material_num("core_light_elements", "melting_depression_K") }
+
 /// RB22 alpha: I/alpha for a regular cubic grid (spacing 1, h = eta) filling the half-space z <= 0, then alpha = 1.5 / that.
 pub fn rb22_alpha() -> f64 { let h = F::ETA; let k = (2.0 * h).ceil() as i64; let (mut num, mut den) = ([0.0; 3], 0.0);
     for x in -k..=k { for y in -k..=k { for z in -k..=0 { let r = [x as f64, y as f64, z as f64]; let wv = F::w(norm(r), h); for q in 0..3 { num[q] += r[q] * wv; } den += wv; } } }
@@ -89,8 +93,8 @@ impl Hot {
             let (pt_, tt) = (e * ptr[i].0 + (1.0 - e) * pb, e * ptr[i].1 + (1.0 - e) * tb); let m = &mats[F::class_of(p.mat[i])];
             let r = if e > 0.999 { self.rho[i] } else { m.rho_at(tt, pt_) }; (r, m.pressure(r, u[i]), m.temperature(r, u[i])) });
         self.rho = out.iter().map(|x| x.0).collect(); self.pres = out.iter().map(|x| x.1).collect(); self.temp = out.iter().map(|x| x.2).collect(); self.imb = imb; self.nb = nb;
-        // inner core: iron below its melting curve
-        for i in 0..n { if F::class_of(self.p.mat[i]) == 0 { self.p.mat[i] = if self.temp[i] < iron_melting_t(self.pres[i]) && self.pres[i] > 0.0 { MAT_IRON_SOLID } else { MAT_IRON }; } } }
+        // inner core: core alloy below its liquidus (light elements keep the outer core liquid)
+        for i in 0..n { if F::class_of(self.p.mat[i]) == 0 { self.p.mat[i] = if self.temp[i] < core_liquidus_t(self.pres[i]) && self.pres[i] > 0.0 { MAT_IRON_SOLID } else { MAT_IRON }; } } }
     /// Accelerations (gravity tree + GDF pressure + centrifugal) and du/dt.
     fn forces(&self) -> Vec<(V3, f64)> { let p = &self.p; let n = p.pos.len(); let tree = Tree::build(&p.pos, &p.mass);
         F::par_map(n, |i| { let xi = p.pos[i]; let mut a = tree.accel(xi, i, self.h[i], 0.6); let mut du = 0.0;
@@ -150,6 +154,9 @@ mod tests { use super::*;
         let p = du.pressure(r, u); assert!((du.rho_at(2500.0, p) / r - 1.0).abs() < 1e-3); }
     #[test] fn melting_curve_matches_anzellini_icb() { // Anzellini 2013: ~6230 K at 330 GPa (inner-core boundary)
         let t = iron_melting_t(330e9); assert!((t - 6230.0).abs() < 500.0, "{t}"); } // paper: 6230 +- 500 K
+    #[test] fn light_elements_keep_the_outer_core_liquid() { // CMB 136 GPa ~4000 K (Lay et al. 2008); ICB 330 GPa ~5000-6000 K
+        let cmb = core_liquidus_t(136e9); assert!(cmb < 4000.0 && iron_melting_t(136e9) > 4000.0, "alloy {cmb} must melt below the CMB temperature");
+        let icb = core_liquidus_t(330e9); assert!(icb > 5000.0 && icb < 6000.0, "ICB liquidus {icb}"); }
     #[test] fn rb22_alpha_is_order_unity() { let a = rb22_alpha(); assert!(a > 0.5 && a < 10.0, "{a}"); }
     #[test] fn hot_mix_sinks_iron_and_heats() { let mut s = Hot::mix(2000, 7, "dunite", C::omega_earth); let b0 = s.boundaries().separation; let u0: f64 = s.u.iter().sum();
         s_relax(&mut s, 300); let b1 = s.boundaries().separation; let u1: f64 = s.u.iter().sum();

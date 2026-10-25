@@ -45,9 +45,9 @@ try {
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
   const shots = [];
   const shoot = async label => {
+    const wake = await ev('window.wake ? window.wake() : null');
     const s = await cdp('Page.captureScreenshot', { format: 'png' });
     writeFileSync(`${out}/${label}.png`, Buffer.from(s.data, 'base64'));
-    const wake = await ev('window.wake ? window.wake() : null');
     writeFileSync(`${out}/${label}.json`, JSON.stringify(wake));
     shots.push(label);
   };
@@ -62,15 +62,19 @@ try {
     if (!ok) throw Error('page not ready ' + url);
     await sleep(1500);
   };
-  // Open water, straight down. 0,0 is below the water plane on seed 1400 (refs/T-0024/probe.ts).
-  await go(`http://127.0.0.1:${PORT}/?nomenu&bench&hour=12&top=1&wake&at=0,0,0`);
+  // Open water with a clear run ahead. Seed 1400, staged: (20, -60) stays wet for 40 m walking +z
+  // (heading π). 0,0 is a pond the wolf leaves in a few strides, so rings there fall under the shore.
+  await go(`http://127.0.0.1:${PORT}/?nomenu&bench&hour=12&top=1&wake&at=20,-60,3.141592653589793`);
+  await sleep(6000); // let the meter move off the first blown frame (render/exposure tauLight 0.4 s of sim)
   await shoot('top-before');
   await key('keyDown', 'w', 'KeyW', 87);
-  await sleep(2000); await shoot('top-2s');
-  await sleep(2000); await shoot('top-4s');
-  await sleep(2000); await shoot('top-6s');
+  // Stay on the key. Headless sim is slower than the wall clock, and the 8-ring cap keeps only the last
+  // strides, so the walk has to be long before the oldest front is outside the body.
+  await sleep(16000); await shoot('top-walk');
   await key('keyUp', 'w', 'KeyW', 87);
-  await sleep(1500); await shoot('top-stop');
+  await sleep(6000); await shoot('top-stop');
+  // He has stopped on the dark water. More waiting only ages the rings; it does not walk him into the glint.
+  await sleep(20000); await shoot('top-aged');
   // Third person, from dry ground at x=18 walking west (heading pi/2) into the water at x≈12.
   await go(`http://127.0.0.1:${PORT}/?nomenu&bench&hour=12&wake&at=18,0,1.571`);
   await key('keyDown', 'w', 'KeyW', 87);

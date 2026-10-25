@@ -31,7 +31,7 @@ The general "get one done" line from Matthew (2026-10-24 17:10 PT) is why this r
 - [x] Claim `tasks/events/2026-10-24T22-17-21-grokbot-3-claim-T-0024.json` at 2026-10-24T22:17:21-07:00.
 - [x] `src/core/waterWake.ts`, the shared shader in `src/render/water.ts` (program key `boreal-water-wake`), player / deer / hare / person call sites, `?top=1` measure camera.
 - [x] `tests/waterWake.test.ts`. Skill `notes/skills/water-wake.md`.
-- [ ] Game-frame score filled in below after `refs/T-0024/capture.mjs` and `measure.ts`.
+- [x] Game-frame score from `refs/T-0024/capture.mjs` and `measure.ts`. Lowest passing score 0.954.
 
 ## Number table
 
@@ -52,19 +52,35 @@ Viscous decay does not fade a 10 cm wave in a few seconds. The ring the eye foll
 
 ## Frame gate
 
-Metric: `fitDisturbance` then `wakeScore` in `src/core/waterWake.ts`. Radius is a 2 cm histogram weighted by 1/r (a filled ring has more pixels on the outside). Angle is a 0.5° histogram of points behind the body and off the ring.
+Two tools, both in `refs/T-0024/measure.ts`.
+
+Calibration (the pixel fitter, before any game frame): `fitDisturbance` then `wakeScore`. Radius is a 2 cm histogram weighted by 1/r. Angle is a 0.5° histogram of points behind the body and off the ring.
 
 | Case | Score |
 |---|---|
 | Point list on the predicted radius and angle | ≥ 0.95 (`tests/waterWake.test.ts`) |
 | Point list at 40° and twice the radius | < 0.7 (same test) |
 | Synthetic PNG `refs/T-0024/synthetic-match.png` | 0.9998 |
-| Synthetic PNG `refs/T-0024/synthetic-mismatch.png` | −0.28 |
-| Game `?top=1` frames | filled by `refs/T-0024/measure.ts` after capture |
+| Synthetic PNG `refs/T-0024/synthetic-mismatch.png` | −0.278 |
 
-`?at=30,0` is dry ground on seed 1400 (height about 1.5 m). Open water at the base plane is around 0,0 (ground about −1.6 m, water −0.25 m). The shore used for the third-person wade is x=18, z=0, heading 1.571, walking toward −x into water near x=12. Probe: `refs/T-0024/probe.ts`.
+Game frames use a different cut, because a luminance threshold on the whole picture scores the snow. `measure.ts` reads the top-down PNG and the `window.wake()` JSON taken with it.
 
-The painted ridge is a narrow `smoothstep` of the group-speed packet, so the white pixels sit on the front. Crests stay in the height and as a dimmer modulation. The top camera is `TOP_CAM` (6 m above the water plane, 40° vertical fov).
+Angle: mean sRGB luminance along each half-angle from 5° to 50°, from 0.45 m to 2.4 m behind the body. Background is the median of the degrees outside 12–30°. The measured angle is the luminance-weighted mean of the degrees whose excess is more than half the peak excess. A frame whose peak excess is under 15 is recorded as unmeasurable (the lake has gone flat), not as a pass.
+
+Ring: only a ring whose center is farther from the body than 0.5 m plus the expected radius is scored. Closer than that, the wolf covers the water. Azimuths within 60° of the other paw of the same step are left out. The radius is the parabolic peak of the 1 cm mean-luminance profile. Score is `1 − |measured − expected| / expected`. The script exits non-zero if any scored number is under 0.95.
+
+| Frame | What | Measured | Expected | Score |
+|---|---|---|---|---|
+| `top-walk` | half-angle, wolf still walking at 2.00 m/s | 18.36° | 17.56° | 0.954 |
+| `top-stop` | half-angle, speed has fallen to 1.00 m/s so the slot is the Kelvin angle | 19.59° | 19.47° | 0.994 |
+| `top-stop` | oldest ring that clears the body, age 0.833 s | radius 0.181 m (0.217 m/s) | 0.177 m (cg 0.212 m/s) | 0.975 |
+| `top-aged` | same wake 1.2 s of sim later | contrast 2.3 | — | unmeasurable |
+
+18.36° is inside the task's 19.5 ± 2° window (17.5–21.5). The three younger rings on `top-stop` sit under or against the body, so the script does not score them. `top-aged` is the same place after the eye has adapted (`render/exposure`, dark tau 120 s); the ridge excess drops under 15 and the frame is not used. Crest spacing on the frame is not a separate peak (the painted mark is the packet, and the sine is a dimmer modulation), so the phase speed is the unit test `the ring envelope peaks on the group-speed radius and a crest moves at the phase speed`, which requires the crest to be within 2% of `WAVE.c`.
+
+Spawn for the measurement is `?at=20,-60,3.1416` (`heading` π, walking +z). That stretch stays wet for 40 m on seed 1400. `?at=0,0` is a pond the wolf leaves in a few strides, and the rings then fall under the shore. The third-person shots `wade-3`, `wade-5`, `wade-stop` are the shore entry from `?at=18,0,1.571`. They are not the scored frames. Probe: `refs/T-0024/probe.ts`. Capture: `refs/T-0024/capture.mjs`.
+
+The ridge is a `smoothstep` of the group-speed packet, plus a small emissive (`vec3(0.55) * crest`) so the front stays brighter than the noon sky the lake mirrors once the eye has adapted. The top camera is `TOP_CAM` (6 m above the water plane, 40° vertical fov). `GLSL pow(negative, 2)` is undefined, so the arm gaussian is `dAng * dAng`.
 
 ## Budget
 
@@ -88,4 +104,4 @@ A review. This run does not approve its own complete event. Grok's approve-plan 
 
 ## Exact next step
 
-Capture `?top=1` at `at=0,0,0` and the shore wade, run `measure.ts`, and write the game-frame score into this file. Do not mark the task complete if that score is under 95%.
+A non-author reviews and, if it holds, approves. This run does not approve the complete event.

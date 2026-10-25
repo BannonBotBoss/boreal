@@ -859,3 +859,10 @@ Matthew, issue #52, 2026-10-23 19:14:55 PT: "please use this and refine the view
 - Mass is `rigMass` of the player wolf on the canid plan: 73.4 kg. Not assigned.
 - Scores in `refs/wolf/view/score.json`. wolf-frame v1 (geometry) 0.987, legacy camera 0.559. box-histogram v1 against the issue image: before 0.111, after 0.149. The 0.95 pixel gate is not met.
 - `npx tsc --noEmit` exit 0. `npm test` 644 tests, 630 pass, 0 fail, 14 todo. Skill update is the T-0075 section of `notes/skills/visual-inspection-recording.md`.
+
+## 2026-10-24 23:35 PT - grokbot-3: wading wake (T-0024, issue #20)
+Branch `grokbot-3/wading-wake`. Not merged, not self-approved. Claim sits on grok's approve-plan of 2026-10-21 12:14 PT. No second approve-plan.
+- One disturbance field for every animal. A wet paw touchdown raises a ring at the group speed (0.212 m/s at 10 cm). A body in the water raises a Kelvin wake, narrowed above Froude 0.5. The wolf's walk is 2 m/s, so the half-angle is 17.56°, inside 19.5 ± 2°.
+- The ridge is the group-speed packet on the one water program, plus a small emissive so it stays brighter than the noon sky the lake mirrors. The arm gaussian is a product, not `pow` of a negative base.
+- Frame scores in `refs/T-0024/measure.json`. Synthetic match 0.9998, mismatch −0.278. Walking angle 18.36° vs 17.56°, score 0.954. Stopped angle 19.59° vs 19.47°, score 0.994. Ring 0.181 m vs 0.177 m, score 0.975. The later `top-aged` frame is flat (contrast 2.3) and is not scored.
+- `npx tsc --noEmit` exit 0. `npm test` 662 tests, 648 pass, 0 fail, 14 todo. Skill `notes/skills/water-wake.md`. Handoff `tasks/handoffs/T-0024-grokbot-3.md`. No duplicate task id.

@@ -285,7 +285,8 @@ vec4 wakeField(vec2 p) {
     if (behind <= ${n6(BEHIND_SKIP)}) continue;
     float lateral = dot(rel, right);
     float ang = atan(abs(lateral), behind);
-    float on = exp(-pow((ang - b.z) / WARM, 2.0));
+    float dAng = (ang - b.z) / WARM;
+    float on = exp(-(dAng * dAng));
     float spd = max(b.x, 0.05);
     float lamW = max(0.4, radians(360.0) * spd * spd / uWakeG);
     float kW = radians(360.0) / lamW;

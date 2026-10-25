@@ -151,11 +151,11 @@ Every animal as pure data + logic on a fixed tick (no renderer): species templat
 
 - Depends on: needs, senses, player, clock
 - Feeds: nothing (a leaf)
-- Modules: `src/core/sim/index.ts`, `src/core/needs/senses.ts`, `src/core/needs/diet.ts`, `src/core/needs/social.ts`, `src/animals/hare.ts`
+- Modules: `src/core/sim/index.ts`, `src/core/needs/senses.ts`, `src/core/needs/diet.ts`, `src/core/needs/social.ts`, `src/animals/hare.ts`, `src/core/hunt.ts`
 
 ### `SYSTEM_PROPERTIES.hunt`
 
-Read by: `src/core/needs/diet.ts`
+Read by: `src/core/needs/diet.ts`, `src/core/hunt.ts`
 
 | Figure | Value | Units | What | Source |
 |---|---|---|---|---|
@@ -168,6 +168,10 @@ Read by: `src/core/needs/diet.ts`
 | `jinkRadii` | 1 | x pursuer turning radius | jink (Howland 1974): when the pursuer is within jinkRadii x its turning radius v^2/a, turn jinkAngle rad off the straight-away line (pi/2 = Howland's optimum, perpendicular), at most every jinkEvery s | Howland 1974 (J Theor Biol 47:333): turn when the pursuer is about one turning radius away |
 | `jinkAngle` | 1.57 | rad | jink (Howland 1974): when the pursuer is within jinkRadii x its turning radius v^2/a, turn jinkAngle rad off the straight-away line (pi/2 = Howland's optimum, perpendicular), at most every jinkEvery s | Howland 1974: the optimal evasive turn is perpendicular |
 | `jinkEvery` | 1 | s | jink (Howland 1974): when the pursuer is within jinkRadii x its turning radius v^2/a, turn jinkAngle rad off the straight-away line (pi/2 = Howland's optimum, perpendicular), at most every jinkEvery s | estimate (game calibration) |
+| `lockDwell` | 0.2 | s | s the view must stay on a prey before it locks. Regular saccade latency is about 200 ms (Fischer & Ramsperger 1984, Exp Brain Res 57:191); a shorter glance does not lock. | Fischer & Ramsperger 1984, Exp Brain Res 57:191: regular saccade latency ~200 ms |
+| `lockHalfDeg` | 30 | deg | degrees either side of the view. 60° is the upper end of the dog's behavioural binocular overlap (Miller & Murphy 1995, JAVMA 207:1623: 30–60°). Half of that overlap is 30°. | Miller & Murphy 1995, JAVMA 207:1623: dog binocular overlap 30–60°, upper end, half either side of the view |
+| `lockRadius` | 30 | m | m. A stalking approach still alerts white-tailed deer inside 30 m (Lingle & Wilson 2001, Ethology 107:125). The lock uses that distance for any prey: beyond it, holding aim does not commit. | Lingle & Wilson 2001, Ethology 107:125: stalking attacks alerted deer under 30 m |
+| `leapGrip` | 13 | m/s^2 | m/s² ceiling on the leap's turn (v²/r). Wilson et al. 2013, Nature 498:185: cheetah hunts often exceed 13 m/s² below 17 m/s. No wolf lateral acceleration was found; a wolf is not allowed to turn harder than that. | Wilson et al. 2013, Nature 498:185: cheetah lateral acceleration often above 13 m/s^2 below 17 m/s; used as a ceiling |
 
 ### `SYSTEM_PROPERTIES.perception`
 
@@ -212,6 +216,7 @@ Read by: `src/core/needs/social.ts`, `src/core/sim/index.ts`
 **Linked data tables** (kept in their own module)
 
 - `NEEDS_SPECIES` in `src/core/needs/species/index.ts`: species templates: senses, diet, social, evasion
+- `HUNT_LOCK` in `src/core/hunt.ts`: aim dwell, binocular cone, lock radius, leap turn ceiling
 
 <a id="audio"></a>
 ## Audio and music (`audio`)
@@ -260,7 +265,7 @@ Animal brains: senses -> problem (explore, escape, feed ...) -> motion intent; d
 
 - Depends on: senses, needs, terrain, clock, vegetation
 - Feeds: audio, interaction, locomotion, senses
-- Modules: `src/core/animalBehavior.ts`, `src/core/autonomy.ts`, `src/core/deerHerd.ts`, `src/animals/hare.ts`, `src/core/why.ts`, `src/core/events.ts`, `src/core/lifespan.ts`
+- Modules: `src/core/animalBehavior.ts`, `src/core/autonomy.ts`, `src/core/agent.ts`, `src/animals/hare.ts`, `src/core/why.ts`, `src/core/events.ts`, `src/core/lifespan.ts`
 
 ### `SYSTEM_PROPERTIES.behaviour`
 
@@ -288,7 +293,7 @@ Read by: `src/core/animalBehavior.ts`
 - `MAMMAL_PLANS` in `src/core/species.ts`: body plans per mammal archetype
 - `MAMMALS` in `src/core/species.ts`: mammal species rows
 - `HARE` in `src/animals/hare.ts`: snowshoe hare agent figures
-- `HERD` in `src/core/deerHerd.ts`: deer herd figures
+- `DEER_AGENT` in `src/core/species.ts`: white-tailed deer agent figures
 - `LIFESPAN` in `src/core/lifespan.ts`: maximum and starting ages
 - `WHY_DEFAULTS` in `src/core/why.ts`: why-chains per object kind
 - `BLOCK` in `src/core/tuning.ts`: step height and trunk clearance per animal

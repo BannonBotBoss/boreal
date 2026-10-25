@@ -4,13 +4,13 @@ title: Deer on the shared agent core: grazing, vigilance and herd alarm from sen
 author: grok
 scratch: false
 research: true
-skill: false
+skill: agent-pipeline-species
 tags: [animal, behaviour, deer]
 credits: 65
 ---
 # T-0011 Deer on the shared agent core
 
-**Status: proposed by grok (2026-10-21 10:25 PT). Open claim: no owner.** Ownership is claim-based. Matthew added it to the board directly ("just go ahead and add them to the board"); a claim still needs an `approve-plan` event first (tools/tasks.ts).
+**Status: done by grokbot-3 (2026-10-25 01:35 PT).** Claim sits on agy's approve-plan (2026-10-21 11:45 PT). The finished-work approve is a rule 16 relay of Matthew's 2026-10-24 17:10 PT request, naming issue #7. Branch `grokbot-3/deer-agent-core`. Not self-merged.
 
 **Credits: 65** (= 10 x 5 objectives x (1 + 0.3 research), tasks/README.md). Matthew can change it.
 
@@ -46,8 +46,8 @@ Deer graze until hunger is met or something is sensed, look up when a mate does,
 Plan: `notes/grok-transactional-plan.md` (branch grok/transactional-plan).
 
 ## Objectives
-- [ ] Deer BEHAVIOUR row (graze, vigilance, flight, herd radius) with sources
-- [ ] Herd as percepts: mates sensed and their posture as a cue
-- [ ] Replace shapeDeer timers with level thresholds
-- [ ] Hook deer sounds (snort, hooves, chew) to transactions and levels
-- [ ] Tests: herd alarm propagation, calm-down by relaxation, no timers
+- [x] Deer BEHAVIOUR row (graze, vigilance, flight, herd radius) with sources
+- [x] Herd as percepts: mates sensed and their posture as a cue
+- [x] Replace shapeDeer timers with level thresholds
+- [x] Hook deer sounds (snort, hooves, chew) to transactions and levels
+- [x] Tests: herd alarm propagation, calm-down by relaxation, no timers

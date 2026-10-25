@@ -20,15 +20,16 @@ import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY, withinEarshot, type SenseItem } f
 import { catalog } from '../core/catalog';
 import { seatRock } from './rocks';
 import { createSky } from './sky';
-import { shapeDeer, forgetDeer } from '../core/deerHerd';
+import { BEHAVIOUR, BROWSE } from '../core/species';
+import { createAgent, stepAgent, writeLocomotion, deerPosture, type Agent, type Mate } from '../core/agent';
+import { stream } from '../proc/rng';
+import { windAt } from '../core/weather';
 import { createHares } from '../animals/hare';
 import { formatHour, hourAt } from '../core/timeOfDay';
 import { mountViewfinder } from '../camera/gameCamera';
 import { LEVEL, BLOCK } from '../core/tuning';
 import { dropVisitors, stepVisitor, visitorFriend, visitorReadout, visitorSitDrop } from '../core/visitors';
 import { nearestWater } from '../core/needs/water';
-import { windAt } from '../core/weather';
-import { stepForward } from '../proc/math';
 import type { SnapshotSource } from '../core/snapshot';
 import { createPost } from './post';
 import { createTargetGlow } from './targetGlow';
@@ -39,6 +40,7 @@ import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
 import { riverAt } from '../core/stages/rivers';
+import { siteAt } from '../core/flora/site';
 import { waterMaterial, updateWaterUniforms } from './water';
 import { WAKES, TOP_CAM, sampleSurface, hipsFor, pawArea, waterline, travelSpeed, PERSON_STRIDE, PERSON_DUTY } from '../core/waterWake';
 import { tiles } from '../photo/frame';
@@ -192,36 +194,55 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   let previousTime = 0, focusBlend = 0, lastFocus: Entity | undefined; const focusQ = new THREE.Quaternion();
   const headPoint = new THREE.Vector3();
-  const audibleAnimals: {key:string; energy:number; motion:string; problem:string; x:number; z:number; phase:number}[] = [];
-  function simulateAnimals(dt:number, x:number,z:number, frozen=false, time=0) {
+  const audibleAnimals: {key:string; energy:number; motion:string; problem:string; x:number; z:number; phase:number; chew?:boolean; snort?:boolean}[] = [];
+  /** One agent per live deer. Mates are the previous step, so a bolt cannot lap the herd in the same frame. */
+  const deerAgents = new Map<string, Agent>();
+  let snortPrev = new Set<string>();
+  function simulateAnimals(dt:number, x:number,z:number, frozen=false, time=0, mode: WolfMode = 'walk') {
     audibleAnimals.length=0;
+    const wolfCover = 1 - siteAt(x, z).light, wolfCrouched = mode === 'stealth' || mode === 'super-stealth';
     scene.updateMatrixWorld(true);
     const entities=[...chunks.values()].flatMap(c=>c.entities), keys=new Set(entities.map(e=>e.key));
     // Only forage patches are food; low herbs are neither food nor obstacles.
     const observations:SenseItem[]=entities.filter(e=>e.kind!=='plant'&&(e.kind!=='rock'||rockDiameter(e)>.22)).map(e=>({key:e.key,x:e.x,y:heightAt(e.x,e.z)+ (e.kind==='deer'?1:0),z:e.z,
       kind:e.kind==='forage'?'food':e.kind==='deer'?'animal':'obstacle',low:e.kind==='log'||e.kind==='rock'}));
     wolf.root.updateMatrixWorld(true);wolf.sensor.getWorldPosition(headPoint);if(!frozen)wolf.brain.sense(headPoint,observations);
-    const herd=[...animals].map(([key,a])=>({key,x:a.entity.x,z:a.entity.z,brain:a.rig.brain}));
+    const snortNext = new Set<string>();
+    for (const [key, animal] of [...animals]) {
+      if (!keys.has(key)) { scene.remove(animal.rig.root); disposeObject(animal.rig.root); animals.delete(key); deerAgents.delete(key); continue; }
+      if (!deerAgents.has(key)) {
+        const { rig, entity: e } = animal;
+        deerAgents.set(key, createAgent(BEHAVIOUR.deer, `deer:${key}`, e.x, e.z, stream(e.seed, key), { heading: rig.brain.heading, energy: rig.brain.energy }));
+      }
+    }
+    const matesOf = (self: string): Mate[] => {
+      const out: Mate[] = [];
+      for (const [k, ag] of deerAgents) if (k !== self) out.push({ key: ag.key, x: ag.x, z: ag.z, heading: ag.heading, action: ag.action, speed: ag.speed, alarmed: ag.action === 'flee' || ag.action === 'alert' || ag.action === 'pause', snort: snortPrev.has(k) });
+      return out;
+    };
     for(const [key,animal] of animals) {
-      if(!keys.has(key)) {scene.remove(animal.rig.root);disposeObject(animal.rig.root);animals.delete(key);forgetDeer(key);continue;}
       const {rig,entity:e}=animal;
       rig.root.position.set(e.x,heightAt(e.x,e.z),e.z);rig.root.rotation.y=rig.brain.heading;rig.root.updateMatrixWorld(true);
       rig.sensor.getWorldPosition(headPoint);
       if(!withinEarshot({x,y:heightAt(x,z)+.45*WOLF_SCALE,z},headPoint))continue;
       rig.root.visible=Math.hypot(e.x-x,e.z-z)<RENDER.animalDistance;
       if(frozen){rig.animate(0);continue;} // photo mode: pose from the (possibly rewound) brain state, no simulation
-      const senses=observations.filter(i=>i.key!==key);
-      if(activeContext.records[key]?.relationship!=='friend') senses.push({key:'player',x,y:heightAt(x,z)+.3*WOLF_SCALE,z,kind:current.threat?'threat':'animal'});
-      rig.brain.sense(headPoint,senses);
+      const ag = deerAgents.get(key)!;
+      ag.x = e.x; ag.z = e.z;
+      const friend = activeContext.records[key]?.relationship === 'friend';
+      const others = !friend && current.threat ? [{ key: 'player', kind: 'wolf', x, z, speed: Math.abs(wolf.brain.speed), crouched: wolfCrouched, cover: wolfCover }] : [];
+      const wind = windAt(e.x, heightAt(e.x, e.z), e.z);
+      let chew = false, snort = false;
       if(dt>0) {
-        rig.brain.decide(headPoint,dt);
-        rig.root.userData.posture=shapeDeer({key,x:e.x,z:e.z,brain:rig.brain},herd,dt); // src/core/deerHerd.ts
-        if(rig.brain.meal) eat(animal, rig.brain.meal.key);
         const oldX=e.x,oldZ=e.z;
-        const {x:nextX,z:nextZ}=stepForward(e.x,e.z,rig.brain.heading,rig.brain.speed,dt);
-        // Avoid deep water, steep slopes and solid trunks; low obstacles can be jumped.
-        const blocked=heightAt(nextX,nextZ)<LEVEL.deerWater || Math.abs(heightAt(nextX,nextZ)-heightAt(e.x,e.z))>BLOCK.deer.step || entities.some(o=>o.kind==='spruce'&&Math.hypot(o.x-nextX,o.z-nextZ)<BLOCK.deer.trunk);
-        if(!blocked) {e.x=nextX;e.z=nextZ;} else {rig.brain.heading+=dt*2;rig.brain.speed=0;}
+        const events = stepAgent(ag, { others, wind: { x: wind.x, z: wind.z }, daylight: 1 - darkness, food: { browse: BROWSE }, mates: matesOf(key),
+          walkable: (nx, nz) => heightAt(nx, nz) >= LEVEL.deerWater && Math.abs(heightAt(nx, nz) - heightAt(e.x, e.z)) <= BLOCK.deer.step && !entities.some(o => o.kind === 'spruce' && Math.hypot(o.x - nx, o.z - nz) < BLOCK.deer.trunk) }, dt);
+        e.x = ag.x; e.z = ag.z;
+        writeLocomotion(rig.brain, ag);
+        rig.brain.time += dt; // the scan head still looks side to side; the roll is not a behaviour choice
+        rig.root.userData.posture = deerPosture(ag.action);
+        chew = events.some(ev => ev.type === 'chew'); snort = events.some(ev => ev.type === 'snort');
+        if (snort) snortNext.add(key);
         // Momentum contact with the player (one integrator): knock velocity decays by ground friction.
         const ddx=e.x-x,ddz=e.z-z,dist=Math.hypot(ddx,ddz);
         if(dist<1.3&&dist>1e-3){const nx=ddx/dist,nz=ddz/dist,mp=rigMass(wolf.root,planOf()),md=rigMass(rig.root,'cervid'),vp=wolf.brain.speed*(-Math.sin(wolf.brain.heading)*nx-Math.cos(wolf.brain.heading)*nz);
@@ -229,7 +250,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
         const kb:Body|undefined=rig.root.userData.kb;
         if(kb&&Math.hypot(kb.vx,kb.vz)>.01){const v=Math.hypot(kb.vx,kb.vz),fr=Math.min(.6*kb.mass*gravity(),kb.mass*v/dt);kb.x=e.x;kb.z=e.z;kb.y=0;step(kb,dt,{x:-kb.vx/v*fr,z:-kb.vz/v*fr,y:kb.mass*gravity()},-1);
           if(heightAt(kb.x,kb.z)>=LEVEL.deerWater){e.x=kb.x;e.z=kb.z;}else{kb.vx=0;kb.vz=0;}}
-        rig.brain.expend(dt,Math.hypot(e.x-oldX,e.z-oldZ));e.energy=rig.brain.energy;e.rotation=rig.brain.heading;
+        ag.x = e.x; ag.z = e.z;
+        rig.brain.expend(dt,Math.hypot(e.x-oldX,e.z-oldZ));
+        rig.brain.energy = ag.energy; e.energy = ag.energy; e.rotation = rig.brain.heading;
         const b=rig.brain, sc=rig.root.scale;
         let kg=rig.root.userData.wakeKg as number|undefined;
         if(!(typeof kg==='number' && kg>0)) { try { kg=rigMass(rig.root,'cervid'); } catch { kg=0; } rig.root.userData.wakeKg=kg; }
@@ -238,8 +261,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
           hips:hipsFor('deer',sc.x,sc.z), pawArea:pawArea('deer'), sample:sampleSurface });
       }
       rig.root.position.set(e.x,heightAt(e.x,e.z),e.z);rig.root.rotation.y=rig.brain.heading;rig.animate(dt);
-      audibleAnimals.push({key,energy:rig.brain.energy,motion:rig.brain.motion,problem:rig.brain.problem,x:e.x,z:e.z,phase:rig.brain.phase});
+      audibleAnimals.push({key,energy:rig.brain.energy,motion:rig.brain.motion,problem:rig.brain.problem,x:e.x,z:e.z,phase:rig.brain.phase,chew,snort});
     }
+    snortPrev = snortNext;
   }
   function draw(x: number, z: number, altitude: number, yaw: number, time: number, target?: Entity, pitch?: number,
     moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity, photo?: PhotoView) {
@@ -318,7 +342,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     if (time - lastBatchLod > .25 || time < lastBatchLod) { lastBatchLod = time; for (const c of chunks.values()) c.batch.update(camera.position, 1); }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
-    simulateAnimals(dt, x, z, frozen, time);
+    simulateAnimals(dt, x, z, frozen, time, mode);
     updateWaterUniforms(time);
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
     const hour = photo?.hour ?? hourAt(tod); clock = formatHour(hour);

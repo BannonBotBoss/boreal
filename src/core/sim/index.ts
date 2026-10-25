@@ -16,6 +16,8 @@ import { NEEDS_SPECIES } from '../needs/species';
 import type { SpeciesTemplate } from '../needs/template';
 import { createNeeds, levelsOf, staminaRates, stepNeeds, type NeedsState } from '../needs/engine';
 import { perceive, SENSE_RULES, type Body } from '../needs/senses';
+import { notices, perceive as agentPerceive } from '../agent';
+import { HARE_AGENT } from '../species';
 import { boltDistance, captured, dietOf, evadeStep, gameSpeed, HUNT, startEvade, type EvadeState } from '../needs/diet';
 import { scatterBend, vigilance } from '../needs/social';
 import { chooseGoal } from '../needs/behaviour';
@@ -28,7 +30,7 @@ export interface SimAnimal {
   id: number; species: string; sp: SpeciesTemplate; x: number; z: number; heading: number; speed: number;
   state: SimState; timer: number; needs: NeedsState; energy: number; stamina: number; alive: boolean;
   /** embodied by the player: the adapter moves it; the sim only senses/feeds/captures */ controlled?: boolean;
-  mode?: string; pouncing?: boolean; crouched?: boolean;
+  mode?: string; pouncing?: boolean; crouched?: boolean; /** 0 open .. 1 canopy hiding this body (sight only; core/agent perceive) */ cover?: number;
   ev?: EvadeState; level: number; /** s: start of the current own detection; last time it perceived the predator */ seenAt?: number; lastSeen?: number; knowsAt?: number; relayed: boolean; linked: number;
   targetId?: number; pounce: number; pounceCool: number; bite: number; rng: () => number;
 }
@@ -77,6 +79,14 @@ export function nearbyWater(w: SimWorld, x: number, z: number, r: number) {
 const senseRange = (sp: SpeciesTemplate) => Math.max(sp.senses.sight.rangeM.v, sp.senses.hearing.rangeM.v, SIM.scentRange);
 const body = (a: SimAnimal): Body => ({ x: a.x, z: a.z, kind: a.species, speed: Math.abs(a.speed), crouched: a.crouched });
 const fears = (a: SimAnimal, b: SimAnimal) => a.sp.behaviour.flight.fears.includes(b.species);
+/** The embodied wolf, as a hare reads it through the agent core (speed, crouch, cover, daylight, wind) against a calm
+ *  notice threshold. Other pairs keep the template perceive. A calm miss is level 0 so the 0.25 sim gate cannot override it. */
+function threatLevel(a: SimAnimal, b: SimAnimal, env: { daylight: number; wind: { x: number; z: number } }) {
+  if (!(b.controlled && a.species === 'hare')) return perceive(a.sp, a, body(b), env).level;
+  const s = agentPerceive(HARE_AGENT, { x: a.x, z: a.z }, { key: `wolf:${b.id}`, kind: 'wolf', x: b.x, z: b.z, speed: Math.abs(b.speed), crouched: !!b.crouched, cover: b.cover ?? 0 }, env.wind, env.daylight);
+  const calm = notices(HARE_AGENT, s, HARE_AGENT.levels.relaxation.max, HARE_AGENT.levels.energy.fed, HARE_AGENT.levels.stamina.max);
+  return calm ? Math.max(s.level, SENSE_RULES.notice) : 0;
+}
 const eatsAnimal = (a: SimAnimal, b: SimAnimal) => a.sp.diet.kind !== 'herbivore' && !!a.sp.diet.foods[b.species];
 
 /** Advance the world by dt seconds in fixed sub-steps of w.step. */
@@ -89,7 +99,7 @@ function stepWorld(w: SimWorld, dt: number) {
   // 1. senses: each animal perceives the animals it fears (own detection)
   for (const a of w.animals) {
     a.level = 0; let threat: SimAnimal | undefined;
-    for (const b of around(g, a.x, a.z, senseRange(a.sp))) if (b !== a && fears(a, b)) { const p = perceive(a.sp, a, body(b), env).level; if (p > a.level) { a.level = p; threat = b; } }
+    for (const b of around(g, a.x, a.z, senseRange(a.sp))) if (b !== a && fears(a, b)) { const p = threatLevel(a, b, env); if (p > a.level) { a.level = p; threat = b; } }
     if (a.level >= SENSE_RULES.notice) { if (a.lastSeen === undefined || w.time - a.lastSeen > SYSTEM_PROPERTIES.social.memorySeconds) a.seenAt = w.time; a.lastSeen = w.time; a.targetId = threat!.id; }
     else if (a.lastSeen !== undefined && w.time - a.lastSeen > SYSTEM_PROPERTIES.social.memorySeconds) { a.seenAt = undefined; a.lastSeen = undefined; }
   }

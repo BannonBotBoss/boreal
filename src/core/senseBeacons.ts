@@ -33,3 +33,9 @@ export function cueBeacons(sounds: readonly SoundCue[], scents: readonly ScentHi
 }
 /** Bearing of a beacon from the head, relative to the wolf's heading (not the camera's). */
 export const beaconBearing = (b: Beacon, head: SensePoint, heading: number) => bearingTo(head, b, heading);
+/** Ring-local point for a locked prey. Same bearing as a sense beacon, so the marker sits on the ring. */
+export function lockPoint(prey: SensePoint, head: SensePoint, heading: number, radius = HALO.radius) {
+  const bearing = bearingTo(head, prey, heading), at = { x: 0, z: 0 };
+  ringOffset(bearing, radius, at);
+  return { bearing, x: at.x, z: at.z };
+}

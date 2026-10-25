@@ -20,8 +20,9 @@ export type Vec3 = [number, number, number];
 /** Optional seating inputs for whoever seats the object (T-0005 seatLog reads them; T-0006 never seats, sinks or tilts).
  *  Densities in kg/m3 (core/materials); sinkFraction = sunk depth / trunk width (Matthew: ~1/3). */
 export interface SeatInputs { trunkDensity?: number; earthDensity?: number; sinkFraction?: number }
-/** solid-solid is a body against a body or the ground. feed is an eater against a food patch (core/agent beginContact, T-0009). */
-export interface Contact extends SeatInputs { a: Solid; b: Solid; at: Vec3; normal: Vec3; kind: 'solid-solid' | 'feed'; source: string }
+/** solid-solid is a body against a body or the ground. feed is an eater against a food patch (core/agent beginContact, T-0009).
+ *  hunt is a hunter against prey while a steered leap is in reach (core/hunt, T-0013). Pin and bite are T-0014. */
+export interface Contact extends SeatInputs { a: Solid; b: Solid; at: Vec3; normal: Vec3; kind: 'solid-solid' | 'feed' | 'hunt'; source: string }
 /** Defaults when a seat does not supply them. earthDensity 1300 kg/m3 is the midpoint of MINERAL.bulk [1200, 1500]
  *  (core/ground.ts: sandy podzol mineral bulk 1.2–1.5 g/cm3, Soil Classification Working Group 1998, CSSC 3rd ed.) [verify ranges].
  *  sinkFraction 1/3 is Matthew's label for the buoyancy seat (core/settle.ts); a live log uses settle.depth instead. */

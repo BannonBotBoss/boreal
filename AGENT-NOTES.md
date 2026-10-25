@@ -896,6 +896,22 @@ Branch `grokbot-3/wolf-autonomous-core`. Claim sits on agy's approve-plan of 202
 - Position score 1.0 against the lope over 4 s minus one frame (`tests/autonomy.test.ts`, `tasks/evidence/T-0010/position.json`). Known match: 0 jumps and 0 m with nothing sensed. Known mismatch: the old 1.8 m rule would jump the log at (0, -1). No pixel frames.
 - `npx tsc --noEmit` exit 0. `npm test` 691 tests, 677 pass, 0 fail, 14 todo. Ledger todo stays 22 legacy rule breaks. Skill `notes/skills/agent-pipeline-species.md`. Handoff `tasks/handoffs/T-0010-grokbot-3.md`. Live board has no duplicate task id.
 
+## 2026-10-25 01:34 PT - grokbot-3: deer on the shared agent core (T-0011, issue #7)
+Branch `grokbot-3/deer-agent-core`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a second approve-plan. The finished-work approve is a rule 16 relay of Matthew's 2026-10-24 17:10 PT chat ("every 30 minutes, check the issues and get one done"), which names the run's issue #7. Not self-merged.
+- `src/core/deerHerd.ts` is gone. Deer are `DEER_AGENT` on `stepAgent`. The hare path is the same code with no `social` row, so it does not roll the herd numbers and the hare tests still pin 3 s / 1 s / 8 s.
+- Graze and head-up bouts are `herdBouts` (Lashley 2014: +0.07 feeding share per extra female, flat after group size 4). Lone share 0.36 is an estimate. Alarm delay is sound travel at 343 m/s when the cue is heard, plus 0.25 s / cue. A wolf inside 30 m (Lingle & Wilson 2001 stalking band) bolts the same step. Calm-down is relaxation reaching 70, not a timer. No `rng` on the social path. No opening jump.
+- Intake is Koerth & Stuth 1991, 7.8 g fresh/min. A chew fires each 7.8/7.1 g (Yucatan bite rate; population mismatch, flagged). Browse is a virtual `browse:ground` contact. Forest regrowth stays T-0015. Top speed 35 mph is the ESF natural-history page, not a timed trial.
+- `npx tsc --noEmit` exit 0. `npm test` 692 tests, 678 pass, 0 fail, 14 todo. Pixel frames of a deer were not scored: the rig is still dropped before the chunk commits (T-0047), and this environment did not produce a body to match. The substitute is the slope, the 343 m/s delay, and the 7.8 g/min rate. Skill `notes/skills/agent-pipeline-species.md`. Handoff `tasks/handoffs/T-0011-grokbot-3.md`.
+- No duplicate task id on main or on the open PR heads. Three old remote branches still carry both T-0071 filenames; main already has the orphan as T-0076. No housekeeping PR.
+
+## 2026-10-25 02:58 PT - grokbot-3: hunt lock, stealth notice, steered leap (T-0013, issue #9)
+Branch `grokbot-3/hunt-lock`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a second approve-plan and not self-approved. #8 was skipped because PR #74 is open. #9 was the first eligible issue.
+- Hold Lock (Q / RB, rebindable) inside a 30° half-angle for 0.2 s. The green pip stays when the senses ring fades or Focus hides it. Aim leaving, or the button up, drops the lock.
+- Cover is canopy closure and multiplies sight only. A calm hare misses crouched 0.35 m/s at 8–10 m downwind and notices a 2 m/s walk. Live hares consult that percept; a calm miss is level 0 so the sim's 0.25 gate cannot override it. Deer receive crouched, absolute speed and the same cover.
+- `decide` still freezes heading for the 0.85 s leap. The lock steers after that return, at no more than 13 m/s² (a cheetah ceiling, not a wolf measurement). The rising edge is a `hunt` contact. Pin and the meal stay T-0014.
+- Timing score 1.000. Steered leap score 1.000. Moving prey 0.999971. Frozen heading 0.552786 is the known mismatch. No pixel frames. Skill `notes/skills/hunt-lock-leap.md`. Handoff `tasks/handoffs/T-0013-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 704 tests, 690 pass, 0 fail, 14 todo. No new ledger break. No live duplicate task id on main. Old branches still carry both T-0071 filenames; main has the orphan as T-0076. No housekeeping PR.
+
 ## 2026-10-25 - grokbot-3: visitors on the shared agent (T-0012, issue #8)
 Branch `grokbot-3/people-agent-core`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a new approve-plan. Not self-approved. PR #73 (T-0011) is left untouched in `agent.ts` and in the deer half of `simulateAnimals`.
 - `BEHAVIOUR.person` in `src/core/species.ts`. `src/core/visitors.ts` calls `stepAgent`. Berries are a `person | forage` transaction. Water and a friend are lures. A stranger is a wolf `other`. The sine sway in `buildScene` is gone; the LOD yaws with the heading and sits 0.45 m on rest.

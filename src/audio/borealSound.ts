@@ -43,7 +43,18 @@ export const MIX = {
   birds: .3, birdEverySeconds: [20, 50] as [number, number], dawn: .45,
 };
 
-export interface AudibleAnimal { key: string; motion: string; problem: string; x?: number; z?: number; phase?: number }
+export interface AudibleAnimal { key: string; motion: string; problem: string; x?: number; z?: number; phase?: number; /** one bite crossed biteG this step */ chew?: boolean; /** the bolt snort this step */ snort?: boolean }
+/** Which deer clips this step. A boolean snort or chew is the agent's own event. When snort is omitted, the old escape edge still snorts once so a caller that has not moved to the agent does not go silent. There is no chew timer. */
+export function deerSoundIds(prev: { problem: string; motion: string; phase: number }, now: AudibleAnimal): SoundId[] {
+  const ids: SoundId[] = [], phase = now.phase ?? 0;
+  if (now.snort) ids.push('deer-snort');
+  else if (now.snort === undefined && now.problem === 'escape' && prev.problem !== 'escape') ids.push('deer-snort');
+  if (now.problem === 'escape' && Math.floor(phase) !== Math.floor(prev.phase)) ids.push('deer-hooves');
+  else if (now.motion === 'walk' && Math.floor(phase) !== Math.floor(prev.phase)) ids.push('paw-walk');
+  if (now.chew) ids.push('chew');
+  if (prev.motion === 'jump' && now.motion !== 'jump') ids.push('land');
+  return ids;
+}
 export interface SoundFrame {
   dt: number; halted: boolean; x: number; z: number; yaw: number; darkness: number;
   /** gaitSpeed/gaitName/legs (an AnimalBrain has them): footsteps land on the gait's own touchdowns, not a fixed timer */
@@ -68,7 +79,7 @@ export class BorealSound {
   private wolfMode = 'walk'; private wasExhausted = false; private prevDark = -1; private nextBird = 15; private nextPant = 0;
   private buffers = new Map<SoundId, AudioBuffer>();
   private loops = new Map<SoundId, GainNode>();
-  private prev = new Map<string, { problem: string; motion: string; phase: number; nextChew: number }>();
+  private prev = new Map<string, { problem: string; motion: string; phase: number }>();
   private wolfPrev = { motion: 'idle', phase: 0 }; private lastTouch = -1e9; private pawState = { last: -1e9 }; private lastSlice = new Map<SoundId, number>();
   private nextLoon = 30; private time = 0; private waterAmount = 0; private waterCheck = 0;
   private haltedNow = false;
@@ -273,19 +284,17 @@ export class BorealSound {
       this.playAt('land', undefined, MIX.land * Math.min(2, Math.max(.4, k)), 1 / Math.min(1.4, Math.max(.7, Math.sqrt(k))), false); haptic('land', 0, Math.min(1.6, k)); }
     this.wolfPrev = { motion: w.motion, phase: w.phase };
 
-    // Deer: alarm snort on flee start, hooves per gait cycle, chewing while feeding, thud on landing.
+    // Deer: snort and chew are agent events; hooves follow the fleeing gait; a landing still thuds. No chew timer.
     const seen = new Set<string>();
+    const deerGain: Partial<Record<SoundId, number>> = { 'deer-snort': MIX.snort, 'deer-hooves': MIX.hooves, 'paw-walk': MIX.deerSteps, chew: MIX.chew, land: MIX.land };
+    const deerRate: Partial<Record<SoundId, number>> = { 'paw-walk': .8, land: .85 };
     for (const a of f.animals) {
       if (a.x === undefined || a.z === undefined) continue;
       seen.add(a.key);
       const at = { x: a.x, z: a.z }, phase = a.phase ?? 0;
-      const p = this.prev.get(a.key) ?? { problem: a.problem, motion: a.motion, phase, nextChew: 0 };
-      if (a.problem === 'escape' && p.problem !== 'escape') this.playAt('deer-snort', at, MIX.snort);
-      if (a.motion === 'run' && p.motion !== 'run') this.playAt('deer-hooves', at, MIX.hooves);
-      else if (Math.floor(phase) !== Math.floor(p.phase) && a.motion === 'walk') this.playAt('paw-walk', at, MIX.deerSteps, .8);
-      if (p.motion === 'jump' && a.motion !== 'jump') this.playAt('land', at, MIX.land, .85);
-      if (a.problem === 'feed' && a.motion === 'idle' && this.time > p.nextChew) { this.playAt('chew', at, MIX.chew); p.nextChew = this.time + 2 + soundRng(); }
-      this.prev.set(a.key, { ...p, problem: a.problem, motion: a.motion, phase });
+      const p = this.prev.get(a.key) ?? { problem: a.problem, motion: a.motion, phase };
+      for (const id of deerSoundIds(p, a)) this.playAt(id, at, deerGain[id] ?? 1, deerRate[id] ?? 1);
+      this.prev.set(a.key, { problem: a.problem, motion: a.motion, phase });
     }
     for (const k of this.prev.keys()) if (!seen.has(k)) this.prev.delete(k);
   }

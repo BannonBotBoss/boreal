@@ -49,8 +49,8 @@ export interface AgentSpecies {
   mood: { boutNerve: number; boutHunger: number; scanChance: [number, number]; scanHunger: number; scanNerve: number; scanHungerShort: number;
     notice: [number, number]; noticeHunger: number; bolt: [number, number]; boltHunger: number; fleeNerve: number; fleeStaminaFull: number;
     pauseNerve: number; resume: number; unhide: number };
-  /** relaxed-choice utilities (pipeline `decide`) */
-  utility: { feedHere: number; approach: number; approachDistance: number; rest: number; restFull: number; restBase: number; scan: number; seek: number; seekBase: number; noise: number };
+  /** relaxed-choice utilities (pipeline `decide`). `investigate` weights a lure (a scent or a seen prey); omitted = the hare, which has none. */
+  utility: { feedHere: number; approach: number; approachDistance: number; rest: number; restFull: number; restBase: number; scan: number; seek: number; seekBase: number; noise: number; investigate?: number };
   /** m: food sensed within `food`; habitat probed at `seek`; a feeding step [min, max] and turn (rad); giveUp s for a move */
   reach: { food: number; seek: number; step: [number, number]; stepTurn: number; giveUp: number };
   speed: { feedStep: number; approach: number; flee: number; fleeTired: number; /** m/s^2 from a standstill into flight; omitted = instant */ accel?: number };
@@ -95,6 +95,8 @@ export interface AgentWorld {
   wind: SensePoint;
   /** 0 night .. 1 day (render/sky light.night complement) */ daylight: number;
   /** per diet kind */ food: Record<string, FoodSource | undefined>;
+  /** Something smelled or seen that is not eaten here (a scent plume, a prey body, water). The animal approaches it; it does not feed. */
+  lures?: readonly { key: string; kind: string; x: number; z: number; level: number }[];
   /** habitat quality the animal can sense at a point (e.g. sunlit ground for a grazer); optional */ habitat?: (x: number, z: number) => number;
   walkable?: (x: number, z: number) => boolean;
   /** Herd percepts. Omitted for a species with no social row. */ mates?: readonly Mate[];
@@ -301,8 +303,25 @@ export function decide(a: Agent, w: AgentWorld) {
     const pick = bestHabitat(a, w);
     if (pick) options.push([U.seek * hunger + U.seekBase, () => { a.target = pick; setAction(a, 'seek', 'hungry, no food sensed: heading for sunlit ground'); }]);
   }
+  // A lure is a cause the animal can smell or see (T-0010). Inside about one body length it holds; farther, it approaches.
+  // 1.2 m is a game clearance so the body does not step onto the plume. Hare rows leave `investigate` unset and pass no lures.
+  const lure = (U.investigate ?? 0) > 0 ? bestLure(a, w) : undefined;
+  if (lure) {
+    const d = Math.hypot(lure.x - a.x, lure.z - a.z);
+    const u = (U.investigate ?? 0) * lure.level + hunger * U.approach;
+    if (d < 1.2) options.push([u, () => setAction(a, 'scan', `holding on ${lure.kind} ${lure.key}`, m.scan * jitter(a))]);
+    else options.push([u, () => { a.target = { x: lure.x, z: lure.z, key: lure.key }; setAction(a, 'approach', `following ${lure.kind} ${lure.key}`); }]);
+  }
   let best = options[0], bu = -Infinity; for (const o of options) { const u = o[0] + (Number.isFinite(o[0]) ? noise() : 0); if (u > bu) { bu = u; best = o; } }
   best[1]();
+}
+function bestLure(a: Agent, w: AgentWorld) {
+  let best: { key: string; kind: string; x: number; z: number; level: number } | undefined;
+  for (const l of w.lures ?? []) {
+    if (l.level <= 0) continue;
+    if (!best || l.level > best.level + 1e-9 || (Math.abs(l.level - best.level) <= 1e-9 && l.key < best.key)) best = l;
+  }
+  return best;
 }
 function bestHabitat(a: Agent, w: AgentWorld) {
   const R = a.species.reach.seek, here = w.habitat!(a.x, a.z); let best: { x: number; z: number } | undefined, bh = here + .05;

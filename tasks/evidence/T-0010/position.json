@@ -1,0 +1,18 @@
+{
+  "metric": "1 - abs(z - expectedZ) / abs(expectedZ)",
+  "expectedZ": "approachSpeed * (seconds - 1/30)",
+  "tool": "tests/autonomy.test.ts sim(), 30 Hz, seed 3, energy 40, forage at (0, -20), 4 s",
+  "approachSpeed": 2.4,
+  "seconds": 4,
+  "z": -9.52,
+  "expected": -9.52,
+  "positionScore": 1,
+  "knownMatch": { "jumps": 0, "displacementM": 0, "case": "energy 95, field of logs, nothing sensed" },
+  "knownMismatch": { "oldWouldJump": true, "log": { "x": 0, "z": -1 }, "newJumps": 0 },
+  "jumpJPerKg": 8.709,
+  "hopMAtLope": 2.08,
+  "longLog": { "scale": 1, "motion": "direct", "jumpJPerKg": 8.709, "detourJPerKg": 9.655, "extraM": 2.323, "clearM": 2.2 },
+  "shortLog": { "goalZ": -40, "motion": "detour", "jumpJPerKg": 8.709, "detourJPerKg": 3.573, "extraM": 0.86 },
+  "fatLog": { "scale": 3, "motion": "detour", "note": "vertical joules are cheaper (8.709 < 47.064) but one hop does not clear the bark" },
+  "pixels": "not captured"
+}

@@ -16,6 +16,7 @@ import { CHUNK_SIZE, WORLD_SEED, chunkSeed, generateChunk, heightAt, terrainBand
 import { applyPopulation } from '../core/population';
 import { catalog } from '../core/catalog';
 import { agentWhy, doingFromAgent, doingFromProblem, groundWhy, inspectWhy, whyOf, withDoing } from '../core/why';
+import { wolfReadout } from '../core/autonomy';
 import { SENSE_RADII } from '../core/animalBehavior';
 import { gaitReadout } from '../core/gaitReadout';
 import { DEER_AGENT } from '../core/species';
@@ -129,9 +130,11 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       const y = inspectWhy(withDoing(agentWhy('hare'), d.goal, d.because), 'Snowshoe hare');
       out.push(obs('why', 'now', y.now), obs('why', 'chain', y.chain));
     } else if (b && sel?.type === 'player') {
-      const d = doingFromProblem(b.problem, b.energy, b.target?.kind);
+      const live = wolfReadout(b);
+      const d = live ? { goal: live.doing, because: live.because } : doingFromProblem(b.problem, b.energy, b.target?.kind);
       const y = inspectWhy(withDoing(agentWhy('wolf'), d.goal, d.because), 'Gray wolf');
       out.push(obs('why', 'now', y.now), obs('why', 'chain', y.chain));
+      if (live) out.push(obs('why', 'goal', live.goal));
     }
     return out;
   }

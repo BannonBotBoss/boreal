@@ -6,6 +6,8 @@
 import { buildBird, buildMammal, type BirdPlan, type MammalPlan, type Skeleton } from './skeleton';
 import type { AgentSpecies, FoodSource } from './agent';
 import { TRANSACTIONS } from './transactions';
+import { activityFactor, agentLevels } from './needs/engine';
+import { WOLF_NEEDS } from './needs/species';
 
 const M = (o: Omit<MammalPlan, 'kind' | 'provisional'> & { provisional?: boolean }): MammalPlan => ({ kind: 'mammal', provisional: true, ...o });
 /** Mammal body plans. Ratios are to shoulder height. */
@@ -231,6 +233,44 @@ TRANSACTIONS.add({
   run: (grams: number) => grams,
 });
 
-/** Behaviour rows. Wolf and person are T-0010 and T-0012: the same AgentSpecies, data only.
+
+/** Gray wolf (Canis lupus), the autonomous player (T-0010). Every rate that already lives on WOLF_NEEDS is read from there
+ *  (one row, not a second copy). Mood bends, the 1.2 m lure hold and `full` are the shared pipeline's shape: game
+ *  calibration, flagged, not a measured wolf ethogram. Water and bed-down stay on chooseGoal (core/needs/behaviour),
+ *  which already steers the wolf when those drives win; this row is scent, forage, rest and travel. */
+const WOLF_L = agentLevels(WOLF_NEEDS);
+const WOLF_S = WOLF_NEEDS.senses;
+export const WOLF_AGENT: AgentSpecies = {
+  id: 'wolf',
+  labels: { feed: 'feeding', step: 'feeding (next bite)', approach: 'travelling', seek: 'seeking', scan: 'watching', rest: 'resting', alert: 'alert', flee: 'fleeing', pause: 'checking back', hide: 'hiding', held: 'held', tame: 'tame' },
+  senses: {
+    sight: { range: WOLF_S.sight.rangeM.v, night: WOLF_S.sight.night.v, motion: WOLF_S.sight.motion.v, presence: WOLF_S.sight.presenceM.v, crouched: WOLF_S.sight.crouched.v, movingAt: .25 },
+    hearing: { range: WOLF_S.hearing.rangeM.v, loud: WOLF_S.hearing.loud.v, movingAt: .08 },
+    scent: { potency: WOLF_S.smell.potency.v },
+  },
+  fear: { person: 1 },
+  levels: {
+    energy: { max: 100, start: 70, drain: WOLF_L.energy.drain, fleeMult: activityFactor(WOLF_NEEDS, WOLF_NEEDS.body.speeds.sprint.v), fed: WOLF_NEEDS.behaviour.drives.energy.seekBelow.v, full: 90 },
+    stamina: { max: WOLF_L.stamina.max, drainSeconds: WOLF_L.stamina.drainSeconds, recoverSeconds: WOLF_L.stamina.recoverSeconds },
+    relaxation: { max: 100, threatDrop: 40, fleeDrop: 8, recover: 4, panic: .8 },
+  },
+  // feed 2 s is SYSTEM_PROPERTIES.behaviour.feedDuration (the meal the forage path already waits). react is the needs
+  // head-up. Wolves orient (alertTurn); they do not freeze. Rest [2, 5] s is how often a settled wolf re-checks, not
+  // the 1.02 h inactivity bout (that threshold is the needs rest drive).
+  timing: { feed: 2, scan: 2, alert: 1, alertMin: .3, react: WOLF_NEEDS.behaviour.alert.reactSeconds.v, alertTurn: 3, flee: 4, pause: 1, rest: [2, 5], jitter: .1 },
+  mood: { boutNerve: .4, boutHunger: .6, scanChance: [.05, .4], scanHunger: .2, scanNerve: .5, scanHungerShort: .2,
+    notice: [.08, .25], noticeHunger: .3, bolt: [.4, .7], boltHunger: .1, fleeNerve: .2, fleeStaminaFull: 40, pauseNerve: .3, resume: .7, unhide: .3 },
+  utility: { feedHere: .8, approach: .6, approachDistance: 40, rest: 1, restFull: .4, restBase: .15, scan: .3, seek: .2, seekBase: 0, noise: .02, investigate: .5 },
+  reach: { food: 40, seek: 20, step: [.4, .8], stepTurn: .4, giveUp: 30 },
+  // approach is the sustained lope (Mech & Boitani 2003, 8–9 km/h, WOLF_NEEDS tiredSpeed), not the player's 4 m/s button.
+  // flee is the game sprint (7 m/s), below the measured 15.5 m/s top, same citation as WOLF_NEEDS.body.speeds.sprint.
+  speed: { feedStep: .8, approach: WOLF_NEEDS.behaviour.evasion.tiredSpeed.v, flee: WOLF_NEEDS.body.speeds.sprint.v, fleeTired: WOLF_NEEDS.behaviour.evasion.tiredSpeed.v },
+  flee: { burstSeconds: 4, zig: [0, 0], zigAngle: 0, distance: WOLF_NEEDS.behaviour.flight.distanceM.v },
+  // One forage patch is one meal. unitsPerEnergy is Infinity so the agent's own drain does not also grant the
+  // FORAGE_ENERGY the existing forageWolf path adds. eatSeconds matches timing.feed.
+  diet: { forage: { eatUnits: 1, eatSeconds: 2, unitsPerEnergy: Infinity } },
+};
+
+/** Behaviour rows. The person row is T-0012: the same AgentSpecies, data only.
  *  The hare bound gait stays HARE_GAIT in core/needs/species (already on main) and is not copied here. */
-export const BEHAVIOUR: { hare: AgentSpecies; deer: AgentSpecies } = { hare: HARE_AGENT, deer: DEER_AGENT };
+export const BEHAVIOUR: { hare: AgentSpecies; deer: AgentSpecies; wolf: AgentSpecies } = { hare: HARE_AGENT, deer: DEER_AGENT, wolf: WOLF_AGENT };

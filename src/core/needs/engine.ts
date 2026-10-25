@@ -21,6 +21,12 @@ export function metabolicW(sp: SpeciesTemplate, v: number) {
   const M = sp.body.massKg.v, s = Math.abs(v);
   return M * ((s < .05 ? 0 : 10.7 * M ** -.316 * s) + 6.03 * M ** -.303);
 }
+/** Joules to cover `distanceM` at `speed` m/s for a body of `massKg`. Same Taylor, Heglund & Maloiy 1982 split as metabolicW
+ *  (E/M = 10.7 M^−0.316 v + 6.03 M^−0.303 W/kg), integrated over d/v. The mass is the caller's generated mass. */
+export function travelJ(massKg: number, speed: number, distanceM: number) {
+  const v = Math.max(.05, Math.abs(speed));
+  return massKg * (10.7 * massKg ** -.316 * v + 6.03 * massKg ** -.303) * (Math.abs(distanceM) / v);
+}
 /** Metabolic power over the daily-average FMR. */
 export const activityFactor = (sp: SpeciesTemplate, v: number) => metabolicW(sp, v) / (sp.body.fmrKjPerDay.v * 1000 / 86400);
 /** Hydration % per mL of water. */

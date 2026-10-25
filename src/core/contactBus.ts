@@ -1,5 +1,5 @@
 /**
- * The ONE solid-contact bus (Grok Bot, T-0006). Pure TypeScript: no three.js, no DOM.
+ * The ONE solid-contact bus (Grok Bot, T-0006). Pure TypeScript: no scene-graph import and no browser globals.
  *
  * "Two solid things are touching" is a stored pair; listeners hear only the edges:
  *   begin(c)  -> true only on the rising edge (the pair was not touching); onContact listeners run once.
@@ -22,7 +22,9 @@ export type Vec3 = [number, number, number];
 export interface SeatInputs { trunkDensity?: number; earthDensity?: number; sinkFraction?: number }
 /** solid-solid is a body against a body or the ground. feed is an eater against a food patch (core/agent beginContact, T-0009). */
 export interface Contact extends SeatInputs { a: Solid; b: Solid; at: Vec3; normal: Vec3; kind: 'solid-solid' | 'feed'; source: string }
-/** Defaults: forest-floor mineral soil bulk density ~1.2-1.5 g/cm3 (core/ground sandy podzol note) [verify]; sink ~1/3 (Matthew). */
+/** Defaults when a seat does not supply them. earthDensity 1300 kg/m3 is the midpoint of MINERAL.bulk [1200, 1500]
+ *  (core/ground.ts: sandy podzol mineral bulk 1.2–1.5 g/cm3, Soil Classification Working Group 1998, CSSC 3rd ed.) [verify ranges].
+ *  sinkFraction 1/3 is Matthew's label for the buoyancy seat (core/settle.ts); a live log uses settle.depth instead. */
 export const SEAT_DEFAULTS = { earthDensity: 1300, sinkFraction: 1 / 3 } as const;
 /** Seating inputs with defaults and sane bounds (densities finite and > 0, sinkFraction in [0, 1]); trunkDensity stays
  *  undefined when not given (the reader picks it from its own material). Pure; never moves anything. */

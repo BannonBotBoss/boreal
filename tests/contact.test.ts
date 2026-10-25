@@ -6,8 +6,10 @@ import { WHY_DEFAULTS, WHY_MAX, anchor, groundWhy, isWhy, nowText, whyOf, whyTex
 import { catalog, type Kind } from '../src/core/catalog';
 import { createContext, interact, parseContext, solidContact } from '../src/core/events';
 import { rockDiameter, SNOUT_REACH } from '../src/core/rocks';
-import { heightAt, type Entity } from '../src/core/world';
+import { generateChunk, heightAt, type Entity } from '../src/core/world';
 import { logContact, LOG_SEAT_DEFAULTS } from '../src/core/logContact';
+import { logSeat } from '../src/render/geometry';
+import { contactPositionScore, contactTimingScore } from '../tools/contact-gate';
 
 const contact = (a: string, b = 'ground', source = 'test'): Contact => ({ a, b, at: [0, 0, 0], normal: [0, 1, 0], kind: 'solid-solid', source });
 const entity = (key: string, kind: Kind, extra: Partial<Entity> = {}): Entity => ({ key, kind, seed: 7, generatorVersion: 1, x: 0, z: 0, rotation: 1, scale: 1, ...extra });
@@ -147,4 +149,26 @@ test('logContact: uses T-0005 logSeat when given (seated point, normal, densitie
   assert.equal(logContact(log, y, () => ({ at: [1, 2], normal: [0, 1, 0] })).source, 'chunk-build:log', 'a malformed seat falls back');
   assert.equal(logContact(log, y, () => ({ at: [1, 2, 3], normal: [0, 1, 0], settle: { depth: 7 } })).sinkFraction, LOG_SEAT_DEFAULTS.sinkFraction, 'bad depth -> default');
   assert.deepEqual(log, before, 'the entity is never changed');
+});
+test('logContact on the merged logSeat: the contact sits on the ground and the inspector why is the fallen-log chain', () => {
+  const log = generateChunk(-2, -2).find(e => e.kind === 'log')!;
+  const y = heightAt(log.x, log.z), seat = logSeat(log), c = logContact(log, y, logSeat);
+  assert.equal(c.source, 'chunk-build:log-seat');
+  assert.deepEqual(c.at, [...seat.at]);
+  assert.equal(contactPositionScore(c.at[1] - heightAt(c.at[0], c.at[2])), 1, 'known match: seated contact on the ground');
+  assert.equal(contactPositionScore(1), 0, 'known mismatch: the same point lifted 1 m');
+  assert.equal(contactPositionScore(0.0025), 0.95);
+  assert.ok(Math.abs(Math.hypot(...c.normal) - 1) < 1e-9 && c.normal[1] > 0);
+  assert.equal(c.trunkDensity, seat.settle.trunkDensity);
+  assert.equal(c.earthDensity, seat.settle.earthDensity);
+  assert.equal(c.sinkFraction, seat.settle.depth);
+  assert.ok(c.sinkFraction > 0.3 && c.sinkFraction < 0.45, 'buoyancy sink is about a third of the width');
+  assert.equal(`${catalog.log.title} - ${nowText(whyOf(log))}`, 'Fallen wood - resting on the ground, becoming forest floor (one more trunk cycle)');
+  const bus = createContactBus();
+  assert.equal(bus.begin(c), true);
+  let extra = 0; for (let i = 0; i < 360; i++) if (bus.begin(c)) extra++;
+  assert.equal(contactTimingScore(extra, 360), 1, 'known match: a resting pair emits nothing across 6 s at 60 Hz');
+  assert.equal(contactTimingScore(360, 360), 0, 'known mismatch: a begin on every idle frame');
+  assert.equal(bus.end(c.a, c.b), true);
+  assert.equal(bus.begin(c), true, 'end then begin fires again');
 });

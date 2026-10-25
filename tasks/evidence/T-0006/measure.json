@@ -1,0 +1,29 @@
+{
+  "tool": "npx tsx tasks/evidence/T-0006/measure.mjs",
+  "metric": "mean contactPositionScore over every log in chunks [-2,2] x [-2,2]; contactTimingScore of 360 repeat begins",
+  "calibration": {
+    "match": 1,
+    "at2_5mm": 0.95,
+    "mismatch1m": 0,
+    "timingMatch": 1,
+    "timingMismatch": 0
+  },
+  "logs": 59,
+  "meanPosition": 1,
+  "maxAbsErrM": 0,
+  "sources": [
+    "chunk-build:log-seat"
+  ],
+  "sink": {
+    "min": 0.04053699478691589,
+    "max": 0.376021527474677
+  },
+  "earth": {
+    "min": 1264.986209120286,
+    "max": 1930.656196745956
+  },
+  "trunk": 511.76,
+  "timing": 1,
+  "why": "Fallen wood - resting on the ground, becoming forest floor (one more trunk cycle)",
+  "pass": true
+}

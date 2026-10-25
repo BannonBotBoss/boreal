@@ -112,7 +112,11 @@ try { view = buildScene(canvas, onForage); } catch (error) {
 // are render lifetime ("became known", see Contact.source), so solidContact is idempotent and writes only records that
 // already exist: generated logs never enter the save. No revision++ here (that would rebuild every chunk and re-fire).
 const contactsLog = new URLSearchParams(location.search).get('contacts') === '1';
-if (contactsLog) (window as unknown as { contacts: typeof CONTACTS }).contacts = CONTACTS; // console: contacts.touching()
+if (contactsLog) { // console: contacts.touching(); showWhy(key) opens the inspector on that object (the same panel a click uses)
+  const probe = window as unknown as { contacts: typeof CONTACTS; showWhy?: (key: string) => string };
+  probe.contacts = CONTACTS;
+  probe.showWhy = key => { const e = view.entities().find(x => x.key === key); inspector.show(key, e?.x ?? 0, e?.z ?? 0); return document.getElementById('inspector')?.innerText ?? ''; };
+}
 CONTACTS.onContact(c => {
   if (contactsLog) console.log(`[contacts] begin ${c.a} | ${c.b} (${c.source}) at ${c.at.map(v => v.toFixed(2)).join(',')} n ${c.normal.map(v => v.toFixed(2)).join(',')}`);
   if (c.kind === 'feed') return; // eater/food pairs belong to core/transactions, not the solid why tip

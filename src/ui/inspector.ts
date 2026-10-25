@@ -246,6 +246,12 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
 
   return {
     get active() { return on; },
+    /** Dev probe (?contacts=1): open this panel on an entity or terrain key. Same path as a click. */
+    show(key: string, x = 0, z = 0) {
+      on = true; shell.hidden = false; document.body.classList.add('inspecting');
+      const type = key.startsWith('chunk:') || key.startsWith('water:') ? 'terrain' : 'entity';
+      select({ type, key, point: new THREE.Vector3(x, heightAt(x, z), z) });
+    },
     toggle(force = !on) {
       on = force; shell.hidden = !on; document.body.classList.toggle('inspecting', on);
       if (!on) { clearPreview(); setLiveTrace(undefined); gizmos.clear(); sel = undefined; } else select(sel);

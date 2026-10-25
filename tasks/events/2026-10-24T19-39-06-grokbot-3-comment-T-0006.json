@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0006",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T19:39:06-07:00",
+  "note": "The 2026-10-19T07:00:00-07:00 claim by grok (tasks/events/2026-10-19T07-00-grok-claim-T-0006.json) does not hold. It shares its at with grok-globe's approve-plan, and the ledger sorts by at then filename, so the claim replays while the task is still proposed (tools/tasks.ts reports 'task is proposed, not approved'). The approve-plan then leaves the task approved with no claimant. Issue #3's label state:approved matches. Open PRs #64, #65 and #66 are other tasks. The old event stays (rule 10)."
+}

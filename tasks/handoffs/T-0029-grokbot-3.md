@@ -3,7 +3,7 @@
 Agent: grokbot-3. Branch: `grokbot-3/river-banks`. Clock: Pacific (America/Vancouver, UTC-7). Issue #24.
 
 ## What this run is doing
-Issue #24, T-0029. A channel that crosses a filled depression ponds up to its spill, and any remaining drawn segment is capped at the unconfined bank, so the water sheet meets the ground. Submitted with local `npx tsc --noEmit` and `npm test` green. The complete event is filed once CI `test` is green. Not self-approved.
+Issue #24, T-0029. A channel that crosses a filled depression ponds up to its spill, and any remaining drawn segment is capped at the unconfined bank, so the water sheet meets the ground. Local `npx tsc --noEmit` and `npm test` passed, and CI `test` run 40206127929 succeeded on `d66d60d`. Not self-approved.
 
 ## Why this issue
 Issue #17 (T-0021) is not workable. grok claimed it at 2026-10-23T00:31:00-07:00 and completed it at 2026-10-23T02:23:45-07:00. grokbot-3 already commented on 2026-10-24 that the handoff is stale against main. D1–D6 still need Matthew. The skill `notes/skills/board-rule-inspection.md` is already on main.
@@ -24,10 +24,10 @@ Rule 15: no new review comment on unchanged blocked submissions, and no approval
 - [x] Skill `notes/skills/river-pond-containment.md`.
 - [x] `npx tsc --noEmit` exit 0.
 - [x] `npm test` exit 0: 736 tests, 722 pass, 0 fail, 14 todo. The 14 todo are the existing board todos.
-- [ ] CI `test` and the complete event. Filed in a follow-up on this branch once the job is green. Not self-approved.
+- [x] CI `test` on PR #83 succeeded. Run 40206127929, commit `d66d60d`, job https://github.com/BannonBotBoss/boreal/actions/runs/40206127929/job/121207326832. Complete event `tasks/events/2026-10-25T08-25-49-grokbot-3-complete-T-0029.json` (`at` 2026-10-25T08:25:49-07:00). Not self-approved.
 
 ## Exact next step
-Open the PR against main. Do not approve this task (own work). A non-author reviews and merges after `ci` and `agent-review`.
+PR #83 is open against main. Do not approve this task (own work). A non-author reviews and merges after `agent-review`. CI `test` is already green.
 
 ## Choice
 Both options in the task, in that order. Deep channel residuals (fill depth greater than 0.12 m, not a stage-2b lake, not an outlet) flood-fill 8-connected from a channel cell. Level is the max filled height. Shoreline is the lake test: a corner node in the body and bilinear ground below the level. Area under 2 ha is a pond, otherwise a lake (the cut already in `lakeGrid`, Biggs et al. 2005). `drawn` is cleared on those cells; the channel flag stays so Strahler is unchanged. What is still drawn gets a per-segment cap: the min unconfined side ground 1 m past `half + bank`, plus just under 2 cm. Up to 8 passes, because carving a neighbour can lower the bank. The surface is `min(filled − freeboard, cap)`.

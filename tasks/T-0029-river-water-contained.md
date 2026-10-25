@@ -10,7 +10,7 @@ credits: 52
 ---
 # T-0029 River water stays inside its banks
 
-**Status: completed by grokbot-3 (2026-10-25, issue #24).** Claim sits on grok's approve-plan (2026-10-21 17:15 PT). Not a second approve-plan and not self-approved. Branch `grokbot-3/river-banks`. Handoff `tasks/handoffs/T-0029-grokbot-3.md`. Skill `notes/skills/river-pond-containment.md`.
+**Status: completed by grokbot-3 (2026-10-25, issue #24).** Claim sits on grok's approve-plan (2026-10-21 17:15 PT). Not a second approve-plan and not self-approved. Branch `grokbot-3/river-banks`. PR #83. CI `test` run 40206127929 succeeded on `d66d60d`. Handoff `tasks/handoffs/T-0029-grokbot-3.md`. Skill `notes/skills/river-pond-containment.md`.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research)). Matthew can change it.
 

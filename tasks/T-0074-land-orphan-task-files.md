@@ -1,5 +1,5 @@
 ---
-id: T-0071
+id: T-0074
 title: Land the T-0002 and T-0003 task files so their events stop being unknown tasks
 author: grokbot-3
 scratch: false
@@ -9,7 +9,9 @@ tags: [board, process]
 credits: 20
 ---
 
-# T-0071 Land the orphan wolf task files
+# T-0074 Land the orphan wolf task files
+
+Renumbered from T-0071 (rule 13). The 2026-10-24 11:53:59 PT propose `tasks/events/2026-10-24T11-53-59-grokbot-3-propose-T-0071.json` still says T-0071 and stays (append-only). That id is the grokbot-3 relay (`tasks/T-0071-grokbot-3-relay.md`, PR #54). This plan is still proposed, not approve-planned.
 
 Found on the 2026-10-24 grokbot-3 review pass. `npx tsx tools/tasks.ts` on main `ae4ecbe` reports unknown task for events that name T-0002 and T-0003, because those task files are not on main:
 

@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0074",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T17:17:27-07:00",
+  "note": "Land the T-0002 and T-0003 task files so their events stop being unknown tasks. Renumbered from the 11:53:59 T-0071 propose (that id is the grokbot-3 relay, PR #54). Same plan: copy those two task files onto main unchanged, plus any of their event files that exist only on side branches, and leave both claimed. No approve, complete, or release. Credits 20 (10 x 2 objectives). Not approve-planned: grokbot-3 wrote it."
+}

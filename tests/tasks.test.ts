@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { award, ledger, weekOf } from '../tools/tasks';
@@ -9,6 +9,53 @@ const real = ledger();
 test('task board: the real board loads, every task has steps', () => {
   assert.ok(real.tasks.length > 0);
   for (const t of real.tasks) if (t.steps > 0) assert.ok(t.award > 0, t.id);
+});
+// Duplicate ids must fail the suite. The legacy-break test above is a todo whenever any error exists, so a second
+// T-0071 would not have failed `npm test` (the ledger also used to overwrite the Map and report nothing).
+test('task ids are unique on the live board, and a second file with the same id is a rule break', () => {
+  const files = readdirSync('tasks').filter(f => /^T-\d{4}-.*\.md$/.test(f)).sort();
+  const seen = new Map<string, string>();
+  for (const f of files) {
+    const text = readFileSync(join('tasks', f), 'utf8').replace(/\r\n?/g, '\n');
+    const fm = /^---\n([\s\S]*?)\n---/.exec(text)?.[1] ?? '';
+    const id = /^id:\s*(.*)$/m.exec(fm)?.[1].trim() ?? '';
+    assert.equal(seen.has(id), false, `${f} duplicates ${seen.get(id)} on ${id}`);
+    seen.set(id, f);
+  }
+  assert.deepEqual(real.errors.filter(e => /duplicate task id/.test(e)), []);
+  assert.equal(seen.get('T-0071'), 'T-0071-grokbot-3-relay.md');
+  const relay = real.tasks.find(t => t.id === 'T-0071');
+  assert.equal(relay?.file, 'T-0071-grokbot-3-relay.md');
+  assert.equal(relay?.title, 'grokbot-3 relays Matthew and reviews other agents\' PRs, never its own');
+  assert.equal(relay?.award, 30);
+  assert.notEqual(relay?.state, 'proposed', 'the stray 11:53 propose must not reopen the relay');
+  assert.equal(seen.get('T-0074'), 'T-0074-land-orphan-task-files.md');
+  const wolf = real.tasks.find(t => t.id === 'T-0074');
+  assert.equal(wolf?.file, 'T-0074-land-orphan-task-files.md');
+  assert.equal(wolf?.author, 'grokbot-3');
+  assert.equal(wolf?.state, 'proposed');
+  assert.equal(wolf?.claimant, undefined);
+  assert.equal(wolf?.steps, 2);
+  assert.equal(wolf?.award, 20);
+  assert.equal(real.tasks.filter(t => t.id === 'T-0071').length, 1);
+  const stray = real.events.find(e => e.file === '2026-10-24T11-53-59-grokbot-3-propose-T-0071.json');
+  assert.equal(stray?.task, 'T-0071', 'the collided propose stays on T-0071 (append-only)');
+  assert.equal(stray?.type, 'propose');
+  assert.ok(real.events.some(e => e.task === 'T-0074' && e.type === 'propose' && e.agent === 'grokbot-3'));
+  assert.ok(real.events.some(e => e.task === 'T-0074' && e.type === 'comment' && /T-0071/.test(e.note ?? '')));
+  assert.ok(real.events.some(e => e.task === 'T-0071' && e.type === 'comment' && /T-0074/.test(e.note ?? '')));
+
+  const root = mkdtempSync(join(tmpdir(), 'tasks-'));
+  try {
+    const md = (title: string) => ['---', 'id: T-0099', `title: ${title}`, 'author: grokbot-3', 'scratch: false', 'research: false', 'skill: false', 'tags: [board]', '---', '', '# T-0099', '', '## Objectives', '- [ ] one', ''].join('\n');
+    writeFileSync(join(root, 'T-0099-a.md'), md('First'));
+    writeFileSync(join(root, 'T-0099-b.md'), md('Second'));
+    const L = ledger(root);
+    assert.equal(L.tasks.filter(t => t.id === 'T-0099').length, 1);
+    assert.equal(L.tasks.find(t => t.id === 'T-0099')?.file, 'T-0099-a.md');
+    assert.equal(L.tasks.find(t => t.id === 'T-0099')?.title, 'First');
+    assert.deepEqual(L.errors, ['T-0099-b.md: duplicate task id T-0099 (also T-0099-a.md)']);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
 // Older events break rules written after them (claims before approve-plan, unknown T-0001..3 ...). They are append-only
 // (rule 10), so this check reports them as a todo instead of failing every run; it turns into a real failure once they are

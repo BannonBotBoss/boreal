@@ -20,7 +20,7 @@ Ledger on main before this branch (`npx tsx tools/tasks.ts`), completed and not 
 
 Proposed, no approve-plan: T-0001 (side branch only, until this branch copies the file), T-0007, T-0045, T-0047, T-0048, T-0049, T-0050, T-0051, T-0052, T-0053, T-0054, T-0055, T-0065, T-0067, T-0066.
 
-Not in the queue: T-0002 and T-0003 are claimed (approve-plan already exists). Their task files are not on main, so the ledger reports unknown task. That is new task T-0071, not a review of those plans.
+Not in the queue: T-0002 and T-0003 are claimed (approve-plan already exists). Their task files are not on main, so the ledger reports unknown task. Filed on this pass as T-0071. That id was already the relay on main (PR #54). Renumbered to T-0074 on `grokbot-3/fix-duplicate-t0071`. Not a review of those plans.
 
 ## Unchanged blocked submissions (rule 15, no new comment)
 
@@ -82,7 +82,7 @@ Checkboxes are not under `## Objectives`. The ledger reports 0 steps and a rule 
 - `node tools/agent-review.mjs` refuses reviewer `grokbot-3` until that name is in `AGENTS`. A separate branch `grokbot-3/relay-reviewer` was described as the place that adds the relay. This run does not edit `RELAYS_MATTHEW` or `AGENTS`.
 
 ## New task
-T-0071, proposed, not approve-planned (own work).
+T-0074 (filed here as T-0071, renumbered), proposed, not approve-planned (own work). The relay stays T-0071.
 
 ## Events written
 All `agent` grokbot-3, Pacific `at` from `new Date()` in the writer, one second apart. No `"for"` field.
@@ -93,9 +93,60 @@ All `agent` grokbot-3, Pacific `at` from `new Date()` in the writer, one second 
 - comment T-0069 `2026-10-24T11-53-44`
 - comment T-0001 `2026-10-24T11-53-45`
 - approve-plan T-0045 through T-0055, then T-0065, comment T-0067, approve-plan T-0066 (`11-53-46` through `11-53-58`)
-- propose T-0071 `2026-10-24T11-53-59`
+- propose T-0071 `2026-10-24T11-53-59` (wolf landing; id collided with the relay, now T-0074; the file is left as written)
 
 `node tools/agent-review.mjs 51 grokbot-3 reject "..."` exits 2: `unknown reviewer grokbot-3; one of grok-globe, grok-gait, grokbot-1, grokbot-2, grok, claude, codex, agy, matthew`. No commit status was set. The same refusal applies to every PR. `gh pr comment` on #38, #51 and #40 returned `Resource not accessible by integration`, so those PR threads have no new comment. The events are the record.
 
 ## Exact next step
 PR https://github.com/Bannon-github/boreal/pull/55 is open against main. Do not merge. Do not push main. A machine that can record should re-run the T-0032 sky-share gate on `241c2b7` and the T-0028 fur look gates. grokbot-3 still cannot set `agent-review` until it is registered.
+
+## 2026-10-24 17:17 PT - duplicate T-0071
+
+Agent: grokbot-3. Branch: `grokbot-3/fix-duplicate-t0071` from main `71d5c46`. Clock: Pacific, from `Intl` `America/Los_Angeles` inside `/tmp/write-board-event.mjs` (not typed). Matthew in chat, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like this mmoving forward". That names this collision fix. It is not an approve-plan of the wolf-file landing.
+
+### Doing
+Renumber the wolf-file task off T-0071. T-0071 stays the relay. Append-only: `tasks/events/2026-10-24T11-53-59-grokbot-3-propose-T-0071.json` stays, still `"task": "T-0071"`.
+
+### Id scan (this run)
+`git fetch origin`. `git log --all --name-only -- "tasks/T-*"` highest id is T-0073 (72 ids). The only gap from T-0001 through T-0073 is T-0046, reserved by the T-0021 handoff. No `T-0074` path on any branch. `tasks/events` on every branch has no T-0072, T-0073, or T-0074 event file. Working tree had two files with `id: T-0071`: `tasks/T-0071-grokbot-3-relay.md` and `tasks/T-0071-land-orphan-task-files.md`. Next free id is T-0074.
+
+`npx tsx tools/tasks.ts` before the renumber listed one T-0071 row, the land task, 20 cr, completed, because `tasks.set` kept the later filename. The relay was hidden and the land task had inherited the relay's claim and complete. 22 legacy rule breaks, none of them a duplicate-id line.
+
+### Rule 15 inventory
+Open PRs: `gh pr list -R BannonBotBoss/boreal --state open` returned none. Completed and not approved, oldest first:
+
+| task | previous review | still the latest event / tip |
+|---|---|---|
+| T-0025 | unchanged blocked, codex comment `2026-10-21T21-32-codex-comment-T-0025.json`; no new grokbot-3 comment | `origin/agy/littoral-plants` is still `01c4bbb` (2026-10-21 18:41:42 -0700). No later event. |
+| T-0032 | grokbot-3 comment `2026-10-24T11-53-41` | `origin/grok/T-0032-forest-edge` is still `1e6477b`. That comment is the latest event. |
+| T-0028 | grokbot-3 comment `2026-10-24T11-53-42` | `origin/grok/hare-mesh` is still `db55c98` (2026-10-21 22:06:52 -0700). That comment is the latest event. |
+| T-0021 | grokbot-3 comment `2026-10-24T11-53-43` | That comment is the latest event. No newer complete. |
+| T-0069 | grokbot-3 comment `2026-10-24T11-53-44` | That comment is the latest event. No handoff added since. |
+
+Those five are unchanged since PR #55. No new comment. Not an approval. T-0071 the relay is grokbot-3's own completed task: not approved here. T-0072 and T-0073 are proposed by grokbot-1 (no events on any branch; code already on main via PRs #58 and #59). Their gates were not run on this pass. Not approve-planned.
+
+### Done
+- [x] `tasks/T-0071-land-orphan-task-files.md` renamed to `tasks/T-0074-land-orphan-task-files.md`. Front matter `id` and the heading say T-0074. Credits 20, author grokbot-3, two objectives, still not approve-planned.
+- [x] Events, `at` from the clock in `/tmp/write-board-event.mjs`: comment `tasks/events/2026-10-24T17-17-25-grokbot-3-comment-T-0071.json` (2026-10-24T17:17:25-07:00), propose `tasks/events/2026-10-24T17-17-27-grokbot-3-propose-T-0074.json` (2026-10-24T17:17:27-07:00), comment `tasks/events/2026-10-24T17-17-28-grokbot-3-comment-T-0074.json` (2026-10-24T17:17:28-07:00, `"for": "matthew"`, quote above). The 11:53:59 propose was not edited.
+- [x] `tools/tasks.ts` reports `duplicate task id` and keeps the first file in sort order. `tests/tasks.test.ts` fails the suite on a live-board collision (not via the legacy todo) and checks a two-file fixture.
+- [x] Skill `notes/skills/next-free-task-id.md`. Pointers in `notes/skills/board-rule-inspection.md` and `notes/skills/grokbot-relay-reviewer.md`. `AGENT-NOTES.md` entry for this run.
+
+### Rule 12 evidence
+Nothing on screen. No new physical number (credits 20 is the existing formula, 10 x 2). A reviewer can spot-check any three rows.
+
+| Finding | Evidence | Became |
+|---|---|---|
+| Two files used id T-0071, and the ledger showed only the land task at 20 cr, completed | `tasks/T-0071-grokbot-3-relay.md` and the land file; `tools/tasks.ts` `tasks.set` before this change | Land file is `tasks/T-0074-land-orphan-task-files.md`. Ledger row T-0071 is the relay, 30 cr, completed. T-0074 is proposed, 20 cr, no claimant. |
+| The 11:53:59 propose is the land plan | `tasks/events/2026-10-24T11-53-59-grokbot-3-propose-T-0071.json` still `"task": "T-0071"` | Left in place. Comment `2026-10-24T17-17-25` names T-0074. Propose `2026-10-24T17-17-27` is the T-0074 propose. Comment `2026-10-24T17-17-28` names old id T-0071. |
+| Next free id was not T-0072 or T-0073 | `git log --all --name-only -- "tasks/T-*"` max T-0073; files `tasks/T-0072-altitude-zones.md`, `tasks/T-0073-local-cloud-column.md`; no T-0074 path before this branch | Wolf landing is T-0074. T-0046 still unused. |
+| A duplicate id did not fail `npm test` | `tests/tasks.test.ts` marks every `ledger().errors` list as a todo while any legacy break exists (22 breaks before and after) | New test asserts zero duplicate ids on `tasks/T-*.md` and the fixture error `T-0099-b.md: duplicate task id T-0099 (also T-0099-a.md)`. |
+| Rule breaks did not grow | `npx tsx tools/tasks.ts` after the events: 22 breaks, the same four unknown-task lines for T-0002 and T-0003, no `duplicate task id` line | T-0074's objective (landing those files) is still open. This run does not copy them. |
+
+### Checks
+Filled in after `npx tsc --noEmit` and `npm test` on this branch.
+
+### Needs from another agent
+None for the renumber. T-0032 and T-0028 still need the recordings named in the section above. A non-author may review this PR. grokbot-3 cannot set `agent-review` on a `grokbot-3/` branch.
+
+### Exact next step
+Push `grokbot-3/fix-duplicate-t0071`, open a PR against main, run `npx tsc --noEmit` and `npm test`. Do not merge. Do not push main. Do not approve-plan T-0074.

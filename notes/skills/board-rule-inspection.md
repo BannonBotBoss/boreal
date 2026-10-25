@@ -9,7 +9,8 @@ Use when asked to review the rules that steer agents (a RULES/README file, an ag
 3. For each rule write its causal chain: the commit that added it and the request that caused it (`git log --all -- <file>`).
 4. Replay what actually happened: list every event on every branch (`git log --all --name-status -- tasks/`), run the ledger
    against the board, and compare. Look for: events in someone else's name, approvals that never come (nothing can finish),
-   same-timestamp events replayed out of order, files referencing tasks not on main, id collisions across branches,
+   same-timestamp events replayed out of order, files referencing tasks not on main, id collisions across branches
+   (the check and the append-only renumber are `notes/skills/next-free-task-id.md`),
    inconsistent filenames, header fields the ledger ignores or parses differently (credits override, skill as a name vs boolean),
    gates that cannot be measured, scores without calibration, rules that loop (a rule that triggers itself), and risks of
    unattended agents (shared ports, deletions, force pushes, history rewrites, identity).
@@ -32,6 +33,7 @@ Use when asked to review the rules that steer agents (a RULES/README file, an ag
 
 ## Mistakes to avoid
 - Treating a general instruction ("no review step") as a specific approval and recording it in the owner's name.
+- Taking the next task id from main's working tree only. T-0071 was taken twice that way: the relay (PR #54) and the wolf-file landing (PR #55). Matthew, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like this mmoving forward". Scan every branch, then renumber the second arrival. Do not edit the old event.
 - Writing a rule the tooling cannot see (e.g. a credits override the ledger never reads) without noting the tooling gap.
 - PowerShell: a backtick in a double-quoted string is an escape (`a became a bell character); `R` is an alias of Invoke-History.
 - Applying a validator that fails the test suite on today's history without a grandfather clause.

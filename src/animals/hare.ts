@@ -27,6 +27,7 @@ import { dayAt } from '../core/timeOfDay';
 import { worldSec } from '../core/worldClock';
 import { INTEREST, tierAt } from '../core/interest';
 import { WAKES, WATERLINE, HARE_HIP_XZ, pawArea, sampleSurface } from '../core/waterWake';
+import { siteAt } from '../core/flora/site';
 
 export const HARE = {
   count: 5, spawnMin: 18, spawnMax: 45, despawn: 70, respawnSeconds: [25, 45] as [number, number],
@@ -313,7 +314,8 @@ export function createHares(scene: THREE.Scene) {
     // an embodied hare (or any non-predator body) is not the wolf animal the sim's hares fear: take it out of the sim world, put it back for a predator
     const present = world.animals.includes(wolfAnimal);
     if (wolf.predator === false && present) world.animals.splice(world.animals.indexOf(wolfAnimal), 1); else if (wolf.predator !== false && !present) world.animals.push(wolfAnimal);
-    Object.assign(wolfAnimal, { x: wolf.x, z: wolf.z, mode: wolf.mode, speed: wolf.moving ? playerSpeed(wolf.mode as WolfMode) : 0, crouched: wolf.mode.includes('stealth'), pouncing: wolf.pouncing });
+    const cover = wolf.predator === false ? 0 : 1 - siteAt(wolf.x, wolf.z).light; // canopy closure at the wolf; sight only (core/agent perceive)
+    Object.assign(wolfAnimal, { x: wolf.x, z: wolf.z, mode: wolf.mode, speed: wolf.moving ? playerSpeed(wolf.mode as WolfMode) : 0, crouched: wolf.mode.includes('stealth'), pouncing: wolf.pouncing, cover });
     world.daylight = () => wolf.daylight ?? 1; world.wind = () => wolf.wind ?? { x: 0, z: 0 };
     tick(world, dt);
     for (const ev of takeEvents(world)) {

@@ -1,4 +1,7 @@
 import { FOCUS, focusSteer, pickFocus } from './core/focusLock';
+import { stepLock, leapAim, steerLeap, huntTouch, type LockState } from './core/hunt';
+import { lockPoint } from './core/senseBeacons';
+import { PHYS } from './core/tuning';
 import { activeViewfinder } from './camera/gameCamera';
 import { SYSTEM_PROPERTIES } from './config/systemProperties';
 import './style.css';
@@ -85,7 +88,7 @@ let altitude = RIDER_HEIGHT, yaw = -.35, pitch = DEFAULT_PITCH, revision = 0, pa
 let pushFrom: Entity | undefined;
 let playerAction: 'speak' | 'gather' | 'move' | undefined, actionStarted = 0;
 let lookYaw = 0;
-let modes = createWolfModes(), focusTarget: Entity | undefined;
+let modes = createWolfModes(), focusTarget: Entity | undefined, huntLock: LockState = { hold: 0 }, huntMarker: { x: number; z: number } | undefined;
 let autonomous = false;
 function setAutonomous(enabled: boolean) {
   autonomous=enabled;
@@ -120,7 +123,7 @@ if (contactsLog) { // console: contacts.touching(); showWhy(key) opens the inspe
 }
 CONTACTS.onContact(c => {
   if (contactsLog) console.log(`[contacts] begin ${c.a} | ${c.b} (${c.source}) at ${c.at.map(v => v.toFixed(2)).join(',')} n ${c.normal.map(v => v.toFixed(2)).join(',')}`);
-  if (c.kind === 'feed') return; // eater/food pairs belong to core/transactions, not the solid why tip
+  if (c.kind === 'feed' || c.kind === 'hunt') return; // feed is core/transactions; hunt is the steered leap (T-0013), not a solid why tip
   if (saveBlocked || !(Object.hasOwn(context.records, c.a) || Object.hasOwn(context.records, c.b))) return; // generated-only: nothing to write
   try {
     const next = solidContact(context, c); if (next === context) return;
@@ -142,7 +145,7 @@ const saveNeeds = () => { try { localStorage.setItem(NEEDS_KEY, JSON.stringify({
 let waterGoal: { x: number; z: number } | undefined; // the autonomous wolf's chosen water (core/needs/water nearestWater)
 let autoNote = ''; // T-0010: the autonomous goal and its cause, kept across frames the sim does not step
 view.onBeforeRender((time, photoView) => bubbles.update(view.lookup('player')?.object, view.camera, thoughtTime, photoView));
-view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView || (!!focusTarget && SYSTEM_PROPERTIES.autoFocus.hideSensesHalo))); // T-0035: the locked target's glow is the only cue
+view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView || (!!focusTarget && SYSTEM_PROPERTIES.autoFocus.hideSensesHalo), huntMarker)); // T-0035 hides the cue ring; the hunt pip stays
 function perform() {
   if(autonomous) setAutonomous(false);
   if (paused || dialog.open || playerAction) return;
@@ -270,7 +273,7 @@ let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem
 function setBindings(b: Bindings) { bindings = b; padRouter?.setBindings(b); hint = { pad: '', keys: '' }; bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
 const controls = controlsScreen({ get: () => bindings, set: setBindings, library: () => { menu.close(); dialog.showModal(); } });
 const hintFor = (kind: 'keys' | 'pad') => { const L = (id: string) => bindingLabel(bindings[id][kind]);
-  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
+  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('lock')} lock · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
 function act(id: string) { // one fired press action (keyboard or gamepad)
   if (padRouter.act(id)) return;
   if (dialog.open) { if (id === 'back' || id === 'interact') dialog.close(); else if (id === 'pause') togglePause(); return; }
@@ -338,7 +341,7 @@ initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the
 const chrono = createChronometer(worldSec); // T / gamepad View: set the time of day (ui/chronometer)
 function bindingTexts() { // help dialog and chronometer lines written from the live bindings (Controls screen rebinding updates them)
   const L = (id: string, k: 'keys' | 'pad') => bindingLabel(bindings[id][k]), G = (id: string, k: 'keys' | 'pad') => groupLabel(bindings, id, k);
-  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} chronometer, ${L('pause', k)} pause`;
+  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold ${L('lock', k)} and keep a prey inside the aim cone to lock it; ${L('jump', k)} then steers the leap onto that lock. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} chronometer, ${L('pause', k)} pause`;
   element('help-binds').textContent = `Xbox: ${tell('pad')}, ${L('back', 'pad')} close this panel. Keyboard: ${tell('keys')}, ${L('photo', 'keys')} photo mode (free camera, rewind, capture). Rebind any of these under ${L('pause', 'keys')} → Controls.`;
   const close = [...bindings.chrono.keys, ...bindings.back.keys, ...bindings.chrono.pad, ...bindings.back.pad].map(comboLabel).join(' / ');
   chrono.setHint(`${G('scrub', 'keys')} or ${G('scrub', 'pad')}: scrub time · drag the dial · ${close}: close`);
@@ -382,6 +385,9 @@ function frame(time: number) { const frameStart = performance.now();
       modes = autonomous ? stepWolfModes(modes,0,view.playerBrain.motion==='run'?1:0,Math.abs(view.playerBrain.speed)>.01,1/30,staminaRates(needsSpecies())) : stepWolfModes(modes, H('stealth'), H('run'), Math.abs(dz) > .01, 1 / 30, staminaRates(needsSpecies()));
       const brain = view.playerBrain, prevSpeed = brain.speed, speed = -dz * playerSpeed(modes.mode, needsSpecies()) * view.playable.speedScale;
       const jump = H('jump') > ACTIVE && brain.jumpCooldown === 0 && brain.energy > 10 && !playerAction;
+      const preyList = view.hares.list().map(h => ({ key: `hare:${h.id}`, x: h.x, z: h.z, heading: h.heading, speed: h.sim.speed }));
+      huntLock = autonomous ? { hold: 0 } : stepLock(huntLock, H('lock') > ACTIVE, yaw + lookYaw, player, preyList, 1 / 30);
+      const locked = preyList.find(p => p.key === huntLock.key);
       if(!autonomous || playerAction) brain.decide({x:player.x,y:0,z:player.z},1/30,{
         motion:jump?'jump':speed<-.01?'back':speed>.01?(modes.mode==='run'||modes.mode==='sprint'?'run':'walk'):'idle',
         heading:yaw+(focusSteer(yaw,player,focusTarget,-dz,dx,1/30)??-dx*2.2/30),speed:jump?pounceSpeed(speed, needsSpecies()):speed});
@@ -400,6 +406,12 @@ function frame(time: number) { const frameStart = performance.now();
       if (drinking || choice?.goal === 'bed-down' || choice?.goal === 'rest') { brain.motion = 'idle'; brain.speed = 0; brain.problem = 'recover'; }
       const steerOnly = !!choice && (drinking || choice.goal !== 'explore' && choice.goal !== 'hunt' && choice.goal !== 'forage');
       const driving = autonomous && !playerAction && !steerOnly;
+      // decide freezes heading for the whole leap (jumpTime < PHYS.jumpSeconds). The lock steers after that return.
+      if (!driving && brain.motion === 'jump' && locked) {
+        const aim = leapAim(player, locked, Math.abs(brain.speed), Math.max(0, PHYS.jumpSeconds - brain.jumpTime));
+        brain.heading = steerLeap(brain.heading, player, aim, brain.speed, 1 / 30);
+        yaw = brain.heading;
+      }
       const pose = driving ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities(),{
         massKg: playerMass, wind: windAt(player.x, .6, player.z), daylight: 1 - view.darkness(),
         hares: view.hares.list().map(h => ({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: 1 })),
@@ -418,6 +430,13 @@ function frame(time: number) { const frameStart = performance.now();
       const nx = stepNeeds(sp, needs, { dtGame: 3600 / REAL_SECONDS_PER_GAME_HOUR / 30, speed: moved * 30, tC: airC, drinking, energy: brain.energy });
       needs = nx.state; brain.energy = nx.energy;
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
+      { const keep = !autonomous && brain.motion === 'jump' && locked ? locked.key : undefined;
+        if (keep && locked) {
+          const c = huntTouch('player', keep, player, locked);
+          if (c) CONTACTS.begin(c); else if (CONTACTS.touching('player', keep).some(t => t.kind === 'hunt')) CONTACTS.end('player', keep);
+        }
+        for (const t of [...CONTACTS.touching('player')]) if (t.kind === 'hunt' && t.a !== keep && t.b !== keep) CONTACTS.end(t.a, t.b);
+      }
       simTime += 1 / 30;
       { const b = view.playerBrain, sc = view.playerScale(), id = view.playable.id;
         WAKES.noteGait({ id: 'player', x: player.x, z: player.z, heading: yaw, phase: b.phase, prevPhase: b.prevPhase, motion: b.motion,
@@ -445,6 +464,8 @@ function frame(time: number) { const frameStart = performance.now();
   actionButton.disabled = canDrink ? paused : !action || paused || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
   // Menu open: hold the last frame (clock frozen; no age/growth/render). Playing: draw every frame.
+  { const held = huntLock.key ? view.hares.list().find(h => `hare:${h.id}` === huntLock.key) : undefined;
+    huntMarker = held ? lockPoint({ x: held.x, z: held.z }, { x: player.x, z: player.z }, yaw) : undefined; }
   const drawStart = performance.now(); if (!menu.open) { if (inpage) inpage.frame(() => drawFrame(pv)); else drawFrame(pv); } view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
   walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
@@ -466,7 +487,8 @@ function frame(time: number) { const frameStart = performance.now();
   const animalStatus = animal ? ` · ${animal.motion}/${animal.problem} · Energy ${Math.round(animal.energy)}` : '';
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
-  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth · LB focus'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
+  const aimLine = huntLock.key ? 'Lock on' : H('lock') > ACTIVE ? 'aiming' : focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : `RT run · LT stealth · LB focus · ${bindingLabel(bindings.lock.keys)} lock`;
+  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind); if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
   requestAnimationFrame(frame);
 }

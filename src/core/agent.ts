@@ -80,7 +80,8 @@ export interface AgentSpecies {
 export type Action = 'feed' | 'step' | 'approach' | 'seek' | 'scan' | 'rest' | 'alert' | 'flee' | 'pause' | 'hide' | 'held' | 'tame';
 export type Pose = 'head-down' | 'head-up' | 'move' | 'run' | 'rest' | 'crouch';
 /** Something the animal can perceive as a possible threat (the player wolf, later other agents). */
-export interface Other extends SensePoint { key: string; kind: string; speed: number; crouched?: boolean }
+export interface Other extends SensePoint { key: string; kind: string; speed: number; crouched?: boolean;
+  /** 0 open .. 1 hidden. Multiplies sight only (sound and scent still carry). Canopy closure at the body. */ cover?: number }
 /** A herd-mate as a percept: posture and a snort from the previous step, not this one (alarm cannot lap the herd in one frame). */
 export interface Mate { key: string; x: number; z: number; heading: number; action: Action; speed: number; alarmed: boolean; snort: boolean }
 export interface FoodItem extends SensePoint { key: string; r: number; units: number }
@@ -129,7 +130,9 @@ export function perceive(sp: AgentSpecies, self: SensePoint, o: Other, wind: Sen
   if (fear <= 0) return { level: 0, sight: 0, sound: 0, scent: 0, moving: false, from: o, distance: d };
   const vision = Math.max(S.sight.night, clamp01(daylight)), motion = smoothstep(S.sight.motion[0], S.sight.motion[1], o.speed);
   const presence = clamp01(1 - d / S.sight.presence) * (o.crouched ? S.sight.crouched : 1);
-  const sight = clamp01(vision * Math.max(motion * clamp01(1 - d / S.sight.range), presence));
+  // Cover is the hidden fraction (canopy closure). Sight falls in proportion; this is not a Beer-Lambert path.
+  const open = 1 - clamp01(o.cover ?? 0);
+  const sight = clamp01(vision * open * Math.max(motion * clamp01(1 - d / S.sight.range), presence));
   const sound = clamp01(smoothstep(S.hearing.loud[0], S.hearing.loud[1], o.speed) * clamp01(1 - d / S.hearing.range) ** 2);
   const scent = scentLevel(self, { key: o.key, kind: o.kind, x: o.x, z: o.z, potency: S.scent.potency }, wind);
   const level = fear * (1 - (1 - sight) * (1 - sound) * (1 - scent));
@@ -262,6 +265,11 @@ export function modulators(a: Pick<Agent, 'species' | 'relaxation' | 'energy' | 
     flee: T.flee * (.7 + .6 * clamp01(cue)) * (1 + M.fleeNerve * nerve) * Math.min(1, a.stamina / M.fleeStaminaFull),
     pause: T.pause * (1 - M.pauseNerve * nerve),
   };
+}
+/** True when the percept is at or above the notice threshold for these levels. A calm animal (relaxation at max)
+ *  needs a stronger cue than a nervous one: noticeAt rises with calm (mood.notice). */
+export function notices(sp: AgentSpecies, sensed: Sensed, relaxation: number, energy: number, stamina: number) {
+  return sensed.level >= modulators({ species: sp, relaxation, energy, stamina }, sensed.level).noticeAt;
 }
 /** Energy, stamina and relaxation for one step (rates from the species record). */
 export function updateLevels(a: Agent, dt: number, sensed: Sensed, eatenUnits = 0, unitsPerEnergy = Infinity) {

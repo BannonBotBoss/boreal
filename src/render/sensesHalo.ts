@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { HALO, cueBeacons, beaconBearing, ringOffset, haloFade, easeSpeed, type Beacon } from '../core/senseBeacons';
 import type { SoundCue, ScentHit } from '../core/senses';
 
-const SOUND = new THREE.Color(0x6fc8ff), SCENT = new THREE.Color(0xff9a3c); // sound: the HUD's blue cue; scent: amber (Matthew's mock-up)
+const SOUND = new THREE.Color(0x6fc8ff), SCENT = new THREE.Color(0xff9a3c), LOCK = new THREE.Color(0x9dff6a); // sound blue, scent amber; lock is a green pip, neither of those
 /** Flat disc, bright core fading to black at the rim: with additive blending that is a soft glow. */
 function glowDisc(r: number, seg = 24) {
   const pos = [0, 0, 0], col = [1, 1, 1], idx: number[] = [];
@@ -26,19 +26,27 @@ export function createSensesHalo(scene: THREE.Scene) {
   const sound = new THREE.InstancedMesh(glowDisc(.19), basic({ vertexColors: true, blending: THREE.AdditiveBlending }), HALO.maxBeacons);
   const scent = new THREE.InstancedMesh(new THREE.TorusGeometry(.06, .013, 6, 24).rotateX(Math.PI / 2), scentMat, HALO.maxBeacons);
   for (const m of [sound, scent]) { m.count = 0; m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.setColorAt(0, SOUND); }
-  ring.renderOrder = sound.renderOrder = scent.renderOrder = 2; root.add(ring, sound, scent); scene.add(root);
+  const lockMat = basic({ color: LOCK, opacity: 1 });
+  const lockMark = new THREE.Mesh(new THREE.CircleGeometry(.05, 18).rotateX(Math.PI / 2), lockMat);
+  ring.renderOrder = sound.renderOrder = scent.renderOrder = lockMark.renderOrder = 2; root.add(ring, sound, scent, lockMark); scene.add(root);
   const beacons: Beacon[] = [], at = { x: 0, z: 0 }, m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), c = new THREE.Color();
   let enabled = true, lastWolf: THREE.Object3D | undefined, sensor: THREE.Object3D = root, lastT = 0, lastX = 0, lastZ = 0, speed = 0; const head = new THREE.Vector3();
   return {
     get enabled() { return enabled; }, set enabled(v: boolean) { enabled = v; },
-    /** Per drawn frame, after the wolf is posed (render/buildScene onBeforeRender): centred on its head-sensor, level, turned with its yaw. */
-    update(wolf: THREE.Object3D | undefined, time: number, darkness: number, sounds: readonly SoundCue[], scents: readonly ScentHit[], hidden: boolean) {
-      root.visible = enabled && !hidden && !!wolf; if (!wolf || !root.visible) return;
+    /** Per drawn frame, after the wolf is posed (render/buildScene onBeforeRender): centred on its head-sensor, level, turned with its yaw.
+     *  `lock` is a ring-local point (core/senseBeacons lockPoint). The pip stays while the cue ring fades with speed or hides for focus. */
+    update(wolf: THREE.Object3D | undefined, time: number, darkness: number, sounds: readonly SoundCue[], scents: readonly ScentHit[], hidden: boolean, lock?: { x: number; z: number } | null) {
+      const wantLock = enabled && !!wolf && !!lock;
+      if (!wolf || !enabled) { root.visible = false; lockMark.visible = false; return; }
       if (wolf !== lastWolf) { lastWolf = wolf; sensor = wolf.getObjectByName('head-sensor') ?? wolf; } // playable swaps replace the rig
       sensor.getWorldPosition(head); const heading = wolf.rotation.y;
       speed = easeSpeed(speed, Math.hypot(head.x - lastX, head.z - lastZ), Math.min(.25, time - lastT)); lastT = time; lastX = head.x; lastZ = head.z;
-      const fade = haloFade(speed); root.visible = fade > .01; if (!root.visible) return; // fades away as the wolf travels faster
+      const fade = haloFade(speed), ringOn = !hidden && fade > .01;
+      root.visible = ringOn || wantLock; if (!root.visible) { lockMark.visible = false; return; }
       root.position.set(head.x, head.y + .04, head.z); root.rotation.set(0, heading, 0); // level ring that turns with the wolf
+      ring.visible = sound.visible = scent.visible = ringOn;
+      lockMark.visible = wantLock; if (wantLock && lock) lockMark.position.set(lock.x, .02, lock.z);
+      if (!ringOn) { sound.count = 0; scent.count = 0; return; }
       ringMat.opacity = (.32 - .1 * darkness) * fade; scentMat.opacity = .9 * fade; // unlit: a little quieter at night so it never outshines the wolf
       const n = cueBeacons(sounds, scents, head, beacons); let ns = 0, nc = 0;
       for (let i = 0; i < n; i++) {

@@ -96,6 +96,18 @@ export const SYSTEM_PROPERTIES = {
     /** s a prey commits to a zig before it may re-aim (turns are grip-limited, see evasion.lateralAccel) */ minZig: .2,
     /** jink (Howland 1974): when the pursuer is within jinkRadii x its turning radius v^2/a, turn jinkAngle rad off the
      *  straight-away line (pi/2 = Howland's optimum, perpendicular), at most every jinkEvery s */ jinkRadii: 1, jinkAngle: 1.57, jinkEvery: 1,
+    /** s the view must stay on a prey before it locks. Regular saccade latency is about 200 ms
+     *  (Fischer & Ramsperger 1984, Exp Brain Res 57:191); a shorter glance does not lock. */
+    lockDwell: 0.2,
+    /** degrees either side of the view. 60° is the upper end of the dog's behavioural binocular overlap
+     *  (Miller & Murphy 1995, JAVMA 207:1623: 30–60°). Half of that overlap is 30°. */
+    lockHalfDeg: 30,
+    /** m. A stalking approach still alerts white-tailed deer inside 30 m (Lingle & Wilson 2001, Ethology 107:125).
+     *  The lock uses that distance for any prey: beyond it, holding aim does not commit. */
+    lockRadius: 30,
+    /** m/s² ceiling on the leap's turn (v²/r). Wilson et al. 2013, Nature 498:185: cheetah hunts often exceed
+     *  13 m/s² below 17 m/s. No wolf lateral acceleration was found; a wolf is not allowed to turn harder than that. */
+    leapGrip: 13,
   },
   /** Jump / pounce stages (animals/locomotion/jump), shares of the jump duration and fractions of hip height. */
   jump: {
@@ -232,11 +244,15 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
     foreRate: ['x', 'fore legs carry ~60 % of a dog\'s weight (Lee et al. 1999, J Exp Biol 202:3565)'],
     hindRate: ['x', 'Lee et al. 1999 (as foreRate)'], pairBoost: ['share', EST] } },
   haptics: { readers: ['src/ui/haptics.ts', 'src/core/renderSettings.ts'], keys: { on: ['on/off', 'design'], intensity: ['0-1', EST], editorSound: ['on/off', 'design'] } },
-  hunt: { readers: ['src/core/needs/diet.ts'], keys: {
+  hunt: { readers: ['src/core/needs/diet.ts', 'src/core/hunt.ts'], keys: {
     catchContact: ['m', 'half a wolf (head-body 1.0-1.3 m, Mech & Boitani 2003) + half a hare; tuned by tools/hunt-sim'], catchPounce: ['m', 'catchContact + jaw reach; ' + EST],
     boltBase: ['x flight distance', EST], boltPerLevel: ['x flight distance per perception', EST], safeDistance: ['m', EST], minZig: ['s', EST],
     jinkRadii: ['x pursuer turning radius', 'Howland 1974 (J Theor Biol 47:333): turn when the pursuer is about one turning radius away'],
-    jinkAngle: ['rad', 'Howland 1974: the optimal evasive turn is perpendicular'], jinkEvery: ['s', EST] } },
+    jinkAngle: ['rad', 'Howland 1974: the optimal evasive turn is perpendicular'], jinkEvery: ['s', EST],
+    lockDwell: ['s', 'Fischer & Ramsperger 1984, Exp Brain Res 57:191: regular saccade latency ~200 ms'],
+    lockHalfDeg: ['deg', 'Miller & Murphy 1995, JAVMA 207:1623: dog binocular overlap 30–60°, upper end, half either side of the view'],
+    lockRadius: ['m', 'Lingle & Wilson 2001, Ethology 107:125: stalking attacks alerted deer under 30 m'],
+    leapGrip: ['m/s^2', 'Wilson et al. 2013, Nature 498:185: cheetah lateral acceleration often above 13 m/s^2 below 17 m/s; used as a ceiling'] } },
   jump: { readers: ['src/animals/locomotion/jump.ts'], keys: {
     crouch: ['share', 'Claude gaitPose jump (game calibration)'], flight: ['share', 'Claude gaitPose jump (game calibration)'],
     land: ['share', 'Claude gaitPose jump (game calibration)'], depth: ['x hip height', EST], reach: ['x hip height', EST] } },
@@ -283,9 +299,10 @@ export interface SystemWiring {
 }
 export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
   animalSim: { title: 'Headless animal simulation', what: 'Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters.',
-    modules: ['src/core/sim/index.ts', 'src/core/needs/senses.ts', 'src/core/needs/diet.ts', 'src/core/needs/social.ts', 'src/animals/hare.ts'],
+    modules: ['src/core/sim/index.ts', 'src/core/needs/senses.ts', 'src/core/needs/diet.ts', 'src/core/needs/social.ts', 'src/animals/hare.ts', 'src/core/hunt.ts'],
     groups: ['hunt', 'perception', 'sim', 'social'], dependsOn: ['needs', 'senses', 'player', 'clock'], flags: {},
-    tables: { 'src/core/needs/species/index.ts#NEEDS_SPECIES': 'species templates: senses, diet, social, evasion' }, remaining: [] },
+    tables: { 'src/core/needs/species/index.ts#NEEDS_SPECIES': 'species templates: senses, diet, social, evasion',
+      'src/core/hunt.ts#HUNT_LOCK': 'aim dwell, binocular cone, lock radius, leap turn ceiling' }, remaining: [] },
   audio: { title: 'Audio and music', what: 'Ambience, animal calls, footsteps, wolf voice, music decks and the bus mixer.',
     modules: ['src/audio/borealSound.ts', 'src/audio/footsteps.ts', 'src/audio/mixer.ts', 'src/audio/music.ts', 'src/audio/musicSettings.ts', 'src/audio/wolfVoice.ts'],
     groups: ['footsteps'], dependsOn: ['clock', 'weather', 'locomotion', 'behaviour', 'player'],

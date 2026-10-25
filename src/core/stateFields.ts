@@ -32,7 +32,7 @@ export const STATE_FIELDS = {
   agent: { key: 'clock', species: 'clock', rng: 'clock',
     x: 'snapshot', z: 'snapshot', heading: 'snapshot', action: 'snapshot', goal: 'snapshot', timer: 'snapshot', elapsed: 'snapshot',
     energy: 'snapshot', stamina: 'snapshot', relaxation: 'snapshot', target: 'snapshot', food: 'snapshot', contact: 'snapshot',
-    zig: 'snapshot', sensed: 'snapshot', speed: 'snapshot' },
+    zig: 'snapshot', bitten: 'snapshot', sensed: 'snapshot', speed: 'snapshot' },
   /** core/fields CloverPatch. Place and capacity come from the seed; units, the grazed clock, stolon and why change when eaten. */
   cloverPatch: { key: 'clock', x: 'clock', z: 'clock', r: 'clock', light: 'clock', max: 'clock',
     units: 'snapshot', at: 'snapshot', stolon: 'snapshot', why: 'snapshot' },

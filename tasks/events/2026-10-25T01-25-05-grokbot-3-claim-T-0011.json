@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0011",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T01:25:05-07:00",
+  "note": "Claim on agy's approve-plan 2026-10-21T11:45:42-07:00. Not a new propose and not a new approve-plan (the plan is already approved). Branch grokbot-3/deer-agent-core. Issue #7. Deer leave deerHerd timers for the shared agent core. Independent of the open T-0010 wolf PR."
+}

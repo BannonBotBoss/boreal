@@ -260,7 +260,7 @@ Animal brains: senses -> problem (explore, escape, feed ...) -> motion intent; d
 
 - Depends on: senses, needs, terrain, clock, vegetation
 - Feeds: audio, interaction, locomotion, senses
-- Modules: `src/core/animalBehavior.ts`, `src/core/autonomy.ts`, `src/core/deerHerd.ts`, `src/animals/hare.ts`, `src/core/why.ts`, `src/core/events.ts`, `src/core/lifespan.ts`
+- Modules: `src/core/animalBehavior.ts`, `src/core/autonomy.ts`, `src/core/agent.ts`, `src/animals/hare.ts`, `src/core/why.ts`, `src/core/events.ts`, `src/core/lifespan.ts`
 
 ### `SYSTEM_PROPERTIES.behaviour`
 
@@ -288,7 +288,7 @@ Read by: `src/core/animalBehavior.ts`
 - `MAMMAL_PLANS` in `src/core/species.ts`: body plans per mammal archetype
 - `MAMMALS` in `src/core/species.ts`: mammal species rows
 - `HARE` in `src/animals/hare.ts`: snowshoe hare agent figures
-- `HERD` in `src/core/deerHerd.ts`: deer herd figures
+- `DEER_AGENT` in `src/core/species.ts`: white-tailed deer agent figures
 - `LIFESPAN` in `src/core/lifespan.ts`: maximum and starting ages
 - `WHY_DEFAULTS` in `src/core/why.ts`: why-chains per object kind
 - `BLOCK` in `src/core/tuning.ts`: step height and trunk clearance per animal

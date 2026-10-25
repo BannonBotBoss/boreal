@@ -30,7 +30,7 @@ guard('no second shader hash/noise library', t => /float\s+(hash\w*|v?noise|fbm)
   ['render/fur.ts'], ['proc/glsl.ts']); // fur.ts: dead, awaiting Claude's OK to delete
 // Rule 3: species are data. Species-named source files are legacy and may only disappear.
 guard('no new species-specific source files', (_t, p) => /wolf|bear|deer|hare|elk|moose|fox|bird|owl|lynx|rabbit|animalRig/i.test(p),
-  ['animals/hare.ts', 'audio/wolfVoice.ts', 'core/bearBody.ts', 'core/deerHerd.ts', 'core/wolfBody.ts', 'core/wolfModes.ts', 'render/animalRig.ts', 'render/bear.ts', 'render/playerWolf.ts']);
+  ['animals/hare.ts', 'audio/wolfVoice.ts', 'core/bearBody.ts', 'core/wolfBody.ts', 'core/wolfModes.ts', 'render/animalRig.ts', 'render/bear.ts', 'render/playerWolf.ts']);
 // Rule 2: one LOD/mesh path. Icosahedron "blob" builders and LOD assembly may only shrink.
 guard('no new hand-built LOD or blob-geometry sites', t => /addLevel\(|IcosahedronGeometry/.test(t),
   ['render/animalRig.ts', 'render/buildScene.ts', 'render/rocks.ts']); // rocks.ts: the one cached icosphere (render/geometry + trees use it)

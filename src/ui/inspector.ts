@@ -19,7 +19,7 @@ import { agentWhy, doingFromAgent, doingFromProblem, groundWhy, inspectWhy, whyO
 import { wolfReadout } from '../core/autonomy';
 import { SENSE_RADII } from '../core/animalBehavior';
 import { gaitReadout } from '../core/gaitReadout';
-import { HERD } from '../core/deerHerd';
+import { DEER_AGENT } from '../core/species';
 import { nearbyWater } from '../audio/borealSound';
 import { generateGeometry } from '../render/geometry';
 import { terrainGeometry } from '../render/math';
@@ -230,9 +230,9 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
     if (show.radii && b) SENSE_RADII.forEach((r, i) => local.add(ring(r, [0xff8080, 0xffd080, 0x80c0ff][i])));
     if (show.radii && h) for (const [n, c] of [['noticeAt', 0xffd080], ['boltAt', 0xff8080]] as const) { const r = value(n); if (typeof r === 'number') local.add(ring(r, c)); }
     if (show.herd && sel.type === 'deer') {
-      if (show.radii) local.add(ring(HERD.radius, 0x6bff9a));
+      if (show.radii) local.add(ring(DEER_AGENT.social!.link, 0x6bff9a));
       const pts: THREE.Vector3[] = [];
-      for (const a of view.audibleAnimals()) if (a.key !== sel.key && Math.hypot(a.x - at.x, a.z - at.z) < HERD.radius) pts.push(at.clone().setY(at.y + 1.5), new THREE.Vector3(a.x, heightAt(a.x, a.z) + 1.5, a.z));
+      for (const a of view.audibleAnimals()) if (a.key !== sel.key && Math.hypot(a.x - at.x, a.z - at.z) < DEER_AGENT.social!.link) pts.push(at.clone().setY(at.y + 1.5), new THREE.Vector3(a.x, heightAt(a.x, a.z) + 1.5, a.z));
       if (pts.length) gizmos.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
     }
     gizmos.traverse(o => { o.renderOrder = 999; });

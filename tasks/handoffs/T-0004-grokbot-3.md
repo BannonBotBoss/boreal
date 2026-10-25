@@ -3,7 +3,7 @@
 Branch: `grokbot-3/surface-bands` off main `71d5c46`. Agent: grokbot-3. Issue: https://github.com/BannonBotBoss/boreal/issues/1
 
 ## Doing
-Spec alignment and the gates this VM can run. Claim is written. Code edit is the default contrast (0.85–1.15) plus tests that lock the chunk, the key, the mask, the opt-outs and the query switch.
+Task left open. Code, tests, skill and the SwiftShader stills are on the branch. The numbers gate and the frame gate do not pass. No complete event.
 
 ## Done
 - Handoff created first and committed (`1e5613e`) before the claim and before code.
@@ -31,11 +31,34 @@ The numbers gate does not pass. No complete event.
 ## Frame gate
 Not run yet on this VM. Omen (bench lock, vsync off, Ultra and Medium within 5%, captures under `/workspace/bands/` on that box) is outside this VM. A headless capture will be attempted and labelled. Scores from SwiftShader are not the omen gate.
 
+## Checks on this VM
+- `npx tsc --noEmit`: exit 0, before the PR and again with the contrast change.
+- `npx tsx --test tests/*.test.ts` (the `npm test` script): 641 tests, 627 pass, 0 fail, 14 todo. The 14 todos are the existing board todos, not new failures.
+- PR: https://github.com/BannonBotBoss/boreal/pull/65 . CI status is recorded in the PR body after the run finishes.
+
+## Frame gate (this VM, not omen)
+Stills: `tasks/evidence/T-0004/log-on.png`, `log-off.png`, `trunk-on.png`, `trunk-off.png`. Script: `tasks/evidence/T-0004/capture.mjs` (headless Chrome, SwiftShader, `?nomenu&hour=15`). Wind amplitude forced to 0 after load. Measure: `tasks/evidence/T-0004/measure.mjs`, numbers in `measure.json`.
+
+What the frames show: a wolf seen from behind in a flat overcast boreal stand, HUD in the corner. The log pair has a fallen trunk across the lower middle. The trunk pair has a standing trunk just ahead of the wolf. I do not see a new set of darker and lighter bands appearing when the query is left on.
+
+Metric: mean absolute luminance in a center box (30–70% of width, 35–72% of height), chosen before the score. Tool calibration: the same frame against itself scores 0. A synthetic sine of amplitude 0.15 across the log-off box moves the coefficient of variation from 0.907 to 0.927 (delta 0.020). That is the known mismatch for the plan's contrast. It is not a nature photo.
+
+| Pair | Mean abs luminance | CV on | CV off | Notes |
+|---|---|---|---|---|
+| Log | 4.68 | 0.933 | 0.907 | Not a matched pair. `log-on` was the cold load (200 s, 178 links) while the startup probe ran. `LOG_MATERIAL` sets `noBands`, so the shared chunk is not on the log. |
+| Trunk | 0.51 | 0.55732 | 0.55740 | Matched pair (both ~44 s, probe cache warm). CV delta 0.00008, about 250× smaller than the calibrated 0.15 sine. |
+
+The trunk pair does not show the 0.85–1.15 multiply in that box. 95% resemblance to a nature reference: no reference was generated, so that comparison is unmeasurable. The pixel comparison against the plan's own contrast fails.
+
+Program links, trunk pair only (same place, Minimum, SwiftShader): 74 with bands, 74 with `?bands=0`. Shader sources containing `float bt =`: 4 when on, 0 when off. The link count did not rise. The cold `log-on` count of 178 is the probe compiling before the SwiftShader cap was cached, not the bands cost.
+
+Frame time substitute, same trunk pair, median of 30 `requestAnimationFrame` intervals: 299.6 ms with bands, 309.1 ms with `?bands=0`. Bands-on is 3.1% lower. This is not the omen gate. Renderer string: `ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero)))`. Governor tier: Minimum, auto. No GPU timer. Sample is 30 frames at about 3 fps. Uncalibrated for "Ultra and Medium within 5%".
+
 ## Next
-Commit this revision, push, open the PR (Refs #1, not Closes). Then `npx tsc --noEmit`, `npm test`, and a headless before/after of a log and a trunk if Chrome can load the game. Update this file with those results. Leave the task open.
+Leave the task open. No complete event. A non-author reviews the PR. The omen bench and a generated reference are still listed below.
 
 ## Needs from another agent
-- Omen, bench lock, vsync off. From `C:\dev` worktree of this branch, two runs of `node tools/smoke-tiers.mjs` or the in-game `?bench=1` (see `src/main.ts`), one with bands on and one with `&bands=0`, same seed and start. Record Ultra and Medium `frame` and `gpu` ms. Pass only if each is within 5% of the other. Also record program-link count and how many shader sources contain `float bt =`. Do not treat a software renderer as a pass. Save the console log next to the captures.
-- Captures Matthew asked for: `/workspace/bands/` on the omen box. Before = `?bands=0`, after = bands on (no `bands` query, amp 0.15). Same `?nomenu&hour=15&at=`. One frame on a fallen log, one on a trunk. This VM will try the same pair and say whether the pixels were measurable.
+- Omen, bench lock, vsync off. From a worktree of this branch, two runs of the in-game `?bench=1` (see `src/main.ts`), one with bands on and one with `&bands=0`, same seed and start. Record Ultra and Medium `frame` and `gpu` ms. Pass only if each is within 5% of the other. Also record program-link count and how many shader sources contain `float bt =`. Do not treat a software renderer as a pass. Save the console log next to the captures. This VM's SwiftShader numbers above are a substitute, not that gate.
+- Captures Matthew asked for, on the omen box, under `/workspace/bands/`. Before = `?bands=0`, after = bands on (no `bands` query, amp 0.15). Same `?nomenu&hour=15&at=`. One frame on a fallen log, one on a trunk, at Ultra, not Minimum. The SwiftShader stills in `tasks/evidence/T-0004/` are the attempt from this VM. The log material opts out, so a log frame will not show this chunk; a prop or the trunk is the surface that has it.
 - Generated reference frames (rule 6): a 3–5 s clip or stills of a boreal fallen log and a spruce/pine trunk in diffuse daylight, camera about 1.5 m away and about 0.8 m off the ground, showing darker and lighter bands across bark. Save under `tasks/evidence/T-0004/reference/`. Grok generates these. A generated picture is a look reference, not a position certificate (rule 11).
 - A non-author review of the PR. grokbot-3 must not review `grokbot-3/surface-bands`.

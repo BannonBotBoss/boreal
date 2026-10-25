@@ -1,0 +1,54 @@
+{
+  "base": "http://127.0.0.1:5288",
+  "at": "2026-10-25T01:51:24.507Z",
+  "results": [
+    {
+      "name": "log-on",
+      "q": "?nomenu&hour=15&at=66.14,12.62,0.677",
+      "loadMs": 199855,
+      "medianMs": 440.5,
+      "frames": 30,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "links": 178,
+      "bandSrc": 9,
+      "tier": "Minimum auto=true gpu=ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "errors": []
+    },
+    {
+      "name": "log-off",
+      "q": "?nomenu&hour=15&bands=0&at=66.14,12.62,0.677",
+      "loadMs": 43282,
+      "medianMs": 286.69999999995343,
+      "frames": 30,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "links": 77,
+      "bandSrc": 0,
+      "tier": "Minimum auto=true gpu=ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "errors": []
+    },
+    {
+      "name": "trunk-on",
+      "q": "?nomenu&hour=15&at=-25.14,-15.98,0",
+      "loadMs": 43745,
+      "medianMs": 299.60000000009313,
+      "frames": 30,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "links": 74,
+      "bandSrc": 4,
+      "tier": "Minimum auto=true gpu=ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "errors": []
+    },
+    {
+      "name": "trunk-off",
+      "q": "?nomenu&hour=15&bands=0&at=-25.14,-15.98,0",
+      "loadMs": 44534,
+      "medianMs": 309.0999999998603,
+      "frames": 30,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "links": 74,
+      "bandSrc": 0,
+      "tier": "Minimum auto=true gpu=ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "errors": []
+    }
+  ]
+}

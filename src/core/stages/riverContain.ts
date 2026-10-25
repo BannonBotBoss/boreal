@@ -4,8 +4,8 @@
  * there must be within 2 cm of the surface. Hydrostatics: a free surface over unconfined ground spreads until it
  * meets the ground (the same test as refs/water/river-audit/contained.ts).
  */
-import { STAGES, flowGrid } from './elevation';
-import { riverAt, riverGrid } from './rivers';
+import { STAGES } from './elevation';
+import { riverAt, riverAuditPoints, riverGrid } from './rivers';
 import { surfaceAt } from './surfaceAt';
 
 export interface Containment {
@@ -17,18 +17,19 @@ export interface Containment {
   edgeHeightM: { p10: number; med: number; p90: number } | null;
 }
 
-/** Midpoint of every drawn D8 segment. `open` = surface more than 2 cm above dry ground 1 m beyond the sheet. */
+/** One point on each curved centreline piece. `open` = surface more than 2 cm above dry ground 1 m beyond the sheet.
+ *  A sample the centreline query misses (d > 0.5 m) counts as open: skipping it would hide a planform bug. */
 export function riverContainment(seed = STAGES.seed): Containment {
-  const R = riverGrid(seed), f = flowGrid(seed), n = R.n, s = R.cell;
+  riverGrid(seed);
   let total = 0, open = 0, openFlat = 0, flat = 0; const lift: number[] = [];
-  for (let c = 0; c < n * n; c++) {
-    if (!R.drawn[c]) continue; const r = f.dir[c]; if (r < 0) continue;
-    const ox = ((r % n) - (c % n) + n + 1) % n - 1, oz = (((r / n) | 0) - ((c / n) | 0) + n + 1) % n - 1;
-    const x = ((c % n) + ox * .5) * s, z = (((c / n) | 0) + oz * .5) * s, h = riverAt(seed, x, z); if (!h || h.d > 1) continue;
-    total++; const isFlat = h.speed < .1; if (isFlat) flat++;
+  for (const s of riverAuditPoints(seed)) {
+    const h = riverAt(seed, s.x, s.z);
+    total++;
+    if (!h || h.d > 0.5) { open++; continue; }
+    const isFlat = h.speed < .1; if (isFlat) flat++;
     let worst = -Infinity;
     for (const side of [1, -1]) {
-      const off = h.half + h.bank + 1, px = x - h.dirZ * side * off, pz = z + h.dirX * side * off, p = surfaceAt(px, pz, seed);
+      const off = h.half + h.bank + 1, px = s.x - h.dirZ * side * off, pz = s.z + h.dirX * side * off, p = surfaceAt(px, pz, seed);
       if (!p.lake && !p.river) worst = Math.max(worst, h.surface - p.height);
     }
     if (worst > .02) { open++; if (isFlat) openFlat++; lift.push(worst); }

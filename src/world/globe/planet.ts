@@ -197,6 +197,36 @@ export const GLOBE_COLOURS = {
 type RGB = readonly [number, number, number];
 const mix = (a: RGB, b: RGB, t: number, o: number[]) => { o[0] = a[0] + (b[0] - a[0]) * t; o[1] = a[1] + (b[1] - a[1]) * t; o[2] = a[2] + (b[2] - a[2]) * t; return o; };
 const mixTo = (o: number[], b: RGB, t: number) => mix([o[0], o[1], o[2]], b, t, o);
+/** Forest weight already painted by `surfaceColour`: spruce, mixed and temperate count, and each later mix
+ *  (tundra, outcrop, bog, beach, rock above the tree line, permanent snow) removes that share. Water is 0.
+ *  Same smoothsteps as the colour, so a cell's vegetation is the canopy the vertex colour already shows. */
+export function vegetationWeight(s: Surface, d: Vec3) {
+  if (s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level) return 0;
+  const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = s.mottle;
+  let w = 1;
+  if (lat > 60) w *= 1 - smoothstep(60, 66, lat);
+  if (s.home < 1) {
+    const k = 1 - s.home;
+    w *= 1 - k * .3 * smoothstep(.6, .95, s.hill + .5 * (m - .5));
+    w *= 1 - k * .55 * smoothstep(-.35, -.8, s.hill + .25 * (m - .5));
+    w *= 1 - k * .5 * (1 - smoothstep(1, 8, s.h));
+  }
+  if (s.home > 0 && s.soilB) {
+    const W = s.soilW;
+    w *= 1 - s.home * W[0] * .6 * smoothstep(.4, .75, m);
+    w *= 1 - s.home * W[1] * .7;
+    w *= 1 - s.home * W[2] * .5;
+    if (W[3] >= 0) w *= 1 - s.home * .45 * smoothstep(.6, .95, W[3]);
+  } else if (s.home > 0 && s.soil) {
+    const rock = s.soil === 'bedrock' ? .6 * smoothstep(.4, .75, m) : s.soil === 'peat' ? .7 : s.soil === 'sand' ? .5 : 0;
+    w *= 1 - s.home * rock;
+    if (s.wet >= 0) w *= 1 - s.home * .45 * smoothstep(.6, .95, s.wet);
+  }
+  const tl = treeLineM(lat), il = iceLineM(lat);
+  if (s.h > tl - 150) w *= 1 - smoothstep(tl - 150, tl + 250, s.h);
+  if (s.h > il - 300 || lat > 78) w *= lat > 78 ? 0 : 1 - smoothstep(il - 300, il + 300, s.h);
+  return Math.max(0, Math.min(1, w));
+}
 /** LAND colour (water is contoured and shaded per pixel by the material). */
 export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0]) {
   const C = GLOBE_COLOURS;

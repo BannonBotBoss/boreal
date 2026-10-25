@@ -1,0 +1,16 @@
+{
+  "metric": "Rec.709 luma of the central 18% of the canvas (nadir)",
+  "score": "clamp((L_pole - L_equator) / 70, 0, 1)",
+  "calibration": {
+    "knownMatch": { "pole": 90, "equator": 10, "score": 1 },
+    "knownMismatch": { "pole": 15, "equator": 10, "score": 0.071 }
+  },
+  "frames": {
+    "jan-pole-tier0": { "luma": 85.92, "rgb": [73.9, 86.7, 113.7], "hydro": "on" },
+    "jan-eq-tier0": { "luma": 9.05, "rgb": [4.2, 8.9, 24.7], "hydro": "on" },
+    "jan-pole-hydro0": { "luma": 13.4, "rgb": [7.2, 13.4, 31.9], "hydro": "off" },
+    "jan-pole-tier5": { "luma": 29.06, "rgb": [13.9, 30.8, 56.3], "hydro": "off" }
+  },
+  "thisRun": { "score": 1, "hydroOffScore": 0.062 },
+  "cpuPlacement": { "poleFrac": 1, "tropFrac": 0.014, "score": 0.986, "calibrationMatch": 1, "calibrationMismatch": 0 }
+}

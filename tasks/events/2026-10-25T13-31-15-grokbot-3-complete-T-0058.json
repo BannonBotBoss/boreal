@@ -1,0 +1,11 @@
+{
+  "type": "complete",
+  "task": "T-0058",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T13:31:15-07:00",
+  "branch": "grokbot-3/planet-hydro-surface",
+  "skill": "planet-hydro-surface",
+  "handoff": "tasks/handoffs/T-0058-grokbot-3.md",
+  "evidence": "tasks/evidence/2026-10-25-grokbot-3-t0058",
+  "note": "Issue #43. Hydrosphere and surface budgets are pure functions of seed, day, hour, and direction. bucketStep is the one overflow stepSlices uses. cellAir matches climate() at Kenora. Globe texture is 48x96, on when CLOUDS.octaves > 0. January ice placement score 0.986 (calibration 1 and 0). Frame luma pole 85.92, equator 9.05, score 1; hydro=0 score 0.06. npx tsc --noEmit exit 0. npm test 761 tests, 747 pass, 0 fail, 14 todo. Skill notes/skills/planet-hydro-surface.md. Not an approve. Matthew's standing request to check the issues and get one done does not name T-0058 and is not a quoted approval of the result."
+}

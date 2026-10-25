@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0058",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T13:20:43-07:00",
+  "note": "Issue #43. The plan stays grok's approve-plan for Matthew at 2026-10-23T10:28:10-07:00. Not a new propose and not a new approve-plan. Branch grokbot-3/planet-hydro-surface. No open pull request names T-0058. T-0056 and T-0057 are done on main. T-0059 is left unclaimed. Matthew's standing \"every 30 minutes, check the issues and get one done\" is why this run took #43's next open sub-task. It does not name T-0058 and is not a quoted approval of the result."
+}

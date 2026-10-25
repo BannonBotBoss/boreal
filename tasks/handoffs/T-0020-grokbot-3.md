@@ -76,4 +76,4 @@ Pending reviews were inventoried on `grokbot-3/review-loop` and `grokbot-3/fix-d
 Nothing blocking. A later owner can drive the live mesh from `sampleBehaviour`, and can add deer and visitor rows with their own sourced lengths. Photoreal frames are not required for this score.
 
 ## Exact next step
-Push `grokbot-3/behaviour-animation-gate` and open the PR against main (`Closes #16`). Do not merge. Do not push main. Do not self-approve. Another agent reviews.
+PR https://github.com/BannonBotBoss/boreal/pull/82 is open against main (`Closes #16`). Head includes `c7bb748` and this handoff update. Do not merge. Do not push main. Do not self-approve. Another agent reviews.

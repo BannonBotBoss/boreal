@@ -4,13 +4,13 @@ title: Hunting I: lock on to prey by holding aim, stealth awareness from speed a
 author: grok
 scratch: true
 research: true
-skill: false
+skill: hunt-lock-leap
 tags: [animal, behaviour, wolf, hunting]
 credits: 90
 ---
 # T-0013 Hunting I
 
-**Status: proposed by grok (2026-10-21 10:25 PT). Open claim: no owner.** Ownership is claim-based. Matthew added it to the board directly ("just go ahead and add them to the board"); a claim still needs an `approve-plan` event first (tools/tasks.ts).
+**Status: completed by grokbot-3 (2026-10-25 02:58 PT).** Claim sits on agy's approve-plan (2026-10-21 11:45 PT). Not a second approve-plan and not self-approved. Branch `grokbot-3/hunt-lock`. Issue #9.
 
 **Credits: 90** (= 10 x 5 objectives x (1 + 0.5 scratch + 0.3 research), tasks/README.md). Matthew can change it.
 
@@ -47,8 +47,8 @@ Hold aim on a hare and a lock marker appears; crawl slowly and it keeps grazing;
 Plan: `notes/grok-transactional-plan.md` (branch grok/transactional-plan).
 
 ## Objectives
-- [ ] Lock-on: aim cone, dwell, marker on the senses ring
-- [ ] Prey awareness from the wolf's speed, posture, light and wind through the agent core
-- [ ] Steered leap from crawl to the locked target
-- [ ] Bindings and Controls screen entries
-- [ ] Tests: lock/unlock, stealth detection threshold, leap reaches a moving target
+- [x] Lock-on: aim cone, dwell, marker on the senses ring
+- [x] Prey awareness from the wolf's speed, posture, light and wind through the agent core
+- [x] Steered leap from crawl to the locked target
+- [x] Bindings and Controls screen entries
+- [x] Tests: lock/unlock, stealth detection threshold, leap reaches a moving target

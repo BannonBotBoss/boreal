@@ -38,6 +38,7 @@ import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
 import { riverAt } from '../core/stages/rivers';
+import { siteAt } from '../core/flora/site';
 import { waterMaterial, updateWaterUniforms } from './water';
 import { WAKES, TOP_CAM, sampleSurface, hipsFor, pawArea, waterline, travelSpeed, PERSON_STRIDE, PERSON_DUTY } from '../core/waterWake';
 import { tiles } from '../photo/frame';
@@ -195,8 +196,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   /** One agent per live deer. Mates are the previous step, so a bolt cannot lap the herd in the same frame. */
   const deerAgents = new Map<string, Agent>();
   let snortPrev = new Set<string>();
-  function simulateAnimals(dt:number, x:number,z:number, frozen=false, time=0) {
+  function simulateAnimals(dt:number, x:number,z:number, frozen=false, time=0, mode: WolfMode = 'walk') {
     audibleAnimals.length=0;
+    const wolfCover = 1 - siteAt(x, z).light, wolfCrouched = mode === 'stealth' || mode === 'super-stealth';
     scene.updateMatrixWorld(true);
     const entities=[...chunks.values()].flatMap(c=>c.entities), keys=new Set(entities.map(e=>e.key));
     // Only forage patches are food; low herbs are neither food nor obstacles.
@@ -226,7 +228,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const ag = deerAgents.get(key)!;
       ag.x = e.x; ag.z = e.z;
       const friend = activeContext.records[key]?.relationship === 'friend';
-      const others = !friend && current.threat ? [{ key: 'player', kind: 'wolf', x, z, speed: wolf.brain.speed }] : [];
+      const others = !friend && current.threat ? [{ key: 'player', kind: 'wolf', x, z, speed: Math.abs(wolf.brain.speed), crouched: wolfCrouched, cover: wolfCover }] : [];
       const wind = windAt(e.x, heightAt(e.x, e.z), e.z);
       let chew = false, snort = false;
       if(dt>0) {
@@ -314,7 +316,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     if (time - lastBatchLod > .25 || time < lastBatchLod) { lastBatchLod = time; for (const c of chunks.values()) c.batch.update(camera.position, 1); }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
-    simulateAnimals(dt, x, z, frozen, time);
+    simulateAnimals(dt, x, z, frozen, time, mode);
     updateWaterUniforms(time);
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
     const hour = photo?.hour ?? hourAt(tod); clock = formatHour(hour);

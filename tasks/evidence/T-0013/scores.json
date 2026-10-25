@@ -1,0 +1,20 @@
+{
+  "metric": {
+    "timing": "lockTimingScore = 1 - |acquiredAt - dwell| / dwell",
+    "position": "leapScore = 1 - minDist / startDist"
+  },
+  "tool": "tests/hunt.test.ts: stepLock at dt = 1/30; closest approach of two linear segments per step (not point samples)",
+  "dwell_s": 0.2,
+  "acquiredAt_s": 0.2,
+  "lockTimingScore": 1,
+  "knownMatch": {
+    "segmentThroughPrey": 1,
+    "steeredLeap": { "score": 1, "minDist_m": 0, "prey_m": [2, -4], "speed_m_s": 8, "jump_s": 0.85 },
+    "movingPrey": { "score": 0.999971, "minDist_m": 0.0002, "prey_m": [1.6, -6], "heading_rad": -1.570796, "speed_m_s": 1.4 }
+  },
+  "knownMismatch": {
+    "frozenHeading": { "score": 0.552786, "note": "same stationary prey, heading held at 0, under 0.95" },
+    "firstStepLock": { "score": 0.833333, "note": "acquired at 1/30 s instead of 0.2 s, under 0.95" }
+  },
+  "pixelFrames": "not recorded"
+}

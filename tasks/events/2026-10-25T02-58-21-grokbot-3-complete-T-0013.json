@@ -1,0 +1,10 @@
+{
+  "branch": "grokbot-3/hunt-lock",
+  "skill": "hunt-lock-leap",
+  "handoff": "tasks/handoffs/T-0013-grokbot-3.md",
+  "note": "Issue #9. npx tsc --noEmit exit 0. npm test 704 tests, 690 pass, 0 fail, 14 todo. Lock timing score 1.000 at 0.200 s. Leap score 1.000 onto (2, -4) m; moving prey 0.999971; frozen heading 0.552786 is the known mismatch. No pixel frames. Not self-approved in this event.",
+  "type": "complete",
+  "task": "T-0013",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T02:58:21-07:00"
+}

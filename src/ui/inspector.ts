@@ -15,7 +15,7 @@ import { stream } from '../proc/rng';
 import { CHUNK_SIZE, WORLD_SEED, chunkSeed, generateChunk, heightAt, terrainBand } from '../core/world';
 import { applyPopulation } from '../core/population';
 import { catalog } from '../core/catalog';
-import { groundWhy, nowText, whyOf, whyText } from '../core/why';
+import { agentWhy, doingFromAgent, doingFromProblem, groundWhy, inspectWhy, whyOf, withDoing } from '../core/why';
 import { SENSE_RADII } from '../core/animalBehavior';
 import { gaitReadout } from '../core/gaitReadout';
 import { HERD } from '../core/deerHerd';
@@ -66,7 +66,7 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
     if (s.type === 'terrain') {
       const t: Trace = { factors: [] }; withTrace(t, () => terrainBand(heightAt(s.point.x, s.point.z)));
       out.push(...t.factors, obs('terrain', 'height', heightAt(s.point.x, s.point.z)), obs('sound', 'nearbyWater', nearbyWater(s.point.x, s.point.z)));
-      { const gw = groundWhy(); out.push(obs('why', 'now', `Ground - ${nowText(gw)}`), obs('why', 'chain', whyText(gw))); } // T-0006 (T-0007: layered fallen wood)
+      { const g = inspectWhy(groundWhy(), 'Ground'); out.push(obs('why', 'now', g.now), obs('why', 'chain', g.chain)); } // T-0006 (T-0007: layered fallen wood)
       const gt: Trace = { factors: [] }, col = withTrace(gt, () => column(s.point.x, s.point.z)); out.push(...gt.factors, obs('ground', 'cell', col.cell), obs('ground', 'game years elapsed', GROUND.years));
       for (const l of col.layers) out.push(obs('layers', `${(l.top * 100).toFixed(1)} cm ${l.label}`, `${(l.thickness * 100).toFixed(1)} cm · ${l.kg.toFixed(2)} kg/m² · ρ ${l.bulk} kg/m³${l.moisture !== undefined ? ` · moisture ${Math.round(l.moisture * 100)}%` : ''}${l.age ? ` · ${l.age}` : ''} — ${l.source}`));
       // Weather cell above this point (core/weather) and the persistent deltas near it (core/deltas).
@@ -94,7 +94,7 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       const r = regenerate(s.key, cx, cz, overrides, s.type === 'entity');
       const pm: Trace = { factors: [] }; withTrace(pm, () => view.massOf(s.key));
       out.push(...r.factors.filter(fa => fa.group !== 'terrain'), ...pm.factors, obs('entity', 'kind', found.entity.kind), obs('entity', 'title', catalog[found.entity.kind].title));
-      { const w = whyOf(found.entity, view.recordOf(s.key)); out.push(obs('why', 'now', `${catalog[found.entity.kind].title} - ${nowText(w)}`), obs('why', 'chain', whyText(w))); } // T-0006
+      { const y = inspectWhy(whyOf(found.entity, view.recordOf(s.key)), catalog[found.entity.kind].title); out.push(obs('why', 'now', y.now), obs('why', 'chain', y.chain)); } // T-0006, placement T-0016
       const lod = found.object as THREE.LOD | undefined;
       if (lod?.isLOD) out.push(obs('render', 'lodLevel', lod.getCurrentLevel()), obs('render', 'lodLevels', lod.levels.length));
       if (r.mesh && lod && Object.keys(overrides).length) {
@@ -119,6 +119,20 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
     else if (found.brain && sel?.type === 'deer') out.push(obs('sound', 'audible', false));
     { const t: Trace = { factors: [] }; withTrace(t, () => view.massOf(sel!.key)); out.push(...t.factors); }
     if (found.hare) out.push(obs('hare', 'id', found.hare.id), obs('hare', 'rng stream', `hare-v1:${found.hare.id}`), obs('hare', 'heading', found.hare.heading));
+    // T-0016: the live goal is an ongoing step, computed here and never stored.
+    if (found.entity && b) {
+      const d = doingFromProblem(b.problem, b.energy, b.target?.kind);
+      const y = inspectWhy(withDoing(whyOf(found.entity, view.recordOf(found.entity.key)), d.goal, d.because), catalog[found.entity.kind].title);
+      out.push(obs('why', 'now', y.now), obs('why', 'chain', y.chain));
+    } else if (found.hare) {
+      const d = doingFromAgent(found.hare.sim);
+      const y = inspectWhy(withDoing(agentWhy('hare'), d.goal, d.because), 'Snowshoe hare');
+      out.push(obs('why', 'now', y.now), obs('why', 'chain', y.chain));
+    } else if (b && sel?.type === 'player') {
+      const d = doingFromProblem(b.problem, b.energy, b.target?.kind);
+      const y = inspectWhy(withDoing(agentWhy('wolf'), d.goal, d.because), 'Gray wolf');
+      out.push(obs('why', 'now', y.now), obs('why', 'chain', y.chain));
+    }
     return out;
   }
 

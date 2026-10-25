@@ -10,7 +10,10 @@
  * -> wetted (water) -> sunned (sunlight) -> rotting (one side) -> nursing (the other side collects debris and lets other
  * plants grow). Oxygen is the 'oxidized' step (no separate 'aired'). The cycle repeats many times, so the forest floor is
  * accumulated fallen wood (Matthew 07:26): the log ends with buried (becoming forest floor) and the ground has its own
- * derived chain, GROUND_WHY (weathered -> accumulated). Terrain and flora follow-ups: T-0007, open claim. Labels only: no weather, plant or seating sim here (T-0005 seats the log; see Contact.sinkFraction).
+ * derived chain, GROUND_WHY (weathered -> accumulated). Terrain and flora follow-ups: T-0007, open claim. The fall
+ * steps are labels only: no weather, plant or seating sim here (T-0005 seats the log; see Contact.sinkFraction).
+ * T-0016: a placed object names why it is at that point (stand age since fire, a sunlit gap, or the river channel),
+ * and an agent carries a live doing step (goal and cause) that is never stored.
  *
  * - Closed vocabulary (WHY_TAGS); `on`/`by` are short identifiers (an entity key, 'ground', 'player'), never prose.
  * - Generated objects get a DERIVED chain from their kind and are never stored (no save growth).
@@ -18,14 +21,23 @@
  * - At most WHY_MAX steps. Not a simulation: provenance structure plus per-kind defaults, deterministic.
  */
 import type { Kind } from './catalog';
-import type { Entity } from './world';
+import { heightAt, LEGACY_RIVER_FOLD2, riverCenter, type Entity } from './world';
+import { LEVEL } from './tuning';
+import { STAGES } from './stages/elevation';
+import { riverAt } from './stages/rivers';
+import { CANOPY, siteAt } from './flora/site';
+import { FIRE, standAt, standStructure } from './stand';
+import { NEEDS_SPECIES } from './needs/species';
 import type { Solid } from './contactBus';
 
-export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated'] as const;
+export const WHY_TAGS = ['photosynthesized', 'seeded', 'dispersed', 'sprouted', 'grew', 'weakened', 'failed', 'pulled', 'tipped', 'displaced', 'settled', 'resting', 'weathered', 'embedded', 'moved', 'born', 'wandered', 'ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated', 'grazing', 'fleeing', 'alerting', 'drinking', 'recovering', 'exploring', 'seeking', 'steered'] as const;
 export type WhyTag = typeof WHY_TAGS[number];
 /** Ongoing steps: slow processes that follow the anchor (the last event) instead of replacing it. A contact compares
  *  against the anchor, so a decaying log still reads as resting on the ground and the same contact stays a no-op. */
-export const ONGOING: readonly WhyTag[] = ['ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated'];
+export const ONGOING: readonly WhyTag[] = ['ceased', 'oxidized', 'decaying', 'held', 'insected', 'wetted', 'sunned', 'rotting', 'nursing', 'buried', 'accumulated', 'grazing', 'fleeing', 'alerting', 'drinking', 'recovering', 'exploring', 'seeking', 'steered'];
+/** Live doing steps (T-0016). Ongoing, so they never become the anchor a contact compares, and withDoing never writes them to a record. */
+export const DOING: readonly WhyTag[] = ['grazing', 'fleeing', 'alerting', 'drinking', 'recovering', 'exploring', 'seeking', 'steered'];
+export type DoingGoal = typeof DOING[number];
 export interface WhyStep { step: WhyTag; on?: Solid; by?: string }
 export type Why = WhyStep[];
 /** Cap on chain length. Raised 16 -> 24 (Matthew 07:25) so the fallen log's origin, break, seating physics, decay and
@@ -51,8 +63,89 @@ export const WHY_DEFAULTS: Record<Kind, Why> = {
 export const GROUND_WHY: Why = [{ step: 'weathered' }, { step: 'accumulated', by: 'trunk-cycles' }];
 const copy = (w: Why): Why => w.map(s => ({ ...s }));
 export const groundWhy = (): Why => copy(GROUND_WHY);
-/** The record's chain if a transaction wrote one, else the derived default for the kind. */
-export function whyOf(e: Pick<Entity, 'kind'>, record?: { why?: Why }): Why { return copy(record?.why ?? WHY_DEFAULTS[e.kind]); }
+
+/** Understorey light of a gap-phase old stand. stand.ts opens the canopy after 150 yr (Harper et al. 2002, the term
+ *  already in standStructure) and site.ts shades the background by CANOPY.stand. A point at least this bright is a gap
+ *  relative to that closed canopy, not a new threshold. */
+export function gapLight(): number {
+  return 1 - CANOPY.stand * standStructure(FIRE.maxAge, .5).canopy;
+}
+/** Inside the river channel: staged rivers use the water half-width (core/stages/rivers); the legacy river is the same
+ *  gaussian heightAt carves, and only where that carve is below the water surface. Lakes are not flow. */
+export function onFlow(x: number, z: number): boolean {
+  if (STAGES.on) { const rv = riverAt(STAGES.seed, x, z); return !!rv && rv.d <= rv.half; }
+  return (x - riverCenter(z)) ** 2 <= LEGACY_RIVER_FOLD2 && heightAt(x, z) < LEVEL.waterSurface + .03;
+}
+export interface Placement { cause: 'flow' | 'sunlit-gap' | 'stand'; age: number; light: number }
+/** One placement cause at a point. Age is the stand's years since fire (standAt, Van Wagner 1978). Flow wins over light,
+ *  and a sunlit gap wins over the closed-stand age, so the chain names the most specific reason the site model gives. */
+export function placementCause(x: number, z: number): Placement {
+  const site = siteAt(x, z), age = Math.round(standAt(x, z, site.wet).age);
+  if (onFlow(x, z)) return { cause: 'flow', age, light: site.light };
+  if (site.light >= gapLight()) return { cause: 'sunlit-gap', age, light: site.light };
+  return { cause: 'stand', age, light: site.light };
+}
+function place(w: Why, kind: Kind, x: number, z: number): Why {
+  const p = placementCause(x, z);
+  if (kind === 'deer' || kind === 'person') return w.map(s => s.step === 'born' ? { ...s, by: 'birth' } : s.step === 'wandered' && p.cause === 'flow' ? { ...s, by: 'flow' } : { ...s });
+  if (kind === 'rock') return p.cause === 'flow' ? w.map(s => s.step === 'embedded' ? { ...s, by: 'flow' } : { ...s }) : w;
+  const by = p.cause === 'flow' ? 'flow' : p.cause === 'sunlit-gap' ? `sunlit-gap:${p.age}` : `stand:${p.age}`;
+  return w.map(s => s.step === 'grew' ? { ...s, by } : { ...s });
+}
+/** Hare and wolf are not catalog Kinds. The cause is the one that actually places them today: the hare in the near
+ *  interest ring (animals/hare.ts), the wolf with the player. Habitat spawn waits on T-0009. */
+const AGENT_PLACE: Record<string, Why> = {
+  hare: [{ step: 'born', by: 'birth' }, { step: 'wandered', by: 'interest-ring' }],
+  wolf: [{ step: 'born', by: 'birth' }, { step: 'wandered', by: 'player' }],
+};
+export function agentWhy(species: string): Why {
+  const w = AGENT_PLACE[species]; if (!w) throw new Error(`no why for ${species}`);
+  return copy(w);
+}
+/** The record's chain if a transaction wrote one, else the derived chain. With x and z, the chain names the placement
+ *  cause. Without them, the kind default (no site), so a caller that has no position cannot invent one. */
+export function whyOf(e: Pick<Entity, 'kind'> & Partial<Pick<Entity, 'x' | 'z'>>, record?: { why?: Why }): Why {
+  if (record?.why) return copy(record.why);
+  const base = copy(WHY_DEFAULTS[e.kind]);
+  return typeof e.x === 'number' && typeof e.z === 'number' ? place(base, e.kind, e.x, e.z) : base;
+}
+/** Append the live goal. Replaces any previous doing step. Does not mutate `w` and is not written by transactions. */
+export function withDoing(w: Why, goal: DoingGoal, because: string): Why {
+  const by = (because || 'unspecified').replace(/\s+/g, ' ').slice(0, ID_MAX) || 'unspecified';
+  const out = [...copy(w).filter(s => !(DOING as readonly string[]).includes(s.step)), { step: goal, by }];
+  return out.length > WHY_MAX ? [out[0], ...out.slice(out.length - WHY_MAX + 1)] : out;
+}
+/** AnimalBrain.problem -> the doing step. `explore` says nothing was sensed: that is what the brain does today. */
+export function doingFromProblem(problem: string, energy: number, targetKind?: string): { goal: DoingGoal; because: string } {
+  const n = Math.round(energy);
+  switch (problem) {
+    case 'feed': return { goal: 'grazing', because: `energy ${n}%` };
+    case 'escape': return { goal: 'fleeing', because: targetKind ?? 'threat' };
+    case 'recover': return { goal: 'recovering', because: `energy ${n}%` };
+    case 'avoid': return { goal: 'seeking', because: 'obstacle' };
+    case 'player': return { goal: 'steered', because: 'player' };
+    default: return { goal: 'exploring', because: 'nothing sensed' };
+  }
+}
+/** Sim state -> the doing step. A graze bout above the hunger line says so, instead of claiming hunger. */
+export function doingFromAgent(a: { species: string; state: string; energy: number; needs: { water: number; rest: number }; level: number }): { goal: DoingGoal; because: string } {
+  const below = NEEDS_SPECIES[a.species]?.behaviour.drives.energy.seekBelow.v ?? 80, n = Math.round(a.energy);
+  switch (a.state) {
+    case 'graze':
+    case 'eat': return { goal: 'grazing', because: a.energy < below ? `energy ${n}%` : `bout, energy ${n}%` };
+    case 'drink': return { goal: 'drinking', because: `water ${Math.round(a.needs.water)}%` };
+    case 'freeze': return { goal: 'alerting', because: `perceived ${a.level.toFixed(2)}` };
+    case 'flee': return { goal: 'fleeing', because: `perceived ${a.level.toFixed(2)}` };
+    case 'rest': return { goal: 'recovering', because: `rest ${Math.round(a.needs.rest)}%` };
+    case 'stalk':
+    case 'chase': return { goal: 'seeking', because: 'hunt' };
+    default: return { goal: 'exploring', because: 'nothing sensed' };
+  }
+}
+/** The two inspector lines. Same strings the panel prints. */
+export function inspectWhy(w: Why, title: string): { now: string; chain: string } {
+  return { now: `${title} - ${nowText(w)}`, chain: whyText(w) };
+}
 export const tip = (w: Why): WhyStep | undefined => w[w.length - 1];
 const anchorIndex = (w: Why) => { for (let i = w.length - 1; i >= 0; i--) if (!ONGOING.includes(w[i].step)) return i; return -1; };
 /** The last event step (skipping trailing ongoing steps): what a contact compares against. */
@@ -73,9 +166,12 @@ const name = (id: string) => id === 'ground' ? 'the ground' : id === 'player' ? 
 export function stepText(s: WhyStep): string {
   switch (s.step) {
     case 'resting': return `resting on ${name(s.on ?? 'ground')}`;
-    case 'embedded': return `embedded in ${name(s.on ?? 'ground')}`;
+    case 'embedded': return s.by === 'flow' ? 'embedded in the channel' : `embedded in ${name(s.on ?? 'ground')}`;
     case 'moved': return s.by ? `moved by ${name(s.by)}` : 'moved';
-    case 'grew': return 'grew and leafed out';
+    case 'grew': return s.by === 'flow' ? 'grew in the channel'
+      : s.by?.startsWith('sunlit-gap:') ? `grew in a sunlit gap (stand ${s.by.slice(11)} years since fire)`
+      : s.by?.startsWith('stand:') ? `grew in a stand ${s.by.slice(6)} years since fire`
+      : 'grew and leafed out';
     case 'sprouted': return 'sprouted from the ground';
     case 'dispersed': return 'seed dispersed';
     case 'seeded': return 'formed a seed';
@@ -84,7 +180,15 @@ export function stepText(s: WhyStep): string {
     case 'weakened': return 'a weak point built up';
     case 'failed': return 'failed under its own mass';
     case 'born': return 'born';
-    case 'wandered': return 'wandered here';
+    case 'wandered': return s.by === 'flow' ? 'wandered into the flow' : s.by === 'interest-ring' ? 'wandered into the near ring' : s.by === 'player' ? 'here with the player' : 'wandered here';
+    case 'grazing': return `grazing (${s.by ?? 'feeding'})`;
+    case 'fleeing': return `fleeing (${s.by ?? 'threat'})`;
+    case 'alerting': return `alert (${s.by ?? 'perceived'})`;
+    case 'drinking': return `drinking (${s.by ?? 'water'})`;
+    case 'recovering': return `recovering (${s.by ?? 'rest'})`;
+    case 'exploring': return `moving (${s.by ?? 'nothing sensed'})`;
+    case 'seeking': return `seeking (${s.by ?? 'a goal'})`;
+    case 'steered': return `steered (${s.by ?? 'player'})`;
     case 'pulled': return 'pulled down by gravity';
     case 'tipped': return 'tipped over';
     case 'displaced': return `displaced ${name(s.on ?? 'ground')} (the earth yields)`;

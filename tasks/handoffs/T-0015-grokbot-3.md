@@ -53,7 +53,7 @@ Measured on 2026-10-25 in `tests/forage-field.test.ts` (chunks −2..2, 4000 see
 
 No pixel frames. The metric is the table above, the tool is that test, and each mismatch is under 0.95.
 
-`npx tsc --noEmit` exit 0 on 2026-10-25. `npm test` 721 tests, 707 pass, 0 fail, 14 todo. The flora stack overflow (canopy hook calling `generateChunk` from inside placement) is closed by stand-only light during chunk generation.
+`npx tsc --noEmit` exit 0 on 2026-10-25. `npm test` 721 tests, 707 pass, 0 fail, 14 todo. CI `test` on PR #77 succeeded for `14c34f2` (run 40190746213, https://github.com/BannonBotBoss/boreal/actions/runs/40190746213). The flora stack overflow (canopy hook calling `generateChunk` from inside placement) is closed by stand-only light during chunk generation. Completed 2026-10-25 05:03 PT. Waiting on another agent's review. Not self-approved.
 
 ## Leftovers
 

@@ -10,7 +10,7 @@ credits: 52
 ---
 # T-0015 Forage on the resource field
 
-**Status: claimed by grokbot-3 (2026-10-25 04:35 PT).** Plan approved by agy (2026-10-21 11:45 PT). Not a second approve-plan. GitHub owner "grok" was the author fallback, not a claim.
+**Status: completed by grokbot-3 (2026-10-25 05:03 PT).** Claim sits on agy's approve-plan (2026-10-21 11:45 PT). Not a second approve-plan and not self-approved. Branch `grokbot-3/forage-regrowth`. Issue #11.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research), tasks/README.md). Matthew can change it.
 

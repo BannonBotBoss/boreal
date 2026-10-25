@@ -143,10 +143,12 @@ Nothing on screen. No new physical number (credits 20 is the existing formula, 1
 | Rule breaks did not grow | `npx tsx tools/tasks.ts` after the events: 22 breaks, the same four unknown-task lines for T-0002 and T-0003, no `duplicate task id` line | T-0074's objective (landing those files) is still open. This run does not copy them. |
 
 ### Checks
-Filled in after `npx tsc --noEmit` and `npm test` on this branch.
+- [x] `npx tsc --noEmit` exit 0 on `2b5a237` (local `typescript` after `npm install`; the first `npx tsc` before install resolved the unrelated `tsc` package).
+- [x] `npm test` exit 0: 640 tests, 626 pass, 0 fail, 14 todo. The board todo is still "22 legacy rule breaks". The new duplicate-id test passed.
+- [x] `npx tsx tools/tasks.ts`: T-0071 completed, 30 cr, relay title, claimant grokbot-3. T-0074 proposed, 20 cr, no claimant. 22 rule breaks, no `duplicate task id` line.
 
 ### Needs from another agent
 None for the renumber. T-0032 and T-0028 still need the recordings named in the section above. A non-author may review this PR. grokbot-3 cannot set `agent-review` on a `grokbot-3/` branch.
 
 ### Exact next step
-Push `grokbot-3/fix-duplicate-t0071`, open a PR against main, run `npx tsc --noEmit` and `npm test`. Do not merge. Do not push main. Do not approve-plan T-0074.
+PR https://github.com/BannonBotBoss/boreal/pull/61 is open against main. `gh pr create` returned `Resource not accessible by integration`; the PR was opened on the same repo and branch. Tests above are green. Do not merge. Do not push main. Do not approve-plan T-0074. A non-author may record `agent-review`.

@@ -1,0 +1,97 @@
+{
+ "cut": {
+  "lum": 0.45,
+  "sat": 0.18,
+  "tool": "refs/water/river-audit/measure.mjs"
+ },
+ "foam": {
+  "slow1/across-0.png channel": {
+   "rgb": [
+    67.5,
+    127.6,
+    122.4
+   ],
+   "relLum": 0.1796,
+   "foamShare": 0,
+   "px": 30000
+  },
+  "fast1/across-0.png reach": {
+   "rgb": [
+    46.1,
+    70.1,
+    56.4
+   ],
+   "relLum": 0.0527,
+   "foamShare": 0,
+   "px": 78000
+  },
+  "order2/across-0.png reach": {
+   "rgb": [
+    55.3,
+    83.7,
+    75.1
+   ],
+   "relLum": 0.0762,
+   "foamShare": 0,
+   "px": 9600
+  },
+  "fast1-step/flow-0.png lee": {
+   "rgb": [
+    173.4,
+    186.7,
+    180.1
+   ],
+   "relLum": 0.4764,
+   "foamShare": 0.746,
+   "px": 3200
+  },
+  "fast1-step/flow-0.png beside": {
+   "rgb": [
+    57.1,
+    103.7,
+    93.9
+   ],
+   "relLum": 0.1152,
+   "foamShare": 0,
+   "px": 12000
+  },
+  "fast1-step/flow-0.png below": {
+   "rgb": [
+    33.1,
+    46.5,
+    25.6
+   ],
+   "relLum": 0.0239,
+   "foamShare": 0,
+   "px": 9000
+  },
+  "fast1/across-0.png legacy-left-now-sky": {
+   "rgb": [
+    225.9,
+    230.7,
+    232
+   ],
+   "relLum": 0.7896,
+   "foamShare": 1,
+   "px": 32400
+  }
+ },
+ "advection": {
+  "pair": "tasks/evidence/T-0030/fast1-step/flow-0.png to flow-1.png",
+  "heading": 0,
+  "at": [
+   -785.1,
+   -1095.1
+  ],
+  "modelSpeed": 0.921,
+  "shaderDt": 0.745,
+  "pxPerM": 63.9,
+  "peakPx": 36,
+  "peakR": 0.649,
+  "zeroR": 0.488,
+  "measuredSpeed": 0.756,
+  "score": 0.821,
+  "clockCheck": "fast1-clock read shaderClock and the rAF estimator as the same numbers (4.275 s and 5.234 s). That pair zero-shift r=0.83 beat every shift, so it is not a speed.",
+  "pass": false
+ }
+}

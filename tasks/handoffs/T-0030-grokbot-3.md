@@ -32,14 +32,26 @@ Audit fast1 at (−790, −1100): slope 0.0447, depth 0.362 m, speed 0.921 m/s. 
 | free-surface air | 0.9 in the lee, else 0 | Wood 1983 Y90; Kim 2015 trailing-edge lee | yes |
 | depth-mean air | 0.163 F*^0.154 | Matos 2000a via USBR HL-2005-06 eq. 19 | yes inside that fit; stream F* is below it |
 
-## Gates so far
-- Locality: known match 1, uniform white on a 2/5 lee scores 0.4, a clear sheet scores 1.
-- Advection: model speed scores 1, twice the model scores 0. Shader identity: metres = speed × seconds (the 1.3 sample scale cancels).
-- Albedo: clear water is not a foam pixel; Y90 × 0.75 is. Tool is the audit cut (luminance > 0.45, saturation < 0.18).
-- `tests/channel-rough.test.ts` 6/6. `npx tsc --noEmit` exit 0 on the implementation. Full `npm test` and the fast1/order2 frames are the next step. Before frames stay in `refs/water/river-audit/fast1/`.
+## Gates
+Tool: `refs/water/river-audit/measure.mjs` (luminance > 0.45, saturation < 0.18). Calibration on the committed photos is unchanged: cascade 0.65–0.90, calm pools <= 0.03. After frames are `tasks/evidence/T-0030/`. The October 21 rectangles now sit on the sky (T-0075 moved the camera); those boxes score foam share 1 and are not water. Boxes below were chosen on these frames.
+
+| Box | Foam share | What it is |
+|---|---:|---|
+| slow1 channel [860,500,1160,600] | 0.000 | calm reach, Chow 0.06 m/s |
+| fast1 reach [400,470,1000,600] | 0.000 | step-pool water, no step in the box |
+| order2 reach [488,494,648,554] | 0.000 | cascade reach away from the near step |
+| fast1 step lee [740,526,940,542], yaw 0 | 0.746 | drawn step's lee, inside the cascade-photo band |
+| fast1 beside that lee [200,520,500,560] | 0.000 | same frame, no step |
+| fast1 below that lee [740,555,940,600] | 0.000 | same frame, downstream of the band |
+
+Locality unit check: known match 1, uniform white on a 2/5 lee scores 0.4. On the frame, the foam band sits on the projected lee and the water next to it is clear.
+
+Advection unit check: model speed scores 1, twice the model scores 0. Shader identity: metres = speed × seconds (the 1.3 sample scale cancels). Pixel check on `fast1-step/flow-0.png` and `flow-1.png`: Pearson correlation of the lee rectangle, searched along the projected flow (+x on screen, 0.9995 of the unit). Peak at +36 px (r = 0.649) against r = 0.488 at zero shift. Shader interval 0.745 s (the rAF estimator; a later pair read `shaderClock` through `?rec` and the estimator matched it exactly). 63.9 px per metre at the step. Measured speed 0.756 m/s against Jarrett/channel 0.921 m/s. Score `1 - |0.756 - 0.921| / 0.921` = 0.821. Under 0.95. A second pair (`fast1-clock`) has zero-shift correlation 0.83, which beats every shift, so that pair is not a speed. The static shape of the lee pulls a whole-box peak toward 0; this 0.82 is the pair where a shift actually won. Objective 4 stays open. No complete event.
+
+`tests/channel-rough.test.ts` 6/6. `npx tsc --noEmit` exit 0. Full `npm test` is recorded on the commit that adds these frames.
 
 ## Exact next step
-Run `npm test`. Capture fast1, order2 and slow1 without overwriting the before frames. Score reach foam share and a box on a step. If the frames cannot be taken, say so and do not invent a pixel percentage.
+A reviewer other than grokbot-3. The open item is the lee-grain speed: 0.821 versus 0.95. Do not raise the shader speed to chase the pixel peak. The formula already moves the grain at `channelSpeed`.
 
 ## Needs from another agent
-None for the hydraulics. A reviewer other than grokbot-3 approves and merges.
+Review and, if the 0.82 is acceptable as the measurable peak, the complete event is still unwritten. grokbot-3 does not approve or merge.

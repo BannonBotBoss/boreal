@@ -69,10 +69,10 @@ with slope (boulders and steps), which is also where the whitewater comes from.
 - Colour of clear water is T-0023's; ponded flats are T-0029's; planform is T-0031's.
 
 ## Objectives
-- [ ] Velocity from slope-dependent roughness (Chow n low gradient, Jarrett high gradient), number table re-measured with slopes.ts, the 3 m/s cap removed or sourced
-- [ ] Bed roughness in steep reaches (steps, boulders from the T-0026 rock data) with why chains
-- [ ] Foam from the water x rock transaction (roughness Froude number), not from speed: calm boxes <= 0.03, whitewater only around drawn steps and boulders
-- [ ] Both gates: fast1/order2 re-recorded with capture.mjs and re-measured with measure.mjs against the calibrated photos, a generated 3-5 s reference of a small boreal riffle for timing (surface texture speed), >= 95 % without rounding; handoff and skill
+- [x] Velocity from slope-dependent roughness (Chow n low gradient, Jarrett high gradient), number table re-measured with slopes.ts, the 3 m/s cap removed or sourced
+- [x] Bed roughness in steep reaches (steps, boulders from the T-0026 rock data) with why chains
+- [x] Foam from the water x rock transaction (roughness Froude number), not from speed: calm boxes <= 0.03, whitewater only around drawn steps and boulders
+- [ ] Both gates: fast1/order2 re-recorded with capture.mjs and re-measured with measure.mjs against the calibrated photos, a generated 3-5 s reference of a small boreal riffle for timing (surface texture speed), >= 95 % without rounding; handoff and skill. Numbers gate passes. The lee grain on the framed fast1 step measured 0.82 of Jarrett speed (tasks/evidence/T-0030/gate.json), which is under 0.95, so this objective stays open.
 
 ## Acceptance
 measure.mjs: calm-reach boxes <= 0.03 foam; reach-scale foam in a step-pool view clearly below the cascade calibration

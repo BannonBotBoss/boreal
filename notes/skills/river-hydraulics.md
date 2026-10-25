@@ -16,6 +16,8 @@ Use this when a channel's speed or whitewater is wrong (T-0030). One Manning n p
 - `tests/channel-rough.test.ts`. Known match for locality is 1. Uniform white on a 2/5 lee scores 0.4. Advection of the model speed scores 1; twice that scores 0. Clear albedo is not a foam pixel; Y90 times 0.75 is.
 - `npx tsx refs/water/river-audit/slopes.ts`. Step-pool and cascade medians match Jarrett. The old 9.6% share pegged at 3 m/s goes to 0. Flat fills stay Chow (they are T-0029's ponds).
 - Pixel foam share is `refs/water/river-audit/measure.mjs`: luminance > 0.45 and saturation < 0.18. Calm boxes <= 0.03. A reach box stays below the cascade photos (0.65–0.90) except a box on a drawn step.
+- After T-0075 the October 21 audit rectangles sit on the sky. Pick the water rectangle on the after frame before scoring it. A step that the across heading leaves off-screen needs a heading that puts the lee in the lower half of the frame (`positionCamera` in `render/math.ts`).
+- Advection: Pearson correlation of the lee rectangle between two stills, shift along the projected flow, metres from pixels-per-metre at that point, seconds from `shaderClock` (`?rec` exposes `__boreal.shaderTime()`). Known match is a shift of `speed * dt * pxPerM`. The static lee shape pulls the peak toward 0, so a whole-box peak can undershoot. Do not treat a peak that loses to the zero shift as a speed.
 - `npx tsc --noEmit` and `npm test`.
 
 ## Mistakes
@@ -25,3 +27,4 @@ Use this when a channel's speed or whitewater is wrong (T-0030). One Manning n p
 - Do not spawn the steps when `STAGES.on` is false. `tests/proc.test.ts` pins that chunk digest.
 - Jarrett's fit is S 0.002–0.04 and R about 0.15–2.1 m. Steeper cells still use his equation; say they are outside the fit instead of inventing another n.
 - Overwriting `refs/water/river-audit/fast1/` destroys the before frames. Write after frames beside them.
+- On a machine with no GPU, `capture.mjs` uses Chrome SwiftShader. `?noprobe` skips the globe prewarm and the Ultra bench so the ground view can finish. A screenshot can take a minute. `RIVER_AUDIT_OUT` keeps the before frames. The bench lock kills the browser at 10 minutes; a software renderer needs longer, so set `RIVER_AUDIT_NO_LOCK` only on a machine you are not sharing.

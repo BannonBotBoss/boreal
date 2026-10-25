@@ -1,0 +1,66 @@
+{
+  "site": "fast1",
+  "river": {
+    "x": -790,
+    "z": -1100,
+    "order": 1,
+    "widthM": 5.25,
+    "depthM": 0.36,
+    "speed": 3,
+    "areaKm2": 2.14,
+    "dir": [
+      0.7071067811865475,
+      -0.7071067811865475
+    ]
+  },
+  "urlAcross": "http://127.0.0.1:5214/?nomenu&noprobe&hour=12&stages=1&at=-785.1,-1095.1,0.785",
+  "urlDown": "http://127.0.0.1:5214/?nomenu&noprobe&hour=12&stages=1&at=-785.1,-1095.1,-0.785",
+  "info": {
+    "w": 1280,
+    "h": 720,
+    "vis": "visible",
+    "status": "12:10 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+    "canvas": true
+  },
+  "shots": [
+    {
+      "f": "across-0.png",
+      "at": "2026-10-25T16:15:42.441Z",
+      "est": {
+        "shader": 3.6703999999999963,
+        "frames": 269,
+        "t": 64121.4
+      }
+    },
+    {
+      "f": "downstream-0.png",
+      "at": "2026-10-25T16:18:27.422Z",
+      "est": {
+        "shader": 2.9720000000000075,
+        "frames": 214,
+        "t": 60309.6
+      }
+    }
+  ],
+  "flow": [
+    {
+      "f": "flow-0.png",
+      "at": "2026-10-25T16:16:40.798Z",
+      "est": {
+        "shader": 3.720399999999996,
+        "frames": 270,
+        "t": 65577.6
+      }
+    },
+    {
+      "f": "flow-1.png",
+      "at": "2026-10-25T16:17:24.984Z",
+      "est": {
+        "shader": 5.40900000000001,
+        "frames": 393,
+        "t": 94333.2
+      }
+    }
+  ],
+  "errors": []
+}

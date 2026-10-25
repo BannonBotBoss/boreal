@@ -1,0 +1,19 @@
+{
+  "port": "5273",
+  "info": {
+    "href": "http://127.0.0.1:5273/?nomenu&bench&hour=12&wake&at=18,0,1.571",
+    "w": 1280,
+    "h": 720,
+    "gl": true
+  },
+  "shots": [
+    "top-before",
+    "top-walk",
+    "top-stop",
+    "top-aged",
+    "wade-3",
+    "wade-5",
+    "wade-stop"
+  ],
+  "errors": []
+}

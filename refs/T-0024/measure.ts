@@ -103,36 +103,110 @@ const synthetic = {
   mismatch: scorePng('refs/T-0024/synthetic-mismatch.png', radius, angleDeg),
 };
 
-const dir = 'refs/T-0024';
-const frames: Record<string, unknown> = {};
-for (const label of ['top-2s', 'top-4s', 'top-6s', 'top-stop']) {
-  if (!existsSync(`${dir}/${label}.png`) || !existsSync(`${dir}/${label}.json`)) continue;
-  const wake = JSON.parse(readFileSync(`${dir}/${label}.json`, 'utf8')) as {
-    now?: number; view?: TopCam; rings?: { x: number; z: number; t0: number; amp: number }[];
-    wakes?: { x: number; z: number; heading: number; t0: number; speed: number; angle: number; length: number; amp: number }[];
-  };
-  if (!wake?.view || wake.now === undefined) { frames[label] = { missing: true }; continue; }
-  const img = png(`${dir}/${label}.png`);
-  const body = { x: wake.view.x, z: wake.view.z };
-  const pts = brightPoints(img, wake.view, 0.35).filter(p => Math.hypot(p.x - body.x, p.z - body.z) > 0.45);
-  const slot = (wake.wakes ?? []).filter(w => w.amp > 0).at(-1);
-  const ringFits = (wake.rings ?? []).filter(r => r.amp > 0).map(r => {
-    const age = Math.max(0, wake.now! - r.t0);
-    const expected = WAVE.cg * age;
-    const near = pts.filter(p => Math.hypot(p.x - r.x, p.z - r.z) < Math.max(0.55, expected + 0.25));
-    const fit = fitDisturbance(near, r, slot?.heading ?? wake.view!.heading);
-    const sc = expected > 0.05 ? wakeScore({ radius: fit.radius, angleDeg: 1 }, { radius: expected, angleDeg: 1 }) : undefined;
-    return { age, expected, radius: fit.radius, nRadius: fit.nRadius, score: sc?.radius };
-  }).filter(r => r.age > 0.2 && r.nRadius > 20);
-  let angle: { angleDeg: number; expected: number; nAngle: number; score: number } | undefined;
-  if (slot) {
-    const fit = fitDisturbance(pts, slot, slot.heading);
-    const expected = slot.angle * 180 / Math.PI;
-    angle = { angleDeg: fit.angleDeg, expected, nAngle: fit.nAngle, score: wakeScore(fit, { radius: fit.radius || 1, angleDeg: expected }).angle };
-  }
-  const best = ringFits.slice().sort((a, b) => (b.score ?? -1) - (a.score ?? -1))[0];
-  frames[label] = { speed: slot?.speed, best, angle, bright: pts.length };
+type Shot = {
+  now?: number; view?: TopCam;
+  rings?: { x: number; z: number; t0: number; amp: number }[];
+  wakes?: { x: number; z: number; heading: number; speed: number; angle: number; amp: number }[];
+};
+function shot(label: string): { img: ReturnType<typeof png>; wake: Shot } | undefined {
+  if (!existsSync(`${dir}/${label}.png`) || !existsSync(`${dir}/${label}.json`)) return undefined;
+  const wake = JSON.parse(readFileSync(`${dir}/${label}.json`, 'utf8')) as Shot;
+  if (!wake.view || wake.now === undefined) return undefined;
+  return { img: png(`${dir}/${label}.png`), wake };
 }
+/** Screen luminance on the sRGB scale the PNG stores, so a ridge and the lake can be compared by eye. */
+function srgbLum(img: ReturnType<typeof png>, view: TopCam, x: number, z: number) {
+  const s = projectTop({ x, z }, view, img.w, img.h);
+  const px = Math.round(s.x), py = Math.round(s.y);
+  if (px < 0 || py < 0 || px >= img.w || py >= img.h) return undefined;
+  const i = px * img.bpp, row = img.rows[py];
+  return 0.2126 * row[i] + 0.7152 * row[i + 1] + 0.0722 * row[i + 2];
+}
+/**
+ * Wake angle. Mean luminance along each half-angle, background = median of the arms outside 12–30°,
+ * measured angle = the luminance-weighted mean of the degrees above half the peak excess.
+ * A frame whose peak excess is under 15 is unmeasurable: the lake has been lifted flat by adaptation.
+ */
+function gameAngle(label: string) {
+  const s = shot(label); if (!s) return { missing: true };
+  const slot = (s.wake.wakes ?? []).filter(w => w.amp > 0).at(-1);
+  if (!slot) return { noWake: true };
+  const fx = -Math.sin(slot.heading), fz = -Math.cos(slot.heading);
+  const rx = Math.cos(slot.heading), rz = -Math.sin(slot.heading);
+  const rows: { deg: number; L: number }[] = [];
+  for (let deg = 5; deg <= 50; deg++) {
+    let sum = 0, n = 0;
+    for (let behind = 0.45; behind <= 2.4; behind += 0.06) for (const sign of [-1, 1]) {
+      const lateral = sign * Math.tan(deg * Math.PI / 180) * behind;
+      const L = srgbLum(s.img, s.wake.view!, slot.x - behind * fx + lateral * rx, slot.z - behind * fz + lateral * rz);
+      if (L === undefined) continue; sum += L; n++;
+    }
+    if (n) rows.push({ deg, L: sum / n });
+  }
+  const floor = rows.filter(o => o.deg < 12 || o.deg > 30).map(o => o.L).sort((a, b) => a - b);
+  const bg = floor[Math.floor(floor.length / 2)] ?? 0;
+  const max = Math.max(...rows.map(o => o.L));
+  const contrast = max - bg;
+  const expected = slot.angle * 180 / Math.PI;
+  if (!(contrast >= 15)) return { speed: slot.speed, expected, contrast, unmeasurable: 'peak excess under 15: the lake is flat' };
+  const hot = rows.filter(o => o.L - bg > 0.5 * contrast);
+  let sw = 0, sd = 0; for (const o of hot) { const w = o.L - bg; sw += w; sd += w * o.deg; }
+  const measured = sd / sw;
+  const score = 1 - Math.abs(measured - expected) / expected;
+  return { speed: slot.speed, measured, expected, contrast, score, hot: hot.map(o => o.deg) };
+}
+/**
+ * Ring front. A ring is measurable only when its ridge clears the body (center farther than 0.5 m plus the
+ * expected radius); closer than that the wolf covers the water. Azimuths within 60° of the other paw of the
+ * same step are left out. The radius is the parabolic peak of the 1 cm mean-luminance profile.
+ */
+function gameRings(label: string) {
+  const s = shot(label); if (!s) return { missing: true };
+  const body = s.wake.view!;
+  const rings = (s.wake.rings ?? []).filter(r => r.amp > 0 && s.wake.now! - r.t0 > 0.4);
+  const scored = rings.map(r => {
+    const age = s.wake.now! - r.t0, expected = WAVE.cg * age;
+    const clear = Math.hypot(r.x - body.x, r.z - body.z) > 0.5 + expected;
+    if (!clear) return { age, expected, clear };
+    const sib = rings.find(o => o !== r && Math.abs(o.t0 - r.t0) < 1e-6);
+    const bins = new Map<number, number[]>();
+    for (let deg = 0; deg < 360; deg += 4) {
+      const t = deg * Math.PI / 180, dx = Math.cos(t), dz = Math.sin(t);
+      if (sib) {
+        const sx = sib.x - r.x, sz = sib.z - r.z, sl = Math.hypot(sx, sz) || 1;
+        if ((dx * sx + dz * sz) / sl > 0.5) continue;
+      }
+      for (let rad = 0.03; rad <= Math.max(0.45, expected * 2); rad += 0.01) {
+        const L = srgbLum(s.img, body, r.x + dx * rad, r.z + dz * rad);
+        if (L === undefined) continue;
+        const b = Math.round(rad * 100), arr = bins.get(b); if (arr) arr.push(L); else bins.set(b, [L]);
+      }
+    }
+    let bestB = 0, bestL = -1;
+    for (const [b, arr] of bins) {
+      if (arr.length < 8) continue;
+      const m = arr.reduce((a, c) => a + c, 0) / arr.length;
+      if (m > bestL) { bestL = m; bestB = b; }
+    }
+    const mean = (b: number) => { const a = bins.get(b); return a && a.length > 5 ? a.reduce((p, q) => p + q, 0) / a.length : undefined; };
+    const yl = mean(bestB - 1), yr = mean(bestB + 1);
+    let peak = bestB / 100;
+    if (yl !== undefined && yr !== undefined) {
+      const den = yl - 2 * bestL + yr;
+      if (den !== 0) peak = (bestB + 0.5 * (yl - yr) / den) / 100;
+    }
+    return { age, expected, clear, peak, score: 1 - Math.abs(peak - expected) / expected };
+  });
+  return { rings: scored };
+}
+
+const dir = 'refs/T-0024';
+const frames = {
+  walkAngle: gameAngle('top-walk'),
+  stopAngle: gameAngle('top-stop'),
+  stopRings: gameRings('top-stop'),
+  agedAngle: gameAngle('top-aged'),
+};
 
 const report = {
   wave: { c: WAVE.c, cg: WAVE.cg, kelvinDeg: WAVE.kelvin * 180 / Math.PI, walkDeg: angleDeg, walkFr: fr },
@@ -143,3 +217,8 @@ writeFileSync(`${dir}/measure.json`, JSON.stringify(report, null, 2));
 console.log(JSON.stringify({ synthetic, frameKeys: Object.keys(frames) }, null, 2));
 if (!(synthetic.match.score >= 0.95)) process.exitCode = 1;
 if (!(synthetic.mismatch.score < 0.7)) process.exitCode = 1;
+const ringScores = (frames.stopRings.rings ?? []).filter(r => r.clear && typeof r.score === 'number').map(r => r.score as number);
+if (ringScores.length < 1 || ringScores.some(s => !(s >= 0.95))) process.exitCode = 1;
+for (const a of [frames.walkAngle, frames.stopAngle]) {
+  if (!('score' in a) || !(a.score >= 0.95)) process.exitCode = 1;
+}

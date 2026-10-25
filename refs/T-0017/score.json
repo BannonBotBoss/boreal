@@ -1,0 +1,31 @@
+{
+  "task": "T-0017",
+  "metric": "timingScore = 1 - |mean interval - expected| / expected; positionScore = matching habitat / callers",
+  "calibration": "known match >= 0.95; known mismatch (doubled interval, or loons moved onto land) < 0.7",
+  "timing": {
+    "loonNight": 1,
+    "loonDay": 0.9999999999999998,
+    "loonPlayback30Hz": 0.9999968888885354,
+    "woodpecker": 1,
+    "woodpeckerPlayback30Hz": 0.9999999999999541,
+    "pantDt001": 0.9872999999999852,
+    "pantDt30Hz": 0.9784166666666445,
+    "doubledLoonInterval": 0,
+    "pantAt3_2s": -2.2640000000000007
+  },
+  "position": {
+    "lakeStub": 1,
+    "forestStub": 1,
+    "loonsMovedToLand": 0,
+    "realTerrain": 1
+  },
+  "expected": {
+    "loonNightGap": 215.82733812949638,
+    "loonDayGap": 5419.354838709677,
+    "woodpeckerGap": 15,
+    "pantGap": 0.7504690431519699,
+    "loons": 1,
+    "woodpeckers": 555
+  },
+  "pixels": "unmeasurable: a frame does not show a call interval or a caller coordinate"
+}

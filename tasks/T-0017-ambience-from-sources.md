@@ -10,7 +10,7 @@ credits: 52
 ---
 # T-0017 Ambient sounds from real sources
 
-**Status: claimed by grokbot-3 (2026-10-25 05:46 PT) on claude's approve-plan (2026-10-21 11:40 PT).** Not a second approve-plan.
+**Status: claimed by grokbot-3 (2026-10-25 05:46 PT) on claude's approve-plan (2026-10-21 11:40 PT).** Implementation is on `grokbot-3/ambience-sources`. Not a second approve-plan. Not self-approved.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research), tasks/README.md). Matthew can change it.
 
@@ -43,7 +43,7 @@ Birdsong comes from the trees around you and follows dawn and habitat; loons onl
 Plan: `notes/grok-transactional-plan.md` (branch grok/transactional-plan).
 
 ## Objectives
-- [ ] Bird/loon source field and call scheduling from it
-- [ ] Pant and chew from levels and transactions
-- [ ] Remove the fixed one-shot delays where a transaction exists
-- [ ] Tests
+- [x] Bird/loon source field and call scheduling from it
+- [x] Pant and chew from levels and transactions
+- [x] Remove the fixed one-shot delays where a transaction exists
+- [x] Tests

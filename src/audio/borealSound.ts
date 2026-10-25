@@ -8,7 +8,9 @@
  */
 import { windAt } from '../core/weather';
 import { stream } from '../proc/rng';
-import { heightAt } from '../core/world';
+import { heightAt, WORLD_SEED } from '../core/world';
+import { callTimes, callersNear, habitatOf, mealChews, pantGap, shouldPant } from '../core/callField';
+import { DAY_OF_YEAR } from '../core/timeOfDay';
 import { LEVEL } from '../core/tuning';
 import { RENDER } from '../core/renderSettings';
 /** Sound variation is seeded too (PROJECT-RULES.md rule 1). */
@@ -22,6 +24,7 @@ import { pawGate, pawSound, touchdownStrength } from './footsteps';
 /** Paw touchdown gaits that use the run clip (gallop family); walk/trot/pace use the walk clip. */
 const RUN_GAITS = new Set(['canter', 'gallop', 'half-bound', 'gallop-lagomorph', 'pronk']);
 import { BUSES, BUS_LEVEL, BUS_STATE, CULL_DISTANCE, VOICES, VOICE_TRIM_DB, admitVoice, busOf, createVolumeStore, onBusChange, priorityOf, trim, type ActiveVoice, type Bus } from './mixer';
+export { mealChews };
 /** Footstep clips hold several footfalls; each gait event plays ONE footfall slice (onsets measured from the clips). */
 const STEP_SLICES: Partial<Record<string, { onsets: number[]; len: number }>> = { 'paw-walk': { onsets: [0, .61], len: .35 }, 'paw-run': { onsets: [.11, .23, .44, .73, 1.03, 1.34, 1.65], len: .2 } };
 export const SOUND_IDS = ['amb-day', 'amb-night', 'wind-pines', 'water', 'loon', 'wolf-howl', 'wolf-growl',
@@ -35,12 +38,11 @@ export const MIX = {
   ambience: { day: .5, night: .45, wind: .25, water: .5 },
   crossfadeSeconds: 2.5,
   wolfSteps: .35, deerSteps: .5, snort: .9, hooves: .8, chew: .6, land: .7, howl: .9, growl: .8, loon: .35,
-  loonEverySeconds: [45, 110] as [number, number],
   hearingDistance: 40,
   music: { day: .35, night: .3, duck: .45, duckRecoverSeconds: .8 },
   ui: .35, pause: .5, whine: .8, pluck: .8, stoneRoll: .8, pant: .6, sprint: .6, stealth: .5, visitor: .7, friend: .6,
   voice: 1, hareHop: .6, hareSqueak: .6, pounce: .8,
-  birds: .3, birdEverySeconds: [20, 50] as [number, number], dawn: .45,
+  birds: .3, dawn: .45,
 };
 
 export interface AudibleAnimal { key: string; motion: string; problem: string; x?: number; z?: number; phase?: number; /** one bite crossed biteG this step */ chew?: boolean; /** the bolt snort this step */ snort?: boolean }
@@ -57,9 +59,11 @@ export function deerSoundIds(prev: { problem: string; motion: string; phase: num
 }
 export interface SoundFrame {
   dt: number; halted: boolean; x: number; z: number; yaw: number; darkness: number;
+  /** game hour and day-of-year. Callers are silent until both are set, so a missing clock cannot fall back to a phantom timer. */
+  hour?: number; day?: number;
   /** gaitSpeed/gaitName/legs (an AnimalBrain has them): footsteps land on the gait's own touchdowns, not a fixed timer */
-  wolf: { motion: string; phase: number; gaitSpeed?: number; gaitName?: GaitName; legs?: LegDims };
-  mode?: string; exhausted?: boolean; /** player mass + the default wolf mass (landing impact scaling) */ mass?: number; refMass?: number; /** core/ground footing().absorb: soft ground = quieter thud, weaker haptic */ groundAbsorb?: number;
+  wolf: { motion: string; phase: number; speed?: number; gaitSpeed?: number; gaitName?: GaitName; legs?: LegDims };
+  mode?: string; exhausted?: boolean; stamina?: number; maxStamina?: number; /** player mass + the default wolf mass (landing impact scaling) */ mass?: number; refMass?: number; /** core/ground footing().absorb: soft ground = quieter thud, weaker haptic */ groundAbsorb?: number;
   animals: AudibleAnimal[];
 }
 
@@ -76,12 +80,12 @@ export class BorealSound {
   private loopLevel = new Map<SoundId, number>();
   /** Bus levels, mute and music on/off (persisted as boreal.volume.v1); the Sound panel and the keys both write here. */
   readonly volumeStore = createVolumeStore();
-  private wolfMode = 'walk'; private wasExhausted = false; private prevDark = -1; private nextBird = 15; private nextPant = 0;
+  private wolfMode = 'walk'; private prevDark = -1; private nextPant = 0;
   private buffers = new Map<SoundId, AudioBuffer>();
   private loops = new Map<SoundId, GainNode>();
   private prev = new Map<string, { problem: string; motion: string; phase: number }>();
   private wolfPrev = { motion: 'idle', phase: 0 }; private lastTouch = -1e9; private pawState = { last: -1e9 }; private lastSlice = new Map<SoundId, number>();
-  private nextLoon = 30; private time = 0; private waterAmount = 0; private waterCheck = 0;
+  private time = 0; private waterAmount = 0; private waterCheck = 0;
   private haltedNow = false;
   get volume() { return BUS_LEVEL.master; } get muted() { return BUS_STATE.muted; } get musicVolume() { return BUS_LEVEL.music; } get musicOn() { return BUS_STATE.musicOn; }
   /** false = the audio/music module's source replaces the built-in music-day/night loops. */
@@ -211,13 +215,17 @@ export class BorealSound {
     if (this.duck) { const t = ctx.currentTime, g = this.duck.gain; g.cancelScheduledValues(t); g.setTargetAtTime(MIX.music.duck * .6, t, .05); g.setTargetAtTime(1, t + buffer.duration, MIX.music.duckRecoverSeconds); }
     return buffer.duration;
   }
-  /** One squeal from the bite row (T-0014). Not the caught path: that one also schedules a chew. */
+  /** One squeal from the bite row (T-0014). The chew is the eat transaction (chewAt), not a delay after the squeal. */
   squeal(at: { x: number; z: number }) { this.playAt('hare-squeak', at, MIX.hareSqueak); }
+  /** One chew per bite of a graze or an eat (mealChews). Deer already pass a chew flag from the graze row. */
+  chewAt(at?: { x: number; z: number }) { this.playAt('chew', at, MIX.chew); }
+  /** A loon caller inside the cull. The night voice line about loons uses this, not darkness alone. */
+  loonNear(x: number, z: number) { return callersNear(x, z, CULL_DISTANCE, habitatOf, WORLD_SEED).some(c => c.kind === 'loon'); }
   /** Hare events from src/animals/hare.ts. */
   hare(type: 'caught' | 'bolt' | 'hop', at: { x: number; z: number }) {
     if (type === 'bolt') { this.playAt('hare-squeak', at, MIX.hareSqueak * .5); this.playAt('hare-hop', at, MIX.hareHop); }
     else if (type === 'hop') this.playAt('hare-hop', at, MIX.hareHop * .4);
-    else { this.playAt('pounce', undefined, MIX.pounce); this.playAt('hare-squeak', at, MIX.hareSqueak); setTimeout(() => this.playAt('chew', undefined, MIX.chew), 500); }
+    else { this.playAt('pounce', undefined, MIX.pounce); this.playAt('hare-squeak', at, MIX.hareSqueak); }
   }
   /** Pause / resume cue; plays even though the context is about to suspend. */
   /** One player paw touchdown: clip by gait (walk/trot/pace vs canter/gallop/bound/pronk), level by strength (0.3 slow walk .. 1
@@ -257,22 +265,21 @@ export class BorealSound {
     this.setLoop('music-night', this.builtInMusic ? MIX.music.night * d : 0);
     if (this.prevDark > .5 && d <= .5) this.playAt('dawn-chorus', undefined, MIX.dawn);
     this.prevDark = d;
-    if (this.time > this.nextBird && RENDER.birdRate > 0) {
-      this.nextBird = this.time + (MIX.birdEverySeconds[0] + soundRng() * (MIX.birdEverySeconds[1] - MIX.birdEverySeconds[0])) / RENDER.birdRate;
-      const a = soundRng() * Math.PI * 2, r = 15 + soundRng() * 20, at = { x: f.x + Math.sin(a) * r, z: f.z + Math.cos(a) * r };
-      this.playAt(d > .5 ? 'owl' : soundRng() < .5 ? 'raven' : 'woodpecker', at, MIX.birds);
+    if (RENDER.birdRate > 0 && f.hour !== undefined) {
+      const day = f.day ?? DAY_OF_YEAR;
+      for (const c of callersNear(f.x, f.z, CULL_DISTANCE, habitatOf, WORLD_SEED))
+        if (callTimes(c.id, c.kind, this.time - f.dt, this.time, f.hour, day, RENDER.birdRate).length)
+          this.playAt(c.clip, { x: c.x, z: c.z }, c.kind === 'loon' ? MIX.loon : MIX.birds);
     }
     if (f.mode && f.mode !== this.wolfMode) {
       if (f.mode === 'sprint') this.playAt('sprint-burst', undefined, MIX.sprint);
       else if (f.mode.includes('stealth')) this.playAt('stealth-rustle', undefined, MIX.stealth);
       this.wolfMode = f.mode;
     }
-    if (f.exhausted && (!this.wasExhausted || this.time > this.nextPant)) { this.playAt('wolf-pant', undefined, MIX.pant); this.nextPant = this.time + 3.2; }
-    this.wasExhausted = !!f.exhausted;
-    if (this.time > this.nextLoon) {
-      this.nextLoon = this.time + MIX.loonEverySeconds[0] + soundRng() * (MIX.loonEverySeconds[1] - MIX.loonEverySeconds[0]);
-      if (d > .25 || this.waterAmount > .2) { const a = soundRng() * Math.PI * 2; this.playAt('loon', { x: f.x + Math.sin(a) * 30, z: f.z + Math.cos(a) * 30 }, MIX.loon); }
-    }
+    const speed = Math.max(Math.abs(f.wolf.speed ?? 0), Math.abs(f.wolf.gaitSpeed ?? 0));
+    const maxS = f.maxStamina ?? 100, stam = f.stamina ?? (f.exhausted ? 0 : maxS);
+    if (shouldPant(speed, stam, maxS)) { if (this.time >= this.nextPant) { this.playAt('wolf-pant', undefined, MIX.pant); this.nextPant = this.time + pantGap(); } }
+    else this.nextPant = this.time;
 
     // Player wolf: one paw sound per real touchdown (touchdown(), when the ?loco=1 layer sends them); otherwise the touchdowns of
     // the brain's own gait (paws that land together merge). Landing thud after a jump.

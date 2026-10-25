@@ -25,7 +25,7 @@ export const LINES: Record<string, string> = {
 };
 const MET_KEY = 'boreal.voice.met.v1';
 let last = '';
-export interface SpeakContext { darkness: number; animal?: { problem: string; energy: number }; posture?: string }
+export interface SpeakContext { darkness: number; animal?: { problem: string; energy: number }; posture?: string; /** a loon caller is inside hearing */ loonNear?: boolean }
 
 export function chooseLine(target: { key: string; kind: string }, ctx: SpeakContext, met: boolean) {
   const pick = (prefix: string) => { const ids = Object.keys(LINES).filter(k => k.startsWith(prefix) && k !== last); return ids[Math.floor(soundRng() * ids.length)] ?? `${prefix}-1`; };
@@ -33,7 +33,7 @@ export function chooseLine(target: { key: string; kind: string }, ctx: SpeakCont
   if (ctx.animal?.problem === 'escape' || ctx.posture === 'alert' || ctx.posture === 'flee') return pick('fear');
   if (!met) return pick('first');
   if (ctx.animal && ctx.animal.energy < 25) return 'tired-1';
-  if (ctx.darkness > .5 && soundRng() < .6) return pick('night');
+  if (ctx.darkness > .5 && soundRng() < .6) return ctx.loonNear ? 'night-1' : 'night-2';
   return pick('calm');
 }
 

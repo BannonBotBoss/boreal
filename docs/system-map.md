@@ -230,7 +230,7 @@ Ambience, animal calls, footsteps, wolf voice, music decks and the bus mixer.
 
 - Depends on: clock, weather, locomotion, behaviour, player
 - Feeds: ui
-- Modules: `src/audio/borealSound.ts`, `src/audio/footsteps.ts`, `src/audio/mixer.ts`, `src/audio/music.ts`, `src/audio/musicSettings.ts`, `src/audio/wolfVoice.ts`
+- Modules: `src/audio/borealSound.ts`, `src/audio/footsteps.ts`, `src/audio/mixer.ts`, `src/audio/music.ts`, `src/audio/musicSettings.ts`, `src/audio/wolfVoice.ts`, `src/core/callField.ts`
 
 ### `SYSTEM_PROPERTIES.footsteps`
 
@@ -255,6 +255,7 @@ Read by: `src/audio/footsteps.ts`
 
 - `MIX` in `src/audio/borealSound.ts`: clip gains and spatial mix
 - `SOUND_IDS` in `src/audio/borealSound.ts`: every sound clip id
+- `CALLERS` in `src/core/callField.ts`: loon territory and wail counts, woodpecker density and drum rate
 - `VOICES` in `src/audio/mixer.ts`: voice limits and priorities
 - `CULL_DISTANCE` in `src/audio/mixer.ts`: sounds beyond this are culled
 - `MUSIC` in `src/audio/music.ts`: music deck crossfade and ducking

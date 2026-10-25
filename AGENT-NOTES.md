@@ -927,6 +927,14 @@ Branch `grokbot-3/people-agent-core`. Claim sits on agy's approve-plan of 2026-1
 - Skill update: `notes/skills/agent-pipeline-species.md` (visitors section) and one line in `notes/skills/water-wake.md`. Handoff `tasks/handoffs/T-0012-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `npm test` 698 tests, 684 pass, 0 fail, 14 todo.
 
+## 2026-10-25 05:59 PT - grokbot-3: ambience from the animals that are there (T-0017, issue #13)
+Branch `grokbot-3/ambience-sources`. Claim sits on claude's approve-plan of 2026-10-21 11:40 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why the run took #13. It is not a quoted approval of this result.
+- Callers are one `stream` draw per 64 m cell in `src/core/callField.ts`. A raw FNV ratio on these keys over-filled the low tail, so the draw is mulberry32. Loons only on stage-2b kind `lake` (>= 2 ha). Woodpeckers only on land with canopy. `fields.ts` stays clover and berries.
+- Loon gap on day 227 is 215.827 s at night (10 h × 3600 / 166.8) and 5419.355 s by day (14 h × 3600 / 9.3). Woodpecker drums every 15 s while the sun is up (slow end of 4–9/min; that range is a naturalist article). Pant is 4/5.33 s when speed is at least 4 m/s or stamina is under 20%. One chew per bite at the eat. The 3.2 s pant and the chew delay are gone. Owl and raven are not scheduled: no published calls per hour.
+- This map (seed 1400, 7680 m) has 2 lakes, 6.0 ha, and 1 loon caller. 555 woodpeckers. Hearing stays the 45 m cull. Mixer gains unchanged.
+- Timing: loon night 1, loon day 1.000, loon at 30 Hz 1.000, woodpecker 1, woodpecker at 30 Hz 1.000, pant dt 0.01 = 0.987, pant dt 1/30 = 0.978. Mismatches: every other loon call 0, loons moved onto land 0, the old 3.2 s pant −2.264. Real-terrain position 1. Pixels unmeasurable. Skill `notes/skills/ambient-call-field.md`. Handoff `tasks/handoffs/T-0017-grokbot-3.md`. Scores `refs/T-0017/score.json`.
+- `npx tsc --noEmit` exit 0. `npm test` 729 tests, 715 pass, 0 fail, 14 todo. No new task id. No duplicate task id on main. Not self-approved.
+
 ## 2026-10-25 04:35 PT - grokbot-3: forage regrows on the sun field (T-0015, issue #11)
 Branch `grokbot-3/forage-regrowth`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a second approve-plan and not a self-approve. T-0009's field was already on main, so this branch is not stacked. Matthew's 2026-10-24 17:10 PT chat is why the run took the open issue. It is not a quoted approval of this result.
 - Berries stay only where ground light can flower a lowbush blueberry (Hall et al. 1979, half sun). Herbs use a separate light draw so the tree stream does not move. Eating takes grams. One `grazed` delta refills from `sunSeconds`. The bush stays in the world. Cover scales the instance, not `entity.scale`.

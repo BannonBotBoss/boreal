@@ -180,12 +180,14 @@ export function push(d: BodyData, tubeIndex: number, center: Vec3, radius: numbe
 
 export type CoatName = 'timber grey' | 'golden tan' | 'black';
 export const COAT_NAMES: CoatName[] = ['timber grey', 'golden tan', 'black'];
-/** Individual wolf coat: timber grey (most common), golden tan or solid black, with small per-animal variation. Pure function of the seed. */
+/** Individual wolf coat: timber grey (most common), golden tan or solid black, with small per-animal variation. Pure function of the seed.
+ *  Grey is the majority North American morph (Gipson, Bangs et al. 2002, Wildlife Society Bulletin 30(3):821). The linear RGB stops
+ *  are the in-engine grey / cream / charcoal of that morph [verify: no published spectrophotometer table for these triples]. */
 export function wolfCoat(seed: number): { name: CoatName; back: RGB; belly: RGB; dark: RGB; accent: RGB } {
   const h = (n: number) => { const x = Math.sin(seed * 12.9898 + n * 78.233) * 43758.5453; return x - Math.floor(x); };
   const kind = h(1), j = (n: number, a: number) => 1 + (h(n) - .5) * 2 * a;
   const archetype: { name: CoatName; back: RGB; belly: RGB; dark: RGB; accent: RGB } =
-    kind < .55 ? { name: 'timber grey', back: [.42, .46, .48], belly: [.8, .79, .74], dark: [.12, .15, .18], accent: [.52, .42, .32] }
+    kind < .55 ? { name: 'timber grey', back: [.30, .31, .32], belly: [.74, .72, .66], dark: [.07, .07, .08], accent: [.46, .38, .28] }
     : kind < .85 ? { name: 'golden tan', back: [.5, .42, .32], belly: [.82, .76, .65], dark: [.16, .13, .1], accent: [.62, .45, .26] }
     : { name: 'black', back: [.14, .15, .17], belly: [.3, .3, .32], dark: [.05, .05, .06], accent: [.2, .18, .17] };
   const scale = (c: RGB, f: number): RGB => [c[0] * f, c[1] * f, c[2] * f];

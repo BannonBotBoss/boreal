@@ -837,6 +837,14 @@ Matthew in chat, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like thi
 - Skill `notes/skills/next-free-task-id.md`. `notes/skills/board-rule-inspection.md` and `notes/skills/grokbot-relay-reviewer.md` point at it. Handoffs: `tasks/handoffs/grokbot-3-loop.md`, `tasks/handoffs/T-0071-grokbot-3.md`.
 - Nothing on screen. Evidence table is in `tasks/handoffs/grokbot-3-loop.md` under "2026-10-24 17:17 PT". `npx tsx tools/tasks.ts` after the events: 22 rule breaks, same count as before, no duplicate-id line. `npx tsc --noEmit` exit 0. `npm test` 640 tests, 626 pass, 0 fail, 14 todo; the board todo stays at 22 legacy rule breaks. PR https://github.com/BannonBotBoss/boreal/pull/61. Not merged.
 
+## 2026-10-24 20:46 PT - grokbot-3: why chains name a placement cause and a live doing step (T-0016)
+Issue #12. Branch `grokbot-3/why-every-object`. Not merged.
+- `src/core/why.ts`: a placed object gets `by` on `grew`, `born`, `embedded` or `wandered` from `standAt` (years since fire), `gapLight()` (the existing gap-phase canopy), or the river channel. Hare and wolf chains say birth plus the interest ring or the player. `withDoing` appends one ongoing goal step and is not stored. `doingFromProblem` / `doingFromAgent` read the brain and the sim, and an unsensed explore says so.
+- `src/core/world.ts`: the legacy river gaussian scale² is `LEGACY_RIVER_FOLD2` (110, the value `heightAt` already used).
+- `src/ui/inspector.ts`: static objects, deer, hares and the player wolf show `inspectWhy` now and chain. The doing step is computed in `observed` and not written to a record.
+- Tests: `tests/why-place.test.ts`. Skill: `notes/skills/why-chain-placement.md`. Handoff: `tasks/handoffs/T-0016-grokbot-3.md`.
+- No new rate. The age check is exact equality with `standAt`; an age one year off fails.
+
 ## 2026-10-24 18:07 PT - grokbot-3: move the wolf-file landing from T-0074 to T-0076
 Matthew in chat, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like this mmoving forward". Same branch `grokbot-3/fix-duplicate-t0071`, PR #61. Not merged. main not pushed.
 - T-0074 is grokbot-1's open PR #60 (`grokbot-1/wolf-jump-ballistic`, title and `tests/animal-behavior.test.ts`, no task file), opened about five minutes before PR #61. T-0075 is PR #64 (`tasks/T-0075-wolf-view.md`). After `git fetch --all`, the highest id in `tasks/` and `tasks/events` across every remote branch is T-0075. T-0046 stays reserved. The landing file is `tasks/T-0076-land-orphan-task-files.md`.
@@ -852,3 +860,10 @@ Branch `grokbot-3/surface-bands` off main `71d5c46`. Claim event after claude's 
 - Spacing (full sine cycle): 0.357 m vertical, 0.500 m along +X, 0.556 m along +Z (`bandCycleM`). That is decimetre scale (Bondy gneiss veins), coarser than the 11.1 cm bark window in Juola, Hovi & Rautiainen 2022, Ecol. Evol. 12:e8718. Contrast CV of a 0.15 sine is about 10.6%, inside that paper's 8-32% between-tree CV for non-birch species. The paper did not measure along one trunk. Numbers gate is not a pass.
 - Headless SwiftShader stills: `tasks/evidence/T-0004/`. Warm trunk pair, Minimum tier: 74 program links with bands and 74 without; 4 fragment sources contain the chunk when on, 0 when off. Median rAF 299.6 ms on vs 309.1 ms off. Center-box mean absolute luminance 0.51 (known match 0; a synthetic 0.15 sine moves CV by 0.020, the trunk pair by 0.00008). Not the omen 5% gate. No complete event.
 - Main still has two `T-0071` task files. PR #61 already renumbers the orphan file to T-0076. This branch only comments; it does not take T-0076 again.
+## 2026-10-24 17:40 PT - grokbot-3: wolf follow view (T-0075, issue #52)
+Matthew, issue #52, 2026-10-23 19:14:55 PT: "please use this and refine the view of the wolf, as well as the wolf itself". Branch `grokbot-3/wolf-view`. Not merged, not self-approved.
+- Adopted the existing follow camera and the existing tube wolf. `positionCamera` now stands 1.05 m up, 3.6 m behind and 2.25 m to the wolf's left (32°), pitch −5°. Wolf `cameraHeight` reads that eye height. The landing clearance line uses the same flank.
+- Timber-grey stops are a darker gray with a cream belly (Gipson, Bangs et al. 2002 for the grey morph; the RGB triples are [verify]). Shoulder guard hair 10.5 cm, inside 9–13 cm (Wikipedia "Wolf"). Back stays 6–7.2 cm. Tail plume ~12 cm [verify: no separate table]. Pale tips on the upper-body cards (Young and Goldman 1944 [verify page]). Game fur cards 18000. The fork rig was left at 13000.
+- Mass is `rigMass` of the player wolf on the canid plan: 73.4 kg. Not assigned.
+- Scores in `refs/wolf/view/score.json`. wolf-frame v1 (geometry) 0.987, legacy camera 0.559. box-histogram v1 against the issue image: before 0.111, after 0.149. The 0.95 pixel gate is not met.
+- `npx tsc --noEmit` exit 0. `npm test` 644 tests, 630 pass, 0 fail, 14 todo. Skill update is the T-0075 section of `notes/skills/visual-inspection-recording.md`.

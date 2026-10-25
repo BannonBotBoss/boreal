@@ -123,7 +123,7 @@ flowchart LR
 | [Headless animal simulation](#animalSim) | Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters. | `hunt`, `perception`, `sim`, `social` | needs, senses, player, clock | - | - |
 | [Audio and music](#audio) | Ambience, animal calls, footsteps, wolf voice, music decks and the bus mixer. | `footsteps` | clock, weather, locomotion, behaviour, player | ui | 1 |
 | [Agent and behaviour pipeline](#behaviour) | Animal brains: senses -> problem (explore, escape, feed ...) -> motion intent; deer herds, hares, people. | `behaviour` | senses, needs, terrain, clock, vegetation | audio, interaction, locomotion, senses | 2 |
-| [Camera](#camera) | Third-person follow camera behind the wolf: pitch spring, look-around and rider distance. | `camera` | player, controls, terrain, interaction | interaction | 2 |
+| [Camera](#camera) | Third-person follow camera: a rear three-quarter just above the wolf, pitch spring and look-around. | `camera` | player, controls, terrain, interaction | interaction | 2 |
 | [Time and clock](#clock) | The one world clock (frozen in menus), game hour, date and sun position; chronometer offset. | `clock`, `chronometer` | save | animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 2 |
 | [Player controls and gamepad](#controls) | One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics. | `haptics` | save | camera, interaction, player, stamina, ui | - |
 | [Globe (planet view)](#globe) | Cube-sphere planet, atmosphere, far layer and the descent from orbit to the ground. | - | terrain, clock, lighting, quality, save | - | 19 |
@@ -301,7 +301,7 @@ Read by: `src/core/animalBehavior.ts`
 <a id="camera"></a>
 ## Camera (`camera`)
 
-Third-person follow camera behind the wolf: pitch spring, look-around and rider distance.
+Third-person follow camera: a rear three-quarter just above the wolf, pitch spring and look-around.
 
 - Depends on: player, controls, terrain, interaction
 - Feeds: interaction
@@ -313,11 +313,12 @@ Read by: `src/render/math.ts`
 
 | Figure | Value | Units | What | Source |
 |---|---|---|---|---|
-| `defaultPitchDeg` | 10 | deg | default downward pitch (deg): aims a little above the wolf so it sits below screen centre | estimate (game calibration) |
+| `defaultPitchDeg` | -5 | deg | resting pitch (deg). Negative looks above the horizon. -5 puts the mid-body near the measured issue #52 centroid (image y 0.74, NDC y -0.48) when the lens is riderHeight. Game calibration of the angle. | estimate (game calibration) |
 | `lookPitchRangeDeg` | 30 | deg | how far the look stick tilts up or down from the default (deg) | estimate (game calibration) |
 | `lookSpringRate` | 14 | 1/s | look-pitch spring return rate (1/s): 98 % settled in 0.3 s, no overshoot | estimate (game calibration) |
-| `riderHeight` | 1.6 | m | camera height above ground at the start (m) | estimate (game calibration) |
-| `riderDistance` | 3 | m | camera distance behind at riderHeight (m); scales with height | estimate (game calibration) |
+| `riderHeight` | 1.05 | m | metres above the ground. Gray-wolf withers are 80–85 cm (Mech 1970, The Wolf; Wikipedia "Wolf" restates it). The lens sits 20 cm above an 85 cm withers, so the view is the animal's, not a standing person's. | withers 80–85 cm (Mech 1970, The Wolf) plus 20 cm, so the lens is just above the back |
+| `riderDistance` | 3.6 | m | metres behind the hips along the trail, at riderHeight. Scales with height. Game calibration so an 85 cm wolf is about a quarter of a 48° frame, the way the animal sits in issue #52. | estimate (game calibration) |
+| `flank` | 2.25 | m | metres to the animal's left, at riderHeight. atan2(flank, riderDistance) is 32°, inside a rear three-quarter (25–45° off the tail; 0° is dead astern, 90° is side-on). Game calibration of that angle. | estimate (game calibration) |
 | `pitchMinDeg` | -80 | deg | hard pitch limits (deg): negative looks above the horizon | estimate (game calibration) |
 | `pitchMaxDeg` | 89 | deg | hard pitch limits (deg): negative looks above the horizon | estimate (game calibration) |
 

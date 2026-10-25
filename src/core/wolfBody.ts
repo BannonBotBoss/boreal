@@ -67,9 +67,9 @@ export function wolfTubes(coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB
     { p: [0, .315, .02], rx: .05, ry: .07, w: only(BONE.torso), fur: 1.05, saddle: .6 },
     { p: [0, .32, -.07], rx: .054, ry: .088, w: only(BONE.torso), fur: 1.2, saddle: .6 },
     { p: [0, .325, -.135], rx: .057, ry: .097, w: only(BONE.torso), fur: 1.05, saddle: .55 },
-    { p: [0, .35, -.19], rx: .05, ry: .082, w: blend(BONE.torso, BONE.head, .2), fur: 1.28, saddle: .4 },
-    { p: [0, .385, -.25], rx: .048, ry: .066, w: blend(BONE.torso, BONE.head, .6), fur: 1.2, saddle: .25 },
-    { p: [0, .405, -.29], rx: .044, ry: .056, w: only(BONE.head), fur: 1.2 },
+    { p: [0, .35, -.19], rx: .05, ry: .082, w: blend(BONE.torso, BONE.head, .2), fur: 1.75, saddle: .4 }, // shoulder guard hair ~10.5 cm (9–13 cm, Wikipedia "Wolf")
+    { p: [0, .385, -.25], rx: .048, ry: .066, w: blend(BONE.torso, BONE.head, .6), fur: 1.75, saddle: .25 },
+    { p: [0, .405, -.29], rx: .044, ry: .056, w: only(BONE.head), fur: 1.75 },
   ] });
 
   // Upper skull and muzzle: broad forehead, a stop, a straight nose bridge, then a tapered blunt muzzle. The snout is fixed to the
@@ -150,9 +150,9 @@ export function wolfTubes(coat: { back: RGB; belly: RGB; dark: RGB; accent?: RGB
   tubes.push({ ...palette, smooth: 1, rings: [
     tailRing(-.03, .03, .036, { fur: 1, saddle: .5 }),
     tailRing(.01, .034, .04, { fur: 1.4, saddle: .6 }),
-    tailRing(.06, .037, .043, { fur: 1.7, saddle: .65 }),
-    tailRing(.12, .037, .043, { fur: 1.8, saddle: .65 }),
-    tailRing(.17, .029, .035, { dark: .3, fur: 1.7, saddle: .6 }),
+    tailRing(.06, .037, .043, { fur: 1.9, saddle: .65 }),
+    tailRing(.12, .037, .043, { fur: 2.05, saddle: .65 }), // plume ~12 cm, the shoulder guard-hair range applied to the tail [verify: no separate tail-hair table]
+    tailRing(.17, .029, .035, { dark: .3, fur: 1.9, saddle: .6 }),
     tailRing(.215, .014, .018, { dark: .9, fur: 1.2 }),
   ] });
   // Cheek ruff: long silver tufts that make the face look broad from the front. Fur only; they sit on the head bone and flow back and down.

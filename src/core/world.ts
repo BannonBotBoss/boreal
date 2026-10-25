@@ -19,6 +19,8 @@ export interface Entity {
   energy?: number; rollX?: number; rollZ?: number;
 }
 export function riverCenter(z: number) { return 45 + Math.sin(z / 44) * 17; }
+/** Legacy river gaussian scale² (m²). heightAt carves exp(−d² / this) about riverCenter. One constant, shared with the why. */
+export const LEGACY_RIVER_FOLD2 = 110;
 const T = 'terrain';
 /** One stacked terrain layer: traced contribution = (overridable) amplitude x shape. */
 const layer = (name: string, shape: number, amp: number) => f(T, name, shape * f(T, `amp.${name}`, amp));
@@ -34,7 +36,7 @@ export function heightAt(x: number, z: number) {
   const distance = Math.abs(x - riverCenter(z));
   const land = f(T, 'base', 1.8) + layer('ridgesX', Math.sin(x * .043), 1.4) + layer('ridgesZ', Math.cos(z * .038), 1.3)
     + layer('ripples', Math.sin(x * .13 + z * .09), .28);
-  return land - layer('riverCarve', Math.exp(-(distance * distance) / 110), 5.8) + f(T, 'depressions', surfaceDetail(x, z));
+  return land - layer('riverCarve', Math.exp(-(distance * distance) / LEGACY_RIVER_FOLD2), 5.8) + f(T, 'depressions', surfaceDetail(x, z));
 }
 /** Terrain band from the tuning thresholds (colour, water); thresholds are traced so the inspector can what-if them. */
 export function terrainBand(y: number, x?: number, z?: number): 'water' | 'shore' | 'upland' | 'forest' | SoilKind {

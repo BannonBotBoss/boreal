@@ -4,7 +4,7 @@ title: Solid contact - a shared contact bus (rising edge) and a solidContact tra
 author: grok
 scratch: true
 research: false
-skill: false
+skill: solid-contact-why
 ---
 # T-0006 Solid contact and the why behind every object
 

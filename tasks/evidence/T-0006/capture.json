@@ -1,0 +1,54 @@
+{
+  "url": "http://127.0.0.1:5276/?nomenu&contacts=1&rec&stages=1&hour=12&at=74.9745,-66.3155,0",
+  "ready": true,
+  "loadedBegins": 1,
+  "idleBegins": 0,
+  "idleEnds": 0,
+  "idleRepeat": 0,
+  "walkBegins": 2,
+  "walkEnds": 1,
+  "logSeen": true,
+  "logLines": 2,
+  "saveBeforeBytes": 0,
+  "saveAfterKeys": [
+    "stones:1:-2:41"
+  ],
+  "saveHasLog": false,
+  "status": "12:07 · WALK · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%",
+  "actBefore": {
+    "text": "E / click · move",
+    "disabled": false,
+    "target": "Shield stone"
+  },
+  "notice": "Stone pushed with your snout. Its new position is remembered.",
+  "logWhy": [
+    "nowFallen wood - resting on the ground, becoming forest floor (one more trunk cycle)",
+    "chainphotosynthesis → formed a seed → seed dispersed → sprouted from the ground → grew and leafed out → weathered over time → a weak point built up → failed under its own mass → pulled down by gravity → tipped over → displaced the ground (the earth yields) → settled (forces balanced) → resting on the ground → no longer photosynthesizing → oxidizing (oxygen and other elements) → decaying into fallen trunk over a long time → held in place by gravity → hosting insects → wetted by water → warmed by sunlight → one side rotting → the other side collecting debris and growing other plants → becoming forest floor (one more trunk cycle)"
+  ],
+  "rockWhy": [
+    "nowShield stone - moved by the player",
+    "chainweathered over time → embedded in the ground → moved by the player"
+  ],
+  "player0": {
+    "x": 74.9745,
+    "z": -66.3154998985335,
+    "yaw": 0,
+    "energy": 74.95068188899481,
+    "water": 99.98052962075889,
+    "mode": "walk"
+  },
+  "player1": {
+    "x": 74.9745,
+    "z": -70.11331172028183,
+    "yaw": 0,
+    "energy": 74.90394392927244,
+    "water": 99.96207786374347,
+    "mode": "walk"
+  },
+  "sampleBegins": [
+    "[contacts] begin 1:-2:9 | ground (chunk-build:log-seat) at 77.90,0.64,-69.00 n -0.04,1.00,-0.09",
+    "[contacts] begin 1:-2:9 | ground (chunk-build:log-seat) at 77.90,0.64,-69.00 n -0.04,1.00,-0.09",
+    "[contacts] begin 2:-2:2 | ground (chunk-build:log-seat) at 112.79,3.04,-45.82 n 0.09,0.99,-0.13"
+  ],
+  "errors": []
+}

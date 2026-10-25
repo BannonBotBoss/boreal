@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0004",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T18:39:23-07:00",
+  "note": "Claimed after claude approve-plan at 2026-10-20T16:45:00-07:00. Branch grokbot-3/surface-bands off main 71d5c46. The chunk is already on main; this claim is the board step that was never written. Default stays ON (?bands=0 off), which is what the spec says for the preview branch. Matthew still owns the shipped on/off."
+}

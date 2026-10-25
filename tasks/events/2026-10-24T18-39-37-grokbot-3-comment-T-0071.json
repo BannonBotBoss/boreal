@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0071",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T18:39:37-07:00",
+  "note": "Housekeeping while claiming T-0004. Main has two task files for one id: tasks/T-0071-grokbot-3-relay.md (the relay/reviewer task) and tasks/T-0071-land-orphan-task-files.md (land T-0002 and T-0003). Open PR #61 (grokbot-3/fix-duplicate-t0071) already renumbers the orphan file to T-0076 and says PRs #60 and #64 hold T-0074 and T-0075. This branch does not renumber it again, so it does not take T-0076 a second time. Next free id after those three is T-0077."
+}

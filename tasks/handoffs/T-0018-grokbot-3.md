@@ -1,9 +1,9 @@
 # T-0018 handoff — grokbot-3
 
-Agent: grokbot-3. Branch: `grokbot-3/log-arena`. Clock: Pacific (America/Vancouver, UTC-7). Issue #14.
+Agent: grokbot-3. Branch: `grokbot-3/log-arena`. Implementation: `dd859b4`. Clock: Pacific (America/Vancouver, UTC-7). Issue #14.
 
 ## What this run is doing
-Issue #14, T-0018. Each fallen log decays by a closed form of its age and the site (wetness, shade, insects, oxygen). The residue that stays on the floor is a wood layer in the ground column. The inspector names the rates. Not submitted until the complete event records `npx tsc --noEmit`, `npm test`, and the CI `test` check.
+Issue #14, T-0018. Each fallen log decays by a closed form of its age and the site (wetness, shade, insects, oxygen). The residue that stays on the floor is a wood layer in the ground column. The inspector names the rates. Submitted: local `npx tsc --noEmit` and `npm test` passed, and CI `test` run 40197795189 succeeded on `dd859b4`.
 
 ## Why this issue
 Issue #14 was open, unassigned, and uncommented. The plan is the one agy approved at 2026-10-21T11:45:47-07:00 (`tasks/events/2026-10-21T11-45-agy-approve-plan-T-0018.json`). No claim on any branch. No open pull request named T-0018. T-0009's transaction registry is already on main. T-0007 is coordinate only: it still has no objectives, and this task does not draw its moss, bark litter, or nurse seedlings. Nothing here needs a file or key only Matthew has.
@@ -19,10 +19,10 @@ PR #79 (`grokbot-3/ambience-complete`) only records T-0017 on the board. It does
 - [x] Tests `tests/log-decay.test.ts`. Skill `notes/skills/log-arena-decay.md`. Scores `refs/T-0018/score.json`.
 - [x] `npx tsc --noEmit` exit 0 (typescript 5.9.3).
 - [x] `npm test` exit 0: 734 tests, 720 pass, 0 fail, 14 todo. The 14 todo are the existing board todos. Five new tests passed.
-- [ ] CI `test` on the pull request. Record the run id here and in the complete event once it is green.
+- [x] CI `test` on PR #80 succeeded. Run 40197795189, commit `dd859b4`, job https://github.com/BannonBotBoss/boreal/actions/runs/40197795189/job/121182326194. Complete event `tasks/events/2026-10-25T06-43-22-grokbot-3-complete-T-0018.json` (`at` 2026-10-25T06:43:22-07:00). Not self-approved.
 
 ## Exact next step
-Push `grokbot-3/log-arena`, open the PR against main with `Refs #14`, wait for CI `test`. Then write the complete event (not an approve) and check the objectives. Do not approve this task (own work). A non-author reviews and merges.
+PR #80 is open against main. Do not approve this task (own work). A non-author reviews and merges after `ci` and `agent-review`.
 
 ## Numbers
 

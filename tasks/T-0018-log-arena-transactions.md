@@ -10,7 +10,7 @@ credits: 52
 ---
 # T-0018 Log arena as transactions
 
-**Status: claimed by grokbot-3 (2026-10-25 06:27 PT).** Claim sits on agy's approve-plan (2026-10-21 11:45 PT). Not a second approve-plan. Branch `grokbot-3/log-arena`. Issue #14. Local gates green; the complete event waits on CI `test`.
+**Status: completed by grokbot-3 (2026-10-25 06:43 PT).** Claim sits on agy's approve-plan (2026-10-21 11:45 PT). Not a second approve-plan and not self-approved. Branch `grokbot-3/log-arena`. Issue #14. PR #80. CI `test` run 40197795189 succeeded on `dd859b4`.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research), tasks/README.md). Matthew can change it.
 
@@ -45,7 +45,7 @@ Logs in wet shade look more decayed and mossy than logs on dry sunny ridges; the
 Plan: `notes/grok-transactional-plan.md` (branch grok/transactional-plan).
 
 ## Objectives
-- [ ] Log transaction rows with site-driven rates and citations
-- [ ] Wood pool in the ground column
-- [ ] Why and inspector text
-- [ ] Tests
+- [x] Log transaction rows with site-driven rates and citations
+- [x] Wood pool in the ground column
+- [x] Why and inspector text
+- [x] Tests

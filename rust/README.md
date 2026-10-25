@@ -3,15 +3,20 @@
 Matthew (2026-10-23): "i want to use rust for the game". New simulation code for the planet goes here. The Three.js/TypeScript game is not
 rewritten: TypeScript loads the wasm (`src/core/planetBudget.ts`) and reads each layer as a `Float64Array` over wasm memory.
 
-| Module | Issue #43 item | Formulas (all cited in the source) |
+The source tree is `src/planet_fundamentals/` (issue #46, T-0062). `lib.rs` re-exports the old module names so there is one copy of each formula. `grid.rs` is still the plane table.
+
+| Module | Issue #46 file | Formulas (all cited in the source) |
 |---|---|---|
-| `solar_budget.rs` | 1. Solar energy budget | NOAA/Spencer solar position (declination = tilt, hour angle = time of day), Kasten–Czeplak cloud attenuation, Brutsaert longwave. Ported from `weather.ts`, checked against it to 1e-9 |
-| `hydrosphere_budget.rs` | 2. Hydrosphere | Penman–Monteith evaporation (`surfaceBalance`), Manabe 1969 bucket, degree-day snow, Bolton `qsat`, large-scale condensation |
-| `atmosphere_budget.rs` | 3. Atmosphere | Sundqvist cloud fraction, Stephens optical depth, hypsometric pressure, geostrophic wind with `f = 2Ω sin φ`, dry-adiabat instability |
-| `surface_budget.rs` | 4. Surface | `SURFACE` table (Oke 1987): albedo, roughness, heat capacity, snow, land/sea mix |
-| `climate_seed.rs` | procedural seed, no spin-up | Budyko 1969 / North & Coakley 1979 zonal energy balance with the tilt-driven daily insolation. Land mask comes from `planet.ts` (TypeScript), not regenerated |
-| `update_energy.rs` `update_wind.rs` `update_moisture.rs` `update_clouds.rs` | the `update_*` steps | slab energy balance, geostrophic wind, upwind moisture advection + bucket, cloud fraction |
-| `grid.rs`, `lib.rs` | | lat–lon grid, plain `extern "C"` exports (no wasm-bindgen) |
+| `planet_fundamentals/energy/solar_budget.rs` | `energy/solar_budget.rs` | NOAA/Spencer solar position, Kasten–Czeplak cloud attenuation. Ported from `weather.ts`, checked against it to 1e-9 |
+| `planet_fundamentals/energy/longwave.rs` | `energy/longwave.rs` | Brutsaert 1975 emissivity, Crawford & Duchon 1999, North & Coakley 1979 OLR A and B |
+| `planet_fundamentals/energy/albedo.rs` | `energy/albedo.rs` | Oke 1987 surface albedo; Budyko 1969 / North, Cahalan & Coakley 1981 planetary albedo |
+| `planet_fundamentals/energy/energy_update.rs` | `energy/energy_update.rs` | slab energy balance. Air temperature stays the climatological field |
+| `planet_fundamentals/hydrosphere/` | evaporation, precipitation, humidity_column, sst, soil_moisture, ice_fraction | Penman–Monteith, Manabe 1969 bucket, Bolton `qsat`, degree-day snow, sub-grid ice |
+| `planet_fundamentals/atmosphere/` | pressure, wind, instability, cloud_fraction, cloud_optical_depth | hydrostatic and hypsometric pressure, geostrophic wind `f = 2Ω sin φ`, Sundqvist cloud, Stephens optical depth |
+| `planet_fundamentals/surface/` | land_sea_mask, elevation, heat_capacity, roughness, vegetation_fraction | land and elevation are host inputs from `planet.ts`. Vegetation fraction is the `// later` stub |
+| `planet_fundamentals/climate_seed.rs` | `climate_seed.rs` | Budyko 1969 / North & Coakley 1979 zonal energy balance. Land mask is not regenerated |
+| `planet_fundamentals/planet_initialization.rs` `planet_update.rs` | the ordered fill and the per-tick step | `Grid::seed` and `Grid::step` moved, not reordered |
+| `grid.rs`, `lib.rs` | | lat–lon grid, plain `extern "C"` exports `grid_init`, `grid_seed`, `grid_step` (no wasm-bindgen) |
 
 ## Run it without installing Rust
 `public/wasm/boreal_sim.wasm` is committed, so `npm ci && npx vite` works as before. If the wasm is missing or stale the TypeScript fallback

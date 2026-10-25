@@ -3,19 +3,21 @@
 //! gets back, calls `grid_seed` and `grid_step`, and reads any plane as a `Float64Array` over the module's memory.
 pub mod constants;
 pub mod consts;
-pub mod solar_budget;
-pub mod surface_budget;
-pub mod hydrosphere_budget;
-pub mod atmosphere_budget;
-pub mod climate_seed;
+pub mod planet_fundamentals;
+// Old module paths stay as names. The formulas live once under planet_fundamentals (T-0062, issue #46).
+pub use planet_fundamentals::energy::solar_budget;
+pub use planet_fundamentals::surface as surface_budget;
+pub use planet_fundamentals::hydrosphere as hydrosphere_budget;
+pub use planet_fundamentals::atmosphere as atmosphere_budget;
+pub use planet_fundamentals::climate_seed;
+pub use planet_fundamentals::energy::energy_update as update_energy;
+pub use planet_fundamentals::hydrosphere::precipitation as update_moisture;
+pub use planet_fundamentals::atmosphere::cloud_fraction as update_clouds;
+pub use planet_fundamentals::atmosphere::wind as update_wind;
 pub mod grid;
-pub mod update_energy;
-pub mod update_moisture;
-pub mod update_clouds;
 pub mod column_budget;
 pub mod rt;
 pub mod emergent;
-pub mod update_wind;
 pub mod sun_spectrum;
 pub mod interior;
 pub mod gas;

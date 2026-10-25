@@ -1,8 +1,13 @@
-//! Cloud update (issue #43): cloud fraction from relative humidity (Sundqvist 1989), optical depth from the liquid-water path (Stephens 1978).
-use crate::atmosphere_budget::*;
+//! Cloud fraction split from `atmosphere_budget.rs` and `update_clouds.rs` (T-0062, issue #46). Sundqvist 1989.
 use crate::consts::*;
 use crate::grid::*;
-use crate::hydrosphere_budget::*;
+use crate::planet_fundamentals::hydrosphere::humidity_column::qsat;
+use super::cloud_optical_depth::cloud_optical_depth;
+use super::pressure::surface_pressure;
+
+/// Cloud fraction from relative humidity (Sundqvist, Berge & Kristjánsson 1989, Mon. Weather Rev. 117:1641): C = 1 − sqrt((1−RH)/(1−RHc)) for RH > RHc.
+pub const RH_CRIT: f64 = 0.75; // critical RH, typical 0.7–0.9 [verify]
+pub fn cloud_fraction(rh: f64) -> f64 { if rh <= RH_CRIT { 0.0 } else { (1.0 - ((1.0 - rh.min(1.0)) / (1.0 - RH_CRIT)).sqrt()).clamp(0.0, 1.0) } }
 
 /// Saturated equivalent-potential-temperature proxy (K) at pressure p: (T + Lv qsat / cp)(P0/p)^(Rd/cp) (Bolton 1980 simplified).
 fn theta_es(t_c: f64, p: f64) -> f64 { (t_c + 273.15 + LV * qsat(t_c, p) / CP) * (P0 / p).powf(RD / CP) }
@@ -70,7 +75,7 @@ pub fn update_clouds(g: &mut Grid, dt: f64) {
 
 #[cfg(test)]
 mod tests {
-    use crate::grid::*;
+    use super::*;
     /// Synthetic Earth-like planet: three 60°-wide continents to ±70°, Antarctica; 30 days from the July seed (day 196).
     fn spun(day: f64) -> Grid { let mut g = Grid::new(45, 90);
         for i in 0..g.n { let (lat, lon) = (g.p(LAT)[i], g.p(LON)[i]); let land = ((lon + 180.0) % 120.0 < 40.0 && lat.abs() < 70.0) || lat < -70.0;
@@ -84,9 +89,10 @@ mod tests {
         // track (50-65 S), ~0.5-0.6 in the subtropics, ~0.7 in the NH storm track.
         for day in [15.0, 196.0] { let g = spun(day);
             let (gl, so, st, nh, tr) = (band(&g, -90.0, 90.0), band(&g, -65.0, -50.0), band(&g, -30.0, -15.0), band(&g, 45.0, 65.0), band(&g, -10.0, 10.0));
-            { use super::*; let mut h=[0.0;4]; let mut ps=vec![]; for i in 0..g.n { let w=g.p(LAT)[i].to_radians().cos(); h[0]+=w*cloud_fraction(g.p(RH)[i]); h[1]+=w*conv_cloud(g.p(PMEAN)[i]); h[3]+=w; ps.push(g.p(PMEAN)[i]); }
+            { let mut h=[0.0;4]; let mut ps=vec![]; for i in 0..g.n { let w=g.p(LAT)[i].to_radians().cos(); h[0]+=w*cloud_fraction(g.p(RH)[i]); h[1]+=w*conv_cloud(g.p(PMEAN)[i]); h[3]+=w; ps.push(g.p(PMEAN)[i]); }
               ps.sort_by(|a,b|a.partial_cmp(b).unwrap()); eprintln!("rh-part {:.2} conv-part {:.2} precip p50 {:.2} p90 {:.2} mean {:.2}", h[0]/h[3], h[1]/h[3], ps[ps.len()/2], ps[ps.len()*9/10], ps.iter().sum::<f64>()/ps.len() as f64); }
             eprintln!("day {day}: global {gl:.2}  SO {so:.2}  S-subtrop {st:.2}  NH 45-65 {nh:.2}  tropics {tr:.2}");
             assert!((gl - 0.67).abs() < 0.08, "global cloud {gl:.2} vs MODIS 0.67"); assert!(so > 0.55 && nh > 0.55, "storm tracks SO {so:.2} NH {nh:.2} vs MODIS ~0.7-0.8"); }
     }
+    #[test] fn clouds_from_humidity() { assert_eq!(cloud_fraction(0.5), 0.0); assert!((cloud_fraction(1.0) - 1.0).abs() < 1e-12); assert!(cloud_fraction(0.9) > 0.0 && cloud_fraction(0.9) < 1.0); }
 }

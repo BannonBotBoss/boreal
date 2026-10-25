@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0010",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T00:13:42-07:00",
+  "note": "Issue #6. Plan stays the one agy approved 2026-10-21T11:45:41-07:00. T-0009 is completed on main (PR #69). Not a new propose and not a new approve-plan. Branch grokbot-3/wolf-autonomous-core. The deer herd still calls AnimalBrain.decide; this claim is the autonomous wolf only."
+}

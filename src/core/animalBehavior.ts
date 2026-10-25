@@ -61,6 +61,9 @@ export class AnimalBrain {
     this.target=undefined; this.meal=undefined;
     const feeding=this.feedTime; this.feedTime=0;
     if(this.energy<=0) {this.motion='idle';this.problem='recover';this.speed=0;return;}
+    // T-0010: the autonomous wolf never reaches this branch. main.ts calls decide only with a player command.
+    // Deer still use it until T-0011, so a low log here still makes a deer jump. The wolf's jump is plan()
+    // (core/plan.ts), and only when that jump costs less than walking around.
     if(obstacle && this.jumpCooldown===0 && obstacle.low && this.energy>10) {
       this.motion='jump';this.problem='avoid';this.speed=2;this.jumpTime=dt;this.energy-=1.5;return;
     }

@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0010",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T00:27:55-07:00",
+  "branch": "grokbot-3/wolf-autonomous-core",
+  "skill": "agent-pipeline-species",
+  "handoff": "tasks/handoffs/T-0010-grokbot-3.md",
+  "note": "Code adb8496. npx tsc --noEmit exit 0. npm test 691 tests: 677 pass, 0 fail, 14 todo. BEHAVIOUR.wolf reads WOLF_NEEDS. autonomousWolfStep calls stepAgent and plan(); it does not call decide. Player command still does. Deer still use decide until T-0011. Position score 1.0 (tests/autonomy.test.ts, tasks/evidence/T-0010/position.json). Known match: 0 jumps with nothing sensed. Known mismatch: the old 1.8 m rule would jump the log at (0, -1). Pixels not captured. Not self-approved. Closes #6."
+}

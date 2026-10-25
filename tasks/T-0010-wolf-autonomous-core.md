@@ -4,13 +4,13 @@ title: Wolf Autonomous mode on the shared agent core: moves with a reason, jumps
 author: grok
 scratch: false
 research: false
-skill: false
+skill: agent-pipeline-species
 tags: [animal, behaviour, wolf, autonomy]
 credits: 50
 ---
 # T-0010 Wolf Autonomous mode on the shared agent core
 
-**Status: proposed by grok (2026-10-21 10:25 PT). Open claim: no owner.** Ownership is claim-based. Matthew added it to the board directly ("just go ahead and add them to the board"); a claim still needs an `approve-plan` event first (tools/tasks.ts).
+**Status: claimed by grokbot-3 (2026-10-25 00:13 PT) on agy's approve-plan (2026-10-21 11:45 PT). Completed the same night. Not approved.** The wolf path is the shared agent. Deer still call `AnimalBrain.decide` until T-0011.
 
 **Credits: 50** (= 10 x 5 objectives x (1), tasks/README.md). Matthew can change it.
 
@@ -46,8 +46,8 @@ In Autonomous mode the wolf trots toward a scent or forage, stops to eat, rests 
 Plan: `notes/grok-transactional-plan.md` (branch grok/transactional-plan).
 
 ## Objectives
-- [ ] Wolf BEHAVIOUR row: sense ranges, diet, needs, rest and travel rules
-- [ ] autonomousWolfStep calls the agent core; decide() keeps only the player command branch
-- [ ] Obstacle handling in plan(): detour vs jump by energy cost on the path to the goal
-- [ ] Goal and cause in the inspector / status line
-- [ ] Tests: no purposeless jumps over a field of logs; goal-directed travel; manual path unchanged
+- [x] Wolf BEHAVIOUR row: sense ranges, diet, needs, rest and travel rules
+- [x] autonomousWolfStep calls the agent core; the wolf reaches decide() only with a player command (deer keep the NPC branches until T-0011)
+- [x] Obstacle handling in plan(): detour vs jump by energy cost on the path to the goal
+- [x] Goal and cause in the inspector / status line
+- [x] Tests: no purposeless jumps over a field of logs; goal-directed travel; manual path unchanged

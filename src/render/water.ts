@@ -3,8 +3,9 @@
  * Flow: the two-phase flow-map technique (Vlachos 2010, "Water Flow in Portal 2", SIGGRAPH; as used by three.js
  * examples/jsm/objects/Water2.js, MIT, r180), tailored: the flow vector is a per-vertex attribute from stage 2c (core/stages/rivers)
  * instead of a flow-map texture, and the normals come from the shared procedural noise (proc/glsl fbm gradient) instead of baked
- * normal-map textures, so nothing is an asset. Foam = noise thresholded by speed (aFlow.z, m/s). Lakes have zero flow and only
- * get the slow ripple drift.
+ * normal-map textures, so nothing is an asset. aFlow.xy is direction × speed (m/s) and scrolls the ripples.
+ * aFlow.z is the water×rock free-surface aeration (channelRough.ts): 0 on a glide, Wood's Y90 in a step's lee.
+ * Lakes have zero flow and only get the slow ripple drift.
  */
 import * as THREE from 'three';
 import { GLSL_NOISE } from '../proc/glsl';
@@ -37,7 +38,10 @@ export function waterMaterial() {
         vec2 fl = vFlow.xy, drift = vec2(0.03, 0.02) * uWaterTime; float p0 = wPhase(0.0), p1 = wPhase(0.5), wgt = abs(0.5 - p0) * 2.0;
         vec2 q = vWXZ * 0.35 + drift;
         vec2 wg = mix(wgrad(q - fl * p0 * 4.0 * 0.35), wgrad(q - fl * p1 * 4.0 * 0.35 + 0.37), wgt);
-        float foam = smoothstep(0.55, 0.85, fbm(vWXZ * 1.3 - fl * uWaterTime * 1.3, ${SEED.toFixed(3)}) + vFlow.z * 0.25 - 0.35) * smoothstep(0.4, 1.2, vFlow.z);
+        // The 1.3 on the sample and on the shift cancel, so the pattern moves at length(fl) metres per second.
+        // vFlow.z is 0 or 0.9 (Y90). The 0.75 floor is game calibration: it keeps the lee broken, and the albedo
+        // mix still clears the foam-pixel cut (luminance 0.45, saturation 0.18) used on the river audit.
+        float foam = vFlow.z * mix(0.75, 1.0, smoothstep(0.15, 0.9, fbm(vWXZ * 1.3 - fl * uWaterTime * 1.3, ${SEED.toFixed(3)})));
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85, 0.9, 0.9), foam);
         vec4 wk = wakeField(vWXZ); float crest = wk.w;
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95), crest * 0.92);

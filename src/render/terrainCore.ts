@@ -14,6 +14,7 @@ import { CHUNK_SIZE, heightAt, terrainBand } from '../core/world';
 import { LEVEL } from '../core/tuning';
 import { STAGES, lakeAt } from '../core/stages/elevation';
 import { pondAt, riverAt } from '../core/stages/rivers';
+import { surfaceAeration } from '../core/stages/channelRough';
 import type { SoilKind } from '../core/stages/soils';
 
 /** Staged materials as ALBEDO (sRGB-encoded hex; three decodes to linear). Sentinel-2 L2A (30 Jul 2024, Kenora window) median per
@@ -93,8 +94,9 @@ export function* terrainCore(r: TerrainRequest): Generator<void, TerrainData> {
   if (r.waterSeg > 0) { // stages 2b/2c: one sheet at the lake level / river surface (per-vertex flow for the water shader), sunk below ground elsewhere
     const seg = r.waterSeg, wr = seg + 1, wn = wr * wr, wp = new Float32Array(wn * 3), flow = new Float32Array(wn * 3), wet = new Uint8Array(wn); let any = false;
     for (let i = 0; i < wn; i++) {
+      // xy scrolls at the channel speed. z is the water×rock free-surface aeration (0 on a glide), not the speed.
       const xr = gridRel(i % wr, seg), zr = gridRel((i / wr) | 0, seg), wx = xr + ox, wz = zr + oz, lk = lakeAt(STAGES.seed, wx, wz), pond = lk ? undefined : pondAt(STAGES.seed, wx, wz), cover = lk ?? pond, rv = cover ? undefined : riverAt(STAGES.seed, wx, wz), inR = !!rv && rv.d < rv.half + rv.bank;
-      if (cover || inR) { any = true; wet[i] = 1; } if (inR) { flow[i * 3] = rv!.dirX * rv!.speed; flow[i * 3 + 1] = rv!.dirZ * rv!.speed; flow[i * 3 + 2] = rv!.speed; }
+      if (cover || inR) { any = true; wet[i] = 1; } if (inR) { flow[i * 3] = rv!.dirX * rv!.speed; flow[i * 3 + 1] = rv!.dirZ * rv!.speed; flow[i * 3 + 2] = surfaceAeration(STAGES.seed, wx, wz, (CHUNK_SIZE / seg) * Math.SQRT2 / 2, rv); }
       // the old path stored the relative position (float32), set y, then translated: x' = fround(xr + ox)
       wp[i * 3] = xr + ox; wp[i * 3 + 1] = Math.fround(cover ? cover.surface : inR ? rv!.surface : heightAt(wx, wz) - .6); wp[i * 3 + 2] = zr + oz;
       if (i % wr === seg) yield;

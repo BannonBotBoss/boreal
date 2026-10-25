@@ -8,7 +8,8 @@ import { STAGES, elevationGrid, flowGrid, lakeAt, sampleGrid, toWorld } from './
 import { cellAt, twi } from './stages/flow';
 import { carve, pondAt, riverAt } from './stages/rivers';
 import { soilAt, type SoilKind } from './stages/soils';
-import { fastRockSite, placeRockSeed } from './rocks';
+import { fastRockSite, placeRockSeed, withRockTier } from './rocks';
+import { stepsInRect } from './stages/channelRough';
 import { f, choose, scope, tracing } from '../proc/trace';
 import { siteAt } from './flora/site';
 import { berrySuit } from './forageLight';
@@ -109,6 +110,14 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     const scale = f('draw', 'scale', .65 + forage() * .35), h = heightAt(x, z), site = siteAt(x, z, true, false);
     if (isDryLand(x, z, h) && plantsGrowAt(h) && !site.water && keep < berrySuit(site.light))
       result.push({ key: `forage:${cx}:${cz}:${i}`, kind: 'forage', x, z, seed, generatorVersion: 1, rotation, scale });
+  }
+  // T-0030: a steep channel (S > 0.02) exposes a Shield boulder. The ordinary stone stream stays on dry land.
+  if (STAGES.on) for (const step of stepsInRect(STAGES.seed, cx * CHUNK_SIZE, cz * CHUNK_SIZE, (cx + 1) * CHUNK_SIZE, (cz + 1) * CHUNK_SIZE)) {
+    const raw = hash(`channel-step:${worldSeed}:${step.x.toFixed(3)}:${step.z.toFixed(3)}`);
+    result.push({
+      key: `step:${step.x.toFixed(2)}:${step.z.toFixed(2)}`, kind: 'rock', seed: withRockTier(raw, step.tier),
+      generatorVersion: GENERATOR_VERSION, x: step.x, z: step.z, rotation: random(raw)() * Math.PI * 2, scale: 1,
+    });
   }
   scope('');
   for (const entity of result) if (entity.kind === 'deer') entity.energy = ANIMAL_DEFAULT_ENERGY;

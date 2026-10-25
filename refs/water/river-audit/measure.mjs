@@ -5,7 +5,7 @@
 // reference/to-png.ps1) with the same statistic.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
-function png(path) {
+export function png(path) {
   const d = readFileSync(path); let i = 8, w = 0, h = 0, ct = 0; const idat = [];
   while (i < d.length) { const n = d.readUInt32BE(i), t = d.toString('latin1', i + 4, i + 8), c = d.subarray(i + 8, i + 8 + n);
     if (t === 'IHDR') { w = c.readUInt32BE(0); h = c.readUInt32BE(4); ct = c[9]; } if (t === 'IDAT') idat.push(c); i += 12 + n; }
@@ -19,13 +19,19 @@ function png(path) {
 }
 const lin = c => (c /= 255) > .04045 ? ((c + .055) / 1.055) ** 2.4 : c / 12.92, L = (r, g, b) => .2126 * lin(r) + .7152 * lin(g) + .0722 * lin(b);
 export const FOAM = { lum: .45, sat: .18 };
-const box = ({ bpp, rows }, x0, y0, x1, y1) => { const s = [0, 0, 0]; let n = 0, foam = 0;
+/** Same cut the audit boxes use: relative luminance above 0.45 and HSV saturation under 0.18. */
+export function isFoamPixel(r, g, b) {
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), sat = mx ? (mx - mn) / mx : 0;
+  return L(r, g, b) > FOAM.lum && sat < FOAM.sat;
+}
+export const box = ({ bpp, rows }, x0, y0, x1, y1) => { const s = [0, 0, 0]; let n = 0, foam = 0;
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const r = rows[y][x * bpp], g = rows[y][x * bpp + 1], b = rows[y][x * bpp + 2];
-    s[0] += r; s[1] += g; s[2] += b; n++; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), sat = mx ? (mx - mn) / mx : 0;
-    if (L(r, g, b) > FOAM.lum && sat < FOAM.sat) foam++; }
+    s[0] += r; s[1] += g; s[2] += b; n++; if (isFoamPixel(r, g, b)) foam++; }
   const m = s.map(v => +(v / n).toFixed(1));
   return { rgb: m, relLum: +L(...m).toFixed(4), foamShare: +(foam / n).toFixed(3), px: n }; };
 const root = 'refs/water/river-audit', out = {};
+const isMain = process.argv[1]?.endsWith('measure.mjs');
+if (isMain) {
 const B = {
   'fast1/across-0.png': { left: [20, 330, 560, 390], right: [720, 360, 1260, 420] },
   'fast1/across-2.png': { left: [20, 330, 560, 390], right: [720, 360, 1260, 420] },
@@ -38,3 +44,4 @@ const src = existsSync(`${root}/reference/SOURCES.json`) ? JSON.parse(readFileSy
 for (const s of src) if (s.box) B[`reference/${s.file}`] = { water: s.box, ...(s.extra ?? {}) };
 for (const [f, boxes] of Object.entries(B)) { if (!existsSync(`${root}/${f}`)) continue; const img = png(`${root}/${f}`); out[f] = Object.fromEntries(Object.entries(boxes).map(([k, b]) => [k, box(img, ...b)])); }
 writeFileSync(`${root}/measure.json`, JSON.stringify({ FOAM, out }, null, 1)); console.log(JSON.stringify(out, null, 1));
+}

@@ -10,8 +10,9 @@
  *  - Bankfull hydraulic geometry from drainage area, Laurentian Upland (the US side of the Canadian Shield, incl. the BWCA next
  *    to Kenora): w = 4.15 A^0.308 m, d = 0.31 A^0.202 m, A in km^2 (Bieger, Rathjens, Allen & Arnold 2015, JAWRA 51(3):842,
  *    via FluvialGeomorph/RegionalCurve regional_curve_equations.csv). Fitted on 16.6-366 km^2; smaller basins extrapolate [verify].
- *  - Velocity: Manning v = R^(2/3) S^(1/2) / n with R ~ d and n = 0.035 (clean winding natural channel; Chow 1959, Table 5-6),
- *    S from the filled surface in game metres. It drives the shader's flow scrolling and foam only.
+ *  - Velocity: Manning v = R^(2/3) S^(1/2) / n with R ~ d (wide shallow channel). n is Chow's 0.035 below
+ *    Jarrett's range and Jarrett's high-gradient n at and above it (channelSpeed). No speed cap. The speed
+ *    scrolls the water texture. Foam is not this speed: it is the water×rock transaction in channelRough.ts.
  *  - Carving is consistent with Priority-Flood: the water surface follows the FILLED surface (strictly decreasing downstream
  *    along D8, flow.ts), so every river runs downhill and meets its lake at the lake's own level. The terrain is only ever
  *    lowered (min), as a parabolic bed inside the banks and a sloped bank blended back to the original surface.
@@ -33,7 +34,9 @@ export const RIVER = {
   /** Channel initiation area (km^2): ~0.5 km^2 for humid boreal Shield terrain (WORLD-STAGES.md) [verify]. */
   initKm2: .5,
   wA: 4.15, wB: .308, dA: .31, dB: .202, // Bieger et al. 2015, Laurentian Upland
-  manningN: .035,                        // Chow 1959
+  manningN: .035,                        // Chow 1959, Table 5-6: clean, winding, some pools and shoals (quoted range 0.033–0.045). Used only below Jarrett's fit.
+  /** Jarrett 1984, J. Hydraulic Eng. 110(11):1519: n = 0.39 S^0.38 R_ft^-0.16, fitted for S > 0.002. 1 ft = 0.3048 m. */
+  jarrettMinS: .002, jarrettA: .39, jarrettB: .38, jarrettC: -.16, footM: .3048,
   /** Water surface sits this far below the filled surface (game m) so banks show. */
   freeboard: .12,
   /** Bank: carved slope (rise/run) and width as a multiple of the half-width (min 2 m). */
@@ -119,7 +122,34 @@ export function pondAt(seed: number, x: number, z: number) {
   if (b < 0) return undefined; const body = P.bodies[b]; if (toWorld(g, sampleGrid(g, x, z)) >= body.level) return undefined;
   return { body: b, ...body, surface: body.level };
 }
-export type RiverHit = { d: number; half: number; bank: number; surface: number; depth: number; order: number; dirX: number; dirZ: number; speed: number; areaKm2: number };
+/** One drawn D8 segment at unwrapped grid node (i, j). Slope and the node position are the same ones riverAt uses. */
+export function segmentGeom(seed: number, i: number, j: number) {
+  const R = riverGrid(seed), f = flowGrid(seed), g = elevationGrid(seed), n = R.n, s = R.cell;
+  const c = ((j % n) + n) % n * n + ((i % n) + n) % n; if (!R.drawn[c]) return undefined;
+  const r = f.dir[c]; if (r < 0) return undefined;
+  const ox = ((r % n) - (c % n) + n + 1) % n - 1, oz = (((r / n) | 0) - ((c / n) | 0) + n + 1) % n - 1;
+  const ax = i * s, az = j * s, ex = ox * s, ez = oz * s, len2 = ex * ex + ez * ez; if (!(len2 > 0)) return undefined;
+  const len = Math.sqrt(len2), surface0 = toWorld(g, f.filled[c]), surface1 = toWorld(g, f.filled[r]);
+  return {
+    c, ax, az, ex, ez, len, dirX: ex / len, dirZ: ez / len,
+    slope: Math.max(1e-5, (surface0 - surface1) / len), surface0, surface1,
+    depth0: R.depth[c], depth1: R.channel[r] ? R.depth[r] : R.depth[c],
+    width0: R.width[c], width1: R.channel[r] ? R.width[r] : R.width[c],
+    order: R.order[c], areaKm2: R.areaKm2[c], drawnR: !!R.drawn[r],
+  };
+}
+/** Manning n. Chow's low-gradient value below S = 0.002; Jarrett's high-gradient n at and above it (R in feet). */
+export function roughnessN(slope: number, depth: number): number {
+  if (!(slope >= RIVER.jarrettMinS) || !(depth > 0)) return RIVER.manningN;
+  return RIVER.jarrettA * slope ** RIVER.jarrettB * (depth / RIVER.footM) ** RIVER.jarrettC;
+}
+/** Manning velocity (m/s). Wide-channel R ~ depth. Not capped: Jarrett's streams are not limited at 3 m/s. */
+export function channelSpeed(depth: number, slope: number): number {
+  const n = roughnessN(depth > 0 ? slope : 0, depth);
+  if (!(n > 0) || !(depth > 0) || !(slope > 0)) return 0;
+  return depth ** (2 / 3) * Math.sqrt(slope) / n;
+}
+export type RiverHit = { d: number; half: number; bank: number; surface: number; depth: number; order: number; dirX: number; dirZ: number; speed: number; areaKm2: number; slope: number };
 function hitFrom(R: Rivers, geo: GeoHit): RiverHit | undefined {
   const t = geo.t, w = geo.w0 + (geo.w1 - geo.w0) * t, half = Math.min(.4 * R.cell, w / 2);
   const bank = Math.min(.5 * R.cell, Math.max(2, half * RIVER.bankK));
@@ -132,7 +162,7 @@ function hitFrom(R: Rivers, geo: GeoHit): RiverHit | undefined {
   const cap = up >= 0 && up < R.cap.length ? R.cap[up] : Infinity;
   return {
     d: geo.d, half, bank, surface: Math.min(filledS, cap), depth, order: up >= 0 ? R.order[up] : 1, dirX: geo.dirX, dirZ: geo.dirZ,
-    speed: Math.min(3, Math.max(0, depth) ** (2 / 3) * Math.sqrt(slope) / RIVER.manningN), areaKm2: up >= 0 ? R.areaKm2[up] : 0,
+    speed: channelSpeed(depth, slope), areaKm2: up >= 0 ? R.areaKm2[up] : 0, slope,
   };
 }
 function hitAt(R: Rivers, plan: RiverPlan, x: number, z: number): RiverHit | undefined {

@@ -4,13 +4,13 @@ title: Forage on the resource field: berries and herbs grow where light reaches 
 author: grok
 scratch: false
 research: true
-skill: false
+skill: forage-sun-field
 tags: [flora, transactions, forage]
 credits: 52
 ---
 # T-0015 Forage on the resource field
 
-**Status: proposed by grok (2026-10-21 10:25 PT). Open claim: no owner.** Ownership is claim-based. Matthew added it to the board directly ("just go ahead and add them to the board"); a claim still needs an `approve-plan` event first (tools/tasks.ts).
+**Status: claimed by grokbot-3 (2026-10-25 04:35 PT).** Plan approved by agy (2026-10-21 11:45 PT). Not a second approve-plan. GitHub owner "grok" was the author fallback, not a claim.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research), tasks/README.md). Matthew can change it.
 

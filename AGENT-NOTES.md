@@ -979,3 +979,10 @@ Branch `grokbot-3/behaviour-animation-gate`. Claim sits on agy's approve-plan of
 - Unshifted score 1.000 and silhouette IoU 1 on every row. Hare-flee phase +0.5 scores 0.333. Wolf paw x matches `footTarget` within 1e-9 m.
 - The live mesh is not driven by this pose. Deer postures and visitor rows are still open. Graze and rest share the bind pose. Sleep shares the drink neck pitch. Photoreal frames are a rejected try in `attempts.md` (no calibrated keypoint picker).
 - `npx tsc --noEmit` exit 0. `npm test` 735 tests, 721 pass, 0 fail, 14 todo. Skill `notes/skills/behaviour-animation-gate.md`. Handoff `tasks/handoffs/T-0020-grokbot-3.md`. No new task id. No duplicate task id on main.
+
+## 2026-10-25 11:54 PT - grokbot-3: globe boot order (T-0063, issue #47)
+Branch `grokbot-3/globe-boot-order`. Claim sits on grok's approve-plan for Matthew of 2026-10-23 13:23:30 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why this run took #47. It does not name T-0063 and is not a quoted approval.
+- `grid_boot` (`rust/boreal-sim/src/boot_order.rs`) fills the planes in issue #47 order after the host writes land and elevation from one `sampleSurface`. `Grid::seed` is unchanged, so PR #86 can keep moving that function. The boot does not call `update_energy` and does not advance the clock.
+- `startGlobe` waits on `bootP` before the first frame. Shared `step` does not render until `booted`. The 48 h layer spin stays after that paint.
+- Numbers: sea-level pressure 101325 Pa (ISO 2533). Land roughness is the empty-soil z0, not forest 1.5 m. Ts equals the climate-seed air temperature. Frame gate N/A: the mesh is still `sampleSurface`.
+- `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` 758 tests, 744 pass, 0 fail, 14 todo. `cargo test` 74 passed. Skill `notes/skills/globe-boot-order.md`. Handoff `tasks/handoffs/T-0063-grokbot-3.md`. No new task id. Task ids on this branch are unique (T-0046 still reserved, T-0074 still absent). Not self-approved. PRs #84 and #86 were not edited.

@@ -34,7 +34,8 @@ import { GLOBE_COAST, cloudClear, coastLambda, globePitch } from './transition';
 import { globePlanet } from './home';
 import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar, withLogDepth } from './logDepth';
-import { setLayerCamera, setSnowIceShown, startPlanetLayers } from './planetLayers';
+import { LAYER_TIERS, SPINUP, globeLandSample, setLayerCamera, setSnowIceShown, spinAndBake, startPlanetLayers } from './planetLayers';
+import { bootGlobe } from './bootOrder';
 import { columnAt, createLocalClouds, type ColumnInput } from './localClouds';
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
@@ -143,11 +144,24 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const layerDay = Number(q.get('day')) || Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 864e5);
   let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; // grid clock = the world clock: ?hour= is local solar time at home, so UTC = local - lon/15
   const homeLonDeg = toLatLon(planet.home as Vec3).lon * 180 / Math.PI, layerUtc = (((hourAt(shotSec) - homeLonDeg / 15) % 24) + 24) % 24;
-  const simP = loadPlanetSim(); // one instance: the layers seed and step it, the axis reads its live cells
-  if (layerTier >= 0) void simP.then(s => startPlanetLayers(planet, layerTier, layerDay, s, layerUtc)).then(ok => { simReady = !!ok; });
+  const simP = loadPlanetSim(); // one instance: the layers spin it, the axis reads its live cells
   // T-0073: local volumetric clouds around the camera from the sim column (dew point, LCL); the shell stays the far field
   let simReady = false, colIn: ColumnInput | null = null, colFrame = -1e9; const localClouds = q.get('localClouds') === '0' ? null : createLocalClouds(); if (localClouds) scene.add(localClouds.mesh);
-  let simRef: Awaited<typeof simP> | null = null; void simP.then(s => { simRef = s; });
+  let simRef: Awaited<typeof simP> | null = null, booted = false, spinQueued = false;
+  // Issue #47: land, elevation, then boot_order, before the first rendered frame. The 48 h layer spin stays after that paint.
+  const bootP: Promise<void> = simP.then(s => {
+    simRef = s;
+    if (s) {
+      const idx = Math.max(0, Math.min(LAYER_TIERS.length - 1, layerTier < 0 ? 0 : layerTier));
+      const row = LAYER_TIERS[idx];
+      const draw = layerTier >= 0 && row.nlat > 0 && row.layers.length > 0;
+      const nlat = draw ? row.nlat : [...LAYER_TIERS].reverse().find(t => t.nlat > 0)!.nlat;
+      const day0 = layerDay - (draw ? SPINUP.steps * SPINUP.dtS / 86400 : 0);
+      try { bootGlobe(s, nlat, nlat * 2, globeLandSample(planet), day0, layerUtc); }
+      catch (e) { console.warn('globe boot failed', e); }
+    }
+    booted = true;
+  });
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   let shown = {} as Record<LayerId, LayerState>; const isOn = (id: LayerId) => shown[id]?.on ?? true;
   const panel = q.get('panel') === '0' || q.has('shot') && !q.has('panel') || q.get('view') !== 'globe' && q.get('start') !== 'globe' ? null : mountLayerPanel(location.search, (st) => { shown = st; });
@@ -492,8 +506,19 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
         (overHome && alt < HANDOFF.hintAlt ? `over the home region: descend below ${HANDOFF.alt / 1000} km to enter the game\n` : '') + `drag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game`;
     }
   }
-  /** One frame: update, draw into `target`, bookkeeping. */
-  function step(target: THREE.WebGLRenderTarget | null = null) { if (down) return; update(); renderTo(target); after(); }
+  /** One frame: update, draw into `target`, bookkeeping. The first `renderTo` waits until `bootP` has finalized the grid. */
+  function step(target: THREE.WebGLRenderTarget | null = null) {
+    if (down) return;
+    update();
+    if (!booted) return; // render_globe is after finalize
+    renderTo(target);
+    const tierAtRender = layerTier;
+    after();
+    if (!spinQueued && simRef && layerTier >= 0 && layerTier === tierAtRender) {
+      spinQueued = true;
+      setTimeout(() => { if (simRef && layerTier >= 0) simReady = spinAndBake(simRef, layerTier); }, 0);
+    }
+  }
   function tick() { if (down) return; step(null); if (!down) requestAnimationFrame(tick); }
   // Compile every program (tiles + aerial perspective, sky shell + clouds) BEFORE the first frame, in parallel where the
   // driver has KHR_parallel_shader_compile (three's compileAsync polls it), so opening the globe never freezes on a compile.
@@ -512,9 +537,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     await p; group.clear();
   }
   return {
-    planet, renderer, scene, camera, tiles, ownership: own, compiled, update, renderTo, after, step, dispose,
-    /** standalone loop */
-    start() { if (started) return; started = true; void compiled.then(() => requestAnimationFrame(tick)); },
+    planet, renderer, scene, camera, tiles, ownership: own, compiled, bootP, update, renderTo, after, step, dispose,
+    /** standalone loop. The first frame is requested only after the boot promise resolves. */
+    start() { if (started) return; started = true; void Promise.all([compiled, bootP]).then(() => requestAnimationFrame(tick)); },
     /** mode-scoped input: the globe's keys, wheel and drags act only while attached */
     attachInput(on: boolean) { inputOn = on; controls.enabled = on; if (!on) { turnX = null; dragging = false; stopCoast(); } },
     get disposed() { return down; }, /** dev: the release coast is running (T-0043) */ get coasting() { return coastT >= 0; }, get altitude() { return alt; }, get ground() { return ground; }, precompile,

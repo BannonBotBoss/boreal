@@ -299,7 +299,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** Behind the loading screen: create the globe, compile its programs for the far layer AND the screen, build the tiles over
      *  the player at the entry altitude, compile the far-layer background program, then terminate the workers. */
     async prewarm() {
-      const g = await loadGlobe(); await g.compiled; await g.precompile(null);
+      const g = await loadGlobe(); await g.compiled; await g.bootP; await g.precompile(null);
       const t0 = performance.now(); let n = 0;
       while (performance.now() - t0 < INPAGE.prebuildMs) { renderer.getDrawingBufferSize(size); far.resize(size.x, size.y); g.step(far.target); if (++n > 10 && g.stats().queued === 0) break; await new Promise(r => requestAnimationFrame(r)); }
       const bg = new THREE.Scene(), rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }); bg.background = far.texture; // background plane: screen and composer variants

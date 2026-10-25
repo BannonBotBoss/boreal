@@ -22,6 +22,7 @@ import { GLOBE_COLOURS, surfaceColour, type Planet, type Vec3 } from './planet';
 import { GLSL_NOISE } from '../../proc/glsl';
 import { CLOUDS } from './atmosphere';
 import { absorbedAttribute } from '../../core/planet/solarBudget';
+import { HYDRO_DRAW } from './hydroLayer';
 import { figureRadius } from './figure';
 
 /** `lake`: 255 where the reference water level is above sea level (lakes and their shores), 0 at sea level: picks the lake vs ocean water colour. */
@@ -197,7 +198,7 @@ export function globeMaterial(debugSegments = 0) {
     sh.vertexShader = centroid(sh.vertexShader, 'logdepthbuf_pars_vertex'); sh.fragmentShader = centroid(sh.fragmentShader, 'logdepthbuf_pars_fragment');
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
-    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale;
+    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
 vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;

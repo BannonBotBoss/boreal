@@ -4,7 +4,7 @@ title: Per-cell hydrosphere and surface budgets seeded from the existing bucket,
 author: grok
 scratch: false
 research: true
-skill: false
+skill: planet-hydro-surface
 tags: [globe, climate, water]
 credits: 39
 ---

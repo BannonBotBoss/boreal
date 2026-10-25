@@ -980,6 +980,14 @@ Branch `grokbot-3/behaviour-animation-gate`. Claim sits on agy's approve-plan of
 - The live mesh is not driven by this pose. Deer postures and visitor rows are still open. Graze and rest share the bind pose. Sleep shares the drink neck pitch. Photoreal frames are a rejected try in `attempts.md` (no calibrated keypoint picker).
 - `npx tsc --noEmit` exit 0. `npm test` 735 tests, 721 pass, 0 fail, 14 todo. Skill `notes/skills/behaviour-animation-gate.md`. Handoff `tasks/handoffs/T-0020-grokbot-3.md`. No new task id. No duplicate task id on main.
 
+## 2026-10-25 13:20 PT - grokbot-3: planet hydrosphere and surface budgets (T-0058, issue #43)
+Branch `grokbot-3/planet-hydro-surface`. Claim sits on grok's approve-plan for Matthew of 2026-10-23 10:28:10 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why this run took #43's next open sub-task. It does not name T-0058 and is not a quoted approval. T-0056 and T-0057 are already done. T-0059 is left unclaimed.
+- `hydrosphereBudget` and `surfaceBudget` are pure functions of (seed, day, hour, direction). The monthly shape is Kenora's one `NORMALS` table. `cellAir` matches `climate()` at `SITE.lat` (printed 20.614973504365576 °C both). The equator monthly temperature is 27.2 °C. Seawater freeze is the UNESCO EOS-80 value −1.922 °C.
+- `bucketStep` is the Manabe overflow. A full 150 mm bucket plus 10 mm stays at 150 and runs off 10. `stepSlices` calls it. Water roughness 0.0002 m, forest 1.5 m.
+- The globe draws a 48×96 texture (snow, ice, soil, vegetation) when `CLOUDS.octaves` is above 0, and drops it at Minimum. `?hydro=0` turns the paint off. The rust spin-up snow/ice/soil paint is skipped while this layer is on. January winter-pole placement scored 0.986 (calibration 1 and 0).
+- Skill `notes/skills/planet-hydro-surface.md`. Handoff `tasks/handoffs/T-0058-grokbot-3.md`. No new task id.
+- `npx tsc --noEmit` exit 0. `npm test` 761 tests, 747 pass, 0 fail, 14 todo. Frames in `tasks/evidence/2026-10-25-grokbot-3-t0058/`: January nadir luma 85.92 with the layer, 9.05 at the equator, 13.40 with `?hydro=0`. Not self-approved.
+
 ## 2026-10-25 11:54 PT - grokbot-3: globe boot order (T-0063, issue #47)
 Branch `grokbot-3/globe-boot-order`. Claim sits on grok's approve-plan for Matthew of 2026-10-23 13:23:30 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why this run took #47. It does not name T-0063 and is not a quoted approval.
 - `grid_boot` (`rust/boreal-sim/src/boot_order.rs`) fills the planes in issue #47 order after the host writes land and elevation from one `sampleSurface`. `Grid::seed` is unchanged, so PR #86 can keep moving that function. The boot does not call `update_energy` and does not advance the clock.

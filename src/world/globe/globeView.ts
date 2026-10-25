@@ -39,6 +39,7 @@ import { bootGlobe } from './bootOrder';
 import { columnAt, createLocalClouds, type ColumnInput } from './localClouds';
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
+import { refreshHydroLayer, hydroLayerState } from './hydroLayer';
 import { GLOBE_SHORE, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
 import { auroraFromSolarWind, fieldLineR } from '../../core/geodynamo';
@@ -477,6 +478,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setLayerCamera(camPos, camera.fov, viewH);
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
+    const hydroSec = q.has('shot') ? shotSec : worldSec();
+    refreshHydroLayer(seed, Number(q.get('day')) || dayAt(hydroSec), hourAt(hydroSec), worldTier(), q.get('hydro') === '0'); // T-0058: same octave gate; ?day= pins the seed, ?hydro=0 leaves the tiles unpainted
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
     if (localClouds) { if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
         colIn = columnAt({ lat: simRef.plane('lat'), lon: simRef.plane('lon'), ts: simRef.plane('tair'), q: simRef.plane('q'), cloud: simRef.plane('cloud') }, [camPos[0] / L, camPos[1] / L, camPos[2] / L]); }
@@ -559,5 +562,6 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     /** the home shoreline mask is on the GPU (inpage holds the landing until it is, so tile triangles never show as lakes) */
     get maskReady() { return GLOBE_SHORE.key === maskKey; },
     stats: () => ({ drawn, inView, cached: tiles.size, queued: queued.size + inflight.size, deepest, tier: GOVERNOR.tier, segments: lod.segments }),
+    hydroLayer: hydroLayerState,
   };
 }

@@ -909,7 +909,7 @@ Branch `grokbot-3/hunt-hold`, stacked on `grokbot-3/hunt-lock` (PR #75, T-0013).
 - A handling capture runs wolf|hare rows pin, bite, hold. The bite row squeals once. The hare stays, limp, nape on a canine. X eats tissue through the diet meal and leaves the gut as a carcass delta. B writes a friend bond, exp(-(now-at)/180) play seconds, and that hare does not flee that wolf until the strength drops below exp(-1). NPC wolves still remove and eat.
 - Keyboard A stays steer, so eat defaults to X. Pad B is Close, so release defaults to keyboard B. Both are rebindable.
 - Pin score 1.000 (standing paws 0.256). Carry score 1.000 (ground, error 0.711 m, score 0.000). Decay score 1.000 (linear 0.893). Grasp 15.06° inside a 44.89° gape. No pixel frames.
-- `npx tsc --noEmit` exit 0. `npm test` 707 tests, 693 pass, 0 fail, 14 todo. Ledger errors stay 22. No new task id. Skill `notes/skills/hunt-pin-carry.md`. Handoff `tasks/handoffs/T-0014-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. After #75 and #74 merged, the commit was replayed onto main and `npm test` was 714 tests, 700 pass, 0 fail, 14 todo. Ledger errors stay 22. No new task id. Skill `notes/skills/hunt-pin-carry.md`. Handoff `tasks/handoffs/T-0014-grokbot-3.md`.
 
 ## 2026-10-25 02:58 PT - grokbot-3: hunt lock, stealth notice, steered leap (T-0013, issue #9)
 Branch `grokbot-3/hunt-lock`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a second approve-plan and not self-approved. #8 was skipped because PR #74 is open. #9 was the first eligible issue.

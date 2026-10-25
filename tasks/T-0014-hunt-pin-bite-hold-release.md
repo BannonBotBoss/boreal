@@ -10,7 +10,7 @@ credits: 108
 ---
 # T-0014 Hunting II
 
-**Status: completed by grokbot-3 (2026-10-25 03:32 PT).** Claim sits on agy's approve-plan (2026-10-21 11:45 PT). Not a second approve-plan. The finished-work approve is a rule 16 relay. Branch `grokbot-3/hunt-hold`, stacked on `grokbot-3/hunt-lock` (PR #75, T-0013). Issue #10.
+**Status: completed by grokbot-3 (2026-10-25 03:32 PT).** Claim sits on agy's approve-plan (2026-10-21 11:45 PT). Not a second approve-plan. The finished-work approve is a rule 16 relay. Branch `grokbot-3/hunt-hold`. PR #75 merged before this opened, so the PR base is main. Issue #10.
 
 **Credits: 108** (= 10 x 6 objectives x (1 + 0.5 scratch + 0.3 research), tasks/README.md). Matthew can change it.
 

@@ -1,6 +1,6 @@
 # T-0014 handoff (grokbot-3)
 
-**Status: completed, waiting on another agent's review of the PR.** Issue #10. Branch `grokbot-3/hunt-hold`, stacked on `grokbot-3/hunt-lock` (PR #75, T-0013). The PR base is `grokbot-3/hunt-lock`, so the diff is only Hunting II. Not merged. Not self-approved on GitHub.
+**Status: completed, waiting on another agent's review of the PR.** Issue #10. Branch `grokbot-3/hunt-hold`. PR base is `main`. PR #75 (T-0013) merged while this was in progress (`2761776`), and main then also took T-0012 (`7bee6af`). The hold commit was replayed onto that main, so the diff is only Hunting II. Not merged. Not self-approved on GitHub.
 
 ## What was built
 On a handling capture the wolf runs wolf|hare rows pin, bite, hold. The bite row squeals once (`hare-squeak` only; the old caught path still schedules a chew and is not used here). The hare stays in the world, limp, with its nape on an upper canine. Keyboard X eats: tissue mass goes through `dietOf(WOLF_NEEDS).meal`, gut contents are a carcass delta. Keyboard B releases a friend bond, `exp(-(now-at)/180)`, and that hare does not flee that wolf while the strength is at or above `exp(-1)`. NPC wolves still delete and eat. Worlds without `handling` (including `tools/hunt-sim.ts`) still emit `caught`.
@@ -8,7 +8,7 @@ On a handling capture the wolf runs wolf|hare rows pin, bite, hold. The bite row
 ## Done
 - `src/core/huntHold.ts`, verb on `transactions.ts`, sim `handling` / `releasePrey` / `consumePrey`, hare carry, wolf jaw and fore-paw hold, bindings, squeal, `context.bonds`, system-map.
 - Skill `notes/skills/hunt-pin-carry.md`. Tests in `tests/hunt.test.ts`.
-- `npx tsc --noEmit` exit 0. `npm test` 707 tests, 693 pass, 0 fail, 14 todo.
+- `npx tsc --noEmit` exit 0. On the replayed base, `npm test` 714 tests, 700 pass, 0 fail, 14 todo. The complete event records the earlier 707/693 run, from before #75 and #74 were on this branch's base.
 
 ## Next
 Another agent reviews the PR. Do not merge it from this branch.

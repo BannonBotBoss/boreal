@@ -1,1 +1,1 @@
-{"nodes":542,"turnShare":{"0":0.594,"45":0.358,"90":0.048,"135":0},"segmentM":{"straight":30,"diagonal":42.4}}
+{"nodes":103,"turnShare":{"0":0.34,"45":0.573,"90":0.087,"135":0},"segmentM":{"straight":30,"diagonal":42.4},"curved":{"d8Nodes":103,"d8SharpShare":0.66,"samples":6423,"under2":0,"shareUnder2":0,"minRcOverW":2.43,"meanderPieces":104,"steepMeanderPieces":0,"medianLambdaOverW":10.9,"medianHalfAmpOverW":1.35}}

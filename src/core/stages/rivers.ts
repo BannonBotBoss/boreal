@@ -20,14 +20,14 @@
  *    (why: filled -> ponded -> spilled) and are not drawn as channels. A drawn channel whose surface would still stand
  *    above unconfined ground is breached: the surface is lowered to that ground (Lindsay 2016, Hydrological Processes
  *    30:846-857, the breaching idea; no Whitebox code is ported). Slope and speed stay on the filled surface (T-0030).
- *  - Centrelines are the D8 segments between grid nodes (same node layout as sampleGrid), evaluated per query point, so rivers
- *    are continuous across chunks at any terrain resolution (Red Blob mapgen4 draws rivers per flow edge the same way, with
- *    width ~ sqrt(flow); we use the cited regional curve instead).
+ *  - Centrelines are fillets and, on pool-riffle slopes, a meander (riverPlanform.ts, T-0031), evaluated per query
+ *    point from the same D8 graph, so rivers stay continuous across chunks. Width is the Bieger curve above.
  */
 import type { Flow } from './flow';
 import { elevationGrid, flowGrid, lakeAt, lakeGrid, sampleGrid, toWorld, type Grid } from './elevation';
 import { surfaceDetail } from '../surface';
 import { LEVEL } from '../tuning';
+import { buildRiverPlan, queryPlan, type GeoHit, type RiverPlan } from './riverPlanform';
 
 export const RIVER = {
   /** Channel initiation area (km^2): ~0.5 km^2 for humid boreal Shield terrain (WORLD-STAGES.md) [verify]. */
@@ -94,14 +94,16 @@ function labelRiverPonds(g: Grid, f: Flow, R: Rivers, lakeId: Int32Array): River
 
 const cache = new Map<number, Rivers>();
 const pondCache = new Map<number, RiverPonds>();
+const planCache = new Map<number, RiverPlan>();
 /** Stage 2c for the seed (cached). Lake cells and channel-crossing depressions are not drawn. */
 export function riverGrid(seed: number): Rivers {
   let R = cache.get(seed); if (R) return R;
   const g = elevationGrid(seed), f = flowGrid(seed), L = lakeGrid(seed);
   R = extractRivers(f, c => L.id[c] >= 0);
   const ponds = labelRiverPonds(g, f, R, L.id);
-  cache.set(seed, R); pondCache.set(seed, ponds); // riverAt / pondAt during the breach read this cache
-  breachUnconfined(seed, R, f);
+  const plan = buildRiverPlan(R, f.dir, c => toWorld(g, f.filled[c]));
+  cache.set(seed, R); pondCache.set(seed, ponds); planCache.set(seed, plan); // riverAt / pondAt during the breach read this cache
+  breachUnconfined(seed, R, f, g, plan);
   return R;
 }
 /** Ponds on channel-crossing depressions (cached with the river grid). */
@@ -118,26 +120,36 @@ export function pondAt(seed: number, x: number, z: number) {
   return { body: b, ...body, surface: body.level };
 }
 export type RiverHit = { d: number; half: number; bank: number; surface: number; depth: number; order: number; dirX: number; dirZ: number; speed: number; areaKm2: number };
-/** Nearest river segment influencing (x, z) (game metres), or undefined. The bank zone is d in [half, half + bank]. */
+function hitFrom(R: Rivers, geo: GeoHit): RiverHit | undefined {
+  const t = geo.t, w = geo.w0 + (geo.w1 - geo.w0) * t, half = Math.min(.4 * R.cell, w / 2);
+  const bank = Math.min(.5 * R.cell, Math.max(2, half * RIVER.bankK));
+  if (geo.d - half > bank) return undefined;
+  const up = geo.up, down = geo.down;
+  const depth0 = up >= 0 ? R.depth[up] : 0, depth1 = down >= 0 && R.channel[down] ? R.depth[down] : depth0, depth = depth0 + (depth1 - depth0) * t;
+  const fb = RIVER.freeboard * (geo.mouth ? 1 - t : 1); // taper to 0 where the piece enters a lake so the surfaces meet
+  const filledS = geo.elev0 + (geo.elev1 - geo.elev0) * t - fb;
+  const slope = Math.max(1e-5, (geo.elev0 - geo.elev1) / geo.run);
+  const cap = up >= 0 && up < R.cap.length ? R.cap[up] : Infinity;
+  return {
+    d: geo.d, half, bank, surface: Math.min(filledS, cap), depth, order: up >= 0 ? R.order[up] : 1, dirX: geo.dirX, dirZ: geo.dirZ,
+    speed: Math.min(3, Math.max(0, depth) ** (2 / 3) * Math.sqrt(slope) / RIVER.manningN), areaKm2: up >= 0 ? R.areaKm2[up] : 0,
+  };
+}
+function hitAt(R: Rivers, plan: RiverPlan, x: number, z: number): RiverHit | undefined {
+  const geo = queryPlan(plan, x, z); if (!geo) return undefined;
+  return hitFrom(R, geo);
+}
+/** Nearest river centreline influencing (x, z) (game metres), or undefined. The bank zone is d in [half, half + bank]. */
 export function riverAt(seed: number, x: number, z: number): RiverHit | undefined {
-  const R = riverGrid(seed), g = elevationGrid(seed), f = flowGrid(seed), n = R.n, s = R.cell, fi = Math.floor(x / s), fj = Math.floor(z / s);
-  let best: RiverHit | undefined, bestEdge = Infinity;
-  for (let dj = -1; dj <= 2; dj++) for (let di = -1; di <= 2; di++) {
-    const i = fi + di, j = fj + dj, c = ((j % n) + n) % n * n + ((i % n) + n) % n; if (!R.drawn[c]) continue;
-    const r = f.dir[c]; if (r < 0) continue;
-    const ox = ((r % n) - (c % n) + n + 1) % n - 1, oz = (((r / n) | 0) - ((c / n) | 0) + n + 1) % n - 1; // wrapped D8 offset in {-1,0,1}
-    const ax = i * s, az = j * s, ex = ox * s, ez = oz * s, len2 = ex * ex + ez * ez;
-    const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / len2)), px = x - ax - t * ex, pz = z - az - t * ez, d = Math.hypot(px, pz);
-    const wr = R.channel[r] ? R.width[r] : R.width[c], half = Math.min(.4 * s, (R.width[c] + (wr - R.width[c]) * t) / 2);
-    const bank = Math.min(.5 * s, Math.max(2, half * RIVER.bankK)), edge = d - half; if (edge > bank || edge >= bestEdge) continue;
-    const sc = toWorld(g, f.filled[c]), sr = toWorld(g, f.filled[r]), len = Math.sqrt(len2), depth = R.depth[c] + ((R.channel[r] ? R.depth[r] : R.depth[c]) - R.depth[c]) * t;
-    const slope = Math.max(1e-5, (sc - sr) / len);
-    const fb = RIVER.freeboard * (1 - t + (R.drawn[r] ? t : 0)); // taper to 0 where the river enters a lake/open water so the surfaces meet
-    const filledS = sc + (sr - sc) * t - fb;
-    bestEdge = edge; best = { d, half, bank, surface: Math.min(filledS, R.cap[c]), depth, order: R.order[c], dirX: ex / len, dirZ: ez / len,
-      speed: Math.min(3, depth ** (2 / 3) * Math.sqrt(slope) / RIVER.manningN), areaKm2: R.areaKm2[c] };
-  }
-  return best;
+  const R = riverGrid(seed), plan = planCache.get(seed); if (!plan) return undefined;
+  return hitAt(R, plan, x, z);
+}
+/** Points on the curved centreline, one per piece. The containment audit samples these, not the D8 nodes. */
+export function riverAuditPoints(seed: number) {
+  riverGrid(seed); return planCache.get(seed)?.samples ?? [];
+}
+export function riverPlan(seed: number) {
+  riverGrid(seed); return planCache.get(seed);
 }
 /** Terrain after channel carving: only ever lowers h (parabolic bed, sloped bank, smooth blend back at the bank's outer edge). */
 export function carve(h: number, r: RiverHit) {
@@ -159,24 +171,19 @@ function alreadyWater(seed: number, x: number, z: number) {
 }
 /** Lower each drawn segment's surface to the lower unconfined bank (Lindsay 2016, applied per segment, not a Whitebox port).
  *  Repeats until the cap stops falling: carving a neighbour can lower the bank this segment is measured against. */
-function breachUnconfined(seed: number, R: Rivers, f: Flow) {
-  const n = R.n, s = R.cell, N = n * n;
+function breachUnconfined(seed: number, R: Rivers, _f: Flow, _g: Grid, plan: RiverPlan) {
   for (let pass = 0; pass < 8; pass++) {
     let moved = false;
-    for (let c = 0; c < N; c++) {
-      if (!R.drawn[c]) continue; const r = f.dir[c]; if (r < 0) continue;
-      const ox = ((r % n) - (c % n) + n + 1) % n - 1, oz = (((r / n) | 0) - ((c / n) | 0) + n + 1) % n - 1;
-      const len = Math.hypot(ox, oz) * s; if (!(len > 0)) continue;
-      const t = .5, x = ((c % n) + ox * t) * s, z = (((c / n) | 0) + oz * t) * s;
-      const wr = R.channel[r] ? R.width[r] : R.width[c], half = Math.min(.4 * s, (R.width[c] + (wr - R.width[c]) * t) / 2);
-      const bank = Math.min(.5 * s, Math.max(2, half * RIVER.bankK)), off = half + bank + 1, dirX = ox * s / len, dirZ = oz * s / len;
+    for (const s of plan.samples) {
+      const geo = queryPlan(plan, s.x, s.z); if (!geo || geo.up < 0) continue;
+      const h = hitFrom(R, geo); if (!h || h.d > 1) continue;
       let cap = Infinity;
       for (const side of [1, -1]) {
-        const px = x - dirZ * side * off, pz = z + dirX * side * off;
+        const off = h.half + h.bank + 1, px = s.x - h.dirZ * side * off, pz = s.z + h.dirX * side * off;
         if (alreadyWater(seed, px, pz)) continue;
         cap = Math.min(cap, auditGround(seed, px, pz) + OPEN_M - 1e-4);
       }
-      if (cap < R.cap[c] - 1e-6) { R.cap[c] = cap; moved = true; }
+      if (cap < R.cap[geo.up] - 1e-6) { R.cap[geo.up] = cap; moved = true; }
     }
     if (!moved) break;
   }

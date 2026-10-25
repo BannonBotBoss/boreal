@@ -5,6 +5,7 @@
  *  cost is one texture fetch per pixel and nlat x 2 nlat x 4 bytes of VRAM (at most 64 KB). Uniform values only, same program. */
 import * as THREE from 'three';
 import { loadPlanetSim, type PlanetSim } from '../../core/planetBudget';
+import { bootGlobe } from './bootOrder';
 import { fromLatLon, PLANET, type Vec3 } from './planet';
 import { visibleWeight } from './visibility';
 
@@ -33,20 +34,33 @@ export function bakeLayers(sim: PlanetSim): Uint8Array {
   return out;
 }
 
-/** Load the wasm, seed the grid for `day` over `planet`, bake and bind the texture for `tier`. Resolves false (tiles unchanged)
- *  when the tier draws nothing or the wasm is missing. Call again when the tier changes. */
-export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: number } }, tier: number, day: number, sim?: PlanetSim | null, utcHour = 0): Promise<boolean> {
+/** Land fraction and height from the globe's own `sampleSurface` (one mask, not a second generator). */
+export function globeLandSample(planet: { sampleSurface(d: Vec3): { h: number } }) {
+  return (lat: number, lon: number) => { const s = planet.sampleSurface(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180)); return { land: s.h > 0 ? 1 : 0, elev: Math.max(0, s.h) }; };
+}
+
+/** Spin the already-booted grid and bind the layer texture. The boot itself does not take these steps. */
+export function spinAndBake(sim: PlanetSim, tier: number): boolean {
   const t = LAYER_TIERS[Math.max(0, Math.min(LAYER_TIERS.length - 1, tier))];
-  tierOn = [0, 0, 0]; GLOBE_LAYERS.uLayers.value.set(0, 0, 0, 0); if (!t.nlat || !t.layers.length) return false;
-  sim = sim ?? await loadPlanetSim(); if (!sim) return false;
-  sim.init(t.nlat, t.nlat * 2).setLand((lat, lon) => { const s = planet.sampleSurface(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180)); return { land: s.h > 0 ? 1 : 0, elev: Math.max(0, s.h) }; }).seed(day - SPINUP.steps * SPINUP.dtS / 86400, utcHour); // seeded one spin-up earlier so the grid ends at (day, utcHour)
-  for (let i = 0; i < SPINUP.steps; i++) sim.step(SPINUP.dtS); // humidity -> cloud needs time: the seed has none (cloud 0); 48 h: RH + convective + stratocumulus + frontal + free-troposphere upglide cloud (update_clouds.rs) global (MODIS 0.67, King et al. 2013: low, SH winter storm tracks missing; July 30-90N 0.56-0.77 matches)
+  if (!t.nlat || !t.layers.length) return false;
+  for (let i = 0; i < SPINUP.steps; i++) sim.step(SPINUP.dtS); // humidity -> cloud needs time after the boot; 48 h: RH + convective + stratocumulus + frontal + free-troposphere upglide cloud (update_clouds.rs) global (MODIS 0.67, King et al. 2013: low, SH winter storm tracks missing; July 30-90N 0.56-0.77 matches)
   const tex = new THREE.DataTexture(bakeLayers(sim), t.nlat * 2, t.nlat, THREE.RGBAFormat, THREE.UnsignedByteType, THREE.UVMapping, THREE.RepeatWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearFilter);
   tex.generateMipmaps = false; tex.needsUpdate = true;
   const old = GLOBE_LAYERS.uLayerTex.value; if (old !== EMPTY) old.dispose(); GLOBE_LAYERS.uLayerTex.value = tex;
   tierOn = [+t.layers.includes('snow'), +t.layers.includes('ice'), +t.layers.includes('soil')];
   GLOBE_LAYERS.uLayers.value.set(tierOn[0], tierOn[1], tierOn[2], 1);
   return true;
+}
+
+/** Load the wasm, boot the grid for `day` over `planet` (issue #47), then spin and bake. Resolves false (tiles unchanged)
+ *  when the tier draws nothing or the wasm is missing. Call again when the tier changes. */
+export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: number } }, tier: number, day: number, sim?: PlanetSim | null, utcHour = 0): Promise<boolean> {
+  const t = LAYER_TIERS[Math.max(0, Math.min(LAYER_TIERS.length - 1, tier))];
+  tierOn = [0, 0, 0]; GLOBE_LAYERS.uLayers.value.set(0, 0, 0, 0); if (!t.nlat || !t.layers.length) return false;
+  sim = sim ?? await loadPlanetSim(); if (!sim) return false;
+  // Boot one spin-up earlier so the steps end at (day, utcHour). The boot itself does not advance the clock.
+  bootGlobe(sim, t.nlat, t.nlat * 2, globeLandSample(planet), day - SPINUP.steps * SPINUP.dtS / 86400, utcHour);
+  return spinAndBake(sim, tier);
 }
 let tierOn = [0, 0, 0], snowIceOn = 1;
 /** layer panel: snow/ice off (still simulated: the budget needs its albedo; only the drawing stops) */

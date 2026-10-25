@@ -956,6 +956,14 @@ Branch `grokbot-3/log-arena`. Claim sits on agy's approve-plan of 2026-10-21 11:
 - Timing scores 1 and 1 (19 yr, 100 yr). Position 1 (12/12). Known mismatches 0.19 and 0.78395. Pixels unmeasurable (mesh unchanged). Skill `notes/skills/log-arena-decay.md`. Handoff `tasks/handoffs/T-0018-grokbot-3.md`. Scores `refs/T-0018/score.json`.
 - `npx tsc --noEmit` exit 0. `npm test` 734 tests, 720 pass, 0 fail, 14 todo. CI `test` on PR #80 succeeded (run 40197795189, commit `dd859b4`). No new task id. Duplicate task-id scan on this branch: 72 files, 72 ids, 0 duplicates. No housekeeping PR. Complete event 2026-10-25 06:43 PT. Not self-approved.
 
+## 2026-10-25 10:55 PT - grokbot-3: river planform curves (T-0031, issue #26)
+Branch `grokbot-3/river-planform`. Claim sits on grok's approve-plan of 2026-10-21 17:15 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why the run took #26. It does not name T-0031 and is not a quoted approval.
+- #19 stays claude's claim (no release). #21 is completed with a blocking review. #22 is done. #23 is grok's. #18 is codex's. #20 is already in PRs #70/#71.
+- The centreline is a fillet at Rc/W 2.43 (Williams 1986) plus a pool-riffle lobe at λ/W 10.9 and crest 1.35 W (Leopold & Wolman 1960). Slope split 0.015 is Montgomery & Buffington 1997. Steep reaches stay on the valley line. Apex widening was not applied: the plan still says "claimant: cite".
+- Seed 1400: 6423 samples, under2 0, min Rc/W 2.43, 104 lobes, median λ/W 10.9, median half-amplitude/W 1.35. Seed 7: 160 lobes, same floor. D8 sharp share 0.66 is the known mismatch. Position score 1.000. Timing N/A. One downstream still `refs/water/river-audit/fast1/after-downstream-0.png`; pixels not scored.
+- Containment open share stays 0. World-chunk digest stays `50484521d390b267`. Fur digests unchanged. `GENERATOR_VERSION` stays 1. Woodpecker callers 489 → 490 (`refs/T-0017/score.json`); the schedule was not retuned.
+- `npx tsc --noEmit` exit 0. `npm test` 750 tests, 736 pass, 0 fail, 14 todo. CI `test` on PR #85 succeeded (run 40218841041, commit `29e041b`). Skill `notes/skills/river-planform.md`. Handoff `tasks/handoffs/T-0031-grokbot-3.md`. Complete event 2026-10-25 11:06 PT. Open PR #84 also edits `rivers.ts`. Old side branches still carry both T-0071 filenames; main does not. No renumber. Not self-approved.
+
 ## 2026-10-25 11:09 PT - grokbot-3: planet_fundamentals layout (T-0062, issue #46)
 Branch `grokbot-3/planet-fundamentals`. Claim sits on grok's approve-plan for Matthew of 2026-10-23 13:22 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why the run took #46. It is not a quoted approval of this result.
 Skipped #27 (claimed by grok), #29 (T-0034 already on main), #32 (GitHub project create is FORBIDDEN for this token), #43 (T-0058 and T-0059 still open).
@@ -979,3 +987,10 @@ Branch `grokbot-3/behaviour-animation-gate`. Claim sits on agy's approve-plan of
 - Unshifted score 1.000 and silhouette IoU 1 on every row. Hare-flee phase +0.5 scores 0.333. Wolf paw x matches `footTarget` within 1e-9 m.
 - The live mesh is not driven by this pose. Deer postures and visitor rows are still open. Graze and rest share the bind pose. Sleep shares the drink neck pitch. Photoreal frames are a rejected try in `attempts.md` (no calibrated keypoint picker).
 - `npx tsc --noEmit` exit 0. `npm test` 735 tests, 721 pass, 0 fail, 14 todo. Skill `notes/skills/behaviour-animation-gate.md`. Handoff `tasks/handoffs/T-0020-grokbot-3.md`. No new task id. No duplicate task id on main.
+
+## 2026-10-25 11:54 PT - grokbot-3: globe boot order (T-0063, issue #47)
+Branch `grokbot-3/globe-boot-order`. Claim sits on grok's approve-plan for Matthew of 2026-10-23 13:23:30 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why this run took #47. It does not name T-0063 and is not a quoted approval.
+- `grid_boot` (`rust/boreal-sim/src/boot_order.rs`) fills the planes in issue #47 order after the host writes land and elevation from one `sampleSurface`. `Grid::seed` is unchanged, so PR #86 can keep moving that function. The boot does not call `update_energy` and does not advance the clock.
+- `startGlobe` waits on `bootP` before the first frame. Shared `step` does not render until `booted`. The 48 h layer spin stays after that paint.
+- Numbers: sea-level pressure 101325 Pa (ISO 2533). Land roughness is the empty-soil z0, not forest 1.5 m. Ts equals the climate-seed air temperature. Frame gate N/A: the mesh is still `sampleSurface`.
+- `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` 758 tests, 744 pass, 0 fail, 14 todo. `cargo test` 74 passed. Skill `notes/skills/globe-boot-order.md`. Handoff `tasks/handoffs/T-0063-grokbot-3.md`. No new task id. Task ids on this branch are unique (T-0046 still reserved, T-0074 still absent). Not self-approved. PRs #84 and #86 were not edited.

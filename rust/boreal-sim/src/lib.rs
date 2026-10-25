@@ -23,6 +23,7 @@ pub mod interior;
 pub mod gas;
 pub mod formation;
 pub mod differentiation;
+pub mod boot_order;
 
 use grid::Grid;
 use std::cell::RefCell;
@@ -39,6 +40,9 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
 #[no_mangle] pub extern "C" fn grid_seed(day: f64, hour: f64) { GRID.with(|g| if let Some(g) = g.borrow_mut().as_mut() { g.seed(day, hour) }) }
 /// Advance dt game seconds.
 #[no_mangle] pub extern "C" fn grid_step(dt: f64) { GRID.with(|g| if let Some(g) = g.borrow_mut().as_mut() { g.step(dt) }) }
+/// Issue #47 boot: host has written LAND and ELEV. Fills the other planes in `boot_order::RUST_BOOT_STEPS`.
+/// Does not advance the clock and does not call `update_energy`. `grid_seed` is unchanged.
+#[no_mangle] pub extern "C" fn grid_boot(day: f64, hour: f64) { GRID.with(|g| if let Some(g) = g.borrow_mut().as_mut() { boot_order::boot(g, day, hour) }) }
 #[no_mangle] pub extern "C" fn grid_day() -> f64 { GRID.with(|g| g.borrow().as_ref().map_or(0.0, |g| g.day)) }
 #[no_mangle] pub extern "C" fn grid_hour() -> f64 { GRID.with(|g| g.borrow().as_ref().map_or(0.0, |g| g.hour)) }
 /// Single-cell solar budget (the same functions weather.ts has in TypeScript), written into `out[0..6]`:

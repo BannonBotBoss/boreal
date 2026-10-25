@@ -39,7 +39,7 @@ export const PLANE_INFO: Record<PlaneName, { unit: string; budget: 'input' | 'st
 
 interface Exports {
   memory: WebAssembly.Memory; layout_version(): number; plane_count(): number;
-  grid_init(nlat: number, nlon: number): number; grid_seed(day: number, hour: number): void; grid_step(dt: number): void;
+  grid_init(nlat: number, nlon: number): number; grid_seed(day: number, hour: number): void; grid_boot(day: number, hour: number): void; grid_step(dt: number): void;
   grid_day(): number; grid_hour(): number; alloc_f64(n: number): number;
   solar_cell(day: number, hour: number, lat: number, lon: number, cloud: number, albedo: number, tC: number, ePa: number, out: number): void;
   radial_profile(rKm: number, mpRe: number, out: number): void;
@@ -65,6 +65,8 @@ export class PlanetSim {
     return this;
   }
   seed(day: number, utcHour = 0) { this.x.grid_seed(day, utcHour); return this; }
+  /** Issue #47 boot (`boot_order.rs`). LAND and ELEV are already on the grid. Does not advance time or integrate Ts. */
+  boot(day: number, utcHour = 0) { this.x.grid_boot(day, utcHour); return this; }
   step(dtSeconds: number) { this.x.grid_step(dtSeconds); return this; }
   get day() { return this.x.grid_day(); } get hour() { return this.x.grid_hour(); }
   /** One cell's solar budget: [toa, swDown, qAbsorbed, qReflected, qLongwaveOut, lwNet, cosZenith]. */

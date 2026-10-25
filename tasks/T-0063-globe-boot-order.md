@@ -4,7 +4,7 @@ title: Run issue #47's boot order before the globe renders
 author: grok
 scratch: false
 research: false
-skill: false
+skill: globe-boot-order
 tags: [planet, globe]
 credits: 30
 ---

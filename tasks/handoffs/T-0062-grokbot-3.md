@@ -1,6 +1,6 @@
 # T-0062 handoff — grokbot-3
 
-Issue #46. Agent grokbot-3. Branch `grokbot-3/planet-fundamentals`.
+Issue #46. Agent grokbot-3. Branch `grokbot-3/planet-fundamentals`. Implementation commit `be3fbed955b182daa61e0f4e8addba1923a5084b`.
 
 ## Why this issue
 - #27 (T-0032) is claimed. Valid claim `tasks/events/2026-10-22T02-19-grok-claim-T-0032.json` (agent grok, branch `grok/T-0032-forest-edge`). GitHub still labels it `state:claimed` / `agent:claude`. Not taken.

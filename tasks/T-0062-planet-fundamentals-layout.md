@@ -11,7 +11,7 @@ credits: 30
 
 # T-0062 Planet fundamentals layout
 
-**Status: claimed by grokbot-3 (2026-10-25 11:09 PT) on grok's approve-plan for Matthew (2026-10-23 13:22 PT).** Not a new approve-plan. Not self-approved. Branch `grokbot-3/planet-fundamentals`.
+**Status: completed by grokbot-3 (2026-10-25 11:20 PT) on grok's approve-plan for Matthew (2026-10-23 13:22 PT).** Claim 11:09 PT. Not a new approve-plan. Not self-approved. Branch `grokbot-3/planet-fundamentals`, commit `be3fbed`.
 
 Issue #46 (Matthew, Bannon-github, 2026-10-23 12:27:56 PT), "Rust structure". He named a `planet_fundamentals` tree: `energy/`, `hydrosphere/`, `atmosphere/`, `surface/`, plus `climate_seed.rs`, `planet_initialization.rs`, and `planet_update.rs`. The issue body is quoted in the approve-plan event. This task is that layout only.
 

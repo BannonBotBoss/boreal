@@ -37,6 +37,7 @@ import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
 import { riverAt } from '../core/stages/rivers';
 import { waterMaterial, updateWaterUniforms } from './water';
+import { WAKES, TOP_CAM, sampleSurface, hipsFor, pawArea, waterline, travelSpeed, PERSON_STRIDE, PERSON_DUTY } from '../core/waterWake';
 import { tiles } from '../photo/frame';
 import { applyGenome } from './appearance';
 import { entityMass, rigMass } from './mass';
@@ -57,6 +58,8 @@ export type ForageHandler = (animal: Entity, plant: Entity) => number | undefine
 const T0005_LOG_SEAT = (GEOMETRY as unknown as Record<string, unknown>)['logSeat'] as LogSeatFn | undefined;
 /** ?glow=0: target glow off (A/B frame-time measurement, T-0035). */
 const GLOW_ON = typeof location === 'undefined' || new URLSearchParams(location.search).get('glow') !== '0';
+/** ?top=1: straight down at the water, for the wake measurement. Not a player camera. */
+const TOP_DOWN = typeof location !== 'undefined' && new URLSearchParams(location.search).has('top');
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU
   mountViewfinder(renderer, 'game', { meta: () => ({ gameTime: formatHour(hourAt(0)), location: `x ${camera.position.x.toFixed(0)} z ${camera.position.z.toFixed(0)}`, seed: STAGES.seed }) }); // T-0068: the view is a camera
@@ -187,7 +190,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   let previousTime = 0, focusBlend = 0, lastFocus: Entity | undefined; const focusQ = new THREE.Quaternion();
   const headPoint = new THREE.Vector3();
   const audibleAnimals: {key:string; energy:number; motion:string; problem:string; x:number; z:number; phase:number}[] = [];
-  function simulateAnimals(dt:number, x:number,z:number, frozen=false) {
+  function simulateAnimals(dt:number, x:number,z:number, frozen=false, time=0) {
     audibleAnimals.length=0;
     scene.updateMatrixWorld(true);
     const entities=[...chunks.values()].flatMap(c=>c.entities), keys=new Set(entities.map(e=>e.key));
@@ -224,6 +227,12 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
         if(kb&&Math.hypot(kb.vx,kb.vz)>.01){const v=Math.hypot(kb.vx,kb.vz),fr=Math.min(.6*kb.mass*gravity(),kb.mass*v/dt);kb.x=e.x;kb.z=e.z;kb.y=0;step(kb,dt,{x:-kb.vx/v*fr,z:-kb.vz/v*fr,y:kb.mass*gravity()},-1);
           if(heightAt(kb.x,kb.z)>=LEVEL.deerWater){e.x=kb.x;e.z=kb.z;}else{kb.vx=0;kb.vz=0;}}
         rig.brain.expend(dt,Math.hypot(e.x-oldX,e.z-oldZ));e.energy=rig.brain.energy;e.rotation=rig.brain.heading;
+        const b=rig.brain, sc=rig.root.scale;
+        let kg=rig.root.userData.wakeKg as number|undefined;
+        if(!(typeof kg==='number' && kg>0)) { try { kg=rigMass(rig.root,'cervid'); } catch { kg=0; } rig.root.userData.wakeKg=kg; }
+        if((kg??0)>0) WAKES.noteGait({ id:key, x:e.x, z:e.z, heading:b.heading, phase:b.phase, prevPhase:b.prevPhase, motion:b.motion,
+          speed:travelSpeed(b.speed,b.gaitSpeed), legs:b.legs, gaitName:b.gaitName, t:time, mass:kg??0, length:waterline('deer',sc.x),
+          hips:hipsFor('deer',sc.x,sc.z), pawArea:pawArea('deer'), sample:sampleSurface });
       }
       rig.root.position.set(e.x,heightAt(e.x,e.z),e.z);rig.root.rotation.y=rig.brain.heading;rig.animate(dt);
       audibleAnimals.push({key,energy:rig.brain.energy,motion:rig.brain.motion,problem:rig.brain.problem,x:e.x,z:e.z,phase:rig.brain.phase});
@@ -239,6 +248,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     const ground = Math.max(heightAt(x, z), -.2);
     wolf.root.position.set(x, ground, z); wolf.root.rotation.y = yaw;
+    camera.up.set(0, 1, 0);
     const pushed = pushFrom && [...chunks.values()].flatMap(c => c.entities).find(e => e.key === pushFrom.key);
     const pushVector = pushed && pushFrom ? { x: pushed.x - pushFrom.x, z: pushed.z - pushFrom.z, yaw } : undefined;
     wolf.animate({ time, dt: photo && photo.frozen !== false ? 0 : Math.max(0, Math.min(.1, time - previousTime)), moving, action, elapsed: actionElapsed, mode, push: pushVector });
@@ -271,10 +281,18 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       if (entity.kind !== 'person') continue;
       const lod = chunk.objects.get(entity.key)! as THREE.LOD;
       lod.rotation.y = Math.sin(time * .7 + entity.seed) * .07;
+      if (!frozen) {
+        let kg = lod.userData.wakeKg as number | undefined;
+        if (!(typeof kg === 'number' && kg > 0)) { kg = entityMass(entity); lod.userData.wakeKg = kg; }
+        WAKES.noteMover({ id: entity.key, x: entity.x, z: entity.z, heading: entity.rotation, motion: 'idle', speed: 0, t: time,
+          mass: kg, length: waterline('person', entity.scale), hips: hipsFor('person', entity.scale, entity.scale), pawArea: pawArea('person'),
+          offsets: [0, 0.5], duty: PERSON_DUTY, stride: PERSON_STRIDE * entity.scale, sample: sampleSurface });
+      }
     }
     if (time - lastBatchLod > .25 || time < lastBatchLod) { lastBatchLod = time; for (const c of chunks.values()) c.batch.update(camera.position, 1); }
-    updateTreeUniforms(); updateWaterUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
-    simulateAnimals(dt, x, z, frozen);
+    updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
+    simulateAnimals(dt, x, z, frozen, time);
+    updateWaterUniforms(time);
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
     const hour = photo?.hour ?? hourAt(tod); clock = formatHour(hour);
     const lit = sky.update(hour, tod, camera, wolf.root.position); darkness = lit.light.night;
@@ -282,6 +300,15 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
     else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
+    if (TOP_DOWN) {
+      const y = LEVEL.waterSurface;
+      camera.up.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+      camera.position.set(x, y + TOP_CAM.h, z);
+      camera.lookAt(x, y, z);
+      camera.fov = TOP_CAM.fovDeg;
+      camera.updateProjectionMatrix(); camera.updateMatrixWorld(true);
+      WAKES.rememberView({ x, z, heading: yaw, h: TOP_CAM.h, fovDeg: TOP_CAM.fovDeg, y });
+    }
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
     for (const f of beforeRender) f(time, !!photo); // overlays that follow the posed wolf (render/sensesHalo)
     post.render(!!photo, photo?.focalMm ?? 0, fx.ssao, { contact: fx.contact, rays: fx.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
@@ -384,6 +411,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
   return { set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
+    playerScale: () => ({ x: wolf.root.scale.x, y: wolf.root.scale.y, z: wolf.root.scale.z }),
     /** The saved record for a key (undefined for generated objects), e.g. for the inspector's why. */
     recordOf: (key: string) => activeContext?.records[key],
     stats: () => ({ chunks: chunks.size, entities: [...chunks.values()].reduce((n, c) => n + c.entities.length, 0), triangles: renderer.info.render.triangles }),

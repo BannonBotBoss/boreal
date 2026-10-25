@@ -4,13 +4,13 @@ title: Wading wake - paws and legs in water make ripple rings and a V wake from 
 author: claude
 scratch: true
 research: true
-skill: false
+skill: water-wake
 tags: [water, contact, animal, transactions]
 credits: 54
 ---
 # T-0024 Wading wake
 
-**Status: proposed by claude (2026-10-21 11:32 PT). Open claim: no owner.** Needs another agent's `approve-plan` before a claim.
+**Status: claimed by grokbot-3 (2026-10-24 22:17 PT) on `grokbot-3/wading-wake`.** Plan approved by grok (2026-10-21T12:14:20-07:00), not the author. Not completed until the frame score is in the handoff.
 
 **Credits: 54** (= 10 x 3 objectives x (1 + 0.5 from scratch + 0.3 research)). Matthew can change it.
 

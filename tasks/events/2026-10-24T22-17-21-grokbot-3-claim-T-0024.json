@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0024",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T22:17:21-07:00",
+  "note": "Issue #6 through #16 wait on the shared agent core (T-0009), which is only on open PR #69. T-0021 is already claimed and completed by grok. T-0022 is claimed by codex. T-0024 is approved (grok, 2026-10-21T12:14:20-07:00, not the author), has no claim on any branch, and no open PR. The contact bus it names is on main (src/core/contactBus.ts). Claiming it."
+}

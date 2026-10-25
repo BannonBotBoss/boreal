@@ -11,17 +11,25 @@ import { GLSL_NOISE } from '../proc/glsl';
 import { shaderClock } from './shaderClock';
 import { WORLD_SEED } from '../core/world';
 import { fadeOptIn } from './fade';
+import { gravity } from '../proc/physics';
+import { WAKE_GLSL, WAKES } from '../core/waterWake';
 
 const SEED = ((WORLD_SEED * 7) % 997) * .37, uTime = { value: 0 };
+const uWakeNow = { value: 0 }, uWakeG = { value: 0 };
+const vec4s = () => Array.from({ length: 8 }, () => new THREE.Vector4());
+const uRings = { value: vec4s() }, uWakeA = { value: vec4s() }, uWakeB = { value: vec4s() };
 let water: THREE.MeshStandardMaterial | undefined;
 export function waterMaterial() {
   if (water) return water;
   water = new THREE.MeshStandardMaterial({ color: 0x578d91, roughness: .32, metalness: .1 }); water.userData.shared = true;
   water.onBeforeCompile = shader => {
     shader.uniforms.uWaterTime = uTime;
+    shader.uniforms.uWakeNow = uWakeNow; shader.uniforms.uWakeG = uWakeG;
+    shader.uniforms.uRings = uRings; shader.uniforms.uWakeA = uWakeA; shader.uniforms.uWakeB = uWakeB;
     shader.vertexShader = 'attribute vec3 aFlow; varying vec3 vFlow; varying vec2 vWXZ;\n' +
       shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vFlow = aFlow; vWXZ = (modelMatrix * vec4(position, 1.)).xz;');
     shader.fragmentShader = `uniform float uWaterTime; varying vec3 vFlow; varying vec2 vWXZ;\n${GLSL_NOISE}
+      ${WAKE_GLSL}
       vec2 wgrad(vec2 p) { float e = 0.07, s = ${SEED.toFixed(3)}; return vec2(fbm(p + vec2(e, 0.), s) - fbm(p - vec2(e, 0.), s), fbm(p + vec2(0., e), s) - fbm(p - vec2(0., e), s)); }
       // Vlachos 2010 / Water2.js: two phases half a cycle apart, crossfaded so the stretch of each phase is hidden
       float wPhase(float k) { return fract(uWaterTime * 0.25 + k); }\n` + shader.fragmentShader
@@ -30,14 +38,21 @@ export function waterMaterial() {
         vec2 q = vWXZ * 0.35 + drift;
         vec2 wg = mix(wgrad(q - fl * p0 * 4.0 * 0.35), wgrad(q - fl * p1 * 4.0 * 0.35 + 0.37), wgt);
         float foam = smoothstep(0.55, 0.85, fbm(vWXZ * 1.3 - fl * uWaterTime * 1.3, ${SEED.toFixed(3)}) + vFlow.z * 0.25 - 0.35) * smoothstep(0.4, 1.2, vFlow.z);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85, 0.9, 0.9), foam);`)
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.7, foam);')
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85, 0.9, 0.9), foam);
+        vec4 wk = wakeField(vWXZ); float crest = wk.w;
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95), crest * 0.92);`)
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n roughnessFactor = mix(roughnessFactor, 0.7, foam);\n roughnessFactor = mix(roughnessFactor, 0.9, crest);')
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
-        normal = normalize(normal - (viewMatrix * vec4(wg.x, 0., wg.y, 0.)).xyz * (0.6 + 0.6 * length(fl)));`);
+        vec4 wkN = wakeField(vWXZ);
+        normal = normalize(normal - (viewMatrix * vec4(wg.x, 0., wg.y, 0.)).xyz * (0.6 + 0.6 * length(fl)) - (viewMatrix * vec4(wkN.y, 0., wkN.z, 0.)).xyz);`);
   };
-  water.customProgramCacheKey = () => 'boreal-water-flow';
+  water.customProgramCacheKey = () => 'boreal-water-wake';
   fadeOptIn(water); // render/fade: in-page transition patch fade (uniform only, same cache key)
   return water;
 }
-/** Per frame: the shared shader clock drives the flow phases. */
-export function updateWaterUniforms() { uTime.value = shaderClock.time; }
+/** Per frame: flow keeps the shared shader clock. Wake rings use sim time (`now`), the same clock that stamped them. */
+export function updateWaterUniforms(now = shaderClock.time) {
+  uTime.value = shaderClock.time; uWakeNow.value = now; uWakeG.value = gravity();
+  const p = WAKES.pack(now), R = uRings.value, A = uWakeA.value, B = uWakeB.value;
+  for (let i = 0; i < 8; i++) { R[i].fromArray(p.rings, i * 4); A[i].fromArray(p.wakeA, i * 4); B[i].fromArray(p.wakeB, i * 4); }
+}

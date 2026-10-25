@@ -26,6 +26,7 @@ import { rigTubes, type CoatPalette, type RigBind, type SkinSpec } from '../core
 import { dayAt } from '../core/timeOfDay';
 import { worldSec } from '../core/worldClock';
 import { INTEREST, tierAt } from '../core/interest';
+import { WAKES, WATERLINE, HARE_HIP_XZ, pawArea, sampleSurface } from '../core/waterWake';
 
 export const HARE = {
   count: 5, spawnMin: 18, spawnMax: 45, despawn: 70, respawnSeconds: [25, 45] as [number, number],
@@ -301,7 +302,7 @@ export function createHares(scene: THREE.Scene) {
   }
   const STATE: Record<string, HareState> = { graze: 'nibble', move: 'hop', freeze: 'freeze', flee: 'flee' };
   let time = 0;
-  function update(dt: number, wolf: WolfInfo): HareEvent[] {
+  function update(dt: number, wolf: WolfInfo, simTime?: number, massOf?: (h: Hare) => number): HareEvent[] {
     const events: HareEvent[] = []; time += dt;
     setHareDay(dayAt(worldSec())); // T-0028: summer / moult / winter coat from the world date (no-op unless it changed)
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }
@@ -331,7 +332,14 @@ export function createHares(scene: THREE.Scene) {
       const a = h.sim, prev = h.state; h.x = a.x; h.z = a.z; h.heading = a.heading; h.state = STATE[a.state] ?? 'nibble';
       if (h.state === 'hop' && prev !== 'hop' && Math.hypot(a.x - wolf.x, a.z - wolf.z) < 30) events.push({ type: 'hop', x: a.x, z: a.z });
       scope(`hare:${h.id}`); f('hare', 'state', h.state); f('hare', 'perceived', a.level); f('hare', 'knows', a.knowsAt ?? -1); f('hare', 'linked', a.linked); f('hare', 'speed', a.speed); f('hare', 'rig', near[i] ? 1 : 0); scope('');
-      const speed = a.speed; h.hopPhase += speed > 0 ? dt * (speed > 3 ? 7 : 4) : 0;
+      const speed = a.speed; const prevHop = h.hopPhase; const hopHz = speed > 3 ? 7 : 4;
+      h.hopPhase += speed > 0 ? dt * hopHz : 0;
+      { let kg = h.root.userData.wakeKg as number | undefined;
+        if (!(typeof kg === 'number' && kg > 0) && massOf) { try { kg = massOf(h); } catch { kg = 0; } h.root.userData.wakeKg = kg; }
+        // Stride metres = speed / the existing hop clock (speed>3 ? 7 : 4). That clock is the game's hop rate.
+        if ((kg ?? 0) > 0) WAKES.noteTimed({ id: `hare:${h.id}`, x: h.x, z: h.z, heading: h.heading, phase: h.hopPhase, prevPhase: prevHop,
+          motion: speed <= 0 ? 'idle' : speed > 3 ? 'run' : 'walk', speed, t: simTime ?? time, mass: kg ?? 0, length: WATERLINE.hare,
+          hips: HARE_HIP_XZ, pawArea: pawArea('hare'), offsets: [0.5, 0, 0.5, 0], duty: 0.45, stride: Math.max(0.25, speed > 0 ? speed / hopHz : 0.25), sample: sampleSurface }); }
       if (near[i]) { poseHare(h, hareBody(a), dt, time, heightAt); HARE_RIG_STATS.rigged++; if (h.rig?.foreLock) HARE_RIG_STATS.locked++; return; }
       // beyond the near tier: no limb IK; the furred body rides a cheap hop (the old adapter's) in its bind pose
       const hop = speed > 0 ? Math.abs(Math.sin(h.hopPhase * Math.PI)) * (speed > 3 ? .28 : .12) : 0;

@@ -1,6 +1,6 @@
 # T-0075 handoff (grokbot-3)
 
-Branch: `grokbot-3/wolf-view` off main `3ed7265`. Code `4ae9f46`. Do not merge. Do not push main. Do not approve this work (the author is grokbot-3).
+Branch: `grokbot-3/wolf-view` off main `3ed7265`. Code `4ae9f46`. Pull request https://github.com/BannonBotBoss/boreal/pull/64. Do not merge. Do not push main. Do not approve this work (the author is grokbot-3).
 
 ## Doing
 Refine the existing follow camera and the existing tube wolf toward Matthew's issue #52 reference (rear three-quarter, gray wolf in the lower half of a forest frame). The three extra angles he posted at 19:22 PT are saved under `refs/wolf/view/reference/` and are not the default camera.

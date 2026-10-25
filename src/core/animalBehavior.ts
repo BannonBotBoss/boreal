@@ -6,7 +6,7 @@ import { canidPlan, gallopLegChord, reachTargets, REF_BODY, swingFollow, suspens
 export const ANIMAL_DEFAULT_ENERGY: number = SYSTEM_PROPERTIES.behaviour.defaultEnergy;
 export const FORAGE_ENERGY: number = SYSTEM_PROPERTIES.behaviour.forageEnergy;
 export const PLAYER_HEARING_RADIUS: number = SYSTEM_PROPERTIES.behaviour.playerHearingRadius;
-/** Seconds an animal spends eating at a forage patch before it is consumed. */
+/** Legacy system-property wiring (2 s). A meal now ends when biteG / bitePerS elapses (default 7.8 g at 7.8 g/min), not this timer. */
 export const FEED_DURATION: number = SYSTEM_PROPERTIES.behaviour.feedDuration;
 /** Distance (m) from a forage patch at which an animal stops to eat. */
 export const FEED_REACH: number = SYSTEM_PROPERTIES.behaviour.feedReach;
@@ -15,7 +15,7 @@ export const THREAT_MEMORY: number = SYSTEM_PROPERTIES.behaviour.threatMemory;
 export function withinEarshot(player: Point, animal: Point) { return Math.hypot(player.x-animal.x,player.y-animal.y,player.z-animal.z) <= PLAYER_HEARING_RADIUS; }
 export type Motion = 'idle' | 'walk' | 'run' | 'back' | 'jump';
 export type Problem = 'explore' | 'escape' | 'avoid' | 'feed' | 'recover' | 'player';
-export interface SenseItem { key: string; x: number; y: number; z: number; kind: 'threat' | 'food' | 'obstacle' | 'animal'; low?: boolean }
+export interface SenseItem { key: string; x: number; y: number; z: number; kind: 'threat' | 'food' | 'obstacle' | 'animal'; low?: boolean; /** fresh grams in one bite; default is the deer mouthful */ biteG?: number; /** grams per second; default 7.8/60 */ bitePerS?: number }
 export interface Point { x: number; y: number; z: number }
 export const SENSE_RADII = SYSTEM_PROPERTIES.behaviour.senseRadii;
 export class AnimalBrain {
@@ -88,8 +88,9 @@ export class AnimalBrain {
       this.heading=Math.atan2(origin.x-food.x,origin.z-food.z);
       if(d<FEED_REACH) {
         this.motion='idle';this.speed=0;this.feedTime=feeding+dt;
-        // Caller consumes the patch and grants energy once the meal is finished.
-        if(this.feedTime>=FEED_DURATION) {this.meal=food;this.feedTime=0;}
+        // Time is the bite mass divided by the bite rate. Defaults are the deer mouthful (7.8 g at 7.8 g/min).
+        const perS = food.bitePerS ?? 7.8 / 60, bite = food.biteG ?? 7.8;
+        if(this.feedTime >= bite / perS - 1e-9) {this.meal=food;this.feedTime=0;}
       } else {this.motion='walk';this.speed=.8;}
       return;
     }

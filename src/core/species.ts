@@ -9,6 +9,7 @@ import { TRANSACTIONS } from './transactions';
 import { activityFactor, agentLevels } from './needs/engine';
 import { WOLF_NEEDS } from './needs/species';
 import { REAL_SECONDS_PER_GAME_HOUR } from './timeOfDay';
+import { browseCellKey, browseGrams, takePatch } from './fields';
 
 const M = (o: Omit<MammalPlan, 'kind' | 'provisional'> & { provisional?: boolean }): MammalPlan => ({ kind: 'mammal', provisional: true, ...o });
 /** Mammal body plans. Ratios are to shoulder height. */
@@ -221,12 +222,28 @@ export const DEER_AGENT: AgentSpecies = {
     turn: 4, // rad/s, the old herd flee turn
   },
 };
-/** Virtual browse (T-0011). Forest depletion and regrowth are T-0015, so a deer grazes in place until hunger is met.
- *  nearest returns nothing when the deer is already on this key, so it feeds here instead of trotting to an origin. */
+/** Virtual browse (T-0011). The contact key stays `browse:ground`. The grazed delta is one 8 m cell (T-0015),
+ *  so two deer on the same ground share the sward and a stripped cell comes back from sun hours.
+ *  nearest returns nothing when the deer is already on this key, so it feeds here instead of trotting to an origin.
+ *  `at` stashes the feet; `eat` runs in the same call and depletes that cell. */
+let browseAt = { x: 0, z: 0 };
 export const BROWSE: FoodSource = {
-  at: (x, z) => ({ key: 'browse:ground', x, z, r: 4, units: 1e9 }),
-  nearest: (x, z, _range, except) => except === 'browse:ground' ? undefined : { key: 'browse:ground', x, z, r: 4, units: 1e9 },
-  eat: (key, units, by) => TRANSACTIONS.run(by, key, units),
+  at: (x, z) => {
+    browseAt = { x, z };
+    const units = browseGrams(x, z);
+    return units > 1e-6 ? { key: 'browse:ground', x, z, r: 4, units } : undefined;
+  },
+  nearest: (x, z, _range, except) => {
+    if (except === 'browse:ground') return undefined;
+    browseAt = { x, z };
+    const units = browseGrams(x, z);
+    return units > 1e-6 ? { key: 'browse:ground', x, z, r: 4, units } : undefined;
+  },
+  eat: (key, units, by) => {
+    const ran = TRANSACTIONS.run(by, key, units);
+    if (!(ran > 0)) return 0;
+    return takePatch({ key: browseCellKey(browseAt.x, browseAt.z), x: browseAt.x, z: browseAt.z, kind: 'browse', grams: ran, by });
+  },
 };
 TRANSACTIONS.add({
   a: 'deer', b: 'browse', name: 'graze', needsContact: true,
@@ -255,10 +272,9 @@ export const WOLF_AGENT: AgentSpecies = {
     stamina: { max: WOLF_L.stamina.max, drainSeconds: WOLF_L.stamina.drainSeconds, recoverSeconds: WOLF_L.stamina.recoverSeconds },
     relaxation: { max: 100, threatDrop: 40, fleeDrop: 8, recover: 4, panic: .8 },
   },
-  // feed 2 s is SYSTEM_PROPERTIES.behaviour.feedDuration (the meal the forage path already waits). react is the needs
-  // head-up. Wolves orient (alertTurn); they do not freeze. Rest [2, 5] s is how often a settled wolf re-checks, not
-  // the 1.02 h inactivity bout (that threshold is the needs rest drive).
-  timing: { feed: 2, scan: 2, alert: 1, alertMin: .3, react: WOLF_NEEDS.behaviour.alert.reactSeconds.v, alertTurn: 3, flee: 4, pause: 1, rest: [2, 5], jitter: .1 },
+  // feed 60 s is one mouthful at 7.8 g/min (the diet row). react is the needs head-up. Wolves orient (alertTurn);
+  // they do not freeze. Rest [2, 5] s is how often a settled wolf re-checks, not the 1.02 h inactivity bout.
+  timing: { feed: 60, scan: 2, alert: 1, alertMin: .3, react: WOLF_NEEDS.behaviour.alert.reactSeconds.v, alertTurn: 3, flee: 4, pause: 1, rest: [2, 5], jitter: .1 },
   mood: { boutNerve: .4, boutHunger: .6, scanChance: [.05, .4], scanHunger: .2, scanNerve: .5, scanHungerShort: .2,
     notice: [.08, .25], noticeHunger: .3, bolt: [.4, .7], boltHunger: .1, fleeNerve: .2, fleeStaminaFull: 40, pauseNerve: .3, resume: .7, unhide: .3 },
   utility: { feedHere: .8, approach: .6, approachDistance: 40, rest: 1, restFull: .4, restBase: .15, scan: .3, seek: .2, seekBase: 0, noise: .02, investigate: .5 },
@@ -267,10 +283,16 @@ export const WOLF_AGENT: AgentSpecies = {
   // flee is the game sprint (7 m/s), below the measured 15.5 m/s top, same citation as WOLF_NEEDS.body.speeds.sprint.
   speed: { feedStep: .8, approach: WOLF_NEEDS.behaviour.evasion.tiredSpeed.v, flee: WOLF_NEEDS.body.speeds.sprint.v, fleeTired: WOLF_NEEDS.behaviour.evasion.tiredSpeed.v },
   flee: { burstSeconds: 4, zig: [0, 0], zigAngle: 0, distance: WOLF_NEEDS.behaviour.flight.distanceM.v },
-  // One forage patch is one meal. unitsPerEnergy is Infinity so the agent's own drain does not also grant the
-  // FORAGE_ENERGY the existing forageWolf path adds. eatSeconds matches timing.feed.
-  diet: { forage: { eatUnits: 1, eatSeconds: 2, unitsPerEnergy: Infinity } },
+  // 7.8 g fresh/min is the deer mouthful (Koerth & Stuth 1991), shared so the bout is units / rate. Not a measured
+  // wolf blueberry rate. unitsPerEnergy stays Infinity: berry joules are applied once in autonomousWolfStep
+  // (WOLF_BERRY_G_PER_ENERGY), not a second time by the pipeline, and not the flat FORAGE_ENERGY of 18.
+  diet: { forage: { eatUnits: 7.8, eatSeconds: 60, unitsPerEnergy: Infinity } },
 };
+TRANSACTIONS.add({
+  a: 'wolf', b: 'forage', name: 'bite', needsContact: true,
+  source: 'Koerth & Stuth 1991, 7.8 g fresh/min, shared mouthful. Berry joules: USDA FDC 171711, 57 kcal/100 g; 100 energy = WOLF_NEEDS fmrKjPerDay.',
+  run: (grams: number) => grams,
+});
 
 /** One game day in real seconds (clock.realSecondsPerGameHour × 24). Visitor metabolism uses this clock,
  *  not a wall-clock day: a play session is one boreal day (systemProperties, design: 2 real hours). */
@@ -292,6 +314,9 @@ export const PERSON_PICK_PER_S = 1;
 export const PERSON_WATER_SEEK = 70;
 /** Grams of fresh berry per +1 energy: (kcal/day ÷ 100) / (kcal/g). */
 export const PERSON_G_PER_ENERGY = (PERSON_KCAL_DAY / 100) / (PERSON_KCAL_PER_100G / 100);
+/** Joules in one gram of raw blueberry, and grams of that fruit per +1 wolf energy (100 energy = one day of FMR). */
+export const WOLF_BERRY_J_PER_G = PERSON_KCAL_PER_100G / 100 * 4184;
+export const WOLF_BERRY_G_PER_ENERGY = WOLF_NEEDS.body.fmrKjPerDay.v * 1000 / 100 / WOLF_BERRY_J_PER_G;
 /** [estimate] how long a pick bout lasts. The rate is PERSON_BERRY_G per second; the bout length only groups it. */
 export const PERSON_PICK_BOUT_S = 8;
 

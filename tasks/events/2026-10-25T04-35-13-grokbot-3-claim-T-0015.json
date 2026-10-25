@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0015",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T04:35:13-07:00",
+  "note": "Issue #11. Plan stays the one agy approved 2026-10-21T11:45:46-07:00. Not a new propose and not a new approve-plan. T-0009's field is already on main. Branch grokbot-3/forage-regrowth. Handoff tasks/handoffs/T-0015-grokbot-3.md."
+}

@@ -5,7 +5,9 @@
  */
 import { AnimalBrain, type SenseItem } from './animalBehavior';
 import { createAgent, stepAgent, writeLocomotion, type Agent, type AgentWorld, type FoodSource } from './agent';
-import { WOLF_AGENT } from './species';
+import { WOLF_AGENT, WOLF_BERRY_G_PER_ENERGY } from './species';
+import { settledGrams, takePatch } from './fields';
+import { TRANSACTIONS } from './transactions';
 import { WOLF_NEEDS } from './needs/species';
 import { blocksFrom, headingToward, JUMP_REACH_M, plan, type RoutePlan } from './plan';
 import { steerWolf, type WolfPose } from './locomotion';
@@ -48,14 +50,23 @@ export function wolfGround(from: { x: number; z: number }) {
   };
 }
 
-function forageSource(items: readonly { key: string; x: number; z: number }[]): FoodSource {
-  const at = (x: number, z: number, pad = 0) => items.find(p => Math.hypot(p.x - x, p.z - z) <= 1 + pad);
+function forageSource(items: readonly { key: string; x: number; z: number; scale?: number }[], taken: { g: number }): FoodSource {
+  const gramsOf = (p: { key: string; x: number; z: number; scale?: number }) =>
+    settledGrams({ key: p.key, x: p.x, z: p.z, kind: 'forage', scale: p.scale ?? 1, grams: 0, by: '' }).grams;
+  const hit = (x: number, z: number, pad = 0) => items.find(p => gramsOf(p) > 1e-6 && Math.hypot(p.x - x, p.z - z) <= 1 + pad);
   return {
-    at: (x, z, pad) => { const p = at(x, z, pad); return p && { key: p.key, x: p.x, z: p.z, r: 1, units: 1 }; },
-    nearest: (x, z, range, except) => items.filter(p => p.key !== except && Math.hypot(p.x - x, p.z - z) <= range)
+    at: (x, z, pad) => { const p = hit(x, z, pad); return p && { key: p.key, x: p.x, z: p.z, r: 1, units: gramsOf(p) }; },
+    nearest: (x, z, range, except) => items.filter(p => p.key !== except && gramsOf(p) > 1e-6 && Math.hypot(p.x - x, p.z - z) <= range)
       .sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))
-      .map(p => ({ key: p.key, x: p.x, z: p.z, r: 1, units: 1 }))[0],
-    eat: () => 0,
+      .map(p => ({ key: p.key, x: p.x, z: p.z, r: 1, units: gramsOf(p) }))[0],
+    eat: (key, units, by) => {
+      const ran = TRANSACTIONS.run(by, key, units);
+      const p = items.find(i => i.key === key);
+      if (!(ran > 0) || !p) return 0;
+      const got = takePatch({ key, x: p.x, z: p.z, kind: 'forage', scale: p.scale ?? 1, grams: ran, by });
+      taken.g += got;
+      return got;
+    },
   };
 }
 
@@ -109,6 +120,7 @@ export function autonomousWolfStep(brain: AnimalBrain, pose: WolfPose, dt: numbe
   const wind = sense.wind ?? { x: 0, z: 0 }, daylight = sense.daylight ?? 1, mass = sense.massKg ?? WOLF_NEEDS.body.massKg.v;
   const walkable = sense.walkable ?? wolfGround(pose);
   const forage = objects.filter(e => e.kind === 'forage');
+  const taken = { g: 0 };
   const lures: { key: string; kind: string; x: number; z: number; level: number }[] = [];
   for (const h of sense.hares ?? []) lures.push({ key: h.key, kind: 'hare', x: h.x, z: h.z, level: lureLevel(pose, { ...h, kind: 'hare' }, wind, daylight) });
   for (const s of sense.scents ?? []) lures.push({ key: s.key, kind: s.kind, x: s.x, z: s.z, level: lureLevel(pose, s, wind, daylight) });
@@ -124,11 +136,15 @@ export function autonomousWolfStep(brain: AnimalBrain, pose: WolfPose, dt: numbe
   }
   const world: AgentWorld = {
     others: objects.filter(e => e.kind === 'person').map(e => ({ key: e.key, kind: 'person', x: e.x, z: e.z, speed: 0 })),
-    wind, daylight, food: { forage: forageSource(forage) }, lures, walkable,
+    wind, daylight, food: { forage: forageSource(forage, taken) }, lures, walkable,
   };
   stepAgent(a, world, dt);
-  // The needs engine owns Energy (main.ts stepNeeds). Discard the pipeline's copy of the same drain.
+  // The needs engine owns the drain (main.ts stepNeeds). Berry joules are the grams just taken, once.
   a.energy = brain.energy;
+  if (taken.g > 0) {
+    brain.energy = Math.min(WOLF_AGENT.levels.energy.max, brain.energy + taken.g / WOLF_BERRY_G_PER_ENERGY);
+    a.energy = brain.energy;
+  }
 
   const goalPoint = a.target ?? (a.action === 'flee' ? {
     x: pose.x - Math.sin(a.heading) * 20,

@@ -1,0 +1,10 @@
+{
+  "branch": "grokbot-3/forage-regrowth",
+  "skill": "forage-sun-field",
+  "handoff": "tasks/handoffs/T-0015-grokbot-3.md",
+  "note": "Issue #11. npx tsc --noEmit exit 0. npm test 721 tests, 707 pass, 0 fail, 14 todo. CI test on PR #77 run 40190746213 succeeded (commit 14c34f2). Position score 1. Acceptance 0.992. Sun-hour score 0.999983. Instant-full scores 0.506. No pixel frames. Not self-approved in this event.",
+  "type": "complete",
+  "task": "T-0015",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T05:03:46-07:00"
+}

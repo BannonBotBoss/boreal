@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { AnimalBrain, FEED_DURATION } from '../src/core/animalBehavior';
+import { AnimalBrain } from '../src/core/animalBehavior';
 import { autonomousWolfStep, wolfReadout, type WolfSense } from '../src/core/autonomy';
 import { BEHAVIOUR, WOLF_AGENT } from '../src/core/species';
 import { blocksFrom, jumpHopM, jumpJPerKg, logAxis, plan, segmentDistance } from '../src/core/plan';
@@ -43,7 +43,9 @@ test('segment distance and the log axis match the mesh yaw', () => {
 test('travel joules are metabolic power times time, the Taylor 1982 split', () => {
   const v = 2.4, d = 10, mass = WOLF_NEEDS.body.massKg.v;
   assert.ok(Math.abs(travelJ(mass, v, d) - metabolicW(WOLF_NEEDS, v) * (d / v)) < 1e-6);
-  assert.equal(WOLF_AGENT.diet.forage.eatSeconds, FEED_DURATION);
+  assert.equal(WOLF_AGENT.diet.forage.eatSeconds, 60);
+  assert.equal(WOLF_AGENT.timing.feed, 60);
+  assert.ok(Math.abs(WOLF_AGENT.diet.forage.eatUnits / WOLF_AGENT.diet.forage.eatSeconds - 7.8 / 60) < 1e-12);
   assert.equal(BEHAVIOUR.wolf, WOLF_AGENT);
   assert.equal(WOLF_AGENT.levels.energy.fed, WOLF_NEEDS.behaviour.drives.energy.seekBelow.v);
   assert.equal(WOLF_AGENT.speed.approach, WOLF_NEEDS.behaviour.evasion.tiredSpeed.v);

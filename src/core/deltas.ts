@@ -7,6 +7,8 @@
 import { K } from './constants';
 import { addDeposit, GROUND } from './ground';
 import { weatherAt } from './weather';
+import { sunSeconds } from './fields';
+import { worldSec } from './worldClock';
 
 export interface Delta { kind: string; x: number; z: number; t: number; m: number; meta?: string } // t in game years, m = magnitude
 /** Per-kind lifetime (τ, game days, e-folding) and where the residue goes. */
@@ -23,14 +25,40 @@ export const DELTA_KINDS: Record<string, { tau: number; until: number; residue?:
   branch: { tau: 365, until: .05, residue: { pool: 1, kgPerM: 1 }, source: 'fine woody debris k≈0.1/yr (Kurz et al. 2009 CBM-CFS3) [verify]' },
   movedStone: { tau: 3650, until: .05, source: 'stones stay moved; ~decade until moss covers the scar [verify]' },
   felledTree: { tau: 3650, until: .05, residue: { pool: 2, kgPerM: 1 }, source: 'snag/log fall ~decades (Kurz et al. 2009) [verify]' },
+  // tau is unused: strength is (max − grams) / max from sunSeconds, not the exponential. until 0.02 drops the row once the patch is ~98% refilled.
+  grazed: { tau: 60, until: .02, source: 'T-0015 forage field: meta key|atWorldSec|perSun|max|by; closed form is grams + perSun * sunSeconds (core/fields)' },
 };
 export const DELTAS = { log: [] as Delta[], cap: 1500 };
 const DAY = 1 / K.julian_year_d;
 /** Current strength 0..1 of a delta at game time `now` (closed form; rain speeds up track loss). */
+/** Depletion still showing, 1 just bitten .. 0 refilled. Uses world seconds, not the game-year `now` of the exponential kinds. */
+function grazedStrength(d: Delta) {
+  const parts = (d.meta ?? '').split('|');
+  if (parts.length < 4) return 0;
+  const at = +parts[1], per = +parts[2], max = +parts[3];
+  if (!(max > 0) || !Number.isFinite(at) || !Number.isFinite(d.m)) return 0;
+  if (!(per > 0)) return Math.max(0, Math.min(1, (max - d.m) / max));
+  const room = Math.max(0, max - d.m);
+  const grams = Math.min(max, d.m + per * sunSeconds(at, worldSec(), room / per));
+  return Math.max(0, Math.min(1, (max - grams) / max));
+}
 export function strength(d: Delta, now = GROUND.years) {
   const k = DELTA_KINDS[d.kind]; if (!k) return 0;
+  if (d.kind === 'grazed') return grazedStrength(d);
   const wet = d.kind === 'footprint' && (weatherAt(d.x, d.z).rainMmH > .1 || weatherAt(d.x, d.z).snow) ? 4 : 1;
   return Math.exp(-Math.max(0, now - d.t) / (k.tau * DAY) * wet);
+}
+/** One grazed row per patch key (the key is the meta prefix, before the first pipe). Not record(): a 1 m merge would fuse neighbours. */
+export function findGrazed(key: string) {
+  return DELTAS.log.find(d => d.kind === 'grazed' && (d.meta ?? '').split('|')[0] === key);
+}
+export function upsertGrazed(d: Omit<Delta, 't' | 'kind'> & { t?: number }) {
+  const key = (d.meta ?? '').split('|')[0];
+  const row: Delta = { kind: 'grazed', x: d.x, z: d.z, t: d.t ?? GROUND.years, m: d.m, meta: d.meta };
+  const i = DELTAS.log.findIndex(o => o.kind === 'grazed' && (o.meta ?? '').split('|')[0] === key);
+  if (i >= 0) { DELTAS.log[i] = row; return; }
+  DELTAS.log.push(row);
+  if (DELTAS.log.length > DELTAS.cap) { DELTAS.log.sort((a, b) => strength(a) * a.m - strength(b) * b.m); expire(DELTAS.log.shift()!); }
 }
 /** Add a delta; a same-kind delta within `mergeM` metres and a day is reinforced instead (keeps the log sparse). */
 export function record(d: Delta, mergeM = 1) {

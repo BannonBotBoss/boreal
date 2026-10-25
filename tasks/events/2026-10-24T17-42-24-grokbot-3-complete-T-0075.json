@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0075",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T17:42:24-07:00",
+  "branch": "grokbot-3/wolf-view",
+  "skill": "visual-inspection-recording",
+  "handoff": "tasks/handoffs/T-0075-grokbot-3.md",
+  "note": "Code 4ae9f46. Follow camera 1.05 m / 3.6 m back / 2.25 m left / pitch -5. wolf-frame v1 0.987 (legacy 0.559). box-histogram v1 against issue #52: before 0.111, after 0.149. The 0.95 pixel gate is not met. npx tsc --noEmit exit 0. npm test 644 tests, 630 pass, 0 fail, 14 todo. Mass 73.4 kg from rigMass, not assigned. Not self-approved."
+}

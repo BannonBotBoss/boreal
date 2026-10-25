@@ -1,0 +1,31 @@
+{
+  "issue": 52,
+  "parent": "3ed7265",
+  "url": "/?nomenu&bench&hour=11",
+  "viewport": [1024, 559],
+  "reference": "refs/wolf/view/reference/issue-main.png",
+  "before": "refs/wolf/view/before/still.png",
+  "after": "refs/wolf/view/after/still.png",
+  "box": { "x0": 0.30, "y0": 0.45, "x1": 0.75, "y1": 0.95 },
+  "wolfFrameV1": {
+    "tool": "tools/wolf-view-score.ts framingScore(frameSample())",
+    "knownMatch": 1,
+    "knownMismatchLegacy": 0.5594304565327617,
+    "shipped": 0.9865100082758994,
+    "sample": {
+      "ndcX": 0,
+      "ndcY": -0.4658355086896945,
+      "bearingDeg": 32.005383208083494,
+      "withersNdcY": -0.31970316465212617
+    },
+    "target": { "ndcX": 0, "ndcY": -0.48, "bearingDeg": "25-45" }
+  },
+  "boxHistogramV1": {
+    "tool": "tools/wolf-view-score.ts histogramIntersection(boxHistogram)",
+    "knownMatch": 1,
+    "knownMismatchFlat": "under 0.2 (tests/wolf-view.test.ts)",
+    "before": 0.11076851564920981,
+    "after": 0.14893864270220017,
+    "gate095Met": false
+  }
+}

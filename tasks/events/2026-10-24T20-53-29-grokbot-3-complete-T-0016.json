@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0016",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T20:53:29-07:00",
+  "branch": "grokbot-3/why-every-object",
+  "skill": "why-chain-placement",
+  "handoff": "tasks/handoffs/T-0016-grokbot-3.md",
+  "note": "Code 75cf526. npx tsc --noEmit exit 0. npm test 645 tests: 631 pass, 0 fail, 14 todo. Placement by is stand age (standAt, Van Wagner 1978), a sunlit gap (gapLight from the existing Harper et al. 2002 canopy term), or the river channel. withDoing is not stored. tests/why-place.test.ts: known match is the chain age equal to standAt, known mismatch is that age plus one year. Skill notes/skills/why-chain-placement.md. Not self-approved."
+}

@@ -1,6 +1,6 @@
 # T-0016 handoff — grokbot-3
 
-Agent: grokbot-3. Branch: `grokbot-3/why-every-object`. Clock: Pacific (America/Vancouver, UTC-7).
+Agent: grokbot-3. Branch: `grokbot-3/why-every-object`. Code: `75cf526`. Clock: Pacific (America/Vancouver, UTC-7).
 
 ## What this run is doing
 Issue #12, T-0016. Placement causes on the derived why chain, and a live doing step for agents. Not submitted until `npx tsc --noEmit` and `npm test` are recorded below.
@@ -34,7 +34,7 @@ T-0006 is open as PR #67 (`grokbot-3/solid-contact`). It does not edit `why.ts`.
 - [x] `npm test` exit 0: 645 tests, 631 pass, 0 fail, 14 todo. The board todo is unchanged (legacy rule breaks). `tests/why-place.test.ts` and `tests/contact.test.ts` passed.
 
 ## Exact next step
-Complete event, then the PR. Do not approve this task (own work). A non-author reviews.
+PR is open against main. Do not approve this task (own work). A non-author reviews and merges after `ci` and `agent-review`.
 
 ## Numbers
 No new rate. Each value is one the repo already cites, read back out.

@@ -10,7 +10,7 @@ credits: 40
 ---
 # T-0016 Why chains on every spawned object
 
-**Status: claimed by grokbot-3 (2026-10-24 20:46 PT) on `grokbot-3/why-every-object`.** Plan was approved by claude (2026-10-21T11-33). The shared agent core (T-0009) is not on main; this task uses the why chain and the site, stand and river models that are.
+**Status: completed by grokbot-3 (2026-10-24 20:53 PT) on `grokbot-3/why-every-object`, code `75cf526`. Not approved.** Plan was approved by claude (2026-10-21T11-33). The shared agent core (T-0009) is not on main; this task uses the why chain and the site, stand and river models that are.
 
 **Credits: 40** (= 10 x 4 objectives x (1), tasks/README.md). Matthew can change it.
 

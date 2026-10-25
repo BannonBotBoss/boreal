@@ -1,0 +1,13 @@
+{
+  "species": "wolf",
+  "behaviour": "leap",
+  "animation": "wolf-leap",
+  "happening": "a gray wolf leaping, crouch then a ballistic flight then a landing, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a gray wolf leaping, crouch then a ballistic flight then a landing, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "gaitPose jump: crouch 0.18, flight 0.65, dip 0.05 m, duration PHYS.jumpSeconds 0.85 s. Apex is g·T_air²/8.",
+  "score": 1
+}

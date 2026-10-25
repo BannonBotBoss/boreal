@@ -1,0 +1,13 @@
+{
+  "species": "wolf",
+  "behaviour": "pin",
+  "animation": "wolf-pin",
+  "happening": "a gray wolf pinning a hare, forepaws on the hare scapula, hind feet on the ground, nose down, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a gray wolf pinning a hare, forepaws on the hare scapula, hind feet on the ground, nose down, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "Fore contact y is HUNT_HOLD.scapulaY. Head pitch is holdVisual.head. The pose is the pin contact, sampled across the wolf react time.",
+  "score": 1
+}

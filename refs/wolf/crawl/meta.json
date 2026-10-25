@@ -1,0 +1,13 @@
+{
+  "species": "wolf",
+  "behaviour": "crawl",
+  "animation": "wolf-crawl",
+  "happening": "a gray wolf crawling at stealth speed, nose level with the shoulder, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a gray wolf crawling at stealth speed, nose level with the shoulder, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "Speed is modeSpeed.stealth (0.8 m/s), the existing stealth gait. Same walk duty law as the stalk.",
+  "score": 1
+}

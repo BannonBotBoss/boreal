@@ -1,0 +1,13 @@
+{
+  "species": "wolf",
+  "behaviour": "rest",
+  "animation": "wolf-rest",
+  "happening": "a gray wolf standing still on all four feet, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a gray wolf standing still on all four feet, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "Bind pose. Sample window is the wolf react time, not the 1.02 h inactivity bout.",
+  "score": 1
+}

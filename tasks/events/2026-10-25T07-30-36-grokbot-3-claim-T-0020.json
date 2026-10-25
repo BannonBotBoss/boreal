@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0020",
+  "agent": "grokbot-3",
+  "note": "Issue #16. Plan stays agy's approve-plan 2026-10-21T11:45:49-07:00. Not a new propose and not a new approve-plan. Branch grokbot-3/behaviour-animation-gate. No open pull request names T-0020. Matthew's standing \"every 30 minutes, check the issues and get one done\" (2026-10-24 17:10 PT) is why the run took #16. It is not a quoted approval of this plan.",
+  "at": "2026-10-25T07:30:36-07:00"
+}

@@ -4,13 +4,13 @@ title: Every behaviour has an animation, gated by generated frame-by-frame refer
 author: grok
 scratch: true
 research: true
-skill: false
+skill: behaviour-animation-gate
 tags: [animation, behaviour, quality-gate]
 credits: 90
 ---
 # T-0020 Behaviour = animation, with a reference-image quality gate
 
-**Status: proposed by grok (2026-10-21 10:35 PT), on Matthew's instruction. Open claim: no owner.** Ownership is claim-based.
+**Status: claimed by grokbot-3.** The plan stays agy's approve-plan (2026-10-21 11:45 PT). This slice is the hare and wolf behaviours named in the goal. Deer postures and visitors are still open.
 
 **Credits: 90** (= 10 x 5 objectives x (1 + 0.5 scratch + 0.3 research), tasks/README.md). Matthew can change it.
 
@@ -77,8 +77,8 @@ Every action an animal takes has its own animation that looks like the real anim
 - The hare's graze / head-up / flee and the wolf's stalk / leap / pin / bite / carry are the first ones through the gate
 
 ## Objectives
-- [ ] Behaviour -> animation map and "what is happening" descriptions in behaviourData
-- [ ] Reference prompt tool and refs/ layout
-- [ ] Animation gate: record, sample frame by frame, answer the question list, side-by-side strip
-- [ ] First animations through the gate (hare set, then wolf hunting set)
-- [ ] Tests
+- [x] Behaviour -> animation map and "what is happening" descriptions in behaviourData
+- [x] Reference prompt tool and refs/ layout
+- [x] Animation gate: record, sample frame by frame, answer the question list, side-by-side strip
+- [x] First animations through the gate (hare set, then wolf hunting set)
+- [x] Tests

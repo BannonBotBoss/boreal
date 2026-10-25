@@ -1,0 +1,13 @@
+{
+  "species": "wolf",
+  "behaviour": "trot",
+  "animation": "wolf-trot",
+  "happening": "a gray wolf trotting at the measured canid trot, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a gray wolf trotting at the measured canid trot, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "Bryce & Williams 2017 trot 2.70 m/s, 2.10 Hz. Duty 0.45 (Maes et al. 2008, under 0.5 above 2 m/s).",
+  "score": 1
+}

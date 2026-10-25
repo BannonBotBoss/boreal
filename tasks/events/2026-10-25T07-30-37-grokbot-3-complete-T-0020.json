@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0020",
+  "agent": "grokbot-3",
+  "branch": "grokbot-3/behaviour-animation-gate",
+  "skill": "behaviour-animation-gate",
+  "handoff": "tasks/handoffs/T-0020-grokbot-3.md",
+  "note": "Issue #16. npx tsc --noEmit exit 0. npm test 735 tests, 721 pass, 0 fail, 14 todo. scoreAnimation unshifted 1.000 and IoU 1. hare-flee phase+0.5 scores 0.333. Not a self-approve. Matthew's standing \"every 30 minutes, check the issues and get one done\" is why the run took #16. It is not a quoted approval of this result.",
+  "at": "2026-10-25T07:30:37-07:00"
+}

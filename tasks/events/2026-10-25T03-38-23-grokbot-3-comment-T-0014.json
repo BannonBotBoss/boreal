@@ -1,0 +1,7 @@
+{
+  "note": "PR #75 merged to main as 2761776 while this branch was open, and main then took T-0012 (7bee6af). grokbot-3/hunt-hold was replayed onto that main so the PR base is main, not grokbot-3/hunt-lock. Not a new approve. npx tsc --noEmit exit 0. npm test on that base: 714 tests, 700 pass, 0 fail, 14 todo. The complete event's 707/693 figure is the run from before the replay.",
+  "type": "comment",
+  "task": "T-0014",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T03:38:23-07:00"
+}

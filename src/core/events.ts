@@ -4,17 +4,32 @@ import { pushContact, rockDiameter } from './rocks';
 import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './animalBehavior';
 import { isWhy, sameWhy, whyOf, withTip, type Why, type WhyStep } from './why';
 import type { SeatInputs, Solid, Vec3 } from './contactBus';
+import { friendLive } from './huntHold';
 export interface Player { x: number; z: number; heading?: number; abilities: Action[] }
 export interface RecordEntry { entity: Entity; relationship: 'friend' | null; removed: boolean; lastAction: Action; interactions: number; playerInteracted?: boolean;
   /** Causal chain (core/why), stored only once a transaction changed it; absent = the kind's derived chain. */ why?: Why }
 export function playerRemembered(record: RecordEntry | undefined) {
   return !!record && (record.playerInteracted === true || record.relationship === 'friend' || record.lastAction !== 'forage');
 }
-export interface EventContext { schemaVersion: 1; generatorVersion: number; worldSeed: number; records: Record<string, RecordEntry>; inventory: { herb: number } }
+/** A released prey's temporary friendship. `at` and the caller's `now` share one clock (play / sim seconds). */
+export interface Bond { at: number; tau: number; species: string }
+export interface EventContext { schemaVersion: 1; generatorVersion: number; worldSeed: number; records: Record<string, RecordEntry>; inventory: { herb: number }; bonds?: Record<string, Bond> }
 export function createContext(): EventContext {
-  return { schemaVersion: 1, generatorVersion: GENERATOR_VERSION, worldSeed: WORLD_SEED, records: {}, inventory: { herb: 0 } };
+  return { schemaVersion: 1, generatorVersion: GENERATOR_VERSION, worldSeed: WORLD_SEED, records: {}, inventory: { herb: 0 }, bonds: {} };
 }
-export function friendCount(context: EventContext) { return Object.values(context.records).filter(r => r.relationship === 'friend').length; }
+/** Permanent friends, plus live bonds. Without `now`, every bond still counts (old callers pass one argument). */
+export function friendCount(context: EventContext, now?: number) {
+  const people = Object.values(context.records).filter(r => r.relationship === 'friend').length;
+  const bonds = Object.values(context.bonds ?? {});
+  const live = now === undefined ? bonds.length : bonds.filter(b => friendLive(b.at, now, b.tau)).length;
+  return people + live;
+}
+/** Pure: the next context remembers this prey as a friend of the player. Hares are not catalog entities, so the bond sits beside records. */
+export function rememberBond(context: EventContext, key: string, bond: Bond): EventContext {
+  const next = structuredClone(context);
+  next.bonds = { ...(next.bonds ?? {}), [key]: { at: bond.at, tau: bond.tau, species: bond.species } };
+  return next;
+}
 export function availableActions(player: Player, target: Entity, context: EventContext): Action[] {
   if (context.records[target.key]?.removed || Math.hypot(player.x - target.x, player.z - target.z) > 6) return [];
   return (catalog[target.kind].interactions ?? []).filter(action => player.abilities.includes(action)
@@ -90,6 +105,12 @@ export function parseContext(text: string): EventContext {
     || !data.records || typeof data.records !== 'object' || Array.isArray(data.records)
     || !Number.isInteger(data.inventory?.herb) || data.inventory.herb < 0 || data.inventory.herb > 99)
     throw new Error('Unsupported or damaged event context. Existing save was not replaced.');
+  if (data.bonds === undefined) data.bonds = {};
+  else if (!data.bonds || typeof data.bonds !== 'object' || Array.isArray(data.bonds)) throw new Error('Invalid friend bonds. Existing save was not replaced.');
+  else for (const bond of Object.values(data.bonds)) {
+    if (!bond || typeof bond.species !== 'string' || !bond.species || !Number.isFinite(bond.at) || !Number.isFinite(bond.tau) || bond.tau <= 0)
+      throw new Error('Invalid friend bond. Existing save was not replaced.');
+  }
   for (const [key, value] of Object.entries(data.records)) {
     const e = value?.entity;
     if (!e || e.key !== key || !Object.hasOwn(catalog, e.kind) || e.generatorVersion !== GENERATOR_VERSION

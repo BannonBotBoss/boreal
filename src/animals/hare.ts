@@ -14,7 +14,8 @@ import { stream, range } from '../proc/rng';
 import { LEVEL } from '../core/tuning';
 import { f, scope } from '../proc/trace';
 import type { SnapshotSource } from '../core/snapshot';
-import { createAnimal, createWorld, removeAnimal, takeEvents, tick, type SimAnimal, type SimState } from '../core/sim';
+import { consumePrey, createAnimal, createWorld, releasePrey, removeAnimal, takeEvents, tick, type SimAnimal, type SimState } from '../core/sim';
+import { carryPlace } from '../core/huntHold';
 import { playerSpeed } from '../core/playerTuning';
 import type { WolfMode } from '../core/wolfModes';
 import { HARE_GAIT } from '../core/needs/species';
@@ -51,8 +52,8 @@ export interface Hare { sim: SimAnimal; id: number; x: number; z: number; headin
   /** the bounding rig: only while the hare is in the core/interest near tier */ rig?: BoundController; frame?: BoundFrame; /** the player plays this hare (always gets the fore lock) */ embodied?: boolean }
 /** One limb: the rig segments as bones of the skinned mesh (render/rigSkin.ts RigLeg). */
 type Leg = RigLeg;
-export interface HareEvent { type: 'caught' | 'bolt' | 'hop'; x: number; z: number }
-export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean; /** false: the player is not a wolf-like predator (an embodied hare, deer): the hares do not sense or flee it; default true */ predator?: boolean; daylight?: number; wind?: { x: number; z: number } }
+export interface HareEvent { type: 'caught' | 'bolt' | 'hop' | 'pinned'; x: number; z: number }
+export interface WolfInfo { x: number; z: number; mode: string; moving: boolean; pouncing: boolean; /** yaw, heading 0 faces -z. The carry uses it. */ heading?: number; /** false: the player is not a wolf-like predator (an embodied hare, deer): the hares do not sense or flee it; default true */ predator?: boolean; daylight?: number; wind?: { x: number; z: number } }
 
 /** Body plan in metres, snowshoe hare summer adult (ADW Lepus americanus / Colorado PW): total length 413-518 mm (tail 39-52),
  *  hind foot 117-147 mm, ear 62-70 mm notch to tip, 1.43-1.55 kg; summer coat grizzled rusty/greyish brown, white belly, ears
@@ -280,7 +281,7 @@ export const HARE_RIG_STATS = { rigged: 0, locked: 0, ms: 0 };
 export function createHares(scene: THREE.Scene) {
   // T-0036: the hares' brains run headless in core/sim (template senses, shared vigilance, evasion, diet); this is the thin
   // render adapter: spawn/despawn around the player, write the embodied wolf into the sim, read positions/states back.
-  const world = createWorld({ seed: WORLD_SEED, passable: (x, z) => heightAt(x, z) > LEVEL.hareWater });
+  const world = createWorld({ seed: WORLD_SEED, passable: (x, z) => heightAt(x, z) > LEVEL.hareWater, handling: true });
   const wolfAnimal = createAnimal(world, 'wolf', { x: 0, z: 0 }, { controlled: true });
   const hares: Hare[] = []; const pending: number[] = [];
   const spawnRng = stream(WORLD_SEED, 'hares-v1'); // seeded placement
@@ -308,19 +309,20 @@ export function createHares(scene: THREE.Scene) {
     setHareDay(dayAt(worldSec())); // T-0028: summer / moult / winter coat from the world date (no-op unless it changed)
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }
     for (let k = 0; k < HARE.count && hares.length + pending.length < HARE.count; k++) spawn(wolf.x, wolf.z); // bounded: spawn() can fail (no dry land in range)
-    while (hares.length > HARE.count) remove(hares[hares.length - 1]); // count lowered in settings
-    for (const h of [...hares]) if (Math.hypot(h.sim.x - wolf.x, h.sim.z - wolf.z) > HARE.despawn) remove(h);
+    while (hares.length > HARE.count) { const i = hares.findIndex(h => h.sim.heldBy === undefined && h.sim.friendOf === undefined); remove(hares[i >= 0 ? i : hares.length - 1]); } // count lowered in settings; a held or befriended hare stays
+    for (const h of [...hares]) if (h.sim.heldBy === undefined && Math.hypot(h.sim.x - wolf.x, h.sim.z - wolf.z) > HARE.despawn) remove(h);
     // the embodied wolf: the adapter writes its pose/gait; the sim senses it and tests captures
     // an embodied hare (or any non-predator body) is not the wolf animal the sim's hares fear: take it out of the sim world, put it back for a predator
     const present = world.animals.includes(wolfAnimal);
     if (wolf.predator === false && present) world.animals.splice(world.animals.indexOf(wolfAnimal), 1); else if (wolf.predator !== false && !present) world.animals.push(wolfAnimal);
     const cover = wolf.predator === false ? 0 : 1 - siteAt(wolf.x, wolf.z).light; // canopy closure at the wolf; sight only (core/agent perceive)
-    Object.assign(wolfAnimal, { x: wolf.x, z: wolf.z, mode: wolf.mode, speed: wolf.moving ? playerSpeed(wolf.mode as WolfMode) : 0, crouched: wolf.mode.includes('stealth'), pouncing: wolf.pouncing, cover });
+    Object.assign(wolfAnimal, { x: wolf.x, z: wolf.z, heading: wolf.heading ?? wolfAnimal.heading, mode: wolf.mode, speed: wolf.moving ? playerSpeed(wolf.mode as WolfMode) : 0, crouched: wolf.mode.includes('stealth'), pouncing: wolf.pouncing, cover });
     world.daylight = () => wolf.daylight ?? 1; world.wind = () => wolf.wind ?? { x: 0, z: 0 };
     tick(world, dt);
     for (const ev of takeEvents(world)) {
       const h = hares.find(x => x.id === ev.id); if (!h) continue;
       if (ev.type === 'caught') { events.push({ type: 'caught', x: ev.x, z: ev.z }); remove(h, false); pending.push(time + range(spawnRng, HARE.respawnSeconds)); }
+      else if (ev.type === 'pinned') events.push({ type: 'pinned', x: ev.x, z: ev.z });
       else if (ev.type === 'bolt') events.push({ type: 'bolt', x: ev.x, z: ev.z });
     }
     // T-0009 LOD: the limb rig only in the core/interest near tier; the fore lock for the embodied hare + the nearest few
@@ -342,10 +344,19 @@ export function createHares(scene: THREE.Scene) {
         if ((kg ?? 0) > 0) WAKES.noteTimed({ id: `hare:${h.id}`, x: h.x, z: h.z, heading: h.heading, phase: h.hopPhase, prevPhase: prevHop,
           motion: speed <= 0 ? 'idle' : speed > 3 ? 'run' : 'walk', speed, t: simTime ?? time, mass: kg ?? 0, length: WATERLINE.hare,
           hips: HARE_HIP_XZ, pawArea: pawArea('hare'), offsets: [0.5, 0, 0.5, 0], duty: 0.45, stride: Math.max(0.25, speed > 0 ? speed / hopHz : 0.25), sample: sampleSurface }); }
-      if (near[i]) { poseHare(h, hareBody(a), dt, time, heightAt); HARE_RIG_STATS.rigged++; if (h.rig?.foreLock) HARE_RIG_STATS.locked++; return; }
-      // beyond the near tier: no limb IK; the furred body rides a cheap hop (the old adapter's) in its bind pose
-      const hop = speed > 0 ? Math.abs(Math.sin(h.hopPhase * Math.PI)) * (speed > 3 ? .28 : .12) : 0;
-      h.root.position.set(h.x, heightAt(h.x, h.z) + hop, h.z); h.root.rotation.y = h.heading;
+      const body = hareBody(a); if (a.heldBy !== undefined) body.action = 'held';
+      if (near[i]) { poseHare(h, body, dt, time, heightAt); HARE_RIG_STATS.rigged++; if (h.rig?.foreLock) HARE_RIG_STATS.locked++; }
+      else {
+        // beyond the near tier: no limb IK; the furred body rides a cheap hop (the old adapter's) in its bind pose
+        const hop = speed > 0 ? Math.abs(Math.sin(h.hopPhase * Math.PI)) * (speed > 3 ? .28 : .12) : 0;
+        h.root.position.set(h.x, heightAt(h.x, h.z) + hop, h.z); h.root.rotation.y = h.heading;
+      }
+      if (a.heldBy !== undefined) {
+        const place = carryPlace({ x: wolf.x, z: wolf.z, heading: wolf.heading ?? 0 });
+        h.root.position.set(place.hip.x, place.hip.y, place.hip.z);
+        h.root.rotation.set(place.pitch, wolf.heading ?? 0, 0);
+        h.x = place.hip.x; h.z = place.hip.z; h.heading = wolf.heading ?? 0;
+      } else if (h.root.rotation.x !== 0) h.root.rotation.x = 0;
     });
     HARE_RIG_STATS.ms = performance.now() - t0;
     return events;
@@ -362,7 +373,19 @@ export function createHares(scene: THREE.Scene) {
       }
     },
   };
-  const api = { update, snapshot, list: () => hares as readonly Hare[], stats: HARE_RIG_STATS };
+  const held = () => hares.find(h => h.sim.heldBy === wolfAnimal.id);
+  function releaseHeld() {
+    const h = held(); if (!h) return undefined;
+    const bond = releasePrey(world, h.sim, wolfAnimal.id);
+    return bond;
+  }
+  function consumeHeld() {
+    const h = held(); if (!h) return undefined;
+    const meal = consumePrey(world, h.sim, wolfAnimal.id);
+    remove(h, false); pending.push(time + range(spawnRng, HARE.respawnSeconds));
+    return meal;
+  }
+  const api = { update, snapshot, list: () => hares as readonly Hare[], stats: HARE_RIG_STATS, held, releaseHeld, consumeHeld, clock: () => world.time };
   (globalThis as { borealHares?: unknown }).borealHares = api; // dev handle (recordings, perf): borealHares.list(), borealHares.stats
   return api;
 }

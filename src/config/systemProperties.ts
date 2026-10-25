@@ -108,6 +108,17 @@ export const SYSTEM_PROPERTIES = {
     /** m/s² ceiling on the leap's turn (v²/r). Wilson et al. 2013, Nature 498:185: cheetah hunts often exceed
      *  13 m/s² below 17 m/s. No wolf lateral acceleration was found; a wolf is not allowed to turn harder than that. */
     leapGrip: 13,
+    /** Play seconds a released prey treats the wolf as a friend. Matthew 2026-10-21: about 3 min. The game clock is 12x,
+     *  so this is play time, not world time (180 world-seconds would feel like 15 s). Inside the tonic-immobility range
+     *  (seconds to several minutes: Whishaw, Flannigan & Barnsley 1979, Dev Psychobiol 12:595). */
+    friendTau: 180,
+    /** Strength exp(-t/tau) is still a friend at exactly one e-folding, and not after. */
+    friendFloor: Math.exp(-1),
+    /** Wet stomach + caecum + upper colon = gutA * mass^gutB (kg, kg). Belovsky 1984, Theor. Popul. Biol. 25:235, n=6, r^2=0.99.
+     *  Read as kilograms (~10 % at 1.5 kg). Mendel & Mendel 1909, J Exp Med 11:36, rabbit stomach+cecum ~10 % of body weight.
+     *  If the 1984 fit was in grams, this reading is high. */
+    gutA: 0.096,
+    gutB: 1.03,
   },
   /** Jump / pounce stages (animals/locomotion/jump), shares of the jump duration and fractions of hip height. */
   jump: {
@@ -244,7 +255,7 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
     foreRate: ['x', 'fore legs carry ~60 % of a dog\'s weight (Lee et al. 1999, J Exp Biol 202:3565)'],
     hindRate: ['x', 'Lee et al. 1999 (as foreRate)'], pairBoost: ['share', EST] } },
   haptics: { readers: ['src/ui/haptics.ts', 'src/core/renderSettings.ts'], keys: { on: ['on/off', 'design'], intensity: ['0-1', EST], editorSound: ['on/off', 'design'] } },
-  hunt: { readers: ['src/core/needs/diet.ts', 'src/core/hunt.ts'], keys: {
+  hunt: { readers: ['src/core/needs/diet.ts', 'src/core/hunt.ts', 'src/core/huntHold.ts'], keys: {
     catchContact: ['m', 'half a wolf (head-body 1.0-1.3 m, Mech & Boitani 2003) + half a hare; tuned by tools/hunt-sim'], catchPounce: ['m', 'catchContact + jaw reach; ' + EST],
     boltBase: ['x flight distance', EST], boltPerLevel: ['x flight distance per perception', EST], safeDistance: ['m', EST], minZig: ['s', EST],
     jinkRadii: ['x pursuer turning radius', 'Howland 1974 (J Theor Biol 47:333): turn when the pursuer is about one turning radius away'],
@@ -252,7 +263,11 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
     lockDwell: ['s', 'Fischer & Ramsperger 1984, Exp Brain Res 57:191: regular saccade latency ~200 ms'],
     lockHalfDeg: ['deg', 'Miller & Murphy 1995, JAVMA 207:1623: dog binocular overlap 30–60°, upper end, half either side of the view'],
     lockRadius: ['m', 'Lingle & Wilson 2001, Ethology 107:125: stalking attacks alerted deer under 30 m'],
-    leapGrip: ['m/s^2', 'Wilson et al. 2013, Nature 498:185: cheetah lateral acceleration often above 13 m/s^2 below 17 m/s; used as a ceiling'] } },
+    leapGrip: ['m/s^2', 'Wilson et al. 2013, Nature 498:185: cheetah lateral acceleration often above 13 m/s^2 below 17 m/s; used as a ceiling'],
+    friendTau: ['play s', 'Matthew 2026-10-21: friendship about 3 min. Whishaw, Flannigan & Barnsley 1979, Dev Psychobiol 12:595: tonic immobility lasts seconds to several minutes'],
+    friendFloor: ['share of strength', 'exp(-1): the memory is live through one e-folding and gone after it'],
+    gutA: ['kg / kg^gutB', 'Belovsky 1984, Theor. Popul. Biol. 25:235: wet stomach+caecum+upper colon = 0.096*W^1.03 (n=6, r^2=0.99). Unit read as kg; Mendel & Mendel 1909 J Exp Med 11:36 is the ~10% check'],
+    gutB: ['exponent', 'Belovsky 1984, Theor. Popul. Biol. 25:235 (same fit)'] } },
   jump: { readers: ['src/animals/locomotion/jump.ts'], keys: {
     crouch: ['share', 'Claude gaitPose jump (game calibration)'], flight: ['share', 'Claude gaitPose jump (game calibration)'],
     land: ['share', 'Claude gaitPose jump (game calibration)'], depth: ['x hip height', EST], reach: ['x hip height', EST] } },
@@ -299,10 +314,11 @@ export interface SystemWiring {
 }
 export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
   animalSim: { title: 'Headless animal simulation', what: 'Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters.',
-    modules: ['src/core/sim/index.ts', 'src/core/needs/senses.ts', 'src/core/needs/diet.ts', 'src/core/needs/social.ts', 'src/animals/hare.ts', 'src/core/hunt.ts'],
+    modules: ['src/core/sim/index.ts', 'src/core/needs/senses.ts', 'src/core/needs/diet.ts', 'src/core/needs/social.ts', 'src/animals/hare.ts', 'src/core/hunt.ts', 'src/core/huntHold.ts'],
     groups: ['hunt', 'perception', 'sim', 'social'], dependsOn: ['needs', 'senses', 'player', 'clock'], flags: {},
     tables: { 'src/core/needs/species/index.ts#NEEDS_SPECIES': 'species templates: senses, diet, social, evasion',
-      'src/core/hunt.ts#HUNT_LOCK': 'aim dwell, binocular cone, lock radius, leap turn ceiling' }, remaining: [] },
+      'src/core/hunt.ts#HUNT_LOCK': 'aim dwell, binocular cone, lock radius, leap turn ceiling',
+      'src/core/huntHold.ts#HUNT_HOLD': 'friend memory, gut allometry, pin and carry pose figures' }, remaining: [] },
   audio: { title: 'Audio and music', what: 'Ambience, animal calls, footsteps, wolf voice, music decks and the bus mixer.',
     modules: ['src/audio/borealSound.ts', 'src/audio/footsteps.ts', 'src/audio/mixer.ts', 'src/audio/music.ts', 'src/audio/musicSettings.ts', 'src/audio/wolfVoice.ts'],
     groups: ['footsteps'], dependsOn: ['clock', 'weather', 'locomotion', 'behaviour', 'player'],

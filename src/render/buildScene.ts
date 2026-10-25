@@ -192,7 +192,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       return;
     }
   }
-  let previousTime = 0, focusBlend = 0, lastFocus: Entity | undefined; const focusQ = new THREE.Quaternion();
+  let previousTime = 0, focusBlend = 0, lastFocus: Entity | undefined, carryPose: { jaw: number; head: number; fore: number } | undefined; const focusQ = new THREE.Quaternion();
   const headPoint = new THREE.Vector3();
   const audibleAnimals: {key:string; energy:number; motion:string; problem:string; x:number; z:number; phase:number; chew?:boolean; snort?:boolean}[] = [];
   /** One agent per live deer. Mates are the previous step, so a bolt cannot lap the herd in the same frame. */
@@ -278,7 +278,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     camera.up.set(0, 1, 0);
     const pushed = pushFrom && [...chunks.values()].flatMap(c => c.entities).find(e => e.key === pushFrom.key);
     const pushVector = pushed && pushFrom ? { x: pushed.x - pushFrom.x, z: pushed.z - pushFrom.z, yaw } : undefined;
-    wolf.animate({ time, dt: photo && photo.frozen !== false ? 0 : Math.max(0, Math.min(.1, time - previousTime)), moving, action, elapsed: actionElapsed, mode, push: pushVector });
+    wolf.animate({ time, dt: photo && photo.frozen !== false ? 0 : Math.max(0, Math.min(.1, time - previousTime)), moving, action, elapsed: actionElapsed, mode, push: pushVector, hold: carryPose });
     positionCamera(camera, x, z, altitude, yaw, pitch, lookYaw);
     const focused = !photo ? focus : undefined; // T-0035: held focus (core/focusLock), any mode
     const frozen = !!photo && photo.frozen !== false;
@@ -460,7 +460,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
-  return { set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     playerScale: () => ({ x: wolf.root.scale.x, y: wolf.root.scale.y, z: wolf.root.scale.z }),
     /** The saved record for a key (undefined for generated objects), e.g. for the inspector's why. */

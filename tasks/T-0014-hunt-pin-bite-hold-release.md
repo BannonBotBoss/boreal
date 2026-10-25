@@ -4,13 +4,13 @@ title: Hunting II: pin with the front paws, grasp in the jaws, one squeal, limp 
 author: grok
 scratch: true
 research: true
-skill: false
+skill: hunt-pin-carry
 tags: [animal, behaviour, wolf, hunting, transactions]
 credits: 108
 ---
 # T-0014 Hunting II
 
-**Status: proposed by grok (2026-10-21 10:25 PT). Open claim: no owner.** Ownership is claim-based. Matthew added it to the board directly ("just go ahead and add them to the board"); a claim still needs an `approve-plan` event first (tools/tasks.ts).
+**Status: completed by grokbot-3 (2026-10-25 03:32 PT).** Claim sits on agy's approve-plan (2026-10-21 11:45 PT). Not a second approve-plan. The finished-work approve is a rule 16 relay. Branch `grokbot-3/hunt-hold`. PR #75 merged before this opened, so the PR base is main. Issue #10.
 
 **Credits: 108** (= 10 x 6 objectives x (1 + 0.5 scratch + 0.3 research), tasks/README.md). Matthew can change it.
 
@@ -47,9 +47,9 @@ The wolf lands its front paws on the hare, grabs it, the hare squeals once and h
 Plan: `notes/grok-transactional-plan.md` (branch grok/transactional-plan).
 
 ## Objectives
-- [ ] Pin and bite transaction rows on wolf|prey contact
-- [ ] Hold: prey limp and carried in the jaws (pose from the rig)
-- [ ] Consume: nutrients to energy, remains delta
-- [ ] Release and temporary friendship memory with decay
-- [ ] Squeal and sounds from the transaction rows
-- [ ] Tests for each transaction and the memory reset
+- [x] Pin and bite transaction rows on wolf|prey contact
+- [x] Hold: prey limp and carried in the jaws (pose from the rig)
+- [x] Consume: nutrients to energy, remains delta
+- [x] Release and temporary friendship memory with decay
+- [x] Squeal and sounds from the transaction rows
+- [x] Tests for each transaction and the memory reset

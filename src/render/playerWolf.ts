@@ -163,19 +163,21 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   const setTail = () => tail.forEach((bone, k) => { bone.rotation.x = k === 0 ? tailPitch.value : TAIL_CURVE[k] * (1 - .6 * (TAIL_HANG - tailPitch.value) / (TAIL_HANG - TAIL_LEVEL)); bone.rotation.y = tailYaw[k]; });
   poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0)); setTail(); // stand on the ground before the first frame
   let lastTime = 0;
-  return { root, brain, sensor, animate(time: number, moving: boolean, action: 'speak' | 'gather' | 'move' | undefined, elapsed: number, mode: WolfMode = 'walk', push?: { x: number; z: number; yaw: number }) {
+  let hold: { jaw: number; head: number; fore: number } | undefined;
+  return { root, brain, sensor, setHold(next?: { jaw: number; head: number; fore: number }) { hold = next; }, animate(time: number, moving: boolean, action: 'speak' | 'gather' | 'move' | undefined, elapsed: number, mode: WolfMode = 'walk', push?: { x: number; z: number; yaw: number }) {
     const stealth = mode === 'stealth' || mode === 'super-stealth';
     const running = mode === 'run' || mode === 'sprint';
     root.scale.set(WOLF_SCALE, WOLF_SCALE * (stealth && action !== 'move' ? .72 : 1), WOLF_SCALE);
     const dt = Math.max(0, Math.min(.1, time - lastTime)); lastTime = time;
     // T-0002/T-0003: the gait's own body motion (suspension arc, vault, pitch, pelvis) replaces the old wall-clock bounce.
     const pose = quadrupedPose(brain.motion, brain.drawPhase, brain.jumpTime, WOLF_LEGS, brain.gaitSpeed, brain.gaitName); // drawPhase: between 30 Hz sim steps
-    poseLegs(pose);
+    const fore = hold ? (i: number) => (i % 2 === 0 ? hold!.fore : 0) : undefined;
+    poseLegs(pose, fore);
     torso.position.y = moving ? 0 : Math.sin(time * 2) * .003;
-    head.rotation.x = action === 'speak' ? -.45 * Math.sin(Math.min(1, elapsed / .2) * Math.PI / 2)
+    head.rotation.x = hold ? hold.head : action === 'speak' ? -.45 * Math.sin(Math.min(1, elapsed / .2) * Math.PI / 2)
       : action === 'gather' ? .65 + Math.sin(elapsed * 12) * .12 : Math.sin(time * 1.4) * .035;
     head.position.set(...HEAD_AT);
-    if (action === 'move' && push) {
+    if (action === 'move' && push && !hold) {
       const retract = Math.max(0, Math.min(1, (1.2 - elapsed) / .4));
       const amount = pushProgress(elapsed) * retract;
       head.rotation.x = 0; torso.position.y = 0;
@@ -185,7 +187,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
       poseLegs(quadrupedPose('idle', 0, 0, WOLF_LEGS, 0), i => (i % 2 ? -.15 : .15) * Math.sin(Math.PI * pushProgress(elapsed)));
     }
     // The jaw is hinged at the rear skull base and opens only downward (rotation about x is negative = chin drops).
-    jaw.rotation.x = -(action === 'speak' ? (1 + Math.sin(elapsed * 22)) * .12 : portrait ? .07 : 0); // portrait rests slightly parted (about 30% of a full open)
+    jaw.rotation.x = hold ? -hold.jaw : -(action === 'speak' ? (1 + Math.sin(elapsed * 22)) * .12 : portrait ? .07 : 0); // portrait rests slightly parted (about 30% of a full open). A hold opens only as far as the neck needs.
     // Tail: the root follows the gait phase and each joint lags the one before, so the sway travels down the chain.
     const lift = brain.motion === 'idle' ? 0 : Math.min(1, brain.gaitSpeed / 6), blendTo = 1 - Math.exp(-12 * dt);
     tail.forEach((_, k) => {

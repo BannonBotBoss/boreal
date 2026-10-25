@@ -8,7 +8,8 @@ import './style.css';
 import { createSensesHUD } from './ui/senses';
 import { createSensesHalo } from './render/sensesHalo';
 import { buildScene } from './render/buildScene';
-import { availableActions, consumeForage, createContext, friendCount, interact, parseContext, solidContact, type Player } from './core/events';
+import { availableActions, consumeForage, createContext, friendCount, interact, parseContext, rememberBond, solidContact, type Player } from './core/events';
+import { holdVisual, setSqueal } from './core/huntHold';
 import { CONTACTS } from './core/contactBus';
 import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from './core/waterWake';
 import { catalog } from './core/catalog';
@@ -21,6 +22,7 @@ import { wolfSpeak } from './audio/wolfVoice';
 import { playerSpeed, pounceSpeed } from './core/playerTuning';
 import { HARE } from './animals/hare';
 const sfx = new BorealSound();
+setSqueal(at => sfx.squeal(at));
 const music = createMusic(() => sfx.musicInput(), on => { sfx.builtInMusic = on; });
 import { clampLookPitch, springLookPitch, DEFAULT_PITCH, RIDER_HEIGHT } from './render/math';
 import { steerWolf } from './core/locomotion';
@@ -273,7 +275,7 @@ let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem
 function setBindings(b: Bindings) { bindings = b; padRouter?.setBindings(b); hint = { pad: '', keys: '' }; bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
 const controls = controlsScreen({ get: () => bindings, set: setBindings, library: () => { menu.close(); dialog.showModal(); } });
 const hintFor = (kind: 'keys' | 'pad') => { const L = (id: string) => bindingLabel(bindings[id][kind]);
-  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('lock')} lock · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
+  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('lock')} lock · ${L('eatPrey')} eat held · ${L('releasePrey')} release · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
 function act(id: string) { // one fired press action (keyboard or gamepad)
   if (padRouter.act(id)) return;
   if (dialog.open) { if (id === 'back' || id === 'interact') dialog.close(); else if (id === 'pause') togglePause(); return; }
@@ -285,7 +287,18 @@ function act(id: string) { // one fired press action (keyboard or gamepad)
   else if (id === 'inspector') { inspector.toggle(); clearInput(); }
   else if (id === 'photo') { const vf = activeViewfinder(); if (vf) vf.shoot(); else enterPhoto(); } // T-0068: P = shutter on the live view; freeze & compose stays on the Photo button / menu
   else if (id === 'planet') toGlobe();
-  else if (id === 'howl') sfx.howl(); else if (id === 'growl') sfx.growl();
+  else if (id === 'eatPrey') {
+    const ate = view.hares.consumeHeld();
+    if (!ate) { notice('Nothing in the jaws.'); return; }
+    view.playerBrain.energy = Math.min(100, view.playerBrain.energy + ate.energy);
+    needs = { ...needs, water: Math.min(100, needs.water + ate.water) };
+    notice(`Ate the hare. +${ate.energy.toFixed(0)} energy, +${ate.water.toFixed(0)} water. Gut contents left on the ground.`);
+  } else if (id === 'releasePrey') {
+    const bond = view.hares.releaseHeld();
+    if (!bond) { notice('Nothing to release.'); return; }
+    context = rememberBond(context, bond.key, { at: bond.at, tau: bond.tau, species: bond.species });
+    notice('Released. It treats you as a friend until the memory fades.');
+  } else if (id === 'howl') sfx.howl(); else if (id === 'growl') sfx.growl();
 }
 let drag: { id: number; x: number; y: number } | undefined;
 const canControl = () => !menuOpen() && !paused && !dialog.open && !document.hidden && !photo.active && !inpage?.blocksGame();
@@ -466,12 +479,14 @@ function frame(time: number) { const frameStart = performance.now();
   // Menu open: hold the last frame (clock frozen; no age/growth/render). Playing: draw every frame.
   { const held = huntLock.key ? view.hares.list().find(h => `hare:${h.id}` === huntLock.key) : undefined;
     huntMarker = held ? lockPoint({ x: held.x, z: held.z }, { x: player.x, z: player.z }, yaw) : undefined; }
+  view.setHold(view.hares.held() ? holdVisual() : undefined);
   const drawStart = performance.now(); if (!menu.open) { if (inpage) inpage.frame(() => drawFrame(pv)); else drawFrame(pv); } view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
   walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
-  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
+  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
+    if (ev.type === 'pinned') { notice('Pinned. X eats, B releases.'); continue; } // the bite row already played the one squeal
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {
       // T-0036: the carnivore diet module turns the whole prey into Energy + hydration (template diet.foods.hare).
@@ -487,8 +502,9 @@ function frame(time: number) { const frameStart = performance.now();
   const animalStatus = animal ? ` · ${animal.motion}/${animal.problem} · Energy ${Math.round(animal.energy)}` : '';
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
-  const aimLine = huntLock.key ? 'Lock on' : H('lock') > ACTIVE ? 'aiming' : focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : `RT run · LT stealth · LB focus · ${bindingLabel(bindings.lock.keys)} lock`;
-  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
+  const holding = view.hares.held();
+  const aimLine = holding ? `Holding a hare · ${bindingLabel(bindings.eatPrey.keys)} eat · ${bindingLabel(bindings.releasePrey.keys)} release` : huntLock.key ? 'Lock on' : H('lock') > ACTIVE ? 'aiming' : focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : `RT run · LT stealth · LB focus · ${bindingLabel(bindings.lock.keys)} lock`;
+  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind); if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
   requestAnimationFrame(frame);
 }

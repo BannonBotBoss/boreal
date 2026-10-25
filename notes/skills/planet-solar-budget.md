@@ -11,3 +11,5 @@ Steps
 6. Gate: `tests/solar-budget.test.ts`. A function that pins the latitude to Kenora fails the winter-equator check. A missing `aAbsorbed` on a tier with octaves above 0 fails `solarLayerGate`.
 
 Mistakes to avoid: moving `sunPosition(hour)` in the sky (T-0022 still owns that call). Passing a stored cloud field (T-0059). Treating outgoing longwave as the net. Wiring the hare paw pole (T-0044) into this branch.
+
+The water and surface fields that sit on this same octave gate are T-0058 (`notes/skills/planet-hydro-surface.md`). They do not reimplement `solar()`.

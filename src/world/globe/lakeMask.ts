@@ -14,7 +14,7 @@
  * Encoding: R8, 128 + 16 x field, clamped to +-8 m (1/16 m steps; only the crossing and the first metres matter).
  */
 import { STAGES, ELEV, elevationGrid, lakeAt, lakeGrid, sampleGrid, toWorld } from '../../core/stages/elevation';
-import { carve, riverAt } from '../../core/stages/rivers';
+import { carve, pondAt, riverAt, riverPondGrid } from '../../core/stages/rivers';
 import { heightAt } from '../../core/world';
 import { LEVEL } from '../../core/tuning';
 
@@ -25,11 +25,15 @@ export const LAKE_MASK = { n: 1024, size: ELEV.n * ELEV.cell, scale: 16, clamp: 
 export function lakeField(x: number, z: number, staged: boolean, seed = STAGES.seed) {
   if (!staged) return heightAt(x, z) - LEVEL.waterSurface;
   const g = elevationGrid(seed), rv = riverAt(seed, x, z), h0 = toWorld(g, sampleGrid(g, x, z)), h = rv ? carve(h0, rv) : h0;
-  const lk = lakeAt(seed, x, z), W = lk ? lk.surface : h < LEVEL.waterSurface ? LEVEL.waterSurface : rv && rv.d < rv.half ? rv.surface : undefined;
+  const lk = lakeAt(seed, x, z), pond = lk ? undefined : pondAt(seed, x, z), W = lk ? lk.surface : pond ? pond.surface : h < LEVEL.waterSurface ? LEVEL.waterSurface : rv && rv.d < rv.half ? rv.surface : undefined;
   if (W !== undefined) return Math.min(-.02, h - W);
-  let f = h - LEVEL.waterSurface; // dry: measured from the nearest surface it borders (a corner node's lake body, the river)
-  const L = lakeGrid(seed), n = g.n, i0 = Math.floor(x / g.cell), j0 = Math.floor(z / g.cell);
-  for (let k = 0; k < 4; k++) { const i = (((i0 + (k & 1)) % n) + n) % n, j = (((j0 + (k >> 1)) % n) + n) % n, b = L.id[j * n + i]; if (b >= 0) f = Math.min(f, h - L.bodies[b].level); }
+  let f = h - LEVEL.waterSurface; // dry: measured from the nearest surface it borders (a corner node's lake or pond, the river)
+  const L = lakeGrid(seed), P = riverPondGrid(seed), n = g.n, i0 = Math.floor(x / g.cell), j0 = Math.floor(z / g.cell);
+  for (let k = 0; k < 4; k++) {
+    const i = (((i0 + (k & 1)) % n) + n) % n, j = (((j0 + (k >> 1)) % n) + n) % n, c = j * n + i, b = L.id[c];
+    if (b >= 0) f = Math.min(f, h - L.bodies[b].level);
+    const pb = P.id[c]; if (pb >= 0) f = Math.min(f, h - P.bodies[pb].level);
+  }
   if (rv) f = Math.min(f, h - rv.surface);
   return Math.max(.02, f);
 }

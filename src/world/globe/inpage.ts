@@ -29,6 +29,7 @@ import { GOVERNOR, resetGovernor } from '../../core/quality';
 import { INTEREST, JOB_FIRST, pending, queued, STATS as JOBS } from '../../core/interest';
 import { CHUNK_SIZE, heightAt } from '../../core/world';
 import { STAGES, lakeAt } from '../../core/stages/elevation';
+import { pondAt } from '../../core/stages/rivers';
 import { LEVEL } from '../../core/tuning';
 import { EXPOSURE } from '../../core/light';
 import { clamp01, smoothstep } from '../../proc/math';
@@ -79,7 +80,8 @@ function patchPlaneY(x: number, z: number, r: number) {
   const k = `${Math.round(x / 8)},${Math.round(z / 8)},${r}`; if (k === planeKey) return planeY; planeKey = k;
   let y = -Infinity;
   for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, sx = x + Math.cos(a) * r * .9, sz = z + Math.sin(a) * r * .9, lk = STAGES.on ? lakeAt(STAGES.seed, sx, sz) : undefined;
-    if (lk) y = Math.max(y, lk.surface); else if (heightAt(sx, sz) < LEVEL.waterSurface) y = Math.max(y, LEVEL.waterSurface); }
+    const pond = lk ? undefined : (STAGES.on ? pondAt(STAGES.seed, sx, sz) : undefined);
+    if (lk) y = Math.max(y, lk.surface); else if (pond) y = Math.max(y, pond.surface); else if (heightAt(sx, sz) < LEVEL.waterSurface) y = Math.max(y, LEVEL.waterSurface); }
   return planeY = Number.isFinite(y) ? y : ground(x, z);
 }
 
@@ -297,7 +299,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** Behind the loading screen: create the globe, compile its programs for the far layer AND the screen, build the tiles over
      *  the player at the entry altitude, compile the far-layer background program, then terminate the workers. */
     async prewarm() {
-      const g = await loadGlobe(); await g.compiled; await g.precompile(null);
+      const g = await loadGlobe(); await g.compiled; await g.bootP; await g.precompile(null);
       const t0 = performance.now(); let n = 0;
       while (performance.now() - t0 < INPAGE.prebuildMs) { renderer.getDrawingBufferSize(size); far.resize(size.x, size.y); g.step(far.target); if (++n > 10 && g.stats().queued === 0) break; await new Promise(r => requestAnimationFrame(r)); }
       const bg = new THREE.Scene(), rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }); bg.background = far.texture; // background plane: screen and composer variants

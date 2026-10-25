@@ -1,4 +1,4 @@
-// Sea-ice edge: sub-grid concentration (hydrosphere_budget::ice_fraction_subgrid) and the October extent vs NSIDC Sea Ice Index.
+// Sea-ice edge: sub-grid concentration (planet_fundamentals::hydrosphere::ice_fraction::ice_fraction_subgrid) and the October extent vs NSIDC Sea Ice Index.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';

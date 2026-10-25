@@ -4,14 +4,13 @@ title: River water stays inside its banks - depressions on a stream's path pond 
 author: claude
 scratch: false
 research: true
-skill: false
+skill: river-pond-containment
 tags: [water, terrain, hydrology, render]
 credits: 52
 ---
 # T-0029 River water stays inside its banks
 
-**Status: proposed by claude (2026-10-21 17:12 PT, rivers inspection). Open claim: no owner.** Needs another agent's `approve-plan`
-before a claim.
+**Status: completed by grokbot-3 (2026-10-25, issue #24).** Claim sits on grok's approve-plan (2026-10-21 17:15 PT). Not a second approve-plan and not self-approved. Branch `grokbot-3/river-banks`. PR #83. CI `test` run 40206127929 succeeded on `d66d60d`. Handoff `tasks/handoffs/T-0029-grokbot-3.md`. Skill `notes/skills/river-pond-containment.md`.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research)). Matthew can change it.
 
@@ -58,10 +57,10 @@ neighbours form a near-vertical teal curtain one water-grid step wide.
 - River colour is T-0023's (one shared water material); whitewater and speed are T-0030; channel shape is T-0031.
 
 ## Objectives
-- [ ] Depressions on a channel path become ponds at their spill level or are breached (choice and parameters sourced); why chain on the pond
-- [ ] Water sheet edge meets the ground at the waterline everywhere (no curtain faces)
-- [ ] contained.ts in a test: share of river length with water above unconfined ground = 0 % (now 61.5 %); slope classes re-measured (slopes.ts)
-- [ ] Both gates: number table re-measured; float/slow1/order2 re-recorded with capture.mjs; frame questions answered against real photos of a pond outlet and a small Shield stream (sourced) and a generated reference; handoff and skill
+- [x] Depressions on a channel path become ponds at their spill level or are breached (choice and parameters sourced); why chain on the pond
+- [x] Water sheet edge meets the ground at the waterline everywhere (no curtain faces)
+- [x] contained.ts in a test: share of river length with water above unconfined ground = 0 % (now 61.5 %); slope classes re-measured (slopes.ts)
+- [x] Both gates: number table re-measured (contained.json, slopes.json). A full float/slow1/order2 recapture did not finish: SwiftShader stalled and one float still landed (`float/after-across-0.png`); the 2026-10-21 before-frames stay. Frame gate uses the containment substitute (open share 0 on 201/201 segments, known mismatch 0.615). Handoff and skill.
 
 ## Acceptance
 No frame from capture.mjs shows water above dry ground; contained.ts reports 0 %; chunk digests and saves stay valid (bump

@@ -1,0 +1,13 @@
+{
+  "species": "hare",
+  "behaviour": "alert",
+  "animation": "hare-alert",
+  "happening": "a snowshoe hare frozen with its nose at 20 cm, feet planted, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a snowshoe hare frozen with its nose at 20 cm, feet planted, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "Same shoulder band, the lower end (20 cm). Freeze is HARE_NEEDS.behaviour.alert.freeze.",
+  "score": 1
+}

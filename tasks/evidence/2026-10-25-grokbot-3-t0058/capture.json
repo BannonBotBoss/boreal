@@ -1,0 +1,53 @@
+{
+  "shots": [
+    {
+      "name": "jan-pole-tier0.png",
+      "lat": 80,
+      "tier": 0,
+      "hydro": {
+        "on": true,
+        "key": "1400:15",
+        "nlat": 48
+      },
+      "url": "http://127.0.0.1:5174/?view=globe&tier=0&day=15&hour=12&workers=0&shot=1&atmos=0&layers=0&hydro=1&latlon=80,0",
+      "hud": "Camera\n◉ Photo\nGallery"
+    },
+    {
+      "name": "jan-eq-tier0.png",
+      "lat": 0,
+      "tier": 0,
+      "hydro": {
+        "on": true,
+        "key": "1400:15",
+        "nlat": 48
+      },
+      "url": "http://127.0.0.1:5174/?view=globe&tier=0&day=15&hour=12&workers=0&shot=1&atmos=0&layers=0&hydro=1&latlon=0,0",
+      "hud": "Camera\n◉ Photo\nGallery"
+    },
+    {
+      "name": "jan-pole-hydro0.png",
+      "lat": 80,
+      "tier": 0,
+      "hydro": {
+        "on": false,
+        "key": "off",
+        "nlat": 48
+      },
+      "url": "http://127.0.0.1:5174/?view=globe&tier=0&day=15&hour=12&workers=0&shot=1&atmos=0&layers=0&hydro=0&latlon=80,0",
+      "hud": "Camera\n◉ Photo\nGallery"
+    },
+    {
+      "name": "jan-pole-tier5.png",
+      "lat": 80,
+      "tier": 5,
+      "hydro": {
+        "on": false,
+        "key": "off",
+        "nlat": 48
+      },
+      "url": "http://127.0.0.1:5174/?view=globe&tier=5&day=15&hour=12&workers=0&shot=1&atmos=0&layers=0&hydro=1&latlon=80,0",
+      "hud": "Camera\n◉ Photo\nGallery"
+    }
+  ],
+  "errors": []
+}

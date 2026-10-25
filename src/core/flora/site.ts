@@ -13,7 +13,7 @@ import { heightAt, WORLD_SEED } from '../world';
 import { LEVEL } from '../tuning';
 import { plantsGrowAt } from '../altitudeZones';
 import { STAGES, lakeAt } from '../stages/elevation';
-import { riverAt } from '../stages/rivers';
+import { pondAt, riverAt } from '../stages/rivers';
 import { soilAt, soilGrid, type SoilKind } from '../stages/soils';
 import { standAt } from '../stand';
 import { hash, random } from '../../proc/rng';
@@ -60,7 +60,7 @@ export function siteAt(x: number, z: number, withLight = true, crowns = true): S
   const slopeDeg = Math.atan(Math.hypot(gx, gz)) * 180 / Math.PI;
   let water = h < LEVEL.waterSurface + .03, wet: number, rock: number, depth: number, soil: Soil | undefined;
   if (STAGES.on) {
-    const rv = riverAt(STAGES.seed, x, z); water ||= !!lakeAt(STAGES.seed, x, z) || (!!rv && rv.d < rv.half + rv.bank * .5); // lakes, river bed + inner bank
+    const rv = riverAt(STAGES.seed, x, z); water ||= !!lakeAt(STAGES.seed, x, z) || !!pondAt(STAGES.seed, x, z) || (!!rv && rv.d < rv.half + rv.bank * .5); // lakes, channel ponds, river bed + inner bank
     const cell = soilGrid(STAGES.seed).cell, fx = x / cell, fz = z / cell, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
     wet = rock = depth = 0; let best = -1;
     for (const [di, dj] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const w = (di ? u : 1 - u) * (dj ? v : 1 - v), so = soilAt(STAGES.seed, (i + di) * cell, (j + dj) * cell);

@@ -1,0 +1,9 @@
+wolf-leap: 8 frames over one cycle
+frame 0 phase 0.000: nose (0.650, 0.810) m, hip y 0.560, LF ground, LH ground, RF ground, RH ground, jaw off, head up, supported
+frame 1 phase 0.125: nose (0.650, 0.766) m, hip y 0.516, LF ground, LH ground, RF ground, RH ground, jaw off, head up, supported
+frame 2 phase 0.250: nose (0.650, 0.909) m, hip y 0.659, LF air, LH air, RF air, RH air, jaw off, head up, airborne
+frame 3 phase 0.375: nose (0.650, 1.090) m, hip y 0.840, LF air, LH air, RF air, RH air, jaw off, head up, airborne
+frame 4 phase 0.500: nose (0.650, 1.159) m, hip y 0.909, LF air, LH air, RF air, RH air, jaw off, head up, airborne
+frame 5 phase 0.625: nose (0.650, 1.118) m, hip y 0.868, LF air, LH air, RF air, RH air, jaw off, head up, airborne
+frame 6 phase 0.750: nose (0.650, 0.966) m, hip y 0.716, LF air, LH air, RF air, RH air, jaw off, head up, airborne
+frame 7 phase 0.875: nose (0.650, 0.780) m, hip y 0.530, LF ground, LH ground, RF ground, RH ground, jaw off, head up, supported

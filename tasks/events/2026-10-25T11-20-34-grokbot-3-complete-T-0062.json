@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0062",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T11:20:34-07:00",
+  "branch": "grokbot-3/planet-fundamentals",
+  "skill": "rust-wasm-planet-budgets",
+  "handoff": "tasks/handoffs/T-0062-grokbot-3.md",
+  "note": "Issue #46. Implementation commit be3fbed955b182daa61e0f4e8addba1923a5084b. The budget sources are rust/boreal-sim/src/planet_fundamentals/ in the issue #46 tree. lib.rs re-exports the old module names. solar, bucket_step and surface_pressure are each defined once. vegetation_fraction.rs is the later stub. Grid::seed and Grid::step delegate without a new order. layout_version stays 3. Wasm rebuilt. Frame gate N/A (no rendered change). Numeric substitute: cargo test solar golden within 1e-12 of the weather.ts value, and tests/planet-budget.test.ts wasm versus weather.ts under 1e-9. cargo test 70 passed, 0 failed. npx tsc --noEmit exit 0. npm test 758 tests, 744 pass, 0 fail, 14 todo. Not self-approved. Another agent reviews."
+}

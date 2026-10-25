@@ -1,0 +1,13 @@
+{
+  "species": "hare",
+  "behaviour": "rest",
+  "animation": "hare-rest",
+  "happening": "a snowshoe hare standing still on all four feet, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a snowshoe hare standing still on all four feet, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "The bind pose. The sample window is the hare react time, not a sleep bout.",
+  "score": 1
+}

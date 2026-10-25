@@ -56,6 +56,22 @@ export const HYDRO = {
   snowDensity: 250, // settled seasonal snow, kg/m³ (Sturm et al. 2010, J. Hydrometeorol. 11:1380) [verify]
   ddf: 3,          // degree-day melt factor, mm w.e./°C/day (Hock 2003, J. Hydrol. 282:104, forest snow 1.5–5) [verify]
 };
+/** Initial bucket fill as a fraction of field capacity. The near grid is seeded here; a frozen planet cell holds the same fill
+ *  instead of draining. Game calibration (not a measured wilting point). */
+export const HYDRO_SEED_FILL = 0.6;
+/** Mean month length (days) that places a day-of-year in the 12-value normals. 365.25/12 rounded to the value this file already used. */
+export const MONTH_DAYS = 30.44;
+/** Interpolate a 12-month normal to a day of the year (the same weights `climate` uses). */
+export function monthValue(table: number[], day: number) {
+  const m = (day - 15) / MONTH_DAYS, i = Math.floor(m), t = m - i;
+  return table[(i % 12 + 12) % 12] * (1 - t) + table[((i + 1) % 12 + 12) % 12] * t;
+}
+/** One Manabe (1969) bucket step. `addMm` is rain plus melt; `evapMm` is removed. Soil stays inside 0..field capacity;
+ *  everything above field capacity is runoff. */
+export function bucketStep(soilMm: number, addMm: number, evapMm = 0) {
+  const w = soilMm + addMm - evapMm;
+  return { soil: Math.min(HYDRO.bucketMm, Math.max(0, w)), runoff: Math.max(0, w - HYDRO.bucketMm) };
+}
 export const KESSLER = {
   k1: 1e-3, qc0: 1e-3, // autoconversion rate 1/s above 1 g/kg (Kessler 1969, Meteor. Monogr. 32)
   k2: 2.2,             // accretion 2.2 qc qr^0.875 (Klemp & Wilhelmson 1978, J. Atmos. Sci. 35:1070)
@@ -84,7 +100,6 @@ export const esat = (tC: number) => 611.2 * Math.exp(17.67 * tC / (tC + 243.5));
 export const qsat = (tC: number, p: number) => .622 * esat(tC) / Math.max(1, p - .378 * esat(tC));
 
 // ---- climatology (the far field: pure function, never stored) -----------------------------------------------------
-const monthly = (table: number[], day: number) => { const m = (day - 15) / 30.44, i = Math.floor(m), t = m - i; return table[(i % 12 + 12) % 12] * (1 - t) + table[((i + 1) % 12 + 12) % 12] * t; };
 const smooth = (key: string, t: number) => { const i = Math.floor(t), a = random(hash(`${key}:${WORLD_SEED}:${i}`))(), b = random(hash(`${key}:${WORLD_SEED}:${i + 1}`))(), u = t - i; return a + (b - a) * u * u * (3 - 2 * u); };
 /** Climatological state at (day, hour, altitude): temperature from normals + diurnal cosine (min at sunrise ~05, max ~15 LST:
  * Parton & Logan 1981, Agric. Meteorol. 23:205, simplified), ISA lapse, seeded synoptic wind (~3-day weather systems). */
@@ -95,11 +110,11 @@ export function climate(day: number, hour: number, z = 0) {
   const v = climateRaw(day, hour, z); memo.unshift({ key, v }); if (memo.length > 12) memo.pop(); return v;
 }
 function climateRaw(day: number, hour: number, z = 0) {
-  const t = day + hour / 24, mean = monthly(NORMALS.temp, day), range = monthly(NORMALS.range, day);
+  const t = day + hour / 24, mean = monthValue(NORMALS.temp, day), range = monthValue(NORMALS.range, day);
   const synopticT = (smooth('synT', t / 3) - .5) * 8; // ± 4 °C day-to-day anomaly [verify: Kenora daily SD ~4–5 °C]
   const tC = mean + synopticT + range / 2 * Math.cos((hour - 15) / 24 * 2 * Math.PI) - AIR.lapse * z;
   const dir = smooth('synDir', t / 3) * 4 * Math.PI, speed = NORMALS.wind * 2 * smooth('synSpd', t / 2) * (1 + z / 500) ;
-  const rh = monthly(NORMALS.rh, day) / 100 * (1 + .3 * (smooth('synRH', t / 3) - .5)) * (1 + .15 * Math.cos((hour - 4) / 24 * 2 * Math.PI));
+  const rh = monthValue(NORMALS.rh, day) / 100 * (1 + .3 * (smooth('synRH', t / 3) - .5)) * (1 + .15 * Math.cos((hour - 4) / 24 * 2 * Math.PI));
   return { tC, u: Math.cos(dir) * speed, v: Math.sin(dir) * speed, rh: Math.min(1, rh), p: AIR.p0 * Math.exp(-gravity() * (z + SITE.elevation) / (AIR.Rd * (tC + 273.15))) };
 }
 
@@ -119,7 +134,7 @@ const cellX = (i: number) => WEATHER.ox + (i + .5 - NX / 2) * DX, cellZ = (j: nu
 export function initWeather(day = WEATHER.day, hour = WEATHER.hour, ox = WEATHER.ox, oz = WEATHER.oz, n = WEATHER.quality) {
   NX = n; DX = 384 / n; Object.assign(WEATHER, { day, hour, ox: Math.round(ox / DX) * DX, oz: Math.round(oz / DX) * DX });
   const N = NX * NX * NY, A = () => new Float32Array(N), S = () => new Float32Array(NX * NX);
-  grid = { u: A(), v: A(), w: A(), th: A(), q: A(), qc: A(), qr: A(), soil: S().fill(HYDRO.bucketMm * .6), swe: S(), runoff: S(), precip: S(), snowfall: S(), flux: [] };
+  grid = { u: A(), v: A(), w: A(), th: A(), q: A(), qc: A(), qr: A(), soil: S().fill(HYDRO.bucketMm * HYDRO_SEED_FILL), swe: S(), runoff: S(), precip: S(), snowfall: S(), flux: [] };
   for (let k = 0; k < NY; k++) for (let j = 0; j < NX; j++) for (let i = 0; i < NX; i++) fillFromClimate(i, j, k);
   return grid;
 }
@@ -195,7 +210,7 @@ export function* stepSlices(dt: number) {
     g.u[n] -= g.u[n] * drag; g.v[n] -= g.v[n] * drag;
     // snowpack melt by degree-day; overflow above field capacity → runoff
     if (g.swe[c] > 0 && tC > 0) { const m = Math.min(g.swe[c], HYDRO.ddf * tC * dt / 86400); g.swe[c] -= m; g.soil[c] += m; }
-    if (g.soil[c] > HYDRO.bucketMm) { g.runoff[c] += g.soil[c] - HYDRO.bucketMm; g.soil[c] = HYDRO.bucketMm; }
+    { const held = bucketStep(g.soil[c], 0); g.runoff[c] += held.runoff; g.soil[c] = held.soil; }
   }
   for (let n = 0; n < N; n++) {
     const k = Math.floor(n / NX / NX), c = climate(WEATHER.day, WEATHER.hour, layerZ(k)), thEnv = theta(c.tC, c.p);

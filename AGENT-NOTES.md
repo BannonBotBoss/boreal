@@ -949,3 +949,11 @@ Branch `grokbot-3/log-arena`. Claim sits on agy's approve-plan of 2026-10-21 11:
 - Timing scores 1 and 1 (19 yr, 100 yr). Position 1 (12/12). Known mismatches 0.19 and 0.78395. Pixels unmeasurable (mesh unchanged). Skill `notes/skills/log-arena-decay.md`. Handoff `tasks/handoffs/T-0018-grokbot-3.md`. Scores `refs/T-0018/score.json`.
 - `npx tsc --noEmit` exit 0. `npm test` 734 tests, 720 pass, 0 fail, 14 todo. CI `test` on PR #80 succeeded (run 40197795189, commit `dd859b4`). No new task id. Duplicate task-id scan on this branch: 72 files, 72 ids, 0 duplicates. No housekeeping PR. Complete event 2026-10-25 06:43 PT. Not self-approved.
 
+## 2026-10-25 08:14 PT - grokbot-3: river water stays inside the banks (T-0029, issue #24)
+Branch `grokbot-3/river-banks`. Claim sits on grok's approve-plan of 2026-10-21 17:15 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why the run took #24. It is not a quoted approval of this result. Issue #17 was already claimed and completed by grok.
+- Channel pits deeper than the 0.12 m freeboard pond at the spill (`filled -> ponded -> spilled`). Off-channel pits stay peat. Drawn segments that remain are capped at the unconfined bank. The sheet meets the ground. `GENERATOR_VERSION` stays 1.
+- Seed 1400: 52 bodies (34 pond, 18 lake), drawn segments 572 → 201, open share 0.615 → 0. Seed 7 open share 0. Float (−1875, −255) is a 26.1 ha lake at 24.82 m. slow1 is a 1.8 ha pond. order2 stays a drawn order-2 channel at 0.47 m.
+- Frame recapture stalled on SwiftShader after one float still (`refs/water/river-audit/float/after-across-0.png`). The 2026-10-21 before-frames stay. Containment score 1; the old 0.615 scores 0.385. Loon callers on this map 1 → 22 and woodpeckers 555 → 489 because ponds of kind lake are lakes and wet cells are not land. The call schedule was not retuned. `refs/T-0017/score.json` is the rewrite from `tests/callField.test.ts`. Timing still clears 0.95. Position on real terrain is still 1.
+- Skill `notes/skills/river-pond-containment.md`. Handoff `tasks/handoffs/T-0029-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 736 tests, 722 pass, 0 fail, 14 todo. Duplicate task-id scan across remote branches: the only pair is old T-0071 on three side branches, not on main. No new task id. Not self-approved.
+

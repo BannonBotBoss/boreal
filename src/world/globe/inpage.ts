@@ -29,6 +29,7 @@ import { GOVERNOR, resetGovernor } from '../../core/quality';
 import { INTEREST, JOB_FIRST, pending, queued, STATS as JOBS } from '../../core/interest';
 import { CHUNK_SIZE, heightAt } from '../../core/world';
 import { STAGES, lakeAt } from '../../core/stages/elevation';
+import { pondAt } from '../../core/stages/rivers';
 import { LEVEL } from '../../core/tuning';
 import { EXPOSURE } from '../../core/light';
 import { clamp01, smoothstep } from '../../proc/math';
@@ -79,7 +80,8 @@ function patchPlaneY(x: number, z: number, r: number) {
   const k = `${Math.round(x / 8)},${Math.round(z / 8)},${r}`; if (k === planeKey) return planeY; planeKey = k;
   let y = -Infinity;
   for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, sx = x + Math.cos(a) * r * .9, sz = z + Math.sin(a) * r * .9, lk = STAGES.on ? lakeAt(STAGES.seed, sx, sz) : undefined;
-    if (lk) y = Math.max(y, lk.surface); else if (heightAt(sx, sz) < LEVEL.waterSurface) y = Math.max(y, LEVEL.waterSurface); }
+    const pond = lk ? undefined : (STAGES.on ? pondAt(STAGES.seed, sx, sz) : undefined);
+    if (lk) y = Math.max(y, lk.surface); else if (pond) y = Math.max(y, pond.surface); else if (heightAt(sx, sz) < LEVEL.waterSurface) y = Math.max(y, LEVEL.waterSurface); }
   return planeY = Number.isFinite(y) ? y : ground(x, z);
 }
 

@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { CHUNK_SIZE, heightAt, terrainBand } from '../core/world';
 import { LEVEL } from '../core/tuning';
 import { STAGES, lakeAt } from '../core/stages/elevation';
-import { riverAt } from '../core/stages/rivers';
+import { pondAt, riverAt } from '../core/stages/rivers';
 import type { SoilKind } from '../core/stages/soils';
 
 /** Staged materials as ALBEDO (sRGB-encoded hex; three decodes to linear). Sentinel-2 L2A (30 Jul 2024, Kenora window) median per
@@ -72,7 +72,8 @@ export function* terrainCore(r: TerrainRequest): Generator<void, TerrainData> {
   for (let i = 0; i < n; i++) {
     const x = gridRel(i % row, segments) + ox, z = gridRel((i / row) | 0, segments) + oz, y = heightAt(x, z);
     position[i * 3] = x; position[i * 3 + 1] = y; position[i * 3 + 2] = z;
-    let b = terrainBand(y, x, z); if (b === 'water' && STAGES.on && y > (lakeAt(STAGES.seed, x, z)?.surface ?? LEVEL.waterSurface)) b = 'till'; // a lake soil cell's ground above the water plane: shore ground, not the khaki lake bed (the pale strip along staged shores, r26)
+    const coverY = STAGES.on ? (lakeAt(STAGES.seed, x, z)?.surface ?? pondAt(STAGES.seed, x, z)?.surface ?? LEVEL.waterSurface) : LEVEL.waterSurface;
+    let b = terrainBand(y, x, z); if (b === 'water' && STAGES.on && y > coverY) b = 'till'; // a water cell's ground above the water plane: shore ground, not the khaki bed (the pale strip along staged shores, r26)
     if (isStaged(b)) groundColor(b as SoilKind, c); else c.set(BAND_COLOR[b]);
     color[i * 3] = c.r; color[i * 3 + 1] = c.g; color[i * 3 + 2] = c.b; band[i] = BANDS.indexOf(b) | (y > LEVEL.waterSurface ? ABOVE : 0);
     if (i % slice === slice - 1) yield;
@@ -90,13 +91,34 @@ export function* terrainCore(r: TerrainRequest): Generator<void, TerrainData> {
   const { uv, index } = planeIndexUv(segments);
   let water: TerrainData['water'] = null;
   if (r.waterSeg > 0) { // stages 2b/2c: one sheet at the lake level / river surface (per-vertex flow for the water shader), sunk below ground elsewhere
-    const seg = r.waterSeg, wr = seg + 1, wn = wr * wr, wp = new Float32Array(wn * 3), flow = new Float32Array(wn * 3); let any = false;
+    const seg = r.waterSeg, wr = seg + 1, wn = wr * wr, wp = new Float32Array(wn * 3), flow = new Float32Array(wn * 3), wet = new Uint8Array(wn); let any = false;
     for (let i = 0; i < wn; i++) {
-      const xr = gridRel(i % wr, seg), zr = gridRel((i / wr) | 0, seg), wx = xr + ox, wz = zr + oz, lk = lakeAt(STAGES.seed, wx, wz), rv = lk ? undefined : riverAt(STAGES.seed, wx, wz), inR = !!rv && rv.d < rv.half + rv.bank;
-      if (lk || inR) any = true; if (inR) { flow[i * 3] = rv!.dirX * rv!.speed; flow[i * 3 + 1] = rv!.dirZ * rv!.speed; flow[i * 3 + 2] = rv!.speed; }
+      const xr = gridRel(i % wr, seg), zr = gridRel((i / wr) | 0, seg), wx = xr + ox, wz = zr + oz, lk = lakeAt(STAGES.seed, wx, wz), pond = lk ? undefined : pondAt(STAGES.seed, wx, wz), cover = lk ?? pond, rv = cover ? undefined : riverAt(STAGES.seed, wx, wz), inR = !!rv && rv.d < rv.half + rv.bank;
+      if (cover || inR) { any = true; wet[i] = 1; } if (inR) { flow[i * 3] = rv!.dirX * rv!.speed; flow[i * 3 + 1] = rv!.dirZ * rv!.speed; flow[i * 3 + 2] = rv!.speed; }
       // the old path stored the relative position (float32), set y, then translated: x' = fround(xr + ox)
-      wp[i * 3] = xr + ox; wp[i * 3 + 1] = Math.fround(lk ? lk.surface : inR ? rv!.surface : heightAt(wx, wz) - .6); wp[i * 3 + 2] = zr + oz;
+      wp[i * 3] = xr + ox; wp[i * 3 + 1] = Math.fround(cover ? cover.surface : inR ? rv!.surface : heightAt(wx, wz) - .6); wp[i * 3 + 2] = zr + oz;
       if (i % wr === seg) yield;
+    }
+    // A dry vertex that shares a triangle with water sits on the ground, so the sheet meets the waterline.
+    // Vertices sunk 0.6 m beside a raised surface were the teal curtain (T-0029). Interior dry vertices stay sunk.
+    for (let i = 0; i < wn; i++) if (!wet[i]) {
+      const ix = i % wr, iz = (i / wr) | 0; let shore = false;
+      for (let dz = -1; dz <= 1 && !shore; dz++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dz) continue; const nx = ix + dx, nz = iz + dz;
+        if (nx >= 0 && nz >= 0 && nx < wr && nz < wr && wet[nz * wr + nx]) shore = true;
+      }
+      if (shore) wp[i * 3 + 1] = Math.fround(heightAt(wp[i * 3], wp[i * 3 + 2]));
+    }
+    // A wet vertex beside lower dry ground is dropped to that ground. The last cell of the sheet is the waterline,
+    // not a face standing above the bank (the containment audit is 1 m past the channel; a mesh step can fall in between).
+    for (let i = 0; i < wn; i++) if (wet[i]) {
+      const ix = i % wr, iz = (i / wr) | 0; let floor = Infinity;
+      for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dz) continue; const nx = ix + dx, nz = iz + dz;
+        if (nx < 0 || nz < 0 || nx >= wr || nz >= wr || wet[nz * wr + nx]) continue;
+        floor = Math.min(floor, heightAt(wp[(nz * wr + nx) * 3], wp[(nz * wr + nx) * 3 + 2]));
+      }
+      if (floor < wp[i * 3 + 1]) wp[i * 3 + 1] = Math.fround(floor);
     }
     if (any) {
       const w = planeIndexUv(seg), g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(wp, 3)); g.setIndex(new THREE.BufferAttribute(w.index, 1)); g.computeVertexNormals();

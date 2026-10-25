@@ -6,7 +6,7 @@ import { LEVEL } from './tuning';
 import { plantsGrowAt } from './altitudeZones';
 import { STAGES, elevationGrid, flowGrid, lakeAt, sampleGrid, toWorld } from './stages/elevation';
 import { cellAt, twi } from './stages/flow';
-import { carve, riverAt } from './stages/rivers';
+import { carve, pondAt, riverAt } from './stages/rivers';
 import { soilAt, type SoilKind } from './stages/soils';
 import { fastRockSite, placeRockSeed } from './rocks';
 import { f, choose, scope, tracing } from '../proc/trace';
@@ -30,7 +30,9 @@ export function heightAt(x: number, z: number) {
   if (STAGES.on) { // stage 1 (core/stages/elevation): eroded coarse grid mapped so the lowest 8 % is open water and the top 15 % is upland rock (Shield ridges)
     const g = elevationGrid(STAGES.seed);
     if (tracing()) { const fl = flowGrid(STAGES.seed), c = cellAt(fl, x, z); f('hydrology', 'flow accumulation (cells)', fl.acc[c]); f('hydrology', 'upslope area (ha)', fl.acc[c] * fl.cell * fl.cell / 1e4);
-      f('hydrology', 'fill depth (m)', fl.filled[c] - g.h[c]); f('hydrology', 'TWI ln(a/tanβ)', twi(fl, c)); f('hydrology', 'D8 receiver', fl.dir[c]); const lk = lakeAt(STAGES.seed, x, z); if (lk) { f('hydrology', 'water body', `${lk.kind} #${lk.body}`); f('hydrology', 'water area (ha)', lk.areaHa); f('hydrology', 'max depth (m)', lk.maxDepth); } f('hydrology', 'grid build (ms)', Math.round(g.ms + fl.ms));
+      f('hydrology', 'fill depth (m)', fl.filled[c] - g.h[c]); f('hydrology', 'TWI ln(a/tanβ)', twi(fl, c)); f('hydrology', 'D8 receiver', fl.dir[c]); const lk = lakeAt(STAGES.seed, x, z); if (lk) { f('hydrology', 'water body', `${lk.kind} #${lk.body}`); f('hydrology', 'water area (ha)', lk.areaHa); f('hydrology', 'max depth (m)', lk.maxDepth); }
+      const pond = pondAt(STAGES.seed, x, z); if (pond) { f('hydrology', 'river pond', `${pond.kind} #${pond.body}`); f('hydrology', 'pond why', pond.why.join(' -> ')); f('hydrology', 'pond spill (m)', pond.surface); f('hydrology', 'pond depth (m)', pond.maxDepth); }
+      f('hydrology', 'grid build (ms)', Math.round(g.ms + fl.ms));
       const rv = riverAt(STAGES.seed, x, z); if (rv) { f('hydrology', 'river Strahler order', rv.order); f('hydrology', 'river basin (km2)', rv.areaKm2); f('hydrology', 'river width (m)', rv.half * 2); f('hydrology', 'river depth (m)', rv.depth); f('hydrology', 'river speed (m/s)', rv.speed); f('hydrology', 'distance to centreline (m)', rv.d); }
       const so = soilAt(STAGES.seed, x, z); f('soil', 'material', so.label); f('soil', 'landscape (Gharari 2011)', so.landscape); f('soil', 'HAND (m)', so.hand); f('soil', 'slope (m/m)', so.slope); f('soil', 'TWI', so.twi); f('soil', 'flow distance to drainage (m)', so.dist); f('soil', 'site wetness', so.wet); }
     const h = f(T, 'stage1 elevation', toWorld(g, sampleGrid(g, x, z))) + f(T, 'depressions', surfaceDetail(x, z)) * .5, rv = riverAt(STAGES.seed, x, z); // stage 2c: rivers carve their channel
@@ -42,7 +44,7 @@ export function heightAt(x: number, z: number) {
 }
 /** Terrain band from the tuning thresholds (colour, water); thresholds are traced so the inspector can what-if them. */
 export function terrainBand(y: number, x?: number, z?: number): 'water' | 'shore' | 'upland' | 'forest' | SoilKind {
-  if (STAGES.on && x !== undefined && z !== undefined) { if (y < LEVEL.waterSurface || lakeAt(STAGES.seed, x, z)) return 'water'; return f('biome', 'stage-3 material', soilAt(STAGES.seed, x, z).kind); } // staged: bands are materials, not heights
+  if (STAGES.on && x !== undefined && z !== undefined) { if (y < LEVEL.waterSurface || lakeAt(STAGES.seed, x, z) || pondAt(STAGES.seed, x, z)) return 'water'; return f('biome', 'stage-3 material', soilAt(STAGES.seed, x, z).kind); } // staged: bands are materials, not heights
   return y < f('biome', 'level.waterSurface', LEVEL.waterSurface) ? 'water' : y < f('biome', 'level.shore', LEVEL.shore) ? 'shore'
     : y > f('biome', 'level.upland', LEVEL.upland) ? 'upland' : 'forest';
 }
@@ -50,7 +52,7 @@ export function terrainBand(y: number, x?: number, z?: number): 'water' | 'shore
 const inRiver = (x: number, z: number) => { const r = riverAt(STAGES.seed, x, z); return !!r && r.d < r.half + 1; };
 /** Revalidate land-bound encounters after restoring old events against the current terrain. */
 export const isDryLand = (x: number, z: number, h = heightAt(x, z)) => h >= LEVEL.shore
-  && !(STAGES.on && (lakeAt(STAGES.seed, x, z) || inRiver(x, z)));
+  && !(STAGES.on && (lakeAt(STAGES.seed, x, z) || pondAt(STAGES.seed, x, z) || inRiver(x, z)));
 export const chunkSeed = (cx: number, cz: number, worldSeed = WORLD_SEED) =>
   f('chunk', 'chunkSeed', hash(`${GENERATOR_VERSION}:${f('chunk', 'worldSeed', worldSeed)}:${cx}:${cz}`));
 /** Candidate roll -> kind (cumulative weights; one data table). */

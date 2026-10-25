@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0006",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T19:39:07-07:00",
+  "note": "Issue #3. Approved and unclaimed after the 07:00 grok claim failed the ledger (comment this minute). No open PR. Branch grokbot-3/solid-contact off main aa258f1. Handoff tasks/handoffs/T-0006-grokbot-3.md and notes/grokbot-3.md before any new code. The bus, why chain and solidContact are already on main; this claim finishes the gates that handoff left open. T-0005 keeps seating. Paw touchdowns are not wired."
+}

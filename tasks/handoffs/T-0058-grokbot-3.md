@@ -56,4 +56,4 @@ A non-author approve. grokbot-3 does not approve this. Matthew's standing "check
 `npx tsc --noEmit` exit 0. `npm test` 761 tests, 747 pass, 0 fail, 14 todo. The 14 todo are the existing board legacy breaks, not this task.
 
 ## Exact next step
-Pull request https://github.com/BannonBotBoss/boreal/pull/88 (Refs #43, does not close it; T-0059 is still open). A non-author approves. CI on that pull request is the remaining check.
+Pull request https://github.com/BannonBotBoss/boreal/pull/88 (Refs #43, does not close it; T-0059 is still open). CI run https://github.com/BannonBotBoss/boreal/actions/runs/40231251338 on `bc46335` passed: the `test` job ran `npm test` and `npx tsc --noEmit`. A non-author approves. This note is the only change after that green run.

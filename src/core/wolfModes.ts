@@ -11,6 +11,8 @@ export interface WolfModes {
   left: boolean; right: boolean; sprintTime: number; sprintSpent: boolean; exhausted: boolean;
 }
 export const modeSpeed: Record<WolfMode, number> = { walk: 2, run: 4, stealth: .8, sprint: 7, 'super-stealth': .35 };
+/** Stamina fraction at which `exhausted` clears. Panting uses the same line (T-0017). */
+export const STAMINA_UP = .2;
 export function createWolfModes(maxStamina = 100): WolfModes {
   return { stamina: maxStamina, maxStamina, mode: 'walk', first: null, left: false, right: false, sprintTime: 0, sprintSpent: false, exhausted: false };
 }
@@ -21,7 +23,7 @@ export function stepWolfModes(state: WolfModes, leftValue: number, rightValue: n
   next.right = rightValue > (state.right ? .15 : .25);
   if (!next.left && !next.right) {
     next.first = null; next.sprintTime = 0; next.sprintSpent = false;
-    if (next.stamina >= (next.maxStamina ?? 100) * .2) next.exhausted = false;
+    if (next.stamina >= (next.maxStamina ?? 100) * STAMINA_UP) next.exhausted = false;
   } else if (!next.first) next.first = next.left ? 'left' : 'right';
   const both = next.left && next.right;
   next.mode = both ? next.first === 'left' ? 'super-stealth' : !next.sprintSpent ? 'sprint' : 'run'

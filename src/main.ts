@@ -14,7 +14,7 @@ import { CONTACTS } from './core/contactBus';
 import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from './core/waterWake';
 import { catalog } from './core/catalog';
 import type { Entity } from './core/world';
-import { BorealSound } from './audio/borealSound';
+import { BorealSound, mealChews } from './audio/borealSound';
 import { createMusic } from './audio/music';
 import { MUSIC_PANEL, MUSIC_SAFETY, MUSIC_SETTINGS, TONES } from './audio/musicSettings';
 import { VOLUME_SETTINGS } from './audio/mixer';
@@ -163,7 +163,7 @@ function perform() {
     pushFrom = action === 'move' ? structuredClone(target) : undefined;
     playerAction = action; actionStarted = simTime;
     sfx.action(action, target); // (the old synth beeps on a second AudioContext doubled every action and ignored mute/volume)
-    if (action === 'speak') { const t = target, a = view.audibleAnimals().find(x => x.key === t.key); wolfSpeak(sfx, t, { darkness: view.darkness(), animal: a }); }
+    if (action === 'speak') { const t = target, a = view.audibleAnimals().find(x => x.key === t.key); wolfSpeak(sfx, t, { darkness: view.darkness(), animal: a, loonNear: sfx.loonNear(player.x, player.z) }); }
     notice(action === 'move' ? 'Stone pushed with your snout. Its new position is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.');
   } catch (error) { notice(`Interaction not committed: ${String(error)}`); }
 }
@@ -289,10 +289,14 @@ function act(id: string) { // one fired press action (keyboard or gamepad)
   else if (id === 'photo') { const vf = activeViewfinder(); if (vf) vf.shoot(); else enterPhoto(); } // T-0068: P = shutter on the live view; freeze & compose stays on the Photo button / menu
   else if (id === 'planet') toGlobe();
   else if (id === 'eatPrey') {
+    const heldHare = view.hares.held();
+    const biteAt = heldHare ? { x: heldHare.x, z: heldHare.z } : undefined;
     const ate = view.hares.consumeHeld();
     if (!ate) { notice('Nothing in the jaws.'); return; }
     view.playerBrain.energy = Math.min(100, view.playerBrain.energy + ate.energy);
     needs = { ...needs, water: Math.min(100, needs.water + ate.water) };
+    const bite = needsSpecies().diet.foods.hare?.biteKg.v ?? 0;
+    if (biteAt) for (let i = 0; i < mealChews(bite, bite); i++) sfx.chewAt(biteAt);
     notice(`Ate the hare. +${ate.energy.toFixed(0)} energy, +${ate.water.toFixed(0)} water. Gut contents left on the ground.`);
   } else if (id === 'releasePrey') {
     const bond = view.hares.releaseHeld();
@@ -485,13 +489,15 @@ function frame(time: number) { const frameStart = performance.now();
   walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
-  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
+  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(worldSec()), day: dayAt(worldSec()), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
   if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
     if (ev.type === 'pinned') { notice('Pinned. X eats, B releases.'); continue; } // the bite row already played the one squeal
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {
       // T-0036: the carnivore diet module turns the whole prey into Energy + hydration (template diet.foods.hare).
       const ate = dietOf(needsSpecies()).eat(needsSpecies(), needs, view.playerBrain.energy, 'hare'); needs = ate.state; view.playerBrain.energy = ate.energy;
+      const bite = needsSpecies().diet.foods.hare?.biteKg.v ?? 0;
+      for (let i = 0; i < mealChews(bite, ate.meal.kg); i++) sfx.chewAt(ev); // the eat's bites, not a 500 ms delay
       modes = { ...modes, stamina: Math.min(modes.maxStamina ?? 100, modes.stamina + HARE.stamina) };
       notice(`Caught a snowshoe hare! +${ate.meal.energy.toFixed(0)} energy, +${ate.meal.water.toFixed(0)} hydration, +${HARE.stamina} stamina.`);
     }

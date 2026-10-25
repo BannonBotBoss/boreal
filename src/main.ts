@@ -7,6 +7,7 @@ import { createSensesHalo } from './render/sensesHalo';
 import { buildScene } from './render/buildScene';
 import { availableActions, consumeForage, createContext, friendCount, interact, parseContext, solidContact, type Player } from './core/events';
 import { CONTACTS } from './core/contactBus';
+import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from './core/waterWake';
 import { catalog } from './core/catalog';
 import type { Entity } from './core/world';
 import { BorealSound } from './audio/borealSound';
@@ -178,6 +179,8 @@ hub.register('player', {
   capture: () => [player.x, player.z, yaw, simTime, shaderClock.time, actionStarted],
   restore: (s: number[]) => { [player.x, player.z, yaw, simTime, shaderClock.time, actionStarted] = s; player.heading = yaw; },
 });
+hub.register('waterWake', { capture: () => WAKES.capture(), restore: s => WAKES.restore(s) });
+{ const q = new URLSearchParams(location.search); if (q.has('bench') || q.has('top') || q.has('wake')) (window as unknown as { wake: () => unknown }).wake = () => WAKES.debug(); }
 let drawFrom: DrawState | undefined; // the player before the last fixed step (core/drawLerp); undefined = draw the latest step
 const drawFrame = (pv?: PhotoView) => {
   const d = drawBetween(drawFrom, { x: player.x, z: player.z, yaw, sim: simTime }, accumulator * 30); view.playerBrain.drawAlpha = d.alpha;
@@ -402,7 +405,12 @@ function frame(time: number) { const frameStart = performance.now();
       const nx = stepNeeds(sp, needs, { dtGame: 3600 / REAL_SECONDS_PER_GAME_HOUR / 30, speed: moved * 30, tC: airC, drinking, energy: brain.energy });
       needs = nx.state; brain.energy = nx.energy;
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
-      simTime += 1 / 30; accumulator -= 1 / 30;
+      simTime += 1 / 30;
+      { const b = view.playerBrain, sc = view.playerScale(), id = view.playable.id;
+        WAKES.noteGait({ id: 'player', x: player.x, z: player.z, heading: yaw, phase: b.phase, prevPhase: b.prevPhase, motion: b.motion,
+          speed: travelSpeed(b.speed, b.gaitSpeed), legs: b.legs, gaitName: b.gaitName, t: simTime, mass: playerMass,
+          length: waterline(id, sc.x), hips: hipsFor(id, sc.x, sc.z), pawArea: pawArea(id), sample: sampleSurface }); }
+      accumulator -= 1 / 30;
     }
     hub.sample(simTime);
   } else { accumulator = 0; drawFrom = undefined; }
@@ -429,7 +437,7 @@ function frame(time: number) { const frameStart = performance.now();
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
-  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) })) {
+  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {
       // T-0036: the carnivore diet module turns the whole prey into Energy + hydration (template diet.foods.hare).

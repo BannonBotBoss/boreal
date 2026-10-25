@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { AnimalBrain, quadrupedPose, DEER_LEGS } from '../core/animalBehavior';
+import { DEER_HIP_XZ } from '../core/waterWake';
 export { DEER_LEGS };
 export function createDeerRig(seed:number,detail:number) {
   const root=new THREE.Group(),body=new THREE.Group();root.add(body);
@@ -15,7 +16,7 @@ export function createDeerRig(seed:number,detail:number) {
   for(const side of [-1,1]) {part(head,side*.4,.25,.15,.14,.32,.16);if(detail<2)part(head,side*.24,.58,.1,.045,.43,.04,pale);}
   const brain=new AnimalBrain(seed),sensor=new THREE.Object3D();sensor.name='head-sensor';sensor.userData.brain=brain;head.add(sensor);
   const legs:THREE.Group[]=[],knees:THREE.Group[]=[];
-  for(const x of [-.38,.38]) for(const z of [-.65,.65]) {
+  for(const [x, z] of DEER_HIP_XZ) {
     const hip=new THREE.Group();hip.position.set(x,1.1,z);root.add(hip);legs.push(hip);
     // Segments overlap at the joints so no gaps open when the knee bends.
     part(hip,0,-DEER_LEGS.upper/2,0,.09,DEER_LEGS.upper/2+.05,.1);

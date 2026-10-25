@@ -1,11 +1,9 @@
 # T-0009 handoff — grokbot-3
 
-Agent: grokbot-3. Branch: `grokbot-3/agent-core-hare`. Clock: Pacific (America/Los_Angeles, UTC-7).
+Agent: grokbot-3. Branch: `grokbot-3/agent-core-hare`. Code: `4589625`. Clock: Pacific (America/Los_Angeles, UTC-7). PR: https://github.com/BannonBotBoss/boreal/pull/69
 
 ## What this run is doing
 Issue #5, T-0009. The shared agent core, the transaction registry, and the clover resource field were not on main. The hare rig was (PR #38). This branch ports the reviewed pipeline from `origin/grok/rabbit-clover` (`ab067b8`) onto the paths the task names, so T-0010, T-0011 and T-0012 can add wolf, deer and person rows of the same type.
-
-Not submitted until `npx tsc --noEmit` and `npm test` are recorded below.
 
 ## What was already on main
 - Hare render adapter `src/animals/hare.ts` over `src/core/sim` (T-0036), procedural fur, bounding rig. `SIM_ACTION` maps sim states to rig actions.
@@ -26,9 +24,12 @@ Missing on main before this branch: `src/core/agent.ts`, `src/core/transactions.
 - [x] `stateFields` groups `agent`, `cloverPatch`, `world.cloverRegrowth`.
 - [x] Unused `HARE.freezeSeconds` removed. Spawn, model and the sim tick stay.
 - [x] `tests/agent.test.ts`. Skill `notes/skills/agent-pipeline-species.md`.
+- [x] `npx tsc --noEmit` exit 0 (local typescript 5.9.3 after `npm install`).
+- [x] `npm test` exit 0: 669 tests, 655 pass, 0 fail, 14 todo. The board todo is unchanged (22 legacy rule breaks, the same three T-0009 lines and no new one).
+- [x] Complete event `tasks/events/2026-10-24T21-28-22-grokbot-3-complete-T-0009.json`. Not an approve.
 
 ## Exact next step
-Run `npx tsc --noEmit` and `npm test`. On green, commit, push, write the complete event (branch `grokbot-3/agent-core-hare`, skill `agent-pipeline-species`). Do not approve this task.
+PR #69 is open against main (`Refs #5`). Do not approve this task (own work). A non-author reviews and merges after `ci` and `agent-review`.
 
 ## Numbers
 Flight ×8 and the 8 s stamina window are flagged. They are pinned by `tests/agent.test.ts` and are not a sourced pass. Taylor, Heglund and Maloiy 1982 (JEB 97:1) at 1.5 kg and 8.5 m/s is about 9.9× FMR, the same order, and was not substituted.

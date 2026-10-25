@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0009",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T21:28:22-07:00",
+  "branch": "grokbot-3/agent-core-hare",
+  "skill": "agent-pipeline-species",
+  "handoff": "tasks/handoffs/T-0009-grokbot-3.md",
+  "note": "Code 4589625. npx tsc --noEmit exit 0. npm test 669 tests: 655 pass, 0 fail, 14 todo. Shared pipeline src/core/agent.ts, registry src/core/transactions.ts, clover field src/core/fields.ts (groundLight = siteAt light times shortwave; sun tables stay on lighting().day), BEHAVIOUR.hare in src/core/species.ts. Flight x8 and the 8 s stamina window stay flagged. Live hares still tick in core/sim. Pixel gate N/A (no new mesh). Skill notes/skills/agent-pipeline-species.md. Not self-approved. Refs #5."
+}

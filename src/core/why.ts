@@ -14,6 +14,8 @@
  * steps are labels only: no weather, plant or seating sim here (T-0005 seats the log; see Contact.sinkFraction).
  * T-0016: a placed object names why it is at that point (stand age since fire, a sunlit gap, or the river channel),
  * and an agent carries a live doing step (goal and cause) that is never stored.
+ * T-0018: a placed log fills oxidized, insected, wetted, sunned, rotting and decaying from the log arena
+ * (src/core/logDecay.ts). The fall steps stay labels. The buried sentence stays the one the contact tests lock.
  *
  * - Closed vocabulary (WHY_TAGS); `on`/`by` are short identifiers (an entity key, 'ground', 'player'), never prose.
  * - Generated objects get a DERIVED chain from their kind and are never stored (no save growth).
@@ -27,6 +29,7 @@ import { STAGES } from './stages/elevation';
 import { riverAt } from './stages/rivers';
 import { CANOPY, siteAt } from './flora/site';
 import { FIRE, standAt, standStructure } from './stand';
+import { arenaOf, fallFraction, logYears } from './logDecay';
 import { NEEDS_SPECIES } from './needs/species';
 import type { Solid } from './contactBus';
 
@@ -85,12 +88,28 @@ export function placementCause(x: number, z: number): Placement {
   if (site.light >= gapLight()) return { cause: 'sunlit-gap', age, light: site.light };
   return { cause: 'stand', age, light: site.light };
 }
-function place(w: Why, kind: Kind, x: number, z: number): Why {
+function place(w: Why, kind: Kind, x: number, z: number, seed?: number): Why {
   const p = placementCause(x, z);
   if (kind === 'deer' || kind === 'person') return w.map(s => s.step === 'born' ? { ...s, by: 'birth' } : s.step === 'wandered' && p.cause === 'flow' ? { ...s, by: 'flow' } : { ...s });
   if (kind === 'rock') return p.cause === 'flow' ? w.map(s => s.step === 'embedded' ? { ...s, by: 'flow' } : { ...s }) : w;
   const by = p.cause === 'flow' ? 'flow' : p.cause === 'sunlit-gap' ? `sunlit-gap:${p.age}` : `stand:${p.age}`;
-  return w.map(s => s.step === 'grew' ? { ...s, by } : { ...s });
+  const placed = w.map(s => s.step === 'grew' ? { ...s, by } : { ...s });
+  if (kind !== 'log') return placed;
+  // Arena rates (T-0018). No seed: the mean of the uniform fall draw (0.5 of the stand age). A placed log passes its seed.
+  const site = siteAt(x, z, true, false), standAge = standAt(x, z, site.wet).age;
+  const age = (seed === undefined ? 0.5 : fallFraction(seed)) * standAge + logYears();
+  const d = arenaOf({ wet: site.wet, light: site.light, age });
+  return placed.map(s => {
+    switch (s.step) {
+      case 'oxidized': return { ...s, by: `o2:${d.oxygen.toFixed(2)}` };
+      case 'insected': return { ...s, by: `share:${d.insects.toFixed(2)}` };
+      case 'wetted': return { ...s, by: `mc:${d.mc.toFixed(2)}` };
+      case 'sunned': return { ...s, by: `light:${d.light.toFixed(2)}` };
+      case 'rotting': return { ...s, by: `k:${d.k.toFixed(4)}` };
+      case 'decaying': return { ...s, by: `class:${d.klass}` };
+      default: return s;
+    }
+  });
 }
 /** Hare and wolf are not catalog Kinds. The cause is the one that actually places them today: the hare in the near
  *  interest ring (animals/hare.ts), the wolf with the player. Habitat spawn waits on T-0009. */
@@ -104,10 +123,10 @@ export function agentWhy(species: string): Why {
 }
 /** The record's chain if a transaction wrote one, else the derived chain. With x and z, the chain names the placement
  *  cause. Without them, the kind default (no site), so a caller that has no position cannot invent one. */
-export function whyOf(e: Pick<Entity, 'kind'> & Partial<Pick<Entity, 'x' | 'z'>>, record?: { why?: Why }): Why {
+export function whyOf(e: Pick<Entity, 'kind'> & Partial<Pick<Entity, 'x' | 'z' | 'seed'>>, record?: { why?: Why }): Why {
   if (record?.why) return copy(record.why);
   const base = copy(WHY_DEFAULTS[e.kind]);
-  return typeof e.x === 'number' && typeof e.z === 'number' ? place(base, e.kind, e.x, e.z) : base;
+  return typeof e.x === 'number' && typeof e.z === 'number' ? place(base, e.kind, e.x, e.z, e.seed) : base;
 }
 /** Append the live goal. Replaces any previous doing step. Does not mutate `w` and is not written by transactions. */
 export function withDoing(w: Why, goal: DoingGoal, because: string): Why {
@@ -194,13 +213,13 @@ export function stepText(s: WhyStep): string {
     case 'displaced': return `displaced ${name(s.on ?? 'ground')} (the earth yields)`;
     case 'settled': return 'settled (forces balanced)';
     case 'ceased': return 'no longer photosynthesizing';
-    case 'oxidized': return 'oxidizing (oxygen and other elements)';
-    case 'decaying': return 'decaying into fallen trunk over a long time';
+    case 'oxidized': return s.by?.startsWith('o2:') ? `oxidizing (oxygen ${s.by.slice(3)} of the well-drained rate)` : 'oxidizing (oxygen and other elements)';
+    case 'decaying': return s.by?.startsWith('class:') ? `decay class ${s.by.slice(6)}` : 'decaying into fallen trunk over a long time';
     case 'held': return 'held in place by gravity';
-    case 'insected': return 'hosting insects';
-    case 'wetted': return 'wetted by water';
-    case 'sunned': return 'warmed by sunlight';
-    case 'rotting': return 'one side rotting';
+    case 'insected': return s.by?.startsWith('share:') ? (s.by === 'share:0.00' ? 'insects absent (too dry or airless)' : `hosting insects (${s.by.slice(6)} of early loss)`) : 'hosting insects';
+    case 'wetted': return s.by?.startsWith('mc:') ? `wetted (moisture ${s.by.slice(3)} g/g)` : 'wetted by water';
+    case 'sunned': return s.by?.startsWith('light:') ? `warmed by sunlight (light ${s.by.slice(6)})` : 'warmed by sunlight';
+    case 'rotting': return s.by?.startsWith('k:') ? `rotting at ${s.by.slice(2)} /yr` : 'one side rotting';
     case 'nursing': return 'the other side collecting debris and growing other plants';
     case 'buried': return `becoming ${s.on === undefined || s.on === 'ground' ? 'forest floor' : name(s.on)} (one more trunk cycle)`;
     case 'accumulated': return 'built up from many cycles of fallen trunks';

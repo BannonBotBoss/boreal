@@ -25,6 +25,9 @@ export interface Site { water: boolean; slopeDeg: number; wet: number; rock: num
 let canopyOf: ((x: number, z: number) => number) | undefined;
 /** Share of the stand model's canopy closure used as background shade (0 = drawn crowns only). */
 export const CANOPY = { stand: .75 };
+/** Wetness above which the site is saturated peat (open black spruce muskeg). The canopy term below is halved,
+ *  and log decay treats it as poorly drained (T-0018). Game calibration, the cut already used here. */
+export const SATURATED_WET = .85;
 export function setCanopySource(fn?: (x: number, z: number) => number) { canopyOf = fn; }
 
 /** Ground footprints of rocks, logs, trunks and props, so ground plants never grow through them (render/flora registers the
@@ -71,7 +74,7 @@ export function siteAt(x: number, z: number, withLight = true, crowns = true): S
   // Understorey light = 1 - max(drawn crown score, stand closure). The scene draws a capped SUBSAMPLE of the stems (core/population:
   // ~130-290 trees/ha vs 650-1500/ha in the stand model), so the stand's canopy closure (core/stand, Harper et al. 2002) is the
   // background shade, thinned on rock / steep faces and halved on saturated peat (open black spruce muskeg) [game calibration .75].
-  const closure = water || !withLight ? 0 : CANOPY.stand * standAt(x, z, wet).canopy * (1 - rock) * (wet > .85 ? .5 : 1);
+  const closure = water || !withLight ? 0 : CANOPY.stand * standAt(x, z, wet).canopy * (1 - rock) * (wet > SATURATED_WET ? .5 : 1);
   const crown = withLight && crowns ? canopyOf?.(x, z) ?? 0 : 0;
   return { water, slopeDeg, wet, rock, depth, h, light: withLight ? 1 - clamp01(Math.max(crown, closure)) : 1, soil };
 }

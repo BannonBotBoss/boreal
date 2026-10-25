@@ -17,6 +17,8 @@ import { LEVEL } from './tuning';
 import { STAGES } from './stages/elevation';
 import { soilAt } from './stages/soils';
 import { HYDRO, WEATHER, setSurfaceSource, weatherAt } from './weather';
+import { siteAt } from './flora/site';
+import { budget, cellsUnder, fallFraction, LOG_FLOOR_BULK, logDryMass, setLogYears } from './logDecay';
 
 export const CELL = 2; // m
 /** Organic pools (dry mass, kg/m²) in chain order. CBM-CFS3 DOM pools (Kurz et al. 2009, Ecol. Model. 220:480, Table 3) [verify]:
@@ -93,6 +95,7 @@ export function chainStep(x0: readonly number[], input: readonly number[], t: nu
 // ---- per-cell column --------------------------------------------------------------------------------------------
 export interface Deposit { x: number; z: number; year: number; pool: number; kg: number; what: string }
 export const GROUND = { years: 0, speed: 1, deposits: [] as Deposit[] }; // game years since world start (persisted by main); speed = flow/decay ×
+setLogYears(() => GROUND.years); // why chains read the same clock the column uses (T-0018)
 export const SAVE_KEY_GROUND = 'boreal.ground.v1';
 /** Advance the ground clock by `gameSeconds` × the flow/decay multiplier. Nothing is stepped: columns are closed-form in `years`. */
 export function tickGround(gameSeconds: number) { GROUND.years += gameSeconds * GROUND.speed / K.julian_year_s; }
@@ -140,6 +143,17 @@ export function solidsAround(x: number, z: number) {
   for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++) for (const e of chunkSolids(a, b)) s.push(e);
   return s;
 }
+/** Fallen boles whose axis crosses a ground cell (T-0018). Site and stand age are fixed; the clock is added at read. */
+interface CachedLog { x: number; z: number; rotation: number; scale: number; seed: number; wet: number; light: number; standAge: number; cells: string[] }
+const logCache = new Map<string, CachedLog[]>();
+function chunkLogs(a: number, b: number) {
+  const key = `${a}:${b}`; let t = logCache.get(key); if (t) return t; t = [];
+  for (const e of generateChunk(a, b)) if (e.kind === 'log') {
+    const site = siteAt(e.x, e.z, true, false);
+    t.push({ x: e.x, z: e.z, rotation: e.rotation, scale: e.scale, seed: e.seed, wet: site.wet, light: site.light, standAge: standAt(e.x, e.z, site.wet).age, cells: cellsUnder(e.x, e.z, e.rotation, e.scale, CELL) });
+  }
+  if (logCache.size > 256) logCache.delete(logCache.keys().next().value!); logCache.set(key, t); return t;
+}
 export interface Layer { id: string; label: string; top: number; thickness: number; kg: number; bulk: number; moisture?: number; age?: string; source: string }
 /** The layer stack of the cell containing (x, z) at `years` since world start (plus the stand's age since fire). */
 const colCache = new Map<string, ReturnType<typeof columnRaw>>();
@@ -177,6 +191,21 @@ function columnRaw(x: number, z: number, years: number) {
   push({ id: 'moss', label: 'live moss mat (feathermoss / Sphagnum)', thickness: mossT, kg: mossT * 20, bulk: 20, moisture: moist, source: 'Yi et al. 2009 (live horizon) [verify]' });
   POOLS.slice(0, 4).forEach((p, i) => push({ id: p.id, label: p.label, thickness: pool[i] / p.bulk, kg: pool[i], bulk: p.bulk, moisture: moist,
     age: `turnover ${(1 / k[i]).toFixed(0)} yr at ${CLIMATE.meanAnnualTempC} °C`, source: 'CBM-CFS3, Kurz et al. 2009; Yi et al. 2009' }));
+  // Log residue (T-0018). The bole's remaining dry mass stays on the mesh. What has transferred, and not yet
+  // respired out of the floor, is this pool. It is not added to the CBM litter pools: those are the stand's
+  // area-average litter, and summing them with the bole would count the same wood twice. Not part of `organic`
+  // (footing and the pebble test stay on the litter mat). The stand cwd layer above is that area average.
+  const cellKey = `${gx}:${gz}`; let woodKg = 0, woodN = 0, best = -1, bestClass = 1, bestK = 0;
+  const kFloor = k[2], pass = POOLS[2].toNext, ccx = Math.floor(cx / CHUNK_SIZE), ccz = Math.floor(cz / CHUNK_SIZE);
+  for (let a = ccx - 1; a <= ccx + 1; a++) for (let b = ccz - 1; b <= ccz + 1; b++) for (const e of chunkLogs(a, b)) {
+    if (!e.cells.includes(cellKey)) continue;
+    const got = budget(logDryMass(e.scale) / e.cells.length, { wet: e.wet, light: e.light, age: fallFraction(e.seed) * e.standAge + years }, kFloor, pass);
+    const per = got.D / (CELL * CELL); woodKg += per; woodN++;
+    if (per >= best) { best = per; bestClass = got.klass; bestK = got.k; }
+  }
+  woodKg = f('ground', 'log wood (kg/m²)', woodKg); f('ground', 'log decay class', bestClass); f('ground', 'log k (/yr)', bestK);
+  push({ id: 'wood', label: `fallen-log wood (decay class ${bestClass})`, thickness: woodKg / LOG_FLOOR_BULK, kg: woodKg, bulk: LOG_FLOOR_BULK, moisture: moist,
+    age: woodN ? `${woodN} log(s) · k ${bestK.toFixed(4)} /yr` : undefined, source: 'Olson 1963; Yatskov et al. 2003; Bond-Lamberty et al. 2002; Storaunet & Rolstad 2002' });
   if (so?.kind === 'peat') { const pt = lerp(so.depth, noise(gx, gz, 'peat')); push({ id: 'peat', label: 'peat (Sphagnum/sedge, fibric to humic)', thickness: pt, kg: pt * PEAT_BULK, bulk: PEAT_BULK, moisture: .9, source: 'stage-3 soils; CSSC 1998 Organic order (>= 40 cm); bulk 0.1 g/cm3 (Clymo 1983) [verify]' }); }
   let ae = lerp(MINERAL.ae, noise(gx, gz, 'ae')), b = lerp(MINERAL.b, noise(gx, gz, 'b')), bulk = lerp(MINERAL.bulk, noise(gx, gz, 'bulk'));
   const soil = (so && so.kind !== 'peat' ? lerp(so.depth, noise(Math.floor(cx / 20), Math.floor(cz / 20), 'rock')) : lerp(MINERAL.bedrock, noise(Math.floor(cx / 20), Math.floor(cz / 20), 'rock'))) - top;
@@ -184,7 +213,8 @@ function columnRaw(x: number, z: number, years: number) {
   push({ id: 'ae', label: so ? `mineral Ae (${so.label})` : 'mineral Ae (eluviated sand)', thickness: ae, kg: ae * bulk, bulk, source: 'CSSC 1998 podzol' });
   push({ id: 'b', label: `mineral B (+ ${pool[4].toFixed(1)} kg/m² SOM)`, thickness: b, kg: b * bulk + pool[4], bulk, age: `SOM turnover ${(1 / k[4]).toFixed(0)} yr`, source: 'CSSC 1998; CBM-CFS3' });
   push({ id: 'bedrock', label: 'bedrock (granite)', thickness: 10, kg: 10 * 2650, bulk: 2650, source: 'Canadian Shield; Klein & Dutrow' });
-  return { cell: `${gx}:${gz}`, height: y, cover, input, pools: pool, layers, organic: layers.filter(l => /moss|Litter|fragmented|duff|humus|peat/i.test(l.id)).reduce((s, l) => s + l.thickness, 0), wet };
+  return { cell: `${gx}:${gz}`, height: y, cover, input, pools: pool, layers, organic: layers.filter(l => /moss|Litter|fragmented|duff|humus|peat/i.test(l.id)).reduce((s, l) => s + l.thickness, 0), wet,
+    wood: { kg: woodKg, logs: woodN, klass: bestClass, k: bestK } };
 }
 export type Column = ReturnType<typeof columnRaw>;
 
@@ -207,7 +237,7 @@ export function footing(col: Column, massKg: number, plan: string, g: number) {
   return { pressure: p, sink: z, cost: f('ground', 'movement cost ×', 1 + R / (massKg * g)), absorb: f('ground', 'impact softening ×', 1 / (1 + z / foot.w)) };
 }
 /** Surface colour mix from the top 2 cm composition (art mapping of real layers; colours are not measurements). */
-const SURFACE: Record<string, number[]> = { snow: [.92, .94, .96], water: [.34, .55, .57], moss: [.37, .48, .23], freshLitter: [.42, .33, .2], fragmented: [.33, .26, .17], duff: [.27, .21, .14], humus: [.2, .15, .1], ae: [.6, .57, .48], b: [.55, .42, .27] };
+const SURFACE: Record<string, number[]> = { snow: [.92, .94, .96], water: [.34, .55, .57], moss: [.37, .48, .23], freshLitter: [.42, .33, .2], fragmented: [.33, .26, .17], duff: [.27, .21, .14], humus: [.2, .15, .1], wood: [.30, .22, .12], ae: [.6, .57, .48], b: [.55, .42, .27] };
 export function surfaceColor(col: Column) {
   const c = [0, 0, 0]; let w = 0;
   for (const l of col.layers) { const take = Math.max(0, Math.min(l.top + l.thickness, .02) - l.top); if (take <= 0 || !SURFACE[l.id]) continue; SURFACE[l.id].forEach((v, i) => { c[i] += v * take; }); w += take; }

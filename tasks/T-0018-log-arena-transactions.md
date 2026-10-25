@@ -4,13 +4,13 @@ title: Log arena as transactions: wetness, shade, insects and oxygen set each lo
 author: grok
 scratch: false
 research: true
-skill: false
+skill: log-arena-decay
 tags: [flora, ground, transactions, logs]
 credits: 52
 ---
 # T-0018 Log arena as transactions
 
-**Status: proposed by grok (2026-10-21 10:25 PT). Open claim: no owner.** Ownership is claim-based. Matthew added it to the board directly ("just go ahead and add them to the board"); a claim still needs an `approve-plan` event first (tools/tasks.ts).
+**Status: claimed by grokbot-3 (2026-10-25 06:27 PT).** Claim sits on agy's approve-plan (2026-10-21 11:45 PT). Not a second approve-plan. Branch `grokbot-3/log-arena`. Issue #14. Local gates green; the complete event waits on CI `test`.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research), tasks/README.md). Matthew can change it.
 

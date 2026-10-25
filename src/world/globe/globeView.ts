@@ -35,6 +35,7 @@ import { globePlanet } from './home';
 import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar, withLogDepth } from './logDepth';
 import { setLayerCamera, setSnowIceShown, startPlanetLayers } from './planetLayers';
+import { columnAt, createLocalClouds, type ColumnInput } from './localClouds';
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
 import { GLOBE_SHORE, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
@@ -143,7 +144,10 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; // grid clock = the world clock: ?hour= is local solar time at home, so UTC = local - lon/15
   const homeLonDeg = toLatLon(planet.home as Vec3).lon * 180 / Math.PI, layerUtc = (((hourAt(shotSec) - homeLonDeg / 15) % 24) + 24) % 24;
   const simP = loadPlanetSim(); // one instance: the layers seed and step it, the axis reads its live cells
-  if (layerTier >= 0) void simP.then(s => startPlanetLayers(planet, layerTier, layerDay, s, layerUtc));
+  if (layerTier >= 0) void simP.then(s => startPlanetLayers(planet, layerTier, layerDay, s, layerUtc)).then(ok => { simReady = !!ok; });
+  // T-0073: local volumetric clouds around the camera from the sim column (dew point, LCL); the shell stays the far field
+  let simReady = false, colIn: ColumnInput | null = null, colFrame = -1e9; const localClouds = q.get('localClouds') === '0' ? null : createLocalClouds(); if (localClouds) scene.add(localClouds.mesh);
+  let simRef: Awaited<typeof simP> | null = null; void simP.then(s => { simRef = s; });
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   let shown = {} as Record<LayerId, LayerState>; const isOn = (id: LayerId) => shown[id]?.on ?? true;
   const panel = q.get('panel') === '0' || q.has('shot') && !q.has('panel') || q.get('view') !== 'globe' && q.get('start') !== 'globe' ? null : mountLayerPanel(location.search, (st) => { shown = st; });
@@ -460,6 +464,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
+    if (localClouds) { if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
+        colIn = columnAt({ lat: simRef.plane('lat'), lon: simRef.plane('lon'), ts: simRef.plane('tair'), q: simRef.plane('q'), cloud: simRef.plane('cloud') }, [camPos[0] / L, camPos[1] / L, camPos[2] / L]); }
+      localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') ? colIn : null); }
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
   }
@@ -470,7 +477,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;
     const segWas = lod.segments; if (seamsDebug) material.userData.uSeg.value = lod.segments;
     if (own.governor && governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); }
-    if (atmos) atmos.setClear(cloudClear(alt)); // T-0041 fade: in-page and standalone (T-0056). Orbit stays closed; 3000 m is already open.
+    if (atmos) atmos.setClear(localClouds?.mesh.visible ? cloudClear(alt) : 0); // T-0073 (Matt): clouds no longer vanish on the descent. The flat shell only opens (T-0041/T-0056) where the local volumetric column takes over; without it the shell stays closed
     if (layerTier >= 0 && layerTier !== GOVERNOR.tier) { layerTier = GOVERNOR.tier; void simP.then(s => startPlanetLayers(planet, layerTier, layerDay, s, layerUtc)); }
     if (atmos && atmos.tier !== GOVERNOR.tier) atmos.setTier(GOVERNOR.tier); // resolution + atmosphere samples follow the tier now (cheap uniforms)
     if (lodTier !== worldTier()) { lodTier = worldTier(); lod = globeLod(); } // tile resolution/split/caps once the new tier has held (no rebuild per step)

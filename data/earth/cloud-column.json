@@ -1,0 +1,14 @@
+{
+ "_sources": {
+  "esat": "Bolton 1980, Mon. Wea. Rev. 108:1046, eq. 10: e_s(T) = 6.112 exp(17.67 T / (T + 243.5)) hPa (T in C); inverted for the dew point. Same formula as rust/boreal-sim hydrosphere_budget.rs esat.",
+  "dry_adiabat": "Dry adiabatic lapse rate g/cp = 9.8 K/km (AMS Glossary of Meteorology, 'dry-adiabatic lapse rate').",
+  "moist_adiabat": "Saturated (pseudo-)adiabatic lapse rate G_m = g (1 + Lv r/(Rd T)) / (cp + Lv^2 r eps/(Rd T^2)) (AMS Glossary, 'moist-adiabatic lapse rate'). Lv 2.501e6 J/kg, Rd 287.04, cp 1004.6, eps 0.622.",
+  "environment": "U.S. Standard Atmosphere 1976 (NOAA-S/T 76-1562): 6.5 K/km to the tropopause at 11 km; pressure scale height RT/g ~ 8.4 km at 288 K.",
+  "vapour": "Vapour falls off with height on a scale height of 2 km (rust/boreal-sim hydrosphere_budget.rs VAPOUR_SCALE_HEIGHT; Weaver & Ramanathan 1995, J. Geophys. Res. 100:11585).",
+  "rh_crit": "Sundqvist, Berge & Kristjansson 1989, Mon. Wea. Rev. 117:1641: layer cloud forms above a critical relative humidity of ~0.8 (the sim's update_clouds uses the same scheme)."
+ },
+ "esat_hPa": 6.112, "esat_b": 17.67, "esat_c_C": 243.5,
+ "g": 9.80665, "cp": 1004.6, "Rd": 287.04, "Lv": 2.501e6, "eps": 0.622,
+ "env_lapse_K_per_m": 0.0065, "tropopause_m": 11000, "p0_Pa": 101325, "pressure_scale_m": 8400,
+ "vapour_scale_m": 2000, "rh_crit": 0.8, "layer_m": 250
+}

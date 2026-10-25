@@ -102,6 +102,8 @@ PR https://github.com/Bannon-github/boreal/pull/55 is open against main. Do not 
 
 ## 2026-10-24 17:17 PT - duplicate T-0071
 
+The id chosen below was T-0074. That collided with PR #60. The landing is T-0076; see "2026-10-24 18:07 PT". This section is the record of the first renumber.
+
 Agent: grokbot-3. Branch: `grokbot-3/fix-duplicate-t0071` from main `71d5c46`. Clock: Pacific, from `Intl` `America/Los_Angeles` inside `/tmp/write-board-event.mjs` (not typed). Matthew in chat, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like this mmoving forward". That names this collision fix. It is not an approve-plan of the wolf-file landing.
 
 ### Doing
@@ -152,3 +154,21 @@ None for the renumber. T-0032 and T-0028 still need the recordings named in the 
 
 ### Exact next step
 PR https://github.com/BannonBotBoss/boreal/pull/61 is open against main. `gh pr create` returned `Resource not accessible by integration`; the PR was opened on the same repo and branch. Tests above are green. Do not merge. Do not push main. Do not approve-plan T-0074. A non-author may record `agent-review`.
+
+## 2026-10-24 18:07 PT - T-0074 was already PR #60
+
+Agent: grokbot-3. Same branch `grokbot-3/fix-duplicate-t0071`. Matthew in chat, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like this mmoving forward". That is the instruction to fix this second collision. It is not an approve-plan of the landing.
+
+### Id scan
+`git fetch --all`. Open PRs: #60 `grokbot-1/wolf-jump-ballistic` (T-0074, test `tests/animal-behavior.test.ts`, no task file, opened 2026-10-25 00:14:09Z), #61 this branch, #64 `grokbot-3/wolf-view` (`tasks/T-0075-wolf-view.md`). `git log --all` task files and event `"task"` fields: highest id T-0075. The only gap from T-0001 through T-0075 is T-0046, reserved by the T-0021 handoff. Next free id is T-0076.
+
+### Done
+- [x] `tasks/T-0074-land-orphan-task-files.md` replaced by `tasks/T-0076-land-orphan-task-files.md`. Front matter `id` and the heading say T-0076. Credits 20, author grokbot-3, two objectives, still not approve-planned.
+- [x] The three 17:17 event files existed only on this unmerged branch and were replaced. `tasks/events/2026-10-24T11-53-59-grokbot-3-propose-T-0071.json` is on main and was not edited. New events, `at` from `Intl` `America/Los_Angeles` in the writer: comment `tasks/events/2026-10-24T18-07-21-grokbot-3-comment-T-0071.json` (2026-10-24T18:07:21-07:00), propose `tasks/events/2026-10-24T18-07-22-grokbot-3-propose-T-0076.json` (2026-10-24T18:07:22-07:00), comment `tasks/events/2026-10-24T18-07-23-grokbot-3-comment-T-0076.json` (2026-10-24T18:07:23-07:00, `"for": "matthew"`, names old id T-0071, says this is not an approve-plan).
+- [x] `notes/skills/next-free-task-id.md` now says to fetch every open PR head before choosing an id. `tools/tasks.ts` duplicate-id check is unchanged.
+
+### Checks
+Not re-run yet on this renumber. Fill in after `npx tsc --noEmit` and `npm test`.
+
+### Exact next step
+Update PR #61's title and body for T-0076. Do not merge. Do not push main. Do not approve-plan T-0076. A non-author may record `agent-review`.

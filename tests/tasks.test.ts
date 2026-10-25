@@ -29,9 +29,11 @@ test('task ids are unique on the live board, and a second file with the same id 
   assert.equal(relay?.title, 'grokbot-3 relays Matthew and reviews other agents\' PRs, never its own');
   assert.equal(relay?.award, 30);
   assert.notEqual(relay?.state, 'proposed', 'the stray 11:53 propose must not reopen the relay');
-  assert.equal(seen.get('T-0074'), 'T-0074-land-orphan-task-files.md');
-  const wolf = real.tasks.find(t => t.id === 'T-0074');
-  assert.equal(wolf?.file, 'T-0074-land-orphan-task-files.md');
+  assert.equal(seen.has('T-0074'), false, 'T-0074 is grokbot-1 PR #60, not this landing');
+  assert.equal(real.events.some(e => e.task === 'T-0074'), false);
+  assert.equal(seen.get('T-0076'), 'T-0076-land-orphan-task-files.md');
+  const wolf = real.tasks.find(t => t.id === 'T-0076');
+  assert.equal(wolf?.file, 'T-0076-land-orphan-task-files.md');
   assert.equal(wolf?.author, 'grokbot-3');
   assert.equal(wolf?.state, 'proposed');
   assert.equal(wolf?.claimant, undefined);
@@ -41,9 +43,9 @@ test('task ids are unique on the live board, and a second file with the same id 
   const stray = real.events.find(e => e.file === '2026-10-24T11-53-59-grokbot-3-propose-T-0071.json');
   assert.equal(stray?.task, 'T-0071', 'the collided propose stays on T-0071 (append-only)');
   assert.equal(stray?.type, 'propose');
-  assert.ok(real.events.some(e => e.task === 'T-0074' && e.type === 'propose' && e.agent === 'grokbot-3'));
-  assert.ok(real.events.some(e => e.task === 'T-0074' && e.type === 'comment' && /T-0071/.test(e.note ?? '')));
-  assert.ok(real.events.some(e => e.task === 'T-0071' && e.type === 'comment' && /T-0074/.test(e.note ?? '')));
+  assert.ok(real.events.some(e => e.task === 'T-0076' && e.type === 'propose' && e.agent === 'grokbot-3'));
+  assert.ok(real.events.some(e => e.task === 'T-0076' && e.type === 'comment' && /T-0071/.test(e.note ?? '')));
+  assert.ok(real.events.some(e => e.task === 'T-0071' && e.type === 'comment' && /T-0076/.test(e.note ?? '')));
 
   const root = mkdtempSync(join(tmpdir(), 'tasks-'));
   try {

@@ -39,4 +39,4 @@ PR https://github.com/Bannon-github/boreal/pull/54 is open. Not merged. No appro
 - Not merged. Undo after a merge would be `git revert` of the merge commit, or `git reset --keep ae4ecbe` only if this branch is the tip of main and Matthew asks for that.
 
 ## Later
-PR #55 also added `tasks/T-0071-land-orphan-task-files.md` with this same id. The ledger kept one row and showed the land task. That file is now `tasks/T-0074-land-orphan-task-files.md` (branch `grokbot-3/fix-duplicate-t0071`). The 11:53:59 propose was not edited. Comment `tasks/events/2026-10-24T17-17-25-grokbot-3-comment-T-0071.json` names the move. T-0071 remains this relay task.
+PR #55 also added `tasks/T-0071-land-orphan-task-files.md` with this same id. The ledger kept one row and showed the land task. That file is now `tasks/T-0076-land-orphan-task-files.md` (branch `grokbot-3/fix-duplicate-t0071`). T-0074 is grokbot-1 PR #60. T-0075 is PR #64. The 11:53:59 propose was not edited. Comment `tasks/events/2026-10-24T18-07-21-grokbot-3-comment-T-0071.json` names the move. T-0071 remains this relay task.

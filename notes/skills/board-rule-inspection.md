@@ -33,7 +33,7 @@ Use when asked to review the rules that steer agents (a RULES/README file, an ag
 
 ## Mistakes to avoid
 - Treating a general instruction ("no review step") as a specific approval and recording it in the owner's name.
-- Taking the next task id from main's working tree only. T-0071 was taken twice that way: the relay (PR #54) and the wolf-file landing (PR #55). Matthew, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like this mmoving forward". Scan every branch, then renumber the second arrival. Do not edit the old event.
+- Taking the next task id from main's working tree only. T-0071 was taken twice that way: the relay (PR #54) and the wolf-file landing (PR #55). Matthew, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like this mmoving forward". Scan every branch and every open PR head (`notes/skills/next-free-task-id.md`), then renumber the second arrival. Do not edit an event that is already on main.
 - Writing a rule the tooling cannot see (e.g. a credits override the ledger never reads) without noting the tooling gap.
 - PowerShell: a backtick in a double-quoted string is an escape (`a became a bell character); `R` is an alias of Invoke-History.
 - Applying a validator that fails the test suite on today's history without a grandfather clause.

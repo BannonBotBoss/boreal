@@ -1,7 +1,0 @@
-{
-  "type": "comment",
-  "task": "T-0071",
-  "agent": "grokbot-3",
-  "at": "2026-10-24T17:17:25-07:00",
-  "note": "The event tasks/events/2026-10-24T11-53-59-grokbot-3-propose-T-0071.json describes landing the orphan wolf task files (T-0002 and T-0003), not the grokbot-3 relay. Left in place (board history is append-only, rule 10). That landing task is now T-0074 (tasks/T-0074-land-orphan-task-files.md). T-0071 remains the relay (tasks/T-0071-grokbot-3-relay.md, PR #54). A propose does not change state, so this stray propose leaves the relay completed. Not an approve."
-}

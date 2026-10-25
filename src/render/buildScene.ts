@@ -28,6 +28,8 @@ import { createHares } from '../animals/hare';
 import { formatHour, hourAt } from '../core/timeOfDay';
 import { mountViewfinder } from '../camera/gameCamera';
 import { LEVEL, BLOCK } from '../core/tuning';
+import { dropVisitors, stepVisitor, visitorFriend, visitorReadout, visitorSitDrop } from '../core/visitors';
+import { nearestWater } from '../core/needs/water';
 import type { SnapshotSource } from '../core/snapshot';
 import { createPost } from './post';
 import { createTargetGlow } from './targetGlow';
@@ -290,6 +292,10 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const highlighted = photo ? undefined : focused ?? target;
     highlight(highlighted);
 
+    const liveEntities = [...chunks.values()].flatMap(c => c.entities);
+    const foragePatches = liveEntities.filter(e => e.kind === 'forage').map(e => ({ key: e.key, x: e.x, z: e.z }));
+    const spruce = liveEntities.filter(e => e.kind === 'spruce');
+    if (!frozen) dropVisitors(new Set(liveEntities.filter(e => e.kind === 'person').map(e => e.key)));
     for (const chunk of chunks.values()) for (const entity of chunk.entities) {
       if (entity.kind === 'rock' && pushFrom?.key === entity.key) {
         let lod = chunk.objects.get(entity.key) as THREE.LOD;
@@ -305,11 +311,31 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       }
       if (entity.kind !== 'person') continue;
       const lod = chunk.objects.get(entity.key)! as THREE.LOD;
-      lod.rotation.y = Math.sin(time * .7 + entity.seed) * .07;
+      let read = visitorReadout(entity.key);
+      if (!frozen && dt > 0) {
+        const h0 = heightAt(entity.x, entity.z);
+        const wind = windAt(entity.x, h0, entity.z);
+        read = stepVisitor({ key: entity.key, x: entity.x, z: entity.z, heading: entity.rotation, seed: entity.seed }, {
+          dt, wolf: { x, z, speed: wolf.brain.speed }, friend: visitorFriend(activeContext?.records[entity.key]),
+          forage: foragePatches, water: nearestWater(entity.x, entity.z, 80),
+          walkable: (nx, nz) => {
+            const h = heightAt(nx, nz);
+            return h >= LEVEL.deerWater && Math.abs(h - h0) <= BLOCK.deer.step && !spruce.some(o => Math.hypot(o.x - nx, o.z - nz) < BLOCK.deer.trunk);
+          },
+          daylight: 1 - darkness, wind: { x: wind.x, z: wind.z },
+        });
+        entity.x = read.x; entity.z = read.z; entity.rotation = read.heading;
+      }
+      const groundY = heightAt(entity.x, entity.z);
+      const drop = read ? visitorSitDrop(read.posture, entity.scale) : 0;
+      lod.position.set(entity.x, groundY - drop, entity.z);
+      lod.rotation.set(read?.posture === 'rest' ? 0.35 : 0, entity.rotation, 0);
+      lod.userData.posture = read?.posture ?? 'rest';
       if (!frozen) {
         let kg = lod.userData.wakeKg as number | undefined;
         if (!(typeof kg === 'number' && kg > 0)) { kg = entityMass(entity); lod.userData.wakeKg = kg; }
-        WAKES.noteMover({ id: entity.key, x: entity.x, z: entity.z, heading: entity.rotation, motion: 'idle', speed: 0, t: time,
+        const speed = read?.speed ?? 0;
+        WAKES.noteMover({ id: entity.key, x: entity.x, z: entity.z, heading: entity.rotation, motion: speed > 0.05 ? 'walk' : 'idle', speed, t: time,
           mass: kg, length: waterline('person', entity.scale), hips: hipsFor('person', entity.scale, entity.scale), pawArea: pawArea('person'),
           offsets: [0, 0.5], duty: PERSON_DUTY, stride: PERSON_STRIDE * entity.scale, sample: sampleSurface });
       }
@@ -439,6 +465,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     playerScale: () => ({ x: wolf.root.scale.x, y: wolf.root.scale.y, z: wolf.root.scale.z }),
     /** The saved record for a key (undefined for generated objects), e.g. for the inspector's why. */
     recordOf: (key: string) => activeContext?.records[key],
+    visitorOf: (key: string) => visitorReadout(key),
     stats: () => ({ chunks: chunks.size, entities: [...chunks.values()].reduce((n, c) => n + c.entities.length, 0), triangles: renderer.info.render.triangles }),
   };
 }

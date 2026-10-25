@@ -8,6 +8,7 @@ import type { AgentSpecies, FoodSource } from './agent';
 import { TRANSACTIONS } from './transactions';
 import { activityFactor, agentLevels } from './needs/engine';
 import { WOLF_NEEDS } from './needs/species';
+import { REAL_SECONDS_PER_GAME_HOUR } from './timeOfDay';
 
 const M = (o: Omit<MammalPlan, 'kind' | 'provisional'> & { provisional?: boolean }): MammalPlan => ({ kind: 'mammal', provisional: true, ...o });
 /** Mammal body plans. Ratios are to shoulder height. */
@@ -271,6 +272,70 @@ export const WOLF_AGENT: AgentSpecies = {
   diet: { forage: { eatUnits: 1, eatSeconds: 2, unitsPerEnergy: Infinity } },
 };
 
-/** Behaviour rows. The person row is T-0012: the same AgentSpecies, data only.
+/** One game day in real seconds (clock.realSecondsPerGameHour × 24). Visitor metabolism uses this clock,
+ *  not a wall-clock day: a play session is one boreal day (systemProperties, design: 2 real hours). */
+export const PERSON_DAY_S = 24 * REAL_SECONDS_PER_GAME_HOUR;
+/** Comfortable gait, men in their 20s: 139.3 cm/s. Bohannon 1997, Age Ageing 26:15, doi:10.1093/ageing/26.1.15. */
+export const PERSON_WALK_MPS = 1.393;
+/** Maximum gait without running, same table, men in their 20s: 253.3 cm/s. A sprint is faster; this is the fast walk. */
+export const PERSON_FAST_MPS = 2.533;
+/** FDA Nutrition Facts reference diet. Not a measured visitor; the scale is 100 energy = this day. */
+export const PERSON_KCAL_DAY = 2000;
+/** Blueberries, raw, 57 kcal/100 g. USDA FoodData Central FDC 171711 (highbush; the mesh is lowbush, same order). */
+export const PERSON_KCAL_PER_100G = 57;
+/** USDA portion: 50 raw blueberries weigh 68 g, so one berry is 1.36 g. */
+export const PERSON_BERRY_G = 68 / 50;
+/** [estimate] one berry each second while the hand is in the patch. The gram weight is the USDA portion; the cadence is not. */
+export const PERSON_PICK_PER_S = 1;
+/** Thirst line on a meter where 100 = euhydrated and 0 = 10% of body mass lost as water.
+ *  70 = a 3% body-mass deficit. Engell et al. 1987, Physiol. Behav. 40:229, thirst after 3, 5 and 7% losses. */
+export const PERSON_WATER_SEEK = 70;
+/** Grams of fresh berry per +1 energy: (kcal/day ÷ 100) / (kcal/g). */
+export const PERSON_G_PER_ENERGY = (PERSON_KCAL_DAY / 100) / (PERSON_KCAL_PER_100G / 100);
+/** [estimate] how long a pick bout lasts. The rate is PERSON_BERRY_G per second; the bout length only groups it. */
+export const PERSON_PICK_BOUT_S = 8;
+
+/** Visitor (a person). Same AgentSpecies as the hare and the wolf (T-0012). Hunger is energy, berries are the forage
+ *  diet, water and a friend are lures (core/visitors.ts). Fear of the wolf is the stranger's reaction; a friend record
+ *  is not passed as a threat. Mood bends, the 8 s pick bout, sight range and the 8 m step-back are flagged in visitors.ts. */
+export const PERSON_AGENT: AgentSpecies = {
+  id: 'person',
+  labels: { feed: 'picking berries', step: 'next berries', approach: 'walking', seek: 'looking', scan: 'watching', rest: 'sitting', alert: 'watching the wolf', flee: 'stepping back', pause: 'checking', hide: 'still', held: 'held', tame: 'with a friend' },
+  senses: {
+    // range 40 m [estimate: a wolf-sized animal in the open, not a measured detection distance under canopy].
+    // night 0.2 [estimate]. presence 8 m [estimate: a still wolf is noticed only when close].
+    sight: { range: 40, night: .2, motion: [.4, 1.8], presence: 8, crouched: .5, movingAt: .3 },
+    // range 30 m [estimate]. loud band is a walk-to-fast-walk footfall.
+    hearing: { range: 30, loud: [1.2, 2.5], movingAt: .15 },
+    scent: { potency: .2 }, // [estimate] people are poor at scent; sight does the noticing
+  },
+  fear: { wolf: 1 },
+  levels: {
+    // 100 energy = one reference day (PERSON_KCAL_DAY), spent over one game day (PERSON_DAY_S), not 86400 wall seconds.
+    energy: { max: 100, start: 70, drain: 100 / PERSON_DAY_S, fleeMult: 2, fed: 80, full: 97 },
+    // Fast-walk bursts are short. 30 s empties the meter [estimate: not a timed trial]. Comfortable gait does not spend it.
+    stamina: { max: 100, drainSeconds: 30, recoverSeconds: 60 },
+    relaxation: { max: 100, threatDrop: 35, fleeDrop: 6, recover: 4, panic: .8 },
+  },
+  // feed bout matches the diet. rest [8, 8] s is how often a seated visitor looks again [estimate], not a sleep.
+  // jitter 0 and noise 0: the choice is the need. alertTurn 2.5 rad/s [estimate] finishes a quarter-turn inside a second.
+  // react 30 s: the shared pipeline bolts a moving cue once `react` elapses. A visitor steps back from distance
+  // (flee.distance), not from that timer, so the timer stays longer than a watch.
+  timing: { feed: PERSON_PICK_BOUT_S, scan: 2, alert: 2, alertMin: .4, react: 30, alertTurn: 2.5, flee: 3, pause: 1, rest: [8, 8], jitter: 0 },
+  mood: { boutNerve: .3, boutHunger: .4, scanChance: [0, .2], scanHunger: .1, scanNerve: .3, scanHungerShort: .1,
+    notice: [.12, .28], noticeHunger: .1, bolt: [.72, .95], boltHunger: 0, fleeNerve: .15, fleeStaminaFull: 40, pauseNerve: .2, resume: .75, unhide: .4 },
+  // approach base 0: only hunger walks them to berries. feedHere 0: only hunger keeps them picking.
+  // investigate weights a water or friend lure. noise 0 so a gate can score the path.
+  utility: { feedHere: 0, approach: 0, approachDistance: 40, rest: 1, restFull: .5, restBase: .08, scan: .15, seek: 0, seekBase: 0, noise: 0, investigate: .6 },
+  reach: { food: 40, seek: 12, step: [.25, .4], stepTurn: .3, giveUp: 40 },
+  // feedStep [estimate]: a shuffle in the patch. approach and flee are Bohannon 1997 (see the constants above).
+  speed: { feedStep: .4, approach: PERSON_WALK_MPS, flee: PERSON_FAST_MPS, fleeTired: PERSON_WALK_MPS },
+  // distance 8 m [estimate]: inside this a stranger steps back. Farther, they turn and watch. Yellowstone's 100-yard
+  // wildlife rule is a park instruction not to approach, not a measured flight distance, so it is not this number.
+  flee: { burstSeconds: 3, zig: [0, 0], zigAngle: 0, distance: 8 },
+  diet: { forage: { eatUnits: PERSON_BERRY_G * PERSON_PICK_PER_S * PERSON_PICK_BOUT_S, eatSeconds: PERSON_PICK_BOUT_S, unitsPerEnergy: PERSON_G_PER_ENERGY } },
+};
+
+/** Behaviour rows. Deer is T-0011, the person row is T-0012: the same AgentSpecies, data only.
  *  The hare bound gait stays HARE_GAIT in core/needs/species (already on main) and is not copied here. */
-export const BEHAVIOUR: { hare: AgentSpecies; deer: AgentSpecies; wolf: AgentSpecies } = { hare: HARE_AGENT, deer: DEER_AGENT, wolf: WOLF_AGENT };
+export const BEHAVIOUR: { hare: AgentSpecies; deer: AgentSpecies; wolf: AgentSpecies; person: AgentSpecies } = { hare: HARE_AGENT, deer: DEER_AGENT, wolf: WOLF_AGENT, person: PERSON_AGENT };

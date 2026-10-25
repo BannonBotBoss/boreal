@@ -25,6 +25,6 @@ export const catalog: Record<Kind, Definition> = {
   log: entry('log', 'Fallen wood', 'Forest floor debris', 'Horizontal trunk with pale cut ends', 'vegetation', 'scenery', null),
   plant: entry('plant', 'Practice herb', 'Demonstrate gathering; fictional plant', 'Orange-tipped low plant', 'vegetation', 'resource', ['gather']),
   deer: entry('deer', 'Woodland deer', 'Demonstrate shared speak capability', 'Tan quadruped with cream muzzle and branching antlers', 'wildlife', 'animal', ['speak']),
-  person: entry('person', 'Visitor', 'Demonstrate individual relationship persistence', 'Simple neutral clay-colored figure', 'inhabitants', 'person', ['speak']),
+  person: entry('person', 'Visitor', 'Demonstrate individual relationship persistence', 'Simple neutral clay-colored figure', 'inhabitants', 'person', ['speak']), // motion is BEHAVIOUR.person (core/visitors), not a sway
 };
 

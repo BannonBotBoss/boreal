@@ -1,0 +1,21 @@
+{
+  "metric": "trackScore = 1 - abs(actual - expected) / abs(expected). A zero expected scores 1 only when abs(actual) < 0.05.",
+  "tool": "tests/visitors.test.ts, 30 Hz, flat walkable ground, seed 3. Same run as npx tsx --test tests/visitors.test.ts.",
+  "calibration": {
+    "knownMatch": "sated visitor, no wolf, no berries, no thirst: z = 0, score 1, posture rest",
+    "knownMismatch": "legacy sway sin(time * 0.7 + seed) * 0.07 over 4 s peaks at 0.070 rad. Scoring that peak as a heading range against 0.14 rad (the old peak-to-peak) gives 0.000, which fails 0.95."
+  },
+  "walkMps": 1.393,
+  "fastMps": 2.533,
+  "seconds": 4,
+  "expectedWalkZ": -5.525566666666667,
+  "berries": { "z": -5.525566666666681, "score": 1, "goal": "trotting to sensed forage forage:m" },
+  "water": { "z": -5.525566666666681, "score": 1, "goal": "following water water" },
+  "rest": { "z": 0, "heading": 0, "score": 1, "posture": "rest", "goal": "resting: nothing to do" },
+  "watch": { "seconds": 2, "heading": -1.570796326794896, "expected": -1.570796326794897, "score": 1, "movedM": 0, "goal": "watching wolf" },
+  "bolt": { "seconds": 2, "z": 4.981566666666661, "expected": 4.981566666666666, "score": 1, "goal": "fleeing wolf (seen)" },
+  "friend": { "z": -5.525566666666681, "score": 1, "goal": "following wolf friend", "because": "friend" },
+  "legacySwayPeakRad": 0.07,
+  "legacyScore": 0,
+  "pixels": "not captured. The measured quantity is the body path and the facing, not a picture."
+}

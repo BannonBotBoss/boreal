@@ -16,6 +16,7 @@ import { CHUNK_SIZE, WORLD_SEED, chunkSeed, generateChunk, heightAt, terrainBand
 import { applyPopulation } from '../core/population';
 import { catalog } from '../core/catalog';
 import { agentWhy, doingFromAgent, doingFromProblem, groundWhy, inspectWhy, whyOf, withDoing } from '../core/why';
+import { visitorReadout } from '../core/visitors';
 import { wolfReadout } from '../core/autonomy';
 import { SENSE_RADII } from '../core/animalBehavior';
 import { gaitReadout } from '../core/gaitReadout';
@@ -95,7 +96,11 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       const r = regenerate(s.key, cx, cz, overrides, s.type === 'entity');
       const pm: Trace = { factors: [] }; withTrace(pm, () => view.massOf(s.key));
       out.push(...r.factors.filter(fa => fa.group !== 'terrain'), ...pm.factors, obs('entity', 'kind', found.entity.kind), obs('entity', 'title', catalog[found.entity.kind].title));
-      { const y = inspectWhy(whyOf(found.entity, view.recordOf(s.key)), catalog[found.entity.kind].title); out.push(obs('why', 'now', y.now), obs('why', 'chain', y.chain)); } // T-0006, placement T-0016
+      { const vis = found.entity.kind === 'person' ? visitorReadout(found.entity.key) : undefined;
+        const base = whyOf(found.entity, view.recordOf(s.key));
+        const y = inspectWhy(vis ? withDoing(base, vis.doing, vis.because) : base, catalog[found.entity.kind].title);
+        out.push(obs('why', 'now', y.now), obs('why', 'chain', y.chain)); // T-0006, placement T-0016; T-0012 adds the live goal
+        if (vis) out.push(obs('why', 'goal', vis.goal), obs('visitor', 'energy', Math.round(vis.energy)), obs('visitor', 'water', Math.round(vis.water)), obs('visitor', 'posture', vis.posture), obs('visitor', 'relationship', view.recordOf(s.key)?.relationship === 'friend' ? 'friend' : 'none')); }
       const lod = found.object as THREE.LOD | undefined;
       if (lod?.isLOD) out.push(obs('render', 'lodLevel', lod.getCurrentLevel()), obs('render', 'lodLevels', lod.levels.length));
       if (r.mesh && lod && Object.keys(overrides).length) {

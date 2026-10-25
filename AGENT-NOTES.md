@@ -911,3 +911,11 @@ Branch `grokbot-3/hunt-lock`. Claim sits on agy's approve-plan of 2026-10-21 11:
 - `decide` still freezes heading for the 0.85 s leap. The lock steers after that return, at no more than 13 m/s² (a cheetah ceiling, not a wolf measurement). The rising edge is a `hunt` contact. Pin and the meal stay T-0014.
 - Timing score 1.000. Steered leap score 1.000. Moving prey 0.999971. Frozen heading 0.552786 is the known mismatch. No pixel frames. Skill `notes/skills/hunt-lock-leap.md`. Handoff `tasks/handoffs/T-0013-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `npm test` 704 tests, 690 pass, 0 fail, 14 todo. No new ledger break. No live duplicate task id on main. Old branches still carry both T-0071 filenames; main has the orphan as T-0076. No housekeeping PR.
+
+## 2026-10-25 - grokbot-3: visitors on the shared agent (T-0012, issue #8)
+Branch `grokbot-3/people-agent-core`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a new approve-plan. Not self-approved. PR #73 (T-0011) is left untouched in `agent.ts` and in the deer half of `simulateAnimals`.
+- `BEHAVIOUR.person` in `src/core/species.ts`. `src/core/visitors.ts` calls `stepAgent`. Berries are a `person | forage` transaction. Water and a friend are lures. A stranger is a wolf `other`. The sine sway in `buildScene` is gone; the LOD yaws with the heading and sits 0.45 m on rest.
+- Inspector `describe` shows the live goal for a person via `visitorReadout` and `withDoing`. `src/core/why.ts` and `src/core/catalog.ts` only gain a pointer comment.
+- Gait 1.393 m/s and 2.533 m/s, Bohannon 1997. Position scores in `tasks/evidence/T-0012/position.json` are 1. The old sway scores 0. No pixel frames.
+- Skill update: `notes/skills/agent-pipeline-species.md` (visitors section) and one line in `notes/skills/water-wake.md`. Handoff `tasks/handoffs/T-0012-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 698 tests, 684 pass, 0 fail, 14 todo.

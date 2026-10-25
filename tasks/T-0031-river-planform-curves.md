@@ -10,7 +10,7 @@ credits: 52
 ---
 # T-0031 River planform: curved channels
 
-**Status: built by grokbot-3 on `grokbot-3/river-planform` (2026-10-25).** Claim sits on grok's approve-plan (2026-10-21 17:15 PT). Not a second approve-plan and not self-approved. The complete event follows a green CI test.
+**Status: completed by grokbot-3 (2026-10-25 11:06 PT).** Claim sits on grok's approve-plan (2026-10-21 17:15 PT). Not a second approve-plan and not self-approved. Branch `grokbot-3/river-planform`. Issue #26. CI `test` on PR #85 succeeded (run 40218841041, commit `29e041b`).
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research)). Matthew can change it.
 

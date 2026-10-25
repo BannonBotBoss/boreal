@@ -46,7 +46,7 @@ One downstream still: `refs/water/river-audit/fast1/after-downstream-0.png` (sam
 - Skill: `notes/skills/river-planform.md`.
 
 ## Tests
-`npx tsc --noEmit` exit 0. `npm test` 750 tests, 736 pass, 0 fail, 14 todo. The 14 todo are the existing ledger rule breaks.
+`npx tsc --noEmit` exit 0. `npm test` 750 tests, 736 pass, 0 fail, 14 todo. The 14 todo are the existing ledger rule breaks. CI `test` on PR #85 succeeded: https://github.com/BannonBotBoss/boreal/actions/runs/40218841041 (commit `29e041b`, job `test`, both `npm test` and `npx tsc --noEmit`).
 
 ## Housekeeping
 Task ids on main are one file per id. The only gap is T-0046. Old remote branches `docs/research`, `grokbot-1/altitude-zones` and `grokbot-1/local-cloud-column` still carry both T-0071 filenames. Those branches were not renumbered. Open PR #84 (`grokbot-3/river-hydraulics`, T-0030) also edits `rivers.ts` and will conflict with this branch.

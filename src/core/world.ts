@@ -3,6 +3,7 @@ import { ANIMAL_DEFAULT_ENERGY } from './animalBehavior';
 import { surfaceDetail } from './surface';
 import type { Kind } from './catalog';
 import { LEVEL } from './tuning';
+import { plantsGrowAt } from './altitudeZones';
 import { STAGES, elevationGrid, flowGrid, lakeAt, sampleGrid, toWorld } from './stages/elevation';
 import { cellAt, twi } from './stages/flow';
 import { carve, riverAt } from './stages/rivers';
@@ -61,6 +62,7 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     const h = heightAt(x, z);
     if (!isDryLand(x, z, h) || Math.hypot(x, z) < 13) continue;
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
+    if ((kind === 'spruce' || kind === 'plant' || kind === 'log') && !plantsGrowAt(h)) continue; // T-0072: above the tree line only rock
     const seed = kind === 'rock' ? placeRockSeed(x, z, h, rawSeed, true) : rawSeed;
     if (seed === undefined) continue;
     result.push({ key: `${cx}:${cz}:${i}`, kind, seed, generatorVersion: GENERATOR_VERSION, x, z, rotation, scale });

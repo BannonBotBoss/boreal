@@ -11,6 +11,7 @@
  */
 import { heightAt, WORLD_SEED } from '../world';
 import { LEVEL } from '../tuning';
+import { plantsGrowAt } from '../altitudeZones';
 import { STAGES, lakeAt } from '../stages/elevation';
 import { riverAt } from '../stages/rivers';
 import { soilAt, soilGrid, type SoilKind } from '../stages/soils';
@@ -75,7 +76,7 @@ export function siteAt(x: number, z: number, withLight = true): Site {
 /** Niche on the site gradients: optimum ± tolerance (Gaussian), with affinities for rock pockets and soils. */
 export interface Niche { wet: [number, number]; light: [number, number]; rock: number; soils?: Partial<Record<Soil, number>> }
 export function suitability(n: Niche, s: Site) {
-  if (s.water) return 0;
+  if (s.water || !plantsGrowAt(s.h)) return 0; // T-0072: no ground plants above the tree line
   const g = (x: number, [o, t]: [number, number]) => Math.exp(-(((x - o) / t) ** 2));
   return g(s.wet, n.wet) * g(s.light, n.light) * (1 - s.rock + s.rock * n.rock) * (s.soil && n.soils ? n.soils[s.soil] ?? 1 : 1) * (1 - smoothstep(32, 42, s.slopeDeg));
 }

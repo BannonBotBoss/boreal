@@ -16,6 +16,7 @@
 import { hash, random } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 import { LEVEL, PHYS } from '../../core/tuning';
+import { treeLineM, iceLineM } from '../../core/altitudeZones';
 
 export const PLANET = {
   radius: PHYS.EARTH_RADIUS,     // m: IUGG mean Earth radius (core/tuning PHYS, Moritz 2000)
@@ -218,8 +219,8 @@ export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0]) {
     if (sc) mixTo(o, sc, w * (s.soil === 'bedrock' ? .6 * smoothstep(.4, .75, m) : s.soil === 'peat' ? .7 : .5)); // bedrock soil = thin cover with outcrop patches, not bare rock
     if (s.wet >= 0) mixTo(o, C.bog, w * .45 * smoothstep(.6, .95, s.wet));
   }
-  if (s.h > 1200) mixTo(o, C.rock, smoothstep(1200, 2600, s.h));
-  const snowLine = 4200 - 3600 * smoothstep(40, 75, lat); // snow line falls with latitude [game calibration]
-  if (s.h > snowLine - 400 || lat > 78) mixTo(o, C.snow, lat > 78 ? 1 : smoothstep(snowLine - 400, snowLine + 300, s.h));
+  const tl = treeLineM(lat), il = iceLineM(lat); // T-0072: from latitude temperature + lapse rate (core/altitudeZones, cited data)
+  if (s.h > tl - 150) mixTo(o, C.rock, smoothstep(tl - 150, tl + 250, s.h)); // bare rock above the tree line
+  if (s.h > il - 300 || lat > 78) mixTo(o, C.snow, lat > 78 ? 1 : smoothstep(il - 300, il + 300, s.h)); // permanent ice
   return o;
 }

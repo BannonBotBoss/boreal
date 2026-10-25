@@ -1,4 +1,6 @@
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
+import { gravity } from '../proc/physics';
+import { PHYS } from './tuning';
 import { canidPlan, gallopLegChord, reachTargets, REF_BODY, swingFollow, suspensionRise, suspensions, type CanidGait, type CanidPlan, type ReachBody } from './gaitData';
 
 export const ANIMAL_DEFAULT_ENERGY: number = SYSTEM_PROPERTIES.behaviour.defaultEnergy;
@@ -108,9 +110,18 @@ export class AnimalBrain {
 /** Leg order LF, LH, RF, RH. Coupled phase offsets, not independent oscillators. */
 export function gaitPose(motion:Motion, phase:number, jumpTime=0) {
   if(motion==='jump') {
-    const t=Math.max(0,Math.min(1,jumpTime/.85)),air=Math.max(0,Math.min(1,(t-.18)/.65));
-    const height=t<.18?-.05*Math.sin(t/.18*Math.PI):t>.83?-.04*Math.sin((t-.83)/.17*Math.PI):.48*4*air*(1-air);
-    return {legs:[-.55,.8,-.55,.8].map((v,i)=>t<.18?.35:t>.83?-.25:v*Math.sin(air*Math.PI)),knees:[0,1,2,3].map(()=>Math.max(0,Math.sin(air*Math.PI))*.9),bob:height};
+    // T-0074: the body arc is ballistic (rule 4): y(τ) = v₀τ − ½gτ² with v₀ = g·T_air/2, the same model as
+    // animals/locomotion/jump.ts and proc/physics jumpArc. No fixed-height hop: apex = g·T_air²/8 from gravity().
+    // Crouch and landing dips and the leg swing are continuous across the stage boundaries (no snaps = no bounce).
+    const T=PHYS.jumpSeconds,c=.18,fl=.65,Ta=fl*T,g=gravity();
+    const t=Math.max(0,Math.min(1,jumpTime/T)),air=Math.max(0,Math.min(1,(t-c)/fl)),tau=air*Ta;
+    const dip=.05,land=1-c-fl,s=Math.sin(air*Math.PI);
+    const height=t<c?-dip*Math.sin(t/c*Math.PI/2)          // preload: sink into the crouch
+      :t<c+fl?-dip*(1-air)+g*Ta/2*tau-g*tau*tau/2          // push off from the crouch, then free flight
+      :-.8*dip*Math.sin(Math.min(1,(t-c-fl)/land)*Math.PI); // absorb the landing and stand back up
+    const k=t<c?Math.sin(t/c*Math.PI/2):t<c+fl?1:Math.cos(Math.min(1,(t-c-fl)/land)*Math.PI/2); // blend in/out of the jump pose
+    const legs=[-.55,.8,-.55,.8].map(v=>k*(.35*(1-s)+v*s));
+    return {legs,knees:[0,1,2,3].map(()=>s*.9),bob:height};
   }
   const offsets=motion==='run'?[.50,0,.62,.12]:[.25,0,.75,.5];
   const amplitude=motion==='idle'?0:motion==='run'?.85:.5,reverse=motion==='back'?-1:1;

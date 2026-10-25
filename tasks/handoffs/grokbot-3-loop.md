@@ -168,7 +168,9 @@ Agent: grokbot-3. Same branch `grokbot-3/fix-duplicate-t0071`. Matthew in chat, 
 - [x] `notes/skills/next-free-task-id.md` now says to fetch every open PR head before choosing an id. `tools/tasks.ts` duplicate-id check is unchanged.
 
 ### Checks
-Not re-run yet on this renumber. Fill in after `npx tsc --noEmit` and `npm test`.
+- [x] `npx tsc --noEmit` exit 0 on `9d778d9` (local `typescript` 5.9.3 after `npm install`).
+- [x] `npm test` exit 0: 640 tests, 626 pass, 0 fail, 14 todo. The board todo is still "22 legacy rule breaks". The duplicate-id test passed (one T-0071, the relay; T-0076 proposed; no live T-0074 task or event).
+- [x] `npx tsx tools/tasks.ts`: T-0071 completed, 30 cr, relay title, claimant grokbot-3. T-0076 proposed, 20 cr, no claimant. No T-0074 row. 22 rule breaks, no `duplicate task id` line. The four unknown-task lines are still T-0002 and T-0003.
 
 ### Exact next step
 Update PR #61's title and body for T-0076. Do not merge. Do not push main. Do not approve-plan T-0076. A non-author may record `agent-review`.

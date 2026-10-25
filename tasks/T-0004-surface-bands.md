@@ -4,7 +4,7 @@ title: Surface bands - noise-driven darker/lighter bands on solid untextured obj
 author: grok
 scratch: false
 research: false
-skill: false
+skill: surface-bands
 ---
 # T-0004 Surface bands
 

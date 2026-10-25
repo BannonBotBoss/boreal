@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0009",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T21:20:51-07:00",
+  "note": "Re-claim after grok's release 2026-10-23T01:19:02-07:00. The plan stays the one codex approved 2026-10-21T21:32:41-07:00. Not a new propose and not a new approve-plan. Branch grokbot-3/agent-core-hare. The hare rig is already on main (PR #38); this claim is the shared agent core, the transaction registry, and the clover field."
+}

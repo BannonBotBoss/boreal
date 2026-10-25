@@ -4,6 +4,7 @@
  * Sizes and proportions are approximate (provisional) unless a plan says otherwise; see SKELETON-RULES.md.
  */
 import { buildBird, buildMammal, type BirdPlan, type MammalPlan, type Skeleton } from './skeleton';
+import type { AgentSpecies } from './agent';
 
 const M = (o: Omit<MammalPlan, 'kind' | 'provisional'> & { provisional?: boolean }): MammalPlan => ({ kind: 'mammal', provisional: true, ...o });
 /** Mammal body plans. Ratios are to shoulder height. */
@@ -112,3 +113,52 @@ export function birdSkeleton(group: string): Skeleton {
   const [, arch, species, length] = row;
   return buildBird(species, { ...BIRD_PLANS[arch], length });
 }
+
+/** Snowshoe hare (Lepus americanus). Matthew's numbers are the calm, fed defaults: graze 3 s, head up 1 s, sprint 3 s, pause
+ *  1 s; stamina emptied by 8 s of flight, refilled by 8 s of rest. Energy and diet are nature-checked (the numbers table in tasks/handoffs/T-0009-grokbot-3.md):
+ *  energy 100 = one summer day's food, 167 g DM (captive snowshoe hares, Seeley Lake MT, UMT thesis); spent over a real day
+ *  (100 per 86 400 s), x8 in flight [estimate: sprint vs daily-average metabolism, verify]. Clover (1 unit = 15 mg DM, core/fields):
+ *  167 g = 11 133 units, so 111 units = +1 energy; cropping rate = 167 g over 8.7 h/day foraging x 26 % of it
+ *  actually cropping (Belovsky 1984, Theor. Popul. Biol., doi:10.1016/0040-5809(84)90009-1) = 20.5 mg/s = 4.1 units per 3 s bite bout. Senses / mood bends are game calibration. Hares are crepuscular with
+ *  large eyes (good dim-light vision: night floor .45) and very mobile ears [game calibration, verify]. */
+export const HARE_AGENT: AgentSpecies = {
+  id: 'hare',
+  labels: { feed: 'graze', step: 'graze (next section)', approach: 'relax: trot to clover', seek: 'relax: seek sunlight', scan: 'scan', rest: 'relax: rest', alert: 'alert (head up)', flee: 'flight', pause: 'flight pause', hide: 'freeze (no stamina)', held: 'held', tame: 'tame' },
+  senses: {
+    sight: { range: 26, night: .45, motion: [.5, 2], presence: 4, crouched: .5, movingAt: .25 }, // .5 m/s = slow stealth: slower is not "moving"
+    hearing: { range: 22, loud: [1.5, 7], movingAt: .08 },
+    scent: { potency: .8 },
+  },
+  fear: { wolf: 1 },
+  levels: {
+    energy: { max: 100, start: 70, drain: 100 / 86400, fleeMult: 8, fed: 80, full: 97 },
+    stamina: { max: 100, drainSeconds: 8, recoverSeconds: 8 },
+    relaxation: { max: 100, threatDrop: 60, fleeDrop: 12, recover: 3, panic: .6 },
+  },
+  // alertTurn 0 (run 4): the freeze is motionless (same source), so the body does not swing round to the wolf.
+  // react 1 s: snowshoe hares freeze first, relying on crypsis, and only then flee (Emmel 2024, UMT MSc thesis, "The Hare and
+  // the Hawk"; Chapman & Flux 2008); the ~1 s hold is read from the reference video (refs/hare/graze-alert-flight attempt 4)
+  // [estimate: no measured freeze duration found]. Inside flee.distance the hare bolts at once.
+  // Sourcing check (grok, T-0009 run 12): a feeding leporid's head-up scan between bites lasts 3.6 s on average (subtle
+  // vigilance, head above the shoulder in the feeding posture, still chewing; 95 per hour; overt upright vigilance 12.3 s,
+  // 20 per hour: European rabbits, Monclus & Rodel 2008, Ethology 114:287, Fig. 2, read from the bars). Matthew's feed 3 s
+  // and calm scanChance .1 give a mean interscan of ~30 s, inside that study's 26-38 s; his 1 s scan is shorter than the
+  // sourced 3.6 s and is kept (his spec, pinned by tests/agent.test.ts) until he decides.
+  timing: { feed: 3, scan: 1, alert: 1, alertMin: .3, react: 1, alertTurn: 0, flee: 3, pause: 1, rest: [2, 4], jitter: .15 },
+  mood: { boutNerve: .6, boutHunger: 1, scanChance: [.1, .9], scanHunger: .4, scanNerve: 1.5, scanHungerShort: .3,
+    notice: [.06, .3], noticeHunger: .6, bolt: [.55, .8], boltHunger: .2, fleeNerve: .3, fleeStaminaFull: 40, pauseNerve: .4, resume: .8, unhide: .25 },
+  utility: { feedHere: .5, approach: .4, approachDistance: 60, rest: 1, restFull: .6, restBase: .05, scan: .8, seek: .7, seekBase: .05, noise: .05 },
+  reach: { food: 20, seek: 10, step: [.25, .45], stepTurn: .5, giveUp: 25 },
+  // accel 10 m/s^2: top flight speed in ~3 bounds (0.85 s at ~4 Hz) as in the reference video; below the cheetah's measured
+  // 13 m/s^2 peak (Wilson et al. 2013, Nature 498:185) [estimate: no measured hare acceleration found; Williams et al. 2007
+  // J Anat 210:472 describe the hare pelvic limb as specialised for acceleration without a value].
+  speed: { feedStep: .35, approach: 1.2, flee: 8.5, fleeTired: 5, accel: 10 },
+  // distance 3.7 m: mean flight initiation distance of radio-collared snowshoe hares approached on foot, 224 approaches,
+  // 74 hares (Emmel 2024, UMT MSc thesis, Fig. 1: 3.97 m winter-brown, 3.02 m winter-white; less concealed hares flee earlier).
+  flee: { burstSeconds: 2.5, zig: [.45, .9], zigAngle: .35, distance: 3.7 },
+  diet: { clover: { eatUnits: 4.1, eatSeconds: 3, unitsPerEnergy: 111 } },
+};
+
+/** First behaviour row. Wolf, deer and person rows are T-0010, T-0011 and T-0012: the same AgentSpecies, data only.
+ *  The hare bound gait stays HARE_GAIT in core/needs/species (already on main) and is not copied here. */
+export const BEHAVIOUR: { hare: AgentSpecies } = { hare: HARE_AGENT };

@@ -10,7 +10,7 @@ credits: 108
 ---
 # T-0009 Shared agent core, transaction registry and resource fields, with the snowshoe hare and sunlit clover as the first species
 
-**Status: Matthew (Bannon-github) merged PR #38 at 2026-10-23 01:01:59 PT (merge 4cecdf2). Grok released the claim the same night (2026-10-23T01-19-grok-release-T-0009.json). Not a complete event: the fore-paw touchdown pop is still an open defect, now T-0044.** Undo: `git revert -m 1 4cecdf2`. The 10:50 approve-plan was written by grok in Matthew's name and invalidated at 11:36; the 10:50 claim predates a valid approval and is superseded by the 22:14 claim, which this release ends. Progress and gate scores: tasks/handoffs/T-0009-grok.md.
+**Status: Matthew (Bannon-github) merged PR #38 at 2026-10-23 01:01:59 PT (merge 4cecdf2). Grok released the claim the same night (2026-10-23T01-19-grok-release-T-0009.json). The fore-paw touchdown pop is T-0044.** Undo of that rig merge: `git revert -m 1 4cecdf2`. The 10:50 approve-plan was written by grok in Matthew's name and invalidated at 11:36; the 10:50 claim predates a valid approval and is superseded by the 22:14 claim, which the release ends. grokbot-3 re-claimed on 2026-10-24 21:20:51 PT (`tasks/events/2026-10-24T21-20-51-grokbot-3-claim-T-0009.json`) on the same codex-approved plan. The shared core, the registry and the clover field are on branch `grokbot-3/agent-core-hare`. Handoff: `tasks/handoffs/T-0009-grokbot-3.md`. Live hares still tick in `core/sim` so `tests/sim.test.ts` stays valid. Flight ×8 and the 8 s stamina window stay flagged.
 
 **Skill:** notes/skills/agent-pipeline-species.md (draft, written on grok/rabbit-clover 18f8fc3; updated before the complete event, RULES 4).
 
@@ -59,9 +59,9 @@ Hares grazing head-down in clover in sunlit gaps, lifting their heads when the w
 Plan: `notes/grok-transactional-plan.md` (branch grok/transactional-plan).
 
 ## Objectives
-- [ ] Agent core core/agent.ts: percepts, levels, goal pick, action plan; AnimalBrain keeps locomotion only
-- [ ] Transaction registry core/transactions.ts keyed by kind pair, subscribed to CONTACTS, data-row effects
-- [ ] Resource fields core/fields.ts: sunlight on the ground from siteAt light and solar shortwave, clover units with closed-form regrowth via deltas
-- [ ] Hare BEHAVIOUR row in core/species.ts with the sourced numbers (nature table; Matthew's spec where it passed), relaxation level and stamina-gated flight
-- [ ] Retire animals/hare.ts behaviour (model and spawn stay until the rig pipeline takes it)
-- [ ] Tests: graze/head-up/flight/relax driven by percepts and levels, clover depletion and regrowth, no timers
+- [x] Agent core core/agent.ts: percepts, levels, goal pick, action plan; AnimalBrain keeps locomotion only
+- [x] Transaction registry core/transactions.ts keyed by kind pair, subscribed to CONTACTS, data-row effects
+- [x] Resource fields core/fields.ts: sunlight on the ground from siteAt light and solar shortwave, clover units with closed-form regrowth via deltas
+- [x] Hare BEHAVIOUR row in core/species.ts with the sourced numbers (nature table; Matthew's spec where it passed), relaxation level and stamina-gated flight
+- [x] Retire animals/hare.ts behaviour (model and spawn stay until the rig pipeline takes it)
+- [x] Tests: graze/head-up/flight/relax driven by percepts and levels, clover depletion and regrowth, no timers

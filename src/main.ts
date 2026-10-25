@@ -119,6 +119,7 @@ if (contactsLog) { // console: contacts.touching(); showWhy(key) opens the inspe
 }
 CONTACTS.onContact(c => {
   if (contactsLog) console.log(`[contacts] begin ${c.a} | ${c.b} (${c.source}) at ${c.at.map(v => v.toFixed(2)).join(',')} n ${c.normal.map(v => v.toFixed(2)).join(',')}`);
+  if (c.kind === 'feed') return; // eater/food pairs belong to core/transactions, not the solid why tip
   if (saveBlocked || !(Object.hasOwn(context.records, c.a) || Object.hasOwn(context.records, c.b))) return; // generated-only: nothing to write
   try {
     const next = solidContact(context, c); if (next === context) return;

@@ -10,6 +10,7 @@ import { createDeerRig } from './animalRig';
 import { icosphere, rockGeometry } from './rocks';
 import { treeGeometry } from './trees';
 import { FLORA_BY_ID } from '../core/flora/plants';
+import { BERRY_RADIUS_M } from '../core/fields';
 import { PROP_MATERIAL } from './batch';
 import { buildClump, buildPlant } from './flora/plant';
 
@@ -117,7 +118,7 @@ const stripFlora = (g: THREE.BufferGeometry) => {
   return g;
 };
 // Clonal lowbush blueberry patch (Vaccinium angustifolium, Vander Kloet 1988; Hall et al. 1979): 18-35 cm branched dwarf shrub stems in a clonal mat (r ~0.38 m), 6-12 mm berries (9 mm mean) in terminal clusters.
-const FORAGE_SPEC = { ...FLORA_BY_ID.blueberry, carpet: { ...FLORA_BY_ID.blueberry.carpet!, ramets: 12, radius: .38, form: { stems: 2, branching: 3,
+const FORAGE_SPEC = { ...FLORA_BY_ID.blueberry, carpet: { ...FLORA_BY_ID.blueberry.carpet!, ramets: 12, radius: BERRY_RADIUS_M, form: { stems: 2, branching: 3,
   flower: { kind: 'corymb' as const, count: 6, petals: 5, petalLength: .009, petalWidth: .007, open: .35, nod: 2.2, cup: .003, colour: '#4d6bb3', centre: '#2c4178', bloom: [185, 250] as [number, number] } } } };
 const HERB_SPECS = [
   FLORA_BY_ID.bunchberry,

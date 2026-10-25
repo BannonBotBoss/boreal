@@ -45,7 +45,7 @@ Berry patches sit in sunny openings; an eaten patch is bare and fills back in ov
 Plan: `notes/grok-transactional-plan.md` (branch grok/transactional-plan).
 
 ## Objectives
-- [ ] Light-weighted forage placement
-- [ ] Units-based eating transaction for every animal and the wolf
-- [ ] Closed-form regrowth via deltas
-- [ ] Tests
+- [x] Light-weighted forage placement
+- [x] Units-based eating transaction for every animal and the wolf
+- [x] Closed-form regrowth via deltas
+- [x] Tests

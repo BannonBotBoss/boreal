@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BEHAVIOUR, PERSON_AGENT, PERSON_BERRY_G, PERSON_DAY_S, PERSON_FAST_MPS, PERSON_G_PER_ENERGY, PERSON_KCAL_DAY, PERSON_KCAL_PER_100G, PERSON_PICK_PER_S, PERSON_WALK_MPS, PERSON_WATER_SEEK } from '../src/core/species';
-import { PERSON_CUP_L, PERSON_CUP_POINTS, PERSON_CUP_S, PERSON_DRINK_L_DAY, PERSON_DRINK_PER_S, PERSON_PATCH_G, PERSON_REFERENCE_KG, PERSON_WATER_DRAIN_PER_S, PERSON_WATER_POINTS_PER_DAY, drinkPoint, stepVisitor, trackScore, visitorFriend, visitorPatchGrams, visitorReadout, visitorSitDrop, visitorStores, type VisitorBody, type VisitorInput } from '../src/core/visitors';
+import { PERSON_CUP_L, PERSON_CUP_POINTS, PERSON_CUP_S, PERSON_DRINK_L_DAY, PERSON_DRINK_PER_S, PERSON_REFERENCE_KG, PERSON_WATER_DRAIN_PER_S, PERSON_WATER_POINTS_PER_DAY, drinkPoint, stepVisitor, trackScore, visitorFriend, visitorPatchGrams, visitorReadout, visitorSitDrop, visitorStores, type VisitorBody, type VisitorInput } from '../src/core/visitors';
+import { forageLedger } from '../src/core/fields';
 import { inspectWhy, whyOf, withDoing } from '../src/core/why';
 import { TRANSACTIONS } from '../src/core/transactions';
 
@@ -146,9 +147,11 @@ test('drinking a cup raises the meter at the cup rate, and picking removes berry
   assert.equal(picked.doing, 'grazing');
   assert.ok(picked.energy > 20, `energy ${picked.energy}`);
   const left = visitorPatchGrams(patch);
-  assert.ok(left !== undefined && left < PERSON_PATCH_G - 2, `berries left ${left}`);
+  const row = forageLedger(patch);
+  assert.ok(left !== undefined && row && left < row.max - 2, `berries left ${left} of ${row?.max}`);
   const gained = picked.energy - 20 + PERSON_AGENT.levels.energy.drain * 3;
-  assert.ok(Math.abs((PERSON_PATCH_G - left) / gained - PERSON_G_PER_ENERGY) / PERSON_G_PER_ENERGY < 0.15, `grams/energy ${(PERSON_PATCH_G - left) / gained}`);
+  const removed = row.max - left;
+  assert.ok(Math.abs(removed / gained - PERSON_G_PER_ENERGY) / PERSON_G_PER_ENERGY < 0.15, `grams/energy ${removed / gained}`);
 });
 
 test('a drink point in the water stops on the last dry step', () => {

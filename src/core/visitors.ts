@@ -8,6 +8,7 @@
 import { createAgent, poseOf, stepAgent, type Agent, type AgentWorld, type FoodSource, type Pose } from './agent';
 import { PERSON_AGENT, PERSON_BERRY_G, PERSON_DAY_S, PERSON_WATER_SEEK } from './species';
 import { TRANSACTIONS } from './transactions';
+import { forageLedger, settledGrams, takePatch } from './fields';
 import { stream } from '../proc/rng';
 import type { DoingGoal } from './why';
 
@@ -39,7 +40,6 @@ const MARGIN = 0.2; // same game margin the wolf uses so a lure beats rest (util
 
 interface VisitorState { agent: Agent; water: number }
 const people = new Map<string, VisitorState>();
-const patches = new Map<string, number>();
 
 TRANSACTIONS.add({
   a: 'person', b: 'forage', name: 'pick', needsContact: true,
@@ -101,28 +101,25 @@ export function trackScore(actual: number, expected: number) {
   return 1 - Math.abs(actual - expected) / Math.abs(expected);
 }
 
-export function visitorPatchGrams(key: string) { return patches.get(key); }
+/** Grams left on a bush that has been picked. Undefined until the first bite (an ungrazed bush is the field crop). */
+export function visitorPatchGrams(key: string) { return forageLedger(key)?.grams; }
 
-function patchGrams(key: string) {
-  const g = patches.get(key);
-  if (g !== undefined) return g;
-  patches.set(key, PERSON_PATCH_G);
-  return PERSON_PATCH_G;
+function patchGrams(p: { key: string; x: number; z: number; scale?: number }) {
+  return settledGrams({ key: p.key, x: p.x, z: p.z, kind: 'forage', scale: p.scale ?? 1, grams: 0, by: '' }).grams;
 }
 
-function forageSource(items: readonly { key: string; x: number; z: number }[]): FoodSource {
-  const hit = (x: number, z: number, pad = 0) => items.find(p => patchGrams(p.key) > 0 && Math.hypot(p.x - x, p.z - z) <= 1 + pad);
+function forageSource(items: readonly { key: string; x: number; z: number; scale?: number }[]): FoodSource {
+  const hit = (x: number, z: number, pad = 0) => items.find(p => patchGrams(p) > 1e-6 && Math.hypot(p.x - x, p.z - z) <= 1 + pad);
   return {
-    at: (x, z, pad) => { const p = hit(x, z, pad); return p && { key: p.key, x: p.x, z: p.z, r: 1, units: patchGrams(p.key) }; },
-    nearest: (x, z, range, except) => items.filter(p => p.key !== except && patchGrams(p.key) > 0 && Math.hypot(p.x - x, p.z - z) <= range)
+    at: (x, z, pad) => { const p = hit(x, z, pad); return p && { key: p.key, x: p.x, z: p.z, r: 1, units: patchGrams(p) }; },
+    nearest: (x, z, range, except) => items.filter(p => p.key !== except && patchGrams(p) > 1e-6 && Math.hypot(p.x - x, p.z - z) <= range)
       .sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z) || (a.key < b.key ? -1 : 1))
-      .map(p => ({ key: p.key, x: p.x, z: p.z, r: 1, units: patchGrams(p.key) }))[0],
+      .map(p => ({ key: p.key, x: p.x, z: p.z, r: 1, units: patchGrams(p) }))[0],
     eat: (key, units, by) => {
-      const left = patchGrams(key);
-      const take = Math.min(left, units);
-      const ran = TRANSACTIONS.run(by, key, take);
-      if (ran > 0) patches.set(key, left - ran);
-      return ran;
+      const ran = TRANSACTIONS.run(by, key, units);
+      const p = items.find(i => i.key === key);
+      if (!(ran > 0) || !p) return 0;
+      return takePatch({ key, x: p.x, z: p.z, kind: 'forage', scale: p.scale ?? 1, grams: ran, by });
     },
   };
 }

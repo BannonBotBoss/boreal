@@ -1,7 +1,9 @@
 import { catalog, type Action } from './catalog';
 import { GENERATOR_VERSION, WORLD_SEED, type Entity } from './world';
 import { pushContact, rockDiameter } from './rocks';
-import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './animalBehavior';
+import { ANIMAL_DEFAULT_ENERGY } from './animalBehavior';
+import { DEER_AGENT } from './species';
+import { forageEdible, forageLedger, takePatch } from './fields';
 import { isWhy, sameWhy, whyOf, withTip, type Why, type WhyStep } from './why';
 import type { SeatInputs, Solid, Vec3 } from './contactBus';
 import { friendLive } from './huntHold';
@@ -32,10 +34,12 @@ export function rememberBond(context: EventContext, key: string, bond: Bond): Ev
 }
 export function availableActions(player: Player, target: Entity, context: EventContext): Action[] {
   if (context.records[target.key]?.removed || Math.hypot(player.x - target.x, player.z - target.z) > 6) return [];
+  const herbLeft = () => target.kind === 'plant' && forageEdible(target.key) && (forageLedger(target.key)?.grams ?? 1) > 1e-6;
+  const berriesLeft = () => target.kind === 'forage' && forageEdible(target.key);
   return (catalog[target.kind].interactions ?? []).filter(action => player.abilities.includes(action)
-    && (action !== 'gather' || context.inventory.herb < 99)
+    && (action !== 'gather' || (context.inventory.herb < 99 && herbLeft()))
     && (action !== 'move' || !!pushContact(player, target))
-    && (action !== 'forage' || Math.hypot(player.x-target.x,player.z-target.z) <= 2.5));
+    && (action !== 'forage' || (Math.hypot(player.x - target.x, player.z - target.z) <= 2.5 && berriesLeft())));
 }
 /** Pure transaction: caller persists the complete next context before exposing it. */
 export function interact(context: EventContext, player: Player, target: Entity, action: Action): EventContext {
@@ -44,10 +48,13 @@ export function interact(context: EventContext, player: Player, target: Entity, 
   const previous = next.records[target.key];
   next.records[target.key] = {
     entity: structuredClone(target), playerInteracted: true, relationship: action === 'speak' ? 'friend' : previous?.relationship ?? null,
-    removed: action === 'gather' || action === 'forage', lastAction: action, interactions: (previous?.interactions ?? 0) + 1,
+    removed: false, lastAction: action, interactions: (previous?.interactions ?? 0) + 1,
   };
   if (previous?.why) next.records[target.key].why = previous.why;
-  if (action === 'gather') next.inventory.herb++;
+  if (action === 'gather') {
+    const eaten = takePatch({ key: target.key, x: target.x, z: target.z, kind: 'plant', scale: target.scale, grams: 1, by: 'player' });
+    if (eaten > 0) next.inventory.herb++;
+  }
   if (action === 'move') {
     const push = pushContact(player, target)!;
     const e = next.records[target.key].entity, radius = rockDiameter(e) / 2;
@@ -58,16 +65,31 @@ export function interact(context: EventContext, player: Player, target: Entity, 
   }
   return next;
 }
+/** Grams the last consumeForage actually took. The unremembered path returns the same context, so the caller reads the bite here. */
+let lastEatenG = 0;
+export const lastForageGrams = () => lastEatenG;
 export function consumeForage(context: EventContext, animal: Entity, plant: Entity): EventContext {
   if(catalog[animal.kind].objectType !== 'animal' || plant.kind !== 'forage') throw new Error('Not animal forage.');
   if (!availableActions({x:animal.x,z:animal.z,abilities:['forage']},plant,context).includes('forage')) throw new Error('Forage is unavailable.');
-  // Autonomous actions must never promote a transient animal into the save.
+  const bite = DEER_AGENT.diet.browse.eatUnits;
+  lastEatenG = takePatch({ key: plant.key, x: plant.x, z: plant.z, kind: 'forage', scale: plant.scale, grams: bite, by: animal.key });
+  // Autonomous actions must never promote a transient animal into the save. The field still loses the grams.
+  // The record is written here, not via interact(): interact would re-check the bush after the bite and throw once it is empty.
   if (!playerRemembered(context.records[animal.key])) return context;
-  const next=interact(context,{x:animal.x,z:animal.z,abilities:['forage']},plant,'forage');
-  next.records[plant.key].playerInteracted = false;
-  const previous=context.records[animal.key];
-  next.records[animal.key]={entity:{...animal,energy:Math.min(100,(animal.energy??ANIMAL_DEFAULT_ENERGY)+FORAGE_ENERGY)},
-    playerInteracted:true,relationship:previous?.relationship??null,removed:false,lastAction:'forage',interactions:(previous?.interactions??0)+1};
+  const next = structuredClone(context);
+  const plantPrev = next.records[plant.key];
+  next.records[plant.key] = {
+    entity: structuredClone(plant), playerInteracted: false, relationship: plantPrev?.relationship ?? null,
+    removed: false, lastAction: 'forage', interactions: (plantPrev?.interactions ?? 0) + 1,
+  };
+  if (plantPrev?.why) next.records[plant.key].why = plantPrev.why;
+  const previous = context.records[animal.key];
+  const gain = lastEatenG / DEER_AGENT.diet.browse.unitsPerEnergy;
+  next.records[animal.key] = {
+    entity: { ...animal, energy: Math.min(100, (animal.energy ?? ANIMAL_DEFAULT_ENERGY) + gain) },
+    playerInteracted: true, relationship: previous?.relationship ?? null, removed: false, lastAction: 'forage',
+    interactions: (previous?.interactions ?? 0) + 1,
+  };
   return next;
 }
 /** What touching `other` means for `self`'s why tip: a rock is embedded in the ground; anything else rests on it. */

@@ -10,6 +10,8 @@ import { carve, riverAt } from './stages/rivers';
 import { soilAt, type SoilKind } from './stages/soils';
 import { fastRockSite, placeRockSeed } from './rocks';
 import { f, choose, scope, tracing } from '../proc/trace';
+import { siteAt } from './flora/site';
+import { berrySuit } from './forageLight';
 export const GENERATOR_VERSION = 1;
 export const WORLD_SEED = 1400;
 export const CHUNK_SIZE = 40;
@@ -65,6 +67,11 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     if (!isDryLand(x, z, h) || Math.hypot(x, z) < 13) continue;
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
     if ((kind === 'spruce' || kind === 'plant' || kind === 'log') && !plantsGrowAt(h)) continue; // T-0072: above the tree line only rock
+    // Herbs: a separate stream so a rejection does not shift later trees, rocks or deer. Acceptance probability is site light.
+    if (kind === 'plant') {
+      const site = siteAt(x, z, true, false), keep = random(hash(`herb-light:${worldSeed}:${cx}:${cz}:${i}`))();
+      if (site.water || keep >= Math.min(1, Math.max(0, site.light))) continue;
+    }
     const seed = kind === 'rock' ? placeRockSeed(x, z, h, rawSeed, true) : rawSeed;
     if (seed === undefined) continue;
     result.push({ key: `${cx}:${cz}:${i}`, kind, seed, generatorVersion: GENERATOR_VERSION, x, z, rotation, scale });
@@ -89,11 +96,17 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     if (seed !== undefined) result.push({ key: `stones:${cx}:${cz}:${i}`, kind: 'rock', seed,
       generatorVersion: GENERATOR_VERSION, x, z, rotation, scale: 1 });
   }
+  // T-0015: every draw happens even when the point is refused, so a dark gap does not slide the next bush.
+  // keep < berrySuit(light): Hall et al. 1979, no flowers below half sun. Re-pins the chunk digest (tests/proc.test.ts).
   const forage = random(hash(`forage-v1:${worldSeed}:${cx}:${cz}`));
-  for (let i=0;i<22;i++) {
+  for (let i = 0; i < 22; i++) {
     scope(`forage:${cx}:${cz}:${i}`);
-    const x=f('draw','x',(cx+forage())*CHUNK_SIZE),z=f('draw','z',(cz+forage())*CHUNK_SIZE),seed=f('draw','seed',Math.floor(forage()*0xffffffff));
-    if(heightAt(x,z)>LEVEL.shore) result.push({key:`forage:${cx}:${cz}:${i}`,kind:'forage',x,z,seed,generatorVersion:1,rotation:f('draw','rotation',forage()*Math.PI*2),scale:f('draw','scale',.65+forage()*.35)});
+    const x = f('draw', 'x', (cx + forage()) * CHUNK_SIZE), z = f('draw', 'z', (cz + forage()) * CHUNK_SIZE);
+    const seed = f('draw', 'seed', Math.floor(forage() * 0xffffffff));
+    const keep = f('draw', 'keep', forage()), rotation = f('draw', 'rotation', forage() * Math.PI * 2);
+    const scale = f('draw', 'scale', .65 + forage() * .35), h = heightAt(x, z), site = siteAt(x, z, true, false);
+    if (isDryLand(x, z, h) && plantsGrowAt(h) && !site.water && keep < berrySuit(site.light))
+      result.push({ key: `forage:${cx}:${cz}:${i}`, kind: 'forage', x, z, seed, generatorVersion: 1, rotation, scale });
   }
   scope('');
   for (const entity of result) if (entity.kind === 'deer') entity.energy = ANIMAL_DEFAULT_ENERGY;

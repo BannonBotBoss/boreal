@@ -43,7 +43,17 @@ A still frame cannot show a 60-day refill. The substitute is `tests/forage-field
 - Timing: slot-stepped daylight × temperature integral against `sunSeconds`. Score is `1 - mean |step - closed| / closed(end)`. An instant-full model (the whole interval's sun already booked at the halfway mark) scores below 0.95.
 - Herb position: each placed plant's separate `herb-light` keep is below its site light. A plant that failed that draw scores 0.
 
-Scores are filled in after the test run.
+Measured on 2026-10-25 in `tests/forage-field.test.ts` (chunks −2..2, 4000 seeded draws, 8 game days of slots):
+
+| Check | Score | Known mismatch |
+|---|---|---|
+| Placed forage with site light ≥ 0.5 (8 bushes) | 1 | A bush counted at light 0.2 scores 0 |
+| Monte Carlo accept rate vs `berrySuit(0.75)` | 0.992 | A coin-flip acceptor at light 0.2 scores 0.5 |
+| Slot step vs `sunSeconds` | 0.999983 | Instant-full at the halfway mark scores 0.506 |
+
+No pixel frames. The metric is the table above, the tool is that test, and each mismatch is under 0.95.
+
+`npx tsc --noEmit` exit 0 on 2026-10-25. `npm test` 721 tests, 707 pass, 0 fail, 14 todo. The flora stack overflow (canopy hook calling `generateChunk` from inside placement) is closed by stand-only light during chunk generation.
 
 ## Leftovers
 
@@ -55,6 +65,8 @@ Scores are filled in after the test run.
 
 ## What the next owner needs
 
+- `generateChunk` calls `siteAt(x, z, true, false)`. Drawn crowns rebuild the chunk. A light read with crowns on, from inside generation, overflows the stack. Regrowth after the chunk exists may use full `siteAt`.
+- `berrySuit` lives in `src/core/forageLight.ts`. `world.ts` must not import `fields.ts`. That cycle initializes the weather surface before it exists.
 - The grazed row is `kind: 'grazed'` in `DELTAS.log`. Meta is `key|atWorldSec|perSun|max|by`. `strength` for that kind is depletion remaining, from `sunSeconds` and `worldSec()`, not the exponential and not the game-year argument.
 - `record()` must not merge grazed rows. Use `upsertGrazed`.
 - Do not retune clover's `/86400`.

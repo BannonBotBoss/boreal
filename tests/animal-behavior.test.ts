@@ -61,32 +61,49 @@ test('terrain forms connected clusters of at most twelve cells, favours middle l
  }
  assert.ok(middle>extremes);assert.ok(Math.abs(surfaceDetail(12-1e-7,5)-surfaceDetail(12+1e-7,5))<1e-5);
 });
-test('hungry animals walk to forage, eat for FEED_DURATION, then report the meal',async()=>{
- const {FEED_DURATION}=await import('../src/core/animalBehavior');
+test('hungry animals walk to forage and finish a meal when bite mass / bite rate elapses',()=>{
  const brain=new AnimalBrain(3);brain.energy=40;
- const patch={key:'forage:test',x:.5,y:0,z:0,kind:'food' as const};
+ const patch={key:'forage:test',x:.5,y:0,z:0,kind:'food' as const,biteG:7.8,bitePerS:7.8/2};
  brain.sense(origin,[{...patch,x:6}]);brain.decide(origin,.1);assert.equal(brain.motion,'walk');assert.equal(brain.meal,undefined);
  brain.sense(origin,[patch]);let t=0;
- while(!brain.meal&&t<FEED_DURATION+1){brain.decide(origin,.1);t+=.1;assert.equal(brain.speed,0);}
- assert.equal((brain as AnimalBrain).meal?.key,'forage:test');assert.ok(t>=FEED_DURATION-1e-9);
+ while(!(brain as {meal?:{key:string}}).meal&&t<3){brain.decide(origin,.1);t+=.1;assert.equal(brain.speed,0);}
+ assert.equal((brain as {meal?:{key:string}}).meal?.key,'forage:test');assert.ok(Math.abs(t-2)<0.15,`meal at ${t}s, bite is 2s`);
+ const slow=new AnimalBrain(3);slow.energy=40;
+ const slowPatch={...patch,bitePerS:7.8/10};
+ slow.sense(origin,[slowPatch]);let t2=0;
+ while(!slow.meal&&t2<12){slow.decide(origin,.1);t2+=.1;}
+ assert.ok(Math.abs(t2-10)<0.15,`slower bite finished at ${t2}s`);
+ const plain=new AnimalBrain(4);plain.energy=40;
+ plain.sense(origin,[{key:'f',x:0,y:0,z:0,kind:'food'}]);
+ for(let i=0;i<30;i++)plain.decide(origin,.1);
+ assert.equal(plain.meal,undefined,'the default mouthful is 60s, not the old 2s timer');
  brain.sense(origin,[]);brain.decide(origin,.1);assert.equal(brain.meal,undefined);assert.equal(brain.feedTime,0);
 });
-test('consuming forage removes the patch, raises animal energy and survives a save round-trip',async()=>{
+test('consuming forage takes grams, leaves the bush, raises energy by the bite and survives a save round-trip',async()=>{
  const {generateChunk}=await import('../src/core/world');
- const {createContext,consumeForage,parseContext,restoreEntities,interact}=await import('../src/core/events');
- const {FORAGE_ENERGY}=await import('../src/core/animalBehavior');
- const chunk=generateChunk(0,0);
- assert.ok(chunk.filter(e=>e.kind==='forage').length>=1);
- const plant=chunk.find(e=>e.kind==='forage')!,anyDeer=[0,1,2,3,4,5].flatMap(i=>generateChunk(i,i)).find(e=>e.kind==='deer')!,deer={...anyDeer,x:plant.x+.5,z:plant.z,energy:40};
+ const {createContext,consumeForage,parseContext,restoreEntities,interact,lastForageGrams}=await import('../src/core/events');
+ const {DEER_AGENT}=await import('../src/core/species');
+ const {forageLedger}=await import('../src/core/fields');
+ let plant: ReturnType<typeof generateChunk>[number] | undefined; let cx=0,cz=0;
+ for(let a=-3;a<=3&&!plant;a++)for(let b=-3;b<=3&&!plant;b++){const found=generateChunk(a,b).find(e=>e.kind==='forage');if(found){plant=found;cx=a;cz=b;}}
+ assert.ok(plant,'a lit chunk has a berry patch');
+ const anyDeer=[0,1,2,3,4,5].flatMap(i=>generateChunk(i,i)).find(e=>e.kind==='deer')!;
+ const deer={...anyDeer,x:plant.x+.5,z:plant.z,energy:40};
+ const bounds={minX:cx*40,minZ:cz*40,maxX:(cx+1)*40,maxZ:(cz+1)*40};
  const empty=createContext();
  assert.equal(consumeForage(empty,deer,plant),empty,'autonomous feeding cannot create persistent records');
  assert.deepEqual(empty.records,{});
+ assert.ok(lastForageGrams()>0,'the field still loses grams');
  const remembered=interact(empty,{x:deer.x,z:deer.z,abilities:['speak']},deer,'speak');
  const next=parseContext(JSON.stringify(consumeForage(remembered,deer,plant)));
- assert.equal(next.records[plant.key].removed,true);assert.equal(next.records[deer.key].entity.energy,40+FORAGE_ENERGY);
- const restored=restoreEntities(generateChunk(0,0),next,{minX:0,minZ:0,maxX:40,maxZ:40});
- assert.ok(!restored.some(e=>e.key===plant.key));
- assert.throws(()=>consumeForage(next,deer,plant));
+ const bite=lastForageGrams(), per=DEER_AGENT.diet.browse.unitsPerEnergy;
+ assert.equal(next.records[plant.key].removed,false);
+ assert.ok(Math.abs((next.records[deer.key].entity.energy??0)-(40+bite/per))<1e-9,`energy ${next.records[deer.key].entity.energy}`);
+ const restored=restoreEntities(generateChunk(cx,cz),next,bounds);
+ assert.ok(restored.some(e=>e.key===plant.key),'the bush stays in the world');
+ let ctx=next;
+ for(let i=0;i<40&&(forageLedger(plant.key)?.grams??1)>1e-6;i++)ctx=consumeForage(ctx,deer,plant);
+ assert.throws(()=>consumeForage(ctx,deer,plant));
  const legacy=structuredClone(next);legacy.records[deer.key].relationship=null;delete legacy.records[deer.key].playerInteracted;
  assert.ok(!parseContext(JSON.stringify(legacy)).records[deer.key],'legacy autonomous-only animal records are dropped');
  assert.ok(parseContext(JSON.stringify(next)).records[deer.key],'player-interacted animals remain saved');

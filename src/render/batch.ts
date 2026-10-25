@@ -49,7 +49,7 @@ ROCK_MATERIAL.onBeforeCompile = shader => {
       vec3 r1 = cross(sy, normal), r2 = cross(normal, sx); float det = dot(sx, r1) * faceDirection;
       normal = normalize(abs(det) * normal - sign(det) * (dH.x * r1 + dH.y * r2)); }`);
 };
-type Item = { key: string; pos: THREE.Vector3; raw: THREE.Object3D[]; levels: Map<THREE.Material, THREE.BufferGeometry>[]; ranges: number[]; shadowFar: number };
+type Item = { key: string; pos: THREE.Vector3; raw: THREE.Object3D[]; levels: Map<THREE.Material, THREE.BufferGeometry>[]; ranges: number[]; shadowFar: number; cover: number };
 const SLICE_MS = 2; // buildJob yields once a step has run this long (core/interest 4 ms budget) [game calibration]
 
 const pv = new THREE.Vector3(), nmat = new THREE.Matrix3();
@@ -106,7 +106,7 @@ export function createChunkBatch() {
   return {
     meshes,
     /** Queues an entity's LOD objects; they are flattened in buildJob (yielding every ~2 ms), not in the caller's step. */
-    add(key: string, pos: THREE.Vector3, levels: THREE.Object3D[], ranges: number[]) { items.push({ key: key, pos: pos.clone(), raw: levels, levels: [], ranges, shadowFar: ranges[1] }); },
+    add(key: string, pos: THREE.Vector3, levels: THREE.Object3D[], ranges: number[], cover = 1) { items.push({ key, pos: pos.clone(), raw: levels, levels: [], ranges, shadowFar: ranges[1], cover }); },
     /** Build one BatchedMesh per material; returns them for the chunk root. */
     build() { return finish(this.buildJob()); },
     /** build() as a budgeted job (core/interest): yields per material and every few instances. */
@@ -126,7 +126,7 @@ export function createChunkBatch() {
         for (let i = 0; i < items.length; i++) { const it = items[i];
           const geo = it.levels.map(l => { const g = l.get(mat); return g ? bm.addGeometry(g) : -1; });
           const first = geo.find(x => x >= 0); if (first === undefined) continue;
-          const inst = bm.addInstance(first); bm.setMatrixAt(inst, new THREE.Matrix4().makeTranslation(it.pos)); (bm.userData.keys as string[])[inst] = it.key;
+          const inst = bm.addInstance(first); bm.setMatrixAt(inst, new THREE.Matrix4().compose(it.pos, new THREE.Quaternion(), new THREE.Vector3(it.cover, it.cover, it.cover))); (bm.userData.keys as string[])[inst] = it.key;
           list.push({ item: i, inst, geo }); if (performance.now() - t > SLICE_MS) { yield; t = performance.now(); }
         } yield; t = performance.now();
         for (const it of items) for (const l of it.levels) l.get(mat)?.dispose(); // copied into the batch
@@ -145,6 +145,13 @@ export function createChunkBatch() {
       level = next;
     },
     hide(key: string) { const i = items.findIndex(x => x.key === key); if (i < 0) return; level[i] = -3; for (const [bm, list] of slots) for (const s of list) if (s.item === i) bm.setVisibleAt(s.inst, false); },
+    /** Fruit or shoot fraction. 1 matches the old translation matrix. Geometry stays baked at entity.scale. */
+    cover(key: string, s: number) {
+      const i = items.findIndex(x => x.key === key); if (i < 0) return;
+      items[i].cover = s;
+      const m = new THREE.Matrix4().compose(items[i].pos, new THREE.Quaternion(), new THREE.Vector3(s, s, s));
+      for (const [bm, list] of slots) for (const slot of list) if (slot.item === i) bm.setMatrixAt(slot.inst, m);
+    },
     dispose() { for (const m of meshes) m.dispose(); },
   };
 }

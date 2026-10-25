@@ -36,6 +36,10 @@ import { lighting, sunPosition, DAY_OF_YEAR, DAY, START_HOUR, REAL_SECONDS_PER_G
 import { climate, solar, shortwave } from './weather';
 import { siteAt } from './flora/site';
 import { TRANSACTIONS, kindOf, type TransactionRow } from './transactions';
+import { worldSec } from './worldClock';
+import { findGrazed, upsertGrazed } from './deltas';
+import { berrySuit, BERRY_FLOWER_LIGHT } from './forageLight';
+export { berrySuit, BERRY_FLOWER_LIGHT };
 
 export const CLEARINGS = { cell: 70, cell2: 28, mix: .35, from: .6, to: .74 };
 const lattice = (i: number, j: number, salt: string, seed: number) => hash(`clearing:${salt}:${seed}:${i}:${j}`) / 4294967296;
@@ -216,4 +220,122 @@ export function groundLight(x: number, z: number, day: number, hour: number, clo
 export function cloverSiteAt(x: number, z: number): CloverSite {
   const s = siteAt(x, z);
   return { water: s.water, light: s.light, wet: s.wet, rock: s.rock, slopeDeg: s.slopeDeg };
+}
+
+/**
+ * Berries and herbs on the same sun field (T-0015). Placement is the light gate. An existing patch is full until a
+ * bite writes one grazed delta; a later read is grams + perSun * sunSeconds since that bite. Clover stays on a
+ * biological 86400 s day. Forage refills on game days so "fills back over game days" is the clock the player has.
+ */
+
+/** Ma et al. 2022, Agronomy 12(3):617, minimum fresh yield of a managed wild lowbush field (Wyman's). Not a boreal opening. */
+export const BERRY_G_PER_M2 = 122.22;
+/** Clonal mat radius (m). Vander Kloet 1988; Hall et al. 1979. The mesh uses this same number (render/geometry FORAGE_SPEC). */
+export const BERRY_RADIUS_M = 0.38;
+/** Bloom to ripe is about eight weeks. Fruit is borne on one-year-old wood, so a stripped crop is next season's fruit. [verify] against Hall's table. */
+export const FORAGE_REFILL_DAYS = 60;
+/** Uneaten woody mat after the fruit is gone. Game presentation, analogous to clover stolons, not a measured height ratio. */
+export const FORAGE_STEM = 0.35;
+/** Deer browse cell (m). One delta per cell so two deer at the same spot share the sward. */
+export const BROWSE_CELL_M = 8;
+/** 50 g DM/m² of understorey [verify], divided by the 0.35 dry fraction already on the deer diet. */
+export const BROWSE_FRESH_G_PER_M2 = 50 / 0.35;
+/** Circle of radius half the cell, so the stock is the ground under the deer's feet rather than a square corner. */
+export const BROWSE_CELL_MAX_G = Math.PI * (BROWSE_CELL_M / 2) ** 2 * BROWSE_FRESH_G_PER_M2;
+const FORAGE_DAY_S = 24 * REAL_SECONDS_PER_GAME_HOUR;
+
+/** Fresh grams on an existing sunlit patch. Light gates placement and the regrowth rate, not this standing crop. */
+export function berryMaxG(scale = 1) {
+  return Math.PI * (BERRY_RADIUS_M * scale) ** 2 * BERRY_G_PER_M2;
+}
+/** Instance scale: full crop is 1, a stripped mat is FORAGE_STEM. */
+export function coverOf(grams: number, max: number) {
+  if (!(max > 0)) return FORAGE_STEM;
+  const f = Math.max(0, Math.min(1, grams / max));
+  return FORAGE_STEM + (1 - FORAGE_STEM) * f;
+}
+/** Grams at `now` from a stored bite. Closed form of the grazed row. */
+export function gramsNow(stored: number, at: number, perSun: number, max: number, now: number) {
+  if (!(max > 0)) return 0;
+  const g0 = Math.max(0, Math.min(max, stored));
+  if (!(perSun > 0) || !(now > at)) return g0;
+  return Math.min(max, g0 + perSun * sunSeconds(at, now, (max - g0) / perSun));
+}
+
+export interface ForageTake {
+  key: string; x: number; z: number; kind: 'forage' | 'plant' | 'browse';
+  grams: number; by: string; scale?: number; /** visitor/tests: a fixed crop instead of berryMaxG */ maxG?: number; now?: number;
+}
+export interface ForageStock { grams: number; max: number; perSun: number; at: number }
+
+export function browseCellKey(x: number, z: number) {
+  return `browse@${Math.floor(x / BROWSE_CELL_M)}:${Math.floor(z / BROWSE_CELL_M)}`;
+}
+
+function standing(p: ForageTake, light: number): { max: number; perSun: number } {
+  const day = FORAGE_REFILL_DAYS * FORAGE_DAY_S;
+  if (p.kind === 'browse') {
+    const max = p.maxG ?? BROWSE_CELL_MAX_G;
+    return { max, perSun: max / day };
+  }
+  if (p.kind === 'plant') return { max: 1, perSun: clamp01(light) / day };
+  const max = p.maxG ?? berryMaxG(p.scale ?? 1);
+  return { max, perSun: max / day * berrySuit(light) };
+}
+
+/** Settled stock. No delta: the patch is full and this does not write. */
+export function settledGrams(p: ForageTake, now = p.now ?? worldSec()): ForageStock {
+  const d = findGrazed(p.key);
+  if (!d) {
+    const light = p.kind === 'browse' ? 1 : siteAt(p.x, p.z).light;
+    const s = standing(p, light);
+    return { grams: s.max, max: s.max, perSun: s.perSun, at: now };
+  }
+  const parts = (d.meta ?? '').split('|');
+  const at = +parts[1], per = +parts[2], max = +parts[3];
+  const useMax = max > 0 ? max : standing(p, p.kind === 'browse' ? 1 : siteAt(p.x, p.z).light).max;
+  const usePer = Number.isFinite(per) && per >= 0 ? per : 0;
+  return { grams: gramsNow(d.m, at, usePer, useMax, now), max: useMax, perSun: usePer, at };
+}
+
+/** Read a grazed row after a bite. Undefined when the patch has never been eaten. */
+export function forageLedger(key: string, now = worldSec()): ForageStock | undefined {
+  const d = findGrazed(key);
+  if (!d) return undefined;
+  const parts = (d.meta ?? '').split('|');
+  const at = +parts[1], per = +parts[2], max = +parts[3];
+  if (!(max > 0) || !Number.isFinite(at)) return undefined;
+  return { grams: gramsNow(d.m, at, Number.isFinite(per) ? per : 0, max, now), max, perSun: per, at };
+}
+
+/** Take up to `grams`. Writes one grazed delta. Returns grams actually eaten. */
+export function takePatch(p: ForageTake): number {
+  const now = p.now ?? worldSec();
+  const s = settledGrams(p, now);
+  const eaten = Math.min(s.grams, Math.max(0, p.grams));
+  if (!(eaten > 0)) return 0;
+  const left = s.grams - eaten;
+  upsertGrazed({
+    x: p.x, z: p.z, m: left < 1e-6 ? 0 : left,
+    meta: `${p.key}|${now}|${s.perSun}|${s.max}|${p.by}`,
+  });
+  return eaten;
+}
+
+export function browseGrams(x: number, z: number, now = worldSec()) {
+  return settledGrams({ key: browseCellKey(x, z), x, z, kind: 'browse', grams: 0, by: '' }, now).grams;
+}
+
+/** Visual cover. Ungrazed (no delta) stays 1 and does not sample the site. */
+export function patchCover(e: { key: string; kind: string; x: number; z: number; scale: number }, now = worldSec()) {
+  if (e.kind !== 'forage' && e.kind !== 'plant') return 1;
+  if (!findGrazed(e.key)) return 1;
+  const s = settledGrams({ key: e.key, x: e.x, z: e.z, kind: e.kind === 'plant' ? 'plant' : 'forage', scale: e.scale, grams: 0, by: '' }, now);
+  return coverOf(s.grams, s.max);
+}
+
+/** Food sense: a bush with no delta is full. A grazed row is food only while grams remain. */
+export function forageEdible(key: string, now = worldSec()) {
+  const row = forageLedger(key, now);
+  return row ? row.grams > 1e-6 : true;
 }

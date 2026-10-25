@@ -50,7 +50,9 @@ export function* prepareArea(x0: number, z0: number, x1: number, z1: number): Ge
 /** The site at a point. Staged: stage-3 soils (core/stages/soils soilAt, the same fields core/ground and the tree mix use):
  * wetness, bedrock share and depth to bedrock are bilinear between the 4 grid nodes (values sit on nodes, i·cell), the material
  * is the nearest node's. Bedrock counts .85 rock (NOEGTS RN: 'bare or thin patchy drift', so soil pockets remain). Unstaged: height above the shore, as render/trees and core/ground do. */
-export function siteAt(x: number, z: number, withLight = true): Site {
+/** `crowns`: include the drawn-tree hook. Chunk generation must pass false. That hook rebuilds the chunk, so a crown read
+ *  from inside generateChunk recurses. Stand closure (core/stand) is the background shade and does not. */
+export function siteAt(x: number, z: number, withLight = true, crowns = true): Site {
   const h = heightAt(x, z), e = 1, gx = (heightAt(x + e, z) - heightAt(x - e, z)) / (2 * e), gz = (heightAt(x, z + e) - heightAt(x, z - e)) / (2 * e);
   const slopeDeg = Math.atan(Math.hypot(gx, gz)) * 180 / Math.PI;
   let water = h < LEVEL.waterSurface + .03, wet: number, rock: number, depth: number, soil: Soil | undefined;
@@ -70,7 +72,8 @@ export function siteAt(x: number, z: number, withLight = true): Site {
   // ~130-290 trees/ha vs 650-1500/ha in the stand model), so the stand's canopy closure (core/stand, Harper et al. 2002) is the
   // background shade, thinned on rock / steep faces and halved on saturated peat (open black spruce muskeg) [game calibration .75].
   const closure = water || !withLight ? 0 : CANOPY.stand * standAt(x, z, wet).canopy * (1 - rock) * (wet > .85 ? .5 : 1);
-  return { water, slopeDeg, wet, rock, depth, h, light: withLight ? 1 - clamp01(Math.max(canopyOf?.(x, z) ?? 0, closure)) : 1, soil };
+  const crown = withLight && crowns ? canopyOf?.(x, z) ?? 0 : 0;
+  return { water, slopeDeg, wet, rock, depth, h, light: withLight ? 1 - clamp01(Math.max(crown, closure)) : 1, soil };
 }
 
 /** Niche on the site gradients: optimum ± tolerance (Gaussian), with affinities for rock pockets and soils. */

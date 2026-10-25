@@ -8,7 +8,7 @@ import './style.css';
 import { createSensesHUD } from './ui/senses';
 import { createSensesHalo } from './render/sensesHalo';
 import { buildScene } from './render/buildScene';
-import { availableActions, consumeForage, createContext, friendCount, interact, parseContext, rememberBond, solidContact, type Player } from './core/events';
+import { availableActions, consumeForage, createContext, friendCount, interact, lastForageGrams, parseContext, rememberBond, solidContact, type Player } from './core/events';
 import { holdVisual, setSqueal } from './core/huntHold';
 import { CONTACTS } from './core/contactBus';
 import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from './core/waterWake';
@@ -27,7 +27,8 @@ const music = createMusic(() => sfx.musicInput(), on => { sfx.builtInMusic = on;
 import { clampLookPitch, springLookPitch, DEFAULT_PITCH, RIDER_HEIGHT } from './render/math';
 import { steerWolf } from './core/locomotion';
 import { createWolfModes, stepWolfModes, modeSpeed } from './core/wolfModes';
-import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './core/animalBehavior';
+import { ANIMAL_DEFAULT_ENERGY } from './core/animalBehavior';
+import { DEER_AGENT } from './core/species';
 import { autonomousWolfStep, clearWolfPlan, wolfReadout } from './core/autonomy';
 import { NEEDS_SPECIES, WOLF_NEEDS, HARE_NEEDS } from './core/needs/species';
 import { dietOf } from './core/needs/diet';
@@ -104,7 +105,7 @@ let view: ReturnType<typeof buildScene>;
 const onForage = (animal: Entity, plant: Entity) => {
   try {
     const next = consumeForage(context, animal, plant);
-    if (next === context) return Math.min(100, (animal.energy ?? ANIMAL_DEFAULT_ENERGY) + FORAGE_ENERGY);
+    if (next === context) return Math.min(100, (animal.energy ?? ANIMAL_DEFAULT_ENERGY) + lastForageGrams() / DEER_AGENT.diet.browse.unitsPerEnergy);
     if (saveBlocked) return undefined;
     localStorage.setItem(SAVE_KEY, JSON.stringify(next));
     context = next; return next.records[animal.key].entity.energy;

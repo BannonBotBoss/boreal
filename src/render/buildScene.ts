@@ -16,7 +16,9 @@ import { applyPopulation } from '../core/population';
 import { WOLF_SCALE, type WolfMode } from '../core/wolfModes';
 import { pushProgress, rockDiameter } from '../core/rocks';
 import { createDeerRig } from './animalRig';
-import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY, withinEarshot, type SenseItem } from '../core/animalBehavior';
+import { ANIMAL_DEFAULT_ENERGY, withinEarshot, type SenseItem } from '../core/animalBehavior';
+import { forageEdible, patchCover } from '../core/fields';
+import { worldSec } from '../core/worldClock';
 import { catalog } from '../core/catalog';
 import { seatRock } from './rocks';
 import { createSky } from './sky';
@@ -84,7 +86,6 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const ratio = () => Math.min(BASE_RATIO, 1.5) * photoreal.tier.resScale;
   const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.Object3D>; near: boolean; batch: import('./batch').ChunkBatch; contacts: Contact[] }>();
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
-  const eatenForage = new Map<string, string>(); // plant key -> loaded chunk; never serialized
   let activeContext: EventContext;
   let current = playable('wolf'), wolf: PlayerRig = current.create(); scene.add(wolf.root);
   /** Appearance genomes: 'player:<playable>', 'species:deer' (all deer) or an entity key (one animal). */
@@ -103,7 +104,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const grass = createGrass(scene); // render/grass: procedural blades around the camera
   const flora = createFlora(scene); // render/flora: flowers + shrubs (shared ecology with the grass)
   const glow = createTargetGlow(renderer, camera); // render/targetGlow (T-0035): outline glow on the interaction target (replaces the ground ring)
-  let lastBatchLod = -1;
+  let lastBatchLod = -1, lastCover = -1;
   let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
   const CHUNK_ADDS_PER_FRAME = 2; let frameNo = 0; const adds = { frame: -1, n: 0 }; // upload pacing (see createChunk)
   warmTerrainWorkers(); // stage grids in each terrain worker, behind the loading screen
@@ -120,7 +121,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const generated = applyPopulation(generateChunk(cx, cz), cx, cz); yield; // chunk build steps stay within the 4 ms job budget
     // Old remembered people bypass generation's land test. Hide invalid placements without
     // deleting their relationship/event records or inventing a new location for them.
-    const entities = structuredClone(restoreEntities(generated, context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => !eatenForage.has(e.key) && (e.kind !== 'person' || isDryLand(e.x, e.z)));
+    const entities = structuredClone(restoreEntities(generated, context, { minX: cx * CHUNK_SIZE, minZ: cz * CHUNK_SIZE, maxX: (cx + 1) * CHUNK_SIZE, maxZ: (cz + 1) * CHUNK_SIZE })).filter(e => e.kind !== 'person' || isDryLand(e.x, e.z));
     for (const entity of entities) {
       if (catalog[entity.kind].objectType === 'animal') {
         const previous = animals.get(entity.key);
@@ -133,7 +134,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       if (entity.kind === 'log') contacts.push(logContact(entity, y, T0005_LOG_SEAT)); // T-0006: the one call site; T-0005's logSeat when present
       if (entity.kind !== 'person') { // static: batched per chunk + material (render/batch); a pushed rock becomes a live LOD (see draw)
         const levels: THREE.Object3D[] = []; for (let d = 0; d < 3; d++) { levels.push(generateGeometry(entity, d)); if (d < 2) yield; } // one LOD per step
-        batch.add(entity.key, new THREE.Vector3(entity.x, y, entity.z), levels, entity.kind === 'rock' ? [...ranges, 45 * RENDER.lod.rocks] : ranges);
+        const cover = entity.kind === 'forage' || entity.kind === 'plant' ? patchCover(entity) : 1;
+        batch.add(entity.key, new THREE.Vector3(entity.x, y, entity.z), levels, entity.kind === 'rock' ? [...ranges, 45 * RENDER.lod.rocks] : ranges, cover);
         const proxy = new THREE.Object3D(); proxy.position.set(entity.x, y, entity.z); proxy.userData.inspect = { type: 'entity', key: entity.key }; objects.set(entity.key, proxy);
         yield; continue;
       }
@@ -166,7 +168,6 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const d = squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), own = a === cx && b === cz;
       if (d <= INTEREST.mid || own) needed.set(`${a}:${b}`, (needed.get(`${a}:${b}`) ?? false) || d <= INTEREST.near || own);
     }
-    for (const [plantKey, chunkKey] of eatenForage) if (!needed.has(chunkKey)) eatenForage.delete(plantKey);
     // Far = math only: dispose everything outside the radius (and re-instantiate when a chunk changes tier).
     for (const [key, chunk] of chunks) if (changed || !needed.has(key) || needed.get(key) !== chunk.near) {
       scene.remove(chunk.root); disposeObject(chunk.root); for (const c of chunk.contacts) CONTACTS.end(c.a, c.b); chunks.delete(key);
@@ -179,15 +180,11 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   function eat(animal: { rig: ReturnType<typeof createDeerRig>; entity: Entity }, plantKey: string) {
     for (const chunk of chunks.values()) {
-      const index = chunk.entities.findIndex(e => e.key === plantKey);
-      if (index < 0) continue;
-      const plant = chunk.entities[index];
+      const plant = chunk.entities.find(e => e.key === plantKey);
+      if (!plant) continue;
       const energy = onForage?.({ ...animal.entity, energy: animal.rig.brain.energy }, plant);
       if (energy === undefined) return;
-      eatenForage.set(plantKey, `${Math.floor(plant.x / CHUNK_SIZE)}:${Math.floor(plant.z / CHUNK_SIZE)}`);
-      chunk.entities.splice(index, 1);
-      const lod = chunk.objects.get(plantKey);
-      if (lod) { chunk.root.remove(lod); disposeObject(lod); chunk.objects.delete(plantKey); chunk.batch.hide(plantKey); }
+      chunk.batch.cover(plantKey, patchCover(plant));
       animal.rig.brain.energy = energy; animal.entity.energy = energy;
       return;
     }
@@ -204,7 +201,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     scene.updateMatrixWorld(true);
     const entities=[...chunks.values()].flatMap(c=>c.entities), keys=new Set(entities.map(e=>e.key));
     // Only forage patches are food; low herbs are neither food nor obstacles.
-    const observations:SenseItem[]=entities.filter(e=>e.kind!=='plant'&&(e.kind!=='rock'||rockDiameter(e)>.22)).map(e=>({key:e.key,x:e.x,y:heightAt(e.x,e.z)+ (e.kind==='deer'?1:0),z:e.z,
+    const observations:SenseItem[]=entities.filter(e=>e.kind!=='plant'&&(e.kind!=='forage'||forageEdible(e.key))&&(e.kind!=='rock'||rockDiameter(e)>.22)).map(e=>({key:e.key,x:e.x,y:heightAt(e.x,e.z)+ (e.kind==='deer'?1:0),z:e.z,
       kind:e.kind==='forage'?'food':e.kind==='deer'?'animal':'obstacle',low:e.kind==='log'||e.kind==='rock'}));
     wolf.root.updateMatrixWorld(true);wolf.sensor.getWorldPosition(headPoint);if(!frozen)wolf.brain.sense(headPoint,observations);
     const snortNext = new Set<string>();
@@ -341,6 +338,10 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       }
     }
     if (time - lastBatchLod > .25 || time < lastBatchLod) { lastBatchLod = time; for (const c of chunks.values()) c.batch.update(camera.position, 1); }
+    if (time - lastCover > 1 || time < lastCover) {
+      lastCover = time; const now = worldSec();
+      for (const c of chunks.values()) for (const e of c.entities) if (e.kind === 'forage' || e.kind === 'plant') c.batch.cover(e.key, patchCover(e, now));
+    }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen, time, mode);
     updateWaterUniforms(time);
@@ -379,15 +380,12 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     glow.set(key, undefined, () => { const o = generateGeometry(e, 0); o.position.set(e.x, heightAt(e.x, e.z), e.z); return o; });
   }
   function forageWolf(plantKey: string) {
-    for(const chunk of chunks.values()) {
-      const index=chunk.entities.findIndex(e=>e.key===plantKey && e.kind==='forage');
-      if(index<0) continue;
-      const plant=chunk.entities[index];
-      if(Math.hypot(plant.x-wolf.root.position.x,plant.z-wolf.root.position.z)>2.5)return;
-      eatenForage.set(plantKey,`${Math.floor(plant.x/CHUNK_SIZE)}:${Math.floor(plant.z/CHUNK_SIZE)}`);
-      chunk.entities.splice(index,1);const lod=chunk.objects.get(plantKey);
-      if(lod){chunk.root.remove(lod);disposeObject(lod);chunk.objects.delete(plantKey);chunk.batch.hide(plantKey);}
-      wolf.brain.energy=Math.min(100,wolf.brain.energy+FORAGE_ENERGY);wolf.brain.meal=undefined;
+    for (const chunk of chunks.values()) {
+      const plant = chunk.entities.find(e => e.key === plantKey && e.kind === 'forage');
+      if (!plant) continue;
+      if (Math.hypot(plant.x - wolf.root.position.x, plant.z - wolf.root.position.z) > 2.5) return;
+      chunk.batch.cover(plantKey, patchCover(plant));
+      wolf.brain.meal = undefined;
       return;
     }
   }
@@ -460,7 +458,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
-  return { set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, eat, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     playerScale: () => ({ x: wolf.root.scale.x, y: wolf.root.scale.y, z: wolf.root.scale.z }),
     /** The saved record for a key (undefined for generated objects), e.g. for the inspector's why. */

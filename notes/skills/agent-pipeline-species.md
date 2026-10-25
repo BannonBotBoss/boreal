@@ -70,7 +70,7 @@ A chew is one bite of fresh mass (`biteG`), not a sound timer. Hooves are gait-p
 
 Herd alarm uses the previous step's posture. `senseHerd` sets `distance` to Infinity so flight-initiation distance is the wolf's, not the mate's. The implied threat sits behind the mate (heading 0 faces -z). Delay is `distance / 343` only when the acoustic cue leads, plus `attend / cue`.
 
-Browse is a virtual `browse:ground` contact (`deer` | `browse`, Koerth 7.8 g fresh/min). Forest depletion and regrowth stay T-0015. Do not build that field here.
+Browse is a virtual `browse:ground` contact (`deer` | `browse`, Koerth 7.8 g fresh/min). The grazed stock is one 8 m cell on the forage field (T-0015, `takePatch`). Do not add a second depletion map.
 
 Deer rigs are still dropped before the chunk commits (T-0047). A pixel frame of a deer body is not a behaviour score until that lands. The calibrated substitute is the vigilance slope, `alarmDelay` against 343 m/s, and the 7.8 g/min intake. Do not invent a 95% pixel match.
 

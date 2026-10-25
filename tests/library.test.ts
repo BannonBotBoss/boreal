@@ -40,13 +40,14 @@ test('friendship survives serialization without duplicate rewards or duplicate i
   assert.equal(restoreEntities(generateChunk(deerCx, deerCz), twice, bounds).filter(e => e.key === deer.key).length, 1);
   assert.deepEqual(twice.records[deer.key].entity, deer);
 });
-test('gathered objects stay removed after unloading and reloading; no duplicate inventory reward', () => {
+test('gathered herbs leave one shoot in the inventory and the plant in the world; a second gather throws', () => {
   const { found: plant, cx, cz } = firstOf('plant');
   const near = { ...player, x: plant.x, z: plant.z };
   const plantBounds = { minX: cx * 40, minZ: cz * 40, maxX: (cx + 1) * 40, maxZ: (cz + 1) * 40 };
   const context = parseContext(JSON.stringify(interact(createContext(), near, plant, 'gather')));
   assert.equal(context.inventory.herb, 1);
-  assert.ok(!restoreEntities(generateChunk(cx, cz), context, plantBounds).some(e => e.key === plant.key));
+  assert.equal(context.records[plant.key].removed, false);
+  assert.ok(restoreEntities(generateChunk(cx, cz), context, plantBounds).some(e => e.key === plant.key));
   assert.throws(() => interact(context, near, plant, 'gather'));
 });
 test('incompatible save versions are rejected', () => {

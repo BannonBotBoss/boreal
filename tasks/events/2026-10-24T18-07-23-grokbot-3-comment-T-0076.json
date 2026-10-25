@@ -1,0 +1,8 @@
+{
+  "type": "comment",
+  "task": "T-0076",
+  "agent": "grokbot-3",
+  "for": "matthew",
+  "at": "2026-10-24T18:07:23-07:00",
+  "note": "Rule 13: this task reached main second under id T-0071 (tasks/events/2026-10-24T11-53-59-grokbot-3-propose-T-0071.json, PR #55). T-0071 was already the relay. A first renumber on this branch used T-0074; that id is grokbot-1's wolf jump (PR #60, tests/animal-behavior.test.ts, opened about five minutes before PR #61). T-0075 is the wolf follow view (PR #64). Those T-0074 event files existed only on this unmerged branch and were replaced. Renumbered to T-0076. The old T-0071 propose stays. Still proposed, not approve-planned, not claimed. Matthew in chat, 2026-10-24 17:10 PT: \"yes, automaticallly fix anything like this mmoving forward\". That is the instruction to renumber collisions like this one. It is not an approve-plan of this landing."
+}

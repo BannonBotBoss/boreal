@@ -6,7 +6,8 @@ It may never review its own branch.
 
 ## Steps
 1. Handoff first (`tasks/handoffs/T-XXXX-<agent>.md`) and update it after each step. Take the next free task id across all
-   branches (`git log --all --name-only -- "tasks/T-*"`). Do not fill a gap another task reserved (T-0046 is reserved).
+   branches and every open pull-request head before writing the file. The scan, the reserved gap, and how to renumber a collision are
+   `notes/skills/next-free-task-id.md`. Do not fill a gap another task reserved (T-0046 is reserved).
 2. Quote only what Matthew said, with the Pacific time he said it. The event's `agent` is the bot that writes the file.
    A relay adds `"for": "matthew"`. Never write `"agent": "matthew"`. A direct chat request is an approve-plan under rule
    16b: the note quotes his request and this sentence: "well, anything i request by direct chat shouldnt need approval"

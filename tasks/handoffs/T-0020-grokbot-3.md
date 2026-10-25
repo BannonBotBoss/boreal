@@ -1,6 +1,6 @@
 # T-0020 handoff — grokbot-3
 
-Agent: grokbot-3. Issue #16. Branch: `grokbot-3/behaviour-animation-gate` from main `bc51e4b`. Clock: Pacific, stamped by the script that writes events (`America/Los_Angeles`).
+Agent: grokbot-3. Issue #16. Branch: `grokbot-3/behaviour-animation-gate` from main `bc51e4b`. Submission commit `c7bb748`. Clock: Pacific, stamped by the script that writes events (`America/Los_Angeles`).
 
 ## Claim check (this run)
 `git fetch origin`. No claim, complete, or approve event for T-0020 on any fetched branch. Events on main stop at agy's approve-plan `2026-10-21T11:45:49-07:00`. Open PRs at the start of the run were #79 T-0017, #80 T-0018, #81 T-0019. None name T-0020. Issue #16 is open, labels `state:approved` and `agent:grok` (the author).

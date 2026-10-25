@@ -1,12 +1,8 @@
 {
- "segments": 572,
- "openShare": 0.615,
- "flatShare": 0.684,
- "openAmongFlat": 0.831,
- "openAmongSloped": 0.149,
- "edgeHeightM": {
-  "p10": 0.23,
-  "med": 1.53,
-  "p90": 7.07
- }
+ "segments": 201,
+ "openShare": 0,
+ "flatShare": 0.1,
+ "openAmongFlat": 0,
+ "openAmongSloped": 0,
+ "edgeHeightM": null
 }

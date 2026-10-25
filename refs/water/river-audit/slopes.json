@@ -1,37 +1,37 @@
 {
- "cells": 572,
+ "cells": 201,
  "classes": [
   {
    "name": "flat fill (S <= 1e-4)",
-   "share": 0.684,
+   "share": 0.1,
    "vGameMed": 0.06,
    "vJarrettMed": null,
    "sMed": 0
   },
   {
    "name": "pool-riffle / plane-bed (1e-4 - .02)",
-   "share": 0.117,
+   "share": 0.333,
    "vGameMed": 1.29,
    "vJarrettMed": 0.7,
    "sMed": 0.0097
   },
   {
    "name": "step-pool (.02 - .08)",
-   "share": 0.163,
+   "share": 0.463,
    "vGameMed": 2.77,
    "vJarrettMed": 0.84,
    "sMed": 0.0417
   },
   {
    "name": "cascade (> .08)",
-   "share": 0.037,
+   "share": 0.104,
    "vGameMed": 3,
    "vJarrettMed": 1.02,
    "sMed": 0.1029
   }
  ],
  "capped": {
-  "share": 0.096,
+  "share": 0.274,
   "sMin": 0.0432,
   "jarrettAtCapped": [
    0.77,

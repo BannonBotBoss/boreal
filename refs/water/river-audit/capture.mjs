@@ -5,10 +5,11 @@
 // (motion of the flow ripples and foam), 2 stills facing downstream. DOM overlays (HUD, title, buttons) are hidden for the
 // shots so the canvas is measurable; nothing in the game changes.
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync, readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { acquire, track, release } from '../../../tools/bench-lock.mjs';
+const BROWSER = ['C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', 'C:/Program Files/Google/Chrome/Application/chrome.exe', process.env.CHROME, '/usr/bin/google-chrome-stable', '/usr/bin/google-chrome', '/usr/local/bin/google-chrome'].find(p => p && existsSync(p));
 const [PORT = '5214', ...want] = process.argv.slice(2), out = resolve('refs/water/river-audit'), views = JSON.parse(readFileSync(`${out}/views.json`, 'utf8'));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const log = [];
@@ -19,7 +20,9 @@ for (const site of want.length ? want : Object.keys(views)) {
   // debug port closed on the next launch (2026-10-21)
   let ws; const profile = mkdtempSync(join(tmpdir(), "claude-river-edge-")), port = 9480 + Object.keys(views).indexOf(site) * 3 + (Date.now() % 3);
   try {
-    const p = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', ['--headless=new', '--disable-extensions', '--no-first-run', '--disable-gpu-vsync', '--disable-frame-rate-limit', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-background-timer-throttling', '--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' }); track(p.pid);
+    if (!BROWSER) throw Error('no Chrome or Edge binary');
+    const gl = process.platform === 'win32' ? ['--use-angle=d3d11', '--enable-gpu'] : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+    const p = spawn(BROWSER, ['--headless=new', '--disable-extensions', '--no-first-run', '--disable-gpu-vsync', '--disable-frame-rate-limit', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-background-timer-throttling', ...gl, '--ignore-gpu-blocklist', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' }); track(p.pid);
     let tabs; for (let i = 0; i < 120; i++) { try { tabs = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); if (tabs.find(t => t.type === "page")) break; } catch {} await sleep(500); }
     if (!tabs) throw Error("Edge debug port did not open");
     ws = new WebSocket(tabs.find(t => t.type === 'page').webSocketDebuggerUrl); await new Promise(r => ws.onopen = r);

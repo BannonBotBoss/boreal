@@ -23,7 +23,7 @@ import { clampLookPitch, springLookPitch, DEFAULT_PITCH, RIDER_HEIGHT } from './
 import { steerWolf } from './core/locomotion';
 import { createWolfModes, stepWolfModes, modeSpeed } from './core/wolfModes';
 import { ANIMAL_DEFAULT_ENERGY, FORAGE_ENERGY } from './core/animalBehavior';
-import { autonomousWolfStep } from './core/autonomy';
+import { autonomousWolfStep, clearWolfPlan, wolfReadout } from './core/autonomy';
 import { NEEDS_SPECIES, WOLF_NEEDS, HARE_NEEDS } from './core/needs/species';
 import { dietOf } from './core/needs/diet';
 import { eatWater, levelsOf, staminaRates, parseNeeds, stepNeeds, type NeedsState } from './core/needs/engine';
@@ -140,6 +140,7 @@ const needsSpecies = () => NEEDS_SPECIES[view.playable.id] ?? WOLF_NEEDS; // the
 const thoughtClock = createThoughtClock(), bubbles = createThoughtBubbles(view.scene);
 const saveNeeds = () => { try { localStorage.setItem(NEEDS_KEY, JSON.stringify({ ...needs, energy: view.playerBrain.energy })); } catch { /* blocked */ } };
 let waterGoal: { x: number; z: number } | undefined; // the autonomous wolf's chosen water (core/needs/water nearestWater)
+let autoNote = ''; // T-0010: the autonomous goal and its cause, kept across frames the sim does not step
 view.onBeforeRender((time, photoView) => bubbles.update(view.lookup('player')?.object, view.camera, thoughtTime, photoView));
 view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView || (!!focusTarget && SYSTEM_PROPERTIES.autoFocus.hideSensesHalo))); // T-0035: the locked target's glow is the only cue
 function perform() {
@@ -398,7 +399,14 @@ function frame(time: number) { const frameStart = performance.now();
       }
       if (drinking || choice?.goal === 'bed-down' || choice?.goal === 'rest') { brain.motion = 'idle'; brain.speed = 0; brain.problem = 'recover'; }
       const steerOnly = !!choice && (drinking || choice.goal !== 'explore' && choice.goal !== 'hunt' && choice.goal !== 'forage');
-      const pose = autonomous && !playerAction && !steerOnly ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities()) : steerWolf({ x: player.x, z: player.z, heading: brain.heading }, 0, Math.sign(brain.speed), 1 / 30, Math.abs(brain.speed));
+      const driving = autonomous && !playerAction && !steerOnly;
+      const pose = driving ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities(),{
+        massKg: playerMass, wind: windAt(player.x, .6, player.z), daylight: 1 - view.darkness(),
+        hares: view.hares.list().map(h => ({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: 1 })),
+      }) : steerWolf({ x: player.x, z: player.z, heading: brain.heading }, 0, Math.sign(brain.speed), 1 / 30, Math.abs(brain.speed));
+      if (!driving) clearWolfPlan(brain);
+      const live = wolfReadout(brain);
+      autoNote = !autonomous ? '' : live ? `${live.goal} (${live.because})` : choice ? `${choice.goal} (${choice.why})` : autoNote;
       if(!autonomous && brain.motion==='idle') brain.problem='recover';
       if(autonomous && brain.meal) view.forageWolf(brain.meal.key);
       const e0 = brain.energy, moved = Math.hypot(pose.x-player.x,pose.z-player.z);
@@ -458,7 +466,7 @@ function frame(time: number) { const frameStart = performance.now();
   const animalStatus = animal ? ` · ${animal.motion}/${animal.problem} · Energy ${Math.round(animal.energy)}` : '';
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
-  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth · LB focus'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
+  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : 'RT run · LT stealth · LB focus'}\n${Object.keys(context.records).length} remembered · ${friendCount(context)} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind); if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
   requestAnimationFrame(frame);
 }

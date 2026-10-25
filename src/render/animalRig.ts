@@ -31,7 +31,7 @@ export function createDeerRig(seed:number,detail:number) {
     const pose=quadrupedPose(brain.motion,brain.phase,brain.jumpTime,DEER_LEGS,brain.gaitSpeed);
     legs.forEach((leg,i)=>{leg.rotation.x=pose.legs[i];knees[i].rotation.x=pose.knees[i];});
     body.position.y=pose.bob; legs.forEach(leg=>leg.position.y=DEER_LEGS.hip+pose.bob);
-    // Posture from src/core/deerHerd.ts: head down to graze, up and scanning when vigilant, raised and still when alert.
+    // Posture from the agent action (deerPosture): head down to graze, up and scanning when vigilant, raised and still when alert.
     const posture=root.userData.posture as string|undefined;
     const headDown=posture==='graze'||posture==='eat'||(!posture&&brain.problem==='feed'&&brain.motion==='idle')?.6:posture==='alert'?-.3:posture==='scan'?-.18:0;
     head.rotation.x+=(headDown-head.rotation.x)*(1-Math.exp(-5*dt));

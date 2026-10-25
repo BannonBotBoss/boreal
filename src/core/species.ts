@@ -4,7 +4,8 @@
  * Sizes and proportions are approximate (provisional) unless a plan says otherwise; see SKELETON-RULES.md.
  */
 import { buildBird, buildMammal, type BirdPlan, type MammalPlan, type Skeleton } from './skeleton';
-import type { AgentSpecies } from './agent';
+import type { AgentSpecies, FoodSource } from './agent';
+import { TRANSACTIONS } from './transactions';
 
 const M = (o: Omit<MammalPlan, 'kind' | 'provisional'> & { provisional?: boolean }): MammalPlan => ({ kind: 'mammal', provisional: true, ...o });
 /** Mammal body plans. Ratios are to shoulder height. */
@@ -159,6 +160,77 @@ export const HARE_AGENT: AgentSpecies = {
   diet: { clover: { eatUnits: 4.1, eatSeconds: 3, unitsPerEnergy: 111 } },
 };
 
-/** First behaviour row. Wolf, deer and person rows are T-0010, T-0011 and T-0012: the same AgentSpecies, data only.
+/** White-tailed deer (Odocoileus virginianus). Energy 100 = one day of food. Graze, head-up and herd alarm come from
+ *  senses and levels (T-0011). The social row is what turns the shared pipeline off dice: bout lengths are herdBouts,
+ *  alarm delay is sound travel plus attention, and a chew fires on bite mass. Numbers that are estimates are marked.
+ *  The hare row has no social field and does not read these. */
+export const DEER_AGENT: AgentSpecies = {
+  id: 'deer',
+  labels: { feed: 'graze', step: 'graze (next step)', approach: 'walk to browse', seek: 'seek cover', scan: 'head up', rest: 'bedded', alert: 'alert', flee: 'flight', pause: 'alert', hide: 'freeze (no stamina)', held: 'held', tame: 'tame' },
+  senses: {
+    // range 80 m [estimate: between Lingle & Wilson 2001 stalking alerts under 30 m and open alerts at 125-200 m].
+    // night 0.35 [estimate]. presence 30 m [estimate].
+    sight: { range: 80, night: .35, motion: [.4, 2], presence: 30, crouched: .5, movingAt: .3 },
+    // range 60 m [estimate]. loud band is a walk-to-run footfall.
+    hearing: { range: 60, loud: [1.2, 6], movingAt: .1 },
+    scent: { potency: .7 }, // [estimate]
+  },
+  fear: { wolf: 1 },
+  levels: {
+    // 100 energy = one day. Daily DM midpoint 3% of the 70 kg species row = 2.1 kg (MSU Extension / Prevention and
+    // Control of Wildlife Damage: 2-4% of live weight; adult bucks in spring 2.0-2.9 kg air-dry/day).
+    // fleeMult 8 [estimate, same order as the hare sprint multiplier; no deer factorial scope].
+    energy: { max: 100, start: 70, drain: 100 / 86400, fleeMult: 8, fed: 80, full: 97 },
+    // 45 s empties a gallop of a few hundred metres; 45 s refills it [estimate: not a timed trial]. burstSeconds is below.
+    stamina: { max: 100, drainSeconds: 45, recoverSeconds: 45 },
+    // recover 5/s: from 40, calmAt 70 is 6 s after the cue is gone. A steady cue holds the settle line (updateLevels).
+    relaxation: { max: 100, threatDrop: 40, fleeDrop: 8, recover: 5, panic: .8 },
+  },
+  // scan 3 s [estimate: no white-tailed head-up duration found; elk bouts in Fortin et al. 2004 Oikos 107:172 are a few seconds].
+  // feed 5.333 s is the lone calm bout (scan * 0.64/0.36); herdBouts recomputes it from the vigilance share.
+  // jitter 0 and a huge zig so even a fall-through cannot roll a duration. react is unused on the social path.
+  timing: { feed: 3 * .64 / .36, scan: 3, alert: 1, alertMin: .3, react: 0, alertTurn: 0, flee: 8, pause: 1, rest: [6, 12], jitter: 0 },
+  mood: { boutNerve: .5, boutHunger: .8, scanChance: [0, 0], scanHunger: 0, scanNerve: .4, scanHungerShort: .2,
+    notice: [.06, .18], noticeHunger: .4, bolt: [.35, .65], boltHunger: .15, fleeNerve: .2, fleeStaminaFull: 40, pauseNerve: .3, resume: .8, unhide: .3 },
+  utility: { feedHere: .6, approach: .35, approachDistance: 40, rest: 1, restFull: .8, restBase: .05, scan: .5, seek: .3, seekBase: 0, noise: 0 },
+  reach: { food: 12, seek: 16, step: [.3, .5], stepTurn: .4, giveUp: 20 },
+  // flee 35 mph = 15.6464 m/s (SUNY ESF "White-tailed Deer", secondary natural-history page, not a timed trial).
+  // fleeTired: Heglund & Taylor 1988 JEB 138:301 preferred gallop, 2.78 * mass^0.116.
+  // feedStep 0.4 and approach 1.3 [estimate]. accel 6 m/s^2 [estimate: top speed in ~2.6 s].
+  speed: { feedStep: .4, approach: 1.3, flee: 35 * .44704, fleeTired: 2.78 * 70 ** .116, accel: 6 },
+  // distance 30 m: Lingle & Wilson 2001 Ethology 107:125, stalking attacks alerted under 30 m. zig is unused (social flight does not roll).
+  flee: { burstSeconds: 6, zig: [1e6, 1e6], zigAngle: 0, distance: 30 },
+  // 7.8 g fresh/min (Koerth & Stuth 1991 J Range Manage 44(6), stem elongation). 60 g fresh = +1 energy:
+  // (2.1 kg DM / 0.35) / 100. The 0.35 dry fraction is an estimate; the fresh rate is not inflated to close the daily budget.
+  diet: { browse: { eatUnits: 7.8, eatSeconds: 60, unitsPerEnergy: 60 } },
+  social: {
+    link: 60, // m [estimate: a mate at 50 m is linked; a wolf at 70 m is below calm notice on motion sight]
+    loneVigilance: .36, // [estimate: Lashley 2014 Fig. 3 intercept is not in the text. Three steps of 0.07 stay inside 0..1 through group size 4]
+    vigilancePerMate: .07, // Lashley et al. 2014 PLoS ONE 9:e90652: females +7 percentage points of feeding time per extra deer
+    vigilanceCap: 4, // same paper: females do not gain past group size 4
+    snort: 200, // m [estimate: Atkeson, Marchinton & Miller 1988, the snort is the alarm call; no measured audibility]
+    sound: 343, // m/s, dry air near 20 C
+    attend: .25, // s [estimate: no deer reaction-time constant; weaker cues take attend/cue]
+    calmAt: 70,
+    cohesionAt: 8, cohesion: .6, // [estimate: a few body lengths]
+    biteG: 7.8 / 7.1, // g fresh. 7.1 bites/min is Yucatan females (scialert tasr.2006.105.112), a smaller subspecies [population mismatch]
+    scatter: .4, // rad [estimate]
+    turn: 4, // rad/s, the old herd flee turn
+  },
+};
+/** Virtual browse (T-0011). Forest depletion and regrowth are T-0015, so a deer grazes in place until hunger is met.
+ *  nearest returns nothing when the deer is already on this key, so it feeds here instead of trotting to an origin. */
+export const BROWSE: FoodSource = {
+  at: (x, z) => ({ key: 'browse:ground', x, z, r: 4, units: 1e9 }),
+  nearest: (x, z, _range, except) => except === 'browse:ground' ? undefined : { key: 'browse:ground', x, z, r: 4, units: 1e9 },
+  eat: (key, units, by) => TRANSACTIONS.run(by, key, units),
+};
+TRANSACTIONS.add({
+  a: 'deer', b: 'browse', name: 'graze', needsContact: true,
+  source: 'Koerth & Stuth 1991 J Range Manage 44(6): stem-elongation mean instantaneous intake 7.8 g fresh/min (range 2.6-16.6); methods weighed fresh branches',
+  run: (grams: number) => grams,
+});
+
+/** Behaviour rows. Wolf and person are T-0010 and T-0012: the same AgentSpecies, data only.
  *  The hare bound gait stays HARE_GAIT in core/needs/species (already on main) and is not copied here. */
-export const BEHAVIOUR: { hare: AgentSpecies } = { hare: HARE_AGENT };
+export const BEHAVIOUR: { hare: AgentSpecies; deer: AgentSpecies } = { hare: HARE_AGENT, deer: DEER_AGENT };

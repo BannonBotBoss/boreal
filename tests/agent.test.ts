@@ -1,10 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { CLOVER, CLOVER_WHY, CLOVER_STATE, clearingAt, cloverPatchesInTile, cloverSuitability, cloverStateJSON, loadCloverState, createCloverField, grazeTransaction, regrowTransaction, regrowthRate, daylightFraction, sunSeconds, unitsAt, groundLight, cloverSiteAt, type CloverPatch, type CloverSite } from '../src/core/fields';
 import { lighting, sunPosition, hourAt, dayAt, REAL_SECONDS_PER_GAME_HOUR } from '../src/core/timeOfDay';
-import { createAgent, stepAgent, modulators, updateLevels, perceive, agentReadout, writeLocomotion, agentSnapshot, restoreAgent, type Agent, type AgentWorld, type FoodSource } from '../src/core/agent';
-import { HARE_AGENT, BEHAVIOUR } from '../src/core/species';
+import { createAgent, stepAgent, modulators, updateLevels, perceive, agentReadout, writeLocomotion, agentSnapshot, restoreAgent, groupVigilance, herdBouts, alarmDelay, deerPosture, type Agent, type AgentWorld, type FoodSource, type Mate } from '../src/core/agent';
+import { HARE_AGENT, BEHAVIOUR, DEER_AGENT, BROWSE } from '../src/core/species';
+import { deerSoundIds } from '../src/audio/borealSound';
 import { stream } from '../src/proc/rng';
 import { TRANSACTIONS } from '../src/core/transactions';
 import { CONTACTS } from '../src/core/contactBus';
@@ -211,6 +212,120 @@ test('ground light is site shade times shortwave, and night shortwave is zero', 
   const s = siteAt(4, -6), c = cloverSiteAt(4, -6);
   assert.equal(c.water, s.water); assert.equal(c.light, s.light); assert.equal(c.wet, s.wet);
   assert.equal(c.rock, s.rock); assert.equal(c.slopeDeg, s.slopeDeg);
+});
+
+const deer = (seed: string, x = 0, z = 0, init: Parameters<typeof createAgent>[5] = {}) => createAgent(DEER_AGENT, `deer:${seed}`, x, z, stream(3, seed), init);
+const deerWorld = (wolf?: { x: number; z: number; speed: number }, mates: Mate[] = []): AgentWorld =>
+  ({ others: wolf ? [{ key: 'player', kind: 'wolf', x: wolf.x, z: wolf.z, speed: wolf.speed }] : [], wind: quiet, daylight: 1, food: { browse: BROWSE }, mates });
+const mateOf = (a: Agent, snort = false): Mate => ({ key: a.key, x: a.x, z: a.z, heading: a.heading, action: a.action, speed: a.speed, alarmed: a.action === 'flee' || a.action === 'alert' || a.action === 'pause', snort });
+
+test('deer vigilance share follows the feeding-time slope and stops at group size 4', () => {
+  const lone = groupVigilance(DEER_AGENT, 0), one = groupVigilance(DEER_AGENT, 1), four = groupVigilance(DEER_AGENT, 3), more = groupVigilance(DEER_AGENT, 6);
+  assert.equal(lone.share, DEER_AGENT.social!.loneVigilance);
+  assert.ok(Math.abs(lone.share - one.share - DEER_AGENT.social!.vigilancePerMate) < 1e-12, 'one mate drops vigilance by the measured slope');
+  assert.ok(Math.abs(lone.share - four.share - 3 * .07) < 1e-12, `group of 4 is 0.21 lower (${four.share})`);
+  assert.equal(more.share, four.share, 'past group size 4 the female slope is flat');
+  const calm = { species: DEER_AGENT, relaxation: 100, energy: 90 };
+  const b0 = herdBouts(calm, 0), b3 = herdBouts(calm, 3);
+  assert.ok(b0.feed < b3.feed, 'alone, the head-down bout is shorter');
+  assert.ok(Math.abs(b0.scan / (b0.scan + b0.feed) - b0.share) < 1e-9, 'time share scanning equals the vigilance share');
+  assert.ok(Math.abs(b3.feed - 17) < 1e-9, `group of 4 grazes 17 s (${b3.feed})`);
+});
+test('deer alarm delay is sound travel plus attention, and a heard cue is faster when it is stronger', () => {
+  const cue = .5;
+  const far = alarmDelay(90, cue, true, DEER_AGENT), nearD = alarmDelay(40, cue, true, DEER_AGENT);
+  assert.ok(Math.abs(far - nearD - 50 / 343) < 1e-9, `${far - nearD} vs ${50 / 343}`);
+  assert.equal(alarmDelay(90, cue, false, DEER_AGENT), alarmDelay(40, cue, false, DEER_AGENT));
+  assert.ok(alarmDelay(10, 1, false, DEER_AGENT) < alarmDelay(10, .25, false, DEER_AGENT));
+});
+test('deer: a wolf inside 30 m bolts the same step; a mate 50 m off bolts after the attention delay, not in the same step', () => {
+  const A = deer('bolt', 20, 0, { heading: 0, energy: 70, relaxation: 100 });
+  const B = deer('mate', 70, 0, { heading: 0, energy: 70, relaxation: 100 });
+  const wolf = { x: 0, z: 0, speed: 4 };
+  const dt = .05;
+  let prevA = mateOf(A), prevB = mateOf(B), t = 0, alertAt = -1, fleeAt = -1, snort = false;
+  for (let i = 0; i < 40; i++) {
+    const evA = stepAgent(A, deerWorld(wolf, [prevB]), dt);
+    const evB = stepAgent(B, deerWorld(wolf, [prevA]), dt);
+    t += dt;
+    if (i === 0) { assert.equal(A.action, 'flee', 'flight distance: bolts the step it notices'); assert.equal(B.action === 'flee', false, 'the mate has not been seen fleeing yet'); }
+    if (evA.some(e => e.type === 'snort')) snort = true;
+    if (B.action === 'alert' && alertAt < 0) alertAt = t;
+    if (B.action === 'flee' && fleeAt < 0) fleeAt = t;
+    prevA = mateOf(A, evA.some(e => e.type === 'snort')); prevB = mateOf(B, evB.some(e => e.type === 'snort'));
+  }
+  assert.ok(snort, 'the bolt snorts');
+  assert.ok(alertAt > 0 && fleeAt > alertAt, `alert ${alertAt} flee ${fleeAt}`);
+  assert.ok(fleeAt - alertAt > .5 && fleeAt - alertAt < .85, `delay ${fleeAt - alertAt} (attention over the fleeing-mate sight cue)`);
+  CONTACTS.end(A.key, 'browse:ground'); CONTACTS.end(B.key, 'browse:ground');
+});
+test('deer calm-down is relaxation, not a timer', () => {
+  const saved = DEER_AGENT.levels.relaxation.recover;
+  const w = deerWorld();
+  const a = deer('calm', 0, 0, { heading: 0, energy: 60, relaxation: 40 });
+  a.action = 'alert'; a.elapsed = 0; a.timer = 0;
+  try {
+    let feeding = false;
+    for (let t = 0; t < 3; t += .1) stepAgent(a, w, .1);
+    assert.equal(a.action, 'alert', `still alert while relaxation is ${a.relaxation}`);
+    assert.ok(a.relaxation < DEER_AGENT.social!.calmAt);
+    for (let t = 3; t < 8; t += .1) { stepAgent(a, w, .1); if ((a.action as string) === 'feed') feeding = true; }
+    assert.ok(feeding, `back to grazing once relaxation recovers (now ${a.action}, relaxation ${a.relaxation})`);
+    a.action = 'alert'; a.relaxation = 40; a.elapsed = 0; a.timer = 0; a.energy = 60;
+    DEER_AGENT.levels.relaxation.recover = 0;
+    for (let t = 0; t < 10; t += .1) stepAgent(a, w, .1);
+    assert.equal(a.action, 'alert', 'with no recovery it never returns to grazing');
+  } finally { DEER_AGENT.levels.relaxation.recover = saved; CONTACTS.end(a.key, 'browse:ground'); }
+});
+test('deer graze at 7.8 g fresh/min, chew once per bite, and do not roll dice', () => {
+  const a = deer('chew', 0, 0, { heading: .4, energy: 60, relaxation: 100 });
+  a.action = 'feed'; a.food = 'browse:ground'; a.timer = 40; a.bitten = 0;
+  const w = deerWorld(undefined, [{ key: 'deer:calm-mate', x: 5, z: 0, heading: 0, action: 'feed', speed: 0, alarmed: false, snort: false }]);
+  const dt = .05; const chews: number[] = []; let t = 0;
+  try {
+    while (t < 20) { const ev = stepAgent(a, w, dt); t += dt; if (ev.some(e => e.type === 'chew')) chews.push(t); }
+    const bite = 60 / 7.1;
+    assert.ok(chews[0] > bite - dt && chews[0] < bite + 2 * dt, `first chew ${chews[0]} vs ${bite}`);
+    assert.ok(Math.abs(chews[1] - chews[0] - bite) < 2 * dt, `interval ${chews[1] - chews[0]}`);
+    assert.equal(chews.filter(c => c < bite - dt).length, 0);
+  } finally { CONTACTS.end(a.key, 'browse:ground'); }
+  const g = deer('rate', 0, 0, { heading: .4, energy: 60, relaxation: 100 });
+  g.action = 'feed'; g.food = 'browse:ground'; g.timer = 30;
+  const e0b = g.energy;
+  try { for (let i = 0; i < 200; i++) stepAgent(g, w, .05); }
+  finally { CONTACTS.end(g.key, 'browse:ground'); }
+  const diet = DEER_AGENT.diet.browse, expect = (diet.eatUnits / diet.eatSeconds) / diet.unitsPerEnergy * 10 - DEER_AGENT.levels.energy.drain * 10;
+  assert.ok(Math.abs(g.energy - e0b - expect) < 1e-6, `energy ${g.energy - e0b} vs ${expect}`);
+  const dice = createAgent(DEER_AGENT, 'deer:nodice', 0, 0, () => { throw new Error('dice'); }, { heading: 1, energy: 70, relaxation: 100, stamina: 100 });
+  const brain = new AnimalBrain(1);
+  assert.doesNotThrow(() => { for (let i = 0; i < 200; i++) { stepAgent(dice, w, .1); writeLocomotion(brain, dice); assert.notEqual(brain.motion, 'jump'); } });
+  CONTACTS.end(dice.key, 'browse:ground');
+  const full = deer('full', 0, 0, { heading: 0, energy: 99, relaxation: 100 });
+  for (let i = 0; i < 50; i++) stepAgent(full, deerWorld(), .1);
+  assert.notEqual(full.action, 'feed', 'a full deer does not keep grazing');
+  const p = deer('same', 0, 0, { heading: .3, energy: 70 }), q = createAgent(DEER_AGENT, 'deer:same-b', 0, 0, stream(9, 'other'), { heading: .3, energy: 70 });
+  const seq = (ag: Agent) => { const s: string[] = []; for (let i = 0; i < 80; i++) { stepAgent(ag, deerWorld(), .1); s.push(ag.action + ag.heading.toFixed(5)); } return s; };
+  assert.deepEqual(seq(p), seq(q), 'two streams, same levels: the same actions');
+  CONTACTS.end(p.key, 'browse:ground'); CONTACTS.end(q.key, 'browse:ground'); CONTACTS.end(full.key, 'browse:ground');
+});
+test('deer sounds follow the snort, the hoof phase and the chew, not a timer', () => {
+  const idle = { problem: 'feed', motion: 'idle', phase: 0 };
+  assert.deepEqual(deerSoundIds(idle, { key: 'd', motion: 'idle', problem: 'feed', phase: 0, snort: true }), ['deer-snort']);
+  assert.deepEqual(deerSoundIds({ problem: 'explore', motion: 'idle', phase: 0 }, { key: 'd', motion: 'run', problem: 'escape', phase: 0, snort: false }), []);
+  assert.deepEqual(deerSoundIds({ problem: 'explore', motion: 'idle', phase: 0 }, { key: 'd', motion: 'run', problem: 'escape', phase: 0 }), ['deer-snort']);
+  assert.deepEqual(deerSoundIds({ problem: 'escape', motion: 'run', phase: .2 }, { key: 'd', motion: 'run', problem: 'escape', phase: 1.1, snort: false }), ['deer-hooves']);
+  assert.deepEqual(deerSoundIds({ problem: 'feed', motion: 'walk', phase: .2 }, { key: 'd', motion: 'walk', problem: 'feed', phase: 1.1 }), ['paw-walk']);
+  assert.deepEqual(deerSoundIds(idle, { key: 'd', motion: 'idle', problem: 'feed', phase: 0, chew: true }), ['chew']);
+  assert.deepEqual(deerSoundIds({ problem: 'explore', motion: 'jump', phase: 0 }, { key: 'd', motion: 'idle', problem: 'explore', phase: 0 }), ['land']);
+  assert.equal(deerPosture('feed'), 'graze'); assert.equal(deerPosture('flee'), 'flee'); assert.equal(deerPosture('alert'), 'alert');
+});
+test('the deer timer layer is gone', () => {
+  assert.equal(existsSync(new URL('../src/core/deerHerd.ts', import.meta.url)), false);
+  const scene = readFileSync(new URL('../src/render/buildScene.ts', import.meta.url), 'utf8');
+  assert.equal(scene.includes('shapeDeer'), false);
+  assert.equal(scene.includes('brain.decide'), false);
+  assert.equal(TRANSACTIONS.get('deer', 'browse')?.name, 'graze');
+  assert.equal(BEHAVIOUR.deer, DEER_AGENT);
 });
 
 test('readout, locomotion plan, behaviour row, and snapshot rewind', () => {

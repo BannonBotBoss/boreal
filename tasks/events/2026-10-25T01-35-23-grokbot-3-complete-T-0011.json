@@ -1,0 +1,10 @@
+{
+  "branch": "grokbot-3/deer-agent-core",
+  "skill": "agent-pipeline-species",
+  "handoff": "tasks/handoffs/T-0011-grokbot-3.md",
+  "note": "Issue #7. npx tsc --noEmit exit 0. npm test 692 tests, 678 pass, 0 fail, 14 todo. deerHerd.ts deleted. Deer graze, vigilance and herd alarm run on stepAgent. Frame gate unmeasurable (T-0047 still drops the rig before chunk commit); numeric substitute is the 0.07 vigilance slope, alarmDelay difference 50/343 m, intake 7.8 g fresh/min. Not self-approved in this event.",
+  "type": "complete",
+  "task": "T-0011",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T01:35:23-07:00"
+}

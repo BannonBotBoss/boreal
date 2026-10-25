@@ -41,3 +41,17 @@ transactions, with no random actions or bare timers.
 - Staging state for a screenshot without saying so.
 - Food state that resets when a tile unloads (depletion silently disappears).
 - Killing a shared dev server or leaving headless browsers running; git reset --hard.
+
+## What T-0011 added (white-tailed deer)
+
+The hare row has no `social` field. Leave it that way. A species with `social` takes the herd path inside the same `stepAgent`: no `rng` call (utility noise, jitter, zig, rest span and the feed step are all off), bout lengths from `herdBouts`, alarm delay from `alarmDelay`. Do not add a second pipeline and do not call `AnimalBrain.decide` for that species.
+
+Vigilance here is Lashley's linear feeding-time slope (females, +0.07 per extra deer, flat after group size 4), not the hare power law in `needs/social.ts`. Do not copy `vigilance()` onto the deer. The lone intercept 0.36 is an estimate so the slope stays inside 0..1; say so.
+
+A chew is one bite of fresh mass (`biteG`), not a sound timer. Hooves are gait-phase crossings while fleeing. The snort is the bolt event. `deerSoundIds` keeps the old escape-edge snort only when `snort` is omitted, so an old caller does not go silent and a new caller does not snort twice.
+
+Herd alarm uses the previous step's posture. `senseHerd` sets `distance` to Infinity so flight-initiation distance is the wolf's, not the mate's. The implied threat sits behind the mate (heading 0 faces -z). Delay is `distance / 343` only when the acoustic cue leads, plus `attend / cue`.
+
+Browse is a virtual `browse:ground` contact (`deer` | `browse`, Koerth 7.8 g fresh/min). Forest depletion and regrowth stay T-0015. Do not build that field here.
+
+Deer rigs are still dropped before the chunk commits (T-0047). A pixel frame of a deer body is not a behaviour score until that lands. The calibrated substitute is the vigilance slope, `alarmDelay` against 343 m/s, and the 7.8 g/min intake. Do not invent a 95% pixel match.

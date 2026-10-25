@@ -5,8 +5,9 @@ import { runInNewContext } from 'node:vm';
 import { f, choose, scope, tracing, withTrace, setLiveTrace, type Trace } from '../src/proc/trace.ts';
 import { generateChunk, heightAt, chunkSeed, terrainBand } from '../src/core/world.ts';
 import { rockRecipe } from '../src/core/rocks.ts';
-import { shapeDeer } from '../src/core/deerHerd.ts';
-import { AnimalBrain } from '../src/core/animalBehavior.ts';
+import { createAgent, stepAgent, type AgentWorld } from '../src/core/agent.ts';
+import { DEER_AGENT, BROWSE } from '../src/core/species.ts';
+import { stream } from '../src/proc/rng.ts';
 import { surfaceDetail } from '../src/core/surface.ts';
 import { LEVEL } from '../src/core/tuning.ts';
 
@@ -51,10 +52,11 @@ test('filter scopes a trace to one entity; overrides re-run the same generator',
   assert.notEqual(generateChunk(0, 0).find(x => x.key === key)!.seed, 12345); // non-destructive
 });
 test('live trace on a behaviour layer: same decisions as untraced', () => {
+  const world: AgentWorld = { others: [], wind: { x: 0, z: 0 }, daylight: 1, food: { browse: BROWSE } };
   const run = (live: boolean) => {
-    const herd = [0, 1, 2].map(i => ({ key: `t${i}${live}`, x: i * 4, z: i, brain: new AnimalBrain(i + 7) }));
-    const t: Trace = { factors: [], filter: herd[0].key }; if (live) setLiveTrace(t);
-    const out: string[] = []; for (let s = 0; s < 200; s++) for (const d of herd) out.push(shapeDeer(d, herd, .05) + d.brain.heading.toFixed(12));
+    const a = createAgent(DEER_AGENT, 'deer:trace', 0, 0, stream(1, 'trace-deer'), { heading: .2, energy: 70 });
+    const t: Trace = { factors: [], filter: a.key }; if (live) setLiveTrace(t);
+    const out: string[] = []; for (let s = 0; s < 30; s++) { stepAgent(a, world, .05); out.push(a.action + a.heading.toFixed(12)); }
     setLiveTrace(undefined); return { out, n: t.factors.length };
   };
   const a = run(false), b = run(true); assert.deepEqual(b.out, a.out); assert.ok(b.n > 0); assert.equal(a.n, 0);

@@ -985,7 +985,7 @@ Branch `grokbot-3/planet-hydro-surface`. Claim sits on grok's approve-plan for M
 - `hydrosphereBudget` and `surfaceBudget` are pure functions of (seed, day, hour, direction). The monthly shape is Kenora's one `NORMALS` table. `cellAir` matches `climate()` at `SITE.lat` (printed 20.614973504365576 °C both). The equator monthly temperature is 27.2 °C. Seawater freeze is the UNESCO EOS-80 value −1.922 °C.
 - `bucketStep` is the Manabe overflow. A full 150 mm bucket plus 10 mm stays at 150 and runs off 10. `stepSlices` calls it. Water roughness 0.0002 m, forest 1.5 m.
 - The globe draws a 48×96 texture (snow, ice, soil, vegetation) when `CLOUDS.octaves` is above 0, and drops it at Minimum. `?hydro=0` turns the paint off. The rust spin-up snow/ice/soil paint is skipped while this layer is on. January winter-pole placement scored 0.986 (calibration 1 and 0).
-- Skill `notes/skills/planet-hydro-surface.md`. Handoff `tasks/handoffs/T-0058-grokbot-3.md`. No new task id.
+- Skill `notes/skills/planet-hydro-surface.md`. Handoff `tasks/handoffs/T-0058-grokbot-3.md`. Pull request https://github.com/BannonBotBoss/boreal/pull/88 (Refs #43, does not close it). No new task id.
 - `npx tsc --noEmit` exit 0. `npm test` 761 tests, 747 pass, 0 fail, 14 todo. Frames in `tasks/evidence/2026-10-25-grokbot-3-t0058/`: January nadir luma 85.92 with the layer, 9.05 at the equator, 13.40 with `?hydro=0`. Not self-approved.
 
 ## 2026-10-25 11:54 PT - grokbot-3: globe boot order (T-0063, issue #47)

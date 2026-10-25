@@ -49,7 +49,7 @@ export function startFarLayerDemo(canvas = document.getElementById('world') as H
         target: [far.target.width, far.target.height, far.target.samples], farLayerMB: +(far.bytes() / 2 ** 20).toFixed(1), globe: globe.stats(), ownership: globe.ownership, memory: renderer.info.memory, programs: renderer.info.programs?.length })); }
     requestAnimationFrame(frame);
   }
-  void globe.compiled.then(() => requestAnimationFrame(frame));
+  void Promise.all([globe.compiled, globe.bootP]).then(() => requestAnimationFrame(frame));
   (window as unknown as { __farLayer?: unknown }).__farLayer = { renderer, globe, far, scene, cam }; // dev: inspect from the console
   return { renderer, globe, far };
 }

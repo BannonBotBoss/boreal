@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0063",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T11:54:20-07:00",
+  "branch": "grokbot-3/globe-boot-order",
+  "skill": "globe-boot-order",
+  "handoff": "tasks/handoffs/T-0063-grokbot-3.md",
+  "note": "Issue #47. Boot order is RUST_BOOT_STEPS / GLOBE_BOOT_ORDER. grid_boot does not call update_energy and does not advance day or hour. startGlobe waits on bootP before requestAnimationFrame. Shared step returns before renderTo until booted. npx tsc --noEmit exit 0. npm test 758 tests, 744 pass, 0 fail, 14 todo. cargo test 74 passed. Frame gate N/A (no mesh, shader, or colour change). Numbers: sea-level pressure 101325 Pa (ISO 2533), land roughness is the empty-soil z0, Ts equals the climate-seed air temperature. Skill notes/skills/globe-boot-order.md."
+}

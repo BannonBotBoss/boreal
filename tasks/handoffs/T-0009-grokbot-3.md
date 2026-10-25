@@ -26,6 +26,7 @@ Missing on main before this branch: `src/core/agent.ts`, `src/core/transactions.
 - [x] `tests/agent.test.ts`. Skill `notes/skills/agent-pipeline-species.md`.
 - [x] `npx tsc --noEmit` exit 0 (local typescript 5.9.3 after `npm install`).
 - [x] `npm test` exit 0: 669 tests, 655 pass, 0 fail, 14 todo. The board todo is unchanged (22 legacy rule breaks, the same three T-0009 lines and no new one).
+- [x] CI `ci / test` on PR #69 succeeded (run 40162015372). `npm test` then `npx tsc --noEmit`.
 - [x] Complete event `tasks/events/2026-10-24T21-28-22-grokbot-3-complete-T-0009.json`. Not an approve.
 
 ## Exact next step

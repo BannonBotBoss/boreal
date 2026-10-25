@@ -1,0 +1,14 @@
+{
+  "port": "5281",
+  "url": "http://127.0.0.1:5281/?nomenu&bench&hour=11",
+  "info": {
+    "href": "http://127.0.0.1:5281/?nomenu&bench&hour=11",
+    "w": 1024,
+    "h": 559,
+    "title": "Boreal · Script laboratory"
+  },
+  "errors": [],
+  "logs": [
+    "BENCH gpu-string ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  ]
+}

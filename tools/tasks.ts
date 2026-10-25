@@ -40,7 +40,11 @@ export function ledger(root = join(process.cwd(), 'tasks')) {
     const t = parseTask(f, readFileSync(join(root, f), 'utf8'));
     if (!t.id || !f.startsWith(t.id + '-')) errors.push(`${f}: front matter id must match the file name`);
     if (!t.author) errors.push(`${f}: no author`); if (t.steps === 0) errors.push(`${f}: no "- [ ]" steps under ## Objectives`);
-    tasks.set(t.id, t);
+    // Two files with one id used to overwrite the Map, so the later filename hid the earlier task (T-0071 relay
+    // vs the wolf-file landing). Keep the first file in sort order and report the collision. Rule 13 renumbers
+    // the task that reached main second; the test for this is not the legacy-break todo.
+    if (tasks.has(t.id)) errors.push(`${f}: duplicate task id ${t.id || '(blank)'} (also ${tasks.get(t.id)!.file})`);
+    else tasks.set(t.id, t);
   }
   // Event files: a UTF-8 BOM (Windows PowerShell writes one) is dropped; a file that is not valid JSON is a warning and is
   // skipped, so one bad file never hides the whole board.

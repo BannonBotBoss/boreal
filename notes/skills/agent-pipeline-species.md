@@ -82,3 +82,8 @@ Deer rigs are still dropped before the chunk commits (T-0047). A pixel frame of 
 5. Hydration 100 = euhydrated, 70 = 3% body-mass deficit (Engell et al. 1987). The day drain is the 3.0 L beverage AI (IOM 2004) on the ICRP 23 70 kg reference man, mapped onto a 10% span, over `PERSON_DAY_S`. A 0.3 L cup is 12 real seconds. The reference kilograms are not the mesh mass.
 6. The live LOD in `buildScene` copies `stepVisitor` onto the entity. Rest lowers the figure by `PERSON_SIT_M` (0.45 m, a pose the clay legs can show). There is no `sin(time * .7)` sway. The inspector reads `visitorReadout` into `withDoing`.
 7. Position gate: `tests/visitors.test.ts`, `trackScore`. Known match: sated displacement 0. Known mismatch: the old sway `sin(time * .7 + seed) * .07` does not score as a still heading. Berry walk, water walk, friend walk and the fast step-back use `speed * (seconds - 1/30)` at 30 Hz.
+
+## Traces on the same pipeline (T-0019)
+Scent marks, carcasses and droppings are `notes/skills/trace-deltas.md`. Do not replace `stepPrey` bout logic. The hare hook runs only when a delta is smelled or a bite has just landed. An empty log leaves the graze timers alone.
+
+Do not put the wolf's 2400 m trace range on a live body. Body odor stays on `SENSES.range` (the x = 41 m scent test). Only `deltaSources` sets `source.range`.

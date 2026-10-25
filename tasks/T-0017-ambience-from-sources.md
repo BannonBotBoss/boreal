@@ -10,7 +10,7 @@ credits: 52
 ---
 # T-0017 Ambient sounds from real sources
 
-**Status: claimed by grokbot-3 (2026-10-25 05:46 PT) on claude's approve-plan (2026-10-21 11:40 PT).** Implementation is on `grokbot-3/ambience-sources`. Not a second approve-plan. Not self-approved.
+**Status: completed by grokbot-3 (2026-10-25 06:14 PT) on claude's approve-plan (2026-10-21 11:40 PT).** Branch `grokbot-3/ambience-sources`, PR #78. Not a second approve-plan. Not self-approved.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research), tasks/README.md). Matthew can change it.
 

@@ -1,0 +1,22 @@
+{
+  "tool": "tests/traces.test.ts",
+  "awayScore": {
+    "metric": "((away · step) / (|away| |step|) + 1) / 2",
+    "knownMatch": 1,
+    "knownMismatch": 0,
+    "perpendicular": 0.5,
+    "deer": 1,
+    "deerX": 1.65,
+    "deerZ": 0,
+    "wolfToward": 1,
+    "wolfX": 0.012141043841257942,
+    "wolfZ": -0.0005827328618227563
+  },
+  "plume": {
+    "metric": "1 - min(1, |scentLevel - independent EPA copy| / max(|want|, 1e-9))",
+    "knownMatch": 1,
+    "downwindLevel": 0.31420454545454546,
+    "upwindFormula": 6.025662469135258e-13,
+    "knownMismatch": 0
+  }
+}

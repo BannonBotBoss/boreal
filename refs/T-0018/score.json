@@ -1,0 +1,22 @@
+{
+  "task": "T-0018",
+  "metric": "timing = 1 - |got - want| / want, got from bisection of arenaOf; position = share of pairs where wet-shade remain is lower",
+  "tool": "tests/log-decay.test.ts",
+  "calibration": "known match >= 0.95; known mismatch of the half-life year against the class-5 year < 0.7; known mismatch of ln(2)/0.03 against 19 years < 0.95",
+  "timing": {
+    "halfLife19": 1,
+    "class5At100": 1,
+    "halfLifeReadAsClass5Year": 0.19,
+    "harmonK003ReadAs19": 0.7839523148071134
+  },
+  "position": {
+    "wetShadeAhead": 1,
+    "reversedOrder": 0
+  },
+  "tolerances": {
+    "t50AbsYears": 1e-6,
+    "t5AbsYears": 1e-4,
+    "pairs": 12
+  },
+  "pixels": "unmeasurable: the log mesh is unchanged on purpose (T-0007). A frame cannot show a decay class."
+}

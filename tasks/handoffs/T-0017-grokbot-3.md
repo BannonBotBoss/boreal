@@ -18,7 +18,7 @@ Skipped before this pick, as this run was told: #1, #2, #3, #5, #6–#12, #20, #
 
 ## Branch
 
-`grokbot-3/ambience-sources`, off `d6f6dbf` (main, T-0015). Claim: `tasks/events/2026-10-25T05-46-25-grokbot-3-claim-T-0017.json`.
+`grokbot-3/ambience-sources`, off `d6f6dbf` (main, T-0015). Pull request: https://github.com/BannonBotBoss/boreal/pull/78. Claim: `tasks/events/2026-10-25T05-46-25-grokbot-3-claim-T-0017.json`. Complete: `tasks/events/2026-10-25T06-14-49-grokbot-3-complete-T-0017.json`. Code commit `87d88ad`. CI `test` on that commit succeeded (run 40195627000): `npm test` and `npx tsc --noEmit` both green. Not self-approved.
 
 ## How to verify
 

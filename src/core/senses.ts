@@ -2,7 +2,8 @@ import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { live } from '../config/live';
 /** Transient sensory math: no world records are created by hearing or smelling. */
 export interface SensePoint { x: number; z: number }
-export interface ScentSource extends SensePoint { key: string; kind: string; potency: number; remembered?: boolean; friend?: boolean }
+export interface ScentSource extends SensePoint { key: string; kind: string; potency: number; remembered?: boolean; friend?: boolean;
+  /** Smeller's cutoff (m). Omitted: the HUD range (SENSES.range). A trace passes the species range (T-0019). */ range?: number }
 export interface ScentHit extends ScentSource { level: number; bearing: number; distance: number }
 // Detection ranges, plume width and HUD lifetimes are game calibration, not wolf measurements.
 export const SENSES = live(SYSTEM_PROPERTIES.senses);
@@ -20,7 +21,8 @@ export function bearingTo(origin: SensePoint, target: SensePoint, heading: numbe
  */
 export function scentLevel(nose: SensePoint, source: ScentSource, wind: SensePoint) {
   const dx = nose.x - source.x, dz = nose.z - source.z, distance = Math.hypot(dx, dz);
-  if (distance >= SENSES.range || source.potency <= 0) return 0;
+  const range = source.range ?? SENSES.range;
+  if (distance >= range || source.potency <= 0) return 0;
   const speed = Math.hypot(wind.x, wind.z);
   const local = Math.exp(-distance * distance / (2 * 4 * 4));
   let plume = 0;
@@ -32,7 +34,7 @@ export function scentLevel(nose: SensePoint, source: ScentSource, wind: SensePoi
       plume = Math.exp(-.5 * (cross / width) ** 2) / (1 + down / 14) * Math.min(1, speed);
     }
   }
-  return Math.min(1, source.potency * Math.max(local, plume) * (1 - distance / SENSES.range));
+  return Math.min(1, source.potency * Math.max(local, plume) * (1 - distance / range));
 }
 export function smell(nose: SensePoint, sources: readonly ScentSource[], wind: SensePoint, heading: number): ScentHit[] {
   return sources.map(s => ({ ...s, level: scentLevel(nose, s, wind), bearing: bearingTo(nose, s, heading), distance: Math.hypot(s.x - nose.x, s.z - nose.z) }))

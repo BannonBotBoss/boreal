@@ -9,7 +9,7 @@
  * without needing STAGES.on, so a globe tile matches the walkable terrain for the same seed.
  */
 import { STAGES, elevationGrid, lakeAt, sampleGrid, toWorld } from './elevation';
-import { carve, riverAt } from './rivers';
+import { carve, pondAt, riverAt } from './rivers';
 import { soilAt, type SoilKind } from './soils';
 import { surfaceDetail } from '../surface';
 import { LEVEL } from '../tuning';
@@ -17,7 +17,7 @@ import { LEVEL } from '../tuning';
 export type SurfacePoint = {
   /** Ground height in game metres (river beds carved; lake/sea floors included, NOT the water surface). */
   height: number;
-  /** Water surface (m) when the point is in a stage-2b lake/pond or below base water, else null. */
+  /** Water surface (m) when the point is in a stage-2b lake, a channel-crossing pond, or below base water, else null. */
   lake: { surface: number; areaHa: number; kind: 'pond' | 'lake' | 'open' } | null;
   /** River channel at the point (bed or inner bank), else null. order = Strahler. */
   river: { surface: number; order: number; widthM: number } | null;
@@ -31,8 +31,9 @@ export type SurfacePoint = {
 export function surfaceAt(x: number, z: number, seed = STAGES.seed): SurfacePoint {
   const g = elevationGrid(seed), rv = riverAt(seed, x, z);
   const h0 = toWorld(g, sampleGrid(g, x, z)) + surfaceDetail(x, z) * .5, height = rv ? carve(h0, rv) : h0;
-  const lk = lakeAt(seed, x, z);
+  const lk = lakeAt(seed, x, z), pond = lk ? undefined : pondAt(seed, x, z);
   const lake: SurfacePoint['lake'] = lk ? { surface: lk.surface, areaHa: lk.areaHa, kind: lk.kind }
+    : pond ? { surface: pond.surface, areaHa: pond.areaHa, kind: pond.kind }
     : height < LEVEL.waterSurface ? { surface: LEVEL.waterSurface, areaHa: Infinity, kind: 'open' } : null;
   const river = rv && rv.d < rv.half ? { surface: rv.surface, order: rv.order, widthM: rv.half * 2 } : null;
   const so = soilAt(seed, x, z), wet = !!lake || !!river;

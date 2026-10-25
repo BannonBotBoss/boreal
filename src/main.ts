@@ -51,7 +51,8 @@ import { createInspector } from './ui/inspector';
 import { createHandles } from './ui/shapeTools';
 import { setThunk } from './ui/haptics';
 import { accelLimit, approach, gravity } from './proc/physics';
-import { GROUND, SAVE_KEY_GROUND, addDeposit, column, deerDroppingsKg, footing, loadGround, saveGround, tickGround } from './core/ground';
+import { GROUND, SAVE_KEY_GROUND, addDeposit, column, footing, loadGround, saveGround, tickGround } from './core/ground';
+import { tryMark } from './core/traces';
 import { appearancePanel, restoreLooks } from './ui/appearancePanel';
 import { runJobs } from './core/interest';
 import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
@@ -228,8 +229,7 @@ setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); } catch 
   if (paused || menu.open) return; // menu freezes the world clock; no sim work while open
   playerMass = view.playerMass(); // follows Play-as + appearance edits
   ground = footing(column(player.x, player.z), playerMass, 'canid', gravity());
-  for (const a of view.audibleAnimals()) if (a.x !== undefined && a.z !== undefined && /deer/.test(a.key)) { const kg = deerDroppingsKg(view.massOf(a.key) ?? 0, 12 * GROUND.speed / 86400);
-    if (kg > 0) record({ kind: 'droppings', x: a.x, z: a.z, t: GROUND.years, m: kg }, 3); } // residue reaches the ground when the delta expires
+  // Droppings are a digest act (core/traces addFeces), not this clock. Footprints stay: a step that sinks the ground.
   if (Math.abs(view.playerBrain.speed) > .3 && ground.sink > .002) record({ kind: 'footprint', x: player.x, z: player.z, t: GROUND.years, m: ground.sink });
   prune(); saveNeeds();
   try { localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); } catch { /* storage blocked */ } }, 1000);
@@ -448,6 +448,7 @@ function frame(time: number) { const frameStart = performance.now();
       const nx = stepNeeds(sp, needs, { dtGame: 3600 / REAL_SECONDS_PER_GAME_HOUR / 30, speed: moved * 30, tC: airC, drinking, energy: brain.energy });
       needs = nx.state; brain.energy = nx.energy;
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
+      if (view.playable.id === 'wolf' && moved > 0) tryMark('wolf:player', player.x, player.z, moved);
       { const keep = !autonomous && brain.motion === 'jump' && locked ? locked.key : undefined;
         if (keep && locked) {
           const c = huntTouch('player', keep, player, locked);

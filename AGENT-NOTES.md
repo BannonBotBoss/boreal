@@ -837,6 +837,14 @@ Matthew in chat, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like thi
 - Skill `notes/skills/next-free-task-id.md`. `notes/skills/board-rule-inspection.md` and `notes/skills/grokbot-relay-reviewer.md` point at it. Handoffs: `tasks/handoffs/grokbot-3-loop.md`, `tasks/handoffs/T-0071-grokbot-3.md`.
 - Nothing on screen. Evidence table is in `tasks/handoffs/grokbot-3-loop.md` under "2026-10-24 17:17 PT". `npx tsx tools/tasks.ts` after the events: 22 rule breaks, same count as before, no duplicate-id line. `npx tsc --noEmit` exit 0. `npm test` 640 tests, 626 pass, 0 fail, 14 todo; the board todo stays at 22 legacy rule breaks. PR https://github.com/BannonBotBoss/boreal/pull/61. Not merged.
 
+## 2026-10-24 20:46 PT - grokbot-3: why chains name a placement cause and a live doing step (T-0016)
+Issue #12. Branch `grokbot-3/why-every-object`. Not merged.
+- `src/core/why.ts`: a placed object gets `by` on `grew`, `born`, `embedded` or `wandered` from `standAt` (years since fire), `gapLight()` (the existing gap-phase canopy), or the river channel. Hare and wolf chains say birth plus the interest ring or the player. `withDoing` appends one ongoing goal step and is not stored. `doingFromProblem` / `doingFromAgent` read the brain and the sim, and an unsensed explore says so.
+- `src/core/world.ts`: the legacy river gaussian scale² is `LEGACY_RIVER_FOLD2` (110, the value `heightAt` already used).
+- `src/ui/inspector.ts`: static objects, deer, hares and the player wolf show `inspectWhy` now and chain. The doing step is computed in `observed` and not written to a record.
+- Tests: `tests/why-place.test.ts`. Skill: `notes/skills/why-chain-placement.md`. Handoff: `tasks/handoffs/T-0016-grokbot-3.md`.
+- No new rate. The age check is exact equality with `standAt`; an age one year off fails.
+
 ## 2026-10-24 18:07 PT - grokbot-3: move the wolf-file landing from T-0074 to T-0076
 Matthew in chat, 2026-10-24 17:10 PT: "yes, automaticallly fix anything like this mmoving forward". Same branch `grokbot-3/fix-duplicate-t0071`, PR #61. Not merged. main not pushed.
 - T-0074 is grokbot-1's open PR #60 (`grokbot-1/wolf-jump-ballistic`, title and `tests/animal-behavior.test.ts`, no task file), opened about five minutes before PR #61. T-0075 is PR #64 (`tasks/T-0075-wolf-view.md`). After `git fetch --all`, the highest id in `tasks/` and `tasks/events` across every remote branch is T-0075. T-0046 stays reserved. The landing file is `tasks/T-0076-land-orphan-task-files.md`.

@@ -4,13 +4,13 @@ title: Why chains on every spawned object: placement causes and a live "doing no
 author: grok
 scratch: false
 research: false
-skill: false
+skill: why-chain-placement
 tags: [why, inspector]
 credits: 40
 ---
 # T-0016 Why chains on every spawned object
 
-**Status: proposed by grok (2026-10-21 10:25 PT). Open claim: no owner.** Ownership is claim-based. Matthew added it to the board directly ("just go ahead and add them to the board"); a claim still needs an `approve-plan` event first (tools/tasks.ts).
+**Status: claimed by grokbot-3 (2026-10-24 20:46 PT) on `grokbot-3/why-every-object`.** Plan was approved by claude (2026-10-21T11-33). The shared agent core (T-0009) is not on main; this task uses the why chain and the site, stand and river models that are.
 
 **Credits: 40** (= 10 x 4 objectives x (1), tasks/README.md). Matthew can change it.
 

@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0016",
+  "agent": "grokbot-3",
+  "at": "2026-10-24T20:49:02-07:00",
+  "note": "Claimed after claude approve-plan 2026-10-21T11:33. T-0009 agent core is not on main; placement uses why.ts plus siteAt, standAt and the river already on main. Branch grokbot-3/why-every-object. Not a new plan."
+}

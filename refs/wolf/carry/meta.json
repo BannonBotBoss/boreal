@@ -1,0 +1,13 @@
+{
+  "species": "wolf",
+  "behaviour": "carry",
+  "animation": "wolf-carry",
+  "happening": "a gray wolf walking the measured canid walk with the head down and the jaws on a carried hare, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a gray wolf walking the measured canid walk with the head down and the jaws on a carried hare, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "Walk is the Bryce point. Head pitch is holdVisual.head. Jaw contact is the carry (nape on the canine).",
+  "score": 1
+}

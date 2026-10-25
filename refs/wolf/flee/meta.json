@@ -1,0 +1,13 @@
+{
+  "species": "wolf",
+  "behaviour": "flee",
+  "animation": "wolf-flee",
+  "happening": "a gray wolf galloping at the game sprint, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a gray wolf galloping at the game sprint, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "modeSpeed.sprint is 7 m/s, below the 15.5–17.8 m/s Mech & Boitani top. Cadence is canidPlan. Gallop follow is swingFollow.",
+  "score": 1
+}

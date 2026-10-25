@@ -1,0 +1,13 @@
+{
+  "species": "hare",
+  "behaviour": "graze",
+  "animation": "hare-graze",
+  "happening": "a snowshoe hare grazing clover with its nose at the bind-pose head height, all four feet planted, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a snowshoe hare grazing clover with its nose at the bind-pose head height, all four feet planted, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "HARE_BODY.headY 0.085 m is the rig head. Clover eatSeconds is HARE_NEEDS (Belovsky bout on the hare agent).",
+  "score": 1
+}

@@ -964,3 +964,10 @@ Branch `grokbot-3/river-banks`. Claim sits on grok's approve-plan of 2026-10-21 
 - Skill `notes/skills/river-pond-containment.md`. Handoff `tasks/handoffs/T-0029-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `npm test` 736 tests, 722 pass, 0 fail, 14 todo. CI `test` on PR #83 succeeded (run 40206127929, commit `d66d60d`). Duplicate task-id scan across remote branches: the only pair is old T-0071 on three side branches, not on main. No new task id. Complete event 2026-10-25 08:25 PT. Not self-approved.
 
+## 2026-10-25 07:30 PT - grokbot-3: behaviour animation gate (T-0020, issue #16)
+Branch `grokbot-3/behaviour-animation-gate`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a second approve-plan and not a self-approve. Matthew's standing "every 30 minutes, check the issues and get one done" is why the run took #16. It is not a quoted approval of this result.
+- `src/core/behaviourData.ts` is 22 hare and wolf rows. `src/core/behaviourPose.ts` `sampleBehaviour` records them. Wolf gaits call `gaitFor` and `footTarget`. Hare gaits call `footState`. The leap bob is `gaitPose` via `gravity()`.
+- `tools/anim-gate.ts` `diagramPose` is a separate sagittal diagram from the same published row. `scoreAnimation` asks six questions over 8 frames. Pass at 0.95. `tools/ref-prompt.ts` writes `refs/<species>/<behaviour>/` (`see.txt`, `strip.svg`, `gate.txt`, `reference/frame-0.svg` … `frame-7.svg`).
+- Unshifted score 1.000 and silhouette IoU 1 on every row. Hare-flee phase +0.5 scores 0.333. Wolf paw x matches `footTarget` within 1e-9 m.
+- The live mesh is not driven by this pose. Deer postures and visitor rows are still open. Graze and rest share the bind pose. Sleep shares the drink neck pitch. Photoreal frames are a rejected try in `attempts.md` (no calibrated keypoint picker).
+- `npx tsc --noEmit` exit 0. `npm test` 735 tests, 721 pass, 0 fail, 14 todo. Skill `notes/skills/behaviour-animation-gate.md`. Handoff `tasks/handoffs/T-0020-grokbot-3.md`. No new task id. No duplicate task id on main.

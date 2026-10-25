@@ -1,0 +1,13 @@
+{
+  "species": "wolf",
+  "behaviour": "release",
+  "animation": "wolf-release",
+  "happening": "a gray wolf standing with the head up and the jaws off the hare, feet planted, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a gray wolf standing with the head up and the jaws off the hare, feet planted, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "The standing bind pose after releaseHold. Sample window is the wolf react time.",
+  "score": 1
+}

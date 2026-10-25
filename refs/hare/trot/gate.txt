@@ -1,0 +1,9 @@
+hare-trot score 1.000 PASS (8 frames)
+pass  1. recording: same frame count over one cycle
+pass  2. overall: silhouette IoU after hip and body-length normalisation >= 0.95
+pass  3. body parts: share of keypoints within 5% of body length >= 0.95
+pass  4. order and timing: paw, head, and airborne flags match
+pass  5. contact: feet and jaws touch in the same frames
+pass  6. real data: duty, footfall, and flight match the published row
+duty 0.505,0.575,0.505,0.575 vs 0.502,0.573,0.502,0.573; hz 4.170 vs 4.170
+failed frames: none

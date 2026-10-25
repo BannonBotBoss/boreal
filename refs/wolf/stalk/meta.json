@@ -1,0 +1,13 @@
+{
+  "species": "wolf",
+  "behaviour": "stalk",
+  "animation": "wolf-stalk",
+  "happening": "a gray wolf stalking at the measured canid walk, nose level with the shoulder, side view",
+  "prompt": "Generate a frame-by-frame sequence of reference images depicting a gray wolf stalking at the measured canid walk, nose level with the shoulder, side view. Fixed camera, side view plus one 3/4 view, plain background, evenly spaced frames over one cycle.",
+  "tool": "tools/anim-gate.ts diagramPose",
+  "date": "2026-10-25",
+  "frames": 8,
+  "accepted": "diagram",
+  "source": "Bryce & Williams 2017 walk 1.27 m/s, 1.50 Hz. Duty 0.65 is gaitData. Nose target is the shoulder-joint height.",
+  "score": 1
+}

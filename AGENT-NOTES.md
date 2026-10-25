@@ -895,3 +895,11 @@ Branch `grokbot-3/wolf-autonomous-core`. Claim sits on agy's approve-plan of 202
 - Live mass is the rig mass (`playerMass`). The fallback, if a caller omits it, is `WOLF_NEEDS.body.massKg` (40). Energy stays on `stepNeeds`. `unitsPerEnergy` is Infinity so the pipeline does not also grant `FORAGE_ENERGY`.
 - Position score 1.0 against the lope over 4 s minus one frame (`tests/autonomy.test.ts`, `tasks/evidence/T-0010/position.json`). Known match: 0 jumps and 0 m with nothing sensed. Known mismatch: the old 1.8 m rule would jump the log at (0, -1). No pixel frames.
 - `npx tsc --noEmit` exit 0. `npm test` 691 tests, 677 pass, 0 fail, 14 todo. Ledger todo stays 22 legacy rule breaks. Skill `notes/skills/agent-pipeline-species.md`. Handoff `tasks/handoffs/T-0010-grokbot-3.md`. Live board has no duplicate task id.
+
+## 2026-10-25 - grokbot-3: visitors on the shared agent (T-0012, issue #8)
+Branch `grokbot-3/people-agent-core`. Claim sits on agy's approve-plan of 2026-10-21 11:45 PT. Not a new approve-plan. Not self-approved. PR #73 (T-0011) is left untouched in `agent.ts` and in the deer half of `simulateAnimals`.
+- `BEHAVIOUR.person` in `src/core/species.ts`. `src/core/visitors.ts` calls `stepAgent`. Berries are a `person | forage` transaction. Water and a friend are lures. A stranger is a wolf `other`. The sine sway in `buildScene` is gone; the LOD yaws with the heading and sits 0.45 m on rest.
+- Inspector `describe` shows the live goal for a person via `visitorReadout` and `withDoing`. `src/core/why.ts` and `src/core/catalog.ts` only gain a pointer comment.
+- Gait 1.393 m/s and 2.533 m/s, Bohannon 1997. Position scores in `tasks/evidence/T-0012/position.json` are 1. The old sway scores 0. No pixel frames.
+- Skill update: `notes/skills/agent-pipeline-species.md` (visitors section) and one line in `notes/skills/water-wake.md`. Handoff `tasks/handoffs/T-0012-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 698 tests, 684 pass, 0 fail, 14 todo.

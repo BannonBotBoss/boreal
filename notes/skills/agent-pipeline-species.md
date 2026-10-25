@@ -47,6 +47,10 @@ transactions, with no random actions or bare timers.
 - Detouring out to a log end during the jump cooldown. If the hop was the cheaper plan, keep walking toward the goal while the legs recover.
 - Scaling a log up to make the detour long. Mesh scale fattens the radius too. One hop at the lope is `jumpHopM` (2.08 m at 2.4 m/s). A log wider than that is walked around even when the vertical joules look cheaper.
 - Putting food at exactly `reach.food`. Approach utility subtracts distance / approachDistance, and at the cap it loses to rest.
+- Giving a person `utility.approach` above 0. With hunger at 0 that term still walks them to berries. Hunger is the approach term (`approach` base 0, `feedHere` 0).
+- Passing a friend as a feared `other`. The friend record is a lure. A stranger is the wolf `other`. Both at once makes them flee the friend.
+- Leaving `timing.react` at the hare's 1 s. The shared pipeline bolts a moving cue once `react` elapses, even outside the flight distance. A visitor watches until `flee.distance`; `react` stays long so the distance is the cause.
+- Editing `src/core/agent.ts` for a person. T-0011's open PR already rewrites that file for the herd. A person is a new `AgentSpecies` plus `stepVisitor`.
 
 ## Wolf route on the same pipeline (T-0010)
 1. Add `BEHAVIOUR.wolf` by reading `WOLF_NEEDS` (senses, lope, sprint, fed, stamina, flight distance). Do not copy those numbers into a second table. Flag mood bends, `full`, the 1.2 m lure hold, `movingAt`, and the rest recheck.
@@ -56,3 +60,12 @@ transactions, with no random actions or bare timers.
 5. Lures are optional. `utility.investigate` omitted or 0, and no lures, leaves the hare row unchanged. A water lure's level has to beat rest-while-full or a sated wolf will not walk to the drink.
 6. Show the goal and the cause on the status line and in the player inspector (`wolfReadout`). Clear the plan when the wolf is not driving, so a manual frame does not keep a stale goal.
 7. Position gate: `tests/autonomy.test.ts`. Score is `1 - |z - expected| / |expected|` with `expected = -approach * (seconds - 1/30)`. Known match: jump count 0 and displacement 0 with nothing sensed, including a log the old 1.8 m rule would jump. Known mismatch: `oldWouldJump` is true for that log. Pixel frames are not this metric.
+
+## Visitors on the same pipeline (T-0012)
+1. Add `BEHAVIOUR.person` in `src/core/species.ts`. Do not edit `src/core/agent.ts` while T-0011's PR is open: that PR rewrites the herd inside the pipeline. `src/core/visitors.ts` calls `createAgent` / `stepAgent` only.
+2. Berries are forage entities wrapped as a `FoodSource`. The pick transaction is `person | forage` and it runs only while the feed contact is on the bus. Water is a lure aimed at `drinkPoint` (the last dry step toward `nearestWater`), not a second food. A friend (`records[key].relationship === 'friend'`) is a lure. A stranger is one `other` of kind `wolf`.
+3. `utility.approach` and `utility.feedHere` stay 0 so hunger is what walks them to a patch and keeps them picking. `utility.noise` and `timing.jitter` stay 0 so the path is the need. `timing.react` stays long so a moving wolf outside `flee.distance` is watched, not bolted.
+4. Gait: comfortable 1.393 m/s and fast walk 2.533 m/s (Bohannon 1997, men in their 20s). Energy 100 is the 2000 kcal reference day, spent over one game day (`PERSON_DAY_S`). Berry grams per energy point are `(2000/100) / (57/100)` from USDA FDC 171711. One berry per second is an estimate; the 1.36 g berry is the USDA 50-berry portion.
+5. Hydration 100 = euhydrated, 70 = 3% body-mass deficit (Engell et al. 1987). The day drain is the 3.0 L beverage AI (IOM 2004) on the ICRP 23 70 kg reference man, mapped onto a 10% span, over `PERSON_DAY_S`. A 0.3 L cup is 12 real seconds. The reference kilograms are not the mesh mass.
+6. The live LOD in `buildScene` copies `stepVisitor` onto the entity. Rest lowers the figure by `PERSON_SIT_M` (0.45 m, a pose the clay legs can show). There is no `sin(time * .7)` sway. The inspector reads `visitorReadout` into `withDoing`.
+7. Position gate: `tests/visitors.test.ts`, `trackScore`. Known match: sated displacement 0. Known mismatch: the old sway `sin(time * .7 + seed) * .07` does not score as a still heading. Berry walk, water walk, friend walk and the fast step-back use `speed * (seconds - 1/30)` at 30 Hz.

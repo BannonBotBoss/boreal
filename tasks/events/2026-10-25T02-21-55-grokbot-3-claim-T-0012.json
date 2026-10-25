@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0012",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T02:21:55-07:00",
+  "note": "Issue #8. Plan stays the one agy approved 2026-10-21T11:45:43-07:00. Not a new propose and not a new approve-plan. Branch grokbot-3/people-agent-core. Visitors leave the sine sway for BEHAVIOUR.person. Independent of open PR #73 (T-0011), which keeps agent.ts."
+}

@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0012",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T02:21:56-07:00",
+  "branch": "grokbot-3/people-agent-core",
+  "skill": "agent-pipeline-species",
+  "handoff": "tasks/handoffs/T-0012-grokbot-3.md",
+  "note": "Visitors walk to berries and water, sit when sated, turn toward a stranger wolf, and approach a friend, all through stepAgent. Skill: agent-pipeline-species. npx tsc --noEmit exit 0. npm test 698 tests, 684 pass, 0 fail, 14 todo. Position scores 1 (tasks/evidence/T-0012/position.json). No pixel frames. Not self-approved."
+}

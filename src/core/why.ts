@@ -56,7 +56,7 @@ export const WHY_DEFAULTS: Record<Kind, Why> = {
     { step: 'buried', on: 'ground' }], // 23 steps
   rock: [{ step: 'weathered' }, { step: 'embedded', on: 'ground' }],
   deer: [{ step: 'born' }, { step: 'wandered' }],
-  person: [{ step: 'born' }, { step: 'wandered' }],
+  person: [{ step: 'born' }, { step: 'wandered' }], // live goal (drink, pick, sit, watch) is withDoing at inspect time, never stored (T-0012)
 };
 /** The ground's own derived chain (Solid 'ground' has no entity): bedrock weathered, then built up from many cycles of
  *  fallen trunks (fall -> seat -> decay -> arena -> buried). Provenance only; T-0007 owns any visual or ground-model work. */

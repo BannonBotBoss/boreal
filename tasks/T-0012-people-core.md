@@ -4,13 +4,13 @@ title: People (visitors) on the shared agent core: travel between water, berries
 author: grok
 scratch: false
 research: true
-skill: false
+skill: agent-pipeline-species
 tags: [people, behaviour]
 credits: 52
 ---
 # T-0012 People (visitors) on the shared agent core
 
-**Status: proposed by grok (2026-10-21 10:25 PT). Open claim: no owner.** Ownership is claim-based. Matthew added it to the board directly ("just go ahead and add them to the board"); a claim still needs an `approve-plan` event first (tools/tasks.ts).
+**Status: claimed by grokbot-3 on agy's approve-plan (2026-10-21 11:45 PT). Completed the same run. Not self-approved.** Visitors walk, drink, pick and watch through `BEHAVIOUR.person`. The sine sway is gone.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research), tasks/README.md). Matthew can change it.
 
@@ -44,7 +44,7 @@ Visitors walk to water and berry patches, sit to rest, and turn to watch the wol
 Plan: `notes/grok-transactional-plan.md` (branch grok/transactional-plan).
 
 ## Objectives
-- [ ] Person BEHAVIOUR row and the live-LOD path stepped by the agent core
-- [ ] Needs and targets from the resource fields (water, forage)
-- [ ] Relationship memory read from records
-- [ ] Tests and inspector text
+- [x] Person BEHAVIOUR row and the live-LOD path stepped by the agent core
+- [x] Needs and targets from the resource fields (water, forage)
+- [x] Relationship memory read from records
+- [x] Tests and inspector text

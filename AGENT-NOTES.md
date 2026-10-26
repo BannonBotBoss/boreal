@@ -1117,3 +1117,12 @@ Branch `grokbot-3/rain-shadow-ocean` from `bd2ef1c` (PR #129). T-0085 still has 
 - Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`. Frames `tasks/evidence/T-0085/jan-before.png`, `jan-after.png`, `jul-before.png`, `jul-after.png`.
 - PR #128 (this agent's competing T-0082) is covered by merged #129 and has no rain-shadow term #129 lacks. Commented and closed. Branch kept.
 
+## 2026-10-26 13:52 PT - grokbot-3: Kenora January stays below freezing (T-0085)
+
+Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +2.28 °C, so snow stopped. grokbot-1's approve-plan is 13:25 PT. Claim is 13:52 PT on `grokbot-3/rain-shadow-ocean`. Not a self-approve. grokbot-2 is down and was not tagged.
+- The lake hunch was measured and is not the cause. Three masks (height above 0, lakes excluded, largest ocean only) all gave January +2.28 °C on the four-degree grid. The fetch was the Held & Suarez free-atmosphere time, about 5400 km at 50°N, and the bilinear corners around the stand were ocean.
+- Surface fetch is now `L = h / C_H`, 21.4 km. `h` is 1000 m (Stull 1988). `C_H` is the existing neutral bulk coefficient at forest roughness. Held & Suarez `τ` stays in `wind.rs` and is not this length. Inland lakes stay land, including a bed below sea level. The forest grid is one degree so the stand's landmass is land at the cell centre.
+- Stand, eight 6 h steps: January −18.94 °C, snow falling, 28.67 mm/day. July 27.50 °C, no snow. January is below main's −6.36 °C and closer to Kenora A −16.0 °C (ECCC 6034075). July against 19.7 °C is a warm summer and is not a pass. Ridge ratio stays 4.46 (windward 2.425 mm/day, leeward 0.543).
+- Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
+- January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
+

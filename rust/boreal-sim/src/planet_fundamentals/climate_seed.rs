@@ -106,19 +106,19 @@ mod tests {
         let tb = annual_global_t();
         let decay = crate::planet_fundamentals::atmosphere::wind::ocean_decay_length_m(49.79);
         let range = |d: f64| maritime_air(196.0, 49.79, 1.0, 0.0, d, decay, tb) - maritime_air(15.0, 49.79, 1.0, 0.0, d, decay, tb);
-        let (r0, r500, r2000, r8000) = (range(0.0), range(500_000.0), range(2_000_000.0), range(8_000_000.0));
+        let (r0, r_half, r1, r4) = (range(0.0), range(0.5 * decay), range(decay), range(4.0 * decay));
         let sea = damped_seed(196.0, 49.79, OCEAN_HEATCAP, tb) - damped_seed(15.0, 49.79, OCEAN_HEATCAP, tb);
         let land = damped_seed(196.0, 49.79, LAND_HEATCAP, tb) - damped_seed(15.0, 49.79, LAND_HEATCAP, tb);
-        eprintln!("seasonal range July-minus-January at 49.79N: coast {r0:.2} K, 500 km {r500:.2}, 2000 km {r2000:.2}, 8000 km {r8000:.2}; ocean column {sea:.2}, land column {land:.2}; L {:.0} km", decay / 1000.0);
+        eprintln!("seasonal range July-minus-January at 49.79N: coast {r0:.2} K, L/2 {r_half:.2}, L {r1:.2}, 4L {r4:.2}; ocean column {sea:.2}, land column {land:.2}; L {:.1} km", decay / 1000.0);
         assert!((r0 - sea).abs() < 1e-6, "a shoreline land cell matches the ocean column, got {r0} vs {sea}");
-        assert!(r0 < r500 && r500 < r2000 && r2000 < r8000, "{r0} {r500} {r2000} {r8000}");
-        assert!(r8000 > (r0 + land) / 2.0, "8000 km is past halfway from the ocean column to the land column");
+        assert!(r0 < r_half && r_half < r1 && r1 < r4, "{r0} {r_half} {r1} {r4}");
+        assert!(r4 > (r0 + land) / 2.0, "four fetches are past halfway from the ocean column to the land column");
         // Published end members, not a fit. A miss is recorded; it is not forced.
         // Tofino A (coast) July 14.7 − January 5.3 = 9.4 K. Kenora A July 19.7 − January −16.0 = 35.7 K.
         // Environment and Climate Change Canada 1981–2010 daily averages, climate ids 1038205 and 6034075.
         let tofino = 14.7f64 - 5.3;
         let kenora = 19.7f64 - (-16.0);
-        eprintln!("ECCC range Tofino {tofino:.1} K, Kenora {kenora:.1} K; game coast {r0:.1}, game 2000 km {r2000:.1}");
+        eprintln!("ECCC range Tofino {tofino:.1} K, Kenora {kenora:.1} K; game coast {r0:.1}, game 4L {r4:.1}");
         assert!((tofino - 9.4).abs() < 1e-9 && (kenora - 35.7).abs() < 1e-9);
     }
 }

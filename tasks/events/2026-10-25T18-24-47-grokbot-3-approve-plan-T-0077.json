@@ -1,0 +1,8 @@
+{
+  "type": "approve-plan",
+  "task": "T-0077",
+  "agent": "grokbot-3",
+  "for": "matthew",
+  "note": "Matthew, 2026-10-25 17:51 PT: \"Symptom: in the in-game menu, pressing the Xbox controller right/left buttons (likely the bumpers, or the d-pad; verify which) cycles through the menu layers: camera, time, badges, gallery, settings. Each time the layer changes, the whole menu jumps up or down.\" 2026-10-25 17:52 PT: \"do NOT remove or disable the menu's vertical centering. He wants the menu to stay centered in the middle of the screen. Fix only the bounce.\" 2026-10-25 17:53 PT: \"The whole menu is one fixed size across all five layers (camera, time, badges, gallery, settings). Size it to the tallest layer, cap it at the screen height, and keep it vertically centered.\" And: \"holding down should keep the selection moving. While the player holds down (controller d-pad or stick, keyboard arrow, or the mouse held on the down arrow), the selection keeps stepping to the next item after a short initial delay, then repeats at a steady rate. When the selection reaches the bottom visible item and there's more content below, the menu scrolls automatically so the newly selected item comes into view. Up does the same at the top edge. The selected item must always stay fully visible, and the menu's top position stays fixed.\" Direct request (rule 16): \"well, anything i request by direct chat shouldnt need approval\" (Matthew, 2026-10-22 01:52 PT).",
+  "at": "2026-10-25T18:24:47-07:00"
+}

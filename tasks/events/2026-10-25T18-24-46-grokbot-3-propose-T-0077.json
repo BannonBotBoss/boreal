@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0077",
+  "agent": "grokbot-3",
+  "note": "Matthew asked in chat for the pad menu to stop jumping when the layer changes, keep the centering, and hold-to-repeat the selection. Branch grokbot-3/menu-no-bounce.",
+  "at": "2026-10-25T18:24:46-07:00"
+}

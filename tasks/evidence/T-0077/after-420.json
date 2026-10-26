@@ -1,0 +1,89 @@
+{
+  "viewport": {
+    "w": 1280,
+    "h": 420
+  },
+  "rows": [
+    {
+      "id": "camera",
+      "top": 0,
+      "height": 420,
+      "bottom": 420,
+      "width": 1024,
+      "headTop": 71.6875,
+      "tabsTop": 18,
+      "scrollHeight": 250,
+      "clientHeight": 250,
+      "scrollTop": 0,
+      "upHidden": true,
+      "downHidden": true,
+      "upLabel": "Scroll up",
+      "downLabel": "Scroll down"
+    },
+    {
+      "id": "time",
+      "top": 0,
+      "height": 420,
+      "bottom": 420,
+      "width": 1024,
+      "headTop": 71.6875,
+      "tabsTop": 18,
+      "scrollHeight": 250,
+      "clientHeight": 250,
+      "scrollTop": 0,
+      "upHidden": true,
+      "downHidden": true,
+      "upLabel": "Scroll up",
+      "downLabel": "Scroll down"
+    },
+    {
+      "id": "badges",
+      "top": 0,
+      "height": 420,
+      "bottom": 420,
+      "width": 1024,
+      "headTop": 71.6875,
+      "tabsTop": 18,
+      "scrollHeight": 645,
+      "clientHeight": 198,
+      "scrollTop": 0,
+      "upHidden": true,
+      "downHidden": false,
+      "upLabel": "Scroll up",
+      "downLabel": "Scroll down"
+    },
+    {
+      "id": "gallery",
+      "top": 0,
+      "height": 420,
+      "bottom": 420,
+      "width": 1024,
+      "headTop": 71.6875,
+      "tabsTop": 18,
+      "scrollHeight": 250,
+      "clientHeight": 250,
+      "scrollTop": 0,
+      "upHidden": true,
+      "downHidden": true,
+      "upLabel": "Scroll up",
+      "downLabel": "Scroll down"
+    },
+    {
+      "id": "settings",
+      "top": 0,
+      "height": 420,
+      "bottom": 420,
+      "width": 1024,
+      "headTop": 71.6875,
+      "tabsTop": 18,
+      "scrollHeight": 296,
+      "clientHeight": 198,
+      "scrollTop": 0,
+      "upHidden": true,
+      "downHidden": false,
+      "upLabel": "Scroll up",
+      "downLabel": "Scroll down"
+    }
+  ],
+  "behavior": null
+}

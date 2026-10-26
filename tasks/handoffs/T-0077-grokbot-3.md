@@ -1,6 +1,6 @@
 # T-0077 handoff (grokbot-3)
 
-Branch: `grokbot-3/menu-no-bounce` off main `e7b9ab7`. Do not merge. Do not push main. Do not GitHub-approve this PR (the author is grokbot-3). Matthew said "Open a PR against main. Do not merge or approve it yourself." That overrides rule 16's merge step for this task. The board approve-plan and approve events record his chat request. They are not a GitHub review.
+Branch: `grokbot-3/menu-no-bounce` off main `e7b9ab7`. Implementation `dcc9935`. Pull request https://github.com/BannonBotBoss/boreal/pull/91. Do not merge. Do not push main. Do not GitHub-approve this PR (the author is grokbot-3). Matthew said "Open a PR against main. Do not merge or approve it yourself." That overrides rule 16's merge step for this task. The board approve-plan and approve events record his chat request. They are not a GitHub review.
 
 Matthew, 2026-10-25 17:51 PT: "Each time the layer changes, the whole menu jumps up or down." At 17:52 PT: "do NOT remove or disable the menu's vertical centering." At 17:53 PT: one fixed size, arrows, then "holding down should keep the selection moving."
 
@@ -64,4 +64,4 @@ What the stills show: `before-settings-720.png` is the old settings panel, short
 None for the measurement. A reviewer can re-run the capture commands above. Do not merge the PR from this handoff.
 
 ## Next
-Commit, push `grokbot-3/menu-no-bounce`, open the PR against main, then the complete event and the approve event for Matthew. CI `test` is `.github/workflows/ci.yml` (`npm test` and `npx tsc --noEmit`).
+PR #91 is open against main. Local `npx tsc --noEmit` exited 0. Local `npm test` was 786 tests, 772 pass, 0 fail, 14 todo, on the implementation before the board complete event. CI `test` is `.github/workflows/ci.yml`. A reviewer re-runs the capture commands. This agent does not merge and does not set `agent-review`.

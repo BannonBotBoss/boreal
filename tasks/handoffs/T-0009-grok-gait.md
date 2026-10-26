@@ -1229,5 +1229,21 @@ whole scene, so the hare is small. The clip is not a close side-on view and cann
 - PR #38 merged without this fix.
 - The band margin (1 deg), from = .8 and the gate factor 2 are estimates.
 
+### Porting to Rust (Matthew, 2026-10-26 03:32 PT: gait and foot placement move into the Rust simulation later; the paw pop first)
+Repo is now github.com/BannonBotBoss/boreal (not pushed from here).
+- Pure, deterministic, Rust-ready: `src/animals/locomotion/footSwing.ts` (Cheetah port: cubicBezier and its 1st/2nd derivatives,
+  computeSwingTrajectoryBezier) and `src/animals/locomotion/touchdownPlan.ts` (swingProgress, inLateSwing, timeToTouchdown,
+  bodyAtTouchdown, landingAhead, forearmBelowDeg, inPlanBand, planBlendU, blendPlan). Neither has a three.js import, Math.random,
+  module state or clock. Inputs and outputs are f64 or small structs, so each maps to a `pub fn` over f64. The upstream is C++ (Eigen Vec3),
+  so footSwing can follow Cheetah-Software directly (keep the MIT header).
+- Tests to port with it: tests/foot-swing.test.ts and tests/touchdown-plan-pure.test.ts (hand-worked values, tolerance 1e-12).
+  Parity check: tools/touchdown-pop.ts gave byte-identical output before and after the extraction (959d7d8). Run it against the Rust build.
+- Still TS glue (bounding.ts): the per-leg plan state (planQ0, planQ, planned, planFail), predicting the body pose at touchdown
+  (girdleShifts, runTilt, pitch/height curves, ground), worldToLimb/limbToWorld, and the foreLimb scan/window calls. In Rust the state
+  should be an explicit `struct ForePlan { q0, qf, planned, fail }` per leg, stepped by the sim tick. FORE_PLAN_STATS
+  are counters for diagnostics only and do not feed back into the motion.
+- Order dependence: the plan is made once at sp >= .8, tracked each frame, and the planting frame takes the planned pair. The result depends on frame rate
+  only through dt (the window sizes), so a fixed-step Rust tick gives reproducible results.
+
 ### Commits (grok-gait, not pushed)
-0d4afb4 probe; b29507c Cheetah port + tests; 48066b3 FORE_PLAN; 074b368 regression test + bench switch; this handoff commit.
+0d4afb4 probe; b29507c Cheetah port + tests; 48066b3 FORE_PLAN; 074b368 regression test + bench switch; 023b356 handoff; 959d7d8 pure touchdownPlan.ts extraction; this note.

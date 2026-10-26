@@ -3,8 +3,10 @@
  * The Rust formulas live under `rust/boreal-sim/src/planet_fundamentals/` (issue #46). `lib.rs` re-exports the old module names.
  * The Rust compiled to WebAssembly owns the per-cell maths; this file loads it, hands it the land mask from the existing
  * `world/globe/planet.ts` (continents are not regenerated in Rust) and exposes each layer as a `Float64Array` over wasm memory.
- * No second climate: the formulas are ports of `weather.ts` (`solar`, `shortwave`, `surfaceBalance`, `qsat`, the Manabe bucket) and
- * `tests/planet-budget.test.ts` checks the wasm against those TypeScript functions to 1e-9.
+ * The wasm is the climate authority when it loads (`climateAuthority.ts` reads its planes for the forest).
+ * The TypeScript copies (`solar`, `shortwave`, `surfaceBalance`, `qsat`, the Manabe bucket) stay as the fallback
+ * for the frame where the wasm will not load. They do not both drive one frame. `tests/planet-budget.test.ts`
+ * treats a loaded wasm as the source and checks the TypeScript solar copy against it to 1e-9.
  * If the wasm is not built or cannot load, `loadPlanetSim` resolves `null` and `solarLayerFallback` still gives the solar layer from `weather.ts`,
  * so `npm test` and `npx vite` work without Rust installed. Build it with `npm run build:wasm` (see rust/README.md).
  */

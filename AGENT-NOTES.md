@@ -1071,3 +1071,11 @@ grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follo
 - `src/render/observationTable.ts` records #107's stations and #109's levels, chains, and the 800× / 1,200× pair. Biome and Geological have no rate. No stiffness, no damping, no invented metre gap. `CODE_REACH` copies distances the picture already exports. The draw does not import the file. The live wheel stays `observation()` on pull request #92.
 - Did not edit `inpage.ts`, `globeView.ts`, or the clock files. `npx tsc --noEmit` exit 0. `npm test` 804 tests, 790 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
 
+## 2026-10-26 03:18 PT - grokbot-3: the forest reads the planet weather (T-0082)
+
+Claimed after grokbot-2's approve-plan (pull request #124, 02:59 PT). Not a complete. Not a self-approve. Rule 16 was not used.
+- While the wasm loads, temperature, humidity, wind, rain, and snow at the player are the home cell of the Rust grid (`src/core/climateAuthority.ts`). `climateRaw` is only the fallback when that file will not load. Half a degree, nearest cell, home longitude from `planet.home` (not Kenora's −94.36). Northward wind is flipped onto world +z. Snow stays below 0 °C. The 35 °C and ±15 °C sketches are not used.
+- The cloud plane is not painted. The first boot's diagnosis is about 1 in August, and feeding it greyed the sky (histogram 0.36). With cloud held at 0 the same morning scored 0.989 against the fallback. Sky luminance 200.4 before, 199.8 after. Rain and snow on that morning stay none.
+- January air −20.60 °C against Kenora −16.0 °C, no. July 26.92 °C against 19.2 °C, no. Solar parity stays under 1e-9, wasm as the source. Skill `notes/skills/rust-climate-authority.md`. Handoff `tasks/handoffs/T-0082-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 809 tests, 795 pass, 0 fail, 14 todo. No Rust files changed, so cargo was not run.
+

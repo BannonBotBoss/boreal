@@ -17,6 +17,7 @@ import { gravity } from '../proc/physics';
 import { WORLD_SEED, heightAt } from './world';
 import { LEVEL } from './tuning';
 import { INTEREST } from './interest';
+import { boundClimate, climateAuthority, climateGeneration } from './climateAuthority';
 
 // ---- constants ---------------------------------------------------------------------------------------------------
 export const AIR = {
@@ -101,13 +102,20 @@ export const qsat = (tC: number, p: number) => .622 * esat(tC) / Math.max(1, p -
 
 // ---- climatology (the far field: pure function, never stored) -----------------------------------------------------
 const smooth = (key: string, t: number) => { const i = Math.floor(t), a = random(hash(`${key}:${WORLD_SEED}:${i}`))(), b = random(hash(`${key}:${WORLD_SEED}:${i + 1}`))(), u = t - i; return a + (b - a) * u * u * (3 - 2 * u); };
-/** Climatological state at (day, hour, altitude): temperature from normals + diurnal cosine (min at sunrise ~05, max ~15 LST:
- * Parton & Logan 1981, Agric. Meteorol. 23:205, simplified), ISA lapse, seeded synoptic wind (~3-day weather systems). */
+/** Climatological state at (day, hour, altitude). While the Rust grid is bound, this is that grid's home cell
+ *  (`boundClimate`): one source for the frame. Otherwise `climateRaw` (Kenora normals + Parton & Logan diurnal
+ *  cosine, ISA lapse, seeded synoptic wind). The two are not mixed. */
 let memo: { key: string; v: ReturnType<typeof climateRaw> }[] = [];
+let memoGen = -1;
 /** Memoised: the grid asks for the same (day, hour, layer) many times per step. */
 export function climate(day: number, hour: number, z = 0) {
-  const key = `${day}:${hour}:${z}`; for (const m of memo) if (m.key === key) return m.v;
-  const v = climateRaw(day, hour, z); memo.unshift({ key, v }); if (memo.length > 12) memo.pop(); return v;
+  const gen = climateGeneration();
+  if (gen !== memoGen) { memo = []; memoGen = gen; }
+  const source = climateAuthority();
+  const key = `${source}:${day}:${hour}:${z}`; for (const m of memo) if (m.key === key) return m.v;
+  const planet = source === 'wasm' ? boundClimate(day, hour, z) : null;
+  const v = planet ? { tC: planet.tC, u: planet.u, v: planet.v, rh: planet.rh, p: planet.p } : climateRaw(day, hour, z);
+  memo.unshift({ key, v }); if (memo.length > 12) memo.pop(); return v;
 }
 function climateRaw(day: number, hour: number, z = 0) {
   const t = day + hour / 24, mean = monthValue(NORMALS.temp, day), range = monthValue(NORMALS.range, day);
@@ -315,6 +323,15 @@ const inGrid = (x: number, z: number) => Math.abs(x - WEATHER.ox) < NX * DX / 2 
  * value scaled to `h` by the neutral log wind profile u(h) = u_ref ln(h/z0)/ln(z_ref/z0) (Stull 1988 §9.7). Outside: climatology. */
 export function windAt(x: number, h: number, z: number, kind: SurfaceKind = 'forest') {
   const z0 = SURFACE[kind].z0, ref = layerZ(0), scale = h >= ref ? 1 : Math.max(0, Math.log(Math.max(h, z0 * 1.01) / z0) / Math.log(ref / z0));
+  const planet = climateAuthority() === 'wasm' ? boundClimate(WEATHER.day, WEATHER.hour, 0) : null;
+  if (planet) {
+    // The plane is already the surface wind (friction factor in the Rust geostrophic step). 10 m is that reference,
+    // not the 200 m layer the Kenora fallback uses. Slope tilt is the ground under the player, not a second climate.
+    const href = 10, sc = h >= href ? 1 : Math.max(0, Math.log(Math.max(h, z0 * 1.01) / z0) / Math.log(href / z0));
+    const u = planet.u * sc, v = planet.v * sc, e = 2;
+    const sx = (heightAt(x + e, z) - heightAt(x - e, z)) / (2 * e), sz = (heightAt(x, z + e) - heightAt(x, z - e)) / (2 * e);
+    return { x: u, y: u * sx + v * sz, z: v };
+  }
   if (!WEATHER.on || !grid) { const c = climate(WEATHER.day, WEATHER.hour, Math.max(h, ref)); return { x: c.u * scale, y: 0, z: c.v * scale }; }
   if (!inGrid(x, z)) { const c = climate(WEATHER.day, WEATHER.hour, Math.max(h, ref)); return { x: c.u * scale, y: 0, z: c.v * scale }; }
   const k = Math.max(0, h / DY - .5), u = sample(grid.u, gx(x), gz(z), k) * scale, v = sample(grid.v, gx(x), gz(z), k) * scale;
@@ -323,6 +340,16 @@ export function windAt(x: number, h: number, z: number, kind: SurfaceKind = 'for
 }
 /** Near-surface weather at (x, z): what rendering, sound, ground and the inspector read. */
 export function weatherAt(x: number, z: number) {
+  const planet = climateAuthority() === 'wasm' ? boundClimate(WEATHER.day, WEATHER.hour, 0) : null;
+  if (planet) {
+    // The cloud plane at this boot is the instantaneous diagnosis (update_clouds with dt = 0).
+    // The globe does not paint that until it has spun (SPINUP, 8 × 6 h). This forest grid is
+    // half a degree, so that spin is not part of the read. Temperature, humidity, wind, rain
+    // and snow are the planes this task takes. Cover stays 0, the empty condensate the near
+    // grid already starts with, until weather is allowed to move. On the August home cell that
+    // unspun value is about 1, and feeding it lays a solid deck over a morning with no rain.
+    return { tC: planet.tC, rh: planet.rh, cloud: 0, rainMmH: planet.rainMmH, snow: planet.snow, soil: planet.soil, sweMm: planet.sweMm, fog: 0, wind: windAt(x, 10, z) };
+  }
   const c = climate(WEATHER.day, WEATHER.hour, 0);
   if (!WEATHER.on || !grid || !inGrid(x, z)) return { tC: c.tC, rh: c.rh, cloud: 0, rainMmH: 0, snow: c.tC < 0, soil: .6, sweMm: 0, fog: 0, wind: windAt(x, 10, z) };
   const i = Math.max(0, Math.min(NX - 1, Math.round(gx(x)))), j = Math.max(0, Math.min(NX - 1, Math.round(gz(z)))), n = idx(i, j, 0), col = j * NX + i;

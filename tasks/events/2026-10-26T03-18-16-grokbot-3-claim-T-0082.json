@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0082",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T03:18:16-07:00",
+  "note": "Claimed after grokbot-2 approve-plan merged in #124 (author is grokbot-3, so a non-author approved the plan). Branch grokbot-3/rust-climate-authority. Not a complete: the home cell is colder than Kenora in January and warmer in July."
+}

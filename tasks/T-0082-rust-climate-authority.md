@@ -11,7 +11,7 @@ credits: 52
 
 # T-0082 Rust climate is the forest weather
 
-Step 2 of `notes/design-roadmap.md`. Issues #100 and #101. Not claimed.
+Step 2 of `notes/design-roadmap.md`. Issues #100 and #101. Claimed by grokbot-3 after grokbot-2's approve-plan. Not complete: January and July do not match the Kenora table.
 
 **Credits: 52** (= 10 × 4 × 1.3). Matthew can change it.
 

@@ -6,7 +6,11 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadPlanetSim, type PlanetSim } from '../src/core/planetBudget';
-import { FOREST_SPIN, weatherAtLatLon } from '../src/core/planetWeather';
+import { FOREST_NLAT, FOREST_SPIN, planetLandSample, weatherAtLatLon } from '../src/core/planetWeather';
+import { bootGlobe } from '../src/world/globe/bootOrder';
+import { planetFor, toLatLon } from '../src/world/globe/planet';
+import { WORLD_SEED } from '../src/core/world';
+import { NORMALS } from '../src/core/weather';
 import {
   CLIMATE_MONTH_DAYS, CLIMATE_SAMPLE_DAY, KOPPEN_IDS, KOPPEN_NAME, PEEL, climateClass, climateYearAt,
   type KoppenId,
@@ -168,7 +172,44 @@ test('surface colours and the picture do not read the class', () => {
 function cellLat(nlat: number, r: number) { return -90 + (r + 0.5) * 180 / nlat; }
 function cellLon(nlon: number, c: number) { return -180 + (c + 0.5) * 360 / nlon; }
 
-test('the planet year feeds the class: the sea shrinks the seasons, and the ridge wets the windward side', { skip, timeout: 120000 }, async () => {
+const DESERT = new Set(['BWh', 'BWk']);
+
+/**
+ * The reader this task replaces. One existing 6 h step, then that mm/day held for CLIMATE_MONTH_DAYS.
+ * It is here so the test can record the class before the month is accumulated. It is not the classifier.
+ */
+function heldRateYear(sim: PlanetSim, lat: number, lon: number) {
+  const tempC: number[] = [];
+  const precipMm: number[] = [];
+  for (const day of CLIMATE_SAMPLE_DAY) {
+    sim.seed(day, 12);
+    sim.step(FOREST_SPIN.dtS);
+    const w = weatherAtLatLon(lat, lon, sim);
+    if (!w) throw new Error('held-rate year needs a booted planet grid');
+    tempC.push(w.tC);
+    precipMm.push(w.precipMmDay * CLIMATE_MONTH_DAYS);
+  }
+  return { tempC, precipMm, climate: climateClass(tempC, precipMm) };
+}
+
+test('Kenora station normals are Dfb, and a July of 27.5 °C on that rain is Dfa', () => {
+  // NORMALS is the game's Kenora A monthly table (ECCC 1981–2010, tagged verify in weather.ts).
+  // July there is 19.2 °C. climate_seed.rs cites the same station, climate id 6034075, July 19.7 °C and January −16.0 °C.
+  // Neither July reaches Peel's 22 °C hot-summer line. The model's July does. This test does not change the model temperature.
+  const station = climateClass(NORMALS.temp, NORMALS.precip);
+  assert.equal(station.id, 'Dfb');
+  const atPublishedJuly = NORMALS.temp.slice();
+  atPublishedJuly[6] = 19.7;
+  assert.equal(climateClass(atPublishedJuly, NORMALS.precip).id, 'Dfb');
+  const atModelJuly = NORMALS.temp.slice();
+  atModelJuly[6] = 27.5;
+  const hot = climateClass(atModelJuly, NORMALS.precip);
+  assert.equal(hot.id, 'Dfa');
+  assert.ok(Math.max(...atModelJuly) >= PEEL.hotSummerC);
+  assert.ok(Math.max(...atPublishedJuly) < PEEL.hotSummerC);
+});
+
+test('the planet year feeds the class: the sea shrinks the seasons, and the ridge wets the windward side', { skip, timeout: 180000 }, async () => {
   const s = await loadPlanetSim(bytes!) as PlanetSim;
   assert.ok(s);
   const nlat = 18, nlon = 36;
@@ -187,6 +228,7 @@ test('the planet year feeds the class: the sea shrinks the seasons, and the ridg
   const eastLon = cellLon(nlon, 22);
   const inlandLon = cellLon(nlon, 25);
   assert.ok(waterLon < 0 && westLon > 0 && eastLon > westLon && inlandLon > 70);
+  const waterBefore = heldRateYear(s, lat, waterLon);
   const water = climateYearAt(s, lat, waterLon);
   const inland = climateYearAt(s, lat, inlandLon);
   const west = climateYearAt(s, lat, westLon);
@@ -196,7 +238,12 @@ test('the planet year feeds the class: the sea shrinks the seasons, and the ridg
   const wind = weatherAtLatLon(lat, westLon, s)!;
   const windward = wind.u >= 0 ? west : east;
   const leeward = wind.u >= 0 ? east : west;
-  console.log(`T-0094 ${lat}N u=${wind.u.toFixed(2)} water range ${water.climate.seasonRangeC.toFixed(2)} K ${water.climate.id}; inland range ${inland.climate.seasonRangeC.toFixed(2)} K ${inland.climate.id}; windward ${windward.climate.mapMm.toFixed(1)} mm ${windward.climate.id}; leeward ${leeward.climate.mapMm.toFixed(1)} mm ${leeward.climate.id}`);
+  console.log(`T-0094 ${lat}N u=${wind.u.toFixed(2)} ocean before ${waterBefore.climate.id} ${waterBefore.climate.mapMm.toFixed(1)} mm, after ${water.climate.id} ${water.climate.mapMm.toFixed(1)} mm, July ${water.tempC[6].toFixed(2)} °C, range ${water.climate.seasonRangeC.toFixed(2)} K; inland after ${inland.climate.id} ${inland.climate.mapMm.toFixed(1)} mm range ${inland.climate.seasonRangeC.toFixed(2)} K; windward ${windward.climate.mapMm.toFixed(1)} mm ${windward.climate.id}; leeward ${leeward.climate.mapMm.toFixed(1)} mm ${leeward.climate.id}`);
+  assert.equal(waterBefore.climate.id, 'BWk');
+  assert.equal(water.climate.id, 'Csb');
+  assert.ok(!DESERT.has(water.climate.id));
+  assert.ok(water.climate.mapMm > waterBefore.climate.mapMm);
+  assert.deepEqual(water.tempC, waterBefore.tempC);
   assert.ok(Math.abs(wind.u) > 0, `expected a wind at 45N, u=${wind.u}`);
   assert.ok(water.climate.seasonRangeC < inland.climate.seasonRangeC, `sea ${water.climate.seasonRangeC} inland ${inland.climate.seasonRangeC}`);
   assert.ok(windward.climate.mapMm > leeward.climate.mapMm, `windward ${windward.climate.mapMm} leeward ${leeward.climate.mapMm}`);
@@ -206,4 +253,30 @@ test('the planet year feeds the class: the sea shrinks the seasons, and the ridg
   }
   assert.equal(CLIMATE_SAMPLE_DAY.length, 12);
   assert.equal(CLIMATE_MONTH_DAYS * 12, 365);
+});
+
+test('the Kenora cell is not a desert once the month is accumulated', { skip, timeout: 2400000 }, async () => {
+  const s = await loadPlanetSim(bytes!) as PlanetSim;
+  assert.ok(s);
+  const planet = planetFor(WORLD_SEED);
+  const home = toLatLon(planet.fromLocal(0, 0));
+  const lat = home.lat * 180 / Math.PI;
+  const lon = home.lon * 180 / Math.PI;
+  // The one-degree forest grid is the grid whose cell centre on this stand is land. Coarser centres fall in the ocean.
+  bootGlobe(s, FOREST_NLAT, FOREST_NLAT * 2, planetLandSample(planet), CLIMATE_SAMPLE_DAY[6], 12);
+  const before = heldRateYear(s, lat, lon);
+  const after = climateYearAt(s, lat, lon);
+  const july = after.tempC[6];
+  console.log(`T-0094 Kenora ${lat.toFixed(2)}N ${lon.toFixed(2)}E before ${before.climate.id} ${before.climate.mapMm.toFixed(1)} mm July ${before.tempC[6].toFixed(2)} °C; after ${after.climate.id} ${after.climate.mapMm.toFixed(1)} mm July ${july.toFixed(2)} °C months ${after.precipMm.map(v => v.toFixed(1)).join(',')}`);
+  assert.equal(before.climate.id, 'Dfa');
+  assert.ok(!DESERT.has(before.climate.id));
+  assert.ok(!DESERT.has(after.climate.id), `accumulated Kenora class ${after.climate.id} is still desert`);
+  assert.deepEqual(after.tempC, before.tempC);
+  // Environment and Climate Change Canada 1981–2010, Kenora A, climate id 6034075: July 19.7 °C (climate_seed.rs).
+  // The class is not corrected to that station. Peel’s hot summer is a hottest month at or above 22 °C, so 27.5 °C is not Dfb.
+  assert.ok(july > 27 && july < 28, `July ${july} should stay about 27.5 °C`);
+  assert.ok(july >= PEEL.hotSummerC);
+  assert.notEqual(after.climate.id, 'Dfb');
+  assert.equal(after.climate.id[0], 'D');
+  assert.equal(after.climate.id[2], 'a');
 });

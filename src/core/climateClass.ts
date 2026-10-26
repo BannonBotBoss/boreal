@@ -105,8 +105,8 @@ const OCT_MAR = [9, 10, 11, 0, 1, 2] as const;
  */
 export const CLIMATE_SAMPLE_DAY = Array.from({ length: 12 }, (_, k) => 15 + 30.4 * k);
 /**
- * The grid year is 365 days. Each monthly total is the mid-month daily rate times an equal share of that year,
- * so twelve months add up to one year of those rates.
+ * The grid year is 365 days. Each month integrated below is an equal share of that year,
+ * so twelve months are 365 days. This is the length of the integral, not a multiplier on one rate.
  */
 export const CLIMATE_MONTH_DAYS = 365 / 12;
 
@@ -222,20 +222,38 @@ export interface ClimateYear {
 
 /**
  * One year at a point on the planet grid (step 2), which already carries the sea and the rain shadow (step 5).
- * Each month is `weatherAtLatLon` after the climate seed and one existing 6 h step. A zero-length moisture
- * step leaves rain at 0, so the step is what lets the rain shadow into the yearly total. Temperature is that
- * same read: the climatological air, including the sea's reach. Nothing here is a second climate formula.
+ *
+ * Temperature is the climatological air after the climate seed and one existing 6 h step, including the sea's
+ * reach. That read is not replaced with a station normal.
+ *
+ * Precipitation is the existing `precip` plane accumulated over the month. `precipitation.rs` stores that plane
+ * as millimetres per day for the step just taken (`rain / dt × 86400` when `dt > 0`). The millimetres in a step
+ * are that rate times the step length in days. Twelve of those sums are the year. Holding one 6 h rate for
+ * `CLIMATE_MONTH_DAYS` is not the month: a flat cell's first step is still the seeded column and rains almost
+ * nothing, while the same plane later in the month does not. The step length is `FOREST_SPIN.dtS` (6 h), the
+ * grid's own step, with a shorter last step so the month is exactly `CLIMATE_MONTH_DAYS`. No second rain formula.
  */
 export function climateYearAt(sim: PlanetSim, latDeg: number, lonDeg: number): ClimateYear {
   const tempC: number[] = [];
   const precipMm: number[] = [];
+  const monthS = CLIMATE_MONTH_DAYS * 86400;
   for (const day of CLIMATE_SAMPLE_DAY) {
     sim.seed(day, 12);
-    sim.step(FOREST_SPIN.dtS);
-    const w = weatherAtLatLon(latDeg, lonDeg, sim);
-    if (!w) throw new Error('climate year needs a booted planet grid');
-    tempC.push(w.tC);
-    precipMm.push(w.precipMmDay * CLIMATE_MONTH_DAYS);
+    let acc = 0;
+    let elapsed = 0;
+    let tC: number | undefined;
+    while (elapsed < monthS - 1e-6) {
+      const dt = Math.min(FOREST_SPIN.dtS, monthS - elapsed);
+      sim.step(dt);
+      const w = weatherAtLatLon(latDeg, lonDeg, sim);
+      if (!w) throw new Error('climate year needs a booted planet grid');
+      if (tC === undefined) tC = w.tC;
+      acc += w.precipMmDay * (dt / 86400);
+      elapsed += dt;
+    }
+    if (tC === undefined) throw new Error('climate year needs a booted planet grid');
+    tempC.push(tC);
+    precipMm.push(acc);
   }
   return { tempC, precipMm, climate: climateClass(tempC, precipMm) };
 }

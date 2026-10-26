@@ -16,7 +16,7 @@ One wheel moves time. Slow, you see a breath and a paw. Fast, you see herds, the
 Nothing pops away when time speeds up. A wolf becomes a pack, then many wolves, then the family line.
 From the ground up to space it stays one picture. What shows depends on how far you are and how fast time is moving.
 The order is where and when you are looking, then the climate, then stepping into a real animal, then senses, then the time wheel.
-The one picture from space down to the trees, and the one clock in the game, are already being built. This plan follows them.
+The one picture from space down to the trees is already being built. The clock in the game already has the time wheel. This plan follows both.
 Where the game already fits your notes, it stays. Where it fights them, it is rewritten, which you allowed.
 
 ## What this document is
@@ -25,8 +25,8 @@ The full path from today's code to issues #100 through #109. No simulation code 
 
 Matthew posted the ten issues between 6:56 and 7:13 PM Pacific on 2026-10-25 and is done supervising. This plan asks him nothing. Two pieces are already open and are linked, not rebuilt:
 
-- The picture from space down to the forest is pull request #94, branch `grokbot-3/render-unification-plan`, task T-0078, write-up `notes/render-unification-plan.md`. That covers the spatial half of #107. Steps 33 and 36 add time and the view from outside a body. They do not add a second picture.
-- The one clock, with the control in the game, is pull request #92, branch `grokbot-3/single-time-control`, task T-0077 on that branch. The in-game bar, the single rate, and the removal of the extra speed sliders stay. Steps 3, 30, 31, and 34 extend that clock. `grokbot-3/menu-no-bounce` also used the id T-0077; the clock work is the single-time-control branch. A merger who hits that collision renumbers by rule 13. Do not open a third clock task.
+- The picture from space down to the forest is pull request #94, branch `grokbot-3/render-unification-plan`, task T-0078, write-up `notes/render-unification-plan.md`. That covers the spatial half of #107. Step 33 multiplies that picture by the time scale pull request #92 already reports. Step 36 adds the view from outside a body. They do not add a second picture.
+- The one clock is pull request #92, branch `grokbot-3/single-time-control`. The bar, the single rate, and the removal of the extra speed sliders were the first commit on that branch (filed there as T-0077). The time wheel from #109 and #108 is already on the same branch (commit `565b2e6`, filed there as T-0078). That T-0078 is not the render plan's T-0078. A merger who hits either collision renumbers by rule 13. Steps 30 and 31 are that delivery. Do not open another clock or another wheel. The same pull request is moving the edge of the dead zone so it is exactly 1×. That adjustment stays on #92. It is not a new step.
 
 ## Conflicts, and which issue won
 
@@ -35,13 +35,13 @@ Standing project rules are not older issues. The precedence line does not repeal
 | # | Conflict | Winner | What the plan does |
 |---|---|---|---|
 | 1 | #101 sends a JSON list of real animals. #105 sends nested perception structs. #106 sends one packed buffer of perception only. | #106 | Step 16. No world JSON. |
-| 2 | #101 always stores every individual. #107 says the simulation is always at full detail and only the picture changes. #109 switches the simulation itself (individual, population, species, geology) and says a thing transforms instead of vanishing. | #109 | Steps 14 and 32. Individuals exist only while time is slow and the animal is near. |
+| 2 | #101 always stores every individual. #107 says the simulation is always at full detail and only the picture changes. #109 switches the simulation itself (individual, population, species, geology) and says a thing transforms instead of vanishing. | #109 | Pull request #92 already holds animals and the weather grid above Immediate. Steps 14 and 32 still transform them into a density instead of only holding them. Individuals exist only while time is slow and the animal is near. |
 | 3 | #104 draws the whole forest for every species, then paints senses on top. #105 and #106 say the viewer receives only what that animal perceives. | #106 | Steps 15, 16, and 24. Nearby ground is drawn because it is perceived, not because the whole world was sent. |
 | 4 | #101 picks an action with fixed cutoffs (fear 90, thirst 80, hunger 80, habitat 25, mating 85). #103 says the strongest weighted urge wins. `src/core/agent.ts` already picks by utilities. | #103, reusing `agent.ts` | Step 10. Do not port the cutoff ladder. |
-| 5 | #108 names eight time scales (Immediate through Planetary). #109 names seven levels (Individual through Geological). | #109 | Step 32. Behavioral folds into Group. Seasonal and Generational fold into Ecosystem. Planetary is a height, not a time mode (step 33). |
-| 6 | #108 maps a dial position from −8 to 8 with powers of ten. #109 maps −1 to 1 with `10^(12 × abs(position))` and a dead zone near 0. | #109 | Step 30. |
-| 7 | #108 changes speed directly. #109 accelerates with a spring, jerk, and hysteresis, and blends instead of popping. | #109 | Steps 31 and 32. #108's fields (time, speed, target speed, mode) stay. |
-| 8 | #107 walks backward along causes. #109 jumps with `state_at(time)` and does not keep every frame. Pull request #92 does not let rewind seek the clock, because ground years are an accumulator. | #109 | Step 34. One clock. A backward gap still does not age the ground twice. The seek uses the closed form. Step 37 keeps the cause chain as the explanation, not as the scrubber. |
+| 5 | #108 names eight time scales (Immediate through Planetary). #109 names seven levels (Individual through Geological). | The eight names on pull request #92, with #109's hysteresis and blend | The signal is delivered (`OBSERVATION_SCALES`, `resolveObservation`). Do not add a second list. Step 32 still wires animals, weather, and ground to that signal. Height stays a separate axis (step 33). |
+| 6 | #108 maps a dial position from −8 to 8 with powers of ten. #109 maps −1 to 1 with `10^(12 × abs(position))` and a dead zone near 0. | #109, already on pull request #92 | Step 30 is delivered. The same pull request is setting the lip of the dead zone to exactly 1×. |
+| 7 | #108 changes speed directly. #109 accelerates with a spring, and blends instead of popping. | #109, already on pull request #92 | Step 31 is delivered (spring in decades, inertia `1 + error²`). The blend of the scale label is delivered with it. The pictures those labels should show are still step 32. |
+| 8 | #107 walks backward along causes. #109 jumps with `state_at(time)` and does not keep every frame. An earlier draft of pull request #92 refused to seek the clock. | #109 for the clock and the sun, which now rewind. The closed-form query of the land is still open. | Rewind of the clock and the sun is delivered. Ground years still refuse a backward gap, so decay is not applied twice. Step 34 still makes ground, climate, and populations answer a time. Step 37 keeps the cause chain as the explanation, not as the scrubber. |
 | 9 | #100 and #101 show round example coefficients (a 35 degree latitude span, ±15 degrees of season, rain only above 70% humidity, an unweighted habitat sum). The forest climate is Kenora normals plus a cited diurnal curve (`src/core/weather.ts` `climateRaw`, lines 112–118). The planet grid uses the same family of published budgets (`rust/boreal-sim/src/planet_fundamentals/`). The numbers gate forbids invented digits. | The issues win the chain and who computes it. The digits stay sourced. | Step 2 moves authority to the Rust grid. Steps 5–9 add the missing relationships (rain shadow, ocean moderation, drought, habitat) with citations. The 35, 15, 70, and 80 are not game numbers. |
 | 10 | #102 stores `body_mass` on the animal. Rule 4 says mass is volume times density and is never assigned. | Rule 4 | Step 18. Metabolism reads the generated mass. The field is not stored. |
 | 11 | #100 and #101 score habitat as food + water + shelter − competition − predator pressure. #100 also subtracts environmental stress. #106 puts temperature and oxygen stress on the body. | #101 for the habitat sum, #106 for the stress | Step 9 sums #101's terms. Step 18 carries the stress. It is not subtracted twice. |
@@ -49,11 +49,11 @@ Standing project rules are not older issues. The precedence line does not repeal
 | 13 | #105 asks for a renderer type per species (wolf, deer, eagle, salmon, bear). Rule 3 says a new animal is a spec row, not a new source file. | Rule 3 for the code shape. The issues for the behaviour. | Step 29. One filter table, one row per species. |
 | 14 | #108 sets time zero at the formation of the solar system. `src/core/deepTime.ts` `dialToYears` (lines 91–96) sets zero at now. | #108 | Step 3. Now is Earth's age on that one line. The play clock remains the rate. |
 | 15 | #100 says snow when temperature is below 0 °C, otherwise rain. The forest grid and the Rust precipitation already do that (`src/core/weather.ts` line 274, `precipitation.rs` line 77). | No fight. #100 matches the code. | Step 7 locks it with a test and exposes depth. Do not replace the threshold. |
-| 16 | #107 turns layers on with hard altitude and speed rectangles. #109 uses a score, hysteresis, and a blend. | #109 | Step 33. #107's layer list is the menu of pictures. #109 decides when each one is visible. |
+| 16 | #107 turns layers on with hard altitude and speed rectangles. #109 uses a score, hysteresis, and a blend. | #109 for the time signal, already on pull request #92 | Hysteresis and the blend of the time scale are delivered. Step 33 still multiplies that signal by height. #107's hard rectangles are not built. |
 | 17 | The player rig is created fresh (`src/render/playables.ts` lines 27–50). #102 and #103 say you enter an animal that already has a past. | #102 and #103 | Step 17. The shared playable motor stays (rule 3). |
 | 18 | The wolf senses panel shows a percent and a distance (`src/ui/senses.ts` lines 31 and 69; `src/core/needs/senses.ts` `threatCue` lines 37–41). #103 and #104 replace numbers with sensation. | #103 and #104, packed by #106 | Steps 20, 24, and 25. The scent math in `src/core/senses.ts` and `src/core/traces.ts` stays. |
 | 19 | Inside #106, `#[repr(C)]` would pad the embodied id off the published offsets, and the sound fields sum to 24 bytes while the issue says 28. The offset table and the later "reserve bytes" line are the specific layout. | The offset table, with 4 reserved bytes on the sound so 28 holds | Step 16. Memory stays 20 bytes, which already matches its fields. |
-| 20 | Pull request #92 clamps the one rate to 0.05–16 world seconds per real second (`src/core/worldClock.ts` `RATE_MIN` / `RATE_MAX` on that branch). #109 spans a pause through geological time on a log wheel. | #109 for the rate law. Pull request #92 for there being one clock. | Steps 30 and 31 replace the clamp. They do not add a wheel beside the bar. |
+| 20 | An earlier draft of pull request #92 clamped the one rate to 0.05–16. #109 spans a pause through geological time on a log wheel. | #109, and it is already the clock on that branch | Steps 30 and 31 are delivered. The 0.05–16 clamp is gone. There is still one bar. |
 | 21 | #104's observer and #105's summary frame versus #107's optional embodiment versus #109's height times time. | #109 | Steps 1, 33, and 36. One simulation. Two readings: inside a body, or looking from outside. |
 
 ## What is already here
@@ -68,7 +68,7 @@ Reuse these. Do not write a second copy.
 | Far things are math | `src/core/interest.ts` lines 10–19. Near 60 m, mid 100 m, beyond that no stored body. | #109 agrees for fast time and far space. The radii stay. What they aggregate changes (step 14). |
 | Ground, rivers, decay | `src/core/ground.ts`, river stages, `src/core/deltas.ts`. Closed form in years. | Step 34 queries them at a time. Do not store every year. |
 | Deep time | `src/core/deepTime.ts`, tasks T-0060 and T-0065. | Epoch moves to #108 (step 3). The stage model stays. |
-| One play clock on main | `src/core/worldClock.ts`: real seconds, frozen while the menu is open. A separate slow-motion (`src/core/timescale.ts`) does not move the sun. | Pull request #92 makes one rate, including the sun. This plan does not redo that. |
+| One play clock, and now the time wheel | Pull request #92, `src/core/worldClock.ts` at commit `565b2e6` (branch tip `8f14525` when this plan was corrected): dial −1..+1, powers of ten, spring, reverse for the clock and the sun, `observation()` with hysteresis. | Steps 30 and 31, and the scale signal, are that file. Do not write a second wheel. Animals, the weather grid, and the ground still only hold or advance. They do not yet follow the scale by transforming (the rest of step 32, with step 14). |
 | Animal body and one motor | Skeleton and species specs. `Playable` in `src/render/playables.ts`. Needs in `src/core/needs/engine.ts` (Taylor, Heglund and Maloiy 1982). Wolf smell distance cited from Mech 1970 on `WOLF_NEEDS`. | You still spawn a fresh rig (step 17). Needs still show as numbers (step 20). |
 | Urge from what is sensed | `src/core/agent.ts` lines 1–16: utilities, no mission timer. `AnimalBrain` in `src/core/animalBehavior.ts` is the legs. | Do not add `choose_action`. Step 10 feeds habitat into the utilities. Step 13 moves the authority to Rust. |
 | Scent and sound | `src/core/senses.ts` `scentLevel`, `src/core/traces.ts`, `src/ui/senses.ts`, `src/render/sensesHalo.ts`. | The panel is a meter and a label (steps 24 and 25). |
@@ -84,7 +84,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 ### Step 1 — One reading of where, how high, how fast, and who
 
 - **Goal:** Any system can ask one record: position, height, time rate, and which creature you are inside, if any.
-- **Kind:** Rewrite of the scattered reads. Reuses `INTEREST` (`src/core/interest.ts` lines 10–19), the playable id (`src/render/playables.ts` line 52), and `worldSec` (`src/core/worldClock.ts`). When pull request #92 lands, the rate field reads that clock's one rate. Until then it reads 1.
+- **Kind:** Rewrite of the scattered reads. Reuses `INTEREST` (`src/core/interest.ts` lines 10–19), the playable id (`src/render/playables.ts` line 52), and the one clock. On a base that includes pull request #92, the rate is `clockRate()` and the scale is `observation()`. On main, until that branch is the base, the rate is 1. Do not build the wheel (steps 30 and 31 are that pull request).
 - **Issues:** #107 (observation coordinates), #109 (height and time together).
 - **Depends on:** Nothing. Parallel with steps 2 and 16.
 - **Size:** S. Board: T-0081.
@@ -102,11 +102,11 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 ### Step 3 — Now sits on one line from the birth of the solar system
 
 - **Goal:** Time zero is the formation of the solar system. The present is Earth's age on that same line. The play clock is still the only rate.
-- **Kind:** Rewrite of the epoch in `dialToYears` (`src/core/deepTime.ts` lines 91–96), which puts zero at now. Reuses the stage model and T-0060. Does not add a clock. Waits for pull request #92 so the rate and the epoch are not edited in two places.
+- **Kind:** Rewrite of the epoch in `dialToYears` (`src/core/deepTime.ts` lines 91–96), which puts zero at now. Reuses the stage model and T-0060. Does not add a clock. Pull request #92 already passes `epochOffsetYr` (session seconds) into `deepTimeAt`. That is not this epoch: zero there is still now. Branch from that clock so the epoch and the wheel are not edited in two places.
 - **Issues:** #108 (the epoch). #109 does not pick a different zero.
 - **Depends on:** Pull request #92 merged, or this step branched from `grokbot-3/single-time-control`. Parallel with step 4 once that lands.
 - **Size:** M. Queue.
-- **Gates:** Numbers: Earth's age and the solar-system formation age from the citations already on `DEEP` / T-0065, not a new round number. Frame N/A if the dial is not on screen yet; the numeric check is `state` at 0 and at the present. Evidence: one function, no second epoch.
+- **Gates:** Numbers: Earth's age and the solar-system formation age from the citations already on `DEEP` / T-0065, not a new round number. The dial is already on pull request #92, so the frame is N/A if only the zero moves. The numeric check is `state` at 0 and at the present. Evidence: one function, no second epoch.
 
 ### Step 4 — Weather moves, and the climate is what it relaxes toward
 
@@ -205,7 +205,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Goal:** Near and slow, creatures are individuals. Far, or at a faster time level, the same animals are a density, a herd, or a species range. They transform. They do not pop out.
 - **Kind:** Rewrite of "always every individual" (#101 loses) and of "always full detail" (#107 loses). Reuses interest tiers, T-0040, and T-0070's fields as the picture of a density. The coarse step is new.
 - **Issues:** #101, #107, #109 (switch the simulation; continuity).
-- **Depends on:** Step 12. The time levels come from step 32; until then only the distance tier is live.
+- **Depends on:** Step 12. The scale signal is already `observation()` on pull request #92. Until this step lands, only the distance tier changes what is drawn; above Immediate the animals hold. Do not add a second list of scales.
 - **Size:** L. Queue.
 - **Gates:** Numbers: densities from a published boreal figure (wolf or deer per square kilometre) or labelled calibration. Frame: leaving the near radius replaces bodies with the density drawing without a one-frame hole, recorded. Evidence: a count test that individuals plus the density describe the same population.
 
@@ -350,61 +350,63 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 
 ## Phase E — The time wheel, on the clock that already exists
 
-Pull request #92 is the clock and the bar. Do not build a second control. #109 replaces the rate law after that pull request is the base.
+Pull request #92 is the clock, the bar, and the wheel. Steps 30 and 31 are that delivery. Do not build a second control. The same pull request is setting the lip of the dead zone to exactly 1×. That stays on #92.
+
+What this phase still queues is the wiring. Animals, the weather grid, and the ground follow the scale (the rest of step 32). Height multiplies that scale (step 33). Ground, climate, and populations answer a time (step 34). Speeding up is something you see and hear (step 35).
 
 ### Step 30 — The wheel is logarithmic, from a pause to geological time
 
-- **Goal:** One wheel. Centre is paused. Toward the ends, speed grows as a power of ten (`10^(12 × abs(position))` on a −1 to 1 wheel, dead zone inside 0.01). Reverse is the same map with a minus sign.
-- **Kind:** Rewrite of the 0.05–16 clamp on pull request #92 (conflict 20). Reuses that clock, that bar, and the pause holds. Removes #108's −8 to 8 map.
+- **Goal:** One wheel. Centre is paused. Toward the ends, speed grows as a power of ten (`10^(12 × abs(position))` on a −1 to 1 wheel, dead zone inside 0.01). Reverse is the same map with a minus sign. The bar reads the rate, and past a year it reads the deep-time label.
+- **Kind:** Delivered by pull request #92, `src/core/worldClock.ts` and `src/ui/timeHud.ts`, commit `565b2e6` (branch tip `8f14525` when this plan was corrected). Replaced the 0.05–16 clamp (conflict 20). One bar. #108's −8 to 8 map was not built.
 - **Issues:** #108 (one wheel, modes), #109 (the map). #109 wins the map.
-- **Depends on:** Pull request #92. Parallel with nothing in this phase.
-- **Size:** M. Queue.
-- **Gates:** Numbers: the exponent 12 is the issue's map, labelled as the design's scale law, and the test pins 0, about 15× at 0.1, and a million-fold at 0.5 as #109 states. Frame: the existing bar still the only control, recorded at two speeds. Evidence: no second slider, and `RATE_MAX = 16` is gone.
+- **Depends on:** Nothing further. This step is not in the queue.
+- **Size:** M. Delivered by pull request #92.
+- **Gates:** Met there. Numbers: `targetRateFromDial` pins 0 inside the dead zone, about 15× at 0.1, and a million-fold at 0.5 (`tests/worldClock.test.ts` on that branch). Frame: that pull request's bar is the only control. Evidence: no second slider, and `RATE_MAX = 16` is gone. The same pull request is moving the lip of the dead zone from about 1.32× to exactly 1×. That adjustment stays on #92. It is not a new step.
 
 ### Step 31 — The wheel has weight
 
 - **Goal:** A small nudge arrives quickly. A jump toward geological speed takes longer. Speed eases. It does not snap.
-- **Kind:** Rewrite of an instant rate set. Reuses step 30's target. Adds acceleration and jerk.
+- **Kind:** Delivered by pull request #92 on the same clock. The spring is in decades (log10 of the rate), stiffness 64 and damping 13.6, labelled game calibration, inertia `1 + error²`. Damping acts on the decade-velocity so the rate rests on the target.
 - **Issues:** #109 (spring, inertia). #108's instant set loses.
-- **Depends on:** Step 30.
-- **Size:** M. Queue.
-- **Gates:** Numbers: stiffness and damping are calibration, labelled, and a test shows a 10× step settling faster than a million-fold step. Frame: the readout eases, recorded. Evidence: one integrator on the one clock.
+- **Depends on:** Step 30, which is the same delivery.
+- **Size:** M. Delivered by pull request #92.
+- **Gates:** Met there. A test on that branch shows the rate has not arrived in one frame, and half a second does not leap to geological time. Evidence: one integrator on the one clock. The scale blend rides the same step (`resolveObservation`).
 
-### Step 32 — Detail levels blend, and they do not flicker
+### Step 32 — Animals, weather, and the ground follow the scale that already exists
 
-- **Goal:** The levels are Individual, Group, Population, Ecosystem, Biome, Evolution, Geological. Entering a coarser level and leaving it use different thresholds. In the overlap, both pictures are partly there.
-- **Kind:** Rewrite of hard switches (#107's rectangles lose, conflict 16). The names are #109's (conflict 5).
-- **Issues:** #107 (what you see as time speeds up), #108 (the old names), #109.
-- **Depends on:** Steps 14 and 31.
-- **Size:** L. Queue.
-- **Gates:** Numbers: the enter and exit thresholds are the issue's bands (Individual through about 50×, Group overlapping it, and so on), labelled as the design's bands where no field study defines them. Frame: crossing a band does not flicker and a wolf becomes a pack trail before the body is gone, recorded. Evidence: no second level-of-detail enum.
+- **Goal:** The scale signal is already on pull request #92. Eight names, from Immediate through Planetary. The label waits to enter a coarser scale and to leave it. In the overlap, a blend says how far you are between the two. What remains is to make animals, the weather grid, and the ground change with that signal. Near and slow they stay individuals. Faster, the same animals become the density from step 14. They transform. They do not pop, and they do not merely freeze.
+- **Kind:** The signal is reuse of `observation()`, `resolveObservation`, and `SCALE_BOUNDS` on pull request #92 (conflicts 5 and 16). Do not add #109's seven names beside the eight. Today `simWorldSec` returns 0 unless time is moving forward and the scale is still Immediate, so animals and the weather grid hold. `groundWorldSec` advances at any forward rate and refuses a backward gap. That hold is the limit this step replaces when time is moving forward.
+- **Issues:** #107 (what you see as time speeds up), #108 (the eight names), #109 (hysteresis, blend, transform).
+- **Depends on:** Step 14, and a base that includes pull request #92. The signal itself does not wait.
+- **Size:** L. Queue for the wiring only. The signal is delivered by pull request #92.
+- **Gates:** Numbers: the enter and exit bands are the ones already on `SCALE_BOUNDS` (8 and 12, then 800 and 1200, and the bands above those). Do not invent a second set. Frame: crossing a band does not flicker, and a wolf becomes the density drawing before the body is gone, recorded. Evidence: callers read `observation()`. No second level-of-detail enum. `simWorldSec` is no longer the only response above Immediate.
 
 ### Step 33 — Height and speed pick the picture together
 
-- **Goal:** Detail is height times time rate, times whether this species could sense it. The spatial picture is pull request #94's one picture. This step adds the time axis to that gate.
-- **Kind:** Extension, not a second tree. Reuses T-0078's distance table once its first code step exists. #109's score and hysteresis replace #107's on/off rectangles.
+- **Goal:** Detail is height times the time scale, times whether this species could sense it. The spatial picture is pull request #94's one picture. The time half is already `observation()` on pull request #92. This step multiplies the two. It does not build a second picture.
+- **Kind:** Extension, not a second tree. Reuses T-0078's distance table once its first code step exists. The time hysteresis and blend are already delivered (conflict 16). #107's hard rectangles are not built.
 - **Issues:** #107, #109.
-- **Depends on:** Step 32 and pull request #94's distance table (do not copy that plan's phases here).
+- **Depends on:** The remaining wiring in step 32, and pull request #94's distance table (do not copy that plan's phases here). The time signal does not wait.
 - **Size:** M. Queue.
-- **Gates:** Numbers: distances stay the ones T-0078 already found in the code; this step adds no new metres. Frame: high and fast shows seasons and flows, not fur, recorded against the #94 picture. Evidence: one gate function. Animals, trees, rivers, and photos still turn on by height as #94 describes.
+- **Gates:** Numbers: distances stay the ones T-0078 already found in the code; this step adds no new metres. Frame: high and fast shows seasons and flows, not fur, recorded against the #94 picture. Evidence: one gate function. Animals, trees, rivers, and photos still turn on by height as #94 describes. The time axis is `observation()`, not a new rate.
 
 ### Step 34 — A time you can jump to, without a saved movie
 
-- **Goal:** Ground, climate, and populations answer "what were you at this time?" in closed form. Scrubbing and rewind use that. Playing backward does not apply the ground's years twice.
-- **Kind:** Rewrite of "rewind does not seek" for a geological jump (conflict 8), on the one clock. Reuses `ground.ts` closed form, `deepTime.ts`, and step 3's epoch. #107's cause browser is step 37, not this seek.
+- **Goal:** Ground, climate, and populations answer "what were you at this time?" in closed form. Scrubbing uses that. The clock and the sun already rewind on pull request #92. Playing backward already does not apply the ground's years twice (`groundWorldSec` returns 0 when the gap is negative).
+- **Kind:** The rewind of the clock and the sun is delivered (conflict 8). What remains is the closed-form query. Reuses `ground.ts` closed form, `deepTime.ts`, and step 3's epoch. #107's cause browser is step 37, not this seek.
 - **Issues:** #107, #108, #109.
-- **Depends on:** Steps 3, 14, and 30.
-- **Size:** L. Queue.
+- **Depends on:** Steps 3 and 14, and pull request #92's clock, which already rewinds.
+- **Size:** L. Queue for the query. The clock, the sun, and the ground's refusal of a backward gap are delivered by pull request #92.
 - **Gates:** Numbers: a ground column at 10 years matches `column()` advanced 10 years, within the existing decay test. Frame N/A for the formula; a recording only if a visible forest age changes. Evidence: no per-frame history buffer.
 
 ### Step 35 — Speeding up is something you feel
 
-- **Goal:** Faster time trails motion, compresses sound, and speeds growth. Trees do not teleport. Rivers keep meandering. Herds become streams.
-- **Kind:** New presentation on step 32. Reuses the post stack and the river path. Not a new simulator.
+- **Goal:** Faster time trails motion, compresses sound, and speeds growth. Trees do not teleport. Rivers keep meandering. Herds become streams. The readable rate and the deep-time label on the bar are already on pull request #92. This step is the picture and the sound, not the readout.
+- **Kind:** New presentation on the remaining wiring in step 32. Reuses the post stack and the river path. Not a new simulator. Does not rebuild the scale.
 - **Issues:** #109 (time-warp feel).
-- **Depends on:** Step 32. Parallel with step 34 after step 32.
+- **Depends on:** The remaining wiring in step 32. Parallel with step 34 after that wiring.
 - **Size:** M. Queue.
-- **Gates:** Numbers: pitch shift labelled calibration. Growth uses the existing ground years, only faster. Frame: a tree and a trail at two speeds, recorded. Evidence: positions come from step 34's query, not from a skipped animation.
+- **Gates:** Numbers: pitch shift labelled calibration. Growth uses the existing ground years, only faster. Frame: a tree and a trail at two speeds, recorded. Evidence: positions come from step 34's query, not from a skipped animation. The rate label stays `formatRate`.
 
 ## Phase F — Looking from outside, and why it happened
 
@@ -531,41 +533,41 @@ Every section of the ten issues maps to a step. "Stays" means the current code a
 | #106 | Perception, not reality | 15 and 16 |
 | #107 | Observation decides the representation | 1 and 33 |
 | #107 | Observation coordinates | 1 |
-| #107 | What each time speed shows | 32 (the pictures) and 30 (the wheel) |
-| #107 | Individual, pack, population, lineage | 14 and 32 |
-| #107 | Reverse time as causes | 37 explains; 34 seeks |
+| #107 | What each time speed shows | 30, the wheel, delivered by pull request #92. The scale label is `observation()` there. The pictures stay in the rest of step 32, with step 14. |
+| #107 | Individual, pack, population, lineage | 14 and the rest of 32. The signal is already on pull request #92. The transform is not. |
+| #107 | Reverse time as causes | 37 explains. The clock and the sun already rewind on pull request #92. Step 34 still seeks the land. |
 | #107 | Spatial scales from grass to orbit | Pull request #94, then step 33. Not rebuilt here. |
-| #107 | Combined space and time | 33 |
+| #107 | Combined space and time | 33. The time half is already `observation()`. |
 | #107 | Earth from space | Pull request #94 and step 36 |
 | #107 | The fidelity equation | 33 |
-| #107 | Always-full-detail simulation | Loses to #109. Steps 14 and 32. |
+| #107 | Always-full-detail simulation | Loses to #109. Pull request #92 holds above Immediate. Steps 14 and 32 still transform. |
 | #107 | The observation statement | 33 |
-| #108 | The dial is an object, not a playback trick | 30, on pull request #92's clock |
-| #108 | Time zero at formation, present at Earth's age | 3 |
-| #108 | Log speed | 30 (#109's map) |
-| #108 | Paused, running, rewind, scrub | 30 and 34 |
-| #108 | Eight scale names | 32 (#109's seven; conflict 5) |
-| #108 | What runs at each scale | 14 and 32 |
-| #108 | Observer plus dial | 1 and 30 |
-| #108 | Height times time matrix | 33 |
-| #108 | Hard visibility rectangles | 33 (#109's blend; conflict 16) |
-| #108 | One wheel | 30 |
-| #108 | Historical query | 34 |
-| #108 | Compact time state to the viewer | 16's timestamp plus step 30's rate and level |
-| #108 | The dial statement | 30 |
-| #109 | No instant mode switch | 31 and 32 |
-| #109 | Acceleration and jerk | 31 |
-| #109 | Dial from −1 to 1 | 30 |
-| #109 | `10^(12 × abs(position))` and the dead zone | 30 |
-| #109 | Spring and heavy jumps | 31 |
-| #109 | Hysteresis | 32 |
-| #109 | Blend between pictures | 32 |
-| #109 | The seven levels and their bands | 32 |
-| #109 | Height times time | 33 |
-| #109 | Blur, trails, pitch, growth, meanders | 35 |
-| #109 | Switch the simulation, do not step every second | 14 |
-| #109 | Transform, do not vanish | 14 and 32 |
-| #109 | The continuity statement | 32 and 35 |
+| #108 | The dial is an object, not a playback trick | 30, delivered by pull request #92 |
+| #108 | Time zero at formation, present at Earth's age | 3. Still open. `epochOffsetYr` on pull request #92 is session seconds. |
+| #108 | Log speed | 30, delivered (#109's map) |
+| #108 | Paused, running, rewind, scrub | Pause, play, and rewind of the clock and the sun are step 30, delivered. Scrub of ground, climate, and populations is still step 34. |
+| #108 | Eight scale names | Delivered on pull request #92 as `OBSERVATION_SCALES`. Do not replace them with #109's seven (conflict 5). The rest of step 32 wires systems to those names. |
+| #108 | What runs at each scale | The hold is on pull request #92 (`simWorldSec`). The transform is step 14 and the rest of step 32. |
+| #108 | Observer plus dial | 1, and 30 which is delivered |
+| #108 | Height times time matrix | 33. The time axis is already `observation()`. |
+| #108 | Hard visibility rectangles | Not built. Time hysteresis is delivered (conflict 16). Step 33 multiplies it by height. |
+| #108 | One wheel | 30, delivered |
+| #108 | Historical query | 34 still open. Clock rewind is delivered. |
+| #108 | Compact time state to the viewer | 16's timestamp, plus the rate and the scale already on pull request #92 |
+| #108 | The dial statement | 30, delivered |
+| #109 | No instant mode switch | 31, delivered (the spring). The label's blend is delivered with it. The pictures still transform in the rest of step 32. |
+| #109 | Acceleration and jerk | 31, delivered |
+| #109 | Dial from −1 to 1 | 30, delivered |
+| #109 | `10^(12 × abs(position))` and the dead zone | 30, delivered. The lip moving to exactly 1× stays on pull request #92. |
+| #109 | Spring and heavy jumps | 31, delivered |
+| #109 | Hysteresis | Delivered on pull request #92 (`resolveObservation`). Wiring animals, weather, and ground is the rest of step 32. |
+| #109 | Blend between pictures | The blend number is delivered. Wolf and pack sharing the frame is the rest of step 32, with step 14. |
+| #109 | The seven levels and their bands | The eight names from #108 landed. Do not add the seven (conflict 5). The bands are `SCALE_BOUNDS` on pull request #92. |
+| #109 | Height times time | 33. Still open. The time axis is `observation()`. |
+| #109 | Blur, trails, pitch, growth, meanders | 35. Still open. The readable rate and the deep-time label are step 30, delivered. |
+| #109 | Switch the simulation, do not step every second | 14. Still open. Today's hold is not the switch. |
+| #109 | Transform, do not vanish | 14 and the rest of 32 |
+| #109 | The continuity statement | The rest of 32, and 35 |
 
 ## First wave, and the queue
 
@@ -582,6 +584,6 @@ Proposed, not claimed. Other bots pick them up after someone else approves the p
 | 7 | T-0086 | 6, moisture debt | T-0082 is done | T-0085, T-0087 |
 | 8 | T-0087 | 7, snow depth | T-0082 is done | T-0085, T-0086 |
 
-The queue, in dependency order, with no task file yet: steps 3, 4, 8, 9, 10, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38. A bot takes the lowest step whose dependencies are met, one task, the next free id. It does not propose the rest.
+The queue, in dependency order, with no task file yet: steps 3, 4, 8, 9, 10, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, the remaining wiring in step 32, then 33, 34, 35, 36, 37, 38. A bot takes the lowest step whose dependencies are met, one task, the next free id. It does not propose the rest. Steps 30 and 31 are not in the queue.
 
-Step 3 and steps 30–35 wait on pull request #92. Step 33 waits on pull request #94's distance table. Neither pull request is copied here.
+Steps 30 and 31 are delivered by pull request #92 (commit `565b2e6`). So are the scale signal (`observation()`, the eight names, hysteresis, and the blend), rewind of the clock and the sun, the readable rate, and the ground's refusal of a backward gap. Step 32's remaining work hooks animals, the weather grid, and the ground to that signal so they transform (step 14) instead of only holding. Step 33 still waits on pull request #94's distance table. Its time half does not. Step 3 still moves the epoch. Pull request #92's `epochOffsetYr` is session seconds, and `dialToYears` still puts zero at now. The 1× dead-zone edge stays on #92. Neither pull request is copied here.

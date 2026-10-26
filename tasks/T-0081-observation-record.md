@@ -21,7 +21,7 @@ One function returns position, height above the ground, the time rate, and the e
 
 ## Kind
 
-Rewrite of the scattered reads. Reuses `INTEREST` (`src/core/interest.ts`), the playable id (`src/render/playables.ts`), and `worldSec` (`src/core/worldClock.ts`). When pull request #92 lands, the rate reads that clock. Until then the rate is 1. Do not add a second interest radius or a second clock. Do not build the log wheel (steps 30 and 31).
+Rewrite of the scattered reads. Reuses `INTEREST` (`src/core/interest.ts`), the playable id (`src/render/playables.ts`), and the one clock. When this step's base includes pull request #92, the rate reads `clockRate()` and the scale reads `observation()`. On main, until that branch is the base, the rate is 1. Do not add a second interest radius, a second clock, or a second scale list. Do not build the log wheel. Steps 30 and 31 are that pull request.
 
 ## Objectives
 - [ ] One observation record returns position, altitude, time rate, and embodied id from the existing camera, interest centre, playable, and clock

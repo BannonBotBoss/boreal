@@ -1022,3 +1022,9 @@ Branch `grokbot-3/design-roadmap`. Proposed only. Not claimed. Not self-approved
 - `PROJECT-RULES.md`: one precedence line under the title.
 - First wave proposed and not claimed: T-0080 (this plan), T-0081 (observation record), T-0082 (Rust weather in the forest; rewrites `climateRaw` authority), T-0083 (perception buffer), T-0084 (empty entity store), T-0085 (rain shadow), T-0086 (moisture debt), T-0087 (snow depth, reuses the 0 °C split). Steps 3, 4, 8-10, 12-15, 17-38 stay in the plan.
 - Skill `notes/skills/design-issue-roadmap.md`. Handoff `tasks/handoffs/T-0080-grokbot-3.md`.
+
+## 2026-10-25 20:00 PT - grokbot-3: the time wheel is already on pull request #92 (T-0080)
+Same branch, `grokbot-3/design-roadmap`. Still proposed. Not claimed. Not a new task.
+- Read `origin/grokbot-3/single-time-control` at `8f14525` (dial commit `565b2e6`). The wheel is −1..+1, dead zone 0.01, `10^(12 × |position|)`, spring in decades, reverse for the clock and the sun, and `observation()` with the eight scale names, hysteresis, and a blend. Animals and the weather grid hold above Immediate (`simWorldSec`). Ground advances on any forward gap and refuses a backward one (`groundWorldSec`). The lip is still about 1.32×; that pull request is moving it to exactly 1×. Not a new step.
+- Steps 30 and 31 are marked delivered by pull request #92. So are the scale signal, clock-and-sun rewind, the readable rate, and the ground's refusal of a backward gap. Still queued: step 3 (epoch; `epochOffsetYr` is session seconds and `dialToYears` still puts zero at now), the wiring in step 32 (animals, weather, and ground follow the scale by transforming, with step 14), step 33 (height times that scale, after pull request #94's distance table), the closed-form query in step 34, and the time-warp feel in step 35.
+- No second wheel. No second list of scale names. No new propose events.

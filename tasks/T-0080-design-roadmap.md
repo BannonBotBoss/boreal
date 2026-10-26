@@ -28,7 +28,7 @@ One roadmap covering the full path, a coverage table for every section of the te
 ## Already covered (do not redo)
 
 - Spatial picture from space to the forest: pull request #94, T-0078, `notes/render-unification-plan.md`.
-- One clock and the in-game control: pull request #92, `grokbot-3/single-time-control`. The menu branch also used T-0077; the clock work is the single-time-control branch.
+- One clock, the in-game control, and the log time wheel: pull request #92, `grokbot-3/single-time-control`. The menu branch also used T-0077. The clock is T-0077 on the single-time-control branch. The wheel (steps 30 and 31, plus the scale signal) is T-0078 on that same branch, not the render plan's T-0078.
 - Planet budgets, snow below 0 °C, scent math, needs, the playable motor, deep time. The roadmap names the files.
 
 ## Objectives
@@ -39,7 +39,7 @@ One roadmap covering the full path, a coverage table for every section of the te
 
 ## Depends on
 
-- Nothing in the repo. Steps 3 and 30–35 of the plan wait on pull request #92. Step 33 waits on pull request #94. This task does not edit those branches.
+- Nothing in the repo. Steps 30 and 31 are delivered by pull request #92. Step 3, and the remaining wiring in steps 32–35, still branch from that clock or wait until it is merged. Step 33 also waits on pull request #94. This task does not edit those branches.
 
 ## What Matthew will see
 

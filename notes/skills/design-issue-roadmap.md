@@ -7,7 +7,7 @@ Use when Matthew posts a design issue, or when a bot takes the next step from `n
 2. Search the repo and the board before adding a step. Name the file that already does the job. A step is a rewrite only when that file conflicts with the winning issue. Say what the rewrite replaces. Reuse it when it already fits.
 3. A new step needs one plain goal, the issues it covers, what it reuses or replaces, the gates (sourced numbers, a frame or a stated reason the frame is N/A, evidence a reviewer can open), a size, and whether it can run beside another step.
 4. Keep the coverage table current. Every section of the issue maps to a step. A section with no step is a hole.
-5. Propose at most the next unblocked step, not the whole remainder. Take the next free task id (`notes/skills/next-free-task-id.md`). Do not claim a pile of tasks. Do not rebuild pull request #94 (the one picture from space to the forest) or pull request #92 (the one clock). Link them.
+5. Propose at most the next unblocked step, not the whole remainder. Take the next free task id (`notes/skills/next-free-task-id.md`). Do not claim a pile of tasks. Do not rebuild pull request #94 (the one picture from space to the forest) or pull request #92 (the one clock, and the log wheel, spring, reverse, and observation signal already on it). Steps 30 and 31 are that delivery. The remaining time work wires animals, weather, and ground to `observation()`. Link them. Do not add a second list of scale names.
 6. A message Matthew will read opens with a short plain summary. No abbreviations. The roadmap's own summary stays about twelve short lines.
 
 ## Checks that prove it worked

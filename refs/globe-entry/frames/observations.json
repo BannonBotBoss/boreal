@@ -1,0 +1,842 @@
+{
+  "url": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+  "orbit": {
+    "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+    "mode": "globe",
+    "phase": "orbit",
+    "alt": 14016219,
+    "height": 0,
+    "fall": null,
+    "el": -90,
+    "layersHidden": false,
+    "prompt": "Looking straight down. Double-click a point to drop there. Drag orbits. Wheel zooms. H flies home. G drops on the centre. A click does not drop."
+  },
+  "clickFall": null,
+  "before": {
+    "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+    "mode": "globe",
+    "phase": "orbit",
+    "alt": 5200,
+    "height": 0,
+    "fall": null,
+    "el": -90,
+    "layersHidden": false,
+    "prompt": "Looking straight down. Double-click a point to drop there. Drag orbits. Wheel zooms. H flies home. G drops on the centre. A click does not drop."
+  },
+  "started": {
+    "h0": 5200.000000000001,
+    "h": 5200.000000000001,
+    "vy": 0,
+    "ease": 0
+  },
+  "marks": {
+    "early": true,
+    "mid": true,
+    "late": true
+  },
+  "lastFall": {
+    "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+    "mode": "globe",
+    "phase": "fall",
+    "alt": 3048,
+    "height": 0,
+    "fall": {
+      "h0": 5200.000000000001,
+      "h": 3048.223522895971,
+      "vy": -204.95393229000368,
+      "ease": 0.9999999676368581
+    },
+    "el": -35.26439145417099,
+    "layersHidden": false,
+    "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+  },
+  "handoff": {
+    "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+    "mode": "band",
+    "phase": "drone",
+    "alt": 3048,
+    "height": 3048,
+    "fall": null,
+    "el": -35.26438968275467,
+    "layersHidden": false,
+    "prompt": "Drone · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on."
+  },
+  "carried": {
+    "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+    "mode": "band",
+    "phase": "drone",
+    "alt": 8253,
+    "height": 2924.438990641065,
+    "fall": null,
+    "el": -35.264389682754654,
+    "layersHidden": false,
+    "prompt": "Drone · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on."
+  },
+  "layout": {
+    "w": 750,
+    "h": 900,
+    "boxes": [
+      {
+        "sel": "footer",
+        "t": 841,
+        "b": 880,
+        "l": 30,
+        "r": 720,
+        "w": 690,
+        "h": 39
+      },
+      {
+        "sel": "footer>span",
+        "hidden": true
+      },
+      {
+        "sel": ".padx",
+        "t": 585,
+        "b": 620,
+        "l": 16,
+        "r": 504,
+        "w": 488,
+        "h": 35
+      },
+      {
+        "sel": "#flight-prompt",
+        "t": 459,
+        "b": 540,
+        "l": 188,
+        "r": 563,
+        "w": 375,
+        "h": 81
+      },
+      {
+        "sel": "#interaction",
+        "hidden": true
+      },
+      {
+        "sel": "#globe-layers",
+        "t": 8,
+        "b": 253,
+        "l": 603,
+        "r": 742,
+        "w": 139,
+        "h": 245
+      },
+      {
+        "sel": "#menu-btn",
+        "t": 841,
+        "b": 880,
+        "l": 30,
+        "r": 92,
+        "w": 62,
+        "h": 39
+      }
+    ],
+    "onGlobe": true,
+    "overlapPromptLegend": 0
+  },
+  "game": {
+    "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+    "mode": "game",
+    "phase": "game",
+    "alt": 5330,
+    "height": 1647.6418939320674,
+    "fall": null,
+    "el": 5.000000000000032,
+    "layersHidden": true,
+    "prompt": ""
+  },
+  "gameLayout": {
+    "mode": "game",
+    "boxes": [
+      {
+        "sel": "footer",
+        "t": 735,
+        "b": 880,
+        "l": 30,
+        "r": 720,
+        "w": 690,
+        "h": 145
+      },
+      {
+        "sel": "footer>span",
+        "t": 735,
+        "b": 788,
+        "l": 30,
+        "r": 720,
+        "w": 690,
+        "h": 53
+      },
+      {
+        "sel": ".padx",
+        "t": 585,
+        "b": 620,
+        "l": 16,
+        "r": 504,
+        "w": 488,
+        "h": 35
+      },
+      null,
+      {
+        "sel": "#interaction",
+        "t": 647,
+        "b": 712,
+        "l": 280,
+        "r": 470,
+        "w": 190,
+        "h": 65
+      },
+      {
+        "sel": "#globe-layers",
+        "hidden": true
+      },
+      {
+        "sel": "#status",
+        "t": 30,
+        "b": 119,
+        "l": 281,
+        "r": 724,
+        "w": 443,
+        "h": 89
+      },
+      {
+        "sel": "#menu-btn",
+        "t": 796,
+        "b": 835,
+        "l": 30,
+        "r": 92,
+        "w": 62,
+        "h": 39
+      }
+    ],
+    "overlapHintLegend": 0,
+    "overlapHintFooter": 36570,
+    "overlapTalkLegend": 0,
+    "w": 750
+  },
+  "errors": [],
+  "samples": [
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5200,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5199.70587362246,
+        "vy": -1.9608425269892578,
+        "ease": 5.6035737948384355e-8
+      },
+      "el": -89.99999692167535,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5197,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5197.254820124532,
+        "vy": -6.862950427358416,
+        "ease": 0.000004877629858834793
+      },
+      "el": -89.99973302264641,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5191,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5191.0781625238515,
+        "vy": -12.745487204209201,
+        "ease": 0.000051421333152039404
+      },
+      "el": -89.99718542202915,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5179,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5179.41113172813,
+        "vy": -19.608465068539033,
+        "ease": 0.00027284925783032494
+      },
+      "el": -89.98506542934712,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5163,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5162.940005199256,
+        "vy": -26.47147248060145,
+        "ease": 0.0008794933127277445
+      },
+      "el": -89.9518603967481,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5148,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5148.233618257187,
+        "vy": -31.373644451357865,
+        "ease": 0.0017080919822331298
+      },
+      "el": -89.90650654287876,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5127,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5127.350509945431,
+        "vy": -37.2562829876901,
+        "ease": 0.003342073098865548
+      },
+      "el": -89.8170695892061,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5103,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5102.937804391893,
+        "vy": -43.13896277145131,
+        "ease": 0.005919402306736922
+      },
+      "el": -89.67599790202969,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5085,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5084.701766813254,
+        "vy": -47.06077542568649,
+        "ease": 0.008303974587323732
+      },
+      "el": -89.54547688290519,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5060,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5059.700691040562,
+        "vy": -51.96307403419481,
+        "ease": 0.01219689973009576
+      },
+      "el": -89.33239524929512,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5038,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5037.934995388186,
+        "vy": -55.88494150581133,
+        "ease": 0.016160121775974562
+      },
+      "el": -89.11546587179176,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 5009,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 5008.521814458266,
+        "vy": -60.78731474294629,
+        "ease": 0.022341802429757578
+      },
+      "el": -88.77710780841998,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4983,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4983.226406510953,
+        "vy": -64.70924680318103,
+        "ease": 0.028396143289369114
+      },
+      "el": -88.4457197663998,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4956,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4956.362217839187,
+        "vy": -68.63121070614132,
+        "ease": 0.0355503599833581
+      },
+      "el": -88.05412934931319,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4921,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4920.575863892837,
+        "vy": -73.53371330449654,
+        "ease": 0.04620014458535956
+      },
+      "el": -87.47120688937557,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4882,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4882.338241835844,
+        "vy": -78.43627244381197,
+        "ease": 0.05893544012775799
+      },
+      "el": -86.77413271529163,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4850,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4849.983211456006,
+        "vy": -82.35836299866774,
+        "ease": 0.07075696599176198
+      },
+      "el": -86.1270742822445,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4753,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4752.917463556869,
+        "vy": -93.14432681596158,
+        "ease": 0.11154926328502221
+      },
+      "el": -83.89428299365522,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4705,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4704.874456185457,
+        "vy": -98.0471498288992,
+        "ease": 0.13444775069021736
+      },
+      "el": -82.64092031019011,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4633,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4633.495828153276,
+        "vy": -104.9112295593358,
+        "ease": 0.17140962678750593
+      },
+      "el": -80.61778946353465,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4580,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4579.569313585108,
+        "vy": -109.81423986295066,
+        "ease": 0.20143066933098622
+      },
+      "el": -78.97456937755716,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4512,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4511.621472277293,
+        "vy": -115.69796403458815,
+        "ease": 0.24150538295234236
+      },
+      "el": -76.78105546920347,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4440,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4440.14335193823,
+        "vy": -121.58181633542061,
+        "ease": 0.2859808219134919
+      },
+      "el": -74.3466651735376,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4365,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4365.134873408245,
+        "vy": -127.46580328600419,
+        "ease": 0.3347364538174254
+      },
+      "el": -71.67799590487287,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4313,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4313.167870086529,
+        "vy": -131.38853927887507,
+        "ease": 0.36950352715345625
+      },
+      "el": -69.77499892688073,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4260,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4259.631756259262,
+        "vy": -135.31133994692212,
+        "ease": 0.4059618476881022
+      },
+      "el": -67.77943050127514,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4119,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4118.926438383692,
+        "vy": -145.11863725436748,
+        "ease": 0.5035363782638433
+      },
+      "el": -62.4386290187932,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 4060,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 4059.898225181672,
+        "vy": -149.041679506312,
+        "ease": 0.5446277468041133
+      },
+      "el": -60.18946788297066,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3984,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3983.906218222974,
+        "vy": -153.94558572935566,
+        "ease": 0.5970972393172533
+      },
+      "el": -57.31751818722785,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3921,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3921.347183814545,
+        "vy": -157.86879579076341,
+        "ease": 0.6395841146587542
+      },
+      "el": -54.99197313493806,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3857,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3857.218846010937,
+        "vy": -161.79208357636705,
+        "ease": 0.6821430235541244
+      },
+      "el": -52.66248528211393,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3792,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3791.521173238987,
+        "vy": -165.71545102013167,
+        "ease": 0.7243708311556873
+      },
+      "el": -50.35112046068317,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3724,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3724.254133151892,
+        "vy": -169.6389000562381,
+        "ease": 0.7658142421807016
+      },
+      "el": -48.08269006460057,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3638,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3637.9633597253655,
+        "vy": -174.54332903756372,
+        "ease": 0.8157387138177489
+      },
+      "el": -45.35004363978078,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3476,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3476.4602400799,
+        "vy": -183.37164215228628,
+        "ease": 0.8968638564859684
+      },
+      "el": -40.90960944376218,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3402,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3402.130626035273,
+        "vy": -187.29548229546927,
+        "ease": 0.9276735426489773
+      },
+      "el": -39.2232224679471,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3288,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3287.693270089187,
+        "vy": -193.18141605469776,
+        "ease": 0.9655459683406317
+      },
+      "el": -37.150252133519885,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3170,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3169.724279283916,
+        "vy": -199.06756387469295,
+        "ease": 0.9907637087222722
+      },
+      "el": -35.769943722908955,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    },
+    {
+      "href": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe",
+      "mode": "globe",
+      "phase": "fall",
+      "alt": 3048,
+      "height": 0,
+      "fall": {
+        "h0": 5200.000000000001,
+        "h": 3048.223522895971,
+        "vy": -204.95393229000368,
+        "ease": 0.9999999676368581
+      },
+      "el": -35.26439145417099,
+      "layersHidden": false,
+      "prompt": "Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet."
+    }
+  ]
+}

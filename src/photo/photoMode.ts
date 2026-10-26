@@ -3,7 +3,9 @@
  * for stills, sequences and video. The world's state comes and goes only through the shared snapshot hub (core/snapshot.ts).
  */
 import { haptic } from '../ui/haptics';
-import { heightAt } from '../core/world';
+import { BINDINGS_KEY, loadBindings } from '../core/bindings';
+import { standardPad } from '../input/gamepad';
+import { photoFlyFloor, photoFlyMove, photoFlyPad } from './fly';
 import { clamp } from '../proc/math';
 import type { SnapshotHub, Snapshot } from '../core/snapshot';
 import type { buildScene, PhotoView } from '../render/buildScene';
@@ -17,6 +19,8 @@ const mmToFov = (mm: number) => 2 * Math.atan(12 / mm) * 180 / Math.PI; // 36×2
 const fovToMm = (fov: number) => 12 / Math.tan(fov * Math.PI / 360);
 
 export interface PhotoHost { view: View; hub: SnapshotHub; simTime(): number; onExit(): void; notice(text: string): void; /** redraw the world for a given frozen view */ draw(v: PhotoView): void }
+
+const flyBindings = () => { try { return loadBindings(localStorage.getItem(BINDINGS_KEY)); } catch { return loadBindings(null); } };
 
 export function createPhotoMode(host: PhotoHost) {
   const { view, hub } = host, canvas = view.canvas;
@@ -34,7 +38,7 @@ export function createPhotoMode(host: PhotoHost) {
   // ---------- DOM (all of it is outside the canvas, so it never appears in captures) ----------
   const root = document.createElement('div'); root.id = 'photo'; root.hidden = true;
   root.innerHTML = `<div id="photo-crop"><div id="photo-grid"></div></div>
-  <div id="photo-hints">PHOTO MODE · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · wheel zoom · click focus · , . step · K play · L live · F photo · R video · B sequence · H panel · P/Esc exit</div>
+  <div id="photo-hints">PHOTO MODE · WASD fly · left stick moves · right stick turns · right trigger climbs · left trigger descends · drag look · Q/E or Space/Ctrl down/up · Shift fast · wheel zoom · click focus · , . step · K play · L live · F photo · R video · B sequence · H panel · P/Esc exit</div>
   <div id="photo-bar"><button data-a="back">◀</button><button data-a="play">▶</button><button data-a="fwd">▶|</button>
     <input id="photo-time" type="range" min="0" max="0" value="0"><span id="photo-when">live</span><button data-a="live">Live</button>
     <button data-a="shot">Photo</button><button data-a="rec">Record</button><button data-a="seq">Sequence</button></div>
@@ -240,13 +244,12 @@ export function createPhotoMode(host: PhotoHost) {
     },
     /** Per frame: fly the camera, advance playback/sequence; returns the frozen view to draw. */
     update(dt: number): PhotoView {
-      const speed = (keys.has('shift') ? 25 : 6) * dt, f = Number(keys.has('w')) - Number(keys.has('s')), r = Number(keys.has('d')) - Number(keys.has('a'));
-      const u = Number(keys.has('e') || keys.has(' ')) - Number(keys.has('q') || keys.has('control'));
-      const cp = Math.cos(cam.pitch);
-      cam.x += (-Math.sin(cam.yaw) * cp * f + Math.cos(cam.yaw) * r) * speed;
-      cam.z += (-Math.cos(cam.yaw) * cp * f - Math.sin(cam.yaw) * r) * speed;
-      cam.y += (Math.sin(cam.pitch) * f + u) * speed;
-      cam.y = Math.max(cam.y, Math.max(heightAt(cam.x, cam.z), -.25) + .3);
+      const pad = photoFlyPad(standardPad(), dt, flyBindings());
+      const f = clamp(Number(keys.has('w')) - Number(keys.has('s')) + pad.f, -1, 1);
+      const r = clamp(Number(keys.has('d')) - Number(keys.has('a')) + pad.r, -1, 1);
+      const u = clamp(Number(keys.has('e') || keys.has(' ')) - Number(keys.has('q') || keys.has('control')) + pad.u, -1, 1);
+      photoFlyMove(cam, dt, f, r, u, keys.has('shift'), pad.yaw, pad.pitch);
+      cam.y = Math.max(cam.y, photoFlyFloor(cam.x, cam.z));
       cam.roll = settings.roll * Math.PI / 180;
       if (playing && !seq) { playAcc += dt; while (playAcc >= .1) { playAcc -= .1; if (index >= 0 && index < hub.ring.size - 1) show(index + 1); else { playing = false; break; } } } else playAcc = 0;
       if (seq && (capture.source === 'rewind' || host.simTime() >= seq.next)) sequenceStep();

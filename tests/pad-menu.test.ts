@@ -28,6 +28,13 @@ test('pad menu: d-pad skips info rows, A selects, LB/RB switch tabs, B closes', 
 test('pad menu: left stick navigates too', () => {
   const { m, press } = rig(); m.open(); press({}, [0, .9, 0, 0]); assert.equal(m.current()?.label, 'Aurora');
 });
+test('pad menu: a click can open a root tab without the bumpers', () => {
+  const { m } = rig(); m.open();
+  m.tabTo(1); assert.equal(m.title(), 'Camera');
+  m.tabTo(0); assert.equal(m.title(), 'Layers');
+  m.push({ title: 'Nested', items: () => [{ label: 'Stay', kind: 'info' }] });
+  m.tabTo(1); assert.equal(m.title(), 'Nested', 'a pushed page does not switch tabs');
+});
 test('badge gate: a locked item opens its test page, B returns; owned item acts', () => {
   const r = rig(); r.m.open(); r.press({ 13: 1 }); assert.equal(r.m.current()?.label, 'Aurora');
   r.press({ 0: 1 }); assert.equal(r.m.title(), 'Locked layer.aurora'); assert.ok(!r.log.includes('aurora'));

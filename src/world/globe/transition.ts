@@ -24,10 +24,10 @@ export const TRANSITION = {
 };
 
 export type TransitionMode = 'game' | 'band' | 'globe';
-/** In-page globe camera elevation (radians, negative = below the horizon) by altitude above ground (T-0034): straight down in
- *  orbit, easing to the descent's 45-degree glide path (inpage glide) by the band top, so globe -> band -> game never swings
- *  the pitch (it used to snap from straight down to the horizon at 300 km, then swing back down in the band). */
-export const GLOBE_PITCH = { orbitAlt: 3e5, glide: -Math.PI / 4, down: -Math.PI / 2 + .01 };
+/** In-page camera elevation (radians, negative = below the horizon) by altitude (Matthew 2026-10-25: the view tilts toward
+ *  the horizon as the straight-down descent gets low, instead of holding the old 45° glide). Straight down in orbit,
+ *  log-smoothed so the tilt happens on the way into the forest and is level with the horizon at the floor. */
+export const HORIZON_TILT = { highAlt: 3e5, floorAlt: 8, down: -Math.PI / 2 + .01, horizon: -0.18 };
 /** In-page globe cloud clearing by altitude (T-0034): the 2.5 km cloud shell (atmosphere CLOUDS, 900 km cells) can sit over
  *  the whole home region, so diving in looked into a flat lit cloud top from ~300 km to the band (the 'blank plain'). The deck
  *  opens from 1500 km (orbit look kept) to none by 150 km (CLOUD_OPEN, T-0041), so the descent always sees the ground it lands on. */
@@ -45,7 +45,10 @@ export const cloudClear = (alt: number) => Math.min(1, Math.max(0, Math.log(CLOU
 export const GLOBE_COAST = { sec: 3, rest: .02, track: .05 };
 /** MathUtils.damp lambda (1/s) for the coast: e^(-lambda sec) = rest */
 export const coastLambda = Math.log(1 / GLOBE_COAST.rest) / GLOBE_COAST.sec;
-export function globePitch(alt: number) { return GLOBE_PITCH.down + (GLOBE_PITCH.glide - GLOBE_PITCH.down) * (1 - smoothstep(TRANSITION.bandTop, GLOBE_PITCH.orbitAlt, alt)); }
+export function globePitch(alt: number) {
+  const t = 1 - smoothstep(Math.log(HORIZON_TILT.floorAlt), Math.log(HORIZON_TILT.highAlt), Math.log(Math.max(alt, 1)));
+  return HORIZON_TILT.down + (HORIZON_TILT.horizon - HORIZON_TILT.down) * t;
+}
 /** In-page (the default since the r18 check) or the reload fallback. ?transition=reload | inpage forces it; low-memory
  *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the
  *  reload when the player or the probe has the game on Low or below at that moment). */
@@ -87,23 +90,23 @@ export function patchFade(heightAboveGround: number, chunksReady: boolean) {
   return chunksReady ? smoothstep(TRANSITION.bandTop, TRANSITION.fadeFull, heightAboveGround) : 0;
 }
 
-export interface ModeInput { mode: TransitionMode; height: number; overHome: boolean; descending: boolean; chunksReady: boolean; ascend?: boolean; descend?: boolean }
-/** One step of the mode machine. globe -> band: descending below bandTop over the home region (or descend requested);
- *  band -> game: below the handover height with the chunks ready; band -> globe: climbing back above bandTop;
- *  game -> band: ascend requested (Shift+G / pause menu). */
+export interface ModeInput { mode: TransitionMode; height: number; overHome: boolean; descending: boolean; chunksReady: boolean; ascend?: boolean; descend?: boolean; embody?: boolean }
+/** One step of the mode machine. globe -> band: only an explicit drop (double-click, A, or G). A zoom, a drag and a
+ *  click do not enter, on or off home. band -> game: the player asks to become the animal, near the floor, with the
+ *  chunks ready (the fall itself stops at the drone and does not take the body); band -> globe: climbing back above
+ *  bandTop; game -> band: ascend requested (Shift+G / pause menu). */
 export function nextMode(s: ModeInput): TransitionMode {
   switch (s.mode) {
     case 'game': return s.ascend ? 'band' : 'game';
-    case 'globe': return s.overHome && (s.descend || (s.descending && s.height < TRANSITION.bandTop)) ? 'band' : 'globe';
+    case 'globe': return s.descend ? 'band' : 'globe';
     case 'band':
       if (!s.descending && s.height >= TRANSITION.bandTop) return 'globe';
-      if (s.descending && s.height <= TRANSITION.handover && s.chunksReady) return 'game';
+      if (s.embody && s.height <= HORIZON_TILT.floorAlt && s.chunksReady) return 'game';
       return 'band';
   }
 }
-/** Which keymap is live: only the active scene's. In band the camera is flown by the transition: the globe keys stay live
- *  on the way down (turn/zoom), none on the way up (the game has handed off). */
-export const inputOwner = (mode: TransitionMode, descending: boolean): 'game' | 'globe' | 'none' => mode === 'game' ? 'game' : mode === 'globe' ? 'globe' : descending ? 'globe' : 'none';
+/** Which keymap is live. The band descent and the drone use the drone map; the climb back to the planet takes none. */
+export const inputOwner = (mode: TransitionMode, descending: boolean): 'game' | 'globe' | 'drone' | 'none' => mode === 'game' ? 'game' : mode === 'globe' ? 'globe' : descending ? 'drone' : 'none';
 /** What runs per mode (lead decision: the world clock always runs; the sim only in game mode). */
 export const simRuns = (mode: TransitionMode) => mode === 'game';
 

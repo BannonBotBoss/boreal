@@ -37,3 +37,10 @@ input[type=range].at-wall{accent-color:#e05a3a;box-shadow:inset -3px 0 0 #e05a3a
 .ctl-live{min-height:2.4em;margin:0;font-size:13px;color:#f3d79a}.ctl-capture{background:#f3d79a;color:#14221b;border-radius:8px;padding:10px 12px;font-weight:600}.ctl-conflicts{display:grid;gap:6px;font-size:12px;max-height:170px;overflow:auto}.ctl-clash{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:#ffd0a8}.ctl-clash button{padding:4px 8px}.ctl-msg{margin:0;color:#c9f0b8}.ctl-tools{display:flex;gap:8px;flex-wrap:wrap}
 .ctl-list{display:grid;gap:3px;max-height:calc(86vh - 120px);overflow:auto;padding-right:4px}.ctl-row,.ctl-head{display:grid;grid-template-columns:1.5fr 1fr 1.2fr;gap:10px;text-align:left;align-items:center;font-size:13px;padding:7px 10px}.ctl-head{color:#f3d79a;font-weight:600;position:sticky;top:0;background:#0d1712;z-index:1;border-radius:5px}.ctl-row .k,.ctl-row .p{color:#4b5e54}.ctl-row.clash{background:#f6d2b8}.ctl-screen.capturing .ctl-list{opacity:.6}
 body.on-globe header,body.on-globe #status,body.on-globe #interaction,body.on-globe footer>span,body.on-globe footer div>button:not(#menu-btn){display:none}
+/* The controls hint wraps instead of covering the button row, including a narrow window around 750px (Matthew 2026-10-25). */
+footer{flex-wrap:wrap;align-items:flex-end}
+footer>span{flex:1 1 240px;min-width:0;max-width:min(460px,100%);white-space:normal;overflow-wrap:anywhere;line-height:1.45;max-height:4.8em;overflow:auto}
+footer div{flex-wrap:wrap;justify-content:flex-end;max-width:100%}
+@media(max-width:900px){footer{flex-direction:column;align-items:stretch;gap:8px}footer div{justify-content:flex-start}footer>span{max-width:none}#interaction{bottom:188px}}
+/* Above the controller legend (.padx bottom 280px, ~35px tall) so a ~750px window does not cover the prompt or the interaction line. */
+#flight-prompt{position:fixed;left:50%;bottom:360px;transform:translateX(-50%);z-index:30;max-width:min(640px,calc(100vw - 24px));background:#0b1622e0;color:#f3f1df;font:14px/1.45 system-ui;padding:10px 14px;border-radius:8px;text-align:center;pointer-events:none}

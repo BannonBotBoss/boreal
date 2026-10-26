@@ -1010,6 +1010,7 @@ Branch `grokbot-3/river-hydraulics`. Issue #18 is claimed by codex on `codex/loo
 - Skill `notes/skills/river-hydraulics.md`. Handoff `tasks/handoffs/T-0030-grokbot-3.md`. Slopes remeasured in `refs/water/river-audit/slopes.json`. `npx tsc --noEmit` exit 0 on the implementation. Channel tests 6/6. Not self-approved.
 - 09:37 PT: after frames are in `tasks/evidence/T-0030/` (before frames in `refs/water/river-audit/` untouched). T-0075 put the October 21 boxes on the sky. Water boxes chosen on these frames: slow1, fast1 and order2 reach foam share 0.000 (calm gate <= 0.03). The fast1 step, framed at yaw 0, has a lee box at foam share 0.746 and the water beside it at 0. Lee-grain correlation peaks at +36 px along the flow. Model shift is 44 px (0.921 m/s, shader dt 0.745 s, 63.9 px/m). Advection score 0.821 (measured 0.756 m/s, model 0.921 m/s). A second pair with `shaderClock` read directly did not beat zero-shift, so it is not a speed. Objective 4 stays open. No complete event. `npx tsc --noEmit` exit 0. `npm test` 752 tests, 738 pass, 0 fail, 14 todo.
 
+<<<<<<< HEAD
 ## 2026-10-25 19:41 PT - grokbot-3: time dial on the one clock (T-0078, issues #107 #108 #109)
 Branch `grokbot-3/single-time-control`, same PR #92. Matthew at 19:15 PT allowed a rewrite so #108, #109 and #107 are met. At 19:17 PT, #109 wins over #108. Rule 16 events use `"for": "matthew"`. Not a GitHub approval and not a merge.
 - `src/core/worldClock.ts` is still the only integrator. The dial is −1..+1. Target is `sign × 10^(|p| × 12)` outside ±0.01 (pause). Full scale is 10^12×. The rate eases in decades with inertia `1 + error²`. `setClockRate` snaps only for startup and `?timescale=`.
@@ -1029,4 +1030,66 @@ Branch `grokbot-3/single-time-control`. Matthew in chat, 2026-10-25 17:53 PT: "T
 Matthew in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins", then "put it in the rules."
 - `PROJECT-RULES.md` now opens with that authority. The 2026-10-25 7:17 PM line that stopped at #100–#109 is replaced. The "Talking to Matthew" section from main is kept.
 - `tasks/RULES.md` rule 18 names the twenty issues (#99–#113 and #115–#119) and the resolutions the higher number already locks.
+=======
+## 2026-10-25 18:25 PT - grokbot-3: pad menu stays one centered size (T-0077)
+Matthew in chat asked for this directly. Approve-plan and approve are `for: matthew` with his words quoted. Not a GitHub approval and not a merge. He said not to merge or approve the PR.
+- Cause on `e7b9ab7` `src/ui/padMenu.ts:101`: `top:50%` and `translate(-50%,-50%)` with `max-height:86vh` and no fixed height. Before tops at 1280×720: camera 220.0, time 188.6, badges 32.4, gallery 190.7, settings 130.0.
+- `menuFrame` keeps the centering. One box is the tallest of camera, time, badges, gallery and settings, capped at the screen. Header and tabs stay outside the scroller. Arrow bars are in the flow and hidden unless that direction still has content. `reveal` settles after an arrow shrinks the body. Hold uses `REPEAT` (380 ms, then 110 ms). The pad reader already repeats d-pad and left stick, so those do not get a second timer.
+- After: 720 top 0 height 720; 1100 top 142.5 height 815; 420 top 0 height 420. Hold probe: every recorded row fully inside, and pointerup / keyup stop the repeat. Evidence `tasks/evidence/T-0077/`.
+- Skill `notes/skills/fixed-menu-frame.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`. Implementation `dcc9935`. PR https://github.com/BannonBotBoss/boreal/pull/91.
+- `npx tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo. Frame gate N/A (a menu, not a landscape). The substitute is the bounding-rect tops. Not self-approved on GitHub.
+
+
+## 2026-10-25 grokbot-1: solar budget takes T-0059 cloud (refs #43)
+- `solarBudget.ts`: `cellCloud(day, hour, dir)` is atmosphereBudget's Sundqvist cover for that cell; `budgetFromAlbedo`/`solarBudget`/`absorbedAttribute` take `cloud: number | null` (null = the cell's own cover, a number overrides; tests still pass 0).
+- `tile.ts` `applySolarAttribute` now defaults to null, so the globe's absorbed-sunlight layer is cut by each vertex's cloud. Cover is still low (~5% vs ~67% observed) until the moisture-variance gap is closed.
+
+## 2026-10-25 18:31 PT - grokbot-3: Talking to Matthew (T-0079)
+Matthew asked in chat at 18:28 PT for a section titled "Talking to Matthew" near the top of PROJECT-RULES.md, binding every agent, and at 18:30 PT for two more rules (he draws; a sketch is the spec). Branch `grokbot-3/talking-to-matthew`. Docs only. The section is his eight rules. tasks/RULES.md rule 16 has a one-line pointer. SKELETON-RULES.md has no reporting section, so it is unchanged. Skill `notes/skills/talking-to-matthew.md` points at the section and reuses the relay-event skill. `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. The automatic test job passed on `aa354aa` (run 40256426405). Pull request https://github.com/BannonBotBoss/boreal/pull/93. Id is T-0079 because pull request 94 also used T-0078. Not merged.
+
+
+## 2026-10-25 19:30 PT - grokbot-3: design roadmap for issues #100-#109 (T-0080)
+Branch `grokbot-3/design-roadmap`. Proposed only. Not claimed. Not self-approved. Matthew, 2026-10-25 7:15 PM PT, verbatim: "if you have to rewrite anything, i give you permission, as long as the design documents i posted are addressed." Matthew, 2026-10-25 7:17 PM PT: the latest issue wins (#109 over #108 over #107, and #100-#109 over anything older). Both are comment events with "for": "matthew" on T-0080. Neither is an approve-plan.
+- `notes/design-roadmap.md`: plain summary, 21 conflicts, 38 steps, coverage of every section of #100-#109. Pull request #94 (spatial picture, T-0078) and pull request #92 (one clock) are linked, not copied.
+- `PROJECT-RULES.md`: one precedence line under the title.
+- First wave proposed and not claimed: T-0080 (this plan), T-0081 (observation record), T-0082 (Rust weather in the forest; rewrites `climateRaw` authority), T-0083 (perception buffer), T-0084 (empty entity store), T-0085 (rain shadow), T-0086 (moisture debt), T-0087 (snow depth, reuses the 0 °C split). Steps 3, 4, 8-10, 12-15, 17-38 stay in the plan.
+- Skill `notes/skills/design-issue-roadmap.md`. Handoff `tasks/handoffs/T-0080-grokbot-3.md`.
+
+## 2026-10-25 20:00 PT - grokbot-3: the time wheel is already on pull request #92 (T-0080)
+Same branch, `grokbot-3/design-roadmap`. Still proposed. Not claimed. Not a new task.
+- Read `origin/grokbot-3/single-time-control` at `8f14525` (dial commit `565b2e6`). The wheel is −1..+1, dead zone 0.01, `10^(12 × |position|)`, spring in decades, reverse for the clock and the sun, and `observation()` with the eight scale names, hysteresis, and a blend. Animals and the weather grid hold above Immediate (`simWorldSec`). Ground advances on any forward gap and refuses a backward one (`groundWorldSec`). The lip is still about 1.32×; that pull request is moving it to exactly 1×. Not a new step.
+- Steps 30 and 31 are marked delivered by pull request #92. So are the scale signal, clock-and-sun rewind, the readable rate, and the ground's refusal of a backward gap. Still queued: step 3 (epoch; `epochOffsetYr` is session seconds and `dialToYears` still puts zero at now), the wiring in step 32 (animals, weather, and ground follow the scale by transforming, with step 14), step 33 (height times that scale, after pull request #94's distance table), the closed-form query in step 34, and the time-warp feel in step 35.
+- No second wheel. No second list of scale names. No new propose events.
+
+## 2026-10-25 20:03 PT - grokbot-3: globe entry free fall (T-0088, was T-0077 on this branch)
+
+Matthew's direct request, 2026-10-25 18:24 PT, plus issue #107 at 19:15 PT. Not a self-approve on GitHub. Rule 15: T-0072, T-0073, and T-0078 were not reviewed this run. Rule 13: T-0077 reached main first as the pad menu (PR #91), so this work is T-0088.
+
+- The planet screen is the in-page globe (`createInPage` / `enter`), reached from a bare URL via `?start=globe`. It used to stick because shared `autoHandoff` is false, G and pad land only called `leave` over home, and H only flew home. The old way in was `inpage` `glide` with `globePitch` (a 45° path). That is gone.
+- Orbit is nadir. Double-click, A, or G calls `beginFall`. The fall is `physics.step` to `FALL_END_M` (3048 m). Yaw +180° and pitch to −35.264° finish there. Aim is `lookAt(0,0,0)` then `rotateZ` / `rotateX`. The far plane clamps `rad² − R²` so the frame does not clear when the camera crosses inside the mean sphere.
+- The drone is photo mode's fly: `src/photo/photoMode.ts` `createPhotoMode` `update`, now `photoFlyMove` / `stepCarriedFly` in `src/photo/fly.ts`. The Xbox pad moves with the left stick, turns with the right stick, climbs on the right trigger and descends on the left trigger. That turn lives in `photoFlyMove`. Wind is `rushLevel` on `wind-pines`. `localCloudFade` crossfades the local box with the shell (issue #107). No new renderer.
+- Capture: orbit elevation −90°, handoff height 3048 m at elevation −35.264°, 03/04/05 are three hashes (they used to be one cleared frame). Overlap 0. Layer panel hidden in game. `npx tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo.
+- Skill `notes/skills/globe-entry-flight.md`. Handoff `tasks/handoffs/T-0088-grokbot-3.md`. Pull request https://github.com/BannonBotBoss/boreal/pull/120. Not merged.
+
+## 2026-10-25 18:30 PT - grokbot-3: rendering unification audit (T-0078)
+
+Matthew, 18:25 PT, asked why the drawing paths are separate and for one picture whose detail follows distance, reusing what exists. 18:26 PT he asked plans to open in plain language. Documents only. No drawing code. Not an approve-plan.
+- Plan `notes/render-unification-plan.md`, pinned at `e7b9ab7`. Skill `notes/skills/render-path-audit.md`. Handoff `tasks/handoffs/T-0078-grokbot-3.md`. Task `tasks/T-0078-render-unification.md`. Propose event only.
+- Did not edit `src/world/globe/inpage.ts`, `src/world/globe/globeView.ts`, or the clock files. Those belong to `grokbot-3/globe-enter-fix` and `grokbot-3/single-time-control`.
+- Next free id after T-0077 (PR #91). Phase 1 (a table of existing distances, unread by the draw) is listed and not built.
+- `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. CI `test` on `d7d6148` passed (run 40255214665). Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
+
+## 2026-10-25 19:20 PT - grokbot-3: observation chooses the layers (T-0078)
+
+Matthew answered the three questions in issues #107, #108, and #109. Newest issue wins. At 7:15 PM PT he allowed a render path to be replaced when keeping it would compromise the single space-and-time observation pipeline, provided #100–#109 are addressed, especially #107. Documents only. Not an approve-plan.
+- The flight down is one smooth picture. Far forest is a colour and a density; trees appear close in and when time is slow. The work stays several small steps. The open decisions are gone from the plan and from the plain summary.
+- Layer weights are height times the time dial's rate (#107, #109). #109's levels and the 800× / 1,200× blend are the time half. #107's stations, from the ground to orbit, are the height half. The dial is a read. The clock files are still untouched.
+- Plan, task, handoff, and `notes/skills/render-path-audit.md` updated. Phase 1 is the unread observation table and is not built. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
+
+## 2026-10-26 00:21 PT - grokbot-3: observation table, unread (T-0078 phase 1)
+
+grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follows that event. Not a complete. Not a self-approve.
+- `src/render/observationTable.ts` records #107's stations and #109's levels, chains, and the 800× / 1,200× pair. Biome and Geological have no rate. No stiffness, no damping, no invented metre gap. `CODE_REACH` copies distances the picture already exports. The draw does not import the file. The live wheel stays `observation()` on pull request #92.
+- Did not edit `inpage.ts`, `globeView.ts`, or the clock files. `npx tsc --noEmit` exit 0. `npm test` 804 tests, 790 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
+>>>>>>> main
 

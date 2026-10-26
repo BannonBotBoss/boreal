@@ -1,6 +1,10 @@
 # Boreal project rules (read first)
 
+<<<<<<< HEAD
 The last twenty GitHub issues take precedence. Where they conflict with each other, with older issues, or with these rules, plans, tasks, notes, or code, the latest issue wins: a higher number wins. The twenty are #99, #100, #101, #102, #103, #104, #105, #106, #107, #108, #109, #110, #111, #112, #113, #115, #116, #117, #118 and #119. An issue opened after these wins over them the same way. This replaces the 2026-10-25 7:17 PM line that stopped at #100–#109. The resolutions are tasks/RULES.md rule 18. (Matthew, 2026-10-26, in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins.")
+=======
+Latest design issue wins. When issues conflict with each other, with older issues, or with existing code, plans, or tasks, follow the newer one: a higher number wins, so #109 overrides #108 overrides #107, and #100–#109 override anything older (Matthew, 2026-10-25 7:17 PM Pacific).
+>>>>>>> main
 
 ## Talking to Matthew
 This section binds every agent: Grok, Grokbot-1, Grokbot-2, grokbot-3, claude, agy, and any other agent. Read it before you write to Matthew.

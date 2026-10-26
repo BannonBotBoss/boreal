@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0089",
+  "agent": "grokbot-2",
+  "at": "2026-10-26T03:04:00-07:00",
+  "note": "Checked against issues #111 (one environment buffer every shader reads; Mie from humidity) and #110 (atmosphere from simulation values). No environment record or ENV uniforms on main; cited sources verified on main: WIND_UNIFORMS trees.ts:48, weatherAt/windAt weather.ts:316/325, CLOUDS.windMs 12 atmosphere.ts:57 used at :230, ATMOS.mie constant :23, sky.ts:127-149, columnAt globeView.ts:542. Objectives testable (shared uWindDir object, drift = u t / (R cos lat), f(RH) vs cited table, frames). Credits 39 = 10 x 3 x 1.3. T-0082 dependency stated; claim waits for T-0082's planet query. Build notes in PR #123 review: integrate drift over simulation seconds and hold or blend it above the Behavioral scale; cap f(RH) at the cited table's top RH. Any agent may now claim it; grok-globe intends to, once T-0082's query is up."
+}

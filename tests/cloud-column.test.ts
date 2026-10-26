@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cloudColumn, dewPointC, esatPa, moistLapse } from '../src/core/atmo/cloudColumn';
-import { bakeLocal, columnAt, LOCAL_CLOUDS } from '../src/world/globe/localClouds';
+import { bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
 test('T-0073: Bolton esat and dew point round-trip', () => {
@@ -25,4 +25,19 @@ test('T-0073: local bake follows cover and the column', () => {
   const base = Math.floor(c.lcl / (L.topM / L.nz)); for (let j = 0; j < base - 1; j++) assert.equal(full[L.nx * j], 0); // clear below the LCL
   const pl = { lat: [49.5, 0], lon: [-94, 0], ts: [18, 28], q: [.009, .018], cloud: [.6, .4] };
   assert.equal(columnAt(pl, [Math.cos(.868) * Math.cos(-1.64), Math.sin(.868), Math.cos(.868) * Math.sin(-1.64)])!.tsC, 18);
+});
+test('issue #107: the local cloud box fades across the span it already had, with no step', () => {
+  assert.equal(localCloudFade(LOCAL_CLOUDS.showBelowM), 0);
+  assert.equal(localCloudFade(LOCAL_CLOUDS.showBelowM + 1000), 0);
+  assert.equal(localCloudFade(LOCAL_CLOUDS.sizeM), 1);
+  assert.equal(localCloudFade(0), 1);
+  const mid = (LOCAL_CLOUDS.showBelowM + LOCAL_CLOUDS.sizeM) / 2;
+  const at = localCloudFade(mid);
+  assert.ok(at > 0.4 && at < 0.6, `mid fade ${at}`);
+  let prev = 0;
+  for (let alt = LOCAL_CLOUDS.showBelowM; alt >= LOCAL_CLOUDS.sizeM; alt -= 200) {
+    const w = localCloudFade(alt);
+    assert.ok(w + 1e-9 >= prev, `not rising as altitude falls at ${alt}`);
+    prev = w;
+  }
 });

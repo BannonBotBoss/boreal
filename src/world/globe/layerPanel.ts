@@ -29,6 +29,10 @@ export function layerStates(hidden: Set<LayerId>, offsetYr = 0): Record<LayerId,
 const LABEL: Record<LayerId, string> = { airglow: 'Airglow (OI 557.7)', clouds: 'Clouds', sunlight: 'Sunlight', atmosphere: 'Atmosphere', aurora: 'Aurora', snowIce: 'Snow / ice', vegetation: 'Vegetation', ocean: 'Ocean', fieldLines: 'Field lines', plates: 'Plates', venus: 'Venus' };
 export function stateText(s: LayerState) { return s.exists === 'present' ? '' : s.exists === 'not-yet-formed' ? 'not yet formed' : 'gone'; }
 
+/** The checkbox panel is the globe's. It stays up through the descent and comes back on the return to the planet.
+ *  Game mode hides it so it does not cover the status HUD (Matthew 2026-10-25). */
+export const layerPanelShown = (mode: 'game' | 'band' | 'globe') => mode !== 'game';
+
 /** DOM panel (top-right). onChange gets the new states; persists to localStorage unless ?hide= fixed them for this visit. */
 export function mountLayerPanel(search: string, onChange: (s: Record<LayerId, LayerState>) => void, note?: () => string) {
   let stored: string | null = null; try { stored = localStorage.getItem(STORE_KEY); } catch { /* private mode */ }

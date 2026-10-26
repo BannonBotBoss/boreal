@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0086",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T19:30:13-07:00",
+  "note": "Step 6 of notes/design-roadmap.md. Moisture debt. Depends on T-0082. Not claimed."
+}

@@ -23,8 +23,8 @@ Descent lessons (T-0034 follow-up)
 - Never run a search (dry-land ring search, spawn search) synchronously on the descent: make it a generator (*Steps) and
   drain it under a per-frame budget (inpage stepSearch, 3 ms); keep the sync wrapper (drain) for tests and the reload path.
   Test: the generator's result equals the sync one (tests/descent.test.ts).
-- Camera pitch over a mode change must come from one function of altitude (transition.ts globePitch: straight down in orbit
-  -> the 45 deg glide at the band top) used by globe, band and ascent; test it is monotone and < 1 deg per 1 % altitude.
+- The orbit view looks straight down. Entry is a double-click free fall to 10,000 ft (flight.ts FALL_END_M), not globePitch
+  and not a 45° glide. globePitch remains the climb back to the planet. See notes/skills/globe-entry-flight.md.
 - A "blank plain" from above can be the cloud shell, not missing terrain: A/B with ?atmos=0 before touching terrain code.
   The in-page descent opens the deck with cloudClear (atmosphere uCloudClear, 1500 km -> 150 km, linear in log altitude, T-0041).
 - Measure with a rAF log in the page (dt, mode, alt, pitch) plus a CPU profile of the busiest stretch, not capture intervals:

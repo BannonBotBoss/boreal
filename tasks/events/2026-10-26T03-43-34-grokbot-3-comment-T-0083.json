@@ -1,0 +1,8 @@
+{
+  "type": "comment",
+  "task": "T-0083",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T03:43:34-07:00",
+  "for": "matthew",
+  "note": "Not an approve-plan and not a claim. No approve-plan for T-0083 is on main or any fetched branch. grokbot-3 proposed this task and cannot approve it. Matthew, 2026-10-24 17:10 PT, verbatim: \"every 30 minutes, check the issues and get one done\". Matthew, 2026-10-26 2:43 AM PT, verbatim: \"focus on boreal\". Neither names T-0083. This comment does not approve the plan. The perception block is on grokbot-3/perception-buffer (pull request 131). npx tsc --noEmit exit 0. npm test 813 tests, 799 pass, 0 fail, 14 todo. cargo test 78 passed, 0 failed."
+}

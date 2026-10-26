@@ -28,11 +28,14 @@ export const hourAt = (worldSec: number) => gameHour(worldSec, START_HOUR + DAY.
 export const dayAt = (worldSec: number) => DAY_OF_YEAR + Math.floor((START_HOUR + DAY.offset + worldSec / REAL_SECONDS_PER_GAME_HOUR) / 24);
 /** Make it `hour` now, by the shortest turn of the dial (never more than 12 h either way). */
 export function setHour(hour: number, worldSec: number) { DAY.offset += ((hour - hourAt(worldSec)) % 24 + 36) % 24 - 12; return hourAt(worldSec); }
-/** Load: the saved offset, then a valid ?hour=HH (0 to <24) makes it exactly that hour. */
+/** Load: the saved offset, then a valid ?hour=HH (0 to <24) makes it exactly that hour.
+ *  ?day=N then shifts the same offset by whole days, so the hour stays and the planet boots on that date. */
 export function initDay(search: string, saved: string | null, worldSec: number) {
   const o = Number(saved); DAY.offset = saved !== null && Number.isFinite(o) ? o : 0;
   const q = new URLSearchParams(search), h = Number(q.get('hour'));
   if (q.get('hour') && Number.isFinite(h) && h >= 0 && h < 24) setHour(h, worldSec);
+  const dayQ = Number(q.get('day'));
+  if (q.get('day') && Number.isFinite(dayQ)) DAY.offset += (Math.round(dayQ) - dayAt(worldSec)) * 24;
 }
 export function formatHour(hour: number) {
   const h = Math.floor(hour), m = Math.floor((hour - h) * 60);

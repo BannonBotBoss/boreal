@@ -1010,3 +1010,10 @@ Branch `grokbot-3/river-hydraulics`. Issue #18 is claimed by codex on `codex/loo
 - Skill `notes/skills/river-hydraulics.md`. Handoff `tasks/handoffs/T-0030-grokbot-3.md`. Slopes remeasured in `refs/water/river-audit/slopes.json`. `npx tsc --noEmit` exit 0 on the implementation. Channel tests 6/6. Not self-approved.
 - 09:37 PT: after frames are in `tasks/evidence/T-0030/` (before frames in `refs/water/river-audit/` untouched). T-0075 put the October 21 boxes on the sky. Water boxes chosen on these frames: slow1, fast1 and order2 reach foam share 0.000 (calm gate <= 0.03). The fast1 step, framed at yaw 0, has a lee box at foam share 0.746 and the water beside it at 0. Lee-grain correlation peaks at +36 px along the flow. Model shift is 44 px (0.921 m/s, shader dt 0.745 s, 63.9 px/m). Advection score 0.821 (measured 0.756 m/s, model 0.921 m/s). A second pair with `shaderClock` read directly did not beat zero-shift, so it is not a speed. Objective 4 stays open. No complete event. `npx tsc --noEmit` exit 0. `npm test` 752 tests, 738 pass, 0 fail, 14 todo.
 
+## 2026-10-25 18:30 PT - grokbot-3: rendering unification audit (T-0078)
+
+Matthew, 18:25 PT, asked why the drawing paths are separate and for one picture whose detail follows distance, reusing what exists. 18:26 PT he asked plans to open in plain language. Documents only. No drawing code. Not an approve-plan.
+- Plan `notes/render-unification-plan.md`, pinned at `e7b9ab7`. Skill `notes/skills/render-path-audit.md`. Handoff `tasks/handoffs/T-0078-grokbot-3.md`. Task `tasks/T-0078-render-unification.md`. Propose event only.
+- Did not edit `src/world/globe/inpage.ts`, `src/world/globe/globeView.ts`, or the clock files. Those belong to `grokbot-3/globe-enter-fix` and `grokbot-3/single-time-control`.
+- Next free id after T-0077 (PR #91). Phase 1 (a table of existing distances, unread by the draw) is listed and not built.
+

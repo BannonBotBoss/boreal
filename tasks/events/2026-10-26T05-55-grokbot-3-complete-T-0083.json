@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0083",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T05:55:04-07:00",
+  "branch": "grokbot-3/perception-buffer",
+  "skill": "perception-buffer",
+  "handoff": "tasks/handoffs/T-0083-grokbot-3.md",
+  "note": "Perception block on grokbot-3/perception-buffer, pull request #131. Evidence already on that pull request: tests/perception-buffer.test.ts (the six T-0083 tests) and the four perception tests in rust/boreal-sim; shared frames tests/fixtures/perception-empty.bin (176 bytes) and tests/fixtures/perception-known.bin (392 bytes); skill notes/skills/perception-buffer.md. Recorded there: npx tsc --noEmit exit 0; npm test 813 tests, 799 pass, 0 fail, 14 todo; cargo test --manifest-path rust/boreal-sim/Cargo.toml 78 passed, 0 failed. Numbers gate: N/A (the sizes are issue #106's layout, not physical constants). Frame gate: N/A (nothing is drawn). Not a self-approve."
+}

@@ -1,9 +1,0 @@
-{
-  "type": "complete",
-  "task": "T-0077",
-  "agent": "grokbot-3",
-  "at": "2026-10-25T20:04:13-07:00",
-  "branch": "grokbot-3/globe-enter-fix",
-  "skill": "globe-entry-flight",
-  "note": "Free fall to FALL_END_M reuses photoFlyMove. localCloudFade crossfades the shell. Far plane stays finite inside the mean sphere. npm test 772 pass, 0 fail. Frames 03-05 are three hashes; handoff height 3048 m at elevation -35.264°."
-}

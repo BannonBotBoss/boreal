@@ -1010,13 +1010,25 @@ Branch `grokbot-3/river-hydraulics`. Issue #18 is claimed by codex on `codex/loo
 - Skill `notes/skills/river-hydraulics.md`. Handoff `tasks/handoffs/T-0030-grokbot-3.md`. Slopes remeasured in `refs/water/river-audit/slopes.json`. `npx tsc --noEmit` exit 0 on the implementation. Channel tests 6/6. Not self-approved.
 - 09:37 PT: after frames are in `tasks/evidence/T-0030/` (before frames in `refs/water/river-audit/` untouched). T-0075 put the October 21 boxes on the sky. Water boxes chosen on these frames: slow1, fast1 and order2 reach foam share 0.000 (calm gate <= 0.03). The fast1 step, framed at yaw 0, has a lee box at foam share 0.746 and the water beside it at 0. Lee-grain correlation peaks at +36 px along the flow. Model shift is 44 px (0.921 m/s, shader dt 0.745 s, 63.9 px/m). Advection score 0.821 (measured 0.756 m/s, model 0.921 m/s). A second pair with `shaderClock` read directly did not beat zero-shift, so it is not a speed. Objective 4 stays open. No complete event. `npx tsc --noEmit` exit 0. `npm test` 752 tests, 738 pass, 0 fail, 14 todo.
 
-## 2026-10-25 20:03 PT - grokbot-3: globe entry free fall (T-0077)
+## 2026-10-25 18:25 PT - grokbot-3: pad menu stays one centered size (T-0077)
+Matthew in chat asked for this directly. Approve-plan and approve are `for: matthew` with his words quoted. Not a GitHub approval and not a merge. He said not to merge or approve the PR.
+- Cause on `e7b9ab7` `src/ui/padMenu.ts:101`: `top:50%` and `translate(-50%,-50%)` with `max-height:86vh` and no fixed height. Before tops at 1280×720: camera 220.0, time 188.6, badges 32.4, gallery 190.7, settings 130.0.
+- `menuFrame` keeps the centering. One box is the tallest of camera, time, badges, gallery and settings, capped at the screen. Header and tabs stay outside the scroller. Arrow bars are in the flow and hidden unless that direction still has content. `reveal` settles after an arrow shrinks the body. Hold uses `REPEAT` (380 ms, then 110 ms). The pad reader already repeats d-pad and left stick, so those do not get a second timer.
+- After: 720 top 0 height 720; 1100 top 142.5 height 815; 420 top 0 height 420. Hold probe: every recorded row fully inside, and pointerup / keyup stop the repeat. Evidence `tasks/evidence/T-0077/`.
+- Skill `notes/skills/fixed-menu-frame.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`. Implementation `dcc9935`. PR https://github.com/BannonBotBoss/boreal/pull/91.
+- `npx tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo. Frame gate N/A (a menu, not a landscape). The substitute is the bounding-rect tops. Not self-approved on GitHub.
 
-Matthew's direct request, 2026-10-25 18:24 PT, plus issue #107 at 19:15 PT. Not a self-approve on GitHub. Rule 15: T-0072, T-0073, and T-0078 were not reviewed this run.
+
+## 2026-10-25 grokbot-1: solar budget takes T-0059 cloud (refs #43)
+- `solarBudget.ts`: `cellCloud(day, hour, dir)` is atmosphereBudget's Sundqvist cover for that cell; `budgetFromAlbedo`/`solarBudget`/`absorbedAttribute` take `cloud: number | null` (null = the cell's own cover, a number overrides; tests still pass 0).
+- `tile.ts` `applySolarAttribute` now defaults to null, so the globe's absorbed-sunlight layer is cut by each vertex's cloud. Cover is still low (~5% vs ~67% observed) until the moisture-variance gap is closed.
+
+## 2026-10-25 20:03 PT - grokbot-3: globe entry free fall (T-0088, was T-0077 on this branch)
+
+Matthew's direct request, 2026-10-25 18:24 PT, plus issue #107 at 19:15 PT. Not a self-approve on GitHub. Rule 15: T-0072, T-0073, and T-0078 were not reviewed this run. Rule 13: T-0077 reached main first as the pad menu (PR #91), so this work is T-0088.
 
 - The planet screen is the in-page globe (`createInPage` / `enter`), reached from a bare URL via `?start=globe`. It used to stick because shared `autoHandoff` is false, G and pad land only called `leave` over home, and H only flew home. The old way in was `inpage` `glide` with `globePitch` (a 45° path). That is gone.
 - Orbit is nadir. Double-click, A, or G calls `beginFall`. The fall is `physics.step` to `FALL_END_M` (3048 m). Yaw +180° and pitch to −35.264° finish there. Aim is `lookAt(0,0,0)` then `rotateZ` / `rotateX`. The far plane clamps `rad² − R²` so the frame does not clear when the camera crosses inside the mean sphere.
-- The drone is photo mode's fly: `src/photo/photoMode.ts` `createPhotoMode` `update`, now `photoFlyMove` / `stepCarriedFly` in `src/photo/fly.ts`. Wind is `rushLevel` on `wind-pines`. `localCloudFade` crossfades the local box with the shell (issue #107). No new renderer.
+- The drone is photo mode's fly: `src/photo/photoMode.ts` `createPhotoMode` `update`, now `photoFlyMove` / `stepCarriedFly` in `src/photo/fly.ts`. The Xbox pad moves with the left stick, turns with the right stick, climbs on the right trigger and descends on the left trigger. That turn lives in `photoFlyMove`. Wind is `rushLevel` on `wind-pines`. `localCloudFade` crossfades the local box with the shell (issue #107). No new renderer.
 - Capture: orbit elevation −90°, handoff height 3048 m at elevation −35.264°, 03/04/05 are three hashes (they used to be one cleared frame). Overlap 0. Layer panel hidden in game. `npx tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo.
-- Skill `notes/skills/globe-entry-flight.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`. Pull request https://github.com/BannonBotBoss/boreal/pull/120. Not merged.
-
+- Skill `notes/skills/globe-entry-flight.md`. Handoff `tasks/handoffs/T-0088-grokbot-3.md`. Pull request https://github.com/BannonBotBoss/boreal/pull/120. Not merged.

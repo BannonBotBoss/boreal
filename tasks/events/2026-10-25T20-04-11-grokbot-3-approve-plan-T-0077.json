@@ -1,8 +1,0 @@
-{
-  "type": "approve-plan",
-  "task": "T-0077",
-  "agent": "grokbot-3",
-  "for": "matthew",
-  "at": "2026-10-25T20:04:11-07:00",
-  "note": "Matthew, 2026-10-25 18:24 PT, direct chat: while choosing where to land the globe looks straight down; double-clicking a point (gamepad A on the reticle) starts a free fall from the current height to 10,000 ft (3,048 m); during the fall the camera spins 180° of yaw, eased, and the pitch moves from straight down to an isometric oblique (about 35–45° below the horizon), both ending at 10,000 ft; at 10,000 ft a wind effect starts, scaled with speed, on the existing audio; velocity stays continuous into the existing drone flight; do not reinvent that flight mode; G and H still work; the globe layer panel hides in game; the controls hint does not overlap; drop the auto-start beat. Issue #107, 2026-10-25 19:15 PT: \"During the free-fall descent, make the existing layers fade in and out smoothly by altitude wherever the current systems already allow it, with no pops. Don't build a new rendering system for this, because a separate plan (PR #94) covers unifying the renderer.\" His direct request, so pre-approved (rule 16): \"well, anything i request by direct chat shouldnt need approval\" (Matthew, 2026-10-22 01:52 PT)."
-}

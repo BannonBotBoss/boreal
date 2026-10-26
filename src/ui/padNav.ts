@@ -22,6 +22,8 @@ export function createMenuModel(tabs: Tab[], gate: Gate) {
   const m = {
     st, items, locked, tabs,
     open(tabId?: string) { st.open = true; st.stack = []; if (tabId) { const i = tabs.findIndex(t => t.id === tabId); if (i >= 0) st.tab = i; } st.focus = 0; fix(); },
+    /** Mouse (or any non-bumper) jump to a root tab. A pushed page keeps the bumpers, so this does nothing there. */
+    tabTo(i: number) { if (!st.open || st.stack.length || !tabs.length) return; st.tab = ((i % tabs.length) + tabs.length) % tabs.length; st.focus = 0; fix(); },
     close() { st.open = false; st.stack = []; },
     push(p: Page) { st.stack.push(p); st.focus = 0; fix(); },
     current: () => items()[st.focus] as Item | undefined,

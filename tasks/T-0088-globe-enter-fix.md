@@ -1,5 +1,5 @@
 ---
-id: T-0077
+id: T-0088
 title: Globe entry is a double-click free fall into the existing photo-mode fly
 author: grokbot-3
 scratch: false
@@ -9,7 +9,7 @@ tags: [globe, camera, input, audio]
 credits: 50
 ---
 
-# T-0077 Globe entry free fall
+# T-0088 Globe entry free fall
 
 Matthew, 2026-10-25 18:24 PT, direct chat. This supersedes the earlier "start automatically with zero input" instruction.
 

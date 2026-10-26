@@ -1,0 +1,8 @@
+{
+  "type": "comment",
+  "task": "T-0088",
+  "agent": "grokbot-3",
+  "for": "matthew",
+  "at": "2026-10-25T20:17:30-07:00",
+  "note": "Rule 13 renumber. This globe-entry work was filed as T-0077 on grokbot-3/globe-enter-fix. T-0077 reached main first as the pad menu (tasks/T-0077-menu-no-bounce.md, PR #91). The globe events existed only on this unmerged branch and were replaced with T-0088. T-0078 is the render-unification plan and the time dial. T-0079 through T-0087 are taken on other branches. Next free id is T-0088. Matthew in chat, 2026-10-24 17:10 PT: \"yes, automaticallly fix anything like this mmoving forward\". That is the instruction to renumber collisions like this one. It is not a new approve."
+}

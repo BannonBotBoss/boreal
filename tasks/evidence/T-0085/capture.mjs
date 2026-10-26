@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { acquire, track, release } from '../../../tools/bench-lock.mjs';
 
-const which = process.argv[2] === 'after' ? 'after' : 'before';
+const which = ['before', 'after', 'fixed'].includes(process.argv[2]) ? process.argv[2] : 'before';
 const base = process.argv[3] ?? 'http://127.0.0.1:5275';
 const out = resolve('tasks/evidence/T-0085');
 const name = `grokbot-3: T-0085 forest ${which}`;
@@ -89,7 +89,7 @@ try {
   }
   writeFileSync(join(out, `observations-${which}.json`), JSON.stringify({
     which,
-    note: 'Same query both times: nomenu, noprobe, noon. before is the planet grid without the sea-distance term or the upslope term. after is that same grid with both.',
+    note: 'Same query: nomenu, noprobe, noon. before is the planet grid without the sea-distance term or the upslope term. after is the merged sea term (long fetch, four-degree cells). fixed is the ocean-coast fetch on the one-degree forest grid.',
     observations,
   }, null, 2));
 } finally {

@@ -20,7 +20,8 @@ pub const NAMES: [&str; PLANES] = ["lat", "lon", "land", "elev", "ts", "tair", "
 pub struct Grid { pub nlat: usize, pub nlon: usize, pub n: usize, pub day: f64, pub hour: f64, pub data: Vec<f64>,
     /// Climatological sea-level air temperature per row for land and ocean columns at the current day (climate_seed::damped_seed).
     pub row_land: Vec<f64>, pub row_sea: Vec<f64>, pub(crate) row_day: f64, pub t_bar: f64,
-    /// Metres to the nearest open-water cell, from the land mask. Ocean cells are 0. Rebuilt when the mask changes.
+    /// Metres to the nearest ocean cell (`LAND` < 0.5). The host writes inland lakes as land, so a lake is not a source.
+    /// Ocean cells are 0. Rebuilt when the mask changes.
     pub coast_m: Vec<f64>, pub(crate) coast_stamp: u64 }
 impl Grid {
     pub fn new(nlat: usize, nlon: usize) -> Grid {
@@ -31,7 +32,8 @@ impl Grid {
     }
     #[inline] pub fn p(&self, k: usize) -> &[f64] { &self.data[k * self.n..(k + 1) * self.n] }
     #[inline] pub fn pm(&mut self, k: usize) -> &mut [f64] { let n = self.n; &mut self.data[k * n..(k + 1) * n] }
-    /// Shortest path, in metres, from each cell to a water cell (`LAND` < 0.5). Water is 0.
+    /// Shortest path, in metres, from each cell to an ocean cell (`LAND` < 0.5). Ocean is 0.
+    /// Inland lakes are land in the host mask, so they are not sources.
     /// Recomputed only when the land/sea mask changes, so a step does not repeat the search.
     pub fn refresh_coast(&mut self) {
         let stamp = land_stamp(self);

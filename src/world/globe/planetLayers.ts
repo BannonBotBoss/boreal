@@ -40,7 +40,7 @@ export function bakeLayers(sim: PlanetSim): Uint8Array {
 }
 
 /** Land fraction and height from the globe's own `sampleSurface` (one mask, not a second generator). */
-export function globeLandSample(planet: { sampleSurface(d: Vec3): { h: number } }) {
+export function globeLandSample(planet: { sampleSurface(d: Vec3): { h: number; kind?: '' | 'ocean' | 'lake'; level?: number } }) {
   return planetLandSample(planet);
 }
 
@@ -59,7 +59,7 @@ export function spinAndBake(sim: PlanetSim, tier: number): boolean {
 
 /** Load the wasm, boot the grid for `day` over `planet` (issue #47), then spin and bake. Resolves false (tiles unchanged)
  *  when the tier draws nothing or the wasm is missing. Call again when the tier changes. */
-export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: number } }, tier: number, day: number, sim?: PlanetSim | null, utcHour = 0): Promise<boolean> {
+export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: number; kind?: '' | 'ocean' | 'lake'; level?: number } }, tier: number, day: number, sim?: PlanetSim | null, utcHour = 0): Promise<boolean> {
   const t = LAYER_TIERS[Math.max(0, Math.min(LAYER_TIERS.length - 1, tier))];
   tierOn = [0, 0, 0]; GLOBE_LAYERS.uLayers.value.set(0, 0, 0, 0); if (!t.nlat || !t.layers.length) return false;
   sim = sim ?? await sharedPlanetSim(); if (!sim) return false;

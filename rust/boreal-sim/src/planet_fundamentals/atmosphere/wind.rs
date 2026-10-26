@@ -45,10 +45,24 @@ pub fn belt_wind_m_s(lat_deg: f64) -> f64 {
     u.hypot(v)
 }
 
-/// E-folding distance of the ocean's seasonal anomaly over land, metres.
-/// Steady advection–relaxation U dA/dx = −(A − A_land)/τ gives A(x) = A_land + (A_sea − A_land) exp(−x/L), L = U τ
-/// (the same linear column as Hartmann 1994 ch. 11, carried downwind). U is `belt_wind_m_s`. τ is `held_suarez_surface_tau_s`.
-pub fn ocean_decay_length_m(lat_deg: f64) -> f64 { belt_wind_m_s(lat_deg) * held_suarez_surface_tau_s(lat_deg) }
+/// Typical daytime mixed-layer depth (Stull 1988, An Introduction to Boundary Layer Meteorology, Kluwer:
+/// the convective boundary layer is of order 1 km). Not fitted to a station.
+pub const ABL_DEPTH_M: f64 = 1000.0;
+/// Wind-measurement height in the neutral bulk coefficient, the same 10 m as `surface_balance`'s ln(10/z0) (FAO-56 eq. 4)
+/// and `WIND_REF_M` in the forest read.
+pub const BULK_WIND_HEIGHT_M: f64 = 10.0;
+
+/// E-folding distance of the ocean's seasonal anomaly in the air the surface feels, metres.
+/// Steady advection–relaxation still gives exp(−x/L) (Hartmann 1994, ch. 11). The clock is the boundary layer, not the
+/// Held & Suarez free-atmosphere time: τ = h / (C_H U), so L = U τ = h / C_H. C_H = κ² / ln(z_m/z0)² is the neutral
+/// coefficient already in `surface_balance`. z0 is the forest roughness, because seeded land holds half a bucket and
+/// `land_kind` then selects forest. U cancels, including at the equator where the belt wind is zero.
+/// Held & Suarez τ stays in this file for the free atmosphere; it is not this length. At 50°N that τ made L ≈ 5400 km,
+/// and no land in the Kenora latitude band is farther than about 500 km from the ocean, so every land cell stayed marine.
+pub fn ocean_decay_length_m(_lat_deg: f64) -> f64 {
+    let ch = KAPPA * KAPPA / (BULK_WIND_HEIGHT_M / crate::planet_fundamentals::surface::FOREST_Z0).ln().powi(2);
+    ABL_DEPTH_M / ch
+}
 
 /// Sea-level pressure from the column temperature (hypsometric), then geostrophic balance with the Coriolis term.
 pub fn update_wind(g: &mut Grid) {
@@ -93,11 +107,14 @@ mod tests {
         let (u2, _v2) = geostrophic(0.0, 0.002, 1.2, -45.0); assert!(u2 > 0.0); // flips in the south
     }
     #[test] fn wind_is_capped() { let (u, v) = geostrophic(1.0, 1.0, 1.2, 1.0); assert!(u.hypot(v) <= MAX_WIND + 1e-9); }
-    #[test] fn ocean_decay_length_is_a_continental_scale() {
+    #[test] fn ocean_decay_length_is_a_boundary_layer_fetch() {
         assert!((HS_KS_PER_DAY - 0.25).abs() < 1e-15 && (HS_KA_PER_DAY - 0.025).abs() < 1e-15);
         let (l0, l50) = (ocean_decay_length_m(0.0), ocean_decay_length_m(50.0));
-        eprintln!("ocean decay length equator {:.0} km, 50N {:.0} km", l0 / 1000.0, l50 / 1000.0);
-        assert!(l50.is_finite() && l50 > 200_000.0 && l50 < 8_000_000.0, "L50 {}", l50);
-        assert!(l0.is_finite() && l0 >= 0.0);
+        let ch = KAPPA * KAPPA / (BULK_WIND_HEIGHT_M / crate::planet_fundamentals::surface::FOREST_Z0).ln().powi(2);
+        let expect = ABL_DEPTH_M / ch;
+        eprintln!("ocean decay length equator {:.1} km, 50N {:.1} km, h/C_H {:.1} km", l0 / 1000.0, l50 / 1000.0, expect / 1000.0);
+        assert!((l50 - expect).abs() < 1e-6 && (l0 - expect).abs() < 1e-6, "L {}", l50);
+        // Order of an ABL fetch over forest roughness, not a station fit and not the old 5400 km free-atmosphere scale.
+        assert!(expect > 10_000.0 && expect < 80_000.0, "fetch {}", expect);
     }
 }

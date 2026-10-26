@@ -19,8 +19,20 @@ import { bootGlobe } from '../world/globe/bootOrder';
 import { PLANET, fromLatLon, planetFor, toLatLon, type Vec3 } from '../world/globe/planet';
 import { WORLD_SEED } from './world';
 
-/** Rows of the forest boot. Columns are twice that, the same shape as a globe tier. */
-export const FOREST_NLAT = 45;
+/**
+ * Rows of the forest boot. Columns are twice that.
+ * One degree. The playable landmass is about a hundred kilometres across, and a four-degree cell is wider than that,
+ * so its centre fell in the ocean and the bilinear read was mostly sea. A one-degree centre on that landmass is land.
+ */
+export const FOREST_NLAT = 180;
+
+/** What the climate mask keeps. Inland lakes are land even when the bed is below sea level. Only the ocean is water. */
+export function landSampleFromSurface(s: { h: number; kind?: '' | 'ocean' | 'lake'; level?: number }) {
+  const lake = s.kind === 'lake';
+  const ocean = s.kind === 'ocean' || (!lake && s.h <= 0);
+  const elev = ocean ? 0 : lake ? Math.max(0, s.level ?? 0, s.h) : Math.max(0, s.h);
+  return { land: ocean ? 0 : 1, elev };
+}
 /**
  * The globe's post-boot spin (`planetLayers.ts` `SPINUP`): 8 steps of 6 h.
  * `boot` leaves precipitation at 0 because `update_moisture` is called with dt = 0.
@@ -49,12 +61,9 @@ export interface PlanetPointWeather {
   /** sea-ice fraction 0..1, plane `ice` */ ice: number;
 }
 
-/** Same land mask the globe writes: one `sampleSurface`, land where height is above the sea. */
-export function planetLandSample(planet: { sampleSurface(d: Vec3): { h: number } }) {
-  return (lat: number, lon: number) => {
-    const s = planet.sampleSurface(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180));
-    return { land: s.h > 0 ? 1 : 0, elev: Math.max(0, s.h) };
-  };
+/** Same land mask the globe writes: one `sampleSurface`. Ocean is water. An inland lake stays land. */
+export function planetLandSample(planet: { sampleSurface(d: Vec3): { h: number; kind?: '' | 'ocean' | 'lake'; level?: number } }) {
+  return (lat: number, lon: number) => landSampleFromSurface(planet.sampleSurface(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180)));
 }
 
 /** Local hour at Kenora to the UTC hour the Rust solar routine stores (`tz` 0). */

@@ -27,7 +27,7 @@ function restore(s: ReturnType<typeof savedWeather>) {
 
 test('forest spin matches the globe spin, and both land samples are one mask', () => {
   assert.deepEqual(FOREST_SPIN, SPINUP);
-  assert.equal(FOREST_NLAT, 45);
+  assert.equal(FOREST_NLAT, 180);
   const planet = planetFor(WORLD_SEED), a = planetLandSample(planet), b = globeLandSample(planet);
   for (const [lat, lon] of [[49.77, -94.5], [0, 10], [-42, 120], [80, -179]] as const) assert.deepEqual(a(lat, lon), b(lat, lon));
 });

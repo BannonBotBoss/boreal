@@ -1,14 +1,10 @@
 /**
  * Pad menu (Grok Bot, Matt: "all of these need to be accessible through the xbox gamepad"). Menu opens it; LB/RB switch
-<<<<<<< HEAD
- * tabs (Layers, Camera, Badges, Gallery, Settings); d-pad / LS move with auto-repeat; A select; ←/→ adjust; B back.
- * Time is not a tab: the in-game clock bar (ui/timeHud) is the only playback control. Deep time stays on the planet layer panel.
-=======
- * tabs (Layers, Camera, Time, Badges, Gallery, Settings); LB/RB (keyboard [ ]) change layer. Selection moves with
+ * tabs (Layers, Camera, Badges, Gallery, Settings). Time is not a tab: the in-game clock bar is the only playback control.
+ * Deep time stays on the planet layer panel. LB/RB (keyboard [ ]) change layer. Selection moves with
  * d-pad up/down, left stick up/down, keyboard ArrowUp/ArrowDown, or the on-screen arrows. Hold repeats after the pad
  * reader's delay, then at its rate (input/gamepad.ts REPEAT). D-pad left/right still adjusts the row, so it does not
- * change layer. The right stick is unused here. The box stays the tallest of camera, time, badges, gallery and settings.
->>>>>>> main
+ * change layer. The right stick is unused here. The box stays the tallest of the layers that are actually in the menu.
  * Tabs read the live panels owned elsewhere through the DOM (globe layer panel, camera panel) so they never fork their
  * state. Gated items (core/badges canUse) show a lock and open their badge page: study link, pad-friendly test (hints on X,
  * number entry on the d-pad, retry with fresh questions), redeem credits, or buy.

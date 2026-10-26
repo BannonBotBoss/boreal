@@ -1010,7 +1010,6 @@ Branch `grokbot-3/river-hydraulics`. Issue #18 is claimed by codex on `codex/loo
 - Skill `notes/skills/river-hydraulics.md`. Handoff `tasks/handoffs/T-0030-grokbot-3.md`. Slopes remeasured in `refs/water/river-audit/slopes.json`. `npx tsc --noEmit` exit 0 on the implementation. Channel tests 6/6. Not self-approved.
 - 09:37 PT: after frames are in `tasks/evidence/T-0030/` (before frames in `refs/water/river-audit/` untouched). T-0075 put the October 21 boxes on the sky. Water boxes chosen on these frames: slow1, fast1 and order2 reach foam share 0.000 (calm gate <= 0.03). The fast1 step, framed at yaw 0, has a lee box at foam share 0.746 and the water beside it at 0. Lee-grain correlation peaks at +36 px along the flow. Model shift is 44 px (0.921 m/s, shader dt 0.745 s, 63.9 px/m). Advection score 0.821 (measured 0.756 m/s, model 0.921 m/s). A second pair with `shaderClock` read directly did not beat zero-shift, so it is not a speed. Objective 4 stays open. No complete event. `npx tsc --noEmit` exit 0. `npm test` 752 tests, 738 pass, 0 fail, 14 todo.
 
-<<<<<<< HEAD
 ## 2026-10-25 19:41 PT - grokbot-3: time dial on the one clock (T-0078, issues #107 #108 #109)
 Branch `grokbot-3/single-time-control`, same PR #92. Matthew at 19:15 PT allowed a rewrite so #108, #109 and #107 are met. At 19:17 PT, #109 wins over #108. Rule 16 events use `"for": "matthew"`. Not a GitHub approval and not a merge.
 - `src/core/worldClock.ts` is still the only integrator. The dial is −1..+1. Target is `sign × 10^(|p| × 12)` outside ±0.01 (pause). Full scale is 10^12×. The rate eases in decades with inertia `1 + error²`. `setClockRate` snaps only for startup and `?timescale=`.
@@ -1030,7 +1029,7 @@ Branch `grokbot-3/single-time-control`. Matthew in chat, 2026-10-25 17:53 PT: "T
 Matthew in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins", then "put it in the rules."
 - `PROJECT-RULES.md` now opens with that authority. The 2026-10-25 7:17 PM line that stopped at #100–#109 is replaced. The "Talking to Matthew" section from main is kept.
 - `tasks/RULES.md` rule 18 names the twenty issues (#99–#113 and #115–#119) and the resolutions the higher number already locks.
-=======
+
 ## 2026-10-25 18:25 PT - grokbot-3: pad menu stays one centered size (T-0077)
 Matthew in chat asked for this directly. Approve-plan and approve are `for: matthew` with his words quoted. Not a GitHub approval and not a merge. He said not to merge or approve the PR.
 - Cause on `e7b9ab7` `src/ui/padMenu.ts:101`: `top:50%` and `translate(-50%,-50%)` with `max-height:86vh` and no fixed height. Before tops at 1280×720: camera 220.0, time 188.6, badges 32.4, gallery 190.7, settings 130.0.
@@ -1091,5 +1090,7 @@ Matthew answered the three questions in issues #107, #108, and #109. Newest issu
 grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follows that event. Not a complete. Not a self-approve.
 - `src/render/observationTable.ts` records #107's stations and #109's levels, chains, and the 800× / 1,200× pair. Biome and Geological have no rate. No stiffness, no damping, no invented metre gap. `CODE_REACH` copies distances the picture already exports. The draw does not import the file. The live wheel stays `observation()` on pull request #92.
 - Did not edit `inpage.ts`, `globeView.ts`, or the clock files. `npx tsc --noEmit` exit 0. `npm test` 804 tests, 790 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
->>>>>>> main
+
+## 2026-10-26 03:41 PT - grokbot-3: the merged branch had conflict markers and two task ids
+The merge of main into `grokbot-3/single-time-control` left conflict markers in the game and the notes, and the clock tasks reused T-0077 and T-0078. Those ids already belong to the pad menu and the render plan. Rule 13: the clock is T-0090 and the dial is T-0091. The old events stay (append-only). The fall's wind rush stays on the sound update, and that update still follows the one clock. The menu hold uses `performance.now` as a repeat timestamp, the same kind of frame budget already allowlisted.
 

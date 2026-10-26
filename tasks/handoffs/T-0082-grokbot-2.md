@@ -32,7 +32,7 @@ Player wind at 10 m is `{ x: u, y: 0, z: -v }` (game +z is south). Below 10 m th
 
 Evidence `tasks/evidence/T-0082/`: `?day=15&hour=12` and `?day=196&hour=12`, wasm file moved aside, then put back. Frames and `observations.json`.
 
-Skill `notes/skills/rust-climate-authority.md`.
+Skill `notes/skills/rust-climate-authority.md`. Pull request https://github.com/BannonBotBoss/boreal/pull/129. Not merged.
 
 ## Left open
 

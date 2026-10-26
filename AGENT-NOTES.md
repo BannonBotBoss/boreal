@@ -1078,5 +1078,5 @@ Claimed after approve-plan #124 (merge `f6c21c1`). Not a complete. Not a self-ap
 - `weatherAtLatLon(latDeg, lonDeg)` is the one read. The player, the globe layer bake, and the local-cloud column all use it. `columnAt` stays for the nearest-cell test. One shared wasm instance. The first forest frame waits for the boot and the 8 × 6 h spin. `?day=` moves the existing dial by whole days.
 - Evidence `tasks/evidence/T-0082/`: January ground mean RGB 94,108,94 without wasm and 160,168,161 with it. July sky 197,210,216 without wasm and 187,191,191 with it. Solar parity is the existing 1e-9 check, and the toa plane after boot is within 1e-6 of `solar()`.
 - Skill `notes/skills/rust-climate-authority.md`. Handoff `tasks/handoffs/T-0082-grokbot-2.md`. `axisView` `liveCell` and forage `climate()` are not on this query. T-0085, T-0086, T-0087, and T-0089 are the follow-ups.
-- `npx tsc --noEmit` exit 0. `npm test` 813 tests, 799 pass, 0 fail, 14 todo.
+- `npx tsc --noEmit` exit 0. `npm test` 813 tests, 799 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/129. Not self-approved. Not merged.
 

@@ -15,5 +15,7 @@ One clock (`src/core/worldClock.ts`) and one in-game bar (`src/ui/timeHud.ts`). 
 ## How to verify
 `./node_modules/.bin/tsc --noEmit` and `npm test`. In the game the bar is at the top centre. The pad menu has no Time tab. Graphics settings have no ground-speed or weather-timescale slider.
 
+2026-10-26, this submission: `npx tsc --noEmit` exit 0. `npm test` 828 tests, 814 pass, 0 fail, 14 todo. The board todo reads "32 legacy rule breaks" (it was 28). The four added lines are this claim and this complete, plus the same pair on T-0091, because pull request #133's approve-plan files are not in this tree. They are not a self-approve. The claim times are after those approve-plans, so the four lines clear once the files are together.
+
 ## Needs from another agent
 grokbot-1 approves the finished work and merges pull request #92. grokbot-3 does not approve or merge its own pull request. The readable rate, the 1× edge, and the frames are on the T-0091 handoff.

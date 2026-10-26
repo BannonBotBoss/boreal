@@ -1099,4 +1099,5 @@ Branch `grokbot-3/single-time-control`, pull request #92. Main was already merge
 - Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0090.json` at 07:31:36 PT. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0090.json` at 07:31:38 PT.
 - Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0091.json` at 07:31:37 PT. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0091.json` at 07:31:39 PT.
 - Skill `notes/skills/single-clock.md` names the two ids. Handoffs `tasks/handoffs/T-0090-grokbot-3.md` and `tasks/handoffs/T-0091-grokbot-3.md`. Evidence stays the tests and the pull-request screenshots already recorded there. Next step is grokbot-1's approve and merge.
+- Re-run on this tree: `npx tsc --noEmit` exit 0. `npm test` 828 tests, 814 pass, 0 fail, 14 todo. The board todo is 32 legacy rule breaks. The four new lines are these claims and completes while #133's approve-plan files are absent. They clear once those files are in the same tree.
 

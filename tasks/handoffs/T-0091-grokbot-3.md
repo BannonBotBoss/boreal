@@ -17,6 +17,8 @@ Until #133 is in the same tree, the ledger still sees this task as proposed, bec
 ## How to verify
 `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` after the merge fix.
 
+2026-10-26, this submission: `npx tsc --noEmit` exit 0. `npm test` 828 tests, 814 pass, 0 fail, 14 todo. The board todo reads "32 legacy rule breaks" (it was 28). The four added lines are the T-0090 and T-0091 claims and completes, because pull request #133's approve-plan files are not in this tree. They are not a self-approve. The claim times are after those approve-plans, so the four lines clear once the files are together.
+
 Ground view, start menu skipped: `/?nomenu&view=ground&noprobe&hour=11`. The bar reads `1 sec / sec`. Hour opens the chronometer. `?timescale=3600` reads `1 hour / sec`. `?timescale=31557600000` reads `1,000 years / sec` and a deep-time label.
 
 ## Numbers

@@ -4,7 +4,34 @@ Branch: `grokbot-3/empty-entity-store`. Base: `origin/main` at `bd2ef1c` (PR #12
 
 ## Status
 
-Claimed. Events written from the Pacific clock. Next: shortlist the four crates on rustc 1.83.0, link the one that fits, and add the empty-world, stale-handle, and count tests.
+Claimed. `hecs` 0.10.5 is linked. The three entity tests passed. Next: the full `cargo test`, `npm test`, and `npx tsc --noEmit`, then the complete event if those pass. Not self-approved.
+
+## What was built
+
+`rust/boreal-sim/src/entities.rs` `EntityStore`. `lib.rs` gains `pub mod entities`. `Cargo.toml` pins `hecs = "=0.10.5"`. `Cargo.lock` records that tree. No planet-grid file, weather file, species file, or TypeScript entity list was edited.
+
+Entity tests (`cargo test --manifest-path rust/boreal-sim/Cargo.toml --lib entities -- --nocapture`):
+
+```
+create=8192 remove=4096 iterate=4096 create_us=1967 remove_us=597 iterate_us=118
+```
+
+`empty_world_constructs`, `handle_is_one_integer_and_fails_after_removal`, and `create_remove_iterate_counts` passed. 78 other lib tests were filtered out of that run. The six warnings are the pre-existing ones in climate seed, formation, and interior.
+
+`cargo check --target wasm32-unknown-unknown` finished. A release build of the wasm is 142,974 bytes against the committed 141,253. The only export-name difference is `__data_end` and `__heap_base`. No entity function is exported. `public/wasm/boreal_sim.wasm` is left as it is on main, so the planet bytes the game loads do not change in this task.
+
+## Shortlist
+
+Compiler: rustc 1.83.0 (90b35a623 2024-11-26). No `rust-toolchain` file. Sizes are crates.io `.crate` bytes. Detail and the probe failures are in `notes/skills/adopt-ecs.md`.
+
+| Crate | Release | Licence | Maintenance | Size | Model | Links here |
+| --- | --- | --- | --- | --- | --- | --- |
+| hecs | 0.11.2 current; pick 0.10.5 | MIT OR Apache-2.0 | pushed 2026-10-25 | 99,108 / 82,553 | archetype store; `to_bits` → one `NonZeroU64` | 0.11.2 no (edition 2024); 0.11.0 no (E0747); 0.10.5 yes |
+| bevy_ecs | 0.20.0 | MIT OR Apache-2.0 | pushed 2026-10-26 | 784,721 | archetype store; `Entity::to_bits` → `u64` | no (`rust-version` 1.95.0) |
+| legion | 0.4.0 | MIT | last push 2021-12-30 | 1,108,971 | archetype store; `Entity(NonZeroU64)` | yes, unmaintained |
+| slotmap | 1.1.1 | Zlib | pushed 2026-09-04 | 61,862 | generational arena, not a component store | yes |
+
+Pick: `hecs = "=0.10.5"`. Smallest maintained component store that links and whose handle is one integer that fails after removal.
 
 - Takeover comment: `tasks/events/2026-10-26T12-33-00-grokbot-3-comment-T-0084.json` at 2026-10-26T12:33:00-07:00. Quotes Matthew at 12:22 PM PT. Not an approval.
 - Claim: `tasks/events/2026-10-26T12-33-01-grokbot-3-claim-T-0084.json` at 2026-10-26T12:33:01-07:00, after grokbot-2's approve-plan at 2026-10-26T03:35:13-07:00.

@@ -237,11 +237,13 @@ export function* stepSlices(dt: number) {
 }
 /** Dry convective adjustment (Manabe & Strickler 1964, J. Atmos. Sci. 21:361): a statically unstable pair of layers
  * (θ decreasing with height) is mixed to neutral, conserving heat and moisture. Stands in for sub-grid convection. */
+/** convectiveAdjust's test: a lower layer with higher θ than the one above is statically unstable. */
+export const unstablePair = (thLow: number, thHigh: number) => thLow > thHigh;
 function convectiveAdjust() {
   const g = grid;
   for (let c = 0; c < NX * NX; c++) for (let k = 0; k < NY - 1; k++) {
     const a = k * NX * NX + c, b = a + NX * NX;
-    if (g.th[a] > g.th[b]) { const m = (g.th[a] + g.th[b]) / 2, mq = (g.q[a] + g.q[b]) / 2; g.w[a] += (g.th[a] - g.th[b]) * .02; g.th[a] = g.th[b] = m; g.q[a] = g.q[b] = mq; }
+    if (unstablePair(g.th[a], g.th[b])) { const m = (g.th[a] + g.th[b]) / 2, mq = (g.q[a] + g.q[b]) / 2; g.w[a] += (g.th[a] - g.th[b]) * .02; g.th[a] = g.th[b] = m; g.q[a] = g.q[b] = mq; }
   }
 }
 /** Kessler warm rain (+ snow at the surface below 0 °C): saturation adjustment with latent heating, autoconversion,

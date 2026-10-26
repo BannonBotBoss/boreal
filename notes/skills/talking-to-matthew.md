@@ -1,6 +1,6 @@
 # Skill: talking to Matthew
 
-Use before any message, plan, or audit that Matthew will read. The binding text is the section "Talking to Matthew" in `PROJECT-RULES.md`. Do not copy those rules into a second file. If this skill and that section disagree, the section wins. T-0078 added the section.
+Use before any message, plan, or audit that Matthew will read. The binding text is the section "Talking to Matthew" in `PROJECT-RULES.md`. Do not copy those rules into a second file. If this skill and that section disagree, the section wins. T-0079 added the section.
 
 ## Steps
 1. Read `PROJECT-RULES.md` "Talking to Matthew" and follow it. Two or three plain sentences about what he will see or experience. Spell abbreviations out. One plain sentence of what you think he wants, before you build. One yes/no question, and only when the decision is his. A plan that needs his approval opens with a "Plain-English summary" of about 12 short lines. Reuse what is already in the repo. He draws: describe the change in visual, in-game terms, show before/after pictures or short clips, and treat a sketch as the spec. One plain question about the picture when it is unclear. Warmth is fine if the message stays short.

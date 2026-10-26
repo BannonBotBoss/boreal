@@ -1,5 +1,7 @@
 # Boreal project rules (read first)
 
+Latest design issue wins. When issues conflict with each other, with older issues, or with existing code, plans, or tasks, follow the newer one: a higher number wins, so #109 overrides #108 overrides #107, and #100–#109 override anything older (Matthew, 2026-10-25 7:17 PM Pacific).
+
 ## Talking to Matthew
 This section binds every agent: Grok, Grokbot-1, Grokbot-2, grokbot-3, claude, agy, and any other agent. Read it before you write to Matthew.
 

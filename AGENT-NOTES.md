@@ -1010,6 +1010,19 @@ Branch `grokbot-3/river-hydraulics`. Issue #18 is claimed by codex on `codex/loo
 - Skill `notes/skills/river-hydraulics.md`. Handoff `tasks/handoffs/T-0030-grokbot-3.md`. Slopes remeasured in `refs/water/river-audit/slopes.json`. `npx tsc --noEmit` exit 0 on the implementation. Channel tests 6/6. Not self-approved.
 - 09:37 PT: after frames are in `tasks/evidence/T-0030/` (before frames in `refs/water/river-audit/` untouched). T-0075 put the October 21 boxes on the sky. Water boxes chosen on these frames: slow1, fast1 and order2 reach foam share 0.000 (calm gate <= 0.03). The fast1 step, framed at yaw 0, has a lee box at foam share 0.746 and the water beside it at 0. Lee-grain correlation peaks at +36 px along the flow. Model shift is 44 px (0.921 m/s, shader dt 0.745 s, 63.9 px/m). Advection score 0.821 (measured 0.756 m/s, model 0.921 m/s). A second pair with `shaderClock` read directly did not beat zero-shift, so it is not a speed. Objective 4 stays open. No complete event. `npx tsc --noEmit` exit 0. `npm test` 752 tests, 738 pass, 0 fail, 14 todo.
 
+## 2026-10-25 18:25 PT - grokbot-3: pad menu stays one centered size (T-0077)
+Matthew in chat asked for this directly. Approve-plan and approve are `for: matthew` with his words quoted. Not a GitHub approval and not a merge. He said not to merge or approve the PR.
+- Cause on `e7b9ab7` `src/ui/padMenu.ts:101`: `top:50%` and `translate(-50%,-50%)` with `max-height:86vh` and no fixed height. Before tops at 1280×720: camera 220.0, time 188.6, badges 32.4, gallery 190.7, settings 130.0.
+- `menuFrame` keeps the centering. One box is the tallest of camera, time, badges, gallery and settings, capped at the screen. Header and tabs stay outside the scroller. Arrow bars are in the flow and hidden unless that direction still has content. `reveal` settles after an arrow shrinks the body. Hold uses `REPEAT` (380 ms, then 110 ms). The pad reader already repeats d-pad and left stick, so those do not get a second timer.
+- After: 720 top 0 height 720; 1100 top 142.5 height 815; 420 top 0 height 420. Hold probe: every recorded row fully inside, and pointerup / keyup stop the repeat. Evidence `tasks/evidence/T-0077/`.
+- Skill `notes/skills/fixed-menu-frame.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`. Implementation `dcc9935`. PR https://github.com/BannonBotBoss/boreal/pull/91.
+- `npx tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo. Frame gate N/A (a menu, not a landscape). The substitute is the bounding-rect tops. Not self-approved on GitHub.
+
+
+## 2026-10-25 grokbot-1: solar budget takes T-0059 cloud (refs #43)
+- `solarBudget.ts`: `cellCloud(day, hour, dir)` is atmosphereBudget's Sundqvist cover for that cell; `budgetFromAlbedo`/`solarBudget`/`absorbedAttribute` take `cloud: number | null` (null = the cell's own cover, a number overrides; tests still pass 0).
+- `tile.ts` `applySolarAttribute` now defaults to null, so the globe's absorbed-sunlight layer is cut by each vertex's cloud. Cover is still low (~5% vs ~67% observed) until the moisture-variance gap is closed.
+
 ## 2026-10-25 18:31 PT - grokbot-3: Talking to Matthew (T-0079)
 Matthew asked in chat at 18:28 PT for a section titled "Talking to Matthew" near the top of PROJECT-RULES.md, binding every agent, and at 18:30 PT for two more rules (he draws; a sketch is the spec). Branch `grokbot-3/talking-to-matthew`. Docs only. The section is his eight rules. tasks/RULES.md rule 16 has a one-line pointer. SKELETON-RULES.md has no reporting section, so it is unchanged. Skill `notes/skills/talking-to-matthew.md` points at the section and reuses the relay-event skill. `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. The automatic test job passed on `aa354aa` (run 40256426405). Pull request https://github.com/BannonBotBoss/boreal/pull/93. Id is T-0079 because pull request 94 also used T-0078. Not merged.
 

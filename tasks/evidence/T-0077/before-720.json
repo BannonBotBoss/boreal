@@ -1,0 +1,88 @@
+{
+  "viewport": {
+    "w": 1280,
+    "h": 720
+  },
+  "rows": [
+    {
+      "id": "camera",
+      "top": 220.015625,
+      "height": 279.96875,
+      "bottom": 499.984375,
+      "width": 1024,
+      "headTop": 291.703125,
+      "tabsTop": 238.015625,
+      "scrollHeight": 280,
+      "clientHeight": 280,
+      "scrollTop": 0,
+      "upHidden": null,
+      "downHidden": null,
+      "upLabel": null,
+      "downLabel": null
+    },
+    {
+      "id": "time",
+      "top": 188.6484375,
+      "height": 342.703125,
+      "bottom": 531.3515625,
+      "width": 1024,
+      "headTop": 260.3359375,
+      "tabsTop": 206.6484375,
+      "scrollHeight": 343,
+      "clientHeight": 343,
+      "scrollTop": 0,
+      "upHidden": null,
+      "downHidden": null,
+      "upLabel": null,
+      "downLabel": null
+    },
+    {
+      "id": "badges",
+      "top": 32.40625,
+      "height": 655.1875,
+      "bottom": 687.59375,
+      "width": 1024,
+      "headTop": 104.09375,
+      "tabsTop": 50.40625,
+      "scrollHeight": 808,
+      "clientHeight": 655,
+      "scrollTop": 0,
+      "upHidden": null,
+      "downHidden": null,
+      "upLabel": null,
+      "downLabel": null
+    },
+    {
+      "id": "gallery",
+      "top": 190.671875,
+      "height": 338.65625,
+      "bottom": 529.328125,
+      "width": 1024,
+      "headTop": 262.359375,
+      "tabsTop": 208.671875,
+      "scrollHeight": 339,
+      "clientHeight": 339,
+      "scrollTop": 0,
+      "upHidden": null,
+      "downHidden": null,
+      "upLabel": null,
+      "downLabel": null
+    },
+    {
+      "id": "settings",
+      "top": 129.9609375,
+      "height": 460.078125,
+      "bottom": 590.0390625,
+      "width": 1024,
+      "headTop": 201.6484375,
+      "tabsTop": 147.9609375,
+      "scrollHeight": 460,
+      "clientHeight": 460,
+      "scrollTop": 0,
+      "upHidden": null,
+      "downHidden": null,
+      "upLabel": null,
+      "downLabel": null
+    }
+  ]
+}

@@ -49,7 +49,7 @@ Kenora A July 19.7 °C and January −16.0 °C: Environment and Climate Change C
 | Very cold winter | coldest < −38 °C, and not already a hot or warm summer | authors' list of Table 1 | Peel HTML reproduction of Table 1 | Yes |
 | Herberton Post Office | Cwa | Cw, and the hottest month 23.3 °C makes a | Peel Table 2 and the tie-break in the text | Yes |
 | Flat 45°N ocean, one 6 h rate held for the year | BWk, 95.6 mm, July about 12.5 °C, range 6.66 K | a mid-latitude ocean is not a cold desert | this grid, before the integral | No. The cause |
-| Flat 45°N ocean, month integral of `precip` | Csb, about 1814 mm, same temperatures | not a desert. Cfb is common for a real ocean at this latitude; this grid's summer is dry, so the letter is s | Peel on the accumulated plane | Yes, it is not desert. The letter is the grid's rain, not a fit |
+| Flat 45°N ocean, month integral of `precip` | Csb, 1809 mm, same temperatures | not a desert. Cfb is common for a real ocean at this latitude; this grid's summer is dry, so the letter is s | Peel on the accumulated plane | Yes, it is not desert. The letter is the grid's rain, not a fit |
 | Flat 45°N inland slab, one 6 h rate | BWk, 0.0 mm | a humid mid-latitude land station is not a desert | the first step is near zero | No |
 | Flat 45°N inland slab, month integral | BWk, about 107 mm | Kenora is not this slab | the bucket dries and the plane stays small | Still desert. Recorded, not fitted |
 | Kenora stand, one 6 h rate held for the year | Dfa, 4264 mm, July 27.47 °C | Köppen Dfb. July 19.7 °C. Annual precipitation 714.99 mm | ECCC 6034075; annual total from the 1981–2010 station row (climate id 6034075) | Not desert. Not Dfb. The July heat makes the third letter a |

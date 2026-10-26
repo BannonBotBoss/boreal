@@ -1023,6 +1023,9 @@ Matthew in chat asked for this directly. Approve-plan and approve are `for: matt
 - `solarBudget.ts`: `cellCloud(day, hour, dir)` is atmosphereBudget's Sundqvist cover for that cell; `budgetFromAlbedo`/`solarBudget`/`absorbedAttribute` take `cloud: number | null` (null = the cell's own cover, a number overrides; tests still pass 0).
 - `tile.ts` `applySolarAttribute` now defaults to null, so the globe's absorbed-sunlight layer is cut by each vertex's cloud. Cover is still low (~5% vs ~67% observed) until the moisture-variance gap is closed.
 
+## 2026-10-25 18:31 PT - grokbot-3: Talking to Matthew (T-0079)
+Matthew asked in chat at 18:28 PT for a section titled "Talking to Matthew" near the top of PROJECT-RULES.md, binding every agent, and at 18:30 PT for two more rules (he draws; a sketch is the spec). Branch `grokbot-3/talking-to-matthew`. Docs only. The section is his eight rules. tasks/RULES.md rule 16 has a one-line pointer. SKELETON-RULES.md has no reporting section, so it is unchanged. Skill `notes/skills/talking-to-matthew.md` points at the section and reuses the relay-event skill. `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. The automatic test job passed on `aa354aa` (run 40256426405). Pull request https://github.com/BannonBotBoss/boreal/pull/93. Id is T-0079 because pull request 94 also used T-0078. Not merged.
+
 
 ## 2026-10-25 19:30 PT - grokbot-3: design roadmap for issues #100-#109 (T-0080)
 Branch `grokbot-3/design-roadmap`. Proposed only. Not claimed. Not self-approved. Matthew, 2026-10-25 7:15 PM PT, verbatim: "if you have to rewrite anything, i give you permission, as long as the design documents i posted are addressed." Matthew, 2026-10-25 7:17 PM PT: the latest issue wins (#109 over #108 over #107, and #100-#109 over anything older). Both are comment events with "for": "matthew" on T-0080. Neither is an approve-plan.

@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0079",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T18:51:46-07:00",
+  "note": "Claimed after the approve-plan for matthew at 2026-10-25T18:51:45-07:00. Branch grokbot-3/talking-to-matthew, off main e7b9ab7. The rules text is already on this branch (8cf924c). A commit before the claim is not a breach."
+}

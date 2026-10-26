@@ -23,7 +23,7 @@ import { createCpg, stepCpg, phases, type Cpg } from './cpg';
 import { footState, forceStep, stepFoot, toWorld, type FootState } from './foot';
 import { solveLimb, clampLimb, soleOf, blendLimits, toeTarget, CANID_LIMITS, type JointLimits, type LimbAngles } from './ik';
 import { worldToLimb, limbToWorld } from './controller';
-import { cubicBezier } from './footSwing';
+import { swingProgress, inLateSwing, timeToTouchdown, bodyAtTouchdown, landingAhead, forearmBelowDeg, inPlanBand, planBlendU, blendPlan } from './touchdownPlan'; // pure, Rust-portable (T-0044 run 11)
 import { springTo, spring, type Spring } from './spring';
 import type { Tilt } from './balance';
 import type { Skeleton } from './bodyPlan';
@@ -747,7 +747,7 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
       let over: { blade: number; psi: number } | undefined;
       const planOn = front && L.girdle && moving && lockOn && FORE_LOCK.on && FORE_PLAN.on && !f.forced && foreUp <= .02 && speed > 0;
       const belowIn = (px: number, pz: number, tl: Tilt) => (a: LimbAngles) => { const a1 = a.girdle + a.leg, a2 = a1 + a.knee, k = { x: 0, z: a.joint.z - L.upper * Math.sin(a1), y: a.joint.y - L.upper * Math.cos(a1) }, w2 = { x: 0, z: k.z - L.lower * Math.sin(a2), y: k.y - L.lower * Math.cos(a2) };
-        const K = limbToWorld(k, px, pz, heading, tl, sk.hips[i]), W = limbToWorld(w2, px, pz, heading, tl, sk.hips[i]), d = Math.atan2(K.y - W.y, Math.hypot(W.z - K.z, W.x - K.x)) * 180 / Math.PI; const q = a2 + a.wrist; return d >= FORE_PLAN.lo && d <= FORE_PLAN.hi && q >= FORE_SCAN.psiFrom - 1e-9 && q <= FORE_SCAN.psiTo + 1e-9; }; // and the manus inside the scan's range
+        const K = limbToWorld(k, px, pz, heading, tl, sk.hips[i]), W = limbToWorld(w2, px, pz, heading, tl, sk.hips[i]), d = forearmBelowDeg(K.x, K.y, K.z, W.x, W.y, W.z); return inPlanBand(d, a2 + a.wrist, FORE_PLAN.lo, FORE_PLAN.hi, FORE_SCAN.psiFrom, FORE_SCAN.psiTo); }; // and the manus inside the scan's range
       const below = belowIn(x, z, tilt);
       if (planOn && f.planted) {
         // the planting frame IS the end of the planned swing (blend parameter 1): the planned pair, tracked onto the actual print
@@ -761,16 +761,16 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
         }
         planFail[i] = false;
       }
-      else if (planOn && ph[i] >= plan.duties[i] && (ph[i] - plan.duties[i]) / (1 - plan.duties[i]) >= FORE_PLAN.from && !planFail[i] && prevFore[i]) {
+      else if (planOn && inLateSwing(ph[i], plan.duties[i], FORE_PLAN.from) && !planFail[i] && prevFore[i]) {
         // the body AT touchdown (the CPG phase advances 1 - phase of this leg first): the same stride-phase curves as above
-        const sp = (ph[i] - plan.duties[i]) / (1 - plan.duties[i]), dphi = 1 - ph[i], tRem = dphi / Math.max(plan.hz, 1e-6), xT = x + fwd.x * speed * tRem, zT = z + fwd.z * speed * tRem;
+        const sp = swingProgress(ph[i], plan.duties[i]), { dphi, tRem } = timeToTouchdown(ph[i], plan.hz), { x: xT, z: zT } = bodyAtTouchdown(x, z, fwd.x, fwd.z, speed, tRem);
         const sT = frac(stridePhase + dphi), shT = girdleShifts(plan.canid, ph.map(q => frac(q + dphi)), reach, plan.spineUse, plan.foreDuty).shift[i] * run;
         const rtT = runTilt(sk, reach.rise, run, pitchAt(pitchCurve(plan, sk), sT) * run, pose), bpT = rtT.pitch + pitchPose, liftT = pitchAt(heightCurve(plan), sT) * run;
         const hipT = ground(xT, zT), shoT = ground(...(() => { const w2 = toWorld(xT, zT, heading, 0, sk.plan.shoulderZ - sk.plan.hipZ); return [w2.x, w2.z] as const; })()), pT = Math.atan2(shoT - hipT, sk.trunk) + bpT;
         const tiltT: Tilt = { height: hipT + liftT - drop + rtT.height, pitch: pT, roll: 0, shift: { y: Hh * (1 - Math.cos(pT)), z: -Hh * Math.sin(pT) } };
         const topT = { z: shT * Math.cos(bpT), y: topY(L) + shT * Math.sin(bpT) };
         // the landing point (stepFoot's: rest ground point + half the stance sweep ahead, with the FORE_TOUCH still to come)
-        const half = plan.duties[i] * plan.stride / 2 + foreTouch * (1 - touchW[i]), rw = restWorld(i, xT, zT);
+        const half = landingAhead(plan.duties[i], plan.stride, foreTouch, touchW[i]), rw = restWorld(i, xT, zT);
         const lx = rw.x + fwd.x * half, lz = rw.z + fwd.z * half; let land = worldToLimb({ x: lx, y: ground(lx, lz), z: lz }, xT, zT, heading, tiltT, sk.hips[i]);
         if ((FORE_REACH.floor ?? 0) > 0) land = { ...land, z: foreReachTarget(L, topT, land, girdle).z }; // the plant frame's own floor (above)
         const below = belowIn(xT, zT, tiltT), top = topT;
@@ -782,7 +782,7 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
           if (q.ok && (q as any).locked) planQ[i] = { blade: q.blade, psi: q.psi, arm: q.arm }; else FORE_PLAN_STATS.holds++;
         }
         const q0 = planQ0[i], qf = planQ[i];
-        if (q0 && qf) { const u = Math.min(1, (sp - FORE_PLAN.from) / (1 - FORE_PLAN.from)); over = { blade: cubicBezier(q0.blade, qf.blade, u), psi: cubicBezier(q0.psi, qf.psi, u) }; planned[i] = true; }
+        if (q0 && qf) { over = blendPlan(q0, qf, planBlendU(sp, FORE_PLAN.from)); planned[i] = true; }
       }
       const solve = (r0: Vec3) => {
         let psi = 0, blade: number | undefined, arm: number | undefined;

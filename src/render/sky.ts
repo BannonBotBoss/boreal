@@ -125,7 +125,7 @@ export function createSky(scene: THREE.Scene) {
       cu.uTime.value = time; cu.uDay.value = light.day; cu.uSunAlt.value = sun.elevation; cu.uTwGain.value = 3 / LUX.ref * LIGHTING.gain; // scene radiance = (3 / LUX.ref) x real luminance (Lambert: L = aE/pi on both sides)
       { const g = sunColour(.01, haze); (cu.uTwTint.value as THREE.Color).setRGB(g.r, g.g, g.b); } cu.uGolden.value = light.golden;
       // Weather (core/weather): cloud cover, drift, fog and precipitation come from the cell under the viewer.
-      const w = weatherAt(focus.x, focus.z), dt = Math.max(0, Math.min(.2, time - lastTime)); lastTime = time; let fogV = Infinity;
+      const w = weatherAt(focus.x, focus.z), dt = Math.max(0, Math.min(.2, time - lastTime)); lastTime = time; let fogV = Infinity; // a rewind drops this gap: cloud drift does not run backward. The sun still does, because the hour comes from the clock.
       if (WEATHER.on) {
         cu.uCover.value = .62 - .4 * Math.max(w.cloud, Math.max(0, w.rh - .6)); // more condensate → lower noise threshold → more cover
         drift.x += w.wind.x * dt * 2e-4; drift.y += w.wind.z * dt * 2e-4; cu.uDrift.value.copy(drift);

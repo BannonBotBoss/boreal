@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0078",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T19:40:50-07:00",
+  "note": "Matthew posted issues #108 (time dial), #109 (details) and #107 (observation) on BannonBotBoss/boreal and asked for PR #92 to follow them. At 19:15 PT he allowed a rewrite of the clock. At 19:17 PT: #109 wins where it differs from #108, and both override the older time behaviour. Next free id is T-0078. Branch grokbot-3/single-time-control. Not merged and not GitHub-approved by this agent."
+}

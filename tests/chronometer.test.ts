@@ -46,4 +46,6 @@ test('the chronometer and planet view are bindable actions (T / D-pad up, Shift+
   assert.deepEqual([ACTION.timeFaster.keys, ACTION.timeFaster.pad], [['k:.'], ['dright']]);
   assert.deepEqual([ACTION.timePause.keys, ACTION.timePause.pad], [['k:;'], ['ls.click']]);
   assert.equal(ACTION.timeSlower.context, 'play');
+  assert.equal(ACTION.timeSlower.kind, 'hold');
+  assert.equal(ACTION.timeFaster.kind, 'hold');
 });

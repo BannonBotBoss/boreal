@@ -124,7 +124,7 @@ flowchart LR
 | [Audio and music](#audio) | Ambience, animal calls, footsteps, wolf voice, music decks and the bus mixer. | `footsteps` | clock, weather, locomotion, behaviour, player | ui | 1 |
 | [Agent and behaviour pipeline](#behaviour) | Animal brains: senses -> problem (explore, escape, feed ...) -> motion intent; deer herds, hares, people. | `behaviour` | senses, needs, terrain, clock, vegetation | audio, interaction, locomotion, senses | 2 |
 | [Camera](#camera) | Third-person follow camera: a rear three-quarter just above the wolf, pitch spring and look-around. | `camera` | player, controls, terrain, interaction | interaction | 2 |
-| [Time and clock](#clock) | The one world clock and its one rate. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control. | `clock`, `chronometer` | save | animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 4 |
+| [Time and clock](#clock) | The one world clock and its one dial. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control. The rate eases; observation scale is a signal for later detail switches. | `clock`, `chronometer` | save | animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 4 |
 | [Player controls and gamepad](#controls) | One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics. | `haptics` | save | camera, interaction, player, stamina, ui | - |
 | [Globe (planet view)](#globe) | Cube-sphere planet, atmosphere, far layer and the descent from orbit to the ground. | - | terrain, clock, lighting, quality, save | - | 19 |
 | [Interaction, focus and target glow](#interaction) | Picking the interaction target, held focus lock and steering, the glowing outline. | `autoFocus`, `targetGlow` | controls, player, behaviour, camera | camera | 1 |
@@ -347,7 +347,7 @@ Read by: `src/render/math.ts`
 <a id="clock"></a>
 ## Time and clock (`clock`)
 
-The one world clock and its one rate. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control.
+The one world clock and its one dial. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control. The rate eases; observation scale is a signal for later detail switches.
 
 - Depends on: save
 - Feeds: animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather
@@ -381,7 +381,7 @@ Read by: `src/ui/chronometer.ts`
 | `?hour` | =HH sets the time of day on the one clock (core/timeOfDay) |
 | `?day` | =1-366 sets the day of year (core/timeOfDay) |
 | `?date` | =YYYY-MM-DD sets the year and day (core/timeOfDay) |
-| `?timescale` | sets the one clock rate, 0.05 to 16 world seconds per real second (core/timescale, core/worldClock) |
+| `?timescale` | sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, full deflection 10^12 sim seconds per real second, negative rewinds |
 
 **Linked data tables** (kept in their own module)
 
@@ -968,7 +968,7 @@ A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain f
 | `?stages` | terrain | =0 / =1 staged terrain off / on (main.ts) |
 | `?start` | globe | =globe opens on the planet (grok-globe/globe-default-view, T-0034) |
 | `?tier` | globe | force a quality tier (globeView) |
-| `?timescale` | clock | sets the one clock rate, 0.05 to 16 world seconds per real second (core/timescale, core/worldClock) |
+| `?timescale` | clock | sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, full deflection 10^12 sim seconds per real second, negative rewinds |
 | `?tones` | audio | show the isochronic / binaural tone controls (grok/music, T-0033) |
 | `?transition` | globe | globe <-> ground mode (world/globe/transition) |
 | `?tree` | vegetation | procedural tree viewer page (world/globe/entry) |

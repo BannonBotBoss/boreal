@@ -53,9 +53,10 @@ export const ACTIONS: ActionDef[] = [
   // Play only. D-pad left/right are the chronometer's while that dial is open, and the menu's while a menu is open.
   // They are not the planet-view axis (d-pad right) or axis-mode layers (d-pad left): main does not dispatch these then.
   // Comma, period and semicolon stay off the volume keys ([ ] and - =).
-  A('timeSlower', 'Time: slower (in-game clock)', 'press', 'play', [','], ['dleft']),
-  A('timeFaster', 'Time: faster (in-game clock)', 'press', 'play', ['.'], ['dright']),
-  A('timePause', 'Time: pause or play (in-game clock)', 'press', 'play', [';'], ['ls.click']),
+  // Hold, not a tap: the dial eases while the key or d-pad is down. Pause/play stays a tap.
+  A('timeSlower', 'Time: hold to rewind (in-game dial)', 'hold', 'play', [','], ['dleft']),
+  A('timeFaster', 'Time: hold to go forward (in-game dial)', 'hold', 'play', ['.'], ['dright']),
+  A('timePause', 'Time: pause or play (in-game dial)', 'press', 'play', [';'], ['ls.click']),
   A('back', 'Close (chronometer / panel)', 'press', 'any', [], ['b']),
   A('pause', 'Pause menu', 'press', 'any', ['escape'], []),
   A('padMenu', 'Pad menu (Layers, Camera, Badges, Gallery, Settings)', 'press', 'any', ['tab'], ['menu']),

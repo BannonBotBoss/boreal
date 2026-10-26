@@ -65,7 +65,7 @@ import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help
 import { startView } from './world/globe/startView';
 import { createInPage } from './world/globe/inpage';
 import { ageYears, lifespanWarning } from './core/lifespan';
-import { CLOCK, clockRate, gameSecondsPerWorldSecond, holdClock, isPaused, loadClock, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, timeCommand, toggleHudPause, worldSec } from './core/worldClock';
+import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
 import { dryStart } from './core/stages/surfaceAt';
 import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
@@ -278,7 +278,7 @@ let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem
 function setBindings(b: Bindings) { bindings = b; padRouter?.setBindings(b); hint = { pad: '', keys: '' }; bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
 const controls = controlsScreen({ get: () => bindings, set: setBindings, library: () => { menu.close(); dialog.showModal(); } });
 const hintFor = (kind: 'keys' | 'pad') => { const L = (id: string) => bindingLabel(bindings[id][kind]);
-  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('lock')} lock · ${L('eatPrey')} eat held · ${L('releasePrey')} release · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} hour · ${L('timeSlower')} slower · ${L('timeFaster')} faster · ${L('timePause')} pause time · Controls: ${L('pause')} → Controls`; };
+  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('lock')} lock · ${L('eatPrey')} eat held · ${L('releasePrey')} release · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} hour · hold ${L('timeSlower')} rewind · hold ${L('timeFaster')} forward · ${L('timePause')} pause time · Controls: ${L('pause')} → Controls`; };
 function act(id: string) { // one fired press action (keyboard or gamepad)
   if (padRouter.act(id)) return;
   if (dialog.open) { if (id === 'back' || id === 'interact') dialog.close(); else if (id === 'pause') togglePause(); return; }
@@ -307,11 +307,6 @@ function act(id: string) { // one fired press action (keyboard or gamepad)
     notice('Released. It treats you as a friend until the memory fades.');
   }   else if (id === 'howl') sfx.howl(); else if (id === 'growl') sfx.growl();
   else if (id === 'timePause') { if (!inpage?.blocksGame()) toggleHudPause(); }
-  else if (id === 'timeSlower' || id === 'timeFaster') {
-    // Planet view keeps d-pad right for the axis and d-pad left for axis-mode layers. The time bar's buttons still work.
-    if (inpage?.mode === 'globe' || inpage?.blocksGame()) return;
-    timeCommand(id === 'timeSlower' ? 'slower' : 'faster');
-  }
 }
 let drag: { id: number; x: number; y: number } | undefined;
 const canControl = () => !menuOpen() && !paused && !dialog.open && !document.hidden && !photo.active && !inpage?.blocksGame();
@@ -369,13 +364,13 @@ const chrono = createChronometer(worldSec); // T / d-pad up: the hour scrub of t
 const timeHud = createTimeHud(() => { if (!inpage?.blocksGame()) { chrono.toggle(); clearInput(); } });
 function bindingTexts() { // help dialog and chronometer lines written from the live bindings (Controls screen rebinding updates them)
   const L = (id: string, k: 'keys' | 'pad') => bindingLabel(bindings[id][k]), G = (id: string, k: 'keys' | 'pad') => groupLabel(bindings, id, k);
-  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold ${L('lock', k)} and keep a prey inside the aim cone to lock it; ${L('jump', k)} then steers the leap onto that lock. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} hour, ${L('timeSlower', k)} slower, ${L('timeFaster', k)} faster, ${L('timePause', k)} pause or play the clock, ${L('pause', k)} menu`;
+  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold ${L('lock', k)} and keep a prey inside the aim cone to lock it; ${L('jump', k)} then steers the leap onto that lock. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} hour, hold ${L('timeSlower', k)} to rewind the dial, hold ${L('timeFaster', k)} to go forward, ${L('timePause', k)} pause or play, ${L('pause', k)} menu`;
   element('help-binds').textContent = `Xbox: ${tell('pad')}, ${L('back', 'pad')} close this panel. Keyboard: ${tell('keys')}, ${L('photo', 'keys')} photo mode (free camera, rewind, capture). Rebind any of these under ${L('pause', 'keys')} → Controls.`;
   const close = [...bindings.chrono.keys, ...bindings.back.keys, ...bindings.chrono.pad, ...bindings.back.pad].map(comboLabel).join(' / ');
   chrono.setHint(`${G('scrub', 'keys')} or ${G('scrub', 'pad')}: scrub time · drag the dial · ${close}: close`);
 }
 bindingTexts();
-let simTime = clock0.worldSec, lastWorld = worldSec(); // sim and clock fields share the world clock (frozen with the menu)
+let simTime = clock0.worldSec, lastWorld = worldSec(), dialHeld = 0; // sim and clock fields share the world clock (frozen with the menu)
 try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
 if (clock0.offlineSec > 0) tickGround(gameSecondsPerWorldSecond * clock0.offlineSec); // time away ages the ground at the clock's game-second conversion, rate 1
 function frame(time: number) { const frameStart = performance.now();
@@ -387,9 +382,18 @@ function frame(time: number) { const frameStart = performance.now();
   const padOwned = padRouter.frame(pad ?? undefined, time, dt);
   const input = resolveInput(bindings, atomValues([...keys, ...tapped], padOwned ? undefined : pad), inputPrev, chrono.open); inputPrev = input.active; tapped.clear();
   if (!menu.open) for (const id of input.fired) act(id); // the menu reads the pad itself (and the keys); its presses never reach the game
+  // Hold slower/faster to move the dial. A fresh press also steps one notch, so a tap is felt. Planet view keeps the d-pad.
+  if (!photo.active && !menu.open && !chrono.open && inpage?.mode !== 'globe' && !inpage?.blocksGame()) {
+    const faster = input.value.timeFaster ?? 0, slower = input.value.timeSlower ?? 0;
+    const dir = faster > 0 && slower > 0 ? 0 : faster > 0 ? 1 : slower > 0 ? -1 : 0;
+    if (dir !== 0) nudgeDial(dir * DIAL_HOLD_PER_SEC * dt);
+    if (dir !== 0 && dialHeld === 0) nudgeDial(dir * DIAL_NOTCH);
+    dialHeld = dir;
+  } else dialHeld = 0;
   if (photo.active && !photo.simulating) holdClock('photo'); else releaseClock('photo'); // a frozen photo holds the one clock; a live sequence lets it run
-  const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow;
-  const sdt = Math.min(wDt, .05 * Math.max(clockRate(), 1)); // physics step budget; the clock itself is not capped
+  const wNow = worldSec(), wDt = wNow - lastWorld; lastWorld = wNow; // signed: rewind moves the sky backward
+  const simDt = simWorldSec(wDt, observation()); // animals and the weather grid hold when rewinding or above Immediate
+  const sdt = Math.min(simDt, .6); // Immediate tops out near 12×; a hitch must not spin the 30 Hz loop for a geological gap
   const hold = photo.active ? resolveInput(bindings, atomValues([], padOwned ? undefined : pad), new Set(), chrono.open).value : input.value; // photo mode: its own keys
   const H = (id: keyof typeof ACTION) => hold[id] ?? 0;
   // A live photo sequence keeps the world running (no player input) while photo mode renders it.
@@ -478,9 +482,9 @@ function frame(time: number) { const frameStart = performance.now();
   } else { accumulator = 0; drawFrom = undefined; }
   view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
-  view.worldTime = wNow; // one clock: ground years and weather use this frame's world-second delta
-  tickGround(gameSecondsPerWorldSecond * wDt);
-  updateWeather(Math.min(wDt, .25), gameSecondsPerWorldSecond, dayAt(wNow), hourAt(wNow));
+  view.worldTime = wNow; // one clock. The sky reads this signed second, so rewind moves the sun backward.
+  tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only: ground years are elapsed time, not a rewind of decay
+  updateWeather(simDt > 0 ? Math.min(simDt, .25) : 0, gameSecondsPerWorldSecond, dayAt(wNow), hourAt(wNow)); // the date follows the clock; the grid steps only at Immediate, forward
   { // T-0035 held focus (core/focusLock): only while Focus (LB / F) is held and an interactable object is within FOCUS.radius
     const kinds = (Object.keys(catalog) as (keyof typeof catalog)[]).filter(k => !(SYSTEM_PROPERTIES.autoFocus.excludeKinds as readonly string[]).includes(k) && (catalog[k].interactions ?? []).some(a => player.abilities.includes(a)));
     focusTarget = pickFocus(active && !autonomous && H('focus') > ACTIVE, focusTarget, { x: player.x, z: player.z, view: yaw + lookYaw }, view.entities().filter(e => !context.records[e.key]?.removed), kinds);
@@ -501,7 +505,7 @@ function frame(time: number) { const frameStart = performance.now();
   walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
-  sfx.update({ dt: wDt, halted: isPaused() || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
+  sfx.update({ dt: simDt > 0 ? Math.min(simDt, .05) : 0, halted: isPaused() || wDt < 0 || observation().scale !== 'immediate' || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
   if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
     if (ev.type === 'pinned') { notice('Pinned. X eats, B releases.'); continue; } // the bite row already played the one squeal
     sfx.hare(ev.type, ev);

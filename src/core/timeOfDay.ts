@@ -27,8 +27,13 @@ export const DAY = { key: 'boreal.hour.v1', offset: 0, dayOffset: 0, year: 2026 
 export const hourAt = (worldSec: number) => gameHour(worldSec, START_HOUR + DAY.offset);
 /** Day of the year at world second `worldSec` (follows the dial past midnight, plus any date offset). */
 export const dayAt = (worldSec: number) => DAY_OF_YEAR + DAY.dayOffset + Math.floor((START_HOUR + DAY.offset + worldSec / REAL_SECONDS_PER_GAME_HOUR) / 24);
-/** UTC date of the clock's day, for the sky and the planets. */
-export const clockDate = (worldSec: number) => new Date(Date.UTC(DAY.year, 0, dayAt(worldSec)));
+/**
+ * UTC date of the clock's day, for the sky and the planets.
+ * JS Date only reaches about ±100 million days. Further than that Venus would see an Invalid Date,
+ * so the calendar view is clamped. The day count itself is not. Geological time is deepTimeAt(epochOffsetYr), not this Date.
+ */
+const DATE_DAY_LIMIT = 1e7;
+export const clockDate = (worldSec: number) => new Date(Date.UTC(DAY.year, 0, Math.max(-DATE_DAY_LIMIT, Math.min(DATE_DAY_LIMIT, dayAt(worldSec)))));
 /** Make it `hour` now, by the shortest turn of the dial (never more than 12 h either way). */
 export function setHour(hour: number, worldSec: number) { DAY.offset += ((hour - hourAt(worldSec)) % 24 + 36) % 24 - 12; return hourAt(worldSec); }
 /** Make today `day` (1–366) without moving the hour. */

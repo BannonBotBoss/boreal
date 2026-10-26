@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { PLANE_NAMES, SURFACE_ROWS, loadPlanetSim, solarLayerFallback } from '../src/core/planetBudget';
-import { AIR, qsat, shortwave, solar } from '../src/core/weather';
+import { AIR, WEATHER, qsat, shortwave, solar, updateWeather, weatherAt } from '../src/core/weather';
+import { bindPlanetWeather } from '../src/core/planetWeather';
 import { fromLatLon, planetFor } from '../src/world/globe/planet';
 
 const wasmPath = new URL('../public/wasm/boreal_sim.wasm', import.meta.url);
@@ -52,4 +53,25 @@ test('real planet.ts continents: seeded planet is physical and stays so for 10 d
   assert.ok(sim!.plane('soil').every(v => v >= 0 && v <= 150 + 1e-9) && sim!.plane('cloud').every(v => v >= 0 && v <= 1) && sim!.plane('precip').every(v => v >= 0));
   const qa = sim!.plane('qabs'), qr = sim!.plane('qrefl'), sw = sim!.plane('swdown');
   for (let i = 0; i < qa.length; i++) assert.ok(Math.abs(qa[i] + qr[i] - sw[i]) < 1e-6, 'energy split closes');
+});
+test('a loaded wasm grid is the forest weather authority', { skip }, async () => {
+  const owned = await loadPlanetSim(readFileSync(wasmPath));
+  assert.ok(owned);
+  owned.init(4, 8);
+  owned.plane('tair').fill(41);
+  owned.plane('rh').fill(0.4);
+  const snap = { day: WEATHER.day, hour: WEATHER.hour, steps: WEATHER.steps };
+  bindPlanetWeather(owned);
+  try {
+    assert.equal(weatherAt(0, 0).tC, 41);
+    assert.equal(weatherAt(0, 0).rh, 0.4);
+    updateWeather(1, 12, 80, 6);
+    assert.equal(WEATHER.day, 80);
+    assert.equal(WEATHER.hour, 6);
+    assert.equal(WEATHER.steps, snap.steps);
+    assert.equal(owned.plane('tair')[0], 41);
+  } finally {
+    bindPlanetWeather(null);
+    WEATHER.day = snap.day; WEATHER.hour = snap.hour; WEATHER.steps = snap.steps;
+  }
 });

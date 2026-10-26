@@ -312,9 +312,27 @@ function project(iters = 12) {
 // ---- the ONE wind field and point queries --------------------------------------------------------------------------
 const gx = (x: number) => (x - WEATHER.ox) / DX + NX / 2 - .5, gz = (z: number) => (z - WEATHER.oz) / DX + NX / 2 - .5;
 const inGrid = (x: number, z: number) => Math.abs(x - WEATHER.ox) < NX * DX / 2 && Math.abs(z - WEATHER.oz) < NX * DX / 2;
+/** What `weatherAt` returns. The planet grid and the near Stam column both fill this shape. */
+export interface PointWeather {
+  tC: number; rh: number; cloud: number; rainMmH: number; snow: boolean;
+  soil: number; sweMm: number; fog: number; wind: { x: number; y: number; z: number };
+}
+/** Optional reader for the one Rust grid (`planetWeather.ts`). While it is driving, it is the only source for the frame. */
+type PlanetRead = {
+  driving(): boolean;
+  at(x: number, z: number): PointWeather | null;
+  wind(x: number, h: number, z: number, kind: SurfaceKind): { x: number; y: number; z: number } | null;
+  follow(day: number, hour: number): void;
+};
+let reader: PlanetRead | null = null;
+export function registerPlanetRead(r: PlanetRead | null) { reader = r; }
+
 /** Wind (m/s, world axes x east, z south→ grid v maps to +z) at height `h` above ground. Inside the grid: trilinear cell
- * value scaled to `h` by the neutral log wind profile u(h) = u_ref ln(h/z0)/ln(z_ref/z0) (Stull 1988 §9.7). Outside: climatology. */
+ * value scaled to `h` by the neutral log wind profile u(h) = u_ref ln(h/z0)/ln(z_ref/z0) (Stull 1988 §9.7). Outside: climatology.
+ * A bound planet grid answers first, at the same height. */
 export function windAt(x: number, h: number, z: number, kind: SurfaceKind = 'forest') {
+  const fromPlanet = reader?.wind(x, h, z, kind);
+  if (fromPlanet) return fromPlanet;
   const z0 = SURFACE[kind].z0, ref = layerZ(0), scale = h >= ref ? 1 : Math.max(0, Math.log(Math.max(h, z0 * 1.01) / z0) / Math.log(ref / z0));
   if (!WEATHER.on || !grid) { const c = climate(WEATHER.day, WEATHER.hour, Math.max(h, ref)); return { x: c.u * scale, y: 0, z: c.v * scale }; }
   if (!inGrid(x, z)) { const c = climate(WEATHER.day, WEATHER.hour, Math.max(h, ref)); return { x: c.u * scale, y: 0, z: c.v * scale }; }
@@ -322,8 +340,11 @@ export function windAt(x: number, h: number, z: number, kind: SurfaceKind = 'for
   const e = 2, sx = (heightAt(x + e, z) - heightAt(x - e, z)) / (2 * e), sz = (heightAt(x, z + e) - heightAt(x, z - e)) / (2 * e);
   return { x: u, y: sample(grid.w, gx(x), gz(z), k) * scale + u * sx + v * sz, z: v }; // terrain deflection: flow follows the slope
 }
-/** Near-surface weather at (x, z): what rendering, sound, ground and the inspector read. */
-export function weatherAt(x: number, z: number) {
+/** Near-surface weather at (x, z): what rendering, sound, ground and the inspector read.
+ *  The bound planet grid answers first. The near column and `climateRaw` remain for a frame with no wasm. */
+export function weatherAt(x: number, z: number): PointWeather {
+  const fromPlanet = reader?.at(x, z);
+  if (fromPlanet) return fromPlanet;
   const c = climate(WEATHER.day, WEATHER.hour, 0);
   if (!WEATHER.on || !grid || !inGrid(x, z)) return { tC: c.tC, rh: c.rh, cloud: 0, rainMmH: 0, snow: c.tC < 0, soil: .6, sweMm: 0, fog: 0, wind: windAt(x, 10, z) };
   const i = Math.max(0, Math.min(NX - 1, Math.round(gx(x)))), j = Math.max(0, Math.min(NX - 1, Math.round(gz(z)))), n = idx(i, j, 0), col = j * NX + i;
@@ -343,6 +364,11 @@ let acc = 0, running: Generator<unknown, unknown> | undefined;
 /** Called every frame with real seconds and the game's seconds-per-real-second. A step starts at most every 0.5 s real and
  * runs one slice per frame (≈ 0.1–0.6 ms each), so no frame pays for a whole step. */
 export function updateWeather(realDt: number, gameSecondsPerReal: number, day: number, hour: number) {
+  if (reader?.driving()) {
+    WEATHER.day = day; WEATHER.hour = hour;
+    reader.follow(day, hour);
+    return;
+  }
   if (!grid) initWeather(day, hour, INTEREST.x, INTEREST.z);
   WEATHER.day = day; WEATHER.hour = hour; // the world clock is the date; a slice may advance the copy, and the next call overwrites it
   if (!WEATHER.on) { running = undefined; return; }

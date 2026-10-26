@@ -56,6 +56,7 @@ import { tryMark } from './core/traces';
 import { appearancePanel, restoreLooks } from './ui/appearancePanel';
 import { runJobs } from './core/interest';
 import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
+import { openForestPlanet } from './core/planetWeather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
 import { createLoading } from './ui/loading';
 import { settle, startup } from './render/startup';
@@ -534,7 +535,8 @@ function frame(time: number) { const frameStart = performance.now();
   timeHud.setHidden(menu.open || photo.active);
   requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+// The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.
+void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally(() => requestAnimationFrame(frame));
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
   void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).catch(e => console.warn('startup', e)).then(() => q.has('noprobe') ? undefined : inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { if (startView(location.search) === 'globe') { if (!inpage?.enter()) toGlobe(); } else openStart(); } }); } // bare load: the planet, no menu over it (T-0034). ?noprobe: ground capture skips the Ultra bench and the globe prewarm (the planet is not in the shot)
 

@@ -1018,3 +1018,10 @@ Matthew, 18:25 PT, asked why the drawing paths are separate and for one picture 
 - Next free id after T-0077 (PR #91). Phase 1 (a table of existing distances, unread by the draw) is listed and not built.
 - `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. CI `test` on `d7d6148` passed (run 40255214665). Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
 
+## 2026-10-25 19:20 PT - grokbot-3: observation chooses the layers (T-0078)
+
+Matthew answered the three questions in issues #107, #108, and #109. Newest issue wins. At 7:15 PM PT he allowed a render path to be replaced when keeping it would compromise the single space-and-time observation pipeline, provided #100–#109 are addressed, especially #107. Documents only. Not an approve-plan.
+- The flight down is one smooth picture. Far forest is a colour and a density; trees appear close in and when time is slow. The work stays several small steps. The open decisions are gone from the plan and from the plain summary.
+- Layer weights are height times the time dial's rate (#107, #109). #109's levels and the 800× / 1,200× blend are the time half. #107's stations, from the ground to orbit, are the height half. The dial is a read. The clock files are still untouched.
+- Plan, task, handoff, and `notes/skills/render-path-audit.md` updated. Phase 1 is the unread observation table and is not built. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
+

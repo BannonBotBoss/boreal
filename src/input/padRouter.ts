@@ -12,6 +12,7 @@ import { padTarget } from './padTargets';
 import { createPadMenu, domItems, cameraControl, ensureCss } from '../ui/padMenu';
 import { radialSlice, type Item, type MenuEvent } from '../ui/padNav';
 import { glyph, mountGamepadSettings } from '../ui/gamepadSettings';
+import { photoFlyStick } from '../photo/fly';
 
 const PAD_IDS = new Set(['padMenu', 'padHelp', 'shutter', 'cameraMode']);
 const readBindings = () => { try { return loadBindings(localStorage.getItem(BINDINGS_KEY)); } catch { return loadBindings(null); } };
@@ -130,9 +131,8 @@ export function createPadRouter(host: RouterHost) {
         drawCam(); return true; }
       const d = padTarget('drone');
       if (d?.active() && host.flight?.()) { const r = resolveContext(b, v, prevDrone, 'drone'); prevDrone = r.active; const V = r.value;
-        d.move((V.droneForward ?? 0) - (V.droneBack ?? 0), (V.droneRight ?? 0) - (V.droneLeft ?? 0));
-        d.look((V.droneYawRight ?? 0) - (V.droneYawLeft ?? 0), (V.dronePitchUp ?? 0) - (V.dronePitchDown ?? 0));
-        d.climb((V.droneClimb ?? 0) - (V.droneDescend ?? 0));
+        const s = photoFlyStick(V);
+        d.move(s.f, s.r); d.look(s.yaw, s.pitch); d.climb(s.u);
         if (r.fired.has('droneEmbody')) d.embody(); if (r.fired.has('droneCancel')) d.cancel();
         return true; }
       const g = padTarget('globe');

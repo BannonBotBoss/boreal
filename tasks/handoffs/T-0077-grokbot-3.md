@@ -10,6 +10,7 @@ Globe entry is a free fall into the photo-mode fly that already existed.
 - The fall is `proc/physics.ts` `step` with ground `-Infinity`, down to `FALL_END_M` = 10000 × 0.3048 m. Yaw +180° and pitch to `ISO_BELOW_HORIZON` (−35.264°) both finish there (`fallEase`).
 - Aim is the nadir `lookAt(0,0,0)`, then `rotateZ(-lookAz)` and `rotateX(fallPitch − NADIR)`. The far plane clamps the limb radical (`Math.max(0, rad² − R²)`) so a camera inside the mean sphere does not get a NaN projection and a cleared frame.
 - `leave({ x, z, yaw: -fallYaw, vy })` starts `inpage` `descend`, which calls `stepCarriedFly` (`src/photo/fly.ts`). Photo mode's `createPhotoMode().update` calls the same `photoFlyMove`. The drone is not photo mode.
+- Xbox on that fly: left stick moves, right stick turns, right trigger climbs, left trigger descends. The turn is inside `photoFlyMove`. The pad router sends `photoFlyStick`. Photo mode sends `photoFlyPad` into the same move. A becomes the wolf. X returns to the planet. Fast is still Shift on the keyboard.
 - Wind is `rushLevel` on the existing `wind-pines` loop, from the drone phase (at and after 10,000 ft). `main.ts` does not halt audio while `airRush()` > 0.
 - Issue #107: `localCloudFade` eases the local cloud box from `showBelowM` (40 km) to `sizeM` (32 km). The shell clear is `cloudClear(alt) * localCloudFade(alt)` while that mesh is visible. `visibleWeight`, `DETAIL`, `cloudClear`, and `patchFade` already fade every frame. No new renderer. PR #94 is untouched.
 

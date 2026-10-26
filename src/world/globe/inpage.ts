@@ -24,7 +24,7 @@ import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './flight';
 import { TRANSITION, globePitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
-import { stepCarriedFly, photoFlyFloor } from '../../photo/fly';
+import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
 import { GLOBE_ENTRY_ALT } from './handoff';
 import { PLANET, GLOBE_COLOURS } from './planet';
 import { setPatchFade, setPatchFar } from '../../render/fade';
@@ -106,7 +106,6 @@ function controller(view: View, host: InPageHost) {
   let spotX = 0, spotZ = 0, yaw = 0, pitch = 0;
   const heldKeys = new Set<string>(), axes = { f: 0, r: 0, u: 0, yaw: 0, pitch: 0 };
   const vel = { x: 0, y: 0, z: 0 }; let airSpeed = 0;
-  const DRONE_LOOK = 1.2; // rad/s at a full stick [game calibration]. Mouse look uses photo mode's own pixel scale.
   let wantEmbody = false, wantCancel = false, mouseYaw = 0, mousePitch = 0, dragging = false;
   const blendFrom = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   let promptEl: HTMLDivElement | null = null;
@@ -169,8 +168,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       r: clamp(axes.r + k('d') - k('a'), -1, 1),
       u: clamp(axes.u + Number(k('e') || k(' ')) - Number(k('q') || k('control')), -1, 1),
       fast: heldKeys.has('shift'),
-      yaw: (axes.yaw + k('arrowright') - k('arrowleft')) * DRONE_LOOK * dt + mouseYaw,
-      pitch: (axes.pitch + k('arrowup') - k('arrowdown')) * DRONE_LOOK * dt + mousePitch,
+      yaw: (axes.yaw + k('arrowright') - k('arrowleft')) * PHOTO_FLY_LOOK * dt + mouseYaw,
+      pitch: (axes.pitch + k('arrowup') - k('arrowdown')) * PHOTO_FLY_LOOK * dt + mousePitch,
     };
     axes.f = axes.r = axes.u = axes.yaw = axes.pitch = 0; mouseYaw = 0; mousePitch = 0;
     return a;

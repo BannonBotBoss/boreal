@@ -8,7 +8,7 @@ The only free-flight already in the repo is photo mode.
 
 1. Search `src` and `git log -S` for fly, drone, freecam, free camera, spectator, flight, noclip, and the camera menu.
 2. The hit that flies is `createPhotoMode().update` in `src/photo/photoMode.ts` (commit b4a2ace). It is kinematic: WASD, Q/E or Space/Ctrl, Shift 25 m/s else 6 m/s, drag look, floor `max(heightAt, -0.25) + 0.3`.
-3. That move lives in `src/photo/fly.ts` as `photoFlyMove` / `photoFlyFloor`. The globe calls `stepCarriedFly`, which adds a carried velocity first and then the same move. Do not enter photo mode for the descent (it freezes the world and opens the photo UI). Do not write a second integrator. Gravity is `proc/physics.ts` `step`.
+3. That move lives in `src/photo/fly.ts` as `photoFlyMove` / `photoFlyFloor`. The globe calls `stepCarriedFly`, which adds a carried velocity first and then the same move. Turn (yaw and pitch) is part of `photoFlyMove`. The Xbox pad uses the drone bindings through `photoFlyStick` (the router) and `photoFlyPad` (photo mode): left stick moves, right stick turns, right trigger climbs, left trigger descends. Do not enter photo mode for the descent (it freezes the world and opens the photo UI). Do not write a second integrator. Gravity is `proc/physics.ts` `step`.
 4. The camera panel (`src/ui/cameraPanel.ts`) is exposure and filters. `src/camera/gameCamera.ts` is the viewfinder. Adaptive-music "drone" is not a camera.
 
 ## How entry works

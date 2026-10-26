@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { body, step } from '../src/proc/physics';
 import { FALL_END_M, ISO_BELOW_HORIZON, NADIR, fallEase, fallPitch, fallVelocity, fallYaw, flightPrompt, isDescentGesture } from '../src/world/globe/flight';
-import { photoFlyMove, stepCarriedFly } from '../src/photo/fly';
+import { PHOTO_FLY_LOOK, photoFlyMove, photoFlyPad, photoFlyStick, stepCarriedFly } from '../src/photo/fly';
+import { atomValues, loadBindings, resolveContext, type PadState } from '../src/core/bindings';
 import { MIX, RUSH_REF_MPS, rushLevel } from '../src/audio/borealSound';
 import { layerPanelShown } from '../src/world/globe/layerPanel';
 
@@ -87,6 +88,45 @@ test('the drone reuses photo mode free-fly', () => {
   const moved = { x: 0, y: 100, z: 0, yaw: 0, pitch: 0 };
   photoFlyMove(moved, 1, 1, 0, 0, false);
   assert.ok(moved.z !== 0, 'W still steps the photo-mode camera');
+  assert.match(photo, /photoFlyPad\(/);
+  assert.match(photo, /photoFlyMove\(cam, dt, f, r, u, keys\.has\('shift'\), pad\.yaw, pad\.pitch\)/);
+  assert.match(readFileSync('src/input/padRouter.ts', 'utf8'), /photoFlyStick\(V\)/);
+});
+
+const xbox = (buttons: Record<number, number> = {}, axes = [0, 0, 0, 0]): PadState => ({
+  buttons: Array.from({ length: 17 }, (_, i) => ({ value: buttons[i] ?? 0, pressed: (buttons[i] ?? 0) > .1 })),
+  axes,
+});
+
+test('the Xbox pad moves, turns, climbs and descends through the shared photo fly', () => {
+  const b = loadBindings(null), dt = 0.5;
+  const stick = (buttons: Record<number, number> = {}, axes = [0, 0, 0, 0]) => photoFlyStick(resolveContext(b, atomValues([], xbox(buttons, axes)), new Set(), 'drone').value);
+  const forward = stick({}, [0, -1, 0, 0]);
+  assert.ok(forward.f > 0.9, 'left stick up is forward');
+  const moved = { x: 0, y: 100, z: 0, yaw: 0, pitch: 0 };
+  photoFlyMove(moved, dt, forward.f, forward.r, forward.u, false, forward.yaw, forward.pitch);
+  assert.ok(moved.z < -1, 'forward carries the camera');
+  assert.equal(moved.y, 100);
+  const turned = stick({}, [0, 0, 1, 0]);
+  assert.ok(turned.yaw > 0.9, 'right stick right yaws right');
+  const look = { x: 0, y: 100, z: 0, yaw: 0, pitch: 0 };
+  const padLook = photoFlyPad(xbox({}, [0, 0, 1, -1]), dt, b);
+  stepCarriedFly(look, { x: 0, y: 0, z: 0 }, dt, { f: 0, r: 0, u: 0, fast: false, yaw: padLook.yaw, pitch: padLook.pitch }, -1e9);
+  assert.ok(Math.abs(look.yaw - PHOTO_FLY_LOOK * dt) < 1e-9, 'a full right stick yaws at the shared rate');
+  assert.ok(Math.abs(look.pitch - PHOTO_FLY_LOOK * dt) < 1e-9, 'right stick up pitches up');
+  const climbed = { x: 0, y: 100, z: 0, yaw: 0, pitch: 0 };
+  const rt = photoFlyPad(xbox({ 7: 1 }), dt, b);
+  assert.ok(rt.u > 0.9, 'right trigger climbs');
+  photoFlyMove(climbed, dt, 0, 0, rt.u, false, rt.yaw, rt.pitch);
+  assert.ok(climbed.y > 100);
+  const dropped = { x: 0, y: 100, z: 0, yaw: 0, pitch: 0 };
+  const lt = photoFlyPad(xbox({ 6: 1 }), 1, b);
+  assert.ok(lt.u < -0.9, 'left trigger descends');
+  photoFlyMove(dropped, 1, 0, 0, lt.u, false);
+  assert.ok(dropped.y < 100);
+  const held = { x: 0, y: 0, z: 0, yaw: 0, pitch: 1.5 };
+  photoFlyMove(held, 1, 0, 0, 0, false, 0, 1);
+  assert.ok(held.pitch <= 1.55, 'the shared fly clamps the look');
 });
 
 test('the prompts name the double-click, the pad, and the photo-mode drone', () => {

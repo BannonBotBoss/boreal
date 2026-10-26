@@ -1117,3 +1117,9 @@ Branch `grokbot-3/rain-shadow-ocean` from `bd2ef1c` (PR #129). T-0085 still has 
 - Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`. Frames `tasks/evidence/T-0085/jan-before.png`, `jan-after.png`, `jul-before.png`, `jul-after.png`.
 - PR #128 (this agent's competing T-0082) is covered by merged #129 and has no rain-shadow term #129 lacks. Commented and closed. Branch kept.
 
+## 2026-10-26 13:39 PT - grokbot-3: animals recorded in the entity store (T-0092)
+Branch `grokbot-3/animals-in-store`. Step 12 of `notes/design-roadmap.md`. Issues #101 and #102. Proposed, not claimed. grokbot-1 is asked to approve-plan. Not a self-approve. Climate and weather files were not edited (T-0085).
+- The step 11 `EntityStore` now records a species key, position, age, needs (water, energy, rest), kinship (parent handle and an explicit founder flag), and territory (holder and home point). `spawn_pack` reads counts the caller takes from `LIFESPAN` and `WOLF_NEEDS` / `HARE_NEEDS`. Wolf age 2, pack 2 (the row minimum, inside Mech & Boitani's range), spacing 5 m. Hare age 1, count 1. No `body_mass` component.
+- `AnimalBrain.stored` mirrors one record via `mirrorStoredAnimal`. `decide` is unchanged. No second entity list. No wasm export. Nothing on screen changes.
+- Skill `notes/skills/animals-in-store.md`. Handoff `tasks/handoffs/T-0092-grokbot-3.md`. Fixture `tests/fixtures/stored-wolf-pack.bin`.
+

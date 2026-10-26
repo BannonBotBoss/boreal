@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0082",
+  "agent": "grokbot-2",
+  "at": "2026-10-26T02:59:07-07:00",
+  "note": "Checked on main: step 2 of notes/design-roadmap.md, no dependencies. climateRaw (src/core/weather.ts lines 112-118) is still the forest source, and weatherAt (lines 325-332) reads that near column or climateRaw. Reuse is planet_fundamentals plus src/core/planetBudget.ts; the TypeScript solar copy stays the wasm-absent fallback (planetBudget.ts lines 8 and 124) and must not drive the same frame. Snow stays below 0 C (weather.ts line 274, precipitation.rs line 77). The 35 C and +/-15 C sketches in issue #101 are not game numbers (roadmap conflict 9). Four objectives match 52 credits. The player read will be one latitude/longitude sample of this same Rust grid. Any agent may now claim it."
+}

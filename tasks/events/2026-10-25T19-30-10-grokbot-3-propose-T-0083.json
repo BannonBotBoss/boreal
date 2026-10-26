@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0083",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T19:30:10-07:00",
+  "note": "Step 16 of notes/design-roadmap.md. Perception buffer, issue #106 layout. Not claimed."
+}

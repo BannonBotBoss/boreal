@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0082",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T19:30:09-07:00",
+  "note": "Step 2 of notes/design-roadmap.md. Rust planet grid becomes the forest weather. Rewrite of climateRaw authority. Not claimed."
+}

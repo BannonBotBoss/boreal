@@ -3,7 +3,7 @@
  * for stills, sequences and video. The world's state comes and goes only through the shared snapshot hub (core/snapshot.ts).
  */
 import { haptic } from '../ui/haptics';
-import { heightAt } from '../core/world';
+import { photoFlyFloor, photoFlyMove } from './fly';
 import { clamp } from '../proc/math';
 import type { SnapshotHub, Snapshot } from '../core/snapshot';
 import type { buildScene, PhotoView } from '../render/buildScene';
@@ -243,13 +243,8 @@ export function createPhotoMode(host: PhotoHost) {
     },
     /** Per frame: fly the camera, advance playback/sequence; returns the frozen view to draw. */
     update(dt: number): PhotoView {
-      const speed = (keys.has('shift') ? 25 : 6) * dt, f = Number(keys.has('w')) - Number(keys.has('s')), r = Number(keys.has('d')) - Number(keys.has('a'));
-      const u = Number(keys.has('e') || keys.has(' ')) - Number(keys.has('q') || keys.has('control'));
-      const cp = Math.cos(cam.pitch);
-      cam.x += (-Math.sin(cam.yaw) * cp * f + Math.cos(cam.yaw) * r) * speed;
-      cam.z += (-Math.cos(cam.yaw) * cp * f - Math.sin(cam.yaw) * r) * speed;
-      cam.y += (Math.sin(cam.pitch) * f + u) * speed;
-      cam.y = Math.max(cam.y, Math.max(heightAt(cam.x, cam.z), -.25) + .3);
+      photoFlyMove(cam, dt, Number(keys.has('w')) - Number(keys.has('s')), Number(keys.has('d')) - Number(keys.has('a')), Number(keys.has('e') || keys.has(' ')) - Number(keys.has('q') || keys.has('control')), keys.has('shift'));
+      cam.y = Math.max(cam.y, photoFlyFloor(cam.x, cam.z));
       cam.roll = settings.roll * Math.PI / 180;
       if (playing && !seq) { playAcc += dt; while (playAcc >= .1) { playAcc -= .1; if (index >= 0 && index < hub.ring.size - 1) show(index + 1); else { playing = false; break; } } } else playAcc = 0;
       if (seq && (capture.source === 'rewind' || host.simTime() >= seq.next)) sequenceStep();

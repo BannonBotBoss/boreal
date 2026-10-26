@@ -1010,3 +1010,13 @@ Branch `grokbot-3/river-hydraulics`. Issue #18 is claimed by codex on `codex/loo
 - Skill `notes/skills/river-hydraulics.md`. Handoff `tasks/handoffs/T-0030-grokbot-3.md`. Slopes remeasured in `refs/water/river-audit/slopes.json`. `npx tsc --noEmit` exit 0 on the implementation. Channel tests 6/6. Not self-approved.
 - 09:37 PT: after frames are in `tasks/evidence/T-0030/` (before frames in `refs/water/river-audit/` untouched). T-0075 put the October 21 boxes on the sky. Water boxes chosen on these frames: slow1, fast1 and order2 reach foam share 0.000 (calm gate <= 0.03). The fast1 step, framed at yaw 0, has a lee box at foam share 0.746 and the water beside it at 0. Lee-grain correlation peaks at +36 px along the flow. Model shift is 44 px (0.921 m/s, shader dt 0.745 s, 63.9 px/m). Advection score 0.821 (measured 0.756 m/s, model 0.921 m/s). A second pair with `shaderClock` read directly did not beat zero-shift, so it is not a speed. Objective 4 stays open. No complete event. `npx tsc --noEmit` exit 0. `npm test` 752 tests, 738 pass, 0 fail, 14 todo.
 
+## 2026-10-25 20:03 PT - grokbot-3: globe entry free fall (T-0077)
+
+Matthew's direct request, 2026-10-25 18:24 PT, plus issue #107 at 19:15 PT. Not a self-approve on GitHub. Rule 15: T-0072, T-0073, and T-0078 were not reviewed this run.
+
+- The planet screen is the in-page globe (`createInPage` / `enter`), reached from a bare URL via `?start=globe`. It used to stick because shared `autoHandoff` is false, G and pad land only called `leave` over home, and H only flew home. The old way in was `inpage` `glide` with `globePitch` (a 45° path). That is gone.
+- Orbit is nadir. Double-click, A, or G calls `beginFall`. The fall is `physics.step` to `FALL_END_M` (3048 m). Yaw +180° and pitch to −35.264° finish there. Aim is `lookAt(0,0,0)` then `rotateZ` / `rotateX`. The far plane clamps `rad² − R²` so the frame does not clear when the camera crosses inside the mean sphere.
+- The drone is photo mode's fly: `src/photo/photoMode.ts` `createPhotoMode` `update`, now `photoFlyMove` / `stepCarriedFly` in `src/photo/fly.ts`. Wind is `rushLevel` on `wind-pines`. `localCloudFade` crossfades the local box with the shell (issue #107). No new renderer.
+- Capture: orbit elevation −90°, handoff height 3048 m at elevation −35.264°, 03/04/05 are three hashes (they used to be one cleared frame). Overlap 0. Layer panel hidden in game. `npx tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo.
+- Skill `notes/skills/globe-entry-flight.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`.
+

@@ -15,14 +15,14 @@ import { glyph, mountGamepadSettings } from '../ui/gamepadSettings';
 
 const PAD_IDS = new Set(['padMenu', 'padHelp', 'shutter', 'cameraMode']);
 const readBindings = () => { try { return loadBindings(localStorage.getItem(BINDINGS_KEY)); } catch { return loadBindings(null); } };
-export interface RouterHost { act(id: string): void; notice(t: string): void; reloadBindings?(): void; globe(): boolean }
+export interface RouterHost { act(id: string): void; notice(t: string): void; reloadBindings?(): void; globe(): boolean; flight?(): boolean }
 
 /** The live button map (for the help overlay and reports): pad input → actions per context. */
 export function buttonMap(b: Bindings) {
-  const ctxs = ['play', 'globe', 'camera', 'menu', 'any'] as const, rows: { atom: string; by: Record<string, string[]> }[] = [];
+  const ctxs = ['play', 'globe', 'drone', 'camera', 'menu', 'any'] as const, rows: { atom: string; by: Record<string, string[]> }[] = [];
   for (const atom of [...BUTTONS.filter(x => x !== 'xbox'), 'ls', 'rs']) {
     const by: Record<string, string[]> = {};
-    for (const c of ctxs) by[c] = ACTIONS.filter(a => a.context === c && b[a.id].pad.some(p => atomsOf(p).some(x => x === atom || x.startsWith(atom + '.') && atom.length === 2))).map(a => a.label.replace(/^(Globe|Camera|Menu): /, ''));
+    for (const c of ctxs) by[c] = ACTIONS.filter(a => a.context === c && b[a.id].pad.some(p => atomsOf(p).some(x => x === atom || x.startsWith(atom + '.') && atom.length === 2))).map(a => a.label.replace(/^(Globe|Camera|Menu|Drone): /, ''));
     if (Object.values(by).some(l => l.length)) rows.push({ atom, by });
   }
   return rows;
@@ -30,7 +30,7 @@ export function buttonMap(b: Bindings) {
 
 export function createPadRouter(host: RouterHost) {
   ensureCss();
-  let b = readBindings(), settingsOpen = false, helpOpen = false, camMode = false, camSel = 0, camAcc = 0, prevCam = new Set<string>(), prevGlobe = new Set<string>(), prevAxis = new Set<string>();
+  let b = readBindings(), settingsOpen = false, helpOpen = false, camMode = false, camSel = 0, camAcc = 0, prevCam = new Set<string>(), prevGlobe = new Set<string>(), prevAxis = new Set<string>(), prevDrone = new Set<string>();
   let yDownAt = -1, radial: { items: Item[]; sel: number } | undefined, hintEl: HTMLDivElement | undefined, camEl: HTMLDivElement | undefined;
   const reader = createPadReader();
   const menu = createPadMenu({ act: id => host.act(id), shutter: () => shutter(), settings: () => openSettings(), help: () => toggleHelp(true), close: () => {}, notice: host.notice });
@@ -42,8 +42,8 @@ export function createPadRouter(host: RouterHost) {
   function toggleHelp(on = !helpOpen) {
     helpOpen = on; helpEl.hidden = !on; if (!on) return;
     const L = (l: string[]) => l.join(', ') || '—';
-    helpEl.innerHTML = `<h2 style="margin:0 0 8px">Controller map ${glyph('B')} or ${glyph('View')} closes</h2><table><tr><th>Input</th><th>Game</th><th>Globe</th><th>Camera mode</th><th>Menus</th><th>Everywhere</th></tr>` +
-      buttonMap(b).map(r => `<tr><td>${glyph(bindingLabel([r.atom]).replace('D-pad ', ''))}</td><td>${L(r.by.play)}</td><td>${L(r.by.globe)}</td><td>${L(r.by.camera)}</td><td>${L(r.by.menu)}</td><td>${L(r.by.any)}</td></tr>`).join('') +
+    helpEl.innerHTML = `<h2 style="margin:0 0 8px">Controller map ${glyph('B')} or ${glyph('View')} closes</h2><table><tr><th>Input</th><th>Game</th><th>Globe</th><th>Drone</th><th>Camera mode</th><th>Menus</th><th>Everywhere</th></tr>` +
+      buttonMap(b).map(r => `<tr><td>${glyph(bindingLabel([r.atom]).replace('D-pad ', ''))}</td><td>${L(r.by.play)}</td><td>${L(r.by.globe)}</td><td>${L(r.by.drone)}</td><td>${L(r.by.camera)}</td><td>${L(r.by.menu)}</td><td>${L(r.by.any)}</td></tr>`).join('') +
       `</table><p>Hold ${glyph('Y')} for the filter wheel (stick to pick, let go to apply). Locked controls show 🔒: ${glyph('A')} opens their test, credits or purchase. Rebind everything under Menu → Settings → Gamepad settings.</p>`;
   }
   const camItems = () => domItems(document.querySelector('#camera-panel'), cameraControl);
@@ -128,6 +128,13 @@ export function createPadRouter(host: RouterHost) {
         const d = (r.value.camUp ?? 0) - (r.value.camDown ?? 0);
         if (Math.abs(d) > .05 && !locked) { camAcc += dt * (2 + 10 * Math.abs(d)); if (camAcc >= 1 || r.fired.size === 0 && camAcc === dt * (2 + 10 * Math.abs(d))) { cur.adjust?.(Math.sign(d)); camAcc = Math.max(0, camAcc - 1); } } else camAcc = .99;
         drawCam(); return true; }
+      const d = padTarget('drone');
+      if (d?.active() && host.flight?.()) { const r = resolveContext(b, v, prevDrone, 'drone'); prevDrone = r.active; const V = r.value;
+        d.move((V.droneForward ?? 0) - (V.droneBack ?? 0), (V.droneRight ?? 0) - (V.droneLeft ?? 0));
+        d.look((V.droneYawRight ?? 0) - (V.droneYawLeft ?? 0), (V.dronePitchUp ?? 0) - (V.dronePitchDown ?? 0));
+        d.climb((V.droneClimb ?? 0) - (V.droneDescend ?? 0));
+        if (r.fired.has('droneEmbody')) d.embody(); if (r.fired.has('droneCancel')) d.cancel();
+        return true; }
       const g = padTarget('globe');
       const ax = g?.active() && (standalone || host.globe()) ? g.axis?.() : undefined;
       if (ax?.on) { const r = resolveContext(b, v, prevAxis, 'axis'); prevAxis = r.active; const V = r.value;

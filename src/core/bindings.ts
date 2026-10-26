@@ -21,8 +21,8 @@ export const deadzone = (v: number) => Math.abs(v) < DEADZONE ? 0 : Math.sign(v)
 
 /** play: normal game · chrono: while the chronometer is open · globe: the planet view · camera: camera-adjust mode ·
  *  menu: any pad overlay (pad menu, settings, quiz) · any: always (except menus, which own the pad). hold = value each frame, press = fires once. */
-export type Context = 'play' | 'chrono' | 'globe' | 'axis' | 'camera' | 'menu' | 'any';
-export const CONTEXTS: { id: Context; label: string }[] = [{ id: 'play', label: 'Game' }, { id: 'chrono', label: 'Chronometer' }, { id: 'globe', label: 'Globe' }, { id: 'camera', label: 'Camera' }, { id: 'menu', label: 'Menus' }, { id: 'any', label: 'Everywhere' }];
+export type Context = 'play' | 'chrono' | 'globe' | 'drone' | 'axis' | 'camera' | 'menu' | 'any';
+export const CONTEXTS: { id: Context; label: string }[] = [{ id: 'play', label: 'Game' }, { id: 'chrono', label: 'Chronometer' }, { id: 'globe', label: 'Globe' }, { id: 'drone', label: 'Drone' }, { id: 'camera', label: 'Camera' }, { id: 'menu', label: 'Menus' }, { id: 'any', label: 'Everywhere' }];
 export interface ActionDef { id: string; label: string; kind: 'hold' | 'press'; context: Context; keys: string[]; pad: string[]; sum?: boolean; keepInChrono?: boolean }
 const A = (id: string, label: string, kind: 'hold' | 'press', context: Context, keys: string[], pad: string[], o: Partial<ActionDef> = {}): ActionDef => ({ id, label, kind, context, keys: keys.map(k => 'k:' + k), pad, ...o });
 /** Defaults = the game's controls before rebinding existed (2026-10-21). */
@@ -69,7 +69,22 @@ export const ACTIONS: ActionDef[] = [
   A('globeTurnLeft', 'Globe: turn heading left', 'hold', 'globe', ['q'], ['lb', 'rs.left'], { sum: true }),
   A('globeTurnRight', 'Globe: turn heading right', 'hold', 'globe', ['e'], ['rb', 'rs.right'], { sum: true }),
   A('globeHome', 'Globe: fly home', 'press', 'globe', ['h'], ['x']),
-  A('globeLand', 'Globe: land (back to the game)', 'press', 'globe', ['g'], ['a']),
+  A('globeLand', 'Globe: drop on the centre', 'press', 'globe', ['g'], ['a']),
+  // Drone steering IS photo mode's free-fly (photo/photoMode.ts update, photo/fly.ts): WASD move,
+  // Q/E or Space/Ctrl down/up, right stick or drag looks. Menus own the pad while they are open.
+  // Esc is not bound here: pause (context any) already uses it.
+  A('droneForward', 'Drone: forward', 'hold', 'drone', ['w'], ['ls.up'], { sum: true }),
+  A('droneBack', 'Drone: back', 'hold', 'drone', ['s'], ['ls.down'], { sum: true }),
+  A('droneLeft', 'Drone: strafe left', 'hold', 'drone', ['a'], ['ls.left'], { sum: true }),
+  A('droneRight', 'Drone: strafe right', 'hold', 'drone', ['d'], ['ls.right'], { sum: true }),
+  A('droneYawLeft', 'Drone: yaw left', 'hold', 'drone', [], ['rs.left'], { sum: true }),
+  A('droneYawRight', 'Drone: yaw right', 'hold', 'drone', [], ['rs.right'], { sum: true }),
+  A('dronePitchUp', 'Drone: pitch up', 'hold', 'drone', ['arrowup'], ['rs.up'], { sum: true }),
+  A('dronePitchDown', 'Drone: pitch down', 'hold', 'drone', ['arrowdown'], ['rs.down'], { sum: true }),
+  A('droneClimb', 'Drone: up', 'hold', 'drone', ['e', 'space'], ['rt'], { sum: true }),
+  A('droneDescend', 'Drone: down', 'hold', 'drone', ['q', 'control'], ['lt'], { sum: true }),
+  A('droneEmbody', 'Drone: become the animal', 'press', 'drone', ['g'], ['a']),
+  A('droneCancel', 'Drone: return to the planet', 'press', 'drone', [], ['x']),
   A('globeAxis', 'Globe: through-planet axis on/off', 'press', 'globe', ['r'], ['dright']),
   // axis mode (radial frame): left stick aims the vector û, triggers move r along it
   A('axisAimLeft', 'Axis: aim west', 'hold', 'axis', ['a'], ['ls.left'], { sum: true }),

@@ -105,7 +105,7 @@ export const PAD_CSS = `.padm{position:fixed;left:50%;top:50%;transform:translat
 .padm .foot{margin-top:12px;font-size:18px;color:#ccd}.padm .g,.padh .g,.padx .g{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.6em;padding:0 .3em;border-radius:1em;font-weight:700;font-size:.85em;color:#000;margin:0 .15em}
 .gA{background:#3c3}.gB{background:#e44}.gX{background:#47f;color:#fff!important}.gY{background:#eb2}.gS{background:#ccd;border-radius:.4em!important}
 .padh{position:fixed;inset:5vh 6vw;z-index:71;background:#0d131ef5;color:#eef2f8;font:19px/1.35 system-ui;border-radius:16px;padding:18px 24px;overflow:auto}.padh table{border-collapse:collapse;width:100%}.padh td,.padh th{padding:5px 10px;border-bottom:1px solid #2a3344;text-align:left;vertical-align:top}
-.padx{position:fixed;left:16px;bottom:16px;z-index:65;background:#0009;color:#eef;font:17px system-ui;padding:6px 10px;border-radius:10px}
+.padx{position:fixed;left:16px;bottom:280px;z-index:65;max-width:min(560px,calc(100vw - 32px));background:#0009;color:#eef;font:17px/1.35 system-ui;padding:6px 10px;border-radius:10px}
 .padr{position:fixed;left:50%;top:50%;width:520px;height:520px;margin:-260px 0 0 -260px;z-index:72;border-radius:50%;background:radial-gradient(#0d131ef0 30%,#0d131ec0);color:#fff;font:18px system-ui}
 .padr .s{position:absolute;width:150px;margin-left:-75px;text-align:center;padding:8px;border-radius:12px;border:3px solid transparent}.padr .s.focus{border-color:#ffd54a;background:#1f2a3d}.padr .s.lock{color:#889}.padr .c{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:180px}
 .pad-focus{outline:4px solid #ffd54a!important;outline-offset:2px}`;

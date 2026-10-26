@@ -23,7 +23,7 @@ When to use: the planet view and the forest view should share one camera, or a s
 - `tests/viewpoint.test.ts`: at 2 km the position gap is under 1 cm, the handover returns the same object at t = 0, 0.5 and 1, a nadir-plus-rotate aim round-trips under 1 cm, and the far side returns false.
 - `tests/flight-entry.test.ts` still locks the double-click, the 180° spin, the isometric pitch at 10,000 ft, carried speed, and `orbitClip`.
 - `npx tsc --noEmit` and `npm test`.
-- Stills: orbit, 2 km, 600 m, 60 m. The 2 km, 600 m and 60 m stills are the drone after a handoff at that height (speed zero, pitch already isometric, because the fall finished at 10,000 ft).
+- Stills: orbit, 2 km, 600 m, 60 m, on `?start=globe&stages=1&trees=v2&noprobe&inpagedev`. The 2 km, 600 m and 60 m stills are the drone after a handoff at that height (speed zero, pitch already isometric, because the fall finished at 10,000 ft). Read `__inpage.height`, the elevation, and `camera.y − (groundAt + height)`. The budget is `STATS.globeMs + STATS.drawMs` against the same capture on main. One `globe.step` per frame.
 
 ## Mistakes to avoid
 

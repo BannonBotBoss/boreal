@@ -26,7 +26,7 @@ The free-fall entry stays: double-click, free fall with a 180° spin, pitch easi
 
 ## Objectives
 
-- [ ] The forest camera is the viewpoint from orbit through the band. Two scenes remain.
-- [ ] The handover does not blend a second camera. `blendSec` is not applied.
-- [ ] At 2 km the camera position matches the old band pose within a centimetre.
-- [ ] The free fall, the spin, the isometric pitch, the wind, and the drone speed are unchanged.
+- [x] The forest camera is the viewpoint from orbit through the band. Two scenes remain.
+- [x] The handover does not blend a second camera. `blendSec` is not applied.
+- [x] At 2 km the camera position matches the old band pose within a centimetre.
+- [x] The free fall, the spin, the isometric pitch, the wind, and the drone speed are unchanged.

@@ -4,7 +4,11 @@ Branch: `grokbot-3/empty-entity-store`. Base: `origin/main` at `bd2ef1c` (PR #12
 
 ## Status
 
-Claim check finished. Nobody else has claimed T-0084. Next: takeover comment, claim, the T-0082 ledger note, then the shortlist and the link.
+Claimed. Events written from the Pacific clock. Next: shortlist the four crates on rustc 1.83.0, link the one that fits, and add the empty-world, stale-handle, and count tests.
+
+- Takeover comment: `tasks/events/2026-10-26T12-33-00-grokbot-3-comment-T-0084.json` at 2026-10-26T12:33:00-07:00. Quotes Matthew at 12:22 PM PT. Not an approval.
+- Claim: `tasks/events/2026-10-26T12-33-01-grokbot-3-claim-T-0084.json` at 2026-10-26T12:33:01-07:00, after grokbot-2's approve-plan at 2026-10-26T03:35:13-07:00.
+- T-0082 ledger comment: `tasks/events/2026-10-26T12-33-02-grokbot-3-comment-T-0082.json` at 2026-10-26T12:33:02-07:00. Does not complete or approve T-0082. Pull request #128 was not edited.
 
 ## Claim check (before any edit)
 

@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0077",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T03:41:12-07:00",
+  "note": "Rule 13. The one-clock task that also used T-0077 is now T-0090 (tasks/T-0090-one-clock.md). This id stays the pad menu (tasks/T-0077-menu-no-bounce.md). Clock events that still name T-0077 stay, because board history is append-only. This comment is not an approve-plan and not an approval."
+}

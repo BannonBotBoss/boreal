@@ -28,7 +28,10 @@ import { children, edgeMetres, faceDir, roots, wantsSplit, centre as nodeCentre,
 import { renderOffset } from './origin';
 import { createAtmosphere } from './atmosphere';
 import { across } from './cube';
-import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
+import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock';
+import { timescaleFrom } from '../../core/timescale';
+import { createChronometer } from '../../ui/chronometer';
+import { bindTimeInputs, createTimeHud } from '../../ui/timeHud';
 import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { GLOBE_COAST, cloudClear, coastLambda } from './transition';
@@ -134,10 +137,15 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const scene = new THREE.Scene(); scene.background = SPACE.clone();
   // Sun: the game's world clock (core/worldClock + timeOfDay, same ?hour= start offset as the game), placed at the home
   // region and turned into planet axes (game +x = east, +y = up, −z = north). One direction for the whole planet.
-  if (own.loadClock) { loadClock(localStorage.getItem(CLOCK.key)); initDay(location.search, localStorage.getItem(DAY.key), worldSec()); } // shared: main already owns the clock and the dial
+  if (own.loadClock) { // shared in-page globe: main already owns the clock, the dial and the time bar
+    loadClock(localStorage.getItem(CLOCK.key)); initDay(location.search, localStorage.getItem(DAY.key), worldSec());
+    if (new URLSearchParams(location.search).has('timescale')) setClockRate(timescaleFrom(location.search));
+  }
+  let pageChrono: ReturnType<typeof createChronometer> | undefined;
+  if (own.pageDom) { pageChrono = createChronometer(worldSec); createTimeHud(() => pageChrono?.toggle()); bindTimeInputs({ padRate: false }); }
   const shotSec = worldSec();
   const E = new THREE.Vector3(...planet.east), N = new THREE.Vector3(...planet.north), U = new THREE.Vector3(...planet.home);
-  const sunDir = new THREE.Vector3(), sunNow = () => { const d = sunPosition(hourAt(q.has('shot') ? shotSec : worldSec())).direction; /* screenshots: clock pinned so ?hour= is exact */ return sunDir.copy(E).multiplyScalar(d.x).addScaledVector(U, d.y).addScaledVector(N, -d.z).normalize(); };
+  const sunDir = new THREE.Vector3(), sunNow = () => { const sec = q.has('shot') ? shotSec : worldSec(); const d = sunPosition(hourAt(sec), dayAt(sec)).direction; /* screenshots: clock pinned so ?hour= is exact */ return sunDir.copy(E).multiplyScalar(d.x).addScaledVector(U, d.y).addScaledVector(N, -d.z).normalize(); };
   const sun = new THREE.DirectionalLight(0xffffff, 3.2), hemi = new THREE.HemisphereLight(0x9fb8d8, 0x202018, .35);
   sun.position.copy(sunNow()); scene.add(sun, hemi);
   const seamsDebug = q.get('seams') === '1'; // ?seams=1: skirts red, tile borders yellow (tile.ts globeMaterial)
@@ -145,7 +153,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   // Atmosphere (atmosphere.ts): sky shell + aerial perspective on the tiles; ?atmos=0 for the plain look
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
   // planet budget layers (planetLayers.ts, issue #43): snow, sea ice, wet soil from rust/boreal-sim; count and grid follow the tier; ?layers=0 off
-  const layerDay = Number(q.get('day')) || Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 864e5);
+  const layerDay = dayAt(q.has('shot') ? shotSec : worldSec()); // ?day= and ?date= are on the clock (initDay), not a wall-calendar day
   let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; // grid clock = the world clock: ?hour= is local solar time at home, so UTC = local - lon/15
   const homeLonDeg = toLatLon(planet.home as Vec3).lon * 180 / Math.PI, layerUtc = (((hourAt(shotSec) - homeLonDeg / 15) % 24) + 24) % 24;
   const simP = loadPlanetSim(); // one instance: the layers spin it, the axis reads its live cells
@@ -433,7 +441,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let last = performance.now(), fps = 0, prevT = 0, t0 = 0, dt = 0, tR = 0;
   /** Camera, LOD, builds, adoption, eviction: everything but the draw. */
   function update() {
-    t0 = performance.now(); dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++;
+    t0 = performance.now(); dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++; pageChrono?.update(dt, 0);
     const sunSec = q.has('shot') ? shotSec : worldSec(), sunDay = dayAt(sunSec), sunHour = hourAt(sunSec);
     let stamped = 0;
     for (const t of tiles.values()) { if (stamped >= 4) break; const before = t.solarBucket; stampSolar(t, sunDay, sunHour); if (t.solarBucket !== before) stamped++; }
@@ -536,7 +544,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
     const hydroSec = q.has('shot') ? shotSec : worldSec();
-    refreshHydroLayer(seed, Number(q.get('day')) || dayAt(hydroSec), hourAt(hydroSec), worldTier(), q.get('hydro') === '0'); // T-0058: same octave gate; ?day= pins the seed, ?hydro=0 leaves the tiles unpainted
+    refreshHydroLayer(seed, dayAt(hydroSec), hourAt(hydroSec), worldTier(), q.get('hydro') === '0'); // T-0058: same octave gate; the date is the clock's (?day= via initDay), ?hydro=0 leaves the tiles unpainted
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
     if (localClouds) { if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
         colIn = columnAt({ lat: simRef.plane('lat'), lon: simRef.plane('lon'), ts: simRef.plane('tair'), q: simRef.plane('q'), cloud: simRef.plane('cloud') }, [camPos[0] / L, camPos[1] / L, camPos[2] / L]); }

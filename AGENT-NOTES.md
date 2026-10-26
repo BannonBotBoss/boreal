@@ -1010,6 +1010,26 @@ Branch `grokbot-3/river-hydraulics`. Issue #18 is claimed by codex on `codex/loo
 - Skill `notes/skills/river-hydraulics.md`. Handoff `tasks/handoffs/T-0030-grokbot-3.md`. Slopes remeasured in `refs/water/river-audit/slopes.json`. `npx tsc --noEmit` exit 0 on the implementation. Channel tests 6/6. Not self-approved.
 - 09:37 PT: after frames are in `tasks/evidence/T-0030/` (before frames in `refs/water/river-audit/` untouched). T-0075 put the October 21 boxes on the sky. Water boxes chosen on these frames: slow1, fast1 and order2 reach foam share 0.000 (calm gate <= 0.03). The fast1 step, framed at yaw 0, has a lee box at foam share 0.746 and the water beside it at 0. Lee-grain correlation peaks at +36 px along the flow. Model shift is 44 px (0.921 m/s, shader dt 0.745 s, 63.9 px/m). Advection score 0.821 (measured 0.756 m/s, model 0.921 m/s). A second pair with `shaderClock` read directly did not beat zero-shift, so it is not a speed. Objective 4 stays open. No complete event. `npx tsc --noEmit` exit 0. `npm test` 752 tests, 738 pass, 0 fail, 14 todo.
 
+## 2026-10-25 19:41 PT - grokbot-3: time dial on the one clock (T-0078, issues #107 #108 #109)
+Branch `grokbot-3/single-time-control`, same PR #92. Matthew at 19:15 PT allowed a rewrite so #108, #109 and #107 are met. At 19:17 PT, #109 wins over #108. Rule 16 events use `"for": "matthew"`. Not a GitHub approval and not a merge.
+- `src/core/worldClock.ts` is still the only integrator. The dial is −1..+1. Target is `sign × 10^(|p| × 12)` outside ±0.01 (pause). Full scale is 10^12×. The rate eases in decades with inertia `1 + error²`. `setClockRate` snaps only for startup and `?timescale=`.
+- Rewind moves the world second and the hour. `groundWorldSec` drops a negative gap. `simWorldSec` is 0 while rewinding or above Immediate, so animals, the weather grid and gameplay audio hold. `clockDate` is clamped. The epoch readout is `deepTimeAt(epochOffsetYr)`.
+- `observation()` is Immediate through Planetary, with enter/exit hysteresis (800/1200 is the #109 example) and a smooth blend. Nothing else consumes it yet.
+- The bar holds − / + (and comma / d-pad left, period / d-pad right) and reads `1 sec / sec`, `1 hour / sec`, `1,000 years / sec`.
+- 2026-10-25 19:46 PT, Matthew: ordinary play is exactly 1×. #109's dead zone stays. The powers of ten are shifted so ±0.01 is 1× and ±1 is still 10^12× (`10^(((|p|−0.01)/0.99)×12)`). Play, and a nudge that crosses real time, stop on that mark.
+- `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` 792 tests, 778 pass, 0 fail, 14 todo after the 1× edge. Skill `notes/skills/single-clock.md` updated. Handoff `tasks/handoffs/T-0078-grokbot-3.md`.
+
+## 2026-10-25 18:28 PT - grokbot-3: one clock and an in-game time bar (T-0077)
+Branch `grokbot-3/single-time-control`. Matthew in chat, 2026-10-25 17:53 PT: "There seem to be multiple time settings, but there should be only one time control for everything." At 17:55 PT one clock for everything rendered or simulated. At 17:56 PT the ground-speed slider. At 17:57 PT the control lives in the game. Rule 16: approve-plan and approve recorded with `"for": "matthew"`. Not a GitHub approval and not a merge.
+- `src/core/worldClock.ts` is the integrator. `src/ui/timeHud.ts` `createTimeHud` is the control. The Time tab is gone from `buildTabs` only. `world.groundSpeed` and `weather.timeScale` are stripped from saves and not applied. `?timescale=` sets the one rate (0.05–16) only when the param is present.
+- Bindings, play context: comma / d-pad left slower, period / d-pad right faster, semicolon / left-stick click pause or play. T / d-pad up remains the hour dial. Planet view does not take the d-pad for rate.
+- `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo. Skill `notes/skills/single-clock.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`. No frame of the bar was captured.
+
+## 2026-10-26 03:05 PT - grok: last twenty issues take precedence
+Matthew in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins", then "put it in the rules."
+- `PROJECT-RULES.md` now opens with that authority. The 2026-10-25 7:17 PM line that stopped at #100–#109 is replaced. The "Talking to Matthew" section from main is kept.
+- `tasks/RULES.md` rule 18 names the twenty issues (#99–#113 and #115–#119) and the resolutions the higher number already locks.
+
 ## 2026-10-25 18:25 PT - grokbot-3: pad menu stays one centered size (T-0077)
 Matthew in chat asked for this directly. Approve-plan and approve are `for: matthew` with his words quoted. Not a GitHub approval and not a merge. He said not to merge or approve the PR.
 - Cause on `e7b9ab7` `src/ui/padMenu.ts:101`: `top:50%` and `translate(-50%,-50%)` with `max-height:86vh` and no fixed height. Before tops at 1280×720: camera 220.0, time 188.6, badges 32.4, gallery 190.7, settings 130.0.
@@ -1071,19 +1091,14 @@ grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follo
 - `src/render/observationTable.ts` records #107's stations and #109's levels, chains, and the 800× / 1,200× pair. Biome and Geological have no rate. No stiffness, no damping, no invented metre gap. `CODE_REACH` copies distances the picture already exports. The draw does not import the file. The live wheel stays `observation()` on pull request #92.
 - Did not edit `inpage.ts`, `globeView.ts`, or the clock files. `npx tsc --noEmit` exit 0. `npm test` 804 tests, 790 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
 
-## 2026-10-26 03:43 PT - grokbot-3: perception block (T-0083, step 16)
+## 2026-10-26 03:41 PT - grokbot-3: the merged branch had conflict markers and two task ids
+The merge of main into `grokbot-3/single-time-control` left conflict markers in the game and the notes, and the clock tasks reused T-0077 and T-0078. Those ids already belong to the pad menu and the render plan. Rule 13: the clock is T-0090 and the dial is T-0091. The old events stay (append-only). The fall's wind rush stays on the sound update, and that update still follows the one clock. The menu hold uses `performance.now` as a repeat timestamp, the same kind of frame budget already allowlisted.
 
-Proposed only. Not claimed. Not a self-approve. No approve-plan is on any branch. Matthew's "every 30 minutes, check the issues and get one done" and "focus on boreal" do not name T-0083, so they are not an approval. Comment `tasks/events/2026-10-26T03-43-34-grokbot-3-comment-T-0083.json` says so.
-- One little-endian block in `rust/boreal-sim/src/perception.rs`, read by `src/core/perceptionBuffer.ts`. Issue #106's order and offset table. Embodied id at byte 20, not padded to 24. Sound entries are 28 bytes with 4 reserved. Memory entries are 20. Scent entries are 32, with 4 reserved, because the issue states 32. Header bytes 44..64 stay reserved. Counts may be zero. A later sense appends after the memory marks. Caps 32 / 16 / 8 / 12. No JSON. Nothing drawn. `lib.rs` only gains `pub mod perception`.
-- Fixtures `tests/fixtures/perception-empty.bin` and `tests/fixtures/perception-known.bin`. Skill `notes/skills/perception-buffer.md`. Handoff `tasks/handoffs/T-0083-grokbot-3.md`.
-- Did not edit the T-0081 observation files or the T-0082 weather files.
-- `npx tsc --noEmit` exit 0. `npm test` 813 tests, 799 pass, 0 fail, 14 todo. `cargo test` 78 passed, 0 failed. Pull request https://github.com/BannonBotBoss/boreal/pull/131. Not merged.
-
-## 2026-10-26 05:55 PT - grokbot-3: claim and complete the perception block (T-0083)
-
-Approve-plan from grokbot-1 is on main (`d9c39d5`, pull request #132) and is on this branch after merge `d974a89`. No conflicts. Claim and complete follow that approve-plan. Not a self-approve. Not merged.
-- `tasks/events/2026-10-26T05-54-grokbot-3-claim-T-0083.json` at 2026-10-26T05:54:37-07:00.
-- `tasks/events/2026-10-26T05-55-grokbot-3-complete-T-0083.json` at 2026-10-26T05:55:04-07:00. Skill `notes/skills/perception-buffer.md`. Shared frames `tests/fixtures/perception-empty.bin` and `tests/fixtures/perception-known.bin`. Numbers gate N/A. Frame gate N/A.
-- Handoff `tasks/handoffs/T-0083-grokbot-3.md`. No game code edited in this step. Pull request https://github.com/BannonBotBoss/boreal/pull/131.
-
+## 2026-10-26 07:31 PT - grokbot-3: claim and complete T-0090 and T-0091
+Branch `grokbot-3/single-time-control`, pull request #92. Main was already merged (merge-base `c3a4052`, already up to date). Pull request #133 had not merged, so grokbot-1's approve-plan files stay on that branch. Claims are stamped after those approve-plans (T-0090 at 07:26:59 PT, T-0091 at 07:27:00 PT). Not a self-approve and not a merge.
+- Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0090.json` at 07:31:36 PT. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0090.json` at 07:31:38 PT.
+- Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0091.json` at 07:31:37 PT. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0091.json` at 07:31:39 PT.
+- Skill `notes/skills/single-clock.md` names the two ids. Handoffs `tasks/handoffs/T-0090-grokbot-3.md` and `tasks/handoffs/T-0091-grokbot-3.md`. Evidence stays the tests and the pull-request screenshots already recorded there. Next step is grokbot-1's approve and merge.
+- Re-run on this tree: `npx tsc --noEmit` exit 0. `npm test` 828 tests, 814 pass, 0 fail, 14 todo. The board todo is 32 legacy rule breaks. The four new lines are these claims and completes while #133's approve-plan files are absent. They clear once those files are in the same tree.
+- 2026-10-26 07:52 PT: pull request #133 merged to main as `e4cda6b`. A normal merge brought those two approve-plan files onto this branch. The ledger now reads T-0090 and T-0091 completed, claimant grokbot-3. Legacy rule breaks are 28 again. Not a self-approve. Next step is still grokbot-1's approve and merge of pull request #92.
 

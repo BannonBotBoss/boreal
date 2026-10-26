@@ -26,6 +26,7 @@ import { chooseGoal } from '../needs/behaviour';
 import { stream } from '../../proc/rng';
 import { stepForward } from '../../proc/math';
 import { SYSTEM_PROPERTIES } from '../../config/systemProperties';
+import { gameSecondsPerWorldSecond } from '../worldClock';
 export const SIM = SYSTEM_PROPERTIES.sim;
 export type SimState = 'graze' | 'move' | 'freeze' | 'flee' | 'rest' | 'stalk' | 'chase' | 'eat' | 'drink';
 export interface SimAnimal {
@@ -41,16 +42,16 @@ export interface SimAnimal {
 export interface Food { id: number; kind: string; x: number; z: number; kg: number }
 export interface SimEvent { type: 'caught' | 'bolt' | 'ate' | 'relay' | 'pinned'; by?: number; id: number; x: number; z: number; food?: string }
 export interface SimWorld {
-  time: number; step: number; /** game seconds per sim second (core/timeOfDay clock) */ timeScale: number; seed: number;
+  time: number; step: number; seed: number;
   animals: SimAnimal[]; food: Food[]; events: SimEvent[]; nextId: number; acc: number;
   passable: (x: number, z: number) => boolean; water: (x: number, z: number) => boolean;
   daylight: () => number; wind: () => { x: number; z: number }; hour: () => number;
   /** Player captures pin instead of deleting the prey. NPC captures still remove and eat. */ handling: boolean;
   /** The player's pin/bite/hold bag. One set of jaws. */ hold: HoldBag;
 }
-export interface WorldOptions { seed?: number; step?: number; timeScale?: number; passable?: SimWorld['passable']; water?: SimWorld['water']; daylight?: SimWorld['daylight']; wind?: SimWorld['wind']; hour?: SimWorld['hour']; handling?: boolean }
+export interface WorldOptions { seed?: number; step?: number; passable?: SimWorld['passable']; water?: SimWorld['water']; daylight?: SimWorld['daylight']; wind?: SimWorld['wind']; hour?: SimWorld['hour']; handling?: boolean }
 export function createWorld(o: WorldOptions = {}): SimWorld {
-  return { time: 0, step: o.step ?? SIM.step, timeScale: o.timeScale ?? SIM.timeScale, seed: o.seed ?? 1, animals: [], food: [], events: [], nextId: 1, acc: 0,
+  return { time: 0, step: o.step ?? SIM.step, seed: o.seed ?? 1, animals: [], food: [], events: [], nextId: 1, acc: 0,
     passable: o.passable ?? (() => true), water: o.water ?? (() => false), daylight: o.daylight ?? (() => 1), wind: o.wind ?? (() => ({ x: 0, z: 0 })), hour: o.hour ?? (() => 12),
     handling: !!o.handling, hold: emptyBag() };
 }
@@ -141,7 +142,7 @@ function stepWorld(w: SimWorld, dt: number) {
       if (!a.controlled) { const r = dietOf(a.sp).eat(a.sp, a.needs, a.energy, b.species); a.needs = r.state; a.energy = r.energy; a.state = 'eat'; a.timer = r.meal.seconds; a.targetId = undefined; }
     }
     // 5. needs + stamina through the shared engine (game time for needs; stamina in sim seconds)
-    const r = stepNeeds(a.sp, a.needs, { dtGame: dt * w.timeScale, speed: a.speed, energy: a.energy, drinking: a.state === 'drink' });
+    const r = stepNeeds(a.sp, a.needs, { dtGame: dt * gameSecondsPerWorldSecond, speed: a.speed, energy: a.energy, drinking: a.state === 'drink' });
     a.needs = r.state; if (!a.controlled) a.energy = r.energy;
     const st = staminaRates(a.sp), sprinting = a.state === 'flee' || a.state === 'chase';
     a.stamina = Math.max(0, Math.min(100, a.stamina + (sprinting && a.speed > 0 ? -st.sprint : st.recover) * dt));

@@ -159,3 +159,12 @@ test('event files: a UTF-8 BOM is ignored, invalid JSON is a warning, not a cras
     assert.equal(L.warnings.length, 1); assert.match(L.warnings[0], /2026-10-22T01-05-claude-comment-T-0099\.json: not valid JSON/);
   });
 });
+test('design precedence: the newer issue wins, in the rules and in the roadmap', () => {
+  const rules = readFileSync('PROJECT-RULES.md', 'utf8');
+  const plan = readFileSync('notes/design-roadmap.md', 'utf8');
+  assert.match(rules, /#109 overrides #108 overrides #107/);
+  assert.match(plan, /Plain-English summary/);
+  assert.match(plan, /#109 overrides #108 overrides #107/);
+  assert.match(plan, /if you have to rewrite anything/);
+  assert.match(plan, /## Coverage/);
+});

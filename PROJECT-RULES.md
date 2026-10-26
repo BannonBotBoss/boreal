@@ -1,5 +1,7 @@
 # Boreal project rules (read first)
 
+Latest design issue wins. When issues conflict with each other, with older issues, or with existing code, plans, or tasks, follow the newer one: a higher number wins, so #109 overrides #108 overrides #107, and #100–#109 override anything older (Matthew, 2026-10-25 7:17 PM Pacific).
+
 ## 0. The purpose: live the lives of different animals
 The game exists so the player can experience the life of any animal. Its challenges (hunger, cold and heat, thirst, speed and endurance limits, predators and prey, breeding seasons, ageing) are generated from real-world biological math applied to the species spec and to the simulated world. No challenge is hand-written for one species. See `CHALLENGES.md`.
 

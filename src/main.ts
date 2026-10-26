@@ -386,10 +386,11 @@ function frame(time: number) { const frameStart = performance.now();
   if (!photo.active && !menu.open && !chrono.open && inpage?.mode !== 'globe' && !inpage?.blocksGame()) {
     const faster = input.value.timeFaster ?? 0, slower = input.value.timeSlower ?? 0;
     const dir = faster > 0 && slower > 0 ? 0 : faster > 0 ? 1 : slower > 0 ? -1 : 0;
-    if (dir !== 0) nudgeDial(dir * DIAL_HOLD_PER_SEC * dt);
+    if (dir !== 0 && dt > 0) nudgeDial(dir * DIAL_HOLD_PER_SEC * dt);
     if (dir !== 0 && dialHeld === 0) nudgeDial(dir * DIAL_NOTCH);
+    if (dir === 0 && dialHeld !== 0) nudgeDial(0);
     dialHeld = dir;
-  } else dialHeld = 0;
+  } else if (dialHeld !== 0) { nudgeDial(0); dialHeld = 0; }
   if (photo.active && !photo.simulating) holdClock('photo'); else releaseClock('photo'); // a frozen photo holds the one clock; a live sequence lets it run
   const wNow = worldSec(), wDt = wNow - lastWorld; lastWorld = wNow; // signed: rewind moves the sky backward
   const simDt = simWorldSec(wDt, observation()); // animals and the weather grid hold when rewinding or above Immediate

@@ -1015,8 +1015,9 @@ Branch `grokbot-3/single-time-control`, same PR #92. Matthew at 19:15 PT allowed
 - `src/core/worldClock.ts` is still the only integrator. The dial is −1..+1. Target is `sign × 10^(|p| × 12)` outside ±0.01 (pause). Full scale is 10^12×. The rate eases in decades with inertia `1 + error²`. `setClockRate` snaps only for startup and `?timescale=`.
 - Rewind moves the world second and the hour. `groundWorldSec` drops a negative gap. `simWorldSec` is 0 while rewinding or above Immediate, so animals, the weather grid and gameplay audio hold. `clockDate` is clamped. The epoch readout is `deepTimeAt(epochOffsetYr)`.
 - `observation()` is Immediate through Planetary, with enter/exit hysteresis (800/1200 is the #109 example) and a smooth blend. Nothing else consumes it yet.
-- The bar holds − / + (and comma / d-pad left, period / d-pad right) and reads `1.32 sec / sec`, `1 hour / sec`, `1,000 years / sec`.
-- `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` 791 tests, 777 pass, 0 fail, 14 todo. Skill `notes/skills/single-clock.md` updated. Handoff `tasks/handoffs/T-0078-grokbot-3.md`.
+- The bar holds − / + (and comma / d-pad left, period / d-pad right) and reads `1 sec / sec`, `1 hour / sec`, `1,000 years / sec`.
+- 2026-10-25 19:46 PT, Matthew: ordinary play is exactly 1×. #109's dead zone stays. The powers of ten are shifted so ±0.01 is 1× and ±1 is still 10^12× (`10^(((|p|−0.01)/0.99)×12)`). Play, and a nudge that crosses real time, stop on that mark.
+- `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` 792 tests, 778 pass, 0 fail, 14 todo after the 1× edge. Skill `notes/skills/single-clock.md` updated. Handoff `tasks/handoffs/T-0078-grokbot-3.md`.
 
 ## 2026-10-25 18:28 PT - grokbot-3: one clock and an in-game time bar (T-0077)
 Branch `grokbot-3/single-time-control`. Matthew in chat, 2026-10-25 17:53 PT: "There seem to be multiple time settings, but there should be only one time control for everything." At 17:55 PT one clock for everything rendered or simulated. At 17:56 PT the ground-speed slider. At 17:57 PT the control lives in the game. Rule 16: approve-plan and approve recorded with `"for": "matthew"`. Not a GitHub approval and not a merge.

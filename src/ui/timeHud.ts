@@ -2,7 +2,7 @@
  * The one time control (Matthew, #109): a compact in-game readout of the clock.
  * Pause, play and the hour button are taps. Holding slower or faster moves the dial;
  * the rate eases toward it and the label reads in world time per real second
- * ("1.32 sec / sec", "1 hour / sec", "1,000 years / sec").
+ * ("1 sec / sec", "1 hour / sec", "1,000 years / sec").
  * The chronometer (T / d-pad up) is the hour scrub of this same clock, not a second clock.
  */
 import { deepTimeAt } from '../core/deepTime';
@@ -35,6 +35,7 @@ export function createTimeHud(onHour: () => void) {
   const release = () => {
     if (holdDir !== 0 && heldMoved < DIAL_NOTCH) nudgeDial(holdDir * (DIAL_NOTCH - heldMoved));
     holdDir = 0;
+    nudgeDial(0);
   };
   root.addEventListener('pointerup', release);
   root.addEventListener('pointercancel', release);
@@ -103,6 +104,7 @@ export function bindTimeInputs(opts?: { padRate?: boolean }) {
     const dir = slower && faster ? 0 : faster ? 1 : slower ? -1 : 0;
     if (dir !== 0 && dt > 0) nudgeDial(dir * DIAL_HOLD_PER_SEC * dt);
     if (dir !== 0 && prev.dir === 0) nudgeDial(dir * DIAL_NOTCH);
+    if (dir === 0 && prev.dir !== 0) nudgeDial(0);
     prev = { left, right, click, dir };
     requestAnimationFrame(poll);
   };

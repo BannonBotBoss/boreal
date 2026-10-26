@@ -381,7 +381,7 @@ Read by: `src/ui/chronometer.ts`
 | `?hour` | =HH sets the time of day on the one clock (core/timeOfDay) |
 | `?day` | =1-366 sets the day of year (core/timeOfDay) |
 | `?date` | =YYYY-MM-DD sets the year and day (core/timeOfDay) |
-| `?timescale` | sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, full deflection 10^12 sim seconds per real second, negative rewinds |
+| `?timescale` | sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, the edge of that zone is exactly 1×, full deflection 10^12 sim seconds per real second, negative rewinds |
 
 **Linked data tables** (kept in their own module)
 
@@ -968,7 +968,7 @@ A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain f
 | `?stages` | terrain | =0 / =1 staged terrain off / on (main.ts) |
 | `?start` | globe | =globe opens on the planet (grok-globe/globe-default-view, T-0034) |
 | `?tier` | globe | force a quality tier (globeView) |
-| `?timescale` | clock | sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, full deflection 10^12 sim seconds per real second, negative rewinds |
+| `?timescale` | clock | sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, the edge of that zone is exactly 1×, full deflection 10^12 sim seconds per real second, negative rewinds |
 | `?tones` | audio | show the isochronic / binaural tone controls (grok/music, T-0033) |
 | `?transition` | globe | globe <-> ground mode (world/globe/transition) |
 | `?tree` | vegetation | procedural tree viewer page (world/globe/entry) |

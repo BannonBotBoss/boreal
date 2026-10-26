@@ -24,15 +24,47 @@ test('menu pause freezes the global clock; resume continues from the exact snaps
   const again = worldSec(200_000);
   resumeClock(200_000); resumeClock(200_000); near(worldSec(200_000), again); near(worldSec(201_000), again + r);
 });
-test('the dial is a power of ten from pause, and the old 16× cap is gone', () => {
+test('the dead zone stays, and its edge is exactly 1× while full deflection stays 10^12×', () => {
+  // #109 literal is 10^(|p|×12), which puts 1× on the pause mark. The curve is shifted:
+  // magnitude = 10^(((|p|−0.01)/0.99)×12). Same dead zone, same twelve decades.
+  const shifted = (p: number) => 10 ** (((Math.abs(p) - DIAL_DEADZONE) / (1 - DIAL_DEADZONE)) * 12);
   assert.equal(targetRateFromDial(0), 0);
   assert.equal(targetRateFromDial(0.009), 0);
-  near(targetRateFromDial(0.1), 10 ** 1.2, 1e-9);
-  near(targetRateFromDial(0.3), 10 ** 3.6, 1e-6);
-  near(targetRateFromDial(0.5), 1e6, 1e-6);
-  near(targetRateFromDial(1), 1e12, 1);
-  near(targetRateFromDial(-0.5), -1e6, 1e-6);
-  near(targetRateFromDial(DIAL_DEADZONE), 10 ** 0.12, 1e-9);
+  assert.equal(targetRateFromDial(DIAL_DEADZONE), 1);
+  assert.equal(targetRateFromDial(-DIAL_DEADZONE), -1);
+  assert.equal(targetRateFromDial(1), 1e12);
+  assert.equal(targetRateFromDial(-1), -1e12);
+  near(targetRateFromDial(0.1), shifted(0.1), 1e-9);
+  near(targetRateFromDial(0.5), shifted(0.5), 1e-4);
+  near(targetRateFromDial(-0.5), -shifted(0.5), 1e-4);
+  assert.ok(Math.abs(targetRateFromDial(0.5) - 1e6) > 1, 'position 0.5 is no longer the literal 10^6, because that map cannot reach 1×');
+});
+test('play and a nudge back past real time both stop on exactly 1×', () => {
+  loadClock(null, 0, 0);
+  assert.equal(clockRate(), 1);
+  assert.equal(dialPosition(), DIAL_DEADZONE);
+  assert.equal(formatRate(clockRate()), '1 sec / sec');
+  setClockRate(4, 0);
+  const fast = dialPosition();
+  assert.ok(fast > DIAL_DEADZONE);
+  nudgeDial(DIAL_DEADZONE - fast - 0.05, 0);
+  assert.equal(dialPosition(), DIAL_DEADZONE);
+  assert.equal(targetRate(), 1);
+  nudgeDial(-0.05, 0);
+  assert.equal(dialPosition(), DIAL_DEADZONE, 'the rest of the gesture stays on real time');
+  nudgeDial(0, 0);
+  nudgeDial(-0.02, 0);
+  assert.ok(dialPosition() < DIAL_DEADZONE, 'the next gesture can leave real time');
+  loadClock(null, 0, 0);
+  nudgeDial(0.2, 0);
+  timeCommand('pause', 0);
+  timeCommand('play', 0);
+  assert.equal(dialPosition(), DIAL_DEADZONE, 'play resumes at real time');
+  timeCommand('pause', 0);
+  nudgeDial(0.02, 0);
+  assert.equal(dialPosition(), DIAL_DEADZONE, 'one notch out of pause lands on 1×');
+  nudgeDial(0, 0);
+  loadClock(null, 0, 0);
 });
 test('the in-game dial eases; it does not jump, and a big swing takes a few seconds', () => {
   loadClock(null, 0, 0);
@@ -65,7 +97,8 @@ test('pause eases to a stop and play returns the dial; the menu hold is separate
   assert.ok(isPaused(), 'a few seconds later the rate has settled on pause');
   assert.ok(Math.abs(clockRate()) < 1e-3);
   timeCommand('play', 3_000);
-  near(dialPosition(), parked);
+  assert.equal(dialPosition(), DIAL_DEADZONE, 'play resumes at real time, not at the faster dial');
+  assert.ok(parked > DIAL_DEADZONE);
   pauseClock(3_000);
   timeCommand('play', 4_000);
   assert.equal(isPaused(), true, 'play does not release the menu hold');

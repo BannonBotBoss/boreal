@@ -5,20 +5,22 @@ import { smoothstep } from '../proc/math';
  * The ONE clock (Matthew: one clock, one rate). #109 replaces the old 0.05–16× slider.
  *
  * The dial is a position from −1 (fastest rewind) through 0 (pause) to +1 (fastest forward).
- * Outside a dead zone of 0.01 it maps by powers of ten (#109):
- *   target = sign(position) × 10^(|position| × 12)
- * so 0.1 ≈ 15×, 0.5 ≈ 10^6× and 1 ≈ 10^12× (about 30,000 years of world time per real second).
- * The first notch forward of pause is 10^0.12 ≈ 1.32×, not exactly 1×: the centre is pause, and
- * 10^0 would be 1× only at position 0, which the spec defines as pause.
+ * #109's dead zone is unchanged: |position| below 0.01 is pause. #109's literal map
+ * `10^(|position| × 12)` puts exactly 1× on that pause mark, so real time could not be selected.
+ * Matthew (2026-10-25): keep the dead zone and the twelve decades, and shift the curve so the
+ * edge of the dead zone is exactly 1× and full deflection is still 10^12×:
+ *   magnitude = 10^(((|position| − 0.01) / 0.99) × 12)
+ * A nudge that crosses ±1× stops on it until the gesture ends. Play sets the dial to +1×.
  *
  * The rate the world actually uses eases toward that target. The spring in #109 is applied in
- * decades (log10 of the rate), with inertia 1 + error², so a small nudge is quick and a jump
- * across the whole dial takes a few seconds. Damping acts on the decade-velocity, so the rate
- * comes to rest ON the target. (Subtracting damping × the rate itself, as one line of #109
- * writes it, would stop short of the target.)
+ * decades, with inertia 1 + error², so a small nudge is quick and a jump across the whole dial
+ * takes a few seconds. The decade coordinate is shifted so 0 is pause and ±1 is exactly ±1×
+ * (the fade between them). Damping acts on the decade-velocity, so the rate comes to rest ON
+ * the target. (Subtracting damping × the rate itself, as one line of #109 writes it, would
+ * stop short of the target.)
  *
  * Holds (`menu`, `photo`) freeze the integrator at once. The in-game Pause sets the dial to 0
- * and the rate eases to a stop; it is not a second hold. Play puts the dial back where it was.
+ * and the rate eases to a stop; it is not a second hold. Play sets the dial to real time.
  *
  * Game seconds (needs, weather step, ground years) are this clock's unit conversion, not a
  * second rate: 3600 / realSecondsPerGameHour (300 s → ×12).
@@ -27,10 +29,12 @@ export const CLOCK = { key: 'boreal.clock.v1', maxOfflineSec: SYSTEM_PROPERTIES.
 /** Game seconds per world second. One hour of the day is REAL_SECONDS_PER_GAME_HOUR world seconds. */
 export const gameSecondsPerWorldSecond = 3600 / (SYSTEM_PROPERTIES.clock.realSecondsPerGameHour as number);
 
-/** #109: |position| below this is pause. At the lip, 10^(0.01×12) ≈ 1.32×. */
+/** #109: |position| below this is pause. The edge itself is exactly 1× (see the shifted curve). */
 export const DIAL_DEADZONE = 0.01;
 /** #109: full deflection is 10^12 sim seconds per real second. */
 export const DIAL_DECADES = 12;
+/** Save marker for the shifted decade coordinate (1× is internal exponent ±1, not the old log10 lip). */
+const DIAL_CURVE = 2;
 /** One tap of slower/faster, in dial position. Game calibration: about a quarter of a decade (×1.7). */
 export const DIAL_NOTCH = 0.02;
 /** Dial position per real second while slower or faster is held. Game calibration: −1→+1 takes about 25 s. */
@@ -40,8 +44,11 @@ export const DIAL_HOLD_PER_SEC = 0.08;
  * and a 12-decade jump takes a few seconds, with a little overshoot (the "momentum" in #109).
  */
 export const DIAL_SPRING = { stiffness: 64, damping: 13.6 };
-const LIP_EXP = DIAL_DEADZONE * DIAL_DECADES;
-const MAX_EXP = DIAL_DECADES + 2;
+/** Internal spring coordinate: 0 is pause, ±1 is exactly ±1×, ±(1+12) is ±10^12×. */
+const REALTIME_EXP = 1;
+const MAX_EXP = REALTIME_EXP + DIAL_DECADES + 2;
+/** Direction of the gesture that is sitting in the ±1× detent. 0 means the next nudge may leave. */
+let detentDir = 0;
 
 export const OBSERVATION_SCALES = ['immediate', 'behavioral', 'ecological', 'seasonal', 'generational', 'evolutionary', 'geological', 'planetary'] as const;
 export type ObservationScale = typeof OBSERVATION_SCALES[number];
@@ -62,38 +69,44 @@ export const SCALE_BOUNDS: { above: ObservationScale; exit: number; enter: numbe
 ];
 export type Observation = { scale: ObservationScale; lower: ObservationScale; higher: ObservationScale; blend: number };
 
-/** #109 target rate (sim seconds per real second). 0 inside the dead zone. */
+/**
+ * Target rate (sim seconds per real second). 0 inside the dead zone.
+ * Outside it, magnitude = 10^(((|p| − 0.01) / 0.99) × 12): exactly 1× at the edge, 10^12× at full deflection.
+ * That is #109's dead zone and #109's twelve decades, shifted so real time is on the curve.
+ */
 export function targetRateFromDial(position: number): number {
   if (!Number.isFinite(position)) return 0;
   const p = Math.max(-1, Math.min(1, position));
   if (Math.abs(p) < DIAL_DEADZONE) return 0;
-  return Math.sign(p) * 10 ** (Math.abs(p) * DIAL_DECADES);
+  return rateFromExponent(exponentForDial(p));
 }
-/** Dial position for a rate. Below the lip magnitude clamps to the lip, so 1× and slower become the first notch, not rewind. */
+/** Dial position for a rate. 1× and anything slower sit on the dead-zone edge, so they are real time, not rewind. */
 export function dialForRate(rate: number): number {
   if (!Number.isFinite(rate) || rate === 0) return 0;
   const mag = Math.abs(rate), sign = Math.sign(rate);
-  if (mag <= 10 ** LIP_EXP) return sign * DIAL_DEADZONE; // exactly the lip; log10 of the lip rate can fall inside the dead zone
+  if (mag <= 1) return sign * DIAL_DEADZONE;
   if (mag >= 10 ** DIAL_DECADES) return sign;
-  return sign * Math.log10(mag) / DIAL_DECADES;
+  const decades = Math.log10(mag);
+  return sign * (DIAL_DEADZONE + (decades / DIAL_DECADES) * (1 - DIAL_DEADZONE));
 }
-/** Rate from the spring's decade coordinate. Below the lip the rate fades to 0, so pause is not a jump from 1×. */
+/**
+ * Rate from the spring coordinate. 0 is pause, ±1 is exactly ±1×, and past that each unit is a decade.
+ * Between 0 and 1 the rate fades, so easing into pause is not a jump from 1×.
+ */
 export function rateFromExponent(exp: number): number {
   if (!Number.isFinite(exp)) return 0;
   const a = Math.abs(exp);
-  if (a < 1e-8) return 0;
-  const fade = a < LIP_EXP ? a / LIP_EXP : 1;
-  return Math.sign(exp) * 10 ** Math.min(a, MAX_EXP) * fade;
+  if (a === 0) return 0;
+  const sign = Math.sign(exp);
+  if (a < REALTIME_EXP) return sign * a;
+  return sign * 10 ** Math.min(a - REALTIME_EXP, DIAL_DECADES + 2);
 }
-function exponentFor(rate: number): number {
-  if (!Number.isFinite(rate) || rate === 0) return 0;
-  return Math.sign(rate) * Math.log10(Math.abs(rate));
-}
-/** Decade coordinate that rests on this dial position. The lip uses the exact exponent so float error does not fall into the fade. */
+/** Spring coordinate that rests on this dial. The ±1× edge is exactly ±1, so float error cannot miss real time. */
 function exponentForDial(dial: number): number {
-  if (Math.abs(dial) < DIAL_DEADZONE) return 0;
-  if (Math.abs(Math.abs(dial) - DIAL_DEADZONE) < 1e-12) return Math.sign(dial) * LIP_EXP;
-  return exponentFor(targetRateFromDial(dial));
+  const a = Math.abs(dial);
+  if (a < DIAL_DEADZONE) return 0;
+  const decades = a >= 1 ? DIAL_DECADES : ((a - DIAL_DEADZONE) / (1 - DIAL_DEADZONE)) * DIAL_DECADES;
+  return Math.sign(dial) * (REALTIME_EXP + decades);
 }
 
 /** Hysteresis label plus a continuous blend between the two scales that bracket |rate|. The blend does not flicker; the label waits for enter/exit. */
@@ -122,7 +135,7 @@ function grouped(n: number): string {
   const [whole, frac] = String(rounded).split('.');
   return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (frac ? '.' + frac : '');
 }
-/** "paused", "1.32 sec / sec", "1 hour / sec", "1,000 years / sec". A leading − means rewind. */
+/** "paused", "1 sec / sec", "1 hour / sec", "1,000 years / sec". A leading − means rewind. */
 export function formatRate(rate: number): string {
   if (!Number.isFinite(rate) || Math.abs(rate) < 1e-4) return 'paused';
   const sign = rate < 0 ? '−' : '';
@@ -135,10 +148,10 @@ export function formatRate(rate: number): string {
   return one(a / year, 'year');
 }
 
-type Saved = { worldSec: number; wallMs: number; rate?: number; dial?: number; exp?: number; expVel?: number; parked?: number | null };
+type Saved = { worldSec: number; wallMs: number; rate?: number; dial?: number; exp?: number; expVel?: number; parked?: number | null; curve?: number };
 const holds = new Set<string>();
-const playLip = () => ({ dial: DIAL_DEADZONE, exp: LIP_EXP, expVel: 0, rate: rateFromExponent(LIP_EXP) });
-const S = { baseSec: 0, perfAt: 0, frozen: false, ...playLip(), parked: null as number | null, scale: 'immediate' as ObservationScale };
+const playForward = () => ({ dial: DIAL_DEADZONE, exp: REALTIME_EXP, expVel: 0, rate: rateFromExponent(REALTIME_EXP) });
+const S = { baseSec: 0, perfAt: 0, frozen: false, ...playForward(), parked: null as number | null, scale: 'immediate' as ObservationScale };
 
 function syncRate() { S.rate = rateFromExponent(S.exp); }
 function clampDial(p: number) { return Math.max(-1, Math.min(1, p)); }
@@ -151,17 +164,16 @@ export function loadClock(raw: string | null, nowWallMs = Date.now(), perfNow = 
   let saved: Saved | undefined; try { saved = raw ? JSON.parse(raw) as Saved : undefined; } catch { saved = undefined; }
   const credited = saved && isFinite(saved.worldSec) ? offlineSec(saved.wallMs, nowWallMs) : 0;
   S.baseSec = (saved && isFinite(saved.worldSec) ? saved.worldSec : 0) + credited;
-  S.perfAt = perfNow; holds.clear(); S.frozen = false;
-  const lip = playLip();
+  S.perfAt = perfNow; holds.clear(); S.frozen = false; detentDir = 0;
+  const play = playForward();
   if (saved && Number.isFinite(saved.dial)) S.dial = clampDial(saved.dial as number);
   else if (saved && Number.isFinite(saved.rate) && saved.rate !== 0) S.dial = dialForRate(saved.rate as number);
-  else S.dial = lip.dial;
-  if (saved && Number.isFinite(saved.exp)) {
+  else S.dial = play.dial;
+  // A save from the unshifted curve stores log10(rate) in exp. Snap those to the dial so 0.01 becomes 1×.
+  if (saved && saved.curve === DIAL_CURVE && Number.isFinite(saved.exp)) {
     S.exp = Math.max(-MAX_EXP, Math.min(MAX_EXP, saved.exp as number));
     S.expVel = Number.isFinite(saved.expVel) ? saved.expVel as number : 0;
-  } else if (saved && Number.isFinite(saved.rate) && saved.rate !== 0) {
-    S.exp = exponentForDial(S.dial); S.expVel = 0;
-  } else { S.exp = lip.exp; S.expVel = 0; }
+  } else { S.exp = exponentForDial(S.dial); S.expVel = 0; }
   S.parked = saved && Number.isFinite(saved.parked) ? clampDial(saved.parked as number) : null;
   syncRate();
   S.scale = 'immediate';
@@ -221,35 +233,62 @@ export function pauseClock(perfNow = performance.now()) { holdClock('menu', perf
 export function resumeClock(perfNow = performance.now()) { releaseClock('menu', perfNow); }
 /**
  * Put the dial on `r` and snap the eased rate there. For a saved clock and `?timescale=` at startup,
- * not for the live bar (that one eases). 0 pauses. Sub-lip magnitudes sit on the first notch.
+ * not for the live bar (that one eases). 0 pauses. Magnitudes at or below 1× sit on real time.
  */
 export function setClockRate(r: number, perfNow = performance.now()) {
   if (!Number.isFinite(r)) return S.rate;
   catchUp(perfNow);
+  detentDir = 0;
   if (r === 0) { S.dial = 0; S.exp = 0; S.expVel = 0; S.rate = 0; S.scale = resolveObservation(S.scale, 0).scale; return 0; }
   S.dial = dialForRate(r);
   S.exp = exponentForDial(S.dial); S.expVel = 0; syncRate();
   S.scale = resolveObservation(S.scale, Math.abs(S.rate)).scale;
   return S.rate;
 }
-/** Move the dial. The rate eases; it does not jump. */
+/** The ±1× marks, in the order a move from `before` toward `next` meets them. */
+function firstRealtimeLip(before: number, next: number): number | null {
+  if (before === next) return null;
+  const lips = before < next ? [-DIAL_DEADZONE, DIAL_DEADZONE] : [DIAL_DEADZONE, -DIAL_DEADZONE];
+  for (const lip of lips) {
+    if ((before - lip) * (next - lip) < 0) return lip;
+    if (next === lip && before !== lip) return lip;
+  }
+  return null;
+}
+/**
+ * Move the dial. The rate eases; it does not jump.
+ * A move that crosses ±1× stops on that mark and stays there while the same direction continues.
+ * `delta` 0 ends the gesture, so the next nudge can leave real time.
+ */
 export function nudgeDial(delta: number, perfNow = performance.now()) {
-  if (!Number.isFinite(delta) || delta === 0) return S.dial;
+  if (!Number.isFinite(delta)) return S.dial;
   catchUp(perfNow);
-  S.dial = clampDial(S.dial + delta);
+  if (delta === 0) { detentDir = 0; return S.dial; }
+  if (detentDir !== 0 && Math.sign(delta) === detentDir) return S.dial;
+  detentDir = 0;
+  const before = S.dial;
+  let next = clampDial(before + delta);
+  const lip = firstRealtimeLip(before, next);
+  if (lip !== null) { next = lip; detentDir = Math.sign(delta); }
+  S.dial = next;
   if (Math.abs(S.dial) >= DIAL_DEADZONE) S.parked = null;
   return S.dial;
 }
-/** In-game control. Pause and play move the dial (the rate eases). Slower and faster step one notch. */
+/** In-game control. Pause eases to a stop. Play sets the dial to +1×. A slower or faster tap is one notch, then the gesture ends. */
 export function timeCommand(cmd: 'pause' | 'play' | 'slower' | 'faster', perfNow = performance.now()) {
   catchUp(perfNow);
   if (cmd === 'pause') {
+    detentDir = 0;
     if (Math.abs(S.dial) >= DIAL_DEADZONE) S.parked = S.dial;
     S.dial = 0;
   } else if (cmd === 'play') {
-    const back = S.parked != null && Math.abs(S.parked) >= DIAL_DEADZONE ? S.parked : DIAL_DEADZONE;
-    S.dial = back; S.parked = null;
-  } else nudgeDial((cmd === 'slower' ? -1 : 1) * DIAL_NOTCH, perfNow);
+    detentDir = 0;
+    S.dial = DIAL_DEADZONE;
+    S.parked = null;
+  } else {
+    nudgeDial((cmd === 'slower' ? -1 : 1) * DIAL_NOTCH, perfNow);
+    nudgeDial(0, perfNow);
+  }
   return { t: S.baseSec, rate: S.rate, target: targetRateFromDial(S.dial), dial: S.dial, paused: isPaused() };
 }
 /** Keyboard / stick-click: pause if the dial is off centre, otherwise play. */
@@ -271,5 +310,5 @@ export function simWorldSec(wDt: number, obs: Observation = observation()) {
 export function groundWorldSec(wDt: number) { return wDt > 0 ? wDt : 0; }
 /** Persist the world second, the dial and the eased rate, and the wall clock for the offline gap. */
 export const saveClock = (nowWallMs = Date.now(), perfNow = performance.now()) => JSON.stringify({
-  worldSec: worldSec(perfNow), wallMs: nowWallMs, rate: S.rate, dial: S.dial, exp: S.exp, expVel: S.expVel, parked: S.parked,
+  worldSec: worldSec(perfNow), wallMs: nowWallMs, rate: S.rate, dial: S.dial, exp: S.exp, expVel: S.expVel, parked: S.parked, curve: DIAL_CURVE,
 } satisfies Saved);

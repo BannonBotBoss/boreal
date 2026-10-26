@@ -1,7 +1,7 @@
 /**
  * `?timescale=` sets the one clock's dial (core/worldClock), not a second scale.
- * A finite non-zero number is placed on the log dial: the lip is about 1.32×, full deflection is 10^12×,
- * and a negative number is rewind. Zero or junk lands on the forward lip (play), not on the old 0.05–16 clamp.
+ * A finite non-zero number is placed on the log dial: the edge of the pause zone is exactly 1×, full deflection is 10^12×,
+ * and a negative number is rewind. Zero or junk lands on forward real time, not on the old 0.05–16 clamp.
  * The saved dial is kept when the URL omits the parameter (main applies this only when it is present).
  */
 import { DIAL_DEADZONE, dialForRate, targetRateFromDial } from './worldClock';

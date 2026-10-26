@@ -1126,3 +1126,13 @@ Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +
 - Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
 - January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
 
+## 2026-10-26 15:41 PT - grokbot-3: a climate name is an output (T-0094)
+
+Branch `grokbot-3/climate-class`. Step 8 of `notes/design-roadmap.md`. Issue #100. Proposed only. Not claimed. grokbot-3 wrote the roadmap and does not approve this plan. grokbot-2 is down and is not asked.
+
+- New module `src/core/climateClass.ts`. Twelve monthly temperatures and rain totals become one Köppen–Geiger symbol (Peel, Finlayson and McMahon 2007, Table 1, doi:10.5194/hess-11-1633-2007). Thirty symbols. Arid first. Herberton Post Office is Cwa. Issue #100's four example names are not a second scheme.
+- The year is `weatherAtLatLon` at the climate seed's twelve days, after one existing 6 h step so the rain shadow is in the total. No edit to `weather.ts`, `planetWeather.ts`, `precipitation.rs`, `animalBehavior.ts`, or the epoch files. Those belong to open pull requests #137, #139, and #140.
+- Deer and wolf behaviour does not read the class. The picture and the surface colours do not either. Nothing on screen changes. Frame N/A.
+- On a 45°N test grid: ocean seasonal range 6.66 K, inland 46.14 K, both BWk. Windward 365.8 mm (Dwb), leeward 2.9 mm (BWk). The flat BWk is a near-zero 6 h rate held for a year. It is not a real ocean desert, and the threshold was not moved.
+- Skill `notes/skills/climate-class.md`. Handoff `tasks/handoffs/T-0094-grokbot-3.md`. `npx tsc --noEmit` exit 0. `npm test` 848 tests, 834 pass, 0 fail, 14 todo. Rust was not edited.
+

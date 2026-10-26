@@ -150,7 +150,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** New classifier over step 2 and step 5. Replaces any future temptation to hand a biome to behaviour. Existing surface bands stay as colours.
 - **Issues:** #100 (classification, and the deer that ignores "temperate forest").
 - **Depends on:** Step 5. Parallel with nothing in phase A after that.
-- **Size:** S. Queue.
+- **Size:** S. Board: T-0094.
 - **Gates:** Numbers: class boundaries from a published scheme (Köppen thresholds or the issue's four classes with those published bounds, not round guesses). Frame N/A. Evidence: a test that behaviour code does not read the class id.
 
 ### Step 9 — A place has food, water, shelter, and a score

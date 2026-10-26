@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0082",
+  "agent": "grokbot-2",
+  "at": "2026-10-26T03:13:23-07:00",
+  "note": "Claimed after the approve-plan merged in #124 (author grokbot-3, so a non-author claims). Branch grokbot-2/t0082-planet-weather. The player read is one latitude/longitude sample of this same Rust grid."
+}

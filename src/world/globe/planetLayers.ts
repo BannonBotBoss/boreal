@@ -4,9 +4,10 @@
  *  baked into one RGBA8 equirectangular texture (rows south -> north, as the sim) shared by every globe material, so the
  *  cost is one texture fetch per pixel and nlat x 2 nlat x 4 bytes of VRAM (at most 64 KB). Uniform values only, same program. */
 import * as THREE from 'three';
-import { loadPlanetSim, type PlanetSim } from '../../core/planetBudget';
+import { type PlanetSim } from '../../core/planetBudget';
+import { bindPlanetWeather, notePlanetClockOwner, planetLandSample, sharedPlanetSim, weatherAtLatLon } from '../../core/planetWeather';
 import { bootGlobe } from './bootOrder';
-import { fromLatLon, PLANET, type Vec3 } from './planet';
+import { PLANET, type Vec3 } from './planet';
 import { visibleWeight } from './visibility';
 
 /** Per governor tier (0 Ultra .. 5 Minimum): grid rows and layers drawn. snow: snow cover on land, ice: sea ice,
@@ -28,15 +29,19 @@ export const GLOBE_LAYERS = { uLayerTex: { value: EMPTY as THREE.Texture }, uLay
 /** Bake the sim's planes into RGBA bytes: R snow fraction, G sea-ice fraction, B soil wetness (0..1), A cloud fraction
  *  (update_clouds.rs: humidity + instability; drives the cloud shell's cover in atmosphere.ts, causal, not a texture). */
 export function bakeLayers(sim: PlanetSim): Uint8Array {
-  const n = sim.n, out = new Uint8Array(n * 4), sf = sim.plane('snowfrac'), ice = sim.plane('ice'), soil = sim.plane('soil'), cl = sim.plane('cloud');
+  const n = sim.n, out = new Uint8Array(n * 4), lat = sim.plane('lat'), lon = sim.plane('lon');
   const b = (v: number) => Math.round(255 * Math.min(1, Math.max(0, v > -900 ? v : 0)));
-  for (let i = 0; i < n; i++) { out[i * 4] = b(sf[i]); out[i * 4 + 1] = b(ice[i]); out[i * 4 + 2] = b(soil[i] / LAYER_LOOK.soilSat); out[i * 4 + 3] = b(cl[i]); }
+  for (let i = 0; i < n; i++) {
+    const w = weatherAtLatLon(lat[i], lon[i], sim);
+    out[i * 4] = b(w?.snowFrac ?? 0); out[i * 4 + 1] = b(w?.ice ?? 0);
+    out[i * 4 + 2] = b((w?.soilMm ?? 0) / LAYER_LOOK.soilSat); out[i * 4 + 3] = b(w?.cloud ?? 0);
+  }
   return out;
 }
 
 /** Land fraction and height from the globe's own `sampleSurface` (one mask, not a second generator). */
 export function globeLandSample(planet: { sampleSurface(d: Vec3): { h: number } }) {
-  return (lat: number, lon: number) => { const s = planet.sampleSurface(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180)); return { land: s.h > 0 ? 1 : 0, elev: Math.max(0, s.h) }; };
+  return planetLandSample(planet);
 }
 
 /** Spin the already-booted grid and bind the layer texture. The boot itself does not take these steps. */
@@ -57,9 +62,11 @@ export function spinAndBake(sim: PlanetSim, tier: number): boolean {
 export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: number } }, tier: number, day: number, sim?: PlanetSim | null, utcHour = 0): Promise<boolean> {
   const t = LAYER_TIERS[Math.max(0, Math.min(LAYER_TIERS.length - 1, tier))];
   tierOn = [0, 0, 0]; GLOBE_LAYERS.uLayers.value.set(0, 0, 0, 0); if (!t.nlat || !t.layers.length) return false;
-  sim = sim ?? await loadPlanetSim(); if (!sim) return false;
+  sim = sim ?? await sharedPlanetSim(); if (!sim) return false;
   // Boot one spin-up earlier so the steps end at (day, utcHour). The boot itself does not advance the clock.
   bootGlobe(sim, t.nlat, t.nlat * 2, globeLandSample(planet), day - SPINUP.steps * SPINUP.dtS / 86400, utcHour);
+  bindPlanetWeather(sim);
+  notePlanetClockOwner('globe');
   return spinAndBake(sim, tier);
 }
 let tierOn = [0, 0, 0], snowIceOn = 1;

@@ -15,6 +15,8 @@ test('initDay: saved offset, then ?hour= makes it exactly that hour; bad values 
   initDay('', '3.5', 0); near(DAY.offset, 3.5);
   initDay('?hour=12&trees=v2', '3.5', 12345); near(hourAt(12345), 12);
   initDay('?hour=abc', null, 0); near(DAY.offset, 0); initDay('?hour=24', null, 0); near(DAY.offset, 0); initDay('?hour=', 'x', 0); near(DAY.offset, 0);
+  initDay('?day=15&hour=12', null, 0); assert.equal(dayAt(0), 15); near(hourAt(0), 12);
+  initDay('?day=abc&hour=12', null, 0); near(hourAt(0), 12); assert.equal(dayAt(0), DAY_OF_YEAR);
   DAY.offset = 0; DAY.dayOffset = 0; DAY.year = 2026;
 });
 test('?date= and ?day= set the one clock; the saved dial keeps the day and year', () => {

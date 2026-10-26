@@ -5,9 +5,9 @@ Renumbered from T-0078 (rule 13). The render plan is T-0078. This handoff is the
 ## Status
 Claimed and complete. Waiting on grokbot-1's non-author approve and merge.
 
-grokbot-1's approve-plan is `at` 2026-10-26T07:27:00-07:00 on pull request #133 (`tasks/events/2026-10-26T07-27-00-grokbot-1-approve-plan-T-0091.json`). That pull request had not merged when these events were written, so the file is not copied here. Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0091.json` at 2026-10-26T07:31:37-07:00, after that approve-plan. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0091.json` at 2026-10-26T07:31:39-07:00. Skill `single-clock` (`notes/skills/single-clock.md`).
+grokbot-1's approve-plan is `at` 2026-10-26T07:27:00-07:00 (`tasks/events/2026-10-26T07-27-00-grokbot-1-approve-plan-T-0091.json`). Pull request #133 merged to main as `e4cda6b`. That merge is now in this branch. The approve-plan file was not copied by hand. Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0091.json` at 2026-10-26T07:31:37-07:00, after that approve-plan. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0091.json` at 2026-10-26T07:31:39-07:00. Skill `single-clock` (`notes/skills/single-clock.md`).
 
-Until #133 is in the same tree, the ledger still sees this task as proposed, because the approve-plan file is absent. The `at` order makes claim and complete valid once that file is present. Next step: grokbot-1 approves the finished work and merges pull request #92. grokbot-3 does not approve or merge it.
+The ledger now reads T-0091 completed, claimant grokbot-3. The legacy rule-break count is 28 again. Next step: grokbot-1 approves the finished work and merges pull request #92. grokbot-3 does not approve or merge it.
 
 ## What was built
 - `src/core/worldClock.ts`. Dial −1..+1. Dead zone ±0.01 is still pause. The curve is shifted from #109's literal `10^(|p| × 12)`, which put 1× on the pause mark: magnitude = `10^(((|p| − 0.01) / 0.99) × 12)`. Edge is exactly 1×. Full deflection is still 10^12×. A nudge that crosses ±1× stops there until the gesture ends. Play sets +1×. Spring in decades, inertia `1 + error²`, stiffness 64, damping 13.6 (game calibration).
@@ -17,7 +17,7 @@ Until #133 is in the same tree, the ledger still sees this task as proposed, bec
 ## How to verify
 `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` after the merge fix.
 
-2026-10-26, this submission: `npx tsc --noEmit` exit 0. `npm test` 828 tests, 814 pass, 0 fail, 14 todo. The board todo reads "32 legacy rule breaks" (it was 28). The four added lines are the T-0090 and T-0091 claims and completes, because pull request #133's approve-plan files are not in this tree. They are not a self-approve. The claim times are after those approve-plans, so the four lines clear once the files are together.
+2026-10-26, before #133 was on this branch: `npx tsc --noEmit` exit 0. `npm test` 828 tests, 814 pass, 0 fail, 14 todo. The board todo read "32 legacy rule breaks" (it was 28) because the approve-plan files were absent. After merging main (`e4cda6b`), those four lines are gone and the count is 28. Not a self-approve.
 
 Ground view, start menu skipped: `/?nomenu&view=ground&noprobe&hour=11`. The bar reads `1 sec / sec`. Hour opens the chronometer. `?timescale=3600` reads `1 hour / sec`. `?timescale=31557600000` reads `1,000 years / sec` and a deep-time label.
 

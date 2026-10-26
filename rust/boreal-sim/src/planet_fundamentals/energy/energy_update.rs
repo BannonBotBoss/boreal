@@ -5,8 +5,8 @@
 //! Moved from `update_energy.rs` (T-0062).
 use crate::consts::*;
 use crate::grid::*;
-use crate::planet_fundamentals::atmosphere::{surface_pressure, vertical_instability};
-use crate::planet_fundamentals::climate_seed::{OLR_A, OLR_B};
+use crate::planet_fundamentals::atmosphere::{ocean_decay_length_m, surface_pressure, vertical_instability};
+use crate::planet_fundamentals::climate_seed::{maritime_weight, OLR_A, OLR_B};
 use crate::planet_fundamentals::hydrosphere::{ice_fraction_subgrid, surface_balance};
 use super::solar_budget::{budget, solar};
 use crate::planet_fundamentals::surface::{beta, cell_surface};
@@ -16,6 +16,7 @@ pub const SUBSTEP_S: f64 = 600.0;
 pub fn update_energy(g: &mut Grid, dt: f64) {
     let n = g.n;
     g.refresh_rows();
+    g.refresh_coast();
     let mut left = dt;
     while left > 1e-9 {
         let h = left.min(SUBSTEP_S);
@@ -23,7 +24,9 @@ pub fn update_energy(g: &mut Grid, dt: f64) {
         for i in 0..n {
             let (lat, lon, land, elev) = (g.p(LAT)[i], g.p(LON)[i], g.p(LAND)[i], g.p(ELEV)[i]);
             let r = i / g.nlon;
-            let ta = (if land < 0.5 { g.row_sea[r] } else { g.row_land[r] }) - LAPSE * elev.max(0.0) * land;
+            let coast = if i < g.coast_m.len() { g.coast_m[i] } else { f64::INFINITY };
+            let w = maritime_weight(land, coast, ocean_decay_length_m(lat));
+            let ta = w * g.row_sea[r] + (1.0 - w) * g.row_land[r] - LAPSE * elev.max(0.0) * land.clamp(0.0, 1.0);
             g.pm(TAIR)[i] = ta;
             let (ts, soil, swe, q, cloud, ice) = (g.p(TS)[i], g.p(SOIL)[i], g.p(SNOW)[i], g.p(Q)[i], g.p(CLOUD)[i], g.p(ICE)[i]);
             let cs = cell_surface(land, soil, swe, ice);

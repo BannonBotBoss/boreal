@@ -11,6 +11,10 @@ pub fn coriolis(lat_deg: f64) -> f64 { 2.0 * OMEGA * (lat_deg * std::f64::consts
 pub const GEOSTROPHIC_MIN_LAT: f64 = 5.0;
 /// Surface wind is a fraction of the geostrophic wind because of boundary-layer friction, about 0.6–0.8 (Wallace & Hobbs 2006, §8.2) → 0.7 [verify].
 pub const FRICTION_FACTOR: f64 = 0.7;
+/// Held & Suarez (1994, Bull. Amer. Meteor. Soc. 75:1825) Newtonian rates, day^-1: k_a in the free troposphere, k_s at the surface.
+/// At σ = 1 their k_T is k_a + (k_s − k_a) cos^4 φ.
+pub const HS_KA_PER_DAY: f64 = 1.0 / 40.0;
+pub const HS_KS_PER_DAY: f64 = 0.25;
 pub const MAX_WIND: f64 = 40.0; // m/s guard on the closed form (game calibration)
 
 /// Geostrophic wind (u east, v north) from pressure gradients (Pa/m, east and north) and density: u = −(1/ρf) ∂p/∂y, v = (1/ρf) ∂p/∂x.
@@ -23,6 +27,28 @@ pub fn geostrophic(dpdx: f64, dpdy: f64, rho: f64, lat_deg: f64) -> (f64, f64) {
     if s > MAX_WIND { u *= MAX_WIND / s; v *= MAX_WIND / s; }
     (u, v)
 }
+
+/// Surface damping time of Held & Suarez (1994) at this latitude, seconds. k_T(σ=1) = k_a + (k_s − k_a) cos^4 φ.
+pub fn held_suarez_surface_tau_s(lat_deg: f64) -> f64 {
+    let c4 = lat_deg.to_radians().cos().powi(4);
+    let k = HS_KA_PER_DAY + (HS_KS_PER_DAY - HS_KA_PER_DAY) * c4;
+    86400.0 / k
+}
+
+/// Speed of the friction-reduced geostrophic wind of the annual pressure belts, m/s.
+/// Density is the ISO 2533 sea-level standard (15 °C, `P0`, `RD`), the same standard the lapse rate uses.
+pub fn belt_wind_m_s(lat_deg: f64) -> f64 {
+    let half = 5.0;
+    let dpdy = (belt_pressure(lat_deg + half) - belt_pressure(lat_deg - half)) / ((2.0 * half).to_radians() * EARTH_RADIUS);
+    let rho = P0 / (RD * (15.0 + 273.15));
+    let (u, v) = geostrophic(0.0, dpdy, rho, lat_deg);
+    u.hypot(v)
+}
+
+/// E-folding distance of the ocean's seasonal anomaly over land, metres.
+/// Steady advection–relaxation U dA/dx = −(A − A_land)/τ gives A(x) = A_land + (A_sea − A_land) exp(−x/L), L = U τ
+/// (the same linear column as Hartmann 1994 ch. 11, carried downwind). U is `belt_wind_m_s`. τ is `held_suarez_surface_tau_s`.
+pub fn ocean_decay_length_m(lat_deg: f64) -> f64 { belt_wind_m_s(lat_deg) * held_suarez_surface_tau_s(lat_deg) }
 
 /// Sea-level pressure from the column temperature (hypsometric), then geostrophic balance with the Coriolis term.
 pub fn update_wind(g: &mut Grid) {
@@ -67,4 +93,11 @@ mod tests {
         let (u2, _v2) = geostrophic(0.0, 0.002, 1.2, -45.0); assert!(u2 > 0.0); // flips in the south
     }
     #[test] fn wind_is_capped() { let (u, v) = geostrophic(1.0, 1.0, 1.2, 1.0); assert!(u.hypot(v) <= MAX_WIND + 1e-9); }
+    #[test] fn ocean_decay_length_is_a_continental_scale() {
+        assert!((HS_KS_PER_DAY - 0.25).abs() < 1e-15 && (HS_KA_PER_DAY - 0.025).abs() < 1e-15);
+        let (l0, l50) = (ocean_decay_length_m(0.0), ocean_decay_length_m(50.0));
+        eprintln!("ocean decay length equator {:.0} km, 50N {:.0} km", l0 / 1000.0, l50 / 1000.0);
+        assert!(l50.is_finite() && l50 > 200_000.0 && l50 < 8_000_000.0, "L50 {}", l50);
+        assert!(l0.is_finite() && l0 >= 0.0);
+    }
 }

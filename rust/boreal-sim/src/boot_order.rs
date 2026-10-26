@@ -35,6 +35,7 @@ pub const RUST_BOOT_STEPS: &[&str] = &[
 pub fn boot(g: &mut Grid, day: f64, hour: f64) {
     g.day = day;
     g.hour = hour;
+    g.refresh_coast();
     for k in 4..PLANES { g.pm(k).fill(0.0); }
     let mut seeds: Vec<Seeded> = Vec::new();
     for step in RUST_BOOT_STEPS {
@@ -66,7 +67,11 @@ fn elevation_roughness(g: &mut Grid) {
 
 fn remember(g: &Grid) -> Vec<Seeded> {
     let t_bar = g.t_bar;
-    (0..g.n).map(|i| seed_cell(g.day, g.p(LAT)[i], g.p(LAND)[i], g.p(ELEV)[i], t_bar)).collect()
+    (0..g.n).map(|i| {
+        let lat = g.p(LAT)[i];
+        let coast = if i < g.coast_m.len() { g.coast_m[i] } else { f64::INFINITY };
+        seed_cell(g.day, lat, g.p(LAND)[i], g.p(ELEV)[i], t_bar, coast, crate::update_wind::ocean_decay_length_m(lat))
+    }).collect()
 }
 
 /// Zonal temperature only (Budyko 1969 / North & Coakley 1979 via `seed_cell`). Soil and humidity stay for the next step.

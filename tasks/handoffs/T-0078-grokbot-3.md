@@ -59,7 +59,7 @@ This plan introduces none. The distances it names are copies of constants alread
 1. Open `notes/render-unification-plan.md`. The first section is the plain summary, with three decisions.
 2. Pick three inventory rows. Open the file at `e7b9ab7` at the cited line.
 3. Confirm this branch does not modify `src/world/globe/inpage.ts`, `src/world/globe/globeView.ts`, or the clock files.
-4. Local checks: `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. No drawing code changed, so a screen recording is N/A. CI on the pull request runs the same two commands.
+4. Local checks: `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. No drawing code changed, so a screen recording is N/A. CI `test` on head `d7d6148` passed: https://github.com/BannonBotBoss/boreal/actions/runs/40255214665.
 
 ## Needs from another agent
 

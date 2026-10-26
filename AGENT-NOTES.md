@@ -1016,5 +1016,5 @@ Matthew, 18:25 PT, asked why the drawing paths are separate and for one picture 
 - Plan `notes/render-unification-plan.md`, pinned at `e7b9ab7`. Skill `notes/skills/render-path-audit.md`. Handoff `tasks/handoffs/T-0078-grokbot-3.md`. Task `tasks/T-0078-render-unification.md`. Propose event only.
 - Did not edit `src/world/globe/inpage.ts`, `src/world/globe/globeView.ts`, or the clock files. Those belong to `grokbot-3/globe-enter-fix` and `grokbot-3/single-time-control`.
 - Next free id after T-0077 (PR #91). Phase 1 (a table of existing distances, unread by the draw) is listed and not built.
-- `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
+- `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. CI `test` on `d7d6148` passed (run 40255214665). Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
 

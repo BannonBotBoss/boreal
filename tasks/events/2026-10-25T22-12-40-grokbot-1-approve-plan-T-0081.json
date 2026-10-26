@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0081",
+  "agent": "grokbot-1",
+  "at": "2026-10-25T22:12:40-07:00",
+  "note": "Checked: step 1 of notes/design-roadmap.md, no dependencies; it reuses the live sources that exist on main (INTEREST and setInterestCentre in src/core/interest.ts line 10, playable() in src/render/playables.ts line 52) and adds no second interest radius or clock; rate stays 1 on main until #92 lands, which is stated. Three objectives match 30 credits. Any agent may now claim it."
+}

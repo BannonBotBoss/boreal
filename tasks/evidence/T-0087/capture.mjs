@@ -58,7 +58,8 @@ try {
   });
   const ev = async expr => {
     const r = await cdp('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
-    if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails));
+    const details = r.exceptionDetails || r.result?.exceptionDetails;
+    if (details) throw new Error(JSON.stringify(details));
     return r.result?.result?.value;
   };
   await cdp('Page.enable');
@@ -97,15 +98,22 @@ try {
       const sim = p.planetWeatherSim();
       return {
         href: location.href,
-        day: w.WEATHER.day, hour: w.WEATHER.hour, clockDay: c.dayAt(0), clockHour: c.hourAt(0),
+        day: w.WEATHER.day, hour: w.WEATHER.hour, clockDay: c.dayAt(0),
+        clockHour: c.hourAt(0), // hour at world time 0, not the live frame; the status line is the live clock
         driving: !!(sim && sim.n > 0),
         tC: here.tC, rh: here.rh, cloud: here.cloud, rainMmH: here.rainMmH, snow: here.snow,
         sweMm: here.sweMm, depthCm: here.depthCm, derivedCm: w.snowDepthCm(here.sweMm),
-        wind: here.wind, blades,
+        wind: here.wind, blades: ${blades},
         status: document.getElementById('status') ? document.getElementById('status').innerText.split('\\n')[0] : '',
       };
     })()`);
-    if (!sample.driving) throw new Error(shot.name + ' did not bind the planet grid');
+    if (!sample || !sample.driving) {
+      console.error(shot.name, 'sample', JSON.stringify(sample));
+      console.error('console', JSON.stringify(consoleErrors.slice(0, 20)));
+      const body = await ev(`document.body ? document.body.innerText.slice(0, 500) : ''`);
+      console.error('body', body);
+      throw new Error(shot.name + ' did not bind the planet grid');
+    }
     const png = await cdp('Page.captureScreenshot', { format: 'png' });
     const file = join(out, shot.name + '.png');
     writeFileSync(file, Buffer.from(png.result.data, 'base64'));

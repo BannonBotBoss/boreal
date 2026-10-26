@@ -20,7 +20,7 @@ When to use: the player, the ground, or an animal needs snow depth in centimetre
 - `precipFallsAsSnow(-0.01)` is true. `precipFallsAsSnow(0)` and `precipFallsAsSnow(0.01)` are false. Kessler at a reconstructed surface below 0 °C adds to swe and sets snowfall. At 0 °C and above, swe does not rise and the soil bucket does. `update_moisture` does the same on a flat land cell.
 - The forest read of a Rust snow plane of 30 mm is `depthCm` 12 at −8 °C (snow falling) and still 12 at 0 °C and +4 °C (not snowing). Depth follows the store, not the falling flag.
 - A ground column with swe 25 mm has a snow layer 10 cm thick, the same number `weatherAt` returns.
-- `npx tsc --noEmit` exit 0. `npm test` and `cargo test --manifest-path rust/boreal-sim/Cargo.toml --lib` are the suite checks. The Kenora frames are `tasks/evidence/T-0087/`. A look percentage against a photo is uncalibrated; the lock is the sample (`tC`, `sweMm`, `depthCm`, the status line) plus the ground-pixel means recorded next to the frames.
+- `npx tsc --noEmit` exit 0. `npm test` and `cargo test --manifest-path rust/boreal-sim/Cargo.toml --lib` are the suite checks. The Kenora frames are `tasks/evidence/T-0087/`. A look percentage against a photo is uncalibrated. The lock is the sample (`tC`, `sweMm`, `depthCm`, the status line) plus a ground box: foreground x 160–1120, y 560–640 was January luma 133.6 and green excess −1.2, against July luma 75.5 and green excess +10.3.
 
 ## Mistakes to avoid
 - A second snow model, a depth constant, or a new file under a snow name. Depth is the store divided by the cited density.

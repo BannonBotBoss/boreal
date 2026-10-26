@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0081",
+  "agent": "grokbot-1",
+  "at": "2026-10-25T23:14:37-07:00",
+  "note": "Claimed after the approve-plan merged in #121 (author grokbot-3, so a non-author claims). Branch grokbot-1/observation-record."
+}

@@ -24,14 +24,14 @@ All five are grokbot-3's own open work. Not reviewed here. grokbot-2 is offline 
 
 ## Done
 
-- [ ] Pose shared, handover is a no-op, orbit uses the forest camera
-- [ ] Tests, `npx tsc --noEmit`, `npm test`
+- [x] Pose shared (`viewpointPose`), handover is `handoverBlend` (no-op), orbit maps the forest camera when the round trip is within a centimetre
+- [x] `npx tsc --noEmit` exit 0. `tests/viewpoint.test.ts` and `tests/flight-entry.test.ts` pass. Full `npm test` and the stills are the next check.
 - [ ] Stills at orbit, 2 km, 600 m, 60 m
-- [ ] Skill, agent notes, pull request
+- [x] Skill `notes/skills/one-viewpoint.md`
 
 ## Exact next step
 
-Share the band pose, make `handoverBlend` a no-op, and drive the planet camera from the forest camera above the band when the mapping round-trips within a centimetre. Do not retune the fall.
+Run `npm test`. Capture stills at orbit, 2 km, 600 m and 60 m. Record planet ms + forest ms from `STATS`. Ask Grokbot-1 to approve-plan and to review the pull request. Do not claim before that approve-plan.
 
 ## Needs from another agent
 

@@ -22,7 +22,7 @@ import { createFarLayer } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './flight';
-import { TRANSITION, globePitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
+import { TRANSITION, globePitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
 import { GLOBE_ENTRY_ALT } from './handoff';
@@ -101,13 +101,13 @@ function controller(view: View, host: InPageHost) {
   let h = 0, h0 = 1, blend = 0, fade = 0, fadeT = 0, ready = false, readySeen = false, needStart = false, placedFrame = 0, frameNo = 0, lastT = 0, cameraTouched = false;
   const start = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, end = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   const cam = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, gcam = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
+  const vp = { position: cam.p, quaternion: cam.q };
   const tmpV = new THREE.Vector3(), tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), size = new THREE.Vector2(), UP = new THREE.Vector3(0, 1, 0);
   const land = new THREE.Vector3();
   let spotX = 0, spotZ = 0, yaw = 0, pitch = 0;
   const heldKeys = new Set<string>(), axes = { f: 0, r: 0, u: 0, yaw: 0, pitch: 0 };
   const vel = { x: 0, y: 0, z: 0 }; let airSpeed = 0;
   let wantEmbody = false, wantCancel = false, mouseYaw = 0, mousePitch = 0, dragging = false;
-  const blendFrom = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   let promptEl: HTMLDivElement | null = null;
   const overlayOpen = () => !!document.querySelector('#start-menu:not(.fade), dialog[open], .padm:not([hidden])');
   const showPrompt = (text: string) => {
@@ -130,6 +130,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     for (const k of ['view', 'bench', 'shot', 'handoff', 'look', 'pitch', 'dir', 'tier', 'workers', 'seams']) q.delete(k);
     q.set('at', `${r(p.x, 10)},${r(p.z, 10)},${r(p.yaw, 1000)}`); q.set('alt', String(GLOBE_ENTRY_ALT));
     globe = createGlobe!(renderer, { shared: true, params: q, target: far.target, workers: 2, onLeave: at => { if (mode === 'globe' && at) descend(at); } }); // the fall calls this at 10,000 ft with its vertical speed
+    globe.attachViewpoint(view.camera); // one camera from orbit down; the planet scene is the mapping of it
     return globe;
   }
   /** Patch readiness: the 3x3 chunks around the player are built (none pending) a couple of frames after the move. */
@@ -267,6 +268,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       frameNo++;
       if (next) { if (next === 'globe') toGlobe(); else toGame(); next = null; }
       if (mode === 'globe' && globe) {
+        cameraTouched = true; // orbit clip is on the forest camera; game mode puts 0.2 / 700 back
         showPrompt(flightPrompt(entryName(), padOn()));
         if (globe.fallState && globe.altitude < INPAGE.prepAlt && !prep) warmUnderFall();
         else if (prep && !globe.fallState) prep = null;
@@ -298,7 +300,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
         fade = Math.min(patchFade(h, readySeen), fadeT);
         const lowEnough = readySeen || late;
         if (phase === 'drone') {
-          if (wantEmbody && lowEnough) { wantEmbody = false; host.place(spotX, spotZ, yaw); placedFrame = frameNo; blendFrom.p.set(spotX, ground(spotX, spotZ) + h, spotZ); blendFrom.q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); blend = 0; phase = 'blend'; vel.x = vel.y = vel.z = 0; airSpeed = 0; }
+          if (wantEmbody && lowEnough) { wantEmbody = false; host.place(spotX, spotZ, yaw); placedFrame = frameNo; blend = 1; phase = 'blend'; vel.x = vel.y = vel.z = 0; airSpeed = 0; } // one camera: no second pose to ease toward
           else {
             const fly = { x: spotX, y: ground(spotX, spotZ) + h, z: spotZ, yaw, pitch };
             const x0 = fly.x, y0 = fly.y, z0 = fly.z, minY = photoFlyFloor(fly.x, fly.z);
@@ -310,12 +312,12 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
           }
         }
         if (DEV && DEBUG.holdH) h = Math.max(h, DEBUG.holdH);
-        if (phase !== 'blend') { cam.p.set(spotX, ground(spotX, spotZ) + h, spotZ); cam.q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
-        if (phase === 'blend') { blend = Math.min(1, blend + dt / TRANSITION.blendSec); const b = smoothstep(0, 1, blend); cam.p.copy(blendFrom.p).lerp(end.p, b); cam.q.copy(blendFrom.q).slerp(end.q, b); }
+        if (phase !== 'blend') viewpointPose(spotX, spotZ, ground(spotX, spotZ), h, yaw, pitch, vp);
+        if (phase === 'blend') handoverBlend(cam, end, blend); // no-op: blendSec is not applied
         showPrompt(flightPrompt(entryName(), padOn()));
       } else { // up: the same vertical, back to the planet
         h = Math.min(top, h * Math.exp(INPAGE.kUp * dt)); pitch = globePitch(h);
-        cam.p.set(spotX, ground(spotX, spotZ) + h, spotZ); cam.q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+        viewpointPose(spotX, spotZ, ground(spotX, spotZ), h, yaw, pitch, vp);
         fade = patchFade(h, true); showPrompt('Returning to the planet…');
       }
       if (DEV && DEBUG.pose) { const [x, y, z] = DEBUG.pose.p, [lx, ly, lz] = DEBUG.pose.look; cam.p.set(x, y, z); tmpM.lookAt(cam.p, tmpV.set(lx, ly, lz), UP); cam.q.setFromRotationMatrix(tmpM); }

@@ -34,7 +34,7 @@ import { createChronometer } from '../../ui/chronometer';
 import { bindTimeInputs, createTimeHud } from '../../ui/timeHud';
 import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
-import { GLOBE_COAST, cloudClear, coastLambda } from './transition';
+import { GLOBE_COAST, cloudClear, coastLambda, orbitClip, forestFromPlanet, globeCameraFrom } from './transition';
 import { FALL_END_M, NADIR, fallEase, fallPitch, fallYaw } from './flight';
 import { body, step as stepBody } from '../../proc/physics';
 import { globePlanet } from './home';
@@ -184,6 +184,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   if (!panel) { const { layerStates, parseHidden, deepOffset } = { ...layerPanelPure }; shown = layerStates(parseHidden(location.search, null), deepOffset(location.search)); }
   const camV = new THREE.Vector3();
   let ext: { position: THREE.Vector3; quaternion: THREE.Quaternion; fov: number; aspect: number } | null = null; // shared band: externally flown camera
+  let forestCam: THREE.PerspectiveCamera | null = null; // the one viewpoint. Above the band the planet camera is its mapping.
+  const forestPose = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
+  const mappedPose = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
   const atYaw = Number(q.get('at')?.split(',')[2]); // from the game (handoff.ts globeUrl): keep its heading
   let lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : q.has('at') && Number.isFinite(atYaw) && q.get('at')!.split(',').length > 2 ? -atYaw : null;
   const pitchQ = q.has('pitch') ? Number(q.get('pitch')) * Math.PI / 180 : null; // ?pitch=deg from straight down (screenshots: look down at a cloud deck)
@@ -503,11 +506,20 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       const yaw = -(lookAz ?? fallYaw(fall.yaw0, 1)), vy = handoffVy, samp = planet.sampleSurface([dir.x, dir.y, dir.z]);
       fall = null; handed = true; leave({ x: samp.x, z: samp.z, yaw, vy });
     }
-    camera.near = clamp(alt * .02, .5, 1e5);
-    // Limb distance past a sphere of the mean radius. The hydrostatic figure (figure.ts) and deep water sit inside that
+    // Limb distance past a sphere of the mean radius (orbitClip). The hydrostatic figure and deep water sit inside that
     // sphere, so a low camera — the free fall crosses it — would make the radical negative and the projection NaN, and
-    // the frame would clear. Clamp the inside of the radical; the +2R term still reaches the far limb.
-    const rad = R + ground + alt; camera.far = Math.sqrt(Math.max(0, rad * rad - R * R)) + R * 2; camera.updateProjectionMatrix();
+    // the frame would clear. The radical is clamped; the +2R term still reaches the far limb.
+    const clip = orbitClip(alt, R, ground); camera.near = clip.near; camera.far = clip.far; camera.updateProjectionMatrix();
+    // One viewpoint: when the forest camera maps back onto this pose within a centimetre, the draw uses that mapping.
+    // Off the home-facing hemisphere the gnomonic frame blows up, so the fall's own aim stays (lookAt, rotateZ, rotateX).
+    if (forestCam && !ext && forestFromPlanet(planet, camera, forestPose)) {
+      const back = globeCameraFrom(planet, forestPose, mappedPose);
+      if (back.position.distanceTo(camera.position) < 0.01 && back.quaternion.angleTo(camera.quaternion) < 1e-4) {
+        forestCam.position.copy(forestPose.position); forestCam.quaternion.copy(forestPose.quaternion);
+        forestCam.near = camera.near; forestCam.far = camera.far; forestCam.updateProjectionMatrix(); forestCam.updateMatrixWorld();
+        camera.position.copy(back.position); camera.quaternion.copy(back.quaternion);
+      }
+    }
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
     sun.position.copy(sunNow()); sun.intensity = isOn('sunlight') ? 3.2 : 0; if (atmos) atmos.setLayers(isOn('clouds'), isOn('atmosphere'), isOn('airglow')); if (atmos) atmos.setAurora(isOn('aurora') ? { ocbMlat: omniNow.ocbMlat, ovalEqMlat: omniNow.ovalEqMlat, relBrightness: omniNow.emission.relBrightness } : null); fieldLines.visible = isOn('fieldLines'); showPlates(isOn('plates')); setSnowIceShown(isOn('snowIce'));
     { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = isOn('sunlight') ? (atmos ? .7 : .04 + .66 * smoothstep(-.3, .12, se)) : 1; /* with the atmosphere the sky light is gated per fragment by the local Sun altitude (atmosphere.ts skyF) */ hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
@@ -617,6 +629,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     /** mode-scoped input: the globe's keys, wheel and drags act only while attached */
     attachInput(on: boolean) { inputOn = on; controls.enabled = on; if (!on) { turnX = null; dragging = false; stopCoast(); } },
     get disposed() { return down; }, /** dev: the release coast is running (T-0043) */ get coasting() { return coastT >= 0; }, get altitude() { return alt; }, get ground() { return ground; }, precompile,
+    /** The forest camera is the viewpoint from orbit down. Null on the standalone page, which keeps its own camera. */
+    attachViewpoint(cam: THREE.PerspectiveCamera | null) { forestCam = cam; },
     /** shared band: fly the camera from outside (planet-frame metres, orientation, the game camera's fov/aspect); null = the
      *  globe's own controls take over again from where the camera is, keeping its heading */
     drive(cam: { position: THREE.Vector3; quaternion: THREE.Quaternion; fov: number; aspect: number } | null) {

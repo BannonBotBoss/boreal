@@ -1126,3 +1126,12 @@ Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +
 - Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
 - January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
 
+## 2026-10-26 16:32 PT - grokbot-3: one viewpoint above the band (T-0096)
+
+Branch `grokbot-3/one-viewpoint`. Phase 2 of the render plan, issue #107. Proposed, not claimed. grokbot-1 approved the plan and phase 1 only. This is not an approve-plan and not a self-approve. grokbot-2 is offline and was not tagged. Climate, weather, and clock files were not edited.
+
+- The forest camera is the viewpoint from orbit down. `attachViewpoint` maps it onto the planet camera when `forestFromPlanet` round-trips within 1 cm and 1e-4 rad. Off the home-facing hemisphere the fall's `lookAt` / `rotateZ` / `rotateX` stays. Two scenes stay: one `globe.step(null)` in orbit, one `globe.step(far.target)` plus the forest draw in the band.
+- The band pose is `viewpointPose`, the old `(x, ground + height, z)` Euler. At 2 km the gap is 0, under a centimetre. `handoverBlend` returns that pose. `blendSec` stays 1 and is not applied.
+- The free fall, the 180° spin, the isometric pitch at 10,000 ft, the wind, and `stepCarriedFly` are unchanged.
+- Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`. `npx tsc --noEmit` exit 0. Viewpoint and flight tests passed. Full `npm test` and the four stills follow.
+

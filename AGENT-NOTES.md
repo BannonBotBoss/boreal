@@ -1049,3 +1049,25 @@ Matthew's direct request, 2026-10-25 18:24 PT, plus issue #107 at 19:15 PT. Not 
 - The drone is photo mode's fly: `src/photo/photoMode.ts` `createPhotoMode` `update`, now `photoFlyMove` / `stepCarriedFly` in `src/photo/fly.ts`. The Xbox pad moves with the left stick, turns with the right stick, climbs on the right trigger and descends on the left trigger. That turn lives in `photoFlyMove`. Wind is `rushLevel` on `wind-pines`. `localCloudFade` crossfades the local box with the shell (issue #107). No new renderer.
 - Capture: orbit elevation −90°, handoff height 3048 m at elevation −35.264°, 03/04/05 are three hashes (they used to be one cleared frame). Overlap 0. Layer panel hidden in game. `npx tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo.
 - Skill `notes/skills/globe-entry-flight.md`. Handoff `tasks/handoffs/T-0088-grokbot-3.md`. Pull request https://github.com/BannonBotBoss/boreal/pull/120. Not merged.
+
+## 2026-10-25 18:30 PT - grokbot-3: rendering unification audit (T-0078)
+
+Matthew, 18:25 PT, asked why the drawing paths are separate and for one picture whose detail follows distance, reusing what exists. 18:26 PT he asked plans to open in plain language. Documents only. No drawing code. Not an approve-plan.
+- Plan `notes/render-unification-plan.md`, pinned at `e7b9ab7`. Skill `notes/skills/render-path-audit.md`. Handoff `tasks/handoffs/T-0078-grokbot-3.md`. Task `tasks/T-0078-render-unification.md`. Propose event only.
+- Did not edit `src/world/globe/inpage.ts`, `src/world/globe/globeView.ts`, or the clock files. Those belong to `grokbot-3/globe-enter-fix` and `grokbot-3/single-time-control`.
+- Next free id after T-0077 (PR #91). Phase 1 (a table of existing distances, unread by the draw) is listed and not built.
+- `npx tsc --noEmit` exit 0. `npm test` 777 tests, 763 pass, 0 fail, 14 todo. CI `test` on `d7d6148` passed (run 40255214665). Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
+
+## 2026-10-25 19:20 PT - grokbot-3: observation chooses the layers (T-0078)
+
+Matthew answered the three questions in issues #107, #108, and #109. Newest issue wins. At 7:15 PM PT he allowed a render path to be replaced when keeping it would compromise the single space-and-time observation pipeline, provided #100–#109 are addressed, especially #107. Documents only. Not an approve-plan.
+- The flight down is one smooth picture. Far forest is a colour and a density; trees appear close in and when time is slow. The work stays several small steps. The open decisions are gone from the plan and from the plain summary.
+- Layer weights are height times the time dial's rate (#107, #109). #109's levels and the 800× / 1,200× blend are the time half. #107's stations, from the ground to orbit, are the height half. The dial is a read. The clock files are still untouched.
+- Plan, task, handoff, and `notes/skills/render-path-audit.md` updated. Phase 1 is the unread observation table and is not built. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
+
+## 2026-10-26 00:21 PT - grokbot-3: observation table, unread (T-0078 phase 1)
+
+grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follows that event. Not a complete. Not a self-approve.
+- `src/render/observationTable.ts` records #107's stations and #109's levels, chains, and the 800× / 1,200× pair. Biome and Geological have no rate. No stiffness, no damping, no invented metre gap. `CODE_REACH` copies distances the picture already exports. The draw does not import the file. The live wheel stays `observation()` on pull request #92.
+- Did not edit `inpage.ts`, `globeView.ts`, or the clock files. `npx tsc --noEmit` exit 0. `npm test` 804 tests, 790 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
+

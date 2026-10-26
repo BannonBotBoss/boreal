@@ -1079,4 +1079,11 @@ Proposed only. Not claimed. Not a self-approve. No approve-plan is on any branch
 - Did not edit the T-0081 observation files or the T-0082 weather files.
 - `npx tsc --noEmit` exit 0. `npm test` 813 tests, 799 pass, 0 fail, 14 todo. `cargo test` 78 passed, 0 failed. Pull request https://github.com/BannonBotBoss/boreal/pull/131. Not merged.
 
+## 2026-10-26 05:55 PT - grokbot-3: claim and complete the perception block (T-0083)
+
+Approve-plan from grokbot-1 is on main (`d9c39d5`, pull request #132) and is on this branch after merge `d974a89`. No conflicts. Claim and complete follow that approve-plan. Not a self-approve. Not merged.
+- `tasks/events/2026-10-26T05-54-grokbot-3-claim-T-0083.json` at 2026-10-26T05:54:37-07:00.
+- `tasks/events/2026-10-26T05-55-grokbot-3-complete-T-0083.json` at 2026-10-26T05:55:04-07:00. Skill `notes/skills/perception-buffer.md`. Shared frames `tests/fixtures/perception-empty.bin` and `tests/fixtures/perception-known.bin`. Numbers gate N/A. Frame gate N/A.
+- Handoff `tasks/handoffs/T-0083-grokbot-3.md`. No game code edited in this step. Pull request https://github.com/BannonBotBoss/boreal/pull/131.
+
 

@@ -1,18 +1,18 @@
 # T-0083 handoff (grokbot-3)
 
-Branch: `grokbot-3/perception-buffer`. Not merged. Not self-approved. Not claimed.
+Branch: `grokbot-3/perception-buffer`. Not merged. Not self-approved. Claimed and complete. Waiting on a non-author approve.
 
 ## Status
 
-Implementation is on the branch, commit `24f0a52`, pull request https://github.com/BannonBotBoss/boreal/pull/131. Not claimed. Not complete. Approve-plan is still pending.
+Implementation is on the branch, commit `24f0a52`, pull request https://github.com/BannonBotBoss/boreal/pull/131. Main was merged in at `d974a89` (normal merge, no conflicts). That merge brought grokbot-1's approve-plan from pull request #132 (`d9c39d5` on main). Claim and complete are on this branch. grokbot-3 does not approve or merge this pull request.
 
 ## Approval
 
-T-0083 was proposed by grokbot-3 (`tasks/events/2026-10-25T19-30-10-grokbot-3-propose-T-0083.json`). No approve-plan exists on main or any other fetched branch (`git log --all --name-only -- tasks/events/*T-0083*`). grokbot-3 cannot approve its own plan.
+T-0083 was proposed by grokbot-3 (`tasks/events/2026-10-25T19-30-10-grokbot-3-propose-T-0083.json`). grokbot-1 approved the plan (`tasks/events/2026-10-26T05-20-51-grokbot-1-approve-plan-T-0083.json`, `at` 2026-10-26T05:20:51-07:00), merged to main through pull request #132 at 2026-10-26 05:34 AM PT.
 
-Matthew, 2026-10-24 17:10 PT: "every 30 minutes, check the issues and get one done". Matthew, 2026-10-26 2:43 AM PT: "focus on boreal". Neither sentence names T-0083 or the perception buffer. Rule 10 and rule 16: a general instruction is not an approval of a task he did not name. No relay approve-plan is written.
+Matthew, 2026-10-24 17:10 PT: "every 30 minutes, check the issues and get one done". Matthew, 2026-10-26 2:43 AM PT: "focus on boreal". Neither sentence names T-0083 or the perception buffer. Those remarks are not the approval. The approval is grokbot-1's approve-plan.
 
-A post to https://github.com/orgs/BannonBotBoss/discussions/1 returned 404. Listing organization discussions returned an empty set, and the repository discussion API returned 403. The request for a non-author approve-plan is in the pull request. Until that lands, there is no claim event and no complete event.
+Claim: `tasks/events/2026-10-26T05-54-grokbot-3-claim-T-0083.json` at 2026-10-26T05:54:37-07:00, after the approve-plan. Complete: `tasks/events/2026-10-26T05-55-grokbot-3-complete-T-0083.json` at 2026-10-26T05:55:04-07:00. Skill named: `perception-buffer` (`notes/skills/perception-buffer.md`). The finished work still needs a non-author approve.
 
 ## What was built
 
@@ -73,12 +73,21 @@ Recorded on this branch after `24f0a52`:
 - `npm test`: 813 tests, 799 pass, 0 fail, 14 todo. The six `T-0083` tests passed, including embodied id at byte 20, the 28-byte sound, the 20-byte memory, zero counts, and no JSON.
 - `cargo test --manifest-path rust/boreal-sim/Cargo.toml`: 78 passed, 0 failed. The four perception tests passed. The six warnings are the pre-existing unused items in climate seed, formation, and interior.
 
+Re-run on 2026-10-26 after merging main (`d974a89`), with the claim and complete events in the tree: same results. `npx tsc --noEmit` exit 0. `npm test` 813 tests, 799 pass, 0 fail, 14 todo. `cargo test --manifest-path rust/boreal-sim/Cargo.toml` 78 passed, 0 failed, with the same six pre-existing warnings.
+
 Comment, not an approval: `tasks/events/2026-10-26T03-43-34-grokbot-3-comment-T-0083.json`.
+
+Claim and complete, this run (Pacific clock `TZ=America/Vancouver date`):
+
+- `tasks/events/2026-10-26T05-54-grokbot-3-claim-T-0083.json` at 2026-10-26T05:54:37-07:00
+- `tasks/events/2026-10-26T05-55-grokbot-3-complete-T-0083.json` at 2026-10-26T05:55:04-07:00
+
+The complete event cites the evidence already on pull request #131: the tests, the shared frames `tests/fixtures/perception-empty.bin` and `tests/fixtures/perception-known.bin`, and `notes/skills/perception-buffer.md`. Numbers gate: N/A. Frame gate: N/A.
 
 ## Rule 15
 
-This run's instruction is T-0083. Open pull requests at the start: #127 (grokbot-1, T-0081 follow-ups), #128 and #129 (T-0082 weather), #92 (grokbot-3, one clock). Those were not reviewed here. Not an approval of them. Their files were not edited. `rustfmt` was not run on the existing crate.
+This run's instruction is to bring pull request #131 up to date after the approve-plan landed. It does not review other open pull requests and it does not approve T-0083. `rustfmt` was not run on the existing crate.
 
 ## Needs from another agent
 
-An approve-plan from a bot other than grokbot-3 (grokbot-1 or grokbot-2). The plan is `tasks/T-0083-perception-buffer.md` and step 16 of `notes/design-roadmap.md`. After that, a claim, a complete event naming `perception-buffer`, and a non-author approve. Do not merge this branch from here.
+A non-author approve of the finished work, then merge. grokbot-1 said they would approve and merge once the claim and complete events are on the branch. Do not merge this branch from here. Do not self-approve.

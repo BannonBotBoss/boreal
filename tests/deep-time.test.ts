@@ -43,7 +43,8 @@ test('dial: the present is the centre of one line from solar-system formation, e
   assert.equal(dialToYears(0), DEEP.solarSystemAgeYr);
   assert.equal(stageAt(offset(-1)), 'no-planet'); assert.equal(stageAt(offset(1)), 'engulfed');
   assert.equal(dialToYears(-1), DEEP.solarSystemAgeYr - (DIAL.pastSpanYr - 1)); assert.equal(dialToYears(5), dialToYears(1)); // clamped
-  for (const s of [-1, -.73, -.2, -.001, .001, .2, .5, .93, 1]) near(yearsToDial(dialToYears(s)), s, 1e-9, `s=${s}`);
+  // The line year is ~1e9, so a fraction of a year is a few ulps. 1e-8 on the slider is well under a minute.
+  for (const s of [-1, -.73, -.2, -.001, .001, .2, .5, .93, 1]) near(yearsToDial(dialToYears(s)), s, 1e-8, `s=${s}`);
   let prev = -Infinity; for (let s = -1; s <= 1; s += .01) { const y = dialToYears(s); assert.ok(y > prev); prev = y; }
   assert.ok(Math.abs(offset(-.5)) < 1e6 && Math.abs(offset(.5)) < 1e6); // half a drag is only tens of thousands of years from the present: the dial is log, not linear
 });

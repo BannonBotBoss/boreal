@@ -174,8 +174,9 @@ export function solarLayerGate(hasAbsorbed: boolean, tier: number) { return hasA
 /** Shared uniforms (one program). uSolarLayer is 0 at Minimum, so the fragment keeps the terrain colour. */
 export const SOLAR_DRAW = { uSolarLayer: { value: 0 }, uQScale: { value: 900 } };
 export function setSolarLayer(on: boolean) { SOLAR_DRAW.uSolarLayer.value = on ? 1 : 0; }
-/** Write Q_absorbed onto the tile, or remove it when the tier drops the layer. Returns whether the layer is on. */
-export function applySolarAttribute(g: THREE.BufferGeometry, centre: Vec3, day: number, hour: number, tier: number, cloud = 0) {
+/** Write Q_absorbed onto the tile, or remove it when the tier drops the layer. Returns whether the layer is on.
+ *  Cloud defaults to each vertex's T-0059 cover (null); pass a number to override. */
+export function applySolarAttribute(g: THREE.BufferGeometry, centre: Vec3, day: number, hour: number, tier: number, cloud: number | null = null) {
   if (!solarLayerOn(tier)) { if (g.getAttribute('aAbsorbed')) g.deleteAttribute('aAbsorbed'); return false; }
   const pos = g.getAttribute('position').array, col = g.getAttribute('color').array, h = g.getAttribute('aH').array;
   const arr = absorbedAttribute(pos, col, h, centre, day, hour, cloud);

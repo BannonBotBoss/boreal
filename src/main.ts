@@ -79,7 +79,7 @@ const dialog = element<HTMLDialogElement>('info');
 const SAVE_KEY = 'boreal.events.v1', NEEDS_KEY = 'boreal.needs.v1'; // T-0036: the embodied animal's needs (water, rest, energy)
 let context = createContext(), saveBlocked = false;
 let noticeTimer: ReturnType<typeof setTimeout>;
-const padRouter = createPadRouter({ act: id => act(id), notice: m => notice(m), globe: () => inpage?.mode === 'globe', reloadBindings: () => { try { bindings = loadBindings(localStorage.getItem(BINDINGS_KEY)); bindingTexts(); } catch { /* blocked */ } } });
+const padRouter = createPadRouter({ act: id => act(id), notice: m => notice(m), globe: () => inpage?.mode === 'globe', flight: () => inpage?.mode === 'band', reloadBindings: () => { try { bindings = loadBindings(localStorage.getItem(BINDINGS_KEY)); bindingTexts(); } catch { /* blocked */ } } });
 function notice(message: string) {
   const node = element('notice'); node.textContent = message; node.style.display = 'block';
   clearTimeout(noticeTimer); noticeTimer = setTimeout(() => node.style.display = 'none', 6000);
@@ -491,7 +491,8 @@ function frame(time: number) { const frameStart = performance.now();
   walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
-  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(worldSec()), day: dayAt(worldSec()), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
+  const rush = inpage?.airRush() ?? 0; if (rush > 0) void sfx.start(); // a double-click already unlocked the context; a pad-only drop may still be silent until a key or click
+  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || (!!inpage?.blocksGame() && rush <= 0), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(worldSec()), day: dayAt(worldSec()), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb, rush });
   if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
     if (ev.type === 'pinned') { notice('Pinned. X eats, B releases.'); continue; } // the bite row already played the one squeal
     sfx.hare(ev.type, ev);

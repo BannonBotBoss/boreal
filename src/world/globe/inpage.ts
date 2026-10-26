@@ -8,9 +8,10 @@
  *  - The patch dithers in under the globe (render/fade.ts, uniform only) once the chunks under the camera are ready, between
  *    TRANSITION.bandTop (2 km) and fadeFull (600 m); undithered scene parts (sky dome, animals, grass, flora, props, rocks)
  *    stay hidden until the patch is fully in. Sky + clouds stay hidden for the whole band (the far layer is the sky).
- *  - Down: the landing spot is ahead along the heading; the camera flies a 45-degree glide path toward it (log-height rate),
- *    turning from the globe pose to look at it, holds at the handover height until the chunks are ready, then blends onto
- *    the rig in TRANSITION.blendSec. Up: the same glide path backwards, turning to the globe's own pose near the top.
+ *  - Down: the orbit looks straight down. A double-click (or A / G) free-falls to 10,000 ft (flight.ts), spinning 180° and
+ *    opening to the isometric pitch. At that height the fall's velocity is handed to photo mode's free-fly (photo/fly.ts
+ *    stepCarriedFly) and is not zeroed. G / A becomes the animal. Esc / pad X returns to the orbit. There is no auto-start.
+ *    Up: the same vertical, in reverse, pitch from globePitch.
  *  - The governor is held from the ascent to the end of the descent (world knobs frozen); input is mode-scoped; the world
  *    clock keeps running, the sim (player, animals) is frozen outside game mode. Tile workers (2) run only while ascending,
  *    on the globe and descending; they are terminated during gameplay.
@@ -19,8 +20,12 @@ import * as THREE from 'three';
 import type { Globe } from './globeView'; // loaded on demand (only with the in-page path on), so the reload path's game bundle is unchanged
 import { createFarLayer } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
-import { TRANSITION, globePitch, transitionPath, planetToGame, gameBasis, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
-import { GLOBE_ENTRY_ALT, HANDOFF, landSpawn, landSpawnSteps } from './handoff';
+import { layerPanelShown } from './layerPanel';
+import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './flight';
+import { TRANSITION, globePitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
+import { registerPadTarget } from '../../input/padTargets';
+import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
+import { GLOBE_ENTRY_ALT } from './handoff';
 import { PLANET, GLOBE_COLOURS } from './planet';
 import { setPatchFade, setPatchFar } from '../../render/fade';
 import { AO_BLEND } from '../../render/post';
@@ -32,7 +37,7 @@ import { STAGES, lakeAt } from '../../core/stages/elevation';
 import { pondAt } from '../../core/stages/rivers';
 import { LEVEL } from '../../core/tuning';
 import { EXPOSURE } from '../../core/light';
-import { clamp01, smoothstep } from '../../proc/math';
+import { clamp, smoothstep } from '../../proc/math';
 
 /** [game calibration] gain: globe radiance scale in the game's exposure (1 = the standalone globe's look); kDown/kUp: log-height
  *  rates (1/s) of the descent (2 km -> 60 m in ~5 s) and the ascent; nearK: band camera near plane = height x nearK;
@@ -87,9 +92,9 @@ function patchPlaneY(x: number, z: number, r: number) {
 
 function controller(view: View, host: InPageHost) {
   const renderer = view.photoreal.renderer, far = createFarLayer(), hold = createGovernorHold(GOVERNOR, resetGovernor);
-  let globe: Globe | null = null, mode: TransitionMode = 'game', down = true, phase: 'fly' | 'blend' = 'fly';
+  let globe: Globe | null = null, mode: TransitionMode = 'game', down = true, phase: 'fly' | 'drone' | 'blend' = 'fly';
   let next: 'globe' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
-  let prep: { x: number; z: number } | null = null; let search: { steps: Generator<void, { x: number; z: number }>; yaw: number } | null = null; // the landing's dry-land search, INPAGE.searchMs per frame // landing chosen (and chunks building) while still in globe mode
+  let prep: { x: number; z: number } | null = null; // chunks under the fall, warmed once the drop is below prepAlt. The clicked point is not moved.
   let renderMs = 0; // last frame's globe + game draw CPU (ms): the descent's chunk job budget fills the rest of jobFrame
   let bandT = 0; /* s since the descent started (the ready safety cap) */ const chunkFirst = (k: string) => k.startsWith('chunk:');
   let maskWait = 0, maskWarned = false, readyAt = 0, dusk = 0; // s waited on the mask with the chunks ready (capped at INPAGE.maskWaitSec); h at first ready (STATS.readyAt)
@@ -97,9 +102,21 @@ function controller(view: View, host: InPageHost) {
   const start = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, end = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   const cam = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, gcam = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
   const tmpV = new THREE.Vector3(), tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), size = new THREE.Vector2(), UP = new THREE.Vector3(0, 1, 0);
-  const land = new THREE.Vector3(), off = new THREE.Vector3(), fwd = new THREE.Vector2(); // landing point, start offset from the glide path, heading
-  /** camera on the 45-degree glide path h metres above the landing ground (behind it along the heading), looking at it */
-  const glide = (hh: number, k: number) => { cam.p.set(land.x - fwd.x * hh + off.x * k, land.y + hh + off.y * k, land.z - fwd.y * hh + off.z * k); tmpM.lookAt(cam.p, land, UP); tmpQ.setFromRotationMatrix(tmpM); };
+  const land = new THREE.Vector3();
+  let spotX = 0, spotZ = 0, yaw = 0, pitch = 0;
+  const heldKeys = new Set<string>(), axes = { f: 0, r: 0, u: 0, yaw: 0, pitch: 0 };
+  const vel = { x: 0, y: 0, z: 0 }; let airSpeed = 0;
+  let wantEmbody = false, wantCancel = false, mouseYaw = 0, mousePitch = 0, dragging = false;
+  const blendFrom = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
+  let promptEl: HTMLDivElement | null = null;
+  const overlayOpen = () => !!document.querySelector('#start-menu:not(.fade), dialog[open], .padm:not([hidden])');
+  const showPrompt = (text: string) => {
+    if (!text) { promptEl?.remove(); promptEl = null; return; }
+    if (!promptEl) { promptEl = document.createElement('div'); promptEl.id = 'flight-prompt'; promptEl.setAttribute('role', 'status'); document.body.append(promptEl); }
+    if (promptEl.textContent !== text) promptEl.textContent = text;
+  };
+  const padOn = () => { try { return [...navigator.getGamepads()].some(p => p?.connected); } catch { return false; } };
+  const entryName = (): EntryPhase => mode === 'game' ? 'game' : mode === 'globe' ? (globe?.fallState ? 'fall' : 'orbit') : 'drone';
   const hidden = new Map<THREE.Object3D, boolean>(); let savedBg: THREE.Scene['background'] | undefined;
   const NO_GLOBE = new THREE.Color(1, 0, 1);
 const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks (DEBUG, frame-cost log fields) only with ?inpagedev
@@ -112,7 +129,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     const q = new URLSearchParams(location.search), p = host.player(), r = (v: number, k: number) => Math.round(v * k) / k;
     for (const k of ['view', 'bench', 'shot', 'handoff', 'look', 'pitch', 'dir', 'tier', 'workers', 'seams']) q.delete(k);
     q.set('at', `${r(p.x, 10)},${r(p.z, 10)},${r(p.yaw, 1000)}`); q.set('alt', String(GLOBE_ENTRY_ALT));
-    globe = createGlobe!(renderer, { shared: true, params: q, target: far.target, workers: 2, onLeave: at => { if (mode === 'globe' && at) descend(at); } });
+    globe = createGlobe!(renderer, { shared: true, params: q, target: far.target, workers: 2, onLeave: at => { if (mode === 'globe' && at) descend(at); } }); // the fall calls this at 10,000 ft with its vertical speed
     return globe;
   }
   /** Patch readiness: the 3x3 chunks around the player are built (none pending) a couple of frames after the move. */
@@ -122,36 +139,40 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     const k = INPAGE.ring; for (let a = cx - k; a <= cx + k; a++) for (let b = cz - k; b <= cz + k; b++) if (pending(`chunk:${a}:${b}`)) return false;
     return true;
   }
-  function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe' && m === 'globe'); if (typeof document !== 'undefined') document.body.classList.toggle(GLOBE_HUD_CLASS, hudHidden(m)); }
-  /** Globe -> band: the player is placed at the landing spot (dry land) under the camera, keeping the heading. */
-  /** Globe -> band. The landing spot is ahead along the heading, one camera height away (the 45-degree glide path the descent
-   *  flies, so the patch is in view the whole way down), kept inside the playable region and snapped to dry land. */
-  function descend(at: { x: number; z: number; yaw: number }) {
-    const g = globe!, v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]);
-    start.p.set(pg.x, pg.y, pg.z); start.q.setFromRotationMatrix(gameBasis(g.planet, pg.x, pg.z, tmpM)).invert().multiply(g.camera.quaternion);
-    h0 = Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)); fwd.set(-Math.sin(at.yaw), -Math.cos(at.yaw));
-    const c = landingPoint(pg.x, pg.z, fwd, h0); let s = prep;
-    if (!s || Math.hypot(c.x - s.x, c.z - s.z) >= 2 * CHUNK_SIZE) { s = landSpawn(c, undefined, at.yaw); host.place(s.x, s.z, at.yaw); placedFrame = frameNo; } // else the spot prepared on the way down (chunks already building); no second search
-    prep = null; search = null;
-    land.set(s.x, ground(s.x, s.z), s.z); h0 = Math.max(TRANSITION.handover + 1, pg.y - land.y); h = h0;
-    off.set(start.p.x - (land.x - fwd.x * h0), start.p.y - (land.y + h0), start.p.z - (land.z - fwd.y * h0)); // decays to 0 with height
-    phase = 'fly'; blend = 0; fadeT = 0; readySeen = false; maskWait = 0; bandT = 0; readyAt = 0; down = true; lastT = performance.now(); setMode('band');
+  function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe'); globe?.setLayerPanel(layerPanelShown(m)); if (typeof document !== 'undefined') document.body.classList.toggle(GLOBE_HUD_CLASS, hudHidden(m)); if (m === 'game') showPrompt(''); }
+  /** Globe -> drone, on the point that was double-clicked. The fall's vertical speed is kept. The spot is not pulled home. */
+  function descend(at: { x: number; z: number; yaw: number; vy?: number }) {
+    const g = globe!;
+    spotX = at.x; spotZ = at.z; yaw = at.yaw;
+    host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null;
+    const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
+    h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;
+    vel.x = 0; vel.y = at.vy ?? 0; vel.z = 0; airSpeed = Math.abs(vel.y);
+    phase = 'drone'; blend = 0; fadeT = 0; readySeen = false; maskWait = 0; bandT = 0; readyAt = 0; down = true; lastT = performance.now(); setMode('band');
   }
-  /** The landing ahead along the heading, one camera height away, inside the playable region, on dry land. */
-  function landingPoint(x: number, z: number, f: THREE.Vector2, hh: number) {
-    const lim = PLANET.home.halfSize - PLANET.home.feather - HANDOFF.margin, clampL = (u: number) => Math.max(-lim, Math.min(lim, u));
-    return { x: clampL(x + f.x * hh), z: clampL(z + f.y * hh) };
+  /** Warm the chunks under the falling camera, at the same point the handoff will use. Does not search for a different landing. */
+  function warmUnderFall() {
+    const g = globe!, v = g.camera.position, L = v.length() || 1, s = g.planet.sampleSurface([v.x / L, v.y / L, v.z / L]);
+    host.place(s.x, s.z, g.headingYaw); placedFrame = frameNo; prep = { x: s.x, z: s.z };
   }
-  /** Globe mode, descending over home below prepAlt: choose the landing the descent will use (from the band top) and place
-   *  the player there now, so the patch chunks build during the last of the globe zoom. */
-  function prepare(yaw: number) { // starts the dry-land search; step() finishes it within INPAGE.searchMs per frame, then places the player
-    const g = globe!, v = g.camera.position, pg = planetToGame(g.planet, [v.x, v.y, v.z]), f = new THREE.Vector2(-Math.sin(yaw), -Math.cos(yaw));
-    search = { steps: landSpawnSteps(landingPoint(pg.x, pg.z, f, Math.min(TRANSITION.bandTop, Math.max(TRANSITION.handover + 1, pg.y - ground(pg.x, pg.z)))), undefined, yaw), yaw };
+  function cancelToGlobe() {
+    if (!globe || mode !== 'band') return;
+    wantCancel = false; wantEmbody = false; vel.x = vel.y = vel.z = 0; airSpeed = 0;
+    toGlobe(); globe.resumeOrbit(); globe.jumpTo(Math.max(globe.altitude, FALL_END_M * 2));
   }
-  function stepSearch() {
-    if (!search) return; const t0 = performance.now(); let r = search.steps.next();
-    while (!r.done && performance.now() - t0 < INPAGE.searchMs) r = search.steps.next();
-    if (r.done) { host.place(r.value.x, r.value.z, search.yaw); placedFrame = frameNo; prep = { x: r.value.x, z: r.value.z }; search = null; }
+  /** Photo-mode axes (fly.ts): f = W−S, r = D−A, u = (E or Space) − (Q or Ctrl). Stick look is rad/s; the drag is already radians. */
+  function readAxes(dt: number) {
+    const k = (c: string) => heldKeys.has(c) ? 1 : 0;
+    const a = {
+      f: clamp(axes.f + k('w') - k('s'), -1, 1),
+      r: clamp(axes.r + k('d') - k('a'), -1, 1),
+      u: clamp(axes.u + Number(k('e') || k(' ')) - Number(k('q') || k('control')), -1, 1),
+      fast: heldKeys.has('shift'),
+      yaw: (axes.yaw + k('arrowright') - k('arrowleft')) * PHOTO_FLY_LOOK * dt + mouseYaw,
+      pitch: (axes.pitch + k('arrowup') - k('arrowdown')) * PHOTO_FLY_LOOK * dt + mousePitch,
+    };
+    axes.f = axes.r = axes.u = axes.yaw = axes.pitch = 0; mouseYaw = 0; mousePitch = 0;
+    return a;
   }
   function toGlobe() { restoreScene(); globe!.drive(null); setMode('globe'); }
   function toGame() { restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
@@ -187,6 +208,29 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     for (const o of now) { if (!hidden.has(o)) hidden.set(o, o.visible); o.visible = false; }
   }
 
+  const unregPad = registerPadTarget('drone', {
+    active: () => mode === 'band' && down,
+    move: (forward, strafe) => { axes.f = forward; axes.r = strafe; },
+    look: (dyaw, dpitch) => { axes.yaw = dyaw; axes.pitch = dpitch; },
+    climb: v => { axes.u = v; },
+    embody: () => { if (phase === 'drone') wantEmbody = true; },
+    cancel: () => { wantCancel = true; },
+  });
+  const onKey = (e: KeyboardEvent) => {
+    if (mode !== 'band' || overlayOpen()) return;
+    const t = e.target; if (t instanceof HTMLElement && (t.isContentEditable || t.matches('input,textarea,select'))) return;
+    if (e.type === 'keyup') { heldKeys.delete(e.key.toLowerCase()); return; }
+    if (e.key === 'Escape') { wantCancel = true; return; }
+    if ((e.key === 'g' || e.key === 'G') && phase === 'drone') { wantEmbody = true; return; }
+    heldKeys.add(e.key.toLowerCase());
+  };
+  let px = 0, py = 0;
+  const onDown = (e: PointerEvent) => { if (mode !== 'band' || e.button !== 0 || overlayOpen()) return; dragging = true; px = e.clientX; py = e.clientY; };
+  const onMove = (e: PointerEvent) => { if (!dragging) return; const s = view.camera.fov / 48 * .004; mouseYaw -= (e.clientX - px) * s; mousePitch -= (e.clientY - py) * s; px = e.clientX; py = e.clientY; };
+  const onUp = () => { dragging = false; };
+  window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey); window.addEventListener('blur', () => heldKeys.clear());
+  view.canvas.addEventListener('pointerdown', onDown); window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp);
+
   const api = {
     /** dev (the check script): chunk job scheduler state */
     /** dev (the check script): hold the descent at a height / pin the band camera (occlusion checks); ground height */
@@ -194,7 +238,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** dev (refs/T-0041/measure.mjs): the game view (scene, camera) and the player spot, for the landing line-of-sight raycast */
     get view() { return view; }, player: () => host.player(),
     jobs: () => ({ q: queued(), run: JOBS.jobsRun, deferred: JOBS.deferred, lastMs: +JOBS.lastFrameMs.toFixed(1), kinds: JSON.parse(JSON.stringify(JOBS.kinds)) as unknown }),
-    get mode() { return mode; }, get globe() { return globe; }, get fade() { return fade; }, get height() { return h; }, STATS, INPAGE, far,
+    get mode() { return mode; }, get globe() { return globe; }, get fade() { return fade; }, get height() { return h; }, get flightPhase() { return entryName(); }, STATS, INPAGE, far,
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */
     ascend(): boolean {
       if (mode !== 'game') return true;
@@ -210,9 +254,11 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (mode !== 'game') return true;
       if (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER) return false;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
-      prep = null; hold.hold(); globe.resumeWorkers(); globe.jumpTo(PLANET.radius * 2.2); toGlobe(); return true;
+      prep = null; hold.hold(); globe.resumeWorkers(); globe.resumeOrbit(); globe.jumpTo(PLANET.radius * 2.2); lastT = performance.now(); toGlobe(); return true;
     },
     blocksGame: () => mode !== 'game',
+    /** Air speed (m/s) once the fall has handed off, so the wind loop can start at 10,000 ft. 0 on the globe and in the game. */
+    airRush: () => mode === 'band' && down && phase === 'drone' ? airSpeed : 0,
     /** main's runJobs budget: undefined = the default; larger while the descent waits for the patch chunks */
     jobBudgetMs: () => { const w = (mode === 'band' && down && !readySeen) || (mode === 'globe' && !!prep && !chunksReady()); JOB_FIRST.test = w ? chunkFirst : null; return w ? Math.max(INPAGE.jobMin, INPAGE.jobFrame - renderMs) : undefined; }, /* + the patch chunks run before grass/flora (core/interest JOB_FIRST) */
     ownsInput: () => mode !== 'game',
@@ -221,16 +267,14 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       frameNo++;
       if (next) { if (next === 'globe') toGlobe(); else toGame(); next = null; }
       if (mode === 'globe' && globe) {
-        const o = globe.overHome;
-        if (o && globe.descending && globe.altitude < INPAGE.prepAlt && !prep && !search) prepare(globe.headingYaw);
-        else if ((prep || search) && globe.altitude > INPAGE.prepAlt * 1.5) prep = search = null; // climbed away: choose again next time
-        stepSearch();
-        if (o && globe.descending && globe.altitude < TRANSITION.bandTop && !search) descend({ ...o, yaw: globe.headingYaw }); // waits (still zooming on the globe) until the landing search is done
-        else {
-          const t0 = performance.now(), w = renderer.domElement.width, hh = renderer.domElement.height;
-          if (Math.abs(globe.camera.aspect - w / hh) > 1e-6) { globe.camera.aspect = w / hh; globe.camera.updateProjectionMatrix(); }
-          renderer.toneMappingExposure = INPAGE.gain; globe.step(null); STATS.globeMs = performance.now() - t0; record(); return;
-        }
+        showPrompt(flightPrompt(entryName(), padOn()));
+        if (globe.fallState && globe.altitude < INPAGE.prepAlt && !prep) warmUnderFall();
+        else if (prep && !globe.fallState) prep = null;
+        const t0 = performance.now(), w = renderer.domElement.width, hh = renderer.domElement.height;
+        if (Math.abs(globe.camera.aspect - w / hh) > 1e-6) { globe.camera.aspect = w / hh; globe.camera.updateProjectionMatrix(); }
+        renderer.toneMappingExposure = INPAGE.gain; globe.step(null); // a finished fall calls descend() from onLeave, which switches to the drone
+        if (mode !== 'globe') { showPrompt(flightPrompt(entryName(), padOn())); record(); return; }
+        STATS.globeMs = performance.now() - t0; record(); return;
       }
       const td = performance.now(); drawGame(); STATS.drawMs = performance.now() - td; record();
     },
@@ -241,35 +285,45 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       const now = performance.now(), dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
       end.p.copy(camera.position); end.q.copy(camera.quaternion); const cr = chunksReady(), mr = globe?.maskReady ?? true; if (!cr || mr) maskWait = 0; else if ((maskWait += dt) > INPAGE.maskWaitSec && !maskWarned) { maskWarned = true; console.warn(`INPAGE shoreline mask not ready after ${INPAGE.maskWaitSec} s: landing with the per-vertex shoreline`); }
       ready = cr && (mr || maskWait > INPAGE.maskWaitSec); if (ready && !readySeen) readyAt = Math.round(h); readySeen ||= ready;
-      if (down) bandT += dt; const late = down && !readySeen && bandT > INPAGE.readyMaxSec; /* safety cap: descend at the normal rate, and hand over at capH even if the patch is still building */
-      if (late && h <= INPAGE.capH) { readySeen = true; readyAt = -Math.round(h); console.warn(`INPAGE patch not ready after ${Math.round(bandT)} s: handing over at ${Math.round(h)} m, the game streams the rest`); } // + the globe's shoreline mask (lakeMask.ts)
-      if (needStart) { // ascent: from the rig pose onto the glide path behind the player, then up it
-        needStart = false; start.p.copy(end.p); start.q.copy(end.q); const p = host.player(); fwd.set(-Math.sin(p.yaw), -Math.cos(p.yaw));
-        land.set(p.x, ground(p.x, p.z), p.z); h = h0 = Math.max(1, end.p.y - land.y); off.set(0, 0, 0);
+      if (down) bandT += dt; const late = down && !readySeen && bandT > INPAGE.readyMaxSec;
+      if (late) { readySeen = true; readyAt = -Math.round(h); console.warn(`INPAGE patch not ready after ${Math.round(bandT)} s: fading in at ${Math.round(h)} m, the game streams the rest`); } // the camera is not held: speed from the fall keeps going
+      if (needStart) { // ascent: straight up the player's vertical. Pitch follows the climb curve back toward nadir.
+        needStart = false; const p = host.player(); spotX = p.x; spotZ = p.z; yaw = p.yaw; vel.x = vel.y = vel.z = 0;
+        land.set(p.x, ground(p.x, p.z), p.z); h = h0 = Math.max(1, end.p.y - land.y); pitch = globePitch(h);
       }
       const top = TRANSITION.bandTop * 1.05;
-      if (down) { // the glide path down to the handover height (held there until the chunks are ready), then the rig
-        // slower until the chunks are ready (so the patch is in by ~1 km); the fade is time-limited too, so a late ready never pops
+      if (wantCancel && down) cancelToGlobe();
+      else if (down) { // photo-mode fly plus the fall's velocity. The patch still waits on chunks; the camera does not.
         if (readySeen) fadeT = Math.min(1, fadeT + dt / INPAGE.fadeSec);
         fade = Math.min(patchFade(h, readySeen), fadeT);
-        if (phase === 'fly') { h = Math.max(TRANSITION.handover, h * Math.exp(-INPAGE.kDown * (readySeen || late ? 1 : INPAGE.waitK) * dt)); if (h <= TRANSITION.handover + 1e-3 && fade >= 1) phase = 'blend'; }
+        const lowEnough = readySeen || late;
+        if (phase === 'drone') {
+          if (wantEmbody && lowEnough) { wantEmbody = false; host.place(spotX, spotZ, yaw); placedFrame = frameNo; blendFrom.p.set(spotX, ground(spotX, spotZ) + h, spotZ); blendFrom.q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); blend = 0; phase = 'blend'; vel.x = vel.y = vel.z = 0; airSpeed = 0; }
+          else {
+            const fly = { x: spotX, y: ground(spotX, spotZ) + h, z: spotZ, yaw, pitch };
+            const x0 = fly.x, y0 = fly.y, z0 = fly.z, minY = photoFlyFloor(fly.x, fly.z);
+            stepCarriedFly(fly, vel, dt, readAxes(dt), minY);
+            if (fly.y <= minY + 1e-3 && vel.y < 0) vel.y = 0; // the photo floor stops the body; it does not zero the speed at the handoff
+            airSpeed = dt > 0 ? Math.hypot(fly.x - x0, fly.y - y0, fly.z - z0) / dt : 0;
+            spotX = fly.x; spotZ = fly.z; yaw = fly.yaw; pitch = fly.pitch; h = fly.y - ground(fly.x, fly.z);
+            if (Math.hypot(spotX - host.player().x, spotZ - host.player().z) > 8) { host.place(spotX, spotZ, yaw); placedFrame = frameNo; }
+          }
+        }
         if (DEV && DEBUG.holdH) h = Math.max(h, DEBUG.holdH);
-        glide(h, clamp01((h - TRANSITION.handover) / (h0 - TRANSITION.handover)));
-        cam.q.copy(start.q).slerp(tmpQ, smoothstep(0, 1, clamp01(Math.log(h0 / h) / Math.log(1 / .6)))); // globe pose -> looking at the landing by 0.6 h0
-        if (phase === 'blend') { blend = Math.min(1, blend + dt / TRANSITION.blendSec); const b = smoothstep(0, 1, blend); cam.p.lerp(end.p, b); cam.q.slerp(end.q, b); }
-      } else { // up: rig -> glide path within the first ~30 m, up the glide path, the globe's own pose (heading, 0.08 down) near the top
-        h = Math.min(top, h * Math.exp(INPAGE.kUp * dt));
-        const a = smoothstep(h0, Math.max(h0 + 1, 30), h); glide(h, 0);
-        cam.p.lerp(start.p.clone().setY(start.p.y + h - h0), 1 - a); cam.q.copy(start.q).slerp(tmpQ, a);
-        tmpQ.setFromEuler(new THREE.Euler(globePitch(top), Math.atan2(-fwd.x, -fwd.y), 0, 'YXZ')); cam.q.slerp(tmpQ, smoothstep(top * .6, top, h));
-        fade = patchFade(h, true);
+        if (phase !== 'blend') { cam.p.set(spotX, ground(spotX, spotZ) + h, spotZ); cam.q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
+        if (phase === 'blend') { blend = Math.min(1, blend + dt / TRANSITION.blendSec); const b = smoothstep(0, 1, blend); cam.p.copy(blendFrom.p).lerp(end.p, b); cam.q.copy(blendFrom.q).slerp(end.q, b); }
+        showPrompt(flightPrompt(entryName(), padOn()));
+      } else { // up: the same vertical, back to the planet
+        h = Math.min(top, h * Math.exp(INPAGE.kUp * dt)); pitch = globePitch(h);
+        cam.p.set(spotX, ground(spotX, spotZ) + h, spotZ); cam.q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+        fade = patchFade(h, true); showPrompt('Returning to the planet…');
       }
       if (DEV && DEBUG.pose) { const [x, y, z] = DEBUG.pose.p, [lx, ly, lz] = DEBUG.pose.look; cam.p.set(x, y, z); tmpM.lookAt(cam.p, tmpV.set(lx, ly, lz), UP); cam.q.setFromRotationMatrix(tmpM); }
       camera.position.copy(cam.p); camera.quaternion.copy(cam.q);
       const hc = Math.max(1, cam.p.y - ground(cam.p.x, cam.p.z)); camera.near = Math.max(.2, hc * INPAGE.nearK); camera.far = Math.max(700, hc * 2 + 900, DEV ? DEBUG.far : 0);
       camera.updateMatrixWorld(true);
       STATS.h = h; STATS.fade = fade; STATS.ready = ready; STATS.readyAt = readyAt;
-      if (down && phase === 'blend' && blend >= 1) next = 'game'; else if (!down && h >= top - 1e-3) next = 'globe'; // next frame (this one still draws the band)
+      if (down && phase === 'blend' && blend >= 1) next = 'game'; else if (!down && h >= top - 1e-3) { globe?.resumeOrbit(); next = 'globe'; } // embody finishes into the animal; the climb finishes on the planet and waits for a double-click
     },
     /** buildScene, after the sky update: the globe into the far layer, as the background; the patch fade; band visibility. */
     background(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
@@ -307,7 +361,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (mode === 'game') g.suspendWorkers(); // not if Shift+G already went up meanwhile (the band would build tiles on the main thread)
       return { ms: performance.now() - t0, frames: n, tiles: g.stats().cached };
     },
-    dispose() { globe?.dispose(); far.dispose(); ctl = null; },
+    dispose() { unregPad(); window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); view.canvas.removeEventListener('pointerdown', onDown); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); promptEl?.remove(); globe?.dispose(); far.dispose(); ctl = null; },
   };
   return api;
   /** lake colours for the band: s = 0 the globe's calibrated lakes, 1 the game-matched ones */

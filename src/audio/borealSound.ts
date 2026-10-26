@@ -57,8 +57,20 @@ export function deerSoundIds(prev: { problem: string; motion: string; phase: num
   if (prev.motion === 'jump' && now.motion !== 'jump') ids.push('land');
   return ids;
 }
+/**
+ * Level of the existing wind-pines loop for air rushing past the camera.
+ * 54 m/s is about the belly-to-earth terminal velocity (USPA Skydiver's Information Manual, ~120 mph) [verify page].
+ * The loop still caps at 2×, the same cap the weather wind already uses.
+ */
+export const RUSH_REF_MPS = 54;
+export function rushLevel(speed: number) {
+  return MIX.ambience.wind * Math.min(2, Math.max(0, speed) / RUSH_REF_MPS);
+}
+
 export interface SoundFrame {
   dt: number; halted: boolean; x: number; z: number; yaw: number; darkness: number;
+  /** m/s of the camera after the 10,000 ft handoff. Louder than the weather wind when the fall is faster. */
+  rush?: number;
   /** game hour and day-of-year. Callers are silent until both are set, so a missing clock cannot fall back to a phantom timer. */
   hour?: number; day?: number;
   /** gaitSpeed/gaitName/legs (an AnimalBrain has them): footsteps land on the gait's own touchdowns, not a fixed timer */
@@ -259,7 +271,9 @@ export class BorealSound {
     const d = Math.min(1, Math.max(0, f.darkness));
     this.setLoop('amb-day', MIX.ambience.day * (1 - d));
     this.setLoop('amb-night', MIX.ambience.night * d);
-    const wv = windAt(f.x, 10, f.z); this.setLoop('wind-pines', MIX.ambience.wind * Math.min(2, Math.hypot(wv.x, wv.z) / 4)); // shared wind field; 4 m/s = old level
+    const wv = windAt(f.x, 10, f.z), weather = MIX.ambience.wind * Math.min(2, Math.hypot(wv.x, wv.z) / 4); // shared wind field; 4 m/s = old level
+    const rush = f.rush && f.rush > 0 ? rushLevel(f.rush) : 0;
+    this.setLoop('wind-pines', Math.max(weather, rush)); // the air rush wins when it is louder; it starts at the 10,000 ft handoff
     this.setLoop('water', MIX.ambience.water * this.waterAmount);
     this.setLoop('music-day', this.builtInMusic ? MIX.music.day * (1 - d) : 0);
     this.setLoop('music-night', this.builtInMusic ? MIX.music.night * d : 0);

@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0081",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T19:30:08-07:00",
+  "note": "Step 1 of notes/design-roadmap.md. One observation record. Not claimed, so another bot can take it after approve-plan."
+}

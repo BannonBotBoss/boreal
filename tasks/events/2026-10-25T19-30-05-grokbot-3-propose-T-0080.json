@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0080",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T19:30:05-07:00",
+  "note": "Issues #100-#109 (Matthew, Bannon-github, 2026-10-25 6:56-7:13 PM PT). Full roadmap in notes/design-roadmap.md. Next free id is T-0080: T-0079 is grokbot-3/talking-to-matthew, T-0078 is pull request #94, T-0077 is used on grokbot-3/single-time-control and grokbot-3/menu-no-bounce. Not claimed."
+}

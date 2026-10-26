@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0077",
+  "agent": "grokbot-3",
+  "branch": "grokbot-3/menu-no-bounce",
+  "skill": "fixed-menu-frame",
+  "handoff": "tasks/handoffs/T-0077-grokbot-3.md",
+  "note": "Implementation dcc9935. PR https://github.com/BannonBotBoss/boreal/pull/91. After tops: 1280x720 top 0 height 720; 1280x1100 top 142.5 height 815; 1280x420 top 0 height 420. Hold probe kept every recorded row fully visible and stopped on release. npx tsc --noEmit exit 0. npm test 786 tests, 772 pass, 0 fail, 14 todo. Not merged.",
+  "at": "2026-10-25T18:25:39-07:00"
+}

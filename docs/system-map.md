@@ -124,7 +124,7 @@ flowchart LR
 | [Audio and music](#audio) | Ambience, animal calls, footsteps, wolf voice, music decks and the bus mixer. | `footsteps` | clock, weather, locomotion, behaviour, player | ui | 1 |
 | [Agent and behaviour pipeline](#behaviour) | Animal brains: senses -> problem (explore, escape, feed ...) -> motion intent; deer herds, hares, people. | `behaviour` | senses, needs, terrain, clock, vegetation | audio, interaction, locomotion, senses | 2 |
 | [Camera](#camera) | Third-person follow camera: a rear three-quarter just above the wolf, pitch spring and look-around. | `camera` | player, controls, terrain, interaction | interaction | 2 |
-| [Time and clock](#clock) | The one world clock (frozen in menus), game hour, date and sun position; chronometer offset. | `clock`, `chronometer` | save | animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 2 |
+| [Time and clock](#clock) | The one world clock and its one rate. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control. | `clock`, `chronometer` | save | animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 4 |
 | [Player controls and gamepad](#controls) | One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics. | `haptics` | save | camera, interaction, player, stamina, ui | - |
 | [Globe (planet view)](#globe) | Cube-sphere planet, atmosphere, far layer and the descent from orbit to the ground. | - | terrain, clock, lighting, quality, save | - | 19 |
 | [Interaction, focus and target glow](#interaction) | Picking the interaction target, held focus lock and steering, the glowing outline. | `autoFocus`, `targetGlow` | controls, player, behaviour, camera | camera | 1 |
@@ -193,8 +193,7 @@ Read by: `src/core/sim/index.ts`
 
 | Figure | Value | Units | What | Source |
 |---|---|---|---|---|
-| `step` | 0.03333333333333333 | s | s fixed sub-step (coarse ecosystem ticks may raise it); game s per sim s (the world clock: 300 real s per game hour = x12) | design (30 Hz like the player sim) |
-| `timeScale` | 12 | game s / sim s | s fixed sub-step (coarse ecosystem ticks may raise it); game s per sim s (the world clock: 300 real s per game hour = x12) | clock.realSecondsPerGameHour 300 -> 3600/300 = 12 |
+| `step` | 0.03333333333333333 | s | s fixed sub-step (coarse ecosystem ticks may raise it). Needs use the world clock's game-second conversion, not a sim rate. | design (30 Hz like the player sim) |
 | `cell` | 25 | m | m spatial-grid cell; m scent search radius (as senses.range) | estimate (game calibration) |
 | `scentRange` | 40 | m | m spatial-grid cell; m scent search radius (as senses.range) | senses.range |
 | `biteReach` | 0.6 | m | m a grazer reaches food from; Energy % above which it stops seeking food | estimate (game calibration) |
@@ -348,11 +347,11 @@ Read by: `src/render/math.ts`
 <a id="clock"></a>
 ## Time and clock (`clock`)
 
-The one world clock (frozen in menus), game hour, date and sun position; chronometer offset.
+The one world clock and its one rate. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control.
 
 - Depends on: save
 - Feeds: animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather
-- Modules: `src/core/timeOfDay.ts`, `src/core/worldClock.ts`, `src/core/timescale.ts`, `src/ui/chronometer.ts`, `src/core/deepTime.ts`
+- Modules: `src/core/timeOfDay.ts`, `src/core/worldClock.ts`, `src/core/timescale.ts`, `src/ui/chronometer.ts`, `src/ui/timeHud.ts`, `src/core/deepTime.ts`
 
 ### `SYSTEM_PROPERTIES.clock`
 
@@ -379,8 +378,10 @@ Read by: `src/ui/chronometer.ts`
 
 | Flag | Effect |
 |---|---|
-| `?hour` | =HH sets the time of day (core/timeOfDay) |
-| `?timescale` | speeds the simulation, not the clock (core/timescale) |
+| `?hour` | =HH sets the time of day on the one clock (core/timeOfDay) |
+| `?day` | =1-366 sets the day of year (core/timeOfDay) |
+| `?date` | =YYYY-MM-DD sets the year and day (core/timeOfDay) |
+| `?timescale` | sets the one clock rate, 0.05 to 16 world seconds per real second (core/timescale, core/worldClock) |
 
 **Linked data tables** (kept in their own module)
 
@@ -941,6 +942,8 @@ A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain f
 | `?bench` | globe | benchmark run (globeView, main.ts) |
 | `?bench` | quality | per-tier and per-feature cost run (main.ts) |
 | `?contacts` | behaviour | =1 logs every solid contact (main.ts) |
+| `?date` | clock | =YYYY-MM-DD sets the year and day (core/timeOfDay) |
+| `?day` | clock | =1-366 sets the day of year (core/timeOfDay) |
 | `?dir` | globe | sun direction (globeView) |
 | `?dome` | globe | sky dome (globeView) |
 | `?farSamples` | globe | far-layer demo samples (farLayerDemo) |
@@ -949,7 +952,7 @@ A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain f
 | `?fov` | camera | field of view override (grok/rabbit-clover, T-0009) |
 | `?glow` | interaction | =0 turns the target glow off for A/B (grok/interact-outline, T-0035) |
 | `?handoff` | globe | handoff test (globeView) |
-| `?hour` | clock | =HH sets the time of day (core/timeOfDay) |
+| `?hour` | clock | =HH sets the time of day on the one clock (core/timeOfDay) |
 | `?inpagedev` | globe | dev hooks for the in-page globe (inpage) |
 | `?loco` | locomotion | the controller-driven player wolf (animals/locomotion/game) |
 | `?look` | globe | look direction (globeView) |
@@ -965,7 +968,7 @@ A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain f
 | `?stages` | terrain | =0 / =1 staged terrain off / on (main.ts) |
 | `?start` | globe | =globe opens on the planet (grok-globe/globe-default-view, T-0034) |
 | `?tier` | globe | force a quality tier (globeView) |
-| `?timescale` | clock | speeds the simulation, not the clock (core/timescale) |
+| `?timescale` | clock | sets the one clock rate, 0.05 to 16 world seconds per real second (core/timescale, core/worldClock) |
 | `?tones` | audio | show the isochronic / binaural tone controls (grok/music, T-0033) |
 | `?transition` | globe | globe <-> ground mode (world/globe/transition) |
 | `?tree` | vegetation | procedural tree viewer page (world/globe/entry) |

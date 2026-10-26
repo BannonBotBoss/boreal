@@ -40,7 +40,7 @@ import { nearestWater, waterAhead } from './core/needs/water';
 import { createSnapshotHub } from './core/snapshot';
 import { createPhotoMode } from './photo/photoMode';
 import { shaderClock } from './render/shaderClock';
-import { TIMESCALE } from './core/timescale';
+import { timescaleFrom } from './core/timescale';
 import { drawBetween, type DrawState } from './core/drawLerp';
 import { WALK_PROBE, installWalkProbe } from './dev/walkProbe';
 import { RENDER_SETTINGS, createSettingsStore } from './core/renderSettings';
@@ -65,11 +65,12 @@ import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help
 import { startView } from './world/globe/startView';
 import { createInPage } from './world/globe/inpage';
 import { ageYears, lifespanWarning } from './core/lifespan';
-import { CLOCK, loadClock, worldSec, pauseClock, resumeClock, saveClock } from './core/worldClock';
+import { CLOCK, clockRate, gameSecondsPerWorldSecond, holdClock, isPaused, loadClock, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, timeCommand, toggleHudPause, worldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
 import { dryStart } from './core/stages/surfaceAt';
-import { DAY, dayAt, hourAt, initDay, REAL_SECONDS_PER_GAME_HOUR } from './core/timeOfDay';
+import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
 import { createChronometer } from './ui/chronometer';
+import { createTimeHud } from './ui/timeHud';
 import { controlsScreen } from './ui/controls';
 import { ACTION, ACTIVE, BINDINGS_KEY, atomValues, bindingLabel, comboLabel, groupLabel, loadBindings, resolveInput, saveBindings, type Bindings } from './core/bindings';
 
@@ -226,7 +227,7 @@ let playerMass = view.playerMass(), ground = { cost: 1, absorb: 1, sink: 0 };
 const walkProbe = WALK_PROBE ? installWalkProbe(() => view.lookup('player')?.object, view.camera, sfx as never) : undefined;
 loadGround(localStorage.getItem(SAVE_KEY_GROUND));
 setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); } catch { /* blocked */ }
-  if (paused || menu.open) return; // menu freezes the world clock; no sim work while open
+  if (isPaused() || menu.open) return; // a hold freezes the world clock; no sim work while it is frozen
   playerMass = view.playerMass(); // follows Play-as + appearance edits
   ground = footing(column(player.x, player.z), playerMass, 'canid', gravity());
   // Droppings are a digest act (core/traces addFeces), not this clock. Footprints stay: a step that sinks the ground.
@@ -277,7 +278,7 @@ let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem
 function setBindings(b: Bindings) { bindings = b; padRouter?.setBindings(b); hint = { pad: '', keys: '' }; bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
 const controls = controlsScreen({ get: () => bindings, set: setBindings, library: () => { menu.close(); dialog.showModal(); } });
 const hintFor = (kind: 'keys' | 'pad') => { const L = (id: string) => bindingLabel(bindings[id][kind]);
-  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('lock')} lock · ${L('eatPrey')} eat held · ${L('releasePrey')} release · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} clock · Controls: ${L('pause')} → Controls`; };
+  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('lock')} lock · ${L('eatPrey')} eat held · ${L('releasePrey')} release · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} hour · ${L('timeSlower')} slower · ${L('timeFaster')} faster · ${L('timePause')} pause time · Controls: ${L('pause')} → Controls`; };
 function act(id: string) { // one fired press action (keyboard or gamepad)
   if (padRouter.act(id)) return;
   if (dialog.open) { if (id === 'back' || id === 'interact') dialog.close(); else if (id === 'pause') togglePause(); return; }
@@ -304,7 +305,13 @@ function act(id: string) { // one fired press action (keyboard or gamepad)
     if (!bond) { notice('Nothing to release.'); return; }
     context = rememberBond(context, bond.key, { at: bond.at, tau: bond.tau, species: bond.species });
     notice('Released. It treats you as a friend until the memory fades.');
-  } else if (id === 'howl') sfx.howl(); else if (id === 'growl') sfx.growl();
+  }   else if (id === 'howl') sfx.howl(); else if (id === 'growl') sfx.growl();
+  else if (id === 'timePause') { if (!inpage?.blocksGame()) toggleHudPause(); }
+  else if (id === 'timeSlower' || id === 'timeFaster') {
+    // Planet view keeps d-pad right for the axis and d-pad left for axis-mode layers. The time bar's buttons still work.
+    if (inpage?.mode === 'globe' || inpage?.blocksGame()) return;
+    timeCommand(id === 'timeSlower' ? 'slower' : 'faster');
+  }
 }
 let drag: { id: number; x: number; y: number } | undefined;
 const canControl = () => !menuOpen() && !paused && !dialog.open && !document.hidden && !photo.active && !inpage?.blocksGame();
@@ -356,11 +363,13 @@ canvas.addEventListener('webglcontextrestored', () => location.reload());
 let lastPhotoView: PhotoView | undefined;
 let hadPad = false, lastTime = 0, accumulator = 0;
 const clock0 = loadClock(localStorage.getItem(CLOCK.key));
-initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the chronometer's saved dial; ?hour=HH sets it exactly
-const chrono = createChronometer(worldSec); // T / gamepad View: set the time of day (ui/chronometer)
+initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the chronometer's saved dial; ?hour= ?day= ?date= set it
+if (new URLSearchParams(location.search).has('timescale')) setClockRate(timescaleFrom(location.search)); // only when present, so a saved rate is kept
+const chrono = createChronometer(worldSec); // T / d-pad up: the hour scrub of the same clock (ui/chronometer)
+const timeHud = createTimeHud(() => { if (!inpage?.blocksGame()) { chrono.toggle(); clearInput(); } });
 function bindingTexts() { // help dialog and chronometer lines written from the live bindings (Controls screen rebinding updates them)
   const L = (id: string, k: 'keys' | 'pad') => bindingLabel(bindings[id][k]), G = (id: string, k: 'keys' | 'pad') => groupLabel(bindings, id, k);
-  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold ${L('lock', k)} and keep a prey inside the aim cone to lock it; ${L('jump', k)} then steers the leap onto that lock. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} chronometer, ${L('pause', k)} pause`;
+  const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold ${L('lock', k)} and keep a prey inside the aim cone to lock it; ${L('jump', k)} then steers the leap onto that lock. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} hour, ${L('timeSlower', k)} slower, ${L('timeFaster', k)} faster, ${L('timePause', k)} pause or play the clock, ${L('pause', k)} menu`;
   element('help-binds').textContent = `Xbox: ${tell('pad')}, ${L('back', 'pad')} close this panel. Keyboard: ${tell('keys')}, ${L('photo', 'keys')} photo mode (free camera, rewind, capture). Rebind any of these under ${L('pause', 'keys')} → Controls.`;
   const close = [...bindings.chrono.keys, ...bindings.back.keys, ...bindings.chrono.pad, ...bindings.back.pad].map(comboLabel).join(' / ');
   chrono.setHint(`${G('scrub', 'keys')} or ${G('scrub', 'pad')}: scrub time · drag the dial · ${close}: close`);
@@ -368,24 +377,25 @@ function bindingTexts() { // help dialog and chronometer lines written from the 
 bindingTexts();
 let simTime = clock0.worldSec, lastWorld = worldSec(); // sim and clock fields share the world clock (frozen with the menu)
 try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
-if (clock0.offlineSec > 0) tickGround(12 * clock0.offlineSec); // time away between quits ages the ground/deltas
+if (clock0.offlineSec > 0) tickGround(gameSecondsPerWorldSecond * clock0.offlineSec); // time away ages the ground at the clock's game-second conversion, rate 1
 function frame(time: number) { const frameStart = performance.now();
   const wallDt = Math.min((time - lastTime) / 1000 || 0, 1); // T-0036: thought bubbles keep real seconds even when frames are slow
-  const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time;
-  const sdt = dt * TIMESCALE; // ?timescale (T-0002): sim, animals, gaits, shader effects; look, input, audio, UI and the world clock stay on real time
+  const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time; // look and input smoothing stay on this real frame delta
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');
   if (hadPad && !pad) { paused = true; pauseClock(); element('pause').textContent = 'Resume'; if (!menu.open) menu.show('pause'); notice('Controller disconnected. Reconnect and press Menu to resume.'); }
   hadPad = !!pad;
   const padOwned = padRouter.frame(pad ?? undefined, time, dt);
   const input = resolveInput(bindings, atomValues([...keys, ...tapped], padOwned ? undefined : pad), inputPrev, chrono.open); inputPrev = input.active; tapped.clear();
   if (!menu.open) for (const id of input.fired) act(id); // the menu reads the pad itself (and the keys); its presses never reach the game
+  if (photo.active && !photo.simulating) holdClock('photo'); else releaseClock('photo'); // a frozen photo holds the one clock; a live sequence lets it run
+  const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow;
+  const sdt = Math.min(wDt, .05 * Math.max(clockRate(), 1)); // physics step budget; the clock itself is not capped
   const hold = photo.active ? resolveInput(bindings, atomValues([], padOwned ? undefined : pad), new Set(), chrono.open).value : input.value; // photo mode: its own keys
   const H = (id: keyof typeof ACTION) => hold[id] ?? 0;
   // A live photo sequence keeps the world running (no player input) while photo mode renders it.
-  const active0 = !menuOpen() && !paused && !dialog.open && !document.hidden && (!photo.active || photo.simulating) && !inpage?.blocksGame(); // in-page globe/band: sim frozen, world clock runs
-  const active = active0; // the world clock (pauseClock/resumeClock around the menu) freezes age and every clock field
+  const active0 = !menuOpen() && !paused && !isPaused() && !dialog.open && !document.hidden && (!photo.active || photo.simulating) && !inpage?.blocksGame(); // in-page globe/band: sim frozen; the clock still runs unless a hold is set
+  const active = active0;
   const pv = photo.active ? (photo.reviewing ? lastPhotoView : lastPhotoView = photo.update(dt)) : undefined;
-  if (!pv || pv.frozen === false) shaderClock.time += sdt;
   let dx = 0, dz = 0;
   chrono.update(dt, menu.open ? 0 : H('scrubLater') - H('scrubEarlier')); // chronometer open: only its inputs and the look inputs it does not use are live (core/bindings liveActions)
   if (active) {
@@ -446,7 +456,7 @@ function frame(time: number) { const frameStart = performance.now();
       // brain's idle 'recover' refill is kept (its forage loop depends on it; flagged in the T-0036 handoff).
       if (!(autonomous && brain.problem === 'recover')) brain.energy = e0;
       if (drinking && (Math.abs(dz) > .01 || needs.water >= 99.5)) { drinking = false; if (needs.water >= 99.5) notice('Thirst quenched.'); }
-      const nx = stepNeeds(sp, needs, { dtGame: 3600 / REAL_SECONDS_PER_GAME_HOUR / 30, speed: moved * 30, tC: airC, drinking, energy: brain.energy });
+      const nx = stepNeeds(sp, needs, { dtGame: gameSecondsPerWorldSecond / 30, speed: moved * 30, tC: airC, drinking, energy: brain.energy });
       needs = nx.state; brain.energy = nx.energy;
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
       if (view.playable.id === 'wolf' && moved > 0) tryMark('wolf:player', player.x, player.z, moved);
@@ -468,9 +478,9 @@ function frame(time: number) { const frameStart = performance.now();
   } else { accumulator = 0; drawFrom = undefined; }
   view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
-  { const wNow = worldSec(), wDt = Math.max(0, wNow - lastWorld); lastWorld = wNow; view.worldTime = wNow; // 'clock' fields follow worldSec (frozen while the menu is open)
-    tickGround(12 * wDt); // 1 real s = 12 game s (timeOfDay REAL_SECONDS_PER_GAME_HOUR 300)
-    updateWeather(Math.min(wDt, .25), 3600 / REAL_SECONDS_PER_GAME_HOUR, dayAt(wNow), hourAt(wNow)); } // hour and date include the chronometer's dial
+  view.worldTime = wNow; // one clock: ground years and weather use this frame's world-second delta
+  tickGround(gameSecondsPerWorldSecond * wDt);
+  updateWeather(Math.min(wDt, .25), gameSecondsPerWorldSecond, dayAt(wNow), hourAt(wNow));
   { // T-0035 held focus (core/focusLock): only while Focus (LB / F) is held and an interactable object is within FOCUS.radius
     const kinds = (Object.keys(catalog) as (keyof typeof catalog)[]).filter(k => !(SYSTEM_PROPERTIES.autoFocus.excludeKinds as readonly string[]).includes(k) && (catalog[k].interactions ?? []).some(a => player.abilities.includes(a)));
     focusTarget = pickFocus(active && !autonomous && H('focus') > ACTIVE, focusTarget, { x: player.x, z: player.z, view: yaw + lookYaw }, view.entities().filter(e => !context.records[e.key]?.removed), kinds);
@@ -481,7 +491,7 @@ function frame(time: number) { const frameStart = performance.now();
   const canDrink = (!action || action === 'forage') && waterAhead(player.x, player.z, yaw);
   const actionLabel = canDrink ? `${pad ? 'A / E' : 'E / click'} · ${drinking ? 'stop drinking' : 'drink'}` : action ? `${pad ? 'A / E' : 'E / click'} · ${action}` : 'Approach an individual';
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;
-  actionButton.disabled = canDrink ? paused : !action || paused || saveBlocked || !!playerAction;
+  actionButton.disabled = canDrink ? paused || isPaused() : !action || paused || isPaused() || saveBlocked || !!playerAction;
   if (playerAction && simTime - actionStarted > 1.2) { playerAction = undefined; pushFrom = undefined; }
   // Menu open: hold the last frame (clock frozen; no age/growth/render). Playing: draw every frame.
   { const held = huntLock.key ? view.hares.list().find(h => `hare:${h.id}` === huntLock.key) : undefined;
@@ -491,7 +501,7 @@ function frame(time: number) { const frameStart = performance.now();
   walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
-  sfx.update({ dt, halted: paused || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(worldSec()), day: dayAt(worldSec()), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
+  sfx.update({ dt: wDt, halted: isPaused() || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || !!inpage?.blocksGame(), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb });
   if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
     if (ev.type === 'pinned') { notice('Pinned. X eats, B releases.'); continue; } // the bite row already played the one squeal
     sfx.hare(ev.type, ev);
@@ -513,8 +523,9 @@ function frame(time: number) { const frameStart = performance.now();
   document.body.classList.toggle('night', view.darkness() > .5);
   const holding = view.hares.held();
   const aimLine = holding ? `Holding a hare · ${bindingLabel(bindings.eatPrey.keys)} eat · ${bindingLabel(bindings.releasePrey.keys)} release` : huntLock.key ? 'Lock on' : H('lock') > ACTIVE ? 'aiming' : focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : `RT run · LT stealth · LB focus · ${bindingLabel(bindings.lock.keys)} lock`;
-  status.innerText = `${photo.active ? 'PHOTO · ' : paused ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
-  { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind); if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
+  status.innerText = `${photo.active ? 'PHOTO · ' : isPaused() ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
+  { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind);   if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
+  timeHud.setHidden(menu.open || photo.active);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

@@ -201,7 +201,7 @@ export const SYSTEM_PROPERTIES = {
   },
   /** Headless animal simulation (core/sim, T-0036): game calibration, not species data. */
   sim: {
-    /** s fixed sub-step (coarse ecosystem ticks may raise it); game s per sim s (the world clock: 300 real s per game hour = x12) */ step: 1 / 30, timeScale: 12,
+    /** s fixed sub-step (coarse ecosystem ticks may raise it). Needs use the world clock's game-second conversion, not a sim rate. */ step: 1 / 30,
     /** m spatial-grid cell; m scent search radius (as senses.range) */ cell: 25, scentRange: 40,
     /** m a grazer reaches food from; Energy % above which it stops seeking food */ biteReach: .6, fullAt: 90,
     /** m ring step of the water search */ waterStep: 2,
@@ -292,7 +292,7 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
     range: ['m', EST], threshold: ['0-1', EST], cueLife: ['s', EST], cueCap: ['count', EST], thoughtCap: ['count', EST], updateSeconds: ['s', EST] } },
   sensesHalo: { readers: ['src/core/senseBeacons.ts'], keys: { radius: ['m', EST], fadeFrom: ['m/s', 'stealth speed 0.8 m/s (core/wolfModes)'], fadeTo: ['m/s', EST], speedEase: ['s', EST] } },
   sim: { readers: ['src/core/sim/index.ts'], keys: {
-    step: ['s', 'design (30 Hz like the player sim)'], timeScale: ['game s / sim s', 'clock.realSecondsPerGameHour 300 -> 3600/300 = 12'], cell: ['m', EST], scentRange: ['m', 'senses.range'],
+    step: ['s', 'design (30 Hz like the player sim)'], cell: ['m', EST], scentRange: ['m', 'senses.range'],
     biteReach: ['m', EST], fullAt: ['0-100', EST], waterStep: ['m', EST], chaseAt: ['m', EST], stalkSpeed: ['x walk', EST], pounceAt: ['m', EST],
     pounceSeconds: ['s', 'core/animalBehavior jump length'], pounceCooldown: ['s', 'core/animalBehavior jump cooldown'], pounceCarry: ['x speed', 'movement.pounceCarry'], restBout: ['s', EST] } },
   social: { readers: ['src/core/needs/social.ts', 'src/core/sim/index.ts'], keys: { maxHops: ['links', EST], memorySeconds: ['s', EST] } },
@@ -341,9 +341,9 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
     modules: ['src/render/math.ts', 'src/render/buildScene.ts'], groups: ['camera'], dependsOn: ['player', 'controls', 'terrain', 'interaction'],
     flags: { at: '=x,z[,yaw] start position (main.ts)', fov: 'field of view override (grok/rabbit-clover, T-0009)' }, tables: {},
     remaining: ['main.ts mouse-drag look sensitivity and look-yaw return rate', 'render/buildScene base field of view (48 deg; the focus field of view is autoFocus.cameraFovDeg)'] },
-  clock: { title: 'Time and clock', what: 'The one world clock (frozen in menus), game hour, date and sun position; chronometer offset.',
-    modules: ['src/core/timeOfDay.ts', 'src/core/worldClock.ts', 'src/core/timescale.ts', 'src/ui/chronometer.ts', 'src/core/deepTime.ts'], groups: ['clock', 'chronometer'], dependsOn: ['save'],
-    flags: { hour: '=HH sets the time of day (core/timeOfDay)', timescale: 'speeds the simulation, not the clock (core/timescale)' },
+  clock: { title: 'Time and clock', what: 'The one world clock and its one rate. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control.',
+    modules: ['src/core/timeOfDay.ts', 'src/core/worldClock.ts', 'src/core/timescale.ts', 'src/ui/chronometer.ts', 'src/ui/timeHud.ts', 'src/core/deepTime.ts'], groups: ['clock', 'chronometer'], dependsOn: ['save'],
+    flags: { hour: '=HH sets the time of day on the one clock (core/timeOfDay)', day: '=1-366 sets the day of year (core/timeOfDay)', date: '=YYYY-MM-DD sets the year and day (core/timeOfDay)', timescale: 'sets the one clock rate, 0.05 to 16 world seconds per real second (core/timescale, core/worldClock)' },
     tables: { 'src/core/timeOfDay.ts#DAY': 'chronometer offset (persisted)', 'src/core/worldClock.ts#CLOCK': 'save key and offline cap',
       'src/core/deepTime.ts#DEEP': 'deep-time figures: sun and Earth age, flux thresholds, life start (T-0060)', 'src/core/deepTime.ts#MILESTONES': 'dated milestones on the deep-time dial (T-0060)' }, remaining: [] },
   controls: { title: 'Player controls and gamepad', what: 'One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics.',

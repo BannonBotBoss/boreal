@@ -1,4 +1,4 @@
-import { createVenus, dayOfYearOf, skyDate } from './venusSky';
+import { createVenus } from './venusSky';
 import { SITE as VENUS_SITE } from '../core/weather'; // the Sun and the planets share the observer (Kenora) so twilight and Venus agree
 import { SKY, TWILIGHT_B0, skyLuminance, twilightIlluminance } from '../core/skyVisibility';
 import { GLSL_NOISE } from '../proc/glsl';
@@ -6,7 +6,7 @@ import { hash, random } from '../proc/rng';
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { WORLD_SEED } from '../core/world';
-import { DAY_OF_YEAR, lighting, sunPosition } from '../core/timeOfDay';
+import { clockDate, dayAt, lighting, sunPosition } from '../core/timeOfDay';
 import { WEATHER, shortwave, weatherAt } from '../core/weather';
 import { LUX, SYNODIC, darkAdapted, exposureFor, moonAge, moonLux, nightKey, nightSkyLight, sunColour, wolfEyes } from '../core/light';
 import { LIGHTING } from './pbr';
@@ -66,8 +66,7 @@ void main() {
 }`;
 
 export function createSky(scene: THREE.Scene) {
-  const search = typeof location === 'undefined' ? '' : location.search, hasDate = new URLSearchParams(search).has('date');
-  const date = skyDate(search, DAY_OF_YEAR), doy = hasDate ? dayOfYearOf(date) : DAY_OF_YEAR, venus = createVenus(scene, search); // ?date= moves the Sun and the planets together
+  const search = typeof location === 'undefined' ? '' : location.search, venus = createVenus(scene, search); // the date is the clock's (initDay applies ?date= after this is built)
   const sky = new Sky(); sky.scale.setScalar(600); sky.layers.enable(1); scene.add(sky); // layer 1 = GI probe capture
   const u = sky.material.uniforms;
   u.turbidity.value = 2.5; u.rayleigh.value = 2.2; u.mieCoefficient.value = .004; u.mieDirectionalG.value = .8;
@@ -94,12 +93,13 @@ export function createSky(scene: THREE.Scene) {
     sky, sunLight, hemi,
     /** Moves the sun and recolours sky, light and fog for the hour; the sky follows the camera. */
     update(hour: number, time: number, camera: THREE.Camera, focus: THREE.Vector3) {
+      const doy = dayAt(time), date = clockDate(time);
       const sun = sunPosition(hour, doy, VENUS_SITE.lat), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
       sky.position.copy(camera.position); clouds.position.copy(camera.position);
       u.sunPosition.value.copy(dir);
       // Physical light (core/light): sun colour from spectral transmittance, illuminance in lux, adaptive exposure.
       const cosZ = Math.sin(sun.elevation * Math.PI / 180), wq = weatherAt(focus.x, focus.z), haze = (u.turbidity.value as number) / 2.5;
-      const sc = sunColour(cosZ, haze), age = moonAge(WEATHER.day), moon = sunPosition(hour - age / SYNODIC * 24); // moon transits ~0.8 h later per day of age
+      const sc = sunColour(cosZ, haze), age = moonAge(WEATHER.day), moon = sunPosition(hour - age / SYNODIC * 24, doy); // moon transits ~0.8 h later per day of age; same day as the sun
       const Esun = shortwave(cosZ, WEATHER.on ? wq.cloud : 0) * LUX.efficacy, Emoon = moonLux(age, Math.sin(moon.elevation * Math.PI / 180)) * (1 - .75 * (WEATHER.on ? wq.cloud : 0));
       const Etw = sun.elevation < 0 ? twilightIlluminance(sun.elevation) : 0; // diffuse sky after sunset (core/skyVisibility), so the eye adapts to it
       LIGHTING.lux = Esun + Emoon + Etw + LUX.nightSky; LIGHTING.gain = exposureFor(LIGHTING.lux) * wolfEyes(LIGHTING.lux); LIGHTING.moonAge = age; LIGHTING.Esun = Esun; LIGHTING.Emoon = Emoon;

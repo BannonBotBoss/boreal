@@ -50,9 +50,15 @@ export const ACTIONS: ActionDef[] = [
   A('chrono', 'Chronometer (time of day)', 'press', 'any', ['t'], ['dup']),
   A('scrubEarlier', 'Chronometer: earlier', 'hold', 'chrono', ['arrowleft'], ['dleft', 'ls.left'], { sum: true }),
   A('scrubLater', 'Chronometer: later', 'hold', 'chrono', ['arrowright'], ['dright', 'ls.right'], { sum: true }),
+  // Play only. D-pad left/right are the chronometer's while that dial is open, and the menu's while a menu is open.
+  // They are not the planet-view axis (d-pad right) or axis-mode layers (d-pad left): main does not dispatch these then.
+  // Comma, period and semicolon stay off the volume keys ([ ] and - =).
+  A('timeSlower', 'Time: slower (in-game clock)', 'press', 'play', [','], ['dleft']),
+  A('timeFaster', 'Time: faster (in-game clock)', 'press', 'play', ['.'], ['dright']),
+  A('timePause', 'Time: pause or play (in-game clock)', 'press', 'play', [';'], ['ls.click']),
   A('back', 'Close (chronometer / panel)', 'press', 'any', [], ['b']),
   A('pause', 'Pause menu', 'press', 'any', ['escape'], []),
-  A('padMenu', 'Pad menu (Layers, Camera, Time, Badges, Gallery, Settings)', 'press', 'any', ['tab'], ['menu']),
+  A('padMenu', 'Pad menu (Layers, Camera, Badges, Gallery, Settings)', 'press', 'any', ['tab'], ['menu']),
   A('padHelp', 'Controls help overlay', 'press', 'any', ['f1'], ['view']),
   A('photo', 'Photo mode', 'press', 'play', ['p'], []),
   A('shutter', 'Take a photo (shutter)', 'press', 'any', ['enter'], ['rs.click']),

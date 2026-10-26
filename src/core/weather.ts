@@ -119,7 +119,8 @@ function climateRaw(day: number, hour: number, z = 0) {
 }
 
 // ---- near-field grid ----------------------------------------------------------------------------------------------
-export const WEATHER = { on: true, quality: 8, timeScale: 1, day: 227, hour: 8, ox: 0, oz: 0, ms: 0, msAvg: 0, steps: 0 };
+/** day and hour are copies of the world clock, written by updateWeather before each step. The step integrates the dt it was given; it does not own a rate. */
+export const WEATHER = { on: true, quality: 8, day: 227, hour: 8, ox: 0, oz: 0, ms: 0, msAvg: 0, steps: 0 };
 export const NY = 4, DY = 400; // layer centres at 200, 600, 1000, 1400 m above the surface
 export let NX = 8, DX = 48;
 export interface Grid { u: Float32Array; v: Float32Array; w: Float32Array; th: Float32Array; q: Float32Array; qc: Float32Array; qr: Float32Array;
@@ -343,15 +344,15 @@ let acc = 0, running: Generator<unknown, unknown> | undefined;
  * runs one slice per frame (≈ 0.1–0.6 ms each), so no frame pays for a whole step. */
 export function updateWeather(realDt: number, gameSecondsPerReal: number, day: number, hour: number) {
   if (!grid) initWeather(day, hour, INTEREST.x, INTEREST.z);
-  if (!WEATHER.on) { WEATHER.day = day; WEATHER.hour = hour; running = undefined; return; }
+  WEATHER.day = day; WEATHER.hour = hour; // the world clock is the date; a slice may advance the copy, and the next call overwrites it
+  if (!WEATHER.on) { running = undefined; return; }
   const t0 = performance.now();
   fillKinds(2);
   acc += realDt;
   if (!running) {
     if (acc < .5) return;
     recentre(INTEREST.x, INTEREST.z);
-    WEATHER.day = day; WEATHER.hour = hour; // the game clock is the date; timeScale only speeds the weather's evolution
-    running = stepSlices(Math.min(120, acc * gameSecondsPerReal * WEATHER.timeScale)); acc = 0;
+    running = stepSlices(Math.min(120, acc * gameSecondsPerReal)); acc = 0;
   }
   if (running.next().done) running = undefined;
   WEATHER.ms = performance.now() - t0; WEATHER.msAvg = WEATHER.msAvg * .98 + WEATHER.ms * .02;

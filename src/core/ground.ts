@@ -71,7 +71,8 @@ export const FAUNA = { deerPelletGroupsPerDay: 12.7, deerIntakeShare: .022, deer
 
 // ---- closed-form decay chain ------------------------------------------------------------------------------------
 const n = POOLS.length;
-export const rates = (tempC = CLIMATE.meanAnnualTempC, speed = 1) => POOLS.map(p => p.k * p.q10 ** ((tempC - CLIMATE.refTempC) / 10) * speed);
+/** Decay rates at `tempC`. Years come from the world clock; there is no separate speed multiplier. */
+export const rates = (tempC = CLIMATE.meanAnnualTempC) => POOLS.map(p => p.k * p.q10 ** ((tempC - CLIMATE.refTempC) / 10));
 /** x(t) for dx/dt = A x + b with A lower-bidiagonal (decay k_i, transfer h_i k_i to i+1): exact (Bateman + steady state). */
 export function chain(x0: readonly number[], input: readonly number[], t: number, k = rates()) {
   const h = POOLS.map(p => p.toNext), xs: number[] = [];
@@ -94,11 +95,11 @@ export function chainStep(x0: readonly number[], input: readonly number[], t: nu
 
 // ---- per-cell column --------------------------------------------------------------------------------------------
 export interface Deposit { x: number; z: number; year: number; pool: number; kg: number; what: string }
-export const GROUND = { years: 0, speed: 1, deposits: [] as Deposit[] }; // game years since world start (persisted by main); speed = flow/decay ×
+export const GROUND = { years: 0, deposits: [] as Deposit[] }; // game years since world start (persisted by main); the world clock's game seconds, with no extra rate
 setLogYears(() => GROUND.years); // why chains read the same clock the column uses (T-0018)
 export const SAVE_KEY_GROUND = 'boreal.ground.v1';
-/** Advance the ground clock by `gameSeconds` × the flow/decay multiplier. Nothing is stepped: columns are closed-form in `years`. */
-export function tickGround(gameSeconds: number) { GROUND.years += gameSeconds * GROUND.speed / K.julian_year_s; }
+/** Advance the ground by `gameSeconds` from the world clock (gameSecondsPerWorldSecond × world-second delta). Columns stay closed-form in `years`. */
+export function tickGround(gameSeconds: number) { GROUND.years += gameSeconds / K.julian_year_s; }
 export const saveGround = () => JSON.stringify({ years: GROUND.years, deposits: GROUND.deposits });
 export function loadGround(json: string | null) { try { const s = JSON.parse(json ?? ''); GROUND.years = +s.years || 0; GROUND.deposits = Array.isArray(s.deposits) ? s.deposits : []; } catch { /* fresh world */ } }
 /** Expected deer droppings (dry kg) over `days`: intake × (1 − digestibility) (FAUNA). Pellet groups: 12.7/day (Neff 1968). */
@@ -172,7 +173,7 @@ function columnRaw(x: number, z: number, years: number) {
   let cover = 0, litter = 0;
   for (const t of treesNear(Math.floor(cx / CHUNK_SIZE), Math.floor(cz / CHUNK_SIZE))) if (Math.hypot(t.x - cx, t.z - cz) < t.r) { cover++; litter += t.rate; }
   const input = [f('ground', 'litterfall (kg/m²/yr)', litter), 0, f('ground', 'moss input (kg/m²/yr)', lerp(MOSS_INPUT, wet)), 0, 0];
-  const k = rates(CLIMATE.meanAnnualTempC, 1), som0 = lerp(MINERAL.som0, noise(gx, gz, 'som'));
+  const k = rates(CLIMATE.meanAnnualTempC), som0 = lerp(MINERAL.som0, noise(gx, gz, 'som'));
   const start = [0, 0, 0, 0, som0], age = standAge + years;
   let pool = chain(start, input, age, k);
   for (const d of GROUND.deposits) if (Math.floor(d.x / CELL) === gx && Math.floor(d.z / CELL) === gz && d.year <= years) {

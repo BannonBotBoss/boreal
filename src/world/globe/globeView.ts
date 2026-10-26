@@ -58,6 +58,7 @@ import { GLOBE_LOD, balancedTree, globeLod, worldTier } from './lod';
 import { surfaceRadius } from './radial';
 import { createAxis } from './axisView';
 import { bindPlanetWeather, notePlanetClockOwner, sharedPlanetSim, weatherAtLatLon } from '../../core/planetWeather';
+import { ENV_FORCE, fillEnvironmentGlobe } from '../../render/environment';
 
 interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number; solarBucket: string } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
@@ -144,6 +145,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const material = globeMaterial(seamsDebug ? lod.segments : 0);
   // Atmosphere (atmosphere.ts): sky shell + aerial perspective on the tiles; ?atmos=0 for the plain look
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
+  for (const [k, f] of [['envrh', 'rh'], ['envu', 'windE']] as const) if (q.has(k)) ENV_FORCE[f] = Number(q.get(k)); // T-0089 dev hook: ?envrh=0.95&envu=40 force the record (frames)
   // planet budget layers (planetLayers.ts, issue #43): snow, sea ice, wet soil from rust/boreal-sim; count and grid follow the tier; ?layers=0 off
   const layerDay = Number(q.get('day')) || Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 864e5);
   let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; // grid clock = the world clock: ?hour= is local solar time at home, so UTC = local - lon/15
@@ -542,11 +544,12 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const hydroSec = q.has('shot') ? shotSec : worldSec();
     refreshHydroLayer(seed, Number(q.get('day')) || dayAt(hydroSec), hourAt(hydroSec), worldTier(), q.get('hydro') === '0'); // T-0058: same octave gate; ?day= pins the seed, ?hydro=0 leaves the tiles unpainted
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
-    if (localClouds) { if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
-        const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3, ll = toLatLon(d);
-        const w = weatherAtLatLon(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, simRef);
-        colIn = w ? { tsC: w.tC, q: w.q, cover: Math.max(0, Math.min(1, w.cloud)) } : null; }
-      localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') ? colIn : null); }
+    if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
+      const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3, ll = toLatLon(d), latD = ll.lat * 180 / Math.PI, lonD = ll.lon * 180 / Math.PI;
+      const w = weatherAtLatLon(latD, lonD, simRef), envSec = q.has('shot') ? shotSec : worldSec();
+      fillEnvironmentGlobe(latD, lonD, dayAt(envSec), hourAt(envSec), simRef); // T-0089: the environment record at the sub-point (cloud drift, Mie haze)
+      colIn = w ? { tsC: w.tC, q: w.q, cover: Math.max(0, Math.min(1, w.cloud)) } : null; }
+    if (localClouds) localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') ? colIn : null);
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
   }

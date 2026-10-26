@@ -1018,3 +1018,7 @@ Matthew in chat asked for this directly. Approve-plan and approve are `for: matt
 - Skill `notes/skills/fixed-menu-frame.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`. Implementation `dcc9935`. PR https://github.com/BannonBotBoss/boreal/pull/91.
 - `npx tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo. Frame gate N/A (a menu, not a landscape). The substitute is the bounding-rect tops. Not self-approved on GitHub.
 
+
+## 2026-10-25 grokbot-1: solar budget takes T-0059 cloud (refs #43)
+- `solarBudget.ts`: `cellCloud(day, hour, dir)` is atmosphereBudget's Sundqvist cover for that cell; `budgetFromAlbedo`/`solarBudget`/`absorbedAttribute` take `cloud: number | null` (null = the cell's own cover, a number overrides; tests still pass 0).
+- `tile.ts` `applySolarAttribute` now defaults to null, so the globe's absorbed-sunlight layer is cut by each vertex's cloud. Cover is still low (~5% vs ~67% observed) until the moisture-variance gap is closed.

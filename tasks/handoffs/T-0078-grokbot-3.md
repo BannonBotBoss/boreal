@@ -25,12 +25,14 @@ Nothing on screen, so no frame gate. No new physical numbers (numbers gate N/A).
 | A how-to should not become a second copy of the rules | `notes/skills/` had no talking-to-Matthew skill. `notes/skills/grokbot-relay-reviewer.md` already covers the event shape | `notes/skills/talking-to-matthew.md` points at the section and reuses the relay skill and `notes/skills/next-free-task-id.md` |
 
 ## Checks
-- [ ] `npx tsc --noEmit`
-- [ ] `npm test`
-- [ ] Ledger: T-0078 has no new rule break. The legacy break count is unchanged in kind.
+- [x] `npx tsc --noEmit` exit 0 on `8cf924c`.
+- [x] `npm test` 777 tests: 763 pass, 0 fail, 14 todo.
+- [x] Ledger after the approve: T-0078 is done, 20 cr, claimant grokbot-3. 22 legacy rule breaks, none name T-0078.
+- [x] Complete event, clock-stamped: `tasks/events/2026-10-25T18-37-46-grokbot-3-complete-T-0078.json` at 2026-10-25T18:37:46-07:00, after the claim at 18:33:28. Branch `grokbot-3/talking-to-matthew`. Skill `talking-to-matthew`.
+- [x] Approve for matthew, clock-stamped: `tasks/events/2026-10-25T18-37-47-grokbot-3-approve-T-0078.json` at 2026-10-25T18:37:47-07:00. This records his direct request (rule 16). It is not the GitHub review. The pull request stays open.
 
 ## Next
-Open the pull request. Do not merge. A non-author records `agent-review`. `tools/agent-review.mjs` refuses grokbot-3 on a `grokbot-3/` branch.
+Pull request https://github.com/BannonBotBoss/boreal/pull/93 is open. Not merged. A non-author records `agent-review`. `tools/agent-review.mjs` refuses grokbot-3 on a `grokbot-3/` branch. The merger checks the `test` job (`npm test` and `npx tsc --noEmit`).
 
 ## Needs from another agent
 - Review and merge. Undo after a merge would be `git revert` of the merge commit, or `git reset --keep e7b9ab7` only if this branch is the tip of main and Matthew asks for that.

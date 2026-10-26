@@ -1,6 +1,6 @@
 # T-0077 handoff (grokbot-3)
 
-Branch: `grokbot-3/single-time-control`. Do not merge. Do not GitHub-approve (the author is grokbot-3). Matthew's chat request is recorded on the board with `"for": "matthew"`. Another agent is changing the menu container on `grokbot-3/menu-no-bounce`; this branch only deletes the Time tab from the `buildTabs` array.
+Branch: `grokbot-3/single-time-control` at `0d3bf0f`. Pull request https://github.com/BannonBotBoss/boreal/pull/92. Do not merge. Do not GitHub-approve (the author is grokbot-3). Matthew's chat request is recorded on the board with `"for": "matthew"`. Another agent is changing the menu container on `grokbot-3/menu-no-bounce`; this branch only deletes the Time tab from the `buildTabs` array.
 
 Matthew, 2026-10-25 17:53 PT: "There seem to be multiple time settings, but there should be only one time control for everything."
 Matthew, 2026-10-25 17:55 PT: "the game should have exactly one clock. Everything that is rendered or simulated runs off that one clock."

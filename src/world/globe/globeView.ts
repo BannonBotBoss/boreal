@@ -39,7 +39,7 @@ import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar, withLogDepth } from './logDepth';
 import { LAYER_TIERS, SPINUP, globeLandSample, setLayerCamera, setSnowIceShown, spinAndBake, startPlanetLayers } from './planetLayers';
 import { bootGlobe } from './bootOrder';
-import { columnAt, createLocalClouds, localCloudFade, type ColumnInput } from './localClouds';
+import { createLocalClouds, localCloudFade, type ColumnInput } from './localClouds';
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
 import { refreshHydroLayer, hydroLayerState } from './hydroLayer';
@@ -57,7 +57,7 @@ import type { TileRequest } from './tileWorker';
 import { GLOBE_LOD, balancedTree, globeLod, worldTier } from './lod';
 import { surfaceRadius } from './radial';
 import { createAxis } from './axisView';
-import { loadPlanetSim } from '../../core/planetBudget';
+import { bindPlanetWeather, notePlanetClockOwner, sharedPlanetSim, weatherAtLatLon } from '../../core/planetWeather';
 
 interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number; solarBucket: string } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
@@ -148,7 +148,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const layerDay = Number(q.get('day')) || Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 864e5);
   let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; // grid clock = the world clock: ?hour= is local solar time at home, so UTC = local - lon/15
   const homeLonDeg = toLatLon(planet.home as Vec3).lon * 180 / Math.PI, layerUtc = (((hourAt(shotSec) - homeLonDeg / 15) % 24) + 24) % 24;
-  const simP = loadPlanetSim(); // one instance: the layers spin it, the axis reads its live cells
+  const simP = sharedPlanetSim(); // one instance with the forest: the layers spin it, the axis reads its live cells
   // T-0073: local volumetric clouds around the camera from the sim column (dew point, LCL); the shell stays the far field
   let simReady = false, colIn: ColumnInput | null = null, colFrame = -1e9; const localClouds = q.get('localClouds') === '0' ? null : createLocalClouds(); if (localClouds) scene.add(localClouds.mesh);
   let simRef: Awaited<typeof simP> | null = null, booted = false, spinQueued = false;
@@ -161,7 +161,11 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       const draw = layerTier >= 0 && row.nlat > 0 && row.layers.length > 0;
       const nlat = draw ? row.nlat : [...LAYER_TIERS].reverse().find(t => t.nlat > 0)!.nlat;
       const day0 = layerDay - (draw ? SPINUP.steps * SPINUP.dtS / 86400 : 0);
-      try { bootGlobe(s, nlat, nlat * 2, globeLandSample(planet), day0, layerUtc); }
+      try {
+        bootGlobe(s, nlat, nlat * 2, globeLandSample(planet), day0, layerUtc);
+        bindPlanetWeather(s);
+        notePlanetClockOwner('globe');
+      }
       catch (e) { console.warn('globe boot failed', e); }
     }
     booted = true;
@@ -539,7 +543,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     refreshHydroLayer(seed, Number(q.get('day')) || dayAt(hydroSec), hourAt(hydroSec), worldTier(), q.get('hydro') === '0'); // T-0058: same octave gate; ?day= pins the seed, ?hydro=0 leaves the tiles unpainted
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
     if (localClouds) { if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
-        colIn = columnAt({ lat: simRef.plane('lat'), lon: simRef.plane('lon'), ts: simRef.plane('tair'), q: simRef.plane('q'), cloud: simRef.plane('cloud') }, [camPos[0] / L, camPos[1] / L, camPos[2] / L]); }
+        const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3, ll = toLatLon(d);
+        const w = weatherAtLatLon(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, simRef);
+        colIn = w ? { tsC: w.tC, q: w.q, cover: Math.max(0, Math.min(1, w.cloud)) } : null; }
       localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') ? colIn : null); }
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();

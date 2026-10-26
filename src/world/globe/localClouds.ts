@@ -21,7 +21,8 @@ export function localCloudFade(alt: number, L = LOCAL_CLOUDS) {
   return t * t * (3 - 2 * t);
 }
 export interface ColumnInput { tsC: number; q: number; cover: number }
-/** Nearest sim cell to a planet direction (planes from core/planetBudget). */
+/** Nearest sim cell to a planet direction (planes from core/planetBudget).
+ *  Live globe clouds read `weatherAtLatLon` instead. This stays for the nearest-cell check in tests/cloud-column.test.ts. */
 export function columnAt(planes: { lat: ArrayLike<number>; lon: ArrayLike<number>; ts: ArrayLike<number>; q: ArrayLike<number>; cloud: ArrayLike<number> }, d: Vec3): ColumnInput | null {
   const { lat, lon } = toLatLon(d), la = lat * 180 / Math.PI, lo = lon * 180 / Math.PI; let best = -1, bd = Infinity;
   for (let i = 0; i < planes.lat.length; i++) { let dl = Math.abs(planes.lon[i] - lo) % 360; if (dl > 180) dl = 360 - dl; const k = (planes.lat[i] - la) ** 2 + (dl * Math.cos(lat)) ** 2; if (k < bd) { bd = k; best = i; } }

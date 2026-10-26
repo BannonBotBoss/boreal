@@ -1,0 +1,130 @@
+{
+  "note": "before = wasm file moved aside, so weatherAt is climateRaw. after = the Rust tair/rh/wind/precip/snow planes via weatherAtLatLon.",
+  "kenoraNormals": {
+    "januaryC": -16,
+    "julyC": 19.2,
+    "source": "ECCC 1981-2010 Kenora A, weather.ts NORMALS.temp[0] and [6]"
+  },
+  "solarParity": "tests/planet-budget.test.ts wasm solarCell vs weather.ts solar()/shortwave() within 1e-9; toa plane after boot vs solar() within 1e-6 (tests/planet-weather.test.ts)",
+  "frameMeans": {
+    "note": "Mean RGB of the sky (top 35%) and the ground (bottom 45%). January ground goes pale when the snow plane is the source. July sky loses its blue when the cloud plane is the source.",
+    "jan-before": { "sky": [186.5, 188.5, 188.6], "ground": [94.3, 107.5, 93.6] },
+    "jan-after": { "sky": [186.6, 188.7, 188.8], "ground": [160.1, 168.2, 161.3] },
+    "jul-before": { "sky": [196.6, 210.1, 215.7], "ground": [97.4, 110.9, 96.5] },
+    "jul-after": { "sky": [187.4, 190.5, 191.1], "ground": [98.9, 112.8, 97.6] }
+  },
+  "observations": [
+    {
+      "name": "jan-before",
+      "q": "?nomenu&noprobe&day=15&hour=12",
+      "wasm": false,
+      "url": "http://127.0.0.1:5173?nomenu&noprobe&day=15&hour=12",
+      "ms": 33483,
+      "sample": {
+        "day": 15,
+        "hour": 12.099243333333106,
+        "clockDay": 15,
+        "clockHour": 12,
+        "driving": false,
+        "gridDay": null,
+        "gridHour": null,
+        "tC": 12.358149949237088,
+        "rh": 0.7129838496500359,
+        "cloud": 1,
+        "rainMmH": 0,
+        "snow": false,
+        "sweMm": 0,
+        "wind": {
+          "x": -0.1653973449577372,
+          "y": 15.526883803842228,
+          "z": 1.9170529222661263
+        },
+        "fog": 0
+      }
+    },
+    {
+      "name": "jul-before",
+      "q": "?nomenu&noprobe&day=196&hour=12",
+      "wasm": false,
+      "url": "http://127.0.0.1:5173?nomenu&noprobe&day=196&hour=12",
+      "ms": 35001,
+      "sample": {
+        "day": 196,
+        "hour": 12.10551299999998,
+        "clockDay": 196,
+        "clockHour": 11.885942,
+        "driving": false,
+        "gridDay": null,
+        "gridHour": null,
+        "tC": -8.26980085261414,
+        "rh": 0.3112901724394678,
+        "cloud": 0,
+        "rainMmH": 0,
+        "snow": true,
+        "sweMm": 0,
+        "wind": {
+          "x": -2.1913284871885774,
+          "y": -0.05521758601684012,
+          "z": -0.41667093556916374
+        },
+        "fog": 0
+      }
+    },
+    {
+      "name": "jan-after",
+      "q": "?nomenu&noprobe&day=15&hour=12",
+      "wasm": true,
+      "url": "http://127.0.0.1:5173?nomenu&noprobe&day=15&hour=12",
+      "ms": 33940,
+      "sample": {
+        "day": 15,
+        "hour": 12.1032506666661,
+        "clockDay": 15,
+        "clockHour": 11.768866999999773,
+        "driving": true,
+        "gridDay": 15,
+        "gridHour": 18,
+        "tC": -6.361970363475805,
+        "rh": 0.9689004138597825,
+        "cloud": 0.9270967283095537,
+        "rainMmH": 0.2146248636382164,
+        "snow": true,
+        "sweMm": 20.528299042230863,
+        "wind": {
+          "x": -7.687627858122028,
+          "y": 0,
+          "z": -19.1845475547889
+        },
+        "fog": 0
+      }
+    },
+    {
+      "name": "jul-after",
+      "q": "?nomenu&noprobe&day=196&hour=12",
+      "wasm": true,
+      "url": "http://127.0.0.1:5173?nomenu&noprobe&day=196&hour=12",
+      "ms": 33471,
+      "sample": {
+        "day": 196,
+        "hour": 12.101636000000099,
+        "clockDay": 196,
+        "clockHour": 11.655827333333377,
+        "driving": true,
+        "gridDay": 196,
+        "gridHour": 18,
+        "tC": 14.388515635083273,
+        "rh": 0.7420453862886418,
+        "cloud": 0.7469301670091825,
+        "rainMmH": 0.034286371589844135,
+        "snow": false,
+        "sweMm": 0,
+        "wind": {
+          "x": 13.699474025485415,
+          "y": 0,
+          "z": 17.749236775360014
+        },
+        "fog": 0
+      }
+    }
+  ]
+}

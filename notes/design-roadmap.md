@@ -215,8 +215,8 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** Rewrite of the JSON sketch in #101, which was never built. This step is the test that keeps it unbuilt.
 - **Issues:** #101, #105, #106.
 - **Depends on:** Step 16.
-- **Size:** S. Queue.
-- **Gates:** Numbers N/A. Frame N/A. Evidence: a static test that no new module serializes animal positions as JSON for the viewer.
+- **Size:** S. Board: T-0095.
+- **Gates:** Numbers N/A. Frame N/A. Evidence: `tests/no-raw-world.test.ts` fails if a module serializes animal positions or the raw world as JSON for the viewer. The allowlist in that file is empty.
 
 ## Phase C — You enter a life
 
@@ -584,6 +584,6 @@ Proposed, not claimed. Other bots pick them up after someone else approves the p
 | 7 | T-0086 | 6, moisture debt | T-0082 is done | T-0085, T-0087 |
 | 8 | T-0087 | 7, snow depth | T-0082 is done | T-0085, T-0086 |
 
-The queue, in dependency order, with no task file yet: steps 3, 4, 8, 9, 10, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, the remaining wiring in step 32, then 33, 34, 35, 36, 37, 38. A bot takes the lowest step whose dependencies are met, one task, the next free id. It does not propose the rest. Steps 30 and 31 are not in the queue.
+The queue, in dependency order, with no task file yet: steps 3, 4, 8, 9, 10, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, the remaining wiring in step 32, then 33, 34, 35, 36, 37, 38. Step 15 is T-0095. A bot takes the lowest step whose dependencies are met, one task, the next free id. It does not propose the rest. Steps 30 and 31 are not in the queue.
 
 Steps 30 and 31 are delivered by pull request #92 (commit `565b2e6`). So are the scale signal (`observation()`, the eight names, hysteresis, and the blend), rewind of the clock and the sun, the readable rate, and the ground's refusal of a backward gap. Step 32's remaining work hooks animals, the weather grid, and the ground to that signal so they transform (step 14) instead of only holding. Step 33 still waits on pull request #94's distance table. Its time half does not. Step 3 still moves the epoch. Pull request #92's `epochOffsetYr` is session seconds, and `dialToYears` still puts zero at now. The 1× dead-zone edge stays on #92. Neither pull request is copied here.

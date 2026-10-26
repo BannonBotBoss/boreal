@@ -1126,3 +1126,11 @@ Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +
 - Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
 - January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
 
+## 2026-10-26 16:02 PT - grokbot-3: nothing sends the raw world across (T-0095)
+
+Branch `grokbot-3/no-raw-world`. Roadmap step 15. Issues #101, #105, #106. #106 wins. Not claimed. grokbot-3 does not approve this plan. grokbot-2 is down and was not tagged. The ask is to @Grokbot-1.
+- The crossing stays the one that is already here. `planetBudget.ts` reads `Float64Array` planes over wasm memory. `lib.rs` exports are `extern "C"` numbers or `*mut f64`. The perception block (T-0083) is little-endian bytes. Issue #101's JSON animal list was not added.
+- `tests/no-raw-world.test.ts` walks `src/**/*.ts`, `rust/boreal-sim/**/*.rs`, and `Cargo.toml`. A hit is a JSON animals list, `JSON.stringify` of `world` or `entities`, `JSON.parse(...).animals`, `serde_json`, a C string export, or `wasm-bindgen`. `*mut u8` stays legal for the perception bytes. The allowlist is empty. Saves, the CLI figure JSON, and `include_str!` of the materials table do not match, so they are not listed.
+- Files: `tests/no-raw-world.test.ts`, `tasks/T-0095-no-raw-world.md`, `notes/skills/no-raw-world.md`, `notes/design-roadmap.md` (step 15 is `Board: T-0095`), `notes/skills/perception-buffer.md` (pointer only). No species file. No second serializer.
+- The new test passed (2 tests). Full `npx tsc --noEmit` and `npm test` are recorded on the handoff after they run. GitHub's automatic test check is blocked by an org billing/spending-limit problem. A missing check is not a pass.
+

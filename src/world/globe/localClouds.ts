@@ -13,6 +13,13 @@ import { hash, random } from '../../proc/rng';
 import { toLatLon, type Vec3 } from './planet';
 
 export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: 1.5e-3 }; // [game calibration: box and cell size]
+/** 0 at showBelowM, 1 at sizeM. The box and the flat shell crossfade across that span instead of swapping in one frame. */
+export function localCloudFade(alt: number, L = LOCAL_CLOUDS) {
+  const span = L.showBelowM - L.sizeM;
+  const u = span <= 0 ? (alt < L.showBelowM ? 1 : 0) : (L.showBelowM - alt) / span;
+  const t = Math.min(1, Math.max(0, u));
+  return t * t * (3 - 2 * t);
+}
 export interface ColumnInput { tsC: number; q: number; cover: number }
 /** Nearest sim cell to a planet direction (planes from core/planetBudget). */
 export function columnAt(planes: { lat: ArrayLike<number>; lon: ArrayLike<number>; ts: ArrayLike<number>; q: ArrayLike<number>; cloud: ArrayLike<number> }, d: Vec3): ColumnInput | null {
@@ -61,7 +68,7 @@ export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
   let centre: THREE.Vector3 | null = null, key = '', col: Column | null = null;
   return { mesh, column: () => col,
     update(cp, groundR, alt, sunDir, input) {
-      mesh.visible = !!input && alt < L.showBelowM; if (!mesh.visible || !input) return;
+      const fade = localCloudFade(alt, L); mesh.visible = !!input && fade > 0; uniforms.uOpacity.value = fade; if (!mesh.visible || !input) return;
       const cam = new THREE.Vector3(cp[0], cp[1], cp[2]); up.copy(cam).normalize();
       const k = `${input.tsC.toFixed(1)}:${input.q.toFixed(5)}:${input.cover.toFixed(2)}`;
       if (!centre || centre.distanceTo(up.clone().multiplyScalar(groundR)) > L.sizeM * L.rebakeFrac || k !== key) {

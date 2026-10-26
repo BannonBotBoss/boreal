@@ -50,7 +50,7 @@ test('globe coast: globeView wiring (OrbitControls damping off, MathUtils.damp, 
   assert.match(src, /controls\.addEventListener\('start'[^\n]*stopCoast\(\)/, 'a new grab');
   assert.match(src, /controls\.addEventListener\('end'/, 'release starts the coast');
   assert.match(src, /'pointerdown'[^\n]*stopCoast\(\)/, 'any click on the globe');
-  assert.match(src, /'H'\) \{ flyHome = 1; stopCoast\(\)/, 'H (fly home)');
+  assert.match(src, /'H'\) \{ fall = null; flyHome = 1; stopCoast\(\)/, 'H (fly home, and it cancels a fall)');
   assert.match(src, /if \(ext \|\| leaving\) stopCoast\(\)/, 'in-page descent flies the camera / auto handoff');
   assert.match(src, /leaving = true; stopCoast\(\)/, 'standalone auto handoff');
   assert.match(src, /attachInput\(on: boolean\)[^\n]*stopCoast\(\)/, 'detached input');

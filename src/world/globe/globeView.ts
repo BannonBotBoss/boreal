@@ -3,7 +3,8 @@
  * (cube.ts, tailored from SimonDev ProceduralTerrain_Part10, MIT), sampled from the seeded planet function (planet.ts),
  * whose home region IS the live game's terrain (core/world heightAt, same seed and stage switch).
  * Controls: drag = orbit (three OrbitControls, MIT, examples/jsm, unmodified; its zoom is replaced by a logarithmic altitude
- * zoom; on release the globe coasts ~3 s with three's MathUtils.damp, T-0043), wheel/+/- = zoom, H = fly home, G or Esc = back to the game.
+ * zoom; on release the globe coasts ~3 s with three's MathUtils.damp, T-0043), wheel/+/- = zoom, double-click = free fall
+ * on that point, A or G = fall on the centre, H = fly home. A click, a drag and the wheel do not start the fall.
  * Perf: tiles build in a small pool of Web Workers (tileWorker.ts; SimonDev part 7 threads the same way), falling back to
  * budgeted core/interest jobs if workers are unavailable. Nodes beyond the horizon (planet + highest relief) are neither
  * split, built nor drawn. Governor: the shared quality ladder (core/quality) picks tile resolution, split distance, depth and
@@ -30,13 +31,15 @@ import { across } from './cube';
 import { CLOCK, loadClock, worldSec } from '../../core/worldClock';
 import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
-import { GLOBE_COAST, cloudClear, coastLambda, globePitch } from './transition';
+import { GLOBE_COAST, cloudClear, coastLambda } from './transition';
+import { FALL_END_M, NADIR, fallEase, fallPitch, fallYaw } from './flight';
+import { body, step as stepBody } from '../../proc/physics';
 import { globePlanet } from './home';
 import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar, withLogDepth } from './logDepth';
 import { LAYER_TIERS, SPINUP, globeLandSample, setLayerCamera, setSnowIceShown, spinAndBake, startPlanetLayers } from './planetLayers';
 import { bootGlobe } from './bootOrder';
-import { columnAt, createLocalClouds, type ColumnInput } from './localClouds';
+import { columnAt, createLocalClouds, localCloudFade, type ColumnInput } from './localClouds';
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
 import { refreshHydroLayer, hydroLayerState } from './hydroLayer';
@@ -72,7 +75,7 @@ export interface GlobeOptions {
   /** shared mode: programs are compiled for this target (render-target programs differ from the screen's: tone mapping, colour space) */
   target?: THREE.WebGLRenderTarget | null;
   /** G / Esc (and the standalone auto handoff): default = dispose and reload into the game at the spot */
-  onLeave?: (at: { x: number; z: number; yaw: number } | null) => void;
+  onLeave?: (at: { x: number; z: number; yaw: number; vy?: number } | null) => void;
   /** tile workers (default: cores - 2, 1..4; shared mode 2). ?workers=0 = main-thread jobs */
   workers?: number;
 }
@@ -197,7 +200,6 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
 
   // Through-planet axis (axisView.ts): ?dir=lat,lon|body:sun, ?r=km, slider, pad, cutaway; dblclick sets û to the view centre
   const axis = createAxis({ q, scene, R, planet, material, renderer, sunDir: () => sunNow().clone().toArray() as Vec3, sim: simP, mount: document.body });
-  canvas.addEventListener('dblclick', () => { if (axis.on) axis.pick([dir.x, dir.y, dir.z]); });
   // ---- camera: OrbitControls rotates around the planet centre; altitude is ours (log zoom), tilt toward the horizon near ground
   const controls = new OrbitControls(camera, canvas); controls.enableZoom = false; controls.enablePan = false; controls.enableDamping = false; // 1:1 drag; the release coast below replaces its per-frame damping
   let inputOn = own.inputAtStart; controls.enabled = inputOn; // input is mode-scoped: only while attached (attachInput)
@@ -219,12 +221,13 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     return fromLatLon(Number(ll[0]) * Math.PI / 180, Number.isFinite(lon) ? lon : 0); })() : null;
   const start = llStart ? llStart : q.get('dir') === 'antisun' ? sunNow().clone().negate().normalize().toArray() as [number, number, number] : dirQ?.length === 3 && dirQ.every(Number.isFinite) ? new THREE.Vector3(...dirQ).normalize().toArray() as [number, number, number] : q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
   let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0, overHome: { x: number; z: number } | null = null, leaving = false;
+  let fall: { h0: number; y: number; vy: number; yaw0: number } | null = null, handed = false;
   const shot = q.has('shot'); // screenshots: clock pinned, stays on the globe, logs seam diagnostics
-  const autoHandoff = own.autoHandoff && !bench && !q.has('shot') && q.get('handoff') !== '0'; // screenshots and benches stay on the globe
-  if (q.get('handoff') === 'demo') targetAlt = HANDOFF.alt * .75; // ?handoff=demo&alt=4000: descend and hand off by itself
+  if (q.get('handoff') === 'demo') targetAlt = HANDOFF.alt * .75; // ?handoff=demo only: a scripted zoom still hands off. A wheel zoom does not.
   const fade = own.pageDom ? document.createElement('div') : null; if (fade) { Object.assign(fade.style, { position: 'fixed', inset: '0', background: '#dfe8ef', opacity: '0', transition: 'opacity .6s', pointerEvents: 'none' }); document.body.append(fade); }
   const leave = opts.onLeave ?? ((at: { x: number; z: number; yaw: number } | null) => { dispose(); location.search = gameUrl(location.search, at); });
   camera.position.set(...start).multiplyScalar(R + alt);
+  const dir = new THREE.Vector3(...start); // unit direction of the point under the camera; a fall keeps the double-clicked one
   const fwdTmp = new THREE.Vector3(), camUp = new THREE.Vector3(...start), nL = new THREE.Vector3(), eL = new THREE.Vector3();
   const localNE = () => { nL.copy(N).addScaledVector(camUp, -N.dot(camUp)).normalize(); eL.copy(E).addScaledVector(camUp, -E.dot(camUp)).normalize(); }; // compass axes at the camera (home's, projected)
   const cameraAz = () => { localNE(); camera.getWorldDirection(fwdTmp); return Math.atan2(fwdTmp.dot(eL), fwdTmp.dot(nL)); };
@@ -237,16 +240,46 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   listen(canvas, 'pointerdown', (e: PointerEvent) => { if (!inputOn) return; stopCoast(); if (e.button === 2) turnX = e.clientX; }); // any click on the globe stops the coast
   listen(window, 'pointermove', (e: PointerEvent) => { if (turnX !== null) { turn((e.clientX - turnX) * .005); turnX = e.clientX; } });
   listen(window, 'pointerup', (e: PointerEvent) => { if (e.button === 2) turnX = null; });
-  const zoom = (f: number) => { targetAlt = clamp(targetAlt * f, 40, R * 4); };
+  const zoom = (f: number) => { if (fall) return; targetAlt = clamp(targetAlt * f, 40, R * 4); };
   listen(canvas, 'wheel', (e: WheelEvent) => { if (!inputOn) return; e.preventDefault(); zoom(Math.exp(e.deltaY * .0016)); }, { passive: false });
+  // A drag is not a descent. prevMoved is the press before this one, so a drag cannot become the double-click, and a later quiet double-click still can.
+  let thisMoved = false, prevMoved = false, pressX = 0, pressY = 0;
+  listen(canvas, 'pointerdown', (e: PointerEvent) => { if (e.button !== 0) return; prevMoved = thisMoved; thisMoved = false; pressX = e.clientX; pressY = e.clientY; });
+  listen(window, 'pointermove', (e: PointerEvent) => { if ((e.buttons & 1) && (e.clientX - pressX) ** 2 + (e.clientY - pressY) ** 2 > 36) thisMoved = true; });
+  /** Ray from the click against the planet sphere. Returns the outward unit direction of the hit, or null on a miss (the sky). */
+  function pickSurface(ev: { clientX: number; clientY: number }) {
+    const rect = canvas.getBoundingClientRect(), w = rect.width || 1, h = rect.height || 1;
+    const ndc = new THREE.Vector3(((ev.clientX - rect.left) / w) * 2 - 1, -((ev.clientY - rect.top) / h) * 2 + 1, .5).unproject(camera);
+    const origin = camera.position.clone(), d = ndc.sub(origin).normalize();
+    const b = origin.dot(d), c = origin.dot(origin) - R * R, disc = b * b - c;
+    if (disc < 0) return null;
+    const s = Math.sqrt(disc), t1 = -b - s, t2 = -b + s, t = t1 > 0 ? t1 : t2;
+    if (t <= 0) return null;
+    return origin.addScaledVector(d, t).normalize();
+  }
+  listen(canvas, 'dblclick', (e: MouseEvent) => {
+    if (axis.on) { axis.pick([dir.x, dir.y, dir.z]); return; }
+    if (!inputOn || thisMoved || prevMoved) return; // a drag does not drop, and a single click never reaches this listener
+    const hit = pickSurface(e); if (hit) beginFall(hit);
+  });
   listen(window, 'keydown', (e: KeyboardEvent) => {
     if (!inputOn) return;
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
-    else if (e.key === 'h' || e.key === 'H') { flyHome = 1; stopCoast(); }
+    else if (e.key === 'h' || e.key === 'H') { fall = null; flyHome = 1; stopCoast(); } // H flies home and does not drop
     else if (e.key === 'q' || e.key === 'Q') turn(-.12); else if (e.key === 'e' || e.key === 'E') turn(.12);
-    else if (e.key === 'g' || e.key === 'G' || (e.key === 'Escape' && own.pageDom)) { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } // over home: spawn right below, same heading; shared (in-page): Esc opens the game menu instead (main.ts)
+    else if (e.key === 'g' || e.key === 'G') beginFall(); // G drops on the centre. Never a no-op while the globe has input.
+    else if (e.key === 'Escape' && own.pageDom) { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); }
   });
-  listeners.push(registerPadTarget('globe', { active: () => inputOn, orbit: (dx, dy) => { if (!dx && !dy) return; stopCoast(); const r = controls as unknown as { _rotateLeft(a: number): void; _rotateUp(a: number): void }; r._rotateLeft(dx * controls.rotateSpeed * 3); r._rotateUp(dy * controls.rotateSpeed * 3); controls.update(); }, zoom, turn, home: () => { flyHome = 1; stopCoast(); }, axis: () => axis, land: () => { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); } })); // Grok Bot: gamepad (input/padRouter)
+  /** Start the free fall. With a hit, the fall is on that point. Without one (G, or A on the reticle), it is the centre. */
+  function beginFall(hit?: THREE.Vector3) {
+    if (!inputOn || fall || handed || leaving) return;
+    if (hit) dir.copy(hit);
+    stopCoast();
+    const yaw0 = lookAz ?? cameraAz();
+    if (alt <= FALL_END_M) { handed = true; const samp = planet.sampleSurface([dir.x, dir.y, dir.z]); leave({ x: samp.x, z: samp.z, yaw: -fallYaw(yaw0, 1), vy: 0 }); return; } // game yaw is minus the look azimuth (headingYaw)
+    fall = { h0: alt, y: alt, vy: 0, yaw0 };
+  }
+  listeners.push(registerPadTarget('globe', { active: () => inputOn, orbit: (dx, dy) => { if (!dx && !dy || fall) return; stopCoast(); const r = controls as unknown as { _rotateLeft(a: number): void; _rotateUp(a: number): void }; r._rotateLeft(dx * controls.rotateSpeed * 3); r._rotateUp(dy * controls.rotateSpeed * 3); controls.update(); }, zoom, turn, home: () => { fall = null; flyHome = 1; stopCoast(); }, axis: () => axis, land: () => beginFall() })); // A on the reticle: the same drop as a double-click on the centre. Stays live during the fall so X can cancel.
 
   // ---- tile builders: a worker pool (default) or budgeted main-thread jobs (?workers=0 or no Worker support)
   const tiles = new Map<string, Tile>(), queued = new Map<string, { n: QNode; pr: number }>(), inflight = new Set<string>();
@@ -398,7 +431,6 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
 
   // ---- loop
   let last = performance.now(), fps = 0, prevT = 0, t0 = 0, dt = 0, tR = 0;
-  const dir = new THREE.Vector3();
   /** Camera, LOD, builds, adoption, eviction: everything but the draw. */
   function update() {
     t0 = performance.now(); dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++;
@@ -406,13 +438,18 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     let stamped = 0;
     for (const t of tiles.values()) { if (stamped >= 4) break; const before = t.solarBucket; stampSolar(t, sunDay, sunHour); if (t.solarBucket !== before) stamped++; }
     if (ext) camera.position.copy(ext.position); // shared band: the transition flies the camera (drive)
-    dir.copy(camera.position).normalize(); const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = surfaceRadius(planet, [dir.x, dir.y, dir.z]) - R; // radial.ts: the single altitude source (figure + terrain/water)
-    // globe → game: below HANDOFF.alt over the playable region (not while climbing), fade and reload into the game there
+    if (!fall) dir.copy(camera.position).normalize(); // the fall keeps the point that was double-clicked
+    const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = surfaceRadius(planet, [dir.x, dir.y, dir.z]) - R; // radial.ts: the single altitude source (figure + terrain/water)
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
-    if (autoHandoff && spawn && !leaving) { leaving = true; stopCoast(); if (fade) fade.style.opacity = '1'; const at = { ...landSpawn(spawn), yaw: headingYaw() }; setTimeout(() => leave(at), 650); }
-    if (flyHome) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
-    if (bench) { const prev = benchT; benchT += dt;
+    if (q.get('handoff') === 'demo' && spawn && !leaving) { leaving = true; stopCoast(); if (fade) fade.style.opacity = '1'; const at = { ...landSpawn(spawn), yaw: headingYaw() }; setTimeout(() => leave(at), 650); } // wheel zoom does not drop; only the demo flag still does
+    if (flyHome && !fall) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
+    let handoffVy: number | null = null;
+    if (fall && !ext && !handed) {
+      const b = body(1, 0, fall.y, 0); b.vy = fall.vy; stepBody(b, dt, {}, -Infinity); // the one integrator; ground -Infinity so the threshold does not zero the speed
+      if (b.y <= FALL_END_M) { fall.y = FALL_END_M; fall.vy = b.vy; alt = targetAlt = FALL_END_M; handoffVy = b.vy; } // keep the fall for this frame's pose; the overshoot is dropped, the speed is not
+      else { fall.y = b.y; fall.vy = b.vy; alt = targetAlt = b.y; }
+    } else if (bench) { const prev = benchT; benchT += dt;
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }
       targetAlt = alt = benchFrom * (benchTo / benchFrom) ** clamp(benchT / benchSec, 0, 1);
       if (prev < benchSec + 8 && benchT >= benchSec + 8) console.log('BENCH ' + JSON.stringify({ mode: mode(), warm: STATS.warm.map(Math.round), tiles: STATS.build.length, buildAvg: +avg(STATS.build).toFixed(2), buildP95: +pct(STATS.build, .95).toFixed(2), buildMax: +Math.max(0, ...STATS.build).toFixed(2),
@@ -428,17 +465,37 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (ext) { alt = targetAlt = Math.max(1, camera.position.length() - R - ground); camUp.copy(dir); camera.quaternion.copy(ext.quaternion);
       if (camera.fov !== ext.fov || camera.aspect !== ext.aspect) { camera.fov = ext.fov; camera.aspect = ext.aspect; } }
     else {
+    controls.enabled = inputOn && !fall;
     controls.rotateSpeed = clamp(alt / R * .6, 2e-6, 1);
     camera.position.copy(dir).multiplyScalar(R + ground + alt); camUp.copy(dir);
-    controls.update();
+    if (!fall) controls.update();
     camera.position.setLength(R + ground + alt);
-    camera.lookAt(0, 0, 0);
-    const tilt = pitchQ ?? (Math.PI / 2 - .12) * (1 - smoothstep(3e3, 3e5, alt)); camera.rotateX(tilt); // look toward the horizon near the ground [game calibration]
-    if (lookAz !== null && (opts.shared || alt < 3e5)) { // shared (in-page): the heading at every altitude, pitch from globePitch (no snap at 300 km) // ?look=azimuth° (0 north, 90 east): face a compass heading near the ground (screenshots)
-      localNE(); const up = camUp.clone(), h = nL.clone().multiplyScalar(Math.cos(lookAz)).addScaledVector(eL, Math.sin(lookAz));
-      camera.up.copy(up); const el = opts.shared ? globePitch(alt) : -Math.atan(.08); camera.lookAt(camera.position.clone().add(h.multiplyScalar(Math.cos(el)).addScaledVector(up, Math.sin(el)))); }
+    camera.up.set(0, 1, 0); camera.lookAt(0, 0, 0); // nadir, the aim the tile draw already uses
+    const ease = fall ? fallEase(fall.h0, alt) : 0;
+    if (fall) lookAz = fallYaw(fall.yaw0, ease);
+    // The fall pitches with rotateX and yaws with rotateZ on that nadir aim. A second lookAt left the tiles off the
+    // centre pixel, so the fall stayed the clear colour. planet.north is world +Y projected on the tangent plane, and
+    // lookAt keeps camera +Y on that, so rotateZ(-azimuth) is the compass heading. rotateX(pitch − nadir) opens to isometric.
+    if (fall) { camera.rotateZ(-lookAz!); camera.rotateX(fallPitch(ease) - NADIR); }
+    else if (lookAz !== null && (opts.shared || alt < 3e5)) {
+      localNE(); const up = camUp.clone(), heading = lookAz ?? 0;
+      const hdg = nL.clone().multiplyScalar(Math.cos(heading)).addScaledVector(eL, Math.sin(heading));
+      const el = pitchQ != null ? NADIR + pitchQ : NADIR;
+      const view = hdg.multiplyScalar(Math.cos(el)).addScaledVector(up, Math.sin(el));
+      const screenUp = up.clone().addScaledVector(view, -up.dot(view));
+      camera.up.copy(screenUp.lengthSq() > 1e-8 ? screenUp.normalize() : nL);
+      camera.lookAt(camera.position.clone().add(view));
+    } else camera.rotateX(pitchQ ?? 0); // standalone orbit: no altitude tilt, straight down unless ?pitch=
     }
-    camera.near = clamp(alt * .02, .5, 1e5); camera.far = Math.sqrt((R + ground + alt) ** 2 - R * R) + R * 2; camera.updateProjectionMatrix();
+    if (handoffVy !== null && fall) { // the spin and the pitch are at ease 1, then the drone inherits the speed
+      const yaw = -(lookAz ?? fallYaw(fall.yaw0, 1)), vy = handoffVy, samp = planet.sampleSurface([dir.x, dir.y, dir.z]);
+      fall = null; handed = true; leave({ x: samp.x, z: samp.z, yaw, vy });
+    }
+    camera.near = clamp(alt * .02, .5, 1e5);
+    // Limb distance past a sphere of the mean radius. The hydrostatic figure (figure.ts) and deep water sit inside that
+    // sphere, so a low camera — the free fall crosses it — would make the radical negative and the projection NaN, and
+    // the frame would clear. Clamp the inside of the radical; the +2R term still reaches the far limb.
+    const rad = R + ground + alt; camera.far = Math.sqrt(Math.max(0, rad * rad - R * R)) + R * 2; camera.updateProjectionMatrix();
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
     sun.position.copy(sunNow()); sun.intensity = isOn('sunlight') ? 3.2 : 0; if (atmos) atmos.setLayers(isOn('clouds'), isOn('atmosphere'), isOn('airglow')); if (atmos) atmos.setAurora(isOn('aurora') ? { ocbMlat: omniNow.ocbMlat, ovalEqMlat: omniNow.ovalEqMlat, relBrightness: omniNow.emission.relBrightness } : null); fieldLines.visible = isOn('fieldLines'); showPlates(isOn('plates')); setSnowIceShown(isOn('snowIce'));
     { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = isOn('sunlight') ? (atmos ? .7 : .04 + .66 * smoothstep(-.3, .12, se)) : 1; /* with the atmosphere the sky light is gated per fragment by the local Sun altitude (atmosphere.ts skyF) */ hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
@@ -494,7 +551,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;
     const segWas = lod.segments; if (seamsDebug) material.userData.uSeg.value = lod.segments;
     if (own.governor && governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); }
-    if (atmos) atmos.setClear(localClouds?.mesh.visible ? cloudClear(alt) : 0); // T-0073 (Matt): clouds no longer vanish on the descent. The flat shell only opens (T-0041/T-0056) where the local volumetric column takes over; without it the shell stays closed
+    if (atmos) atmos.setClear(localClouds?.mesh.visible ? cloudClear(alt) * localCloudFade(alt) : 0); // T-0073: the shell stays until the local column draws. Issue #107: that handoff is localCloudFade, not a pop at showBelowM.
     if (layerTier >= 0 && layerTier !== GOVERNOR.tier) { layerTier = GOVERNOR.tier; void simP.then(s => startPlanetLayers(planet, layerTier, layerDay, s, layerUtc)); }
     if (atmos && atmos.tier !== GOVERNOR.tier) atmos.setTier(GOVERNOR.tier); // resolution + atmosphere samples follow the tier now (cheap uniforms)
     if (lodTier !== worldTier()) { lodTier = worldTier(); lod = globeLod(); } // tile resolution/split/caps once the new tier has held (no rebuild per step)
@@ -506,7 +563,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
         `tiles drawn ${drawn} (${inView} in view, cap ${lod.draw}${splitK < 1 ? ` · split ×${splitK.toFixed(2)}` : ''}) · culled ${culled} · cached ${tiles.size} · deepest L${deepest} · queued ${queued.size + inflight.size}\n` +
         `build (${mode()}) ${built} tiles (${cancelledN} cancelled, ${ready.length} waiting) · avg ${avg(STATS.build).toFixed(1)} ms · p95 ${pct(STATS.build, .95).toFixed(1)} ms · worst frame ${Math.max(0, ...STATS.work).toFixed(1)} ms\n` +
         `tier ${LADDER[GOVERNOR.tier].name}${GOVERNOR.auto ? ' (auto)' : ''} · ${lod.segments} seg · ${fps.toFixed(0)} fps · shaders ${STATS.compileMs >= 0 ? STATS.compileMs.toFixed(0) + ' ms async' : '…'} · work ${work.toFixed(1)} ms\n` +
-        (overHome && alt < HANDOFF.hintAlt ? `over the home region: descend below ${HANDOFF.alt / 1000} km to enter the game\n` : '') + `drag orbit · right-drag / Q E turn · wheel / + - zoom · H home · G game`;
+        (fall ? 'free fall · the view turns · H cancels\n' : 'double-click a point to drop · A drops on the centre · drag orbits · wheel zooms · H home · G drops here\n');
     }
   }
   /** One frame: update, draw into `target`, bookkeeping. The first `renderTo` waits until `bootP` has finalized the grid. */
@@ -555,6 +612,15 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     /** over the playable region (game-local x, z), else null; descending = zooming in */
     get overHome() { return overHome; }, get descending() { return targetAlt < alt * .995; }, get headingYaw() { return headingYaw(); },
     zoomTo(a: number) { targetAlt = clamp(a, 40, R * 4); }, jumpTo(a: number) { alt = targetAlt = clamp(a, 40, R * 4); },
+    /** Turn the orbit toward the playable forest. H does this; it does not start the fall. */
+    aimHome() { fall = null; flyHome = 1; stopCoast(); },
+    /** Double-click, G, or A. Optional hit is the unit direction of the chosen point. */
+    beginFall,
+    /** Back to the orbit view after the drone is cancelled. The fall can be started again. */
+    resumeOrbit() { fall = null; handed = false; leaving = false; },
+    get fallState() { return fall ? { h0: fall.h0, h: fall.y, vy: fall.vy, ease: fallEase(fall.h0, fall.y) } : null; },
+    /** Show or hide the layer checkbox panel. Standalone leaves it up; the in-page handoff hides it in game mode. */
+    setLayerPanel(on: boolean) { const el = document.getElementById('globe-layers'); if (el) el.hidden = !on; },
     /** shared mode: terminate the tile workers during gameplay (their memory goes) and restart them on demand */
     suspendWorkers() { if (suspended || !pool.length) return; suspended = true; for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); if (maskPending) maskPending = ''; }, // an unfinished shoreline mask is asked for again on resume
     resumeWorkers() { if (!suspended || down) return; suspended = false; spawn(); },

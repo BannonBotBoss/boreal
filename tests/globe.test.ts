@@ -395,10 +395,13 @@ test('transition: flag + fallback, fade gated on chunks, mode machine, input sco
   assert.equal(transitionPath('?transition=reload', {}, 'inpage'), 'reload'); assert.equal(transitionPath('?transition=inpage', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('?transition=inpage', { probeCap: 3 }), 'reload');
   assert.equal(patchFade(100, false), 0); assert.equal(patchFade(2500, true), 0); assert.equal(patchFade(TRANSITION.fadeFull, true), 1); assert.ok(patchFade(1300, true) > 0 && patchFade(1300, true) < 1);
   const base = { height: 1500, overHome: true, descending: true, chunksReady: false };
-  assert.equal(nextMode({ ...base, mode: 'globe' }), 'band'); assert.equal(nextMode({ ...base, mode: 'globe', overHome: false }), 'globe');
-  assert.equal(nextMode({ ...base, mode: 'band', height: 40 }), 'band', 'no handover before the chunks are ready'); assert.equal(nextMode({ ...base, mode: 'band', height: 40, chunksReady: true }), 'game');
+  assert.equal(nextMode({ ...base, mode: 'globe' }), 'globe', 'a zoom does not start the descent');
+  assert.equal(nextMode({ ...base, mode: 'globe', descend: true, overHome: false }), 'band', 'a chosen point starts the descent, on or off home');
+  assert.equal(nextMode({ ...base, mode: 'band', height: 8, embody: true }), 'band', 'no embody before the chunks are ready');
+  assert.equal(nextMode({ ...base, mode: 'band', height: 8, chunksReady: true }), 'band', 'reaching the floor stays on the drone until the player becomes the animal');
+  assert.equal(nextMode({ ...base, mode: 'band', height: 8, chunksReady: true, embody: true }), 'game');
   assert.equal(nextMode({ ...base, mode: 'band', descending: false, height: 2100 }), 'globe'); assert.equal(nextMode({ ...base, mode: 'game', ascend: true }), 'band'); assert.equal(nextMode({ ...base, mode: 'game' }), 'game');
-  assert.deepEqual([inputOwner('game', false), inputOwner('globe', false), inputOwner('band', true), inputOwner('band', false)], ['game', 'globe', 'globe', 'none']);
+  assert.deepEqual([inputOwner('game', false), inputOwner('globe', false), inputOwner('band', true), inputOwner('band', false)], ['game', 'globe', 'drone', 'none']);
   assert.ok(simRuns('game') && !simRuns('band') && !simRuns('globe'));
   const g = { auto: true, worldTier: -1, tier: 2, cool: 0, cooldownMs: 10000 }; let resets = 0; const h = createGovernorHold(g, () => { resets++; });
   h.hold(); h.hold(); assert.deepEqual([g.auto, g.worldTier, h.held], [false, 2, true]);

@@ -4,7 +4,7 @@ Branch: `grokbot-3/perception-buffer`. Not merged. Not self-approved. Not claime
 
 ## Status
 
-Implementation is on the branch. The full `npm test`, `npx tsc --noEmit`, and `cargo test` run is the next step, and the results will be written here.
+Implementation is on the branch, commit `24f0a52`, pull request https://github.com/BannonBotBoss/boreal/pull/131. Not claimed. Not complete. Approve-plan is still pending.
 
 ## Approval
 
@@ -67,9 +67,13 @@ Frame gate: N/A. Nothing is drawn. There is no screen recording.
 
 ## How to verify
 
-- `npx tsc --noEmit`
-- `npm test` (includes `tests/perception-buffer.test.ts`)
-- `cargo test --manifest-path rust/boreal-sim/Cargo.toml`
+Recorded on this branch after `24f0a52`:
+
+- `npx tsc --noEmit` exit 0.
+- `npm test`: 813 tests, 799 pass, 0 fail, 14 todo. The six `T-0083` tests passed, including embodied id at byte 20, the 28-byte sound, the 20-byte memory, zero counts, and no JSON.
+- `cargo test --manifest-path rust/boreal-sim/Cargo.toml`: 78 passed, 0 failed. The four perception tests passed. The six warnings are the pre-existing unused items in climate seed, formation, and interior.
+
+Comment, not an approval: `tasks/events/2026-10-26T03-43-34-grokbot-3-comment-T-0083.json`.
 
 ## Rule 15
 

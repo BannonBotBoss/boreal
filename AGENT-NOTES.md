@@ -1071,3 +1071,12 @@ grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follo
 - `src/render/observationTable.ts` records #107's stations and #109's levels, chains, and the 800× / 1,200× pair. Biome and Geological have no rate. No stiffness, no damping, no invented metre gap. `CODE_REACH` copies distances the picture already exports. The draw does not import the file. The live wheel stays `observation()` on pull request #92.
 - Did not edit `inpage.ts`, `globeView.ts`, or the clock files. `npx tsc --noEmit` exit 0. `npm test` 804 tests, 790 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
 
+## 2026-10-26 03:43 PT - grokbot-3: perception block (T-0083, step 16)
+
+Proposed only. Not claimed. Not a self-approve. No approve-plan is on any branch. Matthew's "every 30 minutes, check the issues and get one done" and "focus on boreal" do not name T-0083, so they are not an approval. Comment `tasks/events/2026-10-26T03-43-34-grokbot-3-comment-T-0083.json` says so.
+- One little-endian block in `rust/boreal-sim/src/perception.rs`, read by `src/core/perceptionBuffer.ts`. Issue #106's order and offset table. Embodied id at byte 20, not padded to 24. Sound entries are 28 bytes with 4 reserved. Memory entries are 20. Scent entries are 32, with 4 reserved, because the issue states 32. Header bytes 44..64 stay reserved. Counts may be zero. A later sense appends after the memory marks. Caps 32 / 16 / 8 / 12. No JSON. Nothing drawn. `lib.rs` only gains `pub mod perception`.
+- Fixtures `tests/fixtures/perception-empty.bin` and `tests/fixtures/perception-known.bin`. Skill `notes/skills/perception-buffer.md`. Handoff `tasks/handoffs/T-0083-grokbot-3.md`.
+- Did not edit the T-0081 observation files or the T-0082 weather files.
+- `npx tsc --noEmit` exit 0. `npm test` 813 tests, 799 pass, 0 fail, 14 todo. `cargo test` 78 passed, 0 failed. Pull request https://github.com/BannonBotBoss/boreal/pull/131. Not merged.
+
+

@@ -14,7 +14,7 @@ Open work left alone: pull request #137 (`src/core/animalBehavior.ts`, the entit
 
 ## Next
 
-Push `grokbot-3/climate-class` and open the pull request against main. Ask Grokbot-1 to approve-plan T-0094, then review. Do not merge. Do not approve this branch.
+Pull request https://github.com/BannonBotBoss/boreal/pull/141 is open against main. Ask Grokbot-1 to approve-plan T-0094, then review. Do not merge. Do not approve this branch. The ask is `tasks/events/2026-10-26T15-41-58-grokbot-3-comment-T-0094.json`.
 
 ## Needs from another agent
 
@@ -55,6 +55,7 @@ N/A. The class is not drawn. `src/main.ts`, `src/render`, `src/world`, and `src/
 - `npx tsc --noEmit`: exit 0
 - `npm test`: 848 tests, 834 pass, 0 fail, 14 todo
 - Rust was not edited. `cargo test` was not run.
+- The GitHub `test` check on pull request #141 did not start. Actions says recent account payments have failed or the spending limit needs to be increased (run 40414537876). The job has no steps. That is the same block as T-0087. It is not a failing test.
 
 ## Leftovers
 

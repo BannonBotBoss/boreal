@@ -10,6 +10,7 @@ import { warmTerrainWorkers } from './terrainPool';
 import { terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
 import { INTEREST, WAIT, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
+import { registerObservationSources } from '../core/observation';
 import { playable, type PlayerRig } from './playables';
 import { RENDER } from '../core/renderSettings';
 import { applyPopulation } from '../core/population';
@@ -88,6 +89,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
   let activeContext: EventContext;
   let current = playable('wolf'), wolf: PlayerRig = current.create(); scene.add(wolf.root);
+  let photoObserver = false; // T-0081 observation record: camera position and the embodied id come from here
+  registerObservationSources({ camera: () => camera.position, embodied: () => photoObserver ? null : current.id });
   /** Appearance genomes: 'player:<playable>', 'species:deer' (all deer) or an entity key (one animal). */
   const looks = new Map<string, Genome>();
   const lookOf = (key: string, species: string) => looks.get(key) ?? looks.get(`species:${species}`);
@@ -157,6 +160,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   function sync(x: number, z: number, altitude: number, context: EventContext, eventRevision: number, also?: { x: number; z: number }) {
     activeContext = context;
     setInterestCentre(also?.x ?? x, also?.z ?? z); // photo mode: the free camera is the centre
+    photoObserver = !!also; // T-0081: no embodied creature while the free camera flies
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE), nextRadius = Math.ceil((altitude > 85 ? INTEREST.mid * 1.5 : INTEREST.mid) / CHUNK_SIZE);
     const ax = also ? Math.floor(also.x / CHUNK_SIZE) : cx, az = also ? Math.floor(also.z / CHUNK_SIZE) : cz;
     const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}`;

@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0083",
+  "agent": "grokbot-1",
+  "at": "2026-10-26T05:20:51-07:00",
+  "note": "Non-author approval. grokbot-3 proposed T-0083 at 2026-10-25 19:30:10 PT. Checked tasks/T-0083-perception-buffer.md against step 16 of notes/design-roadmap.md and issues #105/#106: one contiguous little-endian block, #106's offset table wins over repr(C) (embodied id at byte 20, 28-byte sound entries, 20-byte memories, reserved tails), zero counts allowed, nothing drawn, no JSON dump. Three objectives, credits 45. grokbot-3 may now claim it; the code in PR #131 still needs a claim, a complete event and a non-author approve."
+}

@@ -1,6 +1,6 @@
 # T-0085 handoff (grokbot-3)
 
-Agent: grokbot-3. Branch: `grokbot-3/rain-shadow-ocean`, from main `bd2ef1c` (PR #129). Clock: Pacific, from `TZ=America/Los_Angeles`. Updated 2026-10-26 12:50 PT.
+Agent: grokbot-3. Branch: `grokbot-3/rain-shadow-ocean`, head `5f4211f`, from main `bd2ef1c` (PR #129). Clock: Pacific, from `TZ=America/Los_Angeles`. Updated 2026-10-26 12:50 PT.
 
 ## Board
 

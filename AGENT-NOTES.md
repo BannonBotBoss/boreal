@@ -1071,12 +1071,19 @@ grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follo
 - `src/render/observationTable.ts` records #107's stations and #109's levels, chains, and the 800× / 1,200× pair. Biome and Geological have no rate. No stiffness, no damping, no invented metre gap. `CODE_REACH` copies distances the picture already exports. The draw does not import the file. The live wheel stays `observation()` on pull request #92.
 - Did not edit `inpage.ts`, `globeView.ts`, or the clock files. `npx tsc --noEmit` exit 0. `npm test` 804 tests, 790 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
 
-## 2026-10-26 03:22 PT - grokbot-2: forest weather from the Rust grid (T-0082)
+## 2026-10-26 03:43 PT - grokbot-3: perception block (T-0083, step 16)
 
-Claimed after approve-plan #124 (merge `f6c21c1`). Not a complete. Not a self-approve.
-- The forest was not a set of constants. `climateRaw` is Kenora normals plus a diurnal cosine and synoptic noise, and `weatherAt` preferred the near Stam column. The Rust planes are the Budyko seed. January at the player is −6.36 °C against the ECCC mean −16.0 °C. July is 14.39 °C against 19.2 °C. Those normals stay the comparison.
-- `weatherAtLatLon(latDeg, lonDeg)` is the one read. The player, the globe layer bake, and the local-cloud column all use it. `columnAt` stays for the nearest-cell test. One shared wasm instance. The first forest frame waits for the boot and the 8 × 6 h spin. `?day=` moves the existing dial by whole days.
-- Evidence `tasks/evidence/T-0082/`: January ground mean RGB 94,108,94 without wasm and 160,168,161 with it. July sky 197,210,216 without wasm and 187,191,191 with it. Solar parity is the existing 1e-9 check, and the toa plane after boot is within 1e-6 of `solar()`.
-- Skill `notes/skills/rust-climate-authority.md`. Handoff `tasks/handoffs/T-0082-grokbot-2.md`. `axisView` `liveCell` and forage `climate()` are not on this query. T-0085, T-0086, T-0087, and T-0089 are the follow-ups.
-- `npx tsc --noEmit` exit 0. `npm test` 813 tests, 799 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/129. Not self-approved. Not merged.
+Proposed only. Not claimed. Not a self-approve. No approve-plan is on any branch. Matthew's "every 30 minutes, check the issues and get one done" and "focus on boreal" do not name T-0083, so they are not an approval. Comment `tasks/events/2026-10-26T03-43-34-grokbot-3-comment-T-0083.json` says so.
+- One little-endian block in `rust/boreal-sim/src/perception.rs`, read by `src/core/perceptionBuffer.ts`. Issue #106's order and offset table. Embodied id at byte 20, not padded to 24. Sound entries are 28 bytes with 4 reserved. Memory entries are 20. Scent entries are 32, with 4 reserved, because the issue states 32. Header bytes 44..64 stay reserved. Counts may be zero. A later sense appends after the memory marks. Caps 32 / 16 / 8 / 12. No JSON. Nothing drawn. `lib.rs` only gains `pub mod perception`.
+- Fixtures `tests/fixtures/perception-empty.bin` and `tests/fixtures/perception-known.bin`. Skill `notes/skills/perception-buffer.md`. Handoff `tasks/handoffs/T-0083-grokbot-3.md`.
+- Did not edit the T-0081 observation files or the T-0082 weather files.
+- `npx tsc --noEmit` exit 0. `npm test` 813 tests, 799 pass, 0 fail, 14 todo. `cargo test` 78 passed, 0 failed. Pull request https://github.com/BannonBotBoss/boreal/pull/131. Not merged.
+
+## 2026-10-26 05:55 PT - grokbot-3: claim and complete the perception block (T-0083)
+
+Approve-plan from grokbot-1 is on main (`d9c39d5`, pull request #132) and is on this branch after merge `d974a89`. No conflicts. Claim and complete follow that approve-plan. Not a self-approve. Not merged.
+- `tasks/events/2026-10-26T05-54-grokbot-3-claim-T-0083.json` at 2026-10-26T05:54:37-07:00.
+- `tasks/events/2026-10-26T05-55-grokbot-3-complete-T-0083.json` at 2026-10-26T05:55:04-07:00. Skill `notes/skills/perception-buffer.md`. Shared frames `tests/fixtures/perception-empty.bin` and `tests/fixtures/perception-known.bin`. Numbers gate N/A. Frame gate N/A.
+- Handoff `tasks/handoffs/T-0083-grokbot-3.md`. No game code edited in this step. Pull request https://github.com/BannonBotBoss/boreal/pull/131.
+
 

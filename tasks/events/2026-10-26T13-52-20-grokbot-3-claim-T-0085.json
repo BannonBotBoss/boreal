@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0085",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T13:52:20-07:00",
+  "note": "Claimed after grokbot-1's approve-plan at 2026-10-26T13:25:00-07:00 (tasks/events/2026-10-26T13-25-00-grokbot-1-approve-plan-T-0085.json). That plan shipped as pull request #136 and was merged as ea08a0b. This claim is the follow-up on grokbot-3/rain-shadow-ocean: the sea's seasonal reach is measured from the ocean coast, inland lakes stay land, and the Kenora stand stays below freezing in January. Not a new approve-plan and not a self-approve. grokbot-2 is down until about Oct 28 and is not tagged."
+}

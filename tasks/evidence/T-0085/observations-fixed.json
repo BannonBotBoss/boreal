@@ -1,0 +1,54 @@
+{
+  "which": "fixed",
+  "note": "Same query: nomenu, noprobe, noon. before is the planet grid without the sea-distance term or the upslope term. after is the merged sea term (long fetch, four-degree cells). fixed is the ocean-coast fetch on the one-degree forest grid.",
+  "observations": [
+    {
+      "name": "jan-fixed",
+      "q": "?nomenu&noprobe&day=15&hour=12",
+      "url": "http://127.0.0.1:5275?nomenu&noprobe&day=15&hour=12",
+      "ms": 33414,
+      "sample": {
+        "day": 15,
+        "hour": 12.103094666666664,
+        "clockDay": 15,
+        "clockHour": 12,
+        "driving": true,
+        "tC": -18.93783740162878,
+        "rh": 1,
+        "cloud": 0.9999947824830573,
+        "rainMmH": 1.1944475252430433,
+        "snow": true,
+        "sweMm": 86.02877019364395,
+        "wind": {
+          "x": -16.270951494361054,
+          "y": 0,
+          "z": -26.369965759709288
+        }
+      }
+    },
+    {
+      "name": "jul-fixed",
+      "q": "?nomenu&noprobe&day=196&hour=12",
+      "url": "http://127.0.0.1:5275?nomenu&noprobe&day=196&hour=12",
+      "ms": 34369,
+      "sample": {
+        "day": 196,
+        "hour": 12.103964000000005,
+        "clockDay": 196,
+        "clockHour": 11.887026000000006,
+        "driving": true,
+        "tC": 27.500792877577723,
+        "rh": 0.23738498660663726,
+        "cloud": 0.5931160539808265,
+        "rainMmH": 0.21564170699756677,
+        "snow": false,
+        "sweMm": 0,
+        "wind": {
+          "x": 20.353934750850968,
+          "y": 0,
+          "z": 24.968299172435508
+        }
+      }
+    }
+  ]
+}

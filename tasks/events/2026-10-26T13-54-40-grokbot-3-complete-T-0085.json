@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0085",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T13:54:40-07:00",
+  "branch": "grokbot-3/rain-shadow-ocean",
+  "skill": "rain-shadow",
+  "handoff": "tasks/handoffs/T-0085-grokbot-3.md",
+  "note": "Sea softening is measured from the ocean coast. Inland lakes stay land. Surface fetch is L = h/C_H = 21.4 km (Stull 1988 mixed layer 1000 m, existing neutral bulk coefficient, forest z0 1.5 m). Held & Suarez tau stays in wind.rs and is not this length. Forest grid is one degree. Kenora stand January −18.94 °C with snow (main was −6.36 °C; merged #136 was +2.28 °C). July 27.50 °C, no snow (main 14.39 °C; #136 was 6.21 °C; ECCC July 19.7 °C, recorded as a miss). Ridge ratio stays 4.46, windward wetter. cargo test 86 passed, 0 failed. npx tsc --noEmit exit 0. npm test 839 tests, 825 pass, 0 fail, 14 todo. Frames tasks/evidence/T-0085/jan-fixed.png and jul-fixed.png. Not a self-approve. @Grokbot-1 reviews and merges."
+}

@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { SITE, SURFACE, climate, columnLongwave, qsat, solar, surfaceBalance } from '../src/core/weather';
-import { albedoAt, budgetFromAlbedo, homeBudgetDirection, solarBudget } from '../src/core/planet/solarBudget';
+import { albedoAt, budgetFromAlbedo, cellCloud, homeBudgetDirection, solarBudget } from '../src/core/planet/solarBudget';
+import { atmosphereFrom } from '../src/core/planet/atmosphereBudget';
 import { PLANET, fibonacci, fromLatLon, planetFor, toLatLon, type Vec3 } from '../src/world/globe/planet';
 import { CLOUDS } from '../src/world/globe/atmosphere';
 import { applySolarAttribute, solarLayerGate, solarLayerOn } from '../src/world/globe/tile';
@@ -10,7 +11,7 @@ import { applySolarAttribute, solarLayerGate, solarLayerOn } from '../src/world/
 const RAD = Math.PI / 180;
 
 /** A budget that ignores the cell and always uses Kenora's latitude. The known-bad case. */
-function fixedLatitude(seed: number, day: number, hour: number, _dir: Vec3, cloud = 0) {
+function fixedLatitude(seed: number, day: number, hour: number, _dir: Vec3, cloud: number | null = 0) {
   return solarBudget(seed, day, hour, homeBudgetDirection(), cloud);
 }
 
@@ -119,7 +120,7 @@ test('T-0057: absorbed attribute is absent at Minimum and present when octaves a
   assert.ok(attr);
   assert.equal(solarLayerGate(true, 0), true);
   const albedo = 0.2126 * 0.05 + 0.7152 * 0.08 + 0.0722 * 0.03;
-  const expect = budgetFromAlbedo(172, 12, dir, albedo, 0).absorbed;
+  const expect = budgetFromAlbedo(172, 12, dir, albedo, null).absorbed;
   assert.ok(Math.abs((attr.array as Float32Array)[0] - expect) < 1e-3, `vertex ${attr.array[0]} vs ${expect}`);
 
   const bare = new THREE.BufferGeometry();
@@ -127,4 +128,15 @@ test('T-0057: absorbed attribute is absent at Minimum and present when octaves a
   bare.setAttribute('color', new THREE.BufferAttribute(new Float32Array([0.05, 0.08, 0.03]), 3));
   bare.setAttribute('aH', new THREE.BufferAttribute(new Float32Array([120]), 1));
   assert.equal(solarLayerGate(bare.getAttribute('aAbsorbed') != null, 0), false);
+});
+
+test('T-0059 feed: null cloud is the cell\'s own atmosphere cover, and cover cuts absorbed sunlight', () => {
+  const dir = homeBudgetDirection();
+  const cf = cellCloud(172, 12, dir);
+  const ll = toLatLon(dir);
+  assert.equal(cf, atmosphereFrom(172, 12, ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, 0).cloudFraction);
+  const fed = budgetFromAlbedo(172, 12, dir, 0.1, null), clear = budgetFromAlbedo(172, 12, dir, 0.1, 0);
+  assert.equal(fed.absorbed, budgetFromAlbedo(172, 12, dir, 0.1, cf).absorbed);
+  assert.ok(budgetFromAlbedo(172, 12, dir, 0.1, 1).absorbed < clear.absorbed);
+  assert.ok(fed.absorbed <= clear.absorbed);
 });

@@ -18,7 +18,7 @@ The flight down is one smooth picture. The work lands as several small steps, an
 
 ## What this document is
 
-An audit of every drawing path, why they are separate, and a plan to make them one. No drawing code changes in this task. The first code step is listed at the end and is not done.
+An audit of every drawing path, why they are separate, and a plan to make them one. Phase 1, the observation table, is in this pull request and the picture does not read it. Phases 2 onward are listed and not done.
 
 Matthew, 2026-10-25 18:25 PT: "I am not satisfied with the implementation of the rendering system. Why are all these systems isolated? Everything should have been using the same set of pipelines. One system for rendering. Based on the distance, resolution is automatically scaled to show just the layers that produce a realistic view from that point." He also said never reinvent: reuse what is already here. 18:26 PT: plans must open with a short plain summary, because he has been approving plans without being able to read them.
 
@@ -242,15 +242,13 @@ Each of these is in force. Where one of them disagrees with #107–#109, the new
 
 ## Phases
 
-Each phase is a later pull request. None of them is in this one. Each one runs `npm test` and `npx tsc --noEmit`, keeps the governor's 60 fps target (`src/config/systemProperties.ts` line 173), and keeps instantiation inside the 4 ms job budget (`interest.ts` line 13). A phase that draws the planet twice in one frame fails its budget. Anything the player can see also needs the frame gate (board rule 6): a recording, sampled frames, and a calibrated comparison. This plan itself is documents only, so it uses the evidence gate (rule 12) and has no frame gate.
+Phase 1 is in this pull request. Phases 2 onward are later pull requests. Each one runs `npm test` and `npx tsc --noEmit`, keeps the governor's 60 fps target (`src/config/systemProperties.ts` line 173), and keeps instantiation inside the 4 ms job budget (`interest.ts` line 13). A phase that draws the planet twice in one frame fails its budget. Anything the player can see also needs the frame gate (board rule 6): a recording, sampled frames, and a calibrated comparison. Phase 1 does not change the picture, so it uses the evidence gate (rule 12) and has no frame gate.
 
 Files this plan and the early phases leave alone: `src/world/globe/inpage.ts`, `src/world/globe/globeView.ts`, the globe-to-ground camera flight (`inpage.ts` `camera` and `descend`, `transition.ts` `globePitch`), and the clock files owned by `grokbot-3/single-time-control` (`src/core/worldClock.ts`, `src/core/timeOfDay.ts`, `src/core/timescale.ts`, `src/ui/chronometer.ts`, `src/render/shaderClock.ts`). Replacement of a path in those files waits until the branch that owns them has merged. Permission to rewrite is not permission to collide.
 
 ### 1. Write the observation table
 
-The obvious small step. Not done here.
-
-Add one module that lists the stations, the #109 levels, the two continuity chains, and the cited hysteresis pair (enter 1,200×, exit 800×, blend from 800 to 1,200). A test fails if a row drifts from the issue text. Nothing in the draw loop reads the table yet, so the picture does not change. No stiffness, no damping, no geological enter rate, no invented metre gap. Does not touch the files in the paragraph above.
+Done in this pull request. `src/render/observationTable.ts` lists the #107 stations, the #109 levels, the two continuity chains, and the cited hysteresis pair (enter 1,200×, exit 800×, blend from 800 to 1,200). `tests/observationTable.test.ts` fails if a row drifts from that issue text. Nothing in `src` except that module imports it, so the picture does not change. Biome and Geological stay without a rate. Stiffness, damping, and a metre gap for height are absent. `CODE_REACH` copies distances the picture already exports (`INTEREST`, `GRASS.radius`, `TREES_V2.nearM`, `HANDOFF.alt`, `TRANSITION.fadeFull`, `TRANSITION.handover`, `FEATURE_SIZE_M.forest`, `LOCAL_CLOUDS.showBelowM`). It is not a second dial. The live time wheel stays `observation()` on `grokbot-3/single-time-control` (`notes/design-roadmap.md` steps 30–33).
 
 Tests: the equality test only. Perf: no draw change. Frame gate: not applicable.
 

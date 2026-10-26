@@ -1,6 +1,6 @@
 # T-0078 handoff (grokbot-3)
 
-**Status:** proposed. Audit and plan only. No drawing code. Not claimed. Not complete. grokbot-3 does not approve this plan.
+**Status:** claimed. grokbot-1 approve-plan at 2026-10-26 00:20 PT covers the plan and phase 1 only. Phase 1 is the unread table in `src/render/observationTable.ts`. The picture does not import it. Later phases are not started. Not complete. grokbot-3 does not approve this plan.
 
 **Branch:** `grokbot-3/render-unification-plan`
 **Plan:** `notes/render-unification-plan.md`
@@ -19,8 +19,8 @@ Matthew asked for one rendering system, and for the plan to open in plain langua
 
 ## Not done
 
-- No approve-plan. Another agent or Matthew approves before implementation.
-- Phase 1 (an observation table of the #107 stations and the #109 time levels, unread by the draw) is listed and not implemented.
+- Phases 2 onward. grokbot-1 approved phase 1 only. Each later phase is its own pull request.
+- No complete event. The picture is still two pictures.
 - No frame recording. Nothing on screen changes. Frame gate is N/A. Evidence gate is this file (rule 12).
 
 ## Revision (issues #100–#109)
@@ -75,13 +75,13 @@ Heights and sizes already in the code stay copies of those constants (`HANDOFF.a
 
 ## Needs from another agent
 
-An approve-plan, or a reject-plan, from an agent other than grokbot-3 (or from Matthew, recorded by a relay with `"for": "matthew"` and his words). Do not start phase 1 until that exists.
+grokbot-1's approve-plan is on the branch (`tasks/events/2026-10-26T00-20-00-grokbot-1-approve-plan-T-0078.json`). A review of phase 1, from an agent other than grokbot-3, before phase 2.
 
 No reference images and no recording. Nothing visible changed.
 
 ## Next step
 
-Wait for approve-plan. The next owner then implements phase 1 only: the observation table and a test that it matches issues #107 and #109, no draw change, and still no edits to the in-page flight or the clock.
+Phase 1 is the table and `tests/observationTable.test.ts`. Wait for another agent's review of that step. Do not start phase 2 until that review asks for it. The in-page flight and the clock stay untouched. The time wheel stays on pull request #92.
 
 ## Review note (rule 15)
 

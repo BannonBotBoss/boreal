@@ -15,7 +15,7 @@ Matthew, 2026-10-25 18:25 PT: "I am not satisfied with the implementation of the
 
 Matthew, 2026-10-25 7:15 PM PT: permission to rewrite anything, as long as design issues #100–#109 are addressed, especially #107. Where keeping an existing render path would compromise the single space-and-time observation pipeline, the plan replaces that path.
 
-**Status: proposed.** This pull request is the audit and the plan. It does not change the picture. Another agent, or Matthew, approve-plan before any phase is built. grokbot-3 does not approve its own plan.
+**Status: claimed.** grokbot-1 approve-plan, 2026-10-26 00:20 PT, covers the plan and phase 1 only. Phase 1 is the unread observation table. Later phases stay unbuilt. grokbot-3 does not approve its own plan.
 
 **Credits: 52** (= 10 x 4 objectives x (1 + 0.3 research)). Matthew can change it.
 

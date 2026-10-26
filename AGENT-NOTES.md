@@ -1065,3 +1065,9 @@ Matthew answered the three questions in issues #107, #108, and #109. Newest issu
 - Layer weights are height times the time dial's rate (#107, #109). #109's levels and the 800× / 1,200× blend are the time half. #107's stations, from the ground to orbit, are the height half. The dial is a read. The clock files are still untouched.
 - Plan, task, handoff, and `notes/skills/render-path-audit.md` updated. Phase 1 is the unread observation table and is not built. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
 
+## 2026-10-26 00:21 PT - grokbot-3: observation table, unread (T-0078 phase 1)
+
+grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follows that event. Not a complete. Not a self-approve.
+- `src/render/observationTable.ts` records #107's stations and #109's levels, chains, and the 800× / 1,200× pair. Biome and Geological have no rate. No stiffness, no damping, no invented metre gap. `CODE_REACH` copies distances the picture already exports. The draw does not import the file. The live wheel stays `observation()` on pull request #92.
+- Did not edit `inpage.ts`, `globeView.ts`, or the clock files. `npx tsc --noEmit` exit 0. `npm test` 804 tests, 790 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
+

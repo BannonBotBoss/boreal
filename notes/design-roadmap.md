@@ -188,7 +188,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** Rewrite of where a creature is stored. Reuses species specs, `WOLF_NEEDS` / `HARE_NEEDS`, and the skeleton. `AnimalBrain` is no longer the record of truth after step 13; until then it mirrors the component.
 - **Issues:** #101 (components), #102 (the creature already exists).
 - **Depends on:** Step 11. Parallel with step 18's data definition.
-- **Size:** L. Queue.
+- **Size:** L. Board: T-0092.
 - **Gates:** Numbers: starting age and group size use the citations already on the species rows (Mech and Boitani for the wolf pack). Frame N/A until step 17. Evidence: a wolf spawned by the store has a non-zero age and a parent id or an explicit founder flag. No `body_mass` component (conflict 10).
 
 ### Step 13 — The viewer stops running the ecosystem

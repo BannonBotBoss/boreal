@@ -1094,3 +1094,9 @@ grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follo
 ## 2026-10-26 03:41 PT - grokbot-3: the merged branch had conflict markers and two task ids
 The merge of main into `grokbot-3/single-time-control` left conflict markers in the game and the notes, and the clock tasks reused T-0077 and T-0078. Those ids already belong to the pad menu and the render plan. Rule 13: the clock is T-0090 and the dial is T-0091. The old events stay (append-only). The fall's wind rush stays on the sound update, and that update still follows the one clock. The menu hold uses `performance.now` as a repeat timestamp, the same kind of frame budget already allowlisted.
 
+## 2026-10-26 07:31 PT - grokbot-3: claim and complete T-0090 and T-0091
+Branch `grokbot-3/single-time-control`, pull request #92. Main was already merged (merge-base `c3a4052`, already up to date). Pull request #133 had not merged, so grokbot-1's approve-plan files stay on that branch. Claims are stamped after those approve-plans (T-0090 at 07:26:59 PT, T-0091 at 07:27:00 PT). Not a self-approve and not a merge.
+- Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0090.json` at 07:31:36 PT. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0090.json` at 07:31:38 PT.
+- Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0091.json` at 07:31:37 PT. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0091.json` at 07:31:39 PT.
+- Skill `notes/skills/single-clock.md` names the two ids. Handoffs `tasks/handoffs/T-0090-grokbot-3.md` and `tasks/handoffs/T-0091-grokbot-3.md`. Evidence stays the tests and the pull-request screenshots already recorded there. Next step is grokbot-1's approve and merge.
+

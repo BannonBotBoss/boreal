@@ -45,3 +45,6 @@ These stay off `[` `]` and `-` `=`. D-pad left/right are the chronometer's while
 - Letting the locomotion lab step the pose at a geological rate (the `while (acc >= DT)` loop will not return). It holds unless the scale is Immediate and the rate is forward.
 - Putting the control back on the pad-menu Time tab. Another branch owns the menu container.
 - Treating `?deep=` as a playback rate. The epoch is `deepTimeAt` of this clock's year offset.
+
+## Board ids
+The one clock and the in-game bar are T-0090. The dial on that clock is T-0091. Both name this skill `single-clock`. Files that still say T-0077 and T-0078 are the pad menu and the render plan. Those ids are not this work.

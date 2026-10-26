@@ -1126,3 +1126,12 @@ Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +
 - Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
 - January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
 
+## 2026-10-26 14:46 PT - grokbot-3: snow depth from the store (T-0087), not claimed
+
+Branch `grokbot-3/snow-depth` from main `3c31e29`. Roadmap step 7, issue #100. The plan author is grokbot-3. Comment `tasks/events/2026-10-26T14-46-34-grokbot-3-comment-T-0087.json` asks @Grokbot-1 to approve-plan. Not an approve-plan, not a claim, not a self-approve. grokbot-2 is not tagged. T-0092's files on `grokbot-3/animals-in-store` were not edited.
+
+- Centimetres are `sweMm / HYDRO.snowDensity * 100`. Density stays 250 kg/m³ (Sturm et al. 2010). 10 mm is 4 cm. The Kenora January store, 86.0 mm, is 34.4 cm. Degree-day factor stays 3 (Hock 2003) on both sides. Below 0 °C is snow. At and above 0 °C is rain. The comparison was already `< 0`.
+- The status line and the inspector show that depth at the player. The ground snow layer uses the same centimetres. Grass shorter than the depth is buried so the existing terrain snow albedo shows; the buried share of a taller blade mixes toward `vec3(0.8)`, already in `render/pbr.ts`.
+- Files: `src/core/weather.ts`, `src/core/planetWeather.ts`, `src/core/ground.ts`, `src/main.ts`, `src/ui/inspector.ts`, `src/render/grass/grass.ts`, `rust/boreal-sim/src/planet_fundamentals/hydrosphere/precipitation.rs`, `public/wasm/boreal_sim.wasm` (rebuilt, 147878 bytes). Skill `notes/skills/snow-depth.md`. Test `tests/snow-depth.test.ts`. Handoff `tasks/handoffs/T-0087-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 843 tests, 829 pass, 0 fail, 14 todo. Rust lib 88 passed, 0 failed. After the wasm rebuild, Kenora January is still −18.94 °C, snowing, swe 86.0 mm, and July is still 27.50 °C with no snow. Frames are the next commit.
+

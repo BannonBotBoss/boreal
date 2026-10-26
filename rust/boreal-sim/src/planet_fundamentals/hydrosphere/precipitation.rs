@@ -3,6 +3,7 @@
 use crate::consts::*;
 use crate::grid::*;
 use super::humidity_column::{column_water, qsat, BL_RH, BL_VENT_S, VAPOUR_SCALE_HEIGHT};
+use super::orographic::upslope_rate;
 use super::soil_moisture::bucket_step;
 use crate::planet_fundamentals::atmosphere::pressure::surface_pressure;
 
@@ -66,7 +67,14 @@ pub fn update_moisture(g: &mut Grid, dt: f64) {
     // 3. condensation, rain onto the bucket / snow store, melt
     for i in 0..n {
         let ta = g.p(TAIR)[i]; let p = surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
-        let (q, rain0) = condense(g.p(Q)[i], ta, p); g.pm(Q)[i] = q; let rain = rain0 + vent[i];
+        let rho = p / (RD * (ta + 273.15));
+        let q_now = g.p(Q)[i];
+        let dump = {
+            let rate = upslope_rate(g, i, q_now, rho);
+            (rate * dt).max(0.0).min(column_water(q_now, p, ta).max(0.0))
+        };
+        if dump > 0.0 { g.pm(Q)[i] = (q_now - dump / (rho * VAPOUR_SCALE_HEIGHT).max(1.0)).max(0.0); }
+        let (q, rain0) = condense(g.p(Q)[i], ta, p); g.pm(Q)[i] = q; let rain = rain0 + vent[i] + dump;
         let land = g.p(LAND)[i] > 0.5; let evap_mm = g.p(EVAP)[i] / 86400.0 * dt;
         g.pm(PRECIP)[i] = if dt > 0.0 { rain / dt * 86400.0 } else { 0.0 };
         if dt > 0.0 { let k = 1.0 - (-dt / PRECIP_TAU_S).exp(); let pr = g.p(PRECIP)[i]; g.pm(PMEAN)[i] += (pr - g.p(PMEAN)[i]) * k; }

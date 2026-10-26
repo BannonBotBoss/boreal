@@ -1,0 +1,54 @@
+{
+  "which": "before",
+  "note": "Same query both times: nomenu, noprobe, noon. before is the planet grid without the sea-distance term or the upslope term. after is that same grid with both.",
+  "observations": [
+    {
+      "name": "jan-before",
+      "q": "?nomenu&noprobe&day=15&hour=12",
+      "url": "http://127.0.0.1:5275?nomenu&noprobe&day=15&hour=12",
+      "ms": 30471,
+      "sample": {
+        "day": 15,
+        "hour": 12.092705999999993,
+        "clockDay": 15,
+        "clockHour": 12,
+        "driving": true,
+        "tC": -6.361970363475805,
+        "rh": 0.9689004138597825,
+        "cloud": 0.9270967283095537,
+        "rainMmH": 0.2146248636382164,
+        "snow": true,
+        "sweMm": 20.528299042230863,
+        "wind": {
+          "x": -7.687627858122028,
+          "y": 0,
+          "z": -19.1845475547889
+        }
+      }
+    },
+    {
+      "name": "jul-before",
+      "q": "?nomenu&noprobe&day=196&hour=12",
+      "url": "http://127.0.0.1:5275?nomenu&noprobe&day=196&hour=12",
+      "ms": 34955,
+      "sample": {
+        "day": 196,
+        "hour": 12.106116333333333,
+        "clockDay": 196,
+        "clockHour": 11.896927000000005,
+        "driving": true,
+        "tC": 14.388515635083273,
+        "rh": 0.7420453862886418,
+        "cloud": 0.7469301670091825,
+        "rainMmH": 0.034286371589844135,
+        "snow": false,
+        "sweMm": 0,
+        "wind": {
+          "x": 13.699474025485415,
+          "y": 0,
+          "z": 17.749236775360014
+        }
+      }
+    }
+  ]
+}

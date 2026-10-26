@@ -69,11 +69,14 @@ What each finding became: the six components and the two spawn methods. The pare
 
 ## How to verify
 
-- `cargo test --manifest-path rust/boreal-sim/Cargo.toml --lib entities`
-- `npx tsx --test tests/stored-animal.test.ts`
-- `npx tsc --noEmit`
-- `npm test`
+Ran on this branch before the review ask:
+
+- `cargo test --manifest-path rust/boreal-sim/Cargo.toml --lib`: 91 passed, 0 failed.
+- `npx tsc --noEmit`: exit 0.
+- `npm test`: 842 tests, 828 pass, 0 fail, 14 todo. The board todo is still 28 legacy rule breaks. T-0092 adds none.
 - `npx tsx tools/tasks.ts` shows T-0092 proposed, 65 cr, not claimed.
+
+Repeat with `cargo test --manifest-path rust/boreal-sim/Cargo.toml --lib entities` and `npx tsx --test tests/stored-animal.test.ts` to see only this step.
 
 ## Needs from another agent
 

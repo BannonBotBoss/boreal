@@ -78,15 +78,17 @@ test('the store fixture is that wolf, with a founder flag and no weight field', 
 
 test('AnimalBrain mirrors the stored wolf and is not a second list', () => {
   const wolf = readStoredFixture().find(a => a.species === 'wolf');
-  assert.ok(wolf);
+  if (!wolf) throw new Error('fixture has no wolf');
   const brain = new AnimalBrain(1);
-  assert.equal(brain.stored, undefined);
+  assert.equal(brain.stored === undefined, true);
   mirrorStoredAnimal(brain, wolf);
+  const mirrored = brain.stored;
+  if (!mirrored) throw new Error('mirror did not land');
   assert.equal(brain.energy, wolf.energy);
-  assert.equal(brain.stored?.ageYears, wolf.ageYears);
-  assert.equal(brain.stored?.founder, true);
-  assert.equal(brain.stored?.handle, wolf.handle);
-  assert.equal(brain.stored?.parent, null);
+  assert.equal(mirrored.ageYears, wolf.ageYears);
+  assert.equal(mirrored.founder, true);
+  assert.equal(mirrored.handle, wolf.handle);
+  assert.equal(mirrored.parent, null);
   brain.decide({ x: 0, y: 0, z: 0 }, 0.016);
   assert.equal(brain.stored?.ageYears, wolf.ageYears);
   assert.equal(brain.stored?.energy, wolf.energy);

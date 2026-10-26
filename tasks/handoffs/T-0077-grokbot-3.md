@@ -1,6 +1,6 @@
 # T-0077 handoff (grokbot-3)
 
-Branch: `grokbot-3/globe-enter-fix`. Not merged. Not self-approved on GitHub.
+Branch: `grokbot-3/globe-enter-fix`. Pull request: https://github.com/BannonBotBoss/boreal/pull/120. Not merged. Not self-approved on GitHub.
 
 ## What was built
 

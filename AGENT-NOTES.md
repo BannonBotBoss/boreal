@@ -1018,5 +1018,5 @@ Matthew's direct request, 2026-10-25 18:24 PT, plus issue #107 at 19:15 PT. Not 
 - Orbit is nadir. Double-click, A, or G calls `beginFall`. The fall is `physics.step` to `FALL_END_M` (3048 m). Yaw +180° and pitch to −35.264° finish there. Aim is `lookAt(0,0,0)` then `rotateZ` / `rotateX`. The far plane clamps `rad² − R²` so the frame does not clear when the camera crosses inside the mean sphere.
 - The drone is photo mode's fly: `src/photo/photoMode.ts` `createPhotoMode` `update`, now `photoFlyMove` / `stepCarriedFly` in `src/photo/fly.ts`. Wind is `rushLevel` on `wind-pines`. `localCloudFade` crossfades the local box with the shell (issue #107). No new renderer.
 - Capture: orbit elevation −90°, handoff height 3048 m at elevation −35.264°, 03/04/05 are three hashes (they used to be one cleared frame). Overlap 0. Layer panel hidden in game. `npx tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo.
-- Skill `notes/skills/globe-entry-flight.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`.
+- Skill `notes/skills/globe-entry-flight.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`. Pull request https://github.com/BannonBotBoss/boreal/pull/120. Not merged.
 

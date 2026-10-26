@@ -1,0 +1,95 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Menu frame measure</title>
+<style>html,body{margin:0;height:100%;background:#1a2433}</style></head>
+<body>
+<pre id="out">measuring</pre>
+<script type="module">
+import { createPadMenu } from '/src/ui/padMenu.ts';
+const layers = ['camera', 'time', 'badges', 'gallery', 'settings'];
+const menu = createPadMenu({ act() {}, shutter() {}, settings() {}, help() {}, close() {}, notice() {} });
+const q = new URLSearchParams(location.search);
+const only = q.get('layer');
+const ids = only ? [only] : layers;
+const rows = [];
+for (const id of ids) {
+  menu.open(id);
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const root = menu.root.getBoundingClientRect();
+  const head = menu.root.querySelector('h3')?.getBoundingClientRect();
+  const tabs = menu.root.querySelector('.tabs')?.getBoundingClientRect();
+  const body = menu.root.querySelector('.padm-body');
+  const scroller = body ?? menu.root;
+  const up = menu.root.querySelector('.padm-arrow.up');
+  const down = menu.root.querySelector('.padm-arrow.down');
+  rows.push({
+    id,
+    top: root.top, height: root.height, bottom: root.bottom, width: root.width,
+    headTop: head?.top ?? null, tabsTop: tabs?.top ?? null,
+    scrollHeight: scroller.scrollHeight, clientHeight: scroller.clientHeight, scrollTop: scroller.scrollTop,
+    upHidden: up ? up.hasAttribute('hidden') : null,
+    downHidden: down ? down.hasAttribute('hidden') : null,
+    upLabel: up?.getAttribute('aria-label') ?? null,
+    downLabel: down?.getAttribute('aria-label') ?? null,
+  });
+}
+const probe = q.get('probe');
+let behavior = null;
+if (probe) {
+  menu.open('badges');
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const body = menu.root.querySelector('.padm-body');
+  const focusLabel = () => menu.root.querySelector('.focus')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  const arrow = (dir) => menu.root.querySelector(`.padm-arrow.${dir}`);
+  const fit = () => {
+    const el = menu.root.querySelector('.focus');
+    const er = el.getBoundingClientRect(), br = body.getBoundingClientRect();
+    const root = menu.root.getBoundingClientRect();
+    return {
+      focus: focusLabel(), scroll: Math.round(body.scrollTop), view: body.clientHeight,
+      up: arrow('up').hidden, down: arrow('down').hidden,
+      rowTop: Math.round((er.top - br.top) * 10) / 10,
+      rowBottom: Math.round((br.bottom - er.bottom) * 10) / 10,
+      fully: er.top >= br.top - 0.5 && er.bottom <= br.bottom + 0.5,
+      menuTop: root.top,
+    };
+  };
+  const before = fit();
+  const down = arrow('down');
+  down.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerId: 1 }));
+  await new Promise(r => setTimeout(r, 50));
+  const afterPress = fit();
+  await new Promise(r => setTimeout(r, 700));
+  const afterHold = fit();
+  down.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, pointerId: 1 }));
+  down.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, button: 0, pointerId: 1 }));
+  const focusAtRelease = focusLabel();
+  await new Promise(r => setTimeout(r, 400));
+  const afterRelease = { ...fit(), moved: focusLabel() !== focusAtRelease };
+  const steps = [];
+  for (let i = 0; i < 12; i++) { menu.input('menuDown'); steps.push({ dir: 'down', ...fit() }); }
+  for (let i = 0; i < 12; i++) { menu.input('menuUp'); steps.push({ dir: 'up', ...fit() }); }
+  const up = arrow('up');
+  up.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerId: 7 }));
+  await new Promise(r => setTimeout(r, 50));
+  const upPress = fit();
+  await new Promise(r => setTimeout(r, 700));
+  const upHold = fit();
+  up.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, pointerId: 7 }));
+  const upAtRelease = focusLabel();
+  await new Promise(r => setTimeout(r, 400));
+  const upRelease = { ...fit(), moved: focusLabel() !== upAtRelease };
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+  await new Promise(r => setTimeout(r, 50));
+  const keyPress = fit();
+  await new Promise(r => setTimeout(r, 700));
+  const keyHold = fit();
+  window.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowDown', bubbles: true }));
+  const keyAtRelease = focusLabel();
+  await new Promise(r => setTimeout(r, 400));
+  const keyRelease = { ...fit(), moved: focusLabel() !== keyAtRelease };
+  behavior = { before, afterPress, afterHold, afterRelease, steps, upPress, upHold, upRelease, keyPress, keyHold, keyRelease };
+}
+const out = { viewport: { w: innerWidth, h: innerHeight }, rows, behavior };
+document.getElementById('out').textContent = JSON.stringify(out);
+document.title = 'measured';
+</script>
+</body></html>

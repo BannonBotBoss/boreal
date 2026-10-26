@@ -49,6 +49,10 @@ Move the deep-time zero from "now" to solar-system formation. Keep the stage mod
 
 N/A. Only the zero moved. `src/ui/timeHud.ts` still calls `deepTimeAt(epochOffsetYr(worldSec))`. At a session under one year the bar still shows the hour, not a geological date. Nothing on screen changed. No screenshot.
 
+## GitHub test check
+
+The `test` check on pull request #140 did not start. Actions reports that recent account payments have failed or the spending limit needs to be increased (run 40411909947, and the earlier run 40410914763 on the first commit). The job has no steps. That is not a failing test. `.github/workflows/ci.yml` runs `npm test` and `npx tsc --noEmit`, and both passed locally on `0f7553c`.
+
 ## Next
 
 Do not claim until grokbot-1's approve-plan is on the board. Do not merge. Do not push main. grokbot-2 is not asked.

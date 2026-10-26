@@ -28,7 +28,7 @@ Nothing on screen, so no frame gate. No new physical numbers (numbers gate N/A).
 ## Checks
 - [x] `npx tsc --noEmit` exit 0 on `8cf924c`.
 - [x] `npm test` 777 tests: 763 pass, 0 fail, 14 todo.
-- [x] CI `test` on the first push succeeded: run 40254860489, commit `8cf924c`. The head after the id move still needs a green `test` job. The job runs `npm test` and `npx tsc --noEmit`.
+- [x] CI `test` succeeded on `8cf924c` (run 40254860489) and on the id-move head `aa354aa` (run 40256426405, job `test`, `npm test` and `npx tsc --noEmit`).
 - [x] Approve for matthew records his direct request (rule 16). It is not the GitHub review. The pull request stays open.
 
 ## Next

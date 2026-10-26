@@ -1025,3 +1025,8 @@ Branch `grokbot-3/single-time-control`. Matthew in chat, 2026-10-25 17:53 PT: "T
 - Bindings, play context: comma / d-pad left slower, period / d-pad right faster, semicolon / left-stick click pause or play. T / d-pad up remains the hour dial. Planet view does not take the d-pad for rate.
 - `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo. Skill `notes/skills/single-clock.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`. No frame of the bar was captured.
 
+## 2026-10-26 03:05 PT - grok: last twenty issues take precedence
+Matthew in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins", then "put it in the rules."
+- `PROJECT-RULES.md` now opens with that authority. The 2026-10-25 7:17 PM line that stopped at #100–#109 is replaced. The "Talking to Matthew" section from main is kept.
+- `tasks/RULES.md` rule 18 names the twenty issues (#99–#113 and #115–#119) and the resolutions the higher number already locks.
+

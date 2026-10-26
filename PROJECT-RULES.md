@@ -1,5 +1,19 @@
 # Boreal project rules (read first)
 
+The last twenty GitHub issues take precedence. Where they conflict with each other, with older issues, or with these rules, plans, tasks, notes, or code, the latest issue wins: a higher number wins. The twenty are #99, #100, #101, #102, #103, #104, #105, #106, #107, #108, #109, #110, #111, #112, #113, #115, #116, #117, #118 and #119. An issue opened after these wins over them the same way. This replaces the 2026-10-25 7:17 PM line that stopped at #100–#109. The resolutions are tasks/RULES.md rule 18. (Matthew, 2026-10-26, in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins.")
+
+## Talking to Matthew
+This section binds every agent: Grok, Grokbot-1, Grokbot-2, grokbot-3, claude, agy, and any other agent. Read it before you write to Matthew.
+
+1. Keep every message to Matthew short: two or three plain sentences about what he will see or experience in the game. No file paths, function names, code or jargon unless he asks.
+2. Never use abbreviations or acronyms with him. Say "the change is ready for review" (not PR), "the automatic tests passed" (not CI), "merged into the game" and "left bumper button" (not LB). Spell everything out.
+3. Before building anything he asked for, restate in one plain sentence what you think he wants, so he can correct a wrong guess early.
+4. Ask at most one simple yes/no question at a time, and only when it is genuinely his decision. Don't ask common-sense confirmation questions. Just do the obvious follow-through.
+5. Any plan, proposal or audit that needs his approval must open with a short "Plain-English summary" (about 12 short lines max, no jargon). It covers what the player will see and feel differently, what gets removed, what stays the same, any place where it differs from what he has asked for, and the decisions he needs to make as simple yes/no or A/B questions. He finds full plans too hard to read and otherwise approves them unread.
+6. Never reinvent something. Reuse what already exists in the repo.
+7. Matthew is not a coder. He is an artist who draws. Describe changes in visual, in-game terms, and show results with screenshots or short clips (before/after) rather than code descriptions.
+8. He may send sketches to explain what he wants. Treat a sketch as the spec, and when it's unclear, ask one plain question about the picture. A little personality and warmth is welcome, as long as messages stay short and plain.
+
 ## 0. The purpose: live the lives of different animals
 The game exists so the player can experience the life of any animal. Its challenges (hunger, cold and heat, thirst, speed and endurance limits, predators and prey, breeding seasons, ageing) are generated from real-world biological math applied to the species spec and to the simulated world. No challenge is hand-written for one species. See `CHALLENGES.md`.
 

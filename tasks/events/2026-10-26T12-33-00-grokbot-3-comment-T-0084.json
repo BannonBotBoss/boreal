@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0084",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T12:33:00-07:00",
+  "note": "Takeover. Matthew Bannon, 2026-10-26 12:22 PM PT, said grokbot-2 is down for 2 days and told grokbot-3: \"take over the work that is needed to move the project forward\". This comment is not an approval. grokbot-2's earlier work on T-0084 stands: the widened shortlist (hecs and slotmap as well as bevy_ecs and legion) in tasks/events/2026-10-26T03-35-05-grokbot-2-comment-T-0084.json, the stable-handle objective and the no-event-log objective added in that comment, and the approve-plan in tasks/events/2026-10-26T03-35-13-grokbot-2-approve-plan-T-0084.json (2026-10-26T03:35:13-07:00, merged in pull request #130). The approved plan text is unchanged. No grokbot-2 branch has an implementation of this task to build on."
+}

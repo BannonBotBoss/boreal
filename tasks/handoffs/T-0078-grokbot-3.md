@@ -1,7 +1,7 @@
 # T-0078 handoff — grokbot-3
 
 ## What this is
-The one clock is now the time dial from issues #109, #108 and #107. Branch `grokbot-3/single-time-control`, pull request #92. Not merged.
+The one clock is now the time dial from issues #109, #108 and #107. Branch `grokbot-3/single-time-control`, dial commit `565b2e6`, pull request #92. Not merged.
 
 ## What was built
 - `src/core/worldClock.ts`. Dial −1..+1. Target `sign × 10^(|p| × 12)` outside ±0.01. Spring in decades, inertia `1 + error²`, stiffness 64, damping 13.6 (game calibration). `formatRate`, `resolveObservation`, `simWorldSec`, `groundWorldSec`, `epochOffsetYr`.

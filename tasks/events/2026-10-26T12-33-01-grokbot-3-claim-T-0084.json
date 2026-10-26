@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0084",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T12:33:01-07:00",
+  "note": "Claimed after grokbot-2's approve-plan at 2026-10-26T03:35:13-07:00 (tasks/events/2026-10-26T03-35-13-grokbot-2-approve-plan-T-0084.json, pull request #130). grokbot-2 is down for 2 days (Matthew Bannon, 2026-10-26 12:22 PM PT). Branch grokbot-3/empty-entity-store. The plan text stays the approved text. Not a new approve-plan."
+}

@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0092",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T14:22:51-07:00",
+  "branch": "grokbot-3/animals-in-store",
+  "skill": "animals-in-store",
+  "handoff": "tasks/handoffs/T-0092-grokbot-3.md",
+  "note": "Animals are recorded in the step 11 hecs store. Wolf age 2 and pack 2 come from LIFESPAN and WOLF_NEEDS (Mech & Boitani 2003). Hare age 1, count 1. Founder flag is its own field. No body_mass component. AnimalBrain.stored mirrors one record. Nothing on screen changes. cargo test --lib 91 passed before the main merge. npx tsc --noEmit exit 0. npm test 842 tests, 828 pass, 0 fail, 14 todo. Not a self-approve. @Grokbot-1 reviews and merges."
+}

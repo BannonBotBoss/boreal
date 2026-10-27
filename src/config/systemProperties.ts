@@ -345,7 +345,7 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
     modules: ['src/core/timeOfDay.ts', 'src/core/worldClock.ts', 'src/core/timescale.ts', 'src/ui/chronometer.ts', 'src/ui/timeHud.ts', 'src/core/deepTime.ts'], groups: ['clock', 'chronometer'], dependsOn: ['save'],
     flags: { hour: '=HH sets the time of day on the one clock (core/timeOfDay)', day: '=1-366 sets the day of year (core/timeOfDay)', date: '=YYYY-MM-DD sets the year and day (core/timeOfDay)', timescale: 'sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, the edge of that zone is exactly 1×, full deflection 10^12 sim seconds per real second, negative rewinds' },
     tables: { 'src/core/timeOfDay.ts#DAY': 'chronometer offset (persisted)', 'src/core/worldClock.ts#CLOCK': 'save key and offline cap',
-      'src/core/deepTime.ts#DEEP': 'deep-time figures: sun and Earth age, flux thresholds, life start (T-0060)', 'src/core/deepTime.ts#MILESTONES': 'dated milestones on the deep-time dial (T-0060)' }, remaining: [] },
+      'src/core/deepTime.ts#DEEP': 'deep-time figures: solar-system formation, sun and Earth age, flux thresholds, life start (T-0060, T-0093)', 'src/core/deepTime.ts#MILESTONES': 'dated milestones on the deep-time dial (T-0060)' }, remaining: [] },
   controls: { title: 'Player controls and gamepad', what: 'One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics.',
     modules: ['src/core/bindings.ts', 'src/ui/controls.ts', 'src/ui/haptics.ts'], groups: ['haptics'], dependsOn: ['save'], flags: {},
     tables: { 'src/core/bindings.ts#ACTIONS': 'every action and its default keys / pad inputs', 'src/core/bindings.ts#DEADZONE': 'stick dead zone',

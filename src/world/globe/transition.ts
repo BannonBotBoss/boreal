@@ -13,14 +13,16 @@
 import * as THREE from 'three';
 import { PLANET, type Vec3 } from './planet';
 import { HANDOFF } from './handoff';
-import { smoothstep } from '../../proc/math';
+import { figureRadius } from './figure';
+import { ISO_BELOW_HORIZON } from './flight';
+import { clamp, smoothstep } from '../../proc/math';
 
 export const TRANSITION = {
   bandTop: HANDOFF.alt,           // m above ground: the game patch starts fading in below this (and is gone above it)
   fadeFull: 600,                  // m above ground: patch fully faded in
   handover: 60,                   // m above ground: the rig camera takes over (descent ends) [game calibration]
   datum: PLANET.home.elevation,   // m: globe height = game height + datum inside the home region (the one constant offset)
-  blendSec: 1,                    // s: transition pose -> rig pose at the end of the descent
+  blendSec: 1,                    // unused. One viewpoint, so the old 60 m blend of two cameras is a no-op (handoverBlend). The number stays; it is not applied.
 };
 
 export type TransitionMode = 'game' | 'band' | 'globe';
@@ -49,6 +51,15 @@ export function globePitch(alt: number) {
   const t = 1 - smoothstep(Math.log(HORIZON_TILT.floorAlt), Math.log(HORIZON_TILT.highAlt), Math.log(Math.max(alt, 1)));
   return HORIZON_TILT.down + (HORIZON_TILT.horizon - HORIZON_TILT.down) * t;
 }
+/** The drone keeps the isometric pitch the fall finished with. That aim looks into the ground in the last
+ *  tens of metres. Open only the drawn pose toward the horizon between `high` and the floor. The stored
+ *  stick pitch is unchanged, so the climb (`globePitch`) and a later stick input do not inherit this ease.
+ *  100 m stays isometric. Roll stays 0 in viewpointPose. [game calibration] */
+export const FLOOR_LOOK = { high: 48, low: HORIZON_TILT.floorAlt };
+export function descentPitch(height: number, pitch: number) {
+  const t = 1 - smoothstep(Math.log(FLOOR_LOOK.low), Math.log(FLOOR_LOOK.high), Math.log(Math.max(height, 1)));
+  return pitch + (HORIZON_TILT.horizon - ISO_BELOW_HORIZON) * t;
+}
 /** In-page (the default since the r18 check) or the reload fallback. ?transition=reload | inpage forces it; low-memory
  *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the
  *  reload when the player or the probe has the game on Low or below at that moment). */
@@ -61,14 +72,19 @@ export function transitionPath(search: string, env: { deviceMemory?: number; pro
 
 type PlanetFrame = { home: Vec3; east: Vec3; north: Vec3; radius: number; fromLocal(x: number, z: number): Vec3 };
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-/** Game point (x east, y up = game height, z south) -> planet-frame metres. */
+/** Game point (x east, y up = game height, z south) -> planet-frame metres.
+ *  The radius is the hydrostatic figure (figure.ts), the same surface the tiles use.
+ *  The mean sphere sits kilometres off that figure, so a camera placed on it reads as too high
+ *  and the descent never reaches the detail and near-split distances. East/north stay on the mean
+ *  radius: that is the gnomonic scale planet.fromLocal already uses. */
 export function gameToPlanet(p: PlanetFrame, x: number, y: number, z: number): Vec3 {
-  const d = p.fromLocal(x, z), r = p.radius + TRANSITION.datum + y; return [d[0] * r, d[1] * r, d[2] * r];
+  const d = p.fromLocal(x, z), r = figureRadius(d) + TRANSITION.datum + y; return [d[0] * r, d[1] * r, d[2] * r];
 }
 /** Inverse of gameToPlanet (exact inverse of planet.fromLocal's projection). */
 export function planetToGame(p: PlanetFrame, v: Vec3) {
   const len = Math.hypot(v[0], v[1], v[2]), c = dot(v, p.home) / len;
-  return { x: p.radius * dot(v, p.east) / len / c, y: len - p.radius - TRANSITION.datum, z: -p.radius * dot(v, p.north) / len / c };
+  const u: Vec3 = [v[0] / len, v[1] / len, v[2] / len];
+  return { x: p.radius * dot(v, p.east) / len / c, y: len - figureRadius(u) - TRANSITION.datum, z: -p.radius * dot(v, p.north) / len / c };
 }
 /** Rotation taking game-frame vectors (x east, y up, z south) to planet-frame vectors at game point (x, z): home's
  *  east/north projected on the local tangent plane, the same convention as the globe heading (globeView headingYaw). */
@@ -76,6 +92,49 @@ export function gameBasis(p: PlanetFrame, x: number, z: number, out = new THREE.
   const up = new THREE.Vector3(...p.fromLocal(x, z)), e = new THREE.Vector3(...p.east), n = new THREE.Vector3(...p.north);
   e.addScaledVector(up, -e.dot(up)).normalize(); n.crossVectors(up, e); // right-handed: north = up x east
   return out.makeBasis(e, up, n.negate()); // game +z = south
+}
+/** The one viewpoint, in game metres. This is the band pose the descent already flew:
+ *  position above the ground point, orientation Euler(pitch, yaw, YXZ). Orbit, the fall,
+ *  the drone and the climb all write this pose onto the forest camera. */
+export function viewpointPose(
+  x: number, z: number, groundY: number, height: number, yaw: number, pitch: number,
+  out: { position: THREE.Vector3; quaternion: THREE.Quaternion },
+) {
+  out.position.set(x, groundY + height, z);
+  out.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+  return out;
+}
+/** The old handover mixed a transition camera into the rig camera over blendSec.
+ *  One camera means the pose is unchanged. The rig pose and the blend fraction are ignored. */
+export function handoverBlend<T>(pose: T, _rig: unknown, _t: number): T {
+  return pose;
+}
+/** Near and far (m) at altitude. The same clip the planet camera already used: near is
+ *  altitude × 0.02 clamped to 0.5 m … 100 km, far is the limb past the mean sphere.
+ *  The radical is clamped so a camera inside that sphere does not get a NaN projection. */
+export function orbitClip(alt: number, radius: number, radialGround: number) {
+  const rad = radius + radialGround + alt;
+  return {
+    near: clamp(alt * 0.02, 0.5, 1e5),
+    far: Math.sqrt(Math.max(0, rad * rad - radius * radius)) + radius * 2,
+  };
+}
+/** Inverse of globeCameraFrom. False when the point is not on the home-facing hemisphere,
+ *  where the gnomonic frame blows up. The caller then keeps the planet camera as it is. */
+export function forestFromPlanet(
+  p: PlanetFrame,
+  planetCam: { position: THREE.Vector3; quaternion: THREE.Quaternion },
+  out: { position: THREE.Vector3; quaternion: THREE.Quaternion },
+) {
+  const v = planetCam.position, len = Math.hypot(v.x, v.y, v.z);
+  if (!(len > 0)) return false;
+  const c = (v.x * p.home[0] + v.y * p.home[1] + v.z * p.home[2]) / len;
+  if (!(c > 0.25)) return false;
+  const g = planetToGame(p, [v.x, v.y, v.z]);
+  if (!Number.isFinite(g.x) || !Number.isFinite(g.y) || !Number.isFinite(g.z)) return false;
+  out.position.set(g.x, g.y, g.z);
+  out.quaternion.copy(planetCam.quaternion).premultiply(new THREE.Quaternion().setFromRotationMatrix(gameBasis(p, g.x, g.z)).invert());
+  return true;
 }
 /** The globe camera for a game camera (position in game coordinates, orientation in the game frame). */
 export function globeCameraFrom(p: PlanetFrame, gameCam: { position: THREE.Vector3; quaternion: THREE.Quaternion }, out: { position: THREE.Vector3; quaternion: THREE.Quaternion }) {

@@ -136,6 +136,7 @@ test('an arrow that appears after the first reveal shrinks the view, so the row 
 
 test('the panel css keeps vertical centering and hides the scrollbar', () => {
   const src = readFileSync(new URL('../src/ui/padMenu.ts', import.meta.url), 'utf8');
+  assert.match(src, /\.padm\[hidden\]\{display:none\}/);
   assert.match(src, /top:50%/);
   assert.match(src, /translate\(-50%,-50%\)/);
   assert.match(src, /scrollbar-width:none/);

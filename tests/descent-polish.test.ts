@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { CLOUD_OPEN, cloudClear } from '../src/world/globe/transition';
 import { CLOUDS } from '../src/world/globe/atmosphere';
-import { LANDING_VIEW, landSpawn, viewBlocked } from '../src/world/globe/handoff';
+import { EYE_CLEAR, LANDING_VIEW, eyeClearOfTrees, landSpawn, viewBlocked } from '../src/world/globe/handoff';
 import { solidsAround, treesAround } from '../src/core/ground';
 import { isDry } from '../src/core/stages/surfaceAt';
 import { STAGES } from '../src/core/stages/elevation';
@@ -65,6 +65,15 @@ test('descent polish: seeded landings leave no tree, boulder or log between the 
   console.log(`raw landing spots with a tree in the camera's view: ${rawBlocked}/${n}; with only a rock or log: ${rawSolid}/${n}`);
   assert.ok(rawSolid >= 3, `rocks/logs alone block some raw spots (${rawSolid}/${n})`);
   assert.ok(rawBlocked >= 2, `the check has something to catch (${rawBlocked}/${n} raw spots blocked)`);
+});
+
+test('descent polish: the drone eye steps back off a stem and stays put when the stem is far', () => {
+  const on = eyeClearOfTrees(0, 0, 0, [{ x: 0, z: 0, r: 3 }]);
+  assert.ok(Math.hypot(on.x, on.z) >= EYE_CLEAR.gap, `eye is ${Math.hypot(on.x, on.z)} m out`);
+  assert.ok(on.z > 0, 'yaw 0 looks toward -z, so the eye steps back toward +z');
+  const far = eyeClearOfTrees(0, 0, 0, [{ x: 40, z: 0, r: 3 }]);
+  assert.equal(far.x, 0);
+  assert.equal(far.z, 0);
 });
 
 test('descent polish: viewBlocked sees a trunk on the camera-wolf line and ignores one beside it or behind the wolf', () => {

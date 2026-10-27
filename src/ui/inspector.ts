@@ -76,7 +76,7 @@ export function createInspector(view: View, canvas: HTMLCanvasElement, handles?:
       const sb = withTrace(wt, () => surfaceBalance(c2s(col), shortwave(sun.cosZ, w.cloud), w.tC, w.rh * qsat(w.tC, 96000), 96000, Math.hypot(w.wind.x, w.wind.z), w.cloud, Math.min(1, w.soil / .75)));
       out.push(...wt.factors, obs('weather', 'date', `day ${WEATHER.day} ${WEATHER.hour.toFixed(2)} h`), obs('weather', 'sun zenith ° (NOAA)', +sun.zenith.toFixed(2)), obs('weather', `TOA W/m² (S0 ${K.TSI})`, +sun.toa.toFixed(0)),
         obs('weather', 'air °C', +w.tC.toFixed(1)), obs('weather', 'RH', +w.rh.toFixed(2)), obs('weather', 'cloud fraction', +w.cloud.toFixed(2)), obs('weather', 'rain mm/h (Kessler)', +w.rainMmH.toFixed(2)),
-        obs('weather', 'wind 10 m (m/s)', `${w.wind.x.toFixed(1)}, ${w.wind.y.toFixed(2)}, ${w.wind.z.toFixed(1)}`), obs('weather', 'soil bucket (Manabe)', +w.soil.toFixed(2)), obs('weather', 'snow SWE mm', +w.sweMm.toFixed(1)),
+        obs('weather', 'wind 10 m (m/s)', `${w.wind.x.toFixed(1)}, ${w.wind.y.toFixed(2)}, ${w.wind.z.toFixed(1)}`), obs('weather', 'soil bucket (Manabe)', +w.soil.toFixed(2)), obs('weather', 'snow SWE mm', +w.sweMm.toFixed(1)), obs('weather', 'snow depth cm', +w.depthCm.toFixed(1)),
         obs('energy', 'Rn W/m²', +sb.Rn.toFixed(0)), obs('energy', 'λE Penman–Monteith', +sb.LE.toFixed(0)), obs('energy', 'H (residual)', +sb.H.toFixed(0)), obs('energy', 'G', +sb.G.toFixed(0)));
       for (const d of nearDeltas(s.point.x, s.point.z)) out.push(obs('deltas', `${d.kind} @ ${d.x.toFixed(1)}, ${d.z.toFixed(1)}`, `strength ${(d.strength * 100).toFixed(0)}% · m ${d.m.toFixed(3)} — ${DELTA_KINDS[d.kind]?.source ?? ''}`));
       fields = {}; // 24x24 noise layer previews, 40 m around the point

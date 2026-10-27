@@ -16,7 +16,7 @@ import { rockDiameter } from './rocks';
 import { LEVEL } from './tuning';
 import { STAGES } from './stages/elevation';
 import { soilAt } from './stages/soils';
-import { HYDRO, WEATHER, setSurfaceSource, weatherAt } from './weather';
+import { HYDRO, WEATHER, setSurfaceSource, snowDepthCm, weatherAt } from './weather';
 import { siteAt } from './flora/site';
 import { budget, cellsUnder, fallFraction, LOG_FLOOR_BULK, logDryMass, setLogYears } from './logDecay';
 
@@ -183,7 +183,8 @@ function columnRaw(x: number, z: number, years: number) {
   const layers: Layer[] = []; let top = 0;
   const push = (l: Omit<Layer, 'top'>) => { if (l.thickness > 1e-4) { layers.push({ ...l, top }); top += l.thickness; } };
   // Hydrosphere (core/weather): snowpack on top, bucket soil water blended into the organic layers' moisture.
-  const wx = weatherAt(cx, cz), snowM = f('ground', 'snow water equivalent (mm)', wx.sweMm) / HYDRO.snowDensity;
+  const wx = weatherAt(cx, cz), sweMm = f('ground', 'snow water equivalent (mm)', wx.sweMm);
+  const snowM = f('ground', 'snow depth (cm)', snowDepthCm(sweMm)) / 100; // metres: the centimetre depth, not a second density
   if (y >= LEVEL.waterSurface) push({ id: 'snow', label: 'snowpack', thickness: snowM, kg: snowM * HYDRO.snowDensity, bulk: HYDRO.snowDensity, moisture: 1, source: 'core/weather Kessler + degree-day melt; Sturm et al. 2010' });
   const moist = f('ground', 'organic moisture (vol. share)', Math.min(1, (.3 + .6 * wet) * .5 + wx.soil * .5));
   if (y < LEVEL.waterSurface) push({ id: 'water', label: 'water', thickness: LEVEL.waterSurface - y, kg: (LEVEL.waterSurface - y) * 998, bulk: 998, source: 'CRC Handbook' });

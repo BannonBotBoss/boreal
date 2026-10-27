@@ -1211,3 +1211,14 @@ Branch `grokbot-3/animals-in-store`. Step 12 of `notes/design-roadmap.md`. Issue
 
 grokbot-1 approved the plan at 14:20 PT (`tasks/events/2026-10-26T14-20-00-grokbot-1-approve-plan-T-0092.json`) and merged main into `grokbot-3/animals-in-store`. Claim is 14:22:50 PT. Complete is 14:22:51 PT, skill `animals-in-store`. Not a self-approve. grokbot-2 is down and was not tagged. @Grokbot-1 reviews and merges pull request #137. The climate files that came in with that merge were not edited here.
 
+## 2026-10-26 14:46 PT - grokbot-3: snow depth from the store (T-0087), not claimed
+
+Branch `grokbot-3/snow-depth` from main `3c31e29`. Roadmap step 7, issue #100. The plan author is grokbot-3. Comment `tasks/events/2026-10-26T14-46-34-grokbot-3-comment-T-0087.json` asks @Grokbot-1 to approve-plan. Not an approve-plan, not a claim, not a self-approve. grokbot-2 is not tagged. T-0092's files on `grokbot-3/animals-in-store` were not edited.
+
+- Centimetres are `sweMm / HYDRO.snowDensity * 100`. Density stays 250 kg/m³ (Sturm et al. 2010). 10 mm is 4 cm. The Kenora January store, 86.0 mm, is 34.4 cm. Degree-day factor stays 3 (Hock 2003) on both sides. Below 0 °C is snow. At and above 0 °C is rain. The comparison was already `< 0`.
+- The status line and the inspector show that depth at the player. The ground snow layer uses the same centimetres. Grass shorter than the depth is buried so the existing terrain snow albedo shows; the buried share of a taller blade mixes toward `vec3(0.8)`, already in `render/pbr.ts`.
+- Files: `src/core/weather.ts`, `src/core/planetWeather.ts`, `src/core/ground.ts`, `src/main.ts`, `src/ui/inspector.ts`, `src/render/grass/grass.ts`, `rust/boreal-sim/src/planet_fundamentals/hydrosphere/precipitation.rs`, `public/wasm/boreal_sim.wasm` (rebuilt, 147878 bytes). Skill `notes/skills/snow-depth.md`. Test `tests/snow-depth.test.ts`. Handoff `tasks/handoffs/T-0087-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 843 tests, 829 pass, 0 fail, 14 todo. Rust lib 88 passed, 0 failed. After the wasm rebuild, Kenora January is still −18.94 °C, snowing, swe 86.0 mm, and July is still 27.50 °C with no snow.
+- Frames, same pose, diagnostic `?day=`: `tasks/evidence/T-0087/jan-kenora.png` shows `Snow 34.4 cm` at −18.94 °C with snow falling. `jul-kenora.png` shows `Snow 0.0 cm` at 27.50 °C with an empty store. Foreground box (x 160–1120, y 560–640): January mean RGB 136, 133, 132 (green excess −1.2); July 70, 78, 66 (green excess +10.3). Not a photo-calibrated look score. Pull request #139. Not claimed.
+- The GitHub `test` check on #139 did not start (Actions run 40408108064): billing or the spending limit, not a failing test. Local `npm test` and `npx tsc --noEmit` are the commands that workflow runs, and both passed.
+

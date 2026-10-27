@@ -302,7 +302,7 @@ test('globe clouds: cloud noise uses the integer lattice hash (vnoiseU), not the
 });
 
 import * as THREE_E from 'three';
-import { globeMaterial } from '../src/world/globe/tile';
+import { COARSE_LAKE, TILE_SPAN, coarseLake, globeMaterial } from '../src/world/globe/tile';
 test('globe material: varyings used by the atmosphere and log depth are centroid-sampled (MSAA skirt slivers at tile borders shaded outside their triangle gave black samples)', () => {
   const m = globeMaterial(); createAtmosphere(6371000).patch(m);
   const sh = { uniforms: {}, vertexShader: THREE_E.ShaderLib.standard.vertexShader, fragmentShader: THREE_E.ShaderLib.standard.fragmentShader } as unknown as THREE_E.WebGLProgramParametersWithUniforms;
@@ -312,6 +312,13 @@ test('globe material: varyings used by the atmosphere and log depth are centroid
     assert.ok(src.includes('centroid varying float vFragDepth;') && !src.includes('#include <logdepthbuf_pars'), 'log depth varyings centroid');
   }
   assert.ok(sh.fragmentShader.includes('uniform float logDepthBufFC;'));
+  assert.equal(coarseLake(5, 0, 1), 0, 'a sub-pixel segment keeps the lake');
+  assert.equal(coarseLake(80, 0, 1), 1, 'a chunky lake triangle is hidden');
+  assert.equal(coarseLake(80, 1, 1), 0, 'the home shoreline mask still draws the shore');
+  assert.equal(coarseLake(80, 0, 0), 0, 'ocean stays');
+  assert.ok(sh.fragmentShader.includes(`smoothstep(${COARSE_LAKE.px0.toFixed(1)}, ${COARSE_LAKE.px1.toFixed(1)}, segPx)`));
+  assert.ok(sh.fragmentShader.includes('uniform float uFp;'));
+  assert.equal(sh.uniforms.uFp, TILE_SPAN.uFp);
 });
 
 import { globeUrl, GLOBE_ENTRY_ALT } from '../src/world/globe/handoff';

@@ -22,10 +22,11 @@ import { createFarLayer } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './flight';
-import { TRANSITION, globePitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
+import { TRANSITION, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
-import { GLOBE_ENTRY_ALT } from './handoff';
+import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR } from './handoff';
+import { treesAround } from '../../core/ground';
 import { PLANET, GLOBE_COLOURS } from './planet';
 import { setPatchFade, setPatchFar } from '../../render/fade';
 import { AO_BLEND } from '../../render/post';
@@ -312,7 +313,17 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
           }
         }
         if (DEV && DEBUG.holdH) h = Math.max(h, DEBUG.holdH);
-        if (phase !== 'blend') viewpointPose(spotX, spotZ, ground(spotX, spotZ), h, yaw, pitch, vp);
+        if (phase !== 'blend') {
+          // The stick pitch stays isometric. The drawn pitch opens toward the horizon only in the last tens of metres.
+          // Below the crowns the eye steps clear of the stem. The flight spot is not moved, and roll stays 0.
+          const look = descentPitch(h, pitch);
+          let ex = spotX, ez = spotZ, gy = ground(spotX, spotZ);
+          if (h < EYE_CLEAR.below) {
+            const eye = eyeClearOfTrees(spotX, spotZ, yaw, treesAround(spotX, spotZ));
+            ex = eye.x; ez = eye.z; gy = ground(ex, ez);
+          }
+          viewpointPose(ex, ez, gy, h, yaw, look, vp);
+        }
         if (phase === 'blend') handoverBlend(cam, end, blend); // no-op: blendSec is not applied
         showPrompt(flightPrompt(entryName(), padOn()));
       } else { // up: the same vertical, back to the planet

@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { PLANET, type Vec3 } from './planet';
 import { HANDOFF } from './handoff';
 import { figureRadius } from './figure';
+import { ISO_BELOW_HORIZON } from './flight';
 import { clamp, smoothstep } from '../../proc/math';
 
 export const TRANSITION = {
@@ -49,6 +50,15 @@ export const coastLambda = Math.log(1 / GLOBE_COAST.rest) / GLOBE_COAST.sec;
 export function globePitch(alt: number) {
   const t = 1 - smoothstep(Math.log(HORIZON_TILT.floorAlt), Math.log(HORIZON_TILT.highAlt), Math.log(Math.max(alt, 1)));
   return HORIZON_TILT.down + (HORIZON_TILT.horizon - HORIZON_TILT.down) * t;
+}
+/** The drone keeps the isometric pitch the fall finished with. That aim looks into the ground in the last
+ *  tens of metres. Open only the drawn pose toward the horizon between `high` and the floor. The stored
+ *  stick pitch is unchanged, so the climb (`globePitch`) and a later stick input do not inherit this ease.
+ *  100 m stays isometric. Roll stays 0 in viewpointPose. [game calibration] */
+export const FLOOR_LOOK = { high: 48, low: HORIZON_TILT.floorAlt };
+export function descentPitch(height: number, pitch: number) {
+  const t = 1 - smoothstep(Math.log(FLOOR_LOOK.low), Math.log(FLOOR_LOOK.high), Math.log(Math.max(height, 1)));
+  return pitch + (HORIZON_TILT.horizon - ISO_BELOW_HORIZON) * t;
 }
 /** In-page (the default since the r18 check) or the reload fallback. ?transition=reload | inpage forces it; low-memory
  *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the

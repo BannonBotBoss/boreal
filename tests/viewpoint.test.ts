@@ -4,9 +4,9 @@ import { readFileSync } from 'node:fs';
 import * as THREE from 'three';
 import { createPlanet, PLANET } from '../src/world/globe/planet';
 import { figureRadius } from '../src/world/globe/figure';
-import { NADIR, fallPitch } from '../src/world/globe/flight';
+import { ISO_BELOW_HORIZON, NADIR, fallPitch } from '../src/world/globe/flight';
 import {
-  TRANSITION, globePitch, viewpointPose, handoverBlend, orbitClip, forestFromPlanet, globeCameraFrom, gameToPlanet, planetToGame,
+  TRANSITION, HORIZON_TILT, globePitch, descentPitch, FLOOR_LOOK, viewpointPose, handoverBlend, orbitClip, forestFromPlanet, globeCameraFrom, gameToPlanet, planetToGame,
 } from '../src/world/globe/transition';
 
 const read = (p: string) => readFileSync(p, 'utf8');
@@ -45,6 +45,28 @@ test('the driven camera sits on the hydrostatic figure, not the mean sphere', ()
   assert.ok(offMean > 1000, `camera is only ${offMean} m off the mean sphere`);
   const back = planetToGame(p, v);
   assert.ok(Math.abs(back.y - y) < 1e-4 && Math.abs(back.x) < 1e-4 && Math.abs(back.z) < 1e-4);
+});
+
+test('the last tens of metres open toward the horizon, and the roll stays 0', () => {
+  const iso = ISO_BELOW_HORIZON;
+  assert.ok(Math.abs(descentPitch(2000, iso) - iso) < 1e-12, '2 km stays isometric');
+  assert.ok(Math.abs(descentPitch(100, iso) - iso) < 1e-12, '100 m stays isometric');
+  assert.ok(Math.abs(descentPitch(FLOOR_LOOK.high, iso) - iso) < 1e-12);
+  assert.ok(Math.abs(descentPitch(1, iso) - HORIZON_TILT.horizon) < 1e-12, 'the floor looks toward the horizon');
+  assert.ok(Math.abs(descentPitch(FLOOR_LOOK.low, iso) - HORIZON_TILT.horizon) < 1e-12);
+  const mid = descentPitch(20, iso);
+  assert.ok(mid > iso && mid < HORIZON_TILT.horizon, '20 m is between isometric and the horizon');
+  const out = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
+  viewpointPose(0, 0, 4, 1, 0.4, descentPitch(1, iso), out);
+  const euler = new THREE.Euler().setFromQuaternion(out.quaternion, 'YXZ');
+  assert.ok(Math.abs(euler.z) < 1e-8, `roll ${euler.z}`);
+  const page = read('src/world/globe/inpage.ts');
+  const down = page.slice(page.indexOf('else if (down)'), page.indexOf('} else { // up'));
+  const up = page.slice(page.indexOf('} else { // up'));
+  assert.match(down, /descentPitch\(h, pitch\)/);
+  assert.match(down, /eyeClearOfTrees\(/);
+  assert.doesNotMatch(up, /descentPitch/);
+  assert.match(up, /globePitch\(h\)/);
 });
 
 test('the handover blend is a no-op because there is one camera', () => {

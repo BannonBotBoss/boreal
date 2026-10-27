@@ -46,7 +46,7 @@ import { createLocalClouds, localCloudFade, type ColumnInput } from './localClou
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
 import { refreshHydroLayer, hydroLayerState } from './hydroLayer';
-import { GLOBE_SHORE, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
+import { GLOBE_SHORE, TILE_SPAN, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
 import { auroraFromSolarWind, fieldLineR } from '../../core/geodynamo';
 import { auroraPole } from './atmosphere';
@@ -312,6 +312,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const old = tiles.get(n.key); if (old) { releaseTileGeometry(old.mesh.geometry); STATS.rebuilt++; } // a rebuild at the current segment count replaces the old tile
     const mesh = new THREE.Mesh(tileGeometry(t), material); mesh.matrixAutoUpdate = false;
     const tile: Tile = { mesh, used: frame, centre: [t.centre[0], t.centre[1], t.centre[2]], seg: Math.round(Math.sqrt(4 + t.position.length / 3)) - 3, solarBucket: '' };
+    const spacing = edgeMetres(n.level, R) / Math.max(1, tile.seg); // metres per segment; the shared lake fade reads it per tile
+    mesh.onBeforeRender = () => { TILE_SPAN.uFp.value = spacing; };
     tiles.set(n.key, tile);
     const sec = q.has('shot') ? shotSec : worldSec(); stampSolar(tile, dayAt(sec), hourAt(sec)); // T-0057: Q_absorbed at the clock this tile was adopted
   };

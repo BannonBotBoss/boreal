@@ -5,8 +5,9 @@
 //! This module stores a key, not a copy of the spec and not a skeleton.
 //! Needs are the three levels `stepNeeds` already steps. Drives (#117) and the
 //! event log (#119) are not here. Nothing in this module acts.
-//! Conflict 10: issue #102's physiology weight is not a component. Step 18
-//! reads the generated volume.
+//! Conflict 10: the physiology weight is not a component. Step 18 (T-0102)
+//! stores feelings beside Needs and Age. The generated volume stays outside
+//! this crate. The feelings record has no weight field.
 
 use hecs::{Entity, World};
 
@@ -31,7 +32,13 @@ pub const COMPONENT_NAMES: &[&str] = &[
     "Needs",
     "Kinship",
     "Territory",
+    "BodyFeelings",
 ];
+
+/// Little-endian `BDY1` feelings. Header is 12 bytes, then one 32-byte row
+/// (handle plus the six feeling floats). There is no seventh float.
+pub const FEELINGS_BYTES: usize = 32;
+pub const FEELINGS_HEADER_BYTES: usize = 12;
 
 /// Key into the existing species rows. Not the row itself.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -75,6 +82,42 @@ pub struct Territory {
     pub holder: u64,
     pub x: f64,
     pub z: f64,
+}
+
+/// What the body feels, apart from the reserves on `Needs` and the years on `Age`.
+/// Six f32. Opening values are `Default`. Pain and oxygen stress stay 0 because
+/// this step has no injury rate and no oxygen-debt rate (calibration). Health
+/// and stamina start full on the needs percent scale. Temperature 0 means no
+/// air sample yet, so the heat feeling stays 0. The TypeScript step (`stepNeeds`,
+/// `heatFactor`, `staminaRates`) is what moves them. This struct does not.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct BodyFeelings {
+    pub stamina: f32,
+    pub pain: f32,
+    pub health: f32,
+    pub temperature_c: f32,
+    pub temperature_stress: f32,
+    pub oxygen_stress: f32,
+}
+
+impl Default for BodyFeelings {
+    fn default() -> Self {
+        Self {
+            stamina: 100.0,
+            pain: 0.0,
+            health: 100.0,
+            temperature_c: 0.0,
+            temperature_stress: 0.0,
+            oxygen_stress: 0.0,
+        }
+    }
+}
+
+/// One animal's feelings, for the `BDY1` bytes.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FeelingsRow {
+    pub handle: u64,
+    pub feelings: BodyFeelings,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -138,6 +181,7 @@ pub fn spawn_animal(world: &mut World, spec: SpawnAnimal) -> AnimalView {
         Needs { water: spec.water, energy: spec.energy, rest: spec.rest },
         Kinship { parent: spec.parent, founder: spec.founder },
         Territory { holder: spec.territory_holder, x: spec.territory_x, z: spec.territory_z },
+        BodyFeelings::default(),
     ));
     let handle = entity.to_bits().get();
     if spec.territory_holder == 0 {
@@ -219,6 +263,55 @@ pub fn read_animal(world: &World, handle: u64) -> Option<AnimalView> {
         territory_x,
         territory_z,
     })
+}
+
+pub fn read_feelings(world: &World, handle: u64) -> Option<BodyFeelings> {
+    let entity = Entity::from_bits(handle)?;
+    let feelings = world.get::<&BodyFeelings>(entity).ok()?;
+    Some(*feelings)
+}
+
+pub fn set_feelings(world: &mut World, handle: u64, feelings: BodyFeelings) -> bool {
+    let Some(entity) = Entity::from_bits(handle) else {
+        return false;
+    };
+    let Ok(mut slot) = world.get::<&mut BodyFeelings>(entity) else {
+        return false;
+    };
+    *slot = feelings;
+    true
+}
+
+pub fn feelings_of(world: &World, animals: &[AnimalView]) -> Vec<FeelingsRow> {
+    animals
+        .iter()
+        .filter_map(|animal| {
+            read_feelings(world, animal.handle).map(|feelings| FeelingsRow {
+                handle: animal.handle,
+                feelings,
+            })
+        })
+        .collect()
+}
+
+/// Header `BDY1`, version 1, count, then `FEELINGS_BYTES` per animal.
+/// Each row is the handle and the six feeling floats. No weight float.
+pub fn write_feelings(rows: &[FeelingsRow]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(FEELINGS_HEADER_BYTES + rows.len() * FEELINGS_BYTES);
+    out.extend_from_slice(b"BDY1");
+    out.extend_from_slice(&1u32.to_le_bytes());
+    out.extend_from_slice(&(rows.len() as u32).to_le_bytes());
+    for row in rows {
+        let f = row.feelings;
+        out.extend_from_slice(&row.handle.to_le_bytes());
+        out.extend_from_slice(&f.stamina.to_le_bytes());
+        out.extend_from_slice(&f.pain.to_le_bytes());
+        out.extend_from_slice(&f.health.to_le_bytes());
+        out.extend_from_slice(&f.temperature_c.to_le_bytes());
+        out.extend_from_slice(&f.temperature_stress.to_le_bytes());
+        out.extend_from_slice(&f.oxygen_stress.to_le_bytes());
+    }
+    out
 }
 
 /// Header `ANM1`, version 1, count, then `ANIMAL_BYTES` per animal.

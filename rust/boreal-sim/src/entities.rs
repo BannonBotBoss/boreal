@@ -72,6 +72,16 @@ impl EntityStore {
     pub fn animal(&self, handle: Handle) -> Option<crate::animals::AnimalView> {
         crate::animals::read_animal(&self.world, handle)
     }
+
+    /// Feelings on a stored animal. `None` for a bare spawn or a removed handle.
+    pub fn feelings(&self, handle: Handle) -> Option<crate::animals::BodyFeelings> {
+        crate::animals::read_feelings(&self.world, handle)
+    }
+
+    /// Replace the feelings on an animal that already has them. A bare spawn stays bare.
+    pub fn set_feelings(&mut self, handle: Handle, feelings: crate::animals::BodyFeelings) -> bool {
+        crate::animals::set_feelings(&mut self.world, handle, feelings)
+    }
 }
 
 #[cfg(test)]
@@ -184,13 +194,15 @@ mod tests {
     #[test]
     fn component_names_have_no_weight_field() {
         let names = crate::animals::COMPONENT_NAMES;
-        assert_eq!(names.len(), 6);
+        assert_eq!(names.len(), 7);
+        assert_eq!(names[6], "BodyFeelings");
         for name in names {
             assert!(!name.to_ascii_lowercase().contains("mass"), "{name}");
         }
         let src = include_str!("animals.rs");
         assert!(!src.contains("body_mass"));
         assert!(!src.contains("BodyMass"));
+        assert_eq!(std::mem::size_of::<crate::animals::BodyFeelings>(), 24);
     }
 
     #[test]
@@ -284,6 +296,61 @@ mod tests {
         assert_eq!(&got[0..4], b"ANM1");
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/stored-wolf-pack.bin");
         if std::env::var_os("STORE_DUMP").is_some() {
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, &got).unwrap();
+        }
+        let expected = std::fs::read(&path).unwrap_or_else(|_| panic!("missing {}", path.display()));
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn spawned_animal_has_feelings_and_no_weight_float() {
+        let mut store = EntityStore::empty();
+        let bare = store.spawn();
+        assert!(store.feelings(bare).is_none());
+        assert!(!store.set_feelings(bare, crate::animals::BodyFeelings::default()));
+        let wolves = store.spawn_pack(wolf_pack());
+        let wolf = wolves[0].handle;
+        let opening = store.feelings(wolf).expect("feelings");
+        assert_eq!(opening, crate::animals::BodyFeelings::default());
+        assert_eq!(opening.stamina, 100.0);
+        assert_eq!(opening.pain, 0.0);
+        assert_eq!(opening.health, 100.0);
+        assert_eq!(opening.temperature_c, 0.0);
+        assert_eq!(opening.temperature_stress, 0.0);
+        assert_eq!(opening.oxygen_stress, 0.0);
+        let written = crate::animals::BodyFeelings {
+            pain: 1.25,
+            ..crate::animals::BodyFeelings::default()
+        };
+        assert!(store.set_feelings(wolf, written));
+        assert_eq!(store.feelings(wolf).unwrap().pain, 1.25);
+        assert_eq!(store.feelings(wolf).unwrap().stamina, 100.0);
+        assert!(store.remove(wolf));
+        assert!(store.feelings(wolf).is_none());
+    }
+
+    #[test]
+    fn feelings_fixture_matches_the_committed_bytes() {
+        let mut store = EntityStore::empty();
+        let mut animals = store.spawn_pack(wolf_pack());
+        animals.extend(store.spawn_pack(hare()));
+        let animal_bytes = crate::animals::write_animals(&animals);
+        let animal_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures/stored-wolf-pack.bin");
+        let animal_expected = std::fs::read(&animal_path).expect("animal fixture");
+        assert_eq!(animal_bytes, animal_expected, "feelings fixture must share the animal handles");
+        let rows = crate::animals::feelings_of(&store.world, &animals);
+        assert_eq!(rows.len(), 3);
+        let got = crate::animals::write_feelings(&rows);
+        assert_eq!(
+            got.len(),
+            crate::animals::FEELINGS_HEADER_BYTES + crate::animals::FEELINGS_BYTES * 3
+        );
+        assert_eq!(&got[0..4], b"BDY1");
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures/body-feelings.bin");
+        if std::env::var_os("FEELINGS_DUMP").is_some() {
             std::fs::create_dir_all(path.parent().unwrap()).unwrap();
             std::fs::write(&path, &got).unwrap();
         }

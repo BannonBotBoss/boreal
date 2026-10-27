@@ -22,4 +22,4 @@ Use when the viewer needs what an embodied animal perceives, or when a later sen
 - Adding 16 reserved bytes to every struct because the issue also says "reserve bytes". That breaks the stated sizes. The stated size wins. Memory stays 20. Sound's extra is 4, not 16.
 - Treating a zero count as "omit the header". The header, the body, the emotions, and the urges are always in the block.
 - Building a second writer in TypeScript. The TypeScript side reads. If both sides wrote, a shared mistake would look like agreement.
-- Serializing animal positions as JSON for the viewer. That is the contract issue #106 replaced.
+- Serializing animal positions as JSON for the viewer. That is the contract issue #106 replaced. The boundary guard is `tests/no-raw-world.test.ts` (T-0095, roadmap step 15, skill `no-raw-world`). It scans `src` and the Rust crate, not only these two files. The outside-body summary (step 36) is not an exception for that JSON list.

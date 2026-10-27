@@ -4,6 +4,7 @@
  * of life ... as a microscopic entity"). ONE pure module: a signed offset from NOW in years -> what the planet is, from three
  * published models and a dated milestone table. No state, no clock, no DOM: the globe, the chronometer and tools/deep-time.html all
  * read it. The day/hour clock (core/timeOfDay, core/worldClock) is untouched; this is the long axis beside it.
+ * The #108 line (T-0093) is `dialToYears`: years since solar-system formation. `deepTimeAt` still takes the offset from now.
  *
  * Models (each cited where used):
  *  - Solar brightening: Gough 1981 (Solar Physics 74:21), L(t)/L0 = 1 / (1 + 2/5 (1 - t/t0)), t0 = 4.57 Gyr; agrees with standard solar
@@ -22,8 +23,9 @@ import { AIR } from './weather';
 
 export const YEAR = { kyr: 1e3, myr: 1e6, gyr: 1e9 };
 export const DEEP = {
-  /** Age of the Sun now, yr: Gough 1981's t0 (Feulner 2012 §2). */ sunAgeYr: 4.57e9,
-  /** Age of the Earth, yr: 4.54 +- 0.05 Gyr (Dalrymple 2001, Geol. Soc. London Spec. Pub. 190:205). Before it there is no globe. */ earthAgeYr: 4.54e9,
+  /** Age of the Sun now, yr: Gough 1981's t0 (Feulner 2012 §2). The luminosity fit only. Not the #108 line. */ sunAgeYr: 4.57e9,
+  /** Solar-system formation, yr before now: CAIs 4567.30 ± 0.16 Ma (Connelly et al. 2012, Science 338:651). The same figure as T-0065 `nebula_sun.onsetYearsAgo.mean`. Time zero on the one line. Older than the Earth, so the state there is no planet. */ solarSystemAgeYr: 4.5673e9,
+  /** Age of the Earth, yr: 4.54 +- 0.05 Gyr (Dalrymple 2001, Geol. Soc. London Spec. Pub. 190:205). On the formation line this is the span from Earth-formation to the present, not a second zero. Before it there is no globe. */ earthAgeYr: 4.54e9,
   /** Gough's coefficient 2/5 (Gough 1981). */ goughK: .4,
   /** Main sequence end, yr from now: the Sun "grows brighter by 1 % per ~110 Myr ... another ~5 Gyr before the red giant phase"
    *  (Wolf & Toon 2015 §1, after Schröder & Smith 2008). */ mainSequenceEndYr: 5e9,
@@ -88,14 +90,15 @@ export const STAGE_INFO: Record<DeepStage, { title: string; sees: string; embody
   engulfed: { title: 'Engulfed', sees: 'The Sun\'s outer plasma has reached Earth\'s orbit; there is no globe left.', embody: 'none' },
 };
 
-/** The dial: a signed slider position -1..1 (0 = now) on a log scale of years, so one drag spans a day to billions of years. Past end = just past Earth's formation, future end = just past engulfment (both x1.01 / x1.05, a game choice). */
+/** The dial: a signed slider position -1..1 on a log scale of years, so one drag spans a day to billions of years. Position 0 is the present. The returned year is counted from solar-system formation (#108): 0 is formation, and the present is `DEEP.solarSystemAgeYr`. Past end = just past Earth's formation, future end = just past engulfment (both x1.01 / x1.05, a game choice). `deepTimeAt` and `stageAt` still take an offset from now: subtract `DEEP.solarSystemAgeYr`. */
 export const DIAL = { pastSpanYr: DEEP.earthAgeYr * 1.01, futureSpanYr: DEEP.engulfedYr * 1.05 };
 export function dialToYears(s: number): number {
-  const a = Math.min(1, Math.abs(s)); if (a === 0) return 0;
-  const y = (s < 0 ? DIAL.pastSpanYr : DIAL.futureSpanYr) ** a - 1; // 0 at the centre, span - 1 at the end, log in between
-  return (s < 0 ? -y : y);
+  const a = Math.min(1, Math.abs(s));
+  const fromNow = a === 0 ? 0 : (s < 0 ? -1 : 1) * ((s < 0 ? DIAL.pastSpanYr : DIAL.futureSpanYr) ** a - 1);
+  return DEEP.solarSystemAgeYr + fromNow;
 }
-export function yearsToDial(offsetYr: number): number {
+export function yearsToDial(lineYr: number): number {
+  const offsetYr = lineYr - DEEP.solarSystemAgeYr;
   const span = offsetYr < 0 ? DIAL.pastSpanYr : DIAL.futureSpanYr, a = Math.min(1, Math.log(1 + Math.abs(offsetYr)) / Math.log(span));
   return offsetYr < 0 ? -a : a;
 }

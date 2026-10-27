@@ -224,7 +224,7 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
-    float hm = step(0.5, vLoc.z) * uShore.z * (1.0 - smoothstep(1.5, 4.0, sfp)), sf = (texture2D(uShoreTex, suv).r * 255.0 - 128.0) / 16.0; // where texels get smaller than ~1/3 pixel the per-vertex field is the better coastline
+    float hm = step(0.5, vLoc.z) * uShore.z * (1.0 - smoothstep(5.0, 9.0, sfp)), sf = (texture2D(uShoreTex, suv).r * 255.0 - 128.0) / 16.0; // keep the mask while a pixel is finer than ~45 m; coarser than that the averaged field read as all water, and hiding the vertex lake then left flat land
     float F = mix(vH, sf, hm), fw = max(fwidth(F), 1e-3); landMask = smoothstep(-fw, fw, F);
     landMask = mix(landMask, 1.0, vLake * (1.0 - hm) * uHideLake); // a vertex lake with the mask off is a dark polygon this low
     float band = hm * (1.0 - smoothstep(0.1, 0.4, fw)); // shore bands only while they are wider than a pixel

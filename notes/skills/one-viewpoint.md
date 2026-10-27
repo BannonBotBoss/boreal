@@ -53,7 +53,7 @@ At the band top the patch fade is 0, so the picture is only `farLayer`. Its defa
 
 Below `INPAGE.hazeLow` (60 m) `nearGroundOcc` sets the occlusion margin to 1e6 m, so the coarse globe cannot depth-reject the forest floor. Above that the existing `[15 m, 0.03 × distance]` margin stays.
 
-On Minimum the drawing buffer is already half the window (`resScale` 0.5: a 1100×700 still is a 550×350 canvas). `setScale(1)` of that buffer is still half the picture, and the shore footprint stays past the cutoff. While the patch is out, the far layer is sized to the window (`clientWidth` / `clientHeight`), then back to half the drawing buffer.
+On Minimum the drawing buffer is already half the window (`resScale` 0.5: a 1100×700 still is a 550×350 canvas). `setScale(1)` uses that buffer. A second raster at the window size did draw the lakes and then stalled the descent (the height never reached the hold). The mask used to fade out at `smoothstep(1.5, 4)` texels per pixel, and with `uHideLake` on the lake became flat land. It now stays on until `smoothstep(5, 9)`, about 45 m per pixel. Coarser than that, an averaged signed field reads as all water, which is why the mask has no mips.
 
 ## The conifer mesh has to win a job slot
 
@@ -85,5 +85,5 @@ The fall finishes at the isometric pitch (`ISO_BELOW_HORIZON`, about −35.264°
 - Do not edit `positionCamera`. Roll on this camera is already 0 in `viewpointPose`. The wolf follow roll belongs to `grokbot-3/level-view`.
 - Do not repaint the bark to hide the grey stripes. A spruce seen from the middle of the lake reads as bark plates. Land on the dry stand (`landSpawn`). Moving the eye a metre does not leave the lake.
 - Do not call the teal plane the far-layer sky until a still with the far layer replaced still shows teal. Game water stays. The pale ring on that sheet is grazing specular.
-- Do not leave the far layer at half the drawing buffer while the patch fade is 0. On Minimum that buffer is already half the window, and the shore mask then fails its footprint test.
+- Do not leave the far layer at half the drawing buffer while the patch fade is 0, and do not render it at the window size to compensate. The second raster stalls the descent. Keep the shore mask on out to about 45 m per pixel instead.
 - Do not treat `placeTree` as a drawn spruce. The mesh is the `trees2:build` job. If grass and flora own the budget, variants stay 0 and the floor is empty.

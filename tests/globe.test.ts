@@ -318,6 +318,7 @@ test('globe material: varyings used by the atmosphere and log depth are centroid
   assert.equal(coarseLake(2000, 1, 1), 0, 'the home shoreline mask still draws the shore');
   assert.equal(coarseLake(2000, 0, 0), 0, 'ocean stays');
   assert.ok(sh.fragmentShader.includes('uHideLake'));
+  assert.ok(sh.fragmentShader.includes('smoothstep(5.0, 9.0, sfp)'), 'the shore mask stays on at the 2 km footprint');
   assert.equal(sh.uniforms.uHideLake, LAKE_FADE.uHide);
 });
 

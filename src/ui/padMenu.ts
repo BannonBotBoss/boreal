@@ -98,6 +98,7 @@ export function buildTabs(host: PadMenuHost, push: (p: Page) => void): Tab[] {
 }
 
 export const PAD_CSS = `.padm{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:70;width:min(980px,92vw);display:flex;flex-direction:column;overflow:hidden;background:#0d131ef2;color:#eef2f8;font:22px/1.35 system-ui;border-radius:16px;padding:18px 22px;box-shadow:0 10px 40px #000a}
+.padm[hidden]{display:none}
 .padm-head,.padm-foot{flex:0 0 auto;display:flow-root}.padm-scroll{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
 .padm-body{flex:1 1 auto;min-height:0;position:relative;overflow:auto;scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior:contain;touch-action:pan-y}
 .padm-body::-webkit-scrollbar{width:0;height:0;display:none}

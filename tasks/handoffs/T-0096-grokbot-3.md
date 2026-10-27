@@ -207,9 +207,15 @@ Below 60 m (`INPAGE.hazeLow`) the globe occlusion margin is 1e6 m, so the coarse
 | Floor occlusion | 1e6 m below 60 m | the globe must not hide the stand | `nearGroundOcc`, existing `hazeLow` | game calibration |
 | Roll | 0 | `Euler(pitch, yaw, 0, 'YXZ')` | `viewpointPose` | yes, not new |
 
+### What the first recapture showed (2026-10-26 20:24 PT)
+
+The camera does stand at (30, 0), height 1 m, on dry clay. The 2 km far layer was scale 1 but only 550×350, because Minimum draws into a half-size buffer (`resScale` 0.5) and the shore mask was already loaded (`maskReady` true). Half the window is still past the mask cutoff, so the frame stayed a green wash. The floor had `borealTreesV2` variants 0 the whole time the queue was flora, chunk, grass and moss. `trees2:build` at priority 55 never took a slice, so no spruce mesh was drawn.
+
+The far layer is now the window size while the patch is out, and the conifer build runs at priority 4 (after the chunk under the camera, before grass). Stills of that are next.
+
 ### Exact next step
 
-Recapture orbit, 10 km, 2 km, 600 m, 100 m and ground. Read each still. If 2 km is still a wash, the next single change is the shore footprint or the aerial haze, not a bundle. If the ground is still one grey spruce on teal, the camera is not on the dry stand. GitHub `ci` remains billing-blocked and is not a pass.
+Recapture and read the six stills. GitHub `ci` remains billing-blocked and is not a pass. grokbot-3 does not approve or merge. grokbot-2 is not tagged.
 
 ## Needs from another agent
 

@@ -130,8 +130,10 @@ test('orbit clip is the planet camera clip, and a nadir aim round-trips within a
 test('the descent stands on dry land, and the far layer is the whole picture only while the patch is out', () => {
   const page = read('src/world/globe/inpage.ts');
   assert.match(page, /const spot = landSpawn\(\{ x: at\.x, z: at\.z \}, undefined, at\.yaw\)/);
-  assert.match(page, /far\.setScale\(fade < 0\.5 \? 1 : 0\.5\)/);
+  assert.match(page, /fade < 0\.5\) \{ far\.setScale\(1\); far\.resize\(shownW, shownH\)/);
   assert.match(page, /nearGroundOcc\(h, INPAGE\.hazeLow, INPAGE\.occ\)/);
+  const trees = read('src/render/trees/game.ts');
+  assert.match(trees, /enqueue\(`trees2:build:\$\{vk\}`, 4,/);
   assert.doesNotMatch(page, /positionCamera/);
   const occ: [number, number] = [15, 0.03];
   assert.deepEqual(nearGroundOcc(1, 60, occ), [1e6, 0]);

@@ -345,10 +345,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     background(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
       if (mode !== 'band' || !globe) { if (hidden.size || savedBg !== undefined) restoreScene(); return; }
       const t0 = performance.now(); renderer.getDrawingBufferSize(size);
-      // While the patch is out, this texture is the whole picture (the 2 km aerial). Half resolution stretches
-      // one texel across two screen pixels and the shore mask then reads a footprint past its cutoff, so the
-      // lakes wash out. Full resolution once the patch is covering the frame is only the sky behind it.
-      far.setScale(fade < 0.5 ? 1 : 0.5); far.resize(size.x, size.y);
+      // While the patch is out, this texture is the whole picture (the 2 km aerial). The drawing buffer is
+      // already half the window on Minimum (resScale 0.5), and the far layer's own half then leaves a 350-row
+      // target. The shore mask (7.5 m texels) drops out past that footprint and vertex lakes become flat land.
+      // Match the window while that texture is the picture. Once the patch covers the frame, half the buffer is only sky.
+      const shownW = Math.max(size.x, renderer.domElement.clientWidth || 0), shownH = Math.max(size.y, renderer.domElement.clientHeight || 0);
+      if (fade < 0.5) { far.setScale(1); far.resize(shownW, shownH); }
+      else { far.setScale(0.5); far.resize(size.x, size.y); }
       globeCameraFrom(globe.planet, camera, gcam); globe.drive({ position: gcam.position, quaternion: gcam.quaternion, fov: camera.fov, aspect: camera.aspect });
       globe.step(far.target); STATS.globeMs = performance.now() - t0;
       if (savedBg === undefined) savedBg = scene.background; scene.background = DEV && DEBUG.noGlobe ? NO_GLOBE : far.texture;

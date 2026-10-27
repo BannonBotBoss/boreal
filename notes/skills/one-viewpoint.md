@@ -53,6 +53,12 @@ At the band top the patch fade is 0, so the picture is only `farLayer`. Its defa
 
 Below `INPAGE.hazeLow` (60 m) `nearGroundOcc` sets the occlusion margin to 1e6 m, so the coarse globe cannot depth-reject the forest floor. Above that the existing `[15 m, 0.03 × distance]` margin stays.
 
+On Minimum the drawing buffer is already half the window (`resScale` 0.5: a 1100×700 still is a 550×350 canvas). `setScale(1)` of that buffer is still half the picture, and the shore footprint stays past the cutoff. While the patch is out, the far layer is sized to the window (`clientWidth` / `clientHeight`), then back to half the drawing buffer.
+
+## The conifer mesh has to win a job slot
+
+`placeTree` only stores a matrix until `trees2:build` finishes a variant. That job used to sit at priority 55. Grass tiles are `d + 5` and flora tiles are `d + 8`, and the budget is 4 ms, so the build never took a slice (`borealTreesV2.info.variants` stayed 0, `stepMaxMs` 0). The floor then has no bark and no needles. Priority 4 runs after the chunk under the camera (distance 0) and before those tiles. Do not wait on the globe's tile queue and call the forest ready.
+
 ## The floor look
 
 The fall finishes at the isometric pitch (`ISO_BELOW_HORIZON`, about −35.264°) and the drone keeps that stick pitch. At 1 m that aim looks into the ground a couple of metres ahead. Standing in the lake, that is the water sheet, not a missing forest. `eyeClearOfTrees` still shifts the drawn eye when a stem is within 1.6 m, which matters once the stand is dry. It does not turn a lake into a forest.
@@ -79,4 +85,5 @@ The fall finishes at the isometric pitch (`ISO_BELOW_HORIZON`, about −35.264°
 - Do not edit `positionCamera`. Roll on this camera is already 0 in `viewpointPose`. The wolf follow roll belongs to `grokbot-3/level-view`.
 - Do not repaint the bark to hide the grey stripes. A spruce seen from the middle of the lake reads as bark plates. Land on the dry stand (`landSpawn`). Moving the eye a metre does not leave the lake.
 - Do not call the teal plane the far-layer sky until a still with the far layer replaced still shows teal. Game water stays. The pale ring on that sheet is grazing specular.
-- Do not leave the far layer at half resolution while the patch fade is 0. That is the whole 2 km picture, and the shore mask then fails its footprint test.
+- Do not leave the far layer at half the drawing buffer while the patch fade is 0. On Minimum that buffer is already half the window, and the shore mask then fails its footprint test.
+- Do not treat `placeTree` as a drawn spruce. The mesh is the `trees2:build` job. If grass and flora own the budget, variants stay 0 and the floor is empty.

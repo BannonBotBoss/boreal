@@ -59,6 +59,33 @@ export function* clearViewSteps(s: { x: number; z: number }, yaw: number, dry: (
     yield; }
   return s;
 }
+/** Eye clearance for the drone near the floor. Not the wolf follow line (LANDING_VIEW): that one moves the spawn.
+ *  This only shifts the drawn eye. A black spruce stem is well under 0.6 m radius (dbh 15–25 cm, core/treeSpecies);
+ *  1.6 m puts the near plane outside the bark. Crown radius is capped so a wide crown does not shove the eye out of the stand.
+ *  [game calibration] */
+export const EYE_CLEAR = { below: 18, gap: 1.6, ahead: 2.5 };
+export function eyeClearOfTrees(x: number, z: number, yaw: number, trees: readonly { x: number; z: number; r: number }[]) {
+  let px = x, pz = z;
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  for (let n = 0; n < 6; n++) {
+    let moved = false;
+    const spots: [number, number][] = [[px, pz], [px + fx * EYE_CLEAR.ahead, pz + fz * EYE_CLEAR.ahead]];
+    for (const t of trees) {
+      const need = Math.max(EYE_CLEAR.gap, Math.min(2.2, 0.35 * t.r));
+      for (const [qx, qz] of spots) {
+        const dx = qx - t.x, dz = qz - t.z, d = Math.hypot(dx, dz);
+        if (d >= need) continue;
+        let ux = px - t.x, uz = pz - t.z, ud = Math.hypot(ux, uz);
+        if (ud < 1e-4) { ux = -fx; uz = -fz; ud = 1; } // on the stem: step back, opposite the look
+        const s = need - d + 0.05;
+        px += ux / ud * s; pz += uz / ud * s;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  return { x: px, z: pz };
+}
 /** The game URL for a spawn: the current query minus the globe's own keys, plus `at` (x, z and, when known, yaw). */
 export function gameUrl(search: string, at: { x: number; z: number; yaw?: number } | null) {
   const q = new URLSearchParams(search);

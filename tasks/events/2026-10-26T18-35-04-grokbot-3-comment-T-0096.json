@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0096",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T18:35:04-07:00",
+  "note": "The descent stills on pull request https://github.com/BannonBotBoss/boreal/pull/143 were a blank 2 km frame, a flat 600 m mesh, and a dark bar. The bar is the closed pad menu: display:flex overrides hidden. The blank frame was the camera 5329 m above the tiles, on the mean sphere. The flat mesh remained after that fix because the near split measured distance to the node centre, so the 78 km cell under the camera never took the boost, and the draw cap then cancelled it. The boost now uses the cell footprint and the tier split. Fresh stills at orbit, 10 km, 2 km, 600 m, 100 m, and the ground are in tasks/evidence/T-0096/. On swiftshader Minimum the tiles under the camera reach level 15 from 600 m down, and the pad computes to display none. npx tsc --noEmit exit 0. npm test 844 tests, 830 pass, 0 fail, 14 todo. Asking Grokbot-1 to review pull request #143. grokbot-3 wrote this and does not approve or merge it. grokbot-2 is offline until about Oct 28 midday PT and is not tagged. Not an approve-plan and not an approval."
+}

@@ -22,12 +22,13 @@ import { createFarLayer } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './flight';
-import { TRANSITION, globePitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, type TransitionMode } from './transition';
+import { TRANSITION, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
-import { GLOBE_ENTRY_ALT } from './handoff';
+import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR, landSpawn } from './handoff';
+import { treesAround } from '../../core/ground';
 import { PLANET, GLOBE_COLOURS } from './planet';
-import { setPatchFade, setPatchFar } from '../../render/fade';
+import { nearGroundOcc, setPatchFade, setPatchFar } from '../../render/fade';
 import { AO_BLEND } from '../../render/post';
 import { LOG_DEPTH } from './logDepth';
 import { GOVERNOR, resetGovernor } from '../../core/quality';
@@ -101,13 +102,13 @@ function controller(view: View, host: InPageHost) {
   let h = 0, h0 = 1, blend = 0, fade = 0, fadeT = 0, ready = false, readySeen = false, needStart = false, placedFrame = 0, frameNo = 0, lastT = 0, cameraTouched = false;
   const start = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, end = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   const cam = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, gcam = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
+  const vp = { position: cam.p, quaternion: cam.q };
   const tmpV = new THREE.Vector3(), tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), size = new THREE.Vector2(), UP = new THREE.Vector3(0, 1, 0);
   const land = new THREE.Vector3();
   let spotX = 0, spotZ = 0, yaw = 0, pitch = 0;
   const heldKeys = new Set<string>(), axes = { f: 0, r: 0, u: 0, yaw: 0, pitch: 0 };
   const vel = { x: 0, y: 0, z: 0 }; let airSpeed = 0;
   let wantEmbody = false, wantCancel = false, mouseYaw = 0, mousePitch = 0, dragging = false;
-  const blendFrom = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   let promptEl: HTMLDivElement | null = null;
   const overlayOpen = () => !!document.querySelector('#start-menu:not(.fade), dialog[open], .padm:not([hidden])');
   const showPrompt = (text: string) => {
@@ -130,6 +131,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     for (const k of ['view', 'bench', 'shot', 'handoff', 'look', 'pitch', 'dir', 'tier', 'workers', 'seams']) q.delete(k);
     q.set('at', `${r(p.x, 10)},${r(p.z, 10)},${r(p.yaw, 1000)}`); q.set('alt', String(GLOBE_ENTRY_ALT));
     globe = createGlobe!(renderer, { shared: true, params: q, target: far.target, workers: 2, onLeave: at => { if (mode === 'globe' && at) descend(at); } }); // the fall calls this at 10,000 ft with its vertical speed
+    globe.attachViewpoint(view.camera); // one camera from orbit down; the planet scene is the mapping of it
     return globe;
   }
   /** Patch readiness: the 3x3 chunks around the player are built (none pending) a couple of frames after the move. */
@@ -140,10 +142,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     return true;
   }
   function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe'); globe?.setLayerPanel(layerPanelShown(m)); if (typeof document !== 'undefined') document.body.classList.toggle(GLOBE_HUD_CLASS, hudHidden(m)); if (m === 'game') showPrompt(''); }
-  /** Globe -> drone, on the point that was double-clicked. The fall's vertical speed is kept. The spot is not pulled home. */
+  /** Globe -> drone, on the point that was double-clicked. The fall's vertical speed is kept. The spot is not pulled
+   *  home. It does step to the nearest dry stand (the same landSpawn the reload handoff uses): the clicked centre of
+   *  the home region is the lake, and standing there shows the water sheet instead of the forest floor. */
   function descend(at: { x: number; z: number; yaw: number; vy?: number }) {
     const g = globe!;
-    spotX = at.x; spotZ = at.z; yaw = at.yaw;
+    const spot = landSpawn({ x: at.x, z: at.z }, undefined, at.yaw);
+    spotX = spot.x; spotZ = spot.z; yaw = at.yaw;
     host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null;
     const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
     h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;
@@ -267,6 +272,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       frameNo++;
       if (next) { if (next === 'globe') toGlobe(); else toGame(); next = null; }
       if (mode === 'globe' && globe) {
+        cameraTouched = true; // orbit clip is on the forest camera; game mode puts 0.2 / 700 back
         showPrompt(flightPrompt(entryName(), padOn()));
         if (globe.fallState && globe.altitude < INPAGE.prepAlt && !prep) warmUnderFall();
         else if (prep && !globe.fallState) prep = null;
@@ -298,7 +304,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
         fade = Math.min(patchFade(h, readySeen), fadeT);
         const lowEnough = readySeen || late;
         if (phase === 'drone') {
-          if (wantEmbody && lowEnough) { wantEmbody = false; host.place(spotX, spotZ, yaw); placedFrame = frameNo; blendFrom.p.set(spotX, ground(spotX, spotZ) + h, spotZ); blendFrom.q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); blend = 0; phase = 'blend'; vel.x = vel.y = vel.z = 0; airSpeed = 0; }
+          if (wantEmbody && lowEnough) { wantEmbody = false; host.place(spotX, spotZ, yaw); placedFrame = frameNo; blend = 1; phase = 'blend'; vel.x = vel.y = vel.z = 0; airSpeed = 0; } // one camera: no second pose to ease toward
           else {
             const fly = { x: spotX, y: ground(spotX, spotZ) + h, z: spotZ, yaw, pitch };
             const x0 = fly.x, y0 = fly.y, z0 = fly.z, minY = photoFlyFloor(fly.x, fly.z);
@@ -310,12 +316,22 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
           }
         }
         if (DEV && DEBUG.holdH) h = Math.max(h, DEBUG.holdH);
-        if (phase !== 'blend') { cam.p.set(spotX, ground(spotX, spotZ) + h, spotZ); cam.q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); }
-        if (phase === 'blend') { blend = Math.min(1, blend + dt / TRANSITION.blendSec); const b = smoothstep(0, 1, blend); cam.p.copy(blendFrom.p).lerp(end.p, b); cam.q.copy(blendFrom.q).slerp(end.q, b); }
+        if (phase !== 'blend') {
+          // The stick pitch stays isometric. The drawn pitch opens toward the horizon only in the last tens of metres.
+          // Below the crowns the eye steps clear of the stem. The flight spot is not moved, and roll stays 0.
+          const look = descentPitch(h, pitch);
+          let ex = spotX, ez = spotZ, gy = ground(spotX, spotZ);
+          if (h < EYE_CLEAR.below) {
+            const eye = eyeClearOfTrees(spotX, spotZ, yaw, treesAround(spotX, spotZ));
+            ex = eye.x; ez = eye.z; gy = ground(ex, ez);
+          }
+          viewpointPose(ex, ez, gy, h, yaw, look, vp);
+        }
+        if (phase === 'blend') handoverBlend(cam, end, blend); // no-op: blendSec is not applied
         showPrompt(flightPrompt(entryName(), padOn()));
       } else { // up: the same vertical, back to the planet
         h = Math.min(top, h * Math.exp(INPAGE.kUp * dt)); pitch = globePitch(h);
-        cam.p.set(spotX, ground(spotX, spotZ) + h, spotZ); cam.q.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+        viewpointPose(spotX, spotZ, ground(spotX, spotZ), h, yaw, pitch, vp);
         fade = patchFade(h, true); showPrompt('Returning to the planet…');
       }
       if (DEV && DEBUG.pose) { const [x, y, z] = DEBUG.pose.p, [lx, ly, lz] = DEBUG.pose.look; cam.p.set(x, y, z); tmpM.lookAt(cam.p, tmpV.set(lx, ly, lz), UP); cam.q.setFromRotationMatrix(tmpM); }
@@ -328,7 +344,12 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** buildScene, after the sky update: the globe into the far layer, as the background; the patch fade; band visibility. */
     background(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
       if (mode !== 'band' || !globe) { if (hidden.size || savedBg !== undefined) restoreScene(); return; }
-      const t0 = performance.now(); renderer.getDrawingBufferSize(size); far.resize(size.x, size.y);
+      const t0 = performance.now(); renderer.getDrawingBufferSize(size);
+      // While the patch is out, this texture is the whole picture (the 2 km aerial). Half of the drawing
+      // buffer stretches one texel across two pixels. The shore mask then passes its cutoff and vertex lakes
+      // are painted as land. Full buffer while the patch is out; half again once the patch covers the frame
+      // and this texture is only the sky. The window size is not used: a second full raster stalled the descent.
+      far.setScale(fade < 0.5 ? 1 : 0.5); far.resize(size.x, size.y);
       globeCameraFrom(globe.planet, camera, gcam); globe.drive({ position: gcam.position, quaternion: gcam.quaternion, fov: camera.fov, aspect: camera.aspect });
       globe.step(far.target); STATS.globeMs = performance.now() - t0;
       if (savedBg === undefined) savedBg = scene.background; scene.background = DEV && DEBUG.noGlobe ? NO_GLOBE : far.texture;
@@ -339,7 +360,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     if (scene.fog instanceof THREE.Fog) { const k = smoothstep(TRANSITION.handover, INPAGE.fogTop, h), m = 1 + INPAGE.fogOut * k * k; scene.fog.near *= m; scene.fog.far *= m; }
       const p = host.player(); setPatchFade(fade, { x: p.x, z: p.z, r: Math.min(INTEREST.mid, INPAGE.ring * CHUNK_SIZE), y: patchPlaneY(p.x, p.z, Math.min(INTEREST.mid, INPAGE.ring * CHUNK_SIZE)) }); hideForBand(scene); // disc inside the chunks chunksReady checked
       // the patch's aerial blend toward the globe behind it, and globe terrain in front of the patch hides it (render/fade, uniforms)
-      setPatchFar({ color: far.texture, depth: far.target.depthTexture, mix: Math.min(1, INPAGE.haze * smoothstep(INPAGE.hazeLow, INPAGE.hazeTop, h)), scale: scene.backgroundIntensity, logFC: LOG_DEPTH.uniform.value, occ: INPAGE.occ });
+      setPatchFar({ color: far.texture, depth: far.target.depthTexture, mix: Math.min(1, INPAGE.haze * smoothstep(INPAGE.hazeLow, INPAGE.hazeTop, h)), scale: scene.backgroundIntensity, logFC: LOG_DEPTH.uniform.value, occ: nearGroundOcc(h, INPAGE.hazeLow, INPAGE.occ) });
     },
     /** buildScene's screen-space effects in the band: god rays off (the far layer has no depth, so its ground would read as sky
      *  in the ray mask), ambient occlusion only once the patch is fully in (GTAO's normal pass cannot dither). */

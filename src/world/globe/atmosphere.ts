@@ -167,7 +167,7 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
 }
 `;
 
-export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void; setLayers(clouds: boolean, air: boolean, airglow?: boolean): void; setAurora(a: { ocbMlat: number; ovalEqMlat: number; relBrightness: number } | null): void }
+export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number, surfaceRadiusM?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void; setLayers(clouds: boolean, air: boolean, airglow?: boolean): void; setAurora(a: { ocbMlat: number; ovalEqMlat: number; relBrightness: number } | null): void }
 const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.length - 1, tier))];
 
 /** Sky shell + aerial-perspective patcher for a planet of radius `R` metres (centre at the world origin). */
@@ -224,7 +224,10 @@ void main() {
     setTier(t) { if (t === cur) return; cur = t; [sn, sl, tn, tl] = stepsFor(t); setSteps(); },
     /** Per frame, after the camera is placed (camera-relative: camera renders from the origin, `camPos` is its double
      *  world position): planet centre and sun in view space, km. */
-    update(camera, camPos, sunDir, timeSec = 0, viewH = 900) {
+    update(camera, camPos, sunDir, timeSec = 0, viewH = 900, surfaceRadiusM?: number) {
+      // The discard sphere and the aerial-perspective height are the drawn surface (radial.ts), not the mean sphere.
+      // The dome mesh stays at the radius it was built with; the march uses these uniforms.
+      if (surfaceRadiusM != null && surfaceRadiusM > 0) { const rp = surfaceRadiusM / 1000; uniforms.uRp.value = rp; uniforms.uRa.value = rp + ATMOS.heightKm; }
       const fov = (camera as THREE.PerspectiveCamera).fov ?? 45; uniforms.uCloudEdge.value.z = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, viewH); // rad per pixel (cloud octave fade)
       // cloud drift: angle and evolution reduced in double precision on the CPU (the GPU only sees small numbers)
       const ang = (timeSec * CLOUDS.windMs / R) % (2 * Math.PI); uniforms.uCloudSpin.value.set(Math.cos(ang), Math.sin(ang));

@@ -28,6 +28,10 @@ The only free-flight already in the repo is photo mode.
 - `npx tsc --noEmit` and `npm test`.
 - Frames: `node refs/globe-entry/capture.mjs <port> refs/globe-entry/frames` on `?start=globe&stages=1&trees=v2`. Log elevation (`look · up`). Nadir is about −90°. The end of the fall is about −35°. A click and the wheel leave `fallState` null.
 
+## One viewpoint (T-0096)
+
+The forest camera is that viewpoint from orbit down, not only inside the band. `attachViewpoint` maps it onto the planet camera when the round trip is within a centimetre. Off the home-facing hemisphere the fall's own `lookAt` / `rotateZ` / `rotateX` stays, so a far-side orbit does not get a broken gnomonic pose. `handoverBlend` does not mix a second camera, and `blendSec` is not applied. Two scenes remain. Do not put the blend back.
+
 ## Mistakes to avoid
 
 - Do not time-compress gravity. From the default orbit the speed at 10,000 ft is orbital-fall speed. Zoom closer with the wheel, then double-click, when the capture needs a readable fall (`jumpTo` around 5 km is about half a minute).

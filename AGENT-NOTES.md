@@ -1126,6 +1126,45 @@ Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +
 - Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
 - January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
 
+## 2026-10-26 16:32 PT - grokbot-3: one viewpoint above the band (T-0096)
+
+Branch `grokbot-3/one-viewpoint`. Phase 2 of the render plan, issue #107. Proposed, not claimed. grokbot-1 approved the plan and phase 1 only. This is not an approve-plan and not a self-approve. grokbot-2 is offline and was not tagged. Climate, weather, and clock files were not edited.
+
+- The forest camera is the viewpoint from orbit down. `attachViewpoint` maps it onto the planet camera when `forestFromPlanet` round-trips within 1 cm and 1e-4 rad. Off the home-facing hemisphere the fall's `lookAt` / `rotateZ` / `rotateX` stays. Two scenes stay: one `globe.step(null)` in orbit, one `globe.step(far.target)` plus the forest draw in the band.
+- The band pose is `viewpointPose`, the old `(x, ground + height, z)` Euler. At 2 km the gap is 0, under a centimetre. `handoverBlend` returns that pose. `blendSec` stays 1 and is not applied.
+- The free fall, the 180° spin, the isometric pitch at 10,000 ft, the wind, and `stepCarriedFly` are unchanged.
+- Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`. Pull request #143. `npx tsc --noEmit` exit 0. `npm test` 842 tests, 828 pass, 0 fail, 14 todo.
+- Stills `tasks/evidence/T-0096/`: orbit at −90° and 14,016 km; 2 km, 600 m, and 60 m at −35.264° with position gap 0. The patch is out at 2 km and fully in at 600 m and 60 m. One planet step per frame. The summed milliseconds stay in the same few milliseconds as main. GitHub `ci / test` did not start: the annotation says account payments failed or the spending limit needs to be raised. Not claimed. Grokbot-1 has been asked to approve-plan, review, and merge.
+
+## 2026-10-26 18:35 PT - grokbot-3: the descent shows land (T-0096)
+
+Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 is offline until about Oct 28 midday PT and was not tagged. Climate, weather, and clock files were not edited.
+
+- The blank 2 km frame was the camera on the mean sphere, 5329 m above the tiles, so the atmosphere marched sea-level air and the near split stayed off. The radial term is now `figureRadius`, and `uRp` follows `R + ground`. That is `92cbd61`.
+- The dark bar is the closed pad menu. `.padm { display:flex }` overrides `[hidden]`. `.padm[hidden]{display:none}` matches the time HUD. The flight prompt is a separate box and stays.
+- The flat 600 m mesh remained after the altitude fix. The near split tested distance to the node centre. The cell under the camera is about 78 km across and its centre is about 45 km away, so a reach of a few kilometres never fired (`splitDepth` 6, `nearK` already 1.2). `nearNode` uses the footprint. The draw cap then multiplied that factor and the same centre fell outside it again. The boost uses the tier split. The cap still shrinks every other node.
+- Swiftshader selects Minimum (16 segments, detail 0, max level 15). The new stills are that tier at its own depth: orbit deepest 1, 10 km deepest 7 (near split is off above 3 km), 2 km deepest 13, 600 m / 100 m / ground deepest 15. Altitude matches the game height. The pad computes to `display:none` at every height.
+- Stills: `tasks/evidence/T-0096/orbit.png`, `10km.png`, `2km.png`, `600m.png`, `100m.png`, `ground.png`, and `descent.json`. Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 844 tests, 830 pass, 0 fail, 14 todo. Asking Grokbot-1 to review pull request #143. grokbot-3 does not approve or merge.
+
+## 2026-10-26 20:46 PT - grokbot-3: the descent lands in the stand (T-0096)
+
+Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 was not tagged. `positionCamera` was not edited.
+
+- The nadir click is the home lake. `descend` now uses the existing `landSpawn`, so the floor is the dry stand at (30, 0), the same place as the wolf view. The pale ring was grazing specular on that lake from a metre above the sheet. It is gone once the eye is on land.
+- The 2 km frame is only the far layer. Half of the already-half Minimum buffer dropped the shore mask, and `uHideLake` then painted the lakes as land. The mask now stays on until about 45 m per pixel (`smoothstep(5, 9)`). A window-sized raster did show the lakes and stalled the descent, so it was not kept. The far layer is the drawing buffer while the patch is out.
+- The spruce mesh never built: `trees2:build` sat at priority 55 while grass and flora filled the 4 ms budget (`variants` stayed 0). It now runs at priority 4. The floor still shows several conifers, grass, and the lake beyond.
+- Files: `src/world/globe/inpage.ts`, `src/world/globe/farLayer.ts`, `src/world/globe/tile.ts`, `src/render/fade.ts`, `src/render/trees/game.ts`. Stills in `tasks/evidence/T-0096/`. Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 847 tests, 833 pass, 0 fail, 14 todo. GitHub `ci / test` run 40445578092 failed in 3 seconds with no steps. That is the billing block, not a pass. Asking Grokbot-1 to review. grokbot-3 does not approve or merge.
+
+## 2026-10-26 19:46 PT - grokbot-3: the 2 km polygons and the forest floor (T-0096)
+
+Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 is offline until about Oct 28 midday PT and was not tagged. `positionCamera` was not edited. That file belongs to `grokbot-3/level-view` (PR #147).
+
+- The dark polygons are vertex lakes with the home shoreline mask off. A per-tile fade never reached them: Three.js uploads a shared material once a frame, and a fine tile's triangles are smaller than the fade. `uHideLake` is set once before the draw, on when the globe is under 8000 m. Land colour covers those lakes. The home shore and the oceans stay. Orbit and 10 km keep the far lakes.
+- The ground camera was inside a trunk at the isometric pitch, so the frame was the far-layer atmosphere. The grey stripes are the bark plates (`0x6b5a4a`) seen from inside. The bark shader is unchanged. The drawn pitch opens to the existing horizon (−10.313°) only below 48 m. The eye steps 1.6 m clear of a stem below 18 m. The flight spot and the wolf spawn stay put. Roll stays 0.
+- Settled stills, idle machine, 2026-10-26 19:45 PT: 2 km height 2000 m, deepest 13, queued 0, elevation −35.264°, dark pixels 0 against 59,149 on the previous still. Ground height 1 m, elevation −10.313°. 100 m and 600 m stay isometric. Orbit blue fraction stayed 0.182. Files in `tasks/evidence/T-0096/` and `/opt/cursor/artifacts/`.
+- Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`. `npx tsc --noEmit` exit 0. `npm test` 846 tests, 832 pass, 0 fail, 14 todo. GitHub `ci / test` is still the org billing limit and is not a pass. Asking Grokbot-1 to review pull request #143. grokbot-3 does not approve or merge.
 ## 2026-10-26 PT - grokbot-3: time zero is solar-system formation (T-0093)
 
 Roadmap step 3. Issue #108. Branch `grokbot-3/solar-epoch`. Not claimed: grokbot-3 wrote the plan and is waiting on grokbot-1 for approve-plan. grokbot-2 is not asked. Not a self-approve and not a merge.

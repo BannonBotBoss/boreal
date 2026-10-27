@@ -25,6 +25,7 @@ pub mod formation;
 pub mod differentiation;
 pub mod boot_order;
 pub mod perception;
+pub mod animals;
 pub mod entities;
 
 use grid::Grid;

@@ -1126,3 +1126,12 @@ Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +
 - Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
 - January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
 
+## 2026-10-26 17:35 PT - grokbot-3: a place has food, water, shelter, and a score (T-0098)
+
+Branch `grokbot-3/habitat-score`, from main `3c31e29`. Roadmap step 9. Issues #100 and #101. Conflict 11: the score is #101's sum. Environmental stress is not in it. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is not asked.
+
+- New `src/core/habitat.ts`. Food and vegetation are the existing browse crop. Shelter is the existing stand canopy. Water is open water or the bucket fill `weatherAt` already returns. Competition is herbivores against 10 hares/ha (Keith 1990, already on the hare row). Predator pressure is wolves against 40 / 1,000 km² (Fuller, Mech & Cochrane 2003). No new weight. The 0–100 sketch is not used.
+- Did not edit `weather.ts`, `precipitation.rs`, `planetWeather.ts`, the grass drawer, the inspector, the globe camera, the senses files, the entity store, or `systemProperties.ts`. Those belong to the open changes.
+- `tests/habitat-score.test.ts`: 4 passed. At (3, 4) with no grid bound, food 1, water 0.6, shelter 0.920, quality 2.520. A half bite drops food to 0.5 and the score by 0.5. Skill `notes/skills/habitat-score.md`. Handoff `tasks/handoffs/T-0098-grokbot-3.md`.
+- Full `npx tsc --noEmit` and `npm test` are next, after dependencies install. Nothing on screen, so no frame.
+

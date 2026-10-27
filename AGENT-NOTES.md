@@ -1135,3 +1135,12 @@ Branch `grokbot-3/habitat-score`, from main `3c31e29`. Roadmap step 9. Issues #1
 - `tests/habitat-score.test.ts`: 4 passed. At (3, 4) with no grid bound, food 1, water 0.6, shelter 0.920, quality 2.520. A half bite drops food to 0.5 and the score by 0.5. Skill `notes/skills/habitat-score.md`. Handoff `tasks/handoffs/T-0098-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `npm test` 843 tests, 829 pass, 0 fail, 14 todo. Nothing on screen, so no frame. Pull request https://github.com/BannonBotBoss/boreal/pull/145. The GitHub `test` job did not start (run 40427500237): account payments have failed or the spending limit needs to be increased. Not a failing test. Not claimed. Not self-approved.
 
+## 2026-10-26 18:10 PT - grokbot-3: the strongest urge wins (T-0099)
+
+Branch `grokbot-3/strongest-urge`, from `grokbot-3/habitat-score` at `22e3b86` (pull request #145, T-0098). Roadmap step 10. Issues #100, #101, and #103. Conflict 4: #103 wins. The pull request is against `main`, because `tasks/RULES.md` rule 17 says so. It includes #145 until that merges, and it must merge after #145. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is not asked.
+
+- `src/core/agent.ts` `winningUrge`. The score is severity × the species utility already on the row × the opportunity. The step 9 cell is the food, the water, and the quality gap. Flee's importance is 1 because `perceive` already multiplied the cue by `species.fear`. Omit `urges` and the hare and the deer keep the old choice. No `choose_action`. No cutoff 90, 80, 25, or 85.
+- Did not edit `animalBehavior.ts`, `needs/engine.ts`, `main.ts`, or any render or camera file. `AnimalBrain` stays the legs. #143 owns the camera.
+- `tests/strongest-urge.test.ts`: 5 passed. The trace `tasks/evidence/T-0099/approach-then-flee.json` walks from z 0 to z −4.16 toward food, ignores a wolf at 80 m, then runs back to z 1.117 when the wolf is 3 m ahead. Nothing new is drawn, so there is no screenshot. Skill `notes/skills/strongest-urge.md`. Handoff `tasks/handoffs/T-0099-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 848 tests, 834 pass, 0 fail, 14 todo. Not claimed. Not self-approved.
+

@@ -1,0 +1,954 @@
+{
+  "what": "A hungry hare walks toward food. A wolf too far away does not turn it. A wolf close in front does, and the hare runs back.",
+  "food": {
+    "x": 0,
+    "z": -16
+  },
+  "frames": [
+    {
+      "t": 0.0333,
+      "x": 0,
+      "z": 0,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.0667,
+      "x": 0,
+      "z": -0.04,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.1,
+      "x": 0,
+      "z": -0.08,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.1333,
+      "x": 0,
+      "z": -0.12,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.1667,
+      "x": 0,
+      "z": -0.16,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.2,
+      "x": 0,
+      "z": -0.2,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.2333,
+      "x": 0,
+      "z": -0.24,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.2667,
+      "x": 0,
+      "z": -0.28,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.3,
+      "x": 0,
+      "z": -0.32,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.3333,
+      "x": 0,
+      "z": -0.36,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.3667,
+      "x": 0,
+      "z": -0.4,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.4,
+      "x": 0,
+      "z": -0.44,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.4333,
+      "x": 0,
+      "z": -0.48,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.4667,
+      "x": 0,
+      "z": -0.52,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.5,
+      "x": 0,
+      "z": -0.56,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.5333,
+      "x": 0,
+      "z": -0.6,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.5667,
+      "x": 0,
+      "z": -0.64,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.6,
+      "x": 0,
+      "z": -0.68,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.6333,
+      "x": 0,
+      "z": -0.72,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.6667,
+      "x": 0,
+      "z": -0.76,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.7,
+      "x": 0,
+      "z": -0.8,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.7333,
+      "x": 0,
+      "z": -0.84,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.7667,
+      "x": 0,
+      "z": -0.88,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.8,
+      "x": 0,
+      "z": -0.92,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.8333,
+      "x": 0,
+      "z": -0.96,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.8667,
+      "x": 0,
+      "z": -1,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.9,
+      "x": 0,
+      "z": -1.04,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.9333,
+      "x": 0,
+      "z": -1.08,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 0.9667,
+      "x": 0,
+      "z": -1.12,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1,
+      "x": 0,
+      "z": -1.16,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.0333,
+      "x": 0,
+      "z": -1.2,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.0667,
+      "x": 0,
+      "z": -1.24,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.1,
+      "x": 0,
+      "z": -1.28,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.1333,
+      "x": 0,
+      "z": -1.32,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.1667,
+      "x": 0,
+      "z": -1.36,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.2,
+      "x": 0,
+      "z": -1.4,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.2333,
+      "x": 0,
+      "z": -1.44,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.2667,
+      "x": 0,
+      "z": -1.48,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.3,
+      "x": 0,
+      "z": -1.52,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.3333,
+      "x": 0,
+      "z": -1.56,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.3667,
+      "x": 0,
+      "z": -1.6,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.4,
+      "x": 0,
+      "z": -1.64,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.4333,
+      "x": 0,
+      "z": -1.68,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.4667,
+      "x": 0,
+      "z": -1.72,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.5,
+      "x": 0,
+      "z": -1.76,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.5333,
+      "x": 0,
+      "z": -1.8,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.5667,
+      "x": 0,
+      "z": -1.84,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.6,
+      "x": 0,
+      "z": -1.88,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.6333,
+      "x": 0,
+      "z": -1.92,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.6667,
+      "x": 0,
+      "z": -1.96,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.7,
+      "x": 0,
+      "z": -2,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.7333,
+      "x": 0,
+      "z": -2.04,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.7667,
+      "x": 0,
+      "z": -2.08,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.8,
+      "x": 0,
+      "z": -2.12,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.8333,
+      "x": 0,
+      "z": -2.16,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.8667,
+      "x": 0,
+      "z": -2.2,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.9,
+      "x": 0,
+      "z": -2.24,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.9333,
+      "x": 0,
+      "z": -2.28,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 1.9667,
+      "x": 0,
+      "z": -2.32,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2,
+      "x": 0,
+      "z": -2.36,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.0333,
+      "x": 0,
+      "z": -2.4,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.0667,
+      "x": 0,
+      "z": -2.44,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.1,
+      "x": 0,
+      "z": -2.48,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.1333,
+      "x": 0,
+      "z": -2.52,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.1667,
+      "x": 0,
+      "z": -2.56,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.2,
+      "x": 0,
+      "z": -2.6,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.2333,
+      "x": 0,
+      "z": -2.64,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.2667,
+      "x": 0,
+      "z": -2.68,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.3,
+      "x": 0,
+      "z": -2.72,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.3333,
+      "x": 0,
+      "z": -2.76,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.3667,
+      "x": 0,
+      "z": -2.8,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.4,
+      "x": 0,
+      "z": -2.84,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.4333,
+      "x": 0,
+      "z": -2.88,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.4667,
+      "x": 0,
+      "z": -2.92,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.5,
+      "x": 0,
+      "z": -2.96,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.5333,
+      "x": 0,
+      "z": -3,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.5667,
+      "x": 0,
+      "z": -3.04,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.6,
+      "x": 0,
+      "z": -3.08,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.6333,
+      "x": 0,
+      "z": -3.12,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.6667,
+      "x": 0,
+      "z": -3.16,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.7,
+      "x": 0,
+      "z": -3.2,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.7333,
+      "x": 0,
+      "z": -3.24,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.7667,
+      "x": 0,
+      "z": -3.28,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.8,
+      "x": 0,
+      "z": -3.32,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.8333,
+      "x": 0,
+      "z": -3.36,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.8667,
+      "x": 0,
+      "z": -3.4,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.9,
+      "x": 0,
+      "z": -3.44,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.9333,
+      "x": 0,
+      "z": -3.48,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 2.9667,
+      "x": 0,
+      "z": -3.52,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3,
+      "x": 0,
+      "z": -3.56,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.0333,
+      "x": 0,
+      "z": -3.6,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.0667,
+      "x": 0,
+      "z": -3.64,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.1,
+      "x": 0,
+      "z": -3.68,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.1333,
+      "x": 0,
+      "z": -3.72,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.1667,
+      "x": 0,
+      "z": -3.76,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.2,
+      "x": 0,
+      "z": -3.8,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.2333,
+      "x": 0,
+      "z": -3.84,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.2667,
+      "x": 0,
+      "z": -3.88,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.3,
+      "x": 0,
+      "z": -3.92,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.3333,
+      "x": 0,
+      "z": -3.96,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.3667,
+      "x": 0,
+      "z": -4,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.4,
+      "x": 0,
+      "z": -4.04,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.4333,
+      "x": 0,
+      "z": -4.08,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.4667,
+      "x": 0,
+      "z": -4.12,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.5,
+      "x": 0,
+      "z": -4.16,
+      "action": "approach",
+      "goal": "urge feed: trotting to sensed clover clover:t:0:-16"
+    },
+    {
+      "t": 3.5333,
+      "x": -0.0172,
+      "z": -4.1119,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.5667,
+      "x": -0.0381,
+      "z": -4.0533,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.6,
+      "x": -0.0628,
+      "z": -3.9842,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.6333,
+      "x": -0.0912,
+      "z": -3.9047,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.6667,
+      "x": -0.1233,
+      "z": -3.8147,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.7,
+      "x": -0.1592,
+      "z": -3.7142,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.7333,
+      "x": -0.1988,
+      "z": -3.6033,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.7667,
+      "x": -0.2421,
+      "z": -3.4819,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.8,
+      "x": -0.2892,
+      "z": -3.3501,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.8333,
+      "x": -0.34,
+      "z": -3.2078,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.8667,
+      "x": -0.3946,
+      "z": -3.055,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.9,
+      "x": -0.4529,
+      "z": -2.8918,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.9333,
+      "x": -0.5149,
+      "z": -2.7181,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 3.9667,
+      "x": -0.5806,
+      "z": -2.5339,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4,
+      "x": -0.6501,
+      "z": -2.3393,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.0333,
+      "x": -0.7234,
+      "z": -2.1342,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.0667,
+      "x": -0.8003,
+      "z": -1.9186,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.1,
+      "x": -0.8811,
+      "z": -1.6926,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.1333,
+      "x": -0.9655,
+      "z": -1.4561,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.1667,
+      "x": -1.1102,
+      "z": -1.2374,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.2,
+      "x": -1.2611,
+      "z": -1.0095,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.2333,
+      "x": -1.4174,
+      "z": -0.7732,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.2667,
+      "x": -1.5738,
+      "z": -0.5369,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.3,
+      "x": -1.7301,
+      "z": -0.3006,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.3333,
+      "x": -1.8865,
+      "z": -0.0644,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.3667,
+      "x": -2.0429,
+      "z": 0.1719,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.4,
+      "x": -2.1992,
+      "z": 0.4082,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.4333,
+      "x": -2.3556,
+      "z": 0.6445,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.4667,
+      "x": -2.5119,
+      "z": 0.8808,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    },
+    {
+      "t": 4.5,
+      "x": -2.6683,
+      "z": 1.117,
+      "action": "flee",
+      "goal": "urge flee: fleeing wolf (seen)"
+    }
+  ]
+}

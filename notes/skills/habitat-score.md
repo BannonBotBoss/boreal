@@ -24,4 +24,4 @@ Use when a cell must carry food, water, shelter, vegetation, competition, and pr
 - A second growth equation, a second snow depth, or a second bucket.
 - Editing `weather.ts`, `precipitation.rs`, the grass drawer, the inspector, or the globe camera while those files are on an open change.
 - Treating the issue's 0 and 100 as the digits. The sum of shares is the score.
-- Wiring the score into `agent.ts` in this step. Step 10 does that.
+- Wiring the score into `agent.ts` from this step. Step 10 reads the cell through `winningUrge` (`notes/skills/strongest-urge.md`). It does not add the cutoff ladder.

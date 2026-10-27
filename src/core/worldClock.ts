@@ -213,7 +213,7 @@ export const clockRate = () => S.rate;
 export const dialPosition = () => S.dial;
 export const targetRate = () => targetRateFromDial(S.dial);
 export const observation = () => resolveObservation(S.scale, Math.abs(S.rate));
-/** Years from the session origin. Pass to deepTimeAt: the planet epoch is that module, not a second clock. */
+/** Years the session has run. Pass to deepTimeAt as an offset from now. Not the #108 line: that zero is solar-system formation inside dialToYears. */
 export const epochOffsetYr = (sec = worldSec()) => sec / K.julian_year_s;
 export const clockHeld = (id: string) => holds.has(id);
 function catchUp(perfNow: number) { integrate(perfNow); }

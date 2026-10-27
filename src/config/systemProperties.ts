@@ -42,10 +42,9 @@ export const SYSTEM_PROPERTIES = {
     /** seconds a sensed threat is remembered after leaving the senses (stops flip-flopping at the outer ring) */ threatMemory: 3,
     /** sense rings (m): touch, near, far */ senseRadii: [3, 10, 24] as const,
   },
-  /** Follow camera (render/math): a rear three-quarter just above the wolf (T-0075, issue #52). */
+  /** Follow camera (render/math): dead astern, just above the wolf, horizon level (T-0100). The wolf may lean with the ground; the camera does not roll. */
   camera: {
-    /** resting pitch (deg). Negative looks above the horizon. -5 puts the mid-body near the measured
-     *  issue #52 centroid (image y 0.74, NDC y -0.48) when the lens is riderHeight. Game calibration of the angle. */
+    /** resting pitch (deg). Negative looks above the horizon. -5 is near level and puts the body below screen centre. Game calibration of the angle. */
     defaultPitchDeg: -5,
     /** how far the look stick tilts up or down from the default (deg) */ lookPitchRangeDeg: 30,
     /** look-pitch spring return rate (1/s): 98 % settled in 0.3 s, no overshoot */ lookSpringRate: 14,
@@ -55,9 +54,9 @@ export const SYSTEM_PROPERTIES = {
     /** metres behind the hips along the trail, at riderHeight. Scales with height. Game calibration so an 85 cm
      *  wolf is about a quarter of a 48° frame, the way the animal sits in issue #52. */
     riderDistance: 3.6,
-    /** metres to the animal's left, at riderHeight. atan2(flank, riderDistance) is 32°, inside a rear three-quarter
-     *  (25–45° off the tail; 0° is dead astern, 90° is side-on). Game calibration of that angle. */
-    flank: 2.25,
+    /** metres to the animal's left, at riderHeight. 0 is dead astern: the lens sits on the tail line and looks along the heading.
+     *  T-0075 used 2.25 m (32° off the tail). That side offset made a diagonal shore read as a tilted horizon. */
+    flank: 0,
     /** hard pitch limits (deg): negative looks above the horizon */ pitchMinDeg: -80, pitchMaxDeg: 89,
   },
   /** Chronometer dial (ui/chronometer): scrubbing the time of day. */
@@ -337,7 +336,7 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
       'src/core/lifespan.ts#LIFESPAN': 'maximum and starting ages', 'src/core/why.ts#WHY_DEFAULTS': 'why-chains per object kind',
       'src/core/tuning.ts#BLOCK': 'step height and trunk clearance per animal' },
     remaining: ['core/autonomy autonomous wolf figures', 'animals/hare HARE (T-0009 is changing it)'] },
-  camera: { title: 'Camera', what: 'Third-person follow camera: a rear three-quarter just above the wolf, pitch spring and look-around.',
+  camera: { title: 'Camera', what: 'Third-person follow camera: dead astern just above the wolf, level horizon, pitch spring and look-around.',
     modules: ['src/render/math.ts', 'src/render/buildScene.ts'], groups: ['camera'], dependsOn: ['player', 'controls', 'terrain', 'interaction'],
     flags: { at: '=x,z[,yaw] start position (main.ts)', fov: 'field of view override (grok/rabbit-clover, T-0009)' }, tables: {},
     remaining: ['main.ts mouse-drag look sensitivity and look-yaw return rate', 'render/buildScene base field of view (48 deg; the focus field of view is autoFocus.cameraFovDeg)'] },

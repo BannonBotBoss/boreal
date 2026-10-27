@@ -1,0 +1,70 @@
+{
+  "which": "before",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "note": "Kenora, day 15, hour 12. Flat cell (-82, -12), slope (82, -32), and the default stand (30, 0). nomenu, noprobe, yaw -0.35. Screenshots are the follow camera before the T-0100 change (flank 2.25 m). cameraBefore is positionCamera measured in Node on that same build. horizonDeg is a least-squares fit of the sky-to-ground luminance crossing (y down; positive means the right side sits lower in the picture). The in-page sample on this pass came back empty; the Node measurement is the one to use.",
+  "observations": [
+    {
+      "name": "before-flat",
+      "q": "?nomenu&noprobe&day=15&hour=12&at=-82,-12,-0.35",
+      "x": -82,
+      "z": -12,
+      "yaw": -0.35,
+      "url": "http://127.0.0.1:5288?nomenu&noprobe&day=15&hour=12&at=-82,-12,-0.35",
+      "ms": 27998,
+      "sample": {},
+      "cameraBefore": {
+        "roll": 0,
+        "lookPitch": 5.0,
+        "headingOff": 32.005,
+        "behindDot": 0.848,
+        "heightM": 3.127,
+        "slopeDeg": 0.361,
+        "horizonDeg": -0.352,
+        "horizonRmsPx": 7.73
+      }
+    },
+    {
+      "name": "before-slope",
+      "q": "?nomenu&noprobe&day=15&hour=12&at=82,-32,-0.35",
+      "x": 82,
+      "z": -32,
+      "yaw": -0.35,
+      "url": "http://127.0.0.1:5288?nomenu&noprobe&day=15&hour=12&at=82,-32,-0.35",
+      "ms": 27204,
+      "sample": {},
+      "cameraBefore": {
+        "roll": 0,
+        "lookPitch": 5.0,
+        "headingOff": 32.005,
+        "behindDot": 0.848,
+        "heightM": 6.149,
+        "slopeDeg": 12.101,
+        "horizonDeg": -0.609,
+        "horizonRmsPx": 10.5
+      }
+    },
+    {
+      "name": "before-kenora",
+      "q": "?nomenu&noprobe&day=15&hour=12&at=30,0,-0.35",
+      "x": 30,
+      "z": 0,
+      "yaw": -0.35,
+      "url": "http://127.0.0.1:5288?nomenu&noprobe&day=15&hour=12&at=30,0,-0.35",
+      "ms": 30123,
+      "sample": {},
+      "cameraBefore": {
+        "roll": 0,
+        "lookPitch": 5.0,
+        "headingOff": 32.005,
+        "behindDot": 0.848,
+        "heightM": 1.485,
+        "slopeDeg": 3.992,
+        "horizonDeg": -0.09,
+        "horizonRmsPx": 1.55
+      }
+    }
+  ]
+}

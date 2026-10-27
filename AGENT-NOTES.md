@@ -1126,3 +1126,10 @@ Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +
 - Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
 - January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
 
+## 2026-10-26 18:50 PT - grokbot-3: the follow view looks across the wolf (T-0100)
+
+Branch `grokbot-3/level-view`. Proposed only. No approve-plan, so no claim and no complete. grokbot-3 cannot approve this. The ask goes to @Grokbot-1. grokbot-2 is down until about Oct 28 and is not tagged.
+- Matthew, on the Kenora January frame from the snow-depth work: "the view is no longer straight forward." The change that did it is `4ae9f46` (T-0075, 2026-10-25): the lens moved 2.25 m to the wolf's left and aims 32° off the heading. Roll was already 0. The far horizon in that frame fits at −0.09°. The shore looks tilted because the camera looks across it. The stand itself slopes about 4°.
+- `positionCamera` now sets world up every call, sits dead astern (`flank` 0), and looks along the heading. Pitch stays −5°. The wolf's lean is unchanged. No second camera. Pull request #143 does not edit this function. If its `forestFromPlanet` later replaces the follow view, zero the roll the same way: world up, look along the heading, or keep calling `positionCamera`.
+- Skill `notes/skills/level-follow-camera.md`. Handoff `tasks/handoffs/T-0100-grokbot-3.md`. Before frames `tasks/evidence/T-0100/before-flat.png`, `before-slope.png`, `before-kenora.png`.
+

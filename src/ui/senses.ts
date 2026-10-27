@@ -2,80 +2,112 @@ import './senses.css';
 import { Vector3 } from 'three';
 import type { buildScene } from '../render/buildScene';
 import type { BorealSound } from '../audio/borealSound';
-import { playerRemembered, type EventContext } from '../core/events';
+import { playerRemembered } from '../core/events';
+import type { EventContext } from '../core/events';
 import { windAt } from '../core/weather';
 import { deltaSources } from '../core/traces';
 import { WOLF_AGENT } from '../core/species';
-import { createSoundCues, smell, bearingTo, compassWord, cueSoundEntry, soundCaption, SENSES, type ScentSource, type ScentHit } from '../core/senses';
+import { WOLF_NEEDS } from '../core/needs/species';
+import { perceive } from '../core/needs/senses';
+import { createSoundCues, smell, bearingTo, cueSoundEntry, soundCaption, SENSES, type ScentSource, type ScentHit } from '../core/senses';
+import {
+  SENSE_GLYPH, bubbleLook, createSenseStream, demoSenseSignals,
+  signalFromScent, signalFromSight, signalFromSound,
+} from '../core/sensePictures';
 
-// Small procedural pictograms: shared vocabulary, not stored animal meshes or portraits.
-const drawings: Record<string, [string, string]> = {
-  deer: ['Deer', '<path d="M17 29h30l5-15 7 2-3 15-8 4-3 18h-4l-1-17H25l-4 17h-4l2-20-7-3zm37-15-3-9m4 9 6-9m-9 3-5-3m12 3 4-2"/>'],
-  hare: ['Hare', '<ellipse cx="30" cy="37" rx="19" ry="13"/><circle cx="49" cy="28" r="10"/><ellipse cx="46" cy="12" rx="4" ry="12"/><ellipse cx="55" cy="13" rx="3" ry="12"/><circle cx="10" cy="35" r="5"/><path d="M22 48h31"/>'],
-  person: ['Person', '<circle cx="32" cy="13" r="8"/><path d="M24 25h16l9 20-5 2-7-13 3 23h-6l-2-16-2 16h-6l3-23-7 13-5-2z"/>'],
-  forage: ['Berries', '<path d="M33 49V17M33 30Q8 12 13 36Q23 42 33 30M33 25Q56 9 53 30Q45 36 33 25" fill="#a9c989"/><g fill="#a8b6ef"><circle cx="26" cy="41" r="6"/><circle cx="39" cy="42" r="6"/><circle cx="33" cy="50" r="6"/></g>'],
-  plant: ['Herbs', '<path d="M32 56V12M31 25Q6 6 12 28Q22 36 31 25M33 37Q57 16 55 39Q45 49 33 37M31 47Q8 31 13 48Q23 56 31 47" fill="#a9c989"/>'],
-  log: ['Wood', '<path d="M13 20h38v27H13z" fill="#a98c65"/><ellipse cx="13" cy="34" rx="9" ry="14" fill="#d6bd8f"/><ellipse cx="13" cy="34" rx="4" ry="8" fill="none"/><path d="m27 24 14 3m-17 8 22 3m-17 5h14"/>'],
-  scent: ['Scent mark', '<path d="M22 51q-13-12 0-24t0-20m13 44q-13-12 0-24t0-20m13 44q-13-12 0-24t0-20" fill="none"/>'],
-  carcass: ['Remains', '<path d="M18 20q-15-14-16 0 0 8 12 8l31 20q1 12 10 11 13-3 0-15L24 24q4-16-6-4" transform="translate(5 -3) scale(.9)"/>'],
-  droppings: ['Animal trace', '<ellipse cx="22" cy="40" rx="9" ry="6"/><ellipse cx="40" cy="35" rx="8" ry="6"/><ellipse cx="37" cy="49" rx="7" ry="5"/>'],
-};
-const images = Object.fromEntries(Object.entries(drawings).map(([k, [, d]]) => [k, 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="#e2e9cd" stroke="#e2e9cd" stroke-width="2" stroke-linejoin="round">${d}</svg>`)]));
+// Scent potency of a nearby body. The picture does not use the kind.
 const potency: Record<string, number> = { deer: 1, hare: .7, person: .85, forage: .8, plant: .55, log: .3 };
+
 export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: BorealSound, memory: () => EventContext) {
   const root = document.createElement('details'); root.className = 'wolf-senses'; root.open = true;
-  root.innerHTML = `<summary>Wolf senses</summary><div class="sense-panel"><div class="sense-hearing"><div class="sense-compass" role="img" aria-label="Sound directions relative to your view"><span class="sense-ear">◉</span><div class="sense-arrows"></div></div><div class="sense-caption"><strong>Listening</strong><span class="sense-heard">Quiet nearby</span></div></div><div class="sense-smell"><label for="scent-level">Scent <span class="sense-percent">0%</span></label><meter id="scent-level" min="0" max="1" value="0"></meter><div class="sense-direction">No scent picked up</div><div class="sense-thoughts" aria-label="The wolf's scent thoughts"></div></div></div>`;
+  root.innerHTML = `<summary>Wolf senses</summary><div class="sense-panel"><div class="sense-hearing"><div class="sense-compass" role="img" aria-label="Sound directions relative to your view"><span class="sense-ear" aria-hidden="true">◉</span><div class="sense-arrows"></div></div></div><div class="sense-stream" aria-label="Sense pictures. A more solid picture is a stronger signal."></div></div>`;
   document.body.append(root);
   const el = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
-  const arrows = el('.sense-arrows'), heard = el('.sense-heard'), meter = el<HTMLMeterElement>('meter'), percent = el('.sense-percent'), scentDirection = el('.sense-direction'), thoughts = el('.sense-thoughts');
-  const cues = createSoundCues(), nose = new Vector3(), forward = new Vector3();
-  let tick = 0, lastThoughts = '', lastHits: readonly ScentHit[] = [];
+  const arrows = el('.sense-arrows'), streamEl = el('.sense-stream');
+  const cues = createSoundCues(), stream = createSenseStream(), nose = new Vector3(), forward = new Vector3();
+  const nodes = new Map<number, HTMLDivElement>();
+  const demo = demoSenseSignals(new URLSearchParams(location.search).get('sensepic'));
+  let tick = 0, demoOnce = false, lastHits: readonly ScentHit[] = [];
   audio.onSpatialCue = (id, at, level) => { if (!root.hidden) cues.add(id, at, level); };
+  const speedOf = (key: string) => {
+    if (!key.startsWith('hare:')) return 0;
+    const id = Number(key.slice(5));
+    return view.hares.list().find(h => h.id === id)?.sim.speed ?? 0;
+  };
+  const paint = () => {
+    const live = new Set<number>();
+    for (const b of stream.list()) {
+      const look = bubbleLook(b);
+      if (!look) continue;
+      live.add(b.id);
+      let node = nodes.get(b.id);
+      if (!node) {
+        node = document.createElement('div');
+        node.className = `sense-bubble sense-bubble-${b.kind}`;
+        node.innerHTML = SENSE_GLYPH[b.kind];
+        node.setAttribute('aria-hidden', 'true');
+        streamEl.append(node);
+        nodes.set(b.id, node);
+      }
+      const travel = look.ahead >= 0 ? 96 : 48;
+      node.style.opacity = look.opacity.toFixed(3);
+      node.style.transform = `translate3d(${(look.side * 72).toFixed(1)}px, ${(-look.rise * travel).toFixed(1)}px, 0) rotate(${look.tilt.toFixed(3)}rad)`;
+    }
+    for (const [id, node] of nodes) if (!live.has(id)) { node.remove(); nodes.delete(id); }
+  };
+  const offerLive = (heading: number, wind: { x: number; z: number }, sounds: { x: number; z: number; level: number; age: number; id: string }[]) => {
+    sounds.forEach((c, i) => {
+      const signal = signalFromSound(cueSoundEntry(c, bearingTo(nose, c, heading)), `hearing:${i}`);
+      if (signal) stream.offer(signal);
+    });
+    const daylight = 1 - view.darkness();
+    lastHits.forEach((h, i) => {
+      const scent = signalFromScent(h, `scent:${i}`);
+      if (scent) stream.offer(scent);
+      const seen = perceive(WOLF_NEEDS, { x: nose.x, z: nose.z, heading }, { x: h.x, z: h.z, speed: speedOf(h.key) }, { daylight, wind });
+      if (seen.sight < SENSES.threshold) return;
+      const sight = signalFromSight(`sight:${i}`, seen.sight, seen.bearing);
+      if (sight) stream.offer(sight);
+    });
+  };
   return {
     update(dt: number, hidden: boolean) {
       root.hidden = hidden;
-      if (hidden) { cues.clear(); lastHits = []; return; }
-      cues.step(dt); tick += dt;
-      if (tick < SENSES.updateSeconds) return; tick = 0;
-      const wolf = view.lookup('player')?.object;
-      if (!wolf) return;
-      (wolf.getObjectByName('head-sensor') ?? wolf).getWorldPosition(nose);
-      view.camera.getWorldDirection(forward);
-      const heading = Math.atan2(-forward.x, -forward.z);
-      arrows.replaceChildren();
-      const sounds = cues.list().filter(c => Math.hypot(c.x - nose.x, c.z - nose.z) <= SENSES.range);
-      for (const c of sounds) {
-        const a = bearingTo(nose, c, heading), marker = document.createElement('span');
-        marker.className = 'sense-cue'; marker.style.setProperty('--bearing', `${a}rad`);
-        marker.style.opacity = String(.2 + .8 * (1 - c.age / SENSES.cueLife));
-        const caption = soundCaption(cueSoundEntry(c, a));
-        marker.title = caption;
-        marker.setAttribute('aria-label', caption); arrows.append(marker);
-      }
-      const recent = sounds[sounds.length - 1];
-      heard.textContent = recent ? soundCaption(cueSoundEntry(recent, bearingTo(nose, recent, heading))) : 'Quiet nearby';
-      const context = memory();
-      const sources: ScentSource[] = view.entities().filter(e => potency[e.kind] && Math.hypot(e.x - nose.x, e.z - nose.z) < SENSES.range).map(e => ({
-        key: e.key, kind: e.kind, x: e.x, z: e.z, potency: potency[e.kind],
-        remembered: playerRemembered(context.records[e.key]), friend: context.records[e.key]?.relationship === 'friend',
-      }));
-      for (const h of view.hares.list()) if (h.root.visible) sources.push({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: potency.hare });
-      // Bodies keep the HUD range. A mark, carcass or dropping uses the wolf nose (Mech 1970, 2.4 km) inside deltaSources.
-      sources.push(...deltaSources(nose.x, nose.z, WOLF_AGENT.senses.scent.range));
-      const hits = smell(nose, sources, windAt(nose.x, .8, nose.z), heading), first = hits[0], level = first?.level ?? 0; lastHits = hits;
-      meter.value = level; percent.textContent = `${Math.round(level * 100)}%`;
-      scentDirection.textContent = first ? `${compassWord(first.bearing)} · ${level > .65 ? 'strong' : level > .25 ? 'distinct' : 'faint'} scent` : 'No scent picked up';
-      const signature = hits.map(h => `${h.key}:${h.remembered}:${h.friend}`).join('|');
-      if (signature !== lastThoughts) {
-        lastThoughts = signature; thoughts.replaceChildren();
-        for (const h of hits) {
-          const card = document.createElement('div'); card.className = 'sense-thought';
-          const img = document.createElement('img'); img.src = images[h.kind] ?? images.scent; img.alt = drawings[h.kind]?.[0] ?? 'Scent';
-          const label = document.createElement('span'); label.textContent = img.alt;
-          const state = document.createElement('small'); state.textContent = h.friend ? 'Known friend' : h.remembered ? 'Remembered' : 'Unfamiliar';
-          card.append(img, label, state); thoughts.append(card);
+      if (hidden) { cues.clear(); stream.clear(); lastHits = []; paint(); return; }
+      const step = Math.max(0, dt);
+      cues.step(step); stream.step(step); tick += step;
+      if (tick >= SENSES.updateSeconds) {
+        tick = 0;
+        const wolf = view.lookup('player')?.object;
+        if (wolf) {
+          (wolf.getObjectByName('head-sensor') ?? wolf).getWorldPosition(nose);
+          view.camera.getWorldDirection(forward);
+          const heading = Math.atan2(-forward.x, -forward.z);
+          const sounds = cues.list().filter(c => Math.hypot(c.x - nose.x, c.z - nose.z) <= SENSES.range);
+          arrows.replaceChildren();
+          for (const c of sounds) {
+            const a = bearingTo(nose, c, heading), marker = document.createElement('span');
+            marker.className = 'sense-cue'; marker.style.setProperty('--bearing', `${a}rad`);
+            marker.style.opacity = String(.2 + .8 * (1 - c.age / SENSES.cueLife));
+            marker.setAttribute('aria-label', soundCaption(cueSoundEntry(c, a)));
+            arrows.append(marker);
+          }
+          const context = memory();
+          const sources: ScentSource[] = view.entities().filter(e => potency[e.kind] && Math.hypot(e.x - nose.x, e.z - nose.z) < SENSES.range).map(e => ({
+            key: e.key, kind: e.kind, x: e.x, z: e.z, potency: potency[e.kind],
+            remembered: playerRemembered(context.records[e.key]), friend: context.records[e.key]?.relationship === 'friend',
+          }));
+          for (const h of view.hares.list()) if (h.root.visible) sources.push({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: potency.hare });
+          // Bodies keep the HUD range. A mark, carcass or dropping uses the wolf nose (Mech 1970, 2.4 km) inside deltaSources.
+          sources.push(...deltaSources(nose.x, nose.z, WOLF_AGENT.senses.scent.range));
+          const wind = windAt(nose.x, .8, nose.z);
+          lastHits = smell(nose, sources, wind, heading);
+          if (demo.replace) {
+            if (!(demo.once && demoOnce)) { demoOnce = true; for (const s of demo.signals) stream.offer(s); }
+          } else offerLive(heading, wind, sounds);
         }
       }
+      paint();
     },
     /** The same live cues the panel shows, for the 3D senses halo (render/sensesHalo). */
     sounds: () => cues.list(),

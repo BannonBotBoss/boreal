@@ -1,0 +1,31 @@
+{
+  "mode": "strengths",
+  "url": "http://127.0.0.1:5173/?view=ground&nomenu&noprobe&hour=12&at=-100.495,38.429,0&sensepic=0.18,0.55,0.94",
+  "loading": true,
+  "sound": "Sound on",
+  "text": "Wolf senses\n◉",
+  "bubbles": [
+    {
+      "kind": "sense-bubble-sound",
+      "opacity": "0.287",
+      "text": ""
+    },
+    {
+      "kind": "sense-bubble-scent",
+      "opacity": "0.541",
+      "text": ""
+    },
+    {
+      "kind": "sense-bubble-sight",
+      "opacity": "0.809",
+      "text": ""
+    }
+  ],
+  "rect": {
+    "x": 24,
+    "y": 180,
+    "width": 248,
+    "height": 188.1875
+  },
+  "errors": []
+}

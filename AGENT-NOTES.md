@@ -1134,3 +1134,11 @@ Roadmap step 25. Issues #104, #105, #106. #106 wins the bytes. Not claimed. grok
 - In the game at noon, on the woodpecker near x −100.5, z 38.4: before `Hopping · ahead`, after `something, front-right, soft`. Frames in `tasks/evidence/T-0097/`.
 - `npx tsc --noEmit` exit 0. `npm test` 842 tests, 828 pass, 0 fail, 14 todo. Skill `notes/skills/sound-direction.md`. Handoff `tasks/handoffs/T-0097-grokbot-3.md`.
 
+## 2026-10-26 18:54 PT - grokbot-3: sense thoughts are pictures (T-0100)
+
+Branch `grokbot-3/sense-pictures` from `grokbot-3/sound-direction` (pull request #144). Not claimed. grokbot-3 wrote the plan and does not approve it. Merge after #144. grokbot-2 is down and was not tagged.
+- The wolf senses panel no longer prints the listening sentence, the scent sentence, the percent, or a species card. A ripple, a wisp, or an eye bubbles up in that panel. Strength sets how solid it is (floor 0.18, full signal 0.94, game calibration of Matthew's picture). It drifts toward the side the signal comes from and fades. Life is the existing need-thought fade, 1.75 s. The cap is the issue #106 sound cap, 8. A steady signal re-emits every six panel refreshes, 0.9 s.
+- Hearing is still `createSoundCues`, packed with `cueSoundEntry` and read with `readSoundEntry`. Smell is still `smell()`. A close body can add an eye from `perceive().sight`. Category, source species, and distance are not drawn. The compass arrows stay. Their accessibility label can still be the T-0097 caption.
+- Files: `src/core/sensePictures.ts`, `src/ui/senses.ts`, `src/ui/senses.css`. Skill `notes/skills/sense-pictures.md`. Handoff `tasks/handoffs/T-0100-grokbot-3.md`. Frames in `tasks/evidence/T-0100/`.
+- `npx tsc --noEmit` exit 0. `npm test` 846 tests, 832 pass, 0 fail, 14 todo. The four T-0100 tests passed. GitHub's test job was not treated as a pass: recent runs on this repo did not start because of the org billing limit.
+

@@ -1147,3 +1147,12 @@ Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-app
 - Stills: `tasks/evidence/T-0096/orbit.png`, `10km.png`, `2km.png`, `600m.png`, `100m.png`, `ground.png`, and `descent.json`. Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `npm test` 844 tests, 830 pass, 0 fail, 14 todo. Asking Grokbot-1 to review pull request #143. grokbot-3 does not approve or merge.
 
+## 2026-10-26 19:46 PT - grokbot-3: the 2 km polygons and the forest floor (T-0096)
+
+Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 is offline until about Oct 28 midday PT and was not tagged. `positionCamera` was not edited. That file belongs to `grokbot-3/level-view` (PR #147).
+
+- The dark polygons are vertex lakes with the home shoreline mask off. A per-tile fade never reached them: Three.js uploads a shared material once a frame, and a fine tile's triangles are smaller than the fade. `uHideLake` is set once before the draw, on when the globe is under 8000 m. Land colour covers those lakes. The home shore and the oceans stay. Orbit and 10 km keep the far lakes.
+- The ground camera was inside a trunk at the isometric pitch, so the frame was the far-layer atmosphere. The grey stripes are the bark plates (`0x6b5a4a`) seen from inside. The bark shader is unchanged. The drawn pitch opens to the existing horizon (−10.313°) only below 48 m. The eye steps 1.6 m clear of a stem below 18 m. The flight spot and the wolf spawn stay put. Roll stays 0.
+- Settled stills, idle machine, 2026-10-26 19:45 PT: 2 km height 2000 m, deepest 13, queued 0, elevation −35.264°, dark pixels 0 against 59,149 on the previous still. Ground height 1 m, elevation −10.313°. 100 m and 600 m stay isometric. Orbit blue fraction stayed 0.182. Files in `tasks/evidence/T-0096/` and `/opt/cursor/artifacts/`.
+- Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`. `npx tsc --noEmit` exit 0. `npm test` 846 tests, 832 pass, 0 fail, 14 todo. GitHub `ci / test` is still the org billing limit and is not a pass. Asking Grokbot-1 to review pull request #143. grokbot-3 does not approve or merge.
+

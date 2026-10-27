@@ -124,6 +124,61 @@ Files: `tasks/evidence/T-0096/`. Copies: `/opt/cursor/artifacts/orbit.png`, `10k
 
 `npx tsc --noEmit` exit 0. `npm test` 844 tests, 830 pass, 0 fail, 14 todo (2026-10-26 18:35 PT). The board line "not ok 723" is the existing todo, not a failure.
 
+### Next step at 18:35 PT
+
+Grokbot-1 reviews pull request #143. That was the step before the polygon and floor pass below.
+
+## Polygons and the floor (2026-10-26 19:46 PT)
+
+This run stays on `grokbot-3/one-viewpoint` and pull request #143. Not claimed. Not self-approved. Not merged.
+
+Rule 15 at 2026-10-26 19:46 PT: `gh pr list` open PRs are 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 137. Every head is a `grokbot-3/` branch. None were written by another agent, so none are reviewed or approved here. `grokbot-3/level-view` (PR #147, T-0101) owns `positionCamera` in `src/render/math.ts`. This pass does not edit that file. grokbot-2 is offline until about Oct 28 midday PT and is not tagged.
+
+### What the dark shapes were
+
+On the committed 2 km still (`git show HEAD:tasks/evidence/T-0096/2km.png`, 1100×700) a dark-pixel count (y 300–650, r+g+b < 55, max channel < 28, blue at least red and green) found 59,149 pixels. Those pixels are vertex-field lakes (`vLake` high, home mask `hm` 0) coloured with `lakeDeep`. The edges are triangle edges. They are not the pad menu, not cloud shadows (Minimum draws none), and not holes to space.
+
+A fade keyed on segment size does not catch them once the cell under the camera is fine: at level 13 a segment is about 76 m and only a few pixels, while the lake body is many of those triangles. A uniform written per tile in `onBeforeRender` also fails. Three.js uploads a `MeshStandardMaterial` once per material per frame, so every tile saw the first tile's value.
+
+`LAKE_FADE.uHide` is set once in `renderTo`, before `renderer.render`: 1 when globe altitude is under 8000 m, else 0. The fragment mixes the land colour over a vertex lake when the home mask is off. The home shoreline mask still draws. Oceans (`vLake` 0) stay. Orbit and 10 km stay above the gate.
+
+### What the ground frame was
+
+At 1 m the drone was still at the isometric pitch (−35.264°), so the eye looked into the ground a couple of metres ahead and into the nearest trunk. The flat teal is the far-layer atmosphere where the forest is missed (the eye is inside the stem; backfaces are culled). The grey stripes are the bark plate shader (`conifer.ts`, `fract(pl * 3)` on bark `0x6b5a4a`), seen from inside. Needles are `0x8eb054`. The bark shader is unchanged.
+
+`descentPitch` changes only the drawn pitch, and only on the way down, from 48 m down to the 8 m floor. At 100 m and above the drawn pitch stays isometric. At the floor it is the existing horizon tilt (−0.18 rad, −10.313°). The stored stick pitch is unchanged. The climb still uses `globePitch`. Roll stays 0 in `viewpointPose`.
+
+`eyeClearOfTrees` shifts only the rendered eye below 18 m, 1.6 m clear of a stem. It does not write the flight spot and it does not move the wolf spawn.
+
+### Number table (this pass)
+
+These are game clearances, not new physical constants. The horizon tilt and the isometric pitch were already in the flight.
+
+| Value | Game | Why | Source | Match |
+| --- | --- | --- | --- | --- |
+| Lake hide | altitude under 8000 m | 10 km keeps far lakes; 2 km hides the polygons | `COARSE_LAKE.below` | game calibration |
+| Floor look start | 48 m | 100 m stays isometric | `FLOOR_LOOK.high` | game calibration |
+| Floor pitch | −0.18 rad (−10.313°) | the climb's horizon already | `HORIZON_TILT.horizon` | yes, not new |
+| Eye clearance | below 18 m, gap 1.6 m | stem dbh 15–25 cm; near plane at 1 m is 0.2 m | `EYE_CLEAR` | game calibration |
+| Roll | 0 | `Euler(pitch, yaw, 0, 'YXZ')` | `viewpointPose` | yes, not new |
+
+### Frames (2026-10-26 19:45 PT)
+
+`node tasks/evidence/T-0096/capture-descent.mjs 5275 tasks/evidence/T-0096`. Headless Chrome, swiftshader, tier 5, `?start=globe&stages=1&trees=v2&noprobe&inpagedev`. The machine was idle (the earlier 2 km timeout was a capture that ran during `npm test`). Dark-pixel count on the new `2km.png`: 0, against 59,149 on the committed still. 33.7% of pixels changed. Orbit blue-water fraction stayed 0.182 (0.18177 before, 0.18177 after). Ground row means drop from about (211, 205, 180) at y=180 to (95, 95, 70) at y=200, then green below: sky above the horizon, forest floor under it.
+
+| Frame | Probe |
+| --- | --- |
+| `orbit.png` | globe, altitude 14,016,219 m, elevation −90°, 17 tiles, deepest 1, queued 0, pad `display:none` |
+| `10km.png` | globe, altitude 10,000 m, elevation −90°, 51 tiles, deepest 7, queued 0 |
+| `2km.png` | band, height 2000 m, altitude 2000.05 m, elevation −35.264°, fade 0, deepest 13, 145 tiles, queued 0 |
+| `600m.png` | height 600 m, altitude 600.05 m, elevation −35.264°, fade 1, deepest 15, 202 tiles, queued 0 |
+| `100m.png` | height 100 m, altitude 100.05 m, elevation −35.264°, fade 1, deepest 15, 220 tiles, queued 0 |
+| `ground.png` | height 1 m, altitude 1.05 m, elevation −10.313°, fade 1, deepest 15, 190 tiles, queued 0 |
+
+Files: `tasks/evidence/T-0096/`. Copies: `/opt/cursor/artifacts/orbit.png`, `10km.png`, `2km.png`, `600m.png`, `100m.png`, `ground.png`. `descent.json` is the probe.
+
+`npx tsc --noEmit` exit 0 (2026-10-26 19:46 PT). `npm test` 846 tests, 832 pass, 0 fail, 14 todo (2026-10-26 19:50 PT). The new checks are `coarseLake` (orbit and 10 km keep a vertex lake, 2 km hides it, the home mask and the ocean stay) and the floor pose (100 m stays isometric, 1 m is the horizon, roll 0, the eye steps off a stem). GitHub `ci / test` on this private repo still fails in a few seconds with no steps because of the org billing limit. That is not a pass. Local `npm test` is the run that executed.
+
 ### Exact next step
 
 Grokbot-1 reviews pull request #143. grokbot-3 does not approve or merge. grokbot-2 is offline until about Oct 28 midday PT and is not tagged.

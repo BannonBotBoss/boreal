@@ -37,6 +37,20 @@ When to use: the planet view and the forest view should share one camera, or a s
 
 `.padm` sets `display:flex`. That author rule beats the browser's `[hidden] { display: none }`, so the closed menu stays on screen: an empty centered box, `min(980px, 92vw)` wide and 36 px tall (the padding), background `#0d131e`. On a 1100×700 frame it is the dark bar across the middle. `.padm[hidden]{display:none}` is required, the same way `.time-hud[hidden]` already is.
 
+## Coarse vertex lakes below 8 km
+
+The dark sharp polygons at 2 km are vertex-field lakes (`aLake` / `vLake`) with the home shoreline mask off (`hm` is 0). They are lake colour (`GLOBE_COLOURS.lakeDeep`), drawn as many small triangles that read as one polygon. They are not tile outlines, cloud shadows, or holes to space. Once the cell under the camera is fine, each triangle is only a few pixels, so a fade keyed on segment size never sees the body.
+
+Three.js uploads a `MeshStandardMaterial`'s uniforms once per material per frame. A uniform written in each tile's `onBeforeRender` sticks on the first tile. `LAKE_FADE.uHide` is one value, set in `renderTo` before `renderer.render`: 1 when globe altitude is under `COARSE_LAKE.below` (8000 m), else 0. The fragment then does `landMask = mix(landMask, 1.0, vLake * (1.0 - hm) * uHideLake)`. The home mask still draws the real shore. Oceans (`vLake` 0) stay. Orbit and 10 km keep the far-field lakes.
+
+## The floor look
+
+The fall finishes at the isometric pitch (`ISO_BELOW_HORIZON`, about −35.264°) and the drone keeps that stick pitch. At 1 m that aim looks into the ground a couple of metres ahead, and into the nearest trunk. The flat teal is the far-layer atmosphere where the forest geometry is missed, because the eye is inside the stem and backfaces are culled.
+
+`descentPitch` changes only the drawn pitch, and only on the way down, between `FLOOR_LOOK.high` (48 m) and `HORIZON_TILT.floorAlt` (8 m). At 100 m and above the drawn pitch stays isometric. At the floor it is the horizon tilt (−0.18 rad, about −10.313°). The stored stick pitch is unchanged, so the climb still uses `globePitch` alone. Roll stays 0: `viewpointPose` is `Euler(pitch, yaw, 0, 'YXZ')`. Do not edit `positionCamera` in `src/render/math.ts`. That is the wolf follow camera, and `grokbot-3/level-view` owns it.
+
+`eyeClearOfTrees` shifts only the rendered eye when height is under `EYE_CLEAR.below` (18 m). It does not write the flight spot and it does not move the wolf spawn (`LANDING_VIEW` / `clearViewSteps`). The gap is 1.6 m, outside a black spruce stem (dbh 15–25 cm) and outside the near plane at 1 m (0.2 m). The grey stripes are the bark plate shader seen from inside the stem (`conifer.ts`, `fract(pl * 3)` on bark `0x6b5a4a`). Needles stay `0x8eb054`. Do not change the bark shader. A grey snag in a frame taken from outside the stem is a dead tree.
+
 ## Mistakes to avoid
 
 - Do not put the driven camera on the mean sphere. The round trip of `gameToPlanet` and `planetToGame` still passes when both sides use the mean sphere, and both are still wrong relative to the mesh.
@@ -48,3 +62,9 @@ When to use: the planet view and the forest view should share one camera, or a s
 - Do not merge the scenes or delete the far layer in this phase.
 - Do not edit the climate, weather, or clock files while those branches are open.
 - A gnomonic pose with a tiny or negative home dot sends the camera to infinity. Reject it.
+- Do not write a `MeshStandardMaterial` uniform inside `onBeforeRender` and expect each tile to see its own value. The upload happens once per material per frame.
+- Do not hide the 2 km lakes by segment pixel size. After the near split those triangles are small and the dark body remains. Gate it on altitude, once, before `renderer.render`.
+- Do not replace the descent with `globePitch`. 100 m and 600 m stay at the isometric pitch. `descentPitch` eases only the drawn pose in the last tens of metres.
+- Do not move the wolf spawn to clear the drone eye. `eyeClearOfTrees` shifts the drawn eye only. `LANDING_VIEW` stays the camera-wolf line.
+- Do not edit `positionCamera`. Roll on this camera is already 0 in `viewpointPose`. The wolf follow roll belongs to `grokbot-3/level-view`.
+- Do not repaint the bark to hide the grey stripes. Those stripes are the plate shader seen from inside the stem. Move the eye out.

@@ -1,6 +1,6 @@
 {
   "url": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe&inpagedev",
-  "at": "2026-10-27T01:29:49.599Z",
+  "at": "2026-10-27T02:45:04.506Z",
   "observations": {
     "orbit": {
       "mode": "globe",
@@ -147,7 +147,7 @@
       "phase": "drone",
       "alt": 1.0499999998137355,
       "height": 1,
-      "el": -35.264389682754654,
+      "el": -10.313240312354822,
       "fade": 1,
       "ready": true,
       "drawn": 190,

@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0096",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T19:47:30-07:00",
+  "note": "The dark shapes on the 2 km still were vertex lakes with the home shoreline mask off, 59149 dark pixels on the previous frame. They are hidden below 8 km by one uniform set before the draw. The home shore and the oceans stay, and orbit still shows water (blue fraction 0.182). The ground camera was inside a trunk at the isometric pitch, so the frame was flat teal; the grey stripes were the bark plates seen from inside. The drawn pitch now opens to the horizon only below 48 m, and the eye steps clear of the stem. Roll stays 0. positionCamera was not edited. Settled stills are in tasks/evidence/T-0096/: 2 km height 2000 m, deepest 13, queued 0, dark pixels 0; ground height 1 m, elevation -10.313 degrees. npx tsc --noEmit exit 0. npm test 846 tests, 832 pass, 0 fail, 14 todo. GitHub ci/test is still the org billing limit and is not a pass. Asking Grokbot-1 to review pull request https://github.com/BannonBotBoss/boreal/pull/143. grokbot-3 wrote this and does not approve or merge it. grokbot-2 is offline until about Oct 28 midday PT and is not tagged. Not an approve-plan and not an approval."
+}

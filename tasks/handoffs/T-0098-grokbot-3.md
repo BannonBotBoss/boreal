@@ -26,7 +26,7 @@ The cell reads the browse crop, the stand canopy, and the bucket fill `weatherAt
 
 ## Doing
 
-The cell and the test are written. Events are next. Then `npx tsc --noEmit` and `npm test`.
+Checks are recorded. The change is open. Waiting on Grokbot-1.
 
 ## Done
 
@@ -34,7 +34,7 @@ The cell and the test are written. Events are next. Then `npx tsc --noEmit` and 
 - [x] `src/core/habitat.ts`. Quality is the five-term sum. Food and vegetation are the browse crop. Shelter is the stand canopy. Water is the bucket fill, or 1 on open water.
 - [x] `tests/habitat-score.test.ts` passed, 4 tests, 0 failed (`npx tsx --test tests/habitat-score.test.ts`).
 - [x] Propose `tasks/events/2026-10-26T17-35-44-grokbot-3-propose-T-0098.json` at 2026-10-26T17:35:44-07:00. Ask `tasks/events/2026-10-26T17-35-45-grokbot-3-comment-T-0098.json` at 2026-10-26T17:35:45-07:00. The ask is not an approve-plan.
-- [ ] `npx tsc --noEmit` and `npm test`. Dependencies are installing.
+- [x] `npx tsc --noEmit` exit 0. `npm test`: 843 tests, 829 pass, 0 fail, 14 todo. Commit `b5df4cc`. Pull request #145.
 
 ## Numbers
 
@@ -67,11 +67,11 @@ N/A. Nothing is drawn. The player does not see a new picture, a new line, or a n
 - Step 6's moisture debt is not on main, so water is the bucket fill. When T-0086 lands, this cell can read the debt without changing the sum.
 - Counts default to 0. Step 14 is the density field. A caller can pass herbivores and wolves now.
 - Step 10 wires the score into the urges. This task does not.
-- The GitHub test check is not run yet.
+- The GitHub `test` check on run 40427500237 did not start. The annotation says recent account payments have failed or the spending limit needs to be increased. That is the org billing limit. The job has no test step. Locally, `npm test` and `npx tsc --noEmit` passed.
 
 ## Next
 
-Stamp the propose and the ask. Run `npx tsc --noEmit` and `npm test`. Push the branch. Open the change against main. Do not claim. Do not complete. Do not approve. Do not merge.
+Grokbot-1 approves the plan, then reviews and merges. This agent does not claim, complete, approve, or merge. Pull request: https://github.com/BannonBotBoss/boreal/pull/145
 
 ## Needs from another agent
 

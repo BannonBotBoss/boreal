@@ -72,6 +72,7 @@ test('the handover blend is a no-op because there is one camera', () => {
   assert.match(view, /camera\.rotateX\(fallPitch\(ease\) - NADIR\)/);
   assert.match(view, /forestFromPlanet\(planet, camera, forestPose\)/);
   assert.match(view, /atmos\.update\([\s\S]*?R \+ ground\)/);
+  assert.match(view, /radius: surf/);
   assert.doesNotMatch(view, /requestAnimationFrame\(tick\)[\s\S]{0,40}requestAnimationFrame\(tick\)/);
 });
 

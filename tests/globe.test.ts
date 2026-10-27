@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createPlanet, fibonacci, PLANET } from '../src/world/globe/planet';
 import { FACES, bounds, children, cubeToSphere, faceDir, roots, selectLeaves, type QNode } from '../src/world/globe/cube';
-import { GLOBE_LOD } from '../src/world/globe/lod';
+import { GLOBE_LOD, splitWanted } from '../src/world/globe/lod';
 import { LADDER } from '../src/core/quality';
 import { heightAt } from '../src/core/world';
 
@@ -49,6 +49,22 @@ test('quadtree LOD: leaves cover the sphere once, refine near the camera, depth 
     assert.ok(leaves.length < 1500, `${leaves.length} leaves at ${alt} m`);
   }
   assert.ok(prevDeep >= 14, `ground level reaches L${prevDeep}`);
+});
+test('near split: a low camera refines the cell it is over, even far from that cell’s centre', () => {
+  const R = PLANET.radius, alt = 600, s = 2 / 128;
+  const d = faceDir(4, -1 + (20 + .97) * s, -1 + (7 + .97) * s); // a corner of a level-7 cell, not its centre
+  const cam: [number, number, number] = [d[0] * (R + alt), d[1] * (R + alt), d[2] * (R + alt)];
+  const base = { radius: R, minLevel: 1, maxLevel: 15, split: 1.1 * .5 }; // Minimum row × Minimum lod
+  const wants = (n: QNode) => splitWanted(n, cam, alt, base, NEAR_SPLIT.k, NEAR_SPLIT.reach);
+  const leaves = [...balancedTree(roots(), wants).leaves.values()];
+  const deep = Math.max(...leaves.map(q => q.level));
+  assert.ok(deep >= 13, `the cell under the camera reaches L${deep}`);
+  assert.ok(leaves.length < 2000, `${leaves.length} leaves`);
+  // the draw cap at its floor (splitK 0.35) must not cancel that refinement
+  const capped = { ...base, split: base.split * .35 };
+  const held = [...balancedTree(roots(), n => splitWanted(n, cam, alt, capped, NEAR_SPLIT.k, NEAR_SPLIT.reach, base.split)).leaves.values()];
+  const heldDeep = Math.max(...held.map(q => q.level));
+  assert.ok(heldDeep >= 13, `the cap leaves the cell at L${heldDeep}`);
 });
 test('globe LOD table: one row per ladder tier, non-increasing down the ladder', () => {
   assert.equal(GLOBE_LOD.length, LADDER.length);
@@ -333,7 +349,7 @@ test('globe -> game: the arrival spot moves out of a lake to the nearest dry lan
   assert.deepEqual(landSpawn(s, true), s); assert.deepEqual(landSpawn(wet!, false), wet);
 });
 
-import { globeOwnership } from '../src/world/globe/globeView';
+import { NEAR_SPLIT, globeOwnership } from '../src/world/globe/globeView';
 import { LOG_DEPTH, LOG_DEPTH_PREFIX, logDepthFC, setLogDepthFar, withLogDepth } from '../src/world/globe/logDepth';
 import { createFarLayer } from '../src/world/globe/farLayer';
 import { readFileSync as readSrcS1 } from 'node:fs';

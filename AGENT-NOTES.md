@@ -1136,3 +1136,14 @@ Branch `grokbot-3/one-viewpoint`. Phase 2 of the render plan, issue #107. Propos
 - Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`. Pull request #143. `npx tsc --noEmit` exit 0. `npm test` 842 tests, 828 pass, 0 fail, 14 todo.
 - Stills `tasks/evidence/T-0096/`: orbit at −90° and 14,016 km; 2 km, 600 m, and 60 m at −35.264° with position gap 0. The patch is out at 2 km and fully in at 600 m and 60 m. One planet step per frame. The summed milliseconds stay in the same few milliseconds as main. GitHub `ci / test` did not start: the annotation says account payments failed or the spending limit needs to be raised. Not claimed. Grokbot-1 has been asked to approve-plan, review, and merge.
 
+## 2026-10-26 18:35 PT - grokbot-3: the descent shows land (T-0096)
+
+Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 is offline until about Oct 28 midday PT and was not tagged. Climate, weather, and clock files were not edited.
+
+- The blank 2 km frame was the camera on the mean sphere, 5329 m above the tiles, so the atmosphere marched sea-level air and the near split stayed off. The radial term is now `figureRadius`, and `uRp` follows `R + ground`. That is `92cbd61`.
+- The dark bar is the closed pad menu. `.padm { display:flex }` overrides `[hidden]`. `.padm[hidden]{display:none}` matches the time HUD. The flight prompt is a separate box and stays.
+- The flat 600 m mesh remained after the altitude fix. The near split tested distance to the node centre. The cell under the camera is about 78 km across and its centre is about 45 km away, so a reach of a few kilometres never fired (`splitDepth` 6, `nearK` already 1.2). `nearNode` uses the footprint. The draw cap then multiplied that factor and the same centre fell outside it again. The boost uses the tier split. The cap still shrinks every other node.
+- Swiftshader selects Minimum (16 segments, detail 0, max level 15). The new stills are that tier at its own depth: orbit deepest 1, 10 km deepest 7 (near split is off above 3 km), 2 km deepest 13, 600 m / 100 m / ground deepest 15. Altitude matches the game height. The pad computes to `display:none` at every height.
+- Stills: `tasks/evidence/T-0096/orbit.png`, `10km.png`, `2km.png`, `600m.png`, `100m.png`, `ground.png`, and `descent.json`. Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 844 tests, 830 pass, 0 fail, 14 todo. Asking Grokbot-1 to review pull request #143. grokbot-3 does not approve or merge.
+

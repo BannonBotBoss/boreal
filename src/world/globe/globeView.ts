@@ -24,7 +24,7 @@ import { STAGES } from '../../core/stages/elevation';
 import { heightAt, WORLD_SEED } from '../../core/world';
 import { INTEREST, cancel, enqueue, runJobs } from '../../core/interest';
 import { smoothstep, clamp } from '../../proc/math';
-import { children, edgeMetres, faceDir, roots, wantsSplit, centre as nodeCentre, type QNode } from './cube';
+import { children, edgeMetres, faceDir, roots, centre as nodeCentre, type QNode } from './cube';
 import { renderOffset } from './origin';
 import { createAtmosphere } from './atmosphere';
 import { across } from './cube';
@@ -57,7 +57,7 @@ export { GLOBE_LAKE, GLOBE_LAND, GLOBE_SHORE } from './tile'; // inpage.ts (lazy
 /** Deeper tiles under a low camera: split x(1 + k) for tiles within reach x altitude, ramping in from `from` to `full` m. [game calibration] */
 export const NEAR_SPLIT = { k: 1.2, from: 3000, full: 1200, reach: 4 };
 import type { TileRequest } from './tileWorker';
-import { GLOBE_LOD, balancedTree, globeLod, worldTier } from './lod';
+import { GLOBE_LOD, balancedTree, globeLod, splitWanted, worldTier } from './lod';
 import { surfaceRadius } from './radial';
 import { createAxis } from './axisView';
 import { bindPlanetWeather, notePlanetClockOwner, sharedPlanetSim, weatherAtLatLon } from '../../core/planetWeather';
@@ -363,7 +363,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     }
   }
   const offTmp: Vec3 = [0, 0, 0];
-  const wanted = new Set<string>(); let drawn = 0, inView = 0, deepest = 0, culled = 0, splitK = 1;
+  const wanted = new Set<string>(); let drawn = 0, inView = 0, deepest = 0, culled = 0, splitK = 1, splitDepth = 0, nearK = 0;
   function want(n: QNode) {
     const t = tiles.get(n.key);
     if (t) { // built at another tier's segment count (the governor moved the world tier): neighbours would not share
@@ -380,16 +380,16 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const reliefHorizon = Math.acos(R / (R + PLANET.maxLand * 1.6)), dirTmp: Vec3 = [0, 0, 0];
   function hidden(n: QNode) {
     if (n.level === 0) return false;
-    const D = Math.hypot(camPos[0], camPos[1], camPos[2]), s = 2 / (1 << n.level), a0 = -1 + n.i * s, b0 = -1 + n.j * s;
+    const Rs = R + ground, D = Math.hypot(camPos[0], camPos[1], camPos[2]), s = 2 / (1 << n.level), a0 = -1 + n.i * s, b0 = -1 + n.j * s;
     const c = faceDir(n.face, a0 + s / 2, b0 + s / 2, dirTmp), ang = Math.acos(clamp((c[0] * camPos[0] + c[1] * camPos[1] + c[2] * camPos[2]) / D, -1, 1));
-    const extent = edgeMetres(n.level, R) / R * .8; // ≥ half-diagonal of the node (Nowell cells are ≤ 1.2 × the mean size)
-    return ang - extent > Math.acos(clamp(R / D, -1, 1)) + reliefHorizon;
+    const extent = edgeMetres(n.level, Rs) / Math.max(Rs, 1) * .8; // ≥ half-diagonal of the node (Nowell cells are ≤ 1.2 × the mean size)
+    return ang - extent > Math.acos(clamp(Rs / D, -1, 1)) + reliefHorizon;
   }
   // Frustum-aware LOD: below minLevel, a node wholly outside the view frustum never splits (it stays drawn coarse and
   // three's culling skips its draw call), so detail, builds and the cache go only where the camera looks.
   const frustum = new THREE.Frustum(), projView = new THREE.Matrix4(), ball = new THREE.Sphere();
   function inFrustum(n: QNode) {
-    const c = nodeCentre(n, R); ball.center.set(c[0], c[1], c[2]); ball.radius = edgeMetres(n.level, R) * .8 + PLANET.maxLand * 1.6;
+    const Rs = R + ground, c = nodeCentre(n, Rs); ball.center.set(c[0], c[1], c[2]); ball.radius = edgeMetres(n.level, Rs) * .8 + PLANET.maxLand * 1.6;
     return frustum.intersectsSphere(ball);
   }
   // Stitching (tile.ts stitchIndex): an edge whose same-face neighbour is drawn one level coarser gets the collapsed index
@@ -528,12 +528,15 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     // LOD selection, then hand the wanted builds to the workers (or jobs); drop builds nobody wants any more
     camera.updateMatrixWorld(); frustum.setFromProjectionMatrix(projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
     group.clear(); wanted.clear(); drawnNodes.length = 0; drawn = 0; inView = 0; deepest = 0; culled = 0;
-    const lodOpts = { radius: R, minLevel: lod.minLevel, maxLevel: lod.maxLevel, split: lod.split * splitK };
-    // below ~3 km (the in-page descent) tiles near the camera split deeper, so the globe reads like the game where they meet;
-    // the draw cap below still shrinks the split when too many tiles are in view (per-tier caps and the governor unchanged)
-    const nb = NEAR_SPLIT.k * smoothstep(NEAR_SPLIT.from, NEAR_SPLIT.full, alt), nearOpts = { ...lodOpts, split: lodOpts.split * (1 + nb) };
-    const wants = (n: QNode) => { if (nb <= 0) return wantsSplit(n, camPos, lodOpts); const c = nodeCentre(n, R), dd = Math.hypot(camPos[0] - c[0], camPos[1] - c[1], camPos[2] - c[2]); return wantsSplit(n, camPos, dd < alt * NEAR_SPLIT.reach ? nearOpts : lodOpts); };
+    // Tile centres sit on the drawn surface (figure + terrain), the same radius the camera uses.
+    const surf = R + ground, lodOpts = { radius: surf, minLevel: lod.minLevel, maxLevel: lod.maxLevel, split: lod.split * splitK };
+    // Below ~3 km the nodes under the camera split deeper, so the globe reads like the game where they meet.
+    // The reach is along the surface from the node's footprint (lod.ts nearNode). The draw cap shrinks lodOpts
+    // only; the near split keeps the tier factor, or the cell under the camera collapses back to one coarse leaf.
+    const nb = nearK = NEAR_SPLIT.k * smoothstep(NEAR_SPLIT.from, NEAR_SPLIT.full, alt);
+    const wants = (n: QNode) => splitWanted(n, camPos, alt, lodOpts, nb, NEAR_SPLIT.reach, lod.split);
     splitSet = balancedTree(roots(), n => (n.level < lod.minLevel || inFrustum(n)) && wants(n), n => !hidden(n)).splits;
+    splitDepth = 0; for (const k of splitSet) { const lv = +k.split('/')[1]; if (lv > splitDepth) splitDepth = lv; }
     for (const r of roots()) visit(r);
   stitch();
     // draw cap: shrink the split distance while more tiles than the tier's cap are in view, relax it back when under
@@ -655,7 +658,19 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     get workers() { return pool.length; },
     /** the home shoreline mask is on the GPU (inpage holds the landing until it is, so tile triangles never show as lakes) */
     get maskReady() { return GLOBE_SHORE.key === maskKey; },
-    stats: () => ({ drawn, inView, cached: tiles.size, queued: queued.size + inflight.size, deepest, tier: GOVERNOR.tier, segments: lod.segments }),
+    stats: () => {
+      let hold: { lv: number; dd: number; edge: number; reach: number; minDeep: number } | null = null;
+      if (drawnNodes.length) {
+        const Rs = R + ground; let best = drawnNodes[0], bestD = Infinity, minDeep = Infinity;
+        for (const n of drawnNodes) {
+          const c = nodeCentre(n, Rs), dd = Math.hypot(camPos[0] - c[0], camPos[1] - c[1], camPos[2] - c[2]);
+          if (dd < bestD) { bestD = dd; best = n; }
+          if (n.level === deepest) minDeep = Math.min(minDeep, dd);
+        }
+        hold = { lv: best.level, dd: Math.round(bestD), edge: Math.round(edgeMetres(best.level, Rs)), reach: Math.round(alt * NEAR_SPLIT.reach), minDeep: Math.round(minDeep) };
+      }
+      return { drawn, inView, cached: tiles.size, queued: queued.size + inflight.size, deepest, splitDepth, splitK: +splitK.toFixed(3), lodSplit: +lod.split.toFixed(3), nearK: +nearK.toFixed(3), hold, tier: GOVERNOR.tier, segments: lod.segments };
+    },
     hydroLayer: hydroLayerState,
   };
 }

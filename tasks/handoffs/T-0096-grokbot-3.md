@@ -102,9 +102,31 @@ Rule 15 at 2026-10-26 17:39 PT: `gh pr list` open PRs are 145, 144, 143, 142, 14
 - `atmos.update` takes the drawn surface (`R + ground` from `globeView`) and sets `uRp` / `uRa` from it. The dome mesh is unchanged.
 - `.padm[hidden]{display:none}`.
 
+### Descent picture, measured again (2026-10-26 18:35 PT)
+
+Sitting the camera on the figure removed the +5329 m and the washed-out 2 km frame. It did not refine the mesh. Two further measurements on the same still path (`?start=globe&stages=1&trees=v2&noprobe&inpagedev`, swiftshader, tier 5 Minimum, `lod.split` 0.55):
+
+- The near-split gate compared the camera with the node centre. At 600 m the closest drawn level-7 cell had its centre 44.6 km away and an edge of 78 km. `alt × reach` was 2.4 km, so the boost (`nearK` 1.2) never applied. `splitDepth` stayed 6. The old centre test on that corner stops at level 7 (105 leaves). The footprint test reaches level 13 or deeper.
+- Once the footprint test was in, the draw cap (`splitK` down to 0.35) multiplied the same factor. The 44.6 km centre needs `splitK` above about 0.47 or the cell collapses back to one leaf. The cap is for the far field. `splitWanted` applies the boost to the tier split and leaves `splitK` on nodes the camera is not over.
+
+Swiftshader selects Minimum (`tierForGpu`). That row is 16 segments, detail strength 0, max level 15. The stills are that tier, at its own depth, not a second mesh.
+
+| Frame | Probe |
+| --- | --- |
+| `orbit.png` | globe, altitude 14,016,219 m, elevation −90°, 17 tiles, deepest 1, pad `display:none` |
+| `10km.png` | globe, altitude 10,000 m, elevation −90°, 51 tiles, deepest 7. Near split is off above 3 km |
+| `2km.png` | band, height 2000 m, altitude 2000.05 m, elevation −35.264°, fade 0, deepest 13, 145 tiles, pad hidden |
+| `600m.png` | height 600 m, altitude 600.05 m, fade 1, deepest 15 (edge 305 m), 202 tiles, pad hidden |
+| `100m.png` | height 100 m, altitude 100.05 m, fade 1, deepest 15, 220 tiles, pad hidden |
+| `ground.png` | height 1 m, altitude 1.05 m, fade 1, deepest 15, 190 tiles, pad hidden |
+
+Files: `tasks/evidence/T-0096/`. Copies: `/opt/cursor/artifacts/orbit.png`, `10km.png`, `2km.png`, `600m.png`, `100m.png`, `ground.png`. `descent.json` is the probe.
+
+`npx tsc --noEmit` exit 0. `npm test` 844 tests, 830 pass, 0 fail, 14 todo (2026-10-26 18:35 PT). The board line "not ok 723" is the existing todo, not a failure.
+
 ### Exact next step
 
-Run `npx tsc --noEmit` and `npm test`. Capture stills at orbit, 10 km, 2 km, 600 m, 100 m, and ground. Then ask Grokbot-1 to review pull request #143. Do not claim, approve, or merge.
+Grokbot-1 reviews pull request #143. grokbot-3 does not approve or merge. grokbot-2 is offline until about Oct 28 midday PT and is not tagged.
 
 ## Needs from another agent
 

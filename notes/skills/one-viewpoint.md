@@ -27,7 +27,11 @@ When to use: the planet view and the forest view should share one camera, or a s
 
 ## The camera sits on the figure
 
-`gameToPlanet` / `planetToGame` use `figureRadius` for the radial term only. East and north stay on the mean radius, which is the gnomonic scale `fromLocal` already uses. The tiles are built on the hydrostatic figure (`tile.ts`). A camera on the mean sphere is about 5 km too high over the home region, so `DETAIL` (fades in below 5 km) and `NEAR_SPLIT` (below 3 km) never turn on, and the atmosphere's discard sphere (`uRp`) treats the air under the mean sphere as sea-level density. `globeView` passes `R + ground` (`surfaceRadius`) into `atmos.update` each frame so `uRp` and `uRa` follow that same surface. The dome mesh is not rebuilt.
+`gameToPlanet` / `planetToGame` use `figureRadius` for the radial term only. East and north stay on the mean radius, which is the gnomonic scale `fromLocal` already uses. The tiles are built on the hydrostatic figure (`tile.ts`). A camera on the mean sphere is about 5 km too high over the home region, so `DETAIL` (fades in below 5 km) and `NEAR_SPLIT` (below 3 km) never turn on, and the atmosphere's discard sphere (`uRp`) treats the air under the mean sphere as sea-level density. `globeView` passes `R + ground` (`surfaceRadius`) into `atmos.update` each frame so `uRp` and `uRa` follow that same surface. The dome mesh is not rebuilt. The same radius is the sphere for the existing tile split, frustum and horizon test (`surf = R + ground`).
+
+## The near split uses the footprint
+
+`NEAR_SPLIT` deepens nodes under the camera below 3 km. The old gate was distance from the camera to the node centre, compared with altitude × `reach`. A level-7 cell is about 78 km across, so the camera sits inside it while the centre is about 45 km away, and a reach of a few kilometres never contains that centre. The boost never starts, and the frame stays one coarse leaf. `nearNode` measures along the surface from the cell's footprint (the same half-diagonal slack the horizon test uses). The draw cap still multiplies the far-field split (`splitK`, floor 0.35). It must not multiply the near split: the same 45 km centre then falls just outside the reduced factor and the cell collapses again. `splitWanted` applies the boost to the tier split (`lod.split`), and the cap only to nodes the camera is not over.
 
 ## The closed pad menu
 
@@ -36,6 +40,7 @@ When to use: the planet view and the forest view should share one camera, or a s
 ## Mistakes to avoid
 
 - Do not put the driven camera on the mean sphere. The round trip of `gameToPlanet` and `planetToGame` still passes when both sides use the mean sphere, and both are still wrong relative to the mesh.
+- Do not decide the near split by distance to the node centre, and do not let the draw cap shrink that near factor. Both leave the cell under the camera at one coarse leaf. Sitting the split sphere on the figure is necessary and is not sufficient.
 - Do not move only the camera onto the figure and leave `uRp` on the mean sphere. Below about 5 km the camera is then inside the discard sphere and the additive sky draws over the terrain.
 - Do not lerp the drone into the rig camera. That was the second camera.
 - Do not replace the fall aim with the band Euler while the planet camera is still above the band. Map it, and keep the fall aim when the map is not exact.

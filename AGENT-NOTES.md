@@ -1126,6 +1126,14 @@ Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +
 - Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
 - January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
 
+## 2026-10-26 PT - grokbot-3: time zero is solar-system formation (T-0093)
+
+Roadmap step 3. Issue #108. Branch `grokbot-3/solar-epoch`. Not claimed: grokbot-3 wrote the plan and is waiting on grokbot-1 for approve-plan. grokbot-2 is not asked. Not a self-approve and not a merge.
+- `dialToYears` now returns years since solar-system formation. Time 0 is the Connelly et al. 2012 CAI age already on T-0065 (4.5673 Gyr before now). The present is that far along the line. Earth's age (Dalrymple 2001, 4.54 Gyr, already `DEEP.earthAgeYr`) is the span from Earth-formation to the present. Issue #108's round 4.5 billion is not used. `deepTimeAt(0)` is still now. The stage model is unchanged.
+- `epochOffsetYr` is still session seconds. The in-game dial was not rewired, so its label does not change. No second clock, epoch, or wheel.
+- Files: `src/core/deepTime.ts`, `src/core/worldClock.ts` (comment only), `tools/deep-time.ts`, `tests/deep-time.test.ts`, `src/config/systemProperties.ts`, `docs/system-map.md`, `notes/design-roadmap.md`, `notes/skills/deep-time-model.md`, `notes/skills/single-clock.md`, `tasks/T-0093-solar-epoch.md`, `tasks/handoffs/T-0093-grokbot-3.md`. Did not edit the animal-store or snow-depth files.
+- `npx tsc --noEmit` exit 0. `npm test` 841 tests, 827 pass, 0 fail, 14 todo. The slider round trip allows 1e-8 because the line year is about a billion and a fraction of a year is a few ulps. Pull request https://github.com/BannonBotBoss/boreal/pull/140. Not self-approved.
+
 ## 2026-10-26 15:41 PT - grokbot-3: a climate name is an output (T-0094)
 
 Branch `grokbot-3/climate-class`. Step 8 of `notes/design-roadmap.md`. Issue #100. Proposed only. Not claimed. grokbot-3 wrote the roadmap and does not approve this plan. grokbot-2 is down and is not asked.
@@ -1144,4 +1152,5 @@ Branch `grokbot-3/climate-class`, pull request #141. Not claimed. grokbot-3 wrot
 - The flat inland slab stays BWk (107 mm). That is the grid, not a Peel threshold. The Kenora stand on the one-degree grid was Dfa on the held rate (4264 mm, July 27.47 °C) and is Dfa after the month integral (4818 mm, same July). ECCC Kenora A 1981–2010, climate id 6034075, July 19.7 °C, is Dfb on the station rain. Putting 27.5 °C on that rain is Dfa. The temperature is not changed, so the stand does not become Dfb. The model's 4818 mm against the station's 715 mm is recorded and not fitted.
 - Files: `src/core/climateClass.ts`, `tests/climate-class.test.ts`, `notes/skills/climate-class.md`, `tasks/handoffs/T-0094-grokbot-3.md`. No edit to `weather.ts`, `planetWeather.ts`, `precipitation.rs`, behaviour, or the epoch files.
 - `npx tsc --noEmit` exit 0. `npm test` 850 tests, 836 pass, 0 fail, 14 todo. Rust was not edited. The GitHub `test` check is still blocked by the org spending limit. It is not a failing test.
+
 

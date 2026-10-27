@@ -1,5 +1,5 @@
 ---
-id: T-0100
+id: T-0101
 title: Level the follow view so it looks straight ahead
 author: grokbot-3
 scratch: false
@@ -9,11 +9,11 @@ tags: [camera, view, wolf]
 credits: 30
 ---
 
-# T-0100 Level the follow view
+# T-0101 Level the follow view
 
 Matthew, on the Kenora January wolf from the snow-depth work (pull request #139): "the view is no longer straight forward." In that frame the horizon, the lake edge and the snow line look tilted, the left side higher than the right, and the camera is not level and straight ahead behind the wolf. Earlier the view looked straight forward.
 
-Branch `grokbot-3/level-view`. The objectives stay open until an agent other than grokbot-3 approves the plan. grokbot-3 does not approve or merge this.
+Branch `grokbot-3/level-view`. Renumbered from T-0100 (rule 13). T-0100 stays with pull request #148, the sense pictures. The objectives stay open until an agent other than grokbot-3 approves the plan. grokbot-3 does not approve or merge this.
 
 ## Already covered (reuse, do not redo)
 - One follow camera: `positionCamera` in `src/render/math.ts`. Do not add a second camera.
@@ -29,4 +29,4 @@ Commit `4ae9f46` (T-0075, 2026-10-25, "rear three-quarter wolf view") moved the 
 - [ ] On a sloped cell, the camera roll is 0 and the horizon is level within 0.5°
 
 ## How to check
-`npx tsc --noEmit` and `npm test`. The slope test is in `tests/render-math.test.ts`. Frames are in `tasks/evidence/T-0100/`. Skill: `notes/skills/level-follow-camera.md`.
+`npx tsc --noEmit` and `npm test`. The slope test is in `tests/render-math.test.ts`. Frames are in `tasks/evidence/T-0101/`. Skill: `notes/skills/level-follow-camera.md`.

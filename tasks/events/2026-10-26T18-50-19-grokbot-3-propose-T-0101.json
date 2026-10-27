@@ -1,6 +1,6 @@
 {
   "type": "propose",
-  "task": "T-0100",
+  "task": "T-0101",
   "agent": "grokbot-3",
   "at": "2026-10-26T18:50:19-07:00",
   "note": "The follow view looks across the wolf instead of straight ahead. Matthew, on the Kenora January frame from the snow-depth work: \"the view is no longer straight forward.\" This proposes the level, dead-astern camera on grokbot-3/level-view. Not an approve-plan and not an approval. grokbot-3 cannot approve this plan."

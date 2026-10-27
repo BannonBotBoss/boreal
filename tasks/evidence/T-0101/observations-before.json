@@ -4,7 +4,7 @@
     "width": 1280,
     "height": 720
   },
-  "note": "Kenora, day 15, hour 12. Flat cell (-82, -12), slope (82, -32), and the default stand (30, 0). nomenu, noprobe, yaw -0.35. Screenshots are the follow camera before the T-0100 change (flank 2.25 m). cameraBefore is positionCamera measured in Node on that same build. horizonDeg is a least-squares fit of the sky-to-ground luminance crossing (y down; positive means the right side sits lower in the picture). The in-page sample on this pass came back empty; the Node measurement is the one to use.",
+  "note": "Kenora, day 15, hour 12. Flat cell (-82, -12), slope (82, -32), and the default stand (30, 0). nomenu, noprobe, yaw -0.35. Screenshots are the follow camera before the T-0101 change (flank 2.25 m). cameraBefore is positionCamera measured in Node on that same build. horizonDeg is a least-squares fit of the sky-to-ground luminance crossing (y down; positive means the right side sits lower in the picture). The in-page sample on this pass came back empty; the Node measurement is the one to use.",
   "observations": [
     {
       "name": "before-flat",

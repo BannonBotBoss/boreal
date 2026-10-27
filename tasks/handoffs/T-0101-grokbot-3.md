@@ -1,10 +1,12 @@
-# T-0100 handoff (grokbot-3)
+# T-0101 handoff (grokbot-3)
 
-Agent: grokbot-3. Branch: `grokbot-3/level-view`. Clock: Pacific. Updated 2026-10-26 19:00 PT.
+Agent: grokbot-3. Branch: `grokbot-3/level-view`. Clock: Pacific. Updated 2026-10-26 19:07 PT.
 
 ## Board
 
-Proposed by grokbot-3 in `tasks/events/2026-10-26T18-50-19-grokbot-3-propose-T-0100.json`, `at` 2026-10-26T18:50:19-07:00. No approve-plan yet, so no claim and no complete. grokbot-3 wrote the task and cannot approve the plan or the work. The ask is on the pull request, to @Grokbot-1. grokbot-2 is down until about Oct 28 and is not tagged. The objectives stay unchecked.
+Proposed by grokbot-3 in `tasks/events/2026-10-26T18-50-19-grokbot-3-propose-T-0101.json`, `at` 2026-10-26T18:50:19-07:00. No approve-plan yet, so no claim and no complete. grokbot-3 wrote the task and cannot approve the plan or the work. The ask is on the pull request, to @Grokbot-1. grokbot-2 is down until about Oct 28 and is not tagged. The objectives stay unchecked.
+
+Renumbered from T-0100 (rule 13). T-0100 stays with pull request #148 (`grokbot-3/sense-pictures`). Comment `tasks/events/2026-10-26T19-07-40-grokbot-3-comment-T-0101.json`, `at` 2026-10-26T19:07:40-07:00. The 18:50 propose existed only on this unmerged branch, so the file was renamed and its task field is T-0101. It was not on main. Still proposed. The comment quotes Matthew's 2026-10-24 17:10 PT instruction to fix collisions and says that quote is not an approve-plan. `notes/design-roadmap.md` has no line for this camera, so that file was not edited. Frames are `tasks/evidence/T-0101/` (before and after, flat, slope, and Kenora).
 
 ## Doing
 
@@ -37,7 +39,7 @@ Make the existing follow camera look straight ahead, with a level horizon, on fl
 - `npx tsc --noEmit` exit 0 (2026-10-26, this branch).
 - `npm test` — 840 tests, 826 pass, 0 fail, 14 todo.
 - The GitHub `test` job on pull request #147 failed in about 3 seconds with no steps and no log (`actions/runs/40435017538`). That is the org billing block. It is not a pass, and it is not a test failure in the suite.
-- Frames: `tasks/evidence/T-0100/capture.mjs before|after`, Vite on port 5288, queries `?nomenu&noprobe&day=15&hour=12&at=`. Spots: flat (−82, −12), slope (82, −32), Kenora stand (30, 0). Yaw −0.35.
+- Frames: `tasks/evidence/T-0101/capture.mjs before|after`, Vite on port 5288, queries `?nomenu&noprobe&day=15&hour=12&at=`. Spots: flat (−82, −12), slope (82, −32), Kenora stand (30, 0). Yaw −0.35.
 
 ## Numbers
 
@@ -58,17 +60,17 @@ The horizon fit is a picture measurement. The known level case is the Kenora far
 
 Before, same clock (15 Jan, hour 12):
 
-- `tasks/evidence/T-0100/before-flat.png` — flat cell, slope 0.36°. Wolf ahead and to the right of centre. Far horizon −0.35° (rms 7.7 px; trees nick the line).
-- `tasks/evidence/T-0100/before-slope.png` — dry slope 12.1°. Same off-to-the-side framing. Far horizon −0.61° (rms 10.5 px).
-- `tasks/evidence/T-0100/before-kenora.png` — the snow-depth stand. Lake and snow edge cross the frame. Far horizon −0.09°.
+- `tasks/evidence/T-0101/before-flat.png` — flat cell, slope 0.36°. Wolf ahead and to the right of centre. Far horizon −0.35° (rms 7.7 px; trees nick the line).
+- `tasks/evidence/T-0101/before-slope.png` — dry slope 12.1°. Same off-to-the-side framing. Far horizon −0.61° (rms 10.5 px).
+- `tasks/evidence/T-0101/before-kenora.png` — the snow-depth stand. Lake and snow edge cross the frame. Far horizon −0.09°.
 
 After, same query (`hour=12`, day 15). The status line read 12:04. The clock moves a few minutes while the page loads. `?rec` only exposes `window.__boreal.player()`; it does not move the camera. The probe put the wolf at the asked cell each time.
 
-- `tasks/evidence/T-0100/after-flat.png` — wolf centred, straight ahead, snowfield. Far horizon −0.35°.
-- `tasks/evidence/T-0100/after-slope.png` — wolf centred on the 12° slope. The snow underfoot still follows the hill. The sky line is −0.09°. The camera does not roll to flatten that hill.
-- `tasks/evidence/T-0100/after-kenora.png` — wolf centred, straight ahead. Looking along the heading shows the snow and the trees. The lake was in the old frame because that frame looked 32° off the trail. Far horizon −0.35°.
+- `tasks/evidence/T-0101/after-flat.png` — wolf centred, straight ahead, snowfield. Far horizon −0.35°.
+- `tasks/evidence/T-0101/after-slope.png` — wolf centred on the 12° slope. The snow underfoot still follows the hill. The sky line is −0.09°. The camera does not roll to flatten that hill.
+- `tasks/evidence/T-0101/after-kenora.png` — wolf centred, straight ahead. Looking along the heading shows the snow and the trees. The lake was in the old frame because that frame looked 32° off the trail. Far horizon −0.35°.
 
-Copies: `/opt/cursor/artifacts/T-0100-before-flat.png`, `T-0100-before-slope.png`, `T-0100-before-kenora.png`, `T-0100-after-flat.png`, `T-0100-after-slope.png`, `T-0100-after-kenora.png`.
+Copies: `/opt/cursor/artifacts/T-0101-before-flat.png`, `T-0101-before-slope.png`, `T-0101-before-kenora.png`, `T-0101-after-flat.png`, `T-0101-after-slope.png`, `T-0101-after-kenora.png`.
 
 ## Needs from another agent
 

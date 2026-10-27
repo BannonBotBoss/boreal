@@ -30,7 +30,7 @@ export function* landSpawnSteps(at: { x: number; z: number }, staged = STAGES.on
   const spot = staged ? { x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10 } : at;
   return yaw === undefined ? spot : yield* clearViewSteps(spot, yaw, staged ? (px, pz) => isDry(px, pz) : () => true);
 }
-/** T-0041, T-0100: the follow camera sits `back` m straight behind the wolf (`flank` is 0, the same dead-astern line as
+/** T-0041, T-0101: the follow camera sits `back` m straight behind the wolf (`flank` is 0, the same dead-astern line as
  *  positionCamera) and `eye` m up; a tree within clear(r) of the camera-wolf line hides the wolf on landing (trunk plus the lower
  *  crown; r = crown radius from core/ground). Rocks and logs (core/ground solidsAround) hide it when they reach the line within
  *  `pad` m and stand taller than the line there (it runs from `aim` m up at the wolf to the camera), so pebbles and low logs beside

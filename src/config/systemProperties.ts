@@ -42,7 +42,7 @@ export const SYSTEM_PROPERTIES = {
     /** seconds a sensed threat is remembered after leaving the senses (stops flip-flopping at the outer ring) */ threatMemory: 3,
     /** sense rings (m): touch, near, far */ senseRadii: [3, 10, 24] as const,
   },
-  /** Follow camera (render/math): dead astern, just above the wolf, horizon level (T-0100). The wolf may lean with the ground; the camera does not roll. */
+  /** Follow camera (render/math): dead astern, just above the wolf, horizon level (T-0101). The wolf may lean with the ground; the camera does not roll. */
   camera: {
     /** resting pitch (deg). Negative looks above the horizon. -5 is near level and puts the body below screen centre. Game calibration of the angle. */
     defaultPitchDeg: -5,

@@ -21,7 +21,7 @@ import { GOVERNOR } from '../src/core/quality';
 import { RENDER_SETTINGS } from '../src/core/renderSettings';
 
 const deg = Math.PI / 180;
-test('values lock: every moved figure equals its value before T-0037, except the T-0100 follow camera', () => {
+test('values lock: every moved figure equals its value before T-0037, except the T-0101 follow camera', () => {
   assert.equal(DEFAULT_PITCH, -5 * deg); assert.equal(LOOK_PITCH_RANGE, 30 * deg); assert.equal(RIDER_HEIGHT, 1.05); assert.equal(RIDER_DISTANCE, 3.6); assert.equal(RIDER_FLANK, 0);
   assert.equal(clampPitch(-10), -Math.PI * 80 / 180); assert.equal(clampPitch(10), Math.PI * 89 / 180);
   assert.equal(springLookPitch(0, 0, .1), DEFAULT_PITCH + (0 - DEFAULT_PITCH) * Math.exp(-14 * .1));

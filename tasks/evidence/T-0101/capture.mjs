@@ -1,6 +1,6 @@
-// T-0100: Kenora, 15 Jan, about 12:06. Same places before and after the level camera.
+// T-0101: Kenora, 15 Jan, about 12:06. Same places before and after the level camera.
 // Flat cell and a slope, plus the default stand from the snow-depth frame.
-// node tasks/evidence/T-0100/capture.mjs before|after [baseUrl]
+// node tasks/evidence/T-0101/capture.mjs before|after [baseUrl]
 import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -9,7 +9,7 @@ import { acquire, track, release } from '../../../tools/bench-lock.mjs';
 
 const which = process.argv[2] === 'after' ? 'after' : 'before';
 const base = process.argv[3] ?? 'http://127.0.0.1:5288';
-const out = resolve('tasks/evidence/T-0100');
+const out = resolve('tasks/evidence/T-0101');
 const artifacts = '/opt/cursor/artifacts';
 mkdirSync(out, { recursive: true });
 mkdirSync(artifacts, { recursive: true });
@@ -19,10 +19,10 @@ const shots = [
   { name: `${which}-kenora`, q: '?nomenu&noprobe&rec&day=15&hour=12&at=30,0,-0.35', x: 30, z: 0, yaw: -0.35 },
 ];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const name = `grokbot-3: T-0100 level view ${which}`;
+const name = `grokbot-3: T-0101 level view ${which}`;
 if (!await acquire(name, { waitMs: 120000 })) throw new Error('GPU busy');
 const cdpPort = 9440 + Math.floor(Math.random() * 200);
-const profile = mkdtempSync(join(tmpdir(), 't0100-chrome-'));
+const profile = mkdtempSync(join(tmpdir(), 't0101-chrome-'));
 const chrome = process.env.CHROME ?? '/usr/bin/google-chrome';
 const proc = spawn(chrome, [
   '--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
@@ -90,7 +90,7 @@ try {
     const png = await cdp('Page.captureScreenshot', { format: 'png' });
     const file = join(out, shot.name + '.png');
     writeFileSync(file, Buffer.from(png.result.data, 'base64'));
-    copyFileSync(file, join(artifacts, 'T-0100-' + shot.name + '.png'));
+    copyFileSync(file, join(artifacts, 'T-0101-' + shot.name + '.png'));
     observations.push({ ...shot, url: base + shot.q, ms: Date.now() - t0, sample });
     console.log(shot.name, JSON.stringify(sample));
   }

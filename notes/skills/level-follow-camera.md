@@ -13,6 +13,7 @@ Use when the third-person view looks tilted, or when the wolf is no longer in fr
 - The slope test in `tests/render-math.test.ts` passes. Known failure before the up-vector reset: about −10° of roll on a 12° slope.
 - `frameSample()` bearing is within 0.5° of 0. The issue #52 scorer still gives 1 to a 32° rear three-quarter and under 0.95 to dead astern. That scorer records the old framing. It is not the live aim.
 - Same place, same clock, before and after: Kenora, day 15, hour 12. The far horizon fit on the straight-ahead frame stays within 0.5°. A diagonal shoreline may still slope. That is the ground, and the camera must not roll to hide it.
+- The frames for that check are `tasks/evidence/T-0101/` (before and after, flat, slope, and the Kenora stand). The task is T-0101. T-0100 is the sense-pictures task on pull request #148.
 
 ## Mistakes to avoid
 - Adding a second camera, or editing another agent's viewpoint branch to "put the fix where the new camera will be." Put it in `positionCamera`. Say in the pull request what to copy if a later pose stops calling that function.

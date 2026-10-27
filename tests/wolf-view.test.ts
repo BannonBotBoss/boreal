@@ -1,6 +1,6 @@
 /**
- * T-0075, T-0100. wolf-frame v1 stays calibrated: the measured issue #52 target scores 1, and a dead-astern or side
- * view scores under 0.95. T-0100 puts the shipped lens straight behind the wolf, outside that 25–45° band, because
+ * T-0075, T-0101. wolf-frame v1 stays calibrated: the measured issue #52 target scores 1, and a dead-astern or side
+ * view scores under 0.95. T-0101 puts the shipped lens straight behind the wolf, outside that 25–45° band, because
  * the owner asked for a level view straight ahead. Guard-hair lengths stay inside the published ranges.
  * Mass is whatever rigMass derives; the test only checks it is that derivation and finite.
  */

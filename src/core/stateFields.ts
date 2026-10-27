@@ -20,7 +20,8 @@ export const STATE_FIELDS = {
     avoidTime: 'snapshot', feedTime: 'snapshot', meal: 'snapshot', alarm: 'snapshot', lastThreat: 'snapshot',
     gaitName: 'snapshot', // T-0003: last gait, the Froude-hysteresis input of gaitFor
     prevPhase: 'snapshot', drawAlpha: 'snapshot', // render interpolation between fixed sim steps (core/drawLerp)
-    legs: 'clock', gaitSpeed: 'clock', seed: 'clock' }, // body build: from seed (+ age)
+    legs: 'clock', gaitSpeed: 'clock', seed: 'clock', // body build: from seed (+ age)
+    stored: 'snapshot' }, // T-0092 mirror of the store record. The live age clock stays player.bornSec.
   /** core/wolfModes state (the player's animal) */
   modes: { stamina: 'snapshot', maxStamina: 'clock', mode: 'snapshot', first: 'snapshot', left: 'snapshot', right: 'snapshot',
     sprintTime: 'snapshot', sprintSpent: 'snapshot', exhausted: 'snapshot' },

@@ -17,6 +17,13 @@ export type Motion = 'idle' | 'walk' | 'run' | 'back' | 'jump';
 export type Problem = 'explore' | 'escape' | 'avoid' | 'feed' | 'recover' | 'player';
 export interface SenseItem { key: string; x: number; y: number; z: number; kind: 'threat' | 'food' | 'obstacle' | 'animal'; low?: boolean; /** fresh grams in one bite; default is the deer mouthful */ biteG?: number; /** grams per second; default 7.8/60 */ bitePerS?: number }
 export interface Point { x: number; y: number; z: number }
+/** One animal copied off the step 11 store (T-0092). The store is the record. This is the mirror. */
+export interface StoredMirror {
+  handle: string; species: string; archetype: string;
+  x: number; y: number; z: number; ageYears: number;
+  water: number; energy: number; rest: number;
+  founder: boolean; parent: string | null; territory: string;
+}
 export const SENSE_RADII = SYSTEM_PROPERTIES.behaviour.senseRadii;
 export class AnimalBrain {
   energy = ANIMAL_DEFAULT_ENERGY; motion: Motion = 'idle'; problem: Problem = 'explore';
@@ -32,6 +39,8 @@ export class AnimalBrain {
   feedTime = 0; meal?: SenseItem; alarm = 0; lastThreat?: SenseItem;
   /** Leg proportions used for gait timing; set per species. */
   legs: LegDims = DEER_LEGS; gaitSpeed = 0;
+  /** Copy of the store record. Absent on a brain that was not mirrored. Step 13 reads the store. */
+  stored?: StoredMirror;
   constructor(public seed: number) {}
   sense(origin: Point, items: SenseItem[]) {
     const sorted = items.map(item => ({item,d:Math.hypot(item.x-origin.x,item.y-origin.y,item.z-origin.z)})).filter(v=>v.d<=24).sort((a,b)=>a.d-b.d);

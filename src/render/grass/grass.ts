@@ -27,6 +27,7 @@ import { enqueue, cancel, pending } from '../../core/interest';
 import { RENDER } from '../../core/renderSettings';
 import { COVER_SPECIES, GRASS, bladesJob, keepAt, type Blades } from './cover';
 import { MOSS_GLSL, MOSS_UNIFORMS } from '../flora/moss';
+import { snowDepthCm, weatherAt } from '../../core/weather';
 
 export const GRASS_FX = { off: false }; // bench hook (cost measurement), like TREE_FX
 export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, culled: 0, tris: 0, lods: [0, 0, 0], sliceMaxMs: 0, packMaxMs: 0, packs: 0 };
@@ -35,12 +36,13 @@ const K = COVER_SPECIES.length;
 const U = {
   uGrass: { value: new THREE.Vector4(GRASS.lodDist, GRASS.full, GRASS.radius, 1) }, // lodDist, full, radius, foliage
   uPlayer: { value: new THREE.Vector3() }, uCamFwd: { value: new THREE.Vector3(0, 0, -1) }, uPx: { value: .001 }, // pixel footprint per metre of distance (2·tan(fov/2) / screen height)
+  uSnowM: { value: 0 }, // metres, snowDepthCm / 100 at the player. Blades shorter than this are under the snow.
   uShape: { value: COVER_SPECIES.map(s => new THREE.Vector4(s.width, s.profile, s.stem, s.stiff)) },
   uBase: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.base)) }, uTip: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.tip)) }, uFall: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.fall)) },
 };
 const VERT_HEAD = `#define GRASS_K ${K}
 attribute float vertIndex; attribute vec4 aBlade; attribute float aKind;
-uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer, uCamFwd; uniform float uPx;
+uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer, uCamFwd; uniform float uPx; uniform float uSnowM;
 uniform vec4 uShape[GRASS_K]; uniform vec3 uBase[GRASS_K]; uniform vec3 uTip[GRASS_K]; uniform vec3 uFall[GRASS_K];
 varying vec3 vGrassColour;
 ${GLSL_NOISE}
@@ -58,6 +60,7 @@ const VERT_BODY = `
   float keep = (dist <= uGrass.y ? 1.0 : pow(uGrass.y / dist, 2.0)) * (1.0 - smoothstep(uGrass.z * 0.8, uGrass.z, dist)) * uGrass.w; // cover.keepAt × foliage
   keep *= max(step(dist, 3.0), step(-0.35, dot(root - cameraPosition, uCamFwd) / max(dist, 1e-3))); // one field mesh, no per-tile culling: blades well behind the view collapse
   float alive = step(aBlade.w, keep);
+  alive *= 1.0 - step(aBlade.y, uSnowM); // a blade no taller than the snow depth is buried; the terrain snow layer shows
   float highLODOut = smoothstep(uGrass.x * 0.5, uGrass.x, dist);
   int k = int(aKind + 0.5); vec4 sh = uShape[k];
   float GRASS_VERTICES = (GRASS_SEGMENTS + 1.0) * 2.0;
@@ -98,6 +101,8 @@ const VERT_BODY = `
   vec3 tip = mix(uTip[k], uFall[k], fallT), base = mix(uBase[k], uFall[k] * 0.6, fallT * 0.5);
   float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
   vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.35, 1.0, easeInG(heightPercent, 2.0));
+  float snowCover = clamp(uSnowM / max(aBlade.y, 1e-3), 0.0, 1.0); // share of the blade under the snow; 0.8 is the terrain snow albedo (render/pbr.ts, Oke 1987)
+  vGrassColour = mix(vGrassColour, vec3(0.8), snowCover);
   float toGround = smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist); if (toGround > 0.0) vGrassColour = mix(vGrassColour, groundLayer(soilGround(root.xz), root.xz), toGround); // toward the grass radius blades take the terrain's soil colour + moss layer (render/flora/moss) (far normals are already up): no edge where the field ends
   vec3 grassPos = root + p;
   float viewDotNormal = clamp(abs(dot(face * vec3(0.0, 0.0, 1.0), normalize(vec3(cameraPosition.x - root.x, 0.0, cameraPosition.z - root.z)))), 0.0, 1.0); // one face, seen from both sides
@@ -164,7 +169,7 @@ export function createGrass(scene: THREE.Scene) {
     const T = GRASS.tile, cx = camera.position.x, cz = camera.position.z, R = Math.min(GRASS.radius * Math.sqrt(foliage), nearRadius); // never beyond full-res terrain (interest near tier)
     group.visible = !GRASS_FX.off && foliage > 0;
     if (segs !== RENDER.terrainSegments) { segs = RENDER.terrainSegments; tiles.clear(); } // roots follow the terrain lattice
-    U.uGrass.value.set(GRASS.lodDist, GRASS.full, R, foliage); U.uPlayer.value.copy(player); const fov = (camera as THREE.PerspectiveCamera).fov ?? 48; U.uPx.value = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, globalThis.innerHeight ?? 900);
+    U.uGrass.value.set(GRASS.lodDist, GRASS.full, R, foliage); U.uPlayer.value.copy(player); U.uSnowM.value = snowDepthCm(weatherAt(player.x, player.z).sweMm) / 100; const fov = (camera as THREE.PerspectiveCamera).fov ?? 48; U.uPx.value = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, globalThis.innerHeight ?? 900);
     camera.getWorldDirection(U.uCamFwd.value);
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * T - cx, 0, cx - tx * T - T), Math.max(tz * T - cz, 0, cz - tz * T - T));
     const r = Math.ceil(R / T) + 1, ox = Math.floor(cx / T), oz = Math.floor(cz / T), want = new Set<string>();

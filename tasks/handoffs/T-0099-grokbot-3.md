@@ -86,11 +86,12 @@ Drink, rest, and move are the same pipeline, asserted beside the trace: a thirst
 - The forest deer and the player wolf do not pass `urges` yet. The deer call is in `src/render/buildScene.ts`, which this step does not edit (#143 owns the camera and render files). The player wolf still enters through `chooseGoal` in `main.ts`, and that ladder is the one step 10 does not extend. A caller passes the cell. There is no second decision function.
 - Step 13 is when Rust steps the decision. This task does not move it.
 - Mating is not an urge here. Step 19 owns that.
-- The GitHub `test` check may not start. Pull request #145's run 40427500237 did not start because account payments have failed or the spending limit needs to be increased. If this pull request's check fails the same way, that is the org billing limit. Locally, `npm test` and `npx tsc --noEmit` passed.
+- Pull request: https://github.com/BannonBotBoss/boreal/pull/146
+- The GitHub `test` check on run 40431122722 did not start. The annotation says recent account payments have failed or the spending limit needs to be increased. That is the org billing limit, the same one that stopped #145 (run 40427500237). The job has no test step. Locally, `npm test` and `npx tsc --noEmit` passed.
 
 ## Next
 
-Grokbot-1 approves the plan, then reviews and merges. This agent does not claim, complete, approve, or merge. Merge this after #145.
+Grokbot-1 approves the plan, then reviews and merges. This agent does not claim, complete, approve, or merge. Pull request: https://github.com/BannonBotBoss/boreal/pull/146. Merge this after #145.
 
 ## Needs from another agent
 

@@ -14,9 +14,9 @@ const artifacts = '/opt/cursor/artifacts';
 mkdirSync(out, { recursive: true });
 mkdirSync(artifacts, { recursive: true });
 const shots = [
-  { name: `${which}-flat`, q: '?nomenu&noprobe&day=15&hour=12&at=-82,-12,-0.35', x: -82, z: -12, yaw: -0.35 },
-  { name: `${which}-slope`, q: '?nomenu&noprobe&day=15&hour=12&at=82,-32,-0.35', x: 82, z: -32, yaw: -0.35 },
-  { name: `${which}-kenora`, q: '?nomenu&noprobe&day=15&hour=12&at=30,0,-0.35', x: 30, z: 0, yaw: -0.35 },
+  { name: `${which}-flat`, q: '?nomenu&noprobe&rec&day=15&hour=12&at=-82,-12,-0.35', x: -82, z: -12, yaw: -0.35 },
+  { name: `${which}-slope`, q: '?nomenu&noprobe&rec&day=15&hour=12&at=82,-32,-0.35', x: 82, z: -32, yaw: -0.35 },
+  { name: `${which}-kenora`, q: '?nomenu&noprobe&rec&day=15&hour=12&at=30,0,-0.35', x: 30, z: 0, yaw: -0.35 },
 ];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const name = `grokbot-3: T-0100 level view ${which}`;
@@ -63,6 +63,7 @@ try {
   await cdp('Runtime.enable');
   await cdp('Network.enable');
   await cdp('Network.setCacheDisabled', { cacheDisabled: true });
+  await cdp('Page.addScriptToEvaluateOnNewDocument', { source: 'localStorage.clear(); sessionStorage.clear();' });
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
   const observations = [];
   for (const shot of shots) {
@@ -76,37 +77,16 @@ try {
     }
     if (!loaded) throw new Error(shot.name + ' still loading');
     await sleep(2000);
-    const sample = await ev(`(async () => {
-      try {
-        const names = performance.getEntriesByType('resource').map(e => e.name);
-        const pick = (part) => names.filter(n => n.includes(part)).at(-1);
-        const mathUrl = pick('/src/render/math.ts');
-        const threeUrl = pick('/node_modules/three/build/three.module.js') || pick('three');
-        const worldUrl = pick('/src/core/world.ts');
-        if (!mathUrl || !threeUrl || !worldUrl) return { error: 'module url missing', mathUrl, threeUrl, worldUrl, sample: names.filter(n => n.includes('/src/') || n.includes('three')).slice(0, 8) };
-        const math = await import(mathUrl);
-        const THREE = await import(threeUrl);
-        const world = await import(worldUrl);
-        const cam = new THREE.PerspectiveCamera(48, 1280 / 720, 0.2, 700);
-        math.positionCamera(cam, ${shot.x}, ${shot.z}, math.RIDER_HEIGHT, ${shot.yaw});
-        const right = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0);
-        const fwd = new THREE.Vector3(); cam.getWorldDirection(fwd);
-        const roll = Math.asin(Math.max(-1, Math.min(1, right.y))) * 180 / Math.PI;
-        const pitch = Math.asin(Math.max(-1, Math.min(1, fwd.y))) * 180 / Math.PI;
-        fwd.y = 0; fwd.normalize();
-        const heading = new THREE.Vector3(-Math.sin(${shot.yaw}), 0, -Math.cos(${shot.yaw}));
-        const off = Math.acos(Math.max(-1, Math.min(1, fwd.dot(heading)))) * 180 / Math.PI;
-        const h = world.heightAt(${shot.x}, ${shot.z});
-        const hx = (world.heightAt(${shot.x} + 2, ${shot.z}) - world.heightAt(${shot.x} - 2, ${shot.z})) / 4;
-        const hz = (world.heightAt(${shot.x}, ${shot.z} + 2) - world.heightAt(${shot.x}, ${shot.z} - 2)) / 4;
-        const status = document.getElementById('status');
-        return {
-          href: location.href,
-          status: status ? status.innerText.split('\\n')[0] : '',
-          roll, pitch, off, h, slopeDeg: Math.atan(Math.hypot(hx, hz)) * 180 / Math.PI,
-        };
-      } catch (e) { return { error: String(e && e.stack || e) }; }
+    const sample = await ev(`(() => {
+      const status = document.getElementById('status');
+      const probe = window.__boreal;
+      let player = null;
+      try { player = probe && probe.player ? probe.player() : null; } catch (e) { player = { error: String(e) }; }
+      return { href: location.href, status: status ? status.innerText.split('\\n')[0] : '', player };
     })()`);
+    if (!String(sample?.href || '').includes('at=' + shot.x)) {
+      await sleep(5000);
+    }
     const png = await cdp('Page.captureScreenshot', { format: 'png' });
     const file = join(out, shot.name + '.png');
     writeFileSync(file, Buffer.from(png.result.data, 'base64'));

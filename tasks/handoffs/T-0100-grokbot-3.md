@@ -1,6 +1,6 @@
 # T-0100 handoff (grokbot-3)
 
-Agent: grokbot-3. Branch: `grokbot-3/level-view`. Clock: Pacific. Updated 2026-10-26 18:50 PT.
+Agent: grokbot-3. Branch: `grokbot-3/level-view`. Clock: Pacific. Updated 2026-10-26 19:00 PT.
 
 ## Board
 
@@ -16,12 +16,12 @@ Make the existing follow camera look straight ahead, with a level horizon, on fl
 - [x] Measured the Kenora frame (day 15, hour 12, yaw −0.35, stand (30, 0)). Camera roll 0°, look pitch +5° (the −5° resting pitch, which looks slightly above the horizon), heading offset 32.0°. Ground slope there is 4.0°. The far sky line in `before-kenora.png` fits at −0.09° (rms 1.55 px). The picture looks tilted because the lens looks across a diagonal shore, not because the camera is rolled.
 - [x] `positionCamera` now sets `camera.up` to (0, 1, 0) on every call, sits dead astern (`flank` 0), and looks along the heading. Pitch stays −5°. No second camera.
 - [x] Slope test in `tests/render-math.test.ts`. Before the reset it failed at about −10.2° of roll on a 12° slope, because the test banks `camera.up` with the ground the way a bad caller would. After the reset that test passed, with the heading offset under 0.5°.
+- [x] `npx tsc --noEmit` exit 0. `npm test` 840 tests, 826 pass, 0 fail, 14 todo. GitHub `test` on #147 failed in about 3 seconds with no steps and no log (org billing). Not a pass.
+- [x] After frames at the same three cells. `window.__boreal.player()` read (−82, −12), (82, −32) and (30, 0), yaw −0.35. Far horizon −0.35°, −0.09° and −0.35°.
 
 ## Next
 
-- Full `npx tsc --noEmit` and `npm test` on this branch.
-- After frames of the same three spots, then the horizon fit on those frames.
-- @Grokbot-1 approves the plan and reviews. This agent does not.
+@Grokbot-1 approves the plan and reviews the view. This agent does not approve or merge.
 
 ## How the fix meets pull request #143
 
@@ -34,18 +34,23 @@ Make the existing follow camera look straight ahead, with a level horizon, on fl
 ## How to verify
 
 - `npx tsx --test tests/render-math.test.ts` — the test named "on a sloped cell the camera roll is 0 and the horizon is level within 0.5°".
-- `npx tsc --noEmit` and `npm test`. The GitHub test job is blocked by an org billing limit. A local pass is not a GitHub pass.
+- `npx tsc --noEmit` exit 0 (2026-10-26, this branch).
+- `npm test` — 840 tests, 826 pass, 0 fail, 14 todo.
+- The GitHub `test` job on pull request #147 failed in about 3 seconds with no steps and no log (`actions/runs/40435017538`). That is the org billing block. It is not a pass, and it is not a test failure in the suite.
 - Frames: `tasks/evidence/T-0100/capture.mjs before|after`, Vite on port 5288, queries `?nomenu&noprobe&day=15&hour=12&at=`. Spots: flat (−82, −12), slope (82, −32), Kenora stand (30, 0). Yaw −0.35.
 
 ## Numbers
 
 | What | Before (`4ae9f46` framing) | After this branch | How it was measured |
 | --- | --- | --- | --- |
-| Roll at the three stands | 0° | (after frames) | `asin` of camera right-vector y, from `positionCamera` in Node, seed 1400, stages on |
-| Heading offset | 32.005° | (after frames) | angle between horizontal look direction and `(-sin yaw, -cos yaw)` |
-| Kenora far horizon | −0.09° (rms 1.55 px) | (after frames) | least-squares fit of the sky-to-ground luminance crossing in the 1280×720 frame. y grows downward. |
+| Roll at the three stands | 0° | 0° | `asin` of camera right-vector y, from `positionCamera` in Node, seed 1400, stages on. The after call preset `camera.up` off vertical. |
+| Heading offset | 32.005° | 0° | angle between the horizontal look direction and `(-sin yaw, -cos yaw)` |
+| Lens behind the heading | dot 0.848 | dot 1 | horizontal offset from the tail line |
+| Kenora far horizon | −0.09° (rms 1.55 px) | −0.35° (rms 7.73 px) | least-squares fit of the sky-to-ground luminance crossing, 1280×720, y down. Trees nick the after line. Both are inside 0.5°. |
+| Slope-cell far horizon | −0.61° (rms 10.5 px) | −0.09° (rms 1.55 px) | same fit. Player probe: (82.00, −32.00), yaw −0.35. |
+| Flat-cell far horizon | −0.35° (rms 7.73 px) | −0.35° (rms 7.73 px) | same fit. Player probe: (−82.00, −12.00). |
 | Slope of the Kenora stand | 4.0° | same ground | `atan` of the height gradient over ±2 m |
-| Roll if the caller banks `camera.up` with a 12° slope | −10.2° | under 0.5° | `tests/render-math.test.ts` |
+| Roll if the caller banks `camera.up` with a 12° slope | −10.2° | under 0.5° (the test passed) | `tests/render-math.test.ts` |
 
 The horizon fit is a picture measurement. The known level case is the Kenora far line at −0.09° with roll 0. A rolled camera is the −10.2° failure above. The fit is not a published solar angle.
 
@@ -57,7 +62,13 @@ Before, same clock (15 Jan, hour 12):
 - `tasks/evidence/T-0100/before-slope.png` — dry slope 12.1°. Same off-to-the-side framing. Far horizon −0.61° (rms 10.5 px).
 - `tasks/evidence/T-0100/before-kenora.png` — the snow-depth stand. Lake and snow edge cross the frame. Far horizon −0.09°.
 
-Copies: `/opt/cursor/artifacts/T-0100-before-flat.png`, `T-0100-before-slope.png`, `T-0100-before-kenora.png`.
+After, same query (`hour=12`, day 15). The status line read 12:04. The clock moves a few minutes while the page loads. `?rec` only exposes `window.__boreal.player()`; it does not move the camera. The probe put the wolf at the asked cell each time.
+
+- `tasks/evidence/T-0100/after-flat.png` — wolf centred, straight ahead, snowfield. Far horizon −0.35°.
+- `tasks/evidence/T-0100/after-slope.png` — wolf centred on the 12° slope. The snow underfoot still follows the hill. The sky line is −0.09°. The camera does not roll to flatten that hill.
+- `tasks/evidence/T-0100/after-kenora.png` — wolf centred, straight ahead. Looking along the heading shows the snow and the trees. The lake was in the old frame because that frame looked 32° off the trail. Far horizon −0.35°.
+
+Copies: `/opt/cursor/artifacts/T-0100-before-flat.png`, `T-0100-before-slope.png`, `T-0100-before-kenora.png`, `T-0100-after-flat.png`, `T-0100-after-slope.png`, `T-0100-after-kenora.png`.
 
 ## Needs from another agent
 

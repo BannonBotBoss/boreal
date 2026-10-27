@@ -71,6 +71,7 @@ try {
     const who = ip?.player?.();
     const vc = ip?.view?.camera;
     const far = ip?.far;
+    const tv = window.borealTreesV2?.info;
     return {
       mode: window.__inpage?.mode ?? null,
       phase: window.__inpage?.flightPhase ?? null,
@@ -85,6 +86,8 @@ try {
       px: who?.x ?? null, pz: who?.z ?? null, pyaw: who?.yaw ?? null,
       cx: vc?.position?.x ?? null, cy: vc?.position?.y ?? null, cz: vc?.position?.z ?? null,
       farScale: far?.scale ?? null, farW: far?.target?.width ?? null, farH: far?.target?.height ?? null,
+      variants: tv?.variants ?? null, treeCount: tv?.trees ?? null, nearTrees: tv?.near ?? null, midTrees: tv?.mid ?? null, crownTrees: tv?.crown ?? null,
+      mask: ip?.globe?.maskReady ?? null, jobQ: ip?.jobs?.().q ?? null,
     };
   })()`;
   const loading = `(() => { const l = document.getElementById('loading'); if (!l) return false; const st = getComputedStyle(l); return st.pointerEvents !== 'none' && Number(st.opacity) > 0.05; })()`;
@@ -139,7 +142,7 @@ try {
   await ev(`window.__inpage.DEBUG.holdH = 100`);
   await settle('100m', s => s?.mode === 'band' && s.height > 90 && s.height < 140 && s.fade > 0.9 && s.queued === 0 && s.deepest >= 14, 70000);
   await ev(`window.__inpage.DEBUG.holdH = 1`);
-  await settle('ground', s => s?.mode === 'band' && s.height < 8 && s.fade > 0.9 && s.queued === 0 && s.deepest >= 12, 70000);
+  await settle('ground', s => s?.mode === 'band' && s.height < 8 && s.fade > 0.9 && s.queued === 0 && s.deepest >= 12 && (s.variants ?? 0) > 0 && (s.nearTrees ?? 0) > 0, 90000);
   writeFileSync(`${out}/descent.json`, JSON.stringify({ url, at: new Date().toISOString(), observations, log: log.slice(-20) }, null, 2));
   console.log('wrote', out);
   ws.close();

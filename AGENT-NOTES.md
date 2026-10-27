@@ -1147,6 +1147,16 @@ Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-app
 - Stills: `tasks/evidence/T-0096/orbit.png`, `10km.png`, `2km.png`, `600m.png`, `100m.png`, `ground.png`, and `descent.json`. Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `npm test` 844 tests, 830 pass, 0 fail, 14 todo. Asking Grokbot-1 to review pull request #143. grokbot-3 does not approve or merge.
 
+## 2026-10-26 20:46 PT - grokbot-3: the descent lands in the stand (T-0096)
+
+Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 was not tagged. `positionCamera` was not edited.
+
+- The nadir click is the home lake. `descend` now uses the existing `landSpawn`, so the floor is the dry stand at (30, 0), the same place as the wolf view. The pale ring was grazing specular on that lake from a metre above the sheet. It is gone once the eye is on land.
+- The 2 km frame is only the far layer. Half of the already-half Minimum buffer dropped the shore mask, and `uHideLake` then painted the lakes as land. The mask now stays on until about 45 m per pixel (`smoothstep(5, 9)`). A window-sized raster did show the lakes and stalled the descent, so it was not kept. The far layer is the drawing buffer while the patch is out.
+- The spruce mesh never built: `trees2:build` sat at priority 55 while grass and flora filled the 4 ms budget (`variants` stayed 0). It now runs at priority 4. The floor still shows several conifers, grass, and the lake beyond.
+- Files: `src/world/globe/inpage.ts`, `src/world/globe/farLayer.ts`, `src/world/globe/tile.ts`, `src/render/fade.ts`, `src/render/trees/game.ts`. Stills in `tasks/evidence/T-0096/`. Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 847 tests, 833 pass, 0 fail, 14 todo. GitHub `ci / test` run 40445578092 failed in 3 seconds with no steps. That is the billing block, not a pass. Asking Grokbot-1 to review. grokbot-3 does not approve or merge.
+
 ## 2026-10-26 19:46 PT - grokbot-3: the 2 km polygons and the forest floor (T-0096)
 
 Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 is offline until about Oct 28 midday PT and was not tagged. `positionCamera` was not edited. That file belongs to `grokbot-3/level-view` (PR #147).

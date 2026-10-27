@@ -211,11 +211,35 @@ Below 60 m (`INPAGE.hazeLow`) the globe occlusion margin is 1e6 m, so the coarse
 
 The camera does stand at (30, 0), height 1 m, on dry clay. The 2 km far layer was scale 1 but only 550×350, because Minimum draws into a half-size buffer (`resScale` 0.5) and the shore mask was already loaded (`maskReady` true). Half the window is still past the mask cutoff, so the frame stayed a green wash. The floor had `borealTreesV2` variants 0 the whole time the queue was flora, chunk, grass and moss. `trees2:build` at priority 55 never took a slice, so no spruce mesh was drawn.
 
-The far layer is now the window size while the patch is out, and the conifer build runs at priority 4 (after the chunk under the camera, before grass). Stills of that are next.
+A window-sized far layer (1100×700) did draw blue water against the forest, and then the descent stalled: frames were slow enough that 70 s of capture was still at 2611 m. That size was reverted. The mask cutoff moved from `smoothstep(1.5, 4)` to `smoothstep(5, 9)` (about 45 m per pixel). Coarser than that, an averaged field reads as all water, which is why the mask still has no mips. The drawing-buffer far layer (550×350 on this Minimum capture) stays. The conifer build runs at priority 4, after the chunk under the camera and before grass (`d + 5`).
+
+### Frames (2026-10-26 20:44 PT)
+
+`node tasks/evidence/T-0096/capture-descent.mjs 5275 tasks/evidence/T-0096`. Headless Chrome, swiftshader, tier 5, `?start=globe&stages=1&trees=v2&noprobe&inpagedev`. The machine was idle.
+
+| Frame | What it is | Probe |
+| --- | --- | --- |
+| `orbit.png` | the planet, a disc of ocean and land in black space | globe, 14,016,219 m, elevation −90°, 17 tiles, deepest 1 |
+| `10km.png` | an overhead of forest and lakes | globe, 10,000 m, elevation −90°, 51 tiles, deepest 7, mask on |
+| `2km.png` | an aerial: green forest with a dark lake and a shore through the frame | band, height 2000 m, elevation −35.264°, fade 0, far layer 550×350 at scale 1, mask on, deepest 12 |
+| `600m.png` | lakes and forest, the patch fully in | height 600 m, fade 1, deepest 15, queued 0 |
+| `100m.png` | the lake ahead, with the near treetops and the far shore | height 100 m, elevation −35.264°, fade 1 |
+| `ground.png` | the stand: several conifers, grass, the lake beyond | height 1 m at (30, 2.48, 0), elevation −10.313°, variants 6, 1 near / 4 mid / 8 crown spruces, vertical edge 16.2 against 16.0 on the wolf still |
+
+The old white ring was the flat lake mirroring the sky in a circle around a camera a metre above open water. The eye is now on the dry stand, and that circle is not in the frame. The bright band at the horizon is the sky. Roll stays 0. `positionCamera` was not edited.
+
+Open pull requests are all `grokbot-3/*` (#139, #140, #141, #142, #143, #144, #145, #146, #147, #148). This run does not approve or merge any of them.
+
+### Number table (added this pass)
+
+| Value | Game | Why | Source | Match |
+| --- | --- | --- | --- | --- |
+| Shore mask fade | on until 5 texels/pixel, off by 9 | 2 km at the drawing buffer is about 3; coarser than ~45 m/pixel the field washes to water | `smoothstep(5.0, 9.0, sfp)` | game calibration |
+| Spruce build order | priority 4 | after the chunk at distance 0, before grass at `d + 5` | `trees2:build` | game calibration |
 
 ### Exact next step
 
-Recapture and read the six stills. GitHub `ci` remains billing-blocked and is not a pass. grokbot-3 does not approve or merge. grokbot-2 is not tagged.
+Grokbot-1 reviews pull request #143. grokbot-3 does not approve or merge. grokbot-2 is not tagged. `npx tsc --noEmit` exit 0 (2026-10-26 20:40 PT). `npm test` 847 tests, 833 pass, 0 fail, 14 todo (2026-10-26 20:49 PT). GitHub `ci / test` run 40445578092 failed in 3 seconds with no steps (the job never started). That is the billing block, not a pass.
 
 ## Needs from another agent
 

@@ -387,7 +387,7 @@ Read by: `src/ui/chronometer.ts`
 
 - `DAY` in `src/core/timeOfDay.ts`: chronometer offset (persisted)
 - `CLOCK` in `src/core/worldClock.ts`: save key and offline cap
-- `DEEP` in `src/core/deepTime.ts`: deep-time figures: sun and Earth age, flux thresholds, life start (T-0060)
+- `DEEP` in `src/core/deepTime.ts`: deep-time figures: solar-system formation, sun and Earth age, flux thresholds, life start (T-0060, T-0093)
 - `MILESTONES` in `src/core/deepTime.ts`: dated milestones on the deep-time dial (T-0060)
 
 <a id="controls"></a>

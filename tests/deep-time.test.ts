@@ -1,6 +1,7 @@
 /** T-0060 deep time: the Gough brightening fit, the zero-greenhouse temperature, stage boundaries from cited figures, and the log dial. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { DEEP, DIAL, MILESTONES, STAGE_INFO, deepTimeAt, dialToYears, equilibriumTempK, formatYears, luminosityRatio, nearestMilestone, stageAt, yearsAtLuminosity, yearsToDial, type DeepStage } from '../src/core/deepTime';
 const near = (a: number, b: number, e: number, m = '') => assert.ok(Math.abs(a - b) <= e, `${m} ${a} vs ${b} (+-${e})`);
 
@@ -37,12 +38,55 @@ test('readout: no temperature when there is no planet; extrapolation is flagged 
   assert.ok(Number.isNaN(deepTimeAt(-4.6e9).equilibriumK)); assert.ok(Number.isNaN(deepTimeAt(8e9).equilibriumK));
   near(deepTimeAt(0).equilibriumK, 254, .5); assert.equal(deepTimeAt(0).label, 'now'); assert.equal(deepTimeAt(6e9).extrapolated, true); assert.equal(deepTimeAt(0).extrapolated, false);
 });
-test('dial: 0 is now, ends reach no planet and engulfment, log spacing, exact round trip, monotone', () => {
-  assert.equal(dialToYears(0), 0); assert.equal(stageAt(dialToYears(-1)), 'no-planet'); assert.equal(stageAt(dialToYears(1)), 'engulfed');
-  assert.equal(dialToYears(-1), -(DIAL.pastSpanYr - 1)); assert.equal(dialToYears(5), dialToYears(1)); // clamped
-  for (const s of [-1, -.73, -.2, -.001, .001, .2, .5, .93, 1]) near(yearsToDial(dialToYears(s)), s, 1e-9, `s=${s}`);
+test('dial: the present is the centre of one line from solar-system formation, ends reach no planet and engulfment, log spacing, exact round trip, monotone', () => {
+  const offset = (s: number) => dialToYears(s) - DEEP.solarSystemAgeYr;
+  assert.equal(dialToYears(0), DEEP.solarSystemAgeYr);
+  assert.equal(stageAt(offset(-1)), 'no-planet'); assert.equal(stageAt(offset(1)), 'engulfed');
+  assert.equal(dialToYears(-1), DEEP.solarSystemAgeYr - (DIAL.pastSpanYr - 1)); assert.equal(dialToYears(5), dialToYears(1)); // clamped
+  // The line year is ~1e9, so a fraction of a year is a few ulps. 1e-8 on the slider is well under a minute.
+  for (const s of [-1, -.73, -.2, -.001, .001, .2, .5, .93, 1]) near(yearsToDial(dialToYears(s)), s, 1e-8, `s=${s}`);
   let prev = -Infinity; for (let s = -1; s <= 1; s += .01) { const y = dialToYears(s); assert.ok(y > prev); prev = y; }
-  assert.ok(Math.abs(dialToYears(-.5)) < 1e6 && Math.abs(dialToYears(.5)) < 1e6); // half a drag is only tens of thousands of years: the dial is log, not linear
+  assert.ok(Math.abs(offset(-.5)) < 1e6 && Math.abs(offset(.5)) < 1e6); // half a drag is only tens of thousands of years from the present: the dial is log, not linear
+});
+test('state at time 0 is solar-system formation, and the present is the living Earth on that line (T-0093)', () => {
+  const formation = deepTimeAt(0 - DEEP.solarSystemAgeYr);
+  assert.equal(formation.stage, 'no-planet'); assert.equal(formation.embody, 'none');
+  assert.ok(Number.isNaN(formation.equilibriumK));
+  assert.ok(formation.offsetYr < -DEEP.earthAgeYr);
+  near(dialToYears(yearsToDial(0)), 0, 1, 'time 0 round trip');
+
+  const presentLine = dialToYears(0);
+  const present = deepTimeAt(presentLine - DEEP.solarSystemAgeYr);
+  assert.equal(present.offsetYr, 0); assert.equal(present.stage, 'living-earth'); assert.equal(present.label, 'now');
+  near(present.equilibriumK, 254.0, .5, 'Te now'); near(present.luminosity, 1, 1e-12, 'L now');
+
+  const earthForms = DEEP.solarSystemAgeYr - DEEP.earthAgeYr;
+  assert.equal(presentLine - earthForms, DEEP.earthAgeYr);
+  const earth = deepTimeAt(earthForms - DEEP.solarSystemAgeYr);
+  assert.equal(earth.offsetYr, -DEEP.earthAgeYr); assert.equal(earth.stage, 'hadean');
+});
+test('the formation age and Earth age are the cited figures, and there is still one epoch', () => {
+  const causes = JSON.parse(readFileSync(new URL('../src/data/deepTimeCauses.json', import.meta.url), 'utf8')) as {
+    events: { id: string; onsetYearsAgo: { mean: number; source: string } }[];
+    conditioning: { observables: { age: { value: number; source: string } } };
+  };
+  const nebula = causes.events.find(e => e.id === 'nebula_sun')!;
+  assert.equal(DEEP.solarSystemAgeYr, nebula.onsetYearsAgo.mean);
+  assert.equal(nebula.onsetYearsAgo.source, 'Connelly 2012 Science 338:651');
+  assert.equal(DEEP.earthAgeYr, causes.conditioning.observables.age.value);
+  assert.equal(causes.conditioning.observables.age.source, 'Dalrymple 2001');
+  assert.notEqual(DEEP.solarSystemAgeYr, 4.5e9); assert.notEqual(DEEP.earthAgeYr, 4.5e9);
+  assert.ok(DEEP.solarSystemAgeYr > DEEP.earthAgeYr);
+
+  const strip = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  const deep = strip(readFileSync(new URL('../src/core/deepTime.ts', import.meta.url), 'utf8'));
+  assert.equal(deep.split('solarSystemAgeYr').length - 1, 3);
+  const clock = readFileSync(new URL('../src/core/worldClock.ts', import.meta.url), 'utf8');
+  const hud = readFileSync(new URL('../src/ui/timeHud.ts', import.meta.url), 'utf8');
+  assert.match(clock, /export const epochOffsetYr = \(sec = worldSec\(\)\) => sec \/ K\.julian_year_s/);
+  assert.equal(clock.includes('solarSystemAgeYr'), false);
+  assert.equal(hud.includes('dialToYears'), false);
+  assert.equal(hud.includes('solarSystemAgeYr'), false);
 });
 test('formatYears reads like the dial label', () => {
   assert.equal(formatYears(0), 'now'); assert.equal(formatYears(-3.7e9), '3.70 Gyr ago'); assert.equal(formatYears(66e6), '66.0 Myr from now');

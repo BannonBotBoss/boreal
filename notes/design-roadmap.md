@@ -47,7 +47,7 @@ Standing project rules are not older issues. The precedence line does not repeal
 | 11 | #100 and #101 score habitat as food + water + shelter − competition − predator pressure. #100 also subtracts environmental stress. #106 puts temperature and oxygen stress on the body. | #101 for the habitat sum, #106 for the stress | Step 9 sums #101's terms. Step 18 carries the stress. It is not subtracted twice. |
 | 12 | #102 puts fear, curiosity, and mating in one mind. #103 puts hunger and fear in one instinct list. #106 splits body, emotion, and urge into three blocks. | #106 | Steps 16 and 19. |
 | 13 | #105 asks for a renderer type per species (wolf, deer, eagle, salmon, bear). Rule 3 says a new animal is a spec row, not a new source file. | Rule 3 for the code shape. The issues for the behaviour. | Step 29. One filter table, one row per species. |
-| 14 | #108 sets time zero at the formation of the solar system. `src/core/deepTime.ts` `dialToYears` (lines 91–96) sets zero at now. | #108 | Step 3. Now is Earth's age on that one line. The play clock remains the rate. |
+| 14 | #108 sets time zero at the formation of the solar system. `src/core/deepTime.ts` `dialToYears` used to set zero at now. | #108 | Step 3, T-0093. Time zero is formation. Earth's age is the span from Earth-formation to the present on that line. The play clock remains the rate. |
 | 15 | #100 says snow when temperature is below 0 °C, otherwise rain. The forest grid and the Rust precipitation already do that (`src/core/weather.ts` line 274, `precipitation.rs` line 77). | No fight. #100 matches the code. | Step 7 locks it with a test and exposes depth. Do not replace the threshold. |
 | 16 | #107 turns layers on with hard altitude and speed rectangles. #109 uses a score, hysteresis, and a blend. | #109 for the time signal, already on pull request #92 | Hysteresis and the blend of the time scale are delivered. Step 33 still multiplies that signal by height. #107's hard rectangles are not built. |
 | 17 | The player rig is created fresh (`src/render/playables.ts` lines 27–50). #102 and #103 say you enter an animal that already has a past. | #102 and #103 | Step 17. The shared playable motor stays (rule 3). |
@@ -105,7 +105,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** Rewrite of the epoch in `dialToYears` (`src/core/deepTime.ts` lines 91–96), which puts zero at now. Reuses the stage model and T-0060. Does not add a clock. Pull request #92 already passes `epochOffsetYr` (session seconds) into `deepTimeAt`. That is not this epoch: zero there is still now. Branch from that clock so the epoch and the wheel are not edited in two places.
 - **Issues:** #108 (the epoch). #109 does not pick a different zero.
 - **Depends on:** Pull request #92 merged, or this step branched from `grokbot-3/single-time-control`. Parallel with step 4 once that lands.
-- **Size:** M. Queue.
+- **Size:** M. Board: T-0093.
 - **Gates:** Numbers: Earth's age and the solar-system formation age from the citations already on `DEEP` / T-0065, not a new round number. The dial is already on pull request #92, so the frame is N/A if only the zero moves. The numeric check is `state` at 0 and at the present. Evidence: one function, no second epoch.
 
 ### Step 4 — Weather moves, and the climate is what it relaxes toward
@@ -150,7 +150,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** New classifier over step 2 and step 5. Replaces any future temptation to hand a biome to behaviour. Existing surface bands stay as colours.
 - **Issues:** #100 (classification, and the deer that ignores "temperate forest").
 - **Depends on:** Step 5. Parallel with nothing in phase A after that.
-- **Size:** S. Queue.
+- **Size:** S. Board: T-0094.
 - **Gates:** Numbers: class boundaries from a published scheme (Köppen thresholds or the issue's four classes with those published bounds, not round guesses). Frame N/A. Evidence: a test that behaviour code does not read the class id.
 
 ### Step 9 — A place has food, water, shelter, and a score
@@ -543,7 +543,7 @@ Every section of the ten issues maps to a step. "Stays" means the current code a
 | #107 | Always-full-detail simulation | Loses to #109. Pull request #92 holds above Immediate. Steps 14 and 32 still transform. |
 | #107 | The observation statement | 33 |
 | #108 | The dial is an object, not a playback trick | 30, delivered by pull request #92 |
-| #108 | Time zero at formation, present at Earth's age | 3. Still open. `epochOffsetYr` on pull request #92 is session seconds. |
+| #108 | Time zero at formation, present at Earth's age | 3, T-0093. Time zero is formation. Earth's age is the span to the present on that line. `epochOffsetYr` stays session seconds. |
 | #108 | Log speed | 30, delivered (#109's map) |
 | #108 | Paused, running, rewind, scrub | Pause, play, and rewind of the clock and the sun are step 30, delivered. Scrub of ground, climate, and populations is still step 34. |
 | #108 | Eight scale names | Delivered on pull request #92 as `OBSERVATION_SCALES`. Do not replace them with #109's seven (conflict 5). The rest of step 32 wires systems to those names. |
@@ -585,5 +585,6 @@ Proposed, not claimed. Other bots pick them up after someone else approves the p
 | 8 | T-0087 | 7, snow depth | T-0082 is done | T-0085, T-0086 |
 
 The queue, in dependency order, with no task file yet: steps 3, 4, 8, 9, 10, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, the remaining wiring in step 32, then 33, 34, 35, 36, 37, 38. Step 15 is T-0095. A bot takes the lowest step whose dependencies are met, one task, the next free id. It does not propose the rest. Steps 30 and 31 are not in the queue.
+The queue, in dependency order, with no task file yet: steps 4, 8, 9, 10, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, the remaining wiring in step 32, then 33, 34, 35, 36, 37, 38. A bot takes the lowest step whose dependencies are met, one task, the next free id. It does not propose the rest. Steps 3, 30, and 31 are not in the queue.
 
-Steps 30 and 31 are delivered by pull request #92 (commit `565b2e6`). So are the scale signal (`observation()`, the eight names, hysteresis, and the blend), rewind of the clock and the sun, the readable rate, and the ground's refusal of a backward gap. Step 32's remaining work hooks animals, the weather grid, and the ground to that signal so they transform (step 14) instead of only holding. Step 33 still waits on pull request #94's distance table. Its time half does not. Step 3 still moves the epoch. Pull request #92's `epochOffsetYr` is session seconds, and `dialToYears` still puts zero at now. The 1× dead-zone edge stays on #92. Neither pull request is copied here.
+Steps 30 and 31 are delivered by pull request #92 (commit `565b2e6`). So are the scale signal (`observation()`, the eight names, hysteresis, and the blend), rewind of the clock and the sun, the readable rate, and the ground's refusal of a backward gap. Step 32's remaining work hooks animals, the weather grid, and the ground to that signal so they transform (step 14) instead of only holding. Step 33 still waits on pull request #94's distance table. Its time half does not. Step 3 is T-0093: `dialToYears` counts years from solar-system formation, and `epochOffsetYr` stays session seconds. The 1× dead-zone edge stays on #92. Neither pull request is copied here.

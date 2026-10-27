@@ -354,6 +354,10 @@ test('globe -> game: the arrival spot moves out of a lake to the nearest dry lan
   const s = landSpawn(wet!, true), p = surfaceAtH(s.x, s.z);
   assert.ok(!p.lake && !p.river && Math.hypot(s.x - wet!.x, s.z - wet!.z) <= 900, `landed at ${s.x},${s.z}`);
   assert.deepEqual(landSpawn(s, true), s); assert.deepEqual(landSpawn(wet!, false), wet);
+  const home = surfaceAtH(0, 0);
+  assert.ok(home.lake, 'the nadir click on the home centre is the lake');
+  const stand = landSpawn({ x: 0, z: 0 }, true), standP = surfaceAtH(stand.x, stand.z);
+  assert.ok(!standP.lake && !standP.river && Math.hypot(stand.x, stand.z) > 1 && Math.hypot(stand.x, stand.z) <= 900, `stand ${stand.x},${stand.z}`);
 });
 
 import { NEAR_SPLIT, globeOwnership } from '../src/world/globe/globeView';
@@ -389,6 +393,11 @@ test('far layer: linear half-float MSAA target that follows the drawing buffer (
   assert.deepEqual([f.target.width, f.target.height, f.target.samples], [1200, 675, 4]);
   assert.equal(f.texture.colorSpace, THREE_E.LinearSRGBColorSpace); assert.equal(f.target.texture.type, THREE_E.HalfFloatType);
   assert.equal(f.bytes(), 1200 * 675 * (8 + 4 + 4 * 12)); f.dispose();
+  const full = createFarLayer(); assert.equal(full.scale, 0.5);
+  full.resize(1100, 700); assert.deepEqual([full.target.width, full.target.height], [550, 350]);
+  full.setScale(1); full.resize(1100, 700); assert.deepEqual([full.target.width, full.target.height], [1100, 700]);
+  full.setScale(0.5); full.resize(1100, 700); assert.deepEqual([full.target.width, full.target.height], [550, 350]);
+  full.dispose();
 });
 
 import { TRANSITION, createGovernorHold, gameBasis, gameToPlanet, globeCameraFrom, inputOwner, nextMode, patchFade, planetToGame, simRuns, transitionPath } from '../src/world/globe/transition';

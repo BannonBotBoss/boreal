@@ -23,6 +23,12 @@ export function setPatchFade(opacity: number, disc?: { x: number; z: number; r: 
  *  and its resolved log depth (z = the globe's log-depth constant; a globe surface nearer than the fragment by more than
  *  occ.x m + occ.y x distance hides it); w = 1 on. Off (w = 0, also when unset) costs one uniform branch. */
 export const PATCH_FAR = { uFarColor: { value: null as THREE.Texture | null }, uFarDepth: { value: null as THREE.Texture | null }, uFarMix: { value: new THREE.Vector4() }, uFarOcc: { value: new THREE.Vector2(15, .03) } };
+/** Depth margin (metres, then a fraction of distance) before the coarse globe may hide a patch fragment.
+ *  Below `low` the eye is in the stand: a margin of 1e6 m means the globe never wins, so the forest floor
+ *  is not replaced by the far layer. Above `low` the caller's margin stays. */
+export function nearGroundOcc(height: number, low: number, occ: readonly [number, number]): [number, number] {
+  return height < low ? [1e6, 0] : [occ[0], occ[1]];
+}
 export function setPatchFar(o: { color: THREE.Texture; depth: THREE.Texture | null; mix: number; scale: number; logFC: number; occ: [number, number] } | null) {
   if (!o || !o.depth) { PATCH_FAR.uFarMix.value.w = 0; return; }
   PATCH_FAR.uFarColor.value = o.color; PATCH_FAR.uFarDepth.value = o.depth; PATCH_FAR.uFarMix.value.set(o.mix, o.scale, o.logFC, 1); PATCH_FAR.uFarOcc.value.set(o.occ[0], o.occ[1]);

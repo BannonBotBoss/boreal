@@ -25,10 +25,10 @@ import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './
 import { TRANSITION, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
-import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR } from './handoff';
+import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR, landSpawn } from './handoff';
 import { treesAround } from '../../core/ground';
 import { PLANET, GLOBE_COLOURS } from './planet';
-import { setPatchFade, setPatchFar } from '../../render/fade';
+import { nearGroundOcc, setPatchFade, setPatchFar } from '../../render/fade';
 import { AO_BLEND } from '../../render/post';
 import { LOG_DEPTH } from './logDepth';
 import { GOVERNOR, resetGovernor } from '../../core/quality';
@@ -142,10 +142,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     return true;
   }
   function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe'); globe?.setLayerPanel(layerPanelShown(m)); if (typeof document !== 'undefined') document.body.classList.toggle(GLOBE_HUD_CLASS, hudHidden(m)); if (m === 'game') showPrompt(''); }
-  /** Globe -> drone, on the point that was double-clicked. The fall's vertical speed is kept. The spot is not pulled home. */
+  /** Globe -> drone, on the point that was double-clicked. The fall's vertical speed is kept. The spot is not pulled
+   *  home. It does step to the nearest dry stand (the same landSpawn the reload handoff uses): the clicked centre of
+   *  the home region is the lake, and standing there shows the water sheet instead of the forest floor. */
   function descend(at: { x: number; z: number; yaw: number; vy?: number }) {
     const g = globe!;
-    spotX = at.x; spotZ = at.z; yaw = at.yaw;
+    const spot = landSpawn({ x: at.x, z: at.z }, undefined, at.yaw);
+    spotX = spot.x; spotZ = spot.z; yaw = at.yaw;
     host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null;
     const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
     h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;
@@ -341,7 +344,11 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** buildScene, after the sky update: the globe into the far layer, as the background; the patch fade; band visibility. */
     background(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
       if (mode !== 'band' || !globe) { if (hidden.size || savedBg !== undefined) restoreScene(); return; }
-      const t0 = performance.now(); renderer.getDrawingBufferSize(size); far.resize(size.x, size.y);
+      const t0 = performance.now(); renderer.getDrawingBufferSize(size);
+      // While the patch is out, this texture is the whole picture (the 2 km aerial). Half resolution stretches
+      // one texel across two screen pixels and the shore mask then reads a footprint past its cutoff, so the
+      // lakes wash out. Full resolution once the patch is covering the frame is only the sky behind it.
+      far.setScale(fade < 0.5 ? 1 : 0.5); far.resize(size.x, size.y);
       globeCameraFrom(globe.planet, camera, gcam); globe.drive({ position: gcam.position, quaternion: gcam.quaternion, fov: camera.fov, aspect: camera.aspect });
       globe.step(far.target); STATS.globeMs = performance.now() - t0;
       if (savedBg === undefined) savedBg = scene.background; scene.background = DEV && DEBUG.noGlobe ? NO_GLOBE : far.texture;
@@ -352,7 +359,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     if (scene.fog instanceof THREE.Fog) { const k = smoothstep(TRANSITION.handover, INPAGE.fogTop, h), m = 1 + INPAGE.fogOut * k * k; scene.fog.near *= m; scene.fog.far *= m; }
       const p = host.player(); setPatchFade(fade, { x: p.x, z: p.z, r: Math.min(INTEREST.mid, INPAGE.ring * CHUNK_SIZE), y: patchPlaneY(p.x, p.z, Math.min(INTEREST.mid, INPAGE.ring * CHUNK_SIZE)) }); hideForBand(scene); // disc inside the chunks chunksReady checked
       // the patch's aerial blend toward the globe behind it, and globe terrain in front of the patch hides it (render/fade, uniforms)
-      setPatchFar({ color: far.texture, depth: far.target.depthTexture, mix: Math.min(1, INPAGE.haze * smoothstep(INPAGE.hazeLow, INPAGE.hazeTop, h)), scale: scene.backgroundIntensity, logFC: LOG_DEPTH.uniform.value, occ: INPAGE.occ });
+      setPatchFar({ color: far.texture, depth: far.target.depthTexture, mix: Math.min(1, INPAGE.haze * smoothstep(INPAGE.hazeLow, INPAGE.hazeTop, h)), scale: scene.backgroundIntensity, logFC: LOG_DEPTH.uniform.value, occ: nearGroundOcc(h, INPAGE.hazeLow, INPAGE.occ) });
     },
     /** buildScene's screen-space effects in the band: god rays off (the far layer has no depth, so its ground would read as sky
      *  in the ray mask), ambient occlusion only once the patch is fully in (GTAO's normal pass cannot dither). */

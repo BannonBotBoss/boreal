@@ -43,13 +43,23 @@ The dark sharp polygons at 2 km are vertex-field lakes (`aLake` / `vLake`) with 
 
 Three.js uploads a `MeshStandardMaterial`'s uniforms once per material per frame. A uniform written in each tile's `onBeforeRender` sticks on the first tile. `LAKE_FADE.uHide` is one value, set in `renderTo` before `renderer.render`: 1 when globe altitude is under `COARSE_LAKE.below` (8000 m), else 0. The fragment then does `landMask = mix(landMask, 1.0, vLake * (1.0 - hm) * uHideLake)`. The home mask still draws the real shore. Oceans (`vLake` 0) stay. Orbit and 10 km keep the far-field lakes.
 
+## The nadir click is the lake
+
+A double-click on the centre of the home region samples game (0, 0). That point is an open lake (`surfaceAt` height about −1.6 m). `descend` used to stand there. The frame is then the game water sheet: a flat teal plane, one shore spruce seen as grey bark plates (`conifer.ts` `fract(pl * 3)` on `0x6b5a4a`), and a pale ring where the grazing specular on that sheet is constant around a camera a metre above it. Turning the far layer magenta leaves the teal, so it is not the atmosphere. `landSpawn` is the same dry-stand step the reload handoff already uses. `descend` calls it once, with the fall's yaw, and places the player there. For the home centre that stand is a few tens of metres away, on the Kenora forest floor the wolf view already draws. Do not invent a second forest renderer.
+
+## The 2 km frame is the far layer
+
+At the band top the patch fade is 0, so the picture is only `farLayer`. Its default scale is 0.5 (the shared-mode byte budget). On a 1100×700 still that is 550×350 stretched across the screen. The home shore mask is 1024² over 7680 m (7.5 m texels, no mips). The fragment keeps it only while `length(fwidth(suv)) * n` is under `smoothstep(1.5, 4)`. Half resolution doubles that footprint, the mask drops out, and `uHideLake` (on under 8000 m) paints the vertex lakes as flat land. The frame is a green wash. 10 km is still globe mode, full framebuffer, and `uHideLake` is off, so the lakes read. 600 m is in the band too, but the patch is in and the ground is close enough that the mask footprint stays under the cutoff. While `fade < 0.5` the far layer is set to scale 1 for that frame, then back to 0.5 once the patch covers the picture and the far layer is only sky. The default budget is unchanged.
+
+Below `INPAGE.hazeLow` (60 m) `nearGroundOcc` sets the occlusion margin to 1e6 m, so the coarse globe cannot depth-reject the forest floor. Above that the existing `[15 m, 0.03 × distance]` margin stays.
+
 ## The floor look
 
-The fall finishes at the isometric pitch (`ISO_BELOW_HORIZON`, about −35.264°) and the drone keeps that stick pitch. At 1 m that aim looks into the ground a couple of metres ahead, and into the nearest trunk. The flat teal is the far-layer atmosphere where the forest geometry is missed, because the eye is inside the stem and backfaces are culled.
+The fall finishes at the isometric pitch (`ISO_BELOW_HORIZON`, about −35.264°) and the drone keeps that stick pitch. At 1 m that aim looks into the ground a couple of metres ahead. Standing in the lake, that is the water sheet, not a missing forest. `eyeClearOfTrees` still shifts the drawn eye when a stem is within 1.6 m, which matters once the stand is dry. It does not turn a lake into a forest.
 
 `descentPitch` changes only the drawn pitch, and only on the way down, between `FLOOR_LOOK.high` (48 m) and `HORIZON_TILT.floorAlt` (8 m). At 100 m and above the drawn pitch stays isometric. At the floor it is the horizon tilt (−0.18 rad, about −10.313°). The stored stick pitch is unchanged, so the climb still uses `globePitch` alone. Roll stays 0: `viewpointPose` is `Euler(pitch, yaw, 0, 'YXZ')`. Do not edit `positionCamera` in `src/render/math.ts`. That is the wolf follow camera, and `grokbot-3/level-view` owns it.
 
-`eyeClearOfTrees` shifts only the rendered eye when height is under `EYE_CLEAR.below` (18 m). It does not write the flight spot and it does not move the wolf spawn (`LANDING_VIEW` / `clearViewSteps`). The gap is 1.6 m, outside a black spruce stem (dbh 15–25 cm) and outside the near plane at 1 m (0.2 m). The grey stripes are the bark plate shader seen from inside the stem (`conifer.ts`, `fract(pl * 3)` on bark `0x6b5a4a`). Needles stay `0x8eb054`. Do not change the bark shader. A grey snag in a frame taken from outside the stem is a dead tree.
+`eyeClearOfTrees` shifts only the rendered eye when height is under `EYE_CLEAR.below` (18 m). It does not write the flight spot and it does not move the wolf spawn (`LANDING_VIEW` / `clearViewSteps`). The gap is 1.6 m, outside a black spruce stem (dbh 15–25 cm) and outside the near plane at 1 m (0.2 m). Bark plates are `fract(pl * 3)` on `0x6b5a4a`. Needles stay `0x8eb054`. Do not change the bark shader. A grey snag in a frame taken from outside the stem is a dead tree. A frame that is one grey spruce on a teal sheet is the lake at the clicked point, not a camera inside a trunk.
 
 ## Mistakes to avoid
 
@@ -67,4 +77,6 @@ The fall finishes at the isometric pitch (`ISO_BELOW_HORIZON`, about −35.264°
 - Do not replace the descent with `globePitch`. 100 m and 600 m stay at the isometric pitch. `descentPitch` eases only the drawn pose in the last tens of metres.
 - Do not move the wolf spawn to clear the drone eye. `eyeClearOfTrees` shifts the drawn eye only. `LANDING_VIEW` stays the camera-wolf line.
 - Do not edit `positionCamera`. Roll on this camera is already 0 in `viewpointPose`. The wolf follow roll belongs to `grokbot-3/level-view`.
-- Do not repaint the bark to hide the grey stripes. Those stripes are the plate shader seen from inside the stem. Move the eye out.
+- Do not repaint the bark to hide the grey stripes. A spruce seen from the middle of the lake reads as bark plates. Land on the dry stand (`landSpawn`). Moving the eye a metre does not leave the lake.
+- Do not call the teal plane the far-layer sky until a still with the far layer replaced still shows teal. Game water stays. The pale ring on that sheet is grazing specular.
+- Do not leave the far layer at half resolution while the patch fade is 0. That is the whole 2 km picture, and the shore mask then fails its footprint test.

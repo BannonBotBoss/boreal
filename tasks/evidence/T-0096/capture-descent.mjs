@@ -67,6 +67,10 @@ try {
     }
     const pad = document.querySelector('.padm');
     const pst = pad ? getComputedStyle(pad) : null;
+    const ip = window.__inpage;
+    const who = ip?.player?.();
+    const vc = ip?.view?.camera;
+    const far = ip?.far;
     return {
       mode: window.__inpage?.mode ?? null,
       phase: window.__inpage?.flightPhase ?? null,
@@ -78,6 +82,9 @@ try {
       tier: st.tier ?? null, segments: st.segments ?? null,
       padDisplay: pst ? pst.display : null,
       padHidden: pad ? pad.hidden : null,
+      px: who?.x ?? null, pz: who?.z ?? null, pyaw: who?.yaw ?? null,
+      cx: vc?.position?.x ?? null, cy: vc?.position?.y ?? null, cz: vc?.position?.z ?? null,
+      farScale: far?.scale ?? null, farW: far?.target?.width ?? null, farH: far?.target?.height ?? null,
     };
   })()`;
   const loading = `(() => { const l = document.getElementById('loading'); if (!l) return false; const st = getComputedStyle(l); return st.pointerEvents !== 'none' && Number(st.opacity) > 0.05; })()`;

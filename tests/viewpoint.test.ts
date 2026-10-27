@@ -8,6 +8,7 @@ import { ISO_BELOW_HORIZON, NADIR, fallPitch } from '../src/world/globe/flight';
 import {
   TRANSITION, HORIZON_TILT, globePitch, descentPitch, FLOOR_LOOK, viewpointPose, handoverBlend, orbitClip, forestFromPlanet, globeCameraFrom, gameToPlanet, planetToGame,
 } from '../src/world/globe/transition';
+import { nearGroundOcc } from '../src/render/fade';
 
 const read = (p: string) => readFileSync(p, 'utf8');
 
@@ -124,4 +125,18 @@ test('orbit clip is the planet camera clip, and a nadir aim round-trips within a
   assert.ok(ang < 1e-4, `fall aim angle ${ang} rad`);
   cam.position.copy(dir).multiplyScalar(-(R + 2e6));
   assert.equal(forestFromPlanet(p, cam, out), false, 'the far side does not invent a game-frame pose');
+});
+
+test('the descent stands on dry land, and the far layer is the whole picture only while the patch is out', () => {
+  const page = read('src/world/globe/inpage.ts');
+  assert.match(page, /const spot = landSpawn\(\{ x: at\.x, z: at\.z \}, undefined, at\.yaw\)/);
+  assert.match(page, /far\.setScale\(fade < 0\.5 \? 1 : 0\.5\)/);
+  assert.match(page, /nearGroundOcc\(h, INPAGE\.hazeLow, INPAGE\.occ\)/);
+  assert.doesNotMatch(page, /positionCamera/);
+  const occ: [number, number] = [15, 0.03];
+  assert.deepEqual(nearGroundOcc(1, 60, occ), [1e6, 0]);
+  assert.deepEqual(nearGroundOcc(59, 60, occ), [1e6, 0]);
+  assert.deepEqual(nearGroundOcc(60, 60, occ), occ);
+  assert.deepEqual(nearGroundOcc(600, 60, occ), occ);
+  assert.deepEqual(nearGroundOcc(2000, 60, occ), occ);
 });

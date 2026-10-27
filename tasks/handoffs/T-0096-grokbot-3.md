@@ -181,7 +181,35 @@ Files: `tasks/evidence/T-0096/`. Copies: `/opt/cursor/artifacts/orbit.png`, `10k
 
 ### Exact next step
 
-Grokbot-1 reviews pull request #143. grokbot-3 does not approve or merge. grokbot-2 is offline until about Oct 28 midday PT and is not tagged.
+Recapture the six stills on this landing and full-resolution far layer, and read them before asking for review. grokbot-3 does not approve or merge. grokbot-2 is not tagged.
+
+## 2026-10-26 20:17 PT — the floor was the lake, and 2 km was a half-resolution far layer
+
+The stills on `3e8a467` are not showable. This pass changes the landing and the far-layer size. The new stills are not in yet.
+
+### What the old stills were
+
+`ground.png` is the game water sheet. A double-click on the centre of the home region samples (0, 0). `surfaceAt(0, 0)` is an open lake (height about −1.65 m). `descend` stood there. The camera sits about a metre above that sheet, so the frame is flat teal, one shore spruce (bark plates `0x6b5a4a`, `fract(pl * 3)`), and a pale ring of grazing specular on the flat water. Replacing the far layer with magenta leaves the teal, so it is not the atmosphere and not a missing forest renderer. `eyeClearOfTrees` does not find a stem in the middle of the lake, so it does not move the eye.
+
+The wolf view (`tasks/evidence/T-0101/after-kenora.png` on `grokbot-3/level-view`) stands at about (30, 0). `landSpawn({ x: 0, z: 0 })` is that same dry-stand step the reload handoff already uses. `descend` now calls it once, with the fall's yaw, and places the player there. Roll stays 0. `positionCamera` is not edited.
+
+`2km.png` is only the far layer: patch fade is 0 at the band top. The far layer default is half resolution (550×350 stretched to 1100×700). The home shore mask is 1024² over 7680 m. Its fragment keeps the mask only while the texel footprint is under `smoothstep(1.5, 4)`. Half resolution doubles that footprint, the mask drops out, and `uHideLake` (on under 8000 m) paints vertex lakes as land. The frame is a green wash. 10 km is full-framebuffer globe mode with `uHideLake` off. 600 m is close enough, and the patch is in, so it still reads. While fade is under 0.5 the far layer is drawn at scale 1, then returned to 0.5 once the patch covers the frame. The default byte budget is unchanged.
+
+Below 60 m (`INPAGE.hazeLow`) the globe occlusion margin is 1e6 m, so the coarse globe cannot replace the forest floor. At 100 m and above the old margin `[15 m, 0.03 × distance]` stays. No new physical constant.
+
+### Number table
+
+| Value | Game | Why | Source | Match |
+| --- | --- | --- | --- | --- |
+| Dry stand | nearest dry land within 900 m | the clicked centre is the lake | existing `landSpawn` | yes, not new |
+| Far layer while the patch is out | scale 1 | half resolution washes the shore mask | `far.setScale`, fade under 0.5 | game calibration |
+| Far layer once the patch is in | scale 0.5 | the shared-mode budget, sky only | `createFarLayer` default | yes, not new |
+| Floor occlusion | 1e6 m below 60 m | the globe must not hide the stand | `nearGroundOcc`, existing `hazeLow` | game calibration |
+| Roll | 0 | `Euler(pitch, yaw, 0, 'YXZ')` | `viewpointPose` | yes, not new |
+
+### Exact next step
+
+Recapture orbit, 10 km, 2 km, 600 m, 100 m and ground. Read each still. If 2 km is still a wash, the next single change is the shore footprint or the aerial haze, not a bundle. If the ground is still one grey spruce on teal, the camera is not on the dry stand. GitHub `ci` remains billing-blocked and is not a pass.
 
 ## Needs from another agent
 

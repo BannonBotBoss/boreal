@@ -6,7 +6,7 @@ import { createPlanet, PLANET } from '../src/world/globe/planet';
 import { figureRadius } from '../src/world/globe/figure';
 import { NADIR, fallPitch } from '../src/world/globe/flight';
 import {
-  TRANSITION, globePitch, viewpointPose, handoverBlend, orbitClip, forestFromPlanet, globeCameraFrom,
+  TRANSITION, globePitch, viewpointPose, handoverBlend, orbitClip, forestFromPlanet, globeCameraFrom, gameToPlanet, planetToGame,
 } from '../src/world/globe/transition';
 
 const read = (p: string) => readFileSync(p, 'utf8');
@@ -33,6 +33,20 @@ test('at 2 km the viewpoint matches the old band pose within a centimetre', () =
   assert.ok(back.quaternion.angleTo(out.quaternion) < 1e-6);
 });
 
+test('the driven camera sits on the hydrostatic figure, not the mean sphere', () => {
+  const p = createPlanet(1400);
+  const y = TRANSITION.bandTop;
+  const v = gameToPlanet(p, 0, y, 0);
+  const len = Math.hypot(v[0], v[1], v[2]);
+  const fig = figureRadius(p.fromLocal(0, 0));
+  const offFigure = Math.abs(len - (fig + TRANSITION.datum + y));
+  assert.ok(offFigure < 0.01, `radius is ${offFigure} m off the figure`);
+  const offMean = Math.abs(len - (p.radius + TRANSITION.datum + y));
+  assert.ok(offMean > 1000, `camera is only ${offMean} m off the mean sphere`);
+  const back = planetToGame(p, v);
+  assert.ok(Math.abs(back.y - y) < 1e-4 && Math.abs(back.x) < 1e-4 && Math.abs(back.z) < 1e-4);
+});
+
 test('the handover blend is a no-op because there is one camera', () => {
   const pose = {
     position: new THREE.Vector3(4, 60, -2),
@@ -57,6 +71,7 @@ test('the handover blend is a no-op because there is one camera', () => {
   assert.match(view, /camera\.rotateZ\(-lookAz/);
   assert.match(view, /camera\.rotateX\(fallPitch\(ease\) - NADIR\)/);
   assert.match(view, /forestFromPlanet\(planet, camera, forestPose\)/);
+  assert.match(view, /atmos\.update\([\s\S]*?R \+ ground\)/);
   assert.doesNotMatch(view, /requestAnimationFrame\(tick\)[\s\S]{0,40}requestAnimationFrame\(tick\)/);
 });
 

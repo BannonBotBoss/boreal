@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { PLANET, type Vec3 } from './planet';
 import { HANDOFF } from './handoff';
+import { figureRadius } from './figure';
 import { clamp, smoothstep } from '../../proc/math';
 
 export const TRANSITION = {
@@ -61,14 +62,19 @@ export function transitionPath(search: string, env: { deviceMemory?: number; pro
 
 type PlanetFrame = { home: Vec3; east: Vec3; north: Vec3; radius: number; fromLocal(x: number, z: number): Vec3 };
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-/** Game point (x east, y up = game height, z south) -> planet-frame metres. */
+/** Game point (x east, y up = game height, z south) -> planet-frame metres.
+ *  The radius is the hydrostatic figure (figure.ts), the same surface the tiles use.
+ *  The mean sphere sits kilometres off that figure, so a camera placed on it reads as too high
+ *  and the descent never reaches the detail and near-split distances. East/north stay on the mean
+ *  radius: that is the gnomonic scale planet.fromLocal already uses. */
 export function gameToPlanet(p: PlanetFrame, x: number, y: number, z: number): Vec3 {
-  const d = p.fromLocal(x, z), r = p.radius + TRANSITION.datum + y; return [d[0] * r, d[1] * r, d[2] * r];
+  const d = p.fromLocal(x, z), r = figureRadius(d) + TRANSITION.datum + y; return [d[0] * r, d[1] * r, d[2] * r];
 }
 /** Inverse of gameToPlanet (exact inverse of planet.fromLocal's projection). */
 export function planetToGame(p: PlanetFrame, v: Vec3) {
   const len = Math.hypot(v[0], v[1], v[2]), c = dot(v, p.home) / len;
-  return { x: p.radius * dot(v, p.east) / len / c, y: len - p.radius - TRANSITION.datum, z: -p.radius * dot(v, p.north) / len / c };
+  const u: Vec3 = [v[0] / len, v[1] / len, v[2] / len];
+  return { x: p.radius * dot(v, p.east) / len / c, y: len - figureRadius(u) - TRANSITION.datum, z: -p.radius * dot(v, p.north) / len / c };
 }
 /** Rotation taking game-frame vectors (x east, y up, z south) to planet-frame vectors at game point (x, z): home's
  *  east/north projected on the local tangent plane, the same convention as the globe heading (globeView headingYaw). */

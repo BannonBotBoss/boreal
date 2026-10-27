@@ -25,8 +25,18 @@ When to use: the planet view and the forest view should share one camera, or a s
 - `npx tsc --noEmit` and `npm test`.
 - Stills: orbit, 2 km, 600 m, 60 m, on `?start=globe&stages=1&trees=v2&noprobe&inpagedev`. The 2 km, 600 m and 60 m stills are the drone after a handoff at that height (speed zero, pitch already isometric, because the fall finished at 10,000 ft). Read `__inpage.height`, the elevation, and `camera.y − (groundAt + height)`. The budget is `STATS.globeMs + STATS.drawMs` against the same capture on main. One `globe.step` per frame.
 
+## The camera sits on the figure
+
+`gameToPlanet` / `planetToGame` use `figureRadius` for the radial term only. East and north stay on the mean radius, which is the gnomonic scale `fromLocal` already uses. The tiles are built on the hydrostatic figure (`tile.ts`). A camera on the mean sphere is about 5 km too high over the home region, so `DETAIL` (fades in below 5 km) and `NEAR_SPLIT` (below 3 km) never turn on, and the atmosphere's discard sphere (`uRp`) treats the air under the mean sphere as sea-level density. `globeView` passes `R + ground` (`surfaceRadius`) into `atmos.update` each frame so `uRp` and `uRa` follow that same surface. The dome mesh is not rebuilt.
+
+## The closed pad menu
+
+`.padm` sets `display:flex`. That author rule beats the browser's `[hidden] { display: none }`, so the closed menu stays on screen: an empty centered box, `min(980px, 92vw)` wide and 36 px tall (the padding), background `#0d131e`. On a 1100×700 frame it is the dark bar across the middle. `.padm[hidden]{display:none}` is required, the same way `.time-hud[hidden]` already is.
+
 ## Mistakes to avoid
 
+- Do not put the driven camera on the mean sphere. The round trip of `gameToPlanet` and `planetToGame` still passes when both sides use the mean sphere, and both are still wrong relative to the mesh.
+- Do not move only the camera onto the figure and leave `uRp` on the mean sphere. Below about 5 km the camera is then inside the discard sphere and the additive sky draws over the terrain.
 - Do not lerp the drone into the rig camera. That was the second camera.
 - Do not replace the fall aim with the band Euler while the planet camera is still above the band. Map it, and keep the fall aim when the map is not exact.
 - Do not change `globePitch`, `descend`, `stepCarriedFly`, or the wind rush. The climb still uses `globePitch`.

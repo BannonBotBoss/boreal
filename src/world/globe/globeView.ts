@@ -561,7 +561,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
     const hydroSec = q.has('shot') ? shotSec : worldSec();
     refreshHydroLayer(seed, dayAt(hydroSec), hourAt(hydroSec), worldTier(), q.get('hydro') === '0'); // T-0058: same octave gate; the date is the clock's (?day= via initDay), ?hydro=0 leaves the tiles unpainted
-    tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH);
+    tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH, R + ground);
     if (localClouds) { if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
         const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3, ll = toLatLon(d);
         const w = weatherAtLatLon(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, simRef);

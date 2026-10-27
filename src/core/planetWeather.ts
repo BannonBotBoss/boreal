@@ -13,7 +13,7 @@
  * Snow is the split already in the grid: precipitation below 0 °C is snow
  * (`precipitation.rs`). Issue #101's 35 °C and ±15 °C sketches are not used.
  */
-import { HYDRO, SITE, SURFACE, WEATHER, registerPlanetRead, type PointWeather, type SurfaceKind } from './weather';
+import { HYDRO, SITE, SURFACE, WEATHER, registerPlanetRead, snowDepthCm, type PointWeather, type SurfaceKind } from './weather';
 import { loadPlanetSim, type PlanetSim } from './planetBudget';
 import { bootGlobe } from '../world/globe/bootOrder';
 import { PLANET, fromLatLon, planetFor, toLatLon, type Vec3 } from '../world/globe/planet';
@@ -171,7 +171,7 @@ function forestAt(x: number, z: number): PointWeather | null {
   if (!w) return null;
   return {
     tC: w.tC, rh: w.rh, cloud: w.cloud, rainMmH: w.precipMmH, snow: w.snow,
-    soil: Math.min(1, Math.max(0, w.soilMm / HYDRO.bucketMm)), sweMm: w.sweMm, fog: 0,
+    soil: Math.min(1, Math.max(0, w.soilMm / HYDRO.bucketMm)), sweMm: w.sweMm, depthCm: snowDepthCm(w.sweMm), fog: 0,
     wind: windFrom(w, WIND_REF_M, 'forest'),
   };
 }

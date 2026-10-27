@@ -56,6 +56,17 @@ export const HYDRO = {
   snowDensity: 250, // settled seasonal snow, kg/m³ (Sturm et al. 2010, J. Hydrometeorol. 11:1380) [verify]
   ddf: 3,          // degree-day melt factor, mm w.e./°C/day (Hock 2003, J. Hydrol. 282:104, forest snow 1.5–5) [verify]
 };
+/** Snow depth in centimetres from the snow-water store.
+ *  Sturm et al. 2010 eq. 1: SWE = depth × density / density of water, so depth = SWE / density.
+ *  `sweMm` is kg/m² (1 mm of water over 1 m² is 1 kg). Dividing by `HYDRO.snowDensity` (kg/m³) gives metres.
+ *  Centimetres are that length × 100. There is no separate depth constant. */
+export function snowDepthCm(sweMm: number) {
+  return sweMm / HYDRO.snowDensity * 100;
+}
+/** New precipitation below 0 °C is snow. At and above 0 °C it is rain (issue #100). The comparison is the one the Kessler step already used. */
+export function precipFallsAsSnow(tC: number) {
+  return tC < 0;
+}
 /** Initial bucket fill as a fraction of field capacity. The near grid is seeded here; a frozen planet cell holds the same fill
  *  instead of draining. Game calibration (not a measured wilting point). */
 export const HYDRO_SEED_FILL = 0.6;
@@ -272,7 +283,7 @@ export function kessler(dt: number) {
     }
     const mm = incoming * DY, tC = tempOf(g.th[c], climate(WEATHER.day, WEATHER.hour, layerZ(0)).p);
     g.precip[c] = mm / dt * 3600; // mm/h
-    if (tC < 0) { g.swe[c] += mm; g.snowfall[c] = 1; } else { g.soil[c] += mm; g.snowfall[c] = 0; }
+    if (precipFallsAsSnow(tC)) { g.swe[c] += mm; g.snowfall[c] = 1; } else { g.soil[c] += mm; g.snowfall[c] = 0; }
   }
 }
 function sample(a: Float32Array, x: number, y: number, z: number) {
@@ -315,7 +326,10 @@ const inGrid = (x: number, z: number) => Math.abs(x - WEATHER.ox) < NX * DX / 2 
 /** What `weatherAt` returns. The planet grid and the near Stam column both fill this shape. */
 export interface PointWeather {
   tC: number; rh: number; cloud: number; rainMmH: number; snow: boolean;
-  soil: number; sweMm: number; fog: number; wind: { x: number; y: number; z: number };
+  soil: number; sweMm: number; /** centimetres, `snowDepthCm(sweMm)` */ depthCm: number; fog: number; wind: { x: number; y: number; z: number };
+}
+function withDepth(w: Omit<PointWeather, 'depthCm'>): PointWeather {
+  return { ...w, depthCm: snowDepthCm(w.sweMm) };
 }
 /** Optional reader for the one Rust grid (`planetWeather.ts`). While it is driving, it is the only source for the frame. */
 type PlanetRead = {
@@ -346,12 +360,12 @@ export function weatherAt(x: number, z: number): PointWeather {
   const fromPlanet = reader?.at(x, z);
   if (fromPlanet) return fromPlanet;
   const c = climate(WEATHER.day, WEATHER.hour, 0);
-  if (!WEATHER.on || !grid || !inGrid(x, z)) return { tC: c.tC, rh: c.rh, cloud: 0, rainMmH: 0, snow: c.tC < 0, soil: .6, sweMm: 0, fog: 0, wind: windAt(x, 10, z) };
+  if (!WEATHER.on || !grid || !inGrid(x, z)) return withDepth({ tC: c.tC, rh: c.rh, cloud: 0, rainMmH: 0, snow: c.tC < 0, soil: .6, sweMm: 0, fog: 0, wind: windAt(x, 10, z) });
   const i = Math.max(0, Math.min(NX - 1, Math.round(gx(x)))), j = Math.max(0, Math.min(NX - 1, Math.round(gz(z)))), n = idx(i, j, 0), col = j * NX + i;
   const p = climate(WEATHER.day, WEATHER.hour, layerZ(0)).p, tC = tempOf(grid.th[n], p);
   let lwp = 0; for (let k = 0; k < NY; k++) lwp += grid.qc[idx(i, j, k)] * DY;
-  return { tC, rh: Math.min(1, grid.q[n] / qsat(tC, p)), cloud: Math.min(1, lwp / .2), rainMmH: grid.precip[col], snow: grid.snowfall[col] > 0, soil: grid.soil[col] / HYDRO.bucketMm,
-    sweMm: grid.swe[col], fog: Math.min(1, grid.qc[n] / 3e-4), wind: windAt(x, 10, z) };
+  return withDepth({ tC, rh: Math.min(1, grid.q[n] / qsat(tC, p)), cloud: Math.min(1, lwp / .2), rainMmH: grid.precip[col], snow: grid.snowfall[col] > 0, soil: grid.soil[col] / HYDRO.bucketMm,
+    sweMm: grid.swe[col], fog: Math.min(1, grid.qc[n] / 3e-4), wind: windAt(x, 10, z) });
 }
 /** Aerodynamic drag on a body (N): F = ½ ρ C_d A |v_rel| v_rel with v_rel = wind − v (Batchelor 1967). */
 export function drag(v: { x: number; y?: number; z: number }, wind: { x: number; y: number; z: number }, area: number, cd = 1, rho = 1.2) {

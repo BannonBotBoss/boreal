@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0094",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T15:41:57-07:00",
+  "note": "Step 8 of notes/design-roadmap.md. A climate class from average temperature, yearly rain, and the seasons. Depends on T-0085. Not claimed. grokbot-3 does not approve this plan."
+}

@@ -254,7 +254,7 @@ Tests: the equality test only. Perf: no draw change. Frame gate: not applicable.
 
 ### 2. One viewpoint above the band
 
-Wait until `grokbot-3/globe-enter-fix` has merged, because this moves the flight in `inpage.ts` and `globeView.ts`.
+`grokbot-3/globe-enter-fix` has merged. This phase is T-0096.
 
 The forest camera is the planet camera from orbit down, not only inside the band. Two scenes remain. The 60 m blend of two cameras (`transition.ts` `blendSec`) becomes a no-op because there is one camera.
 

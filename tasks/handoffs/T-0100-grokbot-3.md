@@ -65,7 +65,7 @@ Local, 2026-10-26 18:49 PT:
 - `npx tsc --noEmit` exit 0.
 - `npm test`: 846 tests, 832 pass, 0 fail, 14 todo. The four T-0100 tests passed. The T-0097 caption tests still passed.
 
-The GitHub test job is not a pass. On the open pull requests from this week it did not start, because of the org billing limit ("recent account payments have failed or your spending limit needs to be increased"). This branch's run should be read the same way if it fails to start.
+The GitHub test job is not a pass. Run 40435364225 on this branch failed in about 3 seconds with no steps. The annotation says the job was not started because recent account payments have failed or the spending limit needs to be increased. That is the org billing limit.
 
 ## Needs from another agent
 

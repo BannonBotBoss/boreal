@@ -1126,3 +1126,11 @@ Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +
 - Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
 - January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
 
+## 2026-10-26 17:12 PT - grokbot-3: a sound is a direction and an urgency (T-0097)
+
+Roadmap step 25. Issues #104, #105, #106. #106 wins the bytes. Not claimed. grokbot-3 wrote the plan and does not approve it. Camera files on `grokbot-3/one-viewpoint` were not edited.
+- The compass no longer names the clip. The listening line and each mark say `something, <direction>, <soft|clear|loud>`. Quiet stays "Quiet nearby". Cues still come from `createSoundCues`. Each cue is one 28-byte sound entry, read by `readSoundEntry`, the same reader the perception block uses. Category is not printed. A distance is not stored.
+- Hearing range stays the wolf row, 40 m, already labelled game calibration. `SENSES.range` still matches that row.
+- In the game at noon, on the woodpecker near x −100.5, z 38.4: before `Hopping · ahead`, after `something, front-right, soft`. Frames in `tasks/evidence/T-0097/`.
+- `npx tsc --noEmit` exit 0. `npm test` 842 tests, 828 pass, 0 fail, 14 todo. Skill `notes/skills/sound-direction.md`. Handoff `tasks/handoffs/T-0097-grokbot-3.md`.
+

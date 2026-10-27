@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0093",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T15:13:58-07:00",
+  "note": "Roadmap step 3. Issue #108. Time zero is solar-system formation: Connelly et al. 2012, 4567.30 ± 0.16 Ma, the figure already on T-0065 (nebula_sun). The present sits at that age on the same line. Earth's age (Dalrymple 2001, 4.54 ± 0.05 Gyr, already DEEP.earthAgeYr) is the span from Earth-formation to the present, not a second zero and not the round 4.5 billion in the issue. dialToYears is the one function. The stage model and deepTimeAt(0) stay offsets from now. epochOffsetYr stays session seconds. No second clock or wheel. Branch grokbot-3/solar-epoch. Not claimed."
+}

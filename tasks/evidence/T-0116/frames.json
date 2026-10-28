@@ -1,0 +1,109 @@
+{
+  "report": [
+    {
+      "name": "home-glide",
+      "lat": 49.769999999999996,
+      "lon": 65.53668410517275,
+      "height": 400,
+      "placed": true,
+      "waited": 20412,
+      "fade": 1,
+      "chunks": 0,
+      "photos": 1,
+      "skirt": {
+        "triangles": 4184,
+        "outerM": 77104.48985277058,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "home-low",
+      "lat": 49.769999999999996,
+      "lon": 65.53668410517275,
+      "height": 36,
+      "placed": true,
+      "waited": 20873.699999999255,
+      "fade": 1,
+      "chunks": 0,
+      "photos": 1,
+      "skirt": {
+        "triangles": 3592,
+        "outerM": 23131.01656835341,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "boreal-glide",
+      "lat": 55,
+      "lon": 83.53668410517275,
+      "height": 400,
+      "placed": true,
+      "waited": 17468.400000000373,
+      "fade": 1,
+      "chunks": 2,
+      "photos": 0.8,
+      "skirt": {
+        "triangles": 4184,
+        "outerM": 77104.48985277058,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "boreal-low",
+      "lat": 55,
+      "lon": 83.53668410517275,
+      "height": 40,
+      "placed": true,
+      "waited": 4555.9000000003725,
+      "fade": 0.6334999999997671,
+      "chunks": 2,
+      "photos": 1,
+      "skirt": {
+        "triangles": 3592,
+        "outerM": 24382.23614407834,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "prairie-glide",
+      "lat": 42,
+      "lon": 43.53668410517275,
+      "height": 400,
+      "placed": true,
+      "waited": 20044.39999999944,
+      "fade": 1,
+      "chunks": 2,
+      "photos": 0.8,
+      "skirt": {
+        "triangles": 4184,
+        "outerM": 77104.48985277058,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "prairie-low",
+      "lat": 42,
+      "lon": 43.53668410517275,
+      "height": 36,
+      "placed": true,
+      "waited": 5564.399999999441,
+      "fade": 0.62875,
+      "chunks": 2,
+      "photos": 1,
+      "skirt": {
+        "triangles": 3592,
+        "outerM": 23131.01656835341,
+        "visible": true,
+        "photoShare": 1
+      }
+    }
+  ],
+  "logs": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ]
+}

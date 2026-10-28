@@ -6,24 +6,41 @@
  */
 import * as THREE from 'three';
 import { heightAt } from '../core/world';
-import { GLOBE_COLOURS, vegetationWeight, type Planet } from '../world/globe/planet';
+import { vegetationWeight, type Planet } from '../world/globe/planet';
 import { coverKind, coverSpots, type CoverKind } from '../world/globe/coverKind';
 import { skirtLatLon, type SkirtOrigin } from '../world/globe/horizonSkirt';
+import { treeAtlas } from './trees/billboardAtlas';
 
-const COLOUR: Record<CoverKind, readonly [number, number, number]> = {
-  water: GLOBE_COLOURS.shallow,
-  ice: GLOBE_COLOURS.snow,
-  tundra: GLOBE_COLOURS.tundra,
-  rock: GLOBE_COLOURS.rock,
-  desert: GLOBE_COLOURS.sand,
-  prairie: GLOBE_COLOURS.temperate,
-  boreal: GLOBE_COLOURS.spruce,
-};
+const ATLAS = treeAtlas();
+const treeTex = new THREE.DataTexture(ATLAS.rgba, ATLAS.w, ATLAS.h);
+treeTex.colorSpace = THREE.SRGBColorSpace;
+treeTex.magFilter = THREE.LinearFilter;
+treeTex.minFilter = THREE.LinearFilter;
+treeTex.needsUpdate = true;
+/** 0 = conifer (left half), 1 = broadleaf (right half). */
+function treeSlot(kind: CoverKind) { return kind === 'boreal' ? 0 : 1; }
 
 export function createHorizonCover() {
-  const geo = new THREE.PlaneGeometry(2.2, 6);
-  geo.translate(0, 3, 0);
-  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, side: THREE.DoubleSide });
+  const geo = new THREE.PlaneGeometry(2.4, 7);
+  geo.translate(0, 3.5, 0);
+  const slots = new Float32Array(480);
+  geo.setAttribute('aTree', new THREE.InstancedBufferAttribute(slots, 1));
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff, roughness: 0.85, metalness: 0, side: THREE.DoubleSide,
+    map: treeTex, alphaTest: 0.4, alphaToCoverage: true, transparent: false,
+  });
+  mat.onBeforeCompile = shader => {
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float aTree;\nvarying float vTree;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTree = aTree;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vTree;')
+      .replace('#include <map_fragment>', `
+        vec4 sampledDiffuseColor = texture2D(map, vec2(vMapUv.x * 0.5 + vTree * 0.5, vMapUv.y));
+        diffuseColor *= sampledDiffuseColor;
+      `);
+  };
+  mat.customProgramCacheKey = () => 'horizon-cover-tree-atlas';
   const mesh = new THREE.InstancedMesh(geo, mat, 480);
   mesh.name = 'horizon-cover';
   mesh.frustumCulled = false;
@@ -32,7 +49,7 @@ export function createHorizonCover() {
   mesh.count = 0;
   mesh.userData.horizonSkirt = true;
   const dummy = new THREE.Object3D();
-  const colour = new THREE.Color();
+  const white = new THREE.Color(1, 1, 1);
   let key = '';
 
   function update(planet: Planet, cx: number, cz: number, origin: SkirtOrigin) {
@@ -46,17 +63,18 @@ export function createHorizonCover() {
     key = next;
     const spots = coverSpots(cx, cz, kind);
     mesh.count = spots.length;
-    const tint = COLOUR[kind];
-    colour.setRGB(tint[0], tint[1], tint[2]);
+    const slot = treeSlot(kind);
     for (let i = 0; i < spots.length; i++) {
       const s = spots[i];
       dummy.position.set(s.x, heightAt(s.x, s.z), s.z);
       dummy.scale.set(1, kind === 'prairie' ? 0.45 : kind === 'desert' ? 0.35 : 1, 1);
-      dummy.lookAt(cx, dummy.position.y, cz);
+      dummy.lookAt(cx, dummy.position.y + 3, cz);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
-      mesh.setColorAt(i, colour);
+      mesh.setColorAt(i, white);
+      slots[i] = slot;
     }
+    (geo.getAttribute('aTree') as THREE.InstancedBufferAttribute).needsUpdate = true;
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.userData.kind = kind;

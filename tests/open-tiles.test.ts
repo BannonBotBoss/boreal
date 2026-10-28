@@ -2,8 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  blendDem, blendPhoto, resetOpenTiles, sampleDem, samplePhoto, srgbByteToLinear,
-  storePhoto, storeTerrarium, terrariumMetres,
+  blendDem, blendPhoto, demSlope, globeMatch, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
+  storePhoto, storeTerrarium, terrariumMetres, tileMetres, tileRing,
 } from '../src/world/globe/openTiles';
 
 test('terrarium height is (R*256 + G + B/256) - 32768', () => {
@@ -58,4 +58,56 @@ test('a photograph is linear and the close grain is stronger than the far pixel'
   const far = blendPhoto(pic, 2000, 0.7);
   assert.ok(near[1] < pic[1]);
   assert.ok(Math.abs(far[1] - pic[1]) < 1e-6);
+});
+
+test('a slope that rises to the east leans the normal west', () => {
+  resetOpenTiles();
+  const rgba = new Uint8Array(256 * 256 * 4);
+  // Terrarium of a plane rising to the east: height = 1000 + 0.2 * pixel x.
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
+    const h = 1000 + x * 0.5;
+    const v = h + 32768;
+    const i = (y * 256 + x) * 4;
+    rgba[i] = Math.floor(v / 256); rgba[i + 1] = Math.floor(v) % 256; rgba[i + 2] = 0; rgba[i + 3] = 255;
+  }
+  const lat = 45, lon = 10, z = 8, n = 2 ** z;
+  const tx = Math.floor((lon + 180) / 360 * n);
+  const latR = lat * Math.PI / 180;
+  const ty = Math.floor((1 - Math.log(Math.tan(latR) + 1 / Math.cos(latR)) / Math.PI) / 2 * n);
+  storeTerrarium(z, tx, ty, { w: 256, h: 256, rgba });
+  storeTerrarium(z, tx + 1, ty, { w: 256, h: 256, rgba });
+  storeTerrarium(z, tx - 1, ty, { w: 256, h: 256, rgba });
+  storeTerrarium(z, tx, ty + 1, { w: 256, h: 256, rgba });
+  storeTerrarium(z, tx, ty - 1, { w: 256, h: 256, rgba });
+  const slope = demSlope(lat, lon, 200);
+  assert.ok(slope, 'the stored tiles produce a normal');
+  assert.ok(slope![0] < 0, `east-rising ground leans west, nx ${slope![0]}`);
+  assert.ok(slope![1] > 0.5);
+});
+
+test('a missing photo lifts the globe albedo instead of leaving a black vertex', () => {
+  const spruce: [number, number, number] = [0.028, 0.045, 0.022];
+  const lifted = globeMatch(spruce);
+  assert.ok(lifted[1] > spruce[1] * 4);
+  assert.ok(lifted.every(v => v <= 1));
+  assert.equal(tileRing('photo', 8), 2);
+  assert.equal(tileRing('photo', 12), 2);
+});
+
+test('zoom 8 covers a point 40 km out, and a coarse tile fills a missing fine tile', () => {
+  const lat = 49.77, lon = 65.54;
+  const east = lon + 40 / (111.32 * Math.cos(lat * Math.PI / 180));
+  const home = slippy(lat, lon, 8);
+  const far = slippy(lat, east, 8);
+  const ring = tileRing('photo', 8, lat);
+  assert.ok(Math.abs(Math.floor(far.x) - Math.floor(home.x)) <= ring);
+  assert.ok(Math.abs(Math.floor(far.y) - Math.floor(home.y)) <= ring);
+  assert.ok(tileMetres(8, lat) > 50_000);
+  resetOpenTiles();
+  const rgba = new Uint8Array(256 * 256 * 4);
+  for (let i = 0; i < 256 * 256; i++) { rgba[i * 4] = 80; rgba[i * 4 + 1] = 120; rgba[i * 4 + 2] = 40; rgba[i * 4 + 3] = 255; }
+  storePhoto(8, Math.floor(home.x), Math.floor(home.y), { w: 256, h: 256, rgba });
+  const pic = samplePhoto(lat, lon);
+  assert.ok(pic && pic[1] > 0.1, 'the coarse mosaic colours a point the fine zoom has not fetched');
+  assert.ok(photoCoverage(lat, lon) > 0 && photoCoverage(lat, lon) < 1);
 });

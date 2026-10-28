@@ -1,0 +1,13 @@
+{
+  "ready": true,
+  "heard": "Hopping · ahead",
+  "titles": [
+    "Hopping · right",
+    "Hopping · front-right",
+    "Hopping · ahead"
+  ],
+  "url": "http://127.0.0.1:5277/?view=ground&nomenu&noprobe&hour=12&at=-100.495,38.429,0",
+  "out": "tasks/evidence/T-0097/before.png",
+  "clipPath": "tasks/evidence/T-0097/before-panel.png",
+  "errors": []
+}

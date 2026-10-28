@@ -121,6 +121,17 @@ function cap(name: string, count: number, max: number) {
   if (count > max) throw new Error(`${name} count ${count} is over the cap ${max}`);
 }
 
+/** One sound entry. Issue #106 states 28 bytes. A shorter or longer slice is not that entry. */
+export function readSoundEntry(src: ArrayBuffer | ArrayBufferView): HeardSound {
+  const r = new R(src);
+  const bytes = src instanceof ArrayBuffer ? src.byteLength : src.byteLength;
+  if (bytes !== PERCEPTION.soundBytes) throw new Error(`sound entry is ${bytes} bytes, not ${PERCEPTION.soundBytes}`);
+  return {
+    category: r.u16(), urgency: r.u16(), intensity: r.f32(),
+    directionX: r.f32(), directionY: r.f32(), directionZ: r.f32(), ageSeconds: r.f32(), reserved: r.raw(4),
+  };
+}
+
 /** Walk one perception block. Little-endian. Rejects a count above the issue's caps, and a slice shorter than those counts require. Bytes past the memory marks are the tail. */
 export function readPerception(src: ArrayBuffer | ArrayBufferView): PerceptionFrame {
   const r = new R(src);
@@ -160,10 +171,7 @@ export function readPerception(src: ArrayBuffer | ArrayBufferView): PerceptionFr
     directionX: r.f32(), directionY: r.f32(), directionZ: r.f32(), concentration: r.f32(), reserved: r.raw(4),
   });
   const sounds: HeardSound[] = [];
-  for (let i = 0; i < soundCount; i++) sounds.push({
-    category: r.u16(), urgency: r.u16(), intensity: r.f32(),
-    directionX: r.f32(), directionY: r.f32(), directionZ: r.f32(), ageSeconds: r.f32(), reserved: r.raw(4),
-  });
+  for (let i = 0; i < soundCount; i++) sounds.push(readSoundEntry(r.raw(PERCEPTION.soundBytes)));
   const memories: MemoryMark[] = [];
   for (let i = 0; i < memoryCount; i++) memories.push({
     memoryType: r.u16(), emotionType: r.u16(), emotionalWeight: r.f32(), x: r.f32(), y: r.f32(), z: r.f32(),

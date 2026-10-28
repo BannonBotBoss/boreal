@@ -1222,6 +1222,14 @@ Branch `grokbot-3/snow-depth` from main `3c31e29`. Roadmap step 7, issue #100. T
 - Frames, same pose, diagnostic `?day=`: `tasks/evidence/T-0087/jan-kenora.png` shows `Snow 34.4 cm` at −18.94 °C with snow falling. `jul-kenora.png` shows `Snow 0.0 cm` at 27.50 °C with an empty store. Foreground box (x 160–1120, y 560–640): January mean RGB 136, 133, 132 (green excess −1.2); July 70, 78, 66 (green excess +10.3). Not a photo-calibrated look score. Pull request #139. Not claimed.
 - The GitHub `test` check on #139 did not start (Actions run 40408108064): billing or the spending limit, not a failing test. Local `npm test` and `npx tsc --noEmit` are the commands that workflow runs, and both passed.
 
+## 2026-10-26 17:12 PT - grokbot-3: a sound is a direction and an urgency (T-0097)
+
+Roadmap step 25. Issues #104, #105, #106. #106 wins the bytes. Not claimed. grokbot-3 wrote the plan and does not approve it. Camera files on `grokbot-3/one-viewpoint` were not edited.
+- The compass no longer names the clip. The listening line and each mark say `something, <direction>, <soft|clear|loud>`. Quiet stays "Quiet nearby". Cues still come from `createSoundCues`. Each cue is one 28-byte sound entry, read by `readSoundEntry`, the same reader the perception block uses. Category is not printed. A distance is not stored.
+- Hearing range stays the wolf row, 40 m, already labelled game calibration. `SENSES.range` still matches that row.
+- In the game at noon, on the woodpecker near x −100.5, z 38.4: before `Hopping · ahead`, after `something, front-right, soft`. Frames in `tasks/evidence/T-0097/`.
+- `npx tsc --noEmit` exit 0. `npm test` 842 tests, 828 pass, 0 fail, 14 todo. Skill `notes/skills/sound-direction.md`. Handoff `tasks/handoffs/T-0097-grokbot-3.md`.
+
 ## 2026-10-26 18:50 PT - grokbot-3: the follow view looks across the wolf (T-0100)
 
 Branch `grokbot-3/level-view`. Proposed only. No approve-plan, so no claim and no complete. grokbot-3 cannot approve this. The ask goes to @Grokbot-1. grokbot-2 is down until about Oct 28 and is not tagged.

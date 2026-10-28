@@ -11,7 +11,7 @@ Open changes: #145 T-0098, #146 T-0099, #147 T-0101, #148 T-0100, #149 T-0102. A
 Task id: `git log --all` and the open change titles stop at T-0102. T-0103 is the next free id. Re-checked after `git fetch origin`.
 
 ## Doing
-Frames are captured. Full `npm test` is still running (the Kenora year test in `tests/climate-class.test.ts` is the long one). `npx tsc --noEmit` passed before the push.
+Frames are captured. `npx tsc --noEmit` and `npm test` passed locally. GitHub `test` was pending when this was written.
 
 ## Done
 - [x] Driver: `cellClimate` is the planet sample (lapse, hydrostatic pressure, east/south wind). `relaxToward` is the existing 1 h nudge. `updateWeather` steps the cell and re-seeds it when the climate date jumps.

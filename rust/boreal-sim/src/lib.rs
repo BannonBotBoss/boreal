@@ -110,3 +110,12 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
 #[no_mangle] pub extern "C" fn species_spawn_count(density_per_ha: f64, side_m: f64, lat: f64, lon: f64) -> u32 {
     species::spawn_count(density_per_ha, side_m, lat, lon)
 }
+/// Issue #162 bridge: the local population list for one landing, written as (species id, count) pairs into `out`
+/// (room for `cap` pairs, so 2·cap f64). Returns the number of pairs written. Species ids as in `species_density`.
+#[no_mangle] pub extern "C" fn landing_population(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, year: i32, side_m: f64, out: *mut f64, cap: u32) -> u32 {
+    let pop = species::landing_population(lat, lon, elev_m, vegetation, water != 0, year, side_m);
+    let n = pop.len().min(cap as usize);
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 2 * n) };
+    for (i, &(s, c)) in pop.iter().take(n).enumerate() { o[2 * i] = s as u32 as f64; o[2 * i + 1] = c as f64; }
+    n as u32
+}

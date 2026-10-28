@@ -37,7 +37,8 @@ import { GOVERNOR, resetGovernor } from '../../core/quality';
 import { INTEREST, JOB_FIRST, pending, queued, STATS as JOBS } from '../../core/interest';
 import { CHUNK_SIZE, heightAt } from '../../core/world';
 import { createHorizonSkirt, type HorizonSkirt } from '../../render/horizonMesh';
-import { horizonMetres, patchDiscRadius } from './horizonSkirt';
+import { createHorizonCover } from '../../render/horizonCover';
+import { horizonMetres, patchDiscRadius, skirtOrigin } from './horizonSkirt';
 import { STAGES, lakeAt } from '../../core/stages/elevation';
 import { pondAt } from '../../core/stages/rivers';
 import { LEVEL } from '../../core/tuning';
@@ -98,6 +99,7 @@ function patchPlaneY(x: number, z: number, r: number) {
 function controller(view: View, host: InPageHost) {
   const renderer = view.photoreal.renderer, far = createFarLayer(), hold = createGovernorHold(GOVERNOR, resetGovernor);
   let skirt: HorizonSkirt | null = null;
+  let cover: ReturnType<typeof createHorizonCover> | null = null;
   let globe: Globe | null = null, mode: TransitionMode = 'game', down = true, phase: 'fly' | 'drone' | 'blend' = 'fly';
   let pinned: number | null = null; // dev stills: hold the drone at one height instead of the glide floor
   let next: 'globe' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
@@ -193,6 +195,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     for (const [o, v] of hidden) o.visible = v; hidden.clear(); for (const c of unculled) c.frustumCulled = true; unculled.length = 0;
     if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; setPatchFade(1); setPatchFar(null); bandLook(0); AO_BLEND.value = 1;
     if (skirt) skirt.mesh.visible = false;
+    if (cover) cover.mesh.visible = false;
   }
   const isChunkRoot = (o: THREE.Object3D) => o.type === 'Group' && (o.children[0]?.userData.inspect as { type?: string } | undefined)?.type === 'terrain';
   const hasLight = (o: THREE.Object3D) => (o as THREE.Light).isLight || !!o.getObjectByProperty('isLight', true);
@@ -403,6 +406,10 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
         const eye = Math.max(1, camera.position.y - ground(camera.position.x, camera.position.z));
         const ahead = tmpV.set(0, 0, -1).applyQuaternion(camera.quaternion);
         skirt.update(globe.planet, camera.position.x, camera.position.z, eye, ahead.x, ahead.z);
+        cover ??= createHorizonCover();
+        if (!cover.mesh.parent) scene.add(cover.mesh);
+        cover.mesh.visible = true;
+        cover.update(globe.planet, camera.position.x, camera.position.z, skirtOrigin(globe.planet, ground(0, 0)));
       }
       hideForBand(scene); // disc covers the loaded square; the skirt is the ground outside it
       // the patch's aerial blend toward the globe behind it, and globe terrain in front of the patch hides it (render/fade, uniforms)
@@ -428,7 +435,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (mode === 'game') g.suspendWorkers(); // not if Shift+G already went up meanwhile (the band would build tiles on the main thread)
       return { ms: performance.now() - t0, frames: n, tiles: g.stats().cached };
     },
-    dispose() { unregPad(); window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); view.canvas.removeEventListener('pointerdown', onDown); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); promptEl?.remove(); skirt?.dispose(); globe?.dispose(); far.dispose(); ctl = null; },
+    dispose() { unregPad(); window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); view.canvas.removeEventListener('pointerdown', onDown); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); promptEl?.remove(); cover?.dispose(); skirt?.dispose(); globe?.dispose(); far.dispose(); ctl = null; },
   };
   return api;
   /** lake colours for the band: s = 0 the globe's calibrated lakes, 1 the game-matched ones */

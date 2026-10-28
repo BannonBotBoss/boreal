@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  blendDem, blendPhoto, demSlope, globeMatch, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
+  blendDem, blendPhoto, demSlope, elevationWins, globeMatch, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
   storePhoto, storeTerrarium, terrariumMetres, tileMetres, tileRing,
 } from '../src/world/globe/openTiles';
 
@@ -31,6 +31,15 @@ test('a stored tile is sampled in metres, and a hole falls back to null', () => 
   assert.ok(h != null && Math.abs(h - 1000) < 1, `height ${h}`);
   assert.equal(sampleDem(0, 0), null);
   assert.equal(samplePhoto(lat, lon), null);
+});
+
+test('land above sea level beats a planet sample that says ocean, and a lake does not', () => {
+  assert.equal(elevationWins('ocean', 240), true);
+  assert.equal(elevationWins('ocean', 0), false);
+  assert.equal(elevationWins('ocean', -30), false);
+  assert.equal(elevationWins('ocean', null), false);
+  assert.equal(elevationWins('lake', 400), false);
+  assert.equal(elevationWins('', 400), false);
 });
 
 test('DEM replaces the planet away from the camera and leaves water alone', () => {

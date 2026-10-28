@@ -11,7 +11,7 @@ import { smoothstep } from '../proc/math';
 import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { PATCH_FAR } from './fade';
-import { blendDem, blendPhoto, demSlope, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { blendDem, blendPhoto, demSlope, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { canopyTile } from './trees/billboardAtlas';
 
 /** Daylight horizon the ground fades toward. Brighter than the old grey so aerial perspective
@@ -129,15 +129,18 @@ export function createHorizonSkirt(): HorizonSkirt {
       }
       const ll = skirtLatLon(planet, x, z, here.remote);
       const dem = sampleDem(ll.latDeg, ll.lonDeg);
-      if (dem != null) y = blendDem(y, (dem - here.asl) + here.gameY, dist, far.water);
+      // A real land height beats a planet sample that called this point ocean.
+      const water = far.water && !elevationWins(far.kind, dem);
+      if (dem != null) y = blendDem(y, (dem - here.asl) + here.gameY, dist, water);
       const picture = samplePhoto(ll.latDeg, ll.lonDeg);
       let rgb = far.rgb;
       const finite = (c: readonly number[]) => c.length === 3 && c.every(Number.isFinite);
       const ok = !!picture && finite(picture);
-      if (ok && picture && !far.water) {
+      if (ok && picture && !water) {
         const grain = 0.78 + 0.28 * Math.sin(x * 0.41 + z * 0.17) * Math.sin(x * 0.13 - z * 0.29);
         rgb = blendPhoto(picture, dist, grain);
-      } else if (ok && picture && far.water) rgb = picture;
+      } else if (ok && picture && water) rgb = picture;
+      else if (!water && far.kind === 'ocean') rgb = globeMatch([0.06, 0.09, 0.04]);
       else rgb = globeMatch(far.rgb);
       if (!finite(rgb)) rgb = [0.12, 0.16, 0.08];
       const slope = demSlope(ll.latDeg, ll.lonDeg);
@@ -145,7 +148,7 @@ export function createHorizonSkirt(): HorizonSkirt {
       const normal: [number, number, number] = slope
         ? [slope[0] * lit, slope[1] * lit + (1 - lit), slope[2] * lit]
         : [0, 1, 0];
-      return { y, rgb, water: far.water, photo: ok, normal };
+      return { y, rgb, water, photo: ok, normal };
     }, PLANET.radius, (x, z, ringR) => {
       // The pad under the camera stays whole. Farther out, drop quads that reach behind the eye.
       if (ringR < Math.max(80, eyeM * 0.35)) return true;

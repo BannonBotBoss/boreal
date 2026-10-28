@@ -10,6 +10,7 @@ import { vegetationWeight, type Planet } from '../world/globe/planet';
 import { coverKind, coverSpots, type CoverKind } from '../world/globe/coverKind';
 import { skirtLatLon, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { treeAtlas } from './trees/billboardAtlas';
+import { elevationWins, sampleDem } from '../world/globe/openTiles';
 
 const ATLAS = treeAtlas();
 const treeTex = new THREE.DataTexture(ATLAS.rgba, ATLAS.w, ATLAS.h);
@@ -56,9 +57,10 @@ export function createHorizonCover() {
     const ll = skirtLatLon(planet, cx, cz, origin.remote);
     const s = planet.sampleSurface(ll.dir);
     const veg = vegetationWeight(s, ll.dir);
-    const water = s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level;
-    const kind = coverKind(ll.latDeg, s.h, veg, water);
-    const next = `${kind}:${Math.round(cx / 40)}:${Math.round(cz / 40)}`;
+    const dem = sampleDem(ll.latDeg, ll.lonDeg);
+    const water = !elevationWins(s.kind, dem) && (s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level);
+    const kind = coverKind(ll.latDeg, dem != null && dem > 0 ? dem : s.h, veg, water);
+    const next = `${kind}:${dem != null ? Math.round(dem) : 'x'}:${Math.round(cx / 40)}:${Math.round(cz / 40)}`;
     if (next === key) return kind;
     key = next;
     const spots = coverSpots(cx, cz, kind);

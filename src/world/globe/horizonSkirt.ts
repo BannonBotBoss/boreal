@@ -248,7 +248,7 @@ function shownAsl(h: number, water: number) {
  * `origin.asl` is the planet height the game's Y = origin.gameY sits on.
  * At home this matches heightAt inside the home square, because the planet samples that function.
  */
-export function skirtSample(planet: Planet, x: number, z: number, origin: SkirtOrigin): { y: number; rgb: [number, number, number]; water: boolean } {
+export function skirtSample(planet: Planet, x: number, z: number, origin: SkirtOrigin): { y: number; rgb: [number, number, number]; water: boolean; kind: '' | 'ocean' | 'lake' } {
   const dir: Vec3 = origin.remote ? siteDirection(x, z, PLANET.radius) : planet.fromLocal(x, z);
   const s = planet.sampleSurface(dir);
   const asl = shownAsl(s.h, s.water);
@@ -259,7 +259,7 @@ export function skirtSample(planet: Planet, x: number, z: number, origin: SkirtO
     rgb[0] = c[0]; rgb[1] = c[1]; rgb[2] = c[2];
   } else surfaceColour(s, dir, rgb);
   const y = (asl - origin.asl) + origin.gameY;
-  return { y, rgb, water };
+  return { y, rgb, water, kind: s.kind };
 }
 
 export function skirtOrigin(planet: Planet, gameY: number): SkirtOrigin {

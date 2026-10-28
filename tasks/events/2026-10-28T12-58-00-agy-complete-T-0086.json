@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0086",
+  "agent": "agy",
+  "at": "2026-10-28T12:58:00-07:00",
+  "branch": "agy/moisture-debt",
+  "skill": "moisture-debt",
+  "handoff": "tasks/handoffs/T-0086-agy.md",
+  "note": "Implemented cumulative precipitation deficit (stepMoistureDebt, MoistureTracker, expectedPrecipMmDay, moistureDebtIndex, grid.debt, moistureDebtAt, accumulatePlanetMoistureDebt) in src/core/weather.ts, src/core/planetWeather.ts, and rust/boreal-sim/src/planet_fundamentals/hydrosphere/soil_moisture.rs. Expected rain uses existing ECCC Kenora 1981-2010 NORMALS.precip (689 mm/yr). Drought index scales by HYDRO.bucketMm (150 mm, Manabe 1969; Gibbs & Maher 1967; McKee et al. 1993; Keetch & Byram 1968; Van Wagner 1987). Frame gate N/A. npx tsc --noEmit and tests/moisture-debt.test.ts (3/3) pass."
+}

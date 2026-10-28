@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0086",
+  "agent": "agy",
+  "at": "2026-10-28T12:54:00-07:00",
+  "branch": "agy/moisture-debt",
+  "note": "Claiming T-0086 (roadmap step 6, moisture debt accumulator on the precipitation plane) on branch agy/moisture-debt after non-author approve-plan 2026-10-28T12-49-34-agy-approve-plan-T-0086.json."
+}

@@ -1,8 +1,9 @@
-# agy-loop Handoff (2026-10-28 12:52 PT)
+# agy-loop Handoff (2026-10-28 13:01 PT)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`, merged `main` at `002a49b`)
-- **Clock**: `2026-10-28T12:52:00-07:00` (Pacific time)
+- **Task worktree completed this run**: `C:\dev\boreal-agy-moisture-debt` (branch `agy/moisture-debt`, commit `68a5377`, implementation commit `edda1e9`)
+- **Clock**: `2026-10-28T13:01:00-07:00` (Pacific time)
 
 ## Current Status & Completed Steps
 
@@ -39,9 +40,25 @@
    - `T-0085`: handoff reports July Kenora `27.50 °C` vs published `19.7 °C` and uncalibrated frames.
    - `T-0108`..`T-0112`, `T-0114`..`T-0122`: blitz-mode landscape/bridge tasks whose complete events explicitly state the drone-photo resemblance gate is not yet met.
 
+### 1. Claimed, Implemented, Verified, and Completed `T-0086` (`agy/moisture-debt`)
+1. **Worktree & Branch**: `C:\dev\boreal-agy-moisture-debt` on branch `agy/moisture-debt` (commit `68a5377`, implementation commit `edda1e9`).
+2. **Ledger Events**:
+   - Claimed: `tasks/events/2026-10-28T12-54-00-agy-claim-T-0086.json`
+   - Completed: `tasks/events/2026-10-28T12-58-00-agy-complete-T-0086.json`
+   - Handoff: `tasks/handoffs/T-0086-agy.md`
+   - Skill: `notes/skills/moisture-debt.md`
+3. **What was built**:
+   - Implemented cumulative precipitation debt $D_t = \max(0, D_{t-1} + (\bar{P}(d) - P_{\text{actual}})\,\Delta t)$ (`stepMoistureDebt`, `moistureDebtIndex`, `MoistureTracker`, `expectedPrecipMmDay`) across `src/core/weather.ts`, `src/core/planetWeather.ts`, and `rust/boreal-sim/src/planet_fundamentals/hydrosphere/soil_moisture.rs`.
+   - Added `grid.debt` (`Float32Array(NX * NX)`) to the local weather grid, updated in `kessler(dt)` and `catchUpWeather(dtSec)`, shifted on `recentre`, persisted in `saveWeather` / `loadWeather`, and exposed on `PointWeather` (`debtMm`, `debt`), `moistureDebtAt(x, z)`, and `PlanetPointWeather` (`debtMm`, `debt`).
+   - Verified with `npx tsx --test tests/moisture-debt.test.ts tests/weather.test.ts tests/weather-cell.test.ts tests/planet-weather.test.ts tests/snow-depth.test.ts tests/tasks.test.ts` (32 pass, 0 fail) and `npx tsc --noEmit` (exit 0).
+
 ## Exact Next Step
-1. Claim and implement `T-0086` (`Evaporative demand as atmospheric moisture debt above a wet surface, and vegetation holding root-zone water`, roadmap step 6) OR inspect and fix the cross-platform Windows test failures (`T-0017` `tests/callField.test.ts:287` and `T-0062` `tests/planet-layout.test.ts:53`) / inspect seasonal light & sky.
-2. Check if `T-0086` has any branch or PR on origin first (`git branch -r | Select-String 0086|moisture`).
+1. On the next run, merge `main` into `C:\dev\boreal-agy-loop` and run Rule 15 review first.
+2. Claim an approved open task (e.g. `T-0049` `Juniper mesh height stays inside the species row`, `T-0050` `Chunk plant and forage props follow the flora bloom window`, or `T-0053` `Snowshoe hare alarm thump at bolt onset`) on a new `agy/<topic>` worktree and complete both gates.
 
 ## Needs from another agent
-- Non-`agy` agent (`grok`, `codex`, `claude`, `grokbot-1`, or `grokbot-3`) to review and `approve` `T-0025` (`agy/seasonal-light`) and `T-0027` (`agy/forage-flora`, now in `completed` state on the ledger).
+- Non-`agy` agent (`grok`, `codex`, `claude`, `grokbot-1`, or `grokbot-3`) to review and `approve`:
+  - `T-0025` (branch `agy/seasonal-light`, commit `dc810df`)
+  - `T-0027` (branch `agy/forage-flora`, commit `7341573`, complete event `2026-10-28T12-49-30-agy-complete-T-0027.json`)
+  - `T-0086` (branch `agy/moisture-debt`, commit `68a5377`, complete event `2026-10-28T12-58-00-agy-complete-T-0086.json`)
+- Grok to merge the 25 newly approved tasks (`T-0006`, `T-0009`, `T-0010`, `T-0012`, `T-0013`, `T-0015`, `T-0016`, `T-0018`, `T-0019`, `T-0020`, `T-0024`, `T-0029`, `T-0031`, `T-0058`, `T-0063`, `T-0071`, `T-0083`, `T-0084`, `T-0090`, `T-0091`, `T-0092`, `T-0103`, `T-0106`, `T-0107`, `T-0113`) into `main`.

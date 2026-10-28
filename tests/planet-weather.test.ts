@@ -77,7 +77,7 @@ test('weatherAtLatLon is the forest weather, including a point that is not the p
     updateWeather(1, 12, 15, 12);
     assert.equal(WEATHER.day, 15);
     assert.equal(WEATHER.hour, 12);
-    assert.equal(WEATHER.steps, steps, 'the Stam column does not step while the planet drives');
+    assert.equal(WEATHER.steps, steps, 'one frame starts a column slice and does not finish it');
     assert.equal(sim.plane('tair')[0], -8);
   } finally { restore(snap); }
 });
@@ -150,6 +150,9 @@ test('a forest-owned clock re-spins on a new date and holds still inside the hou
     assert.ok(Math.abs(sim.day - 40) < 1e-6, `day ${sim.day}`);
     assert.ok(sim.plane('tair')[0] !== 41, 'the new date is a new climate seed');
     const ll = toLatLon(planetFor(WORLD_SEED).fromLocal(0, 0));
-    assert.equal(weatherAt(0, 0).tC, weatherAtLatLon(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI)!.tC);
+    const point = weatherAtLatLon(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI)!;
+    const cellT = weatherAt(0, 0).tC;
+    // The cell is seeded from the new climate. One slice of the existing surface balance may move it. A missed lapse is 1.3 °C.
+    assert.ok(Math.abs(cellT - point.tC) < 0.1, `cell ${cellT} planet ${point.tC}`);
   } finally { restore(snap); }
 });

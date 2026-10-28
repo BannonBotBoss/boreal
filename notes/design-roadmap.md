@@ -114,7 +114,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** Rewrite of the driver only. Reuses `initWeather`, `updateWeather`, the Kessler rain, and the bucket (`weather.ts` lines 134–139 and 249–274).
 - **Issues:** #100 (weather cells, clouds, rain).
 - **Depends on:** Step 2. Parallel with steps 5, 6, and 7.
-- **Size:** M. Queue.
+- **Size:** M. Board: T-0103.
 - **Gates:** Numbers: the existing cited lapse, Kessler, and Manabe constants stay; any new relaxation time needs a source or a `[game calibration]` label. Frame: a short clip of cloud or rain at a fixed date, plus the cell values. Evidence: `climateRaw` is not called from the near grid.
 
 ### Step 5 — The sea softens the seasons, and a ridge makes a dry side

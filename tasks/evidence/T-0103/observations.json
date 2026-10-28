@@ -1,0 +1,108 @@
+{
+  "commit": "6831417263016c3d13d0ca4011b138d53ef797aa",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "note": "Diagnostic date jump via ?day= (not natural motion). January is day 15 noon, July is day 196 noon. nomenu, noprobe. The cell values are the live near grid. No sun-angle score.",
+  "consoleErrors": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "observations": [
+    {
+      "name": "jan-noon",
+      "q": "?nomenu&noprobe&day=15&hour=12",
+      "url": "http://127.0.0.1:5284?nomenu&noprobe&day=15&hour=12",
+      "ms": 29221,
+      "sample": {
+        "href": "http://127.0.0.1:5284/?nomenu&noprobe&day=15&hour=12",
+        "day": 15,
+        "hour": 12.096248333333328,
+        "steps": 74,
+        "clockDay": 15,
+        "live": true,
+        "tC": -18.94636995185554,
+        "rh": 1,
+        "cloud": 0.9999948448719823,
+        "rainMmH": 1.1947059657010015,
+        "snow": true,
+        "sweMm": 86.04076385498047,
+        "depthCm": 34.41630554199219,
+        "derivedCm": 34.41630554199219,
+        "wind": {
+          "x": -5.946081163313815,
+          "y": -0.0538324672443299,
+          "z": -9.67945040166573
+        },
+        "target": {
+          "source": "planet",
+          "surfaceTC": -18.93783740162878,
+          "layerTC": -20.23783740162878,
+          "p": 94841.31729771255,
+          "rh": 1,
+          "cloud": 0.9999947824830573,
+          "precipMmH": 1.1944475252430433,
+          "u": -16.270951494361054,
+          "v": -26.369965759709288
+        },
+        "planet": {
+          "tC": -18.93783740162878,
+          "rh": 1,
+          "cloud": 0.9999947824830573,
+          "precipMmH": 1.1944475252430433,
+          "snow": true,
+          "sweMm": 86.02877019364395
+        },
+        "status": "12:05 · WALK · Snow 34.4 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      }
+    },
+    {
+      "name": "jul-noon",
+      "q": "?nomenu&noprobe&day=196&hour=12",
+      "url": "http://127.0.0.1:5284?nomenu&noprobe&day=196&hour=12",
+      "ms": 38455,
+      "sample": {
+        "href": "http://127.0.0.1:5284/?nomenu&noprobe&day=196&hour=12",
+        "day": 196,
+        "hour": 12.116991333333331,
+        "steps": 75,
+        "clockDay": 196,
+        "live": true,
+        "tC": 27.425814330697893,
+        "rh": 0.24533303127990266,
+        "cloud": 0.5929479923206287,
+        "rainMmH": 0.21522466373315954,
+        "snow": false,
+        "sweMm": 0,
+        "depthCm": 0,
+        "derivedCm": 0,
+        "wind": {
+          "x": 7.241075218873772,
+          "y": 0.06490798539465553,
+          "z": 8.868046486054542
+        },
+        "target": {
+          "source": "planet",
+          "surfaceTC": 27.500792877577723,
+          "layerTC": 26.200792877577722,
+          "p": 95819.69384970024,
+          "rh": 0.23738498660663726,
+          "cloud": 0.5931160539808265,
+          "precipMmH": 0.21564170699756677,
+          "u": 20.353934750850968,
+          "v": 24.968299172435508
+        },
+        "planet": {
+          "tC": 27.500792877577723,
+          "rh": 0.23738498660663726,
+          "cloud": 0.5931160539808265,
+          "precipMmH": 0.21564170699756677,
+          "snow": false,
+          "sweMm": 0
+        },
+        "status": "12:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      }
+    }
+  ]
+}

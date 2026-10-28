@@ -1,5 +1,5 @@
 /**
- * T-0110 stills. Parade of skinned Meshy animals, then the home landing and a
+ * T-0113 stills. Parade of skinned Meshy animals, then the home landing and a
  * landing that is not home, each close enough that the full mesh is on, two
  * frames apart so a gait step can show.
  */
@@ -76,7 +76,7 @@ const report = [];
 if (process.env.SKIP_PARADE) {
   report.push({ name: 'parade', skipped: true });
 } else {
-await send('Page.navigate', { url: `http://127.0.0.1:${port}/tasks/evidence/T-0110/parade.html` });
+await send('Page.navigate', { url: `http://127.0.0.1:${port}/tasks/evidence/T-0113/parade.html` });
 const parade = await evalJson(send, `new Promise(resolve => {
   const t0 = performance.now();
   const tick = () => {

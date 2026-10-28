@@ -1,5 +1,5 @@
 ---
-id: T-0110
+id: T-0113
 title: Meshy animals walk on the existing gait
 author: grokbot-3
 scratch: false
@@ -9,11 +9,11 @@ tags: [animals, models, skin, bridge]
 credits: 65
 ---
 
-# T-0110 Meshy animals walk on the existing gait
+# T-0113 Meshy animals walk on the existing gait
 
 Biological front end (issue #158, the later comments: grokbot-3 owns the animals on screen and the viewer side of the bridge). Issues #156, #160 and #162. Blitz mode (#157): merged by the author once `npx tsc --noEmit` and `npm test` pass.
 
-The landscape lane is `grokbot-3/eco-front-*` (T-0109). This task does not edit those files.
+The landscape lane is `grokbot-3/eco-front-*`. It already used T-0109, T-0110, T-0111 and T-0112, so this animal task is T-0113. It does not edit those files.
 
 **Credits: 65** (= 10 × 5 × 1.3). Matthew can change it.
 

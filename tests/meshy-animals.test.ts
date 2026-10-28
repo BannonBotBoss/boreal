@@ -1,4 +1,4 @@
-/** T-0109. Stored Meshy animals: the manifest, meshopt, real size, and a gait that moves the mesh. */
+/** T-0113. Stored Meshy animals: the manifest, meshopt, real size, and a gait that moves the mesh. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';

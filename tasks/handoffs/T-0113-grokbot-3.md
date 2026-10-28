@@ -1,6 +1,6 @@
-# T-0110 handoff — grokbot-3
+# T-0113 handoff — grokbot-3
 
-Biological front end. Issues #156, #160, #162. Blitz #157. Branch `grokbot-3/bio-front-meshy-animals`. The landscape agent on `grokbot-3/eco-front-*` already took T-0109, so this is T-0110.
+Biological front end. Issues #156, #160, #162. Blitz #157. Branch `grokbot-3/bio-front-meshy-animals`. The landscape lane took T-0109 through T-0112, including T-0110 on main, so this animal task was renumbered to T-0113. The first events existed only on this branch and were replaced.
 
 ## Doing
 
@@ -18,11 +18,11 @@ Skin the 21 Meshy animals onto the gait they already have, at the species size, 
 
 ## Number table
 
-See `tasks/T-0110-meshy-animal-skin.md`. Wolf height after the fit is 1.19 m, which is 0.74 / 0.62. A run moves a wolf foot about 0.24 m. Deer foot about 0.11 m. Hare foot about 0.02 m on a 0.22 m animal.
+See `tasks/T-0113-meshy-animal-skin.md`. Wolf height after the fit is 1.19 m, which is 0.74 / 0.62. A run moves a wolf foot about 0.24 m. Deer foot about 0.11 m. Hare foot about 0.02 m on a 0.22 m animal.
 
 ## Frames
 
-`tasks/evidence/T-0110/`. The capture script is `capture.mjs`. The parade page poses eight species at phase 0.05 and 0.55.
+`tasks/evidence/T-0113/`. The capture script is `capture.mjs`. The parade page poses eight species at phase 0.05 and 0.55.
 
 - `parade-a.png` and `parade-b.png`: wolf, hare, deer, black bear, moose, red fox, bald eagle, elk, feet on the ground, sizes from the species rows. The elk's hind leg is back in the second frame and planted in the first. That is the gait, not a rigid mesh.
 - `home-a.png` and `home-b.png`: the home shore, 15 Aug, 11:06. The counter reports one full mesh. It is the gray wolf from behind, grey and tawny, standing (the readout is walk at 0 speed). A second animal is on the grass ahead of it.

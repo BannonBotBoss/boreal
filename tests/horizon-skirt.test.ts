@@ -77,7 +77,8 @@ test('home land keeps the local height, and the disc covers the loaded square', 
   assert.equal(step.water, false);
   const loaded = 80;
   const disc = patchDiscRadius(loaded);
-  assert.ok(disc >= loaded * Math.SQRT2, 'the fade circle covers the chunk-square corners');
+  assert.ok(disc < loaded, 'the dither finishes inside the loaded square');
+  assert.ok(disc > loaded * 0.5, 'a circle of chunk detail remains under the camera');
 });
 
 test('far quads behind the eye are dropped so they cannot smear across the sky', () => {

@@ -1,0 +1,211 @@
+/**
+ * Open elevation and ground photographs for a landing (issue #156).
+ *
+ * Elevation is the AWS Terrain Tiles set (Mapzen joerd), terrarium PNGs:
+ * https://registry.opendata.aws/terrain-tiles/
+ * Attribution required, from https://github.com/tilezen/joerd/blob/master/docs/attribution.md :
+ * USGS 3DEP, SRTM and GMTED2010 (public domain, courtesy U.S. Geological Survey);
+ * ETOPO1 (NOAA); EU-DEM (Copernicus, European Union); Canada (Open Government Licence);
+ * and the other national sets named in that file. Height is
+ * (R * 256 + G + B / 256) − 32768 metres.
+ *
+ * Ground colour is EOX Sentinel-2 cloudless, CC BY 4.0:
+ * https://s2maps.eu — "Sentinel-2 cloudless by EOX (Contains modified Copernicus Sentinel data)".
+ * The 2021 layer is the one fetched.
+ *
+ * Both are cached. A missing tile returns null and the caller keeps the planet function.
+ */
+import { smoothstep } from '../../proc/math';
+
+export const OPEN_TILES = {
+  demZoom: [8, 11] as const,
+  photoZoom: [8, 12] as const,
+  demUrl: (z: number, x: number, y: number) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`,
+  photoUrl: (z: number, x: number, y: number) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/${z}/${y}/${x}.jpg`,
+  /** Slippy tiles are 256 px. */
+  size: 256,
+};
+
+export const OPEN_TILES_CREDIT = {
+  dem: 'AWS Terrain Tiles (Mapzen joerd). Attribution: USGS 3DEP / SRTM / GMTED2010 courtesy U.S. Geological Survey; ETOPO1 NOAA; EU-DEM Copernicus Programme; Canada Open Government Licence; full list https://github.com/tilezen/joerd/blob/master/docs/attribution.md',
+  photo: 'Sentinel-2 cloudless 2021 by EOX IT Services GmbH (CC BY 4.0), contains modified Copernicus Sentinel data. https://s2maps.eu',
+};
+
+/** Terrarium metres. R, G, B are 0..255. */
+export function terrariumMetres(r: number, g: number, b: number) {
+  return r * 256 + g + b / 256 - 32768;
+}
+
+export function srgbByteToLinear(c: number) {
+  const x = c / 255;
+  return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+}
+
+/** Web-mercator tile coordinate. x and y are continuous (the fraction is the pixel). */
+export function slippy(latDeg: number, lonDeg: number, z: number) {
+  const n = 2 ** z;
+  const lat = Math.max(-85, Math.min(85, latDeg)) * Math.PI / 180;
+  const x = (lonDeg + 180) / 360 * n;
+  const y = (1 - Math.log(Math.tan(lat) + 1 / Math.cos(lat)) / Math.PI) / 2 * n;
+  return { x, y, z };
+}
+
+export interface RgbaTile { w: number; h: number; rgba: Uint8ClampedArray | Uint8Array }
+
+const dem = new Map<string, Float32Array | null>();
+const photo = new Map<string, Float32Array | null>();
+const inflight = new Map<string, Promise<void>>();
+let generation = 0;
+
+export function openTileGeneration() { return generation; }
+
+function key(z: number, x: number, y: number) { return `${z}/${x}/${y}`; }
+
+export function storeTerrarium(z: number, x: number, y: number, tile: RgbaTile | null) {
+  const id = key(z, x, y);
+  if (!tile) { dem.set(id, null); generation++; return; }
+  const n = tile.w * tile.h;
+  const h = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const o = i * 4;
+    h[i] = terrariumMetres(tile.rgba[o], tile.rgba[o + 1], tile.rgba[o + 2]);
+  }
+  dem.set(id, h);
+  generation++;
+}
+
+export function storePhoto(z: number, x: number, y: number, tile: RgbaTile | null) {
+  const id = key(z, x, y);
+  if (!tile) { photo.set(id, null); generation++; return; }
+  const n = tile.w * tile.h;
+  const rgb = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const o = i * 4;
+    rgb[i * 3] = srgbByteToLinear(tile.rgba[o]);
+    rgb[i * 3 + 1] = srgbByteToLinear(tile.rgba[o + 1]);
+    rgb[i * 3 + 2] = srgbByteToLinear(tile.rgba[o + 2]);
+  }
+  photo.set(id, rgb);
+  generation++;
+}
+
+function sampleGrid(table: Map<string, Float32Array | null>, latDeg: number, lonDeg: number, zooms: readonly number[], channels: number): number[] | null {
+  for (let zi = zooms.length - 1; zi >= 0; zi--) {
+    const z = zooms[zi];
+    const s = slippy(latDeg, lonDeg, z);
+    const size = OPEN_TILES.size;
+    const px = s.x * size;
+    const py = s.y * size;
+    const x0 = Math.floor(px);
+    const y0 = Math.floor(py);
+    const fx = px - x0;
+    const fy = py - y0;
+    const pix = (x: number, y: number): number[] | null => {
+      const tx = Math.floor(x / size);
+      const ty = Math.floor(y / size);
+      const grid = table.get(key(z, tx, ty));
+      if (!grid) return null;
+      const ix = ((x % size) + size) % size;
+      const iy = ((y % size) + size) % size;
+      const i = iy * size + ix;
+      const out = [];
+      for (let c = 0; c < channels; c++) out.push(grid[i * channels + c]);
+      return out;
+    };
+    const a = pix(x0, y0), b = pix(x0 + 1, y0), c = pix(x0, y0 + 1), d = pix(x0 + 1, y0 + 1);
+    if (!a || !b || !c || !d) continue;
+    const mix = (p: number[], q: number[], t: number) => p.map((v, i) => v + (q[i] - v) * t);
+    return mix(mix(a, b, fx), mix(c, d, fx), fy);
+  }
+  return null;
+}
+
+/** Metres above sea level, or null when the tile is not cached. Finest cached zoom wins. */
+export function sampleDem(latDeg: number, lonDeg: number): number | null {
+  const v = sampleGrid(dem, latDeg, lonDeg, OPEN_TILES.demZoom, 1);
+  return v ? v[0] : null;
+}
+
+/** Linear RGB, or null when no photograph is cached. */
+export function samplePhoto(latDeg: number, lonDeg: number): [number, number, number] | null {
+  const v = sampleGrid(photo, latDeg, lonDeg, OPEN_TILES.photoZoom, 3);
+  return v ? [v[0], v[1], v[2]] : null;
+}
+
+/**
+ * Blend a measured height into the planet height. Near the camera the planet
+ * (and therefore the chunk mesh) wins, so the square does not become a step.
+ * Past `far0` the DEM is the ground. Water stays the planet water surface.
+ */
+export function blendDem(planetY: number, demY: number, distM: number, water: boolean, far0 = 200, far1 = 1600) {
+  if (water) return planetY;
+  return planetY + (demY - planetY) * smoothstep(far0, far1, distM);
+}
+
+/**
+ * Up close the photograph is multiplied by a procedural grain (so a 10 m Sentinel pixel
+ * does not go soft at drone height). By 700 m it is the photograph alone.
+ */
+export function blendPhoto(picture: [number, number, number], distM: number, grain: number): [number, number, number] {
+  const t = smoothstep(50, 700, distM);
+  const g = grain + (1 - grain) * t;
+  return [picture[0] * g, picture[1] * g, picture[2] * g];
+}
+
+function tilesAround(lat: number, lon: number, z: number, ring = 1) {
+  const s = slippy(lat, lon, z);
+  const tx = Math.floor(s.x), ty = Math.floor(s.y);
+  const out: { z: number; x: number; y: number }[] = [];
+  for (let j = -ring; j <= ring; j++) for (let i = -ring; i <= ring; i++) out.push({ z, x: tx + i, y: ty + j });
+  return out;
+}
+
+async function decode(blob: Blob): Promise<RgbaTile | null> {
+  if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return null;
+  const bmp = await createImageBitmap(blob);
+  const canvas = document.createElement('canvas');
+  canvas.width = bmp.width; canvas.height = bmp.height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) { bmp.close(); return null; }
+  ctx.drawImage(bmp, 0, 0);
+  const data = ctx.getImageData(0, 0, bmp.width, bmp.height);
+  bmp.close();
+  return { w: bmp.width, h: bmp.height, rgba: data.data };
+}
+
+async function pull(kind: 'dem' | 'photo', z: number, x: number, y: number) {
+  const id = `${kind}/${key(z, x, y)}`;
+  const table = kind === 'dem' ? dem : photo;
+  if (table.has(key(z, x, y)) || inflight.has(id)) return inflight.get(id);
+  const job = (async () => {
+    try {
+      const url = kind === 'dem' ? OPEN_TILES.demUrl(z, x, y) : OPEN_TILES.photoUrl(z, x, y);
+      const res = await fetch(url);
+      if (!res.ok) { (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, null); return; }
+      const tile = await decode(await res.blob());
+      (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, tile);
+    } catch {
+      (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, null);
+    } finally {
+      inflight.delete(id);
+    }
+  })();
+  inflight.set(id, job);
+  return job;
+}
+
+function warm(kind: 'dem' | 'photo', latDeg: number, lonDeg: number) {
+  if (typeof fetch !== 'function') return;
+  const zooms = kind === 'dem' ? OPEN_TILES.demZoom : OPEN_TILES.photoZoom;
+  for (const z of zooms) for (const t of tilesAround(latDeg, lonDeg, z, 1)) void pull(kind, t.z, t.x, t.y);
+}
+
+/** Elevation tiles only. Photographs are a later step so a landing can show relief before the pictures arrive. */
+export function warmDemTiles(latDeg: number, lonDeg: number) { warm('dem', latDeg, lonDeg); }
+/** Sentinel-2 cloudless tiles. Safe to call every frame. */
+export function warmPhotoTiles(latDeg: number, lonDeg: number) { warm('photo', latDeg, lonDeg); }
+
+/** Test hook. */
+export function resetOpenTiles() {
+  dem.clear(); photo.clear(); inflight.clear(); generation++;
+}

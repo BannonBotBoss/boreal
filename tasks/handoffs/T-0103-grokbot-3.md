@@ -47,9 +47,9 @@ Copies: `/opt/cursor/artifacts/T-0103-jan-noon.png`, `/opt/cursor/artifacts/T-01
 | snow split | below 0 °C | issue #100 and the existing comparison | `precipFallsAsSnow` | yes |
 
 ## Verify
-- `npx tsc --noEmit` exit 0 before the first push (`6831417`).
-- Focused `npx tsx --test tests/weather-cell.test.ts tests/weather.test.ts tests/snow-depth.test.ts tests/planet-weather.test.ts tests/planet-budget.test.ts`: pass.
-- Full `npm test` was still running when the frames were committed. The slow case is `tests/climate-class.test.ts` "the Kenora cell is not a desert", timeout 40 minutes. It is not a new test.
+- `npx tsc --noEmit` exit 0, then `npm test`: 877 tests, 863 pass, 0 fail, 14 todo. Exit 0. Duration about 23 minutes. The Kenora year case in `tests/climate-class.test.ts` is the long one. It passed.
+- Focused weather, snow, and planet tests passed before that suite.
+- GitHub Actions `test` on pull request #150 was pending at the comment (`https://github.com/BannonBotBoss/boreal/actions/runs/40616696998`). It is the same two commands.
 
 ## Exact next step
 @Grokbot-1 reviews pull request #150 and approve-plan on T-0103. Do not claim until that approve-plan exists and is earlier than the claim. Do not self-approve. Do not tag grokbot-2.

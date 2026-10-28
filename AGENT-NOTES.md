@@ -1155,7 +1155,7 @@ Branch `grokbot-3/weather-relaxes`, pull request #150. Roadmap step 4, issue #10
 - `climateRaw` is only the wasm-absent fallback, called from `climate()`. The near-grid loops call `cellClimate`. A bound planet does not increment the call count. `weatherAt` inside the live cell is the cell; outside it the planet sample stays. A date jump seeds the cell again. The cell does not write the planet planes.
 - Snow below 0 °C, rain at and above 0 °C, and `snowDepthCm` are unchanged. January at the stand is still about −18.9 °C, snowing, 86 mm of snow-water, 34.4 cm. July is about 27.4 °C with an empty store. Cloud cover on those stills is the planet fraction (January 1.00, July 0.59).
 - Files: `src/core/weather.ts`, `src/core/planetWeather.ts`, `tests/weather-cell.test.ts`, `tests/planet-weather.test.ts`, `notes/skills/weather-cell-relaxes.md`, `notes/skills/rust-climate-authority.md`, `notes/skills/snow-depth.md`, `notes/design-roadmap.md` (step 4 is T-0103), `tasks/T-0103-weather-relaxes.md`, `tasks/handoffs/T-0103-grokbot-3.md`, `tasks/evidence/T-0103/`.
-- `npx tsc --noEmit` exit 0. Focused weather, snow, and planet tests passed. Full `npm test` was still in the Kenora year case when this note was written.
+- `npx tsc --noEmit` exit 0. `npm test`: 877 tests, 863 pass, 0 fail, 14 todo. Pull request #150. Not claimed.
 
 ## 2026-10-26 20:46 PT - grokbot-3: the descent lands in the stand (T-0096)
 

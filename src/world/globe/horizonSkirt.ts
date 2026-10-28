@@ -33,8 +33,11 @@ export const HORIZON_SKIRT = {
   maxTriangles: 6000,
   /** Rebuild when the camera crosses this many metres, or the eye height changes a band. */
   snapM: 40,
-  /** The chunk fade disc is this times the loaded radius, so the square corners fall inside the dither. */
-  discCover: 1.5,
+  /**
+   * The chunk fade disc is this times the loaded radius. Less than 1 so the dither
+   * finishes inside the loaded square and the square corners are fully discarded.
+   */
+  discCover: 0.7,
 };
 
 /** Line-of-sight metres to the horizon from an eye `eyeM` above the surface. */

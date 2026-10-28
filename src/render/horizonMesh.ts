@@ -9,7 +9,8 @@ import { heightAt } from '../core/world';
 import { SITE } from '../core/sitePhase';
 import { smoothstep } from '../proc/math';
 import { PLANET, type Planet } from '../world/globe/planet';
-import { HORIZON_SKIRT, buildSkirtMesh, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
+import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
+import { blendDem, openTileGeneration, sampleDem, warmDemTiles } from '../world/globe/openTiles';
 
 const HAZE = new THREE.Color(0.55, 0.62, 0.68);
 
@@ -74,8 +75,10 @@ export function createHorizonSkirt(): HorizonSkirt {
       originKey = oKey;
       key = '';
     }
+    const hereLL = skirtLatLon(planet, cx, cz, SITE.remote);
+    warmDemTiles(hereLL.latDeg, hereLL.lonDeg);
     const snap = HORIZON_SKIRT.snapM;
-    const next = `${originKey}:${Math.round(cx / snap)}:${Math.round(cz / snap)}:${Math.round(Math.log2(Math.max(1, eyeM)) * 8)}:${Math.round(Math.atan2(forwardZ, forwardX) * 4)}`;
+    const next = `${originKey}:${Math.round(cx / snap)}:${Math.round(cz / snap)}:${Math.round(Math.log2(Math.max(1, eyeM)) * 8)}:${Math.round(Math.atan2(forwardZ, forwardX) * 4)}:${openTileGeneration()}`;
     made.cam.value.set(cx, cz);
     if (next === key) return false;
     key = next;
@@ -85,12 +88,15 @@ export function createHorizonSkirt(): HorizonSkirt {
     const fx = forwardX / fl, fz = forwardZ / fl;
     const data = buildSkirtMesh(cx, cz, Math.max(1, eyeM), (x, z) => {
       const far = skirtSample(planet, x, z, here);
+      const dist = Math.hypot(x - cx, z - cz);
       let y = far.y;
       if (here.remote) {
         // The landing height adds the same micro-relief as heightAt. Fade it out so the far rings stay the globe.
-        const dist = Math.hypot(x - cx, z - cz);
         y += (surfaceDetail(x, z) - detail0) * 0.5 * (1 - smoothstep(400, 2000, dist));
       }
+      const ll = skirtLatLon(planet, x, z, here.remote);
+      const dem = sampleDem(ll.latDeg, ll.lonDeg);
+      if (dem != null) y = blendDem(y, (dem - here.asl) + here.gameY, dist, far.water);
       return { y, rgb: far.rgb };
     }, PLANET.radius, (x, z, ringR) => {
       // The pad under the camera stays whole. Farther out, drop quads that reach behind the eye.

@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0110",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T02:11:48-07:00",
+  "branch": "grokbot-3/eco-front-elevation",
+  "note": "AWS terrarium heights on the horizon rings, blended out from the chunk mesh. The prairie rectangle corners are discarded (prairie-low.png is a dithered curve). Skill open-elevation. Stills are not a drone photo: home-low shows coarse terraces, the glide frames stay dark. npx tsc --noEmit and tests/open-tiles.test.ts plus tests/horizon-skirt.test.ts passed."
+}

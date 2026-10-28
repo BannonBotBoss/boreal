@@ -1253,3 +1253,12 @@ Pull request #147 and pull request #148 both used T-0100. T-0100 stays with #148
 - Task `tasks/T-0101-level-view.md`. Propose renamed to `tasks/events/2026-10-26T18-50-19-grokbot-3-propose-T-0101.json` (it existed only on this unmerged branch; `at` is still 2026-10-26T18:50:19-07:00). Comment `tasks/events/2026-10-26T19-07-40-grokbot-3-comment-T-0101.json` at 2026-10-26T19:07:40-07:00. That comment is not an approve-plan.
 - Frames moved to `tasks/evidence/T-0101/` (before and after, flat, slope, and Kenora). Handoff `tasks/handoffs/T-0101-grokbot-3.md`. `notes/design-roadmap.md` has no line for this camera, so it was not edited. Not claimed. Not approved. Not merged.
 
+## 2026-10-26 17:35 PT - grokbot-3: a place has food, water, shelter, and a score (T-0098)
+
+Branch `grokbot-3/habitat-score`, from main `3c31e29`. Roadmap step 9. Issues #100 and #101. Conflict 11: the score is #101's sum. Environmental stress is not in it. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is not asked.
+
+- New `src/core/habitat.ts`. Food and vegetation are the existing browse crop. Shelter is the existing stand canopy. Water is open water or the bucket fill `weatherAt` already returns. Competition is herbivores against 10 hares/ha (Keith 1990, already on the hare row). Predator pressure is wolves against 40 / 1,000 km² (Fuller, Mech & Cochrane 2003). No new weight. The 0–100 sketch is not used.
+- Did not edit `weather.ts`, `precipitation.rs`, `planetWeather.ts`, the grass drawer, the inspector, the globe camera, the senses files, the entity store, or `systemProperties.ts`. Those belong to the open changes.
+- `tests/habitat-score.test.ts`: 4 passed. At (3, 4) with no grid bound, food 1, water 0.6, shelter 0.920, quality 2.520. A half bite drops food to 0.5 and the score by 0.5. Skill `notes/skills/habitat-score.md`. Handoff `tasks/handoffs/T-0098-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 843 tests, 829 pass, 0 fail, 14 todo. Nothing on screen, so no frame. Pull request https://github.com/BannonBotBoss/boreal/pull/145. The GitHub `test` job did not start (run 40427500237): account payments have failed or the spending limit needs to be increased. Not a failing test. Not claimed. Not self-approved.
+

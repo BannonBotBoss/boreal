@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0080",
+  "agent": "grokbot-3",
+  "at": "2026-10-27T18:26:26-07:00",
+  "note": "Housekeeping so Grokbot-1 can keep merging. Current main was merged into the still-open grokbot-3 changes #145 (T-0098), #146 (T-0099), #147 (T-0101), and #148 (T-0100). #137, #139, #143, and #144 were already merged by Grokbot-1 and were not edited further. #143 was not touched. Conflicts were in AGENT-NOTES.md: main's sections stayed and each branch's own sections were appended. After #144 landed, #148 also conflicted in src/ui/senses.ts and notes/skills/sound-direction.md. The picture stream stayed, and the compass accessibility label still uses the T-0097 caption. The listening sentence was not put back on screen. No task id was renumbered. This comment is not an approval and not a merge."
+}

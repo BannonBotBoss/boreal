@@ -158,8 +158,8 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Goal:** Each habitat cell carries food, water, shelter, vegetation, competition, predator pressure, and a quality score.
 - **Kind:** New cell fed by steps 5–8 and the existing plants (`src/core/flora`, forage regrowth T-0015). Quality is food + water + shelter − competition − predator pressure (#101). Environmental stress is not in this sum (conflict 11).
 - **Issues:** #100 (habitat), #101 (habitat cell and seasonal vegetation).
-- **Depends on:** Steps 6, 7, and 8.
-- **Size:** M. Queue.
+- **Depends on:** Steps 6, 7, and 8. Those files stay on their own changes. This step reads the crop, the canopy, and the bucket.
+- **Size:** M. Board: T-0098.
 - **Gates:** Numbers: food and shelter from existing plant biomass and cover, with the citation already on those systems; any new weight is calibration and labelled. Frame: a hunted clearing reads lower food than an ungrazed one, or N/A with the score tested on two fixture cells. Evidence: no animal reads a climate-class string.
 
 ### Step 10 — The strongest urge wins

@@ -7,10 +7,10 @@ use crate::cover::{cover_row, place_hash, Cover};
 pub const SPECIES_JSON: &str = include_str!("../../../data/earth/species-density.json");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1 }
+pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3 }
 impl Species {
-    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer"][self as usize] }
-    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), _ => None } }
+    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx"][self as usize] }
+    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), _ => None } }
 }
 
 fn block(sp: Species) -> &'static str {
@@ -19,6 +19,7 @@ fn block(sp: Species) -> &'static str {
         .find(|&i| SPECIES_JSON[i + k.len()..].trim_start().starts_with('{')).expect("species block");
     &SPECIES_JSON[start..start + SPECIES_JSON[start..].find('}').unwrap()]
 }
+fn has_field(sp: Species, f: &str) -> bool { block(sp).contains(&format!("\"{f}\"")) }
 fn field(sp: Species, f: &str) -> Vec<f64> {
     let b = block(sp);
     let k = format!("\"{f}\"");
@@ -49,7 +50,9 @@ pub fn density_per_ha(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: 
     let cycle = field(sp, "cycle_years")[0];
     let v = if cycle > 0.0 {
         // Population cycle: the phase shifts slowly with place so neighbouring valleys peak in step, the far range does not.
-        let phase = (year as f64 + 3.0 * place_hash(lat.round(), lon.round())) / cycle;
+        // A predator on the same cycle runs `cycle_lag_years` behind its prey (lynx behind hare).
+        let lag = if has_field(sp, "cycle_lag_years") { field(sp, "cycle_lag_years")[0] } else { 0.0 };
+        let phase = (year as f64 - lag + 3.0 * place_hash(lat.round(), lon.round())) / cycle;
         let wave = 0.5 - 0.5 * (std::f64::consts::TAU * phase).cos();
         (0.8 * wave * wave + 0.2 * h).clamp(0.0, 1.0)
     } else { h };
@@ -85,6 +88,18 @@ mod tests {
         let b = density_per_ha(Species::WhiteTailedDeer, 50.0, -90.0, 350.0, 0.9, false, 2026);
         assert!(p > b, "{p} {b}");
         assert_eq!(density_per_ha(Species::WhiteTailedDeer, 45.0, -95.0, 0.0, 1.0, true, 2026), 0.0);
+    }
+    #[test] fn lynx_peaks_about_two_years_after_hares() {
+        let peak = |sp| (2020..2030).max_by(|&a, &b| density_per_ha(sp, 55.0, -100.0, 300.0, 0.9, false, a)
+            .partial_cmp(&density_per_ha(sp, 55.0, -100.0, 300.0, 0.9, false, b)).unwrap()).unwrap();
+        let lag = (peak(Species::CanadaLynx) - peak(Species::SnowshoeHare)).rem_euclid(10);
+        assert!((1..=3).contains(&lag), "lag {lag}");
+    }
+    #[test] fn moose_in_boreal_not_desert_and_scarcer_than_hares() {
+        let m = density_per_ha(Species::Moose, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        assert!(m > 0.0 && m < 0.02, "{m}");
+        assert_eq!(density_per_ha(Species::Moose, 25.0, -110.0, 900.0, 0.1, false, 2026), 0.0);
+        assert_eq!(Species::from_id(3), Some(Species::CanadaLynx));
     }
     #[test] fn spawn_count_tracks_density() {
         assert_eq!(spawn_count(0.0, 500.0, 50.0, -90.0), 0);

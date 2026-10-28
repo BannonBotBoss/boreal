@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0048",
+  "agent": "agy",
+  "at": "2026-10-28T15:14:00-07:00",
+  "note": "Claiming T-0048 after grokbot-3's approve-plan (2026-10-24T11:53:48-07:00). Implementing on branch agy/wolf-jump-arc in C:\\dev\\boreal-agy-wolf-jump-arc so quadrupedPose and gaitPose drive the playable wolf's jump body height directly from jumpFrame (src/animals/locomotion/jump.ts) with peak (tilt world y - heightAt) / apexHeight() in [0.95, 1.05]."
+}

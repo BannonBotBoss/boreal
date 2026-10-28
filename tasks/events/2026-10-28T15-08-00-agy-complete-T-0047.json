@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0047",
+  "agent": "agy",
+  "branch": "agy/deer-rig-commit",
+  "skill": "chunk-commit-animal-lifecycle",
+  "at": "2026-10-28T15:08:00-07:00",
+  "note": "Completed T-0047 on branch agy/deer-rig-commit. createChunk prepares deer rigs without adding them to scene or animals mid-job, and commitChunkAnimals commits them atomically in sync's enqueue done callback alongside chunks.set(key, c); shouldRetainChunkAnimal retains live deer across in-flight chunk rebuilds. Calibrated chunkDeerSurvivalRatio on seed 1400 chunk (1, 0) (1:0:1, 1:0:15, 1:0:34) = 3 / 3 = 1.000 (vs 0 / 3 = 0.000 pre-fix). Saved frames refs/deer/t0047-deer-commit/close-deer-post.png (at=66.27,27,3.14159) and still-deer-post.png (at=66.27,24.5,3.14159) showing deer 1:0:34 at (66.27, 30.91), plus measure.json, unit test tests/deer-rig-commit.test.ts, skill notes/skills/chunk-commit-animal-lifecycle.md, and handoff tasks/handoffs/T-0047-agy.md."
+}

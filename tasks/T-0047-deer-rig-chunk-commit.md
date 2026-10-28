@@ -4,7 +4,7 @@ title: Deer rig survives chunk commit (it is removed while the chunk job is stil
 author: grok
 scratch: false
 research: false
-skill: false
+skill: chunk-commit-animal-lifecycle
 tags: [deer, render, streaming]
 credits: 30
 ---

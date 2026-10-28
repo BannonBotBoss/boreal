@@ -1,0 +1,354 @@
+{
+  "task": "T-0047",
+  "seed": 1400,
+  "hour": 12,
+  "metric": "chunkDeerSurvivalRatio = survivingChunkDeer / generatedChunkDeer",
+  "calibration": {
+    "knownMismatchPreFix": {
+      "source": "tasks/evidence/2026-10-23-grok-loop-0216/deer-drop.json",
+      "chunk1_0_created": [
+        "1:0:1",
+        "1:0:15",
+        "1:0:34"
+      ],
+      "chunk1_0_dropped": [
+        "1:0:1",
+        "1:0:15",
+        "1:0:34"
+      ],
+      "survivingChunk1_0": 0,
+      "generatedChunk1_0": 3,
+      "score": 0
+    },
+    "knownMatchPostFix": {
+      "chunk1_0_created": [
+        "1:0:1",
+        "1:0:15",
+        "1:0:34"
+      ],
+      "chunk1_0_dropped": [],
+      "survivingChunk1_0": 3,
+      "generatedChunk1_0": 3,
+      "score": 1
+    }
+  },
+  "shots": [
+    {
+      "name": "close-deer-post",
+      "at": "66.27,27,3.14159",
+      "file": "close-deer-post.png",
+      "queued": 0,
+      "jobsRun": 17028,
+      "chunks": 31,
+      "census": {
+        "individuals": 7.918761218639807,
+        "density": 5.081238781360194,
+        "population": 13
+      },
+      "deerCount": 13,
+      "chunk1_0_deerCount": 3,
+      "chunk1_0_deer": [
+        {
+          "species": "deer",
+          "x": 62.163692470639944,
+          "z": 7.437519216910005,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 49.64610427618027,
+          "z": 18.156734658405185,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 66.26709849573672,
+          "z": 30.910044200718403,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        }
+      ],
+      "deerMarks": [
+        {
+          "species": "deer",
+          "x": 62.163692470639944,
+          "z": 7.437519216910005,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 49.64610427618027,
+          "z": 18.156734658405185,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 66.26709849573672,
+          "z": 30.910044200718403,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 104.3586149904877,
+          "z": 11.214244840666652,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 92.20700898207724,
+          "z": 54.55333199352026,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 102.1413956861943,
+          "z": -12.272462323307991,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 137.72663401439786,
+          "z": 30.516546554863453,
+          "body": 0.7982324811504338,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "deer",
+          "x": 96.10028174705803,
+          "z": 109.20532026328146,
+          "body": 0.23353598628130512,
+          "ink": 0.7664640137186949,
+          "kind": "density"
+        },
+        {
+          "species": "deer",
+          "x": 129.01045033708215,
+          "z": -0.16530980356037617,
+          "body": 0.8869927512080671,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "deer",
+          "x": 154.91987499408424,
+          "z": 112.90889571420848,
+          "body": 0,
+          "ink": 1,
+          "kind": "density"
+        },
+        {
+          "species": "deer",
+          "x": 159.46207250468433,
+          "z": 117.34047276899219,
+          "body": 0,
+          "ink": 1,
+          "kind": "density"
+        },
+        {
+          "species": "deer",
+          "x": 139.84437776729465,
+          "z": -46.314357314258814,
+          "body": 0,
+          "ink": 1,
+          "kind": "density"
+        },
+        {
+          "species": "deer",
+          "x": 186.00606148131192,
+          "z": 67.14694934897125,
+          "body": 0,
+          "ink": 1,
+          "kind": "density"
+        }
+      ],
+      "player": {
+        "x": 66.27,
+        "z": 27,
+        "yaw": 3.14159,
+        "energy": 74.65309430854646,
+        "water": 99.86081596108275,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      }
+    },
+    {
+      "name": "still-deer-post",
+      "at": "66.27,24.5,3.14159",
+      "file": "still-deer-post.png",
+      "queued": 0,
+      "jobsRun": 17424,
+      "chunks": 31,
+      "census": {
+        "individuals": 7.864528723234379,
+        "density": 5.135471276765621,
+        "population": 13
+      },
+      "deerCount": 13,
+      "chunk1_0_deerCount": 3,
+      "chunk1_0_deer": [
+        {
+          "species": "deer",
+          "x": 62.163692470639944,
+          "z": 7.437519216910005,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 49.64610427618027,
+          "z": 18.156734658405185,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 66.26709849573672,
+          "z": 30.910044200718403,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        }
+      ],
+      "deerMarks": [
+        {
+          "species": "deer",
+          "x": 62.163692470639944,
+          "z": 7.437519216910005,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 49.64610427618027,
+          "z": 18.156734658405185,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 66.26709849573672,
+          "z": 30.910044200718403,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 104.3586149904877,
+          "z": 11.214244840666652,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 92.20700898207724,
+          "z": 54.55333199352026,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 102.1413956861943,
+          "z": -12.272462323307991,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "deer",
+          "x": 137.72663401439786,
+          "z": 30.516546554863453,
+          "body": 0.7930873436795429,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "deer",
+          "x": 96.10028174705803,
+          "z": 109.20532026328146,
+          "body": 0.1617858167267361,
+          "ink": 0.8382141832732639,
+          "kind": "density"
+        },
+        {
+          "species": "deer",
+          "x": 129.01045033708215,
+          "z": -0.16530980356037617,
+          "body": 0.9096555628280995,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "deer",
+          "x": 154.91987499408424,
+          "z": 112.90889571420848,
+          "body": 0,
+          "ink": 1,
+          "kind": "density"
+        },
+        {
+          "species": "deer",
+          "x": 159.46207250468433,
+          "z": 117.34047276899219,
+          "body": 0,
+          "ink": 1,
+          "kind": "density"
+        },
+        {
+          "species": "deer",
+          "x": 139.84437776729465,
+          "z": -46.314357314258814,
+          "body": 0,
+          "ink": 1,
+          "kind": "density"
+        },
+        {
+          "species": "deer",
+          "x": 186.00606148131192,
+          "z": 67.14694934897125,
+          "body": 0,
+          "ink": 1,
+          "kind": "density"
+        }
+      ],
+      "player": {
+        "x": 66.27,
+        "z": 24.5,
+        "yaw": 3.14159,
+        "energy": 74.65309430854646,
+        "water": 99.86081596108275,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      }
+    }
+  ],
+  "errors": []
+}

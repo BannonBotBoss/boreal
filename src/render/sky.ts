@@ -67,7 +67,10 @@ void main() {
 
 export function createSky(scene: THREE.Scene) {
   const search = typeof location === 'undefined' ? '' : location.search, venus = createVenus(scene, search); // the date is the clock's (initDay applies ?date= after this is built)
-  const sky = new Sky(); sky.scale.setScalar(600); sky.layers.enable(1); scene.add(sky); // layer 1 = GI probe capture
+  const sky = new Sky(); sky.scale.setScalar(600); sky.layers.enable(1); sky.userData.physicalSky = true; scene.add(sky); // layer 1 = GI probe capture
+  const skyMat = sky.material as THREE.ShaderMaterial;
+  skyMat.depthWrite = false;
+  skyMat.fog = false;
   const u = sky.material.uniforms;
   u.turbidity.value = 2.5; u.rayleigh.value = 2.2; u.mieCoefficient.value = .004; u.mieDirectionalG.value = .8;
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(550, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.ShaderMaterial({

@@ -221,6 +221,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     for (const c of unculled) c.frustumCulled = true; unculled.length = 0; // admitted last frame: uploaded by now
     for (const o of scene.children) {
       if (o.userData.horizonSkirt) continue; // the rings stay up: they are the ground past the chunk dither
+      if (o.userData.physicalSky && h > 8 && h < 2500) continue; // Preetham sky fills the top of a drone frame. A 600 m dome would cover the horizon, so the mesh is scaled out in background().
       if (isChunkRoot(o)) { for (const m of o.children) { if (partial && !faded(m)) { now.add(m); continue; } if (uploaded.has(m) || !m.visible && !hidden.has(m)) continue; const b = bytesOf(m); if (b <= budget || budget === INPAGE.uploadMB * 1e6) { budget -= b; admit(m); } else now.add(m); } continue; }
       if (hasLight(o) || (!(o as THREE.Mesh).isMesh && (o as THREE.Points).type !== 'Points' && !o.children.length)) continue;
       if (o.userData.animalPicture) continue; // specks and stored bodies stay through the glide; precipitation points still hide
@@ -410,6 +411,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       dusk = duskOf(scene); const s = bandLook(smoothstep(TRANSITION.bandTop, TRANSITION.fadeFull, h), smoothstep(TRANSITION.fadeFull, INPAGE.tintLow, h));
       DRONE_GRADE.exposure = droneExposureScale(h);
       scene.backgroundIntensity = (INPAGE.gain + (INPAGE.bandGain - INPAGE.gain) * s) / EXPOSURE.base; // the globe's own look at the band top -> matched to the game by fadeFull
+      for (const o of scene.children) if (o.userData.physicalSky) o.scale.setScalar(h > 8 && h < 2500 ? 1e5 : 600);
+      if (scene.fog instanceof THREE.Fog && h > 8 && h < 2500) scene.fog.color.setRGB(0.45, 0.62, 0.9);
     // the game's linear fog (render/sky: ~200-480 m + camera height, pale) is pushed out above the handover: up here the haze toward
     // the globe (setPatchFar) is the aerial perspective, and the fog washed distant patch tree tops out to the fog colour (r19 risk)
     if (scene.fog instanceof THREE.Fog) { const k = smoothstep(TRANSITION.handover, INPAGE.fogTop, h), m = 1 + INPAGE.fogOut * k * k; scene.fog.near *= m; scene.fog.far *= m; }

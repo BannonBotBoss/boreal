@@ -22,12 +22,14 @@ import { createFarLayer } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './flight';
+import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
+import { dryNear, engageLanding } from './landingSite';
 import { TRANSITION, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
 import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR, landSpawn } from './handoff';
 import { treesAround } from '../../core/ground';
-import { PLANET, GLOBE_COLOURS } from './planet';
+import { PLANET, GLOBE_COLOURS, fromLatLon } from './planet';
 import { nearGroundOcc, setPatchFade, setPatchFar } from '../../render/fade';
 import { AO_BLEND } from '../../render/post';
 import { LOG_DEPTH } from './logDepth';
@@ -94,6 +96,7 @@ function patchPlaneY(x: number, z: number, r: number) {
 function controller(view: View, host: InPageHost) {
   const renderer = view.photoreal.renderer, far = createFarLayer(), hold = createGovernorHold(GOVERNOR, resetGovernor);
   let globe: Globe | null = null, mode: TransitionMode = 'game', down = true, phase: 'fly' | 'drone' | 'blend' = 'fly';
+  let pinned: number | null = null; // dev stills: hold the drone at one height instead of the glide floor
   let next: 'globe' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
   let prep: { x: number; z: number } | null = null; // chunks under the fall, warmed once the drop is below prepAlt. The clicked point is not moved.
   let renderMs = 0; // last frame's globe + game draw CPU (ms): the descent's chunk job budget fills the rest of jobFrame
@@ -145,10 +148,12 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
   /** Globe -> drone, on the point that was double-clicked. The fall's vertical speed is kept. The spot is not pulled
    *  home. It does step to the nearest dry stand (the same landSpawn the reload handoff uses): the clicked centre of
    *  the home region is the lake, and standing there shows the water sheet instead of the forest floor. */
-  function descend(at: { x: number; z: number; yaw: number; vy?: number }) {
+  function descend(at: { x: number; z: number; yaw: number; vy?: number; home?: number; dir?: [number, number, number] }) {
     const g = globe!;
+    const remote = !!at.dir && engageLanding(at.dir, at.home ?? 1);
     const spot = landSpawn({ x: at.x, z: at.z }, undefined, at.yaw);
-    spotX = spot.x; spotZ = spot.z; yaw = at.yaw;
+    const stood = remote ? dryNear() : spot;
+    spotX = stood.x; spotZ = stood.z; yaw = at.yaw;
     host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null;
     const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
     h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;
@@ -207,6 +212,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     for (const o of scene.children) {
       if (isChunkRoot(o)) { for (const m of o.children) { if (partial && !faded(m)) { now.add(m); continue; } if (uploaded.has(m) || !m.visible && !hidden.has(m)) continue; const b = bytesOf(m); if (b <= budget || budget === INPAGE.uploadMB * 1e6) { budget -= b; admit(m); } else now.add(m); } continue; }
       if (hasLight(o) || (!(o as THREE.Mesh).isMesh && (o as THREE.Points).type !== 'Points' && !o.children.length)) continue;
+      if (o.userData.animalPicture) continue; // specks and stored bodies stay through the glide; precipitation points still hide
       if (o.renderOrder < 0 || o.type === 'Points' || (partial && !allFaded(o) && fade < popAt(o))) now.add(o); // sky (-2), cloud dome (-1), precipitation; everything else that cannot dither while partial
     }
     for (const [o, v] of hidden) if (!now.has(o)) { o.visible = v; hidden.delete(o); }
@@ -240,6 +246,22 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** dev (the check script): chunk job scheduler state */
     /** dev (the check script): hold the descent at a height / pin the band camera (occlusion checks); ground height */
     DEBUG, groundAt: ground, get land() { return [land.x, land.y, land.z]; },
+    /** Dev stills: the same descend a double-click uses, then hold the drone at a height. */
+    placeAt(latDeg: number, lonDeg: number, heightM = ANIMAL_LADDER.mapHoldM) {
+      if (!globe) return false;
+      const dir = fromLatLon(latDeg * Math.PI / 180, lonDeg * Math.PI / 180);
+      const s = globe.planet.sampleSurface(dir);
+      pinned = null;
+      descend({ x: s.x, z: s.z, yaw, vy: 0, home: s.home, dir: [dir[0], dir[1], dir[2]] });
+      pinned = heightM; h = heightM; vel.x = vel.y = vel.z = 0; pitch = ISO_BELOW_HORIZON; readySeen = true;
+      return true;
+    },
+    setEye(heightM: number, pitchRad?: number, back = 0) {
+      pinned = heightM; h = Math.max(1, heightM);
+      if (pitchRad !== undefined) pitch = pitchRad;
+      if (back) { spotX += Math.sin(yaw) * back; spotZ += Math.cos(yaw) * back; host.place(spotX, spotZ, yaw); }
+      vel.x = vel.y = vel.z = 0;
+    },
     /** dev (refs/T-0041/measure.mjs): the game view (scene, camera) and the player spot, for the landing line-of-sight raycast */
     get view() { return view; }, player: () => host.player(),
     jobs: () => ({ q: queued(), run: JOBS.jobsRun, deferred: JOBS.deferred, lastMs: +JOBS.lastFrameMs.toFixed(1), kinds: JSON.parse(JSON.stringify(JOBS.kinds)) as unknown }),
@@ -306,12 +328,19 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
         if (phase === 'drone') {
           if (wantEmbody && lowEnough) { wantEmbody = false; host.place(spotX, spotZ, yaw); placedFrame = frameNo; blend = 1; phase = 'blend'; vel.x = vel.y = vel.z = 0; airSpeed = 0; } // one camera: no second pose to ease toward
           else {
+            const axesIn = readAxes(dt);
             const fly = { x: spotX, y: ground(spotX, spotZ) + h, z: spotZ, yaw, pitch };
-            const x0 = fly.x, y0 = fly.y, z0 = fly.z, minY = photoFlyFloor(fly.x, fly.z);
-            stepCarriedFly(fly, vel, dt, readAxes(dt), minY);
-            if (fly.y <= minY + 1e-3 && vel.y < 0) vel.y = 0; // the photo floor stops the body; it does not zero the speed at the handoff
+            const diving = playerDiving(axesIn.u, axesIn.f, fly.pitch);
+            const x0 = fly.x, y0 = fly.y, z0 = fly.z;
+            const floorY = photoFlyFloor(fly.x, fly.z);
+            const minY = descentFloorY(ground(fly.x, fly.z), floorY, diving);
+            stepCarriedFly(fly, vel, dt, axesIn, minY);
+            const atGlide = !diving && minY > floorY + 1 && fly.y <= minY + 1e-2;
+            if (atGlide) { const held = arrestGlide(vel, fly.yaw, true, false); vel.x = held.x; vel.y = held.y; vel.z = held.z; fly.y = minY; }
+            else if (fly.y <= minY + 1e-3 && vel.y < 0) vel.y = 0; // the photo floor stops the body; it does not zero the speed at the handoff
             airSpeed = dt > 0 ? Math.hypot(fly.x - x0, fly.y - y0, fly.z - z0) / dt : 0;
             spotX = fly.x; spotZ = fly.z; yaw = fly.yaw; pitch = fly.pitch; h = fly.y - ground(fly.x, fly.z);
+            if (pinned !== null) { h = pinned; vel.x = vel.y = vel.z = 0; }
             if (Math.hypot(spotX - host.player().x, spotZ - host.player().z) > 8) { host.place(spotX, spotZ, yaw); placedFrame = frameNo; }
           }
         }

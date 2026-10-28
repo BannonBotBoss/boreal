@@ -19,6 +19,7 @@ import { gravity } from '../proc/physics';
 import { loadPlanetSim, type PlanetSim } from './planetBudget';
 import { bootGlobe } from '../world/globe/bootOrder';
 import { PLANET, fromLatLon, planetFor, toLatLon, type Vec3 } from '../world/globe/planet';
+import { SITE as LANDING, siteDirection } from './sitePhase';
 import { WORLD_SEED } from './world';
 
 /**
@@ -167,7 +168,8 @@ function windFrom(w: PlanetPointWeather, h: number, kind: SurfaceKind) {
 
 function pointUnder(x: number, z: number) {
   if (!bound || bound.n <= 0) return null;
-  const ll = toLatLon(planetFor(WORLD_SEED).fromLocal(x, z));
+  // Home keeps the Kenora gnomonic frame. A landing off that square reads the click's own direction.
+  const ll = toLatLon(LANDING.remote ? siteDirection(x, z, PLANET.radius) : planetFor(WORLD_SEED).fromLocal(x, z));
   return weatherAtLatLon(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, bound);
 }
 

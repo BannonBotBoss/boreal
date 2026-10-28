@@ -10,6 +10,7 @@
  * stage-3 soils (core/stages/soils), not from the LEVEL heights.
  */
 import { hash, random } from '../../proc/rng';
+import { SITE } from '../sitePhase';
 
 /** Live switch (setting world.stagedTerrain): heightAt reads the staged grid instead of the original layered terrain. */
 export const STAGES = { on: false, seed: 1400 }; // module default off (tests, tools); the APP default is on via the setting world.stagedTerrain.v2 (core/renderSettings), off with ?stages=0
@@ -169,6 +170,7 @@ export function lakeGrid(seed: number): Lakes {
  *  as in sampleGrid: a point belongs to a body if any of its 4 corner nodes does (was floor(x/cell): a half-cell offset), and
  *  it is wet only where the body's flat level is above the bilinear terrain, so the shoreline is the real contour. */
 export function lakeAt(seed: number, x: number, z: number) {
+  if (SITE.remote) return undefined; // off home, water is the planet sample inside heightAt, not the Kenora lakes
   const g = elevationGrid(seed), L = lakeGrid(seed), n = g.n, i0 = Math.floor(x / g.cell), j0 = Math.floor(z / g.cell); let b = -1;
   for (let k = 0; k < 4 && b < 0; k++) { const i = (((i0 + (k & 1)) % n) + n) % n, j = (((j0 + (k >> 1)) % n) + n) % n; b = L.id[j * n + i]; }
   if (b < 0) return undefined; const body = L.bodies[b]; if (toWorld(g, sampleGrid(g, x, z)) >= body.level) return undefined;

@@ -22,6 +22,8 @@ import { forageEdible, patchCover } from '../core/fields';
 import { observation, worldSec } from '../core/worldClock';
 import { animalShares, markFor, coarseStep, type Account } from '../core/coarse';
 import { createAnimalDensity, setBodyShare, DENSITY_MARK_LIFT_M, type DensityMark } from './animalDensity';
+import { createAnimalPicture } from './animalPicture';
+import { ANIMAL_LADDER } from './animalLadder';
 import { catalog } from '../core/catalog';
 import { seatRock } from './rocks';
 import { createSky } from './sky';
@@ -107,6 +109,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   const hares = createHares(scene); // src/animals/hare.ts
   const density = createAnimalDensity(scene);
+  const picture = createAnimalPicture(scene);
   let worldDt = 0;
   let census: Account = { individuals: 0, density: 0, population: 0 };
   const grass = createGrass(scene); // render/grass: procedural blades around the camera
@@ -166,7 +169,10 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     activeContext = context;
     setInterestCentre(also?.x ?? x, also?.z ?? z); // photo mode: the free camera is the centre
     photoObserver = !!also; // T-0081: no embodied creature while the free camera flies
-    const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE), nextRadius = Math.ceil((altitude > 85 ? INTEREST.mid * 1.5 : INTEREST.mid) / CHUNK_SIZE);
+    const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
+    const viewM = altitude > 85 ? Math.min(360, altitude * Math.tan(24 * Math.PI / 180)) : 0;
+    const reach = Math.max(altitude > 85 ? INTEREST.mid * 1.5 : INTEREST.mid, viewM);
+    const nextRadius = Math.ceil(reach / CHUNK_SIZE);
     const ax = also ? Math.floor(also.x / CHUNK_SIZE) : cx, az = also ? Math.floor(also.z / CHUNK_SIZE) : cz;
     const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}`;
     if (centerKey === tierKey && radius === nextRadius && revision === eventRevision) return;
@@ -297,7 +303,21 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const stepped = coarseStep(densityCount, worldDt, 'deer');
     census = { individuals, density: stepped, population: individuals + stepped };
     density.sync(marks, canvas.clientHeight || 720, camera.position); // counted before any body is hidden
-    for (const m of marks) setBodyShare(m.root, m.body);
+    const bodies = marks.map(m => ({
+      key: `${m.species}:${m.x.toFixed(1)}:${m.z.toFixed(1)}`,
+      species: m.species === 'hare' ? 'Snowshoe Hare' : 'White-tailed Deer',
+      x: m.x, y: m.y, z: m.z, yaw: m.root.rotation.y, moving: false, root: m.root,
+    }));
+    for (const h of hares.list()) {
+      const row = bodies.find(b => b.root === h.root);
+      if (row) row.moving = Math.abs(h.sim.speed) > ANIMAL_LADDER.stillMs;
+    }
+    bodies.push({
+      key: 'player-wolf', species: 'Gray Wolf',
+      x: wolf.root.position.x, y: wolf.root.position.y, z: wolf.root.position.z,
+      yaw: wolf.root.rotation.y, moving: Math.abs(wolf.brain.speed) > ANIMAL_LADDER.stillMs, root: wolf.root,
+    });
+    for (const row of picture.sync(bodies, camera, canvas.clientHeight || 720)) setBodyShare(row.root, row.proc);
     const report = {
       census, near: INTEREST.near, mid: INTEREST.mid, chunks: chunks.size,
       animals: marks.map(m => ({ species: m.species, x: m.x, z: m.z, body: m.body, ink: m.ink, kind: m.kind })),

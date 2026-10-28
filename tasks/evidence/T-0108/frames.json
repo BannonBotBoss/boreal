@@ -1,0 +1,121 @@
+[
+  {
+    "name": "home-glide",
+    "lat": 49.769999999999996,
+    "lon": 65.53668410517275,
+    "height": 400,
+    "placed": true,
+    "waited": 8471.799999999814,
+    "fade": 1,
+    "chunks": 2,
+    "animals": 5,
+    "picture": {
+      "specks": 6,
+      "fulls": 0,
+      "lows": 0,
+      "bodies": 0
+    }
+  },
+  {
+    "name": "home-low",
+    "lat": 49.769999999999996,
+    "lon": 65.53668410517275,
+    "height": 36,
+    "placed": true,
+    "waited": 1503.2999999998137,
+    "fade": 0.7567499999998836,
+    "chunks": 2,
+    "animals": 5,
+    "picture": {
+      "specks": 0,
+      "fulls": 0,
+      "lows": 0,
+      "bodies": 2
+    }
+  },
+  {
+    "name": "home-wolf",
+    "lat": 49.769999999999996,
+    "lon": 65.53668410517275,
+    "height": 7,
+    "placed": true,
+    "waited": 1864.8999999999069,
+    "fade": 0.6332500000001164,
+    "chunks": 2,
+    "animals": 5,
+    "picture": {
+      "specks": 0,
+      "fulls": 1,
+      "lows": 0,
+      "bodies": 2
+    }
+  },
+  {
+    "name": "boreal-glide",
+    "lat": 55,
+    "lon": 83.53668410517275,
+    "height": 400,
+    "placed": true,
+    "waited": 1952.5,
+    "fade": 1,
+    "chunks": 2,
+    "animals": 5,
+    "picture": {
+      "specks": 6,
+      "fulls": 0,
+      "lows": 0,
+      "bodies": 0
+    }
+  },
+  {
+    "name": "boreal-low",
+    "lat": 55,
+    "lon": 83.53668410517275,
+    "height": 40,
+    "placed": true,
+    "waited": 1613,
+    "fade": 1,
+    "chunks": 4,
+    "animals": 5,
+    "picture": {
+      "specks": 0,
+      "fulls": 0,
+      "lows": 0,
+      "bodies": 0
+    }
+  },
+  {
+    "name": "prairie-glide",
+    "lat": 42,
+    "lon": 43.53668410517275,
+    "height": 400,
+    "placed": true,
+    "waited": 1551.5,
+    "fade": 1,
+    "chunks": 4,
+    "animals": 5,
+    "picture": {
+      "specks": 6,
+      "fulls": 0,
+      "lows": 0,
+      "bodies": 0
+    }
+  },
+  {
+    "name": "prairie-close",
+    "lat": 42,
+    "lon": 43.53668410517275,
+    "height": 12,
+    "placed": true,
+    "waited": 2502.7000000001863,
+    "fade": 0.7557500000001164,
+    "chunks": 6,
+    "animals": 5,
+    "picture": {
+      "specks": 0,
+      "fulls": 0,
+      "lows": 0,
+      "bodies": 0
+    }
+  }
+]

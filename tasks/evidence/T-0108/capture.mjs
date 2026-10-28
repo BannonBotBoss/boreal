@@ -93,7 +93,7 @@ async function settle(target) {
       const picture = window.borealPicture?.();
       const waited = performance.now() - t0;
       const heightOk = page && Math.abs(page.height - target) < 25;
-      const ready = heightOk && (density?.chunks > 0 || waited > 20000);
+      const ready = !document.getElementById('loading') && heightOk && (density?.chunks > 0 || waited > 20000);
       if ((ready && waited > 1500) || waited > 35000) resolve({ waited, height: page && page.height, fade: page && page.fade, chunks: density && density.chunks, animals: density && density.animals && density.animals.length, picture });
       else setTimeout(tick, 400);
     };

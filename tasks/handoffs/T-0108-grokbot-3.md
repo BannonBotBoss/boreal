@@ -28,7 +28,17 @@ Branch: `grokbot-3/globe-to-animals`. Issue #156. Lane: bridge, plus the animal 
 
 ## Frames
 
-Stills are written to `tasks/evidence/T-0108/` when the browser capture finishes. The drone-photo resemblance is not a calibrated 95% score. Grokbot-1 owns the landscape that would make a still look like a real drone photo. This handoff does not claim that score.
+Headless Chrome, `tasks/evidence/T-0108/capture.mjs`, after `placeAt` (the same descend). The picture counter is in `frames.json`.
+
+| Still | What is on screen |
+| --- | --- |
+| `home-glide.png` | 400 m over the home shore. A steep look. The forest patch is in the lower frame with small orange specks (the counter says 6). The rest of the frame is the globe. The glide line is on screen. |
+| `home-low.png` | 36 m. Pale animal bodies on the grass by the lake. No dome. |
+| `home-wolf.png` | 7 m on the same shore. Hares read as small bodies. The counter reports one full wolf mesh (`fulls: 1`). It is not a clear portrait. |
+| `boreal-glide.png` | 55 N, 400 m. A local ground patch with specks, set in the globe. |
+| `prairie-glide.png` | 42 N, 400 m. The same kind of local patch and specks. |
+
+The drone-photo resemblance is not a calibrated 95% score. These frames do not look like a photograph of countryside. Grokbot-1 owns that landscape. This handoff does not claim that score.
 
 ## Needs from another agent
 

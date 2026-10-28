@@ -21,7 +21,7 @@ These are Matthew's standing rules for every contributor, human or agent. `tests
 
 ## 1. Everything is procedurally generated
 Terrain, trees, rocks, props, animals, and sound where feasible all come from seeded generators. Nothing is hand-placed, and there are no stored 3D models.
-Matthew, 2026-10-28, issue #156: animals may use stored Meshy models. One manifest, `public/models/animals/manifest.json`, keyed by the species names in `src/core/species.ts`. A species with no file keeps the procedural body. That instruction is newer than the sentence above and covers those model files only.
+Stored Meshy animal meshes are the exception (issues #110, #156, #160 and #162, which win over the sentence above): one manifest, `public/models/animals/manifest.json`, keyed by the names in `src/core/species.ts`, and one loader. The files live in that folder. A species with no file keeps the procedural body. The same bones and the same gait drive the mesh at every landing.
 - All randomness comes from `src/proc/rng.ts` (`hash`, `random`, `stream`, `range`). **No `Math.random`** anywhere else. *(guarded)*
 - Every generated thing is reproducible from `WORLD_SEED` plus a stable key (chunk, entity key, id). Render order is never used as identity.
 - Recorded audio clips are allowed for voice, music and bird calls. Their *timing and variation* still come from `proc/rng`.

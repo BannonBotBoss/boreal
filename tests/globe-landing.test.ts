@@ -71,13 +71,17 @@ test('a click off the home square moves the frame; home does not', () => {
   assert.equal(heightAt(0, 0), homeH);
 });
 
-test('the wolf proof is the only stored model, and other species keep a body size', () => {
+test('stored models are the manifest, and a species with no file keeps a body size', () => {
   assert.equal(bodyMetres('Gray Wolf'), 0.74);
   assert.equal(bodyMetres('White-tailed Deer'), 1);
   assert.equal(bodyMetres('Snowshoe Hare'), 0.22);
   assert.equal(bodyMetres('not an animal'), null);
-  const manifest = JSON.parse(readFileSync('public/models/animals/manifest.json', 'utf8')) as Record<string, { full?: string; low?: string }>;
-  assert.equal(manifest['Gray Wolf'].full, 'wolf.glb');
-  assert.ok(manifest['Gray Wolf'].low);
-  assert.equal(manifest['White-tailed Deer'], undefined);
+  const manifest = JSON.parse(readFileSync('public/models/animals/manifest.json', 'utf8')) as Record<string, { full?: string; as?: string } | string>;
+  const wolf = manifest['Gray Wolf'];
+  const deer = manifest['White-tailed Deer'];
+  const hare = manifest['Snowshoe Hare'];
+  assert.equal(typeof wolf === 'object' && wolf.full, 'gray-wolf.glb');
+  assert.equal(typeof deer === 'object' && deer.full, 'white-tailed-deer.glb');
+  assert.equal(typeof hare === 'object' && hare.full, 'snowshoe-hare.glb');
+  assert.equal(manifest['Canada Lynx'], undefined);
 });

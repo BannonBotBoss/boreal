@@ -90,7 +90,8 @@ test('no mesh file on the hare: stored models live in the animal manifest, and t
   assert.doesNotMatch(src, /GLTFLoader|OBJLoader|FBXLoader|ColladaLoader|PLYLoader|STLLoader|\.(glb|gltf|fbx|obj|dae|ply|stl)['"`]|TextureLoader|new URL\(/);
   const walk = (d: string): string[] => !existsSync(d) ? [] : readdirSync(d).flatMap(f => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
   const files = walk('public').filter(f => /hare|rabbit|lepus/i.test(f) && /\.(glb|gltf|fbx|obj|dae|ply|stl|png|jpg|ktx2)$/i.test(f));
-  assert.deepEqual(files.filter(f => !f.includes(`${'public'}/models/animals/`)), []);
+  // #156 and #160: the Meshy hare is the one stored file. The procedural builder above still does not load it.
+  assert.deepEqual(files, ['public/models/animals/snowshoe-hare.glb']);
   assert.ok(existsSync('public/models/animals/manifest.json'), 'the one animal manifest is allowed');
   const g = globalThis as { fetch?: unknown; XMLHttpRequest?: unknown }, saved = [g.fetch, g.XMLHttpRequest]; let calls = 0;
   g.fetch = () => { calls++; throw new Error('fetch'); }; g.XMLHttpRequest = function () { calls++; throw new Error('xhr'); };

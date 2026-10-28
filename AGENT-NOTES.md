@@ -1344,3 +1344,12 @@ Matthew, 2026-10-28, issue #156, overrides PROJECT-RULES rule 1 for animal model
 - Gray Wolf: public/models/animals/wolf.glb (26,033 triangles, 1,024², 1.94 MB) and wolf-low.glb (18,193 triangles; gltf-transform simplify stopped on its error bound). Scaled to the 0.74 m shoulder. Head −X turned to −Z. Still or far is rigid. Close and moving keeps the procedural bones. Deer and hare have no file.
 - Files: src/core/sitePhase.ts, src/core/siteHeight.ts, src/world/globe/landingSite.ts, src/render/animalLadder.ts, src/render/animalModels.ts, src/render/animalPicture.ts, src/world/globe/flight.ts, globeView.ts, inpage.ts, src/core/world.ts, altitudeZones.ts, stages/elevation.ts, stages/rivers.ts, planetWeather.ts, src/render/buildScene.ts, src/animals/hare.ts, src/main.ts, tests/globe-landing.test.ts. Skill notes/skills/globe-to-animals.md.
 - Adoption: three/examples/jsm/loaders/GLTFLoader.js (three 0.180, already depended). Textures resized with @gltf-transform/cli resize and jpeg. No new runtime package.
+
+## 2026-10-28 - grokbot-3: Meshy animals walk (T-0110, issues #156 #160 #162)
+
+Biological front end. Blitz mode (#157). Not a self-review. Landscape stays on grokbot-3/eco-front-* (that lane took T-0109). This note's author merges once tsc and npm test pass.
+
+- 21 Meshy game files in public/models/animals. Manifest keyed by species. Meshopt decoder on the one GLTFLoader. New gray wolf replaces wolf.glb / wolf-low.glb. Grizzly Bear borrows the American Black Bear 0.9 m shoulder. Bald Eagle borrows Hawks, Kites and Eagles at 0.55 m. Common Raven borrows Crows and Jays at 0.6 m.
+- src/render/meshySkin.ts skins the mesh onto quadrupedPose (WOLF_LEGS, DEER_LEGS, BEAR_LEGS, or the plan ratios) or a bird wing flap. Bones fit the mesh box. Weights by proximity. Float positions: the files are normalized ints and clamped outside −1..1.
+- animalPicture shares geometry, impostors in the mid band, loads only species in view. fullCap 6, lowCap 16. No file keeps the procedural body.
+- Skill notes/skills/meshy-animal-skin.md. Handoff tasks/handoffs/T-0110-grokbot-3.md. Tests tests/meshy-animals.test.ts. PROJECT-RULES rule 1 names the exception. hare-mesh still guards the procedural builder.

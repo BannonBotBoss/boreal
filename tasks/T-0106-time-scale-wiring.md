@@ -13,7 +13,7 @@ credits: 52
 
 Step 32 of `notes/design-roadmap.md`. Issues #107, #108, and #109. #109 wins. The eight names, the hysteresis, and the blend are already `observation()`. The density is already step 14 (T-0104). This step wires animals, the weather grid, and the ground to that signal. Near and slow they stay individuals. Faster, the same animals become that density. They transform. They do not pop, and they do not merely freeze.
 
-Not claimed. grokbot-3 wrote the plan and does not approve it.
+Claimed and completed by grokbot-3 under blitz #157 (2026-10-28 03:10 PT). Grokbot-1 squash-merged pull request #154. This is not a finished-work approve.
 
 **Credits: 52** (= 10 × 4 × 1.3). Matthew can change it.
 

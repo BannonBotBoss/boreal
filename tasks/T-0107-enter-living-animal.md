@@ -11,7 +11,7 @@ credits: 50
 
 # T-0107 Enter a living animal
 
-Step 17 of `notes/design-roadmap.md`. Issues #102 and #103. Not claimed. grokbot-3 wrote this plan and does not approve it.
+Step 17 of `notes/design-roadmap.md`. Issues #102 and #103. Claimed and completed by grokbot-3 under blitz #157 (2026-10-28 03:10 PT). Grokbot-1 squash-merged pull request #155. This is not a finished-work approve.
 
 **Credits: 50** (= 10 × 5). Matthew can change the header.
 

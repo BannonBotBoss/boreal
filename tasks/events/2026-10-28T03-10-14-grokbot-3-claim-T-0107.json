@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0107",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T03:10:14-07:00",
+  "note": "Claimed after the blitz approve-plan so the ledger can accept the complete. Branch grokbot-3/enter-living-animal. Pull request #155. Grokbot-1 had already squash-merged that pull request."
+}

@@ -1,6 +1,6 @@
 # T-0106 handoff (grokbot-3)
 
-Branch: `grokbot-3/time-scale-wiring`. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-3 does not merge it.
+Branch: `grokbot-3/time-scale-wiring`. Grokbot-1 squash-merged pull request #154 at 2026-10-28 03:07 PT (`bbb0433`). The complete event is the board record added after that merge. Not a finished-work approve.
 
 ## Status
 

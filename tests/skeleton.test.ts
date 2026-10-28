@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateSkeleton, interiorAngle, gapeDegrees, MAMMAL_CERVICAL, mergedRange, type Skeleton } from '../src/core/skeleton';
-import { MAMMALS, BIRD_GROUPS, mammalSkeleton, birdSkeleton, MAMMALS_POST_1400 } from '../src/core/species';
+import { MAMMALS, BIRD_GROUPS, mammalSkeleton, birdSkeleton, MAMMALS_POST_1400, MAMMALS_BEYOND_CHECKLIST } from '../src/core/species';
 const all: Skeleton[] = [...MAMMALS.map(r => mammalSkeleton(r[0])), ...BIRD_GROUPS.map(r => birdSkeleton(r[0]))];
 const bone = (s: Skeleton, id: string) => s.bones.find(b => b.id === id)!;
 test('every native mammal and every bird group obeys every global rule', () => {
-  assert.equal(MAMMALS.length, 56 - MAMMALS_POST_1400.length);
+  assert.equal(MAMMALS.length, 56 - MAMMALS_POST_1400.length + MAMMALS_BEYOND_CHECKLIST.length);
   for (const s of all) assert.deepEqual(validateSkeleton(s), [], s.species);
 });
 test('the validator catches broken skeletons', () => {

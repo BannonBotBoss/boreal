@@ -36,8 +36,11 @@ test('the manifest lists the 21 Meshy species and every file is meshopt', () => 
 
 test('names that are not species rows borrow a row, and a species with no file is not fetched', () => {
   const table = Object.fromEntries(rows) as Record<string, ModelEntry>;
-  assert.equal(table['Grizzly Bear'].as, 'American Black Bear');
-  assert.equal(table['Bald Eagle'].as, 'Hawks, Kites and Eagles');
+  assert.equal(table['Grizzly Bear'].as, undefined);
+  assert.equal(table['Bald Eagle'].as, undefined);
+  assert.equal(bodyMetres('Grizzly Bear'), 1.05);
+  assert.equal(bodyMetres('Bald Eagle'), 0.85);
+  assert.equal(fitModeFor('Bald Eagle'), 'length');
   assert.equal(table['Common Raven'].as, 'Crows and Jays');
   assert.equal(bodyMetres('American Black Bear'), 0.9);
   assert.equal(bodyMetres('Hawks, Kites and Eagles'), BIRD_GROUPS.find(r => r[0] === 'Hawks, Kites and Eagles')![3]);
@@ -45,7 +48,7 @@ test('names that are not species rows borrow a row, and a species with no file i
   assert.equal(fitModeFor('Hawks, Kites and Eagles'), 'length');
   assert.equal(fitModeFor('Gray Wolf'), 'shoulder');
   assert.equal(bodyMetres('Canada Lynx'), 0.55);
-  const near = entriesFor(table, ['Gray Wolf', 'Snowshoe Hare', 'Canada Lynx', 'Hawks, Kites and Eagles']);
+  const near = entriesFor(table, ['Gray Wolf', 'Snowshoe Hare', 'Canada Lynx', 'Bald Eagle']);
   assert.deepEqual(near.map(([name]) => name).sort(), ['Bald Eagle', 'Gray Wolf', 'Snowshoe Hare']);
 });
 

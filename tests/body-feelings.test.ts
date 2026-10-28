@@ -16,7 +16,7 @@ import { LIFESPAN } from '../src/core/lifespan';
 import { createNeeds, heatFactor, staminaRates, stepNeeds } from '../src/core/needs/engine';
 import { HARE_NEEDS, WOLF_NEEDS } from '../src/core/needs/species';
 import { PERCEPTION, readPerception } from '../src/core/perceptionBuffer';
-import { readStoredFixture } from '../src/core/storedAnimal';
+import { readStoredFixture } from '../src/core/storedFixture';
 import { createWolfModes, stepWolfModes } from '../src/core/wolfModes';
 import { rigMass } from '../src/render/mass';
 import { createPlayerWolf } from '../src/render/playerWolf';

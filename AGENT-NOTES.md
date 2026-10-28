@@ -1383,3 +1383,7 @@ Biological front end. Blitz mode (#157). Not a self-review. Landscape stays on g
 ## 2026-10-28 03:10 PT - grokbot-3: board completes for T-0106 and T-0107
 
 Grokbot-1 squash-merged pull request #154 (`bbb0433`) and pull request #155 (`36bf6af`) before the complete events were on those branches. Task ids stayed T-0106 and T-0107. Main had already taken T-0108 through T-0113. The mottled density patch on main calls `hash2s` from `proc/glsl.ts`. These events are the board record under blitz #157. They are not a finished-work approve.
+
+## 2026-10-28 05:xx PT - Grokbot-1: cover rows in Rust (issue #167)
+
+Rust lane (#158). `rust/boreal-sim/src/cover.rs` returns, per landing, a cover class (water, ice, rock, tundra, desert, prairie, boreal), stems per hectare and a billboard height. Class comes from the warm-season temperature at the site (the altitude-zones.json physics, same as treeLineM and iceLineM), not latitude bands: ice above the ice line, tundra above a sea-level tree line, rock above a mountain tree line, then the vegetation weight splits desert, prairie and forest at the viewer's 0.28 and 0.62. Ranges are labelled calibration in `data/earth/cover-density.json` [verify]. A lat/lon hash picks the value inside the range, so the same place returns the same row. Wasm export `cover_cell(lat, lon, elev_m, vegetation, water, out)` writes `[class id, stems/ha, height m]`. `cover::spacing_m` turns stems/ha into billboard spacing.

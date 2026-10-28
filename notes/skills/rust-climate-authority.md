@@ -7,7 +7,7 @@ One weather query for any point on the planet. The forest player is that query a
 `weatherAtLatLon(latDeg, lonDeg, source?)` in `src/core/planetWeather.ts`.
 
 - Inputs: latitude and longitude in degrees. Longitude wraps to −180..180. Latitude clamps to −90..90. `source` defaults to the bound `PlanetSim`. Pass a sim to read a grid that is not the bound one (the globe does this).
-- Null when that grid is missing or `n` is 0. That is the wasm-absent frame. `climateRaw` in `src/core/weather.ts` still answers `weatherAt` then. Do not run both on the same frame.
+- Null when that grid is missing or `n` is 0. That is the wasm-absent frame. `climateRaw` in `src/core/weather.ts` still answers outside the near cell then. While the planet is bound, the near cell's driver is `cellClimate` and it does not call `climateRaw`.
 - Cell centres (the grid's own lat/lon planes) return that cell. Anywhere else is bilinear, longitude wrapped.
 - Fields on `PlanetPointWeather`: `tC` °C (`tair`), `rh` 0..1, `q` kg/kg, `u` m/s east, `v` m/s north, `precipMmDay` and `precipMmH` (`precip` / 24), `snow` (air below 0 °C and precip > 0), `sweMm` mm water equivalent, `snowFrac` 0..1, `cloud` 0..1, `pressurePa`, `soilMm`, `ice` 0..1.
 - The player path is `weatherAt(x, z)` → `planet.fromLocal` → `toLatLon` → `weatherAtLatLon`. Wind at 10 m is `{ x: u, y: 0, z: -v }` because game +z is south. Below 10 m the existing log profile scales that wind. `fog` is 0. There is no fog plane.
@@ -18,11 +18,11 @@ One weather query for any point on the planet. The forest player is that query a
 
 `sharedPlanetSim` is the only instance. A second `loadPlanetSim()` would be a second grid. The globe's `bootP` and `startPlanetLayers` take the shared one and set the clock owner to `globe`, so the forest does not reboot over a grid the globe is drawing.
 
-While the forest owns the clock, `updateWeather` stores the game day and hour and re-spins only when the date moves by at least three quarters of a day or the UTC hour moves by at least half an hour. An hour scrub inside that window does not spin every frame.
+While the forest owns the clock, `updateWeather` stores the game day and hour and re-spins only when the date moves by at least three quarters of a day or the UTC hour moves by at least half an hour. An hour scrub inside that window does not spin every frame. After T-0103 the near cell keeps stepping between those spins. A spin seeds the cell from the new climate again. The planet planes are not written by the cell.
 
 ## Fallback
 
-`loadPlanetSim` returns null when the wasm is missing or the layout is stale. `registerPlanetRead` then reports not driving. `weatherAt` and `windAt` keep the near Stam column, or `climateRaw` outside it. `solarLayerFallback` stays the solar layer for that same absence. Kenora `NORMALS` stay the published comparison. They are not the driver.
+`loadPlanetSim` returns null when the wasm is missing or the layout is stale. `registerPlanetRead` then reports not driving. `weatherAt` and `windAt` keep the near Stam column fed by `climateRaw`, or `climateRaw` outside it. While the planet is driving, `weatherAt` inside the live cell is the cell, and outside it is still `weatherAtLatLon`. `solarLayerFallback` stays the solar layer for a missing wasm. Kenora `NORMALS` stay the published comparison. They are not the driver.
 
 ## Do not
 

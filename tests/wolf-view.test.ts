@@ -1,6 +1,7 @@
 /**
- * T-0075. wolf-frame v1 is calibrated: the measured issue #52 target scores 1, the pre-change chase camera scores
- * well under 0.95, and the shipped camera reaches the target. Guard-hair lengths stay inside the published ranges.
+ * T-0075, T-0101. wolf-frame v1 stays calibrated: the measured issue #52 target scores 1, and a dead-astern or side
+ * view scores under 0.95. T-0101 puts the shipped lens straight behind the wolf, outside that 25–45° band, because
+ * the owner asked for a level view straight ahead. Guard-hair lengths stay inside the published ranges.
  * Mass is whatever rigMass derives; the test only checks it is that derivation and finite.
  */
 import test from 'node:test';
@@ -14,7 +15,7 @@ import { framingScore, frameSample, histogram, histogramIntersection, legacyFram
 
 const cm = (fur: number) => fur * FUR_LENGTH * 200; // model units × 200 = cm; the card length's random factor averages to 1
 
-test('wolf-frame v1: known match scores 1, known mismatch stays under 0.95, the shipped camera passes', () => {
+test('wolf-frame v1: known match scores 1, known mismatch stays under 0.95, the shipped camera looks straight ahead', () => {
   const hit = framingScore({ ndcX: WOLF_FRAME.ndcX, ndcY: WOLF_FRAME.ndcY, bearingDeg: 32, withersNdcY: 0 });
   assert.equal(hit, 1, 'a sample on the measured target is a known match');
   const legacy = framingScore(legacyFrame());
@@ -24,7 +25,9 @@ test('wolf-frame v1: known match scores 1, known mismatch stays under 0.95, the 
   const live = frameSample();
   const score = framingScore(live);
   assert.ok(Math.abs(Math.atan2(RIDER_FLANK, RIDER_DISTANCE) * 180 / Math.PI - live.bearingDeg) < .5, `bearing ${live.bearingDeg}`);
-  assert.ok(score >= .95, `shipped camera wolf-frame v1 ${score.toFixed(3)} ndc (${live.ndcX.toFixed(3)}, ${live.ndcY.toFixed(3)}) bearing ${live.bearingDeg.toFixed(1)}`);
+  assert.ok(Math.abs(live.bearingDeg) < .5, `shipped bearing ${live.bearingDeg}° is not straight ahead`);
+  assert.ok(Math.abs(live.ndcX) < .05, `body ndcX ${live.ndcX}`);
+  assert.ok(score < .95, `dead astern is outside the issue #52 band (${score.toFixed(3)}, bearing ${live.bearingDeg.toFixed(1)}°)`);
 });
 
 test('box-histogram v1: identical boxes score 1, a flat colour against a varied box scores under 0.2', () => {

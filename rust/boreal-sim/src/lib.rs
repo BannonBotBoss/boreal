@@ -27,6 +27,7 @@ pub mod boot_order;
 pub mod perception;
 pub mod animals;
 pub mod entities;
+pub mod cover;
 
 use grid::Grid;
 use std::cell::RefCell;
@@ -90,3 +91,11 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
         for _ in 0..k { let d = r.dir(); let a = 1.7374e6 * r.f().cbrt(); p.pos.push([dist + d[0] * a, d[1] * a, d[2] * a]); p.vel.push([0.0, vo, 0.0]); p.mass.push(m); p.mat.push(2); } }
     let o = emergent::find_objects(&p, emergent::earth_link(n)); let t = emergent::tidal(&o); let out = unsafe { std::slice::from_raw_parts_mut(out, 13) }; out.fill(0.0); out[0] = o.len() as f64;
     if let Some(e) = o.first() { out[1..12].copy_from_slice(&[e.mass, e.com[0], e.com[1], e.com[2], e.spin[2], e.members.len() as f64, e.trusted as u8 as f64, e.extent, e.layers.len() as f64, t.first().map_or(0.0, |x| x.inside_hill as u8 as f64), t.first().map_or(0.0, |x| x.outside_roche as u8 as f64)]); } }
+
+/// Issue #167 cover row for one landing, written into `out[0..3]`: class id (0 water, 1 ice, 2 rock, 3 tundra, 4 desert,
+/// 5 prairie, 6 boreal), stems per hectare, billboard height in metres. Deterministic per (lat, lon).
+#[no_mangle] pub extern "C" fn cover_cell(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, out: *mut f64) {
+    let r = cover::cover_row(lat, lon, elev_m, vegetation, water != 0);
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 3) };
+    o.copy_from_slice(&[r.class as u32 as f64, r.stems_per_ha, r.height_m]);
+}

@@ -19,7 +19,8 @@ import { smoothstep } from '../../proc/math';
 
 export const OPEN_TILES = {
   demZoom: [8, 11] as const,
-  photoZoom: [8, 12] as const,
+  /** 8 covers the horizon (~100 km a tile). 10 bridges the step. 12 is the valley. */
+  photoZoom: [8, 10, 12] as const,
   demUrl: (z: number, x: number, y: number) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`,
   photoUrl: (z: number, x: number, y: number) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/${z}/${y}/${x}.jpg`,
   /** Slippy tiles are 256 px. */
@@ -108,8 +109,10 @@ function sampleGrid(table: Map<string, Float32Array | null>, latDeg: number, lon
       const ix = ((x % size) + size) % size;
       const iy = ((y % size) + size) % size;
       const i = iy * size + ix;
+      if (!Number.isFinite(i) || i < 0 || i * channels + channels - 1 >= grid.length) return null;
       const out = [];
       for (let c = 0; c < channels; c++) out.push(grid[i * channels + c]);
+      if (out.some(v => !Number.isFinite(v))) return null;
       return out;
     };
     const a = pix(x0, y0);
@@ -167,41 +170,141 @@ function tilesAround(lat: number, lon: number, z: number, ring = 1) {
 async function decode(blob: Blob): Promise<RgbaTile | null> {
   if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return null;
   const bmp = await createImageBitmap(blob);
+  const w = bmp.width, h = bmp.height;
   const canvas = document.createElement('canvas');
-  canvas.width = bmp.width; canvas.height = bmp.height;
+  canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) { bmp.close(); return null; }
+  if (!ctx || !w || !h) { bmp.close(); return null; }
   ctx.drawImage(bmp, 0, 0);
-  const data = ctx.getImageData(0, 0, bmp.width, bmp.height);
+  const data = ctx.getImageData(0, 0, w, h);
   bmp.close();
-  return { w: bmp.width, h: bmp.height, rgba: data.data };
+  // Width has to be read before close(). After close() it is 0, and the tile was stored empty,
+  // which sampled as NaN and drew the black gaps between the patches.
+  return { w, h, rgba: data.data };
 }
 
-async function pull(kind: 'dem' | 'photo', z: number, x: number, y: number) {
+/** Parallel JPEG decodes were failing all at once and then cached as permanent holes.
+ *  Photos and elevation do not share a queue: a slow elevation host must not hold the mosaic. */
+function makePump(limit: number) {
+  const queue: { id: string; start: () => void }[] = [];
+  let active = 0;
+  const stats = { active: 0, queued: 0 };
+  function pump() {
+    while (active < limit && queue.length) queue.shift()!.start();
+    stats.active = active; stats.queued = queue.length;
+  }
+  function schedule(id: string, run: () => Promise<void>) {
+    let go: () => void = () => {};
+    const ready = new Promise<void>(r => { go = r; });
+    queue.push({
+      id,
+      start() {
+        active++;
+        run().finally(() => { active--; go(); pump(); });
+      },
+    });
+    pump();
+    return ready;
+  }
+  /** Drop work that has not started. The caller forgets those inflight keys so a new landing can fetch. */
+  function clear(forget: (id: string) => void) {
+    for (const item of queue) forget(item.id);
+    queue.length = 0;
+    stats.queued = 0;
+  }
+  return { schedule, clear, stats };
+}
+const photoPump = makePump(4);
+const demPump = makePump(2);
+
+function pull(kind: 'dem' | 'photo', z: number, x: number, y: number) {
   const id = `${kind}/${key(z, x, y)}`;
   const table = kind === 'dem' ? dem : photo;
   if (table.has(key(z, x, y)) || inflight.has(id)) return inflight.get(id);
-  const job = (async () => {
+  let finish: () => void = () => {};
+  const job = new Promise<void>(r => { finish = r; });
+  inflight.set(id, job);
+  (kind === 'photo' ? photoPump : demPump).schedule(id, async () => {
     try {
       const url = kind === 'dem' ? OPEN_TILES.demUrl(z, x, y) : OPEN_TILES.photoUrl(z, x, y);
-      const res = await fetch(url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
       if (!res.ok) { (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, null); return; }
       const tile = await decode(await res.blob());
-      (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, tile);
+      // A decode miss is not a 404. Leave it uncached so the next warm tries again.
+      if (tile) (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, tile);
     } catch {
-      (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, null);
+      /* a network miss is not a 404: leave it uncached so the next warm retries */
     } finally {
       inflight.delete(id);
+      finish();
     }
-  })();
-  inflight.set(id, job);
+  });
   return job;
 }
 
+const EARTH_M = 6_378_137;
+
+/** Ground metres one web-mercator tile spans east-west at this latitude. */
+export function tileMetres(z: number, latDeg: number) {
+  const c = Math.cos(Math.max(-85, Math.min(85, latDeg)) * Math.PI / 180);
+  return (2 * Math.PI * EARTH_M * Math.max(0.05, c)) / (2 ** z);
+}
+
+/**
+ * Tiles around the camera so the mosaic covers `radiusM` of ground.
+ * Zoom 8 is at least two tiles: a camera on a tile edge would otherwise leave
+ * the horizon in a neighbour that was never fetched, and that neighbour is the
+ * black gap between photo patches.
+ */
+export function tileRing(kind: 'dem' | 'photo', z: number, latDeg = 50, radiusM?: number) {
+  const radius = radiusM ?? (z <= 8 ? 160_000 : z <= 10 ? 40_000 : kind === 'photo' ? 14_000 : 18_000);
+  const need = Math.ceil(radius / Math.max(1, tileMetres(z, latDeg)));
+  // Zoom 12 stays a small valley. A 11×11 ring sat in front of the next landing's horizon tiles.
+  const cap = z >= 12 ? 2 : z >= 10 ? 1 : 2;
+  const min = z <= 8 ? 2 : 1;
+  return Math.max(min, Math.min(cap, need));
+}
+
+/** Share of the coarse (zoom 8) tiles around this point that have arrived. 1 means the horizon mosaic has no hole. */
+export function photoCoverage(latDeg: number, lonDeg: number) {
+  const z = OPEN_TILES.photoZoom[0];
+  const tiles = tilesAround(latDeg, lonDeg, z, tileRing('photo', z, latDeg));
+  let have = 0;
+  for (const t of tiles) {
+    const grid = photo.get(key(t.z, t.x, t.y));
+    if (grid && grid.length) have++;
+  }
+  return tiles.length ? have / tiles.length : 0;
+}
+
+let photoHere = '';
 function warm(kind: 'dem' | 'photo', latDeg: number, lonDeg: number) {
   if (typeof fetch !== 'function') return;
+  if (kind === 'photo') {
+    const here = `${latDeg.toFixed(1)},${lonDeg.toFixed(1)}`;
+    if (here !== photoHere) {
+      photoHere = here;
+      photoPump.clear(id => inflight.delete(id));
+    }
+  }
   const zooms = kind === 'dem' ? OPEN_TILES.demZoom : OPEN_TILES.photoZoom;
-  for (const z of zooms) for (const t of tilesAround(latDeg, lonDeg, z, 1)) void pull(kind, t.z, t.x, t.y);
+  // Coarse first so the horizon fills before the valley tiles compete for connections.
+  for (const z of zooms) for (const t of tilesAround(latDeg, lonDeg, z, tileRing(kind, z, latDeg))) void pull(kind, t.z, t.x, t.y);
+}
+
+/**
+ * The globe's land table is canopy reflectance (~3 %). A Sentinel pixel of the same forest is
+ * several times brighter. A hole that keeps the raw table reads as black next to the mosaic.
+ * This lift is only the vertex fallback; the shader replaces a missing photo with the globe
+ * texture itself (the far layer).
+ */
+export const GLOBE_PHOTO_LIFT = 5;
+export function globeMatch(albedo: readonly [number, number, number]): [number, number, number] {
+  return [
+    Math.min(1, albedo[0] * GLOBE_PHOTO_LIFT),
+    Math.min(1, albedo[1] * GLOBE_PHOTO_LIFT),
+    Math.min(1, albedo[2] * GLOBE_PHOTO_LIFT),
+  ];
 }
 
 /** Elevation tiles only. Photographs are a later step so a landing can show relief before the pictures arrive. */

@@ -38,7 +38,9 @@ import { INTEREST, JOB_FIRST, pending, queued, STATS as JOBS } from '../../core/
 import { CHUNK_SIZE, heightAt } from '../../core/world';
 import { createHorizonSkirt, type HorizonSkirt } from '../../render/horizonMesh';
 import { createHorizonCover } from '../../render/horizonCover';
-import { horizonMetres, patchDiscRadius, skirtOrigin } from './horizonSkirt';
+import { photoCoverage } from './openTiles';
+import { horizonMetres, patchDiscRadius, skirtLatLon, skirtOrigin } from './horizonSkirt';
+import { SITE } from '../../core/sitePhase';
 import { STAGES, lakeAt } from '../../core/stages/elevation';
 import { pondAt } from '../../core/stages/rivers';
 import { LEVEL } from '../../core/tuning';
@@ -274,6 +276,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     get view() { return view; }, player: () => host.player(),
     jobs: () => ({ q: queued(), run: JOBS.jobsRun, deferred: JOBS.deferred, lastMs: +JOBS.lastFrameMs.toFixed(1), kinds: JSON.parse(JSON.stringify(JOBS.kinds)) as unknown }),
     get mode() { return mode; }, get globe() { return globe; }, get fade() { return fade; }, get height() { return h; }, get flightPhase() { return entryName(); }, STATS, INPAGE, far,
+    /** 0..1 of the zoom-8 imagery tiles around the drone. The stills wait on this so a gap is a real hole, not a tile still in flight. */
+    photosReady() {
+      if (!globe) return 0;
+      const p = host.player();
+      const ll = skirtLatLon(globe.planet, p.x, p.z, SITE.remote);
+      return photoCoverage(ll.latDeg, ll.lonDeg);
+    },
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */
     ascend(): boolean {
       if (mode !== 'game') return true;

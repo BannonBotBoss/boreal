@@ -135,6 +135,7 @@ void main() {
     const material = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
+      side: THREE.DoubleSide,
       toneMapped: true,
       polygonOffset: true,
       polygonOffsetFactor: -2,
@@ -155,9 +156,9 @@ void main() {
   if (r > 1.0 || uAlpha <= 0.02) discard;
   vec2 g = floor(vLocal * 7.0);
   float n = fract(sin(dot(g, vec2(127.1, 311.7))) * 43758.5453);
-  float clump = smoothstep(0.28, 0.72, n);
-  float edge = smoothstep(1.0, 0.22, r);
-  float a = uAlpha * edge * (0.28 + 0.72 * clump);
+  float clump = 0.62 + 0.38 * smoothstep(0.15, 0.85, n);
+  float edge = smoothstep(1.0, 0.35, r);
+  float a = uAlpha * edge * clump;
   if (a < 0.03) discard;
   vec3 soil = vec3(0.29, 0.24, 0.14);
   gl_FragColor = vec4(mix(soil, uColor, 0.78), a);
@@ -207,7 +208,7 @@ void main() {
         material.uniforms.uColor.value.setRGB(c[0], c[1], c[2]);
         material.uniforms.uAlpha.value = opacity;
         const radius = groundMarkRadius(kind);
-        mesh.position.set(m.x, m.y, m.z);
+        mesh.position.set(m.x, m.y + 0.12, m.z);
         mesh.scale.set(radius, 1, radius);
         mesh.visible = true;
         discN++;

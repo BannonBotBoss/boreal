@@ -208,9 +208,10 @@ const renderStore = createSettingsStore(RENDER_SETTINGS);
 { const st = new URLSearchParams(location.search).get('stages'); if (st !== null) renderStore.set('world.stagedTerrain.v2', st !== '0' && st !== 'off'); } // staged terrain is the default; ?stages=0 turns it off (persisted, like the setting), ?stages=1 back on
 { const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number); if (at && at.length >= 2 && at.every(Number.isFinite)) { player.x = at[0]; player.z = at[1]; if (at.length > 2) { yaw = at[2]; player.heading = yaw; } } } // dev/screenshots: ?at=x,z[,yaw]
 { const qPlace = new URLSearchParams(location.search); if (qPlace.has('noprobe') || qPlace.has('bench')) {
-  const hook = window as unknown as { borealPlace?: (x: number, z: number, face?: number, look?: number) => void; borealRate?: (r: number) => void };
+  const hook = window as unknown as { borealPlace?: (x: number, z: number, face?: number, look?: number) => void; borealRate?: (r: number) => void; borealHold?: (on: boolean) => void };
   hook.borealPlace = (x, z, face, look) => { player.x = x; player.z = z; if (face !== undefined) { yaw = face; player.heading = face; } if (look !== undefined) pitch = look; };
   hook.borealRate = r => setClockRate(r);
+  hook.borealHold = on => { if (on) holdClock('shot'); else releaseClock('shot'); };
 } }
 if (STAGES.on && !new URLSearchParams(location.search).has('at')) [player.x, player.z] = dryStart(player.x, player.z); // the fixed default start can fall in a staged lake: nearest dry land
 let pendingRegen = false, playAs = new URLSearchParams(location.search).get('play') ?? localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf'; // ?play=hare: open as that animal for this visit (links, screenshots); the menu's Player panel still saves a choice

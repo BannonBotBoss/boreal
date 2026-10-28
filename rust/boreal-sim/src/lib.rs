@@ -28,6 +28,7 @@ pub mod perception;
 pub mod animals;
 pub mod entities;
 pub mod cover;
+pub mod species;
 
 use grid::Grid;
 use std::cell::RefCell;
@@ -98,4 +99,14 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
     let r = cover::cover_row(lat, lon, elev_m, vegetation, water != 0);
     let o = unsafe { std::slice::from_raw_parts_mut(out, 3) };
     o.copy_from_slice(&[r.class as u32 as f64, r.stems_per_ha, r.height_m]);
+}
+
+/// Animals per hectare for one species at one landing in one year (0 snowshoe hare, 1 white-tailed deer).
+/// Zero outside the species' range or on cover it cannot use. Deterministic per (species, lat, lon, year).
+#[no_mangle] pub extern "C" fn species_density(species: u32, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, year: i32) -> f64 {
+    species::Species::from_id(species).map_or(0.0, |s| species::density_per_ha(s, lat, lon, elev_m, vegetation, water != 0, year))
+}
+/// Whole animals to spawn in a square patch `side_m` wide at that density.
+#[no_mangle] pub extern "C" fn species_spawn_count(density_per_ha: f64, side_m: f64, lat: f64, lon: f64) -> u32 {
+    species::spawn_count(density_per_ha, side_m, lat, lon)
 }

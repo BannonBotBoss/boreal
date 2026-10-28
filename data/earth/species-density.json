@@ -1,0 +1,9 @@
+{
+ "_sources": {
+  "snowshoe_hare": "Lepus americanus, North American boreal forest and its montane fingers. Range roughly 36-70 N, 170-52 W [verify]. Densities cycle about every 10 years: lows near 0.1/ha, peaks of 1-6/ha (Krebs et al. 2001, Kluane, Yukon) [verify]. Lives under forest cover, so prairie, desert, tundra, rock, ice and water hold none.",
+  "white_tailed_deer": "Odocoileus virginianus, southern Canada to northern South America, roughly 15 S-60 N, 168-34 W [verify]. Northern forest often 1-5/km2; farm-prairie edge 5-15/km2 [verify]. Scarce in open desert scrub. Tundra, rock, ice and water hold none.",
+  "note": "Labelled calibration, not a census (PROJECT-RULES 5 and 7). Per hectare. A place picks a value inside its range from a hash of lat/lon and the cycle phase (hare) so the same place and year return the same row."
+ },
+ "snowshoe_hare":     { "lat": [36, 70],  "lon": [-170, -52], "boreal_per_ha": [0.1, 6.0],   "prairie_per_ha": [0, 0],     "desert_per_ha": [0, 0],      "cycle_years": 10 },
+ "white_tailed_deer": { "lat": [-15, 60], "lon": [-168, -34], "boreal_per_ha": [0.01, 0.05], "prairie_per_ha": [0.05, 0.15], "desert_per_ha": [0.0, 0.01], "cycle_years": 0 }
+}

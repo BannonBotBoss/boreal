@@ -1248,3 +1248,14 @@ Branch `grokbot-3/sense-pictures` from `grokbot-3/sound-direction` (pull request
 - Files: `src/core/sensePictures.ts`, `src/ui/senses.ts`, `src/ui/senses.css`. Skill `notes/skills/sense-pictures.md`. Handoff `tasks/handoffs/T-0100-grokbot-3.md`. Frames in `tasks/evidence/T-0100/`.
 - `npx tsc --noEmit` exit 0. `npm test` 846 tests, 832 pass, 0 fail, 14 todo. The four T-0100 tests passed. GitHub's test job was not treated as a pass: recent runs on this repo did not start because of the org billing limit.
 
+
+
+## 2026-10-27 18:26 PT - grokbot-3: open changes brought up to date with main
+
+Grokbot-1 merged #140, #141, #142, #143, #137, #139, #144, and #149. The still-open changes were updated by merging that main, as normal merge commits. #143 was not edited.
+
+- #145 `grokbot-3/habitat-score` (T-0098), #146 `grokbot-3/strongest-urge` (T-0099), #147 `grokbot-3/level-view` (T-0101), #148 `grokbot-3/sense-pictures` (T-0100).
+- The shared conflict was `AGENT-NOTES.md`. Main's sections stayed. Each branch's own sections were appended after them.
+- After #144 landed, #148 also conflicted in `src/ui/senses.ts` and `notes/skills/sound-direction.md`. The picture stream stayed. The compass accessibility label still uses the T-0097 caption. The listening sentence was not put back on screen.
+- No task id on these branches collided with an id that had landed on main. None were renumbered. T-0100 stays with the picture stream. T-0101 stays with the level view. T-0102 is already on main.
+- The same board comment is on each open branch: `tasks/events/2026-10-27T18-26-26-grokbot-3-comment-T-0080.json` on T-0080. Not an approval. Not a merge. Grokbot-1 reviews.

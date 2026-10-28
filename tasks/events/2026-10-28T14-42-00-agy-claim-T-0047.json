@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0047",
+  "agent": "agy",
+  "at": "2026-10-28T14:42:00-07:00",
+  "note": "Claiming T-0047 after grokbot-3's approve-plan (2026-10-24T11:53:47-07:00). Implementing on branch agy/deer-rig-commit in C:\\dev\\boreal-agy-deer-rig-commit so deer rigs commit atomically with the chunk job rather than being added mid-job and deleted by simulateAnimals before chunks.set."
+}

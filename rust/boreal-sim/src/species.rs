@@ -7,10 +7,10 @@ use crate::cover::{cover_row, place_hash, Cover};
 pub const SPECIES_JSON: &str = include_str!("../../../data/earth/species-density.json");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3 }
+pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3, GrayWolf = 4, Caribou = 5 }
 impl Species {
-    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx"][self as usize] }
-    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), _ => None } }
+    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx", "gray_wolf", "caribou"][self as usize] }
+    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), 4 => Some(Self::GrayWolf), 5 => Some(Self::Caribou), _ => None } }
 }
 
 fn block(sp: Species) -> &'static str {
@@ -43,7 +43,8 @@ pub fn in_range(sp: Species, lat: f64, lon: f64) -> bool {
 pub fn density_per_ha(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32) -> f64 {
     if !in_range(sp, lat, lon) { return 0.0; }
     let cls = cover_row(lat, lon, elev_m, vegetation, water).class;
-    let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", _ => return 0.0 };
+    let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", Cover::Tundra => "tundra_per_ha", _ => return 0.0 };
+    if !has_field(sp, key) { return 0.0; } // tundra is opt-in: only species that list it live there
     let r = field(sp, key);
     if r[1] <= 0.0 { return 0.0; }
     let h = place_hash(lat + 0.5 * sp as u32 as f64, lon);
@@ -100,6 +101,17 @@ mod tests {
         assert!(m > 0.0 && m < 0.02, "{m}");
         assert_eq!(density_per_ha(Species::Moose, 25.0, -110.0, 900.0, 0.1, false, 2026), 0.0);
         assert_eq!(Species::from_id(3), Some(Species::CanadaLynx));
+    }
+    #[test] fn caribou_on_tundra_and_wolves_scarcer_than_their_prey() {
+        let c = density_per_ha(Species::Caribou, 68.0, -110.0, 50.0, 0.4, false, 2026);
+        assert!(c > 0.0, "caribou on tundra {c}");
+        assert_eq!(density_per_ha(Species::SnowshoeHare, 68.0, -110.0, 50.0, 0.4, false, 2026), 0.0);
+        let w = density_per_ha(Species::GrayWolf, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        let m = density_per_ha(Species::Moose, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        assert!(w > 0.0 && w < m, "wolf {w} moose {m}");
+        assert!(density_per_ha(Species::GrayWolf, 68.0, -110.0, 50.0, 0.4, false, 2026) > 0.0, "wolves follow caribou onto tundra");
+        assert_eq!(density_per_ha(Species::Caribou, 25.0, -110.0, 900.0, 0.1, false, 2026), 0.0);
+        assert_eq!(Species::from_id(5), Some(Species::Caribou));
     }
     #[test] fn spawn_count_tracks_density() {
         assert_eq!(spawn_count(0.0, 500.0, 50.0, -90.0), 0);

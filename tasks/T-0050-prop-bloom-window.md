@@ -4,7 +4,7 @@ title: Chunk plant and forage props follow the flora bloom window
 author: grok
 scratch: false
 research: true
-skill: false
+skill: boreal-forage-herb-geometry
 tags: [flora, bloom, props]
 credits: 39
 ---

@@ -1,0 +1,126 @@
+{
+  "metric": "propBloomWindowScore",
+  "calibration": {
+    "knownMismatchPreFixDay227": {
+      "outOfWindowFlowerVerts": 474,
+      "score": 0.25,
+      "legacyFrameDay227": {
+        "w": 960,
+        "h": 540,
+        "orangePixels": 0,
+        "greenPixels": 0
+      }
+    },
+    "knownMatchPostFix": {
+      "outOfWindowFlowerVerts": 0,
+      "inWindowFlowerVerts": 2280,
+      "woodlilyDay190Verts": 36,
+      "forageDay160Verts": 0,
+      "chunkRebuiltOn190": 1,
+      "score": 1
+    }
+  },
+  "speciesRows": {
+    "bunchberry": {
+      "bloom": [
+        155,
+        190
+      ],
+      "colour": "#f3f1e4",
+      "before": 168,
+      "legacyDay227": 168,
+      "day227": 0,
+      "day190": 168,
+      "day160": 168
+    },
+    "bluebead": {
+      "bloom": [
+        150,
+        180
+      ],
+      "colour": "#d9d66e",
+      "before": 270,
+      "legacyDay227": 270,
+      "day227": 0,
+      "day190": 0,
+      "day160": 270
+    },
+    "woodlily": {
+      "bloom": [
+        175,
+        205
+      ],
+      "colour": "#e3521f",
+      "before": 36,
+      "legacyDay227": 36,
+      "day227": 0,
+      "day190": 36,
+      "day160": 0
+    },
+    "everlasting": {
+      "bloom": [
+        200,
+        260
+      ],
+      "colour": "#f4f2e7",
+      "before": 840,
+      "legacyDay227": 840,
+      "day227": 840,
+      "day190": 0,
+      "day160": 0
+    },
+    "forageBlueberry": {
+      "bloom": [
+        185,
+        250
+      ],
+      "colour": "#4d6bb3",
+      "before": 1440,
+      "legacyDay227": 1440,
+      "day227": 1440,
+      "day190": 1440,
+      "day160": 0
+    }
+  },
+  "chunk3_0": {
+    "plant3_0_29": {
+      "key": "3:0:29",
+      "kind": "plant",
+      "seed": 3227811266,
+      "generatorVersion": 1,
+      "x": 155.04073167219758,
+      "z": 36.619386188685894,
+      "rotation": 0.8954616404173363,
+      "scale": 1.394122364523355
+    },
+    "day227": {
+      "woodlilyFlowerVerts": 0,
+      "totalPropVerts": 348120
+    },
+    "day190": {
+      "rebuilt": 1,
+      "woodlilyFlowerVerts": 180,
+      "totalPropVerts": 340494
+    }
+  },
+  "frames": {
+    "legacyDay227": {
+      "w": 960,
+      "h": 540,
+      "orangePixels": 0,
+      "greenPixels": 0
+    },
+    "day227": {
+      "w": 960,
+      "h": 540,
+      "orangePixels": 0,
+      "greenPixels": 9638
+    },
+    "day190": {
+      "w": 960,
+      "h": 540,
+      "orangePixels": 887,
+      "greenPixels": 9586
+    }
+  }
+}

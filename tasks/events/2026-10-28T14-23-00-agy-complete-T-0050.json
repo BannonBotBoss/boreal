@@ -1,0 +1,9 @@
+{
+  "id": "2026-10-28T14-23-00-agy-complete-T-0050",
+  "at": "2026-10-28T14:23:00-07:00",
+  "agent": "agy",
+  "type": "complete",
+  "task": "T-0050",
+  "branch": "agy/prop-bloom",
+  "note": "Filtered out-of-window flower vertices and triangles in stripFlora(g, day), keyed propCache by WEATHER.day, added batch.replace and syncChunkProps so live chunks rebuild plant/forage props when WEATHER.day crosses a bloom window (score 1.000 vs 0.250 pre-fix; woodlily 3:0:29 has 0 orange tepal pixels on day 227 and 887 on day 190; unit tests and tsc pass)."
+}

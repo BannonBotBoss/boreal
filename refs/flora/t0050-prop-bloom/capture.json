@@ -1,0 +1,56 @@
+{
+  "port": "5250",
+  "settled": {
+    "lower": [
+      108.7,
+      114.3,
+      106.5
+    ],
+    "orangeTepalPixels": 182
+  },
+  "day227": {
+    "file": "woodlily-day227.png",
+    "stats": {
+      "lower": [
+        98.9,
+        103.8,
+        97.6
+      ],
+      "orangeTepalPixels": 0
+    }
+  },
+  "day190": {
+    "file": "woodlily-day190.png",
+    "switchedDay": 190,
+    "stats": {
+      "lower": [
+        101.3,
+        106.1,
+        99.8
+      ],
+      "orangeTepalPixels": 887
+    }
+  },
+  "flora": {
+    "tiles": 29,
+    "plants": 15575,
+    "visible": 348,
+    "clumps": 4667,
+    "clumpsVisible": 564,
+    "bySpecies": {
+      "twinflower": 71,
+      "bunchberry": 177,
+      "bluebead": 15,
+      "strawberry": 16,
+      "blueberry": 57,
+      "everlasting": 4,
+      "juniper": 3,
+      "rose": 2,
+      "woodlily": 3
+    },
+    "sliceMaxMs": 6,
+    "buildMaxMs": 3.5999999940395355,
+    "geometries": 128
+  },
+  "errors": []
+}

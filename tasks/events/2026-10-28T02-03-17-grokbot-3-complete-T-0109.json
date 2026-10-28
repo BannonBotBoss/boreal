@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0109",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T02:03:17-07:00",
+  "branch": "grokbot-3/eco-front-horizon",
+  "note": "Rings from 28 m out past the geometric horizon, reusing planet.sampleSurface and surfaceColour. Skill horizon-skirt. Objective 2 stays open: prairie-low.png and boreal-low.png still show the chunk rectangle. The stills are not a drone photo. npx tsc --noEmit passed. tests/horizon-skirt.test.ts passed. The full npm test was still in the Kenora climate-year case at push; CI is the full run. Issue #157: merged by the author once that check is green, or on the local typecheck and skirt tests if the check sits more than 15 minutes."
+}

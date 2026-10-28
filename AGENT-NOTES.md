@@ -1321,6 +1321,16 @@ The count is unchanged. From the ground the T-0070 disc was a giant green or tan
 - `npx tsc --noEmit` exit 0. Full `npm test` was still inside the existing Kenora climate-year case when this note was written. The result is added when that run finishes.
 - New stills, same viewpoints: `tasks/evidence/T-0104/near-individual.png` (a hare, 1 sec / sec, no dome), `far-density.png` (trees, lake, wolf, no green dome), `fast-herd.png` (20 sec / sec, behavioral, grass and the wolf, no tan dome), `leaving-near.png` (no disc). Copies in `/opt/cursor/artifacts/`. Pull request #151.
 
+## 2026-10-28 00:27 PT - grokbot-3: you step into an animal that is already alive (T-0107)
+
+Roadmap step 17. Issues #102 and #103. Conflict 17. Not claimed. grokbot-3 wrote the plan and does not approve it. Asking Grokbot-1. grokbot-2 is down until about midday PT and is not tagged. Step 1 (T-0081) is on main and was not redone. Step 22 is not on main; entry only keeps a memory list.
+
+- `enterLiving` picks the territory holder from the step 12 store. `Playable.create(life)` still uses `createPlayerWolf`, `createDeerRig`, and `createHareModel`, then `mirrorStoredAnimal`. Bear is not offered. The embodied id on the observation record is the store handle (`4294967296` for the wolf in the stills), null before entry.
+- The recorded stand is `dryStart(0, 0)` on seed 1400, (30, 0). The old test origin (0, 0) is open water. Wolf mate +5 m (wolf spacing). Hare +20 m (hare spacing). Deer 20 m north. Ages stay the lifespan rows: wolf 2 of 13 (Mech & Boitani 2003), deer 2 of 20 (Ditchkoff 2011), hare 1 of 5 (Krebs et al. 2001).
+- Did not edit `src/render/animalDensity.ts`, `src/core/coarse.ts`, `src/core/weather.ts`, or `src/core/ground.ts`.
+- Files: `src/core/enterLiving.ts`, `src/core/livingPack.ts`, `src/core/storedFixture.ts`, `src/core/storedAnimal.ts`, `src/render/playables.ts`, `src/render/buildScene.ts`, `src/main.ts`, `src/ui/playerPanel.ts`, `src/core/observation.ts`, `rust/boreal-sim/src/animals.rs`, `rust/boreal-sim/src/entities.rs`, the two fixtures. Skill `notes/skills/enter-living-animal.md`. Handoff `tasks/handoffs/T-0107-grokbot-3.md`. Tests `tests/enter-living.test.ts`.
+- Stills: `tasks/evidence/T-0107/before-entry.png` (wolf small on the snow, embodied null) and `after-entry.png` (same wolf, close, embodied equals the store id). Copies in `/opt/cursor/artifacts/`.
+- `npx tsc --noEmit` exit 0. `npm test` 905 tests, 891 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/155.
 ## 2026-10-27 22:08 PT - grokbot-3: body, feeling, and urge are three blocks (T-0105)
 
 Branch `grokbot-3/three-blocks`, from main `43dac9f`. Roadmap step 19. Issues #102, #103, #105, and #106. Conflict 12: #106 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is down and was not asked. The ask is to Grokbot-1.
@@ -1344,6 +1354,12 @@ Matthew, 2026-10-28, issue #156, overrides PROJECT-RULES rule 1 for animal model
 - Gray Wolf: public/models/animals/wolf.glb (26,033 triangles, 1,024², 1.94 MB) and wolf-low.glb (18,193 triangles; gltf-transform simplify stopped on its error bound). Scaled to the 0.74 m shoulder. Head −X turned to −Z. Still or far is rigid. Close and moving keeps the procedural bones. Deer and hare have no file.
 - Files: src/core/sitePhase.ts, src/core/siteHeight.ts, src/world/globe/landingSite.ts, src/render/animalLadder.ts, src/render/animalModels.ts, src/render/animalPicture.ts, src/world/globe/flight.ts, globeView.ts, inpage.ts, src/core/world.ts, altitudeZones.ts, stages/elevation.ts, stages/rivers.ts, planetWeather.ts, src/render/buildScene.ts, src/animals/hare.ts, src/main.ts, tests/globe-landing.test.ts. Skill notes/skills/globe-to-animals.md.
 - Adoption: three/examples/jsm/loaders/GLTFLoader.js (three 0.180, already depended). Textures resized with @gltf-transform/cli resize and jpeg. No new runtime package.
+
+## 2026-10-28 02:03 PT - grokbot-3: horizon rings under the glide (T-0109)
+
+Issue #156 step 1. The chunk square was about 80 m because the dither disc stopped at `INPAGE.ring * CHUNK_SIZE`. `src/world/globe/horizonSkirt.ts` builds doubling rings from 28 m out past the geometric horizon on `planet.sampleSurface` and `surfaceColour`. Curvature drop is `R − R² / sqrt(R² + r²)`. Far quads behind the eye are omitted. One mesh, `src/render/horizonMesh.ts`. Triangle cap 6,000. XR caps unchanged.
+
+The stills are not a drone photo. `home-low.png` and `prairie-low.png` show a horizon; the ground up to it is a dark flat colour, and the prairie chunk rectangle is still there. Objective 2 stays open. Skill `notes/skills/horizon-skirt.md`. Handoff `tasks/handoffs/T-0109-grokbot-3.md`.
 
 ## 2026-10-28 - grokbot-3: Meshy animals walk (T-0110, issues #156 #160 #162)
 

@@ -11,6 +11,8 @@ import { terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
 import { INTEREST, WAIT, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
 import { registerObservationSources } from '../core/observation';
+import { enterLiving, livingRoster, type LivingChoice } from '../core/enterLiving';
+import type { MemoryMark } from '../core/perceptionBuffer';
 import { playable, type PlayerRig } from './playables';
 import { RENDER } from '../core/renderSettings';
 import { applyPopulation } from '../core/population';
@@ -92,20 +94,32 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.Object3D>; near: boolean; batch: import('./batch').ChunkBatch; contacts: Contact[] }>();
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
   let activeContext: EventContext;
-  let current = playable('wolf'), wolf: PlayerRig = current.create(); scene.add(wolf.root);
-  let photoObserver = false; // T-0081 observation record: camera position and the embodied id come from here
-  registerObservationSources({ camera: () => camera.position, embodied: () => photoObserver ? null : current.id });
+  // T-0107: the wolf you start beside is the store's territory holder, not a blank rig.
+  const memoryBook = new Map<string, readonly MemoryMark[]>();
+  const watching = typeof location !== 'undefined' && new URLSearchParams(location.search).has('watch');
+  let choice: LivingChoice = enterLiving(livingRoster(), 'wolf', memoryBook);
+  let current = playable(choice.playableId), wolf: PlayerRig = current.create(choice.animal); scene.add(wolf.root);
+  let photoObserver = false; // T-0081: free camera has no embodied creature
+  let embodiedHandle: string | null = watching ? null : choice.animal.handle;
+  registerObservationSources({ camera: () => camera.position, embodied: () => photoObserver || embodiedHandle === null ? null : embodiedHandle });
   /** Appearance genomes: 'player:<playable>', 'species:deer' (all deer) or an entity key (one animal). */
   const looks = new Map<string, Genome>();
   const lookOf = (key: string, species: string) => looks.get(key) ?? looks.get(`species:${species}`);
   const WOLF_MASS = rigMass(wolf.root, 'canid');
   const planOf = () => RIG_BODY_PLAN[current.id] ?? 'canid'; // reference for force calibration (default wolf)
   const PLAYER_TAG = { type: 'player', key: 'player' }; wolf.root.userData.inspect = PLAYER_TAG;
-  /** Swap the controlled animal in place (keeps position, heading and energy). */
+  /** Step into the stored animal of this species. Same id keeps the rig and the memory list.
+   *  Energy stays the store's. Heading stays the control heading. The place is the store's. */
   function setPlayable(id: string) {
-    const next = playable(id); if (next.id === current.id) return current;
-    const old = wolf; wolf = next.create(); current = next; scene.remove(old.root); disposeObject(old.root);
-    wolf.brain.heading = old.brain.heading; wolf.brain.energy = old.brain.energy; wolf.root.userData.inspect = PLAYER_TAG; const g = looks.get(`player:${id}`); if (g) applyGenome(wolf.root, g); scene.add(wolf.root); return current;
+    const nextChoice = enterLiving(livingRoster(), playable(id).id, memoryBook);
+    const next = playable(nextChoice.playableId);
+    if (nextChoice.animal.handle !== choice.animal.handle) {
+      const old = wolf; wolf = next.create(nextChoice.animal); wolf.brain.heading = old.brain.heading;
+      current = next; choice = nextChoice; scene.remove(old.root); disposeObject(old.root);
+      wolf.root.userData.inspect = PLAYER_TAG; const g = looks.get(`player:${next.id}`); if (g) applyGenome(wolf.root, g); scene.add(wolf.root);
+    }
+    embodiedHandle = choice.animal.handle;
+    return { ...current, x: choice.animal.x, z: choice.animal.z, handle: choice.animal.handle, memories: choice.memories };
   }
   const hares = createHares(scene); // src/animals/hare.ts
   const density = createAnimalDensity(scene);
@@ -541,5 +555,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     /** Forward world seconds this frame. The coarse step uses it. Rewind passes 0. */
     noteWorldDt: (dt: number) => { worldDt = dt > 0 ? dt : 0; },
     population: () => census,
+    /** Where the animal you are entering already stood, and the store id when you are inside it. */
+    livingHere: () => ({ x: choice.animal.x, z: choice.animal.z, handle: choice.animal.handle, species: choice.playableId, embodied: embodiedHandle }),
   };
 }

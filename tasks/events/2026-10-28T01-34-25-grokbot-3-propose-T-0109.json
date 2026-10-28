@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0109",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T01:34:25-07:00",
+  "note": "Proposed from issue #156. The glide ground should reach a real horizon on the planet the globe already samples. Issue #157 is blitz mode. Not a second terrain."
+}

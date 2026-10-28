@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0109",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T01:34:27-07:00",
+  "note": "Claimed under blitz mode (#157) after the approve-plan. The rings reuse planet.sampleSurface and surfaceColour."
+}

@@ -36,6 +36,8 @@ import { LOG_DEPTH } from './logDepth';
 import { GOVERNOR, resetGovernor } from '../../core/quality';
 import { INTEREST, JOB_FIRST, pending, queued, STATS as JOBS } from '../../core/interest';
 import { CHUNK_SIZE, heightAt } from '../../core/world';
+import { createHorizonSkirt, type HorizonSkirt } from '../../render/horizonMesh';
+import { horizonMetres, patchDiscRadius } from './horizonSkirt';
 import { STAGES, lakeAt } from '../../core/stages/elevation';
 import { pondAt } from '../../core/stages/rivers';
 import { LEVEL } from '../../core/tuning';
@@ -95,6 +97,7 @@ function patchPlaneY(x: number, z: number, r: number) {
 
 function controller(view: View, host: InPageHost) {
   const renderer = view.photoreal.renderer, far = createFarLayer(), hold = createGovernorHold(GOVERNOR, resetGovernor);
+  let skirt: HorizonSkirt | null = null;
   let globe: Globe | null = null, mode: TransitionMode = 'game', down = true, phase: 'fly' | 'drone' | 'blend' = 'fly';
   let pinned: number | null = null; // dev stills: hold the drone at one height instead of the glide floor
   let next: 'globe' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
@@ -189,6 +192,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
   function restoreScene() {
     for (const [o, v] of hidden) o.visible = v; hidden.clear(); for (const c of unculled) c.frustumCulled = true; unculled.length = 0;
     if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; setPatchFade(1); setPatchFar(null); bandLook(0); AO_BLEND.value = 1;
+    if (skirt) skirt.mesh.visible = false;
   }
   const isChunkRoot = (o: THREE.Object3D) => o.type === 'Group' && (o.children[0]?.userData.inspect as { type?: string } | undefined)?.type === 'terrain';
   const hasLight = (o: THREE.Object3D) => (o as THREE.Light).isLight || !!o.getObjectByProperty('isLight', true);
@@ -210,6 +214,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     const now = new Set<THREE.Object3D>(), partial = fade < 1; let budget = INPAGE.uploadMB * 1e6;
     for (const c of unculled) c.frustumCulled = true; unculled.length = 0; // admitted last frame: uploaded by now
     for (const o of scene.children) {
+      if (o.userData.horizonSkirt) continue; // the rings stay up: they are the ground past the chunk dither
       if (isChunkRoot(o)) { for (const m of o.children) { if (partial && !faded(m)) { now.add(m); continue; } if (uploaded.has(m) || !m.visible && !hidden.has(m)) continue; const b = bytesOf(m); if (b <= budget || budget === INPAGE.uploadMB * 1e6) { budget -= b; admit(m); } else now.add(m); } continue; }
       if (hasLight(o) || (!(o as THREE.Mesh).isMesh && (o as THREE.Points).type !== 'Points' && !o.children.length)) continue;
       if (o.userData.animalPicture) continue; // specks and stored bodies stay through the glide; precipitation points still hide
@@ -365,7 +370,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       }
       if (DEV && DEBUG.pose) { const [x, y, z] = DEBUG.pose.p, [lx, ly, lz] = DEBUG.pose.look; cam.p.set(x, y, z); tmpM.lookAt(cam.p, tmpV.set(lx, ly, lz), UP); cam.q.setFromRotationMatrix(tmpM); }
       camera.position.copy(cam.p); camera.quaternion.copy(cam.q);
-      const hc = Math.max(1, cam.p.y - ground(cam.p.x, cam.p.z)); camera.near = Math.max(.2, hc * INPAGE.nearK); camera.far = Math.max(700, hc * 2 + 900, DEV ? DEBUG.far : 0);
+      const hc = Math.max(1, cam.p.y - ground(cam.p.x, cam.p.z)); camera.near = Math.max(.2, hc * INPAGE.nearK); camera.far = Math.max(700, hc * 2 + 900, horizonMetres(hc) * 1.2, DEV ? DEBUG.far : 0);
       camera.updateMatrixWorld(true);
       STATS.h = h; STATS.fade = fade; STATS.ready = ready; STATS.readyAt = readyAt;
       if (down && phase === 'blend' && blend >= 1) next = 'game'; else if (!down && h >= top - 1e-3) { globe?.resumeOrbit(); next = 'globe'; } // embody finishes into the animal; the climb finishes on the planet and waits for a double-click
@@ -387,7 +392,19 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     // the game's linear fog (render/sky: ~200-480 m + camera height, pale) is pushed out above the handover: up here the haze toward
     // the globe (setPatchFar) is the aerial perspective, and the fog washed distant patch tree tops out to the fog colour (r19 risk)
     if (scene.fog instanceof THREE.Fog) { const k = smoothstep(TRANSITION.handover, INPAGE.fogTop, h), m = 1 + INPAGE.fogOut * k * k; scene.fog.near *= m; scene.fog.far *= m; }
-      const p = host.player(); setPatchFade(fade, { x: p.x, z: p.z, r: Math.min(INTEREST.mid, INPAGE.ring * CHUNK_SIZE), y: patchPlaneY(p.x, p.z, Math.min(INTEREST.mid, INPAGE.ring * CHUNK_SIZE)) }); hideForBand(scene); // disc inside the chunks chunksReady checked
+      const p = host.player();
+      const loaded = Math.max(INPAGE.ring * CHUNK_SIZE, INTEREST.mid);
+      const discR = patchDiscRadius(loaded);
+      setPatchFade(fade, { x: p.x, z: p.z, r: discR, y: patchPlaneY(p.x, p.z, discR) });
+      if (globe) {
+        skirt ??= createHorizonSkirt();
+        if (!skirt.mesh.parent) scene.add(skirt.mesh);
+        skirt.mesh.visible = true;
+        const eye = Math.max(1, camera.position.y - ground(camera.position.x, camera.position.z));
+        const ahead = tmpV.set(0, 0, -1).applyQuaternion(camera.quaternion);
+        skirt.update(globe.planet, camera.position.x, camera.position.z, eye, ahead.x, ahead.z);
+      }
+      hideForBand(scene); // disc covers the loaded square; the skirt is the ground outside it
       // the patch's aerial blend toward the globe behind it, and globe terrain in front of the patch hides it (render/fade, uniforms)
       setPatchFar({ color: far.texture, depth: far.target.depthTexture, mix: Math.min(1, INPAGE.haze * smoothstep(INPAGE.hazeLow, INPAGE.hazeTop, h)), scale: scene.backgroundIntensity, logFC: LOG_DEPTH.uniform.value, occ: nearGroundOcc(h, INPAGE.hazeLow, INPAGE.occ) });
     },
@@ -411,7 +428,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (mode === 'game') g.suspendWorkers(); // not if Shift+G already went up meanwhile (the band would build tiles on the main thread)
       return { ms: performance.now() - t0, frames: n, tiles: g.stats().cached };
     },
-    dispose() { unregPad(); window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); view.canvas.removeEventListener('pointerdown', onDown); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); promptEl?.remove(); globe?.dispose(); far.dispose(); ctl = null; },
+    dispose() { unregPad(); window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); view.canvas.removeEventListener('pointerdown', onDown); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); promptEl?.remove(); skirt?.dispose(); globe?.dispose(); far.dispose(); ctl = null; },
   };
   return api;
   /** lake colours for the band: s = 0 the globe's calibrated lakes, 1 the game-matched ones */

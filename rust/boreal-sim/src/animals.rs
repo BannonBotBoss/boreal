@@ -19,6 +19,11 @@ pub const SPECIES_HARE: u8 = 2;
 pub const ARCHETYPE_CANID: u8 = 1;
 /// `leporid` on the Snowshoe Hare `MAMMALS` row.
 pub const ARCHETYPE_LEPORID: u8 = 2;
+/// `deer` is the white-tailed deer playable. It has no `NEEDS_SPECIES` row.
+/// Age comes from `LIFESPAN.deer`. One animal, the one you can enter.
+pub const SPECIES_DEER: u8 = 3;
+/// `cervid` on the White-tailed Deer `MAMMALS` row.
+pub const ARCHETYPE_CERVID: u8 = 3;
 
 /// Little-endian `ANM1` record. Header is 12 bytes, then one 76-byte animal.
 pub const ANIMAL_BYTES: usize = 76;

@@ -235,7 +235,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** Rewrite of `Playable.create` as the entry (`playables.ts` lines 27–50). The motor interface stays, so there is still one control path (rule 3).
 - **Issues:** #102, #103 (inhabit).
 - **Depends on:** Steps 1 and 12.
-- **Size:** M. Queue.
+- **Size:** M. Board: T-0107.
 - **Gates:** Numbers: age inside the species' published lifespan. Frame: entering shows that animal in the place it already stood, recorded. Evidence: the embodied id on the step 1 record equals the store id, and a second entry of the same id keeps the memories from step 22.
 
 ### Step 18 — The body feels, and it does not store a mass

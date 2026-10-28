@@ -6,7 +6,9 @@
 import * as THREE from 'three';
 import type { Player } from '../core/events';
 type Action = Player['abilities'][number];
-import { AnimalBrain } from '../core/animalBehavior';
+import { AnimalBrain, type StoredMirror } from '../core/animalBehavior';
+import { mirrorStoredAnimal } from '../core/storedAnimal';
+import { hash } from '../proc/rng';
 import type { WolfMode } from '../core/wolfModes';
 import { createPlayerWolf } from './playerWolf';
 import { createDeerRig } from './animalRig';
@@ -22,24 +24,27 @@ export interface Playable {
   id: string; label: string; available: boolean; note?: string;
   speedScale: number; cameraHeight: number; actions: Action[];
   /** Whether wild deer treat this player as a predator. */ threat: boolean;
-  create(): PlayerRig;
+  /** Enter `life`. The rig is the shared motor. The age, place and past come from the store. */
+  create(life: StoredMirror): PlayerRig;
 }
 export const PLAYABLES: Playable[] = [
   { id: 'wolf', label: 'Grey wolf', available: true, speedScale: 1, cameraHeight: SYSTEM_PROPERTIES.camera.riderHeight, actions: ['speak', 'gather', 'move'], threat: true,
-    create() { if (LOCO_FLAG) return createLocoPlayer(); const w = createPlayerWolf(); return { ...w, animate: f => { w.setHold(f.hold); w.animate(f.time, f.moving, f.action, f.elapsed, f.mode, f.push); } }; } },
+    create(life) { if (LOCO_FLAG) return createLocoPlayer(); const w = createPlayerWolf(); mirrorStoredAnimal(w.brain, life); return { ...w, animate: f => { w.setHold(f.hold); w.animate(f.time, f.moving, f.action, f.elapsed, f.mode, f.push); } }; } },
   { id: 'deer', label: 'White-tailed deer', available: true, speedScale: 1.15, cameraHeight: 2.2, actions: ['speak'], threat: false,
-    create() { const d = createDeerRig(4242, 0); return { root: d.root, brain: d.brain, sensor: d.sensor, animate: f => d.animate(f.dt) }; } },
-  { id: 'bear', label: 'Grizzly bear', available: true, speedScale: .85, cameraHeight: 2.4, actions: ['speak', 'move'], threat: true,
-    create() {
-      const b = createBear(7), brain = new AnimalBrain(7), sensor = new THREE.Object3D(); brain.legs = b.legs;
+    create(life) { const d = createDeerRig(hash(life.handle), 0); mirrorStoredAnimal(d.brain, life); return { root: d.root, brain: d.brain, sensor: d.sensor, animate: f => d.animate(f.dt) }; } },
+  { id: 'bear', label: 'Grizzly bear', available: false, note: 'not in the living store', speedScale: .85, cameraHeight: 2.4, actions: ['speak', 'move'], threat: true,
+    create(life) {
+      const seed = hash(life.handle), b = createBear(seed), brain = new AnimalBrain(seed), sensor = new THREE.Object3D(); brain.legs = b.legs;
+      mirrorStoredAnimal(brain, life);
       sensor.position.set(0, 1.1, -1); b.root.add(sensor);
       return { root: b.root, brain, sensor, animate: f => b.animate(f.time, brain.motion, brain.phase, brain.gaitSpeed) };
     } },
   // The snowshoe hare (T-0064): the T-0009 furred rig (createHareModel) posed by the same poseHare the NPC hares use, driven by the
   // player's AnimalBrain instead of the headless sim. Speeds/stamina/needs come from HARE_NEEDS (main: needsSpecies()); eating is 'gather'.
   { id: 'hare', label: 'Snowshoe hare', available: true, speedScale: 1, cameraHeight: .8, actions: ['gather'], threat: false,
-    create() {
-      const m: HareModel = { ...createHareModel(), id: 0, hopPhase: 0 }, brain = new AnimalBrain(11), sensor = new THREE.Object3D(); sensor.position.set(0, .2, -.27); m.root.add(sensor);
+    create(life) {
+      const brain = new AnimalBrain(hash(life.handle)); mirrorStoredAnimal(brain, life);
+      const m: HareModel = { ...createHareModel(), id: 0, hopPhase: 0 }, sensor = new THREE.Object3D(); sensor.position.set(0, .2, -.27); m.root.add(sensor);
       const ground = (x: number, z: number) => Math.max(heightAt(x, z), -.2); // as buildScene.draw places every player body
       const body: HareBody = { x: 0, z: 0, heading: 0, speed: 0, action: 'scan' };
       return { root: m.root, brain, sensor, animate(f) { // draw() has just put the root at the player's x, z and heading

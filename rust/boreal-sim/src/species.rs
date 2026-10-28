@@ -1,0 +1,94 @@
+//! Animal density per landing (grokbot-1, Rust lane #158; first two species from the #159 3D request).
+//! Built on the #167 cover row: an animal lives only where its range and its cover class allow it.
+//! Densities are labelled calibration ranges in data/earth/species-density.json [verify]. Deterministic per (lat, lon, year).
+
+use crate::cover::{cover_row, place_hash, Cover};
+
+pub const SPECIES_JSON: &str = include_str!("../../../data/earth/species-density.json");
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1 }
+impl Species {
+    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer"][self as usize] }
+    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), _ => None } }
+}
+
+fn block(sp: Species) -> &'static str {
+    let k = format!("\"{}\":", sp.key());
+    let start = SPECIES_JSON.match_indices(&k).map(|(i, _)| i)
+        .find(|&i| SPECIES_JSON[i + k.len()..].trim_start().starts_with('{')).expect("species block");
+    &SPECIES_JSON[start..start + SPECIES_JSON[start..].find('}').unwrap()]
+}
+fn field(sp: Species, f: &str) -> Vec<f64> {
+    let b = block(sp);
+    let k = format!("\"{f}\"");
+    let a = &b[b.find(&k).unwrap_or_else(|| panic!("missing {f}")) + k.len()..];
+    let a = a.trim_start().trim_start_matches(':').trim_start();
+    if let Some(r) = a.strip_prefix('[') {
+        r[..r.find(']').unwrap()].split(',').map(|s| s.trim().parse().unwrap()).collect()
+    } else {
+        let end = a.find(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-')).unwrap_or(a.len());
+        vec![a[..end].parse().unwrap()]
+    }
+}
+
+/// Is (lat, lon) inside the species' range box?
+pub fn in_range(sp: Species, lat: f64, lon: f64) -> bool {
+    let (la, lo) = (field(sp, "lat"), field(sp, "lon"));
+    lat >= la[0] && lat <= la[1] && lon >= lo[0] && lon <= lo[1]
+}
+
+/// Animals per hectare at a landing in a given year. Zero outside the range or on cover the species cannot use.
+pub fn density_per_ha(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32) -> f64 {
+    if !in_range(sp, lat, lon) { return 0.0; }
+    let cls = cover_row(lat, lon, elev_m, vegetation, water).class;
+    let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", _ => return 0.0 };
+    let r = field(sp, key);
+    if r[1] <= 0.0 { return 0.0; }
+    let h = place_hash(lat + 0.5 * sp as u32 as f64, lon);
+    let cycle = field(sp, "cycle_years")[0];
+    let v = if cycle > 0.0 {
+        // Population cycle: the phase shifts slowly with place so neighbouring valleys peak in step, the far range does not.
+        let phase = (year as f64 + 3.0 * place_hash(lat.round(), lon.round())) / cycle;
+        let wave = 0.5 - 0.5 * (std::f64::consts::TAU * phase).cos();
+        (0.8 * wave * wave + 0.2 * h).clamp(0.0, 1.0)
+    } else { h };
+    r[0] + (r[1] - r[0]) * v
+}
+
+/// Whole animals to spawn in a square patch of `side_m` metres, rounded deterministically from the density.
+pub fn spawn_count(density_per_ha: f64, side_m: f64, lat: f64, lon: f64) -> u32 {
+    let expected = density_per_ha * side_m * side_m / 10_000.0;
+    let f = expected.floor();
+    (f + if place_hash(lon, lat + 7.0) < expected - f { 1.0 } else { 0.0 }) as u32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test] fn same_place_same_year_same_density() {
+        let a = density_per_ha(Species::SnowshoeHare, 54.0, -120.0, 200.0, 0.8, false, 2026);
+        assert_eq!(a, density_per_ha(Species::SnowshoeHare, 54.0, -120.0, 200.0, 0.8, false, 2026));
+        assert!(a >= 0.1 && a <= 6.0, "{a}");
+    }
+    #[test] fn hare_cycles_over_a_decade() {
+        let ds: Vec<f64> = (2020..2030).map(|y| density_per_ha(Species::SnowshoeHare, 55.0, -100.0, 300.0, 0.9, false, y)).collect();
+        let (lo, hi) = ds.iter().fold((f64::MAX, 0.0f64), |(l, h), &d| (l.min(d), h.max(d)));
+        assert!(hi > 3.0 * lo, "{lo} {hi}");
+    }
+    #[test] fn no_hares_on_prairie_or_outside_range() {
+        assert_eq!(density_per_ha(Species::SnowshoeHare, 50.0, -105.0, 600.0, 0.45, false, 2026), 0.0);
+        assert_eq!(density_per_ha(Species::SnowshoeHare, 60.0, 25.0, 100.0, 0.9, false, 2026), 0.0); // Finland: other hares
+    }
+    #[test] fn deer_denser_on_prairie_edge_than_boreal_and_none_on_water() {
+        let p = density_per_ha(Species::WhiteTailedDeer, 45.0, -95.0, 300.0, 0.5, false, 2026);
+        let b = density_per_ha(Species::WhiteTailedDeer, 50.0, -90.0, 350.0, 0.9, false, 2026);
+        assert!(p > b, "{p} {b}");
+        assert_eq!(density_per_ha(Species::WhiteTailedDeer, 45.0, -95.0, 0.0, 1.0, true, 2026), 0.0);
+    }
+    #[test] fn spawn_count_tracks_density() {
+        assert_eq!(spawn_count(0.0, 500.0, 50.0, -90.0), 0);
+        let n = spawn_count(2.0, 100.0, 50.0, -90.0); // 2/ha over 1 ha
+        assert!(n == 2 || n == 3);
+    }
+}

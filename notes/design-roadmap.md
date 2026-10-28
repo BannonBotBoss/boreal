@@ -253,7 +253,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** Rewrite of the single mind (#102) and the single instinct list (#103). Reuses step 10's weights.
 - **Issues:** #102, #103, #105, #106.
 - **Depends on:** Steps 10 and 18.
-- **Size:** M. Queue.
+- **Size:** M. Board: T-0105.
 - **Gates:** Numbers: carry the step 10 weights. Frame N/A. Evidence: the three blocks occupy the step 16 offsets, and a test that hunger does not also appear as an emotion.
 
 ### Step 20 — An urge is a feeling, not a mission

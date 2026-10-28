@@ -24,3 +24,4 @@ Use when hunger, thirst, fear, fatigue, or a habitat score should change what an
 - Editing `src/core/animalBehavior.ts` or `src/render/**` for this step. The legs and the camera stay.
 - Treating the issue's example scores (hunger 92, fear 83, safety 100) as game numbers.
 - Calling `habitatAt` from the render loop in this step. The open camera change owns those files. A caller passes the cell.
+- Copying body hunger into the emotion block, or storing mating as a mind stat. Step 19 (`notes/skills/three-blocks.md`) keeps the three blocks apart and still calls `urgeScores`. It does not add a mating weight.

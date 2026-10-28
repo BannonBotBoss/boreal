@@ -1,5 +1,5 @@
 {
-  "_notes": "Grizzly Bear is not a row in src/core/species.ts. It is the American Black Bear row used as a brown-bear variant, so it is drawn at that 0.9 m shoulder. Bald Eagle is not a row either; the bird group is Hawks, Kites and Eagles (representative Red-tailed Hawk), so the eagle is scaled to that group's 0.55 m bill-to-tail length. Common Raven is the representative of Crows and Jays, scaled to that group's 0.6 m length.",
+  "_notes": "Grizzly Bear and Bald Eagle are their own rows in src/core/species.ts (issue #162): grizzly at a 1.05 m shoulder, bald eagle at 0.85 m bill to tail. Common Raven is the representative of Crows and Jays, scaled to that group's 0.6 m length.",
   "Gray Wolf": { "full": "gray-wolf.glb" },
   "Coyote": { "full": "coyote.glb" },
   "Red Fox": { "full": "red-fox.glb" },
@@ -12,13 +12,13 @@
   "Ermine": { "full": "ermine.glb" },
   "American Mink": { "full": "american-mink.glb" },
   "American Black Bear": { "full": "american-black-bear.glb" },
-  "Grizzly Bear": { "full": "grizzly-bear.glb", "as": "American Black Bear" },
+  "Grizzly Bear": { "full": "grizzly-bear.glb" },
   "Moose": { "full": "moose.glb" },
   "Elk": { "full": "elk.glb" },
   "White-tailed Deer": { "full": "white-tailed-deer.glb" },
   "Woodland Caribou": { "full": "woodland-caribou.glb" },
   "Snowshoe Hare": { "full": "snowshoe-hare.glb" },
   "Beaver": { "full": "beaver.glb" },
-  "Bald Eagle": { "full": "bald-eagle.glb", "as": "Hawks, Kites and Eagles" },
+  "Bald Eagle": { "full": "bald-eagle.glb" },
   "Common Raven": { "full": "common-raven.glb", "as": "Crows and Jays" }
 }

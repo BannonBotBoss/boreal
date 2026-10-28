@@ -11,7 +11,8 @@ Use when the glide or the low drone shows a small patch of chunk terrain floatin
 
 ## Steps
 
-1. Build concentric rings from `HORIZON_SKIRT.innerM` out past `horizonMetres(eye)`. Radius doubles each ring. Keep the triangle count under `HORIZON_SKIRT.maxTriangles`.
+1. Build concentric rings from `HORIZON_SKIRT.innerM` out past `horizonMetres(eye)`. Radius doubles each ring. `ringLod` gives the near rings 128 segments and more radial steps, and the far rings 32. Keep the triangle count under `HORIZON_SKIRT.maxTriangles`.
+   At a boundary where the segment count halves, odd vertices geomorph onto the chord of their even neighbours (`smoothstep` across the outer part of the ring) so the coarser ring does not crack. Lighting normals come from `demSlope` (central difference of the terrarium), blended back to straight up inside 200 m where the chunks own the ground.
 2. Place each vertex at the game (x, z) and set y to the tangent-plane height minus `curvatureDrop`. The drop is `R − R² / sqrt(R² + r²)`. At the horizon distance `sqrt(2 R h + h²)` that drop is `h R / (R + h)`.
 3. Near a remote landing, add the same `surfaceDetail * 0.5` the remote `heightAt` adds, and fade that term out by 2 km so the far rings match the globe.
 4. Draw the mesh in the game scene, under the chunks (`polygonOffset`), and do not put it on the patch-fade discard. Widen the chunk disc with `patchDiscRadius` so the square corners fall inside the dither. Extend the band camera's far plane past `horizonMetres`.

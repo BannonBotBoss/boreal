@@ -84,6 +84,16 @@ export function skirtTriangles(rows: number, segments: number) {
   return Math.max(0, rows - 1) * segments * 2;
 }
 
+/**
+ * Finer near the eye, coarser at the horizon. Segment counts stay powers of two so the
+ * outer edge of a fine ring can sit on the inner edge of the next ring (geomorph).
+ */
+export function ringLod(index: number): { segments: number; radials: number } {
+  if (index < 2) return { segments: 128, radials: 6 };
+  if (index < 5) return { segments: 64, radials: 3 };
+  return { segments: 32, radials: 2 };
+}
+
 /** Segment count that stays inside the triangle cap. Never below 24. */
 export function skirtSegments(rows: number, want = HORIZON_SKIRT.segments, cap = HORIZON_SKIRT.maxTriangles) {
   let segments = want;
@@ -115,64 +125,115 @@ export interface SkirtMeshData {
  */
 export function buildSkirtMesh(
   cx: number, cz: number, eyeM: number,
-  place: (x: number, z: number) => { y: number; rgb: [number, number, number]; water?: boolean; photo?: boolean },
+  place: (x: number, z: number) => { y: number; rgb: [number, number, number]; water?: boolean; photo?: boolean; normal?: [number, number, number] },
   radius = PLANET.radius,
   /** Drop a quad when this returns false. Used to omit the ground behind the camera: a ring
    *  triangle that straddles the near plane smears across the sky. */
   keep: (x: number, z: number, ringR: number) => boolean = () => true,
 ): SkirtMeshData {
   const rings = skirtRings(eyeM, radius);
-  const radii = skirtRadii(rings);
-  const rows = radii.length;
-  const segments = skirtSegments(rows);
-  const outer = radii[rows - 1] ?? HORIZON_SKIRT.innerM;
-  const count = rows * segments;
+  const outer = rings.length ? rings[rings.length - 1].r1 : HORIZON_SKIRT.innerM;
+  const fade0 = outer * 0.9;
+  // Count vertices, then shrink the near rings if the triangle cap would be passed.
+  let scale = 1;
+  const budget = () => {
+    let tris = 0;
+    for (let i = 0; i < rings.length; i++) {
+      const lod = ringLod(i);
+      const seg = Math.max(24, Math.round(lod.segments * scale / 4) * 4);
+      tris += lod.radials * seg * 2;
+    }
+    return tris;
+  };
+  while (budget() > HORIZON_SKIRT.maxTriangles && scale > 0.34) scale -= 0.125;
+  type Vert = { x: number; y: number; z: number; rgb: [number, number, number]; water: number; photo: number; nx: number; ny: number; nz: number; fade: number };
+  const rows: Vert[][] = [];
+  const segOf: number[] = [];
+  const sampleAt = (x: number, z: number) => {
+    const p = place(x, z);
+    const drop = curvatureDrop(Math.hypot(x, z), radius);
+    const n = p.normal;
+    return {
+      x, y: p.y - drop, z,
+      rgb: p.rgb, water: p.water ? 1 : 0, photo: p.photo === false ? 0 : 1,
+      nx: n ? n[0] : 0, ny: n ? n[1] : 1, nz: n ? n[2] : 0,
+      fade: 1 - smoothstep(fade0, outer, Math.hypot(x - cx, z - cz)),
+    };
+  };
+  for (let i = 0; i < rings.length; i++) {
+    const lod = ringLod(i);
+    const segments = Math.max(24, Math.round(lod.segments * scale / 4) * 4);
+    const next = i + 1 < rings.length ? Math.max(24, Math.round(ringLod(i + 1).segments * scale / 4) * 4) : segments;
+    const step = Math.max(1, Math.round(segments / next));
+    segOf.push(segments);
+    for (let k = 0; k <= lod.radials; k++) {
+      if (i > 0 && k === 0) continue; // the previous ring already owns this shared radius
+      const rr = rings[i].r0 + (rings[i].r1 - rings[i].r0) * (k / lod.radials);
+      const morph = smoothstep(0.55, 1, k / lod.radials);
+      const row: Vert[] = [];
+      const at = (s: number) => {
+        const theta = (s / segments) * Math.PI * 2;
+        return sampleAt(cx + Math.cos(theta) * rr, cz + Math.sin(theta) * rr);
+      };
+      for (let s = 0; s < segments; s++) {
+        const v = at(s);
+        if (morph > 0 && s % step !== 0) {
+          const s0 = s - (s % step);
+          const s1 = s0 + step;
+          const a = at(s0), b = at(s1 % segments);
+          const u = (s % step) / step;
+          v.x = v.x + (a.x + (b.x - a.x) * u - v.x) * morph;
+          v.y = v.y + (a.y + (b.y - a.y) * u - v.y) * morph;
+          v.z = v.z + (a.z + (b.z - a.z) * u - v.z) * morph;
+        }
+        row.push(v);
+      }
+      rows.push(row);
+    }
+  }
+  const count = rows.reduce((n, row) => n + row.length, 0);
   const position = new Float32Array(count * 3);
+  const normal = new Float32Array(count * 3);
   const color = new Float32Array(count * 3);
   const fade = new Float32Array(count);
   const water = new Float32Array(count);
   const photo = new Float32Array(count);
-  const fade0 = outer * 0.9;
-  for (let row = 0; row < rows; row++) {
-    const rr = radii[row];
-    for (let s = 0; s < segments; s++) {
-      const theta = (s / segments) * Math.PI * 2;
-      const x = cx + Math.cos(theta) * rr;
-      const z = cz + Math.sin(theta) * rr;
-      const p = place(x, z);
-      const i = row * segments + s;
-      position[i * 3] = x;
-      position[i * 3 + 1] = p.y - curvatureDrop(Math.hypot(x, z), radius);
-      position[i * 3 + 2] = z;
-      color[i * 3] = p.rgb[0]; color[i * 3 + 1] = p.rgb[1]; color[i * 3 + 2] = p.rgb[2];
-      water[i] = p.water ? 1 : 0;
-      photo[i] = p.photo === false ? 0 : 1;
-      const dist = Math.hypot(x - cx, z - cz);
-      fade[i] = 1 - smoothstep(fade0, outer, dist);
+  const base: number[] = [];
+  let cursor = 0;
+  for (const row of rows) {
+    base.push(cursor);
+    for (const v of row) {
+      position[cursor * 3] = v.x; position[cursor * 3 + 1] = v.y; position[cursor * 3 + 2] = v.z;
+      const nl = Math.hypot(v.nx, v.ny, v.nz) || 1;
+      normal[cursor * 3] = v.nx / nl; normal[cursor * 3 + 1] = v.ny / nl; normal[cursor * 3 + 2] = v.nz / nl;
+      color[cursor * 3] = v.rgb[0]; color[cursor * 3 + 1] = v.rgb[1]; color[cursor * 3 + 2] = v.rgb[2];
+      water[cursor] = v.water; photo[cursor] = v.photo; fade[cursor] = v.fade;
+      cursor++;
     }
   }
-  // Coarse rings lie about their slope: a chord across a few kilometres tilts the
-  // geometric normal and the sun paints wedges. The planet up is the lighting normal.
-  // Relief still shows in the vertex colour and in the silhouette against the sky.
-  const normal = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) normal[i * 3 + 1] = 1;
   const used: number[] = [];
-  for (let row = 0; row < rows - 1; row++) {
-    const ringR = radii[row + 1];
-    for (let s = 0; s < segments; s++) {
-      const s1 = (s + 1) % segments;
-      const a = row * segments + s;
-      const b = row * segments + s1;
-      const d = (row + 1) * segments + s;
-      const c = (row + 1) * segments + s1;
-      const corners = [a, b, c, d];
-      if (corners.some(v => !keep(position[v * 3], position[v * 3 + 2], ringR))) continue;
-      // A (inner) -> B (inner, next angle) -> C (outer, next) is CCW from +Y.
-      used.push(a, b, c, a, c, d);
+  for (let r = 0; r < rows.length - 1; r++) {
+    const inner = rows[r], outerRow = rows[r + 1];
+    const si = inner.length, so = outerRow.length;
+    const ratio = Math.max(1, Math.round(si / so));
+    const ringR = Math.hypot(outerRow[0].x - cx, outerRow[0].z - cz);
+    for (let s = 0; s < so; s++) {
+      for (let k = 0; k < ratio; k++) {
+        const ia = (s * ratio + k) % si;
+        const ib = (s * ratio + k + 1) % si;
+        const oa = s;
+        const ob = (s + 1) % so;
+        const A = base[r] + ia, B = base[r] + ib, C = base[r + 1] + (k === ratio - 1 ? ob : oa), D = base[r + 1] + oa;
+        const corners = k === ratio - 1 ? [A, B, C, D] : [A, B, C];
+        if (corners.some(v => !keep(position[v * 3], position[v * 3 + 2], ringR))) continue;
+        if (k === ratio - 1) used.push(A, B, C, A, C, D);
+        else used.push(A, B, C);
+      }
     }
   }
   const index = new Uint32Array(used);
-  return { position, normal, color, fade, water, photo, index, triangles: used.length / 3, rows, segments, outerM: outer };
+  const segments = segOf[0] ?? 24;
+  return { position, normal, color, fade, water, photo, index, triangles: used.length / 3, rows: rows.length, segments, outerM: outer };
 }
 
 export interface SkirtOrigin { asl: number; gameY: number; remote: boolean }

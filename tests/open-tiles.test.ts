@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  blendDem, blendPhoto, globeMatch, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
+  blendDem, blendPhoto, demSlope, globeMatch, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
   storePhoto, storeTerrarium, terrariumMetres, tileMetres, tileRing,
 } from '../src/world/globe/openTiles';
 
@@ -58,6 +58,31 @@ test('a photograph is linear and the close grain is stronger than the far pixel'
   const far = blendPhoto(pic, 2000, 0.7);
   assert.ok(near[1] < pic[1]);
   assert.ok(Math.abs(far[1] - pic[1]) < 1e-6);
+});
+
+test('a slope that rises to the east leans the normal west', () => {
+  resetOpenTiles();
+  const rgba = new Uint8Array(256 * 256 * 4);
+  // Terrarium of a plane rising to the east: height = 1000 + 0.2 * pixel x.
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) {
+    const h = 1000 + x * 0.5;
+    const v = h + 32768;
+    const i = (y * 256 + x) * 4;
+    rgba[i] = Math.floor(v / 256); rgba[i + 1] = Math.floor(v) % 256; rgba[i + 2] = 0; rgba[i + 3] = 255;
+  }
+  const lat = 45, lon = 10, z = 8, n = 2 ** z;
+  const tx = Math.floor((lon + 180) / 360 * n);
+  const latR = lat * Math.PI / 180;
+  const ty = Math.floor((1 - Math.log(Math.tan(latR) + 1 / Math.cos(latR)) / Math.PI) / 2 * n);
+  storeTerrarium(z, tx, ty, { w: 256, h: 256, rgba });
+  storeTerrarium(z, tx + 1, ty, { w: 256, h: 256, rgba });
+  storeTerrarium(z, tx - 1, ty, { w: 256, h: 256, rgba });
+  storeTerrarium(z, tx, ty + 1, { w: 256, h: 256, rgba });
+  storeTerrarium(z, tx, ty - 1, { w: 256, h: 256, rgba });
+  const slope = demSlope(lat, lon, 200);
+  assert.ok(slope, 'the stored tiles produce a normal');
+  assert.ok(slope![0] < 0, `east-rising ground leans west, nx ${slope![0]}`);
+  assert.ok(slope![1] > 0.5);
 });
 
 test('a missing photo lifts the globe albedo instead of leaving a black vertex', () => {

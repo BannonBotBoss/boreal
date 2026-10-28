@@ -127,6 +127,29 @@ function sampleGrid(table: Map<string, Float32Array | null>, latDeg: number, lon
   return null;
 }
 
+/**
+ * Unit normal in the game tangent frame from the elevation model.
+ * +x is east, −z is north (the same frame as `planet.fromLocal`). Null when a neighbour tile is missing.
+ * `stepM` is the central-difference spacing.
+ */
+export function demSlope(latDeg: number, lonDeg: number, stepM = 60): [number, number, number] | null {
+  const c = sampleDem(latDeg, lonDeg);
+  if (c == null || !Number.isFinite(c)) return null;
+  const dLat = stepM / 111_320;
+  const dLon = stepM / (111_320 * Math.max(0.2, Math.cos(latDeg * Math.PI / 180)));
+  const north = sampleDem(latDeg + dLat, lonDeg);
+  const south = sampleDem(latDeg - dLat, lonDeg);
+  const east = sampleDem(latDeg, lonDeg + dLon);
+  const west = sampleDem(latDeg, lonDeg - dLon);
+  if (north == null || south == null || east == null || west == null) return null;
+  const dhEast = (east - west) / (2 * stepM);
+  const dhNorth = (north - south) / (2 * stepM);
+  // North is −z, so dh/dz = −dh/dNorth. The normal leans away from the uphill side.
+  const nx = -dhEast, ny = 1, nz = dhNorth;
+  const l = Math.hypot(nx, ny, nz) || 1;
+  return [nx / l, ny / l, nz / l];
+}
+
 /** Metres above sea level, or null when the tile is not cached. Finest cached zoom wins. */
 export function sampleDem(latDeg: number, lonDeg: number): number | null {
   const v = sampleGrid(dem, latDeg, lonDeg, OPEN_TILES.demZoom, 1);

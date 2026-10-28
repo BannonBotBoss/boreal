@@ -287,7 +287,7 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
     threshold: ['share', 'drei PerformanceMonitor default'], flipflops: ['count', EST], lower: ['x target', EST], upper: ['x target', EST],
     cooldownMs: ['ms', '2026-10-18 omen bench (tier change every ~2.5 s)'], upHoldMs: ['ms', '2026-10-18 omen bench'],
     rememberMs: ['ms', '2026-10-18 uncapped bench (bounce every ~40 s)'], worldHoldMs: ['ms', EST] } },
-  senses: { readers: ['src/core/senses.ts'], keys: {
+  senses: { readers: ['src/core/senses.ts', 'src/core/sensePictures.ts'], keys: {
     range: ['m', EST], threshold: ['0-1', EST], cueLife: ['s', EST], cueCap: ['count', EST], thoughtCap: ['count', EST], updateSeconds: ['s', EST] } },
   sensesHalo: { readers: ['src/core/senseBeacons.ts'], keys: { radius: ['m', EST], fadeFrom: ['m/s', 'stealth speed 0.8 m/s (core/wolfModes)'], fadeTo: ['m/s', EST], speedEase: ['s', EST] } },
   sim: { readers: ['src/core/sim/index.ts'], keys: {

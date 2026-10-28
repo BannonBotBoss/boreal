@@ -145,7 +145,11 @@ void main() {
       const weights: PictureWeight[] = [];
       for (const { item, d } of ranked) {
         const share = detailShares(d);
-        const seen = d < 8 || frustum.containsPoint(tmp.set(item.x, item.y + 0.6, item.z));
+        const eye = camera.position.y - item.y;
+        const horiz = Math.hypot(item.x - camera.position.x, item.z - camera.position.z);
+        // From the glide the herd is the ground under the eye, even when the isometric aim looks past it.
+        const overhead = eye > 80 && horiz < Math.max(90, eye * 0.5);
+        const seen = d < 8 || overhead || frustum.containsPoint(tmp.set(item.x, item.y + 0.6, item.z));
         const model = animalModel(item.species);
         const rigidFull = !!model?.full && (!item.moving || d > ANIMAL_LADDER.fullM);
         const rigidLow = !!model?.low && d >= ANIMAL_LADDER.fullM;

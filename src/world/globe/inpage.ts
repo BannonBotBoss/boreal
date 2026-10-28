@@ -96,6 +96,7 @@ function patchPlaneY(x: number, z: number, r: number) {
 function controller(view: View, host: InPageHost) {
   const renderer = view.photoreal.renderer, far = createFarLayer(), hold = createGovernorHold(GOVERNOR, resetGovernor);
   let globe: Globe | null = null, mode: TransitionMode = 'game', down = true, phase: 'fly' | 'drone' | 'blend' = 'fly';
+  let pinned: number | null = null; // dev stills: hold the drone at one height instead of the glide floor
   let next: 'globe' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
   let prep: { x: number; z: number } | null = null; // chunks under the fall, warmed once the drop is below prepAlt. The clicked point is not moved.
   let renderMs = 0; // last frame's globe + game draw CPU (ms): the descent's chunk job budget fills the rest of jobFrame
@@ -150,8 +151,9 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
   function descend(at: { x: number; z: number; yaw: number; vy?: number; home?: number; dir?: [number, number, number] }) {
     const g = globe!;
     const remote = !!at.dir && engageLanding(at.dir, at.home ?? 1);
-    const spot = remote ? dryNear() : landSpawn({ x: at.x, z: at.z }, undefined, at.yaw);
-    spotX = spot.x; spotZ = spot.z; yaw = at.yaw;
+    const spot = landSpawn({ x: at.x, z: at.z }, undefined, at.yaw);
+    const stood = remote ? dryNear() : spot;
+    spotX = stood.x; spotZ = stood.z; yaw = at.yaw;
     host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null;
     const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
     h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;
@@ -249,12 +251,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (!globe) return false;
       const dir = fromLatLon(latDeg * Math.PI / 180, lonDeg * Math.PI / 180);
       const s = globe.planet.sampleSurface(dir);
+      pinned = null;
       descend({ x: s.x, z: s.z, yaw, vy: 0, home: s.home, dir: [dir[0], dir[1], dir[2]] });
-      h = heightM; vel.x = vel.y = vel.z = 0; pitch = ISO_BELOW_HORIZON; readySeen = true;
+      pinned = heightM; h = heightM; vel.x = vel.y = vel.z = 0; pitch = ISO_BELOW_HORIZON; readySeen = true;
       return true;
     },
     setEye(heightM: number, pitchRad?: number, back = 0) {
-      h = Math.max(1, heightM);
+      pinned = heightM; h = Math.max(1, heightM);
       if (pitchRad !== undefined) pitch = pitchRad;
       if (back) { spotX += Math.sin(yaw) * back; spotZ += Math.cos(yaw) * back; host.place(spotX, spotZ, yaw); }
       vel.x = vel.y = vel.z = 0;
@@ -337,6 +340,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
             else if (fly.y <= minY + 1e-3 && vel.y < 0) vel.y = 0; // the photo floor stops the body; it does not zero the speed at the handoff
             airSpeed = dt > 0 ? Math.hypot(fly.x - x0, fly.y - y0, fly.z - z0) / dt : 0;
             spotX = fly.x; spotZ = fly.z; yaw = fly.yaw; pitch = fly.pitch; h = fly.y - ground(fly.x, fly.z);
+            if (pinned !== null) { h = pinned; vel.x = vel.y = vel.z = 0; }
             if (Math.hypot(spotX - host.player().x, spotZ - host.player().z) > 8) { host.place(spotX, spotZ, yaw); placedFrame = frameNo; }
           }
         }

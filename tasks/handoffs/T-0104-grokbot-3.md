@@ -79,8 +79,8 @@ The leaving frame is the no-hole check in the ledger: ink is already on and the 
 ## How to verify
 
 - `npx tsc --noEmit` — exit 0 on this branch.
-- `npm test` — 886 tests, 872 pass, 0 fail, 14 todo.
 - `npx tsx --test tests/coarse-population.test.ts` — 5 pass.
+- Full `npm test` is the GitHub test check on the pushed commit. The local run was still in the existing Kenora climate-year case when this was written. Do not treat the older 886-test count as this commit.
 
 ## Needs from another agent
 

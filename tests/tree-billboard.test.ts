@@ -2,10 +2,24 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { canopyTile, treeAtlas, treeSprite } from '../src/render/trees/billboardAtlas';
+import { CC0_TREES } from '../src/render/trees/cc0Impostors';
+import { treeSlot } from '../src/render/horizonCover';
+import { existsSync } from 'node:fs';
 
 function alphaAt(rgba: Uint8ClampedArray, size: number, x: number, y: number) {
   return rgba[(y * size + x) * 4 + 3];
 }
+
+test('five CC0 Kenney trees are on disk, three pines and two broadleaf', () => {
+  assert.equal(CC0_TREES.length, 5);
+  assert.equal(CC0_TREES.filter(t => !t.broadleaf).length, 3);
+  for (const t of CC0_TREES) assert.ok(existsSync('public' + t.url), t.url);
+  assert.ok(existsSync('public/models/trees/LICENCE.txt'));
+  const a = treeSlot('boreal', 0, 0);
+  const b = treeSlot('boreal', 40, 12);
+  assert.ok(a >= 0 && a < 3 && b >= 0 && b < 3);
+  assert.ok(treeSlot('prairie', 3, 9) >= 3);
+});
 
 test('a conifer is clear in the corner and solid in the crown, and the left side is the lit side', () => {
   const size = 64;
@@ -31,5 +45,7 @@ test('a broadleaf crown is an ellipse and the atlas holds both sprites', () => {
   const canopy = canopyTile();
   let solid = 0;
   for (let i = 3; i < canopy.length; i += 4) if (canopy[i] > 200) solid++;
-  assert.ok(solid > 10 && solid < canopy.length / 4, `canopy crowns, not a solid sheet (${solid})`);
+  const pixels = canopy.length / 4;
+  assert.ok(solid > pixels * 0.35, `canopy should be a closed stand, got ${solid} of ${pixels}`);
+  assert.ok(solid < pixels * 0.92, `canopy should keep a little ground, got ${solid}`);
 });

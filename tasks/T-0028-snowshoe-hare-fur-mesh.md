@@ -20,6 +20,7 @@ icosahedron blobs (`src/animals/hare.ts` `model()`), with stick-segment legs. Th
 but nothing on the board owns a real hare body, so the look gate cannot pass. This task builds that body.
 
 ## Hard constraints
+Matthew, 2026-10-28, issue #156: stored Meshy models are allowed for species that have a file in `public/models/animals/manifest.json`. The hare has no file. This task's mesh stays procedural.
 - **Procedural only.** No downloaded, purchased or imported model (no .glb/.gltf/.fbx/.obj/.vrm or any mesh asset file for the hare);
   every vertex is generated in code at runtime.
 - **Reuse before writing.** Build it the way the wolf is built:

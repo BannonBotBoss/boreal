@@ -487,7 +487,7 @@ function frame(time: number) { const frameStart = performance.now();
     }
     hub.sample(simTime);
   } else { accumulator = 0; drawFrom = undefined; }
-  view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
+  view.sync(player.x, player.z, Math.max(altitude, inpage?.height ?? 0), context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
   view.worldTime = wNow; // one clock. The sky reads this signed second, so rewind moves the sun backward.
   tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only: ground years are elapsed time, not a rewind of decay
@@ -515,7 +515,7 @@ function frame(time: number) { const frameStart = performance.now();
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   const rush = inpage?.airRush() ?? 0; if (rush > 0) void sfx.start(); // a double-click already unlocked the context; a pad-only drop may still be silent until a key or click
   sfx.update({ dt: simDt > 0 ? Math.min(simDt, .05) : 0, halted: isPaused() || wDt < 0 || observation().scale !== 'immediate' || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || (!!inpage?.blocksGame() && rush <= 0), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb, rush });
-  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
+  if (active || inpage?.flightPhase === 'drone') for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
     if (ev.type === 'pinned') { notice('Pinned. X eats, B releases.'); continue; } // the bite row already played the one squeal
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {

@@ -10,6 +10,7 @@
  */
 import * as THREE from 'three';
 import { heightAt, WORLD_SEED } from '../core/world';
+import { plantsGrowAt } from '../core/altitudeZones';
 import { stream, range } from '../proc/rng';
 import { LEVEL } from '../core/tuning';
 import { f, scope } from '../proc/trace';
@@ -287,6 +288,7 @@ export function createHares(scene: THREE.Scene) {
   const hares: Hare[] = []; const pending: number[] = []; const folded = new Set<number>();
   const spawnRng = stream(WORLD_SEED, 'hares-v1'); // seeded placement
   function spawn(px: number, pz: number) {
+    if (!plantsGrowAt(heightAt(px, pz))) return; // above the tree line the local density is rock, not hares
     for (let tries = 0; tries < 12; tries++) {
       const a = spawnRng() * Math.PI * 2, d = range(spawnRng, [HARE.spawnMin, HARE.spawnMax]), x = px + Math.sin(a) * d, z = pz + Math.cos(a) * d;
       if (heightAt(x, z) < LEVEL.shore) continue;

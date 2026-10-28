@@ -78,7 +78,7 @@ export interface GlobeOptions {
   /** shared mode: programs are compiled for this target (render-target programs differ from the screen's: tone mapping, colour space) */
   target?: THREE.WebGLRenderTarget | null;
   /** G / Esc (and the standalone auto handoff): default = dispose and reload into the game at the spot */
-  onLeave?: (at: { x: number; z: number; yaw: number; vy?: number } | null) => void;
+  onLeave?: (at: { x: number; z: number; yaw: number; vy?: number; home?: number; dir?: [number, number, number] } | null) => void;
   /** tile workers (default: cores - 2, 1..4; shared mode 2). ?workers=0 = main-thread jobs */
   workers?: number;
 }
@@ -285,13 +285,18 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     else if (e.key === 'g' || e.key === 'G') beginFall(); // G drops on the centre. Never a no-op while the globe has input.
     else if (e.key === 'Escape' && own.pageDom) { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); }
   });
+  /** The clicked direction travels with the handoff. Off the home square, samp.x/z are 0 and are not a place. */
+  function dropAt(yaw: number, vy: number) {
+    const samp = planet.sampleSurface([dir.x, dir.y, dir.z]);
+    return { x: samp.x, z: samp.z, yaw, vy, home: samp.home, dir: [dir.x, dir.y, dir.z] as [number, number, number] };
+  }
   /** Start the free fall. With a hit, the fall is on that point. Without one (G, or A on the reticle), it is the centre. */
   function beginFall(hit?: THREE.Vector3) {
     if (!inputOn || fall || handed || leaving) return;
     if (hit) dir.copy(hit);
     stopCoast();
     const yaw0 = lookAz ?? cameraAz();
-    if (alt <= FALL_END_M) { handed = true; const samp = planet.sampleSurface([dir.x, dir.y, dir.z]); leave({ x: samp.x, z: samp.z, yaw: -fallYaw(yaw0, 1), vy: 0 }); return; } // game yaw is minus the look azimuth (headingYaw)
+    if (alt <= FALL_END_M) { handed = true; leave(dropAt(-fallYaw(yaw0, 1), 0)); return; } // game yaw is minus the look azimuth (headingYaw)
     fall = { h0: alt, y: alt, vy: 0, yaw0 };
   }
   listeners.push(registerPadTarget('globe', { active: () => inputOn, orbit: (dx, dy) => { if (!dx && !dy || fall) return; stopCoast(); const r = controls as unknown as { _rotateLeft(a: number): void; _rotateUp(a: number): void }; r._rotateLeft(dx * controls.rotateSpeed * 3); r._rotateUp(dy * controls.rotateSpeed * 3); controls.update(); }, zoom, turn, home: () => { fall = null; flyHome = 1; stopCoast(); }, axis: () => axis, land: () => beginFall() })); // A on the reticle: the same drop as a double-click on the centre. Stays live during the fall so X can cancel.
@@ -503,8 +508,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     } else camera.rotateX(pitchQ ?? 0); // standalone orbit: no altitude tilt, straight down unless ?pitch=
     }
     if (handoffVy !== null && fall) { // the spin and the pitch are at ease 1, then the drone inherits the speed
-      const yaw = -(lookAz ?? fallYaw(fall.yaw0, 1)), vy = handoffVy, samp = planet.sampleSurface([dir.x, dir.y, dir.z]);
-      fall = null; handed = true; leave({ x: samp.x, z: samp.z, yaw, vy });
+      const yaw = -(lookAz ?? fallYaw(fall.yaw0, 1)), vy = handoffVy;
+      fall = null; handed = true; leave(dropAt(yaw, vy));
     }
     // Limb distance past a sphere of the mean radius (orbitClip). The hydrostatic figure and deep water sit inside that
     // sphere, so a low camera — the free fall crosses it — would make the radical negative and the projection NaN, and

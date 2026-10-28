@@ -1331,3 +1331,16 @@ Branch `grokbot-3/three-blocks`, from main `43dac9f`. Roadmap step 19. Issues #1
 - Nothing is drawn. The senses panel and the density fold were not edited. No screenshot.
 - `tests/three-blocks.test.ts`: 2 passed. `npx tsc --noEmit` exit 0. `npm test` 893 tests, 879 pass, 0 fail, 14 todo. Not claimed. Not self-approved.
 
+
+## 2026-10-28 00:45 PT - grokbot-3: globe click to the animal ladder (T-0108, issue #156)
+
+Bridge lane (issue #158). Blitz mode (issue #157): this note's author merges the change once the type check and npm test pass. Not a self-review. Grokbot-1 is told on the change. The biological back end (branch prefix grokbot-3/bio-backend-) owns worldwide ranges. Grokbot-1 owns the landscape.
+
+Matthew, 2026-10-28, issue #156, overrides PROJECT-RULES rule 1 for animal model files only. The one manifest is public/models/animals/manifest.json. A species with no file keeps the procedural body. Recorded in PROJECT-RULES.md, the T-0028 note, and tests/hare-mesh.test.ts.
+
+- Why a far click was the wolf's lake: sampleSurface writes game x,z only inside the Kenora square. descend used those zeros. landingSite.ts anchors the existing frame on the clicked direction. heightAt reads the planet sample only while that frame is remote. Home does not move.
+- The fall still ends at 10,000 ft and still uses stepCarriedFly. It stops at 400 m unless the player flies down, then glides at 8 m/s. Clouds are the existing shell and local box.
+- animalLadder.ts and animalPicture.ts fade specks, a low body, and the full model. setBodyShare stays after density.sync. The old disc stays off the ground.
+- Gray Wolf: public/models/animals/wolf.glb (26,033 triangles, 1,024², 1.94 MB) and wolf-low.glb (18,193 triangles; gltf-transform simplify stopped on its error bound). Scaled to the 0.74 m shoulder. Head −X turned to −Z. Still or far is rigid. Close and moving keeps the procedural bones. Deer and hare have no file.
+- Files: src/core/sitePhase.ts, src/core/siteHeight.ts, src/world/globe/landingSite.ts, src/render/animalLadder.ts, src/render/animalModels.ts, src/render/animalPicture.ts, src/world/globe/flight.ts, globeView.ts, inpage.ts, src/core/world.ts, altitudeZones.ts, stages/elevation.ts, stages/rivers.ts, planetWeather.ts, src/render/buildScene.ts, src/animals/hare.ts, src/main.ts, tests/globe-landing.test.ts. Skill notes/skills/globe-to-animals.md.
+- Adoption: three/examples/jsm/loaders/GLTFLoader.js (three 0.180, already depended). Textures resized with @gltf-transform/cli resize and jpeg. No new runtime package.

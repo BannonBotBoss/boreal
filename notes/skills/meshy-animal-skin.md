@@ -28,4 +28,4 @@ Use when a species gets a file in `public/models/animals` and that file should w
 - Do not give canids a copy of `WOLF_LEGS` if you still want the measured gait. `quadrupedPose` uses that gait only when the leg row is `WOLF_LEGS` itself. Scale the metres (bob, pelvis) after.
 - Do not load all 21 files at startup. Ask for the species in view.
 - Do not add a species-named source file. The plan stays data.
-- Grizzly, bald eagle: map them in the manifest. Do not add a species row for them here.
+- Grizzly, bald eagle: they have their own rows in src/core/species.ts now (issue #162); the manifest names them with no `as`.

@@ -32,10 +32,11 @@ export function positionCamera(camera: THREE.PerspectiveCamera, x: number, z: nu
   const ground = Math.max(heightAt(x, z), -.2);
   const scale = altitude / RIDER_HEIGHT;
   const back = RIDER_DISTANCE * scale, flank = RIDER_FLANK * scale;
-  // Behind the animal (sin yaw, cos yaw) and to its left (cos yaw, -sin yaw): a rear three-quarter, not dead astern.
+  // World up on every call. lookAt rolls the horizon when camera.up follows the ground. The wolf may lean; this camera does not.
+  camera.up.set(0, 1, 0);
+  // Straight behind (sin yaw, cos yaw). flank is 0, so the lens is dead astern and the aim is the heading. A leftover side offset still aims through the animal.
   camera.position.set(x + Math.sin(yaw) * back + Math.cos(yaw) * flank, ground + altitude, z + Math.cos(yaw) * back - Math.sin(yaw) * flank);
   const angle = clampPitch(pitch);
-  // Look through the animal so the flank offset does not shove it off the vertical centre. Flank 0 keeps the old yaw.
   const dist = Math.hypot(back, flank) || 1;
   const aimYaw = Math.atan2((Math.sin(yaw) * back + Math.cos(yaw) * flank) / dist, (Math.cos(yaw) * back - Math.sin(yaw) * flank) / dist) + lookYaw;
   camera.lookAt(camera.position.x - Math.sin(aimYaw) * Math.cos(angle),

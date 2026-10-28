@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { positionCamera, terrainGeometry, clampPitch, RIDER_DISTANCE, RIDER_FLANK, RIDER_HEIGHT } from '../src/render/math';
+import { positionCamera, terrainGeometry, clampPitch, DEFAULT_PITCH, RIDER_DISTANCE, RIDER_FLANK, RIDER_HEIGHT } from '../src/render/math';
 import { CHUNK_SIZE, heightAt } from '../src/core/world';
+import { STAGES } from '../src/core/stages/elevation';
+import { isDry } from '../src/core/stages/surfaceAt';
 import { generateGeometry, disposeObject } from '../src/render/geometry';
 import { catalog } from '../src/core/catalog';
 import type { Entity } from '../src/core/world';
@@ -92,6 +94,52 @@ test('LOD changes detail at intended distances, with hysteresis preventing bound
   assert.equal(level(45), 0); assert.equal(level(120), 2); assert.equal(level(114), 2); assert.equal(level(99), 1);
 });
 
+/** Screen angle of a world-horizontal line at the camera's height. 0 means the horizon is level. */
+function horizonDeg(camera: THREE.PerspectiveCamera) {
+  const dir = camera.getWorldDirection(new THREE.Vector3());
+  const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+  const y = camera.position.y;
+  const left = camera.position.clone().addScaledVector(dir, 200).addScaledVector(right, -30).setY(y);
+  const edge = camera.position.clone().addScaledVector(dir, 200).addScaledVector(right, 30).setY(y);
+  const a = left.project(camera), b = edge.project(camera);
+  return Math.atan2((b.y - a.y) / camera.aspect, b.x - a.x) * 180 / Math.PI;
+}
+
+test('on a sloped cell the camera roll is 0 and the horizon is level within 0.5°', () => {
+  const prev = STAGES.on, seed = STAGES.seed;
+  STAGES.on = true; STAGES.seed = 1400;
+  try {
+    let cell: { x: number; z: number; hx: number; hz: number; slope: number } | undefined;
+    for (let x = -100; x <= 100; x += 4) for (let z = -100; z <= 100; z += 4) {
+      if (!isDry(x, z)) continue;
+      const hx = (heightAt(x + 2, z) - heightAt(x - 2, z)) / 4, hz = (heightAt(x, z + 2) - heightAt(x, z - 2)) / 4;
+      const slope = Math.hypot(hx, hz);
+      if (!cell || slope > cell.slope) cell = { x, z, hx, hz, slope };
+    }
+    assert.ok(cell && cell.slope > 0.15, `need a sloped dry cell, got ${cell?.slope}`);
+    // Look across the slope, so a camera that followed the ground normal would roll.
+    const yaw = Math.atan2(-cell.hz, cell.hx);
+    const camera = new THREE.PerspectiveCamera(48, 16 / 9, .2, 700);
+    camera.up.set(cell.hx, 1, cell.hz).normalize(); // a caller that banked the camera with the ground
+    positionCamera(camera, cell.x, cell.z, RIDER_HEIGHT, yaw, DEFAULT_PITCH, 0);
+    const rightY = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).y;
+    const roll = Math.asin(THREE.MathUtils.clamp(rightY, -1, 1)) * 180 / Math.PI;
+    const horizon = horizonDeg(camera);
+    const fwd = camera.getWorldDirection(new THREE.Vector3());
+    const pitch = Math.asin(THREE.MathUtils.clamp(fwd.y, -1, 1)) * 180 / Math.PI;
+    fwd.y = 0; fwd.normalize();
+    const heading = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const off = Math.acos(THREE.MathUtils.clamp(fwd.dot(heading), -1, 1)) * 180 / Math.PI;
+    const side = new THREE.Vector3(camera.position.x - cell.x, 0, camera.position.z - cell.z);
+    const behind = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+    assert.ok(Math.abs(roll) < .5, `roll ${roll}° on a ${(Math.atan(cell.slope) * 180 / Math.PI).toFixed(1)}° slope`);
+    assert.ok(Math.abs(horizon) < .5, `horizon ${horizon}°`);
+    assert.ok(Math.abs(pitch) < 8, `pitch ${pitch}° is not near level`);
+    assert.ok(off < .5, `looks ${off}° off the wolf's forward`);
+    assert.ok(side.clone().normalize().dot(behind) > .999, 'camera is not straight behind the wolf');
+  } finally { STAGES.on = prev; STAGES.seed = seed; }
+});
+
 test('sled rider camera is three metres behind at human eye height', async () => {
   const { createPlayerWolf } = await import('../src/render/playerWolf');
   const wolf = createPlayerWolf();
@@ -102,7 +150,7 @@ test('sled rider camera is three metres behind at human eye height', async () =>
   const camera = new THREE.PerspectiveCamera();
   for (const yaw of [0, Math.PI / 2, Math.PI]) {
     positionCamera(camera, 0, 0, RIDER_HEIGHT, yaw);
-    close(Math.hypot(camera.position.x, camera.position.z), riderSlant); // behind and to the left, not dead astern
+    close(Math.hypot(camera.position.x, camera.position.z), riderSlant); // straight behind the wolf
     close(camera.position.y - Math.max(heightAt(0, 0), -.2), RIDER_HEIGHT); // just above the withers
   }
   // T-0003: the torso and the leg chains hang from the body's `tilt` group (torso first, then the four girdle bones).

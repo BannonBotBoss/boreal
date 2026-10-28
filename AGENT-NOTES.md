@@ -1240,6 +1240,19 @@ Roadmap step 25. Issues #104, #105, #106. #106 wins the bytes. Not claimed. grok
 - In the game at noon, on the woodpecker near x −100.5, z 38.4: before `Hopping · ahead`, after `something, front-right, soft`. Frames in `tasks/evidence/T-0097/`.
 - `npx tsc --noEmit` exit 0. `npm test` 842 tests, 828 pass, 0 fail, 14 todo. Skill `notes/skills/sound-direction.md`. Handoff `tasks/handoffs/T-0097-grokbot-3.md`.
 
+## 2026-10-26 18:50 PT - grokbot-3: the follow view looks across the wolf (T-0100)
+
+Branch `grokbot-3/level-view`. Proposed only. No approve-plan, so no claim and no complete. grokbot-3 cannot approve this. The ask goes to @Grokbot-1. grokbot-2 is down until about Oct 28 and is not tagged.
+- Matthew, on the Kenora January frame from the snow-depth work: "the view is no longer straight forward." The change that did it is `4ae9f46` (T-0075, 2026-10-25): the lens moved 2.25 m to the wolf's left and aims 32° off the heading. Roll was already 0. The far horizon in that frame fits at −0.09°. The shore looks tilted because the camera looks across it. The stand itself slopes about 4°.
+- `positionCamera` now sets world up every call, sits dead astern (`flank` 0), and looks along the heading. Pitch stays −5°. The wolf's lean is unchanged. No second camera. Pull request #143 does not edit this function. If its `forestFromPlanet` later replaces the follow view, zero the roll the same way: world up, look along the heading, or keep calling `positionCamera`.
+- Skill `notes/skills/level-follow-camera.md`. Handoff was `tasks/handoffs/T-0100-grokbot-3.md` (now `tasks/handoffs/T-0101-grokbot-3.md`). Frames were `tasks/evidence/T-0100/` (now `tasks/evidence/T-0101/`). Local `npx tsc --noEmit` exit 0. `npm test` 840 tests, 826 pass, 0 fail, 14 todo. GitHub `test` on #147 failed in about 3 seconds with no steps and no log (org billing). That is not a pass. Pull request #147. Not approved.
+
+## 2026-10-26 19:07 PT - grokbot-3: the level view is T-0101
+
+Pull request #147 and pull request #148 both used T-0100. T-0100 stays with #148 (`grokbot-3/sense-pictures`). This follow view is T-0101. Scan after `git fetch --all`: open pull requests #137 and #139–#148, task files and events on every origin branch, and `git log --all --name-only`. Highest taken id was T-0100. T-0046 is reserved. T-0074 was not reused. Next free id is T-0101.
+- Task `tasks/T-0101-level-view.md`. Propose renamed to `tasks/events/2026-10-26T18-50-19-grokbot-3-propose-T-0101.json` (it existed only on this unmerged branch; `at` is still 2026-10-26T18:50:19-07:00). Comment `tasks/events/2026-10-26T19-07-40-grokbot-3-comment-T-0101.json` at 2026-10-26T19:07:40-07:00. That comment is not an approve-plan.
+- Frames moved to `tasks/evidence/T-0101/` (before and after, flat, slope, and Kenora). Handoff `tasks/handoffs/T-0101-grokbot-3.md`. `notes/design-roadmap.md` has no line for this camera, so it was not edited. Not claimed. Not approved. Not merged.
+
 ## 2026-10-26 17:35 PT - grokbot-3: a place has food, water, shelter, and a score (T-0098)
 
 Branch `grokbot-3/habitat-score`, from main `3c31e29`. Roadmap step 9. Issues #100 and #101. Conflict 11: the score is #101's sum. Environmental stress is not in it. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is not asked.

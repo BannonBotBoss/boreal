@@ -1,0 +1,97 @@
+{
+  "which": "after",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "note": "Kenora, day 15, hour query 12. The status line read 12:04 because the clock moves a few minutes while the page loads. Same yaw -0.35. Flat (-82, -12), slope (82, -32), Kenora stand (30, 0). nomenu, noprobe, rec (the read-only player probe). player is window.__boreal.player() after load. cameraAfter is positionCamera in Node on this branch, with camera.up preset off world Y so a banked caller is included. horizonDeg is the sky-to-ground luminance fit (y down). Within 0.5\u00b0 is level.",
+  "observations": [
+    {
+      "name": "after-flat",
+      "q": "?nomenu&noprobe&rec&day=15&hour=12&at=-82,-12,-0.35",
+      "x": -82,
+      "z": -12,
+      "yaw": -0.35,
+      "url": "http://127.0.0.1:5288?nomenu&noprobe&rec&day=15&hour=12&at=-82,-12,-0.35",
+      "ms": 25448,
+      "sample": {
+        "href": "http://127.0.0.1:5288/?nomenu&noprobe&rec&day=15&hour=12&at=-82,-12,-0.35",
+        "status": "12:04 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 75/100 \u00b7 Water 100% \u00b7 Rest 100%",
+        "player": {
+          "x": -81.99999493771082,
+          "z": -12.000013868195037,
+          "yaw": -0.35,
+          "energy": 74.90703011414766,
+          "water": 99.96329626381356,
+          "mode": "walk"
+        }
+      },
+      "cameraAfter": {
+        "roll": 0,
+        "lookPitch": 5.0,
+        "headingOff": 0,
+        "behindDot": 1,
+        "horizonDeg": -0.351,
+        "horizonRmsPx": 7.73
+      }
+    },
+    {
+      "name": "after-slope",
+      "q": "?nomenu&noprobe&rec&day=15&hour=12&at=82,-32,-0.35",
+      "x": 82,
+      "z": -32,
+      "yaw": -0.35,
+      "url": "http://127.0.0.1:5288?nomenu&noprobe&rec&day=15&hour=12&at=82,-32,-0.35",
+      "ms": 27046,
+      "sample": {
+        "href": "http://127.0.0.1:5288/?nomenu&noprobe&rec&day=15&hour=12&at=82,-32,-0.35",
+        "status": "12:04 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 75/100 \u00b7 Water 100% \u00b7 Rest 100%",
+        "player": {
+          "x": 82.0000054968222,
+          "z": -32.00001505860746,
+          "yaw": -0.35,
+          "energy": 74.79874013423839,
+          "water": 99.92054428216073,
+          "mode": "walk"
+        }
+      },
+      "cameraAfter": {
+        "roll": 0,
+        "lookPitch": 5.0,
+        "headingOff": 0,
+        "behindDot": 1,
+        "horizonDeg": -0.089,
+        "horizonRmsPx": 1.55
+      }
+    },
+    {
+      "name": "after-kenora",
+      "q": "?nomenu&noprobe&rec&day=15&hour=12&at=30,0,-0.35",
+      "x": 30,
+      "z": 0,
+      "yaw": -0.35,
+      "url": "http://127.0.0.1:5288?nomenu&noprobe&rec&day=15&hour=12&at=30,0,-0.35",
+      "ms": 27115,
+      "sample": {
+        "href": "http://127.0.0.1:5288/?nomenu&noprobe&rec&day=15&hour=12&at=30,0,-0.35",
+        "status": "12:04 \u00b7 WALK \u00b7 Stamina 100/100 \u00b7 Energy 75/100 \u00b7 Water 100% \u00b7 Rest 100%",
+        "player": {
+          "x": 30.000005514595607,
+          "z": -1.510730229902037e-05,
+          "yaw": -0.35,
+          "energy": 74.89905527066597,
+          "water": 99.96014786206393,
+          "mode": "walk"
+        }
+      },
+      "cameraAfter": {
+        "roll": 0,
+        "lookPitch": 5.0,
+        "headingOff": 0,
+        "behindDot": 1,
+        "horizonDeg": -0.351,
+        "horizonRmsPx": 7.73
+      }
+    }
+  ]
+}

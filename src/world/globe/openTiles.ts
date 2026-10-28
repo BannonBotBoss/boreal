@@ -150,6 +150,14 @@ export function demSlope(latDeg: number, lonDeg: number, stepM = 60): [number, n
   return [nx / l, ny / l, nz / l];
 }
 
+/**
+ * The planet's ocean and a real elevation tile disagree on the prairie and northern clicks:
+ * the sample says sea, the DEM says land. Land above sea level wins. A lake is left alone.
+ */
+export function elevationWins(kind: '' | 'ocean' | 'lake', demM: number | null) {
+  return kind === 'ocean' && demM != null && demM > 0;
+}
+
 /** Metres above sea level, or null when the tile is not cached. Finest cached zoom wins. */
 export function sampleDem(latDeg: number, lonDeg: number): number | null {
   const v = sampleGrid(dem, latDeg, lonDeg, OPEN_TILES.demZoom, 1);
@@ -286,6 +294,18 @@ export function tileRing(kind: 'dem' | 'photo', z: number, latDeg = 50, radiusM?
   const cap = z >= 12 ? 2 : z >= 10 ? 1 : 2;
   const min = z <= 8 ? 2 : 1;
   return Math.max(min, Math.min(cap, need));
+}
+
+/** Share of the coarse (zoom 8) elevation tiles around this point that have arrived. */
+export function demCoverage(latDeg: number, lonDeg: number) {
+  const z = OPEN_TILES.demZoom[0];
+  const tiles = tilesAround(latDeg, lonDeg, z, tileRing('dem', z, latDeg));
+  let have = 0;
+  for (const t of tiles) {
+    const grid = dem.get(key(t.z, t.x, t.y));
+    if (grid && grid.length) have++;
+  }
+  return tiles.length ? have / tiles.length : 0;
 }
 
 /** Share of the coarse (zoom 8) tiles around this point that have arrived. 1 means the horizon mosaic has no hole. */

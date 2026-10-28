@@ -38,7 +38,7 @@ import { INTEREST, JOB_FIRST, pending, queued, STATS as JOBS } from '../../core/
 import { CHUNK_SIZE, heightAt } from '../../core/world';
 import { createHorizonSkirt, type HorizonSkirt } from '../../render/horizonMesh';
 import { createHorizonCover } from '../../render/horizonCover';
-import { photoCoverage } from './openTiles';
+import { demCoverage, photoCoverage } from './openTiles';
 import { DRONE_GRADE, droneExposureScale } from '../../render/droneGrade';
 import { horizonMetres, patchDiscRadius, skirtLatLon, skirtOrigin } from './horizonSkirt';
 import { SITE } from '../../core/sitePhase';
@@ -283,6 +283,12 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       const p = host.player();
       const ll = skirtLatLon(globe.planet, p.x, p.z, SITE.remote);
       return photoCoverage(ll.latDeg, ll.lonDeg);
+    },
+    demReady() {
+      if (!globe) return 0;
+      const p = host.player();
+      const ll = skirtLatLon(globe.planet, p.x, p.z, SITE.remote);
+      return demCoverage(ll.latDeg, ll.lonDeg);
     },
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */
     ascend(): boolean {

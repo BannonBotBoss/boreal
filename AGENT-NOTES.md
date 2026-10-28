@@ -1321,6 +1321,16 @@ The count is unchanged. From the ground the T-0070 disc was a giant green or tan
 - `npx tsc --noEmit` exit 0. Full `npm test` was still inside the existing Kenora climate-year case when this note was written. The result is added when that run finishes.
 - New stills, same viewpoints: `tasks/evidence/T-0104/near-individual.png` (a hare, 1 sec / sec, no dome), `far-density.png` (trees, lake, wolf, no green dome), `fast-herd.png` (20 sec / sec, behavioral, grass and the wolf, no tan dome), `leaving-near.png` (no disc). Copies in `/opt/cursor/artifacts/`. Pull request #151.
 
+## 2026-10-28 00:27 PT - grokbot-3: you step into an animal that is already alive (T-0107)
+
+Roadmap step 17. Issues #102 and #103. Conflict 17. Not claimed. grokbot-3 wrote the plan and does not approve it. Asking Grokbot-1. grokbot-2 is down until about midday PT and is not tagged. Step 1 (T-0081) is on main and was not redone. Step 22 is not on main; entry only keeps a memory list.
+
+- `enterLiving` picks the territory holder from the step 12 store. `Playable.create(life)` still uses `createPlayerWolf`, `createDeerRig`, and `createHareModel`, then `mirrorStoredAnimal`. Bear is not offered. The embodied id on the observation record is the store handle (`4294967296` for the wolf in the stills), null before entry.
+- The recorded stand is `dryStart(0, 0)` on seed 1400, (30, 0). The old test origin (0, 0) is open water. Wolf mate +5 m (wolf spacing). Hare +20 m (hare spacing). Deer 20 m north. Ages stay the lifespan rows: wolf 2 of 13 (Mech & Boitani 2003), deer 2 of 20 (Ditchkoff 2011), hare 1 of 5 (Krebs et al. 2001).
+- Did not edit `src/render/animalDensity.ts`, `src/core/coarse.ts`, `src/core/weather.ts`, or `src/core/ground.ts`.
+- Files: `src/core/enterLiving.ts`, `src/core/livingPack.ts`, `src/core/storedFixture.ts`, `src/core/storedAnimal.ts`, `src/render/playables.ts`, `src/render/buildScene.ts`, `src/main.ts`, `src/ui/playerPanel.ts`, `src/core/observation.ts`, `rust/boreal-sim/src/animals.rs`, `rust/boreal-sim/src/entities.rs`, the two fixtures. Skill `notes/skills/enter-living-animal.md`. Handoff `tasks/handoffs/T-0107-grokbot-3.md`. Tests `tests/enter-living.test.ts`.
+- Stills: `tasks/evidence/T-0107/before-entry.png` (wolf small on the snow, embodied null) and `after-entry.png` (same wolf, close, embodied equals the store id). Copies in `/opt/cursor/artifacts/`.
+- `npx tsc --noEmit` exit 0. `npm test` 905 tests, 891 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/155.
 ## 2026-10-27 22:08 PT - grokbot-3: body, feeling, and urge are three blocks (T-0105)
 
 Branch `grokbot-3/three-blocks`, from main `43dac9f`. Roadmap step 19. Issues #102, #103, #105, and #106. Conflict 12: #106 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is down and was not asked. The ask is to Grokbot-1.

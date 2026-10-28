@@ -68,7 +68,8 @@ import { createInPage } from './world/globe/inpage';
 import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
-import { dryStart } from './core/stages/surfaceAt';
+import { dryStart, isDry } from './core/stages/surfaceAt';
+import { WITNESS_ALTITUDE_SCALE } from './core/enterLiving';
 import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
 import { createChronometer } from './ui/chronometer';
 import { createTimeHud } from './ui/timeHud';
@@ -212,7 +213,13 @@ const renderStore = createSettingsStore(RENDER_SETTINGS);
   hook.borealPlace = (x, z, face, look) => { player.x = x; player.z = z; if (face !== undefined) { yaw = face; player.heading = face; } if (look !== undefined) pitch = look; };
   hook.borealRate = r => setClockRate(r);
 } }
-if (STAGES.on && !new URLSearchParams(location.search).has('at')) [player.x, player.z] = dryStart(player.x, player.z); // the fixed default start can fall in a staged lake: nearest dry land
+const watchLife = new URLSearchParams(location.search).has('watch');
+if (!new URLSearchParams(location.search).has('at')) {
+  // The animal already stands on its store point. dryStart only if that point is open water.
+  const here = view.livingHere(); player.x = here.x; player.z = here.z;
+  if (STAGES.on && !isDry(player.x, player.z)) [player.x, player.z] = dryStart(player.x, player.z);
+}
+if (watchLife) altitude = view.playable.cameraHeight * WITNESS_ALTITUDE_SCALE;
 let pendingRegen = false, playAs = new URLSearchParams(location.search).get('play') ?? localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf'; // ?play=hare: open as that animal for this visit (links, screenshots); the menu's Player panel still saves a choice
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');
@@ -251,13 +258,18 @@ menu.addPanel({ id: 'globe', title: 'Planet view (Shift+G)', build: () => { toGl
 function toGlobe() { if (!STAGES.on) { notice('The planet view needs staged terrain (Graphics).'); return; } if (inpage?.ascend()) return; saveAll(); location.search = globeUrl(location.search, player.x, player.z, yaw + lookYaw); } // up to the globe at this spot and heading; it hands back through ?at=x,z,yaw (world/globe/handoff)
 function applyPending() {
   if (pendingRegen) { view.invalidate(); pendingRegen = false; }
-  if (pendingPlay) { const p = view.setPlayable(playAs); player.abilities = [...p.actions]; altitude = p.cameraHeight; pendingPlay = false; }
+  if (pendingPlay) {
+    const p = view.setPlayable(playAs); player.abilities = [...p.actions];
+    altitude = watchLife ? p.cameraHeight * WITNESS_ALTITUDE_SCALE : p.cameraHeight;
+    if (!new URLSearchParams(location.search).has('at')) { player.x = p.x; player.z = p.z; }
+    pendingPlay = false;
+  }
 }
 applyPending();
 const inpage = createInPage(view, { player: () => ({ x: player.x, z: player.z, yaw: yaw + lookYaw }), place: (x, z, y) => { player.x = x; player.z = z; yaw = y; player.heading = y; lookYaw = 0; }, save: saveAll }); // ?transition=inpage: world/globe/inpage (null = the reload path)
 if (new URLSearchParams(location.search).has('rec')) (window as unknown as Record<string, unknown>).__boreal = { // ?rec: read-only probe for the recorders (tools/hunt-record.mjs)
   hares: () => view.hares.list().map(h => ({ id: h.id, x: h.x, z: h.z, state: h.state, linked: h.sim.linked, knows: h.sim.knowsAt !== undefined })),
-  player: () => ({ x: player.x, z: player.z, yaw, energy: view.playerBrain.energy, water: needs.water, mode: modes.mode }),
+  player: () => { const here = view.livingHere(); return { x: player.x, z: player.z, yaw, energy: view.playerBrain.energy, water: needs.water, mode: modes.mode, handle: here.handle, embodied: here.embodied, species: here.species }; },
   shaderTime: () => shaderClock.time };
 function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
 actionButton.onclick = perform;

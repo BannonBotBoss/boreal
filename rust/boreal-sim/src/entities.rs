@@ -166,7 +166,10 @@ mod tests {
             count: 2,
             age_years: 2.0,
             spacing_m: 5.0,
-            x: 0.0,
+            // Recorded stand: dryStart(0, 0) on seed 1400 is (30, 0). The
+            // test origin (0, 0) is open water on the staged land. Not a
+            // new length. The mate is one wolf spacing (5 m) along x.
+            x: 30.0,
             y: 0.0,
             z: 0.0,
             water: 100.0,
@@ -182,9 +185,29 @@ mod tests {
             count: 1,
             age_years: 1.0,
             spacing_m: 20.0,
-            x: 0.0,
+            // One hare spacing east of the wolf stand, so it is not inside the wolf.
+            x: 50.0,
             y: 0.0,
             z: 0.0,
+            water: 100.0,
+            energy: 75.0,
+            rest: 100.0,
+        }
+    }
+
+    fn deer() -> crate::animals::PackSpawn {
+        crate::animals::PackSpawn {
+            species: crate::animals::SPECIES_DEER,
+            archetype: crate::animals::ARCHETYPE_CERVID,
+            count: 1,
+            age_years: 2.0,
+            spacing_m: 0.0,
+            // One hare spacing north of the wolf stand. That metre is the
+            // hare row, used so the deer is not standing on the wolf.
+            // isDry(30, 20) on seed 1400. Not a deer group size.
+            x: 30.0,
+            y: 0.0,
+            z: 20.0,
             water: 100.0,
             energy: 75.0,
             rest: 100.0,
@@ -226,7 +249,7 @@ mod tests {
         assert_eq!(wolf.species, crate::animals::SPECIES_WOLF);
         assert_eq!(wolf.archetype, crate::animals::ARCHETYPE_CANID);
         assert_eq!(wolf.territory, wolf.handle);
-        assert_eq!(wolves[1].x, 5.0);
+        assert_eq!(wolves[1].x, 35.0);
         assert!(wolves[1].founder);
         assert_eq!(wolves[1].parent, 0);
         assert_eq!(wolves[1].territory, wolf.handle);
@@ -286,13 +309,22 @@ mod tests {
         let mut store = EntityStore::empty();
         let mut animals = store.spawn_pack(wolf_pack());
         animals.extend(store.spawn_pack(hare()));
-        assert_eq!(animals.len(), 3);
+        animals.extend(store.spawn_pack(deer()));
+        assert_eq!(animals.len(), 4);
         assert_eq!(animals[2].species, crate::animals::SPECIES_HARE);
         assert_eq!(animals[2].age_years, 1.0);
         assert!(animals[2].founder);
         assert_eq!(animals[2].territory, animals[2].handle);
+        assert_eq!(animals[2].x, 50.0);
+        assert_eq!(animals[3].species, crate::animals::SPECIES_DEER);
+        assert_eq!(animals[3].archetype, crate::animals::ARCHETYPE_CERVID);
+        assert_eq!(animals[3].age_years, 2.0);
+        assert!(animals[3].founder);
+        assert_eq!(animals[3].x, 30.0);
+        assert_eq!(animals[3].z, 20.0);
+        assert_eq!(animals[0].x, 30.0);
         let got = crate::animals::write_animals(&animals);
-        assert_eq!(got.len(), crate::animals::PACK_HEADER_BYTES + crate::animals::ANIMAL_BYTES * 3);
+        assert_eq!(got.len(), crate::animals::PACK_HEADER_BYTES + crate::animals::ANIMAL_BYTES * 4);
         assert_eq!(&got[0..4], b"ANM1");
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/stored-wolf-pack.bin");
         if std::env::var_os("STORE_DUMP").is_some() {
@@ -335,17 +367,18 @@ mod tests {
         let mut store = EntityStore::empty();
         let mut animals = store.spawn_pack(wolf_pack());
         animals.extend(store.spawn_pack(hare()));
+        animals.extend(store.spawn_pack(deer()));
         let animal_bytes = crate::animals::write_animals(&animals);
         let animal_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../tests/fixtures/stored-wolf-pack.bin");
         let animal_expected = std::fs::read(&animal_path).expect("animal fixture");
         assert_eq!(animal_bytes, animal_expected, "feelings fixture must share the animal handles");
         let rows = crate::animals::feelings_of(&store.world, &animals);
-        assert_eq!(rows.len(), 3);
+        assert_eq!(rows.len(), 4);
         let got = crate::animals::write_feelings(&rows);
         assert_eq!(
             got.len(),
-            crate::animals::FEELINGS_HEADER_BYTES + crate::animals::FEELINGS_BYTES * 3
+            crate::animals::FEELINGS_HEADER_BYTES + crate::animals::FEELINGS_BYTES * 4
         );
         assert_eq!(&got[0..4], b"BDY1");
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

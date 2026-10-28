@@ -37,5 +37,6 @@ test('T-0081: no second interest radius or clock; buildScene registers the camer
   const src = readFileSync(new URL('../src/core/observation.ts', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /near\s*:|mid\s*:|performance\.now|Date\.now|new\s+\w*Clock/);
   const scene = readFileSync(new URL('../src/render/buildScene.ts', import.meta.url), 'utf8');
-  assert.match(scene, /registerObservationSources\(\{ camera: \(\) => camera\.position, embodied: \(\) => photoObserver \? null : current\.id \}\)/);
+  assert.match(scene, /registerObservationSources\(\{ camera: \(\) => camera\.position, embodied: \(\) => photoObserver \|\| embodiedHandle === null \? null : embodiedHandle \}\)/);
+  assert.doesNotMatch(scene, /embodied: \(\) => photoObserver \? null : current\.id/);
 });

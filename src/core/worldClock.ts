@@ -297,15 +297,35 @@ export function toggleHudPause(perfNow = performance.now()) {
   return isPaused();
 }
 /**
+ * Share of a forward step that has left Immediate. 0 on Immediate, the blend inside the
+ * existing enter/exit band, 1 once the lower scale is no longer Immediate. The bands are
+ * `SCALE_BOUNDS`. This is not a second list of scales.
+ */
+export function aggregateShare(obs: Observation): number {
+  if (obs.lower !== 'immediate') return 1;
+  if (obs.higher !== 'immediate') return obs.blend;
+  return 0;
+}
+/**
  * What may follow a world-second delta.
  * Sky and the clock itself use the signed delta (rewind moves the sun backward).
- * Ground years only advance: the column is closed form of elapsed years, and subtracting would pretend decay ran backward.
- * Animals, needs, physics, the weather grid and gameplay audio run only forward, and only while the scale is still Immediate.
- * Above that they hold. Wiring them to the blend is a later task.
+ * Ground years only advance (`groundWorldSec`): subtracting would pretend decay ran backward.
+ * They advance at the clock's rate on every scale. The seasonal surface follows `aggregateShare`
+ * through the weather read, the same signal as the animals.
+ * Individuals (bodies, needs, physics, the fine weather step, gameplay audio) get `simWorldSec`:
+ * forward, and only the share still on Immediate. Through the overlap that share shrinks with the
+ * blend, so they are still moving while the density appears. Above Immediate it is 0.
+ * `aggregateWorldSec` is the rest: the density's catch-up is already the forward delta in the
+ * scene, and the weather cell uses this share so it does not merely hold. The two forward shares
+ * sum to the forward delta. Rewind is 0 for both.
  */
 export function simWorldSec(wDt: number, obs: Observation = observation()) {
   if (!(wDt > 0) || obs.scale !== 'immediate') return 0;
-  return wDt;
+  return wDt * (1 - aggregateShare(obs));
+}
+export function aggregateWorldSec(wDt: number, obs: Observation = observation()) {
+  if (!(wDt > 0)) return 0;
+  return wDt * aggregateShare(obs);
 }
 export function groundWorldSec(wDt: number) { return wDt > 0 ? wDt : 0; }
 /** Persist the world second, the dial and the eased rate, and the wall clock for the offline gap. */

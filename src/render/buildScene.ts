@@ -275,7 +275,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     paintPopulation(x, z);
   }
   /** Density is counted first, then the body fades, so the ledger never has a frame with neither.
-   *  The sprite itself stays off unless the eye is high and looking down (animalDensity). */
+   *  The flat patch is the play-camera picture. The camera-facing sprite stays off unless the eye is high and looking down. */
   function paintPopulation(x: number, z: number) {
     const obs = observation();
     const marks: (DensityMark & { root: THREE.Object3D; body: number; ledger: number; species: 'deer' | 'hare' })[] = [];
@@ -300,6 +300,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     for (const m of marks) setBodyShare(m.root, m.body);
     const report = {
       census, near: INTEREST.near, mid: INTEREST.mid, chunks: chunks.size,
+      scale: obs.scale, lower: obs.lower, higher: obs.higher, blend: obs.blend,
       animals: marks.map(m => ({ species: m.species, x: m.x, z: m.z, body: m.body, ink: m.ink, kind: m.kind })),
     };
     (globalThis as { borealDensity?: unknown }).borealDensity = () => report;

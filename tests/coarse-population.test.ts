@@ -112,7 +112,7 @@ test('the scene paints the density disc before it fades the body', () => {
   assert.match(scene, /density\.sync\(marks, canvas\.clientHeight \|\| 720, camera\.position\)/);
 });
 
-test('a ground camera draws no density shape, and a high downward look may tint the ground', () => {
+test('the camera-facing sprite stays off at ground height, and a high downward look may tint the ground', () => {
   assert.equal(densityTintGate(1.05, 0.95), 0, 'wolf height, even looking down');
   assert.equal(densityTintGate(40, 0.2), 0, 'just outside near, looking across');
   assert.equal(densityTintGate(DENSITY_TINT.riseFullM, 0.1), 0, 'high, but across: a disc would stand up');

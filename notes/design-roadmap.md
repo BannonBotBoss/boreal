@@ -378,7 +378,7 @@ What this phase still queues is the wiring. Animals, the weather grid, and the g
 - **Kind:** The signal is reuse of `observation()`, `resolveObservation`, and `SCALE_BOUNDS` on pull request #92 (conflicts 5 and 16). Do not add #109's seven names beside the eight. Today `simWorldSec` returns 0 unless time is moving forward and the scale is still Immediate, so animals and the weather grid hold. `groundWorldSec` advances at any forward rate and refuses a backward gap. That hold is the limit this step replaces when time is moving forward.
 - **Issues:** #107 (what you see as time speeds up), #108 (the eight names), #109 (hysteresis, blend, transform).
 - **Depends on:** Step 14, and a base that includes pull request #92. The signal itself does not wait.
-- **Size:** L. Queue for the wiring only. The signal is delivered by pull request #92.
+- **Size:** L. Board: T-0106. The signal is delivered by pull request #92.
 - **Gates:** Numbers: the enter and exit bands are the ones already on `SCALE_BOUNDS` (8 and 12, then 800 and 1200, and the bands above those). Do not invent a second set. Frame: crossing a band does not flicker, and a wolf becomes the density drawing before the body is gone, recorded. Evidence: callers read `observation()`. No second level-of-detail enum. `simWorldSec` is no longer the only response above Immediate.
 
 ### Step 33 — Height and speed pick the picture together

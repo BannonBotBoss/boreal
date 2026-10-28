@@ -19,6 +19,7 @@ import { gravity } from '../proc/physics';
 import { WORLD_SEED, heightAt } from './world';
 import { LEVEL } from './tuning';
 import { INTEREST } from './interest';
+import { aggregateShare, observation } from './worldClock';
 
 // ---- constants ---------------------------------------------------------------------------------------------------
 export const AIR = {
@@ -158,6 +159,24 @@ export function cellClimate(day: number, hour: number, z: number, x = 0, zz = 0)
 export function relaxToward(current: number, target: number, dt: number, thermo = false) {
   const relax = Math.min(1, dt / 3600);
   return current + (target - current) * relax * (thermo ? 0.25 : 1);
+}
+/**
+ * Snow-water the Kenora monthly normals imply for this day of the year.
+ * A cold month adds that month's precipitation: new precip below 0 °C is snow, the split already in `precipFallsAsSnow`.
+ * A warm month melts at `HYDRO.ddf` (Hock 2003), the factor the column already uses, over `MONTH_DAYS`.
+ * One year only, so a geological step cannot stack a million years of snow. Not a second snow product.
+ */
+export function climatologicalSweMm(day: number): number {
+  if (!Number.isFinite(day)) return 0;
+  const span = 365.25;
+  let swe = 0;
+  for (let d = day - span; d <= day + 1e-6; d += MONTH_DAYS) {
+    const wrapped = ((d % span) + span) % span;
+    const t = monthValue(NORMALS.temp, wrapped);
+    if (t < 0) swe += monthValue(NORMALS.precip, wrapped);
+    else swe = Math.max(0, swe - HYDRO.ddf * t * MONTH_DAYS);
+  }
+  return swe;
 }
 
 // ---- near-field grid ----------------------------------------------------------------------------------------------
@@ -425,9 +444,8 @@ function cellPoint(x: number, z: number): PointWeather {
   return withDepth({ tC, rh: Math.min(1, grid.q[n] / qsat(tLayer, p)), cloud, rainMmH, snow: grid.snowfall[col] > 0, soil: grid.soil[col] / HYDRO.bucketMm,
     sweMm: grid.swe[col], fog: Math.min(1, grid.qc[n] / 3e-4), wind: windAt(x, 10, z) });
 }
-/** Near-surface weather at (x, z): what rendering, sound, ground and the inspector read.
- *  Inside the live cell, the cell. Outside it, the planet climate. The private formula remains only when wasm did not load. */
-export function weatherAt(x: number, z: number): PointWeather {
+/** Near-surface weather at (x, z) before the observation blend. */
+function pointWeather(x: number, z: number): PointWeather {
   if (standingInCell(x, z)) return cellPoint(x, z);
   const fromPlanet = reader?.at(x, z);
   if (fromPlanet) return fromPlanet;
@@ -439,6 +457,67 @@ export function weatherAt(x: number, z: number): PointWeather {
   return withDepth({ tC, rh: Math.min(1, grid.q[n] / qsat(tC, p)), cloud: Math.min(1, lwp / CLOUD_LWP_SAT), rainMmH: grid.precip[col], snow: grid.snowfall[col] > 0, soil: grid.soil[col] / HYDRO.bucketMm,
     sweMm: grid.swe[col], fog: Math.min(1, grid.qc[n] / 3e-4), wind: windAt(x, 10, z) });
 }
+/** The climate the cell is resting toward, as the same point the ground and the sky read. Snow-water is the planet's when it has one, otherwise the monthly closed form. */
+function climateSurface(x: number, z: number): PointWeather {
+  const c = cellClimate(WEATHER.day, WEATHER.hour, 0, x, z);
+  const sweMm = c.sweMm !== undefined ? Math.max(0, c.sweMm) : climatologicalSweMm(WEATHER.day);
+  const soil = c.soilMm !== undefined ? Math.min(1, Math.max(0, c.soilMm / HYDRO.bucketMm)) : HYDRO_SEED_FILL;
+  return withDepth({
+    tC: c.surfaceTC, rh: Math.min(1, Math.max(0, c.rh)), cloud: c.cloud ?? 0, rainMmH: Math.max(0, c.precipMmH ?? 0),
+    snow: precipFallsAsSnow(c.surfaceTC) && sweMm > 0.5, soil, sweMm, fog: 0, wind: { x: c.u, y: 0, z: c.v },
+  });
+}
+function mixWeather(a: PointWeather, b: PointWeather, share: number): PointWeather {
+  const w = Math.max(0, Math.min(1, share));
+  const m = (p: number, q: number) => p + (q - p) * w;
+  const sweMm = m(a.sweMm, b.sweMm), tC = m(a.tC, b.tC);
+  return withDepth({
+    tC, rh: m(a.rh, b.rh), cloud: m(a.cloud, b.cloud), rainMmH: m(a.rainMmH, b.rainMmH),
+    snow: precipFallsAsSnow(tC) && sweMm > 0.5, soil: m(a.soil, b.soil), sweMm, fog: m(a.fog, b.fog),
+    wind: { x: m(a.wind.x, b.wind.x), y: m(a.wind.y, b.wind.y), z: m(a.wind.z, b.wind.z) },
+  });
+}
+/**
+ * What rendering, sound, the ground and the inspector read.
+ * On Immediate this is the live cell. As `observation()` leaves Immediate, the same read eases
+ * onto the climate of the current date. The bands are the clock's. No second weather grid.
+ */
+export function weatherAt(x: number, z: number): PointWeather {
+  const cell = pointWeather(x, z);
+  const share = aggregateShare(observation());
+  if (!(share > 0)) return cell;
+  return mixWeather(cell, climateSurface(x, z), share);
+}
+/**
+ * Move the stored cell toward the climate of the current date. Same one-hour nudge as `relaxToward`.
+ * Temperature and humidity keep the quarter rate. Snow-water uses the full nudge. A long step saturates
+ * instead of integrating Kessler for every second. Individuals still use `stepWeather`.
+ */
+export function catchUpWeather(dtSec: number) {
+  if (!(dtSec > 0) || !grid) return;
+  const relax = Math.min(1, dtSec / 3600), thermo = relax * 0.25;
+  let touched = false;
+  for (let k = 0; k < NY; k++) for (let j = 0; j < NX; j++) for (let i = 0; i < NX; i++) {
+    const c = cellClimate(WEATHER.day, WEATHER.hour, layerZ(k), cellX(i), cellZ(j)), n = idx(i, j, k);
+    const thT = theta(c.tC, c.p), qT = Math.max(0, c.rh) * qsat(c.tC, c.p);
+    grid.th[n] += (thT - grid.th[n]) * thermo;
+    grid.q[n] += (qT - grid.q[n]) * thermo;
+    grid.u[n] += (c.u - grid.u[n]) * relax;
+    grid.v[n] += (c.v - grid.v[n]) * relax;
+    if (k !== 0) continue;
+    const col = j * NX + i;
+    const sweT = c.sweMm !== undefined ? Math.max(0, c.sweMm) : climatologicalSweMm(WEATHER.day);
+    const before = grid.swe[col];
+    grid.swe[col] = before + (sweT - before) * relax;
+    if (Math.abs(grid.swe[col] - before) > 0.05) touched = true;
+    grid.snowfall[col] = precipFallsAsSnow(c.surfaceTC) && grid.swe[col] > 0.5 ? 1 : 0;
+    if (c.soilMm !== undefined) {
+      const soilT = Math.min(HYDRO.bucketMm, Math.max(0, c.soilMm));
+      grid.soil[col] += (soilT - grid.soil[col]) * relax;
+    }
+  }
+  if (touched) WEATHER.steps++;
+}
 /** Aerodynamic drag on a body (N): F = ½ ρ C_d A |v_rel| v_rel with v_rel = wind − v (Batchelor 1967). */
 export function drag(v: { x: number; y?: number; z: number }, wind: { x: number; y: number; z: number }, area: number, cd = 1, rho = 1.2) {
   const rx = wind.x - v.x, ry = wind.y - (v.y ?? 0), rz = wind.z - v.z, m = Math.hypot(rx, ry, rz), k = .5 * rho * cd * area * m;
@@ -449,11 +528,12 @@ export function drag(v: { x: number; y?: number; z: number }, wind: { x: number;
 let acc = 0, running: Generator<unknown, unknown> | undefined;
 /** Called every frame with real seconds and the game's seconds-per-real-second. A step starts at most every 0.5 s real and
  * runs one slice per frame (≈ 0.1–0.6 ms each), so no frame pays for a whole step. */
-export function updateWeather(realDt: number, gameSecondsPerReal: number, day: number, hour: number) {
+export function updateWeather(realDt: number, gameSecondsPerReal: number, day: number, hour: number, aggregateSec = 0) {
   const spun = reader?.driving() ? reader.follow(day, hour) === true : false;
   // A new date replaces the climate, so the cell is seeded from it again. Between those jumps the cell steps and relaxes.
   if (!grid || (reader?.driving() && (!cellLive || spun))) { running = undefined; initWeather(day, hour, INTEREST.x, INTEREST.z); }
   WEATHER.day = day; WEATHER.hour = hour; // the world clock is the date; a slice may advance the copy, and the next call overwrites it
+  if (aggregateSec > 0) catchUpWeather(aggregateSec); // above Immediate the cell follows the date instead of holding
   if (!WEATHER.on) { running = undefined; return; }
   const t0 = performance.now();
   fillKinds(2);

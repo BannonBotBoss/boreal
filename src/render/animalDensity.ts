@@ -4,10 +4,11 @@
  * camera, so it does not take the planet clip plane or the globe log-depth path.
  *
  * Issue #107: draw only what would look real from this viewpoint. A herd or a
- * density is not a shape standing on the grass. From the ground the sprite is
- * not drawn. The same point is a faint stain on the ground only when the eye is
- * high and looking down. The fade starts at #107's 1 km station (patterns, not
- * individuals) and is full at 2000 m, the forest camera's top (`HANDOFF.alt`).
+ * density is not a shape standing on the grass. From the ground the camera-facing
+ * sprite is not drawn (it becomes a dome). The same animals are a flat mottled
+ * patch on the litter, the play-camera picture of this mark. From the 1 km station
+ * upward, looking down, that patch gives way to a faint stain. The fade starts at
+ * #107's 1 km station and is full at 2000 m, the forest camera's top (`HANDOFF.alt`).
  *
  * Disc widths are [game calibration] so the stain matches the field from above.
  * Herd matches the deer's cohesion distance. Density and range are the interest
@@ -68,6 +69,26 @@ export function densityTintGate(riseM: number, nadir: number): number {
     * smoothstep(DENSITY_TINT.nadirStart, DENSITY_TINT.nadirFull, nadir);
 }
 
+/**
+ * How solid the flat ground patch is. The camera-facing sprite stays behind `densityTintGate`
+ * (a standing disc reads as a dome). This patch is the play-camera picture of the same mark:
+ * on while the eye is low, gone once the high stain is open. [game calibration]
+ */
+export const GROUND_MARK_ALPHA = 0.62;
+/** Painted radius is half the step-14 width, times this, so a herd sits with the animal. [game calibration] */
+export const GROUND_MARK_SCALE = 0.55;
+
+export function groundMarkOpacity(ink: number, riseGate: number): number {
+  if (!(ink > 0)) return 0;
+  const grounded = 1 - Math.min(1, Math.max(0, riseGate));
+  if (grounded < 0.04) return 0;
+  return Math.min(1, ink) * grounded * GROUND_MARK_ALPHA;
+}
+
+export function groundMarkRadius(kind: Exclude<PictureKind, 'individual'>): number {
+  return SIZE[kind] * 0.5 * GROUND_MARK_SCALE;
+}
+
 export function createAnimalDensity(scene: THREE.Scene) {
   let n = 0;
   const geo = new THREE.BufferGeometry();
@@ -107,6 +128,49 @@ void main() {
   pts.renderOrder = 3;
   pts.visible = false;
   scene.add(pts);
+  const discGeo = new THREE.CircleGeometry(1, 28);
+  discGeo.rotateX(-Math.PI / 2); // unit circle on the ground, face up
+  const discs: THREE.Mesh[] = [];
+  function discMesh() {
+    const material = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      toneMapped: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
+      uniforms: { uColor: { value: new THREE.Color() }, uAlpha: { value: 0 } },
+      vertexShader: `
+varying vec2 vLocal;
+void main() {
+  vLocal = position.xz;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`,
+      fragmentShader: `
+uniform vec3 uColor;
+uniform float uAlpha;
+varying vec2 vLocal;
+void main() {
+  float r = length(vLocal);
+  if (r > 1.0 || uAlpha <= 0.02) discard;
+  vec2 g = floor(vLocal * 7.0);
+  float n = fract(sin(dot(g, vec2(127.1, 311.7))) * 43758.5453);
+  float clump = smoothstep(0.28, 0.72, n);
+  float edge = smoothstep(1.0, 0.22, r);
+  float a = uAlpha * edge * (0.28 + 0.72 * clump);
+  if (a < 0.03) discard;
+  vec3 soil = vec3(0.29, 0.24, 0.14);
+  gl_FragColor = vec4(mix(soil, uColor, 0.78), a);
+}`,
+    });
+    const mesh = new THREE.Mesh(discGeo, material);
+    mesh.frustumCulled = false;
+    mesh.renderOrder = 2;
+    mesh.visible = false;
+    scene.add(mesh);
+    discs.push(mesh);
+    return mesh;
+  }
   return {
     sync(marks: readonly DensityMark[], viewH: number, eye: { x: number; y: number; z: number }) {
       mat.uniforms.uH.value = Math.max(1, viewH);
@@ -118,25 +182,41 @@ void main() {
         geo.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(Math.max(1, n)), 1));
         geo.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(Math.max(1, n)), 1));
       }
-      if (!n) { pts.visible = false; return; }
       const pos = geo.getAttribute('position') as THREE.BufferAttribute;
       const col = geo.getAttribute('color') as THREE.BufferAttribute;
       const size = geo.getAttribute('aSize') as THREE.BufferAttribute;
       const alpha = geo.getAttribute('aAlpha') as THREE.BufferAttribute;
       let any = false;
+      let discN = 0;
       draw.forEach((m, i) => {
         const kind = m.kind === 'individual' ? 'herd' : m.kind;
         const c = RGB[kind];
         const dx = eye.x - m.x, dy = eye.y - m.y, dz = eye.z - m.z;
         const gate = densityTintGate(dy, dy / Math.max(Math.hypot(dx, dy, dz), 1));
         if (gate > 0.02) any = true;
-        pos.setXYZ(i, m.x, m.y, m.z);
-        col.setXYZ(i, c[0], c[1], c[2]);
-        size.setX(i, gate > 0 ? SIZE[kind] * (0.35 + 0.65 * m.ink) : 0);
-        alpha.setX(i, Math.min(1, m.ink) * gate * DENSITY_TINT.peakAlpha);
+        if (n) {
+          pos.setXYZ(i, m.x, m.y, m.z);
+          col.setXYZ(i, c[0], c[1], c[2]);
+          size.setX(i, gate > 0 ? SIZE[kind] * (0.35 + 0.65 * m.ink) : 0);
+          alpha.setX(i, Math.min(1, m.ink) * gate * DENSITY_TINT.peakAlpha);
+        }
+        const opacity = groundMarkOpacity(m.ink, gate);
+        if (opacity <= 0.02) return;
+        const mesh = discs[discN] ?? discMesh();
+        const material = mesh.material as THREE.ShaderMaterial;
+        material.uniforms.uColor.value.setRGB(c[0], c[1], c[2]);
+        material.uniforms.uAlpha.value = opacity;
+        const radius = groundMarkRadius(kind);
+        mesh.position.set(m.x, m.y, m.z);
+        mesh.scale.set(radius, 1, radius);
+        mesh.visible = true;
+        discN++;
       });
-      pos.needsUpdate = true; col.needsUpdate = true; size.needsUpdate = true; alpha.needsUpdate = true;
-      geo.setDrawRange(0, n);
+      for (let i = discN; i < discs.length; i++) discs[i].visible = false;
+      if (n) {
+        pos.needsUpdate = true; col.needsUpdate = true; size.needsUpdate = true; alpha.needsUpdate = true;
+        geo.setDrawRange(0, n);
+      }
       pts.visible = any;
     },
   };

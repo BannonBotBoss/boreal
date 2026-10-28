@@ -66,7 +66,7 @@ import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help
 import { startView } from './world/globe/startView';
 import { createInPage } from './world/globe/inpage';
 import { ageYears, lifespanWarning } from './core/lifespan';
-import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
+import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, aggregateWorldSec, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
 import { dryStart } from './core/stages/surfaceAt';
 import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
@@ -399,7 +399,9 @@ function frame(time: number) { const frameStart = performance.now();
   } else if (dialHeld !== 0) { nudgeDial(0); dialHeld = 0; }
   if (photo.active && !photo.simulating) holdClock('photo'); else releaseClock('photo'); // a frozen photo holds the one clock; a live sequence lets it run
   const wNow = worldSec(), wDt = wNow - lastWorld; lastWorld = wNow; // signed: rewind moves the sky backward
-  const simDt = simWorldSec(wDt, observation()); // animals and the weather grid hold when rewinding or above Immediate
+  const obs = observation();
+  const simDt = simWorldSec(wDt, obs); // individuals: forward, and only the share still on Immediate
+  const aggDt = aggregateWorldSec(wDt, obs); // the same signal, for the weather cell once time has left Immediate
   const sdt = Math.min(simDt, .6); // Immediate tops out near 12×; a hitch must not spin the 30 Hz loop for a geological gap
   const hold = photo.active ? resolveInput(bindings, atomValues([], padOwned ? undefined : pad), new Set(), chrono.open).value : input.value; // photo mode: its own keys
   const H = (id: keyof typeof ACTION) => hold[id] ?? 0;
@@ -490,8 +492,8 @@ function frame(time: number) { const frameStart = performance.now();
   view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
   view.worldTime = wNow; // one clock. The sky reads this signed second, so rewind moves the sun backward.
-  tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only: ground years are elapsed time, not a rewind of decay
-  updateWeather(simDt > 0 ? Math.min(simDt, .25) : 0, gameSecondsPerWorldSecond, dayAt(wNow), hourAt(wNow)); // the date follows the clock; the grid steps only at Immediate, forward
+  tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only, every scale: ground years are elapsed time, not a rewind of decay. Snow on that ground follows obs through the weather read.
+  updateWeather(simDt > 0 ? Math.min(simDt, .25) : 0, gameSecondsPerWorldSecond, dayAt(wNow), hourAt(wNow), aggDt); // fine step on the individual share; the cell catches the date on the aggregate share
   { // T-0035 held focus (core/focusLock): only while Focus (LB / F) is held and an interactable object is within FOCUS.radius
     const kinds = (Object.keys(catalog) as (keyof typeof catalog)[]).filter(k => !(SYSTEM_PROPERTIES.autoFocus.excludeKinds as readonly string[]).includes(k) && (catalog[k].interactions ?? []).some(a => player.abilities.includes(a)));
     focusTarget = pickFocus(active && !autonomous && H('focus') > ACTIVE, focusTarget, { x: player.x, z: player.z, view: yaw + lookYaw }, view.entities().filter(e => !context.records[e.key]?.removed), kinds);
@@ -514,7 +516,7 @@ function frame(time: number) { const frameStart = performance.now();
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   const rush = inpage?.airRush() ?? 0; if (rush > 0) void sfx.start(); // a double-click already unlocked the context; a pad-only drop may still be silent until a key or click
-  sfx.update({ dt: simDt > 0 ? Math.min(simDt, .05) : 0, halted: isPaused() || wDt < 0 || observation().scale !== 'immediate' || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || (!!inpage?.blocksGame() && rush <= 0), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb, rush });
+  sfx.update({ dt: simDt > 0 ? Math.min(simDt, .05) : 0, halted: isPaused() || wDt < 0 || obs.scale !== 'immediate' || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || (!!inpage?.blocksGame() && rush <= 0), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb, rush });
   if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
     if (ev.type === 'pinned') { notice('Pinned. X eats, B releases.'); continue; } // the bite row already played the one squeal
     sfx.hare(ev.type, ev);

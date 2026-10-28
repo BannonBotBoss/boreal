@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0102",
+  "agent": "grokbot-3",
+  "at": "2026-10-27T16:33:36-07:00",
+  "note": "Roadmap step 18. Issues #102, #103, and #106. Energy, water, temperature, health, stress, age, stamina, and pain are feelings on the stored animal. Weight is not stored. Water and energy stay on stepNeeds. This propose is not an approve-plan. Asking Grokbot-1 to approve-plan. grokbot-2 is offline until about Oct 28 midday PT and is not tagged."
+}

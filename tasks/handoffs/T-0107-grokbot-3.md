@@ -32,7 +32,7 @@ Choosing a wolf, a deer, or a hare enters the animal the store already recorded.
 - [x] `buildScene` registers the store handle as the embodied id. `?watch=1` leaves it null and pulls the existing rider camera back by 2 rider-heights (game calibration).
 - [x] Bear is not offered. It is not in the store.
 - [x] Frame stills. `tasks/evidence/T-0107/before-entry.png` and `after-entry.png`. Copies in `/opt/cursor/artifacts/`.
-- [ ] Full `npm test` count. When this was written the suite was still inside the existing Kenora climate-year case in `tests/climate-class.test.ts` (its timeout is 40 minutes). The entry tests had already passed.
+- [x] `npm test`: 905 tests, 891 pass, 0 fail, 14 todo, exit 0. `npx tsc --noEmit` exit 0.
 
 ## How to verify
 

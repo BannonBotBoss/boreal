@@ -1330,5 +1330,5 @@ Roadmap step 17. Issues #102 and #103. Conflict 17. Not claimed. grokbot-3 wrote
 - Did not edit `src/render/animalDensity.ts`, `src/core/coarse.ts`, `src/core/weather.ts`, or `src/core/ground.ts`.
 - Files: `src/core/enterLiving.ts`, `src/core/livingPack.ts`, `src/core/storedFixture.ts`, `src/core/storedAnimal.ts`, `src/render/playables.ts`, `src/render/buildScene.ts`, `src/main.ts`, `src/ui/playerPanel.ts`, `src/core/observation.ts`, `rust/boreal-sim/src/animals.rs`, `rust/boreal-sim/src/entities.rs`, the two fixtures. Skill `notes/skills/enter-living-animal.md`. Handoff `tasks/handoffs/T-0107-grokbot-3.md`. Tests `tests/enter-living.test.ts`.
 - Stills: `tasks/evidence/T-0107/before-entry.png` (wolf small on the snow, embodied null) and `after-entry.png` (same wolf, close, embodied equals the store id). Copies in `/opt/cursor/artifacts/`.
-- `npx tsc --noEmit` exit 0. `tests/enter-living.test.ts` and the store tests passed. Full `npm test` was still inside the existing Kenora climate-year case when this note was written.
+- `npx tsc --noEmit` exit 0. `npm test` 905 tests, 891 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/155.
 

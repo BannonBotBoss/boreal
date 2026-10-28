@@ -27,10 +27,15 @@ export function coverKind(latDeg: number, elevM: number, vegetation: number, wat
   return 'boreal';
 }
 
-/** Metres between billboards. Water, ice, tundra and rock place none. */
+/**
+ * Metres between billboards. Water, ice, tundra and rock place none.
+ * Boreal 6 m is a closed stand: about 280 stems per hectare. A real closed
+ * boreal stand is often 1,000–3,000 stems/ha (the crowns overlap at 6 m).
+ * This is still a calibration, not the census in issue #167.
+ */
 export function coverSpacingM(kind: CoverKind): number | null {
-  if (kind === 'boreal') return 14;
-  if (kind === 'prairie') return 46;
+  if (kind === 'boreal') return 6;
+  if (kind === 'prairie') return 28;
   if (kind === 'desert') return 70;
   return null;
 }
@@ -41,7 +46,7 @@ export interface CoverSpot { x: number; z: number; kind: CoverKind }
  * A grid of billboard spots around the camera, between `inner` and `outer` metres.
  * Capped. Deterministic for a given centre and kind. The near meshes stay inside `inner`.
  */
-export function coverSpots(cx: number, cz: number, kind: CoverKind, inner = 36, outer = 520, cap = 480): CoverSpot[] {
+export function coverSpots(cx: number, cz: number, kind: CoverKind, inner = 36, outer = 900, cap = 4096): CoverSpot[] {
   const step = coverSpacingM(kind);
   if (step == null) return [];
   const out: CoverSpot[] = [];

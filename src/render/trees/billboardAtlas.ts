@@ -63,18 +63,32 @@ export function treeAtlas(size = SIZE) {
   return { rgba, w, h, size };
 }
 
-/** Top-down canopy used past the billboards: a few crowns on a transparent ground, repeated by the skirt. */
-export function canopyTile(size = 32): Uint8ClampedArray {
+/**
+ * Top-down closed canopy. Crowns overlap so a repeat reads as forest, not a few dots.
+ * The greens are the impostor leaf colour, not a grade of the satellite.
+ */
+export function canopyTile(size = 64): Uint8ClampedArray {
   const rgba = new Uint8ClampedArray(size * size * 4);
-  const crowns: [number, number, number][] = [[8, 10, 5], [20, 8, 4], [14, 22, 6], [26, 24, 4]];
+  const crowns: [number, number, number][] = [];
+  for (let i = 0; i < 42; i++) {
+    const cx = (i * 13) % size;
+    const cy = (i * 23) % size;
+    crowns.push([cx, cy, 8 + (i % 5)]);
+  }
   for (const [cx, cy, rad] of crowns) {
     for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-      const d = Math.hypot(x - cx, y - cy) / rad;
+      const dx = Math.min(Math.abs(x - cx), size - Math.abs(x - cx));
+      const dy = Math.min(Math.abs(y - cy), size - Math.abs(y - cy));
+      const d = Math.hypot(dx, dy) / rad;
       if (d > 1) continue;
-      const a = Math.round(255 * (1 - d * d));
+      const a = Math.round(230 * (1 - d * d));
       const i = (y * size + x) * 4;
       if (rgba[i + 3] >= a) continue;
-      rgba[i] = 46; rgba[i + 1] = 78; rgba[i + 2] = 38; rgba[i + 3] = a;
+      const shade = 0.75 + 0.35 * (1 - d);
+      rgba[i] = Math.round(46 * shade);
+      rgba[i + 1] = Math.round(108 * shade);
+      rgba[i + 2] = Math.round(42 * shade);
+      rgba[i + 3] = a;
     }
   }
   return rgba;

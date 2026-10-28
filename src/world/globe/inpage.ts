@@ -424,7 +424,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
         const eye = Math.max(1, camera.position.y - ground(camera.position.x, camera.position.z));
         const ahead = tmpV.set(0, 0, -1).applyQuaternion(camera.quaternion);
         skirt.update(globe.planet, camera.position.x, camera.position.z, eye, ahead.x, ahead.z);
-        cover ??= createHorizonCover();
+        cover ??= createHorizonCover(renderer);
         if (!cover.mesh.parent) scene.add(cover.mesh);
         cover.mesh.visible = true;
         cover.update(globe.planet, camera.position.x, camera.position.z, skirtOrigin(globe.planet, ground(0, 0)));

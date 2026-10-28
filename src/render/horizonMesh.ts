@@ -53,10 +53,10 @@ function skirtMaterial() {
           // black. Take the globe texel whenever the far layer actually drew something.
           if (fd < 0.999 && luma > 0.008) gl_FragColor.rgb = globe;
         }
-        float canopy = smoothstep(420.0, 900.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(8000.0, 16000.0, vSkirtDist));
+        float canopy = smoothstep(80.0, 280.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(6000.0, 14000.0, vSkirtDist));
         if (canopy > 0.001) {
-          vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.01));
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.55);
+          vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.82);
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);

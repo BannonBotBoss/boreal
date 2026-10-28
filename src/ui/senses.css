@@ -1,23 +1,17 @@
-.wolf-senses{position:fixed;left:24px;top:180px;z-index:8;width:220px;color:#f5f4df;font:13px/1.4 system-ui,sans-serif;pointer-events:none;filter:drop-shadow(0 2px 5px #000)}
+.wolf-senses{position:fixed;left:24px;top:180px;z-index:8;width:248px;color:#f5f4df;font:13px/1.4 system-ui,sans-serif;pointer-events:none;filter:drop-shadow(0 2px 5px #000)}
 .wolf-senses[hidden]{display:none}
 .wolf-senses summary{pointer-events:auto;cursor:pointer;width:max-content;padding:5px 10px;background:#14251de8;border-radius:12px;color:#d6e8cf}
-.sense-panel{margin-top:6px;background:#10231de8;border:1px solid #abbc963b;border-radius:16px;padding:12px}
-.sense-hearing{display:flex;align-items:center;gap:12px}
+.sense-panel{display:flex;align-items:center;gap:8px;margin-top:6px;background:#10231de8;border:1px solid #abbc963b;border-radius:16px;padding:10px}
+.sense-hearing{display:flex;align-items:center}
 .sense-compass{position:relative;flex:none;width:76px;height:76px;border:1px solid #d9e7be70;border-radius:50%;box-sizing:border-box}
 .sense-compass:before{content:'↑';position:absolute;top:4px;left:30px;color:#9dab91}
 .sense-ear{position:absolute;inset:0;display:grid;place-content:center;font-size:21px}
 .sense-cue{position:absolute;inset:0;transform:rotate(var(--bearing));color:#aee7ff}
 .sense-cue:before{content:'▲';position:absolute;top:-10px;left:29px;font-size:16px}
-.sense-caption{font-size:12px;color:#c4d4c1}
-.sense-caption strong{display:block;color:#e9f5f4;font-size:13px}
-.sense-smell{margin-top:12px;padding-top:9px;border-top:1px solid #b7c49a33}
-.sense-smell label{display:flex;justify-content:space-between;gap:5px}
-.sense-smell meter{display:block;width:100%;height:13px;accent-color:#b2cf81}
-.sense-thoughts{display:flex;gap:6px;margin-top:9px}
-.sense-thought{flex:1;min-width:0;text-align:center;background:#e1e9c910;border:1px solid #d9e6bd35;border-radius:18px;padding:7px 2px 5px;position:relative}
-.sense-thought:after{content:'';position:absolute;width:5px;height:5px;border-radius:50%;background:#d9e6bd70;bottom:-6px;left:12px}
-.sense-thought img{width:44px;height:38px;display:block;margin:auto}
-.sense-thought small{display:block;font-size:10px;color:#b6c9ad}
-.sense-thought span{font-size:11px;display:block}
-.sense-direction{color:#cae59e;font-size:11px}
-@media(max-width:700px){.wolf-senses{left:10px;top:135px;width:178px;font-size:11px}.sense-panel{padding:9px}.sense-compass{width:66px;height:66px}.sense-compass:before{left:25px}.sense-cue:before{left:24px}.sense-hearing{gap:9px}.sense-thought img{width:35px}}
+.sense-stream{position:relative;flex:1;height:132px;overflow:hidden;border-radius:12px}
+.sense-bubble{position:absolute;left:50%;bottom:2px;width:42px;height:42px;margin-left:-21px;border-radius:50%;background:#e8f2d81c;box-shadow:inset 0 0 0 1px #e8f2d838;pointer-events:none;will-change:transform,opacity}
+.sense-bubble svg{display:block;width:30px;height:30px;margin:6px auto}
+.sense-bubble-sound{color:#b7e6ff}
+.sense-bubble-scent{color:#d7eea4}
+.sense-bubble-sight{color:#f6f1df}
+@media(max-width:700px){.wolf-senses{left:10px;top:135px;width:200px;font-size:11px}.sense-panel{flex-direction:column;align-items:stretch;padding:9px}.sense-compass{width:66px;height:66px}.sense-compass:before{left:25px}.sense-cue:before{left:24px}.sense-stream{height:108px}}

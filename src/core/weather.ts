@@ -1,8 +1,10 @@
 /**
  * Atmosphere + hydrosphere (Grok Bot). PROJECT-RULES rules 5, 7, 8: established models, real values, math-only far field.
- *  - Far field (everything outside the grid, and the grid's boundary/initial state) is CLIMATOLOGY: a pure function of
- *    (seed, day, hour, position) from station normals + the ISA lapse rate + a seeded synoptic wind. Nothing stored.
- *  - Near field: a coarse 3-D cell grid centred on the viewer (core/interest), stepped at a low rate:
+ *  - Far field (everything outside the grid) is the planet climate when that grid is bound, and otherwise station
+ *    normals + the ISA lapse rate + a seeded synoptic wind. Nothing stored. The near grid is seeded from the same target.
+ *  - Near field: a coarse 3-D cell grid centred on the viewer (core/interest), stepped at a low rate.
+ *    Left alone, the cell relaxes toward the planet climate (`cellClimate`), not the private Kenora formula.
+ *    The step is the one already here:
  *    surface energy balance (net shortwave/longwave, Penman–Monteith ET, sensible heat as the residual),
  *    Boussinesq buoyancy, Coriolis, log-law drag over the canopy, Stam (1999) Stable Fluids semi-Lagrangian
  *    advection + Jacobi pressure projection, Kessler (1969) warm-rain microphysics with snow below 0 °C,
@@ -87,6 +89,8 @@ export const KESSLER = {
   k1: 1e-3, qc0: 1e-3, // autoconversion rate 1/s above 1 g/kg (Kessler 1969, Meteor. Monogr. 32)
   k2: 2.2,             // accretion 2.2 qc qr^0.875 (Klemp & Wilhelmson 1978, J. Atmos. Sci. 35:1070)
 };
+/** Liquid-water path the column already treats as cloud fraction 1. 200 g/m². [verify] */
+export const CLOUD_LWP_SAT = 0.2;
 
 // ---- solar: NOAA General Solar Position Calculations (NOAA GML, after Spencer 1971) --------------------------------
 const RAD = Math.PI / 180;
@@ -115,18 +119,45 @@ const smooth = (key: string, t: number) => { const i = Math.floor(t), a = random
 /** Climatological state at (day, hour, altitude): temperature from normals + diurnal cosine (min at sunrise ~05, max ~15 LST:
  * Parton & Logan 1981, Agric. Meteorol. 23:205, simplified), ISA lapse, seeded synoptic wind (~3-day weather systems). */
 let memo: { key: string; v: ReturnType<typeof climateRaw> }[] = [];
-/** Memoised: the grid asks for the same (day, hour, layer) many times per step. */
+let climateRawCalls = 0;
+/** How many times the private Kenora formula ran. The near grid must not add to this while the planet climate is bound. */
+export function climateRawCallCount() { return climateRawCalls; }
+/** Memoised: callers outside the near grid ask for the same (day, hour, layer) many times per step. */
 export function climate(day: number, hour: number, z = 0) {
   const key = `${day}:${hour}:${z}`; for (const m of memo) if (m.key === key) return m.v;
   const v = climateRaw(day, hour, z); memo.unshift({ key, v }); if (memo.length > 12) memo.pop(); return v;
 }
 function climateRaw(day: number, hour: number, z = 0) {
+  climateRawCalls++;
   const t = day + hour / 24, mean = monthValue(NORMALS.temp, day), range = monthValue(NORMALS.range, day);
   const synopticT = (smooth('synT', t / 3) - .5) * 8; // ± 4 °C day-to-day anomaly [verify: Kenora daily SD ~4–5 °C]
   const tC = mean + synopticT + range / 2 * Math.cos((hour - 15) / 24 * 2 * Math.PI) - AIR.lapse * z;
   const dir = smooth('synDir', t / 3) * 4 * Math.PI, speed = NORMALS.wind * 2 * smooth('synSpd', t / 2) * (1 + z / 500) ;
   const rh = monthValue(NORMALS.rh, day) / 100 * (1 + .3 * (smooth('synRH', t / 3) - .5)) * (1 + .15 * Math.cos((hour - 4) / 24 * 2 * Math.PI));
   return { tC, u: Math.cos(dir) * speed, v: Math.sin(dir) * speed, rh: Math.min(1, rh), p: AIR.p0 * Math.exp(-gravity() * (z + SITE.elevation) / (AIR.Rd * (tC + 273.15))) };
+}
+/** What one near-grid cell relaxes toward. `u` is east, `v` is south (the column's axes). */
+export interface CellClimate {
+  tC: number; u: number; v: number; rh: number; p: number;
+  /** Surface air, before the lapse. Snow uses this. */
+  surfaceTC: number;
+  cloud?: number; precipMmH?: number; sweMm?: number; soilMm?: number;
+  source: 'planet' | 'raw';
+}
+/**
+ * The near grid's driver. A bound planet answers with its own climate.
+ * `climateRaw` runs only when that reader has no target (wasm did not load).
+ */
+export function cellClimate(day: number, hour: number, z: number, x = 0, zz = 0): CellClimate {
+  const hit = reader?.target?.(x, zz, z);
+  if (hit) return hit;
+  const c = climate(day, hour, z);
+  return { tC: c.tC, u: c.u, v: c.v, rh: c.rh, p: c.p, surfaceTC: c.tC + AIR.lapse * z, source: 'raw' };
+}
+/** Synoptic nudge toward the climate target. One hour. Temperature and humidity use a quarter of that rate, the factor already on the column. [game calibration] */
+export function relaxToward(current: number, target: number, dt: number, thermo = false) {
+  const relax = Math.min(1, dt / 3600);
+  return current + (target - current) * relax * (thermo ? 0.25 : 1);
 }
 
 // ---- near-field grid ----------------------------------------------------------------------------------------------
@@ -142,17 +173,29 @@ export const theta = (tC: number, p: number) => (tC + 273.15) * (AIR.p0 / p) ** 
 const tempOf = (th: number, p: number) => th * (p / AIR.p0) ** (AIR.Rd / AIR.cp) - 273.15;
 const layerZ = (k: number) => (k + .5) * DY;
 const cellX = (i: number) => WEATHER.ox + (i + .5 - NX / 2) * DX, cellZ = (j: number) => WEATHER.oz + (j + .5 - NX / 2) * DX;
-/** Initialise (or reset) the grid from climatology: deterministic from seed + date. */
+/** Initialise (or reset) the grid from the climate target: deterministic from seed + date. */
 export function initWeather(day = WEATHER.day, hour = WEATHER.hour, ox = WEATHER.ox, oz = WEATHER.oz, n = WEATHER.quality) {
   NX = n; DX = 384 / n; Object.assign(WEATHER, { day, hour, ox: Math.round(ox / DX) * DX, oz: Math.round(oz / DX) * DX });
   const N = NX * NX * NY, A = () => new Float32Array(N), S = () => new Float32Array(NX * NX);
   grid = { u: A(), v: A(), w: A(), th: A(), q: A(), qc: A(), qr: A(), soil: S().fill(HYDRO.bucketMm * HYDRO_SEED_FILL), swe: S(), runoff: S(), precip: S(), snowfall: S(), flux: [] };
-  for (let k = 0; k < NY; k++) for (let j = 0; j < NX; j++) for (let i = 0; i < NX; i++) fillFromClimate(i, j, k);
+  let planet = 0, total = 0;
+  for (let k = 0; k < NY; k++) for (let j = 0; j < NX; j++) for (let i = 0; i < NX; i++) {
+    total++; if (fillFromClimate(i, j, k).source === 'planet') planet++;
+  }
+  cellLive = planet === total && total > 0 && !!reader?.driving();
   return grid;
 }
 function fillFromClimate(i: number, j: number, k: number) {
-  const c = climate(WEATHER.day, WEATHER.hour, layerZ(k)), n = idx(i, j, k);
+  const c = cellClimate(WEATHER.day, WEATHER.hour, layerZ(k), cellX(i), cellZ(j)), n = idx(i, j, k);
   grid.u[n] = c.u; grid.v[n] = c.v; grid.w[n] = 0; grid.th[n] = theta(c.tC, c.p); grid.q[n] = c.rh * qsat(c.tC, c.p); grid.qc[n] = 0; grid.qr[n] = 0;
+  if (k === 0 && c.sweMm !== undefined) {
+    const col = j * NX + i;
+    grid.swe[col] = Math.max(0, c.sweMm);
+    if (c.soilMm !== undefined) grid.soil[col] = Math.min(HYDRO.bucketMm, Math.max(0, c.soilMm));
+    const surface = c.surfaceTC;
+    grid.snowfall[col] = precipFallsAsSnow(surface) && (c.precipMmH ?? 0) > 0 ? 1 : 0;
+  }
+  return c;
 }
 export const getGrid = () => grid;
 /** Keep the grid centred on the interest centre: scroll whole cells; newly exposed cells come from climatology. */
@@ -206,13 +249,13 @@ export function stepWeather(dt: number) { const it = stepSlices(dt); let r = it.
 /** The step as slices (yield between phases) so the runtime spreads one step over several frames. */
 export function* stepSlices(dt: number) {
   const g = grid, N = NX * NX * NY, grav = gravity(), fC = 2 * AIR.omega * Math.sin(SITE.lat * RAD);
-  const sun = solar(WEATHER.day, WEATHER.hour), clim0 = climate(WEATHER.day, WEATHER.hour, 0);
+  const sun = solar(WEATHER.day, WEATHER.hour), clim0 = cellClimate(WEATHER.day, WEATHER.hour, 0, WEATHER.ox, WEATHER.oz);
   g.flux = [];
   // Surface columns: energy balance → bottom-layer heat/moisture; log-law drag; bucket hydrology.
   for (let j = 0; j < NX; j++) for (let i = 0; i < NX; i++) {
-    const n = idx(i, j, 0), c = j * NX + i, p = climate(WEATHER.day, WEATHER.hour, layerZ(0)).p, tC = tempOf(g.th[n], p);
+    const n = idx(i, j, 0), c = j * NX + i, p = cellClimate(WEATHER.day, WEATHER.hour, layerZ(0), cellX(i), cellZ(j)).p, tC = tempOf(g.th[n], p);
     let lwp = 0; for (let k = 0; k < NY; k++) lwp += g.qc[idx(i, j, k)] * DY; // cloud water path, kg/m² (×ρ≈1)
-    const cloud = Math.min(1, lwp / .2); // optical saturation near 200 g/m² [verify]
+    const cloud = Math.min(1, lwp / CLOUD_LWP_SAT); // optical saturation near 200 g/m² [verify]
     const kind: SurfaceKind = g.swe[c] > 5 ? 'snow' : kindAt(i, j), U = Math.hypot(g.u[n], g.v[n]);
     const sb = surfaceBalance(kind, shortwave(sun.cosZ, cloud), tC, g.q[n], p, U, cloud, Math.min(1, g.soil[c] / (HYDRO.bucketMm * .75)));
     g.flux[c] = sb;
@@ -225,12 +268,14 @@ export function* stepSlices(dt: number) {
     { const held = bucketStep(g.soil[c], 0); g.runoff[c] += held.runoff; g.soil[c] = held.soil; }
   }
   for (let n = 0; n < N; n++) {
-    const k = Math.floor(n / NX / NX), c = climate(WEATHER.day, WEATHER.hour, layerZ(k)), thEnv = theta(c.tC, c.p);
+    const i = n % NX, j = Math.floor(n / NX) % NX, k = Math.floor(n / NX / NX);
+    const c = cellClimate(WEATHER.day, WEATHER.hour, layerZ(k), cellX(i), cellZ(j)), thEnv = theta(c.tC, c.p);
     g.w[n] += grav * (g.th[n] - thEnv) / thEnv * dt; // Boussinesq buoyancy
     const u = g.u[n], v = g.v[n], du = fC * (v - c.v), dv = -fC * (u - c.u); // Coriolis on the ageostrophic part (geostrophic balance)
     g.u[n] += du * dt; g.v[n] += dv * dt;
-    const relax = Math.min(1, dt / 3600); // synoptic nudging toward the climatological/geostrophic state, 1 h [game calibration]
-    g.u[n] += (c.u - g.u[n]) * relax; g.v[n] += (c.v - g.v[n]) * relax; g.th[n] += (thEnv - g.th[n]) * relax * .25; g.q[n] += (c.rh * qsat(c.tC, c.p) - g.q[n]) * relax * .25;
+    // synoptic nudging toward the climate target, 1 h [game calibration]. The target is the planet cell, not climateRaw.
+    g.u[n] = relaxToward(g.u[n], c.u, dt); g.v[n] = relaxToward(g.v[n], c.v, dt);
+    g.th[n] = relaxToward(g.th[n], thEnv, dt, true); g.q[n] = relaxToward(g.q[n], c.rh * qsat(c.tC, c.p), dt, true);
   }
   convectiveAdjust();
   yield;
@@ -263,8 +308,9 @@ function convectiveAdjust() {
 export function kessler(dt: number) {
   const g = grid;
   for (let k = 0; k < NY; k++) {
-    const p = climate(WEATHER.day, WEATHER.hour, layerZ(k)).p, exner = (p / AIR.p0) ** (AIR.Rd / AIR.cp);
     for (let n = k * NX * NX; n < (k + 1) * NX * NX; n++) {
+      const i = n % NX, j = Math.floor(n / NX) % NX;
+      const p = cellClimate(WEATHER.day, WEATHER.hour, layerZ(k), cellX(i), cellZ(j)).p, exner = (p / AIR.p0) ** (AIR.Rd / AIR.cp);
       const tC = g.th[n] * exner - 273.15, T = tC + 273.15, qs = qsat(tC, p);
       let dq = (g.q[n] - qs) / (1 + AIR.Lv ** 2 * qs / (AIR.cp * AIR.Rv * T * T));
       if (dq < 0) dq = Math.max(dq, -g.qc[n]); // evaporate cloud only as far as it exists
@@ -281,7 +327,8 @@ export function kessler(dt: number) {
       const n = k * NX * NX + c, rho = 1, vt = 36.34 * (rho * g.qr[n]) ** .1364;
       const out = Math.min(g.qr[n], g.qr[n] * vt * dt / DY); g.qr[n] += incoming - out; incoming = out;
     }
-    const mm = incoming * DY, tC = tempOf(g.th[c], climate(WEATHER.day, WEATHER.hour, layerZ(0)).p);
+    const ii = c % NX, jj = Math.floor(c / NX);
+    const mm = incoming * DY, tC = tempOf(g.th[c], cellClimate(WEATHER.day, WEATHER.hour, layerZ(0), cellX(ii), cellZ(jj)).p);
     g.precip[c] = mm / dt * 3600; // mm/h
     if (precipFallsAsSnow(tC)) { g.swe[c] += mm; g.snowfall[c] = 1; } else { g.soil[c] += mm; g.snowfall[c] = 0; }
   }
@@ -331,40 +378,65 @@ export interface PointWeather {
 function withDepth(w: Omit<PointWeather, 'depthCm'>): PointWeather {
   return { ...w, depthCm: snowDepthCm(w.sweMm) };
 }
-/** Optional reader for the one Rust grid (`planetWeather.ts`). While it is driving, it is the only source for the frame. */
+/** Optional reader for the one Rust grid (`planetWeather.ts`). It is the climate the near cell relaxes toward. */
 type PlanetRead = {
   driving(): boolean;
   at(x: number, z: number): PointWeather | null;
   wind(x: number, h: number, z: number, kind: SurfaceKind): { x: number; y: number; z: number } | null;
-  follow(day: number, hour: number): void;
+  /** True when the climate itself was replaced (a new date), so the cell is seeded again. */
+  follow(day: number, hour: number): boolean;
+  /** Relaxation target at a column. Null when this reader is not the climate. */
+  target?(x: number, z: number, heightM: number): CellClimate | null;
 };
 let reader: PlanetRead | null = null;
+/** The near cell has been seeded from the planet and is what the player stands in. */
+let cellLive = false;
+export function nearCellLive() { return cellLive; }
+export function setNearCellLive(on: boolean) { cellLive = on; }
 export function registerPlanetRead(r: PlanetRead | null) { reader = r; }
 
+/** The live near cell is the air inside the grid. Outside it, the planet climate. The private formula is only the wasm-absent fallback. */
+function standingInCell(x: number, z: number) {
+  return !!(reader?.driving() && cellLive && grid && inGrid(x, z));
+}
 /** Wind (m/s, world axes x east, z south→ grid v maps to +z) at height `h` above ground. Inside the grid: trilinear cell
- * value scaled to `h` by the neutral log wind profile u(h) = u_ref ln(h/z0)/ln(z_ref/z0) (Stull 1988 §9.7). Outside: climatology.
- * A bound planet grid answers first, at the same height. */
+ * value scaled to `h` by the neutral log wind profile u(h) = u_ref ln(h/z0)/ln(z_ref/z0) (Stull 1988 §9.7). Outside: the climate target. */
 export function windAt(x: number, h: number, z: number, kind: SurfaceKind = 'forest') {
-  const fromPlanet = reader?.wind(x, h, z, kind);
-  if (fromPlanet) return fromPlanet;
+  if (!standingInCell(x, z)) {
+    const fromPlanet = reader?.wind(x, h, z, kind);
+    if (fromPlanet) return fromPlanet;
+  }
   const z0 = SURFACE[kind].z0, ref = layerZ(0), scale = h >= ref ? 1 : Math.max(0, Math.log(Math.max(h, z0 * 1.01) / z0) / Math.log(ref / z0));
-  if (!WEATHER.on || !grid) { const c = climate(WEATHER.day, WEATHER.hour, Math.max(h, ref)); return { x: c.u * scale, y: 0, z: c.v * scale }; }
-  if (!inGrid(x, z)) { const c = climate(WEATHER.day, WEATHER.hour, Math.max(h, ref)); return { x: c.u * scale, y: 0, z: c.v * scale }; }
+  if (!standingInCell(x, z) && (!WEATHER.on || !grid || !inGrid(x, z))) { const c = climate(WEATHER.day, WEATHER.hour, Math.max(h, ref)); return { x: c.u * scale, y: 0, z: c.v * scale }; }
   const k = Math.max(0, h / DY - .5), u = sample(grid.u, gx(x), gz(z), k) * scale, v = sample(grid.v, gx(x), gz(z), k) * scale;
   const e = 2, sx = (heightAt(x + e, z) - heightAt(x - e, z)) / (2 * e), sz = (heightAt(x, z + e) - heightAt(x, z - e)) / (2 * e);
   return { x: u, y: sample(grid.w, gx(x), gz(z), k) * scale + u * sx + v * sz, z: v }; // terrain deflection: flow follows the slope
 }
+/** The cell under the player. Layer 0 sits at `layerZ(0)`; the same lapse that built it is added back so the ground reads the surface. */
+function cellPoint(x: number, z: number): PointWeather {
+  const i = Math.max(0, Math.min(NX - 1, Math.round(gx(x)))), j = Math.max(0, Math.min(NX - 1, Math.round(gz(z)))), n = idx(i, j, 0), col = j * NX + i;
+  const clim = cellClimate(WEATHER.day, WEATHER.hour, layerZ(0), cellX(i), cellZ(j));
+  const p = clim.p, tLayer = tempOf(grid.th[n], p), tC = tLayer + AIR.lapse * layerZ(0);
+  let lwp = 0; for (let k = 0; k < NY; k++) lwp += grid.qc[idx(i, j, k)] * DY;
+  const localCloud = Math.min(1, lwp / CLOUD_LWP_SAT);
+  const cloud = clim.cloud === undefined ? localCloud : Math.min(1, Math.max(localCloud, clim.cloud));
+  const localRain = grid.precip[col];
+  const rainMmH = clim.precipMmH === undefined ? localRain : Math.max(localRain, clim.precipMmH);
+  return withDepth({ tC, rh: Math.min(1, grid.q[n] / qsat(tLayer, p)), cloud, rainMmH, snow: grid.snowfall[col] > 0, soil: grid.soil[col] / HYDRO.bucketMm,
+    sweMm: grid.swe[col], fog: Math.min(1, grid.qc[n] / 3e-4), wind: windAt(x, 10, z) });
+}
 /** Near-surface weather at (x, z): what rendering, sound, ground and the inspector read.
- *  The bound planet grid answers first. The near column and `climateRaw` remain for a frame with no wasm. */
+ *  Inside the live cell, the cell. Outside it, the planet climate. The private formula remains only when wasm did not load. */
 export function weatherAt(x: number, z: number): PointWeather {
+  if (standingInCell(x, z)) return cellPoint(x, z);
   const fromPlanet = reader?.at(x, z);
   if (fromPlanet) return fromPlanet;
   const c = climate(WEATHER.day, WEATHER.hour, 0);
   if (!WEATHER.on || !grid || !inGrid(x, z)) return withDepth({ tC: c.tC, rh: c.rh, cloud: 0, rainMmH: 0, snow: c.tC < 0, soil: .6, sweMm: 0, fog: 0, wind: windAt(x, 10, z) });
   const i = Math.max(0, Math.min(NX - 1, Math.round(gx(x)))), j = Math.max(0, Math.min(NX - 1, Math.round(gz(z)))), n = idx(i, j, 0), col = j * NX + i;
-  const p = climate(WEATHER.day, WEATHER.hour, layerZ(0)).p, tC = tempOf(grid.th[n], p);
+  const p = cellClimate(WEATHER.day, WEATHER.hour, layerZ(0), cellX(i), cellZ(j)).p, tC = tempOf(grid.th[n], p);
   let lwp = 0; for (let k = 0; k < NY; k++) lwp += grid.qc[idx(i, j, k)] * DY;
-  return withDepth({ tC, rh: Math.min(1, grid.q[n] / qsat(tC, p)), cloud: Math.min(1, lwp / .2), rainMmH: grid.precip[col], snow: grid.snowfall[col] > 0, soil: grid.soil[col] / HYDRO.bucketMm,
+  return withDepth({ tC, rh: Math.min(1, grid.q[n] / qsat(tC, p)), cloud: Math.min(1, lwp / CLOUD_LWP_SAT), rainMmH: grid.precip[col], snow: grid.snowfall[col] > 0, soil: grid.soil[col] / HYDRO.bucketMm,
     sweMm: grid.swe[col], fog: Math.min(1, grid.qc[n] / 3e-4), wind: windAt(x, 10, z) });
 }
 /** Aerodynamic drag on a body (N): F = ½ ρ C_d A |v_rel| v_rel with v_rel = wind − v (Batchelor 1967). */
@@ -378,12 +450,9 @@ let acc = 0, running: Generator<unknown, unknown> | undefined;
 /** Called every frame with real seconds and the game's seconds-per-real-second. A step starts at most every 0.5 s real and
  * runs one slice per frame (≈ 0.1–0.6 ms each), so no frame pays for a whole step. */
 export function updateWeather(realDt: number, gameSecondsPerReal: number, day: number, hour: number) {
-  if (reader?.driving()) {
-    WEATHER.day = day; WEATHER.hour = hour;
-    reader.follow(day, hour);
-    return;
-  }
-  if (!grid) initWeather(day, hour, INTEREST.x, INTEREST.z);
+  const spun = reader?.driving() ? reader.follow(day, hour) === true : false;
+  // A new date replaces the climate, so the cell is seeded from it again. Between those jumps the cell steps and relaxes.
+  if (!grid || (reader?.driving() && (!cellLive || spun))) { running = undefined; initWeather(day, hour, INTEREST.x, INTEREST.z); }
   WEATHER.day = day; WEATHER.hour = hour; // the world clock is the date; a slice may advance the copy, and the next call overwrites it
   if (!WEATHER.on) { running = undefined; return; }
   const t0 = performance.now();

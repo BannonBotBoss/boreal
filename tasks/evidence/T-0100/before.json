@@ -1,0 +1,13 @@
+{
+  "ready": true,
+  "heard": "something, ahead, soft",
+  "panelText": "Wolf senses\n◉\nListening\nsomething, ahead, soft\nScent\n99%\nbehind-left · strong scent\nScent mark\nUnfamiliar",
+  "rect": {
+    "x": 24,
+    "y": 180,
+    "width": 220,
+    "height": 295.15625
+  },
+  "url": "http://127.0.0.1:5173/?view=ground&nomenu&noprobe&hour=12&at=-100.495,38.429,0",
+  "errors": []
+}

@@ -5,6 +5,10 @@
  *   senses (core/senses scentLevel + sight + hearing)  ->  internal levels (energy, stamina, relaxation)
  *     ->  goal selection (utilities from the levels and what is sensed)  ->  action + motion  ->  contact transactions
  *
+ * Step 10 (issues #100, #103; #101's cutoff ladder loses): when the world carries `urges`, the same
+ * comparison is severity × the species utility × the opportunity. The habitat cell is step 9's score.
+ * AnimalBrain is still the legs. This file does not call it.
+ *
  * Rules:
  *  - Nothing moves without a cause the animal can sense or feel: food it senses (approach), the next bite of the patch it is on
  *    (step), a sensed threat (flee), habitat it senses (seek: brighter ground where its food grows). With no cause it rests
@@ -108,6 +112,11 @@ export interface AgentWorld {
   /** Something smelled or seen that is not eaten here (a scent plume, a prey body, water). The animal approaches it; it does not feed. */
   lures?: readonly { key: string; kind: string; x: number; z: number; level: number }[];
   /** habitat quality the animal can sense at a point (e.g. sunlit ground for a grazer); optional */ habitat?: (x: number, z: number) => number;
+  /**
+   * Step 10. Omitted: the relaxed choice below is unchanged (the hare and the deer).
+   * Present: hunger, thirst, fear, fatigue, and the step 9 cell pick one urge.
+   */
+  urges?: UrgeState;
   walkable?: (x: number, z: number) => boolean;
   /** Herd percepts. Omitted for a species with no social row. */ mates?: readonly Mate[];
 }
@@ -299,8 +308,135 @@ export function updateLevels(a: Agent, dt: number, sensed: Sensed, eatenUnits = 
 const jitter = (a: Agent) => 1 + a.species.timing.jitter * (a.rng() * 2 - 1);
 function setAction(a: Agent, action: Action, goal: string, seconds = 0) { a.action = action; a.goal = goal; a.timer = seconds; a.elapsed = 0; }
 function foodFor(a: Agent, w: AgentWorld) { for (const [kind, diet] of Object.entries(a.species.diet)) { const src = w.food[kind]; if (src) return { kind, diet, src }; } return undefined; }
+/**
+ * Step 10 drives. `habitat` is the step 9 cell (food, water, and the quality score).
+ * Severity is 0..1. Omitted hunger, fear, and fatigue fall back to energy, the sensed cue, and stamina.
+ * Omitted thirst is 0, so a caller that has not measured water does not grow a drink urge.
+ */
+export interface UrgeHabitat { quality: number; food: number; water: number }
+export interface UrgeState {
+  habitat: UrgeHabitat;
+  hunger?: number;
+  thirst?: number;
+  fear?: number;
+  fatigue?: number;
+  /** A drinkable point the animal can sense. */
+  water?: { x: number; z: number };
+  /** Best habitat quality sensed nearby. The move urge is how far this beats `habitat.quality`. */
+  betterQuality?: number;
+  /** Where that better ground is. */
+  toward?: { x: number; z: number };
+}
+export type UrgeName = 'feed' | 'drink' | 'flee' | 'rest' | 'move';
+
+/**
+ * Importance is the utility row the species already carries (feedHere, approach or investigate, rest, seek, restBase).
+ * Flee is the multiplicative identity: `perceive` already multiplied the cue by `species.fear[kind]`.
+ * Counting that fear again would be a second weight. No new coefficient.
+ */
+export function urgeWeights(u: AgentSpecies['utility']) {
+  return {
+    feed: u.feedHere,
+    drink: u.investigate ?? u.approach,
+    flee: 1,
+    rest: u.rest,
+    floor: u.restBase,
+    move: u.seek,
+  };
+}
+/** #100's product: severity × importance × opportunity. #101's cutoffs are not used. */
+export function urgeScores(w: ReturnType<typeof urgeWeights>, s: {
+  hunger: number; thirst: number; fear: number; fatigue: number;
+  food: number; water: number; leave: number;
+}): Record<UrgeName, number> {
+  return {
+    feed: s.hunger * w.feed * s.food,
+    drink: s.thirst * w.drink * s.water,
+    flee: s.fear * w.flee,
+    rest: s.fatigue * w.rest + w.floor,
+    move: w.move * Math.max(0, s.leave),
+  };
+}
+/** Highest score. A tie stays at rest, which is where the comparison starts. */
+export function strongestUrge(scores: Record<UrgeName, number>): UrgeName {
+  let best: UrgeName = 'rest', bu = scores.rest;
+  for (const name of ['feed', 'drink', 'flee', 'rest', 'move'] as const) if (scores[name] > bu) { bu = scores[name]; best = name; }
+  return best;
+}
+function foodOpportunity(a: Agent, w: AgentWorld, habitatFood: number) {
+  const f = foodFor(a, w);
+  if (f?.src.at(a.x, a.z)) return 1;
+  const near = f?.src.nearest(a.x, a.z, a.species.reach.food, a.food);
+  if (!near) return clamp01(habitatFood);
+  return clamp01(1 - Math.hypot(near.x - a.x, near.z - a.z) / a.species.utility.approachDistance);
+}
+/** The five scores and the winner. Requires `w.urges`. */
+export function winningUrge(a: Agent, w: AgentWorld, sensedLevel = a.sensed.level) {
+  const u = w.urges;
+  if (!u) throw new Error('winningUrge requires world.urges');
+  const weights = urgeWeights(a.species.utility);
+  const hunger = u.hunger ?? moods(a).hunger;
+  const thirst = u.thirst ?? 0;
+  const fear = u.fear ?? sensedLevel;
+  const fatigue = u.fatigue ?? (1 - a.stamina / Math.max(a.species.levels.stamina.max, 1e-9));
+  let leave = 0;
+  if (u.betterQuality !== undefined) leave = u.betterQuality - u.habitat.quality;
+  else if (w.habitat) {
+    const here = w.habitat(a.x, a.z), pick = bestHabitat(a, w);
+    if (pick) leave = w.habitat(pick.x, pick.z) - here;
+  }
+  const scores = urgeScores(weights, {
+    hunger, thirst, fear, fatigue,
+    food: foodOpportunity(a, w, u.habitat.food),
+    water: u.water ? 1 : clamp01(u.habitat.water),
+    leave,
+  });
+  return { urge: strongestUrge(scores), scores };
+}
+function applyUrge(a: Agent, w: AgentWorld, urge: UrgeName) {
+  const u = w.urges!, m = modulators(a), social = a.species.social;
+  const bout = () => social ? herdBouts(a, linkedMates(a, w)) : undefined;
+  if (urge === 'feed') {
+    const f = foodFor(a, w), here = f?.src.at(a.x, a.z), near = f?.src.nearest(a.x, a.z, a.species.reach.food, a.food);
+    if (here) {
+      a.food = here.key;
+      setAction(a, 'feed', `urge feed: grazing ${here.key}`, bout()?.feed ?? m.feedBout * jitter(a));
+    } else if (near) {
+      a.target = { x: near.x, z: near.z, key: near.key };
+      setAction(a, 'approach', `urge feed: trotting to sensed ${f!.kind} ${near.key}`);
+    } else {
+      const to = u.toward ?? (w.habitat ? bestHabitat(a, w) : undefined);
+      if (to) a.target = { x: to.x, z: to.z };
+      setAction(a, 'seek', 'urge feed: searching where food is');
+    }
+    return;
+  }
+  if (urge === 'drink') {
+    const water = u.water;
+    // 1.2 m is the lure hold already in the relaxed choice: close enough to drink, far enough not to stand in it. [game calibration]
+    if (water && Math.hypot(water.x - a.x, water.z - a.z) < 1.2) setAction(a, 'scan', 'urge drink: drinking', bout()?.scan ?? m.scan * jitter(a));
+    else if (water) { a.target = { x: water.x, z: water.z, key: 'water' }; setAction(a, 'approach', 'urge drink: walking to water'); }
+    else setAction(a, 'seek', 'urge drink: searching for water');
+    return;
+  }
+  if (urge === 'flee') {
+    if (a.sensed.from) a.heading = awayFrom(a, a.sensed.from);
+    setAction(a, 'flee', `urge flee: fleeing ${a.sensed.from?.kind ?? 'predator'}`);
+    return;
+  }
+  if (urge === 'move') {
+    const to = u.toward ?? (w.habitat ? bestHabitat(a, w) : undefined);
+    if (to) a.target = { x: to.x, z: to.z };
+    setAction(a, 'seek', 'urge move: leaving a poorer place');
+    return;
+  }
+  const span = a.species.timing.rest;
+  setAction(a, 'rest', 'urge rest: resting', social ? (span[0] + span[1]) / 2 : span[0] + a.rng() * (span[1] - span[0]));
+}
+
 /** Relaxed choice: feed here, approach sensed food, seek habitat, rest, or scan; utilities from the levels and what is sensed. */
 export function decide(a: Agent, w: AgentWorld) {
+  if (w.urges) { applyUrge(a, w, winningUrge(a, w).urge); return; }
   const U = a.species.utility, { nerve, hunger } = moods(a), m = modulators(a), f = foodFor(a, w), L = a.species.levels;
   const here = f?.src.at(a.x, a.z), near = f?.src.nearest(a.x, a.z, a.species.reach.food, a.food);
   const social = a.species.social;
@@ -435,7 +571,13 @@ export function stepAgent(a: Agent, w: AgentWorld, dt: number): AgentEvent[] {
     if (a.goal !== goal) setAction(a, hot ? 'flee' : 'approach', goal);
     else a.action = hot ? 'flee' : 'approach';
   } else {
-  if (calmAction && s.level >= m.noticeAt) { endContact(a, events); setAction(a, 'alert', `head up: ${cueName(s)} ${s.from?.kind ?? 'something'}`, social ? 0 : m.alert * jitter(a)); }
+  // With urges, fear wins only when its score beats the others. The notice cutoff stays on the relaxed path.
+  if (w.urges) {
+    if (winningUrge(a, w, s.level).urge === 'flee' && a.action !== 'flee' && a.action !== 'pause' && a.action !== 'hide') {
+      startFlight(a, s, events);
+      a.goal = `urge flee: ${a.goal}`;
+    }
+  } else if (calmAction && s.level >= m.noticeAt) { endContact(a, events); setAction(a, 'alert', `head up: ${cueName(s)} ${s.from?.kind ?? 'something'}`, social ? 0 : m.alert * jitter(a)); }
   switch (a.action) {
     case 'alert':
       if (social) { speed = socialWatch(a, w, s, m, events, dt); break; }

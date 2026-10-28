@@ -6,7 +6,8 @@ board showed one row and the hidden task's events stuck to the survivor. T-0071 
 (`tasks/T-0071-grokbot-3-relay.md`, PR #54) and the wolf-file landing (PR #55). Matthew in chat, 2026-10-24 17:10 PT:
 "yes, automaticallly fix anything like this mmoving forward". The first renumber picked T-0074 without scanning open
 PR branches. PR #60 (`grokbot-1/wolf-jump-ballistic`, opened about five minutes earlier) already used T-0074, and
-PR #64 uses T-0075, so the landing is T-0076.
+PR #64 uses T-0075, so the landing is T-0076. T-0100 collided again on 2026-10-26: pull request #148
+(`grokbot-3/sense-pictures`) keeps T-0100, and the level follow view on pull request #147 is T-0101.
 
 ## Steps
 1. Handoff first. `git fetch --all` so `git log --all` sees every remote branch. Then list open pull requests

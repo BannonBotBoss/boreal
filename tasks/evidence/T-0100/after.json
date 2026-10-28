@@ -1,0 +1,21 @@
+{
+  "mode": "live",
+  "url": "http://127.0.0.1:5173/?view=ground&nomenu&noprobe&hour=12&at=-100.495,38.429,0",
+  "loading": false,
+  "sound": "Sound on",
+  "text": "Wolf senses\n◉",
+  "bubbles": [
+    {
+      "kind": "sense-bubble-scent",
+      "opacity": "0.452",
+      "text": ""
+    }
+  ],
+  "rect": {
+    "x": 24,
+    "y": 180,
+    "width": 248,
+    "height": 188.1875
+  },
+  "errors": []
+}

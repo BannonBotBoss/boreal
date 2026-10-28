@@ -48,7 +48,7 @@ const FRAG = `
     float keep = 1.0 - uPatchCut;
     if (uPatchDisc.z > 0.0) { float dy = cameraPosition.y - vPatchY, t = (cameraPosition.y - uPatchY) / max(dy, 1e-3); // ray -> plane uPatchY
       vec2 pxz = dy > 1.0 && t > 0.0 && t < 4.0 ? cameraPosition.xz + (vPatchXZ - cameraPosition.xz) * t : vPatchXZ;
-      keep *= 1.0 - smoothstep(0.75, 1.0, length(pxz - uPatchDisc.xy) / uPatchDisc.z); }
+      keep *= 1.0 - smoothstep(0.5, 1.0, length(pxz - uPatchDisc.xy) / uPatchDisc.z); }
     int bx = int(gl_FragCoord.x) & 3, by = int(gl_FragCoord.y) & 3, bxy = bx ^ by;
     int bayer = ((bxy & 1) << 3) | ((by & 1) << 2) | (((bxy >> 1) & 1) << 1) | ((by >> 1) & 1);
     if ((float(bayer) + 0.5) / 16.0 >= keep) discard;

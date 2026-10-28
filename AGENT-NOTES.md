@@ -1344,3 +1344,9 @@ Matthew, 2026-10-28, issue #156, overrides PROJECT-RULES rule 1 for animal model
 - Gray Wolf: public/models/animals/wolf.glb (26,033 triangles, 1,024², 1.94 MB) and wolf-low.glb (18,193 triangles; gltf-transform simplify stopped on its error bound). Scaled to the 0.74 m shoulder. Head −X turned to −Z. Still or far is rigid. Close and moving keeps the procedural bones. Deer and hare have no file.
 - Files: src/core/sitePhase.ts, src/core/siteHeight.ts, src/world/globe/landingSite.ts, src/render/animalLadder.ts, src/render/animalModels.ts, src/render/animalPicture.ts, src/world/globe/flight.ts, globeView.ts, inpage.ts, src/core/world.ts, altitudeZones.ts, stages/elevation.ts, stages/rivers.ts, planetWeather.ts, src/render/buildScene.ts, src/animals/hare.ts, src/main.ts, tests/globe-landing.test.ts. Skill notes/skills/globe-to-animals.md.
 - Adoption: three/examples/jsm/loaders/GLTFLoader.js (three 0.180, already depended). Textures resized with @gltf-transform/cli resize and jpeg. No new runtime package.
+
+## 2026-10-28 02:03 PT - grokbot-3: horizon rings under the glide (T-0109)
+
+Issue #156 step 1. The chunk square was about 80 m because the dither disc stopped at `INPAGE.ring * CHUNK_SIZE`. `src/world/globe/horizonSkirt.ts` builds doubling rings from 28 m out past the geometric horizon on `planet.sampleSurface` and `surfaceColour`. Curvature drop is `R − R² / sqrt(R² + r²)`. Far quads behind the eye are omitted. One mesh, `src/render/horizonMesh.ts`. Triangle cap 6,000. XR caps unchanged.
+
+The stills are not a drone photo. `home-low.png` and `prairie-low.png` show a horizon; the ground up to it is a dark flat colour, and the prairie chunk rectangle is still there. Objective 2 stays open. Skill `notes/skills/horizon-skirt.md`. Handoff `tasks/handoffs/T-0109-grokbot-3.md`.

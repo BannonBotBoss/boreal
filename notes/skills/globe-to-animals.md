@@ -15,7 +15,7 @@ Use when a double-click on the planet should pass through the clouds, become the
 1. Pass `dir` and `home` out of the fall (`dropAt`). `descend` calls `engageLanding` only when `home` is 0.
 2. Stop the carried fall at `ANIMAL_LADDER.mapHoldM` (400 m) unless `playerDiving` says the player is flying down. `arrestGlide` turns the vertical speed into an 8 m/s glide once.
 3. Stream chunks with the eye height (`inpage.height`), capped, so the glide has ground under it.
-4. Fade each animal with `detailShares`. Specks are a fixed pixel size. Low and full stored meshes are rigid when the animal is still or far. Close and moving keeps the procedural bones. `setBodyShare` runs after `density.sync`.
+4. Fade each animal with `detailShares`. Specks are a fixed pixel size. A stored mesh is skinned onto the existing gait (`src/render/meshySkin.ts`), so close and moving is the Meshy body. The mid step is a shared impostor quad. `setBodyShare` runs after `density.sync`. No file still means the procedural body.
 5. Above the tree line (`plantsGrowAt` at the site latitude) the generator does not place deer, spruce, or hares.
 
 ## Checks

@@ -1360,3 +1360,12 @@ Matthew, 2026-10-28, issue #156, overrides PROJECT-RULES rule 1 for animal model
 Issue #156 step 1. The chunk square was about 80 m because the dither disc stopped at `INPAGE.ring * CHUNK_SIZE`. `src/world/globe/horizonSkirt.ts` builds doubling rings from 28 m out past the geometric horizon on `planet.sampleSurface` and `surfaceColour`. Curvature drop is `R − R² / sqrt(R² + r²)`. Far quads behind the eye are omitted. One mesh, `src/render/horizonMesh.ts`. Triangle cap 6,000. XR caps unchanged.
 
 The stills are not a drone photo. `home-low.png` and `prairie-low.png` show a horizon; the ground up to it is a dark flat colour, and the prairie chunk rectangle is still there. Objective 2 stays open. Skill `notes/skills/horizon-skirt.md`. Handoff `tasks/handoffs/T-0109-grokbot-3.md`.
+
+## 2026-10-28 - grokbot-3: Meshy animals walk (T-0113, issues #156 #160 #162)
+
+Biological front end. Blitz mode (#157). Not a self-review. Landscape stays on grokbot-3/eco-front-* (that lane took T-0109). This note's author merges once tsc and npm test pass.
+
+- 21 Meshy game files in public/models/animals. Manifest keyed by species. Meshopt decoder on the one GLTFLoader. New gray wolf replaces wolf.glb / wolf-low.glb. Grizzly Bear borrows the American Black Bear 0.9 m shoulder. Bald Eagle borrows Hawks, Kites and Eagles at 0.55 m. Common Raven borrows Crows and Jays at 0.6 m.
+- src/render/meshySkin.ts skins the mesh onto quadrupedPose (WOLF_LEGS, DEER_LEGS, BEAR_LEGS, or the plan ratios) or a bird wing flap. Bones fit the mesh box. Weights by proximity. Float positions: the files are normalized ints and clamped outside −1..1.
+- animalPicture shares geometry, impostors in the mid band, loads only species in view. fullCap 6, lowCap 16. No file keeps the procedural body.
+- Skill notes/skills/meshy-animal-skin.md. Handoff tasks/handoffs/T-0113-grokbot-3.md. Tests tests/meshy-animals.test.ts. PROJECT-RULES rule 1 names the exception. hare-mesh still guards the procedural builder. Renumbered from a branch-only T-0110 after the elevation task took T-0110 on main.

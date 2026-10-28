@@ -1,5 +1,6 @@
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { live } from '../config/live';
+import { PERCEPTION, readSoundEntry } from './perceptionBuffer';
 /** Transient sensory math: no world records are created by hearing or smelling. */
 export interface SensePoint { x: number; z: number }
 export interface ScentSource extends SensePoint { key: string; kind: string; potency: number; remembered?: boolean; friend?: boolean;
@@ -42,6 +43,44 @@ export function smell(nose: SensePoint, sources: readonly ScentSource[], wind: S
     .slice(0, SENSES.thoughtCap);
 }
 export interface SoundCue extends SensePoint { id: string; level: number; age: number }
+
+/** Eight compass words. Clockwise from forward, the same buckets the scent line uses. */
+const COMPASS = ['ahead', 'front-right', 'right', 'behind-right', 'behind', 'behind-left', 'left', 'front-left'] as const;
+export function compassWord(bearing: number) {
+  return COMPASS[(Math.round(bearing / (Math.PI / 4)) + 8) % 8];
+}
+
+/**
+ * One heard snap as the 28-byte sound entry in issue #106.
+ * The clip id is not stored, and neither is a distance: direction is a unit vector in the listener frame
+ * (x right, z forward), so the caption cannot print a species or a range.
+ * Urgency is a game-calibration word for the cue's existing 0–1 level, split in thirds: under 1/3 soft (0),
+ * under 2/3 clear (1), otherwise loud (2). It is not a hearing distance. The species hearing row is unchanged.
+ */
+export function cueSoundEntry(cue: { level: number; age: number }, bearing: number): Uint8Array {
+  const bytes = new Uint8Array(PERCEPTION.soundBytes);
+  const view = new DataView(bytes.buffer);
+  const level = Number.isFinite(cue.level) && cue.level > 0 ? cue.level : 0;
+  const urgency = level < 1 / 3 ? 0 : level < 2 / 3 ? 1 : 2;
+  view.setUint16(0, 0, true);
+  view.setUint16(2, urgency, true);
+  view.setFloat32(4, level, true);
+  view.setFloat32(8, Math.sin(bearing), true);
+  view.setFloat32(12, 0, true);
+  view.setFloat32(16, Math.cos(bearing), true);
+  view.setFloat32(20, Number.isFinite(cue.age) ? cue.age : 0, true);
+  return bytes;
+}
+
+/** "something, ahead, loud". Direction and urgency come from the 28-byte entry. Category and age are not printed. */
+export function soundCaption(entry: ArrayBuffer | ArrayBufferView): string {
+  const sound = readSoundEntry(entry);
+  const horizontal = Math.hypot(sound.directionX, sound.directionZ);
+  const way = horizontal < 1e-4 ? 'that way' : compassWord(Math.atan2(sound.directionX, sound.directionZ));
+  const urge = sound.urgency <= 0 ? 'soft' : sound.urgency === 1 ? 'clear' : 'loud';
+  return `something, ${way}, ${urge}`;
+}
+
 export function createSoundCues() {
   let cues: SoundCue[] = [];
   return {

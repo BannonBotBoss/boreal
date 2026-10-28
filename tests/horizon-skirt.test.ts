@@ -6,7 +6,7 @@ import { PLANET, planetFor } from '../src/world/globe/planet';
 import { XR_CAPS } from '../src/core/quality';
 import {
   HORIZON_SKIRT, buildSkirtMesh, curvatureDrop, horizonMetres, patchDiscRadius,
-  skirtOrigin, skirtRadii, skirtRings, skirtSample, skirtSegments, skirtTriangles,
+  ringLod, skirtOrigin, skirtRadii, skirtRings, skirtSample, skirtSegments, skirtTriangles,
 } from '../src/world/globe/horizonSkirt';
 
 const QUEST_TRIS = 750_000; // core/quality.ts: Quest 3 soft ceiling, triangles per eye
@@ -91,6 +91,34 @@ test('far quads behind the eye are dropped so they cannot smear across the sky',
     const rs = xs.map(x => Math.abs(x));
     if (Math.max(...rs) > 200) assert.ok(xs.every(x => x > -50), 'a far triangle stays in front');
   }
+});
+
+test('the near rings are finer, and the boundary geomorphs onto the coarser edge', () => {
+  assert.equal(ringLod(0).segments, 128);
+  assert.equal(ringLod(4).segments, 64);
+  assert.equal(ringLod(5).segments, 32);
+  assert.equal(ringLod(1).segments, ringLod(5).segments * 4);
+  const mesh = buildSkirtMesh(0, 0, 400, () => ({ y: 0, rgb: [0.2, 0.3, 0.1] }));
+  assert.ok(mesh.triangles <= HORIZON_SKIRT.maxTriangles);
+  assert.ok(mesh.triangles > 1800, `near rings should add triangles, got ${mesh.triangles}`);
+  // An outer vertex of a fine ring lies on the chord of its coarser neighbours, so the
+  // next ring does not crack. Search a vertex whose xz is not on a 32-segment spoke
+  // but whose radius is a ring boundary (a doubling of 28 m).
+  const boundary = 28 * 32; // 896 m, past the fine rings
+  let found = 0;
+  for (let i = 0; i < mesh.position.length / 3; i++) {
+    const x = mesh.position[i * 3], z = mesh.position[i * 3 + 2];
+    const r = Math.hypot(x, z);
+    if (Math.abs(r - boundary) > 8) continue;
+    const theta = Math.atan2(z, x);
+    const spoke = (theta / (Math.PI * 2) * 32);
+    const frac = spoke - Math.floor(spoke);
+    if (frac < 0.2 || frac > 0.8) continue;
+    found++;
+    // It should sit closer to the chord (slightly inside the arc) than a pure arc vertex.
+    assert.ok(r <= boundary + 0.5, `geomorph vertex radius ${r}`);
+  }
+  assert.ok(found > 0, 'a morphed boundary vertex exists');
 });
 
 test('the skirt budget leaves the Quest triangle cap intact', () => {

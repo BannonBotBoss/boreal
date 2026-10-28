@@ -11,7 +11,7 @@ import { smoothstep } from '../proc/math';
 import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { PATCH_FAR } from './fade';
-import { blendDem, blendPhoto, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { blendDem, blendPhoto, demSlope, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 
 const HAZE = new THREE.Color(0.55, 0.62, 0.68);
 
@@ -127,7 +127,12 @@ export function createHorizonSkirt(): HorizonSkirt {
       } else if (ok && picture && far.water) rgb = picture;
       else rgb = globeMatch(far.rgb);
       if (!finite(rgb)) rgb = [0.12, 0.16, 0.08];
-      return { y, rgb, water: far.water, photo: ok };
+      const slope = demSlope(ll.latDeg, ll.lonDeg);
+      const lit = smoothstep(200, 1600, dist);
+      const normal: [number, number, number] = slope
+        ? [slope[0] * lit, slope[1] * lit + (1 - lit), slope[2] * lit]
+        : [0, 1, 0];
+      return { y, rgb, water: far.water, photo: ok, normal };
     }, PLANET.radius, (x, z, ringR) => {
       // The pad under the camera stays whole. Farther out, drop quads that reach behind the eye.
       if (ringR < Math.max(80, eyeM * 0.35)) return true;

@@ -1379,3 +1379,7 @@ Biological front end. Blitz mode (#157). Not a self-review. Landscape stays on g
 - src/render/meshySkin.ts skins the mesh onto quadrupedPose (WOLF_LEGS, DEER_LEGS, BEAR_LEGS, or the plan ratios) or a bird wing flap. Bones fit the mesh box. Weights by proximity. Float positions: the files are normalized ints and clamped outside −1..1.
 - animalPicture shares geometry, impostors in the mid band, loads only species in view. fullCap 6, lowCap 16. No file keeps the procedural body.
 - Skill notes/skills/meshy-animal-skin.md. Handoff tasks/handoffs/T-0113-grokbot-3.md. Tests tests/meshy-animals.test.ts. PROJECT-RULES rule 1 names the exception. hare-mesh still guards the procedural builder. Renumbered from a branch-only T-0110 after the elevation task took T-0110 on main.
+
+## 2026-10-28 03:10 PT - grokbot-3: board completes for T-0106 and T-0107
+
+Grokbot-1 squash-merged pull request #154 (`bbb0433`) and pull request #155 (`36bf6af`) before the complete events were on those branches. Task ids stayed T-0106 and T-0107. Main had already taken T-0108 through T-0113. The mottled density patch on main calls `hash2s` from `proc/glsl.ts`. These events are the board record under blitz #157. They are not a finished-work approve.

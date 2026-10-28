@@ -6,7 +6,7 @@ import { playerRemembered, type EventContext } from '../core/events';
 import { windAt } from '../core/weather';
 import { deltaSources } from '../core/traces';
 import { WOLF_AGENT } from '../core/species';
-import { createSoundCues, smell, bearingTo, SENSES, type ScentSource, type ScentHit } from '../core/senses';
+import { createSoundCues, smell, bearingTo, compassWord, cueSoundEntry, soundCaption, SENSES, type ScentSource, type ScentHit } from '../core/senses';
 
 // Small procedural pictograms: shared vocabulary, not stored animal meshes or portraits.
 const drawings: Record<string, [string, string]> = {
@@ -22,10 +22,6 @@ const drawings: Record<string, [string, string]> = {
 };
 const images = Object.fromEntries(Object.entries(drawings).map(([k, [, d]]) => [k, 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="#e2e9cd" stroke="#e2e9cd" stroke-width="2" stroke-linejoin="round">${d}</svg>`)]));
 const potency: Record<string, number> = { deer: 1, hare: .7, person: .85, forage: .8, plant: .55, log: .3 };
-function direction(a: number) {
-  return ['ahead', 'front-right', 'right', 'behind-right', 'behind', 'behind-left', 'left', 'front-left'][(Math.round(a / (Math.PI / 4)) + 8) % 8];
-}
-const soundNames: Record<string, string> = { 'deer-snort': 'Deer snort', 'deer-hooves': 'Hooves', 'paw-walk': 'Footsteps', 'paw-run': 'Running', 'hare-squeak': 'Hare', 'hare-hop': 'Hopping', 'stone-roll': 'Rolling stone', 'visitor-steps': 'Footsteps', 'herb-pluck': 'Leaves', loon: 'Loon', owl: 'Owl', raven: 'Raven', woodpecker: 'Woodpecker', chew: 'Chewing', land: 'Landing' };
 export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: BorealSound, memory: () => EventContext) {
   const root = document.createElement('details'); root.className = 'wolf-senses'; root.open = true;
   root.innerHTML = `<summary>Wolf senses</summary><div class="sense-panel"><div class="sense-hearing"><div class="sense-compass" role="img" aria-label="Sound directions relative to your view"><span class="sense-ear">◉</span><div class="sense-arrows"></div></div><div class="sense-caption"><strong>Listening</strong><span class="sense-heard">Quiet nearby</span></div></div><div class="sense-smell"><label for="scent-level">Scent <span class="sense-percent">0%</span></label><meter id="scent-level" min="0" max="1" value="0"></meter><div class="sense-direction">No scent picked up</div><div class="sense-thoughts" aria-label="The wolf's scent thoughts"></div></div></div>`;
@@ -52,11 +48,12 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
         const a = bearingTo(nose, c, heading), marker = document.createElement('span');
         marker.className = 'sense-cue'; marker.style.setProperty('--bearing', `${a}rad`);
         marker.style.opacity = String(.2 + .8 * (1 - c.age / SENSES.cueLife));
-        marker.title = `${soundNames[c.id] ?? c.id.replaceAll('-', ' ')} · ${direction(a)}`;
-        marker.setAttribute('aria-label', marker.title); arrows.append(marker);
+        const caption = soundCaption(cueSoundEntry(c, a));
+        marker.title = caption;
+        marker.setAttribute('aria-label', caption); arrows.append(marker);
       }
       const recent = sounds[sounds.length - 1];
-      heard.textContent = recent ? `${soundNames[recent.id] ?? recent.id.replaceAll('-', ' ')} · ${direction(bearingTo(nose, recent, heading))}` : 'Quiet nearby';
+      heard.textContent = recent ? soundCaption(cueSoundEntry(recent, bearingTo(nose, recent, heading))) : 'Quiet nearby';
       const context = memory();
       const sources: ScentSource[] = view.entities().filter(e => potency[e.kind] && Math.hypot(e.x - nose.x, e.z - nose.z) < SENSES.range).map(e => ({
         key: e.key, kind: e.kind, x: e.x, z: e.z, potency: potency[e.kind],
@@ -67,7 +64,7 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
       sources.push(...deltaSources(nose.x, nose.z, WOLF_AGENT.senses.scent.range));
       const hits = smell(nose, sources, windAt(nose.x, .8, nose.z), heading), first = hits[0], level = first?.level ?? 0; lastHits = hits;
       meter.value = level; percent.textContent = `${Math.round(level * 100)}%`;
-      scentDirection.textContent = first ? `${direction(first.bearing)} · ${level > .65 ? 'strong' : level > .25 ? 'distinct' : 'faint'} scent` : 'No scent picked up';
+      scentDirection.textContent = first ? `${compassWord(first.bearing)} · ${level > .65 ? 'strong' : level > .25 ? 'distinct' : 'faint'} scent` : 'No scent picked up';
       const signature = hits.map(h => `${h.key}:${h.remembered}:${h.friend}`).join('|');
       if (signature !== lastThoughts) {
         lastThoughts = signature; thoughts.replaceChildren();

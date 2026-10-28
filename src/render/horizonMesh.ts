@@ -11,7 +11,7 @@ import { smoothstep } from '../proc/math';
 import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { PATCH_FAR } from './fade';
-import { blendDem, blendPhoto, demSlope, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { biomeGrade, blendDem, blendPhoto, demSlope, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { canopyTile } from './trees/billboardAtlas';
 
 /** Daylight horizon the ground fades toward. Brighter than the old grey so aerial perspective
@@ -30,10 +30,12 @@ function skirtMaterial() {
   const haze = { value: new THREE.Vector3(800, 8000, 0) };
   const hazeColor = { value: HAZE.clone() };
   const cam = { value: new THREE.Vector2() };
+  const forest = { value: 0 };
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uSkirtHaze = haze;
     shader.uniforms.uSkirtHazeColor = hazeColor;
     shader.uniforms.uSkirtCam = cam;
+    shader.uniforms.uForest = forest;
     shader.uniforms.uCanopy = { value: CANOPY };
     Object.assign(shader.uniforms, PATCH_FAR);
     shader.vertexShader = shader.vertexShader
@@ -41,7 +43,7 @@ function skirtMaterial() {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkirtFade = aFade;\nvSkirtWater = aWater;\nvSkirtPhoto = aPhoto;\nvSkirtDist = distance(position.xz, uSkirtCam);\nvSkirtWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvSkirtClip = gl_Position;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform sampler2D uCanopy;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
+      .replace('#include <common>', '#include <common>\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform sampler2D uCanopy;\nuniform float uForest;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
       .replace('#include <dithering_fragment>', `
         if (vSkirtPhoto < 0.5 && uFarMix.w > 0.5) {
           vec2 fuv = clamp(vSkirtClip.xy / vSkirtClip.w * 0.5 + 0.5, 0.0, 1.0);
@@ -60,6 +62,7 @@ function skirtMaterial() {
         if (canopy > 0.001) {
           vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));
           gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.82);
+          gl_FragColor.rgb *= mix(vec3(1.0), vec3(1.08, 1.4, 0.96), uForest);
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);
@@ -76,8 +79,8 @@ function skirtMaterial() {
         }
         #include <dithering_fragment>`);
   };
-  material.customProgramCacheKey = () => 'horizon-skirt-canopy';
-  return { material, haze, hazeColor, cam };
+  material.customProgramCacheKey = () => 'horizon-skirt-biome';
+  return { material, haze, hazeColor, cam, forest };
 }
 
 export interface HorizonSkirt {
@@ -116,6 +119,8 @@ export function createHorizonSkirt(): HorizonSkirt {
     const snap = HORIZON_SKIRT.snapM;
     const next = `${originKey}:${Math.round(cx / snap)}:${Math.round(cz / snap)}:${Math.round(Math.log2(Math.max(1, eyeM)) * 8)}:${Math.round(Math.atan2(forwardZ, forwardX) * 4)}:${openTileGeneration()}`;
     made.cam.value.set(cx, cz);
+    const latAbs = Math.abs(hereLL.latDeg);
+    made.forest.value = latAbs >= 48 && latAbs < 70 ? 1 : latAbs >= 32 && latAbs < 48 ? 0.45 : 0;
     if (next === key) return false;
     key = next;
     const here = origin;
@@ -141,7 +146,7 @@ export function createHorizonSkirt(): HorizonSkirt {
       const ok = !!picture && finite(picture);
       if (ok && picture && !water) {
         const grain = 0.78 + 0.28 * Math.sin(x * 0.41 + z * 0.17) * Math.sin(x * 0.13 - z * 0.29);
-        rgb = blendPhoto(picture, dist, grain);
+        rgb = biomeGrade(ll.latDeg, blendPhoto(picture, dist, grain));
       } else if (ok && picture && water) rgb = picture;
       else if (!water && far.kind === 'ocean') rgb = globeMatch([0.06, 0.09, 0.04]);
       else rgb = globeMatch(far.rgb);

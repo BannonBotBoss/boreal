@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  blendDem, blendPhoto, demSlope, elevationWins, globeMatch, inConus, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
+  biomeGrade, blendDem, blendPhoto, demSlope, elevationWins, globeMatch, inConus, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
   storePhoto, storeTerrarium, terrariumMetres, tileMetres, tileRing,
 } from '../src/world/globe/openTiles';
 
@@ -31,6 +31,15 @@ test('a stored tile is sampled in metres, and a hole falls back to null', () => 
   assert.ok(h != null && Math.abs(h - 1000) < 1, `height ${h}`);
   assert.equal(sampleDem(0, 0), null);
   assert.equal(samplePhoto(lat, lon), null);
+});
+
+test('a dark forest pixel is lifted greener in the boreal band and left alone in the tropics', () => {
+  const dark: [number, number, number] = [0.04, 0.05, 0.03];
+  const forest = biomeGrade(55, dark);
+  const tropics = biomeGrade(10, dark);
+  assert.ok(forest[1] > dark[1] * 2);
+  assert.ok(forest[1] > forest[0]);
+  assert.deepEqual(tropics, dark);
 });
 
 test('USGS ortho is only requested inside the continental United States, and zoom 14 is the near mosaic', () => {

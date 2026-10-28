@@ -1,0 +1,40 @@
+{
+  "mode": "rise",
+  "url": "http://127.0.0.1:5173/?view=ground&nomenu&noprobe&hour=12&at=-100.495,38.429,0&sensepic=once:0.9",
+  "frames": [
+    {
+      "file": "tasks/evidence/T-0100/rise-1.png",
+      "bubbles": [
+        {
+          "kind": "sense-bubble-sound",
+          "opacity": "0.28",
+          "text": ""
+        }
+      ],
+      "text": "Wolf senses\n◉"
+    },
+    {
+      "file": "tasks/evidence/T-0100/rise-2.png",
+      "bubbles": [
+        {
+          "kind": "sense-bubble-sound",
+          "opacity": "0.518",
+          "text": ""
+        }
+      ],
+      "text": "Wolf senses\n◉"
+    },
+    {
+      "file": "tasks/evidence/T-0100/rise-3.png",
+      "bubbles": [
+        {
+          "kind": "sense-bubble-sound",
+          "opacity": "0.263",
+          "text": ""
+        }
+      ],
+      "text": "Wolf senses\n◉"
+    }
+  ],
+  "errors": []
+}

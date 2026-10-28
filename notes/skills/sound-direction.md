@@ -8,7 +8,7 @@ Use when a heard snap is shown to the player, or when a later sense wants the sa
 3. Direction is a unit vector in the listener frame (x to the right, z forward). `bearingTo` already returns that angle. Urgency is a game-calibration word for the cue's existing 0–1 level, split in thirds: under 1/3 soft, under 2/3 clear, otherwise loud. It is not a hearing distance.
 4. The caption is `soundCaption`, which calls `readSoundEntry`. That reader is the same one `readPerception` uses for each sound in the block. A slice that is not 28 bytes is refused. The words come from the direction vector and the urgency code. Changing intensity or category does not change the words.
 5. The compass still drops a cue past `SENSES.range`. That value stays the wolf species row `hearing.rangeM` (40 m). The row is already labelled game calibration. Do not add a second range.
-6. The listening line and each compass mark use the caption. Quiet stays "Quiet nearby". Scent cards are step 24. Leave them.
+6. The compass mark's accessibility label uses the caption. T-0100 removed the visible listening line and the scent words. The picture stream is `notes/skills/sense-pictures.md`. Do not put the caption back on screen.
 
 ## Checks that prove it worked
 - `tests/sound-caption.test.ts`: the known fixture's first sound (28 bytes, direction +x, urgency 2) reads "something, right, loud". The next sound, 28 bytes later, reads "something, ahead, loud". Neither string has a species or a digit.

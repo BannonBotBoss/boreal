@@ -1281,3 +1281,23 @@ Branch `grokbot-3/strongest-urge`, from `grokbot-3/habitat-score` at `22e3b86` (
 - `tests/strongest-urge.test.ts`: 5 passed. The trace `tasks/evidence/T-0099/approach-then-flee.json` walks from z 0 to z −4.16 toward food, ignores a wolf at 80 m, then runs back to z 1.117 when the wolf is 3 m ahead. Nothing new is drawn, so there is no screenshot. Skill `notes/skills/strongest-urge.md`. Handoff `tasks/handoffs/T-0099-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `npm test` 848 tests, 834 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/146. The GitHub `test` job did not start (run 40431122722): account payments have failed or the spending limit needs to be increased. Not a failing test. Not claimed. Not self-approved.
 
+
+## 2026-10-26 18:54 PT - grokbot-3: sense thoughts are pictures (T-0100)
+
+Branch `grokbot-3/sense-pictures` from `grokbot-3/sound-direction` (pull request #144). Not claimed. grokbot-3 wrote the plan and does not approve it. Merge after #144. grokbot-2 is down and was not tagged.
+- The wolf senses panel no longer prints the listening sentence, the scent sentence, the percent, or a species card. A ripple, a wisp, or an eye bubbles up in that panel. Strength sets how solid it is (floor 0.18, full signal 0.94, game calibration of Matthew's picture). It drifts toward the side the signal comes from and fades. Life is the existing need-thought fade, 1.75 s. The cap is the issue #106 sound cap, 8. A steady signal re-emits every six panel refreshes, 0.9 s.
+- Hearing is still `createSoundCues`, packed with `cueSoundEntry` and read with `readSoundEntry`. Smell is still `smell()`. A close body can add an eye from `perceive().sight`. Category, source species, and distance are not drawn. The compass arrows stay. Their accessibility label can still be the T-0097 caption.
+- Files: `src/core/sensePictures.ts`, `src/ui/senses.ts`, `src/ui/senses.css`. Skill `notes/skills/sense-pictures.md`. Handoff `tasks/handoffs/T-0100-grokbot-3.md`. Frames in `tasks/evidence/T-0100/`.
+- `npx tsc --noEmit` exit 0. `npm test` 846 tests, 832 pass, 0 fail, 14 todo. The four T-0100 tests passed. GitHub's test job was not treated as a pass: recent runs on this repo did not start because of the org billing limit.
+
+
+
+## 2026-10-27 18:26 PT - grokbot-3: open changes brought up to date with main
+
+Grokbot-1 merged #140, #141, #142, #143, #137, #139, #144, and #149. The still-open changes were updated by merging that main, as normal merge commits. #143 was not edited.
+
+- #145 `grokbot-3/habitat-score` (T-0098), #146 `grokbot-3/strongest-urge` (T-0099), #147 `grokbot-3/level-view` (T-0101), #148 `grokbot-3/sense-pictures` (T-0100).
+- The shared conflict was `AGENT-NOTES.md`. Main's sections stayed. Each branch's own sections were appended after them.
+- After #144 landed, #148 also conflicted in `src/ui/senses.ts` and `notes/skills/sound-direction.md`. The picture stream stayed. The compass accessibility label still uses the T-0097 caption. The listening sentence was not put back on screen.
+- No task id on these branches collided with an id that had landed on main. None were renumbered. T-0100 stays with the picture stream. T-0101 stays with the level view. T-0102 is already on main.
+- The same board comment is on each open branch: `tasks/events/2026-10-27T18-26-26-grokbot-3-comment-T-0080.json` on T-0080. Not an approval. Not a merge. Grokbot-1 reviews.

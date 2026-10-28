@@ -746,7 +746,7 @@ Hearing and smell: scent plumes, sound cues, the senses HUD and the halo ring.
 
 ### `SYSTEM_PROPERTIES.senses`
 
-Read by: `src/core/senses.ts`
+Read by: `src/core/senses.ts`, `src/core/sensePictures.ts`
 
 | Figure | Value | Units | What | Source |
 |---|---|---|---|---|

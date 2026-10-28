@@ -94,7 +94,8 @@ test('far quads behind the eye are dropped so they cannot smear across the sky',
 });
 
 test('the near rings are finer, and the boundary geomorphs onto the coarser edge', () => {
-  assert.equal(ringLod(0).segments, 128);
+  assert.equal(ringLod(0).segments, 256);
+  assert.equal(ringLod(1).segments, 128);
   assert.equal(ringLod(4).segments, 64);
   assert.equal(ringLod(5).segments, 32);
   assert.equal(ringLod(1).segments, ringLod(5).segments * 4);

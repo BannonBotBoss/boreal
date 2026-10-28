@@ -19,8 +19,11 @@ import { smoothstep } from '../../proc/math';
 
 export const OPEN_TILES = {
   demZoom: [8, 11] as const,
-  /** 8 covers the horizon (~100 km a tile). 10 bridges the step. 12 is the valley. */
-  photoZoom: [8, 10, 12] as const,
+  /** 8 covers the horizon. 10 and 12 step in. 14 is about a Sentinel pixel (~10 m) under the drone. */
+  photoZoom: [8, 10, 12, 14] as const,
+  /** Public-domain USGS orthoimage. Only the continental United States has coverage. */
+  orthoZoom: 16,
+  orthoUrl: (z: number, x: number, y: number) => `https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/${z}/${y}/${x}`,
   demUrl: (z: number, x: number, y: number) => `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`,
   photoUrl: (z: number, x: number, y: number) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/${z}/${y}/${x}.jpg`,
   /** Slippy tiles are 256 px. */
@@ -30,7 +33,13 @@ export const OPEN_TILES = {
 export const OPEN_TILES_CREDIT = {
   dem: 'AWS Terrain Tiles (Mapzen joerd). Attribution: USGS 3DEP / SRTM / GMTED2010 courtesy U.S. Geological Survey; ETOPO1 NOAA; EU-DEM Copernicus Programme; Canada Open Government Licence; full list https://github.com/tilezen/joerd/blob/master/docs/attribution.md',
   photo: 'Sentinel-2 cloudless 2021 by EOX IT Services GmbH (CC BY 4.0), contains modified Copernicus Sentinel data. https://s2maps.eu',
+  ortho: 'USGS Imagery Only (public domain), The National Map. Used only inside the continental United States. https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer',
 };
+
+/** Continental United States, where the USGS orthoimage has coverage. */
+export function inConus(latDeg: number, lonDeg: number) {
+  return latDeg >= 24 && latDeg <= 50 && lonDeg >= -125 && lonDeg <= -66;
+}
 
 /** Terrarium metres. R, G, B are 0..255. */
 export function terrariumMetres(r: number, g: number, b: number) {
@@ -164,8 +173,12 @@ export function sampleDem(latDeg: number, lonDeg: number): number | null {
   return v ? v[0] : null;
 }
 
-/** Linear RGB, or null when no photograph is cached. */
+/** Linear RGB, or null when no photograph is cached. A USGS ortho tile wins inside the continental US. */
 export function samplePhoto(latDeg: number, lonDeg: number): [number, number, number] | null {
+  if (inConus(latDeg, lonDeg)) {
+    const ortho = sampleGrid(photo, latDeg, lonDeg, [OPEN_TILES.orthoZoom], 3);
+    if (ortho) return [ortho[0], ortho[1], ortho[2]];
+  }
   const v = sampleGrid(photo, latDeg, lonDeg, OPEN_TILES.photoZoom, 3);
   return v ? [v[0], v[1], v[2]] : null;
 }
@@ -257,7 +270,7 @@ function pull(kind: 'dem' | 'photo', z: number, x: number, y: number) {
   inflight.set(id, job);
   (kind === 'photo' ? photoPump : demPump).schedule(id, async () => {
     try {
-      const url = kind === 'dem' ? OPEN_TILES.demUrl(z, x, y) : OPEN_TILES.photoUrl(z, x, y);
+      const url = kind === 'dem' ? OPEN_TILES.demUrl(z, x, y) : (z >= 15 ? OPEN_TILES.orthoUrl(z, x, y) : OPEN_TILES.photoUrl(z, x, y));
       const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
       if (!res.ok) { (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, null); return; }
       const tile = await decode(await res.blob());
@@ -291,7 +304,7 @@ export function tileRing(kind: 'dem' | 'photo', z: number, latDeg = 50, radiusM?
   const radius = radiusM ?? (z <= 8 ? 160_000 : z <= 10 ? 40_000 : kind === 'photo' ? 14_000 : 18_000);
   const need = Math.ceil(radius / Math.max(1, tileMetres(z, latDeg)));
   // Zoom 12 stays a small valley. A 11×11 ring sat in front of the next landing's horizon tiles.
-  const cap = z >= 12 ? 2 : z >= 10 ? 1 : 2;
+  const cap = z >= 14 ? 1 : z >= 12 ? 2 : z >= 10 ? 1 : 2;
   const min = z <= 8 ? 2 : 1;
   return Math.max(min, Math.min(cap, need));
 }
@@ -333,6 +346,9 @@ function warm(kind: 'dem' | 'photo', latDeg: number, lonDeg: number) {
   const zooms = kind === 'dem' ? OPEN_TILES.demZoom : OPEN_TILES.photoZoom;
   // Coarse first so the horizon fills before the valley tiles compete for connections.
   for (const z of zooms) for (const t of tilesAround(latDeg, lonDeg, z, tileRing(kind, z, latDeg))) void pull(kind, t.z, t.x, t.y);
+  if (kind === 'photo' && inConus(latDeg, lonDeg)) {
+    for (const t of tilesAround(latDeg, lonDeg, OPEN_TILES.orthoZoom, 1)) void pull('photo', t.z, t.x, t.y);
+  }
 }
 
 /**

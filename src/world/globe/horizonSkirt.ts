@@ -89,8 +89,9 @@ export function skirtTriangles(rows: number, segments: number) {
  * outer edge of a fine ring can sit on the inner edge of the next ring (geomorph).
  */
 export function ringLod(index: number): { segments: number; radials: number } {
-  if (index < 2) return { segments: 128, radials: 6 };
-  if (index < 5) return { segments: 64, radials: 3 };
+  if (index < 1) return { segments: 256, radials: 4 };
+  if (index < 3) return { segments: 128, radials: 4 };
+  if (index < 5) return { segments: 64, radials: 2 };
   return { segments: 32, radials: 2 };
 }
 

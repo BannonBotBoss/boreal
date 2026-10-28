@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  blendDem, blendPhoto, demSlope, elevationWins, globeMatch, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
+  blendDem, blendPhoto, demSlope, elevationWins, globeMatch, inConus, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
   storePhoto, storeTerrarium, terrariumMetres, tileMetres, tileRing,
 } from '../src/world/globe/openTiles';
 
@@ -31,6 +31,13 @@ test('a stored tile is sampled in metres, and a hole falls back to null', () => 
   assert.ok(h != null && Math.abs(h - 1000) < 1, `height ${h}`);
   assert.equal(sampleDem(0, 0), null);
   assert.equal(samplePhoto(lat, lon), null);
+});
+
+test('USGS ortho is only requested inside the continental United States, and zoom 14 is the near mosaic', () => {
+  assert.equal(inConus(49.77, 65.5), false);
+  assert.equal(inConus(42, 43.5), false);
+  assert.equal(inConus(39.0, -95.0), true);
+  assert.equal(tileRing('photo', 14), 1);
 });
 
 test('land above sea level beats a planet sample that says ocean, and a lake does not', () => {

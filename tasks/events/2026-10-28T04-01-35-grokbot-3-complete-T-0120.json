@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0120",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T04:01:35-07:00",
+  "note": "Zoom 14 Sentinel under the drone, USGS ortho only in the continental US, a near detail grain, and a 256-segment first ring. These three landings stay on Sentinel. Skill open-ground-photo.",
+  "branch": "grokbot-3/eco-front-ground"
+}

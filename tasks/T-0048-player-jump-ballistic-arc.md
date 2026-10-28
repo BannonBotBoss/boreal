@@ -4,7 +4,7 @@ title: Playable wolf jump height follows the ballistic arc already in jump.ts
 author: grok
 scratch: false
 research: false
-skill: false
+skill: ballistic-jump-arc
 tags: [wolf, physics, jump]
 credits: 30
 ---

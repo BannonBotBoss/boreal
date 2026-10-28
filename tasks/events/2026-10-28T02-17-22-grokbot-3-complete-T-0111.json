@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0111",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T02:17:22-07:00",
+  "note": "Photographs paint the rings where a tile is cached. home-glide.png shows a blocky green and blue mosaic with black gaps. Not a drone photo. Skill open-ground-photo. Water Fresnel F0 is 0.02. tests/open-tiles.test.ts passed.",
+  "branch": "grokbot-3/eco-front-imagery"
+}

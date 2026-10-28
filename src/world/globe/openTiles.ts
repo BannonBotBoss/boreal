@@ -112,8 +112,12 @@ function sampleGrid(table: Map<string, Float32Array | null>, latDeg: number, lon
       for (let c = 0; c < channels; c++) out.push(grid[i * channels + c]);
       return out;
     };
-    const a = pix(x0, y0), b = pix(x0 + 1, y0), c = pix(x0, y0 + 1), d = pix(x0 + 1, y0 + 1);
-    if (!a || !b || !c || !d) continue;
+    const a = pix(x0, y0);
+    if (!a) continue;
+    // A missing neighbour must not punch a hole. Clamp to the pixel we do have.
+    const b = pix(x0 + 1, y0) ?? a;
+    const c = pix(x0, y0 + 1) ?? a;
+    const d = pix(x0 + 1, y0 + 1) ?? b;
     const mix = (p: number[], q: number[], t: number) => p.map((v, i) => v + (q[i] - v) * t);
     return mix(mix(a, b, fx), mix(c, d, fx), fy);
   }

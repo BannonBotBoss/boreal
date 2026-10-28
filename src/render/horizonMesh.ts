@@ -10,7 +10,7 @@ import { SITE } from '../core/sitePhase';
 import { smoothstep } from '../proc/math';
 import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
-import { blendDem, openTileGeneration, sampleDem, warmDemTiles } from '../world/globe/openTiles';
+import { blendDem, blendPhoto, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 
 const HAZE = new THREE.Color(0.55, 0.62, 0.68);
 
@@ -27,13 +27,19 @@ function skirtMaterial() {
     shader.uniforms.uSkirtHazeColor = hazeColor;
     shader.uniforms.uSkirtCam = cam;
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float aFade;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nuniform vec2 uSkirtCam;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkirtFade = aFade;\nvSkirtDist = distance(position.xz, uSkirtCam);');
+      .replace('#include <common>', '#include <common>\nattribute float aFade;\nattribute float aWater;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying vec3 vSkirtWorld;\nuniform vec2 uSkirtCam;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkirtFade = aFade;\nvSkirtWater = aWater;\nvSkirtDist = distance(position.xz, uSkirtCam);\nvSkirtWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nvarying float vSkirtFade;\nvarying float vSkirtDist;')
+      .replace('#include <common>', '#include <common>\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying vec3 vSkirtWorld;')
       .replace('#include <dithering_fragment>', `
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);
+        if (vSkirtWater > 0.5) {
+          vec3 V = normalize(cameraPosition - vSkirtWorld);
+          float ndv = clamp(V.y, 0.0, 1.0);
+          float F = 0.02 + 0.98 * pow(1.0 - ndv, 5.0);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, clamp(F, 0.0, 0.85));
+        }
         if (vSkirtFade < 0.999) {
           int bx = int(gl_FragCoord.x) & 3, by = int(gl_FragCoord.y) & 3, bxy = bx ^ by;
           int bayer = ((bxy & 1) << 3) | ((by & 1) << 2) | (((bxy >> 1) & 1) << 1) | ((by >> 1) & 1);
@@ -77,6 +83,7 @@ export function createHorizonSkirt(): HorizonSkirt {
     }
     const hereLL = skirtLatLon(planet, cx, cz, SITE.remote);
     warmDemTiles(hereLL.latDeg, hereLL.lonDeg);
+    warmPhotoTiles(hereLL.latDeg, hereLL.lonDeg);
     const snap = HORIZON_SKIRT.snapM;
     const next = `${originKey}:${Math.round(cx / snap)}:${Math.round(cz / snap)}:${Math.round(Math.log2(Math.max(1, eyeM)) * 8)}:${Math.round(Math.atan2(forwardZ, forwardX) * 4)}:${openTileGeneration()}`;
     made.cam.value.set(cx, cz);
@@ -97,7 +104,13 @@ export function createHorizonSkirt(): HorizonSkirt {
       const ll = skirtLatLon(planet, x, z, here.remote);
       const dem = sampleDem(ll.latDeg, ll.lonDeg);
       if (dem != null) y = blendDem(y, (dem - here.asl) + here.gameY, dist, far.water);
-      return { y, rgb: far.rgb };
+      let rgb = far.rgb;
+      const picture = samplePhoto(ll.latDeg, ll.lonDeg);
+      if (picture && !far.water) {
+        const grain = 0.78 + 0.28 * Math.sin(x * 0.41 + z * 0.17) * Math.sin(x * 0.13 - z * 0.29);
+        rgb = blendPhoto(picture, dist, grain);
+      } else if (picture && far.water) rgb = picture;
+      return { y, rgb, water: far.water };
     }, PLANET.radius, (x, z, ringR) => {
       // The pad under the camera stays whole. Farther out, drop quads that reach behind the eye.
       if (ringR < Math.max(80, eyeM * 0.35)) return true;
@@ -111,6 +124,7 @@ export function createHorizonSkirt(): HorizonSkirt {
     geo.setAttribute('normal', new THREE.BufferAttribute(data.normal, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(data.color, 3));
     geo.setAttribute('aFade', new THREE.BufferAttribute(data.fade, 1));
+    geo.setAttribute('aWater', new THREE.BufferAttribute(data.water, 1));
     geo.setIndex(new THREE.BufferAttribute(data.index, 1));
     geo.computeBoundingSphere();
     made.haze.value.set(Math.max(200, data.outerM * 0.06), Math.max(800, data.outerM * 0.72), 0);

@@ -99,6 +99,8 @@ export interface SkirtMeshData {
   color: Float32Array;
   fade: Float32Array;
   water: Float32Array;
+  /** 1 where a satellite tile coloured the vertex, 0 where the globe texture should show. */
+  photo: Float32Array;
   index: Uint32Array;
   triangles: number;
   rows: number;
@@ -113,7 +115,7 @@ export interface SkirtMeshData {
  */
 export function buildSkirtMesh(
   cx: number, cz: number, eyeM: number,
-  place: (x: number, z: number) => { y: number; rgb: [number, number, number]; water?: boolean },
+  place: (x: number, z: number) => { y: number; rgb: [number, number, number]; water?: boolean; photo?: boolean },
   radius = PLANET.radius,
   /** Drop a quad when this returns false. Used to omit the ground behind the camera: a ring
    *  triangle that straddles the near plane smears across the sky. */
@@ -129,6 +131,7 @@ export function buildSkirtMesh(
   const color = new Float32Array(count * 3);
   const fade = new Float32Array(count);
   const water = new Float32Array(count);
+  const photo = new Float32Array(count);
   const fade0 = outer * 0.9;
   for (let row = 0; row < rows; row++) {
     const rr = radii[row];
@@ -143,6 +146,7 @@ export function buildSkirtMesh(
       position[i * 3 + 2] = z;
       color[i * 3] = p.rgb[0]; color[i * 3 + 1] = p.rgb[1]; color[i * 3 + 2] = p.rgb[2];
       water[i] = p.water ? 1 : 0;
+      photo[i] = p.photo === false ? 0 : 1;
       const dist = Math.hypot(x - cx, z - cz);
       fade[i] = 1 - smoothstep(fade0, outer, dist);
     }
@@ -168,7 +172,7 @@ export function buildSkirtMesh(
     }
   }
   const index = new Uint32Array(used);
-  return { position, normal, color, fade, water, index, triangles: used.length / 3, rows, segments, outerM: outer };
+  return { position, normal, color, fade, water, photo, index, triangles: used.length / 3, rows, segments, outerM: outer };
 }
 
 export interface SkirtOrigin { asl: number; gameY: number; remote: boolean }

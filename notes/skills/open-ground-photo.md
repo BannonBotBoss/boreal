@@ -11,9 +11,9 @@ Use when the skirt should take its colour from an open satellite mosaic, and sti
 
 ## Steps
 
-1. `warmPhotoTiles` at zoom 8 and 12, 3×3. A missing neighbour pixel clamps. It does not drop the whole zoom.
+1. `warmPhotoTiles` at zoom 8, 10 and 12. Zoom 8 is at least a 5×5 (`tileRing` ≥ 2) so a camera on a tile edge still covers the horizon. Zoom 12 reaches about 36 km. A missing neighbour pixel clamps. A missing fine tile falls through to the coarser zoom. It does not drop the sample.
 2. Land uses `blendPhoto`. Water uses the photograph, then Schlick Fresnel toward the haze colour, F0 = 0.02, capped at 0.85 so the water does not become a mirror of the UI.
-3. If no photograph is cached, `surfaceColour` stays.
+3. If no photograph is cached, the vertex colour is `globeMatch` (the globe palette lifted toward the mosaic, so a hole is not black). The skirt shader then replaces that fragment with the far-layer globe texel when the far depth shows the globe actually drew there. The far clear stays the lifted vertex colour.
 
 ## Checks
 
@@ -22,6 +22,10 @@ Use when the skirt should take its colour from an open satellite mosaic, and sti
 
 ## Mistakes to avoid
 
+- Read `ImageBitmap` width and height before `close()`. After close they are 0, the tile is stored empty, and the sample is NaN, which draws as a black polygon.
+- Decode a few tiles at a time. A burst of `createImageBitmap` fails together, and caching that failure as an empty tile keeps the hole.
 - Do not fail a zoom because the bilinear neighbour tile is missing. That punches black holes.
+- Do not treat a zoom-8 ring of one tile as enough. The horizon at drone height is about 70 km and a tile edge leaves the next tile black.
+- Do not reject a globe-texture fallback because its luma is under 0.04. Boreal canopy in that buffer is darker than that, and the hole stays black.
 - Do not multiply the finished colour by a large gain. Coarse triangles become neon facets.
 - The seeded longitude is not geographic Kenora. The photograph is the real Earth at the lat/lon the globe uses.

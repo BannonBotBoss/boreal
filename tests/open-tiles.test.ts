@@ -2,8 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  blendDem, blendPhoto, resetOpenTiles, sampleDem, samplePhoto, srgbByteToLinear,
-  storePhoto, storeTerrarium, terrariumMetres,
+  blendDem, blendPhoto, globeMatch, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
+  storePhoto, storeTerrarium, terrariumMetres, tileMetres, tileRing,
 } from '../src/world/globe/openTiles';
 
 test('terrarium height is (R*256 + G + B/256) - 32768', () => {
@@ -58,4 +58,31 @@ test('a photograph is linear and the close grain is stronger than the far pixel'
   const far = blendPhoto(pic, 2000, 0.7);
   assert.ok(near[1] < pic[1]);
   assert.ok(Math.abs(far[1] - pic[1]) < 1e-6);
+});
+
+test('a missing photo lifts the globe albedo instead of leaving a black vertex', () => {
+  const spruce: [number, number, number] = [0.028, 0.045, 0.022];
+  const lifted = globeMatch(spruce);
+  assert.ok(lifted[1] > spruce[1] * 4);
+  assert.ok(lifted.every(v => v <= 1));
+  assert.equal(tileRing('photo', 8), 2);
+  assert.equal(tileRing('photo', 12), 2);
+});
+
+test('zoom 8 covers a point 40 km out, and a coarse tile fills a missing fine tile', () => {
+  const lat = 49.77, lon = 65.54;
+  const east = lon + 40 / (111.32 * Math.cos(lat * Math.PI / 180));
+  const home = slippy(lat, lon, 8);
+  const far = slippy(lat, east, 8);
+  const ring = tileRing('photo', 8, lat);
+  assert.ok(Math.abs(Math.floor(far.x) - Math.floor(home.x)) <= ring);
+  assert.ok(Math.abs(Math.floor(far.y) - Math.floor(home.y)) <= ring);
+  assert.ok(tileMetres(8, lat) > 50_000);
+  resetOpenTiles();
+  const rgba = new Uint8Array(256 * 256 * 4);
+  for (let i = 0; i < 256 * 256; i++) { rgba[i * 4] = 80; rgba[i * 4 + 1] = 120; rgba[i * 4 + 2] = 40; rgba[i * 4 + 3] = 255; }
+  storePhoto(8, Math.floor(home.x), Math.floor(home.y), { w: 256, h: 256, rgba });
+  const pic = samplePhoto(lat, lon);
+  assert.ok(pic && pic[1] > 0.1, 'the coarse mosaic colours a point the fine zoom has not fetched');
+  assert.ok(photoCoverage(lat, lon) > 0 && photoCoverage(lat, lon) < 1);
 });

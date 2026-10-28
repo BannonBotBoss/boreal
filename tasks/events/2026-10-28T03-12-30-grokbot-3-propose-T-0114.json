@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0114",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T03:12:30-07:00",
+  "note": "The black gaps between the photo patches are empty tiles. Fill them with the mosaic, and where a tile is still missing use the globe picture."
+}

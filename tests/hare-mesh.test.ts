@@ -85,11 +85,13 @@ test('skinned to the rig: every leg-segment bone sits on its rig joint and point
   assert.equal(HARE_BONE.head, 1); assert.equal(hareLegTube(0), 6);
 });
 
-test('no mesh file: the hare is built from code, nothing is fetched or loaded', () => {
+test('no mesh file on the hare: stored models live in the animal manifest, and the hare does not load one', () => {
   const src = ['src/animals/hare.ts', 'src/core/rigBody.ts', 'src/render/rigSkin.ts', 'src/render/furCards.ts', 'src/core/body.ts'].map(f => readFileSync(f, 'utf8')).join('\n');
   assert.doesNotMatch(src, /GLTFLoader|OBJLoader|FBXLoader|ColladaLoader|PLYLoader|STLLoader|\.(glb|gltf|fbx|obj|dae|ply|stl)['"`]|TextureLoader|new URL\(/);
   const walk = (d: string): string[] => !existsSync(d) ? [] : readdirSync(d).flatMap(f => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
-  assert.deepEqual(walk('public').filter(f => /hare|rabbit|lepus/i.test(f) && /\.(glb|gltf|fbx|obj|dae|ply|stl|png|jpg|ktx2)$/i.test(f)), []);
+  const files = walk('public').filter(f => /hare|rabbit|lepus/i.test(f) && /\.(glb|gltf|fbx|obj|dae|ply|stl|png|jpg|ktx2)$/i.test(f));
+  assert.deepEqual(files.filter(f => !f.includes(`${'public'}/models/animals/`)), []);
+  assert.ok(existsSync('public/models/animals/manifest.json'), 'the one animal manifest is allowed');
   const g = globalThis as { fetch?: unknown; XMLHttpRequest?: unknown }, saved = [g.fetch, g.XMLHttpRequest]; let calls = 0;
   g.fetch = () => { calls++; throw new Error('fetch'); }; g.XMLHttpRequest = function () { calls++; throw new Error('xhr'); };
   try { createHareModel(); } finally { g.fetch = saved[0]; g.XMLHttpRequest = saved[1]; }

@@ -6,7 +6,9 @@ import { LIFESPAN } from '../src/core/lifespan';
 import { HARE_NEEDS, WOLF_NEEDS } from '../src/core/needs/species';
 import { mammalSkeleton } from '../src/core/species';
 import { validateSkeleton } from '../src/core/skeleton';
-import { mirrorStoredAnimal, packRequest, readStoredFixture, recordedPast, STORED_ARCHETYPE, STORED_SPECIES } from '../src/core/storedAnimal';
+import { mirrorStoredAnimal, packRequest, recordedPast, STORED_ARCHETYPE, STORED_SPECIES } from '../src/core/storedAnimal';
+import { readStoredFixture } from '../src/core/storedFixture';
+import { dryStart } from '../src/core/stages/surfaceAt';
 
 const origin = { x: 0, y: 0, z: 0 };
 
@@ -63,10 +65,11 @@ test('the store fixture is that wolf, with a founder flag and no weight field', 
     assert.equal('massKg' in wolf, false);
     assert.equal('bodyMass' in wolf, false);
   }
-  assert.equal(wolves[0].x, 0);
-  assert.equal(wolves[1].x, want.spacingM);
+  const [standX, standZ] = dryStart(0, 0);
+  assert.equal(wolves[0].x, standX);
+  assert.equal(wolves[1].x, standX + want.spacingM);
   assert.equal(wolves[0].y, 0);
-  assert.equal(wolves[0].z, 0);
+  assert.equal(wolves[0].z, standZ);
   const hareWant = packRequest('hare', origin);
   assert.equal(hare.length, hareWant.count);
   assert.equal(hare[0].ageYears, hareWant.ageYears);
@@ -74,6 +77,18 @@ test('the store fixture is that wolf, with a founder flag and no weight field', 
   assert.ok(recordedPast(hare[0]));
   assert.equal(hare[0].archetype, 'leporid');
   assert.notEqual(hare[0].handle, wolves[0].handle);
+  assert.equal(hare[0].x, standX + hareWant.spacingM);
+  assert.equal(hare[0].z, standZ);
+  const deer = animals.filter(a => a.species === 'deer');
+  const deerWant = packRequest('deer', origin);
+  assert.equal(deer.length, deerWant.count);
+  assert.equal(deer[0].ageYears, deerWant.ageYears);
+  assert.equal(deer[0].founder, true);
+  assert.ok(recordedPast(deer[0]));
+  assert.equal(deer[0].archetype, 'cervid');
+  assert.equal(deer[0].x, standX);
+  assert.equal(deer[0].z, standZ + hareWant.spacingM);
+  assert.equal(validateSkeleton(mammalSkeleton('White-tailed Deer')).length, 0);
 });
 
 test('AnimalBrain mirrors the stored wolf and is not a second list', () => {

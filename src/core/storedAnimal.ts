@@ -5,28 +5,30 @@
  * This module does not keep a list of entities. It reads one pack the store
  * wrote, and it builds the spawn request from the species rows that already
  * exist: `LIFESPAN`, `WOLF_NEEDS` / `HARE_NEEDS`, and the `MAMMALS` plan.
- * `AnimalBrain` mirrors one record until step 13. It does not decide from it.
+ * The deer has no needs row. Its age is `LIFESPAN.deer` and the count is one,
+ * the animal you enter (T-0107). `AnimalBrain` mirrors one record until step 13.
+ * It does not decide from it. The file read of the fixture lives in
+ * `storedFixture.ts` so this module can load in the page.
  */
-import { readFileSync } from 'node:fs';
 import { AnimalBrain, ANIMAL_DEFAULT_ENERGY, type StoredMirror } from './animalBehavior';
 import { LIFESPAN } from './lifespan';
 import { createNeeds } from './needs/engine';
 import { NEEDS_SPECIES } from './needs/species';
 import { MAMMALS } from './species';
 
-export const STORED_SPECIES = { wolf: 1, hare: 2 } as const;
-export const STORED_ARCHETYPE = { canid: 1, leporid: 2 } as const;
+export const STORED_SPECIES = { wolf: 1, hare: 2, deer: 3 } as const;
+export const STORED_ARCHETYPE = { canid: 1, leporid: 2, cervid: 3 } as const;
 export const ANIMAL_RECORD_BYTES = 76;
 export const PACK_HEADER_BYTES = 12;
 
-const SPECIES_NAME = { wolf: 'Gray Wolf', hare: 'Snowshoe Hare' } as const;
-const CODE_SPECIES: Record<number, 'wolf' | 'hare'> = { 1: 'wolf', 2: 'hare' };
-const CODE_ARCHETYPE: Record<number, 'canid' | 'leporid'> = { 1: 'canid', 2: 'leporid' };
+const SPECIES_NAME = { wolf: 'Gray Wolf', hare: 'Snowshoe Hare', deer: 'White-tailed Deer' } as const;
+const CODE_SPECIES: Record<number, 'wolf' | 'hare' | 'deer'> = { 1: 'wolf', 2: 'hare', 3: 'deer' };
+const CODE_ARCHETYPE: Record<number, 'canid' | 'leporid' | 'cervid'> = { 1: 'canid', 2: 'leporid', 3: 'cervid' };
 
 export interface PackRequest {
-  species: 'wolf' | 'hare';
+  species: 'wolf' | 'hare' | 'deer';
   speciesCode: number;
-  archetype: 'canid' | 'leporid';
+  archetype: 'canid' | 'leporid' | 'cervid';
   archetypeCode: number;
   ageYears: number;
   count: number;
@@ -38,8 +40,20 @@ export interface PackRequest {
   places: { x: number; y: number; z: number }[];
 }
 
-/** Spawn arguments from the species rows. The count is the row's group-size minimum. */
-export function packRequest(species: 'wolf' | 'hare', origin: { x: number; y: number; z: number }): PackRequest {
+/** Spawn arguments from the species rows. The count is the row's group-size minimum.
+ *  The deer has no needs row: one animal, age from `LIFESPAN.deer`, no spacing. */
+export function packRequest(species: 'wolf' | 'hare' | 'deer', origin: { x: number; y: number; z: number }): PackRequest {
+  if (species === 'deer') {
+    const life = LIFESPAN.deer;
+    const needs = createNeeds();
+    const row = MAMMALS.find(r => r[0] === SPECIES_NAME.deer);
+    if (!row || !life) throw new Error('no deer row');
+    return {
+      species, speciesCode: STORED_SPECIES.deer, archetype: 'cervid', archetypeCode: STORED_ARCHETYPE.cervid,
+      ageYears: life.startYears, count: 1, spacingM: 0, water: needs.water, energy: ANIMAL_DEFAULT_ENERGY, rest: needs.rest,
+      founder: true, places: [{ ...origin }],
+    };
+  }
   const sp = NEEDS_SPECIES[species];
   const life = LIFESPAN[species];
   if (!sp || !life) throw new Error(`no species row for ${species}`);
@@ -49,7 +63,7 @@ export function packRequest(species: 'wolf' | 'hare', origin: { x: number; y: nu
   const row = MAMMALS.find(r => r[0] === SPECIES_NAME[species]);
   if (!row) throw new Error(`no mammal row for ${species}`);
   const archetype = row[1];
-  if (archetype !== 'canid' && archetype !== 'leporid') throw new Error(`plan ${archetype} is not a stored archetype`);
+  if (archetype !== 'canid' && archetype !== 'leporid' && archetype !== 'cervid') throw new Error(`plan ${archetype} is not a stored archetype`);
   const places = [];
   for (let i = 0; i < count; i++) places.push({ x: origin.x + i * spacingM, y: origin.y, z: origin.z });
   return {
@@ -140,7 +154,3 @@ export function recordedPast(animal: Pick<StoredMirror, 'ageYears' | 'founder' |
   return animal.ageYears > 0 && (animal.founder || animal.parent !== null);
 }
 
-/** The committed fixture, written by `STORE_DUMP=1 cargo test --lib entities store_fixture`. */
-export function readStoredFixture(path = new URL('../../tests/fixtures/stored-wolf-pack.bin', import.meta.url)) {
-  return readStoredPack(readFileSync(path));
-}

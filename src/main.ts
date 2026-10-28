@@ -68,7 +68,8 @@ import { createInPage } from './world/globe/inpage';
 import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, aggregateWorldSec, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
-import { dryStart } from './core/stages/surfaceAt';
+import { dryStart, isDry } from './core/stages/surfaceAt';
+import { WITNESS_ALTITUDE_SCALE } from './core/enterLiving';
 import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
 import { createChronometer } from './ui/chronometer';
 import { createTimeHud } from './ui/timeHud';
@@ -213,7 +214,13 @@ const renderStore = createSettingsStore(RENDER_SETTINGS);
   hook.borealRate = r => setClockRate(r);
   hook.borealHold = on => { if (on) holdClock('shot'); else releaseClock('shot'); };
 } }
-if (STAGES.on && !new URLSearchParams(location.search).has('at')) [player.x, player.z] = dryStart(player.x, player.z); // the fixed default start can fall in a staged lake: nearest dry land
+const watchLife = new URLSearchParams(location.search).has('watch');
+if (!new URLSearchParams(location.search).has('at')) {
+  // The animal already stands on its store point. dryStart only if that point is open water.
+  const here = view.livingHere(); player.x = here.x; player.z = here.z;
+  if (STAGES.on && !isDry(player.x, player.z)) [player.x, player.z] = dryStart(player.x, player.z);
+}
+if (watchLife) altitude = view.playable.cameraHeight * WITNESS_ALTITUDE_SCALE;
 let pendingRegen = false, playAs = new URLSearchParams(location.search).get('play') ?? localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf'; // ?play=hare: open as that animal for this visit (links, screenshots); the menu's Player panel still saves a choice
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
 const musicStore = createSettingsStore(MUSIC_SETTINGS, 'boreal.music.v1');
@@ -252,13 +259,18 @@ menu.addPanel({ id: 'globe', title: 'Planet view (Shift+G)', build: () => { toGl
 function toGlobe() { if (!STAGES.on) { notice('The planet view needs staged terrain (Graphics).'); return; } if (inpage?.ascend()) return; saveAll(); location.search = globeUrl(location.search, player.x, player.z, yaw + lookYaw); } // up to the globe at this spot and heading; it hands back through ?at=x,z,yaw (world/globe/handoff)
 function applyPending() {
   if (pendingRegen) { view.invalidate(); pendingRegen = false; }
-  if (pendingPlay) { const p = view.setPlayable(playAs); player.abilities = [...p.actions]; altitude = p.cameraHeight; pendingPlay = false; }
+  if (pendingPlay) {
+    const p = view.setPlayable(playAs); player.abilities = [...p.actions];
+    altitude = watchLife ? p.cameraHeight * WITNESS_ALTITUDE_SCALE : p.cameraHeight;
+    if (!new URLSearchParams(location.search).has('at')) { player.x = p.x; player.z = p.z; }
+    pendingPlay = false;
+  }
 }
 applyPending();
 const inpage = createInPage(view, { player: () => ({ x: player.x, z: player.z, yaw: yaw + lookYaw }), place: (x, z, y) => { player.x = x; player.z = z; yaw = y; player.heading = y; lookYaw = 0; }, save: saveAll }); // ?transition=inpage: world/globe/inpage (null = the reload path)
 if (new URLSearchParams(location.search).has('rec')) (window as unknown as Record<string, unknown>).__boreal = { // ?rec: read-only probe for the recorders (tools/hunt-record.mjs)
   hares: () => view.hares.list().map(h => ({ id: h.id, x: h.x, z: h.z, state: h.state, linked: h.sim.linked, knows: h.sim.knowsAt !== undefined })),
-  player: () => ({ x: player.x, z: player.z, yaw, energy: view.playerBrain.energy, water: needs.water, mode: modes.mode }),
+  player: () => { const here = view.livingHere(); return { x: player.x, z: player.z, yaw, energy: view.playerBrain.energy, water: needs.water, mode: modes.mode, handle: here.handle, embodied: here.embodied, species: here.species }; },
   shaderTime: () => shaderClock.time };
 function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
 actionButton.onclick = perform;
@@ -490,7 +502,7 @@ function frame(time: number) { const frameStart = performance.now();
     }
     hub.sample(simTime);
   } else { accumulator = 0; drawFrom = undefined; }
-  view.sync(player.x, player.z, altitude, context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
+  view.sync(player.x, player.z, Math.max(altitude, inpage?.height ?? 0), context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
   view.worldTime = wNow; // one clock. The sky reads this signed second, so rewind moves the sun backward.
   tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only, every scale: ground years are elapsed time, not a rewind of decay. Snow on that ground follows obs through the weather read.
@@ -517,8 +529,8 @@ function frame(time: number) { const frameStart = performance.now();
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   const rush = inpage?.airRush() ?? 0; if (rush > 0) void sfx.start(); // a double-click already unlocked the context; a pad-only drop may still be silent until a key or click
-  sfx.update({ dt: simDt > 0 ? Math.min(simDt, .05) : 0, halted: isPaused() || wDt < 0 || obs.scale !== 'immediate' || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || (!!inpage?.blocksGame() && rush <= 0), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb, rush });
-  if (active) for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
+  sfx.update({ dt: simDt > 0 ? Math.min(simDt, .05) : 0, halted: isPaused() || wDt < 0 || observation().scale !== 'immediate' || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || (!!inpage?.blocksGame() && rush <= 0), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb, rush });
+  if (active || inpage?.flightPhase === 'drone') for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
     if (ev.type === 'pinned') { notice('Pinned. X eats, B releases.'); continue; } // the bite row already played the one squeal
     sfx.hare(ev.type, ev);
     if (ev.type === 'caught') {

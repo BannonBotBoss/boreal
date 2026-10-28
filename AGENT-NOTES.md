@@ -1330,6 +1330,17 @@ Roadmap step 32. Issues #107, #108, #109. #109 wins. Not claimed. grokbot-3 wrot
 - The step 14 density is the picture. From the play camera it is a flat mottled patch on the litter. The camera-facing sprite stays off at wolf height. The embodied animal stays a body.
 - Files: `src/core/worldClock.ts`, `src/core/weather.ts`, `src/main.ts`, `src/render/animalDensity.ts`, `src/render/buildScene.ts`, `src/core/coarse.ts` (comment), `tests/time-scale-follow.test.ts`, `notes/skills/time-scale-follow.md`, `notes/skills/single-clock.md`, `notes/skills/animals-become-density.md`, `notes/design-roadmap.md`. Handoff `tasks/handoffs/T-0106-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `tests/time-scale-follow.test.ts` passed, with the clock, weather, density, and single-clock tests. Frames: `tasks/evidence/T-0106/slow-individuals.png` (1 sec / sec, hares are bodies), `mid-blend.png` (10 sec / sec, bodies still up and a flat patch is on), `fast-density.png` (20 sec / sec, behavioral, the bodies are gone and the patch remains). No standing dome. The wolf you are inside stays a body. Pull request #154.
+
+## 2026-10-28 00:27 PT - grokbot-3: you step into an animal that is already alive (T-0107)
+
+Roadmap step 17. Issues #102 and #103. Conflict 17. Not claimed. grokbot-3 wrote the plan and does not approve it. Asking Grokbot-1. grokbot-2 is down until about midday PT and is not tagged. Step 1 (T-0081) is on main and was not redone. Step 22 is not on main; entry only keeps a memory list.
+
+- `enterLiving` picks the territory holder from the step 12 store. `Playable.create(life)` still uses `createPlayerWolf`, `createDeerRig`, and `createHareModel`, then `mirrorStoredAnimal`. Bear is not offered. The embodied id on the observation record is the store handle (`4294967296` for the wolf in the stills), null before entry.
+- The recorded stand is `dryStart(0, 0)` on seed 1400, (30, 0). The old test origin (0, 0) is open water. Wolf mate +5 m (wolf spacing). Hare +20 m (hare spacing). Deer 20 m north. Ages stay the lifespan rows: wolf 2 of 13 (Mech & Boitani 2003), deer 2 of 20 (Ditchkoff 2011), hare 1 of 5 (Krebs et al. 2001).
+- Did not edit `src/render/animalDensity.ts`, `src/core/coarse.ts`, `src/core/weather.ts`, or `src/core/ground.ts`.
+- Files: `src/core/enterLiving.ts`, `src/core/livingPack.ts`, `src/core/storedFixture.ts`, `src/core/storedAnimal.ts`, `src/render/playables.ts`, `src/render/buildScene.ts`, `src/main.ts`, `src/ui/playerPanel.ts`, `src/core/observation.ts`, `rust/boreal-sim/src/animals.rs`, `rust/boreal-sim/src/entities.rs`, the two fixtures. Skill `notes/skills/enter-living-animal.md`. Handoff `tasks/handoffs/T-0107-grokbot-3.md`. Tests `tests/enter-living.test.ts`.
+- Stills: `tasks/evidence/T-0107/before-entry.png` (wolf small on the snow, embodied null) and `after-entry.png` (same wolf, close, embodied equals the store id). Copies in `/opt/cursor/artifacts/`.
+- `npx tsc --noEmit` exit 0. `npm test` 905 tests, 891 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/155.
 ## 2026-10-27 22:08 PT - grokbot-3: body, feeling, and urge are three blocks (T-0105)
 
 Branch `grokbot-3/three-blocks`, from main `43dac9f`. Roadmap step 19. Issues #102, #103, #105, and #106. Conflict 12: #106 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is down and was not asked. The ask is to Grokbot-1.
@@ -1340,3 +1351,16 @@ Branch `grokbot-3/three-blocks`, from main `43dac9f`. Roadmap step 19. Issues #1
 - Nothing is drawn. The senses panel and the density fold were not edited. No screenshot.
 - `tests/three-blocks.test.ts`: 2 passed. `npx tsc --noEmit` exit 0. `npm test` 893 tests, 879 pass, 0 fail, 14 todo. Not claimed. Not self-approved.
 
+
+## 2026-10-28 00:45 PT - grokbot-3: globe click to the animal ladder (T-0108, issue #156)
+
+Bridge lane (issue #158). Blitz mode (issue #157): this note's author merges the change once the type check and npm test pass. Not a self-review. Grokbot-1 is told on the change. The biological back end (branch prefix grokbot-3/bio-backend-) owns worldwide ranges. Grokbot-1 owns the landscape.
+
+Matthew, 2026-10-28, issue #156, overrides PROJECT-RULES rule 1 for animal model files only. The one manifest is public/models/animals/manifest.json. A species with no file keeps the procedural body. Recorded in PROJECT-RULES.md, the T-0028 note, and tests/hare-mesh.test.ts.
+
+- Why a far click was the wolf's lake: sampleSurface writes game x,z only inside the Kenora square. descend used those zeros. landingSite.ts anchors the existing frame on the clicked direction. heightAt reads the planet sample only while that frame is remote. Home does not move.
+- The fall still ends at 10,000 ft and still uses stepCarriedFly. It stops at 400 m unless the player flies down, then glides at 8 m/s. Clouds are the existing shell and local box.
+- animalLadder.ts and animalPicture.ts fade specks, a low body, and the full model. setBodyShare stays after density.sync. The old disc stays off the ground.
+- Gray Wolf: public/models/animals/wolf.glb (26,033 triangles, 1,024², 1.94 MB) and wolf-low.glb (18,193 triangles; gltf-transform simplify stopped on its error bound). Scaled to the 0.74 m shoulder. Head −X turned to −Z. Still or far is rigid. Close and moving keeps the procedural bones. Deer and hare have no file.
+- Files: src/core/sitePhase.ts, src/core/siteHeight.ts, src/world/globe/landingSite.ts, src/render/animalLadder.ts, src/render/animalModels.ts, src/render/animalPicture.ts, src/world/globe/flight.ts, globeView.ts, inpage.ts, src/core/world.ts, altitudeZones.ts, stages/elevation.ts, stages/rivers.ts, planetWeather.ts, src/render/buildScene.ts, src/animals/hare.ts, src/main.ts, tests/globe-landing.test.ts. Skill notes/skills/globe-to-animals.md.
+- Adoption: three/examples/jsm/loaders/GLTFLoader.js (three 0.180, already depended). Textures resized with @gltf-transform/cli resize and jpeg. No new runtime package.

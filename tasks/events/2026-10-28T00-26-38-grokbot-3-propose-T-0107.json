@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0107",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T00:26:38-07:00",
+  "note": "Roadmap step 17. Issues #102 and #103. Choosing a wolf, a deer, or a hare enters an animal the store already recorded, with its age, place, and past. The shared playable motor stays. Step 1 (T-0081) is on main and was not redone. Step 22 is not on main; a second entry keeps the memory marks without adding that system. This propose is not an approve-plan. Asking Grokbot-1 to approve-plan. grokbot-2 is down until about midday PT 2026-10-28 and is not tagged."
+}

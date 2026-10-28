@@ -18,6 +18,7 @@ import * as THREE from 'three';
 import { INTEREST } from '../core/interest';
 import { DEER_AGENT } from '../core/species';
 import { smoothstep } from '../proc/math';
+import { GLSL_HASH } from '../proc/glsl';
 import type { PictureKind } from '../core/coarse';
 
 export interface DensityMark {
@@ -151,11 +152,12 @@ void main() {
 uniform vec3 uColor;
 uniform float uAlpha;
 varying vec2 vLocal;
+${GLSL_HASH}
 void main() {
   float r = length(vLocal);
   if (r > 1.0 || uAlpha <= 0.02) discard;
   vec2 g = floor(vLocal * 7.0);
-  float n = fract(sin(dot(g, vec2(127.1, 311.7))) * 43758.5453);
+  float n = hash2s(g, 0.0); // shared proc/glsl hash (PROJECT-RULES: one hash library)
   float clump = 0.62 + 0.38 * smoothstep(0.15, 0.85, n);
   float edge = smoothstep(1.0, 0.35, r);
   float a = uAlpha * edge * clump;

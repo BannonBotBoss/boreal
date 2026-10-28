@@ -59,9 +59,9 @@ export function flightPrompt(phase: EntryPhase, pad: boolean): string {
   if (phase === 'orbit') return pad
     ? 'Looking straight down. A drops on the centre. Left stick orbits. Triggers zoom. X flies home. A single press does not drop.'
     : 'Looking straight down. Double-click a point to drop there. Drag orbits. Wheel zooms. H flies home. G drops on the centre. A click does not drop.';
-  if (phase === 'fall') return 'Free fall to 10,000 ft. The view turns as you drop. H or pad X goes back to the planet.';
+  if (phase === 'fall') return 'Free fall through the clouds to 10,000 ft, then a glide above the land. The view turns as you drop. H or pad X goes back to the planet.';
   if (phase === 'drone') return pad
-    ? 'Drone · left stick moves · right stick looks · RT up · LT down · A become the wolf · X planet. Speed carries on.'
-    : 'Drone · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on.';
+    ? 'Gliding above the land · left stick moves · right stick looks · RT up · LT down · A become the wolf · X planet. Same drone as photo mode. Speed carries on.'
+    : 'Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on.';
   return '';
 }

@@ -28,6 +28,7 @@ import type { Flow } from './flow';
 import { elevationGrid, flowGrid, lakeAt, lakeGrid, sampleGrid, toWorld, type Grid } from './elevation';
 import { surfaceDetail } from '../surface';
 import { LEVEL } from '../tuning';
+import { SITE } from '../sitePhase';
 import { buildRiverPlan, queryPlan, type GeoHit, type RiverPlan } from './riverPlanform';
 
 export const RIVER = {
@@ -117,6 +118,7 @@ export function riverPondGrid(seed: number): RiverPonds {
 /** Water surface of a river pond at (x, z), else undefined. Same shoreline rule as lakeAt: a corner node in the body,
  *  and only where the spill level is above the bilinear ground. */
 export function pondAt(seed: number, x: number, z: number) {
+  if (SITE.remote) return undefined;
   const g = elevationGrid(seed), P = riverPondGrid(seed), n = g.n, i0 = Math.floor(x / g.cell), j0 = Math.floor(z / g.cell); let b = -1;
   for (let k = 0; k < 4 && b < 0; k++) { const i = (((i0 + (k & 1)) % n) + n) % n, j = (((j0 + (k >> 1)) % n) + n) % n; b = P.id[j * n + i]; }
   if (b < 0) return undefined; const body = P.bodies[b]; if (toWorld(g, sampleGrid(g, x, z)) >= body.level) return undefined;
@@ -171,6 +173,7 @@ function hitAt(R: Rivers, plan: RiverPlan, x: number, z: number): RiverHit | und
 }
 /** Nearest river centreline influencing (x, z) (game metres), or undefined. The bank zone is d in [half, half + bank]. */
 export function riverAt(seed: number, x: number, z: number): RiverHit | undefined {
+  if (SITE.remote) return undefined;
   const R = riverGrid(seed), plan = planCache.get(seed); if (!plan) return undefined;
   return hitAt(R, plan, x, z);
 }

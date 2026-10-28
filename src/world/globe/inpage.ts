@@ -39,6 +39,7 @@ import { CHUNK_SIZE, heightAt } from '../../core/world';
 import { createHorizonSkirt, type HorizonSkirt } from '../../render/horizonMesh';
 import { createHorizonCover } from '../../render/horizonCover';
 import { photoCoverage } from './openTiles';
+import { DRONE_GRADE, droneExposureScale } from '../../render/droneGrade';
 import { horizonMetres, patchDiscRadius, skirtLatLon, skirtOrigin } from './horizonSkirt';
 import { SITE } from '../../core/sitePhase';
 import { STAGES, lakeAt } from '../../core/stages/elevation';
@@ -195,7 +196,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
   function toGame() { restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
   function restoreScene() {
     for (const [o, v] of hidden) o.visible = v; hidden.clear(); for (const c of unculled) c.frustumCulled = true; unculled.length = 0;
-    if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; setPatchFade(1); setPatchFar(null); bandLook(0); AO_BLEND.value = 1;
+    if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; DRONE_GRADE.exposure = 1; setPatchFade(1); setPatchFar(null); bandLook(0); AO_BLEND.value = 1;
     if (skirt) skirt.mesh.visible = false;
     if (cover) cover.mesh.visible = false;
   }
@@ -400,7 +401,9 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       globe.step(far.target); STATS.globeMs = performance.now() - t0;
       if (savedBg === undefined) savedBg = scene.background; scene.background = DEV && DEBUG.noGlobe ? NO_GLOBE : far.texture;
       if (DEV && shoreU) shoreU.uShore.value.z = DEBUG.noShore ? 0 : +globe.maskReady; // ?inpagedev: noShore = per-vertex shoreline only, noGlobe = magenta instead of the globe (artefact layer checks)
-      dusk = duskOf(scene); const s = bandLook(smoothstep(TRANSITION.bandTop, TRANSITION.fadeFull, h), smoothstep(TRANSITION.fadeFull, INPAGE.tintLow, h)); scene.backgroundIntensity = (INPAGE.gain + (INPAGE.bandGain - INPAGE.gain) * s) / EXPOSURE.base; // the globe's own look at the band top -> matched to the game by fadeFull
+      dusk = duskOf(scene); const s = bandLook(smoothstep(TRANSITION.bandTop, TRANSITION.fadeFull, h), smoothstep(TRANSITION.fadeFull, INPAGE.tintLow, h));
+      DRONE_GRADE.exposure = droneExposureScale(h);
+      scene.backgroundIntensity = (INPAGE.gain + (INPAGE.bandGain - INPAGE.gain) * s) / EXPOSURE.base; // the globe's own look at the band top -> matched to the game by fadeFull
     // the game's linear fog (render/sky: ~200-480 m + camera height, pale) is pushed out above the handover: up here the haze toward
     // the globe (setPatchFar) is the aerial perspective, and the fog washed distant patch tree tops out to the fog colour (r19 risk)
     if (scene.fog instanceof THREE.Fog) { const k = smoothstep(TRANSITION.handover, INPAGE.fogTop, h), m = 1 + INPAGE.fogOut * k * k; scene.fog.near *= m; scene.fog.far *= m; }

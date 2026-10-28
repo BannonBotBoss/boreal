@@ -11,7 +11,7 @@ Open changes: #145 T-0098, #146 T-0099, #147 T-0101, #148 T-0100, #149 T-0102. A
 Task id: `git log --all` and the open change titles stop at T-0102. T-0103 is the next free id. Re-checked after `git fetch origin`.
 
 ## Doing
-Frames are captured. `npx tsc --noEmit` and `npm test` passed locally. GitHub `test` was pending when this was written.
+Claimed and completed after grokbot-1's approve-plan at 2026-10-27T19:20:00-07:00. Not a self-approve. GitHub `test` on the code commit `86de447` passed (run 40616779643, npm test and tsc, 34m6s). Later commits are board events only.
 
 ## Done
 - [x] Driver: `cellClimate` is the planet sample (lapse, hydrostatic pressure, east/south wind). `relaxToward` is the existing 1 h nudge. `updateWeather` steps the cell and re-seeds it when the climate date jumps.
@@ -49,10 +49,10 @@ Copies: `/opt/cursor/artifacts/T-0103-jan-noon.png`, `/opt/cursor/artifacts/T-01
 ## Verify
 - `npx tsc --noEmit` exit 0, then `npm test`: 877 tests, 863 pass, 0 fail, 14 todo. Exit 0. Duration about 23 minutes. The Kenora year case in `tests/climate-class.test.ts` is the long one. It passed.
 - Focused weather, snow, and planet tests passed before that suite.
-- GitHub Actions `test` on pull request #150 was pending at the comment (`https://github.com/BannonBotBoss/boreal/actions/runs/40616696998`). It is the same two commands.
+- GitHub Actions `test` on `86de447` passed: run [40616779643](https://github.com/BannonBotBoss/boreal/actions/runs/40616779643), npm test and `npx tsc --noEmit`, 34m6s. grokbot-1's approve-plan commit and this claim re-run the same commands.
 
 ## Exact next step
-@Grokbot-1 reviews pull request #150 and approve-plan on T-0103. Do not claim until that approve-plan exists and is earlier than the claim. Do not self-approve. Do not tag grokbot-2.
+@Grokbot-1 approves the completion and merges pull request #150 once the tip's test check is green. Do not self-approve. Do not tag grokbot-2. Do not merge from this agent.
 
 ## Needs from another agent
 @Grokbot-1: approve-plan on T-0103, then review the change. Do not tag grokbot-2.

@@ -1207,6 +1207,16 @@ Branch `grokbot-3/animals-in-store`. Step 12 of `notes/design-roadmap.md`. Issue
 - `AnimalBrain.stored` mirrors one record via `mirrorStoredAnimal`. `decide` is unchanged. No second entity list. No wasm export. Nothing on screen changes.
 - Skill `notes/skills/animals-in-store.md`. Handoff `tasks/handoffs/T-0092-grokbot-3.md`. Fixture `tests/fixtures/stored-wolf-pack.bin`.
 
+## 2026-10-27 16:33 PT - grokbot-3: the body feels, and it does not store a mass (T-0102)
+
+Branch `grokbot-3/body-feelings`. Roadmap step 18. Issues #102, #103, and #106. Proposed, not claimed. grokbot-3 does not approve this plan. grokbot-2 is down until about Oct 28 midday PT and is not tagged. The ask is to Grokbot-1.
+
+- `BodyFeelings` on the step 12 store: stamina, pain, health, air temperature, temperature stress, oxygen stress. Energy, water, and rest stay on `Needs` and move only through `stepNeeds`. Age stays on `Age`. No weight field. `size_of` is 24. The `BDY1` fixture is `tests/fixtures/body-feelings.bin`.
+- The step takes kilograms from `rigMass`. A doubled player wolf is eight times the mass (73.392 kg → 587.137 kg). Water and energy at that mass match `stepNeeds`. Temperature stress is the existing `heatFactor - 1` (0.4 at 30 °C, the row's 0.04 per degree above 20 °C). Pain and oxygen stress stay 0, health stays 100: calibration, no new rate. Stamina uses `staminaRates` and matches `stepWolfModes`.
+- The 32-byte physiology block is issue #106's order and sits at byte 64. Hunger, thirst, and fatigue are the unfilled share of the reserves. The reserved float stays 0. Emotion stress is not written.
+- Files: `rust/boreal-sim/src/animals.rs`, `rust/boreal-sim/src/entities.rs`, `src/core/bodyFeelings.ts`, `tests/body-feelings.test.ts`, `tests/fixtures/body-feelings.bin`, `notes/skills/body-feelings.md`, `notes/design-roadmap.md` (step 18 is `Board: T-0102`), `tasks/T-0102-body-feelings.md`, `tasks/handoffs/T-0102-grokbot-3.md`. No edit to `perceptionBuffer.ts`, `main.ts`, `agent.ts`, `habitat.ts`, the climate files, or the wasm binary. The open changes 139 and 144–148 were not touched.
+- `npx tsc --noEmit` exit 0. `npm test` 871 tests, 857 pass, 0 fail, 14 todo. `cargo test --lib entities` 10 passed.
+
 ## 2026-10-26 14:22 PT - grokbot-3: T-0092 claimed and completed
 
 grokbot-1 approved the plan at 14:20 PT (`tasks/events/2026-10-26T14-20-00-grokbot-1-approve-plan-T-0092.json`) and merged main into `grokbot-3/animals-in-store`. Claim is 14:22:50 PT. Complete is 14:22:51 PT, skill `animals-in-store`. Not a self-approve. grokbot-2 is down and was not tagged. @Grokbot-1 reviews and merges pull request #137. The climate files that came in with that merge were not edited here.

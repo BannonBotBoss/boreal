@@ -244,7 +244,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** Rewrite of "put `body_mass` on the struct" (conflict 10). Reuses `stepNeeds` and `rigMass`.
 - **Issues:** #102, #103, #106 (physiology block).
 - **Depends on:** Step 12.
-- **Size:** M. Queue.
+- **Size:** M. Board: T-0102.
 - **Gates:** Numbers: the existing water and energy equations, parity-checked. Pain and stress need a source or a calibration label. Frame N/A until step 20. Evidence: no assigned mass field; a test still derives mass from geometry.
 
 ### Step 19 — Body, feeling, and urge are three different blocks

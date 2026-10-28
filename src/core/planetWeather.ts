@@ -6,14 +6,16 @@
  * case: `weatherAt` turns game metres into latitude and longitude with the existing
  * gnomonic frame (`planet.fromLocal`) and calls the same function.
  *
- * While that grid is bound, it is the authority for temperature, humidity, wind,
- * rain, and snow. `climateRaw` remains only for the frames where wasm did not load.
- * The near Stam column does not also step on those frames.
+ * While that grid is bound, it is the climate the near weather cell relaxes toward.
+ * The cell is the air around the player. `climateRaw` remains only where wasm did not
+ * load, and the near grid does not call it while this climate is bound.
+ * The cell still steps (Kessler, the bucket, degree-day melt). The planet is the target, not a second column.
  *
  * Snow is the split already in the grid: precipitation below 0 °C is snow
  * (`precipitation.rs`). Issue #101's 35 °C and ±15 °C sketches are not used.
  */
-import { HYDRO, SITE, SURFACE, WEATHER, registerPlanetRead, snowDepthCm, type PointWeather, type SurfaceKind } from './weather';
+import { AIR, HYDRO, SITE, SURFACE, WEATHER, registerPlanetRead, setNearCellLive, snowDepthCm, type CellClimate, type PointWeather, type SurfaceKind } from './weather';
+import { gravity } from '../proc/physics';
 import { loadPlanetSim, type PlanetSim } from './planetBudget';
 import { bootGlobe } from '../world/globe/bootOrder';
 import { PLANET, fromLatLon, planetFor, toLatLon, type Vec3 } from '../world/globe/planet';
@@ -121,7 +123,10 @@ let bound: PlanetSim | null = null;
 let clockOwner: 'forest' | 'globe' | null = null;
 
 export function planetWeatherSim() { return bound; }
-export function bindPlanetWeather(sim: PlanetSim | null) { bound = sim; }
+export function bindPlanetWeather(sim: PlanetSim | null) {
+  bound = sim;
+  setNearCellLive(false); // a new grid is not the cell that was seeded from the previous one
+}
 export function notePlanetClockOwner(owner: 'forest' | 'globe') { clockOwner = owner; }
 
 /**
@@ -196,11 +201,28 @@ function hourApart(a: number, b: number) {
 }
 
 function followForestClock(day: number, localHour: number) {
-  if (clockOwner !== 'forest' || !bound || bound.n <= 0) return;
+  if (clockOwner !== 'forest' || !bound || bound.n <= 0) return false;
   // A half-hour of clock drift, or a new date, re-boots once. Scrubbing inside that window does not spin every frame.
-  if (dayApart(bound.day, day) < 0.75 && hourApart(bound.hour, utcHourFromLocal(localHour)) < 0.5) return;
+  if (dayApart(bound.day, day) < 0.75 && hourApart(bound.hour, utcHourFromLocal(localHour)) < 0.5) return false;
   spin(bound, day, localHour);
   WEATHER.steps += 64;
+  return true;
+}
+/** Climate the near cell relaxes toward. Wind `v` is south, because the column's +z is south and the planet's v is north. */
+function targetAt(x: number, z: number, heightM: number): CellClimate | null {
+  if (!WEATHER.on || !bound || bound.n <= 0) return null;
+  const w = pointUnder(x, z);
+  if (!w) return null;
+  const surfaceTC = w.tC;
+  const tC = surfaceTC - AIR.lapse * heightM;
+  // An unbooted pressure plane is 0. Surface pressure is then AIR.p0, the ISO 2533 standard already on the column.
+  const surfaceP = w.pressurePa > 0 ? w.pressurePa : AIR.p0;
+  const p = surfaceP * Math.exp(-gravity() * heightM / (AIR.Rd * Math.max(1, tC + 273.15)));
+  return {
+    tC, surfaceTC, rh: w.rh, u: w.u, v: -w.v, p,
+    cloud: w.cloud, precipMmH: w.precipMmH, sweMm: w.sweMm, soilMm: w.soilMm,
+    source: 'planet',
+  };
 }
 
 /**
@@ -230,6 +252,7 @@ registerPlanetRead({
   at: (x, z) => WEATHER.on ? forestAt(x, z) : null,
   wind: (x, h, z, kind) => { if (!WEATHER.on) return null; const w = pointUnder(x, z); return w ? windFrom(w, h, kind) : null; },
   follow: followForestClock,
+  target: targetAt,
 });
 
 export const HOME_LAT_DEG = PLANET.home.latDeg;

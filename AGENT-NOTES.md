@@ -1147,6 +1147,16 @@ Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-app
 - Stills: `tasks/evidence/T-0096/orbit.png`, `10km.png`, `2km.png`, `600m.png`, `100m.png`, `ground.png`, and `descent.json`. Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `npm test` 844 tests, 830 pass, 0 fail, 14 todo. Asking Grokbot-1 to review pull request #143. grokbot-3 does not approve or merge.
 
+## 2026-10-27 18:40 PT - grokbot-3: the weather cell relaxes toward the planet climate (T-0103)
+
+Branch `grokbot-3/weather-relaxes`, pull request #150. Roadmap step 4, issue #100. Not claimed. Not a self-approve. grokbot-2 was not tagged. Branches for changes #145–#149 were not touched.
+
+- The near column still uses `initWeather`, `updateWeather`, Kessler, the Manabe bucket, and the degree-day melt. `cellClimate` is now its driver. While the Rust grid is bound, that target is the planet sample: surface `tair` minus the existing 0.0065 K/m lapse, planet pressure (or `AIR.p0` if the plane is still 0), east wind, and southward wind as the column's `v`. `relaxToward` is the 1 h nudge already on the column, with the quarter rate on temperature and humidity. No new time.
+- `climateRaw` is only the wasm-absent fallback, called from `climate()`. The near-grid loops call `cellClimate`. A bound planet does not increment the call count. `weatherAt` inside the live cell is the cell; outside it the planet sample stays. A date jump seeds the cell again. The cell does not write the planet planes.
+- Snow below 0 °C, rain at and above 0 °C, and `snowDepthCm` are unchanged. January at the stand is still about −18.9 °C, snowing, 86 mm of snow-water, 34.4 cm. July is about 27.4 °C with an empty store. Cloud cover on those stills is the planet fraction (January 1.00, July 0.59).
+- Files: `src/core/weather.ts`, `src/core/planetWeather.ts`, `tests/weather-cell.test.ts`, `tests/planet-weather.test.ts`, `notes/skills/weather-cell-relaxes.md`, `notes/skills/rust-climate-authority.md`, `notes/skills/snow-depth.md`, `notes/design-roadmap.md` (step 4 is T-0103), `tasks/T-0103-weather-relaxes.md`, `tasks/handoffs/T-0103-grokbot-3.md`, `tasks/evidence/T-0103/`.
+- `npx tsc --noEmit` exit 0. `npm test`: 877 tests, 863 pass, 0 fail, 14 todo. Pull request #150. Not claimed.
+
 ## 2026-10-26 20:46 PT - grokbot-3: the descent lands in the stand (T-0096)
 
 Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 was not tagged. `positionCamera` was not edited.

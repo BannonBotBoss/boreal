@@ -19,8 +19,10 @@ export const ANIMAL_LADDER = {
   /** Specks are the whole picture beyond this distance. */
   speckM: 140,
   speckCap: 2000,
-  lowCap: 8,
-  fullCap: 2,
+  /** Instanced impostor quads. One draw call per species, two triangles each. */
+  lowCap: 16,
+  /** Nearest skinned meshes. About 26k triangles each; six stay under the Quest triangle cap along with the forest. */
+  fullCap: 6,
   /** Screen pixels. A fixed size cannot swell into a dome. */
   speckPx: 3.5,
   /** Horizontal speed left when the fall is arrested, m/s. Between the photo fly's 6 and 25. [game calibration] */

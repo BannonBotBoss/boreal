@@ -295,7 +295,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     paintPopulation(x, z);
   }
   /** Density is counted first, then the body fades, so the ledger never has a frame with neither.
-   *  The sprite itself stays off unless the eye is high and looking down (animalDensity). */
+   *  The flat patch is the play-camera picture. The camera-facing sprite stays off unless the eye is high and looking down. */
   function paintPopulation(x: number, z: number) {
     const obs = observation();
     const marks: (DensityMark & { root: THREE.Object3D; body: number; ledger: number; species: 'deer' | 'hare' })[] = [];
@@ -317,23 +317,35 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const stepped = coarseStep(densityCount, worldDt, 'deer');
     census = { individuals, density: stepped, population: individuals + stepped };
     density.sync(marks, canvas.clientHeight || 720, camera.position); // counted before any body is hidden
-    const bodies = marks.map(m => ({
-      key: `${m.species}:${m.x.toFixed(1)}:${m.z.toFixed(1)}`,
-      species: m.species === 'hare' ? 'Snowshoe Hare' : 'White-tailed Deer',
-      x: m.x, y: m.y, z: m.z, yaw: m.root.rotation.y, moving: false, root: m.root,
-    }));
+    const bodies = marks.map(m => {
+      const brain = (m.root.userData.rig as { brain?: { motion: 'idle' | 'walk' | 'run' | 'back' | 'jump'; phase: number; gaitSpeed: number; speed: number } } | undefined)?.brain;
+      const moving = brain ? Math.abs(brain.speed) > ANIMAL_LADDER.stillMs : false;
+      return {
+        key: `${m.species}:${m.x.toFixed(1)}:${m.z.toFixed(1)}`,
+        species: m.species === 'hare' ? 'Snowshoe Hare' : 'White-tailed Deer',
+        x: m.root.position.x, y: m.root.position.y, z: m.root.position.z,
+        yaw: m.root.rotation.y, moving, motion: brain?.motion, phase: brain?.phase, speed: brain?.gaitSpeed ?? brain?.speed, root: m.root,
+      };
+    });
     for (const h of hares.list()) {
       const row = bodies.find(b => b.root === h.root);
-      if (row) row.moving = Math.abs(h.sim.speed) > ANIMAL_LADDER.stillMs;
+      if (!row) continue;
+      row.moving = Math.abs(h.sim.speed) > ANIMAL_LADDER.stillMs;
+      row.motion = h.sim.speed > 3 ? 'run' : row.moving ? 'walk' : 'idle';
+      row.phase = h.hopPhase;
+      row.speed = Math.abs(h.sim.speed);
+      row.y = h.root.position.y;
     }
     bodies.push({
       key: 'player-wolf', species: 'Gray Wolf',
       x: wolf.root.position.x, y: wolf.root.position.y, z: wolf.root.position.z,
-      yaw: wolf.root.rotation.y, moving: Math.abs(wolf.brain.speed) > ANIMAL_LADDER.stillMs, root: wolf.root,
+      yaw: wolf.root.rotation.y, moving: Math.abs(wolf.brain.speed) > ANIMAL_LADDER.stillMs,
+      motion: wolf.brain.motion, phase: wolf.brain.drawPhase, speed: wolf.brain.gaitSpeed, root: wolf.root,
     });
     for (const row of picture.sync(bodies, camera, canvas.clientHeight || 720)) setBodyShare(row.root, row.proc);
     const report = {
       census, near: INTEREST.near, mid: INTEREST.mid, chunks: chunks.size,
+      scale: obs.scale, lower: obs.lower, higher: obs.higher, blend: obs.blend,
       animals: marks.map(m => ({ species: m.species, x: m.x, z: m.z, body: m.body, ink: m.ink, kind: m.kind })),
     };
     (globalThis as { borealDensity?: unknown }).borealDensity = () => report;

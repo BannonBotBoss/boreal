@@ -1321,6 +1321,16 @@ The count is unchanged. From the ground the T-0070 disc was a giant green or tan
 - `npx tsc --noEmit` exit 0. Full `npm test` was still inside the existing Kenora climate-year case when this note was written. The result is added when that run finishes.
 - New stills, same viewpoints: `tasks/evidence/T-0104/near-individual.png` (a hare, 1 sec / sec, no dome), `far-density.png` (trees, lake, wolf, no green dome), `fast-herd.png` (20 sec / sec, behavioral, grass and the wolf, no tan dome), `leaving-near.png` (no disc). Copies in `/opt/cursor/artifacts/`. Pull request #151.
 
+## 2026-10-28 00:15 PT - grokbot-3: animals, weather, and the ground follow the scale (T-0106)
+
+Roadmap step 32. Issues #107, #108, #109. #109 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 was not asked. Open pull request #152 (T-0105) was not touched. Playables and the player-entry files were not edited.
+
+- The one clock already had the eight names, the hysteresis, and the blend. `aggregateShare` reads that blend. `simWorldSec` is the share still on Immediate. `aggregateWorldSec` is the rest. They sum to one forward second. Rewind is 0 for both. `SCALE_BOUNDS` was not copied.
+- The weather cell catches the date with that aggregate share, using the existing one-hour nudge. Snow-water eases toward one year of the Kenora monthly normals (snow below 0 °C, melt at the existing degree-day factor) unless the planet already has a snow-water. `weatherAt` shows the mix, so the ground snow follows the same signal. Ground years still advance on every forward second and still refuse a backward gap.
+- The step 14 density is the picture. From the play camera it is a flat mottled patch on the litter. The camera-facing sprite stays off at wolf height. The embodied animal stays a body.
+- Files: `src/core/worldClock.ts`, `src/core/weather.ts`, `src/main.ts`, `src/render/animalDensity.ts`, `src/render/buildScene.ts`, `src/core/coarse.ts` (comment), `tests/time-scale-follow.test.ts`, `notes/skills/time-scale-follow.md`, `notes/skills/single-clock.md`, `notes/skills/animals-become-density.md`, `notes/design-roadmap.md`. Handoff `tasks/handoffs/T-0106-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `tests/time-scale-follow.test.ts` passed, with the clock, weather, density, and single-clock tests. Frames: `tasks/evidence/T-0106/slow-individuals.png` (1 sec / sec, hares are bodies), `mid-blend.png` (10 sec / sec, bodies still up and a flat patch is on), `fast-density.png` (20 sec / sec, behavioral, the bodies are gone and the patch remains). No standing dome. The wolf you are inside stays a body. Pull request #154.
+
 ## 2026-10-28 00:27 PT - grokbot-3: you step into an animal that is already alive (T-0107)
 
 Roadmap step 17. Issues #102 and #103. Conflict 17. Not claimed. grokbot-3 wrote the plan and does not approve it. Asking Grokbot-1. grokbot-2 is down until about midday PT and is not tagged. Step 1 (T-0081) is on main and was not redone. Step 22 is not on main; entry only keeps a memory list.
@@ -1360,3 +1370,12 @@ Matthew, 2026-10-28, issue #156, overrides PROJECT-RULES rule 1 for animal model
 Issue #156 step 1. The chunk square was about 80 m because the dither disc stopped at `INPAGE.ring * CHUNK_SIZE`. `src/world/globe/horizonSkirt.ts` builds doubling rings from 28 m out past the geometric horizon on `planet.sampleSurface` and `surfaceColour`. Curvature drop is `R − R² / sqrt(R² + r²)`. Far quads behind the eye are omitted. One mesh, `src/render/horizonMesh.ts`. Triangle cap 6,000. XR caps unchanged.
 
 The stills are not a drone photo. `home-low.png` and `prairie-low.png` show a horizon; the ground up to it is a dark flat colour, and the prairie chunk rectangle is still there. Objective 2 stays open. Skill `notes/skills/horizon-skirt.md`. Handoff `tasks/handoffs/T-0109-grokbot-3.md`.
+
+## 2026-10-28 - grokbot-3: Meshy animals walk (T-0113, issues #156 #160 #162)
+
+Biological front end. Blitz mode (#157). Not a self-review. Landscape stays on grokbot-3/eco-front-* (that lane took T-0109). This note's author merges once tsc and npm test pass.
+
+- 21 Meshy game files in public/models/animals. Manifest keyed by species. Meshopt decoder on the one GLTFLoader. New gray wolf replaces wolf.glb / wolf-low.glb. Grizzly Bear borrows the American Black Bear 0.9 m shoulder. Bald Eagle borrows Hawks, Kites and Eagles at 0.55 m. Common Raven borrows Crows and Jays at 0.6 m.
+- src/render/meshySkin.ts skins the mesh onto quadrupedPose (WOLF_LEGS, DEER_LEGS, BEAR_LEGS, or the plan ratios) or a bird wing flap. Bones fit the mesh box. Weights by proximity. Float positions: the files are normalized ints and clamped outside −1..1.
+- animalPicture shares geometry, impostors in the mid band, loads only species in view. fullCap 6, lowCap 16. No file keeps the procedural body.
+- Skill notes/skills/meshy-animal-skin.md. Handoff tasks/handoffs/T-0113-grokbot-3.md. Tests tests/meshy-animals.test.ts. PROJECT-RULES rule 1 names the exception. hare-mesh still guards the procedural builder. Renumbered from a branch-only T-0110 after the elevation task took T-0110 on main.

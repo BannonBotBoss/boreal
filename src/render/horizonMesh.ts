@@ -14,7 +14,9 @@ import { PATCH_FAR } from './fade';
 import { blendDem, blendPhoto, demSlope, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { canopyTile } from './trees/billboardAtlas';
 
-const HAZE = new THREE.Color(0.55, 0.62, 0.68);
+/** Daylight horizon the ground fades toward. Brighter than the old grey so aerial perspective
+ *  reads as sky, not a soot band. [game calibration] against the Wasson Lake aerial. */
+const HAZE = new THREE.Color(0.78, 0.86, 0.98);
 const CANOPY = new THREE.DataTexture(canopyTile(), 32, 32);
 CANOPY.wrapS = CANOPY.wrapT = THREE.RepeatWrapping;
 CANOPY.magFilter = THREE.LinearFilter;

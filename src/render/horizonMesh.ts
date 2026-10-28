@@ -53,6 +53,9 @@ function skirtMaterial() {
           // black. Take the globe texel whenever the far layer actually drew something.
           if (fd < 0.999 && luma > 0.008) gl_FragColor.rgb = globe;
         }
+        float detail = 0.5 + 0.5 * sin(vSkirtWorld.x * 1.9 + vSkirtWorld.z * 0.7) * sin(vSkirtWorld.x * 0.45 - vSkirtWorld.z * 1.6);
+        float near = 1.0 - smoothstep(40.0, 380.0, vSkirtDist);
+        gl_FragColor.rgb *= mix(1.0, 0.72 + 0.5 * detail, near);
         float canopy = smoothstep(80.0, 280.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(6000.0, 14000.0, vSkirtDist));
         if (canopy > 0.001) {
           vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));

@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0049",
+  "agent": "agy",
+  "at": "2026-10-28T14:03:00-07:00",
+  "branch": "agy/juniper-height",
+  "skill": "flora-shrub-height",
+  "note": "Completed T-0049 on branch agy/juniper-height (skill: notes/skills/flora-shrub-height.md, handoff: tasks/handoffs/T-0049-agy.md). Updated buildPlant (src/render/flora/plant.ts) so needle shrubs use stemLen = H without dividing by Math.cos(mat). Juniper variant 0 detail 0 boundingBox.max.y / height.mean = 0.4938 / 0.5 = 0.9876 (in [0.95, 1.05]); fireweed stays 1.1170 / 1.1 = 1.0155; all 13 FLORA species stay <= height.max; seed-1400 tile (7, 10) junipers draw at 0.4741..0.7407 m <= 0.9 m. Recorded frame refs/flora/t0049-juniper/juniper-close-post.png and calibrated measurements refs/flora/t0049-juniper/measure.json. Tests and npx tsc --noEmit pass."
+}

@@ -1,0 +1,40 @@
+{
+  "port": "5250",
+  "file": "juniper-close-post.png",
+  "settled": {
+    "lower": [
+      96.8,
+      102.4,
+      93.1
+    ]
+  },
+  "stats": {
+    "lower": [
+      97.7,
+      97.7,
+      90.7
+    ]
+  },
+  "flora": {
+    "tiles": 26,
+    "plants": 16718,
+    "visible": 290,
+    "clumps": 4840,
+    "clumpsVisible": 676,
+    "bySpecies": {
+      "twinflower": 19,
+      "bunchberry": 101,
+      "rose": 10,
+      "strawberry": 26,
+      "everlasting": 4,
+      "blueberry": 117,
+      "juniper": 6,
+      "fireweed": 4,
+      "alder": 3
+    },
+    "sliceMaxMs": 6.5,
+    "buildMaxMs": 1.9000000059604645,
+    "geometries": 128
+  },
+  "errors": []
+}

@@ -4,7 +4,7 @@ title: Juniper mesh height stays inside the species row
 author: grok
 scratch: false
 research: true
-skill: false
+skill: flora-shrub-height
 tags: [flora, juniper, height]
 credits: 39
 ---

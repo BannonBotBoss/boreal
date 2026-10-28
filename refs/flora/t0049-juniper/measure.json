@@ -1,0 +1,242 @@
+{
+  "calibration": {
+    "metric": "buildPlant(spec, 0, 0).boundingBox.max.y / spec.height.mean, and drawnTop = max.y * (h / mean)",
+    "knownMatch": {
+      "species": "fireweed",
+      "ratioToMean": 1.0155,
+      "inBand095To105": true
+    },
+    "knownMismatchPreFix": {
+      "species": "juniper (pre-T-0049 with / Math.cos(1.1))",
+      "maxY": 1.0882,
+      "ratioToMean": 2.1765,
+      "inBand095To105": false
+    },
+    "postFixJuniper": {
+      "species": "juniper",
+      "maxY": 0.4938,
+      "ratioToMean": 0.9876,
+      "inBand095To105": true
+    }
+  },
+  "speciesRows": [
+    {
+      "id": "fireweed",
+      "latin": "Chamerion angustifolium",
+      "form": "herb",
+      "mean": 1.1,
+      "min": 0.5,
+      "max": 1.8,
+      "minY": -0.0002,
+      "maxY": 1.117,
+      "ratioToMean": 1.0155,
+      "underMax": true
+    },
+    {
+      "id": "twinflower",
+      "latin": "Linnaea borealis",
+      "form": "herb",
+      "mean": 0.08,
+      "min": 0.05,
+      "max": 0.12,
+      "minY": -0.0001,
+      "maxY": 0.1006,
+      "ratioToMean": 1.2575,
+      "underMax": true
+    },
+    {
+      "id": "bunchberry",
+      "latin": "Cornus canadensis",
+      "form": "herb",
+      "mean": 0.14,
+      "min": 0.08,
+      "max": 0.22,
+      "minY": -0.0001,
+      "maxY": 0.1723,
+      "ratioToMean": 1.2307,
+      "underMax": true
+    },
+    {
+      "id": "rose",
+      "latin": "Rosa acicularis",
+      "form": "shrub",
+      "mean": 0.7,
+      "min": 0.3,
+      "max": 1.2,
+      "minY": -0.0017,
+      "maxY": 0.7133,
+      "ratioToMean": 1.019,
+      "underMax": true
+    },
+    {
+      "id": "woodlily",
+      "latin": "Lilium philadelphicum",
+      "form": "herb",
+      "mean": 0.45,
+      "min": 0.3,
+      "max": 0.65,
+      "minY": -0.0004,
+      "maxY": 0.4964,
+      "ratioToMean": 1.1031,
+      "underMax": true
+    },
+    {
+      "id": "bluebead",
+      "latin": "Clintonia borealis",
+      "form": "herb",
+      "mean": 0.28,
+      "min": 0.15,
+      "max": 0.4,
+      "minY": -0.0065,
+      "maxY": 0.3026,
+      "ratioToMean": 1.0807,
+      "underMax": true
+    },
+    {
+      "id": "strawberry",
+      "latin": "Fragaria virginiana",
+      "form": "herb",
+      "mean": 0.1,
+      "min": 0.05,
+      "max": 0.16,
+      "minY": -0.0008,
+      "maxY": 0.126,
+      "ratioToMean": 1.26,
+      "underMax": true
+    },
+    {
+      "id": "everlasting",
+      "latin": "Anaphalis margaritacea",
+      "form": "herb",
+      "mean": 0.45,
+      "min": 0.2,
+      "max": 0.8,
+      "minY": -0.0002,
+      "maxY": 0.4514,
+      "ratioToMean": 1.0031,
+      "underMax": true
+    },
+    {
+      "id": "blueberry",
+      "latin": "Vaccinium angustifolium",
+      "form": "shrub",
+      "mean": 0.25,
+      "min": 0.1,
+      "max": 0.45,
+      "minY": -0.0008,
+      "maxY": 0.2903,
+      "ratioToMean": 1.1612,
+      "underMax": true
+    },
+    {
+      "id": "labradortea",
+      "latin": "Rhododendron groenlandicum",
+      "form": "shrub",
+      "mean": 0.55,
+      "min": 0.3,
+      "max": 0.9,
+      "minY": -0.0008,
+      "maxY": 0.663,
+      "ratioToMean": 1.2055,
+      "underMax": true
+    },
+    {
+      "id": "alder",
+      "latin": "Alnus incana ssp. rugosa",
+      "form": "shrub",
+      "mean": 2.8,
+      "min": 1.5,
+      "max": 4.5,
+      "minY": -0.0111,
+      "maxY": 3.3586,
+      "ratioToMean": 1.1995,
+      "underMax": true
+    },
+    {
+      "id": "willow",
+      "latin": "Salix bebbiana / S. discolor",
+      "form": "shrub",
+      "mean": 2.2,
+      "min": 1,
+      "max": 4,
+      "minY": -0.0053,
+      "maxY": 2.6152,
+      "ratioToMean": 1.1887,
+      "underMax": true
+    },
+    {
+      "id": "juniper",
+      "latin": "Juniperus communis var. depressa",
+      "form": "shrub",
+      "mean": 0.5,
+      "min": 0.25,
+      "max": 0.9,
+      "minY": -0.0532,
+      "maxY": 0.4938,
+      "ratioToMean": 0.9876,
+      "underMax": true
+    }
+  ],
+  "tile7_10": [
+    {
+      "x": 151.1,
+      "z": 218.63,
+      "y": 5.52,
+      "h": 0.67,
+      "variant": 2,
+      "scale": 1.3416,
+      "preFixDrawnTopM": 1.46,
+      "drawnTopMeanMeshM": 0.6617,
+      "drawnTopVariantM": 0.5661,
+      "underRowMax09": true
+    },
+    {
+      "x": 153.82,
+      "z": 221.58,
+      "y": 5.04,
+      "h": 0.75,
+      "variant": 0,
+      "scale": 1.4968,
+      "preFixDrawnTopM": 1.63,
+      "drawnTopMeanMeshM": 0.7407,
+      "drawnTopVariantM": 0.7391,
+      "underRowMax09": true
+    },
+    {
+      "x": 145.16,
+      "z": 208.49,
+      "y": 5.36,
+      "h": 0.55,
+      "variant": 1,
+      "scale": 1.0918,
+      "preFixDrawnTopM": 1.2,
+      "drawnTopMeanMeshM": 0.5432,
+      "drawnTopVariantM": 0.4986,
+      "underRowMax09": true
+    },
+    {
+      "x": 158.07,
+      "z": 207.91,
+      "y": 5.31,
+      "h": 0.48,
+      "variant": 1,
+      "scale": 0.9592,
+      "preFixDrawnTopM": 1.04,
+      "drawnTopMeanMeshM": 0.4741,
+      "drawnTopVariantM": 0.438,
+      "underRowMax09": true
+    },
+    {
+      "x": 160.68,
+      "z": 209.29,
+      "y": 5.1,
+      "h": 0.66,
+      "variant": 1,
+      "scale": 1.3221,
+      "preFixDrawnTopM": 1.44,
+      "drawnTopMeanMeshM": 0.6518,
+      "drawnTopVariantM": 0.6037,
+      "underRowMax09": true
+    }
+  ]
+}

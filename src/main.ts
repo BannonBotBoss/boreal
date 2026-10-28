@@ -66,7 +66,7 @@ import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help
 import { startView } from './world/globe/startView';
 import { createInPage } from './world/globe/inpage';
 import { ageYears, lifespanWarning } from './core/lifespan';
-import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
+import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, aggregateWorldSec, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
 import { dryStart, isDry } from './core/stages/surfaceAt';
 import { WITNESS_ALTITUDE_SCALE } from './core/enterLiving';
@@ -209,9 +209,10 @@ const renderStore = createSettingsStore(RENDER_SETTINGS);
 { const st = new URLSearchParams(location.search).get('stages'); if (st !== null) renderStore.set('world.stagedTerrain.v2', st !== '0' && st !== 'off'); } // staged terrain is the default; ?stages=0 turns it off (persisted, like the setting), ?stages=1 back on
 { const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number); if (at && at.length >= 2 && at.every(Number.isFinite)) { player.x = at[0]; player.z = at[1]; if (at.length > 2) { yaw = at[2]; player.heading = yaw; } } } // dev/screenshots: ?at=x,z[,yaw]
 { const qPlace = new URLSearchParams(location.search); if (qPlace.has('noprobe') || qPlace.has('bench')) {
-  const hook = window as unknown as { borealPlace?: (x: number, z: number, face?: number, look?: number) => void; borealRate?: (r: number) => void };
+  const hook = window as unknown as { borealPlace?: (x: number, z: number, face?: number, look?: number) => void; borealRate?: (r: number) => void; borealHold?: (on: boolean) => void };
   hook.borealPlace = (x, z, face, look) => { player.x = x; player.z = z; if (face !== undefined) { yaw = face; player.heading = face; } if (look !== undefined) pitch = look; };
   hook.borealRate = r => setClockRate(r);
+  hook.borealHold = on => { if (on) holdClock('shot'); else releaseClock('shot'); };
 } }
 const watchLife = new URLSearchParams(location.search).has('watch');
 if (!new URLSearchParams(location.search).has('at')) {
@@ -411,7 +412,9 @@ function frame(time: number) { const frameStart = performance.now();
   } else if (dialHeld !== 0) { nudgeDial(0); dialHeld = 0; }
   if (photo.active && !photo.simulating) holdClock('photo'); else releaseClock('photo'); // a frozen photo holds the one clock; a live sequence lets it run
   const wNow = worldSec(), wDt = wNow - lastWorld; lastWorld = wNow; // signed: rewind moves the sky backward
-  const simDt = simWorldSec(wDt, observation()); // animals and the weather grid hold when rewinding or above Immediate
+  const obs = observation();
+  const simDt = simWorldSec(wDt, obs); // individuals: forward, and only the share still on Immediate
+  const aggDt = aggregateWorldSec(wDt, obs); // the same signal, for the weather cell once time has left Immediate
   const sdt = Math.min(simDt, .6); // Immediate tops out near 12×; a hitch must not spin the 30 Hz loop for a geological gap
   const hold = photo.active ? resolveInput(bindings, atomValues([], padOwned ? undefined : pad), new Set(), chrono.open).value : input.value; // photo mode: its own keys
   const H = (id: keyof typeof ACTION) => hold[id] ?? 0;
@@ -502,8 +505,8 @@ function frame(time: number) { const frameStart = performance.now();
   view.sync(player.x, player.z, Math.max(altitude, inpage?.height ?? 0), context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
   view.worldTime = wNow; // one clock. The sky reads this signed second, so rewind moves the sun backward.
-  tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only: ground years are elapsed time, not a rewind of decay
-  updateWeather(simDt > 0 ? Math.min(simDt, .25) : 0, gameSecondsPerWorldSecond, dayAt(wNow), hourAt(wNow)); // the date follows the clock; the grid steps only at Immediate, forward
+  tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only, every scale: ground years are elapsed time, not a rewind of decay. Snow on that ground follows obs through the weather read.
+  updateWeather(simDt > 0 ? Math.min(simDt, .25) : 0, gameSecondsPerWorldSecond, dayAt(wNow), hourAt(wNow), aggDt); // fine step on the individual share; the cell catches the date on the aggregate share
   { // T-0035 held focus (core/focusLock): only while Focus (LB / F) is held and an interactable object is within FOCUS.radius
     const kinds = (Object.keys(catalog) as (keyof typeof catalog)[]).filter(k => !(SYSTEM_PROPERTIES.autoFocus.excludeKinds as readonly string[]).includes(k) && (catalog[k].interactions ?? []).some(a => player.abilities.includes(a)));
     focusTarget = pickFocus(active && !autonomous && H('focus') > ACTIVE, focusTarget, { x: player.x, z: player.z, view: yaw + lookYaw }, view.entities().filter(e => !context.records[e.key]?.removed), kinds);

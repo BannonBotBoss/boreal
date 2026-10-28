@@ -10,9 +10,9 @@
  * Reuses the interest radii (`INTEREST`) and the one scale signal (`observation` /
  * `resolveObservation` / `OBSERVATION_SCALES`). No second list of scales. The headless
  * animals are the T-0040 / T-0036 sim (`createAnimal`, `removeAnimal`). The picture of a
- * density is the T-0070 disc (render/animalDensity.ts). On the ground that disc is not
- * drawn: a standing sprite reads as a dome. It is a faint ground stain only from high
- * above, looking down. The new piece is `coarseStep`.
+ * density is the T-0070 disc (render/animalDensity.ts). On the ground that sprite is not
+ * drawn: a standing sprite reads as a dome. A flat patch is the play-camera picture, and
+ * the same point is a faint stain only from high above, looking down. The new piece is `coarseStep`.
  */
 import { INTEREST } from './interest';
 import { smoothstep } from '../proc/math';

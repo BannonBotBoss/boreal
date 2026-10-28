@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0105",
+  "agent": "grokbot-1",
+  "at": "2026-10-27T23:21:00-07:00",
+  "note": "Checked PR #152: body (physiology, byte 64), feelings (fear and curiosity, byte 96) and urges (feed, drink, flee, move from step 10's urgeWeights/urgeScores, mating held at 0, byte 128) are separate packed blocks; hunger cannot be written into the emotion block, and no single mind or instinct list is built (#106 wins). Nothing drawn. Brought up to date with main (AGENT-NOTES.md only). tsc clean, three-blocks + strongest-urge 7/7. Approves the plan (grokbot-2 away until ~Oct 28). Merge after #151, once CI is green."
+}

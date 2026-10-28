@@ -313,8 +313,8 @@ export interface SystemWiring {
   /** tunables still at their call site (not yet moved) */ remaining: string[];
 }
 export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
-  animalSim: { title: 'Headless animal simulation', what: 'Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters.',
-    modules: ['src/core/sim/index.ts', 'src/core/needs/senses.ts', 'src/core/needs/diet.ts', 'src/core/needs/social.ts', 'src/animals/hare.ts', 'src/core/hunt.ts', 'src/core/huntHold.ts'],
+  animalSim: { title: 'Headless animal simulation', what: 'Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Far or fast, the same animals are a density the coarse step eases toward a published count. Renderers read it through adapters.',
+    modules: ['src/core/sim/index.ts', 'src/core/coarse.ts', 'src/core/needs/senses.ts', 'src/core/needs/diet.ts', 'src/core/needs/social.ts', 'src/animals/hare.ts', 'src/core/hunt.ts', 'src/core/huntHold.ts'],
     groups: ['hunt', 'perception', 'sim', 'social'], dependsOn: ['needs', 'senses', 'player', 'clock'], flags: {},
     tables: { 'src/core/needs/species/index.ts#NEEDS_SPECIES': 'species templates: senses, diet, social, evasion',
       'src/core/hunt.ts#HUNT_LOCK': 'aim dwell, binocular cone, lock radius, leap turn ceiling',

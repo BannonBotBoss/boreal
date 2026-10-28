@@ -8,7 +8,7 @@ Use when a cell must carry food, water, shelter, vegetation, competition, and pr
 3. Food and vegetation are the browse crop already in `src/core/fields.ts` (`browseGrams` / `BROWSE_CELL_MAX_G`, regrowth T-0015). One crop, two names. A bite lowers both. Do not add `Vegetation.update`.
 4. Water is 1 on open water (`siteAt().water`). Otherwise it is `weatherAt().soil`, the Manabe bucket fill already returned as a share of field capacity. Do not add a moisture-debt accumulator here. That is step 6.
 5. Shelter is `standAt().canopy`, the closure already in `src/core/stand.ts`. Do not rescale it.
-6. Competition is herbivores on the cell divided by the hare peak already cited on `HARE_NEEDS` (10 per hectare, Keith 1990, the high end of 5–10). Predator pressure is wolves on the cell divided by 40 per 1,000 km² (Fuller, Mech & Cochrane 2003: mainland midwinter densities rarely exceeded that). Clamp each share to 0..1. Counts default to 0 until a density field exists (step 14).
+6. Competition is herbivores on the cell divided by the hare peak already cited on `HARE_NEEDS` (10 per hectare, Keith 1990, the high end of 5–10). Predator pressure is wolves on the cell divided by 40 per 1,000 km² (Fuller, Mech & Cochrane 2003: mainland midwinter densities rarely exceeded that). Clamp each share to 0..1. Counts default to 0. Step 14's field is `src/core/coarse.ts`; pass its deer and wolf counts when the caller has folded animals.
 7. `habitatQuality` adds those five shares with weight 1. It takes no stress, snow, or climate-class argument. Animals do not read a class name.
 8. The picture does not change. The frame gate is N/A. The check is two fixture cells, plus a grazed browse cell against the same cell ungrazed.
 

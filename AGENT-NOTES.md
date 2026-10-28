@@ -1249,3 +1249,14 @@ Branch `grokbot-3/habitat-score`, from main `3c31e29`. Roadmap step 9. Issues #1
 - `tests/habitat-score.test.ts`: 4 passed. At (3, 4) with no grid bound, food 1, water 0.6, shelter 0.920, quality 2.520. A half bite drops food to 0.5 and the score by 0.5. Skill `notes/skills/habitat-score.md`. Handoff `tasks/handoffs/T-0098-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `npm test` 843 tests, 829 pass, 0 fail, 14 todo. Nothing on screen, so no frame. Pull request https://github.com/BannonBotBoss/boreal/pull/145. The GitHub `test` job did not start (run 40427500237): account payments have failed or the spending limit needs to be increased. Not a failing test. Not claimed. Not self-approved.
 
+## 2026-10-27 20:27 PT - grokbot-3: far away, or time sped up, the individual becomes a number (T-0104)
+
+Roadmap step 14. Issues #101, #107, #109. Conflict 2: #109 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is not asked. Open changes #146, #147, #148, and #150 were not touched.
+
+- New `src/core/coarse.ts`. Near and Immediate, an animal is a body. Farther, or above Immediate, the same animal is a herd, a density, or a range. The two shares sum to 1. The coarse step is Verhulst's closed form. Deer ease toward 1/km² (Ranta & Lankester 2017, Alces 53, Kenora WMU 6, 1978). Wolves ease toward 40/1,000 km², the figure already on the habitat cell. The year rate 0.3 is game calibration. No second list of scales.
+- `src/render/animalDensity.ts` draws the T-0070 round disc. `buildScene` paints that disc before it fades the body. Fully folded deer are not stepped. Fully folded hares leave the headless tick and come back as the same hare. `main.ts` passes the frame's forward world seconds.
+- `tests/coarse-population.test.ts`. Skill `notes/skills/animals-become-density.md`. Handoff `tasks/handoffs/T-0104-grokbot-3.md`.
+- The player you are inside stays a body. The other animals transform.
+- `npx tsc --noEmit` exit 0. `npm test` 886 tests, 872 pass, 0 fail, 14 todo.
+- Frames: `tasks/evidence/T-0104/near-individual.png` (a hare, real time), `leaving-near.png` (tan discs, bodies still counted), `far-density.png` (green density discs), `fast-herd.png` (20 sec / sec, behavioral, herd discs). The headless GPU's ladder had near 40 m and mid 60 m. Those are the live interest radii.
+

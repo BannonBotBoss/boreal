@@ -71,8 +71,9 @@ export function predatorShare(wolves: number) {
 }
 
 /**
- * The cell under a point. `counts` default to 0: the forest has no density field yet
- * (step 14). A caller that knows who is standing here passes the counts.
+ * The cell under a point. `counts` default to 0 when the caller has not read the
+ * coarse field (`src/core/coarse.ts`, step 14). Pass that field's deer and wolf counts
+ * when you have them.
  * `now` is the world second the browse crop is read at (the forage field's clock).
  */
 export function habitatAt(x: number, z: number, counts: HabitatCounts = { herbivores: 0, wolves: 0 }, now?: number): HabitatCell {

@@ -19,7 +19,9 @@ import { pushProgress, rockDiameter } from '../core/rocks';
 import { createDeerRig } from './animalRig';
 import { ANIMAL_DEFAULT_ENERGY, withinEarshot, type SenseItem } from '../core/animalBehavior';
 import { forageEdible, patchCover } from '../core/fields';
-import { worldSec } from '../core/worldClock';
+import { observation, worldSec } from '../core/worldClock';
+import { animalShares, markFor, coarseStep, type Account } from '../core/coarse';
+import { createAnimalDensity, setBodyShare, type DensityMark } from './animalDensity';
 import { catalog } from '../core/catalog';
 import { seatRock } from './rocks';
 import { createSky } from './sky';
@@ -104,6 +106,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     wolf.brain.heading = old.brain.heading; wolf.brain.energy = old.brain.energy; wolf.root.userData.inspect = PLAYER_TAG; const g = looks.get(`player:${id}`); if (g) applyGenome(wolf.root, g); scene.add(wolf.root); return current;
   }
   const hares = createHares(scene); // src/animals/hare.ts
+  const density = createAnimalDensity(scene);
+  let worldDt = 0;
+  let census: Account = { individuals: 0, density: 0, population: 0 };
   const grass = createGrass(scene); // render/grass: procedural blades around the camera
   const flora = createFlora(scene); // render/flora: flowers + shrubs (shared ecology with the grass)
   const glow = createTargetGlow(renderer, camera); // render/targetGlow (T-0035): outline glow on the interaction target (replaces the ground ring)
@@ -225,6 +230,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const {rig,entity:e}=animal;
       rig.root.position.set(e.x,heightAt(e.x,e.z),e.z);rig.root.rotation.y=rig.brain.heading;rig.root.updateMatrixWorld(true);
       rig.sensor.getWorldPosition(headPoint);
+      const folded = animalShares(Math.hypot(e.x - x, e.z - z), observation()).density >= 1;
+      if (folded) continue; // the coarse field holds this deer; the disc is painted below, before the body is hidden
       if(!withinEarshot({x,y:heightAt(x,z)+.45*WOLF_SCALE,z},headPoint))continue;
       rig.root.visible=Math.hypot(e.x-x,e.z-z)<RENDER.animalDistance;
       if(frozen){rig.animate(0);continue;} // photo mode: pose from the (possibly rewound) brain state, no simulation
@@ -265,6 +272,36 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       audibleAnimals.push({key,energy:rig.brain.energy,motion:rig.brain.motion,problem:rig.brain.problem,x:e.x,z:e.z,phase:rig.brain.phase,chew,snort});
     }
     snortPrev = snortNext;
+    paintPopulation(x, z);
+  }
+  /** Density disc first, then the body fade, so leaving near never has a frame with neither. */
+  function paintPopulation(x: number, z: number) {
+    const obs = observation();
+    const marks: (DensityMark & { root: THREE.Object3D; body: number; ledger: number; species: 'deer' | 'hare' })[] = [];
+    let individuals = 0, densityCount = 0;
+    for (const animal of animals.values()) {
+      const e = animal.entity;
+      const d = Math.hypot(e.x - x, e.z - z);
+      const m = markFor(d, obs);
+      individuals += m.body; densityCount += m.density;
+      marks.push({ x: e.x, y: heightAt(e.x, e.z) + 1.2, z: e.z, ink: m.ink, kind: m.kind, root: animal.rig.root, body: m.body, ledger: m.density, species: 'deer' });
+    }
+    for (const h of hares.list()) {
+      if (h.sim.heldBy !== undefined || h.embodied) { individuals += 1; continue; }
+      const d = Math.hypot(h.x - x, h.z - z);
+      const m = markFor(d, obs);
+      individuals += m.body; densityCount += m.density;
+      marks.push({ x: h.x, y: heightAt(h.x, h.z) + 0.4, z: h.z, ink: m.ink, kind: m.kind, root: h.root, body: m.body, ledger: m.density, species: 'hare' });
+    }
+    const stepped = coarseStep(densityCount, worldDt, 'deer');
+    census = { individuals, density: stepped, population: individuals + stepped };
+    density.sync(marks, canvas.clientHeight || 720); // the disc exists before any body is hidden
+    for (const m of marks) setBodyShare(m.root, m.body);
+    const report = {
+      census, near: INTEREST.near, mid: INTEREST.mid, chunks: chunks.size,
+      animals: marks.map(m => ({ species: m.species, x: m.x, z: m.z, body: m.body, ink: m.ink, kind: m.kind })),
+    };
+    (globalThis as { borealDensity?: unknown }).borealDensity = () => report;
   }
   function draw(x: number, z: number, altitude: number, yaw: number, time: number, target?: Entity, pitch?: number,
     moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity, photo?: PhotoView) {
@@ -469,5 +506,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     recordOf: (key: string) => activeContext?.records[key],
     visitorOf: (key: string) => visitorReadout(key),
     stats: () => ({ chunks: chunks.size, entities: [...chunks.values()].reduce((n, c) => n + c.entities.length, 0), triangles: renderer.info.render.triangles }),
+    /** Forward world seconds this frame. The coarse step uses it. Rewind passes 0. */
+    noteWorldDt: (dt: number) => { worldDt = dt > 0 ? dt : 0; },
+    population: () => census,
   };
 }

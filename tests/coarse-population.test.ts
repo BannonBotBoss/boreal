@@ -12,6 +12,7 @@ import { resolveObservation, OBSERVATION_SCALES } from '../src/core/worldClock';
 import {
   DEER_PER_KM2, wolfPerKm2, animalShares, accountShares, markFor, coarseStep, demoteFar, promoteField, pictureKind,
 } from '../src/core/coarse';
+import { DENSITY_TINT, densityTintGate } from '../src/render/animalDensity';
 
 const immediate = () => resolveObservation('immediate', 1);
 
@@ -106,4 +107,18 @@ test('the scene paints the density disc before it fades the body', () => {
   const density = readFileSync(new URL('../src/render/animalDensity.ts', import.meta.url), 'utf8');
   assert.match(density, /gl_PointCoord/);
   assert.match(density, /T-0070/);
+  assert.match(density, /aSize <= 0\.0/);
+  assert.match(scene, /DENSITY_MARK_LIFT_M/);
+  assert.match(scene, /density\.sync\(marks, canvas\.clientHeight \|\| 720, camera\.position\)/);
+});
+
+test('a ground camera draws no density shape, and a high downward look may tint the ground', () => {
+  assert.equal(densityTintGate(1.05, 0.95), 0, 'wolf height, even looking down');
+  assert.equal(densityTintGate(40, 0.2), 0, 'just outside near, looking across');
+  assert.equal(densityTintGate(DENSITY_TINT.riseFullM, 0.1), 0, 'high, but across: a disc would stand up');
+  assert.ok(densityTintGate(DENSITY_TINT.riseStartM, 0.95) === 0);
+  const stain = densityTintGate(DENSITY_TINT.riseFullM, 0.95);
+  assert.ok(stain > 0.9, `full stain ${stain}`);
+  assert.ok(DENSITY_TINT.peakAlpha <= 0.2, 'the stain stays faint');
+  assert.ok(DENSITY_TINT.maxPx <= 96, 'the sprite cannot fill the frame');
 });

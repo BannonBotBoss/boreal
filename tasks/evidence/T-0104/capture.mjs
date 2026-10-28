@@ -113,11 +113,11 @@ if (!target) {
 } else {
   report.push(await shoot('near-individual', 'Close, real time. The animal is a body.', face(home, target, 8)));
   const leave = Math.min(nearR + 6, (nearR + midR) / 2);
-  report.push(await shoot('leaving-near', `Just outside the live near radius (${nearR} m). Body and disc together.`, face(home, target, leave)));
+  report.push(await shoot('leaving-near', `Just outside the live near radius (${nearR} m). The body share is still up. No standing disc.`, face(home, target, leave)));
   const far = Math.min(midR - 3, nearR + (midR - nearR) * 0.85);
-  report.push(await shoot('far-density', `Inside the mid radius (${midR} m), density share leading. The disc has replaced the body.`, face(home, target, far)));
+  report.push(await shoot('far-density', `Inside the mid radius (${midR} m), density share leading. The body is nearly gone. Nothing stands on the grass.`, face(home, target, far)));
   await evalJson(send, `window.borealRate(20)`);
-  report.push(await shoot('fast-herd', 'Back close, clock at 20× (behavioral). The same animal is a herd disc.', face(home, target, 8)));
+  report.push(await shoot('fast-herd', 'Back close, clock at 20× (behavioral). The animals are a herd in the count. The ground shows no disc.', face(home, target, 8)));
 }
 writeFileSync(`${outDir}frames.json`, JSON.stringify(report, null, 2));
 chrome.kill('SIGKILL');

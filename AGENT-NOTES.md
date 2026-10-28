@@ -1260,3 +1260,11 @@ Roadmap step 14. Issues #101, #107, #109. Conflict 2: #109 wins. Not claimed. gr
 - `npx tsc --noEmit` exit 0. `npm test` 886 tests, 872 pass, 0 fail, 14 todo.
 - Frames: `tasks/evidence/T-0104/near-individual.png` (a hare, real time), `leaving-near.png` (tan discs, bodies still counted), `far-density.png` (green density discs), `fast-herd.png` (20 sec / sec, behavioral, herd discs). The headless GPU's ladder had near 40 m and mid 60 m. Those are the live interest radii.
 
+## 2026-10-27 21:37 PT - grokbot-3: the density mark is not a dome (T-0104)
+
+The count is unchanged. From the ground the T-0070 disc was a giant green or tan hemisphere, because a camera-facing sprite the size of the field was cut off by the grass. `densityTintGate` is 0 at wolf height, so that sprite is not drawn. The same point is a faint ground stain only from the 1 km station upward, looking down (full at 2000 m, `HANDOFF.alt`). Peak opacity 0.12 and the 64 px cap are game calibration. Not claimed. grokbot-3 does not approve it.
+
+- Files: `src/render/animalDensity.ts`, `src/render/buildScene.ts` (the mark sits `DENSITY_MARK_LIFT_M` above the ground and the sync gets the camera), a comment in `src/core/coarse.ts`. Skill `notes/skills/animals-become-density.md`. Handoff `tasks/handoffs/T-0104-grokbot-3.md`. Test `tests/coarse-population.test.ts` (5 pass).
+- `npx tsc --noEmit` exit 0. Full `npm test` was still inside the existing Kenora climate-year case when this note was written. The result is added when that run finishes.
+- New stills, same viewpoints: `tasks/evidence/T-0104/near-individual.png` (a hare, 1 sec / sec, no dome), `far-density.png` (trees, lake, wolf, no green dome), `fast-herd.png` (20 sec / sec, behavioral, grass and the wolf, no tan dome), `leaving-near.png` (no disc). Copies in `/opt/cursor/artifacts/`. Pull request #151.
+

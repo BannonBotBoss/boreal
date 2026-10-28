@@ -21,7 +21,7 @@ import { ANIMAL_DEFAULT_ENERGY, withinEarshot, type SenseItem } from '../core/an
 import { forageEdible, patchCover } from '../core/fields';
 import { observation, worldSec } from '../core/worldClock';
 import { animalShares, markFor, coarseStep, type Account } from '../core/coarse';
-import { createAnimalDensity, setBodyShare, type DensityMark } from './animalDensity';
+import { createAnimalDensity, setBodyShare, DENSITY_MARK_LIFT_M, type DensityMark } from './animalDensity';
 import { catalog } from '../core/catalog';
 import { seatRock } from './rocks';
 import { createSky } from './sky';
@@ -274,7 +274,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     snortPrev = snortNext;
     paintPopulation(x, z);
   }
-  /** Density disc first, then the body fade, so leaving near never has a frame with neither. */
+  /** Density is counted first, then the body fades, so the ledger never has a frame with neither.
+   *  The sprite itself stays off unless the eye is high and looking down (animalDensity). */
   function paintPopulation(x: number, z: number) {
     const obs = observation();
     const marks: (DensityMark & { root: THREE.Object3D; body: number; ledger: number; species: 'deer' | 'hare' })[] = [];
@@ -284,18 +285,18 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const d = Math.hypot(e.x - x, e.z - z);
       const m = markFor(d, obs);
       individuals += m.body; densityCount += m.density;
-      marks.push({ x: e.x, y: heightAt(e.x, e.z) + 1.2, z: e.z, ink: m.ink, kind: m.kind, root: animal.rig.root, body: m.body, ledger: m.density, species: 'deer' });
+      marks.push({ x: e.x, y: heightAt(e.x, e.z) + DENSITY_MARK_LIFT_M, z: e.z, ink: m.ink, kind: m.kind, root: animal.rig.root, body: m.body, ledger: m.density, species: 'deer' });
     }
     for (const h of hares.list()) {
       if (h.sim.heldBy !== undefined || h.embodied) { individuals += 1; continue; }
       const d = Math.hypot(h.x - x, h.z - z);
       const m = markFor(d, obs);
       individuals += m.body; densityCount += m.density;
-      marks.push({ x: h.x, y: heightAt(h.x, h.z) + 0.4, z: h.z, ink: m.ink, kind: m.kind, root: h.root, body: m.body, ledger: m.density, species: 'hare' });
+      marks.push({ x: h.x, y: heightAt(h.x, h.z) + DENSITY_MARK_LIFT_M, z: h.z, ink: m.ink, kind: m.kind, root: h.root, body: m.body, ledger: m.density, species: 'hare' });
     }
     const stepped = coarseStep(densityCount, worldDt, 'deer');
     census = { individuals, density: stepped, population: individuals + stepped };
-    density.sync(marks, canvas.clientHeight || 720); // the disc exists before any body is hidden
+    density.sync(marks, canvas.clientHeight || 720, camera.position); // counted before any body is hidden
     for (const m of marks) setBodyShare(m.root, m.body);
     const report = {
       census, near: INTEREST.near, mid: INTEREST.mid, chunks: chunks.size,

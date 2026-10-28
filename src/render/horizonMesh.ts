@@ -12,8 +12,13 @@ import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { PATCH_FAR } from './fade';
 import { blendDem, blendPhoto, demSlope, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { canopyTile } from './trees/billboardAtlas';
 
 const HAZE = new THREE.Color(0.55, 0.62, 0.68);
+const CANOPY = new THREE.DataTexture(canopyTile(), 32, 32);
+CANOPY.wrapS = CANOPY.wrapT = THREE.RepeatWrapping;
+CANOPY.magFilter = THREE.LinearFilter;
+CANOPY.needsUpdate = true;
 
 function skirtMaterial() {
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.94, metalness: 0 });
@@ -27,13 +32,14 @@ function skirtMaterial() {
     shader.uniforms.uSkirtHaze = haze;
     shader.uniforms.uSkirtHazeColor = hazeColor;
     shader.uniforms.uSkirtCam = cam;
+    shader.uniforms.uCanopy = { value: CANOPY };
     Object.assign(shader.uniforms, PATCH_FAR);
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nattribute float aFade;\nattribute float aWater;\nattribute float aPhoto;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;\nuniform vec2 uSkirtCam;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkirtFade = aFade;\nvSkirtWater = aWater;\nvSkirtPhoto = aPhoto;\nvSkirtDist = distance(position.xz, uSkirtCam);\nvSkirtWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvSkirtClip = gl_Position;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
+      .replace('#include <common>', '#include <common>\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform sampler2D uCanopy;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
       .replace('#include <dithering_fragment>', `
         if (vSkirtPhoto < 0.5 && uFarMix.w > 0.5) {
           vec2 fuv = clamp(vSkirtClip.xy / vSkirtClip.w * 0.5 + 0.5, 0.0, 1.0);
@@ -44,6 +50,11 @@ function skirtMaterial() {
           // is only a few percent (MODIS boreal albedo), so the old 0.04 gate left the gap
           // black. Take the globe texel whenever the far layer actually drew something.
           if (fd < 0.999 && luma > 0.008) gl_FragColor.rgb = globe;
+        }
+        float canopy = smoothstep(420.0, 900.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(8000.0, 16000.0, vSkirtDist));
+        if (canopy > 0.001) {
+          vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.01));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.55);
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);
@@ -60,7 +71,7 @@ function skirtMaterial() {
         }
         #include <dithering_fragment>`);
   };
-  material.customProgramCacheKey = () => 'horizon-skirt-globe-fallback';
+  material.customProgramCacheKey = () => 'horizon-skirt-canopy';
   return { material, haze, hazeColor, cam };
 }
 

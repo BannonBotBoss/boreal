@@ -207,6 +207,11 @@ const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw:
 const renderStore = createSettingsStore(RENDER_SETTINGS);
 { const st = new URLSearchParams(location.search).get('stages'); if (st !== null) renderStore.set('world.stagedTerrain.v2', st !== '0' && st !== 'off'); } // staged terrain is the default; ?stages=0 turns it off (persisted, like the setting), ?stages=1 back on
 { const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number); if (at && at.length >= 2 && at.every(Number.isFinite)) { player.x = at[0]; player.z = at[1]; if (at.length > 2) { yaw = at[2]; player.heading = yaw; } } } // dev/screenshots: ?at=x,z[,yaw]
+{ const qPlace = new URLSearchParams(location.search); if (qPlace.has('noprobe') || qPlace.has('bench')) {
+  const hook = window as unknown as { borealPlace?: (x: number, z: number, face?: number, look?: number) => void; borealRate?: (r: number) => void };
+  hook.borealPlace = (x, z, face, look) => { player.x = x; player.z = z; if (face !== undefined) { yaw = face; player.heading = face; } if (look !== undefined) pitch = look; };
+  hook.borealRate = r => setClockRate(r);
+} }
 if (STAGES.on && !new URLSearchParams(location.search).has('at')) [player.x, player.z] = dryStart(player.x, player.z); // the fixed default start can fall in a staged lake: nearest dry land
 let pendingRegen = false, playAs = new URLSearchParams(location.search).get('play') ?? localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf'; // ?play=hare: open as that animal for this visit (links, screenshots); the menu's Player panel still saves a choice
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
@@ -503,6 +508,7 @@ function frame(time: number) { const frameStart = performance.now();
   { const held = huntLock.key ? view.hares.list().find(h => `hare:${h.id}` === huntLock.key) : undefined;
     huntMarker = held ? lockPoint({ x: held.x, z: held.z }, { x: player.x, z: player.z }, yaw) : undefined; }
   view.setHold(view.hares.held() ? holdVisual() : undefined);
+  view.noteWorldDt(wDt); // the coarse population step. Individuals still use simDt, which is 0 above Immediate.
   const drawStart = performance.now(); if (!menu.open) { if (inpage) inpage.frame(() => drawFrame(pv)); else drawFrame(pv); } view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
   walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)

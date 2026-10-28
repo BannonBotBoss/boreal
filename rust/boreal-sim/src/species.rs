@@ -67,6 +67,19 @@ pub fn spawn_count(density_per_ha: f64, side_m: f64, lat: f64, lon: f64) -> u32 
     (f + if place_hash(lon, lat + 7.0) < expected - f { 1.0 } else { 0.0 }) as u32
 }
 
+pub const ALL: [Species; 6] = [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::Moose, Species::CanadaLynx, Species::GrayWolf, Species::Caribou];
+
+/// The local population list for one landing: (species, whole animals) for every species with at least one animal in a
+/// square patch `side_m` wide, in species-id order. This is what the bridge sends so the viewer can show the full cast.
+pub fn landing_population(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32, side_m: f64) -> Vec<(Species, u32)> {
+    ALL.iter().filter_map(|&sp| {
+        let d = density_per_ha(sp, lat, lon, elev_m, vegetation, water, year);
+        // Offset the rounding hash per species so two species at the same density do not round together.
+        let n = spawn_count(d, side_m, lat + 0.25 * sp as u32 as f64, lon);
+        (n > 0).then_some((sp, n))
+    }).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -112,6 +125,15 @@ mod tests {
         assert!(density_per_ha(Species::GrayWolf, 68.0, -110.0, 50.0, 0.4, false, 2026) > 0.0, "wolves follow caribou onto tundra");
         assert_eq!(density_per_ha(Species::Caribou, 25.0, -110.0, 900.0, 0.1, false, 2026), 0.0);
         assert_eq!(Species::from_id(5), Some(Species::Caribou));
+    }
+    #[test] fn landing_population_lists_boreal_cast_and_nothing_on_water() {
+        let pop = landing_population(55.0, -100.0, 300.0, 0.9, false, 2026, 5_000.0);
+        let ids: Vec<u32> = pop.iter().map(|&(s, _)| s as u32).collect();
+        assert!(ids.contains(&0) && ids.contains(&2), "hare and moose in a 25 km2 boreal patch: {ids:?}");
+        assert!(ids.windows(2).all(|w| w[0] < w[1]));
+        assert!(pop.iter().all(|&(_, n)| n > 0));
+        assert_eq!(pop, landing_population(55.0, -100.0, 300.0, 0.9, false, 2026, 5_000.0));
+        assert!(landing_population(45.0, -95.0, 0.0, 1.0, true, 2026, 5_000.0).is_empty());
     }
     #[test] fn spawn_count_tracks_density() {
         assert_eq!(spawn_count(0.0, 500.0, 50.0, -90.0), 0);

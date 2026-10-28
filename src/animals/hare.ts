@@ -25,7 +25,8 @@ import { skeletonOf, type BodyPlan } from './locomotion/bodyPlan';
 import { createRigSkin, setCoatDay, coatState, type RigLeg } from '../render/rigSkin';
 import { rigTubes, type CoatPalette, type RigBind, type SkinSpec } from '../core/rigBody';
 import { dayAt } from '../core/timeOfDay';
-import { worldSec } from '../core/worldClock';
+import { observation, worldSec } from '../core/worldClock';
+import { animalShares } from '../core/coarse';
 import { INTEREST, tierAt } from '../core/interest';
 import { WAKES, WATERLINE, HARE_HIP_XZ, pawArea, sampleSurface } from '../core/waterWake';
 import { siteAt } from '../core/flora/site';
@@ -283,7 +284,7 @@ export function createHares(scene: THREE.Scene) {
   // render adapter: spawn/despawn around the player, write the embodied wolf into the sim, read positions/states back.
   const world = createWorld({ seed: WORLD_SEED, passable: (x, z) => heightAt(x, z) > LEVEL.hareWater, handling: true });
   const wolfAnimal = createAnimal(world, 'wolf', { x: 0, z: 0 }, { controlled: true });
-  const hares: Hare[] = []; const pending: number[] = [];
+  const hares: Hare[] = []; const pending: number[] = []; const folded = new Set<number>();
   const spawnRng = stream(WORLD_SEED, 'hares-v1'); // seeded placement
   function spawn(px: number, pz: number) {
     for (let tries = 0; tries < 12; tries++) {
@@ -299,8 +300,20 @@ export function createHares(scene: THREE.Scene) {
   }
   function remove(h: Hare, fromSim = true) {
     // the coat geometry and materials are shared between hares (render/rigSkin userData.shared): dispose only per-hare ones
+    folded.delete(h.id);
     scene.remove(h.root); h.root.traverse(o => { if (o instanceof THREE.Mesh) { if (!o.geometry.userData.shared && o.geometry !== JAW_GEO) o.geometry.dispose(); const mt = o.material as THREE.Material; if (!mt.userData.shared && mt !== JAW_MAT) mt.dispose(); } });
     hares.splice(hares.indexOf(h), 1); if (fromSim) removeAnimal(world, h.sim);
+  }
+  /** A fully folded hare leaves the individual tick. The same record comes back when the picture does. Needs stay on the sim animal. */
+  function fold(h: Hare) {
+    if (folded.has(h.id)) return;
+    const i = world.animals.indexOf(h.sim);
+    if (i >= 0) world.animals.splice(i, 1);
+    folded.add(h.id);
+  }
+  function unfold(h: Hare) {
+    if (!folded.delete(h.id)) return;
+    if (h.sim.alive && !world.animals.includes(h.sim)) world.animals.push(h.sim);
   }
   const STATE: Record<string, HareState> = { graze: 'nibble', move: 'hop', freeze: 'freeze', flee: 'flee' };
   let time = 0;
@@ -310,7 +323,13 @@ export function createHares(scene: THREE.Scene) {
     for (let i = pending.length - 1; i >= 0; i--) if (pending[i] <= time) { pending.splice(i, 1); spawn(wolf.x, wolf.z); }
     for (let k = 0; k < HARE.count && hares.length + pending.length < HARE.count; k++) spawn(wolf.x, wolf.z); // bounded: spawn() can fail (no dry land in range)
     while (hares.length > HARE.count) { const i = hares.findIndex(h => h.sim.heldBy === undefined && h.sim.friendOf === undefined); remove(hares[i >= 0 ? i : hares.length - 1]); } // count lowered in settings; a held or befriended hare stays
-    for (const h of [...hares]) if (h.sim.heldBy === undefined && Math.hypot(h.sim.x - wolf.x, h.sim.z - wolf.z) > HARE.despawn) remove(h);
+    for (const h of [...hares]) {
+      if (h.sim.heldBy !== undefined || h.embodied) { unfold(h); continue; }
+      const d = Math.hypot(h.sim.x - wolf.x, h.sim.z - wolf.z);
+      // Fully a number: hold the individual. Partway, or still near, the headless tick keeps running.
+      if (animalShares(d, observation()).density >= 1) fold(h);
+      else unfold(h);
+    }
     // the embodied wolf: the adapter writes its pose/gait; the sim senses it and tests captures
     // an embodied hare (or any non-predator body) is not the wolf animal the sim's hares fear: take it out of the sim world, put it back for a predator
     const present = world.animals.includes(wolfAnimal);
@@ -333,6 +352,7 @@ export function createHares(scene: THREE.Scene) {
     rigged.forEach((h, i) => h.rig?.setForeLock(lock[i])); // a rig made this frame (poseHare) starts off and is picked next frame
     const t0 = performance.now(); HARE_RIG_STATS.rigged = 0; HARE_RIG_STATS.locked = 0;
     hares.forEach((h, i) => {
+      if (folded.has(h.id)) { h.root.visible = false; return; }
       const a = h.sim, prev = h.state; h.x = a.x; h.z = a.z; h.heading = a.heading; h.state = STATE[a.state] ?? 'nibble';
       if (h.state === 'hop' && prev !== 'hop' && Math.hypot(a.x - wolf.x, a.z - wolf.z) < 30) events.push({ type: 'hop', x: a.x, z: a.z });
       scope(`hare:${h.id}`); f('hare', 'state', h.state); f('hare', 'perceived', a.level); f('hare', 'knows', a.knowsAt ?? -1); f('hare', 'linked', a.linked); f('hare', 'speed', a.speed); f('hare', 'rig', near[i] ? 1 : 0); scope('');

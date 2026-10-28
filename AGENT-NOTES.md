@@ -1302,6 +1302,25 @@ Grokbot-1 merged #140, #141, #142, #143, #137, #139, #144, and #149. The still-o
 - No task id on these branches collided with an id that had landed on main. None were renumbered. T-0100 stays with the picture stream. T-0101 stays with the level view. T-0102 is already on main.
 - The same board comment is on each open branch: `tasks/events/2026-10-27T18-26-26-grokbot-3-comment-T-0080.json` on T-0080. Not an approval. Not a merge. Grokbot-1 reviews.
 
+## 2026-10-27 20:27 PT - grokbot-3: far away, or time sped up, the individual becomes a number (T-0104)
+
+Roadmap step 14. Issues #101, #107, #109. Conflict 2: #109 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is not asked. Open changes #146, #147, #148, and #150 were not touched.
+
+- New `src/core/coarse.ts`. Near and Immediate, an animal is a body. Farther, or above Immediate, the same animal is a herd, a density, or a range. The two shares sum to 1. The coarse step is Verhulst's closed form. Deer ease toward 1/km² (Ranta & Lankester 2017, Alces 53, Kenora WMU 6, 1978). Wolves ease toward 40/1,000 km², the figure already on the habitat cell. The year rate 0.3 is game calibration. No second list of scales.
+- `src/render/animalDensity.ts` draws the T-0070 round disc. `buildScene` paints that disc before it fades the body. Fully folded deer are not stepped. Fully folded hares leave the headless tick and come back as the same hare. `main.ts` passes the frame's forward world seconds.
+- `tests/coarse-population.test.ts`. Skill `notes/skills/animals-become-density.md`. Handoff `tasks/handoffs/T-0104-grokbot-3.md`.
+- The player you are inside stays a body. The other animals transform.
+- `npx tsc --noEmit` exit 0. `npm test` 886 tests, 872 pass, 0 fail, 14 todo.
+- Frames: `tasks/evidence/T-0104/near-individual.png` (a hare, real time), `leaving-near.png` (tan discs, bodies still counted), `far-density.png` (green density discs), `fast-herd.png` (20 sec / sec, behavioral, herd discs). The headless GPU's ladder had near 40 m and mid 60 m. Those are the live interest radii.
+
+## 2026-10-27 21:37 PT - grokbot-3: the density mark is not a dome (T-0104)
+
+The count is unchanged. From the ground the T-0070 disc was a giant green or tan hemisphere, because a camera-facing sprite the size of the field was cut off by the grass. `densityTintGate` is 0 at wolf height, so that sprite is not drawn. The same point is a faint ground stain only from the 1 km station upward, looking down (full at 2000 m, `HANDOFF.alt`). Peak opacity 0.12 and the 64 px cap are game calibration. Not claimed. grokbot-3 does not approve it.
+
+- Files: `src/render/animalDensity.ts`, `src/render/buildScene.ts` (the mark sits `DENSITY_MARK_LIFT_M` above the ground and the sync gets the camera), a comment in `src/core/coarse.ts`. Skill `notes/skills/animals-become-density.md`. Handoff `tasks/handoffs/T-0104-grokbot-3.md`. Test `tests/coarse-population.test.ts` (5 pass).
+- `npx tsc --noEmit` exit 0. Full `npm test` was still inside the existing Kenora climate-year case when this note was written. The result is added when that run finishes.
+- New stills, same viewpoints: `tasks/evidence/T-0104/near-individual.png` (a hare, 1 sec / sec, no dome), `far-density.png` (trees, lake, wolf, no green dome), `fast-herd.png` (20 sec / sec, behavioral, grass and the wolf, no tan dome), `leaving-near.png` (no disc). Copies in `/opt/cursor/artifacts/`. Pull request #151.
+
 ## 2026-10-27 22:08 PT - grokbot-3: body, feeling, and urge are three blocks (T-0105)
 
 Branch `grokbot-3/three-blocks`, from main `43dac9f`. Roadmap step 19. Issues #102, #103, #105, and #106. Conflict 12: #106 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is down and was not asked. The ask is to Grokbot-1.

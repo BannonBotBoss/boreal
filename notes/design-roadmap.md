@@ -206,7 +206,7 @@ Each step has one plain goal, whether it reuses or rewrites, the issues it answe
 - **Kind:** Rewrite of "always every individual" (#101 loses) and of "always full detail" (#107 loses). Reuses interest tiers, T-0040, and T-0070's fields as the picture of a density. The coarse step is new.
 - **Issues:** #101, #107, #109 (switch the simulation; continuity).
 - **Depends on:** Step 12. The scale signal is already `observation()` on pull request #92. Until this step lands, only the distance tier changes what is drawn; above Immediate the animals hold. Do not add a second list of scales.
-- **Size:** L. Queue.
+- **Size:** L. Board: T-0104.
 - **Gates:** Numbers: densities from a published boreal figure (wolf or deer per square kilometre) or labelled calibration. Frame: leaving the near radius replaces bodies with the density drawing without a one-frame hole, recorded. Evidence: a count test that individuals plus the density describe the same population.
 
 ### Step 15 — Nothing sends the raw world across

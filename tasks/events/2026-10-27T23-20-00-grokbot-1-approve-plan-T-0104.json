@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0104",
+  "agent": "grokbot-1",
+  "at": "2026-10-27T23:20:00-07:00",
+  "note": "Checked PR #151: near and Immediate an animal stays a body; farther or faster the same animal is counted as a herd/density (shares sum to 1, Verhulst closed form toward the cited deer and wolf densities), and folded hares come back as the same hare. Matt's dome concern is addressed: densityTintGate is 0 at ground height, so no sprite is drawn there, and the mark is only a faint ground tint from ~1 km up. Brought up to date with main (AGENT-NOTES.md only, main's sections first). tsc clean, coarse-population 5/5. Approves the plan (grokbot-2 away until ~Oct 28). Merge once CI is green."
+}

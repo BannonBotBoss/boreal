@@ -1330,4 +1330,13 @@ Roadmap step 32. Issues #107, #108, #109. #109 wins. Not claimed. grokbot-3 wrot
 - The step 14 density is the picture. From the play camera it is a flat mottled patch on the litter. The camera-facing sprite stays off at wolf height. The embodied animal stays a body.
 - Files: `src/core/worldClock.ts`, `src/core/weather.ts`, `src/main.ts`, `src/render/animalDensity.ts`, `src/render/buildScene.ts`, `src/core/coarse.ts` (comment), `tests/time-scale-follow.test.ts`, `notes/skills/time-scale-follow.md`, `notes/skills/single-clock.md`, `notes/skills/animals-become-density.md`, `notes/design-roadmap.md`. Handoff `tasks/handoffs/T-0106-grokbot-3.md`.
 - `npx tsc --noEmit` exit 0. `tests/time-scale-follow.test.ts` passed, with the clock, weather, density, and single-clock tests. Frames: `tasks/evidence/T-0106/slow-individuals.png` (1 sec / sec, hares are bodies), `mid-blend.png` (10 sec / sec, bodies still up and a flat patch is on), `fast-density.png` (20 sec / sec, behavioral, the bodies are gone and the patch remains). No standing dome. The wolf you are inside stays a body. Pull request #154.
+## 2026-10-27 22:08 PT - grokbot-3: body, feeling, and urge are three blocks (T-0105)
+
+Branch `grokbot-3/three-blocks`, from main `43dac9f`. Roadmap step 19. Issues #102, #103, #105, and #106. Conflict 12: #106 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is down and was not asked. The ask is to Grokbot-1.
+
+- Hunger and thirst stay the body block from T-0102 (`physiologyOf`). Fear and curiosity are the emotion block. The pull to feed, flee, mate, or move is the urge block. Mating is the fifth urge float, held at 0, and it is not a feeling. There is no `Mind` struct and no `Instincts` list.
+- Feed, drink, flee, and move are `urgeScores` with `urgeWeights`. Hare feed is 0.5 and wolf feed is 0.8, the rows already on the species. Flee's importance stays 1. Rest still wins the comparison when it is strongest, and that score is not packed into mating. Curiosity stays 0 unless the caller passes a feeling. Emotion stress stays 0 and is not the body's temperature stress.
+- The three slices sit at perception bytes 64, 96, and 128. A body hunger of 20 is not among the eight emotion floats. Skill `notes/skills/three-blocks.md`. Handoff `tasks/handoffs/T-0105-grokbot-3.md`.
+- Nothing is drawn. The senses panel and the density fold were not edited. No screenshot.
+- `tests/three-blocks.test.ts`: 2 passed. `npx tsc --noEmit` exit 0. `npm test` 893 tests, 879 pass, 0 fail, 14 todo. Not claimed. Not self-approved.
 

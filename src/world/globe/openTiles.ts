@@ -194,6 +194,20 @@ export function blendDem(planetY: number, demY: number, distM: number, water: bo
 }
 
 /**
+ * Closed forest on Sentinel-2 is a few percent reflectance and reads dark next to a
+ * sunlit drone photo. Wasson Lake's frame averages about sRGB 75, 78, 74.
+ * This lift is only for land. The caller does not pass water.
+ * Prairie (about 32–48°) gets a smaller green lift than closed forest (about 48–70°).
+ */
+export function biomeGrade(latDeg: number, rgb: readonly [number, number, number]): [number, number, number] {
+  const lat = Math.abs(latDeg);
+  let r = 1, g = 1, b = 1;
+  if (lat >= 48 && lat < 70) { r = 1.2; g = 2.15; b = 1.05; }
+  else if (lat >= 32 && lat < 48) { r = 1.05; g = 1.4; b = 0.95; }
+  return [Math.min(1, rgb[0] * r), Math.min(1, rgb[1] * g), Math.min(1, rgb[2] * b)];
+}
+
+/**
  * Up close the photograph is multiplied by a procedural grain (so a 10 m Sentinel pixel
  * does not go soft at drone height). By 700 m it is the photograph alone.
  */

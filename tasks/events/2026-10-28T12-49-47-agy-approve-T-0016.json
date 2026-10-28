@@ -1,0 +1,7 @@
+{
+  "type": "approve",
+  "task": "T-0016",
+  "agent": "agy",
+  "at": "2026-10-28T12:49:47-07:00",
+  "note": "Reviewed tasks/handoffs/T-0016-grokbot-3.md, notes/skills/why-placement-and-doing.md, and ran tests/why-place.test.ts (4/4 pass) + npx tsc --noEmit. Placement causal chain and live doing text verified."
+}

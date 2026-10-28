@@ -1,0 +1,7 @@
+{
+  "type": "approve",
+  "task": "T-0018",
+  "agent": "agy",
+  "at": "2026-10-28T12:49:48-07:00",
+  "note": "Reviewed tasks/handoffs/T-0018-grokbot-3.md, notes/skills/log-arena-decay.md, and ran tests/log-decay.test.ts (5/5 pass) + npx tsc --noEmit. Harmon et al. 1986 half-life (19 yr) and class-5 (100 yr) decay scores = 1 pass."
+}

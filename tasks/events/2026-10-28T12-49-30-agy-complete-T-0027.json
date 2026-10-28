@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0027",
+  "agent": "agy",
+  "at": "2026-10-28T12:49:30-07:00",
+  "branch": "agy/forage-flora",
+  "skill": "boreal-forage-herb-geometry",
+  "handoff": "tasks/handoffs/T-0027-agy.md",
+  "note": "Append-only complete event adding branch agy/forage-flora per 2026-10-23T00-30-04-grok-comment-T-0027.json. Botanical prop meshes from render/flora/plant.ts and core/flora/plants.ts are merged on main; calibrated botanicalPropScore = 1.000 in refs/forage/t0027-audit/measure.json."
+}

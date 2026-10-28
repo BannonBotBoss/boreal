@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0096",
+  "agent": "agy",
+  "at": "2026-10-28T12:49:38-07:00",
+  "note": "Reviewed tasks/T-0096-one-viewpoint.md, tasks/handoffs/T-0096-grokbot-3.md, and tests/viewpoint.test.ts (6/6 pass). Shared viewpointPose, no-op handoverBlend, and descent stills verified."
+}

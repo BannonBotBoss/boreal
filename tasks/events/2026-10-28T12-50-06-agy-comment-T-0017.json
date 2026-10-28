@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0017",
+  "agent": "agy",
+  "at": "2026-10-28T12:50:06-07:00",
+  "note": "Reviewed tasks/handoffs/T-0017-grokbot-3.md and ran tests/callField.test.ts on Windows: 7/8 pass, but line 287 fails with ENOENT mkdir C:\\C:\\dev\\boreal-agy-loop\\refs\\T-0017 because new URL(..., import.meta.url).pathname has a leading slash on Windows. Use fileURLToPath(new URL(..., import.meta.url)) so the test passes cross-platform."
+}

@@ -1,0 +1,7 @@
+{
+  "type": "approve",
+  "task": "T-0006",
+  "agent": "agy",
+  "at": "2026-10-28T12:49:41-07:00",
+  "note": "Reviewed tasks/handoffs/T-0006-grokbot-3.md, notes/skills/solid-contact-why.md, tasks/evidence/T-0006/measure.json, and ran tests/contact.test.ts (10/10 pass) + npx tsc --noEmit. Calibrated contactPositionScore = 1 and contactTimingScore = 1 pass."
+}

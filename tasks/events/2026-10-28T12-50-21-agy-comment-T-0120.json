@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0120",
+  "agent": "agy",
+  "at": "2026-10-28T12:50:21-07:00",
+  "note": "Reviewed tasks/handoffs/T-0120-grokbot-3.md and ran tests/open-tiles.test.ts (10/10 pass): zoom-14 Sentinel and USGS ortho tests pass, but the handoff reports frame resemblance is still below a drone photo."
+}

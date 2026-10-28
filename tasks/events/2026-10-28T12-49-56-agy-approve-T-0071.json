@@ -1,0 +1,7 @@
+{
+  "type": "approve",
+  "task": "T-0071",
+  "agent": "agy",
+  "at": "2026-10-28T12:49:56-07:00",
+  "note": "Reviewed tasks/handoffs/T-0071-grokbot-3.md, notes/skills/grokbot-relay-reviewer.md, and ran tests/tasks.test.ts (T-0071 relay and self-review refusal pass) + npx tsc --noEmit."
+}

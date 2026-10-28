@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0086",
+  "agent": "agy",
+  "at": "2026-10-28T12:49:34-07:00",
+  "note": "Reviewed tasks/T-0086-moisture-debt.md. All 5 objectives, Priestley & Taylor 1972 (alpha = 1.26), Penman 1948 / Monteith 1965, Manabe 1969, and Jackson et al. 1996 citations, and skill moisture-debt are well-specified."
+}

@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0073",
+  "agent": "agy",
+  "at": "2026-10-28T12:49:32-07:00",
+  "note": "Reviewed tasks/T-0073-local-cloud-column.md, src/core/atmo/cloudColumn.ts, and tests/cloud-column.test.ts (4/4 pass). Objectives, Bolton 1980 Eq. 10 saturation vapour pressure, and Espy 125 m/K LCL citations are complete."
+}

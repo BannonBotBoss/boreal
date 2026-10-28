@@ -15,7 +15,7 @@ Use when the drone should show plants past the chunk square, with a different ru
 2. Place billboards with `coverSpots` between 36 m and 520 m. Cap 480. Sort nearest first so the cap does not fill only one corner.
 3. One `InstancedMesh` of a vertical plane, height from `heightAt`. The plane samples `treeAtlas`: a conifer on the left, a broadleaf on the right. Alpha test at 0.4 and alpha-to-coverage, so the corner of the card is not drawn. The sprite is brighter on the left (the lit side). Prairie and desert are shorter and use the broadleaf. Water, ice, tundra and rock place none.
 4. Past the billboards the skirt samples `canopyTile`, a repeating top-down crown texture, and fades it out before the horizon.
-4. Mark `userData.horizonSkirt` so the band hide does not treat it as sky.
+5. Mark `userData.horizonSkirt` so the band hide does not treat it as sky.
 
 ## Checks
 

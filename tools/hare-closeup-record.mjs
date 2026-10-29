@@ -2,7 +2,7 @@
 // (--window-position=-32000,-32000), takes the omen bench lock (tools/bench-lock.mjs) and kills its own Edge when done.
 // Camera option (this copy only): a second three.js renderer on the page's own scene, a narrow camera `dist` m to the hare's side at hare
 // height, following it, so the hare fills the frame. The driven hare: stand .5 s, ramp to V m/s over 1 s, hold.
-// node tools/hare-closeup-record.mjs <base> <outDir> <V m/s> [slow=0.1] [joint=limit=1,plantW=100] [dist=1.3]
+// node tools/hare-closeup-record.mjs <base> <outDir> <V m/s> [slow=0.1] [joint=limit=1,plantW=100 | soft.on=0 (run 13: soft.k sets FORE_SOFT) | none] [dist=1.3]
 import { acquire, track, release } from './bench-lock.mjs';
 import { spawn, execSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 // mode 'drive': the staged hare is driven (embodied-style) across the view
-const [base, outDir, vArg, slowArg, jointArg, distArg] = process.argv.slice(2); const V = Number(vArg ?? 8.5), SLOW = Number(slowArg ?? .1), DIST = Number(distArg ?? 1.3), skipPerf = 1, mode = 'drive'; const LOCKNAME = 'grok-gait: T-0044 run 12 close-up clip';
+const [base, outDir, vArg, slowArg, jointArg, distArg] = process.argv.slice(2); const V = Number(vArg ?? 8.5), SLOW = Number(slowArg ?? .1), DIST = Number(distArg ?? 1.3), skipPerf = 1, mode = 'drive'; const LOCKNAME = 'grok-gait: T-0044 run 12/13 close-up clip';
 if (!(await acquire(LOCKNAME))) { console.error('bench lock not acquired'); process.exit(1); } mkdirSync(join(outDir, 'frames'), { recursive: true });
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const port = 9500 + Math.floor(Math.random() * 90), profile = mkdtempSync(join(tmpdir(), 'grok-hareport-'));
@@ -58,7 +58,7 @@ try {
       requestAnimationFrame(step); return 1; })()`);
     report.staged = await ev('(() => { const h = borealHares.list()[0]; return { id: h.id, x: h.sim.x, z: h.sim.z, driven: true }; })()');
   } else report.staged = await stage(2.5, 3, 0); // beside the wolf, so its flight (away from the wolf) crosses the view side-on
-  report.joint = await ev(`(async () => { const u = performance.getEntriesByType('resource').map(e => e.name), b = u.filter(x => x.includes('/src/animals/locomotion/bounding.ts')).pop(); if (!b) return 'bounding.ts not found'; const m = await import(b); for (const kv of ${JSON.stringify(jointArg ?? '')}.split(',').filter(Boolean)) { const [k, x] = kv.split('='); m.FORE_JOINT[k] = Number(x); } return JSON.stringify(m.FORE_JOINT); })()`);
+  report.joint = await ev(`(async () => { const u = performance.getEntriesByType('resource').map(e => e.name), b = u.filter(x => x.includes('/src/animals/locomotion/bounding.ts')).pop(); if (!b) return 'bounding.ts not found'; const m = await import(b); for (const kv of ${JSON.stringify(jointArg ?? '')}.split(',').filter(kv => kv.includes('='))) { const [k, x] = kv.split('='); if (k.startsWith('soft.')) m.FORE_SOFT[k.slice(5)] = Number(x); else m.FORE_JOINT[k] = Number(x); } return JSON.stringify({ FORE_JOINT: m.FORE_JOINT, FORE_SOFT: m.FORE_SOFT }); })()`);
   report.cam = await ev(`(async () => { const u = performance.getEntriesByType('resource').map(e => e.name), t3 = u.filter(x => /\\/deps\\/three\\.js|three\\.module\\.js/.test(x)).pop(); if (!t3) return 'three not found: ' + u.filter(x => x.includes('three')).slice(0, 3).join(' ');
     const T = await import(t3), h = borealHares.list()[0]; let sc = h.root; while (sc.parent) sc = sc.parent; const cv = document.createElement('canvas');
     const r = new T.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true }); r.setPixelRatio(1); r.setSize(1280, 720, false); const cam = new T.PerspectiveCamera(20, 1280 / 720, .05, 300); cam.layers.set(7); r.setClearColor(0xdfe6ea, 1);

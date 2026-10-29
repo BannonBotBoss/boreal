@@ -1350,3 +1350,97 @@ Limits:
 - The switches change the swing pose: the paw lags its target in joint space. They have not been checked with lookscore or bound-checks.
 - share .9, plantW 100 and the gate factor 2 are estimates.
 - The board event's T-0044 id: tasks.test reports no rule break for it.
+## Run 13 (2026-10-28, grok-gait, T-0044 soft IK at touchdown, option 1; local only, not pushed)
+Branch grok-gait/T-0044-touchdown-pop (C:\dev\boreal-grok-pop), from fe589bc. Commits: a37d4fc pure softIK.ts + tests, 7d61a0d FORE_SOFT glue (off), a4dedbb defaults from the probe + probe/bench tool keys, 6c84da7 recorder FORE_SOFT keys, this note. Options (2) and (3) were not touched. The 2 x 88 deg gate is unchanged.
+
+### prior_art
+- Andy Nicholas, "Soft IK in XSI", Softimage Blog, 14 Aug 2006, http://www.softimageblog.com/archives/108 (archived: https://web.archive.org/web/2010/http://www.softimageblog.com/archives/108). This is the original. Run 12's note said "Nicholas 2009"; the right year is 2006. The page shows the equation only as an image.
+- Text form of the equation: Paul Molodowitch, pmSoftIK (https://github.com/pmolodo/pmSoftIK), src/pmSoftIK.py L56-57 (softDist = softRatio x chainLength; hardDist = chainLength - softDist) and L76-87 (x > hard: softDist x (1 - exp((hardDist - x) / softDist)) + hardDist). The repo has NO licence file, so no code was copied. Only the published one-line equation is re-implemented, with credit to both. The same form appears in the Maya stretch-IK node on tech-artists.org ("Soft IK Setup Help!") and in nickyliu.com "Soft IK" (2015) and "Soft IK Again" (2025).
+- The two-bone solve is the law of cosines, the same as solveLeg (core/animalBehavior.ts, untouched).
+
+### What was built (pure, Rust-portable)
+- src/animals/locomotion/softIK.ts has no three.js, no state, no random and no clock. It holds softSplit, softDistance, bendForDistance, distanceForBend, softBendMin, softExcess, and softTwoBone (aim plus or minus the law-of-cosines angle on the elbow's own fold side). tests/soft-ik.test.ts has 5 tests with hand-worked values: the chain 3 / soft 1 example, slope 1 at hard, the bend and distance inverse, and the forward-kinematics check of softTwoBone on both fold sides.
+- bounding.ts FORE_SOFT { on, ratio, swing, plan, stanceW }:
+  - swing: a fore paw in the air reaches only the soft distance toward its wrist target (the IK wrist plus the sole miss). The manus segment angle is kept and the joint limits are re-applied. A pose that would put the paw under the ground keeps the IK pose for that frame. It runs before the Run 12 limiter.
+  - plan: the plan, track and plant accept also requires an elbow bend of at least softBendMin. The fallback order is band + soft, then band, then none.
+  - stanceW: the stance and plant window pick pays stanceW x (excess / soft)^2. The planted paw stays exact.
+- No Claude- or Codex-owned file was touched.
+
+### Results: tools/elbow-pop.ts, 12 cells (5 / 8.5 / 10 / 11.6 m/s x 60 / 120 / 240 Hz), t 2-4 s, both fore legs; counts are frames over the gate
+Totals over the 12 cells:
+| config | plant hum / elbow | stance+lift hum / elbow | swing hum / elbow | swing manus | stance miss max mm | min stance bend deg |
+|---|---|---|---|---|---|---|
+| off (Run 12 motion, soft.on=0) | 82 / 121 | 456 / 384 | 417 / 637 | 0 | 0 | 9.7 |
+| soft r .1, plan on (first design) | 68 / 107 | 368 / 320 | 320 / 480 | 41 | 6.4 | 4.2 |
+| soft r .2, plan on | 32 / 60 | 370 / 272 | 241 / 192 | 41 | 6.4 | 4.2 |
+| soft r .1, plan off | 47 / 98 | 428 / 377 | 297 / 446 | 0 | 0 | 15.8 |
+| soft r .15 | 19 / 65 | 428 / 363 | 264 / 302 | 0 | 0 | 15.8 |
+| soft r .2 | 9 / 36 | 421 / 322 | 239 / 188 | 0 | 0 | 15.7 |
+| soft r .25 | 5 / 16 | 410 / 251 | 216 / 106 | 0 | 0 | 15.7 |
+| **soft r .3 (default)** | 1 / 8 | 398 / 198 | 199 / 47 | 0 | 0 | 15.7 |
+| soft r .35 | 0 / 3 | 381 / 198 | 180 / 6 | 0 | 0 | 15.7 |
+| Run 12 limit=1, plantW=100 | 16 / 61 | 477 / 401 | 16 / 67 | 0 | 0 | 9.7 |
+| soft r .2 + limit + plantW | 30 / 96 | 434 / 303 | 3 / 0 | 0 | 0 | 15.7 |
+| soft r .3 + limit=1 + plantW=100 | 16 / 68 | 423 / 214 | 0 / 0 | 0 | 0 | 15.7 |
+| soft r .3 + plantW=100 (nearest pick) | 0 / 1 | 414 / 216 | 198 / 47 | 0 | 0 | 15.7 |
+| soft r .15 + limit | 73 / 122 | 428 / 331 | 2 / 9 | 0 | 0 | 15.8 |
+| soft r .2 + limit | 73 / 121 | 421 / 281 | 3 / 0 | 0 | 0 | 15.7 |
+| soft r .1 + limit + plantW | 30 / 97 | 448 / 382 | 5 / 26 | 0 | 0 | 15.8 |
+| soft r .15 + limit + plantW | 37 / 97 | 448 / 354 | 3 / 9 | 0 | 0 | 15.8 |
+| soft r .15, stanceW 1000 | 19 / 65 | 428 / 363 | 264 / 302 | 0 | 0 | 15.8 |
+
+
+Per cell, off -> default (frames over the gate; hum / elbow):
+
+| m/s Hz | plant | stance+lift | swing | under | plant miss mean/max mm | swing miss mean/max mm | touchdown forearm deg |
+|---|---|---|---|---|---|---|---|
+| 5 60 | 0/8 -> 0/0 | 18/34 -> 18/26 | 29/38 -> 22/0 | 0 -> 0 | 26.27/53.6 -> 26.27/53.6 | 15.46/59.6 -> 22.28/64 | 12.0-14.2 -> 12.0-13.2 |
+| 5 120 | 12/17 -> 0/0 | 57/47 -> 50/35 | 69/81 -> 48/13 | 0 -> 0 | 6.14/22.2 -> 6.14/22.2 | 15.35/45.3 -> 22.38/53 | 12.1-22.2 -> 12.1-13.7 |
+| 5 240 | 13/15 -> 0/1 | 123/100 -> 88/54 | 149/160 -> 93/34 | 0 -> 0 | 0.17/2.3 -> 0.16/2.3 | 15.18/43.3 -> 22.27/51.2 | 12.2-34.5 -> 12.1-21.2 |
+| 8.5 60 | 0/0 -> 0/0 | 17/11 -> 17/0 | 8/14 -> 0/0 | 0 -> 0 | 57.49/104.2 -> 57.49/104.2 | 50.49/130.9 -> 56.87/131.8 | 12.5-18.1 -> 12.0-13.1 |
+| 8.5 120 | 0/8 -> 0/0 | 24/35 -> 24/18 | 28/44 -> 7/0 | 0 -> 0 | 18.1/39 -> 18.1/39 | 50.24/115.5 -> 56.49/116.7 | 12.1-18.3 -> 12.0-12.6 |
+| 8.5 240 | 13/15 -> 0/0 | 67/52 -> 58/24 | 66/84 -> 24/0 | 0 -> 0 | 3.32/16.1 -> 3.32/16.1 | 49.65/109.1 -> 55.87/110.6 | 12.0-32.3 -> 12.0-18.2 |
+| 10 60 | 0/0 -> 0/0 | 4/6 -> 4/0 | 1/5 -> 0/0 | 0 -> 0 | 37.08/89.3 -> 37.08/89.3 | 63.02/139.9 -> 70.39/144.9 | 1.3-14.0 -> 1.6-14.0 |
+| 10 120 | 10/13 -> 0/0 | 23/20 -> 23/5 | 11/36 -> 0/0 | 0 -> 0 | 5.92/24.6 -> 5.92/24.6 | 60.35/131.4 -> 67.51/144.6 | -3.6-19.6 -> -3.1-12.5 |
+| 10 240 | 13/16 -> 1/3 | 54/32 -> 50/18 | 31/80 -> 5/0 | 0 -> 0 | 0/0 -> 0/0 | 58.71/130.1 -> 65.95/143.6 | -3.0-21.9 -> -2.7-13.4 |
+| 11.6 60 | 0/0 -> 0/0 | 3/0 -> 3/0 | 0/0 -> 0/0 | 0 -> 0 | 54.39/113.1 -> 54.39/113.1 | 83.28/175 -> 90.39/177.1 | 1.6-14.3 -> 1.9-14.3 |
+| 11.6 120 | 9/15 -> 0/0 | 18/15 -> 18/3 | 9/30 -> 0/0 | 0 -> 0 | 12.58/37.6 -> 12.58/37.6 | 79.42/160.2 -> 86.23/174.2 | -3.8-22.1 -> -3.1-12.9 |
+| 11.6 240 | 12/14 -> 0/4 | 48/32 -> 45/15 | 16/65 -> 0/0 | 0 -> 0 | 0/0 -> 0/0 | 77.82/160.2 -> 84.68/174.2 | -3.4-25.1 -> -3.2-14.8 |
+
+Reading the tables:
+- The "plan" sub-switch is harmful. The required elbow bend at touchdown pulls blade and manus into poses that put 41 manus frames over the gate in swing at 5 m/s, straighten the stance to 4.2 deg, and let a planted paw miss by up to 6.4 mm (5 m/s / 60 Hz). It is OFF by default. Isolated at 5 m/s, the swing part alone gives none of those effects, and the stance cost alone is neutral (stanceW 100 and 1000 give identical results).
+- The ratio is a trade-off. A larger ratio means fewer elbow and humerus overs, but the swing paw trails its target more.
+- Soft + Run 12 limit makes the swing clean (0 / 0 at ratio .3) but brings the plant back to 16 / 68. The limiter lags the swing paw, so the planting frame snaps. Soft + plantW 100 (nearest pick) gives plant 0 / 1 but stance 414 / 216 vs 398 / 198, and the touchdown forearm goes lower at 10-11.6 m/s (-4.3 deg).
+- The paw gate (tools/touchdown-pop.ts, scapula + manus, plant and stance + lift) is 0 / 0 in all 12 cells with the defaults. Under-ground swing paws: 0 in every config.
+
+### Contacts (touchdown forearm, deg below horizontal, every planting frame)
+Default vs off, per cell: see the table above. At 5 and 8.5 m/s every plant is 12.0-21.2 deg with soft, against 12.0-34.5 deg off. The upper end comes down; soft touches down more upright.
+LOUD: at 10 and 11.6 m/s, the off baseline itself has planting frames down to -3.8 deg, under the 11 deg floor. Soft is about the same or slightly better (-3.2 deg). This probe counts EVERY planting frame, including tracking holds and the band-less fallback. Run 11's 12.0-34.6 deg table seems to have counted only the exact in-band plans. So "contacts at 11-36 deg" holds at 5 and 8.5 m/s and does not hold at 10 and 11.6 m/s, with or without soft. Run 13 did not cause this.
+
+### Target miss (|sole - target|, world, mm; added to elbow-pop)
+- Plant: unchanged in all 12 cells (mean 18.45 vs 18.46 over the cells, max 113.1 at 11.6 m/s / 60 Hz both ways).
+- Stance: 0.00 in all cells with the defaults (exact).
+- Swing: worse by design (the soft reach lags the target). The 12-cell mean of means goes from 51.6 to 58.4 mm, +6 to +7 mm per cell, and the 11.6 m/s max goes from 175.0 to 177.1. Most of the swing miss was already there: the targets are up to about 10 cm out of reach (Run 12).
+
+### Cost (tools/fore-lock-bench-joint.ts; ON column = fore lock on; ms per hare, mean; sequential runs)
+- soft off: 0.61-0.97.
+- soft on (default): 0.59-0.88 in 11 cells. The 11.6 m/s / 30 Hz cell read 1.36 on one run and 1.03 on a repeat. Solves per frame are the same as off (320 vs 321), so that is timing noise on omen. An earlier run in parallel with another job gave 2.38 there, so do not trust parallel timings.
+
+### npm test
+832 tests (+5 soft-ik), 811 pass, 4 fail: the same 4 as main (callField, constants, core.test.ts, planet-layout). tasks.test prints the TODO "22 legacy rule breaks" block, which is not counted. tsc --noEmit: 0 errors.
+
+### Recommended defaults (committed in a4dedbb)
+- FORE_SOFT { on 1, ratio .3, swing 1, plan 0, stanceW 100 }.
+- FORE_JOINT stays all off. None of the Run 12 combinations beat soft alone at the plant.
+- ratio .3 is an estimate tuned on this probe. .35 is slightly better on overs (plant 0 / 3, swing 180 / 6) and trails the swing paw about 2 mm more.
+
+### Clips (box: /workspace/locomotion/T-0009/v13/)
+Same off-screen procedure as v12: Edge at -32000, bench lock held then released, own Edge killed, Vite on 5317 started and stopped. Camera 1.3 m to the side, slow 0.1, every 3rd frame kept, 30 fps. report.json confirms the switches in each run (off = soft.on=0, on = defaults).
+Files: T-0044-v13-closeup-v8.5-off-slowmo.mp4 (746 frames), -v8.5-on- (731), -v11.6-off- (731), -v11.6-on- (710), contact-sheet-*.jpg, and frames in v*/g*.jpg. The raw r13 frames remain on omen in C:\dev\r13-clip. C:\dev\r12-clip was deleted after the v12 box outputs were confirmed (741 / 729 / 730 / 727 frames).
+
+### Risks (loud)
+- T-0044 is STILL NOT DONE. Stance + lift overs remain at 398 humerus / 198 elbow frames (from 456 / 384). The remaining swing humerus overs, 199 (from 417), are mostly at 5 m/s.
+- Soft IK changes the look. The swing fore leg never fully straightens, and the swing paw trails its target by about 7 mm more. It has not been checked with lookscore or bound-checks.
+- Contacts are under 11 deg at 10-11.6 m/s in the baseline too (see above). Either the band is not held there or Run 11's measure differed. This needs a decision.
+- ratio .3 and stanceW are estimates. stanceW has no measured effect.
+- The gate (2 x 88 deg, factor 2 an estimate) was not changed, pending Matthew.

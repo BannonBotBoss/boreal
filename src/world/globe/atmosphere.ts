@@ -17,6 +17,9 @@ import { GLSL_NOISE } from '../../proc/glsl';
 import { GLOBE_LAYERS } from './planetLayers';
 import { K } from '../../core/constants';
 import { COMPOSITION, rayleighPerKm, scaleHeightKm, ozoneEquivPerKm } from './composition';
+import { ENV, GAME_SEC_PER_WORLD_SEC } from '../../render/environment';
+import { SCALE_BOUNDS, clockRate } from '../../core/worldClock';
+import { smoothstep } from '../../proc/math';
 
 /** Earth-like constants (Nishita 1993 / Bruneton 2008 values; per km). [game calibration: sunI, mieG] */
 export const ATMOS = {
@@ -54,11 +57,32 @@ export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .8, octaves: [8, 6, 
   shadowCentre: .74, shadowHalf: .08,
   /** drift from the world clock: an eastward wind (m/s) turns the field about the polar axis; the field also evolves
    *  (slides through the noise's 3rd axis) once per `evolveH` game hours [game calibration] */
-  windMs: 12, evolveH: 6,
+  windMs: 12, evolveH: 6, /** windMs: only the fallback (equator) while the environment record is empty (no grid booted) */
   /** cloud shadows on the terrain: ONE noise lookup (the cloud field's base octave: one 3D value-noise sample) where the
    *  sun ray leaves the shell; on while the tier draws at least `shadowMinOct` cloud octaves (off at Low / Minimum).
    *  Cuts this share of the direct sun under full cover [game calibration] */
   shadow: .6, shadowMinOct: 3 };
+
+/** Hygroscopic growth of the Mie (aerosol) term with humidity (T-0089, issue #111): f(RH) = (1 − RH)^−gamma (Hanel 1976,
+ *  Adv. Geophys. 19:73, doi 10.1016/S0065-2687(08)60142-9; the one-parameter fit of Kasten 1969). gamma 0.3: continental
+ *  aerosol 0.27-0.40, f(85 %) ~ 1.8 in the Titos et al. 2016 survey (Atmos. Environ. 141:494). f diverges at RH = 1, so RH is
+ *  capped at 0.95, the top of humidified-nephelometer measurements (Titos 2016); fog above that is the forest sky's job
+ *  (sky.ts Koschmieder). ATMOS.mie is the dry (RH 0) coefficient. */
+export const HYGRO = { gamma: .3, rhCap: .95 };
+export const mieGrowth = (rh: number) => (1 - Math.min(HYGRO.rhCap, Math.max(0, Number.isFinite(rh) ? rh : 0))) ** -HYGRO.gamma;
+/** Cloud drift holds above the Behavioral observation scale: the one clock's SCALE_BOUNDS edge above 'behavioral'
+ *  (worldClock.ts, #92/#109: exit 800, enter 1200). Between them it blends (smoothstep, the same band resolveObservation
+ *  blends across), above it the shell stops turning, so a fast dial does not spin it into a blur. */
+const BEHAVIORAL_EDGE = SCALE_BOUNDS.find(b => b.above === 'ecological')!;
+export const DRIFT_HOLD = { exit: BEHAVIORAL_EDGE.exit, enter: BEHAVIORAL_EDGE.enter };
+export const driftWeight = (rate: number) => 1 - smoothstep(DRIFT_HOLD.exit, DRIFT_HOLD.enter, Math.abs(rate));
+/** Angular rate (rad per game second) of an eastward wind u at latitude lat about the polar axis: u / (R cos lat). */
+export const cloudDriftRate = (u: number, latDeg: number, R: number) => u / (R * Math.max(.05, Math.cos(latDeg * Math.PI / 180)));
+/** One frame of drift, integrated (never time x rate, so a wind change does not jump the shell). dWorldSec is the
+ *  world clock's step; x GAME_SEC_PER_WORLD_SEC = simulation seconds. */
+export function stepCloudDrift(ang: number, dWorldSec: number, u: number, latDeg: number, R: number, rate: number) {
+  return (ang + driftWeight(rate) * cloudDriftRate(u, latDeg, R) * dWorldSec * GAME_SEC_PER_WORLD_SEC) % (2 * Math.PI);
+}
 
 // loop caps = the largest counts in the tables: ANGLE (D3D) unrolls loops to their cap, so a loose cap means a slow first
 // compile (a long main-thread frame at startup), not just dead iterations
@@ -66,13 +90,15 @@ const MAX_N = Math.max(...ATMOS_STEPS.map(r => Math.max(r[0], r[2]))), MAX_L = M
 const GLSL = /* glsl */`
 const float ATM_AERIAL = ${ATMOS.aerial.toFixed(3)}; // in-scatter in the terrain's light units: ~ sun light (3.2) / sunI (22), so haze vs lit ground matches a real sky/ground ratio [reference calibration: Blue Marble land/ocean contrast]
 uniform float uAirglow; uniform vec4 uAurora; uniform vec3 uDipole; uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
-uniform mat3 uViewToWorld; uniform float uCloudOct, uCloudSeed, uCloudEvolve; uniform vec2 uCloudSpin; // spin = (cos, sin) of the drift angle
+uniform mat3 uViewToWorld; uniform float uMieScale; uniform float uCloudOct, uCloudSeed, uCloudEvolve; uniform vec2 uCloudSpin; // spin = (cos, sin) of the drift angle
 uniform float uCloudClear; // 0 = the field as calibrated .. 1 = no clouds (in-page descent, T-0034/T-0041): cover and shadows fade AND the threshold lifts by clearLift, so the deck breaks into clouds and holes instead of a flat sheet
 uniform sampler2D uCloudTex; uniform vec4 uCloudSim; // planetLayers texture: A = sim cloud fraction (rust update_clouds), w = loaded
 uniform vec3 uCloudEdge; // threshold centre, half width (governor tier), pixel angle (rad per px: octave fade by distance)
 const vec3 BR = vec3(${ATMOS.rayleigh.map(v => v.toExponential(4)).join(', ')});
 const vec3 BO = vec3(${ATMOS.ozone.map(v => v.toExponential(4)).join(', ')}); // ozone Chappuis absorption (extinction only, no scattering)
-const float BM = ${ATMOS.mie.toExponential(4)}, BME = ${(ATMOS.mie * ATMOS.mieExt).toExponential(4)}, HR = ${ATMOS.rayleighH.toFixed(2)}, HM = ${ATMOS.mieH.toFixed(2)}, MG = ${ATMOS.mieG.toFixed(3)};
+const float BM0 = ${ATMOS.mie.toExponential(4)}, BME0 = ${(ATMOS.mie * ATMOS.mieExt).toExponential(4)}, HR = ${ATMOS.rayleighH.toFixed(2)}, HM = ${ATMOS.mieH.toFixed(2)}, MG = ${ATMOS.mieG.toFixed(3)};
+#define BM (BM0 * uMieScale)
+#define BME (BME0 * uMieScale) // Mie scattering / extinction x Hanel f(RH) (HYGRO)
 vec2 atmRsi(vec3 ro, vec3 rd, float r) { vec3 oc = ro - uCentre; float b = dot(oc, rd), c = dot(oc, oc) - r * r, d = b * b - c; if (d < 0.0) return vec2(1e9, -1e9); d = sqrt(d); return vec2(-b - d, -b + d); }
 vec2 atmDensity(vec3 x) { float h = max(length(x - uCentre) - uRp, 0.0); return vec2(exp(-h / HR), exp(-h / HM)); }
 // optical depth (Rayleigh, Mie) from x toward the sun; < 0 when the planet blocks the sun
@@ -174,7 +200,7 @@ const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.
 export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   let [sn, sl, tn, tl] = stepsFor(tier), cur = tier;
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
-  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uAirglow: { value: 1 }, uAurora: { value: new THREE.Vector4() }, uDipole: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
+  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uAirglow: { value: 1 }, uAurora: { value: new THREE.Vector4() }, uDipole: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uMieScale: { value: 1 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
   let cloudsOn = true, airOn = true; // layer panel (layerPanel.ts): off = 0 octaves / 0 ray-march steps, the shader skips the work
   const setSteps = () => { if (airOn) uniforms.uSteps.value.set(sn, sl, tn, tl); else uniforms.uSteps.value.set(0, 0, 0, 0); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = cloudsOn ? CLOUDS.octaves[row] : 0; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
   const mat = new THREE.ShaderMaterial({
@@ -209,6 +235,7 @@ void main() {
 }`;
   mat.fragmentShader = LOG_DEPTH_PREFIX + domeFrag(); mat.uniforms.uGlobeLogDepthFC = LOG_DEPTH.uniform; // per-material log depth (logDepth.ts)
   const dome = new THREE.Mesh(new THREE.SphereGeometry(Ra * 1000, 96, 48), mat); dome.frustumCulled = false; dome.renderOrder = 1; dome.matrixAutoUpdate = false;
+  let driftAng = 0, driftSec: number | null = null;
   const centre = new THREE.Vector3(), sunV = new THREE.Vector3(), dipoleW = new THREE.Vector3(...auroraPole());
   return {
     dome, uniforms, get tier() { return cur; },
@@ -230,7 +257,11 @@ void main() {
       if (surfaceRadiusM != null && surfaceRadiusM > 0) { const rp = surfaceRadiusM / 1000; uniforms.uRp.value = rp; uniforms.uRa.value = rp + ATMOS.heightKm; }
       const fov = (camera as THREE.PerspectiveCamera).fov ?? 45; uniforms.uCloudEdge.value.z = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, viewH); // rad per pixel (cloud octave fade)
       // cloud drift: angle and evolution reduced in double precision on the CPU (the GPU only sees small numbers)
-      const ang = (timeSec * CLOUDS.windMs / R) % (2 * Math.PI); uniforms.uCloudSpin.value.set(Math.cos(ang), Math.sin(ang));
+      // T-0089: the record's east wind at the sub-point (u / R cos lat) on simulation seconds; CLOUDS.windMs only while empty
+      const u = ENV.source ? ENV.windE : CLOUDS.windMs, lat = ENV.source ? ENV.latDeg : 0, rate = clockRate(); // the one clock's signed rate (observationRecord().rate is still 0/1 on main)
+      driftAng = driftSec === null ? stepCloudDrift(0, timeSec, u, lat, R, rate) : stepCloudDrift(driftAng, timeSec - driftSec, u, lat, R, rate); driftSec = timeSec;
+      uniforms.uCloudSpin.value.set(Math.cos(driftAng), Math.sin(driftAng));
+      uniforms.uMieScale.value = ENV.source ? mieGrowth(ENV.rh) : 1;
       uniforms.uCloudEvolve.value = (timeSec / (CLOUDS.evolveH * 3600)) % 256;
       centre.copy(camPos).negate(); dome.position.copy(centre); dome.updateMatrix(); // camera-relative: the shell sits at −camera
       const rot = new THREE.Matrix4().extractRotation(camera.matrixWorldInverse);

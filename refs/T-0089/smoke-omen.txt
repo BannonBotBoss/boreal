@@ -1,0 +1,31 @@
+T-0089 GPU smoke on omen, 2026-10-28 ~8:05 PM PT. tools/smoke-tiers.mjs on vite :5199, fresh detached worktree C:\dev\boreal-grok-t0089.
+GPU: NVIDIA GeForce RTX 5060 Laptop GPU (ANGLE D3D11), vsync off. Bench lock taken by the script (BENCH_NAME 'grok-globe: T-0089 smoke'), released.
+Matthew's own vite on :5173 was running (started 7:13 PM) but GPU load was 0 %.
+
+| tier     | main 30217f4 (before T-0089) | main 44e492f (T-0089 merged) |
+|----------|-----:|-----:|
+| Ultra    |  88 fps, gpu 4.5 ms |  86 fps, gpu 6.4 ms |
+| High     |  89 |  90 |
+| Medium   |  84 |  87 |
+| Low      |  97 |  96 |
+| Very low | 101 | 100 |
+| Minimum  | 129 | 137 |
+Program links 132 vs 131. Both runs end "FAIL world not built: 68 draws at Ultra": the same on main before T-0089, so it is the
+smoke script's draw threshold against main's current default view, not this change. fps difference is within run-to-run noise.
+The older "Ultra 113 / Minimum 197" baseline is from an earlier main and not comparable.
+
+--- raw T-0089 (44e492f) ---
+gpu at start: 3324 MiB, 8151 MiB, 0 % (used, total, util)
+loaded in 49 s, 131 program links
+Ultra     ssao 1  86 frames/s  68 draws/frame  gpu 6.4 ms  links 0
+High      ssao 1  90 frames/s  67 draws/frame  gpu 6.5 ms  links 0
+Medium    ssao 0  87 frames/s  84 draws/frame  gpu 7.0 ms  links 78
+Low       ssao 0  96 frames/s  65 draws/frame  gpu 5.3 ms  links 1
+Very low  ssao 0  100 frames/s  61 draws/frame  gpu 6.8 ms  links 42
+Minimum   ssao 0  137 frames/s  25 draws/frame  gpu 0.5 ms  links 66
+FAIL world not built: 68 draws at Ultra
+--- raw baseline (30217f4) ---
+gpu at start: 3360 MiB, 8151 MiB, 2 %
+loaded in 48 s, 132 program links
+Ultra 88 / High 89 / Medium 84 / Low 97 / Very low 101 / Minimum 129 (draws 68/67/85/64/61/25)
+FAIL world not built: 68 draws at Ultra

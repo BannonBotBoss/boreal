@@ -1,0 +1,5 @@
+console.error: Failed to load resource: the server responded with a status of 404 (Not Found)
+ready 7.7 s http://127.0.0.1:5197/?view=globe&hour=10&day=200&latlon=49.77,-94.5&alt=3000000&tier=4&panel=0
+DRIFT +u {"measured":0.006327729857553025,"predicted":0.011665310700391876,"worldSec":50.53,"frames":24}
+DRIFT -u {"measured":-0.011671700800387125,"predicted":-0.011665310700391876,"worldSec":28.66,"frames":14}
+DRIFT frames 41 in 90.2 s, flip seen at frame 24

@@ -7,10 +7,10 @@ use crate::cover::{cover_row, place_hash, Cover};
 pub const SPECIES_JSON: &str = include_str!("../../../data/earth/species-density.json");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3, GrayWolf = 4, Caribou = 5 }
+pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3, GrayWolf = 4, Caribou = 5, AmericanBlackBear = 6, GrizzlyBear = 7 }
 impl Species {
-    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx", "gray_wolf", "caribou"][self as usize] }
-    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), 4 => Some(Self::GrayWolf), 5 => Some(Self::Caribou), _ => None } }
+    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx", "gray_wolf", "caribou", "american_black_bear", "grizzly_bear"][self as usize] }
+    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), 4 => Some(Self::GrayWolf), 5 => Some(Self::Caribou), 6 => Some(Self::AmericanBlackBear), 7 => Some(Self::GrizzlyBear), _ => None } }
 }
 
 fn block(sp: Species) -> &'static str {
@@ -67,7 +67,8 @@ pub fn spawn_count(density_per_ha: f64, side_m: f64, lat: f64, lon: f64) -> u32 
     (f + if place_hash(lon, lat + 7.0) < expected - f { 1.0 } else { 0.0 }) as u32
 }
 
-pub const ALL: [Species; 6] = [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::Moose, Species::CanadaLynx, Species::GrayWolf, Species::Caribou];
+pub const ALL: [Species; 8] = [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::Moose, Species::CanadaLynx, Species::GrayWolf, Species::Caribou,
+    Species::AmericanBlackBear, Species::GrizzlyBear];
 
 /// The local population list for one landing: (species, whole animals) for every species with at least one animal in a
 /// square patch `side_m` wide, in species-id order. This is what the bridge sends so the viewer can show the full cast.
@@ -134,6 +135,18 @@ mod tests {
         assert!(pop.iter().all(|&(_, n)| n > 0));
         assert_eq!(pop, landing_population(55.0, -100.0, 300.0, 0.9, false, 2026, 5_000.0));
         assert!(landing_population(45.0, -95.0, 0.0, 1.0, true, 2026, 5_000.0).is_empty());
+    }
+    #[test] fn bears_black_widespread_grizzly_west_only() {
+        let b = density_per_ha(Species::AmericanBlackBear, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        let m = density_per_ha(Species::Moose, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        assert!(b > 0.0 && b < 0.02, "black bear {b} (moose {m})");
+        assert_eq!(density_per_ha(Species::AmericanBlackBear, 68.0, -110.0, 50.0, 0.4, false, 2026), 0.0, "no black bears on tundra");
+        let g = density_per_ha(Species::GrizzlyBear, 55.0, -120.0, 300.0, 0.9, false, 2026);
+        assert!(g > 0.0 && g < b, "grizzly {g} scarcer than black bear {b}");
+        assert!(density_per_ha(Species::GrizzlyBear, 68.0, -110.0, 50.0, 0.4, false, 2026) > 0.0, "barren-ground grizzlies");
+        assert_eq!(density_per_ha(Species::GrizzlyBear, 50.0, -75.0, 300.0, 0.9, false, 2026), 0.0, "none in Quebec");
+        assert_eq!(Species::from_id(7), Some(Species::GrizzlyBear));
+        assert_eq!(Species::from_id(8), None);
     }
     #[test] fn spawn_count_tracks_density() {
         assert_eq!(spawn_count(0.0, 500.0, 50.0, -90.0), 0);

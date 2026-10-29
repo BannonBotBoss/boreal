@@ -41,6 +41,7 @@ interface Exports {
   memory: WebAssembly.Memory; layout_version(): number; plane_count(): number;
   grid_init(nlat: number, nlon: number): number; grid_seed(day: number, hour: number): void; grid_boot(day: number, hour: number): void; grid_step(dt: number): void;
   grid_day(): number; grid_hour(): number; alloc_f64(n: number): number;
+  landing_population(lat: number, lon: number, elevM: number, vegetation: number, water: number, year: number, sideM: number, out: number, cap: number): number;
   solar_cell(day: number, hour: number, lat: number, lon: number, cloud: number, albedo: number, tC: number, ePa: number, out: number): void;
   radial_profile(rKm: number, mpRe: number, out: number): void;
   gas_column(body: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
@@ -95,12 +96,24 @@ export class PlanetSim {
   /** Emergent-object finder demo (emergent.rs): mode 0 relaxed PREM Earth, 1 unbound, 2 Earth + Moon. */
   emergentDemo(n: number, mode: number) { const p = this.buf(); this.x.emergent_demo(n, mode, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));
     return { count: o[0], mass: o[1], com: [o[2], o[3], o[4]], spinZ: o[5], members: o[6], trusted: o[7] > 0, extent: o[8], layers: o[9], insideHill: o[10] > 0, outsideRoche: o[11] > 0 }; }
+  private popScratch = 0;
+  /** Issue #162 bridge: the simulation's local population list at a landing, as { species, count } for every species
+   *  with at least one animal in a square patch `sideM` wide. Species ids follow LANDING_SPECIES. Empty on water. */
+  landingPopulation(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, year: number, sideM = 5000) {
+    const cap = LANDING_SPECIES.length, p = this.popScratch ||= this.x.alloc_f64(2 * cap);
+    const n = this.x.landing_population(lat, lon, elevM, vegetation, water ? 1 : 0, year, sideM, p, cap);
+    const o = new Float64Array(this.x.memory.buffer, p, 2 * n), out: { species: (typeof LANDING_SPECIES)[number]; count: number }[] = [];
+    for (let i = 0; i < n; i++) out.push({ species: LANDING_SPECIES[o[2 * i]], count: o[2 * i + 1] });
+    return out;
+  }
   /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */
   gasColumn(hKm: number, body = 0, qSurf = 0, co2ppm = 422.8) {
     const p = this.buf(); this.x.gas_column(body, hKm, qSurf, co2ppm, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));
     return { T: o[0], p: o[1], rho: o[2], n: o[3], x: o.slice(4) };
   }
 }
+/** Species ids of the Rust species table (species.rs `Species`), in id order. */
+export const LANDING_SPECIES = ['snowshoe_hare', 'white_tailed_deer', 'moose', 'canada_lynx', 'gray_wolf', 'caribou'] as const;
 export const INTERIOR_LAYERS = ['inner core', 'outer core', 'mantle', 'crust', 'ocean', 'atmosphere', 'magnetosphere', 'solar wind'] as const;
 export const ATM_LAYERS = ['troposphere', 'stratosphere', 'mesosphere', 'thermosphere', 'exosphere'];
 export const GAS_SPECIES = ['N2', 'O2', 'Ar', 'CO2', 'H2O', 'O3', 'O', 'Na', 'He'] as const;

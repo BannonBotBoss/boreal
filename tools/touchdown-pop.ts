@@ -3,7 +3,6 @@
 // (88 deg: Schmidt 2008 JEB 211:3775 Table 4; factor 2 an estimate). npx tsx tools/touchdown-pop.ts [env VS, HZ, LOCK=0|1, VERBOSE=1]
 import { createBounding, GIRDLE, selectRow, FORE_LOCK, FORE_JOINT, FORE_SOFT, FORE_PLAN, FORE_STANCE } from '../src/animals/locomotion/bounding';
 // run 14: SET="k=v,..." as tools/elbow-pop.ts (soft.* FORE_SOFT, plan.* FORE_PLAN, stance.* FORE_STANCE, else FORE_LOCK / FORE_JOINT)
-for (const kv of (process.env.SET ?? '').split(',').filter(Boolean)) { const [k, x] = kv.split('='); const n = Number(x); if (k.startsWith('soft.')) (FORE_SOFT as any)[k.slice(5)] = n; else if (k.startsWith('plan.')) (FORE_PLAN as any)[k.slice(5)] = n; else if (k.startsWith('stance.')) (FORE_STANCE as any)[k.slice(7)] = n; else if (k in FORE_LOCK) (FORE_LOCK as any)[k] = n; else if (k in FORE_JOINT) (FORE_JOINT as any)[k] = n; }
 import { HOST_GAIT, planFor, poseFor } from './bound-plans';
 const D = 180 / Math.PI, wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 const SEG = { scap: (a: any) => a.girdle, hum: (a: any) => a.girdle + a.leg, fore: (a: any) => a.girdle + a.leg + a.knee, manus: (a: any) => a.girdle + a.leg + a.knee + a.wrist } as const;
@@ -28,6 +27,8 @@ export function popCell(v: number, hz: number, foreLock = true, secs = 4, verbos
   return { gate, plants, overPlant, overRest, plant, rest };
 }
 if (process.argv[1]?.includes('touchdown-pop')) {
+  // SET applies only when this file is run as a script (run 14: an inherited SET must not change a test that imports popCell / elbowCell)
+  for (const kv of (process.env.SET ?? '').split(',').filter(Boolean)) { const [k, x] = kv.split('='); const n = Number(x); if (k.startsWith('soft.')) (FORE_SOFT as any)[k.slice(5)] = n; else if (k.startsWith('plan.')) (FORE_PLAN as any)[k.slice(5)] = n; else if (k.startsWith('stance.')) (FORE_STANCE as any)[k.slice(7)] = n; else if (k in FORE_LOCK) (FORE_LOCK as any)[k] = n; else if (k in FORE_JOINT) (FORE_JOINT as any)[k] = n; }
   const V = (process.env.VS ?? '5,8.5,10,11.6').split(',').map(Number), H = (process.env.HZ ?? '60,120,240').split(',').map(Number), lock = process.env.LOCK !== '0', f = (x: number) => x.toFixed(1);
   console.log(`lock ${lock} | v hz | gate | plants overPlant overRest | plant max scap hum fore manus | stance+lift max scap hum fore manus (deg/frame)`);
   for (const v of V) for (const hz of H) { const r = popCell(v, hz, lock, 4, process.env.VERBOSE === '1');

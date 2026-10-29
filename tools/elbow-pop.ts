@@ -4,7 +4,6 @@
 // npx tsx tools/elbow-pop.ts [env VS, HZ, LOCK=0|1, DIAG=1, SET=k=v,... (FORE_LOCK / FORE_JOINT / FORE_SOFT keys; FORE_SOFT's as soft.k)]
 // run 13: also the fore paw-to-target miss (|sole - target| world, mm) per phase, and the smallest elbow bend at plant / stance.
 import { createBounding, GIRDLE, selectRow, FORE_LOCK, FORE_JOINT, FORE_SOFT, FORE_PLAN, FORE_STANCE } from '../src/animals/locomotion/bounding';
-for (const kv of (process.env.SET ?? '').split(',').filter(Boolean)) { const [k, x] = kv.split('='); if (k.startsWith('soft.')) (FORE_SOFT as any)[k.slice(5)] = Number(x); else if (k.startsWith('plan.')) (FORE_PLAN as any)[k.slice(5)] = Number(x); else if (k.startsWith('stance.')) (FORE_STANCE as any)[k.slice(7)] = Number(x); else if (k in FORE_LOCK) (FORE_LOCK as any)[k] = Number(x); else if (k in FORE_JOINT) (FORE_JOINT as any)[k] = Number(x); } // tuning sweeps only
 import { HOST_GAIT, planFor, poseFor } from './bound-plans';
 import { limbToWorld } from '../src/animals/locomotion/controller';
 import { forearmBelowDeg } from '../src/animals/locomotion/touchdownPlan';
@@ -42,6 +41,8 @@ export function elbowCell(v: number, hz: number, foreLock = true, secs = 4, diag
   return { gate, plants, plant, rest, overP, overS, air, overA, under, miss, bend, cont };
 }
 if (process.argv[1]?.includes('elbow-pop')) {
+  // SET applies only when this file is run as a script (run 14: an inherited SET must not change a test that imports popCell / elbowCell)
+  for (const kv of (process.env.SET ?? '').split(',').filter(Boolean)) { const [k, x] = kv.split('='); if (k.startsWith('soft.')) (FORE_SOFT as any)[k.slice(5)] = Number(x); else if (k.startsWith('plan.')) (FORE_PLAN as any)[k.slice(5)] = Number(x); else if (k.startsWith('stance.')) (FORE_STANCE as any)[k.slice(7)] = Number(x); else if (k in FORE_LOCK) (FORE_LOCK as any)[k] = Number(x); else if (k in FORE_JOINT) (FORE_JOINT as any)[k] = Number(x); }
   const V = (process.env.VS ?? '5,8.5,10,11.6').split(',').map(Number), H = (process.env.HZ ?? '60,120,240').split(',').map(Number), lock = process.env.LOCK !== '0', f = (x: number) => x.toFixed(1);
   console.log(`lock ${lock} | v hz | gate | plants | plant max scap hum elbow manus (over) | stance+lift max scap hum elbow manus (over)  deg/frame`);
   for (const v of V) for (const hz of H) { const r = elbowCell(v, hz, lock, 4, process.env.DIAG === '1');

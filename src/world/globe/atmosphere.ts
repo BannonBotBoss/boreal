@@ -18,7 +18,7 @@ import { GLOBE_LAYERS } from './planetLayers';
 import { K } from '../../core/constants';
 import { COMPOSITION, rayleighPerKm, scaleHeightKm, ozoneEquivPerKm } from './composition';
 import { ENV, GAME_SEC_PER_WORLD_SEC } from '../../render/environment';
-import { OBSERVATION_SOURCES } from '../../core/observation';
+import { SCALE_BOUNDS, clockRate } from '../../core/worldClock';
 import { smoothstep } from '../../proc/math';
 
 /** Earth-like constants (Nishita 1993 / Bruneton 2008 values; per km). [game calibration: sunI, mieG] */
@@ -70,10 +70,11 @@ export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .8, octaves: [8, 6, 
  *  (sky.ts Koschmieder). ATMOS.mie is the dry (RH 0) coefficient. */
 export const HYGRO = { gamma: .3, rhCap: .95 };
 export const mieGrowth = (rh: number) => (1 - Math.min(HYGRO.rhCap, Math.max(0, Number.isFinite(rh) ? rh : 0))) ** -HYGRO.gamma;
-/** Cloud drift holds above the Behavioral observation scale: PR #92's SCALE_BOUNDS behavioral → ecological edge
- *  (exit 800, enter 1200; #109). Between them it blends (smoothstep), above it the shell stops turning, so a fast dial
- *  does not spin it into a blur. Swap to worldClock.resolveObservation once #92 is on main. */
-export const DRIFT_HOLD = { exit: 800, enter: 1200 };
+/** Cloud drift holds above the Behavioral observation scale: the one clock's SCALE_BOUNDS edge above 'behavioral'
+ *  (worldClock.ts, #92/#109: exit 800, enter 1200). Between them it blends (smoothstep, the same band resolveObservation
+ *  blends across), above it the shell stops turning, so a fast dial does not spin it into a blur. */
+const BEHAVIORAL_EDGE = SCALE_BOUNDS.find(b => b.above === 'ecological')!;
+export const DRIFT_HOLD = { exit: BEHAVIORAL_EDGE.exit, enter: BEHAVIORAL_EDGE.enter };
 export const driftWeight = (rate: number) => 1 - smoothstep(DRIFT_HOLD.exit, DRIFT_HOLD.enter, Math.abs(rate));
 /** Angular rate (rad per game second) of an eastward wind u at latitude lat about the polar axis: u / (R cos lat). */
 export const cloudDriftRate = (u: number, latDeg: number, R: number) => u / (R * Math.max(.05, Math.cos(latDeg * Math.PI / 180)));
@@ -192,7 +193,7 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
 }
 `;
 
-export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void; setLayers(clouds: boolean, air: boolean, airglow?: boolean): void; setAurora(a: { ocbMlat: number; ovalEqMlat: number; relBrightness: number } | null): void }
+export interface Atmosphere { dome: THREE.Mesh; uniforms: Record<string, THREE.IUniform>; readonly tier: number; update(camera: THREE.Camera, camPos: THREE.Vector3, sunDir: THREE.Vector3, timeSec?: number, viewH?: number, surfaceRadiusM?: number): void; patch(m: THREE.Material): void; setTier(tier: number): void; setClear(k: number): void; setLayers(clouds: boolean, air: boolean, airglow?: boolean): void; setAurora(a: { ocbMlat: number; ovalEqMlat: number; relBrightness: number } | null): void }
 const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.length - 1, tier))];
 
 /** Sky shell + aerial-perspective patcher for a planet of radius `R` metres (centre at the world origin). */
@@ -250,11 +251,14 @@ void main() {
     setTier(t) { if (t === cur) return; cur = t; [sn, sl, tn, tl] = stepsFor(t); setSteps(); },
     /** Per frame, after the camera is placed (camera-relative: camera renders from the origin, `camPos` is its double
      *  world position): planet centre and sun in view space, km. */
-    update(camera, camPos, sunDir, timeSec = 0, viewH = 900) {
+    update(camera, camPos, sunDir, timeSec = 0, viewH = 900, surfaceRadiusM?: number) {
+      // The discard sphere and the aerial-perspective height are the drawn surface (radial.ts), not the mean sphere.
+      // The dome mesh stays at the radius it was built with; the march uses these uniforms.
+      if (surfaceRadiusM != null && surfaceRadiusM > 0) { const rp = surfaceRadiusM / 1000; uniforms.uRp.value = rp; uniforms.uRa.value = rp + ATMOS.heightKm; }
       const fov = (camera as THREE.PerspectiveCamera).fov ?? 45; uniforms.uCloudEdge.value.z = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, viewH); // rad per pixel (cloud octave fade)
       // cloud drift: angle and evolution reduced in double precision on the CPU (the GPU only sees small numbers)
       // T-0089: the record's east wind at the sub-point (u / R cos lat) on simulation seconds; CLOUDS.windMs only while empty
-      const u = ENV.source ? ENV.windE : CLOUDS.windMs, lat = ENV.source ? ENV.latDeg : 0, rate = OBSERVATION_SOURCES.rate();
+      const u = ENV.source ? ENV.windE : CLOUDS.windMs, lat = ENV.source ? ENV.latDeg : 0, rate = clockRate(); // the one clock's signed rate (observationRecord().rate is still 0/1 on main)
       driftAng = driftSec === null ? stepCloudDrift(0, timeSec, u, lat, R, rate) : stepCloudDrift(driftAng, timeSec - driftSec, u, lat, R, rate); driftSec = timeSec;
       uniforms.uCloudSpin.value.set(Math.cos(driftAng), Math.sin(driftAng));
       uniforms.uMieScale.value = ENV.source ? mieGrowth(ENV.rh) : 1;

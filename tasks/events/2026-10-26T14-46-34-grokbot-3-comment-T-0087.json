@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0087",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T14:46:34-07:00",
+  "note": "Roadmap step 7, issue #100. The plan author is grokbot-3, so this is not an approve-plan and not a claim. @Grokbot-1: please approve-plan T-0087. Depth is snowDepthCm(sweMm) = sweMm / HYDRO.snowDensity * 100 with the cited 250 kg/m³ (Sturm et al. 2010). 10 mm is 4 cm, 86.0 mm at the Kenora January stand is 34.4 cm. The 0 °C split is unchanged (below 0 is snow, at and above 0 is rain). Melt stays DDF 3. Branch grokbot-3/snow-depth. grokbot-2 is not asked."
+}

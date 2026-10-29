@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import type { PlanetSim } from '../src/core/planetBudget';
 import { WEATHER, SITE, solar, weatherAt } from '../src/core/weather';
 import { bindPlanetWeather, weatherAtLatLon } from '../src/core/planetWeather';
-import { observationRecord, OBSERVATION_SOURCES } from '../src/core/observation';
+import { observationRecord } from '../src/core/observation';
+import { SCALE_BOUNDS, clockRate, gameSecondsPerWorldSecond, setClockRate } from '../src/core/worldClock';
 import { phenology } from '../src/core/treeSpecies';
 import { WIND_UNIFORMS } from '../src/render/trees';
 import { ENV, ENV_FORCE, ENV_UNIFORMS, GAME_SEC_PER_WORLD_SEC, fillEnvironmentGlobe, fillEnvironmentGround } from '../src/render/environment';
@@ -21,7 +22,7 @@ const humid = { tair: 12, rh: 0.9, q: 0.008, u: 15, v: -4, precip: 24, snow: 0, 
 
 test('globe record equals weatherAtLatLon at the sub-point, plus phenology, solar and the observation rate', () => {
   const sim = fakeSim(humid), day = 200, hour = 14, lat = 49.77, lon = -94.5;
-  const savedRate = OBSERVATION_SOURCES.rate; OBSERVATION_SOURCES.rate = () => 37;
+  const savedRate = clockRate(); setClockRate(37);
   try {
     assert.equal(fillEnvironmentGlobe(lat, lon, day, hour, sim), true);
     const w = weatherAtLatLon(lat, lon, sim)!, ph = phenology(day);
@@ -30,13 +31,13 @@ test('globe record equals weatherAtLatLon at the sub-point, plus phenology, sola
     assert.equal(ENV.windE, w.u); assert.equal(ENV.windN, w.v); assert.equal(ENV.latDeg, w.latDeg);
     assert.deepEqual(ENV.season, ph);
     assert.equal(ENV.sunlight, solar(day, hour, lat, lon, SITE.tz).toa);
-    assert.equal(ENV.rate, observationRecord().rate);
+    assert.equal(ENV.rate, clockRate()); assert.ok(Math.abs(ENV.rate - 37) < 1e-6, `rate ${ENV.rate}`);
     // uniforms carry the same numbers
     assert.equal(ENV_UNIFORMS.uEnvTemp.value, w.tC); assert.equal(ENV_UNIFORMS.uEnvHumidity.value, w.rh);
-    assert.equal(ENV_UNIFORMS.uEnvRain.value, w.precipMmH); assert.equal(ENV_UNIFORMS.uEnvRate.value, 37);
+    assert.equal(ENV_UNIFORMS.uEnvRain.value, w.precipMmH); assert.equal(ENV_UNIFORMS.uEnvRate.value, ENV.rate);
     assert.equal(ENV_UNIFORMS.uEnvSeason.value.x, ph.colour); assert.equal(ENV_UNIFORMS.uEnvSeason.value.y, ph.off);
     assert.equal(ENV_UNIFORMS.uEnvSun.value, ENV.sunlight);
-  } finally { OBSERVATION_SOURCES.rate = savedRate; }
+  } finally { setClockRate(savedRate); }
 });
 
 test('no grid booted: the globe record says so and keeps no stale wind', () => {
@@ -78,10 +79,12 @@ test('drift angle after 1 game hour = u x 3600 / (R cos lat)', () => {
     for (let i = 0; i < 60; i++) ang = stepCloudDrift(ang, dW, u, lat, R, 1);
     assert.ok(Math.abs(ang - want) < 1e-9, `${ang} vs ${want}`);
   }
-  assert.equal(GAME_SEC_PER_WORLD_SEC, 12);
+  assert.equal(GAME_SEC_PER_WORLD_SEC, gameSecondsPerWorldSecond); assert.equal(GAME_SEC_PER_WORLD_SEC, 12);
 });
 
 test('drift holds above the Behavioral scale and blends across its band', () => {
+  const edge = SCALE_BOUNDS.find(b => b.above === 'ecological')!; // the one clock's band, not a copy
+  assert.equal(DRIFT_HOLD.exit, edge.exit); assert.equal(DRIFT_HOLD.enter, edge.enter);
   assert.equal(driftWeight(1), 1); assert.equal(driftWeight(DRIFT_HOLD.exit), 1);
   assert.equal(driftWeight(DRIFT_HOLD.enter), 0); assert.equal(driftWeight(1e6), 0); assert.equal(driftWeight(-1e6), 0);
   const mid = driftWeight((DRIFT_HOLD.exit + DRIFT_HOLD.enter) / 2); assert.ok(mid > 0.49 && mid < 0.51);

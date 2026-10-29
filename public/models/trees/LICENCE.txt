@@ -1,0 +1,15 @@
+Kenney Nature Kit trees (CC0 1.0 Universal).
+
+pine-a.glb    tree_pineDefaultA
+pine-b.glb    tree_pineRoundA
+pine-c.glb    tree_pineTallA_detailed
+oak.glb       tree_oak
+broadleaf.glb tree_default
+
+Author: Kenney (www.kenney.nl). Licence: CC0 1.0 Universal.
+https://creativecommons.org/publicdomain/zero/1.0/
+No attribution is required. These files are the glTF copies from
+https://github.com/shorepine/kenney (a mirror of the Kenney packs).
+
+The game bakes each model to an impostor card (colour and normals) and
+instances the cards. It does not draw the source mesh once per tree.

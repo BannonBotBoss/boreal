@@ -4,12 +4,13 @@
  * owns none of them:
  *   position  = the render camera (registered by buildScene) — x/z fall back to the interest centre (src/core/interest.ts)
  *   altitude  = camera y minus heightAt(x, z) (src/core/world.ts), the same ground every system uses
- *   rate      = the one clock's rate (1 on main until the single-clock branch, PR #92, lands and registers clockRate)
- *   embodied  = the current playable's id (src/render/playables.ts), null in photo mode (free camera, no body)
+ *   rate      = the one clock's rate (0 while paused, else 1, on main until the single-clock branch, PR #92, lands and registers clockRate)
+ *   embodied  = the store id of the animal you have entered (T-0107), null in photo mode and before entry
  * No second interest radius, no second clock, no stored copy: every call reads the sources again.
  */
 import { INTEREST } from './interest';
 import { heightAt } from './world';
+import { isPaused } from './worldClock';
 
 export interface Observation { x: number; y: number; z: number; altitude: number; rate: number; embodied: string | null }
 export interface ObservationSources {
@@ -19,7 +20,7 @@ export interface ObservationSources {
   ground: (x: number, z: number) => number;
 }
 /** Live sources. buildScene registers camera and embodied; the clock registers rate. Tests may swap any of them. */
-export const OBSERVATION_SOURCES: ObservationSources = { camera: null, embodied: () => null, rate: () => 1, ground: heightAt };
+export const OBSERVATION_SOURCES: ObservationSources = { camera: null, embodied: () => null, rate: () => isPaused() ? 0 : 1, ground: heightAt };
 export function registerObservationSources(s: Partial<ObservationSources>) { Object.assign(OBSERVATION_SOURCES, s); }
 
 export function observationRecord(src: ObservationSources = OBSERVATION_SOURCES): Observation {

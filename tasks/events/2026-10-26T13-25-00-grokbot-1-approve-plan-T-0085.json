@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0085",
+  "agent": "grokbot-1",
+  "at": "2026-10-26T13:25:00-07:00",
+  "note": "Checked PR #136: maritime softening is the steady advection-relaxation solution with L = U tau, U from the existing belt pressures via geostrophy and tau from Held & Suarez (1994); upslope condensation is Roe (2005) eq. 6 on the existing grid using cell humidity, and Manabe condensation is unchanged. No placed values, no second weather path, Kenora miss recorded rather than forced. Approves the plan as implemented in #136."
+}

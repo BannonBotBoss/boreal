@@ -1,0 +1,185 @@
+[
+  {
+    "name": "slow-individuals",
+    "note": "Same place, real time. Animals are bodies.",
+    "rate": 1,
+    "census": {
+      "census": {
+        "individuals": 4.8522824637290105,
+        "density": 0.14771753653788297,
+        "population": 5.000000000266893
+      },
+      "near": 40,
+      "mid": 60,
+      "chunks": 3,
+      "scale": "immediate",
+      "lower": "immediate",
+      "higher": "immediate",
+      "blend": 1,
+      "animals": [
+        {
+          "species": "hare",
+          "x": 23.90434768918802,
+          "z": -4.40599149839183,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 32.33062719230158,
+          "z": -6.396560590711959,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": -18.13735559348923,
+          "z": -28.48543875538141,
+          "body": 0.8522824637290104,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 26.700977165279152,
+          "z": 20.878905459158993,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 28.811807586481052,
+          "z": 18.07818321259807,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        }
+      ]
+    }
+  },
+  {
+    "name": "mid-blend",
+    "note": "Same place, 10×, inside the 8×–12× overlap. Bodies still up, density already on.",
+    "rate": 10,
+    "census": {
+      "census": {
+        "individuals": 2.428779036757141,
+        "density": 2.5712208923078164,
+        "population": 4.999999929064957
+      },
+      "near": 40,
+      "mid": 60,
+      "chunks": 3,
+      "scale": "immediate",
+      "lower": "immediate",
+      "higher": "behavioral",
+      "blend": 0.5,
+      "animals": [
+        {
+          "species": "hare",
+          "x": 23.90434768918802,
+          "z": -4.40599149839183,
+          "body": 0.5,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 32.33062719230158,
+          "z": -6.396560590711959,
+          "body": 0.5,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": -18.095518804752125,
+          "z": -28.372967945354244,
+          "body": 0.42877903675714074,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 26.700977165279152,
+          "z": 20.878905459158993,
+          "body": 0.5,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 28.811807586481052,
+          "z": 18.07818321259807,
+          "body": 0.5,
+          "ink": 0.65,
+          "kind": "herd"
+        }
+      ]
+    }
+  },
+  {
+    "name": "fast-density",
+    "note": "Same place, 20×, behavioral. The same animals are the density.",
+    "rate": 20,
+    "census": {
+      "census": {
+        "individuals": 0,
+        "density": 4.99999993421553,
+        "population": 4.99999993421553
+      },
+      "near": 40,
+      "mid": 60,
+      "chunks": 3,
+      "scale": "behavioral",
+      "lower": "behavioral",
+      "higher": "behavioral",
+      "blend": 1,
+      "animals": [
+        {
+          "species": "hare",
+          "x": 24.751106610967415,
+          "z": -4.400905906339449,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 34.34768297967957,
+          "z": -9.185336322057452,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": -17.8444980723295,
+          "z": -27.69814308519125,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 26.700977165279152,
+          "z": 20.878905459158993,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 28.811807586481052,
+          "z": 18.07818321259807,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0077",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T18:28:50-07:00",
+  "branch": "grokbot-3/single-time-control",
+  "skill": "single-clock",
+  "handoff": "tasks/handoffs/T-0077-grokbot-3.md",
+  "note": "One clock in src/core/worldClock.ts. In-game bar is src/ui/timeHud.ts createTimeHud. Bindings: comma / d-pad left slower, period / d-pad right faster, semicolon / left-stick click pause or play, T / d-pad up hour. Time tab removed from buildTabs only. ./node_modules/.bin/tsc --noEmit exit 0. npm test 786 tests, 772 pass, 0 fail, 14 todo. No screenshot of the bar. Not GitHub-approved and not merged."
+}

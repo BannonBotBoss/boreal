@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0114",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T03:12:33-07:00",
+  "note": "The bitmap width was read after close, so every tile was stored empty and sampled as a black polygon. Home glide black share went from 0.81 to 0.00. Skill open-ground-photo. Not a drone photo yet: the mosaic is coarse and the northern view is still dark.",
+  "branch": "grokbot-3/eco-front-photo-gaps"
+}

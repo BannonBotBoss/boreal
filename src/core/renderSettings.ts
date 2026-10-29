@@ -6,7 +6,6 @@
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { HARE } from '../animals/hare';
 import { FEEL, HAPTIC_CATS } from '../ui/haptics';
-import { GROUND } from './ground';
 import { WEATHER, initWeather } from './weather';
 import { INTEREST } from './interest';
 import { STAGES } from './stages/elevation';
@@ -65,7 +64,6 @@ export const RENDER_SETTINGS: SettingDef[] = [
   { id: 'feel.ui', label: 'Haptics: UI and photo mode', group: 'Feel', type: 'toggle', default: true, apply: v => { HAPTIC_CATS.ui = !!v; } },
   { id: 'feel.editor', label: 'Haptics: editor limits', group: 'Feel', type: 'toggle', default: true, apply: v => { HAPTIC_CATS.editor = !!v; } },
   { id: 'feel.sound', label: 'Sound at editor limits', group: 'Feel', type: 'toggle', default: SYSTEM_PROPERTIES.haptics.editorSound, apply: v => { FEEL.sound = !!v; } },
-  { id: 'world.groundSpeed', label: 'Ground flow / decay speed ×', group: 'World', type: 'slider', min: 1, max: 100000, step: 1, default: 1, apply: v => { GROUND.speed = Number(v); } },
   { id: 'interest.near', label: 'Full-detail radius (m)', group: 'Interest radius', type: 'slider', min: 40, max: 120, step: 10, default: 60, apply: v => { USER.near = Number(v); capRender(); } },
   { id: 'interest.mid', label: 'LOD radius (m; beyond = math only)', group: 'Interest radius', type: 'slider', min: 60, max: 240, step: 20, default: 100, apply: v => { USER.mid = Number(v); capRender(); } },
   { id: 'quality.auto', label: 'Adaptive quality (Auto keeps the target frame rate)', group: 'Quality', type: 'toggle', default: true, apply: v => { GOVERNOR.auto = !!v; resetGovernor(); } },
@@ -79,18 +77,22 @@ export const RENDER_SETTINGS: SettingDef[] = [
   { id: 'weather.on', label: 'Weather simulation', group: 'Weather', type: 'toggle', default: true, apply: v => { WEATHER.on = !!v; } },
   { id: 'weather.quality', label: 'Weather grid', group: 'Weather', type: 'select', options: ['Low (6×6)', 'Normal (8×8)', 'High (12×12)'], default: 'Normal (8×8)',
     apply: v => { const n = parseInt(String(v).split('(')[1]) || 8; if (n !== WEATHER.quality) { WEATHER.quality = n; initWeather(); } } },
-  { id: 'weather.timeScale', label: 'Weather time scale ×', group: 'Weather', type: 'slider', min: 0, max: 20, step: 1, default: 1, apply: v => { WEATHER.timeScale = Number(v); } },
   { id: 'animals.birdRate', label: 'Bird activity ×', group: 'Animals', type: 'slider', min: .25, max: 3, step: .25, default: 1, apply: v => { birdRate = Number(v); RENDER.birdRate = birdsOn ? birdRate : 0; } },
 ];
 let hareOn = true, hareCount = HARES_DEFAULT, birdsOn = true, birdRate = 1;
 
+/** Old per-system time rates. They are not applied; a save that still has them is rewritten without them. The clock's rate is the only one. */
+export const RETIRED_TIME_KEYS = ['world.groundSpeed', 'weather.timeScale'];
 /** Generic store over the schema: persisted values, apply-on-set, reset. Returns whether a regeneration is needed. */
 export function createSettingsStore(schema: SettingDef[], key = 'boreal.render.v1', storage: Pick<Storage, 'getItem' | 'setItem'> | undefined = globalThis.localStorage) {
   let saved: Record<string, SettingValue> = {};
   try { saved = JSON.parse(storage?.getItem(key) ?? '{}'); } catch { /* defaults */ }
+  const retired = RETIRED_TIME_KEYS.some(id => id in saved);
+  for (const id of RETIRED_TIME_KEYS) delete saved[id];
   const values: Record<string, SettingValue> = Object.fromEntries(schema.map(d => [d.id, saved[d.id] ?? d.default]));
   const persist = () => { try { storage?.setItem(key, JSON.stringify(values)); } catch { /* storage blocked */ } };
   for (const d of schema) d.apply(values[d.id]);
+  if (retired) persist();
   return {
     get: (id: string) => values[id],
     set(id: string, v: SettingValue) { const d = schema.find(d => d.id === id)!; values[id] = v; d.apply(v); persist(); return !!d.regen; },

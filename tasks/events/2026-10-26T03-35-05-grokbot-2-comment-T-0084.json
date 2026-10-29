@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0084",
+  "agent": "grokbot-2",
+  "at": "2026-10-26T03:35:05-07:00",
+  "note": "Plan text updated before approval. Checked issues #101, #117, #118 and #119 against tasks/T-0084-empty-entity-store.md and step 11 of notes/design-roadmap.md. #101 (newer than the roadmap where they differ) puts the entity store in Rust and leaves Three.js as the picture. #117's competing drives, #118's inspector and #119's event records all need one handle that stays valid until removal and fails afterwards. The original four objectives did not say that, and they did not say to leave the event log and a second TypeScript list unbuilt. Added those two objectives. Widened the shortlist from bevy_ecs and legion to also include hecs (a small maintained component store) and slotmap (the generational-arena pattern, not a component store by itself), because rule 11 and this run ask for a proven small dependency when the repo allows one. The pick is still an objective of the implementation, recorded in AGENT-NOTES.md. Header credits stay 72 (rule 14); only Matthew changes that number. This comment is not an approval."
+}

@@ -55,7 +55,7 @@ export function controlsScreen(o: ControlsHooks) {
     cap.hidden = true;
     const btn = (label: string, on: () => void, cls = '') => { const b = h('button', cls, label) as HTMLButtonElement; b.type = 'button'; b.onclick = on; return b; };
     const tools = h('div', 'ctl-tools'); tools.append(btn('Reset to defaults', () => { o.set(defaults()); render(); }), ...(o.library ? [btn('Library (about the game)', () => o.library!())] : []));
-    left.append(pad.svg, live, cap, clash, tools, h('p', 'note', 'Pick an action, then press the button, stick direction or combination you want (hold them together, then let go). Esc or 8 s idle cancels. Fixed keys: menus (d-pad / stick, A, B · arrows, Enter, Esc), photo mode keys, M mute, [ ] volume, N / - = music, V flora view, O senses halo.'));
+    left.append(pad.svg, live, cap, clash, tools, h('p', 'note', 'Pick an action, then press the button, stick direction or combination you want (hold them together, then let go). Esc or 8 s idle cancels. Fixed keys: menus (d-pad / stick, A, B · arrows, Enter, Esc), photo mode keys, M mute, [ ] volume, N / - = music, V flora view, O senses halo. The in-game dial (hold comma or d-pad left to rewind, hold period or d-pad right to go forward, semicolon or left-stick click pauses or plays) is under Game and can be rebound.'));
     root.append(left, list);
     let target: { kind: 'action' | 'group'; id: string } | undefined, capture = createCapture(), started = 0, focused: string[] = [];
     const held = new Set<string>();

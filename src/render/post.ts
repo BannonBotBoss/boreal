@@ -10,6 +10,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { EXPOSURE } from '../core/light';
+import { DRONE_GRADE } from './droneGrade';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { GLSL_HASH } from '../proc/glsl';
 
@@ -135,7 +136,7 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
     /** `fx` = sun-driven screen-space lighting from the ladder (contact shadows, god-ray samples). */
     render(active: boolean, focalMmForFov: number, ao = 0, fx?: { contact: number; rays: number; sunDir: THREE.Vector3; sunCol: THREE.Color }) {
       const s = active ? settings : defaultSettings();
-      renderer.toneMappingExposure = baseExposure * 2 ** s.ev; // photo EV; the physical adaptation gain is folded into light intensities (render/sky)
+      renderer.toneMappingExposure = baseExposure * 2 ** s.ev * DRONE_GRADE.exposure; // photo EV; drone height adds DRONE_GRADE (render/droneGrade)
       renderer.toneMapping = active ? TONE_MAPS[s.toneMap] ?? baseToneMap : baseToneMap;
       const lightFx = !!fx && fx.sunDir.y > -.05 && (fx.contact > 0 || fx.rays > 0);
       if (!ao && !lightFx && (!active || neutral(s))) { renderer.render(scene, camera); return; }

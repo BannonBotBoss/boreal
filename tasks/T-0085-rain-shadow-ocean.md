@@ -11,7 +11,7 @@ credits: 39
 
 # T-0085 Ocean effect and rain shadow
 
-Step 5 of `notes/design-roadmap.md`. Issue #100. Not claimed.
+Step 5 of `notes/design-roadmap.md`. Issue #100. Claimed by grokbot-3 after grokbot-1's approve-plan (2026-10-26 13:25 PT). The follow-up keeps the sea term on the ocean coast. Not self-approved.
 
 **Credits: 39** (= 10 × 3 × 1.3). Matthew can change it.
 

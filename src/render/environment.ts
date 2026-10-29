@@ -6,7 +6,8 @@
  *                              (T-0082: both are one read of the Rust planet grid; this module never reads the grid)
  *   season                   = phenology(day) (core/treeSpecies), the same leaf-out / colour the trees use
  *   sunlight                 = solar(day, hour, lat, lon).toa, W/m² at the top of the air (NOAA, core/weather)
- *   rate                     = observationRecord().rate (T-0081: the one clock's rate)
+ *   rate                     = clockRate() (worldClock.ts, #92: the one clock's signed rate; observationRecord().rate
+ *                              is still the 0/1 placeholder until the clock registers into it)
  * Uniforms follow three.js UniformsLib: plain { value } objects merged into many materials. The wind uniforms are the
  * trees' WIND_UNIFORMS objects by reference, so there is no second wind.
  */
@@ -17,21 +18,21 @@ import { weatherAtLatLon } from '../core/planetWeather';
 import type { PlanetSim } from '../core/planetBudget';
 import { observationRecord } from '../core/observation';
 import { phenology } from '../core/treeSpecies';
-import { REAL_SECONDS_PER_GAME_HOUR } from '../core/timeOfDay';
+import { clockRate, gameSecondsPerWorldSecond } from '../core/worldClock';
 
 export interface Environment {
   /** air °C */ tC: number; /** relative humidity 0..1 */ rh: number; /** precipitation mm/h */ rainMmH: number;
   /** wind m/s, east and north */ windE: number; windN: number;
   /** latitude (deg) the record was read at: the globe's sub-point, or the home site */ latDeg: number;
   /** phenology(day) */ season: { colour: number; off: number };
-  /** top-of-air sunlight W/m² */ sunlight: number; /** clock rate (observationRecord) */ rate: number;
+  /** top-of-air sunlight W/m² */ sunlight: number; /** clock rate (worldClock.clockRate) */ rate: number;
   /** who filled it this frame; null = nothing (no grid booted), readers use their fallback */ source: 'ground' | 'globe' | null;
 }
 export const ENV: Environment = { tC: 0, rh: 0, rainMmH: 0, windE: 0, windN: 0, latDeg: SITE.lat, season: { colour: 0, off: 0 }, sunlight: 0, rate: 1, source: null };
 /** Dev hook (frames for rule 6): fields set here replace the read values after every fill. */
 export const ENV_FORCE: Partial<Pick<Environment, 'tC' | 'rh' | 'rainMmH' | 'windE' | 'windN'>> = {};
 /** Game seconds per world-clock second (300 real s per game hour = x12). */
-export const GAME_SEC_PER_WORLD_SEC = 3600 / REAL_SECONDS_PER_GAME_HOUR;
+export const GAME_SEC_PER_WORLD_SEC = gameSecondsPerWorldSecond; // worldClock.ts's conversion, not a second one
 
 export const ENV_UNIFORMS = {
   uEnvTemp: { value: 0 }, uEnvHumidity: { value: 0 }, uEnvRain: { value: 0 },
@@ -51,7 +52,7 @@ function finish(source: 'ground' | 'globe', day: number, sunlight: number, rate:
 export function fillEnvironmentGround(day = WEATHER.day, hour = WEATHER.hour) {
   const o = observationRecord(), w = weatherAt(o.x, o.z);
   ENV.tC = w.tC; ENV.rh = w.rh; ENV.rainMmH = w.rainMmH; ENV.windE = w.wind.x; ENV.windN = -w.wind.z; ENV.latDeg = SITE.lat;
-  finish('ground', day, solar(day, hour).toa, o.rate);
+  finish('ground', day, solar(day, hour).toa, clockRate());
 }
 
 /** Globe: T-0082's weatherAtLatLon at the camera's sub-point. `hour` is the game clock's local hour (SITE tz).
@@ -60,6 +61,6 @@ export function fillEnvironmentGlobe(latDeg: number, lonDeg: number, day: number
   const w = weatherAtLatLon(latDeg, lonDeg, sim);
   if (!w) { ENV.source = null; return false; }
   ENV.tC = w.tC; ENV.rh = w.rh; ENV.rainMmH = w.precipMmH; ENV.windE = w.u; ENV.windN = w.v; ENV.latDeg = w.latDeg;
-  finish('globe', day, solar(day, hour, w.latDeg, w.lonDeg, SITE.tz).toa, observationRecord().rate);
+  finish('globe', day, solar(day, hour, w.latDeg, w.lonDeg, SITE.tz).toa, clockRate());
   return true;
 }

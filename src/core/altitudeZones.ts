@@ -7,6 +7,7 @@
 import Z from '../../data/earth/altitude-zones.json';
 import { PLANET } from '../world/globe/planet';
 import { LEVEL } from './tuning';
+import { siteDatum, siteLatitude } from './sitePhase';
 
 const rad = (d: number) => d * Math.PI / 180;
 /** Annual mean sea-level temperature (C) at latitude (deg). */
@@ -19,7 +20,7 @@ export const treeLineM = (latDeg: number) => Math.max(0, (seaLevelWarmC(latDeg) 
 export const iceLineM = (latDeg: number) => Math.max(0, (seaLevelWarmC(latDeg) - Z.ice_line_warm_season_C) / Z.lapse_K_per_m);
 /** Zone at a height: 'forest' (plants grow), 'rock' (above the tree line), 'ice'. */
 export function zoneAt(altM: number, latDeg: number): 'forest' | 'rock' | 'ice' { return altM >= iceLineM(latDeg) ? 'ice' : altM >= treeLineM(latDeg) ? 'rock' : 'forest'; }
-/** Game-local height (core/world heightAt metres) -> metres above sea level: the home region sits at PLANET.home.elevation. */
-export const gameAltitudeM = (h: number) => PLANET.home.elevation + (h - LEVEL.waterSurface);
-/** Can plants grow at this game-local height (home latitude)? */
-export const plantsGrowAt = (h: number) => zoneAt(gameAltitudeM(h), PLANET.home.latDeg) === 'forest';
+/** Game-local height (core/world heightAt metres) -> metres above sea level. Home uses PLANET.home.elevation. A remote landing uses that site's own datum. */
+export const gameAltitudeM = (h: number) => siteDatum(PLANET.home.elevation) + (h - LEVEL.waterSurface);
+/** Can plants grow at this game-local height? Home latitude unless a landing moved the frame. */
+export const plantsGrowAt = (h: number) => zoneAt(gameAltitudeM(h), siteLatitude(PLANET.home.latDeg)) === 'forest';

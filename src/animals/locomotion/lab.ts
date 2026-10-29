@@ -3,7 +3,7 @@
  * by the locomotion layer. Params: ?terrain=flat|hills|world  ?gait=auto|walk|trot|pace|canter|gallop|bound|pronk
  * ?speed=<m/s>  ?lod=near|mid  ?rig=stick|real  ?t=<seconds to pre-simulate>  ?cam=side|follow  ?pause=1 (freeze after ?t)
  * ?seed=<n> (coat variety)  ?darken=0..2 ?streakSpacing ?streakWidth ?streakJitter=0..1 (coat layers, also sliders)  ?posture=key:value,... (override posture.ts)  ?cam=profile (eye-level side view, for comparing with reference photos)  ?hide=body,legs,feet,ik  ?raw=1 (springs off)  ?ui=0 (hide the panel)
- * ?pounce=1 (a pounce at t = 1 s and every 3 s after; P key or the button pounces any time)  ?timescale=0.05..1 (slow motion, T-0002)
+ * ?pounce=1 (a pounce at t = 1 s and every 3 s after; P key or the button pounces any time)  ?timescale= sets the one dial (rewind is negative; the pose holds above Immediate)
  */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -11,13 +11,15 @@ import { heightAt } from '../../core/world';
 import { createLocomotion, limbToWorld, referenceLayout, SPRINGS } from './controller';
 import { limbOf } from '../../core/animalBehavior';
 import { POSTURE } from './posture';
-import { TIMESCALE } from '../../core/timescale';
+import { clockRate, formatRate, observation, setClockRate } from '../../core/worldClock';
+import { timescaleFrom } from '../../core/timescale';
 import { GAIT_TABLE } from './gaits';
 import { createStickRig } from './stickRig';
 import { COAT } from './fork/bodyTubes';
 import { LEG_NAMES, type GaitId, type LegPose, type Lod, type TerrainFn } from './signals';
 
 const q = new URLSearchParams(location.search);
+if (q.has('timescale')) setClockRate(timescaleFrom(location.search)); // the dial, including rates past the old 16× cap. The pose below only follows while Immediate.
 // coat layers (fork/bodyTubes COAT): ?darken=0..2 ?streakSpacing ?streakWidth ?streakJitter=0..1, read before the rig is built
 for (const k of Object.keys(COAT) as Array<keyof typeof COAT>) { const v = Number(q.get(k)); if (q.has(k) && Number.isFinite(v)) COAT[k] = v; }
 // ?posture=headPitch:-.2,bodyDrop:.05 overrides POSTURE (posture.ts) for tuning
@@ -79,7 +81,7 @@ async function loadReal() {
   realChains = wolf.loco.chains; stick.root.visible = false; applyLayers();
   poseReal = (p, a) => {
     wolf.root.position.set(a.x, p.height, a.z); wolf.root.rotation.y = a.heading;
-    wolf.animate(performance.now() / 1000, state.speed > .05, undefined, 0, 'walk', undefined, p);
+    wolf.animate(state.clock, state.speed > .05, undefined, 0, 'walk', undefined, p);
   };
 }
 
@@ -162,14 +164,15 @@ placeCamera(true);
 let last = performance.now(), acc = 0;
 function frame(now: number) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
-  if (!state.paused) { acc += dt * TIMESCALE; while (acc >= DT) { simulate(DT); acc -= DT; } }
+  const poseRate = !state.paused && clockRate() > 0 && observation().scale === 'immediate' ? clockRate() : 0; // rewind and geological rates do not step the pose backward or a million times
+  if (poseRate > 0) { acc += dt * poseRate; while (acc >= DT) { simulate(DT); acc -= DT; } }
   stick.apply(pose, body); poseReal?.(pose, body);
   pose.feet.forEach((f, i) => { dots[i].position.set(f.x, f.y + .02, f.z); dots[i].material = pose.contacts[i] ? green : orange; });
   if (layers.ik) pose.feet.forEach((f, i) => { const L = limbOf(layout.legs, i); setLine(ikLines[i], [limbToWorld({ x: 0, y: L.hip + (L.girdle ?? 0), z: 0 }, body.x, body.z, body.heading, pose, layout.hips[i]), f]); });
   if (layers.legs && !layers.body && realChains.length) realChains.forEach((c, i) => { const v = new THREE.Vector3(); setLine(boneLines[i], [c.girdle, c.upper, c.lower, c.foot, c.paw].map(o => o.getWorldPosition(v).clone())); });
   placeCamera(false); controls.update(); renderer.render(scene, camera);
   $('spv').textContent = state.speed.toFixed(1);
-  $('ro').textContent = `${loco.jumping() ? 'POUNCE  ' : ''}gait ${pose.gait}  Fr ${pose.froude.toFixed(2)}  duty ${pose.duty.toFixed(2)}  ${(state.speed / Math.max(1e-6, pose.cycle)).toFixed(2)} Hz  ${pose.contacts.some(c => c) ? 'ground' : 'AIRBORNE'}${TIMESCALE < 1 ? `  x${TIMESCALE}` : ''}\nstride ${pose.cycle.toFixed(2)} m  pitch ${(pose.pitch * 57.3).toFixed(1)}°  roll ${(pose.roll * 57.3).toFixed(1)}°\n`
+  $('ro').textContent = `${loco.jumping() ? 'POUNCE  ' : ''}gait ${pose.gait}  Fr ${pose.froude.toFixed(2)}  duty ${pose.duty.toFixed(2)}  ${(state.speed / Math.max(1e-6, pose.cycle)).toFixed(2)} Hz  ${pose.contacts.some(c => c) ? 'ground' : 'AIRBORNE'}  ${formatRate(clockRate())}\nstride ${pose.cycle.toFixed(2)} m  pitch ${(pose.pitch * 57.3).toFixed(1)}°  roll ${(pose.roll * 57.3).toFixed(1)}°\n`
     + LEG_NAMES.map((n, i) => `${n} φ ${pose.phases[i].toFixed(2)} ${pose.contacts[i] ? 'down' : 'swing'}`).join('\n');
   drawStrip();
   requestAnimationFrame(frame);

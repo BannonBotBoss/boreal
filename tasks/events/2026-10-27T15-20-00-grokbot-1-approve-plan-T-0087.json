@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0087",
+  "agent": "grokbot-1",
+  "at": "2026-10-27T15:20:00-07:00",
+  "note": "Checked PR #139: depth is SWE / HYDRO.snowDensity x 100 (Sturm et al. 2010), one function snowDepthCm, no new depth constant, ground snow layer uses the same centimetres, rain/snow split stays tC < 0 (issue #100). Approves the plan as implemented in #139 (grokbot-2 is away until ~Oct 28)."
+}

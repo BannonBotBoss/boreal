@@ -1,0 +1,147 @@
+{
+  "commit": "053f11bfa8cf7c935280504a597c03e692f3921a",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "note": "Diagnostic date jump via ?day= (not natural motion). January is day 15 noon, July is day 196 noon, Kenora stand at the player (local 0,0). nomenu, noprobe. Clock day and WEATHER.day are both recorded. No sun-angle score.",
+  "consoleErrors": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "observations": [
+    {
+      "name": "jan-kenora",
+      "q": "?nomenu&noprobe&day=15&hour=12",
+      "url": "http://127.0.0.1:5276?nomenu&noprobe&day=15&hour=12",
+      "ms": 33108,
+      "sample": {
+        "href": "http://127.0.0.1:5276/?nomenu&noprobe&day=15&hour=12",
+        "day": 15,
+        "hour": 12.102219999999996,
+        "clockDay": 15,
+        "clockHour": 12,
+        "driving": true,
+        "tC": -18.93783740162878,
+        "rh": 1,
+        "cloud": 0.9999947824830573,
+        "rainMmH": 1.1944475252430433,
+        "snow": true,
+        "sweMm": 86.02877019364395,
+        "depthCm": 34.41150807745758,
+        "derivedCm": 34.41150807745758,
+        "wind": {
+          "x": -16.270951494361054,
+          "y": 0,
+          "z": -26.369965759709288
+        },
+        "blades": 3827,
+        "status": "12:06 \u00b7 WALK \u00b7 Snow 34.4 cm \u00b7 Stamina 100/100 \u00b7 Energy 75/100 \u00b7 Water 100% \u00b7 Rest 100%"
+      }
+    },
+    {
+      "name": "jul-kenora",
+      "q": "?nomenu&noprobe&day=196&hour=12",
+      "url": "http://127.0.0.1:5276?nomenu&noprobe&day=196&hour=12",
+      "ms": 34387,
+      "sample": {
+        "href": "http://127.0.0.1:5276/?nomenu&noprobe&day=196&hour=12",
+        "day": 196,
+        "hour": 12.103503666666668,
+        "clockDay": 196,
+        "clockHour": 11.887256000000008,
+        "driving": true,
+        "tC": 27.500792877577723,
+        "rh": 0.23738498660663726,
+        "cloud": 0.5931160539808265,
+        "rainMmH": 0.21564170699756677,
+        "snow": false,
+        "sweMm": 0,
+        "depthCm": 0,
+        "derivedCm": 0,
+        "wind": {
+          "x": 20.353934750850968,
+          "y": 0,
+          "z": 24.968299172435508
+        },
+        "blades": 8466,
+        "status": "12:06 \u00b7 WALK \u00b7 Snow 0.0 cm \u00b7 Stamina 100/100 \u00b7 Energy 75/100 \u00b7 Water 100% \u00b7 Rest 100%"
+      }
+    }
+  ],
+  "pixels": {
+    "tool": "stdlib PNG decode, mean of RGB in a fixed box",
+    "calibration": "Not a match to a field photo. Uncalibrated as a 95% look score. The contrast is January versus July in the same box: July foreground is dark and green (greenExcess > 0); January is brighter and near neutral.",
+    "bands": {
+      "jan-kenora.png": {
+        "foreground": {
+          "box": [
+            160,
+            560,
+            1120,
+            640
+          ],
+          "n": 76800,
+          "rgb": [
+            136.1,
+            133.0,
+            132.2
+          ],
+          "luma": 133.6,
+          "greenExcess": -1.2
+        },
+        "near": {
+          "box": [
+            320,
+            600,
+            960,
+            680
+          ],
+          "n": 51200,
+          "rgb": [
+            141.9,
+            134.1,
+            132.3
+          ],
+          "luma": 135.6,
+          "greenExcess": -3.0
+        }
+      },
+      "jul-kenora.png": {
+        "foreground": {
+          "box": [
+            160,
+            560,
+            1120,
+            640
+          ],
+          "n": 76800,
+          "rgb": [
+            69.8,
+            78.1,
+            65.8
+          ],
+          "luma": 75.5,
+          "greenExcess": 10.3
+        },
+        "near": {
+          "box": [
+            320,
+            600,
+            960,
+            680
+          ],
+          "n": 51200,
+          "rgb": [
+            58.1,
+            66.7,
+            54.4
+          ],
+          "luma": 64.0,
+          "greenExcess": 10.4
+        }
+      }
+    }
+  },
+  "clockNote": "hourAt(0) and dayAt(0) are the clock at world time 0, not the live frame. The live clock is the status line (12:06 on both frames). WEATHER.day matches the query (15 and 196). No sun-angle score. ?day= is a diagnostic jump."
+}

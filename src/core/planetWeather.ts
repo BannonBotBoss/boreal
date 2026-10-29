@@ -6,21 +6,36 @@
  * case: `weatherAt` turns game metres into latitude and longitude with the existing
  * gnomonic frame (`planet.fromLocal`) and calls the same function.
  *
- * While that grid is bound, it is the authority for temperature, humidity, wind,
- * rain, and snow. `climateRaw` remains only for the frames where wasm did not load.
- * The near Stam column does not also step on those frames.
+ * While that grid is bound, it is the climate the near weather cell relaxes toward.
+ * The cell is the air around the player. `climateRaw` remains only where wasm did not
+ * load, and the near grid does not call it while this climate is bound.
+ * The cell still steps (Kessler, the bucket, degree-day melt). The planet is the target, not a second column.
  *
  * Snow is the split already in the grid: precipitation below 0 °C is snow
  * (`precipitation.rs`). Issue #101's 35 °C and ±15 °C sketches are not used.
  */
-import { HYDRO, SITE, SURFACE, WEATHER, registerPlanetRead, type PointWeather, type SurfaceKind } from './weather';
+import { AIR, HYDRO, SITE, SURFACE, WEATHER, registerPlanetRead, setNearCellLive, snowDepthCm, type CellClimate, type PointWeather, type SurfaceKind } from './weather';
+import { gravity } from '../proc/physics';
 import { loadPlanetSim, type PlanetSim } from './planetBudget';
 import { bootGlobe } from '../world/globe/bootOrder';
 import { PLANET, fromLatLon, planetFor, toLatLon, type Vec3 } from '../world/globe/planet';
+import { SITE as LANDING, siteDirection } from './sitePhase';
 import { WORLD_SEED } from './world';
 
-/** Rows of the forest boot. Columns are twice that, the same shape as a globe tier. */
-export const FOREST_NLAT = 45;
+/**
+ * Rows of the forest boot. Columns are twice that.
+ * One degree. The playable landmass is about a hundred kilometres across, and a four-degree cell is wider than that,
+ * so its centre fell in the ocean and the bilinear read was mostly sea. A one-degree centre on that landmass is land.
+ */
+export const FOREST_NLAT = 180;
+
+/** What the climate mask keeps. Inland lakes are land even when the bed is below sea level. Only the ocean is water. */
+export function landSampleFromSurface(s: { h: number; kind?: '' | 'ocean' | 'lake'; level?: number }) {
+  const lake = s.kind === 'lake';
+  const ocean = s.kind === 'ocean' || (!lake && s.h <= 0);
+  const elev = ocean ? 0 : lake ? Math.max(0, s.level ?? 0, s.h) : Math.max(0, s.h);
+  return { land: ocean ? 0 : 1, elev };
+}
 /**
  * The globe's post-boot spin (`planetLayers.ts` `SPINUP`): 8 steps of 6 h.
  * `boot` leaves precipitation at 0 because `update_moisture` is called with dt = 0.
@@ -49,12 +64,9 @@ export interface PlanetPointWeather {
   /** sea-ice fraction 0..1, plane `ice` */ ice: number;
 }
 
-/** Same land mask the globe writes: one `sampleSurface`, land where height is above the sea. */
-export function planetLandSample(planet: { sampleSurface(d: Vec3): { h: number } }) {
-  return (lat: number, lon: number) => {
-    const s = planet.sampleSurface(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180));
-    return { land: s.h > 0 ? 1 : 0, elev: Math.max(0, s.h) };
-  };
+/** Same land mask the globe writes: one `sampleSurface`. Ocean is water. An inland lake stays land. */
+export function planetLandSample(planet: { sampleSurface(d: Vec3): { h: number; kind?: '' | 'ocean' | 'lake'; level?: number } }) {
+  return (lat: number, lon: number) => landSampleFromSurface(planet.sampleSurface(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180)));
 }
 
 /** Local hour at Kenora to the UTC hour the Rust solar routine stores (`tz` 0). */
@@ -112,7 +124,10 @@ let bound: PlanetSim | null = null;
 let clockOwner: 'forest' | 'globe' | null = null;
 
 export function planetWeatherSim() { return bound; }
-export function bindPlanetWeather(sim: PlanetSim | null) { bound = sim; }
+export function bindPlanetWeather(sim: PlanetSim | null) {
+  bound = sim;
+  setNearCellLive(false); // a new grid is not the cell that was seeded from the previous one
+}
 export function notePlanetClockOwner(owner: 'forest' | 'globe') { clockOwner = owner; }
 
 /**
@@ -153,7 +168,8 @@ function windFrom(w: PlanetPointWeather, h: number, kind: SurfaceKind) {
 
 function pointUnder(x: number, z: number) {
   if (!bound || bound.n <= 0) return null;
-  const ll = toLatLon(planetFor(WORLD_SEED).fromLocal(x, z));
+  // Home keeps the Kenora gnomonic frame. A landing off that square reads the click's own direction.
+  const ll = toLatLon(LANDING.remote ? siteDirection(x, z, PLANET.radius) : planetFor(WORLD_SEED).fromLocal(x, z));
   return weatherAtLatLon(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, bound);
 }
 
@@ -162,7 +178,7 @@ function forestAt(x: number, z: number): PointWeather | null {
   if (!w) return null;
   return {
     tC: w.tC, rh: w.rh, cloud: w.cloud, rainMmH: w.precipMmH, snow: w.snow,
-    soil: Math.min(1, Math.max(0, w.soilMm / HYDRO.bucketMm)), sweMm: w.sweMm, fog: 0,
+    soil: Math.min(1, Math.max(0, w.soilMm / HYDRO.bucketMm)), sweMm: w.sweMm, depthCm: snowDepthCm(w.sweMm), fog: 0,
     wind: windFrom(w, WIND_REF_M, 'forest'),
   };
 }
@@ -187,11 +203,28 @@ function hourApart(a: number, b: number) {
 }
 
 function followForestClock(day: number, localHour: number) {
-  if (clockOwner !== 'forest' || !bound || bound.n <= 0) return;
+  if (clockOwner !== 'forest' || !bound || bound.n <= 0) return false;
   // A half-hour of clock drift, or a new date, re-boots once. Scrubbing inside that window does not spin every frame.
-  if (dayApart(bound.day, day) < 0.75 && hourApart(bound.hour, utcHourFromLocal(localHour)) < 0.5) return;
+  if (dayApart(bound.day, day) < 0.75 && hourApart(bound.hour, utcHourFromLocal(localHour)) < 0.5) return false;
   spin(bound, day, localHour);
   WEATHER.steps += 64;
+  return true;
+}
+/** Climate the near cell relaxes toward. Wind `v` is south, because the column's +z is south and the planet's v is north. */
+function targetAt(x: number, z: number, heightM: number): CellClimate | null {
+  if (!WEATHER.on || !bound || bound.n <= 0) return null;
+  const w = pointUnder(x, z);
+  if (!w) return null;
+  const surfaceTC = w.tC;
+  const tC = surfaceTC - AIR.lapse * heightM;
+  // An unbooted pressure plane is 0. Surface pressure is then AIR.p0, the ISO 2533 standard already on the column.
+  const surfaceP = w.pressurePa > 0 ? w.pressurePa : AIR.p0;
+  const p = surfaceP * Math.exp(-gravity() * heightM / (AIR.Rd * Math.max(1, tC + 273.15)));
+  return {
+    tC, surfaceTC, rh: w.rh, u: w.u, v: -w.v, p,
+    cloud: w.cloud, precipMmH: w.precipMmH, sweMm: w.sweMm, soilMm: w.soilMm,
+    source: 'planet',
+  };
 }
 
 /**
@@ -221,6 +254,7 @@ registerPlanetRead({
   at: (x, z) => WEATHER.on ? forestAt(x, z) : null,
   wind: (x, h, z, kind) => { if (!WEATHER.on) return null; const w = pointUnder(x, z); return w ? windFrom(w, h, kind) : null; },
   follow: followForestClock,
+  target: targetAt,
 });
 
 export const HOME_LAT_DEG = PLANET.home.latDeg;

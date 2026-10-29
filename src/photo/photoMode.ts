@@ -69,10 +69,7 @@ export function createPhotoMode(host: PhotoHost) {
       l.append(i); panel.append(l);
     }
     section('Sun');
-    const sun = document.createElement('label'); sun.textContent = 'Sun hour (frozen view only)'; const si = document.createElement('input');
-    Object.assign(si, { type: 'range', min: '0', max: '24', step: '0.05', value: String(hour ?? 12) }); si.oninput = () => { hour = Number(si.value); };
-    sun.append(si); panel.append(sun);
-    const follow = document.createElement('button'); follow.type = 'button'; follow.textContent = 'Sun follows clock'; follow.onclick = () => { hour = undefined; }; panel.append(follow);
+    const sunNote = document.createElement('p'); sunNote.textContent = 'The sun follows the in-game clock (the time bar). Pause, play and the rate live there.'; panel.append(sunNote);
     section('Framing');
     panel.append(select('Aspect / crop', Object.keys(ASPECTS), capture.aspect, v => { capture.aspect = v; layoutCrop(); }));
     const note = document.createElement('p'); note.textContent = 'Resolution and format are chosen when the session ends. Video records the crop at screen size, capped at 1080p for smooth recording.'; panel.append(note);

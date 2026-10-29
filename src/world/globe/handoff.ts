@@ -30,7 +30,7 @@ export function* landSpawnSteps(at: { x: number; z: number }, staged = STAGES.on
   const spot = staged ? { x: Math.round(x * 10) / 10, z: Math.round(z * 10) / 10 } : at;
   return yaw === undefined ? spot : yield* clearViewSteps(spot, yaw, staged ? (px, pz) => isDry(px, pz) : () => true);
 }
-/** T-0041, T-0075: the follow camera sits `back` m behind the wolf and `flank` m to its left (the same rear three-quarter as
+/** T-0041, T-0101: the follow camera sits `back` m straight behind the wolf (`flank` is 0, the same dead-astern line as
  *  positionCamera) and `eye` m up; a tree within clear(r) of the camera-wolf line hides the wolf on landing (trunk plus the lower
  *  crown; r = crown radius from core/ground). Rocks and logs (core/ground solidsAround) hide it when they reach the line within
  *  `pad` m and stand taller than the line there (it runs from `aim` m up at the wolf to the camera), so pebbles and low logs beside
@@ -58,6 +58,33 @@ export function* clearViewSteps(s: { x: number; z: number }, yaw: number, dry: (
       if (!blockedAt(x, z, yaw) && dry(x, z)) return { x, z }; }
     yield; }
   return s;
+}
+/** Eye clearance for the drone near the floor. Not the wolf follow line (LANDING_VIEW): that one moves the spawn.
+ *  This only shifts the drawn eye. A black spruce stem is well under 0.6 m radius (dbh 15–25 cm, core/treeSpecies);
+ *  1.6 m puts the near plane outside the bark. Crown radius is capped so a wide crown does not shove the eye out of the stand.
+ *  [game calibration] */
+export const EYE_CLEAR = { below: 18, gap: 1.6, ahead: 2.5 };
+export function eyeClearOfTrees(x: number, z: number, yaw: number, trees: readonly { x: number; z: number; r: number }[]) {
+  let px = x, pz = z;
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  for (let n = 0; n < 6; n++) {
+    let moved = false;
+    const spots: [number, number][] = [[px, pz], [px + fx * EYE_CLEAR.ahead, pz + fz * EYE_CLEAR.ahead]];
+    for (const t of trees) {
+      const need = Math.max(EYE_CLEAR.gap, Math.min(2.2, 0.35 * t.r));
+      for (const [qx, qz] of spots) {
+        const dx = qx - t.x, dz = qz - t.z, d = Math.hypot(dx, dz);
+        if (d >= need) continue;
+        let ux = px - t.x, uz = pz - t.z, ud = Math.hypot(ux, uz);
+        if (ud < 1e-4) { ux = -fx; uz = -fz; ud = 1; } // on the stem: step back, opposite the look
+        const s = need - d + 0.05;
+        px += ux / ud * s; pz += uz / ud * s;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  return { x: px, z: pz };
 }
 /** The game URL for a spawn: the current query minus the globe's own keys, plus `at` (x, z and, when known, yaw). */
 export function gameUrl(search: string, at: { x: number; z: number; yaw?: number } | null) {

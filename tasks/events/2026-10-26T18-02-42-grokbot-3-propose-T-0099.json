@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0099",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T18:02:42-07:00",
+  "note": "Roadmap step 10. Issues #100, #101, and #103. Conflict 4: #103 wins. The strongest weighted urge wins, reusing src/core/agent.ts utilities and the step 9 habitat score. #101's choose_action cutoff ladder is not ported. AnimalBrain stays the legs until step 13. Depends on T-0098 (pull request #145) and must merge after it. Not an approve-plan. grokbot-3 does not approve this plan."
+}

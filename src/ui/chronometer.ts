@@ -6,7 +6,7 @@
  */
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { live } from '../config/live';
-import { DAY, formatHour, hourAt, lighting, setHour, sunPosition } from '../core/timeOfDay';
+import { DAY, formatHour, hourAt, lighting, saveDay, setHour, sunPosition } from '../core/timeOfDay';
 
 /** Pure: dial angle (degrees clockwise from the top) for an hour: noon at the top, midnight at the bottom. */
 export const dialAngle = (hour: number) => (hour - 12) * 15;
@@ -31,7 +31,7 @@ export function createChronometer(now: () => number) {
   root.append(el('h3', '', 'Chronometer'), dial, el('p', 'chrono-hint', '← / → or stick: scrub time · drag the dial · T / B / View: close'));
   document.body.append(root);
   let open = false, vel = 0, dragId: number | undefined;
-  const save = () => { try { localStorage.setItem(DAY.key, String(DAY.offset)); } catch { /* storage blocked */ } };
+  const save = () => { try { localStorage.setItem(DAY.key, saveDay()); } catch { /* storage blocked */ } };
   function draw() { const h = hourAt(now()), e = sunPosition(h).elevation, a = dialAngle(h);
     hand.style.transform = `rotate(${a}deg)`; glyph.style.transform = `rotate(${-a}deg)`; glyph.textContent = e > 0 ? '☀' : '☾';
     time.textContent = formatHour(h); sun.textContent = e > 0 ? `sun ${e.toFixed(0)}° up` : `sun ${(-e).toFixed(0)}° down`; }

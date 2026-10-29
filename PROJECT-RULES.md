@@ -1,6 +1,6 @@
 # Boreal project rules (read first)
 
-Latest design issue wins. When issues conflict with each other, with older issues, or with existing code, plans, or tasks, follow the newer one: a higher number wins, so #109 overrides #108 overrides #107, and #100–#109 override anything older (Matthew, 2026-10-25 7:17 PM Pacific).
+The last twenty GitHub issues take precedence. Where they conflict with each other, with older issues, or with these rules, plans, tasks, notes, or code, the latest issue wins: a higher number wins, so #109 overrides #108 overrides #107. The twenty are #99, #100, #101, #102, #103, #104, #105, #106, #107, #108, #109, #110, #111, #112, #113, #115, #116, #117, #118 and #119. An issue opened after these wins over them the same way. This replaces the 2026-10-25 7:17 PM line that stopped at #100–#109. The resolutions are tasks/RULES.md rule 18. (Matthew, 2026-10-26, in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins.")
 
 ## Talking to Matthew
 This section binds every agent: Grok, Grokbot-1, Grokbot-2, grokbot-3, claude, agy, and any other agent. Read it before you write to Matthew.
@@ -21,6 +21,7 @@ These are Matthew's standing rules for every contributor, human or agent. `tests
 
 ## 1. Everything is procedurally generated
 Terrain, trees, rocks, props, animals, and sound where feasible all come from seeded generators. Nothing is hand-placed, and there are no stored 3D models.
+Stored Meshy animal meshes are the exception (issues #110, #156, #160 and #162, which win over the sentence above): one manifest, `public/models/animals/manifest.json`, keyed by the names in `src/core/species.ts`, and one loader. The files live in that folder. A species with no file keeps the procedural body. The same bones and the same gait drive the mesh at every landing.
 - All randomness comes from `src/proc/rng.ts` (`hash`, `random`, `stream`, `range`). **No `Math.random`** anywhere else. *(guarded)*
 - Every generated thing is reproducible from `WORLD_SEED` plus a stable key (chunk, entity key, id). Render order is never used as identity.
 - Recorded audio clips are allowed for voice, music and bird calls. Their *timing and variation* still come from `proc/rng`.

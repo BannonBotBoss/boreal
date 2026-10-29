@@ -40,6 +40,14 @@ export const MAMMAL_PLANS = {
 } satisfies Record<string, MammalPlan>;
 export type MammalArchetype = keyof typeof MAMMAL_PLANS;
 
+/**
+ * Native mammals reachable from the globe landing but not on the Thunder Bay checklist (issue #162: the viewer
+ * had the grizzly borrowing the black-bear row). Grizzly: shoulder hump about 1.05 m on all fours (see bearBody.ts);
+ * adult mass 145 kg, the midpoint of interior adults: males average 190 kg, females about 100 kg (COSEWIC grizzly status report ch. 2, citing McLellan 1994).
+ */
+export const MAMMALS_BEYOND_CHECKLIST = ['Grizzly Bear'];
+function MAMMALS_BEYOND_CHECKLIST_ROWS(): [string, 'ursid', number, number][] { return [['Grizzly Bear', 'ursid', 1.05, 145]]; }
+
 /** Native mammals of the Thunder Bay district checklist: [common name, plan, shoulder height m, mass kg, tail/withers override?]. */
 export const MAMMALS: [string, MammalArchetype, number, number, number?][] = [
   ['Gray Wolf', 'canid', .74, 40], ['Coyote', 'canid', .55, 15], ['Red Fox', 'canid', .38, 5, 1.0], ['Gray Fox', 'canid', .36, 4.5, 1.0],
@@ -57,6 +65,7 @@ export const MAMMALS: [string, MammalArchetype, number, number, number?][] = [
   ['Northern Short-tailed Shrew', 'insectivore', .03, .02, .6], ['Arctic Shrew', 'insectivore', .025, .01], ['Masked Shrew', 'insectivore', .02, .005], ['Smoky Shrew', 'insectivore', .02, .007],
   ['Pygmy Shrew', 'insectivore', .015, .003], ['Water Shrew', 'insectivore', .03, .015], ['Star-nosed Mole', 'insectivore', .03, .05, .8],
   ['Big Brown Bat', 'bat', .03, .02], ['Silver-haired Bat', 'bat', .025, .01], ['Eastern Red Bat', 'bat', .025, .012], ['Hoary Bat', 'bat', .03, .03], ['Little Brown Myotis', 'bat', .02, .008], ['Northern Myotis', 'bat', .02, .007],
+  ...MAMMALS_BEYOND_CHECKLIST_ROWS(),
 ];
 /** On the checklist but introduced after European arrival — not generated for a 1400s world. */
 export const MAMMALS_POST_1400 = ['European Hare', 'House Mouse', 'Norway Rat', 'Nutria'];
@@ -87,7 +96,9 @@ export const BIRD_PLANS = {
 } satisfies Record<string, BirdPlan>;
 export type BirdArchetype = keyof typeof BIRD_PLANS;
 
-/** Every group on the Thunder Bay bird checklist (376 species): [group, plan, representative species, length m, approx species count]. */
+/** Every group on the Thunder Bay bird checklist (376 species): [group, plan, representative species, length m, approx species count].
+ *  Bald Eagle is split out of Hawks, Kites and Eagles as its own row (issue #162) because it is far longer than the red-tailed hawk:
+ *  71-96 cm bill to tail (Cornell All About Birds), so 0.85 m; the hawk group keeps the other 12 species. */
 export const BIRD_GROUPS: [string, BirdArchetype, string, number, number][] = [
   ['Ducks and Geese', 'waterfowl', 'Mallard', .58, 37], ['Swans', 'swan', 'Trumpeter Swan', 1.5, 3], ['Partridges, Grouse and Turkeys', 'grouse', 'Ruffed Grouse', .45, 8],
   ['Grebes', 'diver', 'Horned Grebe', .35, 5], ['Pigeons and Doves', 'pigeon', 'Mourning Dove', .3, 7], ['Cuckoos and Anis', 'cuckoo', 'Black-billed Cuckoo', .3, 3],
@@ -96,7 +107,7 @@ export const BIRD_GROUPS: [string, BirdArchetype, string, number, number][] = [
   ['Plovers', 'shorebird', 'Killdeer', .25, 6], ['Sandpipers and Phalaropes', 'shorebird', 'Spotted Sandpiper', .19, 30], ['Jaegers', 'gull', 'Parasitic Jaeger', .45, 3],
   ['Alcids', 'diver', 'Ancient Murrelet', .25, 1], ['Gulls and Terns', 'gull', 'Herring Gull', .6, 21], ['Loons', 'diver', 'Common Loon', .8, 3],
   ['Shearwaters and Petrels', 'gull', 'Northern Fulmar', .47, 1], ['Cormorants and Pelicans', 'pelecaniform', 'Double-crested Cormorant', .8, 2], ['Herons and Bitterns', 'wader', 'Great Blue Heron', 1.15, 10],
-  ['Vultures and Osprey', 'raptor', 'Osprey', .58, 3], ['Hawks, Kites and Eagles', 'raptor', 'Red-tailed Hawk', .55, 13], ['Owls', 'owl', 'Great Horned Owl', .55, 11],
+  ['Vultures and Osprey', 'raptor', 'Osprey', .58, 3], ['Hawks, Kites and Eagles', 'raptor', 'Red-tailed Hawk', .55, 12], ['Bald Eagle', 'raptor', 'Bald Eagle', .85, 1], ['Owls', 'owl', 'Great Horned Owl', .55, 11],
   ['Kingfishers', 'kingfisher', 'Belted Kingfisher', .32, 1], ['Woodpeckers', 'woodpecker', 'Pileated Woodpecker', .42, 10], ['Caracaras and Falcons', 'raptor', 'Merlin', .27, 5],
   ['Tyrant Flycatchers', 'songbird', 'Eastern Kingbird', .2, 18], ['Shrikes', 'songbird', 'Northern Shrike', .24, 2], ['Vireos', 'songbird', 'Red-eyed Vireo', .14, 7],
   ['Crows and Jays', 'corvid', 'Common Raven', .6, 6], ['Larks', 'songbird', 'Horned Lark', .18, 1], ['Swallows', 'songbird', 'Tree Swallow', .14, 7],

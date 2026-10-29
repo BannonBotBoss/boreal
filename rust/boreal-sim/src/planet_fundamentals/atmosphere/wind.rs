@@ -11,6 +11,10 @@ pub fn coriolis(lat_deg: f64) -> f64 { 2.0 * OMEGA * (lat_deg * std::f64::consts
 pub const GEOSTROPHIC_MIN_LAT: f64 = 5.0;
 /// Surface wind is a fraction of the geostrophic wind because of boundary-layer friction, about 0.6–0.8 (Wallace & Hobbs 2006, §8.2) → 0.7 [verify].
 pub const FRICTION_FACTOR: f64 = 0.7;
+/// Held & Suarez (1994, Bull. Amer. Meteor. Soc. 75:1825) Newtonian rates, day^-1: k_a in the free troposphere, k_s at the surface.
+/// At σ = 1 their k_T is k_a + (k_s − k_a) cos^4 φ.
+pub const HS_KA_PER_DAY: f64 = 1.0 / 40.0;
+pub const HS_KS_PER_DAY: f64 = 0.25;
 pub const MAX_WIND: f64 = 40.0; // m/s guard on the closed form (game calibration)
 
 /// Geostrophic wind (u east, v north) from pressure gradients (Pa/m, east and north) and density: u = −(1/ρf) ∂p/∂y, v = (1/ρf) ∂p/∂x.
@@ -22,6 +26,42 @@ pub fn geostrophic(dpdx: f64, dpdy: f64, rho: f64, lat_deg: f64) -> (f64, f64) {
     let s = u.hypot(v);
     if s > MAX_WIND { u *= MAX_WIND / s; v *= MAX_WIND / s; }
     (u, v)
+}
+
+/// Surface damping time of Held & Suarez (1994) at this latitude, seconds. k_T(σ=1) = k_a + (k_s − k_a) cos^4 φ.
+pub fn held_suarez_surface_tau_s(lat_deg: f64) -> f64 {
+    let c4 = lat_deg.to_radians().cos().powi(4);
+    let k = HS_KA_PER_DAY + (HS_KS_PER_DAY - HS_KA_PER_DAY) * c4;
+    86400.0 / k
+}
+
+/// Speed of the friction-reduced geostrophic wind of the annual pressure belts, m/s.
+/// Density is the ISO 2533 sea-level standard (15 °C, `P0`, `RD`), the same standard the lapse rate uses.
+pub fn belt_wind_m_s(lat_deg: f64) -> f64 {
+    let half = 5.0;
+    let dpdy = (belt_pressure(lat_deg + half) - belt_pressure(lat_deg - half)) / ((2.0 * half).to_radians() * EARTH_RADIUS);
+    let rho = P0 / (RD * (15.0 + 273.15));
+    let (u, v) = geostrophic(0.0, dpdy, rho, lat_deg);
+    u.hypot(v)
+}
+
+/// Typical daytime mixed-layer depth (Stull 1988, An Introduction to Boundary Layer Meteorology, Kluwer:
+/// the convective boundary layer is of order 1 km). Not fitted to a station.
+pub const ABL_DEPTH_M: f64 = 1000.0;
+/// Wind-measurement height in the neutral bulk coefficient, the same 10 m as `surface_balance`'s ln(10/z0) (FAO-56 eq. 4)
+/// and `WIND_REF_M` in the forest read.
+pub const BULK_WIND_HEIGHT_M: f64 = 10.0;
+
+/// E-folding distance of the ocean's seasonal anomaly in the air the surface feels, metres.
+/// Steady advection–relaxation still gives exp(−x/L) (Hartmann 1994, ch. 11). The clock is the boundary layer, not the
+/// Held & Suarez free-atmosphere time: τ = h / (C_H U), so L = U τ = h / C_H. C_H = κ² / ln(z_m/z0)² is the neutral
+/// coefficient already in `surface_balance`. z0 is the forest roughness, because seeded land holds half a bucket and
+/// `land_kind` then selects forest. U cancels, including at the equator where the belt wind is zero.
+/// Held & Suarez τ stays in this file for the free atmosphere; it is not this length. At 50°N that τ made L ≈ 5400 km,
+/// and no land in the Kenora latitude band is farther than about 500 km from the ocean, so every land cell stayed marine.
+pub fn ocean_decay_length_m(_lat_deg: f64) -> f64 {
+    let ch = KAPPA * KAPPA / (BULK_WIND_HEIGHT_M / crate::planet_fundamentals::surface::FOREST_Z0).ln().powi(2);
+    ABL_DEPTH_M / ch
 }
 
 /// Sea-level pressure from the column temperature (hypsometric), then geostrophic balance with the Coriolis term.
@@ -67,4 +107,14 @@ mod tests {
         let (u2, _v2) = geostrophic(0.0, 0.002, 1.2, -45.0); assert!(u2 > 0.0); // flips in the south
     }
     #[test] fn wind_is_capped() { let (u, v) = geostrophic(1.0, 1.0, 1.2, 1.0); assert!(u.hypot(v) <= MAX_WIND + 1e-9); }
+    #[test] fn ocean_decay_length_is_a_boundary_layer_fetch() {
+        assert!((HS_KS_PER_DAY - 0.25).abs() < 1e-15 && (HS_KA_PER_DAY - 0.025).abs() < 1e-15);
+        let (l0, l50) = (ocean_decay_length_m(0.0), ocean_decay_length_m(50.0));
+        let ch = KAPPA * KAPPA / (BULK_WIND_HEIGHT_M / crate::planet_fundamentals::surface::FOREST_Z0).ln().powi(2);
+        let expect = ABL_DEPTH_M / ch;
+        eprintln!("ocean decay length equator {:.1} km, 50N {:.1} km, h/C_H {:.1} km", l0 / 1000.0, l50 / 1000.0, expect / 1000.0);
+        assert!((l50 - expect).abs() < 1e-6 && (l0 - expect).abs() < 1e-6, "L {}", l50);
+        // Order of an ABL fetch over forest roughness, not a station fit and not the old 5400 km free-atmosphere scale.
+        assert!(expect > 10_000.0 && expect < 80_000.0, "fetch {}", expect);
+    }
 }

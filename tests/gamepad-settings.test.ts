@@ -40,7 +40,7 @@ test('rebinding: capture binds; clash opens swap prompt; swap moves the old bind
   m.input('menuSelect'); assert.deepEqual(store.get().jump.pad, ['a']); assert.deepEqual(store.get().interact.pad, ['x'], 'swap: interact gets jump\'s old X');
   assert.deepEqual(conflicts(store.get()), []);
   m.input('menuSelect'); m.captured(['lb']); m.input('menuAlt'); assert.ok(conflicts(store.get()).length > 0, 'keep both leaves the clash flagged');
-  m.input('menuSelect'); m.captured(['ls.click']); assert.equal(m.st.mode, 'list'); assert.deepEqual(store.get().jump.pad, ['ls.click'], 'free input binds directly');
+  m.input('menuSelect'); m.captured(['xbox']); assert.equal(m.st.mode, 'list'); assert.deepEqual(store.get().jump.pad, ['xbox'], 'an unbound button binds directly');
   m.input('menuSelect'); m.input('menuBack'); assert.equal(m.st.mode, 'list');
   m.input('menuAlt'); assert.deepEqual(store.get().jump.pad, [], 'X clears');
   assert.ok(clashesWith(defaults(), 'moveForward', 'rs.up').includes('lookUp'));

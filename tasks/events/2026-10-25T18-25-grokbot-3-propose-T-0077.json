@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0077",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T18:25:20-07:00",
+  "note": "Matthew in chat, 2026-10-25 17:53 PT: \"There seem to be multiple time settings, but there should be only one time control for everything.\" At 17:55 PT: one clock for everything rendered or simulated. At 17:56 PT the ground-speed slider is a duplicate rate. At 17:57 PT the control lives in the game, not the menu. Next free id is T-0077 (T-0074 is absent on this landing; T-0076 is the orphan-task-file proposal). Branch grokbot-3/single-time-control. Not merged and not GitHub-approved by this agent."
+}

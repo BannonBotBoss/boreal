@@ -23,6 +23,12 @@ export function setPatchFade(opacity: number, disc?: { x: number; z: number; r: 
  *  and its resolved log depth (z = the globe's log-depth constant; a globe surface nearer than the fragment by more than
  *  occ.x m + occ.y x distance hides it); w = 1 on. Off (w = 0, also when unset) costs one uniform branch. */
 export const PATCH_FAR = { uFarColor: { value: null as THREE.Texture | null }, uFarDepth: { value: null as THREE.Texture | null }, uFarMix: { value: new THREE.Vector4() }, uFarOcc: { value: new THREE.Vector2(15, .03) } };
+/** Depth margin (metres, then a fraction of distance) before the coarse globe may hide a patch fragment.
+ *  Below `low` the eye is in the stand: a margin of 1e6 m means the globe never wins, so the forest floor
+ *  is not replaced by the far layer. Above `low` the caller's margin stays. */
+export function nearGroundOcc(height: number, low: number, occ: readonly [number, number]): [number, number] {
+  return height < low ? [1e6, 0] : [occ[0], occ[1]];
+}
 export function setPatchFar(o: { color: THREE.Texture; depth: THREE.Texture | null; mix: number; scale: number; logFC: number; occ: [number, number] } | null) {
   if (!o || !o.depth) { PATCH_FAR.uFarMix.value.w = 0; return; }
   PATCH_FAR.uFarColor.value = o.color; PATCH_FAR.uFarDepth.value = o.depth; PATCH_FAR.uFarMix.value.set(o.mix, o.scale, o.logFC, 1); PATCH_FAR.uFarOcc.value.set(o.occ[0], o.occ[1]);
@@ -42,7 +48,7 @@ const FRAG = `
     float keep = 1.0 - uPatchCut;
     if (uPatchDisc.z > 0.0) { float dy = cameraPosition.y - vPatchY, t = (cameraPosition.y - uPatchY) / max(dy, 1e-3); // ray -> plane uPatchY
       vec2 pxz = dy > 1.0 && t > 0.0 && t < 4.0 ? cameraPosition.xz + (vPatchXZ - cameraPosition.xz) * t : vPatchXZ;
-      keep *= 1.0 - smoothstep(0.75, 1.0, length(pxz - uPatchDisc.xy) / uPatchDisc.z); }
+      keep *= 1.0 - smoothstep(0.5, 1.0, length(pxz - uPatchDisc.xy) / uPatchDisc.z); }
     int bx = int(gl_FragCoord.x) & 3, by = int(gl_FragCoord.y) & 3, bxy = bx ^ by;
     int bayer = ((bxy & 1) << 3) | ((by & 1) << 2) | (((bxy >> 1) & 1) << 1) | ((by >> 1) & 1);
     if ((float(bayer) + 0.5) / 16.0 >= keep) discard;

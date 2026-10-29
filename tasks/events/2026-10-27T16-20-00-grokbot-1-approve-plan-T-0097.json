@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0097",
+  "agent": "grokbot-1",
+  "at": "2026-10-27T16:20:00-07:00",
+  "note": "Checked PR #144: one readSoundEntry for the 28-byte entry in issue #106, used by readPerception and by soundCaption, so the caption reads only direction and urgency from the entry (no species, no distance). Urgency is the cue's existing 0-1 level in thirds and the species hearing row is unchanged. Minor: readSoundEntry's byteLength ternary has identical branches and can be simplified. Approves the plan as implemented in #144 (grokbot-2 is away until ~Oct 28)."
+}

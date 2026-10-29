@@ -1,7 +1,7 @@
 // T-0089 evidence (headless Chrome, SwiftShader software GL: pictures and uniform values, not GPU frame rates).
 //   node refs/T-0089/capture.mjs <base> stills|drift
 // stills: same hour, same pinned clock (?shot), dry (?envrh=0.1) vs humid (?envrh=0.95) at orbit and 2 km, Ultra and Minimum.
-// drift: clock running, 12 s at 3000 km; the record's east wind forced to +4000 m/s, then -4000 m/s at 6 s (dev hook
+// drift: clock running, DUR ms (default 12 s) at 3000 km; the record's east wind forced to +4000 m/s, then -4000 m/s at DUR/2 (dev hook
 // ENV_FORCE; real winds of ~10 m/s move the shell ~0.002 deg/s at 1x, invisible in 12 s). Logs the shell's drift angle
 // (uCloudSpin) each frame against u x 12 x dt / (R cos lat).
 import { chromium } from 'playwright-core';
@@ -34,12 +34,13 @@ try {
       L(`STILL ${f} ${JSON.stringify(v)}`); await page.close();
     }
   } else {
-    const page = await open(`${base}/?view=globe&hour=10&day=200&latlon=49.77,-94.5&alt=3000000&tier=4&panel=0`);
+    const DUR = Number(process.env.DUR ?? 12000), TIER = process.env.TIER ?? '4'; // box SwiftShader draws a few fps: DUR=90000 TIER=5 for a usable clip
+    const page = await open(`${base}/?view=globe&hour=10&day=200&latlon=49.77,-94.5&alt=3000000&tier=${TIER}&panel=0`);
     await page.evaluate(async () => { (await import('/src/render/environment.ts')).ENV_FORCE.windE = 4000; });
     await page.waitForTimeout(1500);
     const rec = []; const t0 = Date.now(); let n = 0, flipped = false;
-    while (Date.now() - t0 < 12000) {
-      if (!flipped && Date.now() - t0 > 6000) { flipped = true; await page.evaluate(async () => { (await import('/src/render/environment.ts')).ENV_FORCE.windE = -4000; }); }
+    while (Date.now() - t0 < DUR) {
+      if (!flipped && Date.now() - t0 > DUR / 2) { flipped = true; await page.evaluate(async () => { (await import('/src/render/environment.ts')).ENV_FORCE.windE = -4000; }); }
       const r = await page.evaluate(`(async () => { const E = (await import('/src/render/environment.ts')).ENV, s = ${dome}.uCloudSpin.value; const w = await import('/src/core/worldClock.ts'); return [performance.now(), w.worldSec(), Math.atan2(s.y, s.x), E.windE, E.latDeg]; })()`);
       rec.push(r); await page.screenshot({ path: `/tmp/t0089-drift/f${String(n++).padStart(4, '0')}.jpg`, type: 'jpeg', quality: 85 });
     }

@@ -21,5 +21,6 @@
  "american_black_bear": { "lat": [18, 70], "lon": [-168, -52], "boreal_per_ha": [0.001, 0.013], "prairie_per_ha": [0, 0.001], "desert_per_ha": [0, 0.0005], "cycle_years": 0 },
  "grizzly_bear":      { "lat": [42, 72],  "lon": [-168, -100], "boreal_per_ha": [0.00001, 0.0004], "prairie_per_ha": [0, 0], "desert_per_ha": [0, 0], "tundra_per_ha": [0.00001, 0.0001], "cycle_years": 0 },
  "bald_eagle":        { "lat": [24, 70],  "lon": [-170, -52],  "boreal_per_ha": [0.00005, 0.002], "prairie_per_ha": [0.000005, 0.0003], "desert_per_ha": [0, 0], "cycle_years": 0 },
- "beaver":            { "lat": [26, 69],  "lon": [-168, -55],  "boreal_per_ha": [0.005, 0.05], "prairie_per_ha": [0.0005, 0.01], "desert_per_ha": [0, 0.001], "cycle_years": 0 }
+ "beaver":            { "lat": [26, 69],  "lon": [-168, -55],  "boreal_per_ha": [0.005, 0.05], "prairie_per_ha": [0.0005, 0.01], "desert_per_ha": [0, 0.001], "cycle_years": 0 },
+ "red_fox":           { "lat": [25, 75],  "lon": [-168, -52],  "boreal_per_ha": [0.001, 0.01], "prairie_per_ha": [0.002, 0.02], "desert_per_ha": [0, 0.001], "tundra_per_ha": [0.0005, 0.003], "cycle_years": 0 }
 }

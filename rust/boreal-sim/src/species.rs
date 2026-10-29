@@ -7,10 +7,10 @@ use crate::cover::{cover_row, place_hash, Cover};
 pub const SPECIES_JSON: &str = include_str!("../../../data/earth/species-density.json");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3, GrayWolf = 4, Caribou = 5, AmericanBlackBear = 6, GrizzlyBear = 7, BaldEagle = 8 }
+pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3, GrayWolf = 4, Caribou = 5, AmericanBlackBear = 6, GrizzlyBear = 7, BaldEagle = 8, Beaver = 9 }
 impl Species {
-    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx", "gray_wolf", "caribou", "american_black_bear", "grizzly_bear", "bald_eagle"][self as usize] }
-    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), 4 => Some(Self::GrayWolf), 5 => Some(Self::Caribou), 6 => Some(Self::AmericanBlackBear), 7 => Some(Self::GrizzlyBear), 8 => Some(Self::BaldEagle), _ => None } }
+    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx", "gray_wolf", "caribou", "american_black_bear", "grizzly_bear", "bald_eagle", "beaver"][self as usize] }
+    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), 4 => Some(Self::GrayWolf), 5 => Some(Self::Caribou), 6 => Some(Self::AmericanBlackBear), 7 => Some(Self::GrizzlyBear), 8 => Some(Self::BaldEagle), 9 => Some(Self::Beaver), _ => None } }
 }
 
 fn block(sp: Species) -> &'static str {
@@ -67,8 +67,8 @@ pub fn spawn_count(density_per_ha: f64, side_m: f64, lat: f64, lon: f64) -> u32 
     (f + if place_hash(lon, lat + 7.0) < expected - f { 1.0 } else { 0.0 }) as u32
 }
 
-pub const ALL: [Species; 9] = [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::Moose, Species::CanadaLynx, Species::GrayWolf, Species::Caribou,
-    Species::AmericanBlackBear, Species::GrizzlyBear, Species::BaldEagle];
+pub const ALL: [Species; 10] = [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::Moose, Species::CanadaLynx, Species::GrayWolf, Species::Caribou,
+    Species::AmericanBlackBear, Species::GrizzlyBear, Species::BaldEagle, Species::Beaver];
 
 /// The local population list for one landing: (species, whole animals) for every species with at least one animal in a
 /// square patch `side_m` wide, in species-id order. This is what the bridge sends so the viewer can show the full cast.
@@ -146,7 +146,7 @@ mod tests {
         assert!(density_per_ha(Species::GrizzlyBear, 68.0, -110.0, 50.0, 0.4, false, 2026) > 0.0, "barren-ground grizzlies");
         assert_eq!(density_per_ha(Species::GrizzlyBear, 50.0, -75.0, 300.0, 0.9, false, 2026), 0.0, "none in Quebec");
         assert_eq!(Species::from_id(7), Some(Species::GrizzlyBear));
-        assert_eq!(Species::from_id(9), None);
+        assert_eq!(Species::from_id(10), None);
     }
     #[test] fn bald_eagles_in_forest_scarce_on_prairie_none_on_tundra() {
         let e = density_per_ha(Species::BaldEagle, 55.0, -100.0, 300.0, 0.9, false, 2026);
@@ -156,6 +156,15 @@ mod tests {
         assert_eq!(density_per_ha(Species::BaldEagle, 68.0, -110.0, 50.0, 0.4, false, 2026), 0.0, "no eagles on open tundra");
         assert_eq!(density_per_ha(Species::BaldEagle, 60.0, 25.0, 100.0, 0.9, false, 2026), 0.0, "Finland: white-tailed eagle, not bald");
         assert_eq!(Species::from_id(8), Some(Species::BaldEagle));
+    }
+    #[test] fn beavers_in_forest_thin_on_prairie_none_on_tundra() {
+        let f = density_per_ha(Species::Beaver, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        let p = density_per_ha(Species::Beaver, 50.0, -105.0, 600.0, 0.45, false, 2026);
+        assert!(f > 0.0 && f <= 0.05, "beaver in boreal {f}");
+        assert!(p >= 0.0 && p <= 0.01, "beaver on prairie {p}");
+        assert_eq!(density_per_ha(Species::Beaver, 72.0, -110.0, 50.0, 0.4, false, 2026), 0.0, "none on the high Arctic tundra");
+        assert_eq!(density_per_ha(Species::Beaver, 60.0, 25.0, 100.0, 0.9, false, 2026), 0.0, "Finland: Eurasian beaver, not this table");
+        assert_eq!(Species::from_id(9), Some(Species::Beaver));
     }
     #[test] fn spawn_count_tracks_density() {
         assert_eq!(spawn_count(0.0, 500.0, 50.0, -90.0), 0);

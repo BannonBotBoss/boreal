@@ -13,3 +13,10 @@ test('landingPopulation lists the boreal cast, is deterministic, and is empty on
   assert.deepEqual(pop, sim!.landingPopulation(55, -100, 300, 0.9, false, 2026, 5000));
   assert.deepEqual(sim!.landingPopulation(45, -95, 0, 1, true, 2026, 5000), []);
 });
+
+test('black bears reach the viewer from a western boreal landing (ids 6 and 7 are bears)', async () => {
+  const sim = await loadPlanetSim(readFileSync('public/wasm/boreal_sim.wasm'));
+  assert.equal(LANDING_SPECIES[6], 'american_black_bear'); assert.equal(LANDING_SPECIES[7], 'grizzly_bear');
+  const pop = sim!.landingPopulation(55, -120, 300, 0.9, false, 2026, 5000);
+  assert.ok(pop.some(p => p.species === 'american_black_bear'), JSON.stringify(pop));
+});

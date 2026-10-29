@@ -9,6 +9,7 @@
   "american_black_bear": "Ursus americanus, Alaska and Canada to northern Mexico, roughly 18-70 N, 168-52 W [verify]. Boreal and mixed forest often 10-130 per 100 km2 (Garshelis; Miller et al. 1997 review) [verify]. Thin at the aspen-parkland edge of the prairie and in mountain scrub; none on tundra, rock, ice or water.",
   "grizzly_bear": "Ursus arctos (North American brown and grizzly bears only here). Western range today roughly 42-72 N, 168-100 W; gone from the Great Plains [verify]. Interior forest about 1-40 per 1000 km2, barren-ground tundra 1-10 per 1000 km2 (McLellan 1994; Miller et al. 1997) [verify]. None in desert, rock, ice or water.",
   "bald_eagle": "Haliaeetus leucocephalus, Alaska and Canada to northern Mexico, roughly 24-70 N, 170-52 W [verify]. Nests in tall shoreline trees near lakes, rivers and coasts; breeding densities from under 1 to about 20 per 100 km2 in forest with water, far fewer on open prairie (Buehler 2000, Birds of North America) [verify]. None on open tundra, desert, rock or ice; open water itself is not counted (the bird is placed on the shore cell).",
+  "beaver": "Castor canadensis, Alaska and Canada to northern Mexico, roughly 26-69 N, 168-55 W [verify]. Colonies of about 4-6 animals; boreal and mixed forest often 0.1-1 colony per km2 along streams and lakes, so roughly 0.5-5 beavers per km2 averaged over a landscape (Novak 1987; Baker and Hill 2003) [verify]. Thin along prairie and desert rivers; none on open tundra, rock or ice. Open water itself is not counted (the lodge is placed on the shore cell).",
   "note": "Labelled calibration, not a census (PROJECT-RULES 5 and 7). Per hectare. A place picks a value inside its range from a hash of lat/lon and the cycle phase (hare) so the same place and year return the same row."
  },
  "snowshoe_hare":     { "lat": [36, 70],  "lon": [-170, -52], "boreal_per_ha": [0.1, 6.0],   "prairie_per_ha": [0, 0],     "desert_per_ha": [0, 0],      "cycle_years": 10 },
@@ -19,5 +20,6 @@
  "caribou":           { "lat": [46, 80],  "lon": [-168, -52], "boreal_per_ha": [0.0001, 0.001], "prairie_per_ha": [0, 0], "desert_per_ha": [0, 0], "tundra_per_ha": [0.001, 0.02], "cycle_years": 0 },
  "american_black_bear": { "lat": [18, 70], "lon": [-168, -52], "boreal_per_ha": [0.001, 0.013], "prairie_per_ha": [0, 0.001], "desert_per_ha": [0, 0.0005], "cycle_years": 0 },
  "grizzly_bear":      { "lat": [42, 72],  "lon": [-168, -100], "boreal_per_ha": [0.00001, 0.0004], "prairie_per_ha": [0, 0], "desert_per_ha": [0, 0], "tundra_per_ha": [0.00001, 0.0001], "cycle_years": 0 },
- "bald_eagle":        { "lat": [24, 70],  "lon": [-170, -52],  "boreal_per_ha": [0.00005, 0.002], "prairie_per_ha": [0.000005, 0.0003], "desert_per_ha": [0, 0], "cycle_years": 0 }
+ "bald_eagle":        { "lat": [24, 70],  "lon": [-170, -52],  "boreal_per_ha": [0.00005, 0.002], "prairie_per_ha": [0.000005, 0.0003], "desert_per_ha": [0, 0], "cycle_years": 0 },
+ "beaver":            { "lat": [26, 69],  "lon": [-168, -55],  "boreal_per_ha": [0.005, 0.05], "prairie_per_ha": [0.0005, 0.01], "desert_per_ha": [0, 0.001], "cycle_years": 0 }
 }

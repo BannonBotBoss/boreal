@@ -6,6 +6,8 @@
   "canada_lynx": "Lynx canadensis, roughly 42-70 N, 168-52 W [verify]. About 2-45 per 100 km2 depending on the hare cycle (Slough and Mowat 1996; Krebs et al.) [verify]. Follows the snowshoe hare 10-year cycle about 2 years behind (cycle_lag_years). Forest only.",
   "gray_wolf": "Canis lupus (North American range only here). Roughly 40-80 N, 168-52 W [verify]. Often 0.5-4 wolves per 100 km2 where moose, deer or caribou are the prey (Fuller et al. 2003) [verify]. Follows caribou onto the tundra; none in desert, rock, ice or open water.",
   "caribou": "Rangifer tarandus (barren-ground and woodland caribou, North America only here). Roughly 46-80 N, 168-52 W [verify]. Woodland herds in the boreal often 0.01-0.1/km2; barren-ground herds on the tundra 0.1-2/km2 averaged over the year [verify]. None on prairie, desert, rock, ice or water.",
+  "american_black_bear": "Ursus americanus, Alaska and Canada to northern Mexico, roughly 18-70 N, 168-52 W [verify]. Boreal and mixed forest often 10-130 per 100 km2 (Garshelis; Miller et al. 1997 review) [verify]. Thin at the aspen-parkland edge of the prairie and in mountain scrub; none on tundra, rock, ice or water.",
+  "grizzly_bear": "Ursus arctos (North American brown and grizzly bears only here). Western range today roughly 42-72 N, 168-100 W; gone from the Great Plains [verify]. Interior forest about 1-40 per 1000 km2, barren-ground tundra 1-10 per 1000 km2 (McLellan 1994; Miller et al. 1997) [verify]. None in desert, rock, ice or water.",
   "note": "Labelled calibration, not a census (PROJECT-RULES 5 and 7). Per hectare. A place picks a value inside its range from a hash of lat/lon and the cycle phase (hare) so the same place and year return the same row."
  },
  "snowshoe_hare":     { "lat": [36, 70],  "lon": [-170, -52], "boreal_per_ha": [0.1, 6.0],   "prairie_per_ha": [0, 0],     "desert_per_ha": [0, 0],      "cycle_years": 10 },
@@ -13,5 +15,7 @@
  "moose":             { "lat": [40, 70],  "lon": [-168, -52], "boreal_per_ha": [0.001, 0.02], "prairie_per_ha": [0.0, 0.002], "desert_per_ha": [0, 0],     "cycle_years": 0 },
  "canada_lynx":       { "lat": [42, 70],  "lon": [-168, -52], "boreal_per_ha": [0.0002, 0.0045], "prairie_per_ha": [0, 0], "desert_per_ha": [0, 0],      "cycle_years": 10, "cycle_lag_years": 2 },
  "gray_wolf":         { "lat": [40, 80],  "lon": [-168, -52], "boreal_per_ha": [0.00005, 0.0004], "prairie_per_ha": [0, 0.0001], "desert_per_ha": [0, 0], "tundra_per_ha": [0.00002, 0.0002], "cycle_years": 0 },
- "caribou":           { "lat": [46, 80],  "lon": [-168, -52], "boreal_per_ha": [0.0001, 0.001], "prairie_per_ha": [0, 0], "desert_per_ha": [0, 0], "tundra_per_ha": [0.001, 0.02], "cycle_years": 0 }
+ "caribou":           { "lat": [46, 80],  "lon": [-168, -52], "boreal_per_ha": [0.0001, 0.001], "prairie_per_ha": [0, 0], "desert_per_ha": [0, 0], "tundra_per_ha": [0.001, 0.02], "cycle_years": 0 },
+ "american_black_bear": { "lat": [18, 70], "lon": [-168, -52], "boreal_per_ha": [0.001, 0.013], "prairie_per_ha": [0, 0.001], "desert_per_ha": [0, 0.0005], "cycle_years": 0 },
+ "grizzly_bear":      { "lat": [42, 72],  "lon": [-168, -100], "boreal_per_ha": [0.00001, 0.0004], "prairie_per_ha": [0, 0], "desert_per_ha": [0, 0], "tundra_per_ha": [0.00001, 0.0001], "cycle_years": 0 }
 }

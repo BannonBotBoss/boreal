@@ -1247,3 +1247,106 @@ Repo is now github.com/BannonBotBoss/boreal (not pushed from here).
 
 ### Commits (grok-gait, not pushed)
 0d4afb4 probe; b29507c Cheetah port + tests; 48066b3 FORE_PLAN; 074b368 regression test + bench switch; 023b356 handoff; 959d7d8 pure touchdownPlan.ts extraction; this note.
+
+## Run 12 (2026-10-28, grok-gait, T-0044 elbow / humerus flicker; local only, not pushed)
+Branch grok-gait/T-0044-touchdown-pop (C:\dev\boreal-grok-pop), from 90e7534. Commits: 5390a21 board comment, 767241f probe + switches + pure jointSwing.ts, 398254d close-up recorder + bench wrapper, this note.
+
+### 1. origin (read-only fetch, 2026-10-28 16:20 PT)
+origin/main 2fbaa9c. Since 7745cea, src/animals changed in 3 commits (a6502bf drop/glide + detail ladder, e493650 T-0104 far/sped-up hares fold into numbers, 69533d6 one clock): src/animals/hare.ts (+fold/unfold of far hares, no spawn above the tree line) and src/animals/locomotion/lab.ts (?timescale goes to the world clock dial). bounding.ts, ik.ts, footSwing.ts and touchdownPlan.ts are untouched on main, so this branch has no conflict there. Note: the remote URL on this worktree is still github.com/Bannon-github/boreal.
+
+### 2. npm test (full)
+Before this run's code (5390a21): 820 tests, 799 pass, 4 fail, 3 skipped, 14 todo. After (767241f): 827 tests (+7, tests/joint-swing.test.ts), 806 pass, 4 fail. The 4 failures are the same 4 as Run 11, which all also failed on main then: callField "loons on lakes", constants.rs generated, planet-layout "solar defined once", tests/core.test.ts. tasks.test.ts prints a failure block but it is the TODO "22 legacy rule breaks" (not counted); the new event file is not among them. Not re-run on today's main 2fbaa9c. tsc --noEmit: 0 errors.
+
+### 3. Board comment
+tasks/events/2026-10-28T16-30-grok-gait-comment-T-0044.json (LF, f5c52de format): the once-per-stride in-band scan is the touchdown pose plan at swing .8 ported from MIT Cheetah FootSwingTrajectory, not a new elbow-branch search.
+
+### 4. Elbow / humerus flicker: diagnosis
+Probe: tools/elbow-pop.ts (same cells and gate as tools/touchdown-pop.ts: 2 x 88 deg / t_stance x dt; 88 deg Schmidt 2008 JEB 211:3775 Table 4, factor 2 an estimate). It measures scapula, humerus (girdle+leg), elbow (knee joint) and manus per frame at the plant, in stance + lift-off, and in swing. tools/elbow-trace.ts prints one fore leg frame by frame.
+- The suggested cause (the window picks between near-tied solutions each frame) is NOT it. A joint-vector continuity term in the FORE_LOCK window (sum of squares, then min-max of the four segments, weights 1-1000; wider blade window; no manus hold; no pantograph cost) changed the 8.5 m/s / 240 Hz stance elbow overs only from 52 to 32-55. Without the pantograph cost it also turned the manus to +60 deg at touchdown and put a manus frame over the gate at 5 m/s.
+- The cause is geometry (measured: 8.5 m/s, 240 Hz trace). The hare fore limb is upper .071 + lower .080 m (+ foot .036, girdle .063; tools/bound-plans hare). Its fore stance lasts ~33 ms (duty .14), and the body covers ~0.28 m in it (8.5 m/s x 0.033 s, an estimate from the plan). So the limb runs at the edge of its reach: in swing the target is up to 104 mm out of reach and the two-bone solve straightens (elbow 4.2 deg = solveLeg's 1e-4 m reach clamp). The touchdown is near-straight (planned elbow 8.9 deg, actual 30.1 deg). Near full extension d(elbow)/d(distance) is very large (worked from the bone lengths: at 9 deg bend, 1 cm of shoulder-wrist distance is ~97 deg of elbow; at 36 deg it is ~24 deg). So a 1-2 cm difference between the predicted and the actual touchdown, or one 35 mm body step in early stance, becomes a 30-50 deg elbow step. In stance the scapula sits on its limit (44.1 or 9.7 deg, GIRDLE.scapulaMax, pika Fischer et al. 2002), so only the 36 mm manus lever is left to share the motion.
+
+### 4b. What was built (all reuse, pure, Rust-portable; ALL OFF by default)
+- src/animals/locomotion/jointSwing.ts: no three.js, no state, no random, no clock. jointGate; segments / fromSegments; limitStep (a per-joint velocity limit on an IK result per control tick, as MoveIt / KDL joint_limits max_velocity); blendJoints (joint-space blend to the planned touchdown configuration along the ported Cheetah cubicBezier); shoulderAt; jointStep2 (the closest-to-seed rule of IKFast / TRAC-IK "Distance" mode, as a max norm because the gate is per joint). Tests: tests/joint-swing.test.ts (7, hand-worked).
+- bounding.ts glue: FORE_JOINT { w 0, plantW 0, panto 1, limit 0, share .9, plan 1 }. With these defaults the probe output is identical to Run 11 in all 12 cells, and so is tools/touchdown-pop.ts. limit = swing frames in the air move under the joint limit (share .9 of the gate, an estimate), heading for the planned touchdown configuration from swing .8; a limited pose that would put the paw through the ground keeps the IK pose that frame. plantW = the planting frame's window pick also keeps the largest segment turn from last frame's pose small (100, an estimate).
+- No Claude- or Codex-owned file touched.
+
+### 4c. Results (tools/elbow-pop.ts; counts = frames over the gate, both fore legs, t 2-4 s)
+#### Before (switches off = Run 11 motion, 767241f; identical to 90e7534 in all 12 cells)
+Paw gate (scapula + manus over-gate frames, plant + stance/lift):
+
+| m/s | 60 Hz | 120 Hz | 240 Hz |
+|---|---|---|---|
+| 5 | 0+0 | 0+0 | 0+0 |
+| 8.5 | 0+0 | 0+0 | 0+0 |
+| 10 | 0+0 | 0+0 | 0+0 |
+| 11.6 | 0+0 | 0+0 | 0+0 |
+
+Elbow (knee joint): over-gate frames plant (worst deg) / stance+lift (worst deg) / swing:
+
+| m/s | 60 Hz | 120 Hz | 240 Hz |
+|---|---|---|---|
+| 5 | 8 (60.7) / 34 (104.9) / 38 | 17 (58.8) / 47 (75.9) / 81 | 15 (44.5) / 100 (50.7) / 160 |
+| 8.5 | 0 (57.5) / 11 (112.2) / 14 | 8 (53.7) / 35 (88.7) / 44 | 15 (52.3) / 52 (69.3) / 84 |
+| 10 | 0 (90.5) / 6 (117) / 5 | 13 (87.4) / 20 (112) / 36 | 16 (76.7) / 32 (79.7) / 80 |
+| 11.6 | 0 (90.5) / 0 (107.6) / 0 | 15 (87) / 15 (114.7) / 30 | 14 (80.6) / 32 (84.5) / 65 |
+
+Humerus (girdle + leg): same layout:
+
+| m/s | 60 Hz | 120 Hz | 240 Hz |
+|---|---|---|---|
+| 5 | 0 (43.7) / 18 (107.6) / 29 | 12 (37.6) / 57 (52.7) / 69 | 13 (26.8) / 123 (31.5) / 149 |
+| 8.5 | 0 (46) / 17 (126.7) / 8 | 0 (38.2) / 24 (93.8) / 28 | 13 (33.8) / 67 (46.1) / 66 |
+| 10 | 0 (84.7) / 4 (156.6) / 1 | 10 (61.9) / 23 (95.7) / 11 | 13 (50) / 54 (54.1) / 31 |
+| 11.6 | 0 (87.3) / 3 (160.5) / 0 | 9 (63.2) / 18 (101.1) / 9 | 12 (53) / 48 (59.4) / 16 |
+
+#### After (switches on: FORE_JOINT.limit 1, plantW 100)
+Paw gate (scapula + manus over-gate frames, plant + stance/lift):
+
+| m/s | 60 Hz | 120 Hz | 240 Hz |
+|---|---|---|---|
+| 5 | 0+0 | 0+0 | 0+0 |
+| 8.5 | 0+0 | 0+0 | 0+0 |
+| 10 | 0+0 | 0+0 | 0+0 |
+| 11.6 | 0+0 | 0+0 | 0+0 |
+
+Elbow (knee joint): over-gate frames plant (worst deg) / stance+lift (worst deg) / swing:
+
+| m/s | 60 Hz | 120 Hz | 240 Hz |
+|---|---|---|---|
+| 5 | 0 (27.3) / 36 (104.9) / 4 | 6 (37.4) / 50 (82.2) / 5 | 9 (32.4) / 99 (52.9) / 11 |
+| 8.5 | 0 (28) / 9 (112.2) / 0 | 0 (25.9) / 34 (102.1) / 0 | 10 (39.7) / 54 (69.3) / 6 |
+| 10 | 0 (88.9) / 2 (116.2) / 0 | 9 (67.6) / 28 (109.1) / 3 | 12 (66) / 35 (79.7) / 21 |
+| 11.6 | 0 (82.5) / 0 (105.4) / 0 | 4 (63.2) / 20 (103.6) / 2 | 11 (71.4) / 34 (85.4) / 15 |
+
+Humerus (girdle + leg): same layout:
+
+| m/s | 60 Hz | 120 Hz | 240 Hz |
+|---|---|---|---|
+| 5 | 0 (12) / 18 (129.4) / 4 | 0 (19.5) / 58 (72.3) / 3 | 4 (16.1) / 124 (35.7) / 7 |
+| 8.5 | 0 (20.5) / 17 (150.7) / 0 | 0 (14.9) / 25 (109.4) / 0 | 0 (21.4) / 68 (54.3) / 1 |
+| 10 | 0 (80.2) / 10 (156.6) / 0 | 0 (36.8) / 24 (96.1) / 0 | 7 (38.4) / 56 (54.1) / 1 |
+| 11.6 | 0 (76.4) / 9 (160.5) / 0 | 0 (37.8) / 18 (110.4) / 0 | 5 (40.9) / 50 (59.3) / 0 |
+
+Totals over the 12 cells, before -> after: plant humerus 82 -> 16, plant elbow 121 -> 61, stance+lift humerus 456 -> 477, stance+lift elbow 384 -> 401, swing humerus 417 -> 16, swing elbow 637 -> 67. Swing paws through the ground: 0 both.
+
+Verdict: the T-0044 criterion (elbow and humerus inside the gate in all 12 cells) is NOT met. The switches fix the swing and most of the plant, but the stance and lift-off overs stay (they move from the plant into the first stance frames). That is why they stay off. Paw gate (scapula + manus) is 0 in every cell, before and after. Contacts: with switches off they are unchanged (tests/touchdown-plan.test.ts passes; Run 11: 12.0-34.6 deg). With switches on they were not measured; the plant still tries the 12-35 band first.
+Cost (tools/fore-lock-bench.ts; ON column = fore lock on; ms per hare, mean; omen timing is noisy): switches off 0.47-1.22 (worst frame 17.96 at 8.5/240, a spike); switches on (tools/fore-lock-bench-joint.ts) 0.60-1.06. Both are at or under 1.3 ms in all 12 bench cells (5/8.5/11.6 m/s x 30/60/120/240 Hz).
+Options that could fix the stance (each needs a decision, none done):
+(a) Touch down with more elbow bend. Pull the touchdown target in off the straight limb (FORE_REACH.reach .995 and floor .74 are estimates), soft-IK style (Nicholas 2009 "soft IK"). This moves the contact angles and lookscore and must be re-checked against 11-36 deg.
+(b) Plan the whole stance (blade and manus from the touchdown plan to a lift-off plan), the same Cheetah plan idea applied to stance.
+(c) Re-check the scapula range: the stance sits on both pika-sourced limits.
+(d) Decide whether the elbow should carry the forearm's 2 x 88 deg gate at all. Schmidt 2008 sources the forearm sweep, not the elbow.
+
+### 5. Close-up clip (box: /workspace/locomotion/T-0009/v12/)
+tools/hare-closeup-record.mjs, a copy of Grok Bot's recorder in drive mode. It ran in off-screen Edge (-32000), with the bench lock held and released, and its own Edge killed; Vite was started for the clips and then stopped. A second three.js renderer draws the page's own scene from a camera 1.3 m to the hare's side. Layer 7 holds only the hare, the lights and a 10 cm grid; grass and terrain are left out so nothing hides the legs.
+The driven hare stands 0.5 s, ramps over 1 s, then holds the speed. slow 0.1, ~55 captures per real second, every 3rd frame kept, 30 fps playback, ~0.16x speed.
+Files: T-0044-v12-closeup-v8.5-off-slowmo.mp4, -v11.6-off-, -v8.5-on-, -v11.6-on-, contact-sheet-*.jpg, and frames in v*/g*.jpg with report.json.
+Limits:
+- The grid sits at the lowest point of the skin, not at the terrain, so it is a motion reference, not ground contact.
+- In slow motion the game steps the controller at about 550 updates per game second. The clip is therefore finer than the 60-240 Hz cells and under-shows per-frame snaps. The probe numbers are the evidence.
+
+### Risks (loud)
+- The elbow and humerus stance flicker remains (up to 160 deg humerus and 117 deg elbow in one 60 Hz frame). T-0044 is not done.
+- The switches change the swing pose: the paw lags its target in joint space. They have not been checked with lookscore or bound-checks.
+- share .9, plantW 100 and the gate factor 2 are estimates.
+- The board event's T-0044 id: tasks.test reports no rule break for it.

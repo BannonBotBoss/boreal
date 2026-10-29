@@ -113,7 +113,7 @@ export class PlanetSim {
   }
 }
 /** Species ids of the Rust species table (species.rs `Species`), in id order. */
-export const LANDING_SPECIES = ['snowshoe_hare', 'white_tailed_deer', 'moose', 'canada_lynx', 'gray_wolf', 'caribou', 'american_black_bear', 'grizzly_bear', 'bald_eagle', 'beaver'] as const;
+export const LANDING_SPECIES = ['snowshoe_hare', 'white_tailed_deer', 'moose', 'canada_lynx', 'gray_wolf', 'caribou', 'american_black_bear', 'grizzly_bear', 'bald_eagle', 'beaver', 'red_fox'] as const;
 export const INTERIOR_LAYERS = ['inner core', 'outer core', 'mantle', 'crust', 'ocean', 'atmosphere', 'magnetosphere', 'solar wind'] as const;
 export const ATM_LAYERS = ['troposphere', 'stratosphere', 'mesosphere', 'thermosphere', 'exosphere'];
 export const GAS_SPECIES = ['N2', 'O2', 'Ar', 'CO2', 'H2O', 'O3', 'O', 'Na', 'He'] as const;

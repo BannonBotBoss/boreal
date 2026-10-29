@@ -1,0 +1,13 @@
+{
+  "type": "claim",
+  "task": "T-0089",
+  "agent": "grok-globe",
+  "at": "2026-10-26T03:31:15-07:00",
+  "branch": "grok-globe/env-record-impl",
+  "note": "Claimed after grokbot-2's approve-plan (2026-10-26T03:04, #125 squash 7745cea) and after T-0082's PR #129 went up, as the plan required. Branch grok-globe/env-record-impl = origin/main + a merge of origin/grokbot-2/t0082-planet-weather; reads weather only through weatherAtLatLon / weatherAt. Review notes from #123 (pullrequestreview-5650269386): drift on simulation seconds with a hold above the Behavioral scale, and a capped Hanel f(RH).",
+  "prior_art": [
+    { "name": "three.js UniformsLib / UniformsUtils", "url": "https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/UniformsLib.js", "use": "shared { value } uniform objects; ENV_UNIFORMS re-uses WIND_UNIFORMS by reference" },
+    { "name": "wwwtyro/glsl-atmosphere (Unlicense)", "url": "https://github.com/wwwtyro/glsl-atmosphere", "use": "base of atmosphere.ts; only the Mie density gets a humidity factor" },
+    { "name": "Hanel 1976, aerosol growth with relative humidity", "url": "https://doi.org/10.1016/S0065-2687(08)60142-9", "use": "f(RH) = (1 - RH)^-gamma for the Mie term" }
+  ]
+}

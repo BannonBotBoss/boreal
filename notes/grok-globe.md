@@ -19,3 +19,7 @@
   dependency. Box captures: Playwright-core + /usr/bin/google-chrome with SwiftShader (`--use-angle=swiftshader --enable-unsafe-swiftshader`),
   `window.__globe` is the standalone handle; page ready = `__globe.stats().drawn > 0 && queued === 0` (~2 s). Handoff:
   tasks/handoffs/T-0043-grok-globe.md.
+- 2026-10-28 T-0089 (branch grok-globe/env-record-impl): environment record `ENV` / `ENV_UNIFORMS` (src/render/environment.ts) from
+  weatherAt / weatherAtLatLon; globe cloud drift = sub-point u / (R cos lat) on sim seconds, held above Behavioral via worldClock
+  SCALE_BOUNDS; Mie x Hanel f(RH) capped at 0.95. Use `clockRate()`, not `observationRecord().rate` (still 0/1 on main). Full
+  npm test on the box takes ~22 min (climate-class.test.ts runs the wasm grid for ~17 min). Skill notes/skills/environment-record.md.

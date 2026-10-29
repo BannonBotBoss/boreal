@@ -26,9 +26,12 @@ Matthew, direct chat 2026-10-28 7:10 PM PT: "push yourr work to the main" (rule 
 refs/T-0089/numbers.md (gamma 0.30, cap 0.95, f(RH) at 0/.5/.8/.9/.95/1 = 1.000/1.231/1.621/1.995/2.457/2.457; drift weight by rate).
 
 ## Evidence
-- refs/T-0089/t0089-orbit-ultra-dry.jpg, t0089-orbit-ultra-humid.jpg (box SwiftShader, branch fbfb490 before the main merge;
-  stills-log.txt has the record values). Drift clip and post-merge frames follow in a later commit if made.
-- GPU smoke on omen: see the complete event / notes; open if not run.
+- Landed on main as 44e492f (merge of this branch, Matthew-directed push 2026-10-28 7:10 PM PT). Undo: `git reset --keep 30217f4`.
+- refs/T-0089/t0089-orbit-ultra-dry.jpg, t0089-orbit-ultra-humid.jpg, t0089-grid.jpg (box SwiftShader, re-shot on 44e492f;
+  stills-log.txt). The haze difference at orbit is 0.21/255 mean: wired, not visible (see numbers.md). 2 km and Minimum stills
+  were not captured: at Minimum the record stays empty (no budget layer), so the old 12 m/s / Mie x1 fallback draws.
+- refs/T-0089/t0089-drift.mp4 + drift-log.txt + drift-rec.json: forced wind flip, measured rate matches u x 12 / (R cos lat) to 0.05 %.
+- refs/T-0089/smoke-omen.txt: RTX 5060, T-0089 vs main before it, within noise; both fail the script's "world not built" draw check.
 
 ## Leftovers / next owner
 - One sub-point wind turns the whole shell; per-latitude zonal drift needs the layer texture's u plane.

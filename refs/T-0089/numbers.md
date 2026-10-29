@@ -38,3 +38,15 @@ Source law: Hanel 1976, Adv. Geophys. 19:73-188, doi 10.1016/S0065-2687(08)60142
 | 1e5 .. 1e9 | seasonal .. evolutionary | 0.000 (held) |
 
 Rewind (negative world-second delta) turns the shell backward, like the sun. No grid booted: drift falls back to the old 12 m/s at the equator, and Mie x 1.
+
+## Box drift clip (refs/T-0089/t0089-drift.mp4, drift-log.txt, drift-rec.json)
+SwiftShader, tier 4, 3000 km over 49.77 N, clock at 1x, record's east wind forced to +4000 m/s then -4000 m/s at 45 s
+(41 frames in 90 s, played at 4 fps). Angular rate in rad per world second:
+- after the flip: measured -0.011672, predicted u x 12 / (R cos lat) = -0.011665 (0.05 %).
+- first half: measured 0.00633 vs 0.01167: the forced wind reaches the record only at its next 60-frame refresh, which takes
+  many seconds at SwiftShader frame rates, so most of that half drifted on the real ~3 m/s wind. The sign flip and the matched
+  rate after it are the check.
+
+## Haze frames (refs/T-0089/t0089-grid.jpg)
+Orbit 3000 km, Ultra, same pinned hour: RH 0.10 (Mie x1.032) vs RH 0.95 (Mie x2.456). Mean absolute pixel difference 0.21 / 255:
+the humidity term is wired (uMieScale read back from the shader uniforms) but is not visible at orbit at this calibration.

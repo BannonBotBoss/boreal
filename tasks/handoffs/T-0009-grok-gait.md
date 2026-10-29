@@ -1444,3 +1444,21 @@ Files: T-0044-v13-closeup-v8.5-off-slowmo.mp4 (746 frames), -v8.5-on- (731), -v1
 - Contacts are under 11 deg at 10-11.6 m/s in the baseline too (see above). Either the band is not held there or Run 11's measure differed. This needs a decision.
 - ratio .3 and stanceW are estimates. stanceW has no measured effect.
 - The gate (2 x 88 deg, factor 2 an estimate) was not changed, pending Matthew.
+## Run 14 (2026-10-28, grok-gait, T-0044; STOPPED at wrap-up, partial)
+Commits: 338eacf (a) diagnosis + frameTouchdown (it had set FORE_PLAN.frame 1 as the default; the wrap-up commit puts it back to 0), plus the wrap-up commit (frame 2 + plantWin, all OFF, contact-exact tool, this note). The committed defaults equal Run 13's: FORE_SOFT on, ratio .3, swing 1, plan 0, stanceW 100. Everything else is off: FORE_JOINT all off, FORE_PLAN.frame 0, plantWin 1, FORE_STANCE.on 0.
+C:\dev\r13-clip was deleted after the v13 box outputs were confirmed (746 / 731 / 731 / 710 frames, mp4s and contact sheets).
+
+### (a) Fallback touchdowns at 10-11.6 m/s: diagnosed, fix not finished
+- tools/plant-path.ts plus FORE_PLAN_DIAG (off = no cost) record one entry per fore planting frame. Every touchdown WAS planned: 0 unplanned, 0 plan fails. The ones below 11 deg are "noband" plants: the plant-frame window about the planned pair found no in-band exact pose and took an out-of-band one. That was 6-15 of 18 plants per cell at 10-11.6 m/s.
+- Cause, measured: the world print was predicted well (0.4-2.5 mm at 120 / 240 Hz). The body was not. The plan predicts the body at the continuous touchdown instant, but a fixed-step host plants on the next control frame, about 0.6 frame later. That is 31-62 mm of extra body travel at 11.6 m/s (dBody); pitch, height and pivot predictions are within 0.7 deg and 0.3 mm.
+- frameTouchdown (pure, touchdownPlan.ts, 3 tests) moves the body prediction to the planting frame and leaves the print at the instant (FORE_PLAN.frame 1). In every 12-cell probe it gave all plants in band, 12.0-28.9 deg, 0 holds, paw gate 0. Overs, totals for humerus / elbow: plant 1 / 5, stance + lift 397 / 211, swing 193 / 48 (Run 13 defaults: 1 / 8, 398 / 198, 199 / 47).
+- BUT frame 1 breaks tests/touchdown-plan.test.ts (5 cells). Its contactScore split-step "exact" measure sub-steps the host to the contact instant, which shrinks the plant window and moves the actual body back to the instant (down to 4.6 deg at 11.6 m/s / 60 Hz). That is why it is OFF.
+- frame 2 also tracks the continuous-instant plan (scan-initialised) and blends the plant seed linearly by how late the plant really is (u = residual phase / hz / gap). It passed both measures in the 3 cells checked (8.5 / 60, 11.6 / 60, 10 / 120: exact 12.0-25.9 deg, every plant in band). The 12-cell run was interrupted by the wrap-up, so it is OFF and unmeasured: cost, paw gate, npm test.
+- Open: finish frame 2 (12 cells, both contact measures, paw gate, cost at or under 1.3 ms, npm test), then decide its default.
+
+### Not done
+- (b) lookscore v1.3 and bound-checks v2 have not been run on the soft-IK defaults, so it is still unjudged whether the ~7 mm extra swing paw trail matters.
+- (c) Option 2, planning the whole stance (FORE_STANCE is only a placeholder, off): not built. Stance + lift flicker remains, about 398 humerus / 198 elbow over-gate frames over 12 cells.
+- The elbow gate question (2 x 88 deg, factor 2 an estimate; does the elbow carry the forearm's gate?) is pending with Matthew.
+- No v14 clips were recorded.
+- T-0044 is NOT done.

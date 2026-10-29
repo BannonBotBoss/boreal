@@ -175,8 +175,11 @@ export const FORE_JOINT = { w: 0, plantW: 0, panto: 1, limit: 0, share: .9, plan
  *  - `plan`: the planned / tracked / planting touchdown pair must also bend the elbow at least softBendMin (falls back to the
  *    run 11 band alone, then to none, so a failed plan never brings the pop back).
  *  - `stanceW`: a planted paw stays exact; the FORE_LOCK window's pick pays stanceW x (excess / soft)^2 for entering the zone.
- *  ratio .1 (an estimate; hard ~136 mm of the ~151 mm chain, a ~50 deg bend). on 0 = off (run 12 motion). */
-export const FORE_SOFT = { on: 0, ratio: .1, swing: 1, plan: 1, stanceW: 100 };
+ *  Defaults from the run 13 probe (12 cells, tools/elbow-pop.ts): on, ratio .3 (an estimate tuned on the probe: hard ~106 mm of
+ *  the ~151 mm chain; .1 / .15 / .2 / .25 / .3 / .35 were measured), swing on, plan OFF (the band + soft accept put manus
+ *  jumps into the swing, straightened stance to 4.2 deg and let a planted paw miss 6.4 mm), stanceW 100 (measured no effect at
+ *  100 or 1000: kept, harmless). on 0 = run 12 motion. */
+export const FORE_SOFT = { on: 1, ratio: .3, swing: 1, plan: 0, stanceW: 100 };
 export const FORE_SCAN = { psiFrom: -.6, psiTo: 1.2, psiStep: .1, bladeStep: .05 };
 export function foreLimb(L: LimbDims, top: { z: number; y: number }, sole: Vec3, limits: JointLimits = CANID_LIMITS, prev?: { blade: number; psi: number; arm?: number; hum?: number; man?: number }, psiWant?: number, any = false, girdle: GirdleLimits = GIRDLE, cont = FORE_CONT.carry, win?: { psi: number; blade: number; soft?: number; w?: number; j?: number; s?: number }, accept?: (a: LimbAngles) => boolean) {
   const rest = L.girdleRest ?? 0, want = top.y - Math.hypot(top.y - sole.y, sole.x), nb = Math.round(girdle.scapulaMax / FORE_SCAN.bladeStep);

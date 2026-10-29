@@ -3,7 +3,8 @@
  * One data table; the governor picks the row, `applied().lod` scales the split distance like every other LOD in the game.
  */
 import { applied, GOVERNOR } from '../../core/quality';
-import { across, children, type QNode } from './cube';
+import { across, centre, children, edgeMetres, wantsSplit, type LodOpts, type QNode } from './cube';
+import type { Vec3 } from './planet';
 
 export const GLOBE_LOD = [
   // segments per tile edge, split factor (× tile edge), shallowest + deepest level, tile cache cap, cap on tiles drawn
@@ -48,4 +49,20 @@ export function balancedTree(roots: QNode[], split: (n: QNode) => boolean, keep:
     }
   }
   return { splits, leaves };
+}
+/** The camera is over this node, or within `reachM` of it along the surface. Distance to the node centre is the wrong
+ *  test: a coarse cell is wider than the near-split reach, so the cell under the camera never takes the extra split. */
+export function nearNode(n: QNode, cam: Vec3, radius: number, reachM: number): boolean {
+  const c = centre(n, radius), camLen = Math.hypot(cam[0], cam[1], cam[2]) || 1, cLen = Math.hypot(c[0], c[1], c[2]) || 1;
+  const ang = Math.acos(Math.max(-1, Math.min(1, (c[0] * cam[0] + c[1] * cam[1] + c[2] * cam[2]) / (cLen * camLen))));
+  const extent = edgeMetres(n.level, radius) / Math.max(radius, 1) * .8; // the same half-diagonal slack the horizon test uses
+  return Math.max(0, ang - extent) * radius < reachM;
+}
+/** Distance split. `base.split` is the draw-capped split. Nodes the camera is over use `full` × (1 + boost)
+ *  (`boost` is NEAR_SPLIT.k × the fade, `full` the tier split before the cap). The cap still shrinks the far
+ *  field. Letting it shrink the near split too drops the cell under the camera: that cell's centre is tens of
+ *  kilometres away, so a small cut in the factor puts it back to one coarse leaf. */
+export function splitWanted(n: QNode, cam: Vec3, alt: number, base: LodOpts, boost: number, reach: number, full = base.split) {
+  const opt = boost > 0 && nearNode(n, cam, base.radius, alt * reach) ? { ...base, split: full * (1 + boost) } : base;
+  return wantsSplit(n, cam, opt);
 }

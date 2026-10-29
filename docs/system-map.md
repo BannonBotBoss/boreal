@@ -120,11 +120,11 @@ flowchart LR
 
 | System | What it does | Groups in the file | Depends on | Feeds | URL flags |
 |---|---|---|---|---|---|
-| [Headless animal simulation](#animalSim) | Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters. | `hunt`, `perception`, `sim`, `social` | needs, senses, player, clock | - | - |
+| [Headless animal simulation](#animalSim) | Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Far or fast, the same animals are a density the coarse step eases toward a published count. Renderers read it through adapters. | `hunt`, `perception`, `sim`, `social` | needs, senses, player, clock | - | - |
 | [Audio and music](#audio) | Ambience, animal calls, footsteps, wolf voice, music decks and the bus mixer. | `footsteps` | clock, weather, locomotion, behaviour, player | ui | 1 |
 | [Agent and behaviour pipeline](#behaviour) | Animal brains: senses -> problem (explore, escape, feed ...) -> motion intent; deer herds, hares, people. | `behaviour` | senses, needs, terrain, clock, vegetation | audio, interaction, locomotion, senses | 2 |
-| [Camera](#camera) | Third-person follow camera: a rear three-quarter just above the wolf, pitch spring and look-around. | `camera` | player, controls, terrain, interaction | interaction | 2 |
-| [Time and clock](#clock) | The one world clock (frozen in menus), game hour, date and sun position; chronometer offset. | `clock`, `chronometer` | save | animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 2 |
+| [Camera](#camera) | Third-person follow camera: dead astern just above the wolf, level horizon, pitch spring and look-around. | `camera` | player, controls, terrain, interaction | interaction | 2 |
+| [Time and clock](#clock) | The one world clock and its one dial. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control. The rate eases; observation scale is a signal for later detail switches. | `clock`, `chronometer` | save | animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather | 4 |
 | [Player controls and gamepad](#controls) | One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics. | `haptics` | save | camera, interaction, player, stamina, ui | - |
 | [Globe (planet view)](#globe) | Cube-sphere planet, atmosphere, far layer and the descent from orbit to the ground. | - | terrain, clock, lighting, quality, save | - | 19 |
 | [Interaction, focus and target glow](#interaction) | Picking the interaction target, held focus lock and steering, the glowing outline. | `autoFocus`, `targetGlow` | controls, player, behaviour, camera | camera | 1 |
@@ -147,11 +147,11 @@ flowchart LR
 <a id="animalSim"></a>
 ## Headless animal simulation (`animalSim`)
 
-Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters.
+Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Far or fast, the same animals are a density the coarse step eases toward a published count. Renderers read it through adapters.
 
 - Depends on: needs, senses, player, clock
 - Feeds: nothing (a leaf)
-- Modules: `src/core/sim/index.ts`, `src/core/needs/senses.ts`, `src/core/needs/diet.ts`, `src/core/needs/social.ts`, `src/animals/hare.ts`, `src/core/hunt.ts`, `src/core/huntHold.ts`
+- Modules: `src/core/sim/index.ts`, `src/core/coarse.ts`, `src/core/needs/senses.ts`, `src/core/needs/diet.ts`, `src/core/needs/social.ts`, `src/animals/hare.ts`, `src/core/hunt.ts`, `src/core/huntHold.ts`
 
 ### `SYSTEM_PROPERTIES.hunt`
 
@@ -193,8 +193,7 @@ Read by: `src/core/sim/index.ts`
 
 | Figure | Value | Units | What | Source |
 |---|---|---|---|---|
-| `step` | 0.03333333333333333 | s | s fixed sub-step (coarse ecosystem ticks may raise it); game s per sim s (the world clock: 300 real s per game hour = x12) | design (30 Hz like the player sim) |
-| `timeScale` | 12 | game s / sim s | s fixed sub-step (coarse ecosystem ticks may raise it); game s per sim s (the world clock: 300 real s per game hour = x12) | clock.realSecondsPerGameHour 300 -> 3600/300 = 12 |
+| `step` | 0.03333333333333333 | s | s fixed sub-step (coarse ecosystem ticks may raise it). Needs use the world clock's game-second conversion, not a sim rate. | design (30 Hz like the player sim) |
 | `cell` | 25 | m | m spatial-grid cell; m scent search radius (as senses.range) | estimate (game calibration) |
 | `scentRange` | 40 | m | m spatial-grid cell; m scent search radius (as senses.range) | senses.range |
 | `biteReach` | 0.6 | m | m a grazer reaches food from; Energy % above which it stops seeking food | estimate (game calibration) |
@@ -312,7 +311,7 @@ Read by: `src/core/animalBehavior.ts`
 <a id="camera"></a>
 ## Camera (`camera`)
 
-Third-person follow camera: a rear three-quarter just above the wolf, pitch spring and look-around.
+Third-person follow camera: dead astern just above the wolf, level horizon, pitch spring and look-around.
 
 - Depends on: player, controls, terrain, interaction
 - Feeds: interaction
@@ -324,12 +323,12 @@ Read by: `src/render/math.ts`
 
 | Figure | Value | Units | What | Source |
 |---|---|---|---|---|
-| `defaultPitchDeg` | -5 | deg | resting pitch (deg). Negative looks above the horizon. -5 puts the mid-body near the measured issue #52 centroid (image y 0.74, NDC y -0.48) when the lens is riderHeight. Game calibration of the angle. | estimate (game calibration) |
+| `defaultPitchDeg` | -5 | deg | resting pitch (deg). Negative looks above the horizon. -5 is near level and puts the body below screen centre. Game calibration of the angle. | estimate (game calibration) |
 | `lookPitchRangeDeg` | 30 | deg | how far the look stick tilts up or down from the default (deg) | estimate (game calibration) |
 | `lookSpringRate` | 14 | 1/s | look-pitch spring return rate (1/s): 98 % settled in 0.3 s, no overshoot | estimate (game calibration) |
 | `riderHeight` | 1.05 | m | metres above the ground. Gray-wolf withers are 80–85 cm (Mech 1970, The Wolf; Wikipedia "Wolf" restates it). The lens sits 20 cm above an 85 cm withers, so the view is the animal's, not a standing person's. | withers 80–85 cm (Mech 1970, The Wolf) plus 20 cm, so the lens is just above the back |
 | `riderDistance` | 3.6 | m | metres behind the hips along the trail, at riderHeight. Scales with height. Game calibration so an 85 cm wolf is about a quarter of a 48° frame, the way the animal sits in issue #52. | estimate (game calibration) |
-| `flank` | 2.25 | m | metres to the animal's left, at riderHeight. atan2(flank, riderDistance) is 32°, inside a rear three-quarter (25–45° off the tail; 0° is dead astern, 90° is side-on). Game calibration of that angle. | estimate (game calibration) |
+| `flank` | 0 | m | metres to the animal's left, at riderHeight. 0 is dead astern: the lens sits on the tail line and looks along the heading. T-0075 used 2.25 m (32° off the tail). That side offset made a diagonal shore read as a tilted horizon. | estimate (game calibration) |
 | `pitchMinDeg` | -80 | deg | hard pitch limits (deg): negative looks above the horizon | estimate (game calibration) |
 | `pitchMaxDeg` | 89 | deg | hard pitch limits (deg): negative looks above the horizon | estimate (game calibration) |
 
@@ -348,11 +347,11 @@ Read by: `src/render/math.ts`
 <a id="clock"></a>
 ## Time and clock (`clock`)
 
-The one world clock (frozen in menus), game hour, date and sun position; chronometer offset.
+The one world clock and its one dial. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control. The rate eases; observation scale is a signal for later detail switches.
 
 - Depends on: save
 - Feeds: animalSim, audio, behaviour, globe, lighting, needs, sky, ui, vegetation, water, weather
-- Modules: `src/core/timeOfDay.ts`, `src/core/worldClock.ts`, `src/core/timescale.ts`, `src/ui/chronometer.ts`, `src/core/deepTime.ts`
+- Modules: `src/core/timeOfDay.ts`, `src/core/worldClock.ts`, `src/core/timescale.ts`, `src/ui/chronometer.ts`, `src/ui/timeHud.ts`, `src/core/deepTime.ts`
 
 ### `SYSTEM_PROPERTIES.clock`
 
@@ -379,14 +378,16 @@ Read by: `src/ui/chronometer.ts`
 
 | Flag | Effect |
 |---|---|
-| `?hour` | =HH sets the time of day (core/timeOfDay) |
-| `?timescale` | speeds the simulation, not the clock (core/timescale) |
+| `?hour` | =HH sets the time of day on the one clock (core/timeOfDay) |
+| `?day` | =1-366 sets the day of year (core/timeOfDay) |
+| `?date` | =YYYY-MM-DD sets the year and day (core/timeOfDay) |
+| `?timescale` | sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, the edge of that zone is exactly 1×, full deflection 10^12 sim seconds per real second, negative rewinds |
 
 **Linked data tables** (kept in their own module)
 
 - `DAY` in `src/core/timeOfDay.ts`: chronometer offset (persisted)
 - `CLOCK` in `src/core/worldClock.ts`: save key and offline cap
-- `DEEP` in `src/core/deepTime.ts`: deep-time figures: sun and Earth age, flux thresholds, life start (T-0060)
+- `DEEP` in `src/core/deepTime.ts`: deep-time figures: solar-system formation, sun and Earth age, flux thresholds, life start (T-0060, T-0093)
 - `MILESTONES` in `src/core/deepTime.ts`: dated milestones on the deep-time dial (T-0060)
 
 <a id="controls"></a>
@@ -745,7 +746,7 @@ Hearing and smell: scent plumes, sound cues, the senses HUD and the halo ring.
 
 ### `SYSTEM_PROPERTIES.senses`
 
-Read by: `src/core/senses.ts`
+Read by: `src/core/senses.ts`, `src/core/sensePictures.ts`
 
 | Figure | Value | Units | What | Source |
 |---|---|---|---|---|
@@ -941,6 +942,8 @@ A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain f
 | `?bench` | globe | benchmark run (globeView, main.ts) |
 | `?bench` | quality | per-tier and per-feature cost run (main.ts) |
 | `?contacts` | behaviour | =1 logs every solid contact (main.ts) |
+| `?date` | clock | =YYYY-MM-DD sets the year and day (core/timeOfDay) |
+| `?day` | clock | =1-366 sets the day of year (core/timeOfDay) |
 | `?dir` | globe | sun direction (globeView) |
 | `?dome` | globe | sky dome (globeView) |
 | `?farSamples` | globe | far-layer demo samples (farLayerDemo) |
@@ -949,7 +952,7 @@ A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain f
 | `?fov` | camera | field of view override (grok/rabbit-clover, T-0009) |
 | `?glow` | interaction | =0 turns the target glow off for A/B (grok/interact-outline, T-0035) |
 | `?handoff` | globe | handoff test (globeView) |
-| `?hour` | clock | =HH sets the time of day (core/timeOfDay) |
+| `?hour` | clock | =HH sets the time of day on the one clock (core/timeOfDay) |
 | `?inpagedev` | globe | dev hooks for the in-page globe (inpage) |
 | `?loco` | locomotion | the controller-driven player wolf (animals/locomotion/game) |
 | `?look` | globe | look direction (globeView) |
@@ -965,7 +968,7 @@ A small 3-D atmosphere grid over the player: temperature, wind, cloud and rain f
 | `?stages` | terrain | =0 / =1 staged terrain off / on (main.ts) |
 | `?start` | globe | =globe opens on the planet (grok-globe/globe-default-view, T-0034) |
 | `?tier` | globe | force a quality tier (globeView) |
-| `?timescale` | clock | speeds the simulation, not the clock (core/timescale) |
+| `?timescale` | clock | sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, the edge of that zone is exactly 1×, full deflection 10^12 sim seconds per real second, negative rewinds |
 | `?tones` | audio | show the isochronic / binaural tone controls (grok/music, T-0033) |
 | `?transition` | globe | globe <-> ground mode (world/globe/transition) |
 | `?tree` | vegetation | procedural tree viewer page (world/globe/entry) |

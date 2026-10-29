@@ -11,7 +11,7 @@ export function playerPanel(get: () => string, choose: (id: string) => void) {
       input.checked = p.id === get(); input.disabled = !p.available; input.onchange = () => choose(p.id);
       label.append(input, ` ${p.label}${p.available ? '' : ` (${p.note ?? 'coming soon'})`}`); form.append(label);
     }
-    const note = document.createElement('p'); note.textContent = 'Switching happens when you resume, at your current position.'; form.append(note);
+    const note = document.createElement('p'); note.textContent = 'You step into an animal that is already alive, where it already stands.'; form.append(note);
     return form;
   };
 }

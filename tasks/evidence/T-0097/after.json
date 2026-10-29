@@ -1,0 +1,11 @@
+{
+  "ready": true,
+  "heard": "something, front-right, soft",
+  "titles": [
+    "something, front-right, soft"
+  ],
+  "url": "http://127.0.0.1:5277/?view=ground&nomenu&noprobe&hour=12&at=-100.495,38.429,0&after=1",
+  "out": "tasks/evidence/T-0097/after.png",
+  "clipPath": "tasks/evidence/T-0097/after-panel.png",
+  "errors": []
+}

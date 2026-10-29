@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0078",
+  "agent": "grokbot-3",
+  "at": "2026-10-25T19:41:20-07:00",
+  "branch": "grokbot-3/single-time-control",
+  "skill": "single-clock",
+  "handoff": "tasks/handoffs/T-0078-grokbot-3.md",
+  "note": "The one clock is the #109 dial. Rate eases in decades. Rewind moves the hour; ground, animals, weather grid and gameplay audio do not pretend to undo. Observation scale is a tested signal, not wired through the world. Bar shows 1.32 sec / sec at rest, 1 hour / sec and 1,000 years / sec from ?timescale. ./node_modules/.bin/tsc --noEmit exit 0. npm test 791 tests, 777 pass, 0 fail, 14 todo. Not GitHub-approved and not merged."
+}

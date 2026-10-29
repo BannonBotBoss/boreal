@@ -1,9 +1,10 @@
 /**
  * Pad menu (Grok Bot, Matt: "all of these need to be accessible through the xbox gamepad"). Menu opens it; LB/RB switch
- * tabs (Layers, Camera, Time, Badges, Gallery, Settings); LB/RB (keyboard [ ]) change layer. Selection moves with
+ * tabs (Layers, Camera, Badges, Gallery, Settings). Time is not a tab: the in-game clock bar is the only playback control.
+ * Deep time stays on the planet layer panel. LB/RB (keyboard [ ]) change layer. Selection moves with
  * d-pad up/down, left stick up/down, keyboard ArrowUp/ArrowDown, or the on-screen arrows. Hold repeats after the pad
  * reader's delay, then at its rate (input/gamepad.ts REPEAT). D-pad left/right still adjusts the row, so it does not
- * change layer. The right stick is unused here. The box stays the tallest of camera, time, badges, gallery and settings.
+ * change layer. The right stick is unused here. The box stays the tallest of the layers that are actually in the menu.
  * Tabs read the live panels owned elsewhere through the DOM (globe layer panel, camera panel) so they never fork their
  * state. Gated items (core/badges canUse) show a lock and open their badge page: study link, pad-friendly test (hints on X,
  * number entry on the d-pad, retry with fresh questions), redeem credits, or buy.
@@ -35,8 +36,6 @@ export function domItems(root: Element | null, controlFor: (el: HTMLInputElement
 const has = (id: string) => id in CONTROL ? id : undefined;
 export const layerControl = (layer: string) => has(`layer.${layer === 'fieldLines' ? 'magnetosphere' : layer}`);
 export const cameraControl = (el: Element) => el instanceof HTMLSelectElement ? 'camera.filters' : 'camera.exposure';
-const reloadWith = (k: string, v: string) => { const u = new URL(location.href); u.searchParams.set(k, v); location.href = u.toString(); };
-
 export function quizPage(id: string, done: () => void): Page {
   let qs: Question[] = drawTest(id), i = 0, answers: number[] = [], hints: number[] = [], shown = '', result: ReturnType<typeof submitTest> | undefined, entry = createNumberEntry();
   const restart = () => { qs = drawTest(id); i = 0; answers = []; hints = []; shown = ''; result = undefined; entry = createNumberEntry(); };
@@ -82,17 +81,11 @@ export function badgePage(id: string, push: (p: Page) => void, notice: (t: strin
 
 export function buildTabs(host: PadMenuHost, push: (p: Page) => void): Tab[] {
   const info = (label: string): Item => ({ label, kind: 'info' });
-  let rate = 1, deep = 0; const RATES = [.05, .1, .25, .5, 1], DEEP = [0, -1e6, -6.6e7, -2.5e8, -5.4e8, -1e9, -2.5e9, -4e9, -4.5e9];
-  const yrs = (y: number) => y === 0 ? 'Today' : `${(-y / 1e6).toLocaleString()} million years ago`;
   return [
     { id: 'layers', label: 'Layers', items: () => { const it = domItems(q('#globe-layers'), el => layerControl((el as HTMLElement).dataset.layer ?? ''));
       return it.length ? it : [info('Layer switches live on the planet view.'), { label: 'Go to the planet view', kind: 'action', act: () => { host.close(); host.act('planet'); } }]; } },
     { id: 'camera', label: 'Camera', items: () => [{ label: 'Take a photo', kind: 'action', act: () => { host.close(); host.shutter(); }, hint: 'RS click' },
       ...(domItems(q('#camera-panel'), cameraControl).length ? domItems(q('#camera-panel'), cameraControl) : [info('The camera panel is not on screen here yet (the Sun viewer has it).')])] },
-    { id: 'time', label: 'Time', items: () => [
-      { label: 'Time of day (chronometer)', kind: 'action', act: () => { host.close(); host.act('chrono'); }, hint: 'D-pad ↑' },
-      { label: 'Slow motion', kind: 'choice', control: has('time.rate'), value: () => `×${RATES[rate === 1 ? RATES.length - 1 : RATES.indexOf(rate)] ?? rate} (A applies)`, adjust: d => { const i = Math.max(0, RATES.indexOf(rate)); rate = RATES[Math.min(RATES.length - 1, Math.max(0, i + d))]; }, act: () => reloadWith('timescale', String(rate)) },
-      { label: 'Deep time', kind: 'choice', control: has('deeptime.seed'), value: () => `${yrs(deep)} (A applies)`, adjust: d => { const i = Math.max(0, DEEP.indexOf(deep)); deep = DEEP[Math.min(DEEP.length - 1, Math.max(0, i + d))]; }, act: () => reloadWith('deep', String(deep)) }] },
     { id: 'badges', label: 'Badges', items: () => [info(`Credits: ${balance()}`), ...Object.keys(CONTROL).map(id => ({ label: `${canUse(id) ? '✅' : '🔒'} ${CONTROL[id].subject}`, kind: 'action', act: () => push(badgePage(id, push, host.notice)) }) as Item)] },
     { id: 'gallery', label: 'Gallery', items: () => [{ label: 'Photo mode (free camera, rewind)', kind: 'action', act: () => { host.close(); host.act('photo'); } },
       { label: 'Take a photo', kind: 'action', act: () => { host.close(); host.shutter(); } }, info('Leaving photo mode opens the gallery: d-pad moves, A picks, B closes.')] },
@@ -105,6 +98,7 @@ export function buildTabs(host: PadMenuHost, push: (p: Page) => void): Tab[] {
 }
 
 export const PAD_CSS = `.padm{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:70;width:min(980px,92vw);display:flex;flex-direction:column;overflow:hidden;background:#0d131ef2;color:#eef2f8;font:22px/1.35 system-ui;border-radius:16px;padding:18px 22px;box-shadow:0 10px 40px #000a}
+.padm[hidden]{display:none}
 .padm-head,.padm-foot{flex:0 0 auto;display:flow-root}.padm-scroll{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
 .padm-body{flex:1 1 auto;min-height:0;position:relative;overflow:auto;scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior:contain;touch-action:pan-y}
 .padm-body::-webkit-scrollbar{width:0;height:0;display:none}

@@ -52,12 +52,28 @@ pub fn damped_seed(day: f64, lat: f64, surface_heatcap: f64, annual_t_bar: f64) 
 /// Annual-mean global temperature, °C (12 monthly samples).
 pub fn annual_global_t() -> f64 { (0..12).map(|k| global_mean_t(15.0 + 30.4 * k as f64)).sum::<f64>() / 12.0 }
 
+/// Share of the ocean's seasonal state felt at this cell. Open water is 1. Land is exp(−distance / L),
+/// the steady solution of advection–relaxation (Hartmann 1994, ch. 11, carried inland). L is passed in
+/// (`wind::ocean_decay_length_m`) so this file does not import the wind module.
+pub fn maritime_weight(land: f64, coast_m: f64, decay_m: f64) -> f64 {
+    if land < 0.5 { return 1.0; }
+    if !(coast_m.is_finite() && decay_m.is_finite()) || decay_m <= 0.0 { return 0.0; }
+    (-coast_m.max(0.0) / decay_m).exp()
+}
+
+/// Air temperature: ocean and land seeds from `damped_seed`, blended by `maritime_weight`, then the lapse on land.
+pub fn maritime_air(day: f64, lat: f64, land: f64, elev_m: f64, coast_m: f64, decay_m: f64, t_bar: f64) -> f64 {
+    let sea = damped_seed(day, lat, OCEAN_HEATCAP, t_bar);
+    let land_t = damped_seed(day, lat, LAND_HEATCAP, t_bar);
+    let w = maritime_weight(land, coast_m, decay_m);
+    w * sea + (1.0 - w) * land_t - LAPSE * elev_m.max(0.0) * land.clamp(0.0, 1.0)
+}
+
 pub struct Seeded { pub t_air: f64, pub soil_mm: f64, pub snow_mm: f64, pub q: f64 }
-/// One cell's initial state: air at the zonal seed minus the lapse over its height, bucket half full on land, snow where the seed is below
-/// freezing, humidity at RH_SEED. Half-full bucket is game calibration (Manabe 1969 starts from field capacity).
-pub fn seed_cell(day: f64, lat: f64, land: f64, elev_m: f64, t_bar: f64) -> Seeded {
-    let hc = if land > 0.5 { LAND_HEATCAP } else { OCEAN_HEATCAP };
-    let t = damped_seed(day, lat, hc, t_bar) - LAPSE * elev_m.max(0.0) * land;
+/// One cell's initial state. `coast_m` is metres to open water and `decay_m` is the e-folding length.
+/// Bucket half full on land is game calibration (Manabe 1969 starts from field capacity). Snow where the seed is below freezing.
+pub fn seed_cell(day: f64, lat: f64, land: f64, elev_m: f64, t_bar: f64, coast_m: f64, decay_m: f64) -> Seeded {
+    let t = maritime_air(day, lat, land, elev_m, coast_m, decay_m, t_bar);
     let p = surface_pressure(P0, elev_m.max(0.0), t);
     Seeded { t_air: t, soil_mm: if land > 0.5 { 0.5 * BUCKET_MM } else { 0.0 }, snow_mm: if land > 0.5 && t < 0.0 { SNOW_SEED_MM } else { 0.0 }, q: RH_SEED * qsat(t, p) }
 }
@@ -85,5 +101,24 @@ mod tests {
     #[test] fn seasons_follow_tilt() {
         let tb = global_mean_t(172.0);
         assert!(seed_temperature(172.0, 60.0, tb) > seed_temperature(355.0, 60.0, global_mean_t(355.0)) + 15.0);
+    }
+    #[test] fn ocean_softening_falls_with_distance_from_water() {
+        let tb = annual_global_t();
+        let decay = crate::planet_fundamentals::atmosphere::wind::ocean_decay_length_m(49.79);
+        let range = |d: f64| maritime_air(196.0, 49.79, 1.0, 0.0, d, decay, tb) - maritime_air(15.0, 49.79, 1.0, 0.0, d, decay, tb);
+        let (r0, r_half, r1, r4) = (range(0.0), range(0.5 * decay), range(decay), range(4.0 * decay));
+        let sea = damped_seed(196.0, 49.79, OCEAN_HEATCAP, tb) - damped_seed(15.0, 49.79, OCEAN_HEATCAP, tb);
+        let land = damped_seed(196.0, 49.79, LAND_HEATCAP, tb) - damped_seed(15.0, 49.79, LAND_HEATCAP, tb);
+        eprintln!("seasonal range July-minus-January at 49.79N: coast {r0:.2} K, L/2 {r_half:.2}, L {r1:.2}, 4L {r4:.2}; ocean column {sea:.2}, land column {land:.2}; L {:.1} km", decay / 1000.0);
+        assert!((r0 - sea).abs() < 1e-6, "a shoreline land cell matches the ocean column, got {r0} vs {sea}");
+        assert!(r0 < r_half && r_half < r1 && r1 < r4, "{r0} {r_half} {r1} {r4}");
+        assert!(r4 > (r0 + land) / 2.0, "four fetches are past halfway from the ocean column to the land column");
+        // Published end members, not a fit. A miss is recorded; it is not forced.
+        // Tofino A (coast) July 14.7 − January 5.3 = 9.4 K. Kenora A July 19.7 − January −16.0 = 35.7 K.
+        // Environment and Climate Change Canada 1981–2010 daily averages, climate ids 1038205 and 6034075.
+        let tofino = 14.7f64 - 5.3;
+        let kenora = 19.7f64 - (-16.0);
+        eprintln!("ECCC range Tofino {tofino:.1} K, Kenora {kenora:.1} K; game coast {r0:.1}, game 4L {r4:.1}");
+        assert!((tofino - 9.4).abs() < 1e-9 && (kenora - 35.7).abs() < 1e-9);
     }
 }

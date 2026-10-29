@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { PLAYABLES, playable } from '../src/render/playables';
+import { readStoredFixture } from '../src/core/storedFixture';
 import { playerSpeed, pounceSpeed, PLAYER } from '../src/core/playerTuning';
 import { HARE_NEEDS, WOLF_NEEDS } from '../src/core/needs/species';
 import { staminaRates } from '../src/core/needs/engine';
@@ -33,7 +34,11 @@ test('the hare is a playable: available, eats by gathering, own needs and stamin
   const p = PLAYABLES.find(x => x.id === 'hare')!; assert.ok(p.available); assert.equal(playable('hare').id, 'hare');
   assert.deepEqual(p.actions, ['gather']); assert.equal(p.threat, false);
   assert.ok(staminaRates(HARE_NEEDS).sprint > staminaRates(WOLF_NEEDS).sprint); // 8 s vs 12 s
-  const rig = p.create(); assert.ok(rig.root instanceof THREE.Object3D && rig.sensor.parent === rig.root);
+  const hareLife = readStoredFixture().find(a => a.species === 'hare');
+  if (!hareLife) throw new Error('fixture has no hare');
+  const rig = p.create(hareLife); assert.ok(rig.root instanceof THREE.Object3D && rig.sensor.parent === rig.root);
+  assert.equal(rig.brain.stored?.handle, hareLife.handle);
+  assert.equal(rig.brain.stored?.ageYears, hareLife.ageYears);
   let skinned = 0; rig.root.traverse(o => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) skinned++; }); assert.ok(skinned > 0, 'furred skin');
   rig.brain.speed = 8.5; rig.root.position.set(5, 2, 5);
   for (let i = 0; i < 20; i++) rig.animate({ time: i / 30, dt: 1 / 30, moving: true, elapsed: 0, mode: 'sprint' });

@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0084",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T12:44:18-07:00",
+  "branch": "grokbot-3/empty-entity-store",
+  "skill": "adopt-ecs",
+  "handoff": "tasks/handoffs/T-0084-grokbot-3.md",
+  "note": "Empty entity store on grokbot-3/empty-entity-store, pull request #135. Crate: hecs 0.10.5 (MIT OR Apache-2.0). Current hecs 0.11.2 and bevy_ecs 0.20.0 do not link on rustc 1.83.0. legion 0.4.0 links and is unmaintained. slotmap 1.1.1 is the arena pattern, not a component store. Tests: empty_world_constructs, handle_is_one_integer_and_fails_after_removal, create_remove_iterate_counts. Benchmark: create=8192 remove=4096 iterate=4096 create_us=1967 remove_us=597 iterate_us=118. cargo test 81 passed, 0 failed. npx tsc --noEmit exit 0. npm test 835 tests, 821 pass, 0 fail, 14 todo. Numbers gate: N/A (no rates). Frame gate: N/A (nothing is drawn). Skill notes/skills/adopt-ecs.md. Not a self-approve."
+}

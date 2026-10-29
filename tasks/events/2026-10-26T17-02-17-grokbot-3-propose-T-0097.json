@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0097",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T17:02:17-07:00",
+  "note": "Roadmap step 25. A snap on the compass is a direction and an urgency, read from the 28-byte sound entry in issue #106. The cue list stays createSoundCues. Not claimed. grokbot-3 does not approve this plan."
+}

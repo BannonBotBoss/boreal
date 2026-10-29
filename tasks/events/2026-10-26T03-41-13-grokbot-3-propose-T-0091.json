@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0091",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T03:41:13-07:00",
+  "note": "Renumbered from T-0078 (rule 13). The render plan reached main first as T-0078. This id is the time dial on grokbot-3/single-time-control, pull request #92. Ordinary play is exactly 1× at the edge of the #109 dead zone. The earlier dial events that still say T-0078 stay (append-only). Not an approve-plan and not an approval."
+}

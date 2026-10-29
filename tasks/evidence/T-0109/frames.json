@@ -1,0 +1,97 @@
+{
+  "report": [
+    {
+      "name": "home-glide",
+      "lat": 49.769999999999996,
+      "lon": 65.53668410517275,
+      "height": 400,
+      "placed": true,
+      "waited": 20302.90000000014,
+      "fade": 1,
+      "chunks": 0,
+      "skirt": {
+        "triangles": 1872,
+        "outerM": 77104.48985277058,
+        "visible": true
+      }
+    },
+    {
+      "name": "home-low",
+      "lat": 49.769999999999996,
+      "lon": 65.53668410517275,
+      "height": 36,
+      "placed": true,
+      "waited": 10761.600000000093,
+      "fade": 1,
+      "chunks": 1,
+      "skirt": {
+        "triangles": 1480,
+        "outerM": 23131.01656835341,
+        "visible": true
+      }
+    },
+    {
+      "name": "boreal-glide",
+      "lat": 55,
+      "lon": 83.53668410517275,
+      "height": 400,
+      "placed": true,
+      "waited": 2626.399999999907,
+      "fade": 0.6311249999998836,
+      "chunks": 2,
+      "skirt": {
+        "triangles": 1872,
+        "outerM": 77104.48985277058,
+        "visible": true
+      }
+    },
+    {
+      "name": "boreal-low",
+      "lat": 55,
+      "lon": 83.53668410517275,
+      "height": 40,
+      "placed": true,
+      "waited": 2830,
+      "fade": 0.3846249999999418,
+      "chunks": 2,
+      "skirt": {
+        "triangles": 1480,
+        "outerM": 24382.23614407834,
+        "visible": true
+      }
+    },
+    {
+      "name": "prairie-glide",
+      "lat": 42,
+      "lon": 43.53668410517275,
+      "height": 400,
+      "placed": true,
+      "waited": 2724.3000000000466,
+      "fade": 0.6322500000000582,
+      "chunks": 2,
+      "skirt": {
+        "triangles": 1872,
+        "outerM": 77104.48985277058,
+        "visible": true
+      }
+    },
+    {
+      "name": "prairie-low",
+      "lat": 42,
+      "lon": 43.53668410517275,
+      "height": 36,
+      "placed": true,
+      "waited": 3063.6999999999534,
+      "fade": 0.385625,
+      "chunks": 2,
+      "skirt": {
+        "triangles": 1480,
+        "outerM": 23131.01656835341,
+        "visible": true
+      }
+    }
+  ],
+  "logs": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ]
+}

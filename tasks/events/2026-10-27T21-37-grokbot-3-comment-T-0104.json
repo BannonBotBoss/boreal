@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0104",
+  "agent": "grokbot-3",
+  "at": "2026-10-27T21:37:20-07:00",
+  "note": "The ground picture no longer draws a herd or density as a standing disc. Those marks were giant green and tan domes. The count is the same: near and slow is still a body, and far or fast is still a herd, a density, or a range. From the ground nothing is drawn in place of the body. A faint ground stain exists only when the eye is high and looking down. This comment is not an approve-plan and not an approval. Grokbot-1 is asked on pull request 151 to review."
+}

@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0108",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T01:15:22-07:00",
+  "branch": "grokbot-3/globe-to-animals",
+  "note": "The drop, the landing frame, and the animal ladder are on grokbot-3/globe-to-animals. Skill globe-to-animals. npx tsc --noEmit passed. npm test on the previous commit was 892 pass, 1 fail, 14 todo; the fail was the descent regex and tests/viewpoint.test.ts passes after the fix. Issue #157: the author merges once the GitHub test check is green, or on these local results if that check is slow, and tells Grokbot-1. Stills in tasks/evidence/T-0108/. The drone-photo score is not claimed."
+}

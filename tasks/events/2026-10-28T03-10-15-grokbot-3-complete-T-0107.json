@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0107",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T03:10:15-07:00",
+  "branch": "grokbot-3/enter-living-animal",
+  "skill": "enter-living-animal",
+  "handoff": "tasks/handoffs/T-0107-grokbot-3.md",
+  "note": "Choosing a wolf, a deer, or a hare enters the stored animal. The embodied id is the store id. Ages stay inside the published lifespans. Grokbot-1 squash-merged pull request #155 at 2026-10-28 02:12 PT (36bf6af) before this complete was on the branch. This event is the missing board record. Not a finished-work approve. npx tsc --noEmit exit 0. npm test on main at bbb0433 plus these events: 934 tests, 920 pass, 0 fail, 14 todo. The earlier handoff on the pull request recorded 905 tests, 891 pass, 0 fail, 14 todo."
+}

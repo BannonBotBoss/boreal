@@ -13,6 +13,8 @@ import { stepsInRect } from './stages/channelRough';
 import { f, choose, scope, tracing } from '../proc/trace';
 import { siteAt } from './flora/site';
 import { berrySuit } from './forageLight';
+import { remoteGameHeight } from './siteHeight';
+import { SITE, siteSalt } from './sitePhase';
 export const GENERATOR_VERSION = 1;
 export const WORLD_SEED = 1400;
 export const CHUNK_SIZE = 40;
@@ -28,6 +30,8 @@ const T = 'terrain';
 /** One stacked terrain layer: traced contribution = (overridable) amplitude x shape. */
 const layer = (name: string, shape: number, amp: number) => f(T, name, shape * f(T, `amp.${name}`, amp));
 export function heightAt(x: number, z: number) {
+  const remote = remoteGameHeight(x, z);
+  if (remote !== null) return remote; // a landing off the home square: the planet sample, not the Kenora grid
   if (STAGES.on) { // stage 1 (core/stages/elevation): eroded coarse grid mapped so the lowest 8 % is open water and the top 15 % is upland rock (Shield ridges)
     const g = elevationGrid(STAGES.seed);
     if (tracing()) { const fl = flowGrid(STAGES.seed), c = cellAt(fl, x, z); f('hydrology', 'flow accumulation (cells)', fl.acc[c]); f('hydrology', 'upslope area (ha)', fl.acc[c] * fl.cell * fl.cell / 1e4);
@@ -54,8 +58,11 @@ const inRiver = (x: number, z: number) => { const r = riverAt(STAGES.seed, x, z)
 /** Revalidate land-bound encounters after restoring old events against the current terrain. */
 export const isDryLand = (x: number, z: number, h = heightAt(x, z)) => h >= LEVEL.shore
   && !(STAGES.on && (lakeAt(STAGES.seed, x, z) || pondAt(STAGES.seed, x, z) || inRiver(x, z)));
-export const chunkSeed = (cx: number, cz: number, worldSeed = WORLD_SEED) =>
-  f('chunk', 'chunkSeed', hash(`${GENERATOR_VERSION}:${f('chunk', 'worldSeed', worldSeed)}:${cx}:${cz}`));
+export const chunkSeed = (cx: number, cz: number, worldSeed = WORLD_SEED) => {
+  const salt = siteSalt(); // 0 at home, so the hashed string (and the chunk digest) stays the one the tests pin
+  const body = `${GENERATOR_VERSION}:${f('chunk', 'worldSeed', worldSeed)}:${cx}:${cz}`;
+  return f('chunk', 'chunkSeed', hash(salt ? `${body}:${salt}` : body));
+};
 /** Candidate roll -> kind (cumulative weights; one data table). */
 export const KIND_TABLE = [['spruce', .60], ['rock', .80], ['log', .91], ['plant', .97], ['deer', .995], ['person', 1]] as const;
 export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): Entity[] {
@@ -69,7 +76,7 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     const h = heightAt(x, z);
     if (!isDryLand(x, z, h) || Math.hypot(x, z) < 13) continue;
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
-    if ((kind === 'spruce' || kind === 'plant' || kind === 'log') && !plantsGrowAt(h)) continue; // T-0072: above the tree line only rock
+    if ((kind === 'spruce' || kind === 'plant' || kind === 'log' || kind === 'deer') && !plantsGrowAt(h)) continue; // T-0072: above the tree line only rock. Deer use the same line.
     // Herbs: a separate stream so a rejection does not shift later trees, rocks or deer. Acceptance probability is site light.
     if (kind === 'plant') {
       const site = siteAt(x, z, true, false), keep = random(hash(`herb-light:${worldSeed}:${cx}:${cz}:${i}`))();
@@ -112,7 +119,7 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
       result.push({ key: `forage:${cx}:${cz}:${i}`, kind: 'forage', x, z, seed, generatorVersion: 1, rotation, scale });
   }
   // T-0030: a steep channel (S > 0.02) exposes a Shield boulder. The ordinary stone stream stays on dry land.
-  if (STAGES.on) for (const step of stepsInRect(STAGES.seed, cx * CHUNK_SIZE, cz * CHUNK_SIZE, (cx + 1) * CHUNK_SIZE, (cz + 1) * CHUNK_SIZE)) {
+  if (STAGES.on && !SITE.remote) for (const step of stepsInRect(STAGES.seed, cx * CHUNK_SIZE, cz * CHUNK_SIZE, (cx + 1) * CHUNK_SIZE, (cz + 1) * CHUNK_SIZE)) {
     const raw = hash(`channel-step:${worldSeed}:${step.x.toFixed(3)}:${step.z.toFixed(3)}`);
     result.push({
       key: `step:${step.x.toFixed(2)}:${step.z.toFixed(2)}`, kind: 'rock', seed: withRockTier(raw, step.tier),

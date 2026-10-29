@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DAY, dayAt, hourAt, initDay, setHour, DAY_OF_YEAR, START_HOUR } from '../src/core/timeOfDay';
+import { DAY, dayAt, formatDate, hourAt, initDay, saveDay, setHour, DAY_OF_YEAR, START_HOUR } from '../src/core/timeOfDay';
 import { CHRONO, dialAngle, dialHour, scrubVelocity } from '../src/ui/chronometer';
 import { ACTION } from '../src/core/bindings';
 const near = (a: number, b: number, e = 1e-9) => assert.ok(Math.abs(a - b) < e, `${a} vs ${b}`);
@@ -15,7 +15,21 @@ test('initDay: saved offset, then ?hour= makes it exactly that hour; bad values 
   initDay('', '3.5', 0); near(DAY.offset, 3.5);
   initDay('?hour=12&trees=v2', '3.5', 12345); near(hourAt(12345), 12);
   initDay('?hour=abc', null, 0); near(DAY.offset, 0); initDay('?hour=24', null, 0); near(DAY.offset, 0); initDay('?hour=', 'x', 0); near(DAY.offset, 0);
-  DAY.offset = 0;
+  initDay('?day=15&hour=12', null, 0); assert.equal(dayAt(0), 15); near(hourAt(0), 12);
+  initDay('?day=abc&hour=12', null, 0); near(hourAt(0), 12); assert.equal(dayAt(0), DAY_OF_YEAR);
+  DAY.offset = 0; DAY.dayOffset = 0; DAY.year = 2026;
+});
+test('?date= and ?day= set the one clock; the saved dial keeps the day and year', () => {
+  const d = new Date('2024-08-15T00:00:00Z');
+  const doy = Math.floor((d.getTime() - Date.UTC(2024, 0, 1)) / 864e5) + 1;
+  initDay('?date=2024-08-15', null, 0);
+  assert.equal(DAY.year, 2024); assert.equal(Math.floor(dayAt(0)), doy);
+  initDay('?day=100', JSON.stringify({ offset: 0, dayOffset: 5, year: 2030 }), 0);
+  assert.equal(DAY.year, 2030); assert.equal(Math.floor(dayAt(0)), 100);
+  initDay('', saveDay(), 0);
+  assert.equal(DAY.year, 2030); assert.equal(Math.floor(dayAt(0)), 100);
+  assert.equal(formatDate(227).text, '15 Aug');
+  DAY.offset = 0; DAY.dayOffset = 0; DAY.year = 2026;
 });
 test('dial: noon top, 18 right, midnight bottom, 6 left; angle and point agree', () => {
   near(dialAngle(12), 0); near(dialAngle(18), 90); near(dialAngle(6), -90);
@@ -30,4 +44,10 @@ test('scrub eases toward input × rate, clamps input, and settles at rest', () =
 });
 test('the chronometer and planet view are bindable actions (T / D-pad up, Shift+G; View is the help overlay)', () => {
   assert.deepEqual([ACTION.chrono.keys, ACTION.chrono.pad, ACTION.planet.keys], [['k:t'], ['dup'], ['k:shift+k:g']]);
+  assert.deepEqual([ACTION.timeSlower.keys, ACTION.timeSlower.pad], [['k:,'], ['dleft']]);
+  assert.deepEqual([ACTION.timeFaster.keys, ACTION.timeFaster.pad], [['k:.'], ['dright']]);
+  assert.deepEqual([ACTION.timePause.keys, ACTION.timePause.pad], [['k:;'], ['ls.click']]);
+  assert.equal(ACTION.timeSlower.context, 'play');
+  assert.equal(ACTION.timeSlower.kind, 'hold');
+  assert.equal(ACTION.timeFaster.kind, 'hold');
 });

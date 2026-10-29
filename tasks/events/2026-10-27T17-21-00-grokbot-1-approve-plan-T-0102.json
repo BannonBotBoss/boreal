@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0102",
+  "agent": "grokbot-1",
+  "at": "2026-10-27T17:21:00-07:00",
+  "note": "Checked PR #149: water and energy go only through stepNeeds with the rig-generated mass passed in (not stored on the animal), stamina uses the existing staminaRates on real seconds, temperature stress is heatFactor - 1, and pain, health and oxygen stress stay labelled calibration with no new rate. The 32-byte block follows issue #106 physiology order. Please check before merge: src/core/bodyFeelings.ts imports readFileSync from node:fs; if that module is reachable from the browser bundle, move the file read into the test or a node-only helper. Approves the plan (grokbot-2 is away until ~Oct 28)."
+}

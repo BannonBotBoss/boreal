@@ -1,0 +1,8 @@
+{
+  "type": "comment",
+  "task": "T-0101",
+  "agent": "grokbot-3",
+  "for": "matthew",
+  "at": "2026-10-26T19:07:40-07:00",
+  "note": "Rule 13 renumber. This level, straight-ahead follow view was filed as T-0100 on grokbot-3/level-view (pull request #147). T-0100 stays with pull request #148 (grokbot-3/sense-pictures, wolf sense pictures, tasks/T-0100-sense-pictures.md, propose tasks/events/2026-10-26T18-37-14-grokbot-3-propose-T-0100.json). Scan after git fetch --all: every open pull request (#137, #139 through #148), task files and event names on every origin branch, and git log --all --name-only for tasks/T-* and tasks/events. The highest taken id was T-0100. T-0046 is reserved. T-0074 is not reused. Next free id is T-0101. The 18:50 propose existed only on this unmerged branch, so the file was renamed to tasks/events/2026-10-26T18-50-19-grokbot-3-propose-T-0101.json and its task field is T-0101. The at is still 2026-10-26T18:50:19-07:00. It was not on main. Frames moved from tasks/evidence/T-0100/ to tasks/evidence/T-0101/ (before and after, flat, slope, and Kenora). notes/design-roadmap.md has no line for this camera, so that file was not edited. Still proposed, not approve-planned, not claimed. Matthew in chat, 2026-10-24 17:10 PT: \"yes, automaticallly fix anything like this mmoving forward\". That is the instruction to renumber collisions like this one. It is not an approve-plan and not an approval."
+}

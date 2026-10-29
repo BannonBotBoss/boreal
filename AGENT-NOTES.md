@@ -1010,6 +1010,26 @@ Branch `grokbot-3/river-hydraulics`. Issue #18 is claimed by codex on `codex/loo
 - Skill `notes/skills/river-hydraulics.md`. Handoff `tasks/handoffs/T-0030-grokbot-3.md`. Slopes remeasured in `refs/water/river-audit/slopes.json`. `npx tsc --noEmit` exit 0 on the implementation. Channel tests 6/6. Not self-approved.
 - 09:37 PT: after frames are in `tasks/evidence/T-0030/` (before frames in `refs/water/river-audit/` untouched). T-0075 put the October 21 boxes on the sky. Water boxes chosen on these frames: slow1, fast1 and order2 reach foam share 0.000 (calm gate <= 0.03). The fast1 step, framed at yaw 0, has a lee box at foam share 0.746 and the water beside it at 0. Lee-grain correlation peaks at +36 px along the flow. Model shift is 44 px (0.921 m/s, shader dt 0.745 s, 63.9 px/m). Advection score 0.821 (measured 0.756 m/s, model 0.921 m/s). A second pair with `shaderClock` read directly did not beat zero-shift, so it is not a speed. Objective 4 stays open. No complete event. `npx tsc --noEmit` exit 0. `npm test` 752 tests, 738 pass, 0 fail, 14 todo.
 
+## 2026-10-25 19:41 PT - grokbot-3: time dial on the one clock (T-0078, issues #107 #108 #109)
+Branch `grokbot-3/single-time-control`, same PR #92. Matthew at 19:15 PT allowed a rewrite so #108, #109 and #107 are met. At 19:17 PT, #109 wins over #108. Rule 16 events use `"for": "matthew"`. Not a GitHub approval and not a merge.
+- `src/core/worldClock.ts` is still the only integrator. The dial is −1..+1. Target is `sign × 10^(|p| × 12)` outside ±0.01 (pause). Full scale is 10^12×. The rate eases in decades with inertia `1 + error²`. `setClockRate` snaps only for startup and `?timescale=`.
+- Rewind moves the world second and the hour. `groundWorldSec` drops a negative gap. `simWorldSec` is 0 while rewinding or above Immediate, so animals, the weather grid and gameplay audio hold. `clockDate` is clamped. The epoch readout is `deepTimeAt(epochOffsetYr)`.
+- `observation()` is Immediate through Planetary, with enter/exit hysteresis (800/1200 is the #109 example) and a smooth blend. Nothing else consumes it yet.
+- The bar holds − / + (and comma / d-pad left, period / d-pad right) and reads `1 sec / sec`, `1 hour / sec`, `1,000 years / sec`.
+- 2026-10-25 19:46 PT, Matthew: ordinary play is exactly 1×. #109's dead zone stays. The powers of ten are shifted so ±0.01 is 1× and ±1 is still 10^12× (`10^(((|p|−0.01)/0.99)×12)`). Play, and a nudge that crosses real time, stop on that mark.
+- `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` 792 tests, 778 pass, 0 fail, 14 todo after the 1× edge. Skill `notes/skills/single-clock.md` updated. Handoff `tasks/handoffs/T-0078-grokbot-3.md`.
+
+## 2026-10-25 18:28 PT - grokbot-3: one clock and an in-game time bar (T-0077)
+Branch `grokbot-3/single-time-control`. Matthew in chat, 2026-10-25 17:53 PT: "There seem to be multiple time settings, but there should be only one time control for everything." At 17:55 PT one clock for everything rendered or simulated. At 17:56 PT the ground-speed slider. At 17:57 PT the control lives in the game. Rule 16: approve-plan and approve recorded with `"for": "matthew"`. Not a GitHub approval and not a merge.
+- `src/core/worldClock.ts` is the integrator. `src/ui/timeHud.ts` `createTimeHud` is the control. The Time tab is gone from `buildTabs` only. `world.groundSpeed` and `weather.timeScale` are stripped from saves and not applied. `?timescale=` sets the one rate (0.05–16) only when the param is present.
+- Bindings, play context: comma / d-pad left slower, period / d-pad right faster, semicolon / left-stick click pause or play. T / d-pad up remains the hour dial. Planet view does not take the d-pad for rate.
+- `./node_modules/.bin/tsc --noEmit` exit 0. `npm test` 786 tests, 772 pass, 0 fail, 14 todo. Skill `notes/skills/single-clock.md`. Handoff `tasks/handoffs/T-0077-grokbot-3.md`. No frame of the bar was captured.
+
+## 2026-10-26 03:05 PT - grok: last twenty issues take precedence
+Matthew in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins", then "put it in the rules."
+- `PROJECT-RULES.md` now opens with that authority. The 2026-10-25 7:17 PM line that stopped at #100–#109 is replaced. The "Talking to Matthew" section from main is kept.
+- `tasks/RULES.md` rule 18 names the twenty issues (#99–#113 and #115–#119) and the resolutions the higher number already locks.
+
 ## 2026-10-25 18:25 PT - grokbot-3: pad menu stays one centered size (T-0077)
 Matthew in chat asked for this directly. Approve-plan and approve are `for: matthew` with his words quoted. Not a GitHub approval and not a merge. He said not to merge or approve the PR.
 - Cause on `e7b9ab7` `src/ui/padMenu.ts:101`: `top:50%` and `translate(-50%,-50%)` with `max-height:86vh` and no fixed height. Before tops at 1280×720: camera 220.0, time 188.6, badges 32.4, gallery 190.7, settings 130.0.
@@ -1071,3 +1091,299 @@ grokbot-1 approve-plan at 00:20 PT covers the plan and phase 1 only. Claim follo
 - `src/render/observationTable.ts` records #107's stations and #109's levels, chains, and the 800× / 1,200× pair. Biome and Geological have no rate. No stiffness, no damping, no invented metre gap. `CODE_REACH` copies distances the picture already exports. The draw does not import the file. The live wheel stays `observation()` on pull request #92.
 - Did not edit `inpage.ts`, `globeView.ts`, or the clock files. `npx tsc --noEmit` exit 0. `npm test` 804 tests, 790 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/94. Not self-approved.
 
+## 2026-10-26 03:41 PT - grokbot-3: the merged branch had conflict markers and two task ids
+The merge of main into `grokbot-3/single-time-control` left conflict markers in the game and the notes, and the clock tasks reused T-0077 and T-0078. Those ids already belong to the pad menu and the render plan. Rule 13: the clock is T-0090 and the dial is T-0091. The old events stay (append-only). The fall's wind rush stays on the sound update, and that update still follows the one clock. The menu hold uses `performance.now` as a repeat timestamp, the same kind of frame budget already allowlisted.
+
+## 2026-10-26 07:31 PT - grokbot-3: claim and complete T-0090 and T-0091
+Branch `grokbot-3/single-time-control`, pull request #92. Main was already merged (merge-base `c3a4052`, already up to date). Pull request #133 had not merged, so grokbot-1's approve-plan files stay on that branch. Claims are stamped after those approve-plans (T-0090 at 07:26:59 PT, T-0091 at 07:27:00 PT). Not a self-approve and not a merge.
+- Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0090.json` at 07:31:36 PT. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0090.json` at 07:31:38 PT.
+- Claim `tasks/events/2026-10-26T07-31-grokbot-3-claim-T-0091.json` at 07:31:37 PT. Complete `tasks/events/2026-10-26T07-31-grokbot-3-complete-T-0091.json` at 07:31:39 PT.
+- Skill `notes/skills/single-clock.md` names the two ids. Handoffs `tasks/handoffs/T-0090-grokbot-3.md` and `tasks/handoffs/T-0091-grokbot-3.md`. Evidence stays the tests and the pull-request screenshots already recorded there. Next step is grokbot-1's approve and merge.
+- Re-run on this tree: `npx tsc --noEmit` exit 0. `npm test` 828 tests, 814 pass, 0 fail, 14 todo. The board todo is 32 legacy rule breaks. The four new lines are these claims and completes while #133's approve-plan files are absent. They clear once those files are in the same tree.
+- 2026-10-26 07:52 PT: pull request #133 merged to main as `e4cda6b`. A normal merge brought those two approve-plan files onto this branch. The ledger now reads T-0090 and T-0091 completed, claimant grokbot-3. Legacy rule breaks are 28 again. Not a self-approve. Next step is still grokbot-1's approve and merge of pull request #92.
+
+## 2026-10-26 12:40 PT - grokbot-3: empty entity store is hecs 0.10.5 (T-0084)
+Branch `grokbot-3/empty-entity-store`. grokbot-2 approved the plan at 2026-10-26 03:35 PT and is down for two days (Matthew, 12:22 PM PT). The approved plan text is unchanged. Not a self-approve.
+- Shortlist on rustc 1.83.0: `hecs` 0.11.2 (MIT OR Apache-2.0, 99,108 bytes, archetype store, does not link: hashbrown 0.17 needs edition 2024), `hecs` 0.11.0 (does not link: E0747), `bevy_ecs` 0.20.0 (MIT OR Apache-2.0, 784,721 bytes, archetype store, `rust-version` 1.95.0, does not link), `legion` 0.4.0 (MIT, 1,108,971 bytes, archetype store, links, last release 2021-02-25), `slotmap` 1.1.1 (Zlib, 61,862 bytes, generational arena, links, not a component store).
+- Pick: `hecs` `=0.10.5` (MIT OR Apache-2.0, 82,553 bytes, rust-version 1.65, published 2024-05-05). Smallest maintained component store that links. `Entity::to_bits` is one `NonZeroU64`. After `despawn`, `contains` is false, and a reused index does not revive the old integer.
+- Files: `rust/boreal-sim/Cargo.toml`, `rust/boreal-sim/Cargo.lock`, `rust/boreal-sim/src/lib.rs` (`pub mod entities`), `rust/boreal-sim/src/entities.rs`. Skill `notes/skills/adopt-ecs.md`. No species file, no `AnimalBrain` port, no event log, no TypeScript entity list. Planet-grid and weather files were not edited.
+## 2026-10-26 12:50 PT - grokbot-3: sea reach and rain shadow (T-0085), not claimed
+
+Branch `grokbot-3/rain-shadow-ocean` from `bd2ef1c` (PR #129). T-0085 still has only its propose event. No approve-plan, so no claim and no complete. grokbot-3 wrote the task and cannot approve the plan. The ask is on the pull request, to @Grokbot-1. The org discussion is not writable with this token.
+
+- Coast distance is a cache on the existing grid. Seasonal air is the ocean seed blended toward the land seed by `exp(−distance / L)`. `L` is the Held & Suarez 1994 surface time times the belt geostrophic wind (5390 km at 49.79°N). Upslope rain is Roe 2005 eq. 6 inside `update_moisture`, before Manabe condensation, using the cell's humidity. No new plane and no second weather query. Forest weather is still `weatherAtLatLon`.
+- Rust lib 83 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 837 tests, 823 pass, 0 fail, 14 todo. The two new tests are the ridge (windward 2.425 mm/day, leeward 0.543, ratio 4.46) and the seasonal transect (water 3.02 K, coast 15.99 K, inland 41.98 K).
+- Published comparisons that miss stay a no. Tofino's 9.4 K range against a shoreline 3.25 K. Kenora's 35.7 K against 37.50 K at 8000 km, which is a different geometry. Olympic ratio 7.5 against this ridge's 4.46. Home January moved from −6.36 °C (snowing) to +2.28 °C (snow still on the ground). That is further from Kenora's −16 °C. L was not tuned.
+- Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`. Frames `tasks/evidence/T-0085/jan-before.png`, `jan-after.png`, `jul-before.png`, `jul-after.png`.
+- PR #128 (this agent's competing T-0082) is covered by merged #129 and has no rain-shadow term #129 lacks. Commented and closed. Branch kept.
+
+## 2026-10-26 13:52 PT - grokbot-3: Kenora January stays below freezing (T-0085)
+
+Pull request #136 merged the sea term and warmed the stand from −6.36 °C to +2.28 °C, so snow stopped. grokbot-1's approve-plan is 13:25 PT. Claim is 13:52 PT on `grokbot-3/rain-shadow-ocean`. Not a self-approve. grokbot-2 is down and was not tagged.
+- The lake hunch was measured and is not the cause. Three masks (height above 0, lakes excluded, largest ocean only) all gave January +2.28 °C on the four-degree grid. The fetch was the Held & Suarez free-atmosphere time, about 5400 km at 50°N, and the bilinear corners around the stand were ocean.
+- Surface fetch is now `L = h / C_H`, 21.4 km. `h` is 1000 m (Stull 1988). `C_H` is the existing neutral bulk coefficient at forest roughness. Held & Suarez `τ` stays in `wind.rs` and is not this length. Inland lakes stay land, including a bed below sea level. The forest grid is one degree so the stand's landmass is land at the cell centre.
+- Stand, eight 6 h steps: January −18.94 °C, snow falling, 28.67 mm/day. July 27.50 °C, no snow. January is below main's −6.36 °C and closer to Kenora A −16.0 °C (ECCC 6034075). July against 19.7 °C is a warm summer and is not a pass. Ridge ratio stays 4.46 (windward 2.425 mm/day, leeward 0.543).
+- Rust lib 86 passed, 0 failed. `npx tsc --noEmit` exit 0. `npm test` 839 tests, 825 pass, 0 fail, 14 todo. Skill `notes/skills/rain-shadow.md`. Handoff `tasks/handoffs/T-0085-grokbot-3.md`.
+- January frame `tasks/evidence/T-0085/jan-fixed.png`: snow on the ground and the spruce, flat overcast, sample snowing at −18.94 °C. July frame `jul-fixed.png`: green canopy, blue sky, 27.50 °C, no snow. The look score is uncalibrated. The lock is the sample.
+
+## 2026-10-26 16:32 PT - grokbot-3: one viewpoint above the band (T-0096)
+
+Branch `grokbot-3/one-viewpoint`. Phase 2 of the render plan, issue #107. Proposed, not claimed. grokbot-1 approved the plan and phase 1 only. This is not an approve-plan and not a self-approve. grokbot-2 is offline and was not tagged. Climate, weather, and clock files were not edited.
+
+- The forest camera is the viewpoint from orbit down. `attachViewpoint` maps it onto the planet camera when `forestFromPlanet` round-trips within 1 cm and 1e-4 rad. Off the home-facing hemisphere the fall's `lookAt` / `rotateZ` / `rotateX` stays. Two scenes stay: one `globe.step(null)` in orbit, one `globe.step(far.target)` plus the forest draw in the band.
+- The band pose is `viewpointPose`, the old `(x, ground + height, z)` Euler. At 2 km the gap is 0, under a centimetre. `handoverBlend` returns that pose. `blendSec` stays 1 and is not applied.
+- The free fall, the 180° spin, the isometric pitch at 10,000 ft, the wind, and `stepCarriedFly` are unchanged.
+- Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`. Pull request #143. `npx tsc --noEmit` exit 0. `npm test` 842 tests, 828 pass, 0 fail, 14 todo.
+- Stills `tasks/evidence/T-0096/`: orbit at −90° and 14,016 km; 2 km, 600 m, and 60 m at −35.264° with position gap 0. The patch is out at 2 km and fully in at 600 m and 60 m. One planet step per frame. The summed milliseconds stay in the same few milliseconds as main. GitHub `ci / test` did not start: the annotation says account payments failed or the spending limit needs to be raised. Not claimed. Grokbot-1 has been asked to approve-plan, review, and merge.
+
+## 2026-10-26 18:35 PT - grokbot-3: the descent shows land (T-0096)
+
+Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 is offline until about Oct 28 midday PT and was not tagged. Climate, weather, and clock files were not edited.
+
+- The blank 2 km frame was the camera on the mean sphere, 5329 m above the tiles, so the atmosphere marched sea-level air and the near split stayed off. The radial term is now `figureRadius`, and `uRp` follows `R + ground`. That is `92cbd61`.
+- The dark bar is the closed pad menu. `.padm { display:flex }` overrides `[hidden]`. `.padm[hidden]{display:none}` matches the time HUD. The flight prompt is a separate box and stays.
+- The flat 600 m mesh remained after the altitude fix. The near split tested distance to the node centre. The cell under the camera is about 78 km across and its centre is about 45 km away, so a reach of a few kilometres never fired (`splitDepth` 6, `nearK` already 1.2). `nearNode` uses the footprint. The draw cap then multiplied that factor and the same centre fell outside it again. The boost uses the tier split. The cap still shrinks every other node.
+- Swiftshader selects Minimum (16 segments, detail 0, max level 15). The new stills are that tier at its own depth: orbit deepest 1, 10 km deepest 7 (near split is off above 3 km), 2 km deepest 13, 600 m / 100 m / ground deepest 15. Altitude matches the game height. The pad computes to `display:none` at every height.
+- Stills: `tasks/evidence/T-0096/orbit.png`, `10km.png`, `2km.png`, `600m.png`, `100m.png`, `ground.png`, and `descent.json`. Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 844 tests, 830 pass, 0 fail, 14 todo. Asking Grokbot-1 to review pull request #143. grokbot-3 does not approve or merge.
+
+## 2026-10-27 18:40 PT - grokbot-3: the weather cell relaxes toward the planet climate (T-0103)
+
+Branch `grokbot-3/weather-relaxes`, pull request #150. Roadmap step 4, issue #100. Not claimed. Not a self-approve. grokbot-2 was not tagged. Branches for changes #145–#149 were not touched.
+
+- The near column still uses `initWeather`, `updateWeather`, Kessler, the Manabe bucket, and the degree-day melt. `cellClimate` is now its driver. While the Rust grid is bound, that target is the planet sample: surface `tair` minus the existing 0.0065 K/m lapse, planet pressure (or `AIR.p0` if the plane is still 0), east wind, and southward wind as the column's `v`. `relaxToward` is the 1 h nudge already on the column, with the quarter rate on temperature and humidity. No new time.
+- `climateRaw` is only the wasm-absent fallback, called from `climate()`. The near-grid loops call `cellClimate`. A bound planet does not increment the call count. `weatherAt` inside the live cell is the cell; outside it the planet sample stays. A date jump seeds the cell again. The cell does not write the planet planes.
+- Snow below 0 °C, rain at and above 0 °C, and `snowDepthCm` are unchanged. January at the stand is still about −18.9 °C, snowing, 86 mm of snow-water, 34.4 cm. July is about 27.4 °C with an empty store. Cloud cover on those stills is the planet fraction (January 1.00, July 0.59).
+- Files: `src/core/weather.ts`, `src/core/planetWeather.ts`, `tests/weather-cell.test.ts`, `tests/planet-weather.test.ts`, `notes/skills/weather-cell-relaxes.md`, `notes/skills/rust-climate-authority.md`, `notes/skills/snow-depth.md`, `notes/design-roadmap.md` (step 4 is T-0103), `tasks/T-0103-weather-relaxes.md`, `tasks/handoffs/T-0103-grokbot-3.md`, `tasks/evidence/T-0103/`.
+- `npx tsc --noEmit` exit 0. `npm test`: 877 tests, 863 pass, 0 fail, 14 todo. Pull request #150. Not claimed.
+
+## 2026-10-26 20:46 PT - grokbot-3: the descent lands in the stand (T-0096)
+
+Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 was not tagged. `positionCamera` was not edited.
+
+- The nadir click is the home lake. `descend` now uses the existing `landSpawn`, so the floor is the dry stand at (30, 0), the same place as the wolf view. The pale ring was grazing specular on that lake from a metre above the sheet. It is gone once the eye is on land.
+- The 2 km frame is only the far layer. Half of the already-half Minimum buffer dropped the shore mask, and `uHideLake` then painted the lakes as land. The mask now stays on until about 45 m per pixel (`smoothstep(5, 9)`). A window-sized raster did show the lakes and stalled the descent, so it was not kept. The far layer is the drawing buffer while the patch is out.
+- The spruce mesh never built: `trees2:build` sat at priority 55 while grass and flora filled the 4 ms budget (`variants` stayed 0). It now runs at priority 4. The floor still shows several conifers, grass, and the lake beyond.
+- Files: `src/world/globe/inpage.ts`, `src/world/globe/farLayer.ts`, `src/world/globe/tile.ts`, `src/render/fade.ts`, `src/render/trees/game.ts`. Stills in `tasks/evidence/T-0096/`. Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 847 tests, 833 pass, 0 fail, 14 todo. GitHub `ci / test` run 40445578092 failed in 3 seconds with no steps. That is the billing block, not a pass. Asking Grokbot-1 to review. grokbot-3 does not approve or merge.
+
+## 2026-10-26 19:46 PT - grokbot-3: the 2 km polygons and the forest floor (T-0096)
+
+Branch `grokbot-3/one-viewpoint`, pull request #143. Not claimed. Not a self-approve. grokbot-2 is offline until about Oct 28 midday PT and was not tagged. `positionCamera` was not edited. That file belongs to `grokbot-3/level-view` (PR #147).
+
+- The dark polygons are vertex lakes with the home shoreline mask off. A per-tile fade never reached them: Three.js uploads a shared material once a frame, and a fine tile's triangles are smaller than the fade. `uHideLake` is set once before the draw, on when the globe is under 8000 m. Land colour covers those lakes. The home shore and the oceans stay. Orbit and 10 km keep the far lakes.
+- The ground camera was inside a trunk at the isometric pitch, so the frame was the far-layer atmosphere. The grey stripes are the bark plates (`0x6b5a4a`) seen from inside. The bark shader is unchanged. The drawn pitch opens to the existing horizon (−10.313°) only below 48 m. The eye steps 1.6 m clear of a stem below 18 m. The flight spot and the wolf spawn stay put. Roll stays 0.
+- Settled stills, idle machine, 2026-10-26 19:45 PT: 2 km height 2000 m, deepest 13, queued 0, elevation −35.264°, dark pixels 0 against 59,149 on the previous still. Ground height 1 m, elevation −10.313°. 100 m and 600 m stay isometric. Orbit blue fraction stayed 0.182. Files in `tasks/evidence/T-0096/` and `/opt/cursor/artifacts/`.
+- Skill `notes/skills/one-viewpoint.md`. Handoff `tasks/handoffs/T-0096-grokbot-3.md`. `npx tsc --noEmit` exit 0. `npm test` 846 tests, 832 pass, 0 fail, 14 todo. GitHub `ci / test` is still the org billing limit and is not a pass. Asking Grokbot-1 to review pull request #143. grokbot-3 does not approve or merge.
+## 2026-10-26 PT - grokbot-3: time zero is solar-system formation (T-0093)
+
+Roadmap step 3. Issue #108. Branch `grokbot-3/solar-epoch`. Not claimed: grokbot-3 wrote the plan and is waiting on grokbot-1 for approve-plan. grokbot-2 is not asked. Not a self-approve and not a merge.
+- `dialToYears` now returns years since solar-system formation. Time 0 is the Connelly et al. 2012 CAI age already on T-0065 (4.5673 Gyr before now). The present is that far along the line. Earth's age (Dalrymple 2001, 4.54 Gyr, already `DEEP.earthAgeYr`) is the span from Earth-formation to the present. Issue #108's round 4.5 billion is not used. `deepTimeAt(0)` is still now. The stage model is unchanged.
+- `epochOffsetYr` is still session seconds. The in-game dial was not rewired, so its label does not change. No second clock, epoch, or wheel.
+- Files: `src/core/deepTime.ts`, `src/core/worldClock.ts` (comment only), `tools/deep-time.ts`, `tests/deep-time.test.ts`, `src/config/systemProperties.ts`, `docs/system-map.md`, `notes/design-roadmap.md`, `notes/skills/deep-time-model.md`, `notes/skills/single-clock.md`, `tasks/T-0093-solar-epoch.md`, `tasks/handoffs/T-0093-grokbot-3.md`. Did not edit the animal-store or snow-depth files.
+- `npx tsc --noEmit` exit 0. `npm test` 841 tests, 827 pass, 0 fail, 14 todo. The slider round trip allows 1e-8 because the line year is about a billion and a fraction of a year is a few ulps. Pull request https://github.com/BannonBotBoss/boreal/pull/140. Not self-approved.
+
+## 2026-10-26 15:41 PT - grokbot-3: a climate name is an output (T-0094)
+
+Branch `grokbot-3/climate-class`. Step 8 of `notes/design-roadmap.md`. Issue #100. Proposed only. Not claimed. grokbot-3 wrote the roadmap and does not approve this plan. grokbot-2 is down and is not asked.
+
+- New module `src/core/climateClass.ts`. Twelve monthly temperatures and rain totals become one Köppen–Geiger symbol (Peel, Finlayson and McMahon 2007, Table 1, doi:10.5194/hess-11-1633-2007). Thirty symbols. Arid first. Herberton Post Office is Cwa. Issue #100's four example names are not a second scheme.
+- The year is `weatherAtLatLon` at the climate seed's twelve days, after one existing 6 h step so the rain shadow is in the total. No edit to `weather.ts`, `planetWeather.ts`, `precipitation.rs`, `animalBehavior.ts`, or the epoch files. Those belong to open pull requests #137, #139, and #140.
+- Deer and wolf behaviour does not read the class. The picture and the surface colours do not either. Nothing on screen changes. Frame N/A.
+- On a 45°N test grid: ocean seasonal range 6.66 K, inland 46.14 K, both BWk. Windward 365.8 mm (Dwb), leeward 2.9 mm (BWk). The flat BWk is a near-zero 6 h rate held for a year. It is not a real ocean desert, and the threshold was not moved.
+- Skill `notes/skills/climate-class.md`. Handoff `tasks/handoffs/T-0094-grokbot-3.md`. `npx tsc --noEmit` exit 0. `npm test` 848 tests, 834 pass, 0 fail, 14 todo. Rust was not edited.
+
+## 2026-10-26 16:10 PT - grokbot-3: monthly rain is the precip plane summed (T-0094)
+
+Branch `grokbot-3/climate-class`, pull request #141. Not claimed. grokbot-3 wrote the roadmap and does not approve this plan. grokbot-2 is down and is not asked.
+
+- Cause: `climateYearAt` multiplied one 6 h `precip` rate by 365/12. That plane is the step's mm/day (`precipitation.rs`), and on flat ground the first step is still the seeded column, so the year was near zero. Flat 45°N ocean before: BWk, 95.6 mm. After summing the same plane for each month: Csb, 1809 mm. Temperatures are still the first step.
+- The flat inland slab stays BWk (107 mm). That is the grid, not a Peel threshold. The Kenora stand on the one-degree grid was Dfa on the held rate (4264 mm, July 27.47 °C) and is Dfa after the month integral (4818 mm, same July). ECCC Kenora A 1981–2010, climate id 6034075, July 19.7 °C, is Dfb on the station rain. Putting 27.5 °C on that rain is Dfa. The temperature is not changed, so the stand does not become Dfb. The model's 4818 mm against the station's 715 mm is recorded and not fitted.
+- Files: `src/core/climateClass.ts`, `tests/climate-class.test.ts`, `notes/skills/climate-class.md`, `tasks/handoffs/T-0094-grokbot-3.md`. No edit to `weather.ts`, `planetWeather.ts`, `precipitation.rs`, behaviour, or the epoch files.
+- `npx tsc --noEmit` exit 0. `npm test` 850 tests, 836 pass, 0 fail, 14 todo. Rust was not edited. The GitHub `test` check is still blocked by the org spending limit. It is not a failing test.
+
+## 2026-10-26 16:02 PT - grokbot-3: nothing sends the raw world across (T-0095)
+
+Branch `grokbot-3/no-raw-world`. Roadmap step 15. Issues #101, #105, #106. #106 wins. Not claimed. grokbot-3 does not approve this plan. grokbot-2 is down and was not tagged. The ask is to @Grokbot-1.
+- The crossing stays the one that is already here. `planetBudget.ts` reads `Float64Array` planes over wasm memory. `lib.rs` exports are `extern "C"` numbers or `*mut f64`. The perception block (T-0083) is little-endian bytes. Issue #101's JSON animal list was not added.
+- `tests/no-raw-world.test.ts` walks `src/**/*.ts`, `rust/boreal-sim/**/*.rs`, and `Cargo.toml`. A hit is a JSON animals list, `JSON.stringify` of `world` or `entities`, `JSON.parse(...).animals`, `serde_json`, a C string export, or `wasm-bindgen`. `*mut u8` stays legal for the perception bytes. The allowlist is empty. Saves, the CLI figure JSON, and `include_str!` of the materials table do not match, so they are not listed.
+- Files: `tests/no-raw-world.test.ts`, `tasks/T-0095-no-raw-world.md`, `notes/skills/no-raw-world.md`, `notes/design-roadmap.md` (step 15 is `Board: T-0095`), `notes/skills/perception-buffer.md` (pointer only). No species file. No second serializer.
+- `npx tsc --noEmit` exit 0 on `6b101c5`. `npm test` 841 tests, 827 pass, 0 fail, 14 todo. The two new tests are the #101 fixture and the live walk (allowlist empty, no hits).
+- Pull request #142. GitHub `test` run 40417092657 did not start: "The job was not started because recent account payments have failed or your spending limit needs to be increased." Not a pass. Not a self-approve. @Grokbot-1 approves the plan and reviews.
+
+## 2026-10-26 13:39 PT - grokbot-3: animals recorded in the entity store (T-0092)
+Branch `grokbot-3/animals-in-store`. Step 12 of `notes/design-roadmap.md`. Issues #101 and #102. Proposed, not claimed. grokbot-1 is asked to approve-plan. Not a self-approve. Climate and weather files were not edited (T-0085).
+- The step 11 `EntityStore` now records a species key, position, age, needs (water, energy, rest), kinship (parent handle and an explicit founder flag), and territory (holder and home point). `spawn_pack` reads counts the caller takes from `LIFESPAN` and `WOLF_NEEDS` / `HARE_NEEDS`. Wolf age 2, pack 2 (the row minimum, inside Mech & Boitani's range), spacing 5 m. Hare age 1, count 1. No `body_mass` component.
+- `AnimalBrain.stored` mirrors one record via `mirrorStoredAnimal`. `decide` is unchanged. No second entity list. No wasm export. Nothing on screen changes.
+- Skill `notes/skills/animals-in-store.md`. Handoff `tasks/handoffs/T-0092-grokbot-3.md`. Fixture `tests/fixtures/stored-wolf-pack.bin`.
+
+## 2026-10-27 16:33 PT - grokbot-3: the body feels, and it does not store a mass (T-0102)
+
+Branch `grokbot-3/body-feelings`. Roadmap step 18. Issues #102, #103, and #106. Proposed, not claimed. grokbot-3 does not approve this plan. grokbot-2 is down until about Oct 28 midday PT and is not tagged. The ask is to Grokbot-1.
+
+- `BodyFeelings` on the step 12 store: stamina, pain, health, air temperature, temperature stress, oxygen stress. Energy, water, and rest stay on `Needs` and move only through `stepNeeds`. Age stays on `Age`. No weight field. `size_of` is 24. The `BDY1` fixture is `tests/fixtures/body-feelings.bin`.
+- The step takes kilograms from `rigMass`. A doubled player wolf is eight times the mass (73.392 kg → 587.137 kg). Water and energy at that mass match `stepNeeds`. Temperature stress is the existing `heatFactor - 1` (0.4 at 30 °C, the row's 0.04 per degree above 20 °C). Pain and oxygen stress stay 0, health stays 100: calibration, no new rate. Stamina uses `staminaRates` and matches `stepWolfModes`.
+- The 32-byte physiology block is issue #106's order and sits at byte 64. Hunger, thirst, and fatigue are the unfilled share of the reserves. The reserved float stays 0. Emotion stress is not written.
+- Files: `rust/boreal-sim/src/animals.rs`, `rust/boreal-sim/src/entities.rs`, `src/core/bodyFeelings.ts`, `tests/body-feelings.test.ts`, `tests/fixtures/body-feelings.bin`, `notes/skills/body-feelings.md`, `notes/design-roadmap.md` (step 18 is `Board: T-0102`), `tasks/T-0102-body-feelings.md`, `tasks/handoffs/T-0102-grokbot-3.md`. No edit to `perceptionBuffer.ts`, `main.ts`, `agent.ts`, `habitat.ts`, the climate files, or the wasm binary. The open changes 139 and 144–148 were not touched.
+- `npx tsc --noEmit` exit 0. `npm test` 871 tests, 857 pass, 0 fail, 14 todo. `cargo test --lib entities` 10 passed.
+
+## 2026-10-26 14:22 PT - grokbot-3: T-0092 claimed and completed
+
+grokbot-1 approved the plan at 14:20 PT (`tasks/events/2026-10-26T14-20-00-grokbot-1-approve-plan-T-0092.json`) and merged main into `grokbot-3/animals-in-store`. Claim is 14:22:50 PT. Complete is 14:22:51 PT, skill `animals-in-store`. Not a self-approve. grokbot-2 is down and was not tagged. @Grokbot-1 reviews and merges pull request #137. The climate files that came in with that merge were not edited here.
+
+## 2026-10-26 14:46 PT - grokbot-3: snow depth from the store (T-0087), not claimed
+
+Branch `grokbot-3/snow-depth` from main `3c31e29`. Roadmap step 7, issue #100. The plan author is grokbot-3. Comment `tasks/events/2026-10-26T14-46-34-grokbot-3-comment-T-0087.json` asks @Grokbot-1 to approve-plan. Not an approve-plan, not a claim, not a self-approve. grokbot-2 is not tagged. T-0092's files on `grokbot-3/animals-in-store` were not edited.
+
+- Centimetres are `sweMm / HYDRO.snowDensity * 100`. Density stays 250 kg/m³ (Sturm et al. 2010). 10 mm is 4 cm. The Kenora January store, 86.0 mm, is 34.4 cm. Degree-day factor stays 3 (Hock 2003) on both sides. Below 0 °C is snow. At and above 0 °C is rain. The comparison was already `< 0`.
+- The status line and the inspector show that depth at the player. The ground snow layer uses the same centimetres. Grass shorter than the depth is buried so the existing terrain snow albedo shows; the buried share of a taller blade mixes toward `vec3(0.8)`, already in `render/pbr.ts`.
+- Files: `src/core/weather.ts`, `src/core/planetWeather.ts`, `src/core/ground.ts`, `src/main.ts`, `src/ui/inspector.ts`, `src/render/grass/grass.ts`, `rust/boreal-sim/src/planet_fundamentals/hydrosphere/precipitation.rs`, `public/wasm/boreal_sim.wasm` (rebuilt, 147878 bytes). Skill `notes/skills/snow-depth.md`. Test `tests/snow-depth.test.ts`. Handoff `tasks/handoffs/T-0087-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 843 tests, 829 pass, 0 fail, 14 todo. Rust lib 88 passed, 0 failed. After the wasm rebuild, Kenora January is still −18.94 °C, snowing, swe 86.0 mm, and July is still 27.50 °C with no snow.
+- Frames, same pose, diagnostic `?day=`: `tasks/evidence/T-0087/jan-kenora.png` shows `Snow 34.4 cm` at −18.94 °C with snow falling. `jul-kenora.png` shows `Snow 0.0 cm` at 27.50 °C with an empty store. Foreground box (x 160–1120, y 560–640): January mean RGB 136, 133, 132 (green excess −1.2); July 70, 78, 66 (green excess +10.3). Not a photo-calibrated look score. Pull request #139. Not claimed.
+- The GitHub `test` check on #139 did not start (Actions run 40408108064): billing or the spending limit, not a failing test. Local `npm test` and `npx tsc --noEmit` are the commands that workflow runs, and both passed.
+
+## 2026-10-26 17:12 PT - grokbot-3: a sound is a direction and an urgency (T-0097)
+
+Roadmap step 25. Issues #104, #105, #106. #106 wins the bytes. Not claimed. grokbot-3 wrote the plan and does not approve it. Camera files on `grokbot-3/one-viewpoint` were not edited.
+- The compass no longer names the clip. The listening line and each mark say `something, <direction>, <soft|clear|loud>`. Quiet stays "Quiet nearby". Cues still come from `createSoundCues`. Each cue is one 28-byte sound entry, read by `readSoundEntry`, the same reader the perception block uses. Category is not printed. A distance is not stored.
+- Hearing range stays the wolf row, 40 m, already labelled game calibration. `SENSES.range` still matches that row.
+- In the game at noon, on the woodpecker near x −100.5, z 38.4: before `Hopping · ahead`, after `something, front-right, soft`. Frames in `tasks/evidence/T-0097/`.
+- `npx tsc --noEmit` exit 0. `npm test` 842 tests, 828 pass, 0 fail, 14 todo. Skill `notes/skills/sound-direction.md`. Handoff `tasks/handoffs/T-0097-grokbot-3.md`.
+
+## 2026-10-26 18:50 PT - grokbot-3: the follow view looks across the wolf (T-0100)
+
+Branch `grokbot-3/level-view`. Proposed only. No approve-plan, so no claim and no complete. grokbot-3 cannot approve this. The ask goes to @Grokbot-1. grokbot-2 is down until about Oct 28 and is not tagged.
+- Matthew, on the Kenora January frame from the snow-depth work: "the view is no longer straight forward." The change that did it is `4ae9f46` (T-0075, 2026-10-25): the lens moved 2.25 m to the wolf's left and aims 32° off the heading. Roll was already 0. The far horizon in that frame fits at −0.09°. The shore looks tilted because the camera looks across it. The stand itself slopes about 4°.
+- `positionCamera` now sets world up every call, sits dead astern (`flank` 0), and looks along the heading. Pitch stays −5°. The wolf's lean is unchanged. No second camera. Pull request #143 does not edit this function. If its `forestFromPlanet` later replaces the follow view, zero the roll the same way: world up, look along the heading, or keep calling `positionCamera`.
+- Skill `notes/skills/level-follow-camera.md`. Handoff was `tasks/handoffs/T-0100-grokbot-3.md` (now `tasks/handoffs/T-0101-grokbot-3.md`). Frames were `tasks/evidence/T-0100/` (now `tasks/evidence/T-0101/`). Local `npx tsc --noEmit` exit 0. `npm test` 840 tests, 826 pass, 0 fail, 14 todo. GitHub `test` on #147 failed in about 3 seconds with no steps and no log (org billing). That is not a pass. Pull request #147. Not approved.
+
+## 2026-10-26 19:07 PT - grokbot-3: the level view is T-0101
+
+Pull request #147 and pull request #148 both used T-0100. T-0100 stays with #148 (`grokbot-3/sense-pictures`). This follow view is T-0101. Scan after `git fetch --all`: open pull requests #137 and #139–#148, task files and events on every origin branch, and `git log --all --name-only`. Highest taken id was T-0100. T-0046 is reserved. T-0074 was not reused. Next free id is T-0101.
+- Task `tasks/T-0101-level-view.md`. Propose renamed to `tasks/events/2026-10-26T18-50-19-grokbot-3-propose-T-0101.json` (it existed only on this unmerged branch; `at` is still 2026-10-26T18:50:19-07:00). Comment `tasks/events/2026-10-26T19-07-40-grokbot-3-comment-T-0101.json` at 2026-10-26T19:07:40-07:00. That comment is not an approve-plan.
+- Frames moved to `tasks/evidence/T-0101/` (before and after, flat, slope, and Kenora). Handoff `tasks/handoffs/T-0101-grokbot-3.md`. `notes/design-roadmap.md` has no line for this camera, so it was not edited. Not claimed. Not approved. Not merged.
+
+## 2026-10-26 17:35 PT - grokbot-3: a place has food, water, shelter, and a score (T-0098)
+
+Branch `grokbot-3/habitat-score`, from main `3c31e29`. Roadmap step 9. Issues #100 and #101. Conflict 11: the score is #101's sum. Environmental stress is not in it. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is not asked.
+
+- New `src/core/habitat.ts`. Food and vegetation are the existing browse crop. Shelter is the existing stand canopy. Water is open water or the bucket fill `weatherAt` already returns. Competition is herbivores against 10 hares/ha (Keith 1990, already on the hare row). Predator pressure is wolves against 40 / 1,000 km² (Fuller, Mech & Cochrane 2003). No new weight. The 0–100 sketch is not used.
+- Did not edit `weather.ts`, `precipitation.rs`, `planetWeather.ts`, the grass drawer, the inspector, the globe camera, the senses files, the entity store, or `systemProperties.ts`. Those belong to the open changes.
+- `tests/habitat-score.test.ts`: 4 passed. At (3, 4) with no grid bound, food 1, water 0.6, shelter 0.920, quality 2.520. A half bite drops food to 0.5 and the score by 0.5. Skill `notes/skills/habitat-score.md`. Handoff `tasks/handoffs/T-0098-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 843 tests, 829 pass, 0 fail, 14 todo. Nothing on screen, so no frame. Pull request https://github.com/BannonBotBoss/boreal/pull/145. The GitHub `test` job did not start (run 40427500237): account payments have failed or the spending limit needs to be increased. Not a failing test. Not claimed. Not self-approved.
+
+## 2026-10-26 18:10 PT - grokbot-3: the strongest urge wins (T-0099)
+
+Branch `grokbot-3/strongest-urge`, from `grokbot-3/habitat-score` at `22e3b86` (pull request #145, T-0098). Roadmap step 10. Issues #100, #101, and #103. Conflict 4: #103 wins. The pull request is against `main`, because `tasks/RULES.md` rule 17 says so. It includes #145 until that merges, and it must merge after #145. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is not asked.
+
+- `src/core/agent.ts` `winningUrge`. The score is severity × the species utility already on the row × the opportunity. The step 9 cell is the food, the water, and the quality gap. Flee's importance is 1 because `perceive` already multiplied the cue by `species.fear`. Omit `urges` and the hare and the deer keep the old choice. No `choose_action`. No cutoff 90, 80, 25, or 85.
+- Did not edit `animalBehavior.ts`, `needs/engine.ts`, `main.ts`, or any render or camera file. `AnimalBrain` stays the legs. #143 owns the camera.
+- `tests/strongest-urge.test.ts`: 5 passed. The trace `tasks/evidence/T-0099/approach-then-flee.json` walks from z 0 to z −4.16 toward food, ignores a wolf at 80 m, then runs back to z 1.117 when the wolf is 3 m ahead. Nothing new is drawn, so there is no screenshot. Skill `notes/skills/strongest-urge.md`. Handoff `tasks/handoffs/T-0099-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `npm test` 848 tests, 834 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/146. The GitHub `test` job did not start (run 40431122722): account payments have failed or the spending limit needs to be increased. Not a failing test. Not claimed. Not self-approved.
+
+
+## 2026-10-26 18:54 PT - grokbot-3: sense thoughts are pictures (T-0100)
+
+Branch `grokbot-3/sense-pictures` from `grokbot-3/sound-direction` (pull request #144). Not claimed. grokbot-3 wrote the plan and does not approve it. Merge after #144. grokbot-2 is down and was not tagged.
+- The wolf senses panel no longer prints the listening sentence, the scent sentence, the percent, or a species card. A ripple, a wisp, or an eye bubbles up in that panel. Strength sets how solid it is (floor 0.18, full signal 0.94, game calibration of Matthew's picture). It drifts toward the side the signal comes from and fades. Life is the existing need-thought fade, 1.75 s. The cap is the issue #106 sound cap, 8. A steady signal re-emits every six panel refreshes, 0.9 s.
+- Hearing is still `createSoundCues`, packed with `cueSoundEntry` and read with `readSoundEntry`. Smell is still `smell()`. A close body can add an eye from `perceive().sight`. Category, source species, and distance are not drawn. The compass arrows stay. Their accessibility label can still be the T-0097 caption.
+- Files: `src/core/sensePictures.ts`, `src/ui/senses.ts`, `src/ui/senses.css`. Skill `notes/skills/sense-pictures.md`. Handoff `tasks/handoffs/T-0100-grokbot-3.md`. Frames in `tasks/evidence/T-0100/`.
+- `npx tsc --noEmit` exit 0. `npm test` 846 tests, 832 pass, 0 fail, 14 todo. The four T-0100 tests passed. GitHub's test job was not treated as a pass: recent runs on this repo did not start because of the org billing limit.
+
+
+
+## 2026-10-27 18:26 PT - grokbot-3: open changes brought up to date with main
+
+Grokbot-1 merged #140, #141, #142, #143, #137, #139, #144, and #149. The still-open changes were updated by merging that main, as normal merge commits. #143 was not edited.
+
+- #145 `grokbot-3/habitat-score` (T-0098), #146 `grokbot-3/strongest-urge` (T-0099), #147 `grokbot-3/level-view` (T-0101), #148 `grokbot-3/sense-pictures` (T-0100).
+- The shared conflict was `AGENT-NOTES.md`. Main's sections stayed. Each branch's own sections were appended after them.
+- After #144 landed, #148 also conflicted in `src/ui/senses.ts` and `notes/skills/sound-direction.md`. The picture stream stayed. The compass accessibility label still uses the T-0097 caption. The listening sentence was not put back on screen.
+- No task id on these branches collided with an id that had landed on main. None were renumbered. T-0100 stays with the picture stream. T-0101 stays with the level view. T-0102 is already on main.
+- The same board comment is on each open branch: `tasks/events/2026-10-27T18-26-26-grokbot-3-comment-T-0080.json` on T-0080. Not an approval. Not a merge. Grokbot-1 reviews.
+
+## 2026-10-27 20:27 PT - grokbot-3: far away, or time sped up, the individual becomes a number (T-0104)
+
+Roadmap step 14. Issues #101, #107, #109. Conflict 2: #109 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is not asked. Open changes #146, #147, #148, and #150 were not touched.
+
+- New `src/core/coarse.ts`. Near and Immediate, an animal is a body. Farther, or above Immediate, the same animal is a herd, a density, or a range. The two shares sum to 1. The coarse step is Verhulst's closed form. Deer ease toward 1/km² (Ranta & Lankester 2017, Alces 53, Kenora WMU 6, 1978). Wolves ease toward 40/1,000 km², the figure already on the habitat cell. The year rate 0.3 is game calibration. No second list of scales.
+- `src/render/animalDensity.ts` draws the T-0070 round disc. `buildScene` paints that disc before it fades the body. Fully folded deer are not stepped. Fully folded hares leave the headless tick and come back as the same hare. `main.ts` passes the frame's forward world seconds.
+- `tests/coarse-population.test.ts`. Skill `notes/skills/animals-become-density.md`. Handoff `tasks/handoffs/T-0104-grokbot-3.md`.
+- The player you are inside stays a body. The other animals transform.
+- `npx tsc --noEmit` exit 0. `npm test` 886 tests, 872 pass, 0 fail, 14 todo.
+- Frames: `tasks/evidence/T-0104/near-individual.png` (a hare, real time), `leaving-near.png` (tan discs, bodies still counted), `far-density.png` (green density discs), `fast-herd.png` (20 sec / sec, behavioral, herd discs). The headless GPU's ladder had near 40 m and mid 60 m. Those are the live interest radii.
+
+## 2026-10-27 21:37 PT - grokbot-3: the density mark is not a dome (T-0104)
+
+The count is unchanged. From the ground the T-0070 disc was a giant green or tan hemisphere, because a camera-facing sprite the size of the field was cut off by the grass. `densityTintGate` is 0 at wolf height, so that sprite is not drawn. The same point is a faint ground stain only from the 1 km station upward, looking down (full at 2000 m, `HANDOFF.alt`). Peak opacity 0.12 and the 64 px cap are game calibration. Not claimed. grokbot-3 does not approve it.
+
+- Files: `src/render/animalDensity.ts`, `src/render/buildScene.ts` (the mark sits `DENSITY_MARK_LIFT_M` above the ground and the sync gets the camera), a comment in `src/core/coarse.ts`. Skill `notes/skills/animals-become-density.md`. Handoff `tasks/handoffs/T-0104-grokbot-3.md`. Test `tests/coarse-population.test.ts` (5 pass).
+- `npx tsc --noEmit` exit 0. Full `npm test` was still inside the existing Kenora climate-year case when this note was written. The result is added when that run finishes.
+- New stills, same viewpoints: `tasks/evidence/T-0104/near-individual.png` (a hare, 1 sec / sec, no dome), `far-density.png` (trees, lake, wolf, no green dome), `fast-herd.png` (20 sec / sec, behavioral, grass and the wolf, no tan dome), `leaving-near.png` (no disc). Copies in `/opt/cursor/artifacts/`. Pull request #151.
+
+## 2026-10-28 00:15 PT - grokbot-3: animals, weather, and the ground follow the scale (T-0106)
+
+Roadmap step 32. Issues #107, #108, #109. #109 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 was not asked. Open pull request #152 (T-0105) was not touched. Playables and the player-entry files were not edited.
+
+- The one clock already had the eight names, the hysteresis, and the blend. `aggregateShare` reads that blend. `simWorldSec` is the share still on Immediate. `aggregateWorldSec` is the rest. They sum to one forward second. Rewind is 0 for both. `SCALE_BOUNDS` was not copied.
+- The weather cell catches the date with that aggregate share, using the existing one-hour nudge. Snow-water eases toward one year of the Kenora monthly normals (snow below 0 °C, melt at the existing degree-day factor) unless the planet already has a snow-water. `weatherAt` shows the mix, so the ground snow follows the same signal. Ground years still advance on every forward second and still refuse a backward gap.
+- The step 14 density is the picture. From the play camera it is a flat mottled patch on the litter. The camera-facing sprite stays off at wolf height. The embodied animal stays a body.
+- Files: `src/core/worldClock.ts`, `src/core/weather.ts`, `src/main.ts`, `src/render/animalDensity.ts`, `src/render/buildScene.ts`, `src/core/coarse.ts` (comment), `tests/time-scale-follow.test.ts`, `notes/skills/time-scale-follow.md`, `notes/skills/single-clock.md`, `notes/skills/animals-become-density.md`, `notes/design-roadmap.md`. Handoff `tasks/handoffs/T-0106-grokbot-3.md`.
+- `npx tsc --noEmit` exit 0. `tests/time-scale-follow.test.ts` passed, with the clock, weather, density, and single-clock tests. Frames: `tasks/evidence/T-0106/slow-individuals.png` (1 sec / sec, hares are bodies), `mid-blend.png` (10 sec / sec, bodies still up and a flat patch is on), `fast-density.png` (20 sec / sec, behavioral, the bodies are gone and the patch remains). No standing dome. The wolf you are inside stays a body. Pull request #154.
+
+## 2026-10-28 00:27 PT - grokbot-3: you step into an animal that is already alive (T-0107)
+
+Roadmap step 17. Issues #102 and #103. Conflict 17. Not claimed. grokbot-3 wrote the plan and does not approve it. Asking Grokbot-1. grokbot-2 is down until about midday PT and is not tagged. Step 1 (T-0081) is on main and was not redone. Step 22 is not on main; entry only keeps a memory list.
+
+- `enterLiving` picks the territory holder from the step 12 store. `Playable.create(life)` still uses `createPlayerWolf`, `createDeerRig`, and `createHareModel`, then `mirrorStoredAnimal`. Bear is not offered. The embodied id on the observation record is the store handle (`4294967296` for the wolf in the stills), null before entry.
+- The recorded stand is `dryStart(0, 0)` on seed 1400, (30, 0). The old test origin (0, 0) is open water. Wolf mate +5 m (wolf spacing). Hare +20 m (hare spacing). Deer 20 m north. Ages stay the lifespan rows: wolf 2 of 13 (Mech & Boitani 2003), deer 2 of 20 (Ditchkoff 2011), hare 1 of 5 (Krebs et al. 2001).
+- Did not edit `src/render/animalDensity.ts`, `src/core/coarse.ts`, `src/core/weather.ts`, or `src/core/ground.ts`.
+- Files: `src/core/enterLiving.ts`, `src/core/livingPack.ts`, `src/core/storedFixture.ts`, `src/core/storedAnimal.ts`, `src/render/playables.ts`, `src/render/buildScene.ts`, `src/main.ts`, `src/ui/playerPanel.ts`, `src/core/observation.ts`, `rust/boreal-sim/src/animals.rs`, `rust/boreal-sim/src/entities.rs`, the two fixtures. Skill `notes/skills/enter-living-animal.md`. Handoff `tasks/handoffs/T-0107-grokbot-3.md`. Tests `tests/enter-living.test.ts`.
+- Stills: `tasks/evidence/T-0107/before-entry.png` (wolf small on the snow, embodied null) and `after-entry.png` (same wolf, close, embodied equals the store id). Copies in `/opt/cursor/artifacts/`.
+- `npx tsc --noEmit` exit 0. `npm test` 905 tests, 891 pass, 0 fail, 14 todo. Pull request https://github.com/BannonBotBoss/boreal/pull/155.
+## 2026-10-27 22:08 PT - grokbot-3: body, feeling, and urge are three blocks (T-0105)
+
+Branch `grokbot-3/three-blocks`, from main `43dac9f`. Roadmap step 19. Issues #102, #103, #105, and #106. Conflict 12: #106 wins. Not claimed. grokbot-3 wrote the plan and does not approve it. grokbot-2 is down and was not asked. The ask is to Grokbot-1.
+
+- Hunger and thirst stay the body block from T-0102 (`physiologyOf`). Fear and curiosity are the emotion block. The pull to feed, flee, mate, or move is the urge block. Mating is the fifth urge float, held at 0, and it is not a feeling. There is no `Mind` struct and no `Instincts` list.
+- Feed, drink, flee, and move are `urgeScores` with `urgeWeights`. Hare feed is 0.5 and wolf feed is 0.8, the rows already on the species. Flee's importance stays 1. Rest still wins the comparison when it is strongest, and that score is not packed into mating. Curiosity stays 0 unless the caller passes a feeling. Emotion stress stays 0 and is not the body's temperature stress.
+- The three slices sit at perception bytes 64, 96, and 128. A body hunger of 20 is not among the eight emotion floats. Skill `notes/skills/three-blocks.md`. Handoff `tasks/handoffs/T-0105-grokbot-3.md`.
+- Nothing is drawn. The senses panel and the density fold were not edited. No screenshot.
+- `tests/three-blocks.test.ts`: 2 passed. `npx tsc --noEmit` exit 0. `npm test` 893 tests, 879 pass, 0 fail, 14 todo. Not claimed. Not self-approved.
+
+
+## 2026-10-28 00:45 PT - grokbot-3: globe click to the animal ladder (T-0108, issue #156)
+
+Bridge lane (issue #158). Blitz mode (issue #157): this note's author merges the change once the type check and npm test pass. Not a self-review. Grokbot-1 is told on the change. The biological back end (branch prefix grokbot-3/bio-backend-) owns worldwide ranges. Grokbot-1 owns the landscape.
+
+Matthew, 2026-10-28, issue #156, overrides PROJECT-RULES rule 1 for animal model files only. The one manifest is public/models/animals/manifest.json. A species with no file keeps the procedural body. Recorded in PROJECT-RULES.md, the T-0028 note, and tests/hare-mesh.test.ts.
+
+- Why a far click was the wolf's lake: sampleSurface writes game x,z only inside the Kenora square. descend used those zeros. landingSite.ts anchors the existing frame on the clicked direction. heightAt reads the planet sample only while that frame is remote. Home does not move.
+- The fall still ends at 10,000 ft and still uses stepCarriedFly. It stops at 400 m unless the player flies down, then glides at 8 m/s. Clouds are the existing shell and local box.
+- animalLadder.ts and animalPicture.ts fade specks, a low body, and the full model. setBodyShare stays after density.sync. The old disc stays off the ground.
+- Gray Wolf: public/models/animals/wolf.glb (26,033 triangles, 1,024², 1.94 MB) and wolf-low.glb (18,193 triangles; gltf-transform simplify stopped on its error bound). Scaled to the 0.74 m shoulder. Head −X turned to −Z. Still or far is rigid. Close and moving keeps the procedural bones. Deer and hare have no file.
+- Files: src/core/sitePhase.ts, src/core/siteHeight.ts, src/world/globe/landingSite.ts, src/render/animalLadder.ts, src/render/animalModels.ts, src/render/animalPicture.ts, src/world/globe/flight.ts, globeView.ts, inpage.ts, src/core/world.ts, altitudeZones.ts, stages/elevation.ts, stages/rivers.ts, planetWeather.ts, src/render/buildScene.ts, src/animals/hare.ts, src/main.ts, tests/globe-landing.test.ts. Skill notes/skills/globe-to-animals.md.
+- Adoption: three/examples/jsm/loaders/GLTFLoader.js (three 0.180, already depended). Textures resized with @gltf-transform/cli resize and jpeg. No new runtime package.
+
+## 2026-10-28 02:03 PT - grokbot-3: horizon rings under the glide (T-0109)
+
+Issue #156 step 1. The chunk square was about 80 m because the dither disc stopped at `INPAGE.ring * CHUNK_SIZE`. `src/world/globe/horizonSkirt.ts` builds doubling rings from 28 m out past the geometric horizon on `planet.sampleSurface` and `surfaceColour`. Curvature drop is `R − R² / sqrt(R² + r²)`. Far quads behind the eye are omitted. One mesh, `src/render/horizonMesh.ts`. Triangle cap 6,000. XR caps unchanged.
+
+The stills are not a drone photo. `home-low.png` and `prairie-low.png` show a horizon; the ground up to it is a dark flat colour, and the prairie chunk rectangle is still there. Objective 2 stays open. Skill `notes/skills/horizon-skirt.md`. Handoff `tasks/handoffs/T-0109-grokbot-3.md`.
+
+## 2026-10-28 - grokbot-3: Meshy animals walk (T-0113, issues #156 #160 #162)
+
+Biological front end. Blitz mode (#157). Not a self-review. Landscape stays on grokbot-3/eco-front-* (that lane took T-0109). This note's author merges once tsc and npm test pass.
+
+- 21 Meshy game files in public/models/animals. Manifest keyed by species. Meshopt decoder on the one GLTFLoader. New gray wolf replaces wolf.glb / wolf-low.glb. Grizzly Bear borrows the American Black Bear 0.9 m shoulder. Bald Eagle borrows Hawks, Kites and Eagles at 0.55 m. Common Raven borrows Crows and Jays at 0.6 m.
+- src/render/meshySkin.ts skins the mesh onto quadrupedPose (WOLF_LEGS, DEER_LEGS, BEAR_LEGS, or the plan ratios) or a bird wing flap. Bones fit the mesh box. Weights by proximity. Float positions: the files are normalized ints and clamped outside −1..1.
+- animalPicture shares geometry, impostors in the mid band, loads only species in view. fullCap 6, lowCap 16. No file keeps the procedural body.
+- Skill notes/skills/meshy-animal-skin.md. Handoff tasks/handoffs/T-0113-grokbot-3.md. Tests tests/meshy-animals.test.ts. PROJECT-RULES rule 1 names the exception. hare-mesh still guards the procedural builder. Renumbered from a branch-only T-0110 after the elevation task took T-0110 on main.
+
+## 2026-10-28 03:10 PT - grokbot-3: board completes for T-0106 and T-0107
+
+Grokbot-1 squash-merged pull request #154 (`bbb0433`) and pull request #155 (`36bf6af`) before the complete events were on those branches. Task ids stayed T-0106 and T-0107. Main had already taken T-0108 through T-0113. The mottled density patch on main calls `hash2s` from `proc/glsl.ts`. These events are the board record under blitz #157. They are not a finished-work approve.
+
+## 2026-10-28 05:xx PT - Grokbot-1: cover rows in Rust (issue #167)
+
+Rust lane (#158). `rust/boreal-sim/src/cover.rs` returns, per landing, a cover class (water, ice, rock, tundra, desert, prairie, boreal), stems per hectare and a billboard height. Class comes from the warm-season temperature at the site (the altitude-zones.json physics, same as treeLineM and iceLineM), not latitude bands: ice above the ice line, tundra above a sea-level tree line, rock above a mountain tree line, then the vegetation weight splits desert, prairie and forest at the viewer's 0.28 and 0.62. Ranges are labelled calibration in `data/earth/cover-density.json` [verify]. A lat/lon hash picks the value inside the range, so the same place returns the same row. Wasm export `cover_cell(lat, lon, elev_m, vegetation, water, out)` writes `[class id, stems/ha, height m]`. `cover::spacing_m` turns stems/ha into billboard spacing.

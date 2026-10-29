@@ -1,0 +1,16 @@
+{
+ "_sources": {
+  "classes": "Class from causes, not latitude bands: site warm-season temperature = sea-level warm season (altitude-zones.json) minus the lapse rate times elevation. Below 0 C is ice (Ohmura et al. 1992), below the 6.4 C tree-line temperature is tundra where the tree line itself is at sea level and rock in mountains (Koerner & Paulsen 2004; Matt's rule: high land gets no plants). Above it, the planet sample's vegetation weight (0..1, a moisture proxy) splits desert, prairie and forest at the thresholds the viewer already uses (coverKind.ts, 0.28 and 0.62).",
+  "boreal": "Closed boreal stands are often 1,000-3,000 stems/ha (already cited in coverKind.ts) [verify]; mature spruce canopy 10-25 m [verify].",
+  "prairie": "Counts are shrub or bunch clumps a billboard can stand for, not grass tillers. Game calibration.",
+  "desert": "Open shrubland, a few hundred to about a thousand shrubs/ha, 1-3 m (creosote-type scrub) [verify]. Game calibration.",
+  "tundra": "Dwarf shrubs 0.1-0.5 m [verify]. The viewer places no billboard; the count is for the ground texture.",
+  "note": "Every range is labelled calibration, not a census (PROJECT-RULES 5 and 7). A place picks a value inside its range from a hash of lat/lon, so the same place always returns the same row."
+ },
+ "boreal":  { "stems_per_ha": [1000, 3000], "height_m": [10, 25] },
+ "prairie": { "stems_per_ha": [30, 120],   "height_m": [0.4, 1.5] },
+ "desert":  { "stems_per_ha": [150, 900],  "height_m": [1, 3] },
+ "tundra":  { "stems_per_ha": [0, 0],      "height_m": [0.1, 0.5] },
+ "veg_desert_below": 0.28,
+ "veg_prairie_below": 0.62
+}

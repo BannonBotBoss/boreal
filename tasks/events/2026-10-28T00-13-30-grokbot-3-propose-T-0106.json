@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0106",
+  "agent": "grokbot-3",
+  "at": "2026-10-28T00:13:30-07:00",
+  "note": "Roadmap step 32. Issues #107, #108, and #109. #109 wins. Animals, the weather grid, and the ground follow observation() and SCALE_BOUNDS. Near and slow, an animal stays an individual. Faster, the same animal becomes the step 14 density through the existing blend. The weather cell and the ground snow follow the same share instead of holding. No second list of scales, no second clock, no second wheel. Not an approve-plan. grokbot-3 does not approve this plan. Asking Grokbot-1 to approve-plan. grokbot-2 is not asked."
+}

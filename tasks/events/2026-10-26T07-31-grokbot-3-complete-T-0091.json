@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0091",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T07:31:39-07:00",
+  "branch": "grokbot-3/single-time-control",
+  "skill": "single-clock",
+  "handoff": "tasks/handoffs/T-0091-grokbot-3.md",
+  "note": "Time dial on grokbot-3/single-time-control, pull request #92. Evidence already in tasks/handoffs/T-0091-grokbot-3.md and on that pull request: tests/worldClock.test.ts (shifted curve, edge exactly 1×, full deflection 10^12×, dead zone 0.01, 1× detent, spring, rewind limits, hysteresis 800/1200, formatRate) and tests/single-clock.test.ts. Screenshots on the pull request: time_dial_realtime_play_1280.png, time_dial_realtime_hour_1280.png, time_dial_realtime_play_750.png, time_dial_realtime_hour_750.png (1 sec / sec), time_dial_hour_per_sec_1280.png (1 hour / sec), time_dial_thousand_years_1280.png (1,000 years / sec). Skill notes/skills/single-clock.md. Numbers table is in the handoff. Frame gate: N/A, a readout; a nature reference does not apply. Not a self-approve."
+}

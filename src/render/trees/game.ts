@@ -41,7 +41,9 @@ function variantJob(vk: number) {
   if (variants.has(vk) || building.has(vk)) return; building.add(vk);
   const cls = Math.floor(vk / VARIANTS), v = vk % VARIANTS;
   const timed = function* <T>(g: Generator<unknown, T>): Generator<unknown, T> { for (let n = 0; ; n++) { const t = performance.now(), r = g.next(), ms = +(performance.now() - t).toFixed(2); TREES_V2_INFO.stepMaxMs = Math.max(TREES_V2_INFO.stepMaxMs, ms); if (ms > 4 && TREES_V2_INFO.slow.length < 12) TREES_V2_INFO.slow.push([ms, vk, n, BUILD_PHASE.at]); if (r.done) { if (TREES_V2_INFO.slow.some(e => e[1] === vk && (e[0] as number) > 0)) TREES_V2_INFO.slow.push([0, vk, n]); return r.value; } yield; } };
-  enqueue(`trees2:build:${vk}`, 55, timed((function* () {
+  // 4: after the chunk under the camera (distance 0) and before grass (d+5) and flora tiles (d+8). At 55 the spruce
+  // mesh never took a slice while those jobs filled the 4 ms budget, so the floor showed one unbuilt crown.
+  enqueue(`trees2:build:${vk}`, 4, timed((function* () {
     const lods: ConiferLods = yield* buildConiferSteps('black-spruce', 101 + v * 17 + cls * 1000, CLASS_AGE[cls]);
     BUILD_PHASE.at = 'meshes'; meshes(); yield;
     const g = (o: THREE.Group, i: number) => (o.children[i] as THREE.Mesh).geometry, add = (b: THREE.BatchedMesh, geo: THREE.BufferGeometry) => { try { return b.addGeometry(geo); } catch { TREES_V2_INFO.full++; return -1; } };

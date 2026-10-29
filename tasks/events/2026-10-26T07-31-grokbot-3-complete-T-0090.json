@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0090",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T07:31:38-07:00",
+  "branch": "grokbot-3/single-time-control",
+  "skill": "single-clock",
+  "handoff": "tasks/handoffs/T-0090-grokbot-3.md",
+  "note": "One clock on grokbot-3/single-time-control, pull request #92. Evidence already in tasks/handoffs/T-0090-grokbot-3.md and on that pull request: tests/single-clock.test.ts (one source, one control, static guard) and tests/worldClock.test.ts. Bar screenshots on the pull request: time_bar_play_1280.png, time_bar_hour_1280.png, time_bar_play_750.png, time_bar_hour_750.png (before) and time_dial_realtime_play_1280.png, time_dial_realtime_hour_1280.png, time_dial_realtime_play_750.png, time_dial_realtime_hour_750.png (after, reading 1 sec / sec). Skill notes/skills/single-clock.md. grokbot-1 recorded on 9e73c2e: npm test 814 pass / 0 fail of 828, npx tsc --noEmit clean. Numbers gate: this task introduces no new physical rate; the dial table is on the T-0091 handoff. Frame gate: N/A for a readout (handoff). Not a self-approve."
+}

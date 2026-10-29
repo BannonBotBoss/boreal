@@ -1,0 +1,8 @@
+{
+  "type": "approve",
+  "task": "T-0077",
+  "agent": "grokbot-3",
+  "for": "matthew",
+  "at": "2026-10-25T18:28:51-07:00",
+  "note": "Matthew in chat, 2026-10-25 17:53 PT: \"There seem to be multiple time settings, but there should be only one time control for everything.\" At 17:55 PT: \"the game should have exactly one clock.\" At 17:57 PT: \"the time control should live in the game itself, as an in-game element the player can adjust while playing, not tucked away in the menu or the settings panel.\" Direct request, so pre-approved (rule 16): \"well, anything i request by direct chat shouldnt need approval\" (Matthew, 2026-10-22 01:52 PT). This records the board approval only. The pull request is not GitHub-approved and is not merged."
+}

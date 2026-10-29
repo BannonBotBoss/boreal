@@ -19,16 +19,28 @@ pub const NAMES: [&str; PLANES] = ["lat", "lon", "land", "elev", "ts", "tair", "
 
 pub struct Grid { pub nlat: usize, pub nlon: usize, pub n: usize, pub day: f64, pub hour: f64, pub data: Vec<f64>,
     /// Climatological sea-level air temperature per row for land and ocean columns at the current day (climate_seed::damped_seed).
-    pub row_land: Vec<f64>, pub row_sea: Vec<f64>, pub(crate) row_day: f64, pub t_bar: f64 }
+    pub row_land: Vec<f64>, pub row_sea: Vec<f64>, pub(crate) row_day: f64, pub t_bar: f64,
+    /// Metres to the nearest ocean cell (`LAND` < 0.5). The host writes inland lakes as land, so a lake is not a source.
+    /// Ocean cells are 0. Rebuilt when the mask changes.
+    pub coast_m: Vec<f64>, pub(crate) coast_stamp: u64 }
 impl Grid {
     pub fn new(nlat: usize, nlon: usize) -> Grid {
-        let n = nlat * nlon; let mut g = Grid { nlat, nlon, n, day: 80.0, hour: 12.0, data: vec![0.0; n * PLANES], row_land: vec![0.0; nlat], row_sea: vec![0.0; nlat], row_day: -1.0, t_bar: annual_global_t() };
+        let n = nlat * nlon; let mut g = Grid { nlat, nlon, n, day: 80.0, hour: 12.0, data: vec![0.0; n * PLANES], row_land: vec![0.0; nlat], row_sea: vec![0.0; nlat], row_day: -1.0, t_bar: annual_global_t(), coast_m: Vec::new(), coast_stamp: 0 };
         for r in 0..nlat { for c in 0..nlon { let i = r * nlon + c;
             g.data[LAT * n + i] = -90.0 + (r as f64 + 0.5) * 180.0 / nlat as f64; g.data[LON * n + i] = -180.0 + (c as f64 + 0.5) * 360.0 / nlon as f64; } }
         g
     }
     #[inline] pub fn p(&self, k: usize) -> &[f64] { &self.data[k * self.n..(k + 1) * self.n] }
     #[inline] pub fn pm(&mut self, k: usize) -> &mut [f64] { let n = self.n; &mut self.data[k * n..(k + 1) * n] }
+    /// Shortest path, in metres, from each cell to an ocean cell (`LAND` < 0.5). Ocean is 0.
+    /// Inland lakes are land in the host mask, so they are not sources.
+    /// Recomputed only when the land/sea mask changes, so a step does not repeat the search.
+    pub fn refresh_coast(&mut self) {
+        let stamp = land_stamp(self);
+        if self.coast_m.len() == self.n && self.coast_stamp == stamp { return; }
+        self.coast_stamp = stamp;
+        self.coast_m = coast_distances(self);
+    }
     /// Recompute the per-row climatological air temperature when the day has moved on by a quarter day or more.
     pub fn refresh_rows(&mut self) {
         if (self.day - self.row_day).abs() < 0.25 { return; }
@@ -47,6 +59,58 @@ impl Grid {
     pub fn step(&mut self, dt: f64) {
         crate::planet_fundamentals::planet_update::advance(self, dt);
     }
+}
+
+fn land_stamp(g: &Grid) -> u64 {
+    let mut h = 0xcbf29ce484222325u64;
+    for &v in g.p(LAND) {
+        h ^= if v >= 0.5 { 1u64 } else { 0 };
+        h = h.wrapping_mul(0x100000001b3);
+    }
+    h ^ (g.nlat as u64) ^ (g.nlon as u64).rotate_left(17)
+}
+
+fn metres_between(g: &Grid, i: usize, j: usize) -> f64 {
+    let (la1, lo1) = (g.p(LAT)[i].to_radians(), g.p(LON)[i].to_radians());
+    let (la2, lo2) = (g.p(LAT)[j].to_radians(), g.p(LON)[j].to_radians());
+    let dlat = la2 - la1;
+    let dlon = lo2 - lo1;
+    let h = (dlat * 0.5).sin().powi(2) + la1.cos() * la2.cos() * (dlon * 0.5).sin().powi(2);
+    2.0 * crate::consts::EARTH_RADIUS * h.clamp(0.0, 1.0).sqrt().asin()
+}
+
+/// 4-connected Dijkstra. A binary heap of stale longer paths is skipped when a shorter one is already stored.
+fn coast_distances(g: &Grid) -> Vec<f64> {
+    let n = g.n;
+    let mut dist = vec![f64::INFINITY; n];
+    let mut heap: std::collections::BinaryHeap<CoastNode> = std::collections::BinaryHeap::new();
+    for i in 0..n {
+        if g.p(LAND)[i] < 0.5 { dist[i] = 0.0; heap.push(CoastNode { dist: 0.0, i }); }
+    }
+    let (nlat, nlon) = (g.nlat, g.nlon);
+    while let Some(CoastNode { dist: d, i }) = heap.pop() {
+        if d > dist[i] + 1e-3 { continue; }
+        let r = i / nlon;
+        let c = i - r * nlon;
+        let mut neigh = [r * nlon + (c + 1) % nlon, r * nlon + (c + nlon - 1) % nlon, i, i];
+        if r + 1 < nlat { neigh[2] = (r + 1) * nlon + c; }
+        if r > 0 { neigh[3] = (r - 1) * nlon + c; }
+        for &j in &neigh {
+            if j == i { continue; }
+            let nd = d + metres_between(g, i, j);
+            if nd + 1e-3 < dist[j] { dist[j] = nd; heap.push(CoastNode { dist: nd, i: j }); }
+        }
+    }
+    dist
+}
+
+#[derive(Copy, Clone)]
+struct CoastNode { dist: f64, i: usize }
+impl PartialEq for CoastNode { fn eq(&self, o: &Self) -> bool { self.i == o.i && self.dist.to_bits() == o.dist.to_bits() } }
+impl Eq for CoastNode {}
+impl PartialOrd for CoastNode { fn partial_cmp(&self, o: &Self) -> Option<std::cmp::Ordering> { Some(self.cmp(o)) } }
+impl Ord for CoastNode {
+    fn cmp(&self, o: &Self) -> std::cmp::Ordering { o.dist.total_cmp(&self.dist).then(self.i.cmp(&o.i)) }
 }
 
 #[cfg(test)]
@@ -73,5 +137,21 @@ mod tests {
         assert!(te > tp + 15.0 && te < 45.0 && tp > -80.0);
         assert!(g.p(SOIL).iter().all(|&v| (0.0..=150.0 + 1e-9).contains(&v)));
         assert!(g.p(PRECIP).iter().all(|&v| v >= 0.0) && g.p(CLOUD).iter().all(|&v| (0.0..=1.0).contains(&v)));
+    }
+    #[test] fn coast_distance_is_zero_on_water_and_grows_inland() {
+        let mut g = Grid::new(12, 24);
+        for i in 0..g.n { g.pm(LAND)[i] = if g.p(LON)[i] > 0.0 { 1.0 } else { 0.0 }; }
+        g.refresh_coast();
+        let row = g.nlat / 2;
+        let mut near = f64::INFINITY;
+        let mut inland = 0.0f64;
+        for c in 0..g.nlon {
+            let i = row * g.nlon + c;
+            let lon = g.p(LON)[i];
+            if g.p(LAND)[i] < 0.5 { assert_eq!(g.coast_m[i], 0.0, "water {}", lon); }
+            else if lon < 20.0 { near = near.min(g.coast_m[i]); }
+            else if (30.0..60.0).contains(&lon) { inland = inland.max(g.coast_m[i]); }
+        }
+        assert!(near.is_finite() && near > 0.0 && inland > near + 100_000.0, "near {} inland {}", near, inland);
     }
 }

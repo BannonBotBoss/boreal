@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { CLOUD_OPEN, cloudClear } from '../src/world/globe/transition';
 import { CLOUDS } from '../src/world/globe/atmosphere';
-import { LANDING_VIEW, landSpawn, viewBlocked } from '../src/world/globe/handoff';
+import { EYE_CLEAR, LANDING_VIEW, eyeClearOfTrees, landSpawn, viewBlocked } from '../src/world/globe/handoff';
 import { solidsAround, treesAround } from '../src/core/ground';
 import { isDry } from '../src/core/stages/surfaceAt';
 import { STAGES } from '../src/core/stages/elevation';
@@ -67,8 +67,17 @@ test('descent polish: seeded landings leave no tree, boulder or log between the 
   assert.ok(rawBlocked >= 2, `the check has something to catch (${rawBlocked}/${n} raw spots blocked)`);
 });
 
+test('descent polish: the drone eye steps back off a stem and stays put when the stem is far', () => {
+  const on = eyeClearOfTrees(0, 0, 0, [{ x: 0, z: 0, r: 3 }]);
+  assert.ok(Math.hypot(on.x, on.z) >= EYE_CLEAR.gap, `eye is ${Math.hypot(on.x, on.z)} m out`);
+  assert.ok(on.z > 0, 'yaw 0 looks toward -z, so the eye steps back toward +z');
+  const far = eyeClearOfTrees(0, 0, 0, [{ x: 40, z: 0, r: 3 }]);
+  assert.equal(far.x, 0);
+  assert.equal(far.z, 0);
+});
+
 test('descent polish: viewBlocked sees a trunk on the camera-wolf line and ignores one beside it or behind the wolf', () => {
-  const back = LANDING_VIEW.back, on = (z: number) => LANDING_VIEW.flank * z / back; // yaw 0: camera is behind and to the left
+  const back = LANDING_VIEW.back, on = (z: number) => LANDING_VIEW.flank * z / back; // yaw 0: camera is straight behind (flank 0)
   assert.equal(viewBlocked(0, 0, 0, [{ x: on(back / 2), z: back / 2, r: 1.6 }]), true);
   assert.equal(viewBlocked(0, 0, 0, [{ x: on(back / 2) + 4, z: back / 2, r: 1.6 }]), false);
   assert.equal(viewBlocked(0, 0, 0, [{ x: 0, z: -4, r: 1.6 }]), false);
@@ -86,7 +95,7 @@ test('descent polish: viewBlocked counts boulders and logs that reach the line, 
   const log = (x: number, z: number, rot: number, s = 1) => ({ x, z, r: .43 * s, top: .85 * s, hx: Math.cos(rot) * 2.2 * s, hz: -Math.sin(rot) * 2.2 * s });
   assert.equal(viewBlocked(0, 0, 0, [], [log(1.5, .6, 0)]), true, 'log across the line just behind the wolf (its end reaches the line)');
   assert.equal(viewBlocked(0, 0, 0, [], [log(0, back * .8, 0, .75)]), false, 'small log across the line near the camera: under the line');
-  const along = Math.hypot(LANDING_VIEW.flank, back), side = 2.4; // beside the rear three-quarter, parallel to it
+  const along = Math.hypot(LANDING_VIEW.flank, back), side = 2.4; // beside the camera line, parallel to it
   const beside = { x: -back / along * side, z: LANDING_VIEW.flank / along * side, r: .43, top: .85, hx: LANDING_VIEW.flank / along * 2.2, hz: back / along * 2.2 };
   assert.equal(viewBlocked(0, 0, 0, [], [beside]), false, 'log parallel to the line, beside it');
   // real placements: rocks and logs come from the same chunks the scene draws

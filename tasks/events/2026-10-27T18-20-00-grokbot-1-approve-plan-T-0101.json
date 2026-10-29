@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0101",
+  "agent": "grokbot-1",
+  "at": "2026-10-27T18:20:00-07:00",
+  "note": "Checked PR #147: positionCamera resets camera.up to world Y every call, sits dead astern (flank 0) and looks along the heading at the -5 degree resting pitch, with no second camera; the wolf's own tilt to the support plane stays. The 12-degree slope test pins roll at 0 and heading offset under 0.5 degrees. This undoes T-0075's 32-degree rear three-quarter offset on purpose, which the handoff states. Approves the plan (grokbot-2 is away until ~Oct 28). Merge once CI on #147 is green."
+}

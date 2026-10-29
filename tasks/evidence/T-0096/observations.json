@@ -1,0 +1,356 @@
+{
+  "url": "http://127.0.0.1:5275/?start=globe&stages=1&trees=v2&noprobe&inpagedev",
+  "orbit": {
+    "mode": "globe",
+    "phase": "orbit",
+    "alt": 14016219,
+    "height": 0,
+    "fall": null,
+    "el": -90,
+    "gap": 14010890.611602493,
+    "fade": 0,
+    "ready": false,
+    "drawn": 16,
+    "globeMs": 1,
+    "medianSum": 2.3,
+    "n": 24,
+    "last": [
+      {
+        "t": 25173.90000000014,
+        "mode": "globe",
+        "h": 0,
+        "fade": 0,
+        "globeMs": 1.9,
+        "drawMs": 0,
+        "jobsMs": 4.9,
+        "cpuMs": 14.9
+      },
+      {
+        "t": 25360.200000000186,
+        "mode": "globe",
+        "h": 0,
+        "fade": 0,
+        "globeMs": 0.9,
+        "drawMs": 0,
+        "jobsMs": 2.1,
+        "cpuMs": 17.8
+      },
+      {
+        "t": 25546.100000000093,
+        "mode": "globe",
+        "h": 0,
+        "fade": 0,
+        "globeMs": 1,
+        "drawMs": 0,
+        "jobsMs": 2.2,
+        "cpuMs": 3.7
+      }
+    ]
+  },
+  "bands": {
+    "60": {
+      "dropped": {
+        "mode": "band",
+        "alt": 60,
+        "handed": true
+      },
+      "settled": {
+        "mode": "band",
+        "phase": "drone",
+        "alt": 5389,
+        "height": 60,
+        "fall": null,
+        "el": -35.264389682754654,
+        "gap": 0,
+        "fade": 1,
+        "ready": true,
+        "drawn": 37,
+        "globeMs": 0.6000000000931323,
+        "medianSum": 3.8000000000000003,
+        "n": 24,
+        "last": [
+          {
+            "t": 41255,
+            "mode": "band",
+            "h": 60,
+            "fade": 0.75,
+            "globeMs": 0.6,
+            "drawMs": 3.2,
+            "jobsMs": 4,
+            "cpuMs": 13.2
+          },
+          {
+            "t": 41543.40000000014,
+            "mode": "band",
+            "h": 60,
+            "fade": 0.875,
+            "globeMs": 0.5,
+            "drawMs": 4.2,
+            "jobsMs": 4.7,
+            "cpuMs": 18.3
+          },
+          {
+            "t": 41856.30000000005,
+            "mode": "band",
+            "h": 60,
+            "fade": 1,
+            "globeMs": 0.6,
+            "drawMs": 5.3,
+            "jobsMs": 3.9,
+            "cpuMs": 14.5
+          }
+        ]
+      },
+      "sample": {
+        "mode": "band",
+        "phase": "drone",
+        "alt": 5389,
+        "height": 60,
+        "fall": null,
+        "el": -35.264389682754654,
+        "gap": 0,
+        "fade": 1,
+        "ready": true,
+        "drawn": 37,
+        "globeMs": 0.5,
+        "medianSum": 3.8000000000000003,
+        "n": 24,
+        "last": [
+          {
+            "t": 42539.700000000186,
+            "mode": "band",
+            "h": 60,
+            "fade": 1,
+            "globeMs": 1.1,
+            "drawMs": 7.1,
+            "jobsMs": 3.4,
+            "cpuMs": 14.7
+          },
+          {
+            "t": 42877.10000000009,
+            "mode": "band",
+            "h": 60,
+            "fade": 1,
+            "globeMs": 0.6,
+            "drawMs": 2.9,
+            "jobsMs": 4.2,
+            "cpuMs": 18.8
+          },
+          {
+            "t": 43207.5,
+            "mode": "band",
+            "h": 60,
+            "fade": 1,
+            "globeMs": 0.5,
+            "drawMs": 5.1,
+            "jobsMs": 3.8,
+            "cpuMs": 15.9
+          }
+        ]
+      }
+    },
+    "600": {
+      "dropped": {
+        "mode": "band",
+        "alt": 600,
+        "handed": true
+      },
+      "settled": {
+        "mode": "band",
+        "phase": "drone",
+        "alt": 5929,
+        "height": 600,
+        "fall": null,
+        "el": -35.26438968275464,
+        "gap": 0,
+        "fade": 1,
+        "ready": true,
+        "drawn": 39,
+        "globeMs": 0.7000000001862645,
+        "medianSum": 3.2,
+        "n": 24,
+        "last": [
+          {
+            "t": 34766.5,
+            "mode": "band",
+            "h": 600,
+            "fade": 0.75,
+            "globeMs": 0.6,
+            "drawMs": 2.5,
+            "jobsMs": 4.4,
+            "cpuMs": 24.5
+          },
+          {
+            "t": 35096.80000000005,
+            "mode": "band",
+            "h": 600,
+            "fade": 0.875,
+            "globeMs": 0.9,
+            "drawMs": 3.8,
+            "jobsMs": 4,
+            "cpuMs": 21.5
+          },
+          {
+            "t": 35446.10000000009,
+            "mode": "band",
+            "h": 600,
+            "fade": 1,
+            "globeMs": 0.7,
+            "drawMs": 73.1,
+            "jobsMs": 4,
+            "cpuMs": 87.4
+          }
+        ]
+      },
+      "sample": {
+        "mode": "band",
+        "phase": "drone",
+        "alt": 5929,
+        "height": 600,
+        "fall": null,
+        "el": -35.26438968275464,
+        "gap": 0,
+        "fade": 1,
+        "ready": true,
+        "drawn": 39,
+        "globeMs": 0.6999999999534339,
+        "medianSum": 3.6,
+        "n": 24,
+        "last": [
+          {
+            "t": 36245.60000000009,
+            "mode": "band",
+            "h": 600,
+            "fade": 1,
+            "globeMs": 0.7,
+            "drawMs": 3.1,
+            "jobsMs": 2.2,
+            "cpuMs": 20.3
+          },
+          {
+            "t": 36489.700000000186,
+            "mode": "band",
+            "h": 600,
+            "fade": 1,
+            "globeMs": 0.6,
+            "drawMs": 2.9,
+            "jobsMs": 2.7,
+            "cpuMs": 14.4
+          },
+          {
+            "t": 36741.5,
+            "mode": "band",
+            "h": 600,
+            "fade": 1,
+            "globeMs": 0.7,
+            "drawMs": 3.5,
+            "jobsMs": 3.9,
+            "cpuMs": 16.3
+          }
+        ]
+      }
+    },
+    "2000": {
+      "dropped": {
+        "mode": "band",
+        "alt": 2000,
+        "handed": true
+      },
+      "settled": {
+        "mode": "band",
+        "phase": "drone",
+        "alt": 7329,
+        "height": 2000,
+        "fall": null,
+        "el": -35.26438968275467,
+        "gap": 0,
+        "fade": 0,
+        "ready": false,
+        "drawn": 3,
+        "globeMs": 7.2000000001862645,
+        "medianSum": 0.9,
+        "n": 24,
+        "last": [
+          {
+            "t": 26333.700000000186,
+            "mode": "globe",
+            "h": 0,
+            "fade": 0,
+            "globeMs": 0.5,
+            "drawMs": 0,
+            "jobsMs": 2.3,
+            "cpuMs": 8.1
+          },
+          {
+            "t": 26538.90000000014,
+            "mode": "globe",
+            "h": 0,
+            "fade": 0,
+            "globeMs": 0.5,
+            "drawMs": 0,
+            "jobsMs": 0.7,
+            "cpuMs": 13.2
+          },
+          {
+            "t": 26761.600000000093,
+            "mode": "band",
+            "h": 2000,
+            "fade": 0,
+            "globeMs": 7.2,
+            "drawMs": 16.6,
+            "jobsMs": 14.8,
+            "cpuMs": 36
+          }
+        ]
+      },
+      "sample": {
+        "mode": "band",
+        "phase": "drone",
+        "alt": 7329,
+        "height": 2000,
+        "fall": null,
+        "el": -35.26438968275467,
+        "gap": 0,
+        "fade": 0,
+        "ready": false,
+        "drawn": 5,
+        "globeMs": 0.5,
+        "medianSum": 1.3,
+        "n": 24,
+        "last": [
+          {
+            "t": 28106.5,
+            "mode": "band",
+            "h": 2000,
+            "fade": 0,
+            "globeMs": 1.4,
+            "drawMs": 3.6,
+            "jobsMs": 9,
+            "cpuMs": 14.2
+          },
+          {
+            "t": 28261,
+            "mode": "band",
+            "h": 2000,
+            "fade": 0,
+            "globeMs": 0.5,
+            "drawMs": 3.8,
+            "jobsMs": 9.9,
+            "cpuMs": 18.8
+          },
+          {
+            "t": 28412.100000000093,
+            "mode": "band",
+            "h": 2000,
+            "fade": 0,
+            "globeMs": 0.5,
+            "drawMs": 1.6,
+            "jobsMs": 11.7,
+            "cpuMs": 19.9
+          }
+        ]
+      }
+    }
+  },
+  "errors": []
+}

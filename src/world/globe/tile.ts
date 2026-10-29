@@ -185,6 +185,17 @@ export function applySolarAttribute(g: THREE.BufferGeometry, centre: Vec3, day: 
   else g.setAttribute('aAbsorbed', new THREE.BufferAttribute(arr, 1));
   return true;
 }
+/** A vertex lake with the home mask off is one dark polygon once the camera is low enough to see the
+ *  triangle. Below `below` that lake is hidden and the land colour stays. The home shoreline mask
+ *  still draws the real shore. Oceans (lake 0) stay, and so do the far-field lakes at 10 km and in orbit.
+ *  One uniform for every tile: three uploads a MeshStandardMaterial's uniforms once per material per frame.
+ *  [game calibration] */
+export const COARSE_LAKE = { below: 8000 };
+export const LAKE_FADE = { uHide: { value: 0 } };
+export function coarseLake(alt: number, homeMask: number, lake: number) {
+  const hide = alt < COARSE_LAKE.below ? 1 : 0;
+  return hide * Math.max(0, Math.min(1, lake)) * (1 - Math.max(0, Math.min(1, homeMask)));
+}
 export function globeMaterial(debugSegments = 0) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }), C = GLOBE_COLOURS;
   const uSeg = { value: debugSegments }; m.userData.uSeg = uSeg;
@@ -199,7 +210,7 @@ export function globeMaterial(debugSegments = 0) {
     sh.vertexShader = centroid(sh.vertexShader, 'logdepthbuf_pars_vertex'); sh.fragmentShader = centroid(sh.fragmentShader, 'logdepthbuf_pars_fragment');
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
-    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
+    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uHideLake = LAKE_FADE.uHide; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
 vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
@@ -209,12 +220,13 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep; uniform float uLakeRough;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep; uniform float uLakeRough;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
-    float hm = step(0.5, vLoc.z) * uShore.z * (1.0 - smoothstep(1.5, 4.0, sfp)), sf = (texture2D(uShoreTex, suv).r * 255.0 - 128.0) / 16.0; // where texels get smaller than ~1/3 pixel the per-vertex field is the better coastline
+    float hm = step(0.5, vLoc.z) * uShore.z * (1.0 - smoothstep(5.0, 9.0, sfp)), sf = (texture2D(uShoreTex, suv).r * 255.0 - 128.0) / 16.0; // keep the mask while a pixel is finer than ~45 m; coarser than that the averaged field read as all water, and hiding the vertex lake then left flat land
     float F = mix(vH, sf, hm), fw = max(fwidth(F), 1e-3); landMask = smoothstep(-fw, fw, F);
+    landMask = mix(landMask, 1.0, vLake * (1.0 - hm) * uHideLake); // a vertex lake with the mask off is a dark polygon this low
     float band = hm * (1.0 - smoothstep(0.1, 0.4, fw)); // shore bands only while they are wider than a pixel
     float dw = smoothstep(0.0, 150.0, -vH); vec3 water = mix(mix(uShallow, uDeep, dw), mix(uLakeShallow, uLakeDeep, dw), vLake);
     water = mix(water, diffuseColor.rgb * 0.5, band * ${SHORE.shallowMix.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.shallow.toFixed(3)}, -F))); // shallows: the bed shows through

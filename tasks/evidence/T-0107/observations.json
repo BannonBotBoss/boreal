@@ -1,0 +1,51 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "note": "Day 15, hour 12. Before: ?watch=1, the rider camera pulled back. After: the same stand, rider height. No ?at=. The place is the stored wolf.",
+  "observations": [
+    {
+      "name": "before-entry",
+      "q": "?nomenu&noprobe&rec&day=15&hour=12&watch=1",
+      "url": "http://127.0.0.1:5277?nomenu&noprobe&rec&day=15&hour=12&watch=1",
+      "ms": 32718,
+      "sample": {
+        "href": "http://127.0.0.1:5277/?nomenu&noprobe&rec&day=15&hour=12&watch=1",
+        "status": "12:06 · WALK · Snow 34.4 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%",
+        "player": {
+          "x": 30.00000119728915,
+          "z": -0.0000032799883115202,
+          "yaw": -0.35,
+          "energy": 74.8675756253435,
+          "water": 99.94771996042067,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": null,
+          "species": "wolf"
+        }
+      }
+    },
+    {
+      "name": "after-entry",
+      "q": "?nomenu&noprobe&rec&day=15&hour=12",
+      "url": "http://127.0.0.1:5277?nomenu&noprobe&rec&day=15&hour=12",
+      "ms": 33031,
+      "sample": {
+        "href": "http://127.0.0.1:5277/?nomenu&noprobe&rec&day=15&hour=12",
+        "status": "12:05 · WALK · Snow 34.4 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%",
+        "player": {
+          "x": 30.000001196008544,
+          "z": -0.0000032764807635845473,
+          "yaw": -0.35,
+          "energy": 74.72444817127737,
+          "water": 99.89121443428263,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        }
+      }
+    }
+  ]
+}

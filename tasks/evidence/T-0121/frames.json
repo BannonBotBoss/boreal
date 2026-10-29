@@ -1,0 +1,115 @@
+{
+  "report": [
+    {
+      "name": "home-glide",
+      "lat": 49.769999999999996,
+      "lon": 65.53668410517275,
+      "height": 400,
+      "placed": true,
+      "waited": 21588.800000000745,
+      "fade": 1,
+      "chunks": 0,
+      "photos": 1,
+      "dems": 0.64,
+      "skirt": {
+        "triangles": 4532,
+        "outerM": 77104.48985277058,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "home-low",
+      "lat": 49.769999999999996,
+      "lon": 65.53668410517275,
+      "height": 36,
+      "placed": true,
+      "waited": 21383.700000001118,
+      "fade": 1,
+      "chunks": 0,
+      "photos": 1,
+      "dems": 1,
+      "skirt": {
+        "triangles": 4056,
+        "outerM": 23131.01656835341,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "boreal-glide",
+      "lat": 55,
+      "lon": 83.53668410517275,
+      "height": 400,
+      "placed": true,
+      "waited": 28761.300000000745,
+      "fade": 1,
+      "chunks": 2,
+      "photos": 1,
+      "dems": 0.48,
+      "skirt": {
+        "triangles": 4532,
+        "outerM": 77104.48985277058,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "boreal-low",
+      "lat": 55,
+      "lon": 83.53668410517275,
+      "height": 40,
+      "placed": true,
+      "waited": 6202.5,
+      "fade": 0.6278750000009313,
+      "chunks": 2,
+      "photos": 1,
+      "dems": 0.64,
+      "skirt": {
+        "triangles": 4056,
+        "outerM": 24382.23614407834,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "prairie-glide",
+      "lat": 42,
+      "lon": 43.53668410517275,
+      "height": 400,
+      "placed": true,
+      "waited": 28540.5,
+      "fade": 1,
+      "chunks": 6,
+      "photos": 1,
+      "dems": 0.08,
+      "skirt": {
+        "triangles": 4532,
+        "outerM": 77104.48985277058,
+        "visible": true,
+        "photoShare": 1
+      }
+    },
+    {
+      "name": "prairie-low",
+      "lat": 42,
+      "lon": 43.53668410517275,
+      "height": 36,
+      "placed": true,
+      "waited": 27229.5,
+      "fade": 1,
+      "chunks": 6,
+      "photos": 1,
+      "dems": 0.64,
+      "skirt": {
+        "triangles": 4056,
+        "outerM": 23131.01656835341,
+        "visible": true,
+        "photoShare": 1
+      }
+    }
+  ],
+  "logs": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ]
+}

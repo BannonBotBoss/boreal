@@ -42,10 +42,9 @@ export const SYSTEM_PROPERTIES = {
     /** seconds a sensed threat is remembered after leaving the senses (stops flip-flopping at the outer ring) */ threatMemory: 3,
     /** sense rings (m): touch, near, far */ senseRadii: [3, 10, 24] as const,
   },
-  /** Follow camera (render/math): a rear three-quarter just above the wolf (T-0075, issue #52). */
+  /** Follow camera (render/math): dead astern, just above the wolf, horizon level (T-0101). The wolf may lean with the ground; the camera does not roll. */
   camera: {
-    /** resting pitch (deg). Negative looks above the horizon. -5 puts the mid-body near the measured
-     *  issue #52 centroid (image y 0.74, NDC y -0.48) when the lens is riderHeight. Game calibration of the angle. */
+    /** resting pitch (deg). Negative looks above the horizon. -5 is near level and puts the body below screen centre. Game calibration of the angle. */
     defaultPitchDeg: -5,
     /** how far the look stick tilts up or down from the default (deg) */ lookPitchRangeDeg: 30,
     /** look-pitch spring return rate (1/s): 98 % settled in 0.3 s, no overshoot */ lookSpringRate: 14,
@@ -55,9 +54,9 @@ export const SYSTEM_PROPERTIES = {
     /** metres behind the hips along the trail, at riderHeight. Scales with height. Game calibration so an 85 cm
      *  wolf is about a quarter of a 48° frame, the way the animal sits in issue #52. */
     riderDistance: 3.6,
-    /** metres to the animal's left, at riderHeight. atan2(flank, riderDistance) is 32°, inside a rear three-quarter
-     *  (25–45° off the tail; 0° is dead astern, 90° is side-on). Game calibration of that angle. */
-    flank: 2.25,
+    /** metres to the animal's left, at riderHeight. 0 is dead astern: the lens sits on the tail line and looks along the heading.
+     *  T-0075 used 2.25 m (32° off the tail). That side offset made a diagonal shore read as a tilted horizon. */
+    flank: 0,
     /** hard pitch limits (deg): negative looks above the horizon */ pitchMinDeg: -80, pitchMaxDeg: 89,
   },
   /** Chronometer dial (ui/chronometer): scrubbing the time of day. */
@@ -201,7 +200,7 @@ export const SYSTEM_PROPERTIES = {
   },
   /** Headless animal simulation (core/sim, T-0036): game calibration, not species data. */
   sim: {
-    /** s fixed sub-step (coarse ecosystem ticks may raise it); game s per sim s (the world clock: 300 real s per game hour = x12) */ step: 1 / 30, timeScale: 12,
+    /** s fixed sub-step (coarse ecosystem ticks may raise it). Needs use the world clock's game-second conversion, not a sim rate. */ step: 1 / 30,
     /** m spatial-grid cell; m scent search radius (as senses.range) */ cell: 25, scentRange: 40,
     /** m a grazer reaches food from; Energy % above which it stops seeking food */ biteReach: .6, fullAt: 90,
     /** m ring step of the water search */ waterStep: 2,
@@ -288,11 +287,11 @@ export const PROPERTY_META: Record<string, GroupMeta> = {
     threshold: ['share', 'drei PerformanceMonitor default'], flipflops: ['count', EST], lower: ['x target', EST], upper: ['x target', EST],
     cooldownMs: ['ms', '2026-10-18 omen bench (tier change every ~2.5 s)'], upHoldMs: ['ms', '2026-10-18 omen bench'],
     rememberMs: ['ms', '2026-10-18 uncapped bench (bounce every ~40 s)'], worldHoldMs: ['ms', EST] } },
-  senses: { readers: ['src/core/senses.ts'], keys: {
+  senses: { readers: ['src/core/senses.ts', 'src/core/sensePictures.ts'], keys: {
     range: ['m', EST], threshold: ['0-1', EST], cueLife: ['s', EST], cueCap: ['count', EST], thoughtCap: ['count', EST], updateSeconds: ['s', EST] } },
   sensesHalo: { readers: ['src/core/senseBeacons.ts'], keys: { radius: ['m', EST], fadeFrom: ['m/s', 'stealth speed 0.8 m/s (core/wolfModes)'], fadeTo: ['m/s', EST], speedEase: ['s', EST] } },
   sim: { readers: ['src/core/sim/index.ts'], keys: {
-    step: ['s', 'design (30 Hz like the player sim)'], timeScale: ['game s / sim s', 'clock.realSecondsPerGameHour 300 -> 3600/300 = 12'], cell: ['m', EST], scentRange: ['m', 'senses.range'],
+    step: ['s', 'design (30 Hz like the player sim)'], cell: ['m', EST], scentRange: ['m', 'senses.range'],
     biteReach: ['m', EST], fullAt: ['0-100', EST], waterStep: ['m', EST], chaseAt: ['m', EST], stalkSpeed: ['x walk', EST], pounceAt: ['m', EST],
     pounceSeconds: ['s', 'core/animalBehavior jump length'], pounceCooldown: ['s', 'core/animalBehavior jump cooldown'], pounceCarry: ['x speed', 'movement.pounceCarry'], restBout: ['s', EST] } },
   social: { readers: ['src/core/needs/social.ts', 'src/core/sim/index.ts'], keys: { maxHops: ['links', EST], memorySeconds: ['s', EST] } },
@@ -313,8 +312,8 @@ export interface SystemWiring {
   /** tunables still at their call site (not yet moved) */ remaining: string[];
 }
 export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
-  animalSim: { title: 'Headless animal simulation', what: 'Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Renderers read it through adapters.',
-    modules: ['src/core/sim/index.ts', 'src/core/needs/senses.ts', 'src/core/needs/diet.ts', 'src/core/needs/social.ts', 'src/animals/hare.ts', 'src/core/hunt.ts', 'src/core/huntHold.ts'],
+  animalSim: { title: 'Headless animal simulation', what: 'Every animal as pure data + logic on a fixed tick (no renderer): species template needs, stamina, senses, diets (carnivore hunt / herbivore graze), group awareness and vigilance. Far or fast, the same animals are a density the coarse step eases toward a published count. Renderers read it through adapters.',
+    modules: ['src/core/sim/index.ts', 'src/core/coarse.ts', 'src/core/needs/senses.ts', 'src/core/needs/diet.ts', 'src/core/needs/social.ts', 'src/animals/hare.ts', 'src/core/hunt.ts', 'src/core/huntHold.ts'],
     groups: ['hunt', 'perception', 'sim', 'social'], dependsOn: ['needs', 'senses', 'player', 'clock'], flags: {},
     tables: { 'src/core/needs/species/index.ts#NEEDS_SPECIES': 'species templates: senses, diet, social, evasion',
       'src/core/hunt.ts#HUNT_LOCK': 'aim dwell, binocular cone, lock radius, leap turn ceiling',
@@ -337,15 +336,15 @@ export const SYSTEM_MAP: Record<SystemId, SystemWiring> = {
       'src/core/lifespan.ts#LIFESPAN': 'maximum and starting ages', 'src/core/why.ts#WHY_DEFAULTS': 'why-chains per object kind',
       'src/core/tuning.ts#BLOCK': 'step height and trunk clearance per animal' },
     remaining: ['core/autonomy autonomous wolf figures', 'animals/hare HARE (T-0009 is changing it)'] },
-  camera: { title: 'Camera', what: 'Third-person follow camera: a rear three-quarter just above the wolf, pitch spring and look-around.',
+  camera: { title: 'Camera', what: 'Third-person follow camera: dead astern just above the wolf, level horizon, pitch spring and look-around.',
     modules: ['src/render/math.ts', 'src/render/buildScene.ts'], groups: ['camera'], dependsOn: ['player', 'controls', 'terrain', 'interaction'],
     flags: { at: '=x,z[,yaw] start position (main.ts)', fov: 'field of view override (grok/rabbit-clover, T-0009)' }, tables: {},
     remaining: ['main.ts mouse-drag look sensitivity and look-yaw return rate', 'render/buildScene base field of view (48 deg; the focus field of view is autoFocus.cameraFovDeg)'] },
-  clock: { title: 'Time and clock', what: 'The one world clock (frozen in menus), game hour, date and sun position; chronometer offset.',
-    modules: ['src/core/timeOfDay.ts', 'src/core/worldClock.ts', 'src/core/timescale.ts', 'src/ui/chronometer.ts', 'src/core/deepTime.ts'], groups: ['clock', 'chronometer'], dependsOn: ['save'],
-    flags: { hour: '=HH sets the time of day (core/timeOfDay)', timescale: 'speeds the simulation, not the clock (core/timescale)' },
+  clock: { title: 'Time and clock', what: 'The one world clock and its one dial. Sky, weather, planet, water, animals, shaders, audio timing and ground years read it. The in-game time bar is the control. The rate eases; observation scale is a signal for later detail switches.',
+    modules: ['src/core/timeOfDay.ts', 'src/core/worldClock.ts', 'src/core/timescale.ts', 'src/ui/chronometer.ts', 'src/ui/timeHud.ts', 'src/core/deepTime.ts'], groups: ['clock', 'chronometer'], dependsOn: ['save'],
+    flags: { hour: '=HH sets the time of day on the one clock (core/timeOfDay)', day: '=1-366 sets the day of year (core/timeOfDay)', date: '=YYYY-MM-DD sets the year and day (core/timeOfDay)', timescale: 'sets the one dial (core/timescale, core/worldClock): pause inside ±0.01, the edge of that zone is exactly 1×, full deflection 10^12 sim seconds per real second, negative rewinds' },
     tables: { 'src/core/timeOfDay.ts#DAY': 'chronometer offset (persisted)', 'src/core/worldClock.ts#CLOCK': 'save key and offline cap',
-      'src/core/deepTime.ts#DEEP': 'deep-time figures: sun and Earth age, flux thresholds, life start (T-0060)', 'src/core/deepTime.ts#MILESTONES': 'dated milestones on the deep-time dial (T-0060)' }, remaining: [] },
+      'src/core/deepTime.ts#DEEP': 'deep-time figures: solar-system formation, sun and Earth age, flux thresholds, life start (T-0060, T-0093)', 'src/core/deepTime.ts#MILESTONES': 'dated milestones on the deep-time dial (T-0060)' }, remaining: [] },
   controls: { title: 'Player controls and gamepad', what: 'One bindings table (keys + gamepad per action), dead zones, rebinding UI, haptics.',
     modules: ['src/core/bindings.ts', 'src/ui/controls.ts', 'src/ui/haptics.ts'], groups: ['haptics'], dependsOn: ['save'], flags: {},
     tables: { 'src/core/bindings.ts#ACTIONS': 'every action and its default keys / pad inputs', 'src/core/bindings.ts#DEADZONE': 'stick dead zone',

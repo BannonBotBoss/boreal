@@ -31,6 +31,17 @@ test('population layer: defaults change nothing; density thins/adds trees determ
   store.reset();
 });
 
+test('retired time rates are dropped from a save and not applied', () => {
+  const storage = memory();
+  storage.setItem('k', JSON.stringify({ 'world.groundSpeed': 1000, 'weather.timeScale': 20, 'world.treeDensity': .5 }));
+  const store = createSettingsStore(RENDER_SETTINGS, 'k', storage);
+  const saved = JSON.parse(storage.getItem('k') ?? '{}') as Record<string, unknown>;
+  assert.equal(saved['world.groundSpeed'], undefined);
+  assert.equal(saved['weather.timeScale'], undefined);
+  assert.equal(store.get('world.treeDensity'), .5);
+  assert.equal(RENDER_SETTINGS.some(d => d.id === 'world.groundSpeed' || d.id === 'weather.timeScale'), false);
+});
+
 test('playables: wolf is the default entry and unavailable ones are marked', () => {
   assert.equal(PLAYABLES[0].id, 'wolf');
   assert.ok(PLAYABLES.filter(p => !p.available).every(p => p.note));

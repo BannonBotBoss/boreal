@@ -25,7 +25,9 @@ test('double-click or A starts the fall; a click, a drag and the wheel do not', 
   assert.match(view, /stepBody\(b, dt, \{\}, -Infinity\)/);
   assert.match(view, /camera\.rotateZ\(-lookAz/);
   assert.match(view, /camera\.rotateX\(fallPitch\(ease\) - NADIR\)/);
-  assert.match(view, /Math\.sqrt\(Math\.max\(0, rad \* rad - R \* R\)\)/);
+  const clip = readFileSync('src/world/globe/transition.ts', 'utf8');
+  assert.match(clip, /Math\.sqrt\(Math\.max\(0, rad \* rad - radius \* radius\)\)/);
+  assert.match(view, /orbitClip\(alt, R, ground\)/);
   const page = readFileSync('src/world/globe/inpage.ts', 'utf8');
   assert.doesNotMatch(page, /ENTRY_BEAT/);
   assert.doesNotMatch(page, /stepFlight\(/);

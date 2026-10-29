@@ -1,0 +1,226 @@
+[
+  {
+    "name": "near-individual",
+    "note": "Close, real time. The animal is a body.",
+    "census": {
+      "census": {
+        "individuals": 4.986448950014756,
+        "density": 0.013551050031601834,
+        "population": 5.000000000046358
+      },
+      "near": 40,
+      "mid": 60,
+      "chunks": 4,
+      "animals": [
+        {
+          "species": "hare",
+          "x": 26.10871784160391,
+          "z": 0.023901454365414097,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 28.168342744049646,
+          "z": -6.836400508593587,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": -16.718004021200507,
+          "z": -24.25697099530323,
+          "body": 0.9864489500147556,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 24.56151102951966,
+          "z": 18.280367726272367,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 26.54868968829799,
+          "z": 15.461140131979242,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        }
+      ]
+    }
+  },
+  {
+    "name": "leaving-near",
+    "note": "Just outside the live near radius (40 m). The body share is still up. No standing disc.",
+    "census": {
+      "census": {
+        "individuals": 3.4936316021644576,
+        "density": 1.5063683936602514,
+        "population": 4.999999995824709
+      },
+      "near": 40,
+      "mid": 60,
+      "chunks": 4,
+      "animals": [
+        {
+          "species": "hare",
+          "x": 26.583888411410772,
+          "z": 1.0381070201110443,
+          "body": 0.7050418912310954,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 27.688599596327855,
+          "z": -6.820699801157271,
+          "body": 0.6307768572407959,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": -15.853086365366279,
+          "z": -23.545411125280932,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 23.72545218176916,
+          "z": 17.157422668356286,
+          "body": 0.6028389412357593,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 25.36831121075175,
+          "z": 14.966057664358253,
+          "body": 0.5549739124568072,
+          "ink": 0.65,
+          "kind": "herd"
+        }
+      ]
+    }
+  },
+  {
+    "name": "far-density",
+    "note": "Inside the mid radius (60 m), density share leading. The body is nearly gone. Nothing stands on the grass.",
+    "census": {
+      "census": {
+        "individuals": 1.1120717568279246,
+        "density": 3.887928240535629,
+        "population": 4.999999997363553
+      },
+      "near": 40,
+      "mid": 60,
+      "chunks": 4,
+      "animals": [
+        {
+          "species": "hare",
+          "x": 25.689471463166548,
+          "z": 2.2670977941584303,
+          "body": 0.04581145127886033,
+          "ink": 0.9541885487211397,
+          "kind": "density"
+        },
+        {
+          "species": "hare",
+          "x": 26.202715575986087,
+          "z": -6.4313630538115545,
+          "body": 0.03796131487669763,
+          "ink": 0.9620386851233024,
+          "kind": "density"
+        },
+        {
+          "species": "hare",
+          "x": -15.415112382447186,
+          "z": -22.089877274666048,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 23.381670155442315,
+          "z": 15.966031079341699,
+          "body": 0.021457966350633573,
+          "ink": 0.9785420336493664,
+          "kind": "density"
+        },
+        {
+          "species": "hare",
+          "x": 24.571158190691385,
+          "z": 14.898625753450588,
+          "body": 0.006841024321733058,
+          "ink": 0.9931589756782669,
+          "kind": "density"
+        }
+      ]
+    }
+  },
+  {
+    "name": "fast-herd",
+    "note": "Back close, clock at 20× (behavioral). The animals are a herd in the count. The ground shows no disc.",
+    "census": {
+      "census": {
+        "individuals": 0,
+        "density": 4.999999215910094,
+        "population": 4.999999215910094
+      },
+      "near": 40,
+      "mid": 60,
+      "chunks": 4,
+      "animals": [
+        {
+          "species": "hare",
+          "x": 25.689471463166548,
+          "z": 2.2670977941584303,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 25.547988718726078,
+          "z": -7.239405591294825,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": -14.200901004370204,
+          "z": -21.684796135450153,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 22.258496849808644,
+          "z": 15.06487530728449,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        },
+        {
+          "species": "hare",
+          "x": 24.571158190691385,
+          "z": 14.898625753450588,
+          "body": 0,
+          "ink": 1,
+          "kind": "herd"
+        }
+      ]
+    }
+  }
+]

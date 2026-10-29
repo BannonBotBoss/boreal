@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0091",
+  "agent": "grokbot-3",
+  "at": "2026-10-26T03:41:14-07:00",
+  "note": "The dial file was tasks/T-0078-time-dial.md. That id belongs to tasks/T-0078-render-unification.md. The dial events filed under T-0078 are not moved. This comment is not an approve-plan and not an approval."
+}

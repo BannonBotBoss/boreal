@@ -1,0 +1,51 @@
+[
+  {
+    "name": "parade",
+    "skipped": true
+  },
+  {
+    "name": "boot",
+    "waited": 14139.399999999907,
+    "mode": "globe",
+    "lat": 49.769999999999996,
+    "lon": 65.53668410517275
+  },
+  {
+    "name": "home",
+    "lat": 49.769999999999996,
+    "lon": 65.53668410517275,
+    "waited": 0.20000000018626451,
+    "mode": "game",
+    "picture": {
+      "specks": 0,
+      "fulls": 1,
+      "lows": 0,
+      "bodies": 0
+    },
+    "after": {
+      "specks": 0,
+      "fulls": 1,
+      "lows": 0,
+      "bodies": 0
+    }
+  },
+  {
+    "name": "boreal",
+    "lat": 55,
+    "lon": 83.53668410517275,
+    "waited": 0,
+    "mode": "game",
+    "picture": {
+      "specks": 0,
+      "fulls": 0,
+      "lows": 0,
+      "bodies": 0
+    },
+    "after": {
+      "specks": 0,
+      "fulls": 0,
+      "lows": 0,
+      "bodies": 0
+    }
+  }
+]

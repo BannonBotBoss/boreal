@@ -64,7 +64,14 @@ try {
   console.log('gpu after tiers: ' + gpuMem());
   for (const r of res) console.log(`${r.tier.padEnd(9)} ssao ${r.ssao}  ${r.frames} frames/s  ${r.draws} draws/frame  gpu ${r.gpu} ms  links ${r.links} (+${r.linksSampled} in the 1 s sample)`);
   console.log(vsyncFlags.length ? '(gpu vsync off: uncapped fps)' : '(gpu vsync on)');
-  const dead = res.filter(r => r.frames < 5), empty = res[0].draws < 150; // Ultra draws ~600 with the world built, ~90 with terrain only
+  // The ground world as the game holds it (world/globe/inpage's window.__inpage dev hook, buildScene's borealDensity report).
+  // Draw counts alone no longer say whether the world is built: since #161 a still player wolf is one rigid wolf.glb mesh
+  // (was ~42 procedural meshes plus their shadow draws), so a built Ultra world can draw under 150.
+  const world = await ev(`(() => { const c = window.__inpage, cam = c?.view?.camera, d = globalThis.borealDensity?.(); return cam ? { mode: c.mode, near: cam.near, far: cam.far, chunks: d?.chunks ?? null } : null; })()`);
+  if (world) console.log(`world: mode ${world.mode}, ${world.chunks ?? '?'} chunks, camera near ${+world.near.toFixed(2)} m far ${+world.far.toFixed(0)} m`);
+  // A game-mode camera must keep the game clip (0.2 m). The orbit clip (near = altitude x 0.02) left on it hides the near world.
+  if (world?.mode === 'game' && world.near > 1) errors.push(`game camera near clip ${world.near.toFixed(1)} m (orbit clip left on the forest camera)`);
+  const dead = res.filter(r => r.frames < 5), empty = world?.chunks != null ? world.chunks < 1 : res[0].draws < 150; // no chunk built in the interest ring (box SwiftShader holds 4-10 after 20 s); older builds without the report: Ultra draws ~600 built, ~90 terrain only
   if (dead.length) console.log('links in the last 20 s by shader: ' + await ev(`(() => { const n = performance.now(), m = new Map(); for (const [t, k] of window.__links) if (n - t < 20000) m.set(k, (m.get(k) || 0) + 1); return JSON.stringify([...m].sort((a, b) => b[1] - a[1]).slice(0, 10)); })()`));
   if (dead.length) { // where a dead frame goes: 3 s browser trace, wall time per event name and thread (top 15)
     await cdp('Tracing.start', { categories: 'devtools.timeline,disabled-by-default-devtools.timeline.frame,viz,cc,gpu,benchmark,toplevel,blink.user_timing', transferMode: 'ReportEvents' });
@@ -73,7 +80,7 @@ try {
     const agg = new Map(); for (const e of trace) if (e.ph === 'X' && e.dur) { const k = (tn.get(e.pid + ':' + e.tid) ?? e.tid) + ' ' + e.name; agg.set(k, (agg.get(k) ?? 0) + e.dur); }
     console.log('trace 3 s, ms per thread+event:'); for (const [k, v] of [...agg].sort((a, b) => b[1] - a[1]).slice(0, 15)) console.log('  ' + (v / 1000).toFixed(0).padStart(6) + ' ' + k); }
   if (dead.length) errors.push('not rendering at ' + dead.map(r => r.tier).join(', ') + ' (' + await ev(`document.visibilityState + ' focus=' + document.hasFocus()`) + ')');
-  if (empty) errors.push(`world not built: ${res[0].draws} draws at ${res[0].tier}`);
+  if (empty) errors.push(world?.chunks != null ? `world not built: ${world.chunks} chunks` : `world not built: ${res[0].draws} draws at ${res[0].tier}`);
   ok = !errors.length; ws.close();
 } catch (e) { errors.push('smoke: ' + (e.stack ?? e)); }
 finally {

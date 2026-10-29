@@ -1,0 +1,33 @@
+{
+  "type": "complete",
+  "task": "T-0089",
+  "agent": "grok-globe",
+  "at": "2026-10-28T19:37:36-07:00",
+  "note": "One environment record (src/render/environment.ts) filled from weatherAt / weatherAtLatLon, phenology, solar and the one clock's rate; ENV_UNIFORMS shares the trees' WIND_UNIFORMS. Planet cloud drift follows the sub-point east wind, u / (R cos lat), on simulation seconds and holds across the clock's behavioral->ecological SCALE_BOUNDS band (800..1200x); 12 m/s only while no grid is booted. Mie haze x Hanel f(RH) = (1 - RH)^-0.3, RH capped at 0.95 (f 2.457). npm test 940 pass / 0 fail (14 todo), tsc clean. Numbers refs/T-0089/numbers.md; frames refs/T-0089/. Skill environment-record. Matthew, direct chat 2026-10-28 7:10 PM PT: \"push yourr work to the main\".",
+  "branch": "grok-globe/env-record-impl",
+  "skill": "environment-record",
+  "evidence": [
+    "refs/T-0089/numbers.md",
+    "refs/T-0089/t0089-orbit-ultra-dry.jpg",
+    "refs/T-0089/t0089-orbit-ultra-humid.jpg",
+    "refs/T-0089/stills-log.txt",
+    "tasks/handoffs/T-0089-grok-globe.md"
+  ],
+  "prior_art": [
+    {
+      "name": "three.js UniformsLib / UniformsUtils",
+      "url": "https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/UniformsLib.js",
+      "use": "shared { value } uniform objects; ENV_UNIFORMS re-uses WIND_UNIFORMS by reference (UniformsUtils: https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/UniformsUtils.js)"
+    },
+    {
+      "name": "wwwtyro/glsl-atmosphere (Unlicense)",
+      "url": "https://github.com/wwwtyro/glsl-atmosphere",
+      "use": "base of atmosphere.ts; only the Mie coefficient gets a humidity factor"
+    },
+    {
+      "name": "Hanel 1976, aerosol growth with relative humidity, Adv. Geophys. 19:73-188",
+      "url": "https://doi.org/10.1016/S0065-2687(08)60142-9",
+      "use": "f(RH) = (1 - RH)^-gamma for the Mie term, gamma 0.3, capped at RH 0.95"
+    }
+  ]
+}

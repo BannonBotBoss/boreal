@@ -1,0 +1,5 @@
+console.error: Failed to load resource: the server responded with a status of 404 (Not Found)
+ready 58.6 s http://127.0.0.1:5197/?view=globe&shot&hour=10&day=200&latlon=49.77,-94.5&alt=3000000&tier=0&envrh=0.1
+STILL /workspace/boreal-gh/refs/T-0089/t0089-orbit-ultra-dry.jpg {"rh":0.1,"tC":9.088934259978297,"windE":3.313915193561502,"windN":0,"latDeg":49.769999999999996,"rate":1,"mieScale":1.03211299742819}
+ready 56.4 s http://127.0.0.1:5197/?view=globe&shot&hour=10&day=200&latlon=49.77,-94.5&alt=3000000&tier=0&envrh=0.95
+STILL /workspace/boreal-gh/refs/T-0089/t0089-orbit-ultra-humid.jpg {"rh":0.95,"tC":9.088934259978297,"windE":3.313915193561502,"windN":0,"latDeg":49.769999999999996,"rate":1,"mieScale":2.45645605223158}

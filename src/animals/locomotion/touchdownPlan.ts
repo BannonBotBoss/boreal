@@ -25,6 +25,15 @@ export function timeToTouchdown(ph: number, hz: number): { dphi: number; tRem: n
   return { dphi, tRem: dphi / Math.max(hz, 1e-6) };
 }
 
+/** T-0044 run 14: the same, for a fixed control step dt. The paw plants on the first frame at or after the phase wraps, so the
+ *  body travels k whole frames (k = ceil(dphi / (hz dt))), not dphi / hz seconds: on average half a frame further (11.6 m/s at
+ *  120 Hz: ~48 mm, the measured planned-vs-actual limb-frame landing error). dt <= 0 falls back to the continuous time. */
+export function frameTouchdown(ph: number, hz: number, dt: number): { dphi: number; tRem: number } {
+  const c = timeToTouchdown(ph, hz); if (!(dt > 0) || !(hz > 0)) return c;
+  const k = Math.max(1, Math.ceil(c.dphi / (hz * dt) - 1e-9));
+  return { dphi: k * hz * dt, tRem: k * dt };
+}
+
 /** Body ground position at touchdown, assuming constant velocity along the heading (fx, fz) for tRem seconds. */
 export function bodyAtTouchdown(x: number, z: number, fx: number, fz: number, speed: number, tRem: number): { x: number; z: number } {
   return { x: x + fx * speed * tRem, z: z + fz * speed * tRem };

@@ -1,7 +1,9 @@
 ﻿// T-0009 run 11 (grok-gait): fore touchdown pop probe. Per speed x rate cell: the worst per-frame scapula / humerus / forearm / manus
 // turn on the PLANTING frame (swing -> stance) and in stance + lift-off, against the run-9 gate 2*88deg/t_stance*dt
 // (88 deg: Schmidt 2008 JEB 211:3775 Table 4; factor 2 an estimate). npx tsx tools/touchdown-pop.ts [env VS, HZ, LOCK=0|1, VERBOSE=1]
-import { createBounding, GIRDLE, selectRow } from '../src/animals/locomotion/bounding';
+import { createBounding, GIRDLE, selectRow, FORE_LOCK, FORE_JOINT, FORE_SOFT, FORE_PLAN, FORE_STANCE } from '../src/animals/locomotion/bounding';
+// run 14: SET="k=v,..." as tools/elbow-pop.ts (soft.* FORE_SOFT, plan.* FORE_PLAN, stance.* FORE_STANCE, else FORE_LOCK / FORE_JOINT)
+for (const kv of (process.env.SET ?? '').split(',').filter(Boolean)) { const [k, x] = kv.split('='); const n = Number(x); if (k.startsWith('soft.')) (FORE_SOFT as any)[k.slice(5)] = n; else if (k.startsWith('plan.')) (FORE_PLAN as any)[k.slice(5)] = n; else if (k.startsWith('stance.')) (FORE_STANCE as any)[k.slice(7)] = n; else if (k in FORE_LOCK) (FORE_LOCK as any)[k] = n; else if (k in FORE_JOINT) (FORE_JOINT as any)[k] = n; }
 import { HOST_GAIT, planFor, poseFor } from './bound-plans';
 const D = 180 / Math.PI, wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 const SEG = { scap: (a: any) => a.girdle, hum: (a: any) => a.girdle + a.leg, fore: (a: any) => a.girdle + a.leg + a.knee, manus: (a: any) => a.girdle + a.leg + a.knee + a.wrist } as const;

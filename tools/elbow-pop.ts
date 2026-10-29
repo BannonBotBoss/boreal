@@ -3,8 +3,8 @@
 // (girdle+leg against the vertical) as well as scapula and manus. DIAG=1 prints each over-gate fore frame with blade / psi / knee.
 // npx tsx tools/elbow-pop.ts [env VS, HZ, LOCK=0|1, DIAG=1, SET=k=v,... (FORE_LOCK / FORE_JOINT / FORE_SOFT keys; FORE_SOFT's as soft.k)]
 // run 13: also the fore paw-to-target miss (|sole - target| world, mm) per phase, and the smallest elbow bend at plant / stance.
-import { createBounding, GIRDLE, selectRow, FORE_LOCK, FORE_JOINT, FORE_SOFT } from '../src/animals/locomotion/bounding';
-for (const kv of (process.env.SET ?? '').split(',').filter(Boolean)) { const [k, x] = kv.split('='); if (k.startsWith('soft.')) (FORE_SOFT as any)[k.slice(5)] = Number(x); else if (k in FORE_LOCK) (FORE_LOCK as any)[k] = Number(x); else if (k in FORE_JOINT) (FORE_JOINT as any)[k] = Number(x); } // tuning sweeps only
+import { createBounding, GIRDLE, selectRow, FORE_LOCK, FORE_JOINT, FORE_SOFT, FORE_PLAN, FORE_STANCE } from '../src/animals/locomotion/bounding';
+for (const kv of (process.env.SET ?? '').split(',').filter(Boolean)) { const [k, x] = kv.split('='); if (k.startsWith('soft.')) (FORE_SOFT as any)[k.slice(5)] = Number(x); else if (k.startsWith('plan.')) (FORE_PLAN as any)[k.slice(5)] = Number(x); else if (k.startsWith('stance.')) (FORE_STANCE as any)[k.slice(7)] = Number(x); else if (k in FORE_LOCK) (FORE_LOCK as any)[k] = Number(x); else if (k in FORE_JOINT) (FORE_JOINT as any)[k] = Number(x); } // tuning sweeps only
 import { HOST_GAIT, planFor, poseFor } from './bound-plans';
 import { limbToWorld } from '../src/animals/locomotion/controller';
 import { forearmBelowDeg } from '../src/animals/locomotion/touchdownPlan';

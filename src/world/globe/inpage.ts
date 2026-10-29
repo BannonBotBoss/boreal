@@ -449,8 +449,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
      *  the player at the entry altitude, compile the far-layer background program, then terminate the workers. */
     async prewarm() {
       const g = await loadGlobe(); await g.compiled; await g.bootP; await g.precompile(null);
+      // The prewarm steps the globe while the game is still the view. Detach the forest camera for those steps:
+      // attached, globeView.step writes the orbit clip (near = altitude x 0.02: 60 m at the 3 km entry altitude, far past the limb) onto
+      // view.camera, and game mode never puts 0.2 / 700 back (cameraTouched stays false), so the ground world was clipped.
+      g.attachViewpoint(null);
       const t0 = performance.now(); let n = 0;
-      while (performance.now() - t0 < INPAGE.prebuildMs) { renderer.getDrawingBufferSize(size); far.resize(size.x, size.y); g.step(far.target); if (++n > 10 && g.stats().queued === 0) break; await new Promise(r => requestAnimationFrame(r)); }
+      try { while (performance.now() - t0 < INPAGE.prebuildMs) { renderer.getDrawingBufferSize(size); far.resize(size.x, size.y); g.step(far.target); if (++n > 10 && g.stats().queued === 0) break; await new Promise(r => requestAnimationFrame(r)); } }
+      finally { g.attachViewpoint(view.camera); }
       const bg = new THREE.Scene(), rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }); bg.background = far.texture; // background plane: screen and composer variants
       const prev = renderer.getRenderTarget(); renderer.setRenderTarget(rt); renderer.render(bg, view.camera); renderer.setRenderTarget(null); renderer.render(bg, view.camera); renderer.setRenderTarget(prev); rt.dispose();
       if (mode === 'game') g.suspendWorkers(); // not if Shift+G already went up meanwhile (the band would build tiles on the main thread)

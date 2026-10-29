@@ -1,0 +1,40 @@
+{
+  "type": "complete",
+  "task": "T-0123",
+  "agent": "grok-globe",
+  "at": "2026-10-28T20:12:00-07:00",
+  "branch": "grok-globe/boot-splash",
+  "commit": "749934b",
+  "main": "e93d865",
+  "skill": "boot-splash-critical-css",
+  "handoff": "tasks/handoffs/T-0123-grok-globe.md",
+  "evidence": "refs/T-0123/",
+  "prior_art": [
+    {
+      "name": "web.dev: Extract critical CSS",
+      "url": "https://web.dev/articles/extract-critical-css",
+      "use": "inline the above-the-fold CSS (here: the #loading splash) in <head> so the first paint is styled"
+    },
+    {
+      "name": "web.dev: Defer non-critical CSS",
+      "url": "https://web.dev/articles/defer-non-critical-css",
+      "use": "the rest of src/style.css keeps arriving later through the module graph"
+    },
+    {
+      "name": "Vite: Features > CSS",
+      "url": "https://vite.dev/guide/features.html#css",
+      "use": "in dev, imported CSS is injected by a JS module, so it lands only after main.ts's import graph loads: the cause of the flash"
+    },
+    {
+      "name": "Vite: Load error handling (vite:preloadError)",
+      "url": "https://vite.dev/guide/build.html#load-error-handling",
+      "use": "dynamic imports can fail; entry.ts now catches them and says so on the splash"
+    },
+    {
+      "name": "existing #loading overlay (src/ui/loading.ts)",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/src/ui/loading.ts",
+      "use": "reused as the boot splash; no second loading UI"
+    }
+  ],
+  "note": "Matthew, direct chat 2026-10-28 7:16 PM PT: \"i dont like seeing this screen. it makes the game feel broken\". Existing #loading rules moved into an inline <style> in index.html (+ html background); entry.ts catches every boot import and shows the error on the splash. Box headless Chrome (SwiftShader, CPU 4x, 120 ms latency, cache off): unstyled white frames 97/128 before (0.3-8.2 s and the 113.6-118.9 s ?view=globe reload), 0/125 after; production build first frame dark. npm test 949 tests, 935 pass, 0 fail, 14 todo (branch on 30217f4); tsc clean on the main merge; boot-splash + globe-hud tests pass on the merge. Pushed to main e93d865 on Matthew's direct instruction (7:10 PM PT \"push yourr work to the main\", 7:14 PM PT \"just do it, i said\"). Approve for Matthew (rule 16b) to be recorded by a relaying Grok bot."
+}

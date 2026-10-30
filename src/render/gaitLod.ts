@@ -30,6 +30,10 @@ export const WOLF_LOD = {
   blendS: 0.2,
   /** A share must pass 0.5 by this much to change level: about 2.6 m either side of 32 m and 3.8 m of 94 m. [game calibration] */
   hyst: 0.1,
+  /** The skin leaves only once the ladder's low share is under 0.04 (speck 0.96), so its opacity (full + low share) has
+   * already faded and the speck carries the picture; it comes back under speck 0.9. [game calibration] */
+  farIn: 0.96,
+  farOut: 0.9,
   /** Mid pose refresh rate, Hz. 15 Hz left trot joints stepping up to 1.2 rad between refreshes (wolf-lod-bench); 30 halves it. [game calibration] */
   midHz: 30,
   /** Phase samples per gait curve. [game calibration] */
@@ -52,11 +56,11 @@ export const GAIT_LOD_SPECIES: readonly string[] = ['Gray Wolf'];
 
 /** Level from the ladder shares with hysteresis. Pure. */
 export function pickLevel(prev: WolfLevel | undefined, s: DetailShares, h: number = WOLF_LOD.hyst): WolfLevel {
-  const hi = 0.5 + h, lo = 0.5 - h;
-  if (!prev) return s.full >= 0.5 ? 'near' : s.speck >= 0.5 ? 'far' : 'mid';
-  if (prev === 'near') return s.full >= lo ? 'near' : s.speck > hi ? 'far' : 'mid';
-  if (prev === 'far') return s.speck >= lo ? 'far' : s.full > hi ? 'near' : 'mid';
-  return s.full > hi ? 'near' : s.speck > hi ? 'far' : 'mid';
+  const hi = 0.5 + h, lo = 0.5 - h, farIn = WOLF_LOD.farIn, farOut = WOLF_LOD.farOut;
+  if (!prev) return s.full >= 0.5 ? 'near' : s.speck >= farIn ? 'far' : 'mid';
+  if (prev === 'near') return s.full >= lo ? 'near' : s.speck >= farIn ? 'far' : 'mid';
+  if (prev === 'far') return s.speck >= farOut ? 'far' : s.full > hi ? 'near' : 'mid';
+  return s.full > hi ? 'near' : s.speck >= farIn ? 'far' : 'mid';
 }
 
 /** Speck bob from the gait phase, metres. Two bobs per stride (one per diagonal or girdle beat). [estimate] */
@@ -297,8 +301,11 @@ export function shareRestFit(from: SkinTemplate, to: SkinTemplate) { const f = r
 const curves = new Map<string, Float32Array>();
 let curveSpawn: { spawn: SkinSpawn; rig: PoseRig; tpl: SkinTemplate } | null = null;
 function gaitKey(motion: Motion, speed: number) {
-  const s = Math.round(speed / WOLF_LOD.speedStep) * WOLF_LOD.speedStep;
-  return { s, name: gaitFor(motion, s, WOLF_LEGS)?.name ?? motion };
+  // the gait comes from the unrounded speed; a bucket that would land in another gait falls back to a finer one
+  const name = gaitFor(motion, speed, WOLF_LEGS)?.name ?? motion;
+  let s = Math.round(speed / WOLF_LOD.speedStep) * WOLF_LOD.speedStep;
+  if ((gaitFor(motion, s, WOLF_LEGS)?.name ?? motion) !== name) s = Math.round(speed * 20) / 20;
+  return { s, name };
 }
 /** Per-limb phase curve table (curveN samples of the full gait) for this motion and speed bucket. */
 export function phaseCurve(tpl: SkinTemplate, motion: Motion, speed: number) {
@@ -369,6 +376,8 @@ export interface WolfLodState {
   midHz: number;
   /** Level before the last switch. */
   from: WolfLevel;
+  /** The mid pose still on screen when mid was left (it is held between 30 Hz refreshes). */
+  heldMid: Float32Array | null;
 }
 export interface WolfFrame { motion: Motion; phase: number; speed: number; moving: boolean; x: number; y: number; z: number; procRoot?: THREE.Object3D }
 
@@ -385,7 +394,7 @@ export function driveWolf(state: WolfLodState, spawn: SkinSpawn, rig: PoseRig, t
   if (state.level === 'mid') {
     state.midT += dt;
     if (!state.mid || state.midT >= 1 / state.midHz - 1e-9) {
-      state.midT = 0;
+      state.midT = state.mid ? Math.min(state.midT - 1 / state.midHz, 1 / state.midHz) : 0; // keep the remainder: 30 Hz at any frame rate
       state.mid = sampleCurve(phaseCurve(tpl, f.motion, f.speed), rig.size, f.phase, state.mid ?? new Float32Array(rig.size));
     }
     target.set(state.mid);
@@ -395,7 +404,7 @@ export function driveWolf(state: WolfLodState, spawn: SkinSpawn, rig: PoseRig, t
     if (state.last && state.blendS > 0) {
       // inertialization: the offset is what the old level would show on this frame minus the new level, so the blend
       // carries no extra lag (the last shown frame is one frame of motion behind)
-      const old: Float32Array | null = state.from === 'mid' ? sampleCurve(phaseCurve(tpl, f.motion, f.speed), rig.size, f.phase) : state.from === 'near' ? nearPose(new Float32Array(rig.size)) : null;
+      const old: Float32Array | null = state.from === 'mid' ? state.heldMid ?? sampleCurve(phaseCurve(tpl, f.motion, f.speed), rig.size, f.phase) : state.from === 'near' ? nearPose(new Float32Array(rig.size)) : null;
       if (old) {
         const off = new Float32Array(target.length);
         for (let j = 0; j < off.length; j++) off[j] = old[j] - target[j];
@@ -417,6 +426,7 @@ export function driveWolf(state: WolfLodState, spawn: SkinSpawn, rig: PoseRig, t
 /** Change level. Into far the skin goes away, so there is no pose to blend from when it comes back (it fades in). */
 export function switchLevel(state: WolfLodState, level: WolfLevel) {
   if (level === state.level) return false;
+  state.heldMid = state.level === 'mid' ? state.mid : null;
   state.from = state.level; state.level = level; state.since = 0; state.mid = null; state.midT = 0; state.offset = null;
   state.pend = level !== 'far';
   if (level === 'far') state.last = null;
@@ -424,7 +434,7 @@ export function switchLevel(state: WolfLodState, level: WolfLevel) {
 }
 
 export function newWolfLod(level: WolfLevel, blendS: number = WOLF_LOD.blendS, midHz: number = WOLF_LOD.midHz): WolfLodState {
-  return { level, since: 0, offset: null, last: null, midT: 0, mid: null, pend: false, blendS, midHz, from: level };
+  return { level, since: 0, offset: null, last: null, midT: 0, mid: null, pend: false, blendS, midHz, from: level, heldMid: null };
 }
 
 // ---------- picture hook (animalPicture.ts calls this for wolves) ----------

@@ -127,7 +127,7 @@ export function levelCost(full: SkinTemplate, low: SkinTemplate, ground: (x: num
     out[g.label] = {
       nearUs: timeIt(() => { driveWolf(near, sF, rF, full, f(), 1 / 60, ground); sF.root.updateMatrixWorld(true); sF.meshes[0].skeleton.update(); }, 400),
       nearNoTerrainUs: timeIt(() => { driveWolf(near, sF, rF, full, f(), 1 / 60); sF.root.updateMatrixWorld(true); sF.meshes[0].skeleton.update(); }, 400),
-      midUs: timeIt(() => { const fr = f(); driveWolf(mid, sL, rL, low, fr, 1 / 60); if (mid.midT === 0) { sL.root.updateMatrixWorld(true); sL.meshes[0].skeleton.update(); } }, 400),
+      midUs: timeIt(() => { driveWolf(mid, sL, rL, low, f(), 1 / 60); sL.root.updateMatrixWorld(true); sL.meshes[0].skeleton.update(); }, 400), // three updates the bone matrices of a visible skin every frame
       farUs: timeIt(() => { speckBob(f().phase, true); }, 4000),
     };
   }

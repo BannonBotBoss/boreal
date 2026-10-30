@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { GAITS, MAES, footfalls, levelCost, loadWolf, stanceSlip, switchPop } from '../tools/wolf-lod-bench';
 
 test('levels follow the ladder with hysteresis: no flicker around 32 m or 94 m', () => {
-  for (const mid of [32, 94]) {
+  for (const mid of [32, 94, 132]) {
     let level: WolfLevel | undefined, flips = 0;
     for (let n = 0; n < 400; n++) { const next = pickLevel(level, detailShares(mid + Math.sin(n * 0.3))); if (level && next !== level) flips++; level = next; }
     assert.ok(flips <= 1, `${mid} m: ${flips} flips`);
@@ -64,7 +64,9 @@ test('wolf: low mesh, leg weights, slip, drift, footfalls, terrain, cost and swi
   const blend = switchPop(full, low, 0.2);
   assert.equal(blend.switches, 4);
   assert.ok(blend.pop.pawMm <= blend.base.pawMm + 5, `switch pop ${blend.pop.pawMm} mm vs mid steps ${blend.base.pawMm} mm`);
-  assert.ok(blend.byKind['mid>near'].pawMm < 5, `mid to near pop ${blend.byKind['mid>near'].pawMm} mm`);
+  const hard = switchPop(full, low, 0);
+  const mn = blend.byKind['mid>near'].pawMm, mnHard = hard.byKind['mid>near'].pawMm;
+  assert.ok(mn < 0.5 * mnHard && mn < blend.base.pawMm, `mid to near pop ${mn} mm blended, ${mnHard} mm hard, mid steps ${blend.base.pawMm} mm`);
   const fine = switchPop(full, low, 0.2, 60);
   assert.ok(fine.pop.pawMm < 15, `switch pop at a 60 Hz mid ${fine.pop.pawMm} mm`);
 });

@@ -152,7 +152,7 @@ export const FORE_LOCK = { psiRate: 30, sweep: 88 * Math.PI / 180, stanceShare: 
  * the last swing frame is the touchdown pose and the planting frame starts on that branch (windowed, no fresh pick). `from`
  * = FORE_LOCK.preFrom (.8, estimate).
  */
-export const FORE_PLAN = { on: 1, from: .8, lo: 12, hi: 35, frame: 0, plantWin: 1 }; // run 14, OFF (work in progress; 0 = Run 13 motion). frame 2 = also track the continuous-instant plan and blend the plant seed by how late the plant really is (passed 3 checked cells on both contact measures; not fully measured). plantWin = planting window x (1 = off). frame 1 = predict the body at the planting FRAME (frameTouchdown), not the continuous instant
+export const FORE_PLAN = { on: 1, from: .8, lo: 12, hi: 35, frame: 2, plantWin: 1 }; // run 15: frame 2 is the default (12 cells: every plant in band 12.0-28.9 deg per frame, 12.0-34.1 split-step, paw gate 0; 0 = Run 13 motion). frame 2 = also track the continuous-instant plan and blend the plant seed by how late the plant really is (passed 3 checked cells on both contact measures; not fully measured). plantWin = planting window x (1 = off). frame 1 = predict the body at the planting FRAME (frameTouchdown), not the continuous instant
 export const FORE_PLAN_STATS = { plans: 0, fails: 0, holds: 0 };
 /** T-0044 run 12 (grok-gait): fore elbow / humerus flicker switches (tools/elbow-pop.ts; handoff Run 12). ALL OFF by default:
  *  with them off the motion is the Run 11 motion (probe output identical in all 12 cells).

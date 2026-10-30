@@ -24,3 +24,10 @@ test('an off-home landing keeps the planet relief and meets the horizon skirt wi
     for (const [r, d] of Object.entries(m.seamMaxM!)) assert.ok(d < 0.1, `${l.name}: seam ${d} m at ${r} m`);
   }
 });
+
+test('a lake landing holds one water level: no step against the skirt, and the datum is the lake surface', () => {
+  const p = rows.find(r => r.l.name.startsWith('wetland'))!.p!;
+  const m = measureSeam(p.lat, p.lon);
+  // Before (Oct 29): the far-field lake surface sloped with the pre-carve ground and stepped 18.7 m at 600 m.
+  for (const [r, d] of Object.entries(m.seamMaxM!)) assert.ok(d < 0.1, `lake seam ${d} m at ${r} m`);
+});

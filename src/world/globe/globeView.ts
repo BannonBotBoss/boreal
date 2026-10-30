@@ -640,7 +640,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     start() { if (started) return; started = true; void Promise.all([compiled, bootP]).then(() => requestAnimationFrame(tick)); },
     /** mode-scoped input: the globe's keys, wheel and drags act only while attached */
     attachInput(on: boolean) { inputOn = on; controls.enabled = on; if (!on) { turnX = null; dragging = false; stopCoast(); } },
-    get disposed() { return down; }, /** dev: the release coast is running (T-0043) */ get coasting() { return coastT >= 0; }, get altitude() { return alt; }, get ground() { return ground; }, precompile,
+    get disposed() { return down; }, /** dev: the release coast is running (T-0043) */ get coasting() { return coastT >= 0; }, get altitude() { return alt; }, get ground() { return ground; }, /** issue #202: the in-page band draws its overlay copy */ get localClouds() { return localClouds; }, precompile,
     /** The forest camera is the viewpoint from orbit down. Null on the standalone page, which keeps its own camera. */
     attachViewpoint(cam: THREE.PerspectiveCamera | null) { forestCam = cam; },
     /** shared band: fly the camera from outside (planet-frame metres, orientation, the game camera's fov/aspect); null = the

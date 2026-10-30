@@ -20,6 +20,16 @@ export function localCloudFade(alt: number, L = LOCAL_CLOUDS) {
   const t = Math.min(1, Math.max(0, u));
   return t * t * (3 - 2 * t);
 }
+/** Issue #202: the in-page band (bandTop..fadeFull). The far-layer box shows where the patch has not dithered in yet (1 - patch);
+ *  the overlay copy drawn after the game pass covers the rest, so the summed cloud stays localCloudFade(alt) through the band. */
+export function bandCloudOpacity(alt: number, patch: number, L = LOCAL_CLOUDS) {
+  return localCloudFade(alt, L) * Math.min(1, Math.max(0, patch));
+}
+/** Issue #202: a camera-relative planet-frame matrix (the globe renders from the origin) -> game metres. basis: gameBasis at the
+ *  camera (game -> planet rotation, orthonormal), camPos: the game camera. */
+export function toGameFrame(basis: THREE.Matrix4, camPos: THREE.Vector3, m: THREE.Matrix4, out = new THREE.Matrix4()) {
+  const r = basis.clone().transpose().setPosition(camPos); return out.multiplyMatrices(r, m);
+}
 export interface ColumnInput { tsC: number; q: number; cover: number }
 /** Nearest sim cell to a planet direction (planes from core/planetBudget).
  *  Live globe clouds read `weatherAtLatLon` instead. This stays for the nearest-cell check in tests/cloud-column.test.ts. */
@@ -58,16 +68,18 @@ void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x >
     p += rd * dt; }
   if (acc.a < .01) discard; outColor = vec4(acc.rgb / max(acc.a, 1e-3), acc.a * uOpacity); }`;
 
-export interface LocalClouds { mesh: THREE.Mesh; update(camPos: ArrayLike<number>, groundR: number, alt: number, sunDir: THREE.Vector3, input: ColumnInput | null): void; column(): Column | null }
+export interface LocalClouds { mesh: THREE.Mesh; /** issue #202: the same box for the game pass in the band (shared volume, own opacity); placed by inpage */ overlay: THREE.Mesh; update(camPos: ArrayLike<number>, groundR: number, alt: number, sunDir: THREE.Vector3, input: ColumnInput | null): void; column(): Column | null }
 /** The local box. The mesh is placed camera-relative (the globe renders from the origin, globeView renderTo). */
 export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
   const tex = new THREE.Data3DTexture(new Uint8Array(L.nx * L.nx * L.nz), L.nx, L.nz, L.nx); tex.format = THREE.RedFormat; tex.minFilter = tex.magFilter = THREE.LinearFilter; tex.unpackAlignment = 1; tex.needsUpdate = true;
   const uniforms = { uVol: { value: tex }, uCamLocal: { value: new THREE.Vector3() }, uSunLocal: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: L.steps }, uOpacity: { value: 1 } };
   const mat = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: 'precision highp float; uniform mat4 modelViewMatrix, projectionMatrix; in vec3 position;\n' + VERT, fragmentShader: FRAG, uniforms, side: THREE.BackSide, transparent: true, depthWrite: false, depthTest: false });
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat); mesh.frustumCulled = false; mesh.renderOrder = 1; mesh.visible = false;
+  const omat = mat.clone(); omat.uniforms = { ...uniforms, uOpacity: { value: 0 } }; // shared volume, camera and sun; own opacity
+  const overlay = new THREE.Mesh(mesh.geometry, omat); overlay.frustumCulled = false; overlay.renderOrder = 10; overlay.visible = false; overlay.matrixAutoUpdate = false; overlay.userData.bandClouds = true;
   const frame = new THREE.Matrix4(), inv = new THREE.Matrix4(), up = new THREE.Vector3(), east = new THREE.Vector3(), north = new THREE.Vector3();
   let centre: THREE.Vector3 | null = null, key = '', col: Column | null = null;
-  return { mesh, column: () => col,
+  return { mesh, overlay, column: () => col,
     update(cp, groundR, alt, sunDir, input) {
       const fade = localCloudFade(alt, L); mesh.visible = !!input && fade > 0; uniforms.uOpacity.value = fade; if (!mesh.visible || !input) return;
       const cam = new THREE.Vector3(cp[0], cp[1], cp[2]); up.copy(cam).normalize();

@@ -1,0 +1,9 @@
+{
+  "type": "comment",
+  "task": "T-0999",
+  "agent": "grok-gait",
+  "at": "2026-11-01T11:00:00-07:00",
+  "run": 1,
+  "visible_fix": false,
+  "note": "Run 1: elbow count down, flicker still visible in the clip"
+}

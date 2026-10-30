@@ -4,7 +4,7 @@
  * tests/tasks.test.ts fails on any rule break.
  */
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 export const STATUS = [['Member', 0], ['Contributor', 100], ['Trusted', 250], ['Senior', 500], ['Lead', 1000]] as const;
 export const CREDITS = { perStep: 10, scratch: .5, research: .3, skill: 1.5, bugPerSeverity: 5, review: 2, weekly: 25 };
@@ -12,8 +12,62 @@ export const CREDITS = { perStep: 10, scratch: .5, research: .3, skill: 1.5, bug
 export const RELAYS_MATTHEW: readonly string[] = ['grok', 'grokbot-1', 'grokbot-2', 'grokbot-3'];
 export type State = 'proposed' | 'approved' | 'claimed' | 'completed' | 'done' | 'rejected';
 export interface Task { id: string; file: string; title: string; author: string; scratch: boolean; research: boolean; skill: boolean; steps: number;
-  state: State; claimant?: string; skillApproved: boolean; award: number }
-export interface Ev { type: string; task?: string; agent: string; at: string; file: string; branch?: string; severity?: number; of?: string; to?: string; note?: string; bug?: string; for?: string }
+  state: State; claimant?: string; skillApproved: boolean; award: number; tags: string[] }
+export interface Ev { type: string; task?: string; agent: string; at: string; file: string; branch?: string; severity?: number; of?: string; to?: string; note?: string; bug?: string; for?: string;
+  footage?: unknown; side_by_side?: unknown; sources?: unknown; run?: unknown; visible_fix?: unknown; escalate?: unknown }
+
+/**
+ * Rule 19 (gait evidence gate, T-0124). A gait task is a task whose `tags:` header has `gait` or `locomotion`.
+ * Its events dated at or after GAIT_RULE_FROM are checked (older ones are grandfathered, rule 10 keeps them as they are):
+ *  - complete: `footage` [{ url: http(s), notes: frames/timestamps }], `side_by_side` { clip: repo path to an existing
+ *    .mp4/.webm, verdict: what the side-by-side shows }, `sources` [{ value, source }] (every number has a source).
+ *  - runs: a comment with `"run": <n>` and `"visible_fix"` (what visibly changed, or false). After two runs in a row with
+ *    `visible_fix: false`, the next event on the task must be an escalation: a comment with `"escalate": "matthew"`.
+ * Every break reads "rule 19: ..." so tests/tasks.test.ts can fail on these alone (the general board test is a todo for legacy breaks).
+ */
+export const GAIT_TAGS: readonly string[] = ['gait', 'locomotion'];
+export const GAIT_RULE_FROM = '2026-10-30T01:00:00-07:00';
+const isGait = (t: Task) => t.tags.some(x => GAIT_TAGS.includes(x));
+const text = (x: unknown) => typeof x === 'string' && x.trim().length > 0;
+const list = (x: unknown): unknown[] => Array.isArray(x) ? x : x && typeof x === 'object' ? [x] : [];
+export function gaitCompleteBreaks(e: Ev, repoRoot: string): string[] {
+  const out: string[] = [];
+  const footage = list(e.footage) as Array<Record<string, unknown>>;
+  if (!footage.length) out.push('rule 19: a gait complete needs "footage": [{ "url": "https://...", "notes": "frames or timestamps used" }] of the real animal');
+  for (const f of footage) {
+    if (!(typeof f?.url === 'string' && /^https?:\/\/\S+$/.test(f.url))) out.push(`rule 19: footage url must be http(s), got ${JSON.stringify(f?.url)}`);
+    if (!text(f?.notes)) out.push('rule 19: footage needs "notes" naming the frames or timestamps used');
+  }
+  const sbs = (e.side_by_side && typeof e.side_by_side === 'object' ? e.side_by_side : {}) as Record<string, unknown>;
+  const clip = typeof e.side_by_side === 'string' ? e.side_by_side : sbs.clip;
+  if (!text(clip)) out.push('rule 19: a gait complete needs "side_by_side": { "clip": "<repo path>.mp4|.webm", "verdict": "..." } (game against the footage)');
+  else if (!/\.(mp4|webm)$/i.test(clip as string)) out.push(`rule 19: side_by_side clip ${clip} must be an .mp4 or .webm`);
+  else if (!existsSync(join(repoRoot, clip as string))) out.push(`rule 19: side_by_side clip ${clip} is not in the repo`);
+  if (text(clip) && !text(sbs.verdict)) out.push('rule 19: side_by_side needs a "verdict": what the side-by-side shows and why it looks right (a metric count alone cannot complete a gait task)');
+  const sources = list(e.sources) as Array<Record<string, unknown>>;
+  if (!sources.length) out.push('rule 19: a gait complete needs "sources": [{ "value": "...", "source": "..." }] for every number it uses');
+  for (const s of sources) if ((!text(s?.value) && typeof s?.value !== 'number') || !text(s?.source)) out.push(`rule 19: every number needs a value and a source, got ${JSON.stringify(s)}`);
+  return out;
+}
+/** Rule 19 over a replayed board: complete-event evidence, and the two-runs-then-escalate stop. */
+export function gaitBreaks(tasks: Map<string, Task>, events: Ev[], repoRoot: string, from = GAIT_RULE_FROM): string[] {
+  const out: string[] = [], since = Date.parse(from), misses = new Map<string, number>();
+  for (const e of events) {
+    const t = e.task ? tasks.get(e.task) : undefined;
+    if (!t || !isGait(t) || Date.parse(e.at) < since) continue;
+    const bad = (why: string) => out.push(`${e.file}: ${why}`);
+    const n = misses.get(t.id) ?? 0, escalation = e.escalate === 'matthew', isRun = e.run !== undefined;
+    if (n >= 2 && !escalation) bad(`rule 19: ${t.id} had ${n} runs with no visible fix; stop and escalate to Matthew (a comment with "escalate": "matthew") before anything else`);
+    if (escalation) misses.set(t.id, 0);
+    if (isRun) {
+      if (e.visible_fix === undefined) bad('rule 19: a gait run event names "visible_fix" (what visibly changed, with the clip) or false');
+      misses.set(t.id, text(e.visible_fix) ? 0 : (misses.get(t.id) ?? 0) + 1);
+    }
+    if (e.type === 'complete') for (const why of gaitCompleteBreaks(e, repoRoot)) bad(why);
+  }
+  for (const [id, n] of misses) if (n >= 2) out.push(`${id}: rule 19: ${n} runs in a row with no visible fix and no escalation to Matthew yet`);
+  return out;
+}
 
 export function award(t: Pick<Task, 'steps' | 'scratch' | 'research'>) {
   return Math.round(CREDITS.perStep * t.steps * (1 + (t.scratch ? CREDITS.scratch : 0) + (t.research ? CREDITS.research : 0)));
@@ -23,7 +77,7 @@ function parseTask(file: string, raw: string): Task {
   const fm =/^---\n([\s\S]*?)\n---/.exec(text)?.[1] ?? '', get = (k: string) => new RegExp(`^${k}:\\s*(.*)$`, 'm').exec(fm)?.[1].trim() ?? '';
   const objectives = /## Objectives\n([\s\S]*?)(\n## |$)/.exec(text)?.[1] ?? '';
   const t = { id: get('id'), file, title: get('title'), author: get('author'), scratch: get('scratch') === 'true', research: get('research') === 'true',
-    skill: get('skill') === 'true', steps: (objectives.match(/^- \[[ x]\]/gm) ?? []).length, state: 'proposed' as State, skillApproved: false, award: 0 };
+    skill: get('skill') === 'true', tags: get('tags').replace(/^\[|\]$/g, '').split(',').map(x => x.trim()).filter(Boolean), steps: (objectives.match(/^- \[[ x]\]/gm) ?? []).length, state: 'proposed' as State, skillApproved: false, award: 0 };
   t.award = award(t); return t;
 }
 /** The Monday (Pacific time, DST included) that starts the week containing `at`, as YYYY-MM-DD. */
@@ -33,7 +87,7 @@ export function weekOf(at: string) {
   const back = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(p.weekday);
   return new Date(Date.UTC(+p.year, +p.month - 1, +p.day - back)).toISOString().slice(0, 10);
 }
-export function ledger(root = join(process.cwd(), 'tasks')) {
+export function ledger(root = join(process.cwd(), 'tasks'), repoRoot = dirname(root)) {
   const tasks = new Map<string, Task>(), errors: string[] = [], balance = new Map<string, number>(), earned = new Map<string, Map<string, number>>();
   const status = new Map<string, number>();
   for (const f of readdirSync(root).filter(f => /^T-\d{4}-.*\.md$/.test(f)).sort()) {
@@ -104,6 +158,7 @@ export function ledger(root = join(process.cwd(), 'tasks')) {
       default: bad(`unknown event type ${e.type}`);
     }
   }
+  errors.push(...gaitBreaks(tasks, events, repoRoot));
   const awards = [...earned].sort().map(([week, m]) => {
     const top = Math.max(...m.values()), winners = [...m].filter(([, n]) => n === top).map(([a]) => a);
     return { week, winners, credits: top };
@@ -118,7 +173,7 @@ export function ledger(root = join(process.cwd(), 'tasks')) {
 }
 
 if (process.argv[1]?.endsWith('tasks.ts')) {
-  const L = ledger();
+  const L = process.argv[2] ? ledger(process.argv[2]) : ledger(); // optional tasks dir, e.g. tests/fixtures/gait-gate/bad/tasks
   console.log('Tasks'); for (const t of L.tasks) console.log(`  ${t.id} ${t.state.padEnd(9)} ${String(t.award).padStart(4)} cr  ${t.title}${t.claimant ? `  (${t.claimant})` : ''}`);
   console.log('Agents'); for (const a of L.agents) console.log(`  ${a.agent.padEnd(12)} ${String(a.credits).padStart(5)} cr  ${a.status}`);
   console.log('Weekly award'); for (const w of L.awards) console.log(`  week of ${w.week}: ${w.winners.join(', ')} (${w.credits} cr)`);

@@ -19,7 +19,7 @@ export function elbowCell(v: number, hz: number, foreLock = true, secs = 4, diag
   const c = createBounding(planFor('hare'), HOST_GAIT, () => 0, { x: 0, z: 0, heading: 0 }, GIRDLE, { pose: poseFor('hare'), foreLock });
   const miss = { plant: [0, 0, 0], stance: [0, 0, 0], swing: [0, 0, 0] } as Record<string, number[]>, bend = { plant: 999, stance: 999 }, cont = [999, -999]; // [sum, n, max] mm; min |knee| deg
   const M = (ph: string, f: any, i: number) => { const a = f.soles[i], b = f.feet[i], m = Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) * 1000, r = miss[ph]; r[0] += m; r[1]++; r[2] = Math.max(r[2], m); };
-  let last: any, gate = 0, plants = 0, under = 0; const plant = zero(), rest = zero(), overP = zero(), overS = zero(), air = zero(), overA = zero();
+  let last: any, gate = 0, plants = 0, under = 0; const plant = zero(), rest = zero(), overP = zero(), overS = zero(), air = zero(), overA = zero(), overS2 = zero(), GH = Number(process.env.GATEH ?? 1.75);
   for (let n = 0; n / hz < secs; n++) {
     const f: any = c.update(1 / hz, Math.min(v, v * n / hz / 1.5), 0, null, selectRow(v));
     gate = 2 * 88 / (f.plan.duties[0] / f.plan.hz) / hz;
@@ -32,13 +32,14 @@ export function elbowCell(v: number, hz: number, foreLock = true, secs = 4, diag
       const line: string[] = [];
       for (const k of KS) { const d = Math.abs(wrap(J[k](f.limbs[i]) - J[k](last.limbs[i]))) * D;
         (isPlant ? plant : rest)[k] = Math.max((isPlant ? plant : rest)[k], d);
-        if (d > gate) { (isPlant ? overP : overS)[k]++; line.push(`${k} ${d.toFixed(0)}`); } }
+        if (d > gate) { (isPlant ? overP : overS)[k]++; line.push(`${k} ${d.toFixed(0)}`); }
+        if (!isPlant && d > gate * (f.contact[i] && (k === 'hum' || k === 'elbow') ? GH : 1)) overS2[k]++; } // run 15, information only: the fix brief's proposed gate (hum / elbow x GATEH in mid-stance; 1.75 has no source)
       if (diag && line.length) { const a = last.limbs[i], b = f.limbs[i];
         console.log(`  t ${(n / hz).toFixed(3)} leg ${i} ${isPlant ? 'PLANT' : (f.contact[i] ? 'stance' : 'lift')} [${line.join(', ')}] blade ${(a.girdle * D).toFixed(1)}->${(b.girdle * D).toFixed(1)} knee ${(a.knee * D).toFixed(1)}->${(b.knee * D).toFixed(1)} leg ${(a.leg * D).toFixed(1)}->${(b.leg * D).toFixed(1)} wrist ${(a.wrist * D).toFixed(1)}->${(b.wrist * D).toFixed(1)}`); }
     }
     last = f;
   }
-  return { gate, plants, plant, rest, overP, overS, air, overA, under, miss, bend, cont };
+  return { gate, plants, plant, rest, overP, overS, air, overA, under, miss, bend, cont, overS2 };
 }
 if (process.argv[1]?.includes('elbow-pop')) {
   // SET applies only when this file is run as a script (run 14: an inherited SET must not change a test that imports popCell / elbowCell)
@@ -47,5 +48,5 @@ if (process.argv[1]?.includes('elbow-pop')) {
   console.log(`lock ${lock} | v hz | gate | plants | plant max scap hum elbow manus (over) | stance+lift max scap hum elbow manus (over)  deg/frame`);
   for (const v of V) for (const hz of H) { const r = elbowCell(v, hz, lock, 4, process.env.DIAG === '1');
     const row = (m: Record<K, number>, o: Record<K, number>) => KS.map(k => `${f(m[k])}(${o[k]})`).join(' ');
-    console.log(`${v} ${hz} | ${f(r.gate)} | ${r.plants} | ${row(r.plant, r.overP)} | ${row(r.rest, r.overS)} | swing ${row(r.air, r.overA)} under ${r.under} | miss mm mean/max plant ${(r.miss.plant[0] / Math.max(1, r.miss.plant[1])).toFixed(2)}/${r.miss.plant[2].toFixed(1)} stance ${(r.miss.stance[0] / Math.max(1, r.miss.stance[1])).toFixed(2)}/${r.miss.stance[2].toFixed(1)} swing ${(r.miss.swing[0] / Math.max(1, r.miss.swing[1])).toFixed(2)}/${r.miss.swing[2].toFixed(1)} | min bend plant ${f(r.bend.plant)} stance ${f(r.bend.stance)} | touchdown forearm ${f(r.cont[0])}-${f(r.cont[1])}`); }
+    console.log(`${v} ${hz} | ${f(r.gate)} | ${r.plants} | ${row(r.plant, r.overP)} | ${row(r.rest, r.overS)} | swing ${row(r.air, r.overA)} under ${r.under} | miss mm mean/max plant ${(r.miss.plant[0] / Math.max(1, r.miss.plant[1])).toFixed(2)}/${r.miss.plant[2].toFixed(1)} stance ${(r.miss.stance[0] / Math.max(1, r.miss.stance[1])).toFixed(2)}/${r.miss.stance[2].toFixed(1)} swing ${(r.miss.swing[0] / Math.max(1, r.miss.swing[1])).toFixed(2)}/${r.miss.swing[2].toFixed(1)} | min bend plant ${f(r.bend.plant)} stance ${f(r.bend.stance)} | touchdown forearm ${f(r.cont[0])}-${f(r.cont[1])} | gate2 stance+lift hum ${r.overS2.hum} elbow ${r.overS2.elbow}`); }
 }

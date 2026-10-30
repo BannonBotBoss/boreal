@@ -30,6 +30,10 @@ export function bandCloudOpacity(alt: number, patch: number, L = LOCAL_CLOUDS) {
 export function toGameFrame(basis: THREE.Matrix4, camPos: THREE.Vector3, m: THREE.Matrix4, out = new THREE.Matrix4()) {
   const r = basis.clone().transpose().setPosition(camPos); return out.multiplyMatrices(r, m);
 }
+/** Issue #202 (2): CPU mirror of the overlay's BAND_OCCLUDE depth: window depth (0..1, default depth range) of a box-local point. */
+export function nearEdgeDepth(p: THREE.Vector3, modelView: THREE.Matrix4, proj: THREE.Matrix4) {
+  const c = new THREE.Vector4(p.x, p.y, p.z, 1).applyMatrix4(modelView).applyMatrix4(proj); return Math.min(1, Math.max(0, c.z / c.w * .5 + .5));
+}
 export interface ColumnInput { tsC: number; q: number; cover: number }
 /** Nearest sim cell to a planet direction (planes from core/planetBudget).
  *  Live globe clouds read `weatherAtLatLon` instead. This stays for the nearest-cell check in tests/cloud-column.test.ts. */
@@ -57,16 +61,23 @@ const VERT = `out vec3 vOrigin; out vec3 vDir; uniform vec3 uCamLocal;
 void main() { vOrigin = uCamLocal; vDir = position - uCamLocal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const FRAG = `precision highp float; precision highp sampler3D; in vec3 vOrigin; in vec3 vDir; out vec4 outColor;
 uniform sampler3D uVol; uniform vec3 uSunLocal; uniform float uSteps; uniform float uOpacity;
+#ifdef BAND_OCCLUDE
+uniform mat4 modelViewMatrix, projectionMatrix;
+#endif
 vec2 hitBox(vec3 o, vec3 d) { vec3 bmin = vec3(-.5), bmax = vec3(.5), ti = 1.0 / d, t0 = (bmin - o) * ti, t1 = (bmax - o) * ti, tmin = min(t0, t1), tmax = max(t0, t1);
   return vec2(max(tmin.x, max(tmin.y, tmin.z)), min(tmax.x, min(tmax.y, tmax.z))); }
 float dens(vec3 p) { return texture(uVol, p + .5).r; }
 void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x > b.y) discard; b.x = max(b.x, 0.0);
-  float dt = (b.y - b.x) / uSteps; vec3 p = vOrigin + rd * b.x; vec4 acc = vec4(0.0);
+  float dt = (b.y - b.x) / uSteps; vec3 p = vOrigin + rd * b.x; vec4 acc = vec4(0.0); vec3 first = vec3(0.0); bool hit = false;
   for (float i = 0.0; i < 256.0; i++) { if (i >= uSteps || acc.a > .97) break;
-    float d = dens(p); if (d > .01) { float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float lit = exp(-sh * 2.5) * max(uSunLocal.y + .25, .15) + .25;
+    float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float lit = exp(-sh * 2.5) * max(uSunLocal.y + .25, .15) + .25;
       float a = 1.0 - exp(-d * dt * 220.0); acc.rgb += (1.0 - acc.a) * a * vec3(lit); acc.a += (1.0 - acc.a) * a; }
     p += rd * dt; }
-  if (acc.a < .01) discard; outColor = vec4(acc.rgb / max(acc.a, 1e-3), acc.a * uOpacity); }`;
+  if (acc.a < .01) discard;
+#ifdef BAND_OCCLUDE
+  vec4 c = projectionMatrix * (modelViewMatrix * vec4(first, 1.0)); gl_FragDepth = clamp(c.z / c.w * .5 + .5, 0.0, 1.0); // issue #202: depth of the cloud's near edge, so ground in front culls it
+#endif
+  outColor = vec4(acc.rgb / max(acc.a, 1e-3), acc.a * uOpacity); }`;
 
 export interface LocalClouds { mesh: THREE.Mesh; /** issue #202: the same box for the game pass in the band (shared volume, own opacity); placed by inpage */ overlay: THREE.Mesh; update(camPos: ArrayLike<number>, groundR: number, alt: number, sunDir: THREE.Vector3, input: ColumnInput | null): void; column(): Column | null }
 /** The local box. The mesh is placed camera-relative (the globe renders from the origin, globeView renderTo). */
@@ -76,6 +87,9 @@ export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
   const mat = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: 'precision highp float; uniform mat4 modelViewMatrix, projectionMatrix; in vec3 position;\n' + VERT, fragmentShader: FRAG, uniforms, side: THREE.BackSide, transparent: true, depthWrite: false, depthTest: false });
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat); mesh.frustumCulled = false; mesh.renderOrder = 1; mesh.visible = false;
   const omat = mat.clone(); omat.uniforms = { ...uniforms, uOpacity: { value: 0 } }; // shared volume, camera and sun; own opacity
+  // issue #202 (2): the overlay writes the depth of the cloud's near edge (BAND_OCCLUDE) and is depth-tested against the game
+  // pass, so a ridge in front hides the cloud behind it while cloud in front of the ground stays. The globe copy keeps depthTest off.
+  omat.defines = { BAND_OCCLUDE: 1 }; omat.depthTest = true;
   const overlay = new THREE.Mesh(mesh.geometry, omat); overlay.frustumCulled = false; overlay.renderOrder = 10; overlay.visible = false; overlay.matrixAutoUpdate = false; overlay.userData.bandClouds = true;
   const frame = new THREE.Matrix4(), inv = new THREE.Matrix4(), up = new THREE.Vector3(), east = new THREE.Vector3(), north = new THREE.Vector3();
   let centre: THREE.Vector3 | null = null, key = '', col: Column | null = null;

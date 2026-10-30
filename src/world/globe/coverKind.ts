@@ -1,29 +1,25 @@
 /**
- * Placeholder ground cover until Grokbot-1 publishes per-place densities.
+ * Ground cover class, one rule shared with the simulation (rust/boreal-sim/src/cover.rs, issue #167).
  *
- * The bands follow breaks the globe colour already uses (surfaceColour:
- * temperate south of 45° N, tundra north of 60°). The tree line and the ice
- * line are the existing latitude functions (core/altitudeZones, Koerner and
- * Paulsen 2004; the lapse rate already cited there). Vegetation is
- * vegetationWeight from the planet sample, 0..1.
- *
- * This is not a species range. Densities below are labelled calibration so the
- * picture has a rule today. The issue filed for Grokbot-1 replaces them.
+ * Classes come from causes, not latitude bands: below the ice line (warm season under 0 C) is ice; above the
+ * tree line is rock in mountains and tundra where the tree line is already near sea level (Koerner and Paulsen
+ * 2004, core/altitudeZones). Below the tree line the planet sample's vegetation weight (0..1) splits desert,
+ * prairie and boreal at data/earth/cover-density.json's thresholds. tests/cover-kind.test.ts checks this matches
+ * the wasm cover_cell everywhere, so the viewer and the simulation agree on what grows at a landing.
  */
 import { iceLineM, treeLineM } from '../../core/altitudeZones';
+import C from '../../../data/earth/cover-density.json';
 
 export type CoverKind = 'water' | 'ice' | 'tundra' | 'rock' | 'desert' | 'prairie' | 'boreal';
 
 export function coverKind(latDeg: number, elevM: number, vegetation: number, water: boolean): CoverKind {
   if (water) return 'water';
-  const lat = Math.abs(latDeg);
-  if (lat >= 75 || elevM >= iceLineM(lat)) return 'ice';
-  // Strictly above the tree line is rock. At 60° N the line is already at sea level, so a low
-  // site there is tundra, not a cliff of rock.
-  if (elevM > treeLineM(lat) + 80) return 'rock';
-  if (lat >= 60 && vegetation < 0.45) return 'tundra';
-  if (lat < 32 && vegetation < 0.28) return 'desert';
-  if (lat < 48 && vegetation < 0.62) return 'prairie';
+  const lat = Math.abs(latDeg), elev = Math.max(0, elevM);
+  if (elev >= iceLineM(lat)) return 'ice';
+  const tree = treeLineM(lat);
+  if (elev > tree) return tree < 80 && elev < tree + 300 ? 'tundra' : 'rock';
+  if (vegetation < C.veg_desert_below) return 'desert';
+  if (vegetation < C.veg_prairie_below) return 'prairie';
   return 'boreal';
 }
 

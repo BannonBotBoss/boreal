@@ -1,7 +1,10 @@
-/** Placeholder cover rule for the drone (T-0112). Not a species range. */
+/** Ground cover class for the drone view; one rule shared with rust cover.rs (#167). */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { coverKind, coverSpacingM, coverSpots } from '../src/world/globe/coverKind';
+import { loadPlanetSim } from '../src/core/planetBudget';
+import { SEAM_LOCATIONS } from '../tools/globe-seam-baseline';
 
 test('water, ice, tundra, desert, prairie and boreal follow the latitude breaks', () => {
   assert.equal(coverKind(50, 300, 0.8, true), 'water');
@@ -24,4 +27,18 @@ test('billboards stay outside the near meshes and under the cap', () => {
     assert.ok(d >= 36 && d <= 200);
   }
   assert.equal(coverSpots(0, 0, 'tundra').length, 0);
+});
+
+test('viewer cover matches the simulation (wasm cover_cell) on a global sweep and the ten sprint sites', async () => {
+  const sim = await loadPlanetSim(readFileSync('public/wasm/boreal_sim.wasm'));
+  assert.ok(sim, 'wasm loads');
+  let n = 0;
+  for (let lat = -89; lat <= 89; lat += 4) for (const elev of [0, 30, 150, 400, 900, 1600, 2500, 3500, 4800]) for (const veg of [0.1, 0.27, 0.29, 0.5, 0.61, 0.63, 0.9]) {
+    for (const water of [false, true]) {
+      const ts: string = coverKind(lat, elev, veg, water), rs: string = sim!.coverCell(lat, 10, elev, veg, water).kind;
+      assert.equal(ts, rs, `lat ${lat} elev ${elev} veg ${veg} water ${water}`); n++;
+    }
+  }
+  for (const s of SEAM_LOCATIONS) for (const elev of [0, 500, 2000]) assert.equal(coverKind(s.lat, elev, 0.7, false), sim!.coverCell(s.lat, s.lon, elev, 0.7, false).kind, s.name);
+  assert.ok(n > 5000);
 });

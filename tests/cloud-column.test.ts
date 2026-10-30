@@ -41,3 +41,12 @@ test('issue #107: the local cloud box fades across the span it already had, with
     prev = w;
   }
 });
+import { bandCloudOpacity } from '../src/world/globe/localClouds';
+import { TRANSITION as TR, patchFade as pf } from '../src/world/globe/transition';
+test('issue #202: through the in-page band the far-layer box plus the overlay keep the cloud, with no step', () => {
+  let prev = -1;
+  for (let h = TR.bandTop + 200; h >= 400; h -= 10) { const f = pf(h, true), a = localCloudFade(h), far = a * (1 - f), over = bandCloudOpacity(h, f);
+    assert.ok(Math.abs(far + over - a) < 1e-12, `${h}: ${far} + ${over} vs ${a}`); assert.ok(a > 0, `${h}: box drawn`); // the patch takes f of the far layer, the overlay gives it back
+    if (prev >= 0) assert.ok(Math.abs(over - prev) < .02, `${h}: overlay step ${prev} -> ${over}`); prev = over; }
+  assert.equal(bandCloudOpacity(TR.bandTop, 0), 0); assert.equal(bandCloudOpacity(500, 1), 1);
+});

@@ -24,7 +24,7 @@ import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './flight';
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
-import { TRANSITION, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
+import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
 import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR, landSpawn } from './handoff';
@@ -36,6 +36,7 @@ import { LOG_DEPTH } from './logDepth';
 import { GOVERNOR, resetGovernor } from '../../core/quality';
 import { INTEREST, JOB_FIRST, pending, queued, STATS as JOBS } from '../../core/interest';
 import { CHUNK_SIZE, heightAt } from '../../core/world';
+import { bandCloudOpacity, toGameFrame } from './localClouds';
 import { createHorizonSkirt, type HorizonSkirt } from '../../render/horizonMesh';
 import { createHorizonCover } from '../../render/horizonCover';
 import { demCoverage, photoCoverage } from './openTiles';
@@ -198,6 +199,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     for (const [o, v] of hidden) o.visible = v; hidden.clear(); for (const c of unculled) c.frustumCulled = true; unculled.length = 0;
     if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; DRONE_GRADE.exposure = 1; setPatchFade(1); setPatchFar(null); bandLook(0); AO_BLEND.value = 1;
     if (skirt) skirt.mesh.visible = false;
+    if (globe?.localClouds) globe.localClouds.overlay.visible = false;
     if (cover) cover.mesh.visible = false;
   }
   const isChunkRoot = (o: THREE.Object3D) => o.type === 'Group' && (o.children[0]?.userData.inspect as { type?: string } | undefined)?.type === 'terrain';
@@ -220,7 +222,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     const now = new Set<THREE.Object3D>(), partial = fade < 1; let budget = INPAGE.uploadMB * 1e6;
     for (const c of unculled) c.frustumCulled = true; unculled.length = 0; // admitted last frame: uploaded by now
     for (const o of scene.children) {
-      if (o.userData.horizonSkirt) continue; // the rings stay up: they are the ground past the chunk dither
+      if (o.userData.horizonSkirt || o.userData.bandClouds) continue; // issue #202: the band's cloud overlay has its own opacity // the rings stay up: they are the ground past the chunk dither
       if (o.userData.physicalSky && h > 8 && h < 2500) continue; // Preetham sky fills the top of a drone frame. A 600 m dome would cover the horizon, so the mesh is scaled out in background().
       if (isChunkRoot(o)) { for (const m of o.children) { if (partial && !faded(m)) { now.add(m); continue; } if (uploaded.has(m) || !m.visible && !hidden.has(m)) continue; const b = bytesOf(m); if (b <= budget || budget === INPAGE.uploadMB * 1e6) { budget -= b; admit(m); } else now.add(m); } continue; }
       if (hasLight(o) || (!(o as THREE.Mesh).isMesh && (o as THREE.Points).type !== 'Points' && !o.children.length)) continue;
@@ -432,6 +434,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
         cover.mesh.visible = true;
         cover.update(globe.planet, camera.position.x, camera.position.z, skirtOrigin(globe.planet, ground(0, 0)));
       }
+      bandClouds(scene, camera);
       hideForBand(scene); // disc covers the loaded square; the skirt is the ground outside it
       // the patch's aerial blend toward the globe behind it, and globe terrain in front of the patch hides it (render/fade, uniforms)
       setPatchFar({ color: far.texture, depth: far.target.depthTexture, mix: Math.min(1, INPAGE.haze * smoothstep(INPAGE.hazeLow, INPAGE.hazeTop, h)), scale: scene.backgroundIntensity, logFC: LOG_DEPTH.uniform.value, occ: nearGroundOcc(h, INPAGE.hazeLow, INPAGE.occ) });
@@ -466,6 +469,14 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
   return api;
   /** lake colours for the band: s = 0 the globe's calibrated lakes, 1 the game-matched ones */
   /** 0 by day .. 1 with the sun low: the game water (sky reflection) stays brighter than the globe's sun-lit lakes at dusk (r21: 11/44/53 vs 9/25/24 at 18.4) */
+  /** Issue #202: the far layer's cloud box is under the game pass, so the dithering patch painted over it. Its copy is drawn after
+   *  the patch in game metres: planet-relative (globe camera at the origin) -> game via gameBasis at the camera, plus the camera. */
+  function bandClouds(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
+    const lc = globe?.localClouds; if (!lc) return; const o = lc.overlay;
+    if (!o.parent) scene.add(o);
+    const a = lc.mesh.visible ? bandCloudOpacity(globe!.altitude, fade) : 0; o.visible = a > 0; (o.material as THREE.RawShaderMaterial).uniforms.uOpacity.value = a; if (!o.visible) return;
+    toGameFrame(gameBasis(globe!.planet, camera.position.x, camera.position.z, tmpM), camera.position, lc.mesh.matrix, o.matrix); o.matrixWorldNeedsUpdate = true;
+  }
   function duskOf(scene: THREE.Scene) { let y = 1; for (const o of scene.children) { const l = o as THREE.DirectionalLight; if (l.isDirectionalLight && l.intensity > 0) { const d = l.position.clone().sub(l.target.position); y = d.y / Math.max(1e-6, d.length()); break; } } return 1 - smoothstep(INPAGE.duskSin[0], INPAGE.duskSin[1], y); }
   function bandLook(s: number, t = 0) { if (landU) { const D = INPAGE.landTint, N = INPAGE.landTintDusk, L = [0, 1, 2].map(i => D[i] + (N[i] - D[i]) * dusk); landU.uLandTint.value.setRGB(1 + (L[0] - 1) * t, 1 + (L[1] - 1) * t, 1 + (L[2] - 1) * t); /* day -> dusk tint (duskOf) */ } if (lakeU) { const L = (u: { value: THREE.Color }, a: readonly number[], b: readonly number[]) => u.value.setRGB(a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s, a[2] + (b[2] - a[2]) * s); const D = INPAGE.duskLake, k = (c: readonly number[]) => c.map((v, i) => v * (1 + (D[i] - 1) * dusk)); L(lakeU.shallow, GLOBE_COLOURS.lakeShallow, k(INPAGE.lakeShallow)); L(lakeU.deep, GLOBE_COLOURS.lakeDeep, k(INPAGE.lakeDeep)); lakeU.rough.value = .55 + (INPAGE.lakeRough - .55) * s; } return s; }
   function record() { renderMs = STATS.globeMs + STATS.drawMs; const l = STATS.log; l.push({ t: performance.now(), mode, h: Math.round(h), fade: +fade.toFixed(3), globeMs: +STATS.globeMs.toFixed(2), ...(DEV ? { drawMs: +STATS.drawMs.toFixed(1), jobsMs: +JOBS.lastFrameMs.toFixed(1), cpuMs: +(performance.now() - Number(document.timeline.currentTime ?? 0)).toFixed(1) } : {}) }); STATS.drawMs = 0; if (l.length > 4000) l.splice(0, l.length - 4000); }

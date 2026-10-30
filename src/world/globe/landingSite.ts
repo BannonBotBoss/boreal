@@ -39,7 +39,10 @@ export function engageLanding(direction: Vec3, home: number) {
   const planet = planetFor(WORLD_SEED);
   // sampleSurface reuses one result object, so keep the number: the reader below samples again and would
   // otherwise read its own sample back as the origin (s.h - origin.h = 0, a flat landing patch).
-  const originH = planet.sampleSurface(frame.dir).h;
+  // On a lake the datum is the lake's surface, not its bed: the game's water plane (LEVEL.waterSurface) is that surface,
+  // so shore land sits at the water line instead of a lake-depth above it.
+  const o = planet.sampleSurface(frame.dir);
+  const originH = o.kind === 'lake' ? o.water : o.h;
   const ll = toLatLon(frame.dir);
   const latDeg = ll.lat * 180 / Math.PI;
   const lonDeg = ll.lon * 180 / Math.PI;

@@ -1,13 +1,14 @@
 /**
  * Mid-distance cover on the horizon skirt. Far cover is the ground colour.
  * Near cover is the chunk meshes. These are the billboards in between.
- * Placement is coverSpots (world/globe/coverKind.ts). Height is heightAt.
+ * Placement is coverSpots (world/globe/coverKind.ts). Ground height is heightAt; plant height is the simulation's
+ * cover row (coverRow, cover.rs #167), so prairie clumps are knee-high and boreal spruce 10-25 m, not one card size.
  * One instanced mesh, capped. Not a new tree species.
  */
 import * as THREE from 'three';
 import { heightAt } from '../core/world';
 import { vegetationWeight, type Planet } from '../world/globe/planet';
-import { coverKind, coverSpots, type CoverKind } from '../world/globe/coverKind';
+import { coverRow, coverSpots, type CoverKind } from '../world/globe/coverKind';
 import { skirtLatLon, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { treeAtlas } from './trees/billboardAtlas';
 import { CC0_TREES, bakeTreeAtlas } from './trees/cc0Impostors';
@@ -28,6 +29,12 @@ export function treeSlot(kind: CoverKind, x: number, z: number) {
   const h = Math.abs(Math.sin(x * 0.17 + z * 0.09));
   if (kind === 'boreal') return Math.floor(h * 3) % 3;
   return 3 + (Math.floor(h * 2) % 2);
+}
+
+/** Card is 10 m tall at scale 1. Scale to the cover row's plant height, with a +-15% per-spot spread. */
+export const CARD_HEIGHT_M = 10;
+export function billboardScale(heightM: number, x: number) {
+  return (heightM / CARD_HEIGHT_M) * (0.85 + 0.3 * Math.abs(Math.sin(x * 0.07)));
 }
 
 export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
@@ -93,10 +100,11 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     const veg = vegetationWeight(s, ll.dir);
     const dem = sampleDem(ll.latDeg, ll.lonDeg);
     const water = !elevationWins(s.kind, dem) && (s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level);
-    const kind = coverKind(ll.latDeg, dem != null && dem > 0 ? dem : s.h, veg, water);
+    const row = coverRow(ll.latDeg, ll.lonDeg, dem != null && dem > 0 ? dem : s.h, veg, water);
+    const kind = row.kind;
     bake();
     const cols = colsUniform.value;
-    const next = `${kind}:${cols}:${dem != null ? Math.round(dem) : 'x'}:${Math.round(cx / 40)}:${Math.round(cz / 40)}`;
+    const next = `${kind}:${row.heightM.toFixed(1)}:${cols}:${dem != null ? Math.round(dem) : 'x'}:${Math.round(cx / 40)}:${Math.round(cz / 40)}`;
     if (next === key) return kind;
     key = next;
     const spots = coverSpots(cx, cz, kind);
@@ -104,7 +112,7 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     for (let i = 0; i < spots.length; i++) {
       const s = spots[i];
       dummy.position.set(s.x, heightAt(s.x, s.z), s.z);
-      const tall = kind === 'prairie' ? 0.55 : kind === 'desert' ? 0.4 : 0.85 + 0.3 * Math.abs(Math.sin(s.x * 0.07));
+      const tall = billboardScale(row.heightM, s.x);
       dummy.scale.set(tall, tall, 1);
       dummy.lookAt(cx, dummy.position.y + 4, cz);
       dummy.updateMatrix();
@@ -119,6 +127,8 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.userData.kind = kind;
     mesh.userData.count = spots.length;
+    mesh.userData.heightM = row.heightM;
+    mesh.userData.stemsPerHa = row.stemsPerHa;
     return kind;
   }
 

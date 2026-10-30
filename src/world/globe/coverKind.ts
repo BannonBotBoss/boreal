@@ -12,6 +12,35 @@ import C from '../../../data/earth/cover-density.json';
 
 export type CoverKind = 'water' | 'ice' | 'tundra' | 'rock' | 'desert' | 'prairie' | 'boreal';
 
+type Range = { stems_per_ha: number[]; height_m: number[] };
+const M64 = (1n << 64n) - 1n;
+const mul = (a: bigint, b: bigint) => (a * b) & M64;
+const i64 = (v: number) => BigInt.asUintN(64, BigInt(Math.round(v * 1e5)));
+
+/** Deterministic 0..1 from a place: the same splitmix64 on quantised lat/lon as cover.rs place_hash. */
+export function placeHash(lat: number, lon: number): number {
+  const a = i64(lat), b = i64(lon);
+  const rotl = ((b << 29n) | (b >> 35n)) & M64;
+  let z = mul(a, 0x9E3779B97F4A7C15n) ^ rotl ^ 0xB0E3A1n;
+  z = mul(z ^ (z >> 30n), 0xBF58476D1CE4E5B9n);
+  z = mul(z ^ (z >> 27n), 0x94D049BB133111EBn);
+  z ^= z >> 31n;
+  return Number(z >> 11n) / 2 ** 53;
+}
+
+export interface CoverRow { kind: CoverKind; stemsPerHa: number; heightM: number }
+
+/** The full #167 row, same as cover.rs cover_row: class, stems per hectare, plant height (m). Deterministic per place. */
+export function coverRow(latDeg: number, lonDeg: number, elevM: number, vegetation: number, water: boolean): CoverRow {
+  const kind = coverKind(latDeg, elevM, vegetation, water);
+  if (kind === 'water' || kind === 'ice' || kind === 'rock') return { kind, stemsPerHa: 0, heightM: 0 };
+  const r = (C as unknown as Record<string, Range>)[kind];
+  const h = placeHash(latDeg, lonDeg), h2 = placeHash(lonDeg, latDeg);
+  const v = Math.min(1, Math.max(0, 0.5 * Math.min(1, Math.max(0, vegetation)) + 0.5 * h));
+  const [s0, s1] = r.stems_per_ha, [t0, t1] = r.height_m;
+  return { kind, stemsPerHa: Math.round(s0 + (s1 - s0) * v), heightM: t0 + (t1 - t0) * (0.5 * v + 0.5 * h2) };
+}
+
 export function coverKind(latDeg: number, elevM: number, vegetation: number, water: boolean): CoverKind {
   if (water) return 'water';
   const lat = Math.abs(latDeg), elev = Math.max(0, elevM);

@@ -31,9 +31,10 @@ export function solveLimb(L: LimbDims, forward: boolean, foot: Vec3, liftFrac: n
   return { girdle: c.girdle, leg: c.leg, knee: c.knee, wrist: c.wrist, paw: c.paw, abduct, joint: c.joint };
 }
 
+const soleDir = (t: number) => ({ z: -Math.sin(t), y: -Math.cos(t) }); // module scope: no per-call named closure under tsx keepNames (#198)
 /** Sole position of a solved limb (sagittal FK, before abduction), for tests and debug overlays. */
 export function soleOf(L: LimbDims, a: LimbAngles) {
-  const dir = (t: number) => ({ z: -Math.sin(t), y: -Math.cos(t) });
+  const dir = soleDir;
   const a1 = a.girdle + a.leg, a2 = a1 + a.knee, a3 = a2 + a.wrist, M = L.foot ?? 0;
   const u = dir(a1), l = dir(a2), f = dir(a3);
   return { z: a.joint.z + L.upper * u.z + L.lower * l.z + M * f.z, y: a.joint.y + L.upper * u.y + L.lower * l.y + M * f.y };

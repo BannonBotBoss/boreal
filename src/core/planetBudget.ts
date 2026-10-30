@@ -37,11 +37,15 @@ export const PLANE_INFO: Record<PlaneName, { unit: string; budget: 'input' | 'st
   reflsw: { unit: 'W/m²', budget: 'solar', label: 'shortwave reflected to space' }, absatm: { unit: 'W/m²', budget: 'atmosphere', label: 'shortwave absorbed by the air' }, pmean: { unit: 'mm/day', budget: 'hydrosphere', label: 'precipitation, 12 h running mean' }, olr: { unit: 'W/m²', budget: 'atmosphere', label: 'outgoing longwave (Budyko A + B T)' },
 };
 
+/** cover.rs class ids, in order. */
+export const COVER_CLASSES = ['water', 'ice', 'rock', 'tundra', 'desert', 'prairie', 'boreal'] as const;
+
 interface Exports {
   memory: WebAssembly.Memory; layout_version(): number; plane_count(): number;
   grid_init(nlat: number, nlon: number): number; grid_seed(day: number, hour: number): void; grid_boot(day: number, hour: number): void; grid_step(dt: number): void;
   grid_day(): number; grid_hour(): number; alloc_f64(n: number): number;
   landing_population(lat: number, lon: number, elevM: number, vegetation: number, water: number, year: number, sideM: number, out: number, cap: number): number;
+  cover_cell(lat: number, lon: number, elevM: number, vegetation: number, water: number, out: number): void;
   solar_cell(day: number, hour: number, lat: number, lon: number, cloud: number, albedo: number, tC: number, ePa: number, out: number): void;
   radial_profile(rKm: number, mpRe: number, out: number): void;
   gas_column(body: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
@@ -105,6 +109,11 @@ export class PlanetSim {
     const o = new Float64Array(this.x.memory.buffer, p, 2 * n), out: { species: (typeof LANDING_SPECIES)[number]; count: number }[] = [];
     for (let i = 0; i < n; i++) out.push({ species: LANDING_SPECIES[o[2 * i]], count: o[2 * i + 1] });
     return out;
+  }
+  /** Issue #167 cover row (cover.rs): class name, stems per hectare, billboard height (m). Deterministic per place. */
+  coverCell(lat: number, lon: number, elevM: number, vegetation: number, water: boolean) {
+    const p = this.buf(); this.x.cover_cell(lat, lon, elevM, vegetation, water ? 1 : 0, p); const o = new Float64Array(this.x.memory.buffer, p, 3);
+    return { kind: COVER_CLASSES[o[0]], stemsPerHa: o[1], heightM: o[2] };
   }
   /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */
   gasColumn(hKm: number, body = 0, qSurf = 0, co2ppm = 422.8) {

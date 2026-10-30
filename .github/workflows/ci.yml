@@ -17,3 +17,13 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npx tsc --noEmit
+  slow:
+    # Issue #198: the long simulation tests (tests/slow/) run here in parallel, so the main test job stays short.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-audit --no-fund
+      - run: npm run test:slow

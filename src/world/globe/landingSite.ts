@@ -37,21 +37,23 @@ export function engageLanding(direction: Vec3, home: number) {
   if (home > 0) { clearLanding(); return false; }
   const frame = tangentFrame(direction);
   const planet = planetFor(WORLD_SEED);
-  const origin = planet.sampleSurface(frame.dir);
+  // sampleSurface reuses one result object, so keep the number: the reader below samples again and would
+  // otherwise read its own sample back as the origin (s.h - origin.h = 0, a flat landing patch).
+  const originH = planet.sampleSurface(frame.dir).h;
   const ll = toLatLon(frame.dir);
   const latDeg = ll.lat * 180 / Math.PI;
   const lonDeg = ll.lon * 180 / Math.PI;
   const salt = hash(`landing:${latDeg.toFixed(3)}:${lonDeg.toFixed(3)}`);
-  setSite({ latDeg, lonDeg, datumM: Math.max(0, origin.h), salt, dir: frame.dir, east: frame.east, north: frame.north });
+  setSite({ latDeg, lonDeg, datumM: Math.max(0, originH), salt, dir: frame.dir, east: frame.east, north: frame.north });
   setRemoteHeight((x, z) => {
     const d = siteDirection(x, z, PLANET.radius);
     const s = planet.sampleSurface(d);
     const ll = toLatLon(d);
     const dem = sampleDem(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI);
-    if (elevationWins(s.kind, dem)) return LEVEL.waterSurface + (dem! - origin.h) + surfaceDetail(x, z) * 0.5;
+    if (elevationWins(s.kind, dem)) return LEVEL.waterSurface + (dem! - originH) + surfaceDetail(x, z) * 0.5;
     if (s.kind === 'ocean' || s.h < 0) return LEVEL.waterSurface - 2;
     if (s.kind === 'lake') return LEVEL.waterSurface - 0.35;
-    return LEVEL.waterSurface + (s.h - origin.h) + surfaceDetail(x, z) * 0.5;
+    return LEVEL.waterSurface + (s.h - originH) + surfaceDetail(x, z) * 0.5;
   });
   return true;
 }

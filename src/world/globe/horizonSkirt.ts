@@ -237,7 +237,12 @@ export function buildSkirtMesh(
   return { position, normal, color, fade, water, photo, index, triangles: used.length / 3, rows: rows.length, segments, outerM: outer };
 }
 
-export interface SkirtOrigin { asl: number; gameY: number; remote: boolean }
+export interface SkirtOrigin { asl: number; gameY: number; remote: boolean; /** Landed lake's surface (m) when the site is on a lake. */ lakeW?: number }
+
+/** The local patch draws the landed lake as one flat water plane. The far-field lake surface follows the pre-carve
+ *  ground and slopes, so near a lake landing the skirt holds the landed lake's level and fades to the planet's
+ *  surface between these distances (m) from the site: one level for the water body you stand on. */
+export const LAKE_HOLD_M = [1500, 4000] as const;
 
 /** Copy what sampleSurface returns. The planet reuses one result object. */
 function shownAsl(h: number, water: number) {
@@ -252,8 +257,12 @@ function shownAsl(h: number, water: number) {
 export function skirtSample(planet: Planet, x: number, z: number, origin: SkirtOrigin): { y: number; rgb: [number, number, number]; water: boolean; kind: '' | 'ocean' | 'lake' } {
   const dir: Vec3 = origin.remote ? siteDirection(x, z, PLANET.radius) : planet.fromLocal(x, z);
   const s = planet.sampleSurface(dir);
-  const asl = shownAsl(s.h, s.water);
+  let asl = shownAsl(s.h, s.water);
   const water = s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level;
+  if (s.kind === 'lake' && origin.lakeW !== undefined) {
+    const t = Math.hypot(x, z), k = Math.min(1, Math.max(0, (t - LAKE_HOLD_M[0]) / (LAKE_HOLD_M[1] - LAKE_HOLD_M[0])));
+    asl = origin.lakeW + (asl - origin.lakeW) * k * k * (3 - 2 * k);
+  }
   const rgb: [number, number, number] = [0, 0, 0];
   if (water) {
     const c = s.kind === 'ocean' ? GLOBE_COLOURS.shallow : GLOBE_COLOURS.lakeShallow;
@@ -266,7 +275,7 @@ export function skirtSample(planet: Planet, x: number, z: number, origin: SkirtO
 export function skirtOrigin(planet: Planet, gameY: number): SkirtOrigin {
   const dir: Vec3 = SITE.remote ? SITE.dir : planet.home;
   const s = planet.sampleSurface(dir);
-  return { asl: shownAsl(s.h, s.water), gameY, remote: SITE.remote };
+  return { asl: shownAsl(s.h, s.water), gameY, remote: SITE.remote, lakeW: SITE.remote && s.kind === 'lake' ? s.water : undefined };
 }
 
 /** Latitude and longitude of a skirt vertex, for a later elevation or imagery sample. */

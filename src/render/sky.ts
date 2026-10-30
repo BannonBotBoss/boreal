@@ -23,7 +23,7 @@ void main() {
   gl_Position = p.xyww; // always at the far plane, behind the world
 }`;
 const CLOUD_FRAG = /* glsl */`
-uniform float uTime, uSeed, uCover, uDay, uGolden, uSunAlt, uTwB0, uTwK, uTwGain;
+uniform float uTime, uSeed, uCover, uDay, uGolden, uSunAlt, uTwB0, uTwK, uTwGain, uBoxK, uBoxSin;
 uniform vec3 uTwTint;
 uniform vec2 uDrift;
 uniform vec3 uSunDir, uSunColor;
@@ -37,6 +37,7 @@ void main() {
   vec2 uv = d.xz / (d.y + 0.08) * 1.6 + uDrift; // drift = integrated wind of the top weather layer
   float n = fbm(uv, uSeed) * 0.75 + fbm(uv * 3.1 + 5.0, uSeed) * 0.25;
   float cloud = smoothstep(uCover, uCover + 0.18, n) * smoothstep(0.0, 0.15, d.y);
+  cloud *= 1.0 - uBoxK * smoothstep(uBoxSin * 0.8, uBoxSin * 1.25, d.y); // issue #202 (1): where the dew-point box is kept, the dome only paints past its edge
   // Lit from the sun side, warm at sunrise/sunset, faint moonlit grey at night; denser cores are darker.
   float facing = 0.5 + 0.5 * dot(d, uSunDir);
   vec3 dayCol = mix(vec3(0.78, 0.8, 0.86), vec3(1.0), facing);
@@ -77,9 +78,9 @@ export function createSky(scene: THREE.Scene) {
     vertexShader: CLOUD_VERT, fragmentShader: CLOUD_FRAG, side: THREE.BackSide, transparent: true, depthWrite: false, fog: false,
     uniforms: { uTime: { value: 0 }, uSeed: { value: (WORLD_SEED % 997) * .37 }, uCover: { value: .47 }, uDrift: { value: new THREE.Vector2() }, uDay: { value: 1 }, uGolden: { value: 0 },
       uSunDir: { value: new THREE.Vector3() }, uSunColor: { value: new THREE.Color() },
-      uSunAlt: { value: 0 }, uTwB0: { value: TWILIGHT_B0 }, uTwK: { value: SKY.k }, uTwGain: { value: 0 }, uTwTint: { value: new THREE.Color(1, .55, .3) } },
+      uSunAlt: { value: 0 }, uBoxK: { value: 0 }, uBoxSin: { value: 1 }, uTwB0: { value: TWILIGHT_B0 }, uTwK: { value: SKY.k }, uTwGain: { value: 0 }, uTwTint: { value: new THREE.Color(1, .55, .3) } },
   }));
-  clouds.renderOrder = -1; sky.renderOrder = -2; scene.add(clouds);
+  clouds.renderOrder = -1; sky.renderOrder = -2; clouds.userData.cloudDome = true; scene.add(clouds);
   const sunLight = new THREE.DirectionalLight(0xffebc3, 3); scene.add(sunLight, sunLight.target);
   const moonLight = new THREE.DirectionalLight(0x9fb4e6, .35); scene.add(moonLight, moonLight.target);
   const hemi = new THREE.HemisphereLight(0xf1f5dd, 0x526753, 2.7); scene.add(hemi);

@@ -34,6 +34,14 @@ export function toGameFrame(basis: THREE.Matrix4, camPos: THREE.Vector3, m: THRE
 export function nearEdgeDepth(p: THREE.Vector3, modelView: THREE.Matrix4, proj: THREE.Matrix4) {
   const c = new THREE.Vector4(p.x, p.y, p.z, 1).applyMatrix4(modelView).applyMatrix4(proj); return Math.min(1, Math.max(0, c.z / c.w * .5 + .5));
 }
+/** Issue #202 (1): after the 60 m handover the overlay box stays, frozen in game metres where it was at the handover. It holds at
+ *  full strength while the player is within a quarter box of that centre and fades out by the box edge (no rebake in game mode). */
+export function keptCloudFade(distM: number, L = LOCAL_CLOUDS) {
+  const t = Math.min(1, Math.max(0, (distM - L.sizeM / 4) / (L.sizeM / 4))); return 1 - t * t * (3 - 2 * t);
+}
+/** Issue #202 (1): sine of the view elevation below which a ray from the ground reaches the cloud base (baseM above the eye) only
+ *  past the box edge (edgeM away). The painted dome fills the sky below it; above it the dew-point box is the cloud. */
+export function boxEdgeSin(baseM: number, edgeM: number) { const b = Math.max(1, baseM); return b / Math.hypot(b, Math.max(1, edgeM)); }
 export interface ColumnInput { tsC: number; q: number; cover: number }
 /** Nearest sim cell to a planet direction (planes from core/planetBudget).
  *  Live globe clouds read `weatherAtLatLon` instead. This stays for the nearest-cell check in tests/cloud-column.test.ts. */
@@ -86,7 +94,7 @@ export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
   const uniforms = { uVol: { value: tex }, uCamLocal: { value: new THREE.Vector3() }, uSunLocal: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: L.steps }, uOpacity: { value: 1 } };
   const mat = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: 'precision highp float; uniform mat4 modelViewMatrix, projectionMatrix; in vec3 position;\n' + VERT, fragmentShader: FRAG, uniforms, side: THREE.BackSide, transparent: true, depthWrite: false, depthTest: false });
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat); mesh.frustumCulled = false; mesh.renderOrder = 1; mesh.visible = false;
-  const omat = mat.clone(); omat.uniforms = { ...uniforms, uOpacity: { value: 0 } }; // shared volume, camera and sun; own opacity
+  const omat = mat.clone(); omat.uniforms = { ...uniforms, uOpacity: { value: 0 }, uCamLocal: { value: new THREE.Vector3() } }; // shared volume and sun; own opacity and camera (game metres, set by inpage)
   // issue #202 (2): the overlay writes the depth of the cloud's near edge (BAND_OCCLUDE) and is depth-tested against the game
   // pass, so a ridge in front hides the cloud behind it while cloud in front of the ground stays. The globe copy keeps depthTest off.
   omat.defines = { BAND_OCCLUDE: 1 }; omat.depthTest = true;

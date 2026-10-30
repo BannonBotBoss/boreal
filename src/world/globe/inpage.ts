@@ -36,7 +36,7 @@ import { LOG_DEPTH } from './logDepth';
 import { GOVERNOR, resetGovernor } from '../../core/quality';
 import { INTEREST, JOB_FIRST, pending, queued, STATS as JOBS } from '../../core/interest';
 import { CHUNK_SIZE, heightAt } from '../../core/world';
-import { bandCloudOpacity, toGameFrame } from './localClouds';
+import { bandCloudOpacity, toGameFrame, keptCloudFade, boxEdgeSin, LOCAL_CLOUDS } from './localClouds';
 import { createHorizonSkirt, type HorizonSkirt } from '../../render/horizonMesh';
 import { createHorizonCover } from '../../render/horizonCover';
 import { demCoverage, photoCoverage } from './openTiles';
@@ -131,6 +131,7 @@ function controller(view: View, host: InPageHost) {
   const padOn = () => { try { return [...navigator.getGamepads()].some(p => p?.connected); } catch { return false; } };
   const entryName = (): EntryPhase => mode === 'game' ? 'game' : mode === 'globe' ? (globe?.fallState ? 'fall' : 'orbit') : 'drone';
   const hidden = new Map<THREE.Object3D, boolean>(); let savedBg: THREE.Scene['background'] | undefined;
+  let kept: { centre: THREE.Vector3; base: number } | null = null; // issue #202 (1): the dew-point box held past the handover (game metres)
   const NO_GLOBE = new THREE.Color(1, 0, 1);
 const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks (DEBUG, frame-cost log fields) only with ?inpagedev
   const DEBUG = { noShore: false, noGlobe: false, noAO: false, holdH: 0, far: 0, pose: null as null | { p: [number, number, number]; look: [number, number, number] } };
@@ -193,13 +194,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     axes.f = axes.r = axes.u = axes.yaw = axes.pitch = 0; mouseYaw = 0; mousePitch = 0;
     return a;
   }
-  function toGlobe() { restoreScene(); globe!.drive(null); setMode('globe'); }
-  function toGame() { restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
+  function toGlobe() { kept = null; restoreScene(); globe!.drive(null); setMode('globe'); }
+  function toGame() { keepClouds(); restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
   function restoreScene() {
     for (const [o, v] of hidden) o.visible = v; hidden.clear(); for (const c of unculled) c.frustumCulled = true; unculled.length = 0;
     if (savedBg !== undefined) { view.scene.background = savedBg; savedBg = undefined; } view.scene.backgroundIntensity = 1; DRONE_GRADE.exposure = 1; setPatchFade(1); setPatchFar(null); bandLook(0); AO_BLEND.value = 1;
     if (skirt) skirt.mesh.visible = false;
-    if (globe?.localClouds) globe.localClouds.overlay.visible = false;
+    if (globe?.localClouds && !kept) globe.localClouds.overlay.visible = false; // issue #202 (1): kept past the handover
     if (cover) cover.mesh.visible = false;
   }
   const isChunkRoot = (o: THREE.Object3D) => o.type === 'Group' && (o.children[0]?.userData.inspect as { type?: string } | undefined)?.type === 'terrain';
@@ -399,7 +400,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     },
     /** buildScene, after the sky update: the globe into the far layer, as the background; the patch fade; band visibility. */
     background(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
-      if (mode !== 'band' || !globe) { if (hidden.size || savedBg !== undefined) restoreScene(); return; }
+      if (mode !== 'band' || !globe) { if (hidden.size || savedBg !== undefined) restoreScene(); if (mode === 'game') keptClouds(scene, camera); return; }
+      if (kept) dropKept(scene);
       const t0 = performance.now(); renderer.getDrawingBufferSize(size);
       // While the patch is out, this texture is the whole picture (the 2 km aerial). Half of the drawing
       // buffer stretches one texel across two pixels. The shore mask then passes its cutoff and vertex lakes
@@ -476,6 +478,28 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     if (!o.parent) scene.add(o);
     const a = lc.mesh.visible ? bandCloudOpacity(globe!.altitude, fade) : 0; o.visible = a > 0; (o.material as THREE.RawShaderMaterial).uniforms.uOpacity.value = a; if (!o.visible) return;
     toGameFrame(gameBasis(globe!.planet, camera.position.x, camera.position.z, tmpM), camera.position, lc.mesh.matrix, o.matrix); o.matrixWorldNeedsUpdate = true;
+    camLocal(o, camera.position);
+  }
+  /** the ray march starts at the camera in box-local coordinates (same value the globe copy gets from the origin) */
+  function camLocal(o: THREE.Mesh, p: THREE.Vector3) { ((o.material as THREE.RawShaderMaterial).uniforms.uCamLocal.value as THREE.Vector3).copy(p).applyMatrix4(tmpM.copy(o.matrix).invert()); }
+  /** Issue #202 (1): at the 60 m handover the dew-point box was replaced in one frame by the game's painted dome (own cover and
+   *  layout). Now the overlay stays where it was in game metres and the dome only paints the sky past the box edge. */
+  function keepClouds() {
+    const o = globe?.localClouds?.overlay, col = globe?.localClouds?.column(); kept = null;
+    if (!o?.visible || !col || col.lcl < 0) return;
+    kept = { centre: new THREE.Vector3().setFromMatrixPosition(o.matrix), base: col.lcl };
+  }
+  function keptClouds(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
+    const o = globe?.localClouds?.overlay; if (!kept || !o) return;
+    const dx = camera.position.x - kept.centre.x, dz = camera.position.z - kept.centre.z, k = keptCloudFade(Math.hypot(dx, dz));
+    (o.material as THREE.RawShaderMaterial).uniforms.uOpacity.value = k; o.visible = k > 0; camLocal(o, camera.position);
+    const eye = camera.position.y - kept.centre.y + LOCAL_CLOUDS.topM / 2, edge = Math.max(1, LOCAL_CLOUDS.sizeM / 2 - Math.max(Math.abs(dx), Math.abs(dz)));
+    domeBox(scene, k, boxEdgeSin(kept.base - eye, edge));
+    if (k <= 0) dropKept(scene);
+  }
+  function dropKept(scene: THREE.Scene) { kept = null; domeBox(scene, 0, 1); if (globe?.localClouds && mode !== 'band') globe.localClouds.overlay.visible = false; }
+  function domeBox(scene: THREE.Scene, k: number, sin: number) {
+    for (const c of scene.children) if (c.userData.cloudDome) { const u = ((c as THREE.Mesh).material as THREE.ShaderMaterial).uniforms; u.uBoxK.value = k; u.uBoxSin.value = sin; }
   }
   function duskOf(scene: THREE.Scene) { let y = 1; for (const o of scene.children) { const l = o as THREE.DirectionalLight; if (l.isDirectionalLight && l.intensity > 0) { const d = l.position.clone().sub(l.target.position); y = d.y / Math.max(1e-6, d.length()); break; } } return 1 - smoothstep(INPAGE.duskSin[0], INPAGE.duskSin[1], y); }
   function bandLook(s: number, t = 0) { if (landU) { const D = INPAGE.landTint, N = INPAGE.landTintDusk, L = [0, 1, 2].map(i => D[i] + (N[i] - D[i]) * dusk); landU.uLandTint.value.setRGB(1 + (L[0] - 1) * t, 1 + (L[1] - 1) * t, 1 + (L[2] - 1) * t); /* day -> dusk tint (duskOf) */ } if (lakeU) { const L = (u: { value: THREE.Color }, a: readonly number[], b: readonly number[]) => u.value.setRGB(a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s, a[2] + (b[2] - a[2]) * s); const D = INPAGE.duskLake, k = (c: readonly number[]) => c.map((v, i) => v * (1 + (D[i] - 1) * dusk)); L(lakeU.shallow, GLOBE_COLOURS.lakeShallow, k(INPAGE.lakeShallow)); L(lakeU.deep, GLOBE_COLOURS.lakeDeep, k(INPAGE.lakeDeep)); lakeU.rough.value = .55 + (INPAGE.lakeRough - .55) * s; } return s; }

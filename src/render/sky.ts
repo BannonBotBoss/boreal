@@ -1,4 +1,5 @@
 import { createVenus } from './venusSky';
+import { siteLatitude } from '../core/sitePhase';
 import { SITE as VENUS_SITE } from '../core/weather'; // the Sun and the planets share the observer (Kenora) so twilight and Venus agree
 import { SKY, TWILIGHT_B0, skyLuminance, twilightIlluminance } from '../core/skyVisibility';
 import { GLSL_NOISE } from '../proc/glsl';
@@ -98,7 +99,7 @@ export function createSky(scene: THREE.Scene) {
     /** Moves the sun and recolours sky, light and fog for the hour; the sky follows the camera. */
     update(hour: number, time: number, camera: THREE.Camera, focus: THREE.Vector3) {
       const doy = dayAt(time), date = clockDate(time);
-      const sun = sunPosition(hour, doy, VENUS_SITE.lat), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
+      const sun = sunPosition(hour, doy, siteLatitude(VENUS_SITE.lat)), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
       sky.position.copy(camera.position); clouds.position.copy(camera.position);
       u.sunPosition.value.copy(dir);
       // Physical light (core/light): sun colour from spectral transmittance, illuminance in lux, adaptive exposure.

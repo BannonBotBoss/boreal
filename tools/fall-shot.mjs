@@ -3,6 +3,7 @@
 // Oct 30 23:xx: waits for the Continue button (LOAD, default 240 s); under SwiftShader the menu appears ~133 s in.
 // Oct 31 01:xx: the old blank planet + paused menu was the reload path: SwiftShader probes to Minimum, so ascend() fell back to
 // location.search. &inpagelow (dev) keeps the in-page path; now Shift+G reaches the in-page globe and G drops into the drone glide.
+// EMBODY=<n> presses G after the glide and grabs n landed frames.
 // BASE=http://127.0.0.1:5173 PW=<playwright-core path> node tools/fall-shot.mjs   (writes /tmp/shots-fall)
 const pw = await import(process.env.PW ?? 'playwright-core'), chromium = pw.chromium ?? pw.default.chromium;
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5173', STEP = +(process.env.STEP ?? 4000), N = +(process.env.N ?? 20);
@@ -24,5 +25,7 @@ for (let i = 1; i <= N; i++) {
   console.log(JSON.stringify({ i, s: +((Date.now() - t0) / 1000).toFixed(1), hud: await hud() }));
 }
 if (process.env.DIVE) { await p.keyboard.down('KeyQ'); for (let i = 1; i <= +(process.env.DIVE); i++) { await p.waitForTimeout(STEP); await p.screenshot({ path: `/tmp/shots-fall/dive-${String(i).padStart(2, '0')}.png` }); console.log(JSON.stringify({ dive: i, hud: await hud() })); } await p.keyboard.up('KeyQ'); }
+if (process.env.EMBODY) { // Oct 31 14:xx: G again in drone phase hands over to the game (embody), so these are true landed frames, not the glide
+  await p.keyboard.press('g'); for (let i = 1; i <= +(process.env.EMBODY); i++) { await p.waitForTimeout(STEP); await p.screenshot({ path: `/tmp/shots-fall/landed-${String(i).padStart(2, '0')}.png` }); console.log(JSON.stringify({ landed: i, hud: await hud() })); } }
 console.log(JSON.stringify({ errs: errs.slice(0, 5) }));
 await b.close();

@@ -17,7 +17,7 @@ export const LANDING_SHOWN_CAP = 5;
 /** Metres ahead of the player. Inside the picture's full-body distance (animalLadder fullM is 16, lowM 48). */
 export const LANDING_NEAR_M = 8;
 export const LANDING_RING_M = 3.2;
-export const LANDING_SIDE_M = 3.4;
+export const LANDING_SIDE_M = 5.5;
 
 /** Rust species id (LANDING_SPECIES) to the common name in src/core/species.ts and the model manifest. */
 export const LANDING_DISPLAY: Record<string, string> = {

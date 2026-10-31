@@ -287,15 +287,34 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     else if (e.key === 'g' || e.key === 'G') beginFall(); // G drops on the centre. Never a no-op while the globe has input.
     else if (e.key === 'Escape' && own.pageDom) { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); }
   });
-  /** The clicked direction travels with the handoff. Off the home square, samp.x/z are 0 and are not a place. */
+  /** ?latlon= on a scripted descent (the ten-site capture). The orbit may still be over the forest; the drop is the named point. */
+  function scriptedDirection(): [number, number, number] | null {
+    const raw = q.get('latlon');
+    if (!raw) return null;
+    const [a, b] = raw.split(',');
+    const lat = Number(a), lon = Number(b);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180);
+  }
+  /** The clicked direction travels with the handoff. Off the home square, samp.x/z are 0 and are not a place.
+   *  A scripted latlon drop passes home 0 so engageLanding anchors the forest on that point. */
   function dropAt(yaw: number, vy: number) {
+    const aimed = scriptedDirection();
+    if (aimed) dir.set(aimed[0], aimed[1], aimed[2]);
     const samp = planet.sampleSurface([dir.x, dir.y, dir.z]);
-    return { x: samp.x, z: samp.z, yaw, vy, home: samp.home, dir: [dir.x, dir.y, dir.z] as [number, number, number] };
+    const scripted = aimed !== null;
+    if (scripted) {
+      const ll = toLatLon([dir.x, dir.y, dir.z]);
+      console.log(`INPAGE drop ${q.get('latlon')} camera=${(ll.lat * 180 / Math.PI).toFixed(2)},${(ll.lon * 180 / Math.PI).toFixed(2)} home=${samp.home.toFixed(3)}`);
+    }
+    return { x: samp.x, z: samp.z, yaw, vy, home: scripted ? 0 : samp.home, dir: [dir.x, dir.y, dir.z] as [number, number, number] };
   }
   /** Start the free fall. With a hit, the fall is on that point. Without one (G, or A on the reticle), it is the centre. */
   function beginFall(hit?: THREE.Vector3) {
     if (!inputOn || fall || handed || leaving) return;
-    if (hit) dir.copy(hit);
+    const aimed = scriptedDirection();
+    if (aimed && !hit) dir.set(aimed[0], aimed[1], aimed[2]);
+    else if (hit) dir.copy(hit);
     stopCoast();
     const yaw0 = lookAz ?? cameraAz();
     if (alt <= FALL_END_M) { handed = true; leave(dropAt(-fallYaw(yaw0, 1), 0)); return; } // game yaw is minus the look azimuth (headingYaw)

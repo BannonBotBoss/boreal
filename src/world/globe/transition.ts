@@ -64,8 +64,9 @@ export function descentPitch(height: number, pitch: number) {
  *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the
  *  reload when the player or the probe has the game on Low or below at that moment). */
 export function transitionPath(search: string, env: { deviceMemory?: number; probeCap?: number } = {}, fallbackDefault: 'inpage' | 'reload' = 'inpage') {
-  const q = new URLSearchParams(search).get('transition');
+  const sp = new URLSearchParams(search), q = sp.get('transition');
   if (q === 'reload') return 'reload';
+  if (q === 'inpage' && sp.has('inpagelow')) return 'inpage'; // dev: evidence capture under software GL (#211)
   if ((env.deviceMemory ?? 8) <= 4 || (env.probeCap ?? 0) >= 3) return 'reload';
   return q === 'inpage' ? 'inpage' : fallbackDefault;
 }

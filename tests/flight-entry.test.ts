@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { body, step } from '../src/proc/physics';
-import { FALL_END_M, ISO_BELOW_HORIZON, NADIR, fallEase, fallPitch, fallVelocity, fallYaw, flightPrompt, isDescentGesture } from '../src/world/globe/flight';
+import { FALL_END_M, ISO_BELOW_HORIZON, NADIR, fallEase, fallPitch, fallVelocity, fallYaw, flightPrompt, freeFallVy, isDescentGesture } from '../src/world/globe/flight';
 import { PHOTO_FLY_LOOK, photoFlyMove, photoFlyPad, photoFlyStick, stepCarriedFly } from '../src/photo/fly';
 import { atomValues, loadBindings, resolveContext, type PadState } from '../src/core/bindings';
 import { MIX, RUSH_REF_MPS, rushLevel } from '../src/audio/borealSound';
@@ -176,4 +176,25 @@ test('controls hint wraps, and the controller legend sits above the button row',
   const prompt = Number(/#flight-prompt\{[^}]*bottom:(\d+)px/.exec(css)?.[1]);
   assert.ok(prompt >= bottom + 40, `flight prompt bottom ${prompt}px sits above the legend (${bottom}px)`);
   assert.match(rule, /max-width:min\(560px/);
+});
+
+test('a G drop from 2,100 m (below 10,000 ft) free-falls from rest to the 400 m glide height (#211)', () => {
+  const glide = 400, dt = 1 / 60, cam = { x: 0, y: 2100, z: 0, yaw: 0, pitch: ISO_BELOW_HORIZON }, vel = { x: 0, y: 0, z: 0 };
+  const still = { f: 0, r: 0, u: 0, fast: false, yaw: 0, pitch: ISO_BELOW_HORIZON };
+  let t = 0;
+  while (cam.y > glide + 1e-2 && t < 60) { vel.y = freeFallVy(vel.y, cam.y, dt); stepCarriedFly(cam, vel, dt, still, glide); t += dt; }
+  assert.ok(cam.y <= glide + 1e-2, `still at ${cam.y.toFixed(0)} m after ${t.toFixed(1)} s`);
+  const ideal = Math.sqrt(2 * (2100 - glide) / 9.81);
+  assert.ok(Math.abs(t - ideal) < 0.5, `fall took ${t.toFixed(2)} s, free fall predicts ${ideal.toFixed(2)} s`);
+  assert.ok(vel.y < -150, 'it arrives with real fall speed, not a hover');
+  const src = readFileSync('src/world/globe/inpage.ts', 'utf8');
+  assert.match(src, /freeFall = !vel\.y/, 'descend starts the free fall when no speed is handed over');
+  assert.match(src, /if \(freeFall\) vel\.y = freeFallVy\(/, 'the drone step applies it');
+});
+
+test('the in-page controller counts its stepped seconds, so a capture can tell a slow frame rate from a slow fall', () => {
+  const src = readFileSync('src/world/globe/inpage.ts', 'utf8');
+  assert.match(src, /dt = Math\.min\(\.1, \(now - lastT\) \/ 1000\); lastT = now; simT \+= dt;/, 'simT adds the same capped dt the fall uses');
+  assert.match(src, /get simT\(\) \{ return simT; \}/);
+  assert.match(readFileSync('tools/fall-shot.mjs', 'utf8'), /sim: c \? \+c\.simT/, 'fall-shot logs stepped seconds beside wall seconds');
 });

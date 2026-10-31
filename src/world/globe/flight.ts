@@ -52,6 +52,14 @@ export function fallVelocity(h0: number, end = FALL_END_M, dt = 1 / 60): number 
   return b.vy;
 }
 
+/**
+ * A G drop that starts below 10,000 ft has no fall speed to hand over. It falls from rest at that height instead:
+ * gravity on the drone's vertical speed through the one integrator (proc/physics), not an invented hand-off speed.
+ * Returns the new vertical speed (m/s) after dt at height y (m above the ground).
+ */
+export function freeFallVy(vy: number, y: number, dt: number): number {
+  const b = body(1, 0, y, 0); b.vy = vy; step(b, dt, {}, -Infinity); return b.vy;
+}
 export type EntryPhase = 'orbit' | 'fall' | 'drone' | 'game';
 
 /** On-screen line. The orbit line is the way in. The drone line is photo mode's own mapping. */

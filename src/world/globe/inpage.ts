@@ -21,7 +21,7 @@ import type { Globe } from './globeView'; // loaded on demand (only with the in-
 import { createFarLayer } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { layerPanelShown } from './layerPanel';
-import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './flight';
+import { FALL_END_M, ISO_BELOW_HORIZON, freeFallVy, flightPrompt, type EntryPhase } from './flight';
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
 import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
@@ -86,6 +86,8 @@ export function createInPage(view: View, host: InPageHost) {
   return ctl;
 }
 const LOW_TIER = 3; // core/quality LADDER: Ultra, High, Medium, Low, ...
+/** Low or below takes the reload path. ?inpagelow (dev, evidence capture under software GL) keeps the in-page path anyway. */
+const lowTier = () => !new URLSearchParams(location.search).has('inpagelow') && (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER);
 const ground = (x: number, z: number) => Math.max(heightAt(x, z), -.2);
 /** The patch dither's plane (render/fade.ts uPatchY): the water surface of the lake the patch disc reaches into (16 samples
  *  on its rim), so the game water and the lake bed under one pixel get the same dither (no ring of bed dots), else the
@@ -111,7 +113,7 @@ function controller(view: View, host: InPageHost) {
   let renderMs = 0; // last frame's globe + game draw CPU (ms): the descent's chunk job budget fills the rest of jobFrame
   let bandT = 0; /* s since the descent started (the ready safety cap) */ const chunkFirst = (k: string) => k.startsWith('chunk:');
   let maskWait = 0, maskWarned = false, readyAt = 0, dusk = 0; // s waited on the mask with the chunks ready (capped at INPAGE.maskWaitSec); h at first ready (STATS.readyAt)
-  let h = 0, h0 = 1, blend = 0, fade = 0, fadeT = 0, ready = false, readySeen = false, needStart = false, placedFrame = 0, frameNo = 0, lastT = 0, cameraTouched = false;
+  let h = 0, h0 = 1, blend = 0, fade = 0, fadeT = 0, ready = false, readySeen = false, needStart = false, placedFrame = 0, frameNo = 0, lastT = 0, cameraTouched = false, simT = 0; // simT: seconds the controller has actually stepped (dt is capped at 0.1 s, so slow frames run the fall slower than the wall clock)
   const start = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, end = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
   const cam = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, gcam = { position: new THREE.Vector3(), quaternion: new THREE.Quaternion() };
   const vp = { position: cam.p, quaternion: cam.q };
@@ -119,7 +121,7 @@ function controller(view: View, host: InPageHost) {
   const land = new THREE.Vector3();
   let spotX = 0, spotZ = 0, yaw = 0, pitch = 0;
   const heldKeys = new Set<string>(), axes = { f: 0, r: 0, u: 0, yaw: 0, pitch: 0 };
-  const vel = { x: 0, y: 0, z: 0 }; let airSpeed = 0;
+  const vel = { x: 0, y: 0, z: 0 }; let airSpeed = 0; let freeFall = false; // a G drop below 10,000 ft falls from rest
   let wantEmbody = false, wantCancel = false, mouseYaw = 0, mousePitch = 0, dragging = false;
   let promptEl: HTMLDivElement | null = null;
   const overlayOpen = () => !!document.querySelector('#start-menu:not(.fade), dialog[open], .padm:not([hidden])');
@@ -167,7 +169,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null;
     const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
     h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;
-    vel.x = 0; vel.y = at.vy ?? 0; vel.z = 0; airSpeed = Math.abs(vel.y);
+    vel.x = 0; vel.y = at.vy ?? 0; vel.z = 0; airSpeed = Math.abs(vel.y); freeFall = !vel.y; // no carried speed: gravity takes over from rest
     phase = 'drone'; blend = 0; fadeT = 0; readySeen = false; maskWait = 0; bandT = 0; readyAt = 0; down = true; lastT = performance.now(); setMode('band');
   }
   /** Warm the chunks under the falling camera, at the same point the handoff will use. Does not search for a different landing. */
@@ -280,7 +282,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** dev (refs/T-0041/measure.mjs): the game view (scene, camera) and the player spot, for the landing line-of-sight raycast */
     get view() { return view; }, player: () => host.player(),
     jobs: () => ({ q: queued(), run: JOBS.jobsRun, deferred: JOBS.deferred, lastMs: +JOBS.lastFrameMs.toFixed(1), kinds: JSON.parse(JSON.stringify(JOBS.kinds)) as unknown }),
-    get mode() { return mode; }, get globe() { return globe; }, get fade() { return fade; }, get height() { return h; }, get flightPhase() { return entryName(); }, STATS, INPAGE, far,
+    get mode() { return mode; }, get globe() { return globe; }, get fade() { return fade; }, get height() { return h; }, get simT() { return simT; }, get flightPhase() { return entryName(); }, STATS, INPAGE, far,
     /** 0..1 of the zoom-8 imagery tiles around the drone. The stills wait on this so a gap is a real hole, not a tile still in flight. */
     photosReady() {
       if (!globe) return 0;
@@ -297,7 +299,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */
     ascend(): boolean {
       if (mode !== 'game') return true;
-      if (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER) return false; // Low or below now: main takes the reload path
+      if (lowTier()) return false; // Low or below now: main takes the reload path
       if (!globe) { void loadGlobe().then(() => api.ascend()); return true; } // first use before the prewarm finished
       for (const o of view.scene.children) if (isChunkRoot(o)) for (const m of o.children) uploaded.add(m); // drawn in the game already
       const g = globe; prep = null; host.save(); hold.hold(); g.resumeWorkers(); down = false; needStart = true; lastT = performance.now(); setMode('band');
@@ -307,7 +309,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
      *  altitude (globeView startAlt, 2.2 R: the whole disc), no rise; the ascent's hold and workers. False = take the reload path. */
     enter(): boolean {
       if (mode !== 'game') return true;
-      if (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER) return false;
+      if (lowTier()) return false;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
       prep = null; hold.hold(); globe.resumeWorkers(); globe.resumeOrbit(); globe.jumpTo(PLANET.radius * 2.2); lastT = performance.now(); toGlobe(); return true;
     },
@@ -338,13 +340,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     camera(camera: THREE.PerspectiveCamera) {
       if (mode !== 'band') { if (cameraTouched) { camera.near = .2; camera.far = 700; cameraTouched = false; } return; }
       cameraTouched = true;
-      const now = performance.now(), dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
+      const now = performance.now(), dt = Math.min(.1, (now - lastT) / 1000); lastT = now; simT += dt;
       end.p.copy(camera.position); end.q.copy(camera.quaternion); const cr = chunksReady(), mr = globe?.maskReady ?? true; if (!cr || mr) maskWait = 0; else if ((maskWait += dt) > INPAGE.maskWaitSec && !maskWarned) { maskWarned = true; console.warn(`INPAGE shoreline mask not ready after ${INPAGE.maskWaitSec} s: landing with the per-vertex shoreline`); }
       ready = cr && (mr || maskWait > INPAGE.maskWaitSec); if (ready && !readySeen) readyAt = Math.round(h); readySeen ||= ready;
       if (down) bandT += dt; const late = down && !readySeen && bandT > INPAGE.readyMaxSec;
       if (late) { readySeen = true; readyAt = -Math.round(h); console.warn(`INPAGE patch not ready after ${Math.round(bandT)} s: fading in at ${Math.round(h)} m, the game streams the rest`); } // the camera is not held: speed from the fall keeps going
       if (needStart) { // ascent: straight up the player's vertical. Pitch follows the climb curve back toward nadir.
-        needStart = false; const p = host.player(); spotX = p.x; spotZ = p.z; yaw = p.yaw; vel.x = vel.y = vel.z = 0;
+        needStart = false; freeFall = false; const p = host.player(); spotX = p.x; spotZ = p.z; yaw = p.yaw; vel.x = vel.y = vel.z = 0;
         land.set(p.x, ground(p.x, p.z), p.z); h = h0 = Math.max(1, end.p.y - land.y); pitch = globePitch(h);
       }
       const top = TRANSITION.bandTop * 1.05;
@@ -362,7 +364,9 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
             const x0 = fly.x, y0 = fly.y, z0 = fly.z;
             const floorY = photoFlyFloor(fly.x, fly.z);
             const minY = descentFloorY(ground(fly.x, fly.z), floorY, diving);
+            if (freeFall) vel.y = freeFallVy(vel.y, h, dt); // free fall from rest until the glide height
             stepCarriedFly(fly, vel, dt, axesIn, minY);
+            if (freeFall && fly.y <= minY + 1e-2) freeFall = false;
             const atGlide = !diving && minY > floorY + 1 && fly.y <= minY + 1e-2;
             if (atGlide) { const held = arrestGlide(vel, fly.yaw, true, false); vel.x = held.x; vel.y = held.y; vel.z = held.z; fly.y = minY; }
             else if (fly.y <= minY + 1e-3 && vel.y < 0) vel.y = 0; // the photo floor stops the body; it does not zero the speed at the handoff

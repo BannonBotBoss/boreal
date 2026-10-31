@@ -78,6 +78,8 @@ export function createLandingCast(scene: THREE.Scene) {
   let key = '';
   let wanted = '';
   let placed: PlacedAnimal[] = [];
+  let slots: ReturnType<typeof pickLandingSlots> = [];
+  let origin = { x: 0, z: 0, yaw: 0 };
   let census: CensusRow[] = [];
   let loading = false;
   let lastTime = 0;
@@ -136,8 +138,9 @@ export function createLandingCast(scene: THREE.Scene) {
       key = asked;
       census = pop.map(row => ({ species: row.species, count: row.count }));
       clearBodies();
-      const slots = pickLandingSlots(census);
-      placed = placeLandingAnimals(slots, { x, z, yaw }, (px, pz) => isDryLand(px, pz));
+      slots = pickLandingSlots(census);
+      origin = { x, z, yaw };
+      placed = placeLandingAnimals(slots, origin, (px, pz) => isDryLand(px, pz));
       for (const animal of placed) {
         const proc = createProceduralAnimal(animal.display);
         if (!proc) continue;
@@ -170,6 +173,11 @@ export function createLandingCast(scene: THREE.Scene) {
       const ctx = landingContext(x, z);
       report = { ...report, ...ctx };
       anchor(ctx, x, z, yaw);
+      // The glide carries the player away from the spot where the list first arrived. Keep the cast in front of them.
+      if (placed.length && Math.hypot(x - origin.x, z - origin.z) > 12) {
+        origin = { x, z, yaw };
+        placed = placeLandingAnimals(slots, origin, (px, pz) => isDryLand(px, pz));
+      }
       const motion: Motion = 'walk';
       const phase = (time * 0.65) % 1;
       const bodies: PictureBody[] = [];

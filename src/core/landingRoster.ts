@@ -14,10 +14,10 @@ export const LANDING_CENSUS_SIDE_M = 5000;
 export const LANDING_YEAR = 2026;
 /** Individuals placed in the first view. One slot stays for the embodied animal's full mesh. */
 export const LANDING_SHOWN_CAP = 5;
-/** Metres ahead of the player. Inside the picture's full-body distance (animalLadder fullM is 16, lowM 48). */
-export const LANDING_NEAR_M = 8;
-export const LANDING_RING_M = 3.2;
-export const LANDING_SIDE_M = 5.5;
+/** Metres ahead of the player, close enough to stand beside the wolf in the first view. */
+export const LANDING_NEAR_M = 5;
+export const LANDING_RING_M = 1.4;
+export const LANDING_SIDE_M = 2.6;
 
 /** Rust species id (LANDING_SPECIES) to the common name in src/core/species.ts and the model manifest. */
 export const LANDING_DISPLAY: Record<string, string> = {

@@ -52,9 +52,9 @@ test('animals stand in front of the player, on dry ground, and a wet landing dra
   assert.equal(placed.length, slots.length);
   for (const animal of placed) {
     const dx = animal.x - 10, dz = animal.z - 30;
-    assert.ok(dz < -6, `ahead of yaw 0, got z ${animal.z}`);
-    assert.ok(Math.hypot(dx, dz) < 40);
-    assert.ok(Math.hypot(dx, dz) > 5);
+    assert.ok(dz < -4, `ahead of yaw 0, got z ${animal.z}`);
+    assert.ok(Math.hypot(dx, dz) < 24);
+    assert.ok(Math.hypot(dx, dz) > 3.5);
   }
   assert.deepEqual(placed, placeLandingAnimals(slots, { x: 10, z: 30, yaw: 0 }, () => true));
   assert.equal(placeLandingAnimals(slots, { x: 0, z: 0, yaw: 0 }, () => false).length, 0);
@@ -89,6 +89,7 @@ test('the stylized fill stays in the shared palette', () => {
   const mapped = new THREE.MeshStandardMaterial({ map: new THREE.Texture() });
   applyStylizedFill(mapped);
   assert.equal(mapped.emissiveMap, mapped.map);
+  assert.equal(mapped.toneMapped, false);
   const flat = new THREE.MeshStandardMaterial({ color: 0x224466 });
   applyStylizedFill(flat);
   assert.equal(flat.emissiveMap, null);

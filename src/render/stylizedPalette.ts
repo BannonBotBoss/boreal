@@ -62,15 +62,18 @@ export function stylizedFill(rgb: readonly [number, number, number]): [number, n
 export function applyStylizedFill(material: THREE.Material, rgb?: readonly [number, number, number]) {
   const m = material as THREE.MeshStandardMaterial;
   if (!m.emissive || !m.color) return;
+  // The landed key light can leave a standard material black. Skip tone mapping so the fill is the colour on screen.
+  m.toneMapped = false;
   if (m.map && !rgb) {
+    // Stored albedos are a few percent reflectance. Without the key light they need a strong lift to read.
     m.emissiveMap = m.map;
-    m.emissive.setRGB(0.55, 0.5, 0.42);
-    m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 0.65);
+    m.emissive.setRGB(1, 0.94, 0.82);
+    m.emissiveIntensity = 14;
   } else {
     const src = rgb ?? [m.color.r, m.color.g, m.color.b] as [number, number, number];
     const fill = stylizedFill(src);
     m.emissive.setRGB(fill[0], fill[1], fill[2]);
-    m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 0.85);
+    m.emissiveIntensity = 1.15;
   }
   m.userData.stylized = true;
 }

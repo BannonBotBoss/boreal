@@ -15,7 +15,7 @@ await cont.waitFor({ state: 'visible', timeout: +(process.env.LOAD ?? 240000) })
 await p.screenshot({ path: '/tmp/shots-fall/game-start.png' }); await p.mouse.move(640, 360);
 await cont.click().catch(() => {}); await p.waitForTimeout(+(process.env.PLAY ?? 30000));
 await p.screenshot({ path: '/tmp/shots-fall/game-play.png' }); await p.keyboard.press('Shift+KeyG'); await p.waitForTimeout(+(process.env.UP ?? 25000));
-const hud = () => p.evaluate(() => { const c = (window).__inpage, S = c?.STATS; return { txt: document.body.innerText.split('\n').filter(l => /(alt|altitude|fall|ft\b|km\b| m\b)/i.test(l)).join(' | ').slice(0, 160), mode: c?.mode, phase: c?.flightPhase, h: c ? Math.round(c.height) : null, fade: c ? +c.fade.toFixed(2) : null, ready: S?.ready, readyAt: S?.readyAt }; });
+const hud = () => p.evaluate(() => { const c = (window).__inpage, S = c?.STATS; return { txt: document.body.innerText.split('\n').filter(l => /(alt|altitude|fall|ft\b|km\b| m\b)/i.test(l)).join(' | ').slice(0, 160), mode: c?.mode, phase: c?.flightPhase, h: c ? Math.round(c.height) : null, sim: c ? +c.simT.toFixed(1) : null, fade: c ? +c.fade.toFixed(2) : null, ready: S?.ready, readyAt: S?.readyAt }; });
 console.log(JSON.stringify({ t: 0, hud: await hud() })); await p.screenshot({ path: '/tmp/shots-fall/fall-00.png' });
 await p.keyboard.press(process.env.KEY ?? 'g'); const t0 = Date.now();
 for (let i = 1; i <= N; i++) {

@@ -191,3 +191,10 @@ test('a G drop from 2,100 m (below 10,000 ft) free-falls from rest to the 400 m 
   assert.match(src, /freeFall = !vel\.y/, 'descend starts the free fall when no speed is handed over');
   assert.match(src, /if \(freeFall\) vel\.y = freeFallVy\(/, 'the drone step applies it');
 });
+
+test('the in-page controller counts its stepped seconds, so a capture can tell a slow frame rate from a slow fall', () => {
+  const src = readFileSync('src/world/globe/inpage.ts', 'utf8');
+  assert.match(src, /dt = Math\.min\(\.1, \(now - lastT\) \/ 1000\); lastT = now; simT \+= dt;/, 'simT adds the same capped dt the fall uses');
+  assert.match(src, /get simT\(\) \{ return simT; \}/);
+  assert.match(readFileSync('tools/fall-shot.mjs', 'utf8'), /sim: c \? \+c\.simT/, 'fall-shot logs stepped seconds beside wall seconds');
+});

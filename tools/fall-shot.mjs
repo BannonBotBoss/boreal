@@ -8,14 +8,14 @@ const pw = await import(process.env.PW ?? 'playwright-core'), chromium = pw.chro
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5173', STEP = +(process.env.STEP ?? 4000), N = +(process.env.N ?? 20);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
-const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (/^PROBE cap|^INPAGE/.test(m.text())) console.log(m.text().slice(0, 160)); });
+const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (/^PROBE cap|INPAGE/.test(m.text())) console.log(m.text().slice(0, 160)); });
 await p.goto(`${BASE}/?transition=inpage&inpagelow${process.env.Q ?? ''}`);
 const tl = Date.now(); const cont = p.getByText('Continue', { exact: true }).first();
 await cont.waitFor({ state: 'visible', timeout: +(process.env.LOAD ?? 240000) }).catch(() => {}); console.log(JSON.stringify({ loaded_s: (Date.now() - tl) / 1000, menu: await cont.isVisible() }));
 await p.screenshot({ path: '/tmp/shots-fall/game-start.png' }); await p.mouse.move(640, 360);
 await cont.click().catch(() => {}); await p.waitForTimeout(+(process.env.PLAY ?? 30000));
 await p.screenshot({ path: '/tmp/shots-fall/game-play.png' }); await p.keyboard.press('Shift+KeyG'); await p.waitForTimeout(+(process.env.UP ?? 25000));
-const hud = () => p.evaluate(() => (document.body.innerText.split('\n').filter(l => /(alt|altitude|fall|ft\b|km\b| m\b)/i.test(l)).join(' | ')).slice(0, 240));
+const hud = () => p.evaluate(() => { const c = (window).__inpage, S = c?.STATS; return { txt: document.body.innerText.split('\n').filter(l => /(alt|altitude|fall|ft\b|km\b| m\b)/i.test(l)).join(' | ').slice(0, 160), mode: c?.mode, phase: c?.flightPhase, h: c ? Math.round(c.height) : null, fade: c ? +c.fade.toFixed(2) : null, ready: S?.ready, readyAt: S?.readyAt }; });
 console.log(JSON.stringify({ t: 0, hud: await hud() })); await p.screenshot({ path: '/tmp/shots-fall/fall-00.png' });
 await p.keyboard.press(process.env.KEY ?? 'g'); const t0 = Date.now();
 for (let i = 1; i <= N; i++) {
@@ -23,5 +23,6 @@ for (let i = 1; i <= N; i++) {
   const f = `/tmp/shots-fall/fall-${String(i).padStart(2, '0')}.png`; await p.screenshot({ path: f });
   console.log(JSON.stringify({ i, s: +((Date.now() - t0) / 1000).toFixed(1), hud: await hud() }));
 }
+if (process.env.DIVE) { await p.keyboard.down('KeyQ'); for (let i = 1; i <= +(process.env.DIVE); i++) { await p.waitForTimeout(STEP); await p.screenshot({ path: `/tmp/shots-fall/dive-${String(i).padStart(2, '0')}.png` }); console.log(JSON.stringify({ dive: i, hud: await hud() })); } await p.keyboard.up('KeyQ'); }
 console.log(JSON.stringify({ errs: errs.slice(0, 5) }));
 await b.close();

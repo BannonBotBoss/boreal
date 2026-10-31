@@ -1,6 +1,6 @@
 // Headless WebGL frames of ?view=globe at 1 km, 300 m and 40 m (gate 2 of #192). SwiftShader = software GL, so frame times are not GPU numbers.
 // BASE=http://127.0.0.1:5173 PW=<playwright-core path> node tools/descent-shot.mjs   (writes /tmp/shots)
-const { chromium } = await import('process.env.PW ?? 'playwright-core'');
+const { chromium } = await import(process.env.PW ?? 'playwright-core');
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'] });
 for (const alt of [1000, 300, 40]) {
   const p = await b.newPage({ viewport: { width: 1280, height: 720 } });

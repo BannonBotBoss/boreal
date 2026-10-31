@@ -432,7 +432,7 @@ test('issue #202: the band cloud overlay maps the globe box (camera-relative pla
 });
 test('transition: flag + fallback, fade gated on chunks, mode machine, input scope, governor hold', () => {
   assert.equal(transitionPath(''), 'inpage'); assert.equal(transitionPath('?transition=reload'), 'reload'); assert.equal(transitionPath('', {}, 'reload'), 'reload'); assert.equal(transitionPath('', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('', { probeCap: 3 }), 'reload'); assert.equal(transitionPath('?transition=inpage'), 'inpage');
-  assert.equal(transitionPath('?transition=reload', {}, 'inpage'), 'reload'); assert.equal(transitionPath('?transition=inpage', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('?transition=inpage', { probeCap: 3 }), 'reload');
+  assert.equal(transitionPath('?transition=reload', {}, 'inpage'), 'reload'); assert.equal(transitionPath('?transition=inpage', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('?transition=inpage', { probeCap: 3 }), 'reload'); assert.equal(transitionPath('?transition=inpage&inpagelow', { probeCap: 3, deviceMemory: 4 }), 'inpage'); assert.equal(transitionPath('?inpagelow', { probeCap: 3 }), 'reload');
   assert.equal(patchFade(100, false), 0); assert.equal(patchFade(2500, true), 0); assert.equal(patchFade(TRANSITION.fadeFull, true), 1); assert.ok(patchFade(1300, true) > 0 && patchFade(1300, true) < 1);
   const base = { height: 1500, overHome: true, descending: true, chunksReady: false };
   assert.equal(nextMode({ ...base, mode: 'globe' }), 'globe', 'a zoom does not start the descent');

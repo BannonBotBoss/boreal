@@ -86,6 +86,8 @@ export function createInPage(view: View, host: InPageHost) {
   return ctl;
 }
 const LOW_TIER = 3; // core/quality LADDER: Ultra, High, Medium, Low, ...
+/** Low or below takes the reload path. ?inpagelow (dev, evidence capture under software GL) keeps the in-page path anyway. */
+const lowTier = () => !new URLSearchParams(location.search).has('inpagelow') && (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER);
 const ground = (x: number, z: number) => Math.max(heightAt(x, z), -.2);
 /** The patch dither's plane (render/fade.ts uPatchY): the water surface of the lake the patch disc reaches into (16 samples
  *  on its rim), so the game water and the lake bed under one pixel get the same dither (no ring of bed dots), else the
@@ -297,7 +299,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */
     ascend(): boolean {
       if (mode !== 'game') return true;
-      if (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER) return false; // Low or below now: main takes the reload path
+      if (lowTier()) return false; // Low or below now: main takes the reload path
       if (!globe) { void loadGlobe().then(() => api.ascend()); return true; } // first use before the prewarm finished
       for (const o of view.scene.children) if (isChunkRoot(o)) for (const m of o.children) uploaded.add(m); // drawn in the game already
       const g = globe; prep = null; host.save(); hold.hold(); g.resumeWorkers(); down = false; needStart = true; lastT = performance.now(); setMode('band');
@@ -307,7 +309,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
      *  altitude (globeView startAlt, 2.2 R: the whole disc), no rise; the ascent's hold and workers. False = take the reload path. */
     enter(): boolean {
       if (mode !== 'game') return true;
-      if (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER) return false;
+      if (lowTier()) return false;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
       prep = null; hold.hold(); globe.resumeWorkers(); globe.resumeOrbit(); globe.jumpTo(PLANET.radius * 2.2); lastT = performance.now(); toGlobe(); return true;
     },

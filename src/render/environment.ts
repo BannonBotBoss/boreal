@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { WIND_UNIFORMS } from './trees';
 import { SITE, WEATHER, solar, weatherAt } from '../core/weather';
 import { weatherAtLatLon } from '../core/planetWeather';
+import { siteLatitude } from '../core/sitePhase';
 import type { PlanetSim } from '../core/planetBudget';
 import { observationRecord } from '../core/observation';
 import { phenology } from '../core/treeSpecies';
@@ -51,7 +52,7 @@ function finish(source: 'ground' | 'globe', day: number, sunlight: number, rate:
 /** Forest: weatherAt at the observation point. Game +z is south, so north = −wind.z. */
 export function fillEnvironmentGround(day = WEATHER.day, hour = WEATHER.hour) {
   const o = observationRecord(), w = weatherAt(o.x, o.z);
-  ENV.tC = w.tC; ENV.rh = w.rh; ENV.rainMmH = w.rainMmH; ENV.windE = w.wind.x; ENV.windN = -w.wind.z; ENV.latDeg = SITE.lat;
+  ENV.tC = w.tC; ENV.rh = w.rh; ENV.rainMmH = w.rainMmH; ENV.windE = w.wind.x; ENV.windN = -w.wind.z; ENV.latDeg = siteLatitude(SITE.lat);
   finish('ground', day, solar(day, hour).toa, clockRate());
 }
 

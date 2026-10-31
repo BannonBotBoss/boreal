@@ -21,7 +21,7 @@ import type { Globe } from './globeView'; // loaded on demand (only with the in-
 import { createFarLayer } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { layerPanelShown } from './layerPanel';
-import { FALL_END_M, ISO_BELOW_HORIZON, flightPrompt, type EntryPhase } from './flight';
+import { FALL_END_M, ISO_BELOW_HORIZON, freeFallVy, flightPrompt, type EntryPhase } from './flight';
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
 import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
@@ -121,7 +121,7 @@ function controller(view: View, host: InPageHost) {
   const land = new THREE.Vector3();
   let spotX = 0, spotZ = 0, yaw = 0, pitch = 0;
   const heldKeys = new Set<string>(), axes = { f: 0, r: 0, u: 0, yaw: 0, pitch: 0 };
-  const vel = { x: 0, y: 0, z: 0 }; let airSpeed = 0;
+  const vel = { x: 0, y: 0, z: 0 }; let airSpeed = 0; let freeFall = false; // a G drop below 10,000 ft falls from rest
   let wantEmbody = false, wantCancel = false, mouseYaw = 0, mousePitch = 0, dragging = false;
   let promptEl: HTMLDivElement | null = null;
   const overlayOpen = () => !!document.querySelector('#start-menu:not(.fade), dialog[open], .padm:not([hidden])');
@@ -169,7 +169,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null;
     const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
     h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;
-    vel.x = 0; vel.y = at.vy ?? 0; vel.z = 0; airSpeed = Math.abs(vel.y);
+    vel.x = 0; vel.y = at.vy ?? 0; vel.z = 0; airSpeed = Math.abs(vel.y); freeFall = !vel.y; // no carried speed: gravity takes over from rest
     phase = 'drone'; blend = 0; fadeT = 0; readySeen = false; maskWait = 0; bandT = 0; readyAt = 0; down = true; lastT = performance.now(); setMode('band');
   }
   /** Warm the chunks under the falling camera, at the same point the handoff will use. Does not search for a different landing. */
@@ -346,7 +346,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (down) bandT += dt; const late = down && !readySeen && bandT > INPAGE.readyMaxSec;
       if (late) { readySeen = true; readyAt = -Math.round(h); console.warn(`INPAGE patch not ready after ${Math.round(bandT)} s: fading in at ${Math.round(h)} m, the game streams the rest`); } // the camera is not held: speed from the fall keeps going
       if (needStart) { // ascent: straight up the player's vertical. Pitch follows the climb curve back toward nadir.
-        needStart = false; const p = host.player(); spotX = p.x; spotZ = p.z; yaw = p.yaw; vel.x = vel.y = vel.z = 0;
+        needStart = false; freeFall = false; const p = host.player(); spotX = p.x; spotZ = p.z; yaw = p.yaw; vel.x = vel.y = vel.z = 0;
         land.set(p.x, ground(p.x, p.z), p.z); h = h0 = Math.max(1, end.p.y - land.y); pitch = globePitch(h);
       }
       const top = TRANSITION.bandTop * 1.05;
@@ -364,7 +364,9 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
             const x0 = fly.x, y0 = fly.y, z0 = fly.z;
             const floorY = photoFlyFloor(fly.x, fly.z);
             const minY = descentFloorY(ground(fly.x, fly.z), floorY, diving);
+            if (freeFall) vel.y = freeFallVy(vel.y, h, dt); // free fall from rest until the glide height
             stepCarriedFly(fly, vel, dt, axesIn, minY);
+            if (freeFall && fly.y <= minY + 1e-2) freeFall = false;
             const atGlide = !diving && minY > floorY + 1 && fly.y <= minY + 1e-2;
             if (atGlide) { const held = arrestGlide(vel, fly.yaw, true, false); vel.x = held.x; vel.y = held.y; vel.z = held.z; fly.y = minY; }
             else if (fly.y <= minY + 1e-3 && vel.y < 0) vel.y = 0; // the photo floor stops the body; it does not zero the speed at the handoff

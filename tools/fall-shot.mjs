@@ -4,7 +4,11 @@
 // Oct 31 01:xx: the old blank planet + paused menu was the reload path: SwiftShader probes to Minimum, so ascend() fell back to
 // location.search. &inpagelow (dev) keeps the in-page path; now Shift+G reaches the in-page globe and G drops into the drone glide.
 // EMBODY=<n> presses G after the glide and grabs n landed frames.
+// OUT= sets the screenshot directory (default /tmp/shots-fall). The landed step also logs window.borealLanding.
 // BASE=http://127.0.0.1:5173 PW=<playwright-core path> node tools/fall-shot.mjs   (writes /tmp/shots-fall)
+import { mkdirSync } from 'node:fs';
+const OUT = process.env.OUT ?? '/tmp/shots-fall';
+mkdirSync(OUT, { recursive: true });
 const pw = await import(process.env.PW ?? 'playwright-core'), chromium = pw.chromium ?? pw.default.chromium;
 const BASE = process.env.BASE ?? 'http://127.0.0.1:5173', STEP = +(process.env.STEP ?? 4000), N = +(process.env.N ?? 20);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'] });
@@ -13,19 +17,27 @@ const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m
 await p.goto(`${BASE}/?transition=inpage&inpagelow${process.env.Q ?? ''}`);
 const tl = Date.now(); const cont = p.getByText('Continue', { exact: true }).first();
 await cont.waitFor({ state: 'visible', timeout: +(process.env.LOAD ?? 240000) }).catch(() => {}); console.log(JSON.stringify({ loaded_s: (Date.now() - tl) / 1000, menu: await cont.isVisible() }));
-await p.screenshot({ path: '/tmp/shots-fall/game-start.png' }); await p.mouse.move(640, 360);
+await p.screenshot({ path: `${OUT}/game-start.png` }); await p.mouse.move(640, 360);
 await cont.click().catch(() => {}); await p.waitForTimeout(+(process.env.PLAY ?? 30000));
-await p.screenshot({ path: '/tmp/shots-fall/game-play.png' }); await p.keyboard.press('Shift+KeyG'); await p.waitForTimeout(+(process.env.UP ?? 25000));
+await p.screenshot({ path: `${OUT}/game-play.png` }); await p.keyboard.press('Shift+KeyG'); await p.waitForTimeout(+(process.env.UP ?? 25000));
 const hud = () => p.evaluate(() => { const c = (window).__inpage, S = c?.STATS; return { txt: document.body.innerText.split('\n').filter(l => /(alt|altitude|fall|ft\b|km\b| m\b)/i.test(l)).join(' | ').slice(0, 160), mode: c?.mode, phase: c?.flightPhase, h: c ? Math.round(c.height) : null, sim: c ? +c.simT.toFixed(1) : null, fade: c ? +c.fade.toFixed(2) : null, ready: S?.ready, readyAt: S?.readyAt }; });
-console.log(JSON.stringify({ t: 0, hud: await hud() })); await p.screenshot({ path: '/tmp/shots-fall/fall-00.png' });
+console.log(JSON.stringify({ t: 0, hud: await hud() })); await p.screenshot({ path: `${OUT}/fall-00.png` });
 await p.keyboard.press(process.env.KEY ?? 'g'); const t0 = Date.now();
 for (let i = 1; i <= N; i++) {
   await p.waitForTimeout(STEP);
-  const f = `/tmp/shots-fall/fall-${String(i).padStart(2, '0')}.png`; await p.screenshot({ path: f });
+  const f = `${OUT}/fall-${String(i).padStart(2, '0')}.png`; await p.screenshot({ path: f });
   console.log(JSON.stringify({ i, s: +((Date.now() - t0) / 1000).toFixed(1), hud: await hud() }));
 }
-if (process.env.DIVE) { await p.keyboard.down('KeyQ'); for (let i = 1; i <= +(process.env.DIVE); i++) { await p.waitForTimeout(STEP); await p.screenshot({ path: `/tmp/shots-fall/dive-${String(i).padStart(2, '0')}.png` }); console.log(JSON.stringify({ dive: i, hud: await hud() })); } await p.keyboard.up('KeyQ'); }
+if (process.env.DIVE) { await p.keyboard.down('KeyQ'); for (let i = 1; i <= +(process.env.DIVE); i++) { await p.waitForTimeout(STEP); await p.screenshot({ path: `${OUT}/dive-${String(i).padStart(2, '0')}.png` }); console.log(JSON.stringify({ dive: i, hud: await hud() })); } await p.keyboard.up('KeyQ'); }
+const landing = () => p.evaluate(() => {
+  const read = globalThis.borealLanding;
+  const cast = typeof read === 'function' ? read() : null;
+  return new Promise(resolve => {
+    const t = performance.now();
+    requestAnimationFrame(() => resolve({ cast, rafMs: +(performance.now() - t).toFixed(1) }));
+  });
+});
 if (process.env.EMBODY) { // Oct 31 14:xx: G again in drone phase hands over to the game (embody), so these are true landed frames, not the glide
-  await p.keyboard.press('g'); for (let i = 1; i <= +(process.env.EMBODY); i++) { await p.waitForTimeout(STEP); await p.screenshot({ path: `/tmp/shots-fall/landed-${String(i).padStart(2, '0')}.png` }); console.log(JSON.stringify({ landed: i, hud: await hud() })); } }
+  await p.keyboard.press('g'); for (let i = 1; i <= +(process.env.EMBODY); i++) { await p.waitForTimeout(STEP); await p.screenshot({ path: `${OUT}/landed-${String(i).padStart(2, '0')}.png` }); console.log(JSON.stringify({ landed: i, hud: await hud(), ...(await landing()) })); } }
 console.log(JSON.stringify({ errs: errs.slice(0, 5) }));
 await b.close();

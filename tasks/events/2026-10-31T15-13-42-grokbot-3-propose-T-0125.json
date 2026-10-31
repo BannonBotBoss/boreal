@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0125",
+  "agent": "grokbot-3",
+  "at": "2026-10-31T15:13:42-07:00",
+  "note": "Issue #192 Oct 31 directive: after a landing, show the simulation's local animals with the existing Meshy models. Stylized fill only. No edit to inpage.ts or sky.ts."
+}

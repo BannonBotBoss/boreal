@@ -5,6 +5,7 @@ import { pushProgress } from '../core/rocks';
 import { buildBody, wolfCoat } from '../core/body';
 import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
 import { buildFurCards, furCardMaterial } from './furCards';
+import { applyStylizedFill, coatOf } from './stylizedPalette';
 
 /**
  * Procedural wolf: a low-poly base skin (tubes swept around an invisible skeleton, see core/body.ts and core/wolfBody.ts)
@@ -87,6 +88,9 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(body.skinWeight, 4));
   geometry.setIndex(body.index);
   const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 });
+  applyStylizedFill(skinMaterial, coatOf('Gray Wolf'));
+  const furMaterial = furCardMaterial();
+  applyStylizedFill(furMaterial, coatOf('Gray Wolf'));
   const skins = [
     new THREE.SkinnedMesh(geometry, skinMaterial),
     new THREE.SkinnedMesh(buildFurCards(body, portrait
@@ -95,7 +99,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
       : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear,
         // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
-        tipTint: (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furCardMaterial()),
+        tipTint: (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furMaterial),
   ];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.

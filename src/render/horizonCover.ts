@@ -13,6 +13,7 @@ import { skirtLatLon, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { treeAtlas } from './trees/billboardAtlas';
 import { CC0_TREES, bakeTreeAtlas } from './trees/cc0Impostors';
 import { elevationWins, sampleDem } from '../world/globe/openTiles';
+import { STYLIZED } from './stylizedPalette';
 
 const CAP = 4096;
 const ATLAS = treeAtlas();
@@ -46,6 +47,7 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     color: 0xffffff, roughness: 0.8, metalness: 0, side: THREE.DoubleSide,
     map: treeTex, alphaTest: 0.35, alphaToCoverage: true, transparent: false,
   });
+  mat.emissive.setRGB(STYLIZED.foliageLift[0], STYLIZED.foliageLift[1], STYLIZED.foliageLift[2]); // stylized fill so far crowns read with the near foliage (#192)
   mat.onBeforeCompile = shader => {
     shader.uniforms.uTreeCols = colsUniform;
     shader.uniforms.uTreeNormal = normalUniform;

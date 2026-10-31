@@ -14,6 +14,7 @@ import { TREE_BY_ID } from '../../core/treeSpecies';
 import { TREE_FORMS, dbhAt, heightAt, type TreeForm } from '../../core/flora/trees/forms';
 import { skeletonSteps, type Skeleton, type Stem } from './weberPenn';
 import { tubeSteps } from './tube';
+import { STYLIZED } from '../stylizedPalette';
 
 export interface ConiferLods { near: THREE.Group; mid: THREE.Group; crown: THREE.BufferGeometry; skeleton: Skeleton; height: number; dbh: number; stats: { buildMs: number; tris: { near: number; mid: number; crown: number }; stems: number; cards: number } }
 
@@ -98,6 +99,7 @@ export function* needleAtlasSteps(form: TreeForm = TREE_FORMS['black-spruce']): 
 export function barkMaterial() {
   if (barkMat) return barkMat;
   barkMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 }); barkMat.userData.shared = true;
+  barkMat.emissive.setRGB(STYLIZED.barkLift[0], STYLIZED.barkLift[1], STYLIZED.barkLift[2]); // stylized fill so trunks read when the landed key light is dim (#192)
   // thin scaly bark (Taylor 1993): plates from proc/glsl value noise on the trunk chart (u around, v along, 0.5 m tiles)
   barkMat.onBeforeCompile = s => {
     withWind(s); s.vertexShader = 'varying vec2 vBarkUv;\n' + s.vertexShader.replace('#include <uv_vertex>', '#include <uv_vertex>\nvBarkUv = uv;');
@@ -117,6 +119,7 @@ export const MIP_ALPHA = `#include <map_fragment>
 export function foliageMaterial() {
   if (leafMat) return leafMat;
   leafMat = new THREE.MeshStandardMaterial({ map: needleAtlas(), vertexColors: true, alphaTest: .4, alphaToCoverage: true, side: THREE.DoubleSide, roughness: .7 }); leafMat.userData.shared = true;
+  leafMat.emissive.setRGB(STYLIZED.foliageLift[0], STYLIZED.foliageLift[1], STYLIZED.foliageLift[2]); // stylized fill, same family as the grass (#192)
   leafMat.onBeforeCompile = sh => { withWind(sh); sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', MIP_ALPHA); };
   leafMat.customProgramCacheKey = () => 'boreal-tree-leaf-v2';
   return leafMat;

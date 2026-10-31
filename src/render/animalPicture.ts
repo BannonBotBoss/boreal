@@ -13,6 +13,7 @@ import { spawnSkin, type SkinSpawn } from './meshySkin';
 import type { Motion } from '../core/animalBehavior';
 import { heightAt } from '../core/world';
 import { createWolfLod, GAIT_LOD_SPECIES } from './gaitLod';
+import { coatOf } from './stylizedPalette';
 
 export interface PictureBody {
   key: string;
@@ -30,35 +31,9 @@ export interface PictureBody {
 
 export interface PictureWeight { proc: number; full: number; low: number; speck: number; root: THREE.Object3D }
 
-const TINT: Record<string, [number, number, number]> = {
-  'Gray Wolf': [0.45, 0.46, 0.48],
-  'Coyote': [0.55, 0.48, 0.32],
-  'Red Fox': [0.72, 0.38, 0.16],
-  'Gray Fox': [0.55, 0.48, 0.32],
-  'Cougar': [0.62, 0.48, 0.28],
-  'Striped Skunk': [0.15, 0.15, 0.15],
-  'Northern Raccoon': [0.45, 0.42, 0.38],
-  'Wolverine': [0.28, 0.22, 0.16],
-  'North American River Otter': [0.25, 0.18, 0.12],
-  'Ermine': [0.55, 0.42, 0.28],
-  'American Mink': [0.22, 0.14, 0.08],
-  'American Black Bear': [0.12, 0.10, 0.08],
-  'Grizzly Bear': [0.35, 0.26, 0.14],
-  'Moose': [0.28, 0.22, 0.16],
-  'Elk': [0.42, 0.32, 0.20],
-  'White-tailed Deer': [0.62, 0.48, 0.30],
-  'Woodland Caribou': [0.48, 0.42, 0.34],
-  'Snowshoe Hare': [0.55, 0.40, 0.26],
-  'Beaver': [0.32, 0.22, 0.14],
-  'Bald Eagle': [0.25, 0.22, 0.18],
-  'Hawks, Kites and Eagles': [0.25, 0.22, 0.18],
-  'Common Raven': [0.08, 0.08, 0.09],
-  'Crows and Jays': [0.08, 0.08, 0.09],
-};
-
 function tintOf(species: string) {
-  const rgb = TINT[species] ?? [0.50, 0.48, 0.36];
-  return (rgb[0] * 255 << 16) + (rgb[1] * 255 << 8) + (rgb[2] * 255);
+  const rgb = coatOf(species);
+  return (Math.round(rgb[0] * 255) << 16) + (Math.round(rgb[1] * 255) << 8) + Math.round(rgb[2] * 255);
 }
 
 function gaitOf(item: PictureBody): { motion: Motion; phase: number; speed: number } {
@@ -241,7 +216,7 @@ void main() {
         if (!model?.skin) proc = seen ? share.full + share.low : 0;
         const uncovered = seen && full === 0 && low === 0 && proc < 0.04 && (share.full > 0.04 || share.low > 0.04 || share.speck > 0.02);
         if (seen && (share.speck > 0.02 || uncovered) && specks < cap) {
-          const tint = TINT[item.species] ?? [0.50, 0.48, 0.36];
+          const tint = coatOf(item.species);
           pos.setXYZ(specks, item.x, item.y + 0.4 + bob, item.z);
           col.setXYZ(specks, tint[0], tint[1], tint[2]);
           alpha.setX(specks, Math.min(1, Math.max(share.speck, uncovered ? 0.45 : 0)) * 0.9);

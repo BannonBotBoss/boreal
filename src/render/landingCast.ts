@@ -17,7 +17,7 @@ import { SITE, siteDirection } from '../core/sitePhase';
 import { isDryLand, WORLD_SEED, heightAt } from '../core/world';
 import { PLANET, planetFor, toLatLon, vegetationWeight } from '../world/globe/planet';
 import { coverKind } from '../world/globe/coverKind';
-import { groundForCover, sampleDem } from '../world/globe/openTiles';
+import { groundForCover, sampleDem, samplePhotoVegetation } from '../world/globe/openTiles';
 import { createProceduralAnimal, type ProceduralAnimal } from './proceduralAnimal';
 import type { PictureBody } from './animalPicture';
 
@@ -57,7 +57,8 @@ export function landingContext(x: number, z: number) {
   const lat = ll.lat * 180 / Math.PI;
   const lon = ll.lon * 180 / Math.PI;
   const { water, elevM } = groundForCover(s, sampleDem(lat, lon));
-  const vegetation = vegetationWeight(s, dir);
+  // A cached satellite photo wins over the seeded planet's vegetation (#192 desert finding).
+  const vegetation = samplePhotoVegetation(lat, lon) ?? vegetationWeight(s, dir);
   const biome = coverKind(lat, elevM, vegetation, water);
   return { lat, lon, elevM, vegetation, water, biome, remote };
 }

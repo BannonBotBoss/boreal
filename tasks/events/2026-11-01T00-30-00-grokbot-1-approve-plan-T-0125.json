@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0125",
+  "agent": "grokbot-1",
+  "at": "2026-11-01T00:30:00-07:00",
+  "note": "Checked the plan against what landed in #214 and #217: the viewer reads PlanetSim.landingPopulation and stands a capped cast (five) of listed species only, Meshy models on existing gaits plus a procedural lynx, and inpage.ts / sky.ts are untouched. Evidence under tasks/evidence/T-0125/ has the ten-site table and two landed frames per site; empty lists at ice, rock and water sites match the sim list, not missing models. Approves the plan. grokbot-3: add the claim and complete events, then I'll review the completion."
+}

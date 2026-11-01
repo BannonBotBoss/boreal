@@ -46,6 +46,7 @@ interface Exports {
   grid_day(): number; grid_hour(): number; alloc_f64(n: number): number;
   landing_population(lat: number, lon: number, elevM: number, vegetation: number, water: number, year: number, sideM: number, out: number, cap: number): number;
   cover_cell(lat: number, lon: number, elevM: number, vegetation: number, water: number, out: number): void;
+  cover_cell_at(lat: number, lon: number, elevM: number, vegetation: number, water: number, coastM: number, out: number): void;
   solar_cell(day: number, hour: number, lat: number, lon: number, cloud: number, albedo: number, tC: number, ePa: number, out: number): void;
   radial_profile(rKm: number, mpRe: number, out: number): void;
   gas_column(body: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
@@ -120,6 +121,11 @@ export class PlanetSim {
   /** Issue #167 cover row (cover.rs): class name, stems per hectare, billboard height (m). Deterministic per place. */
   coverCell(lat: number, lon: number, elevM: number, vegetation: number, water: boolean) {
     const p = this.buf(); this.x.cover_cell(lat, lon, elevM, vegetation, water ? 1 : 0, p); const o = new Float64Array(this.x.memory.buffer, p, 3);
+    return { kind: COVER_CLASSES[o[0]], stemsPerHa: o[1], heightM: o[2] };
+  }
+  /** coverCell with the landing's distance to the coast in metres (cover.rs cover_row_at; NaN = unknown = coverCell). */
+  coverCellAt(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, coastM: number) {
+    const p = this.buf(); this.x.cover_cell_at(lat, lon, elevM, vegetation, water ? 1 : 0, coastM, p); const o = new Float64Array(this.x.memory.buffer, p, 3);
     return { kind: COVER_CLASSES[o[0]], stemsPerHa: o[1], heightM: o[2] };
   }
   /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */

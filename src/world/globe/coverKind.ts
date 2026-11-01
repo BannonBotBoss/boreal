@@ -7,7 +7,7 @@
  * prairie and boreal at data/earth/cover-density.json's thresholds. tests/cover-kind.test.ts checks this matches
  * the wasm cover_cell everywhere, so the viewer and the simulation agree on what grows at a landing.
  */
-import { ARCTIC_TREE_LINE_M, iceLineM, treeLineM } from '../../core/altitudeZones';
+import { ARCTIC_TREE_LINE_M, iceLineAtM, iceLineM, siteMaritimeWeight, treeLineAtM, treeLineM } from '../../core/altitudeZones';
 import C from '../../../data/earth/cover-density.json';
 import Z from '../../../data/earth/altitude-zones.json';
 
@@ -31,9 +31,10 @@ export function placeHash(lat: number, lon: number): number {
 
 export interface CoverRow { kind: CoverKind; stemsPerHa: number; heightM: number }
 
-/** The full #167 row, same as cover.rs cover_row: class, stems per hectare, plant height (m). Deterministic per place. */
-export function coverRow(latDeg: number, lonDeg: number, elevM: number, vegetation: number, water: boolean): CoverRow {
-  const kind = coverKind(latDeg, elevM, vegetation, water);
+/** The full #167 row, same as cover.rs cover_row_at: class, stems per hectare, plant height (m). Deterministic per place.
+ *  coastM is the landing's distance to the sea (m); omitted or NaN keeps the zonal tree and ice lines (cover_row). */
+export function coverRow(latDeg: number, lonDeg: number, elevM: number, vegetation: number, water: boolean, coastM?: number): CoverRow {
+  const kind = coverKind(latDeg, elevM, vegetation, water, coastM);
   if (kind === 'water' || kind === 'ice' || kind === 'rock') return { kind, stemsPerHa: 0, heightM: 0 };
   const r = (C as unknown as Record<string, Range>)[kind];
   const h = placeHash(latDeg, lonDeg), h2 = placeHash(lonDeg, latDeg);
@@ -48,11 +49,13 @@ export function siteMeanC(latDeg: number, elevM: number): number {
   return Z.T0_C + Z.T2_C * (3 * x * x - 1) / 2 - Z.lapse_K_per_m * Math.max(0, elevM);
 }
 
-export function coverKind(latDeg: number, elevM: number, vegetation: number, water: boolean): CoverKind {
+/** Cover class, same as cover.rs cover_class_at. coastM (m to the sea) gives the site its own continentality (#192):
+ *  a continental interior's warm summer lifts the tree and ice lines, a cool coast lowers them. Omitted or NaN = zonal lines. */
+export function coverKind(latDeg: number, elevM: number, vegetation: number, water: boolean, coastM?: number): CoverKind {
   if (water) return 'water';
-  const lat = Math.abs(latDeg), elev = Math.max(0, elevM);
-  if (elev >= iceLineM(lat)) return 'ice';
-  const tree = treeLineM(lat);
+  const lat = Math.abs(latDeg), elev = Math.max(0, elevM), w = siteMaritimeWeight(coastM);
+  if (elev >= (w == null ? iceLineM(lat) : iceLineAtM(lat, w))) return 'ice';
+  const tree = w == null ? treeLineM(lat) : treeLineAtM(lat, w);
   if (elev > tree) return tree < ARCTIC_TREE_LINE_M ? 'tundra' : 'rock'; // Arctic: tundra up to the ice line (#192)
   if (vegetation < C.veg_desert_below) return 'desert';
   if (vegetation < C.veg_prairie_below) return lat >= C.wetland_lat_min && elev < C.wetland_below_m ? 'wetland' : 'prairie';

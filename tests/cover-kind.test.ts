@@ -67,3 +67,21 @@ test('viewer cover row (stems, height) matches wasm cover_cell bit for bit, and 
   assert.ok(Math.abs(billboardScale(boreal.heightM, 0) * CARD_HEIGHT_M - 0.85 * boreal.heightM) < 1e-9);
   assert.ok(billboardScale(prairie.heightM, 0) < 0.16, 'prairie clumps are knee-high, not a 5.5 m card');
 });
+
+test('coast distance: viewer cover matches wasm cover_cell_at (continentality, #192) and NaN keeps the zonal rule', async () => {
+  const sim = await loadPlanetSim(readFileSync('public/wasm/boreal_sim.wasm'));
+  assert.ok(sim, 'wasm loads');
+  let n = 0;
+  for (let lat = -85; lat <= 85; lat += 5) for (const coast of [NaN, 0, 5e3, 6e4, 3e5, 6e5, 2e6]) for (const elev of [0, 60, 200, 380, 700, 1300, 2200, 3500])
+    for (const veg of [0.2, 0.5, 0.8]) {
+      const ts = coverRow(lat, -100, elev, veg, false, coast), rs = sim!.coverCellAt(lat, -100, elev, veg, false, coast);
+      assert.equal(ts.kind, rs.kind, `lat ${lat} coast ${coast} elev ${elev} veg ${veg}`);
+      assert.equal(ts.stemsPerHa, rs.stemsPerHa); n++;
+    }
+  assert.ok(n > 5000);
+  // NaN and an omitted distance are the old zonal answer.
+  assert.equal(coverKind(64.5, 376, 0.8, false, NaN), coverKind(64.5, 376, 0.8, false));
+  // #233's site: 64.5 N at 376 m is boreal 600 km inland and treeless on the coast.
+  assert.equal(coverKind(64.5, 376, 0.8, false, 6e5), 'boreal');
+  assert.notEqual(coverKind(64.5, 376, 0.8, false, 0), 'boreal');
+});

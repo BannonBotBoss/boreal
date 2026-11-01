@@ -4,8 +4,10 @@
   "seasonal_amplitude": "North & Coakley 1979, J. Atmos. Sci. 36:1189 seasonal EBM: the annual cycle amplitude grows ~ sin(phi). Half-range at the pole taken as 15.5 K (Northern Hemisphere zonal mean) [verify]. Mean of the warm half of a sinusoidal year = annual mean + (2/pi) x amplitude.",
   "lapse_rate": "U.S. Standard Atmosphere 1976 (NOAA/NASA/USAF, NOAA-S/T 76-1562): troposphere lapse rate 6.5 K/km.",
   "tree_line": "Koerner & Paulsen 2004, J. Biogeogr. 31:713: worldwide the alpine tree line sits where the growing-season mean root-zone temperature is 6.4 +- 0.7 C.",
-  "ice_line": "Equilibrium-line proxy: permanent snow/ice where even the warm-season mean stays below 0 C (no net melt season); Ohmura, Kasser & Funk 1992, J. Glaciol. 38:397 (ELA summer temperature near 0 C at low precipitation)."
+  "ice_line": "Equilibrium-line proxy: permanent snow/ice where even the warm-season mean stays below 0 C (no net melt season); Ohmura, Kasser & Funk 1992, J. Glaciol. 38:397 (ELA summer temperature near 0 C at low precipitation).",
+  "zone_season": "Tree and ice lines use the mean of the warmest quarter of the year (fraction 0.25), not the warm half: Ohmura et al. 1992 relate the ELA to the June-August (3-month) mean, and at alpine tree lines the Koerner & Paulsen 2004 growing season is about 3 months. Mean of the warmest fraction f of a sinusoidal year = annual mean + amplitude x sin(pi f)/(pi f) (f = 0.5 gives 2/pi)."
  },
+ "zone_season_fraction": 0.25,
  "T0_C": 14.97,
  "T2_C": -28.0,
  "seasonal_half_range_pole_K": 15.5,

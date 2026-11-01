@@ -14,10 +14,12 @@ const rad = (d: number) => d * Math.PI / 180;
 export const seaLevelAnnualC = (latDeg: number) => { const x = Math.sin(rad(latDeg)); return Z.T0_C + Z.T2_C * (3 * x * x - 1) / 2; };
 /** Mean of the warm half of the year at sea level (C): the growing season. */
 export const seaLevelWarmC = (latDeg: number) => seaLevelAnnualC(latDeg) + 2 / Math.PI * Z.seasonal_half_range_pole_K * Math.abs(Math.sin(rad(latDeg)));
+/** Mean of the warmest `zone_season_fraction` of the year at sea level (C): the summer quarter that sets tree and ice lines. */
+export const seaLevelZoneSeasonC = (latDeg: number) => { const f = Math.PI * Z.zone_season_fraction; return seaLevelAnnualC(latDeg) + Math.sin(f) / f * Z.seasonal_half_range_pole_K * Math.abs(Math.sin(rad(latDeg))); };
 /** Height (m a.s.l.) where trees stop. */
-export const treeLineM = (latDeg: number) => Math.max(0, (seaLevelWarmC(latDeg) - Z.tree_line_growing_season_C) / Z.lapse_K_per_m);
+export const treeLineM = (latDeg: number) => Math.max(0, (seaLevelZoneSeasonC(latDeg) - Z.tree_line_growing_season_C) / Z.lapse_K_per_m);
 /** Height (m a.s.l.) above which snow and ice never melt. */
-export const iceLineM = (latDeg: number) => Math.max(0, (seaLevelWarmC(latDeg) - Z.ice_line_warm_season_C) / Z.lapse_K_per_m);
+export const iceLineM = (latDeg: number) => Math.max(0, (seaLevelZoneSeasonC(latDeg) - Z.ice_line_warm_season_C) / Z.lapse_K_per_m);
 /** Zone at a height: 'forest' (plants grow), 'rock' (above the tree line), 'ice'. */
 export function zoneAt(altM: number, latDeg: number): 'forest' | 'rock' | 'ice' { return altM >= iceLineM(latDeg) ? 'ice' : altM >= treeLineM(latDeg) ? 'rock' : 'forest'; }
 /** Game-local height (core/world heightAt metres) -> metres above sea level. Home uses PLANET.home.elevation. A remote landing uses that site's own datum. */

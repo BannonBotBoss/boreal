@@ -8,9 +8,9 @@ import { SEAM_LOCATIONS } from '../tools/globe-seam-baseline';
 
 test('water, ice, tundra, desert, prairie and boreal follow the latitude breaks', () => {
   assert.equal(coverKind(50, 300, 0.8, true), 'water');
-  assert.equal(coverKind(80, 0, 0.2, false), 'ice');
-  assert.equal(coverKind(64, 40, 0.2, false), 'tundra');
-  assert.equal(coverKind(50, 1200, 0.2, false), 'rock');
+  assert.equal(coverKind(80, 400, 0.2, false), 'ice'); // sea-level 80N is polar desert, ice line ~305 m
+  assert.equal(coverKind(68, 40, 0.2, false), 'tundra'); // 64N is now below its ~180 m summer-quarter tree line (forested, as at Fairbanks)
+  assert.equal(coverKind(50, 1800, 0.2, false), 'rock'); // tree line ~1330 m, ice line ~2310 m at 50N
   assert.equal(coverKind(25, 400, 0.1, false), 'desert');
   assert.equal(coverKind(42, 300, 0.4, false), 'prairie');
   assert.equal(coverKind(52, 300, 0.8, false), 'boreal');

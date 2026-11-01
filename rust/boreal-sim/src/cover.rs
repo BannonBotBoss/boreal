@@ -47,10 +47,17 @@ pub fn sea_level_warm_c(lat_deg: f64) -> f64 {
     num(ZONES_JSON, "T0_C") + num(ZONES_JSON, "T2_C") * (3.0 * x * x - 1.0) / 2.0
         + 2.0 / std::f64::consts::PI * num(ZONES_JSON, "seasonal_half_range_pole_K") * x.abs()
 }
+/// Mean of the warmest `zone_season_fraction` of the year at sea level (C). Matches seaLevelZoneSeasonC in TypeScript.
+pub fn sea_level_zone_season_c(lat_deg: f64) -> f64 {
+    let x = lat_deg.to_radians().sin();
+    let f = std::f64::consts::PI * num(ZONES_JSON, "zone_season_fraction");
+    num(ZONES_JSON, "T0_C") + num(ZONES_JSON, "T2_C") * (3.0 * x * x - 1.0) / 2.0
+        + f.sin() / f * num(ZONES_JSON, "seasonal_half_range_pole_K") * x.abs()
+}
 /// Height where trees stop (m a.s.l.), Koerner & Paulsen 2004. Matches treeLineM in TypeScript.
-pub fn tree_line_m(lat_deg: f64) -> f64 { ((sea_level_warm_c(lat_deg) - num(ZONES_JSON, "tree_line_growing_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
+pub fn tree_line_m(lat_deg: f64) -> f64 { ((sea_level_zone_season_c(lat_deg) - num(ZONES_JSON, "tree_line_growing_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
 /// Height above which ice never melts (m a.s.l.). Matches iceLineM in TypeScript.
-pub fn ice_line_m(lat_deg: f64) -> f64 { ((sea_level_warm_c(lat_deg) - num(ZONES_JSON, "ice_line_warm_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
+pub fn ice_line_m(lat_deg: f64) -> f64 { ((sea_level_zone_season_c(lat_deg) - num(ZONES_JSON, "ice_line_warm_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
 
 /// Annual mean at the site (C): North 1975 sea-level mean minus the lapse rate times height (no seasonal term).
 pub fn site_mean_c(lat_deg: f64, elev_m: f64) -> f64 {
@@ -122,7 +129,7 @@ mod tests {
     }
     #[test] fn water_ice_rock_have_no_plants() {
         assert_eq!(cover_row(10.0, 0.0, 0.0, 1.0, true).class, Cover::Water);
-        assert_eq!(cover_row(80.0, 0.0, 10.0, 0.5, false).class, Cover::Ice);
+        assert_eq!(cover_row(80.0, 0.0, 400.0, 0.5, false).class, Cover::Ice); // ice line ~305 m at 80N
         let r = cover_row(46.5, 8.0, 3200.0, 0.9, false); // Alps above the tree line
         assert!(matches!(r.class, Cover::Rock | Cover::Ice));
         assert_eq!(r.stems_per_ha, 0.0);

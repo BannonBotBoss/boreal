@@ -9,8 +9,9 @@
  */
 import { iceLineM, treeLineM } from '../../core/altitudeZones';
 import C from '../../../data/earth/cover-density.json';
+import Z from '../../../data/earth/altitude-zones.json';
 
-export type CoverKind = 'water' | 'ice' | 'tundra' | 'rock' | 'desert' | 'prairie' | 'boreal';
+export type CoverKind = 'water' | 'ice' | 'tundra' | 'rock' | 'desert' | 'prairie' | 'boreal' | 'tropical';
 
 type Range = { stems_per_ha: number[]; height_m: number[] };
 const M64 = (1n << 64n) - 1n;
@@ -41,6 +42,12 @@ export function coverRow(latDeg: number, lonDeg: number, elevM: number, vegetati
   return { kind, stemsPerHa: Math.round(s0 + (s1 - s0) * v), heightM: t0 + (t1 - t0) * (0.5 * v + 0.5 * h2) };
 }
 
+/** Annual mean at the site (C), same as cover.rs site_mean_c: North 1975 sea-level mean minus lapse rate times height. */
+export function siteMeanC(latDeg: number, elevM: number): number {
+  const x = Math.sin(latDeg * Math.PI / 180);
+  return Z.T0_C + Z.T2_C * (3 * x * x - 1) / 2 - Z.lapse_K_per_m * Math.max(0, elevM);
+}
+
 export function coverKind(latDeg: number, elevM: number, vegetation: number, water: boolean): CoverKind {
   if (water) return 'water';
   const lat = Math.abs(latDeg), elev = Math.max(0, elevM);
@@ -49,7 +56,7 @@ export function coverKind(latDeg: number, elevM: number, vegetation: number, wat
   if (elev > tree) return tree < 80 && elev < tree + 300 ? 'tundra' : 'rock';
   if (vegetation < C.veg_desert_below) return 'desert';
   if (vegetation < C.veg_prairie_below) return 'prairie';
-  return 'boreal';
+  return siteMeanC(latDeg, elev) >= C.tropical_mean_C ? 'tropical' : 'boreal';
 }
 
 /**
@@ -60,6 +67,7 @@ export function coverKind(latDeg: number, elevM: number, vegetation: number, wat
  */
 export function coverSpacingM(kind: CoverKind): number | null {
   if (kind === 'boreal') return 6;
+  if (kind === 'tropical') return 5;
   if (kind === 'prairie') return 28;
   if (kind === 'desert') return 70;
   return null;

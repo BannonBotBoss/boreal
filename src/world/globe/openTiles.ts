@@ -195,6 +195,32 @@ export function samplePhoto(latDeg: number, lonDeg: number): [number, number, nu
 }
 
 /**
+ * Vegetation weight (0..1, the scale coverKind splits at 0.28 desert / 0.62 forest) read from the
+ * satellite photograph instead of the seeded planet (#192: the Egypt desert click read boreal).
+ * Greenness is the normalised green-red difference of linear RGB (NGRDI, Tucker 1979); bright bare
+ * ground is pulled down so sand and dry scrub fall under the desert line. Calibrated on 16x16 means of
+ * Sentinel-2 cloudless z12 tiles: Manitoba forest 0.91, Rondonia forest 1, Kansas cropland 0.56,
+ * Saskatchewan grass 0.44, Montana grass 0.36, Mojave 0.15, Egypt and Sahara below 0 (tests/landing-photo-cover.test.ts).
+ */
+export function vegetationFromPhoto(rgb: readonly [number, number, number]): number {
+  const [r, g, b] = rgb;
+  const ngrdi = r + g > 1e-6 ? (g - r) / (g + r) : 0;
+  const bright = (r + g + b) / 3;
+  return Math.min(1, Math.max(0, 0.55 + 0.8 * ngrdi - 1.2 * Math.max(0, bright - 0.15)));
+}
+
+/** Mean photo vegetation over five points (centre and about 120 m each way), or null when no photo is cached. */
+export function samplePhotoVegetation(latDeg: number, lonDeg: number): number | null {
+  const dLat = 120 / 111320, dLon = dLat / Math.max(0.05, Math.cos(latDeg * Math.PI / 180));
+  let sum = 0, n = 0;
+  for (const [a, o] of [[0, 0], [dLat, 0], [-dLat, 0], [0, dLon], [0, -dLon]]) {
+    const c = samplePhoto(latDeg + a, lonDeg + o);
+    if (c) { sum += vegetationFromPhoto(c); n++; }
+  }
+  return n ? sum / n : null;
+}
+
+/**
  * Blend a measured height into the planet height. Near the camera the planet
  * (and therefore the chunk mesh) wins, so the square does not become a step.
  * Past `far0` the DEM is the ground. Water stays the planet water surface.

@@ -15,7 +15,7 @@ export const TEN_PLACES = [
   ['Yukon north tundra', 68, -135, 300, 0.3, false, 'rock', [], ['*']],
   ['Arctic polar', 80, -80, 200, 0.02, false, 'ice', [], ['*']],
   ['Sahara', 23, 13, 400, 0.02, false, 'desert', [], ['*']],
-  ['Amazon', -3, -60, 50, 0.95, false, 'boreal', [], ['canada_lynx', 'caribou']],
+  ['Amazon', -3, -60, 50, 0.95, false, 'tropical', [], ['canada_lynx', 'caribou', 'snowshoe_hare']],
   ['Pacific ocean', 30, -150, 0, 0, true, 'water', [], ['*']],
 ] as const;
 

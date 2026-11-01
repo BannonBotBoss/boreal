@@ -94,7 +94,7 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
     if let Some(e) = o.first() { out[1..12].copy_from_slice(&[e.mass, e.com[0], e.com[1], e.com[2], e.spin[2], e.members.len() as f64, e.trusted as u8 as f64, e.extent, e.layers.len() as f64, t.first().map_or(0.0, |x| x.inside_hill as u8 as f64), t.first().map_or(0.0, |x| x.outside_roche as u8 as f64)]); } }
 
 /// Issue #167 cover row for one landing, written into `out[0..3]`: class id (0 water, 1 ice, 2 rock, 3 tundra, 4 desert,
-/// 5 prairie, 6 boreal), stems per hectare, billboard height in metres. Deterministic per (lat, lon).
+/// 5 prairie, 6 boreal, 7 tropical), stems per hectare, billboard height in metres. Deterministic per (lat, lon).
 #[no_mangle] pub extern "C" fn cover_cell(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, out: *mut f64) {
     let r = cover::cover_row(lat, lon, elev_m, vegetation, water != 0);
     let o = unsafe { std::slice::from_raw_parts_mut(out, 3) };

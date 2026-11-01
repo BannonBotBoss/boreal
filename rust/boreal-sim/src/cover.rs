@@ -9,9 +9,9 @@ pub const COVER_JSON: &str = include_str!("../../../data/earth/cover-density.jso
 
 /// Class ids in the order the wasm export writes them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Cover { Water = 0, Ice = 1, Rock = 2, Tundra = 3, Desert = 4, Prairie = 5, Boreal = 6 }
+pub enum Cover { Water = 0, Ice = 1, Rock = 2, Tundra = 3, Desert = 4, Prairie = 5, Boreal = 6, Tropical = 7 }
 impl Cover {
-    pub fn name(self) -> &'static str { ["water", "ice", "rock", "tundra", "desert", "prairie", "boreal"][self as usize] }
+    pub fn name(self) -> &'static str { ["water", "ice", "rock", "tundra", "desert", "prairie", "boreal", "tropical"][self as usize] }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -52,6 +52,12 @@ pub fn tree_line_m(lat_deg: f64) -> f64 { ((sea_level_warm_c(lat_deg) - num(ZONE
 /// Height above which ice never melts (m a.s.l.). Matches iceLineM in TypeScript.
 pub fn ice_line_m(lat_deg: f64) -> f64 { ((sea_level_warm_c(lat_deg) - num(ZONES_JSON, "ice_line_warm_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
 
+/// Annual mean at the site (C): North 1975 sea-level mean minus the lapse rate times height (no seasonal term).
+pub fn site_mean_c(lat_deg: f64, elev_m: f64) -> f64 {
+    let x = lat_deg.to_radians().sin();
+    num(ZONES_JSON, "T0_C") + num(ZONES_JSON, "T2_C") * (3.0 * x * x - 1.0) / 2.0 - num(ZONES_JSON, "lapse_K_per_m") * elev_m.max(0.0)
+}
+
 /// Deterministic 0..1 from a place (splitmix64 on quantised lat/lon, ~1 m).
 pub fn place_hash(lat: f64, lon: f64) -> f64 {
     let a = (lat * 1e5).round() as i64 as u64;
@@ -76,6 +82,7 @@ pub fn cover_class(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool) -> C
     }
     if vegetation < num(COVER_JSON, "veg_desert_below") { Cover::Desert }
     else if vegetation < num(COVER_JSON, "veg_prairie_below") { Cover::Prairie }
+    else if site_mean_c(lat_deg, elev) >= num(COVER_JSON, "tropical_mean_C") { Cover::Tropical }
     else { Cover::Boreal }
 }
 
@@ -121,6 +128,11 @@ mod tests {
         assert_eq!(cover_class(50.0, 300.0, 0.8, false), Cover::Boreal);
         assert_eq!(cover_class(50.0, 600.0, 0.45, false), Cover::Prairie);
         assert_eq!(cover_class(25.0, 500.0, 0.1, false), Cover::Desert);
+    }
+    #[test] fn warm_wet_lowland_is_tropical() {
+        assert_eq!(cover_class(-3.0, 50.0, 0.95, false), Cover::Tropical); // Amazon
+        assert_eq!(cover_class(-3.0, 3000.0, 0.95, false), Cover::Boreal); // Andes cloud forest height cools it
+        assert_eq!(cover_class(10.0, 300.0, 0.45, false), Cover::Prairie); // dry tropics stay savanna/prairie
     }
     #[test] fn tree_line_matches_typescript_formula() {
         // TypeScript treeLineM(0) with T0 14.97, T2 -28, 6.4 C, 6.5 K/km: (14.97 + 14 - 6.4) / 0.0065.

@@ -38,7 +38,7 @@ export const PLANE_INFO: Record<PlaneName, { unit: string; budget: 'input' | 'st
 };
 
 /** cover.rs class ids, in order. */
-export const COVER_CLASSES = ['water', 'ice', 'rock', 'tundra', 'desert', 'prairie', 'boreal'] as const;
+export const COVER_CLASSES = ['water', 'ice', 'rock', 'tundra', 'desert', 'prairie', 'boreal', 'tropical'] as const;
 
 interface Exports {
   memory: WebAssembly.Memory; layout_version(): number; plane_count(): number;

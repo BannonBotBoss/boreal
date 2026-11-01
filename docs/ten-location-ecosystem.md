@@ -15,7 +15,7 @@ Screenshots and FPS still need a WebGL browser run and are not part of this file
 | Yukon north tundra | 68, -135 | 300 | 0.30 | rock | none |
 | Arctic polar | 80, -80 | 200 | 0.02 | ice | none |
 | Sahara | 23, 13 | 400 | 0.02 | desert | none |
-| Amazon | -3, -60 | 50 | 0.95 | boreal | deer 108 |
+| Amazon | -3, -60 | 50 | 0.95 | tropical | deer (thin, 0.1-1/km2) |
 | Pacific ocean | 30, -150 | 0 | 0 | water | none |
 
 ## Gaps found (not fixed here)
@@ -25,5 +25,5 @@ Screenshots and FPS still need a WebGL browser run and are not part of this file
   tundra runs well above that. Kept as a `test.todo`; the fix touches the altitude-zone rule, so it needs a decision first.
 - **Hudson Bay lowland reads as prairie** with deer as the main animal. It is really wetland and open conifer
   (caribou, moose, beaver). The cover classes have no wetland class yet.
-- **Amazon reads as boreal** because the cover classes have no tropical forest. Only deer appear there, which is fine
-  for the 75% stylised target, since the cast is boreal species only.
+- **Amazon fixed (Nov 1, grokbot-1):** new `tropical` cover class (id 7) for wet land whose site annual mean is at least
+  `tropical_mean_C` (22 C). Only white-tailed deer opt in (`tropical_per_ha`), so the boreal cast stays out.

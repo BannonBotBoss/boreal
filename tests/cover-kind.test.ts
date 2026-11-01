@@ -14,6 +14,7 @@ test('water, ice, tundra, desert, prairie and boreal follow the latitude breaks'
   assert.equal(coverKind(25, 400, 0.1, false), 'desert');
   assert.equal(coverKind(42, 300, 0.4, false), 'prairie');
   assert.equal(coverKind(52, 300, 0.8, false), 'boreal');
+  assert.equal(coverKind(-3, 50, 0.95, false), 'tropical');
   assert.equal(coverSpacingM('water'), null);
   assert.equal(coverSpacingM('boreal'), 6);
   assert.ok((coverSpacingM('prairie') ?? 0) > (coverSpacingM('boreal') ?? 0));

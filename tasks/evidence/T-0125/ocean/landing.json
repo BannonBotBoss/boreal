@@ -1,0 +1,26 @@
+{
+  "site": "ocean edge",
+  "slug": "ocean",
+  "clickLat": 36.6,
+  "clickLon": -121.9,
+  "landedLat": 36.59762712254618,
+  "landedLon": -121.89892112528949,
+  "biome": "water",
+  "water": true,
+  "census": [],
+  "shown": [],
+  "simStepMs": 237.79999999953816,
+  "frameMs": 145.6,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 409,
+    "sim": 58.4,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2100
+  },
+  "exit": 0,
+  "note": ""
+}

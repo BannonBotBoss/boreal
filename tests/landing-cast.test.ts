@@ -57,7 +57,9 @@ test('animals stand in front of the player, on dry ground, and a wet landing dra
     assert.ok(Math.hypot(dx, dz) > 3.5);
   }
   assert.deepEqual(placed, placeLandingAnimals(slots, { x: 10, z: 30, yaw: 0 }, () => true));
-  assert.equal(placeLandingAnimals(slots, { x: 0, z: 0, yaw: 0 }, () => false).length, 0);
+  const wet = placeLandingAnimals(slots, { x: 0, z: 0, yaw: 0 }, () => false);
+  assert.equal(wet.length, slots.length, 'a named animal is still placed when the arc has no dry cell');
+  assert.ok(wet.every(animal => animal.z < -3));
 });
 
 test('canada lynx has no stored model and the procedural body sits on y = 0', () => {

@@ -5,6 +5,7 @@
   "lapse_rate": "U.S. Standard Atmosphere 1976 (NOAA/NASA/USAF, NOAA-S/T 76-1562): troposphere lapse rate 6.5 K/km.",
   "tree_line": "Koerner & Paulsen 2004, J. Biogeogr. 31:713: worldwide the alpine tree line sits where the growing-season mean root-zone temperature is 6.4 +- 0.7 C.",
   "ice_line": "Equilibrium-line proxy: permanent snow/ice where even the warm-season mean stays below 0 C (no net melt season); Ohmura, Kasser & Funk 1992, J. Glaciol. 38:397 (ELA summer temperature near 0 C at low precipitation).",
+  "continentality": "Seasonal amplitude over land vs ocean comes from the simulation's own first-order column response (climate_seed::damped_seed: amplitude 1/sqrt(1+(w tau)^2), tau = C/(B + C_tr), land and ocean heat capacities in surface/heat_capacity.rs). The 15.5 K pole half-range is a zonal mean over a band that is about 70% land at 60-70 N [verify], so a site's amplitude is that half-range times (its own land/ocean damping mix) / (the band's mix). Its own mix uses climate_seed::maritime_weight (exp(-coast distance / L)).",
   "zone_season": "Tree and ice lines use the mean of the warmest quarter of the year (fraction 0.25), not the warm half: Ohmura et al. 1992 relate the ELA to the June-August (3-month) mean, and at alpine tree lines the Koerner & Paulsen 2004 growing season is about 3 months. Mean of the warmest fraction f of a sinusoidal year = annual mean + amplitude x sin(pi f)/(pi f) (f = 0.5 gives 2/pi)."
  },
  "zone_season_fraction": 0.25,
@@ -13,5 +14,6 @@
  "seasonal_half_range_pole_K": 15.5,
  "lapse_K_per_m": 0.0065,
  "tree_line_growing_season_C": 6.4,
- "ice_line_warm_season_C": 0.0
+ "ice_line_warm_season_C": 0.0,
+ "zonal_land_fraction": 0.7
 }

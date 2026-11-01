@@ -59,6 +59,34 @@ pub fn tree_line_m(lat_deg: f64) -> f64 { ((sea_level_zone_season_c(lat_deg) - n
 /// Height above which ice never melts (m a.s.l.). Matches iceLineM in TypeScript.
 pub fn ice_line_m(lat_deg: f64) -> f64 { ((sea_level_zone_season_c(lat_deg) - num(ZONES_JSON, "ice_line_warm_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
 
+/// Seasonal amplitude damping of a column with surface heat capacity `c` (J/m2/K), the same first-order response as
+/// climate_seed::damped_seed: 1/sqrt(1+(w tau)^2), tau = (c + air column) / (B + C_tr).
+fn seasonal_damping(c: f64) -> f64 {
+    use crate::planet_fundamentals::climate_seed::{AIR_COLUMN_HEATCAP, OLR_B, TRANSPORT_C};
+    let w = 2.0 * std::f64::consts::PI / (365.0 * 86400.0);
+    1.0 / (1.0 + (w * (c + AIR_COLUMN_HEATCAP) / (OLR_B + TRANSPORT_C)).powi(2)).sqrt()
+}
+/// How much larger (or smaller) this site's seasonal swing is than the zonal mean the 15.5 K half-range was fitted to.
+/// `maritime_w` is climate_seed::maritime_weight: 1 on open water or right at the coast, falling to 0 deep inland.
+/// A continental interior (w = 0) at 60-70 N gets about 1.34x; the open ocean about 0.2x (altitude-zones.json continentality).
+pub fn continentality_ratio(maritime_w: f64) -> f64 {
+    use crate::planet_fundamentals::surface::{LAND_HEATCAP, OCEAN_HEATCAP};
+    let (dl, d_o) = (seasonal_damping(LAND_HEATCAP), seasonal_damping(OCEAN_HEATCAP));
+    let (w, f) = (maritime_w.clamp(0.0, 1.0), num(ZONES_JSON, "zonal_land_fraction"));
+    (w * d_o + (1.0 - w) * dl) / (f * dl + (1.0 - f) * d_o)
+}
+/// Warmest-quarter sea-level mean (C) at a site with its own continentality (see continentality_ratio).
+pub fn sea_level_zone_season_at_c(lat_deg: f64, maritime_w: f64) -> f64 {
+    let x = lat_deg.to_radians().sin();
+    let f = std::f64::consts::PI * num(ZONES_JSON, "zone_season_fraction");
+    num(ZONES_JSON, "T0_C") + num(ZONES_JSON, "T2_C") * (3.0 * x * x - 1.0) / 2.0
+        + f.sin() / f * num(ZONES_JSON, "seasonal_half_range_pole_K") * x.abs() * continentality_ratio(maritime_w)
+}
+/// Tree line (m) with continentality: a continental interior's warm summer lifts it, an ocean coast's cool summer lowers it.
+pub fn tree_line_at_m(lat_deg: f64, maritime_w: f64) -> f64 { ((sea_level_zone_season_at_c(lat_deg, maritime_w) - num(ZONES_JSON, "tree_line_growing_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
+/// Ice line (m) with continentality.
+pub fn ice_line_at_m(lat_deg: f64, maritime_w: f64) -> f64 { ((sea_level_zone_season_at_c(lat_deg, maritime_w) - num(ZONES_JSON, "ice_line_warm_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
+
 /// Annual mean at the site (C): North 1975 sea-level mean minus the lapse rate times height (no seasonal term).
 pub fn site_mean_c(lat_deg: f64, elev_m: f64) -> f64 {
     let x = lat_deg.to_radians().sin();
@@ -158,6 +186,23 @@ mod tests {
     #[test] fn tree_line_matches_typescript_formula() {
         // TypeScript treeLineM(0) with T0 14.97, T2 -28, 6.4 C, 6.5 K/km: (14.97 + 14 - 6.4) / 0.0065.
         assert!((tree_line_m(0.0) - (14.97 + 14.0 - 6.4) / 0.0065).abs() < 1e-6);
+    }
+    #[test] fn continentality_zonal_mix_is_neutral() {
+        // A site whose land/ocean mix equals the band's (w = 1 - land fraction) reproduces the zonal formula exactly.
+        let w = 1.0 - num(ZONES_JSON, "zonal_land_fraction");
+        assert!((continentality_ratio(w) - 1.0).abs() < 1e-12);
+        assert!((tree_line_at_m(64.5, w) - tree_line_m(64.5)).abs() < 1e-6);
+    }
+    #[test] fn continental_interior_lifts_tree_line_above_376m_at_64n() {
+        // #192 / T-0126: the 64.5 N, -119.7 tundra site at 376 m read bare rock under the ~145 m zonal tree line.
+        assert!(tree_line_m(64.5) < 200.0);
+        let inland = tree_line_at_m(64.5, 0.0);
+        assert!(inland > 376.0 && inland < 1200.0, "{inland}");
+        assert!(continentality_ratio(0.0) > 1.2 && continentality_ratio(1.0) < 0.5);
+    }
+    #[test] fn ocean_coast_lowers_tree_and_ice_lines() {
+        assert!(tree_line_at_m(60.0, 1.0) < tree_line_m(60.0));
+        assert!(ice_line_at_m(60.0, 1.0) < ice_line_at_m(60.0, 0.0));
     }
     #[test] fn boreal_density_inside_range_and_spacing_sane() {
         let r = cover_row(55.0, -100.0, 300.0, 0.9, false);

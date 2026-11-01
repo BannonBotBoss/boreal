@@ -8,6 +8,8 @@ import {
   LANDING_DISPLAY, LANDING_SHOWN_CAP, pickLandingSlots, placeLandingAnimals,
 } from '../src/core/landingRoster';
 import { createProceduralAnimal } from '../src/render/proceduralAnimal';
+import { pictureOrder } from '../src/render/animalPicture';
+import { castShouldReplace, landingLight } from '../src/render/landingCast';
 import { applyStylizedFill, coatOf, stylizedFill, STYLIZED } from '../src/render/stylizedPalette';
 
 const boreal = [
@@ -60,6 +62,51 @@ test('animals stand in front of the player, on dry ground, and a wet landing dra
   const wet = placeLandingAnimals(slots, { x: 0, z: 0, yaw: 0 }, () => false);
   assert.equal(wet.length, slots.length, 'a named animal is still placed when the arc has no dry cell');
   assert.ok(wet.every(animal => animal.z < -3));
+  assert.ok(wet.every(animal => Math.hypot(animal.x, animal.z) < 24), 'a fully wet arc keeps the cast in the first view');
+});
+
+test('a wet arc walks out to the first dry bank instead of standing in the water', () => {
+  const slots = pickLandingSlots(boreal).slice(0, 2);
+  const dryFar = (x: number, z: number) => Math.hypot(x, z) > 28;
+  const placed = placeLandingAnimals(slots, { x: 0, z: 0, yaw: 0 }, dryFar);
+  assert.equal(placed.length, slots.length);
+  for (const animal of placed) {
+    assert.ok(dryFar(animal.x, animal.z), `${animal.display} at ${animal.x},${animal.z}`);
+    assert.ok(animal.z < -4, 'still ahead of the player');
+    assert.ok(Math.hypot(animal.x, animal.z) < 48, 'still inside the low-body distance');
+  }
+});
+
+test('the cast steps back in front when the wolf turns, and stays put for a small look', () => {
+  const origin = { x: 0, z: 0, yaw: 0 };
+  assert.equal(castShouldReplace(origin, 0, 0, 0.1), false);
+  assert.equal(castShouldReplace(origin, 3, 1, 0), false);
+  assert.equal(castShouldReplace(origin, 0, 0, 1.2), true);
+  assert.equal(castShouldReplace(origin, 20, 0, 0), true);
+});
+
+test('the landing cast keeps the full-mesh slots ahead of nearer home animals', () => {
+  const order = [
+    { key: 'hare:1.0:2.0', d: 3 },
+    { key: 'landing:moose:0', d: 12 },
+    { key: 'player-wolf', d: 1 },
+    { key: 'landing:bald_eagle:1', d: 14 },
+  ].sort(pictureOrder);
+  assert.deepEqual(order.map(row => row.key), ['landing:moose:0', 'landing:bald_eagle:1', 'player-wolf', 'hare:1.0:2.0']);
+});
+
+test('every species the landing list can name has a body, and the morning sun is up at home', () => {
+  for (const name of Object.values(LANDING_DISPLAY)) {
+    const body = createProceduralAnimal(name);
+    assert.ok(body, name);
+    body.root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(body.root);
+    assert.ok(Math.abs(box.min.y) < 0.08, `${name} feet at ${box.min.y}`);
+  }
+  const light = landingLight(0);
+  assert.ok(light.sunElevation > 10, `sun ${light.sunElevation}`);
+  assert.ok(light.state === 'day' || light.state === 'golden');
+  assert.ok(light.latitude > 49 && light.latitude < 51);
 });
 
 test('canada lynx has no stored model and the procedural body sits on y = 0', () => {

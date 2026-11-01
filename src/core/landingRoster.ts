@@ -6,6 +6,10 @@
  * chooses a capped handful of that list and stands them in front of the camera.
  * It does not invent a second density table. A species the list omits is not drawn.
  *
+ * Species ranges in the simulation cover North America only. A landing outside those
+ * ranges shows only what `landingPopulation` returns, which may be nothing. This module
+ * does not add stand-in animals for other continents.
+ *
  * The census side is the bridge default (5 km). Counts from that square say who lives
  * here. The drawn count is capped so the existing picture ladder (six full meshes)
  * can show them in the first view.
@@ -18,6 +22,11 @@ export const LANDING_SHOWN_CAP = 5;
 export const LANDING_NEAR_M = 5;
 export const LANDING_RING_M = 1.4;
 export const LANDING_SIDE_M = 2.6;
+/**
+ * How many steps to walk looking for dry ground. Fourteen steps of 2.5 m stay inside the
+ * picture's low-body distance (~48 m), so a lake bank still reads as a body instead of a speck.
+ */
+export const LANDING_DRY_RINGS = 14;
 
 /** Rust species id (LANDING_SPECIES) to the common name in src/core/species.ts and the model manifest. */
 export const LANDING_DISPLAY: Record<string, string> = {
@@ -106,7 +115,7 @@ export function placeLandingAnimals(
   const out: PlacedAnimal[] = [];
   slots.forEach((slot, index) => {
     let fallback: { x: number; z: number } | null = null;
-    for (let ring = 0; ring < 8; ring++) {
+    for (let ring = 0; ring < LANDING_DRY_RINGS; ring++) {
       const dist = LANDING_NEAR_M + (index % 3) * LANDING_RING_M + ring * 2.5;
       const side = ((index % 5) - 2) * LANDING_SIDE_M + (ring % 2) * 1.2;
       const x = origin.x + fx * dist + rx * side;

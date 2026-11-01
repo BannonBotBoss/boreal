@@ -1,0 +1,137 @@
+{
+  "site": "wetland (lake)",
+  "slug": "wetland",
+  "clickLat": 47.9,
+  "clickLon": -104.9,
+  "landedLat": 47.907847683681084,
+  "landedLon": -104.91256291495868,
+  "biome": "prairie",
+  "water": false,
+  "census": [
+    {
+      "species": "snowshoe_hare",
+      "display": "Snowshoe Hare",
+      "count": 5657
+    },
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 121
+    },
+    {
+      "species": "moose",
+      "display": "Moose",
+      "count": 17
+    },
+    {
+      "species": "canada_lynx",
+      "display": "Canada Lynx",
+      "count": 9
+    },
+    {
+      "species": "caribou",
+      "display": "Woodland Caribou",
+      "count": 2
+    },
+    {
+      "species": "american_black_bear",
+      "display": "American Black Bear",
+      "count": 7
+    },
+    {
+      "species": "beaver",
+      "display": "Beaver",
+      "count": 115
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 3
+    }
+  ],
+  "shown": [
+    {
+      "species": "Snowshoe Hare",
+      "count": 1,
+      "x": 939.570249069529,
+      "z": -866.2200678369949
+    },
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": 936.6478230856883,
+      "z": -865.7964803383927
+    },
+    {
+      "species": "Canada Lynx",
+      "count": 1,
+      "x": 933.7253971018474,
+      "z": -865.3728928397904
+    },
+    {
+      "species": "Beaver",
+      "count": 1,
+      "x": 932.2431419093194,
+      "z": -868.8946707351473
+    },
+    {
+      "species": "Moose",
+      "count": 1,
+      "x": 929.3207159254787,
+      "z": -868.4710832365452
+    }
+  ],
+  "simStepMs": 566.1999999987017,
+  "frameMs": 13.4,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.3,
+    "dayOfYear": 227,
+    "latitude": 47.9,
+    "sunElevation": 42.6,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:17",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 5,
+    "lows": 0,
+    "bodies": 1,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 501232772,
+    "total": 563813176
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "No tile or height seam. Spruce and grass. The cast (hare, deer, lynx, beaver, moose) reads as silhouettes. The stand is dry. The foreground is an unlit black band.",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 417,
+    "sim": 23.1,
+    "fade": 1,
+    "ready": true,
+    "readyAt": 1845
+  },
+  "exit": 0,
+  "note": "",
+  "shore": false,
+  "elevM": 748.3609143527091,
+  "vegetation": 0.3945609983026299,
+  "censusLat": 47.907847683681084,
+  "censusLon": -104.91256291495868
+}

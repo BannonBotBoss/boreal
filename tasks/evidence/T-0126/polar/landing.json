@@ -1,0 +1,65 @@
+{
+  "site": "polar",
+  "slug": "polar",
+  "clickLat": 74.2,
+  "clickLon": 50.6,
+  "landedLat": 74.19973718433754,
+  "landedLon": 50.59907642348419,
+  "biome": "tundra",
+  "water": false,
+  "census": [],
+  "shown": [],
+  "simStepMs": 528.4999999994113,
+  "frameMs": 10.7,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.22,
+    "dayOfYear": 227,
+    "latitude": 74.2,
+    "sunElevation": 25.8,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:13",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 1,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 320370765,
+    "total": 339825777
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "No tile or height seam. Bare skyline with one shrub. The foreground is an unlit black band.",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.3,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 1991
+  },
+  "exit": 0,
+  "note": "",
+  "shore": false,
+  "elevM": 109.48582473527924,
+  "vegetation": 0.8344598569206365,
+  "censusLat": 74.19973718433754,
+  "censusLon": 50.59907642348419
+}

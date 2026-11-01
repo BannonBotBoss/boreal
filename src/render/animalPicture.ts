@@ -31,6 +31,16 @@ export interface PictureBody {
 
 export interface PictureWeight { proc: number; full: number; low: number; speck: number; root: THREE.Object3D }
 
+/**
+ * Landing-cast bodies are the species the simulation named for this place. They are
+ * drawn before nearer home-range deer and hares so those five meshes are not pushed
+ * off the full-model budget (six slots, one of them the embodied animal).
+ */
+export function pictureOrder(a: { key: string; d: number }, b: { key: string; d: number }) {
+  const rank = (key: string) => key.startsWith('landing:') ? 0 : 1;
+  return rank(a.key) - rank(b.key) || a.d - b.d;
+}
+
 function tintOf(species: string) {
   const rgb = coatOf(species);
   return (Math.round(rgb[0] * 255) << 16) + (Math.round(rgb[1] * 255) << 8) + Math.round(rgb[2] * 255);
@@ -163,7 +173,7 @@ void main() {
       const col = geo.getAttribute('color') as THREE.BufferAttribute;
       const alpha = geo.getAttribute('aAlpha') as THREE.BufferAttribute;
       const ranked = items.map(item => ({ item, d: tmp.set(item.x - camera.position.x, item.y - camera.position.y, item.z - camera.position.z).length() }));
-      ranked.sort((a, b) => a.d - b.d);
+      ranked.sort((a, b) => pictureOrder({ key: a.item.key, d: a.d }, { key: b.item.key, d: b.d }));
       let specks = 0, fulls = 0, lows = 0;
       const lowCount = new Map<string, number>();
       const weights: PictureWeight[] = [];

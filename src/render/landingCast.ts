@@ -13,7 +13,10 @@ import {
   type CensusRow, type PlacedAnimal,
 } from '../core/landingRoster';
 import { sharedPlanetSim } from '../core/planetWeather';
-import { SITE, siteDirection } from '../core/sitePhase';
+import { SITE, siteDirection, siteLatitude } from '../core/sitePhase';
+import { SITE as SUN_HOME } from '../core/weather';
+import { dayAt, hourAt, lighting, sunPosition } from '../core/timeOfDay';
+import { worldSec } from '../core/worldClock';
 import { isDryLand, WORLD_SEED, heightAt } from '../core/world';
 import { PLANET, fromLatLon, planetFor, toLatLon, vegetationWeight } from '../world/globe/planet';
 import { nearestShore } from '../core/landingShore';
@@ -41,13 +44,50 @@ export interface LandingReport {
   shown: { species: string; count: number; x: number; z: number }[];
   /** Simulation milliseconds since the previous paint (the draw dt). Wall-clock frame time is measured by the capture script. */
   frameMs: number;
+  /** Same sun the sky uses at this landing. A read of the clock, not a change to the sky. */
+  lighting: LandingLight;
   /** Set when the wasm list could not be read. The cast stays empty rather than inventing animals. */
   note: string;
 }
 
+export interface LandingLight {
+  hour: number;
+  dayOfYear: number;
+  latitude: number;
+  sunElevation: number;
+  day: number;
+  golden: number;
+  night: number;
+  /** day, golden hour, twilight, or night. */
+  state: 'day' | 'golden' | 'twilight' | 'night';
+}
+
+const round = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
+
+/** Move the cast when the player walks off, or when the wolf turns far enough that the cast leaves the view. */
+export function castShouldReplace(origin: { x: number; z: number; yaw: number }, x: number, z: number, yaw: number) {
+  const moved = Math.hypot(x - origin.x, z - origin.z) > 12;
+  const turn = Math.atan2(Math.sin(yaw - origin.yaw), Math.cos(yaw - origin.yaw));
+  return moved || Math.abs(turn) > 0.35;
+}
+
+/** Sun at the landed site, using the sky's latitude rule (`siteLatitude` of the Kenora station). */
+export function landingLight(sec = worldSec()): LandingLight {
+  const hour = hourAt(sec);
+  const dayOfYear = dayAt(sec);
+  const latitude = siteLatitude(SUN_HOME.lat);
+  const sun = sunPosition(hour, dayOfYear, latitude);
+  const light = lighting(sun.elevation);
+  const state: LandingLight['state'] = light.night > 0.8 ? 'night' : light.day < 0.35 ? 'twilight' : light.golden > 0.35 ? 'golden' : 'day';
+  return {
+    hour: round(hour), dayOfYear, latitude: round(latitude, 3), sunElevation: round(sun.elevation, 1),
+    day: round(light.day), golden: round(light.golden), night: round(light.night), state,
+  };
+}
+
 const EMPTY: LandingReport = {
   ready: false, remote: false, lat: 0, lon: 0, elevM: 0, vegetation: 0, water: false, biome: '',
-  clickLat: null, clickLon: null, census: [], shown: [], frameMs: 0, note: '',
+  clickLat: null, clickLon: null, census: [], shown: [], frameMs: 0, lighting: landingLight(0), note: '',
 };
 
 /** Where the player is standing, in the same frame the landing bridge uses. */
@@ -109,6 +149,7 @@ export function createLandingCast(scene: THREE.Scene) {
         count: row.count,
       })),
       shown: placed.map(animal => ({ species: animal.display, count: shownCount.get(animal.display) ?? 1, x: animal.x, z: animal.z })),
+      lighting: landingLight(),
       note,
     };
     (globalThis as { borealLanding?: () => LandingReport }).borealLanding = () => report;
@@ -151,8 +192,8 @@ export function createLandingCast(scene: THREE.Scene) {
       clearBodies();
       slots = pickLandingSlots(census);
       origin = { x, z, yaw };
-      placed = placeLandingAnimals(slots, origin, (px, pz) => isDryLand(px, pz));
-      for (const animal of placed) {
+      placed = [];
+      for (const animal of placeLandingAnimals(slots, origin, (px, pz) => isDryLand(px, pz))) {
         const proc = createProceduralAnimal(animal.display);
         if (!proc) continue;
         proc.root.userData.animalPicture = true;
@@ -160,6 +201,7 @@ export function createLandingCast(scene: THREE.Scene) {
         proc.root.userData.species = animal.display;
         scene.add(proc.root);
         procs.set(`${animal.key}:${animal.index}`, proc);
+        placed.push(animal);
       }
       report = { ...report, ...at, note: '' };
       publish();
@@ -184,10 +226,12 @@ export function createLandingCast(scene: THREE.Scene) {
       const ctx = landingContext(x, z);
       report = { ...report, ...ctx };
       anchor(ctx, x, z, yaw);
-      // The glide carries the player away from the spot where the list first arrived. Keep the cast in front of them.
-      if (placed.length && Math.hypot(x - origin.x, z - origin.z) > 12) {
+      // The glide carries the player, and the embody can turn the wolf after the list arrives.
+      // Either one leaves the cast off to the side, where the picture drops it (farther than 8 m and outside the view).
+      if (placed.length && castShouldReplace(origin, x, z, yaw)) {
         origin = { x, z, yaw };
-        placed = placeLandingAnimals(slots, origin, (px, pz) => isDryLand(px, pz));
+        placed = placeLandingAnimals(slots, origin, (px, pz) => isDryLand(px, pz))
+          .filter(animal => procs.has(`${animal.key}:${animal.index}`));
       }
       const motion: Motion = 'walk';
       const phase = (time * 0.65) % 1;

@@ -1,0 +1,147 @@
+{
+  "site": "boreal forest",
+  "slug": "boreal",
+  "clickLat": 52,
+  "clickLon": -97,
+  "landedLat": 51.99964027185816,
+  "landedLon": -97.00000000000217,
+  "biome": "boreal",
+  "water": false,
+  "census": [
+    {
+      "species": "snowshoe_hare",
+      "display": "Snowshoe Hare",
+      "count": 3761
+    },
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 79
+    },
+    {
+      "species": "moose",
+      "display": "Moose",
+      "count": 29
+    },
+    {
+      "species": "canada_lynx",
+      "display": "Canada Lynx",
+      "count": 8
+    },
+    {
+      "species": "gray_wolf",
+      "display": "Gray Wolf",
+      "count": 1
+    },
+    {
+      "species": "caribou",
+      "display": "Woodland Caribou",
+      "count": 1
+    },
+    {
+      "species": "american_black_bear",
+      "display": "American Black Bear",
+      "count": 29
+    },
+    {
+      "species": "bald_eagle",
+      "display": "Bald Eagle",
+      "count": 3
+    },
+    {
+      "species": "beaver",
+      "display": "Beaver",
+      "count": 69
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 14
+    }
+  ],
+  "shown": [
+    {
+      "species": "Snowshoe Hare",
+      "count": 1,
+      "x": 3.170249069529117,
+      "z": 46.47993216300524
+    },
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": 0.24782308568829992,
+      "z": 46.9035196616074
+    },
+    {
+      "species": "American Black Bear",
+      "count": 1,
+      "x": -2.674602898152517,
+      "z": 47.32710716020956
+    },
+    {
+      "species": "Bald Eagle",
+      "count": 1,
+      "x": -4.156858090680441,
+      "z": 43.80532926485272
+    },
+    {
+      "species": "Beaver",
+      "count": 1,
+      "x": -7.079284074521257,
+      "z": 44.22891676345488
+    }
+  ],
+  "simStepMs": 570.9999999993727,
+  "frameMs": 13.8,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.24,
+    "dayOfYear": 227,
+    "latitude": 52,
+    "sunElevation": 40,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:14",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 6,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 366524835,
+    "total": 465972411
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "No tile or height seam in the landed frame. The foreground is an unlit black band. The five animals read as silhouettes on the skyline.",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 401,
+    "sim": 23.2,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 1681
+  },
+  "exit": 0,
+  "note": "",
+  "shore": false,
+  "elevM": 218,
+  "vegetation": 0.9308582316907776,
+  "censusLat": 51.99964027185816,
+  "censusLon": -97.00000000000217
+}

@@ -31,6 +31,7 @@ export const COAT: Record<string, [number, number, number]> = {
   'American Mink': [0.30, 0.18, 0.12],
   'American Black Bear': [0.22, 0.16, 0.12],
   'Grizzly Bear': [0.48, 0.34, 0.18],
+  'Arctic Fox': [0.86, 0.84, 0.80],
   'Moose': [0.38, 0.28, 0.18],
   'Elk': [0.52, 0.38, 0.24],
   'White-tailed Deer': [0.68, 0.52, 0.32],

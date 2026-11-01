@@ -7,10 +7,10 @@ use crate::cover::{cover_row, place_hash, Cover};
 pub const SPECIES_JSON: &str = include_str!("../../../data/earth/species-density.json");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3, GrayWolf = 4, Caribou = 5, AmericanBlackBear = 6, GrizzlyBear = 7, BaldEagle = 8, Beaver = 9, RedFox = 10 }
+pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3, GrayWolf = 4, Caribou = 5, AmericanBlackBear = 6, GrizzlyBear = 7, BaldEagle = 8, Beaver = 9, RedFox = 10, ArcticFox = 11 }
 impl Species {
-    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx", "gray_wolf", "caribou", "american_black_bear", "grizzly_bear", "bald_eagle", "beaver", "red_fox"][self as usize] }
-    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), 4 => Some(Self::GrayWolf), 5 => Some(Self::Caribou), 6 => Some(Self::AmericanBlackBear), 7 => Some(Self::GrizzlyBear), 8 => Some(Self::BaldEagle), 9 => Some(Self::Beaver), 10 => Some(Self::RedFox), _ => None } }
+    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx", "gray_wolf", "caribou", "american_black_bear", "grizzly_bear", "bald_eagle", "beaver", "red_fox", "arctic_fox"][self as usize] }
+    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), 4 => Some(Self::GrayWolf), 5 => Some(Self::Caribou), 6 => Some(Self::AmericanBlackBear), 7 => Some(Self::GrizzlyBear), 8 => Some(Self::BaldEagle), 9 => Some(Self::Beaver), 10 => Some(Self::RedFox), 11 => Some(Self::ArcticFox), _ => None } }
 }
 
 fn block(sp: Species) -> &'static str {
@@ -73,8 +73,8 @@ pub fn spawn_count(density_per_ha: f64, side_m: f64, lat: f64, lon: f64) -> u32 
     (f + if place_hash(lon, lat + 7.0) < expected - f { 1.0 } else { 0.0 }) as u32
 }
 
-pub const ALL: [Species; 11] = [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::Moose, Species::CanadaLynx, Species::GrayWolf, Species::Caribou,
-    Species::AmericanBlackBear, Species::GrizzlyBear, Species::BaldEagle, Species::Beaver, Species::RedFox];
+pub const ALL: [Species; 12] = [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::Moose, Species::CanadaLynx, Species::GrayWolf, Species::Caribou,
+    Species::AmericanBlackBear, Species::GrizzlyBear, Species::BaldEagle, Species::Beaver, Species::RedFox, Species::ArcticFox];
 
 /// The local population list for one landing: (species, whole animals) for every species with at least one animal in a
 /// square patch `side_m` wide, in species-id order. This is what the bridge sends so the viewer can show the full cast.
@@ -158,7 +158,7 @@ mod tests {
         assert!(density_per_ha(Species::GrizzlyBear, 68.0, -110.0, 50.0, 0.4, false, 2026) > 0.0, "barren-ground grizzlies");
         assert_eq!(density_per_ha(Species::GrizzlyBear, 50.0, -75.0, 300.0, 0.9, false, 2026), 0.0, "none in Quebec");
         assert_eq!(Species::from_id(7), Some(Species::GrizzlyBear));
-        assert_eq!(Species::from_id(11), None);
+        assert_eq!(Species::from_id(12), None);
     }
     #[test] fn bald_eagles_in_forest_scarce_on_prairie_none_on_tundra() {
         let e = density_per_ha(Species::BaldEagle, 55.0, -100.0, 300.0, 0.9, false, 2026);
@@ -191,5 +191,17 @@ mod tests {
         assert_eq!(spawn_count(0.0, 500.0, 50.0, -90.0), 0);
         let n = spawn_count(2.0, 100.0, 50.0, -90.0); // 2/ha over 1 ha
         assert!(n == 2 || n == 3);
+    }
+    #[test] fn arctic_foxes_on_tundra_only_and_cycle_with_lemmings() {
+        let t = density_per_ha(Species::ArcticFox, 69.3, -139.5, 150.0, 0.35, false, 2026);
+        assert!(t > 0.0 && t <= 0.01, "Yukon north slope {t}");
+        assert_eq!(density_per_ha(Species::ArcticFox, 55.0, -100.0, 300.0, 0.9, false, 2026), 0.0, "not in boreal forest");
+        assert_eq!(density_per_ha(Species::ArcticFox, 69.0, 25.0, 100.0, 0.4, false, 2026), 0.0, "Lapland: not this North American table");
+        let ds: Vec<f64> = (2020..2028).map(|y| density_per_ha(Species::ArcticFox, 69.3, -139.5, 150.0, 0.35, false, y)).collect();
+        let (lo, hi) = ds.iter().fold((f64::MAX, 0.0f64), |(l, h), &d| (l.min(d), h.max(d)));
+        assert!(hi > 3.0 * lo, "lemming-cycle swing {lo} {hi}");
+        let pop = landing_population(69.3, -139.5, 150.0, 0.35, false, 2026, 5_000.0);
+        assert!(pop.iter().any(|&(s, _)| s == Species::ArcticFox), "on the Yukon north-slope cast: {pop:?}");
+        assert_eq!(Species::from_id(11), Some(Species::ArcticFox));
     }
 }

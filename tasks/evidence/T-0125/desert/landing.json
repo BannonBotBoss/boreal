@@ -1,0 +1,26 @@
+{
+  "site": "desert",
+  "slug": "desert",
+  "clickLat": 27.4,
+  "clickLon": 27.7,
+  "landedLat": 27.397831246848998,
+  "landedLon": 27.701039572215574,
+  "biome": "boreal",
+  "water": false,
+  "census": [],
+  "shown": [],
+  "simStepMs": 106.99999999985721,
+  "frameMs": 58.6,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 402,
+    "sim": 60.7,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 1925
+  },
+  "exit": 0,
+  "note": ""
+}

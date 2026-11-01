@@ -1,0 +1,26 @@
+{
+  "site": "wetland (lake)",
+  "slug": "wetland",
+  "clickLat": 47.9,
+  "clickLon": -104.9,
+  "landedLat": 47.905154141703,
+  "landedLon": -104.9110954751001,
+  "biome": "water",
+  "water": true,
+  "census": [],
+  "shown": [],
+  "simStepMs": 101.80000000065093,
+  "frameMs": 41,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 407,
+    "sim": 63.1,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 1993
+  },
+  "exit": 0,
+  "note": ""
+}

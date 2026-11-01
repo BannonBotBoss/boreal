@@ -3,7 +3,7 @@ import { ANIMAL_DEFAULT_ENERGY } from './animalBehavior';
 import { surfaceDetail } from './surface';
 import type { Kind } from './catalog';
 import { LEVEL } from './tuning';
-import { plantsGrowAt } from './altitudeZones';
+import { groundPlantsGrowAt, plantsGrowAt } from './altitudeZones';
 import { STAGES, elevationGrid, flowGrid, lakeAt, sampleGrid, toWorld } from './stages/elevation';
 import { cellAt, twi } from './stages/flow';
 import { carve, pondAt, riverAt } from './stages/rivers';
@@ -76,7 +76,8 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     const h = heightAt(x, z);
     if (!isDryLand(x, z, h) || Math.hypot(x, z) < 13) continue;
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
-    if ((kind === 'spruce' || kind === 'plant' || kind === 'log' || kind === 'deer') && !plantsGrowAt(h)) continue; // T-0072: above the tree line only rock. Deer use the same line.
+    if ((kind === 'spruce' || kind === 'log' || kind === 'deer') && !plantsGrowAt(h)) continue; // T-0072: above the tree line no trees. Deer use the same line.
+    if (kind === 'plant' && !groundPlantsGrowAt(h)) continue; // herbs grow on Arctic tundra too, not on mountain rock or ice
     // Herbs: a separate stream so a rejection does not shift later trees, rocks or deer. Acceptance probability is site light.
     if (kind === 'plant') {
       const site = siteAt(x, z, true, false), keep = random(hash(`herb-light:${worldSeed}:${cx}:${cz}:${i}`))();
@@ -115,7 +116,7 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     const seed = f('draw', 'seed', Math.floor(forage() * 0xffffffff));
     const keep = f('draw', 'keep', forage()), rotation = f('draw', 'rotation', forage() * Math.PI * 2);
     const scale = f('draw', 'scale', .65 + forage() * .35), h = heightAt(x, z), site = siteAt(x, z, true, false);
-    if (isDryLand(x, z, h) && plantsGrowAt(h) && !site.water && keep < berrySuit(site.light))
+    if (isDryLand(x, z, h) && groundPlantsGrowAt(h) && !site.water && keep < berrySuit(site.light))
       result.push({ key: `forage:${cx}:${cz}:${i}`, kind: 'forage', x, z, seed, generatorVersion: 1, rotation, scale });
   }
   // T-0030: a steep channel (S > 0.02) exposes a Shield boulder. The ordinary stone stream stays on dry land.

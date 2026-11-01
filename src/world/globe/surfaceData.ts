@@ -9,7 +9,7 @@
 import { STAGES } from '../../core/stages/elevation';
 import { surfaceAt } from '../../core/stages/surfaceAt';
 import { heightAt } from '../../core/world';
-import { zoneAt, gameAltitudeM } from '../../core/altitudeZones';
+import { zoneAt, gameAltitudeM, type Zone } from '../../core/altitudeZones';
 import { PLANET } from './planet';
 import { siteLatitude } from '../../core/sitePhase';
 import type { SoilKind } from '../../core/stages/soils';
@@ -23,7 +23,7 @@ export interface SurfaceData {
   tree: 'spruce' | 'pine' | 'birch' | 'aspen' | 'none'; // dominant tree type [PLACEHOLDER]
   season: number;         // 0 midwinter … .5 midsummer … 1 [PLACEHOLDER]
   snow: number;           // snow cover 0..1                [PLACEHOLDER]
-  zone: 'forest' | 'rock' | 'ice'; // T-0072 altitude zone (core/altitudeZones): no plants on rock or ice
+  zone: Zone; // T-0072 altitude zone (core/altitudeZones): no plants on rock or ice, low plants only on tundra
   placeholder: { forest: boolean; tree: boolean; season: boolean; snow: boolean };
 }
 /** Placeholder values: dense boreal spruce in midsummer, no snow (Kenora, July). */

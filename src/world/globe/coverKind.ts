@@ -7,7 +7,7 @@
  * prairie and boreal at data/earth/cover-density.json's thresholds. tests/cover-kind.test.ts checks this matches
  * the wasm cover_cell everywhere, so the viewer and the simulation agree on what grows at a landing.
  */
-import { iceLineM, treeLineM } from '../../core/altitudeZones';
+import { ARCTIC_TREE_LINE_M, iceLineM, treeLineM } from '../../core/altitudeZones';
 import C from '../../../data/earth/cover-density.json';
 import Z from '../../../data/earth/altitude-zones.json';
 
@@ -53,7 +53,7 @@ export function coverKind(latDeg: number, elevM: number, vegetation: number, wat
   const lat = Math.abs(latDeg), elev = Math.max(0, elevM);
   if (elev >= iceLineM(lat)) return 'ice';
   const tree = treeLineM(lat);
-  if (elev > tree) return tree < 80 ? 'tundra' : 'rock'; // Arctic: tundra up to the ice line (#192)
+  if (elev > tree) return tree < ARCTIC_TREE_LINE_M ? 'tundra' : 'rock'; // Arctic: tundra up to the ice line (#192)
   if (vegetation < C.veg_desert_below) return 'desert';
   if (vegetation < C.veg_prairie_below) return lat >= C.wetland_lat_min && elev < C.wetland_below_m ? 'wetland' : 'prairie';
   return siteMeanC(latDeg, elev) >= C.tropical_mean_C ? 'tropical' : 'boreal';

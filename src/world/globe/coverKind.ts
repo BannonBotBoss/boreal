@@ -53,7 +53,7 @@ export function coverKind(latDeg: number, elevM: number, vegetation: number, wat
   const lat = Math.abs(latDeg), elev = Math.max(0, elevM);
   if (elev >= iceLineM(lat)) return 'ice';
   const tree = treeLineM(lat);
-  if (elev > tree) return tree < 80 && elev < tree + 300 ? 'tundra' : 'rock';
+  if (elev > tree) return tree < 80 ? 'tundra' : 'rock'; // Arctic: tundra up to the ice line (#192)
   if (vegetation < C.veg_desert_below) return 'desert';
   if (vegetation < C.veg_prairie_below) return lat >= C.wetland_lat_min && elev < C.wetland_below_m ? 'wetland' : 'prairie';
   return siteMeanC(latDeg, elev) >= C.tropical_mean_C ? 'tropical' : 'boreal';

@@ -12,7 +12,7 @@ Screenshots and FPS still need a WebGL browser run and are not part of this file
 | Saskatchewan prairie | 51, -107 | 600 | 0.45 | prairie | deer 257, fox 17, beaver 12, moose 3, black bear 1 |
 | Hudson Bay lowland | 57, -92 | 80 | 0.60 | wetland | beaver, moose, caribou, wolf, fox, black bear (no deer or hare) |
 | Rockies alpine | 51.4, -116.2 | 2600 | 0.10 | ice | none |
-| Yukon north tundra | 68, -135 | 300 | 0.30 | rock | none |
+| Yukon north tundra | 68, -135 | 300 | 0.30 | tundra | caribou 36, red fox 3 (no deer) |
 | Arctic polar | 80, -80 | 200 | 0.02 | ice | none |
 | Sahara | 23, 13 | 400 | 0.02 | desert | none |
 | Amazon | -3, -60 | 50 | 0.95 | tropical | deer (thin, 0.1-1/km2) |
@@ -20,9 +20,9 @@ Screenshots and FPS still need a WebGL browser run and are not part of this file
 
 ## Gaps found (not fixed here)
 
-- **Arctic lowland tundra is bare rock.** At 68N the modelled tree line is near sea level, and `cover_class` only keeps
-  tundra up to tree line + 300 m, so a 300 m Yukon north slope reads as rock with no caribou, wolf or fox. Real Arctic
-  tundra runs well above that. Kept as a `test.todo`; the fix touches the altitude-zone rule, so it needs a decision first.
+- **Arctic tundra fixed (Nov 1, grokbot-1):** where the modelled tree line is at or near sea level (< 80 m), tundra now runs
+  up to the physics ice line instead of an arbitrary tree line + 300 m, so a 300 m Yukon north slope (ice line ~312 m at 68N)
+  is tundra with caribou and fox (wolf density is too thin to show in a 5 km patch). Mountains with a higher tree line keep bare rock above it, so the no-plants-at-altitude rule is unchanged there.
 - **Hudson Bay lowland fixed (Nov 1, grokbot-1):** new `wetland` cover class (id 8, northern peatland) for prairie-band green
   at |lat| >= `wetland_lat_min` (50) below `wetland_below_m` (200 m). Moose, beaver, caribou, wolf, black bear and red fox opt in
   with `wetland_per_ha`; deer, hare and lynx stay out.

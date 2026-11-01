@@ -12,7 +12,7 @@ export const TEN_PLACES = [
   ['Saskatchewan prairie', 51, -107, 600, 0.45, false, 'prairie', ['white_tailed_deer'], ['canada_lynx', 'snowshoe_hare']],
   ['Hudson Bay lowland', 57, -92, 80, 0.6, false, 'wetland', ['beaver', 'moose', 'caribou'], ['white_tailed_deer', 'snowshoe_hare']],
   ['Rockies alpine', 51.4, -116.2, 2600, 0.1, false, 'ice', [], ['*']],
-  ['Yukon north tundra', 68, -135, 300, 0.3, false, 'rock', [], ['*']],
+  ['Yukon north tundra', 68, -135, 300, 0.3, false, 'tundra', ['caribou', 'red_fox'], ['white_tailed_deer']],
   ['Arctic polar', 80, -80, 200, 0.02, false, 'ice', [], ['*']],
   ['Sahara', 23, 13, 400, 0.02, false, 'desert', [], ['*']],
   ['Amazon', -3, -60, 50, 0.95, false, 'tropical', [], ['canada_lynx', 'caribou', 'snowshoe_hare']],
@@ -32,5 +32,3 @@ test('ten places get the expected cover and fitting wildlife', async () => {
     for (const p of pop) assert.ok(p.count > 0 && Number.isFinite(p.perKm2) && p.habitat.length > 0, `${name}: ${p.species} row`);
   }
 });
-
-test.todo('Arctic lowland at a few hundred metres (Yukon north, 68N 300 m) should be tundra with caribou, wolf and fox, not bare rock');

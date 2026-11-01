@@ -77,8 +77,9 @@ pub fn cover_class(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool) -> C
     if elev >= ice_line_m(lat) { return Cover::Ice; }
     let tree = tree_line_m(lat);
     if elev > tree {
-        // Arctic lowland (tree line at or near sea level) is tundra; a mountain above its tree line is bare rock.
-        return if tree < 80.0 && elev < tree + 300.0 { Cover::Tundra } else { Cover::Rock };
+        // Arctic (tree line at or near sea level): tundra all the way up to the ice line, the physics limit where plants stop
+        // (#192 ten-location gap: a 300 m Yukon north slope was bare rock). A mountain above a higher tree line stays bare rock.
+        return if tree < 80.0 { Cover::Tundra } else { Cover::Rock };
     }
     if vegetation < num(COVER_JSON, "veg_desert_below") { Cover::Desert }
     else if vegetation < num(COVER_JSON, "veg_prairie_below") {
@@ -127,6 +128,11 @@ mod tests {
         assert_eq!(r.stems_per_ha, 0.0);
     }
     #[test] fn arctic_lowland_is_tundra() { assert_eq!(cover_class(68.0, 50.0, 0.4, false), Cover::Tundra); }
+    #[test] fn arctic_upland_below_ice_line_is_tundra() {
+        assert_eq!(cover_class(68.0, 300.0, 0.3, false), Cover::Tundra);
+        assert_eq!(cover_class(68.0, ice_line_m(68.0) + 1.0, 0.3, false), Cover::Ice);
+        assert_eq!(cover_class(51.4, 2600.0, 0.1, false), Cover::Ice);
+    }
     #[test] fn boreal_prairie_desert_by_moisture() {
         assert_eq!(cover_class(50.0, 300.0, 0.8, false), Cover::Boreal);
         assert_eq!(cover_class(50.0, 600.0, 0.45, false), Cover::Prairie);

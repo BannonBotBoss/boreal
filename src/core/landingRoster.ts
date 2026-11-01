@@ -103,17 +103,21 @@ export function placeLandingAnimals(
   const rx = Math.cos(yaw), rz = -Math.sin(yaw);
   const out: PlacedAnimal[] = [];
   slots.forEach((slot, index) => {
+    let fallback: { x: number; z: number } | null = null;
     for (let ring = 0; ring < 8; ring++) {
       const dist = LANDING_NEAR_M + (index % 3) * LANDING_RING_M + ring * 2.5;
       const side = ((index % 5) - 2) * LANDING_SIDE_M + (ring % 2) * 1.2;
       const x = origin.x + fx * dist + rx * side;
       const z = origin.z + fz * dist + rz * side;
       const ahead = (x - origin.x) * fx + (z - origin.z) * fz;
-      if (ahead < 6) continue;
+      if (ahead < 4) continue;
+      if (!fallback) fallback = { x, z };
       if (!dry(x, z)) continue;
       out.push({ ...slot, index, x, z, yaw: yaw + Math.PI / 2 });
       return;
     }
+    // The player is already standing here. A cast the list named is not dropped when the arc is wet.
+    if (fallback) out.push({ ...slot, index, x: fallback.x, z: fallback.z, yaw: yaw + Math.PI / 2 });
   });
   return out;
 }

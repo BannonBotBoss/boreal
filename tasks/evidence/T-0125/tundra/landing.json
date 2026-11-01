@@ -1,0 +1,26 @@
+{
+  "site": "tundra",
+  "slug": "tundra",
+  "clickLat": 64.5,
+  "clickLon": -119.7,
+  "landedLat": 64.49768792822134,
+  "landedLon": -119.69887528704976,
+  "biome": "ice",
+  "water": false,
+  "census": [],
+  "shown": [],
+  "simStepMs": 86.20000000007622,
+  "frameMs": 28.4,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 401,
+    "sim": 57.5,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2006
+  },
+  "exit": 0,
+  "note": ""
+}

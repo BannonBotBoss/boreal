@@ -11,7 +11,7 @@ import { iceLineM, treeLineM } from '../../core/altitudeZones';
 import C from '../../../data/earth/cover-density.json';
 import Z from '../../../data/earth/altitude-zones.json';
 
-export type CoverKind = 'water' | 'ice' | 'tundra' | 'rock' | 'desert' | 'prairie' | 'boreal' | 'tropical';
+export type CoverKind = 'water' | 'ice' | 'tundra' | 'rock' | 'desert' | 'prairie' | 'boreal' | 'tropical' | 'wetland';
 
 type Range = { stems_per_ha: number[]; height_m: number[] };
 const M64 = (1n << 64n) - 1n;
@@ -55,7 +55,7 @@ export function coverKind(latDeg: number, elevM: number, vegetation: number, wat
   const tree = treeLineM(lat);
   if (elev > tree) return tree < 80 && elev < tree + 300 ? 'tundra' : 'rock';
   if (vegetation < C.veg_desert_below) return 'desert';
-  if (vegetation < C.veg_prairie_below) return 'prairie';
+  if (vegetation < C.veg_prairie_below) return lat >= C.wetland_lat_min && elev < C.wetland_below_m ? 'wetland' : 'prairie';
   return siteMeanC(latDeg, elev) >= C.tropical_mean_C ? 'tropical' : 'boreal';
 }
 
@@ -68,6 +68,7 @@ export function coverKind(latDeg: number, elevM: number, vegetation: number, wat
 export function coverSpacingM(kind: CoverKind): number | null {
   if (kind === 'boreal') return 6;
   if (kind === 'tropical') return 5;
+  if (kind === 'wetland') return 14;
   if (kind === 'prairie') return 28;
   if (kind === 'desert') return 70;
   return null;

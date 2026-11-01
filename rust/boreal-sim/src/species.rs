@@ -43,8 +43,8 @@ pub fn in_range(sp: Species, lat: f64, lon: f64) -> bool {
 pub fn density_per_ha(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32) -> f64 {
     if !in_range(sp, lat, lon) { return 0.0; }
     let cls = cover_row(lat, lon, elev_m, vegetation, water).class;
-    let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", Cover::Tundra => "tundra_per_ha", Cover::Tropical => "tropical_per_ha", _ => return 0.0 };
-    if !has_field(sp, key) { return 0.0; } // tundra and tropical are opt-in: only species that list it live there
+    let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", Cover::Tundra => "tundra_per_ha", Cover::Tropical => "tropical_per_ha", Cover::Wetland => "wetland_per_ha", _ => return 0.0 };
+    if !has_field(sp, key) { return 0.0; } // tundra, tropical and wetland are opt-in: only species that list it live there
     let r = field(sp, key);
     if r[1] <= 0.0 { return 0.0; }
     let h = place_hash(lat + 0.5 * sp as u32 as f64, lon);

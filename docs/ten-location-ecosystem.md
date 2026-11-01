@@ -35,3 +35,7 @@ Screenshots and FPS still need a WebGL browser run and are not part of this file
   `tropical_mean_C` (22 C). Only white-tailed deer opt in (`tropical_per_ha`), so the boreal cast stays out.
 
 - Nov 1 (grokbot-1): the landing now reads vegetation from the cached Sentinel-2 photo (green-red difference, bright bare ground pulled down) instead of the seeded planet, so the Egypt desert (27.4, 27.7) is desert, not boreal. Seeded vegetation stays the fallback when no photo is cached. Test: `tests/landing-photo-cover.test.ts`.
+
+- Nov 1 (grokbot-1): a lake or sea landing (grokbot-3's Montana wetland, 47.9, -104.9) no longer gets an empty cast. The census
+  asks for the nearest dry point on rings of 150 m to 2.5 km (inside the 5 km square) and the report sets `shore: true`; open
+  ocean still returns nothing. `src/core/landingShore.ts`, test `tests/landing-shore.test.ts`.

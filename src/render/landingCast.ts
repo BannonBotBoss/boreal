@@ -15,7 +15,8 @@ import {
 import { sharedPlanetSim } from '../core/planetWeather';
 import { SITE, siteDirection } from '../core/sitePhase';
 import { isDryLand, WORLD_SEED, heightAt } from '../core/world';
-import { PLANET, planetFor, toLatLon, vegetationWeight } from '../world/globe/planet';
+import { PLANET, fromLatLon, planetFor, toLatLon, vegetationWeight } from '../world/globe/planet';
+import { nearestShore } from '../core/landingShore';
 import { coverKind } from '../world/globe/coverKind';
 import { groundForCover, sampleDem, samplePhotoVegetation } from '../world/globe/openTiles';
 import { createProceduralAnimal, type ProceduralAnimal } from './proceduralAnimal';
@@ -31,6 +32,8 @@ export interface LandingReport {
   vegetation: number;
   water: boolean;
   biome: string;
+  /** True when the player stands on water and elevM, vegetation, water and biome come from the nearest shore point (#192). */
+  shore?: boolean;
   /** Click from ?latlon=, when the descent was aimed at one. */
   clickLat: number | null;
   clickLon: number | null;
@@ -53,14 +56,21 @@ export function landingContext(x: number, z: number) {
   const remote = Number.isFinite(SITE.latDeg);
   const dir = remote ? siteDirection(x, z, PLANET.radius) : planet.fromLocal(x, z);
   const ll = toLatLon(dir);
+  const at = groundAt(planet, ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, dir);
+  // A lake or sea landing: census the nearest shore inside the same 5 km square instead of an empty list (#192).
+  const shore = at.water ? nearestShore(at.lat, at.lon, (la, lo) => groundAt(planet, la, lo)) : null;
+  const census = shore ?? at;
+  return { ...census, lat: at.lat, lon: at.lon, censusLat: census.lat, censusLon: census.lon, shore: shore != null, remote };
+}
+
+/** Cover inputs at one geographic point: DEM height and land win over the seeded planet, a cached photo's vegetation wins. */
+function groundAt(planet: ReturnType<typeof planetFor>, lat: number, lon: number, dir = fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180)) {
   const s = planet.sampleSurface(dir);
-  const lat = ll.lat * 180 / Math.PI;
-  const lon = ll.lon * 180 / Math.PI;
   const { water, elevM } = groundForCover(s, sampleDem(lat, lon));
   // A cached satellite photo wins over the seeded planet's vegetation (#192 desert finding).
   const vegetation = samplePhotoVegetation(lat, lon) ?? vegetationWeight(s, dir);
   const biome = coverKind(lat, elevM, vegetation, water);
-  return { lat, lon, elevM, vegetation, water, biome, remote };
+  return { lat, lon, elevM, vegetation, water, biome };
 }
 
 function clickFromSearch() {
@@ -135,7 +145,7 @@ export function createLandingCast(scene: THREE.Scene) {
         publish(report.note);
         return;
       }
-      const pop = sim.landingPopulation(at.lat, at.lon, at.elevM, at.vegetation, at.water, LANDING_YEAR, LANDING_CENSUS_SIDE_M);
+      const pop = sim.landingPopulation(at.censusLat, at.censusLon, at.elevM, at.vegetation, at.water, LANDING_YEAR, LANDING_CENSUS_SIDE_M);
       key = asked;
       census = pop.map(row => ({ species: row.species, count: row.count }));
       clearBodies();

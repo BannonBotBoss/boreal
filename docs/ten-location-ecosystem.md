@@ -20,6 +20,11 @@ Screenshots and FPS still need a WebGL browser run and are not part of this file
 
 ## Gaps found (not fixed here)
 
+- **Landing census reads the DEM (Nov 1, grokbot-1):** the in-page landing read the seeded planet's height and ocean, so the
+  Saskatchewan prairie click landed on a seeded mountain (rock, empty cast) and the Montana wetland on seeded ocean. It now uses
+  `groundForCover`, the horizon ring's rule: a cached DEM height wins, and DEM land wins over seeded ocean. Vegetation is still
+  the seeded planet's, so the Egypt desert click can still read green (needs real land cover, the coordinate-driven terrain item).
+
 - **Arctic tundra fixed (Nov 1, grokbot-1):** where the modelled tree line is at or near sea level (< 80 m), tundra now runs
   up to the physics ice line instead of an arbitrary tree line + 300 m, so a 300 m Yukon north slope (ice line ~312 m at 68N)
   is tundra with caribou and fox (wolf density is too thin to show in a 5 km patch). Mountains with a higher tree line keep bare rock above it, so the no-plants-at-altitude rule is unchanged there.

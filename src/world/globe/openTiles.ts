@@ -167,6 +167,17 @@ export function elevationWins(kind: '' | 'ocean' | 'lake', demM: number | null) 
   return kind === 'ocean' && demM != null && demM > 0;
 }
 
+/**
+ * Ground the cover and the landing census should read: a cached DEM height wins over the seeded planet's
+ * height (the prairie click is not a seeded mountain), and DEM land above sea level wins over the planet's
+ * ocean, as in `elevationWins`. The same rule the horizon cover ring uses (#192).
+ */
+export function groundForCover(s: { kind: '' | 'ocean' | 'lake'; h: number; level?: number }, demM: number | null) {
+  const water = !elevationWins(s.kind, demM) && (s.kind === 'ocean' || s.kind === 'lake' || s.h < (s.level ?? 0));
+  const elevM = water ? 0 : Math.max(0, demM != null && demM > 0 ? demM : s.h);
+  return { water, elevM };
+}
+
 /** Metres above sea level, or null when the tile is not cached. Finest cached zoom wins. */
 export function sampleDem(latDeg: number, lonDeg: number): number | null {
   const v = sampleGrid(dem, latDeg, lonDeg, OPEN_TILES.demZoom, 1);

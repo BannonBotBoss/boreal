@@ -79,10 +79,12 @@ export function mountViewfinder(renderer: THREE.WebGLRenderer, view: 'game' | 'g
   const flash = () => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;background:#fff;opacity:.5;z-index:99;pointer-events:none;transition:opacity .3s'; document.body.append(d); requestAnimationFrame(() => { d.style.opacity = '0'; }); setTimeout(() => d.remove(), 400); };
   const shoot = (hdr = new URLSearchParams(search).get('hdr') === '1') => { pending = { hdr }; };
   const panel = mountCameraPanel(st, () => {}, () => readout(), { filters, focal: opts.focal, onPhoto: () => shoot(), onGallery: () => void showGallery() });
-  const readout = () => { const f = isFilterView ? filt() : null; return `${opts.readout ? opts.readout() + '\n' : ''}${view}  EV100 ${meta().ev100.toFixed(1)} ${st.cam.auto ? 'auto' : 'manual'}${f && f.id !== 'visible' ? `\n${f.label}: ${f.note}` : ''}\nP photo  Shift+P photo+EXR  G gallery  \` debug HUD`; };
+  const readout = () => { const f = isFilterView ? filt() : null; return `${opts.readout ? opts.readout() + '\n' : ''}${view}  EV100 ${meta().ev100.toFixed(1)} ${st.cam.auto ? 'auto' : 'manual'}${f && f.id !== 'visible' ? `\n${f.label}: ${f.note}` : ''}\nP photo  Shift+P photo+EXR  ${view === 'game' ? 'G gallery  ' : ''}\` debug HUD`; };
+  /** G drops on the planet (globeView, in-page globe and band): the gallery key is only live in the game proper (#211). */
+  const galleryKey = () => view === 'game' && !document.body.classList.contains('on-globe');
   addEventListener('keydown', e => { if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.ctrlKey || e.metaKey) return;
     if ((e.key === 'p' || e.key === 'P') && view !== 'game') shoot( // game: P is the rebindable 'photo' action (main.ts act)
-      e.shiftKey || undefined); else if (e.key === 'g') void showGallery(); else if (e.key === '`') document.body.classList.toggle('boreal-debug'); });
+      e.shiftKey || undefined); else if (e.key === 'g' && galleryKey()) void showGallery(); else if (e.key === '`') document.body.classList.toggle('boreal-debug'); });
   installViewfinderCss();
   setInterval(() => panel.update(), 250);
   const api = { state: st, shoot, capture, panel, fov: () => fovFromFocal(st.cam.focalMm) }; (renderer as unknown as { __viewfinder: unknown }).__viewfinder = api; active = api; return api;

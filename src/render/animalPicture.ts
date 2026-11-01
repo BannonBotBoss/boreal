@@ -11,6 +11,9 @@ import { ANIMAL_LADDER, detailShares } from './animalLadder';
 import { animalModel, ensureAnimalModels } from './animalModels';
 import { spawnSkin, type SkinSpawn } from './meshySkin';
 import type { Motion } from '../core/animalBehavior';
+import { heightAt } from '../core/world';
+import { createWolfLod, GAIT_LOD_SPECIES } from './gaitLod';
+import { coatOf } from './stylizedPalette';
 
 export interface PictureBody {
   key: string;
@@ -28,35 +31,9 @@ export interface PictureBody {
 
 export interface PictureWeight { proc: number; full: number; low: number; speck: number; root: THREE.Object3D }
 
-const TINT: Record<string, [number, number, number]> = {
-  'Gray Wolf': [0.45, 0.46, 0.48],
-  'Coyote': [0.55, 0.48, 0.32],
-  'Red Fox': [0.72, 0.38, 0.16],
-  'Gray Fox': [0.55, 0.48, 0.32],
-  'Cougar': [0.62, 0.48, 0.28],
-  'Striped Skunk': [0.15, 0.15, 0.15],
-  'Northern Raccoon': [0.45, 0.42, 0.38],
-  'Wolverine': [0.28, 0.22, 0.16],
-  'North American River Otter': [0.25, 0.18, 0.12],
-  'Ermine': [0.55, 0.42, 0.28],
-  'American Mink': [0.22, 0.14, 0.08],
-  'American Black Bear': [0.12, 0.10, 0.08],
-  'Grizzly Bear': [0.35, 0.26, 0.14],
-  'Moose': [0.28, 0.22, 0.16],
-  'Elk': [0.42, 0.32, 0.20],
-  'White-tailed Deer': [0.62, 0.48, 0.30],
-  'Woodland Caribou': [0.48, 0.42, 0.34],
-  'Snowshoe Hare': [0.55, 0.40, 0.26],
-  'Beaver': [0.32, 0.22, 0.14],
-  'Bald Eagle': [0.25, 0.22, 0.18],
-  'Hawks, Kites and Eagles': [0.25, 0.22, 0.18],
-  'Common Raven': [0.08, 0.08, 0.09],
-  'Crows and Jays': [0.08, 0.08, 0.09],
-};
-
 function tintOf(species: string) {
-  const rgb = TINT[species] ?? [0.50, 0.48, 0.36];
-  return (rgb[0] * 255 << 16) + (rgb[1] * 255 << 8) + (rgb[2] * 255);
+  const rgb = coatOf(species);
+  return (Math.round(rgb[0] * 255) << 16) + (Math.round(rgb[1] * 255) << 8) + Math.round(rgb[2] * 255);
 }
 
 function gaitOf(item: PictureBody): { motion: Motion; phase: number; speed: number } {
@@ -133,6 +110,8 @@ void main() {
   const proj = new THREE.Matrix4();
   const tmp = new THREE.Vector3();
   let last: PictureWeight[] = [];
+  /** Wolves: near full mesh + terrain feet, mid low mesh on phase curves, far speck (gaitLod.ts, #162 item 2). */
+  const wolves = createWolfLod(scene, heightAt);
 
   function claimSkin(species: string) {
     const model = animalModel(species);
@@ -179,6 +158,7 @@ void main() {
       frustum.setFromProjectionMatrix(proj.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
       hideSkins();
       hideImpostors();
+      wolves.begin(animalModel(GAIT_LOD_SPECIES[0])?.skin ?? null);
       const pos = geo.getAttribute('position') as THREE.BufferAttribute;
       const col = geo.getAttribute('color') as THREE.BufferAttribute;
       const alpha = geo.getAttribute('aAlpha') as THREE.BufferAttribute;
@@ -194,8 +174,15 @@ void main() {
         const overhead = eye > 80 && horiz < Math.max(90, eye * 0.5);
         const seen = d < 8 || overhead || frustum.containsPoint(tmp.set(item.x, item.y + 0.6, item.z));
         const model = animalModel(item.species);
-        let proc = 0, full = 0, low = 0, speck = 0;
-        if (seen && model?.skin && share.full > 0.04 && fulls < ANIMAL_LADDER.fullCap) {
+        let proc = 0, full = 0, low = 0, speck = 0, bob = 0;
+        const wolf = GAIT_LOD_SPECIES.includes(item.species) && !!model?.skin;
+        if (wolf && seen) {
+          const w = wolves.show({ ...item, ...gaitOf(item) }, share, { near: fulls < ANIMAL_LADDER.fullCap, mid: lows < ANIMAL_LADDER.lowCap }, setOpacity);
+          full = w.full; low = w.low; bob = w.bob;
+          if (full) fulls++;
+          if (low) lows++;
+        }
+        if (!wolf && seen && model?.skin && share.full > 0.04 && fulls < ANIMAL_LADDER.fullCap) {
           const live = claimSkin(item.species);
           if (live) {
             const gait = gaitOf(item);
@@ -208,7 +195,7 @@ void main() {
           }
         }
         const used = lowCount.get(item.species) ?? 0;
-        if (seen && model?.skin && share.low > 0.04 && lows < ANIMAL_LADDER.lowCap && used < ANIMAL_LADDER.lowCap) {
+        if (!wolf && seen && model?.skin && share.low > 0.04 && lows < ANIMAL_LADDER.lowCap && used < ANIMAL_LADDER.lowCap) {
           const mesh = impostor(item.species);
           const height = Math.max(0.05, model.skin.height);
           const width = Math.max(0.05, model.skin.width);
@@ -229,8 +216,8 @@ void main() {
         if (!model?.skin) proc = seen ? share.full + share.low : 0;
         const uncovered = seen && full === 0 && low === 0 && proc < 0.04 && (share.full > 0.04 || share.low > 0.04 || share.speck > 0.02);
         if (seen && (share.speck > 0.02 || uncovered) && specks < cap) {
-          const tint = TINT[item.species] ?? [0.50, 0.48, 0.36];
-          pos.setXYZ(specks, item.x, item.y + 0.4, item.z);
+          const tint = coatOf(item.species);
+          pos.setXYZ(specks, item.x, item.y + 0.4 + bob, item.z);
           col.setXYZ(specks, tint[0], tint[1], tint[2]);
           alpha.setX(specks, Math.min(1, Math.max(share.speck, uncovered ? 0.45 : 0)) * 0.9);
           specks++;
@@ -239,11 +226,12 @@ void main() {
         setFur(item.root, share.full > 0.35 && proc > 0.2);
         weights.push({ proc, full, low, speck, root: item.root });
       }
+      wolves.end();
       pos.needsUpdate = true; col.needsUpdate = true; alpha.needsUpdate = true;
       geo.setDrawRange(0, Math.max(1, specks));
       points.visible = specks > 0;
       last = weights;
-      (globalThis as { borealPicture?: unknown }).borealPicture = () => ({ specks, fulls, lows, bodies: weights.filter(w => w.proc > 0.2).length });
+      (globalThis as { borealPicture?: unknown }).borealPicture = () => ({ specks, fulls, lows, bodies: weights.filter(w => w.proc > 0.2).length, wolves: { ...wolves.stats } });
       return weights;
     },
   };

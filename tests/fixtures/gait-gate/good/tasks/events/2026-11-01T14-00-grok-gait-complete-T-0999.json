@@ -1,0 +1,23 @@
+{
+  "type": "complete",
+  "task": "T-0999",
+  "agent": "grok-gait",
+  "at": "2026-11-01T14:00:00-07:00",
+  "branch": "grok-gait/T-0999-fixture",
+  "footage": [
+    {
+      "url": "https://www.youtube.com/watch?v=D-H5ZIJdQsw",
+      "notes": "0:12-0:15 trot, frames 360-450 at 30 fps"
+    }
+  ],
+  "side_by_side": {
+    "clip": "tasks/evidence/T-0999/side-by-side.webm",
+    "verdict": "game and footage side by side: same footfall order, no elbow flicker"
+  },
+  "sources": [
+    {
+      "value": "duty factor 0.35",
+      "source": "Schmidt 2008 JEB 211:3775 Table 2"
+    }
+  ]
+}

@@ -187,16 +187,18 @@ const girdleShift = (p: number, duty: number, deficit: number) =>
   p < duty ? deficit * (p / duty - .5) : deficit * (.5 - smoothstep((p - duty) / (1 - duty)));
 /** Girdle height drop (m) of one stance leg pivoting over its paw: lever − √(lever² − x²), x = paw relative to the pivot. */
 const vaultDrop = (lever: number, x: number) => lever - Math.sqrt(Math.max(0, lever * lever - x * x));
+// reachTargets helpers at module scope (no per-call named closures under tsx keepNames, #198). Same math as before.
+function foreReach(body: ReachBody, girdle: number[], i: number) { const want = -girdle[i] / body.foreLever, rot = Math.max(-body.scapulaMax, Math.min(body.scapulaMax, want));
+  return [rot, girdle[i] + rot * body.foreLever] as const; }
+function pairDrop(at: number[], girdle: number[], duty: number, sweep: number, legs: number[], lever: number) {
+  const d = legs.filter(i => at[i] < duty).map(i => vaultDrop(lever, sweep * (at[i] / duty - .5) - girdle[i])); return d.length ? Math.max(...d) : 0; }
 /** All reach and pitch targets at one stride phase for a canidPlan. Pure. */
 export function reachTargets(plan: CanidPlan, phase: number, body: ReachBody = REF_BODY): ReachTargets {
   const { duty, offsets } = plan, sweep = duty * plan.stride, chord = body.legChord[plan.gait], deficit = Math.max(0, sweep - chord);
   const at = offsets.map(o => frac(phase + o)), girdle = at.map(p => girdleShift(p, duty, deficit));
-  const fore = (i: number) => { const want = -girdle[i] / body.foreLever, rot = Math.max(-body.scapulaMax, Math.min(body.scapulaMax, want));
-    return [rot, girdle[i] + rot * body.foreLever] as const; };
-  const [lf, rf] = [fore(0), fore(2)], mean = (girdle[1] + girdle[3]) / 2;
+  const [lf, rf] = [foreReach(body, girdle, 0), foreReach(body, girdle, 2)], mean = (girdle[1] + girdle[3]) / 2;
   // Pitch: a pair in stance holds its girdle at the vault height of its planted paws; a pair in swing does not drop.
-  const drop = (legs: number[], lever: number) => { const d = legs.filter(i => at[i] < duty).map(i => vaultDrop(lever, sweep * (at[i] / duty - .5) - girdle[i])); return d.length ? Math.max(...d) : 0; };
-  const pitch = Math.atan2(drop([1, 3], body.hindLever) - drop([0, 2], body.foreLever), body.trunk);
+  const pitch = Math.atan2(pairDrop(at, girdle, duty, sweep, [1, 3], body.hindLever) - pairDrop(at, girdle, duty, sweep, [0, 2], body.foreLever), body.trunk);
   return { sweep, deficit, girdle, scapula: [lf[0], rf[0]], glide: [lf[1], rf[1]], spineFlex: -mean / body.hindLever,
     hindResidual: [girdle[1] - mean, girdle[3] - mean], pitch };
 }

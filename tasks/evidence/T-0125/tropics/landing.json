@@ -1,0 +1,40 @@
+{
+  "site": "tropics",
+  "slug": "tropics",
+  "clickLat": -7.1,
+  "clickLon": -67,
+  "landedLat": -7.1021105711540535,
+  "landedLon": -66.99887352769171,
+  "biome": "boreal",
+  "water": false,
+  "census": [
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 113
+    }
+  ],
+  "shown": [
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": -121.1268724692152,
+      "z": 241.1652138554355
+    }
+  ],
+  "simStepMs": 142.59999999956108,
+  "frameMs": 105.8,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 401,
+    "sim": 58.3,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 1946
+  },
+  "exit": 0,
+  "note": "",
+  "recaptured": true
+}

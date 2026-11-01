@@ -1462,3 +1462,39 @@ C:\dev\r13-clip was deleted after the v13 box outputs were confirmed (746 / 731 
 - The elbow gate question (2 x 88 deg, factor 2 an estimate; does the elbow carry the forearm's gate?) is pending with Matthew.
 - No v14 clips were recorded.
 - T-0044 is NOT done.
+## Run 15 (2026-10-29, grok-gait)
+
+Worktree `C:\dev\boreal-grok-pop`, branch `grok-gait/T-0044-touchdown-pop`, merged with origin/main. All cells: hare plan, fore lock on, 5 / 8.5 / 10 / 11.6 m/s x 60 / 120 / 240 Hz (12 cells). Gate unchanged (2 x 88 deg / t_stance x dt; 88 deg Schmidt 2008 JEB 211:3775 Table 4, the factor 2 an estimate).
+
+Defaults now: `FORE_PLAN = { on: 1, from: .8, lo: 12, hi: 35, frame: 2, plantWin: 1.5, dtWin: 1/240, qcAlways: 1 }`; `FORE_SOFT` and `FORE_JOINT` as Run 13; `FORE_STANCE` off (`on: 0, elbowW: 0, dip: 0`).
+
+| setting (12 cells) | plant hum / elbow overs | stance+lift hum / elbow | swing hum / elbow | per-frame touchdown forearm | split-step (contactScore exact) | min stance bend | stance miss max |
+|---|---|---|---|---|---|---|---|
+| Run 14 mode 2 (frame 2, plantWin 1) | 1 / 5 | 397 / 211 | 193 / 48 | 12.0-28.9 | 12.0-34.1 | 15.8 | 0 |
+| **default: + dtWin 1/240, qcAlways, plantWin 1.5** | 1 / 0 | 396 / 209 | 194 / 50 | 12.0-28.9 | 12.0-20.5 | 15.8 | 0 |
+| FORE_STANCE reach sink k .9 | 1 / 5 | 398 / 211 | 193 / 48 | 12.0-28.9 | 12.0-34.1 | | 0 |
+| reach sink k .8 | 1 / 5 | 399 / 209 | 193 / 50 | 8.9-28.9 | 0.4-34.1 | | 0 |
+| soft-curve dip 8 mm (brief 2b) | 2 / 0 | 400 / 209 | 194 / 49 | 8.9-28.9 | 12.0-34.1 | 19.9 | 0 |
+| hind-phase gather 10 mm (spine C, chest drop) | | 456 / 260 | 195 / 50 | 10.5-21.9 | | | 0.1 |
+| gather 4 mm | | 426 / 232 | 194 / 46 | 12.0-25.6 | | | 0 |
+| dip 8 mm + gather 4 mm | 1 / 0 | 426 / 232 | 194 / 46 | 12.0-25.6 | 12.0-33.6 | 6.1 | 0 |
+| extend 5 mm (chest up while hinds stand) | 1 / 5 | 397 / 211 | 158 / 28 | 12.0-28.9 | 12.0-34.1 | 15.8 | 0 |
+| elbowW 15 (brief 2a) | 1 / 5 | 296 / 239 | 196 / 52 | 12.0-28.9 | 12.0-34.1 | 15.8 | 0.1 |
+| elbowW 100 | 1 / 5 | 128 / 184 | 195 / 49 | 12.0-28.9 | 12.0-34.1 | 6.8 | 0.1 |
+| default + elbowW 100 | 1 / 0 | 139 / 170 | 192 / 50 | 12.0-28.9 | 12.0-20.5 | 6.8 | 0.1 |
+| FORE_JOINT.plantW 100 | 0 / 5 | 401 / 214 | 193 / 48 | 12.0-22.9 | 12.0-34.1 | 15.8 | 0 |
+| stanceShare 1 / holdWeight 100 / psiOff -.3 | 1 / 5, 2 / 5, 1 / 5 | 415/215, 414/213, 424/229 | | | | | |
+
+Proposed gate (fix brief 3; information only, not adopted: hum / elbow x 1.75 in mid-stance, 1x on the plant frame; the 1.75 has no source): stance+lift hum / elbow = default 33 / 93, elbowW 100 0 / 10, default + elbowW 100 0 / 8.
+
+Paw gate (touchdown-pop) 0 / 0 in all cells. touchdown-plan, frame-touchdown, soft-ik, stance-plan tests 24 / 24. bound-checks v2 fore lock on (`tools/bound-score-forelock.ts`): host 99.1 %, hare 94.7 %, identical to Run 12 fe589bc; hare plan slip 10.9 mm at 1.68 m/s and 16.1 mm at 8.5 m/s is the same at Run 12 (open). Full suite skipped (Matthew: wrap up; stopped 19:03 PT). Cost (bench lock held, fore lock on, ms per hare mean): default 0.67-1.29 vs mode 2 0.65-1.34, solves per frame equal or lower (213-396 vs 213-397).
+
+Why the stance overs stay: `DIAG=1 VS=8.5 HZ=240 npx tsx tools/elbow-pop.ts` shows them as a 3-4 frame late-stance fold with the paw still planted: the blade sits at its clamp (44.1 deg throughout), the elbow goes from about 35 to 120 deg and the humerus turns 25-44 deg per 240 Hz frame. A root sink by reach (k .9) changes nothing, so the leg is not at full reach there. The fold is the manus schedule (stancePsi to psiOff) plus the pinned blade. Next: plan the late-stance fold (lift-off pose planned like the touchdown), or a larger blade range if a source allows it.
+
+Not built this run (per brief): the three-segment hind leg and the foothold scoring.
+
+Clips (box): `/workspace/locomotion/T-0009/v14/T-0044-v14-rig-v8.5-slowmo.mp4`, `...-v11.6-slowmo.mp4`, contact sheets, every 3rd frame in `v8.5-rig/`, `v11.6-rig/`. They are stick figures from `tools/rig-trace.ts` (240 Hz, 1/8 speed): on main the close-up page shows no hare, since the Meshy skin (362a270, T-0113) hides the procedural body and forcing the procedural root visible still draws nothing.
+Fix brief claims (Matthew's paste, 2026-10-29), checked against the code:
+- Holds: the plant window is psiRate x dt x plantWin (30 rad/s) and bladeRate x dt (40 rad/s), so a 1e-4 s split step gives about 0.17 deg psi; contactScore's split step can be as short as 1 us. planQc was not tracked when planGap is 0. Late swing blends toward planQ, not planQc. jointStep2 takes the max over all four segments. The blade sits at its clamp in stance (44.1 deg). The dtWin floor + qcAlways + plantWin 1.5 wins (plant elbow 5 -> 0, split-step 12.0-20.5 deg), adopted.
+- Wrong or not shown: "the plant falls back" (mode 2 had 0 holds and every split-step contact in 12.0-34.1). "Near full reach, about 15.7 deg bend" (min stance bend is 15.8 in one cell, 46-90 in most; a k .9 reach sink changes nothing). "Min stance elbow bend 28-32 deg, contacts 12-35" for the 8 mm dip (measured 19.9 deg and per-frame touchdowns down to 8.9 deg). "plantW 100 gives 0 humerus / 1 elbow plant overs" (measured 0 / 5). controller.ts vaultDips / limbDrop is at about lines 130-168 on main, not 97-125, and vaultDips lives in core/animalBehavior.ts. Not checked: that Run 12 FORE_JOINT.w 100 broke the manus at 5 m/s.
+- Brief numbers: "up to 60 % of forelimb reach from the scapula (Fischer)" is Fischer & Lilje 2011 (Dogs in Motion), dogs: scapula movement gives > 60 % (about two thirds) of forelimb STEP LENGTH, not of reach, and not hares. Phase offsets .50 / .62: no source found; the hare plan (HARE_GAIT touchdown [0, .08, .42, .45], an estimate from Hildebrand-style diagrams) puts the trailing fore .58 and the leading fore .63 of a stride after its hind. Duties .30-.35 hind / .22-.28 fore match the plan at about 5 m/s (data .352 / .293, used .352 / .243); at 8.5-11.6 m/s the plan is .21-.20 hind and .16-.14 fore data (.143-.105 used; Hildebrand 1977: Lepus fore contact 70 % or less of hind, fore floor .13).

@@ -1,30 +1,62 @@
 /**
- * Placeholder ground cover until Grokbot-1 publishes per-place densities.
+ * Ground cover class, one rule shared with the simulation (rust/boreal-sim/src/cover.rs, issue #167).
  *
- * The bands follow breaks the globe colour already uses (surfaceColour:
- * temperate south of 45° N, tundra north of 60°). The tree line and the ice
- * line are the existing latitude functions (core/altitudeZones, Koerner and
- * Paulsen 2004; the lapse rate already cited there). Vegetation is
- * vegetationWeight from the planet sample, 0..1.
- *
- * This is not a species range. Densities below are labelled calibration so the
- * picture has a rule today. The issue filed for Grokbot-1 replaces them.
+ * Classes come from causes, not latitude bands: below the ice line (warm season under 0 C) is ice; above the
+ * tree line is rock in mountains and tundra where the tree line is already near sea level (Koerner and Paulsen
+ * 2004, core/altitudeZones). Below the tree line the planet sample's vegetation weight (0..1) splits desert,
+ * prairie and boreal at data/earth/cover-density.json's thresholds. tests/cover-kind.test.ts checks this matches
+ * the wasm cover_cell everywhere, so the viewer and the simulation agree on what grows at a landing.
  */
 import { iceLineM, treeLineM } from '../../core/altitudeZones';
+import C from '../../../data/earth/cover-density.json';
+import Z from '../../../data/earth/altitude-zones.json';
 
-export type CoverKind = 'water' | 'ice' | 'tundra' | 'rock' | 'desert' | 'prairie' | 'boreal';
+export type CoverKind = 'water' | 'ice' | 'tundra' | 'rock' | 'desert' | 'prairie' | 'boreal' | 'tropical' | 'wetland';
+
+type Range = { stems_per_ha: number[]; height_m: number[] };
+const M64 = (1n << 64n) - 1n;
+const mul = (a: bigint, b: bigint) => (a * b) & M64;
+const i64 = (v: number) => BigInt.asUintN(64, BigInt(Math.round(v * 1e5)));
+
+/** Deterministic 0..1 from a place: the same splitmix64 on quantised lat/lon as cover.rs place_hash. */
+export function placeHash(lat: number, lon: number): number {
+  const a = i64(lat), b = i64(lon);
+  const rotl = ((b << 29n) | (b >> 35n)) & M64;
+  let z = mul(a, 0x9E3779B97F4A7C15n) ^ rotl ^ 0xB0E3A1n;
+  z = mul(z ^ (z >> 30n), 0xBF58476D1CE4E5B9n);
+  z = mul(z ^ (z >> 27n), 0x94D049BB133111EBn);
+  z ^= z >> 31n;
+  return Number(z >> 11n) / 2 ** 53;
+}
+
+export interface CoverRow { kind: CoverKind; stemsPerHa: number; heightM: number }
+
+/** The full #167 row, same as cover.rs cover_row: class, stems per hectare, plant height (m). Deterministic per place. */
+export function coverRow(latDeg: number, lonDeg: number, elevM: number, vegetation: number, water: boolean): CoverRow {
+  const kind = coverKind(latDeg, elevM, vegetation, water);
+  if (kind === 'water' || kind === 'ice' || kind === 'rock') return { kind, stemsPerHa: 0, heightM: 0 };
+  const r = (C as unknown as Record<string, Range>)[kind];
+  const h = placeHash(latDeg, lonDeg), h2 = placeHash(lonDeg, latDeg);
+  const v = Math.min(1, Math.max(0, 0.5 * Math.min(1, Math.max(0, vegetation)) + 0.5 * h));
+  const [s0, s1] = r.stems_per_ha, [t0, t1] = r.height_m;
+  return { kind, stemsPerHa: Math.round(s0 + (s1 - s0) * v), heightM: t0 + (t1 - t0) * (0.5 * v + 0.5 * h2) };
+}
+
+/** Annual mean at the site (C), same as cover.rs site_mean_c: North 1975 sea-level mean minus lapse rate times height. */
+export function siteMeanC(latDeg: number, elevM: number): number {
+  const x = Math.sin(latDeg * Math.PI / 180);
+  return Z.T0_C + Z.T2_C * (3 * x * x - 1) / 2 - Z.lapse_K_per_m * Math.max(0, elevM);
+}
 
 export function coverKind(latDeg: number, elevM: number, vegetation: number, water: boolean): CoverKind {
   if (water) return 'water';
-  const lat = Math.abs(latDeg);
-  if (lat >= 75 || elevM >= iceLineM(lat)) return 'ice';
-  // Strictly above the tree line is rock. At 60° N the line is already at sea level, so a low
-  // site there is tundra, not a cliff of rock.
-  if (elevM > treeLineM(lat) + 80) return 'rock';
-  if (lat >= 60 && vegetation < 0.45) return 'tundra';
-  if (lat < 32 && vegetation < 0.28) return 'desert';
-  if (lat < 48 && vegetation < 0.62) return 'prairie';
-  return 'boreal';
+  const lat = Math.abs(latDeg), elev = Math.max(0, elevM);
+  if (elev >= iceLineM(lat)) return 'ice';
+  const tree = treeLineM(lat);
+  if (elev > tree) return tree < 80 ? 'tundra' : 'rock'; // Arctic: tundra up to the ice line (#192)
+  if (vegetation < C.veg_desert_below) return 'desert';
+  if (vegetation < C.veg_prairie_below) return lat >= C.wetland_lat_min && elev < C.wetland_below_m ? 'wetland' : 'prairie';
+  return siteMeanC(latDeg, elev) >= C.tropical_mean_C ? 'tropical' : 'boreal';
 }
 
 /**
@@ -35,6 +67,8 @@ export function coverKind(latDeg: number, elevM: number, vegetation: number, wat
  */
 export function coverSpacingM(kind: CoverKind): number | null {
   if (kind === 'boreal') return 6;
+  if (kind === 'tropical') return 5;
+  if (kind === 'wetland') return 14;
   if (kind === 'prairie') return 28;
   if (kind === 'desert') return 70;
   return null;

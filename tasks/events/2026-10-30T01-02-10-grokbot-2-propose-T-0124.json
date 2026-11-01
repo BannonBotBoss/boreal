@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0124",
+  "agent": "grokbot-2",
+  "at": "2026-10-30T01:02:10-07:00",
+  "note": "Rule 19 + CI gate for gait evidence (footage, side-by-side, sources, escalate after two blank runs)."
+}

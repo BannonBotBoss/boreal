@@ -1,0 +1,26 @@
+{
+  "site": "prairie",
+  "slug": "prairie",
+  "clickLat": 51,
+  "clickLon": -107,
+  "landedLat": 50.99752542329479,
+  "landedLon": -106.99911674570697,
+  "biome": "rock",
+  "water": false,
+  "census": [],
+  "shown": [],
+  "simStepMs": 430.39999999996326,
+  "frameMs": 336.9,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 56.1,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2100
+  },
+  "exit": 0,
+  "note": ""
+}

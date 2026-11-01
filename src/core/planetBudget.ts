@@ -37,11 +37,15 @@ export const PLANE_INFO: Record<PlaneName, { unit: string; budget: 'input' | 'st
   reflsw: { unit: 'W/m²', budget: 'solar', label: 'shortwave reflected to space' }, absatm: { unit: 'W/m²', budget: 'atmosphere', label: 'shortwave absorbed by the air' }, pmean: { unit: 'mm/day', budget: 'hydrosphere', label: 'precipitation, 12 h running mean' }, olr: { unit: 'W/m²', budget: 'atmosphere', label: 'outgoing longwave (Budyko A + B T)' },
 };
 
+/** cover.rs class ids, in order. */
+export const COVER_CLASSES = ['water', 'ice', 'rock', 'tundra', 'desert', 'prairie', 'boreal', 'tropical', 'wetland'] as const;
+
 interface Exports {
   memory: WebAssembly.Memory; layout_version(): number; plane_count(): number;
   grid_init(nlat: number, nlon: number): number; grid_seed(day: number, hour: number): void; grid_boot(day: number, hour: number): void; grid_step(dt: number): void;
   grid_day(): number; grid_hour(): number; alloc_f64(n: number): number;
   landing_population(lat: number, lon: number, elevM: number, vegetation: number, water: number, year: number, sideM: number, out: number, cap: number): number;
+  cover_cell(lat: number, lon: number, elevM: number, vegetation: number, water: number, out: number): void;
   solar_cell(day: number, hour: number, lat: number, lon: number, cloud: number, albedo: number, tC: number, ePa: number, out: number): void;
   radial_profile(rKm: number, mpRe: number, out: number): void;
   gas_column(body: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
@@ -106,6 +110,18 @@ export class PlanetSim {
     for (let i = 0; i < n; i++) out.push({ species: LANDING_SPECIES[o[2 * i]], count: o[2 * i + 1] });
     return out;
   }
+  /** #192 wildlife lane: landingPopulation plus density (animals per km2 of the patch) and each species' habitat
+   *  tags (SPECIES_HABITAT), so the spawner can place every animal in fitting ground without a second sim call. */
+  landingPopulationDetail(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, year: number, sideM = 5000) {
+    const km2 = (sideM / 1000) ** 2;
+    return this.landingPopulation(lat, lon, elevM, vegetation, water, year, sideM)
+      .map(p => ({ ...p, perKm2: p.count / km2, habitat: SPECIES_HABITAT[p.species] }));
+  }
+  /** Issue #167 cover row (cover.rs): class name, stems per hectare, billboard height (m). Deterministic per place. */
+  coverCell(lat: number, lon: number, elevM: number, vegetation: number, water: boolean) {
+    const p = this.buf(); this.x.cover_cell(lat, lon, elevM, vegetation, water ? 1 : 0, p); const o = new Float64Array(this.x.memory.buffer, p, 3);
+    return { kind: COVER_CLASSES[o[0]], stemsPerHa: o[1], heightM: o[2] };
+  }
   /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */
   gasColumn(hKm: number, body = 0, qSurf = 0, co2ppm = 422.8) {
     const p = this.buf(); this.x.gas_column(body, hKm, qSurf, co2ppm, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));
@@ -114,6 +130,13 @@ export class PlanetSim {
 }
 /** Species ids of the Rust species table (species.rs `Species`), in id order. */
 export const LANDING_SPECIES = ['snowshoe_hare', 'white_tailed_deer', 'moose', 'canada_lynx', 'gray_wolf', 'caribou', 'american_black_bear', 'grizzly_bear', 'bald_eagle', 'beaver', 'red_fox'] as const;
+/** Where each landing species lives, from the notes in data/earth/species-density.json. Placement hints for the viewer. */
+export const SPECIES_HABITAT: Record<(typeof LANDING_SPECIES)[number], readonly string[]> = {
+  snowshoe_hare: ['conifer forest', 'shrub'], white_tailed_deer: ['forest edge', 'mixed forest', 'meadow'],
+  moose: ['wetland', 'shoreline', 'conifer forest'], canada_lynx: ['conifer forest'], gray_wolf: ['forest', 'tundra'],
+  caribou: ['tundra', 'open conifer forest'], american_black_bear: ['forest'], grizzly_bear: ['forest', 'tundra', 'meadow'],
+  bald_eagle: ['shoreline', 'tall trees by water'], beaver: ['shoreline', 'stream'], red_fox: ['forest edge', 'meadow', 'tundra'],
+};
 export const INTERIOR_LAYERS = ['inner core', 'outer core', 'mantle', 'crust', 'ocean', 'atmosphere', 'magnetosphere', 'solar wind'] as const;
 export const ATM_LAYERS = ['troposphere', 'stratosphere', 'mesosphere', 'thermosphere', 'exosphere'];
 export const GAS_SPECIES = ['N2', 'O2', 'Ar', 'CO2', 'H2O', 'O3', 'O', 'Na', 'He'] as const;

@@ -28,6 +28,7 @@ import { RENDER } from '../../core/renderSettings';
 import { COVER_SPECIES, GRASS, bladesJob, keepAt, type Blades } from './cover';
 import { MOSS_GLSL, MOSS_UNIFORMS } from '../flora/moss';
 import { snowDepthCm, weatherAt } from '../../core/weather';
+import { STYLIZED } from '../stylizedPalette';
 
 export const GRASS_FX = { off: false }; // bench hook (cost measurement), like TREE_FX
 export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, culled: 0, tris: 0, lods: [0, 0, 0], sliceMaxMs: 0, packMaxMs: 0, packs: 0 };
@@ -112,6 +113,7 @@ const materials = new Map<number, THREE.MeshStandardMaterial>();
 function grassMaterial(segments: number) {
   let m = materials.get(segments); if (m) return m;
   m = new THREE.MeshStandardMaterial({ roughness: .9, side: THREE.DoubleSide }); m.userData.shared = true; // one face (template): three flips the normal on the back
+  m.emissive.setRGB(STYLIZED.grassLift[0], STYLIZED.grassLift[1], STYLIZED.grassLift[2]); // stylized fill: blades stay readable when the landed key light is dim (#192)
   (m as unknown as { defines: Record<string, string> }).defines = { GRASS_SEGMENTS: segments.toFixed(1), TRANSLUCENCY_MASK: '1.0' };
   m.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, U, MOSS_UNIFORMS, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });

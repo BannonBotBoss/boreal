@@ -36,15 +36,21 @@ fn field(sp: Species, f: &str) -> Vec<f64> {
 /// Is (lat, lon) inside the species' range box?
 pub fn in_range(sp: Species, lat: f64, lon: f64) -> bool {
     let (la, lo) = (field(sp, "lat"), field(sp, "lon"));
-    lat >= la[0] && lat <= la[1] && lon >= lo[0] && lon <= lo[1]
+    let inside = lat >= la[0] && lat <= la[1] && lon >= lo[0] && lon <= lo[1];
+    // Optional hole in the range box: "exclude": [lat_min, lat_max, lon_min, lon_max].
+    if inside && has_field(sp, "exclude") {
+        let x = field(sp, "exclude");
+        if lat >= x[0] && lat <= x[1] && lon >= x[2] && lon <= x[3] { return false; }
+    }
+    inside
 }
 
 /// Animals per hectare at a landing in a given year. Zero outside the range or on cover the species cannot use.
 pub fn density_per_ha(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32) -> f64 {
     if !in_range(sp, lat, lon) { return 0.0; }
     let cls = cover_row(lat, lon, elev_m, vegetation, water).class;
-    let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", Cover::Tundra => "tundra_per_ha", _ => return 0.0 };
-    if !has_field(sp, key) { return 0.0; } // tundra is opt-in: only species that list it live there
+    let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", Cover::Tundra => "tundra_per_ha", Cover::Tropical => "tropical_per_ha", Cover::Wetland => "wetland_per_ha", _ => return 0.0 };
+    if !has_field(sp, key) { return 0.0; } // tundra, tropical and wetland are opt-in: only species that list it live there
     let r = field(sp, key);
     if r[1] <= 0.0 { return 0.0; }
     let h = place_hash(lat + 0.5 * sp as u32 as f64, lon);
@@ -83,6 +89,12 @@ pub fn landing_population(lat: f64, lon: f64, elev_m: f64, vegetation: f64, wate
 
 #[cfg(test)]
 mod tests {
+    #[test] fn caribou_absent_from_south_bc_coast() {
+        assert!(!in_range(Species::Caribou, 49.3, -123.1)); // Vancouver
+        assert!(!in_range(Species::Caribou, 49.7, -125.5)); // Vancouver Island
+        assert!(in_range(Species::Caribou, 49.0, -117.0)); // South Selkirks
+        assert!(in_range(Species::Caribou, 52.7, -124.8)); // Itcha-Ilgachuz
+    }
     use super::*;
     #[test] fn same_place_same_year_same_density() {
         let a = density_per_ha(Species::SnowshoeHare, 54.0, -120.0, 200.0, 0.8, false, 2026);

@@ -1,0 +1,17 @@
+{
+  "type": "complete",
+  "task": "T-0999",
+  "agent": "grok-gait",
+  "at": "2026-11-01T14:00:00-07:00",
+  "branch": "grok-gait/T-0999-fixture",
+  "footage": [
+    {
+      "url": "wolf.mp4",
+      "notes": ""
+    }
+  ],
+  "side_by_side": {
+    "clip": "tasks/evidence/T-0999/side-by-side.webm"
+  },
+  "note": "elbow overs 121 -> 8, done"
+}

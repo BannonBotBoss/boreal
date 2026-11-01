@@ -1,0 +1,26 @@
+{
+  "site": "alpine",
+  "slug": "alpine",
+  "clickLat": 0.5,
+  "clickLon": 54,
+  "landedLat": 0.4972101009679573,
+  "landedLon": 54.00118004215131,
+  "biome": "boreal",
+  "water": false,
+  "census": [],
+  "shown": [],
+  "simStepMs": 299.99999999969873,
+  "frameMs": 276,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 402,
+    "sim": 60.8,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2033
+  },
+  "exit": 0,
+  "note": ""
+}

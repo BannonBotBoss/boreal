@@ -25,6 +25,7 @@ import { observation, worldSec } from '../core/worldClock';
 import { animalShares, markFor, coarseStep, type Account } from '../core/coarse';
 import { createAnimalDensity, setBodyShare, DENSITY_MARK_LIFT_M, type DensityMark } from './animalDensity';
 import { createAnimalPicture } from './animalPicture';
+import { createLandingCast } from './landingCast';
 import { ANIMAL_LADDER } from './animalLadder';
 import { catalog } from '../core/catalog';
 import { seatRock } from './rocks';
@@ -124,6 +125,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const hares = createHares(scene); // src/animals/hare.ts
   const density = createAnimalDensity(scene);
   const picture = createAnimalPicture(scene);
+  const landing = createLandingCast(scene);
   let worldDt = 0;
   let census: Account = { individuals: 0, density: 0, population: 0 };
   const grass = createGrass(scene); // render/grass: procedural blades around the camera
@@ -292,15 +294,18 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       audibleAnimals.push({key,energy:rig.brain.energy,motion:rig.brain.motion,problem:rig.brain.problem,x:e.x,z:e.z,phase:rig.brain.phase,chew,snort});
     }
     snortPrev = snortNext;
-    paintPopulation(x, z);
+    paintPopulation(x, z, time);
   }
   /** Density is counted first, then the body fades, so the ledger never has a frame with neither.
    *  The flat patch is the play-camera picture. The camera-facing sprite stays off unless the eye is high and looking down. */
-  function paintPopulation(x: number, z: number) {
+  function paintPopulation(x: number, z: number, time = 0) {
     const obs = observation();
     const marks: (DensityMark & { root: THREE.Object3D; body: number; ledger: number; species: 'deer' | 'hare' })[] = [];
     let individuals = 0, densityCount = 0;
+    const hideDeer = landing.forbids('White-tailed Deer');
+    const hideHares = landing.forbids('Snowshoe Hare');
     for (const animal of animals.values()) {
+      if (hideDeer) continue;
       const e = animal.entity;
       const d = Math.hypot(e.x - x, e.z - z);
       const m = markFor(d, obs);
@@ -308,6 +313,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       marks.push({ x: e.x, y: heightAt(e.x, e.z) + DENSITY_MARK_LIFT_M, z: e.z, ink: m.ink, kind: m.kind, root: animal.rig.root, body: m.body, ledger: m.density, species: 'deer' });
     }
     for (const h of hares.list()) {
+      if (hideHares) continue;
       if (h.sim.heldBy !== undefined || h.embodied) { individuals += 1; continue; }
       const d = Math.hypot(h.x - x, h.z - z);
       const m = markFor(d, obs);
@@ -336,6 +342,10 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       row.speed = Math.abs(h.sim.speed);
       row.y = h.root.position.y;
     }
+    for (const row of landing.sync(x, z, wolf.root.rotation.y, time)) bodies.push({
+      key: row.key, species: row.species, x: row.x, y: row.y, z: row.z, yaw: row.yaw, moving: row.moving,
+      motion: row.motion, phase: row.phase, speed: row.speed, root: row.root,
+    });
     bodies.push({
       key: 'player-wolf', species: 'Gray Wolf',
       x: wolf.root.position.x, y: wolf.root.position.y, z: wolf.root.position.z,
@@ -343,6 +353,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       motion: wolf.brain.motion, phase: wolf.brain.drawPhase, speed: wolf.brain.gaitSpeed, root: wolf.root,
     });
     for (const row of picture.sync(bodies, camera, canvas.clientHeight || 720)) setBodyShare(row.root, row.proc);
+    if (hideDeer) for (const animal of animals.values()) setBodyShare(animal.rig.root, 0);
+    if (hideHares) for (const h of hares.list()) setBodyShare(h.root, 0);
     const report = {
       census, near: INTEREST.near, mid: INTEREST.mid, chunks: chunks.size,
       scale: obs.scale, lower: obs.lower, higher: obs.higher, blend: obs.blend,

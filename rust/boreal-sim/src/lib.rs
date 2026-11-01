@@ -101,6 +101,14 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
     o.copy_from_slice(&[r.class as u32 as f64, r.stems_per_ha, r.height_m]);
 }
 
+/// cover_cell with the landing's distance to the coast in metres (NaN = unknown, identical to cover_cell), so a continental
+/// interior gets its higher tree and ice lines (cover.rs continentality, #192).
+#[no_mangle] pub extern "C" fn cover_cell_at(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, coast_m: f64, out: *mut f64) {
+    let r = cover::cover_row_at(lat, lon, elev_m, vegetation, water != 0, coast_m);
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 3) };
+    o.copy_from_slice(&[r.class as u32 as f64, r.stems_per_ha, r.height_m]);
+}
+
 /// Animals per hectare for one species at one landing in one year (0 snowshoe hare, 1 white-tailed deer, 2 moose, 3 Canada lynx, 4 gray wolf, 5 caribou).
 /// Zero outside the species' range or on cover it cannot use. Deterministic per (species, lat, lon, year).
 #[no_mangle] pub extern "C" fn species_density(species: u32, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, year: i32) -> f64 {

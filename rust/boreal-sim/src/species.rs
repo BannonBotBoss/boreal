@@ -36,7 +36,9 @@ fn field(sp: Species, f: &str) -> Vec<f64> {
 /// Is (lat, lon) inside the species' range box?
 pub fn in_range(sp: Species, lat: f64, lon: f64) -> bool {
     let (la, lo) = (field(sp, "lat"), field(sp, "lon"));
-    let inside = lat >= la[0] && lat <= la[1] && lon >= lo[0] && lon <= lo[1];
+    // Optional second longitude band on the same latitudes: "lon2" (Eurasia for Holarctic species, #192 polar landing).
+    let in_lon2 = has_field(sp, "lon2") && { let l2 = field(sp, "lon2"); lon >= l2[0] && lon <= l2[1] };
+    let inside = lat >= la[0] && lat <= la[1] && ((lon >= lo[0] && lon <= lo[1]) || in_lon2);
     // Optional hole in the range box: "exclude": [lat_min, lat_max, lon_min, lon_max].
     if inside && has_field(sp, "exclude") {
         let x = field(sp, "exclude");
@@ -89,6 +91,15 @@ pub fn landing_population(lat: f64, lon: f64, elev_m: f64, vegetation: f64, wate
 
 #[cfg(test)]
 mod tests {
+    #[test] fn holarctic_species_reach_eurasia_others_do_not() {
+        // Novaya Zemlya tundra (the #192 polar site, 74.2 N 50.6 E): reindeer, arctic fox, wolf and red fox ranges reach it.
+        for sp in [Species::Caribou, Species::ArcticFox, Species::GrayWolf, Species::RedFox] { assert!(in_range(sp, 74.2, 50.6), "{:?}", sp); }
+        assert!(in_range(Species::ArcticFox, 65.0, -18.0)); // Iceland
+        // North American-only species stay out of Eurasia.
+        for sp in [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::CanadaLynx, Species::GrizzlyBear, Species::BaldEagle] { assert!(!in_range(sp, 60.0, 60.0), "{:?}", sp); }
+        // The caribou hole still applies in North America.
+        assert!(!in_range(Species::Caribou, 49.3, -123.1));
+    }
     #[test] fn caribou_absent_from_south_bc_coast() {
         assert!(!in_range(Species::Caribou, 49.3, -123.1)); // Vancouver
         assert!(!in_range(Species::Caribou, 49.7, -125.5)); // Vancouver Island
@@ -184,7 +195,7 @@ mod tests {
         assert!(f > 0.0 && f <= 0.01, "red fox in boreal {f}");
         assert!(p <= 0.02, "red fox on prairie {p}");
         assert!(density_per_ha(Species::RedFox, 68.0, -110.0, 50.0, 0.4, false, 2026) > 0.0, "low-Arctic tundra foxes");
-        assert_eq!(density_per_ha(Species::RedFox, 60.0, 25.0, 100.0, 0.9, false, 2026), 0.0, "Finland: not this North American table");
+        assert!(density_per_ha(Species::RedFox, 60.0, 25.0, 100.0, 0.9, false, 2026) > 0.0, "Finland: red fox is Holarctic (lon2)");
         assert_eq!(Species::from_id(10), Some(Species::RedFox));
     }
     #[test] fn spawn_count_tracks_density() {
@@ -196,7 +207,7 @@ mod tests {
         let t = density_per_ha(Species::ArcticFox, 69.3, -139.5, 150.0, 0.35, false, 2026);
         assert!(t > 0.0 && t <= 0.01, "Yukon north slope {t}");
         assert_eq!(density_per_ha(Species::ArcticFox, 55.0, -100.0, 300.0, 0.9, false, 2026), 0.0, "not in boreal forest");
-        assert_eq!(density_per_ha(Species::ArcticFox, 69.0, 25.0, 100.0, 0.4, false, 2026), 0.0, "Lapland: not this North American table");
+        assert!(density_per_ha(Species::ArcticFox, 69.0, 25.0, 100.0, 0.4, false, 2026) > 0.0, "Lapland tundra: arctic fox is circumpolar (lon2)");
         let ds: Vec<f64> = (2020..2028).map(|y| density_per_ha(Species::ArcticFox, 69.3, -139.5, 150.0, 0.35, false, y)).collect();
         let (lo, hi) = ds.iter().fold((f64::MAX, 0.0f64), |(l, h), &d| (l.min(d), h.max(d)));
         assert!(hi > 3.0 * lo, "lemming-cycle swing {lo} {hi}");

@@ -20,9 +20,19 @@ export const seaLevelZoneSeasonC = (latDeg: number) => { const f = Math.PI * Z.z
 export const treeLineM = (latDeg: number) => Math.max(0, (seaLevelZoneSeasonC(latDeg) - Z.tree_line_growing_season_C) / Z.lapse_K_per_m);
 /** Height (m a.s.l.) above which snow and ice never melt. */
 export const iceLineM = (latDeg: number) => Math.max(0, (seaLevelZoneSeasonC(latDeg) - Z.ice_line_warm_season_C) / Z.lapse_K_per_m);
-/** Zone at a height: 'forest' (plants grow), 'rock' (above the tree line), 'ice'. */
-export function zoneAt(altM: number, latDeg: number): 'forest' | 'rock' | 'ice' { return altM >= iceLineM(latDeg) ? 'ice' : altM >= treeLineM(latDeg) ? 'rock' : 'forest'; }
+/** Tree line below this (m) means Arctic: above it is tundra up to the ice line, not bare rock (#192 owner call). Matches cover.rs. */
+export const ARCTIC_TREE_LINE_M = 80;
+export type Zone = 'forest' | 'tundra' | 'rock' | 'ice';
+/** Zone at a height: 'forest' (trees grow), 'tundra' (Arctic, above a near-sea-level tree line: low plants, no trees), 'rock' (mountain above the tree line), 'ice'. */
+export function zoneAt(altM: number, latDeg: number): Zone {
+  if (altM >= iceLineM(latDeg)) return 'ice';
+  const tree = treeLineM(latDeg);
+  return altM < tree ? 'forest' : tree < ARCTIC_TREE_LINE_M ? 'tundra' : 'rock';
+}
 /** Game-local height (core/world heightAt metres) -> metres above sea level. Home uses PLANET.home.elevation. A remote landing uses that site's own datum. */
 export const gameAltitudeM = (h: number) => siteDatum(PLANET.home.elevation) + (h - LEVEL.waterSurface);
-/** Can plants grow at this game-local height? Home latitude unless a landing moved the frame. */
-export const plantsGrowAt = (h: number) => zoneAt(gameAltitudeM(h), siteLatitude(PLANET.home.latDeg)) === 'forest';
+const localZone = (h: number) => zoneAt(gameAltitudeM(h), siteLatitude(PLANET.home.latDeg));
+/** Can trees (and forest animals) grow at this game-local height? Home latitude unless a landing moved the frame. */
+export const plantsGrowAt = (h: number) => localZone(h) === 'forest';
+/** Can low ground plants (herbs, berries) grow here? Forest or Arctic tundra; never mountain rock or ice. */
+export const groundPlantsGrowAt = (h: number) => { const z = localZone(h); return z === 'forest' || z === 'tundra'; };

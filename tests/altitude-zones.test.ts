@@ -10,7 +10,7 @@ test('T-0072: tree and ice lines from latitude temperature + lapse rate', () => 
   for (let l = 0; l <= 90; l += 10) assert.ok(iceLineM(l) >= treeLineM(l));
 });
 test('T-0072: zones and the game hook', () => {
-  assert.equal(zoneAt(200, 49.77), 'forest'); assert.equal(zoneAt(1200, 49.77), 'rock'); assert.equal(zoneAt(3000, 49.77), 'ice');
+  assert.equal(zoneAt(200, 49.77), 'forest'); assert.equal(zoneAt(1200, 49.77), 'forest'); assert.equal(zoneAt(1800, 49.77), 'rock'); assert.equal(zoneAt(3000, 49.77), 'ice');
   assert.ok(plantsGrowAt(0)); // home terrain (~370 m a.s.l.) is forest
   assert.ok(!plantsGrowAt(1000)); assert.ok(gameAltitudeM(0) > 300);
 });

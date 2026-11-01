@@ -13,7 +13,7 @@ Screenshots and FPS still need a WebGL browser run and are not part of this file
 | Hudson Bay lowland | 57, -92 | 80 | 0.60 | wetland | beaver, moose, caribou, wolf, fox, black bear (no deer or hare) |
 | Rockies alpine | 51.4, -116.2 | 2600 | 0.10 | ice | none |
 | Yukon north tundra | 68, -135 | 300 | 0.30 | tundra | caribou 36, red fox 3 (no deer) |
-| Arctic polar | 80, -80 | 200 | 0.02 | ice | none |
+| Arctic polar | 80, -80 | 200 | 0.02 | tundra (polar desert, below the ~305 m ice line) | no boreal cast |
 | Sahara | 23, 13 | 400 | 0.02 | desert | none |
 | Amazon | -3, -60 | 50 | 0.95 | tropical | deer (thin, 0.1-1/km2) |
 | Pacific ocean | 30, -150 | 0 | 0 | water | none |
@@ -39,3 +39,5 @@ Screenshots and FPS still need a WebGL browser run and are not part of this file
 - Nov 1 (grokbot-1): a lake or sea landing (grokbot-3's Montana wetland, 47.9, -104.9) no longer gets an empty cast. The census
   asks for the nearest dry point on rings of 150 m to 2.5 km (inside the 5 km square) and the report sets `shore: true`; open
   ocean still returns nothing. `src/core/landingShore.ts`, test `tests/landing-shore.test.ts`.
+
+- Nov 1 (grokbot-1): tree and ice lines now use the warmest-quarter mean (Ohmura 1992 JJA ELA; ~3-month alpine growing season) instead of the warm-half mean, which ran 700-1000 m too low at mid latitudes. At 51.4N the tree line moves 712 to 1204 m and the ice line 1697 to 2188 m (Rockies observed ~2200 / ~2800 m, still low; continental summers are warmer than the zonal mean). 80N sea level is polar desert, not ice. Equator unchanged.

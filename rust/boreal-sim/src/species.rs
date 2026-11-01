@@ -36,7 +36,13 @@ fn field(sp: Species, f: &str) -> Vec<f64> {
 /// Is (lat, lon) inside the species' range box?
 pub fn in_range(sp: Species, lat: f64, lon: f64) -> bool {
     let (la, lo) = (field(sp, "lat"), field(sp, "lon"));
-    lat >= la[0] && lat <= la[1] && lon >= lo[0] && lon <= lo[1]
+    let inside = lat >= la[0] && lat <= la[1] && lon >= lo[0] && lon <= lo[1];
+    // Optional hole in the range box: "exclude": [lat_min, lat_max, lon_min, lon_max].
+    if inside && has_field(sp, "exclude") {
+        let x = field(sp, "exclude");
+        if lat >= x[0] && lat <= x[1] && lon >= x[2] && lon <= x[3] { return false; }
+    }
+    inside
 }
 
 /// Animals per hectare at a landing in a given year. Zero outside the range or on cover the species cannot use.
@@ -83,6 +89,12 @@ pub fn landing_population(lat: f64, lon: f64, elev_m: f64, vegetation: f64, wate
 
 #[cfg(test)]
 mod tests {
+    #[test] fn caribou_absent_from_south_bc_coast() {
+        assert!(!in_range(Species::Caribou, 49.3, -123.1)); // Vancouver
+        assert!(!in_range(Species::Caribou, 49.7, -125.5)); // Vancouver Island
+        assert!(in_range(Species::Caribou, 49.0, -117.0)); // South Selkirks
+        assert!(in_range(Species::Caribou, 52.7, -124.8)); // Itcha-Ilgachuz
+    }
     use super::*;
     #[test] fn same_place_same_year_same_density() {
         let a = density_per_ha(Species::SnowshoeHare, 54.0, -120.0, 200.0, 0.8, false, 2026);

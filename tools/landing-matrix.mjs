@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const evidence = join(root, 'tasks/evidence/T-0125');
+const evidence = join(root, process.env.EVIDENCE ?? 'tasks/evidence/T-0125');
 mkdirSync(evidence, { recursive: true });
 
 /** pickSite results on the seeded planet, 2026-10-31. Names are the Earth labels; the cover class is whatever the sim says. */
@@ -33,7 +33,8 @@ function runShot(site) {
     OUT: out,
     Q: `&latlon=${site.lat},${site.lon}`,
     EMBODY: process.env.EMBODY ?? '2',
-    N: process.env.N ?? '20',
+    // The filmstrip is not the evidence. One frame after the glide is enough; the phase waits live in fall-shot.
+    N: process.env.N ?? '1',
     STEP: process.env.STEP ?? '4000',
   };
   return new Promise((resolve) => {
@@ -46,15 +47,20 @@ function runShot(site) {
 }
 
 function lastCast(log) {
-  let cast = null, rafMs = null, hud = null;
+  let cast = null, rafMs = null, hud = null, picture = null, renderer = null, heap = null, time = '', date = '', errs = [];
   for (const line of log.split('\n')) {
     if (!line.startsWith('{')) continue;
     try {
       const row = JSON.parse(line);
-      if (row.landed) { cast = row.cast ?? cast; rafMs = row.rafMs ?? rafMs; hud = row.hud ?? hud; }
+      if (row.landed) {
+        cast = row.cast ?? cast; rafMs = row.rafMs ?? rafMs; hud = row.hud ?? hud;
+        picture = row.picture ?? picture; renderer = row.renderer ?? renderer; heap = row.heap ?? heap;
+        time = row.time ?? time; date = row.date ?? date;
+        if (Array.isArray(row.errs)) errs = row.errs;
+      }
     } catch { /* screenshots share the log with other lines */ }
   }
-  return { cast, rafMs, hud };
+  return { cast, rafMs, hud, picture, renderer, heap, time, date, errs };
 }
 
 const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
@@ -63,7 +69,7 @@ for (const site of SITES) {
   if (only && !only.includes(site.slug)) continue;
   console.log(`\n== ${site.name} ${site.lat},${site.lon} ==`);
   const shot = await runShot(site);
-  const { cast, rafMs, hud } = lastCast(shot.log);
+  const { cast, rafMs, hud, picture, renderer, heap, time, date, errs } = lastCast(shot.log);
   const dir = join(evidence, site.slug);
   mkdirSync(dir, { recursive: true });
   for (const name of readdirSync(shot.out)) {
@@ -72,8 +78,18 @@ for (const site of SITES) {
   const row = {
     site: site.name, slug: site.slug, clickLat: site.lat, clickLon: site.lon,
     landedLat: cast?.lat ?? null, landedLon: cast?.lon ?? null, biome: cast?.biome ?? null,
-    water: cast?.water ?? null, census: cast?.census ?? [], shown: cast?.shown ?? [],
-    simStepMs: cast?.frameMs ?? null, frameMs: rafMs, hud, exit: shot.code, note: cast?.note ?? '',
+    water: cast?.water ?? null, shore: cast?.shore ?? false,
+    elevM: cast?.elevM ?? null, vegetation: cast?.vegetation ?? null,
+    censusLat: cast?.censusLat ?? null, censusLon: cast?.censusLon ?? null,
+    census: cast?.census ?? [], shown: cast?.shown ?? [],
+    simStepMs: cast?.frameMs ?? null,
+    /** One requestAnimationFrame under SwiftShader. Software-rendering only. Not a hardware FPS. */
+    frameMs: rafMs, softwareRendering: true,
+    lighting: cast?.lighting ?? null, clock: time, clockDate: date,
+    picture, renderer, heap, consoleErrors: errs,
+    /** Filled after looking at the landed frames. Empty until then. */
+    seams: '',
+    hud, exit: shot.code, note: cast?.note ?? '',
   };
   rows.push(row);
   writeFileSync(join(dir, 'landing.json'), JSON.stringify(row, null, 2));

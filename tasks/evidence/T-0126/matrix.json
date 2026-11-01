@@ -1,0 +1,1018 @@
+[
+  {
+    "site": "boreal forest",
+    "slug": "boreal",
+    "clickLat": 52,
+    "clickLon": -97,
+    "landedLat": 51.99964027185816,
+    "landedLon": -97.00000000000217,
+    "biome": "boreal",
+    "water": false,
+    "census": [
+      {
+        "species": "snowshoe_hare",
+        "display": "Snowshoe Hare",
+        "count": 3761
+      },
+      {
+        "species": "white_tailed_deer",
+        "display": "White-tailed Deer",
+        "count": 79
+      },
+      {
+        "species": "moose",
+        "display": "Moose",
+        "count": 29
+      },
+      {
+        "species": "canada_lynx",
+        "display": "Canada Lynx",
+        "count": 8
+      },
+      {
+        "species": "gray_wolf",
+        "display": "Gray Wolf",
+        "count": 1
+      },
+      {
+        "species": "caribou",
+        "display": "Woodland Caribou",
+        "count": 1
+      },
+      {
+        "species": "american_black_bear",
+        "display": "American Black Bear",
+        "count": 29
+      },
+      {
+        "species": "bald_eagle",
+        "display": "Bald Eagle",
+        "count": 3
+      },
+      {
+        "species": "beaver",
+        "display": "Beaver",
+        "count": 69
+      },
+      {
+        "species": "red_fox",
+        "display": "Red Fox",
+        "count": 14
+      }
+    ],
+    "shown": [
+      {
+        "species": "Snowshoe Hare",
+        "count": 1,
+        "x": 3.170249069529117,
+        "z": 46.47993216300524
+      },
+      {
+        "species": "White-tailed Deer",
+        "count": 1,
+        "x": 0.24782308568829992,
+        "z": 46.9035196616074
+      },
+      {
+        "species": "American Black Bear",
+        "count": 1,
+        "x": -2.674602898152517,
+        "z": 47.32710716020956
+      },
+      {
+        "species": "Bald Eagle",
+        "count": 1,
+        "x": -4.156858090680441,
+        "z": 43.80532926485272
+      },
+      {
+        "species": "Beaver",
+        "count": 1,
+        "x": -7.079284074521257,
+        "z": 44.22891676345488
+      }
+    ],
+    "simStepMs": 570.9999999993727,
+    "frameMs": 13.8,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.24,
+      "dayOfYear": 227,
+      "latitude": 52,
+      "sunElevation": 40,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:14",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 6,
+      "lows": 0,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 366524835,
+      "total": 465972411
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam in the landed frame. The foreground is an unlit black band. The five animals read as silhouettes on the skyline.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 401,
+      "sim": 23.2,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1681
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 218,
+    "vegetation": 0.9308582316907776,
+    "censusLat": 51.99964027185816,
+    "censusLon": -97.00000000000217
+  },
+  {
+    "site": "tundra",
+    "slug": "tundra",
+    "clickLat": 64.5,
+    "clickLon": -119.7,
+    "landedLat": 64.49995120914461,
+    "landedLon": -119.70079421475046,
+    "biome": "rock",
+    "water": false,
+    "census": [],
+    "shown": [],
+    "simStepMs": 302.3999999997926,
+    "frameMs": 17.3,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.13,
+      "dayOfYear": 227,
+      "latitude": 64.5,
+      "sunElevation": 31.8,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:07",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 1,
+      "lows": 0,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 462736590,
+      "total": 508748698
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam. The foreground is an unlit black band. The skyline is broadleaf trees and cattails.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 23.9,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1960
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 376.478961373954,
+    "vegetation": 0.7142560692988044,
+    "censusLat": 64.49995120914461,
+    "censusLon": -119.70079421475046
+  },
+  {
+    "site": "alpine",
+    "slug": "alpine",
+    "clickLat": 0.5,
+    "clickLon": 54,
+    "landedLat": 0.4997387339515522,
+    "landedLon": 54.00025698443934,
+    "biome": "boreal",
+    "water": false,
+    "census": [],
+    "shown": [],
+    "simStepMs": 314.69999999983145,
+    "frameMs": 12.9,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.17,
+      "dayOfYear": 227,
+      "latitude": 0.5,
+      "sunElevation": 45.8,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:09",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 1,
+      "lows": 0,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 400678241,
+      "total": 493919917
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam. Open sky, one shrub, and an unlit black foreground.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 23.3,
+      "fade": 1,
+      "ready": true,
+      "readyAt": 1895
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 2165.9643099727987,
+    "vegetation": 0.9241811398383335,
+    "censusLat": 0.4997387339515522,
+    "censusLon": 54.00025698443934
+  },
+  {
+    "site": "coast",
+    "slug": "coast",
+    "clickLat": 44.3,
+    "clickLon": -122.2,
+    "landedLat": 44.29973197505108,
+    "landedLon": -122.20034871462421,
+    "biome": "boreal",
+    "water": false,
+    "census": [
+      {
+        "species": "snowshoe_hare",
+        "display": "Snowshoe Hare",
+        "count": 4754
+      },
+      {
+        "species": "white_tailed_deer",
+        "display": "White-tailed Deer",
+        "count": 65
+      },
+      {
+        "species": "moose",
+        "display": "Moose",
+        "count": 39
+      },
+      {
+        "species": "canada_lynx",
+        "display": "Canada Lynx",
+        "count": 10
+      },
+      {
+        "species": "american_black_bear",
+        "display": "American Black Bear",
+        "count": 13
+      },
+      {
+        "species": "grizzly_bear",
+        "display": "Grizzly Bear",
+        "count": 1
+      },
+      {
+        "species": "bald_eagle",
+        "display": "Bald Eagle",
+        "count": 4
+      },
+      {
+        "species": "beaver",
+        "display": "Beaver",
+        "count": 32
+      },
+      {
+        "species": "red_fox",
+        "display": "Red Fox",
+        "count": 25
+      }
+    ],
+    "shown": [
+      {
+        "species": "Snowshoe Hare",
+        "count": 1,
+        "x": 31.470249069529114,
+        "z": 34.77993216300524
+      },
+      {
+        "species": "White-tailed Deer",
+        "count": 1,
+        "x": 28.5478230856883,
+        "z": 35.2035196616074
+      },
+      {
+        "species": "Red Fox",
+        "count": 1,
+        "x": 25.62539710184748,
+        "z": 35.627107160209555
+      },
+      {
+        "species": "Bald Eagle",
+        "count": 1,
+        "x": 24.14314190931956,
+        "z": 32.10532926485272
+      },
+      {
+        "species": "Moose",
+        "count": 1,
+        "x": 21.220715925478743,
+        "z": 32.52891676345488
+      }
+    ],
+    "simStepMs": 546.6999999991629,
+    "frameMs": 18.1,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.32,
+      "dayOfYear": 227,
+      "latitude": 44.3,
+      "sunElevation": 44.7,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:19",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 6,
+      "lows": 0,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 338211536,
+      "total": 383954220
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam. Deer, fox, and moose read as silhouettes. The foreground is an unlit black band.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 23.4,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1883
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 1039.521529168441,
+    "vegetation": 0.9146951520758548,
+    "censusLat": 44.29973197505108,
+    "censusLon": -122.20034871462421
+  },
+  {
+    "site": "desert",
+    "slug": "desert",
+    "clickLat": 27.4,
+    "clickLon": 27.7,
+    "landedLat": 27.400351232867873,
+    "landedLon": 27.700003492875073,
+    "biome": "desert",
+    "water": false,
+    "census": [],
+    "shown": [],
+    "simStepMs": 269.9999999996834,
+    "frameMs": 13.7,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.19,
+      "dayOfYear": 227,
+      "latitude": 27.4,
+      "sunElevation": 48.8,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:11",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 1,
+      "lows": 0,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 543933753,
+      "total": 595365309
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam. Conifer silhouettes stand on the skyline. The foreground is an unlit black band.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 23.4,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1790
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 234.6478927519056,
+    "vegetation": 0,
+    "censusLat": 27.400351232867873,
+    "censusLon": 27.700003492875073
+  },
+  {
+    "site": "tropics",
+    "slug": "tropics",
+    "clickLat": -7.1,
+    "clickLon": -67,
+    "landedLat": -7.0997657673925305,
+    "landedLon": -66.99973606762035,
+    "biome": "tropical",
+    "water": false,
+    "census": [
+      {
+        "species": "white_tailed_deer",
+        "display": "White-tailed Deer",
+        "count": 22
+      }
+    ],
+    "shown": [
+      {
+        "species": "White-tailed Deer",
+        "count": 1,
+        "x": -25.129750930470887,
+        "z": -21.82006783699476
+      }
+    ],
+    "simStepMs": 286.89999999951965,
+    "frameMs": 11.7,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.18,
+      "dayOfYear": 227,
+      "latitude": -7.1,
+      "sunElevation": 42.9,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:10",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 2,
+      "lows": 0,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 562280811,
+      "total": 634154767
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam. The deer head and ears break the skyline on the left. Conifer silhouettes remain. The foreground is an unlit black band.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 23.5,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1758
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 109.77985340474785,
+    "vegetation": 0.9994638920209887,
+    "censusLat": -7.0997657673925305,
+    "censusLon": -66.99973606762035
+  },
+  {
+    "site": "ocean edge",
+    "slug": "ocean",
+    "clickLat": 36.6,
+    "clickLon": -121.9,
+    "landedLat": 36.59997152020102,
+    "landedLon": -121.89998705068787,
+    "biome": "prairie",
+    "water": false,
+    "census": [
+      {
+        "species": "white_tailed_deer",
+        "display": "White-tailed Deer",
+        "count": 7
+      },
+      {
+        "species": "american_black_bear",
+        "display": "American Black Bear",
+        "count": 1
+      },
+      {
+        "species": "red_fox",
+        "display": "Red Fox",
+        "count": 1
+      }
+    ],
+    "shown": [
+      {
+        "species": "White-tailed Deer",
+        "count": 1,
+        "x": 3.170249069529117,
+        "z": 6.479932163005241
+      },
+      {
+        "species": "American Black Bear",
+        "count": 1,
+        "x": 0.24782308568829992,
+        "z": 6.903519661607399
+      },
+      {
+        "species": "Red Fox",
+        "count": 1,
+        "x": -2.674602898152517,
+        "z": 7.3271071602095565
+      }
+    ],
+    "simStepMs": 531.5999999995427,
+    "frameMs": 9.3,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.23,
+      "dayOfYear": 227,
+      "latitude": 36.6,
+      "sunElevation": 46.8,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:13",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 4,
+      "lows": 0,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 478619053,
+      "total": 549592021
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam. The frame is grass and spruce. Bear and deer read as silhouettes. The foreground is an unlit black band.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 23.6,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1626
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 31.414576925515707,
+    "vegetation": 0.48242157264535546,
+    "censusLat": 36.59997152020102,
+    "censusLon": -121.89998705068787
+  },
+  {
+    "site": "polar",
+    "slug": "polar",
+    "clickLat": 74.2,
+    "clickLon": 50.6,
+    "landedLat": 74.19973718433754,
+    "landedLon": 50.59907642348419,
+    "biome": "tundra",
+    "water": false,
+    "census": [],
+    "shown": [],
+    "simStepMs": 528.4999999994113,
+    "frameMs": 10.7,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.22,
+      "dayOfYear": 227,
+      "latitude": 74.2,
+      "sunElevation": 25.8,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:13",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 1,
+      "lows": 0,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 320370765,
+      "total": 339825777
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam. Bare skyline with one shrub. The foreground is an unlit black band.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 23.3,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1991
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 109.48582473527924,
+    "vegetation": 0.8344598569206365,
+    "censusLat": 74.19973718433754,
+    "censusLon": 50.59907642348419
+  },
+  {
+    "site": "prairie",
+    "slug": "prairie",
+    "clickLat": 51,
+    "clickLon": -107,
+    "landedLat": 50.999731974909814,
+    "landedLon": -107.0003965741833,
+    "biome": "prairie",
+    "water": false,
+    "census": [
+      {
+        "species": "snowshoe_hare",
+        "display": "Snowshoe Hare",
+        "count": 1209
+      },
+      {
+        "species": "white_tailed_deer",
+        "display": "White-tailed Deer",
+        "count": 39
+      },
+      {
+        "species": "moose",
+        "display": "Moose",
+        "count": 27
+      },
+      {
+        "species": "canada_lynx",
+        "display": "Canada Lynx",
+        "count": 7
+      },
+      {
+        "species": "gray_wolf",
+        "display": "Gray Wolf",
+        "count": 1
+      },
+      {
+        "species": "caribou",
+        "display": "Woodland Caribou",
+        "count": 1
+      },
+      {
+        "species": "american_black_bear",
+        "display": "American Black Bear",
+        "count": 9
+      },
+      {
+        "species": "grizzly_bear",
+        "display": "Grizzly Bear",
+        "count": 1
+      },
+      {
+        "species": "bald_eagle",
+        "display": "Bald Eagle",
+        "count": 5
+      },
+      {
+        "species": "beaver",
+        "display": "Beaver",
+        "count": 29
+      },
+      {
+        "species": "red_fox",
+        "display": "Red Fox",
+        "count": 18
+      }
+    ],
+    "shown": [
+      {
+        "species": "Snowshoe Hare",
+        "count": 1,
+        "x": 31.470249069529114,
+        "z": 34.77993216300524
+      },
+      {
+        "species": "White-tailed Deer",
+        "count": 1,
+        "x": 28.5478230856883,
+        "z": 35.2035196616074
+      },
+      {
+        "species": "Red Fox",
+        "count": 1,
+        "x": 25.62539710184748,
+        "z": 35.627107160209555
+      },
+      {
+        "species": "Bald Eagle",
+        "count": 1,
+        "x": 24.14314190931956,
+        "z": 32.10532926485272
+      },
+      {
+        "species": "Beaver",
+        "count": 1,
+        "x": 21.220715925478743,
+        "z": 32.52891676345488
+      }
+    ],
+    "simStepMs": 509.5999999991534,
+    "frameMs": 11.5,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.18,
+      "dayOfYear": 227,
+      "latitude": 51,
+      "sunElevation": 40,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:11",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 6,
+      "lows": 0,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 325034879,
+      "total": 339028547
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam. A spruce stand fills the skyline. Deer and fox read as silhouettes. The foreground is an unlit black band.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 23.5,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 2068
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 588,
+    "vegetation": 0.42341753511894475,
+    "censusLat": 50.999731974909814,
+    "censusLon": -107.0003965741833
+  },
+  {
+    "site": "wetland (lake)",
+    "slug": "wetland",
+    "clickLat": 47.9,
+    "clickLon": -104.9,
+    "landedLat": 47.907847683681084,
+    "landedLon": -104.91256291495868,
+    "biome": "prairie",
+    "water": false,
+    "census": [
+      {
+        "species": "snowshoe_hare",
+        "display": "Snowshoe Hare",
+        "count": 5657
+      },
+      {
+        "species": "white_tailed_deer",
+        "display": "White-tailed Deer",
+        "count": 121
+      },
+      {
+        "species": "moose",
+        "display": "Moose",
+        "count": 17
+      },
+      {
+        "species": "canada_lynx",
+        "display": "Canada Lynx",
+        "count": 9
+      },
+      {
+        "species": "caribou",
+        "display": "Woodland Caribou",
+        "count": 2
+      },
+      {
+        "species": "american_black_bear",
+        "display": "American Black Bear",
+        "count": 7
+      },
+      {
+        "species": "beaver",
+        "display": "Beaver",
+        "count": 115
+      },
+      {
+        "species": "red_fox",
+        "display": "Red Fox",
+        "count": 3
+      }
+    ],
+    "shown": [
+      {
+        "species": "Snowshoe Hare",
+        "count": 1,
+        "x": 939.570249069529,
+        "z": -866.2200678369949
+      },
+      {
+        "species": "White-tailed Deer",
+        "count": 1,
+        "x": 936.6478230856883,
+        "z": -865.7964803383927
+      },
+      {
+        "species": "Canada Lynx",
+        "count": 1,
+        "x": 933.7253971018474,
+        "z": -865.3728928397904
+      },
+      {
+        "species": "Beaver",
+        "count": 1,
+        "x": 932.2431419093194,
+        "z": -868.8946707351473
+      },
+      {
+        "species": "Moose",
+        "count": 1,
+        "x": 929.3207159254787,
+        "z": -868.4710832365452
+      }
+    ],
+    "simStepMs": 566.1999999987017,
+    "frameMs": 13.4,
+    "softwareRendering": true,
+    "lighting": {
+      "hour": 9.3,
+      "dayOfYear": 227,
+      "latitude": 47.9,
+      "sunElevation": 42.6,
+      "day": 1,
+      "golden": 0,
+      "night": 0,
+      "state": "day"
+    },
+    "clock": "09:17",
+    "clockDate": "15 Aug · day 227",
+    "picture": {
+      "specks": 0,
+      "fulls": 5,
+      "lows": 0,
+      "bodies": 1,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "heap": {
+      "used": 501232772,
+      "total": 563813176
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    ],
+    "seams": "No tile or height seam. Spruce and grass. The cast (hare, deer, lynx, beaver, moose) reads as silhouettes. The stand is dry. The foreground is an unlit black band.",
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 417,
+      "sim": 23.1,
+      "fade": 1,
+      "ready": true,
+      "readyAt": 1845
+    },
+    "exit": 0,
+    "note": "",
+    "shore": false,
+    "elevM": 748.3609143527091,
+    "vegetation": 0.3945609983026299,
+    "censusLat": 47.907847683681084,
+    "censusLon": -104.91256291495868
+  }
+]

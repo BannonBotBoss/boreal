@@ -8,7 +8,7 @@ import { loadPlanetSim } from '../src/core/planetBudget';
 // name, lat, lon, elevation m, vegetation 0..1, water, expected cover, species that must be present, species that must be absent
 export const TEN_PLACES = [
   ['Kenora boreal', 49.8, -94.5, 350, 0.85, false, 'boreal', ['snowshoe_hare', 'moose', 'canada_lynx', 'beaver'], []],
-  ['BC coast', 49.3, -123.1, 20, 0.8, false, 'boreal', ['bald_eagle', 'american_black_bear'], []],
+  ['BC coast', 49.3, -123.1, 20, 0.8, false, 'boreal', ['bald_eagle', 'american_black_bear'], ['caribou']],
   ['Saskatchewan prairie', 51, -107, 600, 0.45, false, 'prairie', ['white_tailed_deer'], ['canada_lynx', 'snowshoe_hare']],
   ['Hudson Bay lowland', 57, -92, 80, 0.6, false, 'wetland', ['beaver', 'moose', 'caribou'], ['white_tailed_deer', 'snowshoe_hare']],
   ['Rockies alpine', 51.4, -116.2, 2600, 0.1, false, 'ice', [], ['*']],

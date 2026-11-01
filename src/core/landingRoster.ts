@@ -32,6 +32,7 @@ export const LANDING_DISPLAY: Record<string, string> = {
   bald_eagle: 'Bald Eagle',
   beaver: 'Beaver',
   red_fox: 'Red Fox',
+  arctic_fox: 'Arctic Fox',
 };
 
 /** One of each role first, so a prairie is not eight hares and a forest is not only mice. */
@@ -47,6 +48,7 @@ const ROLE: Record<string, 'herb' | 'pred' | 'small' | 'bird'> = {
   bald_eagle: 'bird',
   beaver: 'small',
   red_fox: 'pred',
+  arctic_fox: 'pred',
 };
 
 export interface CensusRow { species: string; count: number }

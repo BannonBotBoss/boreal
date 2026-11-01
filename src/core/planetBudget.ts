@@ -129,13 +129,13 @@ export class PlanetSim {
   }
 }
 /** Species ids of the Rust species table (species.rs `Species`), in id order. */
-export const LANDING_SPECIES = ['snowshoe_hare', 'white_tailed_deer', 'moose', 'canada_lynx', 'gray_wolf', 'caribou', 'american_black_bear', 'grizzly_bear', 'bald_eagle', 'beaver', 'red_fox'] as const;
+export const LANDING_SPECIES = ['snowshoe_hare', 'white_tailed_deer', 'moose', 'canada_lynx', 'gray_wolf', 'caribou', 'american_black_bear', 'grizzly_bear', 'bald_eagle', 'beaver', 'red_fox', 'arctic_fox'] as const;
 /** Where each landing species lives, from the notes in data/earth/species-density.json. Placement hints for the viewer. */
 export const SPECIES_HABITAT: Record<(typeof LANDING_SPECIES)[number], readonly string[]> = {
   snowshoe_hare: ['conifer forest', 'shrub'], white_tailed_deer: ['forest edge', 'mixed forest', 'meadow'],
   moose: ['wetland', 'shoreline', 'conifer forest'], canada_lynx: ['conifer forest'], gray_wolf: ['forest', 'tundra'],
   caribou: ['tundra', 'open conifer forest'], american_black_bear: ['forest'], grizzly_bear: ['forest', 'tundra', 'meadow'],
-  bald_eagle: ['shoreline', 'tall trees by water'], beaver: ['shoreline', 'stream'], red_fox: ['forest edge', 'meadow', 'tundra'],
+  bald_eagle: ['shoreline', 'tall trees by water'], beaver: ['shoreline', 'stream'], red_fox: ['forest edge', 'meadow', 'tundra'], arctic_fox: ['tundra', 'coast'],
 };
 export const INTERIOR_LAYERS = ['inner core', 'outer core', 'mantle', 'crust', 'ocean', 'atmosphere', 'magnetosphere', 'solar wind'] as const;
 export const ATM_LAYERS = ['troposphere', 'stratosphere', 'mesosphere', 'thermosphere', 'exosphere'];

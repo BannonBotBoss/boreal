@@ -12,7 +12,7 @@ export const TEN_PLACES = [
   ['Saskatchewan prairie', 51, -107, 600, 0.45, false, 'prairie', ['white_tailed_deer'], ['canada_lynx', 'snowshoe_hare']],
   ['Hudson Bay lowland', 57, -92, 80, 0.6, false, 'wetland', ['beaver', 'moose', 'caribou'], ['white_tailed_deer', 'snowshoe_hare']],
   ['Rockies alpine', 51.4, -116.2, 2600, 0.1, false, 'ice', [], ['*']],
-  ['Yukon north tundra', 68, -135, 300, 0.3, false, 'tundra', ['caribou', 'red_fox'], ['white_tailed_deer']],
+  ['Yukon north tundra', 68, -135, 300, 0.3, false, 'tundra', ['caribou', 'red_fox', 'arctic_fox'], ['white_tailed_deer']],
   ['Arctic polar', 80, -80, 200, 0.02, false, 'tundra', [], ['white_tailed_deer', 'snowshoe_hare', 'canada_lynx', 'moose']], // polar desert below the ~305 m ice line (Nov 1)
   ['Sahara', 23, 13, 400, 0.02, false, 'desert', [], ['*']],
   ['Amazon', -3, -60, 50, 0.95, false, 'tropical', [], ['canada_lynx', 'caribou', 'snowshoe_hare']],

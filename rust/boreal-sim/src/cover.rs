@@ -106,11 +106,28 @@ pub fn place_hash(lat: f64, lon: f64) -> f64 {
 
 /// Cover class from causes. `vegetation` is the planet sample's 0..1 weight.
 pub fn cover_class(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool) -> Cover {
+    cover_class_lines(lat_deg, elev_m, vegetation, water, ice_line_m(lat_deg.abs()), tree_line_m(lat_deg.abs()))
+}
+/// Maritime weight for a land site `coast_m` metres from the sea (climate_seed::maritime_weight with the boundary-layer
+/// decay length). None when the distance is unknown (NaN or negative): the caller then keeps the zonal-mean lines.
+pub fn site_maritime_weight(lat_deg: f64, coast_m: f64) -> Option<f64> {
+    use crate::planet_fundamentals::{atmosphere::wind::ocean_decay_length_m, climate_seed::maritime_weight};
+    if !coast_m.is_finite() || coast_m < 0.0 { return None; }
+    Some(maritime_weight(1.0, coast_m, ocean_decay_length_m(lat_deg)))
+}
+/// Cover class with the site's own continentality: tree and ice lines from tree_line_at_m / ice_line_at_m using the
+/// distance to the coast. Unknown distance (NaN) falls back to cover_class exactly.
+pub fn cover_class_at(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool, coast_m: f64) -> Cover {
+    match site_maritime_weight(lat_deg, coast_m) {
+        None => cover_class(lat_deg, elev_m, vegetation, water),
+        Some(w) => cover_class_lines(lat_deg, elev_m, vegetation, water, ice_line_at_m(lat_deg.abs(), w), tree_line_at_m(lat_deg.abs(), w)),
+    }
+}
+fn cover_class_lines(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool, ice: f64, tree: f64) -> Cover {
     if water { return Cover::Water; }
     let lat = lat_deg.abs();
     let elev = elev_m.max(0.0);
-    if elev >= ice_line_m(lat) { return Cover::Ice; }
-    let tree = tree_line_m(lat);
+    if elev >= ice { return Cover::Ice; }
     if elev > tree {
         // Arctic (tree line at or near sea level): tundra all the way up to the ice line, the physics limit where plants stop
         // (#192 ten-location gap: a 300 m Yukon north slope was bare rock). A mountain above a higher tree line stays bare rock.
@@ -127,7 +144,11 @@ pub fn cover_class(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool) -> C
 
 /// The full row the viewer asked for in #167.
 pub fn cover_row(lat_deg: f64, lon_deg: f64, elev_m: f64, vegetation: f64, water: bool) -> CoverRow {
-    let class = cover_class(lat_deg, elev_m, vegetation, water);
+    cover_row_at(lat_deg, lon_deg, elev_m, vegetation, water, f64::NAN)
+}
+/// cover_row with the site's distance to the coast (metres; NaN = unknown, same as cover_row).
+pub fn cover_row_at(lat_deg: f64, lon_deg: f64, elev_m: f64, vegetation: f64, water: bool, coast_m: f64) -> CoverRow {
+    let class = cover_class_at(lat_deg, elev_m, vegetation, water, coast_m);
     let h = place_hash(lat_deg, lon_deg);
     let h2 = place_hash(lon_deg, lat_deg);
     let (stems, height) = match class {
@@ -209,5 +230,16 @@ mod tests {
         assert!(r.stems_per_ha >= 1000.0 && r.stems_per_ha <= 3000.0);
         let s = spacing_m(r.stems_per_ha).unwrap();
         assert!(s > 1.5 && s < 3.5, "{s}");
+    }
+    #[test] fn coast_distance_wires_continentality_into_cover() {
+        // #192: 64.5 N, -119.7 at 376 m read bare rock under the zonal tree line (~145 m). Deep inland it is forest.
+        assert_eq!(cover_class(64.5, 376.0, 0.8, false), Cover::Rock);
+        assert_eq!(cover_class_at(64.5, 376.0, 0.8, false, 600e3), Cover::Boreal);
+        // Unknown distance is exactly the old behaviour; right on an ocean coast the line drops, so it stays treeless.
+        assert_eq!(cover_class_at(64.5, 376.0, 0.8, false, f64::NAN), cover_class(64.5, 376.0, 0.8, false));
+        assert_ne!(cover_class_at(64.5, 376.0, 0.8, false, 0.0), Cover::Boreal);
+        assert_eq!(cover_row_at(49.8, -94.5, 350.0, 0.8, false, f64::NAN), cover_row(49.8, -94.5, 350.0, 0.8, false));
+        let w = site_maritime_weight(64.5, 600e3).unwrap();
+        assert!(tree_line_at_m(64.5, w) > 376.0, "w {w} line {}", tree_line_at_m(64.5, w));
     }
 }

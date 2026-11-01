@@ -9,9 +9,9 @@ pub const COVER_JSON: &str = include_str!("../../../data/earth/cover-density.jso
 
 /// Class ids in the order the wasm export writes them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Cover { Water = 0, Ice = 1, Rock = 2, Tundra = 3, Desert = 4, Prairie = 5, Boreal = 6, Tropical = 7 }
+pub enum Cover { Water = 0, Ice = 1, Rock = 2, Tundra = 3, Desert = 4, Prairie = 5, Boreal = 6, Tropical = 7, Wetland = 8 }
 impl Cover {
-    pub fn name(self) -> &'static str { ["water", "ice", "rock", "tundra", "desert", "prairie", "boreal", "tropical"][self as usize] }
+    pub fn name(self) -> &'static str { ["water", "ice", "rock", "tundra", "desert", "prairie", "boreal", "tropical", "wetland"][self as usize] }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -81,7 +81,10 @@ pub fn cover_class(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool) -> C
         return if tree < 80.0 && elev < tree + 300.0 { Cover::Tundra } else { Cover::Rock };
     }
     if vegetation < num(COVER_JSON, "veg_desert_below") { Cover::Desert }
-    else if vegetation < num(COVER_JSON, "veg_prairie_below") { Cover::Prairie }
+    else if vegetation < num(COVER_JSON, "veg_prairie_below") {
+        // A cold flat northern lowland with prairie-band green is peatland (muskeg), not grass.
+        if lat >= num(COVER_JSON, "wetland_lat_min") && elev < num(COVER_JSON, "wetland_below_m") { Cover::Wetland } else { Cover::Prairie }
+    }
     else if site_mean_c(lat_deg, elev) >= num(COVER_JSON, "tropical_mean_C") { Cover::Tropical }
     else { Cover::Boreal }
 }
@@ -133,6 +136,11 @@ mod tests {
         assert_eq!(cover_class(-3.0, 50.0, 0.95, false), Cover::Tropical); // Amazon
         assert_eq!(cover_class(-3.0, 3000.0, 0.95, false), Cover::Boreal); // Andes cloud forest height cools it
         assert_eq!(cover_class(10.0, 300.0, 0.45, false), Cover::Prairie); // dry tropics stay savanna/prairie
+    }
+    #[test] fn cold_flat_lowland_is_wetland() {
+        assert_eq!(cover_class(57.0, 80.0, 0.6, false), Cover::Wetland); // Hudson Bay lowland
+        assert_eq!(cover_class(51.0, 600.0, 0.45, false), Cover::Prairie); // Saskatchewan stays prairie
+        assert_eq!(cover_class(57.0, 80.0, 0.9, false), Cover::Boreal); // dense green stays forest
     }
     #[test] fn tree_line_matches_typescript_formula() {
         // TypeScript treeLineM(0) with T0 14.97, T2 -28, 6.4 C, 6.5 K/km: (14.97 + 14 - 6.4) / 0.0065.

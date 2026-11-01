@@ -6,6 +6,7 @@
   "desert": "Open shrubland, a few hundred to about a thousand shrubs/ha, 1-3 m (creosote-type scrub) [verify]. Game calibration.",
   "tundra": "Dwarf shrubs 0.1-0.5 m [verify]. The viewer places no billboard; the count is for the ground texture.",
   "tropical": "Lowland tropical moist forest: often 400-700 stems/ha over 10 cm DBH, canopy 25-45 m (RAINFOR plots, e.g. Phillips et al. 1998) [verify]. Class needs vegetation >= veg_prairie_below and a site annual mean >= tropical_mean_C (North 1975 mean minus the lapse rate); 22 C is a calibration near the Koeppen A-climate edge [verify].",
+  "wetland": "Northern peatland (bog and fen with open black spruce and tamarack), as in the Hudson Bay lowland: a few hundred stems/ha, 3-10 m [verify]. Class needs prairie-band vegetation, |lat| >= wetland_lat_min and height below wetland_below_m: a cold flat lowland with that much green is muskeg, not grass. Both numbers are calibration [verify].",
   "note": "Every range is labelled calibration, not a census (PROJECT-RULES 5 and 7). A place picks a value inside its range from a hash of lat/lon, so the same place always returns the same row."
  },
  "boreal":  { "stems_per_ha": [1000, 3000], "height_m": [10, 25] },
@@ -13,7 +14,10 @@
  "desert":  { "stems_per_ha": [150, 900],  "height_m": [1, 3] },
  "tundra":  { "stems_per_ha": [0, 0],      "height_m": [0.1, 0.5] },
  "tropical": { "stems_per_ha": [400, 700], "height_m": [25, 45] },
+ "wetland":  { "stems_per_ha": [100, 600], "height_m": [3, 10] },
  "veg_desert_below": 0.28,
  "veg_prairie_below": 0.62,
- "tropical_mean_C": 22
+ "tropical_mean_C": 22,
+ "wetland_lat_min": 50,
+ "wetland_below_m": 200
 }

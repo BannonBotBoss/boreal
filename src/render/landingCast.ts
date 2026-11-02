@@ -12,7 +12,7 @@ import {
   LANDING_CENSUS_SIDE_M, LANDING_DISPLAY, LANDING_YEAR, pickLandingSlots, placeLandingAnimals,
   type CensusRow, type PlacedAnimal,
 } from '../core/landingRoster';
-import { sharedPlanetSim } from '../core/planetWeather';
+import { liveCoastM, sharedPlanetSim } from '../core/planetWeather';
 import { SITE, siteDirection, siteLatitude } from '../core/sitePhase';
 import { SITE as SUN_HOME } from '../core/weather';
 import { dayAt, hourAt, lighting, sunPosition } from '../core/timeOfDay';
@@ -109,7 +109,7 @@ function groundAt(planet: ReturnType<typeof planetFor>, lat: number, lon: number
   const { water, elevM } = groundForCover(s, sampleDem(lat, lon));
   // A cached satellite photo wins over the seeded planet's vegetation (#192 desert finding).
   const vegetation = samplePhotoVegetation(lat, lon) ?? vegetationWeight(s, dir);
-  const biome = coverKind(lat, elevM, vegetation, water);
+  const biome = coverKind(lat, elevM, vegetation, water, liveCoastM(lat, lon)); // live coast distance (#235): continental interiors lift the tree line
   return { lat, lon, elevM, vegetation, water, biome };
 }
 

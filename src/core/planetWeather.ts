@@ -124,6 +124,12 @@ let bound: PlanetSim | null = null;
 let clockOwner: 'forest' | 'globe' | null = null;
 
 export function planetWeatherSim() { return bound; }
+/** Metres to open ocean at (lat, lon) on the bound grid (PlanetSim.coastAt, #235); undefined before a grid is bound or
+ *  when the grid says NaN, so cover keeps its zonal tree and ice lines. Feed it to coverRow / coverKind (#192). */
+export function liveCoastM(lat: number, lon: number): number | undefined {
+  const c = bound?.coastAt(lat, lon);
+  return c != null && Number.isFinite(c) ? c : undefined;
+}
 export function bindPlanetWeather(sim: PlanetSim | null) {
   bound = sim;
   setNearCellLive(false); // a new grid is not the cell that was seeded from the previous one

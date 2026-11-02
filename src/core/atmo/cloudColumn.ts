@@ -59,5 +59,13 @@ export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopa
   }
   return { lcl, top, freezeM, layers };
 }
+/** Share of precipitation reaching the ground as snow (0 rain .. 1 snow) for a column: it needs ice aloft to fall from, and
+ * the flakes melt over the melting layer (melt_layer_m) below the freezing level. Surface already freezing gives all snow,
+ * a freezing level a full melting layer above the ground gives all rain, linear between; no ice cloud means warm rain. */
+export function snowShareAtGround(col: Column) {
+  if (!col.layers.some(l => l.water > 0 && l.ice > 0)) return 0;
+  if (col.freezeM < 0) return 0;
+  return Math.max(0, Math.min(1, 1 - col.freezeM / C.melt_layer_m));
+}
 /** Cloud base (m): the LCL from the parcel's temperature and dew point (iterated, exact for this model). */
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

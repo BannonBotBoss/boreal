@@ -7,11 +7,12 @@
   "vapour": "Vapour falls off with height on a scale height of 2 km (rust/boreal-sim hydrosphere_budget.rs VAPOUR_SCALE_HEIGHT; Weaver & Ramanathan 1995, J. Geophys. Res. 100:11585).",
   "ice_phase": "Mixed-phase split of cloud condensate by temperature, ECMWF IFS Documentation Cy47r1 Part IV (Physical Processes) ch. 7: liquid fraction ((T - T_ice)/(T0 - T_ice))^2 between T0 = 0 C and T_ice = -23 C, all ice below [verify exponent and T_ice against the current cycle]. Below about -38 C droplets freeze homogeneously regardless (Pruppacher & Klett 1997, Microphysics of Clouds and Precipitation, ch. 7).",
   "ice_optics": "Cloud optical depth per unit condensate path is tau = 3 W / (2 rho r_e) (Stephens 1978, J. Atmos. Sci. 35:2123), so at equal water an ice layer is thinner by (rho_w r_liq) / (rho_ice r_ice). Liquid r_e ~10 um (Han et al. 1994, J. Climate 7:465); ice r_e ~30 um for midlatitude cirrus [verify against a cirrus r_e climatology]; ice density 917 kg/m3.",
+  "melting_layer": "Snow falling below the 0 C level melts over a layer a few hundred metres deep, so the snow level sits about 300 m (1000 ft) below the freezing level (AMS Glossary of Meteorology, 'snow level' and 'melting layer'; Lumb 1961, Q. J. R. Meteorol. Soc. 87:437) [verify depth]. Warm-rain clouds with no ice above them give rain whatever the surface.",
   "rh_crit": "Sundqvist, Berge & Kristjansson 1989, Mon. Wea. Rev. 117:1641: layer cloud forms above a critical relative humidity of ~0.8 (the sim's update_clouds uses the same scheme)."
  },
  "esat_hPa": 6.112, "esat_b": 17.67, "esat_c_C": 243.5,
  "g": 9.80665, "cp": 1004.6, "Rd": 287.04, "Lv": 2.501e6, "eps": 0.622,
  "env_lapse_K_per_m": 0.0065, "tropopause_m": 11000, "p0_Pa": 101325, "pressure_scale_m": 8400,
  "vapour_scale_m": 2000, "rh_crit": 0.8, "layer_m": 250, "ice_T0_C": 0, "ice_Tice_C": -23, "ice_exponent": 2,
- "re_liquid_um": 10, "re_ice_um": 30, "rho_ice_kg_m3": 917
+ "re_liquid_um": 10, "re_ice_um": 30, "rho_ice_kg_m3": 917, "melt_layer_m": 300
 }

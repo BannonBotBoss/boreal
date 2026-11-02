@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse } from '../src/core/atmo/cloudColumn';
+import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
 import { bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
@@ -90,4 +90,14 @@ test('#192: ice condensate is thinner per kg than liquid, so thin cirrus bakes f
   const sum = (b: Uint8Array) => b.reduce((a, v) => a + v, 0), bi = bakeLocal(col, 1, 0, 0), bl = bakeLocal(liquid, 1, 0, 0);
   assert.ok(sum(bi) < sum(bl), `ice ${sum(bi)} vs liquid ${sum(bl)}`);
   for (let i = 0; i < bi.length; i++) assert.ok(bi[i] <= bl[i]);
+});
+
+test('#192: precipitation phase at the ground follows the freezing level and the melting layer', () => {
+  assert.equal(snowShareAtGround(cloudColumn(-5, qOf(-5, .9), 1)), 1); // freezing surface: snow
+  assert.equal(snowShareAtGround(cloudColumn(25, qOf(25, .8), 1)), 0); // freezing level kilometres up: rain
+  const near = cloudColumn(1, qOf(1, .95), 1); // 0 C level ~150 m up, inside the melting layer
+  const s = snowShareAtGround(near); assert.ok(s > 0 && s < 1, `mixed ${s} at freeze ${near.freezeM}`);
+  const warm = { ...near, layers: near.layers.map(l => ({ ...l, ice: 0 })) };
+  assert.equal(snowShareAtGround(warm), 0); // no ice aloft: warm rain
+  let prev = 2; for (const t of [-3, 0, 1, 2, 4, 8]) { const v = snowShareAtGround(cloudColumn(t, qOf(t, .95), 1)); assert.ok(v <= prev + 1e-9, `${t}: ${v}`); prev = v; }
 });

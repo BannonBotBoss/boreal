@@ -597,7 +597,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       const w = weatherAtLatLon(latD, lonD, simRef), envSec = q.has('shot') ? shotSec : worldSec();
       fillEnvironmentGlobe(latD, lonD, dayAt(envSec), hourAt(envSec), simRef); // T-0089: the environment record at the sub-point (cloud drift, Mie haze)
       colIn = w ? { tsC: w.tC, q: w.q, cover: Math.max(0, Math.min(1, w.cloud)) } : null; }
-    if (localClouds) localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') ? colIn : null);
+    if (localClouds) localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') ? colIn : null, ground);
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
   }

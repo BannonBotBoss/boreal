@@ -87,7 +87,7 @@ void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x >
 #endif
   outColor = vec4(acc.rgb / max(acc.a, 1e-3), acc.a * uOpacity); }`;
 
-export interface LocalClouds { mesh: THREE.Mesh; /** issue #202: the same box for the game pass in the band (shared volume, own opacity); placed by inpage */ overlay: THREE.Mesh; update(camPos: ArrayLike<number>, groundR: number, alt: number, sunDir: THREE.Vector3, input: ColumnInput | null): void; column(): Column | null }
+export interface LocalClouds { mesh: THREE.Mesh; /** issue #202: the same box for the game pass in the band (shared volume, own opacity); placed by inpage */ overlay: THREE.Mesh; update(camPos: ArrayLike<number>, groundR: number, alt: number, sunDir: THREE.Vector3, input: ColumnInput | null, groundM?: number): void; column(): Column | null }
 /** The local box. The mesh is placed camera-relative (the globe renders from the origin, globeView renderTo). */
 export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
   const tex = new THREE.Data3DTexture(new Uint8Array(L.nx * L.nx * L.nz), L.nx, L.nz, L.nx); tex.format = THREE.RedFormat; tex.minFilter = tex.magFilter = THREE.LinearFilter; tex.unpackAlignment = 1; tex.needsUpdate = true;
@@ -102,13 +102,13 @@ export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
   const frame = new THREE.Matrix4(), inv = new THREE.Matrix4(), up = new THREE.Vector3(), east = new THREE.Vector3(), north = new THREE.Vector3();
   let centre: THREE.Vector3 | null = null, key = '', col: Column | null = null;
   return { mesh, overlay, column: () => col,
-    update(cp, groundR, alt, sunDir, input) {
+    update(cp, groundR, alt, sunDir, input, groundM = 0) {
       const fade = localCloudFade(alt, L); mesh.visible = !!input && fade > 0; uniforms.uOpacity.value = fade; if (!mesh.visible || !input) return;
       const cam = new THREE.Vector3(cp[0], cp[1], cp[2]); up.copy(cam).normalize();
-      const k = `${input.tsC.toFixed(1)}:${input.q.toFixed(5)}:${input.cover.toFixed(2)}`;
+      const gk = Math.round(Math.max(0, groundM) / 100) * 100, k = `${input.tsC.toFixed(1)}:${input.q.toFixed(5)}:${input.cover.toFixed(2)}:${gk}`; // ground to 100 m: the column's pressure follows the terrain
       if (!centre || centre.distanceTo(up.clone().multiplyScalar(groundR)) > L.sizeM * L.rebakeFrac || k !== key) {
         east.set(0, 1, 0).cross(up); if (east.lengthSq() < 1e-8) east.set(1, 0, 0); east.normalize(); north.crossVectors(up, east);
-        centre = up.clone().multiplyScalar(groundR); key = k; col = cloudColumn(input.tsC, input.q, input.cover, L.topM);
+        centre = up.clone().multiplyScalar(groundR); key = k; col = cloudColumn(input.tsC, input.q, input.cover, L.topM, undefined, gk);
         const { lat, lon } = toLatLon([up.x, up.y, up.z]), R = groundR, ox = lon * R * Math.cos(lat) - L.sizeM / 2, oz = lat * R - L.sizeM / 2; // fixed lat/lon metre grid
         tex.image.data = bakeLocal(col, input.cover, ox, oz, L); tex.needsUpdate = true;
         frame.makeBasis(east.clone().multiplyScalar(L.sizeM), up.clone().multiplyScalar(L.topM), north.clone().multiplyScalar(L.sizeM)).setPosition(centre.clone().addScaledVector(up, L.topM / 2));

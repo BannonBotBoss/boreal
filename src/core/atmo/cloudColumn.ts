@@ -27,18 +27,22 @@ export function moistLapse(tC: number, p: number) { const T = tC + 273.15, r = q
 
 export interface Layer { z: number; tEnv: number; q: number; rh: number; dew: number; tParcel: number; saturated: boolean; water: number }
 export interface Column { lcl: number; top: number; layers: Layer[] }
-/** The column over a cell: surface air temperature tsC (C), surface specific humidity q0 (kg/kg), sim cloud fraction (0..1). */
-export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopause_m, dz = C.layer_m): Column {
+/** The column over a cell: surface air temperature tsC (C), surface specific humidity q0 (kg/kg), sim cloud fraction (0..1).
+ * groundM: the surface's height above sea level (m). Layers stay heights above the ground, but pressure is read at the
+ * absolute height (a 3 km plateau starts near 70 kPa, so the same vapour has a lower dew point and a higher base) and a
+ * convective top stops at the absolute tropopause. 0 keeps the sea-level column exactly. */
+export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopause_m, dz = C.layer_m, groundM = 0): Column {
+  const g0 = Math.max(0, groundM) || 0, pAt = (z: number) => pressureAt(z + g0);
   const layers: Layer[] = []; let tp = tsC, lcl = -1, top = -1, buoyant = true;
   const qp = q0; // the parcel keeps its mixing ratio up to the LCL
-  let zl = 0; for (let t = tsC; zl <= topM && t > dewPointFromE(vapourE(qp, pressureAt(zl))); zl += dz) t -= C.g / C.cp * dz; // LCL pre-pass
+  let zl = 0; for (let t = tsC; zl <= topM && t > dewPointFromE(vapourE(qp, pAt(zl))); zl += dz) t -= C.g / C.cp * dz; // LCL pre-pass
   const tl = tsC - C.g / C.cp * zl;
   for (let z = 0; z <= topM; z += dz) {
-    const p = pressureAt(z), tEnv = z <= zl ? tsC - C.g / C.cp * z : tl - C.env_lapse_K_per_m * (z - zl), q = q0 * Math.exp(-z / C.vapour_scale_m), e = vapourE(q, p), rh = Math.min(1.2, e / esatPa(tEnv)), dew = dewPointFromE(e);
+    const p = pAt(z), tEnv = z <= zl ? tsC - C.g / C.cp * z : tl - C.env_lapse_K_per_m * (z - zl), q = q0 * Math.exp(-z / C.vapour_scale_m), e = vapourE(q, p), rh = Math.min(1.2, e / esatPa(tEnv)), dew = dewPointFromE(e);
     const parcelDew = dewPointFromE(vapourE(qp, p)), sat = tp <= parcelDew;
     if (sat && lcl < 0) lcl = z;
     let water = 0;
-    if (lcl >= 0 && buoyant) { if (tp >= tEnv - 1e-9) { water = Math.max(0, qp - qsat(tp, p)); top = z; } else buoyant = false; }
+    if (lcl >= 0 && buoyant) { if (tp >= tEnv - 1e-9 && z + g0 <= C.tropopause_m) { water = Math.max(0, qp - qsat(tp, p)); top = z; } else buoyant = false; }
     if (rh >= C.rh_crit) water = Math.max(water, (rh - C.rh_crit) / (1 - C.rh_crit) * 1e-4 * Math.max(0, cover)); // stratiform layer cloud
     layers.push({ z, tEnv, q, rh, dew, tParcel: tp, saturated: sat || rh >= 1, water });
     tp -= (lcl >= 0 ? moistLapse(tp, p) : C.g / C.cp) * dz;

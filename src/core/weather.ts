@@ -21,6 +21,7 @@ import { LEVEL } from './tuning';
 import { INTEREST } from './interest';
 import { aggregateShare, observation } from './worldClock';
 import { siteLatitude } from './sitePhase';
+import { snowShareFromFreezing } from './atmo/cloudColumn';
 
 // ---- constants ---------------------------------------------------------------------------------------------------
 export const AIR = {
@@ -343,16 +344,29 @@ export function kessler(dt: number) {
   }
   // sedimentation (upwind, column by column); what leaves the bottom is surface precipitation (kg/m² = mm)
   for (let c = 0; c < NX * NX; c++) {
+    const ii = c % NX, jj = Math.floor(c / NX), share = gridSnowShare(g, c, ii, jj);
     let incoming = 0;
     for (let k = NY - 1; k >= 0; k--) {
       const n = k * NX * NX + c, rho = 1, vt = 36.34 * (rho * g.qr[n]) ** .1364;
       const out = Math.min(g.qr[n], g.qr[n] * vt * dt / DY); g.qr[n] += incoming - out; incoming = out;
     }
-    const ii = c % NX, jj = Math.floor(c / NX);
-    const mm = incoming * DY, tC = tempOf(g.th[c], cellClimate(WEATHER.day, WEATHER.hour, layerZ(0), cellX(ii), cellZ(jj)).p);
+    const mm = incoming * DY;
     g.precip[c] = mm / dt * 3600; // mm/h
-    if (precipFallsAsSnow(tC)) { g.swe[c] += mm; g.snowfall[c] = 1; } else { g.soil[c] += mm; g.snowfall[c] = 0; }
+    g.swe[c] += mm * share; g.soil[c] += mm * (1 - share); g.snowfall[c] = share >= .5 ? 1 : 0;
   }
+}
+/** Snow share (0 rain .. 1 snow) of what falls out of grid column c: the freezing level is read from the column's own layer
+ * temperatures (0 when the lowest layer is below 0 °C, linear between layer centres, -1 if never), ice aloft is any cloud or
+ * rain water in a sub-zero layer, and the melting-layer rule is the cloud column's (`snowShareFromFreezing`, #192). */
+export function gridSnowShare(g: Grid, c: number, i: number, j: number) {
+  let freezeM = -1, ice = false, tPrev = 0;
+  for (let k = 0; k < NY; k++) {
+    const n = k * NX * NX + c, tC = tempOf(g.th[n], cellClimate(WEATHER.day, WEATHER.hour, layerZ(k), cellX(i), cellZ(j)).p);
+    if (tC < 0) { if (g.qc[n] + g.qr[n] > 0) ice = true;
+      if (freezeM < 0) freezeM = k === 0 ? 0 : (k - 1 + tPrev / (tPrev - tC)) * DY; }
+    tPrev = tC;
+  }
+  return snowShareFromFreezing(freezeM, ice);
 }
 function sample(a: Float32Array, x: number, y: number, z: number) {
   const cl = (v: number, m: number) => Math.max(0, Math.min(m - 1.001, v));

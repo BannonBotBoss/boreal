@@ -57,3 +57,19 @@ test('altitude zones: the column reads pressure at the ground height, so a plate
   assert.ok(high.lcl > sea.lcl, `plateau base ${high.lcl} vs sea ${sea.lcl}`); // lower pressure, same q: lower dew point
   assert.ok(high.top < 0 || high.top + 3000 <= 11000, `top ${high.top} past the tropopause`);
 });
+test('layered bake: convective towers share the LCL base, tops vary by cell, none passes the buoyant top', () => {
+  const col = cloudColumn(28, qOf(28, .75), .6, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS, dz = L.topM / L.nz, b = bakeLocal(col, .6, 0, 0);
+  assert.ok(col.lcl > 0 && col.top > col.lcl);
+  const tops: number[] = [];
+  for (let k = 0; k < L.nx; k += 4) for (let i = 0; i < L.nx; i += 4) { let lo = -1, hi = -1;
+    for (let j = 0; j < L.nz; j++) if (b[i + L.nx * (j + L.nz * k)] > 8 && col.layers[Math.round((j + .5) * dz / col.layers[1].z)].strat === 0) { if (lo < 0) lo = j; hi = j; }
+    if (lo >= 0) { assert.ok((lo + 1) * dz >= col.lcl - dz, 'no convective cloud below the dew-point base'); assert.ok(hi * dz <= col.top + dz, 'no tower above the buoyant top'); tops.push(hi); } }
+  assert.ok(tops.length > 3 && Math.max(...tops) - Math.min(...tops) >= 2, `tower tops should differ by cell: ${tops}`);
+});
+test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
+  const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
+  let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');
+  const jj = Math.min(L.nz - 1, Math.floor(col.layers[j].z / (L.topM / L.nz))), b = bakeLocal(col, 1, 0, 0); let on = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) if (b[i + L.nx * (jj + L.nz * k)] > 0) on++;
+  assert.ok(on / (L.nx * L.nx) > .5, `overcast sheet covers most of the box (${on})`);
+});

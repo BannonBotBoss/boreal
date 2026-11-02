@@ -55,13 +55,24 @@ const vnoise2 = (salt: number) => { const L = (i: number, j: number) => random(h
     const a = L(i, j), b = L(i + 1, j), c = L(i, j + 1), e = L(i + 1, j + 1); return a + (b - a) * su + (c - a) * sv + (a - b - c + e) * su * sv; }; };
 const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
- *  cells stay put while the box re-centres. Horizontal cells: fBm > threshold, threshold set so the covered share ~ cover. */
+ *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
+ *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share one flat base at the LCL, and each cell's top rises
+ *    with its strength, so towers differ in height but none passes the column's buoyant top;
+ *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
+ *    not broken into convective cells. */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
-  const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, h = new Float32Array(L.nx * L.nx), cut = 1 - cover;
+  const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), cut = 1 - cover;
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { const x = (ox + (i + .5) / L.nx * L.sizeM) / L.cellM, z = (oz + (k + .5) / L.nx * L.sizeM) / L.cellM;
-    const f = (n1(x, z) * .55 + n2(x * 2.1, z * 2.1) * .3 + n3(x * 4.3, z * 4.3) * .15); h[k * L.nx + i] = Math.max(0, Math.min(1, (f - (.25 + .5 * cut)) / .12)); } // fBm spans ~.25-.75
-  const w = new Float32Array(L.nz); for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(col.layers.length - 1, Math.round(z / (col.layers[1]?.z || 250))); w[j] = Math.min(1, (col.layers[li]?.water ?? 0) / L.waterFull); }
-  for (let k = 0; k < L.nx; k++) for (let j = 0; j < L.nz; j++) for (let i = 0; i < L.nx; i++) out[i + L.nx * (j + L.nz * k)] = Math.round(255 * w[j] * h[k * L.nx + i]);
+    const f = (n1(x, z) * .55 + n2(x * 2.1, z * 2.1) * .3 + n3(x * 4.3, z * 4.3) * .15); h[k * L.nx + i] = Math.max(0, Math.min(1, (f - (.25 + .5 * cut)) / .12)); // fBm spans ~.25-.75
+    sh[k * L.nx + i] = Math.max(0, Math.min(1, (n1(x * .35, z * .35) - (.2 + .5 * cut)) / .3)); } // broad sheet: low frequency, soft edge
+  const ly = col.layers, step = ly[1]?.z || 250, conv = new Float32Array(L.nz), strat = new Float32Array(L.nz), zr = new Float32Array(L.nz);
+  const base = col.lcl, top = col.top >= base && base >= 0 ? col.top + step / 2 : -1;
+  for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), l = ly[li];
+    const s = l?.strat ?? 0, w = l?.water ?? 0; strat[j] = Math.min(1, s / L.waterFull); conv[j] = Math.min(1, Math.max(0, w - s) / L.waterFull);
+    zr[j] = top > base ? (z - base) / (top - base) : 2; } // height through the convective layer, 0 at the base, 1 at the top
+  for (let k = 0; k < L.nx; k++) for (let j = 0; j < L.nz; j++) for (let i = 0; i < L.nx; i++) { const c = k * L.nx + i;
+    const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = zr[j] < 0 ? 0 : Math.max(0, Math.min(1, (reach - zr[j]) * 6)); // weaker cells stop lower
+    out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, conv[j] * h[c] * edge + strat[j] * sh[c])); }
   return out;
 }
 

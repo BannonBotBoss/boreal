@@ -47,6 +47,7 @@ interface Exports {
   landing_population(lat: number, lon: number, elevM: number, vegetation: number, water: number, year: number, sideM: number, out: number, cap: number): number;
   cover_cell(lat: number, lon: number, elevM: number, vegetation: number, water: number, out: number): void;
   cover_cell_at(lat: number, lon: number, elevM: number, vegetation: number, water: number, coastM: number, out: number): void;
+  grid_coast_at(lat: number, lon: number): number;
   solar_cell(day: number, hour: number, lat: number, lon: number, cloud: number, albedo: number, tC: number, ePa: number, out: number): void;
   radial_profile(rKm: number, mpRe: number, out: number): void;
   gas_column(body: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
@@ -128,6 +129,8 @@ export class PlanetSim {
     const p = this.buf(); this.x.cover_cell_at(lat, lon, elevM, vegetation, water ? 1 : 0, coastM, p); const o = new Float64Array(this.x.memory.buffer, p, 3);
     return { kind: COVER_CLASSES[o[0]], stemsPerHa: o[1], heightM: o[2] };
   }
+  /** Metres from (lat, lon) to open ocean on the live grid (grid.rs coast_at); NaN before `init`. Feed it to coverCellAt. */
+  coastAt(lat: number, lon: number): number { return this.x.grid_coast_at(lat, lon); }
   /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */
   gasColumn(hKm: number, body = 0, qSurf = 0, co2ppm = 422.8) {
     const p = this.buf(); this.x.gas_column(body, hKm, qSurf, co2ppm, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));

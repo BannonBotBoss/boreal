@@ -14,6 +14,7 @@ import { treeAtlas } from './trees/billboardAtlas';
 import { CC0_TREES, bakeTreeAtlas } from './trees/cc0Impostors';
 import { elevationWins, sampleDem } from '../world/globe/openTiles';
 import { STYLIZED } from './stylizedPalette';
+import { liveCoastM } from '../core/planetWeather';
 
 const CAP = 4096;
 const ATLAS = treeAtlas();
@@ -102,7 +103,7 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     const veg = vegetationWeight(s, ll.dir);
     const dem = sampleDem(ll.latDeg, ll.lonDeg);
     const water = !elevationWins(s.kind, dem) && (s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level);
-    const row = coverRow(ll.latDeg, ll.lonDeg, dem != null && dem > 0 ? dem : s.h, veg, water);
+    const row = coverRow(ll.latDeg, ll.lonDeg, dem != null && dem > 0 ? dem : s.h, veg, water, liveCoastM(ll.latDeg, ll.lonDeg));
     const kind = row.kind;
     bake();
     const cols = colsUniform.value;

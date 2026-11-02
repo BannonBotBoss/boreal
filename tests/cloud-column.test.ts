@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudColumn, dewPointC, esatPa, iceFraction, moistLapse } from '../src/core/atmo/cloudColumn';
+import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse } from '../src/core/atmo/cloudColumn';
 import { bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
@@ -81,4 +81,13 @@ test('#192: cloud condensate glaciates with height: liquid base, mixed middle, i
   assert.equal(cl[0].ice, 0); assert.ok(cl[cl.length - 1].ice > .9, `top ice ${cl[cl.length - 1].ice}`); // anvil top is ice
   for (let i = 1; i < c.layers.length; i++) if (c.layers[i].z <= c.top) assert.ok(c.layers[i].ice >= c.layers[i - 1].ice - 1e-9); // monotone up the tower
   assert.equal(cloudColumn(-5, qOf(-5, .9), 1).freezeM, 0); // winter surface already below 0 C
+});
+
+test('#192: ice condensate is thinner per kg than liquid, so thin cirrus bakes fainter than the same water as liquid', () => {
+  assert.equal(iceOpacity(0), 1); assert.ok(Math.abs(iceOpacity(1) - 10000 / (917 * 30)) < 1e-9);
+  const col = cloudColumn(0, qOf(0, .9), 1, LOCAL_CLOUDS.topM), liquid = { ...col, layers: col.layers.map(l => ({ ...l, ice: 0 })) };
+  assert.ok(col.layers.some(l => l.water > 0 && l.ice > .9), 'a cold column has an upper ice layer');
+  const sum = (b: Uint8Array) => b.reduce((a, v) => a + v, 0), bi = bakeLocal(col, 1, 0, 0), bl = bakeLocal(liquid, 1, 0, 0);
+  assert.ok(sum(bi) < sum(bl), `ice ${sum(bi)} vs liquid ${sum(bl)}`);
+  for (let i = 0; i < bi.length; i++) assert.ok(bi[i] <= bl[i]);
 });

@@ -25,7 +25,7 @@ export const qsat = (tC: number, p: number) => { const e = esatPa(tC); return C.
 export function moistLapse(tC: number, p: number) { const T = tC + 273.15, r = qsat(tC, p);
   return C.g * (1 + C.Lv * r / (C.Rd * T)) / (C.cp + C.Lv * C.Lv * r * C.eps / (C.Rd * T * T)); }
 
-export interface Layer { z: number; tEnv: number; q: number; rh: number; dew: number; tParcel: number; saturated: boolean; water: number }
+export interface Layer { z: number; tEnv: number; q: number; rh: number; dew: number; tParcel: number; saturated: boolean; water: number; /** stratiform (sheet) share of water, kg/kg */ strat: number }
 export interface Column { lcl: number; top: number; layers: Layer[] }
 /** The column over a cell: surface air temperature tsC (C), surface specific humidity q0 (kg/kg), sim cloud fraction (0..1).
  * groundM: the surface's height above sea level (m). Layers stay heights above the ground, but pressure is read at the
@@ -41,10 +41,11 @@ export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopa
     const p = pAt(z), tEnv = z <= zl ? tsC - C.g / C.cp * z : tl - C.env_lapse_K_per_m * (z - zl), q = q0 * Math.exp(-z / C.vapour_scale_m), e = vapourE(q, p), rh = Math.min(1.2, e / esatPa(tEnv)), dew = dewPointFromE(e);
     const parcelDew = dewPointFromE(vapourE(qp, p)), sat = tp <= parcelDew;
     if (sat && lcl < 0) lcl = z;
-    let water = 0;
-    if (lcl >= 0 && buoyant) { if (tp >= tEnv - 1e-9 && z + g0 <= C.tropopause_m) { water = Math.max(0, qp - qsat(tp, p)); top = z; } else buoyant = false; }
-    if (rh >= C.rh_crit) water = Math.max(water, (rh - C.rh_crit) / (1 - C.rh_crit) * 1e-4 * Math.max(0, cover)); // stratiform layer cloud
-    layers.push({ z, tEnv, q, rh, dew, tParcel: tp, saturated: sat || rh >= 1, water });
+    let conv = 0, strat = 0;
+    if (lcl >= 0 && buoyant) { if (tp >= tEnv - 1e-9 && z + g0 <= C.tropopause_m) { conv = Math.max(0, qp - qsat(tp, p)); top = z; } else buoyant = false; }
+    if (rh >= C.rh_crit) strat = (rh - C.rh_crit) / (1 - C.rh_crit) * 1e-4 * Math.max(0, cover); // stratiform layer cloud
+    const water = Math.max(conv, strat);
+    layers.push({ z, tEnv, q, rh, dew, tParcel: tp, saturated: sat || rh >= 1, water, strat: strat >= conv ? strat : 0 });
     tp -= (lcl >= 0 ? moistLapse(tp, p) : C.g / C.cp) * dz;
   }
   return { lcl, top, layers };

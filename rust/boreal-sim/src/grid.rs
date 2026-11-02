@@ -41,6 +41,14 @@ impl Grid {
         self.coast_stamp = stamp;
         self.coast_m = coast_distances(self);
     }
+    /// Coast distance (m) of the cell containing (lat, lon); rows south to north, columns west to east from -180.
+    pub fn coast_at(&mut self, lat: f64, lon: f64) -> f64 {
+        if !(lat.is_finite() && lon.is_finite()) || self.n == 0 { return f64::NAN; }
+        self.refresh_coast();
+        let r = (((lat + 90.0) / 180.0 * self.nlat as f64).floor() as isize).clamp(0, self.nlat as isize - 1) as usize;
+        let c = ((((lon + 180.0) / 360.0).rem_euclid(1.0) * self.nlon as f64).floor() as usize).min(self.nlon - 1);
+        self.coast_m[r * self.nlon + c]
+    }
     /// Recompute the per-row climatological air temperature when the day has moved on by a quarter day or more.
     pub fn refresh_rows(&mut self) {
         if (self.day - self.row_day).abs() < 0.25 { return; }
@@ -137,6 +145,15 @@ mod tests {
         assert!(te > tp + 15.0 && te < 45.0 && tp > -80.0);
         assert!(g.p(SOIL).iter().all(|&v| (0.0..=150.0 + 1e-9).contains(&v)));
         assert!(g.p(PRECIP).iter().all(|&v| v >= 0.0) && g.p(CLOUD).iter().all(|&v| (0.0..=1.0).contains(&v)));
+    }
+    #[test] fn coast_at_reads_the_containing_cell() {
+        let mut g = Grid::new(18, 36);
+        for i in 0..g.n { let lon = g.p(LON)[i]; g.pm(LAND)[i] = if (0.0..90.0).contains(&lon) { 1.0 } else { 0.0 }; }
+        assert_eq!(g.coast_at(5.0, -60.0), 0.0);
+        let near = g.coast_at(5.0, 5.0); let inland = g.coast_at(5.0, 45.0);
+        assert!(near > 0.0 && inland > near, "{} {}", near, inland);
+        assert_eq!(g.coast_at(5.0, 45.0 + 360.0), inland);
+        assert!(g.coast_at(f64::NAN, 0.0).is_nan());
     }
     #[test] fn coast_distance_is_zero_on_water_and_grows_inland() {
         let mut g = Grid::new(12, 24);

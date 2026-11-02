@@ -109,6 +109,12 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
     o.copy_from_slice(&[r.class as u32 as f64, r.stems_per_ha, r.height_m]);
 }
 
+/// Metres from (lat, lon) to open ocean on the live grid (#192): the nearest cell's coast distance, refreshed when the
+/// land mask changed. NaN with no grid, so cover_cell_at falls back to the zonal lines.
+#[no_mangle] pub extern "C" fn grid_coast_at(lat: f64, lon: f64) -> f64 {
+    GRID.with(|g| g.borrow_mut().as_mut().map_or(f64::NAN, |g| g.coast_at(lat, lon)))
+}
+
 /// Animals per hectare for one species at one landing in one year (0 snowshoe hare, 1 white-tailed deer, 2 moose, 3 Canada lynx, 4 gray wolf, 5 caribou).
 /// Zero outside the species' range or on cover it cannot use. Deterministic per (species, lat, lon, year).
 #[no_mangle] pub extern "C" fn species_density(species: u32, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, year: i32) -> f64 {

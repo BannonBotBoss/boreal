@@ -85,3 +85,14 @@ test('coast distance: viewer cover matches wasm cover_cell_at (continentality, #
   assert.equal(coverKind(64.5, 376, 0.8, false, 6e5), 'boreal');
   assert.notEqual(coverKind(64.5, 376, 0.8, false, 0), 'boreal');
 });
+
+test('coastAt: live grid coast distance (grid.rs coast_at) is 0 at sea, grows inland, NaN before init, and lifts the inland tree line', async () => {
+  const fresh = await loadPlanetSim(readFileSync('public/wasm/boreal_sim.wasm'));
+  assert.ok(Number.isNaN(fresh!.coastAt(60, -100)));
+  const sim = fresh!.init(36, 72).setLand((lat, lon) => ({ land: lon > -140 && lon < -60 ? 1 : 0, elev: 300 }));
+  assert.equal(sim.coastAt(60, -170), 0);
+  const near = sim.coastAt(60, -137), inland = sim.coastAt(60, -100);
+  assert.ok(near > 0 && inland > near, `${near} ${inland}`);
+  const coast = sim.coverCellAt(64.5, -137, 376, 0.6, false, near), interior = sim.coverCellAt(64.5, -100, 376, 0.6, false, inland);
+  assert.ok(coast.kind !== 'boreal' || interior.kind === 'boreal', `${coast.kind} ${interior.kind}`);
+});

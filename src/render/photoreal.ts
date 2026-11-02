@@ -67,6 +67,8 @@ function slicedCube(size: number, layer: number, near = .5, far = 1000) {
       renderer.setRenderTarget(rt, face); renderer.render(scene, cam.children[face] as THREE.Camera); renderer.setRenderTarget(prev); renderer.xr.enabled = xr;
       if (++face < 6) return false; face = -1; return true; } };
 }
+/** A GI readback with any NaN/Inf coefficient (seen under SwiftShader's half-float cube read) would turn every lit material black: 0 x NaN = NaN. */
+export const shFinite = (sh: THREE.SphericalHarmonics3) => sh.coefficients.every(c => Number.isFinite(c.x) && Number.isFinite(c.y) && Number.isFinite(c.z));
 type SkyRig = { sky: Sky; sunLight: THREE.DirectionalLight; hemi: THREE.HemisphereLight };
 export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera, rig: SkyRig, baseRatio: number) {
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -88,7 +90,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
     if (giCube.rt.width !== size && !giCube.busy && !giReading) { giCube.rt.dispose(); giCube = slicedCube(size, 1, .5, 200); }
     const t0 = performance.now();
     if (!giCube.busy && time - lastProbe >= (tier.gi >= 2 ? 1 : 4)) { lastProbe = time; giCube.start(camera.position); }
-    if (giCube.step(renderer, scene)) { giReading = true; LightProbeGenerator.fromCubeRenderTarget(renderer, giCube.rt).then(p => { probe.sh.copy(p.sh); probe.intensity = AMBIENT.probe; }).catch(e => console.warn('GI probe readback', e)).finally(() => { giReading = false; }); } // async readback (r180); AMBIENT.probe = bounce only (core/light)
+    if (giCube.step(renderer, scene)) { giReading = true; LightProbeGenerator.fromCubeRenderTarget(renderer, giCube.rt).then(p => { if (!shFinite(p.sh)) { probe.sh.zero(); probe.intensity = 0; return; } probe.sh.copy(p.sh); probe.intensity = AMBIENT.probe; }).catch(e => console.warn('GI probe readback', e)).finally(() => { giReading = false; }); } // async readback (r180); AMBIENT.probe = bounce only (core/light)
     COST.giMs = performance.now() - t0;
   }
   let lastCloud = -1e9;
@@ -312,7 +314,7 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
       if (pend && variantOf(pend) !== variantOf(tier)) { if (warm?.key !== variantOf(pend)) precompile(pend); else if (!warm.late && GOVERNOR.heldMs > GOVERNOR.worldHoldMs * .75) { warm.late = true; precompile(pend); } }
       else if (warm && warm.key === variantOf(tier)) release(); // switched: the live materials hold the programs (once drawn)
       stepWarm(3); stepRoutes(); reap();
-      if (tier.gi) captureGI(time); else probe.intensity = 0;
+      if (tier.gi) captureGI(time); else { probe.intensity = 0; probe.sh.zero(); } // zeroed too: intensity 0 x a NaN coefficient is still NaN in the shader (black lit materials, T-0126/T-0127)
       CLOUD.uSunWorld.value.copy(sunDir); updateClouds(time);
       if (csm) {
         const t0 = performance.now();

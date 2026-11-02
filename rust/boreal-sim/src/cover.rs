@@ -87,6 +87,48 @@ pub fn tree_line_at_m(lat_deg: f64, maritime_w: f64) -> f64 { ((sea_level_zone_s
 /// Ice line (m) with continentality.
 pub fn ice_line_at_m(lat_deg: f64, maritime_w: f64) -> f64 { ((sea_level_zone_season_at_c(lat_deg, maritime_w) - num(ZONES_JSON, "ice_line_warm_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
 
+/// Daily-mean clear-sky direct beam on a slope (W/m2): the sun's position through the day (declination from solar_budget,
+/// hour angle every 5 min) dotted with the slope's normal, counted only while the sun is above both the horizon and the
+/// slope's own plane. The beam is S0 tau^(air mass), air mass 1/cos z (Bouguer-Lambert with tau from altitude-zones.json),
+/// so the weak low morning and evening sun counts for little. `slope_deg` 0..90, `aspect_deg` the compass azimuth the
+/// slope faces (0 = north, 90 = east). With tau = 1 flat ground matches solar_budget::daily_toa without the distance term.
+pub fn daily_beam_on_slope(day_of_year: f64, lat_deg: f64, slope_deg: f64, aspect_deg: f64, tau: f64) -> f64 {
+    use crate::{consts::S0, planet_fundamentals::energy::solar_budget::solar};
+    let d = solar(day_of_year, 12.0, lat_deg, 0.0, 0.0).decl.to_radians();
+    let (phi, s, a) = (lat_deg.to_radians(), slope_deg.clamp(0.0, 90.0).to_radians(), aspect_deg.to_radians());
+    let n = (s.sin() * a.sin(), s.sin() * a.cos(), s.cos()); // east, north, up
+    const STEPS: usize = 288;
+    let mut sum = 0.0;
+    for k in 0..STEPS {
+        let h = std::f64::consts::PI * (2.0 * (k as f64 + 0.5) / STEPS as f64 - 1.0);
+        let up = phi.sin() * d.sin() + phi.cos() * d.cos() * h.cos();
+        if up <= 0.0 { continue; }
+        let (east, north) = (-d.cos() * h.sin(), phi.cos() * d.sin() - phi.sin() * d.cos() * h.cos());
+        sum += (n.0 * east + n.1 * north + n.2 * up).max(0.0) * tau.powf(1.0 / up.max(0.02));
+    }
+    S0 * sum / STEPS as f64
+}
+/// Tree line shift (m) from slope and aspect: the warm-quarter mean clear-sky beam on the slope minus flat ground's, the absorbed
+/// share warming the root zone by dQ / coupling, divided by the lapse rate (altitude-zones.json slope_aspect). Positive on
+/// sun-facing slopes, negative on shaded ones, 0 on flat ground.
+pub fn aspect_tree_line_shift_m(lat_deg: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
+    if slope_deg <= 0.0 { return 0.0; }
+    // Warmest quarter (zone_season_fraction 0.25), centred on the solstice, sampled every 9 days.
+    let mid = if lat_deg >= 0.0 { 172.0 } else { 355.0 };
+    let tau = num(ZONES_JSON, "clear_sky_beam_transmissivity");
+    let mut dq = 0.0;
+    for k in -5..=5 {
+        let day = (mid + 9.0 * k as f64 - 1.0).rem_euclid(365.0) + 1.0;
+        dq += daily_beam_on_slope(day, lat_deg, slope_deg, aspect_deg, tau) - daily_beam_on_slope(day, lat_deg, 0.0, 0.0, tau);
+    }
+    let dq = dq / 11.0 * num(ZONES_JSON, "slope_absorbed_beam_fraction");
+    dq / num(ZONES_JSON, "slope_surface_coupling_W_m2_K") / num(ZONES_JSON, "lapse_K_per_m")
+}
+/// Tree line (m) at a site with continentality and slope aspect: tree_line_at_m plus aspect_tree_line_shift_m.
+pub fn tree_line_slope_m(lat_deg: f64, maritime_w: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
+    (tree_line_at_m(lat_deg.abs(), maritime_w) + aspect_tree_line_shift_m(lat_deg, slope_deg, aspect_deg)).max(0.0)
+}
+
 /// Annual mean at the site (C): North 1975 sea-level mean minus the lapse rate times height (no seasonal term).
 pub fn site_mean_c(lat_deg: f64, elev_m: f64) -> f64 {
     let x = lat_deg.to_radians().sin();
@@ -203,6 +245,26 @@ mod tests {
         assert_eq!(cover_class(57.0, 80.0, 0.6, false), Cover::Wetland); // Hudson Bay lowland
         assert_eq!(cover_class(51.0, 600.0, 0.45, false), Cover::Prairie); // Saskatchewan stays prairie
         assert_eq!(cover_class(57.0, 80.0, 0.9, false), Cover::Boreal); // dense green stays forest
+    }
+    #[test] fn sun_facing_slopes_lift_the_tree_line_and_shaded_ones_lower_it() {
+        // 46.5 N, 30 degree slopes: south face above flat, north face below, east and west in between.
+        let (s, n, e) = (aspect_tree_line_shift_m(46.5, 30.0, 180.0), aspect_tree_line_shift_m(46.5, 30.0, 0.0), aspect_tree_line_shift_m(46.5, 30.0, 90.0));
+        assert!(s > 0.0 && n < 0.0 && n < e && e < s, "s {s} e {e} n {n}");
+        assert!(s - n > 80.0 && s - n < 600.0, "sun vs shade spread {}", s - n);
+        assert_eq!(aspect_tree_line_shift_m(46.5, 0.0, 180.0), 0.0);
+    }
+    #[test] fn southern_hemisphere_sun_faces_north() {
+        assert!(aspect_tree_line_shift_m(-45.0, 30.0, 0.0) > 0.0);
+        assert!(aspect_tree_line_shift_m(-45.0, 30.0, 180.0) < 0.0);
+    }
+    #[test] fn flat_beam_matches_daily_toa_shape() {
+        use crate::planet_fundamentals::energy::solar_budget::daily_toa;
+        // Same geometry as daily_toa up to the Earth-Sun distance factor (~0.967 at the June solstice).
+        let r = daily_beam_on_slope(172.0, 46.5, 0.0, 0.0, 1.0) / daily_toa(172.0, 46.5);
+        assert!((r - 1.0 / 0.9674).abs() < 0.01, "ratio {r}");
+    }
+    #[test] fn slope_tree_line_reduces_to_continental_line_on_flat_ground() {
+        assert!((tree_line_slope_m(46.5, 0.3, 0.0, 0.0) - tree_line_at_m(46.5, 0.3)).abs() < 1e-9);
     }
     #[test] fn tree_line_matches_typescript_formula() {
         // TypeScript treeLineM(0) with T0 14.97, T2 -28, 6.4 C, 6.5 K/km: (14.97 + 14 - 6.4) / 0.0065.

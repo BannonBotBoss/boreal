@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudColumn, dewPointC, esatPa, moistLapse } from '../src/core/atmo/cloudColumn';
+import { cloudColumn, dewPointC, esatPa, iceFraction, moistLapse } from '../src/core/atmo/cloudColumn';
 import { bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
@@ -72,4 +72,13 @@ test('layered bake: a stratiform layer is a broad deck, not broken into convecti
   const jj = Math.min(L.nz - 1, Math.floor(col.layers[j].z / (L.topM / L.nz))), b = bakeLocal(col, 1, 0, 0); let on = 0;
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) if (b[i + L.nx * (jj + L.nz * k)] > 0) on++;
   assert.ok(on / (L.nx * L.nx) > .5, `overcast sheet covers most of the box (${on})`);
+});
+
+test('#192: cloud condensate glaciates with height: liquid base, mixed middle, ice top', () => {
+  assert.equal(iceFraction(5), 0); assert.equal(iceFraction(-30), 1); assert.ok(Math.abs(iceFraction(-11.5) - .75) < 1e-9);
+  const c = cloudColumn(30, qOf(30, .7), 1), cl = c.layers.filter(l => l.water > 0);
+  assert.ok(c.freezeM > c.lcl, `freeze ${c.freezeM} above base ${c.lcl}`); // a warm tropical base is liquid
+  assert.equal(cl[0].ice, 0); assert.ok(cl[cl.length - 1].ice > .9, `top ice ${cl[cl.length - 1].ice}`); // anvil top is ice
+  for (let i = 1; i < c.layers.length; i++) if (c.layers[i].z <= c.top) assert.ok(c.layers[i].ice >= c.layers[i - 1].ice - 1e-9); // monotone up the tower
+  assert.equal(cloudColumn(-5, qOf(-5, .9), 1).freezeM, 0); // winter surface already below 0 C
 });

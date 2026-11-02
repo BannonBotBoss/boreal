@@ -7,7 +7,9 @@
  *  - parcel: lifted from the surface on the dry adiabat (9.8 K/km) keeping its mixing ratio until it reaches its dew point
  *    (the LCL = cloud base), then on the moist adiabat; it holds cloud water while it stays warmer than the environment
  *    (buoyant), which sets the convective top;
- *  - layer (stratiform) cloud wherever the environment's relative humidity reaches the Sundqvist critical value.
+ *  - layer (stratiform) cloud wherever the environment's relative humidity reaches the Sundqvist critical value;
+ *  - each layer's condensate splits into liquid and ice by temperature (IFS mixed-phase ramp), and the column reports its
+ *    freezing level, so glaciated tops (anvils, cirrus) and the melting layer come from the same temperatures.
  * Pure, DOM-free; the renderer (world/globe/localClouds) bakes these layers into a 3D texture around the camera.
  */
 import C from '../../../data/earth/cloud-column.json';
@@ -25,30 +27,34 @@ export const qsat = (tC: number, p: number) => { const e = esatPa(tC); return C.
 export function moistLapse(tC: number, p: number) { const T = tC + 273.15, r = qsat(tC, p);
   return C.g * (1 + C.Lv * r / (C.Rd * T)) / (C.cp + C.Lv * C.Lv * r * C.eps / (C.Rd * T * T)); }
 
-export interface Layer { z: number; tEnv: number; q: number; rh: number; dew: number; tParcel: number; saturated: boolean; water: number; /** stratiform (sheet) share of water, kg/kg */ strat: number }
-export interface Column { lcl: number; top: number; layers: Layer[] }
+export interface Layer { z: number; tEnv: number; q: number; rh: number; dew: number; tParcel: number; saturated: boolean; water: number; /** stratiform (sheet) share of water, kg/kg */ strat: number; /** ice share of the condensate (0 liquid .. 1 ice) */ ice: number }
+export interface Column { lcl: number; top: number; /** height above the ground (m) where the environment reaches 0 C; 0 when the surface is already freezing, -1 if never reached */ freezeM: number; layers: Layer[] }
+/** Ice share of cloud condensate at T (C): 0 at or above T0, 1 at or below T_ice, 1 - ((T - T_ice)/(T0 - T_ice))^n between. */
+export function iceFraction(tC: number) { if (tC >= C.ice_T0_C) return 0; if (tC <= C.ice_Tice_C) return 1;
+  return 1 - Math.pow((tC - C.ice_Tice_C) / (C.ice_T0_C - C.ice_Tice_C), C.ice_exponent); }
 /** The column over a cell: surface air temperature tsC (C), surface specific humidity q0 (kg/kg), sim cloud fraction (0..1).
  * groundM: the surface's height above sea level (m). Layers stay heights above the ground, but pressure is read at the
  * absolute height (a 3 km plateau starts near 70 kPa, so the same vapour has a lower dew point and a higher base) and a
  * convective top stops at the absolute tropopause. 0 keeps the sea-level column exactly. */
 export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopause_m, dz = C.layer_m, groundM = 0): Column {
   const g0 = Math.max(0, groundM) || 0, pAt = (z: number) => pressureAt(z + g0);
-  const layers: Layer[] = []; let tp = tsC, lcl = -1, top = -1, buoyant = true;
+  const layers: Layer[] = []; let tp = tsC, lcl = -1, top = -1, buoyant = true, freezeM = -1;
   const qp = q0; // the parcel keeps its mixing ratio up to the LCL
   let zl = 0; for (let t = tsC; zl <= topM && t > dewPointFromE(vapourE(qp, pAt(zl))); zl += dz) t -= C.g / C.cp * dz; // LCL pre-pass
   const tl = tsC - C.g / C.cp * zl;
   for (let z = 0; z <= topM; z += dz) {
     const p = pAt(z), tEnv = z <= zl ? tsC - C.g / C.cp * z : tl - C.env_lapse_K_per_m * (z - zl), q = q0 * Math.exp(-z / C.vapour_scale_m), e = vapourE(q, p), rh = Math.min(1.2, e / esatPa(tEnv)), dew = dewPointFromE(e);
+    if (freezeM < 0 && tEnv <= C.ice_T0_C) freezeM = z;
     const parcelDew = dewPointFromE(vapourE(qp, p)), sat = tp <= parcelDew;
     if (sat && lcl < 0) lcl = z;
     let conv = 0, strat = 0;
     if (lcl >= 0 && buoyant) { if (tp >= tEnv - 1e-9 && z + g0 <= C.tropopause_m) { conv = Math.max(0, qp - qsat(tp, p)); top = z; } else buoyant = false; }
     if (rh >= C.rh_crit) strat = (rh - C.rh_crit) / (1 - C.rh_crit) * 1e-4 * Math.max(0, cover); // stratiform layer cloud
     const water = Math.max(conv, strat);
-    layers.push({ z, tEnv, q, rh, dew, tParcel: tp, saturated: sat || rh >= 1, water, strat: strat >= conv ? strat : 0 });
+    layers.push({ z, tEnv, q, rh, dew, tParcel: tp, saturated: sat || rh >= 1, water, strat: strat >= conv ? strat : 0, ice: iceFraction(conv > strat ? tp : tEnv) });
     tp -= (lcl >= 0 ? moistLapse(tp, p) : C.g / C.cp) * dz;
   }
-  return { lcl, top, layers };
+  return { lcl, top, freezeM, layers };
 }
 /** Cloud base (m): the LCL from the parcel's temperature and dew point (iterated, exact for this model). */
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

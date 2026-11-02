@@ -8,7 +8,7 @@
  * Budget: 64 x 64 x 48 bytes = 192 KB VRAM, rebaked only when the camera moves a quarter box or the column changes.
  */
 import * as THREE from 'three';
-import { cloudColumn, type Column } from '../../core/atmo/cloudColumn';
+import { cloudColumn, iceOpacity, type Column } from '../../core/atmo/cloudColumn';
 import { hash, random } from '../../proc/rng';
 import { toLatLon, type Vec3 } from './planet';
 
@@ -68,7 +68,7 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
   const ly = col.layers, step = ly[1]?.z || 250, conv = new Float32Array(L.nz), strat = new Float32Array(L.nz), zr = new Float32Array(L.nz);
   const base = col.lcl, top = col.top >= base && base >= 0 ? col.top + step / 2 : -1;
   for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), l = ly[li];
-    const s = l?.strat ?? 0, w = l?.water ?? 0; strat[j] = Math.min(1, s / L.waterFull); conv[j] = Math.min(1, Math.max(0, w - s) / L.waterFull);
+    const s = l?.strat ?? 0, w = l?.water ?? 0, op = iceOpacity(l?.ice ?? 0); strat[j] = Math.min(1, s * op / L.waterFull); conv[j] = Math.min(1, Math.max(0, w - s) * op / L.waterFull); // ice is thinner per kg (#192)
     zr[j] = top > base ? (z - base) / (top - base) : 2; } // height through the convective layer, 0 at the base, 1 at the top
   for (let k = 0; k < L.nx; k++) for (let j = 0; j < L.nz; j++) for (let i = 0; i < L.nx; i++) { const c = k * L.nx + i;
     const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = zr[j] < 0 ? 0 : Math.max(0, Math.min(1, (reach - zr[j]) * 6)); // weaker cells stop lower

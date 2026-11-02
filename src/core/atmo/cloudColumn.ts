@@ -32,6 +32,9 @@ export interface Column { lcl: number; top: number; /** height above the ground 
 /** Ice share of cloud condensate at T (C): 0 at or above T0, 1 at or below T_ice, 1 - ((T - T_ice)/(T0 - T_ice))^n between. */
 export function iceFraction(tC: number) { if (tC >= C.ice_T0_C) return 0; if (tC <= C.ice_Tice_C) return 1;
   return 1 - Math.pow((tC - C.ice_Tice_C) / (C.ice_T0_C - C.ice_Tice_C), C.ice_exponent); }
+/** Opacity per unit condensate relative to liquid, for ice share f (0..1): tau = 3W/(2 rho r_e), so ice (bigger, less dense
+ * crystals) is (rho_w r_liq)/(rho_ice r_ice) as opaque; glaciated anvils and cirrus come out thinner than a liquid deck. */
+export const iceOpacity = (f: number) => 1 - Math.max(0, Math.min(1, f)) * (1 - 1000 * C.re_liquid_um / (C.rho_ice_kg_m3 * C.re_ice_um));
 /** The column over a cell: surface air temperature tsC (C), surface specific humidity q0 (kg/kg), sim cloud fraction (0..1).
  * groundM: the surface's height above sea level (m). Layers stay heights above the ground, but pressure is read at the
  * absolute height (a 3 km plateau starts near 70 kPa, so the same vapour has a lower dew point and a higher base) and a

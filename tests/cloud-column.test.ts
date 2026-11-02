@@ -50,3 +50,10 @@ test('issue #202: through the in-page band the far-layer box plus the overlay ke
     if (prev >= 0) assert.ok(Math.abs(over - prev) < .02, `${h}: overlay step ${prev} -> ${over}`); prev = over; }
   assert.equal(bandCloudOpacity(TR.bandTop, 0), 0); assert.equal(bandCloudOpacity(500, 1), 1);
 });
+
+test('altitude zones: the column reads pressure at the ground height, so a plateau has a higher base and a capped top', () => {
+  const t = 15, q = qOf(t, .7), sea = cloudColumn(t, q, .8), same = cloudColumn(t, q, .8, undefined, undefined, 0), high = cloudColumn(t, q, .8, undefined, undefined, 3000);
+  assert.deepEqual(same, sea);
+  assert.ok(high.lcl > sea.lcl, `plateau base ${high.lcl} vs sea ${sea.lcl}`); // lower pressure, same q: lower dew point
+  assert.ok(high.top < 0 || high.top + 3000 <= 11000, `top ${high.top} past the tropopause`);
+});

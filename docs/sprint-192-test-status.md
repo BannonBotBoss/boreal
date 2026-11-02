@@ -20,7 +20,7 @@ screenshots, needed a WebGL browser run. The headless cover and wildlife matrix 
 
 ## Handoff re-run (Nov 2, 19:49–19:52 UTC)
 
-grokbot-3. Source under test is main `2dc8e20` (through #243). This handoff adds `tasks/evidence/T-0127/` and this note. No TypeScript or Rust files were edited, so these checks are the `2dc8e20` tree.
+grokbot-3. Source under test is main `2dc8e20` (through #243). The frames and the first copy of this note are commit `2aa6820`. No TypeScript or Rust files were edited, so these checks are the `2dc8e20` tree.
 
 | check | command | result |
 |---|---|---|

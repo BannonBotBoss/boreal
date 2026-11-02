@@ -22,3 +22,11 @@ test('liveCoastM passes the bound grid distance into coverKind', () => {
   assert.equal(coverKind(64.5, 300, 0.8, false, c), coverKind(64.5, 300, 0.8, false, 900_000));
   bindPlanetWeather(null);
 });
+
+test('a land site in a sea grid cell (coast 0) keeps the zonal lines, not a sea-level tree line (T-0127 Manitoba)', () => {
+  bindPlanetWeather(stub(0));
+  assert.equal(liveCoastM(52, -97), undefined);
+  assert.equal(coverKind(52, 218, 0.93, false, liveCoastM(52, -97)), 'boreal');
+  assert.equal(coverKind(52, 218, 0.93, false, 0), 'tundra'); // what the raw 0 gave
+  bindPlanetWeather(null);
+});

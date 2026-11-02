@@ -1,0 +1,67 @@
+{
+  "site": "alpine",
+  "slug": "alpine",
+  "clickLat": 0.5,
+  "clickLon": 54,
+  "landedLat": 0.4997307455507411,
+  "landedLon": 54.00025990054383,
+  "biome": "boreal",
+  "water": false,
+  "shore": false,
+  "elevM": 2166.0432730272473,
+  "vegetation": 0.9241811398383335,
+  "censusLat": 0.4997307455507411,
+  "censusLon": 54.00025990054383,
+  "census": [],
+  "shown": [],
+  "simStepMs": 282.69999999966444,
+  "frameMs": 7,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.22,
+    "dayOfYear": 227,
+    "latitude": 0.5,
+    "sunElevation": 46.6,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:13",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 1,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 465915871,
+    "total": 537030499
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "No tile crack or height step visible. Open sky with a black ground band (27% of the lower-middle is near-black) and the wolf’s back on the skyline. One shrub on the right. Census is empty. Cover class stays boreal at 2166 m. It does not read as closed forest or as alpine rock.",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.4,
+    "fade": 1,
+    "ready": true,
+    "readyAt": 1949
+  },
+  "exit": 0,
+  "note": "",
+  "hardwareFps": "UNVERIFIED",
+  "gpuMemory": "UNVERIFIED"
+}

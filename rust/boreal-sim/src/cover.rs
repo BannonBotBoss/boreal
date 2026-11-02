@@ -112,6 +112,14 @@ pub fn daily_beam_on_slope(day_of_year: f64, lat_deg: f64, slope_deg: f64, aspec
 /// share warming the root zone by dQ / coupling, divided by the lapse rate (altitude-zones.json slope_aspect). Positive on
 /// sun-facing slopes, negative on shaded ones, 0 on flat ground.
 pub fn aspect_tree_line_shift_m(lat_deg: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
+    aspect_line_shift_m(lat_deg, slope_deg, aspect_deg, num(ZONES_JSON, "slope_absorbed_beam_fraction"))
+}
+/// Ice line shift (m) from slope and aspect: same warm-quarter extra beam, but snow and ice reflect most of it, so only
+/// snow_absorbed_beam_fraction (cloud-free share x (1 - snow albedo)) feeds melt. Smaller than the tree line shift.
+pub fn aspect_ice_line_shift_m(lat_deg: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
+    aspect_line_shift_m(lat_deg, slope_deg, aspect_deg, num(ZONES_JSON, "snow_absorbed_beam_fraction"))
+}
+fn aspect_line_shift_m(lat_deg: f64, slope_deg: f64, aspect_deg: f64, absorbed: f64) -> f64 {
     if slope_deg <= 0.0 { return 0.0; }
     // Warmest quarter (zone_season_fraction 0.25), centred on the solstice, sampled every 9 days.
     let mid = if lat_deg >= 0.0 { 172.0 } else { 355.0 };
@@ -121,8 +129,12 @@ pub fn aspect_tree_line_shift_m(lat_deg: f64, slope_deg: f64, aspect_deg: f64) -
         let day = (mid + 9.0 * k as f64 - 1.0).rem_euclid(365.0) + 1.0;
         dq += daily_beam_on_slope(day, lat_deg, slope_deg, aspect_deg, tau) - daily_beam_on_slope(day, lat_deg, 0.0, 0.0, tau);
     }
-    let dq = dq / 11.0 * num(ZONES_JSON, "slope_absorbed_beam_fraction");
+    let dq = dq / 11.0 * absorbed;
     dq / num(ZONES_JSON, "slope_surface_coupling_W_m2_K") / num(ZONES_JSON, "lapse_K_per_m")
+}
+/// Ice line (m) at a site with continentality and slope aspect: ice_line_at_m plus aspect_ice_line_shift_m.
+pub fn ice_line_slope_m(lat_deg: f64, maritime_w: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
+    (ice_line_at_m(lat_deg.abs(), maritime_w) + aspect_ice_line_shift_m(lat_deg, slope_deg, aspect_deg)).max(0.0)
 }
 /// Tree line (m) at a site with continentality and slope aspect: tree_line_at_m plus aspect_tree_line_shift_m.
 pub fn tree_line_slope_m(lat_deg: f64, maritime_w: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
@@ -252,6 +264,14 @@ mod tests {
         assert!(s > 0.0 && n < 0.0 && n < e && e < s, "s {s} e {e} n {n}");
         assert!(s - n > 80.0 && s - n < 600.0, "sun vs shade spread {}", s - n);
         assert_eq!(aspect_tree_line_shift_m(46.5, 0.0, 180.0), 0.0);
+    }
+    #[test] fn ice_line_follows_aspect_but_less_than_tree_line() {
+        let (s, n) = (aspect_ice_line_shift_m(46.5, 30.0, 180.0), aspect_ice_line_shift_m(46.5, 30.0, 0.0));
+        assert!(s > 0.0 && n < 0.0, "s {s} n {n}");
+        assert!(s - n < aspect_tree_line_shift_m(46.5, 30.0, 180.0) - aspect_tree_line_shift_m(46.5, 30.0, 0.0));
+        assert!((ice_line_slope_m(46.5, 0.3, 0.0, 0.0) - ice_line_at_m(46.5, 0.3)).abs() < 1e-9);
+        // North faces hold glaciers lower: ice line on the shaded face sits below the sunny face's.
+        assert!(ice_line_slope_m(46.5, 0.3, 30.0, 0.0) < ice_line_slope_m(46.5, 0.3, 30.0, 180.0));
     }
     #[test] fn southern_hemisphere_sun_faces_north() {
         assert!(aspect_tree_line_shift_m(-45.0, 30.0, 0.0) > 0.0);

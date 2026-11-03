@@ -124,5 +124,6 @@ test('CAPE: a hot humid column carries strong convective energy, a cool one litt
   const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), drier = cloudColumn(30, qOf(30, .6), 1);
   assert.ok(hot.cape > 1000, `hot humid CAPE ${hot.cape}`); assert.ok(cool.cape < 300, `cool CAPE ${cool.cape}`);
   assert.ok(drier.cape < hot.cape, `${drier.cape} vs ${hot.cape}`);
+  assert.ok(Math.abs(hot.wMax - Math.sqrt(2 * hot.cape)) < 1e-9 && hot.wMax > 40 && cool.wMax < 25, `wMax ${hot.wMax} / ${cool.wMax}`);
   try { C.entrain_per_m = 0; const pure = cloudColumn(30, qOf(30, .8), 1); assert.ok(pure.cape >= hot.cape, `${pure.cape} vs ${hot.cape}`); } finally { C.entrain_per_m = keep; }
 });

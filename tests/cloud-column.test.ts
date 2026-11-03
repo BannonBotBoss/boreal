@@ -151,3 +151,15 @@ test('layered render: the box extinction gives the densest cell the column optic
   assert.equal(boxExtinction(dry, bz, L) >= 0, true);
   const thin = { ...deep, tau: .5 }; assert.ok(cellTransmittance(bd, boxExtinction(thin, bd, L), di, dk, L) > .5); // same shape, thin optical depth lets sun through
 });
+
+import { LOCAL_CLOUDS_FRAG, sunTransmittance } from '../src/world/globe/localClouds';
+test('layered render shader: no line comment swallows code, braces balance, sun shadow uses the column extinction', () => {
+  for (const line of LOCAL_CLOUDS_FRAG.split('\n')) { const c = line.indexOf('//'); if (c >= 0) assert.ok(!/[;{}]/.test(line.slice(c + 2)), `code after // : ${line.slice(c, c + 80)}`); }
+  const code = LOCAL_CLOUDS_FRAG.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  assert.equal((code.match(/{/g) || []).length, (code.match(/}/g) || []).length);
+  assert.match(code, /exp\(-sh \* uExt \* sm\)/);
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 24 }, deep = cloudColumn(30, qOf(30, .85), 1), bd = bakeLocal(deep, 1, 0, 0, L);
+  const eDeep = boxExtinction(deep, bd, L), eThin = boxExtinction({ ...deep, tau: .5 }, bd, L), sun: [number, number, number] = [0, 1, 0];
+  assert.ok(sunTransmittance(2, eThin, sun, L) > sunTransmittance(2, eDeep, sun, L)); // deep tower self-shadows more
+  assert.ok(sunTransmittance(2, eThin, sun, L) > .5, 'thin deck stays bright inside');
+});

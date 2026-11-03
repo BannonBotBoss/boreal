@@ -222,3 +222,12 @@ test('layered clouds: aerial perspective fades distant clouds into the sky', () 
   assert.ok(near > .97 && far < .75 && far > .6, `near ${near} far ${far}`);
   assert.ok(airTransmittance(30000, 10000, 10000) > far, 'thinner air aloft hazes less');
 });
+
+import { groundAlbedo, groundBounce, ALB_FOREST, ALB_SNOW } from '../src/world/globe/localClouds';
+test('layered clouds: ground bounce lights bases from below, brighter over snow, gone at night', () => {
+  assert.equal(groundAlbedo(10), ALB_FOREST); assert.equal(groundAlbedo(-10), ALB_SNOW);
+  assert.ok(Math.abs(groundBounce(.5, 1, 0) - .5) < 1e-12, 'clear below: albedo * mu');
+  assert.ok(groundBounce(ALB_SNOW, .5, 1) > 3 * groundBounce(ALB_FOREST, .5, 1));
+  assert.ok(groundBounce(ALB_SNOW, .5, 10) < groundBounce(ALB_SNOW, .5, 1));
+  assert.equal(groundBounce(ALB_SNOW, -.1, 0), 0);
+});

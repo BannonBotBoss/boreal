@@ -127,3 +127,9 @@ test('CAPE: a hot humid column carries strong convective energy, a cool one litt
   assert.ok(Math.abs(hot.wMax - Math.sqrt(2 * hot.cape)) < 1e-9 && hot.wMax > 40 && cool.wMax < 25, `wMax ${hot.wMax} / ${cool.wMax}`);
   try { C.entrain_per_m = 0; const pure = cloudColumn(30, qOf(30, .8), 1); assert.ok(pure.cape >= hot.cape, `${pure.cape} vs ${hot.cape}`); } finally { C.entrain_per_m = keep; }
 });
+test('overshooting top: a strong tower punches 1-2 km above its anvil level, a weak one barely, clear air not at all', () => {
+  const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), dry = cloudColumn(30, .001, 1);
+  assert.ok(hot.overshootM > 800 && hot.overshootM < 2500, `hot overshoot ${hot.overshootM}`);
+  assert.ok(cool.overshootM < hot.overshootM / 2, `cool ${cool.overshootM} vs hot ${hot.overshootM}`);
+  if (!(dry.top > dry.lcl && dry.lcl >= 0)) assert.equal(dry.overshootM, 0);
+});

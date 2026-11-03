@@ -28,7 +28,7 @@ export function moistLapse(tC: number, p: number) { const T = tC + 273.15, r = q
   return C.g * (1 + C.Lv * r / (C.Rd * T)) / (C.cp + C.Lv * C.Lv * r * C.eps / (C.Rd * T * T)); }
 
 export interface Layer { z: number; tEnv: number; q: number; rh: number; dew: number; tParcel: number; saturated: boolean; water: number; /** stratiform (sheet) share of water, kg/kg */ strat: number; /** ice share of the condensate (0 liquid .. 1 ice) */ ice: number }
-export interface Column { lcl: number; top: number; /** convective available potential energy (J/kg): g * integral of (T_parcel - T_env)/T_env over the buoyant cloud layers */ cape: number; /** parcel-theory peak updraught speed (m/s), sqrt(2 * CAPE): the upper bound real towers reach only about half of */ wMax: number; /** height above the ground (m) where the environment reaches 0 C; 0 when the surface is already freezing, -1 if never reached */ freezeM: number; layers: Layer[] }
+export interface Column { lcl: number; top: number; /** convective available potential energy (J/kg): g * integral of (T_parcel - T_env)/T_env over the buoyant cloud layers */ cape: number; /** parcel-theory peak updraught speed (m/s), sqrt(2 * CAPE): the upper bound real towers reach only about half of */ wMax: number; /** how far (m) the tower's momentum carries it above its equilibrium-level top: (w_frac * wMax) / N; 0 with no convection */ overshootM: number; /** height above the ground (m) where the environment reaches 0 C; 0 when the surface is already freezing, -1 if never reached */ freezeM: number; layers: Layer[] }
 /** Ice share of cloud condensate at T (C): 0 at or above T0, 1 at or below T_ice, 1 - ((T - T_ice)/(T0 - T_ice))^n between. */
 export function iceFraction(tC: number) { if (tC >= C.ice_T0_C) return 0; if (tC <= C.ice_Tice_C) return 1;
   return 1 - Math.pow((tC - C.ice_Tice_C) / (C.ice_T0_C - C.ice_Tice_C), C.ice_exponent); }
@@ -58,7 +58,8 @@ export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopa
     tp -= (lcl >= 0 ? moistLapse(tp, p) : C.g / C.cp) * dz;
     if (lcl >= 0) tp -= C.entrain_per_m * (tp - tEnv) * dz; // entrainment: the cloudy updraught mixes in environment air and loses buoyancy
   }
-  return { lcl, top, cape, wMax: Math.sqrt(2 * cape), freezeM, layers };
+  const wMax = Math.sqrt(2 * cape), overshootM = top > lcl && lcl >= 0 ? C.updraught_frac * wMax / C.N_strat_per_s : 0;
+  return { lcl, top, cape, wMax, overshootM, freezeM, layers };
 }
 /** Share of precipitation reaching the ground as snow (0 rain .. 1 snow) for a column: it needs ice aloft to fall from, and
  * the flakes melt over the melting layer (melt_layer_m) below the freezing level. Surface already freezing gives all snow,

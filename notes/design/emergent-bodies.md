@@ -121,3 +121,9 @@ Inner core too big: this is pure iron (no light elements), so its melting point 
 (mantle bottom + 1000 K boundary layer, Lay 1998). Real outer core is liquid because S/O/Si lower the melting point (Alfè et al. 2002), not yet modelled.
 Open (light-element melting depression now in: core_liquidus_t, ~700 K, Alfè et al. 2002; needs a re-run to measure the new ICB): GDF f_i term, time-compressed cooling, escaping surface parcels (vmax ~1.5 km/s), COM drift 19 km, latent heat,
 no phase changes in Tillotson, crust/ocean/air not differentiated yet; 24k run in progress.
+
+Re-run with the light-element depression (2026-11-03, same 6k setup: `hot 6000 6000 0.05 dunite out.bin 6000 0.01`, 7 min on 8 cores):
+R_vol 6532 km, CMB 3541 km, ICB 3124 km, 958 solid parcels, centre 14274 kg/m3, 375 GPa, 5650 K, 1/f 328, C/MR2 0.316.
+The ICB did not move (3117 before, 3124 now), so the ~700 K depression alone does not melt the outer core here. Next check:
+why 958 parcels still sit below the alloy liquidus (the core temperature profile, the CMB boundary-layer heat and
+latent heat, before changing any material number.

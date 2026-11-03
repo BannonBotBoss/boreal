@@ -163,3 +163,12 @@ test('layered render shader: no line comment swallows code, braces balance, sun 
   assert.ok(sunTransmittance(2, eThin, sun, L) > sunTransmittance(2, eDeep, sun, L)); // deep tower self-shadows more
   assert.ok(sunTransmittance(2, eThin, sun, L) > .5, 'thin deck stays bright inside');
 });
+
+import { cloudPhase, hgPhase, CLOUD_G } from '../src/world/globe/localClouds';
+test('cloud phase: Henyey-Greenstein is normalised, forward-peaked, and the shader uses it', () => {
+  let s = 0; const n = 20000; for (let i = 0; i < n; i++) { const c = -1 + (i + .5) * 2 / n; s += hgPhase(c) * 2 / n; }
+  assert.ok(Math.abs(s / 2 - 1) < 1e-3, `mean over the sphere ${s / 2}`); // 4*pi*p_HG averages to 1, so it only redistributes light
+  assert.ok(cloudPhase(1) > 5 && cloudPhase(-1) < .05, 'toward the sun bright, away dim');
+  assert.ok(cloudPhase(1) <= 6 && CLOUD_G === .85);
+  assert.match(LOCAL_CLOUDS_FRAG, /G = 0\.85, PHASE_CAP = 6\.0/); assert.match(LOCAL_CLOUDS_FRAG, /\* ph \+ \.25/);
+});

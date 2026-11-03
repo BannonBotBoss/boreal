@@ -113,12 +113,20 @@ export const CLOUD_G = .85;
 export const PHASE_CAP = 6; // [game calibration: caps the forward peak (82x at g=.85) so the sun-facing rim does not blow out]
 export function hgPhase(cosT: number, g = CLOUD_G) { const d = 1 + g * g - 2 * g * cosT; return (1 - g * g) / (d * Math.sqrt(d)); }
 export function cloudPhase(cosT: number, g = CLOUD_G) { return Math.min(PHASE_CAP, hgPhase(cosT, g)); }
+/** Multiple scattering by octaves (Wrenninge 2013; Hillaire 2016, Frostbite): octave n has energy a^n, sees optical depth b^n*tau
+ *  and phase asymmetry c^n*g, so light that scattered many times still reaches deep cloud and spreads wider. a=b=c=0.5, 3 octaves.
+ *  Without it a thick cloud's sun-shadowed core goes black instead of the grey seen from below. CPU mirror of the shader's sun term. */
+export const MS_OCTAVES = 3, MS_A = .5, MS_B = .5, MS_C = .5;
+export function multiScatterSun(tau: number, cosT: number, g = CLOUD_G) {
+  let s = 0, a = 1, b = 1, c = 1; for (let n = 0; n < MS_OCTAVES; n++) { s += a * Math.exp(-b * tau) * cloudPhase(cosT, c * g); a *= MS_A; b *= MS_B; c *= MS_C; } return s; }
 
 const VERT = `out vec3 vOrigin; out vec3 vDir; uniform vec3 uCamLocal;
 void main() { vOrigin = uCamLocal; vDir = position - uCamLocal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 export const LOCAL_CLOUDS_FRAG = `precision highp float; precision highp sampler3D; in vec3 vOrigin; in vec3 vDir; out vec4 outColor;
 uniform sampler3D uVol; uniform vec3 uSunLocal; uniform float uSteps; uniform float uOpacity; uniform vec3 uBoxM; uniform float uExt;
 const float G = 0.85, PHASE_CAP = 6.0; /* Henyey-Greenstein asymmetry of cloud droplets, cap: see cloudPhase */
+float hgp(float ct, float g) { float hd = 1.0 + g * g - 2.0 * g * ct; return min(PHASE_CAP, (1.0 - g * g) / (hd * sqrt(hd))); }
+float msSun(float tau, float ct) { float s = 0.0, a = 1.0, b = 1.0, c = 1.0; for (int n = 0; n < 3; n++) { s += a * exp(-b * tau) * hgp(ct, c * G); a *= 0.5; b *= 0.5; c *= 0.5; } return s; } /* multiple scattering by octaves: see multiScatterSun */
 #ifdef BAND_OCCLUDE
 uniform mat4 modelViewMatrix, projectionMatrix;
 #endif
@@ -126,9 +134,9 @@ vec2 hitBox(vec3 o, vec3 d) { vec3 bmin = vec3(-.5), bmax = vec3(.5), ti = 1.0 /
   return vec2(max(tmin.x, max(tmin.y, tmin.z)), min(tmax.x, min(tmax.y, tmax.z))); }
 float dens(vec3 p) { return texture(uVol, p + .5).r; }
 void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x > b.y) discard; b.x = max(b.x, 0.0);
-  float dt = (b.y - b.x) / uSteps, dm = length(rd * uBoxM) * dt, sm = length(uSunLocal * uBoxM) * .05; /* each of the two sun samples stands for 0.05 box units of path, in metres */ float ct = dot(normalize(rd * uBoxM), normalize(uSunLocal * uBoxM)), hd = 1.0 + G * G - 2.0 * G * ct, ph = min(PHASE_CAP, (1.0 - G * G) / (hd * sqrt(hd))); /* direct sun scattered toward the eye by the droplet phase function */ vec3 p = vOrigin + rd * b.x; vec4 acc = vec4(0.0); vec3 first = vec3(0.0); bool hit = false;
+  float dt = (b.y - b.x) / uSteps, dm = length(rd * uBoxM) * dt, sm = length(uSunLocal * uBoxM) * .05; /* each of the two sun samples stands for 0.05 box units of path, in metres */ float ct = dot(normalize(rd * uBoxM), normalize(uSunLocal * uBoxM)); /* cosine between view ray and sun, for the droplet phase function */ vec3 p = vOrigin + rd * b.x; vec4 acc = vec4(0.0); vec3 first = vec3(0.0); bool hit = false;
   for (float i = 0.0; i < 256.0; i++) { if (i >= uSteps || acc.a > .97) break;
-    float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float lit = exp(-sh * uExt * sm) * max(uSunLocal.y + .25, .15) * ph + .25;
+    float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float lit = msSun(sh * uExt * sm, ct) * max(uSunLocal.y + .25, .15) + .25;
       float a = 1.0 - exp(-d * uExt * dm); /* optical depth of this step: extinction (1/m) times the step in metres */ acc.rgb += (1.0 - acc.a) * a * vec3(lit); acc.a += (1.0 - acc.a) * a; }
     p += rd * dt; }
   if (acc.a < .01) discard;

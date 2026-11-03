@@ -31,6 +31,7 @@ import { WIND_UNIFORMS, treeDims } from '../trees';
 import { buildClump, buildPlant } from './plant';
 import { createMoss } from './moss';
 import { createFarTrees } from './fartrees';
+import { landingHidesCover } from '../../core/landingRoster';
 
 const PARAMS = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams(), PATCH = PARAMS.has('patch');
 type View = { x: number; y: number; z: number; yaw: number; pitch: number };
@@ -205,7 +206,8 @@ export function createFlora(scene: THREE.Scene) {
     if (!bm) return;
     let plants = 0, visible = 0, clumps = 0, clumpsVisible = 0; const by: Record<string, number> = {};
     for (const t of tiles.values()) for (const s of t.slots) { const p = s.p, d = Math.hypot(p.x - cx, p.z - cz); let vis: boolean, lod: number;
-      if (p.clump) { clumps++; vis = d < RC && (d < CLUMP_FULL || p.keep! < (CLUMP_FULL / d) ** 1.5); lod = d > CLUMP_NEAR ? 1 : 0; if (vis) clumpsVisible++; } // far mats thin with distance
+      if (landingHidesCover(p.x, p.z, 'plant')) { vis = false; lod = s.lod; }
+      else if (p.clump) { clumps++; vis = d < RC && (d < CLUMP_FULL || p.keep! < (CLUMP_FULL / d) ** 1.5); lod = d > CLUMP_NEAR ? 1 : 0; if (vis) clumpsVisible++; } // far mats thin with distance
       else { plants++; vis = d < R * Math.min(1, .25 + p.h * .5); lod = d > LOD_DIST * (.5 + p.h) ? 1 : 0; if (vis) { visible++; by[FLORA[p.species].id] = (by[FLORA[p.species].id] ?? 0) + 1; } } // small plants drop out and simplify first
       if (vis !== s.vis) { bm.setVisibleAt(s.inst, vis); s.vis = vis; }
       if (lod !== s.lod) { bm.setGeometryIdAt(s.inst, s.geo[lod]); s.lod = lod; } }

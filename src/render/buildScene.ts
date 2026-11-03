@@ -26,6 +26,7 @@ import { animalShares, markFor, coarseStep, type Account } from '../core/coarse'
 import { createAnimalDensity, setBodyShare, DENSITY_MARK_LIFT_M, type DensityMark } from './animalDensity';
 import { createAnimalPicture } from './animalPicture';
 import { createLandingCast } from './landingCast';
+import { landingHidesCover } from '../core/landingRoster';
 import { ANIMAL_LADDER } from './animalLadder';
 import { catalog } from '../core/catalog';
 import { seatRock } from './rocks';
@@ -132,6 +133,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const flora = createFlora(scene); // render/flora: flowers + shrubs (shared ecology with the grass)
   const glow = createTargetGlow(renderer, camera); // render/targetGlow (T-0035): outline glow on the interaction target (replaces the ground ring)
   let lastBatchLod = -1, lastCover = -1;
+  const openedCover = new Set<string>();
   let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
   const CHUNK_ADDS_PER_FRAME = 2; let frameNo = 0; const adds = { frame: -1, n: 0 }; // upload pacing (see createChunk)
   warmTerrainWorkers(); // stage grids in each terrain worker, behind the loading screen
@@ -441,6 +443,16 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     if (time - lastCover > 1 || time < lastCover) {
       lastCover = time; const now = worldSec();
       for (const c of chunks.values()) for (const e of c.entities) if (e.kind === 'forage' || e.kind === 'plant') c.batch.cover(e.key, patchCover(e, now));
+    }
+    // A census spawn drops the stem and the herbs on that disc, then puts them back when the cast moves.
+    for (const c of chunks.values()) for (const e of c.entities) {
+      if (e.kind !== 'spruce' && e.kind !== 'plant' && e.kind !== 'forage') continue;
+      const hide = landingHidesCover(e.x, e.z, e.kind === 'spruce' ? 'spruce' : 'plant');
+      if (hide) { c.batch.cover(e.key, 0); openedCover.add(e.key); }
+      else if (openedCover.has(e.key)) {
+        c.batch.cover(e.key, e.kind === 'spruce' ? 1 : patchCover(e, worldSec()));
+        openedCover.delete(e.key);
+      }
     }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen, time, mode);

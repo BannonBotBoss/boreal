@@ -14,7 +14,10 @@ import { WORLD_SEED } from '../../core/world';
 import { clearSite, setSite, siteDirection, type SiteVec } from '../../core/sitePhase';
 import { remoteGameHeight, setRemoteHeight } from '../../core/siteHeight';
 import { PLANET, planetFor, toLatLon, type Vec3 } from './planet';
-import { elevationWins, sampleDem } from './openTiles';
+import { elevationWins, groundForCover, sampleDem, samplePhotoVegetation } from './openTiles';
+import { coverKind, coverTreeShare, type CoverKind } from './coverKind';
+import { vegetationWeight } from './planet';
+import { liveCoastM } from '../../core/planetWeather';
 
 const norm = (a: Vec3): Vec3 => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
 const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -47,7 +50,8 @@ export function engageLanding(direction: Vec3, home: number) {
   const latDeg = ll.lat * 180 / Math.PI;
   const lonDeg = ll.lon * 180 / Math.PI;
   const salt = hash(`landing:${latDeg.toFixed(3)}:${lonDeg.toFixed(3)}`);
-  setSite({ latDeg, lonDeg, datumM: Math.max(0, originH), salt, dir: frame.dir, east: frame.east, north: frame.north });
+  const cover = landingCover(planet, latDeg, lonDeg, frame.dir);
+  setSite({ latDeg, lonDeg, datumM: Math.max(0, originH), salt, dir: frame.dir, east: frame.east, north: frame.north, treeShare: cover == null ? 1 : coverTreeShare(cover) });
   setRemoteHeight((x, z) => {
     const d = siteDirection(x, z, PLANET.radius);
     const s = planet.sampleSurface(d);
@@ -59,6 +63,17 @@ export function engageLanding(direction: Vec3, home: number) {
     return LEVEL.waterSurface + (s.h - originH) + surfaceDetail(x, z) * 0.5;
   });
   return true;
+}
+
+/** Cover class at the landing origin, the same inputs as the landing report (render/landingCast groundAt): DEM height and
+ *  land win over the seeded planet, a cached photo's vegetation wins, live coast distance moves the tree line. A water
+ *  origin returns null: its vegetation weight is 0 and would read as desert, so the stand is left as it was (share 1). */
+export function landingCover(planet: ReturnType<typeof planetFor>, latDeg: number, lonDeg: number, dir: Vec3): CoverKind | null {
+  const s = planet.sampleSurface(dir);
+  const { elevM, water } = groundForCover(s, sampleDem(latDeg, lonDeg));
+  if (water) return null;
+  const vegetation = samplePhotoVegetation(latDeg, lonDeg) ?? vegetationWeight(s, dir);
+  return coverKind(latDeg, elevM, vegetation, false, liveCoastM(latDeg, lonDeg));
 }
 
 /** Nearest dry ground in the anchored frame. The Kenora dry-start is not used off home. */

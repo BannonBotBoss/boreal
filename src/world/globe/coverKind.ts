@@ -77,6 +77,16 @@ export function coverSpacingM(kind: CoverKind): number | null {
   return null;
 }
 
+/**
+ * Share of the near chunk's tree draws a landing keeps (#192, T-0127): the boreal billboard spacing over the class's
+ * spacing, squared (stems scale with 1 / spacing^2). Boreal and tropical keep the closed stand (1); wetland ~0.18,
+ * prairie ~0.05, desert ~0.007; water, ice, tundra and rock keep none. Same spacings as the horizon billboards.
+ */
+export function coverTreeShare(kind: CoverKind): number {
+  const step = coverSpacingM(kind), closed = coverSpacingM('boreal')!;
+  return step == null ? 0 : Math.min(1, (closed / step) ** 2);
+}
+
 export interface CoverSpot { x: number; z: number; kind: CoverKind }
 
 /**

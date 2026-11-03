@@ -85,3 +85,26 @@ test('stored models are the manifest, and a species with no file keeps a body si
   assert.equal(typeof hare === 'object' && hare.full, 'snowshoe-hare.glb');
   assert.equal(manifest['Canada Lynx'], undefined);
 });
+
+test('#192 T-0127: the landing cover class thins near trees (desert keeps almost none, boreal keeps the stand)', async () => {
+  const { coverTreeShare } = await import('../src/world/globe/coverKind');
+  const { generateChunk } = await import('../src/core/world');
+  assert.equal(coverTreeShare('boreal'), 1);
+  assert.equal(coverTreeShare('tropical'), 1);
+  for (const k of ['water', 'ice', 'tundra', 'rock'] as const) assert.equal(coverTreeShare(k), 0);
+  assert.ok(coverTreeShare('desert') < coverTreeShare('prairie') && coverTreeShare('prairie') < coverTreeShare('wetland') && coverTreeShare('wetland') < 1);
+  // Desert landing (Libyan desert, T-0127 site): the chunk around the spawn draws no trees or logs.
+  const desert = fromLatLon(27.4 * Math.PI / 180, 27.7 * Math.PI / 180);
+  assert.ok(engageLanding(desert, 0));
+  try {
+    const trees = (s: number) => { SITE.treeShare = s; let n = 0; for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) n += generateChunk(a, b).filter(e => e.kind === 'spruce' || e.kind === 'log').length; return n; };
+    const all = trees(1), none = trees(0), some = trees(.5);
+    assert.equal(none, 0);
+    assert.ok(some <= all, `${some} vs ${all}`);
+    // Thinning never moves the rocks or animals that stay (own random stream).
+    SITE.treeShare = 1; const keep = generateChunk(0, 0).filter(e => e.kind !== 'spruce' && e.kind !== 'log').map(e => e.key);
+    SITE.treeShare = 0; const kept = generateChunk(0, 0).filter(e => e.kind !== 'spruce' && e.kind !== 'log').map(e => e.key);
+    assert.deepEqual(kept, keep);
+  } finally { clearLanding(); }
+  assert.equal(SITE.treeShare, 1);
+});

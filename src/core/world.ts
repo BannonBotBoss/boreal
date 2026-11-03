@@ -77,6 +77,9 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     if (!isDryLand(x, z, h) || Math.hypot(x, z) < 13) continue;
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
     if ((kind === 'spruce' || kind === 'log' || kind === 'deer') && !plantsGrowAt(h)) continue; // T-0072: above the tree line no trees. Deer use the same line.
+    // #192 T-0127: off home the landing's cover class thins trees and logs (desert, prairie, ice). Own stream, so a refusal
+    // does not shift later draws; home keeps share 1 and draws nothing, so the pinned chunk digest is unchanged.
+    if ((kind === 'spruce' || kind === 'log') && SITE.remote && SITE.treeShare < 1 && random(hash(`cover-tree:${worldSeed}:${cx}:${cz}:${i}`))() >= SITE.treeShare) continue;
     if (kind === 'plant' && !groundPlantsGrowAt(h)) continue; // herbs grow on Arctic tundra too, not on mountain rock or ice
     // Herbs: a separate stream so a rejection does not shift later trees, rocks or deer. Acceptance probability is site light.
     if (kind === 'plant') {

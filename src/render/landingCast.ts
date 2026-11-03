@@ -9,8 +9,8 @@
 import * as THREE from 'three';
 import type { Motion } from '../core/animalBehavior';
 import {
-  LANDING_CENSUS_SIDE_M, LANDING_CLEAR_R_M, LANDING_DISPLAY, LANDING_YEAR, landingInFrame, landingStandY,
-  pickLandingSlots, placeLandingAnimals, setLandingClear,
+  LANDING_CAM_BACK_M, LANDING_CENSUS_SIDE_M, LANDING_CLEAR_R_M, LANDING_DISPLAY, LANDING_YEAR, landingInFrame, landingStandY,
+  pickLandingSlots, placeLandingAnimals, setLandingClear, setLandingSight,
   type CensusRow, type PlacedAnimal,
 } from '../core/landingRoster';
 import { liveCoastM, sharedPlanetSim } from '../core/planetWeather';
@@ -191,6 +191,7 @@ export function createLandingCast(scene: THREE.Scene) {
     procs.clear();
     placed = [];
     setLandingClear([]);
+    setLandingSight([]);
   }
 
   function stand(at: { x: number; z: number; yaw: number }) {
@@ -199,6 +200,11 @@ export function createLandingCast(scene: THREE.Scene) {
 
   function markClear() {
     setLandingClear(placed.map(animal => ({ x: animal.x, z: animal.z, r: LANDING_CLEAR_R_M })));
+    const fx = -Math.sin(origin.yaw), fz = -Math.cos(origin.yaw);
+    const back = LANDING_CAM_BACK_M + 0.4;
+    setLandingSight(placed.map(animal => ({
+      x0: origin.x - fx * back, z0: origin.z - fz * back, x1: animal.x, z1: animal.z, r: 1.6,
+    })));
   }
 
   function anchor(ctx: ReturnType<typeof landingContext>, x: number, z: number, yaw: number) {

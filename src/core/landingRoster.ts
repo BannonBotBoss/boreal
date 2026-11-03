@@ -171,13 +171,36 @@ export function landingStandY(groundY: number) {
 }
 
 export interface LandingClear { x: number; z: number; r: number }
+/** Camera-to-animal corridor. Plants on this segment hide the body even when the feet are clear. */
+export interface LandingSight { x0: number; z0: number; x1: number; z1: number; r: number }
 let clears: LandingClear[] = [];
+let sights: LandingSight[] = [];
 
 /** Discs the viewer uses to drop grass, flowers and the nearest trunks at the spawn. */
 export function setLandingClear(next: readonly LandingClear[]) {
   clears = next.slice(0, LANDING_SHOWN_CAP).map(d => ({ x: d.x, z: d.z, r: d.r }));
 }
 export function landingClearDiscs(): readonly LandingClear[] { return clears; }
+
+/** Corridors from the follow camera to each animal. The viewer drops plants that stand in them. */
+export function setLandingSight(next: readonly LandingSight[]) {
+  sights = next.slice(0, LANDING_SHOWN_CAP).map(s => ({ x0: s.x0, z0: s.z0, x1: s.x1, z1: s.z1, r: s.r }));
+}
+export function landingSightLines(): readonly LandingSight[] { return sights; }
+
+/** True when (x, z) is within `extra` metres of a camera-to-animal corridor. */
+export function landingOnSight(x: number, z: number, extra = 0) {
+  for (const s of sights) {
+    const dx = s.x1 - s.x0, dz = s.z1 - s.z0;
+    const L2 = dx * dx + dz * dz || 1;
+    const t = Math.max(0, Math.min(1, ((x - s.x0) * dx + (z - s.z0) * dz) / L2));
+    const qx = s.x0 + t * dx, qz = s.z0 + t * dz;
+    const px = x - qx, pz = z - qz;
+    const r = s.r + extra;
+    if (px * px + pz * pz < r * r) return true;
+  }
+  return false;
+}
 
 /** True when (x, z) lies in a spawn disc grown by `extra` metres. */
 export function landingClearAt(x: number, z: number, extra = 0) {
@@ -192,7 +215,8 @@ export function landingClearAt(x: number, z: number, extra = 0) {
 /** Grass uses the disc. Flowers grow the disc a little. A trunk grows it enough to drop the stem beside the body. */
 export function landingHidesCover(x: number, z: number, kind: 'grass' | 'plant' | 'spruce') {
   const extra = kind === 'spruce' ? 1.1 : kind === 'plant' ? 0.4 : 0;
-  return landingClearAt(x, z, extra);
+  if (landingClearAt(x, z, extra)) return true;
+  return landingOnSight(x, z, kind === 'spruce' ? 0.5 : 0);
 }
 
 /**

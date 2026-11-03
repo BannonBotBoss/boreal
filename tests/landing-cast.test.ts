@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { loadPlanetSim } from '../src/core/planetBudget';
 import {
   LANDING_DISPLAY, LANDING_SHOWN_CAP, landingHidesCover, landingStandY, pickLandingSlots, placeLandingAnimals,
-  setLandingClear,
+  setLandingClear, setLandingSight,
 } from '../src/core/landingRoster';
 import { createProceduralAnimal } from '../src/render/proceduralAnimal';
 import { pictureOrder } from '../src/render/animalPicture';
@@ -170,6 +170,11 @@ test('feet use the ground sample, and the spawn disc clears cover only on that d
   assert.equal(landingHidesCover(5.5, -7, 'plant'), true);
   setLandingClear([]);
   assert.equal(landingHidesCover(3, -7, 'grass'), false);
+  setLandingSight([{ x0: 0, z0: 4, x1: 0, z1: -8, r: 1.6 }]);
+  assert.equal(landingHidesCover(0, -3, 'plant'), true, 'a bush on the camera-to-animal line');
+  assert.equal(landingHidesCover(4.5, -3, 'plant'), false, 'a bush off to the side stays');
+  setLandingSight([]);
+  assert.equal(landingHidesCover(0, -3, 'plant'), false);
 });
 
 test('the landing cast keeps the full-mesh slots ahead of nearer home animals', () => {

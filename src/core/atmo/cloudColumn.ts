@@ -28,7 +28,7 @@ export function moistLapse(tC: number, p: number) { const T = tC + 273.15, r = q
   return C.g * (1 + C.Lv * r / (C.Rd * T)) / (C.cp + C.Lv * C.Lv * r * C.eps / (C.Rd * T * T)); }
 
 export interface Layer { z: number; tEnv: number; q: number; rh: number; dew: number; tParcel: number; saturated: boolean; water: number; /** stratiform (sheet) share of water, kg/kg */ strat: number; /** ice share of the condensate (0 liquid .. 1 ice) */ ice: number }
-export interface Column { lcl: number; top: number; /** height above the ground (m) where the environment reaches 0 C; 0 when the surface is already freezing, -1 if never reached */ freezeM: number; layers: Layer[] }
+export interface Column { lcl: number; top: number; /** convective available potential energy (J/kg): g * integral of (T_parcel - T_env)/T_env over the buoyant cloud layers */ cape: number; /** height above the ground (m) where the environment reaches 0 C; 0 when the surface is already freezing, -1 if never reached */ freezeM: number; layers: Layer[] }
 /** Ice share of cloud condensate at T (C): 0 at or above T0, 1 at or below T_ice, 1 - ((T - T_ice)/(T0 - T_ice))^n between. */
 export function iceFraction(tC: number) { if (tC >= C.ice_T0_C) return 0; if (tC <= C.ice_Tice_C) return 1;
   return 1 - Math.pow((tC - C.ice_Tice_C) / (C.ice_T0_C - C.ice_Tice_C), C.ice_exponent); }
@@ -41,7 +41,7 @@ export const iceOpacity = (f: number) => 1 - Math.max(0, Math.min(1, f)) * (1 - 
  * convective top stops at the absolute tropopause. 0 keeps the sea-level column exactly. */
 export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopause_m, dz = C.layer_m, groundM = 0): Column {
   const g0 = Math.max(0, groundM) || 0, pAt = (z: number) => pressureAt(z + g0);
-  const layers: Layer[] = []; let tp = tsC, lcl = -1, top = -1, buoyant = true, freezeM = -1;
+  const layers: Layer[] = []; let tp = tsC, lcl = -1, top = -1, buoyant = true, freezeM = -1, cape = 0;
   const qp = q0; // the parcel keeps its mixing ratio up to the LCL
   let zl = 0; for (let t = tsC; zl <= topM && t > dewPointFromE(vapourE(qp, pAt(zl))); zl += dz) t -= C.g / C.cp * dz; // LCL pre-pass
   const tl = tsC - C.g / C.cp * zl;
@@ -51,14 +51,14 @@ export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopa
     const parcelDew = dewPointFromE(vapourE(qp, p)), sat = tp <= parcelDew;
     if (sat && lcl < 0) lcl = z;
     let conv = 0, strat = 0;
-    if (lcl >= 0 && buoyant) { if (tp >= tEnv - 1e-9 && z + g0 <= C.tropopause_m) { conv = Math.max(0, qp - qsat(tp, p)); top = z; } else buoyant = false; }
+    if (lcl >= 0 && buoyant) { if (tp >= tEnv - 1e-9 && z + g0 <= C.tropopause_m) { conv = Math.max(0, qp - qsat(tp, p)); top = z; cape += C.g * (tp - tEnv) / (tEnv + 273.15) * dz; } else buoyant = false; }
     if (rh >= C.rh_crit) strat = (rh - C.rh_crit) / (1 - C.rh_crit) * 1e-4 * Math.max(0, cover); // stratiform layer cloud
     const water = Math.max(conv, strat);
     layers.push({ z, tEnv, q, rh, dew, tParcel: tp, saturated: sat || rh >= 1, water, strat: strat >= conv ? strat : 0, ice: iceFraction(conv > strat ? tp : tEnv) });
     tp -= (lcl >= 0 ? moistLapse(tp, p) : C.g / C.cp) * dz;
     if (lcl >= 0) tp -= C.entrain_per_m * (tp - tEnv) * dz; // entrainment: the cloudy updraught mixes in environment air and loses buoyancy
   }
-  return { lcl, top, freezeM, layers };
+  return { lcl, top, cape, freezeM, layers };
 }
 /** Share of precipitation reaching the ground as snow (0 rain .. 1 snow) for a column: it needs ice aloft to fall from, and
  * the flakes melt over the melting layer (melt_layer_m) below the freezing level. Surface already freezing gives all snow,

@@ -143,6 +143,12 @@ export function sunVisible(mu: number, zM: number, R = 6.371e6) {
 /** Skylight level relative to the day value: 1 with the sun up, then Schaefer's 0.4 dex per degree of depression (core/skyVisibility
  *  twilightIlluminance: ~960 lx at sunset, 3.4 lx at -6 deg), floored at -30 deg like the globe's atmSkyF, so night clouds go dark. */
 export function skyLevel(mu: number) { const h = Math.asin(Math.max(-1, Math.min(1, mu))) * 180 / Math.PI; return h >= 0 ? 1 : Math.pow(10, .4 * Math.max(h, -30)); }
+/** Aerial perspective on the layered clouds. Air between the eye and the cloud's near edge scatters light out of the view ray
+ *  (Rayleigh, 550 nm: beta = 13.5e-6 /m at sea level, scale height 8 km, Bruneton & Neyret 2008), so the cloud is blended toward
+ *  the sky behind it by that transmittance: distant towers fade into the horizon sky instead of standing sharp at 30 km.
+ *  Density is taken at the mean height of the two ends. CPU mirror of the shader's airT. */
+export const AIR_BETA = 13.5e-6, AIR_H = 8000;
+export function airTransmittance(distM: number, z0M: number, z1M: number) { const zm = .5 * (Math.max(0, z0M) + Math.max(0, z1M)); return Math.exp(-AIR_BETA * Math.max(0, distM) * Math.exp(-zm / AIR_H)); }
 
 const VERT = `out vec3 vOrigin; out vec3 vDir; uniform vec3 uCamLocal;
 void main() { vOrigin = uCamLocal; vDir = position - uCamLocal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
@@ -153,6 +159,7 @@ float hgp(float ct, float g) { float hd = 1.0 + g * g - 2.0 * g * ct; return min
 float msSun(float tau, float ct) { float s = 0.0, a = 1.0, b = 1.0, c = 1.0; for (int n = 0; n < 3; n++) { s += a * exp(-b * tau) * hgp(ct, c * G); a *= 0.5; b *= 0.5; c *= 0.5; } return s; } /* multiple scattering by octaves: see multiScatterSun */
 float skyAmb(float tau) { float s = 0.0, a = 1.0, b = 1.0; for (int n = 0; n < 3; n++) { s += a * exp(-b * tau); a *= 0.5; b *= 0.5; } return 0.25 * s / 1.75; } /* skylight under cloud above: see skyAmbient */
 float sunVis(float zM) { float dip = sqrt(2.0 * max(zM, 0.0) / uGroundR), e = asin(clamp(uSunMu, -1.0, 1.0)); return smoothstep(-dip - 0.004625, -dip + 0.004625, e); } /* planet's shadow: see sunVisible */
+float airT(vec3 a, vec3 b) { float zm = 0.5 * (max((a.y + 0.5) * uBoxM.y, 0.0) + max((b.y + 0.5) * uBoxM.y, 0.0)); return exp(-13.5e-6 * length((b - a) * uBoxM) * exp(-zm / 8000.0)); } /* aerial perspective: see airTransmittance */
 #ifdef BAND_OCCLUDE
 uniform mat4 modelViewMatrix, projectionMatrix;
 #endif
@@ -169,7 +176,7 @@ void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x >
 #ifdef BAND_OCCLUDE
   vec4 c = projectionMatrix * (modelViewMatrix * vec4(first, 1.0)); gl_FragDepth = clamp(c.z / c.w * .5 + .5, 0.0, 1.0); // issue #202: depth of the cloud's near edge, so ground in front culls it
 #endif
-  outColor = vec4(acc.rgb / max(acc.a, 1e-3), acc.a * uOpacity); }`;
+  outColor = vec4(acc.rgb / max(acc.a, 1e-3), acc.a * uOpacity * airT(vOrigin, first)); } /* air in front of the cloud lets the sky behind show through */`;
 
 export interface LocalClouds { mesh: THREE.Mesh; /** issue #202: the same box for the game pass in the band (shared volume, own opacity); placed by inpage */ overlay: THREE.Mesh; update(camPos: ArrayLike<number>, groundR: number, alt: number, sunDir: THREE.Vector3, input: ColumnInput | null, groundM?: number): void; column(): Column | null }
 /** The local box. The mesh is placed camera-relative (the globe renders from the origin, globeView renderTo). */

@@ -205,3 +205,12 @@ test('sunlight on the cloud is tinted by the Rayleigh air path: white overhead, 
   assert.ok(set[2] < 1e-3 && set[0] > .1, `set ${set}`); // sunset: red survives, blue gone
   assert.match(LOCAL_CLOUDS_FRAG, /vec3 lit = uSunCol \* \(msSun/);
 });
+
+import { sunVisible, skyLevel } from '../src/world/globe/localClouds';
+test('planet shadow: after sunset the cloud top stays lit after its base, and night clouds go dark', () => {
+  const d = (x: number) => Math.sin(x * Math.PI / 180);
+  assert.ok(sunVisible(d(10), 1000) === 1 && sunVisible(d(-20), 12000) === 0);
+  const mu = d(-2.5); assert.ok(sunVisible(mu, 10000) > .99 && sunVisible(mu, 2000) < .01, 'dip ~3.2 deg at 10 km, ~1.4 deg at 2 km');
+  assert.equal(skyLevel(d(5)), 1); assert.ok(Math.abs(Math.log10(skyLevel(d(-6))) + 2.4) < .01 && skyLevel(-1) < 1e-11);
+  assert.match(LOCAL_CLOUDS_FRAG, /sunVis\(\(p\.y \+ \.5\) \* uBoxM\.y\)\) \+ uSkyF \* skyAmb/);
+});

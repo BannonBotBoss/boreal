@@ -157,7 +157,7 @@ test('layered render shader: no line comment swallows code, braces balance, sun 
   for (const line of LOCAL_CLOUDS_FRAG.split('\n')) { const c = line.indexOf('//'); if (c >= 0) assert.ok(!/[;{}]/.test(line.slice(c + 2)), `code after // : ${line.slice(c, c + 80)}`); }
   const code = LOCAL_CLOUDS_FRAG.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
   assert.equal((code.match(/{/g) || []).length, (code.match(/}/g) || []).length);
-  assert.match(code, /exp\(-sh \* uExt \* sm\)/);
+  assert.match(code, /msSun\(sh \* uExt \* sm, ct\)/); assert.match(code, /exp\(-b \* tau\)/);
   const L = { ...LOCAL_CLOUDS, nx: 16, nz: 24 }, deep = cloudColumn(30, qOf(30, .85), 1), bd = bakeLocal(deep, 1, 0, 0, L);
   const eDeep = boxExtinction(deep, bd, L), eThin = boxExtinction({ ...deep, tau: .5 }, bd, L), sun: [number, number, number] = [0, 1, 0];
   assert.ok(sunTransmittance(2, eThin, sun, L) > sunTransmittance(2, eDeep, sun, L)); // deep tower self-shadows more
@@ -170,5 +170,18 @@ test('cloud phase: Henyey-Greenstein is normalised, forward-peaked, and the shad
   assert.ok(Math.abs(s / 2 - 1) < 1e-3, `mean over the sphere ${s / 2}`); // 4*pi*p_HG averages to 1, so it only redistributes light
   assert.ok(cloudPhase(1) > 5 && cloudPhase(-1) < .05, 'toward the sun bright, away dim');
   assert.ok(cloudPhase(1) <= 6 && CLOUD_G === .85);
-  assert.match(LOCAL_CLOUDS_FRAG, /G = 0\.85, PHASE_CAP = 6\.0/); assert.match(LOCAL_CLOUDS_FRAG, /\* ph \+ \.25/);
+  assert.match(LOCAL_CLOUDS_FRAG, /G = 0\.85, PHASE_CAP = 6\.0/); assert.match(LOCAL_CLOUDS_FRAG, /msSun\(sh \* uExt \* sm, ct\)/);
+});
+
+import { multiScatterSun, MS_OCTAVES } from '../src/world/globe/localClouds';
+test('multiple-scattering octaves keep deep cloud lit and reduce to single scattering in thin cloud', () => {
+  assert.equal(MS_OCTAVES, 3);
+  // thin cloud: the first octave dominates, total is phase * (1 + .5*p(g/2)/p(g) + ...) and above single scattering
+  assert.ok(multiScatterSun(0, 1) >= cloudPhase(1));
+  // deep cloud (tau 20): single scattering is ~2e-9, the third octave (a=.25, tau*.25) keeps about .25*e^-5*p, near 1e-3
+  const single = Math.exp(-20) * cloudPhase(0); const ms = multiScatterSun(20, 0);
+  assert.ok(ms > 1e4 * single && ms > 1e-3 && ms < 1e-2, `ms ${ms}`);
+  // still monotonic: more optical depth, less light
+  assert.ok(multiScatterSun(1, .3) > multiScatterSun(5, .3));
+  assert.match(LOCAL_CLOUDS_FRAG, /n < 3; n\+\+\) \{ s \+= a \* exp\(-b \* tau\)/);
 });

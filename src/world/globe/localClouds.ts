@@ -89,10 +89,23 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
   return out;
 }
 
+/** Extinction per metre per unit baked density (density = byte / 255), chosen so a vertical ray through the densest cell of
+ *  every level sums to the column's optical depth col.tau (Stephens 1978, from cloudColumn). The shader multiplies it by the
+ *  march step in metres, so a thin stratus deck lets the sun through and a deep tower goes opaque, instead of one fixed gain. */
+export function boxExtinction(col: Column, bake: Uint8Array, L = LOCAL_CLOUDS) {
+  const dz = L.topM / L.nz, n = L.nx * L.nx; let path = 0;
+  for (let j = 0; j < L.nz; j++) { let m = 0; for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) m = Math.max(m, bake[i + L.nx * (j + L.nz * k)]); path += m / 255 * dz; }
+  return path > 0 && n > 0 ? Math.max(0, col.tau) / path : 0;
+}
+/** Vertical transmittance exp(-tau) through one cell of a bake at extinction ext (CPU mirror of the shader, for tests). */
+export function cellTransmittance(bake: Uint8Array, ext: number, i: number, k: number, L = LOCAL_CLOUDS) {
+  let t = 0; for (let j = 0; j < L.nz; j++) t += bake[i + L.nx * (j + L.nz * k)] / 255 * ext * L.topM / L.nz; return Math.exp(-t);
+}
+
 const VERT = `out vec3 vOrigin; out vec3 vDir; uniform vec3 uCamLocal;
 void main() { vOrigin = uCamLocal; vDir = position - uCamLocal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const FRAG = `precision highp float; precision highp sampler3D; in vec3 vOrigin; in vec3 vDir; out vec4 outColor;
-uniform sampler3D uVol; uniform vec3 uSunLocal; uniform float uSteps; uniform float uOpacity;
+uniform sampler3D uVol; uniform vec3 uSunLocal; uniform float uSteps; uniform float uOpacity; uniform vec3 uBoxM; uniform float uExt;
 #ifdef BAND_OCCLUDE
 uniform mat4 modelViewMatrix, projectionMatrix;
 #endif
@@ -100,10 +113,10 @@ vec2 hitBox(vec3 o, vec3 d) { vec3 bmin = vec3(-.5), bmax = vec3(.5), ti = 1.0 /
   return vec2(max(tmin.x, max(tmin.y, tmin.z)), min(tmax.x, min(tmax.y, tmax.z))); }
 float dens(vec3 p) { return texture(uVol, p + .5).r; }
 void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x > b.y) discard; b.x = max(b.x, 0.0);
-  float dt = (b.y - b.x) / uSteps; vec3 p = vOrigin + rd * b.x; vec4 acc = vec4(0.0); vec3 first = vec3(0.0); bool hit = false;
+  float dt = (b.y - b.x) / uSteps, dm = length(rd * uBoxM) * dt; vec3 p = vOrigin + rd * b.x; vec4 acc = vec4(0.0); vec3 first = vec3(0.0); bool hit = false;
   for (float i = 0.0; i < 256.0; i++) { if (i >= uSteps || acc.a > .97) break;
     float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float lit = exp(-sh * 2.5) * max(uSunLocal.y + .25, .15) + .25;
-      float a = 1.0 - exp(-d * dt * 220.0); acc.rgb += (1.0 - acc.a) * a * vec3(lit); acc.a += (1.0 - acc.a) * a; }
+      float a = 1.0 - exp(-d * uExt * dm); // optical depth of this step: extinction (1/m) times the step in metres acc.rgb += (1.0 - acc.a) * a * vec3(lit); acc.a += (1.0 - acc.a) * a; }
     p += rd * dt; }
   if (acc.a < .01) discard;
 #ifdef BAND_OCCLUDE
@@ -115,7 +128,7 @@ export interface LocalClouds { mesh: THREE.Mesh; /** issue #202: the same box fo
 /** The local box. The mesh is placed camera-relative (the globe renders from the origin, globeView renderTo). */
 export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
   const tex = new THREE.Data3DTexture(new Uint8Array(L.nx * L.nx * L.nz), L.nx, L.nz, L.nx); tex.format = THREE.RedFormat; tex.minFilter = tex.magFilter = THREE.LinearFilter; tex.unpackAlignment = 1; tex.needsUpdate = true;
-  const uniforms = { uVol: { value: tex }, uCamLocal: { value: new THREE.Vector3() }, uSunLocal: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: L.steps }, uOpacity: { value: 1 } };
+  const uniforms = { uVol: { value: tex }, uCamLocal: { value: new THREE.Vector3() }, uSunLocal: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: L.steps }, uOpacity: { value: 1 }, uBoxM: { value: new THREE.Vector3(L.sizeM, L.topM, L.sizeM) }, uExt: { value: 0 } };
   const mat = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: 'precision highp float; uniform mat4 modelViewMatrix, projectionMatrix; in vec3 position;\n' + VERT, fragmentShader: FRAG, uniforms, side: THREE.BackSide, transparent: true, depthWrite: false, depthTest: false });
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat); mesh.frustumCulled = false; mesh.renderOrder = 1; mesh.visible = false;
   const omat = mat.clone(); omat.uniforms = { ...uniforms, uOpacity: { value: 0 }, uCamLocal: { value: new THREE.Vector3() } }; // shared volume and sun; own opacity and camera (game metres, set by inpage)
@@ -134,7 +147,7 @@ export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
         east.set(0, 1, 0).cross(up); if (east.lengthSq() < 1e-8) east.set(1, 0, 0); east.normalize(); north.crossVectors(up, east);
         centre = up.clone().multiplyScalar(groundR); key = k; col = cloudColumn(input.tsC, input.q, input.cover, L.topM, undefined, gk);
         const { lat, lon } = toLatLon([up.x, up.y, up.z]), R = groundR, ox = lon * R * Math.cos(lat) - L.sizeM / 2, oz = lat * R - L.sizeM / 2; // fixed lat/lon metre grid
-        tex.image.data = bakeLocal(col, input.cover, ox, oz, L); tex.needsUpdate = true;
+        const bk = bakeLocal(col, input.cover, ox, oz, L); tex.image.data = bk; tex.needsUpdate = true; uniforms.uExt.value = boxExtinction(col, bk, L);
         frame.makeBasis(east.clone().multiplyScalar(L.sizeM), up.clone().multiplyScalar(L.topM), north.clone().multiplyScalar(L.sizeM)).setPosition(centre.clone().addScaledVector(up, L.topM / 2));
         inv.copy(frame).invert();
       }

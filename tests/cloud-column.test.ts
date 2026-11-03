@@ -139,3 +139,15 @@ test('optical depth: a deep tower is far thicker than shallow cumulus, which is 
   assert.ok(hot.waterPath > cool.waterPath && cool.waterPath > 0, `W ${hot.waterPath} / ${cool.waterPath}`);
   const sum = hot.layers.reduce((a, l) => a + l.water, 0); assert.ok(sum > 0 && hot.waterPath > 0);
 });
+
+import { boxExtinction, cellTransmittance } from '../src/world/globe/localClouds';
+test('layered render: the box extinction gives the densest cell the column optical depth; thin deck passes sun, deep tower is opaque', () => {
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 24 }, dens = (b: Uint8Array) => { let best = [0, 0], bs = -1;
+    for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { let s = 0; for (let j = 0; j < L.nz; j++) s += b[i + L.nx * (j + L.nz * k)]; if (s > bs) { bs = s; best = [i, k]; } } return best; };
+  const deep = cloudColumn(30, qOf(30, .85), 1), bd = bakeLocal(deep, 1, 0, 0, L), ed = boxExtinction(deep, bd, L), [di, dk] = dens(bd);
+  assert.ok(ed > 0); assert.ok(cellTransmittance(bd, ed, di, dk, L) >= Math.exp(-deep.tau) - 1e-9); // never more opaque than the column
+  assert.ok(cellTransmittance(bd, ed, di, dk, L) < .01, `deep tower tau ${deep.tau}`);
+  const dry = cloudColumn(20, qOf(20, .2), 0), bz = bakeLocal(dry, 0, 0, 0, L);
+  assert.equal(boxExtinction(dry, bz, L) >= 0, true);
+  const thin = { ...deep, tau: .5 }; assert.ok(cellTransmittance(bd, boxExtinction(thin, bd, L), di, dk, L) > .5); // same shape, thin optical depth lets sun through
+});

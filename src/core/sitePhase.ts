@@ -17,6 +17,9 @@ export const SITE = {
   datumM: Number.NaN,
   /** Mixed into chunk seeds only when remote, so the home digest does not change. */
   salt: 0,
+  /** Share of the chunk's tree draws kept off home (#192, T-0127): 1 is a closed stand, 0 none. The landing's cover class
+   *  sets it (world/globe/landingSite), so a desert, ice, rock or tundra landing does not stand in a closed conifer stand. */
+  treeShare: 1,
   dir: [0, 1, 0] as SiteVec,
   east: [1, 0, 0] as SiteVec,
   north: [0, 0, 1] as SiteVec,
@@ -36,14 +39,16 @@ export function clearSite() {
   SITE.lonDeg = Number.NaN;
   SITE.datumM = Number.NaN;
   SITE.salt = 0;
+  SITE.treeShare = 1;
 }
 
-export function setSite(s: { latDeg: number; lonDeg: number; datumM: number; salt: number; dir: SiteVec; east: SiteVec; north: SiteVec }) {
+export function setSite(s: { latDeg: number; lonDeg: number; datumM: number; salt: number; dir: SiteVec; east: SiteVec; north: SiteVec; treeShare?: number }) {
   SITE.remote = true;
   SITE.latDeg = s.latDeg;
   SITE.lonDeg = s.lonDeg;
   SITE.datumM = s.datumM;
   SITE.salt = s.salt >>> 0;
+  SITE.treeShare = Math.min(1, Math.max(0, s.treeShare ?? 1));
   SITE.dir = s.dir;
   SITE.east = s.east;
   SITE.north = s.north;

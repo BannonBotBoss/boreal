@@ -132,15 +132,27 @@ export function skyAmbient(tauUp: number) {
 export const RAYLEIGH_TAU = [5.8e-6 * 8000, 13.5e-6 * 8000, 33.1e-6 * 8000] as const;
 export function airMass(cosZ: number) { const c = Math.max(0, Math.min(1, cosZ)), zd = Math.acos(c) * 180 / Math.PI; return 1 / (c + .50572 * Math.pow(96.07995 - zd, -1.6364)); }
 export function sunTint(cosZ: number): [number, number, number] { const m = airMass(cosZ) - 1; return RAYLEIGH_TAU.map(t => Math.exp(-t * m)) as [number, number, number]; }
+/** The planet's shadow on the cloud. A point zM above the ground sees the sun until it sinks past the geometric horizon dip
+ *  acos(R / (R + z)) ~ sqrt(2 z / R), so after sunset a tower's top stays lit (pink) after its base goes dark, and at night the
+ *  direct term is 0 instead of the old floor that kept lighting clouds from below the horizon. Softened over the sun's disc
+ *  (0.53 deg wide). mu: sine of the sun's elevation at the ground. CPU mirror of the shader's sunVis. */
+export const SUN_HALF = .265 * Math.PI / 180;
+export function sunVisible(mu: number, zM: number, R = 6.371e6) {
+  const dip = Math.sqrt(2 * Math.max(0, zM) / R), e = Math.asin(Math.max(-1, Math.min(1, mu))), t = Math.min(1, Math.max(0, (e + dip + SUN_HALF) / (2 * SUN_HALF)));
+  return t * t * (3 - 2 * t); }
+/** Skylight level relative to the day value: 1 with the sun up, then Schaefer's 0.4 dex per degree of depression (core/skyVisibility
+ *  twilightIlluminance: ~960 lx at sunset, 3.4 lx at -6 deg), floored at -30 deg like the globe's atmSkyF, so night clouds go dark. */
+export function skyLevel(mu: number) { const h = Math.asin(Math.max(-1, Math.min(1, mu))) * 180 / Math.PI; return h >= 0 ? 1 : Math.pow(10, .4 * Math.max(h, -30)); }
 
 const VERT = `out vec3 vOrigin; out vec3 vDir; uniform vec3 uCamLocal;
 void main() { vOrigin = uCamLocal; vDir = position - uCamLocal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 export const LOCAL_CLOUDS_FRAG = `precision highp float; precision highp sampler3D; in vec3 vOrigin; in vec3 vDir; out vec4 outColor;
-uniform sampler3D uVol; uniform vec3 uSunLocal; uniform float uSteps; uniform float uOpacity; uniform vec3 uBoxM; uniform float uExt; uniform vec3 uSunCol;
+uniform sampler3D uVol; uniform vec3 uSunLocal; uniform float uSteps; uniform float uOpacity; uniform vec3 uBoxM; uniform float uExt; uniform vec3 uSunCol; uniform float uSunMu; uniform float uSkyF; uniform float uGroundR;
 const float G = 0.85, PHASE_CAP = 6.0; /* Henyey-Greenstein asymmetry of cloud droplets, cap: see cloudPhase */
 float hgp(float ct, float g) { float hd = 1.0 + g * g - 2.0 * g * ct; return min(PHASE_CAP, (1.0 - g * g) / (hd * sqrt(hd))); }
 float msSun(float tau, float ct) { float s = 0.0, a = 1.0, b = 1.0, c = 1.0; for (int n = 0; n < 3; n++) { s += a * exp(-b * tau) * hgp(ct, c * G); a *= 0.5; b *= 0.5; c *= 0.5; } return s; } /* multiple scattering by octaves: see multiScatterSun */
 float skyAmb(float tau) { float s = 0.0, a = 1.0, b = 1.0; for (int n = 0; n < 3; n++) { s += a * exp(-b * tau); a *= 0.5; b *= 0.5; } return 0.25 * s / 1.75; } /* skylight under cloud above: see skyAmbient */
+float sunVis(float zM) { float dip = sqrt(2.0 * max(zM, 0.0) / uGroundR), e = asin(clamp(uSunMu, -1.0, 1.0)); return smoothstep(-dip - 0.004625, -dip + 0.004625, e); } /* planet's shadow: see sunVisible */
 #ifdef BAND_OCCLUDE
 uniform mat4 modelViewMatrix, projectionMatrix;
 #endif
@@ -150,7 +162,7 @@ float dens(vec3 p) { return texture(uVol, p + .5).r; }
 void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x > b.y) discard; b.x = max(b.x, 0.0);
   float dt = (b.y - b.x) / uSteps, dm = length(rd * uBoxM) * dt, sm = length(uSunLocal * uBoxM) * .05; /* each of the two sun samples stands for 0.05 box units of path, in metres */ float ct = dot(normalize(rd * uBoxM), normalize(uSunLocal * uBoxM)); /* cosine between view ray and sun, for the droplet phase function */ vec3 p = vOrigin + rd * b.x; vec4 acc = vec4(0.0); vec3 first = vec3(0.0); bool hit = false;
   for (float i = 0.0; i < 256.0; i++) { if (i >= uSteps || acc.a > .97) break;
-    float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float up = dens(p + vec3(0.0, .03, 0.0)) + dens(p + vec3(0.0, .07, 0.0)); vec3 lit = uSunCol * (msSun(sh * uExt * sm, ct) * max(uSunLocal.y + .25, .15)) + skyAmb(up * uExt * uBoxM.y * .05); /* skylight through the cloud above, same two-sample path as the sun */
+    float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float up = dens(p + vec3(0.0, .03, 0.0)) + dens(p + vec3(0.0, .07, 0.0)); vec3 lit = uSunCol * (msSun(sh * uExt * sm, ct) * max(uSunLocal.y + .25, .15) * sunVis((p.y + .5) * uBoxM.y)) + uSkyF * skyAmb(up * uExt * uBoxM.y * .05); /* skylight through the cloud above, same two-sample path as the sun */
       float a = 1.0 - exp(-d * uExt * dm); /* optical depth of this step: extinction (1/m) times the step in metres */ acc.rgb += (1.0 - acc.a) * a * lit; /* sun term tinted by the air path (sunTint), skylight stays neutral */ acc.a += (1.0 - acc.a) * a; }
     p += rd * dt; }
   if (acc.a < .01) discard;
@@ -163,7 +175,7 @@ export interface LocalClouds { mesh: THREE.Mesh; /** issue #202: the same box fo
 /** The local box. The mesh is placed camera-relative (the globe renders from the origin, globeView renderTo). */
 export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
   const tex = new THREE.Data3DTexture(new Uint8Array(L.nx * L.nx * L.nz), L.nx, L.nz, L.nx); tex.format = THREE.RedFormat; tex.minFilter = tex.magFilter = THREE.LinearFilter; tex.unpackAlignment = 1; tex.needsUpdate = true;
-  const uniforms = { uVol: { value: tex }, uCamLocal: { value: new THREE.Vector3() }, uSunLocal: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: L.steps }, uOpacity: { value: 1 }, uBoxM: { value: new THREE.Vector3(L.sizeM, L.topM, L.sizeM) }, uExt: { value: 0 }, uSunCol: { value: new THREE.Vector3(1, 1, 1) } };
+  const uniforms = { uVol: { value: tex }, uCamLocal: { value: new THREE.Vector3() }, uSunLocal: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: L.steps }, uOpacity: { value: 1 }, uBoxM: { value: new THREE.Vector3(L.sizeM, L.topM, L.sizeM) }, uExt: { value: 0 }, uSunCol: { value: new THREE.Vector3(1, 1, 1) }, uSunMu: { value: 1 }, uSkyF: { value: 1 }, uGroundR: { value: 6.371e6 } };
   const mat = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: 'precision highp float; uniform mat4 modelViewMatrix, projectionMatrix; in vec3 position;\n' + VERT, fragmentShader: LOCAL_CLOUDS_FRAG, uniforms, side: THREE.BackSide, transparent: true, depthWrite: false, depthTest: false });
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat); mesh.frustumCulled = false; mesh.renderOrder = 1; mesh.visible = false;
   const omat = mat.clone(); omat.uniforms = { ...uniforms, uOpacity: { value: 0 }, uCamLocal: { value: new THREE.Vector3() } }; // shared volume and sun; own opacity and camera (game metres, set by inpage)
@@ -190,5 +202,6 @@ export function createLocalClouds(L = LOCAL_CLOUDS): LocalClouds {
       mesh.matrixAutoUpdate = false; mesh.matrix.copy(frame); mesh.matrix.elements[12] -= cam.x; mesh.matrix.elements[13] -= cam.y; mesh.matrix.elements[14] -= cam.z; mesh.matrixWorldNeedsUpdate = true;
       uniforms.uCamLocal.value.copy(cam).applyMatrix4(inv);
       const s = sunDir.clone().transformDirection(inv); uniforms.uSunLocal.value.copy(s); const tn = sunTint(up.dot(sunDir) / (sunDir.length() || 1)); uniforms.uSunCol.value.set(tn[0], tn[1], tn[2]);
+      const mu = up.dot(sunDir) / (sunDir.length() || 1); uniforms.uSunMu.value = mu; uniforms.uSkyF.value = skyLevel(mu); uniforms.uGroundR.value = groundR;
     } };
 }

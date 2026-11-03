@@ -56,6 +56,7 @@ export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopa
     const water = Math.max(conv, strat);
     layers.push({ z, tEnv, q, rh, dew, tParcel: tp, saturated: sat || rh >= 1, water, strat: strat >= conv ? strat : 0, ice: iceFraction(conv > strat ? tp : tEnv) });
     tp -= (lcl >= 0 ? moistLapse(tp, p) : C.g / C.cp) * dz;
+    if (lcl >= 0) tp -= C.entrain_per_m * (tp - tEnv) * dz; // entrainment: the cloudy updraught mixes in environment air and loses buoyancy
   }
   return { lcl, top, freezeM, layers };
 }

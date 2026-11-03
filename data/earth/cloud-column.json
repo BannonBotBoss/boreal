@@ -9,11 +9,12 @@
   "ice_optics": "Cloud optical depth per unit condensate path is tau = 3 W / (2 rho r_e) (Stephens 1978, J. Atmos. Sci. 35:2123), so at equal water an ice layer is thinner by (rho_w r_liq) / (rho_ice r_ice). Liquid r_e ~10 um (Han et al. 1994, J. Climate 7:465); ice r_e ~30 um for midlatitude cirrus [verify against a cirrus r_e climatology]; ice density 917 kg/m3.",
   "anvil": "A deep convective tower stops rising at its equilibrium (zero-buoyancy) level and its outflow spreads sideways there as a glaciated anvil a kilometre or two deep, far wider than the updraught (Houze 2014, Cloud Dynamics 2nd ed., ch. 8; Yuter & Houze 1995, Mon. Wea. Rev. 123:1941). Only towers deep enough to glaciate (cumulonimbus, several km) form one. Depth, minimum tower depth and spread radius here are [game calibration] for the 32 km local box.",
   "melting_layer": "Snow falling below the 0 C level melts over a layer a few hundred metres deep, so the snow level sits about 300 m (1000 ft) below the freezing level (AMS Glossary of Meteorology, 'snow level' and 'melting layer'; Lumb 1961, Q. J. R. Meteorol. Soc. 87:437) [verify depth]. Warm-rain clouds with no ice above them give rain whatever the surface.",
+  "entrainment": "A rising cloudy parcel mixes in surrounding air at a fractional rate eps, so its temperature relaxes toward the environment as dT/dz = -G_m - eps (T - T_env). Deep convection sits near eps ~ 0.2 /km, shallow cumulus near 1-2 /km (de Rooy et al. 2013, Q. J. R. Meteorol. Soc. 139:1). The deep-convection value is used so towers stay below the undiluted-parcel top [verify against the review table].",
   "rh_crit": "Sundqvist, Berge & Kristjansson 1989, Mon. Wea. Rev. 117:1641: layer cloud forms above a critical relative humidity of ~0.8 (the sim's update_clouds uses the same scheme)."
  },
  "esat_hPa": 6.112, "esat_b": 17.67, "esat_c_C": 243.5,
  "g": 9.80665, "cp": 1004.6, "Rd": 287.04, "Lv": 2.501e6, "eps": 0.622,
  "env_lapse_K_per_m": 0.0065, "tropopause_m": 11000, "p0_Pa": 101325, "pressure_scale_m": 8400,
  "vapour_scale_m": 2000, "rh_crit": 0.8, "layer_m": 250, "ice_T0_C": 0, "ice_Tice_C": -23, "ice_exponent": 2,
- "re_liquid_um": 10, "re_ice_um": 30, "rho_ice_kg_m3": 917, "melt_layer_m": 300, "anvil_depth_m": 1500, "anvil_min_tower_m": 6000, "anvil_spread_m": 3000
+ "re_liquid_um": 10, "re_ice_um": 30, "rho_ice_kg_m3": 917, "melt_layer_m": 300, "anvil_depth_m": 1500, "anvil_min_tower_m": 6000, "anvil_spread_m": 3000, "entrain_per_m": 0.0002
 }

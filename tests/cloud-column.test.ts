@@ -112,3 +112,10 @@ test('anvil: a deep glaciated tower spreads wider at its buoyant top than throug
   const bs = bakeLocal(sh, .4, 0, 0), js = Math.floor(sh.top / dz) - 1, jsm = Math.floor((sh.lcl + sh.top) / 2 / dz);
   if (sh.top > sh.lcl && js > jsm) assert.ok(cover(bs, js) <= cover(bs, jsm), 'shallow cumulus narrows to its top');
 });
+test('entrainment: mixing in environment air lowers a deep tower top below the undiluted parcel, base unchanged', async () => {
+  const C = (await import('../data/earth/cloud-column.json')).default as Record<string, number>, keep = C.entrain_per_m;
+  const run = () => cloudColumn(30, qOf(30, .8), 1);
+  try { C.entrain_per_m = 0; const pure = run(); C.entrain_per_m = keep; const mixed = run();
+    assert.equal(mixed.lcl, pure.lcl); assert.ok(keep > 0 && mixed.top <= pure.top, `${mixed.top} vs ${pure.top}`);
+    assert.ok(mixed.top - mixed.lcl >= 6000, 'a hot humid tower still reaches anvil depth'); } finally { C.entrain_per_m = keep; }
+});

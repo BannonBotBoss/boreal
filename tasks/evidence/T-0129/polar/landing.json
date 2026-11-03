@@ -1,0 +1,111 @@
+{
+  "site": "polar",
+  "slug": "polar",
+  "clickLat": 74.2,
+  "clickLon": 50.6,
+  "landedLat": 74.19971016450077,
+  "landedLon": 50.59911264832227,
+  "biome": "tundra",
+  "water": false,
+  "shore": false,
+  "elevM": 109.57647992363621,
+  "vegetation": 0.8335550788934555,
+  "censusLat": 74.19971016450077,
+  "censusLon": 50.59911264832227,
+  "census": [
+    {
+      "species": "gray_wolf",
+      "display": "Gray Wolf",
+      "count": 1
+    },
+    {
+      "species": "caribou",
+      "display": "Woodland Caribou",
+      "count": 38
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 5
+    },
+    {
+      "species": "arctic_fox",
+      "display": "Arctic Fox",
+      "count": 4
+    }
+  ],
+  "shown": [
+    {
+      "species": "Red Fox",
+      "count": 1,
+      "x": 31.470249069529114,
+      "z": 34.77993216300524
+    },
+    {
+      "species": "Woodland Caribou",
+      "count": 1,
+      "x": 28.5478230856883,
+      "z": 35.2035196616074
+    },
+    {
+      "species": "Arctic Fox",
+      "count": 1,
+      "x": 25.62539710184748,
+      "z": 35.627107160209555
+    },
+    {
+      "species": "Gray Wolf",
+      "count": 1,
+      "x": 24.14314190931956,
+      "z": 32.10532926485272
+    }
+  ],
+  "simStepMs": 392.4999999996146,
+  "frameMs": 13.8,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.18,
+    "dayOfYear": 227,
+    "latitude": 74.2,
+    "sunElevation": 25.7,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:11",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 4,
+    "lows": 0,
+    "bodies": 1,
+    "wolves": {
+      "near": 2,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 401454045,
+    "total": 502937813
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.8,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 1892
+  },
+  "exit": 0,
+  "note": ""
+}

@@ -1,0 +1,78 @@
+{
+  "site": "desert",
+  "slug": "desert",
+  "clickLat": 27.4,
+  "clickLon": 27.7,
+  "landedLat": 27.400344508283492,
+  "landedLon": 27.700006257720542,
+  "biome": "desert",
+  "water": false,
+  "shore": false,
+  "elevM": 234.61480000484153,
+  "vegetation": 0,
+  "censusLat": 27.400344508283492,
+  "censusLon": 27.700006257720542,
+  "census": [
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 23
+    }
+  ],
+  "shown": [
+    {
+      "species": "Red Fox",
+      "count": 1,
+      "x": 3.1702490695291137,
+      "z": -33.52006783699476
+    }
+  ],
+  "simStepMs": 319.29999999969993,
+  "frameMs": 10.7,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.22,
+    "dayOfYear": 227,
+    "latitude": 27.4,
+    "sunElevation": 49.1,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:12",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 2,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 532175761,
+    "total": 603683229
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.5,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 1779
+  },
+  "exit": 0,
+  "note": ""
+}

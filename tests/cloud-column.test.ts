@@ -214,3 +214,11 @@ test('planet shadow: after sunset the cloud top stays lit after its base, and ni
   assert.equal(skyLevel(d(5)), 1); assert.ok(Math.abs(Math.log10(skyLevel(d(-6))) + 2.4) < .01 && skyLevel(-1) < 1e-11);
   assert.match(LOCAL_CLOUDS_FRAG, /sunVis\(\(p\.y \+ \.5\) \* uBoxM\.y\)\) \+ uSkyF \* skyAmb/);
 });
+
+import { airTransmittance } from '../src/world/globe/localClouds';
+test('layered clouds: aerial perspective fades distant clouds into the sky', () => {
+  assert.equal(airTransmittance(0, 1000, 2000), 1);
+  const near = airTransmittance(2000, 1000, 2000), far = airTransmittance(30000, 1000, 2000);
+  assert.ok(near > .97 && far < .75 && far > .6, `near ${near} far ${far}`);
+  assert.ok(airTransmittance(30000, 10000, 10000) > far, 'thinner air aloft hazes less');
+});

@@ -113,7 +113,7 @@ test('anvil: a deep glaciated tower spreads wider at its buoyant top than throug
   if (sh.top > sh.lcl && js > jsm) assert.ok(cover(bs, js) <= cover(bs, jsm), 'shallow cumulus narrows to its top');
 });
 test('entrainment: mixing in environment air lowers a deep tower top below the undiluted parcel, base unchanged', async () => {
-  const C = (await import('../data/earth/cloud-column.json')).default as Record<string, number>, keep = C.entrain_per_m;
+  const C = (await import('../data/earth/cloud-column.json')).default as { entrain_per_m: number }, keep = C.entrain_per_m;
   const run = () => cloudColumn(30, qOf(30, .8), 1);
   try { C.entrain_per_m = 0; const pure = run(); C.entrain_per_m = keep; const mixed = run();
     assert.equal(mixed.lcl, pure.lcl); assert.ok(keep > 0 && mixed.top <= pure.top, `${mixed.top} vs ${pure.top}`);

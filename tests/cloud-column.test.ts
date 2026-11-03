@@ -195,3 +195,13 @@ test('skylight inside the cloud dims under the cloud above it, clear sky keeps t
   assert.match(LOCAL_CLOUDS_FRAG, /skyAmb\(up \* uExt \* uBoxM\.y \* \.05\)/);
   assert.match(LOCAL_CLOUDS_FRAG, /return 0\.25 \* s \/ 1\.75;/);
 });
+
+import { airMass, sunTint } from '../src/world/globe/localClouds';
+test('sunlight on the cloud is tinted by the Rayleigh air path: white overhead, red at the horizon', () => {
+  assert.ok(Math.abs(airMass(1) - 1) < 1e-3 && Math.abs(airMass(0) - 38) < 1.5); // Kasten-Young: ~38 air masses at the horizon
+  const noon = sunTint(1); noon.forEach(c => assert.ok(Math.abs(c - 1) < 1e-3));
+  const low = sunTint(Math.cos(80 * Math.PI / 180)), set = sunTint(0);
+  assert.ok(low[0] > low[1] && low[1] > low[2], `low ${low}`); // blue scattered out first: gold
+  assert.ok(set[2] < 1e-3 && set[0] > .1, `set ${set}`); // sunset: red survives, blue gone
+  assert.match(LOCAL_CLOUDS_FRAG, /vec3 lit = uSunCol \* \(msSun/);
+});

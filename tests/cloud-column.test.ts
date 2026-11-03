@@ -133,3 +133,9 @@ test('overshooting top: a strong tower punches 1-2 km above its anvil level, a w
   assert.ok(cool.overshootM < hot.overshootM / 2, `cool ${cool.overshootM} vs hot ${hot.overshootM}`);
   if (!(dry.top > dry.lcl && dry.lcl >= 0)) assert.equal(dry.overshootM, 0);
 });
+test('optical depth: a deep tower is far thicker than shallow cumulus, which is thicker than a near-clear column', () => {
+  const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), dry = cloudColumn(30, .001, 1);
+  assert.ok(hot.tau > 10 * cool.tau && cool.tau > 10 * dry.tau, `tau ${hot.tau} / ${cool.tau} / ${dry.tau}`);
+  assert.ok(hot.waterPath > cool.waterPath && cool.waterPath > 0, `W ${hot.waterPath} / ${cool.waterPath}`);
+  const sum = hot.layers.reduce((a, l) => a + l.water, 0); assert.ok(sum > 0 && hot.waterPath > 0);
+});

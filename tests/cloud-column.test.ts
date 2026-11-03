@@ -57,12 +57,12 @@ test('altitude zones: the column reads pressure at the ground height, so a plate
   assert.ok(high.lcl > sea.lcl, `plateau base ${high.lcl} vs sea ${sea.lcl}`); // lower pressure, same q: lower dew point
   assert.ok(high.top < 0 || high.top + 3000 <= 11000, `top ${high.top} past the tropopause`);
 });
-test('layered bake: convective towers share the LCL base, tops vary by cell, none passes the buoyant top', () => {
+test('layered bake: convective towers share the LCL base, tops vary by cell (below the anvil), none passes the buoyant top', () => {
   const col = cloudColumn(28, qOf(28, .75), .6, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS, dz = L.topM / L.nz, b = bakeLocal(col, .6, 0, 0);
   assert.ok(col.lcl > 0 && col.top > col.lcl);
   const tops: number[] = [];
   for (let k = 0; k < L.nx; k += 4) for (let i = 0; i < L.nx; i += 4) { let lo = -1, hi = -1;
-    for (let j = 0; j < L.nz; j++) if (b[i + L.nx * (j + L.nz * k)] > 8 && col.layers[Math.round((j + .5) * dz / col.layers[1].z)].strat === 0) { if (lo < 0) lo = j; hi = j; }
+    for (let j = 0; j < L.nz; j++) if (b[i + L.nx * (j + L.nz * k)] > 8 && (j + 1) * dz < col.top - 1500 && col.layers[Math.round((j + .5) * dz / col.layers[1].z)].strat === 0) { if (lo < 0) lo = j; hi = j; }
     if (lo >= 0) { assert.ok((lo + 1) * dz >= col.lcl - dz, 'no convective cloud below the dew-point base'); assert.ok(hi * dz <= col.top + dz, 'no tower above the buoyant top'); tops.push(hi); } }
   assert.ok(tops.length > 3 && Math.max(...tops) - Math.min(...tops) >= 2, `tower tops should differ by cell: ${tops}`);
 });
@@ -100,4 +100,15 @@ test('#192: precipitation phase at the ground follows the freezing level and the
   const warm = { ...near, layers: near.layers.map(l => ({ ...l, ice: 0 })) };
   assert.equal(snowShareAtGround(warm), 0); // no ice aloft: warm rain
   let prev = 2; for (const t of [-3, 0, 1, 2, 4, 8]) { const v = snowShareAtGround(cloudColumn(t, qOf(t, .95), 1)); assert.ok(v <= prev + 1e-9, `${t}: ${v}`); prev = v; }
+});
+
+test('anvil: a deep glaciated tower spreads wider at its buoyant top than through its middle; a shallow cumulus does not', () => {
+  const L = LOCAL_CLOUDS, dz = L.topM / L.nz, cover = (b: Uint8Array, j: number) => { let on = 0; for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) if (b[i + L.nx * (j + L.nz * k)] > 8) on++; return on; };
+  const col = cloudColumn(30, qOf(30, .8), .4, L.topM); assert.ok(col.top - col.lcl >= 6000, `deep tower expected: ${col.lcl}-${col.top}`);
+  const b = bakeLocal(col, .4, 0, 0), jt = Math.floor((col.top - 500) / dz), jm = Math.floor((col.lcl + col.top) / 2 / dz);
+  assert.ok(col.layers[Math.round(col.top / col.layers[1].z)].ice >= .5, 'the anvil level is glaciated');
+  assert.ok(cover(b, jt) > 1.3 * cover(b, jm), `anvil ${cover(b, jt)} vs mid-tower ${cover(b, jm)}`);
+  const sh = cloudColumn(18, qOf(18, .6), .4, L.topM); if (sh.top > sh.lcl) assert.ok(sh.top - sh.lcl < 6000);
+  const bs = bakeLocal(sh, .4, 0, 0), js = Math.floor(sh.top / dz) - 1, jsm = Math.floor((sh.lcl + sh.top) / 2 / dz);
+  if (sh.top > sh.lcl && js > jsm) assert.ok(cover(bs, js) <= cover(bs, jsm), 'shallow cumulus narrows to its top');
 });

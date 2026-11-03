@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { cloudColumn, iceOpacity, type Column } from '../../core/atmo/cloudColumn';
 import { hash, random } from '../../proc/rng';
 import { toLatLon, type Vec3 } from './planet';
+import CC from '../../../data/earth/cloud-column.json';
 
 export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: 1.5e-3 }; // [game calibration: box and cell size]
 /** 0 at showBelowM, 1 at sizeM. The box and the flat shell crossfade across that span instead of swapping in one frame. */
@@ -59,7 +60,8 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
  *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share one flat base at the LCL, and each cell's top rises
  *    with its strength, so towers differ in height but none passes the column's buoyant top;
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
- *    not broken into convective cells. */
+ *    not broken into convective cells;
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top. */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), cut = 1 - cover;
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { const x = (ox + (i + .5) / L.nx * L.sizeM) / L.cellM, z = (oz + (k + .5) / L.nx * L.sizeM) / L.cellM;
@@ -70,9 +72,20 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
   for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), l = ly[li];
     const s = l?.strat ?? 0, w = l?.water ?? 0, op = iceOpacity(l?.ice ?? 0); strat[j] = Math.min(1, s * op / L.waterFull); conv[j] = Math.min(1, Math.max(0, w - s) * op / L.waterFull); // ice is thinner per kg (#192)
     zr[j] = top > base ? (z - base) / (top - base) : 2; } // height through the convective layer, 0 at the base, 1 at the top
+  // anvil (data/earth/cloud-column.json "anvil"): a tower deep enough to glaciate spreads sideways at its buoyant top, so the
+  // top layers take a widened footprint of the towers that reach them (a box blur of the mature cells), not just the cores
+  const anv = new Float32Array(n), an = new Float32Array(L.nz), deep = top > base && col.top - base >= CC.anvil_min_tower_m;
+  if (deep) { const r = Math.max(1, Math.round(CC.anvil_spread_m / L.sizeM * L.nx)), m = new Float32Array(n);
+    for (let c = 0; c < n; c++) m[c] = h[c] >= .85 ? 1 : 0; // cells whose tops reach the anvil level
+    for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { let s = 0, w = 0;
+      for (let b = -r; b <= r; b++) for (let a = -r; a <= r; a++) { const kk = k + b, ii = i + a; if (kk < 0 || ii < 0 || kk >= L.nx || ii >= L.nx || a * a + b * b > r * r) continue; s += m[kk * L.nx + ii]; w++; }
+      anv[k * L.nx + i] = Math.min(1, 1.5 * s / Math.max(1, w)); }
+    for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), d = top - z;
+      an[j] = d >= 0 && d <= CC.anvil_depth_m && (ly[li]?.ice ?? 0) >= .5 ? 1 : 0; } }
   for (let k = 0; k < L.nx; k++) for (let j = 0; j < L.nz; j++) for (let i = 0; i < L.nx; i++) { const c = k * L.nx + i;
     const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = zr[j] < 0 ? 0 : Math.max(0, Math.min(1, (reach - zr[j]) * 6)); // weaker cells stop lower
-    out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, conv[j] * h[c] * edge + strat[j] * sh[c])); }
+    const cv = Math.max(h[c] * edge, an[j] * anv[c] * .6);
+    out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, conv[j] * cv + strat[j] * sh[c])); }
   return out;
 }
 

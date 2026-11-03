@@ -185,3 +185,13 @@ test('multiple-scattering octaves keep deep cloud lit and reduce to single scatt
   assert.ok(multiScatterSun(1, .3) > multiScatterSun(5, .3));
   assert.match(LOCAL_CLOUDS_FRAG, /n < 3; n\+\+\) \{ s \+= a \* exp\(-b \* tau\)/);
 });
+
+import { skyAmbient, SKY_AMB } from '../src/world/globe/localClouds';
+test('skylight inside the cloud dims under the cloud above it, clear sky keeps the old ambient', () => {
+  assert.ok(Math.abs(skyAmbient(0) - SKY_AMB) < 1e-12);
+  assert.ok(skyAmbient(1) < skyAmbient(0) && skyAmbient(10) < skyAmbient(1));
+  // deep tower (tau 20): third octave alone keeps .25/1.75*e^-5 of the sky, so a base is dark grey, not black
+  const deep = skyAmbient(20) / SKY_AMB; assert.ok(deep > 5e-4 && deep < 5e-3, `deep ${deep}`);
+  assert.match(LOCAL_CLOUDS_FRAG, /skyAmb\(up \* uExt \* uBoxM\.y \* \.05\)/);
+  assert.match(LOCAL_CLOUDS_FRAG, /return 0\.25 \* s \/ 1\.75;/);
+});

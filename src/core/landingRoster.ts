@@ -244,7 +244,9 @@ export function placeLandingAnimals(
   });
   const out: PlacedAnimal[] = [];
   slots.forEach((slot, index) => {
-    const side0 = (index - (n - 1) / 2) * gap;
+    // One animal on the aim stands directly behind the embodied wolf. A couple of metres
+    // to the right puts the whole body beside the wolf and still inside the frame.
+    const side0 = n <= 1 ? 2.05 : (index - (n - 1) / 2) * gap;
     const push = (x: number, z: number) => out.push({ ...slot, index, x, z, yaw: yaw + Math.PI / 2 });
     const readable: { x: number; z: number; open: boolean }[] = [];
     for (const [da, ds] of LANDING_NUDGE) {

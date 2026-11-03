@@ -93,7 +93,7 @@ function viewEdge(ahead: number, side: number, bodyHalf = 0.9) {
   return Math.atan2(Math.abs(side) + bodyHalf, ahead + 3.6);
 }
 
-test('a lone census animal stands on the aim, broadside, inside the full-mesh view', () => {
+test('a lone census animal stands beside the wolf, broadside, inside the full-mesh view', () => {
   const origin = { x: 4, z: -6, yaw: 0.4 };
   const placed = placeLandingAnimals([{ key: 'red_fox', display: 'Red Fox', census: 23 }], origin, () => true);
   assert.equal(placed.length, 1);
@@ -103,7 +103,7 @@ test('a lone census animal stands on the aim, broadside, inside the full-mesh vi
   const dx = placed[0].x - origin.x, dz = placed[0].z - origin.z;
   const ahead = dx * fx + dz * fz;
   const side = dx * rx + dz * rz;
-  assert.ok(Math.abs(side) < 1.2, `side ${side} puts a lone fox on the frame edge`);
+  assert.ok(Math.abs(side) > 1.5 && Math.abs(side) < 3.2, `side ${side} is behind the wolf or on the frame edge`);
   assert.ok(ahead > 5 && ahead < 12, `ahead ${ahead} is not a readable distance`);
   const edge = viewEdge(ahead, side);
   assert.ok(edge < halfHoriz - 0.08, `body edge ${edge.toFixed(3)} vs half-fov ${halfHoriz.toFixed(3)}`);

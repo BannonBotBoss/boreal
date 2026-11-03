@@ -106,11 +106,19 @@ export function sunTransmittance(sh: number, ext: number, sun: [number, number, 
 export function cellTransmittance(bake: Uint8Array, ext: number, i: number, k: number, L = LOCAL_CLOUDS) {
   let t = 0; for (let j = 0; j < L.nz; j++) t += bake[i + L.nx * (j + L.nz * k)] / 255 * ext * L.topM / L.nz; return Math.exp(-t);
 }
+/** Henyey-Greenstein phase function (1941), scaled so an isotropic scatterer is 1 (i.e. 4*pi*p_HG). Cloud droplets are strongly
+ *  forward-scattering, asymmetry g about 0.85 in the visible (Hansen & Travis 1974), which brightens cloud edges seen toward the
+ *  sun (the silver lining). CPU mirror of the shader's phase term. */
+export const CLOUD_G = .85;
+export const PHASE_CAP = 6; // [game calibration: caps the forward peak (82x at g=.85) so the sun-facing rim does not blow out]
+export function hgPhase(cosT: number, g = CLOUD_G) { const d = 1 + g * g - 2 * g * cosT; return (1 - g * g) / (d * Math.sqrt(d)); }
+export function cloudPhase(cosT: number, g = CLOUD_G) { return Math.min(PHASE_CAP, hgPhase(cosT, g)); }
 
 const VERT = `out vec3 vOrigin; out vec3 vDir; uniform vec3 uCamLocal;
 void main() { vOrigin = uCamLocal; vDir = position - uCamLocal; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 export const LOCAL_CLOUDS_FRAG = `precision highp float; precision highp sampler3D; in vec3 vOrigin; in vec3 vDir; out vec4 outColor;
 uniform sampler3D uVol; uniform vec3 uSunLocal; uniform float uSteps; uniform float uOpacity; uniform vec3 uBoxM; uniform float uExt;
+const float G = 0.85, PHASE_CAP = 6.0; /* Henyey-Greenstein asymmetry of cloud droplets, cap: see cloudPhase */
 #ifdef BAND_OCCLUDE
 uniform mat4 modelViewMatrix, projectionMatrix;
 #endif
@@ -118,9 +126,9 @@ vec2 hitBox(vec3 o, vec3 d) { vec3 bmin = vec3(-.5), bmax = vec3(.5), ti = 1.0 /
   return vec2(max(tmin.x, max(tmin.y, tmin.z)), min(tmax.x, min(tmax.y, tmax.z))); }
 float dens(vec3 p) { return texture(uVol, p + .5).r; }
 void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x > b.y) discard; b.x = max(b.x, 0.0);
-  float dt = (b.y - b.x) / uSteps, dm = length(rd * uBoxM) * dt, sm = length(uSunLocal * uBoxM) * .05; /* each of the two sun samples stands for 0.05 box units of path, in metres */ vec3 p = vOrigin + rd * b.x; vec4 acc = vec4(0.0); vec3 first = vec3(0.0); bool hit = false;
+  float dt = (b.y - b.x) / uSteps, dm = length(rd * uBoxM) * dt, sm = length(uSunLocal * uBoxM) * .05; /* each of the two sun samples stands for 0.05 box units of path, in metres */ float ct = dot(normalize(rd * uBoxM), normalize(uSunLocal * uBoxM)), hd = 1.0 + G * G - 2.0 * G * ct, ph = min(PHASE_CAP, (1.0 - G * G) / (hd * sqrt(hd))); /* direct sun scattered toward the eye by the droplet phase function */ vec3 p = vOrigin + rd * b.x; vec4 acc = vec4(0.0); vec3 first = vec3(0.0); bool hit = false;
   for (float i = 0.0; i < 256.0; i++) { if (i >= uSteps || acc.a > .97) break;
-    float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float lit = exp(-sh * uExt * sm) * max(uSunLocal.y + .25, .15) + .25;
+    float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float lit = exp(-sh * uExt * sm) * max(uSunLocal.y + .25, .15) * ph + .25;
       float a = 1.0 - exp(-d * uExt * dm); /* optical depth of this step: extinction (1/m) times the step in metres */ acc.rgb += (1.0 - acc.a) * a * vec3(lit); acc.a += (1.0 - acc.a) * a; }
     p += rd * dt; }
   if (acc.a < .01) discard;

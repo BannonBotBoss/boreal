@@ -68,6 +68,7 @@ import { globeUrl } from './world/globe/handoff';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
 import { startView } from './world/globe/startView';
 import { createInPage } from './world/globe/inpage';
+import { streamAltitude } from './world/globe/landingStream';
 import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, aggregateWorldSec, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
@@ -518,7 +519,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
     }
     hub.sample(simTime);
   } else { accumulator = 0; drawFrom = undefined; }
-  view.sync(player.x, player.z, Math.max(altitude, inpage?.height ?? 0), context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
+  view.sync(player.x, player.z, streamAltitude(altitude, inpage?.height ?? 0, !!inpage?.blocksGame()), context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
   view.worldTime = wNow; // one clock. The sky reads this signed second, so rewind moves the sun backward.
   tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only, every scale: ground years are elapsed time, not a rewind of decay. Snow on that ground follows obs through the weather read.

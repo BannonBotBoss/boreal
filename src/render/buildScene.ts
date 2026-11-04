@@ -11,6 +11,7 @@ import { warmTerrainWorkers } from './terrainPool';
 import { terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
 import { INTEREST, WAIT, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
+import { chunkRadius } from '../world/globe/landingStream';
 import { registerObservationSources } from '../core/observation';
 import { enterLiving, livingRoster, type LivingChoice } from '../core/enterLiving';
 import type { MemoryMark } from '../core/perceptionBuffer';
@@ -194,9 +195,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     setInterestCentre(also?.x ?? x, also?.z ?? z); // photo mode: the free camera is the centre
     photoObserver = !!also; // T-0081: no embodied creature while the free camera flies
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
-    const viewM = altitude > 85 ? Math.min(360, altitude * Math.tan(24 * Math.PI / 180)) : 0;
-    const reach = Math.max(altitude > 85 ? INTEREST.mid * 1.5 : INTEREST.mid, viewM);
-    const nextRadius = Math.ceil(reach / CHUNK_SIZE);
+    const nextRadius = chunkRadius(altitude, INTEREST.mid, CHUNK_SIZE);
     const ax = also ? Math.floor(also.x / CHUNK_SIZE) : cx, az = also ? Math.floor(also.z / CHUNK_SIZE) : cz;
     const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}`;
     if (centerKey === tierKey && radius === nextRadius && revision === eventRevision) return;
@@ -601,5 +600,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     population: () => census,
     /** Where the animal you are entering already stood, and the store id when you are inside it. */
     livingHere: () => ({ x: choice.animal.x, z: choice.animal.z, handle: choice.animal.handle, species: choice.playableId, embodied: embodiedHandle }),
+    /** True once that chunk's terrain and trees are in the scene. Queued work does not count. */
+    chunkBuilt: (a: number, b: number) => chunks.has(`${a}:${b}`),
   };
 }

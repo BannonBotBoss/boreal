@@ -1,0 +1,24 @@
+{
+  "hot": {
+    "search": "?start=sphere&stages=1&trees=v2",
+    "cycle": 3.8316256286330486,
+    "phase": "sphere",
+    "sphere": true,
+    "loading": false
+  },
+  "mid": {
+    "search": "?start=sphere&stages=1&trees=v2",
+    "cycle": 45.94722037643818,
+    "phase": "sphere",
+    "sphere": true,
+    "loading": false
+  },
+  "violet": {
+    "search": "?start=sphere&stages=1&trees=v2",
+    "cycle": 58,
+    "phase": "sphere",
+    "sphere": true,
+    "loading": false
+  },
+  "notes": []
+}

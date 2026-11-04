@@ -64,6 +64,7 @@ import { RIG_BODY_PLAN } from '../core/materials';
 import { body, step, collide, gravity, type Body } from '../proc/physics';
 import { defaultGenome as defaultLook, type Genome } from '../core/genome';
 import { bandBackground, bandCamera, bandFx } from '../world/globe/inpage';
+import { stylizedNight } from './stylizedPalette';
 
 /** Scene entry point: assembles generated terrain, streamed objects, light and camera. */
 /** Commits an animal eating a forage patch; returns the animal's new energy, or undefined if not committed. */
@@ -495,9 +496,20 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
     litter.place();
+    for (const child of scene.children) {
+      const picture = child.userData.animalPicture || child.userData.wolfLod || child.name.startsWith('pup:');
+      if (picture || child === wolf.root) coatNight(child, darkness);
+    }
     for (const f of beforeRender) f(time, !!photo); // overlays that follow the posed wolf (render/sensesHalo)
     post.render(!!photo, photo?.focalMm ?? 0, fx.ssao, { contact: fx.contact, rays: fx.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
     if (GLOW_ON) glow.render(); // after the frame is on the canvas (additive overlay; nothing while there is no target)
+  }
+  function coatNight(root: THREE.Object3D, night: number) {
+    root.traverse(obj => {
+      const mats = (obj as THREE.Mesh).material;
+      if (!mats) return;
+      for (const material of Array.isArray(mats) ? mats : [mats]) stylizedNight(material, night);
+    });
   }
   /** T-0035: the glow's proxy for the highlighted entity. Deer = the live rig; a person / pushed rock = its LOD; batched
    *  statics = their LOD-0 geometry (what render/batch flattens) placed at the entity. Eaten / removed = no glow. */

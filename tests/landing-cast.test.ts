@@ -11,7 +11,7 @@ import {
 import { createProceduralAnimal } from '../src/render/proceduralAnimal';
 import { pictureOrder } from '../src/render/animalPicture';
 import { castShouldReplace, landingLight } from '../src/render/landingCast';
-import { applyStylizedFill, coatOf, stylizedFill, STYLIZED } from '../src/render/stylizedPalette';
+import { applyStylizedFill, coatOf, stylizedFill, stylizedNight, STYLIZED } from '../src/render/stylizedPalette';
 
 const boreal = [
   { species: 'snowshoe_hare', count: 4000 },
@@ -235,6 +235,18 @@ test('the stylized fill stays in the shared palette', () => {
   applyStylizedFill(flat);
   assert.equal(flat.emissiveMap, null);
   assert.ok(flat.emissive.r > 0.1);
+});
+
+test('night turns the coat fill down so a pale wolf is not a lamp', () => {
+  const mapped = new THREE.MeshStandardMaterial({ map: new THREE.Texture() });
+  applyStylizedFill(mapped);
+  const day = mapped.emissiveIntensity;
+  stylizedNight(mapped, 0);
+  assert.equal(mapped.emissiveIntensity, day);
+  assert.equal(mapped.toneMapped, false);
+  stylizedNight(mapped, 1);
+  assert.ok(mapped.emissiveIntensity < day * 0.05, `night fill ${mapped.emissiveIntensity} from ${day}`);
+  assert.equal(mapped.toneMapped, true);
 });
 
 test('the wasm landing list is what the cast draws, including an empty lake', async () => {

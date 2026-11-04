@@ -155,13 +155,15 @@ let waterGoal: { x: number; z: number } | undefined; // the autonomous wolf's ch
 let autoNote = ''; // T-0010: the autonomous goal and its cause, kept across frames the sim does not step
 view.onBeforeRender((time, photoView) => bubbles.update(view.lookup('player')?.object, view.camera, thoughtTime, photoView));
 view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView || (!!focusTarget && SYSTEM_PROPERTIES.autoFocus.hideSensesHalo), huntMarker)); // T-0035 hides the cue ring; the hunt pip stays
-function perform() {
+function perform(paw?: 'open' | 'fist') {
   if(autonomous) setAutonomous(false);
   if (paused || dialog.open || playerAction) return;
   const targetAction = target && availableActions(player, target, context)[0];
   if ((!targetAction || targetAction === 'forage') && waterAhead(player.x, player.z, yaw)) { drinking = !drinking; notice(drinking ? 'Drinking. Move to stop.' : 'Stopped drinking.'); return; } // T-0036
-  if (!target || saveBlocked) return;
-  const action = availableActions(player, target, context)[0]; if (!action || action === 'forage') return;
+  if (!target || saveBlocked) { if (paw === 'open') notice('Open paw. Nothing close enough to grab.'); return; }
+  const action = availableActions(player, target, context)[0];
+  if (!action || action === 'forage') { if (paw === 'open') notice('Open paw. Nothing close enough to grab.'); return; }
+  if (paw === 'fist' && action !== 'move') return;
   try {
     const next = interact(context, player, target, action);
     localStorage.setItem(SAVE_KEY, JSON.stringify(next)); // Commit before visible rewards.
@@ -170,8 +172,18 @@ function perform() {
     playerAction = action; actionStarted = simTime;
     sfx.action(action, target); // (the old synth beeps on a second AudioContext doubled every action and ignored mute/volume)
     if (action === 'speak') { const t = target, a = view.audibleAnimals().find(x => x.key === t.key); wolfSpeak(sfx, t, { darkness: view.darkness(), animal: a, loonNear: sfx.loonNear(player.x, player.z) }); }
-    notice(action === 'move' ? 'Stone pushed with your snout. Its new position is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.');
+    const line = action === 'move' ? 'Its new place is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.';
+    const who = paw === 'open' ? 'Open paw. ' : paw === 'fist' ? 'Closed paw nudged it. ' : action === 'move' ? 'Stone pushed with your snout. ' : '';
+    notice(who + line);
   } catch (error) { notice(`Interaction not committed: ${String(error)}`); }
+}
+/** A closed paw nudges whatever can be pushed. With nothing there, it scrapes the litter. The scrape is the existing disturbed delta. */
+function digOrNudge() {
+  const action = target && availableActions(player, target, context)[0];
+  if (action === 'move') { perform('fist'); return; }
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  record({ kind: 'disturbed', x: player.x + fx * 0.5, z: player.z + fz * 0.5, t: GROUND.years, m: 0.35, meta: 'paw' });
+  notice('Closed paw dug the litter.');
 }
 // ONE menu (ui/menu) for start and pause. The world clock freezes while the menu is open (Matthew): age/growth/seasons
 // hold, the renderer holds a frozen frame, and resume continues from that exact snapshot.
@@ -275,7 +287,7 @@ if (new URLSearchParams(location.search).has('rec')) (window as unknown as Recor
   player: () => { const here = view.livingHere(); return { x: player.x, z: player.z, yaw, energy: view.playerBrain.energy, water: needs.water, mode: modes.mode, handle: here.handle, embodied: here.embodied, species: here.species }; },
   shaderTime: () => shaderClock.time };
 function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
-actionButton.onclick = perform;
+actionButton.onclick = () => perform();
 element('pause').onclick = togglePause;
 element('menu-btn').onclick = () => { if (!menu.open) openStart(); };
 let xrDriven = false;
@@ -441,6 +453,8 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
       dx = 0; dz = hands.forward ? -1 : 0;
       if (hands.yaw != null) { yaw = hands.yaw; player.heading = yaw; }
       if (hands.forward) setAutonomous(false);
+      if (hands.grab) perform('open');
+      if (hands.dig) digOrNudge();
     } else dx = H('steerRight') - H('steerLeft'), dz = H('moveBack') - H('moveForward');
     if(autonomous && (Math.abs(dx)>.01 || Math.abs(dz)>.01)) setAutonomous(false);
     const lookInput = forestHandsOn() ? 0 : H('lookRight') - H('lookLeft');

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { groundAhead, headingToward, refToWorld, snapYaw } from '../src/vr/forestHands';
+import { groundAhead, headingToward, pawEdge, pawOf, refToWorld, snapYaw } from '../src/vr/forestHands';
 
 test('a pinch aims the mama at the ground point, and the other hand snaps', () => {
   assert.ok(Math.abs(headingToward({ x: 0, z: 0 }, { x: 0, z: -4 }) ?? 1) < 1e-9);
@@ -15,6 +15,24 @@ test('a pinch aims the mama at the ground point, and the other hand snaps', () =
   const hit = groundAhead({ x: 0, y: 1.2, z: 0 }, { x: 0, y: -1, z: -1 }, 0);
   assert.ok(hit && Math.abs(hit.z - -1.2) < 1e-9);
   assert.equal(groundAhead({ x: 0, y: 1, z: 0 }, { x: 0, y: 1, z: -1 }, 0), null);
+});
+
+test('an open paw grabs once and a closed fist digs once; a pinch still points', () => {
+  const open = pawOf({ index: 0.18, middle: 0.19, ring: 0.18, pinky: 0.16, thumbIndex: 0.06, pinch: 0 });
+  const fist = pawOf({ index: 0.07, middle: 0.065, ring: 0.068, pinky: 0.07, thumbIndex: 0.02, pinch: 0 });
+  const point = pawOf({ index: 0.04, middle: 0.03, ring: 0.03, pinky: 0.04, thumbIndex: 0.01, pinch: 1 });
+  assert.equal(open, 'open');
+  assert.equal(fist, 'fist');
+  assert.equal(point, 'point');
+  assert.equal(pawEdge('relaxed', 'open'), 'grab');
+  assert.equal(pawEdge('open', 'open'), null);
+  assert.equal(pawEdge('open', 'fist'), 'dig');
+  assert.equal(pawEdge('fist', 'fist'), null);
+  const main = readFileSync('src/main.ts', 'utf8');
+  assert.match(main, /hands\.grab\) perform\('open'\)/);
+  assert.match(main, /hands\.dig\) digOrNudge\(\)/);
+  assert.match(main, /kind: 'disturbed'/);
+  assert.match(readFileSync('src/vr/forestSession.ts', 'utf8'), /pawOf\(pawMeasure/);
 });
 
 test('the headset ground step is the real forest and the hands, and the page loop yields', () => {

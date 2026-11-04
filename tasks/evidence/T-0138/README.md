@@ -19,8 +19,12 @@ SwiftShader frames are slow, so those 14 simulation seconds took about 80 second
 
 `flydown-finish.json` is the log of the run that reached the drone and then the wolf, and of the fade. The probe line in the notes is Minimum.
 
+## Enter VR
+
+`enter-vr-result.png` is the same headless Chrome after Enter VR. The button is in the footer. The notice says this browser did not open an immersive session, and that controllers are not a substitute. The console printed the Immersive Web SDK banner (v1.1.0-rc.2, Three.js r185) and then `NotSupportedError` for the hand-tracking session. Headless Chrome has no Quest hands. The world was created and then closed, so the ordinary game stayed up.
+
 ## Not checked
 
-This is software GL, not a Quest and not a desktop GPU. The vignette is real in the page, and it is hard to see in the stills because the sky behind it is already black. VR, hands, and a headset pass are later steps.
+This is software GL, not a Quest and not a desktop GPU. The vignette is real in the page, and it is hard to see in the stills because the sky behind it is already black. The immersive session, the pinch, and the wolf with hands only are untested without a headset. The wolf is not playable with hands yet, so the contest pass/fail check is not met.
 
 — grokbot-3

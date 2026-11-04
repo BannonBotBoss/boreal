@@ -72,7 +72,7 @@ export async function startSunView(root: HTMLElement, search = location.search) 
   for (const g of groups.slice(0, MAXG)) { const r = radiusFrac(g.areaMSH), sep = (4 * r + .02) * 180 / Math.PI, t = g.tilt * Math.PI / 180;
     spots.push({ v: dir(g.lat - sep / 2 * Math.sin(t), g.lon + sep / 2 * Math.cos(t)), r: r * Math.sqrt(.6), pol: g.polarity });
     spots.push({ v: dir(g.lat + sep / 2 * Math.sin(t), g.lon - sep / 2 * Math.cos(t)), r: r * Math.sqrt(.4), pol: -g.polarity }); }
-  spots.forEach((s, i) => spotTex.image.data.set([s.v.x, s.v.y, s.v.z, s.r], i * 4)); spotTex.needsUpdate = true; u.uN.value = spots.length;
+  spots.forEach((s, i) => spotTex.image.data?.set([s.v.x, s.v.y, s.v.z, s.r], i * 4)); spotTex.needsUpdate = true; u.uN.value = spots.length;
   // coronal loops: dipole-like semicircles joining each pair, apex height ~ half the footpoint separation, 3 nested (heights 0.5,0.8,1.1)
   let ns = 0; const sd = segTex.image.data as Float32Array, rowB = MAXG * LOOPS * SEGS * 4;
   for (let i = 0; i + 1 < spots.length; i += 2) { const A = spots[i].v, B = spots[i + 1].v, sepR = A.distanceTo(B);

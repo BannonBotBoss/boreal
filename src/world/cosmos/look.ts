@@ -33,6 +33,13 @@ export function sphereLook(a: number, _h: number, temperature: number, rho: numb
   const brightness = 1.15 + 0.55 * Math.min(1, logT / 22) + logR / 400;
   return {
     radius, brightness, color,
-    radiusRule: 'radius = 0.4 + 7 × (log10 a − log10 1e−60) / 60, clamped. The camera steps back with that radius so the sphere stays in frame.',
+    radiusRule: 'radius = 0.4 + 7 × (log10 a − log10 1e−60) / 60, clamped. The camera steps back with that radius so the sphere stays in frame, and shifts left while the data panel is open.',
   };
+}
+
+/** Camera x so the origin sits in the open area left of a right-hand panel.
+ *  `panelFraction` is the panel width divided by the viewport width. */
+export function frameShiftX(panelFraction: number, dist: number, vFovDeg: number, aspect: number) {
+  const halfH = Math.tan(vFovDeg * Math.PI / 360) * aspect;
+  return Math.max(0, panelFraction) * dist * halfH;
 }

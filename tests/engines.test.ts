@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { NOT_IN_RUST } from '../src/data/notInRust';
 import { decodeEngineReport, parseCycle } from '../src/core/engineReport';
-import { sphereLook } from '../src/world/cosmos/look';
+import { frameShiftX, sphereLook } from '../src/world/cosmos/look';
 import { loadPlanetSim } from '../src/core/planetBudget';
 
 test('the not-in-Rust list names files that exist, and not-built rows have no file', () => {
@@ -60,6 +60,8 @@ test('sphere radius and brightness follow the Rust outputs', () => {
   for (const look of [dim, bright, hotter, cooler]) {
     assert.ok(look.color[2] > look.color[0] && look.color[2] > look.color[1] * 2, `violet ${look.color}`);
   }
+  assert.equal(frameShiftX(0, 10, 40, 16 / 9), 0);
+  assert.ok(frameShiftX(0.4, 10, 40, 16 / 9) > 0);
 });
 
 const wasmPath = new URL('../public/wasm/boreal_sim.wasm', import.meta.url);

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chooseTier, stepTier, percentile, type Hysteresis, type TierSample } from '../src/world/cosmos/lod';
+import { TIERS, chooseTier, stepTier, percentile, type Hysteresis, type TierSample } from '../src/world/cosmos/lod';
 
 test('the highest tier inside the frame budget is chosen', () => {
   const samples: TierSample[] = [
@@ -32,6 +32,14 @@ test('a tier steps down only after the hold, and back up the same way', () => {
   state = stepTier(state, 4, 1.2, 16.7);
   state = stepTier(state, 4, 1.2, 16.7);
   assert.equal(state.tier, 'high');
+});
+
+test('every tier keeps a bloom and god rays, including the lowest', () => {
+  for (const tier of TIERS) {
+    assert.ok(tier.bloom >= 1.1, tier.id);
+    assert.ok(tier.godrays >= 0.4, tier.id);
+  }
+  assert.ok(TIERS[0].bloom >= TIERS[TIERS.length - 1].bloom);
 });
 
 test('percentile picks the high end of a sorted sample', () => {

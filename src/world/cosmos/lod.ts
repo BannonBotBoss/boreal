@@ -18,10 +18,10 @@ export interface Tier {
 }
 
 export const TIERS: readonly Tier[] = [
-  { id: 'ultra', label: 'Ultra', width: 3840, height: 2160, segments: 128, raymarch: 48, shells: 0, bloom: 1.15, bloomMips: 5, godrays: 0.55, chromatic: 0.004, grain: 0.045, vignette: 0.45, msaa: 8 },
-  { id: 'high', label: 'High', width: 2560, height: 1440, segments: 96, raymarch: 24, shells: 0, bloom: 0.9, bloomMips: 5, godrays: 0.4, chromatic: 0.003, grain: 0.04, vignette: 0.4, msaa: 4 },
-  { id: 'medium', label: 'Medium', width: 1920, height: 1080, segments: 64, raymarch: 0, shells: 4, bloom: 0.65, bloomMips: 3, godrays: 0, chromatic: 0.002, grain: 0.03, vignette: 0.35, msaa: 2 },
-  { id: 'low', label: 'Low', width: 1280, height: 720, segments: 32, raymarch: 0, shells: 0, bloom: 0.4, bloomMips: 2, godrays: 0, chromatic: 0, grain: 0, vignette: 0.25, msaa: 0 },
+  { id: 'ultra', label: 'Ultra', width: 3840, height: 2160, segments: 128, raymarch: 48, shells: 1, bloom: 1.6, bloomMips: 5, godrays: 0.7, chromatic: 0.004, grain: 0.045, vignette: 0.35, msaa: 8 },
+  { id: 'high', label: 'High', width: 2560, height: 1440, segments: 96, raymarch: 24, shells: 1, bloom: 1.4, bloomMips: 5, godrays: 0.6, chromatic: 0.003, grain: 0.04, vignette: 0.32, msaa: 4 },
+  { id: 'medium', label: 'Medium', width: 1920, height: 1080, segments: 64, raymarch: 12, shells: 1, bloom: 1.25, bloomMips: 3, godrays: 0.5, chromatic: 0.002, grain: 0.03, vignette: 0.28, msaa: 2 },
+  { id: 'low', label: 'Low', width: 1280, height: 720, segments: 32, raymarch: 8, shells: 1, bloom: 1.15, bloomMips: 2, godrays: 0.45, chromatic: 0, grain: 0, vignette: 0.22, msaa: 0 },
 ];
 
 export function tierById(id: string): Tier {

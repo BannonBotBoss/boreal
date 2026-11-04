@@ -4,17 +4,25 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
-import { sphereLook } from './look';
+import { frameShiftX, sphereLook } from './look';
 import { TIERS, chooseTier, percentile, stepTier, tierById, type Hysteresis, type Tier } from './lod';
 
 export interface SphereInputs { a: number; h: number; temperature: number; rho: number }
 export interface GpuInfo { renderer: string; maxTexture: number; floatTarget: boolean; samples: number }
 
 const FINAL = {
-  uniforms: { tDiffuse: { value: null }, chromatic: { value: 0 }, grain: { value: 0 }, vignette: { value: 0 }, time: { value: 0 } },
+  uniforms: {
+    tDiffuse: { value: null },
+    chromatic: { value: 0 },
+    grain: { value: 0 },
+    vignette: { value: 0 },
+    godrays: { value: 0.5 },
+    time: { value: 0 },
+    center: { value: new THREE.Vector2(0.5, 0.5) },
+  },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float chromatic, grain, vignette, time; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform float chromatic, grain, vignette, godrays, time; uniform vec2 center; varying vec2 vUv;
     void main(){
       vec2 d = vUv - 0.5;
       vec2 dir = d * chromatic;
@@ -22,6 +30,14 @@ const FINAL = {
       float g = texture2D(tDiffuse, vUv).g;
       float b = texture2D(tDiffuse, vUv - dir).b;
       vec3 col = vec3(r,g,b);
+      vec2 to = center - vUv;
+      float rays = 0.0;
+      for (int i = 0; i < 12; i++) {
+        float t = float(i) / 12.0;
+        rays += texture2D(tDiffuse, vUv + to * t * 0.55).b;
+      }
+      rays /= 12.0;
+      col += vec3(0.32, 0.06, 0.72) * rays * godrays;
       col += (sin(vUv.x * 180.0 + time * 13.0) * sin(vUv.y * 140.0 - time * 9.0) * 0.5) * grain;
       col *= 1.0 - vignette * dot(d,d) * 2.2;
       gl_FragColor = vec4(col, 1.0);
@@ -55,10 +71,13 @@ const RAY = {
         acc += g * (1.0 - t);
       }
       acc /= n;
-      vec3 col = color * brightness * (0.95 + acc * 0.3);
+      vec3 hot = vec3(0.72, 0.12, 1.0);
+      vec3 edge = vec3(0.20, 0.02, 0.55);
+      float plasma = 0.84 + 0.16 * sin(vP.x * 6.0 + time * 1.4) * sin(vP.y * 5.0 - time) * sin(vP.z * 4.0 + acc * 6.0);
+      vec3 col = mix(hot, edge, smoothstep(0.0, 0.9, fres));
+      col *= brightness * plasma * mix(0.85, 0.4, fres);
       float peak = max(col.r, max(col.g, col.b));
-      if (peak > 1.25) col *= 1.25 / peak;
-      col += color * fres * fres * 1.15;
+      if (peak > 1.0) col *= 1.0 / peak;
       gl_FragColor = vec4(col, 1.0);
     }`,
 };
@@ -77,6 +96,7 @@ export class CosmosSphere {
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(40, 16 / 9, 0.1, 100);
   private core: THREE.Mesh;
+  private halo: THREE.Mesh;
   private shells: THREE.Mesh[] = [];
   private composer: EffectComposer;
   private bloom: UnrealBloomPass;
@@ -102,14 +122,37 @@ export class CosmosSphere {
     parent.appendChild(this.canvas);
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.85;
+    this.renderer.toneMapping = THREE.NoToneMapping;
     const gl = this.renderer.getContext() as WebGL2RenderingContext;
     this.gpu = readGpu(gl);
     this.tier = tierById('low');
     this.camera.position.z = 12;
     this.ray = new THREE.ShaderMaterial({ ...RAY, transparent: false });
     this.core = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), this.ray);
+    this.core.renderOrder = 2;
+    const haloMat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: { time: { value: 0 } },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+      fragmentShader: `
+        varying vec2 vUv; uniform float time;
+        void main(){
+          vec2 p = vUv * 2.0 - 1.0;
+          float d = length(p);
+          float halo = smoothstep(1.0, 0.05, d);
+          float ang = atan(p.y, p.x);
+          float rays = pow(max(0.0, sin(ang * 7.0 + time * 0.5)), 6.0);
+          vec3 violet = vec3(0.42, 0.04, 0.95);
+          float ring = smoothstep(0.22, 0.48, d) * halo;
+          vec3 col = violet * ring * 1.5 + violet * rays * ring * 0.85;
+          gl_FragColor = vec4(col, clamp(halo, 0.0, 1.0));
+        }`,
+    });
+    this.halo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), haloMat);
+    this.halo.renderOrder = 1;
+    this.scene.add(this.halo);
     this.scene.add(this.core);
     this.scene.add(new THREE.AmbientLight(0x2a0848, 0.35));
     const key = new THREE.PointLight(0x6633cc, 2, 40);
@@ -117,7 +160,7 @@ export class CosmosSphere {
     this.scene.add(key);
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(1280, 720), 0.95, 0.75, 0.72);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(1280, 720), 1.4, 0.95, 0.2);
     this.composer.addPass(this.bloom);
     this.final = new ShaderPass(FINAL);
     this.composer.addPass(this.final);
@@ -146,12 +189,16 @@ export class CosmosSphere {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.composer.setSize(w, h);
-    this.bloom.strength = tier.bloom;
+    this.bloom.enabled = true;
+    this.bloom.strength = 0.72;
+    this.bloom.radius = 0.95;
+    this.bloom.threshold = 0.28;
     this.bloom.resolution.set(w / Math.max(1, 6 - tier.bloomMips), h / Math.max(1, 6 - tier.bloomMips));
-    this.ray.uniforms.steps.value = tier.raymarch || 1;
+    this.ray.uniforms.steps.value = Math.max(8, tier.raymarch || 8);
     this.final.uniforms.chromatic.value = tier.chromatic;
     this.final.uniforms.grain.value = tier.grain;
     this.final.uniforms.vignette.value = tier.vignette;
+    this.final.uniforms.godrays.value = Math.max(0.45, tier.godrays);
     this.core.geometry.dispose();
     this.core.geometry = new THREE.SphereGeometry(1, tier.segments, Math.max(16, tier.segments / 2));
     for (const s of this.shells) { s.removeFromParent(); s.geometry.dispose(); (s.material as THREE.Material).dispose(); }
@@ -168,11 +215,22 @@ export class CosmosSphere {
     const radius = Math.max(0.35, look.radius);
     this.core.scale.setScalar(radius);
     const half = THREE.MathUtils.degToRad(this.camera.fov * 0.5);
-    const dist = radius / Math.tan(half) / 0.58;
-    this.camera.position.z = dist;
+    const dist = radius / Math.tan(half) / 0.42;
+    const panel = document.getElementById('data-panel');
+    const panelW = panel && !panel.hidden ? panel.getBoundingClientRect().width : 0;
+    const viewW = window.innerWidth || this.canvas.clientWidth || 1;
+    const shift = frameShiftX(panelW / viewW, dist, this.camera.fov, this.camera.aspect);
+    this.camera.position.set(shift, 0, dist);
+    this.camera.rotation.set(0, 0, 0);
     this.camera.near = Math.max(0.01, dist * 0.02);
-    this.camera.far = dist + radius * 8;
+    this.camera.far = dist + radius * 12;
     this.camera.updateProjectionMatrix();
+    this.halo.position.set(0, 0, 0);
+    this.halo.quaternion.copy(this.camera.quaternion);
+    this.halo.scale.setScalar(radius * 2.45);
+    (this.halo.material as THREE.ShaderMaterial).uniforms.time.value = time;
+    const ndc = new THREE.Vector3(0, 0, 0).project(this.camera);
+    (this.final.uniforms.center.value as THREE.Vector2).set(ndc.x * 0.5 + 0.5, ndc.y * 0.5 + 0.5);
     (this.ray.uniforms.color.value as THREE.Color).setRGB(look.color[0], look.color[1], look.color[2]);
     this.ray.uniforms.brightness.value = look.brightness;
     this.ray.uniforms.time.value = time;

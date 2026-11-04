@@ -144,7 +144,7 @@ export function readForestHands(renderer: WebGLRenderer, at: { x: number; z: num
     driveYaw = snapYaw(at.yaw, side);
   }
   leftWas = leftPinch > 0.9;
-  const pub = window as unknown as { __borealPaw?: { paw: Paw; grab: boolean; dig: boolean; seenGrab: boolean; seenDig: boolean } };
+  const pub = window as unknown as { __borealPaw?: Record<string, unknown> };
   const measured = right ? pawMeasure(frame, right, ref) : null;
   pub.__borealPaw = { paw: drivePaw, grab: driveGrab, dig: driveDig, seenGrab, seenDig, index: measured?.index ?? null, middle: measured?.middle ?? null, ring: measured?.ring ?? null, pinky: measured?.pinky ?? null };
   return forestDrive();

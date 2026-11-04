@@ -77,4 +77,16 @@ export function applyStylizedFill(material: THREE.Material, rgb?: readonly [numb
     m.emissiveIntensity = 1.15;
   }
   m.userData.stylized = true;
+  if (m.userData.fillIntensity == null) m.userData.fillIntensity = m.emissiveIntensity;
+}
+
+/** Day keeps the fill. Night turns it down and back into tone mapping so a pale coat is not a lamp. */
+export function stylizedNight(material: THREE.Material, night: number) {
+  const m = material as THREE.MeshStandardMaterial;
+  if (!m.emissive || !m.userData.stylized) return;
+  if (m.userData.fillIntensity == null) m.userData.fillIntensity = m.emissiveIntensity;
+  const n = Math.min(1, Math.max(0, night));
+  const base = m.userData.fillIntensity as number;
+  m.emissiveIntensity = base * (1 - n * 0.97);
+  m.toneMapped = n > 0.45;
 }

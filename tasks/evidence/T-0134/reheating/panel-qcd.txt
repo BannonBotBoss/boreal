@@ -1,0 +1,481 @@
+What is running
+
+Green is healthy. Yellow needs a look. Red is an error or outside the model. Grey has not been called, or is not active at this time.
+
+Time (cycles)
+39.77356121313317 cycles = 3.200e-5 seconds = 1.014e-12 years. quark
+Spawn log
+spawn spacetime at t=4.355e+17 s — root
+spawn spacetime → reheating at t=1.014e-32 s — ε=1
+spawn spacetime → planet at t=4.355e+17 s — the Earth has formed
+spawn planet → climate at t=4.355e+17 s — the planet grid exists
+spawn planet → solar at t=4.355e+17 s — the planet grid exists
+spawn planet → energy at t=4.355e+17 s — the planet grid exists
+spawn planet → wind at t=4.355e+17 s — the planet grid exists
+spawn planet → hydro at t=4.355e+17 s — the planet grid exists
+spawn planet → clouds at t=4.355e+17 s — the planet grid exists
+despawn spacetime → planet at t=1.020e-32 s — the time moved off its threshold
+despawn planet → climate at t=1.020e-32 s — the time moved off its threshold
+despawn planet → solar at t=1.020e-32 s — the time moved off its threshold
+despawn planet → energy at t=1.020e-32 s — the time moved off its threshold
+despawn planet → wind at t=1.020e-32 s — the time moved off its threshold
+despawn planet → hydro at t=1.020e-32 s — the time moved off its threshold
+despawn planet → clouds at t=1.020e-32 s — the time moved off its threshold
+Dependency tree
+spacetime
+· reheating when inflation_ended (ε=1)
+· planet when planet_ready (the Earth has formed)
+· reheating
+· · nucleosynthesis when T (T fell below 1e10 K)
+· planet
+· · climate when ready (the planet grid exists)
+· · solar when ready (the planet grid exists)
+· · energy when ready (the planet grid exists)
+· · wind when ready (the planet grid exists)
+· · hydro when ready (the planet grid exists)
+· · clouds when ready (the planet grid exists)
+spacetime
+reheating
+nucleosynthesis
+planet
+climate
+solar
+energy
+wind
+hydro
+clouds
+Spawn engine
+Reset all inputs
+●
+spacetime
+Generates: the scale factor, the expansion rate, and the inflaton
+healthy
+Online 00:00:26. Spawned because root. Added 2026-11-04.
+scale factor a: 1.155e-12
+Hubble rate: 15625.008 1/s
+e-folds: 60.743
+radiation density: 3.924e+34 J/m³
+matter density: 1.569e+26 J/m³
+dark-energy density: 5.253e-10 J/m³
+inflaton density: 0 J/m³
+total density: 3.924e+34 J/m³
+temperature: 2.360e+12 K
+inflaton: 0 M_pl
+inflaton speed: 0 M_pl/t_P
+critical density: 3.924e+34 J/m³
+omega radiation: 1
+omega matter: 3.997e-9
+omega dark energy: 1.339e-44
+omega inflaton: 0
+equation of state w: 0.333
+Hubble radius: 19186.707 m
+redshift: 8.660e+11
+slow-roll epsilon: 1
+Friedmann
+𝐻
+2
+=
+8
+𝜋
+𝐺
+3
+𝜌
+−
+𝑘
+𝑐
+2
+𝑎
+2
++
+Λ
+𝑐
+2
+3
+H
+2
+=
+3
+8πG
+	​
+
+ρ−
+a
+2
+kc
+2
+	​
+
++
+3
+Λc
+2
+	​
+
+𝐻
+H = 15625.008 1/s
+𝐺
+G = 6.674e-11 m³/kg/s²
+𝜌
+ρ = 4.366e+17 kg/m³
+𝑎
+a = 1.155e-12
+Λ
+Λ = 1.091e-52 1/m²
+𝑐
+c = 2.998e+8 m/s
+𝑘
+k = 0 1/m²
+Inflaton
+𝜑
+¨
++
+3
+𝐻
+𝜑
+˙
++
+𝑚
+2
+𝜑
+=
+0
+φ
+¨
+	​
+
++3H
+φ
+˙
+	​
+
++m
+2
+φ=0
+𝜑
+φ = 0 M_pl
+𝜑
+˙
+φ
+˙
+	​
+
+ = 0 M_pl/t_P
+𝑚
+m = 9.325e-11 1/t_P
+Inflaton energy
+𝜌
+𝜑
+=
+1
+2
+𝜑
+˙
+2
++
+1
+2
+𝑚
+2
+𝜑
+2
+ρ
+φ
+	​
+
+=
+2
+1
+	​
+
+φ
+˙
+	​
+
+2
++
+2
+1
+	​
+
+m
+2
+φ
+2
+𝜌
+𝜑
+ρ
+φ
+	​
+
+ = 0 J/m³
+Inputs
+Newton's constant (m³/kg/s²)
+speed of light (m/s)
+reduced Planck constant (J·s)
+Boltzmann constant (J/K)
+cosmological constant (1/m²)
+curvature k (1/m²)
+Hubble constant (km/s/Mpc)
+matter fraction today ()
+dark-energy fraction today ()
+radiation fraction today ()
+inflaton mass (1/t_P)
+starting inflaton (M_pl)
+starting inflaton speed (M_pl/t_P)
+friction during inflation (1/t_P)
+CMB temperature today (K)
+Reset this engineDespawn
+●
+reheating
+Generates: radiation and particle densities from the decaying inflaton
+healthy
+Online 00:00:26. Spawned because ε=1. Added 2026-11-04.
+scale factor a: 1.155e-12
+Hubble rate: 15625.008 1/s
+inflaton density: 0 J/m³
+radiation density: 3.924e+34 J/m³
+temperature: 2.360e+12 K
+reheating temperature (analytic): 9.790e+18 K
+reheating temperature (integrated): 6.256e+18 K
+g*: 62.145
+quark-hadron threshold: 1
+photon number density: 2.666e+44 1/m³
+photon energy density: 2.346e+34 J/m³
+gluon number density: 2.133e+45 1/m³
+gluon energy density: 1.877e+35 J/m³
+W number density: 7.087e-124 1/m³
+W energy density: 9.126e-132 J/m³
+Z number density: 3.491e-147 1/m³
+Z energy density: 5.100e-155 J/m³
+Higgs number density: 4.270e-220 1/m³
+Higgs energy density: 8.565e-228 J/m³
+up number density: 1.200e+45 1/m³
+up energy density: 1.232e+35 J/m³
+down number density: 1.200e+45 1/m³
+down energy density: 1.232e+35 J/m³
+charm number density: 8.614e+43 1/m³
+charm energy density: 2.301e+34 J/m³
+strange number density: 1.188e+45 1/m³
+strange energy density: 1.219e+35 J/m³
+top number density: 0 1/m³
+top energy density: 0 J/m³
+bottom number density: 4.163e+38 1/m³
+bottom energy density: 3.124e+29 J/m³
+electron number density: 3.998e+44 1/m³
+electron energy density: 4.105e+34 J/m³
+muon number density: 3.945e+44 1/m³
+muon energy density: 4.050e+34 J/m³
+tau number density: 4.214e+42 1/m³
+tau energy density: 1.506e+33 J/m³
+nu_e number density: 1.999e+44 1/m³
+nu_e energy density: 2.053e+34 J/m³
+nu_mu number density: 1.999e+44 1/m³
+nu_mu energy density: 2.053e+34 J/m³
+nu_tau number density: 1.999e+44 1/m³
+nu_tau energy density: 2.053e+34 J/m³
+Inflaton decay
+𝑑
+𝜌
+𝜑
+𝑑
+𝑡
+=
+−
+3
+𝐻
+𝜌
+𝜑
+−
+Γ
+𝜑
+𝜌
+𝜑
+dt
+dρ
+φ
+	​
+
+	​
+
+=−3Hρ
+φ
+	​
+
+−Γ
+φ
+	​
+
+ρ
+φ
+	​
+
+𝜌
+𝜑
+ρ
+φ
+	​
+
+ = 0 J/m³
+𝐻
+H = 15625.008 1/s
+Γ
+𝜑
+Γ
+φ
+	​
+
+ = 1.519e+18 1/s
+Radiation from the decay
+𝑑
+𝜌
+𝑟
+𝑑
+𝑡
+=
+−
+4
+𝐻
+𝜌
+𝑟
++
+Γ
+𝜑
+𝜌
+𝜑
+dt
+dρ
+r
+	​
+
+	​
+
+=−4Hρ
+r
+	​
+
++Γ
+φ
+	​
+
+ρ
+φ
+	​
+
+𝜌
+𝑟
+ρ
+r
+	​
+
+ = 3.924e+34 J/m³
+Temperature
+𝜌
+𝑟
+=
+𝜋
+2
+30
+𝑔
+∗
+(
+𝑇
+)
+𝑇
+4
+ρ
+r
+	​
+
+=
+30
+π
+2
+	​
+
+g
+∗
+	​
+
+(T)T
+4
+𝑇
+T = 2.360e+12 K
+𝑔
+∗
+g
+∗
+	​
+
+ = 62.145
+Inputs
+inflaton decay rate (1/s)
+g* override (0 = compute it) ()
+quark-hadron threshold flag (0 or 1)
+quark-hadron temperature (MeV)
+up quark mass (GeV)
+electron mass (GeV)
+Higgs mass (GeV)
+top quark mass (GeV)
+Reset this engineDespawn
+Not in Rust
+● NOT IN RUST src/world/globe/planet.ts
+Builds the continents, the height of the land, and where the sea sits.
+● NOT IN RUST src/core/weather.ts
+Steps the air around the player: rain, snow, soil water, and the near wind.
+● NOT IN RUST src/core/altitudeZones.ts
+Decides the tree line and the ice line from latitude.
+● NOT IN RUST src/world/globe/coverKind.ts
+The picture still classifies ground cover in TypeScript, a copy of the Rust cover rule.
+● NOT IN RUST src/core/needs/engine.ts
+Steps an animal's water, energy, and rest.
+● NOT IN RUST src/core/animalBehavior.ts
+Chooses how deer and wolves move: gaits, foraging, and fleeing.
+● NOT IN RUST src/core/sim/index.ts
+Runs the herd: each animal's needs, senses, and what it does next.
+● NOT IN RUST src/core/needs/behaviour.ts
+Picks an animal's goal from what it feels.
+● NOT IN RUST src/core/needs/senses.ts
+Decides what an animal can see and hear.
+● NOT IN RUST src/core/perceptionBuffer.ts
+Packs what an animal perceives. The game does not call the Rust packer.
+● NOT IN RUST src/core/world.ts
+The playable forest's ground height.
+● NOT IN RUST src/core/stages/elevation.ts
+Shapes the staged terrain the player walks on.
+● NOT IN RUST src/core/stages/rivers.ts
+Cuts the rivers and sets how fast they flow.
+● NOT IN RUST src/core/stages/flow.ts
+Sends rainfall downhill into channels.
+● NOT IN RUST src/core/stages/soils.ts
+Picks the soil under each place.
+● NOT IN RUST src/core/stand.ts
+Counts the trees in a stand.
+● NOT IN RUST src/world/globe/plates.ts
+Lays tectonic plates on the procedural planet.
+● NOT BUILT
+Nucleosynthesis — light-element abundances. The stub spawns, but it does not calculate them.
+● NOT BUILT
+Electroweak epoch — no engine.
+● NOT BUILT
+Quark-gluon plasma — no engine. Reheating only flags the 150 MeV threshold.
+● NOT BUILT
+Recombination microphysics — redshift is known, the Saha solver is not.
+● NOT BUILT
+First stars and galaxies — no engine.
+Expansion
+Reheating
+Early-universe picture
+radius = 0.4 + 7 × (log10 a − log10 1e−60) / 60, clamped
+Right now the sphere radius is 6.01 and the brightness is 1.67.
+Tier
+not tested yet
+2500 fps, this frame 0.4 ms
+Test this computer
+Capture 4K still
+Target frame time (ms) 
+automatic tier
+Ultra 3840×2160
+High 2560×1440
+Medium 1920×1080
+Low 1280×720
+GPU ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver). Max texture 8192. Float targets yes. MSAA samples 4.

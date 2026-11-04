@@ -1,0 +1,25 @@
+{
+  "bench": [
+    {
+      "id": "ultra",
+      "p50": 0.10000000055879354,
+      "p95": 1.2000000001862645
+    },
+    {
+      "id": "high",
+      "p50": 0.20000000018626451,
+      "p95": 2
+    },
+    {
+      "id": "medium",
+      "p50": 0.09999999962747097,
+      "p95": 6.7000000001862645
+    },
+    {
+      "id": "low",
+      "p50": 0.09999999962747097,
+      "p95": 0.39999999944120646
+    }
+  ],
+  "note": "Timed with gl.finish() after composer.render, SwiftShader, up to 6 frames or 1.5 s per tier. These sub-10 ms figures are the CPU return on this machine, not a 60 fps claim for a 4K raymarch."
+}

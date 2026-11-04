@@ -33,6 +33,7 @@ pub const RUST_BOOT_STEPS: &[&str] = &[
 
 /// Fill every derived plane. `day` and `hour` are the instant; they are stored and not stepped.
 pub fn boot(g: &mut Grid, day: f64, hour: f64) {
+    let started = crate::registry::now_ms();
     g.day = day;
     g.hour = hour;
     g.refresh_coast();
@@ -54,6 +55,7 @@ pub fn boot(g: &mut Grid, day: f64, hour: f64) {
             other => panic!("unwired boot step {other}"),
         }
     }
+    crate::registry::note("planet", started, g.day, g.hour, &[]);
 }
 
 /// Roughness from `cell_surface` while soil, snow and ice are still the cleared planes (step 2, before the bucket seed).

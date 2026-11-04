@@ -8,9 +8,9 @@
  *  - The patch dithers in under the globe (render/fade.ts, uniform only) once the chunks under the camera are ready, between
  *    TRANSITION.bandTop (2 km) and fadeFull (600 m); undithered scene parts (sky dome, animals, grass, flora, props, rocks)
  *    stay hidden until the patch is fully in. Sky + clouds stay hidden for the whole band (the far layer is the sky).
- *  - Down: the orbit looks straight down. A double-click (or A / G) free-falls to 10,000 ft (flight.ts), spinning 180° and
- *    opening to the isometric pitch. At that height the fall's velocity is handed to photo mode's free-fly (photo/fly.ts
- *    stepCarriedFly) and is not zeroed. G / A becomes the animal. Esc / pad X returns to the orbit. There is no auto-start.
+ *  - Down: the orbit looks straight down. A double-click (or A / G) eases down to the glide (flight.ts DESCENT). The heading
+ *    stays; the pitch opens to isometric. F fades instead of travelling. The handoff speed is 0, so the drone starts at the
+ *    glide already slow. G / A becomes the animal. Esc / pad X returns to the orbit. There is no auto-start.
  *    Up: the same vertical, in reverse, pitch from globePitch.
  *  - The governor is held from the ascent to the end of the descent (world knobs frozen); input is mode-scoped; the world
  *    clock keeps running, the sim (player, animals) is frozen outside game mode. Tile workers (2) run only while ascending,
@@ -85,9 +85,7 @@ export function createInPage(view: View, host: InPageHost) {
   ctl = controller(view, host); (window as unknown as { __inpage?: unknown }).__inpage = ctl; // dev: the check script reads it
   return ctl;
 }
-const LOW_TIER = 3; // core/quality LADDER: Ultra, High, Medium, Low, ...
-/** Low or below takes the reload path. ?inpagelow (dev, evidence capture under software GL) keeps the in-page path anyway. */
-const lowTier = () => !new URLSearchParams(location.search).has('inpagelow') && (GOVERNOR.capTier >= LOW_TIER || GOVERNOR.probeCap >= LOW_TIER);
+// The seated drop stays on this page after the probe. The governor cheapens a slow machine.
 const ground = (x: number, z: number) => Math.max(heightAt(x, z), -.2);
 /** The patch dither's plane (render/fade.ts uPatchY): the water surface of the lake the patch disc reaches into (16 samples
  *  on its rim), so the game water and the lake bed under one pixel get the same dither (no ring of bed dots), else the
@@ -299,7 +297,6 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** Shift+G / pause menu: game -> band (up). Returns true when the in-page path took it. */
     ascend(): boolean {
       if (mode !== 'game') return true;
-      if (lowTier()) return false; // Low or below now: main takes the reload path
       if (!globe) { void loadGlobe().then(() => api.ascend()); return true; } // first use before the prewarm finished
       for (const o of view.scene.children) if (isChunkRoot(o)) for (const m of o.children) uploaded.add(m); // drawn in the game already
       const g = globe; prep = null; host.save(); hold.hold(); g.resumeWorkers(); down = false; needStart = true; lastT = performance.now(); setMode('band');
@@ -309,7 +306,6 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
      *  altitude (globeView startAlt, 2.2 R: the whole disc), no rise; the ascent's hold and workers. False = take the reload path. */
     enter(): boolean {
       if (mode !== 'game') return true;
-      if (lowTier()) return false;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
       prep = null; hold.hold(); globe.resumeWorkers(); globe.resumeOrbit(); globe.jumpTo(PLANET.radius * 2.2); lastT = performance.now(); toGlobe(); return true;
     },

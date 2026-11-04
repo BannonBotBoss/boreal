@@ -1,0 +1,35 @@
+{
+  "band": {
+    "mode": "band",
+    "phase": "drone",
+    "h": 400,
+    "alt": 400,
+    "ease": null,
+    "prompt": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shif"
+  },
+  "ground": {
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "alt": 400,
+    "ease": null,
+    "prompt": ""
+  },
+  "faded": {
+    "mode": "band",
+    "phase": "drone",
+    "h": 400,
+    "alt": 400,
+    "ease": null,
+    "prompt": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shif"
+  },
+  "notes": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "PROBE cap=Minimum {\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"gpuTier\":1,\"maxTexture\":8192,\"deviceMemory\":16,\"cores\"",
+    "INPAGE prewarm {\"ms\":5687.9000000003725,\"frames\":10,\"tiles\":13}",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "PROBE cap=Minimum {\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"gpuTier\":1,\"maxTexture\":8192,\"deviceMemory\":16,\"cores\"",
+    "INPAGE prewarm {\"ms\":5551.60000000149,\"frames\":12,\"tiles\":18}",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

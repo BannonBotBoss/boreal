@@ -54,14 +54,20 @@ test('sphere radius and brightness follow the Rust outputs', () => {
   const bright = sphereLook(1e-10, 1e20, 1e12, 1e20);
   assert.ok(bright.radius > dim.radius);
   assert.ok(bright.brightness > dim.brightness);
-  const hotter = sphereLook(1e-10, 1, 1e20, 1);
-  const cooler = sphereLook(1e-10, 1, 10, 1);
+  const hotter = sphereLook(1e-10, 1, 1e22, 1);
+  const cooler = sphereLook(1e-10, 1, 50, 1);
   assert.notDeepEqual(hotter.color, cooler.color);
-  for (const look of [dim, bright, hotter, cooler]) {
-    assert.ok(look.color[2] > look.color[0] && look.color[2] > look.color[1] * 2, `violet ${look.color}`);
-  }
+  assert.ok(hotter.color[0] > 0.9 && hotter.color[1] > 0.7 && hotter.color[0] > hotter.color[1], `pink-white ${hotter.color}`);
+  assert.ok(cooler.color[2] > cooler.color[0] && cooler.color[2] > cooler.color[1] * 4 && cooler.color[1] < 0.12, `blue-violet ${cooler.color}`);
+  const share = (c: [number, number, number]) => c[2] / (c[0] + c[1] + c[2]);
+  assert.ok(share(cooler.color) > share(bright.color) && share(bright.color) > share(hotter.color));
   assert.equal(frameShiftX(0, 10, 40, 16 / 9), 0);
   assert.ok(frameShiftX(0.4, 10, 40, 16 / 9) > 0);
+  const shader = readFileSync(new URL('../src/world/cosmos/sphere.ts', import.meta.url), 'utf8');
+  const journey = readFileSync(new URL('../src/vr/journey.ts', import.meta.url), 'utf8');
+  assert.equal(shader.includes('vec3(0.72, 0.12, 1.0)'), false);
+  assert.match(shader, /vec3 col = color \*/);
+  assert.match(journey, /mat\.color\.setRGB\(look\.color\[0\]/);
 });
 
 const wasmPath = new URL('../public/wasm/boreal_sim.wasm', import.meta.url);

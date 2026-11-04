@@ -11,8 +11,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { BIRD_GROUPS, MAMMALS } from '../core/species';
 import { createSkinTemplate, type SkinTemplate } from './meshySkin';
+import { asset } from '../core/asset';
 
-export const MODEL_MANIFEST_URL = '/models/animals/manifest.json';
+export const MODEL_MANIFEST_URL = asset('models/animals/manifest.json');
 
 export interface ModelEntry { full?: string; low?: string; /** Species or bird-group row that owns the size. */ as?: string }
 
@@ -130,7 +131,7 @@ export async function loadAnimalBuffer(buffer: ArrayBuffer, name: string, entry:
 
 async function loadNamed(name: string, entry: ModelEntry) {
   if (cache.has(name) || !entry.full) return;
-  const file = entry.full.startsWith('/') ? entry.full : `/models/animals/${entry.full}`;
+  const file = asset(entry.full.startsWith('/') ? entry.full : `models/animals/${entry.full}`);
   try {
     const res = await fetch(file);
     if (!res.ok) return;

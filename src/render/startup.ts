@@ -10,6 +10,9 @@ import { GOVERNOR, LADDER, applied, resetGovernor } from '../core/quality';
 import { STATS, queued } from '../core/interest';
 import { cachedProbe, median, saveProbe, type ProbeResult } from '../core/probe';
 import type { buildScene } from './buildScene';
+import { asset } from '../core/asset';
+/** Reject after `ms` so a hung fetch can never hold the loading screen. */
+const within = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<never>((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
 type View = ReturnType<typeof buildScene>;
 export const raf = () => new Promise<number>(r => requestAnimationFrame(r)), wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 /** Wait until the interest job queue stays empty for `quietFrames` frames (or `maxMs`). Shared with ?bench. */
@@ -21,7 +24,8 @@ export async function settle(quietFrames = 60, maxMs = 40000, onFrame?: (elapsed
  * for: 2026-10-18 omen staged start benched mid-stream and capped an RTX 5060 at Low). Falls back to all frames. */
 export async function benchFrames(view: View, frames = 40, warm = 10) {
   const xs: number[] = [], all: number[] = [];
-  for (let i = 0; i < (frames + warm) * 3 && xs.length < frames; i++) { const j = STATS.jobsRun; await raf(); if (i < warm) continue;
+  const t0 = performance.now();
+  for (let i = 0; i < (frames + warm) * 3 && xs.length < frames && performance.now() - t0 < 15000; i++) { const j = STATS.jobsRun; await raf(); if (i < warm) continue;
     const ms = Math.max(view.photoreal.INFO.workMs, view.photoreal.gpuMs ?? 0); all.push(ms); if (STATS.jobsRun === j) xs.push(ms); }
   return median(xs.length >= frames / 2 ? xs : all);
 }
@@ -40,7 +44,7 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
       ui.step('Measuring your graphics hardware…', .7);
       const gl = r.getContext(), nav = navigator as Navigator & { deviceMemory?: number };
       let gpuTier: number | undefined;
-      try { gpuTier = (await getGPUTier({ glContext: gl, benchmarksURL: '/detect-gpu' })).tier; } catch { /* offline or blocked: bench decides */ }
+      try { gpuTier = (await within(getGPUTier({ glContext: gl, benchmarksURL: asset('detect-gpu') }), 6000)).tier; } catch { /* offline or blocked: bench decides */ }
       const tier = GOVERNOR.tier; GOVERNOR.tier = 0; await settle(30, 10000); // let any Ultra-only chunk work finish
       const benchMs = await benchFrames(view); GOVERNOR.tier = tier;
       probe = saveProbe(localStorage, { renderer: GOVERNOR.gpu, gpuTier, maxTexture: gl.getParameter(gl.MAX_TEXTURE_SIZE), deviceMemory: nav.deviceMemory, cores: nav.hardwareConcurrency, benchMs });

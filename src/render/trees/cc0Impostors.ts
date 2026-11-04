@@ -6,13 +6,14 @@
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { asset } from '../../core/asset';
 
 export const CC0_TREES = [
-  { url: '/models/trees/pine-a.glb', broadleaf: false },
-  { url: '/models/trees/pine-b.glb', broadleaf: false },
-  { url: '/models/trees/pine-c.glb', broadleaf: false },
-  { url: '/models/trees/oak.glb', broadleaf: true },
-  { url: '/models/trees/broadleaf.glb', broadleaf: true },
+  { url: asset('/models/trees/pine-a.glb'), broadleaf: false },
+  { url: asset('/models/trees/pine-b.glb'), broadleaf: false },
+  { url: asset('/models/trees/pine-c.glb'), broadleaf: false },
+  { url: asset('/models/trees/oak.glb'), broadleaf: true },
+  { url: asset('/models/trees/broadleaf.glb'), broadleaf: true },
 ] as const;
 
 export const TREE_CARD = { w: 128, h: 192 };

@@ -11,8 +11,9 @@
  */
 import { DESCENT } from './flight';
 
-/** Wall seconds one frame may add to the seated drop. A 1 s frame moves the ease by this, not by 0.1 s. */
-export const DESCENT_FRAME_CAP = 0.5;
+/** Wall seconds one frame may add to the seated drop. A multi-second software frame still
+ *  moves the ease, so the vacuum-skipped fall can finish inside about 20 s. */
+export const DESCENT_FRAME_CAP = 3;
 
 export function descentFrameDt(wallSec: number, cap = DESCENT_FRAME_CAP) {
   if (!(wallSec > 0)) return 0;
@@ -62,8 +63,9 @@ export function landingChunkPriority(patchReady: boolean, dropStarted: boolean) 
   return dropStarted && !patchReady;
 }
 
-/** Milliseconds of chunk work per frame while the landing ring is still missing. Not shrunk by a slow draw. */
-export const LANDING_JOB_MS = 64;
+/** Milliseconds of chunk work per frame while the landing ring is still missing. Not shrunk by a slow draw.
+ *  Large enough that the chunk under her can finish during the shortened fall. */
+export const LANDING_JOB_MS = 160;
 
 export function landingJobBudget(patchReady: boolean, dropStarted: boolean) {
   return landingChunkPriority(patchReady, dropStarted) ? LANDING_JOB_MS : undefined;

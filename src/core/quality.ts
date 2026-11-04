@@ -4,7 +4,7 @@ import { SYSTEM_PROPERTIES } from '../config/systemProperties';
  * controller that measures frame time (CPU frame interval, or GPU time from EXT_disjoint_timer_query_webgl2 when available,
  * whichever is worse) and steps along the ladder with hysteresis to hold the target frame rate.
  * Manual settings are CAPS: the applied value of every knob is min(ladder tier, manual cap) in "quality" order.
- * Budgets: desktop 60 fps; Quest 3 WebXR 72/90 Hz (≈13.9/11.1 ms), soft ceilings ≈100 draw calls and 750K triangles
+ * Budgets: desktop 60 fps; Quest 3 and 3S WebXR 60 fps (16.7 ms), soft ceilings ≈100 draw calls and 750K triangles
  * per eye, textures ≤ 2048² (skill photoreal-interactive-webxr-assets; Meta Quest performance guidance).
  */
 export interface Tier {
@@ -123,5 +123,9 @@ export function tierForGpu(renderer: string) {
   if (/swiftshader|llvmpipe|software/i.test(renderer)) return LADDER.length - 1;
   return 2;
 }
-/** WebXR on Quest 3 keeps its own budget (≈100 draw calls, 750K tris/eye, 72/90 Hz): these caps apply on top of any tier. */
-export const XR_CAPS: Partial<Omit<Tier, 'name'>> = { gi: 0, pcss: 0, contact: 0, rays: 0, resScale: 1, shadows: 1, ssao: 0, near: 50, mid: 80, trees: .6, foliage: .4, weather: 6 };
+/** 60 fps on Quest 3 / 3S. 72 Hz would be 13.9 ms; this budget is the 60 fps floor. */
+export const QUEST_FPS = 60;
+export const QUEST_FRAME_MS = 1000 / QUEST_FPS;
+/** WebXR on Quest 3 / 3S. Expensive passes stay off. One shadow map, a slightly smaller picture,
+ *  and a shorter tree disc, so the forest with the litter can hold the 60 fps budget. */
+export const XR_CAPS: Partial<Omit<Tier, 'name'>> = { gi: 0, pcss: 0, contact: 0, rays: 0, resScale: 0.85, shadows: 1, ssao: 0, near: 42, mid: 64, trees: .5, foliage: .3, weather: 6 };

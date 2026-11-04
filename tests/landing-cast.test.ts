@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs';
 import * as THREE from 'three';
 import { loadPlanetSim } from '../src/core/planetBudget';
 import {
-  LANDING_DISPLAY, LANDING_SHOWN_CAP, pickLandingSlots, placeLandingAnimals,
+  LANDING_DISPLAY, LANDING_SHOWN_CAP, landingHidesCover, landingStandY, pickLandingSlots, placeLandingAnimals,
+  setLandingClear, setLandingSight,
 } from '../src/core/landingRoster';
 import { createProceduralAnimal } from '../src/render/proceduralAnimal';
 import { pictureOrder } from '../src/render/animalPicture';
@@ -83,6 +84,97 @@ test('the cast steps back in front when the wolf turns, and stays put for a smal
   assert.equal(castShouldReplace(origin, 3, 1, 0), false);
   assert.equal(castShouldReplace(origin, 0, 0, 1.2), true);
   assert.equal(castShouldReplace(origin, 20, 0, 0), true);
+});
+
+/** Follow camera: 3.6 m behind, 48° vertical, 16:9. Half the horizontal field. */
+const halfHoriz = Math.atan(Math.tan((48 * Math.PI) / 360) * (16 / 9));
+
+function viewEdge(ahead: number, side: number, bodyHalf = 0.9) {
+  return Math.atan2(Math.abs(side) + bodyHalf, ahead + 3.6);
+}
+
+test('a lone census animal stands beside the wolf, broadside, inside the full-mesh view', () => {
+  const origin = { x: 4, z: -6, yaw: 0.4 };
+  const placed = placeLandingAnimals([{ key: 'red_fox', display: 'Red Fox', census: 23 }], origin, () => true);
+  assert.equal(placed.length, 1);
+  const yaw = origin.yaw;
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  const rx = Math.cos(yaw), rz = -Math.sin(yaw);
+  const dx = placed[0].x - origin.x, dz = placed[0].z - origin.z;
+  const ahead = dx * fx + dz * fz;
+  const side = dx * rx + dz * rz;
+  assert.ok(Math.abs(side) > 1.5 && Math.abs(side) < 3.2, `side ${side} is behind the wolf or on the frame edge`);
+  assert.ok(ahead > 5 && ahead < 12, `ahead ${ahead} is not a readable distance`);
+  const edge = viewEdge(ahead, side);
+  assert.ok(edge < halfHoriz - 0.08, `body edge ${edge.toFixed(3)} vs half-fov ${halfHoriz.toFixed(3)}`);
+  assert.ok(Math.hypot(ahead + 3.6, side) < 16, 'farther than the full mesh');
+  assert.ok(Math.hypot(ahead + 3.6, side) > 6, 'inside the camera');
+  const ax = -Math.sin(placed[0].yaw), az = -Math.cos(placed[0].yaw);
+  const dot = ax * fx + az * fz;
+  assert.ok(Math.abs(dot) < 0.05, `facing the camera axis (dot ${dot}), not broadside`);
+});
+
+test('every animal of a full cast stays inside the view cone at full-mesh range', () => {
+  const origin = { x: 2, z: 8, yaw: -1.1 };
+  const placed = placeLandingAnimals(pickLandingSlots(boreal), origin, () => true);
+  assert.equal(placed.length, LANDING_SHOWN_CAP);
+  const yaw = origin.yaw;
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  const rx = Math.cos(yaw), rz = -Math.sin(yaw);
+  for (const animal of placed) {
+    const dx = animal.x - origin.x, dz = animal.z - origin.z;
+    const ahead = dx * fx + dz * fz;
+    const side = dx * rx + dz * rz;
+    assert.ok(ahead > 4, `${animal.display} ahead ${ahead}`);
+    const edge = viewEdge(ahead, side);
+    assert.ok(edge < halfHoriz - 0.1, `${animal.display} body edge ${edge.toFixed(3)}`);
+    assert.ok(Math.hypot(ahead + 3.6, side) < 16, `${animal.display} camera distance`);
+    const ax = -Math.sin(animal.yaw), az = -Math.cos(animal.yaw);
+    assert.ok(Math.abs(ax * fx + az * fz) < 0.05, `${animal.display} not broadside`);
+  }
+});
+
+test('a trunk on the aim is skipped for an open cell that stays in the view', () => {
+  const origin = { x: 0, z: 0, yaw: 0 };
+  const placed = placeLandingAnimals(
+    [{ key: 'white_tailed_deer', display: 'White-tailed Deer', census: 22 }],
+    origin,
+    () => true,
+    (x, z) => Math.hypot(x, z + 7) > 1.3,
+  );
+  assert.equal(placed.length, 1);
+  assert.ok(Math.hypot(placed[0].x, placed[0].z + 7) > 1.3, `stood in the trunk at ${placed[0].x},${placed[0].z}`);
+  const ahead = -placed[0].z, side = placed[0].x;
+  assert.ok(ahead > 4 && ahead < 12, `ahead ${ahead}`);
+  assert.ok(Math.abs(side) < 2.2, `side ${side} is still on the frame edge`);
+  assert.ok(viewEdge(ahead, side) < halfHoriz - 0.08, `left the view, side ${side}`);
+});
+
+test('a cast outside the view is replaced even when the wolf has barely turned', () => {
+  const origin = { x: 0, z: 0, yaw: 0 };
+  const stray = [{ x: 9, z: -4 }];
+  assert.equal(castShouldReplace(origin, 0, 0, 0.2, stray), true);
+  assert.equal(castShouldReplace(origin, 0, 0, 0.1), false);
+  const held = placeLandingAnimals([{ key: 'red_fox', display: 'Red Fox', census: 23 }], origin, () => true);
+  assert.equal(castShouldReplace(origin, 0, 0, 0.1, held), false);
+});
+
+test('feet use the ground sample, and the spawn disc clears cover only on that disc', () => {
+  assert.equal(landingStandY(18.25), 18.25);
+  assert.equal(landingStandY(Number.NaN), 0);
+  setLandingClear([{ x: 3, z: -7, r: 2.4 }]);
+  assert.equal(landingHidesCover(3, -7, 'grass'), true);
+  assert.equal(landingHidesCover(6, -7, 'grass'), false);
+  assert.equal(landingHidesCover(5.2, -7, 'spruce'), true);
+  assert.equal(landingHidesCover(8, -7, 'spruce'), false);
+  assert.equal(landingHidesCover(5.5, -7, 'plant'), true);
+  setLandingClear([]);
+  assert.equal(landingHidesCover(3, -7, 'grass'), false);
+  setLandingSight([{ x0: 0, z0: 4, x1: 0, z1: -8, r: 1.6 }]);
+  assert.equal(landingHidesCover(0, -3, 'plant'), true, 'a bush on the camera-to-animal line');
+  assert.equal(landingHidesCover(4.5, -3, 'plant'), false, 'a bush off to the side stays');
+  setLandingSight([]);
+  assert.equal(landingHidesCover(0, -3, 'plant'), false);
 });
 
 test('the landing cast keeps the full-mesh slots ahead of nearer home animals', () => {

@@ -9,7 +9,8 @@
 import * as THREE from 'three';
 import type { Motion } from '../core/animalBehavior';
 import {
-  LANDING_CENSUS_SIDE_M, LANDING_DISPLAY, LANDING_YEAR, pickLandingSlots, placeLandingAnimals,
+  LANDING_CAM_BACK_M, LANDING_CENSUS_SIDE_M, LANDING_CLEAR_R_M, LANDING_DISPLAY, LANDING_YEAR, landingInFrame, landingStandY,
+  pickLandingSlots, placeLandingAnimals, setLandingClear, setLandingSight,
   type CensusRow, type PlacedAnimal,
 } from '../core/landingRoster';
 import { liveCoastM, sharedPlanetSim } from '../core/planetWeather';
@@ -18,6 +19,7 @@ import { SITE as SUN_HOME } from '../core/weather';
 import { dayAt, hourAt, lighting, sunPosition } from '../core/timeOfDay';
 import { worldSec } from '../core/worldClock';
 import { isDryLand, WORLD_SEED, heightAt } from '../core/world';
+import { solidsAround, treesAround } from '../core/ground';
 import { PLANET, fromLatLon, planetFor, toLatLon, vegetationWeight } from '../world/globe/planet';
 import { nearestShore } from '../core/landingShore';
 import { coverKind } from '../world/globe/coverKind';
@@ -64,11 +66,33 @@ export interface LandingLight {
 
 const round = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
 
-/** Move the cast when the player walks off, or when the wolf turns far enough that the cast leaves the view. */
-export function castShouldReplace(origin: { x: number; z: number; yaw: number }, x: number, z: number, yaw: number) {
+/** Move the cast when the player walks off, the wolf turns far, or a body has left the view. */
+export function castShouldReplace(
+  origin: { x: number; z: number; yaw: number },
+  x: number,
+  z: number,
+  yaw: number,
+  animals?: readonly { x: number; z: number }[],
+) {
   const moved = Math.hypot(x - origin.x, z - origin.z) > 12;
   const turn = Math.atan2(Math.sin(yaw - origin.yaw), Math.cos(yaw - origin.yaw));
-  return moved || Math.abs(turn) > 0.35;
+  if (moved || Math.abs(turn) > 0.35) return true;
+  if (!animals?.length) return false;
+  const here = { x, z, yaw };
+  return animals.some(animal => !landingInFrame(here, animal.x, animal.z));
+}
+
+/** A trunk or a standing rock is not an open spawn. The cone still keeps the animal when every cell is closed. */
+function landingSpotOpen(x: number, z: number) {
+  for (const tree of treesAround(x, z)) {
+    const need = Math.max(0.8, Math.min(1.7, 0.25 * tree.r));
+    if (Math.hypot(tree.x - x, tree.z - z) < need) return false;
+  }
+  for (const solid of solidsAround(x, z)) {
+    if (solid.top < 0.45) continue;
+    if (Math.hypot(solid.x - x, solid.z - z) < solid.r + 0.4) return false;
+  }
+  return true;
 }
 
 /** Sun at the landed site, using the sky's latitude rule (`siteLatitude` of the Kenora station). */
@@ -166,6 +190,21 @@ export function createLandingCast(scene: THREE.Scene) {
     }
     procs.clear();
     placed = [];
+    setLandingClear([]);
+    setLandingSight([]);
+  }
+
+  function stand(at: { x: number; z: number; yaw: number }) {
+    return placeLandingAnimals(slots, at, (px, pz) => isDryLand(px, pz), landingSpotOpen);
+  }
+
+  function markClear() {
+    setLandingClear(placed.map(animal => ({ x: animal.x, z: animal.z, r: LANDING_CLEAR_R_M })));
+    const fx = -Math.sin(origin.yaw), fz = -Math.cos(origin.yaw);
+    const back = LANDING_CAM_BACK_M + 0.4;
+    setLandingSight(placed.map(animal => ({
+      x0: origin.x - fx * back, z0: origin.z - fz * back, x1: animal.x, z1: animal.z, r: 1.6,
+    })));
   }
 
   function anchor(ctx: ReturnType<typeof landingContext>, x: number, z: number, yaw: number) {
@@ -193,7 +232,7 @@ export function createLandingCast(scene: THREE.Scene) {
       slots = pickLandingSlots(census);
       origin = { x, z, yaw };
       placed = [];
-      for (const animal of placeLandingAnimals(slots, origin, (px, pz) => isDryLand(px, pz))) {
+      for (const animal of stand(origin)) {
         const proc = createProceduralAnimal(animal.display);
         if (!proc) continue;
         proc.root.userData.animalPicture = true;
@@ -203,6 +242,7 @@ export function createLandingCast(scene: THREE.Scene) {
         procs.set(`${animal.key}:${animal.index}`, proc);
         placed.push(animal);
       }
+      markClear();
       report = { ...report, ...at, note: '' };
       publish();
     }).catch(() => {
@@ -228,10 +268,10 @@ export function createLandingCast(scene: THREE.Scene) {
       anchor(ctx, x, z, yaw);
       // The glide carries the player, and the embody can turn the wolf after the list arrives.
       // Either one leaves the cast off to the side, where the picture drops it (farther than 8 m and outside the view).
-      if (placed.length && castShouldReplace(origin, x, z, yaw)) {
+      if (placed.length && castShouldReplace(origin, x, z, yaw, placed)) {
         origin = { x, z, yaw };
-        placed = placeLandingAnimals(slots, origin, (px, pz) => isDryLand(px, pz))
-          .filter(animal => procs.has(`${animal.key}:${animal.index}`));
+        placed = stand(origin).filter(animal => procs.has(`${animal.key}:${animal.index}`));
+        markClear();
       }
       const motion: Motion = 'walk';
       const phase = (time * 0.65) % 1;
@@ -239,7 +279,7 @@ export function createLandingCast(scene: THREE.Scene) {
       for (const animal of placed) {
         const proc = procs.get(`${animal.key}:${animal.index}`);
         if (!proc) continue;
-        const y = heightAt(animal.x, animal.z);
+        const y = landingStandY(heightAt(animal.x, animal.z));
         proc.pose(motion, phase, 1.2);
         proc.root.position.set(animal.x, y, animal.z);
         proc.root.rotation.y = animal.yaw;

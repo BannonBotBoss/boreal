@@ -29,6 +29,7 @@ import { COVER_SPECIES, GRASS, bladesJob, keepAt, type Blades } from './cover';
 import { MOSS_GLSL, MOSS_UNIFORMS } from '../flora/moss';
 import { snowDepthCm, weatherAt } from '../../core/weather';
 import { STYLIZED } from '../stylizedPalette';
+import { landingClearDiscs, landingSightLines } from '../../core/landingRoster';
 
 export const GRASS_FX = { off: false }; // bench hook (cost measurement), like TREE_FX
 export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, culled: 0, tris: 0, lods: [0, 0, 0], sliceMaxMs: 0, packMaxMs: 0, packs: 0 };
@@ -38,12 +39,21 @@ const U = {
   uGrass: { value: new THREE.Vector4(GRASS.lodDist, GRASS.full, GRASS.radius, 1) }, // lodDist, full, radius, foliage
   uPlayer: { value: new THREE.Vector3() }, uCamFwd: { value: new THREE.Vector3(0, 0, -1) }, uPx: { value: .001 }, // pixel footprint per metre of distance (2·tan(fov/2) / screen height)
   uSnowM: { value: 0 }, // metres, snowDepthCm / 100 at the player. Blades shorter than this are under the snow.
+  /** Spawn discs (x, z, radius). Blades inside a disc collapse so a census animal is not buried. */
+  uClear: { value: Array.from({ length: 5 }, () => new THREE.Vector4()) },
+  uClearN: { value: 0 },
+  /** Camera-to-animal corridors (x0, z0, x1, z1) and a radius. Blades in the corridor collapse. */
+  uSight: { value: Array.from({ length: 5 }, () => new THREE.Vector4()) },
+  uSightR: { value: Array.from({ length: 5 }, () => new THREE.Vector2()) },
+  uSightN: { value: 0 },
   uShape: { value: COVER_SPECIES.map(s => new THREE.Vector4(s.width, s.profile, s.stem, s.stiff)) },
   uBase: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.base)) }, uTip: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.tip)) }, uFall: { value: COVER_SPECIES.map(s => new THREE.Vector3(...s.fall)) },
 };
 const VERT_HEAD = `#define GRASS_K ${K}
 attribute float vertIndex; attribute vec4 aBlade; attribute float aKind;
 uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGrass; uniform vec3 uPlayer, uCamFwd; uniform float uPx; uniform float uSnowM;
+uniform vec4 uClear[5]; uniform float uClearN;
+uniform vec4 uSight[5]; uniform vec2 uSightR[5]; uniform float uSightN;
 uniform vec4 uShape[GRASS_K]; uniform vec3 uBase[GRASS_K]; uniform vec3 uTip[GRASS_K]; uniform vec3 uFall[GRASS_K];
 varying vec3 vGrassColour;
 ${GLSL_NOISE}
@@ -62,6 +72,25 @@ const VERT_BODY = `
   keep *= max(step(dist, 3.0), step(-0.35, dot(root - cameraPosition, uCamFwd) / max(dist, 1e-3))); // one field mesh, no per-tile culling: blades well behind the view collapse
   float alive = step(aBlade.w, keep);
   alive *= 1.0 - step(aBlade.y, uSnowM); // a blade no taller than the snow depth is buried; the terrain snow layer shows
+  float clearKeep = 1.0;
+  clearKeep *= mix(1.0, step(uClear[0].z, distance(root.xz, uClear[0].xy)), step(0.5, uClearN));
+  clearKeep *= mix(1.0, step(uClear[1].z, distance(root.xz, uClear[1].xy)), step(1.5, uClearN));
+  clearKeep *= mix(1.0, step(uClear[2].z, distance(root.xz, uClear[2].xy)), step(2.5, uClearN));
+  clearKeep *= mix(1.0, step(uClear[3].z, distance(root.xz, uClear[3].xy)), step(3.5, uClearN));
+  clearKeep *= mix(1.0, step(uClear[4].z, distance(root.xz, uClear[4].xy)), step(4.5, uClearN));
+  alive *= clearKeep;
+  float sightKeep = 1.0;
+  vec2 sd = uSight[0].zw - uSight[0].xy; float sL = max(dot(sd, sd), 1e-4); float st = clamp(dot(root.xz - uSight[0].xy, sd) / sL, 0.0, 1.0);
+  sightKeep *= mix(1.0, step(uSightR[0].x, distance(root.xz, uSight[0].xy + sd * st)), step(0.5, uSightN));
+  sd = uSight[1].zw - uSight[1].xy; sL = max(dot(sd, sd), 1e-4); st = clamp(dot(root.xz - uSight[1].xy, sd) / sL, 0.0, 1.0);
+  sightKeep *= mix(1.0, step(uSightR[1].x, distance(root.xz, uSight[1].xy + sd * st)), step(1.5, uSightN));
+  sd = uSight[2].zw - uSight[2].xy; sL = max(dot(sd, sd), 1e-4); st = clamp(dot(root.xz - uSight[2].xy, sd) / sL, 0.0, 1.0);
+  sightKeep *= mix(1.0, step(uSightR[2].x, distance(root.xz, uSight[2].xy + sd * st)), step(2.5, uSightN));
+  sd = uSight[3].zw - uSight[3].xy; sL = max(dot(sd, sd), 1e-4); st = clamp(dot(root.xz - uSight[3].xy, sd) / sL, 0.0, 1.0);
+  sightKeep *= mix(1.0, step(uSightR[3].x, distance(root.xz, uSight[3].xy + sd * st)), step(3.5, uSightN));
+  sd = uSight[4].zw - uSight[4].xy; sL = max(dot(sd, sd), 1e-4); st = clamp(dot(root.xz - uSight[4].xy, sd) / sL, 0.0, 1.0);
+  sightKeep *= mix(1.0, step(uSightR[4].x, distance(root.xz, uSight[4].xy + sd * st)), step(4.5, uSightN));
+  alive *= sightKeep;
   float highLODOut = smoothstep(uGrass.x * 0.5, uGrass.x, dist);
   int k = int(aKind + 0.5); vec4 sh = uShape[k];
   float GRASS_VERTICES = (GRASS_SEGMENTS + 1.0) * 2.0;
@@ -127,7 +156,7 @@ function grassMaterial(segments: number) {
         gl_Position = projectionMatrix * mvPosition;`);
     shader.fragmentShader = 'varying vec3 vGrassColour;\n' + shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb = vGrassColour;');
   };
-  m.customProgramCacheKey = () => `boreal-grass-${segments}`;
+  m.customProgramCacheKey = () => `boreal-grass-clear-${segments}`;
   materials.set(segments, m); return m;
 }
 /** Blade template: vertex IDs + index for ONE face (upstream #CreateGeometry_ built front + back faces for FrontSide; drawn
@@ -172,6 +201,12 @@ export function createGrass(scene: THREE.Scene) {
     group.visible = !GRASS_FX.off && foliage > 0;
     if (segs !== RENDER.terrainSegments) { segs = RENDER.terrainSegments; tiles.clear(); } // roots follow the terrain lattice
     U.uGrass.value.set(GRASS.lodDist, GRASS.full, R, foliage); U.uPlayer.value.copy(player); U.uSnowM.value = snowDepthCm(weatherAt(player.x, player.z).sweMm) / 100; const fov = (camera as THREE.PerspectiveCamera).fov ?? 48; U.uPx.value = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, globalThis.innerHeight ?? 900);
+    const discs = landingClearDiscs();
+    U.uClearN.value = Math.min(5, discs.length);
+    for (let i = 0; i < 5; i++) { const d = discs[i]; U.uClear.value[i].set(d?.x ?? 0, d?.z ?? 0, d?.r ?? 0, 0); }
+    const lines = landingSightLines();
+    U.uSightN.value = Math.min(5, lines.length);
+    for (let i = 0; i < 5; i++) { const s = lines[i]; U.uSight.value[i].set(s?.x0 ?? 0, s?.z0 ?? 0, s?.x1 ?? 0, s?.z1 ?? 0); U.uSightR.value[i].set(s?.r ?? 0, 0); }
     camera.getWorldDirection(U.uCamFwd.value);
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * T - cx, 0, cx - tx * T - T), Math.max(tz * T - cz, 0, cz - tz * T - T));
     const r = Math.ceil(R / T) + 1, ox = Math.floor(cx / T), oz = Math.floor(cz / T), want = new Set<string>();

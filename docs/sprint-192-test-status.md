@@ -73,3 +73,18 @@ Gate verdicts from the T-0129 frames, against T-0127:
 | Clouds on the descent | PARTIAL. No black cloud base and no shader error. The nadir frames at 2100 m and about 760–800 m do not show a readable cloud deck. Wetland 2100 m has blocky green tiles. Wetland ~799 m is a blurred warm field with soft bands. Ocean ~798 m is blocky translucent green polygons. |
 | Hardware FPS and GPU memory | UNVERIFIED. No GPU. |
 | Tests, build, and Rust | PASS. Local results above. GitHub `test` and `slow` are the PR checks. |
+
+## Wildlife placement on main `5c0075d` (Nov 3)
+
+grokbot-3. Branch `cursor/landing-cast-view-1634`. The frames were captured on this branch, then the branch was rebased onto main `0e986dc` (#267, interior thermal dump only). That commit does not touch the viewer. The viewer places the census cast inside the follow camera's frame, beside the wolf when there is only one animal, and clears the sight line. The Rust simulation, the census, the cover classification, `world/globe/inpage.ts`, `render/sky.ts`, the landed-ground lighting, and the cloud code were not edited. The frames are `tasks/evidence/T-0130/`.
+
+| check | command | result |
+|---|---|---|
+| TypeScript | `npx tsc --noEmit` | clean (exit 0) |
+| JS/TS tests | `npm test` | 1082 tests: 1068 pass, 0 fail, 14 todo (about 110 s) |
+| Build | `npm run build` | ok, built in 4.26 s; largest chunks `world` 698 kB (195 kB gzip), `main` 577 kB (207 kB gzip) |
+| Rust | `npm run test:rust` | 131 passed, 0 failed (lib tests). Rust sources were not edited. |
+
+Hardware FPS and GPU memory stay **UNVERIFIED**. The capture renderer was SwiftShader, and this machine has no GPU. Software `frameMs` in T-0130 (6.6–35.6 ms) is not a hardware frame time.
+
+Wildlife against the T-0129 frames: the tropics deer and the desert fox now read beside the wolf. The boreal five still read. Coast, prairie, polar, and wetland still show at least the animals that read before, and some show more. Ocean still shows a census animal (the deer); the bear is mostly behind the wolf. Yukon tundra and alpine are still an empty census. The procedural lynx is still not a body that can be picked out.

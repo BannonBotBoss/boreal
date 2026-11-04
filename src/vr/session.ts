@@ -7,6 +7,7 @@ import {
   ReferenceSpaceType, SessionMode, TurningMethod, World, buildSessionInit, type XROptions,
 } from '@iwsdk/core';
 import { setQuestProfile } from '../world/cosmos/lod';
+import { enterForest, type ForestHooks } from './forestSession';
 import { startJourney } from './journey';
 
 /** Seated immersive VR. hand-tracking is required, so the session does not open without hands. */
@@ -18,8 +19,10 @@ export const HANDS_ONLY: XROptions = {
 
 let world: World | null = null;
 let starting = false;
+let forestHooks: ForestHooks | undefined;
 
-export function mountEnterVr(notice: (message: string) => void) {
+export function mountEnterVr(notice: (message: string) => void, forest?: ForestHooks) {
+  forestHooks = forest;
   const button = document.getElementById('vr-btn');
   if (!(button instanceof HTMLButtonElement)) return;
   button.addEventListener('click', () => { void enterVr(notice); });
@@ -45,7 +48,7 @@ export async function enterVr(notice: (message: string) => void) {
         locomotion: { turningMethod: TurningMethod.SnapTurn, enableJumping: false, comfortAssistLevel: 0.65 },
       },
     });
-    startJourney(world);
+    startJourney(world, { onForest: () => { if (forestHooks && world) void enterForest(world.renderer, forestHooks).catch(e => console.warn('forest', e)); } });
     const session = await requested;
     if (!session) {
       setQuestProfile(false);

@@ -319,6 +319,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
       prep = null; hold.hold(); globe.resumeWorkers(); lastT = performance.now(); toGlobe(true); return true;
     },
+    /** VR ground step: leave the planet view and stand the mama at the forest edge. */
+    showForest(at: { x: number; z: number; yaw: number }) {
+      host.place(at.x, at.z, at.yaw);
+      wantEmbody = false; wantCancel = false; prep = null; pinned = null; down = true; next = null;
+      globe?.resumeOrbit(); globe?.drive(null); globe?.suspendWorkers();
+      restoreScene(); setMode('game');
+    },
     blocksGame: () => mode !== 'game',
     /** Air speed (m/s) once the fall has handed off, so the wind loop can start at 10,000 ft. 0 on the globe and in the game. */
     airRush: () => mode === 'band' && down && phase === 'drone' ? airSpeed : 0,

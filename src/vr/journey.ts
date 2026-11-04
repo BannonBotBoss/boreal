@@ -16,7 +16,7 @@ import { sphereLook } from '../world/cosmos/look';
 import { descentHeight, descentProgress } from '../world/globe/flight';
 import { setQuestProfile } from '../world/cosmos/lod';
 
-type Phase = 'dark' | 'sphere' | 'globe' | 'fall' | 'wolf';
+type Phase = 'dark' | 'sphere' | 'globe' | 'fall' | 'wolf' | 'forest';
 
 const rayDir = new Vector3();
 const rayOrigin = new Vector3();
@@ -24,13 +24,13 @@ const quat = new Quaternion();
 const PLANET_YEAR = 9.2e9;
 const worlds = new WeakMap<World, Journey>();
 
-export function startJourney(world: World) {
+export function startJourney(world: World, hooks?: { onForest?: () => void }) {
     world.scene.background = new Color(0x071018);
   world.scene.add(new AmbientLight(0x241830, 0.45));
   const sun = new DirectionalLight(0xfff4e0, 1.2);
   sun.position.set(2, 4, 1);
   world.scene.add(sun);
-  const state = new Journey(world);
+  const state = new Journey(world, hooks?.onForest);
   worlds.set(world, state);
   world.registerSystem(JourneySystem);
   world.onXRFrame((frame, delta) => state.frame(frame, delta));
@@ -63,7 +63,7 @@ class Journey {
   dragX: number | null = null;
   globeHold = 0;
 
-  constructor(private world: World) {
+  constructor(private world: World, private onForest?: () => void) {
     this.canvas = document.createElement('canvas');
     this.canvas.width = 512;
     this.canvas.height = 256;
@@ -160,12 +160,18 @@ class Journey {
   }
 
   beginWolf() {
+    if (this.phase === 'forest' || this.phase === 'wolf') return;
+    this.globe.visible = false;
+    this.sphere.visible = false;
+    this.ground.visible = false;
+    this.panel.visible = false;
+    this.cover(0);
+    if (this.onForest) { this.phase = 'forest'; this.onForest(); return; }
     this.phase = 'wolf';
     this.world.player.position.y = 0;
     this.ground.visible = true;
     this.panel.visible = true;
     this.muzzle.visible = true;
-    this.cover(0);
     this.paint('Point and pinch to glide.\nPinch the other hand to snap turn.\nNo animals are placed in this room.');
   }
 

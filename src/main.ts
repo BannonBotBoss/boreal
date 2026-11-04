@@ -15,7 +15,8 @@ import { holdVisual, setSqueal } from './core/huntHold';
 import { CONTACTS } from './core/contactBus';
 import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from './core/waterWake';
 import { catalog } from './core/catalog';
-import type { Entity } from './core/world';
+import { heightAt, type Entity } from './core/world';
+import { forestHandsOn, readForestHands } from './vr/forestSession';
 import { BorealSound, mealChews } from './audio/borealSound';
 import { createMusic } from './audio/music';
 import { MUSIC_PANEL, MUSIC_SAFETY, MUSIC_SETTINGS, TONES } from './audio/musicSettings';
@@ -277,7 +278,15 @@ function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.cl
 actionButton.onclick = perform;
 element('pause').onclick = togglePause;
 element('menu-btn').onclick = () => { if (!menu.open) openStart(); };
-void import('./vr/session').then(m => m.mountEnterVr(notice)).catch(e => console.warn('vr', e));
+let xrDriven = false;
+void import('./vr/session').then(m => m.mountEnterVr(notice, {
+  renderer: () => view.photoreal.renderer,
+  place: (x, z, y) => { player.x = x; player.z = z; yaw = y; player.heading = y; lookYaw = 0; },
+  showGame: (at) => { if (inpage) inpage.showForest(at); else { player.x = at.x; player.z = at.z; yaw = at.yaw; player.heading = at.yaw; lookYaw = 0; } },
+  drive: (t) => { xrDriven = true; frame(t); },
+  hold: () => { xrDriven = true; },
+  resume: () => { xrDriven = false; requestAnimationFrame(frame); },
+})).catch(e => console.warn('vr', e));
 element('photo-btn').onclick = () => enterPhoto();
 element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = view.playable.cameraHeight; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
 element('help').onclick = () => { if (!menu.open) togglePause(); menu.openControls(); }; // Controls screen (the Library text is a button there)
@@ -427,9 +436,14 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   let dx = 0, dz = 0;
   chrono.update(dt, menu.open ? 0 : H('scrubLater') - H('scrubEarlier')); // chronometer open: only its inputs and the look inputs it does not use are live (core/bindings liveActions)
   if (active) {
-    dx = H('steerRight') - H('steerLeft'); dz = H('moveBack') - H('moveForward');
+    if (forestHandsOn()) {
+      const hands = readForestHands(view.photoreal.renderer, { x: player.x, z: player.z, yaw }, heightAt(player.x, player.z));
+      dx = 0; dz = hands.forward ? -1 : 0;
+      if (hands.yaw != null) { yaw = hands.yaw; player.heading = yaw; }
+      if (hands.forward) setAutonomous(false);
+    } else dx = H('steerRight') - H('steerLeft'), dz = H('moveBack') - H('moveForward');
     if(autonomous && (Math.abs(dx)>.01 || Math.abs(dz)>.01)) setAutonomous(false);
-    const lookInput = H('lookRight') - H('lookLeft');
+    const lookInput = forestHandsOn() ? 0 : H('lookRight') - H('lookLeft');
     lookYaw -= lookInput * dt;
     if (!drag && Math.abs(lookInput) < .01) lookYaw *= Math.exp(-5 * dt);
     const verticalLook = H('lookDown') - H('lookUp');
@@ -556,7 +570,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   const stood = weatherAt(player.x, player.z);
   status.innerText = `${photo.active ? 'PHOTO · ' : isPaused() ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Snow ${stood.depthCm.toFixed(1)} cm · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind);   if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
-  requestAnimationFrame(frame);
+  if (!xrDriven) requestAnimationFrame(frame);
 }
 // The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.
 void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally(() => requestAnimationFrame(frame));

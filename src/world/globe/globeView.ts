@@ -36,6 +36,7 @@ import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { GLOBE_COAST, cloudClear, coastLambda, orbitClip, forestFromPlanet, globeCameraFrom } from './transition';
 import { DESCENT, NADIR, fallPitch, stepDescent, type DescentMode } from './flight';
+import { descentFrameDt } from './landingStream';
 import { body, step as stepBody } from '../../proc/physics';
 import { globePlanet } from './home';
 import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
@@ -497,7 +498,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let last = performance.now(), fps = 0, prevT = 0, t0 = 0, dt = 0, tR = 0;
   /** Camera, LOD, builds, adoption, eviction: everything but the draw. */
   function update() {
-    t0 = performance.now(); dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++; pageChrono?.update(dt, 0);
+    t0 = performance.now(); const wall = Math.max(0, (t0 - last) / 1000); dt = Math.min(.1, wall); last = t0; frame++; pageChrono?.update(dt, 0);
     const sunSec = q.has('shot') ? shotSec : worldSec(), sunDay = dayAt(sunSec), sunHour = hourAt(sunSec);
     let stamped = 0;
     for (const t of tiles.values()) { if (stamped >= 4) break; const before = t.solarBucket; stampSolar(t, sunDay, sunHour); if (t.solarBucket !== before) stamped++; }
@@ -512,7 +513,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (!fall) setCover(0, 'glide');
     if (fall && !ext && !handed) {
       const b = body(1, 0, fall.y, 0); b.vy = fall.vy; stepBody(b, dt, {}, -Infinity); // the one integrator; the seated glide below is what the camera follows
-      const moved = stepDescent(fall, dt);
+      const moved = stepDescent(fall, descentFrameDt(wall)); // slow frames must not stretch the 14 s ease by 10×
       fall.t = moved.t; fall.p = moved.p; fall.y = moved.y; fall.vy = moved.vy; alt = targetAlt = moved.y;
       setCover(moved.cover, fall.mode);
       if (moved.done) handoffVy = 0; // arrive at the glide already slow; the drone does not inherit an orbital impact

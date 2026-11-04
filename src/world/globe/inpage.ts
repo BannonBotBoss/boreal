@@ -22,6 +22,7 @@ import { createFarLayer } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, freeFallVy, flightPrompt, type EntryPhase } from './flight';
+import { canEmbody, descentFrameDt, landingJobBudget, landingPatchReady } from './landingStream';
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
 import { forestLanding } from './forestLanding';
@@ -72,7 +73,7 @@ export const INPAGE = { searchMs: 3, gain: 1, kDown: .7, kUp: 1.7, nearK: .01, p
  *  height), so the game patch (tree greens, a dark forest floor, the water) meets the globe at the globe's own colour high up
  *  and keeps its own look by the handover; occ: [metres, fraction of the distance] a globe surface must be in front of a
  *  patch fragment to hide it (globe tiles are coarser than the game terrain). [game calibration] */
-type View = { scene: THREE.Scene; camera: THREE.PerspectiveCamera; canvas: HTMLCanvasElement; photoreal: { renderer: THREE.WebGLRenderer } };
+type View = { scene: THREE.Scene; camera: THREE.PerspectiveCamera; canvas: HTMLCanvasElement; photoreal: { renderer: THREE.WebGLRenderer }; chunkBuilt?(cx: number, cz: number): boolean };
 export interface InPageHost { player(): { x: number; z: number; yaw: number }; place(x: number, z: number, yaw: number): void; save(): void; notice?(m: string): void }
 type FxTier = { ssao: number; contact: number; rays: number };
 let lakeU: typeof import('./globeView').GLOBE_LAKE | null = null, landU: typeof import('./globeView').GLOBE_LAND | null = null, shoreU: typeof import('./globeView').GLOBE_SHORE | null = null;
@@ -111,6 +112,7 @@ function controller(view: View, host: InPageHost) {
   let prep: { x: number; z: number } | null = null; // chunks under the fall, warmed once the drop is below prepAlt. The clicked point is not moved.
   let renderMs = 0; // last frame's globe + game draw CPU (ms): the descent's chunk job budget fills the rest of jobFrame
   let bandT = 0; /* s since the descent started (the ready safety cap) */ const chunkFirst = (k: string) => k.startsWith('chunk:');
+  let dropStream = false, lateWarned = false; // dropStream: chunk jobs stay first until the landing ring is in the scene, including after G
   let maskWait = 0, maskWarned = false, readyAt = 0, dusk = 0; // s waited on the mask with the chunks ready (capped at INPAGE.maskWaitSec); h at first ready (STATS.readyAt)
   let h = 0, h0 = 1, blend = 0, fade = 0, fadeT = 0, ready = false, readySeen = false, needStart = false, placedFrame = 0, frameNo = 0, lastT = 0, cameraTouched = false, simT = 0; // simT: seconds the controller has actually stepped (dt is capped at 0.1 s, so slow frames run the fall slower than the wall clock)
   const start = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, end = { p: new THREE.Vector3(), q: new THREE.Quaternion() };
@@ -148,12 +150,17 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     globe.attachViewpoint(view.camera); // one camera from orbit down; the planet scene is the mapping of it
     return globe;
   }
-  /** Patch readiness: the 3x3 chunks around the player are built (none pending) a couple of frames after the move. */
+  /** The cell under the wolf. Queued or never started does not count: only a chunk already in the scene. */
+  function centreBuilt() {
+    const p = host.player();
+    return !!view.chunkBuilt?.(Math.floor(p.x / CHUNK_SIZE), Math.floor(p.z / CHUNK_SIZE));
+  }
+  /** Patch readiness: every chunk of the landing ring is in the scene, and none of those jobs are still queued.
+   *  A cell that was never enqueued used to count as ready (`pending` is false), so G landed on an empty plane. */
   function chunksReady() {
     if (frameNo - placedFrame < 3) return false;
     const p = host.player(), cx = Math.floor(p.x / CHUNK_SIZE), cz = Math.floor(p.z / CHUNK_SIZE);
-    const k = INPAGE.ring; for (let a = cx - k; a <= cx + k; a++) for (let b = cz - k; b <= cz + k; b++) if (pending(`chunk:${a}:${b}`)) return false;
-    return true;
+    return landingPatchReady(cx, cz, INPAGE.ring, pending, (a, b) => !!view.chunkBuilt?.(a, b));
   }
   function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe'); globe?.setLayerPanel(layerPanelShown(m)); if (typeof document !== 'undefined') document.body.classList.toggle(GLOBE_HUD_CLASS, hudHidden(m)); if (m === 'game') showPrompt(''); }
   /** Globe -> drone, on the point that was double-clicked. The fall's vertical speed is kept. The spot is not pulled
@@ -165,7 +172,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     const spot = landSpawn({ x: at.x, z: at.z }, undefined, at.yaw);
     const stood = remote ? dryNear() : spot;
     spotX = stood.x; spotZ = stood.z; yaw = at.yaw;
-    host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null;
+    host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null; dropStream = true;
     const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
     h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;
     vel.x = 0; vel.y = at.vy ?? 0; vel.z = 0; airSpeed = Math.abs(vel.y); freeFall = !vel.y; // no carried speed: gravity takes over from rest
@@ -174,7 +181,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
   /** Warm the chunks under the falling camera, at the same point the handoff will use. Does not search for a different landing. */
   function warmUnderFall() {
     const g = globe!, v = g.camera.position, L = v.length() || 1, s = g.planet.sampleSurface([v.x / L, v.y / L, v.z / L]);
-    host.place(s.x, s.z, g.headingYaw); placedFrame = frameNo; prep = { x: s.x, z: s.z };
+    host.place(s.x, s.z, g.headingYaw); placedFrame = frameNo; prep = { x: s.x, z: s.z }; dropStream = true;
   }
   function cancelToGlobe() {
     if (!globe || mode !== 'band') return;
@@ -324,13 +331,18 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       host.place(at.x, at.z, at.yaw);
       wantEmbody = false; wantCancel = false; prep = null; pinned = null; down = true; next = null;
       globe?.resumeOrbit(); globe?.drive(null); globe?.suspendWorkers();
-      restoreScene(); setMode('game');
+      dropStream = true; restoreScene(); setMode('game');
     },
     blocksGame: () => mode !== 'game',
     /** Air speed (m/s) once the fall has handed off, so the wind loop can start at 10,000 ft. 0 on the globe and in the game. */
     airRush: () => mode === 'band' && down && phase === 'drone' ? airSpeed : 0,
-    /** main's runJobs budget: undefined = the default; larger while the descent waits for the patch chunks */
-    jobBudgetMs: () => { const w = (mode === 'band' && down && !readySeen) || (mode === 'globe' && !!prep && !chunksReady()); JOB_FIRST.test = w ? chunkFirst : null; return w ? Math.max(INPAGE.jobMin, INPAGE.jobFrame - renderMs) : undefined; }, /* + the patch chunks run before grass/flora (core/interest JOB_FIRST) */
+    /** main's runJobs budget: undefined = the default. The landing ring keeps chunk jobs first, and a real
+     *  budget, until those chunks are in the scene. A slow draw must not shrink that to a couple of milliseconds:
+     *  flora is queued ahead of chunks, and the ground then never arrives. */
+    jobBudgetMs: () => {
+      const ready = chunksReady(); if (dropStream && ready) dropStream = false;
+      const budget = landingJobBudget(ready, dropStream); JOB_FIRST.test = budget !== undefined ? chunkFirst : null; return budget;
+    },
     ownsInput: () => mode !== 'game',
     /** main's draw slot: globe mode draws the globe to the screen; band and game draw the game (buildScene calls the hooks). */
     frame(drawGame: () => void) {
@@ -339,7 +351,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (mode === 'globe' && globe) {
         cameraTouched = true; // orbit clip is on the forest camera; game mode puts 0.2 / 700 back
         showPrompt(flightPrompt(entryName(), padOn()));
-        if (globe.fallState && globe.altitude < INPAGE.prepAlt && !prep) warmUnderFall();
+        if (globe.fallState && !prep) warmUnderFall(); // the whole fall, not only the last kilometres: the landing chunks need the time
         else if (prep && !globe.fallState) prep = null;
         const t0 = performance.now(), w = renderer.domElement.width, hh = renderer.domElement.height;
         if (Math.abs(globe.camera.aspect - w / hh) > 1e-6) { globe.camera.aspect = w / hh; globe.camera.updateProjectionMatrix(); }
@@ -353,11 +365,12 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     camera(camera: THREE.PerspectiveCamera) {
       if (mode !== 'band') { if (cameraTouched) { camera.near = .2; camera.far = 700; cameraTouched = false; } return; }
       cameraTouched = true;
-      const now = performance.now(), dt = Math.min(.1, (now - lastT) / 1000); lastT = now; simT += dt;
+      const now = performance.now(), wall = Math.max(0, (now - lastT) / 1000);
+      const dt = Math.min(.1, (now - lastT) / 1000); lastT = now; simT += dt;
       end.p.copy(camera.position); end.q.copy(camera.quaternion); const cr = chunksReady(), mr = globe?.maskReady ?? true; if (!cr || mr) maskWait = 0; else if ((maskWait += dt) > INPAGE.maskWaitSec && !maskWarned) { maskWarned = true; console.warn(`INPAGE shoreline mask not ready after ${INPAGE.maskWaitSec} s: landing with the per-vertex shoreline`); }
       ready = cr && (mr || maskWait > INPAGE.maskWaitSec); if (ready && !readySeen) readyAt = Math.round(h); readySeen ||= ready;
-      if (down) bandT += dt; const late = down && !readySeen && bandT > INPAGE.readyMaxSec;
-      if (late) { readySeen = true; readyAt = -Math.round(h); console.warn(`INPAGE patch not ready after ${Math.round(bandT)} s: fading in at ${Math.round(h)} m, the game streams the rest`); } // the camera is not held: speed from the fall keeps going
+      if (down) bandT += descentFrameDt(wall); const late = down && wantEmbody && !centreBuilt() && bandT > INPAGE.readyMaxSec;
+      if (late && !lateWarned) { lateWarned = true; console.warn(`INPAGE ground chunk not in after ${Math.round(bandT)} s at ${Math.round(h)} m: staying on the glide until it is`); }
       if (needStart) { // ascent: straight up the player's vertical. Pitch follows the climb curve back toward nadir.
         needStart = false; freeFall = false; const p = host.player(); spotX = p.x; spotZ = p.z; yaw = p.yaw; vel.x = vel.y = vel.z = 0;
         land.set(p.x, ground(p.x, p.z), p.z); h = h0 = Math.max(1, end.p.y - land.y); pitch = globePitch(h);
@@ -367,9 +380,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       else if (down) { // photo-mode fly plus the fall's velocity. The patch still waits on chunks; the camera does not.
         if (readySeen) fadeT = Math.min(1, fadeT + dt / INPAGE.fadeSec);
         fade = Math.min(patchFade(h, readySeen), fadeT);
-        const lowEnough = readySeen || late;
         if (phase === 'drone') {
-          if (wantEmbody && lowEnough) { wantEmbody = false; host.place(spotX, spotZ, yaw); placedFrame = frameNo; blend = 1; phase = 'blend'; vel.x = vel.y = vel.z = 0; airSpeed = 0; } // one camera: no second pose to ease toward
+          if (canEmbody(centreBuilt(), wantEmbody)) { wantEmbody = false; host.place(spotX, spotZ, yaw); placedFrame = frameNo; blend = 1; phase = 'blend'; vel.x = vel.y = vel.z = 0; airSpeed = 0; } // her chunk is in the scene; the rest of the ring keeps streaming first
           else {
             const axesIn = readAxes(dt);
             const fly = { x: spotX, y: ground(spotX, spotZ) + h, z: spotZ, yaw, pitch };
@@ -404,7 +416,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
         if (phase === 'blend') handoverBlend(cam, end, blend); // no-op: blendSec is not applied
         showPrompt(flightPrompt(entryName(), padOn()));
       } else { // up: the same vertical, back to the planet
-        h = Math.min(top, h * Math.exp(INPAGE.kUp * dt)); pitch = globePitch(h);
+        h = Math.min(top, h * Math.exp(INPAGE.kUp * descentFrameDt(wall))); pitch = globePitch(h);
         viewpointPose(spotX, spotZ, ground(spotX, spotZ), h, yaw, pitch, vp);
         fade = patchFade(h, true); showPrompt('Returning to the planet…');
       }

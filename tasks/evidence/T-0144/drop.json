@@ -1,0 +1,2919 @@
+{
+  "report": {
+    "fallWallSec": 38.6,
+    "landed": {
+      "mode": "game",
+      "h": 401,
+      "chunks": 13,
+      "terrain": 13,
+      "trees": 868,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 3.25
+      },
+      "cam": {
+        "x": 65,
+        "y": 4.3,
+        "z": -18.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "player": {
+        "x": 61.9,
+        "z": -16.7,
+        "yaw": 2.05
+      },
+      "hud": "10:21"
+    },
+    "walked": {
+      "chunks": 12,
+      "terrain": 12,
+      "cam": {
+        "x": 62.9,
+        "y": 4,
+        "z": -17.3,
+        "near": 0.2,
+        "far": 700
+      },
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 2.94
+      },
+      "player": {
+        "x": 59.7,
+        "z": -15.6,
+        "yaw": 2.05
+      }
+    },
+    "notes": [
+      "error Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "warning THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.",
+      "error Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "fall wall 38.6 s"
+    ]
+  },
+  "log": [
+    {
+      "name": "load",
+      "t": 156,
+      "mode": null,
+      "phase": null,
+      "h": null,
+      "simT": null,
+      "player": null,
+      "cam": null,
+      "fall": null,
+      "chunks": null,
+      "entities": null,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": null,
+      "q": null,
+      "kinds": {},
+      "prompt": "",
+      "loading": true,
+      "hud": ""
+    },
+    {
+      "name": "load",
+      "t": 15621,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": true,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 1,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": true,
+      "hud": "10:02"
+    },
+    {
+      "name": "load",
+      "t": 17885,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 10,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": true,
+      "hud": "10:03"
+    },
+    {
+      "name": "load",
+      "t": 19889,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 45,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": true,
+      "hud": "10:03"
+    },
+    {
+      "name": "load",
+      "t": 21893,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 109,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": true,
+      "hud": "10:03"
+    },
+    {
+      "name": "load",
+      "t": 23897,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 109,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": true,
+      "hud": "10:03"
+    },
+    {
+      "name": "load",
+      "t": 25909,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 109,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": true,
+      "hud": "10:03"
+    },
+    {
+      "name": "load",
+      "t": 27913,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 110,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": true,
+      "hud": "10:04"
+    },
+    {
+      "name": "load",
+      "t": 29922,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 110,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": true,
+      "hud": "10:04"
+    },
+    {
+      "name": "load",
+      "t": 31927,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 115,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:05"
+    },
+    {
+      "name": "chunks",
+      "t": 31930,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 115,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:05"
+    },
+    {
+      "name": "chunks",
+      "t": 33436,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 115,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:05"
+    },
+    {
+      "name": "chunks",
+      "t": 34948,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 119,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:06"
+    },
+    {
+      "name": "chunks",
+      "t": 36453,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 122,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:06"
+    },
+    {
+      "name": "chunks",
+      "t": 37959,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 126,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:07"
+    },
+    {
+      "name": "chunks",
+      "t": 39463,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 128,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:07"
+    },
+    {
+      "name": "chunks",
+      "t": 40970,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 133,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:07"
+    },
+    {
+      "name": "chunks",
+      "t": 42476,
+      "mode": "game",
+      "phase": "game",
+      "h": 0,
+      "simT": 0,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 28.8,
+        "y": 2.5,
+        "z": 3.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 141,
+          "dones": 0
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:08"
+    },
+    {
+      "name": "climb",
+      "t": 54308,
+      "mode": "band",
+      "phase": "drone",
+      "h": 2,
+      "simT": 0.11,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 30,
+        "y": 3,
+        "z": 0,
+        "near": 0.2,
+        "far": 5318
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 60,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 19,
+          "dones": 0
+        },
+        "grass": {
+          "slices": 14,
+          "dones": 0
+        }
+      },
+      "prompt": "Returning to the planet…",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "climb",
+      "t": 55740,
+      "mode": "band",
+      "phase": "drone",
+      "h": 8,
+      "simT": 0.31,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 30,
+        "y": 9.9,
+        "z": 0,
+        "near": 0.2,
+        "far": 12442
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 60,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 24,
+          "dones": 0
+        },
+        "grass": {
+          "slices": 14,
+          "dones": 0
+        }
+      },
+      "prompt": "Returning to the planet…",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "climb",
+      "t": 57991,
+      "mode": "band",
+      "phase": "drone",
+      "h": 20,
+      "simT": 0.41,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 30,
+        "y": 21.2,
+        "z": 0,
+        "near": 0.2,
+        "far": 19032
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 60,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 27,
+          "dones": 0
+        },
+        "grass": {
+          "slices": 14,
+          "dones": 0
+        }
+      },
+      "prompt": "Returning to the planet…",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "climb",
+      "t": 59032,
+      "mode": "band",
+      "phase": "drone",
+      "h": 25,
+      "simT": 0.51,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 30,
+        "y": 26.4,
+        "z": 0,
+        "near": 0.25,
+        "far": 21377
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 60,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 30,
+          "dones": 0
+        },
+        "grass": {
+          "slices": 14,
+          "dones": 0
+        }
+      },
+      "prompt": "Returning to the planet…",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "climb",
+      "t": 60090,
+      "mode": "band",
+      "phase": "drone",
+      "h": 136,
+      "simT": 0.71,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 30,
+        "y": 137.8,
+        "z": 0,
+        "near": 1.36,
+        "far": 50014
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 60,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 47,
+          "dones": 0
+        },
+        "grass": {
+          "slices": 14,
+          "dones": 0
+        }
+      },
+      "prompt": "Returning to the planet…",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "climb",
+      "t": 61253,
+      "mode": "band",
+      "phase": "drone",
+      "h": 390,
+      "simT": 0.93,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 30,
+        "y": 391.3,
+        "z": 0,
+        "near": 3.9,
+        "far": 84573
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 60,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 56,
+          "dones": 0
+        },
+        "grass": {
+          "slices": 14,
+          "dones": 0
+        }
+      },
+      "prompt": "Returning to the planet…",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "climb",
+      "t": 62419,
+      "mode": "band",
+      "phase": "drone",
+      "h": 1141,
+      "simT": 1.16,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 30,
+        "y": 1142.7,
+        "z": 0,
+        "near": 11.41,
+        "far": 144713
+      },
+      "fall": null,
+      "chunks": 0,
+      "entities": 0,
+      "terrain": 0,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 60,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 61,
+          "dones": 0
+        },
+        "grass": {
+          "slices": 14,
+          "dones": 0
+        }
+      },
+      "prompt": "Returning to the planet…",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "climb",
+      "t": 64076,
+      "mode": "band",
+      "phase": "drone",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 30,
+        "y": 2101.5,
+        "z": 0,
+        "near": 21,
+        "far": 196312
+      },
+      "fall": null,
+      "chunks": 1,
+      "entities": 15,
+      "terrain": 1,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 59,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 68,
+          "dones": 1
+        },
+        "grass": {
+          "slices": 14,
+          "dones": 0
+        }
+      },
+      "prompt": "Returning to the planet…",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "climb",
+      "t": 65456,
+      "mode": "globe",
+      "phase": "orbit",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 14016223.1,
+        "z": -18.6,
+        "near": 100000,
+        "far": 32102991
+      },
+      "fall": null,
+      "chunks": 1,
+      "entities": 15,
+      "terrain": 1,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 59,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 73,
+          "dones": 1
+        },
+        "grass": {
+          "slices": 14,
+          "dones": 0
+        }
+      },
+      "prompt": "Looking straight down. Double-click a point to drop there. Drag orbits. Wheel zo",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 70242,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 30,
+        "z": 0,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 14016223.1,
+        "z": -18.6,
+        "near": 100000,
+        "far": 32102991
+      },
+      "fall": {
+        "h": 14016219,
+        "ease": 0
+      },
+      "chunks": 2,
+      "entities": 22,
+      "terrain": 2,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 58,
+      "kinds": {
+        "flora": {
+          "slices": 146,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 94,
+          "dones": 2
+        },
+        "grass": {
+          "slices": 20,
+          "dones": 0
+        }
+      },
+      "prompt": "Looking straight down. Double-click a point to drop there. Drag orbits. Wheel zo",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 71249,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 13310706.8,
+        "z": -18.6,
+        "near": 100000,
+        "far": 31358811
+      },
+      "fall": {
+        "h": 13310703,
+        "ease": 0.005
+      },
+      "chunks": 2,
+      "entities": 22,
+      "terrain": 2,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 55,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 94,
+          "dones": 2
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 72256,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 9702086.6,
+        "z": -18.6,
+        "near": 100000,
+        "far": 27493128
+      },
+      "fall": {
+        "h": 9702083,
+        "ease": 0.035
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 236,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 73270,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 7525396.8,
+        "z": -18.6,
+        "near": 100000,
+        "far": 25086350
+      },
+      "fall": {
+        "h": 7525393,
+        "ease": 0.059
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 292,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 74276,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 5517311.9,
+        "z": -18.6,
+        "near": 100000,
+        "far": 22773196
+      },
+      "fall": {
+        "h": 5517308,
+        "ease": 0.089
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 427,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 75281,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 5517311.9,
+        "z": -18.6,
+        "near": 100000,
+        "far": 22773196
+      },
+      "fall": {
+        "h": 5517308,
+        "ease": 0.089
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 427,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 76290,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 3845420.5,
+        "z": -18.6,
+        "near": 76908.33,
+        "far": 20722267
+      },
+      "fall": {
+        "h": 3845417,
+        "ease": 0.124
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 509,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 77296,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 2562492.6,
+        "z": -18.6,
+        "near": 51249.78,
+        "far": 18997345
+      },
+      "fall": {
+        "h": 2562489,
+        "ease": 0.162
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 725,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 78316,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 1641981.4,
+        "z": -18.6,
+        "near": 32839.55,
+        "far": 17593699
+      },
+      "fall": {
+        "h": 1641978,
+        "ease": 0.205
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 769,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 79319,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 1017524.9,
+        "z": -18.6,
+        "near": 20350.42,
+        "far": 16473964
+      },
+      "fall": {
+        "h": 1017521,
+        "ease": 0.251
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 840,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 80324,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 613306.5,
+        "z": -18.6,
+        "near": 12266.05,
+        "far": 15591871
+      },
+      "fall": {
+        "h": 613303,
+        "ease": 0.299
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 1083,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 81338,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 361618.2,
+        "z": -18.6,
+        "near": 7232.29,
+        "far": 14903445
+      },
+      "fall": {
+        "h": 361614,
+        "ease": 0.35
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 1248,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 82345,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 209772.4,
+        "z": -18.6,
+        "near": 4195.37,
+        "far": 14370418
+      },
+      "fall": {
+        "h": 209769,
+        "ease": 0.402
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 1455,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 83353,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 120408.4,
+        "z": -18.6,
+        "near": 2408.09,
+        "far": 13960373
+      },
+      "fall": {
+        "h": 120405,
+        "ease": 0.455
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 1527,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 84361,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 68780,
+        "z": -18.6,
+        "near": 1375.52,
+        "far": 13646055
+      },
+      "fall": {
+        "h": 68776,
+        "ease": 0.508
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 1743,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 85364,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 39323.5,
+        "z": -18.6,
+        "near": 786.39,
+        "far": 13404630
+      },
+      "fall": {
+        "h": 39320,
+        "ease": 0.562
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 1874,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 86372,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 22631.6,
+        "z": -18.6,
+        "near": 452.56,
+        "far": 13216885
+      },
+      "fall": {
+        "h": 22628,
+        "ease": 0.614
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 1943,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 87376,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 13186.9,
+        "z": -18.6,
+        "near": 263.66,
+        "far": 13065917
+      },
+      "fall": {
+        "h": 13183,
+        "ease": 0.666
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 2165,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 88383,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 7824.1,
+        "z": -18.6,
+        "near": 156.41,
+        "far": 12933115
+      },
+      "fall": {
+        "h": 7820,
+        "ease": 0.716
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 2303,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 89389,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 4754.4,
+        "z": -18.6,
+        "near": 95.01,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 4751,
+        "ease": 0.764
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 2645,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 90394,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 2975.9,
+        "z": -18.6,
+        "near": 59.44,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 2972,
+        "ease": 0.808
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 54,
+      "kinds": {
+        "flora": {
+          "slices": 147,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 2748,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 297,
+          "dones": 2
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 91398,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 1929.8,
+        "z": -18.6,
+        "near": 38.52,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 1926,
+        "ease": 0.85
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 53,
+      "kinds": {
+        "flora": {
+          "slices": 148,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 2785,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 493,
+          "dones": 3
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 92408,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 1929.8,
+        "z": -18.6,
+        "near": 38.52,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 1926,
+        "ease": 0.85
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 53,
+      "kinds": {
+        "flora": {
+          "slices": 148,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 2785,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 493,
+          "dones": 3
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 93413,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 1304,
+        "z": -18.6,
+        "near": 26.01,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 1300,
+        "ease": 0.887
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 49,
+      "kinds": {
+        "flora": {
+          "slices": 149,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 2785,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 993,
+          "dones": 7
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 94418,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 923.5,
+        "z": -18.6,
+        "near": 18.39,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 920,
+        "ease": 0.92
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 43,
+      "kinds": {
+        "flora": {
+          "slices": 151,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 2785,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 1737,
+          "dones": 13
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 95426,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 689.3,
+        "z": -18.6,
+        "near": 13.71,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 686,
+        "ease": 0.949
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 31,
+      "kinds": {
+        "flora": {
+          "slices": 163,
+          "dones": 1
+        },
+        "chunk": {
+          "slices": 2785,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 3228,
+          "dones": 25
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 96431,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 545.2,
+        "z": -18.6,
+        "near": 10.83,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 541,
+        "ease": 0.971
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 23,
+      "kinds": {
+        "flora": {
+          "slices": 167,
+          "dones": 2
+        },
+        "chunk": {
+          "slices": 2785,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 3976,
+          "dones": 32
+        },
+        "moss": {
+          "slices": 1,
+          "dones": 0
+        },
+        "fartrees": {
+          "slices": 5,
+          "dones": 0
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 97436,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 457.1,
+        "z": -18.6,
+        "near": 9.07,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 453,
+        "ease": 0.988
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 22,
+      "kinds": {
+        "flora": {
+          "slices": 169,
+          "dones": 2
+        },
+        "chunk": {
+          "slices": 2785,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 3976,
+          "dones": 32
+        },
+        "moss": {
+          "slices": 9,
+          "dones": 0
+        },
+        "fartrees": {
+          "slices": 10,
+          "dones": 1
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 98441,
+      "mode": "globe",
+      "phase": "fall",
+      "h": 2100,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": -0.35
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 414.1,
+        "z": -18.6,
+        "near": 8.21,
+        "far": 12742018
+      },
+      "fall": {
+        "h": 410,
+        "ease": 0.998
+      },
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 21,
+      "kinds": {
+        "flora": {
+          "slices": 187,
+          "dones": 3
+        },
+        "chunk": {
+          "slices": 2785,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 3976,
+          "dones": 32
+        },
+        "moss": {
+          "slices": 10,
+          "dones": 0
+        },
+        "fartrees": {
+          "slices": 10,
+          "dones": 1
+        }
+      },
+      "prompt": "Easing down through the clouds, past 10,000 ft, to a glide above the land. The v",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "fall",
+      "t": 99445,
+      "mode": "band",
+      "phase": "drone",
+      "h": 400,
+      "simT": 1.38,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": 2.05
+      },
+      "cam": {
+        "x": 65.4,
+        "y": 403.8,
+        "z": -18.6,
+        "near": 8,
+        "far": 12742018
+      },
+      "fall": null,
+      "chunks": 3,
+      "entities": 61,
+      "terrain": 3,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 1.48
+      },
+      "q": 21,
+      "kinds": {
+        "flora": {
+          "slices": 188,
+          "dones": 3
+        },
+        "chunk": {
+          "slices": 2785,
+          "dones": 3
+        },
+        "grass": {
+          "slices": 3976,
+          "dones": 32
+        },
+        "moss": {
+          "slices": 15,
+          "dones": 0
+        },
+        "fartrees": {
+          "slices": 10,
+          "dones": 1
+        }
+      },
+      "prompt": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shif",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "embody",
+      "t": 108884,
+      "mode": "band",
+      "phase": "drone",
+      "h": 401,
+      "simT": 1.98,
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": 2.05
+      },
+      "cam": {
+        "x": 61.9,
+        "y": 403.8,
+        "z": -16.7,
+        "near": 4.01,
+        "far": 85726
+      },
+      "fall": null,
+      "chunks": 13,
+      "entities": 868,
+      "terrain": 13,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 3.75
+      },
+      "q": 11,
+      "kinds": {
+        "flora": {
+          "slices": 227,
+          "dones": 5
+        },
+        "chunk": {
+          "slices": 2795,
+          "dones": 13
+        },
+        "grass": {
+          "slices": 6583,
+          "dones": 53
+        },
+        "moss": {
+          "slices": 22,
+          "dones": 0
+        },
+        "fartrees": {
+          "slices": 17,
+          "dones": 2
+        }
+      },
+      "prompt": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shif",
+      "loading": false,
+      "hud": ""
+    },
+    {
+      "name": "embody",
+      "t": 114493,
+      "mode": "game",
+      "phase": "game",
+      "h": 401,
+      "simT": 2.08,
+      "player": {
+        "x": 61.9,
+        "z": -16.7,
+        "yaw": 2.05
+      },
+      "cam": {
+        "x": 65,
+        "y": 4.3,
+        "z": -18.4,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 13,
+      "entities": 868,
+      "terrain": 13,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 3.25
+      },
+      "q": 10,
+      "kinds": {
+        "flora": {
+          "slices": 245,
+          "dones": 6
+        },
+        "chunk": {
+          "slices": 2795,
+          "dones": 13
+        },
+        "grass": {
+          "slices": 6583,
+          "dones": 53
+        },
+        "moss": {
+          "slices": 24,
+          "dones": 0
+        },
+        "fartrees": {
+          "slices": 17,
+          "dones": 2
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:21"
+    },
+    {
+      "name": "walk",
+      "t": 124141,
+      "mode": "game",
+      "phase": "game",
+      "h": 401,
+      "simT": 2.08,
+      "player": {
+        "x": 59.7,
+        "z": -15.6,
+        "yaw": 2.05
+      },
+      "cam": {
+        "x": 62.9,
+        "y": 4,
+        "z": -17.3,
+        "near": 0.2,
+        "far": 700
+      },
+      "fall": null,
+      "chunks": 12,
+      "entities": 742,
+      "terrain": 12,
+      "trees": 0,
+      "wolf": {
+        "h": 0.57,
+        "visible": false,
+        "y": 2.94
+      },
+      "q": 9,
+      "kinds": {
+        "flora": {
+          "slices": 266,
+          "dones": 7
+        },
+        "chunk": {
+          "slices": 4076,
+          "dones": 18
+        },
+        "grass": {
+          "slices": 6583,
+          "dones": 53
+        },
+        "moss": {
+          "slices": 33,
+          "dones": 0
+        },
+        "fartrees": {
+          "slices": 17,
+          "dones": 2
+        }
+      },
+      "prompt": "",
+      "loading": false,
+      "hud": "10:24"
+    }
+  ]
+}

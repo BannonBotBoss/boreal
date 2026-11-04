@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { body, step } from '../src/proc/physics';
-import { FALL_END_M, ISO_BELOW_HORIZON, NADIR, fallEase, fallPitch, fallVelocity, fallYaw, flightPrompt, freeFallVy, isDescentGesture } from '../src/world/globe/flight';
+import { DESCENT, FALL_END_M, ISO_BELOW_HORIZON, NADIR, descentHeight, descentProgress, fallEase, fallPitch, fallVelocity, fallYaw, flightPrompt, freeFallVy, isDescentGesture, stepDescent } from '../src/world/globe/flight';
 import { PHOTO_FLY_LOOK, photoFlyMove, photoFlyPad, photoFlyStick, stepCarriedFly } from '../src/photo/fly';
 import { atomValues, loadBindings, resolveContext, type PadState } from '../src/core/bindings';
 import { MIX, RUSH_REF_MPS, rushLevel } from '../src/audio/borealSound';
@@ -25,13 +25,39 @@ test('double-click or A starts the fall; a click, a drag and the wheel do not', 
   assert.match(view, /stepBody\(b, dt, \{\}, -Infinity\)/);
   assert.match(view, /camera\.rotateZ\(-lookAz/);
   assert.match(view, /camera\.rotateX\(fallPitch\(ease\) - NADIR\)/);
+  assert.match(view, /alt <= DESCENT\.glideM/);
+  assert.doesNotMatch(view, /alt <= FALL_END_M/);
+  assert.match(view, /lookAz = fall\.yaw0/);
+  const page = readFileSync('src/world/globe/inpage.ts', 'utf8');
+  assert.doesNotMatch(page, /lowTier\(\)/);
   const clip = readFileSync('src/world/globe/transition.ts', 'utf8');
   assert.match(clip, /Math\.sqrt\(Math\.max\(0, rad \* rad - radius \* radius\)\)/);
   assert.match(view, /orbitClip\(alt, R, ground\)/);
-  const page = readFileSync('src/world/globe/inpage.ts', 'utf8');
   assert.doesNotMatch(page, /ENTRY_BEAT/);
   assert.doesNotMatch(page, /stepFlight\(/);
   assert.doesNotMatch(page, /autoEntry/);
+});
+
+test('the seated drop reaches the glide from orbit within one sitting, and a fade arrives without travelling', () => {
+  const h0 = 1.4e7;
+  assert.equal(descentProgress(0), 0);
+  assert.equal(descentProgress(DESCENT.sec), 1);
+  assert.ok(descentHeight(h0, DESCENT.glideM, 0) > 1e7);
+  assert.ok(Math.abs(descentHeight(h0, DESCENT.glideM, 1) - DESCENT.glideM) < 1e-3);
+  const mid = descentHeight(h0, DESCENT.glideM, descentProgress(DESCENT.sec / 2));
+  assert.ok(mid < 2e5 && mid > 2e4, `halfway is in the atmosphere, not still in orbit (${mid})`);
+  let state = { h0, t: 0, mode: 'glide' as const }, steps = 0, prev = h0;
+  for (; steps < 2000; steps++) {
+    const n = stepDescent(state, 1 / 60);
+    assert.ok(n.y <= prev + 1e-6, 'the glide only descends');
+    prev = n.y; state = { h0, t: n.t, mode: 'glide' };
+    if (n.done) { assert.ok(Math.abs(n.y - DESCENT.glideM) < 1); assert.ok(n.t <= DESCENT.sec + 1 / 60); break; }
+  }
+  assert.ok(steps < 2000, 'the glide finishes');
+  const fade = stepDescent({ h0, t: 0, mode: 'fade' }, DESCENT.fadeOut + DESCENT.fadeIn);
+  assert.equal(fade.done, true);
+  assert.ok(Math.abs(fade.y - DESCENT.glideM) < 1e-6);
+  assert.ok(fade.cover < 1e-9);
 });
 
 test('the 180° spin and the isometric pitch both finish at 10,000 ft', () => {

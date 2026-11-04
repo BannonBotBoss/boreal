@@ -1,0 +1,129 @@
+{
+  "task": "T-0051",
+  "url": "http://127.0.0.1:5250/?noprobe&nomenu&hour=12&rec&stages=1&needs=water:40,energy:70,rest:80&at=200,250,-1.553",
+  "viewport": [
+    960,
+    540
+  ],
+  "beforeMenu": {
+    "status": "12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 70/100 · Water 40% · Rest 80%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+    "player": {
+      "x": 200.00000179606687,
+      "z": 249.9999999680336,
+      "yaw": -1.553,
+      "energy": 69.94606487434751,
+      "water": 39.97531000845084,
+      "mode": "walk",
+      "handle": "4294967296",
+      "embodied": "4294967296",
+      "species": "wolf"
+    }
+  },
+  "pauseOpen": {
+    "hidden": false,
+    "className": "pause",
+    "buttons": [
+      {
+        "label": "Resume",
+        "disabled": false
+      },
+      {
+        "label": "Controls",
+        "disabled": false
+      },
+      {
+        "label": "Save",
+        "disabled": false
+      },
+      {
+        "label": "Music",
+        "disabled": false
+      },
+      {
+        "label": "Graphics",
+        "disabled": false
+      },
+      {
+        "label": "More",
+        "disabled": false
+      },
+      {
+        "label": "Quit to menu",
+        "disabled": false
+      }
+    ]
+  },
+  "pauseAfterEsc": {
+    "hidden": true,
+    "className": "pause fade"
+  },
+  "startMenuOpen": {
+    "hidden": false,
+    "className": "",
+    "text": "Boreal\nResume\nContinue\nNew world\nControls\nMusic\nGraphics\nBoard ↗\nQuit",
+    "buttons": [
+      {
+        "label": "Resume",
+        "disabled": false
+      },
+      {
+        "label": "Continue",
+        "disabled": true
+      },
+      {
+        "label": "New world",
+        "disabled": false
+      },
+      {
+        "label": "Controls",
+        "disabled": false
+      },
+      {
+        "label": "Music",
+        "disabled": false
+      },
+      {
+        "label": "Graphics",
+        "disabled": false
+      },
+      {
+        "label": "Board ↗",
+        "disabled": false
+      },
+      {
+        "label": "Quit",
+        "disabled": false
+      }
+    ],
+    "continueDisabled": true,
+    "resumeDisabled": false
+  },
+  "menuAfterEsc": {
+    "hidden": true,
+    "className": "fade",
+    "statusVisible": true,
+    "statusText": "12:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 70/100 · Water 40% · Rest 81%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+    "player": {
+      "x": 200.0000024221229,
+      "z": 249.99999995689072,
+      "yaw": -1.553,
+      "energy": 69.9185726507659,
+      "water": 39.962736813676685,
+      "mode": "walk",
+      "handle": "4294967296",
+      "embodied": "4294967296",
+      "species": "wolf"
+    }
+  },
+  "menuAfterResumeClick": {
+    "hidden": true,
+    "className": "fade"
+  },
+  "calibration": {
+    "metric": "Number(menuAfterEsc.hidden === true && menuAfterEsc.className.includes(\"fade\") && startMenuOpen.continueDisabled === true && menuAfterEsc.statusVisible === true)",
+    "knownMatch": 1,
+    "knownMismatchPreFix": 0,
+    "postFixScore": 1
+  },
+  "errors": []
+}

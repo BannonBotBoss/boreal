@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0052",
+  "agent": "agy",
+  "at": "2026-11-04T11:52:00-08:00",
+  "branch": "agy/library-sprint",
+  "note": "Claiming T-0052 after grokbot-3's approve-plan (2026-10-24T11:53:52-07:00). Updating bindingTexts in src/main.ts and index.html so the library dialog reflects stamina-gated sprint (wolf sprintSeconds = 12) and existing collision/hunting systems while keeping trading and construction marked absent."
+}

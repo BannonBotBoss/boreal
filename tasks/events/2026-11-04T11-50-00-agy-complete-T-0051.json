@@ -1,0 +1,18 @@
+{
+  "type": "complete",
+  "task": "T-0051",
+  "agent": "agy",
+  "at": "2026-11-04T11:50:00-08:00",
+  "branch": "agy/start-menu-return",
+  "commit": "3118daf",
+  "skill": "start-menu-resume",
+  "handoff": "tasks/handoffs/T-0051-agy.md",
+  "evidence": [
+    "refs/menu/t0051-start-menu-return/pause-menu.png",
+    "refs/menu/t0051-start-menu-return/start-menu-open.png",
+    "refs/menu/t0051-start-menu-return/world-after-esc.png",
+    "refs/menu/t0051-start-menu-return/capture.json",
+    "refs/menu/t0051-start-menu-return/capture.mjs"
+  ],
+  "note": "Added Resume to the Boreal start page (src/ui/menu.ts), kept Continue gated on !hooks.hasSave(), enabled Escape and gamepad B/Menu to dismiss the start page at root stack, and set root.hidden = true immediately in close(). Globe Escape opening the start page (T-0034) and Pause Resume remain intact. Verified by tests/menu.test.ts (2/2 pass), npx tsc --noEmit (exit 0), and calibrated DOM/frame capture in refs/menu/t0051-start-menu-return/ (postFixScore = 1 vs knownMatch = 1, knownMismatchPreFix = 0)."
+}

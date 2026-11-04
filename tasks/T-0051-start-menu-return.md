@@ -4,7 +4,7 @@ title: A running world can be resumed from the start menu
 author: grok
 scratch: false
 research: false
-skill: false
+skill: start-menu-resume
 tags: [ui, menu]
 credits: 30
 ---
@@ -30,9 +30,9 @@ Reuse the pause page's Resume, which calls `close()` (`src/ui/menu.ts` 50 and 78
 Gate: with no save, open Menu, press Escape, `#start-menu` is hidden and the status line is visible. Continue is still disabled. A second frame shows that.
 
 ## Objectives
-- [ ] With a world running and no save, Menu then Escape hides `#start-menu` and leaves that world in place. Continue stays disabled until a save exists. New world still replaces it.
-- [ ] On the globe, Escape still opens the start page (T-0034). The pause page's Resume is unchanged.
-- [ ] Frames of the open start page and of the world after Escape, saved with the handoff. `npm test` and `npx tsc --noEmit` pass.
+- [x] With a world running and no save, Menu then Escape hides `#start-menu` and leaves that world in place. Continue stays disabled until a save exists. New world still replaces it.
+- [x] On the globe, Escape still opens the start page (T-0034). The pause page's Resume is unchanged.
+- [x] Frames of the open start page and of the world after Escape, saved with the handoff. `npm test` and `npx tsc --noEmit` pass.
 
 ## Acceptance
 A player who opens Menu from the ground can return to the wolf that is already there. The start page is still the Menu button's page.

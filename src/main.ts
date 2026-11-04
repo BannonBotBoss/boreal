@@ -67,6 +67,7 @@ import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
 import { startView } from './world/globe/startView';
+import { createOpening, type Opening } from './world/cosmos/opening';
 import { createInPage } from './world/globe/inpage';
 import { streamAltitude } from './world/globe/landingStream';
 import { ageYears, lifespanWarning } from './core/lifespan';
@@ -416,8 +417,10 @@ bindingTexts();
 let simTime = clock0.worldSec, lastWorld = worldSec(), dialHeld = 0; // sim and clock fields share the world clock (frozen with the menu)
 try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
 if (clock0.offlineSec > 0) tickGround(gameSecondsPerWorldSecond * clock0.offlineSec); // time away ages the ground at the clock's game-second conversion, rate 1
+let opening: Opening | null = null;
 function frame(time: number) { const frameStart = performance.now(); latestPlanetSim()?.setEngineNow(frameStart);
   const wallDt = Math.min((time - lastTime) / 1000 || 0, 1); // T-0036: thought bubbles keep real seconds even when frames are slow
+  opening?.step(wallDt);
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time; // look and input smoothing stay on this real frame delta
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');
   if (hadPad && !pad) { paused = true; pauseClock(); element('pause').textContent = 'Resume'; if (!menu.open) menu.show('pause'); notice('Controller disconnected. Reconnect and press Menu to resume.'); }
@@ -591,7 +594,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
 // The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.
 void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally(() => requestAnimationFrame(frame));
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).catch(e => console.warn('startup', e)).then(() => q.has('noprobe') ? undefined : inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { if (startView(location.search) === 'globe') { if (!inpage?.enter()) toGlobe(); } else openStart(); } }); } // bare load: the planet, no menu over it (T-0034). ?noprobe: ground capture skips the Ultra bench and the globe prewarm (the planet is not in the shot)
+  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).catch(e => console.warn('startup', e)).then(() => q.has('noprobe') ? undefined : inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { const opened = startView(location.search); if (opened === 'globe') { if (!inpage?.enter()) toGlobe(); } else if (opened === 'sphere') opening = createOpening(() => { opening = null; if (!inpage?.enter()) toGlobe(); }); else openStart(); } }); } // bare load: hot sphere, then the planet. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

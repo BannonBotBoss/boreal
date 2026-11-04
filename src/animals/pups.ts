@@ -4,12 +4,14 @@
  * The meshes are the wolf skin without the fur cards, scaled to a four-week pup.
  */
 import * as THREE from 'three';
-import { ageAfter, besideMother, followStep, growthStage, pupScale, stepHz, walkMps, type PupPlace } from '../core/litter';
+import { ageAfter, besideMother, followStep, growthStage, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, walkMps, type PupCall, type PupPlace } from '../core/litter';
 import { livingRoster } from '../core/enterLiving';
 import { heightAt } from '../core/world';
 import { createPlayerWolf } from '../render/playerWolf';
 
 export interface LivePup extends PupPlace { handle: string; parent: string; stage: ReturnType<typeof growthStage> }
+export interface PupMood { hungry: boolean; tired: boolean; nudge: boolean }
+export interface PupHeard { slot: number; kind: PupCall; x: number; z: number; ageYears: number }
 
 export function bornLitter(x = 0, z = 0, yaw = 0): LivePup[] {
   const roster = livingRoster();
@@ -26,6 +28,7 @@ export function createLitter(scene: THREE.Scene) {
   let rows: { pup: LivePup; holder: THREE.Group; wolf: ReturnType<typeof createPlayerWolf> }[] | null = null;
   let yaw = 0;
   let clock = 0;
+  const nextVoice = new Map<number, number>();
   const ensure = (x: number, z: number, motherYaw: number) => {
     if (rows) return rows;
     rows = bornLitter(x, z, motherYaw).map(p => {
@@ -45,15 +48,26 @@ export function createLitter(scene: THREE.Scene) {
   };
   return {
     pups: () => rows?.map(w => w.pup) ?? [],
-    step(dt: number, gameSeconds: number, motherX: number, motherZ: number, motherYaw: number) {
+    step(dt: number, gameSeconds: number, motherX: number, motherZ: number, motherYaw: number, mood: PupMood = { hungry: false, tired: false, nudge: false }): PupHeard[] {
       yaw = motherYaw;
       clock += Math.max(0, dt);
-      for (const row of ensure(motherX, motherZ, motherYaw)) {
+      const heard: PupHeard[] = [];
+      const live = ensure(motherX, motherZ, motherYaw);
+      let huffSlot = -1;
+      if (mood.nudge) {
+        let best: number = PUP_VOICE.nudgeM;
+        for (const row of live) {
+          const d = Math.hypot(row.pup.x - motherX, row.pup.z - motherZ);
+          if (d <= best) { best = d; huffSlot = row.pup.slot; }
+        }
+      }
+      for (const row of live) {
         row.pup.ageYears = ageAfter(row.pup.ageYears, gameSeconds);
         row.pup.stage = growthStage(row.pup.ageYears);
         const grown = pupScale(row.pup.ageYears);
         row.holder.scale.set(grown * 1.12, grown * 0.78, grown * 1.16);
         const prevX = row.pup.x, prevZ = row.pup.z;
+        const dist = Math.hypot(prevX - motherX, prevZ - motherZ);
         const next = followStep(row.pup.x, row.pup.z, row.pup.slot, motherX, motherZ, motherYaw, dt, row.pup.ageYears);
         row.pup.x = next.x;
         row.pup.z = next.z;
@@ -64,8 +78,15 @@ export function createLitter(scene: THREE.Scene) {
         row.wolf.brain.gaitSpeed = moved ? speed : 0;
         row.wolf.brain.prevPhase = row.wolf.brain.phase;
         row.wolf.brain.phase = (row.wolf.brain.phase + stepHz(row.pup.ageYears) * Math.max(0, dt)) % 1;
+        const kind = pupCall({ distM: dist, moving: moved, ageYears: row.pup.ageYears, hungry: mood.hungry, tired: mood.tired, nudged: row.pup.slot === huffSlot });
+        const due = nextVoice.get(row.pup.slot) ?? row.pup.slot * 1.1;
+        if (kind && clock >= due) {
+          heard.push({ slot: row.pup.slot, kind, x: row.pup.x, z: row.pup.z, ageYears: row.pup.ageYears });
+          nextVoice.set(row.pup.slot, clock + pupGap(kind));
+        }
       }
       publish();
+      return heard;
     },
     place() {
       if (!rows) return;

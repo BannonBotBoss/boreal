@@ -111,3 +111,45 @@ export function followStep(x: number, z: number, slot: number, motherX: number, 
   const step = Math.min(walkMps(ageYears) * dt, d);
   return { x: x + dx / d * step, z: z + dz / d * step };
 }
+
+export type PupCall = 'yip' | 'whimper' | 'huff' | 'call';
+
+/** When a pup makes a sound. The same numbers are in rust/boreal-sim/src/litter.rs. */
+export const PUP_VOICE = {
+  /** Past the trail, not yet the rejoin. A short separation. */
+  briefM: 2.2,
+  /** The rejoin gap. She has left this pup behind. */
+  farM: LITTER.rejoinM,
+  /** A closed paw reaches a pup this close to her. */
+  nudgeM: 1.5,
+  yipS: 5.5,
+  whimperS: 7,
+  callS: 9,
+  huffS: 1.2,
+} as const;
+
+/**
+ * The sound for one pup this step, or none.
+ * A nudge of her paw is a huff. Far behind is a call. Hungry, tired, or a short
+ * gap is a whimper. Following or playing (under half a year and still near her) is a yip.
+ */
+export function pupCall(o: { distM: number; moving: boolean; ageYears: number; hungry: boolean; tired: boolean; nudged: boolean }): PupCall | null {
+  if (o.nudged) return 'huff';
+  if (o.distM >= PUP_VOICE.farM) return 'call';
+  if (o.hungry || o.tired || o.distM >= PUP_VOICE.briefM) return 'whimper';
+  if (o.moving || o.ageYears < 0.5) return 'yip';
+  return null;
+}
+
+export function pupGap(kind: PupCall) {
+  if (kind === 'yip') return PUP_VOICE.yipS;
+  if (kind === 'whimper') return PUP_VOICE.whimperS;
+  if (kind === 'huff') return PUP_VOICE.huffS;
+  return PUP_VOICE.callS;
+}
+
+/** Playback rate before a small random wobble. Four weeks is higher. A year is 1. */
+export function pupPitch(ageYears: number) {
+  const u = Math.min(1, Math.max(0, ageYears));
+  return 1.22 + (1 - 1.22) * u;
+}

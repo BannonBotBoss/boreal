@@ -1,0 +1,108 @@
+{
+  "site": "boreal forest",
+  "slug": "boreal",
+  "clickLat": 52,
+  "clickLon": -97,
+  "landedLat": 51.9977094117944,
+  "landedLon": -96.9988552461355,
+  "biome": "boreal",
+  "water": false,
+  "census": [
+    {
+      "species": "snowshoe_hare",
+      "display": "Snowshoe Hare",
+      "count": 3761
+    },
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 79
+    },
+    {
+      "species": "moose",
+      "display": "Moose",
+      "count": 29
+    },
+    {
+      "species": "canada_lynx",
+      "display": "Canada Lynx",
+      "count": 8
+    },
+    {
+      "species": "gray_wolf",
+      "display": "Gray Wolf",
+      "count": 1
+    },
+    {
+      "species": "caribou",
+      "display": "Woodland Caribou",
+      "count": 1
+    },
+    {
+      "species": "american_black_bear",
+      "display": "American Black Bear",
+      "count": 29
+    },
+    {
+      "species": "bald_eagle",
+      "display": "Bald Eagle",
+      "count": 3
+    },
+    {
+      "species": "beaver",
+      "display": "Beaver",
+      "count": 69
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 14
+    }
+  ],
+  "shown": [
+    {
+      "species": "Snowshoe Hare",
+      "count": 1,
+      "x": -77.18641694005692,
+      "z": 263.11841082824503
+    },
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": -78.12435114984225,
+      "z": 261.6050439136753
+    },
+    {
+      "species": "American Black Bear",
+      "count": 1,
+      "x": -81.04677713368307,
+      "z": 262.02863141227743
+    },
+    {
+      "species": "Bald Eagle",
+      "count": 1,
+      "x": -84.51352410026648,
+      "z": 260.4438079300925
+    },
+    {
+      "species": "Beaver",
+      "count": 1,
+      "x": -85.4514583100518,
+      "z": 258.9304410155228
+    }
+  ],
+  "simStepMs": 390.399999999147,
+  "frameMs": 305.4,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 401,
+    "sim": 51.8,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2031
+  },
+  "exit": 0,
+  "note": ""
+}

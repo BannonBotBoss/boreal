@@ -1,0 +1,7 @@
+handoff_t_s 1.01383368e-32
+handoff_rho_phi 2.03162264e92
+T_rh_analytic_K 9.79037118e18
+T_rh_integrated_K 6.25565917e18
+ratio 0.638960
+g_star_high 106.750000
+g_star_low 3.362644

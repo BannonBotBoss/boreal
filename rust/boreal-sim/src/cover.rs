@@ -9,9 +9,9 @@ pub const COVER_JSON: &str = include_str!("../../../data/earth/cover-density.jso
 
 /// Class ids in the order the wasm export writes them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Cover { Water = 0, Ice = 1, Rock = 2, Tundra = 3, Desert = 4, Prairie = 5, Boreal = 6 }
+pub enum Cover { Water = 0, Ice = 1, Rock = 2, Tundra = 3, Desert = 4, Prairie = 5, Boreal = 6, Tropical = 7, Wetland = 8 }
 impl Cover {
-    pub fn name(self) -> &'static str { ["water", "ice", "rock", "tundra", "desert", "prairie", "boreal"][self as usize] }
+    pub fn name(self) -> &'static str { ["water", "ice", "rock", "tundra", "desert", "prairie", "boreal", "tropical", "wetland"][self as usize] }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -47,10 +47,105 @@ pub fn sea_level_warm_c(lat_deg: f64) -> f64 {
     num(ZONES_JSON, "T0_C") + num(ZONES_JSON, "T2_C") * (3.0 * x * x - 1.0) / 2.0
         + 2.0 / std::f64::consts::PI * num(ZONES_JSON, "seasonal_half_range_pole_K") * x.abs()
 }
+/// Mean of the warmest `zone_season_fraction` of the year at sea level (C). Matches seaLevelZoneSeasonC in TypeScript.
+pub fn sea_level_zone_season_c(lat_deg: f64) -> f64 {
+    let x = lat_deg.to_radians().sin();
+    let f = std::f64::consts::PI * num(ZONES_JSON, "zone_season_fraction");
+    num(ZONES_JSON, "T0_C") + num(ZONES_JSON, "T2_C") * (3.0 * x * x - 1.0) / 2.0
+        + f.sin() / f * num(ZONES_JSON, "seasonal_half_range_pole_K") * x.abs()
+}
 /// Height where trees stop (m a.s.l.), Koerner & Paulsen 2004. Matches treeLineM in TypeScript.
-pub fn tree_line_m(lat_deg: f64) -> f64 { ((sea_level_warm_c(lat_deg) - num(ZONES_JSON, "tree_line_growing_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
+pub fn tree_line_m(lat_deg: f64) -> f64 { ((sea_level_zone_season_c(lat_deg) - num(ZONES_JSON, "tree_line_growing_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
 /// Height above which ice never melts (m a.s.l.). Matches iceLineM in TypeScript.
-pub fn ice_line_m(lat_deg: f64) -> f64 { ((sea_level_warm_c(lat_deg) - num(ZONES_JSON, "ice_line_warm_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
+pub fn ice_line_m(lat_deg: f64) -> f64 { ((sea_level_zone_season_c(lat_deg) - num(ZONES_JSON, "ice_line_warm_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
+
+/// Seasonal amplitude damping of a column with surface heat capacity `c` (J/m2/K), the same first-order response as
+/// climate_seed::damped_seed: 1/sqrt(1+(w tau)^2), tau = (c + air column) / (B + C_tr).
+fn seasonal_damping(c: f64) -> f64 {
+    use crate::planet_fundamentals::climate_seed::{AIR_COLUMN_HEATCAP, OLR_B, TRANSPORT_C};
+    let w = 2.0 * std::f64::consts::PI / (365.0 * 86400.0);
+    1.0 / (1.0 + (w * (c + AIR_COLUMN_HEATCAP) / (OLR_B + TRANSPORT_C)).powi(2)).sqrt()
+}
+/// How much larger (or smaller) this site's seasonal swing is than the zonal mean the 15.5 K half-range was fitted to.
+/// `maritime_w` is climate_seed::maritime_weight: 1 on open water or right at the coast, falling to 0 deep inland.
+/// A continental interior (w = 0) at 60-70 N gets about 1.34x; the open ocean about 0.2x (altitude-zones.json continentality).
+pub fn continentality_ratio(maritime_w: f64) -> f64 {
+    use crate::planet_fundamentals::surface::{LAND_HEATCAP, OCEAN_HEATCAP};
+    let (dl, d_o) = (seasonal_damping(LAND_HEATCAP), seasonal_damping(OCEAN_HEATCAP));
+    let (w, f) = (maritime_w.clamp(0.0, 1.0), num(ZONES_JSON, "zonal_land_fraction"));
+    (w * d_o + (1.0 - w) * dl) / (f * dl + (1.0 - f) * d_o)
+}
+/// Warmest-quarter sea-level mean (C) at a site with its own continentality (see continentality_ratio).
+pub fn sea_level_zone_season_at_c(lat_deg: f64, maritime_w: f64) -> f64 {
+    let x = lat_deg.to_radians().sin();
+    let f = std::f64::consts::PI * num(ZONES_JSON, "zone_season_fraction");
+    num(ZONES_JSON, "T0_C") + num(ZONES_JSON, "T2_C") * (3.0 * x * x - 1.0) / 2.0
+        + f.sin() / f * num(ZONES_JSON, "seasonal_half_range_pole_K") * x.abs() * continentality_ratio(maritime_w)
+}
+/// Tree line (m) with continentality: a continental interior's warm summer lifts it, an ocean coast's cool summer lowers it.
+pub fn tree_line_at_m(lat_deg: f64, maritime_w: f64) -> f64 { ((sea_level_zone_season_at_c(lat_deg, maritime_w) - num(ZONES_JSON, "tree_line_growing_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
+/// Ice line (m) with continentality.
+pub fn ice_line_at_m(lat_deg: f64, maritime_w: f64) -> f64 { ((sea_level_zone_season_at_c(lat_deg, maritime_w) - num(ZONES_JSON, "ice_line_warm_season_C")) / num(ZONES_JSON, "lapse_K_per_m")).max(0.0) }
+
+/// Daily-mean clear-sky direct beam on a slope (W/m2): the sun's position through the day (declination from solar_budget,
+/// hour angle every 5 min) dotted with the slope's normal, counted only while the sun is above both the horizon and the
+/// slope's own plane. The beam is S0 tau^(air mass), air mass 1/cos z (Bouguer-Lambert with tau from altitude-zones.json),
+/// so the weak low morning and evening sun counts for little. `slope_deg` 0..90, `aspect_deg` the compass azimuth the
+/// slope faces (0 = north, 90 = east). With tau = 1 flat ground matches solar_budget::daily_toa without the distance term.
+pub fn daily_beam_on_slope(day_of_year: f64, lat_deg: f64, slope_deg: f64, aspect_deg: f64, tau: f64) -> f64 {
+    use crate::{consts::S0, planet_fundamentals::energy::solar_budget::solar};
+    let d = solar(day_of_year, 12.0, lat_deg, 0.0, 0.0).decl.to_radians();
+    let (phi, s, a) = (lat_deg.to_radians(), slope_deg.clamp(0.0, 90.0).to_radians(), aspect_deg.to_radians());
+    let n = (s.sin() * a.sin(), s.sin() * a.cos(), s.cos()); // east, north, up
+    const STEPS: usize = 288;
+    let mut sum = 0.0;
+    for k in 0..STEPS {
+        let h = std::f64::consts::PI * (2.0 * (k as f64 + 0.5) / STEPS as f64 - 1.0);
+        let up = phi.sin() * d.sin() + phi.cos() * d.cos() * h.cos();
+        if up <= 0.0 { continue; }
+        let (east, north) = (-d.cos() * h.sin(), phi.cos() * d.sin() - phi.sin() * d.cos() * h.cos());
+        sum += (n.0 * east + n.1 * north + n.2 * up).max(0.0) * tau.powf(1.0 / up.max(0.02));
+    }
+    S0 * sum / STEPS as f64
+}
+/// Tree line shift (m) from slope and aspect: the warm-quarter mean clear-sky beam on the slope minus flat ground's, the absorbed
+/// share warming the root zone by dQ / coupling, divided by the lapse rate (altitude-zones.json slope_aspect). Positive on
+/// sun-facing slopes, negative on shaded ones, 0 on flat ground.
+pub fn aspect_tree_line_shift_m(lat_deg: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
+    aspect_line_shift_m(lat_deg, slope_deg, aspect_deg, num(ZONES_JSON, "slope_absorbed_beam_fraction"))
+}
+/// Ice line shift (m) from slope and aspect: same warm-quarter extra beam, but snow and ice reflect most of it, so only
+/// snow_absorbed_beam_fraction (cloud-free share x (1 - snow albedo)) feeds melt. Smaller than the tree line shift.
+pub fn aspect_ice_line_shift_m(lat_deg: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
+    aspect_line_shift_m(lat_deg, slope_deg, aspect_deg, num(ZONES_JSON, "snow_absorbed_beam_fraction"))
+}
+fn aspect_line_shift_m(lat_deg: f64, slope_deg: f64, aspect_deg: f64, absorbed: f64) -> f64 {
+    if slope_deg <= 0.0 { return 0.0; }
+    // Warmest quarter (zone_season_fraction 0.25), centred on the solstice, sampled every 9 days.
+    let mid = if lat_deg >= 0.0 { 172.0 } else { 355.0 };
+    let tau = num(ZONES_JSON, "clear_sky_beam_transmissivity");
+    let mut dq = 0.0;
+    for k in -5..=5 {
+        let day = (mid + 9.0 * k as f64 - 1.0).rem_euclid(365.0) + 1.0;
+        dq += daily_beam_on_slope(day, lat_deg, slope_deg, aspect_deg, tau) - daily_beam_on_slope(day, lat_deg, 0.0, 0.0, tau);
+    }
+    let dq = dq / 11.0 * absorbed;
+    dq / num(ZONES_JSON, "slope_surface_coupling_W_m2_K") / num(ZONES_JSON, "lapse_K_per_m")
+}
+/// Ice line (m) at a site with continentality and slope aspect: ice_line_at_m plus aspect_ice_line_shift_m.
+pub fn ice_line_slope_m(lat_deg: f64, maritime_w: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
+    (ice_line_at_m(lat_deg.abs(), maritime_w) + aspect_ice_line_shift_m(lat_deg, slope_deg, aspect_deg)).max(0.0)
+}
+/// Tree line (m) at a site with continentality and slope aspect: tree_line_at_m plus aspect_tree_line_shift_m.
+pub fn tree_line_slope_m(lat_deg: f64, maritime_w: f64, slope_deg: f64, aspect_deg: f64) -> f64 {
+    (tree_line_at_m(lat_deg.abs(), maritime_w) + aspect_tree_line_shift_m(lat_deg, slope_deg, aspect_deg)).max(0.0)
+}
+
+/// Annual mean at the site (C): North 1975 sea-level mean minus the lapse rate times height (no seasonal term).
+pub fn site_mean_c(lat_deg: f64, elev_m: f64) -> f64 {
+    let x = lat_deg.to_radians().sin();
+    num(ZONES_JSON, "T0_C") + num(ZONES_JSON, "T2_C") * (3.0 * x * x - 1.0) / 2.0 - num(ZONES_JSON, "lapse_K_per_m") * elev_m.max(0.0)
+}
 
 /// Deterministic 0..1 from a place (splitmix64 on quantised lat/lon, ~1 m).
 pub fn place_hash(lat: f64, lon: f64) -> f64 {
@@ -65,23 +160,49 @@ pub fn place_hash(lat: f64, lon: f64) -> f64 {
 
 /// Cover class from causes. `vegetation` is the planet sample's 0..1 weight.
 pub fn cover_class(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool) -> Cover {
+    cover_class_lines(lat_deg, elev_m, vegetation, water, ice_line_m(lat_deg.abs()), tree_line_m(lat_deg.abs()))
+}
+/// Maritime weight for a land site `coast_m` metres from the sea (climate_seed::maritime_weight with the boundary-layer
+/// decay length). None when the distance is unknown (NaN or negative): the caller then keeps the zonal-mean lines.
+pub fn site_maritime_weight(lat_deg: f64, coast_m: f64) -> Option<f64> {
+    use crate::planet_fundamentals::{atmosphere::wind::ocean_decay_length_m, climate_seed::maritime_weight};
+    if !coast_m.is_finite() || coast_m < 0.0 { return None; }
+    Some(maritime_weight(1.0, coast_m, ocean_decay_length_m(lat_deg)))
+}
+/// Cover class with the site's own continentality: tree and ice lines from tree_line_at_m / ice_line_at_m using the
+/// distance to the coast. Unknown distance (NaN) falls back to cover_class exactly.
+pub fn cover_class_at(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool, coast_m: f64) -> Cover {
+    match site_maritime_weight(lat_deg, coast_m) {
+        None => cover_class(lat_deg, elev_m, vegetation, water),
+        Some(w) => cover_class_lines(lat_deg, elev_m, vegetation, water, ice_line_at_m(lat_deg.abs(), w), tree_line_at_m(lat_deg.abs(), w)),
+    }
+}
+fn cover_class_lines(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool, ice: f64, tree: f64) -> Cover {
     if water { return Cover::Water; }
     let lat = lat_deg.abs();
     let elev = elev_m.max(0.0);
-    if elev >= ice_line_m(lat) { return Cover::Ice; }
-    let tree = tree_line_m(lat);
+    if elev >= ice { return Cover::Ice; }
     if elev > tree {
-        // Arctic lowland (tree line at or near sea level) is tundra; a mountain above its tree line is bare rock.
-        return if tree < 80.0 && elev < tree + 300.0 { Cover::Tundra } else { Cover::Rock };
+        // Arctic (tree line at or near sea level): tundra all the way up to the ice line, the physics limit where plants stop
+        // (#192 ten-location gap: a 300 m Yukon north slope was bare rock). A mountain above a higher tree line stays bare rock.
+        return if tree < 80.0 { Cover::Tundra } else { Cover::Rock };
     }
     if vegetation < num(COVER_JSON, "veg_desert_below") { Cover::Desert }
-    else if vegetation < num(COVER_JSON, "veg_prairie_below") { Cover::Prairie }
+    else if vegetation < num(COVER_JSON, "veg_prairie_below") {
+        // A cold flat northern lowland with prairie-band green is peatland (muskeg), not grass.
+        if lat >= num(COVER_JSON, "wetland_lat_min") && elev < num(COVER_JSON, "wetland_below_m") { Cover::Wetland } else { Cover::Prairie }
+    }
+    else if site_mean_c(lat_deg, elev) >= num(COVER_JSON, "tropical_mean_C") { Cover::Tropical }
     else { Cover::Boreal }
 }
 
 /// The full row the viewer asked for in #167.
 pub fn cover_row(lat_deg: f64, lon_deg: f64, elev_m: f64, vegetation: f64, water: bool) -> CoverRow {
-    let class = cover_class(lat_deg, elev_m, vegetation, water);
+    cover_row_at(lat_deg, lon_deg, elev_m, vegetation, water, f64::NAN)
+}
+/// cover_row with the site's distance to the coast (metres; NaN = unknown, same as cover_row).
+pub fn cover_row_at(lat_deg: f64, lon_deg: f64, elev_m: f64, vegetation: f64, water: bool, coast_m: f64) -> CoverRow {
+    let class = cover_class_at(lat_deg, elev_m, vegetation, water, coast_m);
     let h = place_hash(lat_deg, lon_deg);
     let h2 = place_hash(lon_deg, lat_deg);
     let (stems, height) = match class {
@@ -111,25 +232,96 @@ mod tests {
     }
     #[test] fn water_ice_rock_have_no_plants() {
         assert_eq!(cover_row(10.0, 0.0, 0.0, 1.0, true).class, Cover::Water);
-        assert_eq!(cover_row(80.0, 0.0, 10.0, 0.5, false).class, Cover::Ice);
+        assert_eq!(cover_row(80.0, 0.0, 400.0, 0.5, false).class, Cover::Ice); // ice line ~305 m at 80N
         let r = cover_row(46.5, 8.0, 3200.0, 0.9, false); // Alps above the tree line
         assert!(matches!(r.class, Cover::Rock | Cover::Ice));
         assert_eq!(r.stems_per_ha, 0.0);
     }
     #[test] fn arctic_lowland_is_tundra() { assert_eq!(cover_class(68.0, 50.0, 0.4, false), Cover::Tundra); }
+    #[test] fn arctic_upland_below_ice_line_is_tundra() {
+        assert_eq!(cover_class(68.0, 300.0, 0.3, false), Cover::Tundra);
+        assert_eq!(cover_class(68.0, ice_line_m(68.0) + 1.0, 0.3, false), Cover::Ice);
+        assert_eq!(cover_class(51.4, 2600.0, 0.1, false), Cover::Ice);
+    }
     #[test] fn boreal_prairie_desert_by_moisture() {
         assert_eq!(cover_class(50.0, 300.0, 0.8, false), Cover::Boreal);
         assert_eq!(cover_class(50.0, 600.0, 0.45, false), Cover::Prairie);
         assert_eq!(cover_class(25.0, 500.0, 0.1, false), Cover::Desert);
     }
+    #[test] fn warm_wet_lowland_is_tropical() {
+        assert_eq!(cover_class(-3.0, 50.0, 0.95, false), Cover::Tropical); // Amazon
+        assert_eq!(cover_class(-3.0, 3000.0, 0.95, false), Cover::Boreal); // Andes cloud forest height cools it
+        assert_eq!(cover_class(10.0, 300.0, 0.45, false), Cover::Prairie); // dry tropics stay savanna/prairie
+    }
+    #[test] fn cold_flat_lowland_is_wetland() {
+        assert_eq!(cover_class(57.0, 80.0, 0.6, false), Cover::Wetland); // Hudson Bay lowland
+        assert_eq!(cover_class(51.0, 600.0, 0.45, false), Cover::Prairie); // Saskatchewan stays prairie
+        assert_eq!(cover_class(57.0, 80.0, 0.9, false), Cover::Boreal); // dense green stays forest
+    }
+    #[test] fn sun_facing_slopes_lift_the_tree_line_and_shaded_ones_lower_it() {
+        // 46.5 N, 30 degree slopes: south face above flat, north face below, east and west in between.
+        let (s, n, e) = (aspect_tree_line_shift_m(46.5, 30.0, 180.0), aspect_tree_line_shift_m(46.5, 30.0, 0.0), aspect_tree_line_shift_m(46.5, 30.0, 90.0));
+        assert!(s > 0.0 && n < 0.0 && n < e && e < s, "s {s} e {e} n {n}");
+        assert!(s - n > 80.0 && s - n < 600.0, "sun vs shade spread {}", s - n);
+        assert_eq!(aspect_tree_line_shift_m(46.5, 0.0, 180.0), 0.0);
+    }
+    #[test] fn ice_line_follows_aspect_but_less_than_tree_line() {
+        let (s, n) = (aspect_ice_line_shift_m(46.5, 30.0, 180.0), aspect_ice_line_shift_m(46.5, 30.0, 0.0));
+        assert!(s > 0.0 && n < 0.0, "s {s} n {n}");
+        assert!(s - n < aspect_tree_line_shift_m(46.5, 30.0, 180.0) - aspect_tree_line_shift_m(46.5, 30.0, 0.0));
+        assert!((ice_line_slope_m(46.5, 0.3, 0.0, 0.0) - ice_line_at_m(46.5, 0.3)).abs() < 1e-9);
+        // North faces hold glaciers lower: ice line on the shaded face sits below the sunny face's.
+        assert!(ice_line_slope_m(46.5, 0.3, 30.0, 0.0) < ice_line_slope_m(46.5, 0.3, 30.0, 180.0));
+    }
+    #[test] fn southern_hemisphere_sun_faces_north() {
+        assert!(aspect_tree_line_shift_m(-45.0, 30.0, 0.0) > 0.0);
+        assert!(aspect_tree_line_shift_m(-45.0, 30.0, 180.0) < 0.0);
+    }
+    #[test] fn flat_beam_matches_daily_toa_shape() {
+        use crate::planet_fundamentals::energy::solar_budget::daily_toa;
+        // Same geometry as daily_toa up to the Earth-Sun distance factor (~0.967 at the June solstice).
+        let r = daily_beam_on_slope(172.0, 46.5, 0.0, 0.0, 1.0) / daily_toa(172.0, 46.5);
+        assert!((r - 1.0 / 0.9674).abs() < 0.01, "ratio {r}");
+    }
+    #[test] fn slope_tree_line_reduces_to_continental_line_on_flat_ground() {
+        assert!((tree_line_slope_m(46.5, 0.3, 0.0, 0.0) - tree_line_at_m(46.5, 0.3)).abs() < 1e-9);
+    }
     #[test] fn tree_line_matches_typescript_formula() {
         // TypeScript treeLineM(0) with T0 14.97, T2 -28, 6.4 C, 6.5 K/km: (14.97 + 14 - 6.4) / 0.0065.
         assert!((tree_line_m(0.0) - (14.97 + 14.0 - 6.4) / 0.0065).abs() < 1e-6);
+    }
+    #[test] fn continentality_zonal_mix_is_neutral() {
+        // A site whose land/ocean mix equals the band's (w = 1 - land fraction) reproduces the zonal formula exactly.
+        let w = 1.0 - num(ZONES_JSON, "zonal_land_fraction");
+        assert!((continentality_ratio(w) - 1.0).abs() < 1e-12);
+        assert!((tree_line_at_m(64.5, w) - tree_line_m(64.5)).abs() < 1e-6);
+    }
+    #[test] fn continental_interior_lifts_tree_line_above_376m_at_64n() {
+        // #192 / T-0126: the 64.5 N, -119.7 tundra site at 376 m read bare rock under the ~145 m zonal tree line.
+        assert!(tree_line_m(64.5) < 200.0);
+        let inland = tree_line_at_m(64.5, 0.0);
+        assert!(inland > 376.0 && inland < 1200.0, "{inland}");
+        assert!(continentality_ratio(0.0) > 1.2 && continentality_ratio(1.0) < 0.5);
+    }
+    #[test] fn ocean_coast_lowers_tree_and_ice_lines() {
+        assert!(tree_line_at_m(60.0, 1.0) < tree_line_m(60.0));
+        assert!(ice_line_at_m(60.0, 1.0) < ice_line_at_m(60.0, 0.0));
     }
     #[test] fn boreal_density_inside_range_and_spacing_sane() {
         let r = cover_row(55.0, -100.0, 300.0, 0.9, false);
         assert!(r.stems_per_ha >= 1000.0 && r.stems_per_ha <= 3000.0);
         let s = spacing_m(r.stems_per_ha).unwrap();
         assert!(s > 1.5 && s < 3.5, "{s}");
+    }
+    #[test] fn coast_distance_wires_continentality_into_cover() {
+        // #192: 64.5 N, -119.7 at 376 m read bare rock under the zonal tree line (~145 m). Deep inland it is forest.
+        assert_eq!(cover_class(64.5, 376.0, 0.8, false), Cover::Rock);
+        assert_eq!(cover_class_at(64.5, 376.0, 0.8, false, 600e3), Cover::Boreal);
+        // Unknown distance is exactly the old behaviour; right on an ocean coast the line drops, so it stays treeless.
+        assert_eq!(cover_class_at(64.5, 376.0, 0.8, false, f64::NAN), cover_class(64.5, 376.0, 0.8, false));
+        assert_ne!(cover_class_at(64.5, 376.0, 0.8, false, 0.0), Cover::Boreal);
+        assert_eq!(cover_row_at(49.8, -94.5, 350.0, 0.8, false, f64::NAN), cover_row(49.8, -94.5, 350.0, 0.8, false));
+        let w = site_maritime_weight(64.5, 600e3).unwrap();
+        assert!(tree_line_at_m(64.5, w) > 376.0, "w {w} line {}", tree_line_at_m(64.5, w));
     }
 }

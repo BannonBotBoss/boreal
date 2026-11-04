@@ -1,0 +1,65 @@
+{
+  "site": "alpine",
+  "slug": "alpine",
+  "clickLat": 0.5,
+  "clickLon": 54,
+  "landedLat": 0.4997387339515522,
+  "landedLon": 54.00025698443934,
+  "biome": "boreal",
+  "water": false,
+  "census": [],
+  "shown": [],
+  "simStepMs": 314.69999999983145,
+  "frameMs": 12.9,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.17,
+    "dayOfYear": 227,
+    "latitude": 0.5,
+    "sunElevation": 45.8,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:09",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 1,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 400678241,
+    "total": 493919917
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "No tile or height seam. Open sky, one shrub, and an unlit black foreground.",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.3,
+    "fade": 1,
+    "ready": true,
+    "readyAt": 1895
+  },
+  "exit": 0,
+  "note": "",
+  "shore": false,
+  "elevM": 2165.9643099727987,
+  "vegetation": 0.9241811398383335,
+  "censusLat": 0.4997387339515522,
+  "censusLon": 54.00025698443934
+}

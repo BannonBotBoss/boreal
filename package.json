@@ -7,10 +7,25 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "test": "tsx --test tests/*.test.ts",
+    "test:slow": "tsx --test tests/slow/*.test.ts",
     "system-map": "tsx tools/system-map.ts",
     "build:wasm": "node tools/build-wasm.mjs",
     "test:rust": "cargo test --manifest-path rust/boreal-sim/Cargo.toml"
   },
-  "dependencies": { "three": "0.180.0" },
-  "devDependencies": { "@types/three": "0.180.0", "typescript": "5.9.3", "vite": "7.1.12", "tsx": "4.20.6", "@types/node": "24.7.0" }
+  "dependencies": {
+    "@iwsdk/core": "1.1.0-rc.2",
+    "katex": "^0.19.1",
+    "three": "npm:super-three@0.185.0"
+  },
+  "overrides": {
+    "three": "npm:super-three@0.185.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.7.0",
+    "@types/three": "0.185.0",
+    "iwer": "^2.7.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vite": "7.1.12"
+  }
 }

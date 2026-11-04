@@ -6,6 +6,8 @@ import { activeViewfinder } from './camera/gameCamera';
 import { SYSTEM_PROPERTIES } from './config/systemProperties';
 import './style.css';
 import { createSensesHUD } from './ui/senses';
+import { toggleDataPanel } from './ui/dataPanel';
+import { latestPlanetSim } from './core/planetBudget';
 import { createSensesHalo } from './render/sensesHalo';
 import { buildScene } from './render/buildScene';
 import { availableActions, consumeForage, createContext, friendCount, interact, lastForageGrams, parseContext, rememberBond, solidContact, type Player } from './core/events';
@@ -13,7 +15,8 @@ import { holdVisual, setSqueal } from './core/huntHold';
 import { CONTACTS } from './core/contactBus';
 import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from './core/waterWake';
 import { catalog } from './core/catalog';
-import type { Entity } from './core/world';
+import { heightAt, type Entity } from './core/world';
+import { forestHandsOn, readForestHands } from './vr/forestSession';
 import { BorealSound, mealChews } from './audio/borealSound';
 import { createMusic } from './audio/music';
 import { MUSIC_PANEL, MUSIC_SAFETY, MUSIC_SETTINGS, TONES } from './audio/musicSettings';
@@ -65,6 +68,7 @@ import { globeUrl } from './world/globe/handoff';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
 import { startView } from './world/globe/startView';
 import { createInPage } from './world/globe/inpage';
+import { streamAltitude } from './world/globe/landingStream';
 import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, aggregateWorldSec, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
@@ -72,7 +76,6 @@ import { dryStart, isDry } from './core/stages/surfaceAt';
 import { WITNESS_ALTITUDE_SCALE } from './core/enterLiving';
 import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
 import { createChronometer } from './ui/chronometer';
-import { createTimeHud } from './ui/timeHud';
 import { controlsScreen } from './ui/controls';
 import { ACTION, ACTIVE, BINDINGS_KEY, atomValues, bindingLabel, comboLabel, groupLabel, loadBindings, resolveInput, saveBindings, type Bindings } from './core/bindings';
 
@@ -153,13 +156,15 @@ let waterGoal: { x: number; z: number } | undefined; // the autonomous wolf's ch
 let autoNote = ''; // T-0010: the autonomous goal and its cause, kept across frames the sim does not step
 view.onBeforeRender((time, photoView) => bubbles.update(view.lookup('player')?.object, view.camera, thoughtTime, photoView));
 view.onBeforeRender((time, photoView) => sensesHalo.update(view.lookup('player')?.object, time, view.darkness(), sensesHUD.sounds(), sensesHUD.scents(), photoView || (!!focusTarget && SYSTEM_PROPERTIES.autoFocus.hideSensesHalo), huntMarker)); // T-0035 hides the cue ring; the hunt pip stays
-function perform() {
+function perform(paw?: 'open' | 'fist') {
   if(autonomous) setAutonomous(false);
   if (paused || dialog.open || playerAction) return;
   const targetAction = target && availableActions(player, target, context)[0];
   if ((!targetAction || targetAction === 'forage') && waterAhead(player.x, player.z, yaw)) { drinking = !drinking; notice(drinking ? 'Drinking. Move to stop.' : 'Stopped drinking.'); return; } // T-0036
-  if (!target || saveBlocked) return;
-  const action = availableActions(player, target, context)[0]; if (!action || action === 'forage') return;
+  if (!target || saveBlocked) { if (paw === 'open') notice('Open paw. Nothing close enough to grab.'); return; }
+  const action = availableActions(player, target, context)[0];
+  if (!action || action === 'forage') { if (paw === 'open') notice('Open paw. Nothing close enough to grab.'); return; }
+  if (paw === 'fist' && action !== 'move') return;
   try {
     const next = interact(context, player, target, action);
     localStorage.setItem(SAVE_KEY, JSON.stringify(next)); // Commit before visible rewards.
@@ -168,8 +173,18 @@ function perform() {
     playerAction = action; actionStarted = simTime;
     sfx.action(action, target); // (the old synth beeps on a second AudioContext doubled every action and ignored mute/volume)
     if (action === 'speak') { const t = target, a = view.audibleAnimals().find(x => x.key === t.key); wolfSpeak(sfx, t, { darkness: view.darkness(), animal: a, loonNear: sfx.loonNear(player.x, player.z) }); }
-    notice(action === 'move' ? 'Stone pushed with your snout. Its new position is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.');
+    const line = action === 'move' ? 'Its new place is remembered.' : action === 'speak' ? 'Relationship remembered in the events context.' : 'Herb gathered. Its removal is remembered.';
+    const who = paw === 'open' ? 'Open paw. ' : paw === 'fist' ? 'Closed paw nudged it. ' : action === 'move' ? 'Stone pushed with your snout. ' : '';
+    notice(who + line);
   } catch (error) { notice(`Interaction not committed: ${String(error)}`); }
+}
+/** A closed paw nudges whatever can be pushed. With nothing there, it scrapes the litter. The scrape is the existing disturbed delta. */
+function digOrNudge() {
+  const action = target && availableActions(player, target, context)[0];
+  if (action === 'move') { perform('fist'); return; }
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  record({ kind: 'disturbed', x: player.x + fx * 0.5, z: player.z + fz * 0.5, t: GROUND.years, m: 0.35, meta: 'paw' });
+  notice('Closed paw dug the litter.');
 }
 // ONE menu (ui/menu) for start and pause. The world clock freezes while the menu is open (Matthew): age/growth/seasons
 // hold, the renderer holds a frozen frame, and resume continues from that exact snapshot.
@@ -273,9 +288,18 @@ if (new URLSearchParams(location.search).has('rec')) (window as unknown as Recor
   player: () => { const here = view.livingHere(); return { x: player.x, z: player.z, yaw, energy: view.playerBrain.energy, water: needs.water, mode: modes.mode, handle: here.handle, embodied: here.embodied, species: here.species }; },
   shaderTime: () => shaderClock.time };
 function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
-actionButton.onclick = perform;
+actionButton.onclick = () => perform();
 element('pause').onclick = togglePause;
 element('menu-btn').onclick = () => { if (!menu.open) openStart(); };
+let xrDriven = false;
+void import('./vr/session').then(m => m.mountEnterVr(notice, {
+  renderer: () => view.photoreal.renderer,
+  place: (x, z, y) => { player.x = x; player.z = z; yaw = y; player.heading = y; lookYaw = 0; },
+  showGame: (at) => { if (inpage) inpage.showForest(at); else { player.x = at.x; player.z = at.z; yaw = at.yaw; player.heading = at.yaw; lookYaw = 0; } },
+  drive: (t) => { xrDriven = true; frame(t); },
+  hold: () => { xrDriven = true; },
+  resume: () => { xrDriven = false; requestAnimationFrame(frame); },
+})).catch(e => console.warn('vr', e));
 element('photo-btn').onclick = () => enterPhoto();
 element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = view.playable.cameraHeight; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
 element('help').onclick = () => { if (!menu.open) togglePause(); menu.openControls(); }; // Controls screen (the Library text is a button there)
@@ -308,6 +332,7 @@ function act(id: string) { // one fired press action (keyboard or gamepad)
   else if (id === 'interact') { void sfx.start().catch(() => {}); perform(); }
   else if (id === 'inspector') { inspector.toggle(); clearInput(); }
   else if (id === 'photo') { const vf = activeViewfinder(); if (vf) vf.shoot(); else enterPhoto(); } // T-0068: P = shutter on the live view; freeze & compose stays on the Photo button / menu
+  else if (id === 'dataPanel') toggleDataPanel();
   else if (id === 'planet') toGlobe();
   else if (id === 'eatPrey') {
     const heldHare = view.hares.held();
@@ -380,7 +405,6 @@ const clock0 = loadClock(localStorage.getItem(CLOCK.key));
 initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the chronometer's saved dial; ?hour= ?day= ?date= set it
 if (new URLSearchParams(location.search).has('timescale')) setClockRate(timescaleFrom(location.search)); // only when present, so a saved rate is kept
 const chrono = createChronometer(worldSec); // T / d-pad up: the hour scrub of the same clock (ui/chronometer)
-const timeHud = createTimeHud(() => { if (!inpage?.blocksGame()) { chrono.toggle(); clearInput(); } });
 function bindingTexts() { // help dialog and chronometer lines written from the live bindings (Controls screen rebinding updates them)
   const L = (id: string, k: 'keys' | 'pad') => bindingLabel(bindings[id][k]), G = (id: string, k: 'keys' | 'pad') => groupLabel(bindings, id, k);
   const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold ${L('lock', k)} and keep a prey inside the aim cone to lock it; ${L('jump', k)} then steers the leap onto that lock. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} hour, hold ${L('timeSlower', k)} to rewind the dial, hold ${L('timeFaster', k)} to go forward, ${L('timePause', k)} pause or play, ${L('pause', k)} menu`;
@@ -392,7 +416,7 @@ bindingTexts();
 let simTime = clock0.worldSec, lastWorld = worldSec(), dialHeld = 0; // sim and clock fields share the world clock (frozen with the menu)
 try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
 if (clock0.offlineSec > 0) tickGround(gameSecondsPerWorldSecond * clock0.offlineSec); // time away ages the ground at the clock's game-second conversion, rate 1
-function frame(time: number) { const frameStart = performance.now();
+function frame(time: number) { const frameStart = performance.now(); latestPlanetSim()?.setEngineNow(frameStart);
   const wallDt = Math.min((time - lastTime) / 1000 || 0, 1); // T-0036: thought bubbles keep real seconds even when frames are slow
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time; // look and input smoothing stay on this real frame delta
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');
@@ -425,9 +449,17 @@ function frame(time: number) { const frameStart = performance.now();
   let dx = 0, dz = 0;
   chrono.update(dt, menu.open ? 0 : H('scrubLater') - H('scrubEarlier')); // chronometer open: only its inputs and the look inputs it does not use are live (core/bindings liveActions)
   if (active) {
-    dx = H('steerRight') - H('steerLeft'); dz = H('moveBack') - H('moveForward');
+    if (forestHandsOn()) {
+      const hands = readForestHands(view.photoreal.renderer, { x: player.x, z: player.z, yaw }, heightAt(player.x, player.z));
+      dx = 0; dz = hands.forward ? -1 : 0;
+      if (hands.yaw != null) { yaw = hands.yaw; player.heading = yaw; }
+      if (hands.forward) setAutonomous(false);
+      if (hands.grab) perform('open');
+      if (hands.dig) digOrNudge();
+    } else dx = H('steerRight') - H('steerLeft'), dz = H('moveBack') - H('moveForward');
+    view.stepPups(wallDt, Math.max(0, wDt), player.x, player.z, yaw);
     if(autonomous && (Math.abs(dx)>.01 || Math.abs(dz)>.01)) setAutonomous(false);
-    const lookInput = H('lookRight') - H('lookLeft');
+    const lookInput = forestHandsOn() ? 0 : H('lookRight') - H('lookLeft');
     lookYaw -= lookInput * dt;
     if (!drag && Math.abs(lookInput) < .01) lookYaw *= Math.exp(-5 * dt);
     const verticalLook = H('lookDown') - H('lookUp');
@@ -502,7 +534,7 @@ function frame(time: number) { const frameStart = performance.now();
     }
     hub.sample(simTime);
   } else { accumulator = 0; drawFrom = undefined; }
-  view.sync(player.x, player.z, Math.max(altitude, inpage?.height ?? 0), context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
+  view.sync(player.x, player.z, streamAltitude(altitude, inpage?.height ?? 0, !!inpage?.blocksGame()), context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
   runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
   view.worldTime = wNow; // one clock. The sky reads this signed second, so rewind moves the sun backward.
   tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only, every scale: ground years are elapsed time, not a rewind of decay. Snow on that ground follows obs through the weather read.
@@ -554,8 +586,7 @@ function frame(time: number) { const frameStart = performance.now();
   const stood = weatherAt(player.x, player.z);
   status.innerText = `${photo.active ? 'PHOTO · ' : isPaused() ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Snow ${stood.depthCm.toFixed(1)} cm · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind);   if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
-  timeHud.setHidden(menu.open || photo.active);
-  requestAnimationFrame(frame);
+  if (!xrDriven) requestAnimationFrame(frame);
 }
 // The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.
 void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally(() => requestAnimationFrame(frame));

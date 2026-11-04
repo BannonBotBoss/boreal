@@ -1,0 +1,50 @@
+# Deploy the game to GitHub Pages on every push to main. public/wasm/boreal_sim.wasm is committed, so vite copies it.
+# Contest freeze (do not turn this on yet). After Nov 18 2026 12:00 PM Pacific the live site must not
+# change, and it has to stay up through Dec 11. To freeze: tag the release commit `meta-vr-2026`,
+# push the tag, then add `.github/PAGES_FROZEN` containing that tag name and push it to main.
+# While that file exists the steps below the check do not run, so Pages keeps the last deployment.
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: freeze
+        run: |
+          if [ -f .github/PAGES_FROZEN ]; then
+            echo "frozen=true" >> "$GITHUB_OUTPUT"
+            echo "Pages auto-deploy is frozen ($(cat .github/PAGES_FROZEN)). The live site stays on that release."
+          else
+            echo "frozen=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.freeze.outputs.frozen != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - if: steps.freeze.outputs.frozen != 'true'
+        run: npm install --no-audit --no-fund
+      - if: steps.freeze.outputs.frozen != 'true'
+        run: npx vite build --base=/boreal/
+      - if: steps.freeze.outputs.frozen != 'true'
+        run: touch dist/.nojekyll
+      - if: steps.freeze.outputs.frozen != 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        if: steps.freeze.outputs.frozen != 'true'
+        uses: actions/deploy-pages@v4

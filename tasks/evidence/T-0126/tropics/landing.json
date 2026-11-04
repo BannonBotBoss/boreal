@@ -1,0 +1,78 @@
+{
+  "site": "tropics",
+  "slug": "tropics",
+  "clickLat": -7.1,
+  "clickLon": -67,
+  "landedLat": -7.0997657673925305,
+  "landedLon": -66.99973606762035,
+  "biome": "tropical",
+  "water": false,
+  "census": [
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 22
+    }
+  ],
+  "shown": [
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": -25.129750930470887,
+      "z": -21.82006783699476
+    }
+  ],
+  "simStepMs": 286.89999999951965,
+  "frameMs": 11.7,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.18,
+    "dayOfYear": 227,
+    "latitude": -7.1,
+    "sunElevation": 42.9,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:10",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 2,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 562280811,
+    "total": 634154767
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "No tile or height seam. The deer head and ears break the skyline on the left. Conifer silhouettes remain. The foreground is an unlit black band.",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.5,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 1758
+  },
+  "exit": 0,
+  "note": "",
+  "shore": false,
+  "elevM": 109.77985340474785,
+  "vegetation": 0.9994638920209887,
+  "censusLat": -7.0997657673925305,
+  "censusLon": -66.99973606762035
+}

@@ -1,0 +1,38 @@
+{
+  "orbit": {
+    "mode": "globe",
+    "phase": "orbit",
+    "alt": 14016219,
+    "h": 0,
+    "loading": false,
+    "trees": 0
+  },
+  "glide": {
+    "mode": "band",
+    "phase": "drone",
+    "alt": 400,
+    "h": 400,
+    "loading": false,
+    "trees": 7
+  },
+  "game": {
+    "mode": "band",
+    "phase": "drone",
+    "alt": 401,
+    "h": 401,
+    "loading": false,
+    "trees": 7
+  },
+  "trees": {
+    "mode": "game",
+    "phase": "game",
+    "alt": 404,
+    "h": 404,
+    "loading": false,
+    "trees": 9
+  },
+  "notes": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

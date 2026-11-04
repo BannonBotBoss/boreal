@@ -1,0 +1,9 @@
+{
+  "type": "comment",
+  "task": "T-0999",
+  "agent": "grok-gait",
+  "at": "2026-11-01T13:00:00-07:00",
+  "run": 3,
+  "visible_fix": "late-stance elbow flicker gone in tasks/evidence/T-0999/side-by-side.webm",
+  "note": "Run 3"
+}

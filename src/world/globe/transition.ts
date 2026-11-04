@@ -61,11 +61,12 @@ export function descentPitch(height: number, pitch: number) {
   return pitch + (HORIZON_TILT.horizon - ISO_BELOW_HORIZON) * t;
 }
 /** In-page (the default since the r18 check) or the reload fallback. ?transition=reload | inpage forces it; low-memory
- *  machines (deviceMemory <= 4 GB) and probe caps of Low or worse always reload (inpage.ascend also falls back to the
- *  reload when the player or the probe has the game on Low or below at that moment). */
+ *  machines (deviceMemory <= 4 GB) and a probe cap of Low or worse, when that cap is already known, take the reload
+ *  page. A probe that finishes after the page has started does not abandon the drop: the seated glide stays in-page. */
 export function transitionPath(search: string, env: { deviceMemory?: number; probeCap?: number } = {}, fallbackDefault: 'inpage' | 'reload' = 'inpage') {
-  const q = new URLSearchParams(search).get('transition');
+  const sp = new URLSearchParams(search), q = sp.get('transition');
   if (q === 'reload') return 'reload';
+  if (q === 'inpage' && sp.has('inpagelow')) return 'inpage'; // dev: evidence capture under software GL (#211)
   if ((env.deviceMemory ?? 8) <= 4 || (env.probeCap ?? 0) >= 3) return 'reload';
   return q === 'inpage' ? 'inpage' : fallbackDefault;
 }

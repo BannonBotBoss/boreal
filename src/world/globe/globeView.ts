@@ -31,11 +31,12 @@ import { across } from './cube';
 import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock';
 import { timescaleFrom } from '../../core/timescale';
 import { createChronometer } from '../../ui/chronometer';
-import { bindTimeInputs, createTimeHud } from '../../ui/timeHud';
+import { bindTimeInputs } from '../../ui/timeHud';
 import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { GLOBE_COAST, cloudClear, coastLambda, orbitClip, forestFromPlanet, globeCameraFrom } from './transition';
-import { FALL_END_M, NADIR, fallEase, fallPitch, fallYaw } from './flight';
+import { DESCENT, NADIR, fallPitch, stepDescent, type DescentMode } from './flight';
+import { descentFrameDt } from './landingStream';
 import { body, step as stepBody } from '../../proc/physics';
 import { globePlanet } from './home';
 import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
@@ -61,6 +62,7 @@ import { GLOBE_LOD, balancedTree, globeLod, splitWanted, worldTier } from './lod
 import { surfaceRadius } from './radial';
 import { createAxis } from './axisView';
 import { bindPlanetWeather, notePlanetClockOwner, sharedPlanetSim, weatherAtLatLon } from '../../core/planetWeather';
+import { ENV_FORCE, fillEnvironmentGlobe } from '../../render/environment';
 
 interface Tile { mesh: THREE.Mesh; used: number; centre: Vec3; seg: number; solarBucket: string } // centre: doubles, CPU only (camera-relative rendering)
 /** Dev stats (HUD + ?bench=zoom): per-tile build CPU ms, per-frame main-thread work and rAF interval. */
@@ -142,7 +144,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (new URLSearchParams(location.search).has('timescale')) setClockRate(timescaleFrom(location.search));
   }
   let pageChrono: ReturnType<typeof createChronometer> | undefined;
-  if (own.pageDom) { pageChrono = createChronometer(worldSec); createTimeHud(() => pageChrono?.toggle()); bindTimeInputs({ padRate: false }); }
+  if (own.pageDom) { pageChrono = createChronometer(worldSec); bindTimeInputs({ padRate: false }); listen(document, 'keydown', (e: KeyboardEvent) => { if ((e.key === 't' || e.key === 'T') && !e.repeat && !(e.target instanceof HTMLElement && (e.target.isContentEditable || e.target.matches('input,textarea,select')))) pageChrono?.toggle(); }); }
   const shotSec = worldSec();
   const E = new THREE.Vector3(...planet.east), N = new THREE.Vector3(...planet.north), U = new THREE.Vector3(...planet.home);
   const sunDir = new THREE.Vector3(), sunNow = () => { const sec = q.has('shot') ? shotSec : worldSec(); const d = sunPosition(hourAt(sec), dayAt(sec)).direction; /* screenshots: clock pinned so ?hour= is exact */ return sunDir.copy(E).multiplyScalar(d.x).addScaledVector(U, d.y).addScaledVector(N, -d.z).normalize(); };
@@ -152,6 +154,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const material = globeMaterial(seamsDebug ? lod.segments : 0);
   // Atmosphere (atmosphere.ts): sky shell + aerial perspective on the tiles; ?atmos=0 for the plain look
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
+  for (const [k, f] of [['envrh', 'rh'], ['envu', 'windE']] as const) if (q.has(k)) ENV_FORCE[f] = Number(q.get(k)); // T-0089 dev hook: ?envrh=0.95&envu=40 force the record (frames)
   // planet budget layers (planetLayers.ts, issue #43): snow, sea ice, wet soil from rust/boreal-sim; count and grid follow the tier; ?layers=0 off
   const layerDay = dayAt(q.has('shot') ? shotSec : worldSec()); // ?day= and ?date= are on the clock (initDay), not a wall-calendar day
   let layerTier = q.get('layers') === '0' ? -1 : GOVERNOR.tier; // grid clock = the world clock: ?hour= is local solar time at home, so UTC = local - lon/15
@@ -236,7 +239,15 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     return fromLatLon(Number(ll[0]) * Math.PI / 180, Number.isFinite(lon) ? lon : 0); })() : null;
   const start = llStart ? llStart : q.get('dir') === 'antisun' ? sunNow().clone().negate().normalize().toArray() as [number, number, number] : dirQ?.length === 3 && dirQ.every(Number.isFinite) ? new THREE.Vector3(...dirQ).normalize().toArray() as [number, number, number] : q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
   let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0, overHome: { x: number; z: number } | null = null, leaving = false;
-  let fall: { h0: number; y: number; vy: number; yaw0: number } | null = null, handed = false;
+  let fall: { h0: number; y: number; vy: number; yaw0: number; t: number; p: number; mode: DescentMode } | null = null, handed = false;
+  const coverEl = document.createElement('div');
+  coverEl.id = 'descent-cover';
+  Object.assign(coverEl.style, { position: 'fixed', inset: '0', pointerEvents: 'none', zIndex: '4', opacity: '0', background: '#000' });
+  document.body.append(coverEl);
+  const setCover = (amount: number, mode: DescentMode) => {
+    coverEl.style.opacity = String(Math.max(0, Math.min(1, amount)));
+    coverEl.style.background = mode === 'fade' ? '#000' : 'radial-gradient(circle at center, transparent 38%, rgba(0,0,0,.92) 100%)';
+  };
   const shot = q.has('shot'); // screenshots: clock pinned, stays on the globe, logs seam diagnostics
   if (q.get('handoff') === 'demo') targetAlt = HANDOFF.alt * .75; // ?handoff=demo only: a scripted zoom still hands off. A wheel zoom does not.
   const fade = own.pageDom ? document.createElement('div') : null; if (fade) { Object.assign(fade.style, { position: 'fixed', inset: '0', background: '#dfe8ef', opacity: '0', transition: 'opacity .6s', pointerEvents: 'none' }); document.body.append(fade); }
@@ -282,22 +293,56 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (e.key === '+' || e.key === '=') zoom(.7); else if (e.key === '-') zoom(1 / .7);
     else if (e.key === 'h' || e.key === 'H') { fall = null; flyHome = 1; stopCoast(); } // H flies home and does not drop
     else if (e.key === 'q' || e.key === 'Q') turn(-.12); else if (e.key === 'e' || e.key === 'E') turn(.12);
+    else if (e.key === 'f' || e.key === 'F') beginFall(undefined, 'fade'); // F fades to the glide. No travel, so no spin.
     else if (e.key === 'g' || e.key === 'G') beginFall(); // G drops on the centre. Never a no-op while the globe has input.
     else if (e.key === 'Escape' && own.pageDom) { const at = overHome && { ...landSpawn(overHome), yaw: headingYaw() }; leave(at); }
   });
-  /** The clicked direction travels with the handoff. Off the home square, samp.x/z are 0 and are not a place. */
-  function dropAt(yaw: number, vy: number) {
-    const samp = planet.sampleSurface([dir.x, dir.y, dir.z]);
-    return { x: samp.x, z: samp.z, yaw, vy, home: samp.home, dir: [dir.x, dir.y, dir.z] as [number, number, number] };
+  /** ?latlon= on a scripted descent (the ten-site capture). The orbit may still be over the forest; the drop is the named point. */
+  function scriptedDirection(): [number, number, number] | null {
+    const raw = q.get('latlon');
+    if (!raw) return null;
+    const [a, b] = raw.split(',');
+    const lat = Number(a), lon = Number(b);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180);
   }
-  /** Start the free fall. With a hit, the fall is on that point. Without one (G, or A on the reticle), it is the centre. */
-  function beginFall(hit?: THREE.Vector3) {
+  /** The clicked direction travels with the handoff. Off the home square, samp.x/z are 0 and are not a place.
+   *  A scripted latlon drop passes home 0 so engageLanding anchors the forest on that point. */
+  function dropAt(yaw: number, vy: number) {
+    const aimed = scriptedDirection();
+    if (aimed) dir.set(aimed[0], aimed[1], aimed[2]);
+    const samp = planet.sampleSurface([dir.x, dir.y, dir.z]);
+    const scripted = aimed !== null;
+    if (scripted) {
+      const ll = toLatLon([dir.x, dir.y, dir.z]);
+      console.log(`INPAGE drop ${q.get('latlon')} camera=${(ll.lat * 180 / Math.PI).toFixed(2)},${(ll.lon * 180 / Math.PI).toFixed(2)} home=${samp.home.toFixed(3)}`);
+    }
+    return { x: samp.x, z: samp.z, yaw, vy, home: scripted ? 0 : samp.home, dir: [dir.x, dir.y, dir.z] as [number, number, number] };
+  }
+  /** The forest edge the sphere was opened over. G uses it while the view is still there. A drag or a double-click replaces it. */
+  const aim = { dir: new THREE.Vector3(), yaw: 0, on: false };
+  /** Point the orbit at a game-local spot. `yaw` is the game heading the drop will face if G is pressed before the view moves. */
+  function lookOver(x: number, z: number, yaw: number) {
+    const d = planet.fromLocal(x, z);
+    aim.dir.set(d[0], d[1], d[2]).normalize();
+    aim.yaw = yaw;
+    aim.on = true;
+    dir.copy(aim.dir);
+    if (!fall) camera.position.copy(dir).setLength(Math.max(camera.position.length(), R + alt));
+  }
+  /** Start the seated drop. With a hit, it is on that point. Without one (G, or A on the reticle), it is the centre.
+   *  Already at the glide: land on the current heading. Above it: ease down. A height under 10,000 ft still eases;
+   *  it does not reload the page. */
+  function beginFall(hit?: THREE.Vector3, mode?: DescentMode) {
     if (!inputOn || fall || handed || leaving) return;
-    if (hit) dir.copy(hit);
+    const aimed = scriptedDirection();
+    if (aimed && !hit) dir.set(aimed[0], aimed[1], aimed[2]);
+    else if (hit) dir.copy(hit);
     stopCoast();
-    const yaw0 = lookAz ?? cameraAz();
-    if (alt <= FALL_END_M) { handed = true; leave(dropAt(-fallYaw(yaw0, 1), 0)); return; } // game yaw is minus the look azimuth (headingYaw)
-    fall = { h0: alt, y: alt, vy: 0, yaw0 };
+    let yaw0 = lookAz ?? cameraAz();
+    if (!hit && !aimed && aim.on && dir.angleTo(aim.dir) < 1e-3) yaw0 = -aim.yaw; // still over the forest: face into the stand
+    if (alt <= DESCENT.glideM) { handed = true; setCover(0, 'glide'); leave(dropAt(-yaw0, 0)); return; } // game yaw is minus the look azimuth (headingYaw)
+    fall = { h0: alt, y: alt, vy: 0, yaw0, t: 0, p: 0, mode: mode ?? (q.get('descent') === 'fade' ? 'fade' : 'glide') };
   }
   listeners.push(registerPadTarget('globe', { active: () => inputOn, orbit: (dx, dy) => { if (!dx && !dy || fall) return; stopCoast(); const r = controls as unknown as { _rotateLeft(a: number): void; _rotateUp(a: number): void }; r._rotateLeft(dx * controls.rotateSpeed * 3); r._rotateUp(dy * controls.rotateSpeed * 3); controls.update(); }, zoom, turn, home: () => { fall = null; flyHome = 1; stopCoast(); }, axis: () => axis, land: () => beginFall() })); // A on the reticle: the same drop as a double-click on the centre. Stays live during the fall so X can cancel.
 
@@ -440,7 +485,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (down) return; down = true; for (const off of listeners) off(); listeners.length = 0; controls.dispose();
     for (const sl of pool) sl.w.terminate(); pool.length = 0; ids.clear(); inflight.clear(); queued.clear(); ready.length = 0;
     for (const t of tiles.values()) releaseTileGeometry(t.mesh.geometry); tiles.clear(); material.dispose(); group.clear();
-    panel?.dispose();
+    panel?.dispose(); coverEl.remove();
     if (atmos) { atmos.dome.geometry.dispose(); (atmos.dome.material as THREE.Material).dispose(); }
     if (own.disposeRenderer) { renderer.dispose(); renderer.forceContextLoss(); }
   }
@@ -453,7 +498,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let last = performance.now(), fps = 0, prevT = 0, t0 = 0, dt = 0, tR = 0;
   /** Camera, LOD, builds, adoption, eviction: everything but the draw. */
   function update() {
-    t0 = performance.now(); dt = Math.min(.1, (t0 - last) / 1000); last = t0; frame++; pageChrono?.update(dt, 0);
+    t0 = performance.now(); const wall = Math.max(0, (t0 - last) / 1000); dt = Math.min(.1, wall); last = t0; frame++; pageChrono?.update(dt, 0);
     const sunSec = q.has('shot') ? shotSec : worldSec(), sunDay = dayAt(sunSec), sunHour = hourAt(sunSec);
     let stamped = 0;
     for (const t of tiles.values()) { if (stamped >= 4) break; const before = t.solarBucket; stampSolar(t, sunDay, sunHour); if (t.solarBucket !== before) stamped++; }
@@ -465,10 +510,13 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (q.get('handoff') === 'demo' && spawn && !leaving) { leaving = true; stopCoast(); if (fade) fade.style.opacity = '1'; const at = { ...landSpawn(spawn), yaw: headingYaw() }; setTimeout(() => leave(at), 650); } // wheel zoom does not drop; only the demo flag still does
     if (flyHome && !fall) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
     let handoffVy: number | null = null;
+    if (!fall) setCover(0, 'glide');
     if (fall && !ext && !handed) {
-      const b = body(1, 0, fall.y, 0); b.vy = fall.vy; stepBody(b, dt, {}, -Infinity); // the one integrator; ground -Infinity so the threshold does not zero the speed
-      if (b.y <= FALL_END_M) { fall.y = FALL_END_M; fall.vy = b.vy; alt = targetAlt = FALL_END_M; handoffVy = b.vy; } // keep the fall for this frame's pose; the overshoot is dropped, the speed is not
-      else { fall.y = b.y; fall.vy = b.vy; alt = targetAlt = b.y; }
+      const b = body(1, 0, fall.y, 0); b.vy = fall.vy; stepBody(b, dt, {}, -Infinity); // the one integrator; the seated glide below is what the camera follows
+      const moved = stepDescent(fall, descentFrameDt(wall)); // slow frames must not stretch the 14 s ease by 10×
+      fall.t = moved.t; fall.p = moved.p; fall.y = moved.y; fall.vy = moved.vy; alt = targetAlt = moved.y;
+      setCover(moved.cover, fall.mode);
+      if (moved.done) handoffVy = 0; // arrive at the glide already slow; the drone does not inherit an orbital impact
     } else if (bench) { const prev = benchT; benchT += dt;
       if (prev < 0 && benchT >= 0) { STATS.build.length = STATS.work.length = STATS.interval.length = 0; benchOrbit = { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; }
       targetAlt = alt = benchFrom * (benchTo / benchFrom) ** clamp(benchT / benchSec, 0, 1);
@@ -491,8 +539,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (!fall) controls.update();
     camera.position.setLength(R + ground + alt);
     camera.up.set(0, 1, 0); camera.lookAt(0, 0, 0); // nadir, the aim the tile draw already uses
-    const ease = fall ? fallEase(fall.h0, alt) : 0;
-    if (fall) lookAz = fallYaw(fall.yaw0, ease);
+    const ease = fall ? fall.p : 0;
+    if (fall) lookAz = fall.yaw0; // heading stays. The pitch opens; the view does not yaw.
     // The fall pitches with rotateX and yaws with rotateZ on that nadir aim. A second lookAt left the tiles off the
     // centre pixel, so the fall stayed the clear colour. planet.north is world +Y projected on the tangent plane, and
     // lookAt keeps camera +Y on that, so rotateZ(-azimuth) is the compass heading. rotateX(pitch − nadir) opens to isometric.
@@ -508,7 +556,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     } else camera.rotateX(pitchQ ?? 0); // standalone orbit: no altitude tilt, straight down unless ?pitch=
     }
     if (handoffVy !== null && fall) { // the spin and the pitch are at ease 1, then the drone inherits the speed
-      const yaw = -(lookAz ?? fallYaw(fall.yaw0, 1)), vy = handoffVy;
+      const yaw = -(lookAz ?? fall.yaw0), vy = handoffVy; setCover(0, 'glide');
       fall = null; handed = true; leave(dropAt(yaw, vy));
     }
     // Limb distance past a sphere of the mean radius (orbitClip). The hydrostatic figure and deep water sit inside that
@@ -571,11 +619,12 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const hydroSec = q.has('shot') ? shotSec : worldSec();
     refreshHydroLayer(seed, dayAt(hydroSec), hourAt(hydroSec), worldTier(), q.get('hydro') === '0'); // T-0058: same octave gate; the date is the clock's (?day= via initDay), ?hydro=0 leaves the tiles unpainted
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH, R + ground);
-    if (localClouds) { if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
-        const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3, ll = toLatLon(d);
-        const w = weatherAtLatLon(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, simRef);
-        colIn = w ? { tsC: w.tC, q: w.q, cover: Math.max(0, Math.min(1, w.cloud)) } : null; }
-      localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') ? colIn : null); }
+    if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
+      const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3, ll = toLatLon(d), latD = ll.lat * 180 / Math.PI, lonD = ll.lon * 180 / Math.PI;
+      const w = weatherAtLatLon(latD, lonD, simRef), envSec = q.has('shot') ? shotSec : worldSec();
+      fillEnvironmentGlobe(latD, lonD, dayAt(envSec), hourAt(envSec), simRef); // T-0089: the environment record at the sub-point (cloud drift, Mie haze)
+      colIn = w ? { tsC: w.tC, q: w.q, cover: Math.max(0, Math.min(1, w.cloud)) } : null; }
+    if (localClouds) localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') ? colIn : null, ground);
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
   }
@@ -598,7 +647,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
         `tiles drawn ${drawn} (${inView} in view, cap ${lod.draw}${splitK < 1 ? ` · split ×${splitK.toFixed(2)}` : ''}) · culled ${culled} · cached ${tiles.size} · deepest L${deepest} · queued ${queued.size + inflight.size}\n` +
         `build (${mode()}) ${built} tiles (${cancelledN} cancelled, ${ready.length} waiting) · avg ${avg(STATS.build).toFixed(1)} ms · p95 ${pct(STATS.build, .95).toFixed(1)} ms · worst frame ${Math.max(0, ...STATS.work).toFixed(1)} ms\n` +
         `tier ${LADDER[GOVERNOR.tier].name}${GOVERNOR.auto ? ' (auto)' : ''} · ${lod.segments} seg · ${fps.toFixed(0)} fps · shaders ${STATS.compileMs >= 0 ? STATS.compileMs.toFixed(0) + ' ms async' : '…'} · work ${work.toFixed(1)} ms\n` +
-        (fall ? 'free fall · the view turns · H cancels\n' : 'double-click a point to drop · A drops on the centre · drag orbits · wheel zooms · H home · G drops here\n');
+        (fall ? 'easing down · vignette on · heading stays · H cancels\n' : 'double-click a point to drop · A drops on the centre · drag orbits · wheel zooms · H home · G drops here · F fades down\n');
     }
   }
   /** One frame: update, draw into `target`, bookkeeping. The first `renderTo` waits until `bootP` has finalized the grid. */
@@ -637,7 +686,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     start() { if (started) return; started = true; void Promise.all([compiled, bootP]).then(() => requestAnimationFrame(tick)); },
     /** mode-scoped input: the globe's keys, wheel and drags act only while attached */
     attachInput(on: boolean) { inputOn = on; controls.enabled = on; if (!on) { turnX = null; dragging = false; stopCoast(); } },
-    get disposed() { return down; }, /** dev: the release coast is running (T-0043) */ get coasting() { return coastT >= 0; }, get altitude() { return alt; }, get ground() { return ground; }, precompile,
+    get disposed() { return down; }, /** dev: the release coast is running (T-0043) */ get coasting() { return coastT >= 0; }, get altitude() { return alt; }, get ground() { return ground; }, /** issue #202: the in-page band draws its overlay copy */ get localClouds() { return localClouds; }, precompile,
     /** The forest camera is the viewpoint from orbit down. Null on the standalone page, which keeps its own camera. */
     attachViewpoint(cam: THREE.PerspectiveCamera | null) { forestCam = cam; },
     /** shared band: fly the camera from outside (planet-frame metres, orientation, the game camera's fov/aspect); null = the
@@ -649,13 +698,15 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     /** over the playable region (game-local x, z), else null; descending = zooming in */
     get overHome() { return overHome; }, get descending() { return targetAlt < alt * .995; }, get headingYaw() { return headingYaw(); },
     zoomTo(a: number) { targetAlt = clamp(a, 40, R * 4); }, jumpTo(a: number) { alt = targetAlt = clamp(a, 40, R * 4); },
+    /** Aim the centre at a game-local spot without starting the fall. The next G, before a drag, drops there. */
+    lookOver,
     /** Turn the orbit toward the playable forest. H does this; it does not start the fall. */
     aimHome() { fall = null; flyHome = 1; stopCoast(); },
     /** Double-click, G, or A. Optional hit is the unit direction of the chosen point. */
     beginFall,
     /** Back to the orbit view after the drone is cancelled. The fall can be started again. */
     resumeOrbit() { fall = null; handed = false; leaving = false; },
-    get fallState() { return fall ? { h0: fall.h0, h: fall.y, vy: fall.vy, ease: fallEase(fall.h0, fall.y) } : null; },
+    get fallState() { return fall ? { h0: fall.h0, h: fall.y, vy: fall.vy, ease: fall.p } : null; },
     /** Show or hide the layer checkbox panel. Standalone leaves it up; the in-page handoff hides it in game mode. */
     setLayerPanel(on: boolean) { const el = document.getElementById('globe-layers'); if (el) el.hidden = !on; },
     /** shared mode: terminate the tile workers during gameplay (their memory goes) and restart them on demand */

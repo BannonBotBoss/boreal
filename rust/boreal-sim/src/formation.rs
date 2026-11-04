@@ -52,6 +52,24 @@ impl Tillotson { pub fn from_data(name: &str) -> Tillotson { Tillotson { rho0: m
     pub fn pressure(&self, d: f64) -> f64 { let mu = d / self.rho0 - 1.0; (self.a_mod * mu + self.b_mod * mu * mu).max(0.0) }
     pub fn sound(&self, d: f64) -> f64 { let mu = (d / self.rho0 - 1.0).max(0.0); ((self.a_mod + 2.0 * self.b_mod * mu) / self.rho0).sqrt() } }
 
+/// Core iron, cold: hcp-Fe Vinet curve (Dewaele et al. 2006) with a cited core density deficit (data/earth/materials.json,
+/// "iron_hcp_vinet"). The alloy at pressure P is (1 - deficit) times as dense as pure hcp iron, so P_alloy(rho) =
+/// P_Fe(rho / (1 - deficit)). Vinet: x = (rho0/rho)^(1/3), P = 3 K0 (1 - x) / x^2 exp(1.5 (K0' - 1)(1 - x)). No tension.
+/// Not yet wired into the bake: the next step swaps it in for cold Tillotson iron and re-bakes against PREM's 364 GPa centre.
+#[derive(Clone, Copy, Debug)] pub struct VinetFe { pub rho0: f64, pub k0: f64, pub k0p: f64, pub deficit: f64 }
+impl VinetFe {
+    /// `liquid` picks the outer-core (liquid) or inner-core (solid) deficit.
+    pub fn from_data(liquid: bool) -> VinetFe { let s = "iron_hcp_vinet"; let v0 = material_num(s, "V0_m3_per_atom");
+        VinetFe { rho0: 55.845 * 1.66054e-27 / v0, k0: material_num(s, "K0_Pa"), k0p: material_num(s, "K0p"),
+            deficit: material_num(s, if liquid { "deficit_liquid" } else { "deficit_solid" }) } }
+    pub fn pressure(&self, d: f64) -> f64 { let r = d / (1.0 - self.deficit); if r <= self.rho0 { return 0.0; } let x = (self.rho0 / r).cbrt();
+        3.0 * self.k0 * (1.0 - x) / (x * x) * (1.5 * (self.k0p - 1.0) * (1.0 - x)).exp() }
+    /// Density at pressure p (Pa), by bisection.
+    pub fn density(&self, p: f64) -> f64 { let (mut lo, mut hi) = (self.rho0 * (1.0 - self.deficit), 4.0 * self.rho0);
+        for _ in 0..100 { let m = 0.5 * (lo + hi); if self.pressure(m) < p { lo = m } else { hi = m } } 0.5 * (lo + hi) }
+    pub fn sound(&self, d: f64) -> f64 { let e = d * 1e-4; ((self.pressure(d + e) - self.pressure((d - e).max(0.0))) / (2.0 * e)).max(1e4).sqrt() }
+}
+
 /// Barotropic table rho -> P for one class, from PREM (rho, P) pairs walking inward, made monotone.
 pub struct Eos { rho: Vec<f64>, p: Vec<f64>, till: Option<Tillotson> }
 impl Eos {
@@ -248,6 +266,13 @@ mod tests { use super::*;
         let mut s = State::new(form_ic(20, 5), C::omega_earth); s.relax(150, 0.05); let f = measure(&s);
         assert!((f.mass / C::M_earth - 1.0).abs() < 0.005); assert!(f.com < 1.0, "com {}", f.com); assert!(f.j2 > 0.0 && f.f_clairaut > 0.0, "{f:?}");
         let objs = crate::emergent::find_objects(&s.p, crate::emergent::earth_link(s.p.pos.len())); assert_eq!(objs.len(), 1); }
+    /// Vinet hcp-Fe plus the cited deficit at PREM's own pressures: within 8% of PREM, and still denser (the thermal term is open).
+    #[test] fn vinet_core_vs_prem() { let (liq, sol) = (VinetFe::from_data(true), VinetFe::from_data(false));
+        assert!((liq.rho0 - 8269.0).abs() < 2.0, "rho0 {}", liq.rho0); assert_eq!(liq.pressure(7000.0), 0.0);
+        let pure = VinetFe { deficit: 0.0, ..liq }; assert!((pure.density(363.85e9) - 14407.0).abs() < 20.0, "pure centre {}", pure.density(363.85e9));
+        for (e, p, rp) in [(liq, 135.75e9, 9903.4), (liq, 328.85e9, 12166.3), (sol, 328.85e9, 12763.6), (sol, 363.85e9, 13088.5)] {
+            let d = e.density(p); let g = d / rp - 1.0; assert!(g > 0.0 && g < 0.08, "P {p} rho {d} PREM {rp} gap {g}");
+            assert!((e.pressure(d) / p - 1.0).abs() < 1e-6); assert!(e.sound(d) > 5e3 && e.sound(d) < 2e4, "c {}", e.sound(d)); } }
     #[test] fn tillotson_from_cited_data() { let fe = Tillotson::from_data("iron"); assert_eq!(fe.rho0, 7800.0); assert_eq!(fe.pressure(7800.0), 0.0); assert_eq!(fe.pressure(7000.0), 0.0);
         assert!((fe.pressure(7800.0 * 1.1) - (1.28e11 * 0.1 + 1.05e11 * 0.01)).abs() < 1e3); assert_eq!(material_num("", "bulk_core_mass_fraction"), 0.325); }
     #[test] fn mix_start_is_undifferentiated() { let (p, rho) = form_mix_ic(3000, 7); let n = p.pos.len(); assert!((n as f64 / 3000.0 - 1.0).abs() < 0.1, "n {n}");

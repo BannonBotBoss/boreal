@@ -1,0 +1,26 @@
+{
+  "site": "polar",
+  "slug": "polar",
+  "clickLat": 74.2,
+  "clickLon": 50.6,
+  "landedLat": 74.19752004411845,
+  "landedLon": 50.60204846124679,
+  "biome": "ice",
+  "water": false,
+  "census": [],
+  "shown": [],
+  "simStepMs": 223.90000000011412,
+  "frameMs": 159.9,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 56.2,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2100
+  },
+  "exit": 0,
+  "note": ""
+}

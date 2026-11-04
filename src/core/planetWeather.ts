@@ -124,6 +124,15 @@ let bound: PlanetSim | null = null;
 let clockOwner: 'forest' | 'globe' | null = null;
 
 export function planetWeatherSim() { return bound; }
+/** Metres to open ocean at (lat, lon) on the bound grid (PlanetSim.coastAt, #235); undefined before a grid is bound,
+ *  when the grid says NaN, or when the containing cell is sea (0), so cover keeps its zonal tree and ice lines. Feed it to
+ *  coverRow / coverKind (#192). Callers only use this for land sites (water returns 'water' first), so a 0 means the shore
+ *  is finer than one grid cell (about 156 km at nlat 128) and the real distance is unknown. Reading it as 0 m gave a
+ *  maritime weight of 1 and a sea-level tree line: the T-0127 Manitoba landing (52, -97, 218 m, closed stand) read tundra. */
+export function liveCoastM(lat: number, lon: number): number | undefined {
+  const c = bound?.coastAt(lat, lon);
+  return c != null && Number.isFinite(c) && c > 0 ? c : undefined;
+}
 export function bindPlanetWeather(sim: PlanetSim | null) {
   bound = sim;
   setNearCellLive(false); // a new grid is not the cell that was seeded from the previous one

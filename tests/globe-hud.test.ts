@@ -21,9 +21,9 @@ test('globe HUD: CSS hides title, status, prompt, footer hint and buttons but ke
   const rule = css.split('}').find(r => r.includes('body.on-globe header'));
   assert.ok(rule, 'a body.on-globe rule');
   for (const sel of ['body.on-globe header', 'body.on-globe #status', 'body.on-globe #interaction', 'body.on-globe footer>span',
-    'body.on-globe footer div>button:not(#menu-btn)']) assert.ok(rule!.includes(sel), sel);
+    'body.on-globe footer div>button:not(#menu-btn):not(#vr-btn)']) assert.ok(rule!.includes(sel), sel);
   assert.match(rule!, /display:none/);
   assert.ok(!/body\.on-globe[^{}]*#menu-btn\s*[,{]/.test(css), 'the Menu button itself is never hidden');
   const html = readFileSync('index.html', 'utf8');
-  assert.match(html, /<footer>.*<div><button id="menu-btn">Menu<\/button>/); // Menu sits in the footer's button row
+  assert.match(html, /<footer>.*<div><button id="menu-btn">Menu<\/button><button id="vr-btn"/); // Menu and Enter VR sit in the footer's button row
 });

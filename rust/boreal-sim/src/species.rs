@@ -2,15 +2,15 @@
 //! Built on the #167 cover row: an animal lives only where its range and its cover class allow it.
 //! Densities are labelled calibration ranges in data/earth/species-density.json [verify]. Deterministic per (lat, lon, year).
 
-use crate::cover::{cover_row, place_hash, Cover};
+use crate::cover::{cover_row_at, place_hash, Cover};
 
 pub const SPECIES_JSON: &str = include_str!("../../../data/earth/species-density.json");
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3, GrayWolf = 4, Caribou = 5 }
+pub enum Species { SnowshoeHare = 0, WhiteTailedDeer = 1, Moose = 2, CanadaLynx = 3, GrayWolf = 4, Caribou = 5, AmericanBlackBear = 6, GrizzlyBear = 7, BaldEagle = 8, Beaver = 9, RedFox = 10, ArcticFox = 11 }
 impl Species {
-    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx", "gray_wolf", "caribou"][self as usize] }
-    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), 4 => Some(Self::GrayWolf), 5 => Some(Self::Caribou), _ => None } }
+    pub fn key(self) -> &'static str { ["snowshoe_hare", "white_tailed_deer", "moose", "canada_lynx", "gray_wolf", "caribou", "american_black_bear", "grizzly_bear", "bald_eagle", "beaver", "red_fox", "arctic_fox"][self as usize] }
+    pub fn from_id(id: u32) -> Option<Self> { match id { 0 => Some(Self::SnowshoeHare), 1 => Some(Self::WhiteTailedDeer), 2 => Some(Self::Moose), 3 => Some(Self::CanadaLynx), 4 => Some(Self::GrayWolf), 5 => Some(Self::Caribou), 6 => Some(Self::AmericanBlackBear), 7 => Some(Self::GrizzlyBear), 8 => Some(Self::BaldEagle), 9 => Some(Self::Beaver), 10 => Some(Self::RedFox), 11 => Some(Self::ArcticFox), _ => None } }
 }
 
 fn block(sp: Species) -> &'static str {
@@ -36,15 +36,31 @@ fn field(sp: Species, f: &str) -> Vec<f64> {
 /// Is (lat, lon) inside the species' range box?
 pub fn in_range(sp: Species, lat: f64, lon: f64) -> bool {
     let (la, lo) = (field(sp, "lat"), field(sp, "lon"));
-    lat >= la[0] && lat <= la[1] && lon >= lo[0] && lon <= lo[1]
+    // Optional second longitude band on the same latitudes: "lon2" (Eurasia for Holarctic species, #192 polar landing).
+    let in_lon2 = has_field(sp, "lon2") && { let l2 = field(sp, "lon2"); lon >= l2[0] && lon <= l2[1] };
+    let inside = lat >= la[0] && lat <= la[1] && ((lon >= lo[0] && lon <= lo[1]) || in_lon2);
+    // Optional hole in the range box: "exclude": [lat_min, lat_max, lon_min, lon_max].
+    if inside && has_field(sp, "exclude") {
+        let x = field(sp, "exclude");
+        if lat >= x[0] && lat <= x[1] && lon >= x[2] && lon <= x[3] { return false; }
+    }
+    inside
 }
 
 /// Animals per hectare at a landing in a given year. Zero outside the range or on cover the species cannot use.
+/// Zonal tree and ice lines (no coast distance); same as `density_per_ha_at` with NaN.
 pub fn density_per_ha(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32) -> f64 {
+    density_per_ha_at(sp, lat, lon, elev_m, vegetation, water, year, f64::NAN)
+}
+/// density_per_ha on the cover the viewer draws: `coast_m` is the landing's distance to the sea (m, NaN = unknown), the
+/// same input cover_row_at uses (#233, #235). Without it a continental interior below its own tree line read as bare rock
+/// under the zonal line, so the census was empty under a boreal stand (T-0132, 64.5 N -119.7).
+#[allow(clippy::too_many_arguments)]
+pub fn density_per_ha_at(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32, coast_m: f64) -> f64 {
     if !in_range(sp, lat, lon) { return 0.0; }
-    let cls = cover_row(lat, lon, elev_m, vegetation, water).class;
-    let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", Cover::Tundra => "tundra_per_ha", _ => return 0.0 };
-    if !has_field(sp, key) { return 0.0; } // tundra is opt-in: only species that list it live there
+    let cls = cover_row_at(lat, lon, elev_m, vegetation, water, coast_m).class;
+    let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", Cover::Tundra => "tundra_per_ha", Cover::Tropical => "tropical_per_ha", Cover::Wetland => "wetland_per_ha", _ => return 0.0 };
+    if !has_field(sp, key) { return 0.0; } // tundra, tropical and wetland are opt-in: only species that list it live there
     let r = field(sp, key);
     if r[1] <= 0.0 { return 0.0; }
     let h = place_hash(lat + 0.5 * sp as u32 as f64, lon);
@@ -67,13 +83,19 @@ pub fn spawn_count(density_per_ha: f64, side_m: f64, lat: f64, lon: f64) -> u32 
     (f + if place_hash(lon, lat + 7.0) < expected - f { 1.0 } else { 0.0 }) as u32
 }
 
-pub const ALL: [Species; 6] = [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::Moose, Species::CanadaLynx, Species::GrayWolf, Species::Caribou];
+pub const ALL: [Species; 12] = [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::Moose, Species::CanadaLynx, Species::GrayWolf, Species::Caribou,
+    Species::AmericanBlackBear, Species::GrizzlyBear, Species::BaldEagle, Species::Beaver, Species::RedFox, Species::ArcticFox];
 
 /// The local population list for one landing: (species, whole animals) for every species with at least one animal in a
 /// square patch `side_m` wide, in species-id order. This is what the bridge sends so the viewer can show the full cast.
 pub fn landing_population(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32, side_m: f64) -> Vec<(Species, u32)> {
+    landing_population_at(lat, lon, elev_m, vegetation, water, year, side_m, f64::NAN)
+}
+/// landing_population on the viewer's cover: `coast_m` as in `density_per_ha_at` (NaN = the zonal lines).
+#[allow(clippy::too_many_arguments)]
+pub fn landing_population_at(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32, side_m: f64, coast_m: f64) -> Vec<(Species, u32)> {
     ALL.iter().filter_map(|&sp| {
-        let d = density_per_ha(sp, lat, lon, elev_m, vegetation, water, year);
+        let d = density_per_ha_at(sp, lat, lon, elev_m, vegetation, water, year, coast_m);
         // Offset the rounding hash per species so two species at the same density do not round together.
         let n = spawn_count(d, side_m, lat + 0.25 * sp as u32 as f64, lon);
         (n > 0).then_some((sp, n))
@@ -82,6 +104,21 @@ pub fn landing_population(lat: f64, lon: f64, elev_m: f64, vegetation: f64, wate
 
 #[cfg(test)]
 mod tests {
+    #[test] fn holarctic_species_reach_eurasia_others_do_not() {
+        // Novaya Zemlya tundra (the #192 polar site, 74.2 N 50.6 E): reindeer, arctic fox, wolf and red fox ranges reach it.
+        for sp in [Species::Caribou, Species::ArcticFox, Species::GrayWolf, Species::RedFox] { assert!(in_range(sp, 74.2, 50.6), "{:?}", sp); }
+        assert!(in_range(Species::ArcticFox, 65.0, -18.0)); // Iceland
+        // North American-only species stay out of Eurasia.
+        for sp in [Species::SnowshoeHare, Species::WhiteTailedDeer, Species::CanadaLynx, Species::GrizzlyBear, Species::BaldEagle] { assert!(!in_range(sp, 60.0, 60.0), "{:?}", sp); }
+        // The caribou hole still applies in North America.
+        assert!(!in_range(Species::Caribou, 49.3, -123.1));
+    }
+    #[test] fn caribou_absent_from_south_bc_coast() {
+        assert!(!in_range(Species::Caribou, 49.3, -123.1)); // Vancouver
+        assert!(!in_range(Species::Caribou, 49.7, -125.5)); // Vancouver Island
+        assert!(in_range(Species::Caribou, 49.0, -117.0)); // South Selkirks
+        assert!(in_range(Species::Caribou, 52.7, -124.8)); // Itcha-Ilgachuz
+    }
     use super::*;
     #[test] fn same_place_same_year_same_density() {
         let a = density_per_ha(Species::SnowshoeHare, 54.0, -120.0, 200.0, 0.8, false, 2026);
@@ -135,9 +172,73 @@ mod tests {
         assert_eq!(pop, landing_population(55.0, -100.0, 300.0, 0.9, false, 2026, 5_000.0));
         assert!(landing_population(45.0, -95.0, 0.0, 1.0, true, 2026, 5_000.0).is_empty());
     }
+    #[test] fn bears_black_widespread_grizzly_west_only() {
+        let b = density_per_ha(Species::AmericanBlackBear, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        let m = density_per_ha(Species::Moose, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        assert!(b > 0.0 && b < 0.02, "black bear {b} (moose {m})");
+        assert_eq!(density_per_ha(Species::AmericanBlackBear, 68.0, -110.0, 50.0, 0.4, false, 2026), 0.0, "no black bears on tundra");
+        let g = density_per_ha(Species::GrizzlyBear, 55.0, -120.0, 300.0, 0.9, false, 2026);
+        assert!(g > 0.0 && g < b, "grizzly {g} scarcer than black bear {b}");
+        assert!(density_per_ha(Species::GrizzlyBear, 68.0, -110.0, 50.0, 0.4, false, 2026) > 0.0, "barren-ground grizzlies");
+        assert_eq!(density_per_ha(Species::GrizzlyBear, 50.0, -75.0, 300.0, 0.9, false, 2026), 0.0, "none in Quebec");
+        assert_eq!(Species::from_id(7), Some(Species::GrizzlyBear));
+        assert_eq!(Species::from_id(12), None);
+    }
+    #[test] fn bald_eagles_in_forest_scarce_on_prairie_none_on_tundra() {
+        let e = density_per_ha(Species::BaldEagle, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        let p = density_per_ha(Species::BaldEagle, 50.0, -105.0, 600.0, 0.45, false, 2026);
+        assert!(e > 0.0 && e <= 0.002, "eagle in boreal {e}");
+        assert!(p >= 0.0 && p <= 0.0003, "eagle on prairie {p}");
+        assert_eq!(density_per_ha(Species::BaldEagle, 68.0, -110.0, 50.0, 0.4, false, 2026), 0.0, "no eagles on open tundra");
+        assert_eq!(density_per_ha(Species::BaldEagle, 60.0, 25.0, 100.0, 0.9, false, 2026), 0.0, "Finland: white-tailed eagle, not bald");
+        assert_eq!(Species::from_id(8), Some(Species::BaldEagle));
+    }
+    #[test] fn beavers_in_forest_thin_on_prairie_none_on_tundra() {
+        let f = density_per_ha(Species::Beaver, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        let p = density_per_ha(Species::Beaver, 50.0, -105.0, 600.0, 0.45, false, 2026);
+        assert!(f > 0.0 && f <= 0.05, "beaver in boreal {f}");
+        assert!(p >= 0.0 && p <= 0.01, "beaver on prairie {p}");
+        assert_eq!(density_per_ha(Species::Beaver, 72.0, -110.0, 50.0, 0.4, false, 2026), 0.0, "none on the high Arctic tundra");
+        assert_eq!(density_per_ha(Species::Beaver, 60.0, 25.0, 100.0, 0.9, false, 2026), 0.0, "Finland: Eurasian beaver, not this table");
+        assert_eq!(Species::from_id(9), Some(Species::Beaver));
+    }
+    #[test] fn red_foxes_in_forest_and_prairie_and_low_arctic() {
+        let f = density_per_ha(Species::RedFox, 55.0, -100.0, 300.0, 0.9, false, 2026);
+        let p = density_per_ha(Species::RedFox, 50.0, -105.0, 600.0, 0.45, false, 2026);
+        assert!(f > 0.0 && f <= 0.01, "red fox in boreal {f}");
+        assert!(p <= 0.02, "red fox on prairie {p}");
+        assert!(density_per_ha(Species::RedFox, 68.0, -110.0, 50.0, 0.4, false, 2026) > 0.0, "low-Arctic tundra foxes");
+        assert!(density_per_ha(Species::RedFox, 60.0, 25.0, 100.0, 0.9, false, 2026) > 0.0, "Finland: red fox is Holarctic (lon2)");
+        assert_eq!(Species::from_id(10), Some(Species::RedFox));
+    }
+    #[test] fn census_reads_the_same_cover_as_the_picture_inland() {
+        // T-0132: the #192 tundra click, 64.5 N -119.7 at 376 m (landing DEM; GEBCO 2020 gives 391 m there), vegetation 0.71.
+        // Zonal lines: 376 m is over the 146 m zonal tree line, so Rock and no animals. 156 km from the sea (the live grid
+        // at nlat 128) the continental tree line is ~815 m, so the viewer draws Boreal and the census must list a boreal cast.
+        let (lat, lon, elev, veg) = (64.5, -119.7, 376.0, 0.71);
+        assert!(landing_population(lat, lon, elev, veg, false, 2026, 5_000.0).is_empty(), "zonal: rock");
+        assert_eq!(cover_row_at(lat, lon, elev, veg, false, 156_000.0).class, Cover::Boreal);
+        let pop = landing_population_at(lat, lon, elev, veg, false, 2026, 5_000.0, 156_000.0);
+        assert!(!pop.is_empty(), "inland boreal cast");
+        assert!(pop.iter().all(|&(s, _)| density_per_ha_at(s, lat, lon, elev, veg, false, 2026, 156_000.0) > 0.0));
+        // NaN coast is exactly the old zonal call.
+        assert_eq!(landing_population_at(lat, lon, elev, veg, false, 2026, 5_000.0, f64::NAN), landing_population(lat, lon, elev, veg, false, 2026, 5_000.0));
+    }
     #[test] fn spawn_count_tracks_density() {
         assert_eq!(spawn_count(0.0, 500.0, 50.0, -90.0), 0);
         let n = spawn_count(2.0, 100.0, 50.0, -90.0); // 2/ha over 1 ha
         assert!(n == 2 || n == 3);
+    }
+    #[test] fn arctic_foxes_on_tundra_only_and_cycle_with_lemmings() {
+        let t = density_per_ha(Species::ArcticFox, 69.3, -139.5, 150.0, 0.35, false, 2026);
+        assert!(t > 0.0 && t <= 0.01, "Yukon north slope {t}");
+        assert_eq!(density_per_ha(Species::ArcticFox, 55.0, -100.0, 300.0, 0.9, false, 2026), 0.0, "not in boreal forest");
+        assert!(density_per_ha(Species::ArcticFox, 69.0, 25.0, 100.0, 0.4, false, 2026) > 0.0, "Lapland tundra: arctic fox is circumpolar (lon2)");
+        let ds: Vec<f64> = (2020..2028).map(|y| density_per_ha(Species::ArcticFox, 69.3, -139.5, 150.0, 0.35, false, y)).collect();
+        let (lo, hi) = ds.iter().fold((f64::MAX, 0.0f64), |(l, h), &d| (l.min(d), h.max(d)));
+        assert!(hi > 3.0 * lo, "lemming-cycle swing {lo} {hi}");
+        let pop = landing_population(69.3, -139.5, 150.0, 0.35, false, 2026, 5_000.0);
+        assert!(pop.iter().any(|&(s, _)| s == Species::ArcticFox), "on the Yukon north-slope cast: {pop:?}");
+        assert_eq!(Species::from_id(11), Some(Species::ArcticFox));
     }
 }

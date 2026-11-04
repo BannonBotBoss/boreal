@@ -348,6 +348,17 @@ export function pelvisShift(flex: number) {
  * behind) out of reach as fast as the drop brings it in. Game calibration of the pivot.
  */
 export const pitchShift = (pitch: number, pivot: number) => ({ y: pivot * (1 - Math.cos(pitch)), z: -pivot * Math.sin(pitch) });
+// solveChain helpers at module scope, not per-call closures: under tsx (keepNames) each named closure costs an
+// Object.defineProperty per call, which was over half of a 240 Hz gait test's time (#198). Same math as before.
+type ZY = { z: number; y: number };
+function chainJointAt(top: ZY, S: number, g: number): ZY { return { z: top.z - S * Math.sin(g), y: top.y - S * Math.cos(g) }; }
+function chainWristAt(foot: ZY, M: number, q: number): ZY { return { z: foot.z + M * Math.sin(q), y: foot.y + M * Math.cos(q) }; }
+function chainBladeFor(L: LimbDims, top: ZY, S: number, rest: number, blade: number | undefined, h: ZY) {
+  if (!S) return 0;
+  if (blade !== undefined) return blade;
+  const j0 = chainJointAt(top, S, rest); return rest + (L.girdleSwing ?? 0) * Math.atan2(-(h.z - j0.z), -(h.y - j0.y));
+}
+function chainFar(foot: ZY, M: number, J0: ZY, r: number, q: number) { const w = chainWristAt(foot, M, q); return Math.hypot(w.z - J0.z, w.y - J0.y) > r; }
 /**
  * One limb in a sagittal frame (z back, y up, origin at the limb's ground point), shared by quadrupedPose and the ?loco=1
  * limb IK (animals/locomotion/ik solveLimb). `top` is the chain top (blade pivot or hip joint). `blade` is the absolute
@@ -357,23 +368,16 @@ export const pitchShift = (pitch: number, pivot: number) => ({ y: pivot * (1 - M
  */
 export function solveChain(L: LimbDims, forward: boolean, foot: { z: number; y: number }, psi0: number, top: { z: number; y: number }, blade?: number, fit = false, pole?: { z: number; y: number }) {
   const S = L.girdle ?? 0, M = L.foot ?? 0, rest = L.girdleRest ?? 0, r = ikReach(L);
-  const jointAt = (g: number) => ({ z: top.z - S * Math.sin(g), y: top.y - S * Math.cos(g) });
-  const wristAt = (q: number) => ({ z: foot.z + M * Math.sin(q), y: foot.y + M * Math.cos(q) });
-  const bladeFor = (h: { z: number; y: number }) => {
-    if (!S) return 0;
-    if (blade !== undefined) return blade;
-    const j0 = jointAt(rest); return rest + (L.girdleSwing ?? 0) * Math.atan2(-(h.z - j0.z), -(h.y - j0.y));
-  };
   let psi = psi0;
   if (fit && M) {
-    const J0 = jointAt(bladeFor(wristAt(psi0))), far = (q: number) => Math.hypot(wristAt(q).z - J0.z, wristAt(q).y - J0.y) > r;
-    if (far(psi0)) {
+    const J0 = chainJointAt(top, S, chainBladeFor(L, top, S, rest, blade, chainWristAt(foot, M, psi0)));
+    if (chainFar(foot, M, J0, r, psi0)) {
       const aligned = Math.atan2(J0.z - foot.z, J0.y - foot.y); let lo = 0, hi = 1;
-      for (let k = 0; k < 16; k++) { const m = (lo + hi) / 2; if (far(psi0 + (aligned - psi0) * m)) lo = m; else hi = m; }
+      for (let k = 0; k < 16; k++) { const m = (lo + hi) / 2; if (chainFar(foot, M, J0, r, psi0 + (aligned - psi0) * m)) lo = m; else hi = m; }
       psi = psi0 + (aligned - psi0) * hi;
     }
   }
-  const h = wristAt(psi), g = bladeFor(h), J = jointAt(g);
+  const h = chainWristAt(foot, M, psi), g = chainBladeFor(L, top, S, rest, blade, h), J = chainJointAt(top, S, g);
   let sol = solveLeg(h.z - J.z, h.y - J.y, L.upper, L.lower, forward);
   // `pole` is a point in this same plane (the previous elbow). It picks the bend side; it is not added to J.
   if (pole) { const e = poleTargetTwoBone(J, h, L.upper, L.lower, pole);

@@ -37,10 +37,18 @@ export const PLANE_INFO: Record<PlaneName, { unit: string; budget: 'input' | 'st
   reflsw: { unit: 'W/m²', budget: 'solar', label: 'shortwave reflected to space' }, absatm: { unit: 'W/m²', budget: 'atmosphere', label: 'shortwave absorbed by the air' }, pmean: { unit: 'mm/day', budget: 'hydrosphere', label: 'precipitation, 12 h running mean' }, olr: { unit: 'W/m²', budget: 'atmosphere', label: 'outgoing longwave (Budyko A + B T)' },
 };
 
+/** cover.rs class ids, in order. */
+export const COVER_CLASSES = ['water', 'ice', 'rock', 'tundra', 'desert', 'prairie', 'boreal', 'tropical', 'wetland'] as const;
+
 interface Exports {
   memory: WebAssembly.Memory; layout_version(): number; plane_count(): number;
   grid_init(nlat: number, nlon: number): number; grid_seed(day: number, hour: number): void; grid_boot(day: number, hour: number): void; grid_step(dt: number): void;
   grid_day(): number; grid_hour(): number; alloc_f64(n: number): number;
+  landing_population(lat: number, lon: number, elevM: number, vegetation: number, water: number, year: number, sideM: number, out: number, cap: number): number;
+  landing_population_at(lat: number, lon: number, elevM: number, vegetation: number, water: number, year: number, sideM: number, coastM: number, out: number, cap: number): number;
+  cover_cell(lat: number, lon: number, elevM: number, vegetation: number, water: number, out: number): void;
+  cover_cell_at(lat: number, lon: number, elevM: number, vegetation: number, water: number, coastM: number, out: number): void;
+  grid_coast_at(lat: number, lon: number): number;
   solar_cell(day: number, hour: number, lat: number, lon: number, cloud: number, albedo: number, tC: number, ePa: number, out: number): void;
   radial_profile(rKm: number, mpRe: number, out: number): void;
   gas_column(body: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
@@ -49,6 +57,19 @@ interface Exports {
   gas_above(hKm: number, qSurf: number, co2ppm: number, out: number): void;
   rt_point(year: number, cosZ: number, cosV: number, phi: number, wind: number, cloud: number, tau: number, surf: number, landAlbedo: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
   emergent_demo(n: number, mode: number, out: number): void;
+  engine_set_now?(ms: number): void;
+  engine_set_cycle?(cycle: number): number;
+  engine_set_param?(ptr: number, len: number, value: number): number;
+  engine_reset_all?(): void;
+  engine_reset_one?(ptr: number, len: number): void;
+  engine_spawn?(ptr: number, len: number): number;
+  engine_despawn?(ptr: number, len: number): number;
+  engine_report_len?(): number;
+  engine_report_ptr?(): number;
+  cosmos_table_len?(): number;
+  cosmos_table_ptr?(): number;
+  reheat_table_len?(): number;
+  reheat_table_ptr?(): number;
 }
 
 export class PlanetSim {
@@ -95,15 +116,95 @@ export class PlanetSim {
   /** Emergent-object finder demo (emergent.rs): mode 0 relaxed PREM Earth, 1 unbound, 2 Earth + Moon. */
   emergentDemo(n: number, mode: number) { const p = this.buf(); this.x.emergent_demo(n, mode, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));
     return { count: o[0], mass: o[1], com: [o[2], o[3], o[4]], spinZ: o[5], members: o[6], trusted: o[7] > 0, extent: o[8], layers: o[9], insideHill: o[10] > 0, outsideRoche: o[11] > 0 }; }
+  private popScratch = 0;
+  /** Issue #162 bridge: the simulation's local population list at a landing, as { species, count } for every species
+   *  with at least one animal in a square patch `sideM` wide. Species ids follow LANDING_SPECIES. Empty on water.
+   *  `coastM` is the landing's distance to the sea (liveCoastM), the same input as coverCellAt, so the census lives on the
+   *  cover the viewer draws (T-0132). Omitted or NaN keeps the zonal tree and ice lines. */
+  landingPopulation(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, year: number, sideM = 5000, coastM = NaN) {
+    const cap = LANDING_SPECIES.length, p = this.popScratch ||= this.x.alloc_f64(2 * cap);
+    const n = this.x.landing_population_at(lat, lon, elevM, vegetation, water ? 1 : 0, year, sideM, coastM, p, cap);
+    const o = new Float64Array(this.x.memory.buffer, p, 2 * n), out: { species: (typeof LANDING_SPECIES)[number]; count: number }[] = [];
+    for (let i = 0; i < n; i++) out.push({ species: LANDING_SPECIES[o[2 * i]], count: o[2 * i + 1] });
+    return out;
+  }
+  /** #192 wildlife lane: landingPopulation plus density (animals per km2 of the patch) and each species' habitat
+   *  tags (SPECIES_HABITAT), so the spawner can place every animal in fitting ground without a second sim call. */
+  landingPopulationDetail(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, year: number, sideM = 5000, coastM = NaN) {
+    const km2 = (sideM / 1000) ** 2;
+    return this.landingPopulation(lat, lon, elevM, vegetation, water, year, sideM, coastM)
+      .map(p => ({ ...p, perKm2: p.count / km2, habitat: SPECIES_HABITAT[p.species] }));
+  }
+  /** Issue #167 cover row (cover.rs): class name, stems per hectare, billboard height (m). Deterministic per place. */
+  coverCell(lat: number, lon: number, elevM: number, vegetation: number, water: boolean) {
+    const p = this.buf(); this.x.cover_cell(lat, lon, elevM, vegetation, water ? 1 : 0, p); const o = new Float64Array(this.x.memory.buffer, p, 3);
+    return { kind: COVER_CLASSES[o[0]], stemsPerHa: o[1], heightM: o[2] };
+  }
+  /** coverCell with the landing's distance to the coast in metres (cover.rs cover_row_at; NaN = unknown = coverCell). */
+  coverCellAt(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, coastM: number) {
+    const p = this.buf(); this.x.cover_cell_at(lat, lon, elevM, vegetation, water ? 1 : 0, coastM, p); const o = new Float64Array(this.x.memory.buffer, p, 3);
+    return { kind: COVER_CLASSES[o[0]], stemsPerHa: o[1], heightM: o[2] };
+  }
+  /** Metres from (lat, lon) to open ocean on the live grid (grid.rs coast_at); NaN before `init`. Feed it to coverCellAt. */
+  coastAt(lat: number, lon: number): number { return this.x.grid_coast_at(lat, lon); }
+  private namePtr(name: string) {
+    const bytes = new TextEncoder().encode(name);
+    const p = this.x.alloc_f64(Math.max(1, Math.ceil(bytes.length / 8)));
+    new Uint8Array(this.x.memory.buffer, p, bytes.length).set(bytes);
+    return { p, n: bytes.length };
+  }
+  /** Ask Rust for the engine record at this cycle. Empty when this wasm has no registry. */
+  engineReport(): string {
+    if (!this.x.engine_report_len || !this.x.engine_report_ptr) return '';
+    const n = this.x.engine_report_len();
+    const p = this.x.engine_report_ptr();
+    return new TextDecoder().decode(new Uint8Array(this.x.memory.buffer, p, n));
+  }
+  setEngineNow(ms: number) { this.x.engine_set_now?.(ms); }
+  setEngineCycle(cycle: number) { return this.x.engine_set_cycle?.(cycle) ?? 0; }
+  setEngineParam(key: string, value: number) {
+    if (!this.x.engine_set_param) return 0;
+    const { p, n } = this.namePtr(key);
+    return this.x.engine_set_param(p, n, value);
+  }
+  resetEngines() { this.x.engine_reset_all?.(); }
+  resetEngine(id: string) { if (!this.x.engine_reset_one) return; const { p, n } = this.namePtr(id); this.x.engine_reset_one(p, n); }
+  spawnEngine(id: string) { if (!this.x.engine_spawn) return 0; const { p, n } = this.namePtr(id); return this.x.engine_spawn(p, n); }
+  despawnEngine(id: string) { if (!this.x.engine_despawn) return 0; const { p, n } = this.namePtr(id); return this.x.engine_despawn(p, n); }
+  cosmosTable(): Float64Array {
+    if (!this.x.cosmos_table_len || !this.x.cosmos_table_ptr) return new Float64Array();
+    const n = this.x.cosmos_table_len();
+    const p = this.x.cosmos_table_ptr();
+    return new Float64Array(this.x.memory.buffer, p, n).slice();
+  }
+  reheatTable(): Float64Array {
+    if (!this.x.reheat_table_len || !this.x.reheat_table_ptr) return new Float64Array();
+    const n = this.x.reheat_table_len();
+    const p = this.x.reheat_table_ptr();
+    return new Float64Array(this.x.memory.buffer, p, n).slice();
+  }
   /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */
   gasColumn(hKm: number, body = 0, qSurf = 0, co2ppm = 422.8) {
     const p = this.buf(); this.x.gas_column(body, hKm, qSurf, co2ppm, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));
     return { T: o[0], p: o[1], rho: o[2], n: o[3], x: o.slice(4) };
   }
 }
+/** Species ids of the Rust species table (species.rs `Species`), in id order. */
+export const LANDING_SPECIES = ['snowshoe_hare', 'white_tailed_deer', 'moose', 'canada_lynx', 'gray_wolf', 'caribou', 'american_black_bear', 'grizzly_bear', 'bald_eagle', 'beaver', 'red_fox', 'arctic_fox'] as const;
+/** Where each landing species lives, from the notes in data/earth/species-density.json. Placement hints for the viewer. */
+export const SPECIES_HABITAT: Record<(typeof LANDING_SPECIES)[number], readonly string[]> = {
+  snowshoe_hare: ['conifer forest', 'shrub'], white_tailed_deer: ['forest edge', 'mixed forest', 'meadow'],
+  moose: ['wetland', 'shoreline', 'conifer forest'], canada_lynx: ['conifer forest'], gray_wolf: ['forest', 'tundra'],
+  caribou: ['tundra', 'open conifer forest'], american_black_bear: ['forest'], grizzly_bear: ['forest', 'tundra', 'meadow'],
+  bald_eagle: ['shoreline', 'tall trees by water'], beaver: ['shoreline', 'stream'], red_fox: ['forest edge', 'meadow', 'tundra'], arctic_fox: ['tundra', 'coast'],
+};
 export const INTERIOR_LAYERS = ['inner core', 'outer core', 'mantle', 'crust', 'ocean', 'atmosphere', 'magnetosphere', 'solar wind'] as const;
 export const ATM_LAYERS = ['troposphere', 'stratosphere', 'mesosphere', 'thermosphere', 'exosphere'];
 export const GAS_SPECIES = ['N2', 'O2', 'Ar', 'CO2', 'H2O', 'O3', 'O', 'Na', 'He'] as const;
+
+let latestPlanet: PlanetSim | null = null;
+/** The wasm instance most recently loaded. The data panel reads this one, so it sees the same registry as the game. */
+export function latestPlanetSim() { return latestPlanet; }
 
 /** Instantiate the wasm. `bytes` is for tests and workers; in the browser it fetches `<base>wasm/boreal_sim.wasm`. Resolves null on any failure. */
 export async function loadPlanetSim(bytes?: BufferSource): Promise<PlanetSim | null> {
@@ -117,7 +218,9 @@ export async function loadPlanetSim(bytes?: BufferSource): Promise<PlanetSim | n
     const { instance } = await WebAssembly.instantiate(buf, {});
     const x = instance.exports as unknown as Exports;
     if (x.layout_version() !== LAYOUT_VERSION || x.plane_count() !== PLANE_NAMES.length) return null; // stale build: use the fallback
-    return new PlanetSim(x);
+    const sim = new PlanetSim(x);
+    latestPlanet = sim;
+    return sim;
   } catch { return null; }
 }
 

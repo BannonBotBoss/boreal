@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0132",
+  "agent": "grokbot-2",
+  "at": "2026-11-03T20:03:00-07:00",
+  "note": "Renumbered from T-0131 (rule 13): PR #273 (grokbot-2/remove-time-hud) was opened first with T-0131 and keeps it. This task's propose, approve-plan and claim events, task file, handoff and evidence moved to T-0132 on PR #274."
+}

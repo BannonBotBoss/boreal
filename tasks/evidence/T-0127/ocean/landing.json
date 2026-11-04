@@ -1,0 +1,102 @@
+{
+  "site": "ocean edge",
+  "slug": "ocean",
+  "clickLat": 36.6,
+  "clickLon": -121.9,
+  "landedLat": 36.5999510625954,
+  "landedLon": -121.89997774894594,
+  "biome": "prairie",
+  "water": false,
+  "shore": false,
+  "elevM": 31.347804763358138,
+  "vegetation": 0.4709991582899137,
+  "censusLat": 36.5999510625954,
+  "censusLon": -121.89997774894594,
+  "census": [
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 7
+    },
+    {
+      "species": "american_black_bear",
+      "display": "American Black Bear",
+      "count": 1
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 1
+    }
+  ],
+  "shown": [
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": 3.170249069529117,
+      "z": 6.479932163005241
+    },
+    {
+      "species": "American Black Bear",
+      "count": 1,
+      "x": 0.24782308568829992,
+      "z": 6.903519661607399
+    },
+    {
+      "species": "Red Fox",
+      "count": 1,
+      "x": -2.674602898152517,
+      "z": 7.3271071602095565
+    }
+  ],
+  "simStepMs": 558.2999999997185,
+  "frameMs": 10.1,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.14,
+    "dayOfYear": 227,
+    "latitude": 36.6,
+    "sunElevation": 45.8,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:08",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 4,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 515329507,
+    "total": 572677199
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "No tile crack or height step visible. Grass shows in the lower third (41% near-black, less of a solid band than the forest sites) with spruce silhouettes and the wolf’s back. Cover is prairie at 31 m, not water. Deer, black bear, and fox are in the census.",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.9,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2020
+  },
+  "exit": 0,
+  "note": "",
+  "hardwareFps": "UNVERIFIED",
+  "gpuMemory": "UNVERIFIED"
+}

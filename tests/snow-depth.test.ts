@@ -127,3 +127,18 @@ test('the forest read of the Rust snow store is the same centimetre depth', { sk
     WEATHER.on = snap;
   }
 });
+
+test('Grid surface precipitation melts through a warm layer below the freezing level (#192)', async () => {
+  const { gridSnowShare } = await import('../src/core/weather');
+  WEATHER.on = true;
+  const g = lay(5);
+  // warm (5 °C) lowest layer, sub-zero layers above holding rain water: the 0 °C level sits between layer centres
+  const n = 4;
+  const cell = 0, tAt = (k: number) => [5, -5, -10, -15][k];
+  for (let k = 0; k < NY; k++) { const i = k * n * n + cell; g.th[i] = theta(tAt(k), climate(WEATHER.day, WEATHER.hour, (k + .5) * DY).p); g.qr[i] = 1e-4; }
+  const share = gridSnowShare(g, cell, 0, 0);
+  // 0 °C halfway between the 200 m and 600 m centres: 200 m of a 300 m melting layer, so about a third arrives as snow
+  assert.ok(Math.abs(share - 1 / 3) < 0.05, `expected about 1/3 snow, got ${share}`);
+  for (let k = 0; k < NY; k++) g.qr[k * n * n + cell] = 0, g.qc[k * n * n + cell] = 0;
+  assert.equal(gridSnowShare(g, cell, 0, 0), 0, 'no ice aloft means warm rain');
+});

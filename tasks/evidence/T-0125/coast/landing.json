@@ -1,0 +1,104 @@
+{
+  "site": "coast",
+  "slug": "coast",
+  "clickLat": 44.3,
+  "clickLon": -122.2,
+  "landedLat": 44.297390695278025,
+  "landedLon": -122.19915461998033,
+  "biome": "boreal",
+  "water": false,
+  "census": [
+    {
+      "species": "snowshoe_hare",
+      "display": "Snowshoe Hare",
+      "count": 4754
+    },
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 65
+    },
+    {
+      "species": "moose",
+      "display": "Moose",
+      "count": 39
+    },
+    {
+      "species": "canada_lynx",
+      "display": "Canada Lynx",
+      "count": 10
+    },
+    {
+      "species": "american_black_bear",
+      "display": "American Black Bear",
+      "count": 13
+    },
+    {
+      "species": "grizzly_bear",
+      "display": "Grizzly Bear",
+      "count": 1
+    },
+    {
+      "species": "bald_eagle",
+      "display": "Bald Eagle",
+      "count": 4
+    },
+    {
+      "species": "beaver",
+      "display": "Beaver",
+      "count": 32
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 25
+    }
+  ],
+  "shown": [
+    {
+      "species": "Snowshoe Hare",
+      "count": 1,
+      "x": -64.10936009884833,
+      "z": 296.62143364024973
+    },
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": -67.03178608268914,
+      "z": 297.0450211388519
+    },
+    {
+      "species": "Red Fox",
+      "count": 1,
+      "x": -69.95421206652995,
+      "z": 297.46860863745405
+    },
+    {
+      "species": "Bald Eagle",
+      "count": 1,
+      "x": -71.43646725905788,
+      "z": 293.94683074209723
+    },
+    {
+      "species": "Moose",
+      "count": 1,
+      "x": -74.35889324289869,
+      "z": 294.3704182406994
+    }
+  ],
+  "simStepMs": 106.09999999957154,
+  "frameMs": 63.3,
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 404,
+    "sim": 58,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2100
+  },
+  "exit": 0,
+  "note": "",
+  "recaptured": true
+}

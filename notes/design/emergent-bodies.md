@@ -121,3 +121,32 @@ Inner core too big: this is pure iron (no light elements), so its melting point 
 (mantle bottom + 1000 K boundary layer, Lay 1998). Real outer core is liquid because S/O/Si lower the melting point (Alfè et al. 2002), not yet modelled.
 Open (light-element melting depression now in: core_liquidus_t, ~700 K, Alfè et al. 2002; needs a re-run to measure the new ICB): GDF f_i term, time-compressed cooling, escaping surface parcels (vmax ~1.5 km/s), COM drift 19 km, latent heat,
 no phase changes in Tillotson, crust/ocean/air not differentiated yet; 24k run in progress.
+
+Re-run with the light-element depression (2026-11-03, same 6k setup: `hot 6000 6000 0.05 dunite out.bin 6000 0.01`, 7 min on 8 cores):
+R_vol 6532 km, CMB 3541 km, ICB 3124 km, 958 solid parcels, centre 14274 kg/m3, 375 GPa, 5650 K, 1/f 328, C/MR2 0.316.
+The ICB did not move (3117 before, 3124 now), so the ~700 K depression alone does not melt the outer core here. Next check:
+why 958 parcels still sit below the alloy liquidus (the core temperature profile, the CMB boundary-layer heat and
+latent heat, before changing any material number.
+
+Core thermal profile (2026-11-03, same 6k run, `hot` now also writes `<out>.thermal.csv`: r, class, P, T, alloy liquidus, solid per parcel).
+Iron parcels binned by radius (mean P, T, liquidus T_liq, solid fraction):
+
+| r (km) | n | P (GPa) | T (K) | T_liq (K) | T - T_liq | solid |
+|---|---|---|---|---|---|---|
+| 0-500 | 6 | 379 | 5700 | 5452 | +248 | 0.00 |
+| 500-1000 | 54 | 364 | 5548 | 5353 | +195 | 0.04 |
+| 1000-1500 | 140 | 336 | 5266 | 5162 | +104 | 0.15 |
+| 1500-2000 | 234 | 295 | 4872 | 4872 | 0 | 0.43 |
+| 2000-2500 | 346 | 246 | 4390 | 4492 | -102 | 0.55 |
+| 2500-3000 | 422 | 202 | 4076 | 4116 | -40 | 0.49 |
+| 3000-3300 | 594 | 186 | 3806 | 3971 | -165 | 0.74 |
+
+Findings: the solid is at the TOP of the core and the centre is liquid, an inverted inner core, so the "ICB 3124 km"
+(95th-percentile radius of solid parcels) was measuring that outer frozen shell, not an inner core. Two causes:
+1. The core adiabat is steeper than the liquidus (Gamma = a + b = 2.0 from Tillotson iron), so T crosses T_liq going up
+   instead of going down. In the real core the adiabat is shallower than the liquidus, which is why it freezes from the
+   centre. The Grueneisen parameter of liquid iron at core conditions is ~1.5 in the ab-initio literature; it needs a
+   cited value in materials.json before it replaces a + b for the core adiabat.
+2. The core top sits at 186 GPa here (PREM CMB 136 GPa), which raises T_liq there by ~500 K; this is the same
+   over-compression and interface gap (no iron parcels at 3300-3600 km) listed above.
+Next: a cited core Grueneisen parameter for the adiabat, and an ICB measure that grows the solid sphere out from the centre.

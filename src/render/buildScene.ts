@@ -6,10 +6,13 @@ import { restoreEntities, type EventContext } from '../core/events';
 import { CONTACTS, type Contact } from '../core/contactBus';
 import { logContact, type LogSeatFn } from '../core/logContact';
 import { chunkTerrainJob, positionCamera } from './math';
+import { forestMoving } from '../vr/forestSession';
+import { createLitter } from '../animals/pups';
 import { warmTerrainWorkers } from './terrainPool';
 import { terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
 import { INTEREST, WAIT, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
+import { chunkRadius } from '../world/globe/landingStream';
 import { registerObservationSources } from '../core/observation';
 import { enterLiving, livingRoster, type LivingChoice } from '../core/enterLiving';
 import type { MemoryMark } from '../core/perceptionBuffer';
@@ -25,6 +28,8 @@ import { observation, worldSec } from '../core/worldClock';
 import { animalShares, markFor, coarseStep, type Account } from '../core/coarse';
 import { createAnimalDensity, setBodyShare, DENSITY_MARK_LIFT_M, type DensityMark } from './animalDensity';
 import { createAnimalPicture } from './animalPicture';
+import { createLandingCast } from './landingCast';
+import { landingHidesCover } from '../core/landingRoster';
 import { ANIMAL_LADDER } from './animalLadder';
 import { catalog } from '../core/catalog';
 import { seatRock } from './rocks';
@@ -59,6 +64,7 @@ import { RIG_BODY_PLAN } from '../core/materials';
 import { body, step, collide, gravity, type Body } from '../proc/physics';
 import { defaultGenome as defaultLook, type Genome } from '../core/genome';
 import { bandBackground, bandCamera, bandFx } from '../world/globe/inpage';
+import { stylizedNight } from './stylizedPalette';
 
 /** Scene entry point: assembles generated terrain, streamed objects, light and camera. */
 /** Commits an animal eating a forage patch; returns the animal's new energy, or undefined if not committed. */
@@ -83,11 +89,17 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xc4d4c8, 200, 480);
+  const litter = createLitter(scene);
   const sky = createSky(scene); // sun, moon, sky colour, clouds, stars and fog follow the game clock
   // Time of day: core/timeOfDay hourAt (world clock + the chronometer's dial; ?hour=HH sets the first value, initDay in main).
   let clock = formatHour(hourAt(0)), darkness = 0;
   let worldTime: number | undefined; // set by main from core/worldClock
   const camera = new THREE.PerspectiveCamera(48, 1, .2, 700);
+  const xrOrigin = new THREE.Group(); scene.add(xrOrigin);
+  const xrMuzzle = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), new THREE.MeshStandardMaterial({ color: 0xc8c2b4 }));
+  xrMuzzle.position.set(0, -0.12, -0.42); xrMuzzle.visible = false; camera.add(xrMuzzle);
+  const xrVignette = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, depthTest: false }));
+  xrVignette.position.set(0, 0, -0.35); xrVignette.renderOrder = 20; xrVignette.visible = false; camera.add(xrVignette);
   const post = createPost(renderer, scene, camera);
   const photoreal = createPhotoreal(renderer, scene, camera, sky, BASE_RATIO); // PBR lighting, CSM, IBL, GTAO + quality governor
   const ratio = () => Math.min(BASE_RATIO, 1.5) * photoreal.tier.resScale;
@@ -124,12 +136,14 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const hares = createHares(scene); // src/animals/hare.ts
   const density = createAnimalDensity(scene);
   const picture = createAnimalPicture(scene);
+  const landing = createLandingCast(scene);
   let worldDt = 0;
   let census: Account = { individuals: 0, density: 0, population: 0 };
   const grass = createGrass(scene); // render/grass: procedural blades around the camera
   const flora = createFlora(scene); // render/flora: flowers + shrubs (shared ecology with the grass)
   const glow = createTargetGlow(renderer, camera); // render/targetGlow (T-0035): outline glow on the interaction target (replaces the ground ring)
   let lastBatchLod = -1, lastCover = -1;
+  const openedCover = new Set<string>();
   let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
   const CHUNK_ADDS_PER_FRAME = 2; let frameNo = 0; const adds = { frame: -1, n: 0 }; // upload pacing (see createChunk)
   warmTerrainWorkers(); // stage grids in each terrain worker, behind the loading screen
@@ -184,9 +198,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     setInterestCentre(also?.x ?? x, also?.z ?? z); // photo mode: the free camera is the centre
     photoObserver = !!also; // T-0081: no embodied creature while the free camera flies
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
-    const viewM = altitude > 85 ? Math.min(360, altitude * Math.tan(24 * Math.PI / 180)) : 0;
-    const reach = Math.max(altitude > 85 ? INTEREST.mid * 1.5 : INTEREST.mid, viewM);
-    const nextRadius = Math.ceil(reach / CHUNK_SIZE);
+    const nextRadius = chunkRadius(altitude, INTEREST.mid, CHUNK_SIZE);
     const ax = also ? Math.floor(also.x / CHUNK_SIZE) : cx, az = also ? Math.floor(also.z / CHUNK_SIZE) : cz;
     const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}`;
     if (centerKey === tierKey && radius === nextRadius && revision === eventRevision) return;
@@ -292,15 +304,18 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       audibleAnimals.push({key,energy:rig.brain.energy,motion:rig.brain.motion,problem:rig.brain.problem,x:e.x,z:e.z,phase:rig.brain.phase,chew,snort});
     }
     snortPrev = snortNext;
-    paintPopulation(x, z);
+    paintPopulation(x, z, time);
   }
   /** Density is counted first, then the body fades, so the ledger never has a frame with neither.
    *  The flat patch is the play-camera picture. The camera-facing sprite stays off unless the eye is high and looking down. */
-  function paintPopulation(x: number, z: number) {
+  function paintPopulation(x: number, z: number, time = 0) {
     const obs = observation();
     const marks: (DensityMark & { root: THREE.Object3D; body: number; ledger: number; species: 'deer' | 'hare' })[] = [];
     let individuals = 0, densityCount = 0;
+    const hideDeer = landing.forbids('White-tailed Deer');
+    const hideHares = landing.forbids('Snowshoe Hare');
     for (const animal of animals.values()) {
+      if (hideDeer) continue;
       const e = animal.entity;
       const d = Math.hypot(e.x - x, e.z - z);
       const m = markFor(d, obs);
@@ -308,6 +323,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       marks.push({ x: e.x, y: heightAt(e.x, e.z) + DENSITY_MARK_LIFT_M, z: e.z, ink: m.ink, kind: m.kind, root: animal.rig.root, body: m.body, ledger: m.density, species: 'deer' });
     }
     for (const h of hares.list()) {
+      if (hideHares) continue;
       if (h.sim.heldBy !== undefined || h.embodied) { individuals += 1; continue; }
       const d = Math.hypot(h.x - x, h.z - z);
       const m = markFor(d, obs);
@@ -336,6 +352,10 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       row.speed = Math.abs(h.sim.speed);
       row.y = h.root.position.y;
     }
+    for (const row of landing.sync(x, z, wolf.root.rotation.y, time)) bodies.push({
+      key: row.key, species: row.species, x: row.x, y: row.y, z: row.z, yaw: row.yaw, moving: row.moving,
+      motion: row.motion, phase: row.phase, speed: row.speed, root: row.root,
+    });
     bodies.push({
       key: 'player-wolf', species: 'Gray Wolf',
       x: wolf.root.position.x, y: wolf.root.position.y, z: wolf.root.position.z,
@@ -343,6 +363,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       motion: wolf.brain.motion, phase: wolf.brain.drawPhase, speed: wolf.brain.gaitSpeed, root: wolf.root,
     });
     for (const row of picture.sync(bodies, camera, canvas.clientHeight || 720)) setBodyShare(row.root, row.proc);
+    if (hideDeer) for (const animal of animals.values()) setBodyShare(animal.rig.root, 0);
+    if (hideHares) for (const h of hares.list()) setBodyShare(h.root, 0);
     const report = {
       census, near: INTEREST.near, mid: INTEREST.mid, chunks: chunks.size,
       scale: obs.scale, lower: obs.lower, higher: obs.higher, blend: obs.blend,
@@ -354,26 +376,39 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity, photo?: PhotoView) {
     frameNo++;
     const width = canvas.clientWidth, height = canvas.clientHeight;
-    if (output) { if (canvas.width !== output.w || canvas.height !== output.h) { renderer.setPixelRatio(1); renderer.setSize(output.w, output.h, false); } }
+    if (renderer.xr.isPresenting) { /* the headset owns the drawing buffer */ }
+    else if (output) { if (canvas.width !== output.w || canvas.height !== output.h) { renderer.setPixelRatio(1); renderer.setSize(output.w, output.h, false); } }
     else if (renderer.getPixelRatio() !== ratio() || canvas.width !== Math.floor(width * ratio()) || canvas.height !== Math.floor(height * ratio())) {
       renderer.setPixelRatio(ratio()); renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
     }
     const ground = Math.max(heightAt(x, z), -.2);
     wolf.root.position.set(x, ground, z); wolf.root.rotation.y = yaw;
+    const inHeadset = renderer.xr.isPresenting;
+    wolf.root.visible = !inHeadset;
+    xrMuzzle.visible = inHeadset; xrVignette.visible = inHeadset;
+    (xrVignette.material as THREE.MeshBasicMaterial).opacity = inHeadset && forestMoving() ? 0.55 : 0;
     camera.up.set(0, 1, 0);
     const pushed = pushFrom && [...chunks.values()].flatMap(c => c.entities).find(e => e.key === pushFrom.key);
     const pushVector = pushed && pushFrom ? { x: pushed.x - pushFrom.x, z: pushed.z - pushFrom.z, yaw } : undefined;
     wolf.animate({ time, dt: photo && photo.frozen !== false ? 0 : Math.max(0, Math.min(.1, time - previousTime)), moving, action, elapsed: actionElapsed, mode, push: pushVector, hold: carryPose });
-    positionCamera(camera, x, z, altitude, yaw, pitch, lookYaw);
+    if (inHeadset) {
+      xrOrigin.position.set(x, ground, z); xrOrigin.rotation.set(0, yaw, 0);
+      if (camera.parent !== xrOrigin) xrOrigin.add(camera);
+    } else {
+      if (camera.parent === xrOrigin) { xrOrigin.remove(camera); camera.position.set(0, 0, 0); camera.rotation.set(0, 0, 0); }
+      positionCamera(camera, x, z, altitude, yaw, pitch, lookYaw);
+    }
     const focused = !photo ? focus : undefined; // T-0035: held focus (core/focusLock), any mode
     const frozen = !!photo && photo.frozen !== false;
     const dt = frozen ? 0 : Math.max(0, Math.min(.1, time - previousTime)); if (!frozen) previousTime = time;
     camera.fov += ((focused ? SYSTEM_PROPERTIES.autoFocus.cameraFovDeg : 48) - camera.fov) * (1 - Math.exp(-SYSTEM_PROPERTIES.autoFocus.cameraEase * dt));
     focusBlend += ((focused ? 1 : 0) - focusBlend) * (1 - Math.exp(-SYSTEM_PROPERTIES.autoFocus.cameraEase * dt)); if (focused) lastFocus = focused; // eased, so engaging / releasing never snaps the view
-    if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
-    bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
-    camera.updateProjectionMatrix();
-    if (lastFocus && focusBlend > .002 && !photo) { const f = lastFocus; focusQ.copy(camera.quaternion); camera.lookAt(f.x, heightAt(f.x, f.z) + (f.kind === 'deer' ? 1.2 : f.kind === 'person' ? 1.4 : .3), f.z); camera.quaternion.slerpQuaternions(focusQ, camera.quaternion.clone(), focusBlend); camera.updateMatrixWorld(true); }
+    if (!inHeadset) {
+      if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
+      bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
+      camera.updateProjectionMatrix();
+      if (lastFocus && focusBlend > .002 && !photo) { const f = lastFocus; focusQ.copy(camera.quaternion); camera.lookAt(f.x, heightAt(f.x, f.z) + (f.kind === 'deer' ? 1.2 : f.kind === 'person' ? 1.4 : .3), f.z); camera.quaternion.slerpQuaternions(focusQ, camera.quaternion.clone(), focusBlend); camera.updateMatrixWorld(true); }
+    } else xrOrigin.updateMatrixWorld(true);
     const highlighted = photo ? undefined : focused ?? target;
     highlight(highlighted);
 
@@ -430,6 +465,16 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       lastCover = time; const now = worldSec();
       for (const c of chunks.values()) for (const e of c.entities) if (e.kind === 'forage' || e.kind === 'plant') c.batch.cover(e.key, patchCover(e, now));
     }
+    // A census spawn drops the stem and the herbs on that disc, then puts them back when the cast moves.
+    for (const c of chunks.values()) for (const e of c.entities) {
+      if (e.kind !== 'spruce' && e.kind !== 'plant' && e.kind !== 'forage') continue;
+      const hide = landingHidesCover(e.x, e.z, e.kind === 'spruce' ? 'spruce' : 'plant');
+      if (hide) { c.batch.cover(e.key, 0); openedCover.add(e.key); }
+      else if (openedCover.has(e.key)) {
+        c.batch.cover(e.key, e.kind === 'spruce' ? 1 : patchCover(e, worldSec()));
+        openedCover.delete(e.key);
+      }
+    }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen, time, mode);
     updateWaterUniforms(time);
@@ -440,7 +485,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
     else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
-    if (TOP_DOWN) {
+    if (TOP_DOWN && !inHeadset) {
       const y = LEVEL.waterSurface;
       camera.up.set(-Math.sin(yaw), 0, -Math.cos(yaw));
       camera.position.set(x, y + TOP_CAM.h, z);
@@ -450,9 +495,21 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       WAKES.rememberView({ x, z, heading: yaw, h: TOP_CAM.h, fovDeg: TOP_CAM.fovDeg, y });
     }
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
+    litter.place();
+    for (const child of scene.children) {
+      const picture = child.userData.animalPicture || child.userData.wolfLod || child.name.startsWith('pup:');
+      if (picture || child === wolf.root) coatNight(child, darkness);
+    }
     for (const f of beforeRender) f(time, !!photo); // overlays that follow the posed wolf (render/sensesHalo)
     post.render(!!photo, photo?.focalMm ?? 0, fx.ssao, { contact: fx.contact, rays: fx.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
     if (GLOW_ON) glow.render(); // after the frame is on the canvas (additive overlay; nothing while there is no target)
+  }
+  function coatNight(root: THREE.Object3D, night: number) {
+    root.traverse(obj => {
+      const mats = (obj as THREE.Mesh).material;
+      if (!mats) return;
+      for (const material of Array.isArray(mats) ? mats : [mats]) stylizedNight(material, night);
+    });
   }
   /** T-0035: the glow's proxy for the highlighted entity. Deer = the live rig; a person / pushed rock = its LOD; batched
    *  statics = their LOD-0 geometry (what render/batch flattens) placed at the entity. Eaten / removed = no glow. */
@@ -546,7 +603,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
-  return { set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, eat, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { stepPups: (dt: number, gameSeconds: number, x: number, z: number, motherYaw: number) => litter.step(dt, gameSeconds, x, z, motherYaw), set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, eat, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     playerScale: () => ({ x: wolf.root.scale.x, y: wolf.root.scale.y, z: wolf.root.scale.z }),
     /** The saved record for a key (undefined for generated objects), e.g. for the inspector's why. */
@@ -558,5 +615,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     population: () => census,
     /** Where the animal you are entering already stood, and the store id when you are inside it. */
     livingHere: () => ({ x: choice.animal.x, z: choice.animal.z, handle: choice.animal.handle, species: choice.playableId, embodied: embodiedHandle }),
+    /** True once that chunk's terrain and trees are in the scene. Queued work does not count. */
+    chunkBuilt: (a: number, b: number) => chunks.has(`${a}:${b}`),
   };
 }

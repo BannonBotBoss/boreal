@@ -33,6 +33,7 @@ pub const RUST_BOOT_STEPS: &[&str] = &[
 
 /// Fill every derived plane. `day` and `hour` are the instant; they are stored and not stepped.
 pub fn boot(g: &mut Grid, day: f64, hour: f64) {
+    let started = crate::registry::now_ms();
     g.day = day;
     g.hour = hour;
     g.refresh_coast();
@@ -41,19 +42,20 @@ pub fn boot(g: &mut Grid, day: f64, hour: f64) {
     for step in RUST_BOOT_STEPS {
         match *step {
             "elevation_roughness" => elevation_roughness(g),
-            "climate_bands" => { seeds = climate_bands(g); }
+            "climate_bands" => { seeds = climate_bands(g); crate::registry::note("climate", started, g.day, g.hour, &[]); }
             "sst_soil_humidity" => sst_soil_humidity(g, &mut seeds),
-            "cloud_seed" => { let _ = crate::update_clouds::update_clouds(g, 0.0); }
-            "solar_budget" => solar_budget(g),
-            "surface_absorption" => surface_absorption(g),
+            "cloud_seed" => { let _ = crate::update_clouds::update_clouds(g, 0.0); crate::registry::note("clouds", started, g.day, g.hour, &[]); }
+            "solar_budget" => { solar_budget(g); crate::registry::note("solar", started, g.day, g.hour, &[]); }
+            "surface_absorption" => { surface_absorption(g); crate::registry::note("energy", started, g.day, g.hour, &[]); }
             "pressure" => pressure(g),
-            "wind" => { crate::update_wind::update_wind(g); }
-            "hydrosphere_flows" => hydrosphere_flows(g),
+            "wind" => { crate::update_wind::update_wind(g); crate::registry::note("wind", started, g.day, g.hour, &[]); }
+            "hydrosphere_flows" => { hydrosphere_flows(g); crate::registry::note("hydro", started, g.day, g.hour, &[]); }
             "atmosphere_updates" => atmosphere_updates(g),
             "finalize" => { let _ = planes_finite(g); }
             other => panic!("unwired boot step {other}"),
         }
     }
+    crate::registry::note("planet", started, g.day, g.hour, &[]);
 }
 
 /// Roughness from `cell_surface` while soil, snow and ice are still the cleared planes (step 2, before the bucket seed).

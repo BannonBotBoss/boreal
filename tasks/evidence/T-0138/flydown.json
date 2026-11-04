@@ -1,0 +1,58 @@
+{
+  "orbit": {
+    "href": "?start=globe&stages=1&trees=v2",
+    "step": null,
+    "mode": "globe",
+    "phase": "orbit",
+    "h": 0,
+    "alt": 14016219,
+    "ease": null,
+    "loading": false
+  },
+  "mid": {
+    "href": "?start=globe&stages=1&trees=v2",
+    "step": null,
+    "mode": "globe",
+    "phase": "fall",
+    "h": 0,
+    "alt": 744,
+    "ease": 0.9407337499202889,
+    "loading": false
+  },
+  "ground": {
+    "href": "?start=globe&stages=1&trees=v2",
+    "step": null,
+    "mode": "globe",
+    "phase": "fall",
+    "h": 0,
+    "alt": 604,
+    "ease": 0.9605857569552678,
+    "loading": false
+  },
+  "fadeOrbit": {
+    "href": "?start=globe&stages=1&trees=v2&descent=fade",
+    "step": null,
+    "mode": "globe",
+    "phase": "orbit",
+    "h": 0,
+    "alt": 14016219,
+    "ease": null,
+    "loading": false
+  },
+  "faded": {
+    "href": "?start=globe&stages=1&trees=v2&descent=fade",
+    "step": null,
+    "mode": "globe",
+    "phase": "fall",
+    "h": 0,
+    "alt": 400,
+    "ease": 1,
+    "loading": false
+  },
+  "notes": [
+    "log: PROBE cap=Minimum {\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"gpuTier\":1,\"maxTexture\":8192,\"deviceMemory\":16,\"cores\"",
+    "log: INPAGE prewarm {\"ms\":4108.0999999996275,\"frames\":12,\"tiles\":19}",
+    "log: PROBE cap=Minimum {\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"gpuTier\":1,\"maxTexture\":8192,\"deviceMemory\":16,\"cores\"",
+    "log: INPAGE prewarm {\"ms\":5910.200000001118,\"frames\":11,\"tiles\":14}"
+  ]
+}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudColumn, dewPointC, esatPa, moistLapse } from '../src/core/atmo/cloudColumn';
+import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
 import { bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
@@ -40,4 +40,194 @@ test('issue #107: the local cloud box fades across the span it already had, with
     assert.ok(w + 1e-9 >= prev, `not rising as altitude falls at ${alt}`);
     prev = w;
   }
+});
+import { bandCloudOpacity } from '../src/world/globe/localClouds';
+import { TRANSITION as TR, patchFade as pf } from '../src/world/globe/transition';
+test('issue #202: through the in-page band the far-layer box plus the overlay keep the cloud, with no step', () => {
+  let prev = -1;
+  for (let h = TR.bandTop + 200; h >= 400; h -= 10) { const f = pf(h, true), a = localCloudFade(h), far = a * (1 - f), over = bandCloudOpacity(h, f);
+    assert.ok(Math.abs(far + over - a) < 1e-12, `${h}: ${far} + ${over} vs ${a}`); assert.ok(a > 0, `${h}: box drawn`); // the patch takes f of the far layer, the overlay gives it back
+    if (prev >= 0) assert.ok(Math.abs(over - prev) < .02, `${h}: overlay step ${prev} -> ${over}`); prev = over; }
+  assert.equal(bandCloudOpacity(TR.bandTop, 0), 0); assert.equal(bandCloudOpacity(500, 1), 1);
+});
+
+test('altitude zones: the column reads pressure at the ground height, so a plateau has a higher base and a capped top', () => {
+  const t = 15, q = qOf(t, .7), sea = cloudColumn(t, q, .8), same = cloudColumn(t, q, .8, undefined, undefined, 0), high = cloudColumn(t, q, .8, undefined, undefined, 3000);
+  assert.deepEqual(same, sea);
+  assert.ok(high.lcl > sea.lcl, `plateau base ${high.lcl} vs sea ${sea.lcl}`); // lower pressure, same q: lower dew point
+  assert.ok(high.top < 0 || high.top + 3000 <= 11000, `top ${high.top} past the tropopause`);
+});
+test('layered bake: convective towers share the LCL base, tops vary by cell (below the anvil), none passes the buoyant top', () => {
+  const col = cloudColumn(28, qOf(28, .75), .6, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS, dz = L.topM / L.nz, b = bakeLocal(col, .6, 0, 0);
+  assert.ok(col.lcl > 0 && col.top > col.lcl);
+  const tops: number[] = [];
+  for (let k = 0; k < L.nx; k += 4) for (let i = 0; i < L.nx; i += 4) { let lo = -1, hi = -1;
+    for (let j = 0; j < L.nz; j++) if (b[i + L.nx * (j + L.nz * k)] > 8 && (j + 1) * dz < col.top - 1500 && col.layers[Math.round((j + .5) * dz / col.layers[1].z)].strat === 0) { if (lo < 0) lo = j; hi = j; }
+    if (lo >= 0) { assert.ok((lo + 1) * dz >= col.lcl - dz, 'no convective cloud below the dew-point base'); assert.ok(hi * dz <= col.top + dz, 'no tower above the buoyant top'); tops.push(hi); } }
+  assert.ok(tops.length > 3 && Math.max(...tops) - Math.min(...tops) >= 2, `tower tops should differ by cell: ${tops}`);
+});
+test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
+  const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
+  let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');
+  const jj = Math.min(L.nz - 1, Math.floor(col.layers[j].z / (L.topM / L.nz))), b = bakeLocal(col, 1, 0, 0); let on = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) if (b[i + L.nx * (jj + L.nz * k)] > 0) on++;
+  assert.ok(on / (L.nx * L.nx) > .5, `overcast sheet covers most of the box (${on})`);
+});
+
+test('#192: cloud condensate glaciates with height: liquid base, mixed middle, ice top', () => {
+  assert.equal(iceFraction(5), 0); assert.equal(iceFraction(-30), 1); assert.ok(Math.abs(iceFraction(-11.5) - .75) < 1e-9);
+  const c = cloudColumn(30, qOf(30, .7), 1), cl = c.layers.filter(l => l.water > 0);
+  assert.ok(c.freezeM > c.lcl, `freeze ${c.freezeM} above base ${c.lcl}`); // a warm tropical base is liquid
+  assert.equal(cl[0].ice, 0); assert.ok(cl[cl.length - 1].ice > .9, `top ice ${cl[cl.length - 1].ice}`); // anvil top is ice
+  for (let i = 1; i < c.layers.length; i++) if (c.layers[i].z <= c.top) assert.ok(c.layers[i].ice >= c.layers[i - 1].ice - 1e-9); // monotone up the tower
+  assert.equal(cloudColumn(-5, qOf(-5, .9), 1).freezeM, 0); // winter surface already below 0 C
+});
+
+test('#192: ice condensate is thinner per kg than liquid, so thin cirrus bakes fainter than the same water as liquid', () => {
+  assert.equal(iceOpacity(0), 1); assert.ok(Math.abs(iceOpacity(1) - 10000 / (917 * 30)) < 1e-9);
+  const col = cloudColumn(0, qOf(0, .9), 1, LOCAL_CLOUDS.topM), liquid = { ...col, layers: col.layers.map(l => ({ ...l, ice: 0 })) };
+  assert.ok(col.layers.some(l => l.water > 0 && l.ice > .9), 'a cold column has an upper ice layer');
+  const sum = (b: Uint8Array) => b.reduce((a, v) => a + v, 0), bi = bakeLocal(col, 1, 0, 0), bl = bakeLocal(liquid, 1, 0, 0);
+  assert.ok(sum(bi) < sum(bl), `ice ${sum(bi)} vs liquid ${sum(bl)}`);
+  for (let i = 0; i < bi.length; i++) assert.ok(bi[i] <= bl[i]);
+});
+
+test('#192: precipitation phase at the ground follows the freezing level and the melting layer', () => {
+  assert.equal(snowShareAtGround(cloudColumn(-5, qOf(-5, .9), 1)), 1); // freezing surface: snow
+  assert.equal(snowShareAtGround(cloudColumn(25, qOf(25, .8), 1)), 0); // freezing level kilometres up: rain
+  const near = cloudColumn(1, qOf(1, .95), 1); // 0 C level ~150 m up, inside the melting layer
+  const s = snowShareAtGround(near); assert.ok(s > 0 && s < 1, `mixed ${s} at freeze ${near.freezeM}`);
+  const warm = { ...near, layers: near.layers.map(l => ({ ...l, ice: 0 })) };
+  assert.equal(snowShareAtGround(warm), 0); // no ice aloft: warm rain
+  let prev = 2; for (const t of [-3, 0, 1, 2, 4, 8]) { const v = snowShareAtGround(cloudColumn(t, qOf(t, .95), 1)); assert.ok(v <= prev + 1e-9, `${t}: ${v}`); prev = v; }
+});
+
+test('anvil: a deep glaciated tower spreads wider at its buoyant top than through its middle; a shallow cumulus does not', () => {
+  const L = LOCAL_CLOUDS, dz = L.topM / L.nz, cover = (b: Uint8Array, j: number) => { let on = 0; for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) if (b[i + L.nx * (j + L.nz * k)] > 8) on++; return on; };
+  const col = cloudColumn(30, qOf(30, .8), .4, L.topM); assert.ok(col.top - col.lcl >= 6000, `deep tower expected: ${col.lcl}-${col.top}`);
+  const b = bakeLocal(col, .4, 0, 0), jt = Math.floor((col.top - 500) / dz), jm = Math.floor((col.lcl + col.top) / 2 / dz);
+  assert.ok(col.layers[Math.round(col.top / col.layers[1].z)].ice >= .5, 'the anvil level is glaciated');
+  assert.ok(cover(b, jt) > 1.3 * cover(b, jm), `anvil ${cover(b, jt)} vs mid-tower ${cover(b, jm)}`);
+  const sh = cloudColumn(18, qOf(18, .6), .4, L.topM); if (sh.top > sh.lcl) assert.ok(sh.top - sh.lcl < 6000);
+  const bs = bakeLocal(sh, .4, 0, 0), js = Math.floor(sh.top / dz) - 1, jsm = Math.floor((sh.lcl + sh.top) / 2 / dz);
+  if (sh.top > sh.lcl && js > jsm) assert.ok(cover(bs, js) <= cover(bs, jsm), 'shallow cumulus narrows to its top');
+});
+test('entrainment: mixing in environment air lowers a deep tower top below the undiluted parcel, base unchanged', async () => {
+  const C = (await import('../data/earth/cloud-column.json')).default as { entrain_per_m: number }, keep = C.entrain_per_m;
+  const run = () => cloudColumn(30, qOf(30, .8), 1);
+  try { C.entrain_per_m = 0; const pure = run(); C.entrain_per_m = keep; const mixed = run();
+    assert.equal(mixed.lcl, pure.lcl); assert.ok(keep > 0 && mixed.top <= pure.top, `${mixed.top} vs ${pure.top}`);
+    assert.ok(mixed.top - mixed.lcl >= 6000, 'a hot humid tower still reaches anvil depth'); } finally { C.entrain_per_m = keep; }
+});
+test('CAPE: a hot humid column carries strong convective energy, a cool one little, entrainment and drier air reduce it', async () => {
+  const C = (await import('../data/earth/cloud-column.json')).default as { entrain_per_m: number }, keep = C.entrain_per_m;
+  const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), drier = cloudColumn(30, qOf(30, .6), 1);
+  assert.ok(hot.cape > 1000, `hot humid CAPE ${hot.cape}`); assert.ok(cool.cape < 300, `cool CAPE ${cool.cape}`);
+  assert.ok(drier.cape < hot.cape, `${drier.cape} vs ${hot.cape}`);
+  assert.ok(Math.abs(hot.wMax - Math.sqrt(2 * hot.cape)) < 1e-9 && hot.wMax > 40 && cool.wMax < 25, `wMax ${hot.wMax} / ${cool.wMax}`);
+  try { C.entrain_per_m = 0; const pure = cloudColumn(30, qOf(30, .8), 1); assert.ok(pure.cape >= hot.cape, `${pure.cape} vs ${hot.cape}`); } finally { C.entrain_per_m = keep; }
+});
+test('overshooting top: a strong tower punches 1-2 km above its anvil level, a weak one barely, clear air not at all', () => {
+  const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), dry = cloudColumn(30, .001, 1);
+  assert.ok(hot.overshootM > 800 && hot.overshootM < 2500, `hot overshoot ${hot.overshootM}`);
+  assert.ok(cool.overshootM < hot.overshootM / 2, `cool ${cool.overshootM} vs hot ${hot.overshootM}`);
+  if (!(dry.top > dry.lcl && dry.lcl >= 0)) assert.equal(dry.overshootM, 0);
+});
+test('optical depth: a deep tower is far thicker than shallow cumulus, which is thicker than a near-clear column', () => {
+  const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), dry = cloudColumn(30, .001, 1);
+  assert.ok(hot.tau > 10 * cool.tau && cool.tau > 10 * dry.tau, `tau ${hot.tau} / ${cool.tau} / ${dry.tau}`);
+  assert.ok(hot.waterPath > cool.waterPath && cool.waterPath > 0, `W ${hot.waterPath} / ${cool.waterPath}`);
+  const sum = hot.layers.reduce((a, l) => a + l.water, 0); assert.ok(sum > 0 && hot.waterPath > 0);
+});
+
+import { boxExtinction, cellTransmittance } from '../src/world/globe/localClouds';
+test('layered render: the box extinction gives the densest cell the column optical depth; thin deck passes sun, deep tower is opaque', () => {
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 24 }, dens = (b: Uint8Array) => { let best = [0, 0], bs = -1;
+    for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { let s = 0; for (let j = 0; j < L.nz; j++) s += b[i + L.nx * (j + L.nz * k)]; if (s > bs) { bs = s; best = [i, k]; } } return best; };
+  const deep = cloudColumn(30, qOf(30, .85), 1), bd = bakeLocal(deep, 1, 0, 0, L), ed = boxExtinction(deep, bd, L), [di, dk] = dens(bd);
+  assert.ok(ed > 0); assert.ok(cellTransmittance(bd, ed, di, dk, L) >= Math.exp(-deep.tau) - 1e-9); // never more opaque than the column
+  assert.ok(cellTransmittance(bd, ed, di, dk, L) < .01, `deep tower tau ${deep.tau}`);
+  const dry = cloudColumn(20, qOf(20, .2), 0), bz = bakeLocal(dry, 0, 0, 0, L);
+  assert.equal(boxExtinction(dry, bz, L) >= 0, true);
+  const thin = { ...deep, tau: .5 }; assert.ok(cellTransmittance(bd, boxExtinction(thin, bd, L), di, dk, L) > .5); // same shape, thin optical depth lets sun through
+});
+
+import { LOCAL_CLOUDS_FRAG, sunTransmittance } from '../src/world/globe/localClouds';
+test('layered render shader: no line comment swallows code, braces balance, sun shadow uses the column extinction', () => {
+  for (const line of LOCAL_CLOUDS_FRAG.split('\n')) { const c = line.indexOf('//'); if (c >= 0) assert.ok(!/[;{}]/.test(line.slice(c + 2)), `code after // : ${line.slice(c, c + 80)}`); }
+  const code = LOCAL_CLOUDS_FRAG.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  assert.equal((code.match(/{/g) || []).length, (code.match(/}/g) || []).length);
+  assert.match(code, /msSun\(sh \* uExt \* sm, ct\)/); assert.match(code, /exp\(-b \* tau\)/);
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 24 }, deep = cloudColumn(30, qOf(30, .85), 1), bd = bakeLocal(deep, 1, 0, 0, L);
+  const eDeep = boxExtinction(deep, bd, L), eThin = boxExtinction({ ...deep, tau: .5 }, bd, L), sun: [number, number, number] = [0, 1, 0];
+  assert.ok(sunTransmittance(2, eThin, sun, L) > sunTransmittance(2, eDeep, sun, L)); // deep tower self-shadows more
+  assert.ok(sunTransmittance(2, eThin, sun, L) > .5, 'thin deck stays bright inside');
+});
+
+import { cloudPhase, hgPhase, CLOUD_G } from '../src/world/globe/localClouds';
+test('cloud phase: Henyey-Greenstein is normalised, forward-peaked, and the shader uses it', () => {
+  let s = 0; const n = 20000; for (let i = 0; i < n; i++) { const c = -1 + (i + .5) * 2 / n; s += hgPhase(c) * 2 / n; }
+  assert.ok(Math.abs(s / 2 - 1) < 1e-3, `mean over the sphere ${s / 2}`); // 4*pi*p_HG averages to 1, so it only redistributes light
+  assert.ok(cloudPhase(1) > 5 && cloudPhase(-1) < .05, 'toward the sun bright, away dim');
+  assert.ok(cloudPhase(1) <= 6 && CLOUD_G === .85);
+  assert.match(LOCAL_CLOUDS_FRAG, /G = 0\.85, PHASE_CAP = 6\.0/); assert.match(LOCAL_CLOUDS_FRAG, /msSun\(sh \* uExt \* sm, ct\)/);
+});
+
+import { multiScatterSun, MS_OCTAVES } from '../src/world/globe/localClouds';
+test('multiple-scattering octaves keep deep cloud lit and reduce to single scattering in thin cloud', () => {
+  assert.equal(MS_OCTAVES, 3);
+  // thin cloud: the first octave dominates, total is phase * (1 + .5*p(g/2)/p(g) + ...) and above single scattering
+  assert.ok(multiScatterSun(0, 1) >= cloudPhase(1));
+  // deep cloud (tau 20): single scattering is ~2e-9, the third octave (a=.25, tau*.25) keeps about .25*e^-5*p, near 1e-3
+  const single = Math.exp(-20) * cloudPhase(0); const ms = multiScatterSun(20, 0);
+  assert.ok(ms > 1e4 * single && ms > 1e-3 && ms < 1e-2, `ms ${ms}`);
+  // still monotonic: more optical depth, less light
+  assert.ok(multiScatterSun(1, .3) > multiScatterSun(5, .3));
+  assert.match(LOCAL_CLOUDS_FRAG, /n < 3; n\+\+\) \{ s \+= a \* exp\(-b \* tau\)/);
+});
+
+import { skyAmbient, SKY_AMB } from '../src/world/globe/localClouds';
+test('skylight inside the cloud dims under the cloud above it, clear sky keeps the old ambient', () => {
+  assert.ok(Math.abs(skyAmbient(0) - SKY_AMB) < 1e-12);
+  assert.ok(skyAmbient(1) < skyAmbient(0) && skyAmbient(10) < skyAmbient(1));
+  // deep tower (tau 20): third octave alone keeps .25/1.75*e^-5 of the sky, so a base is dark grey, not black
+  const deep = skyAmbient(20) / SKY_AMB; assert.ok(deep > 5e-4 && deep < 5e-3, `deep ${deep}`);
+  assert.match(LOCAL_CLOUDS_FRAG, /skyAmb\(up \* uExt \* uBoxM\.y \* \.05\)/);
+  assert.match(LOCAL_CLOUDS_FRAG, /return 0\.25 \* s \/ 1\.75;/);
+});
+
+import { airMass, sunTint } from '../src/world/globe/localClouds';
+test('sunlight on the cloud is tinted by the Rayleigh air path: white overhead, red at the horizon', () => {
+  assert.ok(Math.abs(airMass(1) - 1) < 1e-3 && Math.abs(airMass(0) - 38) < 1.5); // Kasten-Young: ~38 air masses at the horizon
+  const noon = sunTint(1); noon.forEach(c => assert.ok(Math.abs(c - 1) < 1e-3));
+  const low = sunTint(Math.cos(80 * Math.PI / 180)), set = sunTint(0);
+  assert.ok(low[0] > low[1] && low[1] > low[2], `low ${low}`); // blue scattered out first: gold
+  assert.ok(set[2] < 1e-3 && set[0] > .1, `set ${set}`); // sunset: red survives, blue gone
+  assert.match(LOCAL_CLOUDS_FRAG, /vec3 lit = uSunCol \* \(msSun/);
+});
+
+import { sunVisible, skyLevel } from '../src/world/globe/localClouds';
+test('planet shadow: after sunset the cloud top stays lit after its base, and night clouds go dark', () => {
+  const d = (x: number) => Math.sin(x * Math.PI / 180);
+  assert.ok(sunVisible(d(10), 1000) === 1 && sunVisible(d(-20), 12000) === 0);
+  const mu = d(-2.5); assert.ok(sunVisible(mu, 10000) > .99 && sunVisible(mu, 2000) < .01, 'dip ~3.2 deg at 10 km, ~1.4 deg at 2 km');
+  assert.equal(skyLevel(d(5)), 1); assert.ok(Math.abs(Math.log10(skyLevel(d(-6))) + 2.4) < .01 && skyLevel(-1) < 1e-11);
+  assert.match(LOCAL_CLOUDS_FRAG, /sunVis\(\(p\.y \+ \.5\) \* uBoxM\.y\)\) \+ uSkyF \* skyAmb/);
+});
+
+import { airTransmittance } from '../src/world/globe/localClouds';
+test('layered clouds: aerial perspective fades distant clouds into the sky', () => {
+  assert.equal(airTransmittance(0, 1000, 2000), 1);
+  const near = airTransmittance(2000, 1000, 2000), far = airTransmittance(30000, 1000, 2000);
+  assert.ok(near > .97 && far < .75 && far > .6, `near ${near} far ${far}`);
+  assert.ok(airTransmittance(30000, 10000, 10000) > far, 'thinner air aloft hazes less');
+});
+
+import { groundAlbedo, groundBounce, ALB_FOREST, ALB_SNOW } from '../src/world/globe/localClouds';
+test('layered clouds: ground bounce lights bases from below, brighter over snow, gone at night', () => {
+  assert.equal(groundAlbedo(10), ALB_FOREST); assert.equal(groundAlbedo(-10), ALB_SNOW);
+  assert.ok(Math.abs(groundBounce(.5, 1, 0) - .5) < 1e-12, 'clear below: albedo * mu');
+  assert.ok(groundBounce(ALB_SNOW, .5, 1) > 3 * groundBounce(ALB_FOREST, .5, 1));
+  assert.ok(groundBounce(ALB_SNOW, .5, 10) < groundBounce(ALB_SNOW, .5, 1));
+  assert.equal(groundBounce(ALB_SNOW, -.1, 0), 0);
 });

@@ -2,6 +2,13 @@
 //! Plain `extern "C"` exports, no wasm-bindgen: the host calls `grid_init`, fills the LAND and ELEV planes through the pointer it
 //! gets back, calls `grid_seed` and `grid_step`, and reads any plane as a `Float64Array` over the module's memory.
 pub mod constants;
+pub mod cosmic_time;
+pub mod params;
+pub mod cosmology;
+pub mod reheating;
+pub mod engine_born;
+pub mod planet_eval;
+pub mod registry;
 pub mod consts;
 pub mod planet_fundamentals;
 // Old module paths stay as names. The formulas live once under planet_fundamentals (T-0062, issue #46).
@@ -26,6 +33,7 @@ pub mod differentiation;
 pub mod boot_order;
 pub mod perception;
 pub mod animals;
+pub mod litter;
 pub mod entities;
 pub mod cover;
 pub mod species;
@@ -94,11 +102,25 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
     if let Some(e) = o.first() { out[1..12].copy_from_slice(&[e.mass, e.com[0], e.com[1], e.com[2], e.spin[2], e.members.len() as f64, e.trusted as u8 as f64, e.extent, e.layers.len() as f64, t.first().map_or(0.0, |x| x.inside_hill as u8 as f64), t.first().map_or(0.0, |x| x.outside_roche as u8 as f64)]); } }
 
 /// Issue #167 cover row for one landing, written into `out[0..3]`: class id (0 water, 1 ice, 2 rock, 3 tundra, 4 desert,
-/// 5 prairie, 6 boreal), stems per hectare, billboard height in metres. Deterministic per (lat, lon).
+/// 5 prairie, 6 boreal, 7 tropical, 8 wetland), stems per hectare, billboard height in metres. Deterministic per (lat, lon).
 #[no_mangle] pub extern "C" fn cover_cell(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, out: *mut f64) {
     let r = cover::cover_row(lat, lon, elev_m, vegetation, water != 0);
     let o = unsafe { std::slice::from_raw_parts_mut(out, 3) };
     o.copy_from_slice(&[r.class as u32 as f64, r.stems_per_ha, r.height_m]);
+}
+
+/// cover_cell with the landing's distance to the coast in metres (NaN = unknown, identical to cover_cell), so a continental
+/// interior gets its higher tree and ice lines (cover.rs continentality, #192).
+#[no_mangle] pub extern "C" fn cover_cell_at(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, coast_m: f64, out: *mut f64) {
+    let r = cover::cover_row_at(lat, lon, elev_m, vegetation, water != 0, coast_m);
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 3) };
+    o.copy_from_slice(&[r.class as u32 as f64, r.stems_per_ha, r.height_m]);
+}
+
+/// Metres from (lat, lon) to open ocean on the live grid (#192): the nearest cell's coast distance, refreshed when the
+/// land mask changed. NaN with no grid, so cover_cell_at falls back to the zonal lines.
+#[no_mangle] pub extern "C" fn grid_coast_at(lat: f64, lon: f64) -> f64 {
+    GRID.with(|g| g.borrow_mut().as_mut().map_or(f64::NAN, |g| g.coast_at(lat, lon)))
 }
 
 /// Animals per hectare for one species at one landing in one year (0 snowshoe hare, 1 white-tailed deer, 2 moose, 3 Canada lynx, 4 gray wolf, 5 caribou).
@@ -113,9 +135,67 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
 /// Issue #162 bridge: the local population list for one landing, written as (species id, count) pairs into `out`
 /// (room for `cap` pairs, so 2·cap f64). Returns the number of pairs written. Species ids as in `species_density`.
 #[no_mangle] pub extern "C" fn landing_population(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, year: i32, side_m: f64, out: *mut f64, cap: u32) -> u32 {
-    let pop = species::landing_population(lat, lon, elev_m, vegetation, water != 0, year, side_m);
+    landing_population_at(lat, lon, elev_m, vegetation, water, year, side_m, f64::NAN, out, cap)
+}
+/// landing_population with the landing's distance to the sea in metres (NaN = unknown = landing_population), so the census
+/// reads the same cover class as cover_cell_at and the viewer (T-0132).
+#[allow(clippy::too_many_arguments)]
+#[no_mangle] pub extern "C" fn landing_population_at(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, year: i32, side_m: f64, coast_m: f64, out: *mut f64, cap: u32) -> u32 {
+    let pop = species::landing_population_at(lat, lon, elev_m, vegetation, water != 0, year, side_m, coast_m);
     let n = pop.len().min(cap as usize);
     let o = unsafe { std::slice::from_raw_parts_mut(out, 2 * n) };
     for (i, &(s, c)) in pop.iter().take(n).enumerate() { o[2 * i] = s as u32 as f64; o[2 * i + 1] = c as f64; }
     n as u32
 }
+
+fn read_name(ptr: *const u8, len: u32) -> Option<String> {
+    if ptr.is_null() || len > 256 { return None; }
+    let bytes = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
+    std::str::from_utf8(bytes).ok().map(|s| s.to_string())
+}
+
+thread_local! {
+    static REPORT: std::cell::RefCell<Vec<u8>> = const { std::cell::RefCell::new(Vec::new()) };
+    static TABLE: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+    static REHEAT_TABLE: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+thread_local! { static PANIC: std::cell::RefCell<String> = const { std::cell::RefCell::new(String::new()) }; }
+fn install_panic() {
+    std::panic::set_hook(Box::new(|info| { PANIC.with(|p| *p.borrow_mut() = info.to_string()); }));
+}
+#[no_mangle] pub extern "C" fn engine_set_now(ms: f64) { registry::set_now(ms); }
+#[no_mangle] pub extern "C" fn engine_set_cycle(cycle: f64) -> u32 {
+    install_panic();
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| registry::set_cycle(cycle))) { Ok(()) => 1, Err(_) => 0 }
+}
+#[no_mangle] pub extern "C" fn engine_panic_ptr() -> *const u8 { PANIC.with(|p| p.borrow().as_ptr()) }
+#[no_mangle] pub extern "C" fn engine_panic_len() -> u32 { PANIC.with(|p| p.borrow().len() as u32) }
+#[no_mangle] pub extern "C" fn engine_set_param(ptr: *const u8, len: u32, value: f64) -> u32 {
+    match read_name(ptr, len) { Some(name) if registry::set_param(&name, value) => 1, _ => 0 }
+}
+#[no_mangle] pub extern "C" fn engine_reset_all() { registry::reset_all(); }
+#[no_mangle] pub extern "C" fn engine_reset_one(ptr: *const u8, len: u32) { if let Some(name) = read_name(ptr, len) { registry::reset_engine(&name); } }
+#[no_mangle] pub extern "C" fn engine_spawn(ptr: *const u8, len: u32) -> u32 { match read_name(ptr, len) { Some(name) if registry::manual_spawn(&name) => 1, _ => 0 } }
+#[no_mangle] pub extern "C" fn engine_despawn(ptr: *const u8, len: u32) -> u32 { match read_name(ptr, len) { Some(name) if registry::manual_despawn(&name) => 1, _ => 0 } }
+#[no_mangle] pub extern "C" fn engine_report_len() -> u32 {
+    let bytes = registry::report().into_bytes();
+    let n = bytes.len() as u32;
+    REPORT.with(|r| *r.borrow_mut() = bytes);
+    n
+}
+#[no_mangle] pub extern "C" fn engine_report_ptr() -> *const u8 { REPORT.with(|r| r.borrow().as_ptr()) }
+#[no_mangle] pub extern "C" fn cosmos_table_len() -> u32 {
+    let t = cosmology::sample_table();
+    let n = t.len() as u32;
+    TABLE.with(|r| *r.borrow_mut() = t);
+    n
+}
+#[no_mangle] pub extern "C" fn cosmos_table_ptr() -> *const f64 { TABLE.with(|r| r.borrow().as_ptr()) }
+#[no_mangle] pub extern "C" fn reheat_table_len() -> u32 {
+    let t = reheating::decay_table();
+    let n = t.len() as u32;
+    REHEAT_TABLE.with(|r| *r.borrow_mut() = t);
+    n
+}
+#[no_mangle] pub extern "C" fn reheat_table_ptr() -> *const f64 { REHEAT_TABLE.with(|r| r.borrow().as_ptr()) }

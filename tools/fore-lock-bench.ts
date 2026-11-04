@@ -1,6 +1,8 @@
 // T-0009 run 10 (grok-gait): per-frame cost of one hare bound controller, fore lock off vs on (per instance), with fore IK solve counts. Mirrors C:\dev\forelock-bench.ts. npx tsx tools/fore-lock-bench.ts [env VS, HZ, SECS]
 import { createBounding, GIRDLE, selectRow, FORE_LOCK_STATS } from '../src/animals/locomotion/bounding';
 import { HOST_GAIT, planFor, poseFor } from './bound-plans';
+import { FORE_PLAN } from '../src/animals/locomotion/bounding';
+if (process.env.PLAN) FORE_PLAN.on = +process.env.PLAN; // T-0044 run 11: planned touchdown on (default) / off
 function run(v: number, hz: number, on: boolean, secs: number) {
   const c = createBounding(planFor('hare'), HOST_GAIT, () => 0, { x: 0, z: 0, heading: 0 }, GIRDLE, { pose: poseFor('hare'), foreLock: on });
   const N = Math.round(secs * hz), warm = Math.round(2 * hz), ts: number[] = []; let solves = 0;

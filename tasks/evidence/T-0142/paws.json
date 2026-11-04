@@ -1,0 +1,33 @@
+{
+  "open": {
+    "paw": {
+      "paw": "open",
+      "grab": false,
+      "dig": false,
+      "seenGrab": true,
+      "seenDig": false,
+      "index": 0.1833215344154291,
+      "middle": 0.1909201920855356,
+      "ring": 0.1797722668131374,
+      "pinky": 0.15835570224737744
+    },
+    "notice": "Open paw. Nothing close enough to grab."
+  },
+  "fist": {
+    "paw": {
+      "paw": "fist",
+      "grab": false,
+      "dig": false,
+      "seenGrab": true,
+      "seenDig": true,
+      "index": 0.07076286026567215,
+      "middle": 0.06547702937522608,
+      "ring": 0.06766670519951559,
+      "pinky": 0.06990655144851313
+    },
+    "notice": "Closed paw dug the litter."
+  },
+  "notes": [
+    "                                                 \n▄▄▄▄▄▄  ▄▄      ▄▄   ▄▄▄▄    ▄▄▄▄▄     ▄▄   ▄▄▄ \n▀▀██▀▀  ██      ██ ▄█▀▀▀▀█   ██▀▀▀██   ██  ██▀  \n  ██    ▀█▄ ██ ▄█▀ ██▄       ██    ██  ██▄██    \n  █"
+  ]
+}

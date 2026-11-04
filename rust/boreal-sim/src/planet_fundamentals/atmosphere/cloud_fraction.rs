@@ -65,7 +65,10 @@ pub fn update_clouds(g: &mut Grid, dt: f64) {
         let (ta, q) = (g.p(TAIR)[i], g.p(Q)[i]);
         let p = surface_pressure(P0, g.p(ELEV)[i].max(0.0), ta);
         let rh = (q / qsat(ta, p)).clamp(0.0, 1.0);
-        let lat = g.p(LAT)[i]; let t7 = match t7trop { Some(t) if lat.abs() < 25.0 => t, _ => t7row[i / nlon] };
+        let lat = g.p(LAT)[i];
+        // tropical free-troposphere T700 (weak temperature gradient) blended into the zonal row over 15-35 deg: a hard switch at 25 deg
+        // stepped the stratocumulus LTS and drew a straight line of cloud along that latitude on the globe
+        let t7 = match t7trop { Some(t) => { let x = ((lat.abs() - 15.0) / 20.0).clamp(0.0, 1.0); let w = x * x * (3.0 - 2.0 * x); t * (1.0 - w) + t7row[i / nlon] * w }, None => t7row[i / nlon] };
         let cst = if g.p(LAND)[i] < 0.5 { low_cloud_lts(lts(t7, ta)) } else { 0.0 };
         let cfront = cloud_fraction((rh * lift[i]).min(1.0)) - cloud_fraction(rh); // the extra cloud the ascent makes
         let c = 1.0 - (1.0 - cloud_fraction(rh)) * (1.0 - cfront.max(0.0)) * (1.0 - ft[i / nlon]) * (1.0 - conv_cloud(g.p(PMEAN)[i])) * (1.0 - cst);

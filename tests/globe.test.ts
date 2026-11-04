@@ -423,9 +423,16 @@ test('transition: game basis is orthonormal, up = local vertical, game -z = nort
   const dGame = new THREE_E.Vector3(0, 0, -1).applyQuaternion(cam.quaternion), dPlanet = new THREE_E.Vector3(0, 0, -1).applyQuaternion(out.quaternion);
   assert.ok(dPlanet.distanceTo(dGame.applyMatrix4(gameBasis(p, 72, 186))) < 1e-9, 'view direction maps through the basis');
 });
+import { toGameFrame } from '../src/world/globe/localClouds';
+test('issue #202: the band cloud overlay maps the globe box (camera-relative planet metres) back into game metres', () => {
+  const p = globePlanet(1400, true, 1400), cam = new THREE_E.Vector3(72, 1500, 186), c = gameToPlanet(p, cam.x, cam.y, cam.z);
+  for (const [x, y, z] of [[2072, 1250, -1314], [72, 900, 186], [-2928, 2000, 3186]]) { const w = gameToPlanet(p, x, y, z);
+    const m = new THREE_E.Matrix4().makeTranslation(w[0] - c[0], w[1] - c[1], w[2] - c[2]), o = new THREE_E.Vector3().setFromMatrixPosition(toGameFrame(gameBasis(p, cam.x, cam.z), cam, m));
+    assert.ok(o.distanceTo(new THREE_E.Vector3(x, y, z)) < .005 * Math.hypot(x - cam.x, z - cam.z) + 1, `${x},${y},${z} -> ${o.toArray().map(v => v.toFixed(1))}`); } // the flat game frame vs the curved figure: ~5 m at 2.4 km, far under the 2.5 km cloud cell
+});
 test('transition: flag + fallback, fade gated on chunks, mode machine, input scope, governor hold', () => {
   assert.equal(transitionPath(''), 'inpage'); assert.equal(transitionPath('?transition=reload'), 'reload'); assert.equal(transitionPath('', {}, 'reload'), 'reload'); assert.equal(transitionPath('', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('', { probeCap: 3 }), 'reload'); assert.equal(transitionPath('?transition=inpage'), 'inpage');
-  assert.equal(transitionPath('?transition=reload', {}, 'inpage'), 'reload'); assert.equal(transitionPath('?transition=inpage', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('?transition=inpage', { probeCap: 3 }), 'reload');
+  assert.equal(transitionPath('?transition=reload', {}, 'inpage'), 'reload'); assert.equal(transitionPath('?transition=inpage', { deviceMemory: 4 }), 'reload'); assert.equal(transitionPath('?transition=inpage', { probeCap: 3 }), 'reload'); assert.equal(transitionPath('?transition=inpage&inpagelow', { probeCap: 3, deviceMemory: 4 }), 'inpage'); assert.equal(transitionPath('?inpagelow', { probeCap: 3 }), 'reload');
   assert.equal(patchFade(100, false), 0); assert.equal(patchFade(2500, true), 0); assert.equal(patchFade(TRANSITION.fadeFull, true), 1); assert.ok(patchFade(1300, true) > 0 && patchFade(1300, true) < 1);
   const base = { height: 1500, overHome: true, descending: true, chunksReady: false };
   assert.equal(nextMode({ ...base, mode: 'globe' }), 'globe', 'a zoom does not start the descent');

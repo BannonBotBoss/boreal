@@ -27,4 +27,7 @@ Proposal: https://github.com/BannonBotBoss/boreal-/discussions/1#discussioncomme
 - [x] Cited constants and pure column model with tests
 - [x] Local ray-marched box wired into the globe
 - [x] Descent no longer removes clouds
-- [ ] WebGPU path (later), terrain depth occlusion for the box, in-page band (inpage.ts still hides the cloud dome)
+- [x] In-page band: the dew-point box stays through the ground fade-in (#203) and past the 60 m handover, the painted dome only fills the sky past the box edge (#205)
+- [x] Terrain depth occlusion: ridges in front hide the box in the band (#204)
+- [ ] WebGPU path (later)
+- [ ] Browser frames at 1.5 km, 1 km and 700 m on a descent (rule 6); the #203-#205 checks are headless only

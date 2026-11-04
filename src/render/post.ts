@@ -135,6 +135,7 @@ export function createPost(renderer: THREE.WebGLRenderer, scene: THREE.Scene, ca
     /** `ao` = ambient-occlusion level from the quality ladder (0 off, 1 half-res, 2 full-res). */
     /** `fx` = sun-driven screen-space lighting from the ladder (contact shadows, god-ray samples). */
     render(active: boolean, focalMmForFov: number, ao = 0, fx?: { contact: number; rays: number; sunDir: THREE.Vector3; sunCol: THREE.Color }) {
+      if (renderer.xr.isPresenting) { renderer.render(scene, camera); return; } // the composer is one view; a headset needs the XR camera
       const s = active ? settings : defaultSettings();
       renderer.toneMappingExposure = baseExposure * 2 ** s.ev * DRONE_GRADE.exposure; // photo EV; drone height adds DRONE_GRADE (render/droneGrade)
       renderer.toneMapping = active ? TONE_MAPS[s.toneMap] ?? baseToneMap : baseToneMap;

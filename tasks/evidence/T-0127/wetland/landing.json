@@ -1,0 +1,140 @@
+{
+  "site": "wetland (lake)",
+  "slug": "wetland",
+  "clickLat": 47.9,
+  "clickLon": -104.9,
+  "landedLat": 47.907813893806335,
+  "landedLon": -104.91254450524856,
+  "biome": "prairie",
+  "water": false,
+  "shore": false,
+  "elevM": 748.6798869411006,
+  "vegetation": 0.39171969710211785,
+  "censusLat": 47.907813893806335,
+  "censusLon": -104.91254450524856,
+  "census": [
+    {
+      "species": "snowshoe_hare",
+      "display": "Snowshoe Hare",
+      "count": 5657
+    },
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 121
+    },
+    {
+      "species": "moose",
+      "display": "Moose",
+      "count": 17
+    },
+    {
+      "species": "canada_lynx",
+      "display": "Canada Lynx",
+      "count": 9
+    },
+    {
+      "species": "caribou",
+      "display": "Woodland Caribou",
+      "count": 2
+    },
+    {
+      "species": "american_black_bear",
+      "display": "American Black Bear",
+      "count": 7
+    },
+    {
+      "species": "beaver",
+      "display": "Beaver",
+      "count": 115
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 3
+    }
+  ],
+  "shown": [
+    {
+      "species": "Snowshoe Hare",
+      "count": 1,
+      "x": 939.570249069529,
+      "z": -866.2200678369949
+    },
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": 936.6478230856883,
+      "z": -865.7964803383927
+    },
+    {
+      "species": "Canada Lynx",
+      "count": 1,
+      "x": 933.7253971018474,
+      "z": -865.3728928397904
+    },
+    {
+      "species": "Beaver",
+      "count": 1,
+      "x": 932.2431419093194,
+      "z": -868.8946707351473
+    },
+    {
+      "species": "Moose",
+      "count": 1,
+      "x": 929.3207159254787,
+      "z": -868.4710832365452
+    }
+  ],
+  "simStepMs": 352.6999999997855,
+  "frameMs": 11.7,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.19,
+    "dayOfYear": 227,
+    "latitude": 47.9,
+    "sunElevation": 41.7,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:11",
+  "clockDate": "15 Aug · day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 4,
+    "lows": 0,
+    "bodies": 1,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 513987825,
+    "total": 581203893
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.",
+    "PROBE cap=Minimum {\"renderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\",\"gpuTier\":1,\"maxTexture\":8192,\"deviceMemory\":16,\"cores\":4,\"benchMs\":1015.034046,\"cap\":5,\"reasons\":[\"bench 1015.0 ms at Ultra → ≤ Minimum\"],\"igpu\":false,\"at\":1793648472860,\"ver"
+  ],
+  "seams": "No tile crack or height step visible. Grass and a deer silhouette on the left are readable (22% of the lower-middle is near-black, the least solid band). The ground is dry spruce, not a lake. Cover is prairie and shore is false. The lynx is one of the five; it has no Meshy file, so the procedural body is the fallback.",
+  "hud": {
+    "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.7,
+    "fade": 1,
+    "ready": true,
+    "readyAt": 1886
+  },
+  "exit": 0,
+  "note": "",
+  "hardwareFps": "UNVERIFIED",
+  "gpuMemory": "UNVERIFIED"
+}

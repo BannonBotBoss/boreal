@@ -1,0 +1,436 @@
+[
+  {
+    "site": "boreal forest",
+    "slug": "boreal",
+    "clickLat": 52,
+    "clickLon": -97,
+    "landedLat": 51.9977094117944,
+    "landedLon": -96.9988552461355,
+    "biome": "boreal",
+    "water": false,
+    "census": [
+      {
+        "species": "snowshoe_hare",
+        "display": "Snowshoe Hare",
+        "count": 3761
+      },
+      {
+        "species": "white_tailed_deer",
+        "display": "White-tailed Deer",
+        "count": 79
+      },
+      {
+        "species": "moose",
+        "display": "Moose",
+        "count": 29
+      },
+      {
+        "species": "canada_lynx",
+        "display": "Canada Lynx",
+        "count": 8
+      },
+      {
+        "species": "gray_wolf",
+        "display": "Gray Wolf",
+        "count": 1
+      },
+      {
+        "species": "caribou",
+        "display": "Woodland Caribou",
+        "count": 1
+      },
+      {
+        "species": "american_black_bear",
+        "display": "American Black Bear",
+        "count": 29
+      },
+      {
+        "species": "bald_eagle",
+        "display": "Bald Eagle",
+        "count": 3
+      },
+      {
+        "species": "beaver",
+        "display": "Beaver",
+        "count": 69
+      },
+      {
+        "species": "red_fox",
+        "display": "Red Fox",
+        "count": 14
+      }
+    ],
+    "shown": [
+      {
+        "species": "Snowshoe Hare",
+        "count": 1,
+        "x": -77.18641694005692,
+        "z": 263.11841082824503
+      },
+      {
+        "species": "White-tailed Deer",
+        "count": 1,
+        "x": -78.12435114984225,
+        "z": 261.6050439136753
+      },
+      {
+        "species": "American Black Bear",
+        "count": 1,
+        "x": -81.04677713368307,
+        "z": 262.02863141227743
+      },
+      {
+        "species": "Bald Eagle",
+        "count": 1,
+        "x": -84.51352410026648,
+        "z": 260.4438079300925
+      },
+      {
+        "species": "Beaver",
+        "count": 1,
+        "x": -85.4514583100518,
+        "z": 258.9304410155228
+      }
+    ],
+    "simStepMs": 390.399999999147,
+    "frameMs": 305.4,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 401,
+      "sim": 51.8,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 2031
+    },
+    "exit": 0,
+    "note": ""
+  },
+  {
+    "site": "tundra",
+    "slug": "tundra",
+    "clickLat": 64.5,
+    "clickLon": -119.7,
+    "landedLat": 64.49768792822134,
+    "landedLon": -119.69887528704976,
+    "biome": "ice",
+    "water": false,
+    "census": [],
+    "shown": [],
+    "simStepMs": 86.20000000007622,
+    "frameMs": 28.4,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 401,
+      "sim": 57.5,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 2006
+    },
+    "exit": 0,
+    "note": ""
+  },
+  {
+    "site": "alpine",
+    "slug": "alpine",
+    "clickLat": 0.5,
+    "clickLon": 54,
+    "landedLat": 0.4972101009679573,
+    "landedLon": 54.00118004215131,
+    "biome": "boreal",
+    "water": false,
+    "census": [],
+    "shown": [],
+    "simStepMs": 299.99999999969873,
+    "frameMs": 276,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 402,
+      "sim": 60.8,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 2033
+    },
+    "exit": 0,
+    "note": ""
+  },
+  {
+    "site": "coast",
+    "slug": "coast",
+    "clickLat": 44.3,
+    "clickLon": -122.2,
+    "landedLat": 44.297390695278025,
+    "landedLon": -122.19915461998033,
+    "biome": "boreal",
+    "water": false,
+    "census": [
+      {
+        "species": "snowshoe_hare",
+        "display": "Snowshoe Hare",
+        "count": 4754
+      },
+      {
+        "species": "white_tailed_deer",
+        "display": "White-tailed Deer",
+        "count": 65
+      },
+      {
+        "species": "moose",
+        "display": "Moose",
+        "count": 39
+      },
+      {
+        "species": "canada_lynx",
+        "display": "Canada Lynx",
+        "count": 10
+      },
+      {
+        "species": "american_black_bear",
+        "display": "American Black Bear",
+        "count": 13
+      },
+      {
+        "species": "grizzly_bear",
+        "display": "Grizzly Bear",
+        "count": 1
+      },
+      {
+        "species": "bald_eagle",
+        "display": "Bald Eagle",
+        "count": 4
+      },
+      {
+        "species": "beaver",
+        "display": "Beaver",
+        "count": 32
+      },
+      {
+        "species": "red_fox",
+        "display": "Red Fox",
+        "count": 25
+      }
+    ],
+    "shown": [
+      {
+        "species": "Snowshoe Hare",
+        "count": 1,
+        "x": -64.10936009884833,
+        "z": 296.62143364024973
+      },
+      {
+        "species": "White-tailed Deer",
+        "count": 1,
+        "x": -67.03178608268914,
+        "z": 297.0450211388519
+      },
+      {
+        "species": "Red Fox",
+        "count": 1,
+        "x": -69.95421206652995,
+        "z": 297.46860863745405
+      },
+      {
+        "species": "Bald Eagle",
+        "count": 1,
+        "x": -71.43646725905788,
+        "z": 293.94683074209723
+      },
+      {
+        "species": "Moose",
+        "count": 1,
+        "x": -74.35889324289869,
+        "z": 294.3704182406994
+      }
+    ],
+    "simStepMs": 106.09999999957154,
+    "frameMs": 63.3,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 404,
+      "sim": 58,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 2100
+    },
+    "exit": 0,
+    "note": "",
+    "recaptured": true
+  },
+  {
+    "site": "desert",
+    "slug": "desert",
+    "clickLat": 27.4,
+    "clickLon": 27.7,
+    "landedLat": 27.397831246848998,
+    "landedLon": 27.701039572215574,
+    "biome": "boreal",
+    "water": false,
+    "census": [],
+    "shown": [],
+    "simStepMs": 106.99999999985721,
+    "frameMs": 58.6,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 402,
+      "sim": 60.7,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1925
+    },
+    "exit": 0,
+    "note": ""
+  },
+  {
+    "site": "tropics",
+    "slug": "tropics",
+    "clickLat": -7.1,
+    "clickLon": -67,
+    "landedLat": -7.1021105711540535,
+    "landedLon": -66.99887352769171,
+    "biome": "boreal",
+    "water": false,
+    "census": [
+      {
+        "species": "white_tailed_deer",
+        "display": "White-tailed Deer",
+        "count": 113
+      }
+    ],
+    "shown": [
+      {
+        "species": "White-tailed Deer",
+        "count": 1,
+        "x": -121.1268724692152,
+        "z": 241.1652138554355
+      }
+    ],
+    "simStepMs": 142.59999999956108,
+    "frameMs": 105.8,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 401,
+      "sim": 58.3,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1946
+    },
+    "exit": 0,
+    "note": "",
+    "recaptured": true
+  },
+  {
+    "site": "ocean edge",
+    "slug": "ocean",
+    "clickLat": 36.6,
+    "clickLon": -121.9,
+    "landedLat": 36.59762712254618,
+    "landedLon": -121.89892112528949,
+    "biome": "water",
+    "water": true,
+    "census": [],
+    "shown": [],
+    "simStepMs": 237.79999999953816,
+    "frameMs": 145.6,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 409,
+      "sim": 58.4,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 2100
+    },
+    "exit": 0,
+    "note": ""
+  },
+  {
+    "site": "polar",
+    "slug": "polar",
+    "clickLat": 74.2,
+    "clickLon": 50.6,
+    "landedLat": 74.19752004411845,
+    "landedLon": 50.60204846124679,
+    "biome": "ice",
+    "water": false,
+    "census": [],
+    "shown": [],
+    "simStepMs": 223.90000000011412,
+    "frameMs": 159.9,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 56.2,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 2100
+    },
+    "exit": 0,
+    "note": ""
+  },
+  {
+    "site": "prairie",
+    "slug": "prairie",
+    "clickLat": 51,
+    "clickLon": -107,
+    "landedLat": 50.99752542329479,
+    "landedLon": -106.99911674570697,
+    "biome": "rock",
+    "water": false,
+    "census": [],
+    "shown": [],
+    "simStepMs": 430.39999999996326,
+    "frameMs": 336.9,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 400,
+      "sim": 56.1,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 2100
+    },
+    "exit": 0,
+    "note": ""
+  },
+  {
+    "site": "wetland (lake)",
+    "slug": "wetland",
+    "clickLat": 47.9,
+    "clickLon": -104.9,
+    "landedLat": 47.905154141703,
+    "landedLon": -104.9110954751001,
+    "biome": "water",
+    "water": true,
+    "census": [],
+    "shown": [],
+    "simStepMs": 101.80000000065093,
+    "frameMs": 41,
+    "hud": {
+      "txt": "RT run · LT stealth · LB focus · Q lock | W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact",
+      "mode": "game",
+      "phase": "game",
+      "h": 407,
+      "sim": 63.1,
+      "fade": 1,
+      "ready": false,
+      "readyAt": 1993
+    },
+    "exit": 0,
+    "note": ""
+  }
+]

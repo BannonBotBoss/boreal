@@ -44,9 +44,10 @@ export type MammalArchetype = keyof typeof MAMMAL_PLANS;
  * Native mammals reachable from the globe landing but not on the Thunder Bay checklist (issue #162: the viewer
  * had the grizzly borrowing the black-bear row). Grizzly: shoulder hump about 1.05 m on all fours (see bearBody.ts);
  * adult mass 145 kg, the midpoint of interior adults: males average 190 kg, females about 100 kg (COSEWIC grizzly status report ch. 2, citing McLellan 1994).
+ * Arctic fox (tundra landings, #192): shoulder about 0.28 m, adult mass about 3.5 kg (Audet et al. 2002, Mammalian Species 713) [verify].
  */
-export const MAMMALS_BEYOND_CHECKLIST = ['Grizzly Bear'];
-function MAMMALS_BEYOND_CHECKLIST_ROWS(): [string, 'ursid', number, number][] { return [['Grizzly Bear', 'ursid', 1.05, 145]]; }
+export const MAMMALS_BEYOND_CHECKLIST = ['Grizzly Bear', 'Arctic Fox'];
+function MAMMALS_BEYOND_CHECKLIST_ROWS(): [string, 'ursid' | 'canid', number, number][] { return [['Grizzly Bear', 'ursid', 1.05, 145], ['Arctic Fox', 'canid', .28, 3.5]]; }
 
 /** Native mammals of the Thunder Bay district checklist: [common name, plan, shoulder height m, mass kg, tail/withers override?]. */
 export const MAMMALS: [string, MammalArchetype, number, number, number?][] = [

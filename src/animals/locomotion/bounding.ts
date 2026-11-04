@@ -23,6 +23,10 @@ import { createCpg, stepCpg, phases, type Cpg } from './cpg';
 import { footState, forceStep, stepFoot, toWorld, type FootState } from './foot';
 import { solveLimb, clampLimb, soleOf, blendLimits, toeTarget, CANID_LIMITS, type JointLimits, type LimbAngles } from './ik';
 import { worldToLimb, limbToWorld } from './controller';
+import { swingProgress, inLateSwing, timeToTouchdown, bodyAtTouchdown, landingAhead, forearmBelowDeg, inPlanBand, planBlendU, blendPlan, frameTouchdown } from './touchdownPlan'; // pure, Rust-portable (T-0044 run 11)
+import { jointGate, limitStep, blendJoints, shoulderAt, jointStep2 } from './jointSwing'; // pure, Rust-portable (T-0044 run 12)
+import { softTwoBone, softBendMin, softExcess, softSplit } from './softIK'; // pure, Rust-portable (T-0044 run 13, Nicholas 2006 soft IK)
+import { reachDrop, gatherDrop, stanceDropStep, softDip } from './stancePlan'; // pure, Rust-portable (T-0044 run 15 stance plan)
 import { springTo, spring, type Spring } from './spring';
 import type { Tilt } from './balance';
 import type { Skeleton } from './bodyPlan';
@@ -135,9 +139,57 @@ export function preSwingPsi(want: number, plant: number | undefined, sp: number,
  * - FORE_LOCK_STATS.release counts frames where the window had no exact solution and the scan took over.
  * All rates/weights here are estimates tuned against tests/fore-lock.test.ts. */
 export const FORE_LOCK_STATS = { release: 0, solves: 0 };
-export const FORE_LOCK = { psiRate: 30, sweep: 88 * Math.PI / 180, stanceShare: 1.8, psiOff: -.6, maxStep: .5, holdWeight: 10, nearest: 100, preFrom: .8, bladeRate: 40, nBlade: 4, nPsi: 6, fine: 2, on: 1, swing: 1, plant: 0, hold: 1, holdUntil: 0, soft: 1, stanceSoft: 0 };
+export const FORE_LOCK = { psiRate: 30, sweep: 88 * Math.PI / 180, stanceShare: 1.8, psiOff: -.6, maxStep: .5, holdWeight: 10, nearest: 100, preFrom: .8, bladeRate: 40, nBlade: 4, nPsi: 6, fine: 2, on: 1, swing: 1, plant: 0, hold: 1, holdUntil: 0, soft: 1, stanceSoft: 0, clampFine: 1 };
+/**
+ * T-0044 run 11 (grok-gait): planned fore touchdown (fore lock on). The touchdown pop (tools/touchdown-pop.ts) was the planting
+ * frame choosing a fresh (scapula, manus) pair: the fore chain has two spare angles over a 2-D foot target, and two exact pairs
+ * tie (run 9). The elbow side is already fixed (solveLeg), so a pole does not remove it (run 11 handoff). Here the late swing is
+ * a swing-leg trajectory in the sense of the MIT Cheetah FootSwingTrajectory (footSwing.ts, MIT): at swing phase `from` the
+ * touchdown pose is planned ONCE at the predicted landing point (stepFoot's landing: the limb's rest ground point + half the
+ * stance sweep ahead), restricted to a forearm `lo`..`hi` deg below the horizontal - 11-36 deg at fore touchdown in small
+ * therians (Schmidt 2008 JEB 211:3775 Table 4), 1 deg margin each side for the whole-degree read [estimate] - and then tracked
+ * each frame by the FORE_LOCK window about the planned pair (the body's pitch / height move the landing point in the limb
+ * frame); the scapula and manus angles run from their value at `from` to the planned ones along Interpolate::cubicBezier, so
+ * the last swing frame is the touchdown pose and the planting frame starts on that branch (windowed, no fresh pick). `from`
+ * = FORE_LOCK.preFrom (.8, estimate).
+ */
+export const FORE_PLAN = { on: 1, from: .8, lo: 12, hi: 35, frame: 2, plantWin: 1.5, dtWin: 1 / 240, qcAlways: 1 }; // run 15 default (Matthew's fix brief 1, 12 cells: plant elbow overs 5 -> 0, split-step contacts 12.0-34.1 -> 12.0-20.5 deg, the rest unchanged): dtWin floors the dt of the plant / tracking windows (a host's split step, down to 1 us in contactScore, no longer shrinks them; 0 = off); qcAlways tracks planQc even when the frame and the instant coincide; plantWin 1.5 = planting window x 1.5. Run 14 mode 2 = { plantWin: 1, dtWin: 0, qcAlways: 0 }. // run 15: frame 2 is the default (12 cells: every plant in band 12.0-28.9 deg per frame, 12.0-34.1 split-step, paw gate 0; 0 = Run 13 motion). frame 2 = also track the continuous-instant plan and blend the plant seed by how late the plant really is (passed 3 checked cells on both contact measures; not fully measured). plantWin = planting window x (1 = off). frame 1 = predict the body at the planting FRAME (frameTouchdown), not the continuous instant
+export const FORE_PLAN_STATS = { plans: 0, fails: 0, holds: 0 };
+/** T-0044 run 12 (grok-gait): fore elbow / humerus flicker switches (tools/elbow-pop.ts; handoff Run 12). ALL OFF by default:
+ *  with them off the motion is the Run 11 motion (probe output identical in all 12 cells).
+ *  - `w`: min-max joint-displacement term (jointStep2) in the FORE_LOCK window, every windowed call. 100 halves some stance
+ *    overs but put a manus over the gate at 5 m/s, so 0.
+ *  - `plantW`: the same term on the planting frame only, seeded from the pose shown last frame. 100 [estimate]: plant humerus
+ *    overs 82 -> 16 and elbow 121 -> 61 over the 12 cells, the jump moves into the first stance frames.
+ *  - `panto`: weight of the nearest-parallel blade/forearm cost (1 = Run 11).
+ *  - `limit`: swing frames in the air take a joint velocity limit of `share` x the run-9 gate on scapula / humerus / elbow /
+ *    manus (jointSwing.limitStep); a limited pose that would put the paw through the ground keeps the IK pose that frame.
+ *  - `plan`: from FORE_PLAN.from the limited swing heads, in joint space, for the planned touchdown configuration
+ *    (jointSwing.blendJoints, Cheetah cubic Bezier). share .9 is an estimate.
+ *  Stance is not fixed by any of these: see the handoff (near-straight limb + 33 ms stance). */
+export const FORE_JOINT = { w: 0, plantW: 0, panto: 1, limit: 0, share: .9, plan: 1 };
+/** T-0044 run 13: soft IK on the fore two-bone (shoulder -> wrist), Andy Nicholas, "Soft IK in XSI", Softimage Blog 2006
+ *  (softIK.ts has the source and the equation's provenance). The leg is kept out of the last `ratio` x chain of its reach, where
+ *  1 cm of shoulder-wrist distance is ~100 deg of elbow (run 12 diagnosis):
+ *  - `swing`: a fore paw in the air reaches only the soft distance toward its wrist target (manus angle kept); a pose that
+ *    would put the paw under the ground keeps the IK pose that frame.
+ *  - `plan`: the planned / tracked / planting touchdown pair must also bend the elbow at least softBendMin (falls back to the
+ *    run 11 band alone, then to none, so a failed plan never brings the pop back).
+ *  - `stanceW`: a planted paw stays exact; the FORE_LOCK window's pick pays stanceW x (excess / soft)^2 for entering the zone.
+ *  Defaults from the run 13 probe (12 cells, tools/elbow-pop.ts): on, ratio .3 (an estimate tuned on the probe: hard ~106 mm of
+ *  the ~151 mm chain; .1 / .15 / .2 / .25 / .3 / .35 were measured), swing on, plan OFF (the band + soft accept put manus
+ *  jumps into the swing, straightened stance to 4.2 deg and let a planted paw miss 6.4 mm), stanceW 100 (measured no effect at
+ *  100 or 1000: kept, harmless). on 0 = run 12 motion. */
+/** T-0044 run 14 diagnostics (tools only; off = no cost): one record per fore planting frame - which path it took and the
+ *  planned vs actual landing (world xz and limb-frame). */
+export const FORE_PLAN_DIAG = { on: 0, log: [] as { t: number; leg: number; path: string; planOn: boolean; planned: boolean; fail: boolean; dW?: number; dRelZ?: number; dRelY?: number; sp?: number; dBody?: number; dPitch?: number; dHeight?: number; dTop?: number; dFloor?: number; u?: number; qc?: boolean }[] };
+/** T-0044 run 15 stance plan (stancePlan.ts): sink the fore chain root (scapula pivot) so a planted fore leg stays at <= k x
+ *  its straight length (reach term, game foot-IK root offset) and / or with the hind phase (gather term: chest drops while the
+ *  hinds swing, rises while they stand). Values [estimate], tunables. on 0 = off (run 14 motion, bit for bit). */
+export const FORE_STANCE = { on: 0, k: .9, maxDrop: .02, gather: 0, extend: 0, peak: .8, rate: .3, dip: 0, dipRatio: .22, elbowW: 0 }; // dip: max soft-curve sink (m, Matthew's fix brief 2b, 0 = off); elbowW: stance elbow + humerus rate weight (2a, independent of on)
+export const FORE_SOFT = { on: 1, ratio: .3, swing: 1, plan: 0, stanceW: 100 };
 export const FORE_SCAN = { psiFrom: -.6, psiTo: 1.2, psiStep: .1, bladeStep: .05 };
-export function foreLimb(L: LimbDims, top: { z: number; y: number }, sole: Vec3, limits: JointLimits = CANID_LIMITS, prev?: { blade: number; psi: number; arm?: number }, psiWant?: number, any = false, girdle: GirdleLimits = GIRDLE, cont = FORE_CONT.carry, win?: { psi: number; blade: number; soft?: number; w?: number }) {
+export function foreLimb(L: LimbDims, top: { z: number; y: number }, sole: Vec3, limits: JointLimits = CANID_LIMITS, prev?: { blade: number; psi: number; arm?: number; hum?: number; man?: number }, psiWant?: number, any = false, girdle: GirdleLimits = GIRDLE, cont = FORE_CONT.carry, win?: { psi: number; blade: number; soft?: number; w?: number; j?: number; s?: number; e?: number }, accept?: (a: LimbAngles) => boolean) {
   const rest = L.girdleRest ?? 0, want = top.y - Math.hypot(top.y - sole.y, sole.x), nb = Math.round(girdle.scapulaMax / FORE_SCAN.bladeStep);
   let best = { blade: prev?.blade ?? rest, psi: prev?.psi ?? (L.footAngle ?? 0), arm: prev?.arm ?? rest, cost: Infinity, err: Infinity, ok: false };
   // v9 lock: a window about the previous solution (continuous, finer steps); none reachable -> the full scan below (release)
@@ -146,18 +198,22 @@ export function foreLimb(L: LimbDims, top: { z: number; y: number }, sole: Vec3,
     // v10: fixed sample counts (coarse grid +-nB x +-nP, then a fine pass +-1 coarse step about the coarse best), so the
     // cost per frame no longer grows as dt shrinks; blade samples clamped onto the same girdle limit are solved once
     const bLo = rest - girdle.scapulaMax, bHi = rest + girdle.scapulaMax;
-    let lb = { blade: prev.blade, psi: prev.psi, arm: prev.arm ?? rest, cost: Infinity, err: Infinity, ok: false, locked: true };
+    let lb = { blade: prev.blade, psi: prev.psi, arm: prev.arm ?? rest, hum: prev.hum, cost: Infinity, err: Infinity, ok: false, locked: true };
     const grid = (b0: number, p0: number, db: number, dp: number, nB: number, nP: number) => {
       let lastBlade = NaN;
       for (let bi = -nB; bi <= nB; bi++) { const blade = Math.max(bLo, Math.min(bHi, b0 + db * bi));
         if (blade === lastBlade) continue; lastBlade = blade; // dedupe clamped samples (ascending order)
+        if (FORE_LOCK.clampFine && Math.abs(blade - prev.blade) > win.blade + 1e-9) continue; // run 11: the fine pass stays inside the window
         for (let pj = -nP; pj <= nP; pj++) { const psi = p0 + dp * pj;
+          if (FORE_LOCK.clampFine && Math.abs(psi - prev.psi) > win.psi + 1e-9) continue;
           FORE_LOCK_STATS.solves++;
           const LL = { ...L, footAngle: psi }, a = clampLimb(solveLimb(LL, false, sole, 0, { top, blade }), true, limits), s = soleOf(LL, a);
-          const err = Math.hypot(s.z - sole.z, s.y - want), arm = a.girdle + a.leg + a.knee;
-          const cost = (blade - arm) ** 2 + (psiWant === undefined ? 0 : (win.w ?? 1) * (psi - psiWant) ** 2);
-          if (err < 1e-4 && cost < lb.cost) lb = { blade, psi, arm, cost, err, ok: true, locked: true };
-          else if (!lb.ok && err < lb.err) lb = { blade, psi, arm, cost, err, ok: false, locked: true }; } } };
+          const err = Math.hypot(s.z - sole.z, s.y - want), arm = a.girdle + a.leg + a.knee, hum = a.girdle + a.leg;
+          const cost = FORE_JOINT.panto * (blade - arm) ** 2 + (psiWant === undefined ? 0 : (win.w ?? 1) * (psi - psiWant) ** 2) + (prev.hum === undefined || prev.arm === undefined || prev.man === undefined ? 0 : (win.j ?? FORE_JOINT.w) * jointStep2(blade - prev.blade, hum - prev.hum, (arm - hum) - (prev.arm - prev.hum), arm + a.wrist - prev.man)) + (win.s ? win.s * softExcess(a.knee, L.upper, L.lower, FORE_SOFT.ratio) ** 2 : 0)
+            + (win.e && prev.hum !== undefined && prev.arm !== undefined ? win.e * (((arm - hum) - (prev.arm - prev.hum)) ** 2 + (hum - prev.hum) ** 2) : 0); // run 15 FORE_STANCE.elbowW: elbow + humerus rate only (no manus)
+          if (err < 1e-4 && accept && !accept(a)) continue;
+          if (err < 1e-4 && cost < lb.cost) lb = { blade, psi, arm, hum, cost, err, ok: true, locked: true };
+          else if (!lb.ok && err < lb.err) lb = { blade, psi, arm, hum, cost, err, ok: false, locked: true }; } } };
     const nB = FORE_LOCK.nBlade, nP = FORE_LOCK.nPsi, db = win.blade / nB, dp = win.psi / nP;
     grid(prev.blade, prev.psi, db, dp, nB, nP);
     if (FORE_LOCK.fine > 0) { const c = { ...lb }; const f = FORE_LOCK.fine; grid(c.blade, c.psi, db / f, dp / f, f, f); }
@@ -169,7 +225,7 @@ export function foreLimb(L: LimbDims, top: { z: number; y: number }, sole: Vec3,
     for (let psi = FORE_SCAN.psiFrom; psi <= FORE_SCAN.psiTo + 1e-9; psi += FORE_SCAN.psiStep) {
       FORE_LOCK_STATS.solves++;
       const LL = { ...L, footAngle: psi }, a = clampLimb(solveLimb(LL, false, sole, 0, { top, blade }), true, limits), s = soleOf(LL, a);
-      const err = Math.hypot(s.z - sole.z, s.y - want), ok = err < 1e-4;
+      const err = Math.hypot(s.z - sole.z, s.y - want), ok = err < 1e-4 && (!accept || accept(a));
       const arm = a.girdle + a.leg + a.knee;
       if (ok && any) return { blade, psi, arm, cost: 0, err, ok };
       const cost = (blade - arm) ** 2 + (prev ? (held ? FORE_LOCK.nearest : cont) * ((blade - prev.blade) ** 2 + (psi - prev.psi) ** 2) : 0) + (psiWant === undefined ? 0 : (psi - psiWant) ** 2);
@@ -638,7 +694,12 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
   const pitchS: Spring = spring(0), dropS: Spring = spring(0), liftS: Spring = spring(0), moveS: Spring = spring(0);
   const gaitLimits = sk.plan.limits ?? CANID_LIMITS, turnStep = [false, false, false, false];
   const lockPsi = [0, 0, 0, 0], plantPsi: (number | undefined)[] = [undefined, undefined, undefined, undefined]; let wasDown = feet.map(() => true), lastPose: PoseKind = 'stand'; const ankle0 = restAnkle(sk), prevPsi: (number | undefined)[] = [undefined, sk.restFootAngle, undefined, sk.restFootAngle];
-  const prevFore: ({ blade: number; psi: number; arm?: number } | undefined)[] = [undefined, undefined, undefined, undefined];
+  const prevFore: ({ blade: number; psi: number; arm?: number; hum?: number; man?: number } | undefined)[] = [undefined, undefined, undefined, undefined];
+  // T-0044 run 11: planned touchdown per fore leg (FORE_PLAN): the pair at the late-swing start, the planned pair, a failed plan
+  const planQ0: ({ blade: number; psi: number } | undefined)[] = [undefined, undefined, undefined, undefined], planQ: ({ blade: number; psi: number; arm?: number } | undefined)[] = [undefined, undefined, undefined, undefined], planned = [false, false, false, false], planFail = [false, false, false, false];
+  const planLand: ({ x: number; z: number; rz: number; ry: number; bx: number; bz: number; p: number; h: number; tz: number } | undefined)[] = [undefined, undefined, undefined, undefined], lastSp = [0, 0, 0, 0]; // run 14 diag
+  const planQc: ({ blade: number; psi: number; arm?: number } | undefined)[] = [undefined, undefined, undefined, undefined], planGap = [0, 0, 0, 0], stDrop = [0, 0, 0, 0]; // run 14 frame 2: the continuous-instant plan and the frame-vs-instant time gap
+  const lastA: (LimbAngles | undefined)[] = [undefined, undefined, undefined, undefined], planA: (LimbAngles | undefined)[] = [undefined, undefined, undefined, undefined]; // run 12: last shown fore pose, planned touchdown configuration
   return { reach, skeleton: sk, get foreLock() { return lockOn; }, setForeLock(on: boolean) { if (lockOn && !on) plantPsi.fill(undefined); lockOn = on; }, place(px, pz, h) { x = px; z = pz; heading = h; for (let i = 0; i < 4; i++) { const f0 = footState(restWorld(i)); Object.assign(feet[i], f0); wasDown[i] = true; turnStep[i] = false; } },
   update(dt, speed, h, request, force) {
     const v = Math.abs(speed), moving = v > .05; foreTouch = foreTouchAhead(v);
@@ -685,6 +746,7 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
     const swing = moving ? pitchAt(pitchCurve(plan, sk), stridePhase) * run : 0;
     // the gait's joint ranges (BodyPlan.limits: stance measurements) phase in with motion; standing keeps the default
     const lim = blendLimits(CANID_LIMITS, gaitLimits, run);
+    const dw = FORE_PLAN.dtWin > 0 ? Math.max(dt, FORE_PLAN.dtWin) : dt; // run 15: the plan windows' dt (floored when dtWin > 0)
     // v5: the body's height from the stride's ground forces (heightCurve: g·t²/8 flights + the stance dip), not flights only
     const lift = moving ? pitchAt(heightCurve(plan), stridePhase) * run : 0;
     const hipY = ground(x, z), shoY = ground(...(() => { const w2 = toWorld(x, z, heading, 0, sk.plan.shoulderZ - sk.plan.hipZ); return [w2.x, w2.z] as const; })());
@@ -711,21 +773,92 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
       const ik = toeTarget(target, fwd, toeOff(i), f.planted ? ground : undefined);
       let rel = worldToLimb(ik, x, z, heading, tilt, sk.hips[i]);
       // the girdle shifts carry the pivot along the ground (as dutyFits counts them), not along a pitched trunk
-      const top = { z: shift[i] * Math.cos(bodyPitch), y: topY(L) + shift[i] * Math.sin(bodyPitch) };
+      let top = { z: shift[i] * Math.cos(bodyPitch), y: topY(L) + shift[i] * Math.sin(bodyPitch) };
+      // run 15: FORE_STANCE - the fore root sinks (planted: as the reach needs; any phase: the hind-phase gather), rate limited
+      if (FORE_STANCE.on && front && L.girdle && moving && foreUp <= .02) {
+        const rd = f.planted ? reachDrop(rel.z - top.z, rel.y - top.y, (L.girdle ?? 0) + L.upper + L.lower + (L.foot ?? 0), FORE_STANCE.k) : 0, gd = gatherDrop(ph[1], ph[3], plan.duties[1], FORE_STANCE), sd = f.planted && FORE_STANCE.dip > 0 ? softDip(Math.hypot(rel.z - top.z, rel.y - top.y), (L.girdle ?? 0) + L.upper + L.lower + (L.foot ?? 0), FORE_STANCE.dipRatio, FORE_STANCE.dip) : 0, want = gd >= 0 ? Math.max(rd, gd, sd) : Math.max(rd, sd) + gd; // a rise (hinds standing) is not masked by the reach term
+        stDrop[i] = stanceDropStep(stDrop[i], want * run, FORE_STANCE, dt); top = { ...top, y: top.y - stDrop[i] };
+      }
       // v6: late-swing fore reach (FORE_REACH): keep the swing's height, reach no further than the limb does; not in a leash /
       // stop step or a sit-up
       // Plant frame (fore lock on): the swing let the reach go, and one 60 Hz body step closes the paw. Hold it on
       // FORE_REACH.floor with the same circle. Swing below is unchanged (floor forced off).
       const planting = front && L.girdle && moving && f.planted && !wasDown[i] && !f.forced && foreUp <= .02 && lockOn && FORE_LOCK.on && (FORE_REACH.floor ?? 0) > 0;
+      const relPre = rel.z; // run 14 diag
       if (planting) { const t2 = foreReachTarget(L, top, rel, girdle); rel = { ...rel, z: t2.z }; }
       if (front && L.girdle && moving && !f.planted && !f.forced && foreUp <= .02 && ph[i] >= plan.duties[i]) {
         const w = foreReachWeight((ph[i] - plan.duties[i]) / (1 - plan.duties[i])) * run;
         if (w > 0) { const t2 = foreReachTarget(L, top, rel, girdle, foreTouch > 0 ? { ...FORE_REACH, floor: 0, reach: FORE_REACH.reach - FORE_TOUCH.reachCut * foreTouch / FORE_TOUCH.ahead } : { ...FORE_REACH, floor: 0 }); rel = { ...rel, z: rel.z + w * (t2.z - rel.z) }; }
       }
+      // T-0044 run 11: FORE_PLAN - plan the touchdown pose once at the late-swing start, track it, blend the swing into it
+      let over: { blade: number; psi: number } | undefined, dPath = 'unplanned', dU = -1;
+      const planOn = front && L.girdle && moving && lockOn && FORE_LOCK.on && FORE_PLAN.on && !f.forced && foreUp <= .02 && speed > 0;
+      const belowIn = (px: number, pz: number, tl: Tilt) => (a: LimbAngles) => { const a1 = a.girdle + a.leg, a2 = a1 + a.knee, k = { x: 0, z: a.joint.z - L.upper * Math.sin(a1), y: a.joint.y - L.upper * Math.cos(a1) }, w2 = { x: 0, z: k.z - L.lower * Math.sin(a2), y: k.y - L.lower * Math.cos(a2) };
+        const K = limbToWorld(k, px, pz, heading, tl, sk.hips[i]), W = limbToWorld(w2, px, pz, heading, tl, sk.hips[i]), d = forearmBelowDeg(K.x, K.y, K.z, W.x, W.y, W.z); return inPlanBand(d, a2 + a.wrist, FORE_PLAN.lo, FORE_PLAN.hi, FORE_SCAN.psiFrom, FORE_SCAN.psiTo); }; // and the manus inside the scan's range
+      const softMin = FORE_SOFT.on && FORE_SOFT.plan ? softBendMin(L.upper, L.lower, FORE_SOFT.ratio) : 0; // run 13
+      const softIn = (acc: (a: LimbAngles) => boolean) => (a: LimbAngles) => Math.abs(a.knee) >= softMin - 1e-9 && acc(a);
+      const below = belowIn(x, z, tilt);
+      if (planOn && f.planted) {
+        // the planting frame IS the end of the planned swing (blend parameter 1): the planned pair, tracked onto the actual print
+        let qf = planQ[i];
+        // run 14 frame 2: the plant seed between the instant plan and the frame plan, by how late this plant really is
+        if (FORE_PLAN.frame === 2 && qf && planQc[i] && planGap[i] > 1e-9 && !wasDown[i]) { const u = Math.max(0, Math.min(1, ph[i] / Math.max(plan.hz, 1e-6) / planGap[i])), c = planQc[i]!; qf = { blade: c.blade + u * (qf.blade - c.blade), psi: c.psi + u * (qf.psi - c.psi), arm: qf.arm }; dU = u; } // linear in time
+        const holds0 = FORE_PLAN_STATS.holds;
+        if (!wasDown[i] && planned[i] && qf) {
+          const pw = FORE_PLAN.plantWin; // run 14: the planting window, x plantWin (the plant frame's own gate is far wider than the window)
+          const win = { psi: Math.min(FORE_LOCK.maxStep, FORE_LOCK.psiRate * dw * pw), blade: FORE_LOCK.bladeRate * dw * pw, soft: 0, w: FORE_LOCK.holdWeight, j: FORE_JOINT.plantW, s: FORE_SOFT.on ? FORE_SOFT.stanceW : 0 };
+          // run 12: the window's pick also keeps the largest segment turn from the pose shown last frame small (lastA)
+          const la = lastA[i], seed = la ? { ...qf, hum: la.girdle + la.leg, arm: la.girdle + la.leg + la.knee, man: la.girdle + la.leg + la.knee + la.wrist } : qf;
+          // in the window only (a result from foreLimb's full-scan release is a fresh pick: refused); the band first, then without it
+          let q: any = softMin ? foreLimb(L, top, rel, lim, seed, qf.psi, false, girdle, FORE_CONT.carry, win, softIn(below)) : undefined; // run 13: band + soft first
+          if (!(q && q.ok && q.locked)) q = foreLimb(L, top, rel, lim, seed, qf.psi, false, girdle, FORE_CONT.carry, win, below);
+          if (!(q.ok && q.locked)) { FORE_PLAN_STATS.holds++; q = foreLimb(L, top, rel, lim, seed, qf.psi, false, girdle, FORE_CONT.carry, win); }
+          if (q.ok && q.locked) over = { blade: q.blade, psi: q.psi };
+          if (FORE_PLAN_DIAG.on) dPath = !(q.ok && q.locked) ? 'unlocked' : FORE_PLAN_STATS.holds > holds0 ? 'noband' : 'band';
+        }
+        planFail[i] = false;
+      }
+      else if (planOn && inLateSwing(ph[i], plan.duties[i], FORE_PLAN.from) && !planFail[i] && prevFore[i]) {
+        // the body AT touchdown (the CPG phase advances 1 - phase of this leg first): the same stride-phase curves as above
+        const sp = swingProgress(ph[i], plan.duties[i]), tc = timeToTouchdown(ph[i], plan.hz), tf = FORE_PLAN.frame ? frameTouchdown(ph[i], plan.hz, dt) : tc;
+        // the print is placed at the continuous touchdown instant (as stepFoot does); run 14 (FORE_PLAN.frame): the body at the planting frame
+        const bL = bodyAtTouchdown(x, z, fwd.x, fwd.z, speed, tc.tRem);
+        const predict = (dphi: number, tRem: number) => { const { x: xT, z: zT } = bodyAtTouchdown(x, z, fwd.x, fwd.z, speed, tRem);
+        const sT = frac(stridePhase + dphi), shT = girdleShifts(plan.canid, ph.map(q => frac(q + dphi)), reach, plan.spineUse, plan.foreDuty).shift[i] * run;
+        const rtT = runTilt(sk, reach.rise, run, pitchAt(pitchCurve(plan, sk), sT) * run, pose), bpT = rtT.pitch + pitchPose, liftT = pitchAt(heightCurve(plan), sT) * run;
+        const hipT = ground(xT, zT), shoT = ground(...(() => { const w2 = toWorld(xT, zT, heading, 0, sk.plan.shoulderZ - sk.plan.hipZ); return [w2.x, w2.z] as const; })()), pT = Math.atan2(shoT - hipT, sk.trunk) + bpT;
+        const tiltT: Tilt = { height: hipT + liftT - drop + rtT.height, pitch: pT, roll: 0, shift: { y: Hh * (1 - Math.cos(pT)), z: -Hh * Math.sin(pT) } };
+        const topT = { z: shT * Math.cos(bpT), y: topY(L) + shT * Math.sin(bpT) - (FORE_STANCE.on ? stDrop[i] : 0) }; // run 15: the sink held
+        // the landing point (stepFoot's: rest ground point + half the stance sweep ahead, with the FORE_TOUCH still to come)
+        const half = landingAhead(plan.duties[i], plan.stride, foreTouch, touchW[i]), rw = restWorld(i, bL.x, bL.z);
+        const lx = rw.x + fwd.x * half, lz = rw.z + fwd.z * half; let land = worldToLimb({ x: lx, y: ground(lx, lz), z: lz }, xT, zT, heading, tiltT, sk.hips[i]);
+        if ((FORE_REACH.floor ?? 0) > 0) land = { ...land, z: foreReachTarget(L, topT, land, girdle).z }; // the plant frame's own floor (above)
+        return { xT, zT, tiltT, topT, land, lx, lz, below: belowIn(xT, zT, tiltT) }; };
+        const P = predict(tf.dphi, tf.tRem), { xT, zT, tiltT, topT, land, lx, lz, below } = P, top = topT;
+        planGap[i] = tf.tRem - tc.tRem;
+        if (FORE_PLAN.frame === 2 && (FORE_PLAN.qcAlways || planGap[i] > 1e-9) && prevFore[i]) { // run 14: also track the continuous-instant plan (a host may sub-step to the contact)
+          const C = predict(tc.dphi, tc.tRem), tw = { psi: Math.min(FORE_LOCK.maxStep, FORE_LOCK.psiRate * dw), blade: FORE_LOCK.bladeRate * dw, soft: 0 };
+          const q = planQc[i] ? foreLimb(L, C.topT, C.land, lim, planQc[i], undefined, false, girdle, FORE_CONT.carry, tw, softMin ? softIn(C.below) : C.below) : foreLimb(L, C.topT, C.land, lim, prevFore[i], undefined, false, girdle, FORE_CONT.carry, undefined, C.below); // first: the in-band scan, as the plan once
+          if (q.ok && (!planQc[i] || (q as any).locked)) planQc[i] = { blade: q.blade, psi: q.psi, arm: q.arm }; }
+        if (!planQ[i]) { // plan once: the in-band exact pair nearest the swing's own (scan, FORE_CONT.carry continuity)
+          let q = foreLimb(L, top, land, lim, prevFore[i], undefined, false, girdle, FORE_CONT.carry, undefined, softMin ? softIn(below) : below); FORE_PLAN_STATS.plans++;
+          if (!q.ok && softMin) q = foreLimb(L, top, land, lim, prevFore[i], undefined, false, girdle, FORE_CONT.carry, undefined, below); // run 13: band alone
+          if (q.ok) { planQ[i] = { blade: q.blade, psi: q.psi, arm: q.arm }; planA[i] = clampLimb(solveLimb({ ...L, footAngle: q.psi }, false, land, 0, { top, blade: q.blade }), true, lim); planQ0[i] = { blade: prevFore[i]!.blade, psi: prevFore[i]!.psi }; } else { planFail[i] = true; FORE_PLAN_STATS.fails++; }
+        } else { // track: the FORE_LOCK window about the planned pair, exact and in band only; none -> hold the plan
+          const tw = { psi: Math.min(FORE_LOCK.maxStep, FORE_LOCK.psiRate * dw), blade: FORE_LOCK.bladeRate * dw, soft: 0 };
+          let q = foreLimb(L, top, land, lim, planQ[i], undefined, false, girdle, FORE_CONT.carry, tw, softMin ? softIn(below) : below);
+          if (!(q.ok && (q as any).locked) && softMin) q = foreLimb(L, top, land, lim, planQ[i], undefined, false, girdle, FORE_CONT.carry, tw, below); // run 13: band alone
+          if (q.ok && (q as any).locked) { planQ[i] = { blade: q.blade, psi: q.psi, arm: q.arm }; planA[i] = clampLimb(solveLimb({ ...L, footAngle: q.psi }, false, land, 0, { top, blade: q.blade }), true, lim); } else FORE_PLAN_STATS.holds++;
+        }
+        const q0 = planQ0[i], qf = planQ[i];
+        if (q0 && qf) { over = blendPlan(q0, qf, planBlendU(sp, FORE_PLAN.from)); planned[i] = true; }
+        if (FORE_PLAN_DIAG.on) { planLand[i] = { x: lx, z: lz, rz: land.z, ry: land.y, bx: xT, bz: zT, p: tiltT.pitch, h: tiltT.height, tz: topT.z }; lastSp[i] = sp; }
+      }
       const solve = (r0: Vec3) => {
         let psi = 0, blade: number | undefined, arm: number | undefined;
-        if (!front) psi = hindFoot(L, top, r0, ankle0, prevPsi[i], lim, f.planted && moving ? bodyPitch : undefined).psi; // the reaching foot angle nearest the standing ankle
-        else if (L.girdle) { const fl = foreLimb(L, top, r0, lim, prevFore[i], f.planted ? (moving && lockOn && FORE_LOCK.on && FORE_LOCK.hold && wasDown[i] ? stancePsi(lockPsi[i], ph[i] / plan.duties[i]) : undefined) : preSwingPsi((L.footAngle ?? 0) - (L.footFlex ?? 0) * r.lift, plantPsi[i], ph[i] >= plan.duties[i] ? (ph[i] - plan.duties[i]) / (1 - plan.duties[i]) : 0, moving), false, girdle, f.planted && moving && !wasDown[i] ? FORE_CONT.plant : FORE_CONT.carry, moving && lockOn && FORE_LOCK.on && (f.planted ? (wasDown[i] || (FORE_LOCK.plant && plantPsi[i] !== undefined)) : FORE_LOCK.swing) ? { psi: Math.min(FORE_LOCK.maxStep, (f.planted ? FORE_LOCK.stanceShare * FORE_LOCK.sweep * plan.hz / Math.max(plan.duties[i], .05) : FORE_LOCK.psiRate) * dt), blade: FORE_LOCK.bladeRate * dt, soft: f.planted ? FORE_LOCK.stanceSoft : FORE_LOCK.soft, w: f.planted ? FORE_LOCK.holdWeight : 1 } : undefined); psi = fl.psi; blade = fl.blade; arm = fl.arm; }
+        if (front && over) { psi = over.psi; blade = over.blade; }
+        else if (!front) psi = hindFoot(L, top, r0, ankle0, prevPsi[i], lim, f.planted && moving ? bodyPitch : undefined).psi; // the reaching foot angle nearest the standing ankle
+        else if (L.girdle) { const fl = foreLimb(L, top, r0, lim, prevFore[i], f.planted ? (moving && lockOn && FORE_LOCK.on && FORE_LOCK.hold && wasDown[i] ? stancePsi(lockPsi[i], ph[i] / plan.duties[i]) : planned[i] && FORE_PLAN.on && prevFore[i] ? prevFore[i]!.psi : undefined) : preSwingPsi((L.footAngle ?? 0) - (L.footFlex ?? 0) * r.lift, plantPsi[i], ph[i] >= plan.duties[i] ? (ph[i] - plan.duties[i]) / (1 - plan.duties[i]) : 0, moving), false, girdle, f.planted && moving && !wasDown[i] && !(planned[i] && FORE_PLAN.on) ? FORE_CONT.plant : FORE_CONT.carry, moving && lockOn && FORE_LOCK.on && (f.planted ? (wasDown[i] || (FORE_LOCK.plant && plantPsi[i] !== undefined) || (planned[i] && FORE_PLAN.on)) : FORE_LOCK.swing) ? { psi: Math.min(FORE_LOCK.maxStep, (f.planted ? FORE_LOCK.stanceShare * FORE_LOCK.sweep * plan.hz / Math.max(plan.duties[i], .05) : FORE_LOCK.psiRate) * dt), blade: FORE_LOCK.bladeRate * dt, soft: f.planted ? FORE_LOCK.stanceSoft : FORE_LOCK.soft, w: f.planted ? FORE_LOCK.holdWeight : 1, s: f.planted && FORE_SOFT.on ? FORE_SOFT.stanceW : 0, e: f.planted && wasDown[i] ? FORE_STANCE.elbowW : 0 } : undefined); psi = fl.psi; blade = fl.blade; arm = fl.arm; }
         const Lp = { ...L, footAngle: psi };
         const a = clampLimb(solveLimb(Lp, !front, r0, front && !L.girdle && !f.planted ? r.lift : 0, { top, fit: front && !L.girdle, blade }), front, lim);
         const s = soleOf(Lp, a), want0 = top.y - Math.hypot(top.y - r0.y, r0.x);
@@ -735,7 +868,35 @@ export function createBounding(sk: Skeleton, gait: BoundGait, ground: TerrainFn,
       let sol = solve(rel);
       // a swinging foot the limb cannot reach must not end up under the ground: raise its target until the sole clears
       for (let k = 0; k < 4 && !f.planted && sol.w.y < ground(sol.w.x, sol.w.z) - 1e-4; k++) { rel = { ...rel, y: rel.y + (ground(sol.w.x, sol.w.z) - sol.w.y) + .002 }; sol = solve(rel); }
-      if (!front) prevPsi[i] = sol.psi; else if (sol.blade !== undefined) { prevFore[i] = { blade: sol.blade, psi: sol.psi, arm: sol.arm }; if (f.planted && !wasDown[i]) { lockPsi[i] = sol.psi; if (moving && lockOn && FORE_LOCK.on && L.girdle) plantPsi[i] = foreLimb(L, top, rel, lim, prevFore[i], undefined, false, girdle, FORE_CONT.plant).psi; } }
+      // run 13: soft IK (Nicholas 2006) - a fore paw in the air reaches only the soft distance toward its wrist target, so the
+      // elbow never runs into the near-straight zone; the manus segment angle is kept, the joint limits re-applied
+      if (front && L.girdle && moving && !f.planted && !f.forced && foreUp <= .02 && FORE_SOFT.on && FORE_SOFT.swing) {
+        const a0 = sol.a, a1 = a0.girdle + a0.leg, a2 = a1 + a0.knee, a3 = a2 + a0.wrist, Lp = { ...L, footAngle: sol.psi }, s0 = soleOf(Lp, a0), want0 = top.y - Math.hypot(top.y - rel.y, rel.x);
+        const wz = a0.joint.z - L.upper * Math.sin(a1) - L.lower * Math.sin(a2) + (rel.z - s0.z), wy = a0.joint.y - L.upper * Math.cos(a1) - L.lower * Math.cos(a2) + (want0 - s0.y); // the wrist target (IK wrist + sole miss)
+        const { hard } = softSplit(L.upper + L.lower, FORE_SOFT.ratio);
+        if (Math.hypot(wz - a0.joint.z, wy - a0.joint.y) > hard) {
+          const sk2 = softTwoBone(a0.joint.z, a0.joint.y, wz, wy, L.upper, L.lower, FORE_SOFT.ratio, a0.knee < 0 ? -1 : 1);
+          const A = clampLimb({ ...a0, leg: sk2.a1 - a0.girdle, knee: sk2.knee, wrist: a3 - (sk2.a1 + sk2.knee) }, true, lim), s2 = soleOf(Lp, A);
+          const w2 = limbToWorld({ x: rel.x, y: s2.y + (rel.y - want0), z: s2.z }, x, z, heading, tilt, sk.hips[i]);
+          if (w2.y >= ground(w2.x, w2.z) - 1e-3) sol = { ...sol, a: A, err: Math.hypot(s2.z - rel.z, s2.y - want0), w: w2 }; // never through the ground
+        }
+      }
+      // run 12: a swinging fore paw in the air moves in joint space under a velocity limit (the planted paw stays exact): late in
+      // the swing it heads for the planned touchdown configuration, so the planting frame starts from (about) the pose it lands in
+      if (front && L.girdle && moving && !f.planted && !f.forced && foreUp <= .02 && FORE_JOINT.limit && lastA[i]) {
+        const sp = swingProgress(ph[i], plan.duties[i]), pa = planA[i];
+        const goal = FORE_JOINT.plan && planOn && planned[i] && pa && sp >= FORE_PLAN.from ? blendJoints(sol.a, pa, planBlendU(sp, FORE_PLAN.from)) : sol.a;
+        const j = limitStep(lastA[i]!, goal, FORE_JOINT.share * jointGate(plan.duties[i], plan.hz, dt));
+        const A: LimbAngles = { ...sol.a, ...j, joint: shoulderAt(top, L.girdle, j.girdle) }, s2 = soleOf({ ...L, footAngle: sol.psi }, A), want0 = top.y - Math.hypot(top.y - rel.y, rel.x);
+        const w2 = limbToWorld({ x: rel.x, y: s2.y + (rel.y - want0), z: s2.z }, x, z, heading, tilt, sk.hips[i]);
+        if (w2.y >= ground(w2.x, w2.z) - 1e-3) sol = { ...sol, a: A, err: Math.hypot(s2.z - rel.z, s2.y - want0), w: w2 }; // never through the ground: that frame keeps the IK pose
+      }
+      if (!front) prevPsi[i] = sol.psi; else if (sol.blade !== undefined) { prevFore[i] = { blade: sol.blade, psi: sol.psi, arm: sol.a.girdle + sol.a.leg + sol.a.knee, hum: sol.a.girdle + sol.a.leg, man: sol.a.girdle + sol.a.leg + sol.a.knee + sol.a.wrist }; if (f.planted && !wasDown[i]) { lockPsi[i] = sol.psi; if (moving && lockOn && FORE_LOCK.on && L.girdle) plantPsi[i] = foreLimb(L, top, rel, lim, prevFore[i], undefined, false, girdle, FORE_CONT.plant).psi; } }
+      if (FORE_PLAN_DIAG.on && front && L.girdle && moving && f.planted && !wasDown[i]) { const pl = planLand[i];
+        FORE_PLAN_DIAG.log.push({ t: stridePhase, leg: i, path: planOn ? dPath : 'planOff', u: dU, qc: !!planQc[i], planOn: !!planOn, planned: planned[i], fail: planFail[i], sp: lastSp[i], ...(pl ? { dW: Math.hypot(ik.x - pl.x, ik.z - pl.z), dRelZ: rel.z - pl.rz, dRelY: rel.y - pl.ry, dBody: (x - pl.bx) * fwd.x + (z - pl.bz) * fwd.z, dPitch: tilt.pitch - pl.p, dHeight: tilt.height - pl.h, dTop: top.z - pl.tz, dFloor: rel.z - relPre } : {}) }); planLand[i] = undefined; lastSp[i] = 0; }
+      if (front && f.planted && wasDown[i]) planned[i] = false; // the plan covers the planting frame only
+      if (front && f.planted && !wasDown[i]) { planQ[i] = planQ0[i] = undefined; planA[i] = undefined; planQc[i] = undefined; }
+      if (front) lastA[i] = sol.a;
       const a = sol.a, err = sol.err, mtpW = sol.w, soleW = { x: mtpW.x + target.x - ik.x, y: mtpW.y + target.y - ik.y, z: mtpW.z + target.z - ik.z };
       if (f.planted && moving && err > BOUND_LEASH) { forceStep(f); leashes++; out.leashes = leashes; }
       const down = f.planted;

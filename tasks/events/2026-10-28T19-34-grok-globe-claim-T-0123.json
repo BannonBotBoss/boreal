@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0123",
+  "agent": "grok-globe",
+  "at": "2026-10-28T19:34:30-07:00",
+  "branch": "grok-globe/boot-splash",
+  "note": "Direct request (rule 16b). The approve-plan for Matthew is not yet recorded by a relaying Grok bot (grok/grokbot-1..3); per the brief this does not block the fix. Matthew directed pushing straight to main (2026-10-28 7:10 PM PT \"push yourr work to the main\", 7:14 PM PT \"just do it, i said\")."
+}

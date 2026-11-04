@@ -4,7 +4,7 @@
 //! Pups stay in the den for about three weeks and can walk after that
 //! (Packard, in the same volume). They are born at the den at four weeks,
 //! old enough to follow, and the follow step walks them into the trail
-//! behind their mother. Nothing here is placed for a camera.
+//! behind their mother. The trail stays near her, inside the chase view.
 
 /// Pups in one litter. The middle of the common 4–6 range.
 pub const LITTER_COUNT: u32 = 5;
@@ -13,16 +13,22 @@ pub const EMERGE_YEARS: f64 = 4.0 / 52.0;
 /// How fast a four-week pup walks, metres per second. A yearling is quicker.
 pub const PUP_SPEED_M_S: f64 = 0.9;
 /// Metres behind the mother at four weeks. A yearling walks closer.
-const TRAIL_YOUNG_M: f64 = 1.6;
-const TRAIL_YEAR_M: f64 = 0.9;
+/// Close enough that the 3.6 m chase camera, 1.05 m up, still looks at them.
+const TRAIL_YOUNG_M: f64 = 0.75;
+const TRAIL_YEAR_M: f64 = 0.45;
 /// Game seconds of the world clock for one year of pup growth.
 /// The default clock is 300 real seconds per game hour, so ten real minutes
 /// are 7200 game seconds. That is half a year of growth (14400 s per year),
 /// enough for the size, the step and the trail to change in one sitting.
 pub const GROWTH_GAME_S_PER_YEAR: f64 = 14_400.0;
 const DEN_RING_M: f64 = 1.2;
-const TRAIL_GAP_M: f64 = 0.7;
-const LATERAL_M: f64 = 0.45;
+const TRAIL_GAP_M: f64 = 0.06;
+/// Beside her. The outer pair stays inside a 48° frame from 3.6 m back.
+const LATERAL_M: f64 = 0.85;
+/// Closer than this and the pup is under the lens.
+const VIEW_BACK_M: f64 = 1.15;
+/// Further than this in one step is a drop, not a walk. The pup is on the trail at once.
+const REJOIN_M: f64 = 4.0;
 
 fn growth_u(age_years: f64) -> f64 {
     (age_years.max(0.0) / 1.0).min(1.0)
@@ -85,7 +91,7 @@ pub fn birth_places(den_x: f64, den_z: f64) -> [PupPlace; LITTER_COUNT as usize]
 
 /// The point in the trail behind the mother. Forward is (−sin yaw, −cos yaw).
 pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, age_years: f64) -> (f64, f64) {
-    let back = trail_back_m(age_years) + slot as f64 * TRAIL_GAP_M;
+    let back = (trail_back_m(age_years) + slot as f64 * TRAIL_GAP_M).min(VIEW_BACK_M);
     let side = (slot as f64 - (LITTER_COUNT as f64 - 1.0) / 2.0) * LATERAL_M;
     let fx = -yaw.sin();
     let fz = -yaw.cos();
@@ -102,6 +108,9 @@ pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw:
     let d = (dx * dx + dz * dz).sqrt();
     if d < 1e-6 || dt <= 0.0 {
         return (x, z);
+    }
+    if d > REJOIN_M {
+        return (tx, tz);
     }
     let step = (walk_mps(age_years) * dt).min(d);
     (x + dx / d * step, z + dz / d * step)
@@ -202,5 +211,23 @@ mod tests {
         assert!(walk_mps(older) > walk_mps(EMERGE_YEARS));
         assert!(step_hz(older) < step_hz(EMERGE_YEARS));
         assert_eq!(age_after(older, -100.0), older);
+    }
+
+    #[test]
+    fn pups_stay_in_front_of_the_chase_camera() {
+        let mut beside = 0;
+        for slot in 0..LITTER_COUNT {
+            let (x, z) = trail_slot(slot, 0.0, 0.0, 0.0, EMERGE_YEARS);
+            assert!(z < 1.2 && z > 0.3, "slot {slot} is under the lens or in front at {z}");
+            if x.abs() > 0.9 { beside += 1; }
+        }
+        assert!(beside >= 2);
+    }
+
+    #[test]
+    fn a_drop_puts_the_litter_back_on_the_trail() {
+        let (x, z) = follow_step(0.0, 0.0, 1, 40.0, -12.0, -0.4, 0.05, EMERGE_YEARS);
+        let (tx, tz) = trail_slot(1, 40.0, -12.0, -0.4, EMERGE_YEARS);
+        assert!((x - tx).abs() < 1e-9 && (z - tz).abs() < 1e-9);
     }
 }

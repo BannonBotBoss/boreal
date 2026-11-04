@@ -35,7 +35,7 @@ import { bindTimeInputs } from '../../ui/timeHud';
 import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { GLOBE_COAST, cloudClear, coastLambda, orbitClip, forestFromPlanet, globeCameraFrom } from './transition';
-import { DESCENT, NADIR, fallPitch, stepDescent, type DescentMode } from './flight';
+import { DESCENT, NADIR, descentBegin, descentPitchEase, fallPitch, stepDescent, type DescentMode } from './flight';
 import { descentFrameDt } from './landingStream';
 import { body, step as stepBody } from '../../proc/physics';
 import { globePlanet } from './home';
@@ -239,7 +239,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     return fromLatLon(Number(ll[0]) * Math.PI / 180, Number.isFinite(lon) ? lon : 0); })() : null;
   const start = llStart ? llStart : q.get('dir') === 'antisun' ? sunNow().clone().negate().normalize().toArray() as [number, number, number] : dirQ?.length === 3 && dirQ.every(Number.isFinite) ? new THREE.Vector3(...dirQ).normalize().toArray() as [number, number, number] : q.has('at') ? (() => { const [x, z] = (q.get('at') ?? '0,0').split(',').map(Number); return planet.fromLocal(x || 0, z || 0); })() : planet.home;
   let alt = startAlt, targetAlt = startAlt, ground = 0, flyHome = 0, overHome: { x: number; z: number } | null = null, leaving = false;
-  let fall: { h0: number; y: number; vy: number; yaw0: number; t: number; p: number; mode: DescentMode } | null = null, handed = false;
+  let fall: { h0: number; y: number; vy: number; yaw0: number; t: number; p: number; p0: number; mode: DescentMode } | null = null, handed = false;
   const coverEl = document.createElement('div');
   coverEl.id = 'descent-cover';
   Object.assign(coverEl.style, { position: 'fixed', inset: '0', pointerEvents: 'none', zIndex: '4', opacity: '0', background: '#000' });
@@ -342,7 +342,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     let yaw0 = lookAz ?? cameraAz();
     if (!hit && !aimed && aim.on && dir.angleTo(aim.dir) < 1e-3) yaw0 = -aim.yaw; // still over the forest: face into the stand
     if (alt <= DESCENT.glideM) { handed = true; setCover(0, 'glide'); leave(dropAt(-yaw0, 0)); return; } // game yaw is minus the look azimuth (headingYaw)
-    fall = { h0: alt, y: alt, vy: 0, yaw0, t: 0, p: 0, mode: mode ?? (q.get('descent') === 'fade' ? 'fade' : 'glide') };
+    const open = descentBegin(alt); // skip the black vacuum; the ease starts in the high air
+    fall = { h0: alt, y: open.y, vy: 0, yaw0, t: open.t, p: open.p, p0: open.p, mode: mode ?? (q.get('descent') === 'fade' ? 'fade' : 'glide') };
   }
   listeners.push(registerPadTarget('globe', { active: () => inputOn, orbit: (dx, dy) => { if (!dx && !dy || fall) return; stopCoast(); const r = controls as unknown as { _rotateLeft(a: number): void; _rotateUp(a: number): void }; r._rotateLeft(dx * controls.rotateSpeed * 3); r._rotateUp(dy * controls.rotateSpeed * 3); controls.update(); }, zoom, turn, home: () => { fall = null; flyHome = 1; stopCoast(); }, axis: () => axis, land: () => beginFall() })); // A on the reticle: the same drop as a double-click on the centre. Stays live during the fall so X can cancel.
 
@@ -539,7 +540,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (!fall) controls.update();
     camera.position.setLength(R + ground + alt);
     camera.up.set(0, 1, 0); camera.lookAt(0, 0, 0); // nadir, the aim the tile draw already uses
-    const ease = fall ? fall.p : 0;
+    const ease = fall ? descentPitchEase(fall.p, fall.p0 ?? 0) : 0;
     if (fall) lookAz = fall.yaw0; // heading stays. The pitch opens; the view does not yaw.
     // The fall pitches with rotateX and yaws with rotateZ on that nadir aim. A second lookAt left the tiles off the
     // centre pixel, so the fall stayed the clear colour. planet.north is world +Y projected on the tangent plane, and

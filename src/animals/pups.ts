@@ -1,22 +1,20 @@
 /**
  * The mama's litter, drawn from the same rules as the Rust store.
- * They are born on the den ring and each frame walk toward the trail behind her.
+ * They stand on the trail beside her. A drop that leaves them behind puts them back on it.
  * The meshes are the wolf skin without the fur cards, scaled to a four-week pup.
  */
 import * as THREE from 'three';
-import { ageAfter, birthPlaces, followStep, growthStage, pupScale, stepHz, walkMps, type PupPlace } from '../core/litter';
+import { ageAfter, besideMother, followStep, growthStage, pupScale, stepHz, walkMps, type PupPlace } from '../core/litter';
 import { livingRoster } from '../core/enterLiving';
-import { forestLanding } from '../world/globe/forestLanding';
 import { heightAt } from '../core/world';
 import { createPlayerWolf } from '../render/playerWolf';
 
 export interface LivePup extends PupPlace { handle: string; parent: string; stage: ReturnType<typeof growthStage> }
 
-export function bornLitter(): LivePup[] {
+export function bornLitter(x = 0, z = 0, yaw = 0): LivePup[] {
   const roster = livingRoster();
   const mama = roster.find(a => a.species === 'wolf' && a.territory === a.handle) ?? roster.find(a => a.species === 'wolf');
-  const den = forestLanding(mama ? { x: mama.x, z: mama.z } : { x: 0, z: 0 }).den;
-  return birthPlaces(den.x, den.z).map(p => ({
+  return besideMother(x, z, yaw).map(p => ({
     ...p,
     handle: `pup:${p.slot}`,
     parent: mama?.handle ?? '0',
@@ -28,9 +26,9 @@ export function createLitter(scene: THREE.Scene) {
   let rows: { pup: LivePup; holder: THREE.Group; wolf: ReturnType<typeof createPlayerWolf> }[] | null = null;
   let yaw = 0;
   let clock = 0;
-  const ensure = () => {
+  const ensure = (x: number, z: number, motherYaw: number) => {
     if (rows) return rows;
-    rows = bornLitter().map(p => {
+    rows = bornLitter(x, z, motherYaw).map(p => {
       const wolf = createPlayerWolf(1400 + p.slot, { fur: false });
       const holder = new THREE.Group();
       holder.name = p.handle;
@@ -46,11 +44,11 @@ export function createLitter(scene: THREE.Scene) {
     (window as unknown as { __borealPups?: LivePup[] }).__borealPups = rows.map(w => ({ ...w.pup }));
   };
   return {
-    pups: () => ensure().map(w => w.pup),
+    pups: () => rows?.map(w => w.pup) ?? [],
     step(dt: number, gameSeconds: number, motherX: number, motherZ: number, motherYaw: number) {
       yaw = motherYaw;
       clock += Math.max(0, dt);
-      for (const row of ensure()) {
+      for (const row of ensure(motherX, motherZ, motherYaw)) {
         row.pup.ageYears = ageAfter(row.pup.ageYears, gameSeconds);
         row.pup.stage = growthStage(row.pup.ageYears);
         row.holder.scale.setScalar(pupScale(row.pup.ageYears));

@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { DESCENT } from '../src/world/globe/flight';
+import { DESCENT, descentBegin, descentPitchEase, fallPitch, NADIR } from '../src/world/globe/flight';
 import {
   DESCENT_FRAME_CAP, LANDING_JOB_MS, canEmbody, chunkRadius, descentFrameDt, descentFramesAt,
   landingChunkPriority, landingJobBudget, landingPatchReady, streamAltitude,
@@ -15,10 +15,20 @@ import {
 test('a slow frame still finishes the orbit drop in one sitting', () => {
   assert.equal(descentFrameDt(0), 0);
   assert.equal(descentFrameDt(0.05), 0.05);
-  assert.equal(descentFrameDt(1), DESCENT_FRAME_CAP);
+  assert.equal(descentFrameDt(1), 1);
+  assert.equal(descentFrameDt(8), DESCENT_FRAME_CAP);
   const frames = descentFramesAt(1);
   assert.ok(frames <= 30, `1 s frames finish the ${DESCENT.sec} s ease in ${frames} frames, not ~140`);
   assert.ok(descentFramesAt(1, DESCENT.sec, 0.1) >= 140, 'the old tenth-second cap is the long black stretch');
+  const open = descentBegin(1.4e7);
+  assert.ok(open.y < 2e5, `the drop opens in the air, not in the black (${open.y})`);
+  assert.ok(DESCENT.sec - open.t <= 8, `the rest of the fall is ${DESCENT.sec - open.t}s`);
+  const globe = readFileSync('src/world/globe/globeView.ts', 'utf8');
+  assert.match(globe, /descentBegin\(alt\)/);
+  assert.equal(descentPitchEase(open.p, open.p), 0);
+  assert.equal(fallPitch(descentPitchEase(open.p, open.p)), NADIR);
+  assert.equal(descentPitchEase(1, open.p), 1);
+  assert.match(globe, /descentPitchEase\(fall\.p, fall\.p0/);
 });
 
 test('after the wolf is back, streaming uses her eye height, not the leftover glide', () => {

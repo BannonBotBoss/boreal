@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 
-test('the VR entry is Meta Immersive Web SDK and requires hands', () => {
+test('the VR entry is Meta Immersive Web SDK and requires hands', async () => {
   const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { dependencies: Record<string, string>; overrides?: Record<string, string> };
   assert.match(pkg.dependencies['@iwsdk/core'], /^1\./);
   assert.match(pkg.dependencies.three, /super-three@0\.185\.0/);
@@ -15,6 +15,16 @@ test('the VR entry is Meta Immersive Web SDK and requires hands', () => {
   assert.match(src, /TurningMethod\.SnapTurn/);
   assert.doesNotMatch(src, /browserControls/);
   assert.match(readFileSync('src/main.ts', 'utf8'), /import\('\.\/vr\/session'\)/);
+  const journey = readFileSync('src/vr/journey.ts', 'utf8');
+  assert.match(journey, /open palm/);
+  assert.match(journey, /OneHandGrabbable/);
+  assert.match(journey, /Point and pinch to glide/);
+  assert.doesNotMatch(journey, /performance\.now/);
+  const { QUEST, questProfileOn, setQuestProfile } = await import('../src/world/cosmos/lod.ts');
+  setQuestProfile(true);
+  assert.equal(questProfileOn(), true);
+  assert.ok(QUEST.bloom < 0.5 && QUEST.godrays < 0.2);
+  setQuestProfile(false);
   const pages = readFileSync('.github/workflows/pages.yml', 'utf8');
   assert.match(pages, /PAGES_FROZEN/);
   assert.equal(existsSync('.github/PAGES_FROZEN'), false);

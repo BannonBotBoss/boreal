@@ -4,9 +4,10 @@
  * (super-three, one copy). The Rust/wasm sim is unchanged. Hands are required. A controller is not a way in.
  */
 import {
-  Mesh, MeshStandardMaterial, OneHandGrabbable, ReferenceSpaceType, SessionMode, SphereGeometry, TurningMethod, World,
-  buildSessionInit, type XROptions,
+  ReferenceSpaceType, SessionMode, TurningMethod, World, buildSessionInit, type XROptions,
 } from '@iwsdk/core';
+import { setQuestProfile } from '../world/cosmos/lod';
+import { startJourney } from './journey';
 
 /** Seated immersive VR. hand-tracking is required, so the session does not open without hands. */
 export const HANDS_ONLY: XROptions = {
@@ -44,19 +45,22 @@ export async function enterVr(notice: (message: string) => void) {
         locomotion: { turningMethod: TurningMethod.SnapTurn, enableJumping: false, comfortAssistLevel: 0.65 },
       },
     });
-    seatMarker(world);
+    startJourney(world);
     const session = await requested;
     if (!session) {
+      setQuestProfile(false);
       world.destroy();
       world = null;
+      container.remove();
       notice('Enter VR needs a Quest browser and hands. This browser did not open an immersive session. Controllers are not a substitute.');
       return;
     }
     await world.renderer.xr.setSession(session);
     world.session = session;
-    container.hidden = false;
+    setQuestProfile(true);
   } catch (error) {
     console.warn('vr', error);
+    setQuestProfile(false);
     if (world) { world.destroy(); world = null; }
     notice('Enter VR did not start. The page is still the ordinary game.');
   } finally {
@@ -69,16 +73,8 @@ function vrContainer() {
   if (el) return el;
   el = document.createElement('div');
   el.id = 'iwsdk-root';
-  el.hidden = true;
-  Object.assign(el.style, { position: 'fixed', inset: '0', zIndex: '80' });
+  Object.assign(el.style, { position: 'fixed', inset: '0', zIndex: '80', width: '100vw', height: '100vh' });
   document.body.append(el);
   return el;
 }
 
-/** A pinchable violet sphere in front of a seated player, so the IWSDK world is not an empty room. */
-function seatMarker(host: World) {
-  const mesh = new Mesh(new SphereGeometry(0.18, 48, 32), new MeshStandardMaterial({ color: 0x6a2cc4, emissive: 0x3a1578, roughness: 0.35 }));
-  const entity = host.createTransformEntity(mesh);
-  entity.object3D!.position.set(0, 1.2, -0.8);
-  entity.addComponent(OneHandGrabbable, { rotate: true, translate: true });
-}

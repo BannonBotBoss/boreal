@@ -5,7 +5,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { frameShiftX, sphereLook } from './look';
-import { TIERS, chooseTier, percentile, stepTier, tierById, type Hysteresis, type Tier } from './lod';
+import { QUEST, TIERS, chooseTier, percentile, questProfileOn, stepTier, tierById, type Hysteresis, type Tier } from './lod';
 
 export interface SphereInputs { a: number; h: number; temperature: number; rho: number }
 export interface GpuInfo { renderer: string; maxTexture: number; floatTarget: boolean; samples: number }
@@ -199,6 +199,13 @@ export class CosmosSphere {
     this.final.uniforms.grain.value = tier.grain;
     this.final.uniforms.vignette.value = tier.vignette;
     this.final.uniforms.godrays.value = Math.max(0.45, tier.godrays);
+    if (questProfileOn()) {
+      this.bloom.strength = QUEST.bloom;
+      this.bloom.radius = QUEST.bloomRadius;
+      this.final.uniforms.godrays.value = QUEST.godrays;
+      this.final.uniforms.chromatic.value = 0;
+      this.final.uniforms.grain.value = 0;
+    }
     this.core.geometry.dispose();
     this.core.geometry = new THREE.SphereGeometry(1, tier.segments, Math.max(16, tier.segments / 2));
     for (const s of this.shells) { s.removeFromParent(); s.geometry.dispose(); (s.material as THREE.Material).dispose(); }

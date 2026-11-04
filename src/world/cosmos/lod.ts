@@ -28,6 +28,17 @@ export function tierById(id: string): Tier {
   return TIERS.find(t => t.id === id) ?? TIERS[TIERS.length - 1];
 }
 
+/** Quest immersive view. Bloom and god rays stay on, but much cheaper than the desktop tiers.
+ *  Not chosen by the frame-time ladder. The VR session turns it on. */
+export const QUEST = {
+  bloom: 0.35,
+  bloomRadius: 0.4,
+  godrays: 0.12,
+} as const;
+let questOn = false;
+export const setQuestProfile = (on: boolean) => { questOn = on; };
+export const questProfileOn = () => questOn;
+
 export interface TierSample { id: Tier['id']; p50: number; p95: number }
 
 /** Highest tier whose 95th percentile frame time is within the target. */

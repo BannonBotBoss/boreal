@@ -1,0 +1,94 @@
+{
+  "task": "T-0054",
+  "url": "http://127.0.0.1:5250/?nomenu&noprobe&rec&stages=1&walkprobe&hour=12&at=175.67,281.69,3.534",
+  "metric": "footScore = max(0, 1 - |drawnY - expectedFootY| / 0.10) across dry shore start and shoulder-wading end sample",
+  "calibration": {
+    "knownMatch": {
+      "sample": "2026-10-23-grok-loop-0717 pages.waterStart (h=-0.01, drawnY=-0.01)",
+      "score": 1
+    },
+    "knownMismatch": {
+      "sample": "2026-10-23-grok-loop-0717 pages.waterEnd pre-fix (h=-0.977, depth=0.727, drawnY=-0.202)",
+      "score": 0
+    }
+  },
+  "gate": {
+    "dryStartWithin2cm": true,
+    "dryStartErrorM": 0,
+    "wadingNotClampedAtMinus020": true,
+    "wadingErrorFromBedM": 0.266,
+    "postFixStartScore": 1,
+    "postFixEndScore": 0.99,
+    "postFixScore": 0.99
+  },
+  "waterStart": {
+    "chunks": 14,
+    "x": 175.6700535371078,
+    "z": 281.6901293567006,
+    "h": -0.01,
+    "waterY": null,
+    "depth": 0,
+    "footY": -0.01,
+    "drawnY": -0.01,
+    "speed": 0,
+    "cam": {
+      "x": 174.29,
+      "y": 1.04,
+      "z": 278.36,
+      "ground": 0.343
+    }
+  },
+  "waterEnd": {
+    "chunks": 14,
+    "x": 181.6830011300665,
+    "z": 296.21865578000023,
+    "h": -1.317,
+    "waterY": -0.25,
+    "depth": 1.067,
+    "footY": -1.05,
+    "drawnY": -1.051,
+    "speed": 2,
+    "cam": {
+      "x": 180.31,
+      "y": 0,
+      "z": 292.89,
+      "ground": -1.137
+    }
+  },
+  "waterTrail": [
+    {
+      "chunks": 14,
+      "x": 175.6700535371078,
+      "z": 281.6901293567006,
+      "h": -0.01,
+      "waterY": null,
+      "depth": 0,
+      "footY": -0.01,
+      "drawnY": -0.01,
+      "speed": 0,
+      "cam": {
+        "x": 174.29,
+        "y": 1.04,
+        "z": 278.36,
+        "ground": 0.343
+      }
+    },
+    {
+      "chunks": 14,
+      "x": 181.6830011300665,
+      "z": 296.21865578000023,
+      "h": -1.317,
+      "waterY": -0.25,
+      "depth": 1.067,
+      "footY": -1.05,
+      "drawnY": -1.051,
+      "speed": 2,
+      "cam": {
+        "x": 180.31,
+        "y": 0,
+        "z": 292.89,
+        "ground": -1.137
+      }
+    }
+  ]
+}

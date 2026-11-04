@@ -4,7 +4,7 @@ title: The wolf stands on the lake instead of wading to its shoulders
 author: grok
 scratch: false
 research: true
-skill: false
+skill: wolf-water-entry
 tags: [water, collision, wolf]
 credits: 39
 ---
@@ -34,9 +34,9 @@ The metric is the walk-probe tilt y (`drawnY`) against the bed (`h`) and the dep
 Gate: on a replay of this walk, the dry start stays within 2 cm, and the sample at depth 0.727 m is not sitting on -0.20. Save the frame and the probe line with the handoff.
 
 ## Objectives
-- [ ] `draw` and `positionCamera` share one foot height: `heightAt` on dry ground; the bed while the water is no deeper than a 0.80 m shoulder; the water surface minus 0.80 m once it is deeper. The `-0.2` clamp is gone from both.
-- [ ] No swim gait and no wake. T-0024 owns the wake. `LEVEL.wolfWater` stays the autonomous wolf's refusal.
-- [ ] A replay of this shore walk: the dry start stays within 2 cm of `heightAt`, and the depth-0.727 sample is not drawn at -0.20. `npm test` and `npx tsc --noEmit` pass.
+- [x] `draw` and `positionCamera` share one foot height: `heightAt` on dry ground; the bed while the water is no deeper than a 0.80 m shoulder; the water surface minus 0.80 m once it is deeper. The `-0.2` clamp is gone from both.
+- [x] No swim gait and no wake. T-0024 owns the wake. `LEVEL.wolfWater` stays the autonomous wolf's refusal.
+- [x] A replay of this shore walk: the dry start stays within 2 cm of `heightAt`, and the depth-0.727 sample is not drawn at -0.20. `npm test` and `npx tsc --noEmit` pass.
 
 ## Acceptance
 The wolf wades. At this lake the paws are on the bed, not on a plane 5 cm above the water.

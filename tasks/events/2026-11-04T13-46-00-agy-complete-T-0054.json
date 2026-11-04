@@ -1,0 +1,10 @@
+{
+  "type": "complete",
+  "task": "T-0054",
+  "agent": "agy",
+  "at": "2026-11-04T13:46:00-08:00",
+  "branch": "agy/wolf-water-entry",
+  "commit": "bda28e3",
+  "skill": "wolf-water-entry",
+  "note": "Implemented shared footHeight(x, z) and WOLF_SHOULDER_M = 0.80 in src/render/math.ts and wired both positionCamera (src/render/math.ts) and draw (src/render/buildScene.ts) to use it instead of Math.max(heightAt(x, z), -.2). On dry ground footHeight returns heightAt(x, z); under water (surfaceAt(x, z).lake?.surface ?? LEVEL.waterSurface) it returns the bed while water depth <= 0.80 m (adult gray-wolf shoulder height, core/wolfBody.ts 80-85 cm, Mech 1970 The Wolf 0.66-0.81 m) and water - 0.80 m once deeper. LEVEL.wolfWater (0.2 m) remains untouched for autonomous refusal and T-0024 owns the wading wake. Verified with unit tests in tests/render-math.test.ts and shore-walk replay in refs/water/t0054-wolf-water-entry/ (dry start |drawnY - h| = 0.000 m <= 0.02 m; wading drawnY tracks bed -0.977 m and shoulder floor -1.051 m instead of -0.202 m; calibrated footScore = 0.9900 >= 0.95; known match = 1.0000, known mismatch = 0.0000)."
+}

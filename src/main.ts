@@ -6,6 +6,8 @@ import { activeViewfinder } from './camera/gameCamera';
 import { SYSTEM_PROPERTIES } from './config/systemProperties';
 import './style.css';
 import { createSensesHUD } from './ui/senses';
+import { toggleDataPanel } from './ui/dataPanel';
+import { latestPlanetSim } from './core/planetBudget';
 import { createSensesHalo } from './render/sensesHalo';
 import { buildScene } from './render/buildScene';
 import { availableActions, consumeForage, createContext, friendCount, interact, lastForageGrams, parseContext, rememberBond, solidContact, type Player } from './core/events';
@@ -307,6 +309,7 @@ function act(id: string) { // one fired press action (keyboard or gamepad)
   else if (id === 'interact') { void sfx.start().catch(() => {}); perform(); }
   else if (id === 'inspector') { inspector.toggle(); clearInput(); }
   else if (id === 'photo') { const vf = activeViewfinder(); if (vf) vf.shoot(); else enterPhoto(); } // T-0068: P = shutter on the live view; freeze & compose stays on the Photo button / menu
+  else if (id === 'dataPanel') toggleDataPanel();
   else if (id === 'planet') toGlobe();
   else if (id === 'eatPrey') {
     const heldHare = view.hares.held();
@@ -390,7 +393,7 @@ bindingTexts();
 let simTime = clock0.worldSec, lastWorld = worldSec(), dialHeld = 0; // sim and clock fields share the world clock (frozen with the menu)
 try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
 if (clock0.offlineSec > 0) tickGround(gameSecondsPerWorldSecond * clock0.offlineSec); // time away ages the ground at the clock's game-second conversion, rate 1
-function frame(time: number) { const frameStart = performance.now();
+function frame(time: number) { const frameStart = performance.now(); latestPlanetSim()?.setEngineNow(frameStart);
   const wallDt = Math.min((time - lastTime) / 1000 || 0, 1); // T-0036: thought bubbles keep real seconds even when frames are slow
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time; // look and input smoothing stay on this real frame delta
   const pad = [...navigator.getGamepads()].find(p => p?.connected && p.mapping === 'standard');

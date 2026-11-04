@@ -2,6 +2,13 @@
 //! Plain `extern "C"` exports, no wasm-bindgen: the host calls `grid_init`, fills the LAND and ELEV planes through the pointer it
 //! gets back, calls `grid_seed` and `grid_step`, and reads any plane as a `Float64Array` over the module's memory.
 pub mod constants;
+pub mod cosmic_time;
+pub mod params;
+pub mod cosmology;
+pub mod reheating;
+pub mod engine_born;
+pub mod planet_eval;
+pub mod registry;
 pub mod consts;
 pub mod planet_fundamentals;
 // Old module paths stay as names. The formulas live once under planet_fundamentals (T-0062, issue #46).
@@ -139,3 +146,55 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
     for (i, &(s, c)) in pop.iter().take(n).enumerate() { o[2 * i] = s as u32 as f64; o[2 * i + 1] = c as f64; }
     n as u32
 }
+
+fn read_name(ptr: *const u8, len: u32) -> Option<String> {
+    if ptr.is_null() || len > 256 { return None; }
+    let bytes = unsafe { std::slice::from_raw_parts(ptr, len as usize) };
+    std::str::from_utf8(bytes).ok().map(|s| s.to_string())
+}
+
+thread_local! {
+    static REPORT: std::cell::RefCell<Vec<u8>> = const { std::cell::RefCell::new(Vec::new()) };
+    static TABLE: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+    static REHEAT_TABLE: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+thread_local! { static PANIC: std::cell::RefCell<String> = const { std::cell::RefCell::new(String::new()) }; }
+fn install_panic() {
+    std::panic::set_hook(Box::new(|info| { PANIC.with(|p| *p.borrow_mut() = info.to_string()); }));
+}
+#[no_mangle] pub extern "C" fn engine_set_now(ms: f64) { registry::set_now(ms); }
+#[no_mangle] pub extern "C" fn engine_set_cycle(cycle: f64) -> u32 {
+    install_panic();
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| registry::set_cycle(cycle))) { Ok(()) => 1, Err(_) => 0 }
+}
+#[no_mangle] pub extern "C" fn engine_panic_ptr() -> *const u8 { PANIC.with(|p| p.borrow().as_ptr()) }
+#[no_mangle] pub extern "C" fn engine_panic_len() -> u32 { PANIC.with(|p| p.borrow().len() as u32) }
+#[no_mangle] pub extern "C" fn engine_set_param(ptr: *const u8, len: u32, value: f64) -> u32 {
+    match read_name(ptr, len) { Some(name) if registry::set_param(&name, value) => 1, _ => 0 }
+}
+#[no_mangle] pub extern "C" fn engine_reset_all() { registry::reset_all(); }
+#[no_mangle] pub extern "C" fn engine_reset_one(ptr: *const u8, len: u32) { if let Some(name) = read_name(ptr, len) { registry::reset_engine(&name); } }
+#[no_mangle] pub extern "C" fn engine_spawn(ptr: *const u8, len: u32) -> u32 { match read_name(ptr, len) { Some(name) if registry::manual_spawn(&name) => 1, _ => 0 } }
+#[no_mangle] pub extern "C" fn engine_despawn(ptr: *const u8, len: u32) -> u32 { match read_name(ptr, len) { Some(name) if registry::manual_despawn(&name) => 1, _ => 0 } }
+#[no_mangle] pub extern "C" fn engine_report_len() -> u32 {
+    let bytes = registry::report().into_bytes();
+    let n = bytes.len() as u32;
+    REPORT.with(|r| *r.borrow_mut() = bytes);
+    n
+}
+#[no_mangle] pub extern "C" fn engine_report_ptr() -> *const u8 { REPORT.with(|r| r.borrow().as_ptr()) }
+#[no_mangle] pub extern "C" fn cosmos_table_len() -> u32 {
+    let t = cosmology::sample_table();
+    let n = t.len() as u32;
+    TABLE.with(|r| *r.borrow_mut() = t);
+    n
+}
+#[no_mangle] pub extern "C" fn cosmos_table_ptr() -> *const f64 { TABLE.with(|r| r.borrow().as_ptr()) }
+#[no_mangle] pub extern "C" fn reheat_table_len() -> u32 {
+    let t = reheating::decay_table();
+    let n = t.len() as u32;
+    REHEAT_TABLE.with(|r| *r.borrow_mut() = t);
+    n
+}
+#[no_mangle] pub extern "C" fn reheat_table_ptr() -> *const f64 { REHEAT_TABLE.with(|r| r.borrow().as_ptr()) }

@@ -22,7 +22,12 @@ pub fn solar(day_of_year: f64, local_hour: f64, lat: f64, lon: f64, tz: f64) -> 
     let phi = lat * RAD;
     let cos_z = phi.sin() * decl.sin() + phi.cos() * decl.cos() * ha.cos();
     let r2 = 1.000110 + 0.034221 * g.cos() + 0.001280 * g.sin() + 0.000719 * (2.0 * g).cos() + 0.000077 * (2.0 * g).sin(); // (r0/r)² (Spencer 1971)
-    Sun { decl: decl / RAD, eqtime, solar_hour: tst / 60.0, zenith: cos_z.clamp(-1.0, 1.0).acos() / RAD, cos_z, toa: (S0 * r2 * cos_z).max(0.0) }
+    let s0 = crate::params::get("solar_constant", S0);
+    let tilt = crate::params::get("obliquity_deg", 23.439291);
+    let same = (tilt - 23.439291).abs() < 1e-12;
+    let decl = if same { decl } else { decl * (tilt.to_radians().sin() / 23.439291_f64.to_radians().sin()) };
+    let cos_z = if same { cos_z } else { phi.sin() * decl.sin() + phi.cos() * decl.cos() * ha.cos() };
+    Sun { decl: decl / RAD, eqtime, solar_hour: tst / 60.0, zenith: cos_z.clamp(-1.0, 1.0).acos() / RAD, cos_z, toa: (s0 * r2 * cos_z).max(0.0) }
 }
 
 /// Surface shortwave: clear-sky beam+diffuse transmittance 0.7^(AM^0.678) (Meinel & Meinel 1976, via Laue 1970) × 1.1 for
@@ -40,7 +45,7 @@ pub struct SolarBudget { pub toa: f64, pub sw_down: f64, pub q_absorbed: f64, pu
 
 /// Q_absorbed = (1−α) S↓, Q_reflected = α S↓. Longwave terms are `longwave.rs`.
 pub fn budget(sun: &Sun, cloud: f64, albedo: f64, t_surface_c: f64, e_pa: f64) -> SolarBudget {
-    let sw = shortwave(sun.cos_z, cloud, S0);
+    let sw = shortwave(sun.cos_z, cloud, crate::params::get("solar_constant", S0));
     SolarBudget { toa: sun.toa, sw_down: sw, q_absorbed: (1.0 - albedo) * sw, q_reflected: albedo * sw,
         q_longwave_out: surface_emission(t_surface_c), lw_net: longwave_net(e_pa, t_surface_c, cloud) }
 }
@@ -54,7 +59,7 @@ pub fn daily_toa(day_of_year: f64, lat: f64) -> f64 {
     let h0 = if x >= 1.0 { 0.0 } else if x <= -1.0 { std::f64::consts::PI } else { x.acos() };
     let g = 2.0 * std::f64::consts::PI / 365.0 * (day_of_year - 1.0);
     let r2 = 1.000110 + 0.034221 * g.cos() + 0.001280 * g.sin() + 0.000719 * (2.0 * g).cos() + 0.000077 * (2.0 * g).sin();
-    S0 / std::f64::consts::PI * r2 * (h0 * phi.sin() * d.sin() + phi.cos() * d.cos() * h0.sin())
+    crate::params::get("solar_constant", S0) / std::f64::consts::PI * r2 * (h0 * phi.sin() * d.sin() + phi.cos() * d.cos() * h0.sin())
 }
 
 #[cfg(test)]

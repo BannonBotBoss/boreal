@@ -66,7 +66,7 @@ pub fn maritime_air(day: f64, lat: f64, land: f64, elev_m: f64, coast_m: f64, de
     let sea = damped_seed(day, lat, OCEAN_HEATCAP, t_bar);
     let land_t = damped_seed(day, lat, LAND_HEATCAP, t_bar);
     let w = maritime_weight(land, coast_m, decay_m);
-    w * sea + (1.0 - w) * land_t - LAPSE * elev_m.max(0.0) * land.clamp(0.0, 1.0)
+    w * sea + (1.0 - w) * land_t - crate::params::get("lapse_rate", LAPSE) * elev_m.max(0.0) * land.clamp(0.0, 1.0)
 }
 
 pub struct Seeded { pub t_air: f64, pub soil_mm: f64, pub snow_mm: f64, pub q: f64 }
@@ -75,7 +75,7 @@ pub struct Seeded { pub t_air: f64, pub soil_mm: f64, pub snow_mm: f64, pub q: f
 pub fn seed_cell(day: f64, lat: f64, land: f64, elev_m: f64, t_bar: f64, coast_m: f64, decay_m: f64) -> Seeded {
     let t = maritime_air(day, lat, land, elev_m, coast_m, decay_m, t_bar);
     let p = surface_pressure(P0, elev_m.max(0.0), t);
-    Seeded { t_air: t, soil_mm: if land > 0.5 { 0.5 * BUCKET_MM } else { 0.0 }, snow_mm: if land > 0.5 && t < 0.0 { SNOW_SEED_MM } else { 0.0 }, q: RH_SEED * qsat(t, p) }
+    Seeded { t_air: t, soil_mm: if land > 0.5 { 0.5 * BUCKET_MM } else { 0.0 }, snow_mm: if land > 0.5 && t < 0.0 { SNOW_SEED_MM } else { 0.0 }, q: crate::params::get("humidity_seed", RH_SEED) * qsat(t, p) }
 }
 pub const SNOW_SEED_MM: f64 = 30.0; // game calibration
 

@@ -21,7 +21,7 @@ pub fn planetary_albedo(t_c: f64) -> f64 { planetary_albedo_at(t_c, 30.0) }
 /// Area-weighted land/sea albedo. Snow mixes on the land albedo; sea ice mixes on the water albedo. Same expression as `cell_surface`.
 pub fn mixed_albedo(land: f64, land_albedo: f64, snow: f64, ice: f64) -> f64 {
     let l = land.clamp(0.0, 1.0);
-    let land_a = land_albedo * (1.0 - snow) + SNOW_ALBEDO * snow;
-    let sea_a = WATER_ALBEDO * (1.0 - ice) + SEA_ICE_ALBEDO * ice;
+    let land_a = land_albedo * (1.0 - snow) + crate::params::get("snow_albedo", SNOW_ALBEDO) * snow;
+    let sea_a = crate::params::get("water_albedo", WATER_ALBEDO) * (1.0 - ice) + SEA_ICE_ALBEDO * ice;
     l * land_a + (1.0 - l) * sea_a
 }

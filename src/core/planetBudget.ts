@@ -57,6 +57,19 @@ interface Exports {
   gas_above(hKm: number, qSurf: number, co2ppm: number, out: number): void;
   rt_point(year: number, cosZ: number, cosV: number, phi: number, wind: number, cloud: number, tau: number, surf: number, landAlbedo: number, hKm: number, qSurf: number, co2ppm: number, out: number): void;
   emergent_demo(n: number, mode: number, out: number): void;
+  engine_set_now?(ms: number): void;
+  engine_set_cycle?(cycle: number): number;
+  engine_set_param?(ptr: number, len: number, value: number): number;
+  engine_reset_all?(): void;
+  engine_reset_one?(ptr: number, len: number): void;
+  engine_spawn?(ptr: number, len: number): number;
+  engine_despawn?(ptr: number, len: number): number;
+  engine_report_len?(): number;
+  engine_report_ptr?(): number;
+  cosmos_table_len?(): number;
+  cosmos_table_ptr?(): number;
+  reheat_table_len?(): number;
+  reheat_table_ptr?(): number;
 }
 
 export class PlanetSim {
@@ -134,6 +147,42 @@ export class PlanetSim {
   }
   /** Metres from (lat, lon) to open ocean on the live grid (grid.rs coast_at); NaN before `init`. Feed it to coverCellAt. */
   coastAt(lat: number, lon: number): number { return this.x.grid_coast_at(lat, lon); }
+  private namePtr(name: string) {
+    const bytes = new TextEncoder().encode(name);
+    const p = this.x.alloc_f64(Math.max(1, Math.ceil(bytes.length / 8)));
+    new Uint8Array(this.x.memory.buffer, p, bytes.length).set(bytes);
+    return { p, n: bytes.length };
+  }
+  /** Ask Rust for the engine record at this cycle. Empty when this wasm has no registry. */
+  engineReport(): string {
+    if (!this.x.engine_report_len || !this.x.engine_report_ptr) return '';
+    const n = this.x.engine_report_len();
+    const p = this.x.engine_report_ptr();
+    return new TextDecoder().decode(new Uint8Array(this.x.memory.buffer, p, n));
+  }
+  setEngineNow(ms: number) { this.x.engine_set_now?.(ms); }
+  setEngineCycle(cycle: number) { return this.x.engine_set_cycle?.(cycle) ?? 0; }
+  setEngineParam(key: string, value: number) {
+    if (!this.x.engine_set_param) return 0;
+    const { p, n } = this.namePtr(key);
+    return this.x.engine_set_param(p, n, value);
+  }
+  resetEngines() { this.x.engine_reset_all?.(); }
+  resetEngine(id: string) { if (!this.x.engine_reset_one) return; const { p, n } = this.namePtr(id); this.x.engine_reset_one(p, n); }
+  spawnEngine(id: string) { if (!this.x.engine_spawn) return 0; const { p, n } = this.namePtr(id); return this.x.engine_spawn(p, n); }
+  despawnEngine(id: string) { if (!this.x.engine_despawn) return 0; const { p, n } = this.namePtr(id); return this.x.engine_despawn(p, n); }
+  cosmosTable(): Float64Array {
+    if (!this.x.cosmos_table_len || !this.x.cosmos_table_ptr) return new Float64Array();
+    const n = this.x.cosmos_table_len();
+    const p = this.x.cosmos_table_ptr();
+    return new Float64Array(this.x.memory.buffer, p, n).slice();
+  }
+  reheatTable(): Float64Array {
+    if (!this.x.reheat_table_len || !this.x.reheat_table_ptr) return new Float64Array();
+    const n = this.x.reheat_table_len();
+    const p = this.x.reheat_table_ptr();
+    return new Float64Array(this.x.memory.buffer, p, n).slice();
+  }
   /** Gas column (gas.rs) at altitude h km; body 0 Earth, 1 Venus, 2 Mercury. x = mole fractions in GAS_SPECIES order. */
   gasColumn(hKm: number, body = 0, qSurf = 0, co2ppm = 422.8) {
     const p = this.buf(); this.x.gas_column(body, hKm, qSurf, co2ppm, p); const o = Array.from(new Float64Array(this.x.memory.buffer, p, 13));
@@ -153,6 +202,10 @@ export const INTERIOR_LAYERS = ['inner core', 'outer core', 'mantle', 'crust', '
 export const ATM_LAYERS = ['troposphere', 'stratosphere', 'mesosphere', 'thermosphere', 'exosphere'];
 export const GAS_SPECIES = ['N2', 'O2', 'Ar', 'CO2', 'H2O', 'O3', 'O', 'Na', 'He'] as const;
 
+let latestPlanet: PlanetSim | null = null;
+/** The wasm instance most recently loaded. The data panel reads this one, so it sees the same registry as the game. */
+export function latestPlanetSim() { return latestPlanet; }
+
 /** Instantiate the wasm. `bytes` is for tests and workers; in the browser it fetches `<base>wasm/boreal_sim.wasm`. Resolves null on any failure. */
 export async function loadPlanetSim(bytes?: BufferSource): Promise<PlanetSim | null> {
   try {
@@ -165,7 +218,9 @@ export async function loadPlanetSim(bytes?: BufferSource): Promise<PlanetSim | n
     const { instance } = await WebAssembly.instantiate(buf, {});
     const x = instance.exports as unknown as Exports;
     if (x.layout_version() !== LAYOUT_VERSION || x.plane_count() !== PLANE_NAMES.length) return null; // stale build: use the fallback
-    return new PlanetSim(x);
+    const sim = new PlanetSim(x);
+    latestPlanet = sim;
+    return sim;
   } catch { return null; }
 }
 

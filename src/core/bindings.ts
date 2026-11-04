@@ -62,6 +62,7 @@ export const ACTIONS: ActionDef[] = [
   A('padMenu', 'Pad menu (Layers, Camera, Badges, Gallery, Settings)', 'press', 'any', ['tab'], ['menu']),
   A('padHelp', 'Controls help overlay', 'press', 'any', ['f1'], ['view']),
   A('photo', 'Photo mode', 'press', 'play', ['p'], []),
+  A('dataPanel', 'Data panel', 'press', 'any', ['u'], []),
   A('shutter', 'Take a photo (shutter)', 'press', 'any', ['enter'], ['rs.click']),
   A('cameraMode', 'Camera adjust mode (tap) / filter wheel (hold)', 'press', 'any', ['v'], ['y']),
   A('inspector', 'Debug HUD / generation inspector', 'press', 'any', ['i'], ['ddown']),

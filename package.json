@@ -12,6 +12,15 @@
     "build:wasm": "node tools/build-wasm.mjs",
     "test:rust": "cargo test --manifest-path rust/boreal-sim/Cargo.toml"
   },
-  "dependencies": { "three": "0.180.0" },
-  "devDependencies": { "@types/three": "0.180.0", "typescript": "5.9.3", "vite": "7.1.12", "tsx": "4.20.6", "@types/node": "24.7.0" }
+  "dependencies": {
+    "katex": "^0.19.1",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.7.0",
+    "@types/three": "0.180.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vite": "7.1.12"
+  }
 }

@@ -45,7 +45,7 @@ export const AIRGLOW = (() => { const peakKm = 95, sigmaKm = 4, zenithR = 250, l
 export const ATMOS_STEPS = [[16, 6, 8, 3], [14, 5, 6, 3], [12, 4, 6, 2], [10, 4, 4, 2], [8, 3, 3, 2], [6, 2, 0, 0]];
 /** Cloud layer: a thin shell at `heightKm`, density = octaves of the shared value noise (proc/glsl) on the planet-fixed
  *  direction. Octaves per quality row (0 = no clouds). [game calibration: cell size; Blue Marble look] */
-export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .8, octaves: [8, 6, 5, 4, 2, 0],
+export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .95, /** cumulus/cumulonimbus tops above the base at full cover (CAPE overshoot column, PRs #237-#265) [km], relief: normal tilt per density step, tauMax: optical depth of a full column */ topKm: 9, relief: 6, tauMax: 40, octaves: [8, 6, 5, 4, 2, 0],
   /** cloud edges per quality row: fBm persistence (more fine detail than 0.5), the coverage threshold's half width
    *  (contrast: narrower = sharper edges; Ultra 10-90 % edge ~34 km median vs ~310 km before, Medium ~79 vs ~225 km) and
    *  its centre, calibrated per row on the CPU twin of the noise so the mean cover stays 0.16 (as before). Octaves finer
@@ -61,7 +61,7 @@ export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .8, octaves: [8, 6, 
   /** cloud shadows on the terrain: ONE noise lookup (the cloud field's base octave: one 3D value-noise sample) where the
    *  sun ray leaves the shell; on while the tier draws at least `shadowMinOct` cloud octaves (off at Low / Minimum).
    *  Cuts this share of the direct sun under full cover [game calibration] */
-  shadow: .6, shadowMinOct: 3 };
+  shadow: .75, shadowMinOct: 3 };
 
 /** Hygroscopic growth of the Mie (aerosol) term with humidity (T-0089, issue #111): f(RH) = (1 − RH)^−gamma (Hanel 1976,
  *  Adv. Geophys. 19:73, doi 10.1016/S0065-2687(08)60142-9; the one-parameter fit of Kasten 1969). gamma 0.3: continental
@@ -188,8 +188,27 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
   float octD = 1.0 + log2(${CLOUDS.cellKm.toFixed(1)} / max(2.0 * t * uCloudEdge.z, 1e-6)) / log2(2.07);
   vec3 x = rd * t, n = normalize(x - uCentre); float a = cloudDensity(normalize(uViewToWorld * n), clamp(octD, 1.0, uCloudOct), uCloudEdge.x + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, uCloudEdge.y);
   if (a <= 0.0) return vec4(0.0);
-  vec3 sunT = atmSunlight(x, nl); float lam = max(dot(n, uSun), 0.0);
-  return vec4(${CLOUDS.albedo.toFixed(2)} * (sunT * (0.25 + 0.75 * lam) * 1.12 + 0.08 * atmSkyF(dot(n, uSun))), a * 0.9 * (1.0 - uCloudClear));
+  // issue: flat cream blobs from orbit. Shade the deck like a cloud field: the cover a stands in for column optical depth
+  // (thin edges, thick cores reach the convective tops), the density gradient tilts a surface normal (lit tops facing the
+  // sun, shadowed flanks), one lookup up-sun gives self-shadowing (Beer-Lambert), the powder/multiple-scattering term keeps
+  // thick cores white rather than grey, and the top height (base + ${CLOUDS.topKm} km x cover) adds parallax.
+  vec3 wn = normalize(uViewToWorld * n), sw = normalize(uViewToWorld * uSun);
+  vec3 tu = normalize(cross(wn, abs(wn.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0))), tv = cross(wn, tu);
+  float og = min(clamp(octD, 1.0, uCloudOct), 5.0), e = ${(CLOUDS.cellKm / 6371 / 24).toFixed(5)}, c0 = uCloudEdge.x + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, h0 = 0.12; // wide edge: the relief reads the noise itself, so saturated cores keep towers and valleys
+  float a0 = cloudDensity(wn, og, c0, h0), du = cloudDensity(normalize(wn + tu * e), og, c0, h0) - a0, dv = cloudDensity(normalize(wn + tv * e), og, c0, h0) - a0;
+  vec3 st = sw - wn * dot(sw, wn); float sl = length(st);
+  float aS = sl > 1e-4 ? cloudDensity(normalize(wn + st / sl * e * 1.5), og, c0, h0) : a0;
+  vec3 cn = normalize(n - ${CLOUDS.relief.toFixed(2)} * (du * (transpose(uViewToWorld) * tu) + dv * (transpose(uViewToWorld) * tv)));
+  float tau = ${CLOUDS.tauMax.toFixed(1)} * a * (0.3 + 0.7 * a0); // column optical depth from cover (cumulus 10-60)
+  float self = exp(-max(aS - a0, 0.0) * tau * 0.35); // up-sun neighbour thicker = this side is in its shadow
+  float powder = 1.0 - exp(-2.0 * tau * 0.1); // multiple scattering: thick cloud reflects ~all, thin edges let ground through
+  float mu = dot(n, uSun), lamC = max(dot(cn, uSun), 0.0);
+  vec3 sunT = atmSunlight(x + n * (${CLOUDS.topKm.toFixed(1)} * a), nl); // top height: tops above the base see the sun later at the terminator
+  float lit = (0.35 + 0.65 * lamC) * self * smoothstep(-0.12, 0.08, mu) ;
+  float sY = dot(sunT, vec3(0.2126, 0.7152, 0.0722)); sunT = mix(vec3(sY), sunT, smoothstep(0.35, -0.05, mu)); // white tops by day; the reddened sun only near the terminator
+  lit *= 0.55 + 0.45 * a0; // thicker towers (higher tops) catch more sun; low thin deck sits in the haze
+  vec3 col = ${CLOUDS.albedo.toFixed(2)} * (sunT * lit * 1.25 + 0.10 * atmSkyF(mu) * (0.6 + 0.4 * powder));
+  return vec4(col, clamp(a * (0.55 + 0.45 * powder), 0.0, 0.97) * (1.0 - uCloudClear));
 }
 `;
 
@@ -281,7 +300,7 @@ void main() {
     // only the DIRECT sun is reddened (sunset) / cut (planet shadow) on its way to the fragment (x1.12 = noon
     // transmittance^-1); sky (hemisphere) light stays, so ground facing away from a low sun is lit by the sky, not black
     float cs = 1.0; if (uCloudOct > ${CLOUDS.shadowMinOct - .5}) { vec3 nU = normalize(fp - uCentre); float mu = dot(nU, uSun); // cloud shadow: one cloud-field lookup up the sun ray
-      if (mu > 0.02) cs = 1.0 - ${CLOUDS.shadow.toFixed(2)} * (1.0 - uCloudClear) * cloudDensity(normalize(uViewToWorld * normalize(fp + uSun * (${CLOUDS.heightKm.toFixed(2)} / mu) - uCentre)), 1.0, ${CLOUDS.shadowCentre.toFixed(3)} + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, ${CLOUDS.shadowHalf.toFixed(3)}); }
+      if (mu > 0.02) cs = 1.0 - ${CLOUDS.shadow.toFixed(2)} * (1.0 - uCloudClear) * cloudDensity(normalize(uViewToWorld * normalize(fp + uSun * (${(CLOUDS.heightKm + CLOUDS.topKm * .4).toFixed(2)} / mu) - uCentre)), 1.0, ${CLOUDS.shadowCentre.toFixed(3)} + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, ${CLOUDS.shadowHalf.toFixed(3)}); }
     float skyF = atmSkyF(dot(normalize(fp - uCentre), uSun)); // sky light is local (atmSkyF)
     outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * (1.12 * cs) * atmSunlight(fp, int(uSteps.w)) + (reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular) * skyF + totalEmissiveRadiance;
     vec3 ins = atmScatter(rd, d, int(uSteps.z), int(uSteps.w), tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL;

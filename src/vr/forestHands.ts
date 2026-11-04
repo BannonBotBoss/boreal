@@ -4,7 +4,32 @@
  * No keyboard and no controller. The heading matches the game: forward is (−sin yaw, −cos yaw).
  */
 
-export const HAND = { pinch: 0.9, minStepM: 0.45, snap: Math.PI / 6, reachM: 12 };
+export const HAND = { pinch: 0.9, minStepM: 0.45, snap: Math.PI / 6, reachM: 12, fistM: 0.09, openM: 0.12, openGapM: 0.04 };
+
+/** Distances between the wrist and the fingertips, in metres, plus the thumb–index gap. */
+export interface PawMeasure {
+  index: number; middle: number; ring: number; pinky: number; thumbIndex: number; pinch: number;
+}
+export type Paw = 'point' | 'open' | 'fist' | 'relaxed';
+
+/**
+ * Point (pinch, index out) still glides. An open paw is the grab. A closed fist digs or nudges.
+ * Pinch wins, so a pointing pinch is not read as a fist.
+ */
+export function pawOf(m: PawMeasure): Paw {
+  const tips = [m.index, m.middle, m.ring, m.pinky];
+  if (m.pinch > HAND.pinch) return 'point';
+  if (tips.filter(d => d < HAND.fistM).length >= 3) return 'fist';
+  if (tips.filter(d => d > HAND.openM).length >= 3 && m.thumbIndex > HAND.openGapM) return 'open';
+  return 'relaxed';
+}
+
+/** Grab and dig fire once, when the paw first takes that shape. Pointing stays while it is held. */
+export function pawEdge(prev: Paw, now: Paw): 'grab' | 'dig' | null {
+  if (now === 'open' && prev !== 'open') return 'grab';
+  if (now === 'fist' && prev !== 'fist') return 'dig';
+  return null;
+}
 
 /** Game yaw that faces `to` from `from`, or null when the point is too close to bother moving. */
 export function headingToward(from: { x: number; z: number }, to: { x: number; z: number }, minM = HAND.minStepM): number | null {

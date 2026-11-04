@@ -93,7 +93,7 @@ class Journey {
     this.vignette.position.set(0, 0, -0.28);
     this.vignette.renderOrder = 20;
     world.camera.add(this.vignette);
-    this.paint('Pinch, or hold an open palm, to start time.');
+    this.begin();
   }
 
   tick(dt: number) {

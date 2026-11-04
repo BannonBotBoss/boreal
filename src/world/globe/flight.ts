@@ -34,6 +34,13 @@ export function fallEase(h0: number, h: number, end = FALL_END_M) {
 export function fallYaw(yaw0: number, ease: number) { return yaw0 + Math.PI * ease; }
 /** Pitch through the fall: nadir at ease 0, the isometric oblique at ease 1. */
 export function fallPitch(ease: number) { return NADIR + (ISO_BELOW_HORIZON - NADIR) * ease; }
+/** The shortened drop starts part way down the ease. Pitch still opens from nadir, or the
+ *  high-air frame looks past the limb and the screen is only the sky colour. */
+export function descentPitchEase(progress: number, openedAt: number) {
+  const span = 1 - Math.min(1, Math.max(0, openedAt));
+  if (span < 1e-6) return 1;
+  return Math.min(1, Math.max(0, (progress - openedAt) / span));
+}
 
 /** What starts a descent. A drag, a single click and the wheel do not. */
 export function isDescentGesture(kind: 'click' | 'dblclick' | 'drag' | 'wheel' | 'pad', dragged = false) {
@@ -68,9 +75,18 @@ export type EntryPhase = 'orbit' | 'fall' | 'drone' | 'game';
  * so the camera eases down a log altitude over `sec` seconds and keeps its heading. The pitch still opens through fallPitch.
  * F, or ?descent=fade, covers the view and arrives at the same glide height.
  */
-export const DESCENT = { sec: 14, glideM: 400, fadeOut: 0.45, fadeIn: 0.55, vignette: 0.62 };
+export const DESCENT = { sec: 14, glideM: 400, fadeOut: 0.45, fadeIn: 0.55, vignette: 0.62,
+  /** Share of the ease that is still above the air. The drop starts after it, so the opening is not a black void. */
+  vacuum: 0.46 };
 export type DescentMode = 'glide' | 'fade';
 /** 0 at the start, 1 at `sec`, flat at both ends. */
+/** Where a G drop from orbit begins: already in the high air, with the vacuum skipped. */
+export function descentBegin(h0: number, vacuum = DESCENT.vacuum) {
+  const t = DESCENT.sec * vacuum;
+  const p = descentProgress(t);
+  return { t, p, y: descentHeight(h0, DESCENT.glideM, p) };
+}
+
 export function descentProgress(t: number, sec = DESCENT.sec) {
   const u = Math.min(1, Math.max(0, t / Math.max(sec, 1e-6)));
   return u * u * (3 - 2 * u);

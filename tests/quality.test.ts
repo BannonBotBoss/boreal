@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GOVERNOR, KNOBS, LADDER, MANUAL, applied, governFrame, pendingWorld, resetGovernor, tierForGpu } from '../src/core/quality';
+import { GOVERNOR, KNOBS, LADDER, MANUAL, QUEST_FRAME_MS, XR_CAPS, applied, governFrame, pendingWorld, resetGovernor, tierForGpu } from '../src/core/quality';
 
 const feed = (ms: number, seconds: number) => { let changed = 0; for (let t = 0; t < seconds * 1000; t += 16.7) changed += governFrame(ms, undefined, 16.7); return changed; };
 const fresh = (tier = 1) => { Object.assign(GOVERNOR, { auto: true, targetFps: 60, tier, capTier: 0 }); resetGovernor(); for (const k of KNOBS) delete MANUAL[k]; };
@@ -85,4 +85,14 @@ test('vsync-bound frames trust CPU work over the GPU timer; late frames count th
   fresh(1); run(9, 22, 22, 4); assert.equal(GOVERNOR.tier, 2, 'late frames: GPU-bound, steps down');
   fresh(1); run(15, 80, 17.5, 10); assert.equal(GOVERNOR.tier, 1, 'vsync jitter just over 16.7 ms is inside the slack');
   fresh();
+});
+
+test('Quest 3 and 3S aim at 60 fps with the heavy passes off', () => {
+  assert.ok(Math.abs(QUEST_FRAME_MS - 1000 / 60) < 1e-9);
+  assert.equal(XR_CAPS.gi, 0);
+  assert.equal(XR_CAPS.ssao, 0);
+  assert.equal(XR_CAPS.rays, 0);
+  assert.ok((XR_CAPS.resScale ?? 1) <= 0.9);
+  assert.ok((XR_CAPS.trees ?? 1) <= 0.5);
+  assert.ok((XR_CAPS.foliage ?? 1) <= 0.35);
 });

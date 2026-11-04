@@ -11,10 +11,15 @@ export const LITTER = {
   speedMps: 0.9,
   yearSpeedMps: 1.6,
   denRingM: 1.2,
-  trailYoungM: 1.6,
-  trailYearM: 0.9,
-  trailGapM: 0.7,
-  lateralM: 0.45,
+  trailYoungM: 0.75,
+  trailYearM: 0.45,
+  trailGapM: 0.06,
+  /** Beside her, not in a line hidden by her body. The outer pair stays inside a 48° chase frame. */
+  lateralM: 0.85,
+  /** The chase camera is 3.6 m behind her and 1.05 m up. Closer than this, a pup is under the lens. */
+  viewBackM: 1.15,
+  /** A step longer than a walk is the drop. She does not leave the litter at the old spot. */
+  rejoinM: 4,
   /** Game seconds for one year of pup growth. Ten real minutes at the default clock (×12) is half a year. */
   growthGameSPerYear: 14400,
   youngStepHz: 2.6,
@@ -77,9 +82,19 @@ export function birthPlaces(denX: number, denZ: number): PupPlace[] {
   return out;
 }
 
+/** Where the five stand when she is already on her feet: beside her, in front of the chase camera. */
+export function besideMother(x: number, z: number, yaw: number, ageYears = LITTER.emergeYears): PupPlace[] {
+  const out: PupPlace[] = [];
+  for (let slot = 0; slot < LITTER.count; slot++) {
+    const at = trailSlot(slot, x, z, yaw, ageYears);
+    out.push({ slot, x: at.x, z: at.z, ageYears });
+  }
+  return out;
+}
+
 /** The point in the trail behind the mother. Forward is (−sin yaw, −cos yaw). */
 export function trailSlot(slot: number, motherX: number, motherZ: number, yaw: number, ageYears = LITTER.emergeYears) {
-  const back = trailBackM(ageYears) + slot * LITTER.trailGapM;
+  const back = Math.min(LITTER.viewBackM, trailBackM(ageYears) + slot * LITTER.trailGapM);
   const side = (slot - (LITTER.count - 1) / 2) * LITTER.lateralM;
   const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
   const rx = Math.cos(yaw), rz = -Math.sin(yaw);
@@ -92,6 +107,7 @@ export function followStep(x: number, z: number, slot: number, motherX: number, 
   const dx = slotAt.x - x, dz = slotAt.z - z;
   const d = Math.hypot(dx, dz);
   if (d < 1e-6 || dt <= 0) return { x, z };
+  if (d > LITTER.rejoinM) return { x: slotAt.x, z: slotAt.z };
   const step = Math.min(walkMps(ageYears) * dt, d);
   return { x: x + dx / d * step, z: z + dz / d * step };
 }

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ageAfter, birthPlaces, followStep, growthStage, LITTER, pupScale, stepHz, trailBackM, trailSlot, walkMps } from '../src/core/litter';
+import { ageAfter, besideMother, birthPlaces, followStep, growthStage, LITTER, pupScale, stepHz, trailBackM, trailSlot, walkMps } from '../src/core/litter';
 
 test('five pups are born on the den ring at four weeks and walk toward their mother', () => {
   const born = birthPlaces(21.5, 8.5);
@@ -34,4 +34,22 @@ test('ten real minutes at the default clock grows the litter', () => {
   const young = trailSlot(2, 0, 0, 0, LITTER.emergeYears);
   const grown = trailSlot(2, 0, 0, 0, older);
   assert.ok(Math.hypot(grown.x, grown.z) < Math.hypot(young.x, young.z));
+});
+
+test('some pups stand in front of the chase camera, beside her', () => {
+  let ahead = 0, beside = 0;
+  for (let slot = 0; slot < LITTER.count; slot++) {
+    const p = trailSlot(slot, 0, 0, 0, LITTER.emergeYears);
+    assert.ok(p.z > 0.3 && p.z < 1.2, `slot ${slot} is under the lens or ahead of her at ${p.z.toFixed(2)} m`);
+    ahead++;
+    if (Math.abs(p.x) > 0.9) beside++;
+  }
+  assert.equal(ahead, LITTER.count);
+  assert.ok(beside >= 2, `only ${beside} pups stand far enough to the side`);
+  const near = besideMother(30, 0, -0.35);
+  assert.equal(near.length, LITTER.count);
+  assert.ok(near.filter(p => Math.abs(p.x - 30) > 0.5 || Math.abs(p.z) > 0.5).length >= 2);
+  const left = followStep(0, 0, 1, 40, -12, -0.4, 0.05);
+  const slot = trailSlot(1, 40, -12, -0.4);
+  assert.ok(Math.abs(left.x - slot.x) < 1e-9 && Math.abs(left.z - slot.z) < 1e-9);
 });

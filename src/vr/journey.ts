@@ -73,7 +73,7 @@ class Journey {
     this.sphere.position.set(0, 1.25, -0.8);
     this.sphere.visible = false;
     world.scene.add(this.sphere);
-    this.globe = new Mesh(new SphereGeometry(0.22, 48, 32), new MeshStandardMaterial({ color: 0x2f6d4f, roughness: 0.7 }));
+    this.globe = new Mesh(new SphereGeometry(0.22, 48, 32), new MeshStandardMaterial({ map: planetMap(), roughness: 0.65, metalness: 0.05 }));
     this.globe.position.set(0, 1.05, -0.7);
     this.globe.visible = false;
     world.createTransformEntity(this.globe).addComponent(OneHandGrabbable, { rotate: true, translate: false });
@@ -237,7 +237,7 @@ class Journey {
     const eq = report?.equations.find(e => /friedmann/i.test(e.title + e.latex)) ?? report?.equations[0];
     const sym = report?.instances.flatMap(i => i.symbols).slice(0, 3).map(s => `${s.name} ${fmt(s.value)} ${s.unit}`).join('   ') ?? '';
     const time = report ? `cycle ${fmt(report.cycle)}    ${fmt(report.seconds)} s    ${report.era}` : `cycle ${this.cycle.toFixed(2)}`;
-    const hint = this.phase === 'globe' ? 'Pinch the globe to go down. Drag this panel to scrub time.' : this.phase === 'dark' ? 'Pinch, or hold an open palm, to start time.' : 'Drag this panel to scrub time.';
+    const hint = this.phase === 'globe' ? 'A round planet. Pinch it to go down. Drag this panel to scrub time.' : this.phase === 'dark' ? 'Pinch, or hold an open palm, to start time.' : 'Drag this panel to scrub time.';
     this.paint([eq?.title || 'Equation', eq?.latex || '', time, sym, hint].filter(Boolean).join('\n'));
   }
 
@@ -254,6 +254,27 @@ class Journey {
   cover(amount: number) {
     (this.vignette.material as MeshBasicMaterial).opacity = Math.max(0, Math.min(0.85, amount));
   }
+}
+
+/** A small painted sphere so the planet step reads as a globe, not a flat map. */
+function planetMap() {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 128;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#1a4f86';
+  g.fillRect(0, 0, 256, 128);
+  g.fillStyle = '#e7eef3';
+  g.fillRect(0, 0, 256, 14);
+  g.fillRect(0, 114, 256, 14);
+  g.fillStyle = '#2d6a3e';
+  g.beginPath();
+  g.ellipse(100, 74, 40, 24, 0.4, 0, Math.PI * 2);
+  g.fill();
+  g.beginPath();
+  g.ellipse(176, 52, 26, 16, -0.4, 0, Math.PI * 2);
+  g.fill();
+  return new CanvasTexture(c);
 }
 
 function pinchOf(source: XRInputSource) { return source.gamepad?.buttons[0]?.value ?? 0; }

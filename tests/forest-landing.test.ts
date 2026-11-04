@@ -1,0 +1,50 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { treesAround } from '../src/core/ground';
+import { mamaTerritory, forestLanding, standEitherSide, FOREST_LANDING } from '../src/world/globe/forestLanding';
+import { isDry } from '../src/core/stages/surfaceAt';
+import { landSpawn } from '../src/world/globe/handoff';
+
+test('the drop lands at the edge of a closed stand near the mama, facing the trees', () => {
+  const territory = mamaTerritory();
+  assert.equal(territory.x, 30);
+  assert.equal(territory.z, 0);
+  const spot = forestLanding(territory);
+  const again = forestLanding(territory);
+  assert.deepEqual(again, spot);
+  const denD = Math.hypot(spot.den.x - territory.x, spot.den.z - territory.z);
+  const edge = Math.hypot(spot.land.x - spot.den.x, spot.land.z - spot.den.z);
+  assert.ok(denD <= FOREST_LANDING.searchM, `den is ${denD.toFixed(0)} m from her mark`);
+  assert.ok(edge >= FOREST_LANDING.edgeMinM - 0.2 && edge <= FOREST_LANDING.edgeMaxM + 0.2, `edge is ${edge.toFixed(1)} m from the den`);
+  assert.ok(Math.hypot(spot.land.x, spot.land.z) >= FOREST_LANDING.clearM, 'the landing is outside the origin clearing');
+  assert.ok(spot.den.canopy >= FOREST_LANDING.closedCanopy, `den canopy ${spot.den.canopy}`);
+  assert.ok(spot.den.stems >= FOREST_LANDING.minStems, `den stems ${spot.den.stems}`);
+  assert.equal(isDry(spot.land.x, spot.land.z), true);
+  const sides = standEitherSide(spot.land.x, spot.land.z, spot.land.yaw);
+  assert.ok(sides.ahead >= 6, `trees ahead ${sides.ahead}`);
+  assert.ok(sides.ahead > sides.rear, `the stand is in front (${sides.ahead}) and the camera side is more open (${sides.rear})`);
+  const stood = landSpawn(spot.land, undefined, spot.land.yaw);
+  assert.ok(Math.hypot(stood.x - spot.land.x, stood.z - spot.land.z) < 2, 'the handoff does not walk her back out of the stand');
+  let near = 0;
+  for (const t of treesAround(spot.land.x, spot.land.z)) if (Math.hypot(t.x - spot.land.x, t.z - spot.land.z) < 22) near++;
+  assert.ok(near >= 6, `drawn spruce within 22 m: ${near}`);
+});
+
+test('Shift+G opens a sphere over that forest, and a double-click still picks its own point', () => {
+  const page = readFileSync('src/world/globe/inpage.ts', 'utf8');
+  assert.match(page, /next = 'sphere'/);
+  const show = page.slice(page.indexOf('function toGlobe'), page.indexOf('function toGame'));
+  assert.match(show, /if \(sphere\)/);
+  assert.match(show, /jumpTo\(PLANET\.radius \* 2\.2\)/);
+  assert.match(show, /forestLanding\(\)/);
+  assert.match(show, /lookOver\(spot\.land\.x, spot\.land\.z, spot\.land\.yaw\)/);
+  assert.match(page, /toGlobe\(true\)/);
+  const view = readFileSync('src/world/globe/globeView.ts', 'utf8');
+  const dbl = view.slice(view.indexOf("listen(canvas, 'dblclick'"), view.indexOf("listen(window, 'keydown'"));
+  assert.match(dbl, /beginFall\(hit\)/);
+  assert.match(view, /if \(!hit && !aimed && aim\.on && dir\.angleTo\(aim\.dir\) < 1e-3\) yaw0 = -aim\.yaw/);
+  const journey = readFileSync('src/vr/journey.ts', 'utf8');
+  assert.match(journey, /new SphereGeometry\(0\.22/);
+  assert.match(journey, /A round planet/);
+});

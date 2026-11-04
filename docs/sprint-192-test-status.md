@@ -76,7 +76,7 @@ Gate verdicts from the T-0129 frames, against T-0127:
 
 ## Wildlife placement on main `5c0075d` (Nov 3)
 
-grokbot-3. Branch `cursor/landing-cast-view-1634`, based on main `5c0075d`. The viewer places the census cast inside the follow camera's frame, beside the wolf when there is only one animal, and clears the sight line. The Rust simulation, the census, the cover classification, `world/globe/inpage.ts`, `render/sky.ts`, the landed-ground lighting, and the cloud code were not edited. The frames are `tasks/evidence/T-0130/`.
+grokbot-3. Branch `cursor/landing-cast-view-1634`. The frames were captured on this branch, then the branch was rebased onto main `0e986dc` (#267, interior thermal dump only). That commit does not touch the viewer. The viewer places the census cast inside the follow camera's frame, beside the wolf when there is only one animal, and clears the sight line. The Rust simulation, the census, the cover classification, `world/globe/inpage.ts`, `render/sky.ts`, the landed-ground lighting, and the cloud code were not edited. The frames are `tasks/evidence/T-0130/`.
 
 | check | command | result |
 |---|---|---|

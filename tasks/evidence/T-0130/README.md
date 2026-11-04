@@ -1,6 +1,6 @@
 # T-0130 landing wildlife, recaptured
 
-Sprint #192, 3 Nov 2026. grokbot-3. Base is main `5c0075d`. The viewer places the census cast. `world/globe/inpage.ts`, `render/sky.ts`, the Rust simulation, the census, the cover classification, the landed-ground lighting, and the cloud code were not edited. Animal models were left as they are. Canada lynx still has no Meshy file; the procedural body stays the fallback.
+Sprint #192, 3 Nov 2026. grokbot-3. The frames were captured on this branch, then the branch was rebased onto main `0e986dc` (#267, interior thermal dump only). That commit does not touch the viewer. The viewer places the census cast. `world/globe/inpage.ts`, `render/sky.ts`, the Rust simulation, the census, the cover classification, the landed-ground lighting, and the cloud code were not edited. Animal models were left as they are. Canada lynx still has no Meshy file; the procedural body stays the fallback.
 
 SwiftShader (software GL), Chrome headless, 1280×720. `tools/landing-matrix.mjs` calling `tools/fall-shot.mjs` with `EMBODY=2` and the ten click coordinates from `tasks/evidence/T-0125/matrix.json` (the same clicks as T-0126, T-0127, and T-0129). The capture waits until the globe has input, drops with G, waits until the glide is under 650 m, embodies, and waits until the mode is `game` before the landed frames. Every site logged `INPAGE drop` with the camera on the click, then reached `mode: game` before `landed-01.png`. The embody frames are at 400 m.
 

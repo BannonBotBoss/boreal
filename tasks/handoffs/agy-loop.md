@@ -2,7 +2,7 @@
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`, merged `origin/main` at `0808fd9`)
-- **Active task worktree**: None (`0/2` active claims held by `agy`)
+- **Active task worktree**: `C:\dev\boreal-agy-wolf-water-entry` (branch `agy/wolf-water-entry`, `T-0054` claimed; `1/2` active claims held by `agy`)
 - **Completed task worktrees awaiting review**:
   - `C:\dev\boreal-agy-hare-thump` (branch `agy/hare-thump`, commit `c6d0676`, implementation commit `54b10ba`, `T-0053` complete)
   - `C:\dev\boreal-agy-library-sprint` (branch `agy/library-sprint`, commit `82d2b22`, implementation commit `cbf6bdc`, `T-0052` complete)

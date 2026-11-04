@@ -449,6 +449,7 @@ export function skinnedVertex(mesh: THREE.SkinnedMesh, index: number) {
   const acc = new THREE.Vector3();
   const m = new THREE.Matrix4();
   const mats = mesh.skeleton.boneMatrices;
+  if (!mats) return acc;
   for (let k = 0; k < 4; k++) {
     const weight = sw.getComponent(index, k);
     if (weight === 0) continue;

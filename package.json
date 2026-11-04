@@ -13,12 +13,16 @@
     "test:rust": "cargo test --manifest-path rust/boreal-sim/Cargo.toml"
   },
   "dependencies": {
+    "@iwsdk/core": "1.1.0-rc.2",
     "katex": "^0.19.1",
-    "three": "0.180.0"
+    "three": "npm:super-three@0.185.0"
+  },
+  "overrides": {
+    "three": "npm:super-three@0.185.0"
   },
   "devDependencies": {
     "@types/node": "24.7.0",
-    "@types/three": "0.180.0",
+    "@types/three": "0.185.0",
     "tsx": "4.20.6",
     "typescript": "5.9.3",
     "vite": "7.1.12"

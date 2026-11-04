@@ -277,6 +277,7 @@ function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.cl
 actionButton.onclick = perform;
 element('pause').onclick = togglePause;
 element('menu-btn').onclick = () => { if (!menu.open) openStart(); };
+void import('./vr/session').then(m => m.mountEnterVr(notice)).catch(e => console.warn('vr', e));
 element('photo-btn').onclick = () => enterPhoto();
 element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = view.playable.cameraHeight; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
 element('help').onclick = () => { if (!menu.open) togglePause(); menu.openControls(); }; // Controls screen (the Library text is a button there)

@@ -8,14 +8,26 @@ import { sharedPlanetSim } from '../../core/planetWeather';
 import { decodeEngineReport, type EngineReport } from '../../core/engineReport';
 import { CosmosSphere, type SphereInputs } from './sphere';
 
-/** Cycle 1 is the pink-white bath. Cycle 62 is the planet, same hand-off as the VR journey. */
-export const OPENING = { from: 1, planetAt: 62, perSec: 2 } as const;
+/**
+ * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
+ * is only tens of kelvin). Cycle 62 is the planet. The cycle is not advanced at a constant
+ * rate: the colour arc takes `arcSec`, then the violet holds for `holdSec`, then the planet.
+ * A click or a pinch skips the rest.
+ */
+export const OPENING = { from: 1, violetAt: 58, planetAt: 62, arcSec: 32, holdSec: 8 } as const;
 
 const HOT: SphereInputs = { a: 1e-40, h: 1, temperature: 1e22, rho: 1 };
 
-export function stepOpening(cycle: number, dt: number, planetAt = OPENING.planetAt, perSec = OPENING.perSec) {
-  const next = Math.min(planetAt, Math.max(OPENING.from, cycle) + Math.max(0, dt) * perSec);
-  return { cycle: next, planet: next >= planetAt };
+const smooth = (u: number) => { const x = Math.min(1, Math.max(0, u)); return x * x * (3 - 2 * x); };
+
+/** Where the opening is after `elapsed` seconds. The colour is still whatever Rust reports at that cycle. */
+export function openingCycle(elapsed: number, pace = OPENING) {
+  const t = Math.max(0, elapsed);
+  const total = pace.arcSec + pace.holdSec;
+  if (t >= total) return { cycle: pace.planetAt, planet: true, violet: false };
+  if (t >= pace.arcSec) return { cycle: pace.violetAt, planet: false, violet: true };
+  const cycle = pace.from + (pace.violetAt - pace.from) * smooth(t / pace.arcSec);
+  return { cycle, planet: false, violet: false };
 }
 
 export function sphereInputs(report: EngineReport | null): SphereInputs {
@@ -41,6 +53,7 @@ export interface Opening {
   readonly cycle: number;
   readonly phase: 'sphere' | 'planet';
   step(dt: number): void;
+  skip(): void;
   stop(): void;
 }
 
@@ -48,16 +61,28 @@ export interface Opening {
 export function createOpening(onPlanet: () => void): Opening {
   const sphere = new CosmosSphere(document.body);
   sphere.setInputs(HOT);
+  let elapsed = 0;
   let cycle: number = OPENING.from;
   let phase: Opening['phase'] = 'sphere';
   let sim: PlanetSim | null = latestPlanetSim();
   let busy = false;
+  const hint = document.createElement('div');
+  hint.textContent = 'Click, or pinch, to skip to the planet.';
+  hint.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:26;color:#f4efe2;font:15px system-ui;pointer-events:none;text-shadow:0 1px 4px #000';
+  document.body.appendChild(hint);
+  const onPointer = (e: PointerEvent) => {
+    const t = e.target;
+    if (t instanceof Element && t.closest('button,a,input,textarea,select,dialog,#loading')) return;
+    api.skip();
+  };
+  window.addEventListener('pointerdown', onPointer);
   const api: Opening = {
     get cycle() { return cycle; },
     get phase() { return phase; },
     step(dt: number) {
       if (phase === 'planet') return;
-      const next = stepOpening(cycle, dt);
+      elapsed += Math.max(0, dt);
+      const next = openingCycle(elapsed);
       cycle = next.cycle;
       if (next.planet) { finish(); return; }
       if (!busy) {
@@ -65,6 +90,7 @@ export function createOpening(onPlanet: () => void): Opening {
         void paint().finally(() => { busy = false; });
       }
     },
+    skip() { finish(); },
     stop() { finish(); },
   };
   (window as unknown as { __borealOpening?: Opening }).__borealOpening = api;
@@ -81,6 +107,8 @@ export function createOpening(onPlanet: () => void): Opening {
   function finish() {
     if (phase === 'planet') return;
     phase = 'planet';
+    window.removeEventListener('pointerdown', onPointer);
+    hint.remove();
     sphere.dispose();
     onPlanet();
   }

@@ -77,7 +77,10 @@ const RAY = {
       col *= brightness * plasma * mix(0.85, 0.4, fres);
       float peak = max(col.r, max(col.g, col.b));
       if (peak > 1.0) col *= 1.0 / peak;
-      gl_FragColor = vec4(col, 1.0);
+      // The mesh edge is a polygon. Fade the last rim so the silhouette is the glow, not the facets.
+      float edge = smoothstep(0.62, 0.98, fres);
+      col *= 1.0 - edge;
+      gl_FragColor = vec4(col, 1.0 - edge);
     }`,
 };
 
@@ -126,7 +129,7 @@ export class CosmosSphere {
     this.gpu = readGpu(gl);
     this.tier = tierById('low');
     this.camera.position.z = 12;
-    this.ray = new THREE.ShaderMaterial({ ...RAY, transparent: false });
+    this.ray = new THREE.ShaderMaterial({ ...RAY, transparent: true, depthWrite: false });
     this.core = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), this.ray);
     this.core.renderOrder = 2;
     const haloMat = new THREE.ShaderMaterial({
@@ -205,11 +208,13 @@ export class CosmosSphere {
       this.final.uniforms.grain.value = 0;
     }
     this.core.geometry.dispose();
-    this.core.geometry = new THREE.SphereGeometry(1, tier.segments, Math.max(16, tier.segments / 2));
+    // The tier's segment count is for cost. A screen-filling sphere at 32 segments shows flats, so the silhouette stays round.
+    const seg = Math.max(tier.segments, 192);
+    this.core.geometry = new THREE.SphereGeometry(1, seg, Math.max(80, Math.round(seg / 2)));
     for (const s of this.shells) { s.removeFromParent(); s.geometry.dispose(); (s.material as THREE.Material).dispose(); }
     this.shells = [];
     for (let i = 0; i < tier.shells; i++) {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(1.08 + i * 0.12, 32, 24), new THREE.MeshBasicMaterial({ color: 0x5510aa, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false }));
+      const m = new THREE.Mesh(new THREE.SphereGeometry(1.08 + i * 0.12, seg, Math.max(80, Math.round(seg / 2))), new THREE.MeshBasicMaterial({ color: 0x5510aa, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false }));
       this.shells.push(m);
       this.core.add(m);
     }

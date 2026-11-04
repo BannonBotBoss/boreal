@@ -358,24 +358,49 @@ pub fn at_time(t: f64) -> Reheat {
             species,
         };
     }
-    // Decay is finished. The photon temperature is the standard one, T = T0 / a,
-    // and the inflaton density has been consumed.
+    // The inflaton is gone. Keep the radiation era going from this state
+    // (a ∝ √t, ρ_r ∝ a⁻⁴) until that temperature meets the standard track.
+    // Joining earlier used T = T0/a with a pinned at 1e-14, which dropped T
+    // by orders of magnitude in one step.
+    let cont = continue_radiation(t, last);
     let late = cosmology::at_time(t);
-    let (g, species) = species_at(late.temperature);
+    let close = late.temperature > 0.0
+        && cont.temperature > 0.0
+        && late.temperature < cont.temperature * 2.0
+        && cont.temperature < late.temperature * 2.0;
+    // Once the two tracks agree, stay on the standard one. It is the track
+    // that reaches 2.725 K today; pure radiation would stay warmer.
+    let joined = late.temperature.is_finite() && late.a > 0.0 && (close || late.a > 1.0e-12);
+    let (temperature, a, h, rho_r) = if joined {
+        (late.temperature, late.a, late.h, late.rho_r)
+    } else {
+        (cont.temperature, cont.a, cont.h, cont.rho_r)
+    };
+    let (g, species) = species_at(temperature);
     Reheat {
         t,
-        a: late.a,
-        h: late.h,
+        a,
+        h,
         rho_phi: 0.0,
-        rho_r: late.rho_r,
-        temperature: late.temperature,
+        rho_r,
+        temperature,
         t_rh_analytic,
         t_rh_integrated: run.t_rh,
         g_star: g,
-        qcd_threshold: qcd_flag(late.temperature),
+        qcd_threshold: qcd_flag(temperature),
         active: true,
         species,
     }
+}
+
+/// Radiation-dominated continuation: a ∝ √t and ρ_r ∝ a⁻⁴, H from Friedmann.
+fn continue_radiation(t: f64, end: Sample) -> Sample {
+    let grow = (t / end.t.max(1e-40)).sqrt().max(1.0);
+    let a = end.a * grow;
+    let rho_r = end.rho_r / grow.powi(4);
+    let (temperature, _) = temperature_consistent(rho_r);
+    let h = hubble(0.0, rho_r);
+    Sample { t, a, h, rho_phi: 0.0, rho_r, temperature }
 }
 
 fn sample_run(samples: &[Sample], t: f64) -> Sample {
@@ -448,6 +473,27 @@ mod tests {
         assert!((high - 106.75).abs() < 0.2, "high {high}");
         let low = g_star(1.0e-12);
         assert!((low - 3.36).abs() < 0.05, "low {low}");
+    }
+
+    #[test]
+    fn temperature_falls_without_a_jump_after_the_decay() {
+        let hand = cosmology::handoff();
+        let mut t = hand.t;
+        let mut prev = at_time(t).temperature;
+        // Half-decade steps from the end of inflation through today.
+        while t < 4.4e17 {
+            t *= 10f64.sqrt();
+            let now = at_time(t).temperature;
+            if prev > 0.0 && now > 0.0 {
+                let ratio = prev / now;
+                assert!(ratio < 8.0 && ratio > 0.5, "T jumped from {prev} to {now} at t={t}");
+            }
+            prev = now;
+        }
+        let today = at_time(13.8e9 * 365.25 * 86400.0);
+        assert!((today.temperature - 2.725).abs() < 0.05, "today {}", today.temperature);
+        let bbn = at_time(100.0);
+        assert!(bbn.temperature > 1.0e8 && bbn.temperature < 1.0e10, "bbn {}", bbn.temperature);
     }
 
     #[test]

@@ -5,5 +5,5 @@ import { readFileSync } from 'node:fs';
 test('the G gallery key is gated off the globe', () => {
   const src = readFileSync(new URL('../src/camera/gameCamera.ts', import.meta.url), 'utf8');
   assert.match(src, /galleryKey = \(\) => view === 'game' && !document\.body\.classList\.contains\('on-globe'\)/);
-  assert.match(src, /e\.key === 'g' && galleryKey\(\)/);
+  assert.match(src, /e\.key === 'g' \|\| e\.key === 'G'\) && !e\.shiftKey && galleryKey\(\)/);
 });

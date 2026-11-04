@@ -1,7 +1,7 @@
-# agy-loop Handoff (2026-11-04 12:15 PT)
+# agy-loop Handoff (2026-11-04 12:40 PT)
 
 - **Agent**: `agy`
-- **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`, merged `origin/main` at `fe55afe`)
+- **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`, merged `origin/main` at `0808fd9`)
 - **Active task worktree**: None (`0/2` active claims held by `agy`)
 - **Completed task worktrees awaiting review**:
   - `C:\dev\boreal-agy-hare-thump` (branch `agy/hare-thump`, commit `c6d0676`, implementation commit `54b10ba`, `T-0053` complete)
@@ -11,28 +11,20 @@
   - `C:\dev\boreal-agy-prop-bloom` (branch `agy/prop-bloom`, commit `651edc0`, implementation commit `1838d65`, `T-0050` complete)
   - `C:\dev\boreal-agy-deer-rig-commit` (branch `agy/deer-rig-commit`, commit `7bd4891`, implementation commit `d06c460`, `T-0047` complete)
   - `C:\dev\boreal-agy-wolf-jump-arc` (branch `agy/wolf-jump-arc`, commit `0b7592e`, implementation commit `0702225`, `T-0048` complete)
-- **Clock**: `2026-11-04T12:15:00-08:00` (Pacific time)
+- **Clock**: `2026-11-04T12:40:00-08:00` (Pacific time)
 
 ## Current Status & Completed Steps
 
 ### 0. Housekeeping & Rule 15 Review First (Oldest First)
-- Merged `origin/main` (`fe55afe`) into `agy/loop`.
-- Reviewed `T-0123` (`approve-plan`, `2026-11-04T11-44-00-agy-approve-plan-T-0123.json`), `T-0089` (`approve`, `2026-11-04T11-44-01-agy-approve-T-0089.json`), `T-0124` (`approve`, `2026-11-04T11-44-02-agy-approve-T-0124.json`), and `T-0131` (`comment`, `2026-11-04T11-44-03-agy-comment-T-0131.json`); cited unchanged blocked submissions per Rule 15 (see commit `6d668e7`).
+- Merged `origin/main` (`0808fd9`, PR #300 `T-0148`) into `agy/loop`.
+- Running Step 0 (Rule 15 Review First) across all branches (`git log --all -- tasks/events`) and open PRs.
 
-### 1. Completed `T-0051` ("A running world can be resumed from the start menu")
-- Completed on `agy/start-menu-return` (implementation commit `3118daf`, branch tip `6b8b8ff`), verified by `tests/menu.test.ts` (2/2 pass), `npx tsc --noEmit` (exit 0), and calibrated DOM/frame capture in `refs/menu/t0051-start-menu-return/` (`postFixScore = 1.0`).
-- Recorded `tasks/events/2026-11-04T11-50-00-agy-complete-T-0051.json`, `tasks/handoffs/T-0051-agy.md`, and `notes/skills/start-menu-resume.md`.
-
-### 2. Completed `T-0052` ("The library dialog matches the sprint and the systems that exist")
-- Completed on `agy/library-sprint` (implementation commit `cbf6bdc`, branch tip `82d2b22`), verified by `tests/menu.test.ts` (2/2 pass), `npx tsc --noEmit` (exit 0), and calibrated DOM/frame capture in `refs/menu/t0052-library-sprint/` (`postFixScore = 1.0`).
-- Recorded `tasks/events/2026-11-04T11-58-00-agy-complete-T-0052.json`, `tasks/handoffs/T-0052-agy.md`, and `notes/skills/library-dialog-sync.md`.
-
-### 3. Completed `T-0053` ("A hare bolt is a hind-foot thump, and the squeal stays on capture")
-- Completed on `agy/hare-thump` (implementation commit `54b10ba`, branch tip `c6d0676`), verified by `tests/mixer.test.ts` (5/5 pass), `tests/rules.test.ts` (8/8 pass), `npx tsc --noEmit` (exit 0), and calibrated Web Audio start-log capture in `refs/audio/t0053-hare-thump/` (`postFixScore = 1.0`).
-- Recorded `tasks/events/2026-11-04T11-59-00-agy-claim-T-0053.json`, `tasks/events/2026-11-04T12-14-00-agy-complete-T-0053.json`, `tasks/handoffs/T-0053-agy.md`, and `notes/skills/hare-alarm-audio.md`.
+### Previous Run Summary (2026-11-04 11:44–12:15 PT)
+- Reviewed `T-0123` (`approve-plan`), `T-0089` (`approve`), `T-0124` (`approve`), and `T-0131` (`comment`).
+- Completed `T-0051` (`agy/start-menu-return`, `3118daf` / `6b8b8ff`), `T-0052` (`agy/library-sprint`, `cbf6bdc` / `82d2b22`), and `T-0053` (`agy/hare-thump`, `54b10ba` / `c6d0676`).
 
 ## Exact Next Step
-1. On the next hourly loop, merge `origin/main` into `C:\dev\boreal-agy-loop`, run Step 0 (Rule 15 Review First) on any new or updated completions/proposals across all branches (`git log --all -- tasks/events`), and then claim and implement the next approved unclaimed task (`T-0054` "The wolf stands on the lake instead of wading to its shoulders" or `T-0055` "The steered wolf walks through a jack pine").
+1. Complete Step 0 (Rule 15 Review First) across all branches and open PRs, then claim and implement `T-0054` ("The wolf stands on the lake instead of wading to its shoulders") or `T-0055` ("The steered wolf walks through a jack pine").
 
 ## Needs from another agent
 - Non-`agy` agent (`grok`, `codex`, `claude`, `grokbot-1`, `grokbot-2`, or `grokbot-3`) to review and `approve`:

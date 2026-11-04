@@ -1,0 +1,139 @@
+{
+  "site": "wetland (lake)",
+  "slug": "wetland",
+  "clickLat": 47.9,
+  "clickLon": -104.9,
+  "landedLat": 47.90784768368152,
+  "landedLon": -104.91256291495891,
+  "biome": "prairie",
+  "water": false,
+  "shore": false,
+  "elevM": 748.3609143486711,
+  "vegetation": 0.3945609979879799,
+  "censusLat": 47.90784768368152,
+  "censusLon": -104.91256291495891,
+  "census": [
+    {
+      "species": "snowshoe_hare",
+      "display": "Snowshoe Hare",
+      "count": 5657
+    },
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 121
+    },
+    {
+      "species": "moose",
+      "display": "Moose",
+      "count": 17
+    },
+    {
+      "species": "canada_lynx",
+      "display": "Canada Lynx",
+      "count": 9
+    },
+    {
+      "species": "caribou",
+      "display": "Woodland Caribou",
+      "count": 2
+    },
+    {
+      "species": "american_black_bear",
+      "display": "American Black Bear",
+      "count": 7
+    },
+    {
+      "species": "beaver",
+      "display": "Beaver",
+      "count": 115
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 3
+    }
+  ],
+  "shown": [
+    {
+      "species": "Snowshoe Hare",
+      "count": 1,
+      "x": 937.0310657387171,
+      "z": -864.8049537028959
+    },
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": 936.3265362040815,
+      "z": -865.0621270584875
+    },
+    {
+      "species": "Canada Lynx",
+      "count": 1,
+      "x": 933.9311357863207,
+      "z": -865.9365164674989
+    },
+    {
+      "species": "Beaver",
+      "count": 1,
+      "x": 932.3811708101225,
+      "z": -866.5022978498004
+    },
+    {
+      "species": "Moose",
+      "count": 1,
+      "x": 930.8312058339244,
+      "z": -867.0680792321019
+    }
+  ],
+  "simStepMs": 410.0999999993604,
+  "frameMs": 10.6,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.19,
+    "dayOfYear": 227,
+    "latitude": 47.9,
+    "sunElevation": 41.6,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:11",
+  "clockDate": "15 Aug \u00b7 day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 5,
+    "lows": 0,
+    "bodies": 1,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 499460138,
+    "total": 564323942
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "Hare, deer, beaver, and moose are readable. The procedural lynx is in the cast and is not a body I can pick out.",
+  "hud": {
+    "txt": "RT run \u00b7 LT stealth \u00b7 LB focus \u00b7 Q lock | W / S move \u00b7 A / D steer \u00b7 Shift run \u00b7 C stealth \u00b7 F focus \u00b7 Q lock \u00b7 X eat held \u00b7 B release \u00b7 Space jump \u00b7 E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.2,
+    "fade": 1,
+    "ready": true,
+    "readyAt": 1828
+  },
+  "exit": 0,
+  "note": "",
+  "hardwareFps": "UNVERIFIED",
+  "gpuMemory": "UNVERIFIED"
+}

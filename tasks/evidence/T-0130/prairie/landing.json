@@ -1,0 +1,154 @@
+{
+  "site": "prairie",
+  "slug": "prairie",
+  "clickLat": 51,
+  "clickLon": -107,
+  "landedLat": 50.99973717209072,
+  "landedLon": -107.00039958876872,
+  "biome": "prairie",
+  "water": false,
+  "shore": false,
+  "elevM": 588,
+  "vegetation": 0.42408756038211265,
+  "censusLat": 50.99973717209072,
+  "censusLon": -107.00039958876872,
+  "census": [
+    {
+      "species": "snowshoe_hare",
+      "display": "Snowshoe Hare",
+      "count": 1209
+    },
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 39
+    },
+    {
+      "species": "moose",
+      "display": "Moose",
+      "count": 27
+    },
+    {
+      "species": "canada_lynx",
+      "display": "Canada Lynx",
+      "count": 7
+    },
+    {
+      "species": "gray_wolf",
+      "display": "Gray Wolf",
+      "count": 1
+    },
+    {
+      "species": "caribou",
+      "display": "Woodland Caribou",
+      "count": 1
+    },
+    {
+      "species": "american_black_bear",
+      "display": "American Black Bear",
+      "count": 9
+    },
+    {
+      "species": "grizzly_bear",
+      "display": "Grizzly Bear",
+      "count": 1
+    },
+    {
+      "species": "bald_eagle",
+      "display": "Bald Eagle",
+      "count": 5
+    },
+    {
+      "species": "beaver",
+      "display": "Beaver",
+      "count": 29
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 18
+    }
+  ],
+  "shown": [
+    {
+      "species": "Snowshoe Hare",
+      "count": 1,
+      "x": 28.931065738717102,
+      "z": 36.19504629710412
+    },
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": 27.381100762518926,
+      "z": 35.629264914802626
+    },
+    {
+      "species": "Red Fox",
+      "count": 1,
+      "x": 25.83113578632075,
+      "z": 35.06348353250113
+    },
+    {
+      "species": "Bald Eagle",
+      "count": 1,
+      "x": 24.281170810122575,
+      "z": 34.497702150199636
+    },
+    {
+      "species": "Beaver",
+      "count": 1,
+      "x": 22.7312058339244,
+      "z": 33.93192076789814
+    }
+  ],
+  "simStepMs": 402.59999999935303,
+  "frameMs": 18.2,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.19,
+    "dayOfYear": 227,
+    "latitude": 51,
+    "sunElevation": 40.1,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:11",
+  "clockDate": "15 Aug \u00b7 day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 6,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 390169878,
+    "total": 512465502
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "Hare, deer, eagle, and beaver are readable.",
+  "hud": {
+    "txt": "RT run \u00b7 LT stealth \u00b7 LB focus \u00b7 Q lock | W / S move \u00b7 A / D steer \u00b7 Shift run \u00b7 C stealth \u00b7 F focus \u00b7 Q lock \u00b7 X eat held \u00b7 B release \u00b7 Space jump \u00b7 E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.3,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2096
+  },
+  "exit": 0,
+  "note": "",
+  "hardwareFps": "UNVERIFIED",
+  "gpuMemory": "UNVERIFIED"
+}

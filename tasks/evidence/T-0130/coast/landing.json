@@ -1,0 +1,144 @@
+{
+  "site": "coast",
+  "slug": "coast",
+  "clickLat": 44.3,
+  "clickLon": -122.2,
+  "landedLat": 44.29971845831974,
+  "landedLon": -122.20034182055747,
+  "biome": "boreal",
+  "water": false,
+  "shore": false,
+  "elevM": 1038.9919730469608,
+  "vegetation": 0.8988090469102439,
+  "censusLat": 44.29971845831974,
+  "censusLon": -122.20034182055747,
+  "census": [
+    {
+      "species": "snowshoe_hare",
+      "display": "Snowshoe Hare",
+      "count": 4754
+    },
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 65
+    },
+    {
+      "species": "moose",
+      "display": "Moose",
+      "count": 39
+    },
+    {
+      "species": "canada_lynx",
+      "display": "Canada Lynx",
+      "count": 10
+    },
+    {
+      "species": "american_black_bear",
+      "display": "American Black Bear",
+      "count": 13
+    },
+    {
+      "species": "grizzly_bear",
+      "display": "Grizzly Bear",
+      "count": 1
+    },
+    {
+      "species": "bald_eagle",
+      "display": "Bald Eagle",
+      "count": 4
+    },
+    {
+      "species": "beaver",
+      "display": "Beaver",
+      "count": 32
+    },
+    {
+      "species": "red_fox",
+      "display": "Red Fox",
+      "count": 25
+    }
+  ],
+  "shown": [
+    {
+      "species": "Snowshoe Hare",
+      "count": 1,
+      "x": 28.931065738717106,
+      "z": 36.19504629710412
+    },
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": 27.38110076251893,
+      "z": 35.629264914802626
+    },
+    {
+      "species": "Red Fox",
+      "count": 1,
+      "x": 25.831135786320754,
+      "z": 35.06348353250113
+    },
+    {
+      "species": "Bald Eagle",
+      "count": 1,
+      "x": 24.28117081012258,
+      "z": 34.497702150199636
+    },
+    {
+      "species": "Moose",
+      "count": 1,
+      "x": 22.731205833924403,
+      "z": 33.93192076789814
+    }
+  ],
+  "simStepMs": 466.5999999992039,
+  "frameMs": 35.6,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.18,
+    "dayOfYear": 227,
+    "latitude": 44.3,
+    "sunElevation": 43.2,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:10",
+  "clockDate": "15 Aug \u00b7 day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 6,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 492890037,
+    "total": 541861905
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "Hare, deer, eagle, and moose are readable. The fox is in the cast and is not a body I can pick out.",
+  "hud": {
+    "txt": "RT run \u00b7 LT stealth \u00b7 LB focus \u00b7 Q lock | W / S move \u00b7 A / D steer \u00b7 Shift run \u00b7 C stealth \u00b7 F focus \u00b7 Q lock \u00b7 X eat held \u00b7 B release \u00b7 Space jump \u00b7 E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.7,
+    "fade": 1,
+    "ready": false,
+    "readyAt": 2023
+  },
+  "exit": 0,
+  "note": "",
+  "hardwareFps": "UNVERIFIED",
+  "gpuMemory": "UNVERIFIED"
+}

@@ -1,0 +1,80 @@
+{
+  "site": "tropics",
+  "slug": "tropics",
+  "clickLat": -7.1,
+  "clickLon": -67,
+  "landedLat": -7.099767071758854,
+  "landedLon": -66.99973558780965,
+  "biome": "tropical",
+  "water": false,
+  "shore": false,
+  "elevM": 109.78300646125284,
+  "vegetation": 0.9994147930584895,
+  "censusLat": -7.099767071758854,
+  "censusLon": -66.99973558780965,
+  "census": [
+    {
+      "species": "white_tailed_deer",
+      "display": "White-tailed Deer",
+      "count": 22
+    }
+  ],
+  "shown": [
+    {
+      "species": "White-tailed Deer",
+      "count": 1,
+      "x": -32.694578275016376,
+      "z": -22.239456972782545
+    }
+  ],
+  "simStepMs": 268.69999999991023,
+  "frameMs": 11.3,
+  "softwareRendering": true,
+  "lighting": {
+    "hour": 9.18,
+    "dayOfYear": 227,
+    "latitude": -7.1,
+    "sunElevation": 42.9,
+    "day": 1,
+    "golden": 0,
+    "night": 0,
+    "state": "day"
+  },
+  "clock": "09:10",
+  "clockDate": "15 Aug \u00b7 day 227",
+  "picture": {
+    "specks": 0,
+    "fulls": 2,
+    "lows": 0,
+    "bodies": 0,
+    "wolves": {
+      "near": 1,
+      "mid": 0,
+      "far": 0
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "heap": {
+    "used": 587206131,
+    "total": 658584955
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "seams": "The white-tailed deer stands to the right of the wolf and reads in both landed frames.",
+  "hud": {
+    "txt": "RT run \u00b7 LT stealth \u00b7 LB focus \u00b7 Q lock | W / S move \u00b7 A / D steer \u00b7 Shift run \u00b7 C stealth \u00b7 F focus \u00b7 Q lock \u00b7 X eat held \u00b7 B release \u00b7 Space jump \u00b7 E interact",
+    "mode": "game",
+    "phase": "game",
+    "h": 400,
+    "sim": 23.6,
+    "fade": 1,
+    "ready": true,
+    "readyAt": 1725
+  },
+  "exit": 0,
+  "note": "",
+  "hardwareFps": "UNVERIFIED",
+  "gpuMemory": "UNVERIFIED"
+}

@@ -1,0 +1,6 @@
+[
+  "sphere-t1.png {\"sphere\":true,\"w\":1280,\"h\":720,\"look\":\"sphere radius is 1.41\"} menu {\"hidden\":false,\"visibility\":\"hidden\",\"fade\":\"\"}",
+  "sphere-t12.png {\"sphere\":true,\"w\":1280,\"h\":720,\"look\":\"sphere radius is 3.69\"} menu {\"hidden\":false,\"visibility\":\"hidden\",\"fade\":\"\"}",
+  "sphere-t60.png {\"sphere\":true,\"w\":1280,\"h\":720,\"look\":\"sphere radius is 7.24\"} menu {\"hidden\":false,\"visibility\":\"hidden\",\"fade\":\"\"}",
+  "after U {\"panel\":true,\"sphere\":false,\"menu\":\"visible\",\"menuText\":\"Boreal\\nContinue\\nNew world\\nControls\\nMusic\\nGraphics\\nBoard ↗\\nQuit\"}"
+]

@@ -22,6 +22,7 @@ let open = false;
 let sphere: CosmosSphere | null = null;
 let timer = 0;
 let manual = false;
+let menuConcealed = false;
 let generation = 0;
 let synced = NaN;
 let simRef: PlanetSim | null = null;
@@ -556,8 +557,23 @@ function paintLook(report: EngineReport) {
   }
 }
 
+function concealStartMenu() {
+  const menu = document.getElementById('start-menu');
+  if (!menu || menu.hidden || menu.classList.contains('fade')) return;
+  menuConcealed = true;
+  menu.style.visibility = 'hidden';
+}
+
+function revealStartMenu() {
+  const menu = document.getElementById('start-menu');
+  if (!menu || !menuConcealed) return;
+  menuConcealed = false;
+  menu.style.visibility = '';
+}
+
 function showSphere(report: EngineReport) {
   if (!sphere) return;
+  concealStartMenu();
   const space = report.instances.find(i => i.type === 'spacetime');
   const heat = report.instances.find(i => i.type === 'reheating');
   sphere.setInputs({
@@ -568,6 +584,10 @@ function showSphere(report: EngineReport) {
   });
 }
 
-function hideSphere() { sphere?.dispose(); sphere = null; }
+function hideSphere() {
+  sphere?.dispose();
+  sphere = null;
+  revealStartMenu();
+}
 
 ensure();

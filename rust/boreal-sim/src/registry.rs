@@ -221,7 +221,7 @@ impl Engine for ReheatingEng {
         &[
             ParamDef { key: "Gamma_phi", label: "inflaton decay rate", unit: "1/s" },
             ParamDef { key: "g_star", label: "g* override (0 = compute it)", unit: "" },
-            ParamDef { key: "qcd_transition", label: "quark-hadron threshold flag", unit: "0 or 1" },
+            ParamDef { key: "qcd_transition", label: "watch the quark-hadron window", unit: "0 off, 1 on" },
             ParamDef { key: "qcd_MeV", label: "quark-hadron temperature", unit: "MeV" },
             ParamDef { key: "mass_photon", label: "photon mass", unit: "GeV" },
             ParamDef { key: "mass_gluon", label: "gluon mass", unit: "GeV" },
@@ -280,7 +280,7 @@ impl Engine for ReheatingEng {
             v("reheating temperature (analytic)", "K", r.t_rh_analytic),
             v("reheating temperature (integrated)", "K", r.t_rh_integrated),
             v("g*", "", r.g_star),
-            v("quark-hadron threshold", "", r.qcd_threshold),
+            v("in quark-hadron window (1 while T is near the pivot)", "", r.qcd_threshold),
         ];
         for s in &r.species {
             vars.push(v(&format!("{} number density", s.name), "1/m³", s.number_density));

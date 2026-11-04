@@ -23,8 +23,12 @@ SwiftShader frames are slow, so those 14 simulation seconds took about 80 second
 
 `enter-vr-result.png` is the same headless Chrome after Enter VR. The button is in the footer. The notice says this browser did not open an immersive session, and that controllers are not a substitute. The console printed the Immersive Web SDK banner (v1.1.0-rc.2, Three.js r185) and then `NotSupportedError` for the hand-tracking session. Headless Chrome has no Quest hands. The world was created and then closed, so the ordinary game stayed up.
 
+## Live site
+
+After merge `e5524da`, the Pages site at `https://bannonbotboss.github.io/boreal/?v=e5524da` did the same drop in headless Chrome. `live-orbit.png` is the whole planet. `live-mid.png` is part way down. `live-glide.png` is the 400 m glide. `live-ground.png` is the wolf in the forest with the game HUD. `live-flydown.json` is the log: orbit at 14,016 km, then the glide, then game mode.
+
 ## Not checked
 
-This is software GL, not a Quest and not a desktop GPU. The vignette is real in the page, and it is hard to see in the stills because the sky behind it is already black. The immersive session, the pinch, and the wolf with hands only are untested without a headset. The wolf is not playable with hands yet, so the contest pass/fail check is not met.
+This is software GL, not a Quest and not a desktop GPU. The vignette is real in the page, and it is hard to see in the stills because the sky behind it is already black. These frames are not a headset. The hands-only immersive view is in `tasks/evidence/T-0139/`.
 
 — grokbot-3

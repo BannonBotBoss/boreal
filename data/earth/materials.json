@@ -5,7 +5,8 @@
   "iron_melting": "Anzellini et al. 2013, Science 340:464, Simon-Glatzel fit T_m = T0 ((P - P0)/a + 1)^(1/c).",
   "initial_heat": "Initial uniform temperature = present mantle potential temperature 1600 K (Katsura et al. 2010, PEPI 183:212) as a lower bound for the end of accretion; differentiation heat is then computed, not given.",
   "core_light_elements": "Freezing-point depression of the core alloy (Fe with S/O/Si) relative to pure iron at inner-core pressures ~700 K (Alfe, Gillan & Price 2002, EPSL 195:91); the inner core freezes where T falls below the alloy liquidus, not the pure-iron curve.",
-  "cmb_boundary_layer": "Thermal boundary layer temperature contrast at the base of the mantle 1000 +- 500 K (Lay, Williams & Garnero 1998, Nature 392:461; 500-1800 K in Lay, Hernlund & Buffett 2008, Nat. Geosci. 1:25)."
+  "cmb_boundary_layer": "Thermal boundary layer temperature contrast at the base of the mantle 1000 +- 500 K (Lay, Williams & Garnero 1998, Nature 392:461; 500-1800 K in Lay, Hernlund & Buffett 2008, Nat. Geosci. 1:25).",
+  "iron_hcp_vinet": "hcp-iron cold curve: Vinet fit at 300 K, V0 = 22.428 A^3 per 2-atom cell, K0 = 163.4 GPa, K0' = 5.38 (Dewaele et al. 2006, PRL 97:215504). Core density deficit vs pure iron at core pressure: liquid outer core ~10%, solid inner core ~2-5% (Birch 1952, JGR 57:227; Hirose, Labrosse & Hernlund 2013, Annu. Rev. Earth Planet. Sci. 41:657); the solid value used is the upper end. The deficit lumps heat and light elements until a thermal term exists."
  },
  "bulk_core_mass_fraction": 0.325,
  "ocean_mass_kg": 1.4e+21,
@@ -59,5 +60,12 @@
   "cv": 830
  },
  "initial_temperature_K": 1600,
- "cmb_tbl_contrast_K": 1000
+ "cmb_tbl_contrast_K": 1000,
+ "iron_hcp_vinet": {
+  "V0_m3_per_atom": 1.1214e-29,
+  "K0_Pa": 163400000000.0,
+  "K0p": 5.38,
+  "deficit_liquid": 0.10,
+  "deficit_solid": 0.045
+ }
 }

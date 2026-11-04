@@ -85,6 +85,7 @@ export function createSky(scene: THREE.Scene) {
   const sunLight = new THREE.DirectionalLight(0xffebc3, 3); scene.add(sunLight, sunLight.target);
   const moonLight = new THREE.DirectionalLight(0x9fb4e6, .35); scene.add(moonLight, moonLight.target);
   const hemi = new THREE.HemisphereLight(0xf1f5dd, 0x526753, 2.7); scene.add(hemi);
+  const rimLight = new THREE.DirectionalLight(0xffd2a4, 0.35); scene.add(rimLight, rimLight.target);
   const fogDay = new THREE.Color(0xc4d4c8), fogGolden = new THREE.Color(0xd9a47c), fogNight = new THREE.Color(0x0d1422);
   const tmp = new THREE.Color(), tmpV = new THREE.Vector3(), keyDir = new THREE.Vector3();
   // Precipitation: one Points cloud around the camera (only drawn while it rains/snows), fall speed from Kessler V_t / snow ~1 m/s.
@@ -118,6 +119,10 @@ export function createSky(scene: THREE.Scene) {
       moonLight.position.copy(focus).add(tmpV.normalize().multiplyScalar(80)); moonLight.target.position.copy(focus);
       hemi.intensity = 2.7 * light.day + (1 - light.day) * Math.max(.35, nightSkyLight(Emoon, LIGHTING.gain)) + (1 - light.day) * 3 * Etw / LUX.ref * LIGHTING.gain; // + the twilight sky's own diffuse light on the ground (same units as the sun: 3 per LUX.ref lux)
       hemi.userData.night = (1 - light.day) * darkAdapted(LIGHTING.lux); // photoreal: the dark-adapted night sky is not in the IBL map, so keep this share unreduced
+      camera.getWorldDirection(keyDir); keyDir.y = 0.2; if (keyDir.lengthSq() < 1e-4) keyDir.set(0, 0.2, -1); keyDir.normalize();
+      rimLight.position.copy(focus).addScaledVector(keyDir, -24).setY(focus.y + 4);
+      rimLight.target.position.copy(focus);
+      rimLight.intensity = 0.35 * light.day + 0.38 * (1 - light.day);
       hemi.color.setRGB(.25, .3, .45).lerp(tmp.set(0xf1f5dd), light.day);
       hemi.groundColor.setRGB(.05, .06, .09).lerp(tmp.set(0x526753), light.day);
       const fog = (scene.fog as THREE.Fog).color;

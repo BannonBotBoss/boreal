@@ -11,13 +11,13 @@ export const LITTER = {
   speedMps: 0.9,
   yearSpeedMps: 1.6,
   denRingM: 1.2,
-  trailYoungM: 0.75,
-  trailYearM: 0.45,
-  trailGapM: 0.06,
-  /** Beside her, not in a line hidden by her body. The outer pair stays inside a 48° chase frame. */
-  lateralM: 0.85,
-  /** The chase camera is 3.6 m behind her and 1.05 m up. Closer than this, a pup is under the lens. */
-  viewBackM: 1.15,
+  trailYoungM: 0.55,
+  trailYearM: 0.4,
+  trailGapM: 0.04,
+  /** A tight pair beside her hips, not a line stretched toward the lens. */
+  lateralM: 0.32,
+  /** The chase camera is 3.6 m behind her. The cluster stays next to her, in front of that lens. */
+  viewBackM: 0.85,
   /** A step longer than a walk is the drop. She does not leave the litter at the old spot. */
   rejoinM: 4,
   /** Game seconds for one year of pup growth. Ten real minutes at the default clock (×12) is half a year. */
@@ -46,7 +46,7 @@ export function ageAfter(ageYears: number, gameSeconds: number) {
 
 /** How big a pup draws next to an adult. Four weeks is a bit under a third. One year is full size. */
 export function pupScale(ageYears: number) {
-  return 0.28 + 0.72 * growthU(ageYears);
+  return 0.22 + 0.78 * growthU(ageYears);
 }
 
 /** Metres behind the mother, before the slot gap. Older pups walk closer. */

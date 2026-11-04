@@ -32,7 +32,7 @@ export function createLitter(scene: THREE.Scene) {
   const ensure = (x: number, z: number, motherYaw: number) => {
     if (rows) return rows;
     rows = bornLitter(x, z, motherYaw).map(p => {
-      const wolf = createPlayerWolf(1400 + p.slot, { fur: false });
+      const wolf = createPlayerWolf(1400 + p.slot, { pup: true });
       const holder = new THREE.Group();
       holder.name = p.handle;
       holder.scale.setScalar(pupScale(p.ageYears));
@@ -64,7 +64,8 @@ export function createLitter(scene: THREE.Scene) {
       for (const row of live) {
         row.pup.ageYears = ageAfter(row.pup.ageYears, gameSeconds);
         row.pup.stage = growthStage(row.pup.ageYears);
-        row.holder.scale.setScalar(pupScale(row.pup.ageYears));
+        const grown = pupScale(row.pup.ageYears);
+        row.holder.scale.set(grown * 1.12, grown * 0.78, grown * 1.16);
         const prevX = row.pup.x, prevZ = row.pup.z;
         const dist = Math.hypot(prevX - motherX, prevZ - motherZ);
         const next = followStep(row.pup.x, row.pup.z, row.pup.slot, motherX, motherZ, motherYaw, dt, row.pup.ageYears);
@@ -90,6 +91,8 @@ export function createLitter(scene: THREE.Scene) {
     place() {
       if (!rows) return;
       for (const row of rows) {
+        const grown = pupScale(row.pup.ageYears);
+        row.holder.scale.set(grown * 1.12, grown * 0.78, grown * 1.16);
         row.holder.position.set(row.pup.x, Math.max(heightAt(row.pup.x, row.pup.z), -0.2), row.pup.z);
         row.holder.rotation.y = yaw;
         row.wolf.animate(clock, row.wolf.brain.motion === 'walk', undefined, 0, 'walk');

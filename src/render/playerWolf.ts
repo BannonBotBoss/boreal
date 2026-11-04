@@ -40,8 +40,9 @@ export function poseWolfRig(tilt: THREE.Object3D, chains: WolfChain[], pose: Ret
     c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
   });
 }
-export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = {}) {
+export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean } = {}) {
   const portrait = !!options.portrait;
+  const withFur = options.fur !== false;
   const root = new THREE.Group(); root.scale.setScalar(WOLF_SCALE);
   const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
   const torso = bones[BONE.torso], head = bones[BONE.head], jaw = bones[BONE.jaw];
@@ -91,16 +92,14 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean } = 
   applyStylizedFill(skinMaterial, coatOf('Gray Wolf'));
   const furMaterial = furCardMaterial();
   applyStylizedFill(furMaterial, coatOf('Gray Wolf'));
-  const skins = [
-    new THREE.SkinnedMesh(geometry, skinMaterial),
-    new THREE.SkinnedMesh(buildFurCards(body, portrait
+  const skinMesh = new THREE.SkinnedMesh(geometry, skinMaterial);
+  const skins = withFur ? [skinMesh, new THREE.SkinnedMesh(buildFurCards(body, portrait
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
       : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear,
         // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
-        tipTint: (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furMaterial),
-  ];
+        tipTint: (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furMaterial)] : [skinMesh];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.
   const amber = new THREE.MeshStandardMaterial({ color: 0xc9830f, emissive: 0xe07800, emissiveIntensity: 1.0, roughness: .25 }), pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });

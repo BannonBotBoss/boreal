@@ -7,6 +7,7 @@ import { CONTACTS, type Contact } from '../core/contactBus';
 import { logContact, type LogSeatFn } from '../core/logContact';
 import { chunkTerrainJob, positionCamera } from './math';
 import { forestMoving } from '../vr/forestSession';
+import { createLitter } from '../animals/pups';
 import { warmTerrainWorkers } from './terrainPool';
 import { terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
@@ -86,6 +87,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xc4d4c8, 200, 480);
+  const litter = createLitter(scene);
   const sky = createSky(scene); // sun, moon, sky colour, clouds, stars and fog follow the game clock
   // Time of day: core/timeOfDay hourAt (world clock + the chronometer's dial; ?hour=HH sets the first value, initDay in main).
   let clock = formatHour(hourAt(0)), darkness = 0;
@@ -493,6 +495,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       WAKES.rememberView({ x, z, heading: yaw, h: TOP_CAM.h, fovDeg: TOP_CAM.fovDeg, y });
     }
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
+    litter.place();
     for (const f of beforeRender) f(time, !!photo); // overlays that follow the posed wolf (render/sensesHalo)
     post.render(!!photo, photo?.focalMm ?? 0, fx.ssao, { contact: fx.contact, rays: fx.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });
     if (GLOW_ON) glow.render(); // after the frame is on the canvas (additive overlay; nothing while there is no target)
@@ -589,7 +592,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
-  return { set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, eat, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { stepPups: (dt: number, x: number, z: number, motherYaw: number) => litter.step(dt, x, z, motherYaw), set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, eat, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     playerScale: () => ({ x: wolf.root.scale.x, y: wolf.root.scale.y, z: wolf.root.scale.z }),
     /** The saved record for a key (undefined for generated objects), e.g. for the inspector's why. */

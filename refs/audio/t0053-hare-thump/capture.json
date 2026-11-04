@@ -1,0 +1,144 @@
+{
+  "task": "T-0053",
+  "url": "http://127.0.0.1:5250/?noprobe&nomenu&hour=12&rec&stages=1&at=200,250,-1.553",
+  "viewport": [
+    960,
+    540
+  ],
+  "bolted": {
+    "id": 3,
+    "x": 218.83827913974804,
+    "z": 234.15136589927124,
+    "d": 4.83,
+    "state": "flee",
+    "sim": "flee",
+    "level": 0.369
+  },
+  "approach": {
+    "starts": [
+      {
+        "t": 54016,
+        "kind": "start",
+        "id": "hare-hop",
+        "loop": false,
+        "offset": null,
+        "duration": null
+      },
+      {
+        "t": 55291,
+        "kind": "start",
+        "id": "hare-hop",
+        "loop": false,
+        "offset": null,
+        "duration": null
+      },
+      {
+        "t": 55527,
+        "kind": "start",
+        "id": "hare-hop",
+        "loop": false,
+        "offset": null,
+        "duration": null
+      },
+      {
+        "t": 59261,
+        "kind": "start",
+        "id": "hare-hop",
+        "loop": false,
+        "offset": null,
+        "duration": null
+      },
+      {
+        "t": 59672,
+        "kind": "start",
+        "id": "hare-hop",
+        "loop": false,
+        "offset": null,
+        "duration": null
+      }
+    ],
+    "pans": [
+      {
+        "t": 54016,
+        "kind": "pan",
+        "x": 190.709862696385,
+        "z": 222.60488730391972
+      },
+      {
+        "t": 55291,
+        "kind": "pan",
+        "x": 202.31894776470037,
+        "z": 224.5986438703715
+      },
+      {
+        "t": 55527,
+        "kind": "pan",
+        "x": 206.15689085805747,
+        "z": 222.407171454579
+      },
+      {
+        "t": 59261,
+        "kind": "pan",
+        "x": 200.65972365374526,
+        "z": 224.86203587788887
+      },
+      {
+        "t": 59672,
+        "kind": "pan",
+        "x": 217.8155349111386,
+        "z": 234.60593728061392
+      }
+    ],
+    "nonLoopIds": [
+      "hare-hop",
+      "hare-hop",
+      "hare-hop",
+      "hare-hop",
+      "hare-hop"
+    ]
+  },
+  "capture": {
+    "hare": {
+      "id": 2,
+      "x": 200.59,
+      "z": 225.17
+    },
+    "starts": [
+      {
+        "t": 60277,
+        "kind": "start",
+        "id": "hare-squeak",
+        "loop": false,
+        "offset": null,
+        "duration": null
+      },
+      {
+        "t": 60372,
+        "kind": "start",
+        "id": "hare-hop",
+        "loop": false,
+        "offset": null,
+        "duration": null
+      },
+      {
+        "t": 60733,
+        "kind": "start",
+        "id": "hare-hop",
+        "loop": false,
+        "offset": null,
+        "duration": null
+      }
+    ],
+    "nonLoopIds": [
+      "hare-squeak",
+      "hare-hop",
+      "hare-hop"
+    ]
+  },
+  "calibration": {
+    "metric": "scoreHareAudio(approachNonLoopIds, captureIds): fraction of 3 checks satisfied (bolt starts hare-hop, bolt starts 0 hare-squeak, capture starts 1 hare-squeak)",
+    "knownMismatchScore": 0.6666666666666666,
+    "knownMatchScore": 1,
+    "postFixScore": 1
+  }
+}

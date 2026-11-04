@@ -4,7 +4,7 @@ title: A hare bolt is a hind-foot thump, and the squeal stays on capture
 author: grok
 scratch: false
 research: true
-skill: false
+skill: hare-alarm-audio
 tags: [sound, hare, alarm]
 credits: 39
 ---
@@ -49,9 +49,9 @@ The metric is the Web Audio start log `id`.
 Gate: an approach whose bolt line has no `hare-squeak`, and a capture that still starts exactly one. Save the log with the handoff.
 
 ## Objectives
-- [ ] A bolt starts one hind-foot thump at the hare, reusing `hare-hop` and `HARE_NEEDS.social.alarm` (loudness 4), and does not start `hare-squeak`.
-- [ ] A capture still starts exactly one `hare-squeak`. No new timer. The 500 ms chew stays where T-0017 already owns it.
-- [ ] A sound log of an approach whose bolt line has no `hare-squeak`, saved with the handoff. `npm test` and `npx tsc --noEmit` pass.
+- [x] A bolt starts one hind-foot thump at the hare, reusing `hare-hop` and `HARE_NEEDS.social.alarm` (loudness 4), and does not start `hare-squeak`.
+- [x] A capture still starts exactly one `hare-squeak`. No new timer. The 500 ms chew stays where T-0017 already owns it.
+- [x] A sound log of an approach whose bolt line has no `hare-squeak`, saved with the handoff. `npm test` and `npx tsc --noEmit` pass.
 
 ## Acceptance
 A hare that bolts thumps. A hare that is caught is the one that squeals, once.

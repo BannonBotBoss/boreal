@@ -1,0 +1,12 @@
+{
+  "id": "2026-11-04T12-14-00-agy-complete-T-0053",
+  "at": "2026-11-04T12:14:00-08:00",
+  "agent": "agy",
+  "type": "complete",
+  "task": "T-0053",
+  "branch": "agy/hare-thump",
+  "commit": "54b10ba",
+  "handoff": "tasks/handoffs/T-0053-agy.md",
+  "skill": "hare-alarm-audio",
+  "summary": "Updated BorealSound.hare('bolt', at) in src/audio/borealSound.ts to play one hind-foot thump ('hare-hop') at HARE_NEEDS.social.alarm (signal 'thump', loudness 4 -> hareThumpLevel() = MIX.hareHop) without starting 'hare-squeak', while keeping 'hop' at MIX.hareHop * 0.4 and 'caught'/bite at one 'hare-squeak'. Verified with tests/mixer.test.ts (5/5 pass), npx tsc --noEmit (exit 0), and headless Web Audio capture in refs/audio/t0053-hare-thump/ (postFixScore = 1.0)."
+}

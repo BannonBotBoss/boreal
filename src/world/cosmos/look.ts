@@ -1,7 +1,9 @@
 /** How the early-universe sphere looks. Every number comes from Rust.
  *  radius = 0.4 + 7 · (log10(a) − log10(a_min)) / (log10(1) − log10(a_min)),
  *  with a_min = 10⁻⁶⁰ so a Planck-era scale factor and a = 1 both fit on screen.
- *  Brightness follows log10(T) and log10(ρ). Colour shifts from deep violet toward blue-white as T rises.
+ *  Brightness follows log10(T) and log10(ρ). The hue stays violet: hotter temperatures
+ *  lift the blue and a little red, and the green channel stays low so the core
+ *  cannot tone-map to white.
  */
 export interface SphereLook {
   radius: number;
@@ -21,15 +23,16 @@ export function sphereLook(a: number, _h: number, temperature: number, rho: numb
   const radius = 0.4 + 7 * Math.min(1, Math.max(0, u));
   const logT = Math.log10(Math.max(temperature, 1));
   const logR = Math.log10(Math.max(rho, 1));
-  const brightness = Math.min(8, 0.35 + logT / 14 + logR / 80);
-  const hot = Math.min(1, Math.max(0, (logT - 3) / 12));
+  const hot = Math.min(1, Math.max(0, (logT - 1) / 22));
+  // Violet-dominant at every temperature. Blue leads, green stays small.
   const color: [number, number, number] = [
-    0.45 + 0.55 * hot,
-    0.15 + 0.7 * hot,
-    0.85 + 0.15 * hot,
+    0.22 + 0.20 * hot,
+    0.02 + 0.06 * hot,
+    0.58 + 0.32 * hot,
   ];
+  const brightness = 1.15 + 0.55 * Math.min(1, logT / 22) + logR / 400;
   return {
     radius, brightness, color,
-    radiusRule: 'radius = 0.4 + 7 × (log10 a − log10 1e−60) / 60, clamped',
+    radiusRule: 'radius = 0.4 + 7 × (log10 a − log10 1e−60) / 60, clamped. The camera steps back with that radius so the sphere stays in frame.',
   };
 }

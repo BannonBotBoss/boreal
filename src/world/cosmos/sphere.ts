@@ -55,7 +55,10 @@ const RAY = {
         acc += g * (1.0 - t);
       }
       acc /= n;
-      vec3 col = color * brightness * (0.25 + fres * 1.4 + acc * 0.8);
+      vec3 col = color * brightness * (0.95 + acc * 0.3);
+      float peak = max(col.r, max(col.g, col.b));
+      if (peak > 1.25) col *= 1.25 / peak;
+      col += color * fres * fres * 1.15;
       gl_FragColor = vec4(col, 1.0);
     }`,
 };
@@ -100,7 +103,7 @@ export class CosmosSphere {
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.toneMappingExposure = 0.85;
     const gl = this.renderer.getContext() as WebGL2RenderingContext;
     this.gpu = readGpu(gl);
     this.tier = tierById('low');
@@ -108,13 +111,13 @@ export class CosmosSphere {
     this.ray = new THREE.ShaderMaterial({ ...RAY, transparent: false });
     this.core = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), this.ray);
     this.scene.add(this.core);
-    this.scene.add(new THREE.AmbientLight(0x6644aa, 0.4));
-    const key = new THREE.PointLight(0xaaccff, 8, 40);
+    this.scene.add(new THREE.AmbientLight(0x2a0848, 0.35));
+    const key = new THREE.PointLight(0x6633cc, 2, 40);
     key.position.set(4, 3, 6);
     this.scene.add(key);
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(1280, 720), 0.4, 0.6, 0.2);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(1280, 720), 0.95, 0.75, 0.72);
     this.composer.addPass(this.bloom);
     this.final = new ShaderPass(FINAL);
     this.composer.addPass(this.final);
@@ -151,22 +154,33 @@ export class CosmosSphere {
     this.final.uniforms.vignette.value = tier.vignette;
     this.core.geometry.dispose();
     this.core.geometry = new THREE.SphereGeometry(1, tier.segments, Math.max(16, tier.segments / 2));
-    for (const s of this.shells) { this.scene.remove(s); s.geometry.dispose(); (s.material as THREE.Material).dispose(); }
+    for (const s of this.shells) { s.removeFromParent(); s.geometry.dispose(); (s.material as THREE.Material).dispose(); }
     this.shells = [];
     for (let i = 0; i < tier.shells; i++) {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(1.15 + i * 0.18, 32, 24), new THREE.MeshBasicMaterial({ color: 0x8866ff, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false }));
+      const m = new THREE.Mesh(new THREE.SphereGeometry(1.08 + i * 0.12, 32, 24), new THREE.MeshBasicMaterial({ color: 0x5510aa, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false }));
       this.shells.push(m);
-      this.scene.add(m);
+      this.core.add(m);
     }
   }
 
-  private frame(dt: number, time: number) {
+  private applyLook(time: number) {
     const look = sphereLook(this.inputs.a, this.inputs.h, this.inputs.temperature, this.inputs.rho);
-    this.core.scale.setScalar(look.radius);
+    const radius = Math.max(0.35, look.radius);
+    this.core.scale.setScalar(radius);
+    const half = THREE.MathUtils.degToRad(this.camera.fov * 0.5);
+    const dist = radius / Math.tan(half) / 0.58;
+    this.camera.position.z = dist;
+    this.camera.near = Math.max(0.01, dist * 0.02);
+    this.camera.far = dist + radius * 8;
+    this.camera.updateProjectionMatrix();
     (this.ray.uniforms.color.value as THREE.Color).setRGB(look.color[0], look.color[1], look.color[2]);
     this.ray.uniforms.brightness.value = look.brightness;
     this.ray.uniforms.time.value = time;
     this.final.uniforms.time.value = time;
+  }
+
+  private frame(dt: number, time: number) {
+    this.applyLook(time);
     const t0 = performance.now();
     this.composer.render();
     this.renderer.getContext().finish();
@@ -217,6 +231,7 @@ export class CosmosSphere {
   capture4k(): string {
     const prev = this.tier.id;
     this.applyTier(tierById('ultra'));
+    this.applyLook(performance.now() / 1000);
     this.composer.render();
     this.renderer.getContext().finish();
     const url = this.canvas.toDataURL('image/png');

@@ -57,6 +57,9 @@ test('sphere radius and brightness follow the Rust outputs', () => {
   const hotter = sphereLook(1e-10, 1, 1e20, 1);
   const cooler = sphereLook(1e-10, 1, 10, 1);
   assert.notDeepEqual(hotter.color, cooler.color);
+  for (const look of [dim, bright, hotter, cooler]) {
+    assert.ok(look.color[2] > look.color[0] && look.color[2] > look.color[1] * 2, `violet ${look.color}`);
+  }
 });
 
 const wasmPath = new URL('../public/wasm/boreal_sim.wasm', import.meta.url);

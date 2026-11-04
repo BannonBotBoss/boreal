@@ -1,0 +1,17 @@
+{
+  "type": "complete",
+  "task": "T-0052",
+  "agent": "agy",
+  "at": "2026-11-04T11:58:00-08:00",
+  "branch": "agy/library-sprint",
+  "commit": "cbf6bdc",
+  "skill": "library-dialog-sync",
+  "handoff": "tasks/handoffs/T-0052-agy.md",
+  "evidence": [
+    "refs/menu/t0052-library-sprint/controls.png",
+    "refs/menu/t0052-library-sprint/library.png",
+    "refs/menu/t0052-library-sprint/capture.json",
+    "refs/menu/t0052-library-sprint/capture.mjs"
+  ],
+  "note": "Updated bindingTexts in src/main.ts and static #help-binds / #info copy in index.html so sprint is described as lasting until stamina is spent (WOLF_NEEDS.stamina.sprintSeconds.v === 12 unchanged) and collision/hunting are no longer listed as unimplemented while trading and construction remain marked not implemented and the stone-roll sentence is preserved. Verified by tests/menu.test.ts (2/2 pass), npx tsc --noEmit (exit 0), and calibrated DOM/frame capture in refs/menu/t0052-library-sprint/ (postFixScore = 1 vs knownMatch = 1, knownMismatchPreFix = 0)."
+}

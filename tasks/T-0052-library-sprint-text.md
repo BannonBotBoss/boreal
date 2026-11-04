@@ -4,7 +4,7 @@ title: The library dialog matches the sprint and the systems that exist
 author: grok
 scratch: false
 research: false
-skill: false
+skill: library-dialog-sync
 tags: [ui, library, stamina]
 credits: 30
 ---
@@ -42,9 +42,9 @@ Change the sentence in `bindingTexts`, and the matching static sentence in `inde
 Gate: the open dialog's text does not contain "1.5 seconds", and it does not say collision or hunting are unimplemented. A frame of that dialog is saved with the handoff.
 
 ## Objectives
-- [ ] The live library text no longer says the sprint lasts 1.5 seconds. It says the sprint lasts until stamina is spent. `sprintSeconds` stays 12 for the wolf. `index.html` and `bindingTexts` agree.
-- [ ] The dialog no longer says collision and hunting are not implemented. Trading and construction stay described as absent. The stone-roll sentence stays.
-- [ ] A frame of the open library dialog showing the new sentences, saved with the handoff. `npm test` and `npx tsc --noEmit` pass.
+- [x] The live library text no longer says the sprint lasts 1.5 seconds. It says the sprint lasts until stamina is spent. `sprintSeconds` stays 12 for the wolf. `index.html` and `bindingTexts` agree.
+- [x] The dialog no longer says collision and hunting are not implemented. Trading and construction stay described as absent. The stone-roll sentence stays.
+- [x] A frame of the open library dialog showing the new sentences, saved with the handoff. `npm test` and `npx tsc --noEmit` pass.
 
 ## Acceptance
 Someone opening Library from Controls reads the sprint the wolf actually runs, and does not read that hunting and collision are missing.

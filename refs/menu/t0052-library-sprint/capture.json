@@ -1,0 +1,25 @@
+{
+  "task": "T-0052",
+  "url": "http://127.0.0.1:5250/?noprobe&nomenu&hour=12&rec&stages=1&needs=water:40,energy:70,rest:80&at=200,250,-1.553",
+  "viewport": [
+    960,
+    540
+  ],
+  "dialog": {
+    "open": true,
+    "text": "The script library\n\nEverything visible is generated geometry. No stored 3D model files.\n\nbuildScene.ts assembles the view. geometry.ts builds shapes. world.ts generates temporary individuals. events.ts remembers interactions.\n\nMove near the deer or the visitor and choose speak. This is a fictional capability demonstration, not a claim about animal language or a specific culture. Gathering the orange plant records its removal. Face a stone of 22 cm or less and bring your snout close: A / E / click activates move. Six contact sectors determine its rolling direction; the new position is remembered. Stones range from 6 to 50 cm, with smaller sizes more common.\n\nXbox: LS: up/down moves forward/backward, left/right steers the wolf; camera follows behind. RS: look around and tilt. RT runs, LT enters stealth; RT then LT sprints until stamina is spent; LT then RT enters super stealth. Release both to choose a new combination. Hold LB to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold RB and keep a prey inside the aim cone to lock it; X then steers the leap onto that lock. X jump, A interact, D-pad ↑ hour, hold D-pad ← to rewind the dial, hold D-pad → to go forward, LS click pause or play, — menu, B close this panel. Keyboard: WASD: up/down moves forward/backward, left/right steers the wolf; camera follows behind. Arrows: look around and tilt. Shift runs, C enters stealth; Shift then C sprints until stamina is spent; C then Shift enters super stealth. Release both to choose a new combination. Hold F to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold Q and keep a prey inside the aim cone to lock it; Space then steers the leap onto that lock. Space jump, E interact, T hour, hold , to rewind the dial, hold . to go forward, ; pause or play, Esc menu, P photo mode (free camera, rewind, capture). Rebind any of these under Esc → Controls. Mouse: hold left or right button on the landscape and drag horizontally to orbit or vertically to tilt; manual zoom is disabled. Click the action button to interact. Tab and Enter operate menus. This is a terrain and interaction laboratory; trading and construction are not implemented.\n\nUnvisited chunks are not held in memory. Only interacted-with individuals are saved. The terrain is an illustrative river basin, not a historical map or full hydrology simulation.\n\nBack to the land",
+    "bindsText": "Xbox: LS: up/down moves forward/backward, left/right steers the wolf; camera follows behind. RS: look around and tilt. RT runs, LT enters stealth; RT then LT sprints until stamina is spent; LT then RT enters super stealth. Release both to choose a new combination. Hold LB to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold RB and keep a prey inside the aim cone to lock it; X then steers the leap onto that lock. X jump, A interact, D-pad ↑ hour, hold D-pad ← to rewind the dial, hold D-pad → to go forward, LS click pause or play, — menu, B close this panel. Keyboard: WASD: up/down moves forward/backward, left/right steers the wolf; camera follows behind. Arrows: look around and tilt. Shift runs, C enters stealth; Shift then C sprints until stamina is spent; C then Shift enters super stealth. Release both to choose a new combination. Hold F to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold Q and keep a prey inside the aim cone to lock it; Space then steers the leap onto that lock. Space jump, E interact, T hour, hold , to rewind the dial, hold . to go forward, ; pause or play, Esc menu, P photo mode (free camera, rewind, capture). Rebind any of these under Esc → Controls.",
+    "has15Seconds": false,
+    "hasUntilStaminaSpent": true,
+    "hasCollisionHuntingUnimplemented": false,
+    "hasTradingConstructionUnimplemented": true,
+    "hasStoneRollSentence": true
+  },
+  "calibration": {
+    "metric": "Number(dialog.open && !dialog.has15Seconds && dialog.hasUntilStaminaSpent && !dialog.hasCollisionHuntingUnimplemented && dialog.hasTradingConstructionUnimplemented && dialog.hasStoneRollSentence)",
+    "knownMatch": 1,
+    "knownMismatchPreFix": 0,
+    "postFixScore": 1
+  },
+  "errors": []
+}

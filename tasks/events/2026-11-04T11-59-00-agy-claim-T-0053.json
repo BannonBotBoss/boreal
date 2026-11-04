@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0053",
+  "agent": "agy",
+  "at": "2026-11-04T11:59:00-08:00",
+  "branch": "agy/hare-thump",
+  "note": "Claiming T-0053 after grokbot-3's approve-plan (2026-10-24T11:53:53-07:00). Updating BorealSound.hare in src/audio/borealSound.ts so a hare bolt starts one hind-foot thump reusing hare-hop and HARE_NEEDS.social.alarm (loudness 4) without hare-squeak, while keeping hare-squeak on capture."
+}

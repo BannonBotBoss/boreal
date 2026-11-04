@@ -72,7 +72,6 @@ import { dryStart, isDry } from './core/stages/surfaceAt';
 import { WITNESS_ALTITUDE_SCALE } from './core/enterLiving';
 import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
 import { createChronometer } from './ui/chronometer';
-import { createTimeHud } from './ui/timeHud';
 import { controlsScreen } from './ui/controls';
 import { ACTION, ACTIVE, BINDINGS_KEY, atomValues, bindingLabel, comboLabel, groupLabel, loadBindings, resolveInput, saveBindings, type Bindings } from './core/bindings';
 
@@ -380,7 +379,6 @@ const clock0 = loadClock(localStorage.getItem(CLOCK.key));
 initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the chronometer's saved dial; ?hour= ?day= ?date= set it
 if (new URLSearchParams(location.search).has('timescale')) setClockRate(timescaleFrom(location.search)); // only when present, so a saved rate is kept
 const chrono = createChronometer(worldSec); // T / d-pad up: the hour scrub of the same clock (ui/chronometer)
-const timeHud = createTimeHud(() => { if (!inpage?.blocksGame()) { chrono.toggle(); clearInput(); } });
 function bindingTexts() { // help dialog and chronometer lines written from the live bindings (Controls screen rebinding updates them)
   const L = (id: string, k: 'keys' | 'pad') => bindingLabel(bindings[id][k]), G = (id: string, k: 'keys' | 'pad') => groupLabel(bindings, id, k);
   const tell = (k: 'keys' | 'pad') => `${G('walk', k)}: up/down moves forward/backward, left/right steers the wolf; camera follows behind. ${G('look', k)}: look around and tilt. ${L('run', k)} runs, ${L('stealth', k)} enters stealth; ${L('run', k)} then ${L('stealth', k)} sprints for 1.5 seconds; ${L('stealth', k)} then ${L('run', k)} enters super stealth. Release both to choose a new combination. Hold ${L('focus', k)} to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold ${L('lock', k)} and keep a prey inside the aim cone to lock it; ${L('jump', k)} then steers the leap onto that lock. ${L('jump', k)} jump, ${L('interact', k)} interact, ${L('chrono', k)} hour, hold ${L('timeSlower', k)} to rewind the dial, hold ${L('timeFaster', k)} to go forward, ${L('timePause', k)} pause or play, ${L('pause', k)} menu`;
@@ -554,7 +552,6 @@ function frame(time: number) { const frameStart = performance.now();
   const stood = weatherAt(player.x, player.z);
   status.innerText = `${photo.active ? 'PHOTO · ' : isPaused() ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Snow ${stood.depthCm.toFixed(1)} cm · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind);   if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
-  timeHud.setHidden(menu.open || photo.active);
   requestAnimationFrame(frame);
 }
 // The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.

@@ -116,6 +116,28 @@ pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw:
     (x + dx / d * step, z + dz / d * step)
 }
 
+/// Past the trail, not yet the rejoin. A short separation.
+pub const VOICE_BRIEF_M: f64 = 2.2;
+/// Same gap as the rejoin. She has left this pup behind.
+pub const VOICE_FAR_M: f64 = REJOIN_M;
+
+/// The sound for one pup this step.
+/// A nudge of her paw is a huff. Far behind is a call. Hungry, tired, or a short
+/// gap is a whimper. Following or playing (under half a year and still near her) is a yip.
+pub fn pup_voice(dist_m: f64, moving: bool, age_years: f64, hungry: bool, tired: bool, nudged: bool) -> Option<&'static str> {
+    if nudged { return Some("huff"); }
+    if dist_m >= VOICE_FAR_M { return Some("call"); }
+    if hungry || tired || dist_m >= VOICE_BRIEF_M { return Some("whimper"); }
+    if moving || age_years < 0.5 { return Some("yip"); }
+    None
+}
+
+/// Playback rate before a small random wobble. Four weeks is higher. A year is 1.
+pub fn pup_pitch(age_years: f64) -> f64 {
+    let u = age_years.clamp(0.0, 1.0);
+    1.22 + (1.0 - 1.22) * u
+}
+
 /// The mother's litter, stored as her offspring. They are not founders.
 /// Their territory is hers. They stand on the den ring.
 pub fn birth_litter(world: &mut hecs::World, mother: &crate::animals::AnimalView, den_x: f64, den_z: f64) -> Vec<crate::animals::AnimalView> {
@@ -222,6 +244,20 @@ mod tests {
             if x.abs() > 0.9 { beside += 1; }
         }
         assert!(beside >= 2);
+    }
+
+    #[test]
+    fn a_pup_yips_near_her_and_calls_when_left_behind() {
+        assert_eq!(pup_voice(1.0, true, EMERGE_YEARS, false, false, false), Some("yip"));
+        assert_eq!(pup_voice(1.0, false, EMERGE_YEARS, false, false, false), Some("yip"));
+        assert_eq!(pup_voice(1.0, false, 1.2, false, false, false), None);
+        assert_eq!(pup_voice(3.0, true, EMERGE_YEARS, false, false, false), Some("whimper"));
+        assert_eq!(pup_voice(1.0, true, EMERGE_YEARS, true, false, false), Some("whimper"));
+        assert_eq!(pup_voice(1.0, true, EMERGE_YEARS, false, true, false), Some("whimper"));
+        assert_eq!(pup_voice(VOICE_FAR_M, false, EMERGE_YEARS, false, false, false), Some("call"));
+        assert_eq!(pup_voice(1.0, false, 1.2, false, false, true), Some("huff"));
+        assert!(pup_pitch(EMERGE_YEARS) > pup_pitch(1.0));
+        assert!((pup_pitch(1.0) - 1.0).abs() < 1e-9);
     }
 
     #[test]

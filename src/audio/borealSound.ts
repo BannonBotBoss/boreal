@@ -21,6 +21,8 @@ import { gravity, jumpArc } from '../proc/physics';
 import type { Touchdown } from '../animals/locomotion/signals';
 import { gaitFor, touchdownsBetween, type GaitName, type LegDims, type Motion } from '../core/animalBehavior';
 import { pawGate, pawSound, touchdownStrength } from './footsteps';
+import { pupPitch, type PupCall } from '../core/litter';
+import { PUP_CLIPS, pickPupClip } from './pupVoice';
 /** Paw touchdown gaits that use the run clip (gallop family); walk/trot/pace use the walk clip. */
 const RUN_GAITS = new Set(['canter', 'gallop', 'half-bound', 'gallop-lagomorph', 'pronk']);
 import { BUSES, BUS_LEVEL, BUS_STATE, CULL_DISTANCE, VOICES, VOICE_TRIM_DB, admitVoice, busOf, createVolumeStore, onBusChange, priorityOf, trim, type ActiveVoice, type Bus } from './mixer';
@@ -234,6 +236,51 @@ export class BorealSound {
   /** A loon caller inside the cull. The night voice line about loons uses this, not darkness alone. */
   loonNear(x: number, z: number) { return callersNear(x, z, CULL_DISTANCE, habitatOf, WORLD_SEED).some(c => c.kind === 'loon'); }
   /** Hare events from src/animals/hare.ts. */
+  private pupBuf = new Map<string, AudioBuffer | null>();
+  private pupLast = new Map<PupCall, string>();
+  private pupLoad: Promise<void> | null = null;
+  /** A pup at her feet. At most two of these play at once, so a litter stays cheap on a Quest. */
+  pupAt(kind: PupCall, at: { x: number; z: number }, ageYears: number) {
+    const clip = pickPupClip(kind, soundRng, this.pupLast.get(kind));
+    this.pupLast.set(kind, clip);
+    const rate = pupPitch(ageYears) * (0.97 + soundRng() * 0.06);
+    const row = { kind, clip, x: at.x, z: at.z, ageYears, rate };
+    const pub = window as unknown as { __borealPupHeard?: typeof row[] };
+    const log = pub.__borealPupHeard ??= [];
+    log.push(row);
+    if (log.length > 16) log.shift();
+    void this.playPup(clip, at, rate);
+  }
+  private loadPups() {
+    const ctx = this.ctx;
+    if (!ctx) return Promise.resolve();
+    const names = Object.values(PUP_CLIPS).flat();
+    return Promise.all(names.map(async name => {
+      if (this.pupBuf.has(name)) return;
+      try {
+        const res = await fetch(`sounds/pups/${name}.ogg`);
+        this.pupBuf.set(name, res.ok ? await ctx.decodeAudioData(await res.arrayBuffer()) : null);
+      } catch { this.pupBuf.set(name, null); }
+    })).then(() => undefined);
+  }
+  private async playPup(clip: string, at: { x: number; z: number }, rate: number) {
+    const ctx = this.ctx; if (!ctx) return;
+    this.pupLoad ??= this.loadPups();
+    await this.pupLoad;
+    const buffer = this.pupBuf.get(clip);
+    if (!buffer || ctx.state !== 'running') return;
+    if (this.active.filter(v => v.id === 'pup').length >= 2) return;
+    if (Math.hypot(at.x - this.ear.x, at.z - this.ear.z) > CULL_DISTANCE) return;
+    const src = ctx.createBufferSource(), gain = ctx.createGain(), now = ctx.currentTime;
+    src.buffer = buffer; src.playbackRate.value = rate; gain.gain.value = 0.45;
+    const p = new PannerNode(ctx, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 2, maxDistance: MIX.hearingDistance, rolloffFactor: 1.2,
+      positionX: at.x, positionY: heightAt(at.x, at.z) + 0.35, positionZ: at.z });
+    src.connect(gain); gain.connect(p); p.connect(this.bus.get('sfx')!);
+    src.start();
+    const voice = { id: 'pup', priority: 6, start: now, stop: () => { try { src.stop(); } catch { /* already stopped */ } } };
+    this.active.push(voice);
+    src.onended = () => { const i = this.active.indexOf(voice); if (i >= 0) this.active.splice(i, 1); src.disconnect(); gain.disconnect(); p.disconnect(); };
+  }
   hare(type: 'caught' | 'bolt' | 'hop', at: { x: number; z: number }) {
     if (type === 'bolt') { this.playAt('hare-squeak', at, MIX.hareSqueak * .5); this.playAt('hare-hop', at, MIX.hareHop); }
     else if (type === 'hop') this.playAt('hare-hop', at, MIX.hareHop * .4);

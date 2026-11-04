@@ -24,6 +24,7 @@ import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, freeFallVy, flightPrompt, type EntryPhase } from './flight';
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
+import { forestLanding } from './forestLanding';
 import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
@@ -106,7 +107,7 @@ function controller(view: View, host: InPageHost) {
   let cover: ReturnType<typeof createHorizonCover> | null = null;
   let globe: Globe | null = null, mode: TransitionMode = 'game', down = true, phase: 'fly' | 'drone' | 'blend' = 'fly';
   let pinned: number | null = null; // dev stills: hold the drone at one height instead of the glide floor
-  let next: 'globe' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
+  let next: 'globe' | 'sphere' | 'game' | null = null; // mode switches decided in the band take effect at the start of the next frame
   let prep: { x: number; z: number } | null = null; // chunks under the fall, warmed once the drop is below prepAlt. The clicked point is not moved.
   let renderMs = 0; // last frame's globe + game draw CPU (ms): the descent's chunk job budget fills the rest of jobFrame
   let bandT = 0; /* s since the descent started (the ready safety cap) */ const chunkFirst = (k: string) => k.startsWith('chunk:');
@@ -194,7 +195,16 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     axes.f = axes.r = axes.u = axes.yaw = axes.pitch = 0; mouseYaw = 0; mousePitch = 0;
     return a;
   }
-  function toGlobe() { kept = null; restoreScene(); globe!.drive(null); setMode('globe'); }
+  function toGlobe(sphere = false) {
+    kept = null; restoreScene(); globe!.drive(null);
+    // The climb stops near 2 km, which reads as a map. The sphere is the same altitude the page-load globe uses.
+    if (sphere) {
+      globe!.resumeOrbit(); globe!.jumpTo(PLANET.radius * 2.2);
+      const spot = forestLanding();
+      globe!.lookOver(spot.land.x, spot.land.z, spot.land.yaw);
+    }
+    setMode('globe');
+  }
   function toGame() { keepClouds(); restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
   function restoreScene() {
     for (const [o, v] of hidden) o.visible = v; hidden.clear(); for (const c of unculled) c.frustumCulled = true; unculled.length = 0;
@@ -302,12 +312,12 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       const g = globe; prep = null; host.save(); hold.hold(); g.resumeWorkers(); down = false; needStart = true; lastT = performance.now(); setMode('band');
       return true;
     },
-    /** Page load (world/globe/startView): straight into globe mode over the player at the standalone globe's opening
-     *  altitude (globeView startAlt, 2.2 R: the whole disc), no rise; the ascent's hold and workers. False = take the reload path. */
+    /** Page load (world/globe/startView): straight into globe mode at the standalone globe's opening altitude
+     *  (2.2 R: the whole disc), aimed at the forest edge by the mama's den. No rise. False = take the reload path. */
     enter(): boolean {
       if (mode !== 'game') return true;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
-      prep = null; hold.hold(); globe.resumeWorkers(); globe.resumeOrbit(); globe.jumpTo(PLANET.radius * 2.2); lastT = performance.now(); toGlobe(); return true;
+      prep = null; hold.hold(); globe.resumeWorkers(); lastT = performance.now(); toGlobe(true); return true;
     },
     blocksGame: () => mode !== 'game',
     /** Air speed (m/s) once the fall has handed off, so the wind loop can start at 10,000 ft. 0 on the globe and in the game. */
@@ -318,7 +328,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** main's draw slot: globe mode draws the globe to the screen; band and game draw the game (buildScene calls the hooks). */
     frame(drawGame: () => void) {
       frameNo++;
-      if (next) { if (next === 'globe') toGlobe(); else toGame(); next = null; }
+      if (next) { if (next === 'game') toGame(); else toGlobe(next === 'sphere'); next = null; }
       if (mode === 'globe' && globe) {
         cameraTouched = true; // orbit clip is on the forest camera; game mode puts 0.2 / 700 back
         showPrompt(flightPrompt(entryName(), padOn()));
@@ -396,7 +406,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       const hc = Math.max(1, cam.p.y - ground(cam.p.x, cam.p.z)); camera.near = Math.max(.2, hc * INPAGE.nearK); camera.far = Math.max(700, hc * 2 + 900, horizonMetres(hc) * 1.2, DEV ? DEBUG.far : 0);
       camera.updateMatrixWorld(true);
       STATS.h = h; STATS.fade = fade; STATS.ready = ready; STATS.readyAt = readyAt;
-      if (down && phase === 'blend' && blend >= 1) next = 'game'; else if (!down && h >= top - 1e-3) { globe?.resumeOrbit(); next = 'globe'; } // embody finishes into the animal; the climb finishes on the planet and waits for a double-click
+      if (down && phase === 'blend' && blend >= 1) next = 'game'; else if (!down && h >= top - 1e-3) { globe?.resumeOrbit(); next = 'sphere'; } // embody finishes into the animal; the climb finishes as a sphere and waits for a double-click
     },
     /** buildScene, after the sky update: the globe into the far layer, as the background; the patch fade; band visibility. */
     background(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {

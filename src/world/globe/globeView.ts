@@ -318,6 +318,17 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     }
     return { x: samp.x, z: samp.z, yaw, vy, home: scripted ? 0 : samp.home, dir: [dir.x, dir.y, dir.z] as [number, number, number] };
   }
+  /** The forest edge the sphere was opened over. G uses it while the view is still there. A drag or a double-click replaces it. */
+  const aim = { dir: new THREE.Vector3(), yaw: 0, on: false };
+  /** Point the orbit at a game-local spot. `yaw` is the game heading the drop will face if G is pressed before the view moves. */
+  function lookOver(x: number, z: number, yaw: number) {
+    const d = planet.fromLocal(x, z);
+    aim.dir.set(d[0], d[1], d[2]).normalize();
+    aim.yaw = yaw;
+    aim.on = true;
+    dir.copy(aim.dir);
+    if (!fall) camera.position.copy(dir).setLength(Math.max(camera.position.length(), R + alt));
+  }
   /** Start the seated drop. With a hit, it is on that point. Without one (G, or A on the reticle), it is the centre.
    *  Already at the glide: land on the current heading. Above it: ease down. A height under 10,000 ft still eases;
    *  it does not reload the page. */
@@ -327,7 +338,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (aimed && !hit) dir.set(aimed[0], aimed[1], aimed[2]);
     else if (hit) dir.copy(hit);
     stopCoast();
-    const yaw0 = lookAz ?? cameraAz();
+    let yaw0 = lookAz ?? cameraAz();
+    if (!hit && !aimed && aim.on && dir.angleTo(aim.dir) < 1e-3) yaw0 = -aim.yaw; // still over the forest: face into the stand
     if (alt <= DESCENT.glideM) { handed = true; setCover(0, 'glide'); leave(dropAt(-yaw0, 0)); return; } // game yaw is minus the look azimuth (headingYaw)
     fall = { h0: alt, y: alt, vy: 0, yaw0, t: 0, p: 0, mode: mode ?? (q.get('descent') === 'fade' ? 'fade' : 'glide') };
   }
@@ -685,6 +697,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     /** over the playable region (game-local x, z), else null; descending = zooming in */
     get overHome() { return overHome; }, get descending() { return targetAlt < alt * .995; }, get headingYaw() { return headingYaw(); },
     zoomTo(a: number) { targetAlt = clamp(a, 40, R * 4); }, jumpTo(a: number) { alt = targetAlt = clamp(a, 40, R * 4); },
+    /** Aim the centre at a game-local spot without starting the fall. The next G, before a drag, drops there. */
+    lookOver,
     /** Turn the orbit toward the playable forest. H does this; it does not start the fall. */
     aimHome() { fall = null; flyHome = 1; stopCoast(); },
     /** Double-click, G, or A. Optional hit is the unit direction of the chosen point. */

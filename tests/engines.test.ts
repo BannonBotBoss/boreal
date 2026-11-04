@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { NOT_IN_RUST } from '../src/data/notInRust';
-import { decodeEngineReport, parseCycle } from '../src/core/engineReport';
+import { decodeEngineReport, logSentence, parseCycle } from '../src/core/engineReport';
 import { frameShiftX, sphereLook } from '../src/world/cosmos/look';
 import { loadPlanetSim } from '../src/core/planetBudget';
 
@@ -93,4 +93,13 @@ test('wasm registry counts, decodes, and a parameter change moves the sphere', {
   const back = decodeEngineReport(sim!.engineReport());
   assert.ok(!back.instances.some(i => i.type === 'reheating'));
   void end;
+});
+
+test('a spawn log row reads as one plain sentence', () => {
+  assert.equal(logSentence({ kind: 'spawn', t: 1e-32, cause: 'ε=1', parent: 'spacetime', child: 'reheating' }),
+    'reheating spawned by spacetime at t=1.000e-32 s, because ε=1.');
+  assert.equal(logSentence({ kind: 'despawn', t: 100, cause: 'parent despawned', parent: 'reheating', child: 'nucleosynthesis' }),
+    'nucleosynthesis despawned by reheating at t=1.000e+2 s, because parent despawned.');
+  assert.equal(logSentence({ kind: 'spawn', t: 5.39e-44, cause: 'root', parent: '', child: 'spacetime' }),
+    'spacetime spawned at t=5.390e-44 s, because root.');
 });

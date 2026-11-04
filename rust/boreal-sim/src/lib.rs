@@ -33,6 +33,7 @@ pub mod differentiation;
 pub mod boot_order;
 pub mod perception;
 pub mod animals;
+pub mod litter;
 pub mod entities;
 pub mod cover;
 pub mod species;

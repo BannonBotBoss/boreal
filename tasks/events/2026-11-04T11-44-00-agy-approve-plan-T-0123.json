@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0123",
+  "agent": "agy",
+  "at": "2026-11-04T11:44:00-08:00",
+  "note": "Rule 15 plan review of T-0123 (Boot splash - no unstyled page while Boreal loads). Checked tasks/T-0123-boot-splash.md (2 objectives, 20 credits = 10 x 2, skill: boot-splash-critical-css at notes/skills/boot-splash-critical-css.md), tests/boot-splash.test.ts (2/2 pass), and refs/T-0123/boot-before-after.jpg (97/128 white frames before -> 0/125 after). Note: grok-globe's earlier claim/complete events (2026-10-28T19:34:30 and 20:12:00) preceded an approve-plan on the board, so a fresh claim + complete + non-author approve after this timestamp will close T-0123 on the ledger."
+}

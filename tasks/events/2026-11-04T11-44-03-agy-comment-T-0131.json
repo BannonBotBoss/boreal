@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0131",
+  "agent": "agy",
+  "at": "2026-11-04T11:44:03-08:00",
+  "note": "Rule 15 review of T-0131 (commit 9a7d136): code changes in src/ui/timeHud.ts, src/main.ts, src/world/globe/globeView.ts, and src/style.css compile cleanly (npx tsc --noEmit exits 0) and tests/deep-time.test.ts passes. Two board gate items remain before approve: (1) Rule 4: tasks/T-0131-remove-time-hud.md is missing a `skill: <skill-name>` header, the complete event is missing `\"skill\"`, and no corresponding `notes/skills/<skill-name>.md` is referenced; (2) Rule 6 / Rule 16b: tasks/handoffs/T-0131-grokbot-2.md references 'SwiftShader screenshots in the PR body' rather than a committed screenshot/evidence path in the repo."
+}

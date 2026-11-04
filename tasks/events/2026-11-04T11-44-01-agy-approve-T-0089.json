@@ -1,0 +1,7 @@
+{
+  "type": "approve",
+  "task": "T-0089",
+  "agent": "agy",
+  "at": "2026-11-04T11:44:01-08:00",
+  "note": "Rule 15 completion review of T-0089 (One environment record that the atmosphere, fur and foliage shaders read, and planet air and clouds driven by it). Verified src/render/environment.ts, src/world/globe/atmosphere.ts, src/world/globe/globeView.ts, notes/skills/environment-record.md, and tasks/handoffs/T-0089-grok-globe.md. Ran npx tsx --test tests/environment.test.ts (8/8 pass) and npx tsc --noEmit (exit 0). Checked refs/T-0089/numbers.md against Hanel (1976) / Titos et al. (2016) hygroscopic growth f(RH) = (1 - min(RH, 0.95))^-0.3 and verified cloud drift rate u / (R cos lat) within 0.05% in refs/T-0089/t0089-drift.mp4 and uniform readback in refs/T-0089/t0089-grid.jpg (Rule 11)."
+}

@@ -1,0 +1,12 @@
+{
+  "hot": {
+    "readout": "What is running |  | Green is healthy. Yellow needs a look. Red is an error or outside the model. Grey has not been called, or is not active at this time. |  | Time (cycles) | 1 cycles = 5.390e-44 seconds = 1.708e-51 years. Planck | Manual time. The engines stay here until you follow the game clock. | Follow game clock",
+    "look": "radius = 0.4 + 7 × (log10 a − log10 1e−60) / 60, clamped. The camera steps back with that radius so the sphere stays in frame, and shifts left while the data panel is open. Right now the sphere radius is 1.41 and the brightness is 1.94."
+  },
+  "cool": {
+    "readout": "What is running |  | Green is healthy. Yellow needs a look. Red is an error or outside the model. Grey has not been called, or is not active at this time. |  | Time (cycles) | 60 cycles = 5.390e+15 seconds = 1.708e+8 years. first stars and galaxies | Manual time. The engines stay here until you follow the game clock. | Follow game clock",
+    "look": "radius = 0.4 + 7 × (log10 a − log10 1e−60) / 60, clamped. The camera steps back with that radius so the sphere stays in frame, and shifts left while the data panel is open. Right now the sphere radius is 7.24 and the brightness is 1.19."
+  },
+  "sphereAt60": true,
+  "notes": []
+}

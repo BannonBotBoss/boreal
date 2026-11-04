@@ -19,10 +19,11 @@ const FINAL = {
     godrays: { value: 0.5 },
     time: { value: 0 },
     center: { value: new THREE.Vector2(0.5, 0.5) },
+    tint: { value: new THREE.Color(1, 0.78, 0.88) },
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float chromatic, grain, vignette, godrays, time; uniform vec2 center; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform float chromatic, grain, vignette, godrays, time; uniform vec2 center; uniform vec3 tint; varying vec2 vUv;
     void main(){
       vec2 d = vUv - 0.5;
       vec2 dir = d * chromatic;
@@ -37,7 +38,7 @@ const FINAL = {
         rays += texture2D(tDiffuse, vUv + to * t * 0.55).b;
       }
       rays /= 12.0;
-      col += vec3(0.32, 0.06, 0.72) * rays * godrays;
+      col += tint * rays * godrays;
       col += (sin(vUv.x * 180.0 + time * 13.0) * sin(vUv.y * 140.0 - time * 9.0) * 0.5) * grain;
       col *= 1.0 - vignette * dot(d,d) * 2.2;
       gl_FragColor = vec4(col, 1.0);
@@ -71,10 +72,8 @@ const RAY = {
         acc += g * (1.0 - t);
       }
       acc /= n;
-      vec3 hot = vec3(0.72, 0.12, 1.0);
-      vec3 edge = vec3(0.20, 0.02, 0.55);
       float plasma = 0.84 + 0.16 * sin(vP.x * 6.0 + time * 1.4) * sin(vP.y * 5.0 - time) * sin(vP.z * 4.0 + acc * 6.0);
-      vec3 col = mix(hot, edge, smoothstep(0.0, 0.9, fres));
+      vec3 col = color * mix(1.15, 0.55, smoothstep(0.0, 0.9, fres));
       col *= brightness * plasma * mix(0.85, 0.4, fres);
       float peak = max(col.r, max(col.g, col.b));
       if (peak > 1.0) col *= 1.0 / peak;
@@ -134,19 +133,18 @@ export class CosmosSphere {
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-      uniforms: { time: { value: 0 } },
+      uniforms: { time: { value: 0 }, color: { value: new THREE.Color(1, 0.78, 0.88) } },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
       fragmentShader: `
-        varying vec2 vUv; uniform float time;
+        varying vec2 vUv; uniform float time; uniform vec3 color;
         void main(){
           vec2 p = vUv * 2.0 - 1.0;
           float d = length(p);
           float halo = smoothstep(1.0, 0.05, d);
           float ang = atan(p.y, p.x);
           float rays = pow(max(0.0, sin(ang * 7.0 + time * 0.5)), 6.0);
-          vec3 violet = vec3(0.42, 0.04, 0.95);
           float ring = smoothstep(0.22, 0.48, d) * halo;
-          vec3 col = violet * ring * 1.5 + violet * rays * ring * 0.85;
+          vec3 col = color * ring * 1.5 + color * rays * ring * 0.85;
           gl_FragColor = vec4(col, clamp(halo, 0.0, 1.0));
         }`,
     });
@@ -239,6 +237,9 @@ export class CosmosSphere {
     const ndc = new THREE.Vector3(0, 0, 0).project(this.camera);
     (this.final.uniforms.center.value as THREE.Vector2).set(ndc.x * 0.5 + 0.5, ndc.y * 0.5 + 0.5);
     (this.ray.uniforms.color.value as THREE.Color).setRGB(look.color[0], look.color[1], look.color[2]);
+    (this.final.uniforms.tint.value as THREE.Color).setRGB(look.color[0], look.color[1], look.color[2]);
+    ((this.halo.material as THREE.ShaderMaterial).uniforms.color.value as THREE.Color).setRGB(look.color[0], look.color[1], look.color[2]);
+    for (const shell of this.shells) (shell.material as THREE.MeshBasicMaterial).color.setRGB(look.color[0], look.color[1], look.color[2]);
     this.ray.uniforms.brightness.value = look.brightness;
     this.ray.uniforms.time.value = time;
     this.final.uniforms.time.value = time;

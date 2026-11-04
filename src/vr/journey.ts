@@ -1,6 +1,6 @@
 /**
  * Seated, hands-only journey inside the IWSDK world.
- * A pinch or a held open palm starts time. The violet sphere uses the Rust spacetime numbers.
+ * A pinch or a held open palm starts time. The sphere colour is the Rust temperature: pink-white, then deep blue-violet.
  * The panel shows the live equation and the time; a pinch drag scrubs the cycle.
  * The globe can be grabbed and turned. A pinch on it eases the player down to the ground.
  * On the ground, point and pinch to glide, and pinch the other hand to snap turn.
@@ -69,7 +69,7 @@ class Journey {
     this.canvas.height = 256;
     this.ctx = this.canvas.getContext('2d')!;
     this.tex = new CanvasTexture(this.canvas);
-    this.sphere = new Mesh(new SphereGeometry(0.2, 48, 32), new MeshStandardMaterial({ color: 0x2a0848, emissive: 0x14041f, roughness: 0.4 }));
+    this.sphere = new Mesh(new SphereGeometry(0.2, 48, 32), new MeshStandardMaterial({ color: 0xffc7e0, emissive: 0xffc7e0, emissiveIntensity: 0.85, roughness: 0.4 }));
     this.sphere.position.set(0, 1.25, -0.8);
     this.sphere.visible = false;
     world.scene.add(this.sphere);

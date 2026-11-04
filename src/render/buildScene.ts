@@ -6,6 +6,7 @@ import { restoreEntities, type EventContext } from '../core/events';
 import { CONTACTS, type Contact } from '../core/contactBus';
 import { logContact, type LogSeatFn } from '../core/logContact';
 import { chunkTerrainJob, positionCamera } from './math';
+import { forestMoving } from '../vr/forestSession';
 import { warmTerrainWorkers } from './terrainPool';
 import { terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
@@ -90,6 +91,11 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   let clock = formatHour(hourAt(0)), darkness = 0;
   let worldTime: number | undefined; // set by main from core/worldClock
   const camera = new THREE.PerspectiveCamera(48, 1, .2, 700);
+  const xrOrigin = new THREE.Group(); scene.add(xrOrigin);
+  const xrMuzzle = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), new THREE.MeshStandardMaterial({ color: 0xc8c2b4 }));
+  xrMuzzle.position.set(0, -0.12, -0.42); xrMuzzle.visible = false; camera.add(xrMuzzle);
+  const xrVignette = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, depthTest: false }));
+  xrVignette.position.set(0, 0, -0.35); xrVignette.renderOrder = 20; xrVignette.visible = false; camera.add(xrVignette);
   const post = createPost(renderer, scene, camera);
   const photoreal = createPhotoreal(renderer, scene, camera, sky, BASE_RATIO); // PBR lighting, CSM, IBL, GTAO + quality governor
   const ratio = () => Math.min(BASE_RATIO, 1.5) * photoreal.tier.resScale;
@@ -368,26 +374,39 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity, photo?: PhotoView) {
     frameNo++;
     const width = canvas.clientWidth, height = canvas.clientHeight;
-    if (output) { if (canvas.width !== output.w || canvas.height !== output.h) { renderer.setPixelRatio(1); renderer.setSize(output.w, output.h, false); } }
+    if (renderer.xr.isPresenting) { /* the headset owns the drawing buffer */ }
+    else if (output) { if (canvas.width !== output.w || canvas.height !== output.h) { renderer.setPixelRatio(1); renderer.setSize(output.w, output.h, false); } }
     else if (renderer.getPixelRatio() !== ratio() || canvas.width !== Math.floor(width * ratio()) || canvas.height !== Math.floor(height * ratio())) {
       renderer.setPixelRatio(ratio()); renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
     }
     const ground = Math.max(heightAt(x, z), -.2);
     wolf.root.position.set(x, ground, z); wolf.root.rotation.y = yaw;
+    const inHeadset = renderer.xr.isPresenting;
+    wolf.root.visible = !inHeadset;
+    xrMuzzle.visible = inHeadset; xrVignette.visible = inHeadset;
+    (xrVignette.material as THREE.MeshBasicMaterial).opacity = inHeadset && forestMoving() ? 0.55 : 0;
     camera.up.set(0, 1, 0);
     const pushed = pushFrom && [...chunks.values()].flatMap(c => c.entities).find(e => e.key === pushFrom.key);
     const pushVector = pushed && pushFrom ? { x: pushed.x - pushFrom.x, z: pushed.z - pushFrom.z, yaw } : undefined;
     wolf.animate({ time, dt: photo && photo.frozen !== false ? 0 : Math.max(0, Math.min(.1, time - previousTime)), moving, action, elapsed: actionElapsed, mode, push: pushVector, hold: carryPose });
-    positionCamera(camera, x, z, altitude, yaw, pitch, lookYaw);
+    if (inHeadset) {
+      xrOrigin.position.set(x, ground, z); xrOrigin.rotation.set(0, yaw, 0);
+      if (camera.parent !== xrOrigin) xrOrigin.add(camera);
+    } else {
+      if (camera.parent === xrOrigin) { xrOrigin.remove(camera); camera.position.set(0, 0, 0); camera.rotation.set(0, 0, 0); }
+      positionCamera(camera, x, z, altitude, yaw, pitch, lookYaw);
+    }
     const focused = !photo ? focus : undefined; // T-0035: held focus (core/focusLock), any mode
     const frozen = !!photo && photo.frozen !== false;
     const dt = frozen ? 0 : Math.max(0, Math.min(.1, time - previousTime)); if (!frozen) previousTime = time;
     camera.fov += ((focused ? SYSTEM_PROPERTIES.autoFocus.cameraFovDeg : 48) - camera.fov) * (1 - Math.exp(-SYSTEM_PROPERTIES.autoFocus.cameraEase * dt));
     focusBlend += ((focused ? 1 : 0) - focusBlend) * (1 - Math.exp(-SYSTEM_PROPERTIES.autoFocus.cameraEase * dt)); if (focused) lastFocus = focused; // eased, so engaging / releasing never snaps the view
-    if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
-    bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
-    camera.updateProjectionMatrix();
-    if (lastFocus && focusBlend > .002 && !photo) { const f = lastFocus; focusQ.copy(camera.quaternion); camera.lookAt(f.x, heightAt(f.x, f.z) + (f.kind === 'deer' ? 1.2 : f.kind === 'person' ? 1.4 : .3), f.z); camera.quaternion.slerpQuaternions(focusQ, camera.quaternion.clone(), focusBlend); camera.updateMatrixWorld(true); }
+    if (!inHeadset) {
+      if (photo) { const c = photo.cam; camera.position.set(c.x, c.y, c.z); camera.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ'); camera.fov = c.fov; camera.updateMatrixWorld(true); }
+      bandCamera(camera); // world/globe/inpage: the in-page transition flies the camera in the band (no-op otherwise)
+      camera.updateProjectionMatrix();
+      if (lastFocus && focusBlend > .002 && !photo) { const f = lastFocus; focusQ.copy(camera.quaternion); camera.lookAt(f.x, heightAt(f.x, f.z) + (f.kind === 'deer' ? 1.2 : f.kind === 'person' ? 1.4 : .3), f.z); camera.quaternion.slerpQuaternions(focusQ, camera.quaternion.clone(), focusBlend); camera.updateMatrixWorld(true); }
+    } else xrOrigin.updateMatrixWorld(true);
     const highlighted = photo ? undefined : focused ?? target;
     highlight(highlighted);
 
@@ -464,7 +483,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
     else if (camera.view?.enabled) { camera.clearViewOffset(); camera.aspect = width / height; camera.updateProjectionMatrix(); }
-    if (TOP_DOWN) {
+    if (TOP_DOWN && !inHeadset) {
       const y = LEVEL.waterSurface;
       camera.up.set(-Math.sin(yaw), 0, -Math.cos(yaw));
       camera.position.set(x, y + TOP_CAM.h, z);

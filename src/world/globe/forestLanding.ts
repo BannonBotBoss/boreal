@@ -103,8 +103,17 @@ export function forestLanding(around: { x: number; z: number } = mamaTerritory()
       const yaw = Math.atan2(-dx / dist, -dz / dist);
       const { ahead, rear } = standEitherSide(x, z, yaw);
       if (ahead < 6) continue;
+      const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+      if (!usable(x + fx * 8, z + fz * 8)) continue;
+      let close = 0;
+      for (const t of treesAround(x, z)) {
+        const dx = t.x - x, dz = t.z - z, d = Math.hypot(dx, dz);
+        const along = dx * fx + dz * fz;
+        if (d < 16 && along > 3 && along < 14) close++;
+      }
+      if (close < 3) continue;
       const open = viewBlocked(x, z, yaw, treesAround(x, z)) ? 0 : 8;
-      const score = ahead * 2 - rear + stems * 0.25 + open;
+      const score = close * 4 + ahead * 2 - rear + stems * 0.25 + open;
       if (!edge || score > edge.score) edge = { x, z, yaw, stems, score };
     }
   }

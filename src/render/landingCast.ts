@@ -133,8 +133,9 @@ function groundAt(planet: ReturnType<typeof planetFor>, lat: number, lon: number
   const { water, elevM } = groundForCover(s, sampleDem(lat, lon));
   // A cached satellite photo wins over the seeded planet's vegetation (#192 desert finding).
   const vegetation = samplePhotoVegetation(lat, lon) ?? vegetationWeight(s, dir);
-  const biome = coverKind(lat, elevM, vegetation, water, liveCoastM(lat, lon)); // live coast distance (#235): continental interiors lift the tree line
-  return { lat, lon, elevM, vegetation, water, biome };
+  const coastM = liveCoastM(lat, lon); // live coast distance (#235): continental interiors lift the tree line
+  const biome = coverKind(lat, elevM, vegetation, water, coastM);
+  return { lat, lon, elevM, vegetation, water, biome, coastM: coastM ?? NaN };
 }
 
 function clickFromSearch() {
@@ -208,7 +209,10 @@ export function createLandingCast(scene: THREE.Scene) {
   }
 
   function anchor(ctx: ReturnType<typeof landingContext>, x: number, z: number, yaw: number) {
-    const next = `${ctx.lat.toFixed(2)}:${ctx.lon.toFixed(2)}:${ctx.water ? 1 : 0}`;
+    // The cover class is part of the key (T-0132): the first anchor can run before the DEM and photo tiles land, on the seeded
+    // planet's own height and vegetation (64.5 N -119.7 read desert there). When the cached tiles change the class the
+    // picture draws, the census is asked again on the same inputs instead of keeping the first answer.
+    const next = `${ctx.lat.toFixed(2)}:${ctx.lon.toFixed(2)}:${ctx.water ? 1 : 0}:${ctx.biome}`;
     wanted = next;
     if (next === key || loading) return;
     loading = true;
@@ -225,7 +229,7 @@ export function createLandingCast(scene: THREE.Scene) {
         publish(report.note);
         return;
       }
-      const pop = sim.landingPopulation(at.censusLat, at.censusLon, at.elevM, at.vegetation, at.water, LANDING_YEAR, LANDING_CENSUS_SIDE_M);
+      const pop = sim.landingPopulation(at.censusLat, at.censusLon, at.elevM, at.vegetation, at.water, LANDING_YEAR, LANDING_CENSUS_SIDE_M, at.coastM); // same coast as the biome (T-0132)
       key = asked;
       census = pop.map(row => ({ species: row.species, count: row.count }));
       clearBodies();

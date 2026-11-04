@@ -2,7 +2,7 @@
 //! Built on the #167 cover row: an animal lives only where its range and its cover class allow it.
 //! Densities are labelled calibration ranges in data/earth/species-density.json [verify]. Deterministic per (lat, lon, year).
 
-use crate::cover::{cover_row, place_hash, Cover};
+use crate::cover::{cover_row_at, place_hash, Cover};
 
 pub const SPECIES_JSON: &str = include_str!("../../../data/earth/species-density.json");
 
@@ -48,9 +48,17 @@ pub fn in_range(sp: Species, lat: f64, lon: f64) -> bool {
 }
 
 /// Animals per hectare at a landing in a given year. Zero outside the range or on cover the species cannot use.
+/// Zonal tree and ice lines (no coast distance); same as `density_per_ha_at` with NaN.
 pub fn density_per_ha(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32) -> f64 {
+    density_per_ha_at(sp, lat, lon, elev_m, vegetation, water, year, f64::NAN)
+}
+/// density_per_ha on the cover the viewer draws: `coast_m` is the landing's distance to the sea (m, NaN = unknown), the
+/// same input cover_row_at uses (#233, #235). Without it a continental interior below its own tree line read as bare rock
+/// under the zonal line, so the census was empty under a boreal stand (T-0132, 64.5 N -119.7).
+#[allow(clippy::too_many_arguments)]
+pub fn density_per_ha_at(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32, coast_m: f64) -> f64 {
     if !in_range(sp, lat, lon) { return 0.0; }
-    let cls = cover_row(lat, lon, elev_m, vegetation, water).class;
+    let cls = cover_row_at(lat, lon, elev_m, vegetation, water, coast_m).class;
     let key = match cls { Cover::Boreal => "boreal_per_ha", Cover::Prairie => "prairie_per_ha", Cover::Desert => "desert_per_ha", Cover::Tundra => "tundra_per_ha", Cover::Tropical => "tropical_per_ha", Cover::Wetland => "wetland_per_ha", _ => return 0.0 };
     if !has_field(sp, key) { return 0.0; } // tundra, tropical and wetland are opt-in: only species that list it live there
     let r = field(sp, key);
@@ -81,8 +89,13 @@ pub const ALL: [Species; 12] = [Species::SnowshoeHare, Species::WhiteTailedDeer,
 /// The local population list for one landing: (species, whole animals) for every species with at least one animal in a
 /// square patch `side_m` wide, in species-id order. This is what the bridge sends so the viewer can show the full cast.
 pub fn landing_population(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32, side_m: f64) -> Vec<(Species, u32)> {
+    landing_population_at(lat, lon, elev_m, vegetation, water, year, side_m, f64::NAN)
+}
+/// landing_population on the viewer's cover: `coast_m` as in `density_per_ha_at` (NaN = the zonal lines).
+#[allow(clippy::too_many_arguments)]
+pub fn landing_population_at(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32, side_m: f64, coast_m: f64) -> Vec<(Species, u32)> {
     ALL.iter().filter_map(|&sp| {
-        let d = density_per_ha(sp, lat, lon, elev_m, vegetation, water, year);
+        let d = density_per_ha_at(sp, lat, lon, elev_m, vegetation, water, year, coast_m);
         // Offset the rounding hash per species so two species at the same density do not round together.
         let n = spawn_count(d, side_m, lat + 0.25 * sp as u32 as f64, lon);
         (n > 0).then_some((sp, n))
@@ -197,6 +210,19 @@ mod tests {
         assert!(density_per_ha(Species::RedFox, 68.0, -110.0, 50.0, 0.4, false, 2026) > 0.0, "low-Arctic tundra foxes");
         assert!(density_per_ha(Species::RedFox, 60.0, 25.0, 100.0, 0.9, false, 2026) > 0.0, "Finland: red fox is Holarctic (lon2)");
         assert_eq!(Species::from_id(10), Some(Species::RedFox));
+    }
+    #[test] fn census_reads_the_same_cover_as_the_picture_inland() {
+        // T-0132: the #192 tundra click, 64.5 N -119.7 at 376 m (landing DEM; GEBCO 2020 gives 391 m there), vegetation 0.71.
+        // Zonal lines: 376 m is over the 146 m zonal tree line, so Rock and no animals. 156 km from the sea (the live grid
+        // at nlat 128) the continental tree line is ~815 m, so the viewer draws Boreal and the census must list a boreal cast.
+        let (lat, lon, elev, veg) = (64.5, -119.7, 376.0, 0.71);
+        assert!(landing_population(lat, lon, elev, veg, false, 2026, 5_000.0).is_empty(), "zonal: rock");
+        assert_eq!(cover_row_at(lat, lon, elev, veg, false, 156_000.0).class, Cover::Boreal);
+        let pop = landing_population_at(lat, lon, elev, veg, false, 2026, 5_000.0, 156_000.0);
+        assert!(!pop.is_empty(), "inland boreal cast");
+        assert!(pop.iter().all(|&(s, _)| density_per_ha_at(s, lat, lon, elev, veg, false, 2026, 156_000.0) > 0.0));
+        // NaN coast is exactly the old zonal call.
+        assert_eq!(landing_population_at(lat, lon, elev, veg, false, 2026, 5_000.0, f64::NAN), landing_population(lat, lon, elev, veg, false, 2026, 5_000.0));
     }
     #[test] fn spawn_count_tracks_density() {
         assert_eq!(spawn_count(0.0, 500.0, 50.0, -90.0), 0);

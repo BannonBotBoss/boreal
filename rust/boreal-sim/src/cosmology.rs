@@ -181,6 +181,13 @@ fn scale_of_time(t: f64) -> f64 {
     if !(t > 0.0) { return 0.0; }
     let s = scale_samples();
     if t >= s[s.len() - 1].1 { return s[s.len() - 1].0; }
+    // The table's first row is a = 1e-14 at t = 0. Interpolating from that row
+    // pinned every earlier instant to the same scale factor, so temperature
+    // sat on a floor. Before the table has moved, the radiation era is a ∝ √t,
+    // anchored on the first row that has a real time.
+    if s.len() > 1 && s[1].1 > 0.0 && t < s[1].1 {
+        return s[1].0 * (t / s[1].1).sqrt();
+    }
     let i = s.partition_point(|x| x.1 < t).saturating_sub(1);
     let (a0, t0) = s[i];
     let (a1, t1) = s[(i + 1).min(s.len() - 1)];

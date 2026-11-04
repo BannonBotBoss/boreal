@@ -95,7 +95,7 @@ export class CosmosSphere {
   constructor(parent: HTMLElement) {
     this.canvas = document.createElement('canvas');
     this.canvas.id = 'cosmos-sphere';
-    this.canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:18;background:#05010c';
+    this.canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:25;background:#05010c;pointer-events:none';
     parent.appendChild(this.canvas);
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;

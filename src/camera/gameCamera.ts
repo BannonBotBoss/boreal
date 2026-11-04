@@ -84,7 +84,7 @@ export function mountViewfinder(renderer: THREE.WebGLRenderer, view: 'game' | 'g
   const galleryKey = () => view === 'game' && !document.body.classList.contains('on-globe');
   addEventListener('keydown', e => { if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.ctrlKey || e.metaKey) return;
     if ((e.key === 'p' || e.key === 'P') && view !== 'game') shoot( // game: P is the rebindable 'photo' action (main.ts act)
-      e.shiftKey || undefined); else if (e.key === 'g' && galleryKey()) void showGallery(); else if (e.key === '`') document.body.classList.toggle('boreal-debug'); });
+      e.shiftKey || undefined); else if ((e.key === 'g' || e.key === 'G') && !e.shiftKey && galleryKey()) void showGallery(); else if (e.key === '`') document.body.classList.toggle('boreal-debug'); });
   installViewfinderCss();
   setInterval(() => panel.update(), 250);
   const api = { state: st, shoot, capture, panel, fov: () => fovFromFocal(st.cam.focalMm) }; (renderer as unknown as { __viewfinder: unknown }).__viewfinder = api; active = api; return api;

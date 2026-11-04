@@ -223,10 +223,23 @@ impl Engine for ReheatingEng {
             ParamDef { key: "g_star", label: "g* override (0 = compute it)", unit: "" },
             ParamDef { key: "qcd_transition", label: "quark-hadron threshold flag", unit: "0 or 1" },
             ParamDef { key: "qcd_MeV", label: "quark-hadron temperature", unit: "MeV" },
-            ParamDef { key: "mass_up", label: "up quark mass", unit: "GeV" },
-            ParamDef { key: "mass_electron", label: "electron mass", unit: "GeV" },
+            ParamDef { key: "mass_photon", label: "photon mass", unit: "GeV" },
+            ParamDef { key: "mass_gluon", label: "gluon mass", unit: "GeV" },
+            ParamDef { key: "mass_W", label: "W mass", unit: "GeV" },
+            ParamDef { key: "mass_Z", label: "Z mass", unit: "GeV" },
             ParamDef { key: "mass_Higgs", label: "Higgs mass", unit: "GeV" },
+            ParamDef { key: "mass_up", label: "up quark mass", unit: "GeV" },
+            ParamDef { key: "mass_down", label: "down quark mass", unit: "GeV" },
+            ParamDef { key: "mass_charm", label: "charm quark mass", unit: "GeV" },
+            ParamDef { key: "mass_strange", label: "strange quark mass", unit: "GeV" },
             ParamDef { key: "mass_top", label: "top quark mass", unit: "GeV" },
+            ParamDef { key: "mass_bottom", label: "bottom quark mass", unit: "GeV" },
+            ParamDef { key: "mass_electron", label: "electron mass", unit: "GeV" },
+            ParamDef { key: "mass_muon", label: "muon mass", unit: "GeV" },
+            ParamDef { key: "mass_tau", label: "tau mass", unit: "GeV" },
+            ParamDef { key: "mass_nu_e", label: "electron neutrino mass", unit: "GeV" },
+            ParamDef { key: "mass_nu_mu", label: "muon neutrino mass", unit: "GeV" },
+            ParamDef { key: "mass_nu_tau", label: "tau neutrino mass", unit: "GeV" },
         ]
     }
     fn equations(&self) -> &'static [EqDef] {
@@ -379,7 +392,7 @@ impl Engine for Slice {
     }
 }
 
-fn slice_eval(id: &str) -> Outcome {
+fn slice_eval(id: &str, p: &BTreeMap<String, f64>) -> Outcome {
     let snap = PLANET.with(|s| s.borrow().clone());
     let Some(snap) = snap else {
         return Outcome { health: HEALTH_INACTIVE, reason: "not active at this time".into(), vars: vec![], symbols: vec![], outputs: BTreeMap::new() };
@@ -401,12 +414,37 @@ fn slice_eval(id: &str) -> Outcome {
             vars.push(Var { label: (*label).into(), unit: (*unit).into(), value: st.mean, min: st.min, max: st.max, n: st.n });
         }
     }
+    let solar = p.get("solar_constant").copied().unwrap_or(1361.0);
     let mut symbols = vec![];
-    if id == "wind" {
-        if let Some(st) = snap.stat("u") {
-            symbols.push(sym("geostrophic", "u", "u", "m/s", st.mean));
+    match id {
+        "climate" => {
+            symbols.push(sym("budyko", "T", "T", "°C", snap.mean("ts")));
+            symbols.push(sym("budyko", "Q", "Q", "W/m²", solar));
+            symbols.push(sym("budyko", "alpha", r"\alpha", "", p.get("water_albedo").copied().unwrap_or(0.06)));
         }
-        symbols.push(sym("geostrophic", "f", "f", "1/s", 2.0 * 7.292115e-5));
+        "solar" => {
+            symbols.push(sym("insolation", "S0", "S_{0}", "W/m²", solar));
+            symbols.push(sym("insolation", "toa", "Q", "W/m²", snap.mean("toa")));
+        }
+        "energy" => {
+            symbols.push(sym("surface", "T", "T_{s}", "°C", snap.mean("ts")));
+            symbols.push(sym("surface", "E", "E", "mm/day", snap.mean("evap")));
+        }
+        "wind" => {
+            if let Some(st) = snap.stat("u") {
+                symbols.push(sym("geostrophic", "u", "u", "m/s", st.mean));
+            }
+            symbols.push(sym("geostrophic", "f", "f", "1/s", 2.0 * 7.292115e-5));
+        }
+        "hydro" => {
+            symbols.push(sym("bucket", "P", "P", "mm/day", snap.mean("precip")));
+            symbols.push(sym("bucket", "W", "W", "mm", snap.mean("soil")));
+        }
+        "clouds" => {
+            symbols.push(sym("sundqvist", "C", "C", "", snap.mean("cloud")));
+            symbols.push(sym("sundqvist", "RH", "RH_{c}", "", 0.75));
+        }
+        _ => {}
     }
     let (health, reason) = if bad { (HEALTH_BAD, "a grid value is not a number".into()) } else { (HEALTH_OK, "grid summary".into()) };
     Outcome { health, reason, vars, symbols, outputs: BTreeMap::new() }
@@ -535,7 +573,7 @@ fn eval_id(id: &str, t: f64, p: &BTreeMap<String, f64>) -> Outcome {
         "reheating" => ReheatingEng.evaluate(t, p),
         "nucleosynthesis" => Nucleosynthesis.evaluate(t, p),
         "planet" => Planet.evaluate(t, p),
-        "climate" | "solar" | "energy" | "wind" | "hydro" | "clouds" => slice_eval(id),
+        "climate" | "solar" | "energy" | "wind" | "hydro" | "clouds" => slice_eval(id, p),
         _ => Outcome { health: HEALTH_BAD, reason: "unknown engine".into(), vars: vec![], symbols: vec![], outputs: BTreeMap::new() },
     }
 }
@@ -617,10 +655,21 @@ impl Registry {
         let ids: Vec<String> = self.instances.iter().map(|n| n.type_id.clone()).collect();
         for id in ids {
             let outcome = eval_id(&id, t, &self.params);
+            self.count_eval(&id);
             if let Some(inst) = self.instances.iter_mut().find(|n| n.type_id == id) {
                 inst.outcome = outcome;
             }
         }
+    }
+
+    fn count_eval(&mut self, id: &str) {
+        if SUPPRESS.with(|s| s.get() > 0) {
+            return;
+        }
+        let now = now_ms();
+        let e = self.session.entry(id.into()).or_insert(Session { calls: 0, first_ms: 0.0, last_ms: 0.0, day: 0.0, hour: 0.0, vars: vec![] });
+        e.calls += 1;
+        if e.first_ms == 0.0 { e.first_ms = now; }
     }
 
     fn spawn_engine(&mut self, type_id: &str, parent: Option<u64>, parent_type: &str, cause: &str, at: f64, manual: bool) -> Option<u64> {
@@ -668,10 +717,23 @@ fn default_of(key: &str) -> f64 {
         "g_star" => 0.0,
         "qcd_transition" => 1.0,
         "qcd_MeV" => 150.0,
-        "mass_up" => 0.00216,
-        "mass_electron" => 0.000510999,
+        "mass_photon" => 0.0,
+        "mass_gluon" => 0.0,
+        "mass_W" => 80.377,
+        "mass_Z" => 91.1876,
         "mass_Higgs" => 125.20,
+        "mass_up" => 0.00216,
+        "mass_down" => 0.00467,
+        "mass_charm" => 1.27,
+        "mass_strange" => 0.0934,
         "mass_top" => 172.57,
+        "mass_bottom" => 4.183,
+        "mass_electron" => 0.000510999,
+        "mass_muon" => 0.105658,
+        "mass_tau" => 1.77686,
+        "mass_nu_e" => 0.0,
+        "mass_nu_mu" => 0.0,
+        "mass_nu_tau" => 0.0,
         "nlat" => 8.0,
         "nlon" => 16.0,
         "solar_constant" => 1361.0,
@@ -822,8 +884,12 @@ pub fn report() -> String {
                 lines.push(format!("RULE\t{id}\t{}\t{}\t{}", rule.child, rule.output, clean(rule.cause)));
             }
         }
-        // Geostrophic equation lives on the wind slice.
+        lines.push("EQ\tclimate\tbudyko\tBudyko temperature\tT=\\frac{(1-\\alpha)Q-A+C\\bar{T}}{B+C}".into());
+        lines.push("EQ\tsolar\tinsolation\tInsolation\tQ=S_{0}\\,\\mu_{0}".into());
+        lines.push("EQ\tenergy\tsurface\tSurface energy\tC\\frac{dT_{s}}{dt}=R_{n}-\\lambda E-H".into());
         lines.push("EQ\twind\tgeostrophic\tGeostrophic wind\tu=-(1/(\\rho f))\\partial p/\\partial y".into());
+        lines.push("EQ\thydro\tbucket\tSoil bucket\t\\frac{dW}{dt}=P-E".into());
+        lines.push("EQ\tclouds\tsundqvist\tCloud fraction\tC=1-\\sqrt{(1-RH)/(1-RH_{c})}".into());
         for entry in &g.log {
             lines.push(format!("LOG\t{}\t{}\t{}\t{}\t{}", entry.kind, entry.t, clean(&entry.cause), clean(&entry.parent), clean(&entry.child)));
         }
@@ -922,5 +988,16 @@ mod tests {
         let h = ids.iter().position(|id| *id == "reheating").unwrap();
         let n = ids.iter().position(|id| *id == "nucleosynthesis").unwrap();
         assert!(s < h && h < n, "{ids:?}");
+    }
+
+    #[test]
+    fn every_standard_model_mass_is_editable() {
+        let text = report();
+        for key in ["mass_photon", "mass_gluon", "mass_W", "mass_Z", "mass_Higgs", "mass_up", "mass_down", "mass_charm", "mass_strange", "mass_top", "mass_bottom", "mass_electron", "mass_muon", "mass_tau", "mass_nu_e", "mass_nu_mu", "mass_nu_tau"] {
+            assert!(text.contains(key), "missing {key}");
+            assert!(set_param(key, 0.5), "{key}");
+        }
+        assert!(report().contains("mass_muon"));
+        reset_all();
     }
 }

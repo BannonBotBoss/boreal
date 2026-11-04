@@ -92,3 +92,12 @@ export function parseCycle(text: string): number | null {
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
 }
+
+/** One plain sentence per log row, e.g. "reheating spawned by spacetime at t=1.000e-32 s, because ε=1." */
+export function logSentence(row: EngineLog): string {
+  const verb = row.kind === 'despawn' ? 'despawned' : row.kind === 'spawn' ? 'spawned' : row.kind;
+  const by = row.parent ? ` by ${row.parent}` : '';
+  const at = Number.isFinite(row.t) ? ` at t=${row.t.toExponential(3)} s` : '';
+  const why = row.cause ? `, because ${row.cause}` : '';
+  return `${row.child} ${verb}${by}${at}${why}.`;
+}

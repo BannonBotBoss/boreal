@@ -5,7 +5,7 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { latestPlanetSim, type PlanetSim } from '../core/planetBudget';
 import { sharedPlanetSim } from '../core/planetWeather';
-import { decodeEngineReport, healthColor, healthWord, parseCycle, type EngineInst, type EngineReport } from '../core/engineReport';
+import { decodeEngineReport, healthColor, logSentence, healthWord, parseCycle, type EngineInst, type EngineReport } from '../core/engineReport';
 import { NOT_IN_RUST } from '../data/notInRust';
 import { TIERS } from '../world/cosmos/lod';
 import { CosmosSphere } from '../world/cosmos/sphere';
@@ -315,10 +315,7 @@ function paintLog(report: EngineReport) {
   const log = nodes.log; if (!log) return;
   log.replaceChildren();
   if (!report.log.length) log.append(el('div', 'No spawns yet.'));
-  for (const row of report.log) {
-    const who = row.parent ? `${row.parent} → ${row.child}` : row.child;
-    log.append(el('div', `${row.kind} ${who} at t=${row.t.toExponential(3)} s — ${row.cause}`));
-  }
+  for (const row of report.log) log.append(el('div', logSentence(row)));
 }
 
 function paintTree(report: EngineReport) {

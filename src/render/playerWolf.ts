@@ -7,7 +7,6 @@ import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES,
 import { buildFurCards, furCardMaterial } from './furCards';
 import { applyStylizedFill, coatOf } from './stylizedPalette';
 import { finishAnimalCoat } from './coatFinish';
-import { GOVERNOR } from '../core/quality';
 
 /**
  * Procedural wolf: a low-poly base skin (tubes swept around an invisible skeleton, see core/body.ts and core/wolfBody.ts)
@@ -42,12 +41,12 @@ export function poseWolfRig(tilt: THREE.Object3D, chains: WolfChain[], pose: Ret
     c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
   });
 }
-const PUP_COAT = { name: 'golden tan' as const, back: [.42, .30, .16] as [number, number, number], belly: [.74, .58, .34] as [number, number, number], dark: [.16, .10, .07] as [number, number, number], accent: [.58, .36, .16] as [number, number, number] };
+const PUP_COAT = { name: 'golden tan' as const, back: [.62, .42, .22] as [number, number, number], belly: [.84, .68, .44] as [number, number, number], dark: [.34, .22, .12] as [number, number, number], accent: [.72, .48, .26] as [number, number, number] };
 
 export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean; pup?: boolean } = {}) {
   const portrait = !!options.portrait;
   const pup = !!options.pup;
-  const furCount = pup ? (GOVERNOR.xr ? 0 : 480) : FUR_CARDS;
+  const furCount = pup ? 0 : FUR_CARDS;
   const withFur = options.fur !== false && furCount > 0;
   const root = new THREE.Group(); root.scale.setScalar(WOLF_SCALE);
   const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
@@ -104,17 +103,19 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   geometry.setAttribute('normal', new THREE.Float32BufferAttribute(body.normal, 3));
   // Skin tint: under fur, the skin takes the fur-root shade (cards start at 0.55 × the coat colour), so gaps between strands read as
   // depth and shadow, not bare skin. Bare parts (nose, lips, tongue, mouth seal, ear cups) keep their own colour. Vertex colours only: no extra cost.
-  const skinColor = body.color.map((c, i) => c * (body.furLen[Math.floor(i / 3)] >= .03 ? FUR_ROOT_SHADE : BARE_SHADE));
+  const skinShade = pup ? .92 : FUR_ROOT_SHADE;
+  const skinColor = body.color.map((c, i) => c * (body.furLen[Math.floor(i / 3)] >= .03 ? skinShade : BARE_SHADE));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(skinColor, 3));
   geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(body.skinIndex, 4));
   geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(body.skinWeight, 4));
   geometry.setIndex(body.index);
-  const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 });
+  const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, transparent: false, opacity: 1, depthWrite: true });
+  if (pup) skinMaterial.userData.pupCoat = true;
   applyStylizedFill(skinMaterial, pup ? PUP_COAT.back : coatOf('Gray Wolf'));
-  finishAnimalCoat(skinMaterial);
+  finishAnimalCoat(skinMaterial, pup ? 'pup' : 'mama');
   const furMaterial = furCardMaterial();
-  applyStylizedFill(furMaterial, pup ? PUP_COAT.back : coatOf('Gray Wolf'));
-  finishAnimalCoat(furMaterial);
+  applyStylizedFill(furMaterial, coatOf('Gray Wolf'));
+  finishAnimalCoat(furMaterial, 'mama');
   const skinMesh = new THREE.SkinnedMesh(geometry, skinMaterial);
   const skins = withFur ? [skinMesh, new THREE.SkinnedMesh(buildFurCards(body, portrait
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,

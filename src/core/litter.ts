@@ -11,13 +11,15 @@ export const LITTER = {
   speedMps: 0.9,
   yearSpeedMps: 1.6,
   denRingM: 1.2,
-  trailYoungM: 0.55,
-  trailYearM: 0.4,
-  trailGapM: 0.04,
-  /** A tight pair beside her hips, not a line stretched toward the lens. */
-  lateralM: 0.32,
-  /** The chase camera is 3.6 m behind her. The cluster stays next to her, in front of that lens. */
-  viewBackM: 0.85,
+  trailYoungM: 0.45,
+  trailYearM: 0.18,
+  trailGapM: 0.02,
+  /** Beside her. The chase frame crops the ground, so the pair stands a little ahead of her hips. */
+  lateralM: 0.55,
+  /** The middle pup may sit this far back. Further and the lens is on top of them. */
+  viewBackM: 0.6,
+  /** Side pups stand here, ahead of her centre, so their paws clear the button bar. */
+  flankM: -1.35,
   /** A step longer than a walk is the drop. She does not leave the litter at the old spot. */
   rejoinM: 4,
   /** Game seconds for one year of pup growth. Ten real minutes at the default clock (×12) is half a year. */
@@ -46,7 +48,7 @@ export function ageAfter(ageYears: number, gameSeconds: number) {
 
 /** How big a pup draws next to an adult. Four weeks is a bit under a third. One year is full size. */
 export function pupScale(ageYears: number) {
-  return 0.22 + 0.78 * growthU(ageYears);
+  return 0.3 + 0.7 * growthU(ageYears);
 }
 
 /** Metres behind the mother, before the slot gap. Older pups walk closer. */
@@ -94,8 +96,9 @@ export function besideMother(x: number, z: number, yaw: number, ageYears = LITTE
 
 /** The point in the trail behind the mother. Forward is (−sin yaw, −cos yaw). */
 export function trailSlot(slot: number, motherX: number, motherZ: number, yaw: number, ageYears = LITTER.emergeYears) {
-  const back = Math.min(LITTER.viewBackM, trailBackM(ageYears) + slot * LITTER.trailGapM);
+  const along = Math.min(LITTER.viewBackM, trailBackM(ageYears) + slot * LITTER.trailGapM);
   const side = (slot - (LITTER.count - 1) / 2) * LITTER.lateralM;
+  const back = Math.abs(side) > 0.2 ? Math.min(along, LITTER.flankM) : along;
   const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
   const rx = Math.cos(yaw), rz = -Math.sin(yaw);
   return { x: motherX - fx * back + rx * side, z: motherZ - fz * back + rz * side };

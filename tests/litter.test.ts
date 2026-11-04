@@ -40,10 +40,14 @@ test('some pups stand in front of the chase camera, beside her', () => {
   let ahead = 0, beside = 0;
   for (let slot = 0; slot < LITTER.count; slot++) {
     const p = trailSlot(slot, 0, 0, 0, LITTER.emergeYears);
-    assert.ok(p.z > 0.4 && p.z < 0.95, `slot ${slot} is not in the cluster at ${p.z.toFixed(2)} m`);
-    assert.ok(Math.abs(p.x) < 0.8, `slot ${slot} stands too wide at ${p.x.toFixed(2)} m`);
+    assert.ok(Math.abs(p.x) < 1.3, `slot ${slot} stands too wide at ${p.x.toFixed(2)} m`);
+    if (Math.abs(p.x) > 0.4) {
+      assert.ok(p.z > -1.6 && p.z < -0.8, `slot ${slot} is not in the frame at ${p.z.toFixed(2)} m`);
+      beside++;
+    } else {
+      assert.ok(p.z < 1.2, `slot ${slot} is under the lens at ${p.z.toFixed(2)} m`);
+    }
     ahead++;
-    if (Math.abs(p.x) > 0.3) beside++;
   }
   assert.equal(ahead, LITTER.count);
   assert.ok(beside >= 2, `only ${beside} pups stand far enough to the side`);

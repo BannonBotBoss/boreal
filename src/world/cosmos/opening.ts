@@ -11,10 +11,10 @@ import { CosmosSphere, type SphereInputs } from './sphere';
 /**
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
  * is only tens of kelvin). Cycle 62 is the planet. The cycle is not advanced at a constant
- * rate: the colour arc takes `arcSec`, then the violet holds for `holdSec`, then the planet.
+ * rate: the colour arc takes `arcSec`, then the deep blue-violet holds for `holdSec`, then the planet.
  * A click or a pinch skips the rest.
  */
-export const OPENING = { from: 1, violetAt: 58, planetAt: 62, arcSec: 32, holdSec: 8 } as const;
+export const OPENING = { from: 1, violetAt: 58, planetAt: 62, arcSec: 32, holdSec: 12 } as const;
 
 const HOT: SphereInputs = { a: 1e-40, h: 1, temperature: 1e22, rho: 1 };
 

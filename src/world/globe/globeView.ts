@@ -31,7 +31,7 @@ import { across } from './cube';
 import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock';
 import { timescaleFrom } from '../../core/timescale';
 import { createChronometer } from '../../ui/chronometer';
-import { bindTimeInputs, createTimeHud } from '../../ui/timeHud';
+import { bindTimeInputs } from '../../ui/timeHud';
 import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { GLOBE_COAST, cloudClear, coastLambda, orbitClip, forestFromPlanet, globeCameraFrom } from './transition';
@@ -143,7 +143,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (new URLSearchParams(location.search).has('timescale')) setClockRate(timescaleFrom(location.search));
   }
   let pageChrono: ReturnType<typeof createChronometer> | undefined;
-  if (own.pageDom) { pageChrono = createChronometer(worldSec); createTimeHud(() => pageChrono?.toggle()); bindTimeInputs({ padRate: false }); }
+  if (own.pageDom) { pageChrono = createChronometer(worldSec); bindTimeInputs({ padRate: false }); listen(document, 'keydown', (e: KeyboardEvent) => { if ((e.key === 't' || e.key === 'T') && !e.repeat && !(e.target instanceof HTMLElement && (e.target.isContentEditable || e.target.matches('input,textarea,select')))) pageChrono?.toggle(); }); }
   const shotSec = worldSec();
   const E = new THREE.Vector3(...planet.east), N = new THREE.Vector3(...planet.north), U = new THREE.Vector3(...planet.home);
   const sunDir = new THREE.Vector3(), sunNow = () => { const sec = q.has('shot') ? shotSec : worldSec(); const d = sunPosition(hourAt(sec), dayAt(sec)).direction; /* screenshots: clock pinned so ?hour= is exact */ return sunDir.copy(E).multiplyScalar(d.x).addScaledVector(U, d.y).addScaledVector(N, -d.z).normalize(); };

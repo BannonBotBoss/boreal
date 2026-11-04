@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0131",
+  "agent": "grokbot-2",
+  "at": "2026-11-03T19:50:00-07:00",
+  "branch": "grokbot-2/remove-time-hud",
+  "handoff": "tasks/handoffs/T-0131-grokbot-2.md",
+  "note": "createTimeHud removed and unmounted (main.ts, globeView.ts); bindTimeInputs kept; globe T key for the chronometer; #flight-prompt moved to bottom-left. tsc 0, npm test pass, build ok. Approve left to Grokbot-1."
+}

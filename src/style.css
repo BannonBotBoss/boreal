@@ -43,4 +43,4 @@ footer>span{flex:1 1 240px;min-width:0;max-width:min(460px,100%);white-space:nor
 footer div{flex-wrap:wrap;justify-content:flex-end;max-width:100%}
 @media(max-width:900px){footer{flex-direction:column;align-items:stretch;gap:8px}footer div{justify-content:flex-start}footer>span{max-width:none}#interaction{bottom:188px}}
 /* Above the controller legend (.padx bottom 280px, ~35px tall) so a ~750px window does not cover the prompt or the interaction line. */
-#flight-prompt{position:fixed;left:50%;bottom:360px;transform:translateX(-50%);z-index:30;max-width:min(640px,calc(100vw - 24px));background:#0b1622e0;color:#f3f1df;font:14px/1.45 system-ui;padding:10px 14px;border-radius:8px;text-align:center;pointer-events:none}
+#flight-prompt{position:fixed;left:16px;bottom:330px;z-index:30;max-width:min(300px,calc(100vw - 32px));background:#0b1622b8;color:#f3f1df;font:12px/1.4 system-ui;padding:6px 10px;border-radius:8px;text-align:left;pointer-events:none;opacity:.85}

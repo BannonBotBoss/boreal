@@ -2,10 +2,12 @@ import * as THREE from 'three';
 import { WOLF_SCALE, type WolfMode } from '../core/wolfModes';
 import { AnimalBrain, pelvisShift, quadrupedPose, WOLF_LEGS } from '../core/animalBehavior';
 import { pushProgress } from '../core/rocks';
-import { buildBody, wolfCoat } from '../core/body';
-import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
+import { buildBody, computeNormals, wolfCoat } from '../core/body';
+import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, TUBE, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
 import { buildFurCards, furCardMaterial } from './furCards';
 import { applyStylizedFill, coatOf } from './stylizedPalette';
+import { finishAnimalCoat } from './coatFinish';
+import { GOVERNOR } from '../core/quality';
 
 /**
  * Procedural wolf: a low-poly base skin (tubes swept around an invisible skeleton, see core/body.ts and core/wolfBody.ts)
@@ -40,9 +42,13 @@ export function poseWolfRig(tilt: THREE.Object3D, chains: WolfChain[], pose: Ret
     c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
   });
 }
-export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean } = {}) {
+const PUP_COAT = { name: 'golden tan' as const, back: [.42, .30, .16] as [number, number, number], belly: [.74, .58, .34] as [number, number, number], dark: [.16, .10, .07] as [number, number, number], accent: [.58, .36, .16] as [number, number, number] };
+
+export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean; pup?: boolean } = {}) {
   const portrait = !!options.portrait;
-  const withFur = options.fur !== false;
+  const pup = !!options.pup;
+  const furCount = pup ? (GOVERNOR.xr ? 0 : 480) : FUR_CARDS;
+  const withFur = options.fur !== false && furCount > 0;
   const root = new THREE.Group(); root.scale.setScalar(WOLF_SCALE);
   const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
   const torso = bones[BONE.torso], head = bones[BONE.head], jaw = bones[BONE.jaw];
@@ -67,9 +73,24 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   });
 
   // Skin: built once at the straight bind pose, then bound to the skeleton. Fur cards grow from it.
-  const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : wolfCoat(seed)));
-  const coat = portrait ? PORTRAIT_COAT : wolfCoat(seed);
+  const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : pup ? PUP_COAT : wolfCoat(seed)));
+  const coat = portrait ? PORTRAIT_COAT : pup ? PUP_COAT : wolfCoat(seed);
   const clear = sculptWolf(body, portrait ? { ...coat, belly: [.7, .66, .58] } : coat); // portrait: cream cheeks in the muzzle gradient
+  if (pup) {
+    for (const tube of [TUBE.earL, TUBE.earR]) {
+      let cx = 0, cy = 0, cz = 0, n = 0;
+      for (let v = 0; v < body.tube.length; v++) if (body.tube[v] === tube) { cx += body.position[v * 3]; cy += body.position[v * 3 + 1]; cz += body.position[v * 3 + 2]; n++; }
+      if (!n) continue;
+      cx /= n; cy /= n; cz /= n;
+      for (let v = 0; v < body.tube.length; v++) if (body.tube[v] === tube) {
+        body.position[v * 3] = cx + (body.position[v * 3] - cx) * 1.45;
+        body.position[v * 3 + 1] = cy + (body.position[v * 3 + 1] - cy) * 1.45;
+        body.position[v * 3 + 2] = cz + (body.position[v * 3 + 2] - cz) * 1.45;
+        body.rest[v * 3] = body.position[v * 3]; body.rest[v * 3 + 1] = body.position[v * 3 + 1]; body.rest[v * 3 + 2] = body.position[v * 3 + 2];
+      }
+    }
+    computeNormals(body);
+  }
   // Brow shelf fur: short, swept back and outward over the ridge.
   const browAt = (p: [number, number, number]) => {
     for (const side of [-1, 1]) {
@@ -89,15 +110,17 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(body.skinWeight, 4));
   geometry.setIndex(body.index);
   const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 });
-  applyStylizedFill(skinMaterial, coatOf('Gray Wolf'));
+  applyStylizedFill(skinMaterial, pup ? PUP_COAT.back : coatOf('Gray Wolf'));
+  finishAnimalCoat(skinMaterial);
   const furMaterial = furCardMaterial();
-  applyStylizedFill(furMaterial, coatOf('Gray Wolf'));
+  applyStylizedFill(furMaterial, pup ? PUP_COAT.back : coatOf('Gray Wolf'));
+  finishAnimalCoat(furMaterial);
   const skinMesh = new THREE.SkinnedMesh(geometry, skinMaterial);
   const skins = withFur ? [skinMesh, new THREE.SkinnedMesh(buildFurCards(body, portrait
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
-      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear,
+      : { count: furCount, length: pup ? FUR_LENGTH * 1.8 : FUR_LENGTH, width: pup ? FUR_WIDTH * 1.6 : FUR_WIDTH, seed, clear,
         // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
         tipTint: (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furMaterial)] : [skinMesh];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });

@@ -14,19 +14,19 @@ pub const EMERGE_YEARS: f64 = 4.0 / 52.0;
 pub const PUP_SPEED_M_S: f64 = 0.9;
 /// Metres behind the mother at four weeks. A yearling walks closer.
 /// Close enough that the 3.6 m chase camera, 1.05 m up, still looks at them.
-const TRAIL_YOUNG_M: f64 = 0.75;
-const TRAIL_YEAR_M: f64 = 0.45;
+const TRAIL_YOUNG_M: f64 = 0.55;
+const TRAIL_YEAR_M: f64 = 0.4;
 /// Game seconds of the world clock for one year of pup growth.
 /// The default clock is 300 real seconds per game hour, so ten real minutes
 /// are 7200 game seconds. That is half a year of growth (14400 s per year),
 /// enough for the size, the step and the trail to change in one sitting.
 pub const GROWTH_GAME_S_PER_YEAR: f64 = 14_400.0;
 const DEN_RING_M: f64 = 1.2;
-const TRAIL_GAP_M: f64 = 0.06;
-/// Beside her. The outer pair stays inside a 48° frame from 3.6 m back.
-const LATERAL_M: f64 = 0.85;
-/// Closer than this and the pup is under the lens.
-const VIEW_BACK_M: f64 = 1.15;
+const TRAIL_GAP_M: f64 = 0.04;
+/// A tight pair beside her hips, not a line stretched toward the lens.
+const LATERAL_M: f64 = 0.32;
+/// The chase camera is 3.6 m back. The cluster stays next to her.
+const VIEW_BACK_M: f64 = 0.85;
 /// Further than this in one step is a drop, not a walk. The pup is on the trail at once.
 const REJOIN_M: f64 = 4.0;
 
@@ -45,7 +45,7 @@ pub fn age_after(age_years: f64, game_seconds: f64) -> f64 {
 /// Draw scale next to an adult. Four weeks is about a third. One year is full size.
 pub fn body_scale(age_years: f64) -> f64 {
     let grown = growth_u(age_years);
-    0.28 + 0.72 * grown
+    0.22 + 0.78 * grown
 }
 
 /// Metres behind the mother, before the slot gap. Older pups walk closer.
@@ -218,8 +218,9 @@ mod tests {
         let mut beside = 0;
         for slot in 0..LITTER_COUNT {
             let (x, z) = trail_slot(slot, 0.0, 0.0, 0.0, EMERGE_YEARS);
-            assert!(z < 1.2 && z > 0.3, "slot {slot} is under the lens or in front at {z}");
-            if x.abs() > 0.9 { beside += 1; }
+            assert!(z < 0.95 && z > 0.4, "slot {slot} is not in the cluster at {z}");
+            assert!(x.abs() < 0.8, "slot {slot} stands too wide at {x}");
+            if x.abs() > 0.3 { beside += 1; }
         }
         assert!(beside >= 2);
     }

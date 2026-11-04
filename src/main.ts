@@ -457,7 +457,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
       if (hands.grab) perform('open');
       if (hands.dig) digOrNudge();
     } else dx = H('steerRight') - H('steerLeft'), dz = H('moveBack') - H('moveForward');
-    view.stepPups(wallDt, player.x, player.z, yaw);
+    view.stepPups(wallDt, Math.max(0, wDt), player.x, player.z, yaw);
     if(autonomous && (Math.abs(dx)>.01 || Math.abs(dz)>.01)) setAutonomous(false);
     const lookInput = forestHandsOn() ? 0 : H('lookRight') - H('lookLeft');
     lookYaw -= lookInput * dt;

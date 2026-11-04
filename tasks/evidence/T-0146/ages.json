@@ -1,0 +1,16 @@
+{
+  "young": {
+    "n": 5,
+    "age": 0.079,
+    "stage": "pup",
+    "hud": "10:04"
+  },
+  "grown": {
+    "n": 5,
+    "age": 0.97,
+    "stage": "juvenile",
+    "hud": "04:52"
+  },
+  "waitedMs": 31345,
+  "notes": []
+}

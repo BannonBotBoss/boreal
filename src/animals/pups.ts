@@ -4,7 +4,7 @@
  * The meshes are the wolf skin without the fur cards, scaled to a four-week pup.
  */
 import * as THREE from 'three';
-import { birthPlaces, followStep, growthStage, pupScale, type PupPlace } from '../core/litter';
+import { ageAfter, birthPlaces, followStep, growthStage, pupScale, stepHz, walkMps, type PupPlace } from '../core/litter';
 import { livingRoster } from '../core/enterLiving';
 import { forestLanding } from '../world/globe/forestLanding';
 import { heightAt } from '../core/world';
@@ -47,17 +47,24 @@ export function createLitter(scene: THREE.Scene) {
   };
   return {
     pups: () => ensure().map(w => w.pup),
-    step(dt: number, motherX: number, motherZ: number, motherYaw: number) {
+    step(dt: number, gameSeconds: number, motherX: number, motherZ: number, motherYaw: number) {
       yaw = motherYaw;
       clock += Math.max(0, dt);
       for (const row of ensure()) {
+        row.pup.ageYears = ageAfter(row.pup.ageYears, gameSeconds);
+        row.pup.stage = growthStage(row.pup.ageYears);
+        row.holder.scale.setScalar(pupScale(row.pup.ageYears));
         const prevX = row.pup.x, prevZ = row.pup.z;
-        const next = followStep(row.pup.x, row.pup.z, row.pup.slot, motherX, motherZ, motherYaw, dt);
+        const next = followStep(row.pup.x, row.pup.z, row.pup.slot, motherX, motherZ, motherYaw, dt, row.pup.ageYears);
         row.pup.x = next.x;
         row.pup.z = next.z;
         const moved = Math.hypot(next.x - prevX, next.z - prevZ) > 1e-4;
+        const speed = walkMps(row.pup.ageYears);
         row.wolf.brain.motion = moved ? 'walk' : 'idle';
-        row.wolf.brain.speed = moved ? 0.9 : 0;
+        row.wolf.brain.speed = moved ? speed : 0;
+        row.wolf.brain.gaitSpeed = moved ? speed : 0;
+        row.wolf.brain.prevPhase = row.wolf.brain.phase;
+        row.wolf.brain.phase = (row.wolf.brain.phase + stepHz(row.pup.ageYears) * Math.max(0, dt)) % 1;
       }
       publish();
     },

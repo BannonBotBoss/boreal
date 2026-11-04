@@ -10,12 +10,55 @@
 pub const LITTER_COUNT: u32 = 5;
 /// Four weeks, in years. They can leave the den and walk.
 pub const EMERGE_YEARS: f64 = 4.0 / 52.0;
-/// How fast a pup of that age walks, metres per second.
+/// How fast a four-week pup walks, metres per second. A yearling is quicker.
 pub const PUP_SPEED_M_S: f64 = 0.9;
+/// Metres behind the mother at four weeks. A yearling walks closer.
+const TRAIL_YOUNG_M: f64 = 1.6;
+const TRAIL_YEAR_M: f64 = 0.9;
+/// Game seconds of the world clock for one year of pup growth.
+/// The default clock is 300 real seconds per game hour, so ten real minutes
+/// are 7200 game seconds. That is half a year of growth (14400 s per year),
+/// enough for the size, the step and the trail to change in one sitting.
+pub const GROWTH_GAME_S_PER_YEAR: f64 = 14_400.0;
 const DEN_RING_M: f64 = 1.2;
-const TRAIL_M: f64 = 1.6;
 const TRAIL_GAP_M: f64 = 0.7;
 const LATERAL_M: f64 = 0.45;
+
+fn growth_u(age_years: f64) -> f64 {
+    (age_years.max(0.0) / 1.0).min(1.0)
+}
+
+/// Age after `game_seconds` of the world clock. Rewind does not make them younger.
+pub fn age_after(age_years: f64, game_seconds: f64) -> f64 {
+    if !(game_seconds > 0.0) {
+        return age_years;
+    }
+    age_years + game_seconds / GROWTH_GAME_S_PER_YEAR
+}
+
+/// Draw scale next to an adult. Four weeks is about a third. One year is full size.
+pub fn body_scale(age_years: f64) -> f64 {
+    let grown = growth_u(age_years);
+    0.28 + 0.72 * grown
+}
+
+/// Metres behind the mother, before the slot gap. Older pups walk closer.
+pub fn trail_back_m(age_years: f64) -> f64 {
+    let u = growth_u(age_years);
+    TRAIL_YOUNG_M * (1.0 - u) + TRAIL_YEAR_M * u
+}
+
+/// Walking speed. Four weeks is `PUP_SPEED_M_S`. A yearling is quicker.
+pub fn walk_mps(age_years: f64) -> f64 {
+    let u = growth_u(age_years);
+    PUP_SPEED_M_S * (1.0 - u) + 1.6 * u
+}
+
+/// Stride cycles per second. A young pup takes short quick steps. A yearling takes longer ones.
+pub fn step_hz(age_years: f64) -> f64 {
+    let u = growth_u(age_years);
+    2.6 * (1.0 - u) + 1.3 * u
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct PupPlace {
@@ -41,8 +84,8 @@ pub fn birth_places(den_x: f64, den_z: f64) -> [PupPlace; LITTER_COUNT as usize]
 }
 
 /// The point in the trail behind the mother. Forward is (−sin yaw, −cos yaw).
-pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64) -> (f64, f64) {
-    let back = TRAIL_M + slot as f64 * TRAIL_GAP_M;
+pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, age_years: f64) -> (f64, f64) {
+    let back = trail_back_m(age_years) + slot as f64 * TRAIL_GAP_M;
     let side = (slot as f64 - (LITTER_COUNT as f64 - 1.0) / 2.0) * LATERAL_M;
     let fx = -yaw.sin();
     let fz = -yaw.cos();
@@ -52,15 +95,15 @@ pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64) -> (f64, f6
 }
 
 /// One follow step. The pup walks toward its trail slot and does not overshoot it.
-pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64) -> (f64, f64) {
-    let (tx, tz) = trail_slot(slot, mother_x, mother_z, yaw);
+pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64) -> (f64, f64) {
+    let (tx, tz) = trail_slot(slot, mother_x, mother_z, yaw, age_years);
     let dx = tx - x;
     let dz = tz - z;
     let d = (dx * dx + dz * dz).sqrt();
     if d < 1e-6 || dt <= 0.0 {
         return (x, z);
     }
-    let step = (PUP_SPEED_M_S * dt).min(d);
+    let step = (walk_mps(age_years) * dt).min(d);
     (x + dx / d * step, z + dz / d * step)
 }
 
@@ -139,12 +182,25 @@ mod tests {
 
     #[test]
     fn a_pup_walks_toward_the_trail_and_stops_on_it() {
-        let (x, z) = follow_step(0.0, 0.0, 0, 0.0, 0.0, 0.0, 1.0);
-        let (tx, tz) = trail_slot(0, 0.0, 0.0, 0.0);
+        let (x, z) = follow_step(0.0, 0.0, 0, 0.0, 0.0, 0.0, 1.0, EMERGE_YEARS);
+        let (tx, tz) = trail_slot(0, 0.0, 0.0, 0.0, EMERGE_YEARS);
         let before = (tx * tx + tz * tz).sqrt();
         let after = ((tx - x).powi(2) + (tz - z).powi(2)).sqrt();
         assert!(after < before - 0.5, "moved toward the slot");
-        let (sx, sz) = follow_step(tx, tz, 0, 0.0, 0.0, 0.0, 1.0);
+        let (sx, sz) = follow_step(tx, tz, 0, 0.0, 0.0, 0.0, 1.0, EMERGE_YEARS);
         assert!((sx - tx).abs() < 1e-9 && (sz - tz).abs() < 1e-9);
+    }
+
+    #[test]
+    fn ten_real_minutes_at_the_default_clock_grows_them() {
+        // 300 real seconds per game hour, so 600 real seconds is 7200 game seconds.
+        let ten_min = 7200.0;
+        let older = age_after(EMERGE_YEARS, ten_min);
+        assert!((older - (EMERGE_YEARS + 0.5)).abs() < 1e-9);
+        assert!(body_scale(older) > body_scale(EMERGE_YEARS) + 0.3);
+        assert!(trail_back_m(older) < trail_back_m(EMERGE_YEARS));
+        assert!(walk_mps(older) > walk_mps(EMERGE_YEARS));
+        assert!(step_hz(older) < step_hz(EMERGE_YEARS));
+        assert_eq!(age_after(older, -100.0), older);
     }
 }

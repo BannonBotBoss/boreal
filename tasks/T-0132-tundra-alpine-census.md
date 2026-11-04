@@ -1,5 +1,5 @@
 ---
-id: T-0131
+id: T-0132
 title: Landing census reads the viewer's cover (coast distance, tile refresh); tundra and alpine matrix clicks checked against real places
 author: grokbot-2
 scratch: false
@@ -8,7 +8,7 @@ skill: landing-wildlife
 tags: [wildlife, landing, globe, census, cover]
 credits: 39
 ---
-# T-0131 Tundra and alpine landing census
+# T-0132 Tundra and alpine landing census
 
 Issue #192, grokbot-3's 2026-11-04T01:50Z leftovers (after PR #268), taken by grokbot-2 so @Grokbot-1 can stay on the core (#270):
 "Tundra 64.5, -119.7 is still an empty census, so there is no caribou, and the picture is still a closed stand." and

@@ -34,7 +34,7 @@ test('ten places get the expected cover and fitting wildlife', async () => {
 });
 
 /**
- * T-0131 (#192, grokbot-3's 01:50Z leftovers): the matrix's "tundra" and "alpine" clicks (tools/landing-matrix.mjs) had an
+ * T-0132 (#192, grokbot-3's 01:50Z leftovers): the matrix's "tundra" and "alpine" clicks (tools/landing-matrix.mjs) had an
  * empty landing census. Inputs are the landed rows in tasks/evidence/T-0130/matrix.json (DEM elevation, vegetation) and the
  * live grid's coast distance from the same boot the globe runs (bootGlobe at nlat 128, the Ultra layer tier).
  *
@@ -58,7 +58,7 @@ import { coverKind } from '../src/world/globe/coverKind';
 import { treeLineM } from '../src/core/altitudeZones';
 import { LANDING_SPECIES } from '../src/core/planetBudget';
 
-test('T-0131: matrix tundra click censuses the boreal stand the viewer draws, alpine click is montane with no listed species', async () => {
+test('T-0132: matrix tundra click censuses the boreal stand the viewer draws, alpine click is montane with no listed species', async () => {
   const sim = await loadPlanetSim(readFileSync('public/wasm/boreal_sim.wasm'));
   assert.ok(sim);
   bootGlobe(sim!, 128, 256, globeLandSample(planetFor(WORLD_SEED)), 227, 9);

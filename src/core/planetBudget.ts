@@ -107,7 +107,7 @@ export class PlanetSim {
   /** Issue #162 bridge: the simulation's local population list at a landing, as { species, count } for every species
    *  with at least one animal in a square patch `sideM` wide. Species ids follow LANDING_SPECIES. Empty on water.
    *  `coastM` is the landing's distance to the sea (liveCoastM), the same input as coverCellAt, so the census lives on the
-   *  cover the viewer draws (T-0131). Omitted or NaN keeps the zonal tree and ice lines. */
+   *  cover the viewer draws (T-0132). Omitted or NaN keeps the zonal tree and ice lines. */
   landingPopulation(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, year: number, sideM = 5000, coastM = NaN) {
     const cap = LANDING_SPECIES.length, p = this.popScratch ||= this.x.alloc_f64(2 * cap);
     const n = this.x.landing_population_at(lat, lon, elevM, vegetation, water ? 1 : 0, year, sideM, coastM, p, cap);

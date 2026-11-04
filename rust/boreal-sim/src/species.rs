@@ -54,7 +54,7 @@ pub fn density_per_ha(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: 
 }
 /// density_per_ha on the cover the viewer draws: `coast_m` is the landing's distance to the sea (m, NaN = unknown), the
 /// same input cover_row_at uses (#233, #235). Without it a continental interior below its own tree line read as bare rock
-/// under the zonal line, so the census was empty under a boreal stand (T-0131, 64.5 N -119.7).
+/// under the zonal line, so the census was empty under a boreal stand (T-0132, 64.5 N -119.7).
 #[allow(clippy::too_many_arguments)]
 pub fn density_per_ha_at(sp: Species, lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: bool, year: i32, coast_m: f64) -> f64 {
     if !in_range(sp, lat, lon) { return 0.0; }
@@ -212,7 +212,7 @@ mod tests {
         assert_eq!(Species::from_id(10), Some(Species::RedFox));
     }
     #[test] fn census_reads_the_same_cover_as_the_picture_inland() {
-        // T-0131: the #192 tundra click, 64.5 N -119.7 at 376 m (landing DEM; GEBCO 2020 gives 391 m there), vegetation 0.71.
+        // T-0132: the #192 tundra click, 64.5 N -119.7 at 376 m (landing DEM; GEBCO 2020 gives 391 m there), vegetation 0.71.
         // Zonal lines: 376 m is over the 146 m zonal tree line, so Rock and no animals. 156 km from the sea (the live grid
         // at nlat 128) the continental tree line is ~815 m, so the viewer draws Boreal and the census must list a boreal cast.
         let (lat, lon, elev, veg) = (64.5, -119.7, 376.0, 0.71);

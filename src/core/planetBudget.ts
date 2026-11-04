@@ -45,6 +45,7 @@ interface Exports {
   grid_init(nlat: number, nlon: number): number; grid_seed(day: number, hour: number): void; grid_boot(day: number, hour: number): void; grid_step(dt: number): void;
   grid_day(): number; grid_hour(): number; alloc_f64(n: number): number;
   landing_population(lat: number, lon: number, elevM: number, vegetation: number, water: number, year: number, sideM: number, out: number, cap: number): number;
+  landing_population_at(lat: number, lon: number, elevM: number, vegetation: number, water: number, year: number, sideM: number, coastM: number, out: number, cap: number): number;
   cover_cell(lat: number, lon: number, elevM: number, vegetation: number, water: number, out: number): void;
   cover_cell_at(lat: number, lon: number, elevM: number, vegetation: number, water: number, coastM: number, out: number): void;
   grid_coast_at(lat: number, lon: number): number;
@@ -104,19 +105,21 @@ export class PlanetSim {
     return { count: o[0], mass: o[1], com: [o[2], o[3], o[4]], spinZ: o[5], members: o[6], trusted: o[7] > 0, extent: o[8], layers: o[9], insideHill: o[10] > 0, outsideRoche: o[11] > 0 }; }
   private popScratch = 0;
   /** Issue #162 bridge: the simulation's local population list at a landing, as { species, count } for every species
-   *  with at least one animal in a square patch `sideM` wide. Species ids follow LANDING_SPECIES. Empty on water. */
-  landingPopulation(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, year: number, sideM = 5000) {
+   *  with at least one animal in a square patch `sideM` wide. Species ids follow LANDING_SPECIES. Empty on water.
+   *  `coastM` is the landing's distance to the sea (liveCoastM), the same input as coverCellAt, so the census lives on the
+   *  cover the viewer draws (T-0131). Omitted or NaN keeps the zonal tree and ice lines. */
+  landingPopulation(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, year: number, sideM = 5000, coastM = NaN) {
     const cap = LANDING_SPECIES.length, p = this.popScratch ||= this.x.alloc_f64(2 * cap);
-    const n = this.x.landing_population(lat, lon, elevM, vegetation, water ? 1 : 0, year, sideM, p, cap);
+    const n = this.x.landing_population_at(lat, lon, elevM, vegetation, water ? 1 : 0, year, sideM, coastM, p, cap);
     const o = new Float64Array(this.x.memory.buffer, p, 2 * n), out: { species: (typeof LANDING_SPECIES)[number]; count: number }[] = [];
     for (let i = 0; i < n; i++) out.push({ species: LANDING_SPECIES[o[2 * i]], count: o[2 * i + 1] });
     return out;
   }
   /** #192 wildlife lane: landingPopulation plus density (animals per km2 of the patch) and each species' habitat
    *  tags (SPECIES_HABITAT), so the spawner can place every animal in fitting ground without a second sim call. */
-  landingPopulationDetail(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, year: number, sideM = 5000) {
+  landingPopulationDetail(lat: number, lon: number, elevM: number, vegetation: number, water: boolean, year: number, sideM = 5000, coastM = NaN) {
     const km2 = (sideM / 1000) ** 2;
-    return this.landingPopulation(lat, lon, elevM, vegetation, water, year, sideM)
+    return this.landingPopulation(lat, lon, elevM, vegetation, water, year, sideM, coastM)
       .map(p => ({ ...p, perKm2: p.count / km2, habitat: SPECIES_HABITAT[p.species] }));
   }
   /** Issue #167 cover row (cover.rs): class name, stems per hectare, billboard height (m). Deterministic per place. */

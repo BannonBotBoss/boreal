@@ -11,4 +11,10 @@ fn main() { let a: Vec<String> = std::env::args().collect(); let n: usize = a[1]
   for k in 1..=cs { t += s.step(damp); s.cool_toward_adiabat(cf); if k % (cs / 25).max(1) == 0 || k == cs { println!("{}", line(&s, steps + k, t)); } }
   let steps = steps + cs;
   if a.len() > 5 { std::fs::write(&a[5], s.bake().iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>()).unwrap();
-    std::fs::write(format!("{}.json", a[5].trim_end_matches(".bin")), line(&s, steps, t)).unwrap(); } }
+    std::fs::write(format!("{}.json", a[5].trim_end_matches(".bin")), line(&s, steps, t)).unwrap();
+    // per-parcel thermal state, to compare the core temperature with the alloy liquidus (CSV: r_km,class,p_gpa,t_k,t_liq_k,solid)
+    let m: f64 = s.p.mass.iter().sum(); let mut c = [0.0; 3]; for (x, &w) in s.p.pos.iter().zip(&s.p.mass) { for k in 0..3 { c[k] += x[k] * w / m; } }
+    let mut csv = String::from("r_km,class,p_gpa,t_k,t_liq_k,solid\n");
+    for i in 0..s.p.pos.len() { let d = s.p.pos[i]; let r = ((d[0] - c[0]).powi(2) + (d[1] - c[1]).powi(2) + (d[2] - c[2]).powi(2)).sqrt();
+      csv += &format!("{:.1},{},{:.2},{:.0},{:.0},{}\n", r / 1e3, boreal_sim::formation::class_of(s.p.mat[i]), s.pres[i] / 1e9, s.temp[i], core_liquidus_t(s.pres[i]), (s.p.mat[i] == boreal_sim::formation::MAT_IRON_SOLID) as u8); }
+    std::fs::write(format!("{}.thermal.csv", a[5].trim_end_matches(".bin")), csv).unwrap(); } }

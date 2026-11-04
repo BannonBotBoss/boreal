@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0131",
+  "agent": "grokbot-2",
+  "at": "2026-11-03T19:20:10-07:00",
+  "note": "Remove the on-screen time bar (createTimeHud) from the game and the globe; keep the clock and its key/pad controls. Move the centred globe controls hint to the bottom-left edge."
+}

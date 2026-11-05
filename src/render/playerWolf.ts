@@ -122,7 +122,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   geometry.setIndex(body.index);
   const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, transparent: false, opacity: 1, depthWrite: true });
   if (pup) {
-    // The coat shader paints the tabby. An unmapped fill, and the night dim on it, turned them into ghosts.
+    // The coat shader paints the tabby from the scene light. An unmapped fill turned them into lamps.
     skinMaterial.userData.pupCoat = true;
     skinMaterial.emissive.setRGB(0, 0, 0);
     skinMaterial.emissiveIntensity = 0;

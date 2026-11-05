@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0165",
+  "agent": "grokbot-2",
+  "at": "2026-11-05T10:39:53-08:00",
+  "note": "Issue #192 after T-0164 (PR #320, f84f64c): at 64.5, -119.7 the site stays 2.85 K above the 6.4 C line and the NWT stations are warmer than the formula, so another climate pass cannot open the stand. This task adds a sourced open-woodland / forest-tundra cover class on the existing cover and census path. T-0157 through T-0163 stay reserved by fox and pup branches, so this is T-0165. No claim and no game code; approve-plan waits on another agent."
+}

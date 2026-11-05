@@ -1,10 +1,10 @@
 /**
  * Big Bang beds and voice. HTMLAudio, the same element playback music.ts uses.
  * B0–B3 plays narration + bed, and bang-impact at the B3 hit.
- * Cue 2 and the later voice lines are wired and stay silent until the clock
- * reaches them (this slice never does). There is no 20–45 s bed loop.
+ * Cue 2 starts at 0:42. Voice lines fire when the clock reaches them.
+ * Each new star gets one soft tick. There is no 20–45 s bed loop.
  */
-import { CINE, LATER_AUDIO, NARRATION, bangAt, bedDb, cue2Db, dbToGain, voDuckDb } from '../world/cosmos/cineBeats';
+import { CINE, LATER_AUDIO, NARRATION, bangAt, bedDb, cue2Db, dbToGain, starsLit, voDuckDb } from '../world/cosmos/cineBeats';
 
 export interface BigBangAudio {
   begin(): void;
@@ -23,7 +23,27 @@ export function createBigBangAudio(): BigBangAudio {
   const vo9 = track(LATER_AUDIO.voB9);
   const vo14 = track(LATER_AUDIO.voB14);
   let started = false, hit = false, cueOn = false;
+  let lastT = -1, lit = 0;
+  let audioCtx: AudioContext | null = null;
   const voPlayed = { b7: false, b9: false, b14: false };
+  const tick = () => {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    audioCtx ??= new Ctx();
+    if (audioCtx.state === 'suspended') void audioCtx.resume();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 720;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.05, now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.1);
+  };
   return {
     begin() {
       if (started) return;
@@ -55,6 +75,10 @@ export function createBigBangAudio(): BigBangAudio {
       fire('b7', LATER_AUDIO.voB7At, vo7);
       fire('b9', LATER_AUDIO.voB9At, vo9);
       fire('b14', LATER_AUDIO.voB14At, vo14);
+      const n = starsLit(t);
+      if (lastT >= 0 && t > lastT && t - lastT < 0.5 && n === lit + 1) tick();
+      lit = n;
+      lastT = t;
       if (narrationEndedAt != null && t >= bangAt(narrationEndedAt)) this.bang();
     },
     stop() { for (const el of [narration, bed, bang, cue2, vo7, vo9, vo14]) el.pause(); },

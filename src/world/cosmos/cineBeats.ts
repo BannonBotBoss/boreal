@@ -23,11 +23,19 @@ export const CINE = {
   pinpoint: 5,
   /** Slim panel and the counter stay hidden until here. */
   panelAt: 23,
-  /** Bang picture hands into the plasma at 0:26. This slice holds at the end of B6. */
+  /** Bang picture hands into the plasma at 0:26. This slice holds at the Sun, the end of B10. */
   b3End: 26,
   b4End: 36,
   b5End: 44,
   b6End: 54,
+  /** Recombination. The fog clears across the first two seconds. */
+  b7End: 60,
+  /** Dark ages. Cue 2 is ducked here. */
+  b8End: 66,
+  /** First stars, then galaxies along the web. */
+  b9End: 74,
+  /** Spiral, nebula, then the Sun. Linear years begin as the Sun lights. */
+  b10End: 82,
   /** B2 inhale after narration `ended`. */
   b2: 0.8,
   /** Bed eases from −6 dB to −18 dB across this, then on toward 0 dB. */
@@ -193,7 +201,7 @@ export function bangFlash(t: number, narrationEndedAt: number, reduced: boolean)
   return cap * (1 - x / CINE.flashHalf);
 }
 
-export type CineStage = 'fade' | 'wait' | 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'b6' | 'hold';
+export type CineStage = 'fade' | 'wait' | 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'b6' | 'b7' | 'b8' | 'b9' | 'b10' | 'hold';
 export function cineStage(t: number, begun: boolean, narrationEndedAt: number | null): CineStage {
   if (!begun) return t < CINE.fade ? 'fade' : 'wait';
   const end = narrationEndedAt ?? Number.POSITIVE_INFINITY;
@@ -203,6 +211,10 @@ export function cineStage(t: number, begun: boolean, narrationEndedAt: number | 
   if (t < CINE.b4End) return 'b4';
   if (t < CINE.b5End) return 'b5';
   if (t < CINE.b6End) return 'b6';
+  if (t < CINE.b7End) return 'b7';
+  if (t < CINE.b8End) return 'b8';
+  if (t < CINE.b9End) return 'b9';
+  if (t < CINE.b10End) return 'b10';
   return 'hold';
 }
 
@@ -242,7 +254,52 @@ export function panelFigure(t: number): string {
   if (t >= CINE.b3End + 5 && t < CINE.b4End) return 'Energy ≈ 100 GeV per particle';
   if (t >= CINE.b4End && t < CINE.b5End) return 'Hydrogen 75% · Helium 25%';
   if (t >= CINE.b5End && t < CINE.b6End) return 'Light still trapped';
+  if (t >= CINE.b6End && t < CINE.b7End) return 'Temperature ≈ 3000 K';
+  if (t >= CINE.b8End && t < CINE.b8End + 4) return 'First stars';
+  if (t >= CINE.b8End + 4 && t < CINE.b9End) return 'Galaxies';
+  if (t >= 80 && t < CINE.b10End) return 'The Sun';
   return '';
+}
+
+/** How many stars are lit. None before B9. They turn on one every half second, eight in all. */
+export const STAR_COUNT = 8;
+export function starsLit(t: number): number {
+  if (t < CINE.b8End) return 0;
+  return Math.max(0, Math.min(STAR_COUNT, Math.floor((t - CINE.b8End) / 0.5)));
+}
+
+/** Fog thickness falling away. 0 through B6, 1 after the two-second clear. */
+export function plasmaClear(t: number): number {
+  if (t <= CINE.b6End) return 0;
+  if (t >= CINE.b6End + 2) return 1;
+  return (t - CINE.b6End) / 2;
+}
+
+/** Dark ages. 0 outside 1:00–1:06. */
+export function plasmaDark(t: number): number {
+  if (t < CINE.b7End || t >= CINE.b8End) return 0;
+  if (t < CINE.b7End + 1) return t - CINE.b7End;
+  if (t > CINE.b8End - 1) return CINE.b8End - t;
+  return 1;
+}
+
+/** Galaxies along the web, after the stars, fading as the spiral takes the frame. */
+export function galaxyAmount(t: number): number {
+  if (t < 70 || t >= 78) return 0;
+  if (t < 74) return (t - 70) / 4;
+  return 1 - (t - 74) / 4;
+}
+
+/** 0 at the start of B10, 1 as the Sun lights. */
+export function lateAmount(t: number): number {
+  if (t < CINE.b9End) return 0;
+  return Math.min(1, (t - CINE.b9End) / (CINE.b10End - CINE.b9End));
+}
+
+/** The Sun, lighting across the last two and a half seconds of B10. */
+export function sunAmount(t: number): number {
+  if (t < 79.5) return 0;
+  return Math.min(1, (t - 79.5) / 2.5);
 }
 
 /** The shock ring is on its way out. By 0.75 s it has passed the corner and must not be drawn again. */
@@ -250,19 +307,57 @@ export function shellOnScreen(dt: number): boolean {
   return dt > 0.02 && dt < 0.75;
 }
 
-/** 0 blue-white, 1 gold, 2 amber, 3 deep red. B4, B5, then B6, each hotter in hue and darker in body. */
+/**
+ * Hue from the cosmic clock, not from the beat boundaries.
+ * 0 is blue-white at the Planck keyframe, 1 is gold at 1e−6 s, 2 is amber at 20 minutes,
+ * 3 is deep red at recombination. Log time, so the title and B4 are on the same slope.
+ */
 export function plasmaHeat(t: number): number {
-  if (t <= CINE.b3End) return 0;
-  if (t < CINE.b4End) return (t - CINE.b3End) / (CINE.b4End - CINE.b3End);
-  if (t < CINE.b5End) return 1 + (t - CINE.b4End) / (CINE.b5End - CINE.b4End);
-  return 2 + Math.min(1, Math.max(0, (t - CINE.b5End) / (CINE.b6End - CINE.b5End)));
+  const s = cosmicSeconds(Math.max(18.67, t));
+  const log = Math.log10(Math.max(s, 1e-45));
+  const knots: [number, number][] = [
+    [-43, 0],
+    [-32, 0.28],
+    [-6, 1],
+    [Math.log10(1200), 2],
+    [Math.log10(1.2e13), 3],
+  ];
+  if (log <= knots[0][0]) return knots[0][1];
+  for (let i = 0; i < knots.length - 1; i++) {
+    const [a, av] = knots[i];
+    const [b, bv] = knots[i + 1];
+    if (log <= b) return av + (bv - av) * ((log - a) / (b - a));
+  }
+  return 3;
 }
 
 /** Each stage is dimmer than the one before it. Filaments carry the light; the body stays dark. */
 export function plasmaGain(t: number): number {
-  if (t < CINE.b4End) return 1.85;
-  if (t < CINE.b5End) return 1.55;
-  return 1.32;
+  if (t < CINE.b4End) return 1.25;
+  if (t < CINE.b5End) return 1.08;
+  if (t < CINE.b6End) return 0.98;
+  if (t < CINE.b7End) return 1.0;
+  if (t < CINE.b8End) return 0.85;
+  if (t < CINE.b9End) return 0.75;
+  return 0.8;
+}
+
+export type PlasmaLook = {
+  heat: number; gain: number; clear: number; dark: number;
+  stars: number; galaxy: number; sun: number; late: number;
+};
+export function plasmaLook(t: number): PlasmaLook {
+  const held = Math.min(t, CINE.b10End);
+  return {
+    heat: plasmaHeat(held),
+    gain: plasmaGain(held),
+    clear: plasmaClear(held),
+    dark: plasmaDark(held),
+    stars: starsLit(held),
+    galaxy: galaxyAmount(held),
+    sun: sunAmount(held),
+    late: lateAmount(held),
+  };
 }
 
 /** 0 while the title holds, then 1 once it has broken into the haze. */

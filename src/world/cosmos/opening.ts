@@ -8,7 +8,7 @@ import { sharedPlanetSim } from '../../core/planetWeather';
 import { decodeEngineReport, type EngineReport } from '../../core/engineReport';
 import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
-import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatCosmicSeconds, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
+import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatCosmicSeconds, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
 
 /**
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
@@ -74,7 +74,7 @@ body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-
 #cine-plate{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);pointer-events:none;z-index:1}
 #cine .veil{z-index:1}
 #cine .pin,#cine .prompt,#cine .sub,#cine .title,#cine-panel,#cine-ref,#cine .still{z-index:2}
-#cine .hero-line{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);margin:0;z-index:2;color:#fff1d4;font:700 4.2vw Georgia,serif;letter-spacing:.14em;text-shadow:0 2px 18px #000c,0 0 24px #ffb45a55;display:none}
+#cine .hero-line{position:absolute;left:50%;bottom:22%;width:max-content;max-width:92vw;transform:translateX(-50%);margin:0;z-index:2;color:#fff1d4;font:700 5.25vw Georgia,serif;letter-spacing:.12em;text-align:center;white-space:nowrap;text-shadow:0 2px 18px #000c,0 0 24px #ffb45a55;display:none}
 #cine-panel{position:absolute;top:36px;right:28px;width:min(560px,52vw);display:grid;gap:10px;padding:20px 24px 22px;background:rgba(12,7,4,.7);color:#f6efe4;border:1px solid rgba(255,220,170,.2);border-radius:18px;box-shadow:0 12px 40px #0006;backdrop-filter:blur(16px)}
 #cine-panel[hidden]{display:none}
 #cine-panel .x{position:absolute;top:6px;right:8px;background:none;border:0;color:#f6efe4aa;font:20px system-ui;padding:2px 8px}
@@ -191,7 +191,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     get cycle() { return cycle; },
     get phase() { return phase; },
     step(dt: number) {
-      const cap = jump === 'B7' ? 200 : CINE.b6End;
+      const cap = CINE.b10End;
       if (pinned != null) elapsed = pinned;
       else if (!begun) elapsed = Math.min(CINE.fade, elapsed + Math.max(0, dt));
       else elapsed = Math.min(cap, elapsed + Math.max(0, dt));
@@ -248,17 +248,19 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     plate.style.transform = `translate(${kick.x}px, ${kick.y}px)`;
     const hazeOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.02;
     veil.style.opacity = hazeOn ? '0' : '1';
-    heroLine.style.display = stage === 'b5' ? 'block' : 'none';
+    const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : '';
+    heroLine.textContent = line;
+    heroLine.style.display = line ? 'block' : 'none';
     if (sphere) {
       const plasmaOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.05;
       sphere.canvas.style.opacity = plasmaOn ? '1' : '0';
       sphere.canvas.style.transform = plate.style.transform;
-      sphere.setPlasma(plasmaOn, { time: elapsed, heat: plasmaHeat(elapsed), gain: plasmaGain(elapsed) });
+      sphere.setPlasma(plasmaOn, { time: elapsed, ...plasmaLook(elapsed) });
     }
     paintPlate(bang, dissolve);
     showRef(stage);
     const figure = panelFigure(elapsed);
-    const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b6End && !closed;
+    const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b10End && !closed;
     if (showPanel && !panelShown) { panelShown = true; panel.classList.add('pop'); }
     panel.hidden = !showPanel;
     if (showPanel) {
@@ -276,7 +278,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
   function showRef(stage: CineStage) {
     if (!refs) { ref.style.display = 'none'; still.style.display = 'none'; return; }
     const video = stage === 'b1' ? 'cinematic/refs/PLACEHOLDER_B1.mp4' : stage === 'b3' ? 'cinematic/refs/PLACEHOLDER_B3.mp4' : '';
-    const jpg = stage === 'b4' ? 'cinematic/refs/PLACEHOLDER_B4.jpg' : stage === 'b5' ? 'cinematic/refs/PLACEHOLDER_B5.jpg' : stage === 'b6' ? 'cinematic/refs/PLACEHOLDER_B6_B7.jpg' : '';
+    const jpg = stage === 'b4' ? 'cinematic/refs/PLACEHOLDER_B4.jpg' : stage === 'b5' ? 'cinematic/refs/PLACEHOLDER_B5.jpg' : stage === 'b6' || stage === 'b7' ? 'cinematic/refs/PLACEHOLDER_B6_B7.jpg' : stage === 'b8' || stage === 'b9' ? 'cinematic/refs/PLACEHOLDER_B8_B9.jpg' : stage === 'b10' ? 'cinematic/refs/PLACEHOLDER_B10.jpg' : '';
     if (video) {
       still.style.display = 'none';
       if (ref.dataset.file !== video) { ref.dataset.file = video; ref.src = video; void ref.play().catch(() => {}); }

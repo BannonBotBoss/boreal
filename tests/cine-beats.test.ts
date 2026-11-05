@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatCosmicSeconds, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
+import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatCosmicSeconds, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaClear, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, starsLit, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
 import { MILESTONES, deepTimeAt } from '../src/core/deepTime';
 
 test('cosmic clock matches the sheet keyframes and does not jump', () => {
@@ -69,11 +69,28 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
   assert.equal(panelFigure(33), 'Energy ≈ 100 GeV per particle');
   assert.equal(panelFigure(40), 'Hydrogen 75% · Helium 25%');
   assert.equal(panelFigure(50), 'Light still trapped');
-  assert.equal(panelFigure(54), '');
-  assert.equal(plasmaHeat(26), 0);
+  assert.equal(panelFigure(54), 'Temperature ≈ 3000 K');
+  assert.equal(panelFigure(63), '');
+  assert.equal(panelFigure(67), 'First stars');
+  assert.equal(panelFigure(72), 'Galaxies');
+  assert.equal(panelFigure(81), 'The Sun');
+  const h20 = plasmaHeat(20), h26 = plasmaHeat(26), h30 = plasmaHeat(30);
+  assert.ok(h20 > 0 && h20 < h26 && h26 < h30 && h30 < plasmaHeat(36));
+  assert.ok(plasmaHeat(26.2) - plasmaHeat(25.8) < 0.05);
   assert.ok(Math.abs(plasmaHeat(36) - 1) < 1e-9);
   assert.ok(Math.abs(plasmaHeat(44) - 2) < 1e-9);
   assert.ok(Math.abs(plasmaHeat(54) - 3) < 1e-9);
+  assert.equal(plasmaClear(54), 0);
+  assert.ok(Math.abs(plasmaClear(55) - 0.5) < 1e-9);
+  assert.equal(plasmaClear(56), 1);
+  assert.equal(starsLit(65.9), 0);
+  assert.equal(starsLit(66.5), 1);
+  assert.equal(starsLit(70), 8);
+  assert.equal(cineStage(55, true, end), 'b7');
+  assert.equal(cineStage(63, true, end), 'b8');
+  assert.equal(cineStage(68, true, end), 'b9');
+  assert.equal(cineStage(78, true, end), 'b10');
+  assert.equal(cineStage(82, true, end), 'hold');
   assert.ok(plasmaGain(30) > plasmaGain(40) && plasmaGain(40) > plasmaGain(50));
   assert.ok(kickOffset(0.1, false).y > 10);
   assert.equal(kickOffset(-0.1, false).y, 0);

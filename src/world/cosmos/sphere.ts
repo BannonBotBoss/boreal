@@ -117,7 +117,7 @@ export class CosmosSphere {
   private plasma: THREE.Mesh | null = null;
   private plasmaOn = false;
   /** Full-frame turbulent plasma on this same camera. The sphere mesh stays hidden so its edge cannot draw a circle. */
-  setPlasma(on: boolean, u?: { time: number; heat: number; gain: number }) {
+  setPlasma(on: boolean, u?: { time: number; heat: number; gain: number; clear: number; dark: number; stars: number; galaxy: number; sun: number; late: number }) {
     this.plasmaOn = on;
     if (!this.plasma) return;
     this.plasma.visible = on;
@@ -125,8 +125,8 @@ export class CosmosSphere {
     this.halo.visible = !on;
     this.final.uniforms.disc.value = on ? 0 : 1;
     if (on) {
-      this.bloom.threshold = 0.82;
-      this.bloom.strength = 0.1;
+      this.bloom.threshold = 0.9;
+      this.bloom.strength = u && u.sun > 0.15 ? 0.16 : 0.05;
       this.final.uniforms.godrays.value = 0;
       this.final.uniforms.vignette.value = 0;
     } else {
@@ -140,6 +140,12 @@ export class CosmosSphere {
     mat.uniforms.time.value = u.time;
     mat.uniforms.heat.value = u.heat;
     mat.uniforms.gain.value = u.gain;
+    mat.uniforms.clear.value = u.clear;
+    mat.uniforms.dark.value = u.dark;
+    mat.uniforms.stars.value = u.stars;
+    mat.uniforms.galaxy.value = u.galaxy;
+    mat.uniforms.sun.value = u.sun;
+    mat.uniforms.late.value = u.late;
   }
   private core: THREE.Mesh;
   private halo: THREE.Mesh;
@@ -199,10 +205,14 @@ export class CosmosSphere {
     this.scene.add(this.core);
     const plasmaMat = new THREE.ShaderMaterial({
       depthTest: false, depthWrite: false,
-      uniforms: { time: { value: 0 }, heat: { value: 0 }, gain: { value: 1 } },
+      uniforms: {
+        time: { value: 0 }, heat: { value: 0 }, gain: { value: 1 }, clear: { value: 0 }, dark: { value: 0 },
+        stars: { value: 0 }, galaxy: { value: 0 }, sun: { value: 0 }, late: { value: 0 },
+      },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `
-        varying vec2 vUv; uniform float time, heat, gain;
+        varying vec2 vUv;
+        uniform float time, heat, gain, clear, dark, stars, galaxy, sun, late;
         float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float noise(vec2 p){
           vec2 i = floor(p), f = fract(p);
@@ -215,38 +225,78 @@ export class CosmosSphere {
           for (int i = 0; i < 5; i++) { v += a * noise(p); p = mat2(1.62, 1.18, -1.18, 1.62) * p + vec2(1.7, 9.2); a *= 0.5; }
           return v;
         }
-        float spark(vec2 p){
-          vec2 i = floor(p);
-          vec2 f = fract(p);
-          float n = hash(i);
-          vec2 c = vec2(hash(i + 1.7), hash(i + 8.3));
-          float d = length(f - (0.15 + 0.7 * c));
-          return smoothstep(0.13, 0.0, d) * smoothstep(0.8, 0.98, n);
+        float streak(vec2 uv, vec2 flow, float t){
+          vec2 q = uv * 5.5 + flow * 1.4 + vec2(t * 0.65, t * 0.22);
+          float lane = fract(q.x * 0.45 + q.y);
+          float across = abs(fract(q.y * 2.2 - t * 0.15) - 0.5);
+          float life = lane * clamp((0.38 - lane) / 0.2, 0.0, 1.0);
+          float thin = exp(-across * across * 320.0);
+          float gate = clamp((noise(q * 0.45) - 0.64) / 0.28, 0.0, 1.0);
+          return life * thin * gate;
         }
         void main(){
           vec2 uv = (vUv - 0.5) * vec2(1.85, 1.15);
-          vec2 q = vec2(fbm(uv + time * 0.05), fbm(uv + vec2(5.2, 1.3) - time * 0.04));
-          vec2 r = vec2(fbm(uv + 1.9 * q + time * 0.03), fbm(uv + 1.9 * q.yx - time * 0.022));
-          float n = fbm(uv * 1.3 + 2.5 * r);
-          float ridge = pow(1.0 - abs(n * 2.0 - 1.0), 4.0);
-          float cut = mix(0.55, 0.72, clamp(heat / 3.0, 0.0, 1.0));
-          float fil = smoothstep(cut, cut + 0.1, ridge);
-          float sp = spark(uv * 16.0 + r * 1.4 + vec2(time * 0.04, 0.0));
-          float sp2 = spark(uv * 8.0 - r + vec2(0.0, time * 0.03));
+          vec2 q = vec2(fbm(uv + time * 0.045), fbm(uv + vec2(5.2, 1.3) - time * 0.036));
+          vec2 r = vec2(fbm(uv + 1.8 * q + time * 0.028), fbm(uv + 1.8 * q.yx - time * 0.02));
+          float base = fbm(uv * 1.15 + 2.2 * r);
+          float fine = fbm(uv * 4.8 + r * 1.4 + vec2(time * 0.05, 0.0));
+          float grain = fbm(uv * 11.0 - r + vec2(0.0, time * 0.07));
+          float dust = fbm(uv * 22.0 + time * 0.04);
+          float density = base * 0.52 + fine * 0.28 + grain * 0.14 + dust * 0.06;
           float h = clamp(heat, 0.0, 3.0);
-          float warm = h < 1.0 ? smoothstep(0.15, 1.0, h) : 1.0;
-          vec3 body = h < 1.0 ? mix(vec3(0.035, 0.06, 0.15), vec3(0.16, 0.07, 0.018), warm)
-                    : h < 2.0 ? mix(vec3(0.16, 0.07, 0.018), vec3(0.18, 0.05, 0.012), h - 1.0)
-                    : mix(vec3(0.16, 0.035, 0.014), vec3(0.09, 0.014, 0.014), h - 2.0);
-          vec3 hot = h < 1.0 ? mix(vec3(0.4, 0.55, 0.92), vec3(0.95, 0.58, 0.16), warm)
-                   : h < 2.0 ? mix(vec3(0.95, 0.58, 0.16), vec3(0.9, 0.32, 0.07), h - 1.0)
-                   : mix(vec3(0.82, 0.2, 0.08), vec3(0.5, 0.07, 0.04), h - 2.0);
-          float bank = smoothstep(0.18, 0.7, n);
-          vec3 col = body * (0.4 + 0.95 * bank);
-          col += hot * fil * 0.5 * (0.35 + bank);
-          col += hot * (sp * 0.95 + sp2 * 0.65) * (0.3 + bank);
+          float redFog = clamp(h - 2.0, 0.0, 1.0) * (1.0 - clear);
+          density = mix(density, 0.38 + 0.48 * density, redFog);
+          float shaped = clamp((density - 0.28) / 0.55, 0.0, 1.0);
+          float emit = pow(shaped, 1.35);
+          float core = pow(shaped, 3.4);
+          vec3 indigo = vec3(0.11, 0.045, 0.20);
+          vec3 amber = vec3(0.20, 0.075, 0.028);
+          vec3 deepRed = vec3(0.26, 0.055, 0.04);
+          vec3 voids = h < 1.0 ? mix(indigo, amber, h) : h < 2.0 ? mix(amber, deepRed, h - 1.0) : deepRed;
+          vec3 blue = vec3(0.50, 0.66, 0.98);
+          vec3 gold = vec3(1.0, 0.74, 0.38);
+          vec3 orange = vec3(0.95, 0.40, 0.10);
+          vec3 red = vec3(0.72, 0.16, 0.07);
+          vec3 hot = h < 1.0 ? mix(blue, gold, h) : h < 2.0 ? mix(gold, orange, h - 1.0) : mix(orange, red, h - 2.0);
+          vec3 col = voids * (0.36 + 0.25 * emit);
+          col += hot * pow(emit, 1.7) * 1.05;
+          float tip = clamp((shaped - 0.62) / 0.38, 0.0, 1.0);
+          col += vec3(1.0, 0.98, 0.94) * core * 0.45 + vec3(1.0, 0.99, 0.96) * pow(tip, 1.15);
+          col += hot * (grain - 0.5) * 0.07 + hot * (dust - 0.5) * 0.045;
+          float beforeStars = 1.0 - clamp(stars / 8.0, 0.0, 1.0);
+          col += hot * streak(uv, r - q, time) * 0.42 * beforeStars;
+          vec3 thick = deepRed * (0.5 + 0.4 * emit) + red * emit * 0.28;
+          col = mix(col, thick, redFog);
+          float webN = fbm(uv * 2.1 + r * 0.35);
+          float web = pow(clamp(1.0 - abs(webN * 2.0 - 1.0), 0.0, 1.0), 1.7);
+          vec3 webCol = vec3(0.012, 0.01, 0.025) + vec3(0.95, 0.88, 1.0) * pow(web, 3.2);
+          float open = clear * beforeStars * (1.0 - clamp(galaxy + late, 0.0, 1.0));
+          col = mix(col, webCol, open);
+          col = mix(col, webCol * 0.42, dark);
           col *= gain;
-          gl_FragColor = vec4(min(col, vec3(0.98)), 1.0);
+          float clumps = fbm(uv * 4.6 + vec2(1.7, 0.4));
+          float knot = pow(web, 1.6) * pow(clamp(clumps, 0.0, 1.0), 3.2);
+          col = mix(col, webCol * 0.55, galaxy * 0.8);
+          col += vec3(0.95, 0.88, 0.75) * knot * galaxy * 1.35;
+          for (int i = 0; i < 8; i++) {
+            float fi = float(i);
+            float on = clamp((stars - fi) / 0.35, 0.0, 1.0) * (1.0 - sun);
+            vec2 jitter = vec2(hash(vec2(fi + 2.0, 5.0)), hash(vec2(fi + 9.0, 3.0)));
+            vec2 pos = mix(vec2(0.50, 0.48), vec2(0.34, 0.32) + jitter * vec2(0.32, 0.36), clamp(fi, 0.0, 1.0));
+            float rr = dot(vUv - pos, vUv - pos);
+            col += vec3(1.0, 0.98, 0.92) * exp(-rr * 5200.0) * on * 2.2;
+            col += vec3(1.0, 0.86, 0.58) * exp(-rr * 980.0) * on * 0.22;
+          }
+          vec2 pc = (vUv - 0.5) * vec2(1.35, 0.9);
+          float rad = length(pc);
+          float ang = atan(pc.y, pc.x);
+          float twist = sin(ang * 2.0 - log(rad + 0.08) * 4.6 + time * 0.08);
+          float arm = pow(clamp(twist * 0.5 + 0.5, 0.0, 1.0), 1.2) * exp(-rad * rad * 2.4);
+          vec3 neb = mix(vec3(0.05, 0.04, 0.07), vec3(0.42, 0.16, 0.06), arm);
+          col = mix(col, col * 0.25 + neb * 0.7, clamp(late, 0.0, 1.0));
+          col += vec3(1.0, 0.96, 0.72) * exp(-rad * rad * 220.0) * sun * 2.0;
+          col += vec3(1.0, 0.55, 0.16) * exp(-rad * rad * 18.0) * sun * 0.18;
+          gl_FragColor = vec4(min(col, vec3(1.0)), 1.0);
         }`,
     });
     plasmaMat.side = THREE.DoubleSide;

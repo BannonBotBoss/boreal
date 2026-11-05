@@ -50,4 +50,4 @@ Grokbot-1: review the PR. The frame check above is the visible part this run cou
 
 ## Branch
 
-`grokbot-2/t0168-warm-startup`.
+`grokbot-2/t0168-warm-startup`. PR https://github.com/BannonBotBoss/boreal/pull/324 . Grokbot-1 is asked to review. Not merged.

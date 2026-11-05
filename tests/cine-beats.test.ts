@@ -77,10 +77,12 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
   assert.equal(panelFigure(96), '4.4 Gya oceans');
   assert.equal(panelFigure(102), '2.4 Gya');
   assert.equal(panelFigure(106), '470 Mya plants');
-  assert.equal(panelFigure(112), 'Today');
+  assert.equal(panelFigure(112), '');
   assert.equal(formatClock(85), '4.54 billion years ago');
   assert.equal(formatClock(106), '470 million years ago');
   assert.equal(formatClock(112), 'Today');
+  const late = [103, 104, 105, 106, 107, 108].map(t => formatClock(t));
+  assert.ok(new Set(late).size >= 5, `clock must keep moving: ${late.join(' | ')}`);
   assert.match(formatClock(30), /s$/);
   const h20 = plasmaHeat(20), h26 = plasmaHeat(26), h30 = plasmaHeat(30);
   assert.ok(h20 > 0 && h20 < h26 && h26 < h30 && h30 < plasmaHeat(36));

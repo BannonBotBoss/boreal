@@ -248,7 +248,8 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
   if (uSolarLayer > 0.5) { // T-0057: Q_absorbed on this vertex. Night (0) cools and dims; a sunlit cell stays warm. Off when the uniform is 0.
     float qn = clamp(vAbsorbed / max(uQScale, 1.0), 0.0, 1.0);
     diffuseColor.rgb *= mix(vec3(0.22, 0.26, 0.40), vec3(1.12, 1.04, 0.92), qn); }
-  if (uEra.x + uEra.y + uEra.z > 0.001) {
+  if (uEra.x + uEra.y + uEra.z + uEra.w > 0.001) {
+    vec3 present = diffuseColor.rgb;
     vec3 nrm = normalize(vDetW);
     float plateN = detN(nrm * 22.0, 11.0);
     float plate = smoothstep(0.04, 0.2, plateN);
@@ -264,9 +265,12 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     diffuseColor.rgb = skin;
     float flooded = (1.0 - landMask) * smoothstep(0.08, 0.72, uEra.y) * (1.0 - uEra.x);
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.008, 0.028, 0.09), flooded);
-    float growN = detN(nrm * 2.5, 6.0);
-    float plants = landMask * smoothstep(0.02, -0.2, growN - uEra.z) * step(0.02, uEra.z);
+    float elev = smoothstep(0.0, 2200.0, max(vH, 0.0));
+    float shore = 1.0 - smoothstep(0.0, 1.0, elev);
+    float need = mix(0.78, 0.05, shore);
+    float plants = landMask * smoothstep(need, need + 0.14, uEra.z);
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.09, 0.38, 0.08), plants);
+    diffuseColor.rgb = mix(diffuseColor.rgb, present, clamp(uEra.w, 0.0, 1.0));
   }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   if (uDetail.x > 0.001) { // derivative bump from the detail height (Mikkelsen 2010), view space
@@ -274,7 +278,7 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
     normal = normalize(abs(det) * normal - sign(det) * (dhx * r1 + dhy * r2)); }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(uLakeRough, roughnessFactor, landMask); // water: Cox-Munk roughness (GLINT), eased to the game water in the band')
-      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * max(eraMagma, uEra.y * 0.4 * step(0.02, 0.02 - uEra.z));')
+      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * max(eraMagma, uEra.y * 0.4 * step(0.02, 0.02 - uEra.z)) * (1.0 - clamp(uEra.w, 0.0, 1.0));')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
 #ifdef DEBUG_SEAMS
   { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;

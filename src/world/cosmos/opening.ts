@@ -261,21 +261,26 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     plate.style.transform = `translate(${kick.x}px, ${kick.y}px)`;
     const hazeOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.02;
     veil.style.opacity = hazeOn ? '0' : '1';
-    const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : stage === 'b14' ? 'Today · 13.8 billion years' : '';
+    const arrival = stage === 'b14' || (stage === 'hold' && earthOn);
+    const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : arrival ? 'Today · 13.8 billion years' : '';
     heroLine.textContent = line;
-    heroLine.style.fontSize = line.length > 16 ? '3.4vw' : '';
+    heroLine.style.fontSize = line.length > 16 ? '3.2vw' : '';
+    heroLine.style.bottom = arrival ? '1.6vh' : '';
+    heroLine.style.textShadow = arrival ? '0 2px 10px #000, 0 8px 28px #000, 0 0 18px #000' : '';
     heroLine.style.display = line ? 'block' : 'none';
-    const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14';
-    const showEarth = onEarth && booted;
+    const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14' || (stage === 'hold' && earthOn);
+    const bridge = booted && elapsed >= 83.2 && elapsed < 85.4;
+    const showEarth = (onEarth || bridge) && booted;
     if (showEarth && !earthOn) {
       earthOn = true;
       earth?.show();
     }
     if (sphere) {
       const plasmaOn = !showEarth && bang != null && elapsed >= bang + CINE.bangPeak - 0.05;
-      sphere.canvas.style.opacity = plasmaOn ? '1' : '0';
+      const cover = !showEarth ? (plasmaOn ? 1 : 0) : elapsed < 85.4 ? Math.max(0, 1 - (elapsed - 83.2) / 2.2) : 0;
+      sphere.canvas.style.opacity = String(cover);
       sphere.canvas.style.transform = plate.style.transform;
-      sphere.setPlasma(plasmaOn, { time: elapsed, ...plasmaLook(elapsed) });
+      sphere.setPlasma(cover > 0.001, { time: elapsed, ...plasmaLook(Math.min(elapsed, 84.8)) });
     }
     paintPlate(bang, dissolve);
     showRef(stage);
@@ -283,16 +288,16 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b14End && !closed;
     if (showEarth) {
       root.style.background = 'transparent';
-      const impact = elapsed >= 87.2 && elapsed < CINE.b11End;
-      const steam = stage === 'b12';
-      const halo = stage === 'b11';
-      plate.style.visibility = impact || steam || halo ? 'visible' : 'hidden';
-      if (sphere) sphere.canvas.style.opacity = '0';
+      plate.style.visibility = 'visible';
       tintGlobe(elapsed);
       driveFilm(elapsed);
-      panel.style.top = stage === 'b14' ? 'auto' : '';
-      panel.style.bottom = stage === 'b14' ? '28px' : '';
-      panel.style.right = stage === 'b14' ? '28px' : '';
+      panel.style.top = '';
+      panel.style.bottom = '';
+      panel.style.right = '';
+      panel.style.left = '';
+      const panelOut = elapsed < 108 ? 1 : Math.max(0, 1 - (elapsed - 108) / 1.2);
+      if (elapsed >= 108) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
+      panel.style.setProperty('opacity', String(panelOut), 'important');
     } else if (booted) {
       root.style.background = '#000';
       GLOBE_ERA.uEra.value.set(1, 0, 0, 0);
@@ -318,15 +323,18 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       count.style.opacity = '1';
       count.style.color = '#f6efe4';
       count.style.overflow = years ? 'visible' : '';
-      panel.style.width = stage === 'b14' ? '240px' : elapsed >= 82 ? 'min(820px, 78vw)' : '';
+      panel.style.width = elapsed >= 82 ? 'min(820px, 78vw)' : '';
       if (years) setPlain(count, clock);
       else setRolling(count, clock);
       if (fig.dataset.v !== figure) {
         fig.dataset.v = figure;
         fig.textContent = figure;
         fig.classList.remove('roll');
-        if (figure) { void fig.offsetWidth; fig.classList.add('roll'); }
+        fig.style.color = '#f6efe4';
       }
+      const rowEnd = figure === '4.4 Gya oceans' ? 100 : figure === '2.4 Gya' ? 103 : figure === '470 Mya plants' ? 108.4 : 0;
+      const fade = rowEnd > 0 && elapsed > rowEnd - 0.8 ? Math.max(0, (rowEnd - elapsed) / 0.8) : 1;
+      fig.style.opacity = figure ? String(fade) : '1';
     }
     if (begun) audio.sync(elapsed, narrationEndedAt);
   }
@@ -368,20 +376,13 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       GLOBE_SKY.steam = 0.625 + 0.375 * s;
       GLOBE_SKY.clear = 0.241 * (1 - s);
     } else if (t < 108) {
-      const grow = ease((t - 100) / 6);
-      const sky = ease(Math.min(1, (t - 100) / 4));
-      era.set(0, 1, grow * 0.9, 0);
-      GLOBE_SKY.warm = t < 104 ? 0.7 * sky : 0.7 * (1 - ease((t - 104) / 4));
-      GLOBE_SKY.steam = 1 - ease((t - 100) / 4);
-      GLOBE_SKY.clear = 0;
-    } else if (t < 112) {
-      const s = ease((t - 108) / 4);
-      era.set(0, 1 - s, 0.9 * (1 - s), 0);
-      GLOBE_SKY.warm = 0.15 * (1 - s);
-      GLOBE_SKY.steam = 0;
+      era.set(0, 1, Math.min(1, (t - 100) / 5), 0);
+      GLOBE_SKY.warm = 0;
+      GLOBE_SKY.steam = Math.max(0, 1 - (t - 100) / 4);
       GLOBE_SKY.clear = 0;
     } else {
-      era.set(0, 0, 0, 0);
+      const w = Math.min(1, (t - 108) / 4);
+      era.set(0, 1, 1, w);
       GLOBE_SKY.warm = 0;
       GLOBE_SKY.steam = 0;
       GLOBE_SKY.clear = 0;
@@ -389,10 +390,9 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   }
 
   function driveFilm(t: number) {
-    const yaw = Math.max(0, 108 - t) * 2.5 * Math.PI / 180;
-    const u = t <= 85 ? 0 : t >= 108 ? 1 : ((x: number) => x * x * (3 - 2 * x))(Math.min(1, (t - 85) / 23));
-    const offset = t >= 108 ? 0 : t <= 104 ? 1 : 1 - ((x: number) => x * x * (3 - 2 * x))((t - 104) / 4);
-    (window as unknown as { __inpage?: { setFilmDrive?: (yaw: number, radii: number, offset: number) => void } }).__inpage?.setFilmDrive?.(yaw, 2.45 + (2.2 - 2.45) * u, offset);
+    const yaw = Math.max(0, 108 - t) * 2.6 * Math.PI / 180;
+    const u = t <= 83.2 ? 0 : t >= 108 ? 1 : ((x: number) => x * x * (3 - 2 * x))(Math.min(1, (t - 83.2) / (108 - 83.2)));
+    (window as unknown as { __inpage?: { setFilmDrive?: (yaw: number, radii: number, offset: number) => void } }).__inpage?.setFilmDrive?.(yaw, 4.5 + (3.7 - 4.5) * u, 0);
   }
 
   function setPlain(node: HTMLElement, text: string) {
@@ -549,6 +549,22 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
         moon.addColorStop(1, 'rgba(180,160,140,0)');
         ctx.fillStyle = moon;
         ctx.beginPath(); ctx.arc(mx, my, mr * 2.2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (elapsed >= 83.2 && elapsed < CINE.b14End) {
+      const yaw = Math.max(0, 108 - elapsed) * 2.6 * Math.PI / 180;
+      const drift = yaw * Math.min(w, h) * 0.42;
+      const guard = Math.min(w, h) * 0.34;
+      for (let i = 0; i < 80; i++) {
+        const sx = ((i * 97) % 1000) / 1000;
+        const sy = ((i * 53) % 1000) / 1000;
+        const x = (sx * w + drift * (0.25 + (i % 5) * 0.16)) % w;
+        const y = sy * h;
+        const dx = x - w / 2, dy = y - h * 0.48;
+        if (dx * dx + dy * dy < guard * guard) continue;
+        ctx.fillStyle = `rgba(255,246,224,${0.45 + (i % 4) * 0.14})`;
+        const s = i % 9 === 0 ? 2.2 : 1.2;
+        ctx.fillRect(x, y, s, s);
       }
     }
     if (elapsed >= CINE.b11End && elapsed < CINE.b12End) {

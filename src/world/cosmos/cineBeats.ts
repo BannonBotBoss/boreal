@@ -187,13 +187,12 @@ const sup = (n: number) => [...String(n)].map(c => c === '-' ? '⁻' : c === '+'
  */
 export function formatClock(t: number): string {
   if (t < 82) return formatCosmicSeconds(cosmicSeconds(t));
-  let ago = TODAY_YR - cosmicSeconds(Math.min(t, 100)) / YEAR_S;
-  if (t >= 100 && t < 103) {
-    const from = TODAY_YR - cosmicSeconds(100) / YEAR_S;
-    ago = from + (470e6 - from) * ((t - 100) / 3);
-  } else if (t >= 103 && t < 108) ago = 470e6;
-  else if (t >= 108 && t < 112) ago = 470e6 * (1 - (t - 108) / 4);
-  else if (t >= 112) ago = 0;
+  const from100 = TODAY_YR - cosmicSeconds(100) / YEAR_S;
+  let ago = t < 100 ? TODAY_YR - cosmicSeconds(t) / YEAR_S
+    : t < 104.5 ? from100 + (700e6 - from100) * ((t - 100) / 4.5)
+    : t < 107.5 ? 700e6 + (240e6 - 700e6) * ((t - 104.5) / 3)
+    : t < 112 ? 240e6 * (1 - (t - 107.5) / 4.5)
+    : 0;
   if (!(ago > 5e6)) return 'Today';
   if (ago >= 1e9) return `${(Math.round(ago / 1e7) / 100).toFixed(2)} billion years ago`;
   return `${Math.round(ago / 1e6)} million years ago`;
@@ -287,8 +286,7 @@ export function panelFigure(t: number): string {
   if (t >= 80 && t < 82) return 'The Sun';
   if (t >= CINE.b11End && t < CINE.b12End) return '4.4 Gya oceans';
   if (t >= CINE.b12End && t < CINE.b12End + 3) return '2.4 Gya';
-  if (t >= CINE.b12End + 3 && t < CINE.b13End) return '470 Mya plants';
-  if (t >= CINE.b13End && t < CINE.b14End) return 'Today';
+  if (t >= 104.6 && t < 108.4) return '470 Mya plants';
   return '';
 }
 

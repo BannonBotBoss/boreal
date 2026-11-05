@@ -199,6 +199,22 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const filmSpin = new THREE.Quaternion();
   const filmAxis = new THREE.Vector3(0, 1, 0);
   let filmReady = false;
+  let filmStars: THREE.Points | null = null;
+  function ensureFilmStars() {
+    if (filmStars) { filmStars.visible = true; return; }
+    const n = 480;
+    const pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const z = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, rxy = Math.sqrt(Math.max(0, 1 - z * z));
+      const Rs = R * 14;
+      pos[i * 3] = rxy * Math.cos(a) * Rs; pos[i * 3 + 1] = z * Rs; pos[i * 3 + 2] = rxy * Math.sin(a) * Rs;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    filmStars = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xfff4e0, size: 1.6, sizeAttenuation: false, depthWrite: false }));
+    filmStars.frustumCulled = false;
+    scene.add(filmStars);
+  }
   const group = new THREE.Group(); scene.add(group);
   // Plate boundaries (plates.ts: seeded outlines, NNR-MORVEL56 motions), built on first show; red divergent, blue convergent, green transform
   const plateLayer = new THREE.Group(); plateLayer.visible = false; scene.add(plateLayer); let platesBuilt = false;
@@ -553,7 +569,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     // centre pixel, so the fall stayed the clear colour. planet.north is world +Y projected on the tangent plane, and
     // lookAt keeps camera +Y on that, so rotateZ(-azimuth) is the compass heading. rotateX(pitch − nadir) opens to isometric.
     if (fall) { camera.rotateZ(-lookAz!); camera.rotateX(fallPitch(ease) - NADIR); }
-    else if (lookAz !== null && (opts.shared || alt < 3e5)) {
+    else if (!filmReady && lookAz !== null && (opts.shared || alt < 3e5)) {
       localNE(); const up = camUp.clone(), heading = lookAz ?? 0;
       const hdg = nL.clone().multiplyScalar(Math.cos(heading)).addScaledVector(eL, Math.sin(heading));
       const el = pitchQ != null ? NADIR + pitchQ : NADIR;
@@ -722,6 +738,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setFilmDrive(yaw: number, radii: number, offset: number) {
       if (!filmReady) filmHome.copy(dir).normalize();
       filmReady = true;
+      ensureFilmStars();
       filmWide = offset > 0.001;
       filmOffset = offset;
       filmSpin.setFromAxisAngle(filmAxis, yaw);

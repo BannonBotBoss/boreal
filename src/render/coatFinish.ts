@@ -1,9 +1,9 @@
 /**
  * Coat colour written over the lit fragment so the noon sun cannot clip it to white.
  * The mama stays grizzled: a dark saddle, tawny underside, and a small warm rim.
- * A pup is an opaque warm tabby — darker on the back, lighter on the belly — and
- * takes its brightness from the same scene light as the mama, so dusk and night
- * darken the coat. A moonlit rim is only a thin edge. Neither coat uses an emissive fill.
+ * A pup keeps that scene brightness and the sculpt of the body: the light turns
+ * around the head, ears and legs, the back is darker, the belly is lighter.
+ * A moonlit rim is only a thin edge. Neither coat uses an emissive fill.
  */
 import type * as THREE from 'three';
 
@@ -22,21 +22,19 @@ gl_FragColor.rgb = agouti;
 const PUP = `
 vec3 nrm = normalize(normal);
 float agoutiUp = clamp(nrm.y * 0.5 + 0.5, 0.0, 1.0);
-float wrap = clamp(dot(nrm, normalize(vec3(-0.2, 0.86, 0.32))), 0.0, 1.0);
+float wrap = clamp(dot(nrm, normalize(vec3(-0.25, 0.72, 0.45))), 0.0, 1.0);
 vec3 back = vec3(0.22, 0.12, 0.06);
 vec3 belly = vec3(0.42, 0.26, 0.14);
-vec3 tabby = mix(belly, back, smoothstep(0.26, 0.78, agoutiUp));
-// A wrap floor, as on the mama, so the side away from the sun still has form.
-tabby *= 0.78 + 0.28 * wrap;
-// outgoingLight is the sun, sky and moon on this fragment. Divide out the vertex
-// albedo so the tabby hue stays and the brightness follows the scene. The floor
-// stops a shadowed flank going black; it does not add a lamp.
-float litY = max(dot(outgoingLight, vec3(0.2126, 0.7152, 0.0722)), 0.0);
-float albedoY = max(dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722)), 0.04);
-float scene = clamp(litY / albedoY, 0.16, 1.35);
-// Square-root keeps noon near the mama's flank and lifts dusk, where a raw Lambert shade falls darker than she does.
-float shade = sqrt(scene);
-vec3 coat = tabby * shade;
+vec3 tabby = mix(belly, back, smoothstep(0.18, 0.84, agoutiUp));
+// The vertex colour is the sculpt: muzzle, ear, belly, leg. The wrap turns with the normal.
+vec3 coat = mix(diffuseColor.rgb, tabby, 0.62);
+coat *= 0.48 + 0.95 * wrap;
+// outgoingLight still carries the sun. Keep its shape (form) and the #316 brightness (shade).
+vec3 light = outgoingLight / max(diffuseColor.rgb, vec3(0.05));
+float lum = max(dot(light, vec3(0.2126, 0.7152, 0.0722)), 0.001);
+vec3 form = mix(vec3(1.0), light / lum, 0.82);
+float shade = sqrt(clamp(lum, 0.14, 1.4));
+coat *= shade * form;
 float moonRim = pow(1.0 - clamp(dot(nrm, normalize(vViewPosition)), 0.0, 1.0), 3.2);
 coat += moonRim * vec3(0.50, 0.58, 0.68) * 0.02;
 gl_FragColor.rgb = coat;

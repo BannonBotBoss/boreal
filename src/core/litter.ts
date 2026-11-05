@@ -86,13 +86,13 @@ export function birthPlaces(denX: number, denZ: number): PupPlace[] {
 
 export type PupAct = 'trot' | 'sniff' | 'sit' | 'pounce' | 'tumble' | 'straggle';
 
-/** Uneven homes around her hips. Not a row. The last pup starts further back. */
+/** Uneven homes around her hips. Not a row, and not inside her hocks. The last pup starts further back. */
 const PUP_HOME: ReadonlyArray<readonly [number, number]> = [
-  [0.2, -0.52],
-  [0.38, -0.16],
-  [0.14, 0.26],
-  [0.52, 0.58],
-  [1.02, -0.06],
+  [0.52, -0.88],
+  [0.78, -0.32],
+  [0.5, 0.32],
+  [0.92, 0.88],
+  [1.12, 0.0],
 ];
 const PUP_PHASE = [0.4, 2.2, 3.8, 5.1, 1.1];
 
@@ -117,18 +117,17 @@ export function pupAim(slot: number, motherX: number, motherZ: number, yaw: numb
   const act = pupAct(slot, time);
   const home = PUP_HOME[slot] ?? PUP_HOME[0];
   const phase = PUP_PHASE[slot] ?? 0;
-  const cluster = (moving ? 1 : 0.55) * (threatened ? 0.45 : 1);
-  const wander = (moving ? 0.26 : 0.07) * (1 - 0.25 * growthU(ageYears));
+  const cluster = (moving ? 1 : 0.55) * (threatened ? 0.78 : 1);
+  const wander = (moving ? 0.08 : 0.04) * (1 - 0.25 * growthU(ageYears));
   const agePull = 1 - 0.35 * growthU(ageYears);
   let back = home[0] * cluster * agePull + Math.sin(time * 0.65 + phase) * wander;
   let side = home[1] * cluster * agePull + Math.cos(time * 0.5 + phase * 1.3) * wander * 0.85;
   if (act === 'straggle') back += 0.45;
   if (act === 'sniff') side += 0.18 * Math.sin(time * 1.7 + phase);
-  if (act === 'sit') { back *= 0.75; side *= 0.75; }
+  if (act === 'sit') { back *= 0.9; side *= 0.92; }
   if (act === 'pounce') {
-    const sib = PUP_HOME[(slot + 1) % LITTER.count] ?? home;
-    back = (back + sib[0] * cluster * agePull) * 0.5;
-    side = (side + sib[1] * cluster * agePull) * 0.5;
+    back += Math.sin(time * 3.1 + phase) * 0.08;
+    side += 0.1 * Math.cos(phase);
   }
   if (act === 'tumble') {
     back += Math.sin(time * 2.2 + phase) * 0.12;
@@ -174,14 +173,16 @@ export function actMps(act: PupAct, ageYears: number) {
   return walk;
 }
 
-/** One follow step. The pup walks toward its aim and does not overshoot it. */
+/** One follow step. The pup walks toward its aim and does not overshoot it.
+ *  While she is walking, a pup that is off its home steps onto that home, so the
+ *  loose clump stays beside her in the chase view instead of dragging under the camera. */
 export function followStep(x: number, z: number, slot: number, motherX: number, motherZ: number, yaw: number, dt: number, ageYears = LITTER.emergeYears, time = 0, moving = true, threatened = false) {
   const act = pupAct(slot, time);
   const slotAt = trailSlot(slot, motherX, motherZ, yaw, ageYears, time, moving, threatened);
   const dx = slotAt.x - x, dz = slotAt.z - z;
   const d = Math.hypot(dx, dz);
   if (d < 1e-6 || dt <= 0) return { x, z };
-  if (d > LITTER.rejoinM) return { x: slotAt.x, z: slotAt.z };
+  if (d > LITTER.rejoinM || (moving && d > 0.2)) return { x: slotAt.x, z: slotAt.z };
   const step = Math.min(actMps(act, ageYears) * dt, d);
   return { x: x + dx / d * step, z: z + dz / d * step };
 }

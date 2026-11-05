@@ -32,8 +32,9 @@ function mamaTip(y: number): { color: [number, number, number]; amount: number }
 }
 /** Pup guard hairs. Darker on the back, lighter underneath. Not the pale beige that goes ghostly at dusk. */
 function pupTip(y: number): { color: [number, number, number]; amount: number } {
-  if (y > 0.32) return { color: [0.22, 0.12, 0.06], amount: 0.55 };
-  return { color: [0.42, 0.26, 0.14], amount: 0.4 };
+  if (y > 0.38) return { color: [0.24, 0.13, 0.07], amount: 0.28 };
+  if (y < 0.2) return { color: [0.55, 0.36, 0.2], amount: 0.22 };
+  return { color: [0.36, 0.22, 0.12], amount: 0.12 };
 }
 /** A leg chain of a wolf rig: its bones from the girdle down, limb lengths in model units, and its rest position (x, z). */
 export interface WolfChain { girdle: THREE.Bone; upper: THREE.Bone; lower: THREE.Bone; foot: THREE.Bone; paw: THREE.Bone; m: ReturnType<typeof limbModel>; x: number; z: number }
@@ -52,7 +53,7 @@ export function poseWolfRig(tilt: THREE.Object3D, chains: WolfChain[], pose: Ret
     c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
   });
 }
-const PUP_COAT = { name: 'golden tan' as const, back: [.22, .12, .06] as [number, number, number], belly: [.42, .26, .14] as [number, number, number], dark: [.08, .04, .02] as [number, number, number], accent: [.36, .18, .08] as [number, number, number] };
+const PUP_COAT = { name: 'golden tan' as const, back: [.36, .2, .1] as [number, number, number], belly: [.62, .44, .24] as [number, number, number], dark: [.14, .08, .04] as [number, number, number], accent: [.5, .3, .14] as [number, number, number] };
 
 export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean; pup?: boolean } = {}) {
   const portrait = !!options.portrait;
@@ -167,7 +168,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
-      : { count: furCount, length: pup ? FUR_LENGTH * 2.4 : FUR_LENGTH, width: pup ? FUR_WIDTH * 1.35 : FUR_WIDTH, seed, clear,
+      : { count: furCount, length: pup ? FUR_LENGTH * 1.55 : FUR_LENGTH, width: pup ? FUR_WIDTH * 1.05 : FUR_WIDTH, seed, clear,
         // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
         tipTint: pup ? (p) => pupTip(p[1]) : (p) => mamaTip(p[1]) }), furMaterial)] : [skinMesh];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });

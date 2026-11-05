@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import { WOLF_SCALE, type WolfMode } from '../core/wolfModes';
 import { AnimalBrain, pelvisShift, quadrupedPose, WOLF_LEGS } from '../core/animalBehavior';
 import { pushProgress } from '../core/rocks';
-import { buildBody, wolfCoat } from '../core/body';
-import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
+import { buildBody, computeNormals, wolfCoat } from '../core/body';
+import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, TUBE, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
 import { buildFurCards, furCardMaterial } from './furCards';
-import { applyStylizedFill, coatOf } from './stylizedPalette';
+import { finishAnimalCoat } from './coatFinish';
+import { GOVERNOR } from '../core/quality';
 
 /**
  * Procedural wolf: a low-poly base skin (tubes swept around an invisible skeleton, see core/body.ts and core/wolfBody.ts)
@@ -23,6 +24,18 @@ const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math
 const HEAD_DROP = HEAD_AT[1] - .137;
 /** Portrait mode: a darker charcoal-and-silver coat, much finer fur over only the head and neck, eye liner and teeth. The game wolf is unchanged. */
 const PORTRAIT_COAT = { back: [.17, .18, .2] as [number, number, number], belly: [.44, .45, .45] as [number, number, number], dark: [.04, .04, .05] as [number, number, number], accent: [.5, .33, .19] as [number, number, number] };
+/** Guard-hair tips. Dark on the saddle, grey-brown on the ribs, tawny low. Not a white silver that daylight clips. */
+function mamaTip(y: number): { color: [number, number, number]; amount: number } {
+  if (y > 0.42) return { color: [0.28, 0.22, 0.16], amount: 0.5 };
+  if (y > 0.30) return { color: [0.52, 0.42, 0.30], amount: 0.32 };
+  return { color: [0.58, 0.42, 0.26], amount: 0.22 };
+}
+/** Pup guard hairs. Darker on the back, lighter underneath. Not the pale beige that goes ghostly at dusk. */
+function pupTip(y: number): { color: [number, number, number]; amount: number } {
+  if (y > 0.38) return { color: [0.24, 0.13, 0.07], amount: 0.28 };
+  if (y < 0.2) return { color: [0.55, 0.36, 0.2], amount: 0.22 };
+  return { color: [0.36, 0.22, 0.12], amount: 0.12 };
+}
 /** A leg chain of a wolf rig: its bones from the girdle down, limb lengths in model units, and its rest position (x, z). */
 export interface WolfChain { girdle: THREE.Bone; upper: THREE.Bone; lower: THREE.Bone; foot: THREE.Bone; paw: THREE.Bone; m: ReturnType<typeof limbModel>; x: number; z: number }
 /**
@@ -40,9 +53,13 @@ export function poseWolfRig(tilt: THREE.Object3D, chains: WolfChain[], pose: Ret
     c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
   });
 }
-export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean } = {}) {
+const PUP_COAT = { name: 'golden tan' as const, back: [.36, .2, .1] as [number, number, number], belly: [.62, .44, .24] as [number, number, number], dark: [.14, .08, .04] as [number, number, number], accent: [.5, .3, .14] as [number, number, number] };
+
+export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean; pup?: boolean } = {}) {
   const portrait = !!options.portrait;
-  const withFur = options.fur !== false;
+  const pup = !!options.pup;
+  const furCount = pup ? (GOVERNOR.xr ? 220 : 720) : FUR_CARDS;
+  const withFur = options.fur !== false && furCount > 0;
   const root = new THREE.Group(); root.scale.setScalar(WOLF_SCALE);
   const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
   const torso = bones[BONE.torso], head = bones[BONE.head], jaw = bones[BONE.jaw];
@@ -67,9 +84,24 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   });
 
   // Skin: built once at the straight bind pose, then bound to the skeleton. Fur cards grow from it.
-  const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : wolfCoat(seed)));
-  const coat = portrait ? PORTRAIT_COAT : wolfCoat(seed);
+  const body = buildBody(wolfTubes(portrait ? PORTRAIT_COAT : pup ? PUP_COAT : wolfCoat(seed)));
+  const coat = portrait ? PORTRAIT_COAT : pup ? PUP_COAT : wolfCoat(seed);
   const clear = sculptWolf(body, portrait ? { ...coat, belly: [.7, .66, .58] } : coat); // portrait: cream cheeks in the muzzle gradient
+  if (pup) {
+    for (const tube of [TUBE.earL, TUBE.earR]) {
+      let cx = 0, cy = 0, cz = 0, n = 0;
+      for (let v = 0; v < body.tube.length; v++) if (body.tube[v] === tube) { cx += body.position[v * 3]; cy += body.position[v * 3 + 1]; cz += body.position[v * 3 + 2]; n++; }
+      if (!n) continue;
+      cx /= n; cy /= n; cz /= n;
+      for (let v = 0; v < body.tube.length; v++) if (body.tube[v] === tube) {
+        body.position[v * 3] = cx + (body.position[v * 3] - cx) * 1.45;
+        body.position[v * 3 + 1] = cy + (body.position[v * 3 + 1] - cy) * 1.45;
+        body.position[v * 3 + 2] = cz + (body.position[v * 3 + 2] - cz) * 1.45;
+        body.rest[v * 3] = body.position[v * 3]; body.rest[v * 3 + 1] = body.position[v * 3 + 1]; body.rest[v * 3 + 2] = body.position[v * 3 + 2];
+      }
+    }
+    computeNormals(body);
+  }
   // Brow shelf fur: short, swept back and outward over the ridge.
   const browAt = (p: [number, number, number]) => {
     for (const side of [-1, 1]) {
@@ -83,23 +115,62 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   geometry.setAttribute('normal', new THREE.Float32BufferAttribute(body.normal, 3));
   // Skin tint: under fur, the skin takes the fur-root shade (cards start at 0.55 × the coat colour), so gaps between strands read as
   // depth and shadow, not bare skin. Bare parts (nose, lips, tongue, mouth seal, ear cups) keep their own colour. Vertex colours only: no extra cost.
-  const skinColor = body.color.map((c, i) => c * (body.furLen[Math.floor(i / 3)] >= .03 ? FUR_ROOT_SHADE : BARE_SHADE));
+  const skinShade = pup ? .92 : FUR_ROOT_SHADE;
+  const skinColor = body.color.map((c, i) => c * (body.furLen[Math.floor(i / 3)] >= .03 ? skinShade : BARE_SHADE));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(skinColor, 3));
   geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(body.skinIndex, 4));
   geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(body.skinWeight, 4));
   geometry.setIndex(body.index);
-  const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 });
-  applyStylizedFill(skinMaterial, coatOf('Gray Wolf'));
+  const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, transparent: false, opacity: 1, depthWrite: true });
+  if (pup) {
+    // The coat shader paints the tabby from the scene light. An unmapped fill turned them into lamps.
+    skinMaterial.userData.pupCoat = true;
+    skinMaterial.emissive.setRGB(0, 0, 0);
+    skinMaterial.emissiveIntensity = 0;
+    skinMaterial.userData.stylized = true;
+    skinMaterial.userData.fillIntensity = 0;
+    skinMaterial.toneMapped = false;
+    skinMaterial.transparent = false;
+    skinMaterial.opacity = 1;
+    skinMaterial.roughness = 0.82;
+  } else {
+    // Daylight plus an unmapped fill clips the grizzle to white. The coat shader paints the vertex colour.
+    skinMaterial.emissive.setRGB(0, 0, 0);
+    skinMaterial.emissiveIntensity = 0;
+    skinMaterial.toneMapped = false;
+    skinMaterial.userData.mamaCoat = true;
+    skinMaterial.userData.stylized = true;
+    skinMaterial.userData.fillIntensity = 0;
+  }
+  finishAnimalCoat(skinMaterial, pup ? 'pup' : 'mama');
   const furMaterial = furCardMaterial();
-  applyStylizedFill(furMaterial, coatOf('Gray Wolf'));
+  if (pup) {
+    furMaterial.userData.pupCoat = true;
+    furMaterial.emissive.setRGB(0, 0, 0);
+    furMaterial.emissiveIntensity = 0;
+    furMaterial.userData.stylized = true;
+    furMaterial.userData.fillIntensity = 0;
+    furMaterial.toneMapped = false;
+    furMaterial.transparent = false;
+    furMaterial.opacity = 1;
+    furMaterial.depthWrite = true;
+  } else {
+    furMaterial.emissive.setRGB(0, 0, 0);
+    furMaterial.emissiveIntensity = 0;
+    furMaterial.toneMapped = false;
+    furMaterial.userData.mamaCoat = true;
+    furMaterial.userData.stylized = true;
+    furMaterial.userData.fillIntensity = 0;
+  }
+  finishAnimalCoat(furMaterial, pup ? 'pup' : 'mama');
   const skinMesh = new THREE.SkinnedMesh(geometry, skinMaterial);
   const skins = withFur ? [skinMesh, new THREE.SkinnedMesh(buildFurCards(body, portrait
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
-      : { count: FUR_CARDS, length: FUR_LENGTH, width: FUR_WIDTH, seed, clear,
+      : { count: furCount, length: pup ? FUR_LENGTH * 1.55 : FUR_LENGTH, width: pup ? FUR_WIDTH * 1.05 : FUR_WIDTH, seed, clear,
         // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
-        tipTint: (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furMaterial)] : [skinMesh];
+        tipTint: pup ? (p) => pupTip(p[1]) : (p) => mamaTip(p[1]) }), furMaterial)] : [skinMesh];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.
   const amber = new THREE.MeshStandardMaterial({ color: 0xc9830f, emissive: 0xe07800, emissiveIntensity: 1.0, roughness: .25 }), pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });

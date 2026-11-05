@@ -17,6 +17,8 @@ import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from '
 import { catalog } from './core/catalog';
 import { heightAt, type Entity } from './core/world';
 import { forestHandsOn, readForestHands } from './vr/forestSession';
+import { foxPlace, stepDrives } from './core/drives';
+import { pupCloud } from './animals/pups';
 import { BorealSound, mealChews } from './audio/borealSound';
 import { createMusic } from './audio/music';
 import { MUSIC_PANEL, MUSIC_SAFETY, MUSIC_SETTINGS, TONES } from './audio/musicSettings';
@@ -36,6 +38,7 @@ import { autonomousWolfStep, clearWolfPlan, wolfReadout } from './core/autonomy'
 import { NEEDS_SPECIES, WOLF_NEEDS, HARE_NEEDS } from './core/needs/species';
 import { dietOf } from './core/needs/diet';
 import { eatWater, levelsOf, staminaRates, parseNeeds, stepNeeds, type NeedsState } from './core/needs/engine';
+import { styleOf } from './core/needs/thoughts';
 import { chooseGoal, sunTimes } from './core/needs/behaviour';
 import { createThoughtClock, thoughtTick } from './core/needs/thoughts';
 import { createThoughtBubbles } from './render/thoughtBubbles';
@@ -185,6 +188,7 @@ function digOrNudge() {
   if (action === 'move') { perform('fist'); return; }
   const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
   record({ kind: 'disturbed', x: player.x + fx * 0.5, z: player.z + fz * 0.5, t: GROUND.years, m: 0.35, meta: 'paw' });
+  litterNudge = true;
   notice('Closed paw dug the litter.');
 }
 // ONE menu (ui/menu) for start and pause. The world clock freezes while the menu is open (Matthew): age/growth/seasons
@@ -401,6 +405,10 @@ canvas.addEventListener('lostpointercapture', () => { drag = undefined; canvas.s
 canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); inpage?.dispose(); paused = true; notice('Graphics context lost. Your committed events are saved; reload to restore the view.'); });
 canvas.addEventListener('webglcontextrestored', () => location.reload());
 let lastPhotoView: PhotoView | undefined;
+let litterNudge = false;
+let pupHeard: ReturnType<typeof view.stepPups> = [];
+let driveCommitted = false;
+let driveHold = false;
 let hadPad = false, lastTime = 0, accumulator = 0;
 const clock0 = loadClock(localStorage.getItem(CLOCK.key));
 initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the chronometer's saved dial; ?hour= ?day= ?date= set it
@@ -460,7 +468,9 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
       if (hands.grab) perform('open');
       if (hands.dig) digOrNudge();
     } else dx = H('steerRight') - H('steerLeft'), dz = H('moveBack') - H('moveForward');
-    view.stepPups(wallDt, Math.max(0, wDt), player.x, player.z, yaw);
+    const mood = levelsOf(needs, view.playerBrain.energy);
+    pupHeard = view.stepPups(wallDt, Math.max(0, wDt), player.x, player.z, yaw, { hungry: styleOf(mood.energy) != null, tired: styleOf(mood.rest) != null, nudge: litterNudge, threatened: driveCommitted });
+    litterNudge = false;
     if(autonomous && (Math.abs(dx)>.01 || Math.abs(dz)>.01)) setAutonomous(false);
     const lookInput = forestHandsOn() ? 0 : H('lookRight') - H('lookLeft');
     lookYaw -= lookInput * dt;
@@ -502,6 +512,8 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
         brain.heading = steerLeap(brain.heading, player, aim, brain.speed, 1 / 30);
         yaw = brain.heading;
       }
+      // While she charges or walks back, the walk step must not add a second move.
+      if (driveHold) { brain.speed = 0; brain.motion = 'run'; }
       const pose = driving ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities(),{
         massKg: playerMass, wind: windAt(player.x, .6, player.z), daylight: 1 - view.darkness(),
         hares: view.hares.list().map(h => ({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: 1 })),
@@ -520,6 +532,24 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
       const nx = stepNeeds(sp, needs, { dtGame: gameSecondsPerWorldSecond / 30, speed: moved * 30, tC: airC, drinking, energy: brain.energy });
       needs = nx.state; brain.energy = nx.energy;
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
+      if (view.playable.id === 'wolf') {
+        const yip = pupHeard.some(call => call.kind === 'yip');
+        const foxAt = foxPlace();
+        const ox = foxAt?.x ?? player.x, oz = foxAt?.z ?? player.z;
+        let pupX = player.x, pupZ = player.z, best = Infinity;
+        for (const pup of pupCloud()) {
+          const d = Math.hypot(pup.x - ox, pup.z - oz);
+          if (d < best) { best = d; pupX = pup.x; pupZ = pup.z; }
+        }
+        const now = stepDrives(player.x, player.z, yaw, pupX, pupZ, yip, 1 / 30);
+        if (now.hold) {
+          player.x = now.mamaX; player.z = now.mamaZ;
+          yaw = now.mamaYaw + Math.PI; player.heading = yaw;
+          brain.heading = yaw; brain.motion = 'run'; brain.speed = 3.2; brain.gaitSpeed = 3.2;
+        }
+        driveCommitted = now.committed;
+        driveHold = now.hold;
+      }
       if (view.playable.id === 'wolf' && moved > 0) tryMark('wolf:player', player.x, player.z, moved);
       { const keep = !autonomous && brain.motion === 'jump' && locked ? locked.key : undefined;
         if (keep && locked) {
@@ -565,6 +595,8 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
   const rush = inpage?.airRush() ?? 0; if (rush > 0) void sfx.start(); // a double-click already unlocked the context; a pad-only drop may still be silent until a key or click
   sfx.update({ dt: simDt > 0 ? Math.min(simDt, .05) : 0, halted: isPaused() || wDt < 0 || observation().scale !== 'immediate' || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || (!!inpage?.blocksGame() && rush <= 0), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb, rush });
+  for (const h of pupHeard) sfx.pupAt(h.kind, { x: h.x, z: h.z }, h.ageYears);
+  pupHeard = [];
   if (active || inpage?.flightPhase === 'drone') for (const ev of view.hares.update(sdt, { x: player.x, z: player.z, heading: yaw, mode: modes.mode, moving: Math.abs(view.playerBrain.speed) > .01, pouncing: view.playerBrain.motion === 'jump', predator: view.playable.threat, daylight: 1 - view.darkness(), wind: windAt(player.x, .6, player.z) }, simTime, h => view.massOf(`hare:${h.id}`) ?? 0)) {
     if (ev.type === 'pinned') { notice('Pinned. X eats, B releases.'); continue; } // the bite row already played the one squeal
     sfx.hare(ev.type, ev);

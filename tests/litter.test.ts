@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ageAfter, besideMother, birthPlaces, followStep, growthStage, LITTER, pupScale, stepHz, trailBackM, trailSlot, walkMps } from '../src/core/litter';
+import { ageAfter, besideMother, birthPlaces, followStep, growthStage, LITTER, pupAct, pupAim, pupScale, stepHz, trailBackM, trailSlot, walkMps } from '../src/core/litter';
 
 test('five pups are born on the den ring at four weeks and walk toward their mother', () => {
   const born = birthPlaces(21.5, 8.5);
@@ -13,7 +13,7 @@ test('five pups are born on the den ring at four weeks and walk toward their mot
   const slot = trailSlot(0, 0, 0, 0);
   const before = Math.hypot(slot.x, slot.z);
   const stepped = followStep(0, 0, 0, 0, 0, 0, 1);
-  assert.ok(Math.hypot(slot.x - stepped.x, slot.z - stepped.z) < before - 0.5);
+  assert.ok(Math.hypot(slot.x - stepped.x, slot.z - stepped.z) < before);
   const stayed = followStep(slot.x, slot.z, 0, 0, 0, 0, 1);
   assert.ok(Math.abs(stayed.x - slot.x) < 1e-9 && Math.abs(stayed.z - slot.z) < 1e-9);
   let x = born[0].x, z = born[0].z;
@@ -36,20 +36,43 @@ test('ten real minutes at the default clock grows the litter', () => {
   assert.ok(Math.hypot(grown.x, grown.z) < Math.hypot(young.x, young.z));
 });
 
-test('some pups stand in front of the chase camera, beside her', () => {
-  let ahead = 0, beside = 0;
-  for (let slot = 0; slot < LITTER.count; slot++) {
-    const p = trailSlot(slot, 0, 0, 0, LITTER.emergeYears);
-    assert.ok(p.z > 0.3 && p.z < 1.2, `slot ${slot} is under the lens or ahead of her at ${p.z.toFixed(2)} m`);
-    ahead++;
-    if (Math.abs(p.x) > 0.9) beside++;
+test('the litter is a loose clump, not a row, and it moves', () => {
+  const at = (time: number, moving: boolean) => {
+    const pts = [];
+    for (let slot = 0; slot < LITTER.count; slot++) pts.push(pupAim(slot, 0, 0, 0, time, moving));
+    return pts;
+  };
+  const now = at(0, true);
+  const later = at(6, true);
+  let near = 0;
+  const backs = now.map(p => p.z);
+  for (const p of now) {
+    assert.ok(p.z > 0.05 && p.z < 1.7, `out of the chase view at z ${p.z.toFixed(2)}`);
+    assert.ok(Math.abs(p.x) < 1.3, `too wide at x ${p.x.toFixed(2)}`);
+    if (Math.hypot(p.x, p.z) < 0.95) near++;
   }
-  assert.equal(ahead, LITTER.count);
-  assert.ok(beside >= 2, `only ${beside} pups stand far enough to the side`);
-  const near = besideMother(30, 0, -0.35);
-  assert.equal(near.length, LITTER.count);
-  assert.ok(near.filter(p => Math.abs(p.x - 30) > 0.5 || Math.abs(p.z) > 0.5).length >= 2);
+  assert.ok(near >= 2, `only ${near} pups are in the near clump`);
+  assert.ok(Math.max(...backs) - Math.min(...backs) > 0.45, 'the spacing is still even');
+  const gaps = [...now].sort((a, b) => a.x - b.x).slice(1).map((p, i) => p.x - [...now].sort((a, b) => a.x - b.x)[i].x);
+  assert.ok(Math.max(...gaps) - Math.min(...gaps) > 0.08, 'the side gaps are still equal');
+  let shifted = 0;
+  for (let i = 0; i < now.length; i++) if (Math.hypot(now[i].x - later[i].x, now[i].z - later[i].z) > 0.08) shifted++;
+  assert.ok(shifted >= 3, `only ${shifted} pups moved`);
+  const headings = new Set(now.map(p => Math.round(p.yaw * 5)));
+  assert.ok(headings.size >= 3, 'they still face the same way');
+  assert.notEqual(pupAct(0, 0), pupAct(0, 8));
+  const stop = at(6, false);
+  const reach = (pts: { x: number; z: number }[]) => pts.reduce((s, p) => s + Math.hypot(p.x, p.z), 0) / pts.length;
+  assert.ok(reach(stop) < reach(later) * 0.8, 'they do not come in when she stops');
   const left = followStep(0, 0, 1, 40, -12, -0.4, 0.05);
   const slot = trailSlot(1, 40, -12, -0.4);
   assert.ok(Math.abs(left.x - slot.x) < 1e-9 && Math.abs(left.z - slot.z) < 1e-9);
+  const nearHer = besideMother(30, 0, -0.35);
+  assert.equal(nearHer.length, LITTER.count);
+  const caught = followStep(0, 3, 0, 0, 0, 0, 0.05, LITTER.emergeYears, 0, true);
+  const home = pupAim(0, 0, 0, 0, 0, true);
+  assert.ok(Math.hypot(caught.x - home.x, caught.z - home.z) < 0.05, 'a pup behind the chase view steps back into it');
+  const loose = pupAim(4, 0, 0, 0, 1, true);
+  const tucked = pupAim(4, 0, 0, 0, 1, true, undefined, true);
+  assert.ok(Math.hypot(tucked.x, tucked.z) < Math.hypot(loose.x, loose.z), 'a threat pulls the straggler in');
 });

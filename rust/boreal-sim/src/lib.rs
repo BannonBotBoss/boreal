@@ -34,6 +34,7 @@ pub mod boot_order;
 pub mod perception;
 pub mod animals;
 pub mod litter;
+pub mod drives;
 pub mod entities;
 pub mod cover;
 pub mod species;
@@ -171,6 +172,13 @@ fn install_panic() {
 }
 #[no_mangle] pub extern "C" fn engine_panic_ptr() -> *const u8 { PANIC.with(|p| p.borrow().as_ptr()) }
 #[no_mangle] pub extern "C" fn engine_panic_len() -> u32 { PANIC.with(|p| p.borrow().len() as u32) }
+#[no_mangle] pub extern "C" fn engine_set_drives(
+    hunger: f64, fox_x: f64, fox_z: f64, fox_yaw: f64,
+    mama_x: f64, mama_z: f64, mama_yaw: f64,
+    pup_x: f64, pup_z: f64, yip: f64, protect: f64, drive_dt: f64,
+) {
+    registry::set_drives(&[hunger, fox_x, fox_z, fox_yaw, mama_x, mama_z, mama_yaw, pup_x, pup_z, yip, protect, drive_dt]);
+}
 #[no_mangle] pub extern "C" fn engine_set_param(ptr: *const u8, len: u32, value: f64) -> u32 {
     match read_name(ptr, len) { Some(name) if registry::set_param(&name, value) => 1, _ => 0 }
 }

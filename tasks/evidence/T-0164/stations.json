@@ -1,0 +1,65 @@
+{
+  "task": "T-0164",
+  "click": {
+    "lat": 64.5,
+    "lon": -119.7,
+    "elev_m": 376,
+    "coast_m": 156000,
+    "vegetation": 0.71,
+    "coast_note": "156 km is the census distance in rust/boreal-sim/src/species.rs and the T-0132 live-grid distance (156-195 km). It is the viewer's coast, not a re-survey of the Earth shoreline."
+  },
+  "gnwt_taiga_shield_hs": {
+    "july_C": [13, 16],
+    "source": "GNWT, Ecosystem Classification Group, Ecological Regions of the Northwest Territories — Taiga Shield (2008), section 3.4.1. Modelled ecodistrict climate (Agriculture and Agri-Food Canada 1997, quoted there). The ecoregion has no long-term station of its own. This July air range is not the 6.4 C root-zone growing season."
+  },
+  "stations": [
+    {
+      "name": "Yellowknife A",
+      "climate_id": "2204100",
+      "lat_dms": [62, 27, 46],
+      "lon_dms": [-114, -26, -25],
+      "elev_m": 205.7,
+      "member": "continental",
+      "jun_C": 13.3,
+      "jul_C": 17.0,
+      "aug_C": 14.2,
+      "source": "Environment and Climate Change Canada, Canadian Climate Normals 1981-2010, daily average temperature, climate ID 2204100."
+    },
+    {
+      "name": "Norman Wells A",
+      "climate_id": "2202800",
+      "lat_dms": [65, 16, 57],
+      "lon_dms": [-126, -48, -1],
+      "elev_m": 72.5,
+      "member": "continental",
+      "jun_C": 15.0,
+      "jul_C": 17.1,
+      "aug_C": 13.8,
+      "source": "Environment and Climate Change Canada, Canadian Climate Normals 1981-2010, daily average temperature, climate ID 2202800."
+    },
+    {
+      "name": "Inuvik A",
+      "climate_id": "2202570",
+      "lat_dms": [68, 18, 15],
+      "lon_dms": [-133, -28, -58],
+      "elev_m": 67.7,
+      "member": "distance_to_tuktoyaktuk",
+      "jun_C": 11.6,
+      "jul_C": 14.1,
+      "aug_C": 11.0,
+      "source": "Environment and Climate Change Canada, Canadian Climate Normals 1981-2010, daily average temperature, climate ID 2202570."
+    },
+    {
+      "name": "Tuktoyaktuk A",
+      "climate_id": "2203912",
+      "lat_dms": [69, 26, 0],
+      "lon_dms": [-133, -1, -35],
+      "elev_m": 4.3,
+      "member": "shore",
+      "jun_C": 6.4,
+      "jul_C": 11.0,
+      "aug_C": 8.9,
+      "source": "Environment and Climate Change Canada, Canadian Climate Normals 1981-2010, daily average temperature, climate ID 2203912."
+    }
+  ]
+}

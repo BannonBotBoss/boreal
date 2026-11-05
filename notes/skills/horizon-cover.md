@@ -27,3 +27,4 @@ Use when the drone should show plants past the chunk square, with a different ru
 - Do not treat sea level at 60° N as rock. The tree line there is already 0 m. Low sites are tundra.
 - Do not wait on the density table. The placeholder is labelled calibration. Say so.
 - Do not put billboards inside the near ring. They fight the chunk trees.
+- Do not add a cover class, and do not thin the closed boreal stem row, to make one landing look like open woodland. Check the existing continentality first (`siteMaritimeWeight`, `continentalityRatio`, `seaLevelZoneSeasonAtC`, `treeLineAtM`). Compare that warm-quarter air with station June–August means. Keep July air separate from the 6.4 °C root-zone line. If the site is still warmer than that line, leave the class as the existing rule draws it. `tests/continentality-nwt.test.ts` is that check at 64.5 N, 119.7 W.

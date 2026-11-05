@@ -5,7 +5,6 @@ import { pushProgress } from '../core/rocks';
 import { buildBody, computeNormals, wolfCoat } from '../core/body';
 import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, TUBE, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
 import { buildFurCards, furCardMaterial } from './furCards';
-import { applyStylizedFill, coatOf } from './stylizedPalette';
 import { finishAnimalCoat } from './coatFinish';
 import { GOVERNOR } from '../core/quality';
 
@@ -25,6 +24,12 @@ const smooth = (a: number, b: number, x: number) => { const t = Math.max(0, Math
 const HEAD_DROP = HEAD_AT[1] - .137;
 /** Portrait mode: a darker charcoal-and-silver coat, much finer fur over only the head and neck, eye liner and teeth. The game wolf is unchanged. */
 const PORTRAIT_COAT = { back: [.17, .18, .2] as [number, number, number], belly: [.44, .45, .45] as [number, number, number], dark: [.04, .04, .05] as [number, number, number], accent: [.5, .33, .19] as [number, number, number] };
+/** Guard-hair tips. Dark on the saddle, grey-brown on the ribs, tawny low. Not a white silver that daylight clips. */
+function mamaTip(y: number): { color: [number, number, number]; amount: number } {
+  if (y > 0.42) return { color: [0.28, 0.22, 0.16], amount: 0.5 };
+  if (y > 0.30) return { color: [0.52, 0.42, 0.30], amount: 0.32 };
+  return { color: [0.58, 0.42, 0.26], amount: 0.22 };
+}
 /** A leg chain of a wolf rig: its bones from the girdle down, limb lengths in model units, and its rest position (x, z). */
 export interface WolfChain { girdle: THREE.Bone; upper: THREE.Bone; lower: THREE.Bone; foot: THREE.Bone; paw: THREE.Bone; m: ReturnType<typeof limbModel>; x: number; z: number }
 /**
@@ -120,7 +125,15 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
     skinMaterial.userData.fillIntensity = 0.2;
     skinMaterial.toneMapped = false;
     skinMaterial.roughness = 0.78;
-  } else applyStylizedFill(skinMaterial, coatOf('Gray Wolf'));
+  } else {
+    // Daylight plus an unmapped fill clips the grizzle to white. The coat shader paints the vertex colour.
+    skinMaterial.emissive.setRGB(0, 0, 0);
+    skinMaterial.emissiveIntensity = 0;
+    skinMaterial.toneMapped = false;
+    skinMaterial.userData.mamaCoat = true;
+    skinMaterial.userData.stylized = true;
+    skinMaterial.userData.fillIntensity = 0;
+  }
   finishAnimalCoat(skinMaterial, pup ? 'pup' : 'mama');
   const furMaterial = furCardMaterial();
   if (pup) {
@@ -130,7 +143,14 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
     furMaterial.userData.stylized = true;
     furMaterial.userData.fillIntensity = 0.2;
     furMaterial.toneMapped = false;
-  } else applyStylizedFill(furMaterial, coatOf('Gray Wolf'));
+  } else {
+    furMaterial.emissive.setRGB(0, 0, 0);
+    furMaterial.emissiveIntensity = 0;
+    furMaterial.toneMapped = false;
+    furMaterial.userData.mamaCoat = true;
+    furMaterial.userData.stylized = true;
+    furMaterial.userData.fillIntensity = 0;
+  }
   finishAnimalCoat(furMaterial, pup ? 'pup' : 'mama');
   const skinMesh = new THREE.SkinnedMesh(geometry, skinMaterial);
   const skins = withFur ? [skinMesh, new THREE.SkinnedMesh(buildFurCards(body, portrait
@@ -141,7 +161,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
         // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
         tipTint: pup
           ? () => ({ color: [.86, .66, .38] as [number, number, number], amount: .4 })
-          : (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furMaterial)] : [skinMesh];
+          : (p) => mamaTip(p[1]) }), furMaterial)] : [skinMesh];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.
   const amber = new THREE.MeshStandardMaterial({ color: 0xc9830f, emissive: 0xe07800, emissiveIntensity: 1.0, roughness: .25 }), pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });

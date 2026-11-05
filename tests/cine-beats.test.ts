@@ -90,7 +90,12 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
   assert.equal(cineStage(63, true, end), 'b8');
   assert.equal(cineStage(68, true, end), 'b9');
   assert.equal(cineStage(78, true, end), 'b10');
-  assert.equal(cineStage(82, true, end), 'hold');
+  assert.equal(cineStage(82, true, end), 'b10');
+  assert.equal(cineStage(88, true, end), 'b11');
+  assert.equal(cineStage(96, true, end), 'b12');
+  assert.equal(cineStage(104, true, end), 'b13');
+  assert.equal(cineStage(112, true, end), 'b14');
+  assert.equal(cineStage(116, true, end), 'hold');
   assert.ok(plasmaGain(30) > plasmaGain(40) && plasmaGain(40) > plasmaGain(50));
   assert.ok(kickOffset(0.1, false).y > 10);
   assert.equal(kickOffset(-0.1, false).y, 0);

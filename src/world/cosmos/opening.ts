@@ -8,6 +8,7 @@ import { sharedPlanetSim } from '../../core/planetWeather';
 import { decodeEngineReport, type EngineReport } from '../../core/engineReport';
 import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
+import { GLOBE_LAND, GLOBE_LAKE } from '../globe/tile';
 import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatCosmicSeconds, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
 
 /**
@@ -104,7 +105,7 @@ body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-
  * then B1–B3 play. The slice holds at the end of B3. Arrival is a later beat.
  * `onBegin` starts the planet boot behind this picture.
  */
-export function createOpening(onPlanet: () => void, onBegin?: () => void): Opening {
+export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?: { show: () => void; ready: () => Promise<void> }): Opening {
   ensureCss();
   document.body.classList.add('cine-run');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -139,6 +140,10 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
   let busy = false;
   let panelShown = false;
   let closed = false;
+  let booted = false;
+  let earthOn = false;
+  let arrived = false;
+  let lake0: [number, number, number] | null = null;
   try { closed = localStorage.getItem(PANEL_KEY) === 'closed'; } catch { /* private mode */ }
   const audio = createBigBangAudio();
   const narration = new Audio(NARRATION.file);
@@ -161,6 +166,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     root.style.pointerEvents = 'none';
     panel.style.pointerEvents = 'auto';
     onBegin?.();
+    void earth?.ready().then(() => { booted = true; });
     audio.begin();
     void narration.play().catch(() => {});
     sphere = new CosmosSphere(root);
@@ -191,10 +197,11 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     get cycle() { return cycle; },
     get phase() { return phase; },
     step(dt: number) {
-      const cap = CINE.b10End;
-      if (pinned != null) elapsed = pinned;
+      const cap = CINE.b14End;
+      if (pinned != null) elapsed = Math.min(cap, pinned);
       else if (!begun) elapsed = Math.min(CINE.fade, elapsed + Math.max(0, dt));
       else elapsed = Math.min(cap, elapsed + Math.max(0, dt));
+      if (pinned == null && begun && !booted && elapsed >= CINE.b13End) elapsed = CINE.b13End - 0.05;
       if (begun && narrationEndedAt == null && narration.ended && !(Number.isFinite(narration.duration) && narration.duration < 2)) narrationEndedAt = elapsed;
       if (begun && narrationEndedAt == null && elapsed >= narrationEndFallback() + 1 && !(narration.duration > 2)) narrationEndedAt = narrationEndFallback();
       paintDom();
@@ -260,7 +267,22 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     paintPlate(bang, dissolve);
     showRef(stage);
     const figure = panelFigure(elapsed);
-    const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b10End && !closed;
+    const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b14End && !closed;
+    const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14';
+    if (onEarth && booted && !earthOn) {
+      earthOn = true;
+      earth?.show();
+      root.style.background = 'transparent';
+      if (sphere) sphere.canvas.style.opacity = '0';
+    }
+    if (earthOn) tintGlobe(stage, elapsed);
+    if (stage === 'b14' && earthOn && !arrived) {
+      arrived = true;
+      window.dispatchEvent(new Event('cinematic:complete'));
+      const save = (window as unknown as { __borealSave?: { markBigBangSeen?: () => void } }).__borealSave;
+      save?.markBigBangSeen?.();
+      onPlanet();
+    }
     if (showPanel && !panelShown) { panelShown = true; panel.classList.add('pop'); }
     panel.hidden = !showPanel;
     if (showPanel) {
@@ -286,6 +308,26 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     } else ref.style.display = 'none';
     if (jpg) { if (still.dataset.file !== jpg) { still.dataset.file = jpg; still.src = jpg; } still.style.display = 'block'; }
     else still.style.display = 'none';
+  }
+
+  function tintGlobe(stage: CineStage, t: number) {
+    const land = GLOBE_LAND.uLandTint.value;
+    const shallow = GLOBE_LAKE.shallow.value;
+    const deep = GLOBE_LAKE.deep.value;
+    if (!lake0) lake0 = [shallow.r, shallow.g, shallow.b];
+    if (stage === 'b11') {
+      land.setRGB(1.35, 0.32, 0.08);
+      shallow.setRGB(0.62, 0.14, 0.04);
+      deep.setRGB(0.32, 0.05, 0.02);
+    } else if (stage === 'b12') {
+      const u = Math.min(1, Math.max(0, (t - CINE.b11End) / (CINE.b12End - CINE.b11End)));
+      land.setRGB(1.35 + (1 - 1.35) * u, 0.32 + (0.85 - 0.32) * u, 0.08 + (0.7 - 0.08) * u);
+      shallow.setRGB(0.62 + (lake0[0] - 0.62) * u, 0.14 + (lake0[1] - 0.14) * u, 0.04 + (lake0[2] - 0.04) * u);
+      deep.setRGB(0.32 + (lake0[0] - 0.32) * u * 0.5, 0.05 + (lake0[1] - 0.05) * u * 0.5, 0.02 + (lake0[2] - 0.02) * u * 0.5);
+    } else {
+      land.setRGB(1, 1, 1);
+      shallow.setRGB(lake0[0], lake0[1], lake0[2]);
+    }
   }
 
   function setRolling(node: HTMLElement, text: string) {

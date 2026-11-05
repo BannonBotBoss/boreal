@@ -35,7 +35,12 @@ export const CINE = {
   /** First stars, then galaxies along the web. */
   b9End: 74,
   /** Spiral, nebula, then the Sun. Linear years begin as the Sun lights. */
-  b10End: 82,
+  b10End: 85,
+  /** Earth is a real globe from here: lava, then cooling, then a living world, then the orbit. */
+  b11End: 92,
+  b12End: 100,
+  b13End: 108,
+  b14End: 116,
   /** B2 inhale after narration `ended`. */
   b2: 0.8,
   /** Bed eases from −6 dB to −18 dB across this, then on toward 0 dB. */
@@ -201,7 +206,7 @@ export function bangFlash(t: number, narrationEndedAt: number, reduced: boolean)
   return cap * (1 - x / CINE.flashHalf);
 }
 
-export type CineStage = 'fade' | 'wait' | 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'b6' | 'b7' | 'b8' | 'b9' | 'b10' | 'hold';
+export type CineStage = 'fade' | 'wait' | 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'b6' | 'b7' | 'b8' | 'b9' | 'b10' | 'b11' | 'b12' | 'b13' | 'b14' | 'hold';
 export function cineStage(t: number, begun: boolean, narrationEndedAt: number | null): CineStage {
   if (!begun) return t < CINE.fade ? 'fade' : 'wait';
   const end = narrationEndedAt ?? Number.POSITIVE_INFINITY;
@@ -215,6 +220,10 @@ export function cineStage(t: number, begun: boolean, narrationEndedAt: number | 
   if (t < CINE.b8End) return 'b8';
   if (t < CINE.b9End) return 'b9';
   if (t < CINE.b10End) return 'b10';
+  if (t < CINE.b11End) return 'b11';
+  if (t < CINE.b12End) return 'b12';
+  if (t < CINE.b13End) return 'b13';
+  if (t < CINE.b14End) return 'b14';
   return 'hold';
 }
 
@@ -257,7 +266,7 @@ export function panelFigure(t: number): string {
   if (t >= CINE.b6End && t < CINE.b7End) return 'Temperature ≈ 3000 K';
   if (t >= CINE.b8End && t < CINE.b8End + 4) return 'First stars';
   if (t >= CINE.b8End + 4 && t < CINE.b9End) return 'Galaxies';
-  if (t >= 80 && t < CINE.b10End) return 'The Sun';
+  if (t >= 80 && t < 82) return 'The Sun';
   return '';
 }
 
@@ -347,7 +356,7 @@ export type PlasmaLook = {
   stars: number; galaxy: number; sun: number; late: number;
 };
 export function plasmaLook(t: number): PlasmaLook {
-  const held = Math.min(t, CINE.b10End);
+  const held = Math.min(t, CINE.b11End);
   return {
     heat: plasmaHeat(held),
     gain: plasmaGain(held),

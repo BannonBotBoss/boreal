@@ -326,6 +326,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
       prep = null; hold.hold(); globe.resumeWorkers(); lastT = performance.now(); toGlobe(true); return true;
     },
+    /** The planet grid is final. The film waits on this before the living world gives way to arrival. */
+    whenBooted() { return loadGlobe().then(g => g.bootP); },
     /** VR ground step: leave the planet view and stand the mama at the forest edge. */
     showForest(at: { x: number; z: number; yaw: number }) {
       host.place(at.x, at.z, at.yaw);

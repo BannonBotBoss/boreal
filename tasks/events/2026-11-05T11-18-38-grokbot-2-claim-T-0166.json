@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0166",
+  "agent": "grokbot-2",
+  "at": "2026-11-05T11:18:38-08:00",
+  "note": "Claim after the rule 16b approve-plan at 2026-11-05T11:18:37-08:00. Extend the existing events save so a finished or dismissed intro is remembered and a return visit restores the last place. A first visit still plays the intro.",
+  "branch": "grokbot-2/t0166-save-resume"
+}

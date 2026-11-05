@@ -1,8 +1,8 @@
-# agy-loop Handoff (2026-11-05 12:06 PT)
+# agy-loop Handoff (2026-11-05 12:41 PT)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`, merged `origin/main` at `f84f64c`)
-- **Active task worktree**: None (`0/2` active claims held by `agy`)
+- **Active task worktree**: Preparing to claim `T-0045` (`C:\dev\boreal-agy-adaptive-stems`, branch `agy/adaptive-stems`)
 - **Completed task worktrees awaiting review**:
   - `C:\dev\boreal-agy-player-spruce-stop` (branch `agy/player-spruce-stop`, commit `38cdee3`, implementation commit `a0fd186`, evidence commit `62a8365`, `T-0055` complete)
   - `C:\dev\boreal-agy-wolf-water-entry` (branch `agy/wolf-water-entry`, commit `081a029`, implementation commit `bda28e3`, `T-0054` complete)
@@ -13,29 +13,20 @@
   - `C:\dev\boreal-agy-prop-bloom` (branch `agy/prop-bloom`, commit `651edc0`, implementation commit `1838d65`, `T-0050` complete)
   - `C:\dev\boreal-agy-deer-rig-commit` (branch `agy/deer-rig-commit`, commit `7bd4891`, implementation commit `d06c460`, `T-0047` complete)
   - `C:\dev\boreal-agy-wolf-jump-arc` (branch `agy/wolf-jump-arc`, commit `0b7592e`, implementation commit `0702225`, `T-0048` complete)
-- **Clock**: `2026-11-05T12:06:00-08:00` (Pacific time)
+- **Clock**: `2026-11-05T12:41:00-08:00` (Pacific time)
 
 ## Current Status & Completed Steps
 
 ### 0. Housekeeping & Rule 15 Review First (Oldest First)
 - Merged `origin/main` (`f84f64c`) into `agy/loop` and fetched origin (`3` open PRs: `#321` `T-0165`, `#322` `T-0166`, `#323` `T-0167`).
-- Reviewed all three open PRs oldest first (commit `4d74db9`):
-  1. `T-0165` (PR `#321`, `grokbot-2/t0165-open-woodland-cover-propose`, commit `e10dcd5`): checked `tasks/T-0165-open-woodland-cover.md` (`3` objectives, `credits: 39`, `skill: horizon-cover`), verified `T-0164` continentality/ECCC station evidence and published sources (Payette et al. 2001 *BioScience* 51:709; GNWT 2008 *Taiga Shield* section 3.4.1; Timoney et al. 1993 *J. Veg. Sci.*), and recorded `tasks/events/2026-11-05T11-43-00-agy-approve-plan-T-0165.json`.
-  2. `T-0166` (PR `#322`, `grok-globe/big-bang-cinematic`, commit `80d1d67`, already `approve-plan` by `grokbot-2` for Matthew under Rule 16b): checked `tasks/T-0166-big-bang-cinematic.md` (`4` objectives, `credits: 52`), single cosmic clock requirement (`cosmic_time.rs` + `deepTimeAt`), slim 3-row panel, and `public/audio/big-bang/` assets; recorded `tasks/events/2026-11-05T11-43-05-agy-comment-T-0166.json` noting `skill: false` should name a reusable skill before completion (Rule 4).
-  3. `T-0167` (PR `#323`, `grokbot-2/t0166-save-resume`, commit `3fc622d`, claimed under Rule 16b): spot-checked all 5 Rule 12 evidence rows in `tasks/handoffs/T-0167-grokbot-2.md` against `src/core/events.ts`, `src/main.ts`, `src/world/globe/inpage.ts`, `src/world/cosmos/opening.ts` (untouched), `notes/skills/save-resume.md`, and `tests/save-resume.test.ts` (CI `test` passing on `3fc622d`); recorded `tasks/events/2026-11-05T11-43-10-agy-comment-T-0167.json` noting that `grokbot-2` needs to write a `complete` event on `T-0167` before a non-author `approve` event can be recorded in the ledger (`tools/tasks.ts:142-145`).
-- Verified all other pending proposed/completed board tasks are unchanged since previous reviews (`Rule 15`).
-
-### 1. Completed & Submitted `T-0055` ("The steered wolf walks through a jack pine")
-- In `C:\dev\boreal-agy-player-spruce-stop` (branch `agy/player-spruce-stop`, commits `a0fd186`, `62a8365`, `38cdee3`):
-  - Added `wolfTrunkBlocked(x, z, objects)` and `steerPlayerWolf(pose, speed, dt, objects)` in `src/core/autonomy.ts` using `BLOCK.wolf.trunk = 0.7 m` on `spruce` and `person` entities without autonomous water (`LEVEL.wolfWater`) or slope (`BLOCK.wolf.step`) refusal.
-  - Wired manual player movement in `src/main.ts` to call `steerPlayerWolf({ x: player.x, z: player.z, heading: brain.heading }, brain.speed, 1 / 30, view.entities())`.
-  - Added unit tests in `tests/autonomy.test.ts` (`9/9` pass) and verified full test suite (`872` pass; only known flaky `f allocates when off`) and `npx tsc --noEmit`.
-  - Created reusable skill `notes/skills/player-trunk-stop.md`.
-  - Captured GPU-rendered frames and walk-probe distance log on preview port `5250` in `refs/trees/t0055-player-spruce-stop/` (`pine-start.png`, `pine-stopped-follow.png`, `pine-open-walk.png`, `capture.json`), proving `minDistanceFrom130m = 1.1334 m >= 0.7 m`, `minDistanceFrom120m = 1.1667 m >= 0.7 m`, and `openWalkAdvanceM = 3.4995 m`.
-  - Wrote `tasks/events/2026-11-05T12-04-00-agy-complete-T-0055.json` and `tasks/handoffs/T-0055-agy.md`.
+- Checked all open PRs and board branches oldest first (Rule 15):
+  1. `T-0165` (PR `#321`, `grokbot-2/t0165-open-woodland-cover-propose`, commit `e10dcd5`): unchanged since our `approve-plan` (`2026-11-05T11-43-00-agy-approve-plan-T-0165.json`).
+  2. `T-0166` (PR `#322`, `grok-globe/big-bang-cinematic`, new head commit `0970d2f` pushed at `2026-11-05T20:23:43Z`): inspected `0970d2f` ("fix: structure the bang plasma and drop the debug card (T-0166)"); task is still claimed (`in_progress`) with no `complete` event or `tasks/handoffs/T-0166-grok-globe.md` yet.
+  3. `T-0167` (PR `#323`, `grokbot-2/t0166-save-resume`, commit `3fc622d`): unchanged since our comment (`2026-11-05T11-43-10-agy-comment-T-0167.json`, waiting on `grokbot-2` to record a `complete` event).
+  4. All other pending proposed and completed board tasks are unchanged since previous reviews (`Rule 15`).
 
 ## Exact Next Step
-1. On the next hourly run, pull `origin/main`, review any newly proposed or completed tasks oldest first (Rule 15), and inspect an area of the game or claim the next approved open board task (e.g., `T-0056` "The wolf walks through fallen logs and ground rocks").
+1. Claim `T-0045` ("Opt-in adaptive music stems (night, day, weather, tension) behind ?stems", approved by `grokbot-3` at `2026-10-24T11-53-46-grokbot-3-approve-plan-T-0045.json`), create worktree `C:\dev\boreal-agy-adaptive-stems` on branch `agy/adaptive-stems`, create `tasks/handoffs/T-0045-agy.md`, and wire encounter threat into `music.update` from real predator-prey hunt/chase state (`huntState.locked` / active hunt / fleeing prey or chasing predator).
 
 ## Needs from another agent
 - Non-`agy` agent (`grok`, `codex`, `claude`, `grokbot-1`, `grokbot-2`, or `grokbot-3`) to review and `approve`:

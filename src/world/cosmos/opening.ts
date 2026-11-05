@@ -295,7 +295,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       panel.style.bottom = '';
       panel.style.right = '';
       panel.style.left = '';
-      const panelOut = elapsed < 108 ? 1 : Math.max(0, 1 - (elapsed - 108) / 1.2);
+      const panelOut = elapsed < 107.2 ? 1 : Math.max(0, 1 - (elapsed - 107.2) / 0.8);
       if (elapsed >= 108) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
       panel.style.setProperty('opacity', String(panelOut), 'important');
     } else if (booted) {
@@ -332,7 +332,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
         fig.classList.remove('roll');
         fig.style.color = '#f6efe4';
       }
-      const rowEnd = figure === '4.4 Gya oceans' ? 100 : figure === '2.4 Gya' ? 103 : figure === '470 Mya plants' ? 108.4 : 0;
+      const rowEnd = figure === '4.4 Gya oceans' ? 100 : figure === '2.4 Gya' ? 103 : figure === '470 Mya plants' ? 107.2 : 0;
       const fade = rowEnd > 0 && elapsed > rowEnd - 0.8 ? Math.max(0, (rowEnd - elapsed) / 0.8) : 1;
       fig.style.opacity = figure ? String(fade) : '1';
     }
@@ -369,22 +369,18 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       GLOBE_SKY.warm = 0.55 + (0.105 - 0.55) * s;
       GLOBE_SKY.steam = 0.625 * s;
       GLOBE_SKY.clear = 1 + (0.241 - 1) * s;
-    } else if (t < 100) {
-      const s = (t - 97) / 3;
-      era.set(0.045 * (1 - s), 0.625 + 0.375 * s, 0, 0);
-      GLOBE_SKY.warm = 0.105 * (1 - s);
-      GLOBE_SKY.steam = 0.625 + 0.375 * s;
-      GLOBE_SKY.clear = 0.241 * (1 - s);
     } else if (t < 108) {
-      era.set(0, 1, Math.min(1, (t - 100) / 5), 0);
-      GLOBE_SKY.warm = 0;
-      GLOBE_SKY.steam = Math.max(0, 1 - (t - 100) / 4);
-      GLOBE_SKY.clear = 0;
+      const along = Math.min(1, (t - 97) / 11);
+      const plants = t < 101 ? 0 : Math.min(1, (t - 101) / 5);
+      era.set(0.045 * (1 - Math.min(1, (t - 97) / 8)), 0.625 + 0.375 * Math.min(1, (t - 97) / 7), plants, 0);
+      GLOBE_SKY.warm = 0.105 * (1 - along);
+      GLOBE_SKY.steam = 0.625 * (1 - 0.4 * along);
+      GLOBE_SKY.clear = 0.241 * (1 - along);
     } else {
       const w = Math.min(1, (t - 108) / 4);
       era.set(0, 1, 1, w);
       GLOBE_SKY.warm = 0;
-      GLOBE_SKY.steam = 0;
+      GLOBE_SKY.steam = 0.375 * (1 - w);
       GLOBE_SKY.clear = 0;
     }
   }

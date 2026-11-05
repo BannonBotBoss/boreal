@@ -260,7 +260,8 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     vec3 magma = vec3(1.85, 0.42, 0.07);
     vec3 crust = mix(vec3(0.03, 0.01, 0.008), vec3(0.30, 0.25, 0.20), clamp(1.0 - uEra.x, 0.0, 1.0));
     vec3 skin = mix(magma, crust, plate);
-    float crackShow = max(uEra.x, uEra.y * 0.4 * step(0.02, 0.02 - uEra.z));
+    float crackFade = 1.0 - smoothstep(0.15, 0.9, uEra.z);
+    float crackShow = max(uEra.x, uEra.y * 0.4 * crackFade);
     skin = mix(skin, magma, eraCrack * crackShow);
     diffuseColor.rgb = skin;
     float flooded = (1.0 - landMask) * smoothstep(0.08, 0.72, uEra.y) * (1.0 - uEra.x);
@@ -278,7 +279,7 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
     normal = normalize(abs(det) * normal - sign(det) * (dhx * r1 + dhy * r2)); }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(uLakeRough, roughnessFactor, landMask); // water: Cox-Munk roughness (GLINT), eased to the game water in the band')
-      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * max(eraMagma, uEra.y * 0.4 * step(0.02, 0.02 - uEra.z)) * (1.0 - clamp(uEra.w, 0.0, 1.0));')
+      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * max(eraMagma, uEra.y * 0.4 * (1.0 - smoothstep(0.15, 0.9, uEra.z))) * (1.0 - clamp(uEra.w, 0.0, 1.0));')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
 #ifdef DEBUG_SEAMS
   { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;

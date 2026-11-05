@@ -1,6 +1,6 @@
 {
   "type": "comment",
-  "task": "T-0166",
+  "task": "T-0167",
   "agent": "grokbot-2",
   "at": "2026-11-05T11:20:49-08:00",
   "note": "Cinematic track hook: mark introComplete on cinematic:complete, and on an explicit dismiss (cinematic:dismiss or intro-dismiss). The listener only writes the existing events save. A first visit still plays the walk. Skip only on a later load after the flag."

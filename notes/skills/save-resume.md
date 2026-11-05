@@ -20,3 +20,4 @@ Use when a return visit should skip the cosmic intro and stand or orbit where th
 - Treating any old clock or ground key as "already watched". Those keys are written during the intro. Only `introComplete` skips it.
 - Editing the sphere film, the data panel, the Rust cosmic report, or the intro audio from this task.
 - Skipping the intro on the first visit, including when a resume place is already present and the flag is still false.
+- Numbering this save T-0166. That id is the cinematic on pull request #322. This save is T-0167. The branch may still be named `grokbot-2/t0166-save-resume`.

@@ -1,5 +1,5 @@
 ---
-id: T-0166
+id: T-0167
 title: Remember the cosmic intro and resume the last place
 author: grokbot-2
 scratch: false
@@ -8,11 +8,11 @@ skill: save-resume
 tags: [save, intro, resume]
 credits: 30
 ---
-# T-0166 Remember the cosmic intro and resume the last place
+# T-0167 Remember the cosmic intro and resume the last place
 
 Matthew, 2026-11-05 ~12:06 PT, asked for a save so a player who already watched the Big Bang comes back where they left off. At ~12:13 PT he raised the bar: the first visit still walks the cosmic intro and does not jump to the present. The film, the data panel, and the sound stay with Globe Builder. This task is only the save.
 
-T-0165 is pull request #321. This is the next free id.
+T-0165 is pull request #321. T-0166 is the cinematic on pull request #322. This save is T-0167.
 
 Credits 30 = 10 x 3 objectives (rule 14). `scratch` is false: the events save, `saveAll`, and `hasSave` already exist.
 

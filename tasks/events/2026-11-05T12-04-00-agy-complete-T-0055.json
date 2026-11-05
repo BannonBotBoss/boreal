@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0055",
+  "agent": "agy",
+  "at": "2026-11-05T12:04:00-08:00",
+  "branch": "agy/player-spruce-stop",
+  "skill": "player-trunk-stop",
+  "note": "Completed T-0055 on branch agy/player-spruce-stop (implementation commit a0fd186, evidence commit 62a8365). Exported wolfTrunkBlocked and steerPlayerWolf in src/core/autonomy.ts (reusing BLOCK.wolf.trunk = 0.7 m on spruce and person entities without autonomous water or slope refusal) and wired the manual player branch in src/main.ts. Verified with unit tests in tests/autonomy.test.ts (9/9 pass), npx tsc --noEmit, and live walk-probe replay toward placed jack pine 3:4:10 at (141.900, 196.983) in refs/trees/t0055-player-spruce-stop/capture.json (minDist = 1.1334 m >= 0.700 m from 1.30 m start; minDist = 1.1667 m >= 0.700 m from at=141.900,198.183; open walk advances 3.4995 m)."
+}

@@ -24,6 +24,7 @@ import { STAGES } from '../../core/stages/elevation';
 import { heightAt, WORLD_SEED } from '../../core/world';
 import { INTEREST, cancel, enqueue, runJobs } from '../../core/interest';
 import { smoothstep, clamp } from '../../proc/math';
+import { hash, random } from '../../proc/rng';
 import { children, edgeMetres, faceDir, roots, centre as nodeCentre, type QNode } from './cube';
 import { renderOffset } from './origin';
 import { createAtmosphere } from './atmosphere';
@@ -203,9 +204,10 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   function ensureFilmStars() {
     if (filmStars) { filmStars.visible = true; return; }
     const n = 480;
+    const rnd = random(hash('film-stars-v1'));
     const pos = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
-      const z = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, rxy = Math.sqrt(Math.max(0, 1 - z * z));
+      const z = rnd() * 2 - 1, a = rnd() * Math.PI * 2, rxy = Math.sqrt(Math.max(0, 1 - z * z));
       const Rs = R * 14;
       pos[i * 3] = rxy * Math.cos(a) * Rs; pos[i * 3 + 1] = z * Rs; pos[i * 3 + 2] = rxy * Math.sin(a) * Rs;
     }

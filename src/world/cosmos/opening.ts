@@ -63,7 +63,7 @@ export interface Opening {
 
 const CINE_CSS = `
 body.cine-run,body.cine-run *{cursor:none}
-body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-run footer,body.cine-run #notice,body.cine-run #data-panel,body.cine-run #data-panel-btn,body.cine-run #camera-panel,body.cine-run .wolf-senses{visibility:hidden}
+body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-run footer,body.cine-run #notice,body.cine-run #data-panel,body.cine-run #data-panel-btn,body.cine-run #camera-panel,body.cine-run .wolf-senses,body.cine-run #flight-prompt{visibility:hidden}
 #cine{position:fixed;inset:0;z-index:40;overflow:hidden;background:#000;color:#f4efe2;font:15px/1.5 system-ui,sans-serif}
 #cine .veil{position:absolute;inset:0;background:#000}
 #cine .pin{position:absolute;left:50%;top:50%;width:2px;height:2px;margin:-1px;border-radius:50%;background:#FFE8C0;box-shadow:0 0 4px 0 #FFE8C0;animation:cine-breathe 3.2s ease-in-out infinite}
@@ -258,8 +258,13 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : '';
     heroLine.textContent = line;
     heroLine.style.display = line ? 'block' : 'none';
+    const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14';
+    if (onEarth && booted && !earthOn) {
+      earthOn = true;
+      earth?.show();
+    }
     if (sphere) {
-      const plasmaOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.05;
+      const plasmaOn = !earthOn && bang != null && elapsed >= bang + CINE.bangPeak - 0.05;
       sphere.canvas.style.opacity = plasmaOn ? '1' : '0';
       sphere.canvas.style.transform = plate.style.transform;
       sphere.setPlasma(plasmaOn, { time: elapsed, ...plasmaLook(elapsed) });
@@ -268,14 +273,13 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     showRef(stage);
     const figure = panelFigure(elapsed);
     const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b14End && !closed;
-    const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14';
-    if (onEarth && booted && !earthOn) {
-      earthOn = true;
-      earth?.show();
+    if (earthOn) {
       root.style.background = 'transparent';
+      plate.style.visibility = 'hidden';
       if (sphere) sphere.canvas.style.opacity = '0';
+      tintGlobe(stage, elapsed);
     }
-    if (earthOn) tintGlobe(stage, elapsed);
+    document.documentElement.dataset.cineEarth = earthOn ? '1' : '0';
     if (stage === 'b14' && earthOn && !arrived) {
       arrived = true;
       window.dispatchEvent(new Event('cinematic:complete'));

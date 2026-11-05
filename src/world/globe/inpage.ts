@@ -491,7 +491,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       g.attachViewpoint(null);
       const t0 = performance.now(); let n = 0;
       try { while (performance.now() - t0 < INPAGE.prebuildMs) { renderer.getDrawingBufferSize(size); far.resize(size.x, size.y); g.step(far.target); if (++n > 10 && g.stats().queued === 0) break; await new Promise(r => requestAnimationFrame(r)); } }
-      finally { g.attachViewpoint(view.camera); }
+      finally { if (mode === 'game') g.attachViewpoint(view.camera); }
       const bg = new THREE.Scene(), rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }); bg.background = far.texture; // background plane: screen and composer variants
       const prev = renderer.getRenderTarget(); renderer.setRenderTarget(rt); renderer.render(bg, view.camera); renderer.setRenderTarget(null); renderer.render(bg, view.camera); renderer.setRenderTarget(prev); rt.dispose();
       if (mode === 'game') g.suspendWorkers(); // not if Shift+G already went up meanwhile (the band would build tiles on the main thread)

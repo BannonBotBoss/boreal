@@ -15,7 +15,16 @@ export function playerRemembered(record: RecordEntry | undefined) {
 }
 /** A released prey's temporary friendship. `at` and the caller's `now` share one clock (play / sim seconds). */
 export interface Bond { at: number; tau: number; species: string }
-export interface EventContext { schemaVersion: 1; generatorVersion: number; worldSeed: number; records: Record<string, RecordEntry>; inventory: { herb: number }; bonds?: Record<string, Bond> }
+/** Last place in the existing events save. `globe` is the orbit; `game` is the animal; `band` is the air between them. */
+export type ResumeMode = 'game' | 'globe' | 'band';
+export interface ResumePlace { mode: ResumeMode; lat?: number; lon?: number; alt?: number; x?: number; z?: number; yaw?: number }
+export interface EventContext { schemaVersion: 1; generatorVersion: number; worldSeed: number; records: Record<string, RecordEntry>; inventory: { herb: number }; bonds?: Record<string, Bond>;
+  /** Set when the cosmic intro finishes or the player dismisses it. Absent until then, so a first visit still plays it. */
+  introComplete?: boolean;
+  /** Last globe or game place. Same document as the events save (`boreal.events.v1`). */
+  resume?: ResumePlace }
+export type BootView = 'sphere' | 'globe' | 'ground';
+export type BootChoice = BootView | 'resume-game' | 'resume-globe';
 export function createContext(): EventContext {
   return { schemaVersion: 1, generatorVersion: GENERATOR_VERSION, worldSeed: WORLD_SEED, records: {}, inventory: { herb: 0 }, bonds: {} };
 }
@@ -148,5 +157,58 @@ export function parseContext(text: string): EventContext {
   for (const [key, record] of Object.entries(data.records)) {
     if (catalog[record.entity.kind].objectType === 'animal' && !playerRemembered(record)) delete data.records[key];
   }
+  if (typeof data.introComplete !== 'boolean') delete data.introComplete;
+  const resume = cleanResume(data.resume);
+  if (resume) data.resume = resume; else delete data.resume;
   return data;
+}
+
+const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
+/** Drop a damaged place instead of rejecting the events save. Latitude and longitude are degrees. */
+export function cleanResume(raw: unknown): ResumePlace | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as ResumePlace;
+  if (r.mode !== 'game' && r.mode !== 'globe' && r.mode !== 'band') return null;
+  const place: ResumePlace = { mode: r.mode };
+  if (finite(r.lat) && r.lat >= -90 && r.lat <= 90) place.lat = r.lat;
+  if (finite(r.lon) && r.lon >= -180 && r.lon <= 180) place.lon = r.lon;
+  if (finite(r.alt) && r.alt >= 0 && r.alt < 1e8) place.alt = r.alt;
+  if (finite(r.x) && Math.abs(r.x) < 1e8) place.x = r.x;
+  if (finite(r.z) && Math.abs(r.z) < 1e8) place.z = r.z;
+  if (finite(r.yaw)) place.yaw = r.yaw;
+  return place;
+}
+/** Window and document events that mean the cosmic intro finished or the player dismissed it. */
+export const INTRO_DONE_EVENTS = ['cinematic:complete', 'cinematic:dismiss', 'intro-dismiss'] as const;
+export const introEventMarksSeen = (type: string) => (INTRO_DONE_EVENTS as readonly string[]).includes(type);
+/** The intro has finished or been dismissed. Older saves omit the field and still play it. */
+export const hasSeenBigBang = (context: EventContext) => context.introComplete === true;
+/** Remember the intro in the same events document. A second call keeps the same object. */
+export function markBigBangSeen(context: EventContext): EventContext {
+  if (context.introComplete === true) return context;
+  const next = structuredClone(context);
+  next.introComplete = true;
+  return next;
+}
+export const loadResume = (context: EventContext): ResumePlace | null => context.resume ?? null;
+/** Store the last place on the events document. A place with no usable mode is ignored. */
+export function saveResume(context: EventContext, place: ResumePlace): EventContext {
+  const clean = cleanResume(place);
+  if (!clean) return context;
+  const next = structuredClone(context);
+  next.resume = clean;
+  return next;
+}
+/**
+ * Where a load opens. A first visit (`seen` false) that would show the sphere still shows it: this does not
+ * skip the cosmic intro or jump to the present. A return visit skips that intro and restores the saved place.
+ * An explicit globe or ground URL is left alone.
+ */
+export function bootChoice(urlView: BootView, seen: boolean, resume: ResumePlace | null): BootChoice {
+  if (urlView !== 'sphere' || !seen) return urlView;
+  if (resume?.mode === 'globe' && finite(resume.lat) && finite(resume.lon)) return 'resume-globe';
+  if ((resume?.mode === 'game' || resume?.mode === 'band') && finite(resume.x) && finite(resume.z)) return 'resume-game';
+  if (resume && finite(resume.lat) && finite(resume.lon)) return 'resume-globe';
+  if (resume && finite(resume.x) && finite(resume.z)) return 'resume-game';
+  return 'globe';
 }

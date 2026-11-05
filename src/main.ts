@@ -10,7 +10,7 @@ import { toggleDataPanel } from './ui/dataPanel';
 import { latestPlanetSim } from './core/planetBudget';
 import { createSensesHalo } from './render/sensesHalo';
 import { buildScene } from './render/buildScene';
-import { availableActions, consumeForage, createContext, friendCount, interact, lastForageGrams, parseContext, rememberBond, solidContact, type Player } from './core/events';
+import { availableActions, bootChoice, consumeForage, createContext, friendCount, hasSeenBigBang, INTRO_DONE_EVENTS, interact, lastForageGrams, loadResume, markBigBangSeen, parseContext, rememberBond, saveResume, solidContact, type Player, type ResumePlace } from './core/events';
 import { holdVisual, setSqueal } from './core/huntHold';
 import { CONTACTS } from './core/contactBus';
 import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from './core/waterWake';
@@ -68,6 +68,7 @@ import { createLoading } from './ui/loading';
 import { settle, startup } from './render/startup';
 import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
+import { toLatLon } from './world/globe/planet';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
 import { startView } from './world/globe/startView';
 import { createOpening, type Opening } from './world/cosmos/opening';
@@ -194,12 +195,16 @@ function digOrNudge() {
 // ONE menu (ui/menu) for start and pause. The world clock freezes while the menu is open (Matthew): age/growth/seasons
 // hold, the renderer holds a frozen frame, and resume continues from that exact snapshot.
 function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(); return; } chrono.close(); paused = true; pauseClock(); element('pause').textContent = 'Resume'; menu.show('pause'); sfx.pauseCue(); }
-function saveAll() { try { localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); saveNeeds(); if (!saveBlocked) localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
+let captureResume = () => {};
+function commitContext() { if (!saveBlocked) try { localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
+function saveAll() { try { captureResume(); localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); saveNeeds(); commitContext(); } catch { /* storage blocked */ } }
 const menu = createMenu({
   hasSave: () => [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND].some(k => { try { return !!localStorage.getItem(k); } catch { return false; } }),
   seed: () => STAGES.seed, staged: () => STAGES.on, music: () => musicPanel(), controls: () => controls(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
-  newWorld: o => { // fresh world: forget the per-world saves (settings, music and the probe stay)
+  newWorld: o => { // fresh world: forget the per-world saves (settings, music and the probe stay). A watched intro stays watched.
+    const seen = hasSeenBigBang(context);
     for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, NEEDS_KEY, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
+    if (seen) try { localStorage.setItem(SAVE_KEY, JSON.stringify(markBigBangSeen(createContext()))); } catch { /* blocked */ }
     try { localStorage.setItem('boreal.seed.v1', String(o.seed)); } catch { /* blocked */ } renderStore.set('world.stagedTerrain.v2', o.staged); location.reload(); },
   warning: () => { const born = Number(localStorage.getItem('boreal.player.born') ?? worldSec()); const p = view.playable;
     return lifespanWarning(p.id, ageYears(p.id, born, worldSec()), p.label); },
@@ -240,6 +245,18 @@ if (!new URLSearchParams(location.search).has('at')) {
   const here = view.livingHere(); player.x = here.x; player.z = here.z;
   if (STAGES.on && !isDry(player.x, player.z)) [player.x, player.z] = dryStart(player.x, player.z);
 }
+let resumedAtSave = false;
+function applyGameResume() {
+  const q = new URLSearchParams(location.search);
+  if (q.has('at') || q.has('bench') || q.has('nomenu') || q.get('view') === 'ground') return;
+  if (startView(location.search) !== 'sphere' || !hasSeenBigBang(context)) return;
+  const resume = loadResume(context);
+  if (bootChoice('sphere', true, resume) !== 'resume-game' || !resume || typeof resume.x !== 'number' || typeof resume.z !== 'number') return;
+  player.x = resume.x; player.z = resume.z;
+  if (typeof resume.yaw === 'number') { yaw = resume.yaw; player.heading = yaw; }
+  resumedAtSave = true;
+}
+applyGameResume();
 if (watchLife) altitude = view.playable.cameraHeight * WITNESS_ALTITUDE_SCALE;
 let pendingRegen = false, playAs = new URLSearchParams(location.search).get('play') ?? localStorage.getItem('boreal.player.v1') ?? 'wolf', pendingPlay = playAs !== 'wolf'; // ?play=hare: open as that animal for this visit (links, screenshots); the menu's Player panel still saves a choice
 const renderPanel = settingsPanel(RENDER_SETTINGS, renderStore, () => { pendingRegen = true; });
@@ -267,7 +284,8 @@ setInterval(() => { try { localStorage.setItem(CLOCK.key, saveClock()); } catch 
   // Droppings are a digest act (core/traces addFeces), not this clock. Footprints stay: a step that sinks the ground.
   if (Math.abs(view.playerBrain.speed) > .3 && ground.sink > .002) record({ kind: 'footprint', x: player.x, z: player.z, t: GROUND.years, m: ground.sink });
   prune(); saveNeeds();
-  try { localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); } catch { /* storage blocked */ } }, 1000);
+  try { localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); if (hasSeenBigBang(context)) { captureResume(); commitContext(); } } catch { /* storage blocked */ } }, 1000);
+window.addEventListener('pagehide', () => { if (hasSeenBigBang(context)) saveAll(); });
 loadWeather(localStorage.getItem(SAVE_KEY_WEATHER)); loadDeltas(localStorage.getItem(SAVE_KEY_DELTAS));
 const handles = createHandles(view.camera, canvas, view.scene);
 const inspector = createInspector(view, canvas, handles);
@@ -282,12 +300,13 @@ function applyPending() {
   if (pendingPlay) {
     const p = view.setPlayable(playAs); player.abilities = [...p.actions];
     altitude = watchLife ? p.cameraHeight * WITNESS_ALTITUDE_SCALE : p.cameraHeight;
-    if (!new URLSearchParams(location.search).has('at')) { player.x = p.x; player.z = p.z; }
+    if (!new URLSearchParams(location.search).has('at') && !resumedAtSave) { player.x = p.x; player.z = p.z; }
     pendingPlay = false;
   }
 }
 applyPending();
-const inpage = createInPage(view, { player: () => ({ x: player.x, z: player.z, yaw: yaw + lookYaw }), place: (x, z, y) => { player.x = x; player.z = z; yaw = y; player.heading = y; lookYaw = 0; }, save: saveAll }); // ?transition=inpage: world/globe/inpage (null = the reload path)
+let bootAim: { lat: number; lon: number; alt?: number } | null = null;
+const inpage = createInPage(view, { player: () => ({ x: player.x, z: player.z, yaw: yaw + lookYaw }), place: (x, z, y) => { player.x = x; player.z = z; yaw = y; player.heading = y; lookYaw = 0; }, save: saveAll, globeAim: () => { const aim = bootAim; bootAim = null; return aim; } }); // ?transition=inpage: world/globe/inpage (null = the reload path)
 if (new URLSearchParams(location.search).has('rec')) (window as unknown as Record<string, unknown>).__boreal = { // ?rec: read-only probe for the recorders (tools/hunt-record.mjs)
   hares: () => view.hares.list().map(h => ({ id: h.id, x: h.x, z: h.z, state: h.state, linked: h.sim.linked, knows: h.sim.knowsAt !== undefined })),
   player: () => { const here = view.livingHere(); return { x: player.x, z: player.z, yaw, energy: view.playerBrain.energy, water: needs.water, mode: modes.mode, handle: here.handle, embodied: here.embodied, species: here.species }; },
@@ -426,6 +445,63 @@ let simTime = clock0.worldSec, lastWorld = worldSec(), dialHeld = 0; // sim and 
 try { if (!localStorage.getItem('boreal.player.born')) localStorage.setItem('boreal.player.born', String(clock0.worldSec)); } catch { /* blocked */ }
 if (clock0.offlineSec > 0) tickGround(gameSecondsPerWorldSecond * clock0.offlineSec); // time away ages the ground at the clock's game-second conversion, rate 1
 let opening: Opening | null = null;
+captureResume = () => {
+  if (saveBlocked || opening || !hasSeenBigBang(context)) return;
+  const mode = inpage?.mode ?? 'game';
+  if (mode !== 'game' && mode !== 'globe' && mode !== 'band') return;
+  const place: ResumePlace = { mode, x: player.x, z: player.z, yaw: yaw + lookYaw };
+  const cam = inpage?.globe?.camera.position;
+  if (cam && (mode === 'globe' || mode === 'band')) {
+    const ll = toLatLon([cam.x, cam.y, cam.z]);
+    place.lat = ll.lat * 180 / Math.PI; place.lon = ll.lon * 180 / Math.PI;
+    const alt = inpage?.globe?.altitude;
+    if (typeof alt === 'number' && Number.isFinite(alt)) place.alt = alt;
+  }
+  context = saveResume(context, place);
+};
+function armBootAim(q: URLSearchParams) {
+  if (q.has('bench') || q.has('nomenu')) return;
+  const opened = startView(location.search);
+  const seen = hasSeenBigBang(context);
+  const resume = seen ? loadResume(context) : null;
+  if (bootChoice(opened, seen, resume) !== 'resume-globe' || !resume || typeof resume.lat !== 'number' || typeof resume.lon !== 'number') return;
+  bootAim = { lat: resume.lat, lon: resume.lon, alt: resume.alt };
+}
+/** Write introComplete on the events save. Leaves the walk on screen alone and does not jump to the present. */
+function markIntroFlag() {
+  context = markBigBangSeen(context);
+  commitContext();
+}
+/** The opening that is on main today ended, or the player dismissed it. The planet entry is the one that opening already uses. */
+function finishIntro() {
+  opening = null;
+  if (!inpage?.enter()) toGlobe();
+  markIntroFlag();
+  captureResume();
+  commitContext();
+}
+for (const type of INTRO_DONE_EVENTS) {
+  const mark = () => markIntroFlag();
+  window.addEventListener(type, mark);
+  document.addEventListener(type, mark);
+}
+function openAfterLoad(q: URLSearchParams) {
+  if (q.has('bench') || q.has('nomenu')) return;
+  const opened = startView(location.search);
+  const seen = hasSeenBigBang(context);
+  const choice = bootChoice(opened, seen, seen ? loadResume(context) : null);
+  if (choice === 'globe' || choice === 'resume-globe') { if (!inpage?.enter()) toGlobe(); return; }
+  if (opened === 'sphere' && choice === 'sphere') { opening = createOpening(finishIntro); return; }
+  if (choice === 'resume-game') return;
+  openStart();
+}
+const borealSave = {
+  hasSeenBigBang: () => hasSeenBigBang(context),
+  markBigBangSeen: () => markIntroFlag(),
+  loadResume: () => loadResume(context),
+  saveResume: (place: ResumePlace) => { context = saveResume(context, place); commitContext(); },
+};
+(window as unknown as { __borealSave?: typeof borealSave }).__borealSave = borealSave;
 function frame(time: number) { const frameStart = performance.now(); latestPlanetSim()?.setEngineNow(frameStart);
   const wallDt = Math.min((time - lastTime) / 1000 || 0, 1); // T-0036: thought bubbles keep real seconds even when frames are slow
   opening?.step(wallDt);
@@ -626,7 +702,8 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
 // The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.
 void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally(() => requestAnimationFrame(frame));
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).catch(e => console.warn('startup', e)).then(() => q.has('noprobe') ? undefined : inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); if (!q.has('bench') && !q.has('nomenu')) { const opened = startView(location.search); if (opened === 'globe') { if (!inpage?.enter()) toGlobe(); } else if (opened === 'sphere') opening = createOpening(() => { opening = null; if (!inpage?.enter()) toGlobe(); }); else openStart(); } }); } // bare load: hot sphere, then the planet. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
+  armBootAim(q); // return visit only: aim the globe before prewarm. A first visit leaves this empty and still plays the intro.
+  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).catch(e => console.warn('startup', e)).then(() => q.has('noprobe') ? undefined : inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); openAfterLoad(q); }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

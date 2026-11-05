@@ -74,7 +74,9 @@ export const INPAGE = { searchMs: 3, gain: 1, kDown: .7, kUp: 1.7, nearK: .01, p
  *  and keeps its own look by the handover; occ: [metres, fraction of the distance] a globe surface must be in front of a
  *  patch fragment to hide it (globe tiles are coarser than the game terrain). [game calibration] */
 type View = { scene: THREE.Scene; camera: THREE.PerspectiveCamera; canvas: HTMLCanvasElement; photoreal: { renderer: THREE.WebGLRenderer }; chunkBuilt?(cx: number, cz: number): boolean };
-export interface InPageHost { player(): { x: number; z: number; yaw: number }; place(x: number, z: number, yaw: number): void; save(): void; notice?(m: string): void }
+export interface InPageHost { player(): { x: number; z: number; yaw: number }; place(x: number, z: number, yaw: number): void; save(): void; notice?(m: string): void;
+  /** One-shot orbit aim from the events save. Null keeps the forest entry. Consumed on the first globe build. */
+  globeAim?(): { lat: number; lon: number; alt?: number } | null }
 type FxTier = { ssao: number; contact: number; rays: number };
 let lakeU: typeof import('./globeView').GLOBE_LAKE | null = null, landU: typeof import('./globeView').GLOBE_LAND | null = null, shoreU: typeof import('./globeView').GLOBE_SHORE | null = null;
 let ctl: ReturnType<typeof controller> | null = null, globeModule: Promise<typeof import('./globeView')> | null = null, createGlobe: typeof import('./globeView').createGlobe | null = null;
@@ -146,6 +148,11 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     const q = new URLSearchParams(location.search), p = host.player(), r = (v: number, k: number) => Math.round(v * k) / k;
     for (const k of ['view', 'bench', 'shot', 'handoff', 'look', 'pitch', 'dir', 'tier', 'workers', 'seams']) q.delete(k);
     q.set('at', `${r(p.x, 10)},${r(p.z, 10)},${r(p.yaw, 1000)}`); q.set('alt', String(GLOBE_ENTRY_ALT));
+    const aim = host.globeAim?.() ?? null;
+    if (aim && Number.isFinite(aim.lat) && Number.isFinite(aim.lon)) {
+      q.set('latlon', `${aim.lat},${aim.lon}`);
+      if (Number.isFinite(aim.alt)) q.set('alt', String(aim.alt));
+    }
     globe = createGlobe!(renderer, { shared: true, params: q, target: far.target, workers: 2, onLeave: at => { if (mode === 'globe' && at) descend(at); } }); // the fall calls this at 10,000 ft with its vertical speed
     globe.attachViewpoint(view.camera); // one camera from orbit down; the planet scene is the mapping of it
     return globe;

@@ -17,6 +17,8 @@ import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from '
 import { catalog } from './core/catalog';
 import { heightAt, type Entity } from './core/world';
 import { forestHandsOn, readForestHands } from './vr/forestSession';
+import { foxPlace, stepDrives } from './core/drives';
+import { pupCloud } from './animals/pups';
 import { BorealSound, mealChews } from './audio/borealSound';
 import { createMusic } from './audio/music';
 import { MUSIC_PANEL, MUSIC_SAFETY, MUSIC_SETTINGS, TONES } from './audio/musicSettings';
@@ -405,6 +407,7 @@ canvas.addEventListener('webglcontextrestored', () => location.reload());
 let lastPhotoView: PhotoView | undefined;
 let litterNudge = false;
 let pupHeard: ReturnType<typeof view.stepPups> = [];
+let driveCommitted = false;
 let hadPad = false, lastTime = 0, accumulator = 0;
 const clock0 = loadClock(localStorage.getItem(CLOCK.key));
 initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the chronometer's saved dial; ?hour= ?day= ?date= set it
@@ -465,7 +468,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
       if (hands.dig) digOrNudge();
     } else dx = H('steerRight') - H('steerLeft'), dz = H('moveBack') - H('moveForward');
     const mood = levelsOf(needs, view.playerBrain.energy);
-    pupHeard = view.stepPups(wallDt, Math.max(0, wDt), player.x, player.z, yaw, { hungry: styleOf(mood.energy) != null, tired: styleOf(mood.rest) != null, nudge: litterNudge });
+    pupHeard = view.stepPups(wallDt, Math.max(0, wDt), player.x, player.z, yaw, { hungry: styleOf(mood.energy) != null, tired: styleOf(mood.rest) != null, nudge: litterNudge, threatened: driveCommitted });
     litterNudge = false;
     if(autonomous && (Math.abs(dx)>.01 || Math.abs(dz)>.01)) setAutonomous(false);
     const lookInput = forestHandsOn() ? 0 : H('lookRight') - H('lookLeft');
@@ -526,6 +529,23 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
       const nx = stepNeeds(sp, needs, { dtGame: gameSecondsPerWorldSecond / 30, speed: moved * 30, tC: airC, drinking, energy: brain.energy });
       needs = nx.state; brain.energy = nx.energy;
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
+      if (view.playable.id === 'wolf') {
+        const yip = pupHeard.some(call => call.kind === 'yip');
+        const foxAt = foxPlace();
+        const ox = foxAt?.x ?? player.x, oz = foxAt?.z ?? player.z;
+        let pupX = player.x, pupZ = player.z, best = Infinity;
+        for (const pup of pupCloud()) {
+          const d = Math.hypot(pup.x - ox, pup.z - oz);
+          if (d < best) { best = d; pupX = pup.x; pupZ = pup.z; }
+        }
+        const now = stepDrives(player.x, player.z, yaw, pupX, pupZ, yip, 1 / 30);
+        if (now.committed) {
+          player.x = now.mamaX; player.z = now.mamaZ;
+          yaw = now.mamaYaw + Math.PI; player.heading = yaw;
+          brain.heading = yaw; brain.motion = 'run'; brain.speed = 2.8; brain.gaitSpeed = 2.8;
+        }
+        driveCommitted = now.committed;
+      }
       if (view.playable.id === 'wolf' && moved > 0) tryMark('wolf:player', player.x, player.z, moved);
       { const keep = !autonomous && brain.motion === 'jump' && locked ? locked.key : undefined;
         if (keep && locked) {

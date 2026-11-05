@@ -343,6 +343,8 @@ impl Engine for Planet {
             Rule { child: "wind", output: "ready", above: 1.0, below: f64::INFINITY, cause: "the planet grid exists", time_output: "" },
             Rule { child: "hydro", output: "ready", above: 1.0, below: f64::INFINITY, cause: "the planet grid exists", time_output: "" },
             Rule { child: "clouds", output: "ready", above: 1.0, below: f64::INFINITY, cause: "the planet grid exists", time_output: "" },
+            Rule { child: "hunger", output: "ready", above: 1.0, below: f64::INFINITY, cause: "animals live on the planet", time_output: "" },
+            Rule { child: "senses", output: "ready", above: 1.0, below: f64::INFINITY, cause: "animals live on the planet", time_output: "" },
         ]
     }
     fn evaluate(&self, t: f64, p: &BTreeMap<String, f64>) -> Outcome {
@@ -516,12 +518,171 @@ impl Registry {
     }
 }
 
+fn param(p: &BTreeMap<String, f64>, key: &str) -> f64 {
+    p.get(key).copied().unwrap_or_else(|| default_of(key))
+}
+
+struct HungerEng;
+struct PreyEng;
+struct SensesEng;
+struct DangerEng;
+struct ProtectEng;
+
+fn drive_now(p: &BTreeMap<String, f64>) -> crate::drives::DriveNow {
+    crate::drives::step(
+        param(p, "hunger"), param(p, "fox_x"), param(p, "fox_z"), param(p, "fox_yaw"),
+        param(p, "mama_x"), param(p, "mama_z"), param(p, "mama_yaw"),
+        param(p, "pup_x"), param(p, "pup_z"), param(p, "yip") > 0.5, param(p, "protect"), param(p, "drive_dt"),
+    )
+}
+
+impl Engine for HungerEng {
+    fn id(&self) -> &'static str { "hunger" }
+    fn generates(&self) -> &'static str { "one hunger drive, with a rate and a diet for each species" }
+    fn file(&self) -> &'static str { "rust/boreal-sim/src/drives.rs" }
+    fn parameters(&self) -> &'static [ParamDef] {
+        &[
+            ParamDef { key: "hunger", label: "Hunger", unit: "0–1" },
+            ParamDef { key: "fox_x", label: "Fox x", unit: "m" },
+            ParamDef { key: "fox_z", label: "Fox z", unit: "m" },
+            ParamDef { key: "fox_yaw", label: "Fox heading", unit: "rad" },
+            ParamDef { key: "mama_x", label: "Mother x", unit: "m" },
+            ParamDef { key: "mama_z", label: "Mother z", unit: "m" },
+            ParamDef { key: "mama_yaw", label: "Mother heading", unit: "rad" },
+            ParamDef { key: "pup_x", label: "Nearest pup x", unit: "m" },
+            ParamDef { key: "pup_z", label: "Nearest pup z", unit: "m" },
+            ParamDef { key: "yip", label: "A pup is yipping", unit: "0 or 1" },
+            ParamDef { key: "protect", label: "Protect", unit: "0–1" },
+            ParamDef { key: "drive_dt", label: "Drive step", unit: "s" },
+        ]
+    }
+    fn equations(&self) -> &'static [EqDef] {
+        &[EqDef { id: "hunger", title: "Hunger", latex: r"H_{t+\Delta t}=\mathrm{clamp}(H_t+r_{\mathrm{species}}\Delta t,\,0,\,1)" }]
+    }
+    fn rules(&self) -> &'static [Rule] {
+        &[Rule { child: "prey", output: "feed_drive", above: 0.35, below: f64::INFINITY, cause: "hunger is high enough to look for food", time_output: "" }]
+    }
+    fn evaluate(&self, _t: f64, p: &BTreeMap<String, f64>) -> Outcome {
+        let now = drive_now(p);
+        let mut outputs = BTreeMap::new();
+        outputs.insert("feed_drive".into(), now.hunger);
+        Outcome {
+            health: HEALTH_OK,
+            reason: format!("fox diet {}", crate::drives::diet("Red Fox")),
+            vars: vec![v("hunger", "", now.hunger), v("fox rate", "1/s", crate::drives::hunger_rate("Red Fox")), v("wolf rate", "1/s", crate::drives::hunger_rate("Gray Wolf"))],
+            symbols: vec![
+                sym("hunger", "H", "H", "", now.hunger),
+                sym("hunger", "r", "r", "1/s", crate::drives::hunger_rate("Red Fox")),
+            ],
+            outputs,
+        }
+    }
+}
+
+impl Engine for PreyEng {
+    fn id(&self) -> &'static str { "prey" }
+    fn generates(&self) -> &'static str { "how much effort a prey animal would take" }
+    fn file(&self) -> &'static str { "rust/boreal-sim/src/drives.rs" }
+    fn equations(&self) -> &'static [EqDef] {
+        &[EqDef { id: "effort", title: "Prey effort", latex: r"E=\begin{cases}(m_p/m)^{2}&m_p\le m\\ \exp\!\big(4(m_p/m-1)\big)&m_p>m\end{cases}" }]
+    }
+    fn evaluate(&self, _t: f64, p: &BTreeMap<String, f64>) -> Outcome {
+        let now = drive_now(p);
+        Outcome {
+            health: HEALTH_OK,
+            reason: "effort".into(),
+            vars: vec![v("pup effort", "", now.effort_pup), v("mama effort", "", now.effort_mama.min(1.0e6))],
+            symbols: vec![
+                sym("effort", "E_pup", "E_{pup}", "", now.effort_pup),
+                sym("effort", "E_mama", "E_{mama}", "", now.effort_mama.min(1.0e6)),
+            ],
+            outputs: BTreeMap::new(),
+        }
+    }
+}
+
+impl Engine for SensesEng {
+    fn id(&self) -> &'static str { "senses" }
+    fn generates(&self) -> &'static str { "smell, sight and hearing, with smell the longest" }
+    fn file(&self) -> &'static str { "rust/boreal-sim/src/drives.rs" }
+    fn equations(&self) -> &'static [EqDef] {
+        &[EqDef { id: "scent", title: "Scent", latex: r"S=\exp(-d/R_{\mathrm{smell}})" }]
+    }
+    fn rules(&self) -> &'static [Rule] {
+        &[Rule { child: "danger", output: "scent", above: 0.05, below: f64::INFINITY, cause: "something is close enough to smell", time_output: "" }]
+    }
+    fn evaluate(&self, _t: f64, p: &BTreeMap<String, f64>) -> Outcome {
+        let now = drive_now(p);
+        let mut outputs = BTreeMap::new();
+        outputs.insert("scent".into(), now.scent);
+        Outcome {
+            health: HEALTH_OK,
+            reason: "senses".into(),
+            vars: vec![v("scent", "", now.scent), v("smell", "m", crate::drives::SMELL_M), v("sight", "m", crate::drives::SIGHT_M), v("hearing", "m", crate::drives::HEARING_M)],
+            symbols: vec![sym("scent", "S", "S", "", now.scent), sym("scent", "R", "R_{smell}", "m", crate::drives::SMELL_M)],
+            outputs,
+        }
+    }
+}
+
+impl Engine for DangerEng {
+    fn id(&self) -> &'static str { "danger" }
+    fn generates(&self) -> &'static str { "a threat pushing back against hunger" }
+    fn file(&self) -> &'static str { "rust/boreal-sim/src/drives.rs" }
+    fn equations(&self) -> &'static [EqDef] {
+        &[EqDef { id: "danger", title: "Danger against hunger", latex: r"D=\exp(-d_{mama}/R),\quad A=H/(E+0.05)\,S" }]
+    }
+    fn rules(&self) -> &'static [Rule] {
+        &[Rule { child: "protect", output: "threat", above: 1.0, below: f64::INFINITY, cause: "a threat is inside the mother's watch radius", time_output: "" }]
+    }
+    fn evaluate(&self, _t: f64, p: &BTreeMap<String, f64>) -> Outcome {
+        let now = drive_now(p);
+        let mut outputs = BTreeMap::new();
+        outputs.insert("threat".into(), now.threat);
+        outputs.insert("protect".into(), now.protect);
+        Outcome {
+            health: HEALTH_OK,
+            reason: crate::drives::mode_name(now.mode).into(),
+            vars: vec![v("danger", "", now.danger), v("approach", "", now.approach), v("threat", "", now.threat), v("mode", "", match now.mode { crate::drives::FoxMode::Linger => 1.0, crate::drives::FoxMode::Flee => 2.0, crate::drives::FoxMode::Approach => 3.0, crate::drives::FoxMode::Watch => 4.0, crate::drives::FoxMode::None => 0.0 })],
+            symbols: vec![
+                sym("danger", "D", "D", "", now.danger),
+                sym("danger", "A", "A", "", now.approach),
+            ],
+            outputs,
+        }
+    }
+}
+
+impl Engine for ProtectEng {
+    fn id(&self) -> &'static str { "protect" }
+    fn generates(&self) -> &'static str { "a mother putting herself between a threat and her young" }
+    fn file(&self) -> &'static str { "rust/boreal-sim/src/drives.rs" }
+    fn equations(&self) -> &'static [EqDef] {
+        &[EqDef { id: "protect", title: "Protect offspring", latex: r"P_{t+\Delta t}=\mathrm{clamp}(P_t+r\Delta t,\,0,\,1),\ r=+0.22\ \mathrm{near},\ -0.25\ \mathrm{clear}" }]
+    }
+    fn evaluate(&self, _t: f64, p: &BTreeMap<String, f64>) -> Outcome {
+        let now = drive_now(p);
+        Outcome {
+            health: if now.protect > 0.0 { HEALTH_OK } else { HEALTH_INACTIVE },
+            reason: if now.protect > 0.0 { "she is between the fox and the pups".into() } else { "no threat near the litter".into() },
+            vars: vec![v("protect", "", now.protect)],
+            symbols: vec![sym("protect", "P", "P", "", now.protect)],
+            outputs: BTreeMap::new(),
+        }
+    }
+}
+
 fn engine_for<'a>(id: &str) -> Option<&'a dyn Engine> {
     match id {
         "spacetime" => Some(&Spacetime),
         "reheating" => Some(&ReheatingEng),
         "nucleosynthesis" => Some(&Nucleosynthesis),
         "planet" => Some(&Planet),
+        "hunger" => Some(&HungerEng),
+        "prey" => Some(&PreyEng),
+        "senses" => Some(&SensesEng),
+        "danger" => Some(&DangerEng),
+        "protect" => Some(&ProtectEng),
         "climate" | "solar" | "energy" | "wind" | "hydro" | "clouds" => Some(&Slice),
         _ => None,
     }
@@ -539,6 +700,11 @@ fn generates(id: &str) -> &'static str {
         "wind" => "wind and pressure",
         "hydro" => "rain, snow and soil water",
         "clouds" => "cloud cover",
+        "hunger" => "one hunger drive, with a rate and a diet for each species",
+        "prey" => "how much effort a prey animal would take",
+        "senses" => "smell, sight and hearing, with smell the longest",
+        "danger" => "a threat pushing back against hunger",
+        "protect" => "a mother putting herself between a threat and her young",
         _ => "",
     }
 }
@@ -554,6 +720,7 @@ fn file_of(id: &str) -> &'static str {
         "wind" => "rust/boreal-sim/src/planet_fundamentals/atmosphere/wind.rs",
         "hydro" => "rust/boreal-sim/src/planet_fundamentals/hydrosphere/precipitation.rs",
         "clouds" => "rust/boreal-sim/src/planet_fundamentals/atmosphere/cloud_fraction.rs",
+        "hunger" | "prey" | "senses" | "danger" | "protect" => "rust/boreal-sim/src/drives.rs",
         _ => "rust/boreal-sim/src/grid.rs",
     }
 }
@@ -563,6 +730,9 @@ fn rules_of(id: &str) -> &'static [Rule] {
         "spacetime" => Spacetime.rules(),
         "reheating" => ReheatingEng.rules(),
         "planet" => Planet.rules(),
+        "hunger" => HungerEng.rules(),
+        "senses" => SensesEng.rules(),
+        "danger" => DangerEng.rules(),
         _ => &[],
     }
 }
@@ -573,6 +743,11 @@ fn eval_id(id: &str, t: f64, p: &BTreeMap<String, f64>) -> Outcome {
         "reheating" => ReheatingEng.evaluate(t, p),
         "nucleosynthesis" => Nucleosynthesis.evaluate(t, p),
         "planet" => Planet.evaluate(t, p),
+        "hunger" => HungerEng.evaluate(t, p),
+        "prey" => PreyEng.evaluate(t, p),
+        "senses" => SensesEng.evaluate(t, p),
+        "danger" => DangerEng.evaluate(t, p),
+        "protect" => ProtectEng.evaluate(t, p),
         "climate" | "solar" | "energy" | "wind" | "hydro" | "clouds" => slice_eval(id, p),
         _ => Outcome { health: HEALTH_BAD, reason: "unknown engine".into(), vars: vec![], symbols: vec![], outputs: BTreeMap::new() },
     }
@@ -742,6 +917,18 @@ fn default_of(key: &str) -> f64 {
         "humidity_seed" => 0.75,
         "water_albedo" => 0.06,
         "snow_albedo" => 0.80,
+        "fox_x" => 10.0,
+        "fox_z" => 0.0,
+        "fox_yaw" => 0.0,
+        "mama_x" => 0.0,
+        "mama_z" => 0.0,
+        "mama_yaw" => 0.0,
+        "pup_x" => 1.2,
+        "pup_z" => 0.3,
+        "yip" => 1.0,
+        "hunger" => 0.75,
+        "protect" => 0.0,
+        "drive_dt" => 0.05,
         _ => f64::NAN,
     }
 }
@@ -768,6 +955,25 @@ pub fn set_cycle(cycle: f64) {
         let mut g = r.borrow_mut();
         if g.fresh && g.cycle.to_bits() == cycle.to_bits() { return; }
         g.cycle = cycle;
+        g.fresh = true;
+        g.reconcile();
+    });
+}
+
+/// One reconcile for the live drive snapshot. `drive_dt` should be 0 so the
+/// report shows the step the page already took.
+pub fn set_drives(values: &[f64]) {
+    const KEYS: [&str; 12] = [
+        "hunger", "fox_x", "fox_z", "fox_yaw", "mama_x", "mama_z", "mama_yaw",
+        "pup_x", "pup_z", "yip", "protect", "drive_dt",
+    ];
+    REG.with(|r| {
+        let mut g = r.borrow_mut();
+        for (i, key) in KEYS.iter().enumerate() {
+            if let Some(v) = values.get(i).copied() {
+                if v.is_finite() { g.params.insert((*key).into(), v); }
+            }
+        }
         g.fresh = true;
         g.reconcile();
     });
@@ -800,6 +1006,7 @@ pub fn reset_engine(id: &str) {
         "spacetime" => Spacetime.parameters().iter().map(|p| p.key.into()).collect(),
         "reheating" => ReheatingEng.parameters().iter().map(|p| p.key.into()).collect(),
         "planet" | "climate" | "solar" | "energy" | "wind" | "hydro" | "clouds" => Planet.parameters().iter().map(|p| p.key.into()).collect(),
+        "hunger" | "prey" | "senses" | "danger" | "protect" => HungerEng.parameters().iter().map(|p| p.key.into()).collect(),
         _ => vec![],
     };
     REG.with(|r| {
@@ -890,6 +1097,25 @@ pub fn report() -> String {
         lines.push("EQ\twind\tgeostrophic\tGeostrophic wind\tu=-(1/(\\rho f))\\partial p/\\partial y".into());
         lines.push("EQ\thydro\tbucket\tSoil bucket\t\\frac{dW}{dt}=P-E".into());
         lines.push("EQ\tclouds\tsundqvist\tCloud fraction\tC=1-\\sqrt{(1-RH)/(1-RH_{c})}".into());
+        for id in ["hunger", "prey", "senses", "danger", "protect"] {
+            let eng: &dyn Engine = match id {
+                "hunger" => &HungerEng,
+                "prey" => &PreyEng,
+                "senses" => &SensesEng,
+                "danger" => &DangerEng,
+                _ => &ProtectEng,
+            };
+            for par in eng.parameters() {
+                let value = g.params.get(par.key).copied().unwrap_or_else(|| default_of(par.key));
+                lines.push(format!("PAR\t{id}\t{}\t{}\t{}\t{}\t{}", par.key, clean(par.label), clean(par.unit), value, default_of(par.key)));
+            }
+            for eq in eng.equations() {
+                lines.push(format!("EQ\t{id}\t{}\t{}\t{}", eq.id, clean(eq.title), clean(eq.latex)));
+            }
+            for rule in eng.rules() {
+                lines.push(format!("RULE\t{id}\t{}\t{}\t{}", rule.child, rule.output, clean(rule.cause)));
+            }
+        }
         for entry in &g.log {
             lines.push(format!("LOG\t{}\t{}\t{}\t{}\t{}", entry.kind, entry.t, clean(&entry.cause), clean(&entry.parent), clean(&entry.child)));
         }
@@ -909,7 +1135,7 @@ fn clean(s: &str) -> String {
 }
 
 pub fn types() -> &'static [&'static str] {
-    &["spacetime", "reheating", "nucleosynthesis", "planet", "climate", "solar", "energy", "wind", "hydro", "clouds"]
+    &["spacetime", "reheating", "nucleosynthesis", "planet", "climate", "solar", "energy", "wind", "hydro", "clouds", "hunger", "prey", "senses", "danger", "protect"]
 }
 
 #[cfg(test)]
@@ -988,6 +1214,21 @@ mod tests {
         let h = ids.iter().position(|id| *id == "reheating").unwrap();
         let n = ids.iter().position(|id| *id == "nucleosynthesis").unwrap();
         assert!(s < h && h < n, "{ids:?}");
+    }
+
+    #[test]
+    fn hunger_joins_the_planet_and_the_panel_lists_its_equation() {
+        let mut r = fresh();
+        r.cycle = cosmic_time::seconds_to_cycle(13.8e9 * YEAR_S);
+        r.reconcile();
+        let ids: Vec<_> = r.instances.iter().map(|n| n.type_id.as_str()).collect();
+        assert!(ids.contains(&"hunger"), "{ids:?}");
+        assert!(ids.contains(&"prey"), "{ids:?}");
+        assert!(ids.contains(&"senses"), "{ids:?}");
+        assert!(ids.contains(&"danger"), "{ids:?}");
+        let text = report();
+        assert!(text.contains("Prey effort"), "missing the effort equation");
+        assert!(text.contains("Protect offspring"));
     }
 
     #[test]

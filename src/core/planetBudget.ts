@@ -60,6 +60,7 @@ interface Exports {
   engine_set_now?(ms: number): void;
   engine_set_cycle?(cycle: number): number;
   engine_set_param?(ptr: number, len: number, value: number): number;
+  engine_set_drives?(hunger: number, foxX: number, foxZ: number, foxYaw: number, mamaX: number, mamaZ: number, mamaYaw: number, pupX: number, pupZ: number, yip: number, protect: number, driveDt: number): void;
   engine_reset_all?(): void;
   engine_reset_one?(ptr: number, len: number): void;
   engine_spawn?(ptr: number, len: number): number;
@@ -162,6 +163,11 @@ export class PlanetSim {
   }
   setEngineNow(ms: number) { this.x.engine_set_now?.(ms); }
   setEngineCycle(cycle: number) { return this.x.engine_set_cycle?.(cycle) ?? 0; }
+  /** Copy the live drive step into the Rust engines, then reconcile once. */
+  setEngineDrives(values: number[]) {
+    if (!this.x.engine_set_drives || values.length < 12) return;
+    this.x.engine_set_drives(values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], values[9], values[10], values[11]);
+  }
   setEngineParam(key: string, value: number) {
     if (!this.x.engine_set_param) return 0;
     const { p, n } = this.namePtr(key);

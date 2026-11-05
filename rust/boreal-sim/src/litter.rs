@@ -105,11 +105,11 @@ pub fn pup_act(slot: u32, time: f64) -> &'static str {
 }
 
 /// Where one pup is trying to be, and which way it faces. `moving` false pulls the cloud in.
-pub fn pup_aim(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, time: f64, moving: bool, age_years: f64) -> (f64, f64, f64, &'static str) {
+pub fn pup_aim(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, time: f64, moving: bool, age_years: f64, threatened: bool) -> (f64, f64, f64, &'static str) {
     let act = pup_act(slot, time);
     let home = PUP_HOME[slot as usize % 5];
     let phase = PUP_PHASE[slot as usize % 5];
-    let cluster = if moving { 1.0 } else { 0.55 };
+    let cluster = (if moving { 1.0 } else { 0.55 }) * if threatened { 0.45 } else { 1.0 };
     let wander = (if moving { 0.26 } else { 0.07 }) * (1.0 - 0.25 * growth_u(age_years));
     let age_pull = 1.0 - 0.35 * growth_u(age_years);
     let mut back = home.0 * cluster * age_pull + (time * 0.65 + phase).sin() * wander;
@@ -148,7 +148,7 @@ pub fn pup_aim(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, time: f64, mov
 
 /// The pup's aim at time 0 while she is moving. Forward is (−sin yaw, −cos yaw).
 pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, age_years: f64) -> (f64, f64) {
-    let (x, z, _, _) = pup_aim(slot, mother_x, mother_z, yaw, 0.0, true, age_years);
+    let (x, z, _, _) = pup_aim(slot, mother_x, mother_z, yaw, 0.0, true, age_years, false);
     (x, z)
 }
 
@@ -166,7 +166,7 @@ fn act_mps(act: &str, age_years: f64) -> f64 {
 /// One follow step toward the aim at time 0. The pup does not overshoot it.
 pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64) -> (f64, f64) {
     let act = pup_act(slot, 0.0);
-    let (tx, tz, _, _) = pup_aim(slot, mother_x, mother_z, yaw, 0.0, true, age_years);
+    let (tx, tz, _, _) = pup_aim(slot, mother_x, mother_z, yaw, 0.0, true, age_years, false);
     let dx = tx - x;
     let dz = tz - z;
     let d = (dx * dx + dz * dz).sqrt();
@@ -304,7 +304,7 @@ mod tests {
         let mut near = 0;
         let mut backs = Vec::new();
         for slot in 0..LITTER_COUNT {
-            let (x, z, yaw, _) = pup_aim(slot, 0.0, 0.0, 0.0, 0.0, true, EMERGE_YEARS);
+            let (x, z, yaw, _) = pup_aim(slot, 0.0, 0.0, 0.0, 0.0, true, EMERGE_YEARS, false);
             assert!(z < 1.7 && z > 0.05, "slot {slot} left the chase view at {z}");
             assert!(x.abs() < 1.3, "slot {slot} stands too wide at {x}");
             backs.push(z);
@@ -314,8 +314,8 @@ mod tests {
         assert!(near >= 2, "only {near} pups are in the near clump");
         let (lo, hi) = backs.iter().fold((f64::MAX, f64::MIN), |(lo, hi), z| (lo.min(*z), hi.max(*z)));
         assert!(hi - lo > 0.45, "the spacing is still even");
-        let (x0, z0, _, _) = pup_aim(1, 0.0, 0.0, 0.0, 0.0, true, EMERGE_YEARS);
-        let (x1, z1, _, _) = pup_aim(1, 0.0, 0.0, 0.0, 6.0, true, EMERGE_YEARS);
+        let (x0, z0, _, _) = pup_aim(1, 0.0, 0.0, 0.0, 0.0, true, EMERGE_YEARS, false);
+        let (x1, z1, _, _) = pup_aim(1, 0.0, 0.0, 0.0, 6.0, true, EMERGE_YEARS, false);
         assert!(((x0 - x1).powi(2) + (z0 - z1).powi(2)).sqrt() > 0.08, "the clump does not move");
         assert_ne!(pup_act(0, 0.0), pup_act(0, 8.0));
     }
@@ -332,6 +332,15 @@ mod tests {
         assert_eq!(pup_voice(1.0, false, 1.2, false, false, true), Some("huff"));
         assert!(pup_pitch(EMERGE_YEARS) > pup_pitch(1.0));
         assert!((pup_pitch(1.0) - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn a_threat_pulls_the_pups_in_toward_her() {
+        let (x, z, _, _) = pup_aim(4, 0.0, 0.0, 0.0, 1.0, true, EMERGE_YEARS, false);
+        let (tx, tz, _, _) = pup_aim(4, 0.0, 0.0, 0.0, 1.0, true, EMERGE_YEARS, true);
+        let far = (x * x + z * z).sqrt();
+        let near = (tx * tx + tz * tz).sqrt();
+        assert!(near < far, "threatened {near} should be closer than {far}");
     }
 
     #[test]

@@ -113,11 +113,11 @@ export interface PupAim { x: number; z: number; yaw: number; act: PupAct }
  * The home is uneven. A slow wander, its own to each pup, keeps the clump from lining up.
  * When she is still the cloud pulls in. The straggler hangs back. Forward is (−sin yaw, −cos yaw).
  */
-export function pupAim(slot: number, motherX: number, motherZ: number, yaw: number, time = 0, moving = true, ageYears = LITTER.emergeYears): PupAim {
+export function pupAim(slot: number, motherX: number, motherZ: number, yaw: number, time = 0, moving = true, ageYears = LITTER.emergeYears, threatened = false): PupAim {
   const act = pupAct(slot, time);
   const home = PUP_HOME[slot] ?? PUP_HOME[0];
   const phase = PUP_PHASE[slot] ?? 0;
-  const cluster = moving ? 1 : 0.55;
+  const cluster = (moving ? 1 : 0.55) * (threatened ? 0.45 : 1);
   const wander = (moving ? 0.26 : 0.07) * (1 - 0.25 * growthU(ageYears));
   const agePull = 1 - 0.35 * growthU(ageYears);
   let back = home[0] * cluster * agePull + Math.sin(time * 0.65 + phase) * wander;
@@ -159,8 +159,8 @@ export function besideMother(x: number, z: number, yaw: number, ageYears = LITTE
 }
 
 /** The pup's aim at time 0 while she is moving. Forward is (−sin yaw, −cos yaw). */
-export function trailSlot(slot: number, motherX: number, motherZ: number, yaw: number, ageYears = LITTER.emergeYears, time = 0, moving = true) {
-  const at = pupAim(slot, motherX, motherZ, yaw, time, moving, ageYears);
+export function trailSlot(slot: number, motherX: number, motherZ: number, yaw: number, ageYears = LITTER.emergeYears, time = 0, moving = true, threatened = false) {
+  const at = pupAim(slot, motherX, motherZ, yaw, time, moving, ageYears, threatened);
   return { x: at.x, z: at.z };
 }
 
@@ -175,9 +175,9 @@ export function actMps(act: PupAct, ageYears: number) {
 }
 
 /** One follow step. The pup walks toward its aim and does not overshoot it. */
-export function followStep(x: number, z: number, slot: number, motherX: number, motherZ: number, yaw: number, dt: number, ageYears = LITTER.emergeYears, time = 0, moving = true) {
+export function followStep(x: number, z: number, slot: number, motherX: number, motherZ: number, yaw: number, dt: number, ageYears = LITTER.emergeYears, time = 0, moving = true, threatened = false) {
   const act = pupAct(slot, time);
-  const slotAt = trailSlot(slot, motherX, motherZ, yaw, ageYears, time, moving);
+  const slotAt = trailSlot(slot, motherX, motherZ, yaw, ageYears, time, moving, threatened);
   const dx = slotAt.x - x, dz = slotAt.z - z;
   const d = Math.hypot(dx, dz);
   if (d < 1e-6 || dt <= 0) return { x, z };

@@ -69,4 +69,7 @@ test('the litter is a loose clump, not a row, and it moves', () => {
   assert.ok(Math.abs(left.x - slot.x) < 1e-9 && Math.abs(left.z - slot.z) < 1e-9);
   const nearHer = besideMother(30, 0, -0.35);
   assert.equal(nearHer.length, LITTER.count);
+  const loose = pupAim(4, 0, 0, 0, 1, true);
+  const tucked = pupAim(4, 0, 0, 0, 1, true, undefined, true);
+  assert.ok(Math.hypot(tucked.x, tucked.z) < Math.hypot(loose.x, loose.z), 'a threat pulls the straggler in');
 });

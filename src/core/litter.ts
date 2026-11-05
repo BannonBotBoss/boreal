@@ -14,10 +14,10 @@ export const LITTER = {
   trailYoungM: 0.22,
   trailYearM: 0.12,
   trailGapM: 0.03,
-  /** Beside her hips, at her depth, not stretched toward the lens. */
-  lateralM: 0.58,
-  /** The chase camera is behind her. Closer than this and a pup is under the lens. */
-  viewBackM: 0.5,
+  /** How far a pup may sit to one side and still be in the chase view. */
+  lateralM: 1.15,
+  /** The chase camera is 4.4 m behind her. Further back than this is under the lens. */
+  viewBackM: 1.55,
   /** A step longer than a walk is the drop. She does not leave the litter at the old spot. */
   rejoinM: 4,
   /** Game seconds for one year of pup growth. Ten real minutes at the default clock (×12) is half a year. */
@@ -28,7 +28,7 @@ export const LITTER = {
 
 export type GrowthStage = 'pup' | 'juvenile' | 'adult';
 
-export interface PupPlace { slot: number; x: number; z: number; ageYears: number }
+export interface PupPlace { slot: number; x: number; z: number; ageYears: number; yaw: number; act: PupAct }
 
 export function growthStage(ageYears: number): GrowthStage {
   if (ageYears < 0.5) return 'pup';
@@ -77,38 +77,112 @@ export function birthPlaces(denX: number, denZ: number): PupPlace[] {
       x: denX + Math.cos(a) * LITTER.denRingM,
       z: denZ + Math.sin(a) * LITTER.denRingM,
       ageYears: LITTER.emergeYears,
+      yaw: a + Math.PI,
+      act: 'trot',
     });
   }
   return out;
 }
 
-/** Where the five stand when she is already on her feet: beside her, in front of the chase camera. */
+export type PupAct = 'trot' | 'sniff' | 'sit' | 'pounce' | 'tumble' | 'straggle';
+
+/** Uneven homes around her hips. Not a row. The last pup starts further back. */
+const PUP_HOME: ReadonlyArray<readonly [number, number]> = [
+  [0.2, -0.52],
+  [0.38, -0.16],
+  [0.14, 0.26],
+  [0.52, 0.58],
+  [1.02, -0.06],
+];
+const PUP_PHASE = [0.4, 2.2, 3.8, 5.1, 1.1];
+
+/** What this pup is doing. Each slot has its own phase, so they do not switch together. */
+export function pupAct(slot: number, time: number): PupAct {
+  const acts: PupAct[] = ['trot', 'sniff', 'sit', 'pounce', 'tumble'];
+  const period = 5.2 + (slot % 3) * 1.1;
+  const phase = PUP_PHASE[slot] ?? 0;
+  const u = ((Math.max(0, time) + phase) % period) / period;
+  if (slot === LITTER.count - 1 && u < 0.4) return 'straggle';
+  return acts[Math.min(acts.length - 1, Math.floor(u * acts.length))] ?? 'trot';
+}
+
+export interface PupAim { x: number; z: number; yaw: number; act: PupAct }
+
+/**
+ * Where one pup is trying to be, and which way it faces.
+ * The home is uneven. A slow wander, its own to each pup, keeps the clump from lining up.
+ * When she is still the cloud pulls in. The straggler hangs back. Forward is (−sin yaw, −cos yaw).
+ */
+export function pupAim(slot: number, motherX: number, motherZ: number, yaw: number, time = 0, moving = true, ageYears = LITTER.emergeYears): PupAim {
+  const act = pupAct(slot, time);
+  const home = PUP_HOME[slot] ?? PUP_HOME[0];
+  const phase = PUP_PHASE[slot] ?? 0;
+  const cluster = moving ? 1 : 0.55;
+  const wander = (moving ? 0.26 : 0.07) * (1 - 0.25 * growthU(ageYears));
+  const agePull = 1 - 0.35 * growthU(ageYears);
+  let back = home[0] * cluster * agePull + Math.sin(time * 0.65 + phase) * wander;
+  let side = home[1] * cluster * agePull + Math.cos(time * 0.5 + phase * 1.3) * wander * 0.85;
+  if (act === 'straggle') back += 0.45;
+  if (act === 'sniff') side += 0.18 * Math.sin(time * 1.7 + phase);
+  if (act === 'sit') { back *= 0.75; side *= 0.75; }
+  if (act === 'pounce') {
+    const sib = PUP_HOME[(slot + 1) % LITTER.count] ?? home;
+    back = (back + sib[0] * cluster * agePull) * 0.5;
+    side = (side + sib[1] * cluster * agePull) * 0.5;
+  }
+  if (act === 'tumble') {
+    back += Math.sin(time * 2.2 + phase) * 0.12;
+    side += Math.cos(time * 2.2 + phase) * 0.12;
+  }
+  back = Math.min(LITTER.viewBackM, Math.max(0.08, back));
+  side = Math.max(-LITTER.lateralM, Math.min(LITTER.lateralM, side));
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  const rx = Math.cos(yaw), rz = -Math.sin(yaw);
+  const x = motherX - fx * back + rx * side;
+  const z = motherZ - fz * back + rz * side;
+  const bias = [0.45, -0.7, 1.05, -0.35, 0.2][slot] ?? 0;
+  let face = yaw + bias * 0.35;
+  if (act === 'sniff' || act === 'sit') face = yaw + bias + (act === 'sniff' ? 0.8 * Math.sin(time * 0.8 + phase) : 0);
+  else if (act === 'tumble') face = yaw + time * 1.7 + phase;
+  else if (act === 'pounce') face = yaw + bias * 1.6;
+  return { x, z, yaw: face, act };
+}
+
+/** Where the five are when she is already on her feet. */
 export function besideMother(x: number, z: number, yaw: number, ageYears = LITTER.emergeYears): PupPlace[] {
   const out: PupPlace[] = [];
   for (let slot = 0; slot < LITTER.count; slot++) {
-    const at = trailSlot(slot, x, z, yaw, ageYears);
-    out.push({ slot, x: at.x, z: at.z, ageYears });
+    const at = pupAim(slot, x, z, yaw, 0, true, ageYears);
+    out.push({ slot, x: at.x, z: at.z, ageYears, yaw: at.yaw, act: at.act });
   }
   return out;
 }
 
-/** The point in the trail behind the mother. Forward is (−sin yaw, −cos yaw). */
-export function trailSlot(slot: number, motherX: number, motherZ: number, yaw: number, ageYears = LITTER.emergeYears) {
-  const back = Math.min(LITTER.viewBackM, trailBackM(ageYears) + slot * LITTER.trailGapM);
-  const side = (slot - (LITTER.count - 1) / 2) * LITTER.lateralM;
-  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
-  const rx = Math.cos(yaw), rz = -Math.sin(yaw);
-  return { x: motherX - fx * back + rx * side, z: motherZ - fz * back + rz * side };
+/** The pup's aim at time 0 while she is moving. Forward is (−sin yaw, −cos yaw). */
+export function trailSlot(slot: number, motherX: number, motherZ: number, yaw: number, ageYears = LITTER.emergeYears, time = 0, moving = true) {
+  const at = pupAim(slot, motherX, motherZ, yaw, time, moving, ageYears);
+  return { x: at.x, z: at.z };
 }
 
-/** One follow step. The pup walks toward its trail slot and does not overshoot it. */
-export function followStep(x: number, z: number, slot: number, motherX: number, motherZ: number, yaw: number, dt: number, ageYears = LITTER.emergeYears) {
-  const slotAt = trailSlot(slot, motherX, motherZ, yaw, ageYears);
+/** How fast this activity moves. Sitting and sniffing linger. A pounce is quicker. */
+export function actMps(act: PupAct, ageYears: number) {
+  const walk = walkMps(ageYears);
+  if (act === 'sit' || act === 'sniff') return walk * 0.15;
+  if (act === 'tumble') return walk * 0.45;
+  if (act === 'pounce') return walk * 1.25;
+  if (act === 'straggle') return walk * 0.55;
+  return walk;
+}
+
+/** One follow step. The pup walks toward its aim and does not overshoot it. */
+export function followStep(x: number, z: number, slot: number, motherX: number, motherZ: number, yaw: number, dt: number, ageYears = LITTER.emergeYears, time = 0, moving = true) {
+  const act = pupAct(slot, time);
+  const slotAt = trailSlot(slot, motherX, motherZ, yaw, ageYears, time, moving);
   const dx = slotAt.x - x, dz = slotAt.z - z;
   const d = Math.hypot(dx, dz);
   if (d < 1e-6 || dt <= 0) return { x, z };
   if (d > LITTER.rejoinM) return { x: slotAt.x, z: slotAt.z };
-  const step = Math.min(walkMps(ageYears) * dt, d);
+  const step = Math.min(actMps(act, ageYears) * dt, d);
   return { x: x + dx / d * step, z: z + dz / d * step };
 }
 

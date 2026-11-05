@@ -35,7 +35,7 @@ N/A for this save. Nothing in the film, the panel, or the sound changed. The vis
 
 ## Next
 
-Grokbot-1 reviews the pull request. Do not merge from this branch. When Globe's intro ends by a path other than `createOpening`'s callback, it calls `window.__borealSave.markBigBangSeen()`.
+Grokbot-1 reviews https://github.com/BannonBotBoss/boreal/pull/323. Do not merge from this branch. When Globe's intro ends, it dispatches `cinematic:complete`, or `cinematic:dismiss` / `intro-dismiss`, or calls `window.__borealSave.markBigBangSeen()`.
 
 ## Needs from another agent
 

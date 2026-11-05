@@ -8,7 +8,7 @@ import { sharedPlanetSim } from '../../core/planetWeather';
 import { decodeEngineReport, type EngineReport } from '../../core/engineReport';
 import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
-import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, eraOfSeconds, flashLuma, formatCosmicSeconds, heroAt, kickOffset, narrationEndFallback, pinHeld, secondsToCycle, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
+import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatCosmicSeconds, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
 
 /**
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
@@ -69,22 +69,32 @@ body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-
 #cine .pin.shrink{animation:none;transform:scale(.35);transition:transform .4s ease}
 #cine .prompt{position:absolute;left:50%;bottom:11vh;transform:translateX(-50%);margin:0;letter-spacing:.04em;color:#FFE8C0;text-align:center;animation:cine-wait 3s ease-in-out infinite}
 #cine .sub{position:absolute;left:50%;bottom:16vh;transform:translateX(-50%);margin:0;font:italic 22px Georgia,serif;letter-spacing:.02em;text-shadow:0 1px 8px #000}
-#cine .title{position:absolute;left:50%;top:46%;width:max-content;max-width:none;margin:0;font:700 6.05vw Georgia,serif;letter-spacing:.18em;white-space:nowrap;text-align:center;text-shadow:0 1px 0 #fff4,0 10px 22px #000a,0 0 28px #ffb45a66;transform:translate(-50%,-50%) perspective(700px) rotateX(5deg)}
+#cine .title{position:absolute;left:50%;top:46%;width:max-content;max-width:none;margin:0;isolation:isolate;color:#fff6e4;font:700 6.05vw Georgia,serif;letter-spacing:.18em;white-space:nowrap;text-align:center;text-shadow:0 1px 0 #fff6,0 10px 22px #000c,0 0 28px #ffb45a88;transform:translate(-50%,-50%) perspective(700px) rotateX(5deg)}
+#cine .title::before{content:"";position:absolute;left:50%;top:58%;width:145%;height:280%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center, rgba(36,14,6,.66) 0%, rgba(36,14,6,.3) 46%, rgba(36,14,6,0) 72%);z-index:-1;pointer-events:none}
 #cine-plate{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);pointer-events:none;z-index:1}
 #cine .veil{z-index:1}
 #cine .pin,#cine .prompt,#cine .sub,#cine .title,#cine-panel,#cine-ref,#cine .still{z-index:2}
-#cine-panel{position:absolute;top:28px;right:26px;width:min(280px,40vw);display:grid;gap:6px;padding:14px 16px 16px;background:#0d1712f2;color:#f4efe2;border-radius:12px;box-shadow:0 8px 40px #000a}
+#cine .hero-line{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);margin:0;z-index:2;color:#fff1d4;font:700 4.2vw Georgia,serif;letter-spacing:.14em;text-shadow:0 2px 18px #000c,0 0 24px #ffb45a55;display:none}
+#cine-panel{position:absolute;top:36px;right:28px;width:min(560px,52vw);display:grid;gap:10px;padding:20px 24px 22px;background:rgba(12,7,4,.7);color:#f6efe4;border:1px solid rgba(255,220,170,.2);border-radius:18px;box-shadow:0 12px 40px #0006;backdrop-filter:blur(16px)}
 #cine-panel[hidden]{display:none}
-#cine-panel .x{position:absolute;top:6px;right:8px;background:none;border:0;color:#f4efe2;font:18px system-ui;padding:4px 8px}
-#cine-panel h2{margin:0;font:400 22px Georgia,serif;letter-spacing:.12em}
-#cine-panel .count{font:400 28px Georgia,serif}
-#cine-panel .era{font-size:13px;color:#d9d0c0}
+#cine-panel .x{position:absolute;top:6px;right:8px;background:none;border:0;color:#f6efe4aa;font:20px system-ui;padding:2px 8px}
+#cine-panel .count{font:400 39px Georgia,serif;min-height:1.15em;overflow:hidden;text-shadow:0 1px 2px #000a}
+#cine-panel .count .d{display:inline-block}
+#cine-panel .count.roll .d{animation:cine-digit .5s linear both}
+#cine-panel .count.roll .d:nth-child(2){animation-delay:.04s}
+#cine-panel .count.roll .d:nth-child(3){animation-delay:.08s}
+#cine-panel .count.roll .d:nth-child(4){animation-delay:.12s}
+#cine-panel .count.roll .d:nth-child(5){animation-delay:.16s}
+#cine-panel .fig{font:400 31px Georgia,serif;color:#ffe7c4;transform-origin:0 50%;text-shadow:0 1px 2px #000a}
+#cine-panel .fig.roll{animation:cine-roll .5s linear both}
 #cine-panel.pop{animation:cine-pop .35s cubic-bezier(.34,1.56,.64,1) both}
 #cine-panel.out{animation:cine-out .4s ease forwards}
 #cine-ref,#cine .still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 @keyframes cine-breathe{0%,100%{transform:scale(.75);opacity:.7}50%{transform:scale(1.2);opacity:1}}
 @keyframes cine-wait{0%,100%{opacity:.5}50%{opacity:.8}}
 @keyframes cine-pop{0%{opacity:0;transform:scale(.8)}70%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+@keyframes cine-roll{0%{opacity:.25;transform:translateY(34%) scale(.68)}100%{opacity:1;transform:none}}
+@keyframes cine-digit{0%{opacity:.2;transform:translateY(85%)}100%{opacity:1;transform:none}}
 @keyframes cine-out{to{opacity:0;transform:scale(1.02)}}
 `;
 
@@ -109,13 +119,13 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
   const prompt = el('p', 'prompt', 'Click or press any key to begin.');
   const sub = el('p', 'sub');
   const title = el('h1', 'title', 'THE BIG BANG'); title.hidden = true;
+  const heroLine = el('p', 'hero-line', '3 minutes');
   const panel = el('aside'); panel.id = 'cine-panel'; panel.hidden = true;
   const close = document.createElement('button'); close.className = 'x'; close.type = 'button'; close.textContent = '×'; close.setAttribute('aria-label', 'Close');
-  const hero = el('h2', '', '');
   const count = el('div', 'count');
-  const era = el('div', 'era');
-  panel.append(close, hero, count, era);
-  root.append(plate, ref, still, veil, pin, sub, title, prompt, panel);
+  const fig = el('div', 'fig');
+  panel.append(close, count, fig);
+  root.append(plate, ref, still, veil, pin, sub, title, heroLine, prompt, panel);
   document.body.append(root);
 
   let sphere: CosmosSphere | null = null;
@@ -127,8 +137,6 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
   let phase: Opening['phase'] = 'sphere';
   let sim: PlanetSim | null = latestPlanetSim();
   let busy = false;
-  let heroStamp = -10;
-  let countStamp = -10;
   let panelShown = false;
   let closed = false;
   try { closed = localStorage.getItem(PANEL_KEY) === 'closed'; } catch { /* private mode */ }
@@ -155,9 +163,11 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     onBegin?.();
     audio.begin();
     void narration.play().catch(() => {});
-    sphere = new CosmosSphere(document.body);
-    sphere.canvas.style.opacity = '0';
+    sphere = new CosmosSphere(root);
+    sphere.canvas.style.cssText = 'position:absolute;inset:-70px;width:calc(100% + 140px);height:calc(100% + 140px);z-index:0;pointer-events:none;opacity:0;background:#000';
+    root.insertBefore(sphere.canvas, plate);
     sphere.setInputs(HOT);
+    if (jump === 'shot') sphere.lockTier('low');
   };
   const onPointer = (e: PointerEvent) => {
     const t = e.target;
@@ -238,18 +248,26 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     plate.style.transform = `translate(${kick.x}px, ${kick.y}px)`;
     const hazeOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.02;
     veil.style.opacity = hazeOn ? '0' : '1';
-    if (sphere) sphere.canvas.style.opacity = '0';
-    paintPlate(bang, dissolve, stage);
+    heroLine.style.display = stage === 'b5' ? 'block' : 'none';
+    if (sphere) {
+      const plasmaOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.05;
+      sphere.canvas.style.opacity = plasmaOn ? '1' : '0';
+      sphere.canvas.style.transform = plate.style.transform;
+      sphere.setPlasma(plasmaOn, { time: elapsed, heat: plasmaHeat(elapsed), gain: plasmaGain(elapsed) });
+    }
+    paintPlate(bang, dissolve);
     showRef(stage);
-    const heroText = heroAt(elapsed);
-    const showPanel = begun && elapsed >= CINE.panelAt && !closed && heroText !== '';
-    if (showPanel && !panelShown) { panelShown = true; panel.hidden = false; panel.classList.add('pop'); }
+    const figure = panelFigure(elapsed);
+    const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b6End && !closed;
+    if (showPanel && !panelShown) { panelShown = true; panel.classList.add('pop'); }
+    panel.hidden = !showPanel;
     if (showPanel) {
-      if (hero.textContent !== heroText && elapsed - heroStamp >= 2.5) { hero.textContent = heroText; heroStamp = elapsed; }
-      if (elapsed - countStamp >= 2.5 || count.textContent === '') {
-        count.textContent = formatCosmicSeconds(cosmicSeconds(elapsed));
-        era.textContent = elapsed >= CINE.b4End && elapsed < CINE.b5End ? 'Hydrogen 75% · Helium 25%' : eraOfSeconds(cosmicSeconds(elapsed));
-        countStamp = elapsed;
+      setRolling(count, formatCosmicSeconds(cosmicSeconds(elapsed)));
+      if (fig.dataset.v !== figure) {
+        fig.dataset.v = figure;
+        fig.textContent = figure;
+        fig.classList.remove('roll');
+        if (figure) { void fig.offsetWidth; fig.classList.add('roll'); }
       }
     }
     if (begun) audio.sync(elapsed, narrationEndedAt);
@@ -268,40 +286,32 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     else still.style.display = 'none';
   }
 
-  function hazeRgb(t: number, stage: CineStage): string {
-    const mix = (a: number[], b: number[], u: number) => a.map((v, i) => Math.round(v + (b[i] - v) * Math.min(1, Math.max(0, u)))).join(',');
-    if (stage === 'b4') return mix([210, 226, 255], [255, 214, 120], (t - CINE.b3End) / (CINE.b4End - CINE.b3End));
-    if (stage === 'b5') return '255,186,90';
-    if (stage === 'b6' || stage === 'hold') return mix([255, 150, 70], [190, 48, 36], (t - CINE.b5End) / (CINE.b6End - CINE.b5End));
-    return '255,232,190';
+  function setRolling(node: HTMLElement, text: string) {
+    if (node.dataset.v === text) return;
+    node.dataset.v = text;
+    node.replaceChildren();
+    let i = 0;
+    for (const ch of text) {
+      const s = document.createElement('span');
+      s.textContent = ch;
+      if (ch.trim()) { s.className = 'd'; s.style.animationDelay = `${i * 0.035}s`; i++; }
+      node.append(s);
+    }
+    node.classList.remove('roll');
+    void node.offsetWidth;
+    node.classList.add('roll');
   }
 
-  function paintPlate(bang: number | null, dissolve: number, stage: CineStage) {
+  function paintPlate(bang: number | null, dissolve: number) {
     const w = plate.clientWidth || window.innerWidth, h = plate.clientHeight || window.innerHeight;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     if (plate.width !== Math.floor(w * dpr) || plate.height !== Math.floor(h * dpr)) { plate.width = Math.floor(w * dpr); plate.height = Math.floor(h * dpr); }
     const ctx = plate.getContext('2d'); if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, w, h);
+    ctx.clearRect(0, 0, w, h);
     if (bang == null || elapsed < bang + CINE.bangPeak - 0.05) return;
     const amount = bangFlash(elapsed, bang - CINE.b2, reduced);
-    const haze = hazeRgb(elapsed, stage);
-    if (amount < 0.25) {
-      ctx.fillStyle = `rgb(${haze})`;
-      ctx.fillRect(0, 0, w, h);
-    }
-    if (amount < 0.25) for (let i = 0; i < 5; i++) {
-      const ox = w * (0.5 + 0.28 * Math.sin(elapsed * 0.7 + i * 1.7));
-      const oy = h * (0.5 + 0.22 * Math.cos(elapsed * 0.5 + i));
-      const rad = Math.max(w, h) * (0.45 + 0.08 * Math.sin(elapsed * 0.9 + i));
-      const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, rad);
-      g.addColorStop(0, `rgba(${haze},0.55)`);
-      g.addColorStop(1, `rgba(${haze},0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(ox, oy, rad, 0, Math.PI * 2); ctx.fill();
-    }
     if (amount > 0) {
       ctx.globalCompositeOperation = 'lighter';
       const cx = w / 2, cy = h / 2, reach = Math.hypot(w, h) / 2;
@@ -313,10 +323,12 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, w, h);
     }
-    const rad = shellRadius(elapsed - bang - CINE.bangPeak);
-    if (rad > 0.15 && rad < 1.5) {
+    const since = elapsed - bang - CINE.bangPeak;
+    if (!reduced && shellOnScreen(since)) {
+      const rad = shellRadius(since);
       ctx.globalCompositeOperation = 'source-over';
-      const R = rad * Math.min(w, h) * 0.55;
+      const corner = Math.hypot(w, h) / 2;
+      const R = (rad / 1.41) * corner;
       ctx.beginPath(); ctx.arc(w / 2, h / 2, R, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(255,214,160,0.9)'; ctx.lineWidth = 2; ctx.stroke();
       ctx.beginPath(); ctx.arc(w / 2, h / 2, R + 3, 0, Math.PI * 2);

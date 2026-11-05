@@ -20,10 +20,11 @@ const FINAL = {
     time: { value: 0 },
     center: { value: new THREE.Vector2(0.5, 0.5) },
     tint: { value: new THREE.Color(1, 0.78, 0.88) },
+    disc: { value: 1 },
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float chromatic, grain, vignette, godrays, time; uniform vec2 center; uniform vec3 tint; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform float chromatic, grain, vignette, godrays, time, disc; uniform vec2 center; uniform vec3 tint; varying vec2 vUv;
     void main(){
       vec2 d = vUv - 0.5;
       vec2 dir = d * chromatic;
@@ -39,9 +40,9 @@ const FINAL = {
       }
       rays /= 12.0;
       col += tint * rays * godrays;
-      // The outer glow is a circle in screen space. A mesh edge or a ray fan must not draw it.
+      // The outer glow is a circle in screen space. Plasma turns it off so the sphere edge cannot survive as a ring.
       float glowD = length(vUv - center);
-      float glow = smoothstep(0.62, 0.08, glowD);
+      float glow = smoothstep(0.62, 0.08, glowD) * disc;
       col += tint * glow * glow * 0.55;
       col += (sin(vUv.x * 180.0 + time * 13.0) * sin(vUv.y * 140.0 - time * 9.0) * 0.5) * grain;
       col *= 1.0 - vignette * dot(d,d) * 2.2;
@@ -113,6 +114,33 @@ export class CosmosSphere {
   /** One camera. The cinematic sets this; applyLook does not invent a second view. dolly 1 is the old distance. */
   framing = { dolly: 1 };
   setFraming(fov: number, dolly: number) { this.camera.fov = fov; this.framing.dolly = dolly; }
+  private plasma: THREE.Mesh | null = null;
+  private plasmaOn = false;
+  /** Full-frame turbulent plasma on this same camera. The sphere mesh stays hidden so its edge cannot draw a circle. */
+  setPlasma(on: boolean, u?: { time: number; heat: number; gain: number }) {
+    this.plasmaOn = on;
+    if (!this.plasma) return;
+    this.plasma.visible = on;
+    this.core.visible = !on;
+    this.halo.visible = !on;
+    this.final.uniforms.disc.value = on ? 0 : 1;
+    if (on) {
+      this.bloom.threshold = 0.82;
+      this.bloom.strength = 0.1;
+      this.final.uniforms.godrays.value = 0;
+      this.final.uniforms.vignette.value = 0;
+    } else {
+      this.bloom.threshold = 0.62;
+      this.bloom.strength = 0.28;
+      this.final.uniforms.godrays.value = Math.max(0.45, this.tier.godrays);
+      this.final.uniforms.vignette.value = this.tier.vignette;
+    }
+    if (!on || !u) return;
+    const mat = this.plasma.material as THREE.ShaderMaterial;
+    mat.uniforms.time.value = u.time;
+    mat.uniforms.heat.value = u.heat;
+    mat.uniforms.gain.value = u.gain;
+  }
   private core: THREE.Mesh;
   private halo: THREE.Mesh;
   private shells: THREE.Mesh[] = [];
@@ -169,6 +197,66 @@ export class CosmosSphere {
     this.halo.renderOrder = 1;
     this.scene.add(this.halo);
     this.scene.add(this.core);
+    const plasmaMat = new THREE.ShaderMaterial({
+      depthTest: false, depthWrite: false,
+      uniforms: { time: { value: 0 }, heat: { value: 0 }, gain: { value: 1 } },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `
+        varying vec2 vUv; uniform float time, heat, gain;
+        float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float noise(vec2 p){
+          vec2 i = floor(p), f = fract(p);
+          float a = hash(i), b = hash(i+vec2(1.0,0.0)), c = hash(i+vec2(0.0,1.0)), d = hash(i+vec2(1.0,1.0));
+          vec2 u = f*f*(3.0-2.0*f);
+          return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+        }
+        float fbm(vec2 p){
+          float v = 0.0, a = 0.5;
+          for (int i = 0; i < 5; i++) { v += a * noise(p); p = mat2(1.62, 1.18, -1.18, 1.62) * p + vec2(1.7, 9.2); a *= 0.5; }
+          return v;
+        }
+        float spark(vec2 p){
+          vec2 i = floor(p);
+          vec2 f = fract(p);
+          float n = hash(i);
+          vec2 c = vec2(hash(i + 1.7), hash(i + 8.3));
+          float d = length(f - (0.15 + 0.7 * c));
+          return smoothstep(0.13, 0.0, d) * smoothstep(0.8, 0.98, n);
+        }
+        void main(){
+          vec2 uv = (vUv - 0.5) * vec2(1.85, 1.15);
+          vec2 q = vec2(fbm(uv + time * 0.05), fbm(uv + vec2(5.2, 1.3) - time * 0.04));
+          vec2 r = vec2(fbm(uv + 1.9 * q + time * 0.03), fbm(uv + 1.9 * q.yx - time * 0.022));
+          float n = fbm(uv * 1.3 + 2.5 * r);
+          float ridge = pow(1.0 - abs(n * 2.0 - 1.0), 4.0);
+          float cut = mix(0.55, 0.72, clamp(heat / 3.0, 0.0, 1.0));
+          float fil = smoothstep(cut, cut + 0.1, ridge);
+          float sp = spark(uv * 16.0 + r * 1.4 + vec2(time * 0.04, 0.0));
+          float sp2 = spark(uv * 8.0 - r + vec2(0.0, time * 0.03));
+          float h = clamp(heat, 0.0, 3.0);
+          float warm = h < 1.0 ? smoothstep(0.15, 1.0, h) : 1.0;
+          vec3 body = h < 1.0 ? mix(vec3(0.035, 0.06, 0.15), vec3(0.16, 0.07, 0.018), warm)
+                    : h < 2.0 ? mix(vec3(0.16, 0.07, 0.018), vec3(0.18, 0.05, 0.012), h - 1.0)
+                    : mix(vec3(0.16, 0.035, 0.014), vec3(0.09, 0.014, 0.014), h - 2.0);
+          vec3 hot = h < 1.0 ? mix(vec3(0.4, 0.55, 0.92), vec3(0.95, 0.58, 0.16), warm)
+                   : h < 2.0 ? mix(vec3(0.95, 0.58, 0.16), vec3(0.9, 0.32, 0.07), h - 1.0)
+                   : mix(vec3(0.82, 0.2, 0.08), vec3(0.5, 0.07, 0.04), h - 2.0);
+          float bank = smoothstep(0.18, 0.7, n);
+          vec3 col = body * (0.4 + 0.95 * bank);
+          col += hot * fil * 0.5 * (0.35 + bank);
+          col += hot * (sp * 0.95 + sp2 * 0.65) * (0.3 + bank);
+          col *= gain;
+          gl_FragColor = vec4(min(col, vec3(0.98)), 1.0);
+        }`,
+    });
+    plasmaMat.side = THREE.DoubleSide;
+    this.plasma = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), plasmaMat);
+    this.plasma.position.z = -0.45;
+    this.plasma.visible = false;
+    this.plasma.frustumCulled = false;
+    this.plasma.renderOrder = 5;
+    this.camera.add(this.plasma);
+    this.scene.add(this.camera);
     this.scene.add(new THREE.AmbientLight(0x2a0848, 0.35));
     const key = new THREE.PointLight(0x6633cc, 2, 40);
     key.position.set(4, 3, 6);
@@ -262,6 +350,27 @@ export class CosmosSphere {
     this.ray.uniforms.brightness.value = look.brightness;
     this.ray.uniforms.time.value = time;
     this.final.uniforms.time.value = time;
+    if (this.plasmaOn && this.plasma) {
+      this.core.visible = false;
+      this.halo.visible = false;
+      const pw = Math.min(1920, Math.max(640, Math.round(this.canvas.clientWidth || 1280)));
+      const ph = Math.min(1080, Math.max(360, Math.round(this.canvas.clientHeight || 720)));
+      if (this.renderer.domElement.width !== pw || this.renderer.domElement.height !== ph) {
+        this.renderer.setPixelRatio(1);
+        this.renderer.setSize(pw, ph, false);
+        this.camera.aspect = pw / ph;
+        this.composer.setSize(pw, ph);
+      }
+      this.camera.near = 0.02;
+      this.camera.far = Math.max(40, dist + radius * 12);
+      this.camera.updateProjectionMatrix();
+      const distP = 0.45;
+      this.plasma.position.set(0, 0, -distP);
+      const cover = 2 * Math.tan(half) * distP;
+      this.plasma.scale.set(cover * this.camera.aspect * 1.35, cover * 1.35, 1);
+      this.final.uniforms.disc.value = 0;
+      this.final.uniforms.godrays.value = 0;
+    }
   }
 
   private frame(dt: number, time: number) {

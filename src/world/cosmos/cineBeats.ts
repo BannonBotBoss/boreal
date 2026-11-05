@@ -236,6 +236,35 @@ export function pinHeld(t: number, bang: number | null): boolean {
   return t < bang + CINE.bangPeak - 0.02;
 }
 
+/** One figure at a time, gone when its beat ends. The clock row is separate. “3 minutes” is not a panel row. */
+export function panelFigure(t: number): string {
+  if (t >= CINE.b3End && t < CINE.b3End + 5) return 'Temperature 10²⁷ K';
+  if (t >= CINE.b3End + 5 && t < CINE.b4End) return 'Energy ≈ 100 GeV per particle';
+  if (t >= CINE.b4End && t < CINE.b5End) return 'Hydrogen 75% · Helium 25%';
+  if (t >= CINE.b5End && t < CINE.b6End) return 'Light still trapped';
+  return '';
+}
+
+/** The shock ring is on its way out. By 0.75 s it has passed the corner and must not be drawn again. */
+export function shellOnScreen(dt: number): boolean {
+  return dt > 0.02 && dt < 0.75;
+}
+
+/** 0 blue-white, 1 gold, 2 amber, 3 deep red. B4, B5, then B6, each hotter in hue and darker in body. */
+export function plasmaHeat(t: number): number {
+  if (t <= CINE.b3End) return 0;
+  if (t < CINE.b4End) return (t - CINE.b3End) / (CINE.b4End - CINE.b3End);
+  if (t < CINE.b5End) return 1 + (t - CINE.b4End) / (CINE.b5End - CINE.b4End);
+  return 2 + Math.min(1, Math.max(0, (t - CINE.b5End) / (CINE.b6End - CINE.b5End)));
+}
+
+/** Each stage is dimmer than the one before it. Filaments carry the light; the body stays dark. */
+export function plasmaGain(t: number): number {
+  if (t < CINE.b4End) return 1.85;
+  if (t < CINE.b5End) return 1.55;
+  return 1.32;
+}
+
 /** 0 while the title holds, then 1 once it has broken into the haze. */
 export function titleDissolve(dtAfterHold: number): number {
   if (dtAfterHold <= 0) return 0;

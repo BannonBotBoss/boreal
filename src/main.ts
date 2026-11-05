@@ -511,6 +511,8 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
         brain.heading = steerLeap(brain.heading, player, aim, brain.speed, 1 / 30);
         yaw = brain.heading;
       }
+      // Protect already steps her toward the fox. The walk step must not add a second closing.
+      if (driveCommitted) { brain.speed = 0; brain.motion = 'run'; }
       const pose = driving ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities(),{
         massKg: playerMass, wind: windAt(player.x, .6, player.z), daylight: 1 - view.darkness(),
         hares: view.hares.list().map(h => ({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: 1 })),

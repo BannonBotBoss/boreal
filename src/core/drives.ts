@@ -105,6 +105,14 @@ export function approachOf(hunger: number, preyEffort: number, scent: number) {
   return Math.max(0, hunger) / (preyEffort + 0.05) * Math.max(0, scent);
 }
 
+/** Place the fox on the ray that already points away from her, at an exact distance. */
+function pushOut(foxX: number, foxZ: number, mamaX: number, mamaZ: number, dist: number) {
+  let dx = foxX - mamaX, dz = foxZ - mamaZ;
+  const d = Math.hypot(dx, dz);
+  if (d < 1e-4) { dx = 1; dz = 0; } else { dx /= d; dz /= d; }
+  return { x: mamaX + dx * dist, z: mamaZ + dz * dist };
+}
+
 const toward = (x: number, z: number, tx: number, tz: number) => Math.atan2(tx - x, tz - z);
 const away = (x: number, z: number, tx: number, tz: number) => toward(x, z, tx, tz) + Math.PI;
 const tangent = (x: number, z: number, tx: number, tz: number) => toward(x, z, tx, tz) + Math.PI / 2;
@@ -177,11 +185,15 @@ export function stepDrives(mamaX: number, mamaZ: number, gameYaw: number, pupX: 
   else if (mamaD < DANGER_M * 1.35 && approach > 0.02) { mode = 'linger'; speed = 0.7; yaw = tangent(foxX, foxZ, mamaX, mamaZ); }
   else if (approach > danger && (focused || scent > 0.15) && stray) { mode = 'approach'; speed = 1.1 + nextHunger; yaw = toward(foxX, foxZ, pupX, pupZ); }
   else if (scent > 0.05) { mode = 'watch'; speed = 0.55; yaw = toward(foxX, foxZ, pupX, pupZ); }
-  const fox = forward(foxX, foxZ, yaw, speed * Math.max(0, dt));
+  const push = mode === 'flee' || (mode === 'linger' && mamaD <= DANGER_M);
+  const fox = push
+    ? pushOut(foxX, foxZ, mamaX, mamaZ, mamaD + speed * Math.max(0, dt))
+    : forward(foxX, foxZ, yaw, speed * Math.max(0, dt));
   let mama = { x: mamaX, z: mamaZ, yaw: 0 };
   if (guarding) {
     const face = toward(mamaX, mamaZ, foxX, foxZ);
-    const stepped = forward(mamaX, mamaZ, face, 2.8 * Math.max(0, dt));
+    const room = Math.max(0, mamaD - 1.5);
+    const stepped = forward(mamaX, mamaZ, face, Math.min(2.8 * Math.max(0, dt), room));
     mama = { x: stepped.x, z: stepped.z, yaw: face };
   }
   hunger = nextHunger;
@@ -194,6 +206,7 @@ export function stepDrives(mamaX: number, mamaZ: number, gameYaw: number, pupX: 
     committed: guarding, foxX, foxZ, foxYaw, mamaX: mama.x, mamaZ: mama.z, mamaYaw: mama.yaw,
     pupX, pupZ, yip: yipping,
   };
+  (globalThis as { __borealDrive?: DriveNow }).__borealDrive = last;
   return last;
 }
 

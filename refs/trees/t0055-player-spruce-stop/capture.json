@@ -1,0 +1,787 @@
+{
+  "pine": {
+    "key": "3:4:10",
+    "x": 141.89987828023732,
+    "z": 196.9830065406859,
+    "r": 0.15270953200057544,
+    "trunkBlock": 0.7
+  },
+  "summary": {
+    "minDistanceFrom130m": 1.1334,
+    "minDistanceFrom120m": 1.1667,
+    "stoppedAtZ": 198.083,
+    "openWalkAdvanceM": 3.4995,
+    "gatePass": true
+  },
+  "walkFrom130": [
+    {
+      "x": 141.9,
+      "z": 198.283,
+      "yaw": 12.5664,
+      "d": 1.3,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.439,
+        "z": 198.283,
+        "speed": 0,
+        "gait": "idle"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1164,
+      "yaw": 12.5664,
+      "d": 1.1334,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.43,
+        "z": 198.116,
+        "speed": 0,
+        "gait": "walk"
+      }
+    }
+  ],
+  "walkFrom120": [
+    {
+      "x": 141.9,
+      "z": 198.183,
+      "yaw": 12.5664,
+      "d": 1.2,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.433,
+        "z": 198.183,
+        "speed": 0,
+        "gait": "idle"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    },
+    {
+      "x": 141.9,
+      "z": 198.1497,
+      "yaw": 12.5664,
+      "d": 1.1667,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 141.9,
+        "y": 4.431,
+        "z": 198.15,
+        "speed": 0,
+        "gait": "walk"
+      }
+    }
+  ],
+  "openWalk": [
+    {
+      "x": 143.5,
+      "z": 198.183,
+      "yaw": 12.5664,
+      "d": 2.0001,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.664,
+        "z": 198.183,
+        "speed": 0,
+        "gait": "idle"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 197.883,
+      "yaw": 12.5664,
+      "d": 1.8359,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.658,
+        "z": 197.948,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 197.6831,
+      "yaw": 12.5664,
+      "d": 1.7466,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.652,
+        "z": 197.733,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 197.4831,
+      "yaw": 12.5664,
+      "d": 1.6764,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.642,
+        "z": 197.535,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 197.2165,
+      "yaw": 12.5664,
+      "d": 1.6171,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.63,
+        "z": 197.267,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 197.0165,
+      "yaw": 12.5664,
+      "d": 1.6005,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.614,
+        "z": 197.036,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 196.7499,
+      "yaw": 12.5664,
+      "d": 1.617,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.601,
+        "z": 196.8,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 196.5499,
+      "yaw": 12.5664,
+      "d": 1.6577,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.589,
+        "z": 196.567,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 196.2832,
+      "yaw": 12.5664,
+      "d": 1.7464,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.58,
+        "z": 196.335,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 196.0833,
+      "yaw": 12.5664,
+      "d": 1.8357,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.576,
+        "z": 196.133,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 195.8833,
+      "yaw": 12.5664,
+      "d": 1.9416,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.569,
+        "z": 195.904,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 195.6167,
+      "yaw": 12.5664,
+      "d": 2.1041,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.565,
+        "z": 195.667,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 195.4167,
+      "yaw": 12.5664,
+      "d": 2.2391,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.558,
+        "z": 195.434,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 195.1501,
+      "yaw": 12.5664,
+      "d": 2.4331,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.546,
+        "z": 195.202,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 194.9501,
+      "yaw": 12.5664,
+      "d": 2.5871,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.533,
+        "z": 194.967,
+        "speed": 2,
+        "gait": "trot"
+      }
+    },
+    {
+      "x": 143.5,
+      "z": 194.6835,
+      "yaw": 12.5664,
+      "d": 2.8015,
+      "insideWood": false,
+      "insideTrunkStop": false,
+      "drawn": {
+        "x": 143.5,
+        "y": 4.514,
+        "z": 194.737,
+        "speed": 2,
+        "gait": "trot"
+      }
+    }
+  ]
+}

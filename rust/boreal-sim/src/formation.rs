@@ -56,8 +56,15 @@ impl Tillotson { pub fn from_data(name: &str) -> Tillotson { Tillotson { rho0: m
 /// "iron_hcp_vinet"). The alloy at pressure P is (1 - deficit) times as dense as pure hcp iron, so P_alloy(rho) =
 /// P_Fe(rho / (1 - deficit)). Vinet: x = (rho0/rho)^(1/3), P = 3 K0 (1 - x) / x^2 exp(1.5 (K0' - 1)(1 - x)). No tension.
 /// Wired into the bulk-mix path (`State::from_mix` / mix `from_bake`) with the liquid deficit (outer core dominates the
-/// iron class); solid deficit stays for a later per-parcel inner-core step. Silicate stays cold Tillotson. Full asset
-/// re-bake of public/bake/earth-mix-6k.bin is follow-up.
+/// iron class); solid deficit stays for a later per-parcel inner-core step. Silicate stays cold Tillotson.
+///
+/// Re-bake status (grokbot-1, Nov 5): a full Vinet 6k run (20k steps) reaches centre density near PREM (~12770 vs 13088)
+/// but stalls at separation ≈ 0.955. The ~4.5% stranded iron sits just outside the CMB at ρ ≈ 10200–10800 kg/m³
+/// (Vinet density at ~136 GPa), not at the zero-pressure floor rho0·(1−deficit). Eight thousand more continue-relax
+/// steps only move sep to ≈ 0.959. Cause: at CMB pressure the Vinet+10% deficit vs basalt density contrast is ~half
+/// Tillotson's (see test vinet_vs_tillotson_cmb_contrast), so the last iron parcels reach a soft quasi-equilibrium
+/// across the SPH-smoothed interface. Do not commit a bake that fails mix_bake_differentiated (sep > 0.98). Next
+/// levers: higher N (24k), or Matt's call on the threshold / a segregation assist.
 #[derive(Clone, Copy, Debug)] pub struct VinetFe { pub rho0: f64, pub k0: f64, pub k0p: f64, pub deficit: f64 }
 impl VinetFe {
     /// `liquid` picks the outer-core (liquid) or inner-core (solid) deficit.
@@ -301,6 +308,24 @@ mod tests { use super::*;
     /// Liquid deficit (outer-core alloy) at that rho gives ~378 GPa (~+4%); the leftover is the open thermal term
     /// (see vinet_core_vs_prem). Tolerance ±10% — honest for cold Vinet+deficit without a hydrostatic re-bake.
     /// Full `differentiate` re-bake of public/bake/earth-mix-6k.bin is follow-up (binaries are large; not done here).
+    /// At CMB pressure (~136 GPa) Vinet liquid-deficit iron is far less over-dense vs cold basalt than Tillotson iron.
+    /// That weaker contrast is why a Vinet re-bake stalls near sep 0.95 while the old Tillotson bake reached 1.0.
+    #[test] fn vinet_vs_tillotson_cmb_contrast() {
+        let p = 136e9;
+        let v = VinetFe::from_data(true).density(p);
+        let fe = Tillotson::from_data("iron");
+        let (a, b, r0) = (fe.a_mod, fe.b_mod, fe.rho0);
+        let mu = (-a + (a * a + 4.0 * b * p).sqrt()) / (2.0 * b);
+        let till = r0 * (1.0 + mu);
+        let bas = Tillotson::from_data("basalt");
+        let mu_b = (-bas.a_mod + (bas.a_mod * bas.a_mod + 4.0 * bas.b_mod * p).sqrt()) / (2.0 * bas.b_mod);
+        let sil = bas.rho0 * (1.0 + mu_b);
+        let v_contrast = v - sil;
+        let t_contrast = till - sil;
+        assert!(v > 10000.0 && v < 11000.0, "vinet cmb rho {}", v);
+        assert!(t_contrast > 1.6 * v_contrast, "till contrast {} vs vinet {}", t_contrast, v_contrast);
+        assert!(v_contrast > 2000.0, "vinet still denser than basalt {}", v_contrast);
+    }
     #[test] fn vinet_mix_centre_pressure_near_prem() {
         let fe = Eos::vinet(VinetFe::from_data(true)); let sil = Eos::tillotson(Tillotson::from_data("basalt"));
         let mut p = form_ic(20, 5); for m in &mut p.mat { *m = if class_of(*m) == 0 { MAT_IRON } else { MAT_SILICATE }; }

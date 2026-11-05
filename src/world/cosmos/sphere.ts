@@ -39,6 +39,10 @@ const FINAL = {
       }
       rays /= 12.0;
       col += tint * rays * godrays;
+      // The outer glow is a circle in screen space. A mesh edge or a ray fan must not draw it.
+      float glowD = length(vUv - center);
+      float glow = smoothstep(0.62, 0.08, glowD);
+      col += tint * glow * glow * 0.55;
       col += (sin(vUv.x * 180.0 + time * 13.0) * sin(vUv.y * 140.0 - time * 9.0) * 0.5) * grain;
       col *= 1.0 - vignette * dot(d,d) * 2.2;
       gl_FragColor = vec4(col, 1.0);
@@ -153,12 +157,9 @@ export class CosmosSphere {
         void main(){
           vec2 p = vUv * 2.0 - 1.0;
           float d = length(p);
-          float halo = smoothstep(1.0, 0.05, d);
-          float ang = atan(p.y, p.x);
-          float rays = pow(max(0.0, sin(ang * 7.0 + time * 0.5)), 6.0);
-          float ring = smoothstep(0.22, 0.48, d) * halo;
-          vec3 col = color * ring * 1.5 + color * rays * ring * 0.85;
-          gl_FragColor = vec4(col, clamp(halo, 0.0, 1.0));
+          float halo = smoothstep(1.0, 0.0, d);
+          float fall = halo * halo * (1.0 + 0.0 * time);
+          gl_FragColor = vec4(color * fall * 0.85, fall);
         }`,
     });
     this.halo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), haloMat);
@@ -201,9 +202,9 @@ export class CosmosSphere {
     this.camera.updateProjectionMatrix();
     this.composer.setSize(w, h);
     this.bloom.enabled = true;
-    this.bloom.strength = 0.72;
-    this.bloom.radius = 0.95;
-    this.bloom.threshold = 0.28;
+    this.bloom.strength = 0.28;
+    this.bloom.radius = 0.4;
+    this.bloom.threshold = 0.62;
     this.bloom.resolution.set(w / Math.max(1, 6 - tier.bloomMips), h / Math.max(1, 6 - tier.bloomMips));
     this.ray.uniforms.steps.value = Math.max(8, tier.raymarch || 8);
     this.final.uniforms.chromatic.value = tier.chromatic;

@@ -14,21 +14,19 @@ pub const EMERGE_YEARS: f64 = 4.0 / 52.0;
 pub const PUP_SPEED_M_S: f64 = 0.9;
 /// Metres behind the mother at four weeks. A yearling walks closer.
 /// Close enough that the 3.6 m chase camera, 1.05 m up, still looks at them.
-const TRAIL_YOUNG_M: f64 = 0.45;
-const TRAIL_YEAR_M: f64 = 0.18;
+const TRAIL_YOUNG_M: f64 = 0.22;
+const TRAIL_YEAR_M: f64 = 0.12;
 /// Game seconds of the world clock for one year of pup growth.
 /// The default clock is 300 real seconds per game hour, so ten real minutes
 /// are 7200 game seconds. That is half a year of growth (14400 s per year),
 /// enough for the size, the step and the trail to change in one sitting.
 pub const GROWTH_GAME_S_PER_YEAR: f64 = 14_400.0;
 const DEN_RING_M: f64 = 1.2;
-const TRAIL_GAP_M: f64 = 0.02;
-/// Beside her. The pair stands a little ahead of her hips so the frame shows them whole.
-const LATERAL_M: f64 = 0.55;
-/// The middle pup may sit this far back.
-const VIEW_BACK_M: f64 = 0.6;
-/// Side pups stand here, ahead of her centre.
-const FLANK_M: f64 = -1.35;
+const TRAIL_GAP_M: f64 = 0.03;
+/// Beside her hips, at her depth.
+const LATERAL_M: f64 = 0.58;
+/// Closer than this and a pup is under the lens.
+const VIEW_BACK_M: f64 = 0.5;
 /// Further than this in one step is a drop, not a walk. The pup is on the trail at once.
 const REJOIN_M: f64 = 4.0;
 
@@ -93,9 +91,8 @@ pub fn birth_places(den_x: f64, den_z: f64) -> [PupPlace; LITTER_COUNT as usize]
 
 /// The point in the trail behind the mother. Forward is (−sin yaw, −cos yaw).
 pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, age_years: f64) -> (f64, f64) {
-    let along = (trail_back_m(age_years) + slot as f64 * TRAIL_GAP_M).min(VIEW_BACK_M);
+    let back = (trail_back_m(age_years) + slot as f64 * TRAIL_GAP_M).min(VIEW_BACK_M);
     let side = (slot as f64 - (LITTER_COUNT as f64 - 1.0) / 2.0) * LATERAL_M;
-    let back = if side.abs() > 0.2 { along.min(FLANK_M) } else { along };
     let fx = -yaw.sin();
     let fz = -yaw.cos();
     let rx = yaw.cos();
@@ -243,13 +240,9 @@ mod tests {
         let mut beside = 0;
         for slot in 0..LITTER_COUNT {
             let (x, z) = trail_slot(slot, 0.0, 0.0, 0.0, EMERGE_YEARS);
-            assert!(x.abs() < 1.3, "slot {slot} stands too wide at {x}");
-            if x.abs() > 0.4 {
-                assert!(z < -0.8 && z > -1.6, "slot {slot} is not in the frame at {z}");
-                beside += 1;
-            } else {
-                assert!(z < 1.2, "slot {slot} is under the lens at {z}");
-            }
+            assert!(z < 0.55 && z > 0.15, "slot {slot} is not at her depth at {z}");
+            assert!(x.abs() < 1.4, "slot {slot} stands too wide at {x}");
+            if x.abs() > 0.4 { beside += 1; }
         }
         assert!(beside >= 2);
     }

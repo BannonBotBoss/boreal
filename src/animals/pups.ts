@@ -10,7 +10,7 @@ import { heightAt } from '../core/world';
 import { createPlayerWolf } from '../render/playerWolf';
 
 export interface LivePup extends PupPlace { handle: string; parent: string; stage: ReturnType<typeof growthStage> }
-export interface PupMood { hungry: boolean; tired: boolean; nudge: boolean }
+export interface PupMood { hungry: boolean; tired: boolean; nudge: boolean; threatened?: boolean }
 export interface PupHeard { slot: number; kind: PupCall; x: number; z: number; ageYears: number }
 
 export function bornLitter(x = 0, z = 0, yaw = 0): LivePup[] {
@@ -23,6 +23,10 @@ export function bornLitter(x = 0, z = 0, yaw = 0): LivePup[] {
     stage: growthStage(p.ageYears),
   }));
 }
+
+let cloud: { x: number; z: number }[] = [];
+/** Where the pups stood after the last step. The drive uses the nearest one. */
+export function pupCloud() { return cloud; }
 
 export function createLitter(scene: THREE.Scene) {
   let rows: { pup: LivePup; holder: THREE.Group; wolf: ReturnType<typeof createPlayerWolf> }[] | null = null;
@@ -70,8 +74,9 @@ export function createLitter(scene: THREE.Scene) {
         row.holder.scale.set(grown * 1.16 * bulk, grown * 0.82 * bulk, grown * 1.18 * bulk);
         const prevX = row.pup.x, prevZ = row.pup.z;
         const dist = Math.hypot(prevX - motherX, prevZ - motherZ);
-        const aim = pupAim(row.pup.slot, motherX, motherZ, motherYaw, clock, motherMoved, row.pup.ageYears);
-        const next = followStep(row.pup.x, row.pup.z, row.pup.slot, motherX, motherZ, motherYaw, dt, row.pup.ageYears, clock, motherMoved);
+        const threatened = mood.threatened === true;
+        const aim = pupAim(row.pup.slot, motherX, motherZ, motherYaw, clock, motherMoved, row.pup.ageYears, threatened);
+        const next = followStep(row.pup.x, row.pup.z, row.pup.slot, motherX, motherZ, motherYaw, dt, row.pup.ageYears, clock, motherMoved, threatened);
         row.pup.x = next.x;
         row.pup.z = next.z;
         row.pup.yaw = aim.yaw;
@@ -92,6 +97,7 @@ export function createLitter(scene: THREE.Scene) {
           nextVoice.set(row.pup.slot, clock + pupGap(kind));
         }
       }
+      cloud = live.map(row => ({ x: row.pup.x, z: row.pup.z }));
       publish();
       return heard;
     },

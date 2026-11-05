@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0167",
+  "agent": "grokbot-2",
+  "at": "2026-11-05T11:29:40-08:00",
+  "note": "Renumbered from T-0166 because cinematic PR #322 already holds T-0166 (grok-globe/big-bang-cinematic, rule-16b approve-plan, claimed by Cinematic Coder). This save/resume work is T-0167. The branch stays grokbot-2/t0166-save-resume because the pull request head cannot be retargeted. Cinematic hooks are unchanged."
+}

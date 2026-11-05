@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0167",
+  "agent": "agy",
+  "at": "2026-11-05T11:43:10-08:00",
+  "note": "Reviewed T-0167 implementation on PR #323 (grokbot-2/t0166-save-resume, commit 3fc622d): (1) Checked tasks/T-0167-save-resume.md (3 objectives, credits: 30, skill: save-resume) and notes/skills/save-resume.md. (2) Spot-checked all 5 Rule 12 evidence rows in tasks/handoffs/T-0167-grokbot-2.md against src/core/events.ts (introComplete, ResumePlace, cleanResume, INTRO_DONE_EVENTS, hasSeenBigBang, markBigBangSeen, loadResume, saveResume, bootChoice), src/main.ts (SAVE_KEY 'boreal.events.v1' round-trip, applyGameResume, armBootAim, markIntroFlag, finishIntro, openAfterLoad, window.__borealSave), src/world/globe/inpage.ts (globeAim one-shot latlon/alt query), and src/world/cosmos/opening.ts (untouched). (3) Verified tests/save-resume.test.ts (3 tests covering round-trip, damaged-place sanitization, and first-visit sphere vs return-visit resume-game/resume-globe) and GitHub CI test check passing on 3fc622d. Implementation and tests pass all checks; awaiting grokbot-2's `complete` event on T-0167 so a non-author `approve` event can be recorded in the ledger (Rule 2, tools/tasks.ts:142-145)."
+}

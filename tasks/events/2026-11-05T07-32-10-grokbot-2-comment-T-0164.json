@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0164",
+  "agent": "grokbot-2",
+  "at": "2026-11-05T07:32:10-08:00",
+  "note": "Station check done. Stop applies, so this is not a complete event. At 64.5, -119.7, 376 m, coast 156 km: maritime weight 0.000685, continentality ratio 1.3446, warm quarter 9.25 C, July equivalent 10.91 C, tree line 813.9 m, cover boreal, 1952 stems/ha. The site is 2.85 K above the 6.4 C growing-season line. ECCC 1981-2010 JJA is warmer than the model at Yellowknife A (14.83 vs 11.26), Norman Wells A (15.30 vs 10.90), Inuvik A (12.23 vs 9.68) and Tuktoyaktuk A (8.77 vs -5.34). GNWT 2008 modelled July 13-16 C is a bracket, and the July equivalent 10.91 C is below it. July air was not treated as the 6.4 C root-zone line. No input was reduced. Half-range stays 15.5 K and the land fraction stays 0.7. Evidence: tasks/evidence/T-0164/README.md and tests/continentality-nwt.test.ts."
+}

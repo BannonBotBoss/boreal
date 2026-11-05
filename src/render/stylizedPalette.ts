@@ -85,15 +85,14 @@ export function stylizedNight(material: THREE.Material, night: number) {
   const m = material as THREE.MeshStandardMaterial;
   if (!m.emissive || !m.userData.stylized) return;
   if (m.userData.fillIntensity == null) m.userData.fillIntensity = m.emissiveIntensity;
-  if (m.userData.mamaCoat) {
+  if (m.userData.mamaCoat || m.userData.pupCoat) {
     m.emissiveIntensity = 0;
     m.toneMapped = false;
     return;
   }
   const n = Math.min(1, Math.max(0, night));
   const base = m.userData.fillIntensity as number;
-  // The mama's pale fill goes nearly out, so she is not a lamp. A pup keeps a warm share so the brown coat still reads.
-  const dim = m.userData.pupCoat ? 0.4 : 0.97;
+  const dim = 0.97;
   m.emissiveIntensity = base * (1 - n * dim);
-  m.toneMapped = m.userData.pupCoat ? false : n > 0.45;
+  m.toneMapped = n > 0.45;
 }

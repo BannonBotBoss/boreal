@@ -1,8 +1,8 @@
 /**
- * A grizzled coat read on top of the existing skin. The saddle darkens where the
- * normal faces up, the legs and belly stay tawny, and a soft rim catches the fur
- * edge. The rim is moonlight, not a rust lamp. It does not touch emissive, so the
- * night coat still dims with the clock.
+ * Coat colour written over the lit fragment so the sun cannot wash it out.
+ * The mama stays grizzled: a dark saddle, tawny underside, and a small warm rim.
+ * A pup is an opaque warm tabby — darker on the back, lighter on the belly —
+ * held at the same brown at dusk and at night. Neither coat uses an emissive fill.
  */
 import type * as THREE from 'three';
 
@@ -19,13 +19,13 @@ gl_FragColor.rgb = agouti;
 `;
 
 const PUP = `
-float agoutiUp = clamp(normal.y, 0.0, 1.0);
 vec3 nrm = normalize(normal);
-float wrap = clamp(dot(nrm, normalize(vec3(-0.25, 0.72, 0.45))), 0.0, 1.0);
-float agoutiRim = pow(1.0 - clamp(dot(nrm, normalize(vViewPosition)), 0.0, 1.0), 2.2);
-vec3 coat = diffuseColor.rgb * (0.62 + 0.95 * wrap);
-coat = mix(coat, coat * vec3(0.28, 0.18, 0.12), smoothstep(0.15, 0.7, agoutiUp) * 0.8);
-coat += agoutiRim * vec3(0.78, 0.84, 0.95) * 0.4;
+float agoutiUp = clamp(nrm.y * 0.5 + 0.5, 0.0, 1.0);
+float wrap = clamp(dot(nrm, normalize(vec3(-0.15, 0.88, 0.3))), 0.0, 1.0);
+vec3 back = vec3(0.22, 0.12, 0.06);
+vec3 belly = vec3(0.42, 0.26, 0.14);
+vec3 coat = mix(belly, back, smoothstep(0.26, 0.78, agoutiUp));
+coat *= 0.88 + 0.18 * wrap;
 gl_FragColor.rgb = coat;
 `;
 
@@ -63,6 +63,8 @@ export function finishAnimalCoat(material: THREE.Material, kind: 'mama' | 'pup' 
   if (typeof m.roughness === 'number') m.roughness = Math.min(m.roughness, 0.86);
   const chunk = kind === 'pup' ? PUP : MAMA;
   const prev = m.onBeforeCompile;
+  const prevKey = m.customProgramCacheKey?.bind(m);
+  m.customProgramCacheKey = () => `${prevKey ? prevKey() : 'coat'}|${kind}`;
   m.onBeforeCompile = function (shader, renderer) {
     prev?.call(this, shader, renderer);
     shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `#include <opaque_fragment>\n${chunk}`);

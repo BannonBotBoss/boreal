@@ -30,6 +30,11 @@ function mamaTip(y: number): { color: [number, number, number]; amount: number }
   if (y > 0.30) return { color: [0.52, 0.42, 0.30], amount: 0.32 };
   return { color: [0.58, 0.42, 0.26], amount: 0.22 };
 }
+/** Pup guard hairs. Darker on the back, lighter underneath. Not the pale beige that goes ghostly at dusk. */
+function pupTip(y: number): { color: [number, number, number]; amount: number } {
+  if (y > 0.32) return { color: [0.22, 0.12, 0.06], amount: 0.55 };
+  return { color: [0.42, 0.26, 0.14], amount: 0.4 };
+}
 /** A leg chain of a wolf rig: its bones from the girdle down, limb lengths in model units, and its rest position (x, z). */
 export interface WolfChain { girdle: THREE.Bone; upper: THREE.Bone; lower: THREE.Bone; foot: THREE.Bone; paw: THREE.Bone; m: ReturnType<typeof limbModel>; x: number; z: number }
 /**
@@ -47,7 +52,7 @@ export function poseWolfRig(tilt: THREE.Object3D, chains: WolfChain[], pose: Ret
     c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
   });
 }
-const PUP_COAT = { name: 'golden tan' as const, back: [.42, .26, .12] as [number, number, number], belly: [.72, .52, .30] as [number, number, number], dark: [.12, .07, .04] as [number, number, number], accent: [.55, .32, .14] as [number, number, number] };
+const PUP_COAT = { name: 'golden tan' as const, back: [.22, .12, .06] as [number, number, number], belly: [.42, .26, .14] as [number, number, number], dark: [.08, .04, .02] as [number, number, number], accent: [.36, .18, .08] as [number, number, number] };
 
 export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean; pup?: boolean } = {}) {
   const portrait = !!options.portrait;
@@ -117,14 +122,16 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   geometry.setIndex(body.index);
   const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, transparent: false, opacity: 1, depthWrite: true });
   if (pup) {
-    // A flat emissive wash turns the coat into a cardboard cut-out. A small warm floor leaves the lights to shade the fur.
+    // The coat shader paints the tabby. An unmapped fill, and the night dim on it, turned them into ghosts.
     skinMaterial.userData.pupCoat = true;
-    skinMaterial.emissive.setRGB(0.05, 0.03, 0.02);
-    skinMaterial.emissiveIntensity = 0.2;
+    skinMaterial.emissive.setRGB(0, 0, 0);
+    skinMaterial.emissiveIntensity = 0;
     skinMaterial.userData.stylized = true;
-    skinMaterial.userData.fillIntensity = 0.2;
+    skinMaterial.userData.fillIntensity = 0;
     skinMaterial.toneMapped = false;
-    skinMaterial.roughness = 0.78;
+    skinMaterial.transparent = false;
+    skinMaterial.opacity = 1;
+    skinMaterial.roughness = 0.82;
   } else {
     // Daylight plus an unmapped fill clips the grizzle to white. The coat shader paints the vertex colour.
     skinMaterial.emissive.setRGB(0, 0, 0);
@@ -138,11 +145,14 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   const furMaterial = furCardMaterial();
   if (pup) {
     furMaterial.userData.pupCoat = true;
-    furMaterial.emissive.setRGB(0.05, 0.03, 0.02);
-    furMaterial.emissiveIntensity = 0.2;
+    furMaterial.emissive.setRGB(0, 0, 0);
+    furMaterial.emissiveIntensity = 0;
     furMaterial.userData.stylized = true;
-    furMaterial.userData.fillIntensity = 0.2;
+    furMaterial.userData.fillIntensity = 0;
     furMaterial.toneMapped = false;
+    furMaterial.transparent = false;
+    furMaterial.opacity = 1;
+    furMaterial.depthWrite = true;
   } else {
     furMaterial.emissive.setRGB(0, 0, 0);
     furMaterial.emissiveIntensity = 0;
@@ -159,9 +169,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
       : { count: furCount, length: pup ? FUR_LENGTH * 2.4 : FUR_LENGTH, width: pup ? FUR_WIDTH * 1.35 : FUR_WIDTH, seed, clear,
         // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
-        tipTint: pup
-          ? () => ({ color: [.86, .66, .38] as [number, number, number], amount: .4 })
-          : (p) => mamaTip(p[1]) }), furMaterial)] : [skinMesh];
+        tipTint: pup ? (p) => pupTip(p[1]) : (p) => mamaTip(p[1]) }), furMaterial)] : [skinMesh];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.
   const amber = new THREE.MeshStandardMaterial({ color: 0xc9830f, emissive: 0xe07800, emissiveIntensity: 1.0, roughness: .25 }), pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });

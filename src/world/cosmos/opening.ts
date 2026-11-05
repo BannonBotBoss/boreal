@@ -86,7 +86,7 @@ body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-
 #cine-panel .count.roll .d:nth-child(3){animation-delay:.08s}
 #cine-panel .count.roll .d:nth-child(4){animation-delay:.12s}
 #cine-panel .count.roll .d:nth-child(5){animation-delay:.16s}
-#cine-panel .fig{font:400 31px Georgia,serif;color:#ffe7c4;transform-origin:0 50%;text-shadow:0 1px 2px #000a}
+#cine-panel .fig{font:400 31px Georgia,serif;color:#ffffff;transform-origin:0 50%;text-shadow:0 1px 2px #000a}
 #cine-panel .fig.roll{animation:cine-roll .5s linear both}
 #cine-panel.pop{animation:cine-pop .35s cubic-bezier(.34,1.56,.64,1) both}
 #cine-panel.out{animation:cine-out .4s ease forwards}
@@ -94,7 +94,7 @@ body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-
 @keyframes cine-breathe{0%,100%{transform:scale(.75);opacity:.7}50%{transform:scale(1.2);opacity:1}}
 @keyframes cine-wait{0%,100%{opacity:.5}50%{opacity:.8}}
 @keyframes cine-pop{0%{opacity:0;transform:scale(.8)}70%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
-@keyframes cine-roll{0%{opacity:.25;transform:translateY(34%) scale(.68)}100%{opacity:1;transform:none}}
+@keyframes cine-roll{0%{opacity:1;transform:none}100%{opacity:1;transform:none}}
 @keyframes cine-digit{0%{opacity:.2;transform:translateY(85%)}100%{opacity:1;transform:none}}
 @keyframes cine-out{to{opacity:0;transform:scale(1.02)}}
 `;
@@ -295,8 +295,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       panel.style.bottom = '';
       panel.style.right = '';
       panel.style.left = '';
-      const panelOut = elapsed < 107.2 ? 1 : Math.max(0, 1 - (elapsed - 107.2) / 0.8);
-      if (elapsed >= 108) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
+      const panelOut = elapsed < 111.9 ? 1 : Math.max(0, 1 - (elapsed - 111.9) / 0.6);
+      if (elapsed >= 111.9) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
       panel.style.setProperty('opacity', String(panelOut), 'important');
     } else if (booted) {
       root.style.background = '#000';
@@ -330,11 +330,11 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
         fig.dataset.v = figure;
         fig.textContent = figure;
         fig.classList.remove('roll');
-        fig.style.color = '#f6efe4';
       }
       const rowEnd = figure === '4.4 Gya oceans' ? 100 : figure === '2.4 Gya' ? 103 : figure === '470 Mya plants' ? 107.2 : 0;
-      const fade = rowEnd > 0 && elapsed > rowEnd - 0.8 ? Math.max(0, (rowEnd - elapsed) / 0.8) : 1;
-      fig.style.opacity = figure ? String(fade) : '1';
+      const fade = rowEnd > 0 && elapsed > rowEnd - 0.45 ? Math.max(0, (rowEnd - elapsed) / 0.45) : 1;
+      fig.style.setProperty('color', '#ffffff', 'important');
+      fig.style.setProperty('opacity', figure ? String(fade) : '1', 'important');
     }
     if (begun) audio.sync(elapsed, narrationEndedAt);
   }
@@ -369,7 +369,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       GLOBE_SKY.warm = 0.55 + (0.105 - 0.55) * s;
       GLOBE_SKY.steam = 0.625 * s;
       GLOBE_SKY.clear = 1 + (0.241 - 1) * s;
-    } else if (t < 108) {
+    } else if (t < 107) {
       const along = Math.min(1, (t - 97) / 11);
       const plants = t < 101 ? 0 : Math.min(1, (t - 101) / 5);
       era.set(0.045 * (1 - Math.min(1, (t - 97) / 8)), 0.625 + 0.375 * Math.min(1, (t - 97) / 7), plants, 0);
@@ -377,11 +377,11 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       GLOBE_SKY.steam = 0.625 * (1 - 0.4 * along);
       GLOBE_SKY.clear = 0.241 * (1 - along);
     } else {
-      const w = Math.min(1, (t - 108) / 4);
+      const w = Math.min(1, (t - 107) / 4);
       era.set(0, 1, 1, w);
-      GLOBE_SKY.warm = 0;
-      GLOBE_SKY.steam = 0.375 * (1 - w);
-      GLOBE_SKY.clear = 0;
+      GLOBE_SKY.warm = 0.0095 * (1 - w);
+      GLOBE_SKY.steam = 0.397 * (1 - w);
+      GLOBE_SKY.clear = 0.022 * (1 - w);
     }
   }
 
@@ -497,29 +497,35 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, w, h);
       }
-      const spray = Math.min(1, Math.max(0, (u - 0.22) / 0.32));
+      const spray = Math.min(1, Math.max(0, (elapsed - 87.9) / 1.3));
       if (spray > 0) {
-        for (let i = 0; i < 26; i++) {
-          const a = ang - 0.9 + i * 0.07;
-          const len = R * spray * (0.7 + (i % 5) * 0.12);
-          ctx.strokeStyle = `rgba(255,150,50,${0.25 + spray * 0.45})`;
-          ctx.lineWidth = 1.5;
+        const arcR = R * 1.15;
+        for (let i = 0; i < 36; i++) {
+          const a = -1.1 + (i / 35) * 1.95;
+          const ex = cx + Math.cos(a) * arcR;
+          const ey = cy + Math.sin(a) * arcR;
+          const mx = (hx + ex) / 2 + Math.cos(a) * R * 0.42;
+          const my = (hy + ey) / 2 + Math.sin(a) * R * 0.22;
+          const p = Math.min(1, spray * (0.72 + ((i * 5) % 7) / 18));
+          const o = 1 - p;
+          const x = o * o * hx + 2 * o * p * mx + p * p * ex;
+          const y = o * o * hy + 2 * o * p * my + p * p * ey;
+          ctx.fillStyle = `rgba(255,${170 - (i % 5) * 12},60,${0.35 + p * 0.55})`;
           ctx.beginPath();
-          ctx.moveTo(hx, hy);
-          ctx.lineTo(hx + Math.cos(a) * len, hy + Math.sin(a) * len * 0.65);
-          ctx.stroke();
+          ctx.arc(x, y, 1.3 + (i % 3) * 0.7, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
     }
     if (elapsed >= 89.2 && elapsed < CINE.b11End) {
       const after = (elapsed - 89.2) / (CINE.b11End - 89.2);
       const arcR = R * (1.08 + after * 0.42);
-      ctx.strokeStyle = `rgba(255,140,40,${0.18 + after * 0.22})`;
+      ctx.strokeStyle = `rgba(255,140,40,${Math.min(1, after / 0.55) * (0.18 + after * 0.22)})`;
       ctx.lineWidth = 10;
       ctx.beginPath();
       ctx.arc(cx, cy, arcR, -1.1, 0.85);
       ctx.stroke();
-      ctx.strokeStyle = `rgba(255,210,120,${0.45 + after * 0.4})`;
+      ctx.strokeStyle = `rgba(255,210,120,${Math.min(1, after / 0.55) * (0.45 + after * 0.4)})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(cx, cy, arcR, -1.1, 0.85);

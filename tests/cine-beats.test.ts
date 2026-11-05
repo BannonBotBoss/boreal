@@ -97,7 +97,7 @@ test('the film keeps the loading path and does not skip to the planet', () => {
   assert.match(opening, /first visit does not skip/);
   assert.match(opening, /cine-refs/);
   assert.match(readFileSync('src/main.ts', 'utf8'), /createOpening\(/);
-  for (const f of ['PLACEHOLDER_B1.mp4', 'PLACEHOLDER_B3.mp4', 'PLACEHOLDER_B4.mp4', 'PLACEHOLDER_B8_B9.mp4', 'PLACEHOLDER_B10.mp4']) {
+  for (const f of ['PLACEHOLDER_B1.mp4', 'PLACEHOLDER_B3.mp4', 'PLACEHOLDER_B4.mp4', 'PLACEHOLDER_B8_B9.mp4', 'PLACEHOLDER_B10.mp4', 'PLACEHOLDER_B11.mp4', 'PLACEHOLDER_B12.mp4', 'PLACEHOLDER_B13.mp4']) {
     assert.ok(existsSync('public/cinematic/refs/' + f), f);
   }
   assert.equal(KEYFRAMES[0].seconds, 1e-43);

@@ -44,16 +44,14 @@ export const SYSTEM_PROPERTIES = {
   },
   /** Follow camera (render/math): dead astern, just above the wolf, horizon level (T-0101). The wolf may lean with the ground; the camera does not roll. */
   camera: {
-    /** resting pitch (deg). Negative looks above the horizon. -5 is near level and puts the body below screen centre. Game calibration of the angle. */
-    defaultPitchDeg: -5,
+    /** resting pitch (deg). Positive looks down. +6 puts her feet and the pups above the button row. */
+    defaultPitchDeg: 6,
     /** how far the look stick tilts up or down from the default (deg) */ lookPitchRangeDeg: 30,
     /** look-pitch spring return rate (1/s): 98 % settled in 0.3 s, no overshoot */ lookSpringRate: 14,
-    /** metres above the ground. Gray-wolf withers are 80–85 cm (Mech 1970, The Wolf; Wikipedia "Wolf" restates it).
-     *  The lens sits 20 cm above an 85 cm withers, so the view is the animal's, not a standing person's. */
-    riderHeight: 1.05,
-    /** metres behind the hips along the trail, at riderHeight. Scales with height. Game calibration so an 85 cm
-     *  wolf is about a quarter of a 48° frame, the way the animal sits in issue #52. */
-    riderDistance: 3.6,
+    /** metres above the ground. High enough to look down on her hips and the pups, clear of the button row. */
+    riderHeight: 1.55,
+    /** metres behind the hips along the trail, at riderHeight. Pulled back so two pups beside her fit in the frame. */
+    riderDistance: 4.4,
     /** metres to the animal's left, at riderHeight. 0 is dead astern: the lens sits on the tail line and looks along the heading.
      *  T-0075 used 2.25 m (32° off the tail). That side offset made a diagonal shore read as a tilted horizon. */
     flank: 0,

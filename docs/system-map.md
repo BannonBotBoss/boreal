@@ -323,11 +323,11 @@ Read by: `src/render/math.ts`
 
 | Figure | Value | Units | What | Source |
 |---|---|---|---|---|
-| `defaultPitchDeg` | -5 | deg | resting pitch (deg). Negative looks above the horizon. -5 is near level and puts the body below screen centre. Game calibration of the angle. | estimate (game calibration) |
+| `defaultPitchDeg` | 6 | deg | resting pitch (deg). Positive looks down. +6 puts her feet and the pups above the button row. | estimate (game calibration) |
 | `lookPitchRangeDeg` | 30 | deg | how far the look stick tilts up or down from the default (deg) | estimate (game calibration) |
 | `lookSpringRate` | 14 | 1/s | look-pitch spring return rate (1/s): 98 % settled in 0.3 s, no overshoot | estimate (game calibration) |
-| `riderHeight` | 1.05 | m | metres above the ground. Gray-wolf withers are 80–85 cm (Mech 1970, The Wolf; Wikipedia "Wolf" restates it). The lens sits 20 cm above an 85 cm withers, so the view is the animal's, not a standing person's. | withers 80–85 cm (Mech 1970, The Wolf) plus 20 cm, so the lens is just above the back |
-| `riderDistance` | 3.6 | m | metres behind the hips along the trail, at riderHeight. Scales with height. Game calibration so an 85 cm wolf is about a quarter of a 48° frame, the way the animal sits in issue #52. | estimate (game calibration) |
+| `riderHeight` | 1.55 | m | metres above the ground. High enough to look down on her hips and the pups, clear of the button row. | withers 80–85 cm (Mech 1970, The Wolf) plus 20 cm, so the lens is just above the back |
+| `riderDistance` | 4.4 | m | metres behind the hips along the trail, at riderHeight. Pulled back so two pups beside her fit in the frame. | estimate (game calibration) |
 | `flank` | 0 | m | metres to the animal's left, at riderHeight. 0 is dead astern: the lens sits on the tail line and looks along the heading. T-0075 used 2.25 m (32° off the tail). That side offset made a diagonal shore read as a tilted horizon. | estimate (game calibration) |
 | `pitchMinDeg` | -80 | deg | hard pitch limits (deg): negative looks above the horizon | estimate (game calibration) |
 | `pitchMaxDeg` | 89 | deg | hard pitch limits (deg): negative looks above the horizon | estimate (game calibration) |

@@ -244,12 +244,12 @@ export class CosmosSphere {
           float ang = hash(id + vec2(3.1, 9.4)) * 6.2831853;
           float ca = cos(ang), sa = sin(ang);
           d = vec2(ca * d.x + sa * d.y, -sa * d.x + ca * d.y);
-          d.x *= 0.28 + 0.5 * hash(id + vec2(2.2, 0.4));
-          d.y += sin(atan(d.y, d.x) * 2.0) * length(d) * 0.12;
-          float sz = 0.055 + 0.14 * hash(id + vec2(6.6, 1.1));
-          float g = exp(-dot(d, d) / max(sz * sz * 0.09, 0.0012));
-          g *= smoothstep(0.34, 0.8, h);
-          g *= smoothstep(0.18, 0.55, fil);
+          d.x *= 0.32 + 0.45 * hash(id + vec2(2.2, 0.4));
+          d.y += sin(atan(d.y, d.x) * 2.0) * length(d) * 0.22;
+          float sz = 0.11 + 0.2 * hash(id + vec2(6.6, 1.1));
+          float g = exp(-dot(d, d) / max(sz * sz * 0.28, 0.004));
+          g *= smoothstep(0.28, 0.72, h);
+          g *= smoothstep(0.35, 0.8, fil);
           return g;
         }
         void main(){
@@ -275,7 +275,7 @@ export class CosmosSphere {
           vec3 orange = vec3(1.0, 0.46, 0.05);
           vec3 red = vec3(0.62, 0.12, 0.03);
           float warm = clamp((h - 0.2) / 0.9, 0.0, 1.0); warm *= warm;
-          float fire = smoothstep(0.62, 0.95, h) * (1.0 - smoothstep(1.15, 1.7, h));
+          float fire = smoothstep(0.48, 0.78, h) * (1.0 - smoothstep(1.22, 1.72, h));
           vec3 voids = h < 1.0 ? mix(indigo, goldVoid, warm) : h < 2.0 ? mix(goldVoid, vec3(0.14, 0.035, 0.008), h - 1.0) : deepRed;
           vec3 hot = h < 1.0 ? mix(blue, gold, warm) : h < 2.0 ? mix(gold, orange, h - 1.0) : mix(orange, red, h - 2.0);
           vec3 col = voids * (0.45 + 0.3 * emit);
@@ -287,11 +287,11 @@ export class CosmosSphere {
           col += vec3(1.0, 0.98, 0.93) * core * mix(0.28, 1.45, fire);
           col += vec3(1.0, 0.99, 0.96) * pow(tip, 0.72) * mix(0.85, 1.35, fire);
           col += hot * (grain - 0.5) * 0.05 + hot * (dust - 0.5) * 0.03;
-          col = mix(mix(vec3(0.012, 0.004, 0.0), col, smoothstep(0.18, 0.72, shaped)), col, 1.0 - fire);
-          float mid = fire * smoothstep(0.08, 0.4, shaped) * (1.0 - smoothstep(0.82, 0.98, shaped));
-          col.r = mix(col.r, min(1.0, col.r * 1.25 + 0.05), mid);
-          col.g = mix(col.g, col.g * 0.72, mid);
-          col.b = mix(col.b, col.b * 0.25, mid);
+          float band = smoothstep(0.28, 0.7, shaped);
+          float white = smoothstep(0.62, 0.92, shaped);
+          vec3 fireCol = mix(vec3(0.012, 0.004, 0.0), vec3(1.0, 0.84, 0.18), band);
+          fireCol = mix(fireCol, vec3(1.0, 0.98, 0.93), white);
+          col = mix(col, fireCol, fire);
           float beforeStars = 1.0 - clamp(stars / 8.0, 0.0, 1.0);
           col += hot * streak(uv, r - q, time) * 0.42 * beforeStars * (1.0 - fire * 0.35);
           vec3 fogCol = mix(vec3(1.0, 0.46, 0.07), vec3(0.50, 0.10, 0.022), clear);
@@ -315,10 +315,10 @@ export class CosmosSphere {
           float fil = pow(clamp(1.0 - abs(fbm(uv * 3.6 + r * 0.2) * 2.0 - 1.0), 0.0, 1.0), 8.5);
           float filB = pow(clamp(1.0 - abs(fbm(uv * 6.4 + 3.1) * 2.0 - 1.0), 0.0, 1.0), 9.5);
           float threads = max(fil, filB * 0.8);
-          float beads = galaxyField(uv, 18.0, pow(threads, 0.35)) + galaxyField(uv + vec2(2.2, 7.1), 36.0, pow(threads, 0.35)) * 0.9 + galaxyField(uv * 1.04 + vec2(4.0, 1.5), 58.0, pow(threads, 0.35)) * 0.55;
-          vec3 gSky = vec3(0.004, 0.0035, 0.006) + vec3(0.62, 0.58, 0.52) * threads * 0.55;
+          float beads = galaxyField(uv, 20.0, threads) + galaxyField(uv + vec2(2.2, 7.1), 38.0, threads) * 0.85 + galaxyField(uv * 1.04 + vec2(4.0, 1.5), 62.0, threads) * 0.55;
+          vec3 gSky = vec3(0.003, 0.0025, 0.004) + vec3(0.55, 0.52, 0.48) * threads * 0.4;
           col = mix(col, gSky, smoothstep(0.02, 0.28, galaxy));
-          col += vec3(0.96, 0.88, 0.7) * beads * galaxy * 1.25;
+          col += vec3(0.9, 0.82, 0.62) * beads * galaxy * 0.9;
           for (int i = 0; i < 8; i++) {
             float fi = float(i);
             float on = clamp((stars - fi) / 0.35, 0.0, 1.0) * (1.0 - sun) * (1.0 - galaxy) * (1.0 - smoothstep(0.2, 0.42, late));

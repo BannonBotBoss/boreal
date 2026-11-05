@@ -60,6 +60,9 @@ pub const PROTECT_RISE: f64 = 0.22;
 pub const PROTECT_FALL: f64 = 0.25;
 /// At this value the mother overrides her other drives and the danger radius widens.
 pub const PROTECT_COMMIT: f64 = 0.5;
+/// He waits here, outside the 8 m danger disc.
+pub const LINGER_RING: f64 = 11.0;
+pub const FLEE_MPS: f64 = 9.0;
 
 pub fn hunger_step(hunger: f64, species: &str, dt: f64) -> f64 {
     (hunger + hunger_rate(species) * dt.max(0.0)).clamp(0.0, 1.0)
@@ -124,6 +127,7 @@ pub fn step(
     mama_x: f64, mama_z: f64, mama_yaw: f64,
     pup_x: f64, pup_z: f64, yip: bool, protect: f64, dt: f64,
 ) -> DriveNow {
+    let _ = fox_yaw;
     let hunger = hunger_step(hunger, "Red Fox", dt);
     let pup_d = hypot(pup_x - fox_x, pup_z - fox_z);
     let mama_d = hypot(mama_x - fox_x, mama_z - fox_z);
@@ -139,33 +143,28 @@ pub fn step(
     let danger = danger(mama_d, guarding);
     let use_effort = if stray { effort_pup } else { effort_pup.max(0.35) };
     let approach = approach(hunger, use_effort, if focused { scent.max(0.35) } else { scent });
-    let radius = if guarding { DANGER_PROTECT_M } else { DANGER_M };
-    let (mode, speed, yaw) = if guarding && mama_d < radius {
-        (FoxMode::Flee, 3.4, away(fox_x, fox_z, mama_x, mama_z))
-    } else if mama_d <= DANGER_M {
-        (FoxMode::Linger, 1.15, away(fox_x, fox_z, mama_x, mama_z))
-    } else if mama_d < DANGER_M * 1.35 && approach > 0.02 {
-        (FoxMode::Linger, 0.7, tangent(fox_x, fox_z, mama_x, mama_z))
-    } else if approach > danger && (focused || scent > 0.15) && stray {
-        (FoxMode::Approach, 1.1 + hunger, toward(fox_x, fox_z, pup_x, pup_z))
-    } else if scent > 0.05 {
-        (FoxMode::Watch, 0.55, toward(fox_x, fox_z, pup_x, pup_z))
-    } else {
-        (FoxMode::None, 0.0, fox_yaw)
-    };
-    let push = matches!(mode, FoxMode::Flee) || (matches!(mode, FoxMode::Linger) && mama_d <= DANGER_M);
-    let (nx, nz) = if push {
-        push_out(fox_x, fox_z, mama_x, mama_z, mama_d + speed * dt.max(0.0))
-    } else {
-        forward(fox_x, fox_z, yaw, speed * dt.max(0.0))
-    };
-    let (mx, mz, myaw) = if guarding {
+    let (mode, nx, nz, yaw, mx, mz, myaw) = if guarding {
         let face = toward(mama_x, mama_z, fox_x, fox_z);
+        let (fx, fz) = push_out(fox_x, fox_z, mama_x, mama_z, mama_d + FLEE_MPS * dt.max(0.0));
         let room = (mama_d - 1.5).max(0.0);
-        let (sx, sz) = forward(mama_x, mama_z, face, (2.8 * dt.max(0.0)).min(room));
-        (sx, sz, face)
+        let (sx, sz) = forward(mama_x, mama_z, face, (3.4 * dt.max(0.0)).min(room));
+        (FoxMode::Flee, fx, fz, away(fox_x, fox_z, mama_x, mama_z), sx, sz, face)
+    } else if approach > danger && (focused || scent > 0.15) && stray && mama_d > LINGER_RING {
+        let yaw = toward(fox_x, fox_z, pup_x, pup_z);
+        let (fx, fz) = forward(fox_x, fox_z, yaw, (1.1 + hunger) * dt.max(0.0));
+        (FoxMode::Approach, fx, fz, yaw, mama_x, mama_z, mama_yaw)
+    } else if mama_d < LINGER_RING - 0.4 {
+        let (fx, fz) = push_out(fox_x, fox_z, mama_x, mama_z, LINGER_RING);
+        (FoxMode::Linger, fx, fz, toward(fx, fz, mama_x, mama_z), mama_x, mama_z, mama_yaw)
+    } else if mama_d > LINGER_RING + 1.2 {
+        let dist = (mama_d - 4.0 * dt.max(0.0)).max(LINGER_RING);
+        let (fx, fz) = push_out(fox_x, fox_z, mama_x, mama_z, dist);
+        (FoxMode::Watch, fx, fz, toward(fx, fz, mama_x, mama_z), mama_x, mama_z, mama_yaw)
     } else {
-        (mama_x, mama_z, mama_yaw)
+        let yaw = tangent(fox_x, fox_z, mama_x, mama_z);
+        let (fx, fz) = forward(fox_x, fox_z, yaw, 0.8 * dt.max(0.0));
+        let placed = push_out(fx, fz, mama_x, mama_z, LINGER_RING);
+        (FoxMode::Linger, placed.0, placed.1, yaw, mama_x, mama_z, mama_yaw)
     };
     DriveNow {
         hunger, effort_pup, effort_mama, scent, danger, protect,

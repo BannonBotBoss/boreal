@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DANGER_M, HEARING_M, PROTECT_COMMIT, SIGHT_M, SMELL_M,
+  CHARGE_M, DANGER_M, HEARING_M, PROTECT_COMMIT, SIGHT_M, SMELL_M,
   bodyKg, dangerOf, diet, effort, hungerRate, inFocus, resetDrives, scentOf, stepDrives,
 } from '../src/core/drives';
 
@@ -52,6 +52,34 @@ test('a fox already against her is pushed back out while fleeing', () => {
   for (let i = 0; i < 30; i++) now = stepDrives(now.mamaX, now.mamaZ, 0, now.mamaX + 0.2, now.mamaZ + 0.3, false, 1 / 30);
   const dist = Math.hypot(now.foxX - now.mamaX, now.foxZ - now.mamaZ);
   assert.ok(dist > 1.5, `still against her at ${dist}`);
+});
+
+test('he waits outside her ring, she charges a few strides, and he runs out', () => {
+  resetDrives();
+  let now = stepDrives(0, 0, 0.4, 0.3, -0.5, false, 1 / 30);
+  const gap0 = Math.hypot(now.foxX, now.foxZ);
+  assert.ok(gap0 > 10 && gap0 < 12, `started inside the pups at ${gap0}`);
+  for (let i = 0; i < 40; i++) {
+    now = stepDrives(0, 0, 0.4, 0.3, -0.5, false, 1 / 30);
+    const gap = Math.hypot(now.foxX - now.mamaX, now.foxZ - now.mamaZ);
+    assert.ok(gap > 9, `walked into the litter at ${gap}`);
+    assert.equal(now.hold, false);
+  }
+  let guard = 0;
+  while (!now.committed && guard < 300) {
+    now = stepDrives(now.mamaX, now.mamaZ, 0.4, now.mamaX + 0.3, now.mamaZ - 0.5, false, 1 / 30);
+    guard++;
+  }
+  assert.equal(now.committed, true);
+  const homeX = now.mamaX, homeZ = now.mamaZ;
+  let foxGap = Math.hypot(now.foxX - homeX, now.foxZ - homeZ);
+  for (let i = 0; i < 40; i++) {
+    now = stepDrives(now.mamaX, now.mamaZ, 0.4, now.mamaX + 0.3, now.mamaZ - 0.5, false, 1 / 30);
+    foxGap = Math.hypot(now.foxX - homeX, now.foxZ - homeZ);
+  }
+  const mamaMove = Math.hypot(now.mamaX - homeX, now.mamaZ - homeZ);
+  assert.ok(foxGap > 18, `he did not run out, gap ${foxGap}`);
+  assert.ok(mamaMove > 1 && mamaMove <= CHARGE_M + 0.05, `her charge was ${mamaMove}`);
 });
 
 test('a stray pup is approachable and a far scent is only a watch', () => {

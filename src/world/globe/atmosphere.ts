@@ -201,7 +201,7 @@ float cloudDensity(vec3 dir, float oct, float c, float hw) { // dir: planet-fixe
   vec3 qt = q - dir * dot(q, dir); float tw = ${CLOUDS.twistRad.toFixed(3)} * sl; qt = qt * cos(tw) + cross(dir, qt) * sin(tw);
   vec3 east = vec3(-dir.z, 0.0, dir.x); float el = length(east); east = el > 1e-4 ? east / el : vec3(1.0, 0.0, 0.0);
   qt += east * dot(qt, east) * ${CLOUDS.zonalStretch.toFixed(2)} * smoothstep(20.0, 35.0, alat) * (1.0 - smoothstep(60.0, 75.0, alat));
-  if (uCloudSim.w > 0.5) { // causal cover: the sim's cloud fraction f (humidity, ascent, convection; update_clouds.rs) sets the threshold so P(noise > c) ~ f.
+  if (uCloudSim.w > 0.001) { // causal cover: the sim's cloud fraction f (humidity, ascent, convection; update_clouds.rs) sets the threshold so P(noise > c) ~ f.
     // The lookup follows the same warp (${CLOUDS.simWarpRad} rad, ~2 sim cells) and averages 4 taps, so the cover follows the swirls and
     // the grid's bilinear contours (straight cell edges) never show.
     vec3 ds = normalize(d0 + ${CLOUDS.simWarpRad.toFixed(3)} * qt), t1 = normalize(cross(ds, vec3(0.0, 1.0, 0.0001))), t2 = cross(ds, t1); float r = ${CLOUDS.simBlurRad.toFixed(4)};
@@ -210,7 +210,7 @@ float cloudDensity(vec3 dir, float oct, float c, float hw) { // dir: planet-fixe
     // fraction by 1 +- organise, keeping its mean, so a saturated grid region reads as storms with clear slots, not one flat sheet
     float org = clamp(length(qt) * ${CLOUDS.orgGain.toFixed(2)} - 1.0, -1.0, 1.0);
     f = clamp(f * ${CLOUDS.opticalShare.toFixed(2)} * (1.0 + ${CLOUDS.organise.toFixed(2)} * org), 0.02, 0.98); hw = max(hw, ${CLOUDS.simEdgeHalf.toFixed(3)}); // opticalShare: optically thin cirrus (~1/4 of cover, ISCCP Rossow & Schiffer 1999) barely shows from orbit
-    c += 0.5 + ${CLOUDS.noiseSd.toFixed(3)} * log((1.0 - f) / f) / 1.7 - ${CLOUDS.edgeCentre[0].toFixed(3)}; }
+    c += clamp(uCloudSim.w, 0.0, 1.0) * (0.5 + ${CLOUDS.noiseSd.toFixed(3)} * log((1.0 - f) / f) / 1.7 - ${CLOUDS.edgeCentre[0].toFixed(3)}); }
   p += ${CLOUDS.warpAmp.toFixed(2)} * qt * ${(6371 / CLOUDS.cellKm).toFixed(3)};
   float v = 0.0, a = 0.5, n = 0.0;
   for (int i = 0; i < ${CLOUDS.octaves[0]}; i++) { float w = clamp(oct - float(i), 0.0, 1.0); if (w <= 0.0) break;

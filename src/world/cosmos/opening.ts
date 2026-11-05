@@ -9,6 +9,7 @@ import { decodeEngineReport, type EngineReport } from '../../core/engineReport';
 import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
 import { GLOBE_ERA, GLOBE_LAND, GLOBE_SKY } from '../globe/tile';
+import { setCineLayerGate } from '../globe/planetLayers';
 import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatClock, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
 
 /**
@@ -86,8 +87,9 @@ body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-
 #cine-panel .count.roll .d:nth-child(3){animation-delay:.08s}
 #cine-panel .count.roll .d:nth-child(4){animation-delay:.12s}
 #cine-panel .count.roll .d:nth-child(5){animation-delay:.16s}
-#cine-panel .fig{font:400 31px Georgia,serif;color:#ffffff;transform-origin:0 50%;text-shadow:0 1px 2px #000a}
-#cine-panel .fig.roll{animation:cine-roll .5s linear both}
+#cine-panel .count,#cine-panel .fig{color:#fff6e8;opacity:1;filter:none;-webkit-text-fill-color:#fff6e8}
+#cine-panel .fig{font:400 39px Georgia,serif;transform-origin:0 50%;text-shadow:0 1px 2px #000a}
+#cine-panel .fig.roll{animation:none;opacity:1}
 #cine-panel.pop{animation:cine-pop .35s cubic-bezier(.34,1.56,.64,1) both}
 #cine-panel.out{animation:cine-out .4s ease forwards}
 #cine-ref,#cine .still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
@@ -109,6 +111,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   ensureCss();
   document.body.classList.add('cine-run');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let eraMark = -1, eraFloor = 1;
   const refs = new URLSearchParams(location.search).get('cine-refs') === '1';
   const jump = new URLSearchParams(location.search).get('cine');
   const root = el('div'); root.id = 'cine';
@@ -262,12 +265,14 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     const hazeOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.02;
     veil.style.opacity = hazeOn ? '0' : '1';
     const arrival = stage === 'b14' || (stage === 'hold' && earthOn);
-    const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : arrival ? 'Today · 13.8 billion years' : '';
+    const todayHero = elapsed >= 105;
+    const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : todayHero ? 'Today · 13.8 billion years' : '';
     heroLine.textContent = line;
     heroLine.style.fontSize = line.length > 16 ? '3.2vw' : '';
-    heroLine.style.bottom = arrival ? '1.6vh' : '';
-    heroLine.style.textShadow = arrival ? '0 2px 10px #000, 0 8px 28px #000, 0 0 18px #000' : '';
+    heroLine.style.bottom = todayHero ? '1.6vh' : '';
+    heroLine.style.textShadow = todayHero ? '0 2px 10px #000, 0 8px 28px #000, 0 0 18px #000' : '';
     heroLine.style.display = line ? 'block' : 'none';
+    heroLine.style.opacity = todayHero ? String(Math.min(1, Math.max(0, (elapsed - 105) / 0.8))) : '1';
     const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14' || (stage === 'hold' && earthOn);
     const bridge = booted && elapsed >= 83.2 && elapsed < 85.4;
     const showEarth = (onEarth || bridge) && booted;
@@ -298,13 +303,15 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       const panelOut = elapsed < 110.55 ? 1 : Math.max(0, 1 - (elapsed - 110.55) / 0.6);
       if (elapsed >= 110.55) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
       panel.style.setProperty('opacity', String(panelOut), 'important');
-    } else if (booted) {
+    } else if (booted && !earthOn) {
       root.style.background = '#000';
       GLOBE_ERA.uEra.value.set(1, 0, 0, 0);
       GLOBE_SKY.hold = 1;
       GLOBE_SKY.warm = 0.55;
       GLOBE_SKY.clear = 1;
       GLOBE_SKY.steam = 0;
+      GLOBE_ERA.uCrack.value = 1;
+      setCineLayerGate(false, 1);
     }
     document.documentElement.dataset.cineEarth = earthOn ? '1' : '0';
     if (stage === 'b14' && earthOn && !arrived) {
@@ -321,7 +328,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       const years = clock.includes('year') || clock === 'Today';
       count.style.fontSize = years ? '26px' : '';
       count.style.opacity = '1';
-      count.style.color = '#fff6e8';
+      count.style.setProperty('color', '#fff6e8', 'important');
+      count.style.setProperty('-webkit-text-fill-color', '#fff6e8', 'important');
       count.style.overflow = years ? 'visible' : '';
       panel.style.width = elapsed >= 82 ? 'min(820px, 78vw)' : '';
       if (years) setPlain(count, clock);
@@ -335,6 +343,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       const fade = rowEnd > 0 && elapsed > rowEnd - 0.45 ? Math.max(0, (rowEnd - elapsed) / 0.45) : 1;
       fig.style.animation = 'none';
       fig.style.setProperty('color', '#fff6e8', 'important');
+      fig.style.setProperty('-webkit-text-fill-color', '#fff6e8', 'important');
+      fig.style.setProperty('filter', 'none', 'important');
       fig.style.setProperty('opacity', figure ? String(fade) : '1', 'important');
     }
     if (begun) audio.sync(elapsed, narrationEndedAt);
@@ -351,6 +361,16 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     } else ref.style.display = 'none';
     if (jpg) { if (still.dataset.file !== jpg) { still.dataset.file = jpg; still.src = jpg; } still.style.display = 'block'; }
     else still.style.display = 'none';
+  }
+
+  function holdEraX(t: number, x: number) {
+    if (t < eraMark - 0.02) { eraMark = t; eraFloor = x; return x; }
+    eraFloor = Math.min(eraFloor, x); eraMark = Math.max(eraMark, t); return eraFloor;
+  }
+  function crackAmt(t: number) {
+    if (t < 92) return 1;
+    if (t >= 100) return 0;
+    const u = (t - 92) / 8; return 1 - u * u * (3 - 2 * u);
   }
 
   function tintGlobe(t: number) {
@@ -385,6 +405,10 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       GLOBE_SKY.steam = 0.443 * (1 - w);
       GLOBE_SKY.clear = 0.066 * (1 - w);
     }
+    era.x = holdEraX(t, era.x);
+    GLOBE_ERA.uCrack.value = crackAmt(t);
+    if (reduced) setCineLayerGate(false, 1);
+    else { const m = era.w; setCineLayerGate(true, 1 - (1 - m) * (1 - m)); }
   }
 
   function driveFilm(t: number) {

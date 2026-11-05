@@ -153,10 +153,16 @@ pub fn step(
     } else {
         (FoxMode::None, 0.0, fox_yaw)
     };
-    let (nx, nz) = forward(fox_x, fox_z, yaw, speed * dt.max(0.0));
+    let push = matches!(mode, FoxMode::Flee) || (matches!(mode, FoxMode::Linger) && mama_d <= DANGER_M);
+    let (nx, nz) = if push {
+        push_out(fox_x, fox_z, mama_x, mama_z, mama_d + speed * dt.max(0.0))
+    } else {
+        forward(fox_x, fox_z, yaw, speed * dt.max(0.0))
+    };
     let (mx, mz, myaw) = if guarding {
         let face = toward(mama_x, mama_z, fox_x, fox_z);
-        let (sx, sz) = forward(mama_x, mama_z, face, 2.8 * dt.max(0.0));
+        let room = (mama_d - 1.5).max(0.0);
+        let (sx, sz) = forward(mama_x, mama_z, face, (2.8 * dt.max(0.0)).min(room));
         (sx, sz, face)
     } else {
         (mama_x, mama_z, mama_yaw)
@@ -172,6 +178,14 @@ pub fn step(
 fn toward(x: f64, z: f64, tx: f64, tz: f64) -> f64 { (tx - x).atan2(tz - z) }
 fn away(x: f64, z: f64, tx: f64, tz: f64) -> f64 { toward(x, z, tx, tz) + std::f64::consts::PI }
 fn tangent(x: f64, z: f64, tx: f64, tz: f64) -> f64 { toward(x, z, tx, tz) + std::f64::consts::FRAC_PI_2 }
+fn push_out(fox_x: f64, fox_z: f64, mama_x: f64, mama_z: f64, dist: f64) -> (f64, f64) {
+    let mut dx = fox_x - mama_x;
+    let mut dz = fox_z - mama_z;
+    let d = hypot(dx, dz);
+    if d < 1e-4 { dx = 1.0; dz = 0.0; } else { dx /= d; dz /= d; }
+    (mama_x + dx * dist, mama_z + dz * dist)
+}
+
 fn forward(x: f64, z: f64, yaw: f64, dist: f64) -> (f64, f64) {
     (x + yaw.sin() * dist, z + yaw.cos() * dist)
 }
@@ -245,6 +259,16 @@ mod tests {
         let now = step(0.9, 20.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 0.0, true, 0.0, 0.2);
         assert_eq!(now.mode, FoxMode::Approach);
         assert!(now.effort_mama > now.effort_pup * 100.0);
+    }
+
+    #[test]
+    fn a_fox_against_her_is_pushed_back_out() {
+        let mut now = step(0.8, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.3, false, 1.0, 1.0 / 30.0);
+        for _ in 0..30 {
+            now = step(now.hunger, now.fox_x, now.fox_z, now.fox_yaw, now.mama_x, now.mama_z, now.mama_yaw, now.mama_x + 0.2, now.mama_z + 0.3, false, now.protect, 1.0 / 30.0);
+        }
+        let dist = hypot(now.fox_x - now.mama_x, now.fox_z - now.mama_z);
+        assert!(dist > 1.5, "still against her at {dist}");
     }
 
     #[test]

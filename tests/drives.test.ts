@@ -46,6 +46,14 @@ test('once she commits the fox flees and she steps toward it', () => {
   assert.equal(now.threat, 1);
 });
 
+test('a fox already against her is pushed back out while fleeing', () => {
+  resetDrives({ x: 0.05, z: 0, protect: 1 });
+  let now = stepDrives(0, 0, 0, 0.2, 0.3, false, 1 / 30);
+  for (let i = 0; i < 30; i++) now = stepDrives(now.mamaX, now.mamaZ, 0, now.mamaX + 0.2, now.mamaZ + 0.3, false, 1 / 30);
+  const dist = Math.hypot(now.foxX - now.mamaX, now.foxZ - now.mamaZ);
+  assert.ok(dist > 1.5, `still against her at ${dist}`);
+});
+
 test('a stray pup is approachable and a far scent is only a watch', () => {
   resetDrives({ x: 20, z: 0, hunger: 0.9 });
   const stray = stepDrives(0, 0, 0, 8, 0, true, 0.2);

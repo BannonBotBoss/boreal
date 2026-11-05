@@ -22,11 +22,10 @@ const TRAIL_YEAR_M: f64 = 0.12;
 /// enough for the size, the step and the trail to change in one sitting.
 pub const GROWTH_GAME_S_PER_YEAR: f64 = 14_400.0;
 const DEN_RING_M: f64 = 1.2;
-const TRAIL_GAP_M: f64 = 0.03;
-/// Beside her hips, at her depth.
-const LATERAL_M: f64 = 0.58;
-/// Closer than this and a pup is under the lens.
-const VIEW_BACK_M: f64 = 0.5;
+/// How far a pup may sit to one side and still be in the chase view.
+const LATERAL_M: f64 = 1.15;
+/// The chase camera is 4.4 m behind her.
+const VIEW_BACK_M: f64 = 1.55;
 /// Further than this in one step is a drop, not a walk. The pup is on the trail at once.
 const REJOIN_M: f64 = 4.0;
 
@@ -89,20 +88,85 @@ pub fn birth_places(den_x: f64, den_z: f64) -> [PupPlace; LITTER_COUNT as usize]
     out
 }
 
-/// The point in the trail behind the mother. Forward is (−sin yaw, −cos yaw).
-pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, age_years: f64) -> (f64, f64) {
-    let back = (trail_back_m(age_years) + slot as f64 * TRAIL_GAP_M).min(VIEW_BACK_M);
-    let side = (slot as f64 - (LITTER_COUNT as f64 - 1.0) / 2.0) * LATERAL_M;
+/// Uneven homes around her hips. Not a row. The last pup starts further back.
+const PUP_HOME: [(f64, f64); 5] = [(0.2, -0.52), (0.38, -0.16), (0.14, 0.26), (0.52, 0.58), (1.02, -0.06)];
+const PUP_PHASE: [f64; 5] = [0.4, 2.2, 3.8, 5.1, 1.1];
+
+/// What this pup is doing. Each slot has its own phase.
+pub fn pup_act(slot: u32, time: f64) -> &'static str {
+    let period = 5.2 + (slot % 3) as f64 * 1.1;
+    let phase = PUP_PHASE[slot as usize % 5];
+    let u = (time.max(0.0) + phase) % period / period;
+    if slot == LITTER_COUNT - 1 && u < 0.4 {
+        return "straggle";
+    }
+    let acts = ["trot", "sniff", "sit", "pounce", "tumble"];
+    acts[((u * acts.len() as f64) as usize).min(acts.len() - 1)]
+}
+
+/// Where one pup is trying to be, and which way it faces. `moving` false pulls the cloud in.
+pub fn pup_aim(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, time: f64, moving: bool, age_years: f64) -> (f64, f64, f64, &'static str) {
+    let act = pup_act(slot, time);
+    let home = PUP_HOME[slot as usize % 5];
+    let phase = PUP_PHASE[slot as usize % 5];
+    let cluster = if moving { 1.0 } else { 0.55 };
+    let wander = (if moving { 0.26 } else { 0.07 }) * (1.0 - 0.25 * growth_u(age_years));
+    let age_pull = 1.0 - 0.35 * growth_u(age_years);
+    let mut back = home.0 * cluster * age_pull + (time * 0.65 + phase).sin() * wander;
+    let mut side = home.1 * cluster * age_pull + (time * 0.5 + phase * 1.3).cos() * wander * 0.85;
+    if act == "straggle" { back += 0.45; }
+    if act == "sniff" { side += 0.18 * (time * 1.7 + phase).sin(); }
+    if act == "sit" { back *= 0.75; side *= 0.75; }
+    if act == "pounce" {
+        let sib = PUP_HOME[((slot + 1) % LITTER_COUNT) as usize];
+        back = (back + sib.0 * cluster * age_pull) * 0.5;
+        side = (side + sib.1 * cluster * age_pull) * 0.5;
+    }
+    if act == "tumble" {
+        back += (time * 2.2 + phase).sin() * 0.12;
+        side += (time * 2.2 + phase).cos() * 0.12;
+    }
+    back = back.clamp(0.08, VIEW_BACK_M);
+    side = side.clamp(-LATERAL_M, LATERAL_M);
     let fx = -yaw.sin();
     let fz = -yaw.cos();
     let rx = yaw.cos();
     let rz = -yaw.sin();
-    (mother_x - fx * back + rx * side, mother_z - fz * back + rz * side)
+    let x = mother_x - fx * back + rx * side;
+    let z = mother_z - fz * back + rz * side;
+    let bias = [0.45, -0.7, 1.05, -0.35, 0.2][slot as usize % 5];
+    let mut face = yaw + bias * 0.35;
+    if act == "sniff" || act == "sit" {
+        face = yaw + bias + if act == "sniff" { 0.8 * (time * 0.8 + phase).sin() } else { 0.0 };
+    } else if act == "tumble" {
+        face = yaw + time * 1.7 + phase;
+    } else if act == "pounce" {
+        face = yaw + bias * 1.6;
+    }
+    (x, z, face, act)
 }
 
-/// One follow step. The pup walks toward its trail slot and does not overshoot it.
+/// The pup's aim at time 0 while she is moving. Forward is (−sin yaw, −cos yaw).
+pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, age_years: f64) -> (f64, f64) {
+    let (x, z, _, _) = pup_aim(slot, mother_x, mother_z, yaw, 0.0, true, age_years);
+    (x, z)
+}
+
+fn act_mps(act: &str, age_years: f64) -> f64 {
+    let walk = walk_mps(age_years);
+    match act {
+        "sit" | "sniff" => walk * 0.15,
+        "tumble" => walk * 0.45,
+        "pounce" => walk * 1.25,
+        "straggle" => walk * 0.55,
+        _ => walk,
+    }
+}
+
+/// One follow step toward the aim at time 0. The pup does not overshoot it.
 pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64) -> (f64, f64) {
-    let (tx, tz) = trail_slot(slot, mother_x, mother_z, yaw, age_years);
+    let act = pup_act(slot, 0.0);
+    let (tx, tz, _, _) = pup_aim(slot, mother_x, mother_z, yaw, 0.0, true, age_years);
     let dx = tx - x;
     let dz = tz - z;
     let d = (dx * dx + dz * dz).sqrt();
@@ -112,7 +176,7 @@ pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw:
     if d > REJOIN_M {
         return (tx, tz);
     }
-    let step = (walk_mps(age_years) * dt).min(d);
+    let step = (act_mps(act, age_years) * dt).min(d);
     (x + dx / d * step, z + dz / d * step)
 }
 
@@ -217,7 +281,7 @@ mod tests {
         let (tx, tz) = trail_slot(0, 0.0, 0.0, 0.0, EMERGE_YEARS);
         let before = (tx * tx + tz * tz).sqrt();
         let after = ((tx - x).powi(2) + (tz - z).powi(2)).sqrt();
-        assert!(after < before - 0.5, "moved toward the slot");
+        assert!(after < before, "moved toward the slot");
         let (sx, sz) = follow_step(tx, tz, 0, 0.0, 0.0, 0.0, 1.0, EMERGE_YEARS);
         assert!((sx - tx).abs() < 1e-9 && (sz - tz).abs() < 1e-9);
     }
@@ -237,14 +301,23 @@ mod tests {
 
     #[test]
     fn pups_stay_in_front_of_the_chase_camera() {
-        let mut beside = 0;
+        let mut near = 0;
+        let mut backs = Vec::new();
         for slot in 0..LITTER_COUNT {
-            let (x, z) = trail_slot(slot, 0.0, 0.0, 0.0, EMERGE_YEARS);
-            assert!(z < 0.55 && z > 0.15, "slot {slot} is not at her depth at {z}");
-            assert!(x.abs() < 1.4, "slot {slot} stands too wide at {x}");
-            if x.abs() > 0.4 { beside += 1; }
+            let (x, z, yaw, _) = pup_aim(slot, 0.0, 0.0, 0.0, 0.0, true, EMERGE_YEARS);
+            assert!(z < 1.7 && z > 0.05, "slot {slot} left the chase view at {z}");
+            assert!(x.abs() < 1.3, "slot {slot} stands too wide at {x}");
+            backs.push(z);
+            if (x * x + z * z).sqrt() < 0.95 { near += 1; }
+            let _ = yaw;
         }
-        assert!(beside >= 2);
+        assert!(near >= 2, "only {near} pups are in the near clump");
+        let (lo, hi) = backs.iter().fold((f64::MAX, f64::MIN), |(lo, hi), z| (lo.min(*z), hi.max(*z)));
+        assert!(hi - lo > 0.45, "the spacing is still even");
+        let (x0, z0, _, _) = pup_aim(1, 0.0, 0.0, 0.0, 0.0, true, EMERGE_YEARS);
+        let (x1, z1, _, _) = pup_aim(1, 0.0, 0.0, 0.0, 6.0, true, EMERGE_YEARS);
+        assert!(((x0 - x1).powi(2) + (z0 - z1).powi(2)).sqrt() > 0.08, "the clump does not move");
+        assert_ne!(pup_act(0, 0.0), pup_act(0, 8.0));
     }
 
     #[test]

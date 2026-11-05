@@ -8,7 +8,7 @@ import { sharedPlanetSim } from '../../core/planetWeather';
 import { decodeEngineReport, type EngineReport } from '../../core/engineReport';
 import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
-import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, eraOfSeconds, formatCosmicSeconds, heroAt, narrationEndFallback, secondsToCycle, subtitleAt, type CineStage } from './cineBeats';
+import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, eraOfSeconds, flashLuma, formatCosmicSeconds, heroAt, kickOffset, narrationEndFallback, pinHeld, secondsToCycle, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
 
 /**
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
@@ -62,20 +62,17 @@ export interface Opening {
 
 const CINE_CSS = `
 body.cine-run,body.cine-run *{cursor:none}
-body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-run footer,body.cine-run #notice,body.cine-run #data-panel,body.cine-run #data-panel-btn,body.cine-run #camera-panel{visibility:hidden}
-#cine{position:fixed;inset:0;z-index:40;color:#f4efe2;font:15px/1.5 system-ui,sans-serif}
-#cine .veil{position:absolute;inset:0;background:#000;transition:opacity .8s linear}
-#cine .pin{position:absolute;left:50%;top:50%;width:2px;height:2px;margin:-1px;border-radius:50%;background:#f3d7b0;box-shadow:0 0 6px 1px #e7b56a;transform:scale(1);animation:cine-breathe 3.2s ease-in-out infinite}
+body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-run footer,body.cine-run #notice,body.cine-run #data-panel,body.cine-run #data-panel-btn,body.cine-run #camera-panel,body.cine-run .wolf-senses{visibility:hidden}
+#cine{position:fixed;inset:0;z-index:40;overflow:hidden;background:#000;color:#f4efe2;font:15px/1.5 system-ui,sans-serif}
+#cine .veil{position:absolute;inset:0;background:#000}
+#cine .pin{position:absolute;left:50%;top:50%;width:2px;height:2px;margin:-1px;border-radius:50%;background:#FFE8C0;box-shadow:0 0 4px 0 #FFE8C0;animation:cine-breathe 3.2s ease-in-out infinite}
 #cine .pin.shrink{animation:none;transform:scale(.35);transition:transform .4s ease}
-#cine .prompt{position:absolute;left:50%;bottom:11vh;transform:translateX(-50%);margin:0;letter-spacing:.04em;color:#e7dcc8;text-align:center}
+#cine .prompt{position:absolute;left:50%;bottom:11vh;transform:translateX(-50%);margin:0;letter-spacing:.04em;color:#FFE8C0;text-align:center;animation:cine-wait 3s ease-in-out infinite}
 #cine .sub{position:absolute;left:50%;bottom:16vh;transform:translateX(-50%);margin:0;font:italic 22px Georgia,serif;letter-spacing:.02em;text-shadow:0 1px 8px #000}
-#cine .title{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);margin:0;font:700 clamp(42px,8vw,92px) Georgia,serif;letter-spacing:.18em;text-align:center}
-#cine .title.show{animation:cine-title .7s cubic-bezier(.2,.8,.2,1) both}
-#cine .title.out{opacity:0;transition:opacity .8s ease}
-#cine .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
-#cine .ring{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px;border:1px solid #fff8;border-radius:50%;opacity:0}
-#cine .ring.go{animation:cine-ring .7s ease-out both}
-#cine.kick{animation:cine-kick .12s ease-out}
+#cine .title{position:absolute;left:50%;top:46%;width:max-content;max-width:none;margin:0;font:700 6.05vw Georgia,serif;letter-spacing:.18em;white-space:nowrap;text-align:center;text-shadow:0 1px 0 #fff4,0 10px 22px #000a,0 0 28px #ffb45a66;transform:translate(-50%,-50%) perspective(700px) rotateX(5deg)}
+#cine-plate{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);pointer-events:none;z-index:1}
+#cine .veil{z-index:1}
+#cine .pin,#cine .prompt,#cine .sub,#cine .title,#cine-panel,#cine-ref,#cine .still{z-index:2}
 #cine-panel{position:absolute;top:28px;right:26px;width:min(280px,40vw);display:grid;gap:6px;padding:14px 16px 16px;background:#0d1712f2;color:#f4efe2;border-radius:12px;box-shadow:0 8px 40px #000a}
 #cine-panel[hidden]{display:none}
 #cine-panel .x{position:absolute;top:6px;right:8px;background:none;border:0;color:#f4efe2;font:18px system-ui;padding:4px 8px}
@@ -84,11 +81,9 @@ body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-
 #cine-panel .era{font-size:13px;color:#d9d0c0}
 #cine-panel.pop{animation:cine-pop .35s cubic-bezier(.34,1.56,.64,1) both}
 #cine-panel.out{animation:cine-out .4s ease forwards}
-#cine-ref{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
-@keyframes cine-breathe{0%,100%{transform:scale(.7);opacity:.55}50%{transform:scale(1.35);opacity:1}}
-@keyframes cine-title{from{opacity:0;letter-spacing:.45em}to{opacity:1;letter-spacing:.18em}}
-@keyframes cine-ring{from{transform:scale(1);opacity:.8}to{transform:scale(40);opacity:0}}
-@keyframes cine-kick{0%{transform:translateY(0)}40%{transform:translateY(6px)}100%{transform:translateY(0)}}
+#cine-ref,#cine .still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+@keyframes cine-breathe{0%,100%{transform:scale(.75);opacity:.7}50%{transform:scale(1.2);opacity:1}}
+@keyframes cine-wait{0%,100%{opacity:.5}50%{opacity:.8}}
 @keyframes cine-pop{0%{opacity:0;transform:scale(.8)}70%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
 @keyframes cine-out{to{opacity:0;transform:scale(1.02)}}
 `;
@@ -106,21 +101,21 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
   const refs = new URLSearchParams(location.search).get('cine-refs') === '1';
   const jump = new URLSearchParams(location.search).get('cine');
   const root = el('div'); root.id = 'cine';
+  const plate = document.createElement('canvas'); plate.id = 'cine-plate';
   const ref = document.createElement('video'); ref.id = 'cine-ref'; ref.muted = true; ref.loop = true; ref.playsInline = true;
+  const still = document.createElement('img'); still.className = 'still'; still.alt = '';
   const veil = el('div', 'veil');
   const pin = el('div', 'pin'); pin.hidden = true;
   const prompt = el('p', 'prompt', 'Click or press any key to begin.');
   const sub = el('p', 'sub');
   const title = el('h1', 'title', 'THE BIG BANG'); title.hidden = true;
-  const flash = el('div', 'flash');
-  const ring = el('div', 'ring');
   const panel = el('aside'); panel.id = 'cine-panel'; panel.hidden = true;
   const close = document.createElement('button'); close.className = 'x'; close.type = 'button'; close.textContent = '×'; close.setAttribute('aria-label', 'Close');
   const hero = el('h2', '', '');
   const count = el('div', 'count');
   const era = el('div', 'era');
   panel.append(close, hero, count, era);
-  root.append(ref, veil, pin, sub, title, flash, ring, prompt, panel);
+  root.append(plate, ref, still, veil, pin, sub, title, prompt, panel);
   document.body.append(root);
 
   let sphere: CosmosSphere | null = null;
@@ -186,7 +181,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
     get cycle() { return cycle; },
     get phase() { return phase; },
     step(dt: number) {
-      const cap = jump === 'B7' ? 200 : CINE.b3End;
+      const cap = jump === 'B7' ? 200 : CINE.b6End;
       if (pinned != null) elapsed = pinned;
       else if (!begun) elapsed = Math.min(CINE.fade, elapsed + Math.max(0, dt));
       else elapsed = Math.min(cap, elapsed + Math.max(0, dt));
@@ -226,24 +221,25 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
 
   function paintDom() {
     const stage = cineStage(elapsed, begun, narrationEndedAt);
-    pin.hidden = !(stage === 'wait' || stage === 'b1' || stage === 'b2' || stage === 'b3');
-    pin.classList.toggle('shrink', stage === 'b2' || stage === 'b3');
+    const end = narrationEndedAt;
+    const bang = end == null ? null : bangAt(end);
+    const alive = stage === 'wait' || stage === 'b1' || stage === 'b2';
+    pin.hidden = !(alive && pinHeld(elapsed, bang));
+    pin.classList.toggle('shrink', stage === 'b2');
     prompt.hidden = stage !== 'wait';
     sub.textContent = begun ? subtitleAt(elapsed, narrationEndedAt) : '';
-    const end = narrationEndedAt;
-    const showTitle = end != null && elapsed >= bangAt(end) + CINE.titleAfterBang && elapsed < CINE.b3End + 2;
+    const holdEnd = bang == null ? Infinity : bang + CINE.titleAfterBang + CINE.titleHold;
+    const dissolve = bang == null ? 0 : titleDissolve(elapsed - holdEnd);
+    const showTitle = bang != null && elapsed >= bang + CINE.titleAfterBang && dissolve < 1;
     title.hidden = !showTitle;
-    title.classList.toggle('show', showTitle && elapsed < bangAt(end!) + CINE.titleAfterBang + CINE.titleHold);
-    title.classList.toggle('out', showTitle && elapsed >= bangAt(end!) + CINE.titleAfterBang + CINE.titleHold);
-    const flashN = end != null && begun ? bangFlash(elapsed, end, reduced) : 0;
-    flash.style.opacity = String(flashN);
-    if (!reduced && end != null && elapsed >= bangAt(end) && elapsed < bangAt(end) + 0.2) {
-      ring.classList.add('go');
-      root.classList.add('kick');
-    }
-    const veilOut = end != null && elapsed >= bangAt(end) + CINE.titleAfterBang + CINE.titleHold;
-    veil.style.opacity = veilOut ? '0.15' : '1';
-    if (sphere) sphere.canvas.style.opacity = veilOut ? '1' : '0';
+    title.style.opacity = showTitle ? String(1 - dissolve) : '0';
+    const kick = bang == null ? { x: 0, y: 0 } : kickOffset(elapsed - bang - CINE.bangPeak, reduced);
+    title.style.transform = `translate(calc(-50% + ${kick.x * 1.35}px), calc(-50% + ${kick.y * 1.35}px)) perspective(700px) rotateX(5deg)`;
+    plate.style.transform = `translate(${kick.x}px, ${kick.y}px)`;
+    const hazeOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.02;
+    veil.style.opacity = hazeOn ? '0' : '1';
+    if (sphere) sphere.canvas.style.opacity = '0';
+    paintPlate(bang, dissolve, stage);
     showRef(stage);
     const heroText = heroAt(elapsed);
     const showPanel = begun && elapsed >= CINE.panelAt && !closed && heroText !== '';
@@ -252,7 +248,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
       if (hero.textContent !== heroText && elapsed - heroStamp >= 2.5) { hero.textContent = heroText; heroStamp = elapsed; }
       if (elapsed - countStamp >= 2.5 || count.textContent === '') {
         count.textContent = formatCosmicSeconds(cosmicSeconds(elapsed));
-        era.textContent = eraOfSeconds(cosmicSeconds(elapsed));
+        era.textContent = elapsed >= CINE.b4End && elapsed < CINE.b5End ? 'Hydrogen 75% · Helium 25%' : eraOfSeconds(cosmicSeconds(elapsed));
         countStamp = elapsed;
       }
     }
@@ -260,11 +256,82 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void): Openi
   }
 
   function showRef(stage: CineStage) {
-    if (!refs) { ref.style.display = 'none'; return; }
-    const file = stage === 'b1' ? 'cinematic/refs/PLACEHOLDER_B1.mp4' : stage === 'b3' || stage === 'hold' ? 'cinematic/refs/PLACEHOLDER_B3.mp4' : '';
-    if (!file) { ref.style.display = 'none'; return; }
-    if (ref.dataset.file !== file) { ref.dataset.file = file; ref.src = file; void ref.play().catch(() => {}); }
-    ref.style.display = 'block';
+    if (!refs) { ref.style.display = 'none'; still.style.display = 'none'; return; }
+    const video = stage === 'b1' ? 'cinematic/refs/PLACEHOLDER_B1.mp4' : stage === 'b3' ? 'cinematic/refs/PLACEHOLDER_B3.mp4' : '';
+    const jpg = stage === 'b4' ? 'cinematic/refs/PLACEHOLDER_B4.jpg' : stage === 'b5' ? 'cinematic/refs/PLACEHOLDER_B5.jpg' : stage === 'b6' ? 'cinematic/refs/PLACEHOLDER_B6_B7.jpg' : '';
+    if (video) {
+      still.style.display = 'none';
+      if (ref.dataset.file !== video) { ref.dataset.file = video; ref.src = video; void ref.play().catch(() => {}); }
+      ref.style.display = 'block';
+    } else ref.style.display = 'none';
+    if (jpg) { if (still.dataset.file !== jpg) { still.dataset.file = jpg; still.src = jpg; } still.style.display = 'block'; }
+    else still.style.display = 'none';
+  }
+
+  function hazeRgb(t: number, stage: CineStage): string {
+    const mix = (a: number[], b: number[], u: number) => a.map((v, i) => Math.round(v + (b[i] - v) * Math.min(1, Math.max(0, u)))).join(',');
+    if (stage === 'b4') return mix([210, 226, 255], [255, 214, 120], (t - CINE.b3End) / (CINE.b4End - CINE.b3End));
+    if (stage === 'b5') return '255,186,90';
+    if (stage === 'b6' || stage === 'hold') return mix([255, 150, 70], [190, 48, 36], (t - CINE.b5End) / (CINE.b6End - CINE.b5End));
+    return '255,232,190';
+  }
+
+  function paintPlate(bang: number | null, dissolve: number, stage: CineStage) {
+    const w = plate.clientWidth || window.innerWidth, h = plate.clientHeight || window.innerHeight;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (plate.width !== Math.floor(w * dpr) || plate.height !== Math.floor(h * dpr)) { plate.width = Math.floor(w * dpr); plate.height = Math.floor(h * dpr); }
+    const ctx = plate.getContext('2d'); if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+    if (bang == null || elapsed < bang + CINE.bangPeak - 0.05) return;
+    const amount = bangFlash(elapsed, bang - CINE.b2, reduced);
+    const haze = hazeRgb(elapsed, stage);
+    if (amount < 0.25) {
+      ctx.fillStyle = `rgb(${haze})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+    if (amount < 0.25) for (let i = 0; i < 5; i++) {
+      const ox = w * (0.5 + 0.28 * Math.sin(elapsed * 0.7 + i * 1.7));
+      const oy = h * (0.5 + 0.22 * Math.cos(elapsed * 0.5 + i));
+      const rad = Math.max(w, h) * (0.45 + 0.08 * Math.sin(elapsed * 0.9 + i));
+      const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, rad);
+      g.addColorStop(0, `rgba(${haze},0.55)`);
+      g.addColorStop(1, `rgba(${haze},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(ox, oy, rad, 0, Math.PI * 2); ctx.fill();
+    }
+    if (amount > 0) {
+      ctx.globalCompositeOperation = 'lighter';
+      const cx = w / 2, cy = h / 2, reach = Math.hypot(w, h) / 2;
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, reach);
+      for (const u of [0, 0.35, 0.7, 1]) {
+        const luma = flashLuma(u, u * 0.15, amount);
+        grad.addColorStop(u, `rgba(255,${Math.round(246 - u * 36)},${Math.round(214 - u * 70)},${luma})`);
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+    }
+    const rad = shellRadius(elapsed - bang - CINE.bangPeak);
+    if (rad > 0.15 && rad < 1.5) {
+      ctx.globalCompositeOperation = 'source-over';
+      const R = rad * Math.min(w, h) * 0.55;
+      ctx.beginPath(); ctx.arc(w / 2, h / 2, R, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,214,160,0.9)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(w / 2, h / 2, R + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(150,210,255,0.85)'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+    if (dissolve > 0) {
+      ctx.globalCompositeOperation = 'source-over';
+      for (let i = 0; i < 36; i++) {
+        const a = i / 36 * Math.PI * 2 + elapsed;
+        const dist = dissolve * Math.min(w, h) * (0.15 + (i % 5) * 0.04);
+        const x = w / 2 + Math.cos(a) * dist, y = h * 0.46 + Math.sin(a) * dist * 0.55;
+        ctx.fillStyle = `rgba(255,226,180,${1 - dissolve})`;
+        ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
   }
 
   async function paintSim() {

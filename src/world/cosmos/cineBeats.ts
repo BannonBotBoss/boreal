@@ -23,8 +23,11 @@ export const CINE = {
   pinpoint: 5,
   /** Slim panel and the counter stay hidden until here. */
   panelAt: 23,
-  /** This slice holds at the end of B3. Later beats are not started. */
+  /** Bang picture hands into the plasma at 0:26. This slice holds at the end of B6. */
   b3End: 26,
+  b4End: 36,
+  b5End: 44,
+  b6End: 54,
   /** B2 inhale after narration `ended`. */
   b2: 0.8,
   /** Bed eases from −6 dB to −18 dB across this, then on toward 0 dB. */
@@ -186,18 +189,57 @@ export function bangFlash(t: number, narrationEndedAt: number, reduced: boolean)
   const peak = bangAt(narrationEndedAt) + CINE.bangPeak;
   const x = Math.abs(t - peak);
   if (x > CINE.flashHalf) return 0;
-  const cap = reduced ? CINE.flashReduced : CINE.flash;
+  const cap = reduced ? CINE.flashReduced / CINE.flash : 1;
   return cap * (1 - x / CINE.flashHalf);
 }
 
-export type CineStage = 'fade' | 'wait' | 'b1' | 'b2' | 'b3' | 'hold';
+export type CineStage = 'fade' | 'wait' | 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'b6' | 'hold';
 export function cineStage(t: number, begun: boolean, narrationEndedAt: number | null): CineStage {
   if (!begun) return t < CINE.fade ? 'fade' : 'wait';
   const end = narrationEndedAt ?? Number.POSITIVE_INFINITY;
   if (t < end) return 'b1';
   if (t < bangAt(end)) return 'b2';
   if (t < CINE.b3End) return 'b3';
+  if (t < CINE.b4End) return 'b4';
+  if (t < CINE.b5End) return 'b5';
+  if (t < CINE.b6End) return 'b6';
   return 'hold';
+}
+
+/**
+ * Radial flash, not a flat veil. nx and ny run −1..1 across the frame.
+ * Amount 1 is 100% white-gold at the core and averages about 0.70 over the frame.
+ */
+export function flashLuma(nx: number, ny: number, amount: number): number {
+  const r2 = nx * nx + ny * ny;
+  const g = Math.exp(-r2 * 0.9);
+  return Math.max(0, Math.min(1, amount * (0.34 + 0.66 * g)));
+}
+
+/** How far the shell has travelled, in the same −1..1 frame. It passes the corner (~1.4) by 0.6 s. */
+export function shellRadius(dt: number): number {
+  if (dt <= 0) return 0;
+  const u = Math.min(1, dt / 0.6);
+  return u * u * 1.45;
+}
+
+/** Pixels of the one-camera jolt. It hits during the bright flash and is gone by 0.18 s. */
+export function kickOffset(dt: number, reduced: boolean): { x: number; y: number } {
+  if (reduced || dt < 0 || dt > 0.18) return { x: 0, y: 0 };
+  const s = dt < 0.035 ? dt / 0.035 : Math.max(0, 1 - (dt - 0.035) / 0.145);
+  return { x: 34 * s, y: 48 * s };
+}
+
+/** The pinpoint is the core once the flash starts. No leftover dot. */
+export function pinHeld(t: number, bang: number | null): boolean {
+  if (bang == null) return true;
+  return t < bang + CINE.bangPeak - 0.02;
+}
+
+/** 0 while the title holds, then 1 once it has broken into the haze. */
+export function titleDissolve(dtAfterHold: number): number {
+  if (dtAfterHold <= 0) return 0;
+  return Math.min(1, dtAfterHold / 1.3);
 }
 
 /** B1 subtitles, split across the file that is actually playing. Not the spoken stage directions. */

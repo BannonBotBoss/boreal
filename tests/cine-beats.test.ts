@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, formatCosmicSeconds, heroAt, narrationEndFallback, offsetYr, secondsToCycle, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
+import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatCosmicSeconds, heroAt, kickOffset, narrationEndFallback, offsetYr, pinHeld, secondsToCycle, shellRadius, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
 import { MILESTONES, deepTimeAt } from '../src/core/deepTime';
 
 test('cosmic clock matches the sheet keyframes and does not jump', () => {
@@ -53,9 +53,23 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
   assert.equal(end, CINE.b1 + NARRATION.seconds);
   assert.equal(bangAt(end), end + CINE.b2);
   const peak = bangAt(end) + CINE.bangPeak;
-  assert.equal(bangFlash(peak, end, false), 0.7);
-  assert.equal(bangFlash(peak, end, true), 0.4);
+  assert.equal(bangFlash(peak, end, false), 1);
+  assert.ok(Math.abs(bangFlash(peak, end, true) - 0.4 / 0.7) < 1e-9);
   assert.equal(bangFlash(peak - 1, end, false), 0);
+  let sum = 0, n = 0;
+  for (let y = -1; y <= 1; y += 0.1) for (let x = -1; x <= 1; x += 0.1) { sum += flashLuma(x, y, 1); n++; }
+  assert.ok(Math.abs(sum / n - 0.7) < 0.06, `frame average ${sum / n}`);
+  assert.ok(flashLuma(0, 0, 1) > 0.98);
+  assert.ok(flashLuma(1, 1, 1) < flashLuma(0, 0, 1));
+  assert.equal(shellRadius(0), 0);
+  assert.ok(shellRadius(0.6) > 1.4);
+  assert.ok(kickOffset(0.1, false).y > 10);
+  assert.equal(kickOffset(-0.1, false).y, 0);
+  assert.equal(kickOffset(0.1, true).y, 0);
+  assert.equal(pinHeld(peak, bangAt(end)), false);
+  assert.equal(cineStage(30, true, end), 'b4');
+  assert.equal(cineStage(40, true, end), 'b5');
+  assert.equal(cineStage(48, true, end), 'b6');
   assert.equal(cineStage(1, false, null), 'fade');
   assert.equal(cineStage(2, false, null), 'wait');
   assert.equal(cineStage(10, true, null), 'b1');

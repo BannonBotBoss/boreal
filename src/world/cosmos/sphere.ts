@@ -4,6 +4,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { K } from '../../core/constants';
+import { GLSL_NOISE } from '../../proc/glsl';
 import { frameShiftX, sphereLook } from './look';
 import { QUEST, TIERS, chooseTier, percentile, questProfileOn, stepTier, tierById, type Hysteresis, type Tier } from './lod';
 
@@ -213,18 +215,10 @@ export class CosmosSphere {
       fragmentShader: `
         varying vec2 vUv;
         uniform float time, heat, gain, clear, dark, stars, galaxy, sun, late;
-        float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-        float noise(vec2 p){
-          vec2 i = floor(p), f = fract(p);
-          float a = hash(i), b = hash(i+vec2(1.0,0.0)), c = hash(i+vec2(0.0,1.0)), d = hash(i+vec2(1.0,1.0));
-          vec2 u = f*f*(3.0-2.0*f);
-          return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
-        }
-        float fbm(vec2 p){
-          float v = 0.0, a = 0.5;
-          for (int i = 0; i < 5; i++) { v += a * noise(p); p = mat2(1.62, 1.18, -1.18, 1.62) * p + vec2(1.7, 9.2); a *= 0.5; }
-          return v;
-        }
+${GLSL_NOISE}
+        #define hash(p) hash2s((p), 17.0)
+        #define noise(p) vnoise((p), 17.0)
+        float fb(vec2 p){ return fbm(p, 17.0); }
         float streak(vec2 uv, vec2 flow, float t){
           vec2 q = uv * 5.5 + flow * 1.4 + vec2(t * 0.65, t * 0.22);
           float lane = fract(q.x * 0.45 + q.y);
@@ -241,7 +235,7 @@ export class CosmosSphere {
           float h = hash(id);
           vec2 o = vec2(hash(id + vec2(1.7, 2.3)), hash(id + vec2(4.2, 8.1))) - 0.5;
           vec2 d = f - o * 0.86;
-          float ang = hash(id + vec2(3.1, 9.4)) * 6.2831853;
+          float ang = hash(id + vec2(3.1, 9.4)) * ${K.TAU};
           float ca = cos(ang), sa = sin(ang);
           d = vec2(ca * d.x + sa * d.y, -sa * d.x + ca * d.y);
           d.x *= 0.32 + 0.45 * hash(id + vec2(2.2, 0.4));
@@ -254,12 +248,12 @@ export class CosmosSphere {
         }
         void main(){
           vec2 uv = (vUv - 0.5) * vec2(1.85, 1.15);
-          vec2 q = vec2(fbm(uv + time * 0.045), fbm(uv + vec2(5.2, 1.3) - time * 0.036));
-          vec2 r = vec2(fbm(uv + 1.8 * q + time * 0.028), fbm(uv + 1.8 * q.yx - time * 0.02));
-          float base = fbm(uv * 1.15 + 2.2 * r);
-          float fine = fbm(uv * 4.8 + r * 1.4 + vec2(time * 0.05, 0.0));
-          float grain = fbm(uv * 11.0 - r + vec2(0.0, time * 0.07));
-          float dust = fbm(uv * 22.0 + time * 0.04);
+          vec2 q = vec2(fb(uv + time * 0.045), fb(uv + vec2(5.2, 1.3) - time * 0.036));
+          vec2 r = vec2(fb(uv + 1.8 * q + time * 0.028), fb(uv + 1.8 * q.yx - time * 0.02));
+          float base = fb(uv * 1.15 + 2.2 * r);
+          float fine = fb(uv * 4.8 + r * 1.4 + vec2(time * 0.05, 0.0));
+          float grain = fb(uv * 11.0 - r + vec2(0.0, time * 0.07));
+          float dust = fb(uv * 22.0 + time * 0.04);
           float density = base * 0.52 + fine * 0.28 + grain * 0.14 + dust * 0.06;
           float h = clamp(heat, 0.0, 3.0);
           float redFog = clamp(h - 2.0, 0.0, 1.0) * (1.0 - clear);
@@ -299,13 +293,13 @@ export class CosmosSphere {
           fogCol *= 0.45 + 0.7 * shaped;
           float fogAmt = smoothstep(1.65, 2.15, h);
           col = mix(col, fogCol, fogAmt * 0.8 * (1.0 - dark));
-          float webN = fbm(uv * 2.1 + r * 0.35);
+          float webN = fb(uv * 2.1 + r * 0.35);
           float web = pow(clamp(1.0 - abs(webN * 2.0 - 1.0), 0.0, 1.0), 1.7);
           vec3 webCol = vec3(0.02, 0.015, 0.04) + vec3(0.85, 0.78, 0.95) * pow(web, 1.55);
           float clearing = clear * beforeStars * (1.0 - clamp(galaxy + late + dark, 0.0, 1.0));
           float veil = 1.0 - clearing;
-          float lace = pow(clamp(1.0 - abs(fbm(uv * 8.5 + r) * 2.0 - 1.0), 0.0, 1.0), 16.0);
-          float lace2 = pow(clamp(1.0 - abs(fbm(uv * 16.0 + 2.4) * 2.0 - 1.0), 0.0, 1.0), 22.0);
+          float lace = pow(clamp(1.0 - abs(fb(uv * 8.5 + r) * 2.0 - 1.0), 0.0, 1.0), 16.0);
+          float lace2 = pow(clamp(1.0 - abs(fb(uv * 16.0 + 2.4) * 2.0 - 1.0), 0.0, 1.0), 22.0);
           vec3 revealed = vec3(0.012, 0.004, 0.002) + vec3(1.0, 0.45, 0.1) * (lace * 0.07 + lace2 * 0.1);
           col = mix(revealed, col, veil);
           col = mix(col, webCol * 0.42, dark);
@@ -313,8 +307,8 @@ export class CosmosSphere {
           float starSky = clamp(stars, 0.0, 1.0) * (1.0 - smoothstep(0.0, 0.8, galaxy)) * (1.0 - smoothstep(0.0, 0.2, late));
           vec3 night = vec3(0.006, 0.005, 0.008) + vec3(0.09, 0.07, 0.05) * pow(web, 2.8) * 0.28;
           col = mix(col, night, starSky);
-          float fil = pow(clamp(1.0 - abs(fbm(uv * 3.6 + r * 0.2) * 2.0 - 1.0), 0.0, 1.0), 8.5);
-          float filB = pow(clamp(1.0 - abs(fbm(uv * 6.4 + 3.1) * 2.0 - 1.0), 0.0, 1.0), 9.5);
+          float fil = pow(clamp(1.0 - abs(fb(uv * 3.6 + r * 0.2) * 2.0 - 1.0), 0.0, 1.0), 8.5);
+          float filB = pow(clamp(1.0 - abs(fb(uv * 6.4 + 3.1) * 2.0 - 1.0), 0.0, 1.0), 9.5);
           float threads = max(fil, filB * 0.8);
           float beads = galaxyField(uv, 20.0, threads) + galaxyField(uv + vec2(2.2, 7.1), 38.0, threads) * 0.85 + galaxyField(uv * 1.04 + vec2(4.0, 1.5), 62.0, threads) * 0.55;
           vec3 gSky = vec3(0.003, 0.0025, 0.004) + vec3(0.55, 0.52, 0.48) * threads * 0.4;

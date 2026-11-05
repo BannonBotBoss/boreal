@@ -7,6 +7,7 @@ import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES,
 import { buildFurCards, furCardMaterial } from './furCards';
 import { applyStylizedFill, coatOf } from './stylizedPalette';
 import { finishAnimalCoat } from './coatFinish';
+import { GOVERNOR } from '../core/quality';
 
 /**
  * Procedural wolf: a low-poly base skin (tubes swept around an invisible skeleton, see core/body.ts and core/wolfBody.ts)
@@ -41,12 +42,12 @@ export function poseWolfRig(tilt: THREE.Object3D, chains: WolfChain[], pose: Ret
     c.lower.rotation.x = pose.knees[i]; c.foot.rotation.x = pose.wrists[i]; c.paw.rotation.x = pose.paws[i];
   });
 }
-const PUP_COAT = { name: 'golden tan' as const, back: [.62, .42, .22] as [number, number, number], belly: [.84, .68, .44] as [number, number, number], dark: [.34, .22, .12] as [number, number, number], accent: [.72, .48, .26] as [number, number, number] };
+const PUP_COAT = { name: 'golden tan' as const, back: [.42, .26, .12] as [number, number, number], belly: [.72, .52, .30] as [number, number, number], dark: [.12, .07, .04] as [number, number, number], accent: [.55, .32, .14] as [number, number, number] };
 
 export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean; pup?: boolean } = {}) {
   const portrait = !!options.portrait;
   const pup = !!options.pup;
-  const furCount = pup ? 0 : FUR_CARDS;
+  const furCount = pup ? (GOVERNOR.xr ? 220 : 720) : FUR_CARDS;
   const withFur = options.fur !== false && furCount > 0;
   const root = new THREE.Group(); root.scale.setScalar(WOLF_SCALE);
   const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
@@ -110,20 +111,37 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(body.skinWeight, 4));
   geometry.setIndex(body.index);
   const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, transparent: false, opacity: 1, depthWrite: true });
-  if (pup) skinMaterial.userData.pupCoat = true;
-  applyStylizedFill(skinMaterial, pup ? PUP_COAT.back : coatOf('Gray Wolf'));
+  if (pup) {
+    // A flat emissive wash turns the coat into a cardboard cut-out. A small warm floor leaves the lights to shade the fur.
+    skinMaterial.userData.pupCoat = true;
+    skinMaterial.emissive.setRGB(0.05, 0.03, 0.02);
+    skinMaterial.emissiveIntensity = 0.2;
+    skinMaterial.userData.stylized = true;
+    skinMaterial.userData.fillIntensity = 0.2;
+    skinMaterial.toneMapped = false;
+    skinMaterial.roughness = 0.78;
+  } else applyStylizedFill(skinMaterial, coatOf('Gray Wolf'));
   finishAnimalCoat(skinMaterial, pup ? 'pup' : 'mama');
   const furMaterial = furCardMaterial();
-  applyStylizedFill(furMaterial, coatOf('Gray Wolf'));
-  finishAnimalCoat(furMaterial, 'mama');
+  if (pup) {
+    furMaterial.userData.pupCoat = true;
+    furMaterial.emissive.setRGB(0.05, 0.03, 0.02);
+    furMaterial.emissiveIntensity = 0.2;
+    furMaterial.userData.stylized = true;
+    furMaterial.userData.fillIntensity = 0.2;
+    furMaterial.toneMapped = false;
+  } else applyStylizedFill(furMaterial, coatOf('Gray Wolf'));
+  finishAnimalCoat(furMaterial, pup ? 'pup' : 'mama');
   const skinMesh = new THREE.SkinnedMesh(geometry, skinMaterial);
   const skins = withFur ? [skinMesh, new THREE.SkinnedMesh(buildFurCards(body, portrait
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
-      : { count: furCount, length: pup ? FUR_LENGTH * 1.8 : FUR_LENGTH, width: pup ? FUR_WIDTH * 1.6 : FUR_WIDTH, seed, clear,
+      : { count: furCount, length: pup ? FUR_LENGTH * 2.4 : FUR_LENGTH, width: pup ? FUR_WIDTH * 1.35 : FUR_WIDTH, seed, clear,
         // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
-        tipTint: (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furMaterial)] : [skinMesh];
+        tipTint: pup
+          ? () => ({ color: [.86, .66, .38] as [number, number, number], amount: .4 })
+          : (p) => p[1] > .30 ? { color: [.72, .70, .66], amount: .45 } : undefined }), furMaterial)] : [skinMesh];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });
   // Eyes sit forward in the sculpted sockets and ride on the cranium; the head sensor too.
   const amber = new THREE.MeshStandardMaterial({ color: 0xc9830f, emissive: 0xe07800, emissiveIntensity: 1.0, roughness: .25 }), pupil = new THREE.MeshStandardMaterial({ color: 0x120c04, roughness: .3 });

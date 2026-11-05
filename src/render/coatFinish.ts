@@ -17,10 +17,14 @@ gl_FragColor.rgb = agouti;
 `;
 
 const PUP = `
-float agoutiRim = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 2.4);
-vec3 agouti = gl_FragColor.rgb;
-agouti += agoutiRim * vec3(0.62, 0.68, 0.78) * 0.12;
-gl_FragColor.rgb = agouti;
+float agoutiUp = clamp(normal.y, 0.0, 1.0);
+vec3 nrm = normalize(normal);
+float wrap = clamp(dot(nrm, normalize(vec3(-0.25, 0.72, 0.45))), 0.0, 1.0);
+float agoutiRim = pow(1.0 - clamp(dot(nrm, normalize(vViewPosition)), 0.0, 1.0), 2.2);
+vec3 coat = diffuseColor.rgb * (0.62 + 0.95 * wrap);
+coat = mix(coat, coat * vec3(0.28, 0.18, 0.12), smoothstep(0.15, 0.7, agoutiUp) * 0.8);
+coat += agoutiRim * vec3(0.78, 0.84, 0.95) * 0.4;
+gl_FragColor.rgb = coat;
 `;
 
 /** Moonlit rim, and a saddle on the mama. Safe to call once per material. */

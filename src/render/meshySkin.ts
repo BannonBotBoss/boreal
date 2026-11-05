@@ -13,7 +13,7 @@ import { BEAR_LEGS } from '../core/bearBody';
 import { MAMMALS, MAMMAL_PLANS, BIRD_GROUPS } from '../core/species';
 import type { MammalPlan } from '../core/skeleton';
 import { applyStylizedFill } from './stylizedPalette';
-import { finishAnimalCoat } from './coatFinish';
+import { finishAnimalCoat, finishFoxCoat } from './coatFinish';
 
 /** WOLF_LEGS is the 0.82 m shoulder wolf in animalBehavior.ts. Bone lengths scale onto the species row. */
 const WOLF_LEG_SHOULDER = 0.82;
@@ -425,8 +425,11 @@ export function spawnSkin(template: SkinTemplate): SkinSpawn {
   const meshes = template.geometries.map((geometry, i) => {
     const material = template.materials[i].clone();
     material.transparent = true;
-    applyStylizedFill(material);
-    if (/wolf/i.test(template.species)) finishAnimalCoat(material);
+    if (template.species === 'Red Fox') finishFoxCoat(material);
+    else {
+      applyStylizedFill(material);
+      if (/wolf/i.test(template.species)) finishAnimalCoat(material);
+    }
     const mesh = new THREE.SkinnedMesh(geometry, material);
     mesh.frustumCulled = false;
     mesh.name = 'meshy-skin';

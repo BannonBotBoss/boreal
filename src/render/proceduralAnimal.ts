@@ -41,7 +41,8 @@ function sitOnGround(root: THREE.Object3D) {
   const box = new THREE.Box3().setFromObject(root);
   const lift = Number.isFinite(box.min.y) ? -box.min.y : 0;
   if (Math.abs(lift) < 1e-4) return;
-  for (const child of root.children) child.position.y += lift;
+  const local = lift / (root.scale.y || 1);
+  for (const child of root.children) child.position.y += local;
   root.updateMatrixWorld(true);
 }
 
@@ -111,11 +112,10 @@ function bird(name: string, mat: THREE.Material): ProceduralAnimal {
 }
 
 /** A coat that stays its own colour. The shared fill washes a fox out to pale tan. */
+/** Unlit on purpose. Daylight clips a lit orange to cream; this colour is the colour on screen. */
 function foxMat(r: number, g: number, b: number) {
-  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(r, g, b), roughness: 0.55, metalness: 0 });
-  mat.emissive.setRGB(r * 0.35, g * 0.35, b * 0.35);
-  mat.emissiveIntensity = 0.85;
-  mat.toneMapped = true;
+  const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(r, g, b) });
+  mat.toneMapped = false;
   return mat;
 }
 
@@ -124,8 +124,8 @@ function foxMat(r: number, g: number, b: number) {
  * Forward is local −z, the same way the wolf mesh faces.
  */
 function redFox(): ProceduralAnimal {
-  const orange = foxMat(0.92, 0.16, 0.03);
-  const white = foxMat(0.96, 0.94, 0.9);
+  const orange = foxMat(0.55, 0.09, 0.015);
+  const white = foxMat(0.5, 0.46, 0.4);
   const black = foxMat(0.05, 0.04, 0.04);
   const root = new THREE.Group();
   root.name = 'proc-Red Fox';
@@ -164,7 +164,7 @@ function redFox(): ProceduralAnimal {
     knees.forEach((knee, i) => { knee.rotation.x = p.knees[i]; });
     body.position.y = bodyBase + p.bob;
   };
-  root.scale.setScalar(1.45);
+  root.scale.setScalar(1.7);
   poseAt('idle', 0, 0, 0);
   sitOnGround(root);
   const bodyBase = body.position.y;

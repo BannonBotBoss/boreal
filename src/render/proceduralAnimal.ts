@@ -110,9 +110,71 @@ function bird(name: string, mat: THREE.Material): ProceduralAnimal {
   return { root, pose: (motion, phase, speed) => poseAt(motion, phase, speed, bodyBase) };
 }
 
+/** A coat that stays its own colour. The shared fill washes a fox out to pale tan. */
+function foxMat(r: number, g: number, b: number) {
+  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(r, g, b), roughness: 0.55, metalness: 0 });
+  mat.emissive.setRGB(r * 0.35, g * 0.35, b * 0.35);
+  mat.emissiveIntensity = 0.85;
+  mat.toneMapped = true;
+  return mat;
+}
+
+/**
+ * Red-orange back, white chest and tail tip, black legs and ear tips.
+ * Forward is local −z, the same way the wolf mesh faces.
+ */
+function redFox(): ProceduralAnimal {
+  const orange = foxMat(0.92, 0.16, 0.03);
+  const white = foxMat(0.96, 0.94, 0.9);
+  const black = foxMat(0.05, 0.04, 0.04);
+  const root = new THREE.Group();
+  root.name = 'proc-Red Fox';
+  const body = new THREE.Group();
+  root.add(body);
+  part(body, orange, 0, 0.36, 0.02, 0.11, 0.1, 0.28);
+  part(body, white, 0, 0.3, -0.08, 0.08, 0.05, 0.14);
+  part(body, orange, 0, 0.46, -0.26, 0.07, 0.07, 0.1);
+  part(body, orange, 0, 0.44, -0.36, 0.035, 0.03, 0.06);
+  part(body, black, 0, 0.43, -0.4, 0.02, 0.015, 0.02);
+  part(body, orange, -0.045, 0.54, -0.24, 0.02, 0.05, 0.015);
+  part(body, orange, 0.045, 0.54, -0.24, 0.02, 0.05, 0.015);
+  part(body, black, -0.045, 0.58, -0.24, 0.012, 0.015, 0.01);
+  part(body, black, 0.045, 0.58, -0.24, 0.012, 0.015, 0.01);
+  part(body, orange, 0, 0.4, 0.32, 0.06, 0.05, 0.16);
+  part(body, white, 0, 0.42, 0.46, 0.04, 0.035, 0.05);
+  const hips: THREE.Group[] = [];
+  const knees: THREE.Group[] = [];
+  const spots: [number, number][] = [[1, -1], [-1, -1], [1, 1], [-1, 1]];
+  for (const [sx, sz] of spots) {
+    const hip = new THREE.Group();
+    hip.position.set(sx * 0.07, 0.32, sz * 0.12);
+    root.add(hip);
+    hips.push(hip);
+    part(hip, black, 0, -0.08, 0, 0.018, 0.08, 0.018);
+    const knee = new THREE.Group();
+    knee.position.y = -0.16;
+    hip.add(knee);
+    knees.push(knee);
+    part(knee, black, 0, -0.07, 0, 0.015, 0.07, 0.015);
+  }
+  const L = legsForSpecies('Red Fox')!.legs;
+  const poseAt = (motion: Motion, phase: number, speed: number, bodyBase: number) => {
+    const p = quadrupedPose(motion, phase, 0, L, speed);
+    hips.forEach((hip, i) => { hip.rotation.x = p.legs[i]; });
+    knees.forEach((knee, i) => { knee.rotation.x = p.knees[i]; });
+    body.position.y = bodyBase + p.bob;
+  };
+  root.scale.setScalar(1.45);
+  poseAt('idle', 0, 0, 0);
+  sitOnGround(root);
+  const bodyBase = body.position.y;
+  return { root, pose: (motion, phase, speed) => poseAt(motion, phase, speed, bodyBase) };
+}
+
 /** Null when the name is not a mammal or bird row. */
 export function createProceduralAnimal(name: string): ProceduralAnimal | null {
   if (!bodyMetres(name)) return null;
+  if (name === 'Red Fox') return redFox();
   const mat = material(name);
   if (legsForSpecies(name)) return mammal(name, mat);
   if (isBirdPlan(name)) return bird(name, mat);

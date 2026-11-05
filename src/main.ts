@@ -408,6 +408,7 @@ let lastPhotoView: PhotoView | undefined;
 let litterNudge = false;
 let pupHeard: ReturnType<typeof view.stepPups> = [];
 let driveCommitted = false;
+let driveHold = false;
 let hadPad = false, lastTime = 0, accumulator = 0;
 const clock0 = loadClock(localStorage.getItem(CLOCK.key));
 initDay(location.search, localStorage.getItem(DAY.key), clock0.worldSec); // the chronometer's saved dial; ?hour= ?day= ?date= set it
@@ -511,8 +512,8 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
         brain.heading = steerLeap(brain.heading, player, aim, brain.speed, 1 / 30);
         yaw = brain.heading;
       }
-      // Protect already steps her toward the fox. The walk step must not add a second closing.
-      if (driveCommitted) { brain.speed = 0; brain.motion = 'run'; }
+      // While she charges or walks back, the walk step must not add a second move.
+      if (driveHold) { brain.speed = 0; brain.motion = 'run'; }
       const pose = driving ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities(),{
         massKg: playerMass, wind: windAt(player.x, .6, player.z), daylight: 1 - view.darkness(),
         hares: view.hares.list().map(h => ({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: 1 })),
@@ -541,12 +542,13 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
           if (d < best) { best = d; pupX = pup.x; pupZ = pup.z; }
         }
         const now = stepDrives(player.x, player.z, yaw, pupX, pupZ, yip, 1 / 30);
-        if (now.committed) {
+        if (now.hold) {
           player.x = now.mamaX; player.z = now.mamaZ;
           yaw = now.mamaYaw + Math.PI; player.heading = yaw;
-          brain.heading = yaw; brain.motion = 'run'; brain.speed = 2.8; brain.gaitSpeed = 2.8;
+          brain.heading = yaw; brain.motion = 'run'; brain.speed = 3.2; brain.gaitSpeed = 3.2;
         }
         driveCommitted = now.committed;
+        driveHold = now.hold;
       }
       if (view.playable.id === 'wolf' && moved > 0) tryMark('wolf:player', player.x, player.z, moved);
       { const keep = !autonomous && brain.motion === 'jump' && locked ? locked.key : undefined;

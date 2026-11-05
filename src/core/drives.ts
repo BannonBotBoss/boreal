@@ -16,8 +16,14 @@ export const STRAY_M = 6;
 export const PROTECT_RISE = 0.22;
 export const PROTECT_FALL = 0.25;
 export const PROTECT_COMMIT = 0.5;
-/** How far in front of her the fox starts, just outside the danger ring. */
-export const FOX_START_M = 9.2;
+/** Where he waits. Outside the 8 m danger disc, and well clear of the pups. */
+export const LINGER_RING = 11;
+/** How far in front of her the fox starts. Same ring. */
+export const FOX_START_M = LINGER_RING;
+/** She charges this far toward him, then stops. A few strides, not a pursuit. */
+export const CHARGE_M = 4.5;
+/** He leaves. Fast enough to cross the view. */
+export const FLEE_MPS = 9;
 
 export type FoxMode = 'none' | 'approach' | 'linger' | 'watch' | 'flee';
 
@@ -32,6 +38,9 @@ export interface DriveNow {
   approach: number;
   mode: FoxMode;
   committed: boolean;
+  /** She is charging or walking back. The walk step must not move her as well. */
+  hold: boolean;
+  returning: boolean;
   foxX: number;
   foxZ: number;
   foxYaw: number;
@@ -115,7 +124,6 @@ function pushOut(foxX: number, foxZ: number, mamaX: number, mamaZ: number, dist:
 
 const toward = (x: number, z: number, tx: number, tz: number) => Math.atan2(tx - x, tz - z);
 const away = (x: number, z: number, tx: number, tz: number) => toward(x, z, tx, tz) + Math.PI;
-const tangent = (x: number, z: number, tx: number, tz: number) => toward(x, z, tx, tz) + Math.PI / 2;
 const forward = (x: number, z: number, yaw: number, dist: number) => ({ x: x + Math.sin(yaw) * dist, z: z + Math.cos(yaw) * dist });
 
 /** Test hook. Puts the fox back, or at a chosen place. */
@@ -124,6 +132,11 @@ export function resetDrives(at?: { x: number; z: number; hunger?: number; protec
   protect = at?.protect ?? 0;
   foxYaw = 0;
   last = null;
+  pace = 0;
+  phase = 'watch';
+  homeX = Number.NaN;
+  homeZ = Number.NaN;
+  homeYaw = 0;
   if (at) { foxX = at.x; foxZ = at.z; seeded = true; }
   else { foxX = Number.NaN; foxZ = Number.NaN; seeded = false; }
 }
@@ -135,6 +148,11 @@ let foxZ = Number.NaN;
 let foxYaw = 0;
 let seeded = false;
 let last: DriveNow | null = null;
+let pace = 0;
+let phase: 'watch' | 'charge' | 'return' = 'watch';
+let homeX = Number.NaN;
+let homeZ = Number.NaN;
+let homeYaw = 0;
 
 export function driveSnapshot() { return last; }
 
@@ -145,7 +163,7 @@ export function foxPlace() {
   if (!seeded || !last) return null;
   const moving = last.mode !== 'none';
   const motion = last.mode === 'flee' || last.mode === 'approach' ? 'run' : last.mode === 'none' ? 'idle' : 'walk';
-  const speed = last.mode === 'flee' ? 3.4 : last.mode === 'linger' ? 0.7 : last.mode === 'approach' ? 1.6 : 0.55;
+  const speed = last.mode === 'flee' ? FLEE_MPS : last.mode === 'linger' ? 0.8 : last.mode === 'approach' ? 1.6 : 0.6;
   return { x: last.foxX, z: last.foxZ, yaw: last.foxYaw + Math.PI, moving, motion, speed };
 }
 
@@ -154,14 +172,16 @@ export function foxPlace() {
  * `gameYaw` is only used to place the fox the first time, in front of her.
  */
 export function stepDrives(mamaX: number, mamaZ: number, gameYaw: number, pupX: number, pupZ: number, yipping: boolean, dt: number): DriveNow {
+  const facing = gameYaw + Math.PI;
   if (!seeded) {
-    const fx = -Math.sin(gameYaw), fz = -Math.cos(gameYaw);
-    foxX = mamaX + fx * FOX_START_M;
-    foxZ = mamaZ + fz * FOX_START_M;
-    foxYaw = 0;
+    foxX = mamaX + Math.sin(facing) * LINGER_RING;
+    foxZ = mamaZ + Math.cos(facing) * LINGER_RING;
+    foxYaw = facing + Math.PI;
     seeded = true;
   }
-  const nextHunger = hungerStep(hunger, 'Red Fox', dt);
+  const step = Math.max(0, dt);
+  pace += step;
+  const nextHunger = hungerStep(hunger, 'Red Fox', step);
   const pupD = Math.hypot(pupX - foxX, pupZ - foxZ);
   const mamaD = Math.hypot(mamaX - foxX, mamaZ - foxZ);
   const pupFromMama = Math.hypot(pupX - mamaX, pupZ - mamaZ);
@@ -170,31 +190,64 @@ export function stepDrives(mamaX: number, mamaZ: number, gameYaw: number, pupX: 
   const effortPup = effort(bodyKg('Red Fox'), bodyKg('pup'));
   const effortMama = effort(bodyKg('Red Fox'), bodyKg('Gray Wolf'));
   const stray = pupFromMama > STRAY_M;
-  const near = mamaD < PROTECT_M || pupD < PROTECT_M;
-  const nextProtect = protectStep(protect, near, dt);
-  const guarding = nextProtect >= PROTECT_COMMIT;
-  const danger = dangerOf(mamaD, guarding);
+  const near = mamaD < LINGER_RING + 2 || pupD < PROTECT_M;
+  const nextProtect = protectStep(protect, near && phase !== 'return', step);
+  const guarding = nextProtect >= PROTECT_COMMIT && phase !== 'return';
+  if (guarding && phase === 'watch') {
+    phase = 'charge';
+    homeX = mamaX;
+    homeZ = mamaZ;
+    homeYaw = gameYaw;
+  }
+  if (phase === 'charge' && mamaD > 18) phase = 'return';
+  const steered = phase !== 'watch';
+  const danger = dangerOf(mamaD, phase === 'charge');
   const useEffort = stray ? effortPup : Math.max(effortPup, 0.35);
   const approach = approachOf(nextHunger, useEffort, focused ? Math.max(scent, 0.35) : scent);
-  const radius = guarding ? DANGER_PROTECT_M : DANGER_M;
-  let mode: FoxMode = 'none';
-  let speed = 0;
+  let mode: FoxMode = 'watch';
   let yaw = foxYaw;
-  if (guarding && mamaD < radius) { mode = 'flee'; speed = 3.4; yaw = away(foxX, foxZ, mamaX, mamaZ); }
-  else if (mamaD <= DANGER_M) { mode = 'linger'; speed = 1.15; yaw = away(foxX, foxZ, mamaX, mamaZ); }
-  else if (mamaD < DANGER_M * 1.35 && approach > 0.02) { mode = 'linger'; speed = 0.7; yaw = tangent(foxX, foxZ, mamaX, mamaZ); }
-  else if (approach > danger && (focused || scent > 0.15) && stray) { mode = 'approach'; speed = 1.1 + nextHunger; yaw = toward(foxX, foxZ, pupX, pupZ); }
-  else if (scent > 0.05) { mode = 'watch'; speed = 0.55; yaw = toward(foxX, foxZ, pupX, pupZ); }
-  const push = mode === 'flee' || (mode === 'linger' && mamaD <= DANGER_M);
-  const fox = push
-    ? pushOut(foxX, foxZ, mamaX, mamaZ, mamaD + speed * Math.max(0, dt))
-    : forward(foxX, foxZ, yaw, speed * Math.max(0, dt));
-  let mama = { x: mamaX, z: mamaZ, yaw: 0 };
-  if (guarding) {
+  let fox = { x: foxX, z: foxZ };
+  let mama = { x: mamaX, z: mamaZ, yaw: facing };
+  if (phase === 'charge') {
+    mode = 'flee';
+    yaw = away(foxX, foxZ, mamaX, mamaZ);
+    fox = pushOut(foxX, foxZ, mamaX, mamaZ, mamaD + FLEE_MPS * step);
     const face = toward(mamaX, mamaZ, foxX, foxZ);
-    const room = Math.max(0, mamaD - 1.5);
-    const stepped = forward(mamaX, mamaZ, face, Math.min(2.8 * Math.max(0, dt), room));
+    const fromHome = Math.hypot(mamaX - homeX, mamaZ - homeZ);
+    const room = Math.max(0, CHARGE_M - fromHome);
+    const stepped = forward(mamaX, mamaZ, face, Math.min(3.4 * step, room));
     mama = { x: stepped.x, z: stepped.z, yaw: face };
+  } else if (phase === 'return') {
+    mode = 'watch';
+    fox = pushOut(foxX, foxZ, mamaX, mamaZ, Math.min(26, mamaD + FLEE_MPS * step));
+    yaw = away(fox.x, fox.z, mamaX, mamaZ);
+    const face = toward(mamaX, mamaZ, homeX, homeZ);
+    const dHome = Math.hypot(homeX - mamaX, homeZ - mamaZ);
+    if (dHome < 0.4) {
+      phase = 'watch';
+      mama = { x: homeX, z: homeZ, yaw: homeYaw + Math.PI };
+      homeX = Number.NaN;
+    } else {
+      const stepped = forward(mamaX, mamaZ, face, Math.min(2.6 * step, dHome));
+      mama = { x: stepped.x, z: stepped.z, yaw: face };
+    }
+  } else if (stray && approach > danger && mamaD > LINGER_RING) {
+    mode = 'approach';
+    yaw = toward(foxX, foxZ, pupX, pupZ);
+    fox = forward(foxX, foxZ, yaw, (1.1 + nextHunger) * step);
+  } else if (mamaD < LINGER_RING - 0.4) {
+    mode = 'linger';
+    fox = pushOut(foxX, foxZ, mamaX, mamaZ, LINGER_RING);
+    yaw = toward(fox.x, fox.z, mamaX, mamaZ);
+  } else if (mamaD > LINGER_RING + 1.2) {
+    mode = 'watch';
+    fox = pushOut(foxX, foxZ, mamaX, mamaZ, Math.max(LINGER_RING, mamaD - 4 * step));
+    yaw = toward(fox.x, fox.z, mamaX, mamaZ);
+  } else {
+    mode = 'linger';
+    const ang = facing + Math.sin(pace * 0.65) * 0.75;
+    fox = { x: mamaX + Math.sin(ang) * LINGER_RING, z: mamaZ + Math.cos(ang) * LINGER_RING };
+    yaw = ang + Math.PI;
   }
   hunger = nextHunger;
   protect = nextProtect;
@@ -203,7 +256,8 @@ export function stepDrives(mamaX: number, mamaZ: number, gameYaw: number, pupX: 
   foxYaw = yaw;
   last = {
     hunger, effortPup, effortMama, scent, danger, protect, threat: near ? 1 : 0, approach, mode,
-    committed: guarding, foxX, foxZ, foxYaw, mamaX: mama.x, mamaZ: mama.z, mamaYaw: mama.yaw,
+    committed: phase === 'charge', hold: steered || phase !== 'watch', returning: phase === 'return',
+    foxX, foxZ, foxYaw, mamaX: mama.x, mamaZ: mama.z, mamaYaw: mama.yaw,
     pupX, pupZ, yip: yipping,
   };
   (globalThis as { __borealDrive?: DriveNow }).__borealDrive = last;

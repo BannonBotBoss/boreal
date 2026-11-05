@@ -295,8 +295,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       panel.style.bottom = '';
       panel.style.right = '';
       panel.style.left = '';
-      const panelOut = elapsed < 111.9 ? 1 : Math.max(0, 1 - (elapsed - 111.9) / 0.6);
-      if (elapsed >= 111.9) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
+      const panelOut = elapsed < 110.55 ? 1 : Math.max(0, 1 - (elapsed - 110.55) / 0.6);
+      if (elapsed >= 110.55) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
       panel.style.setProperty('opacity', String(panelOut), 'important');
     } else if (booted) {
       root.style.background = '#000';
@@ -321,7 +321,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       const years = clock.includes('year') || clock === 'Today';
       count.style.fontSize = years ? '26px' : '';
       count.style.opacity = '1';
-      count.style.color = '#f6efe4';
+      count.style.color = '#fff6e8';
       count.style.overflow = years ? 'visible' : '';
       panel.style.width = elapsed >= 82 ? 'min(820px, 78vw)' : '';
       if (years) setPlain(count, clock);
@@ -333,7 +333,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       }
       const rowEnd = figure === '4.4 Gya oceans' ? 100 : figure === '2.4 Gya' ? 103 : figure === '470 Mya plants' ? 107.2 : 0;
       const fade = rowEnd > 0 && elapsed > rowEnd - 0.45 ? Math.max(0, (rowEnd - elapsed) / 0.45) : 1;
-      fig.style.setProperty('color', '#ffffff', 'important');
+      fig.style.animation = 'none';
+      fig.style.setProperty('color', '#fff6e8', 'important');
       fig.style.setProperty('opacity', figure ? String(fade) : '1', 'important');
     }
     if (begun) audio.sync(elapsed, narrationEndedAt);
@@ -369,7 +370,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       GLOBE_SKY.warm = 0.55 + (0.105 - 0.55) * s;
       GLOBE_SKY.steam = 0.625 * s;
       GLOBE_SKY.clear = 1 + (0.241 - 1) * s;
-    } else if (t < 107) {
+    } else if (t < 105) {
       const along = Math.min(1, (t - 97) / 11);
       const plants = t < 101 ? 0 : Math.min(1, (t - 101) / 5);
       era.set(0.045 * (1 - Math.min(1, (t - 97) / 8)), 0.625 + 0.375 * Math.min(1, (t - 97) / 7), plants, 0);
@@ -377,11 +378,12 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       GLOBE_SKY.steam = 0.625 * (1 - 0.4 * along);
       GLOBE_SKY.clear = 0.241 * (1 - along);
     } else {
-      const w = Math.min(1, (t - 107) / 4);
-      era.set(0, 1, 1, w);
-      GLOBE_SKY.warm = 0.0095 * (1 - w);
-      GLOBE_SKY.steam = 0.397 * (1 - w);
-      GLOBE_SKY.clear = 0.022 * (1 - w);
+      const w = Math.min(1, (t - 105) / 4);
+      const plants = Math.min(1, 0.8 + 0.2 * Math.min(1, (t - 105)));
+      era.set(0, 1, plants, w);
+      GLOBE_SKY.warm = 0.0286 * (1 - w);
+      GLOBE_SKY.steam = 0.443 * (1 - w);
+      GLOBE_SKY.clear = 0.066 * (1 - w);
     }
   }
 
@@ -497,47 +499,38 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, w, h);
       }
-      const spray = Math.min(1, Math.max(0, (elapsed - 87.9) / 1.3));
-      if (spray > 0) {
-        const arcR = R * 1.15;
-        for (let i = 0; i < 36; i++) {
-          const a = -1.1 + (i / 35) * 1.95;
-          const ex = cx + Math.cos(a) * arcR;
-          const ey = cy + Math.sin(a) * arcR;
-          const mx = (hx + ex) / 2 + Math.cos(a) * R * 0.42;
-          const my = (hy + ey) / 2 + Math.sin(a) * R * 0.22;
-          const p = Math.min(1, spray * (0.72 + ((i * 5) % 7) / 18));
-          const o = 1 - p;
-          const x = o * o * hx + 2 * o * p * mx + p * p * ex;
-          const y = o * o * hy + 2 * o * p * my + p * p * ey;
-          ctx.fillStyle = `rgba(255,${170 - (i % 5) * 12},60,${0.35 + p * 0.55})`;
-          ctx.beginPath();
-          ctx.arc(x, y, 1.3 + (i % 3) * 0.7, 0, Math.PI * 2);
-          ctx.fill();
-        }
+    }
+    if (elapsed >= 87.9 && elapsed < CINE.b11End) {
+      const travel = Math.min(1, (elapsed - 87.9) / 1);
+      const ang = -0.7;
+      const hx = cx + Math.cos(ang) * R * 0.55;
+      const hy = cy + Math.sin(ang) * R * 0.2;
+      const arcR = R * 1.22;
+      const n = 42;
+      for (let i = 0; i < n; i++) {
+        const a = -1.1 + (i / (n - 1)) * 1.95;
+        const ex = cx + Math.cos(a) * arcR;
+        const ey = cy + Math.sin(a) * arcR;
+        const bow = 0.48 + (i % 5) * 0.05;
+        const mx = (hx + ex) / 2 + Math.cos(a) * R * bow;
+        const my = (hy + ey) / 2 + Math.sin(a) * R * bow * 0.5;
+        const p = Math.min(1, travel * (0.84 + (i % 6) / 28));
+        const o = 1 - p;
+        const x = o * o * hx + 2 * o * p * mx + p * p * ex;
+        const y = o * o * hy + 2 * o * p * my + p * p * ey;
+        const rad = 4.5 + (i % 3);
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, rad);
+        glow.addColorStop(0, `rgba(255,214,140,${0.55 + p * 0.4})`);
+        glow.addColorStop(0.45, `rgba(255,140,40,${0.28 + p * 0.3})`);
+        glow.addColorStop(1, 'rgba(255,90,20,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, rad, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
     if (elapsed >= 89.2 && elapsed < CINE.b11End) {
       const after = (elapsed - 89.2) / (CINE.b11End - 89.2);
-      const arcR = R * (1.08 + after * 0.42);
-      ctx.strokeStyle = `rgba(255,140,40,${Math.min(1, after / 0.55) * (0.18 + after * 0.22)})`;
-      ctx.lineWidth = 10;
-      ctx.beginPath();
-      ctx.arc(cx, cy, arcR, -1.1, 0.85);
-      ctx.stroke();
-      ctx.strokeStyle = `rgba(255,210,120,${Math.min(1, after / 0.55) * (0.45 + after * 0.4)})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(cx, cy, arcR, -1.1, 0.85);
-      ctx.stroke();
-      for (let i = 0; i < 22; i++) {
-        const a = -1.1 + (i / 21) * 1.95;
-        const rr = arcR + Math.sin(i * 2.1) * R * 0.06;
-        const px = cx + Math.cos(a) * rr;
-        const py = cy + Math.sin(a) * rr;
-        ctx.fillStyle = `rgba(255,190,80,${0.35 + after * 0.45})`;
-        ctx.beginPath(); ctx.arc(px, py, 1.5 + (i % 3), 0, Math.PI * 2); ctx.fill();
-      }
       if (after > 0.28) {
         const m = (after - 0.28) / 0.72;
         const ang = -0.35 + m * 1.15;

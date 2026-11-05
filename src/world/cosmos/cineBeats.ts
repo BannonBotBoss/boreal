@@ -190,8 +190,8 @@ export function formatClock(t: number): string {
   const from100 = TODAY_YR - cosmicSeconds(100) / YEAR_S;
   let ago = t < 100 ? TODAY_YR - cosmicSeconds(t) / YEAR_S
     : t < 104.5 ? from100 + (700e6 - from100) * ((t - 100) / 4.5)
-    : t < 107.5 ? 700e6 + (240e6 - 700e6) * ((t - 104.5) / 3)
-    : t < 112 ? 240e6 * (1 - (t - 107.5) / 4.5)
+    : t < 106 ? 700e6 + (240e6 - 700e6) * ((t - 104.5) / 3)
+    : t < 110 ? 470e6 * (1 - (t - 106) / 4)
     : 0;
   if (!(ago > 5e6)) return 'Today';
   if (ago >= 1e9) return `${(Math.round(ago / 1e7) / 100).toFixed(2)} billion years ago`;

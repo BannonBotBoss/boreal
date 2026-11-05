@@ -41,7 +41,8 @@ function sitOnGround(root: THREE.Object3D) {
   const box = new THREE.Box3().setFromObject(root);
   const lift = Number.isFinite(box.min.y) ? -box.min.y : 0;
   if (Math.abs(lift) < 1e-4) return;
-  for (const child of root.children) child.position.y += lift;
+  const local = lift / (root.scale.y || 1);
+  for (const child of root.children) child.position.y += local;
   root.updateMatrixWorld(true);
 }
 

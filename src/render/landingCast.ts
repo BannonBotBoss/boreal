@@ -25,6 +25,7 @@ import { nearestShore } from '../core/landingShore';
 import { coverKind } from '../world/globe/coverKind';
 import { groundForCover, sampleDem, samplePhotoVegetation } from '../world/globe/openTiles';
 import { createProceduralAnimal, type ProceduralAnimal } from './proceduralAnimal';
+import { foxPlace } from '../core/drives';
 import type { PictureBody } from './animalPicture';
 
 export interface LandingReport {
@@ -255,6 +256,27 @@ export function createLandingCast(scene: THREE.Scene) {
     });
   }
 
+  function ensureDriveFox() {
+    const pose = foxPlace();
+    if (!pose) return;
+    const count = census.find(row => row.species === 'red_fox')?.count ?? 0;
+    const already = placed.find(animal => animal.key === 'red_fox');
+    if (count <= 0 && !already) return;
+    const animal = already ?? { key: 'red_fox', display: 'Red Fox', census: count, index: 90, x: pose.x, z: pose.z, yaw: pose.yaw };
+    if (!already) placed.push(animal);
+    const id = `${animal.key}:${animal.index}`;
+    if (!procs.has(id)) {
+      const proc = createProceduralAnimal('Red Fox');
+      if (!proc) return;
+      proc.root.userData.animalPicture = true;
+      proc.root.userData.landingCast = true;
+      proc.root.userData.species = 'Red Fox';
+      scene.add(proc.root);
+      procs.set(id, proc);
+      markClear();
+    }
+  }
+
   return {
     report: () => report,
     /** Remote landings hide Kenora deer and hares the census does not include. Home is unchanged. */
@@ -277,14 +299,18 @@ export function createLandingCast(scene: THREE.Scene) {
         placed = stand(origin).filter(animal => procs.has(`${animal.key}:${animal.index}`));
         markClear();
       }
-      const motion: Motion = 'walk';
+      ensureDriveFox();
       const phase = (time * 0.65) % 1;
       const bodies: PictureBody[] = [];
       for (const animal of placed) {
         const proc = procs.get(`${animal.key}:${animal.index}`);
         if (!proc) continue;
+        const driven = animal.key === 'red_fox' ? foxPlace() : null;
+        if (driven) { animal.x = driven.x; animal.z = driven.z; animal.yaw = driven.yaw; }
+        const motion: Motion = driven?.motion === 'run' ? 'run' : driven?.motion === 'idle' ? 'idle' : 'walk';
+        const speed = driven?.speed ?? 1.2;
         const y = landingStandY(heightAt(animal.x, animal.z));
-        proc.pose(motion, phase, 1.2);
+        proc.pose(motion, phase, speed);
         proc.root.position.set(animal.x, y, animal.z);
         proc.root.rotation.y = animal.yaw;
         bodies.push({
@@ -292,8 +318,8 @@ export function createLandingCast(scene: THREE.Scene) {
           species: animal.display,
           x: animal.x, y, z: animal.z,
           yaw: animal.yaw,
-          moving: true,
-          motion, phase, speed: 1.2,
+          moving: speed > 0.05,
+          motion, phase, speed,
           root: proc.root,
         });
       }

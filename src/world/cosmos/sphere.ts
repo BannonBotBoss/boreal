@@ -39,6 +39,10 @@ const FINAL = {
       }
       rays /= 12.0;
       col += tint * rays * godrays;
+      // The outer glow is a circle in screen space. A mesh edge or a ray fan must not draw it.
+      float glowD = length(vUv - center);
+      float glow = smoothstep(0.62, 0.08, glowD);
+      col += tint * glow * glow * 0.55;
       col += (sin(vUv.x * 180.0 + time * 13.0) * sin(vUv.y * 140.0 - time * 9.0) * 0.5) * grain;
       col *= 1.0 - vignette * dot(d,d) * 2.2;
       gl_FragColor = vec4(col, 1.0);
@@ -51,23 +55,32 @@ const RAY = {
     brightness: { value: 1 },
     time: { value: 0 },
     steps: { value: 24 },
+    camLocal: { value: new THREE.Vector3(0, 0, 8) },
   },
-  vertexShader: `varying vec3 vN; varying vec3 vP; void main(){ vN = normalize(normalMatrix * normal); vec4 w = modelViewMatrix * vec4(position,1.0); vP = w.xyz; gl_Position = projectionMatrix * w; }`,
+  vertexShader: `varying vec3 vObj; void main(){ vObj = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
-    uniform vec3 color; uniform float brightness, time, steps; varying vec3 vN; varying vec3 vP;
+    uniform vec3 color; uniform float brightness, time, steps; uniform vec3 camLocal; varying vec3 vObj;
     float nse(vec3 p){ return sin(p.x * 12.3 + p.y * 4.7 + p.z * 8.1) * 0.5 + 0.5; }
     void main(){
-      vec3 N = normalize(vN);
-      vec3 V = normalize(-vP);
+      // The mesh is a coarse shell. The colour is the true sphere, so a hot white disc is a circle.
+      // Fresnel stays in object space: the fragment shader has no modelViewMatrix.
+      vec3 ro = camLocal;
+      vec3 rd = normalize(vObj - camLocal);
+      float b = dot(ro, rd);
+      float h2 = b * b - (dot(ro, ro) - 1.0);
+      if (h2 < 0.0) discard;
+      vec3 hit = ro + rd * (-b - sqrt(h2));
+      vec3 N = normalize(hit);
+      vec3 V = normalize(camLocal - hit);
       float fres = pow(1.0 - max(dot(N, V), 0.0), 2.2);
-      vec3 rd = normalize(vP);
-      vec3 ro = vec3(0.0);
+      vec3 vP = hit;
+      vec3 ray = normalize(hit - camLocal);
       float acc = 0.0;
       float n = max(steps, 1.0);
       for (int i = 0; i < 48; i++){
         if (float(i) >= n) break;
         float t = (float(i) + 0.5) / n;
-        vec3 p = ro + rd * t * 1.6;
+        vec3 p = ray * t * 1.6;
         float g = nse(p * 3.0 + time);
         acc += g * (1.0 - t);
       }
@@ -77,7 +90,10 @@ const RAY = {
       col *= brightness * plasma * mix(0.85, 0.4, fres);
       float peak = max(col.r, max(col.g, col.b));
       if (peak > 1.0) col *= 1.0 / peak;
-      gl_FragColor = vec4(col, 1.0);
+      // The mesh edge is a polygon. Fade the last rim so the silhouette is the glow, not the facets.
+      float edge = smoothstep(0.4, 0.86, fres);
+      col *= 1.0 - edge;
+      gl_FragColor = vec4(col, 1.0 - edge);
     }`,
 };
 
@@ -109,6 +125,7 @@ export class CosmosSphere {
   private raf = 0;
   private last = 0;
   private frames: number[] = [];
+  private camLocal = new THREE.Vector3();
   private onTier: (why: string, fps: number, ms: number) => void = () => {};
   gpu: GpuInfo;
   bench: { id: string; p50: number; p95: number }[] = [];
@@ -126,7 +143,7 @@ export class CosmosSphere {
     this.gpu = readGpu(gl);
     this.tier = tierById('low');
     this.camera.position.z = 12;
-    this.ray = new THREE.ShaderMaterial({ ...RAY, transparent: false });
+    this.ray = new THREE.ShaderMaterial({ ...RAY, transparent: true, depthWrite: false });
     this.core = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), this.ray);
     this.core.renderOrder = 2;
     const haloMat = new THREE.ShaderMaterial({
@@ -140,12 +157,9 @@ export class CosmosSphere {
         void main(){
           vec2 p = vUv * 2.0 - 1.0;
           float d = length(p);
-          float halo = smoothstep(1.0, 0.05, d);
-          float ang = atan(p.y, p.x);
-          float rays = pow(max(0.0, sin(ang * 7.0 + time * 0.5)), 6.0);
-          float ring = smoothstep(0.22, 0.48, d) * halo;
-          vec3 col = color * ring * 1.5 + color * rays * ring * 0.85;
-          gl_FragColor = vec4(col, clamp(halo, 0.0, 1.0));
+          float halo = smoothstep(1.0, 0.0, d);
+          float fall = halo * halo * (1.0 + 0.0 * time);
+          gl_FragColor = vec4(color * fall * 0.85, fall);
         }`,
     });
     this.halo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), haloMat);
@@ -188,9 +202,9 @@ export class CosmosSphere {
     this.camera.updateProjectionMatrix();
     this.composer.setSize(w, h);
     this.bloom.enabled = true;
-    this.bloom.strength = 0.72;
-    this.bloom.radius = 0.95;
-    this.bloom.threshold = 0.28;
+    this.bloom.strength = 0.28;
+    this.bloom.radius = 0.4;
+    this.bloom.threshold = 0.62;
     this.bloom.resolution.set(w / Math.max(1, 6 - tier.bloomMips), h / Math.max(1, 6 - tier.bloomMips));
     this.ray.uniforms.steps.value = Math.max(8, tier.raymarch || 8);
     this.final.uniforms.chromatic.value = tier.chromatic;
@@ -205,14 +219,12 @@ export class CosmosSphere {
       this.final.uniforms.grain.value = 0;
     }
     this.core.geometry.dispose();
-    this.core.geometry = new THREE.SphereGeometry(1, tier.segments, Math.max(16, tier.segments / 2));
+    // The tier's segment count is for cost. A screen-filling sphere at 32 segments shows flats, so the silhouette stays round.
+    // The shell is a little larger than the unit sphere the shader draws, so the polygon never becomes the outline.
+    const seg = Math.max(tier.segments, 192);
+    this.core.geometry = new THREE.SphereGeometry(1.12, seg, Math.max(80, Math.round(seg / 2)));
     for (const s of this.shells) { s.removeFromParent(); s.geometry.dispose(); (s.material as THREE.Material).dispose(); }
     this.shells = [];
-    for (let i = 0; i < tier.shells; i++) {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(1.08 + i * 0.12, 32, 24), new THREE.MeshBasicMaterial({ color: 0x5510aa, transparent: true, opacity: 0.14, blending: THREE.AdditiveBlending, depthWrite: false }));
-      this.shells.push(m);
-      this.core.add(m);
-    }
   }
 
   private applyLook(time: number) {
@@ -226,6 +238,10 @@ export class CosmosSphere {
     const viewW = window.innerWidth || this.canvas.clientWidth || 1;
     const shift = frameShiftX(panelW / viewW, dist, this.camera.fov, this.camera.aspect);
     this.camera.position.set(shift, 0, dist);
+    this.core.updateMatrixWorld(true);
+    this.camLocal.copy(this.camera.position);
+    this.core.worldToLocal(this.camLocal);
+    this.ray.uniforms.camLocal.value.copy(this.camLocal);
     this.camera.rotation.set(0, 0, 0);
     this.camera.near = Math.max(0.01, dist * 0.02);
     this.camera.far = dist + radius * 12;

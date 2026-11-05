@@ -13,6 +13,7 @@ import {
 import { latestPlanetSim } from '../core/planetBudget';
 import { decodeEngineReport } from '../core/engineReport';
 import { sphereLook } from '../world/cosmos/look';
+import { OPENING, openingCycle } from '../world/cosmos/opening';
 import { descentHeight, descentProgress } from '../world/globe/flight';
 import { setQuestProfile } from '../world/cosmos/lod';
 
@@ -46,6 +47,8 @@ class JourneySystem extends JourneyBase {
 class Journey {
   phase: Phase = 'dark';
   cycle = 1;
+  /** Seconds the cooling arc has been running. The cycle comes from openingCycle, not a flat rate. */
+  elapsed = 0;
   palm = 0;
   fallT = 0;
   ms = 0;
@@ -69,7 +72,7 @@ class Journey {
     this.canvas.height = 256;
     this.ctx = this.canvas.getContext('2d')!;
     this.tex = new CanvasTexture(this.canvas);
-    this.sphere = new Mesh(new SphereGeometry(0.2, 48, 32), new MeshStandardMaterial({ color: 0xffc7e0, emissive: 0xffc7e0, emissiveIntensity: 0.85, roughness: 0.4 }));
+    this.sphere = new Mesh(new SphereGeometry(0.2, 96, 64), new MeshStandardMaterial({ color: 0xffc7e0, emissive: 0xffc7e0, emissiveIntensity: 0.85, roughness: 0.4 }));
     this.sphere.position.set(0, 1.25, -0.8);
     this.sphere.visible = false;
     world.scene.add(this.sphere);
@@ -98,7 +101,10 @@ class Journey {
 
   tick(dt: number) {
     this.ms += dt * 1000;
-    if (this.phase === 'sphere' || this.phase === 'globe') this.cycle = Math.min(80, this.cycle + dt * 2);
+    if (this.phase === 'sphere' && this.dragX == null) {
+      this.elapsed += Math.max(0, dt);
+      this.cycle = openingCycle(this.elapsed).cycle;
+    } else if (this.phase === 'globe' && this.dragX == null) this.cycle = Math.min(80, this.cycle + dt * 2);
     if (this.phase === 'sphere') this.inFront(this.sphere, 0.85, 0);
     if (this.phase === 'sphere' || this.phase === 'globe' || this.phase === 'wolf') this.inFront(this.panel, 0.7, 0.12);
     if (this.phase === 'globe') this.inFront(this.globe, 0.6, -0.05);
@@ -130,6 +136,10 @@ class Journey {
       if ((rightPinch > 0.9 && !this.rightWas) || this.palm > 0.5) this.begin();
     } else if (this.phase === 'sphere' || this.phase === 'globe') {
       this.scrub(frame, ref, right, rightPinch);
+      if (this.phase === 'sphere' && right && rightPinch > 0.9 && !this.rightWas && !this.hits(frame, ref, right, this.panel)) {
+        this.elapsed = OPENING.arcSec + OPENING.holdSec;
+        this.cycle = OPENING.planetAt;
+      }
       if (this.phase === 'globe' && right && rightPinch > 0.9 && !this.hits(frame, ref, right, this.panel)) {
         this.globeHold += dt;
         if (this.globeHold > 0.3) this.beginFall();

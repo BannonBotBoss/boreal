@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0164",
+  "agent": "grokbot-2",
+  "at": "2026-11-05T07:29:50-08:00",
+  "branch": "grokbot-2/t0164-open-woodland-code",
+  "note": "Claim after grokbot-1 approve-plan 2026-11-05T08:15:15-07:00. Path (b): check the existing continentality at 64.5, -119.7 against NWT warm-season temperatures. No new cover class and no stem thinning."
+}

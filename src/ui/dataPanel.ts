@@ -6,6 +6,7 @@ import 'katex/dist/katex.min.css';
 import { latestPlanetSim, type PlanetSim } from '../core/planetBudget';
 import { sharedPlanetSim } from '../core/planetWeather';
 import { decodeEngineReport, healthColor, logSentence, healthWord, parseCycle, type EngineInst, type EngineReport } from '../core/engineReport';
+import { DRIVE_EQUATIONS, driveParams, driveSnapshot } from '../core/drives';
 import { NOT_IN_RUST } from '../data/notInRust';
 import { TIERS } from '../world/cosmos/lod';
 import { CosmosSphere } from '../world/cosmos/sphere';
@@ -36,6 +37,7 @@ const nodes = {
   cards: null as HTMLElement | null,
   plotA: null as HTMLCanvasElement | null,
   plotB: null as HTMLCanvasElement | null,
+  drives: null as HTMLElement | null,
   look: null as HTMLElement | null,
   tier: null as HTMLElement | null,
   fps: null as HTMLElement | null,
@@ -139,7 +141,7 @@ function ensure() {
   const spawnRow = el('div', '', 'display:flex;gap:8px;margin:10px 0;flex-wrap:wrap');
   const pick = document.createElement('select');
   pick.style.cssText = 'font:16px system-ui;padding:4px';
-  for (const id of ['spacetime', 'reheating', 'nucleosynthesis', 'planet', 'climate', 'solar', 'energy', 'wind', 'hydro', 'clouds']) pick.add(new Option(id, id));
+  for (const id of ['spacetime', 'reheating', 'nucleosynthesis', 'planet', 'climate', 'solar', 'energy', 'wind', 'hydro', 'clouds', 'hunger', 'prey', 'senses', 'danger', 'protect']) pick.add(new Option(id, id));
   const spawn = el('button', 'Spawn engine') as HTMLButtonElement;
   spawn.onclick = () => { simRef?.spawnEngine(pick.value); void refresh(); };
   const reset = el('button', 'Reset all inputs') as HTMLButtonElement;
@@ -150,6 +152,9 @@ function ensure() {
   nodes.cards = el('div');
   root.append(nodes.cards);
 
+  root.append(section('Drives'));
+  nodes.drives = el('div');
+  root.append(nodes.drives);
   root.append(section('Not in Rust'));
   for (const gap of NOT_IN_RUST) {
     const line = el('div', '', 'margin:6px 0;padding-left:18px');
@@ -280,6 +285,9 @@ async function refresh() {
   const s = await sim();
   if (gen !== generation || !s || !root) return;
   simRef = s;
+  paintDrives();
+  const packed = driveParams();
+  if (packed) s.setEngineDrives(packed);
   if (!s.engineReport()) {
     if (nodes.readout) nodes.readout.textContent = 'The Rust simulation is not loaded, so there is nothing to report yet.';
     return;
@@ -305,6 +313,42 @@ async function refresh() {
   if (early) { await ensureSphere(); showSphere(report); }
   else hideSphere();
   paintLook(report);
+}
+
+function paintDrives() {
+  const host = nodes.drives;
+  if (!host) return;
+  const now = driveSnapshot();
+  if (!host.dataset.ready) {
+    host.dataset.ready = '1';
+    host.replaceChildren();
+    for (const eq of DRIVE_EQUATIONS) {
+      const block = el('div');
+      block.append(el('div', eq.title, 'font-weight:600;margin-top:8px'));
+      const math = el('div', '', 'margin:8px 0;overflow:auto');
+      try { katex.render(eq.latex, math, { throwOnError: false, displayMode: true }); }
+      catch { math.textContent = eq.latex; }
+      const value = el('div', '', 'font-size:16px');
+      value.dataset.drive = eq.id;
+      block.append(math, value);
+      host.append(block);
+    }
+    const mode = el('div', '', 'font-size:18px;margin-top:8px');
+    mode.dataset.drive = 'mode';
+    host.append(mode);
+  }
+  const lines: Record<string, string> = {
+    hunger: now ? `H = ${now.hunger.toFixed(3)}. Fox rate 0.012/s, wolf rate 0.006/s. Fox diet: carnivore.` : 'The drives appear once she is in the forest.',
+    effort: now ? `Pup effort ${now.effortPup.toFixed(3)}. Mother effort ${now.effortMama.toExponential(2)}.` : '',
+    scent: now ? `S = ${now.scent.toFixed(3)}. Smell 40 m, sight 16 m, hearing 20 m (30 m while a pup yips).` : '',
+    danger: now ? `D = ${now.danger.toFixed(3)}. Approach A = ${now.approach.toFixed(3)}.` : '',
+    protect: now ? `P = ${now.protect.toFixed(3)}. ${now.committed ? 'She is between the fox and the pups.' : 'The threat has not committed her yet.'}` : '',
+    mode: now ? `Fox is in ${now.mode}.` : '',
+  };
+  for (const [id, line] of Object.entries(lines)) {
+    const node = host.querySelector<HTMLElement>(`[data-drive="${id}"]`);
+    if (node) node.textContent = line;
+  }
 }
 
 function section(title: string) {

@@ -324,4 +324,19 @@ mod tests {
         let w = site_maritime_weight(64.5, 600e3).unwrap();
         assert!(tree_line_at_m(64.5, w) > 376.0, "w {w} line {}", tree_line_at_m(64.5, w));
     }
+    #[test] fn t0164_click_stays_above_the_growing_season_line() {
+        // 64.5 N, -119.7, 376 m, 156 km from the sea: the census coast (species.rs) and the T-0132 live grid.
+        // The station table that shows this summer is colder than NWT normals, not warmer, is tests/continentality-nwt.test.ts.
+        // While the warm quarter at the site is above 6.4 C the existing rule stays closed boreal. Do not thin stems to hide that.
+        let coast = 156_000.0;
+        let w = site_maritime_weight(64.5, coast).unwrap();
+        let wq = sea_level_zone_season_at_c(64.5, w) - num(ZONES_JSON, "lapse_K_per_m") * 376.0;
+        let line = num(ZONES_JSON, "tree_line_growing_season_C");
+        assert!(wq > line + 2.0, "warm quarter at 376 m is {wq} C, line {line} C");
+        assert!(tree_line_at_m(64.5, w) > 376.0);
+        assert_eq!(cover_class_at(64.5, 376.0, 0.71, false, coast), Cover::Boreal);
+        let row = cover_row_at(64.5, -119.7, 376.0, 0.71, false, coast);
+        assert!(row.stems_per_ha >= 1000.0 && row.stems_per_ha <= 3000.0, "stems {}", row.stems_per_ha);
+        assert_eq!(row.class, Cover::Boreal);
+    }
 }

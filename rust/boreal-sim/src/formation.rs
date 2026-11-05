@@ -55,7 +55,16 @@ impl Tillotson { pub fn from_data(name: &str) -> Tillotson { Tillotson { rho0: m
 /// Core iron, cold: hcp-Fe Vinet curve (Dewaele et al. 2006) with a cited core density deficit (data/earth/materials.json,
 /// "iron_hcp_vinet"). The alloy at pressure P is (1 - deficit) times as dense as pure hcp iron, so P_alloy(rho) =
 /// P_Fe(rho / (1 - deficit)). Vinet: x = (rho0/rho)^(1/3), P = 3 K0 (1 - x) / x^2 exp(1.5 (K0' - 1)(1 - x)). No tension.
-/// Not yet wired into the bake: the next step swaps it in for cold Tillotson iron and re-bakes against PREM's 364 GPa centre.
+/// Wired into the bulk-mix path (`State::from_mix` / mix `from_bake`) with the liquid deficit (outer core dominates the
+/// iron class); solid deficit stays for a later per-parcel inner-core step. Silicate stays cold Tillotson.
+///
+/// Re-bake status (grokbot-1, Nov 5): a full Vinet 6k run (20k steps) reaches centre density near PREM (~12770 vs 13088)
+/// but stalls at separation ≈ 0.955. The ~4.5% stranded iron sits just outside the CMB at ρ ≈ 10200–10800 kg/m³
+/// (Vinet density at ~136 GPa), not at the zero-pressure floor rho0·(1−deficit). Eight thousand more continue-relax
+/// steps only move sep to ≈ 0.959. Cause: at CMB pressure the Vinet+10% deficit vs basalt density contrast is ~half
+/// Tillotson's (see test vinet_vs_tillotson_cmb_contrast), so the last iron parcels reach a soft quasi-equilibrium
+/// across the SPH-smoothed interface. Do not commit a bake that fails mix_bake_differentiated (sep > 0.98). Next
+/// levers: higher N (24k), or Matt's call on the threshold / a segregation assist.
 #[derive(Clone, Copy, Debug)] pub struct VinetFe { pub rho0: f64, pub k0: f64, pub k0p: f64, pub deficit: f64 }
 impl VinetFe {
     /// `liquid` picks the outer-core (liquid) or inner-core (solid) deficit.
@@ -71,7 +80,8 @@ impl VinetFe {
 }
 
 /// Barotropic table rho -> P for one class, from PREM (rho, P) pairs walking inward, made monotone.
-pub struct Eos { rho: Vec<f64>, p: Vec<f64>, till: Option<Tillotson> }
+/// `till` / `vinet` are the analytic cold EOSes used by the bulk-mix path (at most one set).
+pub struct Eos { rho: Vec<f64>, p: Vec<f64>, till: Option<Tillotson>, vinet: Option<VinetFe> }
 impl Eos {
     pub fn prem(class: usize) -> Eos { let (r0, r1) = if class == 0 { (0.0, 3479.9) } else { (3480.1, 6370.9) };
         let mut rho = vec![]; let mut p = vec![]; let n = 2000;
@@ -79,14 +89,15 @@ impl Eos {
             let d = d * 1000.0; let pp = pr[3];
             if let (Some(&dl), Some(&pl)) = (rho.last(), p.last()) { let dmin = dl + dl * (pp - pl) / KMAX; rho.push(f64::max(d, dmin)); } else { rho.push(d); }
             p.push(pp); }
-        Eos { rho, p, till: None } }
-    pub fn tillotson(t: Tillotson) -> Eos { Eos { rho: vec![], p: vec![], till: Some(t) } }
+        Eos { rho, p, till: None, vinet: None } }
+    pub fn tillotson(t: Tillotson) -> Eos { Eos { rho: vec![], p: vec![], till: Some(t), vinet: None } }
+    pub fn vinet(v: VinetFe) -> Eos { Eos { rho: vec![], p: vec![], till: None, vinet: Some(v) } }
     /// Pressure at density d (Pa). Below the table: linear in rho with the end bulk modulus, clamped at 0.
-    pub fn pressure(&self, d: f64) -> f64 { if let Some(t) = self.till { return t.pressure(d); } let n = self.rho.len();
+    pub fn pressure(&self, d: f64) -> f64 { if let Some(t) = self.till { return t.pressure(d); } if let Some(v) = self.vinet { return v.pressure(d); } let n = self.rho.len();
         if d <= self.rho[0] { let k = (self.p[1] - self.p[0]) / (self.rho[1] - self.rho[0]); return (self.p[0] + k * (d - self.rho[0])).max(0.0); }
         if d >= self.rho[n - 1] { let k = (self.p[n - 1] - self.p[n - 2]) / (self.rho[n - 1] - self.rho[n - 2]); return self.p[n - 1] + k * (d - self.rho[n - 1]); }
         let i = self.rho.partition_point(|&x| x < d).max(1); let f = (d - self.rho[i - 1]) / (self.rho[i] - self.rho[i - 1]); self.p[i - 1] + f * (self.p[i] - self.p[i - 1]) }
-    pub fn sound(&self, d: f64) -> f64 { if let Some(t) = self.till { return t.sound(d); } let e = d * 1e-3; ((self.pressure(d + e) - self.pressure(d - e)) / (2.0 * e)).max(1e4).sqrt() }
+    pub fn sound(&self, d: f64) -> f64 { if let Some(t) = self.till { return t.sound(d); } if let Some(v) = self.vinet { return v.sound(d); } let e = d * 1e-3; ((self.pressure(d + e) - self.pressure(d - e)) / (2.0 * e)).max(1e4).sqrt() }
 }
 
 /// Equal-mass parcels from PREM's mass CDF, stratified in radius, 48-fold symmetric. N = 48 * nbase. At rest.
@@ -165,9 +176,10 @@ impl State {
     pub fn new(p: Particles, omega: f64) -> State { let n = p.pos.len(); let h0 = 6.371e6 * (NNEIGH as f64 / n as f64).cbrt() * 0.5;
         let rho = (0..n).map(|i| prem_density(norm(p.pos[i]) / 1e3).0 * 1e3).collect();
         let mut s = State { p, h: vec![h0; n], rho, pres: vec![0.0; n], nb: vec![], eos: [Eos::prem(0), Eos::prem(1)], omega }; s.density(); s }
-    /// Bulk-mix start: the given parcels (materials already assigned), uniform starting density rho0, Tillotson iron/silicate.
+    /// Bulk-mix start: the given parcels (materials already assigned), uniform starting density rho0,
+    /// Vinet hcp-Fe (liquid deficit) for iron and cold Tillotson for silicate.
     pub fn from_mix(p: Particles, omega: f64, rho0: f64) -> State { let n = p.pos.len();
-        let mut s = State { p, h: vec![0.0; n], rho: vec![rho0; n], pres: vec![0.0; n], nb: vec![], eos: [Eos::tillotson(Tillotson::from_data("iron")), Eos::tillotson(Tillotson::from_data("basalt"))], omega }; s.density(); s }
+        let mut s = State { p, h: vec![0.0; n], rho: vec![rho0; n], pres: vec![0.0; n], nb: vec![], eos: [Eos::vinet(VinetFe::from_data(true)), Eos::tillotson(Tillotson::from_data("basalt"))], omega }; s.density(); s }
     /// SPH density: the standard summation rho_i = sum_j m_j W(r_ij, h_i), self term included, with h_i = eta (m_i/rho_i)^(1/3)
     /// iterated to consistency (Price 2012, JCP 231:759, sec. 2.4 / eqs. 10-11). Stage 6 first shipped a Shepard-normalised
     /// form rho_i = sum m_j W / sum (m_j/rho_j) W; any uniform field is a fixed point of that, so it only smoothed the old
@@ -246,7 +258,7 @@ pub(crate) fn raw_state(p: Particles, h: Vec<f64>, rho: Vec<f64>, omega: f64) ->
 /// Rebuild a State from a bake (equal masses M_PREM / n) to re-measure it.
 pub fn from_bake(b: &[f32], omega: f64) -> State { let n = b.len() / 6; let mt = enclosed_mass(6371.0); let mut p = Particles::default();
     for i in 0..n { let o = &b[i * 6..i * 6 + 6]; p.pos.push([o[0] as f64, o[1] as f64, o[2] as f64]); p.vel.push([0.0; 3]); p.mass.push(mt / n as f64); p.mat.push(o[3] as u8); }
-    State { h: (0..n).map(|i| b[i * 6 + 5] as f64).collect(), rho: (0..n).map(|i| b[i * 6 + 4] as f64).collect(), pres: vec![0.0; n], nb: vec![], eos: if b.chunks(6).any(|o| o[3] as u8 >= MAT_IRON) { [Eos::tillotson(Tillotson::from_data("iron")), Eos::tillotson(Tillotson::from_data("basalt"))] } else { [Eos::prem(0), Eos::prem(1)] }, omega, p } }
+    State { h: (0..n).map(|i| b[i * 6 + 5] as f64).collect(), rho: (0..n).map(|i| b[i * 6 + 4] as f64).collect(), pres: vec![0.0; n], nb: vec![], eos: if b.chunks(6).any(|o| o[3] as u8 >= MAT_IRON) { [Eos::vinet(VinetFe::from_data(true)), Eos::tillotson(Tillotson::from_data("basalt"))] } else { [Eos::prem(0), Eos::prem(1)] }, omega, p } }
 
 #[cfg(test)]
 mod tests { use super::*;
@@ -282,9 +294,50 @@ mod tests { use super::*;
         let (p, rho) = form_mix_ic(2000, 7); let mut s = State::from_mix(p, C::omega_earth, rho); let b0 = boundaries(&s).separation; s.relax(400, 0.05);
         let b1 = boundaries(&s).separation; assert!(b1 > b0 + 0.08, "separation {b0} -> {b1}"); }
     /// The committed bulk-mix bake (public/bake/earth-mix-6k.bin): fully differentiated by gravity alone, mass conserved,
-    /// and an emergent core-mantle boundary (verified against PREM's 3480 km only loosely: cold Tillotson over-compresses).
+    /// and an emergent core-mantle boundary (verified against PREM's 3480 km only loosely: cold Tillotson over-compresses;
+    /// positions are from the Tillotson bake — a Vinet re-bake is follow-up).
     #[test] fn mix_bake_differentiated() { let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../public/bake/earth-mix-6k.bin");
         let bytes = std::fs::read(path).expect("bake"); let b: Vec<f32> = bytes.chunks(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect();
         let s = from_bake(&b, C::omega_earth); let bd = boundaries(&s); assert!(bd.separation > 0.98, "sep {}", bd.separation);
         assert!(bd.cmb > 2.5e6 && bd.cmb < 3.6e6, "cmb {}", bd.cmb); let f = measure(&s); assert!(f.com < 1e4, "com {}", f.com); }
+    /// Bulk-mix EOS uses Vinet iron: an iron parcel's SPH pressure matches `VinetFe::from_data(true)`.
+    #[test] fn bulk_mix_uses_vinet_iron() { let (p, rho0) = form_mix_ic(800, 7); let s = State::from_mix(p, C::omega_earth, rho0);
+        let fe = VinetFe::from_data(true); let i = s.p.mat.iter().position(|&m| m == MAT_IRON).expect("iron");
+        assert!((s.pres[i] - fe.pressure(s.rho[i])).abs() < 1.0, "pres {} vinet {}", s.pres[i], fe.pressure(s.rho[i])); }
+    /// Bulk-mix Vinet iron at PREM's own centre density (13088.5 kg/m3): pressure lands near PREM's 363.85 GPa.
+    /// Liquid deficit (outer-core alloy) at that rho gives ~378 GPa (~+4%); the leftover is the open thermal term
+    /// (see vinet_core_vs_prem). Tolerance ±10% — honest for cold Vinet+deficit without a hydrostatic re-bake.
+    /// Full `differentiate` re-bake of public/bake/earth-mix-6k.bin is follow-up (binaries are large; not done here).
+    /// At CMB pressure (~136 GPa) Vinet liquid-deficit iron is far less over-dense vs cold basalt than Tillotson iron.
+    /// That weaker contrast is why a Vinet re-bake stalls near sep 0.95 while the old Tillotson bake reached 1.0.
+    #[test] fn vinet_vs_tillotson_cmb_contrast() {
+        let p = 136e9;
+        let v = VinetFe::from_data(true).density(p);
+        let fe = Tillotson::from_data("iron");
+        let (a, b, r0) = (fe.a_mod, fe.b_mod, fe.rho0);
+        let mu = (-a + (a * a + 4.0 * b * p).sqrt()) / (2.0 * b);
+        let till = r0 * (1.0 + mu);
+        let bas = Tillotson::from_data("basalt");
+        let mu_b = (-bas.a_mod + (bas.a_mod * bas.a_mod + 4.0 * bas.b_mod * p).sqrt()) / (2.0 * bas.b_mod);
+        let sil = bas.rho0 * (1.0 + mu_b);
+        let v_contrast = v - sil;
+        let t_contrast = till - sil;
+        assert!(v > 10000.0 && v < 11000.0, "vinet cmb rho {}", v);
+        assert!(t_contrast > 1.6 * v_contrast, "till contrast {} vs vinet {}", t_contrast, v_contrast);
+        assert!(v_contrast > 2000.0, "vinet still denser than basalt {}", v_contrast);
+    }
+    #[test] fn vinet_mix_centre_pressure_near_prem() {
+        let fe = Eos::vinet(VinetFe::from_data(true)); let sil = Eos::tillotson(Tillotson::from_data("basalt"));
+        let mut p = form_ic(20, 5); for m in &mut p.mat { *m = if class_of(*m) == 0 { MAT_IRON } else { MAT_SILICATE }; }
+        let n = p.pos.len(); let rho: Vec<f64> = (0..n).map(|i| prem_density(norm(p.pos[i]) / 1e3).0 * 1e3).collect();
+        let pres: Vec<f64> = (0..n).map(|i| if class_of(p.mat[i]) == 0 { fe.pressure(rho[i]) } else { sil.pressure(rho[i]) }).collect();
+        let s = State { p, h: vec![0.0; n], rho, pres, nb: vec![], eos: [fe, sil], omega: C::omega_earth };
+        let mut com = [0.0; 3]; let m: f64 = s.p.mass.iter().sum(); for i in 0..n { for k in 0..3 { com[k] += s.p.mass[i] * s.p.pos[i][k] / m; } }
+        let mut idx: Vec<usize> = (0..n).filter(|&i| class_of(s.p.mat[i]) == 0).collect();
+        idx.sort_by(|&i, &j| { let ri = norm([s.p.pos[i][0] - com[0], s.p.pos[i][1] - com[1], s.p.pos[i][2] - com[2]]);
+            let rj = norm([s.p.pos[j][0] - com[0], s.p.pos[j][1] - com[1], s.p.pos[j][2] - com[2]]); ri.partial_cmp(&rj).unwrap() });
+        let core = &idx[..8.min(idx.len())]; let pc = core.iter().map(|&i| s.pres[i]).sum::<f64>() / core.len() as f64;
+        let p_anchor = VinetFe::from_data(true).pressure(13088.5);
+        assert!((p_anchor / 363.85e9 - 1.0).abs() < 0.10, "anchor {} GPa", p_anchor / 1e9);
+        assert!((pc / 363.85e9 - 1.0).abs() < 0.10, "centre P {} GPa ({:.1}% from PREM)", pc / 1e9, 100.0 * (pc / 363.85e9 - 1.0)); }
 }

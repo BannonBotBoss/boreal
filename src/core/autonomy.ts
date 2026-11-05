@@ -50,6 +50,22 @@ export function wolfGround(from: { x: number; z: number }) {
   };
 }
 
+/** True when a probe point (x, z) is inside BLOCK.wolf.trunk (0.7 m) of a tree (spruce) or a person (T-0055). */
+export function wolfTrunkBlocked(x: number, z: number, objects: readonly Pick<Entity, 'kind' | 'x' | 'z'>[]): boolean {
+  return objects.some(e => (e.kind === 'spruce' || e.kind === 'person') && Math.hypot(e.x - x, e.z - z) < BLOCK.wolf.trunk);
+}
+
+/** Steered player step (T-0055): refuses a step whose probe is inside BLOCK.wolf.trunk of a tree or person, without water or slope refusal. */
+export function steerPlayerWolf(pose: WolfPose, speed: number, dt: number, objects: readonly Pick<Entity, 'kind' | 'x' | 'z'>[]): WolfPose {
+  const next = steerWolf(pose, 0, Math.sign(speed), dt, Math.abs(speed));
+  if (Math.abs(speed) <= 0.01) return next;
+  const probe = steerWolf(pose, 0, Math.sign(speed), 0.25, Math.abs(speed));
+  if (wolfTrunkBlocked(probe.x, probe.z, objects) || wolfTrunkBlocked(next.x, next.z, objects)) {
+    return { x: pose.x, z: pose.z, heading: pose.heading };
+  }
+  return next;
+}
+
 function forageSource(items: readonly { key: string; x: number; z: number; scale?: number }[], taken: { g: number }): FoodSource {
   const gramsOf = (p: { key: string; x: number; z: number; scale?: number }) =>
     settledGrams({ key: p.key, x: p.x, z: p.z, kind: 'forage', scale: p.scale ?? 1, grams: 0, by: '' }).grams;

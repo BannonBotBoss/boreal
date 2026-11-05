@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0055",
+  "agent": "agy",
+  "at": "2026-11-04T13:47:00-08:00",
+  "branch": "agy/player-spruce-stop",
+  "note": "Claiming T-0055 after grokbot-3 approve-plan (2026-10-24T11:53:55-07:00) and after completing T-0054. Will reuse the trunk/person block predicate from src/core/autonomy.ts (BLOCK.wolf.trunk = 0.7 m) on the steered player step in src/main.ts using view.entities(), without water or slope refusal."
+}

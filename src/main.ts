@@ -34,7 +34,7 @@ import { steerWolf } from './core/locomotion';
 import { createWolfModes, stepWolfModes, modeSpeed } from './core/wolfModes';
 import { ANIMAL_DEFAULT_ENERGY } from './core/animalBehavior';
 import { DEER_AGENT } from './core/species';
-import { autonomousWolfStep, clearWolfPlan, wolfReadout } from './core/autonomy';
+import { autonomousWolfStep, clearWolfPlan, steerPlayerWolf, wolfReadout } from './core/autonomy';
 import { NEEDS_SPECIES, WOLF_NEEDS, HARE_NEEDS } from './core/needs/species';
 import { dietOf } from './core/needs/diet';
 import { eatWater, levelsOf, staminaRates, parseNeeds, stepNeeds, type NeedsState } from './core/needs/engine';
@@ -517,7 +517,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
       const pose = driving ? autonomousWolfStep(brain,{x:player.x,z:player.z,heading:yaw},1/30,modes.stamina,view.entities(),{
         massKg: playerMass, wind: windAt(player.x, .6, player.z), daylight: 1 - view.darkness(),
         hares: view.hares.list().map(h => ({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: 1 })),
-      }) : steerWolf({ x: player.x, z: player.z, heading: brain.heading }, 0, Math.sign(brain.speed), 1 / 30, Math.abs(brain.speed));
+      }) : steerPlayerWolf({ x: player.x, z: player.z, heading: brain.heading }, brain.speed, 1 / 30, view.entities());
       if (!driving) clearWolfPlan(brain);
       const live = wolfReadout(brain);
       autoNote = !autonomous ? '' : live ? `${live.goal} (${live.because})` : choice ? `${choice.goal} (${choice.why})` : autoNote;

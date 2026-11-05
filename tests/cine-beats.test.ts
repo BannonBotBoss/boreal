@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatCosmicSeconds, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaClear, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, starsLit, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
+import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatClock, formatCosmicSeconds, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaClear, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, starsLit, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
 import { MILESTONES, deepTimeAt } from '../src/core/deepTime';
 
 test('cosmic clock matches the sheet keyframes and does not jump', () => {
@@ -75,9 +75,12 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
   assert.equal(panelFigure(72), 'Galaxies');
   assert.equal(panelFigure(81), 'The Sun');
   assert.equal(panelFigure(96), '4.4 Gya oceans');
-  assert.equal(panelFigure(102), '3.7 Gya life');
-  assert.equal(panelFigure(106), '2.4 Gya oxygen');
-  assert.equal(panelFigure(112), '470 Mya plants');
+  assert.equal(panelFigure(102), '2.4 Gya');
+  assert.equal(panelFigure(106), '470 Mya plants');
+  assert.equal(panelFigure(112), 'Today');
+  assert.equal(formatClock(85), '4.54 billion years ago');
+  assert.equal(formatClock(112), 'Today');
+  assert.match(formatClock(30), /s$/);
   const h20 = plasmaHeat(20), h26 = plasmaHeat(26), h30 = plasmaHeat(30);
   assert.ok(h20 > 0 && h20 < h26 && h26 < h30 && h30 < plasmaHeat(36));
   assert.ok(plasmaHeat(26.2) - plasmaHeat(25.8) < 0.05);

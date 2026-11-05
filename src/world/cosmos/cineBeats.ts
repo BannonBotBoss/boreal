@@ -181,6 +181,18 @@ export const offsetYr = (seconds: number) => cosmicAgeYr(seconds) - TODAY_YR;
 
 const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 const sup = (n: number) => [...String(n)].map(c => c === '-' ? '⁻' : c === '+' ? '' : SUP[+c] ?? c).join('');
+/**
+ * The counter switches at the Sun. Before that it is cosmic seconds.
+ * After that it is years before today, down to “Today”.
+ */
+export function formatClock(t: number): string {
+  if (t < 82) return formatCosmicSeconds(cosmicSeconds(t));
+  const ago = TODAY_YR - cosmicSeconds(t) / YEAR_S;
+  if (!(ago > 5e6)) return 'Today';
+  if (ago >= 1e9) return `${(Math.round(ago / 1e7) / 100).toFixed(2)} billion years ago`;
+  return `${Math.round(ago / 1e6)} million years ago`;
+}
+
 /** Superscript scientific seconds. The chronometer's formatHour is the hour face; this is the cosmic counter. */
 export function formatCosmicSeconds(seconds: number): string {
   if (!(seconds > 0) || !Number.isFinite(seconds)) return '0 s';
@@ -268,9 +280,9 @@ export function panelFigure(t: number): string {
   if (t >= CINE.b8End + 4 && t < CINE.b9End) return 'Galaxies';
   if (t >= 80 && t < 82) return 'The Sun';
   if (t >= CINE.b11End && t < CINE.b12End) return '4.4 Gya oceans';
-  if (t >= CINE.b12End && t < CINE.b12End + 4) return '3.7 Gya life';
-  if (t >= CINE.b12End + 4 && t < CINE.b13End) return '2.4 Gya oxygen';
-  if (t >= CINE.b13End && t < CINE.b14End) return '470 Mya plants';
+  if (t >= CINE.b12End && t < CINE.b12End + 3) return '2.4 Gya';
+  if (t >= CINE.b12End + 3 && t < CINE.b13End) return '470 Mya plants';
+  if (t >= CINE.b13End && t < CINE.b14End) return 'Today';
   return '';
 }
 

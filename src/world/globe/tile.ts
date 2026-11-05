@@ -224,7 +224,7 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep; uniform float uLakeRough;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep; uniform float uLakeRough;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -250,17 +250,23 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     diffuseColor.rgb *= mix(vec3(0.22, 0.26, 0.40), vec3(1.12, 1.04, 0.92), qn); }
   if (uEra.x + uEra.y + uEra.z > 0.001) {
     vec3 nrm = normalize(vDetW);
-    float plate = detN(nrm * 7.5, 11.0);
-    float crust = smoothstep(0.38, 0.52, plate);
-    vec3 hot = mix(vec3(1.7, 0.42, 0.06), vec3(0.07, 0.02, 0.012), crust);
-    vec3 rock = vec3(0.26, 0.1, 0.045);
-    diffuseColor.rgb = mix(rock, hot, uEra.x);
-    float basin = clamp(-vH / 2800.0, 0.0, 1.0);
-    float flooded = smoothstep(1.0 - uEra.y, 1.0 - uEra.y + 0.16, basin) * (1.0 - landMask);
-    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.035, 0.16, 0.34), flooded * (1.0 - uEra.x));
+    float plateN = detN(nrm * 22.0, 11.0);
+    float plate = smoothstep(0.04, 0.2, plateN);
+    float a = detN(nrm * 28.0, 3.0);
+    float b = detN(nrm * 28.0 + vec3(2.4, 7.1, 1.3), 6.0);
+    eraCrack = pow(clamp(1.0 - abs(a - b) * 42.0, 0.0, 1.0), 3.2);
+    eraMagma = uEra.x;
+    vec3 magma = vec3(1.85, 0.42, 0.07);
+    vec3 crust = mix(vec3(0.03, 0.01, 0.008), vec3(0.30, 0.25, 0.20), clamp(1.0 - uEra.x, 0.0, 1.0));
+    vec3 skin = mix(magma, crust, plate);
+    float crackShow = max(uEra.x, uEra.y * 0.4 * step(0.02, 0.02 - uEra.z));
+    skin = mix(skin, magma, eraCrack * crackShow);
+    diffuseColor.rgb = skin;
+    float flooded = (1.0 - landMask) * smoothstep(0.08, 0.72, uEra.y) * (1.0 - uEra.x);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.008, 0.028, 0.09), flooded);
     float growN = detN(nrm * 2.5, 6.0);
     float plants = landMask * smoothstep(0.08, -0.02, growN - uEra.z) * step(0.02, uEra.z);
-    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.09, 0.38, 0.08), plants * (1.0 - uEra.x));
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.09, 0.38, 0.08), plants);
   }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   if (uDetail.x > 0.001) { // derivative bump from the detail height (Mikkelsen 2010), view space
@@ -268,7 +274,7 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
     normal = normalize(abs(det) * normal - sign(det) * (dhx * r1 + dhy * r2)); }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(uLakeRough, roughnessFactor, landMask); // water: Cox-Munk roughness (GLINT), eased to the game water in the band')
-      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)')
+      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * max(eraMagma, uEra.y * 0.4 * step(0.02, 0.02 - uEra.z));')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
 #ifdef DEBUG_SEAMS
   { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;

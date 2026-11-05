@@ -708,7 +708,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     /** Wide: the whole disc and the atmosphere rim, centre near 60% of the frame. Arrival: the page-load orbit. */
     setFilmFrame(wide: boolean) {
       filmWide = wide;
-      const goal = wide ? R * 3.15 : R * 2.2;
+      const goal = wide ? R * 2.45 : R * 2.2;
       if (Math.abs(targetAlt - goal) > R * 0.04) { alt = targetAlt = goal; }
     },
     /** Aim the centre at a game-local spot without starting the fall. The next G, before a drag, drops there. */

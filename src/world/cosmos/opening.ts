@@ -9,7 +9,7 @@ import { decodeEngineReport, type EngineReport } from '../../core/engineReport';
 import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
 import { GLOBE_ERA, GLOBE_LAND, GLOBE_SKY } from '../globe/tile';
-import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatCosmicSeconds, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
+import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatClock, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
 
 /**
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
@@ -275,9 +275,10 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b14End && !closed;
     if (earthOn) {
       root.style.background = 'transparent';
-      const impact = elapsed >= 87.2 && elapsed <= 90.4;
+      const impact = elapsed >= 87.2 && elapsed < CINE.b11End;
       const steam = stage === 'b12';
-      plate.style.visibility = impact || steam ? 'visible' : 'hidden';
+      const halo = stage === 'b11';
+      plate.style.visibility = impact || steam || halo ? 'visible' : 'hidden';
       if (sphere) sphere.canvas.style.opacity = '0';
       tintGlobe(stage, elapsed);
       const wide = stage !== 'b14';
@@ -297,7 +298,12 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     if (showPanel && !panelShown) { panelShown = true; panel.classList.add('pop'); }
     panel.hidden = !showPanel;
     if (showPanel) {
-      setRolling(count, formatCosmicSeconds(cosmicSeconds(elapsed)));
+      const clock = formatClock(elapsed);
+      const years = clock.includes('year') || clock === 'Today';
+      count.style.fontSize = years ? '26px' : '';
+      count.style.overflow = years ? 'visible' : '';
+      panel.style.width = elapsed >= 82 ? 'min(820px, 78vw)' : '';
+      setRolling(count, clock);
       if (fig.dataset.v !== figure) {
         fig.dataset.v = figure;
         fig.textContent = figure;
@@ -328,15 +334,15 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     GLOBE_SKY.hold = 1;
     if (stage === 'b11') {
       era.set(1, 0, 0, 0);
-      GLOBE_SKY.warm = 0.85;
+      GLOBE_SKY.warm = 0.55;
       GLOBE_SKY.steam = 0;
       GLOBE_SKY.clear = 1;
     } else if (stage === 'b12') {
       const u = Math.min(1, Math.max(0, (t - CINE.b11End) / (CINE.b12End - CINE.b11End)));
-      era.set(1 - u, u, 0, 0);
-      GLOBE_SKY.warm = 0.7 * (1 - u * 0.45);
+      era.set(0.12 * (1 - u), u, 0, 0);
+      GLOBE_SKY.warm = 0.28 * (1 - u);
       GLOBE_SKY.steam = u;
-      GLOBE_SKY.clear = 1 - u * 0.85;
+      GLOBE_SKY.clear = 0.35 * (1 - u * 0.5);
     } else if (stage === 'b13') {
       const u = Math.min(1, Math.max(0, (t - CINE.b12End) / (CINE.b13End - CINE.b12End)));
       era.set(0, 1, u, 0);
@@ -415,8 +421,16 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   function paintEarth(ctx: CanvasRenderingContext2D, w: number, h: number) {
     const pad = 40, vh = Math.max(1, h - pad * 2);
     const cx = w / 2, cy = pad + vh * 0.6, R = vh * 0.3;
+    if (elapsed >= CINE.b10End && elapsed < 89.2) {
+      const halo = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.22);
+      halo.addColorStop(0, 'rgba(255,120,30,0)');
+      halo.addColorStop(0.55, 'rgba(255,100,24,0.22)');
+      halo.addColorStop(1, 'rgba(255,80,16,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(cx, cy, R * 1.22, 0, Math.PI * 2); ctx.fill();
+    }
     const hit = elapsed - 87.2;
-    if (hit >= 0 && hit <= 3.2) {
+    if (hit >= 0 && hit <= 2.2) {
       const u = hit / 3.2;
       const ang = -0.7;
       const hx = cx + Math.cos(ang) * R * 0.55;
@@ -455,12 +469,41 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
           ctx.stroke();
         }
       }
-      if (u > 0.5) {
-        const m = (u - 0.5) / 0.5;
-        const mx = cx + R * (1.2 + m * 0.25);
-        const my = cy - R * 0.42;
-        ctx.fillStyle = `rgba(230,210,190,${0.35 + m * 0.55})`;
-        ctx.beginPath(); ctx.arc(mx, my, R * 0.1 * (0.4 + m), 0, Math.PI * 2); ctx.fill();
+    }
+    if (elapsed >= 89.2 && elapsed < CINE.b11End) {
+      const after = (elapsed - 89.2) / (CINE.b11End - 89.2);
+      const arcR = R * (1.08 + after * 0.42);
+      ctx.strokeStyle = `rgba(255,140,40,${0.18 + after * 0.22})`;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(cx, cy, arcR, -1.1, 0.85);
+      ctx.stroke();
+      ctx.strokeStyle = `rgba(255,210,120,${0.45 + after * 0.4})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, arcR, -1.1, 0.85);
+      ctx.stroke();
+      for (let i = 0; i < 22; i++) {
+        const a = -1.1 + (i / 21) * 1.95;
+        const rr = arcR + Math.sin(i * 2.1) * R * 0.06;
+        const px = cx + Math.cos(a) * rr;
+        const py = cy + Math.sin(a) * rr;
+        ctx.fillStyle = `rgba(255,190,80,${0.35 + after * 0.45})`;
+        ctx.beginPath(); ctx.arc(px, py, 1.5 + (i % 3), 0, Math.PI * 2); ctx.fill();
+      }
+      if (after > 0.28) {
+        const m = (after - 0.28) / 0.72;
+        const ang = -0.35 + m * 1.15;
+        const dist = R * (1.45 + m * 0.2);
+        const mx = cx + Math.cos(ang) * dist;
+        const my = cy + Math.sin(ang) * dist * 0.72;
+        const mr = R * 0.07 * (0.55 + m);
+        const moon = ctx.createRadialGradient(mx, my, 0, mx, my, mr * 2.2);
+        moon.addColorStop(0, `rgba(255,236,210,${0.5 + m * 0.5})`);
+        moon.addColorStop(0.45, `rgba(180,160,140,${0.45 + m * 0.35})`);
+        moon.addColorStop(1, 'rgba(180,160,140,0)');
+        ctx.fillStyle = moon;
+        ctx.beginPath(); ctx.arc(mx, my, mr * 2.2, 0, Math.PI * 2); ctx.fill();
       }
     }
     if (elapsed >= CINE.b11End && elapsed < CINE.b12End) {

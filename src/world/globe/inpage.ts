@@ -321,6 +321,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     },
     /** Page load (world/globe/startView): straight into globe mode at the standalone globe's opening altitude
      *  (2.2 R: the whole disc), aimed at the forest edge by the mama's den. No rise. False = take the reload path. */
+    /** Wide disc for the birth beats. False restores the page-load orbit. */
+    setFilmFrame(wide: boolean) { globe?.setFilmFrame(wide); },
     enter(): boolean {
       if (mode !== 'game') return true;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }

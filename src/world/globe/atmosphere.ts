@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { LOG_DEPTH, LOG_DEPTH_PREFIX } from './logDepth';
 import { GLSL_NOISE } from '../../proc/glsl';
 import { GLOBE_LAYERS } from './planetLayers';
+import { GLOBE_SKY } from './tile';
 import { K } from '../../core/constants';
 import { COMPOSITION, rayleighPerKm, scaleHeightKm, ozoneEquivPerKm } from './composition';
 import { ENV, GAME_SEC_PER_WORLD_SEC } from '../../render/environment';
@@ -104,6 +105,7 @@ const float ATM_AERIAL = ${ATMOS.aerial.toFixed(3)}; // in-scatter in the terrai
 uniform float uAirglow; uniform vec4 uAurora; uniform vec3 uDipole; uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
 uniform mat3 uViewToWorld; uniform float uMieScale; uniform float uCloudOct, uCloudSeed, uCloudEvolve; uniform vec2 uCloudSpin; // spin = (cos, sin) of the drift angle
 uniform float uCloudClear; // 0 = the field as calibrated .. 1 = no clouds (in-page descent, T-0034/T-0041): cover and shadows fade AND the threshold lifts by clearLift, so the deck breaks into clouds and holes instead of a flat sheet
+uniform float uSkyWarm; // cinematic: 0 the blue limb, 1 an orange haze (GLOBE_SKY)
 uniform sampler2D uCloudTex; uniform vec4 uCloudSim; // planetLayers texture: A = sim cloud fraction (rust update_clouds), w = loaded
 uniform vec3 uCloudEdge; // threshold centre, half width (governor tier), pixel angle (rad per px: octave fade by distance)
 const vec3 BR = vec3(${ATMOS.rayleigh.map(v => v.toExponential(4)).join(', ')});
@@ -255,7 +257,7 @@ const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.
 export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   let [sn, sl, tn, tl] = stepsFor(tier), cur = tier;
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
-  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uAirglow: { value: 1 }, uAurora: { value: new THREE.Vector4() }, uDipole: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uMieScale: { value: 1 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
+  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uAirglow: { value: 1 }, uAurora: { value: new THREE.Vector4() }, uDipole: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uMieScale: { value: 1 }, uSkyWarm: { value: 0 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
   let cloudsOn = true, airOn = true; // layer panel (layerPanel.ts): off = 0 octaves / 0 ray-march steps, the shader skips the work
   const setSteps = () => { if (airOn) uniforms.uSteps.value.set(sn, sl, tn, tl); else uniforms.uSteps.value.set(0, 0, 0, 0); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = cloudsOn ? CLOUDS.octaves[row] : 0; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
   const mat = new THREE.ShaderMaterial({
@@ -284,6 +286,7 @@ void main() {
       if (abs(a - dl) < 0.00466) c += 40.0 * exp(-((BR + BO) * exp(-ht / HR) * sqrt(2.0 * PI * uRp * HR) + BME * exp(-ht / HM) * sqrt(2.0 * PI * uRp * HM))); } }
   c += atmEmission(rd, 1e9);
   { vec4 cl = atmClouds(rd, tEnd, int(uSteps.y)); c = mix(c, cl.rgb, cl.a); }
+  c = mix(c, vec3(c.r * 1.4 + 0.12, c.g * 0.4 + 0.04, c.b * 0.12), clamp(uSkyWarm, 0.0, 1.0));
   gl_FragColor = vec4(c, 1.0);
 #include <tonemapping_fragment>
 #include <colorspace_fragment>
@@ -316,7 +319,13 @@ void main() {
       const u = ENV.source ? ENV.windE : CLOUDS.windMs, lat = ENV.source ? ENV.latDeg : 0, rate = clockRate(); // the one clock's signed rate (observationRecord().rate is still 0/1 on main)
       driftAng = driftSec === null ? stepCloudDrift(0, timeSec, u, lat, R, rate) : stepCloudDrift(driftAng, timeSec - driftSec, u, lat, R, rate); driftSec = timeSec;
       uniforms.uCloudSpin.value.set(Math.cos(driftAng), Math.sin(driftAng));
-      uniforms.uMieScale.value = ENV.source ? mieGrowth(ENV.rh) : 1;
+      uniforms.uMieScale.value = (ENV.source ? mieGrowth(ENV.rh) : 1) * (1 + GLOBE_SKY.steam * 1.8);
+      uniforms.uSkyWarm.value = GLOBE_SKY.hold ? GLOBE_SKY.warm : 0;
+      if (GLOBE_SKY.hold) {
+        uniforms.uCloudClear.value = GLOBE_SKY.clear;
+        const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur));
+        uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row] - GLOBE_SKY.steam * 0.2;
+      }
       uniforms.uCloudEvolve.value = (timeSec / (CLOUDS.evolveH * 3600)) % 256;
       centre.copy(camPos).negate(); dome.position.copy(centre); dome.updateMatrix(); // camera-relative: the shell sits at −camera
       const rot = new THREE.Matrix4().extractRotation(camera.matrixWorldInverse);

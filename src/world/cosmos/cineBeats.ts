@@ -267,6 +267,10 @@ export function panelFigure(t: number): string {
   if (t >= CINE.b8End && t < CINE.b8End + 4) return 'First stars';
   if (t >= CINE.b8End + 4 && t < CINE.b9End) return 'Galaxies';
   if (t >= 80 && t < 82) return 'The Sun';
+  if (t >= CINE.b11End && t < CINE.b12End) return '4.4 Gya oceans';
+  if (t >= CINE.b12End && t < CINE.b12End + 4) return '3.7 Gya life';
+  if (t >= CINE.b12End + 4 && t < CINE.b13End) return '2.4 Gya oxygen';
+  if (t >= CINE.b13End && t < CINE.b14End) return '470 Mya plants';
   return '';
 }
 

@@ -193,6 +193,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const atYaw = Number(q.get('at')?.split(',')[2]); // from the game (handoff.ts globeUrl): keep its heading
   let lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : q.has('at') && Number.isFinite(atYaw) && q.get('at')!.split(',').length > 2 ? -atYaw : null;
   const pitchQ = q.has('pitch') ? Number(q.get('pitch')) * Math.PI / 180 : null; // ?pitch=deg from straight down (screenshots: look down at a cloud deck)
+  let filmWide = false;
   const group = new THREE.Group(); scene.add(group);
   // Plate boundaries (plates.ts: seeded outlines, NNR-MORVEL56 motions), built on first show; red divergent, blue convergent, green transform
   const plateLayer = new THREE.Group(); plateLayer.visible = false; scene.add(plateLayer); let platesBuilt = false;
@@ -563,7 +564,12 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     // Limb distance past a sphere of the mean radius (orbitClip). The hydrostatic figure and deep water sit inside that
     // sphere, so a low camera — the free fall crosses it — would make the radical negative and the projection NaN, and
     // the frame would clear. The radical is clamped; the +2R term still reaches the far limb.
-    const clip = orbitClip(alt, R, ground); camera.near = clip.near; camera.far = clip.far; camera.updateProjectionMatrix();
+    const clip = orbitClip(alt, R, ground); camera.near = clip.near; camera.far = clip.far;
+    if (filmWide) {
+      const w = renderer.domElement.width || 1280, h = renderer.domElement.height || 720;
+      camera.setViewOffset(w, h, Math.round(w * 0.04), Math.round(-h * 0.1), w, h);
+    } else camera.clearViewOffset();
+    camera.updateProjectionMatrix();
     // One viewpoint: when the forest camera maps back onto this pose within a centimetre, the draw uses that mapping.
     // Off the home-facing hemisphere the gnomonic frame blows up, so the fall's own aim stays (lookAt, rotateZ, rotateX).
     if (forestCam && !ext && forestFromPlanet(planet, camera, forestPose)) {
@@ -699,6 +705,12 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     /** over the playable region (game-local x, z), else null; descending = zooming in */
     get overHome() { return overHome; }, get descending() { return targetAlt < alt * .995; }, get headingYaw() { return headingYaw(); },
     zoomTo(a: number) { targetAlt = clamp(a, 40, R * 4); }, jumpTo(a: number) { alt = targetAlt = clamp(a, 40, R * 4); },
+    /** Wide: the whole disc and the atmosphere rim, centre near 60% of the frame. Arrival: the page-load orbit. */
+    setFilmFrame(wide: boolean) {
+      filmWide = wide;
+      const goal = wide ? R * 3.15 : R * 2.2;
+      if (Math.abs(targetAlt - goal) > R * 0.04) { alt = targetAlt = goal; }
+    },
     /** Aim the centre at a game-local spot without starting the fall. The next G, before a drag, drops there. */
     lookOver,
     /** Turn the orbit toward the playable forest. H does this; it does not start the fall. */

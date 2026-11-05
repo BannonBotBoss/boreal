@@ -8,7 +8,7 @@ import { sharedPlanetSim } from '../../core/planetWeather';
 import { decodeEngineReport, type EngineReport } from '../../core/engineReport';
 import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
-import { GLOBE_LAND, GLOBE_LAKE } from '../globe/tile';
+import { GLOBE_ERA, GLOBE_LAND, GLOBE_SKY } from '../globe/tile';
 import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatCosmicSeconds, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
 
 /**
@@ -143,7 +143,6 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   let booted = false;
   let earthOn = false;
   let arrived = false;
-  let lake0: [number, number, number] | null = null;
   try { closed = localStorage.getItem(PANEL_KEY) === 'closed'; } catch { /* private mode */ }
   const audio = createBigBangAudio();
   const narration = new Audio(NARRATION.file);
@@ -255,8 +254,9 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     plate.style.transform = `translate(${kick.x}px, ${kick.y}px)`;
     const hazeOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.02;
     veil.style.opacity = hazeOn ? '0' : '1';
-    const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : '';
+    const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : stage === 'b14' ? 'Today · 13.8 billion years' : '';
     heroLine.textContent = line;
+    heroLine.style.fontSize = line.length > 16 ? '3.4vw' : '';
     heroLine.style.display = line ? 'block' : 'none';
     const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14';
     if (onEarth && booted && !earthOn) {
@@ -275,9 +275,16 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b14End && !closed;
     if (earthOn) {
       root.style.background = 'transparent';
-      plate.style.visibility = 'hidden';
+      const impact = elapsed >= 87.2 && elapsed <= 90.4;
+      const steam = stage === 'b12';
+      plate.style.visibility = impact || steam ? 'visible' : 'hidden';
       if (sphere) sphere.canvas.style.opacity = '0';
       tintGlobe(stage, elapsed);
+      const wide = stage !== 'b14';
+      (window as unknown as { __inpage?: { setFilmFrame?: (wide: boolean) => void } }).__inpage?.setFilmFrame?.(wide);
+    } else if (GLOBE_SKY.hold) {
+      GLOBE_SKY.hold = 0;
+      GLOBE_ERA.uEra.value.set(0, 0, 0, 0);
     }
     document.documentElement.dataset.cineEarth = earthOn ? '1' : '0';
     if (stage === 'b14' && earthOn && !arrived) {
@@ -316,21 +323,31 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
 
   function tintGlobe(stage: CineStage, t: number) {
     const land = GLOBE_LAND.uLandTint.value;
-    const shallow = GLOBE_LAKE.shallow.value;
-    const deep = GLOBE_LAKE.deep.value;
-    if (!lake0) lake0 = [shallow.r, shallow.g, shallow.b];
+    land.setRGB(1, 1, 1);
+    const era = GLOBE_ERA.uEra.value;
+    GLOBE_SKY.hold = 1;
     if (stage === 'b11') {
-      land.setRGB(1.35, 0.32, 0.08);
-      shallow.setRGB(0.62, 0.14, 0.04);
-      deep.setRGB(0.32, 0.05, 0.02);
+      era.set(1, 0, 0, 0);
+      GLOBE_SKY.warm = 0.85;
+      GLOBE_SKY.steam = 0;
+      GLOBE_SKY.clear = 1;
     } else if (stage === 'b12') {
       const u = Math.min(1, Math.max(0, (t - CINE.b11End) / (CINE.b12End - CINE.b11End)));
-      land.setRGB(1.35 + (1 - 1.35) * u, 0.32 + (0.85 - 0.32) * u, 0.08 + (0.7 - 0.08) * u);
-      shallow.setRGB(0.62 + (lake0[0] - 0.62) * u, 0.14 + (lake0[1] - 0.14) * u, 0.04 + (lake0[2] - 0.04) * u);
-      deep.setRGB(0.32 + (lake0[0] - 0.32) * u * 0.5, 0.05 + (lake0[1] - 0.05) * u * 0.5, 0.02 + (lake0[2] - 0.02) * u * 0.5);
+      era.set(1 - u, u, 0, 0);
+      GLOBE_SKY.warm = 0.7 * (1 - u * 0.45);
+      GLOBE_SKY.steam = u;
+      GLOBE_SKY.clear = 1 - u * 0.85;
+    } else if (stage === 'b13') {
+      const u = Math.min(1, Math.max(0, (t - CINE.b12End) / (CINE.b13End - CINE.b12End)));
+      era.set(0, 1, u, 0);
+      GLOBE_SKY.warm = 0.8 * (1 - u);
+      GLOBE_SKY.steam = 0.4 * (1 - u);
+      GLOBE_SKY.clear = 0.15 * (1 - u);
     } else {
-      land.setRGB(1, 1, 1);
-      shallow.setRGB(lake0[0], lake0[1], lake0[2]);
+      era.set(0, 0, 0, 0);
+      GLOBE_SKY.warm = 0;
+      GLOBE_SKY.steam = 0;
+      GLOBE_SKY.clear = 0;
     }
   }
 
@@ -391,6 +408,69 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
         ctx.fillStyle = `rgba(255,226,180,${1 - dissolve})`;
         ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
       }
+    }
+    paintEarth(ctx, w, h);
+  }
+
+  function paintEarth(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    const pad = 40, vh = Math.max(1, h - pad * 2);
+    const cx = w / 2, cy = pad + vh * 0.6, R = vh * 0.3;
+    const hit = elapsed - 87.2;
+    if (hit >= 0 && hit <= 3.2) {
+      const u = hit / 3.2;
+      const ang = -0.7;
+      const hx = cx + Math.cos(ang) * R * 0.55;
+      const hy = cy + Math.sin(ang) * R * 0.2;
+      const approach = Math.max(0, 1 - u / 0.58);
+      const tx = hx - approach * R * 1.35;
+      const ty = hy - approach * R * 0.85;
+      if (approach > 0.04) {
+        const tr = R * 0.4;
+        const body = ctx.createRadialGradient(tx, ty, tr * 0.15, tx, ty, tr);
+        body.addColorStop(0, 'rgba(255,214,160,0.95)');
+        body.addColorStop(0.45, 'rgba(176,52,16,0.85)');
+        body.addColorStop(1, 'rgba(70,16,6,0)');
+        ctx.fillStyle = body;
+        ctx.beginPath(); ctx.arc(tx, ty, tr, 0, Math.PI * 2); ctx.fill();
+      }
+      const flash = Math.exp(-(((u - 0.42) / 0.09) ** 2));
+      if (flash > 0.03) {
+        const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, R * (0.12 + flash * 0.42));
+        g.addColorStop(0, `rgba(255,248,230,${flash})`);
+        g.addColorStop(0.22, `rgba(255,170,50,${flash * 0.75})`);
+        g.addColorStop(1, 'rgba(255,70,16,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+      }
+      const spray = Math.min(1, Math.max(0, (u - 0.22) / 0.32));
+      if (spray > 0) {
+        for (let i = 0; i < 26; i++) {
+          const a = ang - 0.9 + i * 0.07;
+          const len = R * spray * (0.7 + (i % 5) * 0.12);
+          ctx.strokeStyle = `rgba(255,150,50,${0.25 + spray * 0.45})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(hx, hy);
+          ctx.lineTo(hx + Math.cos(a) * len, hy + Math.sin(a) * len * 0.65);
+          ctx.stroke();
+        }
+      }
+      if (u > 0.5) {
+        const m = (u - 0.5) / 0.5;
+        const mx = cx + R * (1.2 + m * 0.25);
+        const my = cy - R * 0.42;
+        ctx.fillStyle = `rgba(230,210,190,${0.35 + m * 0.55})`;
+        ctx.beginPath(); ctx.arc(mx, my, R * 0.1 * (0.4 + m), 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (elapsed >= CINE.b11End && elapsed < CINE.b12End) {
+      const u = (elapsed - CINE.b11End) / (CINE.b12End - CINE.b11End);
+      const haze = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R * 1.35);
+      haze.addColorStop(0, `rgba(230,226,220,${0.02 + u * 0.05})`);
+      haze.addColorStop(0.6, `rgba(210,206,200,${0.08 + u * 0.12})`);
+      haze.addColorStop(1, 'rgba(210,206,200,0)');
+      ctx.fillStyle = haze;
+      ctx.beginPath(); ctx.arc(cx, cy, R * 1.35, 0, Math.PI * 2); ctx.fill();
     }
   }
 

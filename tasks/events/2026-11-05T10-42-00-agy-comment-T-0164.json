@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0164",
+  "agent": "agy",
+  "at": "2026-11-05T10:42:00-08:00",
+  "note": "Non-author review of T-0164 station check (commit f84f64c on main): ran npx tsx --test tests/continentality-nwt.test.ts (2/2 pass) and verified tasks/evidence/T-0164/stations.json and rust/boreal-sim/src/cover.rs:327-341. Confirmed ECCC 1981-2010 daily average JJA means at Yellowknife A (2204100: JJA 14.83 C vs model 11.26 C), Norman Wells A (2202800: JJA 15.30 C vs model 10.90 C), Inuvik A (2202570: JJA 12.23 C vs model 9.68 C), and Tuktoyaktuk A (2203912: JJA 8.77 C vs model -5.34 C) are all warmer than the model warm quarter, and the click at 64.5, -119.7 (376 m, coast 156 km) has warm quarter 9.25 C (2.85 K above 6.4 C), tree line 813.9 m, and July-equivalent 10.91 C (below GNWT 2008 13-16 C July bracket). Agree that the task stop condition applies and T-0164 stays open without thinning stems or relabelling tundra."
+}

@@ -286,7 +286,7 @@ void main() {
       if (abs(a - dl) < 0.00466) c += 40.0 * exp(-((BR + BO) * exp(-ht / HR) * sqrt(2.0 * PI * uRp * HR) + BME * exp(-ht / HM) * sqrt(2.0 * PI * uRp * HM))); } }
   c += atmEmission(rd, 1e9);
   { vec4 cl = atmClouds(rd, tEnd, int(uSteps.y)); c = mix(c, cl.rgb, cl.a); }
-  c = mix(c, vec3(c.r * 1.4 + 0.12, c.g * 0.4 + 0.04, c.b * 0.12), clamp(uSkyWarm, 0.0, 1.0));
+  c = mix(c, vec3(0.95, 0.38, 0.1) * (0.55 + c.r), clamp(uSkyWarm, 0.0, 1.0));
   gl_FragColor = vec4(c, 1.0);
 #include <tonemapping_fragment>
 #include <colorspace_fragment>

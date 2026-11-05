@@ -340,7 +340,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     } else if (stage === 'b13') {
       const u = Math.min(1, Math.max(0, (t - CINE.b12End) / (CINE.b13End - CINE.b12End)));
       era.set(0, 1, u, 0);
-      GLOBE_SKY.warm = 0.8 * (1 - u);
+      GLOBE_SKY.warm = 0.9 * (1 - u * u);
       GLOBE_SKY.steam = 0.4 * (1 - u);
       GLOBE_SKY.clear = 0.15 * (1 - u);
     } else {

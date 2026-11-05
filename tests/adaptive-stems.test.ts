@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
-import { STEM_FILES, STEM_FRAMES, STEM_IDS, STEM_MASTER, STEM_RATE, STEM_SECONDS, STEM_SUM_CAP, THREAT_HOLD, THREAT_OFF, THREAT_ON, loopPoints, smoothstep, stemTau, stemWeights, stepToward, threatStep } from '../src/audio/adaptiveStems';
+import { STEM_FILES, STEM_FRAMES, STEM_IDS, STEM_MASTER, STEM_RATE, STEM_SECONDS, STEM_SUM_CAP, THREAT_HOLD, THREAT_OFF, THREAT_ON, encounterThreat, loopPoints, smoothstep, stemTau, stemWeights, stepToward, threatStep } from '../src/audio/adaptiveStems';
+import { HUNT } from '../src/core/needs/diet';
 import { EXTRA_SOURCES, MUSIC } from '../src/audio/music';
 import { MUSIC_SETTINGS, TRACK_OPTIONS, sourceOf } from '../src/audio/musicSettings';
 const sum = (w: Record<string, number>) => Object.values(w).reduce((a, b) => a + b, 0);
@@ -76,4 +77,21 @@ test('stems opt-in: not in the default picker; ?stems adds it; a saved choice fa
   assert.equal(sourceOf('Adaptive stems', false, false), 'Fingerpicked'); assert.equal(sourceOf('Adaptive stems', false, true), 'Adaptive stems'); assert.equal(sourceOf('Adaptive stems', true, false), 'Adaptive stems');
   const src = MUSIC_SETTINGS.find(d => d.id === 'music.source')!; src.apply('Adaptive stems'); assert.equal(MUSIC.source, 'Fingerpicked', 'default page: stems are not selectable');
   for (const d of MUSIC_SETTINGS) d.apply(d.default);
+});
+test('stems encounterThreat (T-0045): real predator-prey chase or flight drives threat into threatStep and stemWeights', () => {
+  assert.equal(HUNT.safeDistance, 35);
+  assert.equal(encounterThreat({ x: 0, z: 0, animals: [{ x: 3, z: 0, fleeing: false }, { x: 40, z: 0, fleeing: true }] }), 0, 'calm or beyond safeDistance stays 0');
+  const hareBolt = encounterThreat({ x: 0, z: 0, animals: [{ x: 7, z: 0, fleeing: true }] });
+  near(hareBolt, 1 - 7 / 35); assert.ok(hareBolt >= THREAT_ON, 'fleeing hare at 7 m crosses THREAT_ON');
+  const stepOn = threatStep({ on: false, since: -1e9 }, hareBolt, 5);
+  assert.equal(stepOn.state.on, true); assert.ok(stemWeights(0, 0, stepOn.level).tension > 0.25);
+  const deerMid = encounterThreat({ x: 0, z: 0, running: false, animals: [{ x: 21, z: 0, fleeing: true }] });
+  near(deerMid, 0.4); assert.ok(deerMid >= THREAT_OFF && deerMid < THREAT_ON, 'between THREAT_OFF and THREAT_ON when walking');
+  const deerChase = encounterThreat({ x: 0, z: 0, running: true, animals: [{ x: 21, z: 0, fleeing: true }] });
+  near(deerChase, THREAT_ON);
+  assert.equal(encounterThreat({ x: 0, z: 0, locked: true }), 1, 'hunt lock or autonomous pursuit gives full threat');
+  assert.equal(encounterThreat({ x: 10, z: -5, animals: [{ x: 10, z: -5, fleeing: true }] }), 1, 'embodied hare fleeing gives full threat');
+  const mainSrc = readFileSync('src/main.ts', 'utf8');
+  assert.match(mainSrc, /const threat = encounterThreat\(/);
+  assert.match(mainSrc, /music\.update\(view\.darkness\(\),\s*Math\.min\(1,\s*weatherAt\(player\.x,\s*player\.z\)\.rainMmH\s*\/\s*2\),\s*threat\)/);
 });

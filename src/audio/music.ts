@@ -120,9 +120,10 @@ export function createMusic(input: () => { ctx: AudioContext; node: AudioNode } 
     apply() { key = ''; },
     skip() { if (MUSIC.source === 'Playlist') playNext(); },
     get tracks() { return tracks; },
+    stemsState: () => stems?.state(),
     /** Per frame (cheap): lazily start once audio is up; 'follow world' re-targets mood / preset from darkness + rain. */
     update(darkness: number, rain: number, threat = 0) {
-      stems?.update(darkness, rain, threat); // threat 0..1 is optional; nothing in the game feeds it yet
+      stems?.update(darkness, rain, threat); // threat 0..1 from encounterThreat (T-0045)
       if (MUSIC.followWorld) {
         const m: Track['mood'] = rain > .3 ? 'storm' : darkness > .5 ? 'night' : 'day';
         if (m !== mood) { mood = m; if (MUSIC.source === 'Playlist') { pickOrder(); playNext(); } else if (MUSIC.source !== 'Built-in ambient' && MUSIC.source !== 'Adaptive stems') { MUSIC.pulse = m === 'night' ? 6 : m === 'storm' ? 10 : MUSIC.pulse; key = ''; } }

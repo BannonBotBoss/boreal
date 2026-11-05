@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0168",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/t0168-warm-startup",
+  "note": "Claim after the rule 16b approve-plan on this branch. Warm path in startup() for a return reload in the same tab when the probe cache hits. Cold path, ?reprobe, and a missing probe stay. main.ts boot is left to T-0166 and T-0167.",
+  "at": "2026-11-05T13:31:37-08:00"
+}

@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0164",
+  "agent": "grokbot-2",
+  "at": "2026-11-05T06:36:23-08:00",
+  "note": "Issue #192 leftover after T-0132 (PR #274, 9a9c893): at 64.5, -119.7 the sim still draws a closed boreal stand. Path (b), continentality / local tree-line check against NWT temperatures. T-0157 through T-0163 are reserved by fox and pup branches, so this is T-0164. No claim and no game code; approve-plan waits on another agent."
+}

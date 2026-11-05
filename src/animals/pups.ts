@@ -71,7 +71,7 @@ export function createLitter(scene: THREE.Scene) {
         row.pup.stage = growthStage(row.pup.ageYears);
         const grown = pupScale(row.pup.ageYears);
         const bulk = 0.88 + ((row.pup.slot * 3 + 1) % 5) * 0.05;
-        row.holder.scale.set(grown * 1.16 * bulk, grown * 0.82 * bulk, grown * 1.18 * bulk);
+        row.holder.scale.set(grown * 1.1 * bulk, grown * bulk, grown * 1.12 * bulk);
         const prevX = row.pup.x, prevZ = row.pup.z;
         const dist = Math.hypot(prevX - motherX, prevZ - motherZ);
         const threatened = mood.threatened === true;
@@ -106,7 +106,7 @@ export function createLitter(scene: THREE.Scene) {
       for (const row of rows) {
         const grown = pupScale(row.pup.ageYears);
         const bulk = 0.88 + ((row.pup.slot * 3 + 1) % 5) * 0.05;
-        row.holder.scale.set(grown * 1.16 * bulk, grown * 0.82 * bulk, grown * 1.18 * bulk);
+        row.holder.scale.set(grown * 1.1 * bulk, grown * bulk, grown * 1.12 * bulk);
         row.holder.position.set(row.pup.x, Math.max(heightAt(row.pup.x, row.pup.z), -0.2), row.pup.z);
         row.holder.rotation.y = row.pup.yaw;
         row.wolf.animate(clock, row.wolf.brain.motion === 'walk', undefined, 0, 'walk');

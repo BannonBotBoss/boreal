@@ -110,6 +110,9 @@ export class CosmosSphere {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(40, 16 / 9, 0.1, 100);
+  /** One camera. The cinematic sets this; applyLook does not invent a second view. dolly 1 is the old distance. */
+  framing = { dolly: 1 };
+  setFraming(fov: number, dolly: number) { this.camera.fov = fov; this.framing.dolly = dolly; }
   private core: THREE.Mesh;
   private halo: THREE.Mesh;
   private shells: THREE.Mesh[] = [];
@@ -237,7 +240,7 @@ export class CosmosSphere {
     const panelW = panel && !panel.hidden ? panel.getBoundingClientRect().width : 0;
     const viewW = window.innerWidth || this.canvas.clientWidth || 1;
     const shift = frameShiftX(panelW / viewW, dist, this.camera.fov, this.camera.aspect);
-    this.camera.position.set(shift, 0, dist);
+    this.camera.position.set(shift, 0, dist * this.framing.dolly);
     this.core.updateMatrixWorld(true);
     this.camLocal.copy(this.camera.position);
     this.core.worldToLocal(this.camLocal);

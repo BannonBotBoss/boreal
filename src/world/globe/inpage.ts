@@ -323,6 +323,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
      *  (2.2 R: the whole disc), aimed at the forest edge by the mama's den. No rise. False = take the reload path. */
     /** Wide disc for the birth beats. False restores the page-load orbit. */
     setFilmFrame(wide: boolean) { globe?.setFilmFrame(wide); },
+    /** yaw radians off the page-load aim, altitude in planet radii, view-offset 0..1. */
+    setFilmDrive(yaw: number, radii: number, offset: number) { globe?.setFilmDrive(yaw, radii, offset); },
     enter(): boolean {
       if (mode !== 'game') return true;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }

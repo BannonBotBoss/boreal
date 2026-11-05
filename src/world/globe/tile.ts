@@ -265,7 +265,7 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     float flooded = (1.0 - landMask) * smoothstep(0.08, 0.72, uEra.y) * (1.0 - uEra.x);
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.008, 0.028, 0.09), flooded);
     float growN = detN(nrm * 2.5, 6.0);
-    float plants = landMask * smoothstep(0.08, -0.02, growN - uEra.z) * step(0.02, uEra.z);
+    float plants = landMask * smoothstep(0.02, -0.2, growN - uEra.z) * step(0.02, uEra.z);
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.09, 0.38, 0.08), plants);
   }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>

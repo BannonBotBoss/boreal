@@ -187,7 +187,13 @@ const sup = (n: number) => [...String(n)].map(c => c === '-' ? '⁻' : c === '+'
  */
 export function formatClock(t: number): string {
   if (t < 82) return formatCosmicSeconds(cosmicSeconds(t));
-  const ago = TODAY_YR - cosmicSeconds(t) / YEAR_S;
+  let ago = TODAY_YR - cosmicSeconds(Math.min(t, 100)) / YEAR_S;
+  if (t >= 100 && t < 103) {
+    const from = TODAY_YR - cosmicSeconds(100) / YEAR_S;
+    ago = from + (470e6 - from) * ((t - 100) / 3);
+  } else if (t >= 103 && t < 108) ago = 470e6;
+  else if (t >= 108 && t < 112) ago = 470e6 * (1 - (t - 108) / 4);
+  else if (t >= 112) ago = 0;
   if (!(ago > 5e6)) return 'Today';
   if (ago >= 1e9) return `${(Math.round(ago / 1e7) / 100).toFixed(2)} billion years ago`;
   return `${Math.round(ago / 1e6)} million years ago`;

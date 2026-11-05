@@ -165,7 +165,14 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     root.style.pointerEvents = 'none';
     panel.style.pointerEvents = 'auto';
     onBegin?.();
-    void earth?.ready().then(() => { booted = true; });
+    void earth?.ready().then(() => {
+      booted = true;
+      GLOBE_ERA.uEra.value.set(1, 0, 0, 0);
+      GLOBE_SKY.hold = 1;
+      GLOBE_SKY.warm = 0.55;
+      GLOBE_SKY.steam = 0;
+      GLOBE_SKY.clear = 1;
+    });
     audio.begin();
     void narration.play().catch(() => {});
     sphere = new CosmosSphere(root);
@@ -259,12 +266,13 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     heroLine.style.fontSize = line.length > 16 ? '3.4vw' : '';
     heroLine.style.display = line ? 'block' : 'none';
     const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14';
-    if (onEarth && booted && !earthOn) {
+    const showEarth = onEarth && booted;
+    if (showEarth && !earthOn) {
       earthOn = true;
       earth?.show();
     }
     if (sphere) {
-      const plasmaOn = !earthOn && bang != null && elapsed >= bang + CINE.bangPeak - 0.05;
+      const plasmaOn = !showEarth && bang != null && elapsed >= bang + CINE.bangPeak - 0.05;
       sphere.canvas.style.opacity = plasmaOn ? '1' : '0';
       sphere.canvas.style.transform = plate.style.transform;
       sphere.setPlasma(plasmaOn, { time: elapsed, ...plasmaLook(elapsed) });
@@ -273,19 +281,25 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     showRef(stage);
     const figure = panelFigure(elapsed);
     const showPanel = begun && elapsed >= CINE.panelAt && elapsed <= CINE.b14End && !closed;
-    if (earthOn) {
+    if (showEarth) {
       root.style.background = 'transparent';
       const impact = elapsed >= 87.2 && elapsed < CINE.b11End;
       const steam = stage === 'b12';
       const halo = stage === 'b11';
       plate.style.visibility = impact || steam || halo ? 'visible' : 'hidden';
       if (sphere) sphere.canvas.style.opacity = '0';
-      tintGlobe(stage, elapsed);
-      const wide = stage !== 'b14';
-      (window as unknown as { __inpage?: { setFilmFrame?: (wide: boolean) => void } }).__inpage?.setFilmFrame?.(wide);
-    } else if (GLOBE_SKY.hold) {
-      GLOBE_SKY.hold = 0;
-      GLOBE_ERA.uEra.value.set(0, 0, 0, 0);
+      tintGlobe(elapsed);
+      driveFilm(elapsed);
+      panel.style.top = stage === 'b14' ? 'auto' : '';
+      panel.style.bottom = stage === 'b14' ? '28px' : '';
+      panel.style.right = stage === 'b14' ? '28px' : '';
+    } else if (booted) {
+      root.style.background = '#000';
+      GLOBE_ERA.uEra.value.set(1, 0, 0, 0);
+      GLOBE_SKY.hold = 1;
+      GLOBE_SKY.warm = 0.55;
+      GLOBE_SKY.clear = 1;
+      GLOBE_SKY.steam = 0;
     }
     document.documentElement.dataset.cineEarth = earthOn ? '1' : '0';
     if (stage === 'b14' && earthOn && !arrived) {
@@ -301,9 +315,12 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       const clock = formatClock(elapsed);
       const years = clock.includes('year') || clock === 'Today';
       count.style.fontSize = years ? '26px' : '';
+      count.style.opacity = '1';
+      count.style.color = '#f6efe4';
       count.style.overflow = years ? 'visible' : '';
-      panel.style.width = elapsed >= 82 ? 'min(820px, 78vw)' : '';
-      setRolling(count, clock);
+      panel.style.width = stage === 'b14' ? '240px' : elapsed >= 82 ? 'min(820px, 78vw)' : '';
+      if (years) setPlain(count, clock);
+      else setRolling(count, clock);
       if (fig.dataset.v !== figure) {
         fig.dataset.v = figure;
         fig.textContent = figure;
@@ -327,34 +344,62 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     else still.style.display = 'none';
   }
 
-  function tintGlobe(stage: CineStage, t: number) {
+  function tintGlobe(t: number) {
     const land = GLOBE_LAND.uLandTint.value;
     land.setRGB(1, 1, 1);
     const era = GLOBE_ERA.uEra.value;
+    const ease = (u: number) => { const x = Math.min(1, Math.max(0, u)); return x * x * (3 - 2 * x); };
     GLOBE_SKY.hold = 1;
-    if (stage === 'b11') {
+    if (t < 92) {
       era.set(1, 0, 0, 0);
       GLOBE_SKY.warm = 0.55;
       GLOBE_SKY.steam = 0;
       GLOBE_SKY.clear = 1;
-    } else if (stage === 'b12') {
-      const u = Math.min(1, Math.max(0, (t - CINE.b11End) / (CINE.b12End - CINE.b11End)));
-      era.set(0.12 * (1 - u), u, 0, 0);
-      GLOBE_SKY.warm = 0.28 * (1 - u);
-      GLOBE_SKY.steam = u;
-      GLOBE_SKY.clear = 0.35 * (1 - u * 0.5);
-    } else if (stage === 'b13') {
-      const u = Math.min(1, Math.max(0, (t - CINE.b12End) / (CINE.b13End - CINE.b12End)));
-      era.set(0, 1, u, 0);
-      GLOBE_SKY.warm = 0.9 * (1 - u * u);
-      GLOBE_SKY.steam = 0.4 * (1 - u);
-      GLOBE_SKY.clear = 0.15 * (1 - u);
+    } else if (t < 97) {
+      const s = ease((t - 92) / 5);
+      era.set(1 + (0.045 - 1) * s, 0.625 * s, 0, 0);
+      GLOBE_SKY.warm = 0.55 + (0.105 - 0.55) * s;
+      GLOBE_SKY.steam = 0.625 * s;
+      GLOBE_SKY.clear = 1 + (0.241 - 1) * s;
+    } else if (t < 100) {
+      const s = (t - 97) / 3;
+      era.set(0.045 * (1 - s), 0.625 + 0.375 * s, 0, 0);
+      GLOBE_SKY.warm = 0.105 * (1 - s);
+      GLOBE_SKY.steam = 0.625 + 0.375 * s;
+      GLOBE_SKY.clear = 0.241 * (1 - s);
+    } else if (t < 108) {
+      const grow = ease((t - 100) / 6);
+      const sky = ease(Math.min(1, (t - 100) / 4));
+      era.set(0, 1, grow * 0.9, 0);
+      GLOBE_SKY.warm = t < 104 ? 0.7 * sky : 0.7 * (1 - ease((t - 104) / 4));
+      GLOBE_SKY.steam = 1 - ease((t - 100) / 4);
+      GLOBE_SKY.clear = 0;
+    } else if (t < 112) {
+      const s = ease((t - 108) / 4);
+      era.set(0, 1 - s, 0.9 * (1 - s), 0);
+      GLOBE_SKY.warm = 0.15 * (1 - s);
+      GLOBE_SKY.steam = 0;
+      GLOBE_SKY.clear = 0;
     } else {
       era.set(0, 0, 0, 0);
       GLOBE_SKY.warm = 0;
       GLOBE_SKY.steam = 0;
       GLOBE_SKY.clear = 0;
     }
+  }
+
+  function driveFilm(t: number) {
+    const yaw = Math.max(0, 108 - t) * 2.5 * Math.PI / 180;
+    const u = t <= 85 ? 0 : t >= 108 ? 1 : ((x: number) => x * x * (3 - 2 * x))(Math.min(1, (t - 85) / 23));
+    const offset = t >= 108 ? 0 : t <= 104 ? 1 : 1 - ((x: number) => x * x * (3 - 2 * x))((t - 104) / 4);
+    (window as unknown as { __inpage?: { setFilmDrive?: (yaw: number, radii: number, offset: number) => void } }).__inpage?.setFilmDrive?.(yaw, 2.45 + (2.2 - 2.45) * u, offset);
+  }
+
+  function setPlain(node: HTMLElement, text: string) {
+    if (node.dataset.v === text) return;
+    node.dataset.v = text;
+    node.classList.remove('roll');
+    node.textContent = text;
   }
 
   function setRolling(node: HTMLElement, text: string) {

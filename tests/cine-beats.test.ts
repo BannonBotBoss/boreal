@@ -79,6 +79,7 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
   assert.equal(panelFigure(106), '470 Mya plants');
   assert.equal(panelFigure(112), 'Today');
   assert.equal(formatClock(85), '4.54 billion years ago');
+  assert.equal(formatClock(106), '470 million years ago');
   assert.equal(formatClock(112), 'Today');
   assert.match(formatClock(30), /s$/);
   const h20 = plasmaHeat(20), h26 = plasmaHeat(26), h30 = plasmaHeat(30);

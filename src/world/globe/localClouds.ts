@@ -58,7 +58,7 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
  *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
  *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share one flat base at the LCL, and each cell's top rises
- *    with its strength up to the column's buoyant top; cell strength scales how far into the overshoot dome each tower punches;
+ *    with its strength up to the column's buoyant top; cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells;
  *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, and lateral density falls as anv^1.5 so the fringe is wispy. */
@@ -103,10 +103,14 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       const cellTip = Math.min(L.topM, top + over * frac);
       if (z <= cellTip && cellTip > top) {
         const u = (z - top) / (cellTip - top); // 0 at anvil level, 1 at this cell's tip
+        // Soft-narrow turret with height (Houze 2014 ch. 8): real overshooting tops are narrow
+        // turrets above the anvil. At u=0 keep today's footprint; as u→1 scale ~ frac^(u/(1-u))
+        // so mid cells leave a stubbier lower dome and only near-h=1 punches a thin tip.
+        const turret = Math.pow(Math.max(frac, 1e-9), u / Math.max(1 - u, .05));
         // layers above the EL carry no suspended water; tapered ice plume, denser for stronger cells
         // iceOpacity (Stephens 1978): glaciated overshoot is optically thinner — same as anvil via conv
         const li = Math.min(ly.length - 1, Math.round(z / step)), op = iceOpacity(ly[li]?.ice ?? 0);
-        const plume = (1 - u) * (1 - u) * .45 * frac * op;
+        const plume = (1 - u) * (1 - u) * .45 * frac * op * turret;
         out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, plume));
         continue;
       }

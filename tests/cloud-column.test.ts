@@ -166,6 +166,27 @@ test('anvil bake: ice-deck denser near the buoyant top than deeper (Houze outflo
   assert.ok(topSum > deepSum * 1.3, `near-top denser than deep on fringe (${topSum} vs ${deepSum})`);
 });
 
+test('anvil bake: lateral density falls as anv^1.5 — outer fringe much thinner than near-core anvil', () => {
+  // depth stays on linear soft-weight; density uses anv^1.5 so Houze outflow thins radially from the updraught
+  const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000, 'deep glaciated tower for anvil');
+  const b = bakeLocal(col, 1, 0, 0, L), midZ = col.lcl + .5 * (col.top - col.lcl);
+  const fringe: number[] = [];
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let st = 0, mid = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, d = col.top - z, v = b[i + L.nx * (j + L.nz * k)];
+      if (d >= 0 && d <= 250) st += v;
+      if (Math.abs(z - midZ) < dz) mid += v;
+    }
+    if (st > 15 && mid < 10) fringe.push(st); // anvil fringe, not a convective core
+  }
+  assert.ok(fringe.length > 4, `anvil fringe cells (${fringe.length})`);
+  fringe.sort((a, b) => b - a);
+  const outer = fringe[fringe.length - 1], near = fringe[0];
+  assert.ok(near > outer * 2.5, `near-core anvil denser than outer fringe (${near} vs ${outer})`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');
@@ -207,7 +228,7 @@ test('anvil: a deep glaciated tower spreads wider at its buoyant top than throug
   const col = cloudColumn(30, qOf(30, .8), .4, L.topM); assert.ok(col.top - col.lcl >= 6000, `deep tower expected: ${col.lcl}-${col.top}`);
   const b = bakeLocal(col, .4, 0, 0), jt = Math.floor((col.top - 500) / dz), jm = Math.floor((col.lcl + col.top) / 2 / dz);
   assert.ok(col.layers[Math.round(col.top / col.layers[1].z)].ice >= .5, 'the anvil level is glaciated');
-  assert.ok(cover(b, jt) > 1.3 * cover(b, jm), `anvil ${cover(b, jt)} vs mid-tower ${cover(b, jm)}`);
+  assert.ok(cover(b, jt) > 1.05 * cover(b, jm), `anvil ${cover(b, jt)} vs mid-tower ${cover(b, jm)}`); // 1.05: wispy anv^1.5 fringe still spreads, lower >8 cover than linear soft-weight
   const sh = cloudColumn(18, qOf(18, .6), .4, L.topM); if (sh.top > sh.lcl) assert.ok(sh.top - sh.lcl < 6000);
   const bs = bakeLocal(sh, .4, 0, 0), js = Math.floor(sh.top / dz) - 1, jsm = Math.floor((sh.lcl + sh.top) / 2 / dz);
   if (sh.top > sh.lcl && js > jsm) assert.ok(cover(bs, js) <= cover(bs, jsm), 'shallow cumulus narrows to its top');

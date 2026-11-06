@@ -107,6 +107,26 @@ test('overshoot bake: cell strength scales tip height — mid cells stop short o
   assert.ok(midShort > 0, `some weaker cells stop short in the overshoot band (${midShort})`);
   assert.ok(midShort + coreHigh > 2, `overshoot footprint has more than one cell (${midShort + coreHigh})`);
 });
+test('anvil bake: soft strength weights keep a dense core and a weaker fringe in the ice deck', () => {
+  const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 3000, 'deep glaciated tower for anvil');
+  const b = bakeLocal(col, 1, 0, 0, L);
+  const dens: number[] = [];
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let sum = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz;
+      if (z > col.top - 600 && z <= col.top + dz) sum += b[i + L.nx * (j + L.nz * k)];
+    }
+    if (sum > 0) dens.push(sum);
+  }
+  assert.ok(dens.length > 8, `anvil footprint ${dens.length}`);
+  dens.sort((a, b) => b - a);
+  const fringe = dens.filter(d => d < dens[0] * .55);
+  assert.ok(fringe.length > 0, `weaker fringe cells under soft weights (${fringe.length})`);
+  assert.ok(dens[0] > dens[dens.length - 1], `core denser than outer fringe (${dens[0]} > ${dens[dens.length - 1]})`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');

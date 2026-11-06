@@ -13,7 +13,7 @@
  */
 import * as THREE from 'three';
 import { LOG_DEPTH, LOG_DEPTH_PREFIX } from './logDepth';
-import { GLSL_NOISE } from '../../proc/glsl';
+import { GLSL_NOISE, GLSL_WORLEY } from '../../proc/glsl';
 import { GLOBE_LAYERS } from './planetLayers';
 import { GLOBE_SKY } from './tile';
 import { K } from '../../core/constants';
@@ -49,13 +49,17 @@ export const ATMOS_STEPS = [[16, 6, 8, 3], [14, 5, 6, 3], [12, 4, 6, 2], [10, 4,
 export const CLOUDS = { heightKm: 2.5, cellKm: 700, albedo: .95, /** cumulus/cumulonimbus tops above the base at full cover (CAPE overshoot column, PRs #237-#265) [km], relief: normal tilt per density step, tauMax: optical depth of a full column */ topKm: 9, relief: 6, tauMax: 40, octaves: [8, 6, 5, 4, 2, 0],
   /** synoptic swirl (cloudDensity): warp noise cell, amplitude (radians of arc, x base frequency), Coriolis twist at the poles,
    *  east-west stretch in 25-65 deg, sim-lookup warp and blur (radians) [game calibration vs Apollo 17 Blue Marble] */
-  warpCellKm: 2600, warpAmp: .35, twistRad: 2.2, zonalStretch: 1.4, simWarpRad: .045, simBlurRad: .018, organise: .45, orgGain: 5.0,
-  /** sd of the normalised fBm (8 octaves, persistence .6, value noise ~.15 per octave: ~.075), so P(noise > c) follows the sim fraction
-   *  instead of snapping to all-or-nothing (the 0.113 used before made 0.5 cover read as clear sky and 0.8 as one sheet) */
+  warpCellKm: 2600, warpAmp: .10, twistRad: 2.2, zonalStretch: .30, simWarpRad: .045, simBlurRad: .018, organise: .45, orgGain: 5.0,
+  /** T-0169: a second, smaller warp (iq f(p+h(p))) chops the sampling point so edges are not a straight UV stretch.
+   *  Runs when the tier's octave count is at least chopFrom (Ultra through Low). Billow (iq abs(2n−1)) and one inverted
+   *  Worley F1 run only at billowFrom / worleyFrom and above (Ultra and High). Lower rows stay the base fBm. */
+  chopFrom: 4, chopFreq: 8, chopAmp: .48, billowFrom: 6, billowMix: .85, billowBias: .04, worleyFrom: 6, worleyFreq: 5.2, worleyMix: .72,
+  /** sd of the normalised field on the CPU twin (cloudCover.ts) after the Perlin-Worley mix (~0.17 at 8 octaves;
+   *  the pre-T-0169 fBm was ~0.075). P(noise > c) follows the sim fraction instead of snapping to all-or-nothing. */
   /** share of the sim cover drawn opaque from orbit (thin cirrus and sub-pixel cumulus do not read: ~0.55 global visible deck vs
    *  MODIS 0.67 total), and the softest edge half-width on the causal path (soft, fibrous margins, not cut-out blobs) */
   opticalShare: .68, simEdgeHalf: .035,
-  noiseSd: .075,
+  noiseSd: .17,
   /** tiles: the shell counts as in front of a ground fragment up to this far behind it. Coarse orbit tiles (and the km-scaled
    *  camera-relative centre) put part of the disc a few km above the 2.5 km shell, and the clouds stopped along a straight line there */
   groundSlackKm: 30,
@@ -65,16 +69,22 @@ export const CLOUDS = { heightKm: 2.5, cellKm: 700, albedo: .95, /** cumulus/cum
    *  than 2 px fade out by distance (no shimmer from orbit). clearLift: on the in-page descent the threshold rises by
    *  clearLift x cloudClear while the cover fades (T-0041): the home view sits in one cell whose density spans only ~.62-.71
    *  (refs/T-0041 sweep), so a pure alpha fade left a flat translucent sheet. [game calibration: persistence, widths, lift] */
-  persistence: .6, clearLift: .08, edgeHalf: [.02, .025, .035, .045, .06, .06], edgeCentre: [.613, .616, .621, .629, .675, .675],
-  /** the shadow lookup is ONE octave: its own threshold for the same mean cover, soft (penumbra-like) edges */
-  shadowCentre: .74, shadowHalf: .08,
+  persistence: .6, clearLift: .08, edgeHalf: [.02, .025, .035, .045, .06, .06], edgeCentre: [.619, .621, .621, .629, .675, .675],
+  /** shadow threshold for the same field as the visible deck (full tier octaves, capped at 6). Half-width is
+   *  sharper than the old one-octave penumbra so a glint cannot sit in a hole the eye reads as cloud. */
+  shadowCentre: .619, shadowHalf: .04,
   /** drift from the world clock: an eastward wind (m/s) turns the field about the polar axis; the field also evolves
    *  (slides through the noise's 3rd axis) once per `evolveH` game hours [game calibration] */
   windMs: 12, evolveH: 6, /** windMs: only the fallback (equator) while the environment record is empty (no grid booted) */
-  /** cloud shadows on the terrain: ONE noise lookup (the cloud field's base octave: one 3D value-noise sample) where the
-   *  sun ray leaves the shell; on while the tier draws at least `shadowMinOct` cloud octaves (off at Low / Minimum).
-   *  Cuts this share of the direct sun under full cover [game calibration] */
-  shadow: .75, shadowMinOct: 3 };
+  /** cloud shadows where the sun ray leaves the shell. Same cloudDensity as the deck (octave count capped at 6),
+   *  on while the tier draws at least `shadowMinOct` octaves (off at Very low and Minimum). `shadow` is the share of
+   *  direct diffuse removed under full cover; specular is killed on a tighter ramp in patch() so a sharp glint cannot
+   *  leak. Sky light is not multiplied. [game calibration] */
+  shadow: .96, shadowMinOct: 3 };
+/** T-0169 terminator. mu = N·L. Daylight stays white only while mu is high; below whiteAt the sun keeps atmSunlight's
+ *  Rayleigh colour and, as mu falls toward warmAt, an architectural orange/red (Matthew 2026-11-06). The gain is
+ *  multiplied by the sun's luminance so the band does not blow out. [game calibration] */
+export const TERMINATOR = { whiteAt: .78, warmAt: .02, gain: [1.25, .36, .09] as const };
 
 /** Hygroscopic growth of the Mie (aerosol) term with humidity (T-0089, issue #111): f(RH) = (1 − RH)^−gamma (Hanel 1976,
  *  Adv. Geophys. 19:73, doi 10.1016/S0065-2687(08)60142-9; the one-parameter fit of Kasten 1969). gamma 0.3: continental
@@ -105,6 +115,7 @@ const float ATM_AERIAL = ${ATMOS.aerial.toFixed(3)}; // in-scatter in the terrai
 uniform float uAirglow; uniform vec4 uAurora; uniform vec3 uDipole; uniform vec3 uCentre; uniform vec3 uSun; uniform float uRp, uRa, uSunI; uniform vec4 uSteps; // ray-march samples: sky, sky light, terrain, terrain light (governor tier)
 uniform mat3 uViewToWorld; uniform float uMieScale; uniform float uCloudOct, uCloudSeed, uCloudEvolve; uniform vec2 uCloudSpin; // spin = (cos, sin) of the drift angle
 uniform float uCloudClear; // 0 = the field as calibrated .. 1 = no clouds (in-page descent, T-0034/T-0041): cover and shadows fade AND the threshold lifts by clearLift, so the deck breaks into clouds and holes instead of a flat sheet
+uniform float uOceanGlint; // 1 when this tier's octave count is at least shadowMinOct (ocean chop + Matthew's glint). Not tied to the cloud toggle.
 uniform float uSkyWarm; // cinematic: 0 the blue limb, 1 an orange haze (GLOBE_SKY)
 uniform sampler2D uCloudTex; uniform vec4 uCloudSim; // planetLayers texture: A = sim cloud fraction (rust update_clouds), w = loaded
 uniform vec3 uCloudEdge; // threshold centre, half width (governor tier), pixel angle (rad per px: octave fade by distance)
@@ -172,12 +183,22 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
 }
 // sunlight colour reaching x (transmittance), 0 in the planet's shadow
 vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? atmRefracted(x) : exp(-((BR + BO) * l.x + BME * l.y)); }
+// T-0169: widen the warm terminator. sunT is atmSunlight (Rayleigh/Mie). White only while mu = N·L is high;
+// through the band the Rayleigh colour shows, and at the limb it is the architectural orange/red in TERMINATOR.gain.
+vec3 atmWarmSun(vec3 sunT, float mu) {
+  float sY = max(dot(sunT, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
+  float band = smoothstep(${TERMINATOR.whiteAt.toFixed(2)}, ${TERMINATOR.warmAt.toFixed(2)}, mu);
+  vec3 arch = vec3(${TERMINATOR.gain.map(v => v.toFixed(2)).join(', ')}) * sY;
+  vec3 tinted = mix(sunT, arch, band);
+  return mix(vec3(sY), tinted, band);
+}
 // Local sky (diffuse) light relative to clear noon, from the Sun's altitude h at a point (mu = sin h): the hemisphere light stands
 // for the clear-noon diffuse sky (~20 klx, CIE); sin h / sin 30 deg by day [approx], floor 960/20000 at h = 0 and Schaefer's 0.4 dex
 // per degree of depression below (core/skyVisibility twilightIlluminance), so the night side gets ~0 (night floor ~1e-3 lx)
 float atmSkyF(float mu) { float h = degrees(asin(clamp(mu, -1.0, 1.0)));
   return h >= 0.0 ? clamp(max(0.048, mu / 0.5), 0.0, 1.0) : 0.048 * pow(10.0, 0.4 * max(h, -30.0)); }
 ${GLSL_NOISE}
+${GLSL_WORLEY}
 // 3D value noise from two seeded 2D slices of the shared vnoiseU (proc/glsl), so the clouds have no seams on the sphere.
 // vnoiseU, not vnoise: the fract(sin) hash gave dotted lines / specks along lattice planes in the clouds and their shadows
 // (the base octave's x = 0 plane is the +z face's centre tile line: the "crack" seen from orbit and at 40 km)
@@ -212,10 +233,33 @@ float cloudDensity(vec3 dir, float oct, float c, float hw) { // dir: planet-fixe
     f = clamp(f * ${CLOUDS.opticalShare.toFixed(2)} * (1.0 + ${CLOUDS.organise.toFixed(2)} * org), 0.02, 0.98); hw = max(hw, ${CLOUDS.simEdgeHalf.toFixed(3)}); // opticalShare: optically thin cirrus (~1/4 of cover, ISCCP Rossow & Schiffer 1999) barely shows from orbit
     c += clamp(uCloudSim.w, 0.0, 1.0) * (0.5 + ${CLOUDS.noiseSd.toFixed(3)} * log((1.0 - f) / f) / 1.7 - ${CLOUDS.edgeCentre[0].toFixed(3)}); }
   p += ${CLOUDS.warpAmp.toFixed(2)} * qt * ${(6371 / CLOUDS.cellKm).toFixed(3)};
+  // Wind disturbance: a smaller noise warps the sample (iq f(p + h(p))), so the edge is chopped instead of smeared
+  // along the synoptic stretch. Off below chopFrom octaves.
+  vec3 ps = p;
+  vec3 pCell = ps;
+  if (oct >= ${CLOUDS.chopFrom.toFixed(1)}) {
+    vec3 hs = vec3(cloudBase3(p * ${CLOUDS.chopFreq.toFixed(1)} + vec3(2.2, 5.1, 1.3)), cloudBase3(p * ${CLOUDS.chopFreq.toFixed(1)} + vec3(7.4, 1.9, 4.4)), cloudBase3(p * ${CLOUDS.chopFreq.toFixed(1)} + vec3(3.3, 8.8, 6.1))) - 0.5;
+    ps += ${CLOUDS.chopAmp.toFixed(2)} * hs;
+    pCell = ps;
+  }
   float v = 0.0, a = 0.5, n = 0.0;
   for (int i = 0; i < ${CLOUDS.octaves[0]}; i++) { float w = clamp(oct - float(i), 0.0, 1.0); if (w <= 0.0) break;
-    v += a * w * cloudBase3(p); n += a * w; p = p * 2.07 + 11.3; a *= ${CLOUDS.persistence.toFixed(3)}; }
-  return smoothstep(c - hw, c + hw, v / max(n, 1e-3));
+    float nse = cloudBase3(ps);
+    // Cumuliform fine octaves: iq billow, and on the finest ones a squared ridge (Musgrave, the same form as planet.ts).
+    if (oct >= ${CLOUDS.billowFrom.toFixed(1)} && float(i) >= 2.0) {
+      float billow = abs(nse * 2.0 - 1.0);
+      float shaped = float(i) >= 4.0 ? mix(billow, billow * billow, 0.55) : billow;
+      nse = mix(nse, shaped, ${CLOUDS.billowMix.toFixed(2)});
+    }
+    v += a * w * nse; n += a * w; ps = ps * 2.07 + 11.3; a *= ${CLOUDS.persistence.toFixed(3)}; }
+  float fbm = v / max(n, 1e-3);
+  if (oct >= ${CLOUDS.billowFrom.toFixed(1)}) fbm += ${CLOUDS.billowBias.toFixed(3)}; // puts back the mean the ridge term pulls down
+  // Perlin-Worley (Schneider & Vos 2015): the smooth fBm only survives inside the cells, so the long bands break into clumps.
+  if (oct >= ${CLOUDS.worleyFrom.toFixed(1)}) {
+    float cells = 1.0 - smoothstep(0.0, 0.68, worleyF1(pCell * ${CLOUDS.worleyFreq.toFixed(2)} + vec3(2.2, 0.7, 4.1)));
+    fbm = mix(fbm, clamp(fbm * 0.25 + cells, 0.0, 1.0), ${CLOUDS.worleyMix.toFixed(2)});
+  }
+  return smoothstep(c - hw, c + hw, fbm);
 }
 // the cloud shell along a view ray (camera at the origin, km) before tEnd: rgb = lit cloud (terrain light units), a = cover
 vec4 atmClouds(vec3 rd, float tEnd, int nl) {
@@ -240,10 +284,9 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
   float tau = ${CLOUDS.tauMax.toFixed(1)} * a * (0.3 + 0.7 * a0); // column optical depth from cover (cumulus 10-60)
   float self = exp(-max(aS - a0, 0.0) * tau * 0.35); // up-sun neighbour thicker = this side is in its shadow
   float powder = 1.0 - exp(-2.0 * tau * 0.1); // multiple scattering: thick cloud reflects ~all, thin edges let ground through
-  float mu = dot(n, uSun), lamC = max(dot(cn, uSun), 0.0);
-  vec3 sunT = atmSunlight(x + n * (${CLOUDS.topKm.toFixed(1)} * a), nl); // top height: tops above the base see the sun later at the terminator
-  float lit = (0.35 + 0.65 * lamC) * self * smoothstep(-0.12, 0.08, mu) ;
-  float sY = dot(sunT, vec3(0.2126, 0.7152, 0.0722)); sunT = mix(vec3(sY), sunT, smoothstep(0.35, -0.05, mu)); // white tops by day; the reddened sun only near the terminator
+  float mu = dot(n, uSun), lamC = smoothstep(-0.08, 0.25, dot(cn, uSun));
+  vec3 sunT = atmWarmSun(atmSunlight(x + n * (${CLOUDS.topKm.toFixed(1)} * a), nl), mu); // top height: tops above the base see the sun later at the terminator
+  float lit = (0.35 + 0.65 * lamC) * self * smoothstep(-0.22, 0.28, mu); // soft penumbra, not a hard night cut
   lit *= 0.55 + 0.45 * a0; // thicker towers (higher tops) catch more sun; low thin deck sits in the haze
   vec3 col = ${CLOUDS.albedo.toFixed(2)} * (sunT * lit * 1.25 + 0.10 * atmSkyF(mu) * (0.6 + 0.4 * powder));
   return vec4(col, clamp(a * (0.55 + 0.45 * powder), 0.0, 0.97) * (1.0 - uCloudClear));
@@ -257,9 +300,9 @@ const stepsFor = (tier: number) => ATMOS_STEPS[Math.max(0, Math.min(ATMOS_STEPS.
 export function createAtmosphere(R: number, tier = 0, seed = 0): Atmosphere {
   let [sn, sl, tn, tl] = stepsFor(tier), cur = tier;
   const Rp = R / 1000, Ra = Rp + ATMOS.heightKm;
-  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uAirglow: { value: 1 }, uAurora: { value: new THREE.Vector4() }, uDipole: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uMieScale: { value: 1 }, uSkyWarm: { value: 0 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
+  const uniforms = { uCentre: { value: new THREE.Vector3() }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uRp: { value: Rp }, uRa: { value: Ra }, uSunI: { value: ATMOS.sunI }, uAirglow: { value: 1 }, uAurora: { value: new THREE.Vector4() }, uDipole: { value: new THREE.Vector3(0, 1, 0) }, uSteps: { value: new THREE.Vector4() }, uViewToWorld: { value: new THREE.Matrix3() }, uCloudOct: { value: 0 }, uCloudSeed: { value: (seed % 997) * .173 }, uCloudSpin: { value: new THREE.Vector2(1, 0) }, uCloudEvolve: { value: 0 }, uCloudEdge: { value: new THREE.Vector3(.6, .05, 1e-3) }, uCloudClear: { value: 0 }, uMieScale: { value: 1 }, uSkyWarm: { value: 0 }, uOceanGlint: { value: 1 }, uCloudTex: GLOBE_LAYERS.uLayerTex, uCloudSim: GLOBE_LAYERS.uLayers };
   let cloudsOn = true, airOn = true; // layer panel (layerPanel.ts): off = 0 octaves / 0 ray-march steps, the shader skips the work
-  const setSteps = () => { if (airOn) uniforms.uSteps.value.set(sn, sl, tn, tl); else uniforms.uSteps.value.set(0, 0, 0, 0); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = cloudsOn ? CLOUDS.octaves[row] : 0; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; }; setSteps();
+  const setSteps = () => { if (airOn) uniforms.uSteps.value.set(sn, sl, tn, tl); else uniforms.uSteps.value.set(0, 0, 0, 0); const row = Math.max(0, Math.min(CLOUDS.octaves.length - 1, cur)); uniforms.uCloudOct.value = cloudsOn ? CLOUDS.octaves[row] : 0; uniforms.uCloudEdge.value.x = CLOUDS.edgeCentre[row]; uniforms.uCloudEdge.value.y = CLOUDS.edgeHalf[row]; uniforms.uOceanGlint.value = CLOUDS.octaves[row] >= CLOUDS.shadowMinOct ? 1 : 0; }; setSteps();
   const mat = new THREE.ShaderMaterial({
     uniforms, side: THREE.BackSide, depthWrite: false, transparent: true, blending: THREE.AdditiveBlending,
     vertexShader: LOG_DEPTH_PREFIX + /* glsl */`#include <common>
@@ -344,10 +387,13 @@ void main() {
           .replace('#include <opaque_fragment>', `if (uSteps.z > 0.5) { vec3 fp = -vViewPosition * 1e-3, tr; float d = length(fp); vec3 rd = fp / max(d, 1e-6);
     // only the DIRECT sun is reddened (sunset) / cut (planet shadow) on its way to the fragment (x1.12 = noon
     // transmittance^-1); sky (hemisphere) light stays, so ground facing away from a low sun is lit by the sky, not black
-    float cs = 1.0; if (uCloudOct > ${CLOUDS.shadowMinOct - .5}) { vec3 nU = normalize(fp - uCentre); float mu = dot(nU, uSun); // cloud shadow: one cloud-field lookup up the sun ray
-      if (mu > 0.02) cs = 1.0 - ${CLOUDS.shadow.toFixed(2)} * (1.0 - uCloudClear) * cloudDensity(normalize(uViewToWorld * normalize(fp + uSun * (${(CLOUDS.heightKm + CLOUDS.topKm * .4).toFixed(2)} / mu) - uCentre)), 1.0, ${CLOUDS.shadowCentre.toFixed(3)} + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, ${CLOUDS.shadowHalf.toFixed(3)}); }
+    float coverS = 0.0; if (uCloudOct > ${CLOUDS.shadowMinOct - .5}) { vec3 nU = normalize(fp - uCentre); float mu = dot(nU, uSun); // cloud shadow: the deck's own field up the sun ray
+      if (mu > 0.02) coverS = 1.0 * (1.0 - uCloudClear) * cloudDensity(normalize(uViewToWorld * normalize(fp + uSun * (${(CLOUDS.heightKm + CLOUDS.topKm * .4).toFixed(2)} / mu) - uCentre)), min(uCloudOct, 6.0), ${CLOUDS.shadowCentre.toFixed(3)} + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, ${CLOUDS.shadowHalf.toFixed(3)}); }
+    float cs = 1.0 - ${CLOUDS.shadow.toFixed(2)} * coverS; // direct diffuse. Sky light below is not shadowed.
+    float csSpec = 1.0 - smoothstep(0.08, 0.35, coverS); // a sharp glint is gone once the deck is actually there
     float skyF = atmSkyF(dot(normalize(fp - uCentre), uSun)); // sky light is local (atmSkyF)
-    outgoingLight = (reflectedLight.directDiffuse + reflectedLight.directSpecular) * (1.12 * cs) * atmSunlight(fp, int(uSteps.w)) + (reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular) * skyF + totalEmissiveRadiance;
+    vec3 sunC = atmWarmSun(atmSunlight(fp, int(uSteps.w)), dot(normal, uSun));
+    outgoingLight = (reflectedLight.directDiffuse * cs + reflectedLight.directSpecular * csSpec) * (1.12) * sunC + (reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular) * skyF + totalEmissiveRadiance;
     vec3 ins = atmScatter(rd, d, int(uSteps.z), int(uSteps.w), tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL;
     vec4 cl = atmClouds(rd, d + ${CLOUDS.groundSlackKm.toFixed(1)}, int(uSteps.w)); outgoingLight = mix(outgoingLight, cl.rgb * tr + ins * ATM_AERIAL, cl.a); outgoingLight += atmEmission(rd, d) * ATM_AERIAL; } // clouds between camera and ground
 #include <opaque_fragment>`);

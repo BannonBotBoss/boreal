@@ -87,6 +87,26 @@ test('overshoot bake: a strong tower paints a tapered plume above the buoyant to
   assert.ok(coolPlume < hotPlume / 3, `cool plume ${coolPlume} vs hot ${hotPlume}`);
   assert.equal(hotPastTip, 0, `nothing past the clamped tip (${hotPastTip})`);
 });
+test('overshoot bake: cell strength scales tip height — mid cells stop short of the full overshoot', () => {
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 48 }, dz = L.topM / L.nz;
+  const hot = cloudColumn(30, qOf(30, .8), 1, L.topM);
+  assert.ok(hot.overshootM > 800 && hot.top > 0, `column overshoot ${hot.overshootM} top ${hot.top}`);
+  const b = bakeLocal(hot, 1, 0, 0, L), tipFull = Math.min(L.topM, hot.top + hot.overshootM);
+  let midShort = 0, coreHigh = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let maxZ = -1;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, v = b[i + L.nx * (j + L.nz * k)];
+      if (z > hot.top + dz && v > 0 && z > maxZ) maxZ = z;
+    }
+    if (maxZ < 0) continue;
+    if (maxZ >= tipFull - dz) coreHigh++;
+    else if (maxZ > hot.top + hot.overshootM * .15 && maxZ < tipFull - 2 * dz) midShort++;
+  }
+  assert.ok(coreHigh > 0, `at least one mature core reaches the full tip (${coreHigh})`);
+  assert.ok(midShort > 0, `some weaker cells stop short in the overshoot band (${midShort})`);
+  assert.ok(midShort + coreHigh > 2, `overshoot footprint has more than one cell (${midShort + coreHigh})`);
+});
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');

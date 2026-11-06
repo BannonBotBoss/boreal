@@ -328,11 +328,17 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     },
     /** Page load (world/globe/startView): straight into globe mode at the standalone globe's opening altitude
      *  (2.2 R: the whole disc), aimed at the forest edge by the mama's den. No rise. False = take the reload path. */
+    /** Wide disc for the birth beats. False restores the page-load orbit. */
+    setFilmFrame(wide: boolean) { globe?.setFilmFrame(wide); },
+    /** yaw radians off the page-load aim, altitude in planet radii, view-offset 0..1. */
+    setFilmDrive(yaw: number, radii: number, offset: number) { globe?.setFilmDrive(yaw, radii, offset); },
     enter(): boolean {
       if (mode !== 'game') return true;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
       prep = null; hold.hold(); globe.resumeWorkers(); lastT = performance.now(); toGlobe(true); return true;
     },
+    /** The planet grid is final. The film waits on this before the living world gives way to arrival. */
+    whenBooted() { return loadGlobe().then(g => g.bootP); },
     /** VR ground step: leave the planet view and stand the mama at the forest edge. */
     showForest(at: { x: number; z: number; yaw: number }) {
       host.place(at.x, at.z, at.yaw);
@@ -496,7 +502,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       g.attachViewpoint(null);
       const t0 = performance.now(); let n = 0;
       try { while (performance.now() - t0 < INPAGE.prebuildMs) { renderer.getDrawingBufferSize(size); far.resize(size.x, size.y); g.step(far.target); if (++n > 10 && g.stats().queued === 0) break; await new Promise(r => requestAnimationFrame(r)); } }
-      finally { g.attachViewpoint(view.camera); }
+      finally { if (mode === 'game') g.attachViewpoint(view.camera); }
       const bg = new THREE.Scene(), rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }); bg.background = far.texture; // background plane: screen and composer variants
       const prev = renderer.getRenderTarget(); renderer.setRenderTarget(rt); renderer.render(bg, view.camera); renderer.setRenderTarget(null); renderer.render(bg, view.camera); renderer.setRenderTarget(prev); rt.dispose();
       if (mode === 'game') g.suspendWorkers(); // not if Shift+G already went up meanwhile (the band would build tiles on the main thread)

@@ -4,6 +4,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { K } from '../../core/constants';
+import { GLSL_NOISE } from '../../proc/glsl';
 import { frameShiftX, sphereLook } from './look';
 import { QUEST, TIERS, chooseTier, percentile, questProfileOn, stepTier, tierById, type Hysteresis, type Tier } from './lod';
 
@@ -20,10 +22,11 @@ const FINAL = {
     time: { value: 0 },
     center: { value: new THREE.Vector2(0.5, 0.5) },
     tint: { value: new THREE.Color(1, 0.78, 0.88) },
+    disc: { value: 1 },
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float chromatic, grain, vignette, godrays, time; uniform vec2 center; uniform vec3 tint; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform float chromatic, grain, vignette, godrays, time, disc; uniform vec2 center; uniform vec3 tint; varying vec2 vUv;
     void main(){
       vec2 d = vUv - 0.5;
       vec2 dir = d * chromatic;
@@ -39,9 +42,9 @@ const FINAL = {
       }
       rays /= 12.0;
       col += tint * rays * godrays;
-      // The outer glow is a circle in screen space. A mesh edge or a ray fan must not draw it.
+      // The outer glow is a circle in screen space. Plasma turns it off so the sphere edge cannot survive as a ring.
       float glowD = length(vUv - center);
-      float glow = smoothstep(0.62, 0.08, glowD);
+      float glow = smoothstep(0.62, 0.08, glowD) * disc;
       col += tint * glow * glow * 0.55;
       col += (sin(vUv.x * 180.0 + time * 13.0) * sin(vUv.y * 140.0 - time * 9.0) * 0.5) * grain;
       col *= 1.0 - vignette * dot(d,d) * 2.2;
@@ -110,6 +113,42 @@ export class CosmosSphere {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(40, 16 / 9, 0.1, 100);
+  /** One camera. The cinematic sets this; applyLook does not invent a second view. dolly 1 is the old distance. */
+  framing = { dolly: 1 };
+  setFraming(fov: number, dolly: number) { this.camera.fov = fov; this.framing.dolly = dolly; }
+  private plasma: THREE.Mesh | null = null;
+  private plasmaOn = false;
+  /** Full-frame turbulent plasma on this same camera. The sphere mesh stays hidden so its edge cannot draw a circle. */
+  setPlasma(on: boolean, u?: { time: number; heat: number; gain: number; clear: number; dark: number; stars: number; galaxy: number; sun: number; late: number }) {
+    this.plasmaOn = on;
+    if (!this.plasma) return;
+    this.plasma.visible = on;
+    this.core.visible = !on;
+    this.halo.visible = !on;
+    this.final.uniforms.disc.value = on ? 0 : 1;
+    if (on) {
+      this.bloom.threshold = 0.62;
+      this.bloom.strength = u && u.stars > 0 && u.galaxy < 0.35 && u.sun < 0.05 ? 0.55 : u && u.sun > 0.05 ? 0.02 : 0.05;
+      this.final.uniforms.godrays.value = 0;
+      this.final.uniforms.vignette.value = 0;
+    } else {
+      this.bloom.threshold = 0.62;
+      this.bloom.strength = 0.28;
+      this.final.uniforms.godrays.value = Math.max(0.45, this.tier.godrays);
+      this.final.uniforms.vignette.value = this.tier.vignette;
+    }
+    if (!on || !u) return;
+    const mat = this.plasma.material as THREE.ShaderMaterial;
+    mat.uniforms.time.value = u.time;
+    mat.uniforms.heat.value = u.heat;
+    mat.uniforms.gain.value = u.gain;
+    mat.uniforms.clear.value = u.clear;
+    mat.uniforms.dark.value = u.dark;
+    mat.uniforms.stars.value = u.stars;
+    mat.uniforms.galaxy.value = u.galaxy;
+    mat.uniforms.sun.value = u.sun;
+    mat.uniforms.late.value = u.late;
+  }
   private core: THREE.Mesh;
   private halo: THREE.Mesh;
   private shells: THREE.Mesh[] = [];
@@ -166,6 +205,170 @@ export class CosmosSphere {
     this.halo.renderOrder = 1;
     this.scene.add(this.halo);
     this.scene.add(this.core);
+    const plasmaMat = new THREE.ShaderMaterial({
+      depthTest: false, depthWrite: false,
+      uniforms: {
+        time: { value: 0 }, heat: { value: 0 }, gain: { value: 1 }, clear: { value: 0 }, dark: { value: 0 },
+        stars: { value: 0 }, galaxy: { value: 0 }, sun: { value: 0 }, late: { value: 0 },
+      },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform float time, heat, gain, clear, dark, stars, galaxy, sun, late;
+${GLSL_NOISE}
+        #define hash(p) hash2s((p), 17.0)
+        #define noise(p) vnoise((p), 17.0)
+        float fb(vec2 p){ return fbm(p, 17.0); }
+        float streak(vec2 uv, vec2 flow, float t){
+          vec2 q = uv * 5.5 + flow * 1.4 + vec2(t * 0.65, t * 0.22);
+          float lane = fract(q.x * 0.45 + q.y);
+          float across = abs(fract(q.y * 2.2 - t * 0.15) - 0.5);
+          float life = lane * clamp((0.38 - lane) / 0.2, 0.0, 1.0);
+          float thin = exp(-across * across * 320.0);
+          float gate = clamp((noise(q * 0.45) - 0.64) / 0.28, 0.0, 1.0);
+          return life * thin * gate;
+        }
+        float galaxyField(vec2 uv, float scale, float fil){
+          vec2 p = uv * scale;
+          vec2 id = floor(p);
+          vec2 f = fract(p) - 0.5;
+          float h = hash(id);
+          vec2 o = vec2(hash(id + vec2(1.7, 2.3)), hash(id + vec2(4.2, 8.1))) - 0.5;
+          vec2 d = f - o * 0.86;
+          float ang = hash(id + vec2(3.1, 9.4)) * ${K.TAU};
+          float ca = cos(ang), sa = sin(ang);
+          d = vec2(ca * d.x + sa * d.y, -sa * d.x + ca * d.y);
+          d.x *= 0.32 + 0.45 * hash(id + vec2(2.2, 0.4));
+          d.y += sin(atan(d.y, d.x) * 2.0) * length(d) * 0.22;
+          float sz = 0.11 + 0.2 * hash(id + vec2(6.6, 1.1));
+          float g = exp(-dot(d, d) / max(sz * sz * 0.28, 0.004));
+          g *= smoothstep(0.28, 0.72, h);
+          g *= smoothstep(0.35, 0.8, fil);
+          return g;
+        }
+        void main(){
+          vec2 uv = (vUv - 0.5) * vec2(1.85, 1.15);
+          vec2 q = vec2(fb(uv + time * 0.045), fb(uv + vec2(5.2, 1.3) - time * 0.036));
+          vec2 r = vec2(fb(uv + 1.8 * q + time * 0.028), fb(uv + 1.8 * q.yx - time * 0.02));
+          float base = fb(uv * 1.15 + 2.2 * r);
+          float fine = fb(uv * 4.8 + r * 1.4 + vec2(time * 0.05, 0.0));
+          float grain = fb(uv * 11.0 - r + vec2(0.0, time * 0.07));
+          float dust = fb(uv * 22.0 + time * 0.04);
+          float density = base * 0.52 + fine * 0.28 + grain * 0.14 + dust * 0.06;
+          float h = clamp(heat, 0.0, 3.0);
+          float redFog = clamp(h - 2.0, 0.0, 1.0) * (1.0 - clear);
+          density = mix(density, 0.38 + 0.48 * density, redFog);
+          float shaped = clamp((density - 0.28) / 0.55, 0.0, 1.0);
+          float emit = pow(shaped, 1.35);
+          float core = pow(shaped, 3.4);
+          vec3 indigo = vec3(0.05, 0.08, 0.28);
+          vec3 goldVoid = vec3(0.07, 0.022, 0.005);
+          vec3 deepRed = vec3(0.42, 0.08, 0.02);
+          vec3 blue = vec3(0.82, 0.90, 1.0);
+          vec3 gold = vec3(1.0, 0.80, 0.18);
+          vec3 orange = vec3(1.0, 0.46, 0.05);
+          vec3 red = vec3(0.62, 0.12, 0.03);
+          float warm = clamp((h - 0.2) / 0.9, 0.0, 1.0); warm *= warm;
+          float fire = smoothstep(0.72, 0.9, h) * (1.0 - smoothstep(1.05, 1.28, h));
+          vec3 voids = h < 1.0 ? mix(indigo, goldVoid, warm) : h < 2.0 ? mix(goldVoid, vec3(0.14, 0.035, 0.008), h - 1.0) : deepRed;
+          vec3 hot = h < 1.0 ? mix(blue, gold, warm) : h < 2.0 ? mix(gold, orange, h - 1.0) : mix(orange, red, h - 2.0);
+          vec3 col = voids * (0.45 + 0.3 * emit);
+          col += hot * emit * mix(0.55, 1.55, fire);
+          col.r *= mix(0.7, 1.38, warm);
+          col.g *= mix(0.85, mix(0.72, 1.08, fire), warm);
+          col.b *= mix(1.45, mix(0.22, 0.08, fire), warm);
+          float tip = clamp((shaped - 0.48) / 0.28, 0.0, 1.0);
+          col += vec3(1.0, 0.98, 0.93) * core * mix(0.28, 1.45, fire);
+          col += vec3(1.0, 0.99, 0.96) * pow(tip, 0.72) * mix(0.85, 1.35, fire);
+          col += hot * (grain - 0.5) * 0.05 + hot * (dust - 0.5) * 0.03;
+          vec3 edge = vec3(0.48, 0.09, 0.015);
+          vec3 amber = vec3(0.95, 0.42, 0.06);
+          vec3 coreC = vec3(1.0, 0.94, 0.8);
+          vec3 fireCol = mix(edge, amber, smoothstep(0.12, 0.48, shaped));
+          fireCol = mix(fireCol, coreC, smoothstep(0.52, 0.84, shaped));
+          col = mix(col, fireCol, smoothstep(0.15, 0.7, fire));
+          float beforeStars = 1.0 - clamp(stars / 8.0, 0.0, 1.0);
+          col += hot * streak(uv, r - q, time) * 0.42 * beforeStars * (1.0 - fire * 0.35);
+          vec3 fogCol = mix(vec3(1.0, 0.42, 0.06), vec3(0.55, 0.12, 0.025), clear);
+          fogCol *= 0.45 + 0.7 * shaped;
+          float fogAmt = smoothstep(1.65, 2.15, h);
+          col = mix(col, fogCol, fogAmt * 0.8 * (1.0 - dark));
+          float webN = fb(uv * 2.1 + r * 0.35);
+          float web = pow(clamp(1.0 - abs(webN * 2.0 - 1.0), 0.0, 1.0), 1.7);
+          vec3 webCol = vec3(0.02, 0.015, 0.04) + vec3(0.85, 0.78, 0.95) * pow(web, 1.55);
+          float clearing = clear * beforeStars * (1.0 - clamp(galaxy + late + dark, 0.0, 1.0));
+          float veil = 1.0 - clearing;
+          float lace = pow(clamp(1.0 - abs(fb(uv * 8.5 + r) * 2.0 - 1.0), 0.0, 1.0), 16.0);
+          float lace2 = pow(clamp(1.0 - abs(fb(uv * 16.0 + 2.4) * 2.0 - 1.0), 0.0, 1.0), 22.0);
+          vec3 revealed = vec3(0.012, 0.004, 0.002) + vec3(1.0, 0.45, 0.1) * (lace * 0.07 + lace2 * 0.1);
+          col = mix(revealed, col, veil);
+          col = mix(col, webCol * 0.42, dark);
+          col *= gain;
+          float starSky = clamp(stars, 0.0, 1.0) * (1.0 - smoothstep(0.0, 0.8, galaxy)) * (1.0 - smoothstep(0.0, 0.2, late));
+          vec3 night = vec3(0.006, 0.005, 0.008) + vec3(0.09, 0.07, 0.05) * pow(web, 2.8) * 0.28;
+          col = mix(col, night, starSky);
+          float fil = pow(clamp(1.0 - abs(fb(uv * 3.6 + r * 0.2) * 2.0 - 1.0), 0.0, 1.0), 8.5);
+          float filB = pow(clamp(1.0 - abs(fb(uv * 6.4 + 3.1) * 2.0 - 1.0), 0.0, 1.0), 9.5);
+          float threads = max(fil, filB * 0.8);
+          float beads = galaxyField(uv, 20.0, threads) + galaxyField(uv + vec2(2.2, 7.1), 38.0, threads) * 0.85 + galaxyField(uv * 1.04 + vec2(4.0, 1.5), 62.0, threads) * 0.55;
+          vec3 gSky = vec3(0.003, 0.0025, 0.004) + vec3(0.55, 0.52, 0.48) * threads * 0.4;
+          col = mix(col, gSky, smoothstep(0.02, 0.28, galaxy));
+          col += vec3(0.9, 0.82, 0.62) * beads * galaxy * 0.9;
+          for (int i = 0; i < 8; i++) {
+            float fi = float(i);
+            float on = clamp((stars - fi) / 0.35, 0.0, 1.0) * (1.0 - sun) * (1.0 - galaxy) * (1.0 - smoothstep(0.2, 0.42, late));
+            vec2 jitter = vec2(hash(vec2(fi + 2.0, 5.0)), hash(vec2(fi + 9.0, 3.0)));
+            vec2 pos = mix(vec2(0.50, 0.48), vec2(0.36, 0.34) + jitter * vec2(0.28, 0.32), clamp(fi, 0.0, 1.0));
+            vec2 dd = vUv - pos;
+            float px = length(dd) * 1400.0;
+            col += vec3(1.0, 0.98, 0.94) * exp(-px * px * 0.18) * on * 2.6;
+            float glint = pow(abs(cos(atan(dd.y, dd.x) * 2.0)), 48.0) * exp(-px * 0.35);
+            col += vec3(1.0, 0.95, 0.85) * glint * on * 0.55;
+          }
+          float push = clamp(late * 1.7, 0.0, 1.0);
+          float scale = mix(0.42, 3.1, push);
+          vec2 pc = (vUv - 0.5) * vec2(1.55, 1.0) / scale;
+          float rad = length(pc);
+          float ang = atan(pc.y, pc.x);
+          float arm = pow(0.5 + 0.5 * sin(ang * 2.0 - log(rad + 0.06) * 5.4 + time * 0.05), 1.5);
+          arm = clamp(0.5 + (arm - 0.5) * 1.3, 0.0, 1.0);
+          arm *= exp(-rad * rad * 0.45) * (0.25 + 0.75 * (1.0 - exp(-rad * 10.0)));
+          float nebU = clamp((late - 0.1) / 0.26, 0.0, 1.0);
+          float spiralW = clamp(late * 2.4, 0.0, 1.0) * (1.0 - smoothstep(0.2, 0.72, nebU)) * (1.0 - sun);
+          vec3 neb = mix(vec3(0.05, 0.04, 0.07), vec3(0.72, 0.32, 0.08), arm);
+          col = mix(col, neb * (0.12 + arm * 1.05), spiralW);
+          vec2 dc = (vUv - 0.5) * vec2(1.15, 1.0);
+          float tilt = 0.55;
+          float ct = cos(tilt), st = sin(tilt);
+          dc = vec2(dc.x * ct - dc.y * st, dc.x * st + dc.y * ct);
+          dc.y *= mix(2.6, 6.2, nebU);
+          float pinch = mix(1.15, 0.42, nebU);
+          float diskR = length(dc) / pinch;
+          float disk = exp(-diskR * diskR * mix(1.1, 2.4, nebU));
+          float heart = exp(-diskR * diskR * mix(8.0, 28.0, nebU));
+          vec3 diskCol = mix(vec3(0.28, 0.08, 0.02), vec3(1.0, 0.78, 0.42), heart);
+          float diskW = smoothstep(0.08, 0.45, nebU) * (1.0 - sun);
+          col = mix(col, vec3(0.01, 0.008, 0.01), diskW * 0.82);
+          col += diskCol * disk * diskW * (0.55 + heart * 1.4);
+          vec2 su = (vUv - 0.5) * vec2(1.777, 1.0);
+          float sunPx = length(su) * 533.0;
+          float radius = mix(1.3, 4.4, sun);
+          float sunCore = exp(-pow(sunPx / max(radius, 0.6), 2.0));
+          float corona = exp(-pow(sunPx / max(radius * 1.55, 1.1), 2.0));
+          col = mix(col, vec3(0.004, 0.003, 0.005), smoothstep(0.02, 0.35, sun));
+          col += vec3(1.0, 0.72, 0.32) * corona * sun * 0.28;
+          col += vec3(1.0, 0.98, 0.94) * sunCore * sun * 1.7;
+          gl_FragColor = vec4(min(col, vec3(1.0)), 1.0);
+        }`,
+    });
+    plasmaMat.side = THREE.DoubleSide;
+    this.plasma = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), plasmaMat);
+    this.plasma.position.z = -0.45;
+    this.plasma.visible = false;
+    this.plasma.frustumCulled = false;
+    this.plasma.renderOrder = 5;
+    this.camera.add(this.plasma);
+    this.scene.add(this.camera);
     this.scene.add(new THREE.AmbientLight(0x2a0848, 0.35));
     const key = new THREE.PointLight(0x6633cc, 2, 40);
     key.position.set(4, 3, 6);
@@ -237,7 +440,7 @@ export class CosmosSphere {
     const panelW = panel && !panel.hidden ? panel.getBoundingClientRect().width : 0;
     const viewW = window.innerWidth || this.canvas.clientWidth || 1;
     const shift = frameShiftX(panelW / viewW, dist, this.camera.fov, this.camera.aspect);
-    this.camera.position.set(shift, 0, dist);
+    this.camera.position.set(shift, 0, dist * this.framing.dolly);
     this.core.updateMatrixWorld(true);
     this.camLocal.copy(this.camera.position);
     this.core.worldToLocal(this.camLocal);
@@ -259,6 +462,27 @@ export class CosmosSphere {
     this.ray.uniforms.brightness.value = look.brightness;
     this.ray.uniforms.time.value = time;
     this.final.uniforms.time.value = time;
+    if (this.plasmaOn && this.plasma) {
+      this.core.visible = false;
+      this.halo.visible = false;
+      const pw = Math.min(1920, Math.max(640, Math.round(this.canvas.clientWidth || 1280)));
+      const ph = Math.min(1080, Math.max(360, Math.round(this.canvas.clientHeight || 720)));
+      if (this.renderer.domElement.width !== pw || this.renderer.domElement.height !== ph) {
+        this.renderer.setPixelRatio(1);
+        this.renderer.setSize(pw, ph, false);
+        this.camera.aspect = pw / ph;
+        this.composer.setSize(pw, ph);
+      }
+      this.camera.near = 0.02;
+      this.camera.far = Math.max(40, dist + radius * 12);
+      this.camera.updateProjectionMatrix();
+      const distP = 0.45;
+      this.plasma.position.set(0, 0, -distP);
+      const cover = 2 * Math.tan(half) * distP;
+      this.plasma.scale.set(cover * this.camera.aspect * 1.35, cover * 1.35, 1);
+      this.final.uniforms.disc.value = 0;
+      this.final.uniforms.godrays.value = 0;
+    }
   }
 
   private frame(dt: number, time: number) {

@@ -23,3 +23,6 @@
   weatherAt / weatherAtLatLon; globe cloud drift = sub-point u / (R cos lat) on sim seconds, held above Behavioral via worldClock
   SCALE_BOUNDS; Mie x Hanel f(RH) capped at 0.95. Use `clockRate()`, not `observationRecord().rate` (still 0/1 on main). Full
   npm test on the box takes ~22 min (climate-class.test.ts runs the wasm grid for ~17 min). Skill notes/skills/environment-record.md.
+
+## 2026-11-05 T-0166 Big Bang opening (B0–B3), branch grok-globe/big-bang-cinematic
+- After the loading card the screen is black until a click or a key. Narration and the bed start then. The impact flash is the peak of bang-impact, 0.37 s after it starts. The title is THE BIG BANG. The film holds there. Cue 2 and the later voices are on disk and stay quiet until their times. No save.

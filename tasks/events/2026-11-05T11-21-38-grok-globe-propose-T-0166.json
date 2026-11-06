@@ -1,0 +1,44 @@
+{
+  "type": "propose",
+  "task": "T-0166",
+  "agent": "grok-globe",
+  "at": "2026-11-05T11:21:38-08:00",
+  "note": "Matthew, direct chat 2026-11-05: the bright circle at boot needs a Big Bang film, then the planet, and a return visit should not sit through it (save is another agent). Spielberg beat sheet v1 plus the addendum is the authority. T-0165 is PR #321, so this is T-0166. Audio is in public/audio/big-bang/. No claim and no save. Implementation stays on grok-globe/big-bang-cinematic.",
+  "prior_art": [
+    {
+      "name": "T-0123 boot splash",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/tasks/T-0123-boot-splash.md",
+      "use": "inline #loading critical CSS; the film starts after that splash, it does not replace it"
+    },
+    {
+      "name": "T-0063 globe boot order",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/tasks/T-0063-globe-boot-order.md",
+      "use": "bootGlobe / bootP stays the gate; arrival waits on it and does not show an unfinished planet"
+    },
+    {
+      "name": "cosmic_time.rs",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/rust/boreal-sim/src/cosmic_time.rs",
+      "use": "the only pre-Sun clock: cycle_to_seconds, seconds_to_cycle, era_of_seconds"
+    },
+    {
+      "name": "deepTime.ts",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/src/core/deepTime.ts",
+      "use": "post-Sun years via deepTimeAt; deepTimeAt(0) stays now; do not touch epochOffsetYr"
+    },
+    {
+      "name": "opening.ts",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/src/world/cosmos/opening.ts",
+      "use": "evolve the existing sphere opening in place; do not add a second boot stack"
+    },
+    {
+      "name": "music.ts",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/src/audio/music.ts",
+      "use": "HTMLAudio on the music bus, two-deck crossfade for the bed loop"
+    },
+    {
+      "name": "borealSound.ts",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/src/audio/borealSound.ts",
+      "use": "missing clips stay silent; gesture unlocks the audio context"
+    }
+  ]
+}

@@ -24,6 +24,7 @@ import { STAGES } from '../../core/stages/elevation';
 import { heightAt, WORLD_SEED } from '../../core/world';
 import { INTEREST, cancel, enqueue, runJobs } from '../../core/interest';
 import { smoothstep, clamp } from '../../proc/math';
+import { hash, random } from '../../proc/rng';
 import { children, edgeMetres, faceDir, roots, centre as nodeCentre, type QNode } from './cube';
 import { renderOffset } from './origin';
 import { createAtmosphere } from './atmosphere';
@@ -193,6 +194,29 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const atYaw = Number(q.get('at')?.split(',')[2]); // from the game (handoff.ts globeUrl): keep its heading
   let lookAz = q.has('look') ? Number(q.get('look')) * Math.PI / 180 : q.has('at') && Number.isFinite(atYaw) && q.get('at')!.split(',').length > 2 ? -atYaw : null;
   const pitchQ = q.has('pitch') ? Number(q.get('pitch')) * Math.PI / 180 : null; // ?pitch=deg from straight down (screenshots: look down at a cloud deck)
+  let filmWide = false;
+  let filmOffset = 1;
+  const filmHome = new THREE.Vector3();
+  const filmSpin = new THREE.Quaternion();
+  const filmAxis = new THREE.Vector3(0, 1, 0);
+  let filmReady = false;
+  let filmStars: THREE.Points | null = null;
+  function ensureFilmStars() {
+    if (filmStars) { filmStars.visible = true; return; }
+    const n = 480;
+    const rnd = random(hash('film-stars-v1'));
+    const pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const z = rnd() * 2 - 1, a = rnd() * Math.PI * 2, rxy = Math.sqrt(Math.max(0, 1 - z * z));
+      const Rs = R * 14;
+      pos[i * 3] = rxy * Math.cos(a) * Rs; pos[i * 3 + 1] = z * Rs; pos[i * 3 + 2] = rxy * Math.sin(a) * Rs;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    filmStars = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xfff4e0, size: 1.6, sizeAttenuation: false, depthWrite: false }));
+    filmStars.frustumCulled = false;
+    scene.add(filmStars);
+  }
   const group = new THREE.Group(); scene.add(group);
   // Plate boundaries (plates.ts: seeded outlines, NNR-MORVEL56 motions), built on first show; red divergent, blue convergent, green transform
   const plateLayer = new THREE.Group(); plateLayer.visible = false; scene.add(plateLayer); let platesBuilt = false;
@@ -504,7 +528,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     let stamped = 0;
     for (const t of tiles.values()) { if (stamped >= 4) break; const before = t.solarBucket; stampSolar(t, sunDay, sunHour); if (t.solarBucket !== before) stamped++; }
     if (ext) camera.position.copy(ext.position); // shared band: the transition flies the camera (drive)
-    if (!fall) dir.copy(camera.position).normalize(); // the fall keeps the point that was double-clicked
+    if (!fall && !filmReady) dir.copy(camera.position).normalize(); // the fall keeps the point that was double-clicked
+    if (filmReady) dir.copy(filmHome).applyQuaternion(filmSpin);
     const s = planet.sampleSurface([dir.x, dir.y, dir.z]); ground = surfaceRadius(planet, [dir.x, dir.y, dir.z]) - R; // radial.ts: the single altitude source (figure + terrain/water)
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
@@ -523,7 +548,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       targetAlt = alt = benchFrom * (benchTo / benchFrom) ** clamp(benchT / benchSec, 0, 1);
       if (prev < benchSec + 8 && benchT >= benchSec + 8) console.log('BENCH ' + JSON.stringify({ mode: mode(), warm: STATS.warm.map(Math.round), tiles: STATS.build.length, buildAvg: +avg(STATS.build).toFixed(2), buildP95: +pct(STATS.build, .95).toFixed(2), buildMax: +Math.max(0, ...STATS.build).toFixed(2),
         frames: STATS.work.length, compileMs: +STATS.compileMs.toFixed(0), workAvg: +avg(STATS.work).toFixed(2), workP99: +pct(STATS.work, .99).toFixed(2), workMax: +Math.max(0, ...STATS.work).toFixed(2), intervalP99: +pct(STATS.interval, .99).toFixed(1), intervalMax: +Math.max(0, ...STATS.interval).toFixed(1), cached: tiles.size, orbit: benchOrbit, ground: { drawn, inView, calls: renderer.info.render.calls, tris: renderer.info.render.triangles } })); }
-    else if (!ext) alt = Math.exp(Math.log(alt) + (Math.log(targetAlt) - Math.log(alt)) * (1 - Math.exp(-dt * 7)));
+    else if (!ext && !filmReady) alt = Math.exp(Math.log(alt) + (Math.log(targetAlt) - Math.log(alt)) * (1 - Math.exp(-dt * 7)));
     if (ext || leaving) stopCoast(); // the in-page descent flies the camera (band), the standalone auto handoff fades out
     else if (dragging && dt > 0) { const az = controls.getAzimuthalAngle(), po = controls.getPolarAngle(), rs = controls.rotateSpeed, k = 1 / GLOBE_COAST.track; // drag rate (rad/s per unit rotateSpeed), damp-smoothed
       coastV.set(THREE.MathUtils.damp(coastV.x, Math.atan2(Math.sin(az - coastPrev.x), Math.cos(az - coastPrev.x)) / dt / rs, k, dt), THREE.MathUtils.damp(coastV.y, (po - coastPrev.y) / dt / rs, k, dt)); coastPrev.set(az, po); }
@@ -537,7 +562,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     controls.enabled = inputOn && !fall;
     controls.rotateSpeed = clamp(alt / R * .6, 2e-6, 1);
     camera.position.copy(dir).multiplyScalar(R + ground + alt); camUp.copy(dir);
-    if (!fall) controls.update();
+    if (!fall && !filmReady) controls.update();
     camera.position.setLength(R + ground + alt);
     camera.up.set(0, 1, 0); camera.lookAt(0, 0, 0); // nadir, the aim the tile draw already uses
     const ease = fall ? descentPitchEase(fall.p, fall.p0 ?? 0) : 0;
@@ -546,7 +571,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     // centre pixel, so the fall stayed the clear colour. planet.north is world +Y projected on the tangent plane, and
     // lookAt keeps camera +Y on that, so rotateZ(-azimuth) is the compass heading. rotateX(pitch − nadir) opens to isometric.
     if (fall) { camera.rotateZ(-lookAz!); camera.rotateX(fallPitch(ease) - NADIR); }
-    else if (lookAz !== null && (opts.shared || alt < 3e5)) {
+    else if (!filmReady && lookAz !== null && (opts.shared || alt < 3e5)) {
       localNE(); const up = camUp.clone(), heading = lookAz ?? 0;
       const hdg = nL.clone().multiplyScalar(Math.cos(heading)).addScaledVector(eL, Math.sin(heading));
       const el = pitchQ != null ? NADIR + pitchQ : NADIR;
@@ -563,7 +588,12 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     // Limb distance past a sphere of the mean radius (orbitClip). The hydrostatic figure and deep water sit inside that
     // sphere, so a low camera — the free fall crosses it — would make the radical negative and the projection NaN, and
     // the frame would clear. The radical is clamped; the +2R term still reaches the far limb.
-    const clip = orbitClip(alt, R, ground); camera.near = clip.near; camera.far = clip.far; camera.updateProjectionMatrix();
+    const clip = orbitClip(alt, R, ground); camera.near = clip.near; camera.far = clip.far;
+    if (filmWide && filmOffset > 0.001) {
+      const w = renderer.domElement.width || 1280, h = renderer.domElement.height || 720;
+      camera.setViewOffset(w, h, Math.round(w * 0.04 * filmOffset), Math.round(-h * 0.1 * filmOffset), w, h);
+    } else camera.clearViewOffset();
+    camera.updateProjectionMatrix();
     // One viewpoint: when the forest camera maps back onto this pose within a centimetre, the draw uses that mapping.
     // Off the home-facing hemisphere the gnomonic frame blows up, so the fall's own aim stays (lookAt, rotateZ, rotateX).
     if (forestCam && !ext && forestFromPlanet(planet, camera, forestPose)) {
@@ -699,6 +729,23 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     /** over the playable region (game-local x, z), else null; descending = zooming in */
     get overHome() { return overHome; }, get descending() { return targetAlt < alt * .995; }, get headingYaw() { return headingYaw(); },
     zoomTo(a: number) { targetAlt = clamp(a, 40, R * 4); }, jumpTo(a: number) { alt = targetAlt = clamp(a, 40, R * 4); },
+    /** Wide: the whole disc and the atmosphere rim, centre near 60% of the frame. Arrival: the page-load orbit. */
+    setFilmFrame(wide: boolean) {
+      filmWide = wide;
+      filmOffset = wide ? 1 : 0;
+      const goal = wide ? R * 2.45 : R * 2.2;
+      if (Math.abs(targetAlt - goal) > R * 0.04) { alt = targetAlt = goal; }
+    },
+    /** Absolute orbit for the film. yaw 0 and alt 2.2 R with offset 0 is the page-load view. */
+    setFilmDrive(yaw: number, radii: number, offset: number) {
+      if (!filmReady) filmHome.copy(dir).normalize();
+      filmReady = true;
+      ensureFilmStars();
+      filmWide = offset > 0.001;
+      filmOffset = offset;
+      filmSpin.setFromAxisAngle(filmAxis, yaw);
+      alt = targetAlt = R * radii;
+    },
     /** Aim the centre at a game-local spot without starting the fall. The next G, before a drag, drops there. */
     lookOver,
     /** Turn the orbit toward the playable forest. H does this; it does not start the fall. */

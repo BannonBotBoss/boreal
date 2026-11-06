@@ -491,7 +491,7 @@ function openAfterLoad(q: URLSearchParams) {
   const seen = hasSeenBigBang(context);
   const choice = bootChoice(opened, seen, seen ? loadResume(context) : null);
   if (choice === 'globe' || choice === 'resume-globe') { if (!inpage?.enter()) toGlobe(); return; }
-  if (opened === 'sphere' && choice === 'sphere') { opening = createOpening(finishIntro); return; }
+  if (opened === 'sphere' && choice === 'sphere') { opening = createOpening(finishIntro, () => { void inpage?.prewarm(); }, { show: () => { inpage?.enter(); }, ready: () => inpage?.whenBooted() ?? Promise.resolve() }); return; }
   if (choice === 'resume-game') return;
   openStart();
 }
@@ -703,7 +703,8 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
 void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally(() => requestAnimationFrame(frame));
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
   armBootAim(q); // return visit only: aim the globe before prewarm. A first visit leaves this empty and still plays the intro.
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).catch(e => console.warn('startup', e)).then(() => q.has('noprobe') ? undefined : inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); openAfterLoad(q); }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
+  const cine = startView(location.search) === 'sphere' && !q.has('bench') && !q.has('nomenu') && !hasSeenBigBang(context);
+  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).catch(e => console.warn('startup', e)).then(() => q.has('noprobe') || cine ? undefined : inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); openAfterLoad(q); }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

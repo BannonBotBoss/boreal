@@ -154,6 +154,10 @@ const SHORE_EMPTY = new THREE.DataTexture(new Uint8Array([255]), 1, 1, THREE.Red
 export const GLOBE_SHORE = { uShoreTex: { value: SHORE_EMPTY as THREE.Texture }, uShore: { value: new THREE.Vector4(1, 0, 0, 0) }, key: '' };
 /** Land tint (1 = unchanged): inpage.ts eases it toward the game patch's colour over the end of the descent. Uniform only. */
 export const GLOBE_LAND = { uLandTint: { value: new THREE.Color(1, 1, 1) } };
+/** Cinematic Earth. x magma, y sea fill from the basins, z plants across the land, w unused. 0 is the present globe. */
+export const GLOBE_ERA = { uEra: { value: new THREE.Vector4(0, 0, 0, 0) }, uCrack: { value: 1 } };
+/** Atmosphere grade for the same beats. warm 1 is an orange haze, steam raises the cloud deck. hold 0 leaves the sky alone. */
+export const GLOBE_SKY = { warm: 0, steam: 0, clear: 0, hold: 0 };
 /** Shore band widths (m of the field): wet ground above the waterline, shallows below it. [game calibration] */
 export const SHORE = { wet: .6, shallow: 1.5, wetDark: .2, shallowMix: .4 };
 export function setLakeMask(key: string, data: Uint8Array, n: number, size: number) {
@@ -210,7 +214,7 @@ export function globeMaterial(debugSegments = 0) {
     sh.vertexShader = centroid(sh.vertexShader, 'logdepthbuf_pars_vertex'); sh.fragmentShader = centroid(sh.fragmentShader, 'logdepthbuf_pars_fragment');
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
-    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uHideLake = LAKE_FADE.uHide; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
+    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uEra = GLOBE_ERA.uEra; sh.uniforms.uCrack = GLOBE_ERA.uCrack; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uHideLake = LAKE_FADE.uHide; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
 vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
@@ -220,7 +224,7 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep; uniform float uLakeRough;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep; uniform float uLakeRough;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -243,14 +247,39 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
   diffuseColor.rgb *= mix(vec3(1.0), uLandTint, landMask); // in-page band: land matched to the game patch near the handover (GLOBE_LAND)
   if (uSolarLayer > 0.5) { // T-0057: Q_absorbed on this vertex. Night (0) cools and dims; a sunlit cell stays warm. Off when the uniform is 0.
     float qn = clamp(vAbsorbed / max(uQScale, 1.0), 0.0, 1.0);
-    diffuseColor.rgb *= mix(vec3(0.22, 0.26, 0.40), vec3(1.12, 1.04, 0.92), qn); }`)
+    diffuseColor.rgb *= mix(vec3(0.22, 0.26, 0.40), vec3(1.12, 1.04, 0.92), qn); }
+  if (uEra.x + uEra.y + uEra.z + uEra.w > 0.001) {
+    vec3 present = diffuseColor.rgb;
+    vec3 nrm = normalize(vDetW);
+    float plateN = detN(nrm * 22.0, 11.0);
+    float plate = smoothstep(0.04, 0.2, plateN);
+    float a = detN(nrm * 28.0, 3.0);
+    float b = detN(nrm * 28.0 + vec3(2.4, 7.1, 1.3), 6.0);
+    eraCrack = pow(clamp(1.0 - abs(a - b) * 42.0, 0.0, 1.0), 3.2);
+    eraMagma = uEra.x;
+    vec3 magma = vec3(1.85, 0.42, 0.07);
+    vec3 crust = mix(vec3(0.03, 0.01, 0.008), vec3(0.30, 0.25, 0.20), clamp(1.0 - uEra.x, 0.0, 1.0));
+    vec3 skin = mix(crust, mix(magma, crust, plate), clamp(uCrack, 0.0, 1.0));
+    float crackShow = clamp(uCrack, 0.0, 1.0);
+    skin = mix(skin, magma, eraCrack * crackShow);
+    diffuseColor.rgb = skin;
+    float flooded = (1.0 - landMask) * smoothstep(0.08, 0.72, uEra.y) * (1.0 - uEra.x);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.008, 0.028, 0.09), flooded);
+    float elev = smoothstep(0.0, 2200.0, max(vH, 0.0));
+    float shore = 1.0 - smoothstep(0.0, 1.0, elev);
+    float need = mix(0.78, 0.05, shore);
+    float plants = landMask * smoothstep(need, need + 0.14, uEra.z);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.09, 0.38, 0.08), plants);
+    float presentMix = clamp(uEra.w, 0.0, 1.0); presentMix = 1.0 - (1.0 - presentMix) * (1.0 - presentMix);
+    diffuseColor.rgb = mix(diffuseColor.rgb, present, presentMix);
+  }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   if (uDetail.x > 0.001) { // derivative bump from the detail height (Mikkelsen 2010), view space
     vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition); float dhx = dFdx(detH), dhy = dFdy(detH);
     vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
     normal = normalize(abs(det) * normal - sign(det) * (dhx * r1 + dhy * r2)); }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(uLakeRough, roughnessFactor, landMask); // water: Cox-Munk roughness (GLINT), eased to the game water in the band')
-      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)')
+      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * clamp(uCrack, 0.0, 1.0);')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
 #ifdef DEBUG_SEAMS
   { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;

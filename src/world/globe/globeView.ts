@@ -534,7 +534,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     overHome = s.home >= 1 ? { x: Math.round(s.x * 10) / 10, z: Math.round(s.z * 10) / 10 } : null;
     const spawn = handoffTarget(s, alt, targetAlt > alt * 1.01);
     if (q.get('handoff') === 'demo' && spawn && !leaving) { leaving = true; stopCoast(); if (fade) fade.style.opacity = '1'; const at = { ...landSpawn(spawn), yaw: headingYaw() }; setTimeout(() => leave(at), 650); } // wheel zoom does not drop; only the demo flag still does
-    if (flyHome && !fall) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
+    if (flyHome && !fall && !filmReady) { const h = new THREE.Vector3(...planet.home), k = 1 - Math.exp(-dt * 2.5); dir.lerp(h, k).normalize(); if (dir.angleTo(h) < 1e-5) flyHome = 0; }
     let handoffVy: number | null = null;
     if (!fall) setCover(0, 'glide');
     if (fall && !ext && !handed) {
@@ -552,7 +552,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (ext || leaving) stopCoast(); // the in-page descent flies the camera (band), the standalone auto handoff fades out
     else if (dragging && dt > 0) { const az = controls.getAzimuthalAngle(), po = controls.getPolarAngle(), rs = controls.rotateSpeed, k = 1 / GLOBE_COAST.track; // drag rate (rad/s per unit rotateSpeed), damp-smoothed
       coastV.set(THREE.MathUtils.damp(coastV.x, Math.atan2(Math.sin(az - coastPrev.x), Math.cos(az - coastPrev.x)) / dt / rs, k, dt), THREE.MathUtils.damp(coastV.y, (po - coastPrev.y) / dt / rs, k, dt)); coastPrev.set(az, po); }
-    else if (coastT >= 0) { const rs = controls.rotateSpeed, vx = coastV.x, vy = coastV.y; coastT += dt; // coast: speed damped toward 0, angle by the trapezoid
+    else if (coastT >= 0 && !filmReady) { const rs = controls.rotateSpeed, vx = coastV.x, vy = coastV.y; coastT += dt; // coast: speed damped toward 0, angle by the trapezoid
       coastV.set(THREE.MathUtils.damp(vx, 0, coastLambda, dt), THREE.MathUtils.damp(vy, 0, coastLambda, dt));
       coastS.setFromVector3(dir); coastS.theta += (vx + coastV.x) / 2 * dt * rs; coastS.phi += (vy + coastV.y) / 2 * dt * rs; coastS.makeSafe(); dir.setFromSpherical(coastS);
       if (coastT >= GLOBE_COAST.sec) stopCoast(); }
@@ -589,14 +589,21 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     // sphere, so a low camera — the free fall crosses it — would make the radical negative and the projection NaN, and
     // the frame would clear. The radical is clamped; the +2R term still reaches the far limb.
     const clip = orbitClip(alt, R, ground); camera.near = clip.near; camera.far = clip.far;
-    if (filmWide && filmOffset > 0.001) {
+    if (filmReady) {
+      dir.copy(filmHome).applyQuaternion(filmSpin);
+      ground = surfaceRadius(planet, [dir.x, dir.y, dir.z]) - R;
+      camera.up.set(0, 1, 0);
+      camera.position.copy(dir).multiplyScalar(R + ground + alt);
+      camera.lookAt(0, 0, 0);
+      camera.clearViewOffset();
+    } else if (filmWide && filmOffset > 0.001) {
       const w = renderer.domElement.width || 1280, h = renderer.domElement.height || 720;
       camera.setViewOffset(w, h, Math.round(w * 0.04 * filmOffset), Math.round(-h * 0.1 * filmOffset), w, h);
     } else camera.clearViewOffset();
     camera.updateProjectionMatrix();
     // One viewpoint: when the forest camera maps back onto this pose within a centimetre, the draw uses that mapping.
     // Off the home-facing hemisphere the gnomonic frame blows up, so the fall's own aim stays (lookAt, rotateZ, rotateX).
-    if (forestCam && !ext && forestFromPlanet(planet, camera, forestPose)) {
+    if (!filmReady && forestCam && !ext && forestFromPlanet(planet, camera, forestPose)) {
       const back = globeCameraFrom(planet, forestPose, mappedPose);
       if (back.position.distanceTo(camera.position) < 0.01 && back.quaternion.angleTo(camera.quaternion) < 1e-4) {
         forestCam.position.copy(forestPose.position); forestCam.quaternion.copy(forestPose.quaternion);
@@ -738,8 +745,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     },
     /** Absolute orbit for the film. yaw 0 and alt 2.2 R with offset 0 is the page-load view. */
     setFilmDrive(yaw: number, radii: number, offset: number) {
-      if (!filmReady) filmHome.copy(dir).normalize();
+      if (!filmReady) filmHome.set(start[0], start[1], start[2]).normalize();
       filmReady = true;
+      stopCoast();
       ensureFilmStars();
       filmWide = offset > 0.001;
       filmOffset = offset;

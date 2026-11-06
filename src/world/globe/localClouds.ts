@@ -77,7 +77,8 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
   // top layers take a widened footprint of the towers that reach them (a box blur of the mature cells), not just the cores
   const anv = new Float32Array(n), an = new Float32Array(L.nz), deep = top > base && col.top - base >= CC.anvil_min_tower_m;
   if (deep) { const r = Math.max(1, Math.round(CC.anvil_spread_m / L.sizeM * L.nx)), m = new Float32Array(n);
-    for (let c = 0; c < n; c++) m[c] = h[c] >= .85 ? 1 : 0; // cells whose tops reach the anvil level
+    // same strength ramp as overshoot: mature cores (h>=0.85) full weight, mid cells (.5..0.85) partial, nothing below .5
+    for (let c = 0; c < n; c++) m[c] = h[c] <= .5 ? 0 : Math.min(1, (h[c] - .5) / .35);
     for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { let s = 0, w = 0;
       for (let b = -r; b <= r; b++) for (let a = -r; a <= r; a++) { const kk = k + b, ii = i + a; if (kk < 0 || ii < 0 || kk >= L.nx || ii >= L.nx || a * a + b * b > r * r) continue; s += m[kk * L.nx + ii]; w++; }
       anv[k * L.nx + i] = Math.min(1, 1.5 * s / Math.max(1, w)); }

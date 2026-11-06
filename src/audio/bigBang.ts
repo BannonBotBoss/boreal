@@ -22,7 +22,7 @@ export function createBigBangAudio(): BigBangAudio {
   const vo7 = track(LATER_AUDIO.voB7);
   const vo9 = track(LATER_AUDIO.voB9);
   const vo14 = track(LATER_AUDIO.voB14);
-  let started = false, hit = false, cueOn = false;
+  let started = false, hit = false, cueOn = false, bedHeld = false;
   let lastT = -1, lit = 0;
   let audioCtx: AudioContext | null = null;
   const voPlayed = { b7: false, b9: false, b14: false };
@@ -62,6 +62,10 @@ export function createBigBangAudio(): BigBangAudio {
       const end = narrationEndedAt ?? CINE.b1 + NARRATION.seconds;
       const duck = voDuckDb(t);
       bed.volume = dbToGain(bedDb(t, narrationEndedAt) + duck);
+      if (t >= LATER_AUDIO.cue2At - LATER_AUDIO.bedLapLead && !bedHeld) {
+        bedHeld = true;
+        bed.currentTime = LATER_AUDIO.bedLapAt;
+      }
       if (t >= LATER_AUDIO.cue2At && !cueOn) {
         cueOn = true;
         void cue2.play().catch(() => {});

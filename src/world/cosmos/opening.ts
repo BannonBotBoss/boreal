@@ -10,7 +10,7 @@ import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
 import { GLOBE_ERA, GLOBE_LAND, GLOBE_SKY } from '../globe/tile';
 import { setCineLayerGate } from '../globe/planetLayers';
-import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatClock, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
+import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatClock, haloFade, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
 
 /**
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
@@ -266,15 +266,17 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     const hazeOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.02;
     veil.style.opacity = hazeOn ? '0' : '1';
     const arrival = stage === 'b14' || (stage === 'hold' && earthOn);
-    const panelFadeAt = 110.55;
-    const todayHero = elapsed >= panelFadeAt;
+    const panelFadeAt = 110.2;
+    const todayFade = 0.8;
+    const todayU = elapsed < panelFadeAt ? 0 : Math.min(1, (elapsed - panelFadeAt) / todayFade);
+    const todayHero = todayU > 0;
     const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : todayHero ? 'Today · 13.8 billion years' : '';
     heroLine.textContent = line;
     heroLine.style.fontSize = line.length > 16 ? '3.2vw' : '';
     heroLine.style.bottom = todayHero ? '1.6vh' : '';
     heroLine.style.textShadow = todayHero ? '0 2px 10px #000, 0 8px 28px #000, 0 0 18px #000' : '';
     heroLine.style.display = line ? 'block' : 'none';
-    heroLine.style.opacity = todayHero ? String(Math.min(1, Math.max(0, (elapsed - panelFadeAt) / 0.8))) : '1';
+    heroLine.style.opacity = todayHero ? String(todayU) : '1';
     const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14' || (stage === 'hold' && earthOn);
     const bridge = booted && elapsed >= 83.2 && elapsed < 85.4;
     const showEarth = (onEarth || bridge) && booted;
@@ -302,8 +304,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       panel.style.bottom = '';
       panel.style.right = '';
       panel.style.left = '';
-      const panelOut = elapsed < 110.55 ? 1 : Math.max(0, 1 - (elapsed - 110.55) / 0.6); // 600 ms, after the clock already reads Today
-      if (elapsed >= 110.55) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
+      const panelOut = 1 - todayU; // same 800 ms as the hero, so the two cross instead of leaving a gap
+      if (todayU > 0) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
       panel.style.setProperty('opacity', String(panelOut), 'important');
     } else if (booted && !earthOn) {
       root.style.background = '#000';
@@ -416,7 +418,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   function driveFilm(t: number) {
     const yaw = Math.max(0, 108 - t) * 2.6 * Math.PI / 180;
     const u = t <= 83.2 ? 0 : t >= 108 ? 1 : ((x: number) => x * x * (3 - 2 * x))(Math.min(1, (t - 83.2) / (108 - 83.2)));
-    (window as unknown as { __inpage?: { setFilmDrive?: (yaw: number, radii: number, offset: number) => void } }).__inpage?.setFilmDrive?.(yaw, 4.5 + (3.7 - 4.5) * u, 0);
+    const sunU = t <= 108 ? 0 : t >= 112 ? 1 : ((x: number) => x * x * (3 - 2 * x))((t - 108) / 4);
+    (window as unknown as { __inpage?: { setFilmDrive?: (yaw: number, radii: number, offset: number, sunBias?: number) => void } }).__inpage?.setFilmDrive?.(yaw, 4.5 + (3.7 - 4.5) * u, 0, sunU);
   }
 
   function setPlain(node: HTMLElement, text: string) {
@@ -490,10 +493,11 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   function paintEarth(ctx: CanvasRenderingContext2D, w: number, h: number) {
     const pad = 40, vh = Math.max(1, h - pad * 2);
     const cx = w / 2, cy = pad + vh * 0.6, R = vh * 0.3;
-    if (elapsed >= CINE.b10End && elapsed < 89.2) {
+    const impactHalo = haloFade(elapsed, CINE.b10End, 89.8, 0.3, 1);
+    if (impactHalo > 0.001) {
       const halo = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.22);
       halo.addColorStop(0, 'rgba(255,120,30,0)');
-      halo.addColorStop(0.55, 'rgba(255,100,24,0.22)');
+      halo.addColorStop(0.55, `rgba(255,100,24,${(0.22 * impactHalo).toFixed(4)})`);
       halo.addColorStop(1, 'rgba(255,80,16,0)');
       ctx.fillStyle = halo;
       ctx.beginPath(); ctx.arc(cx, cy, R * 1.22, 0, Math.PI * 2); ctx.fill();
@@ -588,12 +592,12 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
         ctx.fillRect(x, y, s, s);
       }
     }
-    if (elapsed >= CINE.b11End && elapsed < 102) {
+    const steamHalo = haloFade(elapsed, CINE.b11End, 102, 0.3, 1);
+    if (steamHalo > 0.001) {
       const u = Math.min(1, (elapsed - CINE.b11End) / (CINE.b12End - CINE.b11End));
-      const fade = elapsed <= 99 ? 1 : Math.max(0, (102 - elapsed) / 3);
       const haze = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R * 1.35);
-      haze.addColorStop(0, `rgba(230,226,220,${(0.02 + u * 0.05) * fade})`);
-      haze.addColorStop(0.6, `rgba(210,206,200,${(0.08 + u * 0.12) * fade})`);
+      haze.addColorStop(0, `rgba(230,226,220,${((0.02 + u * 0.05) * steamHalo).toFixed(4)})`);
+      haze.addColorStop(0.6, `rgba(210,206,200,${((0.08 + u * 0.12) * steamHalo).toFixed(4)})`);
       haze.addColorStop(1, 'rgba(210,206,200,0)');
       ctx.fillStyle = haze;
       ctx.beginPath(); ctx.arc(cx, cy, R * 1.35, 0, Math.PI * 2); ctx.fill();

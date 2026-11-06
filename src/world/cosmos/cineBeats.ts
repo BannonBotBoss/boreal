@@ -78,8 +78,12 @@ export const LATER_AUDIO = {
   cue2: 'audio/big-bang/cue2-emergence.mp3',
   cue2At: 42,
   cue2Fade: 4,
+  /** Loud plateau of the bed. Replayed from 2 s before cue 2, because the take's own tail is already silent. */
+  bedLapAt: 31,
+  bedLapLead: 2,
   voB7: 'audio/big-bang/vo-b7-light.mp3',
-  voB7At: 57,
+  /** With “380,000 years”, while the plasma is still glowing. */
+  voB7At: 54,
   voB7Seconds: 2.82,
   voB9: 'audio/big-bang/vo-b9-stars.mp3',
   voB9At: 67,
@@ -337,6 +341,18 @@ export function shellOnScreen(dt: number): boolean {
 }
 
 /**
+ * Halo envelope. 0 outside [on, off). Rises over `inn` seconds from `on` and
+ * falls over `out` seconds so it is gone at `off`. The impact flash is not this.
+ */
+export function haloFade(t: number, on: number, off: number, inn = 0.3, out = 1): number {
+  if (!(t >= on) || !(t < off)) return 0;
+  const rise = inn <= 0 ? 1 : Math.min(1, (t - on) / inn);
+  const fall = out <= 0 ? 1 : Math.min(1, (off - t) / out);
+  const s = (x: number) => x * x * (3 - 2 * x);
+  return s(rise) * s(fall);
+}
+
+/**
  * Hue from the cosmic clock, not from the beat boundaries.
  * 0 is blue-white at the Planck keyframe, 1 is gold at 1e−6 s, 2 is amber at 20 minutes,
  * 3 is deep red at recombination. Log time, so the title and B4 are on the same slope.
@@ -415,7 +431,14 @@ export function heroAt(t: number): string {
   return 'Today · 13.8 billion years';
 }
 
-/** Bed level in dB. Silent before the click's B1. Stays at −6 dB until narration ends. Cue 2 takes over at 0:42; there is no 20–45 s loop. */
+const gainDb = (g: number) => g <= 1e-4 ? -80 : 20 * Math.log10(g);
+
+/**
+ * Bed level in dB. Silent before the click's B1. Stays at −6 dB until narration ends.
+ * From 0:42 the loud part of the bed is still up under cue 2, full for the first
+ * half of the 4 s overlap, then out. The voice duck is added on top and lets go
+ * after each line. There is no 20–45 s loop.
+ */
 export function bedDb(t: number, narrationEndedAt: number | null): number {
   if (t < CINE.b1) return -80;
   if (narrationEndedAt == null) return CINE.bedB1;
@@ -426,19 +449,16 @@ export function bedDb(t: number, narrationEndedAt: number | null): number {
   if (t < CINE.bedFullBy) return CINE.bedB2 * (1 - (t - ramped) / (CINE.bedFullBy - ramped));
   if (t < LATER_AUDIO.cue2At) return 0;
   if (t >= LATER_AUDIO.cue2At + LATER_AUDIO.cue2Fade) return -80;
-  return -80 * ((t - LATER_AUDIO.cue2At) / LATER_AUDIO.cue2Fade);
+  const u = (t - LATER_AUDIO.cue2At) / LATER_AUDIO.cue2Fade;
+  if (u < 0.75) return 0;
+  return gainDb(Math.cos((u - 0.75) / 0.25 * Math.PI / 2));
 }
 
-/** Cue 2 level in dB. Dark-ages duck is −8 dB from 1:00–1:06 with 1 s ramps. */
+/** Cue 2 level in dB. Starts at 0:42 and rises over 4 s on top of the bed. Full after 0:46. */
 export function cue2Db(t: number): number {
   if (t < LATER_AUDIO.cue2At) return -80;
   const u = Math.min(1, (t - LATER_AUDIO.cue2At) / LATER_AUDIO.cue2Fade);
-  let db = -80 * (1 - u);
-  const a = LATER_AUDIO.darkFrom, b = LATER_AUDIO.darkTo, r = LATER_AUDIO.darkRamp, d = LATER_AUDIO.darkDb;
-  if (t >= a && t < a + r) db += d * ((t - a) / r);
-  else if (t >= a + r && t < b - r) db += d;
-  else if (t >= b - r && t < b) db += d * (1 - (t - (b - r)) / r);
-  return db;
+  return gainDb(Math.sin(u * Math.PI / 2));
 }
 
 /** Extra music duck under a VO line. 300 ms attack, 600 ms release, −6 dB. */

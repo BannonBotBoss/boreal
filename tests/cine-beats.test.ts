@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatClock, formatCosmicSeconds, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaClear, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, starsLit, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
+import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatClock, formatCosmicSeconds, haloFade, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaClear, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, starsLit, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
 import { MILESTONES, deepTimeAt } from '../src/core/deepTime';
 
 test('cosmic clock matches the sheet keyframes and does not jump', () => {
@@ -65,6 +65,17 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
   assert.ok(shellRadius(0.6) > 1.4);
   assert.equal(shellOnScreen(0.3), true);
   assert.equal(shellOnScreen(0.9), false);
+  assert.equal(haloFade(84.9, 85, 89.8, 0.3, 1), 0);
+  assert.equal(haloFade(89.8, 85, 89.8, 0.3, 1), 0);
+  assert.ok(haloFade(85.15, 85, 89.8, 0.3, 1) > 0.4 && haloFade(85.15, 85, 89.8, 0.3, 1) < 0.6);
+  assert.equal(haloFade(86, 85, 89.8, 0.3, 1), 1);
+  assert.equal(haloFade(88.6, 85, 89.8, 0.3, 1), 1);
+  assert.ok(haloFade(89.3, 85, 89.8, 0.3, 1) > 0.4 && haloFade(89.3, 85, 89.8, 0.3, 1) < 0.6);
+  assert.equal(haloFade(91.9, 92, 102, 0.3, 1), 0);
+  assert.equal(haloFade(94, 92, 102, 0.3, 1), 1);
+  assert.ok(haloFade(101.5, 92, 102, 0.3, 1) > 0.4 && haloFade(101.5, 92, 102, 0.3, 1) < 0.6);
+  assert.equal(haloFade(102, 92, 102, 0.3, 1), 0);
+  assert.equal(bangFlash(bangAt(end) + CINE.bangPeak, end, false), 1);
   assert.equal(panelFigure(28), 'Temperature 10²⁷ K');
   assert.equal(panelFigure(33), 'Energy ≈ 100 GeV per particle');
   assert.equal(panelFigure(40), 'Hydrogen 75% · Helium 25%');
@@ -132,13 +143,19 @@ test('bed hands to cue 2 at 0:42; voice ducks are later, and there is no loop', 
   const end = narrationEndFallback();
   assert.ok(bedDb(end + 0.2, end) < -6 && bedDb(end + 0.2, end) > -18);
   assert.ok(Math.abs(bedDb(22, end)) < 1e-6);
-  assert.equal(bedDb(44, end), -40);
+  assert.ok(Math.abs(bedDb(41, end)) < 1e-6);
+  assert.ok(Math.abs(bedDb(43, end)) < 1e-6);
+  assert.ok(Math.abs(bedDb(45, end)) < 1e-6);
+  assert.ok(bedDb(45.5, end) < -2 && bedDb(45.5, end) > -5);
   assert.equal(bedDb(46, end), -80);
   assert.equal(cue2Db(41), -80);
+  assert.ok(cue2Db(44) < -2 && cue2Db(44) > -5);
   assert.ok(Math.abs(cue2Db(46)) < 1e-6);
-  assert.ok(cue2Db(63) < -7 && cue2Db(63) > -9);
-  assert.equal(voDuckDb(57.3), -6);
+  assert.ok(Math.abs(cue2Db(63)) < 1e-6);
+  assert.equal(voDuckDb(54.5), -6);
+  assert.equal(voDuckDb(63), 0);
   assert.equal(voDuckDb(10), 0);
+  assert.equal(LATER_AUDIO.voB7At, 54);
   assert.ok(dbToGain(-6) < 0.51 && dbToGain(-6) > 0.5);
   assert.equal(LATER_AUDIO.cue2At, 42);
   assert.equal(LATER_AUDIO.cue2Fade, 4);

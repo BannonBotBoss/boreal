@@ -331,7 +331,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** Wide disc for the birth beats. False restores the page-load orbit. */
     setFilmFrame(wide: boolean) { globe?.setFilmFrame(wide); },
     /** yaw radians off the page-load aim, altitude in planet radii, view-offset 0..1. */
-    setFilmDrive(yaw: number, radii: number, offset: number) { globe?.setFilmDrive(yaw, radii, offset); },
+    setFilmDrive(yaw: number, radii: number, offset: number, sunBias?: number) { globe?.setFilmDrive(yaw, radii, offset, sunBias); },
     enter(): boolean {
       if (mode !== 'game') return true;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }

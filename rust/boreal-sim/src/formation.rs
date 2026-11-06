@@ -58,13 +58,19 @@ impl Tillotson { pub fn from_data(name: &str) -> Tillotson { Tillotson { rho0: m
 /// Wired into the bulk-mix path (`State::from_mix` / mix `from_bake`) with the liquid deficit (outer core dominates the
 /// iron class); solid deficit stays for a later per-parcel inner-core step. Silicate stays cold Tillotson.
 ///
-/// Re-bake status (grokbot-1, Nov 5): a full Vinet 6k run (20k steps) reaches centre density near PREM (~12770 vs 13088)
-/// but stalls at separation ≈ 0.955. The ~4.5% stranded iron sits just outside the CMB at ρ ≈ 10200–10800 kg/m³
-/// (Vinet density at ~136 GPa), not at the zero-pressure floor rho0·(1−deficit). Eight thousand more continue-relax
-/// steps only move sep to ≈ 0.959. Cause: at CMB pressure the Vinet+10% deficit vs basalt density contrast is ~half
-/// Tillotson's (see test vinet_vs_tillotson_cmb_contrast), so the last iron parcels reach a soft quasi-equilibrium
-/// across the SPH-smoothed interface. Do not commit a bake that fails mix_bake_differentiated (sep > 0.98). Next
-/// levers: higher N (24k), or Matt's call on the threshold / a segregation assist.
+/// Re-bake status (grokbot-1, Nov 5–6): a full Vinet 6k run (20k steps, ~239 ks) reaches centre density near PREM
+/// (~12770 vs 13088) but stalls at separation ≈ 0.955. The ~4.5% stranded iron sits just outside the CMB at
+/// ρ ≈ 10200–10800 kg/m³ (Vinet density at ~136 GPa), not at the zero-pressure floor rho0·(1−deficit). Eight
+/// thousand more continue-relax steps only move sep to ≈ 0.959. Cause: at CMB pressure the Vinet+10% deficit vs
+/// basalt density contrast is ~half Tillotson's (see test vinet_vs_tillotson_cmb_contrast), so the last iron
+/// parcels reach a soft quasi-equilibrium across the SPH-smoothed interface.
+///
+/// 24k follow-up (same `differentiate 24000 20000 0.05`): finished at sep 0.910 / cmb 3333 km / rhoc 12548 /
+/// vmax 186 after only ~145 ks of physical time. CFL dt = 0.25 h/c and h ∝ N^(−1/3) (see test
+/// sph_h_scales_as_n_to_minus_one_third), so a fixed step budget at 4×N covers ~0.63× the physical time of the
+/// 6k run — and even on a time axis the 24k sep curve stays below the 6k plateau. Higher N alone does not clear
+/// the 0.98 gate. Do not commit a bake that fails mix_bake_differentiated. Remaining levers need Matt: lower the
+/// sep threshold for Vinet, or add a segregation assist.
 #[derive(Clone, Copy, Debug)] pub struct VinetFe { pub rho0: f64, pub k0: f64, pub k0p: f64, pub deficit: f64 }
 impl VinetFe {
     /// `liquid` picks the outer-core (liquid) or inner-core (solid) deficit.
@@ -340,4 +346,20 @@ mod tests { use super::*;
         let p_anchor = VinetFe::from_data(true).pressure(13088.5);
         assert!((p_anchor / 363.85e9 - 1.0).abs() < 0.10, "anchor {} GPa", p_anchor / 1e9);
         assert!((pc / 363.85e9 - 1.0).abs() < 0.10, "centre P {} GPa ({:.1}% from PREM)", pc / 1e9, 100.0 * (pc / 363.85e9 - 1.0)); }
+    /// h = eta (m/rho)^(1/3): at fixed density, quadrupling N shrinks mean h by 4^(1/3) ≈ 1.587, so the CFL
+    /// dt = 0.25 h/c of a fixed step budget covers less physical time at higher N. Documents why the 24k / 20k-step
+    /// Vinet bake (sep 0.910) is not a fair same-time compare with the 6k / 20k-step run (sep 0.955).
+    #[test] fn sph_h_scales_as_n_to_minus_one_third() {
+        let mean_h = |n_target: usize| -> f64 {
+            let (p, rho0) = form_mix_ic(n_target, 7);
+            let s = State::from_mix(p, C::omega_earth, rho0);
+            s.h.iter().sum::<f64>() / s.h.len() as f64
+        };
+        let (h_lo, h_hi) = (mean_h(1500), mean_h(6000));
+        let n_lo = form_mix_ic(1500, 7).0.pos.len() as f64;
+        let n_hi = form_mix_ic(6000, 7).0.pos.len() as f64;
+        let ratio = h_lo / h_hi;
+        let expect = (n_hi / n_lo).cbrt();
+        assert!((ratio / expect - 1.0).abs() < 0.08, "h_lo/h_hi {ratio} vs N^(1/3) {expect}");
+    }
 }

@@ -1,0 +1,49 @@
+{
+  "type": "propose",
+  "task": "T-0169",
+  "agent": "grok-globe",
+  "at": "2026-11-06T01:16:17-07:00",
+  "note": "Matthew, 2026-11-06 about 1:08 AM PT, from omen via Grok Bot (grok): globe is 'an excellent starting point' (cloud drop shadows and limb halo stay); next pass removes the artificial close-up look: 1) break up liquid cloud bands with billow/ridged/Worley plus a small-scale wind-disturbance warp, 2) Rayleigh warm terminator tint and a smoothstep penumbra, 3) deep ocean near #030b1e-#051330 with his Fresnel pow(1-N.V,5), 4) sun glint his way on MeshStandardMaterial (roughness 0.15-0.2, metalness 0.1-0.2, high-frequency simplex normal chop), 5) glint and direct diffuse hidden under cloud shadows. Acceptance refs: refs/T-0169/closeup-clouds.jpg and full-globe.jpg (Matthew's screenshots; start URL ?start=sphere&stages=1&trees=v2). Id scan: git log --all has tasks up to T-0168; open PRs #326 and #330 carry no task id; locked T-0169. Direct request, so pre-approved under RULES.md 16; a relay records the approve-plan for matthew. No claim and no game code in this event.",
+  "prior_art": [
+    {
+      "name": "iq fBm (billow/ridged)",
+      "url": "https://iquilezles.org/articles/fbm/",
+      "use": "billow abs(2n-1) on sub-synoptic octaves of cloudDensity"
+    },
+    {
+      "name": "iq domain warping",
+      "url": "https://iquilezles.org/articles/warp/",
+      "use": "second small-scale warp for wind-chopped edges"
+    },
+    {
+      "name": "iq smooth Voronoi (MIT)",
+      "url": "https://iquilezles.org/articles/smoothvoronoi/",
+      "use": "cellular F1 added once to src/proc/glsl.ts"
+    },
+    {
+      "name": "Schneider & Vos 2015 Nubis Perlin-Worley",
+      "url": "https://www.guerrilla-games.com/read/the-real-time-volumetric-cloudscapes-of-horizon-zero-dawn",
+      "use": "inverted Worley over fBm for cumuliform clumps"
+    },
+    {
+      "name": "stegu/webgl-noise (MIT)",
+      "url": "https://github.com/stegu/webgl-noise",
+      "use": "high-frequency simplex for the water normal chop"
+    },
+    {
+      "name": "atmosphere.ts",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/src/world/globe/atmosphere.ts",
+      "use": "cloudDensity, atmClouds terminator band, analytic cloud shadow cs in patch()"
+    },
+    {
+      "name": "tile.ts globeMaterial",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/src/world/globe/tile.ts",
+      "use": "MeshStandardMaterial water roughness/metalness/F0 hooks, Mikkelsen bump"
+    },
+    {
+      "name": "planet.ts GLOBE_COLOURS",
+      "url": "https://github.com/BannonBotBoss/boreal/blob/main/src/world/globe/planet.ts",
+      "use": "deep ocean colour"
+    }
+  ]
+}

@@ -26,3 +26,7 @@
 
 ## 2026-11-05 T-0166 Big Bang opening (B0–B3), branch grok-globe/big-bang-cinematic
 - After the loading card the screen is black until a click or a key. Narration and the bed start then. The impact flash is the peak of bang-impact, 0.37 s after it starts. The title is THE BIG BANG. The film holds there. Cue 2 and the later voices are on disk and stay quiet until their times. No save.
+
+## 2026-11-06 01:16 PT T-0169 globe close-up realism (proposed only)
+- Matthew's brief via Grok Bot: billow/Worley clouds + small-scale wind warp, warm soft terminator, deep ocean #030b1e-#051330 with Fresnel, glint on the existing MeshStandardMaterial (roughness 0.15-0.2, metalness 0.1-0.2, simplex chop), glint and diffuse hidden under cloud shadows. Refs: refs/T-0169/.
+- Where it lives: clouds are the analytic shell in atmosphere.ts cloudDensity (the liquid bands come from the single 2600 km warp + zonalStretch over smooth value fBm); the ocean is tile.ts globeMaterial (Cox-Munk roughness 0.444, metalness 0); the cloud shadow is analytic cs in atmosphere.ts patch() (no receiveShadow: the clouds are not a mesh). Implementation branch later: grok-globe/globe-closeup-realism.

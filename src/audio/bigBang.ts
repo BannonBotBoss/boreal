@@ -62,7 +62,7 @@ export function createBigBangAudio(): BigBangAudio {
       const end = narrationEndedAt ?? CINE.b1 + NARRATION.seconds;
       const duck = voDuckDb(t);
       bed.volume = dbToGain(bedDb(t, narrationEndedAt) + duck);
-      if (t >= LATER_AUDIO.cue2At && !cueOn) {
+      if (t >= LATER_AUDIO.cue2At - LATER_AUDIO.cue2Fade && !cueOn) {
         cueOn = true;
         void cue2.play().catch(() => {});
       }

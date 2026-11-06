@@ -197,6 +197,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let filmWide = false;
   let filmOffset = 1;
   const filmHome = new THREE.Vector3();
+  let filmSun = 0;
   const filmSpin = new THREE.Quaternion();
   const filmAxis = new THREE.Vector3(0, 1, 0);
   let filmReady = false;
@@ -612,7 +613,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       }
     }
     if (!atmos) (scene.background as THREE.Color).copy(SPACE).lerp(SKY, 1 - smoothstep(2e4, 1.2e5, alt)); // plain look: flat daytime sky below ~100 km
-    sun.position.copy(sunNow()); sun.intensity = isOn('sunlight') ? 3.2 : 0; if (atmos) atmos.setLayers(isOn('clouds'), isOn('atmosphere'), isOn('airglow')); if (atmos) atmos.setAurora(isOn('aurora') ? { ocbMlat: omniNow.ocbMlat, ovalEqMlat: omniNow.ovalEqMlat, relBrightness: omniNow.emission.relBrightness } : null); fieldLines.visible = isOn('fieldLines'); showPlates(isOn('plates')); setSnowIceShown(isOn('snowIce'));
+    sun.position.copy(sunNow());
+    if (filmReady && filmSun > 0.001) { sunDir.lerp(camera.position.clone().normalize(), Math.min(1, filmSun)).normalize(); sun.position.copy(sunDir); }
+    sun.intensity = isOn('sunlight') ? 3.2 : 0; if (atmos) atmos.setLayers(isOn('clouds'), isOn('atmosphere'), isOn('airglow')); if (atmos) atmos.setAurora(isOn('aurora') ? { ocbMlat: omniNow.ocbMlat, ovalEqMlat: omniNow.ovalEqMlat, relBrightness: omniNow.emission.relBrightness } : null); fieldLines.visible = isOn('fieldLines'); showPlates(isOn('plates')); setSnowIceShown(isOn('snowIce'));
     { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = isOn('sunlight') ? (atmos ? .7 : .04 + .66 * smoothstep(-.3, .12, se)) : 1; /* with the atmosphere the sky light is gated per fragment by the local Sun altitude (atmosphere.ts skyF) */ hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
     camPos[0] = camera.position.x; camPos[1] = camera.position.y; camPos[2] = camera.position.z;
 
@@ -744,9 +747,10 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       if (Math.abs(targetAlt - goal) > R * 0.04) { alt = targetAlt = goal; }
     },
     /** Absolute orbit for the film. yaw 0 and alt 2.2 R with offset 0 is the page-load view. */
-    setFilmDrive(yaw: number, radii: number, offset: number) {
+    setFilmDrive(yaw: number, radii: number, offset: number, sunBias = 0) {
       if (!filmReady) filmHome.set(start[0], start[1], start[2]).normalize();
       filmReady = true;
+      filmSun = sunBias;
       stopCoast();
       ensureFilmStars();
       filmWide = offset > 0.001;

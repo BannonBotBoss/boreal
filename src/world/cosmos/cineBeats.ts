@@ -79,7 +79,8 @@ export const LATER_AUDIO = {
   cue2At: 42,
   cue2Fade: 4,
   voB7: 'audio/big-bang/vo-b7-light.mp3',
-  voB7At: 57,
+  /** With “380,000 years”, while the plasma is still glowing. */
+  voB7At: 54,
   voB7Seconds: 2.82,
   voB9: 'audio/big-bang/vo-b9-stars.mp3',
   voB9At: 67,
@@ -427,7 +428,14 @@ export function heroAt(t: number): string {
   return 'Today · 13.8 billion years';
 }
 
-/** Bed level in dB. Silent before the click's B1. Stays at −6 dB until narration ends. Cue 2 takes over at 0:42; there is no 20–45 s loop. */
+const gainDb = (g: number) => g <= 1e-4 ? -80 : 20 * Math.log10(g);
+
+/**
+ * Bed level in dB. Silent before the click's B1. Stays at −6 dB until narration ends.
+ * The bed take itself thins out after 0:41, so cue 2 has already risen underneath it
+ * and the bed only leaves once cue 2 is carrying the floor. Equal-power, not a dB ramp.
+ * There is no 20–45 s loop.
+ */
 export function bedDb(t: number, narrationEndedAt: number | null): number {
   if (t < CINE.b1) return -80;
   if (narrationEndedAt == null) return CINE.bedB1;
@@ -438,19 +446,20 @@ export function bedDb(t: number, narrationEndedAt: number | null): number {
   if (t < CINE.bedFullBy) return CINE.bedB2 * (1 - (t - ramped) / (CINE.bedFullBy - ramped));
   if (t < LATER_AUDIO.cue2At) return 0;
   if (t >= LATER_AUDIO.cue2At + LATER_AUDIO.cue2Fade) return -80;
-  return -80 * ((t - LATER_AUDIO.cue2At) / LATER_AUDIO.cue2Fade);
+  const u = (t - LATER_AUDIO.cue2At) / LATER_AUDIO.cue2Fade;
+  return gainDb(Math.cos(u * Math.PI / 2));
 }
 
-/** Cue 2 level in dB. Dark-ages duck is −8 dB from 1:00–1:06 with 1 s ramps. */
+/**
+ * Cue 2 level in dB. Playback starts one fade early (0:38) so the 4 s rise
+ * finishes at 0:42, while the bed is still loud. Full after that: the voice
+ * duck is separate and lets go after each line. No second duck through 1:03.
+ */
 export function cue2Db(t: number): number {
-  if (t < LATER_AUDIO.cue2At) return -80;
-  const u = Math.min(1, (t - LATER_AUDIO.cue2At) / LATER_AUDIO.cue2Fade);
-  let db = -80 * (1 - u);
-  const a = LATER_AUDIO.darkFrom, b = LATER_AUDIO.darkTo, r = LATER_AUDIO.darkRamp, d = LATER_AUDIO.darkDb;
-  if (t >= a && t < a + r) db += d * ((t - a) / r);
-  else if (t >= a + r && t < b - r) db += d;
-  else if (t >= b - r && t < b) db += d * (1 - (t - (b - r)) / r);
-  return db;
+  const start = LATER_AUDIO.cue2At - LATER_AUDIO.cue2Fade;
+  if (t < start) return -80;
+  const u = Math.min(1, (t - start) / LATER_AUDIO.cue2Fade);
+  return gainDb(Math.sin(u * Math.PI / 2));
 }
 
 /** Extra music duck under a VO line. 300 ms attack, 600 ms release, −6 dB. */

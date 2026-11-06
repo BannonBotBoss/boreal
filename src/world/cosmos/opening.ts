@@ -266,15 +266,17 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     const hazeOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.02;
     veil.style.opacity = hazeOn ? '0' : '1';
     const arrival = stage === 'b14' || (stage === 'hold' && earthOn);
-    const panelFadeAt = 110.55;
-    const todayHero = elapsed >= panelFadeAt;
+    const panelFadeAt = 110.2;
+    const todayFade = 0.8;
+    const todayU = elapsed < panelFadeAt ? 0 : Math.min(1, (elapsed - panelFadeAt) / todayFade);
+    const todayHero = todayU > 0;
     const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : todayHero ? 'Today · 13.8 billion years' : '';
     heroLine.textContent = line;
     heroLine.style.fontSize = line.length > 16 ? '3.2vw' : '';
     heroLine.style.bottom = todayHero ? '1.6vh' : '';
     heroLine.style.textShadow = todayHero ? '0 2px 10px #000, 0 8px 28px #000, 0 0 18px #000' : '';
     heroLine.style.display = line ? 'block' : 'none';
-    heroLine.style.opacity = todayHero ? String(Math.min(1, Math.max(0, (elapsed - panelFadeAt) / 0.8))) : '1';
+    heroLine.style.opacity = todayHero ? String(todayU) : '1';
     const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14' || (stage === 'hold' && earthOn);
     const bridge = booted && elapsed >= 83.2 && elapsed < 85.4;
     const showEarth = (onEarth || bridge) && booted;
@@ -302,8 +304,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       panel.style.bottom = '';
       panel.style.right = '';
       panel.style.left = '';
-      const panelOut = elapsed < 110.55 ? 1 : Math.max(0, 1 - (elapsed - 110.55) / 0.6); // 600 ms, after the clock already reads Today
-      if (elapsed >= 110.55) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
+      const panelOut = 1 - todayU; // same 800 ms as the hero, so the two cross instead of leaving a gap
+      if (todayU > 0) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
       panel.style.setProperty('opacity', String(panelOut), 'important');
     } else if (booted && !earthOn) {
       root.style.background = '#000';
@@ -416,7 +418,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   function driveFilm(t: number) {
     const yaw = Math.max(0, 108 - t) * 2.6 * Math.PI / 180;
     const u = t <= 83.2 ? 0 : t >= 108 ? 1 : ((x: number) => x * x * (3 - 2 * x))(Math.min(1, (t - 83.2) / (108 - 83.2)));
-    (window as unknown as { __inpage?: { setFilmDrive?: (yaw: number, radii: number, offset: number) => void } }).__inpage?.setFilmDrive?.(yaw, 4.5 + (3.7 - 4.5) * u, 0);
+    const sunU = t <= 108 ? 0 : t >= 112 ? 1 : ((x: number) => x * x * (3 - 2 * x))((t - 108) / 4);
+    (window as unknown as { __inpage?: { setFilmDrive?: (yaw: number, radii: number, offset: number, sunBias?: number) => void } }).__inpage?.setFilmDrive?.(yaw, 4.5 + (3.7 - 4.5) * u, 0, sunU);
   }
 
   function setPlain(node: HTMLElement, text: string) {
@@ -490,7 +493,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   function paintEarth(ctx: CanvasRenderingContext2D, w: number, h: number) {
     const pad = 40, vh = Math.max(1, h - pad * 2);
     const cx = w / 2, cy = pad + vh * 0.6, R = vh * 0.3;
-    const impactHalo = haloFade(elapsed, CINE.b10End, 89.2, 0.3, 1);
+    const impactHalo = haloFade(elapsed, CINE.b10End, 89.8, 0.3, 1);
     if (impactHalo > 0.001) {
       const halo = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.22);
       halo.addColorStop(0, 'rgba(255,120,30,0)');

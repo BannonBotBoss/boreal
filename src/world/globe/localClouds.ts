@@ -58,7 +58,7 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
  *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
  *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share one flat base at the LCL, and each cell's top rises
- *    with its strength, so towers differ in height but none passes the column's buoyant top;
+ *    with its strength up to the column's buoyant top; the strongest cells punch into the overshoot dome above that top;
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells;
  *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top. */
@@ -69,9 +69,10 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
     sh[k * L.nx + i] = Math.max(0, Math.min(1, (n1(x * .35, z * .35) - (.2 + .5 * cut)) / .3)); } // broad sheet: low frequency, soft edge
   const ly = col.layers, step = ly[1]?.z || 250, conv = new Float32Array(L.nz), strat = new Float32Array(L.nz), zr = new Float32Array(L.nz);
   const base = col.lcl, top = col.top >= base && base >= 0 ? col.top + step / 2 : -1;
+  const over = top > base ? Math.max(0, col.overshootM) : 0, tip = top > base ? Math.min(L.topM, top + over) : -1; // Houze overshoot dome; clamp to the local box
   for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), l = ly[li];
     const s = l?.strat ?? 0, w = l?.water ?? 0, op = iceOpacity(l?.ice ?? 0); strat[j] = Math.min(1, s * op / L.waterFull); conv[j] = Math.min(1, Math.max(0, w - s) * op / L.waterFull); // ice is thinner per kg (#192)
-    zr[j] = top > base ? (z - base) / (top - base) : 2; } // height through the convective layer, 0 at the base, 1 at the top
+    zr[j] = top > base ? (z - base) / (top - base) : 2; } // height through the convective layer, 0 at the base, 1 at the buoyant top
   // anvil (data/earth/cloud-column.json "anvil"): a tower deep enough to glaciate spreads sideways at its buoyant top, so the
   // top layers take a widened footprint of the towers that reach them (a box blur of the mature cells), not just the cores
   const anv = new Float32Array(n), an = new Float32Array(L.nz), deep = top > base && col.top - base >= CC.anvil_min_tower_m;
@@ -83,8 +84,18 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
     for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), d = top - z;
       an[j] = d >= 0 && d <= CC.anvil_depth_m && (ly[li]?.ice ?? 0) >= .5 ? 1 : 0; } }
   for (let k = 0; k < L.nx; k++) for (let j = 0; j < L.nz; j++) for (let i = 0; i < L.nx; i++) { const c = k * L.nx + i;
-    const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = zr[j] < 0 ? 0 : Math.max(0, Math.min(1, (reach - zr[j]) * 6)); // weaker cells stop lower
-    const cv = Math.max(h[c] * edge, an[j] * anv[c] * .6);
+    const z = (j + .5) * dz;
+    let cv = 0;
+    if (zr[j] >= 0 && zr[j] <= 1) { // up to the buoyant top: strength scales cell height
+      const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = Math.max(0, Math.min(1, (reach - zr[j]) * 6));
+      cv = Math.max(h[c] * edge, an[j] * anv[c] * .6);
+    } else if (tip > top && z > top && z <= tip && h[c] >= .85) { // overshooting dome: only the strongest towers (Houze 2014 ch. 8)
+      const u = (z - top) / (tip - top); // 0 at anvil level, 1 at (clamped) overshoot tip
+      // layers above the equilibrium level carry no suspended water in the column; paint a tapered ice plume at ~half anvil density
+      const plume = (1 - u) * (1 - u) * .45;
+      out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, plume));
+      continue;
+    }
     out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, conv[j] * cv + strat[j] * sh[c])); }
   return out;
 }

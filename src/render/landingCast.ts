@@ -133,8 +133,8 @@ function groundAt(planet: ReturnType<typeof planetFor>, lat: number, lon: number
   const s = planet.sampleSurface(dir);
   const { water, elevM } = groundForCover(s, sampleDem(lat, lon));
   // A cached satellite photo wins over the seeded planet's vegetation (#192 desert finding).
-  const vegetation = samplePhotoVegetation(lat, lon) ?? vegetationWeight(s, dir);
   const coastM = liveCoastM(lat, lon); // live coast distance (#235): continental interiors lift the tree line
+  const vegetation = samplePhotoVegetation(lat, lon) ?? vegetationWeight(s, dir, coastM);
   const biome = coverKind(lat, elevM, vegetation, water, coastM);
   return { lat, lon, elevM, vegetation, water, biome, coastM: coastM ?? NaN };
 }

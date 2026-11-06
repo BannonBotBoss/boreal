@@ -224,7 +224,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     skip() { /* first visit does not skip */ },
     stop() { /* the film holds; B14 will dismiss it */ },
   };
-  const probe = api as Opening & { begin: () => void; seek: (t: number) => void; elapsed: number };
+  const probe = api as Opening & { begin: () => void; seek: (t: number) => void; play: () => void; elapsed: number };
   probe.begin = begin;
   probe.seek = (t: number) => {
     if (!debug) return;
@@ -233,6 +233,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     pinned = t;
     elapsed = t;
   };
+  probe.play = () => { pinned = null; };
   Object.defineProperty(probe, 'elapsed', { get: () => elapsed });
   (window as unknown as { __borealOpening?: typeof probe }).__borealOpening = probe;
   return api;
@@ -265,14 +266,15 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     const hazeOn = bang != null && elapsed >= bang + CINE.bangPeak - 0.02;
     veil.style.opacity = hazeOn ? '0' : '1';
     const arrival = stage === 'b14' || (stage === 'hold' && earthOn);
-    const todayHero = elapsed >= 105;
+    const panelFadeAt = 110.55;
+    const todayHero = elapsed >= panelFadeAt;
     const line = stage === 'b5' ? '3 minutes' : stage === 'b7' ? '380,000 years' : todayHero ? 'Today · 13.8 billion years' : '';
     heroLine.textContent = line;
     heroLine.style.fontSize = line.length > 16 ? '3.2vw' : '';
     heroLine.style.bottom = todayHero ? '1.6vh' : '';
     heroLine.style.textShadow = todayHero ? '0 2px 10px #000, 0 8px 28px #000, 0 0 18px #000' : '';
     heroLine.style.display = line ? 'block' : 'none';
-    heroLine.style.opacity = todayHero ? String(Math.min(1, Math.max(0, (elapsed - 105) / 0.8))) : '1';
+    heroLine.style.opacity = todayHero ? String(Math.min(1, Math.max(0, (elapsed - panelFadeAt) / 0.8))) : '1';
     const onEarth = stage === 'b11' || stage === 'b12' || stage === 'b13' || stage === 'b14' || (stage === 'hold' && earthOn);
     const bridge = booted && elapsed >= 83.2 && elapsed < 85.4;
     const showEarth = (onEarth || bridge) && booted;
@@ -300,7 +302,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       panel.style.bottom = '';
       panel.style.right = '';
       panel.style.left = '';
-      const panelOut = elapsed < 110.55 ? 1 : Math.max(0, 1 - (elapsed - 110.55) / 0.6);
+      const panelOut = elapsed < 110.55 ? 1 : Math.max(0, 1 - (elapsed - 110.55) / 0.6); // 600 ms, after the clock already reads Today
       if (elapsed >= 110.55) { panel.style.animation = 'none'; panel.classList.remove('pop'); }
       panel.style.setProperty('opacity', String(panelOut), 'important');
     } else if (booted && !earthOn) {
@@ -586,11 +588,12 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
         ctx.fillRect(x, y, s, s);
       }
     }
-    if (elapsed >= CINE.b11End && elapsed < CINE.b12End) {
-      const u = (elapsed - CINE.b11End) / (CINE.b12End - CINE.b11End);
+    if (elapsed >= CINE.b11End && elapsed < 102) {
+      const u = Math.min(1, (elapsed - CINE.b11End) / (CINE.b12End - CINE.b11End));
+      const fade = elapsed <= 99 ? 1 : Math.max(0, (102 - elapsed) / 3);
       const haze = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R * 1.35);
-      haze.addColorStop(0, `rgba(230,226,220,${0.02 + u * 0.05})`);
-      haze.addColorStop(0.6, `rgba(210,206,200,${0.08 + u * 0.12})`);
+      haze.addColorStop(0, `rgba(230,226,220,${(0.02 + u * 0.05) * fade})`);
+      haze.addColorStop(0.6, `rgba(210,206,200,${(0.08 + u * 0.12) * fade})`);
       haze.addColorStop(1, 'rgba(210,206,200,0)');
       ctx.fillStyle = haze;
       ctx.beginPath(); ctx.arc(cx, cy, R * 1.35, 0, Math.PI * 2); ctx.fill();

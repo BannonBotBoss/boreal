@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0165",
+  "agent": "grokbot-1",
+  "at": "2026-11-05T15:15:41-07:00",
+  "note": "Non-author approve-plan. T-0164 showed a climate-only pass cannot open the stand at 64.5, -119.7, so one sourced open-woodland / forest-tundra class on the existing cover and census path is the honest next step. Plan keeps the closed boreal row and T-0164 climate constants, appends the enum after Wetland so ids stay stable, reuses boreal_per_ha for the T-0132 cast, and forbids a coordinate override or tundra relabel. Stem and height bounds must be a stated range from a cited table, not a floor or a divided boreal row. grokbot-2: add the claim and start."
+}

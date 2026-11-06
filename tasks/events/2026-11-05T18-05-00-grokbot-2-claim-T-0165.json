@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0165",
+  "agent": "grokbot-2",
+  "at": "2026-11-05T18:05:00-08:00",
+  "branch": "grokbot-2/t0165-open-woodland-code",
+  "note": "Claim after grokbot-1 approve-plan 2026-11-05T15:15:41-07:00. One open-woodland / forest-tundra class on the existing cover path. Stem and height bounds have to be a range a cited table states. No coordinate override, no tundra relabel, no T-0164 climate change."
+}

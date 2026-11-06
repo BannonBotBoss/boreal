@@ -285,8 +285,8 @@ export function panelFigure(t: number): string {
   if (t >= CINE.b8End + 4 && t < CINE.b9End) return 'Galaxies';
   if (t >= 80 && t < 82) return 'The Sun';
   if (t >= CINE.b11End && t < CINE.b12End) return '4.4 Gya oceans';
-  if (t >= 102 && t < 105.4) return '2.4 Gya';
-  if (t >= 105.4 && t < 107.2) return '470 Mya plants';
+  if (t >= 102 && t < 105.85) return '2.4 Gya';
+  if (t >= 105.85 && t < 107.2) return '470 Mya plants';
   return '';
 }
 

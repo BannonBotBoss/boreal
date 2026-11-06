@@ -83,7 +83,7 @@ test('overshoot bake: a strong tower paints a tapered plume above the buoyant to
     if (z > cool.top + dz && z <= tipC + dz && vc > 0) coolPlume++;
   }
   assert.ok(hotPlume > 10, `hot plume voxels ${hotPlume}`);
-  assert.ok(maxHot > 40 && maxHot < 200, `tapered plume density ${maxHot}`);
+  assert.ok(maxHot > 15 && maxHot < 80, `tapered ice-thinned plume density ${maxHot}`); // iceOpacity ~0.36 caps raw .45*255
   assert.ok(coolPlume < hotPlume / 3, `cool plume ${coolPlume} vs hot ${hotPlume}`);
   assert.equal(hotPastTip, 0, `nothing past the clamped tip (${hotPastTip})`);
 });
@@ -106,6 +106,28 @@ test('overshoot bake: cell strength scales tip height — mid cells stop short o
   assert.ok(coreHigh > 0, `at least one mature core reaches the full tip (${coreHigh})`);
   assert.ok(midShort > 0, `some weaker cells stop short in the overshoot band (${midShort})`);
   assert.ok(midShort + coreHigh > 2, `overshoot footprint has more than one cell (${midShort + coreHigh})`);
+});
+test('overshoot bake: plume uses iceOpacity so glaciated tops are optically thinner', () => {
+  const L = LOCAL_CLOUDS, dz = L.topM / L.nz;
+  const hot = cloudColumn(30, qOf(30, .8), 1, L.topM);
+  assert.ok(hot.overshootM > 800 && hot.top > 0, `hot overshoot ${hot.overshootM}`);
+  const b = bakeLocal(hot, 1, 0, 0, L), tip = Math.min(L.topM, hot.top + hot.overshootM);
+  const step = hot.layers[1]?.z || 250;
+  let maxV = 0, iceNear = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) for (let j = 0; j < L.nz; j++) {
+    const z = (j + .5) * dz, v = b[i + L.nx * (j + L.nz * k)];
+    if (z > hot.top + dz && z <= tip + dz && v > maxV) {
+      maxV = v;
+      const li = Math.min(hot.layers.length - 1, Math.round(z / step));
+      iceNear = hot.layers[li]?.ice ?? 0;
+    }
+  }
+  assert.ok(maxV > 0, `plume painted (${maxV})`);
+  assert.ok(iceNear > .9, `overshoot layer is ice (${iceNear})`);
+  const rawMax = Math.round(255 * .45); // pre-opacity formula at u=0, frac=1
+  const thinnedCap = Math.round(255 * Math.min(1, .45 * iceOpacity(iceNear)));
+  assert.ok(maxV <= thinnedCap + 1, `plume ≤ ice-thinned cap: ${maxV} vs ${thinnedCap} (raw would be ${rawMax})`);
+  assert.ok(maxV < rawMax * .55, `clearly thinner than a liquid tip (${maxV} < ${rawMax * .55})`);
 });
 test('anvil bake: soft strength weights keep a dense core and a weaker fringe in the ice deck', () => {
   const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;

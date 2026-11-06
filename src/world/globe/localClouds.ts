@@ -104,7 +104,9 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       if (z <= cellTip && cellTip > top) {
         const u = (z - top) / (cellTip - top); // 0 at anvil level, 1 at this cell's tip
         // layers above the EL carry no suspended water; tapered ice plume, denser for stronger cells
-        const plume = (1 - u) * (1 - u) * .45 * frac;
+        // iceOpacity (Stephens 1978): glaciated overshoot is optically thinner — same as anvil via conv
+        const li = Math.min(ly.length - 1, Math.round(z / step)), op = iceOpacity(ly[li]?.ice ?? 0);
+        const plume = (1 - u) * (1 - u) * .45 * frac * op;
         out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, plume));
         continue;
       }

@@ -46,6 +46,12 @@ export const treeLineAtM = (latDeg: number, maritimeW: number) => Math.max(0, (s
 /** Ice line (m) with the site's continentality. */
 export const iceLineAtM = (latDeg: number, maritimeW: number) => Math.max(0, (seaLevelZoneSeasonAtC(latDeg, maritimeW) - Z.ice_line_warm_season_C) / Z.lapse_K_per_m);
 /** Tree line below this (m) means Arctic: above it is tundra up to the ice line, not bare rock (#192 owner call). Matches cover.rs. */
+/** Tree and ice lines (m a.s.l.) at latitude; optional coastM applies the same continentality as coverKind / zoneAt. */
+export function treeIceLinesM(latDeg: number, coastM?: number): { tree: number; ice: number } {
+  const w = siteMaritimeWeight(coastM);
+  if (w == null) return { tree: treeLineM(latDeg), ice: iceLineM(latDeg) };
+  return { tree: treeLineAtM(latDeg, w), ice: iceLineAtM(latDeg, w) };
+}
 export const ARCTIC_TREE_LINE_M = 80;
 export type Zone = 'forest' | 'tundra' | 'rock' | 'ice';
 /** Landed coast distance (m), or NaN when unknown / home — same value landingCover already uses for coverKind. */

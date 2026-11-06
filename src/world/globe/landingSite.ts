@@ -73,8 +73,9 @@ export function landingCover(planet: ReturnType<typeof planetFor>, latDeg: numbe
   const s = planet.sampleSurface(dir);
   const { elevM, water } = groundForCover(s, sampleDem(latDeg, lonDeg));
   if (water) return null;
-  const vegetation = samplePhotoVegetation(latDeg, lonDeg) ?? vegetationWeight(s, dir);
-  return coverKind(latDeg, elevM, vegetation, false, liveCoastM(latDeg, lonDeg));
+  const coastM = liveCoastM(latDeg, lonDeg);
+  const vegetation = samplePhotoVegetation(latDeg, lonDeg) ?? vegetationWeight(s, dir, coastM);
+  return coverKind(latDeg, elevM, vegetation, false, coastM);
 }
 
 /** Nearest dry ground in the anchored frame. The Kenora dry-start is not used off home. */

@@ -100,10 +100,11 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
   function update(planet: Planet, cx: number, cz: number, origin: SkirtOrigin) {
     const ll = skirtLatLon(planet, cx, cz, origin.remote);
     const s = planet.sampleSurface(ll.dir);
-    const veg = vegetationWeight(s, ll.dir);
+    const coastM = liveCoastM(ll.latDeg, ll.lonDeg);
+    const veg = vegetationWeight(s, ll.dir, coastM);
     const dem = sampleDem(ll.latDeg, ll.lonDeg);
     const water = !elevationWins(s.kind, dem) && (s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level);
-    const row = coverRow(ll.latDeg, ll.lonDeg, dem != null && dem > 0 ? dem : s.h, veg, water, liveCoastM(ll.latDeg, ll.lonDeg));
+    const row = coverRow(ll.latDeg, ll.lonDeg, dem != null && dem > 0 ? dem : s.h, veg, water, coastM);
     const kind = row.kind;
     bake();
     const cols = colsUniform.value;

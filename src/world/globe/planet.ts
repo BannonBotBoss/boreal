@@ -16,7 +16,7 @@
 import { hash, random } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 import { LEVEL, PHYS } from '../../core/tuning';
-import { treeLineM, iceLineM } from '../../core/altitudeZones';
+import { treeIceLinesM } from '../../core/altitudeZones';
 
 export const PLANET = {
   radius: PHYS.EARTH_RADIUS,     // m: IUGG mean Earth radius (core/tuning PHYS, Moritz 2000)
@@ -202,7 +202,7 @@ const mixTo = (o: number[], b: RGB, t: number) => mix([o[0], o[1], o[2]], b, t, 
 /** Forest weight already painted by `surfaceColour`: spruce, mixed and temperate count, and each later mix
  *  (tundra, outcrop, bog, beach, rock above the tree line, permanent snow) removes that share. Water is 0.
  *  Same smoothsteps as the colour, so a cell's vegetation is the canopy the vertex colour already shows. */
-export function vegetationWeight(s: Surface, d: Vec3) {
+export function vegetationWeight(s: Surface, d: Vec3, coastM?: number) {
   if (s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level) return 0;
   const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = s.mottle;
   let w = 1;
@@ -224,13 +224,13 @@ export function vegetationWeight(s: Surface, d: Vec3) {
     w *= 1 - s.home * rock;
     if (s.wet >= 0) w *= 1 - s.home * .45 * smoothstep(.6, .95, s.wet);
   }
-  const tl = treeLineM(lat), il = iceLineM(lat);
+  const { tree: tl, ice: il } = treeIceLinesM(lat, coastM);
   if (s.h > tl - 150) w *= 1 - smoothstep(tl - 150, tl + 250, s.h);
   if (s.h > il - 300 || lat > 78) w *= lat > 78 ? 0 : 1 - smoothstep(il - 300, il + 300, s.h);
   return Math.max(0, Math.min(1, w));
 }
 /** LAND colour (water is contoured and shaded per pixel by the material). */
-export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0]) {
+export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0], coastM?: number) {
   const C = GLOBE_COLOURS;
   const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = s.mottle;
   // forest: spruce ↔ mixed stands by hill position and mottle; temperate south of 45°, tundra north of 62°
@@ -251,7 +251,7 @@ export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0]) {
     if (sc) mixTo(o, sc, w * (s.soil === 'bedrock' ? .6 * smoothstep(.4, .75, m) : s.soil === 'peat' ? .7 : .5)); // bedrock soil = thin cover with outcrop patches, not bare rock
     if (s.wet >= 0) mixTo(o, C.bog, w * .45 * smoothstep(.6, .95, s.wet));
   }
-  const tl = treeLineM(lat), il = iceLineM(lat); // T-0072: from latitude temperature + lapse rate (core/altitudeZones, cited data)
+  const { tree: tl, ice: il } = treeIceLinesM(lat, coastM); // T-0072 + #192 continentality when coastM known
   if (s.h > tl - 150) mixTo(o, C.rock, smoothstep(tl - 150, tl + 250, s.h)); // bare rock above the tree line
   if (s.h > il - 300 || lat > 78) mixTo(o, C.snow, lat > 78 ? 1 : smoothstep(il - 300, il + 300, s.h)); // permanent ice
   return o;

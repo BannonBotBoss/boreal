@@ -58,7 +58,7 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
  *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
  *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share one flat base at the LCL, and each cell's top rises
- *    with its strength up to the column's buoyant top; the strongest cells punch into the overshoot dome above that top;
+ *    with its strength up to the column's buoyant top; cell strength scales how far into the overshoot dome each tower punches;
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells;
  *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top. */
@@ -89,12 +89,17 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
     if (zr[j] >= 0 && zr[j] <= 1) { // up to the buoyant top: strength scales cell height
       const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = Math.max(0, Math.min(1, (reach - zr[j]) * 6));
       cv = Math.max(h[c] * edge, an[j] * anv[c] * .6);
-    } else if (tip > top && z > top && z <= tip && h[c] >= .85) { // overshooting dome: only the strongest towers (Houze 2014 ch. 8)
-      const u = (z - top) / (tip - top); // 0 at anvil level, 1 at (clamped) overshoot tip
-      // layers above the equilibrium level carry no suspended water in the column; paint a tapered ice plume at ~half anvil density
-      const plume = (1 - u) * (1 - u) * .45;
-      out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, plume));
-      continue;
+    } else if (tip > top && z > top && h[c] > .5) { // overshooting dome: cell strength sets how far past the EL (Houze 2014 ch. 8)
+      // mature cores (h~1) take the full overshootM; mid cells taper off; nothing below h=0.5 (same cut as anvil cores start rising)
+      const frac = Math.max(0, Math.min(1, (h[c] - .5) / .35)); // 0 at 0.5, 1 at >=0.85
+      const cellTip = Math.min(L.topM, top + over * frac);
+      if (z <= cellTip && cellTip > top) {
+        const u = (z - top) / (cellTip - top); // 0 at anvil level, 1 at this cell's tip
+        // layers above the EL carry no suspended water; tapered ice plume, denser for stronger cells
+        const plume = (1 - u) * (1 - u) * .45 * frac;
+        out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, plume));
+        continue;
+      }
     }
     out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, conv[j] * cv + strat[j] * sh[c])); }
   return out;

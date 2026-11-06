@@ -13,7 +13,7 @@ import { hash, random } from '../../proc/rng';
 import { toLatLon, type Vec3 } from './planet';
 import CC from '../../../data/earth/cloud-column.json';
 
-export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: 1.5e-3 }; // [game calibration: box and cell size]
+export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: CC.qc_auto_kg_kg as number }; // full bake byte = Kessler qc0 (suspended convective condensate after #329), not the old 1.5e-3 adiabatic-ish scale
 /** 0 at showBelowM, 1 at sizeM. The box and the flat shell crossfade across that span instead of swapping in one frame. */
 export function localCloudFade(alt: number, L = LOCAL_CLOUDS) {
   const span = L.showBelowM - L.sizeM;

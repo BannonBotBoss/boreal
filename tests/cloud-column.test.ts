@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
 import { bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
+import CC from '../data/earth/cloud-column.json';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
 test('T-0073: Bolton esat and dew point round-trip', () => {
@@ -148,6 +149,13 @@ test('Kessler cap: suspended convective condensate stays at the autoconversion t
   assert.ok(hot.tau > 50 && hot.tau < 2000, `deep tau ${hot.tau}`); // order 10^2-10^3, not the adiabatic 10^3-10^4
   assert.ok(cool.waterPath < hot.waterPath && cool.tau < hot.tau);
 });
+
+test('Kessler bake: waterFull matches qc_auto so a deep tower saturates the densest convective voxel', () => {
+  assert.equal(LOCAL_CLOUDS.waterFull, CC.qc_auto_kg_kg);
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 24 }, deep = cloudColumn(30, qOf(30, .85), 1), b = bakeLocal(deep, 1, 0, 0, L);
+  assert.ok(Math.max(...b) === 255, `max bake byte ${Math.max(...b)}`); // capped q_c / waterFull reaches 1
+});
+
 
 import { boxExtinction, cellTransmittance } from '../src/world/globe/localClouds';
 test('layered render: the box extinction gives the densest cell the column optical depth; thin deck passes sun, deep tower is opaque', () => {

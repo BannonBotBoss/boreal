@@ -58,14 +58,34 @@ test('altitude zones: the column reads pressure at the ground height, so a plate
   assert.ok(high.lcl > sea.lcl, `plateau base ${high.lcl} vs sea ${sea.lcl}`); // lower pressure, same q: lower dew point
   assert.ok(high.top < 0 || high.top + 3000 <= 11000, `top ${high.top} past the tropopause`);
 });
-test('layered bake: convective towers share the LCL base, tops vary by cell (below the anvil), none passes the buoyant top', () => {
+test('layered bake: convective towers share the LCL base, tops vary by cell (below the anvil), mid-strength cells stop at the buoyant top', () => {
   const col = cloudColumn(28, qOf(28, .75), .6, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS, dz = L.topM / L.nz, b = bakeLocal(col, .6, 0, 0);
   assert.ok(col.lcl > 0 && col.top > col.lcl);
   const tops: number[] = [];
   for (let k = 0; k < L.nx; k += 4) for (let i = 0; i < L.nx; i += 4) { let lo = -1, hi = -1;
     for (let j = 0; j < L.nz; j++) if (b[i + L.nx * (j + L.nz * k)] > 8 && (j + 1) * dz < col.top - 1500 && col.layers[Math.round((j + .5) * dz / col.layers[1].z)].strat === 0) { if (lo < 0) lo = j; hi = j; }
-    if (lo >= 0) { assert.ok((lo + 1) * dz >= col.lcl - dz, 'no convective cloud below the dew-point base'); assert.ok(hi * dz <= col.top + dz, 'no tower above the buoyant top'); tops.push(hi); } }
+    if (lo >= 0) { assert.ok((lo + 1) * dz >= col.lcl - dz, 'no convective cloud below the dew-point base'); assert.ok(hi * dz <= col.top + dz, 'mid-tower cells stay at or below the buoyant top'); tops.push(hi); } }
   assert.ok(tops.length > 3 && Math.max(...tops) - Math.min(...tops) >= 2, `tower tops should differ by cell: ${tops}`);
+});
+test('overshoot bake: a strong tower paints a tapered plume above the buoyant top; a weak one barely does', () => {
+  const L = LOCAL_CLOUDS, dz = L.topM / L.nz;
+  const hot = cloudColumn(30, qOf(30, .8), 1, L.topM), cool = cloudColumn(10, qOf(10, .5), 1, L.topM);
+  assert.ok(hot.overshootM > 800, `hot overshoot ${hot.overshootM}`);
+  assert.ok(cool.overshootM < hot.overshootM / 5, `cool overshoot ${cool.overshootM}`);
+  const bh = bakeLocal(hot, 1, 0, 0), bc = bakeLocal(cool, 1, 0, 0);
+  const tipH = Math.min(L.topM, hot.top + hot.overshootM), tipC = Math.min(L.topM, cool.top + cool.overshootM);
+  let hotPlume = 0, coolPlume = 0, maxHot = 0, hotPastTip = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) for (let j = 0; j < L.nz; j++) {
+    const z = (j + .5) * dz;
+    const vh = bh[i + L.nx * (j + L.nz * k)], vc = bc[i + L.nx * (j + L.nz * k)];
+    if (z > hot.top + dz && z <= tipH + dz && vh > 0) { hotPlume++; maxHot = Math.max(maxHot, vh); }
+    if (z > tipH + dz && vh > 0 && z < hot.top + hot.overshootM + 500) hotPastTip++; // only the overshoot path paints here for deep towers (strat is below)
+    if (z > cool.top + dz && z <= tipC + dz && vc > 0) coolPlume++;
+  }
+  assert.ok(hotPlume > 10, `hot plume voxels ${hotPlume}`);
+  assert.ok(maxHot > 40 && maxHot < 200, `tapered plume density ${maxHot}`);
+  assert.ok(coolPlume < hotPlume / 3, `cool plume ${coolPlume} vs hot ${hotPlume}`);
+  assert.equal(hotPastTip, 0, `nothing past the clamped tip (${hotPastTip})`);
 });
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;

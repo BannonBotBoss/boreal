@@ -61,7 +61,7 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
  *    with its strength up to the column's buoyant top; cell strength scales how far into the overshoot dome each tower punches;
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells;
- *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets both weight and how deep that ice deck reaches. */
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, and density peaks near the top (Houze outflow at the EL) then thins deeper. */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), cut = 1 - cover;
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { const x = (ox + (i + .5) / L.nx * L.sizeM) / L.cellM, z = (oz + (k + .5) / L.nx * L.sizeM) / L.cellM;
@@ -91,8 +91,10 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
     if (zr[j] >= 0 && zr[j] <= 1) { // up to the buoyant top: strength scales cell height
       const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = Math.max(0, Math.min(1, (reach - zr[j]) * 6));
       // ice-deck depth scales with blurred strength: mature cores fill anvil_depth_m, fringe stays near the top
+      // density peaks at the buoyant top (Houze outflow at the EL) and thins deeper into the ice deck
       const d = top - z, cellDepth = CC.anvil_depth_m * anv[c];
-      const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * .6 : 0;
+      const taper = cellDepth > 0 ? 1 - .7 * Math.min(1, Math.max(0, d) / cellDepth) : 0; // 1 at top, .3 at cellDepth
+      const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * .6 * taper : 0;
       cv = Math.max(h[c] * edge, anvHere);
     } else if (tip > top && z > top && h[c] > .5) { // overshooting dome: cell strength sets how far past the EL (Houze 2014 ch. 8)
       // mature cores (h~1) take the full overshootM; mid cells taper off; nothing below h=0.5 (same cut as anvil cores start rising)

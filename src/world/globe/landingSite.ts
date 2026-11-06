@@ -51,7 +51,8 @@ export function engageLanding(direction: Vec3, home: number) {
   const lonDeg = ll.lon * 180 / Math.PI;
   const salt = hash(`landing:${latDeg.toFixed(3)}:${lonDeg.toFixed(3)}`);
   const cover = landingCover(planet, latDeg, lonDeg, frame.dir);
-  setSite({ latDeg, lonDeg, datumM: Math.max(0, originH), salt, dir: frame.dir, east: frame.east, north: frame.north, treeShare: cover == null ? 1 : coverTreeShare(cover) });
+  const coastM = liveCoastM(latDeg, lonDeg);
+  setSite({ latDeg, lonDeg, datumM: Math.max(0, originH), salt, dir: frame.dir, east: frame.east, north: frame.north, treeShare: cover == null ? 1 : coverTreeShare(cover), coastM });
   setRemoteHeight((x, z) => {
     const d = siteDirection(x, z, PLANET.radius);
     const s = planet.sampleSurface(d);

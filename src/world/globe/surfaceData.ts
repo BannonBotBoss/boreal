@@ -9,7 +9,7 @@
 import { STAGES } from '../../core/stages/elevation';
 import { surfaceAt } from '../../core/stages/surfaceAt';
 import { heightAt } from '../../core/world';
-import { zoneAt, gameAltitudeM, type Zone } from '../../core/altitudeZones';
+import { zoneAt, gameAltitudeM, siteCoastM, type Zone } from '../../core/altitudeZones';
 import { PLANET } from './planet';
 import { siteLatitude } from '../../core/sitePhase';
 import type { SoilKind } from '../../core/stages/soils';
@@ -38,7 +38,7 @@ export function surfaceDataAt(x: number, z: number, seed = STAGES.seed, staged =
     if (s.river) river = { order: s.river.order, widthM: s.river.widthM };
     soil = s.soil; wetness = s.wetness;
   }
-  const zone = zoneAt(gameAltitudeM(heightAt(x, z)), siteLatitude(PLANET.home.latDeg)) /* landed site's latitude, same frame as plantsGrowAt */, bare = zone !== 'forest';
+  const zone = zoneAt(gameAltitudeM(heightAt(x, z)), siteLatitude(PLANET.home.latDeg), siteCoastM()) /* landed site's latitude+coast, same frame as plantsGrowAt */, bare = zone !== 'forest';
   return { lake, river, soil, wetness, ...SURFACE_PLACEHOLDER, ...(bare ? { forest: 0, tree: 'none' as const } : {}), ...(zone === 'ice' ? { snow: 1 } : {}), zone,
     placeholder: { forest: !bare, tree: !bare, season: true, snow: zone !== 'ice' } };
 }

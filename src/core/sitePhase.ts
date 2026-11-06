@@ -20,6 +20,8 @@ export const SITE = {
   /** Share of the chunk's tree draws kept off home (#192, T-0127): 1 is a closed stand, 0 none. The landing's cover class
    *  sets it (world/globe/landingSite), so a desert, ice, rock or tundra landing does not stand in a closed conifer stand. */
   treeShare: 1,
+  /** Metres to the sea at the landing (liveCoastM). NaN = unknown → zonal tree/ice lines. */
+  coastM: Number.NaN,
   dir: [0, 1, 0] as SiteVec,
   east: [1, 0, 0] as SiteVec,
   north: [0, 0, 1] as SiteVec,
@@ -40,15 +42,17 @@ export function clearSite() {
   SITE.datumM = Number.NaN;
   SITE.salt = 0;
   SITE.treeShare = 1;
+  SITE.coastM = Number.NaN;
 }
 
-export function setSite(s: { latDeg: number; lonDeg: number; datumM: number; salt: number; dir: SiteVec; east: SiteVec; north: SiteVec; treeShare?: number }) {
+export function setSite(s: { latDeg: number; lonDeg: number; datumM: number; salt: number; dir: SiteVec; east: SiteVec; north: SiteVec; treeShare?: number; coastM?: number }) {
   SITE.remote = true;
   SITE.latDeg = s.latDeg;
   SITE.lonDeg = s.lonDeg;
   SITE.datumM = s.datumM;
   SITE.salt = s.salt >>> 0;
   SITE.treeShare = Math.min(1, Math.max(0, s.treeShare ?? 1));
+  SITE.coastM = s.coastM == null || !Number.isFinite(s.coastM) ? Number.NaN : s.coastM;
   SITE.dir = s.dir;
   SITE.east = s.east;
   SITE.north = s.north;

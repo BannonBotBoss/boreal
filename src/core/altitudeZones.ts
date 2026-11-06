@@ -7,7 +7,7 @@
 import Z from '../../data/earth/altitude-zones.json';
 import { PLANET } from '../world/globe/planet';
 import { LEVEL } from './tuning';
-import { siteDatum, siteLatitude } from './sitePhase';
+import { SITE, siteDatum, siteLatitude } from './sitePhase';
 
 const rad = (d: number) => d * Math.PI / 180;
 /** Annual mean sea-level temperature (C) at latitude (deg). */
@@ -48,15 +48,19 @@ export const iceLineAtM = (latDeg: number, maritimeW: number) => Math.max(0, (se
 /** Tree line below this (m) means Arctic: above it is tundra up to the ice line, not bare rock (#192 owner call). Matches cover.rs. */
 export const ARCTIC_TREE_LINE_M = 80;
 export type Zone = 'forest' | 'tundra' | 'rock' | 'ice';
-/** Zone at a height: 'forest' (trees grow), 'tundra' (Arctic, above a near-sea-level tree line: low plants, no trees), 'rock' (mountain above the tree line), 'ice'. */
-export function zoneAt(altM: number, latDeg: number): Zone {
-  if (altM >= iceLineM(latDeg)) return 'ice';
-  const tree = treeLineM(latDeg);
+/** Landed coast distance (m), or NaN when unknown / home — same value landingCover already uses for coverKind. */
+export const siteCoastM = () => SITE.coastM;
+/** Zone at a height: 'forest' (trees grow), 'tundra' (Arctic, above a near-sea-level tree line: low plants, no trees), 'rock' (mountain above the tree line), 'ice'.
+ *  Optional coastM (m to the sea) applies the same continentality as coverKind; omit/NaN keeps the zonal lines. */
+export function zoneAt(altM: number, latDeg: number, coastM?: number): Zone {
+  const w = siteMaritimeWeight(coastM);
+  if (altM >= (w == null ? iceLineM(latDeg) : iceLineAtM(latDeg, w))) return 'ice';
+  const tree = w == null ? treeLineM(latDeg) : treeLineAtM(latDeg, w);
   return altM < tree ? 'forest' : tree < ARCTIC_TREE_LINE_M ? 'tundra' : 'rock';
 }
 /** Game-local height (core/world heightAt metres) -> metres above sea level. Home uses PLANET.home.elevation. A remote landing uses that site's own datum. */
 export const gameAltitudeM = (h: number) => siteDatum(PLANET.home.elevation) + (h - LEVEL.waterSurface);
-const localZone = (h: number) => zoneAt(gameAltitudeM(h), siteLatitude(PLANET.home.latDeg));
+const localZone = (h: number) => zoneAt(gameAltitudeM(h), siteLatitude(PLANET.home.latDeg), siteCoastM());
 /** Can trees (and forest animals) grow at this game-local height? Home latitude unless a landing moved the frame. */
 export const plantsGrowAt = (h: number) => localZone(h) === 'forest';
 /** Can low ground plants (herbs, berries) grow here? Forest or Arctic tundra; never mountain rock or ice. */

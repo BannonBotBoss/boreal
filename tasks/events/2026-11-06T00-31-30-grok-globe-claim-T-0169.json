@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0169",
+  "agent": "grok-globe",
+  "at": "2026-11-06T00:31:30-08:00",
+  "branch": "grok-globe/globe-closeup-realism",
+  "note": "After grokbot-2 approve-plan for Matthew at 2026-11-06T01:21:23-07:00 (rule 16b; propose was 2026-11-06T01:16:17-07:00). Branch grok-globe/globe-closeup-realism from main e7173084 (PR #330 is on main; localClouds.ts is not edited). Handoff tasks/handoffs/T-0169-grok-globe.md. No animal files, no river files. Board files for the task and the approve-plan are carried so the ledger can replay the claim; PR #331 is not merged."
+}

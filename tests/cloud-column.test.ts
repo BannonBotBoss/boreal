@@ -127,6 +127,25 @@ test('anvil bake: soft strength weights keep a dense core and a weaker fringe in
   assert.ok(dens[0] > dens[dens.length - 1], `core denser than outer fringe (${dens[0]} > ${dens[dens.length - 1]})`);
 });
 
+test('anvil bake: blurred strength scales ice-deck depth — near-top footprint wider than deep', () => {
+  const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000, 'deep glaciated tower for anvil');
+  const b = bakeLocal(col, 1, 0, 0, L);
+  let near = 0, deep = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let sn = 0, sd = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, d = col.top - z, v = b[i + L.nx * (j + L.nz * k)];
+      if (d >= 0 && d <= 350) sn += v;
+      if (d >= 900 && d <= 1400) sd += v;
+    }
+    if (sn > 40) near++;
+    if (sd > 40) deep++;
+  }
+  assert.ok(deep > 0, `some mature cells still reach deep into the anvil (${deep})`);
+  assert.ok(near > deep, `near-top footprint ${near} wider than deep ${deep}`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');

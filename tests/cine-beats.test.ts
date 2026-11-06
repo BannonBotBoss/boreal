@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatClock, formatCosmicSeconds, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaClear, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, starsLit, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
+import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatClock, formatCosmicSeconds, haloFade, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaClear, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, starsLit, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
 import { MILESTONES, deepTimeAt } from '../src/core/deepTime';
 
 test('cosmic clock matches the sheet keyframes and does not jump', () => {
@@ -65,6 +65,16 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
   assert.ok(shellRadius(0.6) > 1.4);
   assert.equal(shellOnScreen(0.3), true);
   assert.equal(shellOnScreen(0.9), false);
+  assert.equal(haloFade(84.9, 85, 89.2, 0.3, 1), 0);
+  assert.equal(haloFade(89.2, 85, 89.2, 0.3, 1), 0);
+  assert.ok(haloFade(85.15, 85, 89.2, 0.3, 1) > 0.4 && haloFade(85.15, 85, 89.2, 0.3, 1) < 0.6);
+  assert.equal(haloFade(86, 85, 89.2, 0.3, 1), 1);
+  assert.ok(haloFade(88.7, 85, 89.2, 0.3, 1) > 0.4 && haloFade(88.7, 85, 89.2, 0.3, 1) < 0.6);
+  assert.equal(haloFade(91.9, 92, 102, 0.3, 1), 0);
+  assert.equal(haloFade(94, 92, 102, 0.3, 1), 1);
+  assert.ok(haloFade(101.5, 92, 102, 0.3, 1) > 0.4 && haloFade(101.5, 92, 102, 0.3, 1) < 0.6);
+  assert.equal(haloFade(102, 92, 102, 0.3, 1), 0);
+  assert.equal(bangFlash(bangAt(end) + CINE.bangPeak, end, false), 1);
   assert.equal(panelFigure(28), 'Temperature 10²⁷ K');
   assert.equal(panelFigure(33), 'Energy ≈ 100 GeV per particle');
   assert.equal(panelFigure(40), 'Hydrogen 75% · Helium 25%');

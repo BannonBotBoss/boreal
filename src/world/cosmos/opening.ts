@@ -10,7 +10,7 @@ import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
 import { GLOBE_ERA, GLOBE_LAND, GLOBE_SKY } from '../globe/tile';
 import { setCineLayerGate } from '../globe/planetLayers';
-import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatClock, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
+import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatClock, haloFade, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
 
 /**
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
@@ -490,10 +490,11 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   function paintEarth(ctx: CanvasRenderingContext2D, w: number, h: number) {
     const pad = 40, vh = Math.max(1, h - pad * 2);
     const cx = w / 2, cy = pad + vh * 0.6, R = vh * 0.3;
-    if (elapsed >= CINE.b10End && elapsed < 89.2) {
+    const impactHalo = haloFade(elapsed, CINE.b10End, 89.2, 0.3, 1);
+    if (impactHalo > 0.001) {
       const halo = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.22);
       halo.addColorStop(0, 'rgba(255,120,30,0)');
-      halo.addColorStop(0.55, 'rgba(255,100,24,0.22)');
+      halo.addColorStop(0.55, `rgba(255,100,24,${(0.22 * impactHalo).toFixed(4)})`);
       halo.addColorStop(1, 'rgba(255,80,16,0)');
       ctx.fillStyle = halo;
       ctx.beginPath(); ctx.arc(cx, cy, R * 1.22, 0, Math.PI * 2); ctx.fill();
@@ -588,12 +589,12 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
         ctx.fillRect(x, y, s, s);
       }
     }
-    if (elapsed >= CINE.b11End && elapsed < 102) {
+    const steamHalo = haloFade(elapsed, CINE.b11End, 102, 0.3, 1);
+    if (steamHalo > 0.001) {
       const u = Math.min(1, (elapsed - CINE.b11End) / (CINE.b12End - CINE.b11End));
-      const fade = elapsed <= 99 ? 1 : Math.max(0, (102 - elapsed) / 3);
       const haze = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R * 1.35);
-      haze.addColorStop(0, `rgba(230,226,220,${(0.02 + u * 0.05) * fade})`);
-      haze.addColorStop(0.6, `rgba(210,206,200,${(0.08 + u * 0.12) * fade})`);
+      haze.addColorStop(0, `rgba(230,226,220,${((0.02 + u * 0.05) * steamHalo).toFixed(4)})`);
+      haze.addColorStop(0.6, `rgba(210,206,200,${((0.08 + u * 0.12) * steamHalo).toFixed(4)})`);
       haze.addColorStop(1, 'rgba(210,206,200,0)');
       ctx.fillStyle = haze;
       ctx.beginPath(); ctx.arc(cx, cy, R * 1.35, 0, Math.PI * 2); ctx.fill();

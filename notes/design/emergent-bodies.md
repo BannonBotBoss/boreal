@@ -150,3 +150,9 @@ Findings: the solid is at the TOP of the core and the centre is liquid, an inver
 2. The core top sits at 186 GPa here (PREM CMB 136 GPa), which raises T_liq there by ~500 K; this is the same
    over-compression and interface gap (no iron parcels at 3300-3600 km) listed above.
 Next: a cited core Grueneisen parameter for the adiabat, and an ICB measure that grows the solid sphere out from the centre.
+
+Core adiabat Gamma + ICB measure (2026-11-06, grokbot-1): materials.json `core_liquid_iron.grueneisen` = 1.5
+(Vocadlo, Alfe, Gillan & Price 2003, PEPI 140:101). `cool_toward_adiabat` uses that for iron (mantle still Tillotson a+b).
+`boundaries().icb` now walks iron parcels from the centre and stops at the first liquid, so an inverted outer frozen shell
+reads as ICB = 0. A full hot re-run is still needed to measure the new ICB; the 24k Vinet sep gate still needs Matt
+(sep threshold vs segregation assist).

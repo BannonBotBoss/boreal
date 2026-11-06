@@ -146,6 +146,26 @@ test('anvil bake: blurred strength scales ice-deck depth — near-top footprint 
   assert.ok(near > deep, `near-top footprint ${near} wider than deep ${deep}`);
 });
 
+test('anvil bake: ice-deck denser near the buoyant top than deeper (Houze outflow at the EL)', () => {
+  // fringe columns: anvil outflow with little mid-tower convective fill, so the taper is visible
+  const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000, 'deep glaciated tower for anvil');
+  const b = bakeLocal(col, 1, 0, 0, L), midZ = col.lcl + .5 * (col.top - col.lcl);
+  let topSum = 0, deepSum = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let st = 0, sd = 0, mid = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, d = col.top - z, v = b[i + L.nx * (j + L.nz * k)];
+      if (d >= 0 && d <= 250) st += v;
+      if (d >= 900 && d <= 1150) sd += v;
+      if (Math.abs(z - midZ) < dz) mid += v;
+    }
+    if (st > 20 && mid < 10) { topSum += st; deepSum += sd; n++; } // anvil fringe, not a convective core
+  }
+  assert.ok(n > 2, `anvil fringe cells (${n})`);
+  assert.ok(topSum > deepSum * 1.3, `near-top denser than deep on fringe (${topSum} vs ${deepSum})`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');

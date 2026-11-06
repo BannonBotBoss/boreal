@@ -21,3 +21,13 @@ test('surfaceDataAt zone follows the landed site latitude', () => {
   } finally { clearSite(); }
   for (const [x, z] of pts) assert.equal(surfaceDataAt(x, z, undefined, false).zone === 'forest', plantsGrowAt(heightAt(x, z)));
 });
+
+test('surfaceDataAt zone follows landed coast with plantsGrowAt', () => {
+  // Inland continental: zonal rock, continental forest at datum 300 m.
+  setSite({ latDeg: 64.5, lonDeg: -125, datumM: 300, salt: 9, dir: [1, 0, 0], east: [0, 0, 1], north: [0, 1, 0], coastM: 156_000 });
+  try {
+    const d = surfaceDataAt(0, 0, undefined, false);
+    assert.equal(d.zone, 'forest');
+    assert.equal(d.zone === 'forest', plantsGrowAt(heightAt(0, 0)));
+  } finally { clearSite(); }
+});

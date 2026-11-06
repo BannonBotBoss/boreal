@@ -337,6 +337,18 @@ export function shellOnScreen(dt: number): boolean {
 }
 
 /**
+ * Halo envelope. 0 outside [on, off). Rises over `inn` seconds from `on` and
+ * falls over `out` seconds so it is gone at `off`. The impact flash is not this.
+ */
+export function haloFade(t: number, on: number, off: number, inn = 0.3, out = 1): number {
+  if (!(t >= on) || !(t < off)) return 0;
+  const rise = inn <= 0 ? 1 : Math.min(1, (t - on) / inn);
+  const fall = out <= 0 ? 1 : Math.min(1, (off - t) / out);
+  const s = (x: number) => x * x * (3 - 2 * x);
+  return s(rise) * s(fall);
+}
+
+/**
  * Hue from the cosmic clock, not from the beat boundaries.
  * 0 is blue-white at the Planck keyframe, 1 is gold at 1e−6 s, 2 is amber at 20 minutes,
  * 3 is deep red at recombination. Log time, so the title and B4 are on the same slope.

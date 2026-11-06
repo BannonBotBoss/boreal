@@ -185,7 +185,9 @@ export function createPlanet(seed: number, local?: LocalHeight) {
  *  Inside the home region the colour follows the game's own data (stage-3 soil + wetness via surfaceAt); outside it
  *  follows the far-field hills (ridges → outcrop, hollows → wetland) and a fine per-point mottle. */
 export const GLOBE_COLOURS = {
-  deep: [.012, .045, .11], shallow: [.022, .08, .135], // oceans: dark navy like Blue Marble [reference calibration] // water: shaded per pixel by depth (tile.ts globeMaterial)
+  deep: [.00091, .00335, .01298], // #030b1e linear. Matthew 2026-11-06: midnight, not saturated royal blue (#1d3c5d was the old deep)
+  deepSun: [.00152, .00651, .02956], // #051330 linear, mixed in only where the sun is face-on (tile.ts). Still not royal blue.
+  shallow: [.022, .08, .135], // shallows unchanged
   // lakes (water above sea level): dark slate, much less saturated than the sea. In ISS052-E-12924 Shield lakes read
   // ~20 % darker than the forest around them and nearly the same hue (tannin-dark, sky-reflecting water) [reference calibration]
   lakeDeep: [.009, .014, .02], lakeShallow: [.016, .022, .027],

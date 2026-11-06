@@ -19,7 +19,7 @@ import * as THREE from 'three';
 import { withLogDepth } from './logDepth';
 import { bounds, edgeMetres, faceDir, type QNode } from './cube';
 import { GLOBE_COLOURS, surfaceColour, type Planet, type Vec3 } from './planet';
-import { GLSL_NOISE } from '../../proc/glsl';
+import { GLSL_NOISE, GLSL_SIMPLEX } from '../../proc/glsl';
 import { CLOUDS } from './atmosphere';
 import { absorbedAttribute } from '../../core/planet/solarBudget';
 import { HYDRO_DRAW } from './hydroLayer';
@@ -126,6 +126,10 @@ export const GLINT = { n: 1.33, windMs: 7 };
 export const fresnelF0 = (n = GLINT.n) => ((n - 1) / (n + 1)) ** 2;
 export const coxMunkSigma2 = (w = GLINT.windMs) => 0.003 + 0.00512 * w;
 export const glintRoughness = (w = GLINT.windMs) => coxMunkSigma2(w) ** 0.25;
+/** Matthew 2026-11-06: ocean sun glint on this MeshStandardMaterial. Lakes stay on GLINT / Cox-Munk.
+ *  The chop and these values are applied only when uOceanGlint is 1 (tier octaves ≥ CLOUDS.shadowMinOct:
+ *  off at Very low and Minimum). roughness 0.15–0.2, metalness 0.1–0.2. */
+export const OCEAN_GLINT = { roughness: 0.18, metalness: 0.15 };
 export const GLOBE_LAKE = { shallow: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeShallow) }, deep: { value: new THREE.Color().setRGB(...GLOBE_COLOURS.lakeDeep) }, rough: { value: glintRoughness() } }; // rough: water roughness (inpage eases it to the game water's .32 in the band)
 /** High-frequency ground detail in the tile shader (the CPU makes the macro shape, the GPU adds what is finer than a vertex):
  *  three octaves of seeded value noise on proc/glsl's hash2u, 3D in planet space (a function of position only, so it is
@@ -136,6 +140,8 @@ export const GLOBE_LAKE = { shallow: { value: new THREE.Color().setRGB(...GLOBE_
 /** proc/glsl's noise, namespaced (gd_): other patches of this material (atmosphere, the game's photoreal chain) may or may
  *  not bring their own unguarded copy, and GLSL allows one body per name. Same code, same values. */
 const DETAIL_NOISE = GLSL_NOISE.replace(/\b(hash2s|vnoise|hash2u|vnoiseU|fbm)\b/g, 'gd_$1');
+/** Simplex for the ocean chop only. Renamed so it does not collide with anything the atmosphere patch injects. */
+const SIMPLEX_NOISE = GLSL_SIMPLEX.replace(/\b(mod289v3|mod289v4|permute4|taylorInvSqrt4|snoise)\b/g, 'gd_$1');
 /** r20: finer and much weaker than r19 (40/12/4 m, albedo .6, bumps 3 m read as blotches): crown-scale grain, not patches. */
 export const DETAIL = { lambda: [24, 8, 3], amp: [1.2, .6, .25], albedo: .22, weight: [.3, .4, .3], fadeFrom: 5000, fadeFull: 2500 };
 export const GLOBE_DETAIL = { uDetail: { value: new THREE.Vector4(0, DETAIL.albedo, 1, 0) }, uDetO0: { value: new THREE.Vector3() }, uDetO1: { value: new THREE.Vector3() }, uDetO2: { value: new THREE.Vector3() },
@@ -213,7 +219,8 @@ export function globeMaterial(debugSegments = 0) {
       .replace(`#include <${pars}>`, `#ifdef USE_LOGARITHMIC_DEPTH_BUFFER\n${pars.endsWith('fragment') ? 'uniform float logDepthBufFC;\n' : ''}centroid varying float vFragDepth;\ncentroid varying float vIsPerspective;\n#endif`);
     sh.vertexShader = centroid(sh.vertexShader, 'logdepthbuf_pars_vertex'); sh.fragmentShader = centroid(sh.fragmentShader, 'logdepthbuf_pars_fragment');
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
-    sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) };
+    sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) }; sh.uniforms.uDeepSun = { value: new THREE.Color().setRGB(...C.deepSun) };
+    sh.uniforms.uOceanRough = { value: OCEAN_GLINT.roughness }; sh.uniforms.uOceanMetal = { value: OCEAN_GLINT.metalness };
     sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uEra = GLOBE_ERA.uEra; sh.uniforms.uCrack = GLOBE_ERA.uCrack; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uHideLake = LAKE_FADE.uHide; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -224,7 +231,7 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uLakeShallow, uLakeDeep; uniform float uLakeRough;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -232,7 +239,12 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     float F = mix(vH, sf, hm), fw = max(fwidth(F), 1e-3); landMask = smoothstep(-fw, fw, F);
     landMask = mix(landMask, 1.0, vLake * (1.0 - hm) * uHideLake); // a vertex lake with the mask off is a dark polygon this low
     float band = hm * (1.0 - smoothstep(0.1, 0.4, fw)); // shore bands only while they are wider than a pixel
-    float dw = smoothstep(0.0, 150.0, -vH); vec3 water = mix(mix(uShallow, uDeep, dw), mix(uLakeShallow, uLakeDeep, dw), vLake);
+    float eraSum = uEra.x + uEra.y + uEra.z + uEra.w;
+    presentW = eraSum < 0.001 ? 1.0 : (1.0 - (1.0 - clamp(uEra.w, 0.0, 1.0)) * (1.0 - clamp(uEra.w, 0.0, 1.0))); // film beats stay as authored; the present globe (and a non-film load) takes the new ocean
+    float dw = smoothstep(0.0, 150.0, -vH);
+    float face = smoothstep(0.05, 0.82, max(dot(normalize(vNormal), uSun), 0.0)); // darker away from a face-on sun; #030b1e -> #051330
+    vec3 deepCol = mix(uDeep, uDeepSun, face);
+    vec3 water = mix(mix(uShallow, deepCol, dw), mix(uLakeShallow, uLakeDeep, dw), vLake);
     water = mix(water, diffuseColor.rgb * 0.5, band * ${SHORE.shallowMix.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.shallow.toFixed(3)}, -F))); // shallows: the bed shows through
     diffuseColor.rgb *= 1.0 - band * ${SHORE.wetDark.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.wet.toFixed(3)}, F)); // wet ground at the waterline
     diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }${LAYERS_FRAG}
@@ -244,6 +256,13 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     detH = (k0 * n0 * uDetAmp.x + k1 * n1 * uDetAmp.y + k2 * n2 * uDetAmp.z) * uDetail.x * uDetail.z * landMask;
     a = k0 * n0 * ${DETAIL.weight[0].toFixed(3)} + k1 * n1 * ${DETAIL.weight[1].toFixed(3)} + k2 * n2 * ${DETAIL.weight[2].toFixed(3)};
     diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask; }
+  if (uOceanGlint > 0.5) { // macro wave chop on the ocean only (stegu simplex). Fades when a cell is under ~2 px. Lakes and the film's early beats stay flat.
+    float ocean = (1.0 - landMask) * (1.0 - clamp(vLake, 0.0, 1.0)) * presentW;
+    vec3 pw = vDetW;
+    float k1 = 1.0 - smoothstep(0.22, 0.55, length(fwidth(pw * 4.0e-5)));
+    float k2 = 1.0 - smoothstep(0.22, 0.55, length(fwidth(pw * 2.2e-4)));
+    float k3 = 1.0 - smoothstep(0.22, 0.55, length(fwidth(pw * 1.6e-3)));
+    detH += ocean * (k1 * gd_snoise(pw * 4.0e-5) * 160.0 + k2 * gd_snoise(pw * 2.2e-4 + 9.1) * 28.0 + k3 * gd_snoise(pw * 1.6e-3 + 3.7) * 3.5); }
   diffuseColor.rgb *= mix(vec3(1.0), uLandTint, landMask); // in-page band: land matched to the game patch near the handover (GLOBE_LAND)
   if (uSolarLayer > 0.5) { // T-0057: Q_absorbed on this vertex. Night (0) cools and dims; a sunlit cell stays warm. Off when the uniform is 0.
     float qn = clamp(vAbsorbed / max(uQScale, 1.0), 0.0, 1.0);
@@ -274,12 +293,24 @@ vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix
     diffuseColor.rgb = mix(diffuseColor.rgb, present, presentMix);
   }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
-  if (uDetail.x > 0.001) { // derivative bump from the detail height (Mikkelsen 2010), view space
+  if (uDetail.x > 0.001 || uOceanGlint > 0.5) { // derivative bump (Mikkelsen 2010). detH carries land detail and, on the ocean, the simplex chop.
     vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition); float dhx = dFdx(detH), dhy = dFdy(detH);
     vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
-    normal = normalize(abs(det) * normal - sign(det) * (dhx * r1 + dhy * r2)); }`)
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(uLakeRough, roughnessFactor, landMask); // water: Cox-Munk roughness (GLINT), eased to the game water in the band')
-      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(vec3(' + fresnelF0().toFixed(4) + '), material.specularColor, landMask); // water Fresnel F0 (n = 1.33)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * clamp(uCrack, 0.0, 1.0);')
+    normal = normalize(abs(det) * normal - sign(det) * (dhx * r1 + dhy * r2)); }
+  vec3 viewDirection = normalize(vViewPosition);
+  float fresnel = pow(1.0 - max(dot(normal, viewDirection), 0.0), 5.0);
+  float oceanF = (1.0 - landMask) * (1.0 - clamp(vLake, 0.0, 1.0)) * presentW;
+  vec3 reflectionColor = mix(vec3(0.02, 0.035, 0.07), vec3(0.62, 0.76, 0.94), clamp(atmSkyF(dot(normal, uSun)), 0.0, 1.0));
+  diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb, reflectionColor, fresnel), oceanF);`)
+      .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+oceanGlint = (1.0 - landMask) * (1.0 - clamp(vLake, 0.0, 1.0)) * uOceanGlint * presentW;
+roughnessFactor = mix(roughnessFactor, uOceanRough, oceanGlint); // Matthew 2026-11-06: 0.15-0.2 on the ocean
+roughnessFactor = mix(roughnessFactor, uLakeRough, (1.0 - landMask) * (1.0 - oceanGlint)); // lakes, and the ocean when the tier drops the glint: Cox-Munk`)
+      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(metalnessFactor, uOceanMetal, oceanGlint); // ocean 0.1-0.2; land and lakes stay at the material metalness')
+      .replace('#include <lights_physical_pars_fragment>', THREE.ShaderChunk.lights_physical_pars_fragment.replace(
+        'float dotNL = saturate( dot( geometryNormal, directLight.direction ) );',
+        'float dotNL = smoothstep(-0.08, 0.25, dot( geometryNormal, directLight.direction )); // T-0169: soft Lambert penumbra'))
+      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(material.specularColor, vec3(' + fresnelF0().toFixed(4) + '), (1.0 - landMask) * (1.0 - oceanGlint)); // lakes keep dielectric F0; the ocean keeps the metalness mix (Matthew 2026-11-06)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * clamp(uCrack, 0.0, 1.0);')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
 #ifdef DEBUG_SEAMS
   { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;

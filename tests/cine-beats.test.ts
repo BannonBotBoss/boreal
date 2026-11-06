@@ -144,11 +144,13 @@ test('bed hands to cue 2 at 0:42; voice ducks are later, and there is no loop', 
   assert.ok(bedDb(end + 0.2, end) < -6 && bedDb(end + 0.2, end) > -18);
   assert.ok(Math.abs(bedDb(22, end)) < 1e-6);
   assert.ok(Math.abs(bedDb(41, end)) < 1e-6);
-  assert.ok(bedDb(44, end) < -2 && bedDb(44, end) > -5);
+  assert.ok(Math.abs(bedDb(43, end)) < 1e-6);
+  assert.ok(Math.abs(bedDb(45, end)) < 1e-6);
+  assert.ok(bedDb(45.5, end) < -2 && bedDb(45.5, end) > -5);
   assert.equal(bedDb(46, end), -80);
-  assert.equal(cue2Db(37), -80);
-  assert.ok(cue2Db(40) < -2 && cue2Db(40) > -5);
-  assert.ok(Math.abs(cue2Db(42)) < 1e-6);
+  assert.equal(cue2Db(41), -80);
+  assert.ok(cue2Db(44) < -2 && cue2Db(44) > -5);
+  assert.ok(Math.abs(cue2Db(46)) < 1e-6);
   assert.ok(Math.abs(cue2Db(63)) < 1e-6);
   assert.equal(voDuckDb(54.5), -6);
   assert.equal(voDuckDb(63), 0);

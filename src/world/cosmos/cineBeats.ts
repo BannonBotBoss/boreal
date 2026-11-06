@@ -78,6 +78,9 @@ export const LATER_AUDIO = {
   cue2: 'audio/big-bang/cue2-emergence.mp3',
   cue2At: 42,
   cue2Fade: 4,
+  /** Loud plateau of the bed. Replayed from 2 s before cue 2, because the take's own tail is already silent. */
+  bedLapAt: 31,
+  bedLapLead: 2,
   voB7: 'audio/big-bang/vo-b7-light.mp3',
   /** With “380,000 years”, while the plasma is still glowing. */
   voB7At: 54,
@@ -432,9 +435,9 @@ const gainDb = (g: number) => g <= 1e-4 ? -80 : 20 * Math.log10(g);
 
 /**
  * Bed level in dB. Silent before the click's B1. Stays at −6 dB until narration ends.
- * The bed take itself thins out after 0:41, so cue 2 has already risen underneath it
- * and the bed only leaves once cue 2 is carrying the floor. Equal-power, not a dB ramp.
- * There is no 20–45 s loop.
+ * From 0:42 the loud part of the bed is still up under cue 2, full for the first
+ * half of the 4 s overlap, then out. The voice duck is added on top and lets go
+ * after each line. There is no 20–45 s loop.
  */
 export function bedDb(t: number, narrationEndedAt: number | null): number {
   if (t < CINE.b1) return -80;
@@ -447,18 +450,14 @@ export function bedDb(t: number, narrationEndedAt: number | null): number {
   if (t < LATER_AUDIO.cue2At) return 0;
   if (t >= LATER_AUDIO.cue2At + LATER_AUDIO.cue2Fade) return -80;
   const u = (t - LATER_AUDIO.cue2At) / LATER_AUDIO.cue2Fade;
-  return gainDb(Math.cos(u * Math.PI / 2));
+  if (u < 0.75) return 0;
+  return gainDb(Math.cos((u - 0.75) / 0.25 * Math.PI / 2));
 }
 
-/**
- * Cue 2 level in dB. Playback starts one fade early (0:38) so the 4 s rise
- * finishes at 0:42, while the bed is still loud. Full after that: the voice
- * duck is separate and lets go after each line. No second duck through 1:03.
- */
+/** Cue 2 level in dB. Starts at 0:42 and rises over 4 s on top of the bed. Full after 0:46. */
 export function cue2Db(t: number): number {
-  const start = LATER_AUDIO.cue2At - LATER_AUDIO.cue2Fade;
-  if (t < start) return -80;
-  const u = Math.min(1, (t - start) / LATER_AUDIO.cue2Fade);
+  if (t < LATER_AUDIO.cue2At) return -80;
+  const u = Math.min(1, (t - LATER_AUDIO.cue2At) / LATER_AUDIO.cue2Fade);
   return gainDb(Math.sin(u * Math.PI / 2));
 }
 

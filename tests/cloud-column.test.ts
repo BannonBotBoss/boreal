@@ -135,9 +135,18 @@ test('overshooting top: a strong tower punches 1-2 km above its anvil level, a w
 });
 test('optical depth: a deep tower is far thicker than shallow cumulus, which is thicker than a near-clear column', () => {
   const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), dry = cloudColumn(30, .001, 1);
-  assert.ok(hot.tau > 10 * cool.tau && cool.tau > 10 * dry.tau, `tau ${hot.tau} / ${cool.tau} / ${dry.tau}`);
+  assert.ok(hot.tau > 3 * cool.tau && cool.tau > 10 * dry.tau, `tau ${hot.tau} / ${cool.tau} / ${dry.tau}`); // deep > shallow still holds under the Kessler cap; the 10x gap was the adiabatic overshoot
   assert.ok(hot.waterPath > cool.waterPath && cool.waterPath > 0, `W ${hot.waterPath} / ${cool.waterPath}`);
   const sum = hot.layers.reduce((a, l) => a + l.water, 0); assert.ok(sum > 0 && hot.waterPath > 0);
+});
+test('Kessler cap: suspended convective condensate stays at the autoconversion threshold, so water path is a few kg/m2 not the adiabatic tens', async () => {
+  const C = (await import('../data/earth/cloud-column.json')).default as { qc_auto_kg_kg: number };
+  assert.equal(C.qc_auto_kg_kg, 1e-3); // same Kessler 1969 qc0 as weather.ts KESSLER
+  const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1);
+  assert.ok(hot.layers.filter(l => l.water > 0 && l.strat === 0).every(l => l.water <= C.qc_auto_kg_kg + 1e-15), 'convective layers stay at or below qc0');
+  assert.ok(hot.waterPath > 1 && hot.waterPath < 20, `deep W ${hot.waterPath}`); // observed CB paths are a few kg/m2
+  assert.ok(hot.tau > 50 && hot.tau < 2000, `deep tau ${hot.tau}`); // order 10^2-10^3, not the adiabatic 10^3-10^4
+  assert.ok(cool.waterPath < hot.waterPath && cool.tau < hot.tau);
 });
 
 import { boxExtinction, cellTransmittance } from '../src/world/globe/localClouds';

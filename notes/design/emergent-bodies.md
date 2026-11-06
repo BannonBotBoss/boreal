@@ -156,3 +156,5 @@ Core adiabat Gamma + ICB measure (2026-11-06, grokbot-1): materials.json `core_l
 `boundaries().icb` now walks iron parcels from the centre and stops at the first liquid, so an inverted outer frozen shell
 reads as ICB = 0. A full hot re-run is still needed to measure the new ICB; the 24k Vinet sep gate still needs Matt
 (sep threshold vs segregation assist).
+Regression (2026-11-06, grokbot-1): `core_adiabat_gamma_allows_centre_freeze` pins that gamma=1.5 makes (T_liq − T_ad) rise toward the centre when the adiabat is anchored just above the liquidus at the core top, while Tillotson a+b (=2.0) keeps the centre liquid. A full hot re-run is still needed to measure the new ICB on a settled body; the 24k Vinet sep gate still needs Matt.
+

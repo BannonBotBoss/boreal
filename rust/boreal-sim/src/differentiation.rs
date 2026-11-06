@@ -182,6 +182,23 @@ mod tests { use super::*;
         assert!((icb_growing_from_centre(&[(1e6, true), (2e6, true), (3e6, false)]) - 2e6).abs() < 1.0);
         assert!((icb_growing_from_centre(&[(1e6, false), (2e6, true), (3e6, true)]) - 0.0).abs() < 1.0, "outer frozen shell is not an inner core");
         assert!((icb_growing_from_centre(&[]) - 0.0).abs() < 1.0); }
+    /// Cited liquid-Fe gamma (1.5) makes the adiabat shallower than the alloy liquidus, so an
+    /// adiabat anchored just above the liquidus at the core top freezes at the centre. Tillotson
+    /// a+b (=2.0) is steeper and keeps the centre liquid — the inverted outer shell we measured.
+    /// Anchors are PREM-like outer-core / deep-core (rho, P); the claim is the gamma choice vs the
+    /// Anzellini+Alfè liquidus, not the Tillotson cold curve.
+    #[test] fn core_adiabat_gamma_allows_centre_freeze() {
+        let fe = Till::from_data("iron");
+        let top = (10_600.0_f64, 140e9);
+        let centre = (13_000.0_f64, 360e9);
+        let t_top = core_liquidus_t(top.1) + 200.0;
+        let margin = |g: f64, rho: f64, p: f64| core_liquidus_t(p) - t_top * (rho / top.0).powf(g);
+        let (m_top, m_c) = (margin(1.5, top.0, top.1), margin(1.5, centre.0, centre.1));
+        assert!(m_c > m_top + 100.0, "gamma 1.5: centre margin {m_c} must exceed top {m_top}");
+        assert!(m_c > 0.0, "gamma 1.5: centre solid (margin {m_c})");
+        let steep = fe.a + fe.b;
+        assert!(margin(steep, centre.0, centre.1) < 0.0, "Tillotson a+b={steep} keeps the centre liquid");
+    }
     #[test] fn rb22_alpha_is_order_unity() { let a = rb22_alpha(); assert!(a > 0.5 && a < 10.0, "{a}"); }
     #[test] fn hot_mix_sinks_iron_and_heats() { let mut s = Hot::mix(2000, 7, "dunite", C::omega_earth); let b0 = s.boundaries().separation; let u0: f64 = s.u.iter().sum();
         s_relax(&mut s, 300); let b1 = s.boundaries().separation; let u1: f64 = s.u.iter().sum();

@@ -129,6 +129,40 @@ test('overshoot bake: plume uses iceOpacity so glaciated tops are optically thin
   assert.ok(maxV <= thinnedCap + 1, `plume ≤ ice-thinned cap: ${maxV} vs ${thinnedCap} (raw would be ${rawMax})`);
   assert.ok(maxV < rawMax * .55, `clearly thinner than a liquid tip (${maxV} < ${rawMax * .55})`);
 });
+test('overshoot bake: plume soft-narrows into a turret — mid cells thinner near the tip than mature cores', () => {
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 48 }, dz = L.topM / L.nz;
+  const hot = cloudColumn(30, qOf(30, .8), 1, L.topM);
+  assert.ok(hot.overshootM > 800 && hot.top > 0, `column overshoot ${hot.overshootM} top ${hot.top}`);
+  const b = bakeLocal(hot, 1, 0, 0, L);
+  const step = hot.layers[1]?.z || 250, bakeTop = hot.top + step / 2; // bakeLocal buoyant top
+  const tipFull = Math.min(L.topM, bakeTop + hot.overshootM), overIn = tipFull - bakeTop;
+  // low band (near EL) vs upper overshoot: turret should shrink the lit footprint with height
+  const lo0 = bakeTop + overIn * .05, lo1 = bakeTop + overIn * .25;
+  const hi0 = bakeTop + overIn * .6, hi1 = bakeTop + overIn * .85;
+  let litLo = 0, litHi = 0, maxCoreHi = 0, maxMidHi = 0, midZeroHi = 0, midSeen = 0, coreSeen = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let maxZ = -1, densLo = 0, densHi = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, v = b[i + L.nx * (j + L.nz * k)];
+      if (z > bakeTop && v > 0 && z > maxZ) maxZ = z;
+      if (z >= lo0 && z <= lo1) densLo = Math.max(densLo, v);
+      if (z >= hi0 && z <= hi1) densHi = Math.max(densHi, v);
+    }
+    if (maxZ < 0) continue;
+    if (densLo > 0) litLo++;
+    if (densHi > 0) litHi++;
+    const mature = maxZ >= tipFull - dz;
+    const mid = !mature && maxZ > bakeTop + overIn * .15 && maxZ < tipFull - 3 * dz;
+    if (mature) { coreSeen++; maxCoreHi = Math.max(maxCoreHi, densHi); }
+    if (mid) { midSeen++; maxMidHi = Math.max(maxMidHi, densHi); if (densHi === 0) midZeroHi++; }
+  }
+  assert.ok(litLo > litHi, `turret narrows with height: lit low ${litLo} > high ${litHi}`);
+  assert.ok(coreSeen > 0 && maxCoreHi > 0, `mature core paints upper band (${coreSeen}, dens ${maxCoreHi})`);
+  assert.ok(midSeen > 0, `mid cells present (${midSeen})`);
+  assert.ok(maxCoreHi > maxMidHi, `upper-band density: mature ${maxCoreHi} > mid ${maxMidHi}`);
+  assert.ok(maxMidHi === 0 || maxCoreHi >= maxMidHi * 2, `mid zero or clearly thinner near tip (${maxMidHi} vs ${maxCoreHi})`);
+  assert.ok(midZeroHi > 0 || maxMidHi === 0, `some mid cells already gone in upper band (${midZeroHi})`);
+});
 test('anvil bake: soft strength weights keep a dense core and a weaker fringe in the ice deck', () => {
   const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;
   assert.ok(col.top - col.lcl >= 3000, 'deep glaciated tower for anvil');

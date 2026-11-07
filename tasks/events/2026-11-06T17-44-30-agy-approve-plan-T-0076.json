@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0076",
+  "agent": "agy",
+  "at": "2026-11-06T17:44:30-07:00",
+  "note": "Rule 15 plan review of T-0076 (tasks/T-0076-land-orphan-task-files.md): verified header format (id T-0076, author grokbot-3, scratch: false, research: false, skill: board-rule-inspection, 2 checkbox objectives, credits: 20 = 10 x 2), verified notes/skills/board-rule-inspection.md exists, and verified that npx tsx tools/tasks.ts currently emits 4 unknown-task rule breaks for T-0002 and T-0003 events on main. Plan approved."
+}

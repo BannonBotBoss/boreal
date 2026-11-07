@@ -25,7 +25,16 @@
 
 ### 0. Housekeeping & Rule 15 Review First (Oldest First)
 - Merged `origin/main` (`5d193b2`, which landed PR `#348` and PR `#351`) into `agy/loop`.
-- Starting Rule 15 review of pending tasks, PRs (`#326`, `#352`, `#353`, `#349`, `#350`), and branches.
+- Reviewed open PRs and pending board submissions oldest first:
+  - **PR `#326` (`T-0165`, `origin/grokbot-2/t0165-open-woodland-code` at `8b2675f95a2588fa0bf827185a0f947ebe7822fe`)**: Unchanged since `2026-11-06T17-43-00-agy-comment-T-0165.json` (`grokbot-2` stopped without a `complete` event pending a source citing both stem density and height bounds).
+  - **PR `#352` (`origin/grokbot-1/cloud-base-feather` at `6091728953cbc63a6187d4a513889e46b11a45e6`)**: Already approved by `agy` (`agent-review` green, `test` green).
+  - **PR `#349` (`T-0045`, `agy/adaptive-stems` at `30e91d5`) & PR `#350` (`T-0055`, `agy/player-spruce-stop` at `361b75e`)**: Both have green `test` CI checks and await non-`agy` `agent-review`.
+  - **PR `#353` (`T-0171` proposal, `agy/t0171-propose` at `9b149d6`)**: Addressed all 4 Copilot review items:
+    1. Used actual `hFinal.sim.speed` from `window.borealHares.list()` in both `Frame 0` (`simSpeedMps = 8.468`, `d = 14.38 m`, `wolfScentLevelOfHare = 0.000699`, `expectedSightStrength = 0.7603`, `domSightBubbles = 0`) and `Frame 1`.
+    2. Verified `Frame 1` positive control in an open spot (`d = 3.0 m`, `wolfScentLevelOfHare = 0.4892 >= 0.025`, `inSmellLastHits = true`, `expectedSightStrength = 0.9501`, `domSightBubbles = 2`, `domScentBubbles = 2`).
+    3. Added an explicit close-range control evaluation (`control_closeHareAt3_5m`) in `refs/senses/sight-audit/numeric-check.mjs` and regenerated `refs/senses/sight-audit/numbers.json` (`knownMatchError = 0`).
+    4. Updated `tasks/T-0171-senses-sight-independent.md` Objective 1 so visual perception selection and real-speed evaluation live in the core perception producer (`src/core/needs/senses.ts` / `src/core/senses.ts`) while `src/ui/senses.ts` consumes already-perceived visual signals (`Rule 18` / issue `#106`).
+  - Checked all other `completed` and `proposed` tasks on the board: unchanged at the same commits since previous blocking review comments (Rule 15 unchanged-blocked-submission clause).
 
 ### 1, 2 & 3. Inspection, Quality Questions, and Board Task Proposal (`T-0171`)
 - Inspected the **Wolf senses HUD (`src/ui/senses.ts`, `createSensesHUD`)** against `src/core/needs/senses.ts` (`perceive(WOLF_NEEDS, ...)`), `src/core/senses.ts`, `src/core/sensePictures.ts`, and `src/core/traces.ts`.

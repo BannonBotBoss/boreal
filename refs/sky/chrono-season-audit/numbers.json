@@ -1,0 +1,68 @@
+{
+  "source": "NOAA General Solar Position Calculations (Spencer 1971), https://gml.noaa.gov/grad/solcalc/solareqns.PDF; Standish (1992) JPL Keplerian elements & Meeus (1998) Astronomical Algorithms eq. 12.4",
+  "calibration": {
+    "metric": "Absolute solar/planetary elevation error |game - reference| in degrees",
+    "knownMatchDeg": 0,
+    "knownMismatchDeg": 38.010406950103736,
+    "passThresholdDeg": 0.05
+  },
+  "solarChecks": [
+    {
+      "id": "winter-solstice-noon-kenora",
+      "description": "Day 355 (Dec 21), 12:00 local solar time at Kenora home site (49.79°N)",
+      "day": 355,
+      "hour": 12,
+      "lat": 49.79,
+      "chronoGameDeg": 54.80051654380602,
+      "datedGameDeg": 16.790109593702283,
+      "noaaReferenceDeg": 16.790109593702283,
+      "chronoErrorVsNoaaDeg": 38.010406950103736,
+      "datedErrorVsNoaaDeg": 0
+    },
+    {
+      "id": "winter-solstice-1630-kenora",
+      "description": "Day 355 (Dec 21), 16:30 local solar time at Kenora home site (49.79°N)",
+      "day": 355,
+      "hour": 16.5,
+      "lat": 49.79,
+      "chronoGameDeg": 25.382424008499875,
+      "datedGameDeg": -4.406659999050917,
+      "noaaReferenceDeg": -4.406659999050917,
+      "chronoErrorVsNoaaDeg": 29.78908400755079,
+      "datedErrorVsNoaaDeg": 0
+    },
+    {
+      "id": "southern-solstice-noon-tropic",
+      "description": "Day 355 (Dec 21), 12:00 local solar time at remote Tropic of Capricorn landing (-23.44°S, 15.0°E)",
+      "day": 355,
+      "hour": 12,
+      "lat": -23.44,
+      "chronoGameDeg": 54.80051654380602,
+      "datedGameDeg": 89.9798904062951,
+      "noaaReferenceDeg": 89.9798904062951,
+      "chronoErrorVsNoaaDeg": -35.17937386248908,
+      "datedErrorVsNoaaDeg": 0
+    },
+    {
+      "id": "august-baseline-noon-kenora",
+      "description": "Day 227 (Aug 15), 12:00 local solar time at Kenora home site (49.79°N)",
+      "day": 227,
+      "hour": 12,
+      "lat": 49.79,
+      "chronoGameDeg": 54.80051654380602,
+      "datedGameDeg": 54.51051654380602,
+      "noaaReferenceDeg": 54.51051654380602,
+      "chronoErrorVsNoaaDeg": 0.28999999999999915,
+      "datedErrorVsNoaaDeg": 0
+    }
+  ],
+  "venusRemoteCheck": {
+    "description": "Day 355 (2026-12-21), 12:00 local solar time at landed site (-23.44°S, 15.0°E)",
+    "currentVenusSkyAltDeg": 14.350173409806494,
+    "currentVenusSkySunAltDeg": 16.771136289694184,
+    "landedSiteReferenceVenusAltDeg": 42.940187099668854,
+    "landedSiteReferenceSunAltDeg": 89.17809158081702,
+    "venusAltErrorDeg": -28.59001368986236,
+    "venusSunAltErrorDeg": -72.40695529112284
+  }
+}

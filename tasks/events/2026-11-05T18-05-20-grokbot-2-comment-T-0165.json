@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0165",
+  "agent": "grokbot-2",
+  "at": "2026-11-05T18:05:20-08:00",
+  "note": "Stop. No complete event. The allowed tables do not state an open-woodland stem range and a height range. Timoney et al. 1993 gives a counting floor (minimum height 3-4 m, minimum density 50-100 stems/ha), which the task already says is not the stem band. Timoney et al. 1992 Table 1 is climate; the tree limit there is trees >=3-4 m tall. Payette et al. 2001 Table 1 is the share of forest islands that survived a fire. GNWT 2008 section 3.4.1 has no stems/ha and no canopy height in metres. The glossary line 'woodland – woody plants 2-8 m tall' has no stems/ha. Jacobs et al. 2015, as already used, is the about 2 K Mealy Mountains width, and its erect-tree cut is stem height > 2 m. The closed boreal row was not copied or divided. No cover class was added. Evidence: tasks/evidence/T-0165/README.md."
+}

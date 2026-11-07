@@ -399,6 +399,29 @@ test('overshoot bake: tip inside the box soft-feathers the cap; plume body stays
   assert.ok(softBody > hardBody, `feathered body denser than (1-u)^2 taper (${softBody} > ${hardBody})`);
 });
 
+test('overshoot bake: soft-feathers tower→plume at the EL over baseFeatherM (not a knife handoff)', () => {
+  // Deep overshooting tower; finer nz so baseFeatherM spans >1 bake level.
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok(col.overshootM > 800 && col.top > col.lcl, `overshooting tower (${col.overshootM})`);
+  assert.ok((L.baseFeatherM ?? 0) > dz, 'feather spans >1 bake voxel');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const jNear = Math.min(L.nz - 1, Math.floor((col.top - L.baseFeatherM * .3) / dz)); // inside feather, below EL
+  assert.ok(jNear * dz < col.top, 'near-EL sample is below the buoyant top');
+  let softNear = 0, hardNear = 0, softPlume = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    // mature overshooting cores: lit plume just above the EL
+    const jPlume = Math.min(L.nz - 1, Math.floor((col.top + dz) / dz));
+    const pl = soft[i + L.nx * (jPlume + L.nz * k)];
+    const sn = soft[i + L.nx * (jNear + L.nz * k)], hn = hard[i + L.nx * (jNear + L.nz * k)];
+    if (pl > 8 && hn > 40) { softNear += sn; hardNear += hn; softPlume += pl; n++; }
+  }
+  assert.ok(n > 0, `overshooting core columns (${n})`);
+  assert.ok(softNear < hardNear, `feather lowers near-EL vs knife handoff (${softNear} < ${hardNear})`);
+  // Soft attach moves the near-EL sample toward the ice-plume density (not the full knife tower).
+  assert.ok(Math.abs(softNear - softPlume) < Math.abs(hardNear - softPlume),
+    `soft near-EL closer to plume than knife (${softNear} vs plume ${softPlume}, knife ${hardNear})`);
+});
+
 test('layered bake: soft-feathers toward the horizontal box rim (not a knife wall)', () => {
   const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 48 };
   assert.ok((L.baseFeatherM ?? 0) > 0, 'feathering on');

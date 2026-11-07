@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0170",
+  "agent": "agy",
+  "at": "2026-11-06T18:20:30-07:00",
+  "note": "Propose T-0170 (credits = 39 = 10 x 3 objectives x (1 + 0.3 research), skill: boreal-seasonal-light-audit): propagate authoritative world date (dayAt) and landed site coordinates (siteLatitude / siteLongitude) to src/ui/chronometer.ts and src/render/venusSky.ts. Evidence in refs/sky/chrono-season-audit/{recording.webm,frame-0..3.png,observations.json,numbers.json,numeric-check.mjs,capture.mjs}."
+}

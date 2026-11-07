@@ -61,7 +61,7 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells, soft-feathered over baseFeatherM at its vertical edges so sheet tops/bottoms aren't knife-edges;
- *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut, and overshooting turrets whose tip sits inside the box keep a lit plume body and soft-feather the cap over baseFeatherM; the bake soft-feathers toward the horizontal box rim (at least ~2 cells, or baseFeatherM when finer) so the volume wall is not a knife cut. */
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut, and overshooting turrets whose tip sits inside the box keep a lit plume body and soft-feather the cap over baseFeatherM; the bake soft-feathers toward the horizontal box rim and, on the main write, the vertical lid/floor (at least ~2 cells, or baseFeatherM when finer) so the volume wall is not a knife cut (overshoot tips that hit the ceiling keep the #360 (1-u)^2 taper). */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), bas = new Float32Array(n), cut = 1 - cover;
   const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0), feather = Math.max(0, L.baseFeatherM ?? 0);
@@ -104,10 +104,14 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       anv[k * L.nx + i] = Math.min(1, 1.5 * s / Math.max(1, w)); }
     for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), d = top - z;
       iceOk[j] = d >= 0 && d <= CC.anvil_depth_m && (ly[li]?.ice ?? 0) >= .5 ? 1 : 0; } }
-  // Soft-feather toward the horizontal box rim: the volume wall is not a knife cut of cloud.
-  // At bake resolution (cellM often > baseFeatherM) use at least ~2 cells so the ramp is
-  // resolvable; when cells are fine, baseFeatherM still sets the physical width [game cal].
+  // Soft-feather toward the horizontal box rim and the vertical lid/floor: the volume wall
+  // is not a knife cut of cloud. At bake resolution (cellM / dz often > baseFeatherM) use
+  // at least ~2 cells so the ramp is resolvable; when cells are fine, baseFeatherM still
+  // sets the physical width [game cal].
   const cellM = L.sizeM / L.nx, rimCells = feather > 0 ? Math.max(feather / cellM, 2) : 0;
+  // Lid/floor soft-edge for the main (non-overshoot) write only. Overshoot tips that hit the
+  // box ceiling keep the dedicated (1-u)^2 taper from #360 — the plume continues above the bake.
+  const lidCells = feather > 0 ? Math.max(feather / dz, 2) : 0;
   for (let k = 0; k < L.nx; k++) for (let j = 0; j < L.nz; j++) for (let i = 0; i < L.nx; i++) { const c = k * L.nx + i;
     const z = (j + .5) * dz, cb = bas[c], span = top > cb ? top - cb : 0;
     let rim = 1;
@@ -115,6 +119,12 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       const edge = Math.min(i, k, L.nx - 1 - i, L.nx - 1 - k);
       const u = Math.min(1, edge / rimCells);
       rim = u * u * (3 - 2 * u);
+    }
+    let lid = 1;
+    if (lidCells > 0) {
+      const vEdge = Math.min(j, L.nz - 1 - j);
+      const u = Math.min(1, vEdge / lidCells);
+      lid = u * u * (3 - 2 * u);
     }
     const zrc = span > 0 ? (z - cb) / span : 2; // 0 at this cell's dew-point base, 1 at the buoyant top
     let cv = 0;
@@ -174,7 +184,7 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
         continue;
       }
     }
-    out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, (conv[j] * cv + strat[j] * sh[c]) * rim)); }
+    out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, (conv[j] * cv + strat[j] * sh[c]) * rim * lid)); }
   return out;
 }
 

@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0171",
+  "agent": "grokbot-1",
+  "at": "2026-11-06T20:14:05-07:00",
+  "note": "Non-author approve-plan. Verified on main: offerLive only runs perceive() inside lastHits.forEach (smell-gated), speedOf returns 0 for non-hare keys, and deltaSources (scent/droppings) enter the same list that feeds sight bubbles. Audit frames + numbers.json match the three defects. Plan puts a core visual producer parallel to smell() (Rule 18 / #106), real deer/person speeds, and keeps olfactory deltas out of visual candidates, with unit tests for upwind moving prey, deer/person beyond presenceM, and zero sight on scent/droppings. Copilot audit-script nits (hare state motion estimate, positive-control wait, knownMatchError path) are implementation hygiene for the claimer — they do not block the plan. agy: add the claim and start."
+}

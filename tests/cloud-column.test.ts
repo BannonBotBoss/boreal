@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
-import { anvilDepthGate, coreStrength, bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
+import { anvilDepthGate, coreStrength, bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
@@ -81,6 +81,25 @@ test('layered bake: dew-point bases undulate per cell around the column LCL (not
   assert.ok(bases.length > 8, `lit bases ${bases.length}`);
   assert.ok(Math.max(...bases) - Math.min(...bases) >= 1, `base voxels should vary by cell: ${Math.min(...bases)}..${Math.max(...bases)}`);
   for (const j of bases) assert.ok((j + 1) * dz >= col.lcl - L.baseUndulM - dz && j * dz <= col.lcl + L.baseUndulM + dz, `base near LCL ${col.lcl}`);
+});
+test('layered bake: dew-point base undulation soft-blurs across neighbors (no knife wall)', () => {
+  const nx = 16, bas = new Float32Array(nx * nx);
+  // Left/right LCL step of ±undul around 1200 m — a knife wall at the mid-column before blur.
+  // (A checkerboard collapses under a 3×3 blur; a low-frequency step keeps interior undulation.)
+  for (let k = 0; k < nx; k++) for (let i = 0; i < nx; i++)
+    bas[k * nx + i] = 1200 + (i < nx / 2 ? -300 : 300);
+  const soft = softBlurBas(bas, nx);
+  let rawJump = 0, softJump = 0, n = 0, softSpan = 0;
+  const mid = nx / 2 - 1;
+  for (let k = 0; k < nx; k++) {
+    rawJump += Math.abs(bas[k * nx + mid] - bas[k * nx + mid + 1]);
+    softJump += Math.abs(soft[k * nx + mid] - soft[k * nx + mid + 1]);
+    n++;
+  }
+  for (let c = 0; c < soft.length; c++) softSpan = Math.max(softSpan, Math.abs(soft[c] - 1200));
+  assert.ok(n > 0);
+  assert.ok(softJump < rawJump * .75, `mid-wall |Δbas| drops after blur (${softJump} < ${rawJump * .75})`);
+  assert.ok(softSpan > 200, `far-field undulation still present after blur (span ${softSpan})`);
 });
 test('layered bake: dew-point bases soft-feather over a thin condensation zone (not a knife-edge)', () => {
   // Real LCL bases build condensate over O(100 m); finer nz so baseFeatherM spans >1 bake level.

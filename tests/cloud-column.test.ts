@@ -422,6 +422,17 @@ test('overshoot bake: soft-feathers tower→plume at the EL over baseFeatherM (n
     `soft near-EL closer to plume than knife (${softNear} vs plume ${softPlume}, knife ${hardNear})`);
 });
 
+test('anvil bake: ice-share gate smoothsteps mixed phase (0.25→0.75), full at ice≥0.75', () => {
+  // Mirrors the iceOk ramp in bakeLocal (ECMWF IFS Cy47r1 ice_phase band).
+  const gate = (ice: number) => { const u = Math.min(1, Math.max(0, (ice - .25) / .5)); return u * u * (3 - 2 * u); };
+  assert.equal(gate(0), 0);
+  assert.equal(gate(.25), 0);
+  assert.equal(gate(.5), .5);
+  assert.equal(gate(.75), 1);
+  assert.equal(gate(1), 1);
+  assert.ok(gate(.4) > 0 && gate(.4) < gate(.6) && gate(.6) < 1, 'strictly rising through mixed phase');
+});
+
 test('layered bake: soft-feathers toward the horizontal box rim (not a knife wall)', () => {
   const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 48 };
   assert.ok((L.baseFeatherM ?? 0) > 0, 'feathering on');

@@ -61,7 +61,7 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells, soft-feathered over baseFeatherM at its vertical edges so sheet tops/bottoms aren't knife-edges;
- *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, and lateral density falls as anv^1.5 so the fringe is wispy. */
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, and the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor. */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), bas = new Float32Array(n), cut = 1 - cover;
   const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0), feather = Math.max(0, L.baseFeatherM ?? 0);
@@ -119,7 +119,14 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       // lateral: density ~ anv^1.5 so outflow thins away from the updraught (wispy fringe; Houze 2014 ch. 8)
       const d = top - z, cellDepth = CC.anvil_depth_m * anv[c];
       const taper = cellDepth > 0 ? 1 - .7 * Math.min(1, Math.max(0, d) / cellDepth) : 0; // 1 at top, .3 at cellDepth
-      const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper : 0;
+      // Soft-feather anvil underside over baseFeatherM (same O(100 m) edge scale as dew-point / strat edges):
+      // the ice deck's lower bound is not a knife cut at cellDepth (Houze 2014 ch. 8 outflow thins downward).
+      let anvEdge = 1;
+      if (feather > 0 && cellDepth > 0 && d <= cellDepth) {
+        const u = Math.min(1, Math.max(0, (cellDepth - d) / feather)); // 0 at underside, 1 a feather above
+        anvEdge = u * u * (3 - 2 * u);
+      }
+      const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper * anvEdge : 0;
       cv = Math.max(h[c] * edge * tower, anvHere);
       // Soft-feather dew-point base: ramp 0→1 over baseFeatherM (condensation zone; AMS Glossary / O(100 m) game cal)
       if (feather > 0) { const u = Math.min(1, Math.max(0, (z - cb) / feather)); cv *= u * u * (3 - 2 * u); }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
-import { bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
+import { anvilDepthGate, bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
@@ -666,4 +666,14 @@ test('layered clouds: ground bounce lights bases from below, brighter over snow,
   assert.ok(groundBounce(ALB_SNOW, .5, 1) > 3 * groundBounce(ALB_FOREST, .5, 1));
   assert.ok(groundBounce(ALB_SNOW, .5, 10) < groundBounce(ALB_SNOW, .5, 1));
   assert.equal(groundBounce(ALB_SNOW, -.1, 0), 0);
+});
+
+test('anvil bake: tower-depth gate smoothsteps 0.8x→1x anvil_min_tower_m (no on/off pop)', () => {
+  const m = CC.anvil_min_tower_m;
+  assert.equal(anvilDepthGate(0), 0);
+  assert.equal(anvilDepthGate(.8 * m), 0);
+  assert.ok(Math.abs(anvilDepthGate(.9 * m) - .5) < 1e-9);
+  assert.equal(anvilDepthGate(m), 1);
+  assert.equal(anvilDepthGate(2 * m), 1);
+  assert.ok(anvilDepthGate(.85 * m) < anvilDepthGate(.95 * m), 'rising through the band');
 });

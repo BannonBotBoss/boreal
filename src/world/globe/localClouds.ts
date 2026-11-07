@@ -61,7 +61,14 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells, soft-feathered over baseFeatherM at its vertical edges so sheet tops/bottoms aren't knife-edges;
- *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the ice-share gate soft-ramps through mixed phase (ice 0.25→0.75) instead of a 0.5 knife, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut, overshooting cores soft-feather toward the ice-plume value over baseFeatherM below the EL so the tower→plume handoff is not a knife cut, and overshooting turrets whose tip sits inside the box keep a lit plume body and soft-feather the cap over baseFeatherM; the bake soft-feathers toward the horizontal box rim and, on the main write, the vertical lid (at least ~2 cells; not the floor, which is the ground, so fog and ground-based stratus stay, or baseFeatherM when finer) so the volume wall is not a knife cut (overshoot tips that hit the ceiling keep the #360 (1-u)^2 taper). */
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the tower-depth gate soft-ramps from 0.8x to 1x anvil_min_tower_m instead of popping on, the ice-share gate soft-ramps through mixed phase (ice 0.25→0.75) instead of a 0.5 knife, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut, overshooting cores soft-feather toward the ice-plume value over baseFeatherM below the EL so the tower→plume handoff is not a knife cut, and overshooting turrets whose tip sits inside the box keep a lit plume body and soft-feather the cap over baseFeatherM; the bake soft-feathers toward the horizontal box rim and, on the main write, the vertical lid (at least ~2 cells; not the floor, which is the ground, so fog and ground-based stratus stay, or baseFeatherM when finer) so the volume wall is not a knife cut (overshoot tips that hit the ceiling keep the #360 (1-u)^2 taper). */
+/** Soft tower-depth gate for the anvil: towers only glaciate and spread an anvil once deep (Houze 2014 ch. 8),
+ *  but a hard cut at anvil_min_tower_m made the whole anvil pop on/off as the column top crossed it. Smoothstep
+ *  from 0.8x to 1x the minimum depth ([game calibration] band, 4.8 to 6 km at today's 6 km). */
+export function anvilDepthGate(depthM: number): number {
+  const lo = .8 * CC.anvil_min_tower_m, u = Math.min(1, Math.max(0, (depthM - lo) / (CC.anvil_min_tower_m - lo)));
+  return u * u * (3 - 2 * u);
+}
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), bas = new Float32Array(n), cut = 1 - cover;
   const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0), feather = Math.max(0, L.baseFeatherM ?? 0);
@@ -97,10 +104,10 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
   // anvil (data/earth/cloud-column.json "anvil"): a tower deep enough to glaciate spreads sideways at its buoyant top, so the
   // top layers take a widened footprint of the towers that reach them (a box blur of the mature cells), not just the cores.
   // Blurred strength also sets how deep the ice deck reaches at that cell: full anvil_depth_m at anv~1, thinner fringe.
-  const anv = new Float32Array(n), iceOk = new Float32Array(L.nz), deep = top > base && col.top - base >= CC.anvil_min_tower_m;
+  const anv = new Float32Array(n), iceOk = new Float32Array(L.nz), dg = top > base ? anvilDepthGate(col.top - base) : 0, deep = dg > 0;
   if (deep) { const r = Math.max(1, Math.round(CC.anvil_spread_m / L.sizeM * L.nx)), m = new Float32Array(n);
     // same strength ramp as overshoot: mature cores (h>=0.85) full weight, mid cells (.5..0.85) partial, nothing below .5
-    for (let c = 0; c < n; c++) m[c] = h[c] <= .5 ? 0 : Math.min(1, (h[c] - .5) / .35);
+    for (let c = 0; c < n; c++) m[c] = h[c] <= .5 ? 0 : Math.min(1, (h[c] - .5) / .35) * dg; // dg: soft tower-depth gate
     for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { let s = 0, w = 0;
       for (let b = -r; b <= r; b++) for (let a = -r; a <= r; a++) { const kk = k + b, ii = i + a; if (kk < 0 || ii < 0 || kk >= L.nx || ii >= L.nx || a * a + b * b > r * r) continue; s += m[kk * L.nx + ii]; w++; }
       anv[k * L.nx + i] = Math.min(1, 1.5 * s / Math.max(1, w)); }

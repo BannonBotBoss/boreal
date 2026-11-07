@@ -685,3 +685,12 @@ test('layered clouds: core-strength ramp is smooth at both ends (no crease at h=
   assert.ok(slope(.5 + e) < .01 && slope(.85 - e) < .01); // zero slope at the ends
   for (let x = .5; x < .85; x += .01) assert.ok(coreStrength(x + .01) >= coreStrength(x)); // monotone
 });
+
+test('layered clouds: EL tower→plume attach shares coreStrength (no leftover linear mid-ramp)', () => {
+  // bakeLocal plumeAtEl uses coreStrength(h), same 0.5→0.85 band as the overshoot plume (#368).
+  // Near the low knee, smoothstep stays well below a linear (h-0.5)/0.35 — pin that so a revert can't sneak back.
+  assert.equal(coreStrength(.5), 0);
+  assert.ok(coreStrength(.55) < ((.55 - .5) / .35) * .5);
+  assert.ok(Math.abs(coreStrength(.675) - .5) < 1e-9);
+  assert.equal(coreStrength(.85), 1);
+});

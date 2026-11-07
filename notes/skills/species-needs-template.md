@@ -55,3 +55,7 @@ The one `Playable` (src/render/playables.ts) and one `playerTuning.ts` serve eve
 - Speed comes from the species template: `playerSpeed(mode, sp)` = wolf-tuned game speed x scale, capped at `sp.behaviour.evasion.burstSpeed` (real top speed). Pounce speed scales by `sp.burst / WOLF.burst`. Stamina uses `staminaRates(needsSpecies())`.
 - A prey player must not be a wolf in the sim: `WolfInfo.predator = false` removes the embodied `controlled` animal so NPCs do not flee from or get captured by the player.
 - Mistakes to avoid: a x1.5 sprint multiplier above the real top speed; a second speed table; copying the wolf's pounce minimum for a 3.5 kg animal.
+
+## Seasonal and landed-site photoperiod (T-0172)
+- `sunTimes(dayOfYear, latitude)` in `src/core/needs/behaviour.ts` drives crepuscular, diurnal, and nocturnal activity windows (`activityAt`, `chooseGoal`; Theuerkauf et al. 2003). Always pass both the active day of year (`dayAt(worldSec())`) and the landed site latitude (`siteLatitude(LATITUDE)` from `src/core/sitePhase.ts`), never a bare `sunTimes(day)` at hardcoded `49.5°N` or hardcoded `{ sunrise: 6, sunset: 18 }` in `src/core/sim/index.ts`.
+- Any render adapter over `src/core/sim` (`src/animals/hare.ts`) must wire `world.hour = () => hourAt(worldSec())`, `world.day = () => dayAt(worldSec())`, and `world.latitude = () => siteLatitude(LATITUDE)` so headless NPC circadian decisions match the rendered sky across all seasons and globe landings.

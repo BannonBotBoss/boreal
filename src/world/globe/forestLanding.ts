@@ -71,7 +71,15 @@ export function standEitherSide(x: number, z: number, yaw: number) {
  * The den maximises drawn stems on a closed canopy, preferring a nearer stand.
  * The edge is 16–36 m out, still in the stand, facing the den, with the camera line clear.
  */
+let landingMemo: { key: string; value: ForestLanding } | null = null;
 export function forestLanding(around: { x: number; z: number } = mamaTerritory()): ForestLanding {
+  const key = `${around.x},${around.z}`;
+  if (landingMemo?.key === key) return landingMemo.value;
+  const value = findForestLanding(around);
+  landingMemo = { key, value };
+  return value;
+}
+function findForestLanding(around: { x: number; z: number }): ForestLanding {
   const { searchM, stepM, closedCanopy, minStems, edgeMinM, edgeMaxM } = FOREST_LANDING;
   let den: { x: number; z: number; stems: number; canopy: number; score: number } | null = null;
   for (let r = 0; r <= searchM; r += stepM) {

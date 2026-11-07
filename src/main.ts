@@ -476,11 +476,25 @@ function markIntroFlag() {
 }
 /** The opening that is on main today ended, or the player dismissed it. The planet entry is the one that opening already uses. */
 function finishIntro() {
+  const t0 = performance.now();
   opening = null;
-  if (!inpage?.enter()) toGlobe();
+  const tRel = performance.now();
+  const released = inpage?.releaseFilm() ?? false;
+  const releaseMs = performance.now() - tRel;
+  const tEnter = performance.now();
+  const entered = inpage?.enter() ?? false;
+  const enterMs = performance.now() - tEnter;
+  if (!entered) toGlobe();
+  const tMark = performance.now();
   markIntroFlag();
+  const markMs = performance.now() - tMark;
+  const tCap = performance.now();
   captureResume();
+  const captureMs = performance.now() - tCap;
+  const tCommit = performance.now();
   commitContext();
+  const commitMs = performance.now() - tCommit;
+  console.log(`CINE TRACE finishIntro ${JSON.stringify({ released, releaseMs: +releaseMs.toFixed(1), entered, enterMs: +enterMs.toFixed(1), markMs: +markMs.toFixed(1), captureMs: +captureMs.toFixed(1), commitMs: +commitMs.toFixed(1), totalMs: +(performance.now() - t0).toFixed(1) })}`);
 }
 for (const type of INTRO_DONE_EVENTS) {
   const mark = () => markIntroFlag();

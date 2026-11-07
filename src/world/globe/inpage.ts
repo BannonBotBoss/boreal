@@ -210,14 +210,19 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     return a;
   }
   function toGlobe(sphere = false) {
+    const t0 = performance.now();
     kept = null; restoreScene(); globe!.drive(null);
+    let landMs = 0;
     // The climb stops near 2 km, which reads as a map. The sphere is the same altitude the page-load globe uses.
     if (sphere) {
       globe!.resumeOrbit(); globe!.jumpTo(PLANET.radius * 2.2);
+      const tLand = performance.now();
       const spot = forestLanding();
+      landMs = performance.now() - tLand;
       globe!.lookOver(spot.land.x, spot.land.z, spot.land.yaw);
     }
     setMode('globe');
+    console.log(`CINE TRACE toGlobe ${JSON.stringify({ sphere, landMs: +landMs.toFixed(1), totalMs: +(performance.now() - t0).toFixed(1) })}`);
   }
   function toGame() { keepClouds(); restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
   function restoreScene() {
@@ -332,6 +337,8 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     setFilmFrame(wide: boolean) { globe?.setFilmFrame(wide); },
     /** yaw radians off the page-load aim, altitude in planet radii, view-offset 0..1. */
     setFilmDrive(yaw: number, radii: number, offset: number, sunBias?: number) { globe?.setFilmDrive(yaw, radii, offset, sunBias); },
+    /** Arrival: stop overwriting the camera with the film pose. The disc stays where the last beat left it. */
+    releaseFilm() { return globe?.releaseFilm() ?? false; },
     enter(): boolean {
       if (mode !== 'game') return true;
       if (!globe) { void loadGlobe().then(() => api.enter()).catch(e => console.warn('inpage prewarm', e)); return true; }
@@ -504,6 +511,10 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
      *  the player at the entry altitude, compile the far-layer background program, then terminate the workers. */
     async prewarm() {
       const g = await loadGlobe(); await g.compiled; await g.bootP; await g.precompile(null);
+      // The den search builds chunk trees the first time. Pay it here, during the bang, so the earth frame does not.
+      const tLand = performance.now();
+      forestLanding();
+      console.log(`CINE TRACE forestLanding primed ${(performance.now() - tLand).toFixed(1)}ms`);
       // The prewarm steps the globe while the game is still the view. Detach the forest camera for those steps:
       // attached, globeView.step writes the orbit clip (near = altitude x 0.02: 60 m at the 3 km entry altitude, far past the limb) onto
       // view.camera, and game mode never puts 0.2 / 700 back (cameraTouched stays false), so the ground world was clipped.

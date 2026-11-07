@@ -44,8 +44,6 @@ import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar, withLogDepth } from './logDepth';
 import { LAYER_TIERS, SPINUP, globeLandSample, setLayerCamera, setSnowIceShown, spinAndBake, startPlanetLayers } from './planetLayers';
 import { bootGlobe } from './bootOrder';
-import { BOOT_READY_MS } from './bootReady';
-import { settleOr } from '../../render/startup';
 import { createLocalClouds, localCloudFade, type ColumnInput } from './localClouds';
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
@@ -167,28 +165,25 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let simReady = false, colIn: ColumnInput | null = null, colFrame = -1e9; const localClouds = q.get('localClouds') === '0' ? null : createLocalClouds(); if (localClouds) scene.add(localClouds.mesh);
   let simRef: Awaited<typeof simP> | null = null, booted = false, spinQueued = false;
   // Issue #47: land, elevation, then boot_order, before the first rendered frame. The 48 h layer spin stays after that paint.
-  // A throw used to reject bootP before `booted` was set, and a hung wasm fetch never settled it. Either one left the
-  // first-visit film clamped at the end of B13. The budget is the slowest successful boot measured on this path.
-  const adoptSim = (s: Awaited<typeof simP>) => {
-    if (!s || simRef) return;
+  // No deadline here. A slow sim still finishes this order before `booted` is set, so the first frame is not an empty globe.
+  // A rejection is logged and left rejected: the film's own catch plays through B14 without drawing this grid.
+  const bootP: Promise<void> = simP.then(s => {
     simRef = s;
-    try {
-      const idx = Math.max(0, Math.min(LAYER_TIERS.length - 1, layerTier < 0 ? 0 : layerTier));
-      const row = LAYER_TIERS[idx];
-      const draw = layerTier >= 0 && row.nlat > 0 && row.layers.length > 0;
-      const nlat = draw ? row.nlat : [...LAYER_TIERS].reverse().find(t => t.nlat > 0)!.nlat;
-      const day0 = layerDay - (draw ? SPINUP.steps * SPINUP.dtS / 86400 : 0);
-      bootGlobe(s, nlat, nlat * 2, globeLandSample(planet), day0, layerUtc);
-      bindPlanetWeather(s);
-      notePlanetClockOwner('globe');
+    if (s) {
+      try {
+        const idx = Math.max(0, Math.min(LAYER_TIERS.length - 1, layerTier < 0 ? 0 : layerTier));
+        const row = LAYER_TIERS[idx];
+        const draw = layerTier >= 0 && row.nlat > 0 && row.layers.length > 0;
+        const nlat = draw ? row.nlat : [...LAYER_TIERS].reverse().find(t => t.nlat > 0)!.nlat;
+        const day0 = layerDay - (draw ? SPINUP.steps * SPINUP.dtS / 86400 : 0);
+        bootGlobe(s, nlat, nlat * 2, globeLandSample(planet), day0, layerUtc);
+        bindPlanetWeather(s);
+        notePlanetClockOwner('globe');
+      }
+      catch (e) { console.warn('globe boot failed', e); }
     }
-    catch (e) { console.warn('globe boot failed', e); }
-  };
-  const bootP: Promise<void> = settleOr(simP, BOOT_READY_MS, null).then(s => {
-    try { adoptSim(s); }
-    finally { booted = true; }
-  }).catch(e => { console.warn('globe boot failed', e); booted = true; });
-  void simP.then(s => { if (booted) adoptSim(s); }, e => console.warn('globe boot failed', e));
+    booted = true;
+  }).catch(e => { console.warn('globe boot failed', e); throw e; });
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   let shown = {} as Record<LayerId, LayerState>; const isOn = (id: LayerId) => shown[id]?.on ?? true;
   const panel = q.get('panel') === '0' || q.has('shot') && !q.has('panel') || q.get('view') !== 'globe' && q.get('start') !== 'globe' ? null : mountLayerPanel(location.search, (st) => { shown = st; });
@@ -754,6 +749,21 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       filmOffset = wide ? 1 : 0;
       const goal = wide ? R * 2.45 : R * 2.2;
       if (Math.abs(targetAlt - goal) > R * 0.04) { alt = targetAlt = goal; }
+    },
+    /** Leave the film camera on the pose it already has and hand the orbit back. lookAz would tilt off that nadir disc. */
+    releaseFilm() {
+      if (!filmReady) return false;
+      const len = camera.position.length() || 1;
+      dir.set(camera.position.x / len, camera.position.y / len, camera.position.z / len);
+      const gnd = surfaceRadius(planet, [dir.x, dir.y, dir.z]) - R;
+      alt = targetAlt = Math.max(1, len - R - gnd);
+      filmReady = false;
+      filmSun = 0;
+      filmOffset = 0;
+      filmWide = false;
+      lookAz = null;
+      camera.clearViewOffset();
+      return true;
     },
     /** Absolute orbit for the film. yaw 0 and alt 2.2 R with offset 0 is the page-load view. */
     setFilmDrive(yaw: number, radii: number, offset: number, sunBias = 0) {

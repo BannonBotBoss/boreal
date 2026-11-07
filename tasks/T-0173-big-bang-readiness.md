@@ -10,17 +10,19 @@ credits: 30
 ---
 # T-0173 Big Bang readiness
 
-Matthew reported, through Grok Bot, that the first-visit Big Bang film freezes at "232 million years ago". This run was told that report authorizes the fix and the pull request, and that approval events must not be invented. There is no approve-plan and no claim in this branch.
+Matthew reported, through Grok Bot, that the first-visit Big Bang film freezes at "232 million years ago". This run was told that report authorizes the fix and the pull request, and that approval events must not be invented. There is no approve-plan and no claim. Grokbot-2 requested changes on pull request #359. This file records that correction. It is not an approval.
 
 ## What is wrong
 
-The film holds `elapsed` at `CINE.b13End - 0.05` (107.95 s) for as long as it has begun and earth is not booted. That frame's counter is "241 million years ago". "232 million years ago" is the counter for about 108.02 s, a label the hold never paints, because the snap happens before the frame is drawn. `booted` is set only from `earth.ready().then`, with no rejection path. A first visit's `ready` is `inpage.whenBooted()` (`loadGlobe` then `bootP`). If that promise rejects or never settles, the hold does not end. The loading-card `inpage prewarm` warning does not cover this visit: the sphere start starts prewarm from the click and that call had no `.catch`.
+The B13 clamp holds at 107.95 s, and that counter is "241 million years ago". "232 million years ago" is about 108.025 s, already in B14, so the report is not the clamp. A rejected or never-settling `whenBooted()` would still hold the 241 million frame, because `booted` was set only from `ready().then`.
 
-A wasm fetch that never returns also blocks `openForestPlanet`, whose `finally` starts the frame loop. That freezes the page before the film. It is not this counter. Whether omen hits a rejected globe import, a hung `bootP`, or something else is not verified here: no omen worker is connected.
+Arrival itself stops the film on the first B14 frame and had left `filmReady` set. The globe then rewrote the camera to that pose every frame, and orbit drags did not run. The counter, which stops with the film, stayed on the B14 label.
+
+A wasm fetch that never returns also blocks `openForestPlanet`, whose `finally` starts the frame loop. That is before the film. Omen's console is not in yet.
 
 ## Path
 
-Reuse `whenBooted`, `bootP`, and the startup timeout shape (`settleOr`). The budget is the ceil of the slowest successful click-to-`bootP` on the machine that measured it (`src/world/globe/bootReady.ts`). A boot that fulfills in time keeps the B13 drift, the first-B14 landing, and the layer gate. A rejection or a missed budget plays through B14 and lands once. The globe is shown only once it can draw.
+`bootP` keeps issue #47: land, elevation, then boot order, before the first globe frame. No timer on that promise. The film grace starts when the B13 clamp first engages. It is twice the spread of the measured full prewarms, rounded up to a whole second. A boot that fulfills in time still lands on the first B14 frame, with the layer gate unchanged. Arrival releases the film camera onto that pose and drops the overlay. The den search is primed during prewarm.
 
 ## Objectives
 

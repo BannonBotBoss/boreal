@@ -1,33 +1,34 @@
 # Skill: first-visit film when the planet boot does not settle
 
-When to use: the Big Bang film sticks near the end of B13 (the counter sits on "241 million years ago") and never enters B14. Not for a new beat, and not for animal, river, grass, or local-cloud work.
+When to use: the Big Bang counter sits still near "232 million years ago", or the film never enters B14 because earth readiness rejected or never settled. Not for a new beat, and not for animal, river, grass, or local-cloud work.
 
-## Why it sticks
+## What the counter is
 
-`src/world/cosmos/opening.ts` holds `elapsed` at `CINE.b13End - 0.05` while `begun && !booted`. `booted` is set only in `earth.ready().then`, with no rejection handler. On a first visit, `main.ts` passes `inpage.whenBooted()`, which is `loadGlobe().then(g => g.bootP)`. A rejection, or a promise that never settles, leaves the hold in place. The startup line that logs `inpage prewarm` does not run on that visit: a sphere start skips the loading-card prewarm and starts it from the click, and that call had no `.catch`.
+`formatClock(107.95)` is "241 million years ago". That is the B13 clamp (`CINE.b13End - 0.05`). `formatClock(108.025)` is "232 million years ago", already the first B14 frames. A report of 232 million years is not evidence that the clamp is what held the picture.
 
-`formatClock(107.95)` is "241 million years ago". "232 million years ago" is `formatClock` for about 108.02–108.03 s, a passing label just after B13, not the held frame. The frame loop has to be running to reach the hold. A wasm fetch that never returns also blocks `openForestPlanet`, and that `finally` is what starts the frame loop, so a hung wasm file freezes the page before the film, not on this counter.
+On a ready globe the film lands on the first B14 frame: `cinematic:complete`, `markBigBangSeen`, `onPlanet` / `finishIntro`. The counter stops because the film stops. If `filmReady` is left set, every later globe frame rewrites the camera to that pose and `OrbitControls.update` does not run, so the disc does not take a drag either.
 
-## Steps
+## Boot order
 
-1. Read `opening.ts` (the hold and `begin`), `main.ts` (`openAfterLoad`, the `cine` flag), `inpage.ts` `whenBooted` / `prewarm` / `enter`, and `globeView.ts` `bootP`.
-2. Time successful click → `bootP` and click → `prewarm()` on the machine you have. Label a software renderer as such. `tools/cine-boot-measure.mjs` is the SwiftShader procedure. The film gate is `bootP`, not the tile-step loop inside `prewarm`.
-3. Put the budget in `src/world/globe/bootReady.ts` as `Math.ceil` of the slowest successful `bootP` sample. Do not pick a round number. `settleOr` in `src/render/startup.ts` is the existing "a hung fetch must not hold the boot" helper: the value, or the fallback, and the original promise is not cancelled.
-4. `bootP` uses that budget. A throw is caught and `booted` is still set, so the globe can draw without climate layers. A sim that arrives later still runs `bootGlobe` once.
-5. The film counts cinematic `dt` with `stepCineBoot`. Past the budget, or on rejection, it stops holding and plays through B14, then lands once. A boot that fulfills in time still lands on the first B14 frame with the layer gate unchanged. `?cine=B7` stays a pin: it does not burn the budget.
-6. `enter()` switches to the globe on the same frame only when `bootSettled` is already true. Otherwise it waits, so a pending boot is not a blank `renderTo`.
-7. The click-time `prewarm()` uses the same `console.warn('inpage prewarm', …)` as the loading-card path.
+`bootP` waits for the shared sim, then land, elevation, and `bootGlobe`, and only then sets the globe's `booted` flag. Issue #47. Do not resolve it on a timer and do not draw a frame before that order. A rejection is logged and stays rejected. The film's `ready()` catch plays through B14 without calling `earth.show()`. `enter()` still waits until `bootSettled` before `toGlobe`, so a pending boot is not a blank `renderTo`.
+
+## The clamp grace
+
+Count seconds only while the clamp is on screen, starting with the frame that first reaches `b13End`. The grace is `CINE_HOLD_S` in `src/world/globe/bootReady.ts`: twice the spread of the measured full prewarms, rounded up to a whole second. It is not the max of the boot samples. A diagnostic pin (`?cine=B7`) does not burn it.
+
+## Arrival
+
+`finishIntro` calls `releaseFilm()` before `enter()`. That keeps the camera on the film's last pose, clears `lookAz` so the stored heading does not tilt off the disc, and lets the orbit controls run. The film overlay and `cine-run` come off in the same arrival, so the counter cannot stay painted. The den search (`forestLanding`) is memoized and primed inside `prewarm`, before the tile steps, so the earth frame does not build chunk trees.
 
 ## Checks
 
-- `tests/cine-ready.test.ts`: the held label, a settling boot, a rejection, a promise that never resolves, reduced motion, the B7 pin, return visits, and `settleOr`.
+- `tests/cine-ready.test.ts` and `tests/forest-landing.test.ts`.
 - `npm test` and `npx tsc --noEmit`.
-- A browser check is still required. The node tests drive `createOpening` with a fake document; they do not draw the globe. On SwiftShader, aborting `globeView` should reach `hasSeenBigBang` with the overlay gone. A normal first visit should reach B14 with the overlay still up and the globe in view. Neither is an omen result.
+- Browser: `CINE TRACE` lines for `earth.show`, `toGlobe`, `forestLanding primed`, `arrival`, and `finishIntro`. A drag after arrival must move the camera. SwiftShader timings are not omen timings.
 
 ## Mistakes to avoid
 
-- Treating "232 million years ago" as the held string. Measure `formatClock` at the clamp.
-- Releasing the hold by forcing `booted` when the globe cannot draw. That turns the overlay transparent onto a canvas `step` will not render.
-- Starting the budget at B13 only. A healthy boot on the measured machines finished in a few seconds, so the extra wait belongs on the click, and B13 stays the drift for a boot that is still inside the budget.
-- Editing `localClouds.ts`, animals, rivers, or grass while fixing this.
-- Calling a SwiftShader timing an omen measurement. Omen still needs the console lines `cine earth ready` and `inpage prewarm` plus whether `bootP` fulfills.
+- Putting a timeout on `bootP`. Slow hardware then draws before the boot order.
+- Starting the grace at the click. A boot longer than a few seconds would be marked given-up while B1 is still on screen.
+- Leaving `filmReady` set after `finishIntro`. The picture stays on the B14 pose and drags do nothing.
+- Treating a SwiftShader trace as the omen cause. Omen still needs the `CINE TRACE` lines from the machine that froze.

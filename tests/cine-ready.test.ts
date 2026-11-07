@@ -6,67 +6,75 @@ import { cineArrivalDue, stepCineBoot } from '../src/world/cosmos/cineReady';
 import { createOpening } from '../src/world/cosmos/opening';
 import { cineLayerGateState } from '../src/world/globe/planetLayers';
 import { bootChoice, createContext, markBigBangSeen } from '../src/core/events';
-import { BOOT_READY_MS, BOOT_READY_SAMPLES_MS, PREWARM_SAMPLES_MS } from '../src/world/globe/bootReady';
-import { settleOr } from '../src/render/startup';
+import { BOOT_SAMPLES_MS, CINE_HOLD_MARGIN, CINE_HOLD_S, PREWARM_SAMPLES_MS } from '../src/world/globe/bootReady';
 
 const boot = (over: Partial<Parameters<typeof stepCineBoot>[0]> = {}) => ({
-  elapsed: 0, waited: 0, begun: false, booted: false, gaveUp: false, pinned: false, ...over,
+  elapsed: 0, held: 0, begun: false, booted: false, gaveUp: false, pinned: false, ...over,
 });
 
 test('the B13 clamp is 241 million years ago; 232 million is just after B13 and is not the held frame', () => {
   const held = CINE.b13End - 0.05;
   assert.equal(formatClock(held), '241 million years ago');
   assert.equal(formatClock(108.025), '232 million years ago');
-  const stuck = stepCineBoot(boot({ elapsed: 107, waited: 0, begun: true }), 2, 10_000);
+  const stuck = stepCineBoot(boot({ elapsed: 107, held: 0, begun: true }), 2, 10_000);
   assert.equal(stuck.elapsed, held);
   assert.equal(stuck.gaveUp, false);
   assert.equal(formatClock(stuck.elapsed), '241 million years ago');
 });
 
-test('a ready globe is not held, and a missed budget releases into B14', () => {
-  const ready = stepCineBoot(boot({ elapsed: 107, waited: 1, begun: true, booted: true }), 2, 30);
+test('the grace starts when the clamp engages, and a ready globe is not held', () => {
+  const ready = stepCineBoot(boot({ elapsed: 107, held: 0, begun: true, booted: true }), 2, 9);
   assert.equal(ready.elapsed, 109);
   assert.equal(ready.gaveUp, false);
-  const early = stepCineBoot(boot({ elapsed: 20, waited: 4.5, begun: true }), 0.5, 5);
-  assert.equal(early.gaveUp, true);
-  assert.equal(early.elapsed, 20.5);
-  const released = stepCineBoot(boot({ elapsed: 107.95, waited: 5, begun: true, gaveUp: true }), 1, 5);
+  assert.equal(ready.held, 0);
+  let s = boot({ elapsed: 3, begun: true });
+  for (let i = 0; i < 100; i++) {
+    const n = stepCineBoot(s, 1, 9);
+    s = { ...s, elapsed: n.elapsed, held: n.held, gaveUp: n.gaveUp };
+  }
+  assert.equal(s.gaveUp, false);
+  assert.equal(s.held, 0);
+  assert.ok(s.elapsed < CINE.b13End);
+  let guard = 0;
+  while (!s.gaveUp && guard++ < 30) {
+    const n = stepCineBoot(s, 1, 9);
+    s = { ...s, elapsed: n.elapsed, held: n.held, gaveUp: n.gaveUp };
+  }
+  assert.equal(s.gaveUp, true);
+  assert.ok(s.held >= 9 && s.held < 12, `held ${s.held}`);
+  assert.ok(s.elapsed >= CINE.b13End);
+  const released = stepCineBoot(boot({ elapsed: 107.95, held: 9, begun: true, gaveUp: true }), 1, 9);
   assert.equal(released.elapsed, 108.95);
   assert.equal(cineArrivalDue(108, true, true, false, false), true);
+  assert.equal(cineArrivalDue(108.025, true, true, false, false), true);
+  assert.equal(formatClock(108.025), '232 million years ago');
   assert.equal(cineArrivalDue(108, false, false, true, false), false);
   assert.equal(cineArrivalDue(116, false, false, true, false), true);
   assert.equal(cineArrivalDue(116, false, false, true, true), false);
 });
 
-test('a diagnostic pin does not burn the budget or snap back to the clamp', () => {
-  const pinned = stepCineBoot(boot({ elapsed: 112, waited: 0, begun: true, pinned: true }), 5, 1);
+test('a diagnostic pin does not burn the grace or snap back to the clamp', () => {
+  const pinned = stepCineBoot(boot({ elapsed: 112, held: 0, begun: true, pinned: true }), 5, 1);
   assert.equal(pinned.elapsed, 112);
-  assert.equal(pinned.waited, 0);
+  assert.equal(pinned.held, 0);
   assert.equal(pinned.gaveUp, false);
 });
 
-test('settleOr returns the value, the rejection, or the fallback when the wait wins', async () => {
-  assert.equal(await settleOr(Promise.resolve('sim'), 50, 'fallback', () => new Promise(() => {})), 'sim');
-  assert.equal(await settleOr(Promise.reject(new Error('wasm')), 50, 'fallback', () => new Promise(() => {})), 'fallback');
-  let release: () => void = () => {};
-  const hung = settleOr(new Promise(() => {}), 10, 'fallback', () => new Promise<void>(r => { release = r; }));
-  release();
-  assert.equal(await hung, 'fallback');
-  let late = false;
-  const p = new Promise<string>(r => setTimeout(() => { late = true; r('later'); }, 0));
-  assert.equal(await settleOr(p, 0, 'fallback', () => Promise.resolve()), 'fallback');
-  await p;
-  assert.equal(late, true);
-});
-
-test('the boot budget is the ceil of the slowest measured successful bootP, not a round guess', () => {
-  assert.ok(BOOT_READY_SAMPLES_MS.length >= 2);
-  const slowest = Math.max(...BOOT_READY_SAMPLES_MS);
-  assert.equal(BOOT_READY_MS, Math.ceil(slowest));
-  assert.ok(BOOT_READY_MS < CINE.b13End * 1000, 'a measured success finishes before the B13 hold, so the hold is not the steady cadence');
-  const slowestPrewarm = Math.max(...PREWARM_SAMPLES_MS);
-  assert.ok(slowestPrewarm < 83.2 * 1000, 'on these runs prewarm finished before the film draws the earth');
-  assert.ok(BOOT_READY_MS <= Math.ceil(slowestPrewarm));
+test('the B13 grace is twice the measured prewarm spread, and bootP is not on a timer', () => {
+  const spread = Math.max(...PREWARM_SAMPLES_MS) - Math.min(...PREWARM_SAMPLES_MS);
+  assert.equal(CINE_HOLD_MARGIN, 2);
+  assert.equal(CINE_HOLD_S, Math.ceil(CINE_HOLD_MARGIN * spread / 1000));
+  assert.ok(CINE_HOLD_S > spread / 1000, 'the grace is longer than the three-run spread');
+  assert.ok(Math.max(...PREWARM_SAMPLES_MS) < 83.2 * 1000, 'measured prewarm finished before the earth frame');
+  assert.ok(Math.max(...BOOT_SAMPLES_MS) < Math.min(...PREWARM_SAMPLES_MS));
+  const view = readFileSync('src/world/globe/globeView.ts', 'utf8');
+  assert.equal(view.includes('settleOr'), false);
+  assert.match(view, /bootGlobe\(/);
+  assert.match(view, /console\.warn\('globe boot failed'/);
+  assert.match(view, /releaseFilm\(\)/);
+  const bootFn = view.slice(view.indexOf('const bootP'), view.indexOf('if (atmos)'));
+  assert.ok(bootFn.indexOf('booted = true') > bootFn.indexOf('bootGlobe('));
+  assert.equal(bootFn.includes('BOOT_READY'), false);
 });
 
 test('return visits do not open the sphere, and the first-visit prewarm failure is logged', () => {
@@ -75,9 +83,10 @@ test('return visits do not open the sphere, and the first-visit prewarm failure 
   const main = readFileSync('src/main.ts', 'utf8');
   assert.match(main, /prewarm\(\)\.catch\(e => console\.warn\('inpage prewarm'/);
   assert.match(main, /whenBooted\(\)/);
-  const view = readFileSync('src/world/globe/globeView.ts', 'utf8');
-  assert.match(view, /settleOr\(simP, BOOT_READY_MS, null\)/);
-  assert.ok(view.indexOf('finally { booted = true; }') !== -1);
+  assert.match(main, /releaseFilm\(\)/);
+  const pre = readFileSync('src/world/globe/inpage.ts', 'utf8');
+  const warm = pre.slice(pre.indexOf('async prewarm'), pre.indexOf('g.attachViewpoint(null)'));
+  assert.match(warm, /forestLanding\(\)/);
 });
 
 function installDom(search: string, reduced: boolean) {
@@ -172,7 +181,7 @@ test('first-visit readiness paths', { concurrency: false }, async (t) => {
     assert.equal(f.seen, true);
     assert.equal(f.w.events.filter(e => e === 'cinematic:complete').length, 1);
     assert.equal(cineLayerGateState().on, true);
-    assert.equal((globalThis as { document: { getElementById: (id: string) => unknown } }).document.getElementById('cine') != null, true);
+    assert.equal((globalThis as { document: { getElementById: (id: string) => unknown } }).document.getElementById('cine'), null);
     f.opening.step(1);
     f.opening.step(1);
     assert.equal(f.planets, 1);

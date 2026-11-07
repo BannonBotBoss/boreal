@@ -61,7 +61,7 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells, soft-feathered over baseFeatherM at its vertical edges so sheet tops/bottoms aren't knife-edges;
- *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, and cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut. */
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut, and overshooting turrets whose tip sits inside the box keep a lit plume body and soft-feather the cap over baseFeatherM. */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), bas = new Float32Array(n), cut = 1 - cover;
   const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0), feather = Math.max(0, L.baseFeatherM ?? 0);
@@ -147,10 +147,19 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
         // turrets above the anvil. At u=0 keep today's footprint; as u→1 scale ~ frac^(u/(1-u))
         // so mid cells leave a stubbier lower dome and only near-h=1 punches a thin tip.
         const turret = Math.pow(Math.max(frac, 1e-9), u / Math.max(1 - u, .05));
-        // layers above the EL carry no suspended water; tapered ice plume, denser for stronger cells
+        // layers above the EL carry no suspended water; ice plume denser for stronger cells
         // iceOpacity (Stephens 1978): glaciated overshoot is optically thinner — same as anvil via conv
         const li = Math.min(ly.length - 1, Math.round(z / step)), op = iceOpacity(ly[li]?.ice ?? 0);
-        const plume = (1 - u) * (1 - u) * .45 * frac * op * turret;
+        // Tip inside the box: keep plume body lit and soft-feather the cap over baseFeatherM into clear
+        // air (Houze 2014 ch. 8). Tip at the box ceiling: keep the old (1-u)^2 taper toward the volume
+        // top — the plume continues above the bake, so a knife feather at the ceiling would be wrong.
+        let plume = .45 * frac * op * turret;
+        if (feather > 0 && cellTip < L.topM) {
+          const uTip = Math.min(1, Math.max(0, (cellTip - z) / feather)); // 0 at tip, 1 a feather below
+          plume *= uTip * uTip * (3 - 2 * uTip);
+        } else {
+          plume *= (1 - u) * (1 - u);
+        }
         out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, plume));
         continue;
       }

@@ -374,6 +374,31 @@ test('layered bake: cells without overshoot soft-feather their top at the EL ove
   assert.ok(softNear < hardNear, `feather lowers EL top vs knife-edge (${softNear} < ${hardNear})`);
 });
 
+test('overshoot bake: tip inside the box soft-feathers the cap; plume body stays denser than (1-u)^2', () => {
+  // Raise topM so the physical tip sits inside the volume (default 12 km clamps hot overshoots).
+  const col = cloudColumn(30, qOf(30, .85), 1, 14000), L = { ...LOCAL_CLOUDS, nx: 16, nz: 112, topM: 14000 }, dz = L.topM / L.nz;
+  const tipFull = col.top + col.overshootM;
+  assert.ok(col.overshootM > 800 && tipFull < L.topM - L.baseFeatherM, `tip inside box (${tipFull})`);
+  assert.ok((L.baseFeatherM ?? 0) > dz, 'feather spans >1 bake voxel');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  // near tip (inside feather) vs deeper in the plume body
+  const jNear = Math.min(L.nz - 1, Math.floor((tipFull - L.baseFeatherM * .3) / dz));
+  const jDeep = Math.min(L.nz - 1, Math.floor((tipFull - L.baseFeatherM * .95) / dz));
+  const jBody = Math.min(L.nz - 1, Math.floor((col.top + (tipFull - col.top) * .35) / dz));
+  assert.ok(jBody < jDeep && jDeep < jNear, 'body < deep-feather < near-tip');
+  let softNear = 0, softDeep = 0, softBody = 0, hardBody = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    const sb = soft[i + L.nx * (jBody + L.nz * k)], hb = hard[i + L.nx * (jBody + L.nz * k)];
+    if (hb < 8 && sb < 8) continue; // mature / lit plume column
+    softNear += soft[i + L.nx * (jNear + L.nz * k)];
+    softDeep += soft[i + L.nx * (jDeep + L.nz * k)];
+    softBody += sb; hardBody += hb; n++;
+  }
+  assert.ok(n > 0, `plume columns (${n})`);
+  assert.ok(softDeep > softNear, `cap feathers: deeper denser than near tip (${softDeep} > ${softNear})`);
+  assert.ok(softBody > hardBody, `feathered body denser than (1-u)^2 taper (${softBody} > ${hardBody})`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');

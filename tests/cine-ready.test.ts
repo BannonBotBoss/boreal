@@ -6,7 +6,7 @@ import { cineArrivalDue, stepCineBoot } from '../src/world/cosmos/cineReady';
 import { createOpening } from '../src/world/cosmos/opening';
 import { cineLayerGateState } from '../src/world/globe/planetLayers';
 import { bootChoice, createContext, markBigBangSeen } from '../src/core/events';
-import { BOOT_SAMPLES_MS, CINE_HOLD_MARGIN, CINE_HOLD_S, PREWARM_SAMPLES_MS } from '../src/world/globe/bootReady';
+import { BOOT_SAMPLES_MS, CINE_BOOT_TIMEOUT_S, CINE_HOLD_MARGIN, CINE_HOLD_S, PREWARM_SAMPLES_MS } from '../src/world/globe/bootReady';
 
 const boot = (over: Partial<Parameters<typeof stepCineBoot>[0]> = {}) => ({
   elapsed: 0, held: 0, begun: false, booted: false, gaveUp: false, pinned: false, ...over,
@@ -58,6 +58,31 @@ test('the grace starts when the clamp engages, and a ready globe is not held', (
   assert.equal(cineArrivalDue(108.03, false, true, true, false), false);
   assert.equal(cineArrivalDue(116, false, false, true, true), false);
   assert.equal(cineArrivalDue(116, false, false, false, false), false);
+});
+
+test('the boot hold shows loading the planet and falls back after 15 seconds', () => {
+  assert.equal(CINE_BOOT_TIMEOUT_S, 15);
+  const f = film({ ready: () => new Promise<void>(() => {}) });
+  f.probe.begin();
+  const played = (f.w as { played: string[] }).played;
+  assert.equal(played.filter(src => src.includes('narration')).length, 1);
+  for (let i = 0; i < 130 && f.probe.elapsed < CINE.b13End - 0.2; i++) f.opening.step(1);
+  f.opening.step(2);
+  assert.ok(f.probe.elapsed < CINE.b13End, `held clock ran to ${f.probe.elapsed}`);
+  assert.equal(f.planets, 0);
+  type Node = { className?: string; textContent?: string; hidden?: boolean; children?: Node[] };
+  const nodesOf = (n: Node): Node[] => [n, ...(n.children ?? []).flatMap(nodesOf)];
+  const note = nodesOf((globalThis as unknown as { document: { body: Node } }).document.body).find(n => n.className === 'boot');
+  assert.equal(note?.hidden, false);
+  assert.equal(note?.textContent, 'loading the planet');
+  for (let i = 0; i < 10; i++) f.opening.step(1);
+  assert.equal(f.planets, 0);
+  assert.ok(f.probe.elapsed < CINE.b13End, `clock left the hold early at ${f.probe.elapsed}`);
+  for (let i = 0; i < 40 && f.planets === 0; i++) f.opening.step(1);
+  assert.equal(f.planets, 1);
+  assert.ok(f.probe.elapsed >= CINE.b14End);
+  assert.equal((globalThis as { document: { getElementById: (id: string) => unknown; body: { className: string } } }).document.getElementById('cine'), null);
+  assert.match(readFileSync('src/main.ts', 'utf8'), /opening\?\.stop\(\);\s*opening = null/);
 });
 
 test('a diagnostic pin does not burn the grace or snap back to the clamp', () => {

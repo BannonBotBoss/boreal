@@ -17,4 +17,6 @@ export const PREWARM_SAMPLES_MS = [12837, 16056.59999999986, 11702.100000000093]
  * span still finishes before the film gives up. The film has already played to B13.
  */
 export const CINE_HOLD_MARGIN = 2;
+/** If the planet is still booting at the end of B13, hold the clock this long, then continue on to the globe. */
+export const CINE_BOOT_TIMEOUT_S = 15;
 export const CINE_HOLD_S = Math.ceil(CINE_HOLD_MARGIN * (Math.max(...PREWARM_SAMPLES_MS) - Math.min(...PREWARM_SAMPLES_MS)) / 1000);

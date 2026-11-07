@@ -43,9 +43,10 @@ export const CINE = {
   b14End: 116,
   /** B2 inhale after narration `ended`. */
   b2: 0.8,
-  /** Bed eases from −6 dB to −18 dB across this, then on toward 0 dB. */
+  /** Bed eases from the ducked narration level toward full across this, then on toward 0 dB. */
   bedRamp: 0.4,
-  bedB1: -6,
+  /** Music under the opening voice. About −18 dB while the narration plays. */
+  bedB1: -18,
   bedB2: -18,
   bedFullBy: 22,
   /** Title lands this long after the impact file starts. Holds 3 s. */
@@ -62,9 +63,9 @@ export const CINE = {
 } as const;
 
 /**
- * Current narration file (measured). It speaks stage directions; a clean take
- * replaces the file. B2 and B3 key off the element's `ended`, not this number.
- * The number is only the timing the tests and the fallback use.
+ * Opening narration, loudness-normalized (about −16 LUFS, true peak under −1.5 dBTP).
+ * B2 and B3 key off the element's `ended`, not this number.
+ * The number is the measured duration the tests and the fallback use.
  */
 export const NARRATION = {
   file: 'audio/big-bang/narration.mp3',
@@ -84,10 +85,10 @@ export const LATER_AUDIO = {
   voB7: 'audio/big-bang/vo-b7-light.mp3',
   /** With “380,000 years”, while the plasma is still glowing. */
   voB7At: 54,
-  voB7Seconds: 2.82,
+  voB7Seconds: 2.821224,
   voB9: 'audio/big-bang/vo-b9-stars.mp3',
   voB9At: 67,
-  voB9Seconds: 1.25,
+  voB9Seconds: 1.253878,
   voB14: 'audio/big-bang/vo-b14-home.mp3',
   voB14At: 112.3,
   voB14Seconds: 2.4,
@@ -434,7 +435,7 @@ export function heroAt(t: number): string {
 const gainDb = (g: number) => g <= 1e-4 ? -80 : 20 * Math.log10(g);
 
 /**
- * Bed level in dB. Silent before the click's B1. Stays at −6 dB until narration ends.
+ * Bed level in dB. Silent before the click's B1. Stays at −18 dB while narration plays.
  * From 0:42 the loud part of the bed is still up under cue 2, full for the first
  * half of the 4 s overlap, then out. The voice duck is added on top and lets go
  * after each line. There is no 20–45 s loop.

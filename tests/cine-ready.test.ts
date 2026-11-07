@@ -54,6 +54,9 @@ test('the grace starts when the clamp engages, and a ready globe is not held', (
   assert.equal(cineArrivalDue(108, false, false, true, false), false);
   assert.equal(cineArrivalDue(116, false, false, true, false), true);
   assert.equal(cineArrivalDue(116, false, false, true, true), false);
+  // Hang case: gave up, then ready() fulfilled with earth still off at b14End.
+  assert.equal(cineArrivalDue(116, false, true, true, false), true);
+  assert.equal(cineArrivalDue(CINE.b14End, false, true, false, false), true);
 });
 
 test('a diagnostic pin does not burn the grace or snap back to the clamp', () => {

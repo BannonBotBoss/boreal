@@ -44,10 +44,11 @@ export function stepCineBoot(s: CineBoot, dt: number, holdS = CINE_HOLD_S): Cine
  * Land once, at the end of B14. The beat from 108 s through Today, the sun grade,
  * vo-b14 and the hero crossfade has to keep stepping. A boot that gave up uses the same end.
  */
-export function cineArrivalDue(elapsed: number, earthOn: boolean, booted: boolean, gaveUp: boolean, arrived: boolean): boolean {
+export function cineArrivalDue(elapsed: number, _earthOn: boolean, booted: boolean, gaveUp: boolean, arrived: boolean): boolean {
   if (arrived || elapsed < CINE.b14End) return false;
-  if (booted && earthOn) return true;
-  if (!booted && gaveUp) return true;
+  // At b14End, land if the globe booted or the hold gave up — including booted && !earthOn
+  // (gaveUp then ready() just before the last frame), which otherwise leaves the player stuck.
+  if (booted || gaveUp) return true;
   return false;
 }
 

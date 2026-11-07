@@ -518,7 +518,10 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
         massKg: playerMass, wind: windAt(player.x, .6, player.z), daylight: 1 - view.darkness(),
         hares: view.hares.list().map(h => ({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: 1 })),
       }) : steerPlayerWolf({ x: player.x, z: player.z, heading: brain.heading }, brain.speed, 1 / 30, view.entities());
-      if (!driving) clearWolfPlan(brain);
+      if (!driving) {
+        if (pose.x === player.x && pose.z === player.z && brain.speed !== 0) brain.speed = 0;
+        clearWolfPlan(brain);
+      }
       const live = wolfReadout(brain);
       autoNote = !autonomous ? '' : live ? `${live.goal} (${live.because})` : choice ? `${choice.goal} (${choice.why})` : autoNote;
       if(!autonomous && brain.motion==='idle') brain.problem='recover';

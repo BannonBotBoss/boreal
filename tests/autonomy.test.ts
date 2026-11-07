@@ -165,4 +165,13 @@ test('steered player wolf refuses a step whose probe is inside BLOCK.wolf.trunk 
   let openPose: WolfPose = { x: 141.900, z: 198.183, heading: 0 };
   for (let i = 0; i < 30; i++) openPose = steerPlayerWolf(openPose, 2, 1 / 30, []);
   assert.ok(Math.abs(openPose.z - (198.183 - 2)) < 1e-6, `expected open walk to advance 2 m in 1 s, got z=${openPose.z}`);
+  // Slow nonzero creep (0.005 m/s) at the 0.7 m boundary is still checked
+  const creep = steerPlayerWolf({ x: 0, z: 0, heading: 0 }, 0.005, 1 / 30, [ent('spruce', 0, -0.7001)]);
+  assert.equal(creep.z, 0);
+  // Oblique sprint (10.5 m/s, dt = 1/30) past a tree at (0.68, -0.17) is caught by the swept segment check
+  const oblique = steerPlayerWolf({ x: 0, z: 0, heading: 0 }, 10.5, 1 / 30, [ent('spruce', 0.68, -0.17)]);
+  assert.equal(oblique.z, 0);
+  // Backing out from an existing overlap (d0 = 0.5 < 0.7) is permitted when moving outward
+  const backOut = steerPlayerWolf({ x: 0, z: 0, heading: 0 }, -2, 1 / 30, [ent('spruce', 0, -0.5)]);
+  assert.ok(backOut.z > 0, `expected backing out to increase z, got ${backOut.z}`);
 });

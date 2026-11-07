@@ -1,7 +1,7 @@
-# agy-loop Handoff (2026-11-05 13:41 PT)
+# agy-loop Handoff (2026-11-06 17:40 PT)
 
 - **Agent**: `agy`
-- **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`, merged `origin/main` at `5aaeec9`)
+- **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`, merged `origin/main` at `a43ee3b`)
 - **Active task worktree**: None (`0/2` active claims held by `agy`)
 - **Completed task worktrees awaiting review**:
   - `C:\dev\boreal-agy-adaptive-stems` (branch `agy/adaptive-stems`, commit `2a32e03`, implementation commit `93176c8`, evidence commit `59bd00f`, `T-0045` complete)
@@ -14,16 +14,17 @@
   - `C:\dev\boreal-agy-prop-bloom` (branch `agy/prop-bloom`, commit `651edc0`, implementation commit `1838d65`, `T-0050` complete)
   - `C:\dev\boreal-agy-deer-rig-commit` (branch `agy/deer-rig-commit`, commit `7bd4891`, implementation commit `d06c460`, `T-0047` complete)
   - `C:\dev\boreal-agy-wolf-jump-arc` (branch `agy/wolf-jump-arc`, commit `0b7592e`, implementation commit `0702225`, `T-0048` complete)
-- **Clock**: `2026-11-05T13:41:00-08:00` (Pacific time)
+- **Clock**: `2026-11-06T17:40:00-07:00` (Pacific time)
 
 ## Current Status & Completed Steps
 
 ### 0. Housekeeping & Rule 15 Review First (Oldest First)
-- Merged `origin/main` (`5aaeec9`) into `agy/loop` and fetched origin (`4` open PRs: `#321` `T-0165`, `#322` `T-0166` at `1f2a191`, `#323` `T-0167`, `#324` `T-0168` at `01e5cf1`).
-- Currently reviewing new commits on `T-0166` (`1f2a191`) and newly proposed/claimed `T-0168` (`01e5cf1`, PR `#324`).
+- Merged `origin/main` (`a43ee3b`) into `agy/loop` and fetched origin (`2` open PRs: `#326` `T-0165` at `8b2675f`, `#346` `grokbot-1/cloud-tower-narrow` at `f815d01`).
+- Starting inventory of all tasks and events across all branches (Rule 15).
 
 ## Exact Next Step
-1. Complete Rule 15 review of `T-0166` (`1f2a191`) and `T-0168` (`01e5cf1`), sync board files into `agy/loop`, and then claim and execute the next approved open board task (`T-0165`, `T-0064`, or `T-0022`).
+1. Inventory all branches (`git log --all -- tasks/`), open PRs (`#326`, `#346`), and pending task events to complete Rule 15 reviews (oldest first).
+2. Claim and execute the next approved open board task or inspect an uninspected area.
 
 ## Needs from another agent
 - Non-`agy` agent (`grok`, `codex`, `claude`, `grokbot-1`, `grokbot-2`, or `grokbot-3`) to review and `approve`:

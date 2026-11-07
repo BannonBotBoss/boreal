@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
-import { STEM_FILES, STEM_FRAMES, STEM_IDS, STEM_MASTER, STEM_RATE, STEM_SECONDS, STEM_SUM_CAP, THREAT_HOLD, THREAT_OFF, THREAT_ON, encounterThreat, loopPoints, smoothstep, stemTau, stemWeights, stepToward, threatStep } from '../src/audio/adaptiveStems';
+import { STEM_FILES, STEM_FRAMES, STEM_IDS, STEM_MASTER, STEM_RATE, STEM_SECONDS, STEM_SUM_CAP, THREAT_HOLD, THREAT_OFF, THREAT_ON, capStemSum, encounterThreat, loopPoints, smoothstep, stemTau, stemWeights, stepToward, threatStep } from '../src/audio/adaptiveStems';
 import { HUNT } from '../src/core/needs/diet';
 import { EXTRA_SOURCES, MUSIC } from '../src/audio/music';
 import { MUSIC_SETTINGS, TRACK_OPTIONS, sourceOf } from '../src/audio/musicSettings';
@@ -32,6 +32,9 @@ test('stems weights: the layered sum never exceeds the cap, for any darkness / r
 });
 test('stems headroom: master gain x summed stem gains x the loudest stem peak (.51) stays under the music limiter threshold (-10 dBFS)', () => {
   assert.ok(STEM_MASTER * STEM_SUM_CAP * .51 <= 10 ** (-10 / 20), 'would reach the compressor');
+  const transition = capStemSum({ night: 0, day: 0.82009, weather: 0, tension: 0.44477 });
+  near(sum(transition), STEM_SUM_CAP, 1e-9);
+  assert.ok(STEM_MASTER * sum(transition) * .51 <= 10 ** (-10 / 20), 'transition sum is capped under the limiter threshold');
 });
 test('stems smoothing: exponential approach, 63 % of the gap after one tau, never overshoots, no-op at dt 0', () => {
   near(stepToward(0, 1, 6, 6), 1 - Math.exp(-1)); near(stepToward(.3, .3, 1, 2), .3); near(stepToward(0, 1, 0, 6), 0);
@@ -93,5 +96,8 @@ test('stems encounterThreat (T-0045): real predator-prey chase or flight drives 
   assert.equal(encounterThreat({ x: 10, z: -5, animals: [{ x: 10, z: -5, fleeing: true }] }), 1, 'embodied hare fleeing gives full threat');
   const mainSrc = readFileSync('src/main.ts', 'utf8');
   assert.match(mainSrc, /const threat = encounterThreat\(/);
+  assert.match(mainSrc, /a\.problem === 'flee' \|\| a\.problem === 'escape'/);
+  assert.match(mainSrc, /view\.playable\.id === 'wolf' && driveCommitted/);
+  assert.match(mainSrc, /autoRead\.targetKey\?\.startsWith\('hare:'\)/);
   assert.match(mainSrc, /music\.update\(view\.darkness\(\),\s*Math\.min\(1,\s*weatherAt\(player\.x,\s*player\.z\)\.rainMmH\s*\/\s*2\),\s*threat\)/);
 });

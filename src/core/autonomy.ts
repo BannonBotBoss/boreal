@@ -32,7 +32,7 @@ export interface WolfSense {
   waterLevel?: number;
   walkable?: (x: number, z: number) => boolean;
 }
-export interface WolfReadout { goal: string; because: string; doing: DoingGoal }
+export interface WolfReadout { goal: string; because: string; doing: DoingGoal; targetKey?: string; action?: Agent['action'] }
 
 const agents = new WeakMap<AnimalBrain, Agent>();
 const reads = new WeakMap<AnimalBrain, WolfReadout>();
@@ -160,30 +160,30 @@ export function autonomousWolfStep(brain: AnimalBrain, pose: WolfPose, dt: numbe
     brain.heading = route.heading;
     next = move(pose, route.heading, brain.speed, dt, walkable);
     because = `jump ${route.jumpJPerKg.toFixed(1)}<detour ${route.detourJPerKg.toFixed(1)} J/kg`;
-    reads.set(brain, { goal: `jumping ${route.block ?? 'log'}`, because, doing: 'seeking' });
+    reads.set(brain, { goal: `jumping ${route.block ?? 'log'}`, because, doing: 'seeking', targetKey: a.target?.key, action: a.action });
   } else if (route && route.motion === 'jump' && brain.jumpCooldown > 0) {
     // The hop is still the cheaper plan, but the legs are recovering. Keep walking at the goal; do not swing out to an end.
     const want = a.action === 'flee' ? WOLF_AGENT.speed.flee : WOLF_AGENT.speed.approach;
     next = move(pose, route.heading, want, dt, walkable);
     const speed = Math.hypot(next.x - pose.x, next.z - pose.z) / Math.max(dt, 1e-6);
     because = 'walking in while the jump recovers';
-    reads.set(brain, { goal: a.goal, because, doing: a.action === 'flee' ? 'fleeing' : 'seeking' });
+    reads.set(brain, { goal: a.goal, because, doing: a.action === 'flee' ? 'fleeing' : 'seeking', targetKey: a.target?.key, action: a.action });
     writeLocomotion(brain, { heading: next.heading, speed, action: a.action });
   } else if (route && route.motion === 'detour' && route.to && route.detourJPerKg < Infinity) {
     const want = a.action === 'flee' ? WOLF_AGENT.speed.flee : WOLF_AGENT.speed.approach;
     next = move(pose, headingToward(pose, route.to), want, dt, walkable);
     const speed = Math.hypot(next.x - pose.x, next.z - pose.z) / Math.max(dt, 1e-6);
     because = `detour ${route.detourJPerKg.toFixed(1)}<jump ${route.jumpJPerKg.toFixed(1)} J/kg`;
-    reads.set(brain, { goal: `around ${route.block ?? 'obstacle'}`, because, doing: a.action === 'flee' ? 'fleeing' : 'seeking' });
+    reads.set(brain, { goal: `around ${route.block ?? 'obstacle'}`, because, doing: a.action === 'flee' ? 'fleeing' : 'seeking', targetKey: a.target?.key, action: a.action });
     writeLocomotion(brain, { heading: next.heading, speed, action: a.action });
   } else if (route && route.motion === 'wait') {
     next = pose;
     writeLocomotion(brain, { heading: pose.heading, speed: 0, action: 'rest' });
-    reads.set(brain, { goal: 'waiting: the way is closed', because: route.block ?? 'blocked', doing: 'recovering' });
+    reads.set(brain, { goal: 'waiting: the way is closed', because: route.block ?? 'blocked', doing: 'recovering', targetKey: a.target?.key, action: 'rest' });
   } else {
     if (!walkable(next.x, next.z)) next = { ...pose, heading: wrapAngle(pose.heading + Math.PI * 0.6) };
     writeLocomotion(brain, { ...a, heading: next.heading, speed: Math.hypot(next.x - pose.x, next.z - pose.z) / Math.max(dt, 1e-6) });
-    reads.set(brain, { goal: a.goal, because: because.slice(0, 64), doing: doingFor(a.action) });
+    reads.set(brain, { goal: a.goal, because: because.slice(0, 64), doing: doingFor(a.action), targetKey: a.target?.key, action: a.action });
   }
   a.x = next.x; a.z = next.z; a.heading = next.heading; brain.heading = next.heading;
   if (a.action === 'feed' && a.food && a.elapsed >= WOLF_AGENT.diet.forage.eatSeconds) {

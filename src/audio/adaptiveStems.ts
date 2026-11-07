@@ -27,14 +27,18 @@ export const THREAT_ON = .5, THREAT_OFF = .25, THREAT_HOLD = 12;
 const clamp01 = (x: number) => Math.min(1, Math.max(0, Number.isFinite(x) ? x : 0));
 export const smoothstep = (a: number, b: number, x: number) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 
+/** Scale stem gains down proportionally whenever their sum exceeds STEM_SUM_CAP (1.0), both on targets and on smoothed transitions. */
+export function capStemSum(w: StemWeights): StemWeights {
+  const sum = w.night + w.day + w.weather + w.tension, k = sum > STEM_SUM_CAP ? STEM_SUM_CAP / sum : 1;
+  return { night: w.night * k, day: w.day * k, weather: w.weather * k, tension: w.tension * k };
+}
+
 /** Target gain for each stem from view.darkness() (0 day .. 1 night), rain (0..1, as music.update gets it) and threat (0..1).
  * Night/day are equal-power around dusk; rain brings the weather stem in and ducks day/night; threat brings tension in and ducks the bed.
  * The sum is capped at STEM_SUM_CAP so layered stems stay under the music limiter's threshold. */
 export function stemWeights(darkness: number, rain: number, threat = 0): StemWeights {
   const s = smoothstep(.35, .65, darkness), w = smoothstep(.15, .6, rain), th = clamp01(threat), duck = (1 - .5 * w) * (1 - .3 * th);
-  const raw: StemWeights = { night: Math.sin(Math.PI / 2 * s) * duck, day: Math.cos(Math.PI / 2 * s) * duck, weather: .8 * w, tension: .6 * th };
-  const sum = raw.night + raw.day + raw.weather + raw.tension, k = sum > STEM_SUM_CAP ? STEM_SUM_CAP / sum : 1;
-  return { night: raw.night * k, day: raw.day * k, weather: raw.weather * k, tension: raw.tension * k };
+  return capStemSum({ night: Math.sin(Math.PI / 2 * s) * duck, day: Math.cos(Math.PI / 2 * s) * duck, weather: .8 * w, tension: .6 * th });
 }
 
 /** One step of an exponential approach (the same curve as AudioParam.setTargetAtTime): after `tau` seconds 63 % of the gap is closed. */
@@ -118,12 +122,17 @@ export function startStems(ctx: AudioContext, to: AudioNode, base = 'music/stems
       if (dead) return; const now = ctx.currentTime, dt = Math.min(.5, now - last); last = now; lastThreat = clamp01(threat);
       const th = threatStep(threatState, threat, now); threatState = th.state;
       const target = stemWeights(darkness, rain, th.level);
+      const next = {} as StemWeights;
       for (const id of STEM_IDS) {
-        const c = cur[id] === undefined ? target[id] : stepToward(cur[id]!, target[id], dt, stemTau(id, target[id] > cur[id]!)); cur[id] = c;
-        gains[id].gain.setTargetAtTime(c, now, .05);
+        next[id] = cur[id] === undefined ? target[id] : stepToward(cur[id]!, target[id], dt, stemTau(id, target[id] > cur[id]!));
+      }
+      const capped = capStemSum(next);
+      for (const id of STEM_IDS) {
+        cur[id] = capped[id];
+        gains[id].gain.setTargetAtTime(capped[id], now, .05);
       }
     },
-    state: () => ({ cur: { ...cur }, threatState, threat: lastThreat }),
+    state: () => ({ cur: { ...cur }, threatState: { ...threatState }, threat: lastThreat }),
     /** Fade out over `fade` s, then stop and free the sources (the decoded buffers stay cached for a quick restart). */
     stop(fade = 2) {
       if (dead) return; dead = true; const now = ctx.currentTime;

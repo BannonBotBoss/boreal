@@ -594,13 +594,14 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   const drawStart = performance.now(); if (!menu.open) { if (inpage) inpage.frame(() => drawFrame(pv)); else drawFrame(pv); } view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
   walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
+  const autoRead = autonomous ? wolfReadout(view.playerBrain) : undefined;
   const threat = encounterThreat({
     x: player.x, z: player.z,
-    locked: !!huntLock.key || driveHold || !!(autonomous && wolfReadout(view.playerBrain)?.goal.startsWith('hare:')),
+    locked: !!huntLock.key || (view.playable.id === 'wolf' && driveCommitted) || !!(autoRead && (autoRead.action === 'approach' || autoRead.action === 'seek') && autoRead.targetKey?.startsWith('hare:')),
     running: modes.mode === 'run' || modes.mode === 'sprint' || view.playerBrain.motion === 'run' || view.playerBrain.motion === 'jump',
     animals: [
       ...view.hares.list().map(h => ({ x: h.x, z: h.z, fleeing: h.state === 'flee' })),
-      ...view.audibleAnimals().map(a => ({ x: a.x, z: a.z, fleeing: a.problem === 'flee' })),
+      ...view.audibleAnimals().map(a => ({ x: a.x, z: a.z, fleeing: a.problem === 'flee' || a.problem === 'escape' })),
     ],
   });
   music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2), threat); // 'storm' above ~0.6 mm/h

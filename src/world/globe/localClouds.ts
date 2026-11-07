@@ -61,7 +61,7 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells, soft-feathered over baseFeatherM at its vertical edges so sheet tops/bottoms aren't knife-edges;
- *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut, overshooting cores soft-feather toward the ice-plume value over baseFeatherM below the EL so the tower→plume handoff is not a knife cut, and overshooting turrets whose tip sits inside the box keep a lit plume body and soft-feather the cap over baseFeatherM; the bake soft-feathers toward the horizontal box rim and, on the main write, the vertical lid (at least ~2 cells; not the floor, which is the ground, so fog and ground-based stratus stay, or baseFeatherM when finer) so the volume wall is not a knife cut (overshoot tips that hit the ceiling keep the #360 (1-u)^2 taper). */
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the ice-share gate soft-ramps through mixed phase (ice 0.25→0.75) instead of a 0.5 knife, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut, overshooting cores soft-feather toward the ice-plume value over baseFeatherM below the EL so the tower→plume handoff is not a knife cut, and overshooting turrets whose tip sits inside the box keep a lit plume body and soft-feather the cap over baseFeatherM; the bake soft-feathers toward the horizontal box rim and, on the main write, the vertical lid (at least ~2 cells; not the floor, which is the ground, so fog and ground-based stratus stay, or baseFeatherM when finer) so the volume wall is not a knife cut (overshoot tips that hit the ceiling keep the #360 (1-u)^2 taper). */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), bas = new Float32Array(n), cut = 1 - cover;
   const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0), feather = Math.max(0, L.baseFeatherM ?? 0);
@@ -105,7 +105,12 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       for (let b = -r; b <= r; b++) for (let a = -r; a <= r; a++) { const kk = k + b, ii = i + a; if (kk < 0 || ii < 0 || kk >= L.nx || ii >= L.nx || a * a + b * b > r * r) continue; s += m[kk * L.nx + ii]; w++; }
       anv[k * L.nx + i] = Math.min(1, 1.5 * s / Math.max(1, w)); }
     for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), d = top - z;
-      iceOk[j] = d >= 0 && d <= CC.anvil_depth_m && (ly[li]?.ice ?? 0) >= .5 ? 1 : 0; } }
+      // Soft-ramp the ice-share gate through mixed phase (ECMWF IFS Cy47r1 ice_phase band):
+      // anvil outflow is glaciated, but a 0.5 knife snapped mid-layer. Smoothstep ice 0.25→0.75.
+      if (d >= 0 && d <= CC.anvil_depth_m) {
+        const ice = ly[li]?.ice ?? 0, u = Math.min(1, Math.max(0, (ice - .25) / .5));
+        iceOk[j] = u * u * (3 - 2 * u);
+      } else iceOk[j] = 0; } }
   // Soft-feather toward the horizontal box rim and the vertical lid: the volume wall
   // is not a knife cut of cloud. At bake resolution (cellM / dz often > baseFeatherM) use
   // at least ~2 cells so the ramp is resolvable; when cells are fine, baseFeatherM still
@@ -148,7 +153,7 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
         const u = Math.min(1, Math.max(0, (cellDepth - d) / feather)); // 0 at underside, 1 a feather above
         anvEdge = u * u * (3 - 2 * u);
       }
-      const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper * anvEdge : 0;
+      const anvHere = iceOk[j] > 0 && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper * anvEdge * iceOk[j] : 0;
       cv = Math.max(h[c] * edge * tower, anvHere);
       // Soft-feather dew-point base: ramp 0→1 over baseFeatherM (condensation zone; AMS Glossary / O(100 m) game cal)
       if (feather > 0) { const u = Math.min(1, Math.max(0, (z - cb) / feather)); cv *= u * u * (3 - 2 * u); }

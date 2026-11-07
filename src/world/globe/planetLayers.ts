@@ -53,7 +53,9 @@ export function spinAndBake(sim: PlanetSim, tier: number): boolean {
   tex.generateMipmaps = false; tex.needsUpdate = true;
   const old = GLOBE_LAYERS.uLayerTex.value; if (old !== EMPTY) old.dispose(); GLOBE_LAYERS.uLayerTex.value = tex;
   tierOn = [+t.layers.includes('snow'), +t.layers.includes('ice'), +t.layers.includes('soil')];
+  layersBaked = 1;
   GLOBE_LAYERS.uLayers.value.set(tierOn[0], tierOn[1], tierOn[2], 1);
+  applyLayerDraw();
   return true;
 }
 
@@ -61,7 +63,7 @@ export function spinAndBake(sim: PlanetSim, tier: number): boolean {
  *  when the tier draws nothing or the wasm is missing. Call again when the tier changes. */
 export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: number; kind?: '' | 'ocean' | 'lake'; level?: number } }, tier: number, day: number, sim?: PlanetSim | null, utcHour = 0): Promise<boolean> {
   const t = LAYER_TIERS[Math.max(0, Math.min(LAYER_TIERS.length - 1, tier))];
-  tierOn = [0, 0, 0]; GLOBE_LAYERS.uLayers.value.set(0, 0, 0, 0); if (!t.nlat || !t.layers.length) return false;
+  tierOn = [0, 0, 0]; layersBaked = 0; GLOBE_LAYERS.uLayers.value.set(0, 0, 0, 0); if (!t.nlat || !t.layers.length) return false;
   sim = sim ?? await sharedPlanetSim(); if (!sim) return false;
   // Boot one spin-up earlier so the steps end at (day, utcHour). The boot itself does not advance the clock.
   bootGlobe(sim, t.nlat, t.nlat * 2, globeLandSample(planet), day - SPINUP.steps * SPINUP.dtS / 86400, utcHour);
@@ -69,7 +71,17 @@ export async function startPlanetLayers(planet: { sampleSurface(d: Vec3): { h: n
   notePlanetClockOwner('globe');
   return spinAndBake(sim, tier);
 }
-let tierOn = [0, 0, 0], snowIceOn = 1;
+let tierOn = [0, 0, 0], snowIceOn = 1, layersBaked = 0;
+/** First-visit Earth film only. Off for a return, a skip, ?cine= jumps other than the full-film recorder, and reduced motion. */
+const cineLayer = { gate: 0, mix: 1 };
+export function setCineLayerGate(on: boolean, mix = 1) {
+  cineLayer.gate = on ? 1 : 0;
+  cineLayer.mix = Math.min(1, Math.max(0, mix));
+  applyLayerDraw();
+}
+function applyLayerDraw() {
+  GLOBE_LAYERS.uLayers.value.w = layersBaked * (cineLayer.gate ? cineLayer.mix : 1);
+}
 /** layer panel: snow/ice off (still simulated: the budget needs its albedo; only the drawing stops) */
 export function setSnowIceShown(on: boolean) { snowIceOn = on ? 1 : 0; }
 /** Camera + physical visibility gate (visibility.ts): each layer's weight = its characteristic size in pixels at the camera's
@@ -78,17 +90,19 @@ export function setLayerCamera(cam: Vec3, fovDeg = 45, hPx = 1080) {
   GLOBE_LAYERS.uCamP.value.set(cam[0], cam[1], cam[2]);
   const range = Math.max(1, Math.hypot(cam[0], cam[1], cam[2]) - PLANET.radius), u = GLOBE_LAYERS.uLayers.value;
   u.x = snowIceOn * tierOn[0] * visibleWeight('snowCover', range, fovDeg, hPx); u.y = snowIceOn * tierOn[1] * visibleWeight('seaIceEdge', range, fovDeg, hPx); u.z = tierOn[2] * visibleWeight('soilMoisture', range, fovDeg, hPx);
+  applyLayerDraw();
 }
 
 /** Fragment code (after the land/water mix in globeMaterial). Planet direction = camera-relative world position + camera;
  *  lat/lon as planet.ts toLatLon (lat = asin y, lon = atan2(z, x)); u = (lon + pi) / 2pi matches the sim's -180..180 columns. */
 export const LAYERS_FRAG = `
-  if (uLayers.w > 0.5 && uHydroLayer < 0.5) {
+  if (uLayers.w > 0.001 && uHydroLayer < 0.5) {
     vec3 pd = normalize(vDetW + uCamP); vec2 luv = vec2(atan(pd.z, pd.x) / 6.2831853 + 0.5, asin(clamp(pd.y, -1.0, 1.0)) / 3.1415927 + 0.5);
     vec4 L = texture2D(uLayerTex, luv);
-    diffuseColor.rgb *= 1.0 - uLayers.z * ${LAYER_LOOK.soilDark.toFixed(3)} * L.b * landMask; // wet soil darker
-    diffuseColor.rgb = mix(diffuseColor.rgb, uSnowC, uLayers.x * L.r * landMask); // snow cover
-    diffuseColor.rgb = mix(diffuseColor.rgb, uIceC, uLayers.y * L.g * (1.0 - landMask)); }
+    float lw = clamp(uLayers.w, 0.0, 1.0);
+    diffuseColor.rgb *= 1.0 - uLayers.z * ${LAYER_LOOK.soilDark.toFixed(3)} * L.b * landMask * lw; // wet soil darker
+    diffuseColor.rgb = mix(diffuseColor.rgb, uSnowC, uLayers.x * L.r * landMask * lw); // snow cover
+    diffuseColor.rgb = mix(diffuseColor.rgb, uIceC, uLayers.y * L.g * (1.0 - landMask) * lw); }
   if (uHydroLayer > 0.5) { // T-0058: pure-function snow, sea ice, wet soil. Skips the spin-up paint above so the two do not stack.
     vec3 hd = normalize(vDetW + uCamP); vec2 huv = vec2(atan(hd.z, hd.x) / 6.2831853 + 0.5, asin(clamp(hd.y, -1.0, 1.0)) / 3.1415927 + 0.5);
     vec4 H = texture2D(uHydroTex, huv);

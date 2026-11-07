@@ -13,7 +13,7 @@ import { hash, random } from '../../proc/rng';
 import { toLatLon, type Vec3 } from './planet';
 import CC from '../../../data/earth/cloud-column.json';
 
-export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: 1.5e-3 }; // [game calibration: box and cell size]
+export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: CC.qc_auto_kg_kg as number }; // full bake byte = Kessler qc0 (suspended convective condensate after #329), not the old 1.5e-3 adiabatic-ish scale
 /** 0 at showBelowM, 1 at sizeM. The box and the flat shell crossfade across that span instead of swapping in one frame. */
 export function localCloudFade(alt: number, L = LOCAL_CLOUDS) {
   const span = L.showBelowM - L.sizeM;
@@ -58,10 +58,10 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
  *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
  *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share one flat base at the LCL, and each cell's top rises
- *    with its strength, so towers differ in height but none passes the column's buoyant top;
+ *    with its strength up to the column's buoyant top; cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells;
- *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top. */
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, and lateral density falls as anv^1.5 so the fringe is wispy. */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), cut = 1 - cover;
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { const x = (ox + (i + .5) / L.nx * L.sizeM) / L.cellM, z = (oz + (k + .5) / L.nx * L.sizeM) / L.cellM;
@@ -69,22 +69,52 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
     sh[k * L.nx + i] = Math.max(0, Math.min(1, (n1(x * .35, z * .35) - (.2 + .5 * cut)) / .3)); } // broad sheet: low frequency, soft edge
   const ly = col.layers, step = ly[1]?.z || 250, conv = new Float32Array(L.nz), strat = new Float32Array(L.nz), zr = new Float32Array(L.nz);
   const base = col.lcl, top = col.top >= base && base >= 0 ? col.top + step / 2 : -1;
+  const over = top > base ? Math.max(0, col.overshootM) : 0, tip = top > base ? Math.min(L.topM, top + over) : -1; // Houze overshoot dome; clamp to the local box
   for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), l = ly[li];
     const s = l?.strat ?? 0, w = l?.water ?? 0, op = iceOpacity(l?.ice ?? 0); strat[j] = Math.min(1, s * op / L.waterFull); conv[j] = Math.min(1, Math.max(0, w - s) * op / L.waterFull); // ice is thinner per kg (#192)
-    zr[j] = top > base ? (z - base) / (top - base) : 2; } // height through the convective layer, 0 at the base, 1 at the top
+    zr[j] = top > base ? (z - base) / (top - base) : 2; } // height through the convective layer, 0 at the base, 1 at the buoyant top
   // anvil (data/earth/cloud-column.json "anvil"): a tower deep enough to glaciate spreads sideways at its buoyant top, so the
-  // top layers take a widened footprint of the towers that reach them (a box blur of the mature cells), not just the cores
-  const anv = new Float32Array(n), an = new Float32Array(L.nz), deep = top > base && col.top - base >= CC.anvil_min_tower_m;
+  // top layers take a widened footprint of the towers that reach them (a box blur of the mature cells), not just the cores.
+  // Blurred strength also sets how deep the ice deck reaches at that cell: full anvil_depth_m at anv~1, thinner fringe.
+  const anv = new Float32Array(n), iceOk = new Float32Array(L.nz), deep = top > base && col.top - base >= CC.anvil_min_tower_m;
   if (deep) { const r = Math.max(1, Math.round(CC.anvil_spread_m / L.sizeM * L.nx)), m = new Float32Array(n);
-    for (let c = 0; c < n; c++) m[c] = h[c] >= .85 ? 1 : 0; // cells whose tops reach the anvil level
+    // same strength ramp as overshoot: mature cores (h>=0.85) full weight, mid cells (.5..0.85) partial, nothing below .5
+    for (let c = 0; c < n; c++) m[c] = h[c] <= .5 ? 0 : Math.min(1, (h[c] - .5) / .35);
     for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { let s = 0, w = 0;
       for (let b = -r; b <= r; b++) for (let a = -r; a <= r; a++) { const kk = k + b, ii = i + a; if (kk < 0 || ii < 0 || kk >= L.nx || ii >= L.nx || a * a + b * b > r * r) continue; s += m[kk * L.nx + ii]; w++; }
       anv[k * L.nx + i] = Math.min(1, 1.5 * s / Math.max(1, w)); }
     for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), d = top - z;
-      an[j] = d >= 0 && d <= CC.anvil_depth_m && (ly[li]?.ice ?? 0) >= .5 ? 1 : 0; } }
+      iceOk[j] = d >= 0 && d <= CC.anvil_depth_m && (ly[li]?.ice ?? 0) >= .5 ? 1 : 0; } }
   for (let k = 0; k < L.nx; k++) for (let j = 0; j < L.nz; j++) for (let i = 0; i < L.nx; i++) { const c = k * L.nx + i;
-    const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = zr[j] < 0 ? 0 : Math.max(0, Math.min(1, (reach - zr[j]) * 6)); // weaker cells stop lower
-    const cv = Math.max(h[c] * edge, an[j] * anv[c] * .6);
+    const z = (j + .5) * dz;
+    let cv = 0;
+    if (zr[j] >= 0 && zr[j] <= 1) { // up to the buoyant top: strength scales cell height
+      const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = Math.max(0, Math.min(1, (reach - zr[j]) * 6));
+      // ice-deck depth scales with blurred strength: mature cores fill anvil_depth_m, fringe stays near the top
+      // density peaks at the buoyant top (Houze outflow at the EL) and thins deeper into the ice deck
+      // lateral: density ~ anv^1.5 so outflow thins away from the updraught (wispy fringe; Houze 2014 ch. 8)
+      const d = top - z, cellDepth = CC.anvil_depth_m * anv[c];
+      const taper = cellDepth > 0 ? 1 - .7 * Math.min(1, Math.max(0, d) / cellDepth) : 0; // 1 at top, .3 at cellDepth
+      const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper : 0;
+      cv = Math.max(h[c] * edge, anvHere);
+    } else if (tip > top && z > top && h[c] > .5) { // overshooting dome: cell strength sets how far past the EL (Houze 2014 ch. 8)
+      // mature cores (h~1) take the full overshootM; mid cells taper off; nothing below h=0.5 (same cut as anvil cores start rising)
+      const frac = Math.max(0, Math.min(1, (h[c] - .5) / .35)); // 0 at 0.5, 1 at >=0.85
+      const cellTip = Math.min(L.topM, top + over * frac);
+      if (z <= cellTip && cellTip > top) {
+        const u = (z - top) / (cellTip - top); // 0 at anvil level, 1 at this cell's tip
+        // Soft-narrow turret with height (Houze 2014 ch. 8): real overshooting tops are narrow
+        // turrets above the anvil. At u=0 keep today's footprint; as u→1 scale ~ frac^(u/(1-u))
+        // so mid cells leave a stubbier lower dome and only near-h=1 punches a thin tip.
+        const turret = Math.pow(Math.max(frac, 1e-9), u / Math.max(1 - u, .05));
+        // layers above the EL carry no suspended water; tapered ice plume, denser for stronger cells
+        // iceOpacity (Stephens 1978): glaciated overshoot is optically thinner — same as anvil via conv
+        const li = Math.min(ly.length - 1, Math.round(z / step)), op = iceOpacity(ly[li]?.ice ?? 0);
+        const plume = (1 - u) * (1 - u) * .45 * frac * op * turret;
+        out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, plume));
+        continue;
+      }
+    }
     out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, conv[j] * cv + strat[j] * sh[c])); }
   return out;
 }

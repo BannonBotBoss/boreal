@@ -62,6 +62,19 @@ pub fn iron_melting_t(p: f64) -> f64 { let g = |k: &str| material_num("iron_melt
 /// constant in materials.json). Pure iron froze the whole CMB solid because its ~4100 K melting point there sits above the core-top T.
 pub fn core_liquidus_t(p: f64) -> f64 { iron_melting_t(p) - material_num("core_light_elements", "melting_depression_K") }
 
+/// Liquid-iron Grueneisen parameter for the core cooling adiabat (Vocadlo, Alfe, Gillan & Price 2003, PEPI 140:101: gamma ~ 1.5
+/// under core conditions). Distinct from Tillotson a+b (=2.0), which made the core adiabat steeper than the liquidus and froze
+/// an inverted outer shell instead of an inner core (notes/design/emergent-bodies.md).
+pub fn core_grueneisen() -> f64 { material_num("core_liquid_iron", "grueneisen") }
+
+/// Inner-core boundary (m): grow a solid sphere from the centre. Walk iron parcels by radius; stop at the first liquid.
+/// An inverted frozen shell at the top of the core (solid only at large r) yields 0 — that is not an inner core.
+pub fn icb_growing_from_centre(iron_by_r: &[(f64, bool)]) -> f64 {
+    let mut icb = 0.0;
+    for &(r, solid) in iron_by_r { if !solid { break; } icb = r; }
+    icb
+}
+
 /// RB22 alpha: I/alpha for a regular cubic grid (spacing 1, h = eta) filling the half-space z <= 0, then alpha = 1.5 / that.
 pub fn rb22_alpha() -> f64 { let h = F::ETA; let k = (2.0 * h).ceil() as i64; let (mut num, mut den) = ([0.0; 3], 0.0);
     for x in -k..=k { for y in -k..=k { for z in -k..=0 { let r = [x as f64, y as f64, z as f64]; let wv = F::w(norm(r), h); for q in 0..3 { num[q] += r[q] * wv; } den += wv; } } }
@@ -114,31 +127,35 @@ impl Hot {
         self.density(); dt }
     /// Cooling phase (time-compressed): the hot run keeps every joule (no radiation), but Earth lost most accretion and core
     /// formation heat over ~4.5 Gyr. This relaxes each parcel's temperature a fraction `frac` per step toward the adiabat
-    /// T = T_p (rho/rho0)^Gamma, Gamma = a + b (Tillotson's low-energy Grueneisen parameter; dlnT/dlnrho = Gamma on an
-    /// isentrope), anchored at the cited mantle potential temperature (materials.json, Katsura et al. 2010); the core's adiabat
-    /// starts above the mantle's bottom by the cited boundary-layer contrast (Lay et al. 1998). The heat
-    /// removed is counted in `heat_removed`. The time scale is not physical; only the end state is used.
+    /// T = T_p (rho/rho0)^Gamma. Mantle Gamma = Tillotson a + b; core Gamma = cited liquid-iron Grueneisen (core_grueneisen,
+    /// Vocadlo et al. 2003), not a + b — that value (~2) is steeper than the alloy liquidus and froze an inverted outer shell.
+    /// Anchored at the cited mantle potential temperature (materials.json, Katsura et al. 2010); the core's adiabat starts
+    /// above the mantle's bottom by the cited boundary-layer contrast (Lay et al. 1998). The heat removed is counted in
+    /// `heat_removed`. The time scale is not physical; only the end state is used.
     pub fn cool_toward_adiabat(&mut self, frac: f64) { let tp = material_num("", "initial_temperature_K"); let dt_tbl = material_num("", "cmb_tbl_contrast_K"); let n = self.p.pos.len();
         // mantle: T = T_p (rho/rho0)^Gamma from the surface down. Core: the core cools only through the base of the mantle,
         // so its adiabat starts at the mantle-bottom temperature plus the cited boundary-layer contrast, at the top-of-core
         // density, both read from the parcels (90th-percentile silicate density, 10th-percentile iron density).
         let pct = |mut v: Vec<f64>, q: f64| -> f64 { if v.is_empty() { return 0.0; } v.sort_by(|a, b| a.partial_cmp(b).unwrap()); v[((v.len() - 1) as f64 * q) as usize] };
-        let (fe, si) = (&self.mats[0], &self.mats[1]); let g = |m: &Till| m.a + m.b;
+        let (fe, si) = (&self.mats[0], &self.mats[1]); let g_si = si.a + si.b; let g_fe = core_grueneisen();
         let rho_si_bot = pct((0..n).filter(|&i| F::class_of(self.p.mat[i]) == 1).map(|i| self.rho[i]).collect(), 0.9);
         let rho_fe_top = pct((0..n).filter(|&i| F::class_of(self.p.mat[i]) == 0).map(|i| self.rho[i]).collect(), 0.1).max(fe.rho0);
-        let t_top = tp * (rho_si_bot / si.rho0).max(1.0).powf(g(si)) + dt_tbl;
+        let t_top = tp * (rho_si_bot / si.rho0).max(1.0).powf(g_si) + dt_tbl;
         for i in 0..n { let c = F::class_of(self.p.mat[i]); let m = &self.mats[c];
-            let tt = if c == 0 { t_top * (self.rho[i] / rho_fe_top).max(1.0).powf(g(fe)) } else { tp * (self.rho[i] / m.rho0).max(1.0).powf(g(si)) };
+            let tt = if c == 0 { t_top * (self.rho[i] / rho_fe_top).max(1.0).powf(g_fe) } else { tp * (self.rho[i] / m.rho0).max(1.0).powf(g_si) };
             let target = m.e_cold(self.rho[i]) + m.cv * tt; let du = frac * (target - self.u[i]); if du < 0.0 { self.u[i] += du; self.heat_removed -= du * self.p.mass[i]; } } }
     pub fn as_state(&self) -> F::State { F::raw_state(self.p.clone(), self.h.clone(), self.rho.clone(), self.omega) }
     pub fn measure(&self) -> Figure { F::measure(&self.as_state()) }
     pub fn boundaries(&self) -> Boundaries { let s = self.as_state(); let b = F::boundaries(&s); let n = self.p.pos.len(); let m: f64 = self.p.mass.iter().sum();
         let mut com = [0.0; 3]; for i in 0..n { for k in 0..3 { com[k] += self.p.mass[i] * self.p.pos[i][k] / m; } }
         let r = |i: usize| norm([self.p.pos[i][0] - com[0], self.p.pos[i][1] - com[1], self.p.pos[i][2] - com[2]]);
-        let mut sol: Vec<f64> = (0..n).filter(|&i| self.p.mat[i] == MAT_IRON_SOLID).map(r).filter(|&x| x < b.cmb).collect(); sol.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let mut iron: Vec<(f64, bool)> = (0..n).filter(|&i| F::class_of(self.p.mat[i]) == 0).map(|i| (r(i), self.p.mat[i] == MAT_IRON_SOLID)).filter(|&(x, _)| x < b.cmb).collect();
+        iron.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+        let n_solid = iron.iter().filter(|&&(_, s)| s).count();
+        let icb = icb_growing_from_centre(&iron);
         let mut all: Vec<(f64, usize)> = (0..n).map(|i| (r(i), i)).collect(); all.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
         let tc = all.iter().take(20).map(|&(_, i)| self.temp[i]).sum::<f64>() / 20.0_f64.min(n as f64); let pc = all.iter().take(20).map(|&(_, i)| self.pres[i]).sum::<f64>() / 20.0_f64.min(n as f64);
-        Boundaries { separation: b.separation, cmb: b.cmb, n_solid: sol.len(), icb: if sol.is_empty() { 0.0 } else { sol[(sol.len() * 95 / 100).min(sol.len() - 1)] }, t_centre: tc, p_centre: pc } }
+        Boundaries { separation: b.separation, cmb: b.cmb, n_solid, icb, t_centre: tc, p_centre: pc } }
     /// Bake (same 6-float layout as formation::bake: x, y, z, material, density, h) plus a 7th file-level array is not used.
     pub fn bake(&self) -> Vec<f32> { let mut v = F::bake(&self.as_state()); let n = self.p.pos.len(); for i in 0..n { v[i * 6 + 3] = self.p.mat[i] as f32; } v }
 }
@@ -157,6 +174,31 @@ mod tests { use super::*;
     #[test] fn light_elements_keep_the_outer_core_liquid() { // CMB 136 GPa ~4000 K (Lay et al. 2008); ICB 330 GPa ~5000-6000 K
         let cmb = core_liquidus_t(136e9); assert!(cmb < 4000.0 && iron_melting_t(136e9) > 4000.0, "alloy {cmb} must melt below the CMB temperature");
         let icb = core_liquidus_t(330e9); assert!(icb > 5000.0 && icb < 6000.0, "ICB liquidus {icb}"); }
+    #[test] fn core_grueneisen_is_cited_liquid_iron_not_tillotson() {
+        let g = core_grueneisen(); assert!((g - 1.5).abs() < 1e-9, "{g}");
+        let fe = Till::from_data("iron"); assert!((fe.a + fe.b - 2.0).abs() < 1e-9, "Tillotson a+b stays 2; core adiabat must not use it");
+        assert!(g < fe.a + fe.b - 0.1, "core Gamma must be shallower than Tillotson a+b"); }
+    #[test] fn icb_grows_from_centre_ignores_inverted_shell() {
+        assert!((icb_growing_from_centre(&[(1e6, true), (2e6, true), (3e6, false)]) - 2e6).abs() < 1.0);
+        assert!((icb_growing_from_centre(&[(1e6, false), (2e6, true), (3e6, true)]) - 0.0).abs() < 1.0, "outer frozen shell is not an inner core");
+        assert!((icb_growing_from_centre(&[]) - 0.0).abs() < 1.0); }
+    /// Cited liquid-Fe gamma (1.5) makes the adiabat shallower than the alloy liquidus, so an
+    /// adiabat anchored just above the liquidus at the core top freezes at the centre. Tillotson
+    /// a+b (=2.0) is steeper and keeps the centre liquid — the inverted outer shell we measured.
+    /// Anchors are PREM-like outer-core / deep-core (rho, P); the claim is the gamma choice vs the
+    /// Anzellini+Alfè liquidus, not the Tillotson cold curve.
+    #[test] fn core_adiabat_gamma_allows_centre_freeze() {
+        let fe = Till::from_data("iron");
+        let top = (10_600.0_f64, 140e9);
+        let centre = (13_000.0_f64, 360e9);
+        let t_top = core_liquidus_t(top.1) + 200.0;
+        let margin = |g: f64, rho: f64, p: f64| core_liquidus_t(p) - t_top * (rho / top.0).powf(g);
+        let (m_top, m_c) = (margin(1.5, top.0, top.1), margin(1.5, centre.0, centre.1));
+        assert!(m_c > m_top + 100.0, "gamma 1.5: centre margin {m_c} must exceed top {m_top}");
+        assert!(m_c > 0.0, "gamma 1.5: centre solid (margin {m_c})");
+        let steep = fe.a + fe.b;
+        assert!(margin(steep, centre.0, centre.1) < 0.0, "Tillotson a+b={steep} keeps the centre liquid");
+    }
     #[test] fn rb22_alpha_is_order_unity() { let a = rb22_alpha(); assert!(a > 0.5 && a < 10.0, "{a}"); }
     #[test] fn hot_mix_sinks_iron_and_heats() { let mut s = Hot::mix(2000, 7, "dunite", C::omega_earth); let b0 = s.boundaries().separation; let u0: f64 = s.u.iter().sum();
         s_relax(&mut s, 300); let b1 = s.boundaries().separation; let u1: f64 = s.u.iter().sum();

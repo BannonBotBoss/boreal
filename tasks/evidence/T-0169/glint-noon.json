@@ -1,0 +1,37 @@
+{
+  "ready": false,
+  "info": {
+    "stats": {
+      "drawn": 11,
+      "inView": 11,
+      "cached": 29,
+      "queued": 8,
+      "deepest": 3,
+      "splitDepth": 3,
+      "splitK": 1,
+      "lodSplit": 1.8,
+      "nearK": 0,
+      "hold": {
+        "lv": 3,
+        "dd": 2249578,
+        "edge": 1251590,
+        "reach": 7200000,
+        "minDeep": 2249578
+      },
+      "tier": 0,
+      "segments": 48
+    },
+    "hud": "Camera\n◉ Photo\nGallery",
+    "times": [
+      4496.100000000093,
+      11.199999999953434,
+      4352.600000000093,
+      4103.899999999907,
+      4682.600000000093
+    ],
+    "href": "http://127.0.0.1:5173/?view=globe&stages=1&trees=v2&shot=1&tier=0&hour=12&latlon=25,-40&alt=1800000&pitch=0"
+  },
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

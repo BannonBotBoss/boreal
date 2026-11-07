@@ -74,7 +74,9 @@ export const INPAGE = { searchMs: 3, gain: 1, kDown: .7, kUp: 1.7, nearK: .01, p
  *  and keeps its own look by the handover; occ: [metres, fraction of the distance] a globe surface must be in front of a
  *  patch fragment to hide it (globe tiles are coarser than the game terrain). [game calibration] */
 type View = { scene: THREE.Scene; camera: THREE.PerspectiveCamera; canvas: HTMLCanvasElement; photoreal: { renderer: THREE.WebGLRenderer }; chunkBuilt?(cx: number, cz: number): boolean };
-export interface InPageHost { player(): { x: number; z: number; yaw: number }; place(x: number, z: number, yaw: number): void; save(): void; notice?(m: string): void }
+export interface InPageHost { player(): { x: number; z: number; yaw: number }; place(x: number, z: number, yaw: number): void; save(): void; notice?(m: string): void;
+  /** One-shot orbit aim from the events save. Null keeps the forest entry. Consumed on the first globe build. */
+  globeAim?(): { lat: number; lon: number; alt?: number } | null }
 type FxTier = { ssao: number; contact: number; rays: number };
 let lakeU: typeof import('./globeView').GLOBE_LAKE | null = null, landU: typeof import('./globeView').GLOBE_LAND | null = null, shoreU: typeof import('./globeView').GLOBE_SHORE | null = null;
 let ctl: ReturnType<typeof controller> | null = null, globeModule: Promise<typeof import('./globeView')> | null = null, createGlobe: typeof import('./globeView').createGlobe | null = null;
@@ -146,6 +148,11 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     const q = new URLSearchParams(location.search), p = host.player(), r = (v: number, k: number) => Math.round(v * k) / k;
     for (const k of ['view', 'bench', 'shot', 'handoff', 'look', 'pitch', 'dir', 'tier', 'workers', 'seams']) q.delete(k);
     q.set('at', `${r(p.x, 10)},${r(p.z, 10)},${r(p.yaw, 1000)}`); q.set('alt', String(GLOBE_ENTRY_ALT));
+    const aim = host.globeAim?.() ?? null;
+    if (aim && Number.isFinite(aim.lat) && Number.isFinite(aim.lon)) {
+      q.set('latlon', `${aim.lat},${aim.lon}`);
+      if (Number.isFinite(aim.alt)) q.set('alt', String(aim.alt));
+    }
     globe = createGlobe!(renderer, { shared: true, params: q, target: far.target, workers: 2, onLeave: at => { if (mode === 'globe' && at) descend(at); } }); // the fall calls this at 10,000 ft with its vertical speed
     globe.attachViewpoint(view.camera); // one camera from orbit down; the planet scene is the mapping of it
     return globe;
@@ -321,11 +328,17 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     },
     /** Page load (world/globe/startView): straight into globe mode at the standalone globe's opening altitude
      *  (2.2 R: the whole disc), aimed at the forest edge by the mama's den. No rise. False = take the reload path. */
+    /** Wide disc for the birth beats. False restores the page-load orbit. */
+    setFilmFrame(wide: boolean) { globe?.setFilmFrame(wide); },
+    /** yaw radians off the page-load aim, altitude in planet radii, view-offset 0..1. */
+    setFilmDrive(yaw: number, radii: number, offset: number, sunBias?: number) { globe?.setFilmDrive(yaw, radii, offset, sunBias); },
     enter(): boolean {
       if (mode !== 'game') return true;
       if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
       prep = null; hold.hold(); globe.resumeWorkers(); lastT = performance.now(); toGlobe(true); return true;
     },
+    /** The planet grid is final. The film waits on this before the living world gives way to arrival. */
+    whenBooted() { return loadGlobe().then(g => g.bootP); },
     /** VR ground step: leave the planet view and stand the mama at the forest edge. */
     showForest(at: { x: number; z: number; yaw: number }) {
       host.place(at.x, at.z, at.yaw);
@@ -489,7 +502,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       g.attachViewpoint(null);
       const t0 = performance.now(); let n = 0;
       try { while (performance.now() - t0 < INPAGE.prebuildMs) { renderer.getDrawingBufferSize(size); far.resize(size.x, size.y); g.step(far.target); if (++n > 10 && g.stats().queued === 0) break; await new Promise(r => requestAnimationFrame(r)); } }
-      finally { g.attachViewpoint(view.camera); }
+      finally { if (mode === 'game') g.attachViewpoint(view.camera); }
       const bg = new THREE.Scene(), rt = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }); bg.background = far.texture; // background plane: screen and composer variants
       const prev = renderer.getRenderTarget(); renderer.setRenderTarget(rt); renderer.render(bg, view.camera); renderer.setRenderTarget(null); renderer.render(bg, view.camera); renderer.setRenderTarget(prev); rt.dispose();
       if (mode === 'game') g.suspendWorkers(); // not if Shift+G already went up meanwhile (the band would build tiles on the main thread)

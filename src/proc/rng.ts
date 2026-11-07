@@ -1,4 +1,19 @@
 /** Shared seeded randomness (Grok Bot). Every procedural system draws from here; never Math.random or render order. */
+const f32Bits = new Float32Array(1), u32Bits = new Uint32Array(f32Bits.buffer);
+const u32mul = (a: number, b: number) => Math.imul(a, b) >>> 0;
+/** CPU twin of `hash2u` in proc/glsl.ts (the integer lattice hash the cloud shell uses). One implementation site
+ *  for the multiply; the shader copy stays in the GLSL string. */
+export function hash2u(cx: number, cy: number, s: number) {
+  f32Bits[0] = s;
+  const q0 = u32mul(cx | 0, 1597334673);
+  const q1 = u32mul(cy | 0, 3812015801);
+  let n = (q0 ^ q1 ^ u32Bits[0]) >>> 0;
+  n = u32mul(n, 1597334673);
+  n = (n ^ (n >>> 16)) >>> 0;
+  n = u32mul(n, 0x7feb352d);
+  n = (n ^ (n >>> 15)) >>> 0;
+  return n / 4294967295;
+}
 /** FNV-1a 32-bit hash of a string. */
 export function hash(text: string): number {
   let value = 2166136261;

@@ -51,7 +51,8 @@ export function engageLanding(direction: Vec3, home: number) {
   const lonDeg = ll.lon * 180 / Math.PI;
   const salt = hash(`landing:${latDeg.toFixed(3)}:${lonDeg.toFixed(3)}`);
   const cover = landingCover(planet, latDeg, lonDeg, frame.dir);
-  setSite({ latDeg, lonDeg, datumM: Math.max(0, originH), salt, dir: frame.dir, east: frame.east, north: frame.north, treeShare: cover == null ? 1 : coverTreeShare(cover) });
+  const coastM = liveCoastM(latDeg, lonDeg);
+  setSite({ latDeg, lonDeg, datumM: Math.max(0, originH), salt, dir: frame.dir, east: frame.east, north: frame.north, treeShare: cover == null ? 1 : coverTreeShare(cover), coastM });
   setRemoteHeight((x, z) => {
     const d = siteDirection(x, z, PLANET.radius);
     const s = planet.sampleSurface(d);
@@ -72,8 +73,9 @@ export function landingCover(planet: ReturnType<typeof planetFor>, latDeg: numbe
   const s = planet.sampleSurface(dir);
   const { elevM, water } = groundForCover(s, sampleDem(latDeg, lonDeg));
   if (water) return null;
-  const vegetation = samplePhotoVegetation(latDeg, lonDeg) ?? vegetationWeight(s, dir);
-  return coverKind(latDeg, elevM, vegetation, false, liveCoastM(latDeg, lonDeg));
+  const coastM = liveCoastM(latDeg, lonDeg);
+  const vegetation = samplePhotoVegetation(latDeg, lonDeg) ?? vegetationWeight(s, dir, coastM);
+  return coverKind(latDeg, elevM, vegetation, false, coastM);
 }
 
 /** Nearest dry ground in the anchored frame. The Kenora dry-start is not used off home. */

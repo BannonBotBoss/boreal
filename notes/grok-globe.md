@@ -23,3 +23,13 @@
   weatherAt / weatherAtLatLon; globe cloud drift = sub-point u / (R cos lat) on sim seconds, held above Behavioral via worldClock
   SCALE_BOUNDS; Mie x Hanel f(RH) capped at 0.95. Use `clockRate()`, not `observationRecord().rate` (still 0/1 on main). Full
   npm test on the box takes ~22 min (climate-class.test.ts runs the wasm grid for ~17 min). Skill notes/skills/environment-record.md.
+
+## 2026-11-06 T-0169 globe close-up realism, branch grok-globe/globe-closeup-realism
+- Claimed 00:31 PT after grokbot-2 approve-plan 2026-11-06T01:21:23-07:00 (Matthew's direct chat, rule 16b). From main e7173084. Handoff tasks/handoffs/T-0169-grok-globe.md. Not submitted.
+- Clouds: smaller synoptic warp, a second small-scale warp from 4 octaves, billow + one Worley only at 6+ octaves. CPU twin `cloudCover.ts` holds convective cover to the base fBm (the twin itself reads ~0.12, not the old GPU 0.16). `noiseSd` 0.17.
+- Terminator: `atmWarmSun` (white only while N·L is high, then Rayleigh plus architectural orange/red) on clouds and on the ground. Lambert is `smoothstep(-0.08, 0.25, N·L)`.
+- Ocean: deep #030b1e, face-on #051330. Fresnel is Matthew's `pow(1-N·V, 5)`. Ocean roughness 0.18 and metalness 0.15, simplex chop. Lakes stay Cox-Munk and F0 0.020. Glint and direct diffuse are killed by the analytic cloud shadow (`csSpec` hits 0 by cover 0.35). `localClouds.ts` untouched. `presentW` leaves the T-0166 early beats alone.
+- Stills: tasks/evidence/T-0169/. SwiftShader, `tools/t0169-shot.mjs`. Ultra render gaps were about 1–7 s and Medium about 1–6 s while tiles were still queuing. Skill notes/skills/globe-surface-optics.md.
+
+## 2026-11-05 T-0166 Big Bang opening (B0–B3), branch grok-globe/big-bang-cinematic
+- After the loading card the screen is black until a click or a key. Narration and the bed start then. The impact flash is the peak of bang-impact, 0.37 s after it starts. The title is THE BIG BANG. The film holds there. Cue 2 and the later voices are on disk and stay quiet until their times. No save.

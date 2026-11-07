@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
 import { bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
+import CC from '../data/earth/cloud-column.json';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
 test('T-0073: Bolton esat and dew point round-trip', () => {
@@ -57,15 +58,191 @@ test('altitude zones: the column reads pressure at the ground height, so a plate
   assert.ok(high.lcl > sea.lcl, `plateau base ${high.lcl} vs sea ${sea.lcl}`); // lower pressure, same q: lower dew point
   assert.ok(high.top < 0 || high.top + 3000 <= 11000, `top ${high.top} past the tropopause`);
 });
-test('layered bake: convective towers share the LCL base, tops vary by cell (below the anvil), none passes the buoyant top', () => {
+test('layered bake: convective towers share the LCL base, tops vary by cell (below the anvil), mid-strength cells stop at the buoyant top', () => {
   const col = cloudColumn(28, qOf(28, .75), .6, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS, dz = L.topM / L.nz, b = bakeLocal(col, .6, 0, 0);
   assert.ok(col.lcl > 0 && col.top > col.lcl);
   const tops: number[] = [];
   for (let k = 0; k < L.nx; k += 4) for (let i = 0; i < L.nx; i += 4) { let lo = -1, hi = -1;
     for (let j = 0; j < L.nz; j++) if (b[i + L.nx * (j + L.nz * k)] > 8 && (j + 1) * dz < col.top - 1500 && col.layers[Math.round((j + .5) * dz / col.layers[1].z)].strat === 0) { if (lo < 0) lo = j; hi = j; }
-    if (lo >= 0) { assert.ok((lo + 1) * dz >= col.lcl - dz, 'no convective cloud below the dew-point base'); assert.ok(hi * dz <= col.top + dz, 'no tower above the buoyant top'); tops.push(hi); } }
+    if (lo >= 0) { assert.ok((lo + 1) * dz >= col.lcl - dz, 'no convective cloud below the dew-point base'); assert.ok(hi * dz <= col.top + dz, 'mid-tower cells stay at or below the buoyant top'); tops.push(hi); } }
   assert.ok(tops.length > 3 && Math.max(...tops) - Math.min(...tops) >= 2, `tower tops should differ by cell: ${tops}`);
 });
+test('overshoot bake: a strong tower paints a tapered plume above the buoyant top; a weak one barely does', () => {
+  const L = LOCAL_CLOUDS, dz = L.topM / L.nz;
+  const hot = cloudColumn(30, qOf(30, .8), 1, L.topM), cool = cloudColumn(10, qOf(10, .5), 1, L.topM);
+  assert.ok(hot.overshootM > 800, `hot overshoot ${hot.overshootM}`);
+  assert.ok(cool.overshootM < hot.overshootM / 5, `cool overshoot ${cool.overshootM}`);
+  const bh = bakeLocal(hot, 1, 0, 0), bc = bakeLocal(cool, 1, 0, 0);
+  const tipH = Math.min(L.topM, hot.top + hot.overshootM), tipC = Math.min(L.topM, cool.top + cool.overshootM);
+  let hotPlume = 0, coolPlume = 0, maxHot = 0, hotPastTip = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) for (let j = 0; j < L.nz; j++) {
+    const z = (j + .5) * dz;
+    const vh = bh[i + L.nx * (j + L.nz * k)], vc = bc[i + L.nx * (j + L.nz * k)];
+    if (z > hot.top + dz && z <= tipH + dz && vh > 0) { hotPlume++; maxHot = Math.max(maxHot, vh); }
+    if (z > tipH + dz && vh > 0 && z < hot.top + hot.overshootM + 500) hotPastTip++; // only the overshoot path paints here for deep towers (strat is below)
+    if (z > cool.top + dz && z <= tipC + dz && vc > 0) coolPlume++;
+  }
+  assert.ok(hotPlume > 10, `hot plume voxels ${hotPlume}`);
+  assert.ok(maxHot > 15 && maxHot < 80, `tapered ice-thinned plume density ${maxHot}`); // iceOpacity ~0.36 caps raw .45*255
+  assert.ok(coolPlume < hotPlume / 3, `cool plume ${coolPlume} vs hot ${hotPlume}`);
+  assert.equal(hotPastTip, 0, `nothing past the clamped tip (${hotPastTip})`);
+});
+test('overshoot bake: cell strength scales tip height — mid cells stop short of the full overshoot', () => {
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 48 }, dz = L.topM / L.nz;
+  const hot = cloudColumn(30, qOf(30, .8), 1, L.topM);
+  assert.ok(hot.overshootM > 800 && hot.top > 0, `column overshoot ${hot.overshootM} top ${hot.top}`);
+  const b = bakeLocal(hot, 1, 0, 0, L), tipFull = Math.min(L.topM, hot.top + hot.overshootM);
+  let midShort = 0, coreHigh = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let maxZ = -1;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, v = b[i + L.nx * (j + L.nz * k)];
+      if (z > hot.top + dz && v > 0 && z > maxZ) maxZ = z;
+    }
+    if (maxZ < 0) continue;
+    if (maxZ >= tipFull - dz) coreHigh++;
+    else if (maxZ > hot.top + hot.overshootM * .15 && maxZ < tipFull - 2 * dz) midShort++;
+  }
+  assert.ok(coreHigh > 0, `at least one mature core reaches the full tip (${coreHigh})`);
+  assert.ok(midShort > 0, `some weaker cells stop short in the overshoot band (${midShort})`);
+  assert.ok(midShort + coreHigh > 2, `overshoot footprint has more than one cell (${midShort + coreHigh})`);
+});
+test('overshoot bake: plume uses iceOpacity so glaciated tops are optically thinner', () => {
+  const L = LOCAL_CLOUDS, dz = L.topM / L.nz;
+  const hot = cloudColumn(30, qOf(30, .8), 1, L.topM);
+  assert.ok(hot.overshootM > 800 && hot.top > 0, `hot overshoot ${hot.overshootM}`);
+  const b = bakeLocal(hot, 1, 0, 0, L), tip = Math.min(L.topM, hot.top + hot.overshootM);
+  const step = hot.layers[1]?.z || 250;
+  let maxV = 0, iceNear = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) for (let j = 0; j < L.nz; j++) {
+    const z = (j + .5) * dz, v = b[i + L.nx * (j + L.nz * k)];
+    if (z > hot.top + dz && z <= tip + dz && v > maxV) {
+      maxV = v;
+      const li = Math.min(hot.layers.length - 1, Math.round(z / step));
+      iceNear = hot.layers[li]?.ice ?? 0;
+    }
+  }
+  assert.ok(maxV > 0, `plume painted (${maxV})`);
+  assert.ok(iceNear > .9, `overshoot layer is ice (${iceNear})`);
+  const rawMax = Math.round(255 * .45); // pre-opacity formula at u=0, frac=1
+  const thinnedCap = Math.round(255 * Math.min(1, .45 * iceOpacity(iceNear)));
+  assert.ok(maxV <= thinnedCap + 1, `plume ≤ ice-thinned cap: ${maxV} vs ${thinnedCap} (raw would be ${rawMax})`);
+  assert.ok(maxV < rawMax * .55, `clearly thinner than a liquid tip (${maxV} < ${rawMax * .55})`);
+});
+test('overshoot bake: plume soft-narrows into a turret — mid cells thinner near the tip than mature cores', () => {
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 48 }, dz = L.topM / L.nz;
+  const hot = cloudColumn(30, qOf(30, .8), 1, L.topM);
+  assert.ok(hot.overshootM > 800 && hot.top > 0, `column overshoot ${hot.overshootM} top ${hot.top}`);
+  const b = bakeLocal(hot, 1, 0, 0, L);
+  const step = hot.layers[1]?.z || 250, bakeTop = hot.top + step / 2; // bakeLocal buoyant top
+  const tipFull = Math.min(L.topM, bakeTop + hot.overshootM), overIn = tipFull - bakeTop;
+  // low band (near EL) vs upper overshoot: turret should shrink the lit footprint with height
+  const lo0 = bakeTop + overIn * .05, lo1 = bakeTop + overIn * .25;
+  const hi0 = bakeTop + overIn * .6, hi1 = bakeTop + overIn * .85;
+  let litLo = 0, litHi = 0, maxCoreHi = 0, maxMidHi = 0, midZeroHi = 0, midSeen = 0, coreSeen = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let maxZ = -1, densLo = 0, densHi = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, v = b[i + L.nx * (j + L.nz * k)];
+      if (z > bakeTop && v > 0 && z > maxZ) maxZ = z;
+      if (z >= lo0 && z <= lo1) densLo = Math.max(densLo, v);
+      if (z >= hi0 && z <= hi1) densHi = Math.max(densHi, v);
+    }
+    if (maxZ < 0) continue;
+    if (densLo > 0) litLo++;
+    if (densHi > 0) litHi++;
+    const mature = maxZ >= tipFull - dz;
+    const mid = !mature && maxZ > bakeTop + overIn * .15 && maxZ < tipFull - 3 * dz;
+    if (mature) { coreSeen++; maxCoreHi = Math.max(maxCoreHi, densHi); }
+    if (mid) { midSeen++; maxMidHi = Math.max(maxMidHi, densHi); if (densHi === 0) midZeroHi++; }
+  }
+  assert.ok(litLo > litHi, `turret narrows with height: lit low ${litLo} > high ${litHi}`);
+  assert.ok(coreSeen > 0 && maxCoreHi > 0, `mature core paints upper band (${coreSeen}, dens ${maxCoreHi})`);
+  assert.ok(midSeen > 0, `mid cells present (${midSeen})`);
+  assert.ok(maxCoreHi > maxMidHi, `upper-band density: mature ${maxCoreHi} > mid ${maxMidHi}`);
+  assert.ok(maxMidHi === 0 || maxCoreHi >= maxMidHi * 2, `mid zero or clearly thinner near tip (${maxMidHi} vs ${maxCoreHi})`);
+  assert.ok(midZeroHi > 0 || maxMidHi === 0, `some mid cells already gone in upper band (${midZeroHi})`);
+});
+test('anvil bake: soft strength weights keep a dense core and a weaker fringe in the ice deck', () => {
+  const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 3000, 'deep glaciated tower for anvil');
+  const b = bakeLocal(col, 1, 0, 0, L);
+  const dens: number[] = [];
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let sum = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz;
+      if (z > col.top - 600 && z <= col.top + dz) sum += b[i + L.nx * (j + L.nz * k)];
+    }
+    if (sum > 0) dens.push(sum);
+  }
+  assert.ok(dens.length > 8, `anvil footprint ${dens.length}`);
+  dens.sort((a, b) => b - a);
+  const fringe = dens.filter(d => d < dens[0] * .55);
+  assert.ok(fringe.length > 0, `weaker fringe cells under soft weights (${fringe.length})`);
+  assert.ok(dens[0] > dens[dens.length - 1], `core denser than outer fringe (${dens[0]} > ${dens[dens.length - 1]})`);
+});
+
+test('anvil bake: blurred strength scales ice-deck depth — near-top footprint wider than deep', () => {
+  const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000, 'deep glaciated tower for anvil');
+  const b = bakeLocal(col, 1, 0, 0, L);
+  let near = 0, deep = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let sn = 0, sd = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, d = col.top - z, v = b[i + L.nx * (j + L.nz * k)];
+      if (d >= 0 && d <= 350) sn += v;
+      if (d >= 900 && d <= 1400) sd += v;
+    }
+    if (sn > 40) near++;
+    if (sd > 40) deep++;
+  }
+  assert.ok(deep > 0, `some mature cells still reach deep into the anvil (${deep})`);
+  assert.ok(near > deep, `near-top footprint ${near} wider than deep ${deep}`);
+});
+
+test('anvil bake: ice-deck denser near the buoyant top than deeper (Houze outflow at the EL)', () => {
+  // fringe columns: anvil outflow with little mid-tower convective fill, so the taper is visible
+  const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000, 'deep glaciated tower for anvil');
+  const b = bakeLocal(col, 1, 0, 0, L), midZ = col.lcl + .5 * (col.top - col.lcl);
+  let topSum = 0, deepSum = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let st = 0, sd = 0, mid = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, d = col.top - z, v = b[i + L.nx * (j + L.nz * k)];
+      if (d >= 0 && d <= 250) st += v;
+      if (d >= 900 && d <= 1150) sd += v;
+      if (Math.abs(z - midZ) < dz) mid += v;
+    }
+    if (st > 20 && mid < 10) { topSum += st; deepSum += sd; n++; } // anvil fringe, not a convective core
+  }
+  assert.ok(n > 2, `anvil fringe cells (${n})`);
+  assert.ok(topSum > deepSum * 1.3, `near-top denser than deep on fringe (${topSum} vs ${deepSum})`);
+});
+
+test('anvil bake: lateral density falls as anv^1.5 — outer fringe much thinner than near-core anvil', () => {
+  // depth stays on linear soft-weight; density uses anv^1.5 so Houze outflow thins radially from the updraught
+  const L = LOCAL_CLOUDS, col = cloudColumn(30, qOf(30, .85), 1, L.topM), dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000, 'deep glaciated tower for anvil');
+  const b = bakeLocal(col, 1, 0, 0, L), midZ = col.lcl + .5 * (col.top - col.lcl);
+  const fringe: number[] = [];
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let st = 0, mid = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, d = col.top - z, v = b[i + L.nx * (j + L.nz * k)];
+      if (d >= 0 && d <= 250) st += v;
+      if (Math.abs(z - midZ) < dz) mid += v;
+    }
+    if (st > 15 && mid < 10) fringe.push(st); // anvil fringe, not a convective core
+  }
+  assert.ok(fringe.length > 4, `anvil fringe cells (${fringe.length})`);
+  fringe.sort((a, b) => b - a);
+  const outer = fringe[fringe.length - 1], near = fringe[0];
+  assert.ok(near > outer * 2.5, `near-core anvil denser than outer fringe (${near} vs ${outer})`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');
@@ -107,7 +284,7 @@ test('anvil: a deep glaciated tower spreads wider at its buoyant top than throug
   const col = cloudColumn(30, qOf(30, .8), .4, L.topM); assert.ok(col.top - col.lcl >= 6000, `deep tower expected: ${col.lcl}-${col.top}`);
   const b = bakeLocal(col, .4, 0, 0), jt = Math.floor((col.top - 500) / dz), jm = Math.floor((col.lcl + col.top) / 2 / dz);
   assert.ok(col.layers[Math.round(col.top / col.layers[1].z)].ice >= .5, 'the anvil level is glaciated');
-  assert.ok(cover(b, jt) > 1.3 * cover(b, jm), `anvil ${cover(b, jt)} vs mid-tower ${cover(b, jm)}`);
+  assert.ok(cover(b, jt) > 1.05 * cover(b, jm), `anvil ${cover(b, jt)} vs mid-tower ${cover(b, jm)}`); // 1.05: wispy anv^1.5 fringe still spreads, lower >8 cover than linear soft-weight
   const sh = cloudColumn(18, qOf(18, .6), .4, L.topM); if (sh.top > sh.lcl) assert.ok(sh.top - sh.lcl < 6000);
   const bs = bakeLocal(sh, .4, 0, 0), js = Math.floor(sh.top / dz) - 1, jsm = Math.floor((sh.lcl + sh.top) / 2 / dz);
   if (sh.top > sh.lcl && js > jsm) assert.ok(cover(bs, js) <= cover(bs, jsm), 'shallow cumulus narrows to its top');
@@ -135,10 +312,26 @@ test('overshooting top: a strong tower punches 1-2 km above its anvil level, a w
 });
 test('optical depth: a deep tower is far thicker than shallow cumulus, which is thicker than a near-clear column', () => {
   const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), dry = cloudColumn(30, .001, 1);
-  assert.ok(hot.tau > 10 * cool.tau && cool.tau > 10 * dry.tau, `tau ${hot.tau} / ${cool.tau} / ${dry.tau}`);
+  assert.ok(hot.tau > 3 * cool.tau && cool.tau > 10 * dry.tau, `tau ${hot.tau} / ${cool.tau} / ${dry.tau}`); // deep > shallow still holds under the Kessler cap; the 10x gap was the adiabatic overshoot
   assert.ok(hot.waterPath > cool.waterPath && cool.waterPath > 0, `W ${hot.waterPath} / ${cool.waterPath}`);
   const sum = hot.layers.reduce((a, l) => a + l.water, 0); assert.ok(sum > 0 && hot.waterPath > 0);
 });
+test('Kessler cap: suspended convective condensate stays at the autoconversion threshold, so water path is a few kg/m2 not the adiabatic tens', async () => {
+  const C = (await import('../data/earth/cloud-column.json')).default as { qc_auto_kg_kg: number };
+  assert.equal(C.qc_auto_kg_kg, 1e-3); // same Kessler 1969 qc0 as weather.ts KESSLER
+  const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1);
+  assert.ok(hot.layers.filter(l => l.water > 0 && l.strat === 0).every(l => l.water <= C.qc_auto_kg_kg + 1e-15), 'convective layers stay at or below qc0');
+  assert.ok(hot.waterPath > 1 && hot.waterPath < 20, `deep W ${hot.waterPath}`); // observed CB paths are a few kg/m2
+  assert.ok(hot.tau > 50 && hot.tau < 2000, `deep tau ${hot.tau}`); // order 10^2-10^3, not the adiabatic 10^3-10^4
+  assert.ok(cool.waterPath < hot.waterPath && cool.tau < hot.tau);
+});
+
+test('Kessler bake: waterFull matches qc_auto so a deep tower saturates the densest convective voxel', () => {
+  assert.equal(LOCAL_CLOUDS.waterFull, CC.qc_auto_kg_kg);
+  const L = { ...LOCAL_CLOUDS, nx: 16, nz: 24 }, deep = cloudColumn(30, qOf(30, .85), 1), b = bakeLocal(deep, 1, 0, 0, L);
+  assert.ok(Math.max(...b) === 255, `max bake byte ${Math.max(...b)}`); // capped q_c / waterFull reaches 1
+});
+
 
 import { boxExtinction, cellTransmittance } from '../src/world/globe/localClouds';
 test('layered render: the box extinction gives the densest cell the column optical depth; thin deck passes sun, deep tower is opaque', () => {

@@ -105,6 +105,26 @@ test('layered bake: dew-point bases soft-feather over a thin condensation zone (
   assert.ok(softNear < mid, `density just above LCL softer than mid-tower (${softNear} < ${mid})`);
   assert.ok(softNear < hardNear, `feather lowers near-base density vs knife-edge (${softNear} < ${hardNear})`);
 });
+test('layered bake: stratiform decks soft-feather at vertical edges (not a knife-edge sheet)', () => {
+  // Cold saturated column → high strat sheet. Finer nz so baseFeatherM spans >1 bake level.
+  const col = cloudColumn(0, qOf(0, .9), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok((L.baseFeatherM ?? 0) >= 150 && L.baseFeatherM > dz, 'feather spans >1 bake voxel');
+  const step = col.layers[1]?.z || 250;
+  // Meaningful strat only (tiny residual layers near zero confuse a min>0 scan)
+  const hasStrat = (j: number) => (col.layers[Math.min(col.layers.length - 1, Math.round((j + .5) * dz / step))]?.strat ?? 0) > 1e-4;
+  let lo = -1, hi = -1;
+  for (let j = 0; j < L.nz; j++) if (hasStrat(j)) { if (lo < 0) lo = j; hi = j; }
+  assert.ok(lo >= 0 && hi > lo + 2, `strat band spans bake levels ${lo}..${hi}`);
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const on = (b: Uint8Array, j: number) => {
+    let s = 0; for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) s += b[i + L.nx * (j + L.nz * k)];
+    return s;
+  };
+  const edgeSoft = on(soft, hi), edgeHard = on(hard, hi), mid = Math.floor((lo + hi) / 2), midSoft = on(soft, mid);
+  assert.ok(midSoft > 100, `mid-deck lit (${midSoft})`);
+  assert.ok(edgeSoft < midSoft, `strat top edge softer than mid-deck (${edgeSoft} < ${midSoft})`);
+  assert.ok(edgeSoft < edgeHard, `feather lowers top edge vs knife-edge (${edgeSoft} < ${edgeHard})`);
+});
 test('overshoot bake: a strong tower paints a tapered plume above the buoyant top; a weak one barely does', () => {
   const L = LOCAL_CLOUDS, dz = L.topM / L.nz;
   const hot = cloudColumn(30, qOf(30, .8), 1, L.topM), cool = cloudColumn(10, qOf(10, .5), 1, L.topM);
@@ -305,6 +325,53 @@ test('anvil bake: lateral density falls as anv^1.5 — outer fringe much thinner
   fringe.sort((a, b) => b - a);
   const outer = fringe[fringe.length - 1], near = fringe[0];
   assert.ok(near > outer * 2.5, `near-core anvil denser than outer fringe (${near} vs ${outer})`);
+});
+
+test('anvil bake: underside soft-feathers over baseFeatherM (not a knife-edge floor)', () => {
+  // Deep glaciated tower; finer nz so baseFeatherM spans >1 bake level.
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000, 'deep glaciated tower for anvil');
+  assert.ok((L.baseFeatherM ?? 0) >= 150 && L.baseFeatherM > dz, 'feather spans >1 bake voxel');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const step = col.layers[1]?.z || 250;
+  let softBot = 0, hardBot = 0, softTop = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    // fringe columns: anvil present near top, little mid-tower convective fill
+    const jTop = Math.min(L.nz - 1, Math.floor((col.top - dz * .5) / dz));
+    const jDeep = Math.min(L.nz - 1, Math.floor((col.top - CC.anvil_depth_m * .85) / dz));
+    const midZ = col.lcl + .4 * (col.top - col.lcl);
+    const jMid = Math.min(L.nz - 1, Math.floor(midZ / dz));
+    const st = soft[i + L.nx * (jTop + L.nz * k)], sd = soft[i + L.nx * (jDeep + L.nz * k)];
+    const ht = hard[i + L.nx * (jTop + L.nz * k)], hd = hard[i + L.nx * (jDeep + L.nz * k)];
+    const mid = soft[i + L.nx * (jMid + L.nz * k)];
+    if (st > 20 && mid < 10 && hd > 5) { softBot += sd; hardBot += hd; softTop += st; n++; }
+  }
+  assert.ok(n > 2, `anvil fringe cells (${n})`);
+  assert.ok(softTop > softBot, `top denser than feathered underside (${softTop} > ${softBot})`);
+  assert.ok(softBot < hardBot, `feather lowers underside vs knife-edge (${softBot} < ${hardBot})`);
+});
+
+test('layered bake: cells without overshoot soft-feather their top at the EL over baseFeatherM', () => {
+  // Deep glaciated tower; finer nz so baseFeatherM spans >1 bake level. Fringe cells (anvil, h<=0.5) stop at the EL.
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000 && col.overshootM > 0, 'deep tower with overshoot for contrast');
+  assert.ok((L.baseFeatherM ?? 0) >= 150 && L.baseFeatherM > dz, 'feather spans >1 bake voxel');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const step = col.layers[1]?.z || 250, bakeTop = col.top + step / 2;
+  const jNear = Math.min(L.nz - 1, Math.floor((bakeTop - dz * .5) / dz));
+  const jDeep = Math.min(L.nz - 1, Math.floor((bakeTop - L.baseFeatherM * .85) / dz));
+  const midZ = col.lcl + .4 * (col.top - col.lcl);
+  const jMid = Math.min(L.nz - 1, Math.floor(midZ / dz));
+  let softNear = 0, hardNear = 0, softDeep = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    const sn = soft[i + L.nx * (jNear + L.nz * k)], hn = hard[i + L.nx * (jNear + L.nz * k)];
+    const sd = soft[i + L.nx * (jDeep + L.nz * k)], mid = soft[i + L.nx * (jMid + L.nz * k)];
+    // fringe: anvil near EL, little mid-tower fill (weak / no overshoot turret)
+    if (hn > 15 && mid < 10) { softNear += sn; hardNear += hn; softDeep += sd; n++; }
+  }
+  assert.ok(n > 2, `EL-stopping fringe cells (${n})`);
+  assert.ok(softDeep > softNear, `below-feather denser than feathered EL top (${softDeep} > ${softNear})`);
+  assert.ok(softNear < hardNear, `feather lowers EL top vs knife-edge (${softNear} < ${hardNear})`);
 });
 
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {

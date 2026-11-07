@@ -60,8 +60,8 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
  *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share a dew-point base near the column LCL (slight per-cell undulation from low-frequency moisture noise so bases aren't ruler-flat; soft-feathered over baseFeatherM so condensate builds over a thin zone, not a knife-edge), and each cell's top rises
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
- *    not broken into convective cells;
- *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, and lateral density falls as anv^1.5 so the fringe is wispy. */
+ *    not broken into convective cells, soft-feathered over baseFeatherM at its vertical edges so sheet tops/bottoms aren't knife-edges;
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, and cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut. */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), bas = new Float32Array(n), cut = 1 - cover;
   const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0), feather = Math.max(0, L.baseFeatherM ?? 0);
@@ -75,6 +75,23 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
   const over = top > base ? Math.max(0, col.overshootM) : 0, tip = top > base ? Math.min(L.topM, top + over) : -1; // Houze overshoot dome; clamp to the local box
   for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), l = ly[li];
     const s = l?.strat ?? 0, w = l?.water ?? 0, op = iceOpacity(l?.ice ?? 0); strat[j] = Math.min(1, s * op / L.waterFull); conv[j] = Math.min(1, Math.max(0, w - s) * op / L.waterFull); } // ice is thinner per kg (#192)
+  // Soft-feather stratiform vertical edges (same condensation-zone scale as convective bases): a sheet's
+  // top and bottom are not a knife-edge at the first/last saturated layer (AMS Glossary; O(100 m) game cal).
+  // Single-voxel decks stay lit; thicker bands ramp 0→1 over baseFeatherM from each edge.
+  if (feather > 0) {
+    const edge = new Float32Array(L.nz), on = (v: number) => v > 1e-6;
+    for (let j = 0; j < L.nz; ) {
+      if (!on(strat[j])) { j++; continue; }
+      let hi = j; while (hi + 1 < L.nz && on(strat[hi + 1])) hi++;
+      if (hi === j) edge[j] = 1;
+      else for (let i = j; i <= hi; i++) {
+        const u = Math.min(1, Math.min(i - j, hi - i) * dz / feather);
+        edge[i] = u * u * (3 - 2 * u);
+      }
+      j = hi + 1;
+    }
+    for (let j = 0; j < L.nz; j++) strat[j] *= edge[j];
+  }
   // anvil (data/earth/cloud-column.json "anvil"): a tower deep enough to glaciate spreads sideways at its buoyant top, so the
   // top layers take a widened footprint of the towers that reach them (a box blur of the mature cells), not just the cores.
   // Blurred strength also sets how deep the ice deck reaches at that cell: full anvil_depth_m at anv~1, thinner fringe.
@@ -102,10 +119,24 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       // lateral: density ~ anv^1.5 so outflow thins away from the updraught (wispy fringe; Houze 2014 ch. 8)
       const d = top - z, cellDepth = CC.anvil_depth_m * anv[c];
       const taper = cellDepth > 0 ? 1 - .7 * Math.min(1, Math.max(0, d) / cellDepth) : 0; // 1 at top, .3 at cellDepth
-      const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper : 0;
+      // Soft-feather anvil underside over baseFeatherM (same O(100 m) edge scale as dew-point / strat edges):
+      // the ice deck's lower bound is not a knife cut at cellDepth (Houze 2014 ch. 8 outflow thins downward).
+      let anvEdge = 1;
+      if (feather > 0 && cellDepth > 0 && d <= cellDepth) {
+        const u = Math.min(1, Math.max(0, (cellDepth - d) / feather)); // 0 at underside, 1 a feather above
+        anvEdge = u * u * (3 - 2 * u);
+      }
+      const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper * anvEdge : 0;
       cv = Math.max(h[c] * edge * tower, anvHere);
       // Soft-feather dew-point base: ramp 0→1 over baseFeatherM (condensation zone; AMS Glossary / O(100 m) game cal)
       if (feather > 0) { const u = Math.min(1, Math.max(0, (z - cb) / feather)); cv *= u * u * (3 - 2 * u); }
+      // Soft-feather buoyant top into clear air over baseFeatherM when this cell has no overshooting turret
+      // (h<=0.5): towers that stop at the EL are not a knife cut (Houze 2014 ch. 8). Overshooting cores keep
+      // full density at the EL so the plume can attach.
+      if (feather > 0 && !(tip > top && h[c] > .5) && top > cb) {
+        const uTop = Math.min(1, Math.max(0, (top - z) / feather)); // 0 at EL, 1 a feather below
+        cv *= uTop * uTop * (3 - 2 * uTop);
+      }
     } else if (tip > top && z > top && h[c] > .5) { // overshooting dome: cell strength sets how far past the EL (Houze 2014 ch. 8)
       // mature cores (h~1) take the full overshootM; mid cells taper off; nothing below h=0.5 (same cut as anvil cores start rising)
       const frac = Math.max(0, Math.min(1, (h[c] - .5) / .35)); // 0 at 0.5, 1 at >=0.85

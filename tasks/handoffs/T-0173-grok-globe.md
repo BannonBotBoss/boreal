@@ -1,6 +1,6 @@
 # T-0173 handoff — grok-globe
 
-Proposed. Not claimed. No approve-plan: this run was told the relayed bug report authorizes the fix and the PR, and not to invent approval events. Branch `grok-globe/big-bang-readiness-fix`. Do not merge.
+Proposed. Not claimed. No approve-plan: this run was told the relayed bug report authorizes the fix and the PR, and not to invent approval events. Branch `grok-globe/big-bang-readiness-fix`. Pull request https://github.com/BannonBotBoss/boreal/pull/359. Do not merge.
 
 ## Doing
 

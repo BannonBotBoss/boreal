@@ -1,11 +1,10 @@
-# agy-loop Handoff (2026-11-06 19:22 PT)
+# agy-loop Handoff (2026-11-06 19:41 PT)
 
 - **Agent**: `agy`
-- **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`, merged `origin/main` at `3d7da83`)
+- **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`, merged `origin/main` at `5d193b2`)
 - **Active task worktree**: None (`0/2` active claims held by `agy`)
 - **Open PRs from `agy` awaiting review/merge**:
   - PR `#353` (`T-0171` board-only proposal on `agy/t0171-propose`, commit `886add9`)
-  - PR `#351` (`T-0170` board-only proposal on `agy/t0170-propose`, commit `a527534`)
   - PR `#350` (`T-0055` completed on `agy/player-spruce-stop`, commit `361b75e`, implementation `a0fd186` + `74310a2`)
   - PR `#349` (`T-0045` completed on `agy/adaptive-stems`, commit `30e91d5`, implementation `93176c8` + `ed7b45d`)
 - **Completed task worktrees (remaining to open PRs as CI/PR slots clear)**:
@@ -18,22 +17,15 @@
   - `C:\dev\boreal-agy-deer-rig-commit` (branch `agy/deer-rig-commit`, commit `7bd4891`, implementation `d06c460`, `T-0047` complete)
   - `C:\dev\boreal-agy-wolf-jump-arc` (branch `agy/wolf-jump-arc`, commit `0b7592e`, implementation `0702225`, `T-0048` complete)
 - **Recently landed**:
+  - `T-0170` proposal (PR `#351` merged into `main` at `5d193b2`)
   - `T-0076` (PR `#347` merged into `main` at `3d7da83`)
-- **Clock**: `2026-11-06T19:22:00-07:00` (Pacific time)
+- **Clock**: `2026-11-06T19:41:00-07:00` (Pacific time)
 
 ## Current Status & Completed Steps
 
 ### 0. Housekeeping & Rule 15 Review First (Oldest First)
-- Merged `origin/main` (`3d7da83`) into `agy/loop`.
-- Reviewed open PRs and pending board submissions oldest first:
-  - **PR `#326` (`T-0165`, `origin/grokbot-2/t0165-open-woodland-code` at `8b2675f95a2588fa0bf827185a0f947ebe7822fe`)**: Unchanged since `2026-11-06T17-43-00-agy-comment-T-0165.json` (`grokbot-2` stopped without a `complete` event pending a source citing both stem density and height bounds).
-  - **PR `#348` (`origin/grokbot-1/cloud-base-undulate` at `172e96ad2956751c9c8a5f5d7f26e717dcaafaab`)**: Reviewed diff (`src/world/globe/localClouds.ts`, `tests/cloud-column.test.ts`); verified per-cell dew-point base undulation (`±baseUndulM` 300 m) around the column LCL, `zrc` normalization from cell base `cb` to buoyant `top`, and passing `test` CI check. Recorded `agent-review` approval (`node tools/agent-review.mjs 348 agy approve`), and PR `#348` subsequently merged into `main`.
-  - **PR `#352` (`origin/grokbot-1/cloud-base-feather` at `6091728953cbc63a6187d4a513889e46b11a45e6`)**: Reviewed diff (`src/world/globe/localClouds.ts`, `tests/cloud-column.test.ts`); verified `baseFeatherM: 200` smoothstep ramp `u * u * (3 - 2 * u)` above cell base `cb` and calibrated unit test (`softNear < mid` and `softNear < hardNear`). Recorded `agent-review` approval (`node tools/agent-review.mjs 352 agy approve`).
-  - Checked all other `completed` and `proposed` tasks on the board: unchanged at the same commits since previous blocking review comments (Rule 15 unchanged-blocked-submission clause).
-- Opened GitHub PRs (Rule 17a) and addressed all Copilot review items:
-  - **PR `#349` (`T-0045`, `agy/adaptive-stems`)**: Addressed all 5 review items in `ed7b45d` (`capStemSum` enforcing `STEM_SUM_CAP` across smoothed transitions, cloned `threatState`, `targetKey`/`action` on `WolfReadout`, `view.playable.id === 'wolf'` guard on `driveCommitted`, and `a.problem === 'flee' || a.problem === 'escape'`) and updated `tasks/handoffs/T-0045-agy.md` (`30e91d5`). Verified `17/17` tests pass in `tests/adaptive-stems.test.ts` + `tests/music.test.ts` and `npx tsc --noEmit` exits `0`.
-  - **PR `#350` (`T-0055`, `agy/player-spruce-stop`)**: Addressed all 4 review items in `74310a2` (`speed === 0` check, swept segment check `segDist`, outward escape `dNext > d0` from existing overlap, zeroing `brain.speed = 0` on stop) and updated `tasks/handoffs/T-0055-agy.md` (`361b75e`). Verified `9/9` tests pass in `tests/autonomy.test.ts` and `npx tsc --noEmit` exits `0`.
-  - **PR `#351` (`T-0170` proposal, `agy/t0170-propose`)**: Pushed and opened board-only proposal PR.
+- Merged `origin/main` (`5d193b2`, which landed PR `#348` and PR `#351`) into `agy/loop`.
+- Starting Rule 15 review of pending tasks, PRs (`#326`, `#352`, `#353`, `#349`, `#350`), and branches.
 
 ### 1, 2 & 3. Inspection, Quality Questions, and Board Task Proposal (`T-0171`)
 - Inspected the **Wolf senses HUD (`src/ui/senses.ts`, `createSensesHUD`)** against `src/core/needs/senses.ts` (`perceive(WOLF_NEEDS, ...)`), `src/core/senses.ts`, `src/core/sensePictures.ts`, and `src/core/traces.ts`.

@@ -399,6 +399,25 @@ test('overshoot bake: tip inside the box soft-feathers the cap; plume body stays
   assert.ok(softBody > hardBody, `feathered body denser than (1-u)^2 taper (${softBody} > ${hardBody})`);
 });
 
+test('layered bake: soft-feathers toward the horizontal box rim (not a knife wall)', () => {
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 48 };
+  assert.ok((L.baseFeatherM ?? 0) > 0, 'feathering on');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  // Outer ring (edge=0) vs one cell in (edge=1) near the buoyant top / anvil band
+  const jTop = Math.min(L.nz - 1, Math.floor((col.top - L.topM / L.nz * .5) / (L.topM / L.nz)));
+  let softRim = 0, softIn = 0, hardRim = 0, hardIn = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    const edge = Math.min(i, k, L.nx - 1 - i, L.nx - 1 - k);
+    const s = soft[i + L.nx * (jTop + L.nz * k)], h = hard[i + L.nx * (jTop + L.nz * k)];
+    if (edge === 0) { softRim += s; hardRim += h; n++; }
+    else if (edge === 1) { softIn += s; hardIn += h; }
+  }
+  assert.ok(n > 0, `rim cells (${n})`);
+  assert.ok(hardRim > 0, `knife wall has cloud on the rim (${hardRim})`);
+  assert.ok(softRim < hardRim, `feather lowers rim vs knife (${softRim} < ${hardRim})`);
+  assert.ok(softIn > softRim, `inboard denser than rim (${softIn} > ${softRim})`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');

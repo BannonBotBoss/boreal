@@ -53,10 +53,11 @@ test('the grace starts when the clamp engages, and a ready globe is not held', (
   assert.equal(cineArrivalDue(108.025, true, true, false, false), false);
   assert.equal(cineArrivalDue(108, false, false, true, false), false);
   assert.equal(cineArrivalDue(116, false, false, true, false), true);
-  assert.equal(cineArrivalDue(116, false, false, true, true), false);
-  // Hang case: gave up, then ready() fulfilled with earth still off at b14End.
   assert.equal(cineArrivalDue(116, false, true, true, false), true);
-  assert.equal(cineArrivalDue(CINE.b14End, false, true, false, false), true);
+  assert.equal(cineArrivalDue(116, false, true, false, false), true);
+  assert.equal(cineArrivalDue(108.03, false, true, true, false), false);
+  assert.equal(cineArrivalDue(116, false, false, true, true), false);
+  assert.equal(cineArrivalDue(116, false, false, false, false), false);
 });
 
 test('a diagnostic pin does not burn the grace or snap back to the clamp', () => {
@@ -250,6 +251,37 @@ test('first-visit readiness paths', { concurrency: false }, async (t) => {
     assert.ok(f.probe.elapsed >= CINE.b14End);
     assert.equal(f.marks, 1);
     assert.equal(f.w.events.filter(e => e === 'cinematic:complete').length, 1);
+  });
+
+  await t.test('a ready promise that fulfils on the last frame still finishes once', async () => {
+    let release: () => void = () => {};
+    const f = film({ ready: () => new Promise<void>(r => { release = r; }) });
+    f.probe.begin();
+    let saw108 = false;
+    for (let i = 0; i < 800 && f.probe.elapsed + 0.5 < CINE.b14End; i++) {
+      f.opening.step(0.5);
+      if (f.probe.elapsed >= 108.03 && f.probe.elapsed < CINE.b14End) {
+        saw108 = true;
+        assert.equal(f.planets, 0);
+      }
+    }
+    assert.equal(saw108, true);
+    assert.equal(f.planets, 0);
+    assert.equal(f.shows, 0);
+    assert.ok(f.probe.elapsed < CINE.b14End);
+    release();
+    await Promise.resolve();
+    await Promise.resolve();
+    f.opening.step(0.5);
+    assert.ok(f.probe.elapsed >= CINE.b14End);
+    assert.equal(f.shows, 0);
+    assert.equal(f.planets, 1);
+    assert.equal(f.marks, 1);
+    assert.equal(f.w.events.filter(e => e === 'cinematic:complete').length, 1);
+    f.opening.step(1);
+    f.opening.step(1);
+    assert.equal(f.planets, 1);
+    assert.equal(f.marks, 1);
   });
 
   await t.test('a rejected boot plays through B14 and lands once without showing a globe', async () => {

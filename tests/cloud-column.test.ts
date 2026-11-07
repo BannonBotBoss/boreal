@@ -418,6 +418,26 @@ test('layered bake: soft-feathers toward the horizontal box rim (not a knife wal
   assert.ok(softIn > softRim, `inboard denser than rim (${softIn} > ${softRim})`);
 });
 
+test('layered bake: soft-feathers toward the vertical box lid (not a knife ceiling)', () => {
+  // Clamp the box below the buoyant top so the main write truncates at the lid (not the overshoot path).
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 48, topM: 6000 };
+  assert.ok((L.baseFeatherM ?? 0) > 0, 'feathering on');
+  assert.ok(col.top > L.topM, `EL above lid (${col.top} > ${L.topM})`);
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const jLid = L.nz - 1, jIn = L.nz - 2, mid = (L.nx / 2) | 0;
+  let softLid = 0, softIn = 0, hardLid = 0, n = 0;
+  for (let k = mid - 2; k <= mid + 2; k++) for (let i = mid - 2; i <= mid + 2; i++) {
+    softLid += soft[i + L.nx * (jLid + L.nz * k)];
+    hardLid += hard[i + L.nx * (jLid + L.nz * k)];
+    softIn += soft[i + L.nx * (jIn + L.nz * k)];
+    n++;
+  }
+  assert.ok(n > 0, `lid cells (${n})`);
+  assert.ok(hardLid > 0, `knife ceiling has cloud on the lid (${hardLid})`);
+  assert.ok(softLid < hardLid, `feather lowers lid vs knife (${softLid} < ${hardLid})`);
+  assert.ok(softIn > softLid, `below-lid denser than lid (${softIn} > ${softLid})`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');

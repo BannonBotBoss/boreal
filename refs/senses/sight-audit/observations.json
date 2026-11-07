@@ -1,0 +1,76 @@
+{
+  "url": "http://127.0.0.1:5173/?nomenu&noprobe&view=ground&rec&day=227&hour=12",
+  "errors": [],
+  "observations": [
+    {
+      "frame": 0,
+      "scenario": "Wolf 14 m upwind of actively fleeing hare in broad daylight (scentLevel < 0.025, sim.speed > 1.5 m/s)",
+      "wolf": {
+        "x": 41.7,
+        "z": -4.8,
+        "yaw": 3.052
+      },
+      "hare": {
+        "id": 2,
+        "x": 39.99,
+        "z": 9.48,
+        "state": "flee",
+        "simSpeedMps": 8.468,
+        "distanceM": 14.38
+      },
+      "wind": {
+        "x": -0.001,
+        "z": 0.011
+      },
+      "wolfScentLevelOfHare": 0.000699,
+      "expectedSightStrength": 0.7603,
+      "domSightBubbles": 0,
+      "domScentBubbles": 0,
+      "domSoundBubbles": 0
+    },
+    {
+      "frame": 1,
+      "scenario": "Positive control: Wolf 2.5 m from hare (inside scent threshold 0.025 and presenceM 6 m; lastHits includes hare)",
+      "wolf": {
+        "x": 81.88,
+        "z": -25.81,
+        "yaw": -0.09
+      },
+      "hare": {
+        "id": 2,
+        "x": 82.44,
+        "z": -28.75,
+        "state": "flee",
+        "simSpeedMps": 8.468,
+        "distanceM": 3
+      },
+      "wind": {
+        "x": -0.001,
+        "z": 0.011
+      },
+      "wolfScentLevelOfHare": 0.489202,
+      "inSmellLastHits": true,
+      "expectedSightStrength": 0.9501,
+      "domSightBubbles": 2,
+      "domScentBubbles": 2
+    },
+    {
+      "frame": 2,
+      "scenario": "Invisible territory scent mark (delta kind=scent) 2.0 m ahead of wolf with no animal in view",
+      "wolf": {
+        "x": 80,
+        "z": -28,
+        "yaw": 0
+      },
+      "scentMark": {
+        "kind": "scent",
+        "x": 80,
+        "z": -30,
+        "distanceM": 2
+      },
+      "expectedSightBubbles": 0,
+      "domSightBubbles": 4,
+      "domScentBubbles": 4
+    }
+  ]
+}

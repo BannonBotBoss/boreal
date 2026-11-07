@@ -105,6 +105,26 @@ test('layered bake: dew-point bases soft-feather over a thin condensation zone (
   assert.ok(softNear < mid, `density just above LCL softer than mid-tower (${softNear} < ${mid})`);
   assert.ok(softNear < hardNear, `feather lowers near-base density vs knife-edge (${softNear} < ${hardNear})`);
 });
+test('layered bake: stratiform decks soft-feather at vertical edges (not a knife-edge sheet)', () => {
+  // Cold saturated column → high strat sheet. Finer nz so baseFeatherM spans >1 bake level.
+  const col = cloudColumn(0, qOf(0, .9), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok((L.baseFeatherM ?? 0) >= 150 && L.baseFeatherM > dz, 'feather spans >1 bake voxel');
+  const step = col.layers[1]?.z || 250;
+  // Meaningful strat only (tiny residual layers near zero confuse a min>0 scan)
+  const hasStrat = (j: number) => (col.layers[Math.min(col.layers.length - 1, Math.round((j + .5) * dz / step))]?.strat ?? 0) > 1e-4;
+  let lo = -1, hi = -1;
+  for (let j = 0; j < L.nz; j++) if (hasStrat(j)) { if (lo < 0) lo = j; hi = j; }
+  assert.ok(lo >= 0 && hi > lo + 2, `strat band spans bake levels ${lo}..${hi}`);
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const on = (b: Uint8Array, j: number) => {
+    let s = 0; for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) s += b[i + L.nx * (j + L.nz * k)];
+    return s;
+  };
+  const edgeSoft = on(soft, hi), edgeHard = on(hard, hi), mid = Math.floor((lo + hi) / 2), midSoft = on(soft, mid);
+  assert.ok(midSoft > 100, `mid-deck lit (${midSoft})`);
+  assert.ok(edgeSoft < midSoft, `strat top edge softer than mid-deck (${edgeSoft} < ${midSoft})`);
+  assert.ok(edgeSoft < edgeHard, `feather lowers top edge vs knife-edge (${edgeSoft} < ${edgeHard})`);
+});
 test('overshoot bake: a strong tower paints a tapered plume above the buoyant top; a weak one barely does', () => {
   const L = LOCAL_CLOUDS, dz = L.topM / L.nz;
   const hot = cloudColumn(30, qOf(30, .8), 1, L.topM), cool = cloudColumn(10, qOf(10, .5), 1, L.topM);

@@ -66,6 +66,19 @@ try {
     if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails));
     return r.result?.value;
   };
+  const snapPng = async () => {
+    try {
+      const s = await Promise.race([
+        cdp('Page.captureScreenshot', { format: 'png' }),
+        new Promise((_, j) => setTimeout(() => j(new Error('short timeout')), 5000)),
+      ]);
+      if (s?.data) return s.data;
+    } catch {}
+    return ev(`(() => {
+      const c = document.querySelector('canvas');
+      return c.toDataURL('image/png').split(',')[1];
+    })()`);
+  };
 
   await cdp('Runtime.enable');
   await cdp('Page.enable');
@@ -103,46 +116,43 @@ try {
 
   const observations = [];
 
-  // Frame 0: Place the wolf 16 m UPWIND of a live hare (so wind blows from the wolf toward the hare).
-  // The hare smells/sees the wolf and flees right in front of the wolf in broad daylight,
-  // yet because the hare is downwind of the wolf's nose, scentLevel < SENSES.threshold and Wolf senses shows 0 sight bubbles!
+  // Frame 0: Trigger the hare to bolt/flee (by briefly placing the wolf 4 m from it), then place the wolf 14 m UPWIND of the fleeing hare
+  // (where scentLevel < SENSES.threshold 0.025 and all other plants/logs are > 20 m away), wait 1.9 s so prior sense bubbles expire (life = 1.75 s),
+  // and keep the wolf at 14 m from the fleeing hare for 0.35 s so the HUD ticks while the hare is actively fleeing (sim.speed > 1.5 m/s) in front of the wolf.
   const obs0 = await ev(`(async () => {
     auditDrives.resetDrives({ x: 9999, z: 9999, hunger: 0, protect: 0 });
     auditDeltas.DELTAS.log.length = 0;
-    const hares = __boreal.hares();
-    const h0 = hares[0];
+    const h0 = window.borealHares.list()[0];
     const w = auditWeather.windAt(h0.x, 0.8, h0.z);
     const wLen = Math.hypot(w.x, w.z) || 1;
     const ux = w.x / wLen, uz = w.z / wLen;
-    // Place wolf 16 m upwind of h0 so vector from hare to wolf is (-ux*16, -uz*16):
-    // In scentLevel(nose, source, wind): dx = nose.x - source.x, dz = nose.z - source.z.
-    // We want down = (dx * wind.x + dz * wind.z) / speed < 0 for the wolf (nose=wolf, source=hare),
-    // which means nose - source is opposite to wind -> wolf is upwind of hare!
-    const px = h0.x - ux * 16;
-    const pz = h0.z - uz * 16;
-    const yawToHare = Math.atan2(-(h0.x - px), -(h0.z - pz));
-    window.borealPlace(px, pz, yawToHare, 0);
-    // Wait 1.8 s so any prior sense bubbles expire (life = 1.75 s) and the hare reacts/flees while sensesHUD updates
-    await new Promise(r => setTimeout(r, 1850));
-    const hNow = __boreal.hares().find(h => h.id === h0.id) || __boreal.hares()[0];
-    const pNow = __boreal.player();
-    const windNow = auditWeather.windAt(pNow.x, 0.8, pNow.z);
-    const yawNow = Math.atan2(-(hNow.x - pNow.x), -(hNow.z - pNow.z));
-    window.borealPlace(pNow.x, pNow.z, yawNow, 0);
-    await new Promise(r => setTimeout(r, 450));
-    const hFinal = __boreal.hares().find(h => h.id === hNow.id) || hNow;
+    // Trigger bolt by placing wolf 4 m from h0 for 0.25 s, then move to 14 m upwind for 1.85 s so any close-range bubbles expire:
+    window.borealPlace(h0.x - ux * 4, h0.z - uz * 4, Math.atan2(-ux, -uz), 0);
+    await new Promise(r => setTimeout(r, 250));
+    for (let step = 0; step < 37; step++) {
+      const hCur = window.borealHares.list().find(h => h.id === h0.id) || window.borealHares.list()[0];
+      // If hare stopped fleeing, briefly step within 4.5 m to re-trigger flee, then resume 14 m tracking during the final 1.8 s
+      const dTarget = step < 5 && !(hCur.sim.speed > 1.5) ? 4.5 : 14.0;
+      const px = hCur.x - ux * dTarget;
+      const pz = hCur.z - uz * dTarget;
+      const yawNow = Math.atan2(-(hCur.x - px), -(hCur.z - pz));
+      window.borealPlace(px, pz, yawNow, 0);
+      await new Promise(r => setTimeout(r, 50));
+    }
+    const hFinal = window.borealHares.list().find(h => h.id === h0.id) || window.borealHares.list()[0];
     const pFinal = __boreal.player();
+    const windNow = auditWeather.windAt(pFinal.x, 0.8, pFinal.z);
     const dist = Math.hypot(hFinal.x - pFinal.x, hFinal.z - pFinal.z);
+    const actualSpeed = Number((hFinal.sim?.speed ?? 0).toFixed(3));
     const wolfScentOfHare = auditSenses.scentLevel(
       { x: pFinal.x, z: pFinal.z },
       { key: 'hare:' + hFinal.id, kind: 'hare', x: hFinal.x, z: hFinal.z, potency: 0.7 },
       windNow
     );
-    const speedEst = hFinal.state === 'flee' ? 8.5 : 1.2;
     const expectedPercept = auditNeedSenses.perceive(
       auditSpecies.WOLF_NEEDS,
       { x: pFinal.x, z: pFinal.z, heading: pFinal.yaw },
-      { x: hFinal.x, z: hFinal.z, speed: speedEst },
+      { x: hFinal.x, z: hFinal.z, speed: actualSpeed },
       { daylight: 1, wind: windNow }
     );
     const sightBubbles = document.querySelectorAll('.sense-bubble-sight').length;
@@ -150,9 +160,9 @@ try {
     const soundBubbles = document.querySelectorAll('.sense-bubble-sound').length;
     return {
       frame: 0,
-      scenario: 'Wolf upwind of visible hare in broad daylight (wind blowing from wolf to hare)',
+      scenario: 'Wolf 14 m upwind of actively fleeing hare in broad daylight (scentLevel < 0.025, sim.speed > 1.5 m/s)',
       wolf: { x: Number(pFinal.x.toFixed(2)), z: Number(pFinal.z.toFixed(2)), yaw: Number(pFinal.yaw.toFixed(3)) },
-      hare: { id: hFinal.id, x: Number(hFinal.x.toFixed(2)), z: Number(hFinal.z.toFixed(2)), state: hFinal.state, distanceM: Number(dist.toFixed(2)) },
+      hare: { id: hFinal.id, x: Number(hFinal.x.toFixed(2)), z: Number(hFinal.z.toFixed(2)), state: hFinal.state, simSpeedMps: actualSpeed, distanceM: Number(dist.toFixed(2)) },
       wind: { x: Number(windNow.x.toFixed(3)), z: Number(windNow.z.toFixed(3)) },
       wolfScentLevelOfHare: Number(wolfScentOfHare.toFixed(6)),
       expectedSightStrength: Number(expectedPercept.sight.toFixed(4)),
@@ -162,67 +172,68 @@ try {
     };
   })()`);
   observations.push(obs0);
-  const shot0 = await cdp('Page.captureScreenshot', { format: 'png' });
-  writeFileSync(resolve(out, 'frame-0.png'), Buffer.from(shot0.data, 'base64'));
+  writeFileSync(resolve(out, 'frame-0.png'), Buffer.from(await snapPng(), 'base64'));
 
-  // Frame 1: Place the wolf 3.5 m from the live hare (inside both scent threshold and presenceM = 6 m) and wait 1.1 s (> reemit 0.9 s).
-  // Now scentLevel >= SENSES.threshold AND seen.sight >= SENSES.threshold, so both scent and sight bubbles appear.
+  // Frame 1: Positive control — move the hare into an open spot with no nearby plants/logs (x=80, z=-25) so `lastHits` (thoughtCap=3)
+  // is not filled by closer plants, wait 1.9 s for prior sense bubbles to expire and reemit cooldown (0.9 s) to clear,
+  // then keep the wolf 2.5 m from the hare so distance < presenceM (6 m), wolfScentLevelOfHare >= SENSES.threshold (0.025),
+  // smell() lastHits includes the hare, and both scent and sight bubbles appear!
   const obs1 = await ev(`(async () => {
     auditDrives.resetDrives({ x: 9999, z: 9999, hunger: 0, protect: 0 });
     auditDeltas.DELTAS.log.length = 0;
-    const hares = __boreal.hares();
-    const h0 = hares[0];
-    const w = auditWeather.windAt(h0.x, 0.8, h0.z);
-    const wLen = Math.hypot(w.x, w.z) || 1;
-    const ux = w.x / wLen, uz = w.z / wLen;
-    const px = h0.x + ux * 3.5;
-    const pz = h0.z + uz * 3.5;
-    const yawToHare = Math.atan2(-(h0.x - px), -(h0.z - pz));
-    window.borealPlace(px, pz, yawToHare, 0);
-    await new Promise(r => setTimeout(r, 1100));
-    const hFinal = __boreal.hares().find(h => h.id === h0.id) || __boreal.hares()[0];
-    const px2 = hFinal.x + ux * 3.5;
-    const pz2 = hFinal.z + uz * 3.5;
-    const yawNow = Math.atan2(-(hFinal.x - px2), -(hFinal.z - pz2));
-    window.borealPlace(px2, pz2, yawNow, 0);
-    await new Promise(r => setTimeout(r, 1050));
-    const hCheck = __boreal.hares().find(h => h.id === hFinal.id) || hFinal;
+    // Wait 1.9 s at (120, -28) far from entities so all existing bubbles expire and reemit cooldowns clear:
+    window.borealPlace(120, -28, 0, 0);
+    await new Promise(r => setTimeout(r, 1900));
+    const h0 = window.borealHares.list()[0];
+    h0.x = 80; h0.z = -25; h0.sim.x = 80; h0.sim.z = -25;
+    for (let step = 0; step < 8; step++) {
+      const hCur = window.borealHares.list().find(h => h.id === h0.id) || window.borealHares.list()[0];
+      const w = auditWeather.windAt(hCur.x, 0.8, hCur.z);
+      const wLen = Math.hypot(w.x, w.z) || 1;
+      const ux = w.x / wLen, uz = w.z / wLen;
+      const px = hCur.x + ux * 2.5;
+      const pz = hCur.z + uz * 2.5;
+      const yawNow = Math.atan2(-(hCur.x - px), -(hCur.z - pz));
+      window.borealPlace(px, pz, yawNow, 0);
+      await new Promise(r => setTimeout(r, 50));
+    }
+    const hCheck = window.borealHares.list().find(h => h.id === h0.id) || window.borealHares.list()[0];
     const pCheck = __boreal.player();
     const windNow = auditWeather.windAt(pCheck.x, 0.8, pCheck.z);
     const dist = Math.hypot(hCheck.x - pCheck.x, hCheck.z - pCheck.z);
-    const wolfScentOfHare = auditSenses.scentLevel(
-      { x: pCheck.x, z: pCheck.z },
-      { key: 'hare:' + hCheck.id, kind: 'hare', x: hCheck.x, z: hCheck.z, potency: 0.7 },
-      windNow
-    );
+    const actualSpeed = Number((hCheck.sim?.speed ?? 0).toFixed(3));
+    const hareSource = { key: 'hare:' + hCheck.id, kind: 'hare', x: hCheck.x, z: hCheck.z, potency: 0.7 };
+    const wolfScentOfHare = auditSenses.scentLevel({ x: pCheck.x, z: pCheck.z }, hareSource, windNow);
+    const inSmellHits = auditSenses.smell({ x: pCheck.x, z: pCheck.z }, [hareSource], windNow, pCheck.yaw).some(s => s.key === hareSource.key);
     const expectedPercept = auditNeedSenses.perceive(
       auditSpecies.WOLF_NEEDS,
       { x: pCheck.x, z: pCheck.z, heading: pCheck.yaw },
-      { x: hCheck.x, z: hCheck.z, speed: hCheck.state === 'flee' ? 8.5 : 0 },
+      { x: hCheck.x, z: hCheck.z, speed: actualSpeed },
       { daylight: 1, wind: windNow }
     );
     const sightBubbles = document.querySelectorAll('.sense-bubble-sight').length;
     const scentBubbles = document.querySelectorAll('.sense-bubble-scent').length;
     return {
       frame: 1,
-      scenario: 'Wolf within scent threshold and presenceM of hare in broad daylight (lastHits includes hare)',
+      scenario: 'Positive control: Wolf 2.5 m from hare (inside scent threshold 0.025 and presenceM 6 m; lastHits includes hare)',
       wolf: { x: Number(pCheck.x.toFixed(2)), z: Number(pCheck.z.toFixed(2)), yaw: Number(pCheck.yaw.toFixed(3)) },
-      hare: { id: hCheck.id, x: Number(hCheck.x.toFixed(2)), z: Number(hCheck.z.toFixed(2)), state: hCheck.state, distanceM: Number(dist.toFixed(2)) },
+      hare: { id: hCheck.id, x: Number(hCheck.x.toFixed(2)), z: Number(hCheck.z.toFixed(2)), state: hCheck.state, simSpeedMps: actualSpeed, distanceM: Number(dist.toFixed(2)) },
       wind: { x: Number(windNow.x.toFixed(3)), z: Number(windNow.z.toFixed(3)) },
       wolfScentLevelOfHare: Number(wolfScentOfHare.toFixed(6)),
+      inSmellLastHits: inSmellHits,
       expectedSightStrength: Number(expectedPercept.sight.toFixed(4)),
       domSightBubbles: sightBubbles,
       domScentBubbles: scentBubbles,
     };
   })()`);
   observations.push(obs1);
-  const shot1 = await cdp('Page.captureScreenshot', { format: 'png' });
-  writeFileSync(resolve(out, 'frame-1.png'), Buffer.from(shot1.data, 'base64'));
+  writeFileSync(resolve(out, 'frame-1.png'), Buffer.from(await snapPng(), 'base64'));
 
   // Frame 2: Place wolf away from hares in the loaded clearing and record an invisible scent delta 2.0 m ahead (strongest scent hit).
   // Because deltaSources are included in smell() lastHits and within presenceM (6 m), ui/senses.ts falsely emits a sight (eye) bubble!
   const obs2 = await ev(`(async () => {
     auditDrives.resetDrives({ x: 9999, z: 9999, hunger: 0, protect: 0 });
+    for (const h of window.borealHares.list()) { h.x = 0; h.z = 0; h.sim.x = 0; h.sim.z = 0; }
     const px = 80, pz = -28, yaw = 0;
     window.borealPlace(px, pz, yaw, 0);
     auditDeltas.DELTAS.log.length = 0;
@@ -246,8 +257,7 @@ try {
     };
   })()`);
   observations.push(obs2);
-  const shot2 = await cdp('Page.captureScreenshot', { format: 'png' });
-  writeFileSync(resolve(out, 'frame-2.png'), Buffer.from(shot2.data, 'base64'));
+  writeFileSync(resolve(out, 'frame-2.png'), Buffer.from(await snapPng(), 'base64'));
 
   const videoBase64 = await ev(`new Promise(resolve => {
     auditRecorder.onstop = async () => {

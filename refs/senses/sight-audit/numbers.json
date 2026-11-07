@@ -11,6 +11,15 @@
     "presenceM": 6,
     "hudThreshold": 0.025
   },
+  "control_closeHareAt3_5m": {
+    "distanceM": 3.5,
+    "speedMps": 2.91,
+    "scentLevel": 0.5109999999999999,
+    "inSmellLastHits": true,
+    "expectedSightStrength": 0.9416666666666667,
+    "actualHudSightStrength": 0.9416666666666667,
+    "error": 0
+  },
   "case1_downwindMovingHareAt20m": {
     "distanceM": 20,
     "speedMps": 2.91,

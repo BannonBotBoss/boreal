@@ -1,0 +1,52 @@
+{
+  "source": "Miller & Murphy 1995, JAVMA 207:1623 (Vision in dogs, cited in WOLF_NEEDS.senses.sight) and EPA ISC Gaussian plume model (src/core/senses.ts)",
+  "wolfSightSpec": {
+    "rangeM": 60,
+    "fovDeg": 250,
+    "nightFloor": 0.5,
+    "motionRampMps": [
+      0.3,
+      1.5
+    ],
+    "presenceM": 6,
+    "hudThreshold": 0.025
+  },
+  "case1_downwindMovingHareAt20m": {
+    "distanceM": 20,
+    "speedMps": 2.91,
+    "wind": {
+      "x": 0,
+      "z": -3
+    },
+    "scentLevel": 0.0000013043286102275348,
+    "inSmellLastHits": false,
+    "maxDownwindHareScentDistanceM": 9.87,
+    "expectedSightStrength": 0.6666666666666667,
+    "actualHudSightStrength": 0,
+    "error": -0.6666666666666667
+  },
+  "case2_upwindMovingDeerAndPersonAt20m": {
+    "distanceM": 20,
+    "deerSpeedMps": 2,
+    "deerExpectedSightStrength": 0.6666666666666667,
+    "deerActualHudSightStrength": 0,
+    "deerError": -0.6666666666666667,
+    "personSpeedMps": 1.2,
+    "personExpectedSightStrength": 0.5,
+    "personActualHudSightStrength": 0,
+    "personError": -0.5
+  },
+  "case3_invisibleScentMarkAt2m": {
+    "distanceM": 2,
+    "kind": "scent",
+    "expectedSightStrength": 0,
+    "actualHudSightStrength": 0.6666666666666667,
+    "error": 0.6666666666666667
+  },
+  "calibration": {
+    "knownMatchError": 0,
+    "knownMismatchCase1Error": 0.6666666666666667,
+    "knownMismatchCase2DeerError": 0.6666666666666667,
+    "knownMismatchCase3FalseSightError": 0.6666666666666667
+  }
+}

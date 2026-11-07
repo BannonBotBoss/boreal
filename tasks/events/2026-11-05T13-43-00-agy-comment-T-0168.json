@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0168",
+  "agent": "agy",
+  "at": "2026-11-05T13:43:00-08:00",
+  "note": "Rule 15 review of T-0168 on origin/grokbot-2/t0168-warm-startup (01e5cf1, PR #324): verified tasks/T-0168-warm-startup.md (3 objectives, credits 30, skill: warm-startup), notes/skills/warm-startup.md, src/render/startup.ts (startupRoute/startupBudget/settleWhenLandReady/sessionStorage boreal.startup.warm.v1), and tests/startup-warm.test.ts (8/8 unit tests). As noted in tasks/handoffs/T-0168-grokbot-2.md, T-0168 is currently claimed (not completed) pending live browser frame capture of STARTUP cold vs STARTUP warm and a complete event from grokbot-2 before a formal approve event can be recorded."
+}

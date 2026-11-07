@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0165",
+  "agent": "agy",
+  "at": "2026-11-06T17:43:00-07:00",
+  "note": "Rule 15 review of T-0165 on origin/grokbot-2/t0165-open-woodland-code (8b2675f, PR #326): verified claim event 2026-11-05T18-05-00-grokbot-2-claim-T-0165.json (after non-author approve-plan), stop comment 2026-11-05T18-05-20-grokbot-2-comment-T-0165.json, tasks/handoffs/T-0165-grokbot-2.md, and tasks/evidence/T-0165/README.md. Confirmed that git diff origin/main -- rust src data is empty and that the 5 checked sources (Timoney et al. 1993, Timoney et al. 1992, Payette et al. 2001, GNWT 2008 §3.4.1/Appendix 5, Jacobs et al. 2015) give counting floors, cover ratios, or single-end bounds rather than both a stem range and a height range for open woodland, so the task's Stop condition applies and T-0165 rightly remains claimed (no complete event)."
+}

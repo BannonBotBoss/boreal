@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0169",
+  "agent": "agy",
+  "at": "2026-11-06T17:43:10-07:00",
+  "note": "Rule 15 review of T-0169 on origin/main (51ffd33): verified tasks/T-0169-globe-closeup-realism.md (5 objectives, credits 65, skill: globe-surface-optics), tasks/handoffs/T-0169-grok-globe.md, notes/skills/globe-surface-optics.md, src/world/globe/atmosphere.ts, src/world/globe/cloudCover.ts, src/world/globe/tile.ts, tests/cloud-cover.test.ts, and captured frames in tasks/evidence/T-0169/ (full-globe-ultra.png, closeup-ultra.png, glint-noon.png, full-globe-medium.png) against refs/T-0169/. As noted in tasks/handoffs/T-0169-grok-globe.md, T-0169 remains claimed (no complete event yet) pending a calibrated 95% frame gate score and completion event from grok-globe."
+}

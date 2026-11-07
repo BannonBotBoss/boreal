@@ -1,0 +1,19 @@
+# T-0165 source check
+
+Claimed. Stopped before any cover class. The click at 64.5 N, 119.7 W stays the closed boreal row that T-0164 measured. No coordinate override, no tundra or rock relabel, and no change to the T-0164 climate constants.
+
+The task allows a stem range and a height range only when a cited table states both ends. A minimum is not a range. The about 2 K Mealy Mountains width is not the gate. The closed boreal row (1,000–3,000 stems/ha, 10–25 m) was not copied and was not divided.
+
+## What was read
+
+| source | what it states | usable stem and height range? |
+|---|---|---|
+| Timoney, La Roi, and Dale, Journal of Vegetation Science (1993), https://doi.org/10.2307/3235597 | Air-photo tree cover is "closed and open crown forests, and forest-tundras, to a minimum tree height of 3-4 m and a minimum density of 50-100 stems/ha". | No. The task already calls that sentence a counting floor, not an open-woodland stem band. |
+| Timoney, La Roi, Zoltai, and Robinson, Arctic 45:1–9 (1992), https://pubs.aina.ucalgary.ca/arctic/Arctic45-1-1.pdf | The high subarctic forest–tundra runs north to "the northern limit (<0.1% cover) of trees ≥3-4 m tall". "Dwarf spruce (<3 m tall) are occasional in the low arctic tundra". Cardinal boundaries are the 1000:1, 1:1, and 1:1000 tree:upland-tundra cover isolines. Table 1 is climate (radiation, July temperature, heating degree-days). Field plots recorded density and height; the published results do not give those plot ranges. | No. Cover ratios and a minimum tree height. No stems/ha band. |
+| Payette, Fortin, and Gamache, BioScience 51:709 (2001), https://academic.oup.com/bioscience/article/51/9/709/288238 | The forest–tundra "extends from the continuous-forest limit, that is, the limit of the area where all well-drained sites are colonized by forest, to the arctic tree line, that is, the northernmost position of arboreal growth." Table 1 is "Percentage and distribution of forest islands surviving a large fire (179,000 ha)." "White spruce density increased in FT stands" over 100–150 years, with no count. | No. Definition and a fire-survival table. No stem or height band. |
+| GNWT, *Ecological Regions of the Northwest Territories — Taiga Shield* (2008), section 3.4.1, https://www.gov.nt.ca/sites/ecc/files/resources/taiga_shield_ecological_land_classification_report_0.pdf | "South of tree line, open, stunted spruce woodlands with lichen and shrub understories are typical of lower slopes and valleys; shrub and lichen tundra communities occupy upper slope and crest positions." Footnote 11, citing Scott (1995): trees at the forest side of tree line "are typically over 3 m tall". Section 3.4.1.8 captions one white spruce "less than 5 m tall" and another "9 m tall". Appendix 5 glossary: "woodland – woody plants 2-8 m tall growing somewhat closely spaced." Appendix 2 Table 3, quoting Bradley et al. (1982): woodland is "Open areas with trees widely spaced so that the forest floor is exposed to sun and skylight; trees can be moderately tall." | No. Section 3.4.1 has no stems/ha and no canopy-height band. The glossary height span has no stems/ha. Two captioned trees are not a table range. "Widely spaced" and "somewhat closely spaced" are not stems/ha. |
+| Jacobs, Chan, and Sutton, the Mealy Mountains climatology the T-0132 README cites as Jacobs et al. 2015, Arctic 68, https://doi.org/10.14430/arctic4358 | "The forest-tundra ecotone extends from the highest open woodland patches at ca. 550 m a.s.l. to the limit of tree species in krummholz form near 750 m a.s.l." The FT subzone has "isolated erect trees (stem height > 2 m)". | No. That elevational width is the about 2 K figure the task already refuses as the gate. Stem height > 2 m is a minimum. |
+
+## Not done
+
+`cover.rs`, `data/earth/cover-density.json`, `coverKind.ts`, and `species.rs` are unchanged. Filling either end of a range, or thinning 1,000–3,000 stems/ha, would invent the row the stop forbids.

@@ -1,0 +1,9 @@
+{
+  "type": "propose",
+  "task": "T-0171",
+  "agent": "agy",
+  "at": "2026-11-06T19:18:00-08:00",
+  "title": "Decouple Senses HUD sight from scent hits, restore deer/person motion sight, and exclude non-visual scent deltas",
+  "credits": 39,
+  "note": "Inspection of the Wolf senses HUD (src/ui/senses.ts, createSensesHUD) with recorded frames (refs/senses/sight-audit/recording.webm, frame-0.png..frame-2.png, observations.json) and calibrated numeric checks (refs/senses/sight-audit/numbers.json via numeric-check.mjs) against perceive(WOLF_NEEDS, ...) and Miller & Murphy 1995 (JAVMA 207:1623) uncovered three bugs: (1) offerLive only evaluates perceive() inside lastHits.forEach(...), gating visual sight on smell() >= 0.025 so a hare fleeing at 12.26 m ahead upwind in daylight (expectedSightStrength = 0.7957) produces 0 sight bubbles; (2) speedOf(key) returns 0 for non-hare keys, blinding motion sight (>6 m) to moving deer and visitors; (3) invisible scent/droppings deltas in lastHits within presenceM (6 m) emit false .sense-bubble-sight eye bubbles (4 false sight bubbles at d = 2.0 m in frame-2.png)."
+}

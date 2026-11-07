@@ -58,7 +58,7 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
  *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
  *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share one flat base at the LCL, and each cell's top rises
- *    with its strength up to the column's buoyant top; cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
+ *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells;
  *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, and lateral density falls as anv^1.5 so the fringe is wispy. */
@@ -90,13 +90,17 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
     let cv = 0;
     if (zr[j] >= 0 && zr[j] <= 1) { // up to the buoyant top: strength scales cell height
       const reach = h[c] > 0 ? .35 + .65 * h[c] : 0, edge = Math.max(0, Math.min(1, (reach - zr[j]) * 6));
+      // Soft-narrow convective tower with height (Houze 2014 ch. 8): updraught cross-section
+      // shrinks toward the buoyant top. At zr≈0 keep today's footprint; as zr→1 scale ~ h^(zr/(1-zr))
+      // so mid/weak cells thin near the top while mature cores (h≈1) stay lit.
+      const tower = Math.pow(Math.max(h[c], 1e-9), zr[j] / Math.max(1 - zr[j], .05));
       // ice-deck depth scales with blurred strength: mature cores fill anvil_depth_m, fringe stays near the top
       // density peaks at the buoyant top (Houze outflow at the EL) and thins deeper into the ice deck
       // lateral: density ~ anv^1.5 so outflow thins away from the updraught (wispy fringe; Houze 2014 ch. 8)
       const d = top - z, cellDepth = CC.anvil_depth_m * anv[c];
       const taper = cellDepth > 0 ? 1 - .7 * Math.min(1, Math.max(0, d) / cellDepth) : 0; // 1 at top, .3 at cellDepth
       const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper : 0;
-      cv = Math.max(h[c] * edge, anvHere);
+      cv = Math.max(h[c] * edge * tower, anvHere);
     } else if (tip > top && z > top && h[c] > .5) { // overshooting dome: cell strength sets how far past the EL (Houze 2014 ch. 8)
       // mature cores (h~1) take the full overshootM; mid cells taper off; nothing below h=0.5 (same cut as anvil cores start rising)
       const frac = Math.max(0, Math.min(1, (h[c] - .5) / .35)); // 0 at 0.5, 1 at >=0.85

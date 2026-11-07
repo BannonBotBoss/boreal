@@ -4,52 +4,55 @@
   "observations": [
     {
       "frame": 0,
-      "scenario": "Wolf upwind of visible hare in broad daylight (wind blowing from wolf to hare)",
+      "scenario": "Wolf 14 m upwind of actively fleeing hare in broad daylight (scentLevel < 0.025, sim.speed > 1.5 m/s)",
       "wolf": {
-        "x": 46.38,
-        "z": -28.04,
-        "yaw": 2.969
+        "x": 41.7,
+        "z": -4.8,
+        "yaw": 3.052
       },
       "hare": {
         "id": 2,
-        "x": 43.56,
-        "z": -11.89,
-        "state": "nibble",
-        "distanceM": 16.4
+        "x": 39.99,
+        "z": 9.48,
+        "state": "flee",
+        "simSpeedMps": 8.468,
+        "distanceM": 14.38
       },
       "wind": {
         "x": -0.001,
         "z": 0.011
       },
-      "wolfScentLevelOfHare": 0.000093,
-      "expectedSightStrength": 0.545,
+      "wolfScentLevelOfHare": 0.000699,
+      "expectedSightStrength": 0.7603,
       "domSightBubbles": 0,
       "domScentBubbles": 0,
       "domSoundBubbles": 0
     },
     {
       "frame": 1,
-      "scenario": "Wolf within scent threshold and presenceM of hare in broad daylight (lastHits includes hare)",
+      "scenario": "Positive control: Wolf 2.5 m from hare (inside scent threshold 0.025 and presenceM 6 m; lastHits includes hare)",
       "wolf": {
-        "x": 42.67,
-        "z": -14.86,
+        "x": 81.88,
+        "z": -25.81,
         "yaw": -0.09
       },
       "hare": {
         "id": 2,
-        "x": 39.75,
-        "z": -26.77,
+        "x": 82.44,
+        "z": -28.75,
         "state": "flee",
-        "distanceM": 12.26
+        "simSpeedMps": 8.468,
+        "distanceM": 3
       },
       "wind": {
         "x": -0.001,
         "z": 0.011
       },
-      "wolfScentLevelOfHare": 0.00443,
-      "expectedSightStrength": 0.7957,
-      "domSightBubbles": 0,
-      "domScentBubbles": 0
+      "wolfScentLevelOfHare": 0.489202,
+      "inSmellLastHits": true,
+      "expectedSightStrength": 0.9501,
+      "domSightBubbles": 2,
+      "domScentBubbles": 2
     },
     {
       "frame": 2,

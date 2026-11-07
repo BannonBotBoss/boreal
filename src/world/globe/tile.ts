@@ -11,6 +11,12 @@
  * tile swaps to a shared index buffer that collapses its odd edge vertices onto their even neighbours (stitchIndex), so
  * that edge runs straight through the coarse tile's own vertices: no crack, no T-junction, and the skirt stays hidden.
  * Vertex data never changes (only the index buffer), so the exactness tests still hold. Deeper steps fall back to the skirt.
+ * LOD rings: a distance split draws a fine leaf against a coarse neighbour. The fine leaf's extra vertices, normals and
+ * colours are a different surface, so from overhead the boundary is a bright or dark ring. Each vertex also stores the
+ * point it would have on the parent grid (even vertices already lie there; odd ones sit on the parent's diagonal).
+ * The vertex shader smoothsteps onto that point between this node's split distance and the parent's, so the shared
+ * edge is already the coarse surface when the leaf is replaced. A sealed edge (neighbour drawn at this level or one
+ * coarser) drops its skirt, which was a radial fin and read as a line around every cell.
  * Coastlines: each vertex carries the signed field h âˆ’ level (aH); the material contours it per pixel (globeMaterial), so
  * the land/water edge is an interpolated contour instead of a per-vertex colour switch (no stair steps).
  */
@@ -27,16 +33,25 @@ import { figureRadius } from './figure';
 
 /** `lake`: 255 where the reference water level is above sea level (lakes and their shores), 0 at sea level: picks the lake vs ocean water colour. */
 /** `loc`: game-local x, z (gnomonic, m) and the home weight per vertex: where the shader reads the home shoreline mask (lakeMask.ts). */
-export interface TileData { position: Float32Array; color: Float32Array; height: Float32Array; lake: Uint8Array; loc: Float32Array; normal: Float32Array; index: Uint16Array; centre: Vec3; cpu: number }
+export interface TileData { position: Float32Array; color: Float32Array; height: Float32Array; lake: Uint8Array; loc: Float32Array; normal: Float32Array; index: Uint16Array; centre: Vec3; cpu: number; coarsePos: Float32Array; coarseNrm: Float32Array; coarseH: Float32Array; coarseCol: Float32Array; coarseLake: Float32Array; level: number }
+/** 0 at `near` (this leaf's own split distance: full detail), 1 at `far` (the parent split: the leaf is about to
+ *  disappear and must already be the parent surface). Smoothstep, the same curve the vertex shader uses. */
+export function morphWeight(dist: number, near: number, far: number): number {
+  const span = far - near;
+  if (!(span > 0)) return 0;
+  const u = Math.max(0, Math.min(1, (dist - near) / span));
+  return u * u * (3 - 2 * u);
+}
 export function* buildTile(q: QNode, planet: Planet, segments: number): Generator<void, TileData> {
   let cpu = 0, t = performance.now();
-  const n = segments + 1, m = n + 2, R = planet.radius, { a0, b0, s } = bounds(q), den = segments * 2 ** q.level;
+  const n = segments + 1, g = 2, m = n + g * 2, R = planet.radius, { a0, b0, s } = bounds(q), den = segments * 2 ** q.level;
   const cd = faceDir(q.face, a0 + s / 2, b0 + s / 2), Rc = figureRadius(cd), centre: Vec3 = [cd[0] * Rc, cd[1] * Rc, cd[2] * Rc];
   const count = n * n + 4 * n, position = new Float32Array(count * 3), color = new Float32Array(count * 3), height = new Float32Array(count), lake = new Uint8Array(count), loc = new Float32Array(count * 3), normal = new Float32Array(count * 3);
+  const coarsePos = new Float32Array(count * 3), coarseNrm = new Float32Array(count * 3), coarseH = new Float32Array(count), coarseCol = new Float32Array(count * 3), coarseLake = new Float32Array(count);
   const P = new Float64Array(m * m * 3), d: Vec3 = [0, 0, 0], rgb = [0, 0, 0], fp = 1.6 * R / den; // fp: ~vertex spacing (m), the soil colour's filter footprint
   for (let jj = 0; jj < m; jj++) { // sample rows âˆ’1 â€¦ n (the outer ring only feeds normals)
     for (let ii = 0; ii < m; ii++) {
-      const i = ii - 1, j = jj - 1, inside = i >= 0 && j >= 0 && i < n && j < n;
+      const i = ii - g, j = jj - g, inside = i >= 0 && j >= 0 && i < n && j < n;
       // exact dyadic lattice: a = -1 + 2g / (segmentsÂ·2^L) with integer g, so a point shared by neighbours, parents and
       // children gets the SAME double (division is correctly rounded): shared vertices are bit-identical, never 1-ulp apart
       const a = -1 + 2 * (q.i * segments + i) / den, b = -1 + 2 * (q.j * segments + j) / den;
@@ -54,7 +69,7 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
     cpu += performance.now() - t; yield; t = performance.now();
   }
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
-    const c = ((j + 1) * m + i + 1) * 3, v = (j * n + i) * 3, e = c + 3, w = c - 3, nn = c + m * 3, ss = c - m * 3;
+    const c = ((j + g) * m + i + g) * 3, v = (j * n + i) * 3, e = c + 3, w = c - 3, nn = c + m * 3, ss = c - m * 3;
     position[v] = P[c]; position[v + 1] = P[c + 1]; position[v + 2] = P[c + 2];
     const ax = P[e] - P[w], ay = P[e + 1] - P[w + 1], az = P[e + 2] - P[w + 2], bx = P[nn] - P[ss], by = P[nn + 1] - P[ss + 1], bz = P[nn + 2] - P[ss + 2];
     const nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx, l = Math.hypot(nx, ny, nz) || 1; // a Ã— b, outward (u Ã— v = n)
@@ -66,27 +81,67 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
   const drop = edgeMetres(q.level, R) / segments * 3 + 20;
   const edges = [Array.from({ length: n }, (_, i) => i), Array.from({ length: n }, (_, i) => (n - 1) * n + i),
     Array.from({ length: n }, (_, j) => j * n), Array.from({ length: n }, (_, j) => j * n + n - 1)];
+  const skirtSrc = new Int16Array(count).fill(-1);
   let v = n * n;
   for (const edge of edges) {
     const start = v;
     for (const src of edge) {
       const k = src * 3, x = position[k] + centre[0], y = position[k + 1] + centre[1], z = position[k + 2] + centre[2], l = Math.hypot(x, y, z), f = (l - drop) / l;
       position[v * 3] = x * f - centre[0]; position[v * 3 + 1] = y * f - centre[1]; position[v * 3 + 2] = z * f - centre[2];
-      color.copyWithin(v * 3, k, k + 3); normal.copyWithin(v * 3, k, k + 3); height[v] = height[src]; lake[v] = lake[src]; loc.copyWithin(v * 3, k, k + 3); v++;
+      color.copyWithin(v * 3, k, k + 3); normal.copyWithin(v * 3, k, k + 3); height[v] = height[src]; lake[v] = lake[src]; loc.copyWithin(v * 3, k, k + 3); skirtSrc[v] = src; v++;
     }
     for (let e = 0; e < n - 1; e++) { const a = edge[e], b = edge[e + 1], c = start + e, dd = start + e + 1; idx.push(a, c, b, b, c, dd, a, b, c, b, dd, c); } // both windings
   }
+  // Parent surface. Even vertices already are the parent lattice (segments is even on every LOD row). Odd ones
+  // lie on the parent's diagonal, which is the edge shared by both of its triangles. The parent normal samples
+  // two fine steps out, the same points the parent tile's own normal uses.
+  const samp = (i: number, j: number) => (j + g) * m + (i + g);
+  const nrmAt = (i: number, j: number, step: number) => {
+    const e = samp(i + step, j) * 3, w = samp(i - step, j) * 3, nn = samp(i, j + step) * 3, ss = samp(i, j - step) * 3;
+    const ax = P[e] - P[w], ay = P[e + 1] - P[w + 1], az = P[e + 2] - P[w + 2], bx = P[nn] - P[ss], by = P[nn + 1] - P[ss + 1], bz = P[nn + 2] - P[ss + 2];
+    const nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx, l = Math.hypot(nx, ny, nz) || 1;
+    return [nx / l, ny / l, nz / l];
+  };
+  const evenN = new Float32Array(n * n * 3);
+  if (segments % 2 === 0) {
+    for (let j = 0; j < n; j += 2) for (let i = 0; i < n; i += 2) { const vn = nrmAt(i, j, 2), o = (j * n + i) * 3; evenN[o] = vn[0]; evenN[o + 1] = vn[1]; evenN[o + 2] = vn[2]; }
+  }
+  const copy3 = (dst: Float32Array, to: number, srcA: Float32Array, from: number) => { dst[to] = srcA[from]; dst[to + 1] = srcA[from + 1]; dst[to + 2] = srcA[from + 2]; };
+  const avg3 = (dst: Float32Array, to: number, srcA: Float32Array, a: number, b: number) => { dst[to] = (srcA[a] + srcA[b]) / 2; dst[to + 1] = (srcA[a + 1] + srcA[b + 1]) / 2; dst[to + 2] = (srcA[a + 2] + srcA[b + 2]) / 2; };
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const v = j * n + i, k = v * 3, ie = (i & 1) === 0, je = (j & 1) === 0;
+    if (segments % 2 || (ie && je)) {
+      copy3(coarsePos, k, position, k); copy3(coarseCol, k, color, k); coarseH[v] = height[v]; coarseLake[v] = lake[v] / 255;
+      if (segments % 2) copy3(coarseNrm, k, normal, k); else copy3(coarseNrm, k, evenN, k);
+      continue;
+    }
+    // Edge midpoint: the two even neighbours. Quad centre: the parent's diagonal, (i-1,j-1) to (i+1,j+1).
+    let pa: number, pb: number;
+    if (!ie && je) { pa = j * n + (i - 1); pb = j * n + (i + 1); }
+    else if (ie && !je) { pa = (j - 1) * n + i; pb = (j + 1) * n + i; }
+    else { pa = (j - 1) * n + (i - 1); pb = (j + 1) * n + (i + 1); }
+    avg3(coarsePos, k, position, pa * 3, pb * 3); avg3(coarseCol, k, color, pa * 3, pb * 3);
+    coarseH[v] = (height[pa] + height[pb]) / 2; coarseLake[v] = (lake[pa] + lake[pb]) / 510;
+    const nx = evenN[pa * 3] + evenN[pb * 3], ny = evenN[pa * 3 + 1] + evenN[pb * 3 + 1], nz = evenN[pa * 3 + 2] + evenN[pb * 3 + 2], l = Math.hypot(nx, ny, nz) || 1;
+    coarseNrm[k] = nx / l; coarseNrm[k + 1] = ny / l; coarseNrm[k + 2] = nz / l;
+  }
+  for (let s = n * n; s < count; s++) {
+    const src = skirtSrc[s]; copy3(coarsePos, s * 3, coarsePos, src * 3); copy3(coarseNrm, s * 3, coarseNrm, src * 3); copy3(coarseCol, s * 3, coarseCol, src * 3);
+    coarseH[s] = coarseH[src]; coarseLake[s] = coarseLake[src];
+  }
   cpu += performance.now() - t;
-  return { position, color, height, lake, loc, normal, index: Uint16Array.from(idx), centre, cpu };
+  return { position, color, height, lake, loc, normal, index: Uint16Array.from(idx), centre, cpu, coarsePos, coarseNrm, coarseH, coarseCol, coarseLake, level: q.level };
 }
 /** Edge bits for stitchIndex: the neighbour across that edge is coarser. Row j = 0, row j = n-1, column i = 0, column i = n-1. */
 export const EDGE = { south: 1, north: 2, west: 4, east: 8 } as const;
 const STITCH = new Map<string, THREE.BufferAttribute>();
-/** Shared index buffer for a tile of `segments` with the given coarser-neighbour edge bits (16 per segment count, built
- *  once): the grid and skirt triangles of buildTile with each odd vertex on a flagged edge (and its skirt copy) collapsed
- *  onto its lower even neighbour. Collapsed triangles are degenerate and rasterize nothing. */
-export function stitchIndex(segments: number, flags: number) {
-  const key = segments + '/' + flags; let a = STITCH.get(key); if (a) return a;
+/** Shared index buffer for a tile of `segments` with the given coarser-neighbour edge bits (built once per combination):
+ *  the grid and skirt triangles of buildTile with each odd vertex on a flagged edge (and its skirt copy) collapsed
+ *  onto its lower even neighbour. Collapsed triangles are degenerate and rasterize nothing. `skirt` is the edge-bit
+ *  mask of fins to keep; a sealed edge (same level, or one level coarser) passes 0 for that bit so the radial fin,
+ *  which reads as a line around the cell, is not drawn. Default 15 keeps every fin (buildTile's own index). */
+export function stitchIndex(segments: number, flags: number, skirt = 15) {
+  const key = segments + '/' + flags + '/' + skirt; let a = STITCH.get(key); if (a) return a;
   const n = segments + 1, at = (i: number, j: number) => {
     if (j === 0 && flags & 1 && i & 1) i--; else if (j === n - 1 && flags & 2 && i & 1) i--;
     if (i === 0 && flags & 4 && j & 1) j--; else if (i === n - 1 && flags & 8 && j & 1) j--;
@@ -96,6 +151,7 @@ export function stitchIndex(segments: number, flags: number) {
   for (let j = 0; j < segments; j++) for (let i = 0; i < segments; i++) { const p = at(i, j), b = at(i + 1, j), c = at(i, j + 1), e = at(i + 1, j + 1); idx.push(p, b, e, p, e, c); }
   const edges: [number, (k: number) => [number, number]][] = [[1, k => [k, 0]], [2, k => [k, n - 1]], [4, k => [0, k]], [8, k => [n - 1, k]]];
   edges.forEach(([bit, ij], ei) => {
+    if ((skirt & bit) === 0) return;
     const start = n * n + ei * n, sk = (k: number) => start + (flags & bit && k & 1 ? k - 1 : k);
     for (let k = 0; k < n - 1; k++) { const p = at(...ij(k)), b = at(...ij(k + 1)), c = sk(k), d = sk(k + 1); idx.push(p, c, b, b, c, d, p, b, c, b, d, c); }
   });
@@ -108,8 +164,11 @@ export function tileGeometry(t: TileData) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(t.position, 3)); g.setAttribute('normal', new THREE.BufferAttribute(t.normal, 3));
   g.setAttribute('color', new THREE.BufferAttribute(t.color, 3)); g.setAttribute('aH', new THREE.BufferAttribute(t.height, 1)); g.setAttribute('aLake', new THREE.BufferAttribute(t.lake, 1, true)); g.setAttribute('aLoc', new THREE.BufferAttribute(t.loc, 3));
+  g.setAttribute('aCoarse', new THREE.BufferAttribute(t.coarsePos, 3)); g.setAttribute('aCoarseN', new THREE.BufferAttribute(t.coarseNrm, 3)); g.setAttribute('aCoarseC', new THREE.BufferAttribute(t.coarseCol, 3));
+  g.setAttribute('aCoarseH', new THREE.BufferAttribute(t.coarseH, 1)); g.setAttribute('aCoarseL', new THREE.BufferAttribute(t.coarseLake, 1));
+  const level = new Float32Array(t.position.length / 3); level.fill(t.level); g.setAttribute('aLevel', new THREE.BufferAttribute(level, 1));
   const seg = Math.round(Math.sqrt(4 + t.position.length / 3)) - 3; // count = nÂ² + 4n
-  g.setIndex(stitchIndex(seg, 0)); g.userData.stitch = 0; // shared index buffers (same triangles as t.index), never per tile
+  g.setIndex(stitchIndex(seg, 0)); g.userData.stitch = -1; // stitch() fills the real edge mask; 0 would mean "already sealed" and skip it
   g.computeBoundingSphere(); return g;
 }
 /** The globe material: vertex-colour land, per-pixel land/water contour of aH (antialiased with fwidth), water shaded
@@ -153,6 +212,40 @@ export function setGlobeDetail(cam: Vec3, alt: number, tierScale: number, seed: 
   const m = (v: number, l: number) => (((v / l) % 4096) + 4096) % 4096;
   [u.uDetO0, u.uDetO1, u.uDetO2].forEach((o, k) => { const l = DETAIL.lambda[k]; o.value.set(m(cam[0], l), m(cam[1], l), m(cam[2], l)); });
 }
+/** One program, one upload per frame (globeView sets these before the draw). x radius (m), y capped split, z full
+ *  split, w near boost. Reach is metres. Cam is the real camera, because the draw itself runs from the origin. */
+export const GLOBE_MORPH = { uMorph: { value: new THREE.Vector4(0, 1, 1, 0) }, uMorphReach: { value: 0 }, uMorphCam: { value: new THREE.Vector3() } };
+export function setGlobeMorph(radius: number, split: number, full: number, boost: number, reach: number, cam: Vec3) {
+  GLOBE_MORPH.uMorph.value.set(radius, split, full, boost);
+  GLOBE_MORPH.uMorphReach.value = reach;
+  GLOBE_MORPH.uMorphCam.value.set(cam[0], cam[1], cam[2]);
+}
+/** morphWeight, in the vertex shader. The near test is lod.ts nearNode: extent is 0.8 edge / radius, the parent
+ *  uses twice that because its edge is twice as long. The angle is measured at this tile's centre (the parent
+ *  centre is within half an edge). Level 0 has no parent, so it stays at full detail. */
+const MORPH_GLSL = /* glsl */`
+attribute vec3 aCoarse, aCoarseN, aCoarseC;
+attribute float aCoarseH, aCoarseL, aLevel;
+uniform vec4 uMorph;
+uniform float uMorphReach;
+uniform vec3 uMorphCam;
+float gMorph;
+float globeMorph() {
+  if (aLevel < 0.5 || uMorph.x <= 0.0) return 0.0;
+  vec3 centreW = modelMatrix[3].xyz + uMorphCam;
+  float camL = length(uMorphCam), cL = length(centreW);
+  float ang = camL > 1.0 ? acos(clamp(dot(centreW, uMorphCam) / max(cL * camL, 1e-6), -1.0, 1.0)) : 0.0;
+  float edge = uMorph.x * 1.57079632679 / exp2(aLevel);
+  float ext = edge / uMorph.x * 0.8;
+  float boosted = uMorph.z * (1.0 + uMorph.w);
+  float split = max(0.0, ang - ext) * uMorph.x < uMorphReach ? boosted : uMorph.y;
+  float parentSplit = max(0.0, ang - ext * 2.0) * uMorph.x < uMorphReach ? boosted : uMorph.y;
+  float dist = length((modelMatrix * vec4(position, 1.0)).xyz);
+  float farD = parentSplit * edge * 2.0, nearD = split * edge, span = farD - nearD;
+  if (span <= 0.0) return dist >= farD ? 1.0 : 0.0;
+  float t = clamp((dist - nearD) / span, 0.0, 1.0);
+  return t * t * (3.0 - 2.0 * t);
+}`;
 /** Home shoreline mask (lakeMask.ts): one R8 signed-field texture over the home region, shared by every globe material.
  *  uShore: x = 1 / region size, y = half a texel (texel i sits on x = i * size / n), w = n, z = 1 once the mask is loaded (until
  *  then, and outside the home region, the per-vertex field aH contours as before). Uniform values only, same program. */
@@ -221,10 +314,14 @@ export function globeMaterial(debugSegments = 0) {
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) }; sh.uniforms.uDeepSun = { value: new THREE.Color().setRGB(...C.deepSun) };
     sh.uniforms.uOceanRough = { value: OCEAN_GLINT.roughness }; sh.uniforms.uOceanMetal = { value: OCEAN_GLINT.metalness };
-    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uEra = GLOBE_ERA.uEra; sh.uniforms.uCrack = GLOBE_ERA.uCrack; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uHideLake = LAKE_FADE.uHide; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc;')
+    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS, GLOBE_MORPH); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uEra = GLOBE_ERA.uEra; sh.uniforms.uCrack = GLOBE_ERA.uCrack; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uHideLake = LAKE_FADE.uHide; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc;\n' + MORPH_GLSL)
+      .replace('#include <color_vertex>', `#include <color_vertex>\ngMorph = globeMorph();`)
+      .replace('#include <morphcolor_vertex>', `#include <morphcolor_vertex>\nvColor.rgb = mix(vColor.rgb, aCoarseC, gMorph);`)
+      .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>\nobjectNormal = normalize(mix(objectNormal, aCoarseN, gMorph));`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
-vH = aH; vLake = aLake; vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
+transformed = mix(transformed, aCoarse, gMorph);
+vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
 #ifdef DEBUG_SEAMS
 { float n = uSeg + 1.0, id = float(gl_VertexID); vSkirt = id >= n * n ? 1.0 : 0.0;
   if (id < n * n) vTileUV = vec2(mod(id, n), floor(id / n)) / uSeg;

@@ -48,7 +48,7 @@ import { createLocalClouds, localCloudFade, type ColumnInput } from './localClou
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
 import { refreshHydroLayer, hydroLayerState } from './hydroLayer';
-import { COARSE_LAKE, GLOBE_SHORE, LAKE_FADE, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
+import { COARSE_LAKE, GLOBE_SHORE, LAKE_FADE, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setGlobeMorph, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
 import { auroraFromSolarWind, fieldLineR } from '../../core/geodynamo';
 import { auroraPole } from './atmosphere';
@@ -442,6 +442,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   }
   const offTmp: Vec3 = [0, 0, 0];
   const wanted = new Set<string>(); let drawn = 0, inView = 0, deepest = 0, culled = 0, splitK = 1, splitDepth = 0, nearK = 0;
+  let morphRadius = 0, morphSplit = 1, morphFull = 1, morphBoost = 0, morphReach = 0;
   function want(n: QNode) {
     const t = tiles.get(n.key);
     if (t) { // built at another tier's segment count (the governor moved the world tier): neighbours would not share
@@ -475,12 +476,16 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   function stitch() {
     drawnKeys.clear(); for (const n of drawnNodes) drawnKeys.add(n.key);
     for (const n of drawnNodes) {
-      let flags = 0;
-      if (n.level > 0) for (let e = 0; e < 4; e++) { // the same-level node across each edge (also across cube-face edges): its parent drawn?
-        const a = across(n, e); if (drawnKeys.has(`${a.face}/${n.level - 1}/${a.i >> 1}/${a.j >> 1}`)) flags |= 1 << e;
+      let flags = 0, skirt = 0;
+      for (let e = 0; e < 4; e++) { // same-level neighbour, or its parent when that parent is the drawn coarser leaf
+        const a = across(n, e);
+        const same = drawnKeys.has(`${a.face}/${n.level}/${a.i}/${a.j}`);
+        const coarser = n.level > 0 && drawnKeys.has(`${a.face}/${n.level - 1}/${a.i >> 1}/${a.j >> 1}`);
+        if (coarser) flags |= 1 << e;
+        if (!same && !coarser) skirt |= 1 << e; // an open edge keeps the fin; a sealed edge would draw a ring
       }
-      const t = tiles.get(n.key)!, g = t.mesh.geometry;
-      if ((g.userData.stitch ?? 0) !== flags) { g.userData.stitch = flags; g.setIndex(stitchIndex(t.seg, flags)); }
+      const t = tiles.get(n.key)!, g = t.mesh.geometry, key = flags + skirt * 16;
+      if ((g.userData.stitch ?? -1) !== key) { g.userData.stitch = key; g.setIndex(stitchIndex(t.seg, flags, skirt)); }
     }
     if (shot && frame % 240 === 0) console.log('SEAMS ' + JSON.stringify(seamReport())); // screenshots: level jumps / segment mismatches across drawn edges
   }
@@ -625,11 +630,13 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     camera.updateMatrixWorld(); frustum.setFromProjectionMatrix(projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
     group.clear(); wanted.clear(); drawnNodes.length = 0; drawn = 0; inView = 0; deepest = 0; culled = 0;
     // Tile centres sit on the drawn surface (figure + terrain), the same radius the camera uses.
-    const surf = R + ground, lodOpts = { radius: surf, minLevel: lod.minLevel, maxLevel: lod.maxLevel, split: lod.split * splitK };
+    const surf = R + ground, splitNow = lod.split * splitK, lodOpts = { radius: surf, minLevel: lod.minLevel, maxLevel: lod.maxLevel, split: splitNow };
+    morphRadius = surf; morphSplit = splitNow; morphFull = lod.split;
     // Below ~3 km the nodes under the camera split deeper, so the globe reads like the game where they meet.
     // The reach is along the surface from the node's footprint (lod.ts nearNode). The draw cap shrinks lodOpts
     // only; the near split keeps the tier factor, or the cell under the camera collapses back to one coarse leaf.
     const nb = nearK = NEAR_SPLIT.k * smoothstep(NEAR_SPLIT.from, NEAR_SPLIT.full, alt);
+    morphBoost = nb; morphReach = alt * NEAR_SPLIT.reach;
     const wants = (n: QNode) => splitWanted(n, camPos, alt, lodOpts, nb, NEAR_SPLIT.reach, lod.split);
     splitSet = balancedTree(roots(), n => (n.level < lod.minLevel || inFrustum(n)) && wants(n), n => !hidden(n)).splits;
     splitDepth = 0; for (const k of splitSet) { const lv = +k.split('/')[1]; if (lv > splitDepth) splitDepth = lv; }
@@ -657,6 +664,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setLogDepthFar(camera.far);
     setLayerCamera(camPos, camera.fov, viewH);
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
+    setGlobeMorph(morphRadius, morphSplit, morphFull, morphBoost, morphReach, camPos); // fade each leaf onto its parent before the LOD ring
     LAKE_FADE.uHide.value = alt < COARSE_LAKE.below ? 1 : 0; // vertex lakes off below 8 km; one value for every tile this frame
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
     const hydroSec = q.has('shot') ? shotSec : worldSec();

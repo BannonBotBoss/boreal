@@ -18,7 +18,7 @@ Count seconds only while the clamp is on screen, starting with the frame that fi
 
 ## Arrival
 
-`finishIntro` calls `releaseFilm()` before `enter()`. That keeps the camera on the film's last pose, clears `lookAz` so the stored heading does not tilt off the disc, and lets the orbit controls run. The film overlay and `cine-run` come off in the same arrival, so the counter cannot stay painted. The den search (`forestLanding`) is memoized and primed inside `prewarm`, before the tile steps, so the earth frame does not build chunk trees.
+Finish only when `elapsed >= b14End` and the globe is up (or the boot was given up). The steps from 108 s through 116 s are the approved beat: Today, the sun grade to 112, `vo-b14` at 112.3, and the 800 ms hero crossfade. `finishIntro` then calls `releaseFilm()` before `enter()`. That keeps the camera on the film's last pose, clears `lookAz` so the stored heading does not tilt off the disc, and lets the orbit controls run. The overlay and `cine-run` come off in that same landing. The den search (`forestLanding`) is memoized and primed inside `prewarm`. Trace lines go through `cineTrace` and stay quiet unless `?cine-trace=1` or `?inpagedev`.
 
 ## Checks
 

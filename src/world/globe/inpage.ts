@@ -26,6 +26,7 @@ import { canEmbody, descentFrameDt, landingJobBudget, landingPatchReady } from '
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
 import { forestLanding } from './forestLanding';
+import { cineTrace } from '../cosmos/cineReady';
 import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
@@ -222,7 +223,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       globe!.lookOver(spot.land.x, spot.land.z, spot.land.yaw);
     }
     setMode('globe');
-    console.log(`CINE TRACE toGlobe ${JSON.stringify({ sphere, landMs: +landMs.toFixed(1), totalMs: +(performance.now() - t0).toFixed(1) })}`);
+    cineTrace(`CINE TRACE toGlobe ${JSON.stringify({ sphere, landMs: +landMs.toFixed(1), totalMs: +(performance.now() - t0).toFixed(1) })}`);
   }
   function toGame() { keepClouds(); restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
   function restoreScene() {
@@ -514,7 +515,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       // The den search builds chunk trees the first time. Pay it here, during the bang, so the earth frame does not.
       const tLand = performance.now();
       forestLanding();
-      console.log(`CINE TRACE forestLanding primed ${(performance.now() - tLand).toFixed(1)}ms`);
+      cineTrace(`CINE TRACE forestLanding primed ${(performance.now() - tLand).toFixed(1)}ms`);
       // The prewarm steps the globe while the game is still the view. Detach the forest camera for those steps:
       // attached, globeView.step writes the orbit clip (near = altitude x 0.02: 60 m at the 3 km entry altitude, far past the limb) onto
       // view.camera, and game mode never puts 0.2 / 700 back (cameraTouched stays false), so the ground world was clipped.

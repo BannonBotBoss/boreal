@@ -45,9 +45,12 @@ test('the grace starts when the clamp engages, and a ready globe is not held', (
   assert.ok(s.elapsed >= CINE.b13End);
   const released = stepCineBoot(boot({ elapsed: 107.95, held: 9, begun: true, gaveUp: true }), 1, 9);
   assert.equal(released.elapsed, 108.95);
-  assert.equal(cineArrivalDue(108, true, true, false, false), true);
-  assert.equal(cineArrivalDue(108.025, true, true, false, false), true);
+  assert.equal(cineArrivalDue(108.03, true, true, false, false), false);
+  assert.equal(cineArrivalDue(112.3, true, true, false, false), false);
+  assert.equal(cineArrivalDue(CINE.b14End, true, true, false, false), true);
+  assert.equal(formatClock(108.03), '231 million years ago');
   assert.equal(formatClock(108.025), '232 million years ago');
+  assert.equal(cineArrivalDue(108.025, true, true, false, false), false);
   assert.equal(cineArrivalDue(108, false, false, true, false), false);
   assert.equal(cineArrivalDue(116, false, false, true, false), true);
   assert.equal(cineArrivalDue(116, false, false, true, true), false);
@@ -106,7 +109,7 @@ function installDom(search: string, reduced: boolean) {
   const mk = (tag: string): Fake => {
     const node = {
       tag, id: '', className: '', textContent: '', hidden: false,
-      style: { setProperty() {}, cssText: '' },
+      style: { setProperty(k: string, v: string) { (node.style as unknown as Record<string, string>)[k] = v; }, cssText: '' },
       classList: { add() {}, remove() {}, toggle() {} },
       dataset: {}, children: [] as Fake[], parent: null as Fake | null,
       append(...kids: Fake[]) { for (const k of kids) { k.parent = node; node.children.push(k); } },
@@ -139,7 +142,13 @@ function installDom(search: string, reduced: boolean) {
   g.location = { search, hash: '' };
   g.localStorage = { getItem: () => null, setItem() {} };
   g.matchMedia = (q: string) => ({ matches: reduced && q.includes('reduce'), addEventListener() {}, removeEventListener() {} });
-  g.Audio = function Audio(this: unknown) { return mk('audio'); };
+  const played: string[] = [];
+  g.Audio = function Audio(this: unknown, src?: string) {
+    const n = mk('audio');
+    if (src) n.src = src;
+    n.play = () => { played.push(n.src); return Promise.resolve(); };
+    return n;
+  };
   const listeners = new Map<string, ((e: unknown) => void)[]>();
   g.window = {
     addEventListener(type: string, fn: (e: unknown) => void) { const list = listeners.get(type) ?? []; list.push(fn); listeners.set(type, list); },
@@ -150,7 +159,11 @@ function installDom(search: string, reduced: boolean) {
     devicePixelRatio: 1,
   };
   g.AudioContext = undefined;
-  return g.window as { events: string[]; __borealOpening?: { begin: () => void; seek: (t: number) => void; elapsed: number }; __borealSave?: { markBigBangSeen?: () => void } };
+  const suns: number[] = [];
+  (g.window as { __inpage?: { setFilmDrive: (yaw: number, radii: number, offset: number, sunBias?: number) => void } }).__inpage = {
+    setFilmDrive(_yaw, _radii, _offset, sunBias) { suns.push(sunBias ?? 0); },
+  };
+  return Object.assign(g.window as { events: string[]; __borealOpening?: { begin: () => void; seek: (t: number) => void; elapsed: number }; __borealSave?: { markBigBangSeen?: () => void } }, { played, suns });
 }
 
 function film(opts: { search?: string; reduced?: boolean; ready: () => Promise<void> }) {
@@ -173,8 +186,15 @@ test('first-visit readiness paths', { concurrency: false }, async (t) => {
     f.probe.begin();
     await Promise.resolve();
     const seen = new Set<number>();
-    for (let i = 0; i < 130 && f.planets === 0; i++) { f.opening.step(1); seen.add(Math.round(f.probe.elapsed * 100) / 100); }
+    let throughB14 = false;
+    for (let i = 0; i < 200 && f.planets === 0; i++) {
+      f.opening.step(1);
+      seen.add(Math.round(f.probe.elapsed * 100) / 100);
+      if (f.probe.elapsed >= 108.03 && f.probe.elapsed < CINE.b14End) throughB14 = true;
+    }
+    assert.equal(throughB14, true);
     assert.equal(seen.has(CINE.b13End - 0.05), false);
+    assert.ok(f.probe.elapsed >= CINE.b14End);
     assert.equal(f.shows, 1);
     assert.equal(f.planets, 1);
     assert.equal(f.marks, 1);
@@ -186,6 +206,47 @@ test('first-visit readiness paths', { concurrency: false }, async (t) => {
     f.opening.step(1);
     assert.equal(f.planets, 1);
     assert.equal(f.marks, 1);
+  });
+
+  await t.test('Today, the sun grade, vo-b14 and the hero crossfade run before finish', async () => {
+    const f = film({ ready: () => Promise.resolve() });
+    const played = (f.w as { played: string[] }).played;
+    const suns = (f.w as { suns: number[] }).suns;
+    f.probe.begin();
+    await Promise.resolve();
+    let today = false, overlap = false, at108 = false;
+    const nodesOf = (n: { className?: string; id?: string; textContent?: string; style?: { opacity?: string }; children?: unknown[] }): typeof n[] => {
+      const out = [n];
+      for (const c of n.children ?? []) out.push(...nodesOf(c as typeof n));
+      return out;
+    };
+    for (let i = 0; i < 800 && f.planets === 0; i++) {
+      f.opening.step(0.2);
+      const t = f.probe.elapsed;
+      if (t >= 108.03 && t < CINE.b14End) {
+        at108 = true;
+        assert.equal(f.planets, 0);
+        assert.equal(cineArrivalDue(t, true, true, false, false), false);
+      }
+      const nodes = nodesOf((globalThis as unknown as { document: { body: { children: unknown[] } } }).document.body);
+      const hero = nodes.find(n => n.className === 'hero-line');
+      const panel = nodes.find(n => n.id === 'cine-panel');
+      const count = nodes.find(n => n.className === 'count');
+      if (count?.textContent === 'Today') today = true;
+      const ho = Number(hero?.style?.opacity);
+      const po = Number(panel?.style?.opacity);
+      if (hero?.textContent?.includes('Today · 13.8 billion years') && ho > 0 && ho < 1 && Math.abs(po - (1 - ho)) < 1e-6) overlap = true;
+    }
+    assert.equal(at108, true);
+    assert.equal(today, true);
+    assert.equal(overlap, true);
+    assert.ok(suns.some(s => s > 0 && s < 1), 'sun grade is partial between 108 and 112');
+    assert.ok(suns.some(s => s >= 1), 'sun grade reaches full before the landing');
+    assert.ok(played.some(s => s.includes('vo-b14-home')), 'vo-b14 plays before finish');
+    assert.equal(f.planets, 1);
+    assert.ok(f.probe.elapsed >= CINE.b14End);
+    assert.equal(f.marks, 1);
+    assert.equal(f.w.events.filter(e => e === 'cinematic:complete').length, 1);
   });
 
   await t.test('a rejected boot plays through B14 and lands once without showing a globe', async () => {

@@ -11,26 +11,28 @@ Proposed. Not claimed. No approve-plan. Pull request https://github.com/BannonBo
 
 The rejection catch, the `CosmosSphere` try, `enter()` waiting on `bootSettled`, and the never-settling tests stay.
 
+## B14 is the whole beat
+
+`cineArrivalDue` is false at 108.03 s with the globe up, and true at `b14End` (116 s). `step` keeps running, so the Today counter, the sun grade from 108 to 112, `vo-b14-home` at 112.3, and the 800 ms hero/panel crossfade all happen before `finishIntro`. The overlay comes off only then. `?cine-trace=1` or `?inpagedev` gates the trace lines.
+
 ## Arrival trace (SwiftShader, not omen)
 
-`tools/cine-arrival-trace.mjs`. Chrome 156 headless, ANGLE SwiftShader, 1280×720, fresh context, `?start=sphere&stages=1&trees=v2&noprobe=1`. Cold in the sense of an empty browser context. The dev server had already transformed the modules.
+`tools/cine-arrival-trace.mjs` with `?cine-trace=1`. Chrome 156 headless, ANGLE SwiftShader, 1280×720, fresh context, `?start=sphere&stages=1&trees=v2&noprobe=1`. Not omen. The dev server had already transformed the modules.
 
 | Point | Measured |
 | --- | --- |
-| `forestLanding` primed during prewarm | 73.1 ms |
-| `toGlobe` on the earth frame, including the memoized search | 0.5 ms (search 0.1 ms) |
-| `earth.show` | same frame as `toGlobe`, film time 83.32 s. The show line does not carry `performance.now` (one clock). |
-| `finishIntro` | 3.4 ms total (release 0.1, enter 0, mark 0, capture 0.2, commit 3.1) |
-| Arrival film time | 108.148 s, counter "218 million years ago" (SwiftShader frames are about a second, so the crossing frame steps past 108) |
-| Camera 1 s after release, no input | moved 0 m |
-| Camera after one drag | moved about 3.28×10^7 m |
-| Cursor after the overlay came off | `auto` |
+| `forestLanding` primed during prewarm | 121.6 ms |
+| `toGlobe` on the earth frame | 0.5 ms (search 0 ms, memo hit) |
+| Earth shown | film time 83.37 s, save not written |
+| Still inside B14 | 108.10 s, counter "223 million years ago", save not written |
+| Hero crossfade | 110.27 s, counter Today, hero opacity 0.082, save not written |
+| `finishIntro` | elapsed 116, clock Today, 4.0 ms (release 0.1, enter 0, commit 3.7) |
+| Camera 1 s after release, no input | moved about 0 m |
+| Camera after one drag | moved about 3.27×10^7 m |
 
-`finishIntro` is not a stall. The long tasks through the film are the software renderer (about 0.5–2.5 s a frame the whole way, including a 13.7 s gap while startup was still compiling). They are not a spike inside arrival. A Node timing of the first `forestLanding()` on a cold module was 571 ms; the repeat was 23 ms. Prewarm now pays the first search, and the earth frame hit the memo.
+`finishIntro` is not a stall. SwiftShader frames through the film are about 0.5–2.5 s. A Node timing of the first `forestLanding()` was 571 ms; the repeat was under 50 ms. Prewarm pays the first search.
 
-What did stick the picture on that B14 label: `setFilmDrive` sets `filmReady`, and nothing cleared it. Every later `update()` rewrote the camera to the film pose and skipped `controls.update()`. The counter had already stopped because the film stops on the first B14 frame. Releasing the film keeps that pose (`lookAz` is cleared so the stored heading does not tilt off the disc) and the next drag orbits. The overlay comes off in the same arrival, so the counter is not left on screen.
-
-Still: `tasks/evidence/T-0173/arrival-orbit.png` is the globe after that drag, with the orbit hint and no film counter. Coarse night-side shading is SwiftShader.
+`tasks/evidence/T-0173/b14-today.png` is the disc during B14, before the save: the counter reads Today and the hero reads "Today · 13.8 billion years", with the panel still crossing out. `tasks/evidence/T-0173/arrival-orbit.png` is the globe after the later drag. Coarse shading is SwiftShader.
 
 ## Number table
 
@@ -49,7 +51,7 @@ No biological rate is introduced.
 
 `tests/cine-ready.test.ts`: grace starts at the clamp, rejection, a promise that never settles, reduced motion, the B7 pin, `bootP` has no `settleOr`. `tests/forest-landing.test.ts`: the repeat search is the same object and under 50 ms.
 
-`npm test`: 1163 pass, 0 fail, 14 todo. `npx tsc --noEmit`: exit 0.
+`npm test`: 1164 pass, 0 fail, 14 todo. `npx tsc --noEmit`: exit 0. The B14 integration test steps 0.2 s and requires Today, a partial hero opacity with the panel at `1 - opacity`, a sun bias strictly between 0 and 1 and then 1, and `vo-b14-home` played, all before `onPlanet`.
 
 The node tests do not draw the globe. The trace above is one SwiftShader visit. It is not omen.
 

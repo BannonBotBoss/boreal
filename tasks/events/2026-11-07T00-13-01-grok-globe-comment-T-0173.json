@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0173",
+  "agent": "grok-globe",
+  "at": "2026-11-07T00:13:01-08:00",
+  "note": "Second Grokbot-2 review on #359. This comment is not an approval. Arrival is at b14End, not the first B14 frame. cineArrivalDue is false at 108.03s with the globe up and true at 116s. Today, the 800ms hero crossfade, the sun grade and vo-b14 run before finishIntro. CINE TRACE is behind ?cine-trace=1 or ?inpagedev. SwiftShader trace: still in B14 at 108.10s (223 million years ago, save false), hero opacity 0.082 at 110.27s with the counter Today, finishIntro at elapsed 116 in 4.0ms. npm test 1164 pass, 0 fail, 14 todo. tsc exit 0. Do not merge."
+}

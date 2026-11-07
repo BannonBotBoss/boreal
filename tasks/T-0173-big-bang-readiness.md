@@ -22,7 +22,7 @@ A wasm fetch that never returns also blocks `openForestPlanet`, whose `finally` 
 
 ## Path
 
-`bootP` keeps issue #47: land, elevation, then boot order, before the first globe frame. No timer on that promise. The film grace starts when the B13 clamp first engages. It is twice the spread of the measured full prewarms, rounded up to a whole second. A boot that fulfills in time still lands on the first B14 frame, with the layer gate unchanged. Arrival releases the film camera onto that pose and drops the overlay. The den search is primed during prewarm.
+`bootP` keeps issue #47: land, elevation, then boot order, before the first globe frame. No timer on that promise. The film grace starts when the B13 clamp first engages. It is twice the spread of the measured full prewarms, rounded up to a whole second. A ready globe keeps stepping through all of B14. Finish, the camera release, the overlay, and the save run once at `b14End`. The den search is primed during prewarm.
 
 ## Objectives
 

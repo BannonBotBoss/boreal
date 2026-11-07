@@ -73,6 +73,7 @@ import { toLatLon } from './world/globe/planet';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
 import { startView } from './world/globe/startView';
 import { createOpening, type Opening } from './world/cosmos/opening';
+import { cineTrace } from './world/cosmos/cineReady';
 import { createInPage } from './world/globe/inpage';
 import { streamAltitude } from './world/globe/landingStream';
 import { ageYears, lifespanWarning } from './core/lifespan';
@@ -494,7 +495,7 @@ function finishIntro() {
   const tCommit = performance.now();
   commitContext();
   const commitMs = performance.now() - tCommit;
-  console.log(`CINE TRACE finishIntro ${JSON.stringify({ released, releaseMs: +releaseMs.toFixed(1), entered, enterMs: +enterMs.toFixed(1), markMs: +markMs.toFixed(1), captureMs: +captureMs.toFixed(1), commitMs: +commitMs.toFixed(1), totalMs: +(performance.now() - t0).toFixed(1) })}`);
+  cineTrace(`CINE TRACE finishIntro ${JSON.stringify({ released, releaseMs: +releaseMs.toFixed(1), entered, enterMs: +enterMs.toFixed(1), markMs: +markMs.toFixed(1), captureMs: +captureMs.toFixed(1), commitMs: +commitMs.toFixed(1), totalMs: +(performance.now() - t0).toFixed(1) })}`);
 }
 for (const type of INTRO_DONE_EVENTS) {
   const mark = () => markIntroFlag();

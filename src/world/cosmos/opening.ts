@@ -11,7 +11,7 @@ import { CosmosSphere, type SphereInputs } from './sphere';
 import { GLOBE_ERA, GLOBE_LAND, GLOBE_SKY } from '../globe/tile';
 import { setCineLayerGate } from '../globe/planetLayers';
 import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatClock, haloFade, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
-import { cineArrivalDue, stepCineBoot } from './cineReady';
+import { cineArrivalDue, cineTrace, stepCineBoot } from './cineReady';
 
 /**
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
@@ -302,7 +302,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     if (showEarth && !earthOn) {
       earthOn = true;
       earth?.show();
-      console.log(`CINE TRACE earth.show at ${elapsed.toFixed(2)}s`);
+      cineTrace(`CINE TRACE earth.show at ${elapsed.toFixed(2)}s`);
     }
     if (sphere) {
       const plasmaOn = !showEarth && bang != null && elapsed >= bang + CINE.bangPeak - 0.05;
@@ -338,16 +338,6 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       setCineLayerGate(false, 1);
     }
     document.documentElement.dataset.cineEarth = earthOn ? '1' : '0';
-    if (cineArrivalDue(elapsed, earthOn, booted, bootGaveUp, arrived)) {
-      arrived = true;
-      console.log(`CINE TRACE arrival ${JSON.stringify({ elapsed: +elapsed.toFixed(3), clock: formatClock(elapsed), earthOn, booted, gaveUp: bootGaveUp, held: +bootHeld.toFixed(2) })}`);
-      document.body.classList.remove('cine-run');
-      root.remove();
-      window.dispatchEvent(new Event('cinematic:complete'));
-      const save = (window as unknown as { __borealSave?: { markBigBangSeen?: () => void } }).__borealSave;
-      save?.markBigBangSeen?.();
-      onPlanet();
-    }
     if (showPanel && !panelShown) { panelShown = true; panel.classList.add('pop'); }
     panel.hidden = !showPanel;
     if (showPanel) {
@@ -375,6 +365,16 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       fig.style.setProperty('opacity', figure ? String(fade) : '1', 'important');
     }
     if (begun) audio.sync(elapsed, narrationEndedAt);
+    if (cineArrivalDue(elapsed, earthOn, booted, bootGaveUp, arrived)) {
+      arrived = true;
+      cineTrace(`CINE TRACE arrival ${JSON.stringify({ elapsed: +elapsed.toFixed(3), clock: formatClock(elapsed), earthOn, booted, gaveUp: bootGaveUp, held: +bootHeld.toFixed(2) })}`);
+      document.body.classList.remove('cine-run');
+      root.remove();
+      window.dispatchEvent(new Event('cinematic:complete'));
+      const save = (window as unknown as { __borealSave?: { markBigBangSeen?: () => void } }).__borealSave;
+      save?.markBigBangSeen?.();
+      onPlanet();
+    }
   }
 
   function showRef(stage: CineStage) {

@@ -41,12 +41,21 @@ export function stepCineBoot(s: CineBoot, dt: number, holdS = CINE_HOLD_S): Cine
 }
 
 /**
- * Land once. A globe that became ready lands on the first B14 frame (the cadence already on main).
- * A boot that rejected or outlasted the clamp grace plays through B14, then lands.
+ * Land once, at the end of B14. The beat from 108 s through Today, the sun grade,
+ * vo-b14 and the hero crossfade has to keep stepping. A boot that gave up uses the same end.
  */
 export function cineArrivalDue(elapsed: number, earthOn: boolean, booted: boolean, gaveUp: boolean, arrived: boolean): boolean {
-  if (arrived || elapsed < CINE.b13End) return false;
-  if (booted && earthOn && elapsed < CINE.b14End) return true;
-  if (!booted && gaveUp && elapsed >= CINE.b14End) return true;
+  if (arrived || elapsed < CINE.b14End) return false;
+  if (booted && earthOn) return true;
+  if (!booted && gaveUp) return true;
   return false;
+}
+
+/** `?cine-trace=1` or `?inpagedev`. Off otherwise, so a normal visit stays quiet. */
+export function cineTrace(line: string) {
+  try {
+    const q = new URLSearchParams(location.search);
+    if (!q.has('inpagedev') && q.get('cine-trace') !== '1') return;
+  } catch { return; }
+  console.log(line);
 }

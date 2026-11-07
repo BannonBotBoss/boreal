@@ -57,7 +57,7 @@ const vnoise2 = (salt: number) => { const L = (i: number, j: number) => random(h
 const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
  *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
- *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share a dew-point base near the column LCL (slight per-cell undulation from low-frequency moisture noise so bases aren't ruler-flat; soft-feathered over baseFeatherM so condensate builds over a thin zone, not a knife-edge), and each cell's top rises
+ *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share a dew-point base near the column LCL (slight per-cell undulation from low-frequency moisture noise (then a 3×3 soft-blur so adjacent columns aren't a knife wall) so bases aren't ruler-flat; soft-feathered over baseFeatherM so condensate builds over a thin zone, not a knife-edge), and each cell's top rises
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells, soft-feathered over baseFeatherM at its vertical edges so sheet tops/bottoms aren't knife-edges;
@@ -76,6 +76,23 @@ export function anvilDepthGate(depthM: number): number {
   const lo = .8 * CC.anvil_min_tower_m, u = Math.min(1, Math.max(0, (depthM - lo) / (CC.anvil_min_tower_m - lo)));
   return u * u * (3 - 2 * u);
 }
+/** Soften per-cell dew-point bases so adjacent columns don't form a knife-edge wall.
+ *  Moisture varies continuously across ~cellM; a 3×3 binomial blur matches that scale
+ *  (AMS Glossary condensation level; game cal — same O(100–cell) family as baseUndulM). */
+export function softBlurBas(bas: Float32Array, nx: number) {
+  const n = nx * nx, out = new Float32Array(n);
+  for (let k = 0; k < nx; k++) for (let i = 0; i < nx; i++) {
+    let s = 0, w = 0;
+    for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) {
+      const kk = k + b, ii = i + a;
+      if (kk < 0 || ii < 0 || kk >= nx || ii >= nx) continue;
+      const wt = a === 0 && b === 0 ? 4 : a === 0 || b === 0 ? 2 : 1;
+      s += bas[kk * nx + ii] * wt; w += wt;
+    }
+    out[k * nx + i] = s / w;
+  }
+  return out;
+}
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), bas = new Float32Array(n), cut = 1 - cover;
   const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0), feather = Math.max(0, L.baseFeatherM ?? 0);
@@ -84,6 +101,8 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
     sh[k * L.nx + i] = Math.max(0, Math.min(1, (n1(x * .35, z * .35) - (.2 + .5 * cut)) / .3)); // broad sheet: low frequency, soft edge
     // dew-point base undulates with low-frequency moisture noise around the column LCL (not a placed deck height)
     bas[k * L.nx + i] = base >= 0 ? Math.max(0, base + (n1(x * .4, z * .4) - .5) * 2 * undul) : base; }
+  // Soft-blur dew-point bases horizontally: adjacent cell LCLs are not a knife wall (moisture is continuous).
+  if (undul > 0 && base >= 0) bas.set(softBlurBas(bas, L.nx));
   const ly = col.layers, step = ly[1]?.z || 250, conv = new Float32Array(L.nz), strat = new Float32Array(L.nz);
   const top = col.top >= base && base >= 0 ? col.top + step / 2 : -1;
   const over = top > base ? Math.max(0, col.overshootM) : 0, tip = top > base ? Math.min(L.topM, top + over) : -1; // Houze overshoot dome; clamp to the local box

@@ -1,0 +1,50 @@
+[
+  {
+    "alt": 1500,
+    "ready": true,
+    "info": {
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&noprobe=1&inpagedev=1&alt=1500",
+      "alt": 14016219.359999985,
+      "height": 0,
+      "drawn": 17,
+      "lcVisible": false,
+      "lcExt": 0,
+      "lcOp": 0,
+      "mode": "globe",
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+    },
+    "errs": []
+  },
+  {
+    "alt": 1000,
+    "ready": true,
+    "info": {
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&noprobe=1&inpagedev=1&alt=1000",
+      "alt": 14016219.359999985,
+      "height": 0,
+      "drawn": 17,
+      "lcVisible": false,
+      "lcExt": 0,
+      "lcOp": 0,
+      "mode": "globe",
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+    },
+    "errs": []
+  },
+  {
+    "alt": 700,
+    "ready": true,
+    "info": {
+      "href": "http://127.0.0.1:5173/?start=globe&stages=1&trees=v2&noprobe=1&inpagedev=1&alt=700",
+      "alt": 14016219.359999985,
+      "height": 0,
+      "drawn": 17,
+      "lcVisible": false,
+      "lcExt": 0,
+      "lcOp": 0,
+      "mode": "globe",
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+    },
+    "errs": []
+  }
+]

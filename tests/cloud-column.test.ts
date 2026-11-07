@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
-import { anvilDepthGate, bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
+import { anvilDepthGate, coreStrength, bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
@@ -676,4 +676,12 @@ test('anvil bake: tower-depth gate smoothsteps 0.8x→1x anvil_min_tower_m (no o
   assert.equal(anvilDepthGate(m), 1);
   assert.equal(anvilDepthGate(2 * m), 1);
   assert.ok(anvilDepthGate(.85 * m) < anvilDepthGate(.95 * m), 'rising through the band');
+});
+
+test('layered clouds: core-strength ramp is smooth at both ends (no crease at h=0.5 or 0.85)', () => {
+  assert.equal(coreStrength(.4), 0); assert.equal(coreStrength(.5), 0); assert.equal(coreStrength(.85), 1); assert.equal(coreStrength(1), 1);
+  assert.ok(Math.abs(coreStrength(.675) - .5) < 1e-9);
+  const e = 1e-4, slope = (x: number) => (coreStrength(x + e) - coreStrength(x - e)) / (2 * e);
+  assert.ok(slope(.5 + e) < .01 && slope(.85 - e) < .01); // zero slope at the ends
+  for (let x = .5; x < .85; x += .01) assert.ok(coreStrength(x + .01) >= coreStrength(x)); // monotone
 });

@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { AnimalBrain } from '../src/core/animalBehavior';
-import { autonomousWolfStep, wolfReadout, type WolfSense } from '../src/core/autonomy';
+import { autonomousWolfStep, steerPlayerWolf, wolfReadout, wolfTrunkBlocked, type WolfSense } from '../src/core/autonomy';
 import { BEHAVIOUR, WOLF_AGENT } from '../src/core/species';
 import { blocksFrom, jumpHopM, jumpJPerKg, logAxis, plan, segmentDistance } from '../src/core/plan';
 import { metabolicW, travelJ } from '../src/core/needs/engine';
 import { WOLF_NEEDS } from '../src/core/needs/species';
+import { BLOCK } from '../src/core/tuning';
 import type { Entity } from '../src/core/world';
 import type { WolfPose } from '../src/core/locomotion';
 
@@ -135,4 +136,42 @@ test('the same seed walks the same path, and a player command ignores a log', ()
   assert.equal(brain.motion, 'walk'); assert.equal(brain.problem, 'player');
   assert.equal(brain.heading, .4); assert.equal(brain.speed, 1.2);
   assert.ok(jumpJPerKg() > 0);
+});
+
+test('steered player wolf refuses a step whose probe is inside BLOCK.wolf.trunk (0.7 m) of a tree or person and moves on open ground (T-0055)', () => {
+  assert.equal(BLOCK.wolf.trunk, 0.7);
+  // Known match from T-0055 calibration: tree at (0, -1) from origin heading 0 keeps x = 0, z = 0
+  const tree0 = ent('spruce', 0, -1);
+  const blocked0 = steerPlayerWolf({ x: 0, z: 0, heading: 0 }, 2, 1 / 30, [tree0]);
+  assert.equal(blocked0.x, 0);
+  assert.equal(blocked0.z, 0);
+  assert.equal(wolfTrunkBlocked(0, -0.5, [tree0]), true);
+  // Person inside 0.7 m also blocks
+  const person0 = ent('person', 0, -1);
+  const blockedP = steerPlayerWolf({ x: 0, z: 0, heading: 0 }, 2, 1 / 30, [person0]);
+  assert.equal(blockedP.x, 0);
+  assert.equal(blockedP.z, 0);
+  // Replay of placed jack pine 3:4:10 at (141.900, 196.983) from at=(141.900, 198.183) heading 0 at speed 2 m/s
+  const pine = ent('spruce', 141.900, 196.983, { key: '3:4:10', scale: 1.284 });
+  let pose: WolfPose = { x: 141.900, z: 198.183, heading: 0 };
+  let minDist = Infinity;
+  for (let i = 0; i < 90; i++) {
+    pose = steerPlayerWolf(pose, 2, 1 / 30, [pine]);
+    const d = Math.hypot(pose.x - pine.x, pose.z - pine.z);
+    if (d < minDist) minDist = d;
+  }
+  assert.ok(minDist >= BLOCK.wolf.trunk, `expected min distance >= 0.7 m from jack pine 3:4:10, got ${minDist}`);
+  // Open walk with no tree or person inside 0.7 m moves normally
+  let openPose: WolfPose = { x: 141.900, z: 198.183, heading: 0 };
+  for (let i = 0; i < 30; i++) openPose = steerPlayerWolf(openPose, 2, 1 / 30, []);
+  assert.ok(Math.abs(openPose.z - (198.183 - 2)) < 1e-6, `expected open walk to advance 2 m in 1 s, got z=${openPose.z}`);
+  // Slow nonzero creep (0.005 m/s) at the 0.7 m boundary is still checked
+  const creep = steerPlayerWolf({ x: 0, z: 0, heading: 0 }, 0.005, 1 / 30, [ent('spruce', 0, -0.7001)]);
+  assert.equal(creep.z, 0);
+  // Oblique sprint (10.5 m/s, dt = 1/30) past a tree at (0.68, -0.17) is caught by the swept segment check
+  const oblique = steerPlayerWolf({ x: 0, z: 0, heading: 0 }, 10.5, 1 / 30, [ent('spruce', 0.68, -0.17)]);
+  assert.equal(oblique.z, 0);
+  // Backing out from an existing overlap (d0 = 0.5 < 0.7) is permitted when moving outward
+  const backOut = steerPlayerWolf({ x: 0, z: 0, heading: 0 }, -2, 1 / 30, [ent('spruce', 0, -0.5)]);
+  assert.ok(backOut.z > 0, `expected backing out to increase z, got ${backOut.z}`);
 });

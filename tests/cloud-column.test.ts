@@ -82,6 +82,29 @@ test('layered bake: dew-point bases undulate per cell around the column LCL (not
   assert.ok(Math.max(...bases) - Math.min(...bases) >= 1, `base voxels should vary by cell: ${Math.min(...bases)}..${Math.max(...bases)}`);
   for (const j of bases) assert.ok((j + 1) * dz >= col.lcl - L.baseUndulM - dz && j * dz <= col.lcl + L.baseUndulM + dz, `base near LCL ${col.lcl}`);
 });
+test('layered bake: dew-point bases soft-feather over a thin condensation zone (not a knife-edge)', () => {
+  // Real LCL bases build condensate over O(100 m); finer nz so baseFeatherM spans >1 bake level.
+  const col = cloudColumn(28, qOf(28, .75), .6, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok((L.baseFeatherM ?? 0) >= 150 && L.baseFeatherM > dz, 'feather spans >1 bake voxel');
+  const soft = bakeLocal(col, .6, 0, 0, L), hard = bakeLocal(col, .6, 0, 0, { ...L, baseFeatherM: 0 });
+  let softNear = 0, mid = 0, hardNear = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    let lo = -1, midS = 0;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, vH = hard[i + L.nx * (j + L.nz * k)], vS = soft[i + L.nx * (j + L.nz * k)];
+      const strat = col.layers[Math.min(col.layers.length - 1, Math.round(z / (col.layers[1]?.z || 250)))]?.strat ?? 0;
+      if (strat > 0 || z > col.top - 1500) continue;
+      if (lo < 0 && vH > 8) lo = j; // knife-edge first lit level
+      if (z >= col.lcl + .35 * (col.top - col.lcl) && z <= col.lcl + .55 * (col.top - col.lcl)) midS = Math.max(midS, vS);
+    }
+    if (lo < 0 || midS < 40) continue;
+    const nearS = soft[i + L.nx * (lo + L.nz * k)], nearH = hard[i + L.nx * (lo + L.nz * k)];
+    softNear += nearS; hardNear += nearH; mid += midS; n++;
+  }
+  assert.ok(n > 3, `mature cells ${n}`);
+  assert.ok(softNear < mid, `density just above LCL softer than mid-tower (${softNear} < ${mid})`);
+  assert.ok(softNear < hardNear, `feather lowers near-base density vs knife-edge (${softNear} < ${hardNear})`);
+});
 test('overshoot bake: a strong tower paints a tapered plume above the buoyant top; a weak one barely does', () => {
   const L = LOCAL_CLOUDS, dz = L.topM / L.nz;
   const hot = cloudColumn(30, qOf(30, .8), 1, L.topM), cool = cloudColumn(10, qOf(10, .5), 1, L.topM);

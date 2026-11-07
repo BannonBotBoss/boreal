@@ -9,6 +9,7 @@
  * everything that touches an AudioContext is in `startStems`.
  * All constants here are game calibration (taste + headroom), not measurements: there is no published model for them.
  */
+import { HUNT } from '../core/needs/diet';
 export const STEM_IDS = ['night', 'day', 'weather', 'tension'] as const;
 export type StemId = typeof STEM_IDS[number];
 export type StemWeights = Record<StemId, number>;
@@ -26,14 +27,18 @@ export const THREAT_ON = .5, THREAT_OFF = .25, THREAT_HOLD = 12;
 const clamp01 = (x: number) => Math.min(1, Math.max(0, Number.isFinite(x) ? x : 0));
 export const smoothstep = (a: number, b: number, x: number) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 
+/** Scale stem gains down proportionally whenever their sum exceeds STEM_SUM_CAP (1.0), both on targets and on smoothed transitions. */
+export function capStemSum(w: StemWeights): StemWeights {
+  const sum = w.night + w.day + w.weather + w.tension, k = sum > STEM_SUM_CAP ? STEM_SUM_CAP / sum : 1;
+  return { night: w.night * k, day: w.day * k, weather: w.weather * k, tension: w.tension * k };
+}
+
 /** Target gain for each stem from view.darkness() (0 day .. 1 night), rain (0..1, as music.update gets it) and threat (0..1).
  * Night/day are equal-power around dusk; rain brings the weather stem in and ducks day/night; threat brings tension in and ducks the bed.
  * The sum is capped at STEM_SUM_CAP so layered stems stay under the music limiter's threshold. */
 export function stemWeights(darkness: number, rain: number, threat = 0): StemWeights {
   const s = smoothstep(.35, .65, darkness), w = smoothstep(.15, .6, rain), th = clamp01(threat), duck = (1 - .5 * w) * (1 - .3 * th);
-  const raw: StemWeights = { night: Math.sin(Math.PI / 2 * s) * duck, day: Math.cos(Math.PI / 2 * s) * duck, weather: .8 * w, tension: .6 * th };
-  const sum = raw.night + raw.day + raw.weather + raw.tension, k = sum > STEM_SUM_CAP ? STEM_SUM_CAP / sum : 1;
-  return { night: raw.night * k, day: raw.day * k, weather: raw.weather * k, tension: raw.tension * k };
+  return capStemSum({ night: Math.sin(Math.PI / 2 * s) * duck, day: Math.cos(Math.PI / 2 * s) * duck, weather: .8 * w, tension: .6 * th });
 }
 
 /** One step of an exponential approach (the same curve as AudioParam.setTargetAtTime): after `tau` seconds 63 % of the gap is closed. */
@@ -47,6 +52,40 @@ export function threatStep(s: ThreatState, threat: number, t: number): { state: 
   if (!on && x >= THREAT_ON) { on = true; since = t; }
   else if (on && x < THREAT_OFF && t - since >= THREAT_HOLD) on = false;
   return { state: on === s.on && since === s.since ? s : { on, since }, level: on ? Math.max(x, THREAT_ON) : 0 };
+}
+
+export interface EncounterAnimal { x: number; z: number; fleeing: boolean }
+export interface EncounterInput {
+  x: number;
+  z: number;
+  /** True when the player has a hunt lock on prey, the autonomous wolf is pursuing a hare, or the mother wolf is charging the fox. */
+  locked?: boolean;
+  /** True when the player body is running, sprinting or jumping. */
+  running?: boolean;
+  /** Nearby hares and deer with their position and whether they are fleeing. */
+  animals?: readonly EncounterAnimal[];
+  /** Distance (m) at which a fleeing prey calms down (SYSTEM_PROPERTIES.hunt.safeDistance = 35 m). */
+  safeDistance?: number;
+}
+/**
+ * Threat 0..1 from a real predator-prey encounter (T-0045):
+ * - 1 when locked onto prey, autonomous wolf is pursuing a hare, or mother wolf is charging the fox;
+ * - 1 - d / safeDistance for any fleeing hare or deer within safeDistance (35 m), raised to at least THREAT_ON (0.5)
+ *   while the player is running/jumping in pursuit so an active chase inside safeDistance turns the tension stem on.
+ */
+export function encounterThreat(input: EncounterInput): number {
+  let best = input.locked ? 1 : 0;
+  const safe = input.safeDistance ?? HUNT.safeDistance;
+  if (!(safe > 0)) return best;
+  for (const a of input.animals ?? []) {
+    if (!a.fleeing) continue;
+    const d = Math.hypot(a.x - input.x, a.z - input.z);
+    if (!(d < safe)) continue;
+    const close = clamp01(1 - d / safe);
+    const level = input.running ? Math.max(THREAT_ON, close) : close;
+    if (level > best) best = level;
+  }
+  return best;
 }
 
 /** Loop points for a decoded buffer: the whole stem. A decoder that trims a few frames still gets a loop that ends at its own end. */
@@ -67,7 +106,7 @@ async function load(ctx: AudioContext, id: StemId, base: string): Promise<AudioB
  * Stems start together on one clock so they stay phase-aligned. Memory: four decoded stereo buffers, about 30 MB each at 44.1 kHz. */
 export function startStems(ctx: AudioContext, to: AudioNode, base = 'music/stems/') {
   const out = ctx.createGain(), gains = {} as Record<StemId, GainNode>, cur = {} as Partial<StemWeights>;
-  const sources: AudioBufferSourceNode[] = []; let dead = false, last = ctx.currentTime, threatState: ThreatState = { on: false, since: -1e9 };
+  const sources: AudioBufferSourceNode[] = []; let dead = false, last = ctx.currentTime, threatState: ThreatState = { on: false, since: -1e9 }, lastThreat = 0;
   out.gain.value = 0; out.gain.setTargetAtTime(STEM_MASTER, ctx.currentTime, 1.5); out.connect(to);
   for (const id of STEM_IDS) { const g = ctx.createGain(); g.gain.value = 0; g.connect(out); gains[id] = g; }
   void Promise.all(STEM_IDS.map(id => load(ctx, id, base))).then(bufs => {
@@ -78,16 +117,22 @@ export function startStems(ctx: AudioContext, to: AudioNode, base = 'music/stems
     });
   });
   return {
-    /** Per frame (cheap). threat is 0..1 and optional; nothing in the game feeds it yet. */
+    /** Per frame (cheap). threat is 0..1 from encounterThreat (T-0045). */
     update(darkness: number, rain: number, threat = 0) {
-      if (dead) return; const now = ctx.currentTime, dt = Math.min(.5, now - last); last = now;
+      if (dead) return; const now = ctx.currentTime, dt = Math.min(.5, now - last); last = now; lastThreat = clamp01(threat);
       const th = threatStep(threatState, threat, now); threatState = th.state;
       const target = stemWeights(darkness, rain, th.level);
+      const next = {} as StemWeights;
       for (const id of STEM_IDS) {
-        const c = cur[id] === undefined ? target[id] : stepToward(cur[id]!, target[id], dt, stemTau(id, target[id] > cur[id]!)); cur[id] = c;
-        gains[id].gain.setTargetAtTime(c, now, .05);
+        next[id] = cur[id] === undefined ? target[id] : stepToward(cur[id]!, target[id], dt, stemTau(id, target[id] > cur[id]!));
+      }
+      const capped = capStemSum(next);
+      for (const id of STEM_IDS) {
+        cur[id] = capped[id];
+        gains[id].gain.setTargetAtTime(capped[id], now, .05);
       }
     },
+    state: () => ({ cur: { ...cur }, threatState: { ...threatState }, threat: lastThreat }),
     /** Fade out over `fade` s, then stop and free the sources (the decoded buffers stay cached for a quick restart). */
     stop(fade = 2) {
       if (dead) return; dead = true; const now = ctx.currentTime;

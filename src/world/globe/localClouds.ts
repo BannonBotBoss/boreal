@@ -13,7 +13,7 @@ import { hash, random } from '../../proc/rng';
 import { toLatLon, type Vec3 } from './planet';
 import CC from '../../../data/earth/cloud-column.json';
 
-export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: CC.qc_auto_kg_kg as number, /** horizontal LCL scatter (m) over a cell: moisture/temp heterogeneity so bases aren't ruler-flat [game calibration; O(100 m) on convective scales] */ baseUndulM: 300 }; // full bake byte = Kessler qc0 (suspended convective condensate after #329), not the old 1.5e-3 adiabatic-ish scale
+export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: CC.qc_auto_kg_kg as number, /** horizontal LCL scatter (m) over a cell: moisture/temp heterogeneity so bases aren't ruler-flat [game calibration; O(100 m) on convective scales] */ baseUndulM: 300, /** soft condensation zone (m) above the dew-point base: condensate builds over O(100 m), not a knife-edge at the LCL [game calibration; AMS Glossary condensation level] */ baseFeatherM: 200 }; // full bake byte = Kessler qc0 (suspended convective condensate after #329), not the old 1.5e-3 adiabatic-ish scale
 /** 0 at showBelowM, 1 at sizeM. The box and the flat shell crossfade across that span instead of swapping in one frame. */
 export function localCloudFade(alt: number, L = LOCAL_CLOUDS) {
   const span = L.showBelowM - L.sizeM;
@@ -57,14 +57,14 @@ const vnoise2 = (salt: number) => { const L = (i: number, j: number) => random(h
 const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
  *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
- *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share a dew-point base near the column LCL (slight per-cell undulation from low-frequency moisture noise so bases aren't ruler-flat), and each cell's top rises
+ *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share a dew-point base near the column LCL (slight per-cell undulation from low-frequency moisture noise so bases aren't ruler-flat; soft-feathered over baseFeatherM so condensate builds over a thin zone, not a knife-edge), and each cell's top rises
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells;
  *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, and lateral density falls as anv^1.5 so the fringe is wispy. */
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), bas = new Float32Array(n), cut = 1 - cover;
-  const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0);
+  const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0), feather = Math.max(0, L.baseFeatherM ?? 0);
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { const x = (ox + (i + .5) / L.nx * L.sizeM) / L.cellM, z = (oz + (k + .5) / L.nx * L.sizeM) / L.cellM;
     const f = (n1(x, z) * .55 + n2(x * 2.1, z * 2.1) * .3 + n3(x * 4.3, z * 4.3) * .15); h[k * L.nx + i] = Math.max(0, Math.min(1, (f - (.25 + .5 * cut)) / .12)); // fBm spans ~.25-.75
     sh[k * L.nx + i] = Math.max(0, Math.min(1, (n1(x * .35, z * .35) - (.2 + .5 * cut)) / .3)); // broad sheet: low frequency, soft edge
@@ -104,6 +104,8 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       const taper = cellDepth > 0 ? 1 - .7 * Math.min(1, Math.max(0, d) / cellDepth) : 0; // 1 at top, .3 at cellDepth
       const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper : 0;
       cv = Math.max(h[c] * edge * tower, anvHere);
+      // Soft-feather dew-point base: ramp 0→1 over baseFeatherM (condensation zone; AMS Glossary / O(100 m) game cal)
+      if (feather > 0) { const u = Math.min(1, Math.max(0, (z - cb) / feather)); cv *= u * u * (3 - 2 * u); }
     } else if (tip > top && z > top && h[c] > .5) { // overshooting dome: cell strength sets how far past the EL (Houze 2014 ch. 8)
       // mature cores (h~1) take the full overshootM; mid cells taper off; nothing below h=0.5 (same cut as anvil cores start rising)
       const frac = Math.max(0, Math.min(1, (h[c] - .5) / .35)); // 0 at 0.5, 1 at >=0.85

@@ -1,6 +1,6 @@
 # Skill: game-music-tracks
 
-Adding or replacing background music tracks in Boreal (first used by T-0033).
+Adding or replacing background music tracks and opt-in adaptive stems in Boreal (first used by T-0033; updated by T-0045).
 
 ## Steps
 1. Read src/audio/music.ts (one music module on the BorealSound music bus: limiter, ducking, two-deck crossfade) and src/audio/musicSettings.ts (schema for the shared settings store/panel, saved as boreal.music.v1). Do not add a second player.
@@ -9,7 +9,8 @@ Adding or replacing background music tracks in Boreal (first used by T-0033).
 4. Vocal check (the "Instrumental" flag reads False in the flow even with "no vocals"): faster-whisper small in a venv, decode with ffmpeg to 16 kHz mono numpy (PyAV in the wheel rejects file paths), 10 s windows, vad_filter off. Pass = no segment with no_speech_prob < 0.45. Calibrate: a real voice line mixed at -6 dB over the guitar scores ~0.04. Whisper hallucinates "Thank you for watching!" on music at no_speech 0.7-0.8; that is not a vocal.
 5. Put files in public/music, list them in public/music/manifest.json (file, title, source with flow and generation id, licence, prompt, processing, vocalCheck) and in GUITAR_TRACKS in music.ts; tests/music.test.ts keeps the two in step and caps file size.
 6. Getting files onto the PC: CopyFromBox drops the file in C:\Users\0 under its basename whatever the destination says, so give staged files a unique prefix and Move-Item them into the worktree. CopyToBox only reads under C:\Users\0, so copy PC outputs there first.
-7. Proof: tools/music-shot.mjs <url> <outPrefix> (headless Edge, CDP, killed in finally). It opens Menu > Music with real input events (the first gesture), screenshots the picker, switches track, and lists audio requests through the CDP Network domain. performance.getEntriesByType('resource') stops at 250 entries under Vite dev, so it misses the mp3s.
+7. Opt-in adaptive stems (`?stems`, T-0045): `src/audio/adaptiveStems.ts` decodes four phase-aligned Ogg loops (`night`, `day`, `weather`, `tension`, 32 bars = 3,763,200 frames @ 44.1 kHz = 85.333 s at 90 BPM in `public/music/stems/`). Drive `threat` in `music.update(darkness, rain, threat)` from a pure encounter function (`encounterThreat`) fed by real predator-prey state (`huntLock.key`, autonomous hare pursuit, fox-litter charge, and fleeing hares/deer within `HUNT.safeDistance`), never from a bare timer or random pulse (Rule 5). Expose `stemsState()` on `createMusic` and `__boreal.stems()` under `?rec` so headless browser probes can verify both `.ogg` network loads and live stem weights/threat transitions.
+8. Proof: tools/music-shot.mjs <url> <outPrefix> (headless Edge, CDP, killed in finally). It opens Menu > Music with real input events (the first gesture), screenshots the picker, switches track, and lists audio requests through the CDP Network domain. performance.getEntriesByType('resource') stops at 250 entries under Vite dev, so it misses the mp3s.
 
 ## Mistakes to avoid
 - A level change must not restart the track: rebuild() only calls play() when the deck's file differs.

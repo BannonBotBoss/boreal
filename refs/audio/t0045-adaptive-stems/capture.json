@@ -1,0 +1,672 @@
+{
+  "defaultOptions": [
+    "Fingerpicked",
+    "Open tuning",
+    "Campfire",
+    "Off"
+  ],
+  "stemsOptions": [
+    "Fingerpicked",
+    "Open tuning",
+    "Campfire",
+    "Adaptive stems",
+    "Off"
+  ],
+  "pickedSource": "Adaptive stems",
+  "oggRequests": [
+    "boreal-day.ogg",
+    "boreal-night.ogg",
+    "boreal-tension.ogg",
+    "boreal-weather.ogg",
+    "call_01.ogg",
+    "call_02.ogg",
+    "huff_01.ogg",
+    "huff_02.ogg",
+    "huff_03.ogg",
+    "whimper_01.ogg",
+    "whimper_02.ogg",
+    "whimper_03.ogg",
+    "yip_01.ogg",
+    "yip_02.ogg",
+    "yip_03.ogg",
+    "yip_04.ogg"
+  ],
+  "calmSnapshot": {
+    "player": {
+      "x": 29.999999607449798,
+      "z": 0.0000010753960406230395,
+      "yaw": 5.933185307179587,
+      "energy": 74.90954848577346,
+      "water": 99.95860901497684,
+      "mode": "walk",
+      "handle": "4294967296",
+      "embodied": "4294967296",
+      "species": "wolf"
+    },
+    "hares": [
+      {
+        "id": 2,
+        "x": 45.218376145454116,
+        "z": -12.150121513118965,
+        "state": "nibble",
+        "linked": 4,
+        "knows": false
+      },
+      {
+        "id": 3,
+        "x": 53.99430148786176,
+        "z": 6.892455453927855,
+        "state": "nibble",
+        "linked": 3,
+        "knows": false
+      },
+      {
+        "id": 4,
+        "x": 58.80025815614863,
+        "z": -4.4721720293693465,
+        "state": "nibble",
+        "linked": 4,
+        "knows": false
+      },
+      {
+        "id": 5,
+        "x": 51.231915657202514,
+        "z": -1.1452657861454716,
+        "state": "hop",
+        "linked": 4,
+        "knows": false
+      },
+      {
+        "id": 6,
+        "x": 54.12151012861717,
+        "z": -16.115054663556784,
+        "state": "nibble",
+        "linked": 3,
+        "knows": false
+      }
+    ],
+    "stems": {
+      "cur": {
+        "night": 0,
+        "day": 1,
+        "weather": 0,
+        "tension": 0
+      },
+      "threatState": {
+        "on": false,
+        "since": -1000000000
+      },
+      "threat": 0
+    },
+    "status": "12:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+  },
+  "peakThreat": 1,
+  "peakTensionGain": 0.4612212850157603,
+  "threatTurnedOn": true,
+  "fleeingHareObserved": true,
+  "lockObserved": true,
+  "chaseSamples": [
+    {
+      "step": 0,
+      "player": {
+        "x": 30.51,
+        "z": -1.41,
+        "yaw": 5.933,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 45.218376145454116,
+        "z": -12.150121513118965,
+        "state": "nibble",
+        "linked": 4,
+        "knows": false,
+        "distM": 18.21
+      },
+      "fleeingHares": 0,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.9969333105792466,
+          "weather": 0,
+          "tension": 0.022509496384285843
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:07 · RUN · Snow 0.0 cm · Stamina 99/100 · Energy 75/100 · Water 100% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 1,
+      "player": {
+        "x": 31.13,
+        "z": -3.1,
+        "yaw": 5.933,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 45.09986013752873,
+        "z": -12.131307798296252,
+        "state": "hop",
+        "linked": 4,
+        "knows": false,
+        "distM": 16.63
+      },
+      "fleeingHares": 0,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.9744764754280753,
+          "weather": 0,
+          "tension": 0.16030104169354792
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:07 · RUN · Snow 0.0 cm · Stamina 98/100 · Energy 75/100 · Water 100% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 2,
+      "player": {
+        "x": 31.68,
+        "z": -4.6,
+        "yaw": 5.933,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 44.7838174497277,
+        "z": -12.081137892102351,
+        "state": "hop",
+        "linked": 4,
+        "knows": false,
+        "distM": 15.09
+      },
+      "fleeingHares": 0,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.9553370371698116,
+          "weather": 0,
+          "tension": 0.24641070730049208
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:07 · RUN · Snow 0.0 cm · Stamina 97/100 · Energy 75/100 · Water 100% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 3,
+      "player": {
+        "x": 32.37,
+        "z": -6.48,
+        "yaw": 5.933,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 44.38876408997641,
+        "z": -12.018425509359975,
+        "state": "hop",
+        "linked": 4,
+        "knows": false,
+        "distM": 13.24
+      },
+      "fleeingHares": 0,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.934389412110477,
+          "weather": 0,
+          "tension": 0.3153984141327446
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:07 · RUN · Snow 0.0 cm · Stamina 97/100 · Energy 75/100 · Water 100% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 4,
+      "player": {
+        "x": 33.58,
+        "z": -9.97,
+        "yaw": 0.125,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 44.270248082051026,
+        "z": -11.999611794537262,
+        "state": "freeze",
+        "linked": 4,
+        "knows": true,
+        "distM": 10.88
+      },
+      "fleeingHares": 0,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.9117565737779108,
+          "weather": 0,
+          "tension": 0.32275862122203997
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:08 · RUN · Snow 0.0 cm · Stamina 95/100 · Energy 75/100 · Water 100% · Rest 100%\naiming\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 5,
+      "player": {
+        "x": 33.43,
+        "z": -11.21,
+        "yaw": 0.125,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 45.69490336082465,
+        "z": -12.850289334044005,
+        "state": "flee",
+        "linked": 4,
+        "knows": true,
+        "distM": 12.37
+      },
+      "fleeingHares": 1,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.8911129962638815,
+          "weather": 0,
+          "tension": 0.37095948598774436
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:08 · RUN · Snow 0.0 cm · Stamina 94/100 · Energy 75/100 · Water 100% · Rest 100%\naiming\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 6,
+      "player": {
+        "x": 33.3,
+        "z": -12.22,
+        "yaw": 0.125,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 46.24219023238522,
+        "z": -15.552166364954992,
+        "state": "flee",
+        "linked": 3,
+        "knows": true,
+        "distM": 13.36
+      },
+      "fleeingHares": 1,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.8722038211395342,
+          "weather": 0,
+          "tension": 0.40162574403405515
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:08 · RUN · Snow 0.0 cm · Stamina 93/100 · Energy 75/100 · Water 100% · Rest 100%\naiming\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 9,
+      "player": {
+        "x": 33.19,
+        "z": -13.13,
+        "yaw": 3.267,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 45.21717846823355,
+        "z": -23.94482920938682,
+        "state": "flee",
+        "linked": 1,
+        "knows": true,
+        "distM": 16.18
+      },
+      "fleeingHares": 5,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.8200907374806845,
+          "weather": 0,
+          "tension": 0.4447690671646983
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:08 · RUN · Snow 0.0 cm · Stamina 90/100 · Energy 75/100 · Water 100% · Rest 100%\naiming\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 12,
+      "player": {
+        "x": 33.53,
+        "z": -10.38,
+        "yaw": 3.267,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 46.24037012610101,
+        "z": -32.88998201495621,
+        "state": "flee",
+        "linked": 1,
+        "knows": false,
+        "distM": 25.85
+      },
+      "fleeingHares": 3,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.7748508798901403,
+          "weather": 0,
+          "tension": 0.4570287998900269
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:08 · RUN · Snow 0.0 cm · Stamina 87/100 · Energy 75/100 · Water 100% · Rest 100%\naiming\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 15,
+      "player": {
+        "x": 34.39,
+        "z": -12.02,
+        "yaw": 12.216,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 46.666611724338644,
+        "z": -37.83985925161359,
+        "state": "flee",
+        "linked": 1,
+        "knows": false,
+        "distM": 28.59
+      },
+      "fleeingHares": 2,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.7681126420423023,
+          "weather": 0,
+          "tension": 0.42792130569673525
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 0.5
+      },
+      "status": "12:08 · RUN · Snow 0.0 cm · Stamina 86/100 · Energy 75/100 · Water 100% · Rest 100%\naiming\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 18,
+      "player": {
+        "x": 35.69,
+        "z": -15.59,
+        "yaw": 12.216,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 45.50335589754709,
+        "z": -42.44493749374846,
+        "state": "flee",
+        "linked": 0,
+        "knows": false,
+        "distM": 28.59
+      },
+      "fleeingHares": 2,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.745245033321778,
+          "weather": 0,
+          "tension": 0.4462305489015864
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:08 · RUN · Snow 0.0 cm · Stamina 84/100 · Energy 75/100 · Water 100% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 21,
+      "player": {
+        "x": 36.72,
+        "z": -18.4,
+        "yaw": 12.216,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 48.62754615610737,
+        "z": -39.76793029139582,
+        "state": "flee",
+        "linked": 0,
+        "knows": false,
+        "distM": 24.46
+      },
+      "fleeingHares": 2,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.7284158235612981,
+          "weather": 0,
+          "tension": 0.4534397644630176
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:08 · RUN · Snow 0.0 cm · Stamina 82/100 · Energy 75/100 · Water 100% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 24,
+      "player": {
+        "x": 37.75,
+        "z": -21.22,
+        "yaw": 12.216,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 52.35952853583795,
+        "z": -41.572272514516435,
+        "state": "flee",
+        "linked": 0,
+        "knows": false,
+        "distM": 25.05
+      },
+      "fleeingHares": 1,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.7131890848442578,
+          "weather": 0,
+          "tension": 0.4572107602222808
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:09 · RUN · Snow 0.0 cm · Stamina 81/100 · Energy 75/100 · Water 100% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 27,
+      "player": {
+        "x": 38.84,
+        "z": -24.23,
+        "yaw": 12.216,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 56.450535568699934,
+        "z": -44.078576428410955,
+        "state": "flee",
+        "linked": 0,
+        "knows": false,
+        "distM": 26.54
+      },
+      "fleeingHares": 1,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.69790228009153,
+          "weather": 0,
+          "tension": 0.4593605424801227
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:09 · RUN · Snow 0.0 cm · Stamina 80/100 · Energy 75/100 · Water 100% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 30,
+      "player": {
+        "x": 40.01,
+        "z": -27.42,
+        "yaw": 12.216,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 59.64655025185759,
+        "z": -47.01477190423479,
+        "state": "flee",
+        "linked": 0,
+        "knows": false,
+        "distM": 27.74
+      },
+      "fleeingHares": 1,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.6836944868649881,
+          "weather": 0,
+          "tension": 0.46045693894124334
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:09 · RUN · Snow 0.0 cm · Stamina 78/100 · Energy 75/100 · Water 100% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 33,
+      "player": {
+        "x": 41.34,
+        "z": -30.85,
+        "yaw": 5.208,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 2,
+        "x": 60.37181150545349,
+        "z": -52.0377038133955,
+        "state": "flee",
+        "linked": 0,
+        "knows": false,
+        "distM": 28.48
+      },
+      "fleeingHares": 1,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.6700490776461778,
+          "weather": 0,
+          "tension": 0.46102245205737824
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:09 · RUN · Snow 0.0 cm · Stamina 76/100 · Energy 75/100 · Water 100% · Rest 99%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "step": 35,
+      "player": {
+        "x": 42.54,
+        "z": -31.5,
+        "yaw": 5.208,
+        "mode": "run"
+      },
+      "nearestHare": {
+        "id": 6,
+        "x": 71.99753868147702,
+        "z": -28.480695479464355,
+        "state": "nibble",
+        "linked": 0,
+        "knows": false,
+        "distM": 29.61
+      },
+      "fleeingHares": 1,
+      "stems": {
+        "cur": {
+          "night": 0,
+          "day": 0.6617816414898257,
+          "weather": 0,
+          "tension": 0.4612212850157603
+        },
+        "threatState": {
+          "on": true,
+          "since": 2.7306666666666666
+        },
+        "threat": 1
+      },
+      "status": "12:09 · RUN · Snow 0.0 cm · Stamina 75/100 · Energy 75/100 · Water 100% · Rest 99%\nLock on\n0 remembered · 0 friends · 0 herbs"
+    }
+  ],
+  "errors": []
+}

@@ -21,6 +21,7 @@ import { foxPlace, stepDrives } from './core/drives';
 import { pupCloud } from './animals/pups';
 import { BorealSound, mealChews } from './audio/borealSound';
 import { createMusic } from './audio/music';
+import { encounterThreat } from './audio/adaptiveStems';
 import { MUSIC_PANEL, MUSIC_SAFETY, MUSIC_SETTINGS, TONES } from './audio/musicSettings';
 import { VOLUME_SETTINGS } from './audio/mixer';
 import { wolfSpeak } from './audio/wolfVoice';
@@ -310,6 +311,7 @@ const inpage = createInPage(view, { player: () => ({ x: player.x, z: player.z, y
 if (new URLSearchParams(location.search).has('rec')) (window as unknown as Record<string, unknown>).__boreal = { // ?rec: read-only probe for the recorders (tools/hunt-record.mjs)
   hares: () => view.hares.list().map(h => ({ id: h.id, x: h.x, z: h.z, state: h.state, linked: h.sim.linked, knows: h.sim.knowsAt !== undefined })),
   player: () => { const here = view.livingHere(); return { x: player.x, z: player.z, yaw, energy: view.playerBrain.energy, water: needs.water, mode: modes.mode, handle: here.handle, embodied: here.embodied, species: here.species }; },
+  stems: () => music.stemsState(),
   shaderTime: () => shaderClock.time };
 function enterPhoto() { if (paused) menu.close(); clearInput(); document.body.classList.add('photo-mode'); photo.enter(); }
 actionButton.onclick = () => perform();
@@ -668,7 +670,17 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   const drawStart = performance.now(); if (!menu.open) { if (inpage) inpage.frame(() => drawFrame(pv)); else drawFrame(pv); } view.photoreal.INFO.drawMs = performance.now() - drawStart; if (!menu.open) view.photoreal.after(performance.now() - frameStart); // menu frames must not teach the governor (or lift the probe cap)
   walkProbe?.(simTime, view.playerBrain, ground.cost);
   inspector.update(); handles.update(); // (were inside the comment above since 168da74)
-  music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2)); // 'storm' above ~0.6 mm/h
+  const autoRead = autonomous ? wolfReadout(view.playerBrain) : undefined;
+  const threat = encounterThreat({
+    x: player.x, z: player.z,
+    locked: !!huntLock.key || (view.playable.id === 'wolf' && driveCommitted) || !!(autoRead && (autoRead.action === 'approach' || autoRead.action === 'seek') && autoRead.targetKey?.startsWith('hare:')),
+    running: modes.mode === 'run' || modes.mode === 'sprint' || view.playerBrain.motion === 'run' || view.playerBrain.motion === 'jump',
+    animals: [
+      ...view.hares.list().map(h => ({ x: h.x, z: h.z, fleeing: h.state === 'flee' })),
+      ...view.audibleAnimals().map(a => ({ x: a.x, z: a.z, fleeing: a.problem === 'flee' || a.problem === 'escape' })),
+    ],
+  });
+  music.update(view.darkness(), Math.min(1, weatherAt(player.x, player.z).rainMmH / 2), threat); // 'storm' above ~0.6 mm/h
   const rush = inpage?.airRush() ?? 0; if (rush > 0) void sfx.start(); // a double-click already unlocked the context; a pad-only drop may still be silent until a key or click
   sfx.update({ dt: simDt > 0 ? Math.min(simDt, .05) : 0, halted: isPaused() || wDt < 0 || observation().scale !== 'immediate' || dialog.open || document.hidden || (!!pv && pv.frozen !== false) || (!!inpage?.blocksGame() && rush <= 0), x: player.x, z: player.z, yaw, darkness: view.darkness(), hour: hourAt(wNow), day: dayAt(wNow), wolf: view.playerBrain, animals: view.audibleAnimals(), mode: modes.mode, exhausted: modes.exhausted, stamina: modes.stamina, maxStamina: modes.maxStamina, mass: playerMass, refMass: view.wolfMass, groundAbsorb: ground.absorb, rush });
   for (const h of pupHeard) sfx.pupAt(h.kind, { x: h.x, z: h.z }, h.ageYears);

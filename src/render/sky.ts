@@ -31,36 +31,63 @@ uniform vec3 uSunDir, uSunColor;
 varying vec3 vDir;
 ${GLSL_NOISE}
 #define hash(p) hash2s(p, uSeed)
+// Budget cirrus: anisotropic fibratus + uncinus hooks on a foreshortened layer (ground-sky audit GCUR-3).
+float cirrusField(vec2 uv, vec2 fiber, float seed, float along, float across) {
+  vec2 perp = vec2(-fiber.y, fiber.x);
+  vec2 q = vec2(dot(uv, fiber) * along, dot(uv, perp) * across);
+  float hook = fbm(uv * 0.65 + 1.7, seed) - 0.5;
+  q.x += hook * 1.55 * q.y; // mares'-tail shear
+  q += 0.35 * (vec2(fbm(q * 0.45 + 2.3, seed), fbm(q * 0.45 + 6.8, seed)) - 0.5);
+  float sheet = fbm(q * 0.5, seed);
+  float fibers = fbm(vec2(q.x * 0.85, q.y * 4.8) + 3.4, seed);
+  float lace = fbm(vec2(q.x * 1.55 + hook * 1.2, q.y * 7.2) + 9.1, seed);
+  return sheet * 0.38 + fibers * 0.40 + lace * 0.22;
+}
 void main() {
   vec3 d = normalize(vDir);
   if (d.y <= 0.0) discard;
-  // Project onto a flat cloud layer so clouds shrink toward the horizon; wind drifts them east.
-  vec2 uv = d.xz / (d.y + 0.08) * 1.6 + uDrift; // drift = integrated wind of the top weather layer
-  float n = fbm(uv, uSeed) * 0.75 + fbm(uv * 3.1 + 5.0, uSeed) * 0.25;
-  float cloud = smoothstep(uCover, uCover + 0.18, n) * smoothstep(0.0, 0.15, d.y);
-  cloud *= 1.0 - uBoxK * smoothstep(uBoxSin * 0.8, uBoxSin * 1.25, d.y); // issue #202 (1): where the dew-point box is kept, the dome only paints past its edge
-  // Lit from the sun side, warm at sunrise/sunset, faint moonlit grey at night; denser cores are darker.
-  float facing = 0.5 + 0.5 * dot(d, uSunDir);
-  vec3 dayCol = mix(vec3(0.78, 0.8, 0.86), vec3(1.0), facing);
+  float elev = d.y;
+  // Horizon packing: compress UV toward the horizon so streaks foreshorten instead of tiling as equal bands.
+  float pack = mix(3.1, 1.05, smoothstep(0.02, 0.62, elev));
+  vec2 uv = d.xz / (elev + 0.055) * pack + uDrift;
+  // Wind-aware fiber axes (drift direction + a crossed sheet for overlapping altitude).
+  vec2 wind = length(uDrift) > 1e-5 ? normalize(uDrift) : vec2(1.0, 0.12);
+  vec2 f0 = normalize(wind + 0.28 * (vec2(fbm(uv * 0.2 + 0.4, uSeed), fbm(uv * 0.2 + 4.1, uSeed)) - 0.5));
+  vec2 f1 = normalize(vec2(f0.y, -f0.x) * 0.55 + f0 * 0.45 + vec2(0.15, 0.35));
+  float n0 = cirrusField(uv, f0, uSeed, 0.9, 3.4);
+  float n1 = cirrusField(uv * 1.15 + 5.5, f1, uSeed + 17.0, 0.75, 3.9);
+  float n = max(n0 * 0.72 + n1 * 0.48, n0 * 0.55); // overlapping sheets with clear holes between
+  // Soft veil + denser ice cores (lace with bright patches, not one flat sheet).
+  float veil = smoothstep(uCover - 0.06, uCover + 0.34, n);
+  float core = smoothstep(uCover + 0.14, uCover + 0.46, n);
+  float cloud = mix(veil * 0.38, 1.0, core);
+  cloud *= smoothstep(0.0, 0.07, elev);
+  // Aerial merge: thin and soften into horizon haze (cuts the hard sticker-on-fog read).
+  float haze = smoothstep(0.02, 0.22, elev);
+  cloud *= mix(0.35, 1.0, haze);
+  cloud *= 1.0 - uBoxK * smoothstep(uBoxSin * 0.8, uBoxSin * 1.25, elev); // issue #202 (1)
+  // Bright sun-lit ice; subtle thickness in cores — no embossed normals.
+  float facing = 0.58 + 0.42 * dot(d, uSunDir);
+  vec3 dayCol = mix(vec3(0.90, 0.92, 0.96), vec3(1.0), facing);
+  dayCol = mix(dayCol, vec3(0.82, 0.84, 0.88), core * (1.0 - facing) * 0.28);
   vec3 col = mix(vec3(0.16, 0.17, 0.22), dayCol, uDay);
-  col = mix(col, uSunColor * (0.75 + 0.45 * facing), uGolden * 0.55);
-  col *= mix(1.0, 0.82, smoothstep(0.6, 0.95, n));
+  col = mix(col, uSunColor * (0.82 + 0.38 * facing), uGolden * 0.55);
   // Stars: hashed cells, only at night and where the sky is clear.
-  vec3 s = d * 380.0; vec2 cell = floor(s.xz / max(d.y, 0.2)) + floor(s.y);
+  vec3 s = d * 380.0; vec2 cell = floor(s.xz / max(elev, 0.2)) + floor(s.y);
   float star = step(0.9972, hash(cell)) * (0.6 + 0.4 * sin(uTime * 3.0 + hash(cell + 3.0) * 40.0));
   // Layers, back to front: night darkening over the scattering sky, then stars, then clouds.
   float night = 1.0 - uDay;
   // Twilight glow: the same Schaefer (1993) sky luminance the Venus threshold uses (core/skyVisibility skyLuminance, h <= 0),
   // cd/m² -> scene units by the lights' scale (3 per LUX.ref lux, Lambert 1/pi folded: L = E/pi) and the eye's gain.
-  float zd = degrees(acos(clamp(d.y, 0.0, 1.0))), rho = max(1.0, degrees(acos(clamp(dot(d, uSunDir), -1.0, 1.0))));
+  float zd = degrees(acos(clamp(elev, 0.0, 1.0))), rho = max(1.0, degrees(acos(clamp(dot(d, uSunDir), -1.0, 1.0))));
   float X = 1.0 / (cos(radians(min(zd, 90.0))) + 0.025 * exp(-11.0 * cos(radians(min(zd, 90.0)))));
   float L = uTwB0 * pow(10.0, 0.4 * (min(uSunAlt, 0.0) + zd / (360.0 * uTwK))) * (100.0 / rho) * (1.0 - pow(10.0, -0.4 * uTwK * X));
   // colour: reddened toward the Sun's horizon (sunlight's grazing transmittance), ozone-blue (Chappuis band, Hulburt 1953) overhead [approx]
-  vec3 tint = mix(vec3(0.62, 0.74, 1.0), uTwTint, exp(-rho / 40.0) * (1.0 - d.y)); tint /= dot(tint, vec3(0.2126, 0.7152, 0.0722));
+  vec3 tint = mix(vec3(0.62, 0.74, 1.0), uTwTint, exp(-rho / 40.0) * (1.0 - elev)); tint /= dot(tint, vec3(0.2126, 0.7152, 0.0722));
   vec3 c = tint * L * uTwGain; float a = uSunAlt < 0.0 ? 1.0 : night * 0.9;
-  float sa = star * night * smoothstep(0.05, 0.3, d.y);
+  float sa = star * night * smoothstep(0.05, 0.3, elev);
   c = mix(c * a, vec3(0.92, 0.94, 1.0), sa); a = sa + a * (1.0 - sa);
-  float ca = cloud * 0.95;
+  float ca = cloud * mix(0.55, 0.9, core); // translucent veils leave Preetham blue; cores stay bright
   c = col * ca + c * (1.0 - ca); a = ca + a * (1.0 - ca);
   gl_FragColor = vec4(c / max(a, 1e-4), a);
   #include <tonemapping_fragment>
@@ -74,7 +101,8 @@ export function createSky(scene: THREE.Scene) {
   skyMat.depthWrite = false;
   skyMat.fog = false;
   const u = sky.material.uniforms;
-  u.turbidity.value = 2.5; u.rayleigh.value = 2.2; u.mieCoefficient.value = .004; u.mieDirectionalG.value = .8;
+  // Clearer air + stronger Rayleigh: deeper zenith blue and a whitened horizon (ground-sky audit vs flat cyan).
+  u.turbidity.value = 1.8; u.rayleigh.value = 3.0; u.mieCoefficient.value = .003; u.mieDirectionalG.value = .8;
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(550, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.ShaderMaterial({
     vertexShader: CLOUD_VERT, fragmentShader: CLOUD_FRAG, side: THREE.BackSide, transparent: true, depthWrite: false, fog: false,
     uniforms: { uTime: { value: 0 }, uSeed: { value: (WORLD_SEED % 997) * .37 }, uCover: { value: .47 }, uDrift: { value: new THREE.Vector2() }, uDay: { value: 1 }, uGolden: { value: 0 },
@@ -86,7 +114,8 @@ export function createSky(scene: THREE.Scene) {
   const moonLight = new THREE.DirectionalLight(0x9fb4e6, .35); scene.add(moonLight, moonLight.target);
   const hemi = new THREE.HemisphereLight(0xf1f5dd, 0x526753, 2.7); scene.add(hemi);
   const rimLight = new THREE.DirectionalLight(0xb7c4d6, 0.16); scene.add(rimLight, rimLight.target);
-  const fogDay = new THREE.Color(0xc4d4c8), fogGolden = new THREE.Color(0xd9a47c), fogNight = new THREE.Color(0x0d1422);
+  // Day fog leans sky-haze (pale blue-white) so the ground cut softens into the Preetham horizon instead of a grey slab.
+  const fogDay = new THREE.Color(0xd2dde8), fogGolden = new THREE.Color(0xd9a47c), fogNight = new THREE.Color(0x0d1422);
   const tmp = new THREE.Color(), tmpV = new THREE.Vector3(), keyDir = new THREE.Vector3();
   // Precipitation: one Points cloud around the camera (only drawn while it rains/snows), fall speed from Kessler V_t / snow ~1 m/s.
   const N = 1500, P = new Float32Array(N * 3), rnd = random(hash(`precip:${WORLD_SEED}`));

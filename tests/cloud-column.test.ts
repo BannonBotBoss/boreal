@@ -438,6 +438,20 @@ test('layered bake: soft-feathers toward the vertical box lid (not a knife ceili
   assert.ok(softIn > softLid, `below-lid denser than lid (${softIn} > ${softLid})`);
 });
 
+test('layered bake: ground fog is not feathered away at the box floor (the floor is the ground)', () => {
+  // Synthetic fog deck: stratiform water in the lowest ~1 km only, no convective parcel.
+  const L = { ...LOCAL_CLOUDS, nx: 16 }, base = cloudColumn(5, qOf(5, .5), 1, L.topM);
+  const layers = base.layers.map(l => ({ ...l, strat: l.z <= 1000 ? L.waterFull : 0, water: l.z <= 1000 ? L.waterFull : 0, ice: 0 }));
+  const col = { ...base, layers, lcl: -1, top: -1, overshootM: 0 };
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  let s0 = 0, h0 = 0, sTop = 0, hTop = 0; const jTop = Math.floor(1000 / (L.topM / L.nz)) - 1; // last voxel of the deck
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { if (Math.min(i, k, L.nx - 1 - i, L.nx - 1 - k) < 3) continue;
+    s0 += soft[i + L.nx * L.nz * k]; h0 += hard[i + L.nx * L.nz * k]; sTop += soft[i + L.nx * (jTop + L.nz * k)]; hTop += hard[i + L.nx * (jTop + L.nz * k)]; }
+  assert.ok(h0 > 0, `deck has cloud at the ground (${h0})`);
+  assert.ok(s0 >= h0 * .9, `floor keeps fog (${s0} vs knife ${h0})`);
+  assert.ok(sTop < hTop, `deck top still feathers (${sTop} < ${hTop})`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');

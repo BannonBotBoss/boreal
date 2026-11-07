@@ -18,6 +18,20 @@ import type { buildScene } from './buildScene';
 import { asset } from '../core/asset';
 /** Reject after `ms` so a hung fetch can never hold the loading screen. */
 const within = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<never>((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
+const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+/**
+ * The value of `p`, or `fallback` if `p` rejects or is still pending when `wait(ms)` resolves.
+ * `p` is not cancelled: a later success can still be observed by the caller's own `then`.
+ * The default wait is a timer macrotask, so a fulfillment already queued as a microtask wins a tie.
+ */
+export function settleOr<T>(p: Promise<T>, ms: number, fallback: T, wait: (ms: number) => Promise<void> = delay): Promise<T> {
+  return new Promise(resolve => {
+    let done = false;
+    const finish = (v: T) => { if (!done) { done = true; resolve(v); } };
+    p.then(v => finish(v), () => finish(fallback));
+    void wait(ms).then(() => finish(fallback));
+  });
+}
 type View = ReturnType<typeof buildScene>;
 export const raf = () => new Promise<number>(r => requestAnimationFrame(r)), wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 const wall = () => performance.now();

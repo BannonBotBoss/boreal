@@ -44,6 +44,8 @@ import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
 import { setLogDepthFar, withLogDepth } from './logDepth';
 import { LAYER_TIERS, SPINUP, globeLandSample, setLayerCamera, setSnowIceShown, spinAndBake, startPlanetLayers } from './planetLayers';
 import { bootGlobe } from './bootOrder';
+import { BOOT_READY_MS } from './bootReady';
+import { settleOr } from '../../render/startup';
 import { createLocalClouds, localCloudFade, type ColumnInput } from './localClouds';
 import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
@@ -165,23 +167,28 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let simReady = false, colIn: ColumnInput | null = null, colFrame = -1e9; const localClouds = q.get('localClouds') === '0' ? null : createLocalClouds(); if (localClouds) scene.add(localClouds.mesh);
   let simRef: Awaited<typeof simP> | null = null, booted = false, spinQueued = false;
   // Issue #47: land, elevation, then boot_order, before the first rendered frame. The 48 h layer spin stays after that paint.
-  const bootP: Promise<void> = simP.then(s => {
+  // A throw used to reject bootP before `booted` was set, and a hung wasm fetch never settled it. Either one left the
+  // first-visit film clamped at the end of B13. The budget is the slowest successful boot measured on this path.
+  const adoptSim = (s: Awaited<typeof simP>) => {
+    if (!s || simRef) return;
     simRef = s;
-    if (s) {
+    try {
       const idx = Math.max(0, Math.min(LAYER_TIERS.length - 1, layerTier < 0 ? 0 : layerTier));
       const row = LAYER_TIERS[idx];
       const draw = layerTier >= 0 && row.nlat > 0 && row.layers.length > 0;
       const nlat = draw ? row.nlat : [...LAYER_TIERS].reverse().find(t => t.nlat > 0)!.nlat;
       const day0 = layerDay - (draw ? SPINUP.steps * SPINUP.dtS / 86400 : 0);
-      try {
-        bootGlobe(s, nlat, nlat * 2, globeLandSample(planet), day0, layerUtc);
-        bindPlanetWeather(s);
-        notePlanetClockOwner('globe');
-      }
-      catch (e) { console.warn('globe boot failed', e); }
+      bootGlobe(s, nlat, nlat * 2, globeLandSample(planet), day0, layerUtc);
+      bindPlanetWeather(s);
+      notePlanetClockOwner('globe');
     }
-    booted = true;
-  });
+    catch (e) { console.warn('globe boot failed', e); }
+  };
+  const bootP: Promise<void> = settleOr(simP, BOOT_READY_MS, null).then(s => {
+    try { adoptSim(s); }
+    finally { booted = true; }
+  }).catch(e => { console.warn('globe boot failed', e); booted = true; });
+  void simP.then(s => { if (booted) adoptSim(s); }, e => console.warn('globe boot failed', e));
   if (atmos) { atmos.patch(material); if (q.get('dome') !== '0') scene.add(atmos.dome); }
   let shown = {} as Record<LayerId, LayerState>; const isOn = (id: LayerId) => shown[id]?.on ?? true;
   const panel = q.get('panel') === '0' || q.has('shot') && !q.has('panel') || q.get('view') !== 'globe' && q.get('start') !== 'globe' ? null : mountLayerPanel(location.search, (st) => { shown = st; });
@@ -723,6 +730,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   }
   return {
     planet, renderer, scene, camera, tiles, ownership: own, compiled, bootP, update, renderTo, after, step, dispose,
+    /** True once bootP has settled, including a timed-out or failed boot. The film can draw on this frame. */
+    get bootSettled() { return booted; },
     /** standalone loop. The first frame is requested only after the boot promise resolves. */
     start() { if (started) return; started = true; void Promise.all([compiled, bootP]).then(() => requestAnimationFrame(tick)); },
     /** mode-scoped input: the globe's keys, wheel and drags act only while attached */

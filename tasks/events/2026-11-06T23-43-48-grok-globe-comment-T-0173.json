@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0173",
+  "agent": "grok-globe",
+  "at": "2026-11-06T23:43:48-08:00",
+  "note": "Diagnosis and the SwiftShader runs are in tasks/handoffs/T-0173-grok-globe.md. The held counter is \"241 million years ago\" at 107.95 s. \"232 million years ago\" is formatClock near 108.02 s and is not the held frame. Boot budget is 4749 ms, ceil of the slowest measured click-to-bootP. npm test 1164 pass, 0 fail, 14 todo. npx tsc --noEmit exit 0. Browser stills are tasks/evidence/T-0173/. Omen cause is not verified. Do not merge."
+}

@@ -334,8 +334,16 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     setFilmDrive(yaw: number, radii: number, offset: number, sunBias?: number) { globe?.setFilmDrive(yaw, radii, offset, sunBias); },
     enter(): boolean {
       if (mode !== 'game') return true;
-      if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
-      prep = null; hold.hold(); globe.resumeWorkers(); lastT = performance.now(); toGlobe(true); return true;
+      if (!globe) { void loadGlobe().then(() => api.enter()).catch(e => console.warn('inpage prewarm', e)); return true; }
+      const go = () => {
+        if (mode !== 'game' || !globe) return;
+        prep = null; hold.hold(); globe.resumeWorkers(); lastT = performance.now(); toGlobe(true);
+      };
+      // A settled boot draws on this frame. A promise that is still pending waits, so the view is not
+      // switched onto a globe that returns before its first renderTo.
+      if (globe.bootSettled) { go(); return true; }
+      void globe.bootP.then(go, e => console.warn('inpage prewarm', e));
+      return true;
     },
     /** The planet grid is final. The film waits on this before the living world gives way to arrival. */
     whenBooted() { return loadGlobe().then(g => g.bootP); },

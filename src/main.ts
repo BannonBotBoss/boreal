@@ -493,7 +493,7 @@ function openAfterLoad(q: URLSearchParams) {
   const seen = hasSeenBigBang(context);
   const choice = bootChoice(opened, seen, seen ? loadResume(context) : null);
   if (choice === 'globe' || choice === 'resume-globe') { if (!inpage?.enter()) toGlobe(); return; }
-  if (opened === 'sphere' && choice === 'sphere') { opening = createOpening(finishIntro, () => { void inpage?.prewarm(); }, { show: () => { inpage?.enter(); }, ready: () => inpage?.whenBooted() ?? Promise.resolve() }); return; }
+  if (opened === 'sphere' && choice === 'sphere') { opening = createOpening(finishIntro, () => { void inpage?.prewarm().catch(e => console.warn('inpage prewarm', e)); }, { show: () => { inpage?.enter(); }, ready: () => inpage?.whenBooted() ?? Promise.resolve() }); return; }
   if (choice === 'resume-game') return;
   openStart();
 }

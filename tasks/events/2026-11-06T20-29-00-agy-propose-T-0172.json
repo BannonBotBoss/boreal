@@ -1,0 +1,10 @@
+{
+  "type": "propose",
+  "task": "T-0172",
+  "agent": "agy",
+  "at": "2026-11-06T20:29:00-07:00",
+  "branch": "agy/t0172-propose",
+  "title": "Propagate world date and landed site latitude to animal photoperiod and headless sim",
+  "credits": 39,
+  "note": "Inspection of animal circadian / seasonal photoperiod (refs/animals/photoperiod-audit/recording.webm, frame-0.png..frame-2.png, observations.json, numbers.json) found three breaks against NOAA solar geometry (Spencer 1971) and Theuerkauf et al. (2003, J. Mammal. 84:243): (1) src/main.ts:576 calls sunTimes(dayAt(wNow)) without siteLat() and src/core/needs/behaviour.ts:10 defaults sunTimes to hardcoded LATITUDE = 49.5 deg N instead of siteLatitude(LATITUDE), causing -2.33 h (-140 min) sunset error at 64.5 deg N on summer solstice (day 172, frame-0.png) so the autonomous wolf rests ('crepuscular: rest hour') while the sun is +1.47 deg above the horizon at dusk, and -2.32 h (-139 min) sunrise error on winter solstice (day 355, frame-1.png) so chooseGoal marks 08:02 dark winter night (-9.04 deg sun elevation) as active dawn; (2) src/core/sim/index.ts:240 (stepPredator) hardcodes equinox {sunrise: 6, sunset: 18} instead of sunTimes(w.day(), w.latitude()), causing +-2.04 h error at 49.5 deg N and +-4.36 h error at 64.5 deg N and putting SimWorld predators to sleep during summer dawn/dusk; (3) src/animals/hare.ts never wires world.hour, world.day, or world.latitude, leaving world.hour() at 12 noon forever."
+}

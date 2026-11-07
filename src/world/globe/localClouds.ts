@@ -180,7 +180,7 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
         cv *= uTop * uTop * (3 - 2 * uTop);
       }
       if (feather > 0 && tip > top && h[c] > .5 && top > cb) {
-        const frac = Math.max(0, Math.min(1, (h[c] - .5) / .35)); // same ramp as the overshoot plume
+        const frac = coreStrength(h[c]); // same smoothstep core ramp as the overshoot plume (#368)
         const li = Math.min(ly.length - 1, Math.round(z / step)), op = iceOpacity(ly[li]?.ice ?? 0);
         const plumeAtEl = .45 * frac * op; // matches the overshoot path at u=0, turret=1
         const uAtt = Math.min(1, Math.max(0, (top - z) / feather)); // 0 at EL, 1 a feather below

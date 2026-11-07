@@ -65,6 +65,13 @@ const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Soft tower-depth gate for the anvil: towers only glaciate and spread an anvil once deep (Houze 2014 ch. 8),
  *  but a hard cut at anvil_min_tower_m made the whole anvil pop on/off as the column top crossed it. Smoothstep
  *  from 0.8x to 1x the minimum depth ([game calibration] band, 4.8 to 6 km at today's 6 km). */
+/** Core-strength ramp shared by the anvil footprint and the overshoot dome: cells below h=0.5 don't feed either,
+ *  mature cores (h>=0.85) take full weight. A linear ramp left slope corners at both ends, so neighbouring cells
+ *  showed a visible crease in anvil/turret weight; smoothstep keeps the same endpoints and midpoint [game calibration]. */
+export function coreStrength(h: number): number {
+  const u = Math.min(1, Math.max(0, (h - .5) / .35));
+  return u * u * (3 - 2 * u);
+}
 export function anvilDepthGate(depthM: number): number {
   const lo = .8 * CC.anvil_min_tower_m, u = Math.min(1, Math.max(0, (depthM - lo) / (CC.anvil_min_tower_m - lo)));
   return u * u * (3 - 2 * u);
@@ -106,8 +113,8 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
   // Blurred strength also sets how deep the ice deck reaches at that cell: full anvil_depth_m at anv~1, thinner fringe.
   const anv = new Float32Array(n), iceOk = new Float32Array(L.nz), dg = top > base ? anvilDepthGate(col.top - base) : 0, deep = dg > 0;
   if (deep) { const r = Math.max(1, Math.round(CC.anvil_spread_m / L.sizeM * L.nx)), m = new Float32Array(n);
-    // same strength ramp as overshoot: mature cores (h>=0.85) full weight, mid cells (.5..0.85) partial, nothing below .5
-    for (let c = 0; c < n; c++) m[c] = h[c] <= .5 ? 0 : Math.min(1, (h[c] - .5) / .35) * dg; // dg: soft tower-depth gate
+    // same strength ramp as overshoot: mature cores (h>=0.85) full weight, mid cells (.5..0.85) partial (smoothstep), nothing below .5
+    for (let c = 0; c < n; c++) m[c] = coreStrength(h[c]) * dg; // dg: soft tower-depth gate
     for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { let s = 0, w = 0;
       for (let b = -r; b <= r; b++) for (let a = -r; a <= r; a++) { const kk = k + b, ii = i + a; if (kk < 0 || ii < 0 || kk >= L.nx || ii >= L.nx || a * a + b * b > r * r) continue; s += m[kk * L.nx + ii]; w++; }
       anv[k * L.nx + i] = Math.min(1, 1.5 * s / Math.max(1, w)); }
@@ -182,7 +189,7 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       }
     } else if (tip > top && z > top && h[c] > .5) { // overshooting dome: cell strength sets how far past the EL (Houze 2014 ch. 8)
       // mature cores (h~1) take the full overshootM; mid cells taper off; nothing below h=0.5 (same cut as anvil cores start rising)
-      const frac = Math.max(0, Math.min(1, (h[c] - .5) / .35)); // 0 at 0.5, 1 at >=0.85
+      const frac = coreStrength(h[c]); // 0 at 0.5, 1 at >=0.85, smooth both ends
       const cellTip = Math.min(L.topM, top + over * frac);
       if (z <= cellTip && cellTip > top) {
         const u = (z - top) / (cellTip - top); // 0 at anvil level, 1 at this cell's tip

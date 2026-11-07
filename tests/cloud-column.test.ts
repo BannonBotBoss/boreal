@@ -23,7 +23,7 @@ test('T-0073: local bake follows cover and the column', () => {
   const c = cloudColumn(25, qOf(25, .8), .8), L = { ...LOCAL_CLOUDS, nx: 16, nz: 12 };
   const full = bakeLocal(c, 1, 0, 0, L), none = bakeLocal(c, 0, 0, 0, L);
   assert.ok(full.reduce((a, b) => a + b, 0) > none.reduce((a, b) => a + b, 0));
-  const base = Math.floor(c.lcl / (L.topM / L.nz)); for (let j = 0; j < base - 1; j++) assert.equal(full[L.nx * j], 0); // clear below the LCL
+  const undul = L.baseUndulM ?? 0, base = Math.floor((c.lcl - undul) / (L.topM / L.nz)); for (let j = 0; j < Math.max(0, base - 1); j++) assert.equal(full[L.nx * j], 0); // clear below the undulated LCL floor
   const pl = { lat: [49.5, 0], lon: [-94, 0], ts: [18, 28], q: [.009, .018], cloud: [.6, .4] };
   assert.equal(columnAt(pl, [Math.cos(.868) * Math.cos(-1.64), Math.sin(.868), Math.cos(.868) * Math.sin(-1.64)])!.tsC, 18);
 });
@@ -61,11 +61,26 @@ test('altitude zones: the column reads pressure at the ground height, so a plate
 test('layered bake: convective towers share the LCL base, tops vary by cell (below the anvil), mid-strength cells stop at the buoyant top', () => {
   const col = cloudColumn(28, qOf(28, .75), .6, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS, dz = L.topM / L.nz, b = bakeLocal(col, .6, 0, 0);
   assert.ok(col.lcl > 0 && col.top > col.lcl);
-  const tops: number[] = [];
+  const undul = L.baseUndulM ?? 0, tops: number[] = [];
   for (let k = 0; k < L.nx; k += 4) for (let i = 0; i < L.nx; i += 4) { let lo = -1, hi = -1;
     for (let j = 0; j < L.nz; j++) if (b[i + L.nx * (j + L.nz * k)] > 8 && (j + 1) * dz < col.top - 1500 && col.layers[Math.round((j + .5) * dz / col.layers[1].z)].strat === 0) { if (lo < 0) lo = j; hi = j; }
-    if (lo >= 0) { assert.ok((lo + 1) * dz >= col.lcl - dz, 'no convective cloud below the dew-point base'); assert.ok(hi * dz <= col.top + dz, 'mid-tower cells stay at or below the buoyant top'); tops.push(hi); } }
+    if (lo >= 0) { assert.ok((lo + 1) * dz >= col.lcl - undul - dz, 'no convective cloud below the undulated dew-point base'); assert.ok(hi * dz <= col.top + dz, 'mid-tower cells stay at or below the buoyant top'); tops.push(hi); } }
   assert.ok(tops.length > 3 && Math.max(...tops) - Math.min(...tops) >= 2, `tower tops should differ by cell: ${tops}`);
+});
+test('layered bake: dew-point bases undulate per cell around the column LCL (not ruler-flat)', () => {
+  const col = cloudColumn(28, qOf(28, .75), .6, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS, dz = L.topM / L.nz;
+  assert.ok((L.baseUndulM ?? 0) >= 250, 'undulation spans >1 bake voxel');
+  const b = bakeLocal(col, .6, 0, 0), bases: number[] = [];
+  for (let k = 0; k < L.nx; k += 2) for (let i = 0; i < L.nx; i += 2) { let lo = -1;
+    for (let j = 0; j < L.nz; j++) {
+      const z = (j + .5) * dz, v = b[i + L.nx * (j + L.nz * k)];
+      // convective-only: skip strat-heavy layers near the LCL
+      if (v > 8 && z < col.top - 1500 && (col.layers[Math.min(col.layers.length - 1, Math.round(z / (col.layers[1]?.z || 250)))]?.strat ?? 0) === 0) { lo = j; break; }
+    }
+    if (lo >= 0) bases.push(lo); }
+  assert.ok(bases.length > 8, `lit bases ${bases.length}`);
+  assert.ok(Math.max(...bases) - Math.min(...bases) >= 1, `base voxels should vary by cell: ${Math.min(...bases)}..${Math.max(...bases)}`);
+  for (const j of bases) assert.ok((j + 1) * dz >= col.lcl - L.baseUndulM - dz && j * dz <= col.lcl + L.baseUndulM + dz, `base near LCL ${col.lcl}`);
 });
 test('overshoot bake: a strong tower paints a tapered plume above the buoyant top; a weak one barely does', () => {
   const L = LOCAL_CLOUDS, dz = L.topM / L.nz;

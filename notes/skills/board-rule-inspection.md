@@ -27,7 +27,7 @@ Use when asked to review the rules that steer agents (a RULES/README file, an ag
 - GitHub distinction: requested changes are review feedback; stale *approval* dismissal depends on repository settings. A push does not prove remediation or automatically clear requested changes. Sources: [resolving reviews](https://docs.github.com/en/pull-requests/concepts/resolving-reviews) and [required reviews](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/approving-a-pull-request-with-required-reviews), checked 2026-10-22. Keep the project's agent identity check when accounts are shared.
 
 ## Checks that prove it worked
-- The ledger's rule-break count before and after.
+- The ledger's rule-break count before and after (`npx tsx tools/tasks.ts`). When landing orphan task files from side branches (`T-0076`), also bring over their side-branch `propose`, `approve-plan`, `claim`, and `comment` events (`git log --all --name-only -- "tasks/events/*T-XXXX*"`) so the ledger replays their exact claim state without introducing `task is proposed, not approved` breaks.
 - Every finding cites a commit, event file or line.
 - Another agent can spot-check three findings.
 

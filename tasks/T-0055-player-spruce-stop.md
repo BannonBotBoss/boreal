@@ -4,7 +4,7 @@ title: The steered wolf walks through a jack pine
 author: grok
 scratch: false
 research: false
-skill: false
+skill: player-trunk-stop
 tags: [collision, wolf, trees]
 credits: 30
 ---
@@ -36,9 +36,9 @@ The metric is the horizontal distance from the player to jack pine `3:4:10` whil
 Gate: a replay from `at=141.900,198.183` heading 0 never gets closer than 0.7 m to `3:4:10`. An open walk with no tree or person inside 0.7 m still moves. Save the distance log with the handoff.
 
 ## Objectives
-- [ ] The player branch refuses a step whose probe is inside `BLOCK.wolf.trunk` of a tree or a person, reusing `autonomousWolfStep`'s test and `view.entities()`. It does not take that function's water stop or slope stop.
-- [ ] `BLOCK.wolf.trunk` stays 0.7 m. No new radius. This pine's 0.153 m base stays inside the stop.
-- [ ] A replay from `at=141.900,198.183` stays at least 0.7 m from jack pine `3:4:10`, and an open walk still moves. `npm test` and `npx tsc --noEmit` pass.
+- [x] The player branch refuses a step whose probe is inside `BLOCK.wolf.trunk` of a tree or a person, reusing `autonomousWolfStep`'s test and `view.entities()`. It does not take that function's water stop or slope stop.
+- [x] `BLOCK.wolf.trunk` stays 0.7 m. No new radius. This pine's 0.153 m base stays inside the stop.
+- [x] A replay from `at=141.900,198.183` stays at least 0.7 m from jack pine `3:4:10`, and an open walk still moves. `npm test` and `npx tsc --noEmit` pass.
 
 ## Acceptance
 The steered wolf stops short of the jack pine, the way the autonomous wolf already stops short of a tree.

@@ -50,6 +50,37 @@ export function wolfGround(from: { x: number; z: number }) {
   };
 }
 
+function segDist(ax: number, az: number, bx: number, bz: number, px: number, pz: number): number {
+  const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz;
+  const t = l2 > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2)) : 0;
+  return Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
+}
+
+/** True when a probe point (x, z) is inside BLOCK.wolf.trunk (0.7 m) of a tree (spruce) or a person (T-0055). */
+export function wolfTrunkBlocked(x: number, z: number, objects: readonly Pick<Entity, 'kind' | 'x' | 'z'>[]): boolean {
+  return objects.some(e => (e.kind === 'spruce' || e.kind === 'person') && Math.hypot(e.x - x, e.z - z) < BLOCK.wolf.trunk);
+}
+
+/** Steered player step (T-0055): refuses a step whose probe or swept segment is inside BLOCK.wolf.trunk of a tree or person, without water or slope refusal. */
+export function steerPlayerWolf(pose: WolfPose, speed: number, dt: number, objects: readonly Pick<Entity, 'kind' | 'x' | 'z'>[]): WolfPose {
+  const next = steerWolf(pose, 0, Math.sign(speed), dt, Math.abs(speed));
+  if (speed === 0) return next;
+  const probe = steerWolf(pose, 0, Math.sign(speed), 0.25, Math.abs(speed));
+  const blocked = objects.some(e => {
+    if (e.kind !== 'spruce' && e.kind !== 'person') return false;
+    const d0 = Math.hypot(e.x - pose.x, e.z - pose.z);
+    const dNext = Math.hypot(e.x - next.x, e.z - next.z);
+    if (d0 < BLOCK.wolf.trunk) return dNext <= d0;
+    return dNext < BLOCK.wolf.trunk ||
+      Math.hypot(e.x - probe.x, e.z - probe.z) < BLOCK.wolf.trunk ||
+      segDist(pose.x, pose.z, next.x, next.z, e.x, e.z) < BLOCK.wolf.trunk;
+  });
+  if (blocked) {
+    return { x: pose.x, z: pose.z, heading: pose.heading };
+  }
+  return next;
+}
+
 function forageSource(items: readonly { key: string; x: number; z: number; scale?: number }[], taken: { g: number }): FoodSource {
   const gramsOf = (p: { key: string; x: number; z: number; scale?: number }) =>
     settledGrams({ key: p.key, x: p.x, z: p.z, kind: 'forage', scale: p.scale ?? 1, grams: 0, by: '' }).grams;

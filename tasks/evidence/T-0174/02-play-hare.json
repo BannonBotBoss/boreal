@@ -1,0 +1,110 @@
+{
+  "name": "02-play-hare",
+  "url": "/?nomenu&noprobe&stages=1&trees=v2&hour=15&play=hare",
+  "navErr": "",
+  "readyAt": 24612,
+  "loadMs": 33317,
+  "info": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "href": "http://127.0.0.1:5173/?nomenu&noprobe&stages=1&trees=v2&hour=15&play=hare",
+    "title": "Boreal · Script laboratory",
+    "loading": false,
+    "cine": false,
+    "cineCount": "",
+    "hero": "",
+    "frameMs": {
+      "p50": 273.5,
+      "p95": 551.1,
+      "max": 1034.9,
+      "stallsOver500": 3
+    },
+    "heap": {
+      "used": 187313552,
+      "total": 241793340
+    },
+    "landing": {
+      "ready": true,
+      "remote": false,
+      "lat": 49.76999999786316,
+      "lon": 65.53598788325391,
+      "elevM": 370,
+      "vegetation": 1,
+      "water": false,
+      "biome": "boreal",
+      "clickLat": null,
+      "clickLon": null,
+      "census": [
+        {
+          "species": "caribou",
+          "display": "Woodland Caribou",
+          "count": 2
+        },
+        {
+          "species": "red_fox",
+          "display": "Red Fox",
+          "count": 17
+        }
+      ],
+      "shown": [
+        {
+          "species": "Woodland Caribou",
+          "count": 1,
+          "x": 51.69388128468731,
+          "z": -7.046373015820485
+        },
+        {
+          "species": "Red Fox",
+          "count": 1,
+          "x": 53.243846260885476,
+          "z": -6.480591633518991
+        }
+      ],
+      "frameMs": 339.9000000000108,
+      "lighting": {
+        "hour": 15.1,
+        "dayOfYear": 227,
+        "latitude": 49.79,
+        "sunElevation": 38.3,
+        "day": 1,
+        "golden": 0,
+        "night": 0,
+        "state": "day"
+      },
+      "note": "",
+      "coastM": 72214.89784980303,
+      "censusLat": 49.76999999786316,
+      "censusLon": 65.53598788325391,
+      "shore": false
+    },
+    "picture": {
+      "specks": 0,
+      "fulls": 6,
+      "lows": 4,
+      "bodies": 0,
+      "wolves": {
+        "near": 1,
+        "mid": 0,
+        "far": 0
+      }
+    },
+    "inpage": {
+      "mode": "game",
+      "phase": "game",
+      "h": 0
+    },
+    "globe": null,
+    "seen": false,
+    "hud": "",
+    "body": "PROCEDURAL WORLD / 01 Boreal A landscape made from instructions. 15:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100% RT run · LT stealth · LB focus · Q lock 0 remembered · 0 friends · 0 herbs Explore Approach an individual W / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact · T hour · hold , rewind"
+  },
+  "bag": {
+    "pageErrors": [],
+    "console": [
+      {
+        "t": "warning",
+        "text": "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+      }
+    ],
+    "http": []
+  }
+}

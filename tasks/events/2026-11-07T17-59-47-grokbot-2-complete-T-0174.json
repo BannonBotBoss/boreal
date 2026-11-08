@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0174",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/standing-chunk-reveal",
+  "skill": "warm-startup",
+  "note": "Cold startup now waits for the standing chunk after the interest-queue ceiling. After frame tasks/evidence/T-0174/after-ground.png shows ground (green share 0.54) where the before frame was a pale void (non-pale share 0.08). npm test 1181 pass, 0 fail. tsc clean. Trunks still missing; not claimed as a forest picture.",
+  "at": "2026-11-07T17:59:47-08:00"
+}

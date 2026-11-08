@@ -44,3 +44,5 @@ footer div{flex-wrap:wrap;justify-content:flex-end;max-width:100%}
 @media(max-width:900px){footer{flex-direction:column;align-items:stretch;gap:8px}footer div{justify-content:flex-start}footer>span{max-width:none}#interaction{bottom:188px}}
 /* Above the controller legend (.padx bottom 280px, ~35px tall) so a ~750px window does not cover the prompt or the interaction line. */
 #flight-prompt{position:fixed;left:16px;bottom:330px;z-index:30;max-width:min(300px,calc(100vw - 32px));background:#0b1622b8;color:#f3f1df;font:12px/1.4 system-ui;padding:6px 10px;border-radius:8px;text-align:left;pointer-events:none;opacity:.85}
+/* A lost graphics context used to fade the toast and leave a black canvas. This card stays until reload. */
+body.gl-lost #notice{display:block;position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:40;max-width:28rem;padding:22px 26px;background:#14251ee6;color:#f3f1df;font:18px/1.45 system-ui;text-align:center;border-radius:12px}

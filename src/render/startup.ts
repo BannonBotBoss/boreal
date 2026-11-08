@@ -15,7 +15,15 @@ import { STATS, queued } from '../core/interest';
 import { CHUNK_SIZE } from '../core/world';
 import { cachedProbe, median, saveProbe, type ProbeInput, type ProbeResult } from '../core/probe';
 import type { buildScene } from './buildScene';
+import { failTerrainWorkers } from './terrainPool';
 import { asset } from '../core/asset';
+/** Copy for the land wait. The standing chunk is the terrain mesh and the trees on it (buildScene chunkBuilt). */
+export const GROUND_HOLD = {
+  building: 'Building the ground here…',
+  missing: 'The ground did not arrive. Reload the page.',
+  /** After the worker misses the second cap, the same chunk is built here. The stage grid is the slow part. */
+  recoverMs: 45000,
+};
 /** Reject after `ms` so a hung fetch can never hold the loading screen. */
 const within = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<never>((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
 type View = ReturnType<typeof buildScene>;
@@ -164,7 +172,7 @@ export interface StartupOptions {
   /** Test seam for the Ultra bench. The default is measureHardware. */
   measureProbe?: () => Promise<ProbeInput>;
 }
-export async function startup(view: View, ui: { step(label: string, f: number): void }, opts: StartupOptions = {}): Promise<ProbeResult | undefined> {
+export async function startup(view: View, ui: { step(label: string, f: number): void }, opts: StartupOptions = {}): Promise<(ProbeResult & { ground: boolean }) | undefined> {
   const pump = opts.pump ?? raf, now = opts.now ?? wall;
   const buildId = opts.buildId ?? startupBuildId();
   const warmStorage = opts.warmStorage ?? browserStore('sessionStorage');
@@ -182,8 +190,14 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
     await settle(budget.settleQuiet, budget.settleMaxMs, onLand, pump, now, opts.busy ?? queued);
     // Grass and flora keep the interest queue full, so the ceiling above can fire while the
     // standing chunk is still queued. Revealing then is a pale void (no ground, no trees).
-    // Wait for that chunk on its own, still behind the splash. Same ceiling, not a new one.
+    // Wait for that chunk on its own, still behind the splash. Same ceiling, not a new one. (#376)
     if (!land()) await settleWhenLandReady(budget.settleQuiet, budget.settleMaxMs, land, onLand, pump, now);
+  }
+  // #376 already waited for the chunk. If the worker still has not answered, build it here.
+  if (!land()) {
+    ui.step(GROUND_HOLD.building, .4);
+    failTerrainWorkers('terrain worker did not return the standing chunk; building it on the main thread');
+    await settleWhenLandReady(WARM_START.settleQuiet, GROUND_HOLD.recoverMs, land, undefined, pump, now);
   }
   if (budget.compileBeforeProbe) { ui.step('Compiling shaders…', .45); await view.photoreal.compile(); }
   const compiled = JSON.stringify(applied());
@@ -203,9 +217,13 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
   if (!budget.compileBeforeProbe) { ui.step('Compiling shaders…', .45); await view.photoreal.compile(); }
   else if (JSON.stringify(applied()) !== compiled) { ui.step('Compiling shaders…', .9); await pump(); await view.photoreal.compile(); } // the probe moved the tier: its variants too, still covered
   await view.photoreal.warmUp(applied(GOVERNOR.tier + 1), budget.warmUpMs); // cold blocks; warm queues the next cheaper tier and returns
-  ui.step('Ready', 1); await pump(); await pump(); // one more frame at the final tier before the reveal
+  const ground = land();
+  if (ground) { ui.step('Ready', 1); await pump(); await pump(); } // one more frame at the final tier before the reveal
+  else ui.step(GROUND_HOLD.missing, .35); // leave the loading card up: main does not fade it while the chunk is still out
   GOVERNOR.auto = auto; resetGovernor(); GOVERNOR.cool = GOVERNOR.cooldownMs; // grace: streaming right after the reveal is not the steady cost
-  if (probe && buildId) saveWarmStamp(warmStorage, { build: buildId, renderer: probe.renderer });
-  console.log(`STARTUP ${route}`);
-  return probe;
+  if (probe && buildId && ground) saveWarmStamp(warmStorage, { build: buildId, renderer: probe.renderer });
+  console.log(`STARTUP ${route}${ground ? '' : ' ground-missing'}`);
+  if (probe) return { ...probe, ground };
+  if (!ground) return { renderer: '', benchMs: 0, cap: 0, igpu: false, reasons: ['ground missing'], at: 0, version: 0, ground: false };
+  return undefined;
 }

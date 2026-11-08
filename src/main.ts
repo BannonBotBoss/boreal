@@ -93,7 +93,9 @@ const SAVE_KEY = 'boreal.events.v1', NEEDS_KEY = 'boreal.needs.v1'; // T-0036: t
 let context = createContext(), saveBlocked = false;
 let noticeTimer: ReturnType<typeof setTimeout>;
 const padRouter = createPadRouter({ act: id => act(id), notice: m => notice(m), globe: () => inpage?.mode === 'globe', flight: () => inpage?.mode === 'band', reloadBindings: () => { try { bindings = loadBindings(localStorage.getItem(BINDINGS_KEY)); bindingTexts(); } catch { /* blocked */ } } });
+let graphicsLost = false;
 function notice(message: string) {
+  if (graphicsLost) return; // the context-loss card stays until reload; a later tip must not hide it
   const node = element('notice'); node.textContent = message; node.style.display = 'block';
   clearTimeout(noticeTimer); noticeTimer = setTimeout(() => node.style.display = 'none', 6000);
 }
@@ -424,7 +426,13 @@ canvas.addEventListener('pointermove', event => {
 canvas.addEventListener('pointerup', clearInput);
 canvas.addEventListener('pointercancel', clearInput);
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; canvas.style.cursor = 'grab'; });
-canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); inpage?.dispose(); paused = true; notice('Graphics context lost. Your committed events are saved; reload to restore the view.'); });
+canvas.addEventListener('webglcontextlost', event => {
+  event.preventDefault(); inpage?.dispose(); paused = true; pauseClock();
+  graphicsLost = true; document.body.classList.add('gl-lost');
+  const node = element('notice');
+  node.textContent = 'Graphics stopped. Your committed events are saved. Reload the page to bring the forest back.';
+  node.style.display = 'block'; clearTimeout(noticeTimer);
+});
 canvas.addEventListener('webglcontextrestored', () => location.reload());
 let lastPhotoView: PhotoView | undefined;
 let litterNudge = false;
@@ -735,7 +743,12 @@ void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally((
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
   armBootAim(q); // return visit only: aim the globe before prewarm. A first visit leaves this empty and still plays the intro.
   const cine = startView(location.search) === 'sphere' && !q.has('bench') && !q.has('nomenu') && !hasSeenBigBang(context);
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).catch(e => console.warn('startup', e)).then(() => q.has('noprobe') || cine ? undefined : inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); openAfterLoad(q); }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
+  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).then(async result => {
+    if (result && result.ground === false) return false; // the loading card stays, with the reload line, instead of a black void
+    try { if (!(q.has('noprobe') || cine)) { const r = await inpage?.prewarm(); console.log('INPAGE prewarm ' + JSON.stringify(r)); } }
+    catch (e) { console.warn('inpage prewarm', e); }
+    return true;
+  }).catch(e => { console.warn('startup', e); return true; }).then(show => { if (show === false) return; void loading.finish(); openAfterLoad(q); }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

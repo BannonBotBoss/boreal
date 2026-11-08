@@ -781,9 +781,22 @@ test('layered clouds: shortwave uses TSI times two-stream albedo and transmittan
   assert.ok(Math.abs(deck.transmitted - K.TSI * cloudTransmittance(10)) < 1e-12);
   assert.ok(Math.abs(deck.reflected - K.TSI * cloudAlbedo(10)) < 1e-12);
   assert.ok(Math.abs(deck.transmitted - K.TSI * .5714) < 15, 'stratocumulus ~57% of 1361 W/m2');
-  assert.ok(Math.abs(slant.transmitted - .5 * deck.transmitted) < 1e-12 && Math.abs(slant.incident - .5 * K.TSI) < 1e-12);
+  assert.ok(Math.abs(slant.incident - .5 * K.TSI) < 1e-12);
+  assert.ok(slant.albedo > deck.albedo, 'low sun lengthens the path, so the same deck is brighter');
+  assert.ok(Math.abs(slant.albedo - .6) < .01, 'stratocumulus at mu=0.5 reflects ~60%');
+  assert.ok(slant.transmitted < .5 * deck.transmitted, 'less reaches the ground than the cosine law alone');
+  assert.ok(Math.abs(slant.reflected + slant.transmitted - slant.incident) < 1e-9, 'conservative at a slant too');
   assert.equal(night.transmitted, 0);
   assert.equal(night.reflected, 0);
   const deep = cloudColumn(28, qOf(28, .85)), thin = cloudColumn(5, qOf(5, .6));
   assert.ok(cloudShortwave(deep.tau).transmitted <= cloudShortwave(thin.tau).transmitted);
+});
+
+test('layered clouds: two-stream albedo rises as the sun lowers (Coakley and Chylek path)', () => {
+  assert.equal(cloudAlbedo(0, .5), 0);
+  assert.ok(Math.abs(cloudAlbedo(10) - .4286) < .01, 'overhead stratocumulus still ~43%');
+  assert.ok(cloudAlbedo(10, .5) > cloudAlbedo(10), 'mu=0.5 is brighter than overhead');
+  assert.ok(Math.abs(cloudAlbedo(10, .5) - .6) < .01);
+  assert.ok(Math.abs(cloudTransmittance(10, .5) + cloudAlbedo(10, .5) - 1) < 1e-12);
+  assert.ok(cloudTransmittance(10, .5) < cloudTransmittance(10), 'low sun lets less through the same deck');
 });

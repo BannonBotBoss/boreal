@@ -17,9 +17,11 @@
  *  - CAPE and the equilibrium level use virtual temperature, so water vapour adds buoyancy and condensate loading
  *    takes it away (Emanuel 1994 ch. 4 and ch. 6; AMS Glossary, 'virtual temperature');
  *  - shortwave albedo and transmittance follow the non-absorbing two-stream formulae from the column optical depth
- *    (Lacis & Hansen 1974), so a thick tower is bright on top and still lets diffuse light through to the ground;
- *  - those shares times the IAU 2015 TSI (Kopp & Lean 2011) and the cosine of the solar zenith angle give the reflected
- *    (to space) and transmitted (to the ground) shortwave in W/m², instead of fixed climate-model partitions.
+ *    (Lacis & Hansen 1974 at overhead sun; Coakley & Chýlek 1975 for any solar-zenith cosine μ), so a thick tower is
+ *    bright on top, still lets diffuse light through to the ground, and looks brighter (lets less through) at low sun
+ *    because the path through the deck is longer;
+ *  - those shares times the IAU 2015 TSI (Kopp & Lean 2011) and μ give the reflected (to space) and transmitted
+ *    (to the ground) shortwave in W/m², instead of fixed climate-model partitions.
  * Pure, DOM-free; the renderer (world/globe/localClouds) bakes these layers into a 3D texture around the camera.
  */
 import C from '../../../data/earth/cloud-column.json';
@@ -99,20 +101,25 @@ export function snowShareFromFreezing(freezeM: number, iceAloft: boolean) {
   return Math.max(0, Math.min(1, 1 - freezeM / C.melt_layer_m));
 }
 /** Cloud base (m): the LCL from the parcel's temperature and dew point (iterated, exact for this model). */
-/** Shortwave albedo of a cloud of optical depth tau: two-stream, non-absorbing scattering, A = (1-g)tau / (2 + (1-g)tau)
- * with asymmetry g ~ 0.85 (Lacis & Hansen 1974; Bohren 1987). Thin cirrus (tau ~1) reflects ~7%, a stratocumulus deck
- * (tau ~10) ~43%, a cumulonimbus (tau ~100) ~88%, so bright towers and grey decks come out of the water path, not a dial. */
-export const cloudAlbedo = (tau: number) => { const x = (1 - C.asym_g) * Math.max(0, tau); return x / (2 + x); };
-/** Diffuse two-stream transmittance of a non-absorbing cloud: T = 1 − A = 2 / (2 + (1-g)τ)
- * (Lacis & Hansen 1974). Direct-beam exp(−τ) would call a stratocumulus (τ ~10) black underneath;
- * multiple forward scattering still lets about 57% through to the ground. */
-export const cloudTransmittance = (tau: number) => 1 - cloudAlbedo(tau);
-/** Shortwave through a non-absorbing cloud: incident = S0 μ, reflected = incident A, transmitted = incident T.
+/** Shortwave albedo of a cloud of optical depth tau at solar-zenith cosine mu:
+ * two-stream, non-absorbing, A = (1-g)τ / (2μ + (1-g)τ) (Coakley & Chýlek 1975; reduces to Lacis & Hansen 1974
+ * and Bohren 1987 when μ = 1). g ~ 0.85. Thin cirrus (τ ~1) at overhead sun reflects ~7%, a stratocumulus deck
+ * (τ ~10) ~43%, a cumulonimbus (τ ~100) ~88%; the same deck at μ = 0.5 reflects ~60% because the path is longer. */
+export const cloudAlbedo = (tau: number, mu = 1) => {
+  const x = (1 - C.asym_g) * Math.max(0, tau);
+  return x === 0 ? 0 : x / (2 * Math.max(0, mu) + x);
+};
+/** Diffuse two-stream transmittance of a non-absorbing cloud: T = 1 − A = 2μ / (2μ + (1-g)τ)
+ * (Coakley & Chýlek 1975). Direct-beam exp(−τ/μ) would call a stratocumulus (τ ~10) black underneath;
+ * multiple forward scattering still lets about 57% through at overhead sun, and about 40% at μ = 0.5. */
+export const cloudTransmittance = (tau: number, mu = 1) => 1 - cloudAlbedo(tau, mu);
+/** Shortwave through a non-absorbing cloud: incident = S0 μ, reflected = incident A(τ,μ), transmitted = incident T(τ,μ).
  * S0 is the IAU 2015 TSI from core/constants (Kopp & Lean 2011); μ is the cosine of the solar zenith angle
  * (1 overhead, 0 at the horizon). Conservative: reflected + transmitted = incident. */
 export function cloudShortwave(tau: number, mu = 1) {
-  const albedo = cloudAlbedo(tau), transmittance = cloudTransmittance(tau);
-  const incident = K.TSI * Math.max(0, mu);
+  const muClamped = Math.max(0, mu);
+  const albedo = cloudAlbedo(tau, muClamped), transmittance = cloudTransmittance(tau, muClamped);
+  const incident = K.TSI * muClamped;
   return { albedo, transmittance, incident, reflected: incident * albedo, transmitted: incident * transmittance };
 }
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

@@ -13,7 +13,7 @@ import { hash, random } from '../../proc/rng';
 import { toLatLon, type Vec3 } from './planet';
 import CC from '../../../data/earth/cloud-column.json';
 
-export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: CC.qc_auto_kg_kg as number, /** horizontal LCL scatter (m) over a cell: moisture/temp heterogeneity so bases aren't ruler-flat [game calibration; O(100 m) on convective scales] */ baseUndulM: 300, /** soft condensation zone (m) above the dew-point base: condensate builds over O(100 m), not a knife-edge at the LCL [game calibration; AMS Glossary condensation level] */ baseFeatherM: 200 }; // full bake byte = Kessler qc0 (suspended convective condensate after #329), not the old 1.5e-3 adiabatic-ish scale
+export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: CC.qc_auto_kg_kg as number, /** horizontal LCL half-range (m) from moisture heterogeneity, mapped through Espy 125 m/K so wetter cells sit lower [game calibration; O(100 m) on convective scales] */ baseUndulM: 300, /** soft condensation zone (m) above the dew-point base: condensate builds over O(100 m), not a knife-edge at the LCL [game calibration; AMS Glossary condensation level] */ baseFeatherM: 200 }; // full bake byte = Kessler qc0 (suspended convective condensate after #329), not the old 1.5e-3 adiabatic-ish scale
 /** 0 at showBelowM, 1 at sizeM. The box and the flat shell crossfade across that span instead of swapping in one frame. */
 export function localCloudFade(alt: number, L = LOCAL_CLOUDS) {
   const span = L.showBelowM - L.sizeM;
@@ -57,7 +57,7 @@ const vnoise2 = (salt: number) => { const L = (i: number, j: number) => random(h
 const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
  *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
- *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share a dew-point base near the column LCL (slight per-cell undulation from low-frequency moisture noise (then a 3×3 soft-blur so adjacent columns aren't a knife wall) so bases aren't ruler-flat; soft-feathered over baseFeatherM so condensate builds over a thin zone, not a knife-edge), and each cell's top rises
+ *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share a dew-point base near the column LCL (slight per-cell undulation from low-frequency moisture noise mapped through Espy 125 m/K so wetter air has a higher dew point and a lower base (then a 3×3 soft-blur so adjacent columns aren't a knife wall) so bases aren't ruler-flat; soft-feathered over baseFeatherM so condensate builds over a thin zone, not a knife-edge), and each cell's top rises
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells, soft-feathered over baseFeatherM at its vertical edges so sheet tops/bottoms aren't knife-edges;
@@ -75,6 +75,15 @@ export function coreStrength(h: number): number {
 export function anvilDepthGate(depthM: number): number {
   const lo = .8 * CC.anvil_min_tower_m, u = Math.min(1, Math.max(0, (depthM - lo) / (CC.anvil_min_tower_m - lo)));
   return u * u * (3 - 2 * u);
+}
+/** Local dew-point cloud base (m): the column LCL shifted by Espy's 125 m/K.
+ *  moisture01 is 0 (drier than the column) .. 1 (wetter); 0.5 is the column-mean mixing ratio.
+ *  Wetter air has a higher dew point and a lower base. undulM is the half-range in metres. */
+export function dewPointBaseM(columnLcl: number, moisture01: number, undulM: number, espyMPerK = CC.espy_m_per_K as number) {
+  if (columnLcl < 0) return columnLcl;
+  const m = Math.min(1, Math.max(0, moisture01));
+  const dTd = (m - .5) * 2 * (undulM / espyMPerK); // dew-point perturbation (K)
+  return Math.max(0, columnLcl - espyMPerK * dTd);
 }
 /** Soften per-cell dew-point bases so adjacent columns don't form a knife-edge wall.
  *  Moisture varies continuously across ~cellM; a 3×3 binomial blur matches that scale
@@ -99,8 +108,9 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { const x = (ox + (i + .5) / L.nx * L.sizeM) / L.cellM, z = (oz + (k + .5) / L.nx * L.sizeM) / L.cellM;
     const f = (n1(x, z) * .55 + n2(x * 2.1, z * 2.1) * .3 + n3(x * 4.3, z * 4.3) * .15); h[k * L.nx + i] = Math.max(0, Math.min(1, (f - (.25 + .5 * cut)) / .12)); // fBm spans ~.25-.75
     sh[k * L.nx + i] = Math.max(0, Math.min(1, (n1(x * .35, z * .35) - (.2 + .5 * cut)) / .3)); // broad sheet: low frequency, soft edge
-    // dew-point base undulates with low-frequency moisture noise around the column LCL (not a placed deck height)
-    bas[k * L.nx + i] = base >= 0 ? Math.max(0, base + (n1(x * .4, z * .4) - .5) * 2 * undul) : base; }
+    // Local mixing-ratio heterogeneity shifts the dew point; Espy maps that onto LCL height
+    // so wetter cells sit lower (not a signed height offset around a placed deck).
+    bas[k * L.nx + i] = dewPointBaseM(base, n1(x * .4, z * .4), undul); }
   // Soft-blur dew-point bases horizontally: adjacent cell LCLs are not a knife wall (moisture is continuous).
   if (undul > 0 && base >= 0) bas.set(softBlurBas(bas, L.nx));
   const ly = col.layers, step = ly[1]?.z || 250, conv = new Float32Array(L.nz), strat = new Float32Array(L.nz);

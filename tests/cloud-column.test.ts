@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
-import { anvilDepthGate, coreStrength, bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
+import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
@@ -100,6 +100,15 @@ test('layered bake: dew-point base undulation soft-blurs across neighbors (no kn
   assert.ok(n > 0);
   assert.ok(softJump < rawJump * .75, `mid-wall |Δbas| drops after blur (${softJump} < ${rawJump * .75})`);
   assert.ok(softSpan > 200, `far-field undulation still present after blur (span ${softSpan})`);
+});
+test('layered bake: dew-point bases follow Espy — wetter air sits lower', () => {
+  assert.equal(dewPointBaseM(1200, .5, 300), 1200);
+  assert.equal(dewPointBaseM(1200, 1, 300), 900);  // wetter → higher dew point → lower LCL
+  assert.equal(dewPointBaseM(1200, 0, 300), 1500); // drier → lower dew point → higher LCL
+  assert.ok(dewPointBaseM(1200, .8, 300) < dewPointBaseM(1200, .2, 300));
+  assert.equal(dewPointBaseM(-1, .8, 300), -1); // no column LCL
+  assert.equal(dewPointBaseM(100, 1, 300), 0);  // don't go underground
+  assert.equal(dewPointBaseM(1200, .5, 300, CC.espy_m_per_K), 1200);
 });
 test('layered bake: dew-point bases soft-feather over a thin condensation zone (not a knife-edge)', () => {
   // Real LCL bases build condensate over O(100 m); finer nz so baseFeatherM spans >1 bake level.

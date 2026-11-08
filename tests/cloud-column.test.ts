@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudColumn, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudColumn, cloudShortwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
+import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
 
@@ -770,4 +771,19 @@ test('layered clouds: two-stream transmittance is 1 minus albedo and lets light 
   assert.ok(cloudTransmittance(1) > cloudTransmittance(10) && cloudTransmittance(10) > cloudTransmittance(100));
   const deep = cloudColumn(28, qOf(28, .85)), thin = cloudColumn(5, qOf(5, .6));
   assert.ok(cloudTransmittance(deep.tau) <= cloudTransmittance(thin.tau), 'a deeper, wetter column lets less through');
+});
+
+test('layered clouds: shortwave uses TSI times two-stream albedo and transmittance', () => {
+  const clear = cloudShortwave(0), deck = cloudShortwave(10), slant = cloudShortwave(10, .5), night = cloudShortwave(10, 0);
+  assert.equal(clear.transmitted, K.TSI);
+  assert.equal(clear.reflected, 0);
+  assert.ok(Math.abs(deck.reflected + deck.transmitted - K.TSI) < 1e-9, 'conservative: R + T = S0');
+  assert.ok(Math.abs(deck.transmitted - K.TSI * cloudTransmittance(10)) < 1e-12);
+  assert.ok(Math.abs(deck.reflected - K.TSI * cloudAlbedo(10)) < 1e-12);
+  assert.ok(Math.abs(deck.transmitted - K.TSI * .5714) < 15, 'stratocumulus ~57% of 1361 W/m2');
+  assert.ok(Math.abs(slant.transmitted - .5 * deck.transmitted) < 1e-12 && Math.abs(slant.incident - .5 * K.TSI) < 1e-12);
+  assert.equal(night.transmitted, 0);
+  assert.equal(night.reflected, 0);
+  const deep = cloudColumn(28, qOf(28, .85)), thin = cloudColumn(5, qOf(5, .6));
+  assert.ok(cloudShortwave(deep.tau).transmitted <= cloudShortwave(thin.tau).transmitted);
 });

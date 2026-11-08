@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
 
@@ -752,4 +752,12 @@ test('layered clouds: precipitable water is the column vapour path and sits in t
   assert.ok(cold.pw > 0 && cold.pw < 5, `polar winter ${cold.pw} mm`);
   const plateau = cloudColumn(t, q0, 1, CC.tropopause_m, CC.layer_m, 3000);
   assert.ok(plateau.pw < c.pw, 'thinner air on a plateau holds less vapour mass for the same q0');
+});
+
+test('layered clouds: albedo comes from optical depth (two-stream) and spans cirrus to cumulonimbus', () => {
+  assert.equal(cloudAlbedo(0), 0);
+  assert.ok(Math.abs(cloudAlbedo(10) - .4286) < .01, 'stratocumulus deck ~0.4');
+  assert.ok(cloudAlbedo(1) < .1 && cloudAlbedo(100) > .85 && cloudAlbedo(100) < 1);
+  const deep = cloudColumn(28, qOf(28, .85)), thin = cloudColumn(5, qOf(5, .6));
+  assert.ok(cloudAlbedo(deep.tau) >= cloudAlbedo(thin.tau), 'a deeper, wetter column is at least as bright');
 });

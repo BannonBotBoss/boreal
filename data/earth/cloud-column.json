@@ -1,5 +1,7 @@
 {
+ "asym_g": 0.85,
  "_sources": {
+   "asym_g": "Cloud droplet asymmetry parameter at visible wavelengths ~0.85 (Hansen & Travis 1974); used by cloudAlbedo two-stream A = (1-g)tau/(2+(1-g)tau) (Lacis & Hansen 1974).",
   "esat": "Bolton 1980, Mon. Wea. Rev. 108:1046, eq. 10: e_s(T) = 6.112 exp(17.67 T / (T + 243.5)) hPa (T in C); inverted for the dew point. Same formula as rust/boreal-sim hydrosphere_budget.rs esat.",
   "dry_adiabat": "Dry adiabatic lapse rate g/cp = 9.8 K/km (AMS Glossary of Meteorology, 'dry-adiabatic lapse rate').",
   "moist_adiabat": "Saturated (pseudo-)adiabatic lapse rate G_m = g (1 + Lv r/(Rd T)) / (cp + Lv^2 r eps/(Rd T^2)) (AMS Glossary, 'moist-adiabatic lapse rate'). Lv 2.501e6 J/kg, Rd 287.04, cp 1004.6, eps 0.622.",

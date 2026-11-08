@@ -94,4 +94,8 @@ export function snowShareFromFreezing(freezeM: number, iceAloft: boolean) {
   return Math.max(0, Math.min(1, 1 - freezeM / C.melt_layer_m));
 }
 /** Cloud base (m): the LCL from the parcel's temperature and dew point (iterated, exact for this model). */
+/** Shortwave albedo of a cloud of optical depth tau: two-stream, non-absorbing scattering, A = (1-g)tau / (2 + (1-g)tau)
+ * with asymmetry g ~ 0.85 (Lacis & Hansen 1974; Bohren 1987). Thin cirrus (tau ~1) reflects ~7%, a stratocumulus deck
+ * (tau ~10) ~43%, a cumulonimbus (tau ~100) ~88%, so bright towers and grey decks come out of the water path, not a dial. */
+export const cloudAlbedo = (tau: number) => { const x = (1 - C.asym_g) * Math.max(0, tau); return x / (2 + x); };
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

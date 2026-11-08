@@ -17,10 +17,13 @@
  *  - CAPE and the equilibrium level use virtual temperature, so water vapour adds buoyancy and condensate loading
  *    takes it away (Emanuel 1994 ch. 4 and ch. 6; AMS Glossary, 'virtual temperature');
  *  - shortwave albedo and transmittance follow the non-absorbing two-stream formulae from the column optical depth
- *    (Lacis & Hansen 1974), so a thick tower is bright on top and still lets diffuse light through to the ground.
+ *    (Lacis & Hansen 1974), so a thick tower is bright on top and still lets diffuse light through to the ground;
+ *  - those shares times the IAU 2015 TSI (Kopp & Lean 2011) and the cosine of the solar zenith angle give the reflected
+ *    (to space) and transmitted (to the ground) shortwave in W/m², instead of fixed climate-model partitions.
  * Pure, DOM-free; the renderer (world/globe/localClouds) bakes these layers into a 3D texture around the camera.
  */
 import C from '../../../data/earth/cloud-column.json';
+import { K } from '../constants';
 
 /** Saturation vapour pressure (Pa) over water, Bolton 1980. */
 export const esatPa = (tC: number) => 100 * C.esat_hPa * Math.exp(C.esat_b * tC / (tC + C.esat_c_C));
@@ -104,4 +107,12 @@ export const cloudAlbedo = (tau: number) => { const x = (1 - C.asym_g) * Math.ma
  * (Lacis & Hansen 1974). Direct-beam exp(−τ) would call a stratocumulus (τ ~10) black underneath;
  * multiple forward scattering still lets about 57% through to the ground. */
 export const cloudTransmittance = (tau: number) => 1 - cloudAlbedo(tau);
+/** Shortwave through a non-absorbing cloud: incident = S0 μ, reflected = incident A, transmitted = incident T.
+ * S0 is the IAU 2015 TSI from core/constants (Kopp & Lean 2011); μ is the cosine of the solar zenith angle
+ * (1 overhead, 0 at the horizon). Conservative: reflected + transmitted = incident. */
+export function cloudShortwave(tau: number, mu = 1) {
+  const albedo = cloudAlbedo(tau), transmittance = cloudTransmittance(tau);
+  const incident = K.TSI * Math.max(0, mu);
+  return { albedo, transmittance, incident, reflected: incident * albedo, transmitted: incident * transmittance };
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

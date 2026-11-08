@@ -205,7 +205,7 @@ test('globe far field: land outside the playable region keeps Kenora-scale relie
   assert.ok(n >= 3 && spread / n > 25, `mean local relief over 2.8 km patches ${n ? (spread / n).toFixed(1) : '-'} m`);
 });
 
-import { stitchIndex, morphWeight } from '../src/world/globe/tile';
+import { stitchIndex, morphWeight, morphAngle, morphSplit } from '../src/world/globe/tile';
 import { edgeMetres } from '../src/world/globe/cube';
 test('globe LOD morph: an orbital leaf is already its parent surface, and the fade is smoothstep', () => {
   const R = 6371000, split = 1.8, edge = edgeMetres(2, R), near = split * edge, far = split * edge * 2;
@@ -215,6 +215,24 @@ test('globe LOD morph: an orbital leaf is already its parent surface, and the fa
   assert.equal(morphWeight(R * 2.2, near, far), 1, 'page-load orbit');
   assert.equal(morphWeight(R * 3.7, near, far), 1, 'film arrival altitude');
   assert.equal(morphWeight(near * 0.5, near, far), 0);
+});
+test('globe LOD morph: same-level neighbours pick the near/far split from the shared vertex, not each tile centre', () => {
+  const R = 6371000, reach = 2e6, boosted = 3.6, capped = 1.8, level = 4;
+  const edge = R * Math.PI / 2 / 2 ** level, ext = edge / R * 0.8;
+  const flipAng = reach / R + ext, half = 0.15 * ext;
+  const left = morphSplit(flipAng - half, ext, R, reach, boosted, capped);
+  const right = morphSplit(flipAng + half, ext, R, reach, boosted, capped);
+  const shared = morphSplit(flipAng, ext, R, reach, boosted, capped);
+  assert.equal(left, boosted, 'the nearer tile centre is inside the reach band');
+  assert.equal(right, capped, 'the farther tile centre is outside the reach band');
+  assert.notEqual(left, right, 'tile centres on either side of the reach boundary would disagree');
+  assert.equal(shared, capped, 'the shared vertex has one pick (the < reach test treats the exact boundary as capped)');
+  // On the sphere, morphAngle from a camera above the pole equals the point's polar angle, so both sides
+  // feeding that same vertex world position get `shared`, not `left` / `right`.
+  const cam: [number, number, number] = [0, 0, R * 3];
+  const at = (ang: number): [number, number, number] => [R * Math.sin(ang), 0, R * Math.cos(ang)];
+  assert.ok(Math.abs(morphAngle(at(flipAng), cam) - flipAng) < 1e-9);
+  assert.equal(morphSplit(morphAngle(at(flipAng), cam), ext, R, reach, boosted, capped), shared);
 });
 test('globe tiles: odd vertices lie on the parent chord, and even-vertex coarse normals match the parent tile', () => {
   const p = createPlanet(1400, heightAt), seg = 16, n = seg + 1;
@@ -360,6 +378,8 @@ test('globe material: varyings used by the atmosphere and log depth are centroid
   assert.ok(sh.fragmentShader.includes('uHideLake'));
   assert.ok(sh.fragmentShader.includes('smoothstep(5.0, 9.0, sfp)'), 'the shore mask stays on at the 2 km footprint');
   assert.ok(sh.vertexShader.includes('gMorph = globeMorph()') && sh.vertexShader.includes('mix(transformed, aCoarse, gMorph)'), 'the leaf fades onto the parent surface');
+  assert.ok(sh.vertexShader.includes('vertW = vertCam + uMorphCam'), 'the near/far pick uses the vertex world position');
+  assert.ok(!sh.vertexShader.includes('modelMatrix[3]'), 'tile-centre pick removed so sealed same-level edges cannot crack');
   assert.equal(sh.uniforms.uHideLake, LAKE_FADE.uHide);
 });
 

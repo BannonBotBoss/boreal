@@ -15,8 +15,10 @@
  * colours are a different surface, so from overhead the boundary is a bright or dark ring. Each vertex also stores the
  * point it would have on the parent grid (even vertices already lie there; odd ones sit on the parent's diagonal).
  * The vertex shader smoothsteps onto that point between this node's split distance and the parent's, so the shared
- * edge is already the coarse surface when the leaf is replaced. A sealed edge (neighbour drawn at this level or one
- * coarser) drops its skirt, which was a radial fin and read as a line around every cell.
+ * edge is already the coarse surface when the leaf is replaced. The near/far pick uses each vertex's world
+ * position so two same-level neighbours agree on a shared edge (those edges drop their skirt, so a centre-based
+ * pick that disagreed near the reach boundary would show a hairline crack). A sealed edge (neighbour drawn at
+ * this level or one coarser) drops its skirt, which was a radial fin and read as a line around every cell.
  * Coastlines: each vertex carries the signed field h âˆ’ level (aH); the material contours it per pixel (globeMaterial), so
  * the land/water edge is an interpolated contour instead of a per-vertex colour switch (no stair steps).
  */
@@ -41,6 +43,16 @@ export function morphWeight(dist: number, near: number, far: number): number {
   if (!(span > 0)) return 0;
   const u = Math.max(0, Math.min(1, (dist - near) / span));
   return u * u * (3 - 2 * u);
+}
+/** Angular distance (radians) from the camera to a planet-centric point. Matches `globeMorph`. */
+export function morphAngle(point: Vec3, cam: Vec3): number {
+  const camL = Math.hypot(cam[0], cam[1], cam[2]), cL = Math.hypot(point[0], point[1], point[2]);
+  if (!(camL > 1)) return 0;
+  return Math.acos(Math.max(-1, Math.min(1, (point[0] * cam[0] + point[1] * cam[1] + point[2] * cam[2]) / Math.max(cL * camL, 1e-6))));
+}
+/** Near/far split pick in `globeMorph`: the boosted split inside the reach band, otherwise the capped split. */
+export function morphSplit(ang: number, ext: number, radius: number, reach: number, boosted: number, capped: number): number {
+  return Math.max(0, ang - ext) * radius < reach ? boosted : capped;
 }
 export function* buildTile(q: QNode, planet: Planet, segments: number): Generator<void, TileData> {
   let cpu = 0, t = performance.now();
@@ -221,8 +233,8 @@ export function setGlobeMorph(radius: number, split: number, full: number, boost
   GLOBE_MORPH.uMorphCam.value.set(cam[0], cam[1], cam[2]);
 }
 /** morphWeight, in the vertex shader. The near test is lod.ts nearNode: extent is 0.8 edge / radius, the parent
- *  uses twice that because its edge is twice as long. The angle is measured at this tile's centre (the parent
- *  centre is within half an edge). Level 0 has no parent, so it stays at full detail. */
+ *  uses twice that because its edge is twice as long. The angle is measured at the vertex's world position so
+ *  two same-level neighbours share one near/far pick on a shared edge. Level 0 has no parent, so it stays at full detail. */
 const MORPH_GLSL = /* glsl */`
 attribute vec3 aCoarse, aCoarseN, aCoarseC;
 attribute float aCoarseH, aCoarseL, aLevel;
@@ -232,15 +244,16 @@ uniform vec3 uMorphCam;
 float gMorph;
 float globeMorph() {
   if (aLevel < 0.5 || uMorph.x <= 0.0) return 0.0;
-  vec3 centreW = modelMatrix[3].xyz + uMorphCam;
-  float camL = length(uMorphCam), cL = length(centreW);
-  float ang = camL > 1.0 ? acos(clamp(dot(centreW, uMorphCam) / max(cL * camL, 1e-6), -1.0, 1.0)) : 0.0;
+  vec3 vertCam = (modelMatrix * vec4(position, 1.0)).xyz;
+  vec3 vertW = vertCam + uMorphCam;
+  float camL = length(uMorphCam), cL = length(vertW);
+  float ang = camL > 1.0 ? acos(clamp(dot(vertW, uMorphCam) / max(cL * camL, 1e-6), -1.0, 1.0)) : 0.0;
   float edge = uMorph.x * 1.57079632679 / exp2(aLevel);
   float ext = edge / uMorph.x * 0.8;
   float boosted = uMorph.z * (1.0 + uMorph.w);
   float split = max(0.0, ang - ext) * uMorph.x < uMorphReach ? boosted : uMorph.y;
   float parentSplit = max(0.0, ang - ext * 2.0) * uMorph.x < uMorphReach ? boosted : uMorph.y;
-  float dist = length((modelMatrix * vec4(position, 1.0)).xyz);
+  float dist = length(vertCam);
   float farD = parentSplit * edge * 2.0, nearD = split * edge, span = farD - nearD;
   if (span <= 0.0) return dist >= farD ? 1.0 : 0.0;
   float t = clamp((dist - nearD) / span, 0.0, 1.0);

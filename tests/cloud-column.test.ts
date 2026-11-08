@@ -741,3 +741,15 @@ test('layered clouds: EL tower→plume attach shares coreStrength (no leftover l
   assert.ok(Math.abs(coreStrength(.675) - .5) < 1e-9);
   assert.equal(coreStrength(.85), 1);
 });
+
+test('layered clouds: precipitable water is the column vapour path and sits in the observed range', () => {
+  // Analytic check: q = q0 exp(-z/Hq) and rho ~ rho0 exp(-z/Hp) give PW ~ rho0 q0 / (1/Hq + 1/Hp) (cooler air aloft is denser by a few %, and the 250 m layer sum from z=0 reads ~dz/(2H) = 7% high, same convention as waterPath).
+  const t = 25, q0 = qOf(t, .8), c = cloudColumn(t, q0), rho0 = 101325 / (287.04 * (t + 273.15));
+  const analytic = rho0 * q0 / (1 / CC.vapour_scale_m + 1 / CC.pressure_scale_m);
+  assert.ok(Math.abs(c.pw - analytic) / analytic < .15, `pw ${c.pw} vs ${analytic}`);
+  assert.ok(c.pw > 20 && c.pw < 60, `humid summer column ${c.pw} mm`); // tropical/summer columns 30-60 mm
+  const cold = cloudColumn(-20, qOf(-20, .7));
+  assert.ok(cold.pw > 0 && cold.pw < 5, `polar winter ${cold.pw} mm`);
+  const plateau = cloudColumn(t, q0, 1, CC.tropopause_m, CC.layer_m, 3000);
+  assert.ok(plateau.pw < c.pw, 'thinner air on a plateau holds less vapour mass for the same q0');
+});

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudShortwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -823,5 +823,19 @@ test('layered clouds: cloud base radiates longwave down with Stephens emissivity
   assert.ok(lw.baseK < 20 + 273.15, 'the base is colder than the surface air');
   assert.ok(lw.down <= K.sigma * (20 + 273.15) ** 4, 'never more than a blackbody at surface temperature');
   const deck = cloudBaseLongwave({ ...col, waterPath: .05 });
+  assert.ok(Math.abs(deck.emissivity - (1 - Math.exp(-6.5))) < 1e-9, '50 g/m2 deck is nearly black');
+});
+
+test('layered clouds: cloud top radiates longwave up with Stephens emissivity', () => {
+  const dry = cloudTopLongwave({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0 });
+  assert.equal(dry.up, 0);
+  const col = cloudColumn(20, qOf(20, .9)), up = cloudTopLongwave(col), down = cloudBaseLongwave(col);
+  assert.ok(col.waterPath > 0 && col.top > col.lcl);
+  assert.ok(up.emissivity > 0 && up.emissivity <= 1);
+  assert.ok(Math.abs(up.emissivity - (1 - Math.exp(-CC.lw_a0_down_m2_g * col.waterPath * 1000))) < 1e-12);
+  assert.ok(up.topK < down.baseK, 'the top is colder than the base');
+  assert.ok(up.up < down.down, 'a colder top sends less up than the base sends down');
+  assert.ok(up.up <= K.sigma * (20 + 273.15) ** 4, 'never more than a blackbody at surface temperature');
+  const deck = cloudTopLongwave({ ...col, waterPath: .05 });
   assert.ok(Math.abs(deck.emissivity - (1 - Math.exp(-6.5))) < 1e-9, '50 g/m2 deck is nearly black');
 });

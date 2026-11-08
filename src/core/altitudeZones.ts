@@ -45,13 +45,13 @@ export const seaLevelZoneSeasonAtC = (latDeg: number, maritimeW: number) => { co
 export const treeLineAtM = (latDeg: number, maritimeW: number) => Math.max(0, (seaLevelZoneSeasonAtC(latDeg, maritimeW) - Z.tree_line_growing_season_C) / Z.lapse_K_per_m);
 /** Ice line (m) with the site's continentality. */
 export const iceLineAtM = (latDeg: number, maritimeW: number) => Math.max(0, (seaLevelZoneSeasonAtC(latDeg, maritimeW) - Z.ice_line_warm_season_C) / Z.lapse_K_per_m);
-/** Tree line below this (m) means Arctic: above it is tundra up to the ice line, not bare rock (#192 owner call). Matches cover.rs. */
 /** Tree and ice lines (m a.s.l.) at latitude; optional coastM applies the same continentality as coverKind / zoneAt. */
 export function treeIceLinesM(latDeg: number, coastM?: number): { tree: number; ice: number } {
   const w = siteMaritimeWeight(coastM);
   if (w == null) return { tree: treeLineM(latDeg), ice: iceLineM(latDeg) };
   return { tree: treeLineAtM(latDeg, w), ice: iceLineAtM(latDeg, w) };
 }
+/** Tree line below this (m) means Arctic: above it is tundra up to the ice line, not bare rock (#192 owner call). Matches cover.rs. */
 export const ARCTIC_TREE_LINE_M = 80;
 export type Zone = 'forest' | 'tundra' | 'rock' | 'ice';
 /** Landed coast distance (m), or NaN when unknown / home — same value landingCover already uses for coverKind. */
@@ -59,9 +59,8 @@ export const siteCoastM = () => SITE.coastM;
 /** Zone at a height: 'forest' (trees grow), 'tundra' (Arctic, above a near-sea-level tree line: low plants, no trees), 'rock' (mountain above the tree line), 'ice'.
  *  Optional coastM (m to the sea) applies the same continentality as coverKind; omit/NaN keeps the zonal lines. */
 export function zoneAt(altM: number, latDeg: number, coastM?: number): Zone {
-  const w = siteMaritimeWeight(coastM);
-  if (altM >= (w == null ? iceLineM(latDeg) : iceLineAtM(latDeg, w))) return 'ice';
-  const tree = w == null ? treeLineM(latDeg) : treeLineAtM(latDeg, w);
+  const { tree, ice } = treeIceLinesM(latDeg, coastM);
+  if (altM >= ice) return 'ice';
   return altM < tree ? 'forest' : tree < ARCTIC_TREE_LINE_M ? 'tundra' : 'rock';
 }
 /** Game-local height (core/world heightAt metres) -> metres above sea level. Home uses PLANET.home.elevation. A remote landing uses that site's own datum. */

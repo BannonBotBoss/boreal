@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudColumn, cloudShortwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudColumn, cloudShortwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -799,4 +799,16 @@ test('layered clouds: two-stream albedo rises as the sun lowers (Coakley and Chy
   assert.ok(Math.abs(cloudAlbedo(10, .5) - .6) < .01);
   assert.ok(Math.abs(cloudTransmittance(10, .5) + cloudAlbedo(10, .5) - 1) < 1e-12);
   assert.ok(cloudTransmittance(10, .5) < cloudTransmittance(10), 'low sun lets less through the same deck');
+});
+
+test('layered clouds: partly cloudy sky mixes clear and cloudy columns by cover fraction', () => {
+  const half = partlyCloudyShortwave(10, 1, .5), full = cloudShortwave(10), clear = partlyCloudyShortwave(10, 1, 0);
+  assert.equal(clear.transmitted, K.TSI);
+  assert.equal(clear.reflected, 0);
+  assert.ok(Math.abs(partlyCloudyShortwave(10, 1, 1).transmitted - full.transmitted) < 1e-9, 'overcast equals the cloudy column');
+  assert.ok(Math.abs(half.albedo - full.albedo / 2) < 1e-12, 'half cover reflects half as much');
+  assert.ok(Math.abs(half.reflected + half.transmitted - K.TSI) < 1e-9, 'conservative');
+  assert.ok(Math.abs(half.transmitted / K.TSI - .7857) < .01, 'half-covered stratocumulus sky lets ~79% through');
+  assert.equal(partlyCloudyShortwave(10, 1, 2).cover, 1);
+  assert.equal(partlyCloudyShortwave(10, 0, .5).transmitted, 0, 'no sun at the horizon');
 });

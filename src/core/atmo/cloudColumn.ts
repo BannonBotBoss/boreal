@@ -122,4 +122,12 @@ export function cloudShortwave(tau: number, mu = 1) {
   const incident = K.TSI * muClamped;
   return { albedo, transmittance, incident, reflected: incident * albedo, transmitted: incident * transmittance };
 }
+/** Shortwave under a partly cloudy sky, independent-column approximation: a fraction f of the sky is covered by
+ * cloud of optical depth tau and the rest is clear, so the shares mix linearly, A_sky = f A(τ,μ) and
+ * T_sky = (1 − f) + f T(τ,μ) (Cahalan et al. 1994; Stephens 1984). f is clamped to [0, 1]; f = 1 is cloudShortwave. */
+export function partlyCloudyShortwave(tau: number, mu = 1, cover = 1) {
+  const f = Math.min(1, Math.max(0, cover)), cloudy = cloudShortwave(tau, mu);
+  const albedo = f * cloudy.albedo, transmittance = 1 - albedo;
+  return { cover: f, albedo, transmittance, incident: cloudy.incident, reflected: cloudy.incident * albedo, transmitted: cloudy.incident * transmittance };
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

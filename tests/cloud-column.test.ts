@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
+import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
 
@@ -178,6 +178,8 @@ test('overshoot bake: cell strength scales tip height — mid cells stop short o
   const hot = cloudColumn(30, qOf(30, .8), 1, L.topM);
   assert.ok(hot.overshootM > 800 && hot.top > 0, `column overshoot ${hot.overshootM} top ${hot.top}`);
   const b = bakeLocal(hot, 1, 0, 0, L), tipFull = Math.min(L.topM, hot.top + hot.overshootM);
+  // The bake feathers the vertical lid over ~2 cells; a tip that hits the ceiling cannot paint tipFull itself.
+  const tipReach = tipFull - (tipFull >= L.topM - 1e-6 ? 2 * dz : dz);
   let midShort = 0, coreHigh = 0;
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
     let maxZ = -1;
@@ -186,8 +188,8 @@ test('overshoot bake: cell strength scales tip height — mid cells stop short o
       if (z > hot.top + dz && v > 0 && z > maxZ) maxZ = z;
     }
     if (maxZ < 0) continue;
-    if (maxZ >= tipFull - dz) coreHigh++;
-    else if (maxZ > hot.top + hot.overshootM * .15 && maxZ < tipFull - 2 * dz) midShort++;
+    if (maxZ >= tipReach) coreHigh++;
+    else if (maxZ > hot.top + hot.overshootM * .15 && maxZ < tipReach - dz) midShort++;
   }
   assert.ok(coreHigh > 0, `at least one mature core reaches the full tip (${coreHigh})`);
   assert.ok(midShort > 0, `some weaker cells stop short in the overshoot band (${midShort})`);
@@ -222,6 +224,7 @@ test('overshoot bake: plume soft-narrows into a turret — mid cells thinner nea
   const b = bakeLocal(hot, 1, 0, 0, L);
   const step = hot.layers[1]?.z || 250, bakeTop = hot.top + step / 2; // bakeLocal buoyant top
   const tipFull = Math.min(L.topM, bakeTop + hot.overshootM), overIn = tipFull - bakeTop;
+  const tipReach = tipFull - (tipFull >= L.topM - 1e-6 ? 2 * dz : dz); // lid feather when the tip hits the box ceiling
   // low band (near EL) vs upper overshoot: turret should shrink the lit footprint with height
   const lo0 = bakeTop + overIn * .05, lo1 = bakeTop + overIn * .25;
   const hi0 = bakeTop + overIn * .6, hi1 = bakeTop + overIn * .85;
@@ -237,8 +240,8 @@ test('overshoot bake: plume soft-narrows into a turret — mid cells thinner nea
     if (maxZ < 0) continue;
     if (densLo > 0) litLo++;
     if (densHi > 0) litHi++;
-    const mature = maxZ >= tipFull - dz;
-    const mid = !mature && maxZ > bakeTop + overIn * .15 && maxZ < tipFull - 3 * dz;
+    const mature = maxZ >= tipReach;
+    const mid = !mature && maxZ > bakeTop + overIn * .15 && maxZ < tipReach - dz;
     if (mature) { coreSeen++; maxCoreHi = Math.max(maxCoreHi, densHi); }
     if (mid) { midSeen++; maxMidHi = Math.max(maxMidHi, densHi); if (densHi === 0) midZeroHi++; }
   }
@@ -574,6 +577,22 @@ test('CAPE: a hot humid column carries strong convective energy, a cool one litt
   assert.ok(drier.cape < hot.cape, `${drier.cape} vs ${hot.cape}`);
   assert.ok(Math.abs(hot.wMax - Math.sqrt(2 * hot.cape)) < 1e-9 && hot.wMax > 40 && cool.wMax < 25, `wMax ${hot.wMax} / ${cool.wMax}`);
   try { C.entrain_per_m = 0; const pure = cloudColumn(30, qOf(30, .8), 1); assert.ok(pure.cape >= hot.cape, `${pure.cape} vs ${hot.cape}`); } finally { C.entrain_per_m = keep; }
+});
+test('CAPE: virtual temperature adds vapour buoyancy and subtracts condensate loading (Emanuel 1994)', () => {
+  assert.equal(virtualTempK(20, 0), 293.15);
+  assert.ok(virtualTempK(20, .01) > virtualTempK(20, 0), 'vapour lightens the air');
+  assert.ok(virtualTempK(20, .01, .001) < virtualTempK(20, .01), 'condensate loads the air');
+  const T = 293.15, q = .01, qc = .001;
+  assert.ok(Math.abs(virtualTempK(20, q, qc) - T * (1 + (1 / CC.eps - 1) * q - qc)) < 1e-12);
+  const hot = cloudColumn(30, qOf(30, .8), 1), dz = hot.layers[1].z, qp = hot.layers[0].q;
+  let sum = 0;
+  for (const l of hot.layers) {
+    if (l.z < hot.lcl || l.z > hot.top) continue;
+    const p = pressureAt(l.z), qcL = Math.min(CC.qc_auto_kg_kg, Math.max(0, qp - qsat(l.tParcel, p)));
+    const tvP = virtualTempK(l.tParcel, qsat(l.tParcel, p), qcL), tvE = virtualTempK(l.tEnv, l.q);
+    if (tvP >= tvE - 1e-9) sum += CC.g * (tvP - tvE) / tvE * dz;
+  }
+  assert.ok(Math.abs(sum - hot.cape) < 1e-4, `cape ${hot.cape} vs recomputed Tv integral ${sum}`);
 });
 test('overshooting top: a strong tower punches 1-2 km above its anvil level, a weak one barely, clear air not at all', () => {
   const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), dry = cloudColumn(30, .001, 1);

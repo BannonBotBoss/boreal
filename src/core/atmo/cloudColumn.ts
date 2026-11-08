@@ -22,6 +22,10 @@
  *    because the path through the deck is longer;
  *  - those shares times the IAU 2015 TSI (Kopp & Lean 2011) and μ give the reflected (to space) and transmitted
  *    (to the ground) shortwave in W/m², instead of fixed climate-model partitions.
+ *  - the cloud base radiates longwave down as ε σ T⁴, with ε = 1 − exp(−a0 LWP) (Stephens 1978), so a
+ *    thick deck is nearly black and cloudy nights stay warm;
+ *  - the cloud top radiates longwave up the same way at the top temperature, so a high cold top sends
+ *    less to space than a low warm deck (the longwave greenhouse of deep cloud).
  * Pure, DOM-free; the renderer (world/globe/localClouds) bakes these layers into a 3D texture around the camera.
  */
 import C from '../../../data/earth/cloud-column.json';
@@ -138,5 +142,16 @@ export function cloudBaseLongwave(col: Column) {
   const base = col.layers.find(l => l.z >= col.lcl) ?? col.layers[col.layers.length - 1];
   const emissivity = 1 - Math.exp(-C.lw_a0_down_m2_g * col.waterPath * 1000), baseK = base.tEnv + 273.15;
   return { emissivity, baseK, down: emissivity * K.sigma * baseK ** 4 };
+}
+/** Longwave the cloud top sends up: the same Stephens 1978 emissivity ε = 1 − exp(−a0 LWP),
+ * times σT⁴ at the top temperature (the environment in the highest layer that holds condensate).
+ * A column with no cloud gives 0; a high cold top radiates less to space than a low warm deck,
+ * which is why deep cloud has a longwave greenhouse effect. Returns W/m². */
+export function cloudTopLongwave(col: Column) {
+  if (col.waterPath <= 0) return { emissivity: 0, topK: 0, up: 0 };
+  let top = col.layers[0];
+  for (const l of col.layers) if (l.water > 0) top = l;
+  const emissivity = 1 - Math.exp(-C.lw_a0_down_m2_g * col.waterPath * 1000), topK = top.tEnv + 273.15;
+  return { emissivity, topK, up: emissivity * K.sigma * topK ** 4 };
 }
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

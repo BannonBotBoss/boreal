@@ -173,7 +173,7 @@ export interface StartupOptions {
   /** Test seam for the Ultra bench. The default is measureHardware. */
   measureProbe?: () => Promise<ProbeInput>;
 }
-export async function startup(view: View, ui: { step(label: string, f: number): void }, opts: StartupOptions = {}): Promise<(ProbeResult & { ground: boolean }) | { ground: false } | undefined> {
+export async function startup(view: View, ui: { step(label: string, f: number): void }, opts: StartupOptions = {}): Promise<(ProbeResult & { ground: boolean }) | undefined> {
   const pump = opts.pump ?? raf, now = opts.now ?? wall;
   const buildId = opts.buildId ?? startupBuildId();
   const warmStorage = opts.warmStorage ?? browserStore('sessionStorage');
@@ -224,5 +224,6 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
   if (probe && buildId && ground) saveWarmStamp(warmStorage, { build: buildId, renderer: probe.renderer });
   console.log(`STARTUP ${route}${ground ? '' : ' ground-missing'}`);
   if (probe) return { ...probe, ground };
-  return ground ? undefined : { ground: false } as ProbeResult & { ground: boolean };
+  if (!ground) return { renderer: '', benchMs: 0, cap: 0, igpu: false, reasons: ['ground missing'], at: 0, version: 0, ground: false };
+  return undefined;
 }

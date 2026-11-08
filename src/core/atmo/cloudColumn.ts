@@ -168,4 +168,13 @@ export function cloudOutgoingLongwave(col: Column) {
   const surfaceUp = K.sigma * sfcK ** 4;
   return { emissivity: top.emissivity, topK: top.topK, sfcK, surfaceUp, up: top.up + (1 - top.emissivity) * surfaceUp };
 }
+/** Cloud radiative effect at the top of the atmosphere for a partly cloudy sky (Ramanathan et al. 1989), with cover f:
+ * longwave CRE = f (σT_sfc⁴ − OLR_cloudy) (warming, ≥ 0), shortwave CRE = −f S0 μ A(τ,μ) (cooling, ≤ 0, over a black
+ * surface), net = LW + SW. At night (μ = 0) only the longwave greenhouse is left, so clouds warm; a bright low deck at
+ * high sun cools strongly. Uses the column's own optical depth. Returns W/m². */
+export function cloudRadiativeEffect(col: Column, mu = 1, cover = 1) {
+  const f = Math.min(1, Math.max(0, cover)), olr = cloudOutgoingLongwave(col), sw = cloudShortwave(col.tau, mu);
+  const lw = f * (olr.surfaceUp - olr.up), swCre = sw.reflected > 0 ? -f * sw.reflected : 0;
+  return { cover: f, lw, sw: swCre, net: lw + swCre };
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

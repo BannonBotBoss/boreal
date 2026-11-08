@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -854,4 +854,18 @@ test('layered clouds: outgoing longwave is the top emission plus transmitted sur
   const deckTop = cloudTopLongwave({ ...col, waterPath: .05 });
   assert.ok(Math.abs(deck.up - deckTop.up) < 1, 'a 50 g/m2 deck is nearly black, so little surface leaks through');
   assert.ok(deck.up < sfc, 'a blacker deck hides more of the warm ground');
+});
+
+test('layered clouds: cloud radiative effect warms at night and cools a bright deck at high sun', () => {
+  const dry = cloudRadiativeEffect({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0, tau: 0 }, 1, 1);
+  assert.ok(Math.abs(dry.net) < 1e-9, 'no cloud, no effect');
+  const col = cloudColumn(20, qOf(20, .9));
+  const night = cloudRadiativeEffect(col, 0, 1);
+  assert.equal(night.sw, 0);
+  assert.ok(night.lw > 0 && night.net === night.lw, 'at night only the longwave greenhouse is left');
+  const noon = cloudRadiativeEffect({ ...col, waterPath: .05, tau: 10 }, 1, 1);
+  assert.ok(noon.sw < 0 && noon.net < 0, 'a stratocumulus deck at overhead sun cools');
+  const half = cloudRadiativeEffect(col, .5, .5), full = cloudRadiativeEffect(col, .5, 1);
+  assert.ok(Math.abs(half.net - full.net / 2) < 1e-9, 'scales linearly with cover');
+  assert.ok(Math.abs(cloudRadiativeEffect(col, .5, 2).net - full.net) < 1e-12, 'cover clamps to 1');
 });

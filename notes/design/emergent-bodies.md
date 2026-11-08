@@ -179,3 +179,13 @@ the cooling phase pulls the whole core onto an adiabat anchored too cold at the 
 material number: (1) the core-top anchor (mantle bottom + 1000 K, Lay 1998) is applied at 187 GPa, not 136 GPa, so it
 inherits the over-compression gap; (2) time-compressed cooling with no latent heat release, which in the real core holds
 the growing ICB at the liquidus. Next: latent heat on freezing (needs a cited Fe value in materials.json first).
+
+Latent heat check (2026-11-07, grokbot-1): latent heat on freezing will not move this ICB. `cool_toward_adiabat` relaxes
+every iron parcel to the same adiabat, so the end state is set by where that adiabat crosses the liquidus, not by the
+freezing history; latent heat would only slow the approach. The deficit comes from the core top pressure instead. With
+the materials.json constants (Anzellini 2013 Simon-Glatzel, minus the 700 K light-element depression) the alloy liquidus
+is 3460 K at the PREM CMB (136 GPa) but 3969 K at this run's core top (186 GPa), so the 50 GPa over-compression raises the
+core-top liquidus by ~510 K. The real CMB sits ~4000 K (Lay et al. 2008), about 540 K above its liquidus; this run's
+core top sits 165 K below it. That ~700 K swing is larger than the 100-290 K deficit across the core, so fixing the
+over-compression (the 24k Vinet sep gate, still waiting on Matt) is the next lever, not latent heat. Latent heat stays
+open for a future cooling-history model.

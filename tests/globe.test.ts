@@ -205,7 +205,65 @@ test('globe far field: land outside the playable region keeps Kenora-scale relie
   assert.ok(n >= 3 && spread / n > 25, `mean local relief over 2.8 km patches ${n ? (spread / n).toFixed(1) : '-'} m`);
 });
 
-import { stitchIndex } from '../src/world/globe/tile';
+import { stitchIndex, morphWeight, morphAngle, morphSplit } from '../src/world/globe/tile';
+import { edgeMetres } from '../src/world/globe/cube';
+test('globe LOD morph: an orbital leaf is already its parent surface, and the fade is smoothstep', () => {
+  const R = 6371000, split = 1.8, edge = edgeMetres(2, R), near = split * edge, far = split * edge * 2;
+  assert.equal(morphWeight(near, near, far), 0);
+  assert.equal(morphWeight(far, near, far), 1);
+  assert.ok(Math.abs(morphWeight((near + far) / 2, near, far) - 0.5) < 1e-9);
+  assert.equal(morphWeight(R * 2.2, near, far), 1, 'page-load orbit');
+  assert.equal(morphWeight(R * 3.7, near, far), 1, 'film arrival altitude');
+  assert.equal(morphWeight(near * 0.5, near, far), 0);
+});
+test('globe LOD morph: same-level neighbours pick the near/far split from the shared vertex, not each tile centre', () => {
+  const R = 6371000, reach = 2e6, boosted = 3.6, capped = 1.8, level = 4;
+  const edge = R * Math.PI / 2 / 2 ** level, ext = edge / R * 0.8;
+  const flipAng = reach / R + ext, half = 0.15 * ext;
+  const left = morphSplit(flipAng - half, ext, R, reach, boosted, capped);
+  const right = morphSplit(flipAng + half, ext, R, reach, boosted, capped);
+  const shared = morphSplit(flipAng, ext, R, reach, boosted, capped);
+  assert.equal(left, boosted, 'the nearer tile centre is inside the reach band');
+  assert.equal(right, capped, 'the farther tile centre is outside the reach band');
+  assert.notEqual(left, right, 'tile centres on either side of the reach boundary would disagree');
+  assert.equal(shared, capped, 'the shared vertex has one pick (the < reach test treats the exact boundary as capped)');
+  // On the sphere, morphAngle from a camera above the pole equals the point's polar angle, so both sides
+  // feeding that same vertex world position get `shared`, not `left` / `right`.
+  const cam: [number, number, number] = [0, 0, R * 3];
+  const at = (ang: number): [number, number, number] => [R * Math.sin(ang), 0, R * Math.cos(ang)];
+  assert.ok(Math.abs(morphAngle(at(flipAng), cam) - flipAng) < 1e-9);
+  assert.equal(morphSplit(morphAngle(at(flipAng), cam), ext, R, reach, boosted, capped), shared);
+});
+test('globe tiles: odd vertices lie on the parent chord, and even-vertex coarse normals match the parent tile', () => {
+  const p = createPlanet(1400, heightAt), seg = 16, n = seg + 1;
+  let q = roots()[0]; while (q.level < 4) q = children(q)[0];
+  const par = finish(buildTile(q, p, seg)), world = (t: { position: Float32Array; coarsePos: Float32Array; centre: number[] }, v: number, coarse = false) => {
+    const a = coarse ? t.coarsePos : t.position; return [0, 1, 2].map(k => a[v * 3 + k] + t.centre[k]);
+  };
+  const ch = finish(buildTile(children(q)[0], p, seg));
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const v = j * n + i;
+    if ((i & 1) === 0 && (j & 1) === 0) {
+      for (let k = 0; k < 3; k++) assert.equal(ch.coarsePos[v * 3 + k], ch.position[v * 3 + k], 'even vertex stays put');
+      const pv = (j / 2) * n + i / 2;
+      for (let k = 0; k < 3; k++) assert.ok(Math.abs(ch.coarseNrm[v * 3 + k] - par.normal[pv * 3 + k]) < 1e-4, `parent normal ${i},${j} k=${k}`);
+    } else {
+      const pa = ((i & 1) && (j & 1) ? j - 1 : (j & 1) ? j - 1 : j) * n + ((i & 1) && (j & 1) ? i - 1 : (i & 1) ? i - 1 : i);
+      const pb = ((i & 1) && (j & 1) ? j + 1 : (j & 1) ? j + 1 : j) * n + ((i & 1) && (j & 1) ? i + 1 : (i & 1) ? i + 1 : i);
+      const a = world(ch, pa), b = world(ch, pb), c = world(ch, v, true);
+      const mid = a.map((x, k) => (x + b[k]) / 2);
+      assert.ok(Math.hypot(c[0] - mid[0], c[1] - mid[1], c[2] - mid[2]) < 0.05, `chord ${i},${j}`);
+    }
+  }
+  assert.equal(ch.coarsePos[(n * n) * 3], ch.coarsePos[0], 'skirt follows its edge vertex');
+});
+test('globe stitching: a sealed edge drops its skirt fin; an open edge keeps it', () => {
+  const seg = 16, n = seg + 1, full = stitchIndex(seg, 0), open = stitchIndex(seg, 0, 15), sealed = stitchIndex(seg, 0, 0), south = stitchIndex(seg, 0, 14);
+  assert.deepEqual(Array.from(open.array), Array.from(full.array));
+  assert.ok(!Array.from(sealed.array).some(v => v >= n * n), 'no skirt vertices when every edge is sealed');
+  assert.ok(Array.from(south.array).some(v => v >= n * n + n), 'north fin remains when only the south edge is sealed');
+  assert.ok(!Array.from(south.array).some(v => v >= n * n && v < n * n + n), 'south fin is gone');
+});
 test('globe stitching: flags 0 is buildTile\'s own triangulation; flagged edges never use an odd edge vertex (no T-junctions)', () => {
   const p = createPlanet(1400, heightAt), seg = 16, n = seg + 1, t = finish(buildTile(node(4, 6, 20, 30), p, seg));
   assert.deepEqual(Array.from(stitchIndex(seg, 0).array), Array.from(t.index));
@@ -319,6 +377,9 @@ test('globe material: varyings used by the atmosphere and log depth are centroid
   assert.equal(coarseLake(2000, 0, 0), 0, 'ocean stays');
   assert.ok(sh.fragmentShader.includes('uHideLake'));
   assert.ok(sh.fragmentShader.includes('smoothstep(5.0, 9.0, sfp)'), 'the shore mask stays on at the 2 km footprint');
+  assert.ok(sh.vertexShader.includes('gMorph = globeMorph()') && sh.vertexShader.includes('mix(transformed, aCoarse, gMorph)'), 'the leaf fades onto the parent surface');
+  assert.ok(sh.vertexShader.includes('vertW = vertCam + uMorphCam'), 'the near/far pick uses the vertex world position');
+  assert.ok(!sh.vertexShader.includes('modelMatrix[3]'), 'tile-centre pick removed so sealed same-level edges cannot crack');
   assert.equal(sh.uniforms.uHideLake, LAKE_FADE.uHide);
 });
 

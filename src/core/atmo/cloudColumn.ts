@@ -15,7 +15,9 @@
  *  - precipitable water is the column's vapour path (integral of rho q dz, kg/m2 = mm of rain if it all fell out;
  *    AMS Glossary, 'precipitable water'), so a run can check its moisture against radiosonde climatology;
  *  - CAPE and the equilibrium level use virtual temperature, so water vapour adds buoyancy and condensate loading
- *    takes it away (Emanuel 1994 ch. 4 and ch. 6; AMS Glossary, 'virtual temperature').
+ *    takes it away (Emanuel 1994 ch. 4 and ch. 6; AMS Glossary, 'virtual temperature');
+ *  - shortwave albedo and transmittance follow the non-absorbing two-stream formulae from the column optical depth
+ *    (Lacis & Hansen 1974), so a thick tower is bright on top and still lets diffuse light through to the ground.
  * Pure, DOM-free; the renderer (world/globe/localClouds) bakes these layers into a 3D texture around the camera.
  */
 import C from '../../../data/earth/cloud-column.json';
@@ -98,4 +100,8 @@ export function snowShareFromFreezing(freezeM: number, iceAloft: boolean) {
  * with asymmetry g ~ 0.85 (Lacis & Hansen 1974; Bohren 1987). Thin cirrus (tau ~1) reflects ~7%, a stratocumulus deck
  * (tau ~10) ~43%, a cumulonimbus (tau ~100) ~88%, so bright towers and grey decks come out of the water path, not a dial. */
 export const cloudAlbedo = (tau: number) => { const x = (1 - C.asym_g) * Math.max(0, tau); return x / (2 + x); };
+/** Diffuse two-stream transmittance of a non-absorbing cloud: T = 1 − A = 2 / (2 + (1-g)τ)
+ * (Lacis & Hansen 1974). Direct-beam exp(−τ) would call a stratocumulus (τ ~10) black underneath;
+ * multiple forward scattering still lets about 57% through to the ground. */
+export const cloudTransmittance = (tau: number) => 1 - cloudAlbedo(tau);
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

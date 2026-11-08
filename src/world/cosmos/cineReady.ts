@@ -1,7 +1,7 @@
 import { CINE } from './cineBeats';
-import { CINE_HOLD_S } from '../globe/bootReady';
+import { CINE_BOOT_TIMEOUT_S, CINE_HOLD_S } from '../globe/bootReady';
 
-export { CINE_HOLD_S };
+export { CINE_BOOT_TIMEOUT_S, CINE_HOLD_S };
 
 export interface CineBoot {
   elapsed: number;

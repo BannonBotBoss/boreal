@@ -4,8 +4,8 @@ ElevenLabs, 2026-11-05. Flow: https://elevenlabs.io/app/flows/Tdor8Ye6rN30SZHNN9
 
 Played in the opening (B0–B3):
 
-- `narration.mp3` — about 14.47 s. This take speaks its stage directions as well as the line. The path and that duration stay in `NARRATION` so a clean file can replace it. B2 and B3 start when the element ends, not on a hard clock.
-- `bed.mp3` — instrumental under the opening. −6 dB during the voice, down to −18 dB as it ends, back to full by 0:22.
+- `narration.mp3` — 14.47 s, loudness-normalized to about −16 LUFS (true peak under −1.5 dBTP). B2 and B3 start when the element ends, not on a hard clock. One element plays it.
+- `bed.mp3` — instrumental under the opening. −18 dB while the narration plays, back to full by 0:22.
 - `bang-impact.mp3` — the hit. The white flash is the peak 0.37 s after it starts.
 
 Wired for later beats, silent until the clock reaches them:

@@ -478,6 +478,7 @@ function markIntroFlag() {
 /** The opening that is on main today ended, or the player dismissed it. The planet entry is the one that opening already uses. */
 function finishIntro() {
   const t0 = performance.now();
+  opening?.stop();
   opening = null;
   const tRel = performance.now();
   const released = inpage?.releaseFilm() ?? false;

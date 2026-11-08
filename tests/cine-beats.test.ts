@@ -139,9 +139,9 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
 
 test('bed hands to cue 2 at 0:42; voice ducks are later, and there is no loop', () => {
   assert.equal(bedDb(1, null), -80);
-  assert.equal(bedDb(10, null), -6);
+  assert.equal(bedDb(10, null), -18);
   const end = narrationEndFallback();
-  assert.ok(bedDb(end + 0.2, end) < -6 && bedDb(end + 0.2, end) > -18);
+  assert.ok(Math.abs(bedDb(end + 0.2, end) - (-18)) < 0.5);
   assert.ok(Math.abs(bedDb(22, end)) < 1e-6);
   assert.ok(Math.abs(bedDb(41, end)) < 1e-6);
   assert.ok(Math.abs(bedDb(43, end)) < 1e-6);

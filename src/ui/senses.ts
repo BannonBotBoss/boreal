@@ -7,7 +7,8 @@ import type { EventContext } from '../core/events';
 import { windAt } from '../core/weather';
 import { deltaSources } from '../core/traces';
 import { WOLF_AGENT } from '../core/species';
-import { WOLF_NEEDS } from '../core/needs/species';
+import { NEEDS_SPECIES, WOLF_NEEDS } from '../core/needs/species';
+import { sensesTitle } from '../render/playables';
 import { perceive } from '../core/needs/senses';
 import { createSoundCues, smell, bearingTo, cueSoundEntry, soundCaption, SENSES, type ScentSource, type ScentHit } from '../core/senses';
 import {
@@ -20,7 +21,8 @@ const potency: Record<string, number> = { deer: 1, hare: .7, person: .85, forage
 
 export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: BorealSound, memory: () => EventContext) {
   const root = document.createElement('details'); root.className = 'wolf-senses'; root.open = true;
-  root.innerHTML = `<summary>Wolf senses</summary><div class="sense-panel"><div class="sense-hearing"><div class="sense-compass" role="img" aria-label="Sound directions relative to your view"><span class="sense-ear" aria-hidden="true">◉</span><div class="sense-arrows"></div></div></div><div class="sense-stream" aria-label="Sense pictures. A more solid picture is a stronger signal."></div></div>`;
+  root.innerHTML = `<summary>${sensesTitle('Grey wolf')}</summary><div class="sense-panel"><div class="sense-hearing"><div class="sense-compass" role="img" aria-label="Sound directions relative to your view"><span class="sense-ear" aria-hidden="true">◉</span><div class="sense-arrows"></div></div></div><div class="sense-stream" aria-label="Sense pictures. A more solid picture is a stronger signal."></div></div>`;
+  const summary = root.querySelector('summary')!;
   document.body.append(root);
   const el = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
   const arrows = el('.sense-arrows'), streamEl = el('.sense-stream');
@@ -28,6 +30,7 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
   const nodes = new Map<number, HTMLDivElement>();
   const demo = demoSenseSignals(new URLSearchParams(location.search).get('sensepic'));
   let tick = 0, demoOnce = false, lastHits: readonly ScentHit[] = [];
+  let needs = WOLF_NEEDS;
   audio.onSpatialCue = (id, at, level) => { if (!root.hidden) cues.add(id, at, level); };
   const speedOf = (key: string) => {
     if (!key.startsWith('hare:')) return 0;
@@ -64,7 +67,7 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
     lastHits.forEach((h, i) => {
       const scent = signalFromScent(h, `scent:${i}`);
       if (scent) stream.offer(scent);
-      const seen = perceive(WOLF_NEEDS, { x: nose.x, z: nose.z, heading }, { x: h.x, z: h.z, speed: speedOf(h.key) }, { daylight, wind });
+      const seen = perceive(needs, { x: nose.x, z: nose.z, heading }, { x: h.x, z: h.z, speed: speedOf(h.key) }, { daylight, wind });
       if (seen.sight < SENSES.threshold) return;
       const sight = signalFromSight(`sight:${i}`, seen.sight, seen.bearing);
       if (sight) stream.offer(sight);
@@ -78,6 +81,8 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
       cues.step(step); stream.step(step); tick += step;
       if (tick >= SENSES.updateSeconds) {
         tick = 0;
+        summary.textContent = sensesTitle(view.playable.label);
+        needs = NEEDS_SPECIES[view.playable.id] ?? WOLF_NEEDS;
         const wolf = view.lookup('player')?.object;
         if (wolf) {
           (wolf.getObjectByName('head-sensor') ?? wolf).getWorldPosition(nose);

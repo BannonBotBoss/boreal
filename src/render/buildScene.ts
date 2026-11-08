@@ -16,7 +16,7 @@ import { chunkRadius } from '../world/globe/landingStream';
 import { registerObservationSources } from '../core/observation';
 import { enterLiving, livingRoster, type LivingChoice } from '../core/enterLiving';
 import type { MemoryMark } from '../core/perceptionBuffer';
-import { playable, type PlayerRig } from './playables';
+import { pictureSpecies, playable, type PlayerRig } from './playables';
 import { RENDER } from '../core/renderSettings';
 import { applyPopulation } from '../core/population';
 import { WOLF_SCALE, type WolfMode } from '../core/wolfModes';
@@ -357,7 +357,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       motion: row.motion, phase: row.phase, speed: row.speed, root: row.root,
     });
     bodies.push({
-      key: 'player-wolf', species: 'Gray Wolf',
+      key: 'player', species: pictureSpecies(current.id),
       x: wolf.root.position.x, y: wolf.root.position.y, z: wolf.root.position.z,
       yaw: wolf.root.rotation.y, moving: Math.abs(wolf.brain.speed) > ANIMAL_LADDER.stillMs,
       motion: wolf.brain.motion, phase: wolf.brain.drawPhase, speed: wolf.brain.gaitSpeed, root: wolf.root,

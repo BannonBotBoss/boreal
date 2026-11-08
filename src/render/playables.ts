@@ -55,3 +55,13 @@ export const PLAYABLES: Playable[] = [
     } },
 ];
 export const playable = (id: string) => PLAYABLES.find(p => p.id === id && p.available) ?? PLAYABLES[0];
+/** Name the picture ladder uses for a stored model. The embodied rig is not always a wolf. */
+const PICTURE_NAME: Record<string, string> = {
+  wolf: 'Gray Wolf',
+  hare: 'Snowshoe Hare',
+  deer: 'White-tailed Deer',
+  bear: 'Grizzly Bear',
+};
+export const pictureSpecies = (id: string) => PICTURE_NAME[id] ?? PICTURE_NAME.wolf;
+/** Senses panel title. Follows the body the player is in. */
+export const sensesTitle = (label: string) => `${label} senses`;

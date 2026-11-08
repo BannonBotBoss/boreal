@@ -24,12 +24,16 @@ test('the opening voices sit near -16 LUFS with the peak under -1.5 dBTP', () =>
   }
 });
 
-test('narration plays once, and the bed stays ducked while that voice is on', () => {
+test('narration plays once, and the bed stays ducked only while that voice is on', () => {
   const opening = readFileSync('src/world/cosmos/opening.ts', 'utf8');
   const audio = readFileSync('src/audio/bigBang.ts', 'utf8');
   assert.equal(opening.includes('narration.play'), false);
   assert.equal(opening.includes('new Audio'), false);
   assert.equal((audio.match(/narration\.play\(\)/g) ?? []).length, 1);
+  assert.match(audio, /narration\.loop = false/);
   assert.equal(CINE.bedB1, -18);
   assert.equal(bedDb(10, null), -18);
+  const dur = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', 'public/audio/big-bang/narration.mp3'], { encoding: 'utf8' });
+  assert.equal(dur.error, undefined, 'ffprobe is required');
+  assert.ok(Math.abs(Number(dur.stdout) - 5.851429) < 1e-4, `duration ${dur.stdout}`);
 });

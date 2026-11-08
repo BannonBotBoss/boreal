@@ -20,6 +20,7 @@ export interface BigBangAudio {
 
 export function createBigBangAudio(): BigBangAudio {
   const narration = track(NARRATION.file);
+  narration.loop = false;
   const bed = track(LATER_AUDIO.bed);
   const bang = track(LATER_AUDIO.bang);
   const cue2 = track(LATER_AUDIO.cue2);

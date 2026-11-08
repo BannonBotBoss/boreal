@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatClock, formatCosmicSeconds, haloFade, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaClear, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, starsLit, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
+import { CINE, KEYFRAMES, LATER_AUDIO, NARRATION, NARRATION_CUES, PANEL_COPY, YEAR_S, bangAt, bangFlash, bedDb, cineStage, cosmicSeconds, cue2Db, cycleToSeconds, dbToGain, eraOfSeconds, flashLuma, formatClock, formatCosmicSeconds, haloFade, heroAt, kickOffset, narrationEndFallback, offsetYr, panelFigure, pinHeld, plasmaClear, plasmaGain, plasmaHeat, secondsToCycle, shellOnScreen, shellRadius, starsLit, subtitleAt, sunKeyframeCheck, voDuckDb } from '../src/world/cosmos/cineBeats';
 import { MILESTONES, deepTimeAt } from '../src/core/deepTime';
 
 test('cosmic clock matches the sheet keyframes and does not jump', () => {
@@ -130,7 +130,13 @@ test('B2 and B3 key off narration ended, and the flash is the impact peak', () =
   assert.equal(cineStage(10, true, null), 'b1');
   assert.equal(cineStage(end + 0.2, true, end), 'b2');
   assert.equal(cineStage(end + 1, true, end), 'b3');
-  assert.equal(subtitleAt(4, null).startsWith('In the beginning'), true);
+  assert.equal(NARRATION.seconds, 5.851429);
+  assert.equal(subtitleAt(4, null), 'In the beginning…');
+  assert.equal(subtitleAt(CINE.b1 + NARRATION_CUES[1].at, null), 'there was an event…');
+  assert.equal(subtitleAt(CINE.b1 + NARRATION_CUES[2].at, null), 'It was called…');
+  assert.equal(subtitleAt(CINE.b1 + NARRATION_CUES[3].at, null), 'The Big Bang.');
+  assert.equal(subtitleAt(end, end), '');
+  assert.equal(subtitleAt(CINE.b1 + 14.47, end), '');
   assert.equal(heroAt(22), '');
   assert.equal(heroAt(23), 'THE BIG BANG');
   assert.equal(heroAt(54), '380,000 years');
@@ -141,7 +147,11 @@ test('bed hands to cue 2 at 0:42; voice ducks are later, and there is no loop', 
   assert.equal(bedDb(1, null), -80);
   assert.equal(bedDb(10, null), -18);
   const end = narrationEndFallback();
-  assert.ok(Math.abs(bedDb(end + 0.2, end) - (-18)) < 0.5);
+  assert.equal(bedDb(end - 0.05, end), -18);
+  const mid = bedDb(end + CINE.bedRamp / 2, end);
+  assert.ok(mid < -8 && mid > -10, `half release ${mid}`);
+  assert.ok(Math.abs(bedDb(end + CINE.bedRamp, end)) < 1e-6);
+  assert.ok(Math.abs(bedDb(CINE.b1 + 14.47, end)) < 1e-6, 'the old 14 s tail does not keep the duck');
   assert.ok(Math.abs(bedDb(22, end)) < 1e-6);
   assert.ok(Math.abs(bedDb(41, end)) < 1e-6);
   assert.ok(Math.abs(bedDb(43, end)) < 1e-6);

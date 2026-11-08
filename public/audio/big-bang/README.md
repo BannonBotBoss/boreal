@@ -4,8 +4,8 @@ ElevenLabs, 2026-11-05. Flow: https://elevenlabs.io/app/flows/Tdor8Ye6rN30SZHNN9
 
 Played in the opening (B0–B3):
 
-- `narration.mp3` — 14.47 s, loudness-normalized to about −16 LUFS (true peak under −1.5 dBTP). B2 and B3 start when the element ends, not on a hard clock. One element plays it.
-- `bed.mp3` — instrumental under the opening. −18 dB while the narration plays, back to full by 0:22.
+- `narration.mp3` — 5.851429 s clean take (“In the beginning… there was an event… It was called… The Big Bang.”), about −16.5 LUFS, true peak −2 dBTP. Voice George (`JBFqnCBsd6RMkjVDRZzb`). No stage directions. B2 and the impact start when the element ends. One element plays it once.
+- `bed.mp3` — instrumental under the opening. −18 dB only while the narration plays, back to full across 0.4 s after it ends.
 - `bang-impact.mp3` — the hit. The white flash is the peak 0.37 s after it starts.
 
 Wired for later beats, silent until the clock reaches them:

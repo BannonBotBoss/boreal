@@ -11,7 +11,9 @@
  *  - each layer's condensate splits into liquid and ice by temperature (IFS mixed-phase ramp), and the column reports its
  *    freezing level, so glaciated tops (anvils, cirrus) and the melting layer come from the same temperatures;
  *  - convective condensate is capped at the Kessler 1969 autoconversion threshold (qc_auto_kg_kg), so water path and
- *    optical depth are the suspended cloud after warm-rain fallout, not the adiabatic upper bound.
+ *    optical depth are the suspended cloud after warm-rain fallout, not the adiabatic upper bound;
+ *  - CAPE and the equilibrium level use virtual temperature, so water vapour adds buoyancy and condensate loading
+ *    takes it away (Emanuel 1994 ch. 4 and ch. 6; AMS Glossary, 'virtual temperature').
  * Pure, DOM-free; the renderer (world/globe/localClouds) bakes these layers into a 3D texture around the camera.
  */
 import C from '../../../data/earth/cloud-column.json';
@@ -30,7 +32,13 @@ export function moistLapse(tC: number, p: number) { const T = tC + 273.15, r = q
   return C.g * (1 + C.Lv * r / (C.Rd * T)) / (C.cp + C.Lv * C.Lv * r * C.eps / (C.Rd * T * T)); }
 
 export interface Layer { z: number; tEnv: number; q: number; rh: number; dew: number; tParcel: number; saturated: boolean; water: number; /** stratiform (sheet) share of water, kg/kg */ strat: number; /** ice share of the condensate (0 liquid .. 1 ice) */ ice: number }
-export interface Column { lcl: number; top: number; /** convective available potential energy (J/kg): g * integral of (T_parcel - T_env)/T_env over the buoyant cloud layers */ cape: number; /** parcel-theory peak updraught speed (m/s), sqrt(2 * CAPE): the upper bound real towers reach only about half of */ wMax: number; /** how far (m) the tower's momentum carries it above its equilibrium-level top: (w_frac * wMax) / N; 0 with no convection */ overshootM: number; /** condensate path (kg/m2): integral of air density * cloud water over the column, liquid plus ice. Convective water is capped at the Kessler autoconversion threshold, so deep towers read a few kg/m2 like observed cumulonimbus */ waterPath: number; /** cloud optical depth of the column, sum over layers of 3 W / (2 rho r_e) with liquid and ice split by the ice share (Stephens 1978) */ tau: number; /** height above the ground (m) where the environment reaches 0 C; 0 when the surface is already freezing, -1 if never reached */ freezeM: number; layers: Layer[] }
+export interface Column { lcl: number; top: number; /** convective available potential energy (J/kg): g * integral of (T_v,parcel - T_v,env)/T_v,env over the buoyant cloud layers (virtual temperature: vapour buoyancy minus condensate loading) */ cape: number; /** parcel-theory peak updraught speed (m/s), sqrt(2 * CAPE): the upper bound real towers reach only about half of */ wMax: number; /** how far (m) the tower's momentum carries it above its equilibrium-level top: (w_frac * wMax) / N; 0 with no convection */ overshootM: number; /** condensate path (kg/m2): integral of air density * cloud water over the column, liquid plus ice. Convective water is capped at the Kessler autoconversion threshold, so deep towers read a few kg/m2 like observed cumulonimbus */ waterPath: number; /** cloud optical depth of the column, sum over layers of 3 W / (2 rho r_e) with liquid and ice split by the ice share (Stephens 1978) */ tau: number; /** height above the ground (m) where the environment reaches 0 C; 0 when the surface is already freezing, -1 if never reached */ freezeM: number; layers: Layer[] }
+/** Virtual temperature (K): T (1 + (1/ε − 1) q − q_c). Moisture lightens the air; suspended condensate loads it
+ *  (Emanuel 1994, Atmospheric Convection, ch. 4; AMS Glossary of Meteorology, 'virtual temperature'). q and q_c are
+ *  specific humidity and condensate mixing ratio (kg/kg). */
+export function virtualTempK(tC: number, q = 0, qc = 0) {
+  return (tC + 273.15) * (1 + (1 / C.eps - 1) * Math.max(0, q) - Math.max(0, qc));
+}
 /** Ice share of cloud condensate at T (C): 0 at or above T0, 1 at or below T_ice, 1 - ((T - T_ice)/(T0 - T_ice))^n between. */
 export function iceFraction(tC: number) { if (tC >= C.ice_T0_C) return 0; if (tC <= C.ice_Tice_C) return 1;
   return 1 - Math.pow((tC - C.ice_Tice_C) / (C.ice_T0_C - C.ice_Tice_C), C.ice_exponent); }
@@ -53,7 +61,13 @@ export function cloudColumn(tsC: number, q0: number, cover = 1, topM = C.tropopa
     const parcelDew = dewPointFromE(vapourE(qp, p)), sat = tp <= parcelDew;
     if (sat && lcl < 0) lcl = z;
     let conv = 0, strat = 0;
-    if (lcl >= 0 && buoyant) { if (tp >= tEnv - 1e-9 && z + g0 <= C.tropopause_m) { conv = Math.min(C.qc_auto_kg_kg, Math.max(0, qp - qsat(tp, p))); top = z; cape += C.g * (tp - tEnv) / (tEnv + 273.15) * dz; } else buoyant = false; }
+    if (lcl >= 0 && buoyant) {
+      conv = Math.min(C.qc_auto_kg_kg, Math.max(0, qp - qsat(tp, p)));
+      const qParcel = sat ? qsat(tp, p) : qp;
+      const tvP = virtualTempK(tp, qParcel, conv), tvE = virtualTempK(tEnv, q);
+      if (tvP >= tvE - 1e-9 && z + g0 <= C.tropopause_m) { top = z; cape += C.g * (tvP - tvE) / tvE * dz; }
+      else { conv = 0; buoyant = false; }
+    }
     if (rh >= C.rh_crit) strat = (rh - C.rh_crit) / (1 - C.rh_crit) * 1e-4 * Math.max(0, cover); // stratiform layer cloud
     const water = Math.max(conv, strat), ice = iceFraction(conv > strat ? tp : tEnv), wp = p / (C.Rd * (tEnv + 273.15)) * water * dz;
     waterPath += wp; tau += 1.5 * wp * ((1 - ice) / (1000 * C.re_liquid_um * 1e-6) + ice / (C.rho_ice_kg_m3 * C.re_ice_um * 1e-6));

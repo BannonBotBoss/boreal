@@ -1,3 +1,4 @@
+import { smoothstep } from '../proc/math';
 /**
  * Natural light in physical units (Grok Bot), rule 7. Pure functions, shared by the sky, exposure and tests.
  *  - Sun colour from spectral transmittance along the slant path: Rayleigh optical depth (Hansen & Travis 1974, Space Sci.
@@ -65,3 +66,31 @@ export const wolfEyes = (lux: number) => 1 + (NIGHT.wolf - 1) * darkAdapted(lux)
 export const nightSkyLight = (Emoon: number, gain: number) => 3 * NIGHT.sky * (LUX.nightSky + NIGHT.moonDiffuse * Emoon) / LUX.ref * gain;
 /** Overhead key from behind the viewer while the moon is down: fades out as real moonlight takes over. */
 export const nightKey = (gain: number) => 3 * NIGHT.key * LUX.nightSky / LUX.ref * gain;
+
+/**
+ * Readable night on a real GPU (Matthew, 03:40 and 18:56).
+ * Daylight later multiplies the hemisphere by AMBIENT.hemiIbl (0.11) because the IBL
+ * map already has the sky. That same scale ran at dusk, while darkAdapted was still ~0,
+ * so the fill fell to about 0.04 and the ground went black under a lit sky.
+ *
+ * η = 1 − smoothstep(−6°, 4°) on solar elevation. 0 with the sun up, 1 once it is 6° down.
+ * Hemisphere floor H = 1.6 η. Moon and starlight key K = max(physical key, 1.05 η).
+ * Keep κ = max(dark-adapted share, η), and the draw uses
+ *   H_kept = max(H_raw, H) · (0.11 + 0.89 κ).
+ * A horizontal Lambert patch of albedo a, with a low moon (μ ≈ 0.45), reads
+ *   L = a (0.5 H_kept + K μ).
+ * Hours 0, 3 and 22 must stay above the near-black line. Noon stays brighter.
+ */
+export const NIGHT_READ = { hemi: 1.6, key: 1.05, sunDownDeg: -6, sunUpDeg: 4, groundAlbedo: 0.12, wolfAlbedo: 0.42, mu: 0.45, minL: 0.1 };
+export function nightAmount(sunElevationDeg: number) {
+  return 1 - smoothstep(NIGHT_READ.sunDownDeg, NIGHT_READ.sunUpDeg, sunElevationDeg);
+}
+export function sceneFill(o: { elevation: number; rawHemi: number; rawKey: number; dark: number }) {
+  const eta = nightAmount(o.elevation);
+  const hemi = Math.max(o.rawHemi, NIGHT_READ.hemi * eta);
+  const key = Math.max(o.rawKey, NIGHT_READ.key * eta);
+  const keep = Math.max(o.dark, eta);
+  const hemiKept = hemi * (AMBIENT.hemiIbl + (1 - AMBIENT.hemiIbl) * keep);
+  const patch = (albedo: number) => albedo * (0.5 * hemiKept + key * NIGHT_READ.mu);
+  return { eta, hemi, key, keep, hemiKept, ground: patch(NIGHT_READ.groundAlbedo), wolf: patch(NIGHT_READ.wolfAlbedo) };
+}

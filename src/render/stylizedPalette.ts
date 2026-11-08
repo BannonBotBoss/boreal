@@ -80,19 +80,22 @@ export function applyStylizedFill(material: THREE.Material, rgb?: readonly [numb
   if (m.userData.fillIntensity == null) m.userData.fillIntensity = m.emissiveIntensity;
 }
 
-/** Day keeps the fill. Night turns it down and back into tone mapping so a pale coat is not a lamp. */
+/** Day keeps the fill. Night cools it but does not turn it off: a real GPU with working
+ *  shadows was leaving mama, the pups and the near grass black once the sun dropped. */
 export function stylizedNight(material: THREE.Material, night: number) {
   const m = material as THREE.MeshStandardMaterial;
-  if (!m.emissive || !m.userData.stylized) return;
-  if (m.userData.fillIntensity == null) m.userData.fillIntensity = m.emissiveIntensity;
+  if (!m.emissive) return;
+  const n = Math.min(1, Math.max(0, night));
   if (m.userData.mamaCoat || m.userData.pupCoat) {
-    m.emissiveIntensity = 0;
+    m.emissive.setRGB(0.16, 0.18, 0.28);
+    m.emissiveIntensity = 0.38 * n;
     m.toneMapped = false;
     return;
   }
-  const n = Math.min(1, Math.max(0, night));
+  if (!m.userData.stylized) return;
+  if (m.userData.fillIntensity == null) m.userData.fillIntensity = m.emissiveIntensity;
   const base = m.userData.fillIntensity as number;
-  const dim = 0.97;
+  const dim = 0.35;
   m.emissiveIntensity = base * (1 - n * dim);
-  m.toneMapped = n > 0.45;
+  m.toneMapped = false;
 }

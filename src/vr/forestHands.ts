@@ -5,6 +5,8 @@
  */
 
 export const HAND = { pinch: 0.9, minStepM: 0.45, snap: Math.PI / 6, reachM: 12, fistM: 0.09, openM: 0.12, openGapM: 0.04 };
+/** On-screen words for the hands-only contest. No controller buttons. */
+export const HAND_HINT = 'Point and pinch to move. Pinch the other hand to turn. An open paw grabs. A closed paw digs.';
 
 /** Distances between the wrist and the fingertips, in metres, plus the thumb–index gap. */
 export interface PawMeasure {

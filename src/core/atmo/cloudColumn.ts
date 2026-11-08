@@ -130,4 +130,13 @@ export function partlyCloudyShortwave(tau: number, mu = 1, cover = 1) {
   const albedo = f * cloudy.albedo, transmittance = 1 - albedo;
   return { cover: f, albedo, transmittance, incident: cloudy.incident, reflected: cloudy.incident * albedo, transmitted: cloudy.incident * transmittance };
 }
+/** Longwave the cloud base sends down: emissivity ε = 1 − exp(−a0 LWP), LWP in g/m² and a0 = 0.130 m²/g (Stephens 1978),
+ * times σT⁴ at the base temperature (the environment at the LCL). A column with no cloud gives 0; a stratocumulus deck
+ * (~50 g/m²) is nearly a blackbody, which is why cloudy nights stay warm. Returns W/m². */
+export function cloudBaseLongwave(col: Column) {
+  if (col.lcl < 0 || col.waterPath <= 0) return { emissivity: 0, baseK: 0, down: 0 };
+  const base = col.layers.find(l => l.z >= col.lcl) ?? col.layers[col.layers.length - 1];
+  const emissivity = 1 - Math.exp(-C.lw_a0_down_m2_g * col.waterPath * 1000), baseK = base.tEnv + 273.15;
+  return { emissivity, baseK, down: emissivity * K.sigma * baseK ** 4 };
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

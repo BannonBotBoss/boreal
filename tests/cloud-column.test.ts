@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudColumn, cloudShortwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudShortwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -811,4 +811,17 @@ test('layered clouds: partly cloudy sky mixes clear and cloudy columns by cover 
   assert.ok(Math.abs(half.transmitted / K.TSI - .7857) < .01, 'half-covered stratocumulus sky lets ~79% through');
   assert.equal(partlyCloudyShortwave(10, 1, 2).cover, 1);
   assert.equal(partlyCloudyShortwave(10, 0, .5).transmitted, 0, 'no sun at the horizon');
+});
+
+test('layered clouds: cloud base radiates longwave down with Stephens emissivity', () => {
+  const dry = cloudBaseLongwave({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0 });
+  assert.equal(dry.down, 0);
+  const col = cloudColumn(20, qOf(20, .9)), lw = cloudBaseLongwave(col);
+  assert.ok(col.lcl >= 0 && col.waterPath > 0);
+  assert.ok(lw.emissivity > 0 && lw.emissivity <= 1);
+  assert.ok(Math.abs(lw.emissivity - (1 - Math.exp(-CC.lw_a0_down_m2_g * col.waterPath * 1000))) < 1e-12);
+  assert.ok(lw.baseK < 20 + 273.15, 'the base is colder than the surface air');
+  assert.ok(lw.down <= K.sigma * (20 + 273.15) ** 4, 'never more than a blackbody at surface temperature');
+  const deck = cloudBaseLongwave({ ...col, waterPath: .05 });
+  assert.ok(Math.abs(deck.emissivity - (1 - Math.exp(-6.5))) < 1e-9, '50 g/m2 deck is nearly black');
 });

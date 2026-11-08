@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0175",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/stand-trunks",
+  "skill": "far-stand-priority",
+  "note": "Far-tree refill priority was 60, behind every grass tile. It is 9, after the feet and before the mid-edge grass. A closed boreal stand can grow trunks without waiting out the whole grass queue.",
+  "at": "2026-11-07T18:14:04-08:00"
+}

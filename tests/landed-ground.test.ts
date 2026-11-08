@@ -67,11 +67,10 @@ test('the loader does not say Ready while the standing chunk is still out', asyn
   try {
     const result = await startup(h.view, { step: (label) => h.steps.push(label) }, h.opts);
     assert.equal(result && 'ground' in result ? result.ground : undefined, false);
-    assert.ok(h.steps.includes(GROUND_HOLD.forming));
-    assert.ok(h.steps.includes(GROUND_HOLD.building));
+    assert.ok(h.steps.includes(GROUND_HOLD.building), 'the worker miss builds the chunk on this thread');
     assert.equal(h.steps.at(-1), GROUND_HOLD.missing);
     assert.equal(h.steps.includes('Ready'), false);
-    assert.ok(h.now() >= COLD_START.settleMaxMs + GROUND_HOLD.recoverMs, 'it waited for the worker and for the main-thread rebuild');
+    assert.ok(h.now() >= COLD_START.settleMaxMs * 2 + GROUND_HOLD.recoverMs, 'splash wait, then the main-thread rebuild');
   } finally { resetGovernor(); Object.assign(GOVERNOR, saved); }
 });
 
@@ -105,7 +104,7 @@ test('a chunk that arrives after the first ceiling still reveals, with trees on 
   try {
     const result = await startup(view as unknown as View, { step: (label) => steps.push(label) }, opts);
     assert.equal(result && 'ground' in result ? result.ground : undefined, true);
-    assert.ok(steps.includes(GROUND_HOLD.forming), 'the first ceiling is not the reveal');
+    assert.equal(steps.includes(GROUND_HOLD.building), false, 'a chunk that arrives in the splash wait does not rebuild here');
     assert.equal(steps.includes(GROUND_HOLD.missing), false);
     assert.equal(steps.at(-1), 'Ready');
     assert.ok(generateChunk(0, 0).some(e => e.kind === 'spruce'));

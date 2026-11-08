@@ -161,6 +161,21 @@ test('grass still queued: cold waits out the ceiling, warm returns once the stan
   } finally { restore(saved); }
 });
 
+test('cold does not reveal while the standing chunk is still missing and the queue stays full', async () => {
+  const saved = gov(); GOVERNOR.gpu = 'TEST GPU'; GOVERNOR.tier = 1; GOVERNOR.probeCap = 0; GOVERNOR.auto = true;
+  const h = harness();
+  let t = 0;
+  const pump = async () => { t += 16; await h.pump(); };
+  try {
+    await startup(h.view, { step() {} }, {
+      probeStorage: mem(), warmStorage: mem(), buildId: 'build-a', skipProbe: true,
+      pump, now: () => t, busy: () => true, landReady: () => t > COLD_START.settleMaxMs + 2000,
+    });
+    assert.ok(t > COLD_START.settleMaxMs + 2000, `revealed at ${t} ms, before the standing chunk`);
+    assert.ok(t < COLD_START.settleMaxMs * 2 + 8000, `second land wait stayed bounded (${t} ms)`);
+  } finally { restore(saved); }
+});
+
 test('warm does not reveal before the standing chunk, and does not skip a missing sky', async () => {
   const saved = gov(); GOVERNOR.gpu = 'TEST GPU'; GOVERNOR.tier = 1; GOVERNOR.auto = true;
   const probeStore = mem(); saveProbe(probeStore, { renderer: 'TEST GPU', benchMs: 9 });

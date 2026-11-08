@@ -19,7 +19,6 @@ import { failTerrainWorkers } from './terrainPool';
 import { asset } from '../core/asset';
 /** Copy for the land wait. The standing chunk is the terrain mesh and the trees on it (buildScene chunkBuilt). */
 export const GROUND_HOLD = {
-  forming: 'The ground is still forming…',
   building: 'Building the ground here…',
   missing: 'The ground did not arrive. Reload the page.',
   /** After the worker misses the second cap, the same chunk is built here. The stage grid is the slow part. */
@@ -187,13 +186,14 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
   ui.step('Generating the land around you…', .1);
   const onLand = (ms: number) => ui.step('Generating the land around you…', .1 + .3 * Math.min(1, ms / 8000));
   if (budget.leaveWhenChunkBuilt) await settleWhenLandReady(budget.settleQuiet, budget.settleMaxMs, land, onLand, pump, now);
-  else await settle(budget.settleQuiet, budget.settleMaxMs, onLand, pump, now, opts.busy ?? queued);
-  // A full grass queue used to hit the ceiling and reveal anyway. The animal then stood in a void:
-  // no terrain mesh, no trees, only the senses ring. Wait for that one chunk, then build it here if the worker never answers.
-  if (!land()) {
-    ui.step(GROUND_HOLD.forming, .35);
-    await settleWhenLandReady(WARM_START.settleQuiet, budget.settleMaxMs, land, undefined, pump, now);
+  else {
+    await settle(budget.settleQuiet, budget.settleMaxMs, onLand, pump, now, opts.busy ?? queued);
+    // Grass and flora keep the interest queue full, so the ceiling above can fire while the
+    // standing chunk is still queued. Revealing then is a pale void (no ground, no trees).
+    // Wait for that chunk on its own, still behind the splash. Same ceiling, not a new one. (#376)
+    if (!land()) await settleWhenLandReady(budget.settleQuiet, budget.settleMaxMs, land, onLand, pump, now);
   }
+  // #376 already waited for the chunk. If the worker still has not answered, build it here.
   if (!land()) {
     ui.step(GROUND_HOLD.building, .4);
     failTerrainWorkers('terrain worker did not return the standing chunk; building it on the main thread');

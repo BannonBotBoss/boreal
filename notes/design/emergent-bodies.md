@@ -158,3 +158,24 @@ reads as ICB = 0. A full hot re-run is still needed to measure the new ICB; the 
 (sep threshold vs segregation assist).
 Regression (2026-11-06, grokbot-1): `core_adiabat_gamma_allows_centre_freeze` pins that gamma=1.5 makes (T_liq − T_ad) rise toward the centre when the adiabat is anchored just above the liquidus at the core top, while Tillotson a+b (=2.0) keeps the centre liquid. A full hot re-run is still needed to measure the new ICB on a settled body; the 24k Vinet sep gate still needs Matt.
 
+
+Hot re-run with core Gamma 1.5 and the centre-out ICB (2026-11-07, grokbot-1, same 6k setup: `hot 6000 6000 0.05 dunite out.bin 6000 0.01`, 7.5 min on 8 cores):
+R_vol 6533 km, CMB 3553 km, ICB 2618 km (PREM 1221.5), 1658 solid parcels, centre 14301 kg/m3, 374 GPa, 5170 K, 1/f 283, C/MR2 0.317, separation 0.992.
+Iron parcels binned by radius:
+
+| r (km) | n | P (GPa) | T (K) | T_liq (K) | T - T_liq | solid |
+|---|---|---|---|---|---|---|
+| 0-500 | 7 | 377 | 5197 | 5437 | -240 | 1.00 |
+| 500-1000 | 54 | 362 | 5096 | 5340 | -243 | 1.00 |
+| 1000-1500 | 140 | 334 | 4884 | 5152 | -268 | 1.00 |
+| 1500-2000 | 247 | 293 | 4566 | 4853 | -288 | 1.00 |
+| 2000-2500 | 327 | 245 | 4230 | 4481 | -251 | 1.00 |
+| 2500-3000 | 405 | 202 | 4015 | 4115 | -99 | 0.89 |
+| 3000-3600 | 614 | 187 | 3783 | 3976 | -193 | 0.85 |
+
+Findings: the inversion is gone, the core now freezes from the centre outward as in the real Earth. But the whole core sits
+~100-290 K below the alloy liquidus, so the inner core is 2.1x too big. The centre cooled from 5650 K (Nov 3) to 5170 K:
+the cooling phase pulls the whole core onto an adiabat anchored too cold at the top. Two candidates before touching any
+material number: (1) the core-top anchor (mantle bottom + 1000 K, Lay 1998) is applied at 187 GPa, not 136 GPa, so it
+inherits the over-compression gap; (2) time-compressed cooling with no latent heat release, which in the real core holds
+the growing ICB at the liquidus. Next: latent heat on freezing (needs a cited Fe value in materials.json first).

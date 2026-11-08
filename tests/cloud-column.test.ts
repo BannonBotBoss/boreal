@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -838,4 +838,20 @@ test('layered clouds: cloud top radiates longwave up with Stephens emissivity', 
   assert.ok(up.up <= K.sigma * (20 + 273.15) ** 4, 'never more than a blackbody at surface temperature');
   const deck = cloudTopLongwave({ ...col, waterPath: .05 });
   assert.ok(Math.abs(deck.emissivity - (1 - Math.exp(-6.5))) < 1e-9, '50 g/m2 deck is nearly black');
+});
+
+test('layered clouds: outgoing longwave is the top emission plus transmitted surface upwelling', () => {
+  const sfc = K.sigma * (20 + 273.15) ** 4;
+  const dry = cloudOutgoingLongwave({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0 });
+  assert.equal(dry.emissivity, 0);
+  assert.ok(Math.abs(dry.up - sfc) < 1e-6, 'no cloud: OLR is the surface');
+  const col = cloudColumn(20, qOf(20, .9)), olr = cloudOutgoingLongwave(col), top = cloudTopLongwave(col);
+  assert.ok(col.waterPath > 0);
+  assert.ok(Math.abs(olr.up - (top.up + (1 - top.emissivity) * olr.surfaceUp)) < 1e-9);
+  assert.ok(olr.up >= top.up, 'transmitted surface upwelling cannot reduce the top emission');
+  assert.ok(olr.up < olr.surfaceUp, 'a colder top reduces OLR (the longwave greenhouse)');
+  const deck = cloudOutgoingLongwave({ ...col, waterPath: .05 });
+  const deckTop = cloudTopLongwave({ ...col, waterPath: .05 });
+  assert.ok(Math.abs(deck.up - deckTop.up) < 1, 'a 50 g/m2 deck is nearly black, so little surface leaks through');
+  assert.ok(deck.up < sfc, 'a blacker deck hides more of the warm ground');
 });

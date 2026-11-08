@@ -25,7 +25,10 @@
  *  - the cloud base radiates longwave down as ε σ T⁴, with ε = 1 − exp(−a0 LWP) (Stephens 1978), so a
  *    thick deck is nearly black and cloudy nights stay warm;
  *  - the cloud top radiates longwave up the same way at the top temperature, so a high cold top sends
- *    less to space than a low warm deck (the longwave greenhouse of deep cloud).
+ *    less to space than a low warm deck (the longwave greenhouse of deep cloud);
+ *  - outgoing longwave above the cloud is that top emission plus the surface upwelling a thin cloud
+ *    transmits, F↑ = ε σ T_top⁴ + (1 − ε) σ T_sfc⁴ (Kirchhoff: a non-scattering IR slab transmits
+ *    1 − ε), so a black deck hides the ground and a thin cirrus lets most of the warm surface through.
  * Pure, DOM-free; the renderer (world/globe/localClouds) bakes these layers into a 3D texture around the camera.
  */
 import C from '../../../data/earth/cloud-column.json';
@@ -153,5 +156,16 @@ export function cloudTopLongwave(col: Column) {
   for (const l of col.layers) if (l.water > 0) top = l;
   const emissivity = 1 - Math.exp(-C.lw_a0_down_m2_g * col.waterPath * 1000), topK = top.tEnv + 273.15;
   return { emissivity, topK, up: emissivity * K.sigma * topK ** 4 };
+}
+/** Outgoing longwave above the cloud: the top's own emission plus the surface upwelling that a
+ * non-scattering IR slab transmits, F↑ = ε σ T_top⁴ + (1 − ε) σ T_sfc⁴ (Kirchhoff's law with the
+ * Stephens 1978 emissivity). No cloud (ε = 0) is just the surface; a black deck hides the ground
+ * so the OLR is the cold top, which is the longwave greenhouse. T_sfc is the column's lowest-layer
+ * environment temperature. Returns W/m². */
+export function cloudOutgoingLongwave(col: Column) {
+  const top = cloudTopLongwave(col);
+  const sfcK = (col.layers[0]?.tEnv ?? 0) + 273.15;
+  const surfaceUp = K.sigma * sfcK ** 4;
+  return { emissivity: top.emissivity, topK: top.topK, sfcK, surfaceUp, up: top.up + (1 - top.emissivity) * surfaceUp };
 }
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

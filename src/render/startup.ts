@@ -178,7 +178,13 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
   ui.step('Generating the land around you…', .1);
   const onLand = (ms: number) => ui.step('Generating the land around you…', .1 + .3 * Math.min(1, ms / 8000));
   if (budget.leaveWhenChunkBuilt) await settleWhenLandReady(budget.settleQuiet, budget.settleMaxMs, land, onLand, pump, now);
-  else await settle(budget.settleQuiet, budget.settleMaxMs, onLand, pump, now, opts.busy ?? queued);
+  else {
+    await settle(budget.settleQuiet, budget.settleMaxMs, onLand, pump, now, opts.busy ?? queued);
+    // Grass and flora keep the interest queue full, so the ceiling above can fire while the
+    // standing chunk is still queued. Revealing then is a pale void (no ground, no trees).
+    // Wait for that chunk on its own, still behind the splash. Same ceiling, not a new one.
+    if (!land()) await settleWhenLandReady(budget.settleQuiet, budget.settleMaxMs, land, onLand, pump, now);
+  }
   if (budget.compileBeforeProbe) { ui.step('Compiling shaders…', .45); await view.photoreal.compile(); }
   const compiled = JSON.stringify(applied());
   ui.step('Lighting the sky…', .6); const t0 = now();

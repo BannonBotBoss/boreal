@@ -37,6 +37,13 @@ float shade = sqrt(clamp(lum, 0.14, 1.4));
 coat *= shade * form;
 float moonRim = pow(1.0 - clamp(dot(nrm, normalize(vViewPosition)), 0.0, 1.0), 3.2);
 coat += moonRim * vec3(0.50, 0.58, 0.68) * 0.02;
+// Wool. A four-week gray wolf is not a smooth tan solid (Mech and Boitani 2003,
+// Wolves: Behavior, Ecology and Conservation, pups emerge from the den woolly).
+// Bands follow the body so the coat reads at the distance the litter is drawn.
+float furBand = 0.5 + 0.5 * sin(vPupLocal.y * 70.0 + vPupLocal.z * 22.0);
+float furStrand = 0.5 + 0.5 * sin(vPupLocal.x * 55.0 + vPupLocal.y * 16.0);
+coat *= mix(0.45, 1.22, furBand);
+coat *= mix(0.78, 1.12, furStrand);
 gl_FragColor.rgb = coat;
 `;
 
@@ -78,6 +85,12 @@ export function finishAnimalCoat(material: THREE.Material, kind: 'mama' | 'pup' 
   m.customProgramCacheKey = () => `${prevKey ? prevKey() : 'coat'}|${kind}`;
   m.onBeforeCompile = function (shader, renderer) {
     prev?.call(this, shader, renderer);
+    if (kind === 'pup') {
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vPupLocal;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvPupLocal = transformed;');
+      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vPupLocal;');
+    }
     shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `#include <opaque_fragment>\n${chunk}`);
   };
 }

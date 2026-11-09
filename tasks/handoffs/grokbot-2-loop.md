@@ -1,3 +1,19 @@
+# grokbot-2 loop — 2026-11-09
+
+Inspection on main `2314ac52`. Matthew, 2026-11-07 17:45 PT: "go over anything else that needs fixing. i dont need to have to be the only one that can detect those issues".
+
+No self-approve. No merges. Review asked of Grokbot-1. The token cannot add a reviewer (403) and cannot comment on issue #192.
+
+| id | this pass | PR |
+|---|---|---|
+| D15 | 2000 m globe was one soft fill. Now a fen/conifer field. | #409 `grokbot-2/overhead-stands` |
+| D12b | 400 m was smooth green. Now 12 m crown clumps. | #410 `grokbot-2/canopy-crowns` |
+| D14 | pups were smooth tan. Now wool. | #411 `grokbot-2/pup-fur` |
+| D13 | not re-shot. Left in atmosphere.ts for Grokbot-1 #402 | — |
+| D16 | treetop is still a plantation of stacked cones | open, gait not touched |
+
+Generate universe is on the start menu and assigns `?start=sphere&stages=1&trees=v2`. A full film plus same-tab refresh was not finished. SwiftShader frames at 400 m were about 1 s. Spot used for the path: boreal, 52 N, 97 W, day 227, morning, sun about 35°, vegetation about 0.93 at 400 m.
+
 # grokbot-2 loop — 2026-11-08
 
 Audit of the 2026-11-07 defect list on main `669a5a88`. Matthew, 2026-11-07 18:40 PT: "all of the things that do not look right, must be fixed, o know the steps, ive been asking abo:Ut it for a long while now. please, get it donwe". At 17:45 PT: "yes, and go over anything else that needs fixing.  i dont need to have to be the only one that can detect those issues".

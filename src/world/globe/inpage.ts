@@ -25,12 +25,12 @@ import { FALL_END_M, ISO_BELOW_HORIZON, freeFallVy, flightPrompt, type EntryPhas
 import { canEmbody, descentFrameDt, landingJobBudget, landingPatchReady } from './landingStream';
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
-import { forestLanding } from './forestLanding';
+import { dropStand, forestLanding } from './forestLanding';
 import { cineTrace } from '../cosmos/cineReady';
 import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
-import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR, landSpawn } from './handoff';
+import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR } from './handoff';
 import { treesAround } from '../../core/ground';
 import { PLANET, GLOBE_COLOURS, fromLatLon } from './planet';
 import { nearGroundOcc, setPatchFade, setPatchFar } from '../../render/fade';
@@ -172,14 +172,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
   }
   function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe'); globe?.setLayerPanel(layerPanelShown(m)); if (typeof document !== 'undefined') document.body.classList.toggle(GLOBE_HUD_CLASS, hudHidden(m)); if (m === 'game') showPrompt(''); }
   /** Globe -> drone, on the point that was double-clicked. The fall's vertical speed is kept. The spot is not pulled
-   *  home. It does step to the nearest dry stand (the same landSpawn the reload handoff uses): the clicked centre of
-   *  the home region is the lake, and standing there shows the water sheet instead of the forest floor. */
+   *  home. Off home it steps to the nearest dry ground. At home the lake centre's nearest dry cell is the waterline,
+   *  so the drop uses the stand edge (dropStand) and the animal faces the trees, not the flat lake. */
   function descend(at: { x: number; z: number; yaw: number; vy?: number; home?: number; dir?: [number, number, number] }) {
     const g = globe!;
     const remote = !!at.dir && engageLanding(at.dir, at.home ?? 1);
-    const spot = landSpawn({ x: at.x, z: at.z }, undefined, at.yaw);
-    const stood = remote ? dryNear() : spot;
-    spotX = stood.x; spotZ = stood.z; yaw = at.yaw;
+    if (remote) { const stood = dryNear(); spotX = stood.x; spotZ = stood.z; yaw = at.yaw; }
+    else { const stood = dropStand({ x: at.x, z: at.z }, at.yaw); spotX = stood.x; spotZ = stood.z; yaw = stood.yaw; }
     host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null; dropStream = true;
     const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
     h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;

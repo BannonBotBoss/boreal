@@ -349,7 +349,14 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
     float hm = step(0.5, vLoc.z) * uShore.z * (1.0 - smoothstep(5.0, 9.0, sfp)), sf = (texture2D(uShoreTex, suv).r * 255.0 - 128.0) / 16.0; // keep the mask while a pixel is finer than ~45 m; coarser than that the averaged field read as all water, and hiding the vertex lake then left flat land
-    float F = mix(vH, sf, hm), fw = max(fwidth(F), 1e-3); landMask = smoothstep(-fw, fw, F);
+    float F = mix(vH, sf, hm);
+    // A coarse quad draws a lake as a straight polygon. A few metres of world-space
+    // wander, only while the hi-res shore mask is off and a pixel is metres not kilometres,
+    // bends that edge. The amplitude stays under a real lake's depth so open water does not dry.
+    float pxS = max(length(fwidth(vDetW.xz)), 1e-3);
+    float shoreBand = (1.0 - hm) * smoothstep(0.8, 2.0, pxS) * (1.0 - smoothstep(40.0, 90.0, pxS));
+    F += (detN(vDetW / 48.0, uDetail.w + 19.0) - 0.5) * 3.0 * shoreBand;
+    float fw = max(fwidth(F), 1e-3); landMask = smoothstep(-fw, fw, F);
     landMask = mix(landMask, 1.0, vLake * (1.0 - hm) * uHideLake); // a vertex lake with the mask off is a dark polygon this low
     float band = hm * (1.0 - smoothstep(0.1, 0.4, fw)); // shore bands only while they are wider than a pixel
     float eraSum = uEra.x + uEra.y + uEra.z + uEra.w;
@@ -358,9 +365,33 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
     float face = smoothstep(0.05, 0.82, max(dot(normalize(vNormal), uSun), 0.0)); // darker away from a face-on sun; #030b1e -> #051330
     vec3 deepCol = mix(uDeep, uDeepSun, face);
     vec3 water = mix(mix(uShallow, deepCol, dw), mix(uLakeShallow, uLakeDeep, dw), vLake);
+    // Globe lakes are ~0.01 albedo and read as black polygons from a few kilometres up.
+    // A tannin lake in Sentinel-2 cloudless is dark blue, not a flat charcoal facet.
+    water = mix(water, vec3(0.018, 0.036, 0.046), shoreBand * (1.0 - landMask));
     water = mix(water, diffuseColor.rgb * 0.5, band * ${SHORE.shallowMix.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.shallow.toFixed(3)}, -F))); // shallows: the bed shows through
     diffuseColor.rgb *= 1.0 - band * ${SHORE.wetDark.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.wet.toFixed(3)}, F)); // wet ground at the waterline
-    diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask); }${LAYERS_FRAG}
+    diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask);
+    // Overhead land is one vertex colour across a coarse quad, so the tile border is a square
+    // and the boreal is one olive. This stand is only a function of world metres (same waves
+    // as landMosaic / overheadStand), so both sides of a tile edge agree.
+    // A full disk (tens of metres per pixel and up) is left as the vertex colour.
+    {
+      float pxO = max(length(fwidth(vDetW.xz)), 1e-3);
+      float overhead = smoothstep(0.5, 1.2, pxO) * (1.0 - smoothstep(35.0, 80.0, pxO));
+      float veg = 1.0 - smoothstep(0.10, 0.18, max(diffuseColor.r, diffuseColor.g));
+      if (overhead * veg * landMask > 0.04) {
+        float s0 = detN(vDetW / 40.0, uDetail.w + 7.0);
+        float s1 = detN(vDetW / 160.0, uDetail.w + 8.0);
+        float s2 = detN(vDetW / 640.0, uDetail.w + 9.0);
+        float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
+        vec3 conifer = vec3(0.020, 0.034, 0.016);
+        vec3 leaf = vec3(0.055, 0.086, 0.030);
+        vec3 fen = vec3(0.090, 0.062, 0.028);
+        vec3 field = stand < 0.46 ? mix(fen, conifer, stand / 0.46) : mix(conifer, leaf, (stand - 0.46) / 0.54);
+        diffuseColor.rgb = mix(diffuseColor.rgb, field, overhead * 0.88);
+      }
+    }
+    }${LAYERS_FRAG}
   if (uDetail.x > 0.001) { // ground detail (DETAIL): octaves fade out where a cell is under ~2 pixels (no shimmer)
     float a = 0.0;
     vec3 q0 = uDetO0 + vDetW * uDetL.x, q1 = uDetO1 + vDetW * uDetL.y, q2 = uDetO2 + vDetW * uDetL.z;

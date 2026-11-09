@@ -42,6 +42,15 @@ the cell with `max(12.0, px * 3.5)` so a coarse pixel still shows a clump instea
 The skirt uses the same 12 m scale as a hard step (`mix(0.62, 1.28, crown)`), not the old
 soft `0.82 + 0.36 * grain`. The mean stays near the albedo. Do not push the bright end to 1.4.
 
+## Overhead quads
+
+A vertex colour is constant across a coarse quad, so the stand mosaic that only
+scales that colour keeps the square tile edge. `overheadStand` is a function of
+world metres only (fen, conifer, leaf in the spruce albedo range). The tile shader
+mixes it in when a pixel is about 1–35 m, and leaves a full disk alone.
+A lake edge on that same band gets ±1.5 m of `detN` wander (`shoreBand`) so the
+shore is not the triangle edge, and the lake albedo is lifted off the 0.01 black.
+
 ## Mistakes to avoid
 
 - Do not call the lattice hash on an un-wrapped planet coordinate with `floor` passed straight into `ivec`. It crushed the frame to a dark red. Use `detN`, which already mods the cell.

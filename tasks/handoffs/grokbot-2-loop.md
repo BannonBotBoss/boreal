@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-09 evening, ground
+
+T-0191 `grokbot-2/ground-floor`, from main, not stacked on the wolf branch. The spawn is prairie, vegetation 0.33. The feet are thatch, soil and green clumps instead of one lawn. Not self-approved. Spruce and the overhead proposal are still open. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 late
 
 T-0189 `grokbot-2/aerial-structure`. The T-0187 overhead matched zoom-8 luma and stayed a blur. 2000 m and 400 m now use camera-relative crowns, fen, and 150 m ponds. The structure test fails the T-0187 frames. Not self-approved. D18, D16, D13, and the forest path are not in that PR. Gait was not touched.

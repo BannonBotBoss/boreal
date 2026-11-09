@@ -8,8 +8,9 @@ import { logContact, type LogSeatFn } from '../core/logContact';
 import { chunkTerrainJob, positionCamera } from './math';
 import { forestMoving } from '../vr/forestSession';
 import { createLitter } from '../animals/pups';
+import { landingContext } from './landingCast';
 import { warmTerrainWorkers } from './terrainPool';
-import { terrainMaterial } from './pbr';
+import { setGroundFloor, terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
 import { INTEREST, WAIT, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
 import { chunkRadius } from '../world/globe/landingStream';
@@ -147,7 +148,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const grass = createGrass(scene); // render/grass: procedural blades around the camera
   const flora = createFlora(scene); // render/flora: flowers + shrubs (shared ecology with the grass)
   const glow = createTargetGlow(renderer, camera); // render/targetGlow (T-0035): outline glow on the interaction target (replaces the ground ring)
-  let lastBatchLod = -1, lastCover = -1;
+  let lastBatchLod = -1, lastCover = -1, lastFloor = -1;
   const openedCover = new Set<string>();
   let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
   const CHUNK_ADDS_PER_FRAME = 2; let frameNo = 0; const adds = { frame: -1, n: 0 }; // upload pacing (see createChunk)
@@ -479,6 +480,10 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
         c.batch.cover(e.key, e.kind === 'spruce' ? 1 : patchCover(e, worldSec()));
         openedCover.delete(e.key);
       }
+    }
+    if (time - lastFloor > 1 || time < lastFloor) {
+      lastFloor = time;
+      try { setGroundFloor(landingContext(x, z).biome); } catch { /* keep the last floor */ }
     }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen, time, mode);

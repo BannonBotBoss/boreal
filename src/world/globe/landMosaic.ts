@@ -53,6 +53,29 @@ export function flatGroundFill(s: GroundFillStats) {
   return s.stdL < 2 && s.bins < 5;
 }
 
+/**
+ * Crown clump at 12 m.
+ * A closed boreal crown is a few metres across. Sentinel-2's 10 m pixel (Drusch et al. 2012)
+ * still breaks a stand into clumps rather than one green. 12 m sits between one crown and that pixel.
+ * 1 at a centre, 0 in a gap. A jittered grid, so it does not line up with a quadtree edge.
+ */
+export const CROWN_CELL_M = 12;
+
+export function crownCover(x: number, z: number) {
+  const cell = CROWN_CELL_M;
+  const ix = Math.floor(x / cell), iz = Math.floor(z / cell);
+  let best = 2;
+  for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+    const cx = ix + a, cz = iz + b;
+    const jx = (hash2u(cx, cz, 21) - 0.5) * 0.75;
+    const jz = (hash2u(cx, cz, 22) - 0.5) * 0.75;
+    const rad = 0.40 + 0.28 * hash2u(cx, cz, 23);
+    const d = Math.hypot(x / cell - (cx + 0.5 + jx), z / cell - (cz + 0.5 + jz)) / rad;
+    if (d < best) best = d;
+  }
+  return best >= 1 ? 0 : 1 - best;
+}
+
 /** Fen (browner) below the middle, broadleaf (greener) above it. Water is not passed in. */
 export function landMosaic(x: number, z: number, rgb: readonly [number, number, number]): [number, number, number] {
   const u = standField(x, z);

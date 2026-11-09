@@ -33,6 +33,15 @@ The in-page far layer was 320×144 while it was the whole drone picture, and the
 upscale hid the mosaic. `farLayerScale` stays 1 above 150 m. Half resolution returns
 on the ground once the patch fade is in.
 
+## Crowns
+
+The 40 / 160 / 640 m waves are smooth blobs. A closed boreal canopy is overlapping crowns
+a few metres across, and a 10 m Sentinel-2 pixel still breaks that (Drusch et al. 2012).
+`crownCover` is a jittered 12 m grid (1 at a centre, 0 in a gap). The tile shader widens
+the cell with `max(12.0, px * 3.5)` so a coarse pixel still shows a clump instead of one green.
+The skirt uses the same 12 m scale as a hard step (`mix(0.62, 1.28, crown)`), not the old
+soft `0.82 + 0.36 * grain`. The mean stays near the albedo. Do not push the bright end to 1.4.
+
 ## Mistakes to avoid
 
 - Do not call the lattice hash on an un-wrapped planet coordinate with `floor` passed straight into `ivec`. It crushed the frame to a dark red. Use `detN`, which already mods the cell.

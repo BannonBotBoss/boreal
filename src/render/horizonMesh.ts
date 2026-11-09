@@ -83,8 +83,11 @@ function skirtMaterial() {
           vec3 leaf = vec3(gl_FragColor.r * 0.7, gl_FragColor.g * 2.2, gl_FragColor.b * 0.6);
           vec3 mosaic = stand < 0.5 ? mix(fen, gl_FragColor.rgb, stand * 2.0) : mix(gl_FragColor.rgb, leaf, (stand - 0.5) * 2.0);
           gl_FragColor.rgb = mix(gl_FragColor.rgb, mosaic, mix(0.45, 1.0, dark));
+          // 12 m clumps, the same crown scale as the globe tiles. A smooth 0.82–1.18 grain
+          // stayed one green at 400 m. The step is a crown against a gap, and the mean stays near 1.
           float grain = vnoiseU(xz / 12.0, 4.0);
-          gl_FragColor.rgb *= 0.82 + 0.36 * grain;
+          float crown = smoothstep(0.32, 0.68, grain);
+          gl_FragColor.rgb *= mix(0.62, 1.28, crown);
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);

@@ -58,7 +58,9 @@ const PUP_COAT = { name: 'golden tan' as const, back: [.36, .2, .1] as [number, 
 export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur?: boolean; pup?: boolean } = {}) {
   const portrait = !!options.portrait;
   const pup = !!options.pup;
-  const furCount = pup ? (GOVERNOR.xr ? 220 : 720) : FUR_CARDS;
+  // A four-week pup is about a third of an adult. 4200 cards is the adult density on that smaller skin
+  // (18000 * ~0.23). 720 left the coat as the bare tube. XR keeps a smaller set.
+  const furCount = pup ? (GOVERNOR.xr ? 480 : 4200) : FUR_CARDS;
   const withFur = options.fur !== false && furCount > 0;
   const root = new THREE.Group(); root.scale.setScalar(WOLF_SCALE);
   const bones = Array.from({ length: BONE_COUNT }, () => new THREE.Bone());
@@ -115,7 +117,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
   geometry.setAttribute('normal', new THREE.Float32BufferAttribute(body.normal, 3));
   // Skin tint: under fur, the skin takes the fur-root shade (cards start at 0.55 × the coat colour), so gaps between strands read as
   // depth and shadow, not bare skin. Bare parts (nose, lips, tongue, mouth seal, ear cups) keep their own colour. Vertex colours only: no extra cost.
-  const skinShade = pup ? .92 : FUR_ROOT_SHADE;
+  const skinShade = pup ? .58 : FUR_ROOT_SHADE;
   const skinColor = body.color.map((c, i) => c * (body.furLen[Math.floor(i / 3)] >= .03 ? skinShade : BARE_SHADE));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(skinColor, 3));
   geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(body.skinIndex, 4));
@@ -168,7 +170,7 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,
         // Muzzle bridge and nose: fur combed forward toward the nose, lying nearly flat (about 10° off the skin).
         comb: p => browAt(p) ?? (p[2] < HEAD_AT[2] - .02 && p[1] > HEAD_AT[1] - .03 ? { lay: [0, -.18, -1], lean: .2 } : undefined), scaleAt: p => .55 + .45 * (1 - smooth(HEAD_AT[2] + .04, HEAD_AT[2] + .14, p[2])) }
-      : { count: furCount, length: pup ? FUR_LENGTH * 1.55 : FUR_LENGTH, width: pup ? FUR_WIDTH * 1.05 : FUR_WIDTH, seed, clear,
+      : { count: furCount, length: pup ? FUR_LENGTH * 1.9 : FUR_LENGTH, width: pup ? FUR_WIDTH * 1.7 : FUR_WIDTH, seed, clear,
         // Banded guard hairs: pale tip over a darker shaft, which is what reads as grizzle (Young and Goldman 1944, The Wolves of North America) [verify page].
         tipTint: pup ? (p) => pupTip(p[1]) : (p) => mamaTip(p[1]) }), furMaterial)] : [skinMesh];
   skins.forEach(skin => { skin.frustumCulled = false; skin.name = skin === skins[0] ? 'skin' : 'fur'; });

@@ -1,7 +1,7 @@
 /**
  * The mama's litter, drawn from the same rules as the Rust store.
  * They stand on the trail beside her. A drop that leaves them behind puts them back on it.
- * The meshes are the wolf skin without the fur cards, scaled to a four-week pup.
+ * The meshes are the wolf skin with a woolly coat of fur cards, scaled to a four-week pup.
  */
 import * as THREE from 'three';
 import { ageAfter, besideMother, followStep, growthStage, pupAim, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';

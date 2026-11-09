@@ -1,9 +1,9 @@
 /**
  * ONE menu screen for start and pause (Grok Bot; replaces ui/pauseMenu). Mode 'start' (after the loading screen):
- * Continue, Generate universe, Controls, Music, Graphics, Board (the GitHub task board, new tab), Quit. Mode 'pause' (Esc / gamepad Menu): Resume, Save, Music, Graphics, More
- * (registered panels: player, appearance, inspector, photo), Quit to menu (autosaves first). While either mode is open the
- * world clock is frozen (core/worldClock.pauseClock) and the renderer holds its last frame.
- * Generate universe mints (or replays) a universe seed and boots the cosmic sim; each Generate is a little different.
+ * Continue, Generate universe (one click), Universe options…, Controls, Music, Graphics, Board, Quit.
+ * Mode 'pause' (Esc / gamepad Menu): Resume, Save, Music, Graphics, More, Quit to menu.
+ * While either mode is open the world clock is frozen (core/worldClock.pauseClock) and the renderer holds its last frame.
+ * Generate universe mints a universe seed and boots the cosmic sim; each Generate is a little different.
  * Keyboard: ↑/↓ (or Tab) move, Enter/Space choose, Escape back. Gamepad (standard mapping): d-pad / left stick move,
  * A choose, B back. Sub-pages reuse the shared settings panels (ui/settingsPanel) passed in by main.
  */
@@ -52,25 +52,18 @@ export function createMenu(hooks: MenuHooks) {
   const controls = () => page('Controls', hooks.controls!(), backBtn()), controlsBtn = () => hooks.controls ? [btn('Controls', () => sub(controls))] : [];
   function main() { stack = [];
     if (mode === 'start') {
-      page('Boreal', btn('Continue', close, !hooks.hasSave()), btn('Generate universe', () => sub(generateUniverse)), ...controlsBtn(), music(), btn('Graphics', () => sub(graphics)), board(), btn('Quit', quit));
+      // Generate universe is one click on the main menu; Advanced is for seed replay / legacy forest.
+      page('Boreal',
+        btn('Continue', close, !hooks.hasSave()),
+        btn('Generate universe', () => { hooks.generateUniverse({ staged: hooks.staged() }); close(); }),
+        btn('Universe options…', () => sub(generateAdvanced)),
+        ...controlsBtn(), music(), btn('Graphics', () => sub(graphics)), board(), btn('Quit', quit));
       if (!hooks.hasSave()) (panel.querySelectorAll('button')[1] as HTMLElement).focus();
     } else page('Paused', ...(hooks.warning?.() ? [Object.assign(document.createElement('p'), { className: 'note', textContent: hooks.warning!() })] : []), btn('Resume', close), ...controlsBtn(), btn('Save', () => { hooks.save(); saved.textContent = `Saved ${new Date().toLocaleTimeString()}`; }), music(), btn('Graphics', () => sub(graphics)),
       ...(panels.length ? [btn('More', () => sub(more))] : []), btn('Quit to menu', () => { hooks.save(); hooks.quitToMenu?.(); show('start'); }), saved);
   }
   const saved = Object.assign(document.createElement('p'), { className: 'note' });
   function more() { page('More', ...panels.map(p => btn(p.title, () => sub(() => page(p.title, p.build(), backBtn())))), backBtn()); }
-  function generateUniverse() {
-    const last = hooks.universeSeed();
-    const note = document.createElement('p'); note.className = 'note';
-    note.textContent = last
-      ? `Each generate is a little different. Last universe seed: ${last}.`
-      : 'Each generate is a little different. Laws stay the same; the seed changes.';
-    const warn = document.createElement('p'); warn.className = 'note';
-    if (hooks.hasSave()) warn.textContent = 'Generating a universe replaces your saved world (remembered animals, ground and changes).';
-    page('Generate universe', note, warn,
-      btn('Generate', () => { hooks.generateUniverse({ staged: hooks.staged() }); close(); }),
-      btn('Replay / advanced…', () => sub(generateAdvanced)), backBtn());
-  }
   function generateAdvanced() {
     const seed = Object.assign(document.createElement('input'), { type: 'number', value: String(hooks.universeSeed() || mintUniverseSeed()), min: '1', step: '1' });
     seed.setAttribute('aria-label', 'Universe seed');

@@ -441,7 +441,16 @@ export function spawnSkin(template: SkinTemplate): SkinSpawn {
   root.updateMatrixWorld(true);
   const skeleton = new THREE.Skeleton(built.bones);
   for (const mesh of meshes) mesh.bind(skeleton);
+  // The stored mesh is centred on the body. Sitting the root on the terrain then buried her to the shoulders.
+  const box = new THREE.Box3().setFromObject(root);
+  const lift = footLiftMetres(box.min.y);
+  if (lift > 0) { built.pivot.position.y += lift; for (const mesh of meshes) mesh.position.y += lift; }
   return { root, meshes, pose: built.pose };
+}
+
+/** Metres to raise a body so its lowest point sits on the ground the caller already set. */
+export function footLiftMetres(minY: number) {
+  return Number.isFinite(minY) && minY < -0.02 ? -minY : 0;
 }
 
 /** A deformed vertex, in the mesh's local space (the shader's skinning, without the camera). */

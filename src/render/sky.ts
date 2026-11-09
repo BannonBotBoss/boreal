@@ -9,7 +9,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { WORLD_SEED } from '../core/world';
 import { clockDate, dayAt, lighting, sunPosition } from '../core/timeOfDay';
 import { WEATHER, shortwave, weatherAt } from '../core/weather';
-import { LUX, SYNODIC, darkAdapted, exposureFor, moonAge, moonLux, nightKey, nightSkyLight, sunColour, wolfEyes } from '../core/light';
+import { LUX, SYNODIC, darkAdapted, exposureFor, moonAge, moonLux, nightKey, nightSkyLight, sceneFill, sunColour, wolfEyes } from '../core/light';
 import { LIGHTING } from './pbr';
 
 /**
@@ -147,7 +147,9 @@ export function createSky(scene: THREE.Scene) {
       if (wk > 0) { camera.getWorldDirection(keyDir); keyDir.y = 0; if (keyDir.lengthSq() < 1e-6) keyDir.set(0, 0, -1); keyDir.normalize().multiplyScalar(-1); keyDir.y = .75; tmpV.addScaledVector(keyDir.normalize(), wk); }
       moonLight.position.copy(focus).add(tmpV.normalize().multiplyScalar(80)); moonLight.target.position.copy(focus);
       hemi.intensity = 2.7 * light.day + (1 - light.day) * Math.max(.35, nightSkyLight(Emoon, LIGHTING.gain)) + (1 - light.day) * 3 * Etw / LUX.ref * LIGHTING.gain; // + the twilight sky's own diffuse light on the ground (same units as the sun: 3 per LUX.ref lux)
-      hemi.userData.night = (1 - light.day) * darkAdapted(LIGHTING.lux); // photoreal: the dark-adapted night sky is not in the IBL map, so keep this share unreduced
+      const fill = sceneFill({ elevation: sun.elevation, rawHemi: hemi.intensity, rawKey: moonLight.intensity, dark: (1 - light.day) * darkAdapted(LIGHTING.lux) });
+      hemi.intensity = fill.hemi; moonLight.intensity = fill.key;
+      hemi.userData.night = fill.keep; // photoreal: do not crush this fill with the daylight IBL scale
       camera.getWorldDirection(keyDir); keyDir.y = 0.2; if (keyDir.lengthSq() < 1e-4) keyDir.set(0, 0.2, -1); keyDir.normalize();
       rimLight.position.copy(focus).addScaledVector(keyDir, -24).setY(focus.y + 4);
       rimLight.target.position.copy(focus);

@@ -50,6 +50,8 @@ import { createTargetGlow } from './targetGlow';
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
+import { planetFor } from '../world/globe/planet';
+import { createHorizonSkirt } from './horizonMesh';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
@@ -89,6 +91,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xc4d4c8, 200, 480);
+  const horizon = createHorizonSkirt(); scene.add(horizon.mesh);
+  const horizonPlanet = planetFor(STAGES.seed, (x, z) => heightAt(x, z), 'ground-skirt');
+  const horizonAhead = new THREE.Vector3();
   const litter = createLitter(scene);
   const sky = createSky(scene); // sun, moon, sky colour, clouds, stars and fog follow the game clock
   // Time of day: core/timeOfDay hourAt (world clock + the chronometer's dial; ?hour=HH sets the first value, initDay in main).
@@ -481,6 +486,13 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
     const hour = photo?.hour ?? hourAt(tod); clock = formatHour(hour);
     const lit = sky.update(hour, tod, camera, wolf.root.position); darkness = lit.light.night;
+    if (camera.near < 2) {
+      horizonAhead.set(0, 0, -1).applyQuaternion(camera.quaternion);
+      const eye = Math.max(1, camera.position.y - heightAt(camera.position.x, camera.position.z));
+      horizon.update(horizonPlanet, camera.position.x, camera.position.z, eye, horizonAhead.x, horizonAhead.z);
+      horizon.setHaze(160, 700, (scene.fog as THREE.Fog).color);
+      horizon.mesh.visible = true;
+    } else horizon.mesh.visible = false;
     bandBackground(scene, camera); // world/globe/inpage: band = globe far layer as the background + patch fade (no-op otherwise)
     photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }

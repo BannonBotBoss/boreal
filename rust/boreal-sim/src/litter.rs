@@ -89,7 +89,7 @@ pub fn birth_places(den_x: f64, den_z: f64) -> [PupPlace; LITTER_COUNT as usize]
 }
 
 /// Uneven homes around her hips. Not a row. The last pup starts further back.
-const PUP_HOME: [(f64, f64); 5] = [(0.2, -0.52), (0.38, -0.16), (0.14, 0.26), (0.52, 0.58), (1.02, -0.06)];
+const PUP_HOME: [(f64, f64); 5] = [(0.62, -1.05), (0.40, 0.55), (0.88, -0.15), (1.20, 0.85), (1.45, -0.55)];
 const PUP_PHASE: [f64; 5] = [0.4, 2.2, 3.8, 5.1, 1.1];
 
 /// What this pup is doing. Each slot has its own phase.

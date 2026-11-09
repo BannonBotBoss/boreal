@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -885,4 +885,17 @@ test('layered clouds: surface cloud radiative effect warms the ground at night a
   assert.ok(snow.sw > noon.sw, 'over bright snow the ground loses less shortwave to the cloud');
   const half = surfaceCloudRadiativeEffect(col, .5, .5), full = surfaceCloudRadiativeEffect(col, .5, 1);
   assert.ok(Math.abs(half.net - full.net / 2) < 1e-9, 'scales linearly with cover');
+});
+
+test('layered clouds: atmospheric cloud radiative effect is TOA minus surface, longwave only', () => {
+  const col = cloudColumn(20, qOf(20, .9)), deck = { ...col, waterPath: .05, tau: 10 };
+  const at = atmosphericCloudRadiativeEffect(deck, 1, 1, .15);
+  const toa = cloudRadiativeEffect(deck, 1, 1), sfc = surfaceCloudRadiativeEffect(deck, 1, 1, .15);
+  assert.ok(Math.abs(at.lw - (toa.lw - sfc.lw)) < 1e-9, 'longwave part is TOA minus surface');
+  assert.ok(Math.abs(at.sw) < 1e-9, 'a conservative-scattering cloud absorbs no shortwave');
+  assert.ok(Math.abs(at.heatingKPerDay) < 5, 'column heating stays within a few K/day');
+  const half = atmosphericCloudRadiativeEffect(col, .5, .5), full = atmosphericCloudRadiativeEffect(col, .5, 1);
+  assert.ok(Math.abs(half.net - full.net / 2) < 1e-9, 'scales linearly with cover');
+  const none = atmosphericCloudRadiativeEffect({ ...col, waterPath: 0, tau: 0 }, 1, 1);
+  assert.ok(Math.abs(none.net) < 1e-6, 'no cloud, no effect');
 });

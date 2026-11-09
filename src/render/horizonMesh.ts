@@ -12,6 +12,7 @@ import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { PATCH_FAR } from './fade';
 import { biomeGrade, blendDem, blendPhoto, demSlope, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { GLSL_NOISE } from '../proc/glsl';
 import { canopyTile } from './trees/billboardAtlas';
 
 /** Daylight horizon the ground fades toward. Brighter than the old grey so aerial perspective
@@ -43,7 +44,7 @@ function skirtMaterial() {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkirtFade = aFade;\nvSkirtWater = aWater;\nvSkirtPhoto = aPhoto;\nvSkirtDist = distance(position.xz, uSkirtCam);\nvSkirtWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvSkirtClip = gl_Position;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform sampler2D uCanopy;\nuniform float uForest;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
+      .replace('#include <common>', '#include <common>\n' + GLSL_NOISE + '\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform sampler2D uCanopy;\nuniform float uForest;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
       .replace('#include <dithering_fragment>', `
         if (vSkirtPhoto < 0.5 && uFarMix.w > 0.5) {
           vec2 fuv = clamp(vSkirtClip.xy / vSkirtClip.w * 0.5 + 0.5, 0.0, 1.0);
@@ -62,7 +63,18 @@ function skirtMaterial() {
         if (canopy > 0.001) {
           vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));
           gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.82);
-          gl_FragColor.rgb *= mix(vec3(1.0), vec3(1.08, 1.4, 0.96), uForest);
+        }
+        // Stand mosaic, the same waves as the globe tiles. A coarse triangle is one colour without it.
+        // The 1.4 green gain is not applied: it turned those triangles into neon facets.
+        if (vSkirtWater < 0.5) {
+          vec2 xz = vSkirtWorld.xz;
+          float s0 = vnoiseU(xz / 40.0, 7.0);
+          float s1 = vnoiseU(xz / 160.0, 8.0);
+          float s2 = vnoiseU(xz / 640.0, 9.0);
+          float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
+          float fen = stand < 0.5 ? (0.5 - stand) / 0.5 : 0.0;
+          float leaf = stand > 0.5 ? (stand - 0.5) / 0.5 : 0.0;
+          gl_FragColor.rgb *= vec3(1.0 + 0.55 * fen + 0.15 * leaf, 1.0 - 0.25 * fen + 0.45 * leaf, 1.0 - 0.15 * fen - 0.05 * leaf);
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);

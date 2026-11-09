@@ -1407,3 +1407,7 @@ The home lake waterline is not a landing. `dropStand` uses `forestLanding` when 
 ## 2026-11-08 PT - grokbot-2: T-0182 land mosaic
 
 Vegetated land at drone height mixes 40/160/640 m stands (Sentinel-2 scale, Drusch et al. 2012) in the tile shader and the skirt. The skirt green gain is gone. Skill `notes/skills/land-mosaic.md`.
+
+## 2026-11-08 PT - grokbot-2: T-0181 continuous sward
+
+The skirt datum is the bed (`s.h`), matching `heightAt`, so the far ground meets the chunks. The near skirt is a clump grain, not a crown sheet. Skill `notes/skills/continuous-sward.md`.

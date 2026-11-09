@@ -56,13 +56,18 @@ function skirtMaterial() {
           // black. Take the globe texel whenever the far layer actually drew something.
           if (fd < 0.999 && luma > 0.008) gl_FragColor.rgb = globe;
         }
-        float detail = 0.5 + 0.5 * sin(vSkirtWorld.x * 1.9 + vSkirtWorld.z * 0.7) * sin(vSkirtWorld.x * 0.45 - vSkirtWorld.z * 1.6);
-        float near = 1.0 - smoothstep(40.0, 380.0, vSkirtDist);
-        gl_FragColor.rgb *= mix(1.0, 0.72 + 0.5 * detail, near);
-        float canopy = smoothstep(80.0, 280.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(6000.0, 14000.0, vSkirtDist));
+        // A continuous sward, not a striped shelf. The old 22 m crown repeat and the 1.4 green
+        // gain turned coarse triangles into neon facets (open-ground-photo). Tillers are a few
+        // centimetres to a few metres (FNA grass leaves, already the blade lengths in render/grass).
+        // 2.5 m cells are that clump scale. Crowns start only once a tree reads as a tree.
+        if (vSkirtWater < 0.5) {
+          float clump = vnoiseU(vSkirtWorld.xz * 0.4, 4.0);
+          gl_FragColor.rgb *= 0.9 + 0.2 * clump;
+        }
+        float canopy = smoothstep(400.0, 900.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(6000.0, 14000.0, vSkirtDist));
         if (canopy > 0.001) {
           vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.82);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.45);
         }
         // Stand mosaic, the same waves as the globe tiles. A coarse triangle is one colour without it.
         // The 1.4 green gain is not applied: it turned those triangles into neon facets.

@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0176",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/hare-senses",
+  "skill": "enter-living-animal",
+  "note": "The picture ladder labelled the embodied body Gray Wolf even for ?play=hare, so a canid was drawn on the hare. The senses title now follows the playable label, and sight uses that species template when one exists.",
+  "at": "2026-11-07T18:14:12-08:00"
+}

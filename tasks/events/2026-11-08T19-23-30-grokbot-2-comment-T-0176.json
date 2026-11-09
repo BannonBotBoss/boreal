@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0176",
+  "agent": "grokbot-2",
+  "note": "Rebased onto main 669a5a88. The defect still reproduced: ?play=hare drew untextured canids at the camera and the senses title stayed Wolf senses. After the rebase the title is Snowshoe hare senses, wolves.near is 0, and the litter does not follow a hare. Frames tasks/evidence/T-0176/before-hare.png and after-hare.png. No self-approve.",
+  "at": "2026-11-08T19:23:30-08:00"
+}

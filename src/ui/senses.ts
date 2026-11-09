@@ -24,7 +24,7 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
   root.innerHTML = `<summary></summary><div class="sense-panel"><div class="sense-hearing"><div class="sense-compass" role="img" aria-label="Sound directions relative to your view"><span class="sense-ear" aria-hidden="true">◉</span><div class="sense-arrows"></div></div></div><div class="sense-stream" aria-label="Sense pictures. A more solid picture is a stronger signal."></div></div>`;
   const summary = root.querySelector('summary')!;
   document.body.append(root);
-  summary.textContent = sensesTitle(view.playable.label);
+  summary.replaceChildren(document.createTextNode(sensesTitle(view.playable.label)));
   const el = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
   const arrows = el('.sense-arrows'), streamEl = el('.sense-stream');
   const cues = createSoundCues(), stream = createSenseStream(), nose = new Vector3(), forward = new Vector3();
@@ -82,7 +82,7 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
       cues.step(step); stream.step(step); tick += step;
       if (tick >= SENSES.updateSeconds) {
         tick = 0;
-        summary.textContent = sensesTitle(view.playable.label);
+        summary.replaceChildren(document.createTextNode(sensesTitle(view.playable.label)));
         needs = NEEDS_SPECIES[view.playable.id] ?? WOLF_NEEDS;
         const wolf = view.lookup('player')?.object;
         if (wolf) {

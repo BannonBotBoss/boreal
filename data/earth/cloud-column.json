@@ -1,7 +1,10 @@
 {
  "asym_g": 0.85,
  "lw_a0_down_m2_g": 0.13,
+ "lw_clear_brutsaert_a": 1.24,
+ "lw_clear_brutsaert_b": 0.142857,
  "_sources": {
+   "lw_clear_brutsaert": "Clear-sky atmospheric emissivity from screen-level vapour pressure and temperature, eps_clr = 1.24 (e/T)^(1/7), e in hPa, T in K (Brutsaert 1975, Water Resour. Res. 11:742, eq. 11); about 0.8 for a mild humid day. Used for clear-sky downwelling longwave at the ground.",
    "lw_a0_down_m2_g": "Broadband longwave emissivity of a water cloud, eps = 1 - exp(-a0 LWP) with LWP in g/m2 and a0 = 0.130 m2/g for downward flux at cloud base (Stephens 1978, J. Atmos. Sci. 35:2123, eq. 13). A deck of ~50 g/m2 is nearly black (eps ~0.998); thin cloud of 5 g/m2 ~0.48.",
    "asym_g": "Cloud droplet asymmetry parameter at visible wavelengths ~0.85 (Hansen & Travis 1974); used by cloudAlbedo two-stream A = (1-g)tau/(2+(1-g)tau) (Lacis & Hansen 1974).",
   "esat": "Bolton 1980, Mon. Wea. Rev. 108:1046, eq. 10: e_s(T) = 6.112 exp(17.67 T / (T + 243.5)) hPa (T in C); inverted for the dew point. Same formula as rust/boreal-sim hydrosphere_budget.rs esat.",

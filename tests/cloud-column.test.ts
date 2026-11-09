@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -868,4 +868,21 @@ test('layered clouds: cloud radiative effect warms at night and cools a bright d
   const half = cloudRadiativeEffect(col, .5, .5), full = cloudRadiativeEffect(col, .5, 1);
   assert.ok(Math.abs(half.net - full.net / 2) < 1e-9, 'scales linearly with cover');
   assert.ok(Math.abs(cloudRadiativeEffect(col, .5, 2).net - full.net) < 1e-12, 'cover clamps to 1');
+});
+
+test('layered clouds: surface cloud radiative effect warms the ground at night and shades it by day', () => {
+  const dry = surfaceCloudRadiativeEffect({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0, tau: 0 }, 1, 1);
+  assert.ok(Math.abs(dry.net) < 1e-9, 'no cloud, no effect');
+  assert.ok(dry.clearEps > .7 && dry.clearEps < .9, 'Brutsaert clear sky ~0.8 on a mild humid day');
+  const col = cloudColumn(20, qOf(20, .9));
+  const night = surfaceCloudRadiativeEffect(col, 0, 1);
+  assert.equal(night.sw, 0);
+  assert.ok(night.lw > 0 && night.cloudyDown > night.clearDown, 'a cloudy night sends more longwave down');
+  const deck = { ...col, waterPath: .05, tau: 10 };
+  const noon = surfaceCloudRadiativeEffect(deck, 1, 1, .15);
+  assert.ok(noon.sw < 0 && noon.net < 0, 'a stratocumulus deck at overhead sun shades the ground');
+  const snow = surfaceCloudRadiativeEffect(deck, 1, 1, .8);
+  assert.ok(snow.sw > noon.sw, 'over bright snow the ground loses less shortwave to the cloud');
+  const half = surfaceCloudRadiativeEffect(col, .5, .5), full = surfaceCloudRadiativeEffect(col, .5, 1);
+  assert.ok(Math.abs(half.net - full.net / 2) < 1e-9, 'scales linearly with cover');
 });

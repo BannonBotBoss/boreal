@@ -28,7 +28,9 @@
  *    less to space than a low warm deck (the longwave greenhouse of deep cloud);
  *  - outgoing longwave above the cloud is that top emission plus the surface upwelling a thin cloud
  *    transmits, F↑ = ε σ T_top⁴ + (1 − ε) σ T_sfc⁴ (Kirchhoff: a non-scattering IR slab transmits
- *    1 − ε), so a black deck hides the ground and a thin cirrus lets most of the warm surface through.
+ *    1 − ε), so a black deck hides the ground and a thin cirrus lets most of the warm surface through;
+ *  - at the ground, cloud adds the base's longwave over Brutsaert's 1975 clear sky and takes away the shortwave it
+ *    reflects, so a deck warms the surface at night and shades it by day (surface cloud radiative effect).
  * Pure, DOM-free; the renderer (world/globe/localClouds) bakes these layers into a 3D texture around the camera.
  */
 import C from '../../../data/earth/cloud-column.json';
@@ -176,5 +178,21 @@ export function cloudRadiativeEffect(col: Column, mu = 1, cover = 1) {
   const f = Math.min(1, Math.max(0, cover)), olr = cloudOutgoingLongwave(col), sw = cloudShortwave(col.tau, mu);
   const lw = f * (olr.surfaceUp - olr.up), swCre = sw.reflected > 0 ? -f * sw.reflected : 0;
   return { cover: f, lw, sw: swCre, net: lw + swCre };
+}
+/** Cloud radiative effect at the ground for a partly cloudy sky with cover f and surface albedo α (Ramanathan et al. 1989,
+ * surface form). Clear-sky downwelling longwave is ε_clr σ T_sfc⁴ with Brutsaert's 1975 ε_clr = 1.24 (e/T)^(1/7) from the
+ * lowest layer's vapour pressure; under cloud the base emits ε σ T_base⁴ and the clear sky still shines through the
+ * (1 − ε) the deck transmits, so LW CRE = f ε (σT_base⁴ − ε_clr σT_sfc⁴) (≥ 0 when the base is warmer than the clear sky's
+ * effective temperature, which a low deck always is). Shortwave absorbed at the ground is (1 − α) S0 μ T(τ,μ), so
+ * SW CRE = −f (1 − α) S0 μ A(τ,μ) (single bounce, no cloud–ground multiple reflection). Returns W/m². */
+export function surfaceCloudRadiativeEffect(col: Column, mu = 1, cover = 1, albedo = 0) {
+  const f = Math.min(1, Math.max(0, cover)), a = Math.min(1, Math.max(0, albedo)), l0 = col.layers[0];
+  const sfcK = (l0?.tEnv ?? 0) + 273.15, eHpa = l0 ? esatPa(l0.dew) / 100 : 0;
+  const clearEps = Math.min(1, C.lw_clear_brutsaert_a * Math.pow(Math.max(0, eHpa) / sfcK, C.lw_clear_brutsaert_b));
+  const clearDown = clearEps * K.sigma * sfcK ** 4, base = cloudBaseLongwave(col);
+  const cloudyDown = base.down + (1 - base.emissivity) * clearDown;
+  const lw = f * (cloudyDown - clearDown), sw = cloudShortwave(col.tau, mu);
+  const swCre = sw.reflected > 0 ? -f * (1 - a) * sw.reflected : 0;
+  return { cover: f, clearEps, clearDown, cloudyDown, lw, sw: swCre, net: lw + swCre };
 }
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

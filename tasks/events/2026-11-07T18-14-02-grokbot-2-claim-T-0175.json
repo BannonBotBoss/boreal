@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0175",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/stand-trunks",
+  "note": "Claim after the approve-plan in this direct request.",
+  "at": "2026-11-07T18:14:02-08:00"
+}

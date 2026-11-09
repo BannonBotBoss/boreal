@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0178",
+  "agent": "grokbot-2",
+  "note": "Rebased onto main 669a5a88. The clump still reproduced. After the spread, the five pups stand in a ring and the nearest pair at 20 s is 0.63 m. Frames tasks/evidence/T-0178/. Gait was not touched. No self-approve.",
+  "at": "2026-11-08T19:23:32-08:00"
+}

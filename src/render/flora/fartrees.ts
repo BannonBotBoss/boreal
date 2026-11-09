@@ -20,6 +20,15 @@ import { bindWind, placeTree, removeTree, updateTrees, v2Handles } from '../tree
 import { fadeOptIn } from '../fade';
 
 export const FAR_TREE_FX = { off: typeof location !== 'undefined' && new URLSearchParams(location.search).get('fartrees') === '0' }; // ?fartrees=0: bench A/B
+/**
+ * Interest priority for the horizon refill. Lower runs first.
+ * Trees v2 builds at 4. The grass under the player is about 5 (chunk distance + 5).
+ * A refill at 60 waited behind every grass tile out to the mid radius, so five
+ * seconds after the splash the horizon job had not started (tiles 0, refills 0)
+ * and a closed stand showed three mid trees and no trunks on the skyline.
+ * 9 runs after the feet and the near build, and before grass at the mid edge (~105).
+ */
+export const FAR_TREE_PRIORITY = 9;
 export const FAR_TREE_INFO = { instances: 0, geometries: 0, tiles: 0, refills: 0, sliceMaxMs: 0, inner: 0, outer: 0, triangles: 0 };
 (globalThis as { borealFarTrees?: unknown }).borealFarTrees = { info: FAR_TREE_INFO, fx: FAR_TREE_FX }; // dev/bench handle
 
@@ -82,7 +91,7 @@ export function createFarTrees(scene: THREE.Scene) {
       for (;;) { const t0 = performance.now(); let r; do r = g.next(); while (!r.done && performance.now() - t0 < FAR_TREES.sliceMs * .5);
         FAR_TREE_INFO.sliceMaxMs = Math.max(FAR_TREE_INFO.sliceMaxMs, performance.now() - t0); if (r.done) return; yield; }
     })();
-    enqueue('fartrees:refill', 60, timed, () => {
+    enqueue('fartrees:refill', FAR_TREE_PRIORITY, timed, () => {
       let n = 0, t = 0; for (const insts of tiles.values()) for (const i of insts) if (i >= 0) { n++; t += tris.get(bm!.getGeometryIdAt(i)) ?? 0; }
       Object.assign(FAR_TREE_INFO, { instances: n, tiles: tiles.size, triangles: t, refills: FAR_TREE_INFO.refills + 1 });
     });

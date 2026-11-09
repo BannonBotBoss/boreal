@@ -52,6 +52,9 @@ test('the litter is a loose clump, not a row, and it moves', () => {
     if (Math.hypot(p.x, p.z) < 0.95) near++;
   }
   assert.ok(near >= 2, `only ${near} pups are in the near clump`);
+  let minD = Infinity;
+  for (let i = 0; i < now.length; i++) for (let j = i + 1; j < now.length; j++) minD = Math.min(minD, Math.hypot(now[i].x - now[j].x, now[i].z - now[j].z));
+  assert.ok(minD >= 0.55, `pups share one patch (${minD.toFixed(2)} m)`);
   assert.ok(Math.max(...backs) - Math.min(...backs) > 0.45, 'the spacing is still even');
   const gaps = [...now].sort((a, b) => a.x - b.x).slice(1).map((p, i) => p.x - [...now].sort((a, b) => a.x - b.x)[i].x);
   assert.ok(Math.max(...gaps) - Math.min(...gaps) > 0.08, 'the side gaps are still equal');

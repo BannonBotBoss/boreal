@@ -66,7 +66,7 @@ import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeat
 import { openForestPlanet } from './core/planetWeather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
 import { createLoading } from './ui/loading';
-import { settle, startup } from './render/startup';
+import { settle, standChunkIndex, startup } from './render/startup';
 import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
 import { toLatLon } from './world/globe/planet';
@@ -80,6 +80,7 @@ import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, aggregateWorldSec, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
 import { dryStart, isDry } from './core/stages/surfaceAt';
+import { dropStand } from './world/globe/forestLanding';
 import { WITNESS_ALTITUDE_SCALE } from './core/enterLiving';
 import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
 import { createChronometer } from './ui/chronometer';
@@ -245,9 +246,14 @@ const renderStore = createSettingsStore(RENDER_SETTINGS);
 } }
 const watchLife = new URLSearchParams(location.search).has('watch');
 if (!new URLSearchParams(location.search).has('at')) {
-  // The animal already stands on its store point. dryStart only if that point is open water.
+  // The store mark faces the shore, so the picture is the flat lake. Step up the bank before
+  // the first frame. The splash waits on this same point (landReady below), not the store mark.
   const here = view.livingHere(); player.x = here.x; player.z = here.z;
   if (STAGES.on && !isDry(player.x, player.z)) [player.x, player.z] = dryStart(player.x, player.z);
+  if (STAGES.on) {
+    const bank = dropStand({ x: player.x, z: player.z }, yaw);
+    player.x = bank.x; player.z = bank.z; yaw = bank.yaw; player.heading = yaw;
+  }
 }
 let resumedAtSave = false;
 function applyGameResume() {
@@ -330,7 +336,11 @@ void import('./vr/session').then(m => m.mountEnterVr(notice, {
   resume: () => { xrDriven = false; requestAnimationFrame(frame); },
 })).catch(e => console.warn('vr', e));
 element('photo-btn').onclick = () => enterPhoto();
-element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = view.playable.cameraHeight; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
+element('home').onclick = () => {
+  setAutonomous(false);
+  const bank = STAGES.on ? dropStand({ x: 0, z: 0 }, -.35) : { x: 0, z: 0, yaw: -.35 };
+  player.x = bank.x; player.z = bank.z; altitude = view.playable.cameraHeight; yaw = bank.yaw; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH;
+};
 element('help').onclick = () => { if (!menu.open) togglePause(); menu.openControls(); }; // Controls screen (the Library text is a button there)
 element('close').onclick = () => dialog.close();
 const soundLabel = () => { element('sound').textContent = sfx.muted ? 'Sound off' : 'Sound on'; };
@@ -743,7 +753,15 @@ void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally((
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
   armBootAim(q); // return visit only: aim the globe before prewarm. A first visit leaves this empty and still plays the intro.
   const cine = startView(location.search) === 'sphere' && !q.has('bench') && !q.has('nomenu') && !hasSeenBigBang(context);
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).then(async result => {
+  void startup(view, loading, {
+    reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe'),
+    landReady: () => {
+      const built = view.chunkBuilt;
+      if (typeof built !== 'function') return false;
+      const cell = standChunkIndex(player.x, player.z);
+      return built(cell.a, cell.b);
+    },
+  }).then(async result => {
     if (result && result.ground === false) return false; // the loading card stays, with the reload line, instead of a black void
     try { if (!(q.has('noprobe') || cine)) { const r = await inpage?.prewarm(); console.log('INPAGE prewarm ' + JSON.stringify(r)); } }
     catch (e) { console.warn('inpage prewarm', e); }

@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0175",
+  "agent": "grokbot-2",
+  "note": "Rebased onto main 669a5a88. On main the far-tree refill had sliceMaxMs 0 at 20 s. After the priority change it is slicing (sliceMaxMs 5.1, geometries 14). This spawn reports prairie vegetation 0.33, so it is not the closed stand from the audit. Frames tasks/evidence/T-0175/. No self-approve.",
+  "at": "2026-11-08T19:23:34-08:00"
+}

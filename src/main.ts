@@ -71,7 +71,8 @@ import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
 import { toLatLon } from './world/globe/planet';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
-import { startView } from './world/globe/startView';
+import { SPHERE_START, startView } from './world/globe/startView';
+import { mintUniverseSeed, normalizeUniverseSeed, readUniverseSeed, worldSeedFromUniverse, writeUniverseSeed } from './core/universeSeed';
 import { createOpening, type Opening } from './world/cosmos/opening';
 import { cineTrace } from './world/cosmos/cineReady';
 import { createInPage } from './world/globe/inpage';
@@ -203,13 +204,25 @@ function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(
 let captureResume = () => {};
 function commitContext() { if (!saveBlocked) try { localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
 function saveAll() { try { captureResume(); localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); saveNeeds(); commitContext(); } catch { /* storage blocked */ } }
+function clearWorldSaves(keepBigBangSeen: boolean) {
+  const seen = keepBigBangSeen && hasSeenBigBang(context);
+  for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, NEEDS_KEY, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
+  if (seen) try { localStorage.setItem(SAVE_KEY, JSON.stringify(markBigBangSeen(createContext()))); } catch { /* blocked */ }
+}
 const menu = createMenu({
   hasSave: () => [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND].some(k => { try { return !!localStorage.getItem(k); } catch { return false; } }),
-  seed: () => STAGES.seed, staged: () => STAGES.on, music: () => musicPanel(), controls: () => controls(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
-  newWorld: o => { // fresh world: forget the per-world saves (settings, music and the probe stay). A watched intro stays watched.
-    const seen = hasSeenBigBang(context);
-    for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, NEEDS_KEY, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
-    if (seen) try { localStorage.setItem(SAVE_KEY, JSON.stringify(markBigBangSeen(createContext()))); } catch { /* blocked */ }
+  seed: () => STAGES.seed, staged: () => STAGES.on, universeSeed: () => readUniverseSeed(),
+  music: () => musicPanel(), controls: () => controls(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
+  generateUniverse: o => {
+    // Fresh universe: mint (or replay) seed, clear per-world saves, boot the sphere → cosmos journey.
+    const u = normalizeUniverseSeed(o?.seed ?? 0) || mintUniverseSeed();
+    clearWorldSaves(true);
+    writeUniverseSeed(u);
+    renderStore.set('world.stagedTerrain.v2', o?.staged ?? STAGES.on);
+    location.assign(`?${SPHERE_START}`);
+  },
+  newWorld: o => { // legacy forest-only new world (Generate universe → Advanced)
+    clearWorldSaves(true);
     try { localStorage.setItem('boreal.seed.v1', String(o.seed)); } catch { /* blocked */ } renderStore.set('world.stagedTerrain.v2', o.staged); location.reload(); },
   warning: () => { const born = Number(localStorage.getItem('boreal.player.born') ?? worldSec()); const p = view.playable;
     return lifespanWarning(p.id, ageYears(p.id, born, worldSec()), p.label); },
@@ -234,7 +247,11 @@ const drawFrame = (pv?: PhotoView) => {
 };
 const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw: pv => drawFrame(pv), onExit: () => { clearInput(); accumulator = 0; document.body.classList.remove('photo-mode'); } });
 // Pause-menu panels. Anything that rebuilds the world or swaps the body waits until resume.
-{ const sd = Number(localStorage.getItem('boreal.seed.v1')); if (sd > 0) STAGES.seed = sd; } // seed chosen in the start menu
+{ // Universe seed (Generate universe) owns the derived world/stages seed when present.
+  const u = readUniverseSeed();
+  const sd = u > 0 ? worldSeedFromUniverse(u) : Number(localStorage.getItem('boreal.seed.v1'));
+  if (sd > 0) STAGES.seed = sd;
+}
 const renderStore = createSettingsStore(RENDER_SETTINGS);
 { const st = new URLSearchParams(location.search).get('stages'); if (st !== null) renderStore.set('world.stagedTerrain.v2', st !== '0' && st !== 'off'); } // staged terrain is the default; ?stages=0 turns it off (persisted, like the setting), ?stages=1 back on
 { const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number); if (at && at.length >= 2 && at.every(Number.isFinite)) { player.x = at[0]; player.z = at[1]; if (at.length > 2) { yaw = at[2]; player.heading = yaw; } } } // dev/screenshots: ?at=x,z[,yaw]

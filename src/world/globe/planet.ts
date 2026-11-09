@@ -226,10 +226,13 @@ export function vegetationWeight(s: Surface, d: Vec3, coastM?: number) {
   }
   const { tree: tl, ice: il } = treeIceLinesM(lat, coastM);
   if (s.h > tl - 150) w *= 1 - smoothstep(tl - 150, tl + 250, s.h);
-  if (s.h > il - 300 || lat > 78) w *= lat > 78 ? 0 : 1 - smoothstep(il - 300, il + 300, s.h);
+  w *= 1 - iceCover(s.h, il, lat);
   return Math.max(0, Math.min(1, w));
 }
 /** LAND colour (water is contoured and shaded per pixel by the material). */
+/** Permanent-ice weight 0..1. The ice line (lapse rate x latitude, #192) sets it; above 80° it also fades in up to full ice at 86°,
+ *  instead of the old hard cut at 78° that painted every low polar island pure white (#402). Svalbard-like lowlands at 78° stay bare. */
+export const iceCover = (h: number, il: number, lat: number) => Math.max(smoothstep(il - 300, il + 300, h), smoothstep(80, 86, lat));
 export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0], coastM?: number) {
   const C = GLOBE_COLOURS;
   const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = s.mottle;
@@ -253,6 +256,6 @@ export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0], coas
   }
   const { tree: tl, ice: il } = treeIceLinesM(lat, coastM); // T-0072 + #192 continentality when coastM known
   if (s.h > tl - 150) mixTo(o, C.rock, smoothstep(tl - 150, tl + 250, s.h)); // bare rock above the tree line
-  if (s.h > il - 300 || lat > 78) mixTo(o, C.snow, lat > 78 ? 1 : smoothstep(il - 300, il + 300, s.h)); // permanent ice
+  mixTo(o, C.snow, iceCover(s.h, il, lat)); // permanent ice: from the lapse-rate ice line, plus a soft high-Arctic fade (no hard 78° cut)
   return o;
 }

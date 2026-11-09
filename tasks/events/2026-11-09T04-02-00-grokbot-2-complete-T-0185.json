@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0185",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/canopy-crowns",
+  "skill": "land-mosaic",
+  "note": "The 400 m globe is a stipple of crowns, not a smooth green. The 4 px step goes from 0.21 to 2.22. Frames tasks/evidence/T-0185/. tests/crown-cover.test.ts passes. No self-approve.",
+  "at": "2026-11-09T04:02:00-08:00"
+}

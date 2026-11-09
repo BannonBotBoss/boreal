@@ -458,6 +458,28 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
       vec3 leaf = vec3(diffuseColor.r * 0.7, diffuseColor.g * 2.2, diffuseColor.b * 0.6);
       vec3 mosaic = stand < 0.5 ? mix(fen, diffuseColor.rgb, stand * 2.0) : mix(diffuseColor.rgb, leaf, (stand - 0.5) * 2.0);
       diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen * mix(0.55, 1.0, dark));
+      // Crowns. The stand waves are smooth blobs. A closed boreal canopy is overlapping
+      // crowns a few metres across, and a 10 m Sentinel-2 pixel still breaks that
+      // (Drusch et al. 2012). Coarser than 12 m, the cell widens so a clump stays a few
+      // pixels instead of averaging back to one green. detC is the lattice hash already in this shader.
+      float cell = max(12.0, px * 3.5);
+      vec2 gC = vDetW.xz / cell;
+      vec2 bC = floor(gC);
+      float bestC = 2.0;
+      for (int ia = -1; ia <= 1; ia++) {
+        for (int ib = -1; ib <= 1; ib++) {
+          vec2 idC = bC + vec2(float(ia), float(ib));
+          vec2 midC = mod(idC, 4096.0);
+          float hxC = detC(vec3(midC, 21.0), uDetail.w + 21.0);
+          float hyC = detC(vec3(midC.yx, 22.0), uDetail.w + 22.0);
+          float hrC = detC(vec3(midC, 23.0), uDetail.w + 23.0);
+          vec2 ctrC = idC + 0.5 + (vec2(hxC, hyC) - 0.5) * 0.75;
+          float radC = 0.40 + 0.28 * hrC;
+          bestC = min(bestC, length(gC - ctrC) / radC);
+        }
+      }
+      float coverC = bestC >= 1.0 ? 0.0 : 1.0 - bestC;
+      diffuseColor.rgb *= mix(1.0, mix(0.58, 1.32, coverC), 1.0 - smoothstep(40.0, 80.0, px));
     }
   }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>

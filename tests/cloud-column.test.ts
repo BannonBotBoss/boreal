@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex, kIndex } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -906,4 +906,11 @@ test('layered clouds: lifted index is negative for a warm humid column, positive
   assert.ok(moist < 0, `warm humid air is unstable (LI ${moist})`);
   assert.ok(dry > 0, `cold dry air is stable (LI ${dry})`);
   assert.ok(Number.isNaN(liftedIndex(cloudColumn(20, qOf(20, .8), 1, 3000))), 'a column topping out below 500 hPa has no index');
+});
+test('Layered clouds: K-index rises with warm humid air and is undefined on a high plateau', () => {
+  const humid = kIndex(cloudColumn(30, qOf(30, .85))), dry = kIndex(cloudColumn(5, qOf(5, .3)));
+  assert.ok(Number.isFinite(humid) && Number.isFinite(dry));
+  assert.ok(humid > 30, `warm humid air gives thunderstorm-likely K (${humid})`);
+  assert.ok(dry < 20, `cold dry air gives few storms (${dry})`);
+  assert.ok(Number.isNaN(kIndex(cloudColumn(10, qOf(10, .6), 1, undefined, undefined, 3000), 3000)), 'ground above 850 hPa has no K-index');
 });

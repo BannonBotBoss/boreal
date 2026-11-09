@@ -28,6 +28,31 @@ export function standField(x: number, z: number) {
   return u;
 }
 
+/**
+ * The stand mosaic is on whenever a 40 m cell is wider than about 2 px.
+ * `detailStrength` is the globe tier's detail (0 at Minimum). It does not turn the mosaic off:
+ * that gate left the drone over boreal as one green fill.
+ */
+export function standMosaicActive(detailStrength: number, metresPerPixel: number) {
+  if (detailStrength < -1) return false;
+  return 40 / Math.max(metresPerPixel, 1e-6) > 2;
+}
+
+export interface GroundFillStats { stdL: number; bins: number; black: number }
+
+/**
+ * A ground crop that is one colour, or a black canvas.
+ * Calibrated on the 400 m boreal frame (one green: low luma spread, few bins)
+ * and on a mottled stand field (spread and bins both higher).
+ * The crop is the ground, not the HUD.
+ */
+export function flatGroundFill(s: GroundFillStats) {
+  if (s.black >= 0.85 && s.stdL < 6) return true;
+  // The 400 m boreal crop before the fix was one green: luma spread 0.3, two bins.
+  // A stand mosaic on that same crop spreads both.
+  return s.stdL < 2 && s.bins < 5;
+}
+
 /** Fen (browner) below the middle, broadleaf (greener) above it. Water is not passed in. */
 export function landMosaic(x: number, z: number, rgb: readonly [number, number, number]): [number, number, number] {
   const u = standField(x, z);

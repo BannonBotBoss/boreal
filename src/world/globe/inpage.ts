@@ -18,7 +18,7 @@
  */
 import * as THREE from 'three';
 import type { Globe } from './globeView'; // loaded on demand (only with the in-page path on), so the reload path's game bundle is unchanged
-import { createFarLayer } from './farLayer';
+import { createFarLayer, farLayerScale } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, freeFallVy, flightPrompt, type EntryPhase } from './flight';
@@ -464,7 +464,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       // buffer stretches one texel across two pixels. The shore mask then passes its cutoff and vertex lakes
       // are painted as land. Full buffer while the patch is out; half again once the patch covers the frame
       // and this texture is only the sky. The window size is not used: a second full raster stalled the descent.
-      far.setScale(fade < 0.5 ? 1 : 0.5); far.resize(size.x, size.y);
+      far.setScale(farLayerScale(h, fade)); far.resize(size.x, size.y);
       globeCameraFrom(globe.planet, camera, gcam); globe.drive({ position: gcam.position, quaternion: gcam.quaternion, fov: camera.fov, aspect: camera.aspect });
       globe.step(far.target); STATS.globeMs = performance.now() - t0;
       if (savedBg === undefined) savedBg = scene.background; scene.background = DEV && DEBUG.noGlobe ? NO_GLOBE : far.texture;

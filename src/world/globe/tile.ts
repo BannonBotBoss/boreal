@@ -215,12 +215,15 @@ const DETAIL_NOISE = GLSL_NOISE.replace(/\b(hash2s|vnoise|hash2u|vnoiseU|fbm)\b/
 const SIMPLEX_NOISE = GLSL_SIMPLEX.replace(/\b(mod289v3|mod289v4|permute4|taylorInvSqrt4|snoise)\b/g, 'gd_$1');
 /** r20: finer and much weaker than r19 (40/12/4 m, albedo .6, bumps 3 m read as blotches): crown-scale grain, not patches. */
 export const DETAIL = { lambda: [24, 8, 3], amp: [1.2, .6, .25], albedo: .22, weight: [.3, .4, .3], fadeFrom: 5000, fadeFull: 2500 };
-export const GLOBE_DETAIL = { uDetail: { value: new THREE.Vector4(0, DETAIL.albedo, 1, 0) }, uDetO0: { value: new THREE.Vector3() }, uDetO1: { value: new THREE.Vector3() }, uDetO2: { value: new THREE.Vector3() },
+export const GLOBE_DETAIL = { uDetail: { value: new THREE.Vector4(0, DETAIL.albedo, 1, 0) }, uLiveMosaic: { value: 0 }, uDetO0: { value: new THREE.Vector3() }, uDetO1: { value: new THREE.Vector3() }, uDetO2: { value: new THREE.Vector3() },
   uDetL: { value: new THREE.Vector3(...DETAIL.lambda.map(l => 1 / l)) }, uDetAmp: { value: new THREE.Vector3(...DETAIL.amp) } };
 /** globeView, each render: the detail strength and the camera's lattice offsets (double precision in, float32 out). */
 export function setGlobeDetail(cam: Vec3, alt: number, tierScale: number, seed: number) {
   const u = GLOBE_DETAIL, t = Math.min(1, Math.max(0, (DETAIL.fadeFrom - alt) / (DETAIL.fadeFrom - DETAIL.fadeFull)));
   u.uDetail.value.set(tierScale * t * t * (3 - 2 * t), DETAIL.albedo, 1, seed % 65536);
+  // Below 20 km a coarse tile can still fill the drone frame. The mosaic then uses a
+  // wavelength of at least a few pixels, so the fill breaks before the quadtree arrives.
+  u.uLiveMosaic.value = alt < 20000 ? 1 : 0;
   const m = (v: number, l: number) => (((v / l) % 4096) + 4096) % 4096;
   [u.uDetO0, u.uDetO1, u.uDetO2].forEach((o, k) => { const l = DETAIL.lambda[k]; o.value.set(m(cam[0], l), m(cam[1], l), m(cam[2], l)); });
 }
@@ -341,7 +344,7 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -366,23 +369,7 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
     detH = (k0 * n0 * uDetAmp.x + k1 * n1 * uDetAmp.y + k2 * n2 * uDetAmp.z) * uDetail.x * uDetail.z * landMask;
     a = k0 * n0 * ${DETAIL.weight[0].toFixed(3)} + k1 * n1 * ${DETAIL.weight[1].toFixed(3)} + k2 * n2 * ${DETAIL.weight[2].toFixed(3)};
     diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask;
-    // Stand mosaic. Sentinel-2 MSI is a 10 m pixel (Drusch et al. 2012). These three waves
-    // (40 / 160 / 640 m) are the stand and wetland patches a true-colour mosaic shows.
-    // Same detN the crown grain already uses, so a planet-scale coordinate stays exact.
-    // A cell under about 2 px fades, and a full-disk view is unchanged.
-    float seen = 1.0 - smoothstep(0.25, 0.7, length(fwidth(vDetW.xz / 40.0)));
-    if (seen > 0.001 && landMask > 0.5) {
-      float s0 = detN(vDetW / 40.0, uDetail.w + 7.0);
-      float s1 = detN(vDetW / 160.0, uDetail.w + 8.0);
-      float s2 = detN(vDetW / 640.0, uDetail.w + 9.0);
-      float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
-      // A 3% canopy albedo under ACES hides a small multiply (the frame stayed one olive).
-      // These stretches are the display of a Sentinel quicklook, not a new reflectance. [game calibration]
-      vec3 fen = vec3(diffuseColor.r * 2.4, diffuseColor.g * 0.45, diffuseColor.b * 0.35);
-      vec3 leaf = vec3(diffuseColor.r * 0.7, diffuseColor.g * 2.2, diffuseColor.b * 0.6);
-      vec3 mosaic = stand < 0.5 ? mix(fen, diffuseColor.rgb, stand * 2.0) : mix(diffuseColor.rgb, leaf, (stand - 0.5) * 2.0);
-      diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen);
-    } }
+  }
   if (uOceanGlint > 0.5) { // macro wave chop on the ocean only (stegu simplex). Fades when a cell is under ~2 px. Lakes and the film's early beats stay flat.
     float ocean = (1.0 - landMask) * (1.0 - clamp(vLake, 0.0, 1.0)) * presentW;
     vec3 pw = vDetW;
@@ -418,6 +405,29 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
     diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.09, 0.38, 0.08), plants);
     float presentMix = clamp(uEra.w, 0.0, 1.0); presentMix = 1.0 - (1.0 - presentMix) * (1.0 - presentMix);
     diffuseColor.rgb = mix(diffuseColor.rgb, present, presentMix);
+  }
+  // Stand mosaic. Sentinel-2 MSI is a 10 m pixel (Drusch et al. 2012). These three waves
+  // (40 / 160 / 640 m) are the stand and wetland patches a true-colour mosaic shows.
+  // Outside the detail gate, and after the era mix: Minimum sets uDetail.x to 0, and the
+  // plant-era colour is one green. Either one left the 400 m boreal as a single fill.
+  // standMosaicActive ignores the detail strength. A full disk (uLiveMosaic 0 and a
+  // sub-pixel cell) is unchanged. A coarse drone tile widens the wave until it is a few pixels.
+  {
+    float px = max(length(fwidth(vDetW.xz)), 1e-3);
+    float w0 = 40.0, w1 = 160.0, w2 = 640.0;
+    float wave = uLiveMosaic > 0.5 ? max(w0, px * 6.0) : w0;
+    float seen = 1.0 - smoothstep(0.25, 0.7, length(fwidth(vDetW.xz / wave)));
+    if (seen > 0.001 && landMask > 0.5) {
+      float s0 = detN(vDetW / wave, uDetail.w + 7.0);
+      float s1 = detN(vDetW / (wave * (w1 / w0)), uDetail.w + 8.0);
+      float s2 = detN(vDetW / (wave * (w2 / w0)), uDetail.w + 9.0);
+      float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
+      float dark = 1.0 - smoothstep(0.07, 0.16, max(diffuseColor.r, diffuseColor.g));
+      vec3 fen = vec3(diffuseColor.r * 2.4, diffuseColor.g * 0.45, diffuseColor.b * 0.35);
+      vec3 leaf = vec3(diffuseColor.r * 0.7, diffuseColor.g * 2.2, diffuseColor.b * 0.6);
+      vec3 mosaic = stand < 0.5 ? mix(fen, diffuseColor.rgb, stand * 2.0) : mix(diffuseColor.rgb, leaf, (stand - 0.5) * 2.0);
+      diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen * mix(0.55, 1.0, dark));
+    }
   }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   if (uDetail.x > 0.001 || uOceanGlint > 0.5) { // derivative bump (Mikkelsen 2010). detH carries land detail and, on the ocean, the simplex chop.

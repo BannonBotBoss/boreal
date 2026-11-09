@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0183",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/drone-fill-df61",
+  "skill": "land-mosaic",
+  "note": "The 400 m boreal is no longer one green. The far layer stays full size above 150 m, and the stand mosaic runs after the era colour even when detail strength is 0. Frames tasks/evidence/T-0183/. tests/drone-fill.test.ts passes. No self-approve.",
+  "at": "2026-11-08T23:28:40-08:00"
+}

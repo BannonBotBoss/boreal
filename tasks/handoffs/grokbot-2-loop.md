@@ -20,3 +20,13 @@ No self-approve. No merges.
 | D11 | SwiftShader warning | not a game bug |
 
 New: drone glide at 400 m is flat green and brown tiles (`tasks/evidence/T-0179/descent-clouds.png`). Home spawn reports prairie, vegetation about 0.33, with a floating grass shelf. Pup skins are untextured. Gait was not touched.
+
+## 2026-11-08 evening, main 7fa938f
+
+Recaptured the path. D12 still reproduced: 400 m over 52 N, 97 W (boreal, vegetation 0.93, day 227, morning) was one green. Fixed on `grokbot-2/drone-fill-df61` (T-0183). Not self-approved.
+
+D13 white marks still on the opening planet. Not edited (`atmosphere.ts`, #402).
+
+D14 pups are smooth tan low-poly (`tasks/evidence` lake and wolf frames from this pass; the committed pup frame is not on T-0183). Not fixed in T-0183.
+
+Gait was not changed. SwiftShader frame time at the globe was about 0.4–1 s.

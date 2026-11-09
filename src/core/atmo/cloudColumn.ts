@@ -206,4 +206,14 @@ export function atmosphericCloudRadiativeEffect(col: Column, mu = 1, cover = 1, 
   const lw = toa.lw - sfc.lw, sw = toaSw - sfc.sw, net = lw + sw;
   return { cover: toa.cover, lw, sw, net, heatingKPerDay: net * C.g / (C.cp * C.p0_Pa) * 86400 };
 }
+/** Lifted index (K) of a column (Galway 1956): environment minus lifted-parcel temperature at the 50 kPa level, read from
+ * the layer whose absolute pressure is nearest 500 hPa (groundM: the surface height above sea level, as in cloudColumn).
+ * The parcel here is the column's own entraining parcel. Negative means the parcel is warmer than its surroundings aloft,
+ * so the air is unstable (below -6 K: severe storms possible); positive means stable. NaN if the column stops below 500 hPa. */
+export function liftedIndex(col: Column, groundM = 0, pLevelPa = 50000) {
+  const g0 = Math.max(0, groundM) || 0; let best: Layer | undefined, d = Infinity;
+  for (const l of col.layers) { const dd = Math.abs(pressureAt(l.z + g0) - pLevelPa); if (dd < d) { d = dd; best = l; } }
+  if (!best || pressureAt(best.z + g0) > pLevelPa + 2500) return NaN;
+  return best.tEnv - best.tParcel;
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

@@ -104,13 +104,80 @@ export function aerialStats(file: string) {
 }
 
 /**
- * Readable August boreal land. The EOX tile's centre crop is luma about 39, red-dominant 0, green-dominant.
- * The broken overhead was luma 19.7 and 6% red, and a luma-spread test passed it.
- * Open water is the height field below its level (`aH`), and the aerial band no longer forces that to land.
- * `aLake` is "level > 0.5 m", which is most dry land, so it is not a water test.
+ * Readable August boreal land. Mean luma alone is not this: the zoom-8 tile and the
+ * T-0187 frames both sit near luma 39, and the frames are still a soft green.
  */
 export function daylightBoreal(s: { mean: number; redPct: number; greenPct: number; bluePct: number }, floor = 34) {
-  return s.mean >= floor && s.mean <= 110 && s.redPct < 2 && s.greenPct > 55;
+  return s.mean >= floor && s.mean <= 140 && s.redPct < 8 && s.greenPct > 40;
+}
+
+/**
+ * Structure of an overhead frame, centre crop.
+ * edge: mean |Δ luma| to the next pixel (1 px). A blur is near 0; a shore or a crown is not.
+ * water: share of pixels that are blue over both red and green (open water).
+ * hist: 4×4×4 sRGB histogram, 64 bins, normalised.
+ *
+ * Reference: EOX Sentinel-2 cloudless 2021, Web Mercator z14 / y5484 / x3868.
+ * That tile is centred near 51 N, 95 W (boreal shield, not the game point 52 N, 97 W, and not Kenora).
+ * Metres per pixel = 156543.03392 × cos(latitude) / 2^z ≈ 6.07 m at 51° (EPSG:3857).
+ * A 2000 m camera with a 45° lens and a 1280 px frame covers about 1.3 m per pixel
+ * (2 × 2000 × tan(22.5°) / 1280). 5 m is the same class of picture; zoom 8 (~376 m at 52°) is not.
+ * CC BY 4.0, https://s2maps.eu — file tasks/evidence/T-0189/ref-eox-z14.png.
+ */
+export function structureRead(file: string) {
+  const { w, h, rgb } = readPng(file);
+  const x0 = Math.floor(w * 0.08), x1 = Math.floor(w * 0.92);
+  const y0 = Math.floor(h * 0.08), y1 = Math.floor(h * 0.88);
+  let n = 0, edge = 0, edgeN = 0, water = 0;
+  const hist = new Float64Array(64);
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const i = (y * w + x) * 3;
+    const r = rgb[i], g = rgb[i + 1], b = rgb[i + 2];
+    const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    n++;
+    if (b > r + 4 && b + 2 >= g && L > 8 && L < 90) water++;
+    hist[(r >> 6) * 16 + (g >> 6) * 4 + (b >> 6)]++;
+    if (x + 1 < x1) {
+      const j = (y * w + x + 1) * 3;
+      const L2 = 0.2126 * rgb[j] + 0.7152 * rgb[j + 1] + 0.0722 * rgb[j + 2];
+      edge += Math.abs(L - L2); edgeN++;
+    }
+  }
+  for (let i = 0; i < 64; i++) hist[i] /= n;
+  return { edge: edge / edgeN, water: water / n, hist, n };
+}
+
+/** Chi-square distance between two normalised 64-bin histograms. 0 is the same picture. */
+export function histDistance(a: Float64Array, b: Float64Array) {
+  let d = 0;
+  for (let i = 0; i < 64; i++) {
+    const s = a[i] + b[i];
+    if (s > 0) { const diff = a[i] - b[i]; d += diff * diff / s; }
+  }
+  return d;
+}
+
+/**
+ * A 2000 m or 400 m boreal frame against the z14 tile.
+ * The T-0187 frames match that tile's mean luma and fail this: their edge is a blur
+ * and they have no water. A known match is the reference against itself (distance 0,
+ * and its own edge and water). A solid green fails the edge and the water.
+ */
+export function histPeak(h: Float64Array) {
+  let m = 0;
+  for (let i = 0; i < h.length; i++) if (h[i] > m) m = h[i];
+  return m;
+}
+
+export function aerialStructure(frame: { edge: number; water: number; hist: Float64Array }, ref: { edge: number; water: number; hist: Float64Array }) {
+  // Edge: the smudge is ~0.08; the 6 m tile is 2.63. 0.4 of the tile still rejects the blur.
+  // Water: the tile is 4.4% blue-dark; the smudge is 0. A frame that is mostly water fails the cap.
+  // Peak: the smudge puts every centre pixel in one histogram bin (peak 1). The tile's peak is 0.78.
+  // Distance: a palette with no shared green (a red field) is far from the tile. The cap is that miss.
+  return frame.edge >= ref.edge * 0.4
+    && frame.water >= 0.02 && frame.water <= 0.35
+    && histPeak(frame.hist) <= 0.92
+    && histDistance(frame.hist, ref.hist) <= 1.2;
 }
 
 test('the overhead stand is one colour at one point and not one colour across a few hundred metres', () => {
@@ -156,10 +223,22 @@ test('the 2000 m frame that only raised luma spread is still not daylight boreal
   assert.equal(daylightBoreal(s), false, JSON.stringify(s));
 });
 
-test('overhead boreal at 2000 m and 400 m is in the EOX daylight band and is not red', () => {
-  const far = aerialStats('tasks/evidence/T-0187/after-globe-2000.png');
-  const near = aerialStats('tasks/evidence/T-0187/after-globe-400.png');
-  // 2000 m matches the EOX tile (luma about 39). 400 m is the same land a little darker, still far above the broken luma 19.7.
-  assert.equal(daylightBoreal(far, 36), true, JSON.stringify(far));
-  assert.equal(daylightBoreal(near, 32), true, JSON.stringify(near));
+test('the zoom-14 boreal tile has shores and open water; the luma-matched overhead does not', () => {
+  const ref = structureRead('tasks/evidence/T-0189/ref-eox-z14.png');
+  const bad = structureRead('tasks/evidence/T-0187/after-globe-2000.png');
+  const badNear = structureRead('tasks/evidence/T-0187/after-globe-400.png');
+  assert.ok(ref.edge > 2 && ref.water > 0.03 && ref.water < 0.2, JSON.stringify({ edge: +ref.edge.toFixed(3), water: +ref.water.toFixed(3), peak: +histPeak(ref.hist).toFixed(3) }));
+  assert.equal(aerialStructure(ref, ref), true, 'the reference is the known match');
+  assert.equal(aerialStructure(bad, ref), false, JSON.stringify({ edge: +bad.edge.toFixed(3), water: +bad.water.toFixed(3), peak: +histPeak(bad.hist).toFixed(3), d: +histDistance(bad.hist, ref.hist).toFixed(3) }));
+  assert.equal(aerialStructure(badNear, ref), false, JSON.stringify({ edge: +badNear.edge.toFixed(3), water: +badNear.water.toFixed(3), peak: +histPeak(badNear.hist).toFixed(3) }));
+});
+
+test('overhead boreal at 2000 m and 400 m matches the zoom-14 tile on edge, water and colour', () => {
+  const ref = structureRead('tasks/evidence/T-0189/ref-eox-z14.png');
+  for (const file of ['tasks/evidence/T-0189/after-globe-2000.png', 'tasks/evidence/T-0189/after-globe-400.png']) {
+    const s = structureRead(file);
+    assert.equal(aerialStructure(s, ref), true, JSON.stringify({
+      file, edge: +s.edge.toFixed(3), water: +s.water.toFixed(3), peak: +histPeak(s.hist).toFixed(3), d: +histDistance(s.hist, ref.hist).toFixed(3),
+    }));
+  }
 });

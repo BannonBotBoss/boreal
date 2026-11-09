@@ -35,10 +35,21 @@ on the ground once the patch fade is in.
 
 ## Crowns
 
-A jittered 12 m grid (`crownCover`) is a dot wallpaper at 400 m. The globe tile no longer
-stamps it. The canopy at 400 m and at 2000 m is the 40 / 160 / 640 m stand field.
-At 2000 m the 40 m wave is grain, so its weight drops and the 160 m and 640 m waves lead.
-The skirt still has the 12 m step. Do not bring that step back onto the tile.
+A jittered 12 m grid of identical disks is a dot wallpaper at 400 m. Do not stamp that.
+A smooth 160 m and 640 m blend is the other failure: at 2000 m (about 1–3 m per pixel
+on a 45° lens and a 1280 px frame) it is an out-of-focus green, and a mean-luma match
+to a zoom-8 tile (~376 m per pixel at 52°) will pass it.
+
+Paint camera-relative metres (`vAerial = world − camera`, subtracted in the vertex
+shader). Planet-frame `vDetW` is ~6e6 and the 40 m noise becomes speckle. Crowns are
+ellipses on a cell of about seven pixels, clamped to 6–28 m, with a jitter near one
+cell so the lattice disappears. The crown albedo and the gap albedo must differ in the
+green channel or luma stays one histogram bin. Fens are the low part of a 180 m field
+plus the ring around a pond. Ponds are a 150 m field the 1.8 km lake octave cannot
+draw inside a 2 km frame; punch `landMask` before the aerial blue or the pond stays
+the 0.01 albedo and reads black.
+
+The skirt still has the 12 m step. Do not copy that step onto the tile.
 
 ## Overhead quads
 
@@ -60,11 +71,13 @@ to land (`uHideLake`). The aerial band leaves it as water.
 
 ## Checks that are not a luma spread
 
-`tests/overhead-stand.test.ts` `daylightBoreal` reads the centre crop against the committed
-EOX tile (`tasks/evidence/T-0187/ref-eox-z8.png`). Mean luma, red-dominant share, and
-green-dominant share. A red/green noise field can pass a variance test and fail this one.
-The broken frame `tasks/evidence/T-0184/after-globe-2000.png` is the known failure
-(luma 19.7, red 6%).
+`tests/overhead-stand.test.ts` `aerialStructure` reads edge (mean 1 px luma step), blue-dark
+water share, histogram peak, and chi-square distance to
+`tasks/evidence/T-0189/ref-eox-z14.png` (EOX Sentinel-2 cloudless 2021, z14 y5484 x3868,
+about 51 N, 95 W, 6.1 m per pixel, CC BY 4.0). The reference is the known match.
+`tasks/evidence/T-0187/after-globe-2000.png` is the known mismatch: luma near the old
+zoom-8 tile, edge about 0.08, no water, one histogram bin. A variance or mean-luma test
+passes that frame.
 
 ## Mistakes to avoid
 

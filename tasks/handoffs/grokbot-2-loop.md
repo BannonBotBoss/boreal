@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-09 late
+
+T-0189 `grokbot-2/aerial-structure`. The T-0187 overhead matched zoom-8 luma and stayed a blur. 2000 m and 400 m now use camera-relative crowns, fen, and 150 m ponds. The structure test fails the T-0187 frames. Not self-approved. D18, D16, D13, and the forest path are not in that PR. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 afternoon
 
 T-0187 `grokbot-2/overhead-daylight`. The black overhead was the few-percent stand albedo under the globe sun, a red fen, and a 12 m dot grid. 2000 m is now luma 39, red 0, next to the EOX tile at luma 38.9. Not self-approved. This nadir still has no height-field lake. D18, D16, the undeclared `shadow` error, and opening resume are not in that PR. Gait was not touched.

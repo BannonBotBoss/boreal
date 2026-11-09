@@ -90,15 +90,22 @@ export function crownCover(x: number, z: number) {
  * Lake is the aerial water, darker than the canopy and blue, so a vertex lake stays a lake.
  */
 export const OVERHEAD_STAND = {
-  conifer: [0.088, 0.139, 0.065],
-  leaf: [0.166, 0.245, 0.096],
-  fen: [0.141, 0.133, 0.065],
+  // Linear albedo under the globe sun (intensity 3.2, Lambert / π, ACES exposure 1).
+  // The previous table was tuned so a zoom-8 tile's luma (~39) passed. A 2000 m
+  // frame is about 1–3 m per pixel, and that table read as one dark green.
+  // Crown is the shaded spruce; moss is the gap; leaf is aspen/birch; fen is brown.
+  // Green channel is what luma sees. Crown and gap have to differ there, or a
+  // 2000 m frame stays one bin. Crown is the shaded spruce; moss is the lit gap.
+  conifer: [0.035, 0.055, 0.025],
+  moss: [0.16, 0.22, 0.07],
+  leaf: [0.20, 0.30, 0.08],
+  fen: [0.20, 0.13, 0.05],
 } as const;
 
 /** Dark-blue lake albedo for the aerial band. Same lighting model as OVERHEAD_STAND.
- *  The first capture at these lights (atmosphere on) was luma 32 with no water, short of the
- *  EOX tile's luma 39, so the table sits about 1.4× above the no-atmosphere card. */
-export const OVERHEAD_LAKE = [0.042, 0.069, 0.112] as const;
+ *  Darker than the canopy, and blue, so a shore is an edge. The 0.01 stored
+ *  lake albedo tone-maps to black. */
+export const OVERHEAD_LAKE = [0.025, 0.045, 0.12] as const;
 
 export function overheadStand(x: number, z: number): [number, number, number] {
   const u = standField(x, z);

@@ -332,20 +332,21 @@ export function globeMaterial(debugSegments = 0) {
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) }; sh.uniforms.uDeepSun = { value: new THREE.Color().setRGB(...C.deepSun) };
     sh.uniforms.uOceanRough = { value: OCEAN_GLINT.roughness }; sh.uniforms.uOceanMetal = { value: OCEAN_GLINT.metalness };
     sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS, GLOBE_MORPH); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uEra = GLOBE_ERA.uEra; sh.uniforms.uCrack = GLOBE_ERA.uCrack; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uHideLake = LAKE_FADE.uHide; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc;\n' + MORPH_GLSL)
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc, vAerial;\n' + MORPH_GLSL)
       .replace('#include <color_vertex>', `#include <color_vertex>\ngMorph = globeMorph();`)
       .replace('#include <morphcolor_vertex>', `#include <morphcolor_vertex>\nvColor.rgb = mix(vColor.rgb, aCoarseC, gMorph);`)
       .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>\nobjectNormal = normalize(mix(objectNormal, aCoarseN, gMorph));`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
 transformed = mix(transformed, aCoarse, gMorph);
 vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
+vAerial = vDetW - uMorphCam;
 #ifdef DEBUG_SEAMS
 { float n = uSeg + 1.0, id = float(gl_VertexID); vSkirt = id >= n * n ? 1.0 : 0.0;
   if (id < n * n) vTileUV = vec2(mod(id, n), floor(id / n)) / uSeg;
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc, vAerial;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -379,34 +380,72 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
     // Globe lakes are ~0.01 albedo and read as black polygons from a few kilometres up.
     // A tannin lake in Sentinel-2 cloudless is dark blue, not a flat charcoal facet.
     water = mix(water, vec3(0.018, 0.036, 0.046), shoreBand * (1.0 - landMask));
-    // Daylight lake. The stored lake albedo is about 0.01 and tone-maps to black. This is the
-    // aerial blue (darker than the canopy) for the same band as the stand field.
+    // Ponds the 1.8 km lake octave cannot draw inside a 2 km frame. Punch the mask
+    // before the aerial blue, or the pond keeps the ~0.01 albedo and reads black.
+    // vAerial is the vertex minus the camera, so a 300 m cell stays exact.
+    float pond = 0.0;
+    float fenRing = 0.0;
+    if (aerial > 0.15 && landMask > 0.45) {
+      float pn = detN(vec3(vAerial.x, 0.0, vAerial.z) / 150.0, uDetail.w + 31.0);
+      float pfw = max(fwidth(pn), 0.003);
+      pond = 1.0 - smoothstep(0.16, 0.16 + pfw * 2.2, pn);
+      fenRing = (1.0 - pond) * (1.0 - smoothstep(0.28, 0.28 + pfw * 2.2, pn));
+      landMask = mix(landMask, 0.0, pond);
+    }
+    // Daylight lake. The stored lake albedo is about 0.01 and tone-maps to black.
     water = mix(water, vec3(${OVERHEAD_LAKE.map(v => v.toFixed(3)).join(', ')}), (1.0 - landMask) * aerial);
     water = mix(water, diffuseColor.rgb * 0.5, band * ${SHORE.shallowMix.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.shallow.toFixed(3)}, -F))); // shallows: the bed shows through
     diffuseColor.rgb *= 1.0 - band * ${SHORE.wetDark.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.wet.toFixed(3)}, F)); // wet ground at the waterline
     diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask);
-    // Overhead land is one vertex colour across a coarse quad, so the tile border is a square
-    // and the boreal is one olive. This stand is only a function of world metres (same waves
-    // as landMosaic / overheadStand), so both sides of a tile edge agree.
-    // A full disk (tens of metres per pixel and up) is left as the vertex colour.
+    // Overhead land was one smooth 160–640 m blend, so a 2000 m frame was an
+    // out-of-focus green. Crowns are a few pixels at that height: the cell is
+    // about six pixels, never under one black-spruce crown and never a stand.
     {
-      // Same eye-distance band as aerial above. The full disk stays the vertex colour.
       float overhead = aerial;
-      float veg = 1.0 - smoothstep(0.10, 0.18, max(diffuseColor.r, diffuseColor.g));
+      float veg = 1.0 - smoothstep(0.10, 0.22, max(diffuseColor.r, diffuseColor.g));
       if (overhead * veg * landMask > 0.04) {
-        float s0 = detN(vDetW / 40.0, uDetail.w + 7.0);
-        float s1 = detN(vDetW / 160.0, uDetail.w + 8.0);
-        float s2 = detN(vDetW / 640.0, uDetail.w + 9.0);
-        // At 2000 m a 40 m cell is grain. Weight the 160 m and 640 m stands, which are the
-        // patches on the EOX tile. Closer in, the 40 m wave comes back.
-        float close = 1.0 - smoothstep(500.0, 1600.0, eye);
-        float w0 = mix(0.12, 0.50, close);
-        float stand = s0 * w0 + s1 * 0.40 + s2 * (0.60 - w0);
+        vec2 ap = vAerial.xz;
+        float mpp = max(length(fwidth(ap)), 0.05);
+        float s1 = detN(vec3(ap / 180.0, 0.0), uDetail.w + 8.0);
+        float s2 = detN(vec3(ap / 720.0, 0.0), uDetail.w + 9.0);
+        float stand = s1 * 0.62 + s2 * 0.38;
+        float sfw = max(fwidth(stand), 0.008);
+        float fenW = max(1.0 - smoothstep(0.28, 0.28 + sfw, stand), fenRing);
+        float leafW = smoothstep(0.74, 0.74 + sfw, stand);
+        fenW = clamp(fenW, 0.0, 1.0);
+        float cell = clamp(mpp * 7.0, 6.0, 28.0);
+        vec2 g = ap / cell;
+        vec2 base = floor(g);
+        float cover = 0.0;
+        float speck = 0.5;
+        float open = detN(vec3(ap / 80.0, 0.0), uDetail.w + 11.0);
+        for (int a = -1; a <= 1; a++) {
+          for (int b = -1; b <= 1; b++) {
+            vec2 c = base + vec2(float(a), float(b));
+            float keep = gd_hash2u(c, uDetail.w + 21.0);
+            float skip = fenW > 0.55 ? 0.78 : mix(0.06, 0.5, open);
+            if (keep < skip) continue;
+            vec2 j = vec2(gd_hash2u(c, uDetail.w + 22.0), gd_hash2u(c, uDetail.w + 23.0)) - 0.5;
+            float ang = gd_hash2u(c, uDetail.w + 26.0) * ${(2 * Math.PI).toFixed(5)};
+            float ca = cos(ang), sa = sin(ang);
+            vec2 dlt = g - (c + 0.5 + j * 0.95);
+            vec2 rot = vec2(ca * dlt.x - sa * dlt.y, sa * dlt.x + ca * dlt.y);
+            vec2 ax = vec2(0.26 + 0.7 * gd_hash2u(c, uDetail.w + 24.0), 0.2 + 0.55 * gd_hash2u(c, uDetail.w + 27.0));
+            float d = length(rot / ax);
+            float disk = 1.0 - smoothstep(0.78, 0.98, d);
+            if (disk > cover) { cover = disk; speck = keep; }
+          }
+        }
         vec3 conifer = vec3(${OVERHEAD_STAND.conifer.map(v => v.toFixed(3)).join(', ')});
         vec3 leaf = vec3(${OVERHEAD_STAND.leaf.map(v => v.toFixed(3)).join(', ')});
         vec3 fen = vec3(${OVERHEAD_STAND.fen.map(v => v.toFixed(3)).join(', ')});
-        vec3 field = stand < 0.46 ? mix(fen, conifer, stand / 0.46) : mix(conifer, leaf, (stand - 0.46) / 0.54);
-        diffuseColor.rgb = mix(diffuseColor.rgb, field, overhead * 0.92);
+        vec3 moss = vec3(${OVERHEAD_STAND.moss.map(v => v.toFixed(3)).join(', ')});
+        vec3 floorC = mix(moss, fen, clamp(fenW, 0.0, 1.0));
+        floorC = mix(floorC, leaf, leafW * 0.45);
+        vec3 crown = mix(conifer, leaf, leafW);
+        crown *= 0.82 + 0.36 * speck;
+        vec3 field = mix(floorC, crown, cover);
+        diffuseColor.rgb = mix(diffuseColor.rgb, field, overhead);
       }
     }
     }${LAYERS_FRAG}

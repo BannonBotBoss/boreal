@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0189",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/aerial-structure",
+  "skill": "land-mosaic",
+  "note": "2000 m and 400 m now have crowns, fen, deciduous patches and dark-blue ponds. The gate is edge, water share, histogram peak and histogram distance against the zoom-14 tile at about 51 N, 95 W. The T-0187 frames fail that gate. No self-approve. Gait was not touched.",
+  "at": "2026-11-09T11:19:40-08:00"
+}

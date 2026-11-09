@@ -33,6 +33,15 @@ The in-page far layer was 320×144 while it was the whole drone picture, and the
 upscale hid the mosaic. `farLayerScale` stays 1 above 150 m. Half resolution returns
 on the ground once the patch fade is in.
 
+## Overhead quads
+
+A vertex colour is constant across a coarse quad, so the stand mosaic that only
+scales that colour keeps the square tile edge. `overheadStand` is a function of
+world metres only (fen, conifer, leaf in the spruce albedo range). The tile shader
+mixes it in when a pixel is about 1–35 m, and leaves a full disk alone.
+A lake edge on that same band gets ±1.5 m of `detN` wander (`shoreBand`) so the
+shore is not the triangle edge, and the lake albedo is lifted off the 0.01 black.
+
 ## Mistakes to avoid
 
 - Do not call the lattice hash on an un-wrapped planet coordinate with `floor` passed straight into `ivec`. It crushed the frame to a dark red. Use `detN`, which already mods the cell.

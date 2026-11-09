@@ -7,6 +7,7 @@ Steps
 2. Reuse the existing loading UI (`#loading` in index.html, driven by `src/ui/loading.ts`). Do not add a second splash.
 3. Move (do not copy) the `#loading` rules from `src/style.css` into an inline `<style>` in index.html's `<head>`, plus `html{background:#16241d}body{margin:0;overflow:hidden}`. The splash is fixed, opaque and z-index 50, so it hides the unstyled chrome behind it. `:root` in style.css overrides the html background once it loads. Critical CSS guidance: https://web.dev/articles/extract-critical-css
 4. Catch every boot `import()` in entry.ts and write the error into `#loading .loading-step`, so a failed fetch says so instead of hanging.
+5. Link `rel=icon` to `public/favicon.svg` and `public/favicon.ico`. A page with no icon makes Chrome request `/favicon.ico` and log a 404. `tests/favicon.test.ts` checks the link and that both files exist.
 
 Checks
 - `tests/boot-splash.test.ts` (inline style in head before the module script, one copy of #loading, every boot import has `.catch(bootFailed)`).

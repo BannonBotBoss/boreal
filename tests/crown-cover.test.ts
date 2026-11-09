@@ -82,7 +82,8 @@ test('a 12 m crown field has centres and gaps', () => {
   assert.ok(crowns > 5, `crowns ${crowns}`);
   const tile = readFileSync('src/world/globe/tile.ts', 'utf8');
   const skirt = readFileSync('src/render/horizonMesh.ts', 'utf8');
-  assert.ok(tile.includes('max(12.0, px * 3.5)'));
+  // The globe tile no longer stamps a 12 m dot grid. That grid read as wallpaper at 400 m.
+  assert.ok(!tile.includes('max(12.0, px * 3.5)'));
   assert.ok(skirt.includes('xz / 12.0'));
   assert.ok(skirt.includes('mix(0.62, 1.28, crown)'));
 });

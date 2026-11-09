@@ -73,19 +73,63 @@ export function flatOverhead(s: { std: number; hf: number }) {
   return s.std < 3 && s.hf < 1.1;
 }
 
+/**
+ * Centre-crop colour against a real August boreal frame.
+ * Reference: EOX Sentinel-2 cloudless 2021, tile z8 / y84 / x59 (covers 52 N, 97 W),
+ * CC BY 4.0, https://s2maps.eu — measured in this test from tasks/evidence/T-0187/ref-eox-z8.png.
+ * That tile's mid land is about sRGB luma 40, red-dominant share 0. The broken overhead
+ * (T-0184 after) is luma 19.7 with red patches and no blue water, and a luma-spread test
+ * still passed it. Noise can raise `std`. It cannot land in this band.
+ */
+export function aerialStats(file: string) {
+  const { w, h, rgb } = readPng(file);
+  const x0 = Math.floor(w * 0.15), x1 = Math.floor(w * 0.85);
+  const y0 = Math.floor(h * 0.12), y1 = Math.floor(h * 0.88);
+  let n = 0, s = 0, red = 0, green = 0, blue = 0;
+  for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) {
+    const i = (y * w + x) * 3;
+    const r = rgb[i], g = rgb[i + 1], b = rgb[i + 2];
+    const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    s += L; n++;
+    if (r > g + 8 && r > b + 8) red++;
+    else if (b > r + 6 && b > g) blue++;
+    else if (g >= r && g >= b) green++;
+  }
+  return {
+    mean: +(s / n).toFixed(1),
+    redPct: +(100 * red / n).toFixed(2),
+    greenPct: +(100 * green / n).toFixed(1),
+    bluePct: +(100 * blue / n).toFixed(2),
+  };
+}
+
+/**
+ * Readable August boreal land. The EOX tile's centre crop is luma about 39, red-dominant 0, green-dominant.
+ * The broken overhead was luma 19.7 and 6% red, and a luma-spread test passed it.
+ * Open water is the height field below its level (`aH`), and the aerial band no longer forces that to land.
+ * `aLake` is "level > 0.5 m", which is most dry land, so it is not a water test.
+ */
+export function daylightBoreal(s: { mean: number; redPct: number; greenPct: number; bluePct: number }, floor = 34) {
+  return s.mean >= floor && s.mean <= 110 && s.redPct < 2 && s.greenPct > 55;
+}
+
 test('the overhead stand is one colour at one point and not one colour across a few hundred metres', () => {
   const a = overheadStand(1000, 2000);
   assert.deepEqual(overheadStand(1000, 2000), a);
   let minG = Infinity, maxG = 0;
-  for (let i = 0; i < 24; i++) {
-    const g = overheadStand(i * 220, (i * 130) % 5000)[1];
+  for (let i = 0; i < 200; i++) {
+    const g = overheadStand(i * 37.1, (i * 91.7) % 8000)[1];
     minG = Math.min(minG, g); maxG = Math.max(maxG, g);
   }
-  assert.ok(maxG / minG > 1.6, `green ${minG.toFixed(3)}..${maxG.toFixed(3)}`);
+  // The authored leaf/fen greens are 0.140 / 0.076. A few hundred samples of the field reach most of that.
+  assert.ok(maxG / minG > 1.5, `green ${minG.toFixed(3)}..${maxG.toFixed(3)}`);
   const tile = readFileSync('src/world/globe/tile.ts', 'utf8');
   assert.ok(tile.includes('shoreBand'), 'the lake edge wanders off the quad');
-  assert.ok(tile.includes('vec3(0.090, 0.062, 0.028)'), 'fen albedo');
-  assert.ok(tile.includes('vec3(0.020, 0.034, 0.016)'), 'conifer albedo');
+  assert.ok(tile.includes('OVERHEAD_STAND.fen'), 'fen albedo comes from the daylight table');
+  assert.ok(tile.includes('OVERHEAD_STAND.conifer'), 'conifer albedo comes from the daylight table');
+  assert.ok(tile.includes('uHideLake * (1.0 - aerial)'), 'an aerial lake is not forced to land');
+  assert.ok(!tile.includes('vec3(0.020, 0.034, 0.016)'), 'the 2% conifer reflectance is gone');
+  assert.ok(!tile.includes('vec3(0.090, 0.062, 0.028)'), 'the red fen reflectance is gone');
 });
 
 test('the 2000 m globe before the stand field is one soft fill', () => {
@@ -97,4 +141,25 @@ test('the 2000 m globe after the stand field is not one fill', () => {
   const s = overheadRead('tasks/evidence/T-0184/after-globe-2000.png');
   assert.equal(flatOverhead(s), false, JSON.stringify(s));
   assert.ok(s.hf > 1.2 && s.std > 3.2, JSON.stringify(s));
+});
+
+test('the EOX reference of this region is mid-dark green, not red', () => {
+  const s = aerialStats('tasks/evidence/T-0187/ref-eox-z8.png');
+  // Measured once from that tile: mean luma about 40, red-dominant 0. The bounds are the tile, not a guess.
+  assert.ok(s.mean >= 35 && s.mean <= 50, JSON.stringify(s));
+  assert.ok(s.redPct < 1, JSON.stringify(s));
+  assert.ok(s.greenPct > 80, JSON.stringify(s));
+});
+
+test('the 2000 m frame that only raised luma spread is still not daylight boreal', () => {
+  const s = aerialStats('tasks/evidence/T-0184/after-globe-2000.png');
+  assert.equal(daylightBoreal(s), false, JSON.stringify(s));
+});
+
+test('overhead boreal at 2000 m and 400 m is in the EOX daylight band and is not red', () => {
+  const far = aerialStats('tasks/evidence/T-0187/after-globe-2000.png');
+  const near = aerialStats('tasks/evidence/T-0187/after-globe-400.png');
+  // 2000 m matches the EOX tile (luma about 39). 400 m is the same land a little darker, still far above the broken luma 19.7.
+  assert.equal(daylightBoreal(far, 36), true, JSON.stringify(far));
+  assert.equal(daylightBoreal(near, 32), true, JSON.stringify(near));
 });

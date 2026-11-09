@@ -79,8 +79,8 @@ function skirtMaterial() {
           float s2 = vnoiseU(xz / 640.0, 9.0);
           float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
           float dark = 1.0 - smoothstep(0.07, 0.16, max(gl_FragColor.r, gl_FragColor.g));
-          vec3 fen = vec3(gl_FragColor.r * 2.4, gl_FragColor.g * 0.45, gl_FragColor.b * 0.35);
-          vec3 leaf = vec3(gl_FragColor.r * 0.7, gl_FragColor.g * 2.2, gl_FragColor.b * 0.6);
+          vec3 fen = vec3(gl_FragColor.r * 1.2, gl_FragColor.g * 0.88, gl_FragColor.b * 0.65);
+          vec3 leaf = vec3(gl_FragColor.r * 0.95, gl_FragColor.g * 1.28, gl_FragColor.b * 0.75);
           vec3 mosaic = stand < 0.5 ? mix(fen, gl_FragColor.rgb, stand * 2.0) : mix(gl_FragColor.rgb, leaf, (stand - 0.5) * 2.0);
           gl_FragColor.rgb = mix(gl_FragColor.rgb, mosaic, mix(0.45, 1.0, dark));
           // 12 m clumps, the same crown scale as the globe tiles. A smooth 0.82–1.18 grain

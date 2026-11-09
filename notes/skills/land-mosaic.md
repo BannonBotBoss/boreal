@@ -35,23 +35,40 @@ on the ground once the patch fade is in.
 
 ## Crowns
 
-The 40 / 160 / 640 m waves are smooth blobs. A closed boreal canopy is overlapping crowns
-a few metres across, and a 10 m Sentinel-2 pixel still breaks that (Drusch et al. 2012).
-`crownCover` is a jittered 12 m grid (1 at a centre, 0 in a gap). The tile shader widens
-the cell with `max(12.0, px * 3.5)` so a coarse pixel still shows a clump instead of one green.
-The skirt uses the same 12 m scale as a hard step (`mix(0.62, 1.28, crown)`), not the old
-soft `0.82 + 0.36 * grain`. The mean stays near the albedo. Do not push the bright end to 1.4.
+A jittered 12 m grid (`crownCover`) is a dot wallpaper at 400 m. The globe tile no longer
+stamps it. The canopy at 400 m and at 2000 m is the 40 / 160 / 640 m stand field.
+At 2000 m the 40 m wave is grain, so its weight drops and the 160 m and 640 m waves lead.
+The skirt still has the 12 m step. Do not bring that step back onto the tile.
 
 ## Overhead quads
 
-A vertex colour is constant across a coarse quad, so the stand mosaic that only
-scales that colour keeps the square tile edge. `overheadStand` is a function of
-world metres only (fen, conifer, leaf in the spruce albedo range). The tile shader
-mixes it in when a pixel is about 1–35 m, and leaves a full disk alone.
-A lake edge on that same band gets ±1.5 m of `detN` wander (`shoreBand`) so the
-shore is not the triangle edge, and the lake albedo is lifted off the 0.01 black.
+A vertex colour is constant across a coarse quad. `overheadStand` is a function of world
+metres only. Gate it on `length(vViewPosition)`, about 120 m to 20 km. `fwidth` of the
+tile position does not track metres per pixel here, and a gate on it left the frame on
+the vertex albedo.
+
+Do not write MODIS reflectance (a few percent) into this material. The globe sun is
+intensity 3.2, Lambert divides by π, and ACES exposure is 1. A few percent then
+tone-maps to sRGB luma about 20. `OVERHEAD_STAND` is the albedo that lands near the
+EOX Sentinel-2 cloudless tile of this region (52 N, 97 W, zoom 8, CC BY 4.0): mid land
+about luma 39, red-dominant share 0. Fen stays olive (red does not lead green). August
+boreal is not red.
+
+`aLake` means `surf.level > 0.5`, which is most dry land. Do not paint `vLake` as water.
+Open water is the height field below its level. Below 8 km that water used to be forced
+to land (`uHideLake`). The aerial band leaves it as water.
+
+## Checks that are not a luma spread
+
+`tests/overhead-stand.test.ts` `daylightBoreal` reads the centre crop against the committed
+EOX tile (`tasks/evidence/T-0187/ref-eox-z8.png`). Mean luma, red-dominant share, and
+green-dominant share. A red/green noise field can pass a variance test and fail this one.
+The broken frame `tasks/evidence/T-0184/after-globe-2000.png` is the known failure
+(luma 19.7, red 6%).
 
 ## Mistakes to avoid
 
 - Do not call the lattice hash on an un-wrapped planet coordinate with `floor` passed straight into `ivec`. It crushed the frame to a dark red. Use `detN`, which already mods the cell.
 - Do not leave the 1.4 green gain on the skirt.
+- Do not treat a higher luma standard deviation as a fix. Measure the colour against a sourced frame.
+- A backtick inside the tile shader template closes the string. Esbuild then fails the module.

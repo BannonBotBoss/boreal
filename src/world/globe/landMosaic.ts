@@ -77,17 +77,28 @@ export function crownCover(x: number, z: number) {
 }
 
 /**
- * Continuous stand albedo for an overhead quad.
+ * Daylight stand albedo for an overhead quad.
  * The vertex colour jumps on a tile edge; this field does not, because it is only a function of metres.
- * The three colours sit in the spruce albedo range (MODIS boreal canopy, a few percent).
- * Fen is the wet hollow, conifer the closed stand, leaf the broadleaf patch.
- * Sentinel-2 cloudless (EOX, CC BY 4.0) shows those as separate patches, not one olive.
+ *
+ * These are not MODIS reflectance. The globe sun is intensity 3.2 with a hemisphere fill, and three's
+ * Lambert divides by π (MeshStandardMaterial). An albedo of a few percent then tone-maps to sRGB luma
+ * about 20 (measured on tasks/evidence/T-0184/after-globe-2000.png: mean luma 19.7, and the fen
+ * 0.090, 0.062, 0.028 came out red). The numbers below are the linear albedos that the same lights
+ * and ACES (exposure 1, the standalone globe) put near the EOX Sentinel-2 cloudless 2021 tile of
+ * this region (52 N, 97 W, zoom 8, CC BY 4.0): mid land about sRGB 34, 43, 23. Conifer is that
+ * mid green, leaf is the lighter aspen/birch patch, fen is brown-olive (red does not lead green).
+ * Lake is the aerial water, darker than the canopy and blue, so a vertex lake stays a lake.
  */
 export const OVERHEAD_STAND = {
-  conifer: [0.020, 0.034, 0.016],
-  leaf: [0.055, 0.086, 0.030],
-  fen: [0.090, 0.062, 0.028],
+  conifer: [0.088, 0.139, 0.065],
+  leaf: [0.166, 0.245, 0.096],
+  fen: [0.141, 0.133, 0.065],
 } as const;
+
+/** Dark-blue lake albedo for the aerial band. Same lighting model as OVERHEAD_STAND.
+ *  The first capture at these lights (atmosphere on) was luma 32 with no water, short of the
+ *  EOX tile's luma 39, so the table sits about 1.4× above the no-atmosphere card. */
+export const OVERHEAD_LAKE = [0.042, 0.069, 0.112] as const;
 
 export function overheadStand(x: number, z: number): [number, number, number] {
   const u = standField(x, z);

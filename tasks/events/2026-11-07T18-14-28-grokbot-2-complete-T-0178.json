@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0178",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/fox-spacing",
+  "skill": "litter-spacing",
+  "note": "Those bodies are the litter, not a second fox gait. Homes stay inside the chase view (back under 1.55 m, side under 1.15 m) and are at least 0.55 m apart. The same pairs are in the Rust litter. Gait is unchanged.",
+  "at": "2026-11-07T18:14:28-08:00"
+}

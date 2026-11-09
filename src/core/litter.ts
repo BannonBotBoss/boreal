@@ -86,13 +86,15 @@ export function birthPlaces(denX: number, denZ: number): PupPlace[] {
 
 export type PupAct = 'trot' | 'sniff' | 'sit' | 'pounce' | 'tumble' | 'straggle';
 
-/** Uneven homes around her hips. Not a row, and not inside her hocks. The last pup starts further back. */
+/** Uneven homes around her hips. Not a row, and not inside her hocks. The last pup starts further back.
+ *  Spread uses the chase-view limits already in LITTER (viewBackM 1.55, lateralM 1.15), so the five
+ *  do not share one patch of ground under the camera. The same pairs are in rust litter.rs. */
 const PUP_HOME: ReadonlyArray<readonly [number, number]> = [
-  [0.52, -0.88],
-  [0.78, -0.32],
-  [0.5, 0.32],
-  [0.92, 0.88],
-  [1.12, 0.0],
+  [0.62, -1.05],
+  [0.4, 0.55],
+  [0.88, -0.15],
+  [1.2, 0.85],
+  [1.45, -0.55],
 ];
 const PUP_PHASE = [0.4, 2.2, 3.8, 5.1, 1.1];
 

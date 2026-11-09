@@ -131,7 +131,7 @@ test('the descent stands on dry land, and the far layer is the whole picture onl
   const page = read('src/world/globe/inpage.ts');
   assert.match(page, /dropStand\(\{ x: at\.x, z: at\.z \}, at\.yaw\)/);
   assert.match(page, /const stood = dryNear\(\)/);
-  assert.match(page, /far\.setScale\(fade < 0\.5 \? 1 : 0\.5\)/);
+  assert.match(page, /far\.setScale\(farLayerScale\(h, fade\)\)/); // full size above 150 m, tests/drone-fill.test.ts
   assert.match(page, /nearGroundOcc\(h, INPAGE\.hazeLow, INPAGE\.occ\)/);
   const trees = read('src/render/trees/game.ts');
   assert.match(trees, /enqueue\(`trees2:build:\$\{vk\}`, 4,/);

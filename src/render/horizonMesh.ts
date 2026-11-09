@@ -69,17 +69,22 @@ function skirtMaterial() {
           vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));
           gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.45);
         }
-        // Stand mosaic, the same waves as the globe tiles. A coarse triangle is one colour without it.
-        // The 1.4 green gain is not applied: it turned those triangles into neon facets.
+        // Stand mosaic, the same waves and the same dark-canopy stretches as the globe tiles.
+        // A coarse triangle is one colour without it. The 1.4 green gain is not applied.
+        // A bright grassland pixel keeps its colour; a dark canopy (a few percent albedo) does not stay one fill.
         if (vSkirtWater < 0.5) {
           vec2 xz = vSkirtWorld.xz;
           float s0 = vnoiseU(xz / 40.0, 7.0);
           float s1 = vnoiseU(xz / 160.0, 8.0);
           float s2 = vnoiseU(xz / 640.0, 9.0);
           float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
-          float fen = stand < 0.5 ? (0.5 - stand) / 0.5 : 0.0;
-          float leaf = stand > 0.5 ? (stand - 0.5) / 0.5 : 0.0;
-          gl_FragColor.rgb *= vec3(1.0 + 0.55 * fen + 0.15 * leaf, 1.0 - 0.25 * fen + 0.45 * leaf, 1.0 - 0.15 * fen - 0.05 * leaf);
+          float dark = 1.0 - smoothstep(0.07, 0.16, max(gl_FragColor.r, gl_FragColor.g));
+          vec3 fen = vec3(gl_FragColor.r * 2.4, gl_FragColor.g * 0.45, gl_FragColor.b * 0.35);
+          vec3 leaf = vec3(gl_FragColor.r * 0.7, gl_FragColor.g * 2.2, gl_FragColor.b * 0.6);
+          vec3 mosaic = stand < 0.5 ? mix(fen, gl_FragColor.rgb, stand * 2.0) : mix(gl_FragColor.rgb, leaf, (stand - 0.5) * 2.0);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, mosaic, mix(0.45, 1.0, dark));
+          float grain = vnoiseU(xz / 12.0, 4.0);
+          gl_FragColor.rgb *= 0.82 + 0.36 * grain;
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);

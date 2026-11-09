@@ -7,6 +7,17 @@
  */
 import * as THREE from 'three';
 export interface FarLayerOptions { scale?: number; samples?: number }
+/**
+ * Scale of the far-layer target. Above about 150 m the far layer is the picture the
+ * player sees (the chunk patch is a small disc). Half resolution then stretches one
+ * texel across the frame and a boreal drone view is one green. On the ground the
+ * patch covers the frame, and the half-resolution budget returns once the fade is in.
+ */
+export function farLayerScale(heightM: number, fade: number) {
+  if (heightM > 150) return 1;
+  return fade < 0.5 ? 1 : 0.5;
+}
+
 /** Defaults from the step-0 budget (2026-10-18): half resolution, 2x MSAA = 32 B per far-layer pixel, ~26 MB at 2400x1350
  *  (full resolution with 4x MSAA measured 82 MB at 1600x900, ~180 MB at 1.5 DPR: over the shared-mode budget). */
 export function createFarLayer({ scale = .5, samples = 2 }: FarLayerOptions = {}) {

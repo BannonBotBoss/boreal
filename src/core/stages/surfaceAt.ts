@@ -47,6 +47,22 @@ export function dryStart(x: number, z: number, seed = STAGES.seed, maxR = 900, m
 export function drain<T>(g: Generator<unknown, T>): T { let r = g.next(); while (!r.done) r = g.next(); return r.value; }
 /** Dry land at (x, z): no lake or river and margin m above the water surface (dryStart's test, T-0041 landing view). */
 export function isDry(x: number, z: number, seed = STAGES.seed, margin = .6) { const p = surfaceAt(x, z, seed); return !p.lake && !p.river && p.height > LEVEL.waterSurface + margin; }
+/** Feet and a ring around them are dry ground above the shore line. The first dry cell off a lake is the
+ *  waterline (about 14 m from open water at the home mark): the follow camera (riderDistance 4.4 m) then
+ *  looks across the flat water plane and the animal reads as standing in the lake. 16 m is the clearance
+ *  past that waterline [game calibration]. LEVEL.shore is the dry-land line in core/tuning.ts. */
+export function clearOfWater(x: number, z: number, radius = 16, seed = STAGES.seed): boolean {
+  const dry = (px: number, pz: number) => {
+    const p = surfaceAt(px, pz, seed);
+    return !p.lake && !p.river && p.height >= LEVEL.shore;
+  };
+  if (!dry(x, z)) return false;
+  for (let a = 0; a < 8; a++) {
+    const t = a / 8 * Math.PI * 2;
+    if (!dry(x + Math.cos(t) * radius, z + Math.sin(t) * radius)) return false;
+  }
+  return true;
+}
 /** dryStart as resumable steps: yields after every candidate point, so a caller with a frame budget (world/globe/inpage, the
  *  descent) spreads a long lake search (up to ~1.4 s in one call, T-0034) over frames. Same points, same order, same result. */
 export function* dryStartSteps(x: number, z: number, seed = STAGES.seed, maxR = 900, margin = .6): Generator<void, [number, number]> {

@@ -69,6 +69,18 @@ function skirtMaterial() {
           vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));
           gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.45);
         }
+        // Stand mosaic, the same waves as the globe tiles. A coarse triangle is one colour without it.
+        // The 1.4 green gain is not applied: it turned those triangles into neon facets.
+        if (vSkirtWater < 0.5) {
+          vec2 xz = vSkirtWorld.xz;
+          float s0 = vnoiseU(xz / 40.0, 7.0);
+          float s1 = vnoiseU(xz / 160.0, 8.0);
+          float s2 = vnoiseU(xz / 640.0, 9.0);
+          float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
+          float fen = stand < 0.5 ? (0.5 - stand) / 0.5 : 0.0;
+          float leaf = stand > 0.5 ? (stand - 0.5) / 0.5 : 0.0;
+          gl_FragColor.rgb *= vec3(1.0 + 0.55 * fen + 0.15 * leaf, 1.0 - 0.25 * fen + 0.45 * leaf, 1.0 - 0.15 * fen - 0.05 * leaf);
+        }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);
         if (vSkirtWater > 0.5) {

@@ -1400,6 +1400,14 @@ The rebind matters more than the LOD. The Meshy wolf stands mid-stride, so its p
 
 Forced edit: `src/render/animalPicture.ts` (grokbot-3's) now calls `createWolfLod` for Gray Wolf and skips its own full-skin and impostor branches for that species. The integration is 18 lines; other species are unchanged. Hook points in Claude's files, which were not edited: (1) playerWolf.ts, where `tilt.children` = [torso, girdle0..3] is read by `copyProcRig`; if that order changes, the player wolf falls back to the flat gait. (2) controller.ts could pass its terrain sampler and per-foot ground heights, so wild wolves reuse its IK instead of `terrainFeet`. Known gaps: a few far-side fore-leg triangles still flap at trot (wrapper max stretch 27-35x, against 15-22x before); downhill hind legs out of reach stay short (67 mm on a 1:4 slope) because the body is not pitched to the slope; the source mesh's head is turned.
 
+## 2026-11-08 PT - grokbot-2: T-0180 bank stand
+
+The home lake waterline is not a landing. `dropStand` uses `forestLanding` when `clearOfWater` fails. The splash waits on the feet. Skill `notes/skills/bank-stand.md`.
+
+## 2026-11-08 PT - grokbot-2: T-0182 land mosaic
+
+Vegetated land at drone height mixes 40/160/640 m stands (Sentinel-2 scale, Drusch et al. 2012) in the tile shader and the skirt. The skirt green gain is gone. Skill `notes/skills/land-mosaic.md`.
+
 ## 2026-11-08 PT - grokbot-2: T-0181 continuous sward
 
 The skirt datum is the bed (`s.h`), matching `heightAt`, so the far ground meets the chunks. The near skirt is a clump grain, not a crown sheet. Skill `notes/skills/continuous-sward.md`.

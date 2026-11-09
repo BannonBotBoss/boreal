@@ -281,6 +281,15 @@ export function multiScatterSun(tau: number, cosT: number, g = CLOUD_G) {
  *  isotropic, so it takes the same octaves without a phase term, normalised so clear sky above gives SKY_AMB. Cloud tops stay
  *  bright and bases under a deep tower go darker grey, as seen from below, instead of one flat ambient everywhere. CPU mirror. */
 export const SKY_AMB = .25; // [game calibration: ambient level of the old flat term, now the clear-sky value]
+/**
+ * A march that gathers optical depth but no light composites as pure black and hides the
+ * ground (400 m overhead at 52 N, 97 W). Below `minLight` the fragment is discarded, same
+ * as a miss. A lit cloud (channel at or above the floor) still draws.
+ */
+export const CLOUD_VEIL = { minAlpha: 0.01, minLight: 0.001 } as const;
+export function cloudVeilCovers(maxChannel: number, alpha: number) {
+  return alpha >= CLOUD_VEIL.minAlpha && maxChannel >= CLOUD_VEIL.minLight;
+}
 export function skyAmbient(tauUp: number) {
   let s = 0, n0 = 0, a = 1, b = 1; for (let n = 0; n < MS_OCTAVES; n++) { s += a * Math.exp(-b * Math.max(0, tauUp)); n0 += a; a *= MS_A; b *= MS_B; } return SKY_AMB * s / n0; }
 /** Colour of direct sunlight after the air path to the cloud: Rayleigh extinction of a sea-level column (beta * H, H = 8 km,
@@ -338,7 +347,7 @@ void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x >
     float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float up = dens(p + vec3(0.0, .03, 0.0)) + dens(p + vec3(0.0, .07, 0.0)); vec3 lit = uSunCol * (msSun(sh * uExt * sm, ct) * max(uSunLocal.y + .25, .15) * sunVis((p.y + .5) * uBoxM.y)) + uSkyF * skyAmb(up * uExt * uBoxM.y * .05) + uSunCol * (uAlb * max(uSunMu, 0.0) * skyAmb((dens(p - vec3(0.0, .03, 0.0)) + dens(p - vec3(0.0, .07, 0.0))) * uExt * uBoxM.y * .05) * 4.0); /* ground bounce from below: see groundBounce (skyAmb is SKY_AMB-scaled, so x4) */ /* skylight through the cloud above, same two-sample path as the sun */
       float a = 1.0 - exp(-d * uExt * dm); /* optical depth of this step: extinction (1/m) times the step in metres */ acc.rgb += (1.0 - acc.a) * a * lit; /* sun term tinted by the air path (sunTint), skylight stays neutral */ acc.a += (1.0 - acc.a) * a; }
     p += rd * dt; }
-  if (acc.a < .01) discard;
+  if (acc.a < .01 || max(acc.r, max(acc.g, acc.b)) < .001) discard; /* unlit march (alpha, no colour) must not paint a black veil over the planet */
 #ifdef BAND_OCCLUDE
   vec4 c = projectionMatrix * (modelViewMatrix * vec4(first, 1.0)); gl_FragDepth = clamp(c.z / c.w * .5 + .5, 0.0, 1.0); // issue #202: depth of the cloud's near edge, so ground in front culls it
 #endif

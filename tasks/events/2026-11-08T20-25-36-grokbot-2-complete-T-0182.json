@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0182",
+  "agent": "grokbot-2",
+  "note": "Overhead boreal at 400 m is mottled, and the skirt no longer multiplies by the neon green gain. Frames tasks/evidence/T-0182/. tests/land-mosaic.test.ts passes. No self-approve.",
+  "at": "2026-11-08T20:25:36-08:00",
+  "skill": "land-mosaic"
+}

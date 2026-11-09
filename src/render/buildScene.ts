@@ -16,7 +16,7 @@ import { chunkRadius } from '../world/globe/landingStream';
 import { registerObservationSources } from '../core/observation';
 import { enterLiving, livingRoster, type LivingChoice } from '../core/enterLiving';
 import type { MemoryMark } from '../core/perceptionBuffer';
-import { playable, type PlayerRig } from './playables';
+import { litterFollowsPlayer, pictureSpecies, playable, type PlayerRig } from './playables';
 import { RENDER } from '../core/renderSettings';
 import { applyPopulation } from '../core/population';
 import { WOLF_SCALE, type WolfMode } from '../core/wolfModes';
@@ -362,7 +362,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       motion: row.motion, phase: row.phase, speed: row.speed, root: row.root,
     });
     bodies.push({
-      key: 'player-wolf', species: 'Gray Wolf',
+      key: 'player', species: pictureSpecies(current.id),
       x: wolf.root.position.x, y: wolf.root.position.y, z: wolf.root.position.z,
       yaw: wolf.root.rotation.y, moving: Math.abs(wolf.brain.speed) > ANIMAL_LADDER.stillMs,
       motion: wolf.brain.motion, phase: wolf.brain.drawPhase, speed: wolf.brain.gaitSpeed, root: wolf.root,
@@ -615,7 +615,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
-  return { stepPups: (dt: number, gameSeconds: number, x: number, z: number, motherYaw: number, mood?: { hungry: boolean; tired: boolean; nudge: boolean; threatened?: boolean }) => litter.step(dt, gameSeconds, x, z, motherYaw, mood), set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, eat, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { stepPups: (dt: number, gameSeconds: number, x: number, z: number, motherYaw: number, mood?: { hungry: boolean; tired: boolean; nudge: boolean; threatened?: boolean }) => { const on = litterFollowsPlayer(current.id); litter.setFollow(on); return on ? litter.step(dt, gameSeconds, x, z, motherYaw, mood) : []; }, set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, eat, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     playerScale: () => ({ x: wolf.root.scale.x, y: wolf.root.scale.y, z: wolf.root.scale.z }),
     /** The saved record for a key (undefined for generated objects), e.g. for the inspector's why. */

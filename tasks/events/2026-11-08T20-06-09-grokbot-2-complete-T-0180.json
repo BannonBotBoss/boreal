@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0180",
+  "agent": "grokbot-2",
+  "note": "The drop, the cold start and Return to start stand clear of the lake, facing the trees. Frames tasks/evidence/T-0180/. tests/bank-stand.test.ts passes. No self-approve.",
+  "at": "2026-11-08T20:06:09-08:00",
+  "skill": "bank-stand"
+}

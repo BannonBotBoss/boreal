@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-09 evening, spruce
+
+T-0192 `grokbot-2/spruce-crowns`. The stacked cones are overlapping uneven whorls. The shared crown holds out to 70 m. The 40 m before frame is flat facets (0.28); the after frame is 0.08. Not self-approved. The overhead is a proposal, not another shader. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 late
 
 T-0189 `grokbot-2/aerial-structure`. The T-0187 overhead matched zoom-8 luma and stayed a blur. 2000 m and 400 m now use camera-relative crowns, fen, and 150 m ponds. The structure test fails the T-0187 frames. Not self-approved. D18, D16, D13, and the forest path are not in that PR. Gait was not touched.

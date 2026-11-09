@@ -216,4 +216,19 @@ export function liftedIndex(col: Column, groundM = 0, pLevelPa = 50000) {
   if (!best || pressureAt(best.z + g0) > pLevelPa + 2500) return NaN;
   return best.tEnv - best.tParcel;
 }
+/** The column layer nearest a pressure level (Pa), or undefined if the column stops more than 25 hPa short of it. */
+function layerAtPressure(col: Column, pLevelPa: number, groundM = 0) {
+  const g0 = Math.max(0, groundM) || 0; let best: Layer | undefined, d = Infinity;
+  for (const l of col.layers) { const dd = Math.abs(pressureAt(l.z + g0) - pLevelPa); if (dd < d) { d = dd; best = l; } }
+  return best && pressureAt(best.z + g0) <= pLevelPa + 2500 && d <= 2500 ? best : undefined;
+}
+/** K-index (K) of a column (George 1960): (T850 - T500) + Td850 - (T700 - Td700), from the environment's temperatures and
+ * dew points at 850, 700 and 500 hPa. The first term is the mid-level lapse rate, the rest the low- and mid-level moisture,
+ * so it flags air-mass thunderstorms: under 20 few, 26-30 widely scattered, over 35 numerous (US NWS guidance).
+ * NaN if the column does not reach 500 hPa or the ground is already above 850 hPa (high plateaus). */
+export function kIndex(col: Column, groundM = 0) {
+  const l850 = layerAtPressure(col, 85000, groundM), l700 = layerAtPressure(col, 70000, groundM), l500 = layerAtPressure(col, 50000, groundM);
+  if (!l850 || !l700 || !l500 || pressureAt(Math.max(0, groundM) || 0) < 85000) return NaN;
+  return (l850.tEnv - l500.tEnv) + l850.dew - (l700.tEnv - l700.dew);
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0188",
+  "agent": "grokbot-2",
+  "note": "Matthew, direct chat 2026-11-07 17:45 PT: \"go over anything else that needs fixing. i dont need to have to be the only one that can detect those issues\". Some MeshStandardMaterial programs log that shadow is undeclared. The PCSS splice hits the sampler uniform in three 0.185.",
+  "at": "2026-11-09T07:37:10-08:00"
+}

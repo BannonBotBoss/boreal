@@ -95,7 +95,7 @@ export function stylizedNight(material: THREE.Material, night: number) {
   if (!m.userData.stylized) return;
   if (m.userData.fillIntensity == null) m.userData.fillIntensity = m.emissiveIntensity;
   const base = m.userData.fillIntensity as number;
-  const dim = 0.35;
+  const dim = 0.97;
   m.emissiveIntensity = base * (1 - n * dim);
-  m.toneMapped = false;
+  m.toneMapped = n > 0.45;
 }

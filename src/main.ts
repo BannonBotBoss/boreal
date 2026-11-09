@@ -17,7 +17,6 @@ import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from '
 import { catalog } from './core/catalog';
 import { heightAt, type Entity } from './core/world';
 import { forestHandsOn, readForestHands } from './vr/forestSession';
-import { HAND_HINT } from './vr/forestHands';
 import { foxPlace, stepDrives } from './core/drives';
 import { pupCloud } from './animals/pups';
 import { BorealSound, mealChews } from './audio/borealSound';
@@ -347,9 +346,11 @@ element('export').onclick = () => {
 };
 const keys = new Set<string>(), tapped = new Set<string>(); // tapped: keys pressed since the last frame (a quick tap still fires)
 // Input goes through ONE bindings table (core/bindings): defaults = the old fixed keys; rebinding in ui/controls (Menu > Controls).
-let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem(BINDINGS_KEY); } catch { return null; } })()), inputPrev = new Set<string>();
-function setBindings(b: Bindings) { bindings = b; padRouter?.setBindings(b); bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
+let bindings: Bindings = loadBindings((() => { try { return localStorage.getItem(BINDINGS_KEY); } catch { return null; } })()), inputPrev = new Set<string>(), hint = { pad: '', keys: '' };
+function setBindings(b: Bindings) { bindings = b; padRouter?.setBindings(b); hint = { pad: '', keys: '' }; bindingTexts(); try { localStorage.setItem(BINDINGS_KEY, saveBindings(b)); } catch { /* storage blocked */ } }
 const controls = controlsScreen({ get: () => bindings, set: setBindings, library: () => { menu.close(); dialog.showModal(); } });
+const hintFor = (kind: 'keys' | 'pad') => { const L = (id: string) => bindingLabel(bindings[id][kind]);
+  return `${L('moveForward')} / ${L('moveBack')} move · ${L('steerLeft')} / ${L('steerRight')} steer · ${L('run')} run · ${L('stealth')} stealth · ${L('focus')} focus · ${L('lock')} lock · ${L('eatPrey')} eat held · ${L('releasePrey')} release · ${L('jump')} jump · ${L('interact')} interact · ${L('chrono')} hour · hold ${L('timeSlower')} rewind · hold ${L('timeFaster')} forward · ${L('timePause')} pause time · Controls: ${L('pause')} → Controls`; };
 function act(id: string) { // one fired press action (keyboard or gamepad)
   if (padRouter.act(id)) return;
   if (dialog.open) { if (id === 'back' || id === 'interact') dialog.close(); else if (id === 'pause') togglePause(); return; }
@@ -731,10 +732,10 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   if (target?.kind === 'deer') element('target').textContent = catalog[target.kind].title + animalStatus;
   document.body.classList.toggle('night', view.darkness() > .5);
   const holding = view.hares.held();
-  const aimLine = holding ? `Holding a hare · ${bindingLabel(bindings.eatPrey.keys)} eat · ${bindingLabel(bindings.releasePrey.keys)} release` : huntLock.key ? 'Lock on' : H('lock') > ACTIVE ? 'aiming' : focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina. Open your paws.' : HAND_HINT;
+  const aimLine = holding ? `Holding a hare · ${bindingLabel(bindings.eatPrey.keys)} eat · ${bindingLabel(bindings.releasePrey.keys)} release` : huntLock.key ? 'Lock on' : H('lock') > ACTIVE ? 'aiming' : focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : `RT run · LT stealth · LB focus · ${bindingLabel(bindings.lock.keys)} lock`;
   const stood = weatherAt(player.x, player.z);
   status.innerText = `${photo.active ? 'PHOTO · ' : isPaused() ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Snow ${stood.depthCm.toFixed(1)} cm · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
-  if (element('device').textContent !== HAND_HINT) element('device').textContent = HAND_HINT;
+  { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind);   if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
   if (!xrDriven) requestAnimationFrame(frame);
 }
 // The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.

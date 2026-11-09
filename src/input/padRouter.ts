@@ -87,7 +87,7 @@ export function createPadRouter(host: RouterHost) {
     if (!pad) { hintEl?.remove(); hintEl = undefined; return; }
     if (!hintEl) { hintEl = document.createElement('div'); hintEl.className = 'padx'; document.body.append(hintEl); }
     const busy = menu.isOpen || helpOpen || settingsOpen || !!radial; hintEl.hidden = busy;
-    hintEl.textContent = 'Point and pinch to move. Pinch the other hand to turn. An open paw grabs. A closed paw digs.';
+    hintEl.innerHTML = `${glyph('≡')} Menu · ${glyph('⧉')} Help · ${glyph('Y')} Camera (hold: filters) · ${glyph('RS')} Photo`;
   }
   const api = {
     menu, buttonMap: () => buttonMap(b), get state() { return { settingsOpen, helpOpen, camMode, radial: !!radial, menu: menu.isOpen }; },

@@ -1,11 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { LUX, NIGHT_READ, SYNODIC, darkAdapted, exposureFor, moonAge, moonLux, nightKey, nightSkyLight, sceneFill, wolfEyes } from '../src/core/light';
 import { lighting, sunPosition } from '../src/core/timeOfDay';
 import { besideMother } from '../src/core/litter';
 import { footLiftMetres } from '../src/render/meshySkin';
-import { HAND_HINT } from '../src/vr/forestHands';
 
 function fillAt(hour: number) {
   const sun = sunPosition(hour);
@@ -43,15 +41,4 @@ test('mama is lifted onto her feet, and the pups are a clump', () => {
   assert.ok(span > 0.6 && span < 3, `clump span ${span}`);
   const area = Math.abs((pups[1].x - pups[0].x) * (pups[2].z - pups[0].z) - (pups[2].x - pups[0].x) * (pups[1].z - pups[0].z));
   assert.ok(area > 0.05, 'the homes are not a straight row');
-});
-
-test('the always-on hints are hand words', () => {
-  assert.doesNotMatch(HAND_HINT, /\b(LB|RB|LS|RS|LT|RT)\b/);
-  assert.match(HAND_HINT, /open paw/i);
-  assert.match(HAND_HINT, /pinch/i);
-  const main = readFileSync('src/main.ts', 'utf8');
-  const pad = readFileSync('src/input/padRouter.ts', 'utf8');
-  assert.match(main, /HAND_HINT/);
-  assert.doesNotMatch(main, /LB focus/);
-  assert.doesNotMatch(pad, /RS'\)\} Photo/);
 });

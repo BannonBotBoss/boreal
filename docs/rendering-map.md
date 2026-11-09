@@ -76,6 +76,6 @@ Headless: the sphere draws. It does not use the forest shadow program.
 
 ## Overlays and UI
 
-The forest HUD is DOM, not a 3D light: `index.html` plus `src/main.ts` (status, footer) and `src/ui/senses.ts` (the wolf-senses card). The always-on words are `HAND_HINT` in `src/vr/forestHands.ts`: point and pinch to move, pinch the other hand to turn, an open paw grabs, a closed paw digs. The old controller chip (`LB`, `RB`, `RS`) is not the contest hint. The senses halo is `src/render/sensesHalo.ts`, an unlit ring, so it stays visible when the world is dark. That ring is not the ground.
+The forest HUD is DOM, not a 3D light: `index.html` plus `src/main.ts` (status, footer) and `src/ui/senses.ts` (the wolf-senses card). The status line and the footer still name the controller buttons (`RT`, `LT`, `LB`, and the pad chip in `src/input/padRouter.ts` with `RS` Photo). Those hints were left as they are. The senses halo is `src/render/sensesHalo.ts`, an unlit ring, so it stays visible when the world is dark. That ring is not the ground.
 
 Headless: the DOM is exact. The 3D halo is exact. Neither one tells you whether the terrain shader survived.

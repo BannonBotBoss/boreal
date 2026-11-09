@@ -10,7 +10,7 @@ Use when the glide or the landed view shows a grass shelf floating over the prai
 
 ## Steps
 
-1. The origin datum is `s.h`, the bed, the same surface as `heightAt`. Lake vertices still use `shownAsl`, so the water stays on the water plane.
+1. At home the origin datum is `s.h`, the bed, the same surface as `heightAt`. A remote landing keeps `shownAsl`, because its `heightAt` is already the water surface the skirt should meet. Lake vertices still use `shownAsl`, so the water stays on the water plane.
 2. Do not paint the near skirt with a coarse crown repeat or a green gain. Those turn large triangles into a striped shelf. A clump-scale grain (`vnoiseU`) is the sward. Crowns start far enough out that a tree reads as a tree.
 
 ## Checks

@@ -8,7 +8,7 @@ The far ground floated over the near ground as a striped shelf.
 
 ## Done
 
-- `skirtOrigin` uses the bed (`s.h`), the same surface as `heightAt`. Lake vertices still sit on the water plane.
+- At home, `skirtOrigin` uses the bed (`s.h`), the same surface as `heightAt`. A remote landing keeps the shown water surface, so ocean and lake clicks still meet the skirt. Lake vertices still sit on the water plane.
 - The near skirt is a 2.5 m clump grain. The crown repeat and the 1.4 green gain are not applied up close.
 - Test in `tests/horizon-skirt.test.ts`. Frames in `tasks/evidence/T-0181/`.
 

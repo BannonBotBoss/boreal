@@ -195,4 +195,15 @@ export function surfaceCloudRadiativeEffect(col: Column, mu = 1, cover = 1, albe
   const swCre = sw.reflected > 0 ? -f * (1 - a) * sw.reflected : 0;
   return { cover: f, clearEps, clearDown, cloudyDown, lw, sw: swCre, net: lw + swCre };
 }
+/** Cloud radiative effect absorbed inside the atmosphere: the top-of-atmosphere CRE minus the surface CRE (Allan 2011,
+ * Meteorol. Appl. 18:324; Ramanathan et al. 1989), with the TOA term taken over the same surface albedo. Positive means
+ * the cloudy column gains energy the clear column would not. The shortwave part is zero here because the two-stream
+ * cloud is conservative (no absorption). heatingKPerDay spreads it over the whole air column, dT/dt = CRE g / (cp p_s),
+ * times 86400 s. Returns W/m² and K/day. */
+export function atmosphericCloudRadiativeEffect(col: Column, mu = 1, cover = 1, albedo = 0) {
+  const toa = cloudRadiativeEffect(col, mu, cover), sfc = surfaceCloudRadiativeEffect(col, mu, cover, albedo);
+  const a = Math.min(1, Math.max(0, albedo)), toaSw = toa.sw * (1 - a);
+  const lw = toa.lw - sfc.lw, sw = toaSw - sfc.sw, net = lw + sw;
+  return { cover: toa.cover, lw, sw, net, heatingKPerDay: net * C.g / (C.cp * C.p0_Pa) * 86400 };
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

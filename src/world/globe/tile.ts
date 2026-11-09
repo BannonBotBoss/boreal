@@ -426,7 +426,7 @@ vAerial = vDetW - uMorphCam;
             float skip = fenW > 0.55 ? 0.78 : mix(0.06, 0.5, open);
             if (keep < skip) continue;
             vec2 j = vec2(gd_hash2u(c, uDetail.w + 22.0), gd_hash2u(c, uDetail.w + 23.0)) - 0.5;
-            float ang = gd_hash2u(c, uDetail.w + 26.0) * 6.28318;
+            float ang = gd_hash2u(c, uDetail.w + 26.0) * ${(2 * Math.PI).toFixed(5)};
             float ca = cos(ang), sa = sin(ang);
             vec2 dlt = g - (c + 0.5 + j * 0.95);
             vec2 rot = vec2(ca * dlt.x - sa * dlt.y, sa * dlt.x + ca * dlt.y);

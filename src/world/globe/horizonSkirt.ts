@@ -275,7 +275,10 @@ export function skirtSample(planet: Planet, x: number, z: number, origin: SkirtO
 export function skirtOrigin(planet: Planet, gameY: number): SkirtOrigin {
   const dir: Vec3 = SITE.remote ? SITE.dir : planet.home;
   const s = planet.sampleSurface(dir);
-  return { asl: shownAsl(s.h, s.water), gameY, remote: SITE.remote, lakeW: SITE.remote && s.kind === 'lake' ? s.water : undefined };
+  // gameY is heightAt, the ground (a lake bed sits below the water plane). shownAsl lifts a lake
+  // to its surface, and that datum then drops every surrounding land vertex by the same gap:
+  // the far ground floats off the chunks as a shelf. The bed is the matching surface.
+  return { asl: s.h, gameY, remote: SITE.remote, lakeW: SITE.remote && s.kind === 'lake' ? s.water : undefined };
 }
 
 /** Latitude and longitude of a skirt vertex, for a later elevation or imagery sample. */

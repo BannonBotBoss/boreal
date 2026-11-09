@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0181",
+  "agent": "grokbot-2",
+  "note": "The skirt uses the ground height, and the near surface is a clump-scale sward. Frames tasks/evidence/T-0181/. The horizon-skirt test passes. No self-approve.",
+  "at": "2026-11-08T20:14:10-08:00",
+  "skill": "continuous-sward"
+}

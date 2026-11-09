@@ -12,6 +12,7 @@ import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { PATCH_FAR } from './fade';
 import { biomeGrade, blendDem, blendPhoto, demSlope, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { GLSL_NOISE } from '../proc/glsl';
 import { canopyTile } from './trees/billboardAtlas';
 
 /** Daylight horizon the ground fades toward. Brighter than the old grey so aerial perspective
@@ -43,7 +44,7 @@ function skirtMaterial() {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkirtFade = aFade;\nvSkirtWater = aWater;\nvSkirtPhoto = aPhoto;\nvSkirtDist = distance(position.xz, uSkirtCam);\nvSkirtWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvSkirtClip = gl_Position;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform sampler2D uCanopy;\nuniform float uForest;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
+      .replace('#include <common>', '#include <common>\n' + GLSL_NOISE + '\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform sampler2D uCanopy;\nuniform float uForest;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
       .replace('#include <dithering_fragment>', `
         if (vSkirtPhoto < 0.5 && uFarMix.w > 0.5) {
           vec2 fuv = clamp(vSkirtClip.xy / vSkirtClip.w * 0.5 + 0.5, 0.0, 1.0);
@@ -55,14 +56,18 @@ function skirtMaterial() {
           // black. Take the globe texel whenever the far layer actually drew something.
           if (fd < 0.999 && luma > 0.008) gl_FragColor.rgb = globe;
         }
-        float detail = 0.5 + 0.5 * sin(vSkirtWorld.x * 1.9 + vSkirtWorld.z * 0.7) * sin(vSkirtWorld.x * 0.45 - vSkirtWorld.z * 1.6);
-        float near = 1.0 - smoothstep(40.0, 380.0, vSkirtDist);
-        gl_FragColor.rgb *= mix(1.0, 0.72 + 0.5 * detail, near);
-        float canopy = smoothstep(80.0, 280.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(6000.0, 14000.0, vSkirtDist));
+        // A continuous sward, not a striped shelf. The old 22 m crown repeat and the 1.4 green
+        // gain turned coarse triangles into neon facets (open-ground-photo). Tillers are a few
+        // centimetres to a few metres (FNA grass leaves, already the blade lengths in render/grass).
+        // 2.5 m cells are that clump scale. Crowns start only once a tree reads as a tree.
+        if (vSkirtWater < 0.5) {
+          float clump = vnoiseU(vSkirtWorld.xz * 0.4, 4.0);
+          gl_FragColor.rgb *= 0.9 + 0.2 * clump;
+        }
+        float canopy = smoothstep(400.0, 900.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(6000.0, 14000.0, vSkirtDist));
         if (canopy > 0.001) {
           vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.82);
-          gl_FragColor.rgb *= mix(vec3(1.0), vec3(1.08, 1.4, 0.96), uForest);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.45);
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);

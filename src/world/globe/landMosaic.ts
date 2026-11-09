@@ -53,6 +53,27 @@ export function flatGroundFill(s: GroundFillStats) {
   return s.stdL < 2 && s.bins < 5;
 }
 
+/**
+ * Continuous stand albedo for an overhead quad.
+ * The vertex colour jumps on a tile edge; this field does not, because it is only a function of metres.
+ * The three colours sit in the spruce albedo range (MODIS boreal canopy, a few percent).
+ * Fen is the wet hollow, conifer the closed stand, leaf the broadleaf patch.
+ * Sentinel-2 cloudless (EOX, CC BY 4.0) shows those as separate patches, not one olive.
+ */
+export const OVERHEAD_STAND = {
+  conifer: [0.020, 0.034, 0.016],
+  leaf: [0.055, 0.086, 0.030],
+  fen: [0.090, 0.062, 0.028],
+} as const;
+
+export function overheadStand(x: number, z: number): [number, number, number] {
+  const u = standField(x, z);
+  const a = u < 0.46 ? OVERHEAD_STAND.fen : OVERHEAD_STAND.conifer;
+  const b = u < 0.46 ? OVERHEAD_STAND.conifer : OVERHEAD_STAND.leaf;
+  const t = u < 0.46 ? u / 0.46 : (u - 0.46) / 0.54;
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+}
+
 /** Fen (browner) below the middle, broadleaf (greener) above it. Water is not passed in. */
 export function landMosaic(x: number, z: number, rgb: readonly [number, number, number]): [number, number, number] {
   const u = standField(x, z);

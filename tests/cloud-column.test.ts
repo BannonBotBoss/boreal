@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -898,4 +898,12 @@ test('layered clouds: atmospheric cloud radiative effect is TOA minus surface, l
   assert.ok(Math.abs(half.net - full.net / 2) < 1e-9, 'scales linearly with cover');
   const none = atmosphericCloudRadiativeEffect({ ...col, waterPath: 0, tau: 0 }, 1, 1);
   assert.ok(Math.abs(none.net) < 1e-6, 'no cloud, no effect');
+});
+
+test('layered clouds: lifted index is negative for a warm humid column, positive for a cold dry one', () => {
+  const moist = liftedIndex(cloudColumn(30, qOf(30, .85))), dry = liftedIndex(cloudColumn(5, qOf(5, .3)));
+  assert.ok(Number.isFinite(moist) && Number.isFinite(dry));
+  assert.ok(moist < 0, `warm humid air is unstable (LI ${moist})`);
+  assert.ok(dry > 0, `cold dry air is stable (LI ${dry})`);
+  assert.ok(Number.isNaN(liftedIndex(cloudColumn(20, qOf(20, .8), 1, 3000))), 'a column topping out below 500 hPa has no index');
 });

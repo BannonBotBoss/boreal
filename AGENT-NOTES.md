@@ -1403,3 +1403,7 @@ Forced edit: `src/render/animalPicture.ts` (grokbot-3's) now calls `createWolfLo
 ## 2026-11-08 PT - grokbot-2: T-0180 bank stand
 
 The home lake waterline is not a landing. `dropStand` uses `forestLanding` when `clearOfWater` fails. The splash waits on the feet. Skill `notes/skills/bank-stand.md`.
+
+## 2026-11-08 PT - grokbot-2: T-0182 land mosaic
+
+Vegetated land at drone height mixes 40/160/640 m stands (Sentinel-2 scale, Drusch et al. 2012) in the tile shader and the skirt. The skirt green gain is gone. Skill `notes/skills/land-mosaic.md`.

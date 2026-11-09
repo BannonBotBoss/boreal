@@ -365,7 +365,24 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
     float n0 = detN(q0, uDetail.w) - 0.5, n1 = detN(q1, uDetail.w + 1.0) - 0.5, n2 = detN(q2, uDetail.w + 2.0) - 0.5;
     detH = (k0 * n0 * uDetAmp.x + k1 * n1 * uDetAmp.y + k2 * n2 * uDetAmp.z) * uDetail.x * uDetail.z * landMask;
     a = k0 * n0 * ${DETAIL.weight[0].toFixed(3)} + k1 * n1 * ${DETAIL.weight[1].toFixed(3)} + k2 * n2 * ${DETAIL.weight[2].toFixed(3)};
-    diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask; }
+    diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask;
+    // Stand mosaic. Sentinel-2 MSI is a 10 m pixel (Drusch et al. 2012). These three waves
+    // (40 / 160 / 640 m) are the stand and wetland patches a true-colour mosaic shows.
+    // Same detN the crown grain already uses, so a planet-scale coordinate stays exact.
+    // A cell under about 2 px fades, and a full-disk view is unchanged.
+    float seen = 1.0 - smoothstep(0.25, 0.7, length(fwidth(vDetW.xz / 40.0)));
+    if (seen > 0.001 && landMask > 0.5) {
+      float s0 = detN(vDetW / 40.0, uDetail.w + 7.0);
+      float s1 = detN(vDetW / 160.0, uDetail.w + 8.0);
+      float s2 = detN(vDetW / 640.0, uDetail.w + 9.0);
+      float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
+      // A 3% canopy albedo under ACES hides a small multiply (the frame stayed one olive).
+      // These stretches are the display of a Sentinel quicklook, not a new reflectance. [game calibration]
+      vec3 fen = vec3(diffuseColor.r * 2.4, diffuseColor.g * 0.45, diffuseColor.b * 0.35);
+      vec3 leaf = vec3(diffuseColor.r * 0.7, diffuseColor.g * 2.2, diffuseColor.b * 0.6);
+      vec3 mosaic = stand < 0.5 ? mix(fen, diffuseColor.rgb, stand * 2.0) : mix(diffuseColor.rgb, leaf, (stand - 0.5) * 2.0);
+      diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen);
+    } }
   if (uOceanGlint > 0.5) { // macro wave chop on the ocean only (stegu simplex). Fades when a cell is under ~2 px. Lakes and the film's early beats stay flat.
     float ocean = (1.0 - landMask) * (1.0 - clamp(vLake, 0.0, 1.0)) * presentW;
     vec3 pw = vDetW;

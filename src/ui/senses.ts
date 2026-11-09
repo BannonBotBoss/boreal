@@ -21,9 +21,10 @@ const potency: Record<string, number> = { deer: 1, hare: .7, person: .85, forage
 
 export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: BorealSound, memory: () => EventContext) {
   const root = document.createElement('details'); root.className = 'wolf-senses'; root.open = true;
-  root.innerHTML = `<summary>${sensesTitle('Grey wolf')}</summary><div class="sense-panel"><div class="sense-hearing"><div class="sense-compass" role="img" aria-label="Sound directions relative to your view"><span class="sense-ear" aria-hidden="true">◉</span><div class="sense-arrows"></div></div></div><div class="sense-stream" aria-label="Sense pictures. A more solid picture is a stronger signal."></div></div>`;
+  root.innerHTML = `<summary></summary><div class="sense-panel"><div class="sense-hearing"><div class="sense-compass" role="img" aria-label="Sound directions relative to your view"><span class="sense-ear" aria-hidden="true">◉</span><div class="sense-arrows"></div></div></div><div class="sense-stream" aria-label="Sense pictures. A more solid picture is a stronger signal."></div></div>`;
   const summary = root.querySelector('summary')!;
   document.body.append(root);
+  summary.textContent = sensesTitle(view.playable.label);
   const el = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
   const arrows = el('.sense-arrows'), streamEl = el('.sense-stream');
   const cues = createSoundCues(), stream = createSenseStream(), nose = new Vector3(), forward = new Vector3();

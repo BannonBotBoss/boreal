@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-09 afternoon
+
+T-0187 `grokbot-2/overhead-daylight`. The black overhead was the few-percent stand albedo under the globe sun, a red fen, and a 12 m dot grid. 2000 m is now luma 39, red 0, next to the EOX tile at luma 38.9. Not self-approved. This nadir still has no height-field lake. D18, D16, the undeclared `shadow` error, and opening resume are not in that PR. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09
 
 Inspection on main `2314ac52`. Matthew, 2026-11-07 17:45 PT: "go over anything else that needs fixing. i dont need to have to be the only one that can detect those issues".

@@ -32,6 +32,7 @@ import { CLOUDS } from './atmosphere';
 import { absorbedAttribute } from '../../core/planet/solarBudget';
 import { HYDRO_DRAW } from './hydroLayer';
 import { figureRadius } from './figure';
+import { OVERHEAD_LAKE, OVERHEAD_STAND } from './landMosaic';
 
 /** `lake`: 255 where the reference water level is above sea level (lakes and their shores), 0 at sea level: picks the lake vs ocean water colour. */
 /** `loc`: game-local x, z (gnomonic, m) and the home weight per vertex: where the shader reads the home shoreline mask (lakeMask.ts). */
@@ -354,10 +355,20 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
     // wander, only while the hi-res shore mask is off and a pixel is metres not kilometres,
     // bends that edge. The amplitude stays under a real lake's depth so open water does not dry.
     float pxS = max(length(fwidth(vDetW.xz)), 1e-3);
-    float shoreBand = (1.0 - hm) * smoothstep(0.8, 2.0, pxS) * (1.0 - smoothstep(40.0, 90.0, pxS));
-    F += (detN(vDetW / 48.0, uDetail.w + 19.0) - 0.5) * 3.0 * shoreBand;
+    // Aerial band from the camera distance, not from fwidth. On these tiles fwidth(vDetW)
+    // does not track metres per pixel (the 2000 m frame stayed on the vertex albedo, luma
+    // ~32, after the stand table moved). length(vViewPosition) is the eye distance in metres.
+    // 400 m and 2000 m are in. The forest floor (~40 m) and the full disk are out.
+    float eye = length(vViewPosition);
+    float aerial = smoothstep(120.0, 350.0, eye) * (1.0 - smoothstep(20000.0, 60000.0, eye));
+    float shoreBand = (1.0 - hm) * smoothstep(0.35, 1.1, pxS) * (1.0 - smoothstep(40.0, 90.0, pxS));
+    F += (detN(vDetW / 48.0, uDetail.w + 19.0) - 0.5) * max(3.0, pxS * 2.2) * shoreBand;
     float fw = max(fwidth(F), 1e-3); landMask = smoothstep(-fw, fw, F);
-    landMask = mix(landMask, 1.0, vLake * (1.0 - hm) * uHideLake); // a vertex lake with the mask off is a dark polygon this low
+    // Below 8 km a vertex lake used to be forced to land, so the 400 m and 2000 m frames had no water.
+    // Keep it water in the aerial band. Underfoot the hide stays, and the game water draws the shore.
+    // Underfoot, a vertex lake with the mask off used to be forced to land (a black polygon).
+    // From the air that hide erased the lakes. Draw the vertex lake as water instead.
+    landMask = mix(landMask, 1.0, vLake * (1.0 - hm) * uHideLake * (1.0 - aerial));
     float band = hm * (1.0 - smoothstep(0.1, 0.4, fw)); // shore bands only while they are wider than a pixel
     float eraSum = uEra.x + uEra.y + uEra.z + uEra.w;
     presentW = eraSum < 0.001 ? 1.0 : (1.0 - (1.0 - clamp(uEra.w, 0.0, 1.0)) * (1.0 - clamp(uEra.w, 0.0, 1.0))); // film beats stay as authored; the present globe (and a non-film load) takes the new ocean
@@ -368,6 +379,9 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
     // Globe lakes are ~0.01 albedo and read as black polygons from a few kilometres up.
     // A tannin lake in Sentinel-2 cloudless is dark blue, not a flat charcoal facet.
     water = mix(water, vec3(0.018, 0.036, 0.046), shoreBand * (1.0 - landMask));
+    // Daylight lake. The stored lake albedo is about 0.01 and tone-maps to black. This is the
+    // aerial blue (darker than the canopy) for the same band as the stand field.
+    water = mix(water, vec3(${OVERHEAD_LAKE.map(v => v.toFixed(3)).join(', ')}), (1.0 - landMask) * aerial);
     water = mix(water, diffuseColor.rgb * 0.5, band * ${SHORE.shallowMix.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.shallow.toFixed(3)}, -F))); // shallows: the bed shows through
     diffuseColor.rgb *= 1.0 - band * ${SHORE.wetDark.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.wet.toFixed(3)}, F)); // wet ground at the waterline
     diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask);
@@ -376,19 +390,23 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
     // as landMosaic / overheadStand), so both sides of a tile edge agree.
     // A full disk (tens of metres per pixel and up) is left as the vertex colour.
     {
-      float pxO = max(length(fwidth(vDetW.xz)), 1e-3);
-      float overhead = smoothstep(0.5, 1.2, pxO) * (1.0 - smoothstep(35.0, 80.0, pxO));
+      // Same eye-distance band as aerial above. The full disk stays the vertex colour.
+      float overhead = aerial;
       float veg = 1.0 - smoothstep(0.10, 0.18, max(diffuseColor.r, diffuseColor.g));
       if (overhead * veg * landMask > 0.04) {
         float s0 = detN(vDetW / 40.0, uDetail.w + 7.0);
         float s1 = detN(vDetW / 160.0, uDetail.w + 8.0);
         float s2 = detN(vDetW / 640.0, uDetail.w + 9.0);
-        float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
-        vec3 conifer = vec3(0.020, 0.034, 0.016);
-        vec3 leaf = vec3(0.055, 0.086, 0.030);
-        vec3 fen = vec3(0.090, 0.062, 0.028);
+        // At 2000 m a 40 m cell is grain. Weight the 160 m and 640 m stands, which are the
+        // patches on the EOX tile. Closer in, the 40 m wave comes back.
+        float close = 1.0 - smoothstep(500.0, 1600.0, eye);
+        float w0 = mix(0.12, 0.50, close);
+        float stand = s0 * w0 + s1 * 0.40 + s2 * (0.60 - w0);
+        vec3 conifer = vec3(${OVERHEAD_STAND.conifer.map(v => v.toFixed(3)).join(', ')});
+        vec3 leaf = vec3(${OVERHEAD_STAND.leaf.map(v => v.toFixed(3)).join(', ')});
+        vec3 fen = vec3(${OVERHEAD_STAND.fen.map(v => v.toFixed(3)).join(', ')});
         vec3 field = stand < 0.46 ? mix(fen, conifer, stand / 0.46) : mix(conifer, leaf, (stand - 0.46) / 0.54);
-        diffuseColor.rgb = mix(diffuseColor.rgb, field, overhead * 0.88);
+        diffuseColor.rgb = mix(diffuseColor.rgb, field, overhead * 0.92);
       }
     }
     }${LAYERS_FRAG}
@@ -454,32 +472,16 @@ vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed 
       float s2 = detN(vDetW / (wave * (w2 / w0)), uDetail.w + 9.0);
       float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
       float dark = 1.0 - smoothstep(0.07, 0.16, max(diffuseColor.r, diffuseColor.g));
-      vec3 fen = vec3(diffuseColor.r * 2.4, diffuseColor.g * 0.45, diffuseColor.b * 0.35);
-      vec3 leaf = vec3(diffuseColor.r * 0.7, diffuseColor.g * 2.2, diffuseColor.b * 0.6);
+      // Olive fen and a greener leaf. The old 2.4 red / 0.45 green turned August boreal red.
+      vec3 fen = vec3(diffuseColor.r * 1.2, diffuseColor.g * 0.88, diffuseColor.b * 0.65);
+      vec3 leaf = vec3(diffuseColor.r * 0.95, diffuseColor.g * 1.28, diffuseColor.b * 0.75);
       vec3 mosaic = stand < 0.5 ? mix(fen, diffuseColor.rgb, stand * 2.0) : mix(diffuseColor.rgb, leaf, (stand - 0.5) * 2.0);
-      diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen * mix(0.55, 1.0, dark));
-      // Crowns. The stand waves are smooth blobs. A closed boreal canopy is overlapping
-      // crowns a few metres across, and a 10 m Sentinel-2 pixel still breaks that
-      // (Drusch et al. 2012). Coarser than 12 m, the cell widens so a clump stays a few
-      // pixels instead of averaging back to one green. detC is the lattice hash already in this shader.
-      float cell = max(12.0, px * 3.5);
-      vec2 gC = vDetW.xz / cell;
-      vec2 bC = floor(gC);
-      float bestC = 2.0;
-      for (int ia = -1; ia <= 1; ia++) {
-        for (int ib = -1; ib <= 1; ib++) {
-          vec2 idC = bC + vec2(float(ia), float(ib));
-          vec2 midC = mod(idC, 4096.0);
-          float hxC = detC(vec3(midC, 21.0), uDetail.w + 21.0);
-          float hyC = detC(vec3(midC.yx, 22.0), uDetail.w + 22.0);
-          float hrC = detC(vec3(midC, 23.0), uDetail.w + 23.0);
-          vec2 ctrC = idC + 0.5 + (vec2(hxC, hyC) - 0.5) * 0.75;
-          float radC = 0.40 + 0.28 * hrC;
-          bestC = min(bestC, length(gC - ctrC) / radC);
-        }
-      }
-      float coverC = bestC >= 1.0 ? 0.0 : 1.0 - bestC;
-      diffuseColor.rgb *= mix(1.0, mix(0.58, 1.32, coverC), 1.0 - smoothstep(40.0, 80.0, px));
+      // The aerial stand above already painted this band. Do not paint it again.
+      float aerialM = smoothstep(120.0, 350.0, length(vViewPosition)) * (1.0 - smoothstep(20000.0, 60000.0, length(vViewPosition)));
+      diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen * mix(0.55, 1.0, dark) * (1.0 - aerialM));
+      // No 12 m crown grid here. At 400 m that grid was a wallpaper of identical dots
+      // (tasks/evidence/T-0185/after-globe-400.png and the first T-0187 recapture).
+      // The 40 / 160 / 640 m stands are the canopy.
     }
   }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>

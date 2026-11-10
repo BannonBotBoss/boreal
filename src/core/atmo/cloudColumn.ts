@@ -274,4 +274,18 @@ export function convectiveCondensationLevel(col: Column, groundM = 0) {
   }
   return { cclM: -1, tCcl: NaN, convT: NaN };
 }
+/** Wet-bulb temperature (C) from air temperature (C) and relative humidity (0..1), Stull (2011, J. Appl. Meteor. Climatol.
+ * 50, 2267) empirical fit at sea-level pressure, good to about 1 C for RH 5-99 % and -20..50 C. */
+export function wetBulbC(tC: number, rh: number) {
+  const R = Math.max(5, Math.min(99, 100 * rh));
+  return tC * Math.atan(0.151977 * Math.sqrt(R + 8.313659)) + Math.atan(tC + R) - Math.atan(R - 1.676331)
+    + 0.00391838 * R ** 1.5 * Math.atan(0.023101 * R) - 4.686035;
+}
+/** Wet-bulb zero height of a column (m above ground): the lowest layer whose wet-bulb temperature reaches 0 C. Falling snow
+ * cools its air toward the wet bulb as it melts and evaporates, so this, not the dry freezing level, sets where snow turns to
+ * rain and how much hail survives. 0 if the surface wet bulb is already freezing, -1 if never reached. */
+export function wetBulbZeroM(col: Column) {
+  for (const l of col.layers) if (wetBulbC(l.tEnv, Math.min(1, l.rh)) <= 0) return l.z;
+  return -1;
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

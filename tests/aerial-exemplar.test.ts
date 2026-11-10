@@ -196,8 +196,46 @@ test('the reference matches itself; the #417 camouflage and static do not', () =
   }
 });
 
+/**
+ * Spread of ~200 m block means. A uniform carpet stays near 0. The Sentinel tile,
+ * which has forest, rock, fen and lakes, does not.
+ * Measured: tasks/evidence/T-0191/carpet-2000.png (the first 2000 m still) std about 2.5.
+ * The reference at the same block size is about 12.
+ */
+export function largeScaleStd(file: string, mpp: number, blockM = 200) {
+  const { w, h, rgb } = readPng(file);
+  const block = Math.max(8, Math.round(blockM / mpp));
+  const x0 = Math.floor(w * 0.06), x1 = Math.floor(w * 0.94);
+  const y0 = Math.floor(h * 0.06), y1 = Math.floor(h * 0.86);
+  const means: number[] = [];
+  for (let y = y0; y + block <= y1; y += block) for (let x = x0; x + block <= x1; x += block) {
+    let s = 0, n = 0;
+    for (let yy = 0; yy < block; yy += 2) for (let xx = 0; xx < block; xx += 2) {
+      const i = ((y + yy) * w + (x + xx)) * 3;
+      s += 0.2126 * rgb[i] + 0.7152 * rgb[i + 1] + 0.0722 * rgb[i + 2];
+      n++;
+    }
+    means.push(s / n);
+  }
+  if (means.length < 4) return { std: 0, blocks: means.length, block };
+  const mean = means.reduce((a, b) => a + b, 0) / means.length;
+  const v = means.reduce((a, b) => a + (b - mean) ** 2, 0) / means.length;
+  return { std: Math.sqrt(v), blocks: means.length, block, mean };
+}
+
+test('a 2000 m carpet with no stand-scale variation fails; the reference does not', () => {
+  const ref = largeScaleStd('tasks/evidence/T-0189/ref-eox-z14.png', REF_MPP);
+  const carpet = largeScaleStd('tasks/evidence/T-0191/carpet-2000.png', frameMpp(2000, 1280));
+  assert.ok(ref.std > 8, JSON.stringify(ref));
+  assert.ok(carpet.std < 4, JSON.stringify(carpet));
+  const frame = largeScaleStd('tasks/evidence/T-0191/after-globe-2000.png', frameMpp(2000, 1280));
+  const lake = largeScaleStd('tasks/evidence/T-0191/after-globe-2000-lake.png', frameMpp(2000, 1280));
+  assert.ok(frame.std > 4, JSON.stringify(frame));
+  assert.ok(lake.std > 4, JSON.stringify(lake));
+});
+
 test('the exemplar frames keep a photographic patch score and drop the camouflage paint', () => {
-  for (const [file, alt] of [['tasks/evidence/T-0190/after-globe-2000.png', 2000], ['tasks/evidence/T-0190/after-globe-400.png', 400]] as const) {
+  for (const [file, alt] of [['tasks/evidence/T-0191/after-globe-2000.png', 2000], ['tasks/evidence/T-0191/after-globe-400.png', 400]] as const) {
     const structure = patchStructure(file, frameMpp(alt, 1280));
     const paint = camouflageShares(file);
     assert.equal(aerialOk(file, alt), true, JSON.stringify({ file, structure, paint }));

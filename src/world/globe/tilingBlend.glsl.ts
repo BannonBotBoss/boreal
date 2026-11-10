@@ -41,7 +41,7 @@ vec3 tbLut(sampler2D lut, float layer, vec3 g) {
     texture2D(lut, vec2(g.b, y)).b));
 }
 
-vec3 tbSample(sampler2D tex, sampler2D lut, float layer, vec2 uv) {
+vec3 tbSample(sampler2D tex, sampler2D lut, float layer, vec2 uv, float lod) {
   mat2 sheared = mat2(-TB_TAN30, TB_TWO_TAN30, 1.0, 0.0);
   vec2 s = sheared * (uv * TB_SQRT3);
   vec2 iuv = floor(s);
@@ -56,7 +56,7 @@ vec3 tbSample(sampler2D tex, sampler2D lut, float layer, vec2 uv) {
   // (Error-mdl RandomOffsetTiling) left a diagonal brightness wave on this canopy.
   w = w * w;
   w /= max(w.x + w.y + w.z, 1e-4);
-  vec3 g = tbBlend3(texture2D(tex, uv + h0).rgb, texture2D(tex, uv + h1).rgb, texture2D(tex, uv + h2).rgb, w);
+  vec3 g = tbBlend3(textureLod(tex, uv + h0, lod).rgb, textureLod(tex, uv + h1, lod).rgb, textureLod(tex, uv + h2, lod).rgb, w);
   return tbLut(lut, layer, g);
 }
 `;

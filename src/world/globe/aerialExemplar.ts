@@ -28,8 +28,8 @@ function dataTexture(repeat: boolean) {
   const tex = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255]), 1, 1);
   tex.colorSpace = THREE.NoColorSpace;
   tex.magFilter = THREE.LinearFilter;
-  tex.minFilter = THREE.LinearFilter;
-  tex.generateMipmaps = false;
+  tex.minFilter = repeat ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter;
+  tex.generateMipmaps = repeat;
   tex.wrapS = tex.wrapT = repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
   tex.flipY = true;
   tex.needsUpdate = true;
@@ -52,8 +52,8 @@ const READY = 'aerial-exemplars';
 function adopt(slot: { value: THREE.Texture }, tex: THREE.Texture, repeat: boolean) {
   tex.colorSpace = THREE.NoColorSpace;
   tex.magFilter = THREE.LinearFilter;
-  tex.minFilter = THREE.LinearFilter;
-  tex.generateMipmaps = false;
+  tex.minFilter = repeat ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter;
+  tex.generateMipmaps = repeat;
   tex.wrapS = tex.wrapT = repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
   tex.flipY = true;
   tex.needsUpdate = true;

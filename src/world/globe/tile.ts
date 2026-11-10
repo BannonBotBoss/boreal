@@ -370,6 +370,10 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
     float aerial = smoothstep(120.0, 350.0, eye) * (1.0 - smoothstep(20000.0, 60000.0, eye));
     float shoreBand = (1.0 - hm) * smoothstep(0.35, 1.1, pxS) * (1.0 - smoothstep(40.0, 90.0, pxS));
     F += (detN(vDetW / 48.0, uDetail.w + 19.0) - 0.5) * max(3.0, pxS * 2.2) * shoreBand * (1.0 - aerial);
+    // Aerial shore: bend the height contour by a few tens of metres so a coarse quad is not a straight cut.
+    // Only next to the existing contour, so this does not open a new lake in the forest.
+    float shoreGate = 1.0 - smoothstep(8.0, 60.0, abs(F));
+    F += ((detN(vDetW / 240.0, uDetail.w + 19.0) - 0.5) * 70.0 + (detN(vDetW / 75.0, uDetail.w + 23.0) - 0.5) * 22.0) * aerial * shoreGate;
     float fw = max(fwidth(F), 1e-3); landMask = smoothstep(-fw, fw, F);
     // Below 8 km a vertex lake used to be forced to land, so the 400 m and 2000 m frames had no water.
     // Keep it water in the aerial band. Underfoot the hide stays, and the game water draws the shore.
@@ -389,23 +393,50 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
     water = mix(water, diffuseColor.rgb * 0.5, band * ${SHORE.shallowMix.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.shallow.toFixed(3)}, -F))); // shallows: the bed shows through
     diffuseColor.rgb *= 1.0 - band * ${SHORE.wetDark.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.wet.toFixed(3)}, F)); // wet ground at the waterline
     diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask);
-    // 400–2000 m: colour is a real aerial exemplar, blended by the vertex cover weights.
-    // The shoreline is the height field (landMask from F). No punched pond, no flat navy disc.
+    // 400–2000 m: real aerial exemplars. Weights are the vertex cover plus stands,
+    // age and disturbance at 100–800 m, and the height field (wet hollows, the shore).
+    // The shoreline is landMask from F. No punched pond and no flat navy disc.
     aerialBand = aerial;
     if (aerial > 0.02 && uExOn > 0.5) {
-      vec3 cw = max(vec3(vCover.x, vCover.y, vCover.z), vec3(0.0));
-      cw = cw * cw * cw;
-      float csum = cw.x + cw.y + cw.z;
-      cw = csum > 1e-4 ? cw / csum : vec3(1.0, 0.0, 0.0);
+      float eyeDist = length(vViewPosition);
+      // At 2000 m a 1.6 m crown is a repeating grain. A lower mip blurs it toward the
+      // Sentinel pixel without stretching the tiling cells into big squares.
+      float coarse = smoothstep(650.0, 1600.0, eyeDist);
+      float lod = coarse * 2.6;
       vec2 uv = vAerial.xz / max(uExMetres, 1.0);
-      vec3 canopy = tbSample(uExCanopy, uExLut, 0.0, uv);
-      vec3 fenC = tbSample(uExFen, uExLut, 1.0, uv);
-      vec3 shoreC = tbSample(uExShore, uExLut, 2.0, uv);
-      vec3 waterC = tbSample(uExWater, uExLut, 3.0, uv);
-      vec3 landEx = canopy * cw.x + fenC * cw.y + shoreC * cw.z;
-      float shoreH = landMask * (1.0 - smoothstep(0.0, 40.0, max(F, 0.0)));
-      landEx = mix(landEx, shoreC, clamp(shoreH, 0.0, 1.0));
-      vec3 photo = mix(waterC, landEx, landMask) * uExGain;
+      vec3 canopy = tbSample(uExCanopy, uExLut, 0.0, uv, lod);
+      vec3 fenC = tbSample(uExFen, uExLut, 1.0, uv, lod);
+      vec3 shoreC = tbSample(uExShore, uExLut, 2.0, uv, lod);
+      vec3 waterC = tbSample(uExWater, uExLut, 3.0, uv, lod);
+      float stand = detN(vDetW / 760.0, uDetail.w + 41.0) * 0.72 + detN(vDetW / 280.0, uDetail.w + 42.0) * 0.28;
+      float age = detN(vDetW / 480.0, uDetail.w + 53.0);
+      float burnN = detN(vDetW / 880.0, uDetail.w + 67.0);
+      float above = max(F, 0.0);
+      // Fen is a wet patch, not every metre of ground that happens to sit near a lake.
+      float fenN = smoothstep(0.70, 0.88, 1.0 - stand);
+      float fen = max(vCover.y, fenN * (1.0 - smoothstep(3.0, 18.0, above)));
+      fen = clamp(fen, 0.0, 1.0);
+      float decid = smoothstep(0.60, 0.78, stand) * (1.0 - fen);
+      float rock = smoothstep(0.76, 0.90, age) * (1.0 - fen);
+      rock = max(rock, smoothstep(0.55, 0.82, vCover.z) * smoothstep(22.0, 55.0, above));
+      float burn = smoothstep(0.87, 0.96, burnN);
+      rock = clamp(max(rock, burn), 0.0, 1.0);
+      float sum = decid + fen + rock;
+      if (sum > 1.0) { decid /= sum; fen /= sum; rock /= sum; sum = 1.0; }
+      float conifer = 1.0 - sum;
+      // Far grade pulls the lawn-green canopy toward the darker olive of the Sentinel tile.
+      // Near grade keeps the crowns that read at 400 m.
+      vec3 coniferC = mix(canopy, canopy * vec3(0.34, 0.28, 0.24), coarse);
+      vec3 decidC = mix(canopy * vec3(1.05, 0.96, 0.62), canopy * vec3(0.90, 0.74, 0.32), coarse);
+      vec3 fenCol = fenC * vec3(0.70, 0.55, 0.34);
+      vec3 rockCol = shoreC * vec3(0.72, 0.66, 0.58);
+      vec3 burnCol = rockCol * 0.22 + vec3(0.025, 0.018, 0.012);
+      rockCol = mix(rockCol, burnCol, burn);
+      vec3 landEx = coniferC * conifer + decidC * decid + fenCol * fen + rockCol * rock;
+      float shoreH = landMask * (1.0 - smoothstep(0.0, 7.0, above));
+      landEx = mix(landEx, mix(rockCol, fenCol, 0.35), clamp(shoreH, 0.0, 1.0));
+      vec3 waterCol = waterC * vec3(0.28, 0.36, 0.55);
+      vec3 photo = mix(waterCol, landEx, landMask) * uExGain;
       diffuseColor.rgb = mix(diffuseColor.rgb, photo, aerial * (1.0 - clamp(vCover.w, 0.0, 1.0)));
     }
     }${LAYERS_FRAG}

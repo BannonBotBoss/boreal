@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0195",
+  "agent": "grokbot-2",
+  "skill": "design-issue-roadmap",
+  "branch": "grokbot-2/spec-map",
+  "note": "The index is tasks/T-0195-spec-issue-map.md. Holes are written as no task yet. Not self-approved.",
+  "at": "2026-11-09T19:25:40-08:00"
+}

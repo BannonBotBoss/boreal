@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex, kIndex, totalTotals } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex, kIndex, totalTotals, showalterIndex } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -923,4 +923,12 @@ test('Layered clouds: Total Totals (Miller 1972) is vertical plus cross totals a
   const l500 = humidCol.layers.reduce((a, l) => Math.abs(pressureAt(l.z) - 50000) < Math.abs(pressureAt(a.z) - 50000) ? l : a);
   assert.ok(Math.abs(humid - ((l850.tEnv - l500.tEnv) + (l850.dew - l500.tEnv))) < 1e-9, 'TT = VT + CT');
   assert.ok(Number.isNaN(totalTotals(cloudColumn(10, qOf(10, .6), 1, undefined, undefined, 3000), 3000)), 'ground above 850 hPa has no Total Totals');
+});
+test('Showalter index: 850 hPa parcel lifted to 500 hPa', () => {
+  const humid = cloudColumn(30, qOf(30, .8)), dry = cloudColumn(5, qOf(5, .3));
+  const si = showalterIndex(humid), sd = showalterIndex(dry);
+  assert.ok(Number.isFinite(si) && Number.isFinite(sd));
+  assert.ok(si < sd, `warm humid air is less stable than cold dry air (${si} vs ${sd})`);
+  assert.ok(sd > 0, `cold dry air is stable (${sd})`);
+  assert.ok(Number.isNaN(showalterIndex(cloudColumn(10, qOf(10, .6), 1, undefined, undefined, 3000), 3000)), 'ground above 850 hPa has no Showalter index');
 });

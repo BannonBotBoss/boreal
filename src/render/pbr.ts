@@ -22,6 +22,11 @@ export const LIGHTING = { lux: 1e5, gain: 1, moonAge: 0, Esun: 0, Emoon: 0 };
 export const SUN_UNIFORMS = { uSunView: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color(1, 1, 1) } };
 const SEED = (WORLD_SEED % 997) * .37;
 
+/** 1 = prairie thatch and soil at the feet, 0 = boreal needle litter and moss. The satellite tint stays past 30 m. */
+export const FLOOR = { uFloor: { value: 0 } };
+export function setGroundFloor(biome: string) {
+  FLOOR.uFloor.value = biome === 'prairie' || biome === 'desert' ? 1 : 0;
+}
 let terrain: THREE.MeshStandardMaterial | undefined;
 /** Extra terrain albedo layers (e.g. render/flora/moss: forest-floor mosses and lichens), applied before the noise, wet and
  * snow response. `head` is fragment GLSL after GLSL_NOISE (world xz is `vXZ`), `body` edits `diffuseColor`. No draw calls. */
@@ -37,13 +42,29 @@ export function terrainMaterial() {
     for (const l of groundLayers) Object.assign(shader.uniforms, l.uniforms);
     shader.vertexShader = 'attribute float aWet; attribute float aSnow; varying float vWet; varying float vSnow; varying vec2 vXZ;\n' +
       shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vWet = aWet; vSnow = aSnow; vXZ = (modelMatrix * vec4(position, 1.)).xz;');
-    shader.fragmentShader = `varying float vWet; varying float vSnow; varying vec2 vXZ;\n${GLSL_NOISE}\n${groundLayers.map(l => l.head).join('\n')}\n` + shader.fragmentShader
+    Object.assign(shader.uniforms, FLOOR);
+    shader.fragmentShader = `uniform float uFloor;\nvarying float vWet; varying float vSnow; varying vec2 vXZ;\n${GLSL_NOISE}\n${groundLayers.map(l => l.head).join('\n')}\n` + shader.fragmentShader
       .replace('#include <color_fragment>', `#include <color_fragment>
         ${groundLayers.map(l => l.body).join('\n')}
         float n1 = fbm(vXZ * 1.7, ${SEED.toFixed(3)}), n2 = vnoise(vXZ * 9.0, ${SEED.toFixed(3)});
         diffuseColor.rgb *= (0.85 + 0.3 * n1) * (1.0 - 0.4 * vWet);
         float snow = smoothstep(0.2, 0.8, vSnow + (n2 - 0.5) * 0.4);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.8), snow);`)
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.8), snow);
+        // The satellite grassland tint is one dark green. At a person's feet a prairie is
+        // live clumps, standing-dead thatch and bare soil (Sims and Gamon 2002: senescent
+        // grass is brighter and browner than green leaf). A boreal floor is needle litter
+        // and feathermoss (Bubier et al. 1997, green peak about 0.09). Past 30 m the
+        // satellite tint returns.
+        float floorNear = 1.0 - smoothstep(5.0, 30.0, length(vXZ - cameraPosition.xz));
+        vec3 soil = vec3(0.18, 0.12, 0.07);
+        vec3 thatch = vec3(0.34, 0.24, 0.11);
+        vec3 liveG = vec3(0.05, 0.10, 0.035);
+        vec3 prairie = mix(mix(soil, thatch, smoothstep(0.30, 0.62, n2)), liveG, smoothstep(0.55, 0.82, n1));
+        vec3 litter = vec3(0.14, 0.08, 0.04);
+        vec3 mossC = vec3(0.045, 0.09, 0.028);
+        vec3 boreal = mix(litter, mossC, smoothstep(0.40, 0.75, n1));
+        vec3 floorC = mix(boreal, prairie, clamp(uFloor, 0.0, 1.0));
+        diffuseColor.rgb = mix(diffuseColor.rgb, floorC, floorNear * (1.0 - snow) * 0.92);`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         roughnessFactor = mix(mix(0.95, 0.35, vWet) * (0.9 + 0.2 * n2), 0.6, snow);`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>

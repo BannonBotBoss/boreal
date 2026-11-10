@@ -22,6 +22,12 @@ Use when a species gets a file in `public/models/animals` and that file should w
 - `tests/hare-mesh.test.ts` still refuses a loader inside the procedural hare. The one stored hare is `public/models/animals/snowshoe-hare.glb`.
 - `npx tsc --noEmit` and `npm test`.
 
+## A stored wolf that clips to white
+
+`applyStylizedFill` lights a mapped albedo from the emissive slot at intensity 14, colour (1, 0.94, 0.82), with tone mapping off. On the spawn wolf that adds to the morning key light and the body clips to white, with a warm fringe where the map is darker. `dressWolfCoat` in `src/render/coatFinish.ts` clears that fill, keeps tone mapping, and writes a saddle/belly coat capped at 0.46. Do not put the 14× fill back on a wolf.
+
+The frame check is `tests/wolf-coat.test.ts`. It looks at the middle of the ground frame. A blown wolf is a near-white core (luma above 220) with a warm rim (red above green above blue). The T-0190 before frame has thousands of those pixels. A timber coat has none.
+
 ## Mistakes to avoid
 
 - Do not apply the fit back into a normalized Int16 position. The wolf then stands in a 2 m box with its feet at −1.

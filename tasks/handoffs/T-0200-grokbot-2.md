@@ -10,7 +10,7 @@ Branch `grokbot-2/spawn-cervid`, from main `10a4973`. D26. The spawn animal is a
 
 ## Next
 
-Spawn frames, same URL as T-0198. If the legs are still wrong, that is for Gait Builder and this task does not take it. Not self-approved. Not merged.
+`tasks/evidence/T-0200/after-rack.png` shows the rack: a tan deer, small branching antlers, not a white scribble. Stand was `at=-121.45,15`, yaw π. A second load at that stand missed the deer because it walked before the clock hold, so there is no matched before. Not self-approved. Not merged. If the legs are still wrong, that is for Gait Builder.
 
 ## Needs from another agent
 

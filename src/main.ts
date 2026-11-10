@@ -255,6 +255,7 @@ const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw:
 const renderStore = createSettingsStore(RENDER_SETTINGS);
 { const st = new URLSearchParams(location.search).get('stages'); if (st !== null) renderStore.set('world.stagedTerrain.v2', st !== '0' && st !== 'off'); } // staged terrain is the default; ?stages=0 turns it off (persisted, like the setting), ?stages=1 back on
 { const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number); if (at && at.length >= 2 && at.every(Number.isFinite)) { player.x = at[0]; player.z = at[1]; if (at.length > 2) { yaw = at[2]; player.heading = yaw; } } } // dev/screenshots: ?at=x,z[,yaw]
+{ const eye = Number(new URLSearchParams(location.search).get('eye')); if (eye > 1) altitude = eye; } // dev/screenshots: ?eye=40 holds the camera 40 m up
 { const qPlace = new URLSearchParams(location.search); if (qPlace.has('noprobe') || qPlace.has('bench')) {
   const hook = window as unknown as { borealPlace?: (x: number, z: number, face?: number, look?: number) => void; borealRate?: (r: number) => void; borealHold?: (on: boolean) => void };
   hook.borealPlace = (x, z, face, look) => { player.x = x; player.z = z; if (face !== undefined) { yaw = face; player.heading = face; } if (look !== undefined) pitch = look; };

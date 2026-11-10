@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0192",
+  "agent": "grokbot-2",
+  "note": "Merged origin/main 66deb5e (T-0193, #421) into grokbot-2/spruce-crowns and replayed the board with npx tsx tools/tasks.ts. T-0190, T-0191 and T-0193 are the tasks already on main. T-0192 does not share an id with them, so it stays T-0192. The complete event now names branch grokbot-2/spruce-crowns. The opening-voice duration check is the 0.1 s tolerance from #421.",
+  "at": "2026-11-09T18:58:20-08:00"
+}

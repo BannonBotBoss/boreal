@@ -139,6 +139,75 @@ function painted(g: THREE.BufferGeometry, color: THREE.ColorRepresentation, m: T
 const M = (x: number, y: number, z: number, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) =>
   new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
 
+/**
+ * One spruce crown as drooping whorls, not ConeGeometry.
+ * Black spruce is narrow, gapped, and club-tipped (Viereck and Johnston 1990; tools/tree-ref club_tops).
+ * White spruce is broader and droops (Nienstaedt and Zasada 1990). Balsam fir is a dense spire (Frank 1990).
+ * Sector radii differ, so two neighbours are not the same cone.
+ */
+function spireCrown(id: string, h: number, y0: number, w: number, droop: number, tiers: number, detail: number, rng: () => number) {
+  const sectors = detail === 2 ? 8 : 12;
+  const club = id === 'black-spruce';
+  const dense = id === 'balsam-fir';
+  const scale = id === 'white-spruce' ? 1.05 : club ? 0.62 : 0.82;
+  const notchP = dense ? 0.08 : club ? 0.28 : 0.16;
+  const pos: number[] = [];
+  const treeScale = 0.78 + rng() * 0.4;
+  const span = Math.max(0.5, h * 0.97 - y0), step = span / Math.max(1, tiers - 1);
+  const leanA = rng() * Math.PI * 2, lean = (0.012 + rng() * 0.03) * (club ? 1.5 : 0.7);
+  const push = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c); };
+  for (let i = 0; i < tiers; i++) {
+    const t = tiers <= 1 ? 0 : i / (tiers - 1);
+    let env = 1 - t * (dense ? 0.92 : club ? 0.42 : 0.7);
+    if (club && t > 0.74) env = 0.62;
+    const reach = Math.max(0.45, w * scale * treeScale * Math.max(0.16, env));
+    const y = y0 + (h * 0.97 - y0) * t;
+    const drop = Math.max(step * (dense ? 1.15 : 1.45), Math.sin(Math.max(0.08, droop)) * reach * 0.4);
+    const ox = Math.cos(leanA) * lean * (y - y0), oz = Math.sin(leanA) * lean * (y - y0);
+    const spin = rng() * 0.4 + i * (Math.PI * 2 / sectors * 0.5);
+    const center = [ox, y, oz];
+    const ring: number[][] = [];
+    for (let s = 0; s < sectors; s++) {
+      const notch = rng() < notchP && !(club && t > 0.74);
+      const rad = reach * (notch ? 0.28 + rng() * 0.15 : 0.72 + rng() * 0.38);
+      const a = spin + s / sectors * Math.PI * 2;
+      ring.push([ox + Math.cos(a) * rad, y - drop * (notch ? 0.25 : 0.65 + rng() * 0.5), oz + Math.sin(a) * rad]);
+    }
+    for (let s = 0; s < sectors; s++) {
+      const a = ring[s], b = ring[(s + 1) % sectors];
+      push(center, a, b);
+      const hemA = [ox + (a[0] - ox) * 0.9, a[1] - drop * 0.85, oz + (a[2] - oz) * 0.9];
+      const hemB = [ox + (b[0] - ox) * 0.9, b[1] - drop * 0.85, oz + (b[2] - oz) * 0.9];
+      push(a, hemA, hemB); push(a, hemB, b);
+    }
+  }
+  if (pos.length < 9) pos.push(0, h * 0.9, 0, w * 0.2, h * 0.7, 0, -w * 0.15, h * 0.75, w * 0.1);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
+}
+/** Radius spread of the foliage at mid-crown. A cone is near 1. An uneven whorl is well above that. */
+export function spireSpread(id: string, variant: number, detail = 1) {
+  const geo = build(id, variant, detail, 1, false);
+  const pos = geo.getAttribute('position'), leaf = geo.getAttribute('aLeaf');
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < pos.count; i++) if (leaf.getX(i) > 0.5) { const y = pos.getY(i); if (y < minY) minY = y; if (y > maxY) maxY = y; }
+  const band = minY + (maxY - minY) * 0.45, tol = (maxY - minY) * 0.1;
+  const radii: number[] = [];
+  for (let i = 0; i < pos.count; i++) {
+    if (leaf.getX(i) <= 0.5) continue;
+    if (Math.abs(pos.getY(i) - band) > tol) continue;
+    const r = Math.hypot(pos.getX(i), pos.getZ(i));
+    if (r > 0.15) radii.push(r);
+  }
+  radii.sort((a, b) => a - b);
+  const outer = radii.slice(Math.floor(radii.length * 0.55));
+  const rMin = outer[0] ?? 1, rMax = outer[outer.length - 1] ?? 1;
+  geo.dispose();
+  return { ratio: rMax / Math.max(0.05, rMin), width: rMax, n: outer.length };
+}
+
 /** ONE builder; the crown FORM and every number come from the species spec (core/treeSpecies). Per-vertex attributes:
  * aLeaf (0 bark, 1 needle, 2 deciduous leaf), aFall (fall colour), aFlutter (petiole flutter) feed the shared tree shader. */
 function build(id: TreeSpecies, variant: number, detail: number, cls = 1, snag = false) {
@@ -186,13 +255,10 @@ function build(id: TreeSpecies, variant: number, detail: number, cls = 1, snag =
   const childR = r * Math.max(1, B.per) ** (-1 / B.taper) * .5; // pipe model: r^Δ = Σ r_i^Δ (half the stem radius at crown base)
   if (snag) { // standing dead: bare broken limbs only (crown shed), core/stand snag share
     for (let i = 0; i < Math.min(nodes * B.per, detail === 2 ? 0 : 8); i++) limb(h * (crownBase + rng() * (1 - crownBase) * .8), i * B.div, w * .35 * rng(), childR * .7, B.angle + B.droop, 0x4a3f36);
-  } else if (sp.form === 'spire') { // excurrent conifer: one drooping cone tier per (group of) whorls
-    const tiers = f('tree', 'tiers', Math.min(nodes, detail === 2 ? 2 : detail === 1 ? 5 : 10));
-    for (let i = 0; i < tiers; i++) {
-      const t = i / tiers, y = h * (crownBase + (.96 - crownBase) * t), radius = Math.max(.3, w * B.len * (1 - t * .88) * (.85 + rng() * .3)), tall = h * (1 - crownBase) / tiers * 1.8 + h * (detail === 2 ? .2 : 0);
-      parts.push(tag(painted(new THREE.ConeGeometry(radius, tall, seg + (detail === 0 ? 2 : 0)), green.clone().offsetHSL(0, 0, (t - .5) * .05),
-        M((rng() - .5) * .12, y - Math.sin(B.droop) * radius * .3, (rng() - .5) * .12, 1, 1, 1, (rng() - .5) * .08, i * B.div, (rng() - .5) * .08), .07, rng), leafKind));
-    }
+  } else if (sp.form === 'spire') { // excurrent conifer: uneven drooping whorls, not a stack of cones
+    const tiers = f('tree', 'tiers', Math.min(nodes, detail === 2 ? 5 : detail === 1 ? 8 : 11));
+    parts.push(tag(painted(spireCrown(id, h, h * crownBase, w, B.droop, tiers, detail, rng), green.clone().offsetHSL((rng() - .5) * .04, 0, (rng() - .5) * .08),
+      M(0, 0, 0), .1, rng), leafKind));
   } else { // broadleaf / open pine: limbs at phyllotactic azimuths, foliage masses at drooping tips
     const n = f('tree', 'limbs', Math.min(nodes * B.per, detail === 2 ? 3 : detail === 1 ? 6 : sp.form === 'open-pine' ? 9 : 14)), flat = sp.form === 'open-pine' ? .5 : 1;
     for (let i = 0; i < n; i++) {

@@ -16,7 +16,7 @@ import { standAt } from '../../core/stand';
 import { FAR_TREES, farTreesInTile } from '../../core/flora/stands';
 import { hash, random } from '../../proc/rng';
 import { WIND_UNIFORMS, ageClass, treeGeometry, treeSpecies } from '../trees';
-import { bindWind, placeTree, removeTree, updateTrees, v2Handles } from '../trees/game';
+import { bindWind, crownStartM, placeTree, removeTree, updateTrees, v2Handles } from '../trees/game';
 import { fadeOptIn } from '../fade';
 
 export const FAR_TREE_FX = { off: typeof location !== 'undefined' && new URLSearchParams(location.search).get('fartrees') === '0' }; // ?fartrees=0: bench A/B
@@ -82,7 +82,7 @@ export function createFarTrees(scene: THREE.Scene) {
   return (camera: THREE.Camera) => {
     updateTrees(scene, camera); // trees v2 LOD + pruning (no-op unless ?trees=v2)
     if (bm) bm.visible = !FAR_TREE_FX.off && RENDER.treeDensity > 0;
-    const x = camera.position.x, z = camera.position.z, density = RENDER.treeDensity, inner = 55 * RENDER.lod.trees + 5, outer = Math.max(inner, INTEREST.mid);
+    const x = camera.position.x, z = camera.position.z, density = RENDER.treeDensity, inner = crownStartM(RENDER.lod.trees), outer = Math.max(inner, INTEREST.mid);
     const reset = density !== lDensity || Math.abs(inner - lInner) > 1 || Math.abs(outer - lOuter) > 1;
     if (pending('fartrees:refill') || (!reset && lx !== undefined && Math.hypot(x - lx, z - lz) < FAR_TREES.tile / 2)) return;
     lx = x; lz = z; lDensity = density; lInner = inner; lOuter = outer; Object.assign(FAR_TREE_INFO, { inner, outer });

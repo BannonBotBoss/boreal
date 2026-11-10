@@ -68,12 +68,26 @@ function materialise(t: Tree) {
   t.lod = 2;
 }
 const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), p3 = new THREE.Vector3(), s3 = new THREE.Vector3();
-/** Place one tree (idempotent by key). `cls` = render/trees age class 0-3; `seed` picks the variant. */
+/** Place one tree (idempotent by key). `cls` = render/trees age class 0-3; `seed` picks the variant.
+ *  A second call with a new scale rewrites the matrix. The cover sample arrives after the first
+ *  chunks, and a stuck full-size spruce would ignore that. */
 export function placeTree(key: string, x: number, y: number, z: number, rotY: number, sx: number, sy: number, sz: number, seed: number, cls: number, far: boolean) {
-  if (trees.has(key)) return;
+  const m = new THREE.Matrix4().compose(p3.set(x, y, z), q.setFromAxisAngle(up, rotY), s3.set(sx, sy, sz));
+  const prev = trees.get(key);
+  if (prev) {
+    prev.m.copy(m);
+    if (prev.crown >= 0 && crown) crown.setMatrixAt(prev.crown, m);
+    if (prev.bark >= 0 && bark) bark.setMatrixAt(prev.bark, m);
+    if (prev.leaf >= 0 && leaf) leaf.setMatrixAt(prev.leaf, m);
+    return;
+  }
   const vk = Math.max(0, Math.min(3, cls)) * VARIANTS + ((seed >>> 5) % VARIANTS);
-  const t: Tree = { m: new THREE.Matrix4().compose(p3.set(x, y, z), q.setFromAxisAngle(up, rotY), s3.set(sx, sy, sz)), vk, far, lod: -1, bark: -1, leaf: -1, crown: -1 };
+  const t: Tree = { m, vk, far, lod: -1, bark: -1, leaf: -1, crown: -1 };
   trees.set(key, t); variantJob(vk); if (variants.has(vk)) materialise(t);
+}
+/** Drop every placed tree so a cover change can put back only the stems the sample keeps. */
+export function dropPlacedTrees() {
+  for (const key of [...trees.keys()]) removeTree(key);
 }
 export function removeTree(key: string) {
   const t = trees.get(key); if (!t) return; trees.delete(key);

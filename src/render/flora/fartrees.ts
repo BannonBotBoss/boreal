@@ -18,6 +18,7 @@ import { hash, random } from '../../proc/rng';
 import { WIND_UNIFORMS, ageClass, treeGeometry, treeSpecies } from '../trees';
 import { bindWind, crownStartM, placeTree, removeTree, updateTrees, v2Handles } from '../trees/game';
 import { fadeOptIn } from '../fade';
+import { coverSampleAt } from '../../world/globe/coverSample';
 
 export const FAR_TREE_FX = { off: typeof location !== 'undefined' && new URLSearchParams(location.search).get('fartrees') === '0' }; // ?fartrees=0: bench A/B
 /**
@@ -36,12 +37,19 @@ export function createFarTrees(scene: THREE.Scene) {
   let bm: THREE.BatchedMesh | undefined;
   const v2keys = new Map<string, string[]>(); // trees v2 (render/trees/game): far black spruce as ragged crowns, per tile
   const tiles = new Map<string, number[]>(), geoIds = new Map<THREE.BufferGeometry, number>(), tris = new Map<number, number>(), stands = new Map<string, number>();
-  let lx: number | undefined, lz = 0, lDensity = -1, lInner = 0, lOuter = 0;
+  const fit = new Map<string, { share: number; scaleMul: number }>();
+  let lx: number | undefined, lz = 0, lDensity = -1, lInner = 0, lOuter = 0, lCover = '';
   const mat4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), pos = new THREE.Vector3();
-  /** Stand stems/ha per 40 m chunk centre (the same sample core/population uses). */
+  /** Stand stems/ha per 40 m chunk centre, times the cover sample's share. Prairie keeps a few clumps, not the closed stand. */
+  const coverFit = (x: number, z: number) => {
+    const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE), k = `${cx},${cz}`;
+    let s = fit.get(k);
+    if (!s) { if (fit.size > 4096) fit.clear(); const c = coverSampleAt((cx + .5) * CHUNK_SIZE, (cz + .5) * CHUNK_SIZE); s = { share: c.treeShare, scaleMul: c.scaleMul }; fit.set(k, s); }
+    return s;
+  };
   const stemsAt = (x: number, z: number) => {
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE), k = `${cx},${cz}`; let s = stands.get(k);
-    if (s === undefined) { if (stands.size > 4096) stands.clear(); stands.set(k, s = RENDER.standMap ? standAt((cx + .5) * CHUNK_SIZE, (cz + .5) * CHUNK_SIZE).stems : 1500); }
+    if (s === undefined) { if (stands.size > 4096) stands.clear(); stands.set(k, s = (RENDER.standMap ? standAt((cx + .5) * CHUNK_SIZE, (cz + .5) * CHUNK_SIZE).stems : 1500) * coverFit(x, z).share); }
     return s;
   };
   const dry = (x: number, z: number) => heightAt(x, z) < LEVEL.shore ? 0 : 1;
@@ -53,6 +61,7 @@ export function createFarTrees(scene: THREE.Scene) {
     if (src !== g) src.dispose(); geoIds.set(g, id); FAR_TREE_INFO.geometries = tris.size; return id;
   }
   function* refill(cx: number, cz: number, inner: number, outer: number, density: number, reset: boolean) {
+    if (reset) { stands.clear(); fit.clear(); }
     const T = FAR_TREES.tile, in2 = inner * inner, out2 = outer * outer;
     const d2 = (tx: number, tz: number) => { const dx = (tx + .5) * T - cx, dz = (tz + .5) * T - cz; return dx * dx + dz * dz; };
     for (const [k, insts] of tiles) {
@@ -67,7 +76,8 @@ export function createFarTrees(scene: THREE.Scene) {
       for (const p of farTreesInTile(tx, tz, density, stemsAt, dry)) {
         if (bm && bm.instanceCount >= FAR_TREES.maxInstances) break;
         const rr = random(hash(`fartree-v2:${WORLD_SEED}:${Math.floor(p.r * 0xffffffff)}`));
-        const e: Entity = { key: `fartree:${tx}:${tz}:${insts.length}`, kind: 'spruce', seed: Math.floor(rr() * 0xffffffff), generatorVersion: GENERATOR_VERSION, x: p.x, z: p.z, rotation: rr() * Math.PI * 2, scale: .75 + rr() * .65 };
+        const grown = coverFit(p.x, p.z).scaleMul;
+        const e: Entity = { key: `fartree:${tx}:${tz}:${insts.length}`, kind: 'spruce', seed: Math.floor(rr() * 0xffffffff), generatorVersion: GENERATOR_VERSION, x: p.x, z: p.z, rotation: rr() * Math.PI * 2, scale: (.75 + rr() * .65) * grown };
         if (v2Handles(treeSpecies(e.seed, e.x, e.z))) { // trees v2: a crown instance in render/trees/game (built there in sliced jobs)
           bindWind(WIND_UNIFORMS); const s = random(e.seed)(); placeTree(e.key, e.x, heightAt(e.x, e.z), e.z, e.rotation, e.scale, e.scale * (.9 + s * .2), e.scale, e.seed, ageClass(e.x, e.z), true);
           (v2keys.get(k) ?? v2keys.set(k, []).get(k)!).push(e.key); insts.push(-1); continue;
@@ -83,8 +93,11 @@ export function createFarTrees(scene: THREE.Scene) {
     updateTrees(scene, camera); // trees v2 LOD + pruning (no-op unless ?trees=v2)
     if (bm) bm.visible = !FAR_TREE_FX.off && RENDER.treeDensity > 0;
     const x = camera.position.x, z = camera.position.z, density = RENDER.treeDensity, inner = crownStartM(RENDER.lod.trees), outer = Math.max(inner, INTEREST.mid);
-    const reset = density !== lDensity || Math.abs(inner - lInner) > 1 || Math.abs(outer - lOuter) > 1;
+    const cover = coverSampleAt(x, z);
+    const coverKey = `${cover.biome}:${cover.water ? 1 : 0}:${Math.floor(cover.vegetation * 10)}`;
+    const reset = density !== lDensity || Math.abs(inner - lInner) > 1 || Math.abs(outer - lOuter) > 1 || coverKey !== lCover;
     if (pending('fartrees:refill') || (!reset && lx !== undefined && Math.hypot(x - lx, z - lz) < FAR_TREES.tile / 2)) return;
+    lCover = coverKey;
     lx = x; lz = z; lDensity = density; lInner = inner; lOuter = outer; Object.assign(FAR_TREE_INFO, { inner, outer });
     const g = refill(x, z, inner, outer, density, reset);
     const timed = (function* () { // tiles are small: run several per slice up to the slice budget

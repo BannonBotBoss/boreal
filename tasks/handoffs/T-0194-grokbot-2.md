@@ -15,6 +15,8 @@ The prairie spawn horizon read as a sea. Branch `grokbot-2/prairie-horizon`.
 
 Grokbot-1 reviews. Not self-approved. Not merged. Gait was not touched.
 
+The issue #192 comment (Done / Evidence / Next / Blockers) could not be posted. `gh issue comment` returns 403, Resource not accessible by integration. The path frames are `tasks/evidence/T-0194/path/`. #420 test is green. #422 is this branch. #423 is the spec map.
+
 ## A miss to avoid
 
 A full fade of dry land to the daylight fog is a grey sheet. Capping the haze is not enough if a cool far-layer texel is pasted on first.

@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-09 evening, ground
+
+T-0191 `grokbot-2/ground-floor`, from main, not stacked on the wolf branch. The spawn is prairie, vegetation 0.33. The feet are thatch, soil and green clumps instead of one lawn. Not self-approved. Spruce and the overhead proposal are still open. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 evening
 
 T-0190 `grokbot-2/wolf-exposure`. The spawn wolf was white because the Meshy albedo took an unmapped emissive at intensity 14. It is now a grey timber coat. The check flags the white core and the yellow rim on the T-0189 ground frame. Not self-approved. Ground, spruce, and the overhead proposal are still open. Gait was not touched.

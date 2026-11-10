@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex, kIndex, totalTotals, showalterIndex, convectiveCondensationLevel } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex, kIndex, totalTotals, showalterIndex, convectiveCondensationLevel, wetBulbC, wetBulbZeroM } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -938,4 +938,10 @@ test('Convective condensation level: surface dew point line meets the profile, c
   assert.ok(r.convT >= col.layers[0].tEnv - 0.5, `convective temperature ${r.convT} is not below the surface temperature`);
   const moist = convectiveCondensationLevel(cloudColumn(25, qOf(25, .9)));
   assert.ok(moist.cclM >= 0 && moist.cclM < r.cclM, `moister air gives a lower CCL (${moist.cclM} vs ${r.cclM})`);
+});
+test('Wet-bulb zero: Stull wet bulb checks out and sits at or below the dry freezing level', () => {
+  assert.ok(Math.abs(wetBulbC(20, .5) - 13.7) < 0.2, `Stull (2011) example 20 C, 50 % gives 13.7 C (${wetBulbC(20, .5)})`);
+  const col = cloudColumn(15, qOf(15, .5)); const wbz = wetBulbZeroM(col);
+  assert.ok(wbz > 0 && col.freezeM > 0 && wbz <= col.freezeM, `wet-bulb zero ${wbz} at or below freezing level ${col.freezeM}`);
+  assert.equal(wetBulbZeroM(cloudColumn(-5, qOf(-5, .8))), 0, 'a freezing surface has wet-bulb zero at the ground');
 });

@@ -231,4 +231,13 @@ export function kIndex(col: Column, groundM = 0) {
   if (!l850 || !l700 || !l500 || pressureAt(Math.max(0, groundM) || 0) < 85000) return NaN;
   return (l850.tEnv - l500.tEnv) + l850.dew - (l700.tEnv - l700.dew);
 }
+/** Total Totals index (K) of a column (Miller 1972): T850 + Td850 - 2*T500, the vertical totals (T850 - T500, lapse rate)
+ * plus the cross totals (Td850 - T500, low-level moisture against mid-level cold). Thunderstorms become likely near 44-45,
+ * scattered severe storms from about 50, and 55+ points to scattered to numerous severe storms (US NWS guidance).
+ * NaN under the same conditions as kIndex: the column misses 500 hPa or the ground already sits above 850 hPa. */
+export function totalTotals(col: Column, groundM = 0) {
+  const l850 = layerAtPressure(col, 85000, groundM), l500 = layerAtPressure(col, 50000, groundM);
+  if (!l850 || !l500 || pressureAt(Math.max(0, groundM) || 0) < 85000) return NaN;
+  return l850.tEnv + l850.dew - 2 * l500.tEnv;
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

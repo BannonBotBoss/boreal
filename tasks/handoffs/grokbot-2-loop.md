@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-10, prairie sky and skirt
+
+T-0194 `grokbot-2/prairie-horizon`. The spawn grey band is the horizon skirt. The white sky is Preetham clipped under ACES. The skirt's near ring is thatch. The sky uses the Sky.js exposure scale. Fog follows Koschmieder out to 6 km. The wide sheet scores 0 at yaw 2.054. The open sky luma is about 210. B−R is not yet 59, and the horizon step is about 60. Not self-approved. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-10, prairie horizon matched frames
 
 T-0194 `grokbot-2/prairie-horizon`. The open-prairie pair is one pose (seed 1400, x 65.4, z −18.6, yaw 5.140, 08:46). Main `66deb5e` already has the white sky, the hard horizon step, and the blotchy ground. This branch matches those scores and does not fix them. The spawn heading's grey band scores 0.068 on both. Not self-approved. Gait was not touched.

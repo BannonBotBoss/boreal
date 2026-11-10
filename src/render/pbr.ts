@@ -40,10 +40,10 @@ export function terrainMaterial() {
   terrain.onBeforeCompile = shader => {
     addCloudShadow(shader as unknown as Parameters<typeof addCloudShadow>[0]);
     for (const l of groundLayers) Object.assign(shader.uniforms, l.uniforms);
-    shader.vertexShader = 'attribute float aWet; attribute float aSnow; varying float vWet; varying float vSnow; varying vec2 vXZ;\n' +
-      shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vWet = aWet; vSnow = aSnow; vXZ = (modelMatrix * vec4(position, 1.)).xz;');
+    shader.vertexShader = 'attribute float aWet; attribute float aSnow; varying float vWet; varying float vSnow; varying vec2 vXZ; varying float vWY;\n' +
+      shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vWet = aWet; vSnow = aSnow; vXZ = (modelMatrix * vec4(position, 1.)).xz; vWY = (modelMatrix * vec4(position, 1.)).y;');
     Object.assign(shader.uniforms, FLOOR);
-    shader.fragmentShader = `uniform float uFloor;\nvarying float vWet; varying float vSnow; varying vec2 vXZ;\n${GLSL_NOISE}\n${groundLayers.map(l => l.head).join('\n')}\n` + shader.fragmentShader
+    shader.fragmentShader = `uniform float uFloor;\nvarying float vWet; varying float vSnow; varying vec2 vXZ; varying float vWY;\n${GLSL_NOISE}\n${groundLayers.map(l => l.head).join('\n')}\n` + shader.fragmentShader
       .replace('#include <color_fragment>', `#include <color_fragment>
         ${groundLayers.map(l => l.body).join('\n')}
         float n1 = fbm(vXZ * 1.7, ${SEED.toFixed(3)}), n2 = vnoise(vXZ * 9.0, ${SEED.toFixed(3)});
@@ -70,7 +70,14 @@ export function terrainMaterial() {
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
         { float e = 0.05, s = ${SEED.toFixed(3)}; vec2 p = vXZ * 3.0;
           float gx = fbm(p + vec2(e, 0.), s) - fbm(p - vec2(e, 0.), s), gz = fbm(p + vec2(0., e), s) - fbm(p - vec2(0., e), s);
-          normal = normalize(normal - (viewMatrix * vec4(gx, 0., gz, 0.)).xyz * (1.0 - snow) * 1.5); }`);
+          normal = normalize(normal - (viewMatrix * vec4(gx, 0., gz, 0.)).xyz * (1.0 - snow) * 1.5); }`)
+      .replace('#include <dithering_fragment>', `
+        // Koschmieder path: only rays within about 3° of horizontal. The feet stay land.
+        vec3 airTo = normalize(vec3(vXZ.x, vWY, vXZ.y) - cameraPosition);
+        float dep = clamp(-airTo.y, 0.0, 1.0);
+        float ang = 1.0 - smoothstep(0.006, 0.045, dep);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, ang * 0.72);
+        #include <dithering_fragment>`);
   };
   terrain.customProgramCacheKey = () => ['boreal-terrain-pbr', ...groundLayers.map(l => l.name)].join(':');
   fadeOptIn(terrain); // render/fade: in-page transition patch fade (uniform only, same cache key)

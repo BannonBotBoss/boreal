@@ -100,7 +100,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   // Time of day: core/timeOfDay hourAt (world clock + the chronometer's dial; ?hour=HH sets the first value, initDay in main).
   let clock = formatHour(hourAt(0)), darkness = 0;
   let worldTime: number | undefined; // set by main from core/worldClock
-  const camera = new THREE.PerspectiveCamera(48, 1, .2, 700);
+  const camera = new THREE.PerspectiveCamera(48, 1, .35, 8000);
   const xrOrigin = new THREE.Group(); scene.add(xrOrigin);
   const xrMuzzle = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), new THREE.MeshStandardMaterial({ color: 0xc8c2b4 }));
   xrMuzzle.position.set(0, -0.12, -0.42); xrMuzzle.visible = false; camera.add(xrMuzzle);
@@ -499,7 +499,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       horizonAhead.set(0, 0, -1).applyQuaternion(camera.quaternion);
       const eye = Math.max(1, camera.position.y - heightAt(camera.position.x, camera.position.z));
       horizon.update(horizonPlanet, camera.position.x, camera.position.z, eye, horizonAhead.x, horizonAhead.z);
-      horizon.setHaze(160, 700, (scene.fog as THREE.Fog).color);
+      const fog = scene.fog as THREE.Fog;
+      horizon.setHaze(80, 480, fog.color);
       horizon.mesh.visible = true;
     } else horizon.mesh.visible = false;
     bandBackground(scene, camera); // world/globe/inpage: band = globe far layer as the background + patch fade (no-op otherwise)

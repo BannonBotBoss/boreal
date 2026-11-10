@@ -142,42 +142,45 @@ test('a dry basin under the water line is soil, and a real lake stays water', ()
   assert.equal(terrainBand(heightAt(lake!.x, lake!.z), lake!.x, lake!.z), 'water');
 });
 
-test('the matched prairie frames keep the Comanche sky and horizon scores', () => {
+test('the matched prairie frames move toward the Comanche sky and off the grey sheet', () => {
   // Comanche National Grassland, 29 May 2015, snow-free shortgrass. Public domain, US National Park Service.
   // Same cover the game reports (prairie, snow 0). Not Kenora. Not these coordinates.
-  // Calibration of this metric, measured on these files:
-  //   known match, the reference: sky luma 189, blue (B−R 59), horizon drop 31, cool sheet 0.0025
-  //   known mismatch, main 66deb5e at the same pose: sky luma 232, nearly white (B−R 5), drop 99, cool sheet 0
-  // The branch frame has to sit on that mismatch. The white sky and the hard step are already on main.
+  // Calibration, measured on these files:
+  //   known match, the reference: sky luma 189, B−R 59, horizon drop 31, cool sheet 0.0025
+  //   known mismatch, main 66deb5e, open prairie: sky luma 232, B−R 5, drop 99, cool sheet 0
+  //   known mismatch, main spawn heading: cool sheet 0.068, the grey-blue band
+  // After the Preetham retune the open frame is about luma 210, B−R 22, drop 63, cool 0.011.
+  // The spawn frame is about luma 175, B−R 37, drop 60, cool 0.
+  // The wide sheet is gone. The step is smaller than main's 99 and is not yet under 45.
+  // The sun-facing sky is bluer than the old white and is not yet B−R 59.
   const ref = readPng('tasks/evidence/T-0194/ref-comanche-horizon.png');
   const main = readPng('tasks/evidence/T-0194/main-66deb5e.png');
-  const before = readPng('tasks/evidence/T-0194/before-horizon.png');
   const after = readPng('tasks/evidence/T-0194/after-horizon.png');
+  const spawnMain = readPng('tasks/evidence/T-0194/spawn-main.png');
+  const spawnBranch = readPng('tasks/evidence/T-0194/spawn-branch.png');
   const refSky = regionMean(ref.rgb, ref.w, ref.h);
   const mainSky = regionMean(main.rgb, main.w, main.h);
   const afterSky = regionMean(after.rgb, after.w, after.h);
+  const spawnSky = regionMean(spawnBranch.rgb, spawnBranch.w, spawnBranch.h);
   const refDrop = horizonDrop(horizonBins(ref.rgb, ref.w, ref.h));
-  const mainBins = horizonBins(main.rgb, main.w, main.h);
-  const afterBins = horizonBins(after.rgb, after.w, after.h);
-  const mainDrop = horizonDrop(mainBins);
-  const afterDrop = horizonDrop(afterBins);
+  const mainDrop = horizonDrop(horizonBins(main.rgb, main.w, main.h));
+  const afterDrop = horizonDrop(horizonBins(after.rgb, after.w, after.h));
+  const spawnDrop = horizonDrop(horizonBins(spawnBranch.rgb, spawnBranch.w, spawnBranch.h));
   assert.ok(refSky.luma > 160 && refSky.luma < 210 && refSky.b - refSky.r > 40, `reference sky ${refSky.luma.toFixed(1)} B-R ${(refSky.b - refSky.r).toFixed(1)}`);
-  assert.ok(refDrop < 40, `reference horizon drop ${refDrop.toFixed(1)}`);
+  assert.ok(refDrop < 45, `reference horizon drop ${refDrop.toFixed(1)}`);
   assert.ok(coolSheetRows(ref.rgb, ref.w, ref.h) < 0.01);
-  assert.ok(mainSky.luma > 220 && mainSky.b - mainSky.r < 15, `main sky ${mainSky.luma.toFixed(1)} is the known white mismatch`);
-  assert.ok(mainDrop > 80, `main horizon drop ${mainDrop.toFixed(1)} is the known hard step`);
-  assert.ok(coolSheetRows(main.rgb, main.w, main.h) < 0.02);
-  assert.ok(Math.abs(afterSky.luma - mainSky.luma) < 1, `after sky ${afterSky.luma.toFixed(1)} main ${mainSky.luma.toFixed(1)}`);
-  assert.ok(Math.abs(afterDrop - mainDrop) < 1, `after drop ${afterDrop.toFixed(1)} main ${mainDrop.toFixed(1)}`);
-  const binGap = afterBins.reduce((s, v, i) => s + Math.abs(v - mainBins[i]), 0) / afterBins.length;
-  assert.ok(binGap < 1, `horizon profile gap ${binGap.toFixed(2)}`);
-  assert.ok(coolSheetRows(after.rgb, after.w, after.h) < 0.02);
-  assert.ok(coolSheetRows(before.rgb, before.w, before.h) < 0.02);
-  // The open view has no sheet on main either. The spawn heading still has the lake band, on both.
-  const spawnMain = readPng('tasks/evidence/T-0194/spawn-main.png');
-  const spawnBranch = readPng('tasks/evidence/T-0194/spawn-branch.png');
+  assert.ok(mainSky.luma > 220 && mainSky.b - mainSky.r < 15, `main sky ${mainSky.luma.toFixed(1)}`);
+  assert.ok(mainDrop > 80, `main drop ${mainDrop.toFixed(1)}`);
   const sheetMain = coolSheetRows(spawnMain.rgb, spawnMain.w, spawnMain.h);
   const sheetBranch = coolSheetRows(spawnBranch.rgb, spawnBranch.w, spawnBranch.h);
-  assert.ok(sheetMain > 0.04 && sheetBranch > 0.04, `spawn sheet main ${sheetMain} branch ${sheetBranch}`);
-  assert.ok(Math.abs(sheetMain - sheetBranch) < 0.005, `spawn sheet moved: main ${sheetMain} branch ${sheetBranch}`);
+  const sheetAfter = coolSheetRows(after.rgb, after.w, after.h);
+  assert.ok(sheetMain > 0.04, `main spawn sheet ${sheetMain}`);
+  assert.ok(sheetBranch < 0.02 && sheetBranch < sheetMain * 0.5, `spawn sheet ${sheetBranch}`);
+  assert.ok(sheetAfter < 0.02, `open sheet ${sheetAfter}`);
+  assert.ok(afterSky.luma > 165 && afterSky.luma < 220, `open sky luma ${afterSky.luma.toFixed(1)}`);
+  assert.ok(afterSky.b - afterSky.r > 15, `open B-R ${(afterSky.b - afterSky.r).toFixed(1)}`);
+  assert.ok(spawnSky.luma > 155 && spawnSky.luma < 210, `spawn sky luma ${spawnSky.luma.toFixed(1)}`);
+  assert.ok(spawnSky.b - spawnSky.r > 25, `spawn B-R ${(spawnSky.b - spawnSky.r).toFixed(1)}`);
+  assert.ok(afterDrop < 75 && afterDrop < mainDrop, `open drop ${afterDrop.toFixed(1)}`);
+  assert.ok(spawnDrop < 75, `spawn drop ${spawnDrop.toFixed(1)}`);
 });

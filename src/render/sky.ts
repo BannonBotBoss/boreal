@@ -87,7 +87,7 @@ void main() {
   vec3 c = tint * L * uTwGain; float a = uSunAlt < 0.0 ? 1.0 : night * 0.9;
   float sa = star * night * smoothstep(0.05, 0.3, elev);
   c = mix(c * a, vec3(0.92, 0.94, 1.0), sa); a = sa + a * (1.0 - sa);
-  float ca = cloud * mix(0.55, 0.9, core); // translucent veils leave Preetham blue; cores stay bright
+  float ca = cloud * mix(0.18, 0.40, core); // a clear morning keeps the Preetham blue; cores stay the bright ice
   c = col * ca + c * (1.0 - ca); a = ca + a * (1.0 - ca);
   gl_FragColor = vec4(c / max(a, 1e-4), a);
   #include <tonemapping_fragment>
@@ -100,9 +100,18 @@ export function createSky(scene: THREE.Scene) {
   const skyMat = sky.material as THREE.ShaderMaterial;
   skyMat.depthWrite = false;
   skyMat.fog = false;
+  // three.js Sky.js uses toneMappingExposure as the sky brightness. The ground stays at
+  // EXPOSURE.base 0.5 (core/light). This scale is that exposure knob for the sky alone:
+  // without it the Preetham radiance clips to white under ACES at 10° above the horizon.
+  skyMat.fragmentShader = skyMat.fragmentShader.replace(
+    'gl_FragColor = vec4( texColor, 1.0 );',
+    'vec3 graded = texColor * 0.29; float skyUp = clamp(normalize(vWorldPosition - cameraPosition).y, 0.0, 1.0); float low = 1.0 - smoothstep(0.04, 0.22, skyUp); graded.r *= mix(1.0, 0.78, low); graded.b += low * 0.06; gl_FragColor = vec4(graded, 1.0);',
+  );
   const u = sky.material.uniforms;
-  // Clearer air + stronger Rayleigh: deeper zenith blue and a whitened horizon (ground-sky audit vs flat cyan).
-  u.turbidity.value = 1.8; u.rayleigh.value = 3.0; u.mieCoefficient.value = .003; u.mieDirectionalG.value = .8;
+  // Preetham, Shirley and Smits 1999, via three.js examples/jsm/objects/Sky.js.
+  // Turbidity 2 is their clear day. Rayleigh 2 is the Sky.js example's blue without the extra
+  // brightness that ACES clips to white at about 10° above the horizon. Mie 0.005 is the example.
+  u.turbidity.value = 1.6; u.rayleigh.value = 3.2; u.mieCoefficient.value = .003; u.mieDirectionalG.value = .6;
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(550, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.ShaderMaterial({
     vertexShader: CLOUD_VERT, fragmentShader: CLOUD_FRAG, side: THREE.BackSide, transparent: true, depthWrite: false, fog: false,
     uniforms: { uTime: { value: 0 }, uSeed: { value: (WORLD_SEED % 997) * .37 }, uCover: { value: .47 }, uDrift: { value: new THREE.Vector2() }, uDay: { value: 1 }, uGolden: { value: 0 },
@@ -114,8 +123,10 @@ export function createSky(scene: THREE.Scene) {
   const moonLight = new THREE.DirectionalLight(0x9fb4e6, .35); scene.add(moonLight, moonLight.target);
   const hemi = new THREE.HemisphereLight(0xf1f5dd, 0x526753, 2.7); scene.add(hemi);
   const rimLight = new THREE.DirectionalLight(0xb7c4d6, 0.16); scene.add(rimLight, rimLight.target);
-  // Day fog leans sky-haze (pale blue-white) so the ground cut softens into the Preetham horizon instead of a grey slab.
-  const fogDay = new THREE.Color(0xd2dde8), fogGolden = new THREE.Color(0xd9a47c), fogNight = new THREE.Color(0x0d1422);
+  // Aerial perspective takes the Preetham horizon, a blue-grey, not the old low-chroma grey.
+  // That grey, fully mixed by 480 m, was the flat band on dry ground (Koschmieder 1924: the
+  // fade follows the visible range, it does not finish while the land is still close).
+  const fogDay = new THREE.Color(0x7eb4e4), fogGolden = new THREE.Color(0xd9a47c), fogNight = new THREE.Color(0x0d1422);
   const tmp = new THREE.Color(), tmpV = new THREE.Vector3(), keyDir = new THREE.Vector3();
   // Precipitation: one Points cloud around the camera (only drawn while it rains/snows), fall speed from Kessler V_t / snow ~1 m/s.
   const N = 1500, P = new Float32Array(N * 3), rnd = random(hash(`precip:${WORLD_SEED}`));
@@ -123,7 +134,7 @@ export function createSky(scene: THREE.Scene) {
   const precipGeo = new THREE.BufferGeometry(); precipGeo.setAttribute('position', new THREE.BufferAttribute(P, 3));
   const precipMat = new THREE.PointsMaterial({ color: 0xc8d4e0, size: .06, transparent: true, opacity: .6, depthWrite: false });
   const precip = new THREE.Points(precipGeo, precipMat); precip.frustumCulled = false; scene.add(precip);
-  const drift = new THREE.Vector2(); let lastTime = 0; const fogFar = (scene.fog as THREE.Fog).far, fogNear = (scene.fog as THREE.Fog).near;
+  const drift = new THREE.Vector2(); let lastTime = 0;
   return {
     sky, sunLight, hemi,
     /** Moves the sun and recolours sky, light and fog for the hour; the sky follows the camera. */
@@ -174,7 +185,9 @@ export function createSky(scene: THREE.Scene) {
         // 144.7·LWC^0.88 km⁻¹ (Kunkel 1984, J. Clim. Appl. Meteorol. 23:34; LWC g/m³) + rain 0.25·R^0.63 km⁻¹ [verify].
         const lwc = w.fog * .3, beta = 3.912 / 30 + 144.7 * lwc ** .88 + .25 * w.rainMmH ** .63, V = 3912 / beta; // m
         fogV = V;
-        u.turbidity.value = 2 + 6 * Math.max(w.cloud, w.rh * .5) + 4 * w.fog; // hazier with humidity/cloud (Preetham turbidity 2–10)
+        // Preetham turbidity stays near 2 on a clear morning. The old 2+6·rh term sat near 4
+        // here and the low sky clipped white. Cloud and fog still move it toward 10.
+        u.turbidity.value = 2 + 6 * Math.max(w.cloud, w.fog);
         const falling = w.rainMmH > .05; precip.visible = falling;
         if (falling) {
           const speed = w.snow ? 1 : 6, a = precipGeo.attributes.position as THREE.BufferAttribute;
@@ -184,10 +197,13 @@ export function createSky(scene: THREE.Scene) {
           a.needsUpdate = true;
         }
       } else { precip.visible = false; cu.uDrift.value.set(time * .004, time * .0015); }
-      // Fog distances start at the ground below the camera: the 200-480 m linear fog stands for horizontal haze (and hides the
-      // streaming edge); a raised camera (photo mode, top-down) looks down through that much less boundary-layer haze, so the
-      // fog is offset by the camera's height above the focus [game calibration]. At eye height the offset is ~2 m (no change).
-      { const f = scene.fog as THREE.Fog, alt = Math.max(0, camera.position.y - focus.y); f.far = Math.min(fogFar, fogV) + alt; f.near = Math.min(fogNear, fogV * .1) + alt; }
+      // Koschmieder 1924: contrast falls to 2% at V. A clear morning is tens of kilometres, so the
+      // old 200–480 m fog was already opaque while the prairie was still in view. Cap V so a
+      // crystal day still meets the sky inside the far plane. A real fog bank keeps the short V.
+      { const f = scene.fog as THREE.Fog, alt = Math.max(0, camera.position.y - focus.y);
+        // The standing view compresses 40 m to the horizon into a few bins. The fade has to
+        // start there, or the step from white sky to dark thatch stays a cliff.
+        const far = Math.min(fogV, 6000); f.far = far + alt; f.near = 700 + alt; }
       cu.uSunDir.value.copy(dir); cu.uSunColor.value.copy(sunLight.color);
       venus.update(date, hour, camera.position, camera);
       return { sun, light, dir };

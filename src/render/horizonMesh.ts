@@ -92,10 +92,14 @@ function skirtMaterial() {
           float crown = smoothstep(0.32, 0.68, grain);
           gl_FragColor.rgb *= mix(0.62, 1.28, crown);
         }
+        // The planet fill east of the photo tiles is a pale sheet. The near ring takes the
+        // same thatch the chunks use (Sims and Gamon 2002), then the outer ring fades to the
+        // Preetham horizon (Koschmieder 1924). An angle fade painted the whole ring.
+        vec3 thatch = vec3(0.34, 0.24, 0.11);
+        float nearSkirt = (1.0 - smoothstep(30.0, 120.0, vSkirtDist)) * (1.0 - vSkirtWater);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, thatch, nearSkirt * 0.72);
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
-        // Dry land keeps its colour out to the horizon. A full fade to the sky fog is the
-        // flat grey sheet that read as a sea on the prairie. Water still takes the sky.
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, vSkirtWater > 0.5 ? hf : min(hf, 0.28));
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf * 0.5);
         if (vSkirtWater > 0.5) {
           vec3 V = normalize(cameraPosition - vSkirtWorld);
           float ndv = clamp(V.y, 0.0, 1.0);

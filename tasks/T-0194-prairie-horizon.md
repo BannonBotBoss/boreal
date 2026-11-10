@@ -25,4 +25,4 @@ The spawn is seed 1400, 49.77 N, 65.54 E, prairie, snow 0, day 227, about 08:46.
 
 The open-prairie pair is one pose: seed 1400, x 65.4, z −18.6, yaw 5.140, day 227, 08:46. Before: `tasks/evidence/T-0194/before-horizon.png` (main `66deb5e`, also `main-66deb5e.png`). After: `tasks/evidence/T-0194/after-horizon.png`. Reference: `tasks/evidence/T-0194/ref-comanche-horizon.png` (US National Park Service, public domain, 29 May 2015, Comanche National Grassland). Same cover the game reports (prairie, snow 0). Not Kenora. Not these coordinates.
 
-The white sky, the hard horizon step, and the blotchy ground are already on main at this pose. This branch matches those numbers and does not fix them. The spawn heading (yaw 2.054) still shows the grey-blue band on both builds (`spawn-main.png`, `spawn-branch.png`).
+The white sky and the hard step were already on main. This branch retunes the Preetham sky and the skirt. The spawn heading no longer has the wide grey-blue band. The open sky luma is near the reference. B−R is not yet 59 on the brighter heading, and the horizon step is about 60, not under 45.

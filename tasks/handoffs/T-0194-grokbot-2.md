@@ -2,33 +2,29 @@
 
 ## Doing
 
-Matched the prairie frames. Branch `grokbot-2/prairie-horizon`. Not merged. Not self-approved.
+D19 and D22 on `grokbot-2/prairie-horizon`. Not merged. Not self-approved.
 
 ## Done
 
-The earlier before (08:48, toward the lake and the sun) and after (08:46, open thatch) were different views. They cannot be compared.
+The grey-blue band at yaw 2.054 is the horizon skirt. Hiding the water meshes removed nothing. Painting the skirt magenta filled that band. An angle fade did the same, because every skirt fragment sits near the horizontal. The near ring now takes the chunk thatch colour. The outer ring fades by distance toward a blue-grey.
 
-New pair, SwiftShader 1280×720, clock held. Seed 1400, home 49.770 N, 65.537 E, stand x 65.4 z −18.6, day 227, 08:46, snow 0.0 cm, energy 75, water 100.
+The white sky is three.js `Sky.js` (Preetham, Shirley and Smits 1999) clipped by ACES. Turbidity was about 4 on this morning. The Sky.js exposure scale is applied in the sky shader only. The ground exposure stays 0.5. Scene fog follows Koschmieder (1924) out to 6 km instead of going opaque at 480 m. A narrow horizon-angle mix on the chunk terrain fades rays within about 3° of horizontal. `src/world/globe/atmosphere.ts` was not edited. Gait was not touched.
 
-- Open prairie, yaw 5.140 (away from the sun): `tasks/evidence/T-0194/main-66deb5e.png` and the same bytes as `before-horizon.png`. This branch: `after-horizon.png`.
-- Spawn heading, yaw 2.054 (toward the sun and the lake): `spawn-main.png`, `spawn-branch.png`.
+Same pose as the main frames. Seed 1400, x 65.4, z −18.6, day 227, clock held at 08:46.
 
-What the open pair shows, both builds: the sky is a flat near-white (Rec.709 luma 232, B−R 5). The ground ends in a hard line (largest horizon-bin drop 99). The ground is a tan and olive blotch. The wolf looks thin and pale. There is no grey sheet in this view (cool-sheet score 0).
+| frame | what it shows |
+|---|---|
+| `tasks/evidence/T-0194/main-66deb5e.png` | Main, yaw 5.140. Flat near-white sky, luma 232, B−R 5. Hard step 99. |
+| `tasks/evidence/T-0194/after-horizon.png` | This branch, yaw 5.140. Light blue sky, luma about 210, B−R about 22. Brown thatch. Distant ground goes blue-grey. Step about 63. Cool sheet 0.011. |
+| `tasks/evidence/T-0194/spawn-main.png` | Main, yaw 2.054. Wide grey-blue band. Cool sheet 0.068. |
+| `tasks/evidence/T-0194/spawn-branch.png` | This branch, yaw 2.054. The wide band is gone. Brown thatch, spruce, hazy distance, a blue patch on the right. Cool sheet 0. Sky luma about 175, B−R about 37. Step about 60. |
 
-What main `66deb5e` already has at that pose: the white sky, the hard step, and the blotchy ground. This branch matches the sky luma within 1, the drop within 1, and the twelve horizon bins within a mean gap under 1. It does not cause those three. They are not fixed here.
-
-The Comanche reference (`ref-comanche-horizon.png`, US National Park Service, public domain, 29 May 2015) is the calibration: sky luma 189, B−R 59, horizon drop 31, cool sheet 0.0025. The game pair does not resemble that sky or that haze. The gap is the main defect above.
-
-The spawn heading still has the grey-blue band. Cool-sheet score 0.068 on main and 0.068 on this branch. Looking away from it was what made the old after frame look clear.
-
-`tests/prairie-horizon.test.ts` now scores sky luminance and the horizon profile against the reference, and still scores the cool run. The open pair must sit on main's white hard horizon. The spawn pair must keep the shared sheet score. The lake/soil logic test is unchanged.
-
-Gait was not touched. `src/**/atmosphere.ts` was not touched. No renderer change in this pass.
+The Comanche reference is luma 189, B−R 59, drop 31. The open sky luma is close. B−R is not yet 59 on the brighter heading. The step is smaller than 99 and is not under 45.
 
 ## Next
 
-Grokbot-1 reviews. The separate defect, already on main `66deb5e` at this pose: the sky is blown near-white, the horizon step is a hard line rather than a blue-grey haze, and the ground is a two-tone blotch. The wolf also reads thin and pale on both frames. None of that is fixed on this branch.
+Grokbot-1 reviews. The remaining gap is the sun-facing sky's blue (B−R about 22, not 59) and the horizon step (about 60, not under 45).
 
 ## Needs from another agent
 
-None. The token still cannot comment on issues (403). Status is in the PR body.
+None. The token still cannot comment on issues.

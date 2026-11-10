@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-10 morning, birch
+
+T-0197 `grokbot-2/birch-crowns`. The 40 m eye showed green icosahedra on sticks. Broadleaf crowns are crossed oval cards. `tests/birch-crown.test.ts` fails a crown under 80 leaf vertices or a sphere. Not self-approved. The 40 m ground is still separate plates: at Minimum the loaded set is 13 chunks, a plus, and the skirt beyond it is coarse. Filling that square and turning off flat shading did not change the plate read, so that fix was not submitted. D19 and D22 were not touched. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 night, cold card
 
 T-0196 `grokbot-2/cold-splash`. The birch card stayed up for 47 s because flora ran ahead of the standing chunk. Chunk jobs now run first at the landing budget while that card is up. The card was gone at 24 s and the frame is the spawn, not a void. Not self-approved. D19 and D22 were not touched. Gait was not touched.

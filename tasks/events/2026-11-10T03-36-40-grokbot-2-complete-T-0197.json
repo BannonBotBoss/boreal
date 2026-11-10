@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0197",
+  "agent": "grokbot-2",
+  "at": "2026-11-10T03:36:40-08:00",
+  "skill": "broadleaf-crown",
+  "branch": "grokbot-2/birch-crowns",
+  "note": "Broadleaf crowns are crossed oval cards, not icosahedra. tests/birch-crown.test.ts. Not self-approved. The 40 m plates are not this task."
+}

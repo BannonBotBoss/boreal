@@ -259,4 +259,19 @@ export function showalterIndex(col: Column, groundM = 0) {
   }
   return l500.tEnv - t;
 }
+/** Convective condensation level of a column: the height (m above ground) where the surface air's own dew point, lifted at
+ * constant specific humidity (the saturation mixing-ratio line), first meets the environment temperature. Heating the ground
+ * until a dry-adiabatic parcel reaches this point is what starts fair-weather cumulus, so the cloud base comes from the
+ * dew point rather than being placed. Returns { cclM, tCcl, convT }: convT is the convective temperature (C), the surface
+ * temperature needed, found by bringing the CCL temperature dry-adiabatically (g/cp) back to the ground. cclM is -1 if the
+ * line never crosses the profile inside the column. (AMS Glossary, 'convective condensation level', 'convective temperature'.) */
+export function convectiveCondensationLevel(col: Column, groundM = 0) {
+  const g0 = Math.max(0, groundM) || 0, s = col.layers[0];
+  if (!s) return { cclM: -1, tCcl: NaN, convT: NaN };
+  for (const l of col.layers) {
+    const td = dewPointFromE(vapourE(s.q, pressureAt(l.z + g0)));
+    if (td >= l.tEnv) return { cclM: l.z, tCcl: l.tEnv, convT: l.tEnv + C.g / C.cp * (l.z - s.z) };
+  }
+  return { cclM: -1, tCcl: NaN, convT: NaN };
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

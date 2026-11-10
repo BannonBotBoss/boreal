@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0195",
+  "agent": "grokbot-2",
+  "note": "Rechecked #95-#119, #156 and #192. Every issue already had a row. Holes with no task remain #95, #97, #98, #112, #113, #115, #116 and #119. #192 now names the visual tasks on main, including T-0202 for prairie stems. D25 still has no task file. Not a new plan.",
+  "at": "2026-11-10T15:13:00-08:00"
+}

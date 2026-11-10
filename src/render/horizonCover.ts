@@ -12,7 +12,7 @@ import { coverRow, coverSpots, type CoverKind } from '../world/globe/coverKind';
 import { skirtLatLon, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { treeAtlas } from './trees/billboardAtlas';
 import { CC0_TREES, bakeTreeAtlas } from './trees/cc0Impostors';
-import { elevationWins, sampleDem } from '../world/globe/openTiles';
+import { elevationWins, sampleDem, samplePhotoVegetation } from '../world/globe/openTiles';
 import { STYLIZED } from './stylizedPalette';
 import { liveCoastM } from '../core/planetWeather';
 
@@ -101,7 +101,7 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     const ll = skirtLatLon(planet, cx, cz, origin.remote);
     const s = planet.sampleSurface(ll.dir);
     const coastM = liveCoastM(ll.latDeg, ll.lonDeg);
-    const veg = vegetationWeight(s, ll.dir, coastM);
+    const veg = samplePhotoVegetation(ll.latDeg, ll.lonDeg) ?? vegetationWeight(s, ll.dir, coastM);
     const dem = sampleDem(ll.latDeg, ll.lonDeg);
     const water = !elevationWins(s.kind, dem) && (s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level);
     const row = coverRow(ll.latDeg, ll.lonDeg, dem != null && dem > 0 ? dem : s.h, veg, water, coastM);
@@ -111,6 +111,7 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     const next = `${kind}:${row.heightM.toFixed(1)}:${cols}:${dem != null ? Math.round(dem) : 'x'}:${Math.round(cx / 40)}:${Math.round(cz / 40)}`;
     if (next === key) return kind;
     key = next;
+    if (kind === 'prairie' || kind === 'desert') { mesh.count = 0; mesh.userData.kind = kind; return kind; }
     const spots = coverSpots(cx, cz, kind);
     mesh.count = spots.length;
     for (let i = 0; i < spots.length; i++) {

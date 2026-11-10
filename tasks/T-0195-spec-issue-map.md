@@ -52,7 +52,7 @@ This is the index. It does not build the holes. A row is a mapping when the task
 | #118 why an animal did what it did | T-0081 | T-0084 only reserves a handle. The inspector is not built |
 | #119 an event log for rewind and why | no task yet | T-0084 and T-0092 say the log is not those tasks |
 | #156 navigable globe, drop through clouds, drone landscape | T-0108 through T-0122 | bridge, skirt, elevation, photo, cover, animals, gaps, rings, sky, land, canopy |
-| #192 globe-to-ground descent and the defect list | T-0125, T-0132, T-0164, T-0165 | wildlife, census, open woodland. Later visual tasks (T-0179 on) are the defect passes, including T-0194 |
+| #192 globe-to-ground descent and the defect list | T-0125, T-0132, T-0164, T-0165, T-0179, T-0190, T-0191, T-0192, T-0196, T-0197, T-0200, T-0202 | wildlife and the later visual passes that are on main. Prairie stems that read as spruce are T-0202. D26 is T-0200. D27 is T-0201 on #433 (not on main yet). D19/D22 are #422, D23 is #428, D24 is #429, all held. D25 checker ground has no task file yet. |
 
 ## Acceptance
 

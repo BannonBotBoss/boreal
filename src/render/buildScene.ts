@@ -13,6 +13,7 @@ import { warmTerrainWorkers } from './terrainPool';
 import { setGroundFloor, terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
 import { INTEREST, WAIT, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
+import { clearSteppeCache } from './flora/steppeTuft';
 import { chunkRadius } from '../world/globe/landingStream';
 import { registerObservationSources } from '../core/observation';
 import { enterLiving, livingRoster, type LivingChoice } from '../core/enterLiving';
@@ -150,7 +151,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const glow = createTargetGlow(renderer, camera); // render/targetGlow (T-0035): outline glow on the interaction target (replaces the ground ring)
   let lastBatchLod = -1, lastCover = -1, lastFloor = -1;
   const openedCover = new Set<string>();
-  let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
+  let centerKey = '', radius = -1, revision = -1, coverBiome = ''; const chunkJobs = new Set<string>();
   const CHUNK_ADDS_PER_FRAME = 2; let frameNo = 0; const adds = { frame: -1, n: 0 }; // upload pacing (see createChunk)
   warmTerrainWorkers(); // stage grids in each terrain worker, behind the loading screen
   /** Instantiates a chunk from the math layers as a sliced job (core/interest): near = full, mid = coarse terrain + far LODs. */
@@ -207,8 +208,12 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const nextRadius = chunkRadius(altitude, INTEREST.mid, CHUNK_SIZE);
     const ax = also ? Math.floor(also.x / CHUNK_SIZE) : cx, az = also ? Math.floor(also.z / CHUNK_SIZE) : cz;
     const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}`;
-    if (centerKey === tierKey && radius === nextRadius && revision === eventRevision) return;
-    const changed = revision !== eventRevision;
+    const biome = landingContext(x, z).biome;
+    const coverChanged = coverBiome !== '' && biome !== coverBiome;
+    if (biome) coverBiome = biome;
+    if (coverChanged) clearSteppeCache();
+    if (!coverChanged && centerKey === tierKey && radius === nextRadius && revision === eventRevision) return;
+    const changed = revision !== eventRevision || coverChanged;
     centerKey = tierKey; radius = nextRadius; revision = eventRevision;
     const needed = new Map<string, boolean>(); // chunk key -> near tier
     for (const [ox, oz] of [[cx, cz], [ax, az]]) for (let a = ox - radius; a <= ox + radius; a++) for (let b = oz - radius; b <= oz + radius; b++) {

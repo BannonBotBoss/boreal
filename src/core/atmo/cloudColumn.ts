@@ -231,4 +231,32 @@ export function kIndex(col: Column, groundM = 0) {
   if (!l850 || !l700 || !l500 || pressureAt(Math.max(0, groundM) || 0) < 85000) return NaN;
   return (l850.tEnv - l500.tEnv) + l850.dew - (l700.tEnv - l700.dew);
 }
+/** Total Totals index (K) of a column (Miller 1972): T850 + Td850 - 2*T500, the vertical totals (T850 - T500, lapse rate)
+ * plus the cross totals (Td850 - T500, low-level moisture against mid-level cold). Thunderstorms become likely near 44-45,
+ * scattered severe storms from about 50, and 55+ points to scattered to numerous severe storms (US NWS guidance).
+ * NaN under the same conditions as kIndex: the column misses 500 hPa or the ground already sits above 850 hPa. */
+export function totalTotals(col: Column, groundM = 0) {
+  const l850 = layerAtPressure(col, 85000, groundM), l500 = layerAtPressure(col, 50000, groundM);
+  if (!l850 || !l500 || pressureAt(Math.max(0, groundM) || 0) < 85000) return NaN;
+  return l850.tEnv + l850.dew - 2 * l500.tEnv;
+}
+/** Showalter index (K) of a column (Showalter 1953): T500 of the environment minus the temperature of a parcel lifted from
+ * 850 hPa, so unlike the lifted index it ignores the boundary layer and sees elevated instability above a cool surface.
+ * The parcel starts at the 850 hPa layer's temperature and dew point, rises dry adiabatically (g/cp) holding its specific
+ * humidity until it saturates, then follows the saturated adiabat (moistLapse), in 10 m steps up to the 500 hPa layer.
+ * Above +3 stable, 0 to -3 thunderstorms possible, -3 to -6 likely, below -6 severe (US NWS guidance).
+ * NaN under the same conditions as kIndex. */
+export function showalterIndex(col: Column, groundM = 0) {
+  const l850 = layerAtPressure(col, 85000, groundM), l500 = layerAtPressure(col, 50000, groundM);
+  if (!l850 || !l500 || pressureAt(Math.max(0, groundM) || 0) < 85000) return NaN;
+  const g0 = Math.max(0, groundM) || 0, step = 10, p850 = pressureAt(l850.z + g0), e = esatPa(l850.dew);
+  const q = C.eps * e / (p850 - (1 - C.eps) * e);
+  let t = l850.tEnv, saturated = l850.dew >= t;
+  for (let z = l850.z; z < l500.z; z += step) {
+    const p = pressureAt(z + g0);
+    if (!saturated && dewPointFromE(vapourE(q, p)) >= t) saturated = true;
+    t -= (saturated ? moistLapse(t, p) : C.g / C.cp) * Math.min(step, l500.z - z);
+  }
+  return l500.tEnv - t;
+}
 export const cloudBaseM = (tsC: number, q0: number) => cloudColumn(tsC, q0).lcl;

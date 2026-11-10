@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-09 night, cold card
+
+T-0196 `grokbot-2/cold-splash`. The birch card stayed up for 47 s because flora ran ahead of the standing chunk. Chunk jobs now run first at the landing budget while that card is up. The card was gone at 24 s and the frame is the spawn, not a void. Not self-approved. D19 and D22 were not touched. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 evening, spruce
 
 T-0192 `grokbot-2/spruce-crowns`. The stacked cones are overlapping uneven whorls. The shared crown holds out to 70 m. The 40 m before frame is flat facets (0.28); the after frame is 0.08. Not self-approved. Merged origin/main 66deb5e on 2026-11-09 18:58 PT. T-0192 does not collide with T-0190, T-0191 or T-0193. The complete event names the branch. The opening-voice check is the 0.1 s tolerance from #421. Gait was not touched.

@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { GOVERNOR, resetGovernor } from '../src/core/quality';
 import { PROBE, cachedProbe, saveProbe } from '../src/core/probe';
+import { LANDING_JOB_MS } from '../src/world/globe/landingStream';
 import {
-  COLD_START, WARM_START, parseWarmStamp, readWarmStamp, saveWarmStamp, standChunkIndex, standPoint,
+  COLD_START, WARM_START, parseWarmStamp, readWarmStamp, saveWarmStamp, splashChunkBudget, standChunkIndex, standPoint,
   startup, startupBudget, startupRoute, type StartupOptions,
 } from '../src/render/startup';
 import type { buildScene } from '../src/render/buildScene';
@@ -34,7 +35,7 @@ test('startup route is warm only for a cached probe, this build, and this tab', 
 test('warm budget keeps the sky cap and the land ceiling, and does not block on the next tier', () => {
   const warm = startupBudget('warm'), cold = startupBudget('cold');
   assert.equal(warm.leaveWhenChunkBuilt, true);
-  assert.equal(cold.leaveWhenChunkBuilt, false);
+  assert.equal(cold.leaveWhenChunkBuilt, true);
   assert.equal(warm.skyMaxMs, COLD_START.skyMaxMs);
   assert.equal(warm.settleMaxMs, COLD_START.settleMaxMs);
   assert.equal(warm.settleQuiet, WARM_START.settleQuiet);
@@ -133,20 +134,26 @@ test('a return reload compiles once and does not bench again; a full queue no lo
   } finally { restore(saved); }
 });
 
-test('grass still queued: cold waits out the ceiling, warm returns once the standing chunk is in', async () => {
+test('grass still queued: cold returns once the standing chunk is in, and does not sit out the ceiling', async () => {
   const saved = gov(); GOVERNOR.gpu = 'TEST GPU'; GOVERNOR.tier = 1; GOVERNOR.probeCap = 0; GOVERNOR.auto = true;
   const probeStore = mem(); saveProbe(probeStore, { renderer: 'TEST GPU', benchMs: 9 });
   const h = harness();
   let measured = 0;
   const measure = async () => { measured++; return { renderer: 'TEST GPU', benchMs: 80, maxTexture: 8192, deviceMemory: 8, cores: 8 }; };
   try {
+    const seen: number[] = [];
+    const pump = async () => { const b = splashChunkBudget(); if (b !== undefined) seen.push(b); await h.pump(); };
     await startup(h.view, { step() {} }, {
-      probeStorage: probeStore, warmStorage: mem(), buildId: 'build-a', pump: h.pump, now: h.now,
+      probeStorage: probeStore, warmStorage: mem(), buildId: 'build-a', pump, now: h.now,
       measureProbe: measure, busy: () => true, landReady: () => true,
     });
     const coldPumps = h.pumps;
+    assert.ok(seen.includes(LANDING_JOB_MS), 'the card gives chunk jobs the landing budget while grass is still queued');
+    assert.equal(splashChunkBudget(), undefined, 'the boost ends when the chunk is in');
     assert.equal(measured, 0, 'a cached probe skips the Ultra bench even on the cold route');
-    assert.ok(coldPumps > 500, `cold wait while the queue stays full (${coldPumps})`);
+    // The old cold path waited for the interest queue. With land already in and the queue stuck
+    // full, that was the 20 s ceiling (more than 500 pumps at 16 ms). It must not recur.
+    assert.ok(coldPumps < 80, `cold wait while grass stays queued but the chunk is in (${coldPumps})`);
     assert.equal(h.warmUps[0], 6000);
     h.reset();
     const warmStore = mem(); saveWarmStamp(warmStore, { build: 'build-a', renderer: 'TEST GPU' });

@@ -70,11 +70,12 @@ test('the loader does not say Ready while the standing chunk is still out', asyn
     assert.ok(h.steps.includes(GROUND_HOLD.building), 'the worker miss builds the chunk on this thread');
     assert.equal(h.steps.at(-1), GROUND_HOLD.missing);
     assert.equal(h.steps.includes('Ready'), false);
-    assert.ok(h.now() >= COLD_START.settleMaxMs * 2 + GROUND_HOLD.recoverMs, 'splash wait, then the main-thread rebuild');
+    assert.ok(h.now() >= COLD_START.settleMaxMs + GROUND_HOLD.recoverMs, 'one splash ceiling (T-0196), then the main-thread rebuild');
+    assert.ok(h.now() < COLD_START.settleMaxMs * 2 + GROUND_HOLD.recoverMs, 'the cold card no longer waits out a second ceiling');
   } finally { resetGovernor(); Object.assign(GOVERNOR, saved); }
 });
 
-test('a chunk that arrives after the first ceiling still reveals, with trees on that ground', async () => {
+test('a chunk that arrives inside the splash ceiling reveals, with trees on that ground', async () => {
   const saved = { auto: GOVERNOR.auto, tier: GOVERNOR.tier, probeCap: GOVERNOR.probeCap, gpu: GOVERNOR.gpu };
   GOVERNOR.gpu = 'TEST GPU'; GOVERNOR.tier = 1; GOVERNOR.auto = true;
   let t = 0, ready = false;
@@ -94,7 +95,7 @@ test('a chunk that arrives after the first ceiling still reveals, with trees on 
   };
   const opts: StartupOptions = {
     probeStorage: mem(), warmStorage: mem(), buildId: 'build-a',
-    pump: async () => { t += 16; if (t > COLD_START.settleMaxMs + 1000) ready = true; },
+    pump: async () => { t += 16; if (t > COLD_START.settleMaxMs - 1000) ready = true; },
     now: () => t,
     busy: () => !ready,
     landReady: () => ready,

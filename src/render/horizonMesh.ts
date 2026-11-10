@@ -53,8 +53,11 @@ function skirtMaterial() {
           float luma = max(globe.r, max(globe.g, globe.b));
           // The far clear is ~0 and must not paint a hole. Lit canopy in that same buffer
           // is only a few percent (MODIS boreal albedo), so the old 0.04 gate left the gap
-          // black. Take the globe texel whenever the far layer actually drew something.
-          if (fd < 0.999 && luma > 0.008) gl_FragColor.rgb = globe;
+          // black. A cool flat texel is the sky, not land: pasting it on dry ground was the
+          // grey sheet that read as a sea. Water may still take that texel.
+          float gch = max(globe.r, max(globe.g, globe.b)) - min(globe.r, min(globe.g, globe.b));
+          bool skyPaste = vSkirtWater < 0.5 && globe.b + 0.02 > globe.r && gch < 0.12;
+          if (fd < 0.999 && luma > 0.008 && !skyPaste) gl_FragColor.rgb = globe;
         }
         // A continuous sward, not a striped shelf. The old 22 m crown repeat and the 1.4 green
         // gain turned coarse triangles into neon facets (open-ground-photo). Tillers are a few
@@ -90,7 +93,9 @@ function skirtMaterial() {
           gl_FragColor.rgb *= mix(0.62, 1.28, crown);
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);
+        // Dry land keeps its colour out to the horizon. A full fade to the sky fog is the
+        // flat grey sheet that read as a sea on the prairie. Water still takes the sky.
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, vSkirtWater > 0.5 ? hf : min(hf, 0.28));
         if (vSkirtWater > 0.5) {
           vec3 V = normalize(cameraPosition - vSkirtWorld);
           float ndv = clamp(V.y, 0.0, 1.0);

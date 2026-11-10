@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-09 night, prairie horizon
+
+T-0194 `grokbot-2/prairie-horizon`. The spawn horizon was a grey sheet. Dry land no longer fades all the way to the sky fog, and a cool far texel is not pasted on it. The flat sea square is off when stages are on. Not self-approved. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 evening, ground
 
 T-0191 `grokbot-2/ground-floor`, from main, not stacked on the wolf branch. The spawn is prairie, vegetation 0.33. The feet are thatch, soil and green clumps instead of one lawn. Not self-approved. Spruce and the overhead proposal are still open. Gait was not touched.

@@ -48,8 +48,23 @@ export function heightAt(x: number, z: number) {
   return land - layer('riverCarve', Math.exp(-(distance * distance) / LEGACY_RIVER_FOLD2), 5.8) + f(T, 'depressions', surfaceDetail(x, z));
 }
 /** Terrain band from the tuning thresholds (colour, water); thresholds are traced so the inspector can what-if them. */
+/**
+ * Staged open water is a lake, a pond, or a river channel. A cell that only sits under the
+ * 8th-percentile water line is a dry basin: painting it as the sea is what made a prairie
+ * horizon a flat sheet. The line itself stays (toWorld). It is not a water body.
+ */
+/** Staged chunks use the lake and river sheet. The flat sea square is only the unstaged fallback. */
+export const baseSeaPlane = (stagesOn: boolean) => !stagesOn;
+export function stagedOpenWater(x: number, z: number): boolean {
+  if (lakeAt(STAGES.seed, x, z) || pondAt(STAGES.seed, x, z)) return true;
+  const rv = riverAt(STAGES.seed, x, z);
+  return !!rv && rv.d < rv.half + rv.bank;
+}
 export function terrainBand(y: number, x?: number, z?: number): 'water' | 'shore' | 'upland' | 'forest' | SoilKind {
-  if (STAGES.on && x !== undefined && z !== undefined) { if (y < LEVEL.waterSurface || lakeAt(STAGES.seed, x, z) || pondAt(STAGES.seed, x, z)) return 'water'; return f('biome', 'stage-3 material', soilAt(STAGES.seed, x, z).kind); } // staged: bands are materials, not heights
+  if (STAGES.on && x !== undefined && z !== undefined) {
+    if (stagedOpenWater(x, z)) return 'water';
+    return f('biome', 'stage-3 material', soilAt(STAGES.seed, x, z).kind);
+  }
   return y < f('biome', 'level.waterSurface', LEVEL.waterSurface) ? 'water' : y < f('biome', 'level.shore', LEVEL.shore) ? 'shore'
     : y > f('biome', 'level.upland', LEVEL.upland) ? 'upland' : 'forest';
 }

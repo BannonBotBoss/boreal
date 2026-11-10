@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0194",
+  "agent": "grokbot-2",
+  "skill": "horizon-skirt",
+  "branch": "grokbot-2/prairie-horizon",
+  "note": "The cool sheet is gone from the prairie horizon. The before frame fails the sheet test. The after frame passes against the Comanche horizon. Not self-approved.",
+  "at": "2026-11-09T19:23:40-08:00"
+}

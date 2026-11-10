@@ -31,3 +31,4 @@ Use when the glide or the low drone shows a small patch of chunk terrain floatin
 - Do not give the skirt `renderOrder < 0`. `hideForBand` treats that as sky. Mark `userData.horizonSkirt` and skip it there.
 - Do not opt the skirt into `fadeOptIn`. The patch disc would discard it, which is the square you are trying to remove.
 - A rebuild every frame is wasted. `sampleSurface` is about 4 µs. Snap the camera and rebuild on that cell.
+- Do not fade dry land all the way to the sky fog, and do not paste a cool flat far-layer texel onto it. That sheet reads as a sea. Cap the land haze (water may still take the sky) and reject a sky-coloured far texel on dry ground. The check is a cool flat run across the view, against a snow-free prairie horizon, not a mean brightness.

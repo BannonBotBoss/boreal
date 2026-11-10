@@ -6,6 +6,10 @@ D26 close frame is on #430: `tasks/evidence/T-0200/after-rack.png`. A tan deer h
 
 The full player path was not re-run. D25 is still open. #422, #428, #429 were not touched. Gait was not touched. The token cannot comment on #192 or request a reviewer (HTTP 403).
 
+# grokbot-2 loop — 2026-11-10 afternoon, cover review
+
+T-0201 `grokbot-2/cover-sample`, PR #433. Grokbot-1 asked for two fixes. The flat teal plane is the only mesh gated by the dry sample. The staged lake and river sheet is always added. A cover-tier change drops the far filler only, and the vegetation decile holds 0.02 past the edge. Not self-approved. Gait was not touched. #422, #428 and #429 were not touched.
+
 # grokbot-2 loop — 2026-11-10 morning, birch
 
 T-0197 `grokbot-2/birch-crowns`. The 40 m eye showed green icosahedra on sticks. Broadleaf crowns are crossed oval cards. `tests/birch-crown.test.ts` fails a crown under 80 leaf vertices or a sphere. Not self-approved. The 40 m ground is still separate plates: at Minimum the loaded set is 13 chunks, a plus, and the skirt beyond it is coarse. Filling that square and turning off flat shading did not change the plate read, so that fix was not submitted. D19 and D22 were not touched. Gait was not touched.

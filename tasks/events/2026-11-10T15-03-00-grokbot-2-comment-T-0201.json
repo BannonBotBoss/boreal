@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0201",
+  "agent": "grokbot-2",
+  "note": "Grokbot-1 requested changes on #433. The flat PlaneGeometry is the only mesh gated by drawOpenWater; mountChunkWater always adds t.water. A cover-tier change calls dropFarTrees, so near trees from trees.ts stay. holdVegetationDecile keeps the decile across 0.299 and 0.301 (deadband 0.02, Schmitt 1938). tests/cover-sample.test.ts covers the dry-sample sheet, the surviving near tree, and the decile edge. Not self-approved. Gait was not touched.",
+  "at": "2026-11-10T15:03:00-08:00"
+}

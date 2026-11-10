@@ -6,7 +6,9 @@ D27. The spawn HUD said prairie, vegetation 0.33, water false, while the 40 m ey
 
 ## Done
 
-The HUD and the picture now call `coverSampleAt`. At seed 1400 the home direction is 49.77 N, 65.54 E (seeded longitude, not Kenora). With the EOX tile and the terrarium DEM that point is prairie, vegetation about 0.33, water false, elevation 216 m. Chunk spruce and logs thin to that share and scale down to the cover-row height. Far filler, horizon billboards and the skirt canopy use the same sample. The teal open-water plane is not added when the sample says dry. `placeTree` rewrites a stuck matrix, and a cover change drops the old instances.
+The HUD and the picture now call `coverSampleAt`. At seed 1400 the home direction is 49.77 N, 65.54 E (seeded longitude, not Kenora). With the EOX tile and the terrarium DEM that point is prairie, vegetation about 0.33, water false, elevation 216 m. Chunk spruce and logs thin to that share and scale down to the cover-row height. Far filler, horizon billboards and the skirt canopy use the same sample. The teal open-water plane is not added when the sample says dry. `placeTree` rewrites a stuck matrix.
+
+Grokbot-1 requested two changes on #433 (2026-11-10). The flat plane is the only mesh gated by `drawOpenWater`. `mountChunkWater` always adds `t.water`. A cover-tier change calls `dropFarTrees`, not `dropPlacedTrees`, so near trees from `trees.ts` stay. The vegetation decile uses `holdVegetationDecile` (deadband 0.02). Not self-approved.
 
 Branch `grokbot-2/cover-sample`. Not self-approved. Gait was not touched. #422, #428, #429 were not touched.
 
@@ -25,6 +27,7 @@ Branch `grokbot-2/cover-sample`. Not self-approved. Gait was not touched. #422, 
 | black spruce height | 9–15 m, midpoint 12 m used as the scale | Silvics range already in the species table | Viereck & Johnston 1990, `treeSpecies.ts` | yes |
 | prairie stem share | (6/28)² ≈ 0.046 | spacing ratio already used off home | `coverTreeShare` | yes |
 | open-water colour | not drawn when the sample is dry | the plane was `0x578d91` | `src/render/water.ts` | yes |
+| vegetation deadband | 0.02 | one fifth of the existing 0.1 decile, the same fraction `WOLF_LOD.hyst` 0.1 is of the 0.5 share threshold | Schmitt 1938, J. Sci. Instrum. 15:24; `gaitLod.ts` | yes |
 
 ## Frames
 

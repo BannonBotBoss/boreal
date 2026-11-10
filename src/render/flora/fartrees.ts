@@ -18,7 +18,7 @@ import { hash, random } from '../../proc/rng';
 import { WIND_UNIFORMS, ageClass, treeGeometry, treeSpecies } from '../trees';
 import { bindWind, crownStartM, placeTree, removeTree, updateTrees, v2Handles } from '../trees/game';
 import { fadeOptIn } from '../fade';
-import { coverSampleAt } from '../../world/globe/coverSample';
+import { coverSampleAt, coverTierToken } from '../../world/globe/coverSample';
 
 export const FAR_TREE_FX = { off: typeof location !== 'undefined' && new URLSearchParams(location.search).get('fartrees') === '0' }; // ?fartrees=0: bench A/B
 /**
@@ -38,7 +38,7 @@ export function createFarTrees(scene: THREE.Scene) {
   const v2keys = new Map<string, string[]>(); // trees v2 (render/trees/game): far black spruce as ragged crowns, per tile
   const tiles = new Map<string, number[]>(), geoIds = new Map<THREE.BufferGeometry, number>(), tris = new Map<number, number>(), stands = new Map<string, number>();
   const fit = new Map<string, { share: number; scaleMul: number }>();
-  let lx: number | undefined, lz = 0, lDensity = -1, lInner = 0, lOuter = 0, lCover = '';
+  let lx: number | undefined, lz = 0, lDensity = -1, lInner = 0, lOuter = 0, lCover = '', lDecile: number | undefined;
   const mat4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), pos = new THREE.Vector3();
   /** Stand stems/ha per 40 m chunk centre, times the cover sample's share. Prairie keeps a few clumps, not the closed stand. */
   const coverFit = (x: number, z: number) => {
@@ -94,7 +94,9 @@ export function createFarTrees(scene: THREE.Scene) {
     if (bm) bm.visible = !FAR_TREE_FX.off && RENDER.treeDensity > 0;
     const x = camera.position.x, z = camera.position.z, density = RENDER.treeDensity, inner = crownStartM(RENDER.lod.trees), outer = Math.max(inner, INTEREST.mid);
     const cover = coverSampleAt(x, z);
-    const coverKey = `${cover.biome}:${cover.water ? 1 : 0}:${Math.floor(cover.vegetation * 10)}`;
+    const tier = coverTierToken(cover.biome, cover.water, cover.vegetation, lDecile);
+    lDecile = tier.decile;
+    const coverKey = tier.token;
     const reset = density !== lDensity || Math.abs(inner - lInner) > 1 || Math.abs(outer - lOuter) > 1 || coverKey !== lCover;
     if (pending('fartrees:refill') || (!reset && lx !== undefined && Math.hypot(x - lx, z - lz) < FAR_TREES.tile / 2)) return;
     lCover = coverKey;

@@ -14,13 +14,13 @@ Use when the landing report and the drawn trees or water disagree.
 
 1. Read `coverSampleAt(x, z)`. It uses the landed frame when `SITE.latDeg` is finite, otherwise `planet.fromLocal`. Same direction as the HUD.
 2. Install `installPictureGate` from the scene. `generateChunk` thins spruce and logs on that share, and scales a stem by `heightM / 12` when the cover row is shorter than 9 m. With the gate unset, the share is 1 and the pinned chunk digest does not move.
-3. Far filler stems use the same share. Horizon billboards and the skirt's closed-canopy weight use `coverSampleAt`. The teal open-water plane is added only when `drawOpenWater` is true.
-4. `placeTree` is keyed. A photograph that arrives after the first chunks must drop the old instances (`dropPlacedTrees`) or the full-size spruce stays. Put the biome and a coarse vegetation bucket on the chunk key so the reload happens once.
-5. Named river and pond sheets still come from `terrainCore`. The river tests build that mesh directly. The scene hides them when the sample says dry.
+3. Far filler stems use the same share. Horizon billboards and the skirt's closed-canopy weight use `coverSampleAt`. The flat teal plane is added only when `drawOpenWater` is true. `mountChunkWater` always adds the staged lake and river sheet (`t.water`) when the terrain job built one. `isDryLand` still treats those cells as water.
+4. `placeTree` is keyed. A second call with a new scale rewrites the matrix. Do not call `dropPlacedTrees` on a cover change: that clears near-chunk trees from `trees.ts` (placed with `far=false`), and those chunks are not rebuilt when only the tier key changes, so the near trees stay gone until reload. `dropFarTrees` drops the far filler. The far filler also resets on its own cover key.
+5. The cover tier token is biome, water, and a vegetation decile with hysteresis (`coverTierToken`, `holdVegetationDecile`). The deadband is `VEG_HYST` 0.02, one fifth of the decile, the same fraction `WOLF_LOD.hyst` is of the 0.5 share threshold (Schmitt 1938). `floor(vegetation * 10)` chatters when a walk sits on the edge. Named river and pond sheets still come from `terrainCore`.
 
 ## Checks
 
-- `tests/cover-sample.test.ts` stores the measured steppe pixel and a 216 m DEM, then fails if the HUD and `coverSampleAt` disagree, if prairie still keeps a closed stand, or if `drawOpenWater` is true on the wet Kenora origin.
+- `tests/cover-sample.test.ts` stores the measured steppe pixel and a 216 m DEM, then fails if the HUD and `coverSampleAt` disagree, if prairie still keeps a closed stand, or if `drawOpenWater` is true on the wet Kenora origin. It also fails if a dry chunk-centre sample mounts no staged sheet, if a near tree disappears on `dropFarTrees`, or if vegetation 0.299 and 0.301 flip the tier token.
 - `tests/proc.test.ts` still pins the ungated chunk digest.
 - Frame: `?view=ground&nomenu=1&noprobe=1&stages=1&trees=v2&hour=8.6&eye=40`. Wait until `borealLanding` says prairie. The open water and the closed spruce stand should be gone. A few short stems are the prairie share, not a failure. Floating ground plates are a different defect.
 
@@ -29,4 +29,6 @@ Use when the landing report and the drawn trees or water disagree.
 - Do not retarget the home longitude to Kenora to make the report say boreal. The report is the place. The picture follows it.
 - Do not thin inside `generateChunk` unconditionally. The digest test does not load this gate.
 - Do not call `placeTree` and expect a new scale to stick. The key returns early unless the matrix is rewritten, and trees that the new chunk omits stay until something drops them.
+- Do not gate `t.water` on `drawOpenWater`. That hides a real river under a dry chunk-centre sample while `isDryLand` still refuses stems there.
+- Do not put `floor(vegetation * 10)` on the tier key. A walk along the decile edge drops and refills the far set on every step.
 - Do not treat the gap between floating plates as a lake. That gap is the held ground-plate defect. Sample the pixels. The water shader is teal (about 87, 141, 145), not the pale haze.

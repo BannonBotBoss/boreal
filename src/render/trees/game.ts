@@ -11,7 +11,7 @@
  */
 import * as THREE from 'three';
 import { BUILD_PHASE, buildConiferSteps, barkMaterial, crownMaterial, foliageMaterial, CONIFER_WIND, type ConiferLods } from './conifer';
-import { INTEREST, enqueue } from '../../core/interest';
+import { INTEREST, cancel, enqueue } from '../../core/interest';
 import { RENDER } from '../../core/renderSettings';
 import { fadeOptIn } from '../fade';
 
@@ -85,9 +85,24 @@ export function placeTree(key: string, x: number, y: number, z: number, rotY: nu
   const t: Tree = { m, vk, far, lod: -1, bark: -1, leaf: -1, crown: -1 };
   trees.set(key, t); variantJob(vk); if (variants.has(vk)) materialise(t);
 }
-/** Drop every placed tree so a cover change can put back only the stems the sample keeps. */
+/** A placed tree, or undefined. Tests use this to see a near tree survive a cover-tier change. */
+export function treeRecord(key: string): { far: boolean } | undefined {
+  const t = trees.get(key);
+  return t ? { far: t.far } : undefined;
+}
+/** Drop the far filler only. Near-chunk trees (trees.ts, placed with far=false) are not rebuilt
+ *  when the cover tier changes, so a full clear leaves them gone until the chunk reloads.
+ *  The far filler already resets on its own cover key. */
+export function dropFarTrees() {
+  for (const [key, t] of [...trees]) if (t.far) removeTree(key);
+}
+/** Drop every placed tree. The scene does not call this on a cover change. */
 export function dropPlacedTrees() {
   for (const key of [...trees.keys()]) removeTree(key);
+}
+/** Drop queued variant builds started by placeTree. Tests call this so a later runJobs does not build them. */
+export function cancelPendingTreeBuilds() {
+  for (const vk of [...building]) { cancel(`trees2:build:${vk}`); building.delete(vk); }
 }
 export function removeTree(key: string) {
   const t = trees.get(key); if (!t) return; trees.delete(key);

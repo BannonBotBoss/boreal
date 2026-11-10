@@ -74,7 +74,47 @@ export function coverSampleAt(x: number, z: number): CoverSample {
 /**
  * The flat open-water plane (the teal sheet under every chunk) is drawn only when this
  * sample calls the point water. A Kenora depression under a dry prairie sample is not a lake.
+ * The staged lake and river sheet is not this plane. buildScene mounts that sheet whenever
+ * the terrain job produced it.
  */
 export function drawOpenWater(x: number, z: number) {
   return coverSampleAt(x, z).water;
+}
+
+/** Vegetation bins in the cover tier key. The old key was floor(vegetation * 10). */
+export const VEG_DECILES = 10;
+/**
+ * Deadband past a decile edge, as a vegetation fraction.
+ * A Schmitt trigger (Schmitt 1938, J. Sci. Instrum. 15:24) stays put while the
+ * input sits on the threshold, so the output does not chatter.
+ * The bin width is 1/10. 0.02 is one fifth of that bin: the same fraction
+ * WOLF_LOD.hyst (0.1) is of the 0.5 share threshold in gaitLod.ts pickLevel.
+ */
+export const VEG_HYST = 0.02;
+
+/** Hold the previous decile until vegetation has cleared the shared edge by VEG_HYST.
+ *  Pure, same shape as selectGait: one step per crossed edge, and a step only
+ *  when the sample is past the deadband. The first call (no previous) takes the raw bin. */
+export function holdVegetationDecile(vegetation: number, prev?: number): number {
+  const v = Math.min(1, Math.max(0, vegetation));
+  const raw = Math.min(VEG_DECILES - 1, Math.floor(v >= 1 ? VEG_DECILES - 1e-6 : v * VEG_DECILES));
+  if (prev === undefined || !Number.isInteger(prev)) return raw;
+  let held = Math.min(VEG_DECILES - 1, Math.max(0, prev));
+  if (held === raw) return held;
+  const dir = raw > held ? 1 : -1;
+  for (let k = 0; k < VEG_DECILES && held !== raw; k++) {
+    const boundary = (dir > 0 ? held + 1 : held) / VEG_DECILES;
+    if (dir > 0) {
+      if (v + 1e-12 >= boundary + VEG_HYST) held += 1;
+      else break;
+    } else if (v < boundary - VEG_HYST) held -= 1;
+    else break;
+  }
+  return held;
+}
+
+/** Biome, water and the held vegetation decile. buildScene and the far filler share this string. */
+export function coverTierToken(biome: string, water: boolean, vegetation: number, prevDecile?: number) {
+  const decile = holdVegetationDecile(vegetation, prevDecile);
+  return { decile, token: `${biome}:${water ? 1 : 0}:${decile}` };
 }

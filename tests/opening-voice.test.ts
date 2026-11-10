@@ -35,5 +35,9 @@ test('narration plays once, and the bed stays ducked only while that voice is on
   assert.equal(bedDb(10, null), -18);
   const dur = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', 'public/audio/big-bang/narration.mp3'], { encoding: 'utf8' });
   assert.equal(dur.error, undefined, 'ffprobe is required');
-  assert.ok(Math.abs(Number(dur.stdout) - 5.851429) < 1e-4, `duration ${dur.stdout}`);
+  // VBR MP3 container duration drifts by tens of milliseconds between ffprobe
+  // builds. This pin is 5.851429 s locally and read 5.804989 s on the GitHub
+  // runner (run 42728115381), so 0.1 s covers the build difference and still
+  // fails a clip that is off by a second.
+  assert.ok(Math.abs(Number(dur.stdout) - 5.851429) < 0.1, `duration ${dur.stdout}`);
 });

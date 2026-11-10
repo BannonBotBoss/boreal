@@ -26,17 +26,18 @@ import { GLOBE_LAYERS, LAYERS_FRAG, LAYERS_PARS } from './planetLayers';
 import * as THREE from 'three';
 import { withLogDepth } from './logDepth';
 import { bounds, edgeMetres, faceDir, type QNode } from './cube';
-import { GLOBE_COLOURS, surfaceColour, type Planet, type Vec3 } from './planet';
+import { GLOBE_COLOURS, coverWeights, surfaceColour, type Planet, type Vec3 } from './planet';
 import { GLSL_NOISE, GLSL_SIMPLEX } from '../../proc/glsl';
 import { CLOUDS } from './atmosphere';
 import { absorbedAttribute } from '../../core/planet/solarBudget';
 import { HYDRO_DRAW } from './hydroLayer';
 import { figureRadius } from './figure';
-import { OVERHEAD_LAKE, OVERHEAD_STAND } from './landMosaic';
+import { AERIAL } from './aerialExemplar';
+import { TILING_BLEND_GLSL } from './tilingBlend.glsl';
 
 /** `lake`: 255 where the reference water level is above sea level (lakes and their shores), 0 at sea level: picks the lake vs ocean water colour. */
 /** `loc`: game-local x, z (gnomonic, m) and the home weight per vertex: where the shader reads the home shoreline mask (lakeMask.ts). */
-export interface TileData { position: Float32Array; color: Float32Array; height: Float32Array; lake: Uint8Array; loc: Float32Array; normal: Float32Array; index: Uint16Array; centre: Vec3; cpu: number; coarsePos: Float32Array; coarseNrm: Float32Array; coarseH: Float32Array; coarseCol: Float32Array; coarseLake: Float32Array; level: number }
+export interface TileData { position: Float32Array; color: Float32Array; height: Float32Array; lake: Uint8Array; loc: Float32Array; normal: Float32Array; index: Uint16Array; centre: Vec3; cpu: number; cover: Float32Array; coarsePos: Float32Array; coarseNrm: Float32Array; coarseH: Float32Array; coarseCol: Float32Array; coarseLake: Float32Array; coarseCover: Float32Array; level: number }
 /** 0 at `near` (this leaf's own split distance: full detail), 1 at `far` (the parent split: the leaf is about to
  *  disappear and must already be the parent surface). Smoothstep, the same curve the vertex shader uses. */
 export function morphWeight(dist: number, near: number, far: number): number {
@@ -61,6 +62,7 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
   const cd = faceDir(q.face, a0 + s / 2, b0 + s / 2), Rc = figureRadius(cd), centre: Vec3 = [cd[0] * Rc, cd[1] * Rc, cd[2] * Rc];
   const count = n * n + 4 * n, position = new Float32Array(count * 3), color = new Float32Array(count * 3), height = new Float32Array(count), lake = new Uint8Array(count), loc = new Float32Array(count * 3), normal = new Float32Array(count * 3);
   const coarsePos = new Float32Array(count * 3), coarseNrm = new Float32Array(count * 3), coarseH = new Float32Array(count), coarseCol = new Float32Array(count * 3), coarseLake = new Float32Array(count);
+  const cover = new Float32Array(count * 4), coarseCover = new Float32Array(count * 4);
   const P = new Float64Array(m * m * 3), d: Vec3 = [0, 0, 0], rgb = [0, 0, 0], fp = 1.6 * R / den; // fp: ~vertex spacing (m), the soil colour's filter footprint
   for (let jj = 0; jj < m; jj++) { // sample rows âˆ’1 â€¦ n (the outer ring only feeds normals)
     for (let ii = 0; ii < m; ii++) {
@@ -77,6 +79,7 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
         if (hc > 0) { loc[v * 3] = R * (d[0] * planet.east[0] + d[1] * planet.east[1] + d[2] * planet.east[2]) / hc; loc[v * 3 + 1] = -R * (d[0] * planet.north[0] + d[1] * planet.north[1] + d[2] * planet.north[2]) / hc; loc[v * 3 + 2] = surf.home; }
         surf.kind = ''; if (surf.h < surf.level) surf.h = surf.level; // the land colour this vertex would have at the shore
         surfaceColour(surf, d, rgb); color.set(rgb, v * 3);
+        const cw = coverWeights(surf, d); cover[v * 4] = cw[0]; cover[v * 4 + 1] = cw[1]; cover[v * 4 + 2] = cw[2]; cover[v * 4 + 3] = cw[3];
       }
     }
     cpu += performance.now() - t; yield; t = performance.now();
@@ -101,7 +104,7 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
     for (const src of edge) {
       const k = src * 3, x = position[k] + centre[0], y = position[k + 1] + centre[1], z = position[k + 2] + centre[2], l = Math.hypot(x, y, z), f = (l - drop) / l;
       position[v * 3] = x * f - centre[0]; position[v * 3 + 1] = y * f - centre[1]; position[v * 3 + 2] = z * f - centre[2];
-      color.copyWithin(v * 3, k, k + 3); normal.copyWithin(v * 3, k, k + 3); height[v] = height[src]; lake[v] = lake[src]; loc.copyWithin(v * 3, k, k + 3); skirtSrc[v] = src; v++;
+      color.copyWithin(v * 3, k, k + 3); normal.copyWithin(v * 3, k, k + 3); height[v] = height[src]; lake[v] = lake[src]; loc.copyWithin(v * 3, k, k + 3); cover.copyWithin(v * 4, src * 4, src * 4 + 4); skirtSrc[v] = src; v++;
     }
     for (let e = 0; e < n - 1; e++) { const a = edge[e], b = edge[e + 1], c = start + e, dd = start + e + 1; idx.push(a, c, b, b, c, dd, a, b, c, b, dd, c); } // both windings
   }
@@ -125,6 +128,7 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
     const v = j * n + i, k = v * 3, ie = (i & 1) === 0, je = (j & 1) === 0;
     if (segments % 2 || (ie && je)) {
       copy3(coarsePos, k, position, k); copy3(coarseCol, k, color, k); coarseH[v] = height[v]; coarseLake[v] = lake[v] / 255;
+      coarseCover.set(cover.subarray(v * 4, v * 4 + 4), v * 4);
       if (segments % 2) copy3(coarseNrm, k, normal, k); else copy3(coarseNrm, k, evenN, k);
       continue;
     }
@@ -135,15 +139,16 @@ export function* buildTile(q: QNode, planet: Planet, segments: number): Generato
     else { pa = (j - 1) * n + (i - 1); pb = (j + 1) * n + (i + 1); }
     avg3(coarsePos, k, position, pa * 3, pb * 3); avg3(coarseCol, k, color, pa * 3, pb * 3);
     coarseH[v] = (height[pa] + height[pb]) / 2; coarseLake[v] = (lake[pa] + lake[pb]) / 510;
+    for (let c = 0; c < 4; c++) coarseCover[v * 4 + c] = (cover[pa * 4 + c] + cover[pb * 4 + c]) / 2;
     const nx = evenN[pa * 3] + evenN[pb * 3], ny = evenN[pa * 3 + 1] + evenN[pb * 3 + 1], nz = evenN[pa * 3 + 2] + evenN[pb * 3 + 2], l = Math.hypot(nx, ny, nz) || 1;
     coarseNrm[k] = nx / l; coarseNrm[k + 1] = ny / l; coarseNrm[k + 2] = nz / l;
   }
   for (let s = n * n; s < count; s++) {
     const src = skirtSrc[s]; copy3(coarsePos, s * 3, coarsePos, src * 3); copy3(coarseNrm, s * 3, coarseNrm, src * 3); copy3(coarseCol, s * 3, coarseCol, src * 3);
-    coarseH[s] = coarseH[src]; coarseLake[s] = coarseLake[src];
+    coarseH[s] = coarseH[src]; coarseLake[s] = coarseLake[src]; coarseCover.set(coarseCover.subarray(src * 4, src * 4 + 4), s * 4);
   }
   cpu += performance.now() - t;
-  return { position, color, height, lake, loc, normal, index: Uint16Array.from(idx), centre, cpu, coarsePos, coarseNrm, coarseH, coarseCol, coarseLake, level: q.level };
+  return { position, color, height, lake, loc, normal, index: Uint16Array.from(idx), centre, cpu, cover, coarsePos, coarseNrm, coarseH, coarseCol, coarseLake, coarseCover, level: q.level };
 }
 /** Edge bits for stitchIndex: the neighbour across that edge is coarser. Row j = 0, row j = n-1, column i = 0, column i = n-1. */
 export const EDGE = { south: 1, north: 2, west: 4, east: 8 } as const;
@@ -179,6 +184,7 @@ export function tileGeometry(t: TileData) {
   g.setAttribute('color', new THREE.BufferAttribute(t.color, 3)); g.setAttribute('aH', new THREE.BufferAttribute(t.height, 1)); g.setAttribute('aLake', new THREE.BufferAttribute(t.lake, 1, true)); g.setAttribute('aLoc', new THREE.BufferAttribute(t.loc, 3));
   g.setAttribute('aCoarse', new THREE.BufferAttribute(t.coarsePos, 3)); g.setAttribute('aCoarseN', new THREE.BufferAttribute(t.coarseNrm, 3)); g.setAttribute('aCoarseC', new THREE.BufferAttribute(t.coarseCol, 3));
   g.setAttribute('aCoarseH', new THREE.BufferAttribute(t.coarseH, 1)); g.setAttribute('aCoarseL', new THREE.BufferAttribute(t.coarseLake, 1));
+  g.setAttribute('aCover', new THREE.BufferAttribute(t.cover, 4)); g.setAttribute('aCoarseK', new THREE.BufferAttribute(t.coarseCover, 4));
   const level = new Float32Array(t.position.length / 3); level.fill(t.level); g.setAttribute('aLevel', new THREE.BufferAttribute(level, 1));
   const seg = Math.round(Math.sqrt(4 + t.position.length / 3)) - 3; // count = nÂ² + 4n
   g.setIndex(stitchIndex(seg, 0)); g.userData.stitch = -1; // stitch() fills the real edge mask; 0 would mean "already sealed" and skip it
@@ -331,22 +337,22 @@ export function globeMaterial(debugSegments = 0) {
     sh.uniforms.uSeg = uSeg; if (debugSegments) { sh.vertexShader = '#define DEBUG_SEAMS\n' + sh.vertexShader; sh.fragmentShader = '#define DEBUG_SEAMS\n' + sh.fragmentShader; }
     sh.uniforms.uShallow = { value: new THREE.Color().setRGB(...C.shallow) }; sh.uniforms.uDeep = { value: new THREE.Color().setRGB(...C.deep) }; sh.uniforms.uDeepSun = { value: new THREE.Color().setRGB(...C.deepSun) };
     sh.uniforms.uOceanRough = { value: OCEAN_GLINT.roughness }; sh.uniforms.uOceanMetal = { value: OCEAN_GLINT.metalness };
-    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS, GLOBE_MORPH); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uEra = GLOBE_ERA.uEra; sh.uniforms.uCrack = GLOBE_ERA.uCrack; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uHideLake = LAKE_FADE.uHide; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc, vAerial;\n' + MORPH_GLSL)
+    sh.uniforms.uLakeShallow = GLOBE_LAKE.shallow; sh.uniforms.uLakeDeep = GLOBE_LAKE.deep; sh.uniforms.uLakeRough = GLOBE_LAKE.rough; Object.assign(sh.uniforms, GLOBE_DETAIL, GLOBE_LAYERS, GLOBE_MORPH, AERIAL); sh.uniforms.uLandTint = GLOBE_LAND.uLandTint; sh.uniforms.uEra = GLOBE_ERA.uEra; sh.uniforms.uCrack = GLOBE_ERA.uCrack; sh.uniforms.uShoreTex = GLOBE_SHORE.uShoreTex; sh.uniforms.uShore = GLOBE_SHORE.uShore; sh.uniforms.uHideLake = LAKE_FADE.uHide; sh.uniforms.uSolarLayer = SOLAR_DRAW.uSolarLayer; sh.uniforms.uQScale = SOLAR_DRAW.uQScale; sh.uniforms.uHydroTex = HYDRO_DRAW.uHydroTex; sh.uniforms.uHydroLayer = HYDRO_DRAW.uHydroLayer;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aH, aLake;\nattribute float aAbsorbed;\nattribute vec3 aLoc;\nattribute vec4 aCover, aCoarseK;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nvarying vec3 vDetW, vLoc, vAerial;\nvarying vec4 vCover;\n' + MORPH_GLSL)
       .replace('#include <color_vertex>', `#include <color_vertex>\ngMorph = globeMorph();`)
       .replace('#include <morphcolor_vertex>', `#include <morphcolor_vertex>\nvColor.rgb = mix(vColor.rgb, aCoarseC, gMorph);`)
       .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>\nobjectNormal = normalize(mix(objectNormal, aCoarseN, gMorph));`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
 transformed = mix(transformed, aCoarse, gMorph);
 vH = mix(aH, aCoarseH, gMorph); vLake = mix(aLake, aCoarseL, gMorph); vAbsorbed = aAbsorbed; vLoc = aLoc; vDetW = (modelMatrix * vec4(transformed, 1.0)).xyz;
-vAerial = vDetW - uMorphCam;
+vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
 #ifdef DEBUG_SEAMS
 { float n = uSeg + 1.0, id = float(gl_VertexID); vSkirt = id >= n * n ? 1.0 : 0.0;
   if (id < n * n) vTileUV = vec2(mod(id, n), floor(id / n)) / uSeg;
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc, vAerial;\nuniform float uHideLake;\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc, vAerial;\nvarying vec4 vCover;\nuniform float uHideLake;\nuniform sampler2D uExCanopy, uExFen, uExShore, uExWater, uExLut;\nuniform float uExOn, uExMetres, uExGain;\nfloat aerialBand = 0.0;\n' + TILING_BLEND_GLSL + '\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -363,7 +369,11 @@ vAerial = vDetW - uMorphCam;
     float eye = length(vViewPosition);
     float aerial = smoothstep(120.0, 350.0, eye) * (1.0 - smoothstep(20000.0, 60000.0, eye));
     float shoreBand = (1.0 - hm) * smoothstep(0.35, 1.1, pxS) * (1.0 - smoothstep(40.0, 90.0, pxS));
-    F += (detN(vDetW / 48.0, uDetail.w + 19.0) - 0.5) * max(3.0, pxS * 2.2) * shoreBand;
+    F += (detN(vDetW / 48.0, uDetail.w + 19.0) - 0.5) * max(3.0, pxS * 2.2) * shoreBand * (1.0 - aerial);
+    // Aerial shore: bend the height contour by a few tens of metres so a coarse quad is not a straight cut.
+    // Only next to the existing contour, so this does not open a new lake in the forest.
+    float shoreGate = 1.0 - smoothstep(6.0, 40.0, abs(F));
+    F += ((detN(vDetW / 180.0, uDetail.w + 19.0) - 0.5) * 28.0 + (detN(vDetW / 55.0, uDetail.w + 23.0) - 0.5) * 10.0) * aerial * shoreGate;
     float fw = max(fwidth(F), 1e-3); landMask = smoothstep(-fw, fw, F);
     // Below 8 km a vertex lake used to be forced to land, so the 400 m and 2000 m frames had no water.
     // Keep it water in the aerial band. Underfoot the hide stays, and the game water draws the shore.
@@ -379,74 +389,69 @@ vAerial = vDetW - uMorphCam;
     vec3 water = mix(mix(uShallow, deepCol, dw), mix(uLakeShallow, uLakeDeep, dw), vLake);
     // Globe lakes are ~0.01 albedo and read as black polygons from a few kilometres up.
     // A tannin lake in Sentinel-2 cloudless is dark blue, not a flat charcoal facet.
-    water = mix(water, vec3(0.018, 0.036, 0.046), shoreBand * (1.0 - landMask));
-    // Ponds the 1.8 km lake octave cannot draw inside a 2 km frame. Punch the mask
-    // before the aerial blue, or the pond keeps the ~0.01 albedo and reads black.
-    // vAerial is the vertex minus the camera, so a 300 m cell stays exact.
-    float pond = 0.0;
-    float fenRing = 0.0;
-    if (aerial > 0.15 && landMask > 0.45) {
-      float pn = detN(vec3(vAerial.x, 0.0, vAerial.z) / 150.0, uDetail.w + 31.0);
-      float pfw = max(fwidth(pn), 0.003);
-      pond = 1.0 - smoothstep(0.16, 0.16 + pfw * 2.2, pn);
-      fenRing = (1.0 - pond) * (1.0 - smoothstep(0.28, 0.28 + pfw * 2.2, pn));
-      landMask = mix(landMask, 0.0, pond);
-    }
-    // Daylight lake. The stored lake albedo is about 0.01 and tone-maps to black.
-    water = mix(water, vec3(${OVERHEAD_LAKE.map(v => v.toFixed(3)).join(', ')}), (1.0 - landMask) * aerial);
+    water = mix(water, vec3(0.018, 0.036, 0.046), shoreBand * (1.0 - landMask) * (1.0 - aerial));
     water = mix(water, diffuseColor.rgb * 0.5, band * ${SHORE.shallowMix.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.shallow.toFixed(3)}, -F))); // shallows: the bed shows through
     diffuseColor.rgb *= 1.0 - band * ${SHORE.wetDark.toFixed(3)} * (1.0 - smoothstep(0.0, ${SHORE.wet.toFixed(3)}, F)); // wet ground at the waterline
     diffuseColor.rgb = mix(water, diffuseColor.rgb, landMask);
-    // Overhead land was one smooth 160–640 m blend, so a 2000 m frame was an
-    // out-of-focus green. Crowns are a few pixels at that height: the cell is
-    // about six pixels, never under one black-spruce crown and never a stand.
-    {
-      float overhead = aerial;
-      float veg = 1.0 - smoothstep(0.10, 0.22, max(diffuseColor.r, diffuseColor.g));
-      if (overhead * veg * landMask > 0.04) {
-        vec2 ap = vAerial.xz;
-        float mpp = max(length(fwidth(ap)), 0.05);
-        float s1 = detN(vec3(ap / 180.0, 0.0), uDetail.w + 8.0);
-        float s2 = detN(vec3(ap / 720.0, 0.0), uDetail.w + 9.0);
-        float stand = s1 * 0.62 + s2 * 0.38;
-        float sfw = max(fwidth(stand), 0.008);
-        float fenW = max(1.0 - smoothstep(0.28, 0.28 + sfw, stand), fenRing);
-        float leafW = smoothstep(0.74, 0.74 + sfw, stand);
-        fenW = clamp(fenW, 0.0, 1.0);
-        float cell = clamp(mpp * 7.0, 6.0, 28.0);
-        vec2 g = ap / cell;
-        vec2 base = floor(g);
-        float cover = 0.0;
-        float speck = 0.5;
-        float open = detN(vec3(ap / 80.0, 0.0), uDetail.w + 11.0);
-        for (int a = -1; a <= 1; a++) {
-          for (int b = -1; b <= 1; b++) {
-            vec2 c = base + vec2(float(a), float(b));
-            float keep = gd_hash2u(c, uDetail.w + 21.0);
-            float skip = fenW > 0.55 ? 0.78 : mix(0.06, 0.5, open);
-            if (keep < skip) continue;
-            vec2 j = vec2(gd_hash2u(c, uDetail.w + 22.0), gd_hash2u(c, uDetail.w + 23.0)) - 0.5;
-            float ang = gd_hash2u(c, uDetail.w + 26.0) * ${(2 * Math.PI).toFixed(5)};
-            float ca = cos(ang), sa = sin(ang);
-            vec2 dlt = g - (c + 0.5 + j * 0.95);
-            vec2 rot = vec2(ca * dlt.x - sa * dlt.y, sa * dlt.x + ca * dlt.y);
-            vec2 ax = vec2(0.26 + 0.7 * gd_hash2u(c, uDetail.w + 24.0), 0.2 + 0.55 * gd_hash2u(c, uDetail.w + 27.0));
-            float d = length(rot / ax);
-            float disk = 1.0 - smoothstep(0.78, 0.98, d);
-            if (disk > cover) { cover = disk; speck = keep; }
-          }
-        }
-        vec3 conifer = vec3(${OVERHEAD_STAND.conifer.map(v => v.toFixed(3)).join(', ')});
-        vec3 leaf = vec3(${OVERHEAD_STAND.leaf.map(v => v.toFixed(3)).join(', ')});
-        vec3 fen = vec3(${OVERHEAD_STAND.fen.map(v => v.toFixed(3)).join(', ')});
-        vec3 moss = vec3(${OVERHEAD_STAND.moss.map(v => v.toFixed(3)).join(', ')});
-        vec3 floorC = mix(moss, fen, clamp(fenW, 0.0, 1.0));
-        floorC = mix(floorC, leaf, leafW * 0.45);
-        vec3 crown = mix(conifer, leaf, leafW);
-        crown *= 0.82 + 0.36 * speck;
-        vec3 field = mix(floorC, crown, cover);
-        diffuseColor.rgb = mix(diffuseColor.rgb, field, overhead);
-      }
+    // 400–2000 m: real aerial exemplars. Weights are the vertex cover plus stands,
+    // age and disturbance at 100–800 m, and the height field (wet hollows, the shore).
+    // The shoreline is landMask from F. No punched pond and no flat navy disc.
+    aerialBand = aerial;
+    if (aerial > 0.02 && uExOn > 0.5) {
+      float eyeDist = length(vViewPosition);
+      // At 2000 m a 1.6 m crown is a repeating grain. A lower mip blurs it toward the
+      // Sentinel pixel without stretching the tiling cells into big squares.
+      float coarse = smoothstep(650.0, 1600.0, eyeDist);
+      float lod = coarse * 2.6;
+      vec2 uv = vAerial.xz / max(uExMetres, 1.0);
+      vec3 canopy = tbSample(uExCanopy, uExLut, 0.0, uv, lod);
+      vec3 fenC = tbSample(uExFen, uExLut, 1.0, uv, lod);
+      vec3 shoreC = tbSample(uExShore, uExLut, 2.0, uv, lod);
+      vec3 waterC = tbSample(uExWater, uExLut, 3.0, uv, lod);
+      float stand = detN(vDetW / 760.0, uDetail.w + 41.0) * 0.72 + detN(vDetW / 280.0, uDetail.w + 42.0) * 0.28;
+      float age = detN(vDetW / 480.0, uDetail.w + 53.0);
+      float burnN = detN(vDetW / 160.0, uDetail.w + 67.0) * 0.55 + detN(vDetW / 70.0, uDetail.w + 69.0) * 0.45;
+      float outN = detN(vDetW / 180.0, uDetail.w + 81.0) * 0.6 + detN(vDetW / 55.0, uDetail.w + 83.0) * 0.4;
+      float above = max(F, 0.0);
+      float dx = max(length(dFdx(vDetW)), 1e-3);
+      float dy = max(length(dFdy(vDetW)), 1e-3);
+      float slope = length(vec2(dFdx(F) / dx, dFdy(F) / dy));
+      // Fen is a wet patch in a hollow, not a ring around every lake.
+      float fenN = smoothstep(0.72, 0.9, 1.0 - stand);
+      float fen = max(vCover.y, fenN * (1.0 - smoothstep(2.0, 14.0, above)));
+      fen = clamp(fen, 0.0, 1.0);
+      float decid = smoothstep(0.62, 0.8, stand) * (1.0 - fen);
+      // Bare rock on ridge tops and steep ground, in 50–300 m patches.
+      float high = smoothstep(28.0, 62.0, above);
+      float steep = smoothstep(0.06, 0.18, slope);
+      float rock = smoothstep(0.58, 0.74, outN) * max(high, steep) * (1.0 - fen);
+      rock = max(rock, smoothstep(0.78, 0.9, age) * high * (1.0 - fen));
+      float burn = smoothstep(0.74, 0.86, burnN) * (1.0 - fen);
+      float regen = smoothstep(0.62, 0.76, detN(vDetW / 210.0, uDetail.w + 93.0)) * (1.0 - burn) * (1.0 - fen);
+      rock = clamp(rock, 0.0, 1.0);
+      float sum = decid + fen + rock + burn + regen;
+      if (sum > 1.0) { float inv = 1.0 / sum; decid *= inv; fen *= inv; rock *= inv; burn *= inv; regen *= inv; sum = 1.0; }
+      float conifer = 1.0 - sum;
+      // Far grade pulls the lawn-green canopy toward the darker olive of the Sentinel tile.
+      // Near grade keeps the crowns that read at 400 m.
+      vec3 coniferC = mix(canopy, canopy * vec3(0.36, 0.32, 0.26), coarse);
+      vec3 decidC = mix(canopy * vec3(1.02, 0.94, 0.64), canopy * vec3(0.62, 0.55, 0.30), coarse);
+      vec3 fenCol = fenC * vec3(0.55, 0.48, 0.32);
+      vec3 rockCol = shoreC * vec3(0.48, 0.50, 0.46);
+      vec3 burnCol = canopy * vec3(0.16, 0.13, 0.10) + vec3(0.02, 0.016, 0.012);
+      vec3 regenC = canopy * vec3(0.55, 0.50, 0.28);
+      vec3 landEx = coniferC * conifer + decidC * decid + fenCol * fen + rockCol * rock + burnCol * burn + regenC * regen;
+      // Shore: forest meets water. A broken grey margin, and only the odd sandy spot.
+      float edge = landMask * (1.0 - smoothstep(0.2, 1.6, above));
+      float marginN = detN(vDetW / 32.0, uDetail.w + 71.0);
+      float showMargin = smoothstep(0.78, 0.9, marginN);
+      float sand = smoothstep(0.93, 0.98, detN(vDetW / 46.0, uDetail.w + 73.0));
+      vec3 margin = mix(rockCol * vec3(0.72, 0.74, 0.7), shoreC * vec3(0.85, 0.72, 0.48), sand);
+      landEx = mix(landEx, margin, edge * showMargin);
+      // Reference open water is near-black and slightly green (about sRGB 12, 20, 16), not navy.
+      vec3 waterCol = waterC * vec3(0.16, 0.22, 0.15);
+      vec3 photo = mix(waterCol, landEx, landMask) * uExGain;
+      diffuseColor.rgb = mix(diffuseColor.rgb, photo, aerial * (1.0 - clamp(vCover.w, 0.0, 1.0)));
     }
     }${LAYERS_FRAG}
   if (uDetail.x > 0.001) { // ground detail (DETAIL): octaves fade out where a cell is under ~2 pixels (no shimmer)
@@ -456,7 +461,7 @@ vAerial = vDetW - uMorphCam;
     float n0 = detN(q0, uDetail.w) - 0.5, n1 = detN(q1, uDetail.w + 1.0) - 0.5, n2 = detN(q2, uDetail.w + 2.0) - 0.5;
     detH = (k0 * n0 * uDetAmp.x + k1 * n1 * uDetAmp.y + k2 * n2 * uDetAmp.z) * uDetail.x * uDetail.z * landMask;
     a = k0 * n0 * ${DETAIL.weight[0].toFixed(3)} + k1 * n1 * ${DETAIL.weight[1].toFixed(3)} + k2 * n2 * ${DETAIL.weight[2].toFixed(3)};
-    diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask;
+    diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask * (1.0 - aerialBand);
   }
   if (uOceanGlint > 0.5) { // macro wave chop on the ocean only (stegu simplex). Fades when a cell is under ~2 px. Lakes and the film's early beats stay flat.
     float ocean = (1.0 - landMask) * (1.0 - clamp(vLake, 0.0, 1.0)) * presentW;

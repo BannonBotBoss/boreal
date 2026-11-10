@@ -2,6 +2,20 @@
 
 Use when a drone or a low overhead shows one flat colour, or flat neon tiles, where the biome is vegetated.
 
+## 400–2000 m is a photograph, not another noise pass
+
+Five procedural passes (crowns, ponds, fen rings, luma matching) produced camouflage and green static. Stop. Proland and flight sims keep the height field and the land-cover weights, and take colour from a few real aerial photographs, one per cover.
+
+1. Crops live in `public/aerial/`. They are samples of canopy, fen, shore, and open water, not a map draped on the game point. Licence and tile indices are `public/aerial/CREDITS.md` and `meta.json`. Rebuild with `tools/bake-aerial-exemplars.py`.
+2. `coverWeights` in `planet.ts` is the same sequence of mixes as `surfaceColour`, stored on the vertex as `aCover`. Do not invent a second biome field in the shader.
+3. Repeats use Deliot and Heitz, GPU Zen 2 (2019). The GLSL is `tilingBlend.glsl.ts`, ported from Error-mdl/UnityGaussianTex (BSD-3-Clause): triangle-grid offsets, variance-preserving blend, per-channel Gaussian plus a lookup table. Do not write a new hash blender.
+4. Water is the height contour (`landMask` from `F`). Do not punch ponds. Forest meets the water. A broken grey margin, and only the odd sandy spot, sits in the first metre or two of height. A small wander bends the contour so a coarse quad is not a straight cut.
+5. The globe sun crushes a raw photograph used as a 3% albedo. `uExGain` (2.5) is the exposure that landed near the EOX tile. It is a uniform.
+6. A 2000 m frame that is one cover is a carpet. Mix conifer, deciduous, fen and rock with noise at about 280–880 m, and with height (wet hollows, a thin shore). At that distance sample a lower mip so the 1.6 m crowns are not a grain. `largeScaleStd` in `tests/aerial-exemplar.test.ts` fails a 200 m block field whose means barely move.
+7. Judge the still against real imagery of the biome the game reports, at the same metres per pixel. `tests/aerial-exemplar.test.ts` compares local patches to `tasks/evidence/T-0189/ref-eox-z14.png`. The reference against itself scores 1. The #417 frames fail on orange rings and navy discs. A patch-correlation threshold alone ranked those frames above a real 1.6 m canopy, because Sentinel-2 at 6 m is smoother than crown photographs. Keep both checks.
+
+Below about 120 m and above about 20 km the older stand waves still apply. Do not copy the exemplar path onto the skirt.
+
 ## Search before writing
 
 1. `samplePhoto` in `src/world/globe/openTiles.ts` is the real Sentinel-2 mosaic when a tile is cached. Do not add a second tile cache.

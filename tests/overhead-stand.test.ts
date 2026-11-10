@@ -191,10 +191,10 @@ test('the overhead stand is one colour at one point and not one colour across a 
   // The authored leaf/fen greens are 0.140 / 0.076. A few hundred samples of the field reach most of that.
   assert.ok(maxG / minG > 1.5, `green ${minG.toFixed(3)}..${maxG.toFixed(3)}`);
   const tile = readFileSync('src/world/globe/tile.ts', 'utf8');
-  assert.ok(tile.includes('shoreBand'), 'the lake edge wanders off the quad');
-  assert.ok(tile.includes('OVERHEAD_STAND.fen'), 'fen albedo comes from the daylight table');
-  assert.ok(tile.includes('OVERHEAD_STAND.conifer'), 'conifer albedo comes from the daylight table');
+  assert.ok(tile.includes('shoreBand'), 'the lake edge wanders off the quad below the aerial band');
+  assert.ok(tile.includes('tbSample(uExCanopy'), 'aerial colour is an exemplar, not a flat albedo');
   assert.ok(tile.includes('uHideLake * (1.0 - aerial)'), 'an aerial lake is not forced to land');
+  assert.ok(!tile.includes('uDetail.w + 31.0'), 'the punched pond is gone');
   assert.ok(!tile.includes('vec3(0.020, 0.034, 0.016)'), 'the 2% conifer reflectance is gone');
   assert.ok(!tile.includes('vec3(0.090, 0.062, 0.028)'), 'the red fen reflectance is gone');
 });

@@ -259,3 +259,44 @@ export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0], coas
   mixTo(o, C.snow, iceCover(s.h, il, lat)); // permanent ice: from the lapse-rate ice line, plus a soft high-Arctic fade (no hard 78° cut)
   return o;
 }
+
+/**
+ * The same mixes as `surfaceColour`, as weights instead of a baked albedo.
+ * Canopy is what is left after fen (bog), shore (rock, sand, beach) and ice.
+ * Each mix replaces a fraction of whatever is already there, in the same order.
+ * Water is not a weight: the renderer contours `h − level`.
+ * Returns canopy, fen, shore, ice. They sum to 1.
+ */
+export function coverWeights(s: Surface, d: Vec3, coastM?: number): [number, number, number, number] {
+  let canopy = 1, fen = 0, shore = 0, ice = 0;
+  const take = (which: 'fen' | 'shore' | 'ice', t: number) => {
+    const k = Math.max(0, Math.min(1, t));
+    if (!(k > 0)) return;
+    canopy *= 1 - k; fen *= 1 - k; shore *= 1 - k; ice *= 1 - k;
+    if (which === 'fen') fen += k; else if (which === 'shore') shore += k; else ice += k;
+  };
+  const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = s.mottle;
+  if (s.home < 1) {
+    const k = 1 - s.home;
+    take('shore', k * .3 * smoothstep(.6, .95, s.hill + .5 * (m - .5)));
+    take('fen', k * .55 * smoothstep(-.35, -.8, s.hill + .25 * (m - .5)));
+    take('shore', k * .5 * (1 - smoothstep(1, 8, s.h)));
+  }
+  if (s.home > 0 && s.soilB) {
+    const w = s.home, W = s.soilW;
+    take('shore', w * W[0] * .6 * smoothstep(.4, .75, m));
+    take('fen', w * W[1] * .7);
+    take('shore', w * W[2] * .5);
+    if (W[3] >= 0) take('fen', w * .45 * smoothstep(.6, .95, W[3]));
+  } else if (s.home > 0 && s.soil) {
+    const w = s.home;
+    if (s.soil === 'bedrock') take('shore', w * .6 * smoothstep(.4, .75, m));
+    else if (s.soil === 'peat') take('fen', w * .7);
+    else if (s.soil === 'sand') take('shore', w * .5);
+    if (s.wet >= 0) take('fen', w * .45 * smoothstep(.6, .95, s.wet));
+  }
+  const { tree: tl, ice: il } = treeIceLinesM(lat, coastM);
+  if (s.h > tl - 150) take('shore', smoothstep(tl - 150, tl + 250, s.h));
+  take('ice', iceCover(s.h, il, lat));
+  return [canopy, fen, shore, ice];
+}

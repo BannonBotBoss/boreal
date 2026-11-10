@@ -49,6 +49,7 @@ import * as layerPanelPure from './layerPanel';
 import { mountLayerPanel, type LayerId, type LayerState } from './layerPanel';
 import { refreshHydroLayer, hydroLayerState } from './hydroLayer';
 import { COARSE_LAKE, GLOBE_SHORE, LAKE_FADE, applySolarAttribute, buildTile, globeMaterial, releaseTileGeometry, setGlobeDetail, setGlobeMorph, setLakeMask, setSolarLayer, solarLayerOn, stitchIndex, tileGeometry, type TileData } from './tile';
+import { loadAerialExemplars } from './aerialExemplar';
 import { LAKE_MASK, buildLakeMask } from './lakeMask';
 import { auroraFromSolarWind, fieldLineR } from '../../core/geodynamo';
 import { auroraPole } from './atmosphere';
@@ -153,6 +154,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   sun.position.copy(sunNow()); scene.add(sun, hemi);
   const seamsDebug = q.get('seams') === '1'; // ?seams=1: skirts red, tile borders yellow (tile.ts globeMaterial)
   const material = globeMaterial(seamsDebug ? lod.segments : 0);
+  loadAerialExemplars();
   // Atmosphere (atmosphere.ts): sky shell + aerial perspective on the tiles; ?atmos=0 for the plain look
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
   for (const [k, f] of [['envrh', 'rh'], ['envu', 'windE']] as const) if (q.has(k)) ENV_FORCE[f] = Number(q.get(k)); // T-0089 dev hook: ?envrh=0.95&envu=40 force the record (frames)

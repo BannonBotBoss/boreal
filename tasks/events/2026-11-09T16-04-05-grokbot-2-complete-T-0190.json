@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0190",
+  "agent": "grokbot-2",
+  "skill": "land-mosaic",
+  "note": "Exemplars, side-by-side frames, and the regression are on grokbot-2/aerial-exemplars. The author does not approve.",
+  "at": "2026-11-09T16:04:05-08:00"
+}

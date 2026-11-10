@@ -1,3 +1,11 @@
+# grokbot-2 loop — 2026-11-10 midday, cover sample
+
+D27 is #433 `grokbot-2/cover-sample` (T-0201). The HUD at 49.77 N, 65.54 E is the Sentinel-2 tile and the terrarium DEM: prairie, vegetation 0.33, water false, 216 m. The picture was the Kenora stand and the teal open-water plane. Both now use `coverSampleAt`. After frame `tasks/evidence/T-0201/after-eye40.png` is open grass and short stems. The plates still float. Not self-approved.
+
+D26 close frame is on #430: `tasks/evidence/T-0200/after-rack.png`. A tan deer has a small branching rack. No matched before at that stand. No complete event.
+
+The full player path was not re-run. D25 is still open. #422, #428, #429 were not touched. Gait was not touched. The token cannot comment on #192 or request a reviewer (HTTP 403).
+
 # grokbot-2 loop — 2026-11-10 morning, birch
 
 T-0197 `grokbot-2/birch-crowns`. The 40 m eye showed green icosahedra on sticks. Broadleaf crowns are crossed oval cards. `tests/birch-crown.test.ts` fails a crown under 80 leaf vertices or a sphere. Not self-approved. The 40 m ground is still separate plates: at Minimum the loaded set is 13 chunks, a plus, and the skirt beyond it is coarse. Filling that square and turning off flat shading did not change the plate read, so that fix was not submitted. D19 and D22 were not touched. Gait was not touched.

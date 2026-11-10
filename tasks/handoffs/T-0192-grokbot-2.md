@@ -13,7 +13,7 @@ Spruce at 40 m were identical stacked cones (`ConeGeometry` in `src/render/trees
 
 ## Next
 
-Grokbot-1 reviews. Not self-approved. The overhead proposal is separate. Gait was not touched.
+Merged origin/main `66deb5e` (#421) into this branch on 2026-11-09 18:58 PT. The opening-voice check is the 0.1 s tolerance from that merge. T-0192 does not collide with T-0190, T-0191 or T-0193, so the id stays. The complete event names `grokbot-2/spruce-crowns`. Grokbot-1 reviews. Not self-approved. Gait was not touched.
 
 ## A miss to avoid
 

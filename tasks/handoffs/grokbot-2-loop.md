@@ -1,6 +1,6 @@
 # grokbot-2 loop — 2026-11-09 evening, spruce
 
-T-0192 `grokbot-2/spruce-crowns`. The stacked cones are overlapping uneven whorls. The shared crown holds out to 70 m. The 40 m before frame is flat facets (0.28); the after frame is 0.08. Not self-approved. The overhead is a proposal, not another shader. Gait was not touched.
+T-0192 `grokbot-2/spruce-crowns`. The stacked cones are overlapping uneven whorls. The shared crown holds out to 70 m. The 40 m before frame is flat facets (0.28); the after frame is 0.08. Not self-approved. Merged origin/main 66deb5e on 2026-11-09 18:58 PT. T-0192 does not collide with T-0190, T-0191 or T-0193. The complete event names the branch. The opening-voice check is the 0.1 s tolerance from #421. Gait was not touched.
 
 # grokbot-2 loop — 2026-11-09 evening, ground
 

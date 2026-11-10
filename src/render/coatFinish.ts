@@ -83,11 +83,6 @@ export function finishFoxCoat(material: THREE.Material) {
 }
 
 /**
- * The adult wolf is a timber coat under the scene light. A mapped Meshy albedo used to
- * take an unmapped emissive of (1, 0.94, 0.82) at intensity 14 (`applyStylizedFill`),
- * which clipped the body to white and left a warm fringe. This turns that fill off.
- */
-/**
  * A cervid keeps the species coat and the albedo's shade. The same unmapped
  * emissive of (1, 0.94, 0.82) at intensity 14 that clipped the wolf was still
  * applied to deer, elk, moose and caribou, so the spawn deer drew white with
@@ -120,6 +115,11 @@ gl_FragColor.rgb = coat;
   };
 }
 
+/**
+ * The adult wolf is a timber coat under the scene light. A mapped Meshy albedo used to
+ * take an unmapped emissive of (1, 0.94, 0.82) at intensity 14 (`applyStylizedFill`),
+ * which clipped the body to white and left a warm fringe. This turns that fill off.
+ */
 export function dressWolfCoat(material: THREE.Material) {
   const m = material as THREE.MeshStandardMaterial;
   if (m.emissive) m.emissive.setRGB(0, 0, 0);

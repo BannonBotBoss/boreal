@@ -154,7 +154,8 @@ function spireCrown(id: string, h: number, y0: number, w: number, droop: number,
   const treeScale = 0.78 + rng() * 0.4;
   const span = Math.max(0.5, h * 0.97 - y0), step = span / Math.max(1, tiers - 1);
   const leanA = rng() * Math.PI * 2, lean = (0.012 + rng() * 0.03) * (club ? 1.5 : 0.7);
-  const push = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c); };
+  // Both windings: the leaf material is FrontSide, so a one-sided card vanishes from behind and the crown reads as a pole.
+  const push = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c, ...a, ...c, ...b); };
   for (let i = 0; i < tiers; i++) {
     const t = tiers <= 1 ? 0 : i / (tiers - 1);
     let env = 1 - t * (dense ? 0.92 : club ? 0.42 : 0.7);
@@ -187,7 +188,7 @@ function spireCrown(id: string, h: number, y0: number, w: number, droop: number,
   return g;
 }
 /**
- * Broadleaf crown as a ragged oval of rings. Not an icosahedron.
+ * Broadleaf crown as crossed ragged oval cards. Not an icosahedron.
  * Paper birch is narrowly oval and irregular (Farrar 1995, Trees in Canada, Betula papyrifera).
  * Jack pine is wider and more open (Rudolph and Laidly 1990).
  */
@@ -195,7 +196,8 @@ function broadleafCrown(h: number, y0: number, w: number, detail: number, rng: (
   // Crossed cards. A closed ring mesh reads as a faceted gem from the 40 m eye.
   // Two or three vertical ovals, the same trick as a tree billboard (render/trees/billboardAtlas).
   const pos: number[] = [];
-  const push = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c); };
+  // Both windings: the leaf material is FrontSide, so a one-sided card vanishes from behind and the crown reads as a pole.
+  const push = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c, ...a, ...c, ...b); };
   const planes = detail === 2 ? 2 : 3;
   const steps = 12;
   const span = Math.max(0.8, h * 0.96 - y0);

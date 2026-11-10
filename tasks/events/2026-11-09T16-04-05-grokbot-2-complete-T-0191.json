@@ -3,6 +3,7 @@
   "task": "T-0191",
   "agent": "grokbot-2",
   "skill": "land-mosaic",
+  "branch": "grokbot-2/aerial-exemplars",
   "note": "Exemplars, side-by-side frames, and the regression are on grokbot-2/aerial-exemplars. The author does not approve.",
   "at": "2026-11-09T16:04:05-08:00"
 }

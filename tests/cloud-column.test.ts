@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex, kIndex, totalTotals, showalterIndex } from '../src/core/atmo/cloudColumn';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex, kIndex, totalTotals, showalterIndex, convectiveCondensationLevel } from '../src/core/atmo/cloudColumn';
 import { K } from '../src/core/constants';
 import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
@@ -931,4 +931,11 @@ test('Showalter index: 850 hPa parcel lifted to 500 hPa', () => {
   assert.ok(si < sd, `warm humid air is less stable than cold dry air (${si} vs ${sd})`);
   assert.ok(sd > 0, `cold dry air is stable (${sd})`);
   assert.ok(Number.isNaN(showalterIndex(cloudColumn(10, qOf(10, .6), 1, undefined, undefined, 3000), 3000)), 'ground above 850 hPa has no Showalter index');
+});
+test('Convective condensation level: surface dew point line meets the profile, convective temperature at or above surface', () => {
+  const col = cloudColumn(25, qOf(25, .6)); const r = convectiveCondensationLevel(col);
+  assert.ok(r.cclM > 0, `CCL found aloft (${r.cclM})`);
+  assert.ok(r.convT >= col.layers[0].tEnv - 0.5, `convective temperature ${r.convT} is not below the surface temperature`);
+  const moist = convectiveCondensationLevel(cloudColumn(25, qOf(25, .9)));
+  assert.ok(moist.cclM >= 0 && moist.cclM < r.cclM, `moister air gives a lower CCL (${moist.cclM} vs ${r.cclM})`);
 });

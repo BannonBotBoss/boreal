@@ -31,4 +31,6 @@ Use when the glide or the low drone shows a small patch of chunk terrain floatin
 - Do not give the skirt `renderOrder < 0`. `hideForBand` treats that as sky. Mark `userData.horizonSkirt` and skip it there.
 - Do not opt the skirt into `fadeOptIn`. The patch disc would discard it, which is the square you are trying to remove.
 - A rebuild every frame is wasted. `sampleSurface` is about 4 µs. Snap the camera and rebuild on that cell.
-- Do not fade dry land all the way to the sky fog, and do not paste a cool flat far-layer texel onto it. That sheet reads as a sea. Cap the land haze (water may still take the sky) and reject a sky-coloured far texel on dry ground. The check is a cool flat run across the view, against a snow-free prairie horizon, not a mean brightness.
+- Do not fade dry land all the way to the sky fog, and do not paste a cool flat far-layer texel onto it. That sheet reads as a sea. Cap the land haze (water may still take the sky) and reject a sky-coloured far texel on dry ground.
+- Compare frames at one seed, one x/z, one yaw, and one held minute. A cool-flat-run score can pass because the camera turned away from the lake. Also score Rec.709 sky luma in the clear upper band and the largest step in the centre horizon bins. Calibrate both on the Comanche frame (blue, drop about 31) and on a known white hard horizon (drop about 99).
+- If main at that same pose already has the white sky or the blotchy ground, record it as its own defect. Do not treat a mismatched pair as proof this branch caused it.

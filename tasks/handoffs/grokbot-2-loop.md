@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-10, prairie horizon matched frames
+
+T-0194 `grokbot-2/prairie-horizon`. The open-prairie pair is one pose (seed 1400, x 65.4, z −18.6, yaw 5.140, 08:46). Main `66deb5e` already has the white sky, the hard horizon step, and the blotchy ground. This branch matches those scores and does not fix them. The spawn heading's grey band scores 0.068 on both. Not self-approved. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 night, prairie horizon
 
 T-0194 `grokbot-2/prairie-horizon`. The spawn horizon was a grey sheet. Dry land no longer fades all the way to the sky fog, and a cool far texel is not pasted on it. The flat sea square is off when stages are on. Not self-approved. Gait was not touched.

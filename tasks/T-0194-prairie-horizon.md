@@ -19,8 +19,10 @@ The spawn is seed 1400, 49.77 N, 65.54 E, prairie, snow 0, day 227, about 08:46.
 ## Objectives
 
 - [x] The dry prairie horizon is land. The flat sea square is not drawn on staged terrain. A cool flat far texel is not pasted onto dry ground.
-- [x] `tests/prairie-horizon.test.ts` fails the before frame and passes the after frame against the Comanche National Grassland horizon. The author does not approve the work.
+- [x] `tests/prairie-horizon.test.ts` scores the matched frames on sky luminance and the horizon brightness profile against the Comanche National Grassland horizon, and on the cool flat run. The author does not approve the work.
 
 ## Acceptance
 
-Before: `tasks/evidence/T-0194/before-horizon.png`. After: `tasks/evidence/T-0194/after-horizon.png`. Reference: `tasks/evidence/T-0194/ref-comanche-horizon.png` (US National Park Service, public domain, 29 May 2015, Comanche National Grassland). Same cover the game reports (prairie, snow 0). Not Kenora. Not these coordinates.
+The open-prairie pair is one pose: seed 1400, x 65.4, z −18.6, yaw 5.140, day 227, 08:46. Before: `tasks/evidence/T-0194/before-horizon.png` (main `66deb5e`, also `main-66deb5e.png`). After: `tasks/evidence/T-0194/after-horizon.png`. Reference: `tasks/evidence/T-0194/ref-comanche-horizon.png` (US National Park Service, public domain, 29 May 2015, Comanche National Grassland). Same cover the game reports (prairie, snow 0). Not Kenora. Not these coordinates.
+
+The white sky, the hard horizon step, and the blotchy ground are already on main at this pose. This branch matches those numbers and does not fix them. The spawn heading (yaw 2.054) still shows the grey-blue band on both builds (`spawn-main.png`, `spawn-branch.png`).

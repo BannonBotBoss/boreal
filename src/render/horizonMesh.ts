@@ -1,7 +1,10 @@
 /**
- * The horizon skirt as one mesh in the game scene (world/globe/horizonSkirt.ts).
- * Rebuilt when the camera crosses a snap cell. One draw call. The material is not
- * on the patch-fade path: the skirt is what remains after the chunks dither out.
+ * The far ground as one mesh (world/terrain/cdlod.ts).
+ * Filip Strugar, GPU Pro, 2010: a quadtree of fixed grids, morphed onto the parent
+ * grid so levels meet without cracks. Rebuilt when the camera crosses a snap cell.
+ * The old concentric skirt is not what is drawn. The material is not on the
+ * patch-fade path: this mesh is the ground after the chunks dither out, and it
+ * also fills the gaps between the loaded chunks.
  */
 import * as THREE from 'three';
 import { surfaceDetail } from '../core/surface';
@@ -9,9 +12,10 @@ import { heightAt } from '../core/world';
 import { SITE } from '../core/sitePhase';
 import { smoothstep } from '../proc/math';
 import { PLANET, type Planet } from '../world/globe/planet';
-import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
+import { HORIZON_SKIRT, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
+import { buildCdlodMesh } from '../world/terrain/cdlod';
 import { PATCH_FAR } from './fade';
-import { biomeGrade, blendDem, blendPhoto, demSlope, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { biomeGrade, blendDem, blendPhoto, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { GLSL_NOISE } from '../proc/glsl';
 import { canopyTile } from './trees/billboardAtlas';
 
@@ -131,7 +135,7 @@ export function createHorizonSkirt(): HorizonSkirt {
   let originKey = '';
   let geo = geometry;
 
-  function update(planet: Planet, cx: number, cz: number, eyeM: number, forwardX: number, forwardZ: number) {
+  function update(planet: Planet, cx: number, cz: number, eyeM: number, _forwardX: number, _forwardZ: number) {
     const oKey = `${SITE.remote ? 1 : 0}:${Number.isFinite(SITE.latDeg) ? SITE.latDeg.toFixed(3) : 'home'}:${Math.round(heightAt(0, 0) * 10)}`;
     if (!origin || originKey !== oKey) {
       origin = skirtOrigin(planet, heightAt(0, 0));
@@ -142,7 +146,8 @@ export function createHorizonSkirt(): HorizonSkirt {
     warmDemTiles(hereLL.latDeg, hereLL.lonDeg);
     warmPhotoTiles(hereLL.latDeg, hereLL.lonDeg);
     const snap = HORIZON_SKIRT.snapM;
-    const next = `${originKey}:${Math.round(cx / snap)}:${Math.round(cz / snap)}:${Math.round(Math.log2(Math.max(1, eyeM)) * 8)}:${Math.round(Math.atan2(forwardZ, forwardX) * 4)}:${openTileGeneration()}`;
+    // The mesh is a full disc, so turning does not rebuild it.
+    const next = `${originKey}:${Math.round(cx / snap)}:${Math.round(cz / snap)}:${Math.round(Math.log2(Math.max(1, eyeM)) * 8)}:${openTileGeneration()}`;
     made.cam.value.set(cx, cz);
     const latAbs = Math.abs(hereLL.latDeg);
     made.forest.value = latAbs >= 48 && latAbs < 70 ? 1 : latAbs >= 32 && latAbs < 48 ? 0.45 : 0;
@@ -150,9 +155,7 @@ export function createHorizonSkirt(): HorizonSkirt {
     key = next;
     const here = origin;
     const detail0 = here.remote ? surfaceDetail(0, 0) : 0;
-    const fl = Math.hypot(forwardX, forwardZ) || 1;
-    const fx = forwardX / fl, fz = forwardZ / fl;
-    const data = buildSkirtMesh(cx, cz, Math.max(1, eyeM), (x, z) => {
+    const data = buildCdlodMesh(cx, cz, Math.max(1, eyeM), (x, z) => {
       const far = skirtSample(planet, x, z, here);
       const dist = Math.hypot(x - cx, z - cz);
       let y = far.y;
@@ -176,18 +179,8 @@ export function createHorizonSkirt(): HorizonSkirt {
       else if (!water && far.kind === 'ocean') rgb = globeMatch([0.06, 0.09, 0.04]);
       else rgb = globeMatch(far.rgb);
       if (!finite(rgb)) rgb = [0.12, 0.16, 0.08];
-      const slope = demSlope(ll.latDeg, ll.lonDeg);
-      const lit = smoothstep(200, 1600, dist);
-      const normal: [number, number, number] = slope
-        ? [slope[0] * lit, slope[1] * lit + (1 - lit), slope[2] * lit]
-        : [0, 1, 0];
-      return { y, rgb, water, photo: ok, normal };
-    }, PLANET.radius, (x, z, ringR) => {
-      // The pad under the camera stays whole. Farther out, drop quads that reach behind the eye.
-      if (ringR < Math.max(80, eyeM * 0.35)) return true;
-      const dx = x - cx, dz = z - cz, len = Math.hypot(dx, dz) || 1;
-      return (dx * fx + dz * fz) / len > -0.15;
-    });
+      return { y, rgb, water, photo: ok };
+    }, PLANET.radius);
     geo.dispose();
     geo = new THREE.BufferGeometry();
     mesh.geometry = geo;

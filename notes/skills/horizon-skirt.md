@@ -1,5 +1,7 @@
 # Skill: fill the drone view out to the horizon
 
+The drawn ground past the chunks is no longer these rings. T-0198 replaced that mesh with CDLOD (Strugar 2010). Use `notes/skills/cdlod-ground.md`. The helpers below (`horizonMetres`, `curvatureDrop`, `skirtSample`) are still the height and the horizon. Do not add ring segments to close a gap.
+
 Use when the glide or the low drone shows a small patch of chunk terrain floating in the globe, or the ground should reach the horizon at a landing that is not the Kenora square.
 
 ## Search before writing

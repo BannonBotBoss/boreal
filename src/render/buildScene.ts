@@ -53,6 +53,7 @@ import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
 import { planetFor } from '../world/globe/planet';
 import { createHorizonSkirt } from './horizonMesh';
+import { groundFarPlane } from '../world/terrain/cdlod';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
@@ -494,6 +495,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     if (camera.near < 2) {
       horizonAhead.set(0, 0, -1).applyQuaternion(camera.quaternion);
       const eye = Math.max(1, camera.position.y - heightAt(camera.position.x, camera.position.z));
+      const far = groundFarPlane(eye);
+      if (camera.far < far) { camera.far = far; camera.updateProjectionMatrix(); }
       horizon.update(horizonPlanet, camera.position.x, camera.position.z, eye, horizonAhead.x, horizonAhead.z);
       horizon.setHaze(160, 700, (scene.fog as THREE.Fog).color);
       horizon.mesh.visible = true;

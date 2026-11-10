@@ -87,6 +87,39 @@ export function finishFoxCoat(material: THREE.Material) {
  * take an unmapped emissive of (1, 0.94, 0.82) at intensity 14 (`applyStylizedFill`),
  * which clipped the body to white and left a warm fringe. This turns that fill off.
  */
+/**
+ * A cervid keeps the species coat and the albedo's shade. The same unmapped
+ * emissive of (1, 0.94, 0.82) at intensity 14 that clipped the wolf was still
+ * applied to deer, elk, moose and caribou, so the spawn deer drew white with
+ * an orange fringe. The coat is capped so antler albedo cannot clip to white.
+ */
+export function dressCervidCoat(material: THREE.Material, coat: readonly [number, number, number]) {
+  const m = material as THREE.MeshStandardMaterial;
+  if (!m || m.userData.cervidCoat) return;
+  m.userData.cervidCoat = true;
+  if (m.emissive) m.emissive.setRGB(0, 0, 0);
+  m.emissiveIntensity = 0;
+  if ('emissiveMap' in m) m.emissiveMap = null;
+  m.toneMapped = true;
+  const rgb = `${coat[0].toFixed(3)}, ${coat[1].toFixed(3)}, ${coat[2].toFixed(3)}`;
+  const chunk = `
+vec3 nrm = normalize(normal);
+float wrap = clamp(dot(nrm, normalize(vec3(-0.12, 0.9, 0.28))), 0.0, 1.0);
+float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+float shade = clamp(lum, 0.35, 1.05);
+vec3 coat = vec3(${rgb}) * shade * (0.62 + 0.5 * wrap);
+coat = min(coat, vec3(0.62));
+gl_FragColor.rgb = coat;
+`;
+  const prev = m.onBeforeCompile;
+  const prevKey = m.customProgramCacheKey?.bind(m);
+  m.customProgramCacheKey = () => `${prevKey ? prevKey() : 'cervid'}|cervid`;
+  m.onBeforeCompile = function (shader, renderer) {
+    prev?.call(this, shader, renderer);
+    shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `#include <opaque_fragment>\n${chunk}`);
+  };
+}
+
 export function dressWolfCoat(material: THREE.Material) {
   const m = material as THREE.MeshStandardMaterial;
   if (m.emissive) m.emissive.setRGB(0, 0, 0);

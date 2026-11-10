@@ -7,13 +7,26 @@ export function createDeerRig(seed:number,detail:number) {
   const brown=new THREE.MeshStandardMaterial({color:0xa28055,flatShading:true,roughness:1});
   const pale=new THREE.MeshStandardMaterial({color:0xc4ab7a,flatShading:true,roughness:1});
   const dark=new THREE.MeshStandardMaterial({color:0x3b2f25,flatShading:true,roughness:1});
+  // Bone, not a blown-out icosahedron. A stretched icosahedron reads as a white scribble.
+  const antlerMat=new THREE.MeshStandardMaterial({color:0x6e5a40,roughness:1,metalness:0});
   const part=(parent:THREE.Object3D,x:number,y:number,z:number,sx:number,sy:number,sz:number,mat=brown)=>{
     const mesh=new THREE.Mesh(new THREE.IcosahedronGeometry(1,detail===0?1:0),mat);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh;
   };
   part(body,0,1.3,0,.55,.65,1.05);part(body,0,1.95,-.85,.3,.7,.34);
   const head=new THREE.Group();head.position.set(0,2.4,-1.05);body.add(head);
   part(head,0,0,0,.32,.34,.5);part(head,0,-.12,-.35,.23,.2,.25,pale);
-  for(const side of [-1,1]) {part(head,side*.4,.25,.15,.14,.32,.16);if(detail<2)part(head,side*.24,.58,.1,.045,.43,.04,pale);}
+  for(const side of [-1,1]) {
+    part(head,side*.4,.25,.15,.14,.32,.16);
+    if(detail<2){
+      const rack=new THREE.Group();
+      rack.position.set(side*.12,.32,.04);
+      const beam=new THREE.Mesh(new THREE.CylinderGeometry(.018,.03,.36,5),antlerMat);
+      beam.position.y=.18;
+      const tine=new THREE.Mesh(new THREE.CylinderGeometry(.01,.016,.14,4),antlerMat);
+      tine.position.set(side*.05,.26,0); tine.rotation.z=side*-.7;
+      rack.add(beam,tine); head.add(rack);
+    }
+  }
   const brain=new AnimalBrain(seed),sensor=new THREE.Object3D();sensor.name='head-sensor';sensor.userData.brain=brain;head.add(sensor);
   const legs:THREE.Group[]=[],knees:THREE.Group[]=[];
   for(const [x, z] of DEER_HIP_XZ) {

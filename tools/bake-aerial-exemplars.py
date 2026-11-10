@@ -2,8 +2,10 @@
 """Crop boreal cover samples and bake the Deliot & Heitz Gaussian lookup.
 
 The photographs are USGS Imagery Only (NAIP), public domain, via The National Map.
-Zoom 16 is about 1.6 m per pixel near 48 N. Each crop is a sample of one cover,
-not a map of the game point. The Gaussian and the 256×4 lookup are the 1D histogram
+Fen, shore, and water stay zoom 16, about 1.6 m per pixel near 48 N, 128 px.
+Canopy is zoom 19, about 0.2 m per pixel, 1024 px, the same ground as the old
+128 px crop. Each crop is a sample of one cover, not a map of the game point.
+The Gaussian and the 256×4 lookup are the 1D histogram
 transform from Deliot and Heitz, GPU Zen 2 (2019): per channel, rank to a Gaussian
 of mean 0.5, and a table back to the original sRGB byte.
 
@@ -19,6 +21,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "public" / "aerial"
 Z = 16
+# Canopy is what a 400–800 m frame is full of. The old crop is 128 px at zoom 16
+# (about 1.6 m per pixel), so a crown is a couple of texels. The tile cache stops
+# at that zoom (level 17 is 404). The export draws 1024 px across 1024 m, which is
+# NAIP's native metre, from a closed stand 1.6 km east of that crop. Crowns and
+# gaps are in the photograph. Fen, shore, and water stay 128 px. The canopy has
+# its own repeat (canopyMetres) so their world size does not change.
+CANOPY_PX = 1024
+CANOPY_M = 1024.0
+# Centre of the export, WGS84. Northern Minnesota, not the game coordinate.
+CANOPY_LAT = 48.09436233616627
+CANOPY_LON = -91.48154754629795
 # z, x, y, crop x, crop y, crop size. Tile URL is z/y/x.
 CROPS = {
     "canopy": (16110, 22755, 32, 80, 128),
@@ -45,11 +58,11 @@ def erfinv(x: float) -> float:
     return math.copysign(math.sqrt(max(0.0, math.sqrt(t * t - ln / a) - t)), x)
 
 
-def download(x: int, y: int) -> bytes:
-    cache = Path(f"/tmp/naip/grid/{Z}-{x}-{y}.jpg")
+def download(x: int, y: int, zoom: int = Z) -> bytes:
+    cache = Path(f"/tmp/naip/grid/{zoom}-{x}-{y}.jpg")
     if cache.exists():
         return cache.read_bytes()
-    url = URL.format(z=Z, y=y, x=x)
+    url = URL.format(z=zoom, y=y, x=x)
     req = urllib.request.Request(url, headers={"User-Agent": "boreal-exemplar/1.0"})
     with urllib.request.urlopen(req, timeout=60) as r:
         data = r.read()
@@ -121,6 +134,28 @@ def gaussianize(rgb: bytes):
     return bytes(gauss), bytes(lut)
 
 
+def canopy_rgb() -> bytes:
+    """1024 m × 1024 m NAIP export, decoded to RGB. Public domain, The National Map."""
+    dlat = CANOPY_M / 111320.0
+    dlon = CANOPY_M / (111320.0 * math.cos(math.radians(CANOPY_LAT)))
+    bbox = f"{CANOPY_LON - dlon / 2},{CANOPY_LAT - dlat / 2},{CANOPY_LON + dlon / 2},{CANOPY_LAT + dlat / 2}"
+    url = ("https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/export"
+           f"?bbox={bbox}&bboxSR=4326&size={CANOPY_PX},{CANOPY_PX}&format=png&f=image")
+    cache = Path("/tmp/naip/canopy-1024.png")
+    if not cache.exists():
+        req = urllib.request.Request(url, headers={"User-Agent": "boreal-exemplar/1.0"})
+        with urllib.request.urlopen(req, timeout=90) as r:
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.write_bytes(r.read())
+    proc = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(cache), "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+        capture_output=True, check=True,
+    )
+    if len(proc.stdout) != CANOPY_PX * CANOPY_PX * 3:
+        raise SystemExit(f"canopy export decoded to {len(proc.stdout)} bytes")
+    return proc.stdout
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "source").mkdir(exist_ok=True)
@@ -132,6 +167,13 @@ def main():
     luts = []
     names = ("canopy", "fen", "shore", "water")
     for name in names:
+        if name == "canopy":
+            sample = canopy_rgb()
+            png_write(OUT / "source" / "canopy.png", CANOPY_PX, CANOPY_PX, sample)
+            gauss, lut = gaussianize(sample)
+            png_write(OUT / "canopy.png", CANOPY_PX, CANOPY_PX, gauss)
+            luts.append(lut)
+            continue
         x, y, cx, cy, size = CROPS[name]
         raw = decode_jpg(download(x, y))
         sample = crop(raw, cx, cy, size)
@@ -149,6 +191,10 @@ def main():
         "metres": round(metres, 3),
         "metresPerPixel": round(mpp, 4),
         "pixels": 128,
+        "canopyPixels": CANOPY_PX,
+        "canopyMetres": CANOPY_M,
+        "canopyMetresPerPixel": 1.0,
+        "canopyCenter": {"lat": CANOPY_LAT, "lon": CANOPY_LON},
         "latitudeDeg": round(lat, 4),
         "zoom": Z,
         "gainNote": "Shader uniform uExGain. The bake does not scale the photograph.",
@@ -156,6 +202,14 @@ def main():
         "service": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
         "note": "Samples of boreal cover in northern Minnesota. Not a map of the game point, and not Kenora.",
         "crops": {k: {"x": v[0], "y": v[1], "cropX": v[2], "cropY": v[3], "cropPx": v[4]} for k, v in CROPS.items()},
+    }
+    meta["crops"]["canopy"] = {
+        "pixels": CANOPY_PX,
+        "metres": CANOPY_M,
+        "metresPerPixel": 1.0,
+        "lat": CANOPY_LAT,
+        "lon": CANOPY_LON,
+        "note": "USGS Imagery Only export, 1024 m on a side. Closed boreal canopy 1.6 km east of the old zoom-16 crop.",
     }
     (OUT / "meta.json").write_text(__import__("json").dumps(meta, indent=2) + "\n")
     print(f"metres {metres:.2f} mpp {mpp:.3f} lat {lat:.3f}")

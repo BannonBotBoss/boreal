@@ -6,8 +6,9 @@
  * fen, shore, and open water. They are not a map of 52 N, 97 W.
  *
  * Repeats are hidden by Deliot and Heitz, GPU Zen 2 (2019), via tilingBlend.glsl.ts.
- * Source and licence: public/aerial/CREDITS.md. Ground sample distance is about 1.6 m
- * (USGS Imagery Only / NAIP, zoom 16). One 128 px crop is uExMetres of world.
+ * Source and licence: public/aerial/CREDITS.md. Fen, shore, and water are about 1.6 m
+ * per pixel (USGS Imagery Only / NAIP, zoom 16), one 128 px crop across uExMetres.
+ * Canopy is a 1024 px crop at about 1 m per pixel, across uExCanopyMetres.
  */
 import * as THREE from 'three';
 import { asset } from '../../core/asset';
@@ -15,6 +16,8 @@ import { asset } from '../../core/asset';
 export const AERIAL_EXEMPLAR = {
   /** Metres of ground across one 128 px crop. Set again from public/aerial/meta.json when it loads. */
   metres: 205,
+  /** Metres across the 1024 px canopy. NAIP's native metre, so a crown is several texels. */
+  canopyMetres: 1024,
   /**
    * NAIP sRGB green ~110 is linear ~0.16. The globe sun is intensity 3.2 and Lambert divides by π,
    * so an albedo near the daylight stand table (landMosaic OVERHEAD_STAND, a few percent to ~0.2)
@@ -44,6 +47,7 @@ export const AERIAL = {
   uExLut: { value: dataTexture(false) },
   uExOn: { value: 0 },
   uExMetres: { value: AERIAL_EXEMPLAR.metres },
+  uExCanopyMetres: { value: AERIAL_EXEMPLAR.canopyMetres },
   uExGain: { value: AERIAL_EXEMPLAR.gain },
 };
 
@@ -87,5 +91,7 @@ export function loadAerialExemplars() {
   fetch(asset('aerial/meta.json')).then(r => r.ok ? r.json() : null).then(meta => {
     const metres = Number(meta?.metres);
     if (metres > 1) AERIAL.uExMetres.value = metres;
+    const canopy = Number(meta?.canopyMetres);
+    if (canopy > 1) AERIAL.uExCanopyMetres.value = canopy;
   }).catch(() => { /* the compiled default stands */ });
 }

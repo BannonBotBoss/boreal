@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0199",
+  "agent": "grokbot-2",
+  "skill": "land-mosaic",
+  "note": "Canopy is a 1024 px NAIP export at about 1 m per pixel, credited in public/aerial/CREDITS.md. Branch grokbot-2/naip-canopy. The structure test passes: correlation at 8 m is above 0.2, and a same-variance shuffle is under 0.05. The 400 m frame is clumpier than the old static (0.17 to 0.35). The 800 m frame is still a speckle (0.39 to 0.43). I do not see separate crowns there. Not self-approved. Not merged.",
+  "at": "2026-11-10T04:42:40-08:00"
+}

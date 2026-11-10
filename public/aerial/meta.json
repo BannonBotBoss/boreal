@@ -2,6 +2,13 @@
   "metres": 204.21,
   "metresPerPixel": 1.5954,
   "pixels": 128,
+  "canopyPixels": 1024,
+  "canopyMetres": 1024.0,
+  "canopyMetresPerPixel": 1.0,
+  "canopyCenter": {
+    "lat": 48.09436233616627,
+    "lon": -91.48154754629795
+  },
   "latitudeDeg": 48.0946,
   "zoom": 16,
   "gainNote": "Shader uniform uExGain. The bake does not scale the photograph.",
@@ -10,11 +17,12 @@
   "note": "Samples of boreal cover in northern Minnesota. Not a map of the game point, and not Kenora.",
   "crops": {
     "canopy": {
-      "x": 16110,
-      "y": 22755,
-      "cropX": 32,
-      "cropY": 80,
-      "cropPx": 128
+      "pixels": 1024,
+      "metres": 1024.0,
+      "metresPerPixel": 1.0,
+      "lat": 48.09436233616627,
+      "lon": -91.48154754629795,
+      "note": "USGS Imagery Only export, 1024 m on a side. Closed boreal canopy 1.6 km east of the old zoom-16 crop."
     },
     "fen": {
       "x": 15947,

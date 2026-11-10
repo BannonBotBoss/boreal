@@ -7,8 +7,11 @@ Public domain. Served by The National Map:
 
 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer
 
-The crops are zoom 16, about 1.6 m per pixel, near 48 N in northern Minnesota
-(canopy, fen, shore, open water). `source/` is the photograph. The files next to
+Fen, shore, and open water are zoom 16, about 1.6 m per pixel, 128 px, near 48 N
+in northern Minnesota. Canopy is a 1024 px export of the same service, 1024 m on a
+side, so about 1 m per pixel, centred near 48.094 N, 91.482 W (a closed stand about
+1.6 km east of the old 128 px crop). NAIP on this service is about 1 m; finer zoom
+tiles are not in the cache. `source/` is the photograph. The files next to
 this note are the per-channel Gaussian and `lut.png` is the table back to sRGB,
 the 1D histogram transform from Thomas Deliot and Eric Heitz, "Procedural Stochastic
 Textures by Tiling and Blending", GPU Zen 2, 2019. The shader is

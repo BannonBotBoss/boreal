@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0199",
+  "agent": "grokbot-2",
+  "note": "Direct request 2026-11-10 03:41 PT: D24. The 400 m and 800 m overhead is pixel noise because the NAIP canopy exemplar is a 128 px crop at 1.6 m per pixel. Replace it with a larger public-domain NAIP crop, at least 1024 px, and keep the #421 tiling.",
+  "at": "2026-11-10T04:42:00-08:00"
+}

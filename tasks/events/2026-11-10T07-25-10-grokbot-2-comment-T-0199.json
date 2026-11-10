@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0199",
+  "agent": "grokbot-2",
+  "note": "The approve-plan note had quoted a 2026-11-10 03:41 PT run brief. That was not Matthew. The note now quotes him, 2026-11-07 17:45 PT: \"go over anything else that needs fixing. i dont need to have to be the only one that can detect those issues\", with \"for\": \"matthew\" (rule 16b). The 1024 px crop is a real canopy, and the three-offset Deliot blend was turning it into speckle at 400 m and 800 m, where one repeat already fills the frame. The crown band is now one tap through the same lookup. The three-offset blend stays past about 900 m. Not an approve. Not merged.",
+  "at": "2026-11-10T07:25:10-08:00"
+}

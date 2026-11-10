@@ -406,7 +406,9 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       vec2 uv = vAerial.xz / max(uExMetres, 1.0);
       // Canopy is a 1024 px NAIP crop at 1 m per pixel. Fen, shore, and water stay the 128 px crops.
       vec2 uvCanopy = vAerial.xz / max(uExCanopyMetres, 1.0);
-      vec3 canopy = tbSample(uExCanopy, uExLut, 0.0, uvCanopy, lod);
+      // 400–800 m: one NAIP tap so crowns stay crowns. The three-offset blend is for the repeat past that.
+      float crownBand = 1.0 - smoothstep(900.0, 1600.0, eyeDist);
+      vec3 canopy = mix(tbSample(uExCanopy, uExLut, 0.0, uvCanopy, lod), tbSampleOne(uExCanopy, uExLut, 0.0, uvCanopy, 0.0), crownBand);
       vec3 fenC = tbSample(uExFen, uExLut, 1.0, uv, lod);
       vec3 shoreC = tbSample(uExShore, uExLut, 2.0, uv, lod);
       vec3 waterC = tbSample(uExWater, uExLut, 3.0, uv, lod);
@@ -436,7 +438,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       float conifer = 1.0 - sum;
       // Far grade pulls the lawn-green canopy toward the darker olive of the Sentinel tile.
       // Near grade keeps the crowns that read at 400 m.
-      vec3 coniferC = mix(canopy, canopy * vec3(0.36, 0.32, 0.26), coarse);
+      vec3 coniferC = mix(canopy, canopy * vec3(0.36, 0.32, 0.26), coarse * (1.0 - crownBand));
       vec3 decidC = mix(canopy * vec3(1.02, 0.94, 0.64), canopy * vec3(0.62, 0.55, 0.30), coarse);
       vec3 fenCol = fenC * vec3(0.55, 0.48, 0.32);
       vec3 rockCol = shoreC * vec3(0.48, 0.50, 0.46);

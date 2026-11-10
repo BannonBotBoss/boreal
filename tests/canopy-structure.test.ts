@@ -95,6 +95,7 @@ test('the canopy crop is at least 1024 px at about 1 m per pixel', () => {
   const shader = readFileSync('src/world/globe/tile.ts', 'utf8');
   assert.ok(shader.includes('uExCanopyMetres'), 'the canopy repeat is its own metres, not the 128 px crop');
   assert.ok(shader.includes('tbSample'), 'tiling and blending stays the Deliot and Heitz sampler');
+  assert.ok(shader.includes('tbSampleOne'), 'the crown band is one tap, not three blended offsets');
 });
 
 test('crown-scale correlation is structure, and a same-variance shuffle is not', () => {

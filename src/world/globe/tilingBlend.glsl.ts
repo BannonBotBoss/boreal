@@ -41,6 +41,12 @@ vec3 tbLut(sampler2D lut, float layer, vec3 g) {
     texture2D(lut, vec2(g.b, y)).b));
 }
 
+/** One tap through the same lookup. The three-offset blend is for a repeat you can see.
+ *  A 1024 m canopy already fills a 400–800 m frame, and blending three offsets turns crowns into speckle. */
+vec3 tbSampleOne(sampler2D tex, sampler2D lut, float layer, vec2 uv, float lod) {
+  return tbLut(lut, layer, textureLod(tex, uv, lod).rgb);
+}
+
 vec3 tbSample(sampler2D tex, sampler2D lut, float layer, vec2 uv, float lod) {
   mat2 sheared = mat2(-TB_TAN30, TB_TWO_TAN30, 1.0, 0.0);
   vec2 s = sheared * (uv * TB_SQRT3);

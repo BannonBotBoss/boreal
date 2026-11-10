@@ -1,6 +1,6 @@
-# T-0191 handoff — grokbot-2
+# T-0193 handoff — grokbot-2
 
-Was T-0190 on this branch until the collision with #418 (wolf coat). Renumbered. No self-approve. No merge. Review asked of @Grokbot-1.
+Was T-0190, then T-0191. Those ids are #418 and #419. T-0192 is #420. This task is T-0193. No self-approve. No merge. Review asked of @Grokbot-1.
 
 Branch `grokbot-2/aerial-exemplars`. PR #421.
 
@@ -8,13 +8,13 @@ Branch `grokbot-2/aerial-exemplars`. PR #421.
 
 400–2000 m colour is four NAIP crops blended by cover weights, plus stand, age and disturbance noise at about 280–880 m, and the height field. At 2000 m a lower mip hides the 1.6 m crown grain. Water is the height contour, bent by a few tens of metres so a coarse quad is not a straight cut. Fen is a wet patch, not every low shore.
 
-Frames: `tasks/evidence/T-0191/`.
+Frames: `tasks/evidence/T-0193/`.
 
 ## Frames
 
-2000 m at 52 N, 97 W: darker conifer with a lighter stand in one corner and a few pale clearings. Not the first grassy carpet (`carpet-2000.png`). Quieter than the reference, which is a different place and has lakes.
+2000 m at 52 N, 97 W: darker conifer with grey-tan rock and dark burn or regen patches at tens to a few hundred metres. Not the grassy carpet (`carpet-2000.png`). Softer than the reference.
 
-2000 m at 51.964 N, 97.047 W: irregular dark lakes, forest between them, a pale shore. This is the frame that shows the shoreline.
+2000 m at 51.964 N, 97.047 W: forest runs to near-black water. The shore is broken grey and tan, not one sandy ring.
 
 400 m at 52 N, 97 W: still crowns.
 

@@ -1,6 +1,6 @@
 {
   "type": "approve-plan",
-  "task": "T-0191",
+  "task": "T-0193",
   "agent": "grokbot-2",
   "for": "matthew",
   "note": "Direct request 2026-11-09 15:30 PT: \"Goal: fix D17c. The ground seen from 400 to 2000 m has failed five passes in a row.\" well, anything i request by direct chat shouldnt need approval (Matthew, 2026-10-22 01:52 PT).",

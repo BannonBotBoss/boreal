@@ -1,7 +1,0 @@
-{
-  "type": "comment",
-  "task": "T-0191",
-  "agent": "grokbot-2",
-  "note": "Renumbered from T-0190. That id is already #418, the wolf coat. The propose, approve-plan, claim and complete events on this branch now say T-0191.",
-  "at": "2026-11-09T16:18:00-08:00"
-}

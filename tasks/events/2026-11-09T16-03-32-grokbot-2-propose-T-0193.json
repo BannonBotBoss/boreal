@@ -1,6 +1,6 @@
 {
   "type": "propose",
-  "task": "T-0191",
+  "task": "T-0193",
   "agent": "grokbot-2",
   "note": "Direct request 2026-11-09 15:30 PT: fix D17c. The ground from 400 to 2000 m has failed five passes. After #417 it is camouflage at 2000 m and green static at 400 m. Use real aerial exemplars blended by the biome weights, Heitz and Deliot tiling-and-blending, and a height-field shoreline.",
   "at": "2026-11-09T16:03:32-08:00"

@@ -8,7 +8,7 @@ import { BIRD_GROUPS, MAMMALS } from '../src/core/species';
 import {
   WITHERS_SHARE, bodyMetres, entriesFor, fitAnimalModel, fitModeFor, loadAnimalBuffer, resetAnimalModels, type ModelEntry,
 } from '../src/render/animalModels';
-import { legsForSpecies, proximityWeights, skinnedVertex, spawnSkin, createSkinTemplate, type Segment } from '../src/render/meshySkin';
+import { legsForSpecies, lockRaisedHead, proximityWeights, skinnedVertex, spawnSkin, createSkinTemplate, type Segment } from '../src/render/meshySkin';
 
 const manifest = JSON.parse(readFileSync('public/models/animals/manifest.json', 'utf8')) as Record<string, ModelEntry | string>;
 const rows = Object.entries(manifest).filter((entry): entry is [string, ModelEntry] => typeof entry[1] === 'object' && !!entry[1].full);
@@ -97,6 +97,24 @@ function columnAnimal(species: string) {
   assert.ok(template, species);
   return template!;
 }
+
+test('a point above the head stays on the head bone, and a foot does not', () => {
+  const segs: Segment[] = [
+    { ax: 0, ay: 0.4, az: 0, bx: 0, by: 0.9, bz: 0.2, index: 0, radius: 0.2 },
+    { ax: 0, ay: 1.0, az: -0.2, bx: 0, by: 1.15, bz: -0.45, index: 1, radius: 0.12 },
+    { ax: 0.1, ay: 0.1, az: 0.2, bx: 0.1, by: 0.0, bz: 0.2, index: 8, radius: 0.05 },
+  ];
+  const positions = new Float32Array([
+    0.02, 1.55, -0.3,
+    0.1, 0.05, 0.2,
+  ]);
+  const skin = proximityWeights(positions, segs);
+  const locked = lockRaisedHead(positions, skin.skinIndex, skin.skinWeight, segs);
+  assert.equal(locked, 1);
+  assert.equal(skin.skinIndex[0], 1);
+  assert.equal(skin.skinWeight[0], 1);
+  assert.notEqual(skin.skinIndex[4], 1);
+});
 
 test('a walk moves the skinned feet and leaves the idle pose on the mesh', () => {
   for (const species of ['Gray Wolf', 'Snowshoe Hare', 'White-tailed Deer', 'American Black Bear']) {

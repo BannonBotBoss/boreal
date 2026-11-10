@@ -16,6 +16,8 @@ import { RENDER } from '../../core/renderSettings';
 import { fadeOptIn } from '../fade';
 
 export const TREES_V2 = { on: typeof location !== 'undefined' && new URLSearchParams(location.search).get('trees') === 'v2', nearM: 28, species: new Set(['black-spruce']) };
+/** Shared crown / far filler starts here. 55 * LOD + 5 put a 40 m eye on Minimum (LOD 0.5) onto the shared crown at 32 m. The mid mesh holds out to at least 70 m. */
+export const crownStartM = (k = 1) => Math.max(70, 55 * k + 5);
 export const TREES_V2_INFO = { stepMaxMs: 0, trees: 0, far: 0, near: 0, mid: 0, crown: 0, variants: 0, buildMs: [] as number[], slow: [] as (number | string)[][], tris: {} as Record<string, number>, full: 0 };
 (globalThis as { borealTreesV2?: unknown }).borealTreesV2 = { fx: TREES_V2, info: TREES_V2_INFO, list: () => [...trees.values()].filter(t => !t.far).map(t => [Math.round(t.m.elements[12]), Math.round(t.m.elements[14]), t.lod]) }; // dev/bench handle
 /** Representative age (yr) per render/trees age class (stand age since fire < 40, < 100, < 190, older). */
@@ -82,7 +84,7 @@ export function updateTrees(sc: THREE.Scene, camera: THREE.Camera) {
   if (!TREES_V2.on) return; scene = sc;
   const x = camera.position.x, z = camera.position.z, now = performance.now();
   if (Math.hypot(x - lx, z - lz) < 1 && now - lt < 500) return; lx = x; lz = z; lt = now;
-  const k = RENDER.lod.trees, n2 = (TREES_V2.nearM * k) ** 2, m2 = (55 * k + 5) ** 2, drop2 = (INTEREST.mid * 1.5 + 80) ** 2, doPrune = now - prune > 1000;
+  const k = RENDER.lod.trees, n2 = (TREES_V2.nearM * k) ** 2, m2 = crownStartM(k) ** 2, drop2 = (INTEREST.mid * 1.5 + 80) ** 2, doPrune = now - prune > 1000;
   let near = 0, mid = 0, cr = 0, far = 0;
   for (const [key, t] of trees) {
     const dx = t.m.elements[12] - x, dz = t.m.elements[14] - z, d2 = dx * dx + dz * dz;

@@ -6,6 +6,10 @@ T-0194 `grokbot-2/prairie-horizon`. The open-prairie pair is one pose (seed 1400
 
 T-0194 `grokbot-2/prairie-horizon`. The spawn horizon was a grey sheet. Dry land no longer fades all the way to the sky fog, and a cool far texel is not pasted on it. The flat sea square is off when stages are on. Not self-approved. Gait was not touched.
 
+# grokbot-2 loop — 2026-11-09 evening, spruce
+
+T-0192 `grokbot-2/spruce-crowns`. The stacked cones are overlapping uneven whorls. The shared crown holds out to 70 m. The 40 m before frame is flat facets (0.28); the after frame is 0.08. Not self-approved. Merged origin/main 66deb5e on 2026-11-09 18:58 PT. T-0192 does not collide with T-0190, T-0191 or T-0193. The complete event names the branch. The opening-voice check is the 0.1 s tolerance from #421. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 evening, ground
 
 T-0191 `grokbot-2/ground-floor`, from main, not stacked on the wolf branch. The spawn is prairie, vegetation 0.33. The feet are thatch, soil and green clumps instead of one lawn. Not self-approved. Spruce and the overhead proposal are still open. Gait was not touched.

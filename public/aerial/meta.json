@@ -1,0 +1,41 @@
+{
+  "metres": 204.21,
+  "metresPerPixel": 1.5954,
+  "pixels": 128,
+  "latitudeDeg": 48.0946,
+  "zoom": 16,
+  "gainNote": "Shader uniform uExGain. The bake does not scale the photograph.",
+  "licence": "Public domain. USGS Imagery Only (NAIP), The National Map.",
+  "service": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+  "note": "Samples of boreal cover in northern Minnesota. Not a map of the game point, and not Kenora.",
+  "crops": {
+    "canopy": {
+      "x": 16110,
+      "y": 22755,
+      "cropX": 32,
+      "cropY": 80,
+      "cropPx": 128
+    },
+    "fen": {
+      "x": 15947,
+      "y": 22835,
+      "cropX": 32,
+      "cropY": 16,
+      "cropPx": 128
+    },
+    "shore": {
+      "x": 15947,
+      "y": 22835,
+      "cropX": 48,
+      "cropY": 48,
+      "cropPx": 128
+    },
+    "water": {
+      "x": 16146,
+      "y": 22766,
+      "cropX": 16,
+      "cropY": 88,
+      "cropPx": 64
+    }
+  }
+}

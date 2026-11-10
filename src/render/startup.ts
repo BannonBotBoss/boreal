@@ -7,11 +7,14 @@
  *
  * T-0168: a return load in the same tab, on the same build, with that cache, does not wait for grass and flora to drain
  * and does not block on the next tier. The standing chunk, the live-tier compile, and the sky bake still run. A first
- * visit, a build change, a new tab, ?reprobe, or a missing probe keeps the full path.
+ * visit, a build change, a new tab, ?reprobe, or a missing probe keeps the probe and the shader warm-up.
+ * T-0196: that first visit also leaves once the standing chunk is in. Grass and flora keep the interest queue full,
+ * so waiting for the queue to go quiet is two 20 s ceilings with the card still up.
  */
 import { getGPUTier } from '../../vendor/detect-gpu/index.js';
 import { GOVERNOR, LADDER, applied, resetGovernor } from '../core/quality';
 import { STATS, queued } from '../core/interest';
+import { LANDING_JOB_MS } from '../world/globe/landingStream';
 import { CHUNK_SIZE } from '../core/world';
 import { cachedProbe, median, saveProbe, type ProbeInput, type ProbeResult } from '../core/probe';
 import type { buildScene } from './buildScene';
@@ -73,7 +76,7 @@ export interface StartupBudget {
   route: StartupRoute;
   settleQuiet: number;
   settleMaxMs: number;
-  /** Warm ends the land wait once the standing chunk is in the scene. Cold waits until the interest queue is quiet. */
+  /** Both routes end the land wait once the standing chunk is in the scene. The interest queue is not the ground. */
   leaveWhenChunkBuilt: boolean;
   skyMaxMs: number;
   /** Cold compiles before the Ultra bench, then again if the probe moved the tier. Warm compiles once, after the cached tier is applied. */
@@ -93,6 +96,13 @@ export function readWarmStamp(storage: Pick<Storage, 'getItem'> | undefined): Wa
 }
 export function saveWarmStamp(storage: Pick<Storage, 'setItem'> | undefined, stamp: WarmStamp) {
   try { storage?.setItem(WARM_START.key, JSON.stringify(stamp)); } catch { /* storage blocked: the next load stays cold */ }
+}
+/** While the loading card is waiting for the standing chunk, the frame loop gives chunk jobs the landing budget.
+ *  inpage's jobBudgetMs clears JOB_FIRST every frame when no descent is running, so the frame loop sets it again
+ *  after that call. Grass and flora otherwise stay ahead of the chunk and the card hits both ceilings. */
+let splashChunks = false;
+export function splashChunkBudget(): number | undefined {
+  return splashChunks ? LANDING_JOB_MS : undefined;
 }
 /** The module URL. A production bundle's content hash changes it; a dev server keeps it across reloads of the same session. */
 export const startupBuildId = () => import.meta.url;
@@ -120,7 +130,7 @@ export function startupBudget(route: StartupRoute): StartupBudget {
     skyMaxMs: WARM_START.skyMaxMs, compileBeforeProbe: false, warmUpMs: 0,
   };
   return {
-    route: 'cold', settleQuiet: COLD_START.settleQuiet, settleMaxMs: COLD_START.settleMaxMs, leaveWhenChunkBuilt: false,
+    route: 'cold', settleQuiet: COLD_START.settleQuiet, settleMaxMs: COLD_START.settleMaxMs, leaveWhenChunkBuilt: true,
     skyMaxMs: COLD_START.skyMaxMs, compileBeforeProbe: true, warmUpMs: COLD_START.warmUpMs,
   };
 }
@@ -185,13 +195,17 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
   const land = () => { try { return (opts.landReady ?? (() => standingChunkReady(view)))(); } catch { return false; } };
   ui.step('Generating the land around you…', .1);
   const onLand = (ms: number) => ui.step('Generating the land around you…', .1 + .3 * Math.min(1, ms / 8000));
-  if (budget.leaveWhenChunkBuilt) await settleWhenLandReady(budget.settleQuiet, budget.settleMaxMs, land, onLand, pump, now);
-  else {
-    await settle(budget.settleQuiet, budget.settleMaxMs, onLand, pump, now, opts.busy ?? queued);
-    // Grass and flora keep the interest queue full, so the ceiling above can fire while the
-    // standing chunk is still queued. Revealing then is a pale void (no ground, no trees).
-    // Wait for that chunk on its own, still behind the splash. Same ceiling, not a new one. (#376)
-    if (!land()) await settleWhenLandReady(budget.settleQuiet, budget.settleMaxMs, land, onLand, pump, now);
+  // Grass and flora keep queued() above zero, and flora is queued ahead of chunks, so the
+  // standing chunk's worker never gets a turn (the same stall the landing budget already
+  // fixes: inpage jobBudgetMs). While this card is up, the frame loop runs chunk jobs first
+  // at that landing budget. The card leaves once the chunk has been in the scene. The ceiling
+  // remains if it has not arrived.
+  splashChunks = true;
+  try {
+    await settleWhenLandReady(budget.settleQuiet, budget.settleMaxMs, land, onLand, pump, now);
+    if (!budget.leaveWhenChunkBuilt && !land()) await settleWhenLandReady(budget.settleQuiet, budget.settleMaxMs, land, onLand, pump, now);
+  } finally {
+    splashChunks = false;
   }
   // #376 already waited for the chunk. If the worker still has not answered, build it here.
   if (!land()) {

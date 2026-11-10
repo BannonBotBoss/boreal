@@ -61,12 +61,12 @@ import { accelLimit, approach, gravity } from './proc/physics';
 import { GROUND, SAVE_KEY_GROUND, addDeposit, column, footing, loadGround, saveGround, tickGround } from './core/ground';
 import { tryMark } from './core/traces';
 import { appearancePanel, restoreLooks } from './ui/appearancePanel';
-import { runJobs } from './core/interest';
+import { JOB_FIRST, runJobs } from './core/interest';
 import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
 import { openForestPlanet } from './core/planetWeather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
 import { createLoading } from './ui/loading';
-import { settle, standChunkIndex, startup } from './render/startup';
+import { settle, splashChunkBudget, standChunkIndex, startup } from './render/startup';
 import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
 import { toLatLon } from './world/globe/planet';
@@ -701,7 +701,10 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
     hub.sample(simTime);
   } else { accumulator = 0; drawFrom = undefined; }
   view.sync(player.x, player.z, streamAltitude(altitude, inpage?.height ?? 0, !!inpage?.blocksGame()), context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
-  runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
+  const pageJobs = inpage?.jobBudgetMs(); // chunk instantiation, time-budgeted; more while a descent waits for the patch
+  const splashJobs = splashChunkBudget(); // cold card: chunks before grass, same landing budget (inpage clears JOB_FIRST above)
+  if (splashJobs !== undefined) JOB_FIRST.test = (k) => k.startsWith('chunk:');
+  runJobs(splashJobs ?? pageJobs);
   view.worldTime = wNow; // one clock. The sky reads this signed second, so rewind moves the sun backward.
   tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only, every scale: ground years are elapsed time, not a rewind of decay. Snow on that ground follows obs through the weather read.
   updateWeather(simDt > 0 ? Math.min(simDt, .25) : 0, gameSecondsPerWorldSecond, dayAt(wNow), hourAt(wNow), aggDt); // fine step on the individual share; the cell catches the date on the aggregate share

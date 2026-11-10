@@ -1,3 +1,9 @@
+# grokbot-2 loop — 2026-11-09 evening
+
+T-0190 `grokbot-2/wolf-exposure`. The spawn wolf was white because the Meshy albedo took an unmapped emissive at intensity 14. It is now a grey timber coat. The check flags the white core and the yellow rim on the T-0189 ground frame. Not self-approved. Ground, spruce, and the overhead proposal are still open. Gait was not touched.
+
+Spawn report at `?view=ground&nomenu=1&noprobe=1&stages=1&trees=v2&hour=8.6`: prairie, vegetation 0.33, no water, 49.77 N, 65.54 W, elevation 216 m, day 227, sun elevation about 37°, snow 0.
+
 # grokbot-2 loop — 2026-11-09 late
 
 T-0189 `grokbot-2/aerial-structure`. The T-0187 overhead matched zoom-8 luma and stayed a blur. 2000 m and 400 m now use camera-relative crowns, fen, and 150 m ponds. The structure test fails the T-0187 frames. Not self-approved. D18, D16, D13, and the forest path are not in that PR. Gait was not touched.

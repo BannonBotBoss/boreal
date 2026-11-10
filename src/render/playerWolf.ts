@@ -5,7 +5,7 @@ import { pushProgress } from '../core/rocks';
 import { buildBody, computeNormals, wolfCoat } from '../core/body';
 import { BONE, BONE_COUNT, EYE_AT, HEAD_AT, JAW_AT, LEG_XZ, TAIL_AT, TAIL_BONES, TAIL_SEG, TUBE, legBone, limbModel, sculptWolf, wolfTeeth, wolfTubes } from '../core/wolfBody';
 import { buildFurCards, furCardMaterial } from './furCards';
-import { finishAnimalCoat } from './coatFinish';
+import { dressWolfCoat, finishAnimalCoat } from './coatFinish';
 import { GOVERNOR } from '../core/quality';
 
 /**
@@ -135,16 +135,8 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
     skinMaterial.transparent = false;
     skinMaterial.opacity = 1;
     skinMaterial.roughness = 0.82;
-  } else {
-    // Daylight plus an unmapped fill clips the grizzle to white. The coat shader paints the vertex colour.
-    skinMaterial.emissive.setRGB(0, 0, 0);
-    skinMaterial.emissiveIntensity = 0;
-    skinMaterial.toneMapped = false;
-    skinMaterial.userData.mamaCoat = true;
-    skinMaterial.userData.stylized = true;
-    skinMaterial.userData.fillIntensity = 0;
-  }
-  finishAnimalCoat(skinMaterial, pup ? 'pup' : 'mama');
+  } else dressWolfCoat(skinMaterial);
+  if (pup) finishAnimalCoat(skinMaterial, 'pup');
   const furMaterial = furCardMaterial();
   if (pup) {
     furMaterial.userData.pupCoat = true;
@@ -156,15 +148,8 @@ export function createPlayerWolf(seed = 1400, options: { portrait?: boolean; fur
     furMaterial.transparent = false;
     furMaterial.opacity = 1;
     furMaterial.depthWrite = true;
-  } else {
-    furMaterial.emissive.setRGB(0, 0, 0);
-    furMaterial.emissiveIntensity = 0;
-    furMaterial.toneMapped = false;
-    furMaterial.userData.mamaCoat = true;
-    furMaterial.userData.stylized = true;
-    furMaterial.userData.fillIntensity = 0;
-  }
-  finishAnimalCoat(furMaterial, pup ? 'pup' : 'mama');
+  } else dressWolfCoat(furMaterial);
+  if (pup) finishAnimalCoat(furMaterial, 'pup');
   const skinMesh = new THREE.SkinnedMesh(geometry, skinMaterial);
   const skins = withFur ? [skinMesh, new THREE.SkinnedMesh(buildFurCards(body, portrait
       ? { count: 320000, length: .03, width: .0052, seed, clear, lean: .45, tone: .7,

@@ -34,7 +34,7 @@ import { landingHidesCover } from '../core/landingRoster';
 import { ANIMAL_LADDER } from './animalLadder';
 import { catalog } from '../core/catalog';
 import { seatRock } from './rocks';
-import { createSky } from './sky';
+import { createSky, horizontalVisibilityM } from './sky';
 import { BEHAVIOUR, BROWSE } from '../core/species';
 import { createAgent, stepAgent, writeLocomotion, deerPosture, type Agent, type Mate } from '../core/agent';
 import { stream } from '../proc/rng';
@@ -53,7 +53,7 @@ import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
 import { planetFor } from '../world/globe/planet';
 import { createHorizonSkirt } from './horizonMesh';
-import { groundFarPlane } from '../world/terrain/cdlod';
+import { aerialHazeMetres, groundFarPlane } from '../world/terrain/cdlod';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
@@ -498,7 +498,13 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const far = groundFarPlane(eye);
       if (camera.far < far) { camera.far = far; camera.updateProjectionMatrix(); }
       horizon.update(horizonPlanet, camera.position.x, camera.position.z, eye, horizonAhead.x, horizonAhead.z);
-      horizon.setHaze(160, 700, (scene.fog as THREE.Fog).color);
+      // Koschmieder clear air is 30 km (render/sky.ts). The 160–700 m mix turned the
+      // far CDLOD into a flat blue-grey plane and left the nearer land as an island edge.
+      const band = aerialHazeMetres(eye, undefined, horizontalVisibilityM(camera.position.x, camera.position.z));
+      const fog = scene.fog as THREE.Fog;
+      fog.near = band.start;
+      fog.far = Math.max(band.end, band.start + 1);
+      horizon.setHaze(band.start, band.end, fog.color);
       horizon.mesh.visible = true;
     } else horizon.mesh.visible = false;
     bandBackground(scene, camera); // world/globe/inpage: band = globe far layer as the background + patch fade (no-op otherwise)

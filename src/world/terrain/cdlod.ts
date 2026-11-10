@@ -19,8 +19,13 @@ import { PLANET } from '../globe/planet';
 export const CDLOD = {
   /** Finest node side, metres. Eight quads on a side is Strugar's small fixed grid; 32 / 8 = 4 m. */
   leaf: 32,
-  /** Quads along one node edge. */
-  grid: 8,
+  /**
+   * Quads along one node edge. 8 left a 6 km hill as a few 200 m facets,
+   * which read as a stair against the plain. 16 keeps the morph (even count)
+   * and cuts that facet in half. The mesh stays under the 750k triangle
+   * guidance in src/core/quality.ts.
+   */
+  grid: 16,
   /**
    * Split a node of size S when the camera is closer than S * range.
    * range 2 is the paper's factor-of-two band, which keeps neighbours within one level.
@@ -293,6 +298,34 @@ export function buildCdlodMesh(
 /** How far the ground camera must see so the mesh is not clipped before the horizon. */
 export function groundFarPlane(eyeM: number, radius = PLANET.radius) {
   return Math.max(900, horizonMetres(Math.max(1, eyeM), radius) * (CDLOD.cover + 0.2));
+}
+
+/**
+ * Clear-air visibility. Koschmieder 1924: contrast falls to 2% at V = 3.912/β.
+ * The same 30 km clear-air term is already in render/sky.ts (β = 3.912/30 km).
+ */
+export const CLEAR_AIR_VIS_M = 30_000;
+
+/** Smoothstep used by the horizon shader's haze mix. */
+export function hazeMix(dist: number, start: number, end: number) {
+  if (!(end > start)) return dist >= end ? 1 : 0;
+  const t = Math.min(1, Math.max(0, (dist - start) / (end - start)));
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * Aerial perspective for the ground camera. Land stays land while transmission
+ * is still about 0.7 (e^{-3.912 d/V} = 0.7). The mix reaches the horizon colour
+ * at the geometric horizon, or sooner when weather visibility is shorter.
+ * The old 160–700 m mix painted a flat slab well before the horizon.
+ */
+export function aerialHazeMetres(eyeM: number, radius = PLANET.radius, visibilityM = CLEAR_AIR_VIS_M) {
+  const horizon = horizonMetres(Math.max(1, eyeM), radius);
+  const vis = Math.max(50, visibilityM);
+  const end = Math.min(vis, Math.max(horizon, 1));
+  const land = -Math.log(0.7) * vis / 3.912;
+  const start = Math.min(land, end * 0.45);
+  return { start, end, horizon, vis };
 }
 
 function edgeKey(ax: number, ay: number, az: number, bx: number, by: number, bz: number) {

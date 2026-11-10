@@ -94,6 +94,19 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
+/**
+ * Koschmieder 1924: V = 3.912/β metres, the distance where contrast is 2%.
+ * Clear air is 30 km. Fog uses Kunkel 1984 (LWC g/m³, β km⁻¹) and rain
+ * 0.25·R^0.63 km⁻¹ [verify], the same terms the sky update applies.
+ */
+export function horizontalVisibilityM(x: number, z: number) {
+  if (!WEATHER.on) return 30_000;
+  const w = weatherAt(x, z);
+  const lwc = w.fog * 0.3;
+  const beta = 3.912 / 30 + 144.7 * lwc ** 0.88 + 0.25 * w.rainMmH ** 0.63;
+  return 3912 / beta;
+}
+
 export function createSky(scene: THREE.Scene) {
   const search = typeof location === 'undefined' ? '' : location.search, venus = createVenus(scene, search); // the date is the clock's (initDay applies ?date= after this is built)
   const sky = new Sky(); sky.scale.setScalar(600); sky.layers.enable(1); sky.userData.physicalSky = true; scene.add(sky); // layer 1 = GI probe capture
@@ -172,8 +185,7 @@ export function createSky(scene: THREE.Scene) {
         drift.x += w.wind.x * dt * 2e-4; drift.y += w.wind.z * dt * 2e-4; cu.uDrift.value.copy(drift);
         // Aerial perspective: Koschmieder visibility V = 3.912/β (Koschmieder 1924). β = clear air 3.912/30 km + fog
         // 144.7·LWC^0.88 km⁻¹ (Kunkel 1984, J. Clim. Appl. Meteorol. 23:34; LWC g/m³) + rain 0.25·R^0.63 km⁻¹ [verify].
-        const lwc = w.fog * .3, beta = 3.912 / 30 + 144.7 * lwc ** .88 + .25 * w.rainMmH ** .63, V = 3912 / beta; // m
-        fogV = V;
+        fogV = horizontalVisibilityM(focus.x, focus.z);
         u.turbidity.value = 2 + 6 * Math.max(w.cloud, w.rh * .5) + 4 * w.fog; // hazier with humidity/cloud (Preetham turbidity 2–10)
         const falling = w.rainMmH > .05; precip.visible = falling;
         if (falling) {

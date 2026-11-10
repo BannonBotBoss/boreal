@@ -13,7 +13,7 @@ import { SITE } from '../core/sitePhase';
 import { smoothstep } from '../proc/math';
 import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
-import { buildCdlodMesh } from '../world/terrain/cdlod';
+import { aerialHazeMetres, buildCdlodMesh } from '../world/terrain/cdlod';
 import { PATCH_FAR } from './fade';
 import { biomeGrade, blendDem, blendPhoto, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { GLSL_NOISE } from '../proc/glsl';
@@ -29,6 +29,8 @@ CANOPY.needsUpdate = true;
 
 function skirtMaterial() {
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.94, metalness: 0 });
+  // Scene fog is a second mix. This mesh fades itself, or the two together become a slab.
+  material.fog = false;
   material.polygonOffset = true;
   material.polygonOffsetFactor = 1;
   material.polygonOffsetUnits = 1;
@@ -95,12 +97,20 @@ function skirtMaterial() {
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);
+        vec3 toEye = normalize(cameraPosition - vSkirtWorld);
+        // A lake stays a lake. The old 0.85 fresnel cap turned every distant water
+        // pixel into the haze colour, which read as a flat sea.
         if (vSkirtWater > 0.5) {
-          vec3 V = normalize(cameraPosition - vSkirtWorld);
-          float ndv = clamp(V.y, 0.0, 1.0);
+          float ndv = clamp(toEye.y, 0.0, 1.0);
           float F = 0.02 + 0.98 * pow(1.0 - ndv, 5.0);
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, clamp(F, 0.0, 0.85));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, clamp(F, 0.0, 0.35));
         }
+        // The geometric horizon is nearly level from 40 m (dip about 0.2 deg).
+        // Coarse far quads still cut a hard line if the mix is only by distance.
+        // The last degree takes the sky colour. Koschmieder, same haze colour.
+        float rayElev = asin(clamp(-toEye.y, -1.0, 1.0));
+        float limb = smoothstep(-0.02, -0.003, rayElev);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, max(uSkirtHazeColor, vec3(0.93, 0.95, 0.97)), limb);
         if (vSkirtFade < 0.999) {
           int bx = int(gl_FragCoord.x) & 3, by = int(gl_FragCoord.y) & 3, bxy = bx ^ by;
           int bayer = ((bxy & 1) << 3) | ((by & 1) << 2) | (((bxy >> 1) & 1) << 1) | ((by >> 1) & 1);
@@ -192,7 +202,8 @@ export function createHorizonSkirt(): HorizonSkirt {
     geo.setAttribute('aPhoto', new THREE.BufferAttribute(data.photo, 1));
     geo.setIndex(new THREE.BufferAttribute(data.index, 1));
     geo.computeBoundingSphere();
-    made.haze.value.set(Math.max(200, data.outerM * 0.06), Math.max(800, data.outerM * 0.72), 0);
+    const band = aerialHazeMetres(Math.max(1, eyeM));
+    made.haze.value.set(band.start, band.end, 0);
     let painted = 0, sum = 0, maxC = 0, dark = 0;
     for (let i = 0; i < data.photo.length; i++) {
       if (data.photo[i] > 0.5) painted++;

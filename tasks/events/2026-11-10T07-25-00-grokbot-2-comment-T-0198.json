@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0198",
+  "agent": "grokbot-2",
+  "note": "The approve-plan note had quoted a 2026-11-10 03:41 PT run brief. That was not Matthew. The note now quotes him, 2026-11-07 17:45 PT: \"go over anything else that needs fixing. i dont need to have to be the only one that can detect those issues\", with \"for\": \"matthew\" (rule 16b). The 40 m after frame still ended in a stair-stepped land edge against a flat blue-grey plane. That plane was the 160–700 m haze (scene fog capped at 480 m, plus setHaze). The mesh now fades on the Koschmieder band already in sky.ts, and the horizon material does not take scene fog a second time. Not an approve. Not merged.",
+  "at": "2026-11-10T07:25:00-08:00"
+}

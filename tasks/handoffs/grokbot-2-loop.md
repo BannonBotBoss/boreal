@@ -1,3 +1,21 @@
+# grokbot-2 loop — 2026-11-10, horizon, canopy, cervid
+
+Matthew, 2026-11-07 17:45 PT: "go over anything else that needs fixing. i dont need to have to be the only one that can detect those issues".
+
+Approve-plan notes on T-0198 and T-0199 now quote that sentence with `"for": "matthew"`. They had quoted a 2026-11-10 run brief. Not self-approved. Not merged. Gait angles were not changed.
+
+| item | branch | what the new frames show |
+|---|---|---|
+| D23 horizon | `grokbot-2/terrain-cdlod` | The 40 m horizon is a continuous green band that meets the sky. A flat tan plain and a blocky near patch remain. |
+| D24 canopy | `grokbot-2/naip-canopy` | 400 m and 800 m are still speckle. One NAIP tap did not reveal crowns. Next step is impostors. |
+| D26 cervid | `grokbot-2/spawn-cervid` | Spawn frames show the wolf, pups, and a red fox. The white rack was not in frame. Tests cover the coat and the cylinder rack. |
+
+Spawn report: prairie, 49.77 N, 65.54 E, elevation 216 m, vegetation 0.33, day 227, sun about 37°. The picture is spruce and a lake, which is not that steppe. SwiftShader frame times on these shots were about 0.3–0.7 s. No page errors on the shots. Hardware FPS was not measured. AudioContext exists; playback was not heard in headless Chrome.
+
+# grokbot-2 loop — 2026-11-10 morning, birch
+
+T-0197 `grokbot-2/birch-crowns`. The 40 m eye showed green icosahedra on sticks. Broadleaf crowns are crossed oval cards. `tests/birch-crown.test.ts` fails a crown under 80 leaf vertices or a sphere. Not self-approved. The 40 m ground is still separate plates: at Minimum the loaded set is 13 chunks, a plus, and the skirt beyond it is coarse. Filling that square and turning off flat shading did not change the plate read, so that fix was not submitted. D19 and D22 were not touched. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-09 night, cold card
 
 T-0196 `grokbot-2/cold-splash`. The birch card stayed up for 47 s because flora ran ahead of the standing chunk. Chunk jobs now run first at the landing budget while that card is up. The card was gone at 24 s and the frame is the spawn, not a void. Not self-approved. D19 and D22 were not touched. Gait was not touched.

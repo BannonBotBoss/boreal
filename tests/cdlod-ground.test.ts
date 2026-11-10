@@ -11,7 +11,7 @@ import { PLANET } from '../src/world/globe/planet';
 import { horizonMetres } from '../src/world/globe/horizonSkirt';
 import { DEFAULT_PITCH, positionCamera } from '../src/render/math';
 import {
-  CDLOD, buildCdlodMesh, groundFarPlane, interiorGaps, levelRatio, selectNodes, skyPixelsBelowHorizon,
+  CDLOD, aerialHazeMetres, buildCdlodMesh, groundFarPlane, hazeMix, interiorGaps, levelRatio, selectNodes, skyPixelsBelowHorizon,
   vertexMorph, type CdlodMeshData, type SkyCam,
 } from '../src/world/terrain/cdlod';
 
@@ -73,7 +73,7 @@ test('a flat disc has no interior gap, and one missing face is a gap', () => {
   const mesh = buildCdlodMesh(0, 0, eye, flat(0));
   const horizon = horizonMetres(eye);
   assert.ok(mesh.outerM >= horizon, `outer ${mesh.outerM} horizon ${horizon}`);
-  assert.ok(mesh.triangles < 120_000, `triangles ${mesh.triangles}`);
+  assert.ok(mesh.triangles < 280_000, `triangles ${mesh.triangles}`);
   assert.equal(mesh.fade.every(v => v === 1), true, 'nothing is dithered out inside the mesh');
   const gaps = interiorGaps(mesh, 0, 0, horizon);
   assert.equal(gaps, 0, `flat gaps ${gaps}`);
@@ -119,6 +119,35 @@ test('bumpy ground stays sealed, and the 40 m eye is not a ring of 7 m steps', (
   const verts = mesh.normal.length / 3;
   for (let i = 0; i < verts; i++) if (mesh.normal[i * 3 + 1] > 0.5) up++;
   assert.ok(up / verts > 0.9, `up share ${(up / verts).toFixed(3)}`);
+});
+
+test('the 40 m eye fades to the horizon instead of a flat plane by 700 m', () => {
+  // Calibration: the old 160–700 m mix is a known mismatch (a slab). The Koschmieder
+  // band is the known match (land through the middle of the view, haze only at the limb).
+  const eye = 40;
+  const band = aerialHazeMetres(eye);
+  assert.ok(band.start > 1500, `haze starts too soon (${band.start.toFixed(0)} m)`);
+  assert.ok(Math.abs(band.end - band.horizon) < 1, `end ${band.end} horizon ${band.horizon}`);
+  const land = 0.18, sky = 0.85;
+  const column = (start: number, end: number) => {
+    const n = 64;
+    const luma = new Array<number>(n);
+    for (let i = 0; i < n; i++) {
+      const d = ((i + 0.5) / n) * band.horizon;
+      luma[i] = land * (1 - hazeMix(d, start, end)) + sky * hazeMix(d, start, end);
+    }
+    return luma;
+  };
+  const step = (luma: number[]) => luma.reduce((m, v, i) => i === 0 ? 0 : Math.max(m, Math.abs(v - luma[i - 1])), 0);
+  const earlySlab = (luma: number[]) => luma.filter((v, i) => i < luma.length / 2 && Math.abs(v - sky) < 0.05).length / luma.length;
+  const next = column(band.start, band.end);
+  const old = column(160, 700);
+  assert.ok(step(next) < 0.08, `luma step ${step(next).toFixed(3)}`);
+  assert.ok(earlySlab(next) === 0, `flat plane in the near half ${earlySlab(next)}`);
+  assert.ok(step(old) > 0.15, `old slab should be a hard step, got ${step(old).toFixed(3)}`);
+  assert.ok(earlySlab(old) > 0.4, `old slab should fill the near half, got ${earlySlab(old).toFixed(2)}`);
+  assert.ok(hazeMix(700, band.start, band.end) < 0.05, '700 m is still land');
+  assert.ok(hazeMix(band.horizon, band.start, band.end) > 0.98, 'the limb is haze');
 });
 
 test('home height and the planet radius used for the dip are the published ones', () => {

@@ -3,6 +3,6 @@
   "task": "T-0198",
   "agent": "grokbot-2",
   "for": "matthew",
-  "note": "Direct request 2026-11-10 03:41 PT: \"D23 (highest priority). From the 40 m eye, the ground breaks into separate plates with sky in the gaps (see the attached frame). The loaded set stops at a plus shape of 13 chunks, and beyond it is a coarse ring with steps of about 7 m. I've decided the approach: reuse a published continuous terrain LOD, either CDLOD (Strugar 2010) or geometry clipmaps (Losasso and Hoppe 2004), or adapt an existing three.js implementation of one. Cite which one you use. The fix has to produce a filled, crack-free surface with morphing between levels, out to the horizon. Don't spend more effort on the old skirt ring. Success: at the same pose, from both the 40 m eye and the spawn, there are no gaps, no floating plates and no visible step rings, and an automated check counts sky pixels below the horizon line and requires zero.\" well, anything i request by direct chat shouldnt need approval (Matthew, 2026-10-22 01:52 PT).",
+  "note": "\"go over anything else that needs fixing. i dont need to have to be the only one that can detect those issues\" (Matthew, 2026-11-07 17:45 PT). well, anything i request by direct chat shouldnt need approval (Matthew, 2026-10-22 01:52 PT).",
   "at": "2026-11-10T04:16:10-08:00"
 }

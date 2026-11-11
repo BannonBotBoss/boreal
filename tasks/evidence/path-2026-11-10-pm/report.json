@@ -1,0 +1,404 @@
+{
+  "shots": [
+    {
+      "name": "01-opening",
+      "cine": true,
+      "count": "",
+      "hero": "",
+      "elapsed": 0.4166000000000058,
+      "seen": false,
+      "mode": "game",
+      "h": 0,
+      "phase": "game",
+      "time": "",
+      "sound": "Sound on",
+      "biome": "prairie",
+      "water": false,
+      "veg": 0.3303528197523545,
+      "lat": 49.770167270022114,
+      "lon": 65.53577344371371,
+      "elev": 216.0098080513401,
+      "sun": 31.7,
+      "hour": 8.17,
+      "day": 227,
+      "snow": null,
+      "census": [
+        {
+          "species": "red_fox",
+          "display": "Red Fox",
+          "count": 24
+        }
+      ],
+      "shown": [
+        {
+          "species": "Red Fox",
+          "count": 1,
+          "x": 54.71342200834295,
+          "z": -21.20711318795789
+        }
+      ],
+      "audio": []
+    },
+    {
+      "name": "02-today",
+      "cine": true,
+      "count": "Today",
+      "hero": "",
+      "elapsed": 110.17969999999994,
+      "seen": false,
+      "mode": "globe",
+      "h": 0,
+      "phase": "orbit",
+      "time": "",
+      "sound": "Sound on",
+      "biome": "prairie",
+      "water": false,
+      "veg": 0.3303528196432562,
+      "lat": 49.77016727002583,
+      "lon": 65.5357734437028,
+      "elev": 216.00980804768813,
+      "sun": 34.6,
+      "hour": 8.49,
+      "day": 227,
+      "snow": null,
+      "census": [
+        {
+          "species": "red_fox",
+          "display": "Red Fox",
+          "count": 24
+        }
+      ],
+      "shown": [
+        {
+          "species": "Red Fox",
+          "count": 1,
+          "x": 56.35114032086439,
+          "z": 5.689184365045886
+        }
+      ],
+      "audio": [
+        "running",
+        "running",
+        "suspended"
+      ]
+    },
+    {
+      "name": "03-handoff",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "elapsed": 116,
+      "seen": true,
+      "mode": "globe",
+      "h": 0,
+      "phase": "orbit",
+      "time": "",
+      "sound": "Sound on",
+      "biome": "prairie",
+      "water": false,
+      "veg": 0.3303528196432562,
+      "lat": 49.77016727002583,
+      "lon": 65.5357734437028,
+      "elev": 216.00980804768813,
+      "sun": 34.6,
+      "hour": 8.49,
+      "day": 227,
+      "snow": null,
+      "census": [
+        {
+          "species": "red_fox",
+          "display": "Red Fox",
+          "count": 24
+        }
+      ],
+      "shown": [
+        {
+          "species": "Red Fox",
+          "count": 1,
+          "x": 56.35114032086439,
+          "z": 5.689184365045886
+        }
+      ],
+      "audio": [
+        "running",
+        "running",
+        "suspended"
+      ]
+    },
+    {
+      "name": "05-orbit",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "elapsed": 116,
+      "seen": true,
+      "mode": "globe",
+      "h": 0,
+      "phase": "orbit",
+      "time": "",
+      "sound": "Sound on",
+      "biome": "prairie",
+      "water": false,
+      "veg": 0.3303528196432562,
+      "lat": 49.77016727002583,
+      "lon": 65.5357734437028,
+      "elev": 216.00980804768813,
+      "sun": 34.6,
+      "hour": 8.49,
+      "day": 227,
+      "snow": null,
+      "census": [
+        {
+          "species": "red_fox",
+          "display": "Red Fox",
+          "count": 24
+        }
+      ],
+      "shown": [
+        {
+          "species": "Red Fox",
+          "count": 1,
+          "x": 56.35114032086439,
+          "z": 5.689184365045886
+        }
+      ],
+      "audio": [
+        "running",
+        "running",
+        "suspended"
+      ]
+    },
+    {
+      "name": "04-overhead-400",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "elapsed": 116,
+      "seen": true,
+      "mode": "band",
+      "h": 400,
+      "phase": "drone",
+      "time": "",
+      "sound": "Sound on",
+      "biome": "prairie",
+      "water": false,
+      "veg": 0.3303528196432562,
+      "lat": 49.77016727002583,
+      "lon": 65.5357734437028,
+      "elev": 216.00980804768813,
+      "sun": 34.6,
+      "hour": 8.49,
+      "day": 227,
+      "snow": null,
+      "census": [
+        {
+          "species": "red_fox",
+          "display": "Red Fox",
+          "count": 24
+        }
+      ],
+      "shown": [
+        {
+          "species": "Red Fox",
+          "count": 1,
+          "x": 56.35114032086439,
+          "z": 5.689184365045886
+        }
+      ],
+      "audio": [
+        "running",
+        "running",
+        "suspended"
+      ]
+    },
+    {
+      "name": "06-descent",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "elapsed": 116,
+      "seen": true,
+      "mode": "band",
+      "h": 402,
+      "phase": "drone",
+      "time": "",
+      "sound": "Sound on",
+      "biome": "ice",
+      "water": false,
+      "veg": 0.9241811398383335,
+      "lat": 8.487003131472033,
+      "lon": -129.334407962844,
+      "elev": 5074.600593151922,
+      "sun": 48.2,
+      "hour": 9.18,
+      "day": 227,
+      "snow": null,
+      "census": [],
+      "shown": [],
+      "audio": [
+        "running",
+        "running",
+        "suspended",
+        "running"
+      ]
+    },
+    {
+      "name": "07-landed",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "elapsed": 116,
+      "seen": true,
+      "mode": "game",
+      "h": 402,
+      "phase": "game",
+      "time": "09:14",
+      "sound": "Sound on",
+      "biome": "ice",
+      "water": false,
+      "veg": 0.9241811398383335,
+      "lat": 8.486919332427702,
+      "lon": -129.33443743264695,
+      "elev": 5074.301888889058,
+      "sun": 49.1,
+      "hour": 9.24,
+      "day": 227,
+      "snow": null,
+      "census": [],
+      "shown": [],
+      "audio": [
+        "running",
+        "running",
+        "suspended",
+        "running",
+        "suspended",
+        "running"
+      ]
+    },
+    {
+      "name": "10-floor",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "elapsed": 116,
+      "seen": true,
+      "mode": "game",
+      "h": 402,
+      "phase": "game",
+      "time": "09:15",
+      "sound": "Sound on",
+      "biome": "ice",
+      "water": false,
+      "veg": 0.9241811398383335,
+      "lat": 8.486919332427568,
+      "lon": -129.334437432647,
+      "elev": 5074.301888888598,
+      "sun": 49.2,
+      "hour": 9.25,
+      "day": 227,
+      "snow": null,
+      "census": [],
+      "shown": [],
+      "audio": [
+        "running",
+        "running",
+        "suspended",
+        "running",
+        "suspended",
+        "running"
+      ]
+    },
+    {
+      "name": "11-floor-walk",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "elapsed": 116,
+      "seen": true,
+      "mode": "game",
+      "h": 402,
+      "phase": "game",
+      "time": "09:16",
+      "sound": "Sound on",
+      "biome": "ice",
+      "water": false,
+      "veg": 0.9241811398383335,
+      "lat": 8.486867019912777,
+      "lon": -129.3344558295027,
+      "elev": 5074.153352139207,
+      "sun": 49.6,
+      "hour": 9.28,
+      "day": 227,
+      "snow": null,
+      "census": [],
+      "shown": [],
+      "audio": [
+        "running",
+        "running",
+        "suspended",
+        "running",
+        "suspended",
+        "running"
+      ]
+    },
+    {
+      "name": "12-look",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "elapsed": 116,
+      "seen": true,
+      "mode": "game",
+      "h": 402,
+      "phase": "game",
+      "time": "09:18",
+      "sound": "Sound on",
+      "biome": "ice",
+      "water": false,
+      "veg": 0.9241811398383335,
+      "lat": 8.486866675713287,
+      "lon": -129.33445595054806,
+      "elev": 5074.152484159321,
+      "sun": 50,
+      "hour": 9.3,
+      "day": 227,
+      "snow": null,
+      "census": [],
+      "shown": [],
+      "audio": [
+        "running",
+        "running",
+        "suspended",
+        "running",
+        "suspended",
+        "running"
+      ]
+    }
+  ],
+  "rafHandoff": [
+    404,
+    450,
+    450,
+    450,
+    883,
+    17,
+    450,
+    433
+  ],
+  "rafFloor": [
+    341,
+    417,
+    450,
+    433,
+    517,
+    450,
+    433,
+    417
+  ],
+  "walk": {
+    "before": "09:16",
+    "after": "09:16",
+    "mode": "game"
+  },
+  "logs": []
+}

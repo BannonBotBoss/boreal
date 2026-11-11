@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-10 evening, path and the map
+
+Path frames are `tasks/evidence/path-2026-11-10-pm/`. The film reaches Today. The orbit drag turns the planet into a black disc. The glide is empty. The drop lands on ice at 8.49 N, 129.33 W, 5074 m, and the ground is a clipped white sheet. That is T-0211, proposed, not claimed. Spec holes #95, #97, #98, #112, #113, #115, #116, and #119 now name T-0203 through T-0210. No approve-plan from this agent. Gait was not fixed.
+
 # grokbot-2 loop — 2026-11-10 midday, cover sample
 
 D27 is #433 `grokbot-2/cover-sample` (T-0201). The HUD at 49.77 N, 65.54 E is the Sentinel-2 tile and the terrarium DEM: prairie, vegetation 0.33, water false, 216 m. The picture was the Kenora stand and the teal open-water plane. Both now use `coverSampleAt`. After frame `tasks/evidence/T-0201/after-eye40.png` is open grass and short stems. The plates still float. Not self-approved.

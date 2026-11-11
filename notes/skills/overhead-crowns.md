@@ -8,7 +8,7 @@ Use when a nadir view of forest is one noise texture and individual crowns are m
 2. A vertical billboard is edge-on from overhead and vanishes. The impostor has to be the top view: a horizontal quad (the overhead frame of an octahedral impostor, here one InstancedMesh).
 3. The globe renders camera-relative (`origin.ts`). During the draw the camera is at the origin and tiles are `renderOffset` from it. A mesh left at planet coordinates (about 6.4e6 m) is outside the clip. Move it by `-camera`, the same as `fieldLines`.
 4. Globe materials use logarithmic depth. A default material does not match that depth, so the discs fail the depth test. While the eye is in the nadir band the discs draw with `depthTest` false.
-5. A full stem list fuses 8 m crowns into one mat. `spaceCrowns` keeps Thomas positions at least 14 m apart so the ground shows between them.
+5. The octahedral impostor shader in this build fails (`unpackRGBToNormal`). Bake a lit top-down billboard of `buildConifer`'s mid LOD instead. Do not draw one identical disc.
 
 ## Steps
 
@@ -20,9 +20,7 @@ Use when a nadir view of forest is one noise texture and individual crowns are m
 ## Checks
 
 - `tests/overhead-crowns.test.ts`: the sprite is a disc with a clear outside, the kept points are at least 14 m apart, they span the view, and spacing drops stems.
-- `tests/overhead-picture.test.ts`. Centre window, luma under 45 and green at least as strong as red and blue.
-  - Known mismatch, the tile noise: 0.027 at 400 m, 0.023 at 800 m.
-  - After: 0.206 at both. Pass is above 0.12.
+- `tests/overhead-picture.test.ts`. Median green of the centre window. The tiled canopy scores 89 and 83. The impostor frames score 35 and 37. Pass is under 55. The known mismatch is above 70.
 - URL `?view=globe&alt=400&latlon=52,-97&shot=1&localClouds=0&hour=8.3&day=227&tier=5`, and `alt=800`. Wait until `window.__crowns.count` is set and the tiles have had about 12 s. A shot at 2 s is still the black coarse tiles.
 
 ## Mistakes to avoid

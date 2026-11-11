@@ -1,42 +1,21 @@
-/** Overhead crowns: the existing stand placement, top-down, with gaps. */
+/** Overhead crowns fill the nadir rectangle from the stand placement, and fade at the edge. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { collectCrowns, crownSprite, CROWN_CAP, CROWN_MAX_M, CROWN_MIN_M, nadirRadius, spaceCrowns } from '../src/render/trees/overheadCrowns';
+import { collectCrowns, viewSpan, CROWN_CAP } from '../src/render/trees/overheadCrowns';
 
-test('a crown sprite is a disc with a transparent outside, not a solid square', () => {
-  const rgba = crownSprite(0);
-  const size = Math.sqrt(rgba.length / 4);
-  let ink = 0, clear = 0;
-  for (let i = 3; i < rgba.length; i += 4) {
-    if (rgba[i] > 200) ink++;
-    else if (rgba[i] === 0) clear++;
-  }
-  assert.ok(clear > size * size * 0.3, `clear ${clear}`);
-  assert.ok(ink > size * size * 0.15, `ink ${ink}`);
-  // A corner is outside the disc.
-  assert.equal(rgba[3], 0);
-});
-
-test('crowns come from the stand placement, stay inside the view, and leave gaps', () => {
-  const radius = nadirRadius(400);
-  assert.ok(radius > 140 && radius < 220, `radius ${radius}`);
-  const raw = collectCrowns(radius, 1, () => 1500);
-  const spots = spaceCrowns(raw, 14);
-  assert.ok(raw.length > spots.length, 'spacing drops stems so crowns do not fuse');
-  assert.ok(spots.length > 80, `count ${spots.length}`);
-  assert.ok(spots.length <= CROWN_CAP);
-  let minX = Infinity, maxX = -Infinity;
-  const slots = new Set<number>();
+test('the field covers the view rectangle and fades at the edge, not in a circle', () => {
+  const { hx, hy } = viewSpan(400, 45, 16 / 9);
+  assert.ok(hx > hy, 'the frame is wider than it is tall');
+  const spots = collectCrowns(hx, hy, () => 1500);
+  assert.ok(spots.length > 400 && spots.length <= CROWN_CAP, `count ${spots.length}`);
+  let maxEx = 0, maxEz = 0, edgeFade = 0, mid = 0, close = 0;
+  const sample = spots.filter((_, i) => i % 23 === 0).slice(0, 60);
   for (const s of spots) {
-    assert.ok(s.x * s.x + s.z * s.z <= radius * radius + 1);
-    assert.ok(s.metres >= CROWN_MIN_M && s.metres <= CROWN_MAX_M);
-    slots.add(s.slot);
-    minX = Math.min(minX, s.x); maxX = Math.max(maxX, s.x);
+    maxEx = Math.max(maxEx, Math.abs(s.x) / hx);
+    maxEz = Math.max(maxEz, Math.abs(s.z) / hy);
+    if (s.fade < 0.95) edgeFade++;
+    else mid++;
   }
-  assert.ok(slots.size >= 3, 'more than one crown shape');
-  assert.ok(maxX - minX > radius, 'the crowns span the view, not one clump');
-  let nearest = Infinity;
-  const sample = spots.filter((_, i) => i % 11 === 0);
   for (const s of sample) {
     let best = Infinity;
     for (const o of spots) {
@@ -44,7 +23,11 @@ test('crowns come from the stand placement, stay inside the view, and leave gaps
       const d = (s.x - o.x) ** 2 + (s.z - o.z) ** 2;
       if (d < best) best = d;
     }
-    nearest = Math.min(nearest, Math.sqrt(best));
+    if (Math.sqrt(best) < 6) close++;
   }
-  assert.ok(nearest >= 13.5, `nearest crown ${nearest} m`);
+  assert.ok(maxEx > 0.9 && maxEz > 0.9, `extent ${maxEx.toFixed(2)} ${maxEz.toFixed(2)}`);
+  assert.ok(edgeFade > 20 && mid > 100, `fade ${edgeFade} full ${mid}`);
+  assert.ok(close > 5, `clustered neighbours ${close}`);
+  const scales = new Set(spots.map(s => Math.round(s.scale * 20)));
+  assert.ok(scales.size > 8, 'scales vary');
 });

@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0203",
+  "agent": "grokbot-2",
+  "skill": "continuous-terrain-lod",
+  "note": "One mesh to the horizon. After eye-40 frame is rolling ground, no plates and no tan plane. The horizon line is still hard. Tan share 0.209 before, 0.001 after.",
+  "at": "2026-11-10T20:16:40-08:00"
+}

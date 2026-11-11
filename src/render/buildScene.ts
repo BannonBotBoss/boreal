@@ -55,8 +55,8 @@ import { createTargetGlow } from './targetGlow';
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
-import { planetFor } from '../world/globe/planet';
-import { createHorizonSkirt } from './horizonMesh';
+import { horizonMetres } from '../world/globe/horizonSkirt';
+import { createContinuousTerrain } from './continuousTerrain';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
@@ -97,9 +97,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xc4d4c8, 200, 480);
-  const horizon = createHorizonSkirt(); scene.add(horizon.mesh);
-  const horizonPlanet = planetFor(STAGES.seed, (x, z) => heightAt(x, z), 'ground-skirt');
-  const horizonAhead = new THREE.Vector3();
+  // One surface to the horizon. The old skirt was a second mesh, and the chunk
+  // grounds were the floating plates on top of it. Both stay out of the scene.
+  const terrain = createContinuousTerrain(); scene.add(terrain.mesh);
   const litter = createLitter(scene);
   const sky = createSky(scene); // sun, moon, sky colour, clouds, stars and fog follow the game clock
   // Time of day: core/timeOfDay hourAt (world clock + the chronometer's dial; ?hour=HH sets the first value, initDay in main).
@@ -164,6 +164,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     // heights, normals, world-space positions and the water sheet come from a terrain worker (render/terrainPool); WAIT until then
     const t = yield* chunkTerrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near, STAGES.on ? (near ? 32 : 8) : 0, { worker: true, wanted: () => chunkJobs.has(`${cx}:${cz}`) });
     const ground = new THREE.Mesh(t.terrain, terrainMaterial()); ground.receiveShadow = true;
+    ground.visible = false; // the continuous mesh is the ground; this plate is not drawn
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; ground.layers.enable(1); root.add(ground); // layer 1 = GI probe capture
     // The teal plane follows the cover sample. The staged lake and river sheet is mounted
     // whenever the terrain job built one, including when that sample is dry.
@@ -502,13 +503,19 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
     const hour = photo?.hour ?? hourAt(tod); clock = formatHour(hour);
     const lit = sky.update(hour, tod, camera, wolf.root.position); darkness = lit.light.night;
-    if (camera.near < 2) {
-      horizonAhead.set(0, 0, -1).applyQuaternion(camera.quaternion);
+    {
       const eye = Math.max(1, camera.position.y - heightAt(camera.position.x, camera.position.z));
-      horizon.update(horizonPlanet, camera.position.x, camera.position.z, eye, horizonAhead.x, horizonAhead.z);
-      horizon.setHaze(160, 700, (scene.fog as THREE.Fog).color);
-      horizon.mesh.visible = true;
-    } else horizon.mesh.visible = false;
+      terrain.update(camera.position.x, camera.position.z, eye);
+      // The mesh reaches the geometric horizon. The camera used to clip at 700 m,
+      // which cut that surface off and left the sky in its place.
+      const far = Math.max(8000, horizonMetres(eye) * 1.15);
+      if (Math.abs(camera.far - far) > 50) { camera.far = far; camera.updateProjectionMatrix(); }
+      // Linear fog at 480 m was the pale wall in front of the horizon. Hold it out
+      // near the horizon so the surface stays visible; aerial perspective replaces this.
+      const fog = scene.fog as THREE.Fog;
+      fog.near = Math.min(far * 0.35, 4000 + eye);
+      fog.far = far * 0.92;
+    }
     bandBackground(scene, camera); // world/globe/inpage: band = globe far layer as the background + patch fade (no-op otherwise)
     photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }

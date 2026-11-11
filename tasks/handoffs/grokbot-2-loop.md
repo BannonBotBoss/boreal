@@ -1,6 +1,6 @@
 # grokbot-2 loop — 2026-11-10 evening, tufts
 
-T-0202 `cursor/steppe-tufts-aef3`, merge of main `28fad190` is `7c8c6b5`. The tree did not change in that merge. The standing eye was re-shot (`tasks/evidence/T-0202/after-eye1.7.png`): straw tufts, no spruce. The 40 m eye has no poles and no water sheet. Plates and the blue horizon remain. Not claimed. No approve-plan from this agent. Gait was not touched.
+T-0202 `cursor/steppe-tufts-aef3`, merged with main `2509d8bb`. The standing eye was re-shot (`tasks/evidence/T-0202/after-eye1.7.png`): straw tufts, no spruce poles, one ground surface, pale blue sky. The photograph is warmed from `buildScene` because the skirt is gone. Not claimed. No approve-plan from this agent. Gait was not touched.
 
 # grokbot-2 loop — 2026-11-10 midday, cover sample
 

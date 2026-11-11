@@ -2,7 +2,7 @@
 
 ## Doing
 
-Prairie stems were still spruce after the cover-sample merge. Main `28fad190` is merged in `7c8c6b5`. The tuft edits already contained those cover-sample lines, so the merge does not change the tree. The standing frame was re-shot at the same URL. Not claimed. No approve-plan from this agent.
+Prairie stems were still spruce after the cover-sample merge. Main `2509d8bb` is merged (continuous terrain and the aerial sky). The skirt no longer requests the photograph, so `buildScene` warms the DEM and photo tiles at the camera or the sample stays forest and the tufts never appear. The standing frame was re-shot at the same URL. Not claimed. No approve-plan from this agent.
 
 ## Done
 
@@ -31,7 +31,7 @@ After 40 m (`after-eye40.png`): poles gone, water sheet gone. Plates, blue horiz
 
 Before 1.7 m (`before-eye1.7.png`): full spruce, leafy pole, water, dirt.
 
-After 1.7 m (`after-eye1.7.png`), re-shot at 08:43 on the merged tree: 805 straw tufts in the foreground. No spruce. The wolf has turned, so the far ridge is not the previous after. Spruce pixels (red under 70, green above red by 35 and above blue by 20, green under 180) score 0; the previous after scored 32.
+After 1.7 m (`after-eye1.7.png`), re-shot at 08:36 on main `2509d8bb`: 805 straw tufts, no spruce poles, one ground surface, pale blue sky. Spruce-like pixels score 104.
 
 ## Next
 

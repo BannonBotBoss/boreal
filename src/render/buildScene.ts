@@ -56,7 +56,10 @@ import { createTargetGlow } from './targetGlow';
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
-import { horizonMetres } from '../world/globe/horizonSkirt';
+import { SITE } from '../core/sitePhase';
+import { planetFor } from '../world/globe/planet';
+import { horizonMetres, skirtLatLon } from '../world/globe/horizonSkirt';
+import { warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { createContinuousTerrain } from './continuousTerrain';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
@@ -101,6 +104,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   // One surface to the horizon. The old skirt was a second mesh, and the chunk
   // grounds were the floating plates on top of it. Both stay out of the scene.
   const terrain = createContinuousTerrain(); scene.add(terrain.mesh);
+  // The skirt used to request the DEM and the photograph. The continuous mesh does not.
+  // Without that request the cover sample stays the seeded forest and a prairie home draws spruce.
+  const coverPlanet = planetFor(STAGES.seed, (x, z) => heightAt(x, z), 'ground-cover');
   const litter = createLitter(scene);
   const sky = createSky(scene); // sun, moon, sky colour, clouds, stars and fog follow the game clock
   // Time of day: core/timeOfDay hourAt (world clock + the chronometer's dial; ?hour=HH sets the first value, initDay in main).
@@ -524,6 +530,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     {
       const eye = Math.max(1, camera.position.y - heightAt(camera.position.x, camera.position.z));
       terrain.update(camera.position.x, camera.position.z, eye);
+      const hereLL = skirtLatLon(coverPlanet, camera.position.x, camera.position.z, SITE.remote);
+      warmDemTiles(hereLL.latDeg, hereLL.lonDeg);
+      warmPhotoTiles(hereLL.latDeg, hereLL.lonDeg);
       // The mesh reaches the geometric horizon. The camera used to clip at 700 m,
       // which cut that surface off and left the sky in its place.
       const far = Math.max(8000, horizonMetres(eye) * 1.15);

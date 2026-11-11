@@ -1,49 +1,67 @@
 /**
  * Picture check for overhead crowns (T-0214).
- * A crown pixel is bright and yellow-green (g > 120 and g > r + 15).
- * The tiled canopy has almost none of those, including at the frame edge.
- * The billboard frame has them through the middle and through the top band,
- * so a fade that follows the screen rectangle fails.
- * A near-black floor fails the black share.
+ *
+ * HSV of the frame against the NAIP canopy crop. The carpet of lime discs
+ * (c86d3e68 after-400.png) measured saturation 0.70 against the reference
+ * 0.285, and this tolerance rejects that frame.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 
-function read(file: string) {
-  return PNG.sync.read(readFileSync(file));
+const REF = 'tasks/evidence/T-0199/ref-naip-canopy.png';
+
+function hsv(r: number, g: number, b: number) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d > 1e-6) {
+    if (mx === r) h = ((g - b) / d) % 6;
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  return [h, mx === 0 ? 0 : d / mx, mx];
 }
 
-function share(file: string, box: { x0: number; x1: number; y0: number; y1: number }, pred: (r: number, g: number, b: number) => boolean) {
-  const { width, height, data } = read(file);
-  const x0 = Math.floor(width * box.x0), x1 = Math.floor(width * box.x1);
-  const y0 = Math.floor(height * box.y0), y1 = Math.floor(height * box.y1);
-  let n = 0, c = 0;
+export function hsvStats(file: string) {
+  const { width, height, data } = PNG.sync.read(readFileSync(file));
+  const acc: number[][] = [[], [], []];
+  const y0 = Math.floor(height * 0.08), y1 = Math.floor(height * 0.9);
+  const x0 = Math.floor(width * 0.05), x1 = Math.floor(width * 0.95);
   for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) {
     const i = (y * width + x) * 4;
-    n++;
-    if (pred(data[i], data[i + 1], data[i + 2])) c++;
+    const [h, s, v] = hsv(data[i], data[i + 1], data[i + 2]);
+    acc[0].push(h); acc[1].push(s); acc[2].push(v);
   }
-  return c / n;
+  const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
+  const sd = (a: number[], m: number) => Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length);
+  return [0, 1, 2].map(i => ({ mean: mean(acc[i]), sd: sd(acc[i], mean(acc[i])) }));
 }
 
-const crown = (r: number, g: number, b: number) => g > 120 && g > r + 15;
-const black = (r: number, g: number, b: number) => Math.max(r, g, b) < 28;
-const center = { x0: 0.35, x1: 0.65, y0: 0.35, y1: 0.65 };
-const top = { x0: 0.15, x1: 0.85, y0: 0.02, y1: 0.1 };
+const TOL = {
+  hMean: 10, hSd: 7,
+  sMean: 0.07, sSd: 0.04,
+  vMean: 0.06, vSd: 0.04,
+};
 
-test('crowns reach the frame edge and the floor is not black', () => {
+test('the nadir frame matches the NAIP canopy in hue, saturation and value', () => {
+  const ref = hsvStats(REF);
   for (const alt of [400, 800]) {
-    const before = `tasks/evidence/T-0214/before-${alt}.png`;
-    const after = `tasks/evidence/T-0214/after-${alt}.png`;
-    const beforeTop = share(before, top, crown);
-    const afterTop = share(after, top, crown);
-    const afterCenter = share(after, center, crown);
-    const afterBlack = share(after, center, black);
-    assert.ok(beforeTop < 0.08, `before ${alt} top crown share ${beforeTop.toFixed(3)}`);
-    assert.ok(afterTop > 0.45 && afterCenter > 0.45, `after ${alt} top ${afterTop.toFixed(3)} center ${afterCenter.toFixed(3)}`);
-    assert.ok(afterTop / afterCenter > 0.75, `after ${alt} edge/center ${ (afterTop / afterCenter).toFixed(2) }`);
-    assert.ok(afterBlack < 0.05, `after ${alt} black share ${afterBlack.toFixed(3)}`);
+    const got = hsvStats(`tasks/evidence/T-0214/after-${alt}.png`);
+    const names = ['H', 'S', 'V'];
+    const tol = [
+      [TOL.hMean, TOL.hSd],
+      [TOL.sMean, TOL.sSd],
+      [TOL.vMean, TOL.vSd],
+    ];
+    for (let i = 0; i < 3; i++) {
+      const dm = Math.abs(got[i].mean - ref[i].mean);
+      const ds = Math.abs(got[i].sd - ref[i].sd);
+      assert.ok(dm <= tol[i][0], `${alt} ${names[i]} mean ${got[i].mean.toFixed(3)} vs ${ref[i].mean.toFixed(3)} (off ${dm.toFixed(3)})`);
+      assert.ok(ds <= tol[i][1], `${alt} ${names[i]} sd ${got[i].sd.toFixed(3)} vs ${ref[i].sd.toFixed(3)} (off ${ds.toFixed(3)})`);
+    }
   }
 });

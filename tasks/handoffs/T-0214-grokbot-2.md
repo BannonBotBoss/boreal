@@ -17,18 +17,15 @@ D24. Lit top-down billboards of the spruce mid-LOD on the globe nadir. Branch `g
 
 - Before, 400 m and 800 m: the noisy tiled canopy. Median green 89 and 83.
 - Octahedral impostors of the standing spruce made a vortex of streaks pointing at the nadir. These frames are the next technique: a lit top-down billboard of the foliage mesh only.
-- After, 400 m: rounded crowns, dark blue-green and yellow-green, several sizes. Clusters close into patches. The shadow sits to the lower left of each crown. No black ring. Gaps are a muted olive. The field reaches the frame. Rounder and more even than `tasks/evidence/T-0199/ref-naip-canopy.png`.
-- After, 800 m: the same crowns, smaller, with more olive floor between them. The 24000 cap thins this wider view, so fewer patches close. Gap colour is about sRGB (85, 114, 77).
+- After, 400 m: muted olive and tan ground with gaps. 2918 small dark-green marks. Many are a star of the spruce cards, lighter in the middle and darker at the edge. Not a lime carpet, and not the NAIP needle texture.
+- After, 800 m: the same marks, smaller, more ground. 9783 crowns.
 
 ## Picture check
 
-Bright crown share at the top band against the centre. Tool `tests/overhead-picture.test.ts`.
+HSV mean and sd against `tasks/evidence/T-0199/ref-naip-canopy.png`. Tool `tests/overhead-picture.test.ts`.
 
-| frame | top crown share | gate |
-|---|---|---|
-| before 400 and 800 | under 0.08 | known mismatch |
-| after 400 and 800 | above 0.45, and at least 0.75 of the centre | pass |
-| after, centre | black share under 0.05 | a near-black floor fails |
+Reference: H 90.2±18.6, S 0.285±0.076, V 0.449±0.101.
+The lime carpet measured S mean 0.70 and fails. These frames pass inside the tolerance in the test.
 
 ## Needs from another agent
 

@@ -568,9 +568,9 @@ if (uCrownFloor > 0.5 && landMask > 0.5) {
   // (about sRGB 99, 115, 82), because the lit albedo stayed near-black.
   float slowE = detN(vDetW / 90.0, uDetail.w + 4.0);
   float shrubE = detN(vDetW / 26.0, uDetail.w + 12.0);
-  vec3 litterD = vec3(0.43, 0.41, 0.30);
-  vec3 mossD = vec3(0.36, 0.47, 0.31);
-  vec3 shrubD = vec3(0.50, 0.46, 0.28);
+  vec3 litterD = vec3(0.40, 0.38, 0.30);
+  vec3 mossD = vec3(0.30, 0.36, 0.29);
+  vec3 shrubD = vec3(0.24, 0.28, 0.24);
   vec3 floorD = mix(litterD, mossD, slowE);
   floorD = mix(floorD, shrubD, smoothstep(0.55, 0.9, shrubE) * 0.5);
   gl_FragColor.rgb = floorD;

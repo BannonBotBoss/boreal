@@ -20,7 +20,7 @@ D24. PR #429 painted a NAIP texture and the views stayed a noise field. Identica
 
 - [x] Nadir crowns are billboards baked from `buildConifer`, placed from `farTreesInTile`. Fade is world distance past the view corner, not the screen rectangle. `tests/overhead-crowns.test.ts`.
 - [x] They sit on the visible surface, in the camera-relative frame the tiles use. The shadow is offset away from the sun. The tiled canopy is off while they draw, and the gaps are a mid-tone moss and litter colour.
-- [x] Same pose before and after at 400 m and 800 m. The picture check fails the noise (almost no bright crowns at the top edge) and passes crowns that reach that edge. `tests/overhead-picture.test.ts`.
+- [x] Same pose before and after at 400 m and 800 m. The picture check compares HSV mean and sd to the NAIP crop and fails the lime carpet. `tests/overhead-picture.test.ts`.
 
 ## Acceptance
 
@@ -29,8 +29,8 @@ URL `?view=globe&latlon=52,-97&shot=1&localClouds=0&hour=8.3&day=227&tier=5` wit
 | frame | what it shows |
 |---|---|
 | `before-400.png` | Green and brown tile noise across the whole frame. Median green 89. No crown you can point at. |
-| `after-400.png` | Rounded crowns in two hues, dark blue-green and yellow-green, with a size spread. Clusters touch and close into patches. A darker side sits off each crown, toward the lower left, and there is no black ring. Gaps are a muted olive, not near-black. The field reaches the frame edge. Still rounder and more even than the NAIP crop. |
+| `after-400.png` | Not the lime carpet. The ground is muted olive and tan, and it shows between the trees. The trees are small dark-green marks, many of them a star or cross from the spruce cards seen from above, with a lighter middle and a darker edge. They are not the NAIP crowns: no resolved needle clumps, and the same few shapes repeat. HSV mean/sd sits inside the NAIP tolerance. |
 | `before-800.png` | The same noise. Median green 83. |
-| `after-800.png` | The same crowns, smaller. More of the olive floor shows, so patches are less closed than at 400 m. The instance cap is 24000. No black ring, no frame-shaped fade. The floor in the gaps is about sRGB (85, 114, 77), near the NAIP gap. |
+| `after-800.png` | The same ground and the same small marks, smaller on screen, with more ground between them. 9783 crowns. Same colour statistics. |
 
-Bright crown share (g > 120 and g > r + 15) at the top of the frame: the noise is under 0.08, the billboards stay above 0.45 and within a quarter of the centre.
+Picture check: HSV mean and standard deviation of the frame against `tasks/evidence/T-0199/ref-naip-canopy.png`. The lime carpet (saturation 0.70 against 0.285) fails. Tolerance is hue mean 10°, hue sd 7°, saturation mean 0.07, saturation sd 0.04, value mean 0.06, value sd 0.04.

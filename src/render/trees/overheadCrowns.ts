@@ -11,23 +11,21 @@
 import * as THREE from 'three';
 import { FAR_TREES, farTreesInTile } from '../../core/flora/stands';
 import { standAt } from '../../core/stand';
-import { worldSec } from '../../core/worldClock';
-import { dayAt, hourAt, sunPosition } from '../../core/timeOfDay';
 import { hash } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 import { coverSampleLatLon } from '../../world/globe/coverSample';
-import { toLatLon, type Planet } from '../../world/globe/planet';
+import { PLANET, toLatLon, vegetationWeight, type Planet } from '../../world/globe/planet';
 import { tangentFrame } from '../../world/globe/landingSite';
 import { AERIAL } from '../../world/globe/aerialExemplar';
 import { buildConifer } from './conifer';
 
-export const CROWN_CAP = 24000;
+export const CROWN_CAP = 40000;
 
-/** 0 spruce, 1 spruce (cooler), 2 aspen/birch. Multiplies the baked crown. */
+/** Small multipliers. The bake is already graded to the NAIP range. */
 export const CROWN_HUES: [number, number, number][] = [
-  [0.50, 0.64, 0.60],
-  [0.62, 0.76, 0.64],
-  [1.25, 1.15, 0.34],
+  [0.90, 0.94, 0.88],
+  [0.84, 0.90, 0.90],
+  [1.04, 1.00, 0.78],
 ];
 
 export interface CrownSpot { x: number; z: number; slot: number; scale: number; fade: number; group: number }
@@ -48,6 +46,7 @@ export function collectCrowns(
   hx: number, hy: number,
   stems: (x: number, z: number) => number,
   dry: (x: number, z: number) => number = () => 1,
+  cover: (x: number, z: number) => number = () => 1,
 ): CrownSpot[] {
   if (!(hx > 1) || !(hy > 1)) return [];
   const T = FAR_TREES.tile;
@@ -60,12 +59,17 @@ export function collectCrowns(
     for (const p of farTreesInTile(tx, tz, 1, stems, dry)) {
       const dist = Math.hypot(p.x, p.z);
       if (dist > corner * 1.22) continue;
+      const c = Math.max(0, Math.min(1, cover(p.x, p.z)));
+      if (c < 0.22) continue;
       const h = hash(`ov:${Math.round(p.x)}:${Math.round(p.z)}`);
+      // vegetation weight is a canopy fraction, not a keep-every-stem flag.
+      // Full stems at this weight tile the view; scale the keep to that fraction.
+      if ((h % 1000) / 1000 > c * 0.18) continue;
       const u = (h % 10000) / 10000;
-      const group = h % 10 < 6 ? 0 : h % 10 < 8 ? 1 : 2;
-      const dense = Math.min(1, Math.max(0, stems(p.x, p.z)) / 900);
-      const base = group === 2 ? 7 + Math.pow(u, 0.85) * 9 : 3.5 + Math.pow(u, 1.15) * 8.5;
-      const scale = base * (0.75 + 0.55 * dense);
+      const aspen = c > 0.55 && h % 8 === 0;
+      const group = aspen ? 2 : h % 5 === 0 ? 1 : 0;
+      const base = aspen ? 9 + u * 4 : 6.5 + Math.pow(u, 1.2) * 4;
+      const scale = base * (0.85 + 0.15 * c);
       const fade = 1 - smoothstep(corner * 1.02, corner * 1.22, dist);
       spots.push({ x: p.x, z: p.z, slot: h % 3, scale, fade, group });
     }
@@ -76,23 +80,41 @@ export function collectCrowns(
   return kept.slice(0, CROWN_CAP);
 }
 
-/** Mid-tone moss, shrub and litter. Display sRGB, close to the NAIP gap (99, 115, 82). */
+/** Mid olive, darker moss, and tan openings. Smooth, so it is not a pixel quilt. */
 function floorTexture() {
-  const n = 64, data = new Uint8Array(n * n * 4);
-  const moss = [86, 116, 80], litter = [104, 118, 76], shrub = [118, 124, 74];
+  const n = 128, g = 24, cell = new Float32Array(g * g), cell2 = new Float32Array(g * g);
+  for (let i = 0; i < g * g; i++) { cell[i] = (hash(`fl:${i}`) % 1000) / 1000; cell2[i] = (hash(`flb:${i}`) % 1000) / 1000; }
+  const at = (grid: Float32Array, x: number, y: number) => {
+    const fx = (x / n) * g, fy = (y / n) * g;
+    const x0 = Math.floor(fx), y0 = Math.floor(fy);
+    const tx = fx - x0, ty = fy - y0;
+    const s = (ix: number, iy: number) => grid[(((iy % g) + g) % g) * g + (((ix % g) + g) % g)];
+    const a = s(x0, y0) * (1 - tx) + s(x0 + 1, y0) * tx;
+    const b = s(x0, y0 + 1) * (1 - tx) + s(x0 + 1, y0 + 1) * tx;
+    return a * (1 - ty) + b * ty;
+  };
+  const moss = [110, 121, 98], shade = [57, 67, 53], litter = [162, 146, 118];
+  const data = new Uint8Array(n * n * 4);
   for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
-    const h = hash(`fl:${x >> 2}:${y >> 2}`) % 1000 / 1000;
-    const k = hash(`fl2:${x >> 2}:${y >> 2}`) % 1000 / 1000;
-    const a = h < 0.7 ? moss : h < 0.88 ? litter : shrub;
+    const u = at(cell, x, y), w = at(cell2, x, y);
+    const t = u < 0.72 ? u / 0.72 : 1;
+    const base = u < 0.72 ? shade : moss;
+    const mix = u < 0.72 ? moss : litter;
+    const k = u < 0.72 ? t : (u - 0.72) / 0.28;
+    const tan = w > 0.62 ? (w - 0.62) / 0.38 : 0;
     const i = (y * n + x) * 4;
-    data[i] = a[0]; data[i + 1] = Math.max(0, a[1] - Math.round(k * 10)); data[i + 2] = a[2]; data[i + 3] = 255;
+    for (let c = 0; c < 3; c++) {
+      const v = base[c] * (1 - k) + mix[c] * k;
+      data[i + c] = Math.round(v * (1 - tan) + litter[c] * tan);
+    }
+    data[i + 3] = 255;
   }
   const tex = new THREE.DataTexture(data, n, n);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.magFilter = THREE.LinearFilter;
   tex.minFilter = THREE.LinearFilter;
-  tex.repeat.set(5, 5);
+  tex.repeat.set(3, 3);
   tex.needsUpdate = true;
   return tex;
 }
@@ -112,9 +134,36 @@ function shadowTexture() {
   return tex;
 }
 
+/** Keep the bake's light and dark. Pull hue and saturation into the NAIP spruce range. */
+function gradeFoliage(r: number, g: number, b: number): [number, number, number] {
+  const lum = (0.25 * r + 0.65 * g + 0.1 * b) / 255;
+  const v = Math.min(0.66, 0.12 + lum * 0.72);
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 110;
+  if (d > 2) {
+    if (mx === r) h = ((g - b) / d) % 6;
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60; if (h < 0) h += 360;
+  }
+  const h2 = 112 + (h - 110) * 0.45;
+  const s2 = 0.18 + Math.min(0.14, (mx - mn) / 320);
+  const c = v * s2, hp = ((h2 % 360) + 360) % 360 / 60, x = c * (1 - Math.abs(hp % 2 - 1));
+  let rr = 0, gg = 0, bb = 0;
+  if (hp < 1) { rr = c; gg = x; }
+  else if (hp < 2) { rr = x; gg = c; }
+  else if (hp < 3) { gg = c; bb = x; }
+  else if (hp < 4) { gg = x; bb = c; }
+  else if (hp < 5) { rr = x; bb = c; }
+  else { rr = c; bb = x; }
+  const m = v - c;
+  return [Math.round((rr + m) * 255), Math.round((gg + m) * 255), Math.round((bb + m) * 255)];
+}
+
 /**
- * Copy crown colour into the clear texels, then drop the dark fringe.
- * A black clear averaged into the mips is the outline around each crown.
+ * Keep the lit foliage pixels. Do not fill the silhouette: a flat disc is the
+ * clip-art crown. Clear texels copy a neighbour's colour so the mips do not
+ * pull in the black clear.
  */
 function sealCrown(buf: Uint8Array, size: number): { tex: THREE.DataTexture; fill: number } | null {
   const rgb = new Uint8Array(size * size * 3);
@@ -122,58 +171,61 @@ function sealCrown(buf: Uint8Array, size: number): { tex: THREE.DataTexture; fil
   let opaque = 0;
   for (let i = 0; i < size * size; i++) {
     const r = buf[i * 4], g = buf[i * 4 + 1], b = buf[i * 4 + 2], a = buf[i * 4 + 3];
-    if (a > 70 && r + g + b > 48) {
-      solid[i] = 1; rgb[i * 3] = r; rgb[i * 3 + 1] = g; rgb[i * 3 + 2] = Math.max(b, g * 0.48); opaque++;
+    if (a > 90 && r + g + b > 30) {
+      const [rr, gg, bb] = gradeFoliage(r, g, b);
+      solid[i] = 1; rgb[i * 3] = rr; rgb[i * 3 + 1] = gg; rgb[i * 3 + 2] = bb; opaque++;
     }
   }
   if (opaque < 40) return null;
-  for (let pass = 0; pass < 8; pass++) {
-    const next = rgb.slice(), ns = solid.slice();
+  // Close small holes between needle cards. Original pixels keep their shade,
+  // so the lit side and the shaded side stay. This is not a flat disc fill.
+  for (let pass = 0; pass < 18; pass++) {
+    const ns = solid.slice(), next = rgb.slice();
     for (let y = 1; y < size - 1; y++) for (let x = 1; x < size - 1; x++) {
       const i = y * size + x;
       if (solid[i]) continue;
       for (const j of [i - 1, i + 1, i - size, i + size]) if (solid[j]) {
-        next[i * 3] = rgb[j * 3]; next[i * 3 + 1] = rgb[j * 3 + 1]; next[i * 3 + 2] = rgb[j * 3 + 2];
-        ns[i] = 1; break;
+        ns[i] = 1; next[i * 3] = rgb[j * 3]; next[i * 3 + 1] = rgb[j * 3 + 1]; next[i * 3 + 2] = rgb[j * 3 + 2];
+        break;
       }
     }
-    rgb.set(next); solid.set(ns);
+    solid.set(ns); rgb.set(next);
+  }
+  for (let pass = 0; pass < 7; pass++) {
+    const ns = solid.slice();
+    for (let y = 1; y < size - 1; y++) for (let x = 1; x < size - 1; x++) {
+      const i = y * size + x;
+      if (!solid[i]) continue;
+      if (!solid[i - 1] || !solid[i + 1] || !solid[i - size] || !solid[i + size]) ns[i] = 0;
+    }
+    // Keep the real foliage pixels through the erode.
+    for (let i = 0; i < size * size; i++) if (buf[i * 4 + 3] > 90) ns[i] = 1;
+    solid.set(ns);
+  }
+  for (let pass = 0; pass < 4; pass++) {
+    const next = rgb.slice();
+    for (let y = 1; y < size - 1; y++) for (let x = 1; x < size - 1; x++) {
+      const i = y * size + x;
+      if (solid[i]) continue;
+      for (const j of [i - 1, i + 1, i - size, i + size]) if (solid[j] || next[j * 3] + next[j * 3 + 1] > 0) {
+        next[i * 3] = rgb[j * 3]; next[i * 3 + 1] = rgb[j * 3 + 1]; next[i * 3 + 2] = rgb[j * 3 + 2];
+        break;
+      }
+    }
+    rgb.set(next);
   }
   const out = new Uint8Array(size * size * 4);
-  const keep = new Uint8Array(size * size);
-  let minX = size, minY = size, maxX = 0, maxY = 0, cx = 0, cy = 0, nKeep = 0;
-  let sr = 0, sg = 0, sb = 0;
+  let minX = size, minY = size, maxX = 0, maxY = 0, nKeep = 0;
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
     const i = y * size + x;
-    const a = buf[i * 4 + 3], lum = buf[i * 4] + buf[i * 4 + 1] + buf[i * 4 + 2];
-    if (!(a > 80 && lum > 28)) continue;
-    keep[i] = 1; nKeep++; cx += x; cy += y;
-    sr += rgb[i * 3]; sg += rgb[i * 3 + 1]; sb += rgb[i * 3 + 2];
-    if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y;
+    out[i * 4] = rgb[i * 3]; out[i * 4 + 1] = rgb[i * 3 + 1]; out[i * 4 + 2] = rgb[i * 3 + 2];
+    out[i * 4 + 3] = solid[i] ? 255 : 0;
+    if (solid[i]) {
+      nKeep++;
+      if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y;
+    }
   }
   if (nKeep < 30) return null;
-  // The top-down cards are a star. Fill the silhouette so the floor does not
-  // show through the gaps as a dark rim, and neighbouring crowns can close.
-  const inv = 1 / Math.max(1, nKeep);
-  cx *= inv; cy *= inv;
-  const mr = Math.max(8, sr * inv), mg = Math.max(8, sg * inv), mb = Math.max(8, sb * inv);
-  let rad = 0;
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    if (!keep[y * size + x]) continue;
-    rad = Math.max(rad, Math.hypot(x - cx, y - cy));
-  }
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    const i = y * size + x;
-    const dx = (x - cx) / rad, dy = (y - cy) / rad;
-    const d = Math.hypot(dx, dy);
-    const wobble = 0.9 + 0.1 * ((Math.sin(dx * 9.0 + dy * 5.0) + Math.sin(dx * 4.0 - dy * 11.0)) * 0.5);
-    const inside = d < wobble;
-    out[i * 4] = inside ? (keep[i] ? rgb[i * 3] : mr) : rgb[i * 3];
-    out[i * 4 + 1] = inside ? (keep[i] ? rgb[i * 3 + 1] : mg) : rgb[i * 3 + 1];
-    out[i * 4 + 2] = inside ? (keep[i] ? rgb[i * 3 + 2] : mb) : rgb[i * 3 + 2];
-    out[i * 4 + 3] = inside ? 255 : 0;
-    if (inside) { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; }
-  }
   const tex = new THREE.DataTexture(out, size, size);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.generateMipmaps = true;
@@ -195,11 +247,11 @@ function bakeTopDown(renderer: THREE.WebGLRenderer, root: THREE.Object3D): { tex
   cam.position.set(center.x, box.max.y + 1.5, center.z);
   cam.up.set(0, 0, -1);
   cam.lookAt(center);
-  const sun = new THREE.DirectionalLight(0xfff6e4, 2.4);
-  sun.position.set(center.x, box.max.y + reach * 4, center.z);
-  const fill = new THREE.DirectionalLight(0xd5e2cc, 0.7);
-  fill.position.set(center.x + reach, box.max.y + reach, center.z - reach * 0.4);
-  const sky = new THREE.AmbientLight(0xc5d0c0, 1.05);
+  const sun = new THREE.DirectionalLight(0xfff0d2, 3.1);
+  sun.position.set(center.x + reach * 2.4, box.max.y + reach * 0.55, center.z + reach * 0.35);
+  const fill = new THREE.DirectionalLight(0x9eb4c8, 0.28);
+  fill.position.set(center.x - reach, box.max.y + reach * 0.2, center.z - reach);
+  const sky = new THREE.AmbientLight(0x8ea0b4, 0.32);
   const scene = new THREE.Scene();
   scene.add(root, sun, fill, sky);
   const n = 256;
@@ -227,16 +279,22 @@ function bakeTopDown(renderer: THREE.WebGLRenderer, root: THREE.Object3D): { tex
   return { texture: rt.texture, fill: 0.7 };
 }
 
-/** Horizontal sun, in the tangent frame. Shadows fall the other way. */
-function shadowAway(planet: Planet, east: THREE.Vector3, north: THREE.Vector3) {
-  const d = sunPosition(hourAt(worldSec()), dayAt(worldSec())).direction;
-  const sun = new THREE.Vector3(...planet.east).multiplyScalar(d.x)
-    .addScaledVector(new THREE.Vector3(...planet.home), d.y)
-    .addScaledVector(new THREE.Vector3(...planet.north), -d.z);
-  let se = sun.dot(east), sn = sun.dot(north);
-  const len = Math.hypot(se, sn);
-  if (len < 1e-4) return { e: -1, n: 0 };
-  return { e: -se / len, n: -sn / len };
+/** Vegetation weight of the cover model, cached on a 24 m grid. 0 opens a gap. */
+function coverAt(planet: Planet, east: THREE.Vector3, north: THREE.Vector3, up: THREE.Vector3) {
+  const cache = new Map<string, number>();
+  const R = PLANET.radius;
+  const p = new THREE.Vector3();
+  return (x: number, z: number) => {
+    const ix = Math.round(x / 24), iz = Math.round(z / 24);
+    const key = `${ix}:${iz}`;
+    const hit = cache.get(key);
+    if (hit !== undefined) return hit;
+    p.copy(up).addScaledVector(east, x / R).addScaledVector(north, -z / R).normalize();
+    const d = p.toArray() as [number, number, number];
+    const w = vegetationWeight(planet.sampleSurface(d), d);
+    cache.set(key, w);
+    return w;
+  };
 }
 
 function disposeTree(root: THREE.Object3D) {
@@ -281,8 +339,7 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
   (globalThis as { __crowns?: typeof pub }).__crowns = pub;
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3();
   const east = new THREE.Vector3(), north = new THREE.Vector3(), up = new THREE.Vector3(), at = new THREE.Vector3();
-  const ax = new THREE.Vector3(), ay = new THREE.Vector3();
-  const flat = new THREE.Quaternion(), shQ = new THREE.Quaternion();
+  const flat = new THREE.Quaternion(), spin = new THREE.Quaternion();
   let key = '';
 
   function ensure() {
@@ -341,9 +398,15 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
       pub.count = 0;
       return 0;
     }
-    const spots = collectCrowns(span.hx, span.hy, (x, z) => standAt(x, z).stems * cover.treeShare);
     const frame = tangentFrame([dir.x, dir.y, dir.z]);
     east.set(...frame.east); north.set(...frame.north); up.set(...frame.dir);
+    const localCover = coverAt(_planet, east, north, up);
+    const spots = collectCrowns(
+      span.hx, span.hy,
+      (x, z) => standAt(x, z).stems * cover.treeShare * localCover(x, z),
+      () => 1,
+      localCover,
+    );
     flat.setFromRotationMatrix(new THREE.Matrix4().makeBasis(east, north, up));
     const cam = camera.position;
     floor.visible = true;
@@ -351,7 +414,6 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
     floor.position.copy(up).multiplyScalar(surfaceR).sub(cam);
     floor.scale.set(span.hx * 2.6, span.hy * 2.6, 1);
     const counts = meshes.map(() => 0);
-    const away = shadowAway(_planet, east, north);
     let n = 0;
     for (const spot of spots) {
       if (spot.fade < 0.04) continue;
@@ -364,16 +426,12 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
       at.sub(cam);
       const vis = spot.scale;
       const quad = vis / (fills[vi] || 1);
-      m4.compose(at, flat, s.set(quad, quad, 1));
+      const ang = (hash(`rot:${Math.round(spot.x)}:${Math.round(spot.z)}`) % 628) / 100;
+      spin.setFromAxisAngle(up, ang).multiply(flat);
+      m4.compose(at, spin, s.set(quad, quad, 1));
       mesh.setMatrixAt(i, m4);
       const hue = CROWN_HUES[spot.group] ?? CROWN_HUES[0];
       mesh.instanceColor!.setXYZ(i, hue[0] * spot.fade, hue[1] * spot.fade, hue[2] * spot.fade);
-      ax.copy(east).multiplyScalar(away.e).addScaledVector(north, away.n);
-      ay.copy(up).cross(ax);
-      shQ.setFromRotationMatrix(m4.makeBasis(ax, ay, up));
-      const sh = at.clone().addScaledVector(ax, vis * 0.46);
-      m4.compose(sh, shQ, s.set(vis * 0.55, vis * 0.55, 1));
-      shadows.setMatrixAt(n, m4);
       n++;
     }
     for (let k = 0; k < meshes.length; k++) {
@@ -381,7 +439,7 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
       meshes[k].instanceMatrix.needsUpdate = true;
       if (meshes[k].instanceColor) meshes[k].instanceColor!.needsUpdate = true;
     }
-    shadows.count = n;
+    shadows.count = 0;
     shadows.instanceMatrix.needsUpdate = true;
     pub.count = n;
     return n;

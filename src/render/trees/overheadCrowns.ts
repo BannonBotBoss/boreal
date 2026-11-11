@@ -20,6 +20,7 @@ import { FAR_TREES, farTreesInTile } from '../../core/flora/stands';
 import { standAt } from '../../core/stand';
 import { worldSec } from '../../core/worldClock';
 import { dayAt, hourAt, sunPosition } from '../../core/timeOfDay';
+import { GLSL_HASH, GLSL_NOISE } from '../../proc/glsl';
 import { hash } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 import { coverSampleLatLon } from '../../world/globe/coverSample';
@@ -179,26 +180,18 @@ const FLOOR_FRAG = `
 varying vec2 vUv;
 uniform vec2 uSize;
 uniform sampler2D uCover;
-float hash(vec2 p) {
-  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-}
-float noise(vec2 p) {
-  vec2 i = floor(p), f = fract(p);
-  f = f * f * (3.0 - 2.0 * f);
-  float a = hash(i), b = hash(i + vec2(1.0, 0.0)), c = hash(i + vec2(0.0, 1.0)), d = hash(i + vec2(1.0, 1.0));
-  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-}
+${GLSL_NOISE}
 void main() {
   vec2 m = (vUv - 0.5) * uSize;
-  float fine = noise(m / 0.55);
-  float mid = noise(m / 2.1 + 4.0);
+  float fine = vnoise(m / 0.55, 1.7);
+  float mid = vnoise(m / 2.1 + 4.0, 2.3);
   vec3 moss = vec3(0.20, 0.26, 0.16);
   vec3 litter = vec3(0.24, 0.30, 0.15);
   vec3 grass = vec3(0.28, 0.34, 0.17);
   vec3 c = mix(moss, litter, fine);
   c = mix(c, grass, smoothstep(0.45, 0.8, mid));
-  c.r += 0.03 * (noise(m / 2.4) - 0.5);
-  c.b = mix(0.12, 0.22, noise(m / 3.1 + 2.0));
+  c.r += 0.03 * (vnoise(m / 2.4, 3.1) - 0.5);
+  c.b = mix(0.12, 0.22, vnoise(m / 3.1 + 2.0, 4.4));
   vec3 cov = texture2D(uCover, vUv).rgb;
   float canopy = cov.r;
   float shore = cov.g;
@@ -206,7 +199,7 @@ void main() {
   float open = max(smoothstep(0.20, 0.28, shore) * smoothstep(0.58, 0.74, mottle), 1.0 - smoothstep(0.55, 0.90, canopy));
   vec3 meadow = vec3(0.22, 0.28, 0.15);
   c = mix(c, meadow, open * 0.85);
-  float grain = fract(sin(dot(m, vec2(12.9898, 78.233))) * 43758.5453);
+  float grain = hash2s(m, 7.0);
   c *= 0.78 + 0.44 * grain;
   gl_FragColor = vec4(c, 1.0);
 }
@@ -263,12 +256,14 @@ export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCr
   const spruceMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.05, 0.09, 0.05), roughness: 0.94, metalness: 0, emissive: new THREE.Color().setRGB(0.016, 0.028, 0.018), emissiveIntensity: 1, side: THREE.DoubleSide, depthTest: false });
   const aspenMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.07, 0.10, 0.045), roughness: 0.92, metalness: 0, emissive: new THREE.Color().setRGB(0.028, 0.036, 0.020), emissiveIntensity: 1, side: THREE.DoubleSide, depthTest: false });
   const grain = `
-    float crownGrain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    float crownGrain = hash2s(gl_FragCoord.xy, 3.0);
     diffuseColor.rgb *= 0.45 + 0.55 * crownGrain;
   `;
   for (const mat of [spruceMat, aspenMat]) {
     mat.onBeforeCompile = (sh) => {
-      sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + grain);
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\n' + GLSL_HASH)
+        .replace('#include <color_fragment>', '#include <color_fragment>\n' + grain);
     };
   }
   const spruce = new THREE.InstancedMesh(spruceGeometry(), spruceMat, CROWN_CAP);

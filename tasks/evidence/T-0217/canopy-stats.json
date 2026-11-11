@@ -9,10 +9,10 @@
   "blocks": {
     "note": "Rec. 709 luminance. No 8x8 block in the frame may sit under the reference 1st percentile.",
     "referenceP01": 15.08,
-    "darkest8At400": 29.63,
-    "darkest8At800": 31.86
+    "darkest8At400": 29.57,
+    "darkest8At800": 32.22
   },
-  "openings": "Tree survival is standDensity(canopy, shore, mottle) from coverWeights. Shore is capped at 0.30, so the stand mottle that already feeds that term opens meadows inside the outcrop. The floor has no black multiply.",
+  "openings": "Tree survival is standDensity(canopy, shore, mottle) from coverWeights. Shore is capped at 0.30, so the stand mottle that already feeds that term opens meadows inside the outcrop. Floor and crown grain use proc/glsl.ts. The floor has no black multiply.",
   "albedo": "Diffuse colour is linear RGB with green 0.09 (Betts and Ball 1997, JGR 102, 28901, summer boreal conifer albedo about 0.08). A small sky-coloured emissive keeps the shade above the reference dark floor. Instance colour stays at or below 1.",
   "referenceStats": {
     "coverage": 0.8765,
@@ -44,110 +44,110 @@
   "after400": {
     "coverage": 0.9135,
     "r": {
-      "mean": 56.2564,
-      "sd": 7.9076
+      "mean": 56.1382,
+      "sd": 7.825
     },
     "g": {
-      "mean": 71.3646,
-      "sd": 8.9477
+      "mean": 71.2322,
+      "sd": 8.8484
     },
     "b": {
-      "mean": 39.5578,
-      "sd": 5.1264
+      "mean": 39.4969,
+      "sd": 5.0792
     },
     "h": {
-      "mean": 89.2367,
-      "sd": 5.2712
+      "mean": 89.2684,
+      "sd": 5.2493
     },
     "s": {
-      "mean": 0.4441,
-      "sd": 0.0431
+      "mean": 0.4439,
+      "sd": 0.043
     },
     "v": {
-      "mean": 0.2799,
-      "sd": 0.0351
+      "mean": 0.2793,
+      "sd": 0.0347
     }
   },
   "after800": {
-    "coverage": 0.9499,
+    "coverage": 0.9497,
     "r": {
-      "mean": 54.2474,
-      "sd": 9.2336
+      "mean": 54.1849,
+      "sd": 9.2143
     },
     "g": {
-      "mean": 69.1732,
-      "sd": 10.272
+      "mean": 69.1059,
+      "sd": 10.2531
     },
     "b": {
-      "mean": 38.7025,
-      "sd": 5.655
+      "mean": 38.6887,
+      "sd": 5.637
     },
     "h": {
-      "mean": 90.4344,
-      "sd": 6.1921
+      "mean": 90.4742,
+      "sd": 6.1814
     },
     "s": {
-      "mean": 0.4382,
-      "sd": 0.044
+      "mean": 0.4379,
+      "sd": 0.0438
     },
     "v": {
-      "mean": 0.2713,
-      "sd": 0.0403
+      "mean": 0.271,
+      "sd": 0.0402
     }
   },
   "compare400": [
     {
       "channel": "r",
       "stat": "mean",
-      "frame": 56.256,
+      "frame": 56.138,
       "reference": 52.938,
-      "rel": 0.063,
+      "rel": 0.06,
       "within15": true
     },
     {
       "channel": "r",
       "stat": "sd",
-      "frame": 7.908,
+      "frame": 7.825,
       "reference": 16.782,
-      "rel": 0.529,
+      "rel": 0.534,
       "within15": false
     },
     {
       "channel": "g",
       "stat": "mean",
-      "frame": 71.365,
+      "frame": 71.232,
       "reference": 71.949,
-      "rel": 0.008,
+      "rel": 0.01,
       "within15": true
     },
     {
       "channel": "g",
       "stat": "sd",
-      "frame": 8.948,
+      "frame": 8.848,
       "reference": 15.625,
-      "rel": 0.427,
+      "rel": 0.434,
       "within15": false
     },
     {
       "channel": "b",
       "stat": "mean",
-      "frame": 39.558,
+      "frame": 39.497,
       "reference": 43.55,
-      "rel": 0.092,
+      "rel": 0.093,
       "within15": true
     },
     {
       "channel": "b",
       "stat": "sd",
-      "frame": 5.126,
+      "frame": 5.079,
       "reference": 13.665,
-      "rel": 0.625,
+      "rel": 0.628,
       "within15": false
     },
     {
       "channel": "h",
       "stat": "mean",
-      "frame": 89.237,
+      "frame": 89.268,
       "reference": 101.399,
       "rel": 0.12,
       "within15": true
@@ -155,9 +155,9 @@
     {
       "channel": "h",
       "stat": "sd",
-      "frame": 5.271,
+      "frame": 5.249,
       "reference": 12.692,
-      "rel": 0.585,
+      "rel": 0.586,
       "within15": false
     },
     {
@@ -173,15 +173,15 @@
       "stat": "sd",
       "frame": 0.043,
       "reference": 0.098,
-      "rel": 0.561,
+      "rel": 0.562,
       "within15": false
     },
     {
       "channel": "v",
       "stat": "mean",
-      "frame": 0.28,
+      "frame": 0.279,
       "reference": 0.282,
-      "rel": 0.008,
+      "rel": 0.01,
       "within15": true
     },
     {
@@ -189,7 +189,7 @@
       "stat": "sd",
       "frame": 0.035,
       "reference": 0.061,
-      "rel": 0.427,
+      "rel": 0.434,
       "within15": false
     }
   ],
@@ -197,55 +197,55 @@
     {
       "channel": "r",
       "stat": "mean",
-      "frame": 54.247,
+      "frame": 54.185,
       "reference": 52.938,
-      "rel": 0.025,
+      "rel": 0.024,
       "within15": true
     },
     {
       "channel": "r",
       "stat": "sd",
-      "frame": 9.234,
+      "frame": 9.214,
       "reference": 16.782,
-      "rel": 0.45,
+      "rel": 0.451,
       "within15": false
     },
     {
       "channel": "g",
       "stat": "mean",
-      "frame": 69.173,
+      "frame": 69.106,
       "reference": 71.949,
-      "rel": 0.039,
+      "rel": 0.04,
       "within15": true
     },
     {
       "channel": "g",
       "stat": "sd",
-      "frame": 10.272,
+      "frame": 10.253,
       "reference": 15.625,
-      "rel": 0.343,
+      "rel": 0.344,
       "within15": false
     },
     {
       "channel": "b",
       "stat": "mean",
-      "frame": 38.703,
+      "frame": 38.689,
       "reference": 43.55,
-      "rel": 0.111,
+      "rel": 0.112,
       "within15": true
     },
     {
       "channel": "b",
       "stat": "sd",
-      "frame": 5.655,
+      "frame": 5.637,
       "reference": 13.665,
-      "rel": 0.586,
+      "rel": 0.587,
       "within15": false
     },
     {
       "channel": "h",
       "stat": "mean",
-      "frame": 90.434,
+      "frame": 90.474,
       "reference": 101.399,
       "rel": 0.108,
       "within15": true
@@ -253,9 +253,9 @@
     {
       "channel": "h",
       "stat": "sd",
-      "frame": 6.192,
+      "frame": 6.181,
       "reference": 12.692,
-      "rel": 0.512,
+      "rel": 0.513,
       "within15": false
     },
     {
@@ -263,7 +263,7 @@
       "stat": "mean",
       "frame": 0.438,
       "reference": 0.403,
-      "rel": 0.087,
+      "rel": 0.086,
       "within15": true
     },
     {
@@ -271,7 +271,7 @@
       "stat": "sd",
       "frame": 0.044,
       "reference": 0.098,
-      "rel": 0.551,
+      "rel": 0.554,
       "within15": false
     },
     {
@@ -279,7 +279,7 @@
       "stat": "mean",
       "frame": 0.271,
       "reference": 0.282,
-      "rel": 0.039,
+      "rel": 0.04,
       "within15": true
     },
     {
@@ -287,7 +287,7 @@
       "stat": "sd",
       "frame": 0.04,
       "reference": 0.061,
-      "rel": 0.343,
+      "rel": 0.344,
       "within15": false
     }
   ]

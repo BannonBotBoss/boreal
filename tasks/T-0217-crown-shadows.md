@@ -35,7 +35,7 @@ Green-canopy pixels: green at least red and blue, green above 40, no channel at 
 |---|---|---|---|---|---|
 | reference | 0.877 | 52.9 / 16.8 | 71.9 / 15.6 | 43.5 / 13.7 | p01 luminance 15.1 |
 | 400 m | 0.914 | 56.3 / 7.9 | 71.4 / 8.9 | 39.6 / 5.1 | 29.6 |
-| 800 m | 0.950 | 54.2 / 9.2 | 69.2 / 10.3 | 38.7 / 5.7 | 31.9 |
+| 800 m | 0.950 | 54.2 / 9.2 | 69.1 / 10.3 | 38.7 / 5.7 | 32.2 |
 
 Coverage is inside 10 points (3.7 and 7.3). Every mean is inside 15%. The standard deviations are still wider in the photograph. No 8×8 block is under the reference 1st percentile (15.1). Full table: `tasks/evidence/T-0217/canopy-stats.json`.
 

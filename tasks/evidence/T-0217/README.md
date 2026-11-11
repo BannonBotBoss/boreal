@@ -1,5 +1,11 @@
 # T-0217 evidence
 
+Numbers are in `canopy-stats.json`. A green-canopy pixel has green at least as high as red and blue, green above 40, and no channel at 220 or above. The bottom 40 rows are the HUD and are left out.
+
+Reference coverage 0.877. After 400 m is 0.959 (8.3 points). After 800 m is 0.973 (9.7 points). Both are inside 10 points. Every RGB and HSV mean is inside 15%. The standard deviations are not: blue's is about 7.7 against 13.7 at 400 m.
+
+The shot is 52.05 N, 96.94 W. The planet calls 48.094 N, 91.482 W water, so a frame there has no crowns. This cell is boreal in the game (about 2277 stems/ha) and forest in the imagery.
+
 SwiftShader, 1280×720. `?view=globe&latlon=52,-97&shot=1&localClouds=0&hour=8.3&day=227&tier=5` at `alt=400` and `alt=800`.
 
 ## Sources

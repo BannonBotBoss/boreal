@@ -1,0 +1,288 @@
+{
+  "definition": "green >= red and green >= blue and green > 40 and max channel < 220; 4 px border and the bottom 40 px (HUD) excluded",
+  "shot": "52.05 N, 96.94 W, alt 400 and 800, hour 8.3, day 227",
+  "referenceUrl": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-96.947,52.047,-96.933,52.053&bboxSR=4326&size=1280,720&format=jpg&f=image",
+  "instances": {
+    "at400": 7598,
+    "at800": 25542
+  },
+  "diagnosis": "The earlier frame had 18045 instances and a geometric crown area about 3 times the view, so the crowns were not culled and not missing from the GPU. They were darker than the green threshold except for the yellow tips, so the measured canopy fraction collapsed.",
+  "albedo": "Diffuse colour is linear RGB with green 0.09–0.10 (Betts and Ball 1997, JGR 102, 28901, summer boreal conifer albedo about 0.08). A small sky-coloured emissive keeps the shade from going black. Instance colour stays at or below 1.",
+  "referenceStats": {
+    "coverage": 0.8765,
+    "r": {
+      "mean": 52.938,
+      "sd": 16.7824
+    },
+    "g": {
+      "mean": 71.9493,
+      "sd": 15.625
+    },
+    "b": {
+      "mean": 43.5496,
+      "sd": 13.6648
+    },
+    "h": {
+      "mean": 101.3993,
+      "sd": 12.6921
+    },
+    "s": {
+      "mean": 0.4032,
+      "sd": 0.0981
+    },
+    "v": {
+      "mean": 0.2822,
+      "sd": 0.0613
+    }
+  },
+  "after400": {
+    "coverage": 0.9593,
+    "r": {
+      "mean": 53.2715,
+      "sd": 13.3343
+    },
+    "g": {
+      "mean": 68.3551,
+      "sd": 13.7182
+    },
+    "b": {
+      "mean": 39.8358,
+      "sd": 7.6783
+    },
+    "h": {
+      "mean": 95.3557,
+      "sd": 13.1573
+    },
+    "s": {
+      "mean": 0.4124,
+      "sd": 0.0729
+    },
+    "v": {
+      "mean": 0.2681,
+      "sd": 0.0538
+    }
+  },
+  "after800": {
+    "coverage": 0.9731,
+    "r": {
+      "mean": 52.7045,
+      "sd": 11.5602
+    },
+    "g": {
+      "mean": 67.7478,
+      "sd": 12.0262
+    },
+    "b": {
+      "mean": 39.5425,
+      "sd": 6.789
+    },
+    "h": {
+      "mean": 94.5265,
+      "sd": 10.5878
+    },
+    "s": {
+      "mean": 0.4121,
+      "sd": 0.0633
+    },
+    "v": {
+      "mean": 0.2657,
+      "sd": 0.0472
+    }
+  },
+  "compare400": [
+    {
+      "channel": "r",
+      "stat": "mean",
+      "frame": 53.271,
+      "reference": 52.938,
+      "rel": 0.006,
+      "within15": true
+    },
+    {
+      "channel": "r",
+      "stat": "sd",
+      "frame": 13.334,
+      "reference": 16.782,
+      "rel": 0.205,
+      "within15": false
+    },
+    {
+      "channel": "g",
+      "stat": "mean",
+      "frame": 68.355,
+      "reference": 71.949,
+      "rel": 0.05,
+      "within15": true
+    },
+    {
+      "channel": "g",
+      "stat": "sd",
+      "frame": 13.718,
+      "reference": 15.625,
+      "rel": 0.122,
+      "within15": true
+    },
+    {
+      "channel": "b",
+      "stat": "mean",
+      "frame": 39.836,
+      "reference": 43.55,
+      "rel": 0.085,
+      "within15": true
+    },
+    {
+      "channel": "b",
+      "stat": "sd",
+      "frame": 7.678,
+      "reference": 13.665,
+      "rel": 0.438,
+      "within15": false
+    },
+    {
+      "channel": "h",
+      "stat": "mean",
+      "frame": 95.356,
+      "reference": 101.399,
+      "rel": 0.06,
+      "within15": true
+    },
+    {
+      "channel": "h",
+      "stat": "sd",
+      "frame": 13.157,
+      "reference": 12.692,
+      "rel": 0.037,
+      "within15": true
+    },
+    {
+      "channel": "s",
+      "stat": "mean",
+      "frame": 0.412,
+      "reference": 0.403,
+      "rel": 0.023,
+      "within15": true
+    },
+    {
+      "channel": "s",
+      "stat": "sd",
+      "frame": 0.073,
+      "reference": 0.098,
+      "rel": 0.257,
+      "within15": false
+    },
+    {
+      "channel": "v",
+      "stat": "mean",
+      "frame": 0.268,
+      "reference": 0.282,
+      "rel": 0.05,
+      "within15": true
+    },
+    {
+      "channel": "v",
+      "stat": "sd",
+      "frame": 0.054,
+      "reference": 0.061,
+      "rel": 0.122,
+      "within15": true
+    }
+  ],
+  "compare800": [
+    {
+      "channel": "r",
+      "stat": "mean",
+      "frame": 52.704,
+      "reference": 52.938,
+      "rel": 0.004,
+      "within15": true
+    },
+    {
+      "channel": "r",
+      "stat": "sd",
+      "frame": 11.56,
+      "reference": 16.782,
+      "rel": 0.311,
+      "within15": false
+    },
+    {
+      "channel": "g",
+      "stat": "mean",
+      "frame": 67.748,
+      "reference": 71.949,
+      "rel": 0.058,
+      "within15": true
+    },
+    {
+      "channel": "g",
+      "stat": "sd",
+      "frame": 12.026,
+      "reference": 15.625,
+      "rel": 0.23,
+      "within15": false
+    },
+    {
+      "channel": "b",
+      "stat": "mean",
+      "frame": 39.542,
+      "reference": 43.55,
+      "rel": 0.092,
+      "within15": true
+    },
+    {
+      "channel": "b",
+      "stat": "sd",
+      "frame": 6.789,
+      "reference": 13.665,
+      "rel": 0.503,
+      "within15": false
+    },
+    {
+      "channel": "h",
+      "stat": "mean",
+      "frame": 94.527,
+      "reference": 101.399,
+      "rel": 0.068,
+      "within15": true
+    },
+    {
+      "channel": "h",
+      "stat": "sd",
+      "frame": 10.588,
+      "reference": 12.692,
+      "rel": 0.166,
+      "within15": false
+    },
+    {
+      "channel": "s",
+      "stat": "mean",
+      "frame": 0.412,
+      "reference": 0.403,
+      "rel": 0.022,
+      "within15": true
+    },
+    {
+      "channel": "s",
+      "stat": "sd",
+      "frame": 0.063,
+      "reference": 0.098,
+      "rel": 0.355,
+      "within15": false
+    },
+    {
+      "channel": "v",
+      "stat": "mean",
+      "frame": 0.266,
+      "reference": 0.282,
+      "rel": 0.058,
+      "within15": true
+    },
+    {
+      "channel": "v",
+      "stat": "sd",
+      "frame": 0.047,
+      "reference": 0.061,
+      "rel": 0.23,
+      "within15": false
+    }
+  ]
+}

@@ -61,7 +61,7 @@ export function collectCrowns(
       const c = Math.max(0, Math.min(1, cover(p.x, p.z)));
       if (c < 0.22) continue;
       const h = hash(`ov:${Math.round(p.x)}:${Math.round(p.z)}`);
-      if ((h % 1000) / 1000 > c) continue;
+      if ((h % 1000) / 1000 > c * 0.42) continue;
       const u = (h % 10000) / 10000;
       const aspen = c > 0.6 && h % 11 === 0;
       const group = aspen ? 2 : h % 5 === 0 ? 1 : 0;
@@ -174,11 +174,16 @@ void main() {
   vec2 m = (vUv - 0.5) * uSize;
   float fine = noise(m / 0.55);
   float mid = noise(m / 2.1 + 4.0);
-  vec3 moss = vec3(0.18, 0.24, 0.13);
-  vec3 litter = vec3(0.26, 0.21, 0.13);
-  vec3 grass = vec3(0.30, 0.34, 0.16);
+  vec3 moss = vec3(0.20, 0.26, 0.16);
+  vec3 litter = vec3(0.24, 0.30, 0.15);
+  vec3 grass = vec3(0.28, 0.34, 0.17);
   vec3 c = mix(moss, litter, fine);
-  c = mix(c, grass, smoothstep(0.62, 0.9, mid) * 0.45);
+  c = mix(c, grass, smoothstep(0.45, 0.8, mid));
+  c.r += 0.03 * (noise(m / 2.4) - 0.5);
+  c.b = mix(0.12, 0.22, noise(m / 3.1 + 2.0));
+  float grain = fract(sin(dot(m, vec2(12.9898, 78.233))) * 43758.5453);
+  c *= 0.78 + 0.44 * grain;
+  if (noise(m / 18.0 + 5.0) > 0.9) c *= 0.2;
   gl_FragColor = vec4(c, 1.0);
 }
 `;
@@ -220,8 +225,20 @@ export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCr
   shadows.count = 0;
   group.add(shadows);
 
-  const spruceMat = new THREE.MeshStandardMaterial({ color: 0x8fbf62, roughness: 0.84, metalness: 0, emissive: 0x183216, emissiveIntensity: 0.7, side: THREE.DoubleSide, depthTest: false });
-  const aspenMat = new THREE.MeshStandardMaterial({ color: 0xc6d878, roughness: 0.8, metalness: 0, emissive: 0x304018, emissiveIntensity: 0.45, side: THREE.DoubleSide, depthTest: false });
+  // Summer boreal conifer albedo is about 0.08 (Betts & Ball 1997, JGR 102, 28901).
+  // Linear RGB, green a little above red and blue. A small sky-coloured emissive
+  // holds the shade; the brighter side is still the scene sun.
+  const spruceMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.05, 0.09, 0.05), roughness: 0.94, metalness: 0, emissive: new THREE.Color().setRGB(0.022, 0.038, 0.024), emissiveIntensity: 1, side: THREE.DoubleSide, depthTest: false });
+  const aspenMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.07, 0.10, 0.045), roughness: 0.92, metalness: 0, emissive: new THREE.Color().setRGB(0.038, 0.048, 0.026), emissiveIntensity: 1, side: THREE.DoubleSide, depthTest: false });
+  const grain = `
+    float crownGrain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    diffuseColor.rgb *= 0.45 + 0.55 * crownGrain;
+  `;
+  for (const mat of [spruceMat, aspenMat]) {
+    mat.onBeforeCompile = (sh) => {
+      sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + grain);
+    };
+  }
   const spruce = new THREE.InstancedMesh(spruceGeometry(), spruceMat, CROWN_CAP);
   const aspen = new THREE.InstancedMesh(aspenGeometry(), aspenMat, CROWN_CAP);
   for (const mesh of [spruce, aspen]) {
@@ -286,12 +303,14 @@ export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCr
       at.setLength(surfaceR + 0.4);
       at.sub(cam);
       const d = spot.scale;
-      m4.compose(at, flat, s.set(d, d, d * 0.7));
+      m4.compose(at, flat, s.set(d, d, d * 1.6));
       mesh.setMatrixAt(i, m4);
-      const jitter = 0.82 + (hash(`j:${spot.x}:${spot.z}`) % 40) / 100;
-      mesh.instanceColor!.setXYZ(i, jitter, jitter * (spot.group === 1 ? 1.05 : 0.96), jitter * 0.9);
-      const sh = at.clone().addScaledVector(ax, d * 0.48);
-      m4.compose(sh, shQ, s.set(d * 0.72, d * 0.48, 1));
+      const jitter = 0.5 + (hash(`j:${spot.x}:${spot.z}`) % 50) / 100;
+      const red = 0.65 + (hash(`r:${spot.x}:${spot.z}`) % 60) / 100;
+      const blue = 0.3 + (hash(`b:${spot.x}:${spot.z}`) % 95) / 100;
+      mesh.instanceColor!.setXYZ(i, jitter * red, jitter, jitter * blue);
+      const sh = at.clone().addScaledVector(ax, d * 0.62);
+      m4.compose(sh, shQ, s.set(d * 0.55, d * 0.38, 1));
       shadows.setMatrixAt(nsh, m4);
       nsh++;
     }

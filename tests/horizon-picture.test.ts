@@ -5,7 +5,7 @@
  * A white pixel is R, G and B all above 210.
  *
  * Calibration, same URL, SwiftShader 1280×720:
- *   tasks/evidence/T-0212/before-eye40.png (the plates frame; the task was renumbered from T-0203): cutout 0.307, white 0.687
+ *   tasks/evidence/T-0212/before-eye40.png (the plates frame): cutout 0.307, white 0.687
  *   tasks/evidence/T-0204/before-eye40.png (continuous ground, no aerial fade): zenith blue cast 13.9
  *   after eye 40: blue cast 38.6, cutout 0, white 0.16
  *   after standing: blue cast 54.9, cutout 0, white 0.003

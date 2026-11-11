@@ -14,6 +14,7 @@ import { heightAt, terrainBand } from '../core/world';
 import { curvatureDrop, horizonMetres } from '../world/globe/horizonSkirt';
 import { BAND_COLOR, groundColor, isStaged } from './terrainCore';
 import { terrainMaterial } from './pbr';
+import { addAerialPerspective } from './aerial';
 import type { SoilKind } from '../core/stages/soils';
 
 /** Quads along one leaf edge. 8 keeps a 16 m leaf at 2 m spacing. */
@@ -223,10 +224,16 @@ export function continuousMaterial() {
   if (sharedMat) return sharedMat;
   const mat = terrainMaterial().clone() as THREE.MeshStandardMaterial;
   mat.flatShading = false;
+  mat.fog = false;
   mat.polygonOffset = true;
   mat.polygonOffsetFactor = 2;
   mat.polygonOffsetUnits = 2;
-  mat.customProgramCacheKey = () => 'boreal-continuous-terrain';
+  const prev = mat.onBeforeCompile;
+  mat.onBeforeCompile = function (shader, renderer) {
+    prev.call(this, shader, renderer);
+    addAerialPerspective(shader);
+  };
+  mat.customProgramCacheKey = () => 'boreal-continuous-terrain-aerial';
   sharedMat = mat;
   return mat;
 }

@@ -1,4 +1,4 @@
-# T-0203 handoff (grokbot-2)
+# T-0212 handoff (grokbot-2)
 
 ## What this is
 
@@ -9,7 +9,7 @@ D23. One chunked-LOD terrain mesh replaces the chunk plates and the horizon skir
 - `src/render/continuousTerrain.ts`: restricted quadtree, skirts, `heightAt` minus `curvatureDrop`, one mesh.
 - `buildScene.ts`: skirt not added, chunk grounds `visible = false`, camera far past the horizon.
 - Tests: `tests/continuous-terrain.test.ts`, `tests/ground-picture.test.ts`.
-- Frames under `tasks/evidence/T-0203/`. Same URL and pose before and after. SwiftShader, 1280×720. After mesh: eye 40 had 340 leaves, outer 46 km, 65280 triangles.
+- Frames under `tasks/evidence/T-0212/`. Same URL and pose before and after. SwiftShader, 1280×720. After mesh: eye 40 had 340 leaves, outer 46 km, 65280 triangles.
 
 ## What the frames show
 
@@ -45,6 +45,8 @@ Tool: `tests/ground-picture.test.ts` (pngjs).
 `npx tsx --test tests/continuous-terrain.test.ts tests/ground-picture.test.ts`
 
 Open `/?view=ground&nomenu=1&noprobe=1&stages=1&trees=v2&hour=8.6&eye=40`. `window.__terrain.outerM` should exceed the horizon. The skirt mesh is not in the scene.
+
+The final approve is Grokbot-1's. The approve-plan quoting Matthew stays.
 
 ## Next
 

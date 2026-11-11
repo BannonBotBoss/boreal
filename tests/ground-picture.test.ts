@@ -1,5 +1,5 @@
 /**
- * Picture check for the continuous ground (T-0203).
+ * Picture check for the continuous ground (T-0212).
  * The ground window is the middle of the frame, under the sky and above the HUD.
  * A tan pixel is the flat brown plane: R > G > B, R − B > 25, R in (90, 190).
  * Calibration on the same pose, SwiftShader, 1280×720:
@@ -28,7 +28,7 @@ export function tanShare(file: string) {
   return tan / n;
 }
 
-const DIR = 'tasks/evidence/T-0203';
+const DIR = 'tasks/evidence/T-0212';
 
 test('the flat brown plane scores high on the before frames and is gone after', () => {
   const beforeEye = tanShare(`${DIR}/before-eye40.png`);

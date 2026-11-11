@@ -18,8 +18,8 @@ D28. After the globe drop the player stands at 8.487 N, 129.334 W. That pixel of
 
 ## Objectives
 
-- [ ] The landing at that aim is the sea surface: biome water, elevation 0, and the radius is the figure, not a 5074 m mountain. Open ocean stays on the aim.
-- [ ] A check fails the seeded mountain and the ice class, and passes the sea surface. The ground state is not a clipped white sheet.
+- [x] The landing at that aim is the sea surface: biome water, elevation 0, and the radius is the figure, not a 5074 m mountain. Open ocean stays on the aim.
+- [x] A check fails the seeded mountain and the ice class, and passes the sea surface. The ground state is not a clipped white sheet.
 
 ## Acceptance
 

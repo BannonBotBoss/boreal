@@ -37,7 +37,7 @@ export const SEAM_LOCATIONS: readonly { name: string; lat: number; lon: number; 
 ];
 const D2R = Math.PI / 180;
 function probe(lat: number, lon: number): Probe {
-  const planet = planetFor(WORLD_SEED);
+  const planet = planetFor(WORLD_SEED, undefined, '', true);
   const s = planet.sampleSurface(fromLatLon(lat * D2R, lon * D2R));
   const out = { lat, h: s.h, kind: s.kind, oceanNear: false };
   // "near" = a 0.1 degree ring (about 11 km) touches the other side of the shoreline
@@ -60,7 +60,7 @@ export const SEAM_RINGS_M = [28, 100, 300, 600];
 const BEARINGS = 16;
 
 export function measureSeam(lat: number, lon: number) {
-  const planet = planetFor(WORLD_SEED);
+  const planet = planetFor(WORLD_SEED, undefined, '', true);
   const errors: string[] = [];
   try {
     if (!engageLanding(fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180), 0)) errors.push('landing did not engage');

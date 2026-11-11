@@ -116,7 +116,7 @@ const EMPTY: LandingReport = {
 
 /** Where the player is standing, in the same frame the landing bridge uses. */
 export function landingContext(x: number, z: number) {
-  const planet = planetFor(WORLD_SEED);
+  const planet = planetFor(WORLD_SEED, undefined, '', true);
   const remote = Number.isFinite(SITE.latDeg);
   const dir = remote ? siteDirection(x, z, PLANET.radius) : planet.fromLocal(x, z);
   const ll = toLatLon(dir);

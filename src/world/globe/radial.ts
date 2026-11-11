@@ -10,7 +10,8 @@ import { fromLatLon, type Vec3 } from './planet';
 import { K } from '../../core/constants';
 
 interface Surf { sampleSurface(d: Vec3, fp?: number): { h: number; water: number } }
-/** Radius (m) of the solid or liquid surface along unit û: figure + max(terrain, water surface). */
+/** Radius (m) of the solid or liquid surface along unit û: figure + max(terrain, water surface).
+ *  Over ocean, sampleSurface stores bathymetry in h and 0 in water, so this is sea level. A seeded mountain does not raise it. */
 export function surfaceRadius(planet: Surf, u: Vec3): number { const s = planet.sampleSurface(u); return figureRadius(u) + Math.max(s.h, s.water); }
 /** Altitudes (m) of a point at radius r (m) along û. */
 export function altitudeAt(planet: Surf, r: number, u: Vec3) { return { h: r - surfaceRadius(planet, u), hSea: r - figureRadius(u), hMean: r - K.R_earth_mean }; }

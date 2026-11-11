@@ -17,6 +17,7 @@ import { hash, random } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 import { LEVEL, PHYS } from '../../core/tuning';
 import { treeIceLinesM } from '../../core/altitudeZones';
+import { coarseMetres, coarseReliefOn } from './coarseRelief';
 
 export const PLANET = {
   radius: PHYS.EARTH_RADIUS,     // m: IUGG mean Earth radius (core/tuning PHYS, Moritz 2000)
@@ -123,8 +124,34 @@ const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0
 export type Planet = ReturnType<typeof createPlanet>;
 const planets = new Map<string, Planet>();
 /** The planet for a seed (cached per seed + local function). `local` is the game's height function for the home region. */
-export function planetFor(seed: number, local?: LocalHeight, key = '') {
-  const k = `${seed}:${key}`; let p = planets.get(k); if (!p) planets.set(k, p = createPlanet(seed, local)); return p;
+/**
+ * The playable planet reads zoom-0 bathymetry outside the home lift (coarseRelief.ts).
+ * createPlanet stays the seeded generator the hypsometry tests call. A seeded mountain
+ * on a negative pixel becomes the sea; a seeded ocean on a positive pixel becomes that land
+ * so the land share stays near Earth's 0.292.
+ */
+export function applyCoarseCoast(d: Vec3, s: Surface, home: Vec3): Surface {
+  if (!coarseReliefOn()) return s;
+  const liftRad = PLANET.home.liftKm * 1000 / PLANET.radius;
+  const c = Math.max(-1, Math.min(1, d[0] * home[0] + d[1] * home[1] + d[2] * home[2]));
+  if (!(Math.acos(c) > liftRad)) return s;
+  const ll = toLatLon(d);
+  const bathy = coarseMetres(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI);
+  if (bathy < 0) { s.h = bathy; s.water = 0; s.kind = 'ocean'; s.level = 0; s.hill = 0; }
+  else if (s.kind === 'ocean' || s.h < 0) { s.h = bathy; s.water = -Infinity; s.kind = ''; s.level = 0; }
+  return s;
+}
+export function planetFor(seed: number, local?: LocalHeight, key = '', coasts = false) {
+  const k = `${seed}:${key}:${coasts ? 1 : 0}`; let p = planets.get(k);
+  if (!p) {
+    p = createPlanet(seed, local);
+    if (coasts) {
+      const raw = p.sampleSurface;
+      p.sampleSurface = (d, fp) => applyCoarseCoast(d, raw(d, fp), p!.home);
+    }
+    planets.set(k, p);
+  }
+  return p;
 }
 export function createPlanet(seed: number, local?: LocalHeight) {
   const { relief, hills, noise } = makeNoise(seed), R = PLANET.radius, H = PLANET.home, fm = R / 150, LK = PLANET.lakes, lf = LK.cellsKm.map(k => R / (k * 1000)), lw = R / (LK.warpCellKm * 1000), wa = LK.warpKm * 2000 / R;

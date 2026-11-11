@@ -28,7 +28,7 @@ This is the index. It does not build the holes. A row is a mapping when the task
 |---|---|---|
 | #95 ecosystem is the object, animals are one expression | T-0203 | proposed, not claimed |
 | #96 universal timeline, solar system to the present | T-0060, T-0093 | deep time, then time zero at formation |
-| #97 deterministic generation from seed, place, time, parent | T-0204 | proposed. The issue is closed; the formula still had no task |
+| #97 deterministic generation from seed, place, time, parent | T-0213 | proposed. Moved off T-0204 because #436 landed the aerial-horizon task as T-0204. |
 | #98 habitat from geology | T-0205 | proposed, not claimed |
 | #99 seasons change the habitat, not a texture swap | T-0094, T-0172 | climate class, and photoperiod from the landed date. The full ripple is not a task |
 | #100 climate, then weather | T-0082 | Rust grid is the weather the forest reads |
@@ -52,7 +52,7 @@ This is the index. It does not build the holes. A row is a mapping when the task
 | #118 why an animal did what it did | T-0081 | T-0084 only reserves a handle. The inspector is not built |
 | #119 an event log for rewind and why | T-0210 | proposed. T-0084 and T-0092 are not the log |
 | #156 navigable globe, drop through clouds, drone landscape | T-0108 through T-0122 | bridge, skirt, elevation, photo, cover, animals, gaps, rings, sky, land, canopy |
-| #192 globe-to-ground descent and the defect list | T-0125, T-0132, T-0164, T-0165, T-0179 onward, T-0211 | wildlife and the visual passes. D25 is still open. D26 is T-0200. D27 is T-0201, merged as #433. D28 and D29 are T-0211 (the clipped ice sheet and the empty glide); that task is a separate agent's, and this branch does not change the drop or the glide. D19/D22 are T-0213 (#436). D23 is T-0212 (#435). D24 is T-0214 (#439). Prairie stems are T-0202 (#434). #422, #428 and #429 are closed; #428 points at #435 and #429 points at #439. T-0202, T-0212, T-0213 and T-0214 are on those PRs, not in this branch. |
+| #192 globe-to-ground descent and the defect list | T-0125, T-0132, T-0164, T-0165, T-0179 onward, T-0211 | wildlife and the visual passes. D25 is still open. D26 is T-0200. D27 is T-0201, merged as #433. D28 and D29 are T-0211 (the clipped ice sheet and the empty glide); a separate agent has that task, and this branch does not change the drop or the glide. D19/D22 are T-0204, merged as #436. D23 is T-0212, merged as #435. D24 is T-0214 (#439). Prairie stems are T-0202 (#434). #422, #428 and #429 are closed; #428 points at #435 and #429 points at #439. |
 
 ## Acceptance
 

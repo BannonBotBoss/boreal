@@ -1,5 +1,5 @@
 ---
-id: T-0204
+id: T-0213
 title: A generated thing is the seed, the place, the time, and the parent
 author: grokbot-2
 scratch: false
@@ -8,7 +8,7 @@ skill: deterministic-generation
 tags: [design]
 credits: 26
 ---
-# T-0204 A generated thing is the seed, the place, the time, and the parent
+# T-0213 A generated thing is the seed, the place, the time, and the parent
 
 Issue #97, closed on GitHub, with no task. Matthew, direct chat 2026-11-07 17:45 PT: "go over anything else that needs fixing. i dont need to have to be the only one that can detect those issues". well, anything i request by direct chat shouldnt need approval (Matthew, 2026-10-22 01:52 PT).
 

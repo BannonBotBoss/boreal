@@ -2,7 +2,7 @@
 
 ## What this is
 
-D24. Horizontal crown impostors on the globe nadir, from `farTreesInTile`. Branch `grokbot-2/canopy-crowns`.
+D24. Horizontal crown impostors on the globe nadir, from `farTreesInTile`. Branch `grokbot-2/nadir-crown-discs`. `grokbot-2/canopy-crowns` is an older T-0185 branch and was left alone.
 
 ## Done
 

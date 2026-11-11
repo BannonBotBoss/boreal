@@ -23,7 +23,7 @@ import { dayAt, hourAt, sunPosition } from '../../core/timeOfDay';
 import { hash } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 import { coverSampleLatLon } from '../../world/globe/coverSample';
-import { PLANET, toLatLon, vegetationWeight, type Planet } from '../../world/globe/planet';
+import { PLANET, coverWeights, toLatLon, type Planet } from '../../world/globe/planet';
 import { tangentFrame } from '../../world/globe/landingSite';
 import { AERIAL } from '../../world/globe/aerialExemplar';
 
@@ -78,19 +78,37 @@ export function collectCrowns(
   return kept.slice(0, CROWN_CAP);
 }
 
-function coverAt(planet: Planet, east: THREE.Vector3, north: THREE.Vector3, up: THREE.Vector3) {
-  const cache = new Map<string, number>();
+/**
+ * Closed-stand weight from `coverWeights`. Canopy near 1 and shore near 0 is
+ * forest. Shore is capped at 0.30, so a whole ridge sits on that cap. The
+ * stand mottle that already feeds the shore term (planet.ts, ~150 m) is what
+ * still varies inside the cap: high mottle on that outcrop is a meadow,
+ * hundreds of metres is not the whole ridge. Fen that has already lowered
+ * canopy opens as well. `collectCrowns` drops a stem below 0.22.
+ */
+export function standDensity(canopy: number, shore: number, mottle = 0.5) {
+  const outcrop = smoothstep(0.20, 0.28, shore) * smoothstep(0.58, 0.74, mottle);
+  const closed = smoothstep(0.55, 0.92, canopy);
+  return Math.max(0, Math.min(1, closed * (1 - outcrop)));
+}
+
+interface CoverCell { canopy: number; shore: number; mottle: number; density: number }
+
+function coverField(planet: Planet, east: THREE.Vector3, north: THREE.Vector3, up: THREE.Vector3) {
+  const cache = new Map<string, CoverCell>();
   const R = PLANET.radius;
   const p = new THREE.Vector3();
-  return (x: number, z: number) => {
-    const key = `${Math.round(x / 24)}:${Math.round(z / 24)}`;
+  return (x: number, z: number): CoverCell => {
+    const key = `${Math.round(x / 12)}:${Math.round(z / 12)}`;
     const hit = cache.get(key);
-    if (hit !== undefined) return hit;
+    if (hit) return hit;
     p.copy(up).addScaledVector(east, x / R).addScaledVector(north, -z / R).normalize();
     const d = p.toArray() as [number, number, number];
-    const w = vegetationWeight(planet.sampleSurface(d), d);
-    cache.set(key, w);
-    return w;
+    const s = planet.sampleSurface(d);
+    const [canopy, , shore] = coverWeights(s, d);
+    const cell: CoverCell = { canopy, shore, mottle: s.mottle, density: standDensity(canopy, shore, s.mottle) };
+    cache.set(key, cell);
+    return cell;
   };
 }
 
@@ -152,10 +170,15 @@ void main() {
 }
 `;
 
-/** World-metre fbm. Wavelengths are 1.6 m, 5 m and 16 m, so there is no cell grid. */
+/**
+ * World-metre litter. `uCover` is canopy, shore, mottle from `coverWeights`
+ * over the same ground as the crowns. A shore outcrop lightens toward meadow.
+ * Nothing multiplies the colour down to black.
+ */
 const FLOOR_FRAG = `
 varying vec2 vUv;
 uniform vec2 uSize;
+uniform sampler2D uCover;
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -164,11 +187,6 @@ float noise(vec2 p) {
   f = f * f * (3.0 - 2.0 * f);
   float a = hash(i), b = hash(i + vec2(1.0, 0.0)), c = hash(i + vec2(0.0, 1.0)), d = hash(i + vec2(1.0, 1.0));
   return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-}
-float fbm(vec2 p) {
-  float s = 0.0, a = 0.55;
-  for (int i = 0; i < 4; i++) { s += a * noise(p); p = p * 2.05 + 3.1; a *= 0.5; }
-  return s;
 }
 void main() {
   vec2 m = (vUv - 0.5) * uSize;
@@ -181,9 +199,15 @@ void main() {
   c = mix(c, grass, smoothstep(0.45, 0.8, mid));
   c.r += 0.03 * (noise(m / 2.4) - 0.5);
   c.b = mix(0.12, 0.22, noise(m / 3.1 + 2.0));
+  vec3 cov = texture2D(uCover, vUv).rgb;
+  float canopy = cov.r;
+  float shore = cov.g;
+  float mottle = cov.b;
+  float open = max(smoothstep(0.20, 0.28, shore) * smoothstep(0.58, 0.74, mottle), 1.0 - smoothstep(0.55, 0.90, canopy));
+  vec3 meadow = vec3(0.22, 0.28, 0.15);
+  c = mix(c, meadow, open * 0.85);
   float grain = fract(sin(dot(m, vec2(12.9898, 78.233))) * 43758.5453);
   c *= 0.78 + 0.44 * grain;
-  if (noise(m / 18.0 + 5.0) > 0.9) c *= 0.2;
   gl_FragColor = vec4(c, 1.0);
 }
 `;
@@ -197,8 +221,16 @@ export interface OverheadCrowns {
 export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCrowns {
   const group = new THREE.Group();
   group.name = 'overhead-crowns';
+  const COVER_N = 160;
+  const coverData = new Uint8Array(COVER_N * COVER_N * 4);
+  const coverTex = new THREE.DataTexture(coverData, COVER_N, COVER_N);
+  coverTex.magFilter = THREE.LinearFilter;
+  coverTex.minFilter = THREE.LinearFilter;
+  coverTex.wrapS = THREE.ClampToEdgeWrapping;
+  coverTex.wrapT = THREE.ClampToEdgeWrapping;
+  coverTex.needsUpdate = true;
   const floorMat = new THREE.ShaderMaterial({
-    uniforms: { uSize: { value: new THREE.Vector2(1, 1) } },
+    uniforms: { uSize: { value: new THREE.Vector2(1, 1) }, uCover: { value: coverTex } },
     vertexShader: FLOOR_VERT,
     fragmentShader: FLOOR_FRAG,
     depthTest: false,
@@ -228,8 +260,8 @@ export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCr
   // Summer boreal conifer albedo is about 0.08 (Betts & Ball 1997, JGR 102, 28901).
   // Linear RGB, green a little above red and blue. A small sky-coloured emissive
   // holds the shade; the brighter side is still the scene sun.
-  const spruceMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.05, 0.09, 0.05), roughness: 0.94, metalness: 0, emissive: new THREE.Color().setRGB(0.022, 0.038, 0.024), emissiveIntensity: 1, side: THREE.DoubleSide, depthTest: false });
-  const aspenMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.07, 0.10, 0.045), roughness: 0.92, metalness: 0, emissive: new THREE.Color().setRGB(0.038, 0.048, 0.026), emissiveIntensity: 1, side: THREE.DoubleSide, depthTest: false });
+  const spruceMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.05, 0.09, 0.05), roughness: 0.94, metalness: 0, emissive: new THREE.Color().setRGB(0.016, 0.028, 0.018), emissiveIntensity: 1, side: THREE.DoubleSide, depthTest: false });
+  const aspenMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.07, 0.10, 0.045), roughness: 0.92, metalness: 0, emissive: new THREE.Color().setRGB(0.028, 0.036, 0.020), emissiveIntensity: 1, side: THREE.DoubleSide, depthTest: false });
   const grain = `
     float crownGrain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
     diffuseColor.rgb *= 0.45 + 0.55 * crownGrain;
@@ -281,14 +313,29 @@ export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCr
     const frame = tangentFrame([dir.x, dir.y, dir.z]);
     east.set(...frame.east); north.set(...frame.north); up.set(...frame.dir);
     flat.setFromRotationMatrix(new THREE.Matrix4().makeBasis(east, north, up));
-    const localCover = coverAt(planet, east, north, up);
-    const spots = collectCrowns(span.hx, span.hy, (x, z) => standAt(x, z).stems * cover.treeShare, () => 1, localCover);
+    const field = coverField(planet, east, north, up);
+    const spots = collectCrowns(span.hx, span.hy, (x, z) => standAt(x, z).stems * cover.treeShare, () => 1, (x, z) => field(x, z).density);
     const cam = camera.position;
     floor.visible = true;
     floor.quaternion.copy(flat);
     floor.position.copy(up).multiplyScalar(surfaceR).sub(cam);
-    floor.scale.set(span.hx * 2.4, span.hy * 2.4, 1);
-    floorMat.uniforms.uSize.value.set(span.hx * 2.4, span.hy * 2.4);
+    const sizeX = span.hx * 2.4, sizeY = span.hy * 2.4;
+    floor.scale.set(sizeX, sizeY, 1);
+    floorMat.uniforms.uSize.value.set(sizeX, sizeY);
+    for (let j = 0; j < COVER_N; j++) {
+      const v = (j + 0.5) / COVER_N;
+      const z = (0.5 - v) * sizeY;
+      for (let i = 0; i < COVER_N; i++) {
+        const u = (i + 0.5) / COVER_N;
+        const cell = field((u - 0.5) * sizeX, z);
+        const o = (j * COVER_N + i) * 4;
+        coverData[o] = Math.round(cell.canopy * 255);
+        coverData[o + 1] = Math.round(cell.shore * 255);
+        coverData[o + 2] = Math.round(cell.mottle * 255);
+        coverData[o + 3] = 255;
+      }
+    }
+    coverTex.needsUpdate = true;
     const away = shadowAway(planet, east, north);
     ax.copy(east).multiplyScalar(away.e).addScaledVector(north, away.n).normalize();
     ay.copy(up).cross(ax).normalize();
@@ -308,7 +355,10 @@ export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCr
       const jitter = 0.5 + (hash(`j:${spot.x}:${spot.z}`) % 50) / 100;
       const red = 0.65 + (hash(`r:${spot.x}:${spot.z}`) % 60) / 100;
       const blue = 0.3 + (hash(`b:${spot.x}:${spot.z}`) % 95) / 100;
-      mesh.instanceColor!.setXYZ(i, jitter * red, jitter, jitter * blue);
+      // Closed canopy (low shore) is the darker patch. An outcrop edge stays lighter.
+      const cell = field(spot.x, spot.z);
+      const shade = 0.88 + 0.12 * smoothstep(0.05, 0.28, cell.shore);
+      mesh.instanceColor!.setXYZ(i, jitter * red * shade, jitter * shade, jitter * blue * shade);
       const sh = at.clone().addScaledVector(ax, d * 0.62);
       m4.compose(sh, shQ, s.set(d * 0.55, d * 0.38, 1));
       shadows.setMatrixAt(nsh, m4);

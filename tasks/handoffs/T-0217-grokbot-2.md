@@ -6,4 +6,4 @@ Nadir crowns are instanced cones and low domes with `MeshStandardMaterial`, plus
 
 Frames: `tasks/evidence/T-0217/`. The crown reference is Esri World Imagery / NAIP at 48.094 N, 91.482 W. The game point 52 N, 97 W is lake and fen in that imagery.
 
-What is still wrong: smooth cones, a pale lit crescent instead of a separate ground shadow, and a soft ground with no litter detail.
+What is still wrong: smooth cones, and a meadow that is softer litter than the orthophoto's grass. The black floor multiply is gone, and the openings follow canopy and shore cover.

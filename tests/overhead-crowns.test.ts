@@ -1,7 +1,7 @@
 /** Overhead crowns follow cover, stay small, and fade in world metres. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { collectCrowns, viewSpan, CROWN_CAP } from '../src/render/trees/overheadCrowns';
+import { collectCrowns, viewSpan, CROWN_CAP, standDensity } from '../src/render/trees/overheadCrowns';
 
 test('the field covers the view and fades by world distance, not the screen edge', () => {
   const { hx, hy } = viewSpan(400, 45, 16 / 9);
@@ -38,6 +38,13 @@ test('the field covers the view and fades by world distance, not the screen edge
   assert.ok(close > 8, `clustered neighbours ${close}`);
   assert.ok(scales[0] < 3.4 && scales[scales.length - 1] > 6 && scales[scales.length - 1] < 8, `spread ${scales[0].toFixed(1)}..${scales[scales.length - 1].toFixed(1)}`);
   assert.ok(groups[0] > groups[2] && groups[2] > 20, `groups ${groups.join(',')}`);
+});
+
+test('a shore outcrop opens the stand and closed canopy stays dense', () => {
+  assert.ok(standDensity(0.99, 0.02, 0.9) > 0.9, `closed ${standDensity(0.99, 0.02, 0.9)}`);
+  assert.ok(standDensity(0.70, 0.30, 0.9) < 0.05, `outcrop ${standDensity(0.70, 0.30, 0.9)}`);
+  assert.ok(standDensity(0.70, 0.30, 0.3) > 0.25, `ridge without the mottle ${standDensity(0.70, 0.30, 0.3)}`);
+  assert.ok(standDensity(0.85, 0.04, 0.9) > standDensity(0.85, 0.27, 0.9), 'shore thins the same canopy');
 });
 
 test('a low cover sample opens a gap', () => {

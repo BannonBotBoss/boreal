@@ -3,11 +3,17 @@
   "shot": "52.05 N, 96.94 W, alt 400 and 800, hour 8.3, day 227",
   "referenceUrl": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-96.947,52.047,-96.933,52.053&bboxSR=4326&size=1280,720&format=jpg&f=image",
   "instances": {
-    "at400": 7598,
-    "at800": 25542
+    "at400": 4355,
+    "at800": 16397
   },
-  "diagnosis": "The earlier frame had 18045 instances and a geometric crown area about 3 times the view, so the crowns were not culled and not missing from the GPU. They were darker than the green threshold except for the yellow tips, so the measured canopy fraction collapsed.",
-  "albedo": "Diffuse colour is linear RGB with green 0.09–0.10 (Betts and Ball 1997, JGR 102, 28901, summer boreal conifer albedo about 0.08). A small sky-coloured emissive keeps the shade from going black. Instance colour stays at or below 1.",
+  "blocks": {
+    "note": "Rec. 709 luminance. No 8x8 block in the frame may sit under the reference 1st percentile.",
+    "referenceP01": 15.08,
+    "darkest8At400": 29.63,
+    "darkest8At800": 31.86
+  },
+  "openings": "Tree survival is standDensity(canopy, shore, mottle) from coverWeights. Shore is capped at 0.30, so the stand mottle that already feeds that term opens meadows inside the outcrop. The floor has no black multiply.",
+  "albedo": "Diffuse colour is linear RGB with green 0.09 (Betts and Ball 1997, JGR 102, 28901, summer boreal conifer albedo about 0.08). A small sky-coloured emissive keeps the shade above the reference dark floor. Instance colour stays at or below 1.",
   "referenceStats": {
     "coverage": 0.8765,
     "r": {
@@ -36,194 +42,96 @@
     }
   },
   "after400": {
-    "coverage": 0.9593,
+    "coverage": 0.9135,
     "r": {
-      "mean": 53.2715,
-      "sd": 13.3343
+      "mean": 56.2564,
+      "sd": 7.9076
     },
     "g": {
-      "mean": 68.3551,
-      "sd": 13.7182
+      "mean": 71.3646,
+      "sd": 8.9477
     },
     "b": {
-      "mean": 39.8358,
-      "sd": 7.6783
+      "mean": 39.5578,
+      "sd": 5.1264
     },
     "h": {
-      "mean": 95.3557,
-      "sd": 13.1573
+      "mean": 89.2367,
+      "sd": 5.2712
     },
     "s": {
-      "mean": 0.4124,
-      "sd": 0.0729
+      "mean": 0.4441,
+      "sd": 0.0431
     },
     "v": {
-      "mean": 0.2681,
-      "sd": 0.0538
+      "mean": 0.2799,
+      "sd": 0.0351
     }
   },
   "after800": {
-    "coverage": 0.9731,
+    "coverage": 0.9499,
     "r": {
-      "mean": 52.7045,
-      "sd": 11.5602
+      "mean": 54.2474,
+      "sd": 9.2336
     },
     "g": {
-      "mean": 67.7478,
-      "sd": 12.0262
+      "mean": 69.1732,
+      "sd": 10.272
     },
     "b": {
-      "mean": 39.5425,
-      "sd": 6.789
+      "mean": 38.7025,
+      "sd": 5.655
     },
     "h": {
-      "mean": 94.5265,
-      "sd": 10.5878
+      "mean": 90.4344,
+      "sd": 6.1921
     },
     "s": {
-      "mean": 0.4121,
-      "sd": 0.0633
+      "mean": 0.4382,
+      "sd": 0.044
     },
     "v": {
-      "mean": 0.2657,
-      "sd": 0.0472
+      "mean": 0.2713,
+      "sd": 0.0403
     }
   },
   "compare400": [
     {
       "channel": "r",
       "stat": "mean",
-      "frame": 53.271,
+      "frame": 56.256,
       "reference": 52.938,
-      "rel": 0.006,
+      "rel": 0.063,
       "within15": true
     },
     {
       "channel": "r",
       "stat": "sd",
-      "frame": 13.334,
+      "frame": 7.908,
       "reference": 16.782,
-      "rel": 0.205,
+      "rel": 0.529,
       "within15": false
     },
     {
       "channel": "g",
       "stat": "mean",
-      "frame": 68.355,
+      "frame": 71.365,
       "reference": 71.949,
-      "rel": 0.05,
+      "rel": 0.008,
       "within15": true
     },
     {
       "channel": "g",
       "stat": "sd",
-      "frame": 13.718,
+      "frame": 8.948,
       "reference": 15.625,
-      "rel": 0.122,
-      "within15": true
-    },
-    {
-      "channel": "b",
-      "stat": "mean",
-      "frame": 39.836,
-      "reference": 43.55,
-      "rel": 0.085,
-      "within15": true
-    },
-    {
-      "channel": "b",
-      "stat": "sd",
-      "frame": 7.678,
-      "reference": 13.665,
-      "rel": 0.438,
-      "within15": false
-    },
-    {
-      "channel": "h",
-      "stat": "mean",
-      "frame": 95.356,
-      "reference": 101.399,
-      "rel": 0.06,
-      "within15": true
-    },
-    {
-      "channel": "h",
-      "stat": "sd",
-      "frame": 13.157,
-      "reference": 12.692,
-      "rel": 0.037,
-      "within15": true
-    },
-    {
-      "channel": "s",
-      "stat": "mean",
-      "frame": 0.412,
-      "reference": 0.403,
-      "rel": 0.023,
-      "within15": true
-    },
-    {
-      "channel": "s",
-      "stat": "sd",
-      "frame": 0.073,
-      "reference": 0.098,
-      "rel": 0.257,
-      "within15": false
-    },
-    {
-      "channel": "v",
-      "stat": "mean",
-      "frame": 0.268,
-      "reference": 0.282,
-      "rel": 0.05,
-      "within15": true
-    },
-    {
-      "channel": "v",
-      "stat": "sd",
-      "frame": 0.054,
-      "reference": 0.061,
-      "rel": 0.122,
-      "within15": true
-    }
-  ],
-  "compare800": [
-    {
-      "channel": "r",
-      "stat": "mean",
-      "frame": 52.704,
-      "reference": 52.938,
-      "rel": 0.004,
-      "within15": true
-    },
-    {
-      "channel": "r",
-      "stat": "sd",
-      "frame": 11.56,
-      "reference": 16.782,
-      "rel": 0.311,
-      "within15": false
-    },
-    {
-      "channel": "g",
-      "stat": "mean",
-      "frame": 67.748,
-      "reference": 71.949,
-      "rel": 0.058,
-      "within15": true
-    },
-    {
-      "channel": "g",
-      "stat": "sd",
-      "frame": 12.026,
-      "reference": 15.625,
-      "rel": 0.23,
+      "rel": 0.427,
       "within15": false
     },
     {
       "channel": "b",
       "stat": "mean",
-      "frame": 39.542,
+      "frame": 39.558,
       "reference": 43.55,
       "rel": 0.092,
       "within15": true
@@ -231,57 +139,155 @@
     {
       "channel": "b",
       "stat": "sd",
-      "frame": 6.789,
+      "frame": 5.126,
       "reference": 13.665,
-      "rel": 0.503,
+      "rel": 0.625,
       "within15": false
     },
     {
       "channel": "h",
       "stat": "mean",
-      "frame": 94.527,
+      "frame": 89.237,
       "reference": 101.399,
-      "rel": 0.068,
+      "rel": 0.12,
       "within15": true
     },
     {
       "channel": "h",
       "stat": "sd",
-      "frame": 10.588,
+      "frame": 5.271,
       "reference": 12.692,
-      "rel": 0.166,
+      "rel": 0.585,
       "within15": false
     },
     {
       "channel": "s",
       "stat": "mean",
-      "frame": 0.412,
+      "frame": 0.444,
       "reference": 0.403,
-      "rel": 0.022,
+      "rel": 0.101,
       "within15": true
     },
     {
       "channel": "s",
       "stat": "sd",
-      "frame": 0.063,
+      "frame": 0.043,
       "reference": 0.098,
-      "rel": 0.355,
+      "rel": 0.561,
       "within15": false
     },
     {
       "channel": "v",
       "stat": "mean",
-      "frame": 0.266,
+      "frame": 0.28,
       "reference": 0.282,
-      "rel": 0.058,
+      "rel": 0.008,
       "within15": true
     },
     {
       "channel": "v",
       "stat": "sd",
-      "frame": 0.047,
+      "frame": 0.035,
       "reference": 0.061,
-      "rel": 0.23,
+      "rel": 0.427,
+      "within15": false
+    }
+  ],
+  "compare800": [
+    {
+      "channel": "r",
+      "stat": "mean",
+      "frame": 54.247,
+      "reference": 52.938,
+      "rel": 0.025,
+      "within15": true
+    },
+    {
+      "channel": "r",
+      "stat": "sd",
+      "frame": 9.234,
+      "reference": 16.782,
+      "rel": 0.45,
+      "within15": false
+    },
+    {
+      "channel": "g",
+      "stat": "mean",
+      "frame": 69.173,
+      "reference": 71.949,
+      "rel": 0.039,
+      "within15": true
+    },
+    {
+      "channel": "g",
+      "stat": "sd",
+      "frame": 10.272,
+      "reference": 15.625,
+      "rel": 0.343,
+      "within15": false
+    },
+    {
+      "channel": "b",
+      "stat": "mean",
+      "frame": 38.703,
+      "reference": 43.55,
+      "rel": 0.111,
+      "within15": true
+    },
+    {
+      "channel": "b",
+      "stat": "sd",
+      "frame": 5.655,
+      "reference": 13.665,
+      "rel": 0.586,
+      "within15": false
+    },
+    {
+      "channel": "h",
+      "stat": "mean",
+      "frame": 90.434,
+      "reference": 101.399,
+      "rel": 0.108,
+      "within15": true
+    },
+    {
+      "channel": "h",
+      "stat": "sd",
+      "frame": 6.192,
+      "reference": 12.692,
+      "rel": 0.512,
+      "within15": false
+    },
+    {
+      "channel": "s",
+      "stat": "mean",
+      "frame": 0.438,
+      "reference": 0.403,
+      "rel": 0.087,
+      "within15": true
+    },
+    {
+      "channel": "s",
+      "stat": "sd",
+      "frame": 0.044,
+      "reference": 0.098,
+      "rel": 0.551,
+      "within15": false
+    },
+    {
+      "channel": "v",
+      "stat": "mean",
+      "frame": 0.271,
+      "reference": 0.282,
+      "rel": 0.039,
+      "within15": true
+    },
+    {
+      "channel": "v",
+      "stat": "sd",
+      "frame": 0.04,
+      "reference": 0.061,
+      "rel": 0.343,
       "within15": false
     }
   ]

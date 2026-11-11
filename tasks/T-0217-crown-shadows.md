@@ -31,14 +31,14 @@ Shot at 52.05 N, 96.94 W, the boreal cell next to the game point. 48.094 N, 91.4
 
 Green-canopy pixels: green at least red and blue, green above 40, no channel at 220 or above. Reference crop coverage 0.877.
 
-| | coverage | R mean/sd | G mean/sd | B mean/sd |
-|---|---|---|---|---|
-| reference | 0.877 | 52.9 / 16.8 | 71.9 / 15.6 | 43.5 / 13.7 |
-| 400 m | 0.959 | 53.3 / 13.3 | 68.4 / 13.7 | 39.8 / 7.7 |
-| 800 m | 0.973 | 52.7 / 11.6 | 67.7 / 12.0 | 39.5 / 6.8 |
+| | coverage | R mean/sd | G mean/sd | B mean/sd | darkest 8×8 |
+|---|---|---|---|---|---|
+| reference | 0.877 | 52.9 / 16.8 | 71.9 / 15.6 | 43.5 / 13.7 | p01 luminance 15.1 |
+| 400 m | 0.914 | 56.3 / 7.9 | 71.4 / 8.9 | 39.6 / 5.1 | 29.6 |
+| 800 m | 0.950 | 54.2 / 9.2 | 69.2 / 10.3 | 38.7 / 5.7 | 31.9 |
 
-Coverage is inside 10 points (8.3 and 9.7). Every mean is inside 15%. Blue's standard deviation is not: 7.7 and 6.8 against 13.7. Full table: `tasks/evidence/T-0217/canopy-stats.json`.
+Coverage is inside 10 points (3.7 and 7.3). Every mean is inside 15%. The standard deviations are still wider in the photograph. No 8×8 block is under the reference 1st percentile (15.1). Full table: `tasks/evidence/T-0217/canopy-stats.json`.
 
-7598 crowns at 400 m, 25542 at 800 m. The earlier 18045-instance frame had a geometric crown area about three times the view, so the trees were not culled. They were too dark to count except for the yellow tips.
+4355 crowns at 400 m, 16397 at 800 m. Openings follow `coverWeights`: shore is capped at 0.30 on this ridge, and the stand mottle that already feeds that term clears meadows inside the outcrop. The floor shader no longer multiplies a noise cell by 0.2, which was the black holes.
 
-Still not the photograph. The crowns are smooth cones. The lit side is a lighter green edge, not a separate shadow on the ground. The ground is soft, and a few dark holes are wider than the photo's gaps.
+Still not the photograph. The crowns are smooth cones, and the meadow is a softer litter than the orthophoto's grass.

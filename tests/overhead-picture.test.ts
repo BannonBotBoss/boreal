@@ -2,7 +2,7 @@
  * Picture check for overhead crowns (T-0214).
  * Centre window, median green channel.
  * The old frame is the tiled canopy: median green 89 at 400 m and 83 at 800 m.
- * The impostor frame is a smooth darker floor with crowns on it: median 35 and 37.
+ * The impostor frame is a smooth darker floor with crowns on it: median 37 and 38.
  * Known mismatch is a median above 70. Pass is a median under 55.
  */
 import { test } from 'node:test';

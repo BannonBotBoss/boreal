@@ -14,7 +14,7 @@ Matthew, 2026-11-10 20:07 PT: "I told you, no waiting on me". Matthew, 2026-11-0
 
 Credits 39 = 10 x 3 objectives x (1 + 0.3 research). Not from scratch: `farTreesInTile` and the globe nadir already exist.
 
-D24. PR #429 painted a NAIP texture and the 400 m and 800 m views stayed a noise field. The first impostor pass on this branch was identical black dots inside a circle. This pass bakes a lit top-down billboard of the existing spruce mid-LOD (three seeds). The octahedral shader does not compile here (`unpackRGBToNormal`). The tiled canopy under the billboards is replaced by a smooth litter and moss floor.
+D24. PR #429 painted a NAIP texture and the views stayed a noise field. Identical discs in a circle were rejected. An octahedral impostor of the whole spruce, stood on the radial, turns into streaks that point at the nadir. These frames are lit top-down billboards of that spruce's foliage, three seeds, on a smooth floor.
 
 ## Objectives
 
@@ -29,8 +29,8 @@ URL `?view=globe&latlon=52,-97&shot=1&localClouds=0&hour=8.3&day=227&tier=5` wit
 | frame | what it shows |
 |---|---|
 | `before-400.png` | Green and brown tile noise across the whole frame. Median green 89. No crown you can point at. |
-| `after-400.png` | Clusters of rounded spruce crowns, bright in the middle and dark at the rim, with soft shadows. They touch inside the clusters and leave olive gaps. The floor is smooth, not the tiled noise. They thin toward the edges of the frame. Median green 35. They are three baked shapes repeated, not the NAIP photograph. |
+| `after-400.png` | Clusters of rounded foliage crowns, brighter in the middle, with dark rims and soft shadows. Many touch inside a cluster. Olive ground shows in the gaps. The floor is smooth, not the tiled noise. Crowns thin toward the edges. Median green 37. Three baked shapes, not the NAIP photograph. |
 | `before-800.png` | The same noise. Median green 83. |
-| `after-800.png` | The same crowns, smaller and more separated. Clusters and gaps remain. The floor is smooth. Median green 37. |
+| `after-800.png` | The same crowns, smaller and more separated. Clusters and gaps remain. The floor is smooth. They thin at the edges. Median green 38. |
 
 Median green of the centre window: before above 70, after under 55.

@@ -1,12 +1,12 @@
 /**
  * Overhead crowns from the existing spruce (D24).
  *
- * Top-down billboards baked from the mid LOD of buildConifer (three seeds).
- * The octahedral impostor shader does not compile in this WebGL build
- * (unpackRGBToNormal). A lit orthographic render of the same mesh is the
- * billboard. Each disc lies in the tangent plane, with a soft shadow beside
- * it. Placement is farTreesInTile across the whole nadir rectangle, faded
- * toward the frame edge rather than cut off in a circle.
+ * Overhead crowns. An octahedral impostor of the spruce, stood on the radial,
+ * shows the side of the tree anywhere off the nadir and the frame becomes a
+ * vortex of streaks. The billboard is a lit render of that same foliage mesh
+ * from above, laid in the tangent plane, so every instance stays a crown.
+ * Three seeds, per-instance scale and tint, a soft shadow. farTreesInTile fills
+ * the view rectangle and fades at the frame edge. The tiled canopy is off.
  */
 import * as THREE from 'three';
 import { FAR_TREES, farTreesInTile } from '../../core/flora/stands';
@@ -74,21 +74,20 @@ function shadowTexture() {
   return tex;
 }
 
-/** One lit top-down billboard of a real spruce. The octahedral material failed to compile here. */
+/** Lit top-down billboard of one spruce's foliage. */
 function bakeTopDown(renderer: THREE.WebGLRenderer, root: THREE.Object3D): { texture: THREE.Texture; width: number } {
   root.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const reach = Math.max(size.x, size.z, 1) * 0.62;
-  const cam = new THREE.OrthographicCamera(-reach, reach, reach, -reach, 0.05, size.y + 4);
-  cam.position.set(center.x + reach * 0.42, center.y + Math.max(size.y, 1) * 0.85, center.z + reach * 0.22);
+  const cam = new THREE.OrthographicCamera(-reach, reach, reach, -reach, 0.05, Math.max(size.y, 1) + 4);
+  cam.position.set(center.x, box.max.y + 1.5, center.z);
   cam.up.set(0, 0, -1);
-  cam.lookAt(center.x, center.y, center.z);
-  const sun = new THREE.DirectionalLight(0xfff1d6, 2.4);
-  sun.position.set(center.x + reach, box.max.y + reach, center.z + reach * 0.35);
-  sun.intensity = 1.15;
-  const sky = new THREE.AmbientLight(0x8aa4c4, 0.35);
+  cam.lookAt(center);
+  const sun = new THREE.DirectionalLight(0xfff1d6, 1.3);
+  sun.position.set(center.x + reach, box.max.y + reach, center.z + reach * 0.4);
+  const sky = new THREE.AmbientLight(0x8aa4c4, 0.45);
   const scene = new THREE.Scene();
   scene.add(root, sun, sky);
   const rt = new THREE.WebGLRenderTarget(256, 256, { format: THREE.RGBAFormat });
@@ -119,7 +118,7 @@ function disposeTree(root: THREE.Object3D) {
 
 export interface OverheadCrowns {
   group: THREE.Group;
-  update(dir: THREE.Vector3, altM: number, surfaceR: number, planet: Planet, aspect: number, fovDeg: number): number;
+  update(dir: THREE.Vector3, altM: number, surfaceR: number, planet: Planet, aspect: number, fovDeg: number, camera: THREE.Camera): number;
   dispose(): void;
 }
 
@@ -137,7 +136,7 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
   shadows.count = 0;
   group.add(shadows);
   const meshes: THREE.InstancedMesh[] = [];
-  const widths: number[] = [];
+  const diameters: number[] = [];
   let baked = false;
   const pub = { count: 0, alt: 0 };
   (globalThis as { __crowns?: typeof pub }).__crowns = pub;
@@ -152,10 +151,11 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
     for (const seed of [11, 29, 53]) {
       const tree = buildConifer('black-spruce', seed, 55 + (seed % 40));
       try {
-        const shot = bakeTopDown(renderer, tree.mid);
+        const foliage = tree.mid.children[1] ?? tree.mid;
+        const shot = bakeTopDown(renderer, foliage);
         const mesh = new THREE.InstancedMesh(
           new THREE.PlaneGeometry(1, 1),
-          new THREE.MeshBasicMaterial({ map: shot.texture, alphaTest: 0.28, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }),
+          new THREE.MeshBasicMaterial({ map: shot.texture, alphaTest: 0.22, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }),
           CROWN_CAP,
         );
         mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(CROWN_CAP * 3), 3);
@@ -164,9 +164,9 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
         mesh.renderOrder = 2;
         group.add(mesh);
         meshes.push(mesh);
-        widths.push(shot.width);
+        diameters.push(shot.width);
       } catch (err) {
-        console.warn('overhead billboard bake failed', err);
+        console.warn('overhead crown bake failed', err);
       }
       disposeTree(tree.near);
       disposeTree(tree.mid);
@@ -174,7 +174,7 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
     }
   }
 
-  function update(dir: THREE.Vector3, altM: number, surfaceR: number, _planet: Planet, aspect: number, fovDeg: number) {
+  function update(dir: THREE.Vector3, altM: number, surfaceR: number, _planet: Planet, aspect: number, fovDeg: number, camera: THREE.Camera) {
     pub.alt = altM;
     const show = altM > 180 && altM < 2200;
     AERIAL.uCrownFloor.value = show ? 1 : 0;
@@ -203,8 +203,9 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
     const frame = tangentFrame([dir.x, dir.y, dir.z]);
     east.set(...frame.east); north.set(...frame.north); up.set(...frame.dir);
     flat.setFromRotationMatrix(new THREE.Matrix4().makeBasis(east, north, up));
+    const cam = camera.position;
     const counts = meshes.map(() => 0);
-    const hues: [number, number, number][] = [[0.55, 0.72, 0.4], [0.72, 0.62, 0.32], [0.4, 0.58, 0.3], [0.85, 0.78, 0.38]];
+    const hues: [number, number, number][] = [[0.82, 1.05, 0.72], [1.08, 0.92, 0.62], [0.7, 0.88, 0.58], [1.05, 1.12, 0.78]];
     let n = 0;
     for (const spot of spots) {
       const vi = spot.slot % meshes.length;
@@ -212,14 +213,15 @@ export function createOverheadCrowns(renderer: THREE.WebGLRenderer): OverheadCro
       const i = counts[vi]++;
       if (i >= CROWN_CAP) continue;
       at.copy(up).multiplyScalar(surfaceR).addScaledVector(east, spot.x).addScaledVector(north, -spot.z);
-      at.setLength(surfaceR + 2);
-      const sc = widths[vi] * spot.scale * 2.4 * Math.max(0.05, spot.fade);
+      at.setLength(surfaceR + 1);
+      at.sub(cam);
+      const sc = diameters[vi] * spot.scale * 2.2 * Math.max(0.05, spot.fade);
       m4.compose(at, flat, s.set(sc, sc, 1));
       mesh.setMatrixAt(i, m4);
       const hue = hues[hash(`hue:${spot.x}:${spot.z}`) % hues.length];
       mesh.instanceColor!.setXYZ(i, hue[0], hue[1], hue[2]);
-      const sh = at.clone().addScaledVector(east, sc * 0.18).setLength(surfaceR + 0.2);
-      m4.compose(sh, flat, s.set(sc * 1.35, sc * 1.05, 1));
+      const sh = at.clone().addScaledVector(east, sc * 0.16);
+      m4.compose(sh, flat, s.set(sc * 1.25, sc * 0.95, 1));
       shadows.setMatrixAt(n, m4);
       n++;
     }

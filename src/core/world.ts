@@ -58,6 +58,11 @@ const inRiver = (x: number, z: number) => { const r = riverAt(STAGES.seed, x, z)
 /** Revalidate land-bound encounters after restoring old events against the current terrain. */
 export const isDryLand = (x: number, z: number, h = heightAt(x, z)) => h >= LEVEL.shore
   && !(STAGES.on && (lakeAt(STAGES.seed, x, z) || pondAt(STAGES.seed, x, z) || inRiver(x, z)));
+/** Home picture fit. Null in the chunk-digest test, so that digest stays put. The game installs the cover sample. */
+export type PictureFit = { share: number; scaleMul: number };
+let pictureFit: ((x: number, z: number) => PictureFit) | null = null;
+export function setPictureFit(fn: ((x: number, z: number) => PictureFit) | null) { pictureFit = fn; }
+
 export const chunkSeed = (cx: number, cz: number, worldSeed = WORLD_SEED) => {
   const salt = siteSalt(); // 0 at home, so the hashed string (and the chunk digest) stays the one the tests pin
   const body = `${GENERATOR_VERSION}:${f('chunk', 'worldSeed', worldSeed)}:${cx}:${cz}`;
@@ -72,14 +77,20 @@ export function generateChunk(cx: number, cz: number, worldSeed = WORLD_SEED): E
     scope(`${cx}:${cz}:${i}`);
     const x = f('draw', 'x', (cx + rng()) * CHUNK_SIZE), z = f('draw', 'z', (cz + rng()) * CHUNK_SIZE);
     const roll = rng(), rawSeed = f('draw', 'seed', Math.floor(rng() * 0xffffffff)), rotation = f('draw', 'rotation', rng() * Math.PI * 2);
-    const scale = f('draw', 'scale', .75 + rng() * .65);
+    let scale = f('draw', 'scale', .75 + rng() * .65);
     const h = heightAt(x, z);
     if (!isDryLand(x, z, h) || Math.hypot(x, z) < 13) continue;
     const kind: Kind = choose('draw', 'kind', roll, KIND_TABLE);
     if ((kind === 'spruce' || kind === 'log' || kind === 'deer') && !plantsGrowAt(h)) continue; // T-0072: above the tree line no trees. Deer use the same line.
     // #192 T-0127: off home the landing's cover class thins trees and logs (desert, prairie, ice). Own stream, so a refusal
-    // does not shift later draws; home keeps share 1 and draws nothing, so the pinned chunk digest is unchanged.
-    if ((kind === 'spruce' || kind === 'log') && SITE.remote && SITE.treeShare < 1 && random(hash(`cover-tree:${worldSeed}:${cx}:${cz}:${i}`))() >= SITE.treeShare) continue;
+    // does not shift later draws. At home the picture fit (the same sample the HUD reads) does the same when it is
+    // installed. With no fit the share stays 1, so the pinned chunk digest is unchanged.
+    if (kind === 'spruce' || kind === 'log') {
+      const fit = SITE.remote ? null : pictureFit?.(x, z);
+      const share = SITE.remote ? SITE.treeShare : (fit?.share ?? 1);
+      if (share < 1 && random(hash(`cover-tree:${worldSeed}:${cx}:${cz}:${i}`))() >= share) continue;
+      if ((fit?.scaleMul ?? 1) < 1) scale *= fit!.scaleMul;
+    }
     if (kind === 'plant' && !groundPlantsGrowAt(h)) continue; // herbs grow on Arctic tundra too, not on mountain rock or ice
     // Herbs: a separate stream so a rejection does not shift later trees, rocks or deer. Acceptance probability is site light.
     if (kind === 'plant') {

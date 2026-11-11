@@ -7,14 +7,13 @@
  */
 import * as THREE from 'three';
 import { heightAt } from '../core/world';
-import { vegetationWeight, type Planet } from '../world/globe/planet';
-import { coverRow, coverSpots, type CoverKind } from '../world/globe/coverKind';
-import { skirtLatLon, type SkirtOrigin } from '../world/globe/horizonSkirt';
+import { type Planet } from '../world/globe/planet';
+import { coverSpots, type CoverKind } from '../world/globe/coverKind';
+import { coverSampleAt } from '../world/globe/coverSample';
+import { type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { treeAtlas } from './trees/billboardAtlas';
 import { CC0_TREES, bakeTreeAtlas } from './trees/cc0Impostors';
-import { elevationWins, sampleDem } from '../world/globe/openTiles';
 import { STYLIZED } from './stylizedPalette';
-import { liveCoastM } from '../core/planetWeather';
 
 const CAP = 4096;
 const ATLAS = treeAtlas();
@@ -97,18 +96,13 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     });
   }
 
-  function update(planet: Planet, cx: number, cz: number, origin: SkirtOrigin) {
-    const ll = skirtLatLon(planet, cx, cz, origin.remote);
-    const s = planet.sampleSurface(ll.dir);
-    const coastM = liveCoastM(ll.latDeg, ll.lonDeg);
-    const veg = vegetationWeight(s, ll.dir, coastM);
-    const dem = sampleDem(ll.latDeg, ll.lonDeg);
-    const water = !elevationWins(s.kind, dem) && (s.kind === 'ocean' || s.kind === 'lake' || s.h < s.level);
-    const row = coverRow(ll.latDeg, ll.lonDeg, dem != null && dem > 0 ? dem : s.h, veg, water, coastM);
-    const kind = row.kind;
+  function update(_planet: Planet, cx: number, cz: number, _origin: SkirtOrigin) {
+    // Same sample the HUD publishes. A photo of steppe is prairie here, not the planet's own forest weight.
+    const sample = coverSampleAt(cx, cz);
+    const kind = sample.biome;
     bake();
     const cols = colsUniform.value;
-    const next = `${kind}:${row.heightM.toFixed(1)}:${cols}:${dem != null ? Math.round(dem) : 'x'}:${Math.round(cx / 40)}:${Math.round(cz / 40)}`;
+    const next = `${kind}:${sample.heightM.toFixed(1)}:${cols}:${Math.round(sample.elevM)}:${Math.round(cx / 40)}:${Math.round(cz / 40)}`;
     if (next === key) return kind;
     key = next;
     const spots = coverSpots(cx, cz, kind);
@@ -116,7 +110,7 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     for (let i = 0; i < spots.length; i++) {
       const s = spots[i];
       dummy.position.set(s.x, heightAt(s.x, s.z), s.z);
-      const tall = billboardScale(row.heightM, s.x);
+      const tall = billboardScale(sample.heightM, s.x);
       dummy.scale.set(tall, tall, 1);
       dummy.lookAt(cx, dummy.position.y + 4, cz);
       dummy.updateMatrix();
@@ -131,8 +125,8 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.userData.kind = kind;
     mesh.userData.count = spots.length;
-    mesh.userData.heightM = row.heightM;
-    mesh.userData.stemsPerHa = row.stemsPerHa;
+    mesh.userData.heightM = sample.heightM;
+    mesh.userData.stemsPerHa = sample.stemsPerHa;
     return kind;
   }
 

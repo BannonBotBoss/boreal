@@ -12,6 +12,7 @@ import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { PATCH_FAR } from './fade';
 import { biomeGrade, blendDem, blendPhoto, demSlope, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { coverSampleAt } from '../world/globe/coverSample';
 import { GLSL_NOISE } from '../proc/glsl';
 import { canopyTile } from './trees/billboardAtlas';
 
@@ -144,8 +145,9 @@ export function createHorizonSkirt(): HorizonSkirt {
     const snap = HORIZON_SKIRT.snapM;
     const next = `${originKey}:${Math.round(cx / snap)}:${Math.round(cz / snap)}:${Math.round(Math.log2(Math.max(1, eyeM)) * 8)}:${Math.round(Math.atan2(forwardZ, forwardX) * 4)}:${openTileGeneration()}`;
     made.cam.value.set(cx, cz);
-    const latAbs = Math.abs(hereLL.latDeg);
-    made.forest.value = latAbs >= 48 && latAbs < 70 ? 1 : latAbs >= 32 && latAbs < 48 ? 0.45 : 0;
+    const cover = coverSampleAt(cx, cz);
+    // Closed canopy only where the same sample the HUD reads is forest. A prairie photograph does not grow one.
+    made.forest.value = cover.biome === 'boreal' || cover.biome === 'tropical' ? 1 : cover.biome === 'wetland' ? 0.45 : 0;
     if (next === key) return false;
     key = next;
     const here = origin;

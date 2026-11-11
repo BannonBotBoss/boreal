@@ -292,9 +292,11 @@ varying vec2 vSpriteUV3;
 
 #ifdef EZ_USE_NORMAL
 vec3 blendNormals(vec2 uv1, vec2 uv2, vec2 uv3) {
-  vec3 normalDepth1 = unpackRGBToNormal(texture2D(normalMap, uv1).rgb); // we're reading twice if parallax enabled
-  vec3 normalDepth2 = unpackRGBToNormal(texture2D(normalMap, uv2).rgb);
-  vec3 normalDepth3 = unpackRGBToNormal(texture2D(normalMap, uv3).rgb);
+  // ANGLE does not match a .rgb swizzle to unpackRGBToNormal(const in vec3).
+  // The function is 2*rgb-1 (three packing.glsl.js).
+  vec3 normalDepth1 = texture2D(normalMap, uv1).rgb * 2.0 - 1.0;
+  vec3 normalDepth2 = texture2D(normalMap, uv2).rgb * 2.0 - 1.0;
+  vec3 normalDepth3 = texture2D(normalMap, uv3).rgb * 2.0 - 1.0;
 
   // Fix normal if blended bad
 
@@ -432,10 +434,10 @@ export function bakeAtlas(renderer: THREE.WebGLRenderer, target: THREE.Object3D,
  *  shading in the viewer [game calibration]. */
 export const IMPOSTOR_FX = { normalMix: { value: .25 }, upBend: { value: .15 }, tint: { value: new THREE.Vector3(.39, .42, .8) } }; // tint (M2): linear albedo gain; the flat impostor misses the needle cards' sky sheen, so it read yellow next to the near LOD (B/G .5 vs .72); rescaled for the lifted M2 needle colour so its median matches the near LOD [game calibration] // upBend: the camera-facing normal bent toward world up (the near LOD's crown normals lean up); .15 matches the near LOD's rendered brightness in the viewer [game calibration]
 /** Impostor material over MeshStandardMaterial (upstream createOctahedralImpostorMaterial, hemi + normal, opaque). */
-export function impostorMaterial(atlas: Atlas, spritesPerSide = 8, alphaClamp = .4) {
+export function impostorMaterial(atlas: Atlas, spritesPerSide = 8, alphaClamp = .4, tint: THREE.Vector3 = IMPOSTOR_FX.tint.value) {
   const m = new THREE.MeshStandardMaterial({ roughness: .7 }); m.userData.shared = true; // the near foliage's roughness (M2: .85 lost the sky sheen, a yellow cast)
   (m as unknown as { map: THREE.Texture }).map = atlas.albedo; m.normalMap = atlas.normalDepth;
-  const u = { uNormalMix: IMPOSTOR_FX.normalMix, uUpBend: IMPOSTOR_FX.upBend, uImpTint: IMPOSTOR_FX.tint, spritesPerSide: { value: spritesPerSide }, alphaClamp: { value: alphaClamp }, impostorTransform: { value: atlas.transform } };
+  const u = { uNormalMix: IMPOSTOR_FX.normalMix, uUpBend: IMPOSTOR_FX.upBend, uImpTint: { value: tint }, spritesPerSide: { value: spritesPerSide }, alphaClamp: { value: alphaClamp }, impostorTransform: { value: atlas.transform } };
   m.onBeforeCompile = s => {
     s.defines = { ...s.defines, EZ_USE_HEMI_OCTAHEDRON: true, EZ_USE_NORMAL: true }; Object.assign(s.uniforms, u);
     s.vertexShader = s.vertexShader.replace('#include <clipping_planes_pars_vertex>', P_VERT).replace('#include <project_vertex>', VERT);
@@ -448,7 +450,7 @@ export function impostorMaterial(atlas: Atlas, spritesPerSide = 8, alphaClamp = 
   return m;
 }
 /** One InstancedMesh of impostors (PlaneGeometry, oriented in the shader); `count` capacity. */
-export function impostorMesh(atlas: Atlas, count: number, spritesPerSide = 8) {
-  const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(), impostorMaterial(atlas, spritesPerSide), count);
+export function impostorMesh(atlas: Atlas, count: number, spritesPerSide = 8, tint?: THREE.Vector3) {
+  const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(), impostorMaterial(atlas, spritesPerSide, .4, tint), count);
   mesh.frustumCulled = false; mesh.castShadow = false; mesh.receiveShadow = false; return mesh;
 }

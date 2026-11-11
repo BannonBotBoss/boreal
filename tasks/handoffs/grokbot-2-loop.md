@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-11, nadir on current main
+
+T-0214 `grokbot-2/nadir-crown-discs` merged main `2509d8bb`. `overheadCrowns.ts` was not edited in that merge. The after frames stay the foliage billboards from `ca28f0ac`. The id was T-0205; T-0205 is habitat from geology on #438. Not self-approved. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-10 midday, cover sample
 
 D27 is #433 `grokbot-2/cover-sample` (T-0201). The HUD at 49.77 N, 65.54 E is the Sentinel-2 tile and the terrarium DEM: prairie, vegetation 0.33, water false, 216 m. The picture was the Kenora stand and the teal open-water plane. Both now use `coverSampleAt`. After frame `tasks/evidence/T-0201/after-eye40.png` is open grass and short stems. The plates still float. Not self-approved.

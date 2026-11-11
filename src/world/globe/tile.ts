@@ -352,7 +352,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc, vAerial;\nvarying vec4 vCover;\nuniform float uHideLake;\nuniform sampler2D uExCanopy, uExFen, uExShore, uExWater, uExLut;\nuniform float uExOn, uExMetres, uExGain;\nfloat aerialBand = 0.0;\n' + TILING_BLEND_GLSL + '\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc, vAerial;\nvarying vec4 vCover;\nuniform float uHideLake;\nuniform sampler2D uExCanopy, uExFen, uExShore, uExWater, uExLut;\nuniform float uExOn, uExMetres, uExGain, uCrownFloor;\nfloat aerialBand = 0.0;\n' + TILING_BLEND_GLSL + '\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -452,6 +452,21 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       vec3 waterCol = waterC * vec3(0.16, 0.22, 0.15);
       vec3 photo = mix(waterCol, landEx, landMask) * uExGain;
       diffuseColor.rgb = mix(diffuseColor.rgb, photo, aerial * (1.0 - clamp(vCover.w, 0.0, 1.0)));
+      // Impostors own the crowns. The tiled NAIP crop underneath becomes a smooth
+      // moss, shrub and litter floor. Feathermoss albedo ~0.09 (Bubier et al. 1997)
+      // renders near-black under this sun. These values are the albedo that lands
+      // near the NAIP gap, about sRGB (99, 115, 82), once the globe light hits them.
+      // Water is left alone.
+      if (uCrownFloor > 0.5 && landMask > 0.5) {
+        float slow = detN(vDetW / 90.0, uDetail.w + 4.0);
+        float shrubN = detN(vDetW / 26.0, uDetail.w + 12.0);
+        vec3 litter = vec3(0.28, 0.30, 0.16);
+        vec3 moss = vec3(0.20, 0.34, 0.16);
+        vec3 shrub = vec3(0.26, 0.32, 0.14);
+        vec3 floorC = mix(litter, moss, slow);
+        floorC = mix(floorC, shrub, smoothstep(0.58, 0.88, shrubN) * 0.7);
+        diffuseColor.rgb = floorC;
+      }
     }
     }${LAYERS_FRAG}
   if (uDetail.x > 0.001) { // ground detail (DETAIL): octaves fade out where a cell is under ~2 pixels (no shimmer)
@@ -522,7 +537,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       vec3 mosaic = stand < 0.5 ? mix(fen, diffuseColor.rgb, stand * 2.0) : mix(diffuseColor.rgb, leaf, (stand - 0.5) * 2.0);
       // The aerial stand above already painted this band. Do not paint it again.
       float aerialM = smoothstep(120.0, 350.0, length(vViewPosition)) * (1.0 - smoothstep(20000.0, 60000.0, length(vViewPosition)));
-      diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen * mix(0.55, 1.0, dark) * (1.0 - aerialM));
+      diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen * mix(0.55, 1.0, dark) * (1.0 - aerialM) * (1.0 - uCrownFloor));
       // No 12 m crown grid here. At 400 m that grid was a wallpaper of identical dots
       // (tasks/evidence/T-0185/after-globe-400.png and the first T-0187 recapture).
       // The 40 / 160 / 640 m stands are the canopy.
@@ -548,6 +563,18 @@ roughnessFactor = mix(roughnessFactor, uLakeRough, (1.0 - landMask) * (1.0 - oce
         'float dotNL = smoothstep(-0.08, 0.25, dot( geometryNormal, directLight.direction )); // T-0169: soft Lambert penumbra'))
       .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(material.specularColor, vec3(' + fresnelF0().toFixed(4) + '), (1.0 - landMask) * (1.0 - oceanGlint)); // lakes keep dielectric F0; the ocean keeps the metalness mix (Matthew 2026-11-06)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * clamp(uCrack, 0.0, 1.0);')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
+if (uCrownFloor > 0.5 && landMask > 0.5) {
+  // After tone mapping. These are display colours, matched to the NAIP gap
+  // (about sRGB 99, 115, 82), because the lit albedo stayed near-black.
+  float slowE = detN(vDetW / 90.0, uDetail.w + 4.0);
+  float shrubE = detN(vDetW / 26.0, uDetail.w + 12.0);
+  vec3 litterD = vec3(0.40, 0.38, 0.30);
+  vec3 mossD = vec3(0.30, 0.36, 0.29);
+  vec3 shrubD = vec3(0.24, 0.28, 0.24);
+  vec3 floorD = mix(litterD, mossD, slowE);
+  floorD = mix(floorD, shrubD, smoothstep(0.55, 0.9, shrubE) * 0.5);
+  gl_FragColor.rgb = floorD;
+}
 #ifdef DEBUG_SEAMS
   { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;
     if (vSkirt > 0.0) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }

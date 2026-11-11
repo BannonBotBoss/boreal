@@ -6,29 +6,29 @@ D24. Lit top-down billboards of the spruce mid-LOD on the globe nadir. Branch `g
 
 ## Done
 
-- `src/render/trees/overheadCrowns.ts`. Three seeds of `buildConifer`. The octahedral shader compiles after the `unpackRGBToNormal` swizzle fix, but a standing spruce seen off the nadir is a streak aimed at the camera. The frames use a lit top-down billboard of the foliage mesh instead. Scale and tint vary. A soft disc is the shadow. `farTreesInTile` fills the view rectangle and fades in the outer band.
-- The tiled canopy (`uExCanopy`) is replaced by a smooth litter/moss floor while the billboards are on (`uCrownFloor`).
+- `src/render/trees/overheadCrowns.ts`. Three seeds of `buildConifer`. The octahedral shader compiles after the `unpackRGBToNormal` swizzle fix, but a standing spruce seen off the nadir is a streak aimed at the camera. The frames use a lit top-down billboard of the foliage mesh. The silhouette is filled so the star of cards does not leave a dark rim. Scale runs from a few metres to the high teens. About one crown in five is the lighter yellow-green group. The shadow quad is smaller than the crown and offset opposite the sun.
+- Fade is world distance past the view corner. It is 1 across the frame.
+- The tiled canopy is off while the billboards draw. A camera-relative quad carries the gap colour, about sRGB (86, 116, 80) moss with lighter litter, because the lit terrain albedo stayed near-black.
 - Instance positions are camera-relative. The impostor path needs the camera at the origin, so the group itself is not also shifted.
 - The self-approve event was removed. Grokbot-1 approves.
-- Frames in `tasks/evidence/T-0214/`. 3200 instances at both heights.
+- Frames in `tasks/evidence/T-0214/`. 23743 crowns at 400 m, the 24000 cap at 800 m.
 
 ## What the frames show
 
 - Before, 400 m and 800 m: the noisy tiled canopy. Median green 89 and 83.
 - Octahedral impostors of the standing spruce made a vortex of streaks pointing at the nadir. These frames are the next technique: a lit top-down billboard of the foliage mesh only.
-- After, 400 m: clusters of rounded crowns, brighter in the middle, dark rims, soft shadows, olive gaps, smooth floor, thinning at the frame edge. Median green 37. Not a closed NAIP canopy.
-- After, 800 m: the same crowns, smaller and more separated. Median green 38.
+- After, 400 m: rounded crowns, dark blue-green and yellow-green, several sizes. Clusters close into patches. The shadow sits to the lower left of each crown. No black ring. Gaps are a muted olive. The field reaches the frame. Rounder and more even than `tasks/evidence/T-0199/ref-naip-canopy.png`.
+- After, 800 m: the same crowns, smaller, with more olive floor between them. The 24000 cap thins this wider view, so fewer patches close. Gap colour is about sRGB (85, 114, 77).
 
 ## Picture check
 
-Median green, centre window, every second pixel. Tool `tests/overhead-picture.test.ts`.
+Bright crown share at the top band against the centre. Tool `tests/overhead-picture.test.ts`.
 
-| frame | median green | gate |
+| frame | top crown share | gate |
 |---|---|---|
-| before 400 | 89 | known mismatch, above 70 |
-| before 800 | 83 | known mismatch |
-| after 400 | 37 | pass, under 55 |
-| after 800 | 38 | pass |
+| before 400 and 800 | under 0.08 | known mismatch |
+| after 400 and 800 | above 0.45, and at least 0.75 of the centre | pass |
+| after, centre | black share under 0.05 | a near-black floor fails |
 
 ## Needs from another agent
 

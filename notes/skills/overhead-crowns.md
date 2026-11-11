@@ -20,7 +20,7 @@ Use when a nadir view of forest is one noise texture and individual crowns are m
 ## Checks
 
 - `tests/overhead-crowns.test.ts`: the sprite is a disc with a clear outside, the kept points are at least 14 m apart, they span the view, and spacing drops stems.
-- `tests/overhead-picture.test.ts`. Median green of the centre window. The tiled canopy scores 89 and 83. The impostor frames score 35 and 37. Pass is under 55. The known mismatch is above 70.
+- `tests/overhead-picture.test.ts`. A bright crown is g > 120 and g > r + 15. The tiled canopy is under 0.08 of the top band. The billboard frames are above 0.45 there and at least three quarters of the centre. A black centre (share of max channel under 28 above 0.05) fails.
 - URL `?view=globe&alt=400&latlon=52,-97&shot=1&localClouds=0&hour=8.3&day=227&tier=5`, and `alt=800`. Wait until `window.__crowns.count` is set and the tiles have had about 12 s. A shot at 2 s is still the black coarse tiles.
 
 ## Mistakes to avoid

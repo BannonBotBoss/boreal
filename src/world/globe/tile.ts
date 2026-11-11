@@ -453,13 +453,19 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       vec3 photo = mix(waterCol, landEx, landMask) * uExGain;
       diffuseColor.rgb = mix(diffuseColor.rgb, photo, aerial * (1.0 - clamp(vCover.w, 0.0, 1.0)));
       // Impostors own the crowns. The tiled NAIP crop underneath becomes a smooth
-      // needle-litter and moss floor (Bubier et al. 1997, feathermoss albedo ~0.09,
-      // here in linear under the globe sun). Water is left alone.
+      // moss, shrub and litter floor. Feathermoss albedo ~0.09 (Bubier et al. 1997)
+      // renders near-black under this sun. These values are the albedo that lands
+      // near the NAIP gap, about sRGB (99, 115, 82), once the globe light hits them.
+      // Water is left alone.
       if (uCrownFloor > 0.5 && landMask > 0.5) {
         float slow = detN(vDetW / 90.0, uDetail.w + 4.0);
-        vec3 litter = vec3(0.11, 0.09, 0.045);
-        vec3 moss = vec3(0.06, 0.13, 0.04);
-        diffuseColor.rgb = mix(litter, moss, slow);
+        float shrubN = detN(vDetW / 26.0, uDetail.w + 12.0);
+        vec3 litter = vec3(0.28, 0.30, 0.16);
+        vec3 moss = vec3(0.20, 0.34, 0.16);
+        vec3 shrub = vec3(0.26, 0.32, 0.14);
+        vec3 floorC = mix(litter, moss, slow);
+        floorC = mix(floorC, shrub, smoothstep(0.58, 0.88, shrubN) * 0.7);
+        diffuseColor.rgb = floorC;
       }
     }
     }${LAYERS_FRAG}
@@ -557,6 +563,18 @@ roughnessFactor = mix(roughnessFactor, uLakeRough, (1.0 - landMask) * (1.0 - oce
         'float dotNL = smoothstep(-0.08, 0.25, dot( geometryNormal, directLight.direction )); // T-0169: soft Lambert penumbra'))
       .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(material.specularColor, vec3(' + fresnelF0().toFixed(4) + '), (1.0 - landMask) * (1.0 - oceanGlint)); // lakes keep dielectric F0; the ocean keeps the metalness mix (Matthew 2026-11-06)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * clamp(uCrack, 0.0, 1.0);')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
+if (uCrownFloor > 0.5 && landMask > 0.5) {
+  // After tone mapping. These are display colours, matched to the NAIP gap
+  // (about sRGB 99, 115, 82), because the lit albedo stayed near-black.
+  float slowE = detN(vDetW / 90.0, uDetail.w + 4.0);
+  float shrubE = detN(vDetW / 26.0, uDetail.w + 12.0);
+  vec3 litterD = vec3(0.43, 0.41, 0.30);
+  vec3 mossD = vec3(0.36, 0.47, 0.31);
+  vec3 shrubD = vec3(0.50, 0.46, 0.28);
+  vec3 floorD = mix(litterD, mossD, slowE);
+  floorD = mix(floorD, shrubD, smoothstep(0.55, 0.9, shrubE) * 0.5);
+  gl_FragColor.rgb = floorD;
+}
 #ifdef DEBUG_SEAMS
   { vec2 b = min(vTileUV, 1.0 - vTileUV); float d = min(b.x, b.y), w = fwidth(d) * 1.5;
     if (vSkirt > 0.0) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }

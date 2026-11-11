@@ -1,20 +1,27 @@
-/** Overhead crowns fill the nadir rectangle from the stand placement, and fade at the edge. */
+/** Overhead crowns fill the nadir view from the stand, and fade in world metres. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { collectCrowns, viewSpan, CROWN_CAP } from '../src/render/trees/overheadCrowns';
 
-test('the field covers the view rectangle and fades at the edge, not in a circle', () => {
+test('the field covers the view and fades by world distance, not the screen edge', () => {
   const { hx, hy } = viewSpan(400, 45, 16 / 9);
   assert.ok(hx > hy, 'the frame is wider than it is tall');
   const spots = collectCrowns(hx, hy, () => 1500);
   assert.ok(spots.length > 400 && spots.length <= CROWN_CAP, `count ${spots.length}`);
-  let maxEx = 0, maxEz = 0, edgeFade = 0, mid = 0, close = 0;
-  const sample = spots.filter((_, i) => i % 23 === 0).slice(0, 60);
+  let maxEx = 0, maxEz = 0, frameFade = 0, frameN = 0, close = 0;
+  const scales: number[] = [];
+  const groups = [0, 0, 0];
+  const sample = spots.filter((_, i) => i % 23 === 0).slice(0, 80);
   for (const s of spots) {
-    maxEx = Math.max(maxEx, Math.abs(s.x) / hx);
-    maxEz = Math.max(maxEz, Math.abs(s.z) / hy);
-    if (s.fade < 0.95) edgeFade++;
-    else mid++;
+    const ex = Math.abs(s.x) / hx, ez = Math.abs(s.z) / hy;
+    maxEx = Math.max(maxEx, ex);
+    maxEz = Math.max(maxEz, ez);
+    if (Math.max(ex, ez) < 0.92) {
+      frameN++;
+      if (s.fade < 0.98) frameFade++;
+    }
+    scales.push(s.scale);
+    groups[s.group]++;
   }
   for (const s of sample) {
     let best = Infinity;
@@ -23,11 +30,12 @@ test('the field covers the view rectangle and fades at the edge, not in a circle
       const d = (s.x - o.x) ** 2 + (s.z - o.z) ** 2;
       if (d < best) best = d;
     }
-    if (Math.sqrt(best) < 6) close++;
+    if (Math.sqrt(best) < s.scale * 0.7) close++;
   }
-  assert.ok(maxEx > 0.9 && maxEz > 0.9, `extent ${maxEx.toFixed(2)} ${maxEz.toFixed(2)}`);
-  assert.ok(edgeFade > 20 && mid > 100, `fade ${edgeFade} full ${mid}`);
-  assert.ok(close > 5, `clustered neighbours ${close}`);
-  const scales = new Set(spots.map(s => Math.round(s.scale * 20)));
-  assert.ok(scales.size > 8, 'scales vary');
+  scales.sort((a, b) => a - b);
+  assert.ok(maxEx > 0.95 && maxEz > 0.95, `extent ${maxEx.toFixed(2)} ${maxEz.toFixed(2)}`);
+  assert.equal(frameFade, 0, `in-frame fade ${frameFade} of ${frameN}`);
+  assert.ok(close > 8, `overlapping neighbours ${close}`);
+  assert.ok(scales[0] < 6 && scales[scales.length - 1] > 14, `spread ${scales[0].toFixed(1)}..${scales[scales.length - 1].toFixed(1)}`);
+  assert.ok(groups[0] > groups[2] && groups[2] > 20, `groups ${groups.join(',')}`);
 });

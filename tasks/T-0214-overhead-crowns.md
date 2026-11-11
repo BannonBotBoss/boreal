@@ -18,9 +18,9 @@ D24. PR #429 painted a NAIP texture and the views stayed a noise field. Identica
 
 ## Objectives
 
-- [x] Nadir crowns are billboards baked from `buildConifer`, placed from `farTreesInTile` across the view rectangle, faded at the frame edge. `tests/overhead-crowns.test.ts`.
-- [x] They sit on the visible surface, in the camera-relative frame the tiles use, with a ground shadow. The tiled canopy is off while they draw.
-- [x] Same pose before and after at 400 m and 800 m. The picture check fails the bright noise and passes the darker floor. `tests/overhead-picture.test.ts`.
+- [x] Nadir crowns are billboards baked from `buildConifer`, placed from `farTreesInTile`. Fade is world distance past the view corner, not the screen rectangle. `tests/overhead-crowns.test.ts`.
+- [x] They sit on the visible surface, in the camera-relative frame the tiles use. The shadow is offset away from the sun. The tiled canopy is off while they draw, and the gaps are a mid-tone moss and litter colour.
+- [x] Same pose before and after at 400 m and 800 m. The picture check fails the noise (almost no bright crowns at the top edge) and passes crowns that reach that edge. `tests/overhead-picture.test.ts`.
 
 ## Acceptance
 
@@ -29,8 +29,8 @@ URL `?view=globe&latlon=52,-97&shot=1&localClouds=0&hour=8.3&day=227&tier=5` wit
 | frame | what it shows |
 |---|---|
 | `before-400.png` | Green and brown tile noise across the whole frame. Median green 89. No crown you can point at. |
-| `after-400.png` | Clusters of rounded foliage crowns, brighter in the middle, with dark rims and soft shadows. Many touch inside a cluster. Olive ground shows in the gaps. The floor is smooth, not the tiled noise. Crowns thin toward the edges. Median green 37. Three baked shapes, not the NAIP photograph. |
+| `after-400.png` | Rounded crowns in two hues, dark blue-green and yellow-green, with a size spread. Clusters touch and close into patches. A darker side sits off each crown, toward the lower left, and there is no black ring. Gaps are a muted olive, not near-black. The field reaches the frame edge. Still rounder and more even than the NAIP crop. |
 | `before-800.png` | The same noise. Median green 83. |
-| `after-800.png` | The same crowns, smaller and more separated. Clusters and gaps remain. The floor is smooth. They thin at the edges. Median green 38. |
+| `after-800.png` | The same crowns, smaller. More of the olive floor shows, so patches are less closed than at 400 m. The instance cap is 24000. No black ring, no frame-shaped fade. The floor in the gaps is about sRGB (85, 114, 77), near the NAIP gap. |
 
-Median green of the centre window: before above 70, after under 55.
+Bright crown share (g > 120 and g > r + 15) at the top of the frame: the noise is under 0.08, the billboards stay above 0.45 and within a quarter of the centre.

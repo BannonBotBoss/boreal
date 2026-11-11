@@ -41,6 +41,7 @@ import { descentFrameDt } from './landingStream';
 import { body, step as stepBody } from '../../proc/physics';
 import { globePlanet } from './home';
 import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
+import { createOverheadCrowns } from '../../render/trees/overheadCrowns';
 import { setLogDepthFar, withLogDepth } from './logDepth';
 import { LAYER_TIERS, SPINUP, globeLandSample, setLayerCamera, setSnowIceShown, spinAndBake, startPlanetLayers } from './planetLayers';
 import { bootGlobe } from './bootOrder';
@@ -223,6 +224,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     scene.add(filmStars);
   }
   const group = new THREE.Group(); scene.add(group);
+  const crowns = createOverheadCrowns(); scene.add(crowns.mesh);
   // Plate boundaries (plates.ts: seeded outlines, NNR-MORVEL56 motions), built on first show; red divergent, blue convergent, green transform
   const plateLayer = new THREE.Group(); plateLayer.visible = false; scene.add(plateLayer); let platesBuilt = false;
   const showPlates = (on: boolean) => { plateLayer.visible = on; if (!on || platesBuilt) return; platesBuilt = true;
@@ -599,6 +601,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     // sphere, so a low camera — the free fall crosses it — would make the radical negative and the projection NaN, and
     // the frame would clear. The radical is clamped; the +2R term still reaches the far limb.
     const clip = orbitClip(alt, R, ground); camera.near = clip.near; camera.far = clip.far;
+    crowns.update(dir, alt, R + ground, planet);
     if (filmReady) {
       dir.copy(filmHome).applyQuaternion(filmSpin);
       ground = surfaceRadius(planet, [dir.x, dir.y, dir.z]) - R;
@@ -671,7 +674,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setSolarLayer(solarLayerOn(worldTier())); // T-0057: Minimum (CLOUDS.octaves 0) draws no budget layer
     const hydroSec = q.has('shot') ? shotSec : worldSec();
     refreshHydroLayer(seed, dayAt(hydroSec), hourAt(hydroSec), worldTier(), q.get('hydro') === '0'); // T-0058: same octave gate; the date is the clock's (?day= via initDay), ?hydro=0 leaves the tiles unpainted
-    tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position); axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH, R + ground);
+    tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position);
+    crowns.mesh.position.copy(fieldLines.position); // same camera-relative origin as the tiles (origin.ts) axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH, R + ground);
     if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
       const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3, ll = toLatLon(d), latD = ll.lat * 180 / Math.PI, lonD = ll.lon * 180 / Math.PI;
       const w = weatherAtLatLon(latD, lonD, simRef), envSec = q.has('shot') ? shotSec : worldSec();

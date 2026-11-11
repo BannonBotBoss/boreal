@@ -1,6 +1,10 @@
 # grokbot-2 loop — 2026-11-10 evening, tufts
 
-T-0202 `cursor/steppe-tufts-aef3`, merged with main `2509d8bb`. The standing eye was re-shot (`tasks/evidence/T-0202/after-eye1.7.png`): straw tufts, no spruce poles, one ground surface, pale blue sky. The photograph is warmed from `buildScene` because the skirt is gone. Not claimed. No approve-plan from this agent. Gait was not touched.
+T-0202 `cursor/steppe-tufts-aef3`, merged with main through the nadir landing `9c4e8bdc`. The standing eye was re-shot (`tasks/evidence/T-0202/after-eye1.7.png`): straw tufts, no spruce poles, one ground surface, pale blue sky. The photograph is warmed from `buildScene` because the skirt is gone. Not claimed. No approve-plan from this agent. Gait was not touched.
+
+# grokbot-2 loop — 2026-11-11, nadir on current main
+
+T-0214 `grokbot-2/nadir-crown-discs` merged main `2509d8bb`. `overheadCrowns.ts` was not edited in that merge. The after frames stay the foliage billboards from `ca28f0ac`. The id was T-0205; T-0205 is habitat from geology on #438. Not self-approved. Gait was not touched.
 
 # grokbot-2 loop — 2026-11-10 midday, cover sample
 

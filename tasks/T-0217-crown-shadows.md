@@ -27,8 +27,18 @@ Side by side: `tasks/evidence/T-0217/side-by-side-400.png`.
 
 ## What the frames show
 
-`after-400.png`: round low-poly crowns, darker green, with a pale lit side toward the upper left and a darker side toward the lower right. The ground is a fine olive mottle, not the old block camo. 18045 crowns.
+Shot at 52.05 N, 96.94 W, the boreal cell next to the game point. 48.094 N, 91.482 W is water in the planet, so a frame there has no crowns.
 
-`after-800.png`: the same stand, smaller marks, same light direction. 59882 crowns.
+Green-canopy pixels: green at least red and blue, green above 40, no channel at 220 or above. Reference crop coverage 0.877.
 
-Still not the photograph. The crowns are smooth cones, not needle clumps. The lit side is a pale crescent, brighter than the NAIP sun. The cast shadow is mostly the dark rim of that crescent, not a separate patch on the ground. The ground has no sharp litter.
+| | coverage | R mean/sd | G mean/sd | B mean/sd |
+|---|---|---|---|---|
+| reference | 0.877 | 52.9 / 16.8 | 71.9 / 15.6 | 43.5 / 13.7 |
+| 400 m | 0.959 | 53.3 / 13.3 | 68.4 / 13.7 | 39.8 / 7.7 |
+| 800 m | 0.973 | 52.7 / 11.6 | 67.7 / 12.0 | 39.5 / 6.8 |
+
+Coverage is inside 10 points (8.3 and 9.7). Every mean is inside 15%. Blue's standard deviation is not: 7.7 and 6.8 against 13.7. Full table: `tasks/evidence/T-0217/canopy-stats.json`.
+
+7598 crowns at 400 m, 25542 at 800 m. The earlier 18045-instance frame had a geometric crown area about three times the view, so the trees were not culled. They were too dark to count except for the yellow tips.
+
+Still not the photograph. The crowns are smooth cones. The lit side is a lighter green edge, not a separate shadow on the ground. The ground is soft, and a few dark holes are wider than the photo's gaps.

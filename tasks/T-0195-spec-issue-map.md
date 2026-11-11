@@ -52,7 +52,7 @@ This is the index. It does not build the holes. A row is a mapping when the task
 | #118 why an animal did what it did | T-0081 | T-0084 only reserves a handle. The inspector is not built |
 | #119 an event log for rewind and why | T-0210 | proposed. T-0084 and T-0092 are not the log |
 | #156 navigable globe, drop through clouds, drone landscape | T-0108 through T-0122 | bridge, skirt, elevation, photo, cover, animals, gaps, rings, sky, land, canopy |
-| #192 globe-to-ground descent and the defect list | T-0125, T-0132, T-0164, T-0165, T-0179 onward, T-0211 | wildlife and the visual passes. D25 is still open. D26 is T-0200. D27 is T-0201. D28 and D29 are T-0211 (ice sheet and the empty glide). D19/D22 are T-0194 (#422). D23 is T-0198 (#428). D24 is T-0199 (#429). Prairie stems are T-0202 (#434). |
+| #192 globe-to-ground descent and the defect list | T-0125, T-0132, T-0164, T-0165, T-0179 onward, T-0211 | wildlife and the visual passes. D25 is still open. D26 is T-0200. D27 is T-0201, merged as #433. D28 and D29 are T-0211 (the clipped ice sheet and the empty glide); that task is a separate agent's, and this branch does not change the drop or the glide. D19/D22 are T-0213 (#436). D23 is T-0212 (#435). D24 is T-0214 (#439). Prairie stems are T-0202 (#434). #422, #428 and #429 are closed; #428 points at #435 and #429 points at #439. T-0202, T-0212, T-0213 and T-0214 are on those PRs, not in this branch. |
 
 ## Acceptance
 

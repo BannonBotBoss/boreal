@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-11, spec map re-check
+
+Re-checked T-0195 against issues #95–#119, #156 and #192 and the task files on this branch (main 28fad190). The #192 row now names T-0212 (#435), T-0213 (#436), T-0214 (#439) and T-0202 (#434). #422, #428 and #429 stay closed. D28 and D29 stay T-0211. No game code. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-10 evening, path and the map
 
 Path frames are `tasks/evidence/path-2026-11-10-pm/`. The film reaches Today. The orbit drag turns the planet into a black disc. The glide is empty. The drop lands on ice at 8.49 N, 129.33 W, 5074 m, and the ground is a clipped white sheet. That is T-0211, proposed, not claimed. Spec holes #95, #97, #98, #112, #113, #115, #116, and #119 now name T-0203 through T-0210. No approve-plan from this agent. Gait was not fixed.

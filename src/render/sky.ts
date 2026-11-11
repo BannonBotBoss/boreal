@@ -10,6 +10,7 @@ import { WORLD_SEED } from '../core/world';
 import { clockDate, dayAt, lighting, sunPosition } from '../core/timeOfDay';
 import { WEATHER, shortwave, weatherAt } from '../core/weather';
 import { LUX, SYNODIC, darkAdapted, exposureFor, moonAge, moonLux, nightKey, nightSkyLight, sceneFill, sunColour, wolfEyes } from '../core/light';
+import { AERIAL } from './aerial';
 import { LIGHTING } from './pbr';
 
 /**
@@ -101,8 +102,11 @@ export function createSky(scene: THREE.Scene) {
   skyMat.depthWrite = false;
   skyMat.fog = false;
   const u = sky.material.uniforms;
-  // Clearer air + stronger Rayleigh: deeper zenith blue and a whitened horizon (ground-sky audit vs flat cyan).
-  u.turbidity.value = 1.8; u.rayleigh.value = 3.0; u.mieCoefficient.value = .003; u.mieDirectionalG.value = .8;
+  // Preetham (three.js Sky.js). Rayleigh near the model's 1 keeps a blue zenith; 3 washed this
+  // hour out to white. The Sky.js fork also draws its own cloud layer. The game already has
+  // a cirrus dome, so that second layer stays off. It was a pale sheet over the sky.
+  u.turbidity.value = 2.2; u.rayleigh.value = 1.15; u.mieCoefficient.value = 0.004; u.mieDirectionalG.value = 0.8;
+  u.cloudCoverage.value = 0; u.cloudDensity.value = 0;
   const clouds = new THREE.Mesh(new THREE.SphereGeometry(550, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.ShaderMaterial({
     vertexShader: CLOUD_VERT, fragmentShader: CLOUD_FRAG, side: THREE.BackSide, transparent: true, depthWrite: false, fog: false,
     uniforms: { uTime: { value: 0 }, uSeed: { value: (WORLD_SEED % 997) * .37 }, uCover: { value: .47 }, uDrift: { value: new THREE.Vector2() }, uDay: { value: 1 }, uGolden: { value: 0 },
@@ -139,6 +143,12 @@ export function createSky(scene: THREE.Scene) {
       const Etw = sun.elevation < 0 ? twilightIlluminance(sun.elevation) : 0; // diffuse sky after sunset (core/skyVisibility), so the eye adapts to it
       LIGHTING.lux = Esun + Emoon + Etw + LUX.nightSky; LIGHTING.gain = exposureFor(LIGHTING.lux) * wolfEyes(LIGHTING.lux); LIGHTING.moonAge = age; LIGHTING.Esun = Esun; LIGHTING.Emoon = Emoon;
       sunLight.color.setRGB(sc.r, sc.g, sc.b);
+      AERIAL.uSunDir.value.copy(dir);
+      AERIAL.uSunCol.value.copy(sunLight.color);
+      // Horizon tint of the same sun. Low sun warms it; a high sun stays pale blue, the steppe
+      // land line rather than a saturated band.
+      { const warm = Math.exp(-Math.max(0, sun.elevation) / 14);
+        AERIAL.uHorizon.value.setRGB(0.78 + 0.14 * warm, 0.84 + 0.06 * warm, 0.92 - 0.08 * warm); }
       sunLight.intensity = 3 * Esun / LUX.ref * LIGHTING.gain; sunLight.position.copy(focus).addScaledVector(dir, 80); sunLight.target.position.copy(focus);
       // Moon, or with the moon down/thin an overhead skylight key from behind the viewer (core/light NIGHT.key): reuses this light so no shader recompiles.
       const night = 1 - light.day, key = nightKey(LIGHTING.gain) * night, Emoon3 = 3 * Emoon / LUX.ref * LIGHTING.gain, wk = key / (key + Emoon3 || 1);

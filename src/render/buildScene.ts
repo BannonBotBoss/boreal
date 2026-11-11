@@ -510,11 +510,6 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       // which cut that surface off and left the sky in its place.
       const far = Math.max(8000, horizonMetres(eye) * 1.15);
       if (Math.abs(camera.far - far) > 50) { camera.far = far; camera.updateProjectionMatrix(); }
-      // Linear fog at 480 m was the pale wall in front of the horizon. Hold it out
-      // near the horizon so the surface stays visible; aerial perspective replaces this.
-      const fog = scene.fog as THREE.Fog;
-      fog.near = Math.min(far * 0.35, 4000 + eye);
-      fog.far = far * 0.92;
     }
     bandBackground(scene, camera); // world/globe/inpage: band = globe far layer as the background + patch fade (no-op otherwise)
     photoreal.before(lit.dir, time);

@@ -105,6 +105,8 @@ export function createHorizonCover(renderer?: THREE.WebGLRenderer) {
     const next = `${kind}:${sample.heightM.toFixed(1)}:${cols}:${Math.round(sample.elevM)}:${Math.round(cx / 40)}:${Math.round(cz / 40)}`;
     if (next === key) return kind;
     key = next;
+    // A tree photograph on a prairie sample is the pole. The grass is the tuft field.
+    if (kind === 'prairie') { mesh.count = 0; mesh.userData.kind = kind; return kind; }
     const spots = coverSpots(cx, cz, kind);
     mesh.count = spots.length;
     for (let i = 0; i < spots.length; i++) {

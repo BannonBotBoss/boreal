@@ -17,6 +17,7 @@ import { FAR_TREES, farTreesInTile } from '../../core/flora/stands';
 import { hash, random } from '../../proc/rng';
 import { WIND_UNIFORMS, ageClass, treeGeometry, treeSpecies } from '../trees';
 import { bindWind, crownStartM, placeTree, removeTree, updateTrees, v2Handles } from '../trees/game';
+import { steppeAt, updateSteppeField } from './steppeTuft';
 import { fadeOptIn } from '../fade';
 import { coverSampleAt, coverTierToken } from '../../world/globe/coverSample';
 
@@ -78,6 +79,7 @@ export function createFarTrees(scene: THREE.Scene) {
         const rr = random(hash(`fartree-v2:${WORLD_SEED}:${Math.floor(p.r * 0xffffffff)}`));
         const grown = coverFit(p.x, p.z).scaleMul;
         const e: Entity = { key: `fartree:${tx}:${tz}:${insts.length}`, kind: 'spruce', seed: Math.floor(rr() * 0xffffffff), generatorVersion: GENERATOR_VERSION, x: p.x, z: p.z, rotation: rr() * Math.PI * 2, scale: (.75 + rr() * .65) * grown };
+        if (steppeAt(e.x, e.z)) continue; // a prairie sample is grass, not a spruce skyline
         if (v2Handles(treeSpecies(e.seed, e.x, e.z))) { // trees v2: a crown instance in render/trees/game (built there in sliced jobs)
           bindWind(WIND_UNIFORMS); const s = random(e.seed)(); placeTree(e.key, e.x, heightAt(e.x, e.z), e.z, e.rotation, e.scale, e.scale * (.9 + s * .2), e.scale, e.seed, ageClass(e.x, e.z), true);
           (v2keys.get(k) ?? v2keys.set(k, []).get(k)!).push(e.key); insts.push(-1); continue;
@@ -90,6 +92,7 @@ export function createFarTrees(scene: THREE.Scene) {
     }
   }
   return (camera: THREE.Camera) => {
+    updateSteppeField(scene, camera);
     updateTrees(scene, camera); // trees v2 LOD + pruning (no-op unless ?trees=v2)
     if (bm) bm.visible = !FAR_TREE_FX.off && RENDER.treeDensity > 0;
     const x = camera.position.x, z = camera.position.z, density = RENDER.treeDensity, inner = crownStartM(RENDER.lod.trees), outer = Math.max(inner, INTEREST.mid);

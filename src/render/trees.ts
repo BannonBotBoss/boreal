@@ -20,6 +20,7 @@ import { f, choose, tracing, withTrace, type Trace } from '../proc/trace';
 import { massOf, frustum, cone } from '../core/mass';
 import { PHYS } from '../core/tuning';
 import { TREES_V2, bindWind, placeTree, v2Handles } from './trees/game';
+import { steppeAt, steppeTuftGroup } from './flora/steppeTuft';
 
 /**
  * Stylized boreal forest (Grok Bot). Every 'spruce' entity becomes one of five species picked
@@ -343,6 +344,8 @@ export function updateTreeUniforms() {
 }
 /** One LOD level of a tree: a single shared-geometry mesh, flagged so disposeObject skips it. */
 export function treeGeometry(entity: Entity, detail: number): THREE.Group {
+  // A prairie sample is feather grass. A spruce mesh here, even scaled down, reads as a pole.
+  if (entity.kind === 'spruce' && steppeAt(entity.x, entity.z)) return steppeTuftGroup(entity.seed);
   const species = treeSpecies(entity.seed, entity.x, entity.z), variant = f('tree', 'variant', (entity.seed >>> 3) % VARIANTS), cls = ageClass(entity.x, entity.z), snag = isSnag(entity.seed, entity.x, entity.z), key = `${species}:${variant}:${cls}:${snag ? 1 : 0}:${detail}`;
   // Traced (inspector) builds bypass the shared cache so factors are reported and what-if overrides take effect.
   if (TREES_V2.on && !snag && !tracing() && !entity.key.startsWith('fartree:') && v2Handles(species)) { // trees v2 hook (render/trees/game): drawn there, nothing here

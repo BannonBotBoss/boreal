@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-10 evening, tufts
+
+T-0202 `cursor/steppe-tufts-aef3`, merged with main through the nadir landing `9c4e8bdc`. The standing eye was re-shot (`tasks/evidence/T-0202/after-eye1.7.png`): straw tufts, no spruce poles, one ground surface, pale blue sky. The photograph is warmed from `buildScene` because the skirt is gone. Not claimed. No approve-plan from this agent. Gait was not touched.
+
 # grokbot-2 loop — 2026-11-11, spec map after the merges
 
 Main is `9c4e8bdc` (#439 merged). #435 landed T-0212 and #436 landed the aerial task as T-0204. Deterministic generation moved from T-0204 to T-0213. The #192 row names D19/D22 as T-0204, D23 as T-0212, D24 as T-0214, prairie stems as T-0202 (#434). D28 and D29 stay T-0211. Gait was not touched.

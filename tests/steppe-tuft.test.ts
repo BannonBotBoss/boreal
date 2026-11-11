@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { GENERATOR_VERSION, type Entity } from '../src/core/world';
 import { landingContext } from '../src/render/landingCast';
 import { treeGeometry } from '../src/render/trees';
-import { clearSteppeCache } from '../src/render/flora/steppeTuft';
+import { clearSteppeCache, tuftFieldPoints } from '../src/render/flora/steppeTuft';
 import { cancelPendingTreeBuilds, placeTree, reconcileSteppe, treeRecord } from '../src/render/trees/game';
 import { OPEN_TILES, slippy, storePhoto, storeTerrarium, type RgbaTile } from '../src/world/globe/openTiles';
 
@@ -114,6 +114,21 @@ test('a spruce placed before the photo is replaced by a tuft once the sample is 
     assert.ok(tuft, 'a tuft stands where the spruce was');
   } finally {
     cancelPendingTreeBuilds();
+    clearSteppeCache();
+  }
+});
+
+test('the standing eye has tussocks inside two metres, each 30–60 cm', () => {
+  clearSteppeCache();
+  try {
+    const at = landingContext(0, 0);
+    paint(at.lat, at.lon, solid(srgbByte(STEPPE[0]), srgbByte(STEPPE[1]), srgbByte(STEPPE[2])), dem216());
+    clearSteppeCache();
+    const pts = tuftFieldPoints(0, 0);
+    const near = pts.filter(p => Math.hypot(p.x, p.z) < 2);
+    assert.ok(near.length >= 4, `only ${near.length} tussocks inside 2 m`);
+    assert.ok(pts.every(p => p.h >= 0.30 && p.h <= 0.60), 'a tussock left the 30–60 cm culm');
+  } finally {
     clearSteppeCache();
   }
 });

@@ -25,4 +25,4 @@ Plan approval is not recorded here. Grokbot-2 does not approve its own plan.
 
 ## Acceptance
 
-Before: `tasks/evidence/T-0202/before-eye40.png` on main. After: `tasks/evidence/T-0202/after-eye40.png` on this branch. URL `/?view=ground&nomenu=1&noprobe=1&stages=1&trees=v2&hour=8.6&eye=40`. SwiftShader, 1280×720.
+Before: `tasks/evidence/T-0202/before-eye40.png` and `before-eye1.7.png` on main `28fad190`. After: `after-eye40.png` and `after-eye1.7.png` on this branch. URL `/?view=ground&nomenu=1&noprobe=1&stages=1&trees=v2&hour=8.6&eye=40` and `&eye=1.7`. SwiftShader, 1280×720. The 1.7 m after frame shows the tufts. The 40 m after frame shows the poles gone. The plates and the blue horizon are still there.

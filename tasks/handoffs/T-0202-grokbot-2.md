@@ -2,38 +2,41 @@
 
 ## Doing
 
-Replace the prairie spruce mesh with a feather-grass tuft. Branch `cursor/steppe-tufts-aef3`. Not claimed. No approve-plan from this agent.
+Prairie stems were still spruce after the cover-sample merge. Rebased onto main `28fad190` by merging it into `cursor/steppe-tufts-aef3`. Not claimed. No approve-plan from this agent.
 
 ## Done
 
-`treeGeometry` returns `steppeTuftGroup` when `landingContext` says prairie. The far filler skips those points, so the skyline is not a spruce wall. `tests/steppe-tuft.test.ts` passes on this branch.
+A prairie sample no longer keeps a spruce mesh. `treeGeometry` returns a 30–60 cm crossed-card tuft. The far filler skips those points. Horizon tree cards are not drawn on prairie. When the photograph changes the cover tier, the loaded chunks rebuild, so a spruce batched before the photo does not stay. `reconcileSteppe` drops a v2 spruce already in the list. A sward of the same tufts is instanced for 8 m around the camera, because the replaced stems sit outside the 13 m clear and a standing eye never reached one. On a dry prairie sample the open-water sheet and the staged sheet are not drawn. The meshes stay mounted.
 
 ## How to verify
 
-`npx tsx --test tests/steppe-tuft.test.ts`. Then the eye URL in the task file. The HUD should still say prairie. The stems should be clumps under 60 cm, not poles.
+`npx tsx --test tests/steppe-tuft.test.ts`. Then the two eye URLs. The HUD stays prairie. The 1.7 m frame shows straw tufts. The 40 m frame does not show spruce.
 
 ## Numbers
 
 | value | game | real | source | match |
 |---|---|---|---|---|
 | culm height | 0.30–0.60 m | 30–60 cm | Flora of China 22, Stipa lessingiana | yes |
-| blade width drawn | 8 mm | 0.3–0.5 mm setaceous | Flora of China 22; drawn wider for the same reason as wavy hairgrass in `cover.ts` | the real width is sub-pixel; the drawn width is the existing calibration |
-| flower | past by day 227 | May–July | Flora of China 22 | yes, mid-August is after anthesis |
+| tussock width drawn | 28 cm | a tussock, not the 0.3–0.5 mm blade | Flora of China 22; the blade is sub-pixel, same calibration as hairgrass in `cover.ts` | the blade is not drawn at real width |
+| field spacing | 0.50 m | a closed sward, not the 28 m billboard step | `cover-density.json` says the prairie count is not grass tillers. The Akmola photograph is a continuous sward | the 28 m figure is the wrong object |
+| flower | past by day 227 | May–July | Flora of China 22 | yes, the tuft is straw |
 | black spruce | not drawn on prairie | 9–15 m | Viereck & Johnston 1990 | yes |
-| spawn | prairie, vegetation 0.331, 49.77 N, 65.54 E, 216 m | Kazakh steppe | HUD on main `7f256748`, Sentinel-2 / terrarium | yes |
+| spawn | prairie, vegetation 0.331, 49.77 N, 65.54 E, 216 m | Kazakh steppe | HUD on main `28fad190` | yes |
 
 ## Frames
 
-Before (`tasks/evidence/T-0202/before-eye40.png`) is main `7f256748`, eye 40 m. Spruce poles and a cone on the prairie sample.
+Before 40 m (`tasks/evidence/T-0202/before-eye40.png`): spruce poles, teal-grey water, floating plates.
 
-After (`tasks/evidence/T-0202/after-eye40.png`) is this branch, same URL. `borealTreesV2` reported `trees: 0` and `tufts: 6`, and `steppeAt(0, 0)` was true. The HUD was still prairie, vegetation 0.330, 49.77 N, 65.54 E, 216 m, sun 36.6°. A chunk rebuild runs when that biome changes, so stems placed before the photograph are replaced. Floating plates and the flat blue horizon are still there. Those are #428 and #422.
+After 40 m (`after-eye40.png`): poles gone, water sheet gone. Plates, blue horizon, and the brown smear remain. Tufts are not readable from 40 m. Dark-green pixels 302 → 0.
 
-Reference: `tasks/evidence/path-2026-11-10/ref-astana-steppe.jpg`.
+Before 1.7 m (`before-eye1.7.png`): full spruce, leafy pole, water, dirt.
+
+After 1.7 m (`after-eye1.7.png`): straw tufts around the wolf. No spruce. No water sheet. Dark-green pixels 1741 → 32.
 
 ## Next
 
-Grokbot-1 approve-plan, then a claim. Not self-approved. Gait was not touched. #422, #428, #429 were not touched.
+Approve-plan from another agent, then a claim. Not self-approved. Gait was not touched. #422, #428, and #429 were not pushed.
 
 ## Needs from another agent
 
-Approve-plan from Grokbot-1 or Matthew before this can be claimed.
+Approve-plan before this can be claimed.

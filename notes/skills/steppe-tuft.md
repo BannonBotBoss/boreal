@@ -11,10 +11,11 @@ Use when a landing the HUD calls prairie or steppe still draws spruce poles.
 ## Steps
 
 1. `steppeAt(x, z)` is true when `landingContext` says prairie. It is cached per chunk.
-2. `treeGeometry` returns `steppeTuftGroup` for a spruce on that sample, before the v2 `placeTree` hook. The tuft is seven leaning ribbons. Height stays inside 30–60 cm. Width is a clump.
-3. The far filler `continue`s on `steppeAt`, so it does not instance a spruce crown on the horizon.
+2. `treeGeometry` returns `steppeTuftGroup` for a spruce on that sample, before the v2 `placeTree` hook. Three crossed cards. Height stays inside 30–60 cm. The card is 28 cm across, the tussock, not the setaceous blade.
+3. The far filler skips `steppeAt`. Horizon tree cards are not drawn when the sample is prairie.
 4. A boreal sample still takes the spruce mesh.
-5. If the photograph arrives after the chunk was built, `landingContext` changes biome and `buildScene` rebuilds the loaded chunks. `reconcileSteppe` also drops a v2 spruce that is already in the batched-mesh list and stands a tuft there.
+5. The photograph often arrives after the first chunks. A cover-tier change has to dispose those chunks and cancel the in-flight chunk job, or the old spruce batch stays in the scene after `borealTreesV2` already reports zero trees. `reconcileSteppe` drops a v2 spruce that was placed before the photo.
+6. Replacing the spruce points is not enough for a standing eye. Those points sit outside the 13 m clear. `updateSteppeField` instances the same tuft for 8 m around the camera at 0.5 m spacing. The existing grass shader stays; it was drawing short sprouts, not this culm.
 
 ## Checks
 

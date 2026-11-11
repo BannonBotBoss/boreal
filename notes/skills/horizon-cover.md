@@ -11,7 +11,7 @@ Use when the drone should show plants past the chunk square, with a different ru
 
 ## Steps
 
-1. Classify the landing once: water, ice, rock (more than 80 m above the tree line), tundra, desert, prairie, or boreal.
+1. Classify with `coverSampleAt` (the same function the HUD reads), not `vegetationWeight` alone. A cached Sentinel-2 tile wins, so the seeded home at 49.77 N, 65.54 E is prairie. Water, ice, rock, tundra, desert, prairie, boreal, tropical, wetland.
 2. Place billboards with `coverSpots` between 36 m and 520 m. Cap 480. Sort nearest first so the cap does not fill only one corner.
 3. One `InstancedMesh` of a vertical plane, height from `heightAt`. The plane samples `treeAtlas`: a conifer on the left, a broadleaf on the right. Alpha test at 0.4 and alpha-to-coverage, so the corner of the card is not drawn. The sprite is brighter on the left (the lit side). Prairie and desert are shorter and use the broadleaf. Water, ice, tundra and rock place none.
 4. Past the billboards the skirt samples `canopyTile`, a repeating top-down crown texture, and fades it out before the horizon.

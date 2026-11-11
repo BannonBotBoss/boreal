@@ -9,6 +9,10 @@ import { chunkTerrainJob, positionCamera } from './math';
 import { forestMoving } from '../vr/forestSession';
 import { createLitter } from '../animals/pups';
 import { landingContext } from './landingCast';
+import { installPictureGate } from './pictureGate';
+import { coverSampleAt, coverTierToken, drawOpenWater } from '../world/globe/coverSample';
+import { mountChunkWater } from './chunkWater';
+import { dropFarTrees } from './trees/game';
 import { warmTerrainWorkers } from './terrainPool';
 import { setGroundFloor, terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
@@ -85,6 +89,7 @@ const GLOW_ON = typeof location === 'undefined' || new URLSearchParams(location.
 /** ?top=1: straight down at the water, for the wake measurement. Not a player camera. */
 const TOP_DOWN = typeof location !== 'undefined' && new URLSearchParams(location.search).has('top');
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
+  installPictureGate();
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU
   mountViewfinder(renderer, 'game', { meta: () => ({ gameTime: formatHour(hourAt(0)), location: `x ${camera.position.x.toFixed(0)} z ${camera.position.z.toFixed(0)}`, seed: STAGES.seed }) }); // T-0068: the view is a camera
   const BASE_RATIO = Math.min(devicePixelRatio, 1.5);
@@ -151,19 +156,22 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const glow = createTargetGlow(renderer, camera); // render/targetGlow (T-0035): outline glow on the interaction target (replaces the ground ring)
   let lastBatchLod = -1, lastCover = -1, lastFloor = -1;
   const openedCover = new Set<string>();
-  let centerKey = '', radius = -1, revision = -1, coverBiome = ''; const chunkJobs = new Set<string>();
+  let centerKey = '', radius = -1, revision = -1, coverKey = '', vegDecile: number | undefined, chunkEpoch = 0; const chunkJobs = new Set<string>();
   const CHUNK_ADDS_PER_FRAME = 2; let frameNo = 0; const adds = { frame: -1, n: 0 }; // upload pacing (see createChunk)
   warmTerrainWorkers(); // stage grids in each terrain worker, behind the loading screen
   /** Instantiates a chunk from the math layers as a sliced job (core/interest): near = full, mid = coarse terrain + far LODs. */
   function* createChunk(cx: number, cz: number, context: EventContext, near: boolean) {
+    const epoch = chunkEpoch;
     const root = new THREE.Group(), objects = new Map<string, THREE.Object3D>(), batch = createChunkBatch(), contacts: Contact[] = []; // contacts begin only once the chunk is in the scene (a cancelled build fires nothing)
     // heights, normals, world-space positions and the water sheet come from a terrain worker (render/terrainPool); WAIT until then
     const t = yield* chunkTerrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near, STAGES.on ? (near ? 32 : 8) : 0, { worker: true, wanted: () => chunkJobs.has(`${cx}:${cz}`) });
     const ground = new THREE.Mesh(t.terrain, terrainMaterial()); ground.receiveShadow = true;
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; ground.layers.enable(1); root.add(ground); // layer 1 = GI probe capture
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), waterMaterial());
-    water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
-    if (t.water) { const lake = new THREE.Mesh(t.water, water.material); lake.userData.inspect = { type: 'terrain', key: `water:${cx}:${cz}` }; root.add(lake); } // stages 2b/2c: lake level / river surface sheet
+    // The teal plane follows the cover sample. The staged lake and river sheet is mounted
+    // whenever the terrain job built one, including when that sample is dry.
+    const centreX = (cx + .5) * CHUNK_SIZE, centreZ = (cz + .5) * CHUNK_SIZE;
+    const openSheet = drawOpenWater(centreX, centreZ);
+    if (openSheet || t.water) mountChunkWater(root, cx, cz, openSheet, t.water, waterMaterial());
     const generated = applyPopulation(generateChunk(cx, cz), cx, cz); yield; // chunk build steps stay within the 4 ms job budget
     // Old remembered people bypass generation's land test. Hide invalid placements without
     // deleting their relationship/event records or inventing a new location for them.
@@ -196,8 +204,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     // GPU uploads happen on a mesh's first draw: add at most CHUNK_ADDS_PER_FRAME chunk roots per frame, so uploads spread out
     while (adds.frame === frameNo && adds.n >= CHUNK_ADDS_PER_FRAME) yield WAIT;
     if (adds.frame !== frameNo) { adds.frame = frameNo; adds.n = 0; } adds.n++;
+    if (epoch !== chunkEpoch) return { root, entities, objects, near, batch, contacts, epoch };
     scene.add(root); for (const c of contacts) CONTACTS.begin(c); // T-0006: rising edge per log; ends at disposal
-    return { root, entities, objects, near, batch, contacts };
+    return { root, entities, objects, near, batch, contacts, epoch };
   }
   /** `also`: a second streaming centre (the photo-mode camera); the player's own chunks always stay loaded. */
   function sync(x: number, z: number, altitude: number, context: EventContext, eventRevision: number, also?: { x: number; z: number }) {
@@ -207,13 +216,14 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
     const nextRadius = chunkRadius(altitude, INTEREST.mid, CHUNK_SIZE);
     const ax = also ? Math.floor(also.x / CHUNK_SIZE) : cx, az = also ? Math.floor(also.z / CHUNK_SIZE) : cz;
-    const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}`;
-    const biome = landingContext(x, z).biome;
-    const coverChanged = coverBiome !== '' && biome !== coverBiome;
-    if (biome) coverBiome = biome;
-    if (coverChanged) clearSteppeCache();
-    if (!coverChanged && centerKey === tierKey && radius === nextRadius && revision === eventRevision) return;
-    const changed = revision !== eventRevision || coverChanged;
+    const here = coverSampleAt(x, z);
+    const tier = coverTierToken(here.biome, here.water, here.vegetation, vegDecile);
+    vegDecile = tier.decile;
+    const tierChanged = tier.token !== coverKey;
+    if (tierChanged) { coverKey = tier.token; chunkEpoch++; dropFarTrees(); clearSteppeCache(); }
+    const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}:${tier.token}`;
+    if (centerKey === tierKey && radius === nextRadius && revision === eventRevision) return;
+    const changed = revision !== eventRevision || tierChanged;
     centerKey = tierKey; radius = nextRadius; revision = eventRevision;
     const needed = new Map<string, boolean>(); // chunk key -> near tier
     for (const [ox, oz] of [[cx, cz], [ax, az]]) for (let a = ox - radius; a <= ox + radius; a++) for (let b = oz - radius; b <= oz + radius; b++) {
@@ -224,10 +234,14 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     for (const [key, chunk] of chunks) if (changed || !needed.has(key) || needed.get(key) !== chunk.near) {
       scene.remove(chunk.root); disposeObject(chunk.root); for (const c of chunk.contacts) CONTACTS.end(c.a, c.b); chunks.delete(key);
     }
-    for (const key of [...chunkJobs]) if (!needed.has(key)) { cancel(`chunk:${key}`); chunkJobs.delete(key); }
+    for (const key of [...chunkJobs]) if (tierChanged || !needed.has(key)) { cancel(`chunk:${key}`); chunkJobs.delete(key); }
     for (const [key, near] of needed) if (!chunks.has(key) && !pending(`chunk:${key}`)) {
       const [a, b] = key.split(':').map(Number); chunkJobs.add(key);
-      enqueue(`chunk:${key}`, squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), createChunk(a, b, context, near), c => { chunkJobs.delete(key); chunks.set(key, c); });
+      enqueue(`chunk:${key}`, squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), createChunk(a, b, context, near), c => {
+        chunkJobs.delete(key);
+        if (c.epoch !== chunkEpoch) { scene.remove(c.root); disposeObject(c.root); return; }
+        chunks.set(key, c);
+      });
     }
   }
   function eat(animal: { rig: ReturnType<typeof createDeerRig>; entity: Entity }, plantKey: string) {
@@ -386,6 +400,16 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   function draw(x: number, z: number, altitude: number, yaw: number, time: number, target?: Entity, pitch?: number,
     moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity, photo?: PhotoView) {
     frameNo++;
+    // A dry prairie sample does not show the Kenora lake. The mesh stays mounted
+    // (cover-sample.test.ts). It is not drawn.
+    for (const [key, chunk] of chunks) {
+      const [cx, cz] = key.split(':').map(Number);
+      const sample = coverSampleAt((cx + .5) * CHUNK_SIZE, (cz + .5) * CHUNK_SIZE);
+      const hide = sample.biome === 'prairie' && !sample.water;
+      chunk.root.traverse(o => {
+        if (o.name === 'open-water-sheet' || o.name === 'staged-water') o.visible = !hide;
+      });
+    }
     const width = canvas.clientWidth, height = canvas.clientHeight;
     if (renderer.xr.isPresenting) { /* the headset owns the drawing buffer */ }
     else if (output) { if (canvas.width !== output.w || canvas.height !== output.h) { renderer.setPixelRatio(1); renderer.setSize(output.w, output.h, false); } }

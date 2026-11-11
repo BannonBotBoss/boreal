@@ -84,6 +84,13 @@ export function storeTerrarium(z: number, x: number, y: number, tile: RgbaTile |
   generation++;
 }
 
+/** Drop cached elevation and photographs. Tests use this so one sample does not leak into the next file. */
+export function clearCachedTiles() {
+  dem.clear();
+  photo.clear();
+  generation++;
+}
+
 export function storePhoto(z: number, x: number, y: number, tile: RgbaTile | null) {
   const id = key(z, x, y);
   if (!tile) { photo.set(id, null); generation++; return; }

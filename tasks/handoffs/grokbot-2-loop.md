@@ -1,6 +1,6 @@
-# grokbot-2 loop — 2026-11-11, spec map re-check
+# grokbot-2 loop — 2026-11-11, spec map after the merges
 
-Re-checked T-0195 against issues #95–#119, #156 and #192 and the task files on this branch (main 28fad190). The #192 row now names T-0212 (#435), T-0213 (#436), T-0214 (#439) and T-0202 (#434). #422, #428 and #429 stay closed. D28 and D29 stay T-0211. No game code. Gait was not touched.
+Main is `2509d8bb`. #435 landed T-0212 and #436 landed the aerial task as T-0204. Deterministic generation moved from T-0204 to T-0213. The #192 row names D19/D22 as T-0204, D23 as T-0212, D24 as T-0214 (#439), prairie stems as T-0202 (#434). D28 and D29 stay T-0211. Gait was not touched.
 
 # grokbot-2 loop — 2026-11-10 evening, path and the map
 

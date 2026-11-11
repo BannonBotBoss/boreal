@@ -1,11 +1,17 @@
 # T-0216 grokbot-2
 
-D29. Branch `grokbot-2/glide-terrain`, from T-0215. The landing is the sea. The glide was still a flat field because `gameToPlanet` used the home frame.
+D29. Branch `grokbot-2/glide-terrain`, stacked on T-0215 `grokbot-2/ocean-landing`.
 
-## Doing
+## Done
 
-Map the band camera through `SITE` when the drop has moved the origin. Datum is the landing datum (0 on this ocean). 400 m of game height is 400 m above the sea, on the aim.
+`gameToPlanet`, `planetToGame`, `gameBasis`, and the hemisphere test use the landed site when `SITE.remote` is set. Datum is the landing datum. At 8.487 N, 129.334 W that is 0, so a game height of 400 m is 400 m above the sea, on the aim.
 
-## Next
+The pale glide (RGB 227, 228, 223) became the ocean colour (about 16, 25, 41). The Sentinel-2 tile of that point averages 16, 28, 51. The HUD on that glide is water, elevation 0, vegetation 0, the same sample as the landing.
 
-Tests, then a glide frame of the same URL as T-0215.
+## Check
+
+`tests/glide-site-frame.test.ts`. `tests/viewpoint.test.ts` still round-trips the home frame.
+
+## Leftover
+
+The landed frame still has a few spruce on the far bank. `coverSpots` for this water sample is empty and `isDryLand` is false. Those meshes are not this camera change.

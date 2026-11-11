@@ -18,8 +18,8 @@ D29. "Gliding above the land" was a flat field, pale and then light blue, with n
 
 ## Objectives
 
-- [ ] The glide camera sits on the aim, one glide height above that surface, and the picture shows that surface.
-- [ ] A check fails a camera left on the home frame or inside a 5074 m mountain, and passes 400 m above the sea.
+- [x] The glide camera sits on the aim, one glide height above that surface, and the picture shows that surface.
+- [x] A check fails a camera left on the home frame or inside a 5074 m mountain, and passes 400 m above the sea.
 
 ## Acceptance
 

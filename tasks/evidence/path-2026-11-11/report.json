@@ -1,0 +1,553 @@
+{
+  "commit": "e2f7db86",
+  "renderer": "SwiftShader",
+  "viewport": [
+    1280,
+    720
+  ],
+  "url": "http://127.0.0.1:5173/?start=sphere&stages=1&trees=v2&noprobe=1",
+  "started": "2026-11-11T23:37:36.946Z",
+  "shots": [
+    {
+      "name": "00-skip-attempt",
+      "path": "/tmp/path-audit/00-skip-attempt.png",
+      "how": "playwright",
+      "t": "2026-11-11T23:38:45.516Z",
+      "cine": true,
+      "count": "",
+      "hero": "",
+      "prompt": "Click or press any key to begin.",
+      "elapsed": 15.6492,
+      "seen": false,
+      "resume": null,
+      "mode": "game",
+      "h": 0,
+      "phase": "game",
+      "alt": 2999.9999999999977,
+      "sound": "Sound on",
+      "aim": {
+        "lat": 49.77016727001916,
+        "lon": 65.5357734437224,
+        "h": 373.75042510830554,
+        "kind": "",
+        "water": null,
+        "home": 1
+      },
+      "landing": {
+        "ready": true,
+        "remote": false,
+        "lat": 49.770167270021894,
+        "lon": 65.53577344371439,
+        "elevM": 215.40385077161264,
+        "vegetation": 0.34562680554611547,
+        "water": false,
+        "biome": "prairie",
+        "clickLat": null,
+        "clickLon": null,
+        "census": [
+          {
+            "species": "red_fox",
+            "display": "Red Fox",
+            "count": 47
+          }
+        ],
+        "shown": [
+          {
+            "species": "Red Fox",
+            "count": 1,
+            "x": 57.30441524646271,
+            "z": -7.276224431191682
+          }
+        ],
+        "frameMs": 600.0000000000298,
+        "lighting": {
+          "hour": 8.22,
+          "dayOfYear": 227,
+          "latitude": 49.79,
+          "sunElevation": 32.2,
+          "day": 1,
+          "golden": 0,
+          "night": 0,
+          "state": "day"
+        },
+        "note": "",
+        "coastM": null,
+        "censusLat": 49.770167270021894,
+        "censusLon": 65.53577344371439,
+        "shore": false
+      },
+      "frame": {
+        "medMs": 18.4,
+        "lastMs": 2243,
+        "stalls": 19,
+        "fps": 54.3,
+        "n": 105
+      },
+      "audioStates": [
+        "running"
+      ],
+      "audios": [],
+      "title": "Boreal · Script laboratory"
+    },
+    {
+      "name": "01-opening",
+      "path": "/tmp/path-audit/01-opening.png",
+      "how": "playwright",
+      "t": "2026-11-11T23:39:51.777Z",
+      "cine": true,
+      "count": "",
+      "hero": "",
+      "prompt": "Click or press any key to begin.",
+      "elapsed": 11.21509999999999,
+      "seen": false,
+      "resume": null,
+      "mode": "game",
+      "h": 0,
+      "phase": "game",
+      "alt": 2999.9999999999977,
+      "sound": "Sound on",
+      "aim": {
+        "lat": 49.77016727001912,
+        "lon": 65.53577344372243,
+        "h": 373.7504251078492,
+        "kind": "",
+        "water": null,
+        "home": 1
+      },
+      "landing": {
+        "ready": true,
+        "remote": false,
+        "lat": 49.770167270021545,
+        "lon": 65.53577344371539,
+        "elevM": 215.40385077182668,
+        "vegetation": 0.3456268055448872,
+        "water": false,
+        "biome": "prairie",
+        "clickLat": null,
+        "clickLon": null,
+        "census": [
+          {
+            "species": "red_fox",
+            "display": "Red Fox",
+            "count": 47
+          }
+        ],
+        "shown": [
+          {
+            "species": "Red Fox",
+            "count": 1,
+            "x": 51.25598944300955,
+            "z": 1.1840678606853103
+          }
+        ],
+        "frameMs": 599.9999999999997,
+        "lighting": {
+          "hour": 8.21,
+          "dayOfYear": 227,
+          "latitude": 49.79,
+          "sunElevation": 32,
+          "day": 1,
+          "golden": 0,
+          "night": 0,
+          "state": "day"
+        },
+        "note": "",
+        "coastM": null,
+        "censusLat": 49.770167270021545,
+        "censusLon": 65.53577344371539,
+        "shore": false
+      },
+      "frame": {
+        "medMs": 26.8,
+        "lastMs": 2877.4,
+        "stalls": 14,
+        "fps": 37.3,
+        "n": 96
+      },
+      "audioStates": [
+        "running"
+      ],
+      "audios": [],
+      "title": "Boreal · Script laboratory"
+    },
+    {
+      "name": "02-today",
+      "path": "/tmp/path-audit/02-today.png",
+      "how": "failed",
+      "t": "2026-11-11T23:45:25.067Z",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "prompt": "",
+      "elapsed": 116,
+      "seen": true,
+      "resume": {
+        "mode": "globe",
+        "lat": 90,
+        "lon": 65.53577344372239,
+        "alt": 23572732.56,
+        "x": 65.40000115845481,
+        "z": -18.60000060800406,
+        "yaw": 46.03641542375813
+      },
+      "mode": "globe",
+      "h": 0,
+      "phase": "orbit",
+      "alt": 23572732.56,
+      "sound": "Sound on",
+      "aim": {
+        "lat": 49.770167270019186,
+        "lon": 65.53577344372239,
+        "h": 373.7504251088015,
+        "kind": "",
+        "water": null,
+        "home": 1
+      },
+      "landing": {
+        "ready": true,
+        "remote": false,
+        "lat": 49.77016727002464,
+        "lon": 65.53577344370628,
+        "elevM": 216.0098080488544,
+        "vegetation": 0.33035281967785196,
+        "water": false,
+        "biome": "prairie",
+        "clickLat": null,
+        "clickLon": null,
+        "census": [
+          {
+            "species": "red_fox",
+            "display": "Red Fox",
+            "count": 47
+          }
+        ],
+        "shown": [
+          {
+            "species": "Red Fox",
+            "count": 1,
+            "x": 61.75730810584402,
+            "z": -8.22065634526467
+          }
+        ],
+        "frameMs": 599.9999999999659,
+        "lighting": {
+          "hour": 8.92,
+          "dayOfYear": 227,
+          "latitude": 49.79,
+          "sunElevation": 38.4,
+          "day": 1,
+          "golden": 0,
+          "night": 0,
+          "state": "day"
+        },
+        "note": "",
+        "coastM": null,
+        "censusLat": 49.77016727002464,
+        "censusLon": 65.53577344370628,
+        "shore": false
+      },
+      "frame": {
+        "medMs": 313.9,
+        "lastMs": 14.8,
+        "stalls": 109,
+        "fps": 3.2,
+        "n": 180
+      },
+      "audioStates": [
+        "suspended",
+        "running"
+      ],
+      "audios": [],
+      "title": "Boreal · Script laboratory"
+    },
+    {
+      "name": "03-handoff",
+      "path": "/tmp/path-audit/03-handoff.png",
+      "how": "failed",
+      "t": "2026-11-11T23:46:18.577Z",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "prompt": "",
+      "elapsed": 116,
+      "seen": true,
+      "resume": {
+        "mode": "globe",
+        "lat": 90,
+        "lon": 65.53577344372239,
+        "alt": 23572732.56,
+        "x": 65.40000115845481,
+        "z": -18.60000060800406,
+        "yaw": 46.03641542375813
+      },
+      "mode": "globe",
+      "h": 0,
+      "phase": "orbit",
+      "alt": 23572732.56,
+      "sound": "Sound on",
+      "aim": {
+        "lat": 49.770167270019186,
+        "lon": 65.53577344372239,
+        "h": 373.7504251088015,
+        "kind": "",
+        "water": null,
+        "home": 1
+      },
+      "landing": {
+        "ready": true,
+        "remote": false,
+        "lat": 49.77016727002464,
+        "lon": 65.53577344370628,
+        "elevM": 216.0098080488544,
+        "vegetation": 0.33035281967785196,
+        "water": false,
+        "biome": "prairie",
+        "clickLat": null,
+        "clickLon": null,
+        "census": [
+          {
+            "species": "red_fox",
+            "display": "Red Fox",
+            "count": 47
+          }
+        ],
+        "shown": [
+          {
+            "species": "Red Fox",
+            "count": 1,
+            "x": 61.75730810584402,
+            "z": -8.22065634526467
+          }
+        ],
+        "frameMs": 599.9999999999659,
+        "lighting": {
+          "hour": 8.92,
+          "dayOfYear": 227,
+          "latitude": 49.79,
+          "sunElevation": 38.4,
+          "day": 1,
+          "golden": 0,
+          "night": 0,
+          "state": "day"
+        },
+        "note": "",
+        "coastM": null,
+        "censusLat": 49.77016727002464,
+        "censusLon": 65.53577344370628,
+        "shore": false
+      },
+      "frame": {
+        "medMs": 440.9,
+        "lastMs": 149.7,
+        "stalls": 121,
+        "fps": 2.3,
+        "n": 180
+      },
+      "audioStates": [
+        "suspended",
+        "running"
+      ],
+      "audios": [],
+      "title": "Boreal · Script laboratory"
+    },
+    {
+      "name": "05-orbit",
+      "path": "/tmp/path-audit/05-orbit.png",
+      "how": "failed",
+      "t": "2026-11-11T23:47:43.503Z",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "prompt": "",
+      "elapsed": 116,
+      "seen": true,
+      "resume": {
+        "mode": "globe",
+        "lat": 90,
+        "lon": -143.4487928963587,
+        "alt": 23572732.56,
+        "x": 65.40000115845481,
+        "z": -18.60000060800406,
+        "yaw": 46.03641542375813
+      },
+      "mode": "globe",
+      "h": 0,
+      "phase": "orbit",
+      "alt": 23572732.56,
+      "sound": "Sound on",
+      "aim": {
+        "lat": 84.61987827746945,
+        "lon": -143.4487928963587,
+        "h": -1986.1511001946883,
+        "kind": "ocean",
+        "water": 0,
+        "home": 0
+      },
+      "landing": {
+        "ready": true,
+        "remote": false,
+        "lat": 49.77016727002464,
+        "lon": 65.53577344370628,
+        "elevM": 216.0098080488544,
+        "vegetation": 0.33035281967785196,
+        "water": false,
+        "biome": "prairie",
+        "clickLat": null,
+        "clickLon": null,
+        "census": [
+          {
+            "species": "red_fox",
+            "display": "Red Fox",
+            "count": 47
+          }
+        ],
+        "shown": [
+          {
+            "species": "Red Fox",
+            "count": 1,
+            "x": 61.75730810584402,
+            "z": -8.22065634526467
+          }
+        ],
+        "frameMs": 599.9999999999659,
+        "lighting": {
+          "hour": 8.92,
+          "dayOfYear": 227,
+          "latitude": 49.79,
+          "sunElevation": 38.4,
+          "day": 1,
+          "golden": 0,
+          "night": 0,
+          "state": "day"
+        },
+        "note": "",
+        "coastM": null,
+        "censusLat": 49.77016727002464,
+        "censusLon": 65.53577344370628,
+        "shore": false
+      },
+      "frame": {
+        "medMs": 546.7,
+        "lastMs": 560.6,
+        "stalls": 160,
+        "fps": 1.8,
+        "n": 180
+      },
+      "audioStates": [
+        "suspended",
+        "running"
+      ],
+      "audios": [],
+      "title": "Boreal · Script laboratory"
+    },
+    {
+      "name": "04-overhead-2000",
+      "path": "/tmp/path-audit/04-overhead-2000.png",
+      "how": "failed",
+      "t": "2026-11-11T23:49:03.543Z",
+      "cine": false,
+      "count": "",
+      "hero": "",
+      "prompt": "",
+      "elapsed": 116,
+      "seen": true,
+      "resume": {
+        "mode": "globe",
+        "lat": 90,
+        "lon": -143.44879289636256,
+        "alt": 38386.15824061034,
+        "x": 65.40000115845481,
+        "z": -18.60000060800406,
+        "yaw": 46.03641542375813
+      },
+      "mode": "globe",
+      "h": 0,
+      "phase": "orbit",
+      "alt": 38386.15824061034,
+      "sound": "Sound on",
+      "aim": {
+        "lat": 84.61987827747068,
+        "lon": -143.44879289636256,
+        "h": -1986.1511001951899,
+        "kind": "ocean",
+        "water": 0,
+        "home": 0
+      },
+      "landing": {
+        "ready": true,
+        "remote": false,
+        "lat": 49.77016727002464,
+        "lon": 65.53577344370628,
+        "elevM": 216.0098080488544,
+        "vegetation": 0.33035281967785196,
+        "water": false,
+        "biome": "prairie",
+        "clickLat": null,
+        "clickLon": null,
+        "census": [
+          {
+            "species": "red_fox",
+            "display": "Red Fox",
+            "count": 47
+          }
+        ],
+        "shown": [
+          {
+            "species": "Red Fox",
+            "count": 1,
+            "x": 61.75730810584402,
+            "z": -8.22065634526467
+          }
+        ],
+        "frameMs": 599.9999999999659,
+        "lighting": {
+          "hour": 8.92,
+          "dayOfYear": 227,
+          "latitude": 49.79,
+          "sunElevation": 38.4,
+          "day": 1,
+          "golden": 0,
+          "night": 0,
+          "state": "day"
+        },
+        "note": "",
+        "coastM": null,
+        "censusLat": 49.77016727002464,
+        "censusLon": 65.53577344370628,
+        "shore": false
+      },
+      "frame": {
+        "medMs": 538,
+        "lastMs": 635.4,
+        "stalls": 186,
+        "fps": 1.9,
+        "n": 180
+      },
+      "audioStates": [
+        "suspended",
+        "running"
+      ],
+      "audios": [],
+      "title": "Boreal · Script laboratory",
+      "targetM": 2000
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "notes": [],
+  "skip": {
+    "beforeElapsed": 6.211100000000002,
+    "afterElapsed": 9.235000000000003,
+    "beforeCount": "",
+    "afterCount": "",
+    "beforeSeen": false,
+    "afterSeen": false,
+    "cineStillUp": true,
+    "jumped": false
+  },
+  "zoomResponse": {
+    "before": 23572732.56,
+    "afterPlus": 19423682.822807398,
+    "moved": true
+  }
+}

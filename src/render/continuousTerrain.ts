@@ -11,6 +11,10 @@
  */
 import * as THREE from 'three';
 import { heightAt, terrainBand } from '../core/world';
+import { dayAt } from '../core/timeOfDay';
+import { worldSec } from '../core/worldClock';
+import { coverSampleAt } from '../world/globe/coverSample';
+import { steppeCure } from './pbr';
 import { curvatureDrop, horizonMetres } from '../world/globe/horizonSkirt';
 import { BAND_COLOR, groundColor, isStaged } from './terrainCore';
 import { terrainMaterial } from './pbr';
@@ -119,12 +123,14 @@ export function selectTerrainLeaves(camX: number, camZ: number, eyeM: number, sp
   return { leaves, root };
 }
 
-function paint(x: number, z: number, y: number, target: THREE.Color) {
+function paint(x: number, z: number, y: number, target: THREE.Color, cure = 0) {
   const band = terrainBand(y, x, z);
   if (isStaged(band)) groundColor(band as SoilKind, target);
   else target.set(BAND_COLOR[band]);
+  if (cure > 0) target.lerp(STRAW, 0.35 + 0.6 * cure);
   return target;
 }
+const STRAW = new THREE.Color().setRGB(0.41, 0.28, 0.08);
 
 /**
  * One indexed mesh. `height(x, z)` is the ground the near chunks already use.
@@ -136,6 +142,8 @@ export function buildContinuousMesh(
   split = TERRAIN_SPLIT,
 ): ContinuousMesh {
   const { leaves, root } = selectTerrainLeaves(camX, camZ, eyeM, split);
+  const here = coverSampleAt(camX, camZ);
+  const cure = (here.biome === 'prairie' || here.biome === 'desert') ? steppeCure(dayAt(worldSec())) : 0;
   const seg = TERRAIN_GRID, row = seg + 1;
   const skirtVerts = 4 * row;
   const per = row * row + skirtVerts;
@@ -171,7 +179,7 @@ export function buildContinuousMesh(
       const gz = (hAt(ix, iz + 1) - hAt(ix, iz - 1)) / (2 * step);
       const len = Math.hypot(gx, 1, gz) || 1;
       normal[i * 3] = -gx / len; normal[i * 3 + 1] = 1 / len; normal[i * 3 + 2] = -gz / len;
-      paint(x, z, raw, tint);
+      paint(x, z, raw, tint, cure);
       color[i * 3] = tint.r; color[i * 3 + 1] = tint.g; color[i * 3 + 2] = tint.b;
       uv[i * 2] = ix / seg; uv[i * 2 + 1] = iz / seg;
     }
@@ -253,7 +261,8 @@ export function createContinuousTerrain(): ContinuousTerrain {
   function update(camX: number, camZ: number, eyeM: number) {
     const eye = Math.max(1, eyeM);
     const snap = Math.max(24, minLeaf(eye));
-    const next = `${Math.round(camX / snap)}:${Math.round(camZ / snap)}:${Math.round(Math.log2(eye) * 4)}`;
+    const biome = coverSampleAt(camX, camZ).biome;
+    const next = `${Math.round(camX / snap)}:${Math.round(camZ / snap)}:${Math.round(Math.log2(eye) * 4)}:${biome}`;
     if (next === key && geo.getAttribute('position')) return false;
     key = next;
     const data = buildContinuousMesh(camX, camZ, eye, heightAt);

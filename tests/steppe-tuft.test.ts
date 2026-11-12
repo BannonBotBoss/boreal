@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { GENERATOR_VERSION, type Entity } from '../src/core/world';
 import { landingContext } from '../src/render/landingCast';
 import { treeGeometry } from '../src/render/trees';
-import { clearSteppeCache, tuftFieldPoints } from '../src/render/flora/steppeTuft';
+import { clearSteppeCache, steppeTuftGeometry, tuftBladeCensus, tuftFieldPoints } from '../src/render/flora/steppeTuft';
 import { cancelPendingTreeBuilds, placeTree, reconcileSteppe, treeRecord } from '../src/render/trees/game';
 import { OPEN_TILES, slippy, storePhoto, storeTerrarium, type RgbaTile } from '../src/world/globe/openTiles';
 
@@ -82,6 +82,19 @@ test('a prairie sample draws a feather-grass tuft, not a spruce pole', () => {
   } finally {
     clearSteppeCache();
   }
+});
+
+test('a tuft is a fan of narrow blades, not three wide triangles', () => {
+  const census = tuftBladeCensus(1);
+  assert.equal(census.wideGround, 0, `a ground edge is wider than 4 cm (${census.wideGround})`);
+  assert.ok(census.tips >= 8, `only ${census.tips} triangles reach a culm tip`);
+  const g = steppeTuftGeometry(1);
+  g.computeBoundingBox();
+  const box = g.boundingBox!;
+  const w = Math.max(box.max.x - box.min.x, box.max.z - box.min.z);
+  const h = box.max.y - box.min.y;
+  assert.ok(w >= 0.20, `fan width ${w} m still reads as a pole`);
+  assert.ok(h >= 0.30 && h <= 0.60, `culm height ${h} m left 30–60 cm`);
 });
 
 test('a boreal sample still draws a tree taller than a tuft', () => {

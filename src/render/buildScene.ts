@@ -45,7 +45,7 @@ import { createAgent, stepAgent, writeLocomotion, deerPosture, type Agent, type 
 import { stream } from '../proc/rng';
 import { windAt } from '../core/weather';
 import { createHares } from '../animals/hare';
-import { formatHour, hourAt } from '../core/timeOfDay';
+import { formatHour, dayAt, hourAt } from '../core/timeOfDay';
 import { mountViewfinder } from '../camera/gameCamera';
 import { LEVEL, BLOCK } from '../core/tuning';
 import { dropVisitors, stepVisitor, visitorFriend, visitorReadout, visitorSitDrop } from '../core/visitors';
@@ -519,7 +519,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     if (time - lastFloor > 1 || time < lastFloor) {
       lastFloor = time;
-      try { setGroundFloor(landingContext(x, z).biome); } catch { /* keep the last floor */ }
+      try { setGroundFloor(landingContext(x, z).biome, dayAt(worldTime ?? time)); } catch { /* keep the last floor */ }
     }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen, time, mode);

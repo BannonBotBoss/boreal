@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-11, path and the tuft blades
+
+Main `e2f7db86`. The film reaches Today (elapsed 111, counter "Today", hero "Today · 13.8 billion years") and then the globe (seen, cine gone, elapsed 116). A second click, Escape, and space during the first minute do not skip: elapsed moved 6.2 s to 9.2 s and the film stayed up. Sound read "Sound on" and the audio context was running. No page error. A drag after handoff aimed the centre at 84.6 N, 143.4 W, ocean, −1986 m. Plus zoomed the altitude. Globe screenshots did not return within 40 s (the page was at about 3 fps). The standing eye at 49.77 N, 65.54 E is prairie, vegetation 0.35, 215 m, day 227, sun 37°, snow 0. That grass was three wide triangles. T-0218 `grokbot-2/steppe-blades` replaces them with a fan of narrow blades. Not claimed. No approve-plan from this agent. Gait was not touched. #440, #441, #443 were not edited.
+
 # grokbot-2 loop — 2026-11-10 evening, tufts
 
 T-0202 `cursor/steppe-tufts-aef3`, merged with main through the nadir landing `9c4e8bdc`. The standing eye was re-shot (`tasks/evidence/T-0202/after-eye1.7.png`): straw tufts, no spruce poles, one ground surface, pale blue sky. The photograph is warmed from `buildScene` because the skirt is gone. Not claimed. No approve-plan from this agent. Gait was not touched.

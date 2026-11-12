@@ -7,10 +7,11 @@
  * Viereck & Johnston 1990). The blade is drawn 8 mm wide: a 0.3–0.5 mm
  * blade is sub-pixel, the same calibration as wavy hairgrass in cover.ts.
  *
- * The ribbon is a crossed card, built on the CPU so a test can measure it.
- * Three cards keep a face toward the eye. The card is the tussock, not the
- * 0.3–0.5 mm blade: a setaceous leaf is sub-pixel, the same calibration as
- * wavy hairgrass in cover.ts. The tussock is drawn 28 cm across.
+ * The ribbon is built on the CPU so a test can measure it. A tussock is a
+ * fan of narrow blades, not three wide triangles. The setaceous leaf is
+ * sub-pixel, the same calibration as wavy hairgrass in cover.ts. Each drawn
+ * blade is 12 mm wide so the fan reads as grass. The fan, not one card, is
+ * the tussock.
  *
  * The near field is a sward, not the few spruce stems the cover share keeps.
  * Those stems sit outside the 13 m clear around the wolf, so a standing eye
@@ -30,6 +31,14 @@ export const STIPA_CULM_M = { min: 0.30, max: 0.60 } as const;
 export const STIPA_SPACING_M = 0.5;
 /** Radius of the sward around the camera. The standing eye is inside it. */
 export const STIPA_RADIUS_M = 8;
+/**
+ * Drawn blade width. 12 mm is [game calibration] so a setaceous leaf is a
+ * few pixels at the standing eye, the same reason cover.ts draws hairgrass
+ * wider than the real leaf. A 28 cm triangle reads as a spike.
+ */
+export const STIPA_BLADE_M = 0.012;
+/** Blades in one tussock. Three wide cards read as pyramids. */
+export const STIPA_BLADES = 9;
 
 const cache = new Map<string, boolean>();
 let cacheGen = -1;
@@ -58,10 +67,7 @@ function tuftMaterial() {
   return material;
 }
 
-/** One tuft. Three crossed cards, so a 40 m eye still sees a clump.
- *  A single 8 mm ribbon is under a pixel at that distance (same reason cover.ts
- *  draws hairgrass wider than the setaceous blade). Card width 0.16 m is the
- *  clump, not the leaf. Height stays inside the 30–60 cm culm. */
+/** One tussock: a fan of narrow bent blades. Height stays inside the 30–60 cm culm. */
 export function steppeTuftGeometry(seed: number) {
   const rnd = random(seed || 1);
   const pos: number[] = [];
@@ -69,30 +75,51 @@ export function steppeTuftGeometry(seed: number) {
   const h = STIPA_CULM_M.min + rnd() * (STIPA_CULM_M.max - STIPA_CULM_M.min);
   // Day 227 is past anthesis (May–July). The culm is cured straw, the colour of the Akmola steppe in September.
   const base: [number, number, number] = [0.36, 0.28, 0.10];
+  const mid: [number, number, number] = [0.55, 0.44, 0.16];
   const tip: [number, number, number] = [0.72, 0.58, 0.22];
-  const cards = 3;
-  for (let i = 0; i < cards; i++) {
-    const ang = (i / cards) * Math.PI + rnd() * 0.2;
-    const lean = 0.15 + rnd() * 0.2;
-    const w = 0.28;
-    const dx = Math.cos(ang) * w * 0.5;
-    const dz = Math.sin(ang) * w * 0.5;
-    const ox = Math.cos(ang + Math.PI / 2) * Math.sin(lean) * h;
-    const oz = Math.sin(ang + Math.PI / 2) * Math.sin(lean) * h;
+  const half = STIPA_BLADE_M / 2;
+  for (let i = 0; i < STIPA_BLADES; i++) {
+    const ang = (i / STIPA_BLADES) * Math.PI * 2 + rnd() * 0.15;
+    const lean = 0.45 + rnd() * 0.35;
+    const side = ang + Math.PI / 2;
+    const dx = Math.cos(side) * half;
+    const dz = Math.sin(side) * half;
+    const reach = Math.sin(lean) * h;
+    const ox = Math.cos(ang) * reach;
+    const oz = Math.sin(ang) * reach;
     const ty = Math.cos(lean) * h;
+    const mx = ox * 0.42, mz = oz * 0.42, my = ty * 0.55;
     const push = (x: number, y: number, z: number, c: [number, number, number]) => { pos.push(x, y, z); col.push(...c); };
-    push(-dx, 0, -dz, base);
-    push(dx, 0, dz, base);
-    push(ox, ty, oz, tip);
-    push(-dx, 0, -dz, base);
-    push(dx, 0, dz, base);
-    push(-ox, ty, -oz, tip);
+    const tri = (a: number[], b: number[], c: number[], ca: [number, number, number], cb: [number, number, number], cc: [number, number, number]) => {
+      push(a[0], a[1], a[2], ca); push(b[0], b[1], b[2], cb); push(c[0], c[1], c[2], cc);
+    };
+    const a0 = [-dx, 0, -dz], b0 = [dx, 0, dz];
+    const am = [mx - dx * 0.7, my, mz - dz * 0.7], bm = [mx + dx * 0.7, my, mz + dz * 0.7];
+    const tipP = [ox, ty, oz];
+    tri(a0, b0, bm, base, base, mid);
+    tri(a0, bm, am, base, mid, mid);
+    tri(am, bm, tipP, mid, mid, tip);
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   geo.computeVertexNormals();
   return geo;
+}
+
+/** Ground-edge length of each triangle, and how many triangles reach a culm tip. */
+export function tuftBladeCensus(seed: number) {
+  const pos = steppeTuftGeometry(seed).getAttribute('position').array as ArrayLike<number>;
+  let wideGround = 0, tips = 0;
+  for (let i = 0; i < pos.length; i += 9) {
+    const v = [0, 1, 2].map(k => ({ x: pos[i + k * 3], y: pos[i + k * 3 + 1], z: pos[i + k * 3 + 2] }));
+    if (Math.max(v[0].y, v[1].y, v[2].y) > 0.25) tips++;
+    for (let a = 0; a < 3; a++) {
+      const p = v[a], q = v[(a + 1) % 3];
+      if (p.y < 0.05 && q.y < 0.05 && Math.hypot(p.x - q.x, p.y - q.y, p.z - q.z) > 0.04) wideGround++;
+    }
+  }
+  return { wideGround, tips };
 }
 
 export function steppeTuftGroup(seed: number) {

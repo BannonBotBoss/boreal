@@ -791,6 +791,12 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       filmOffset = offset;
       filmSpin.setFromAxisAngle(filmAxis, yaw);
       alt = targetAlt = R * radii;
+      dir.copy(filmHome).applyQuaternion(filmSpin);
+      ground = surfaceRadius(planet, [dir.x, dir.y, dir.z]) - R;
+      camera.up.set(0, 1, 0);
+      camera.position.copy(dir).multiplyScalar(R + ground + alt);
+      camera.lookAt(0, 0, 0);
+      camera.clearViewOffset();
     },
     /** Aim the centre at a game-local spot without starting the fall. The next G, before a drag, drops there. */
     lookOver,

@@ -175,13 +175,14 @@ test('bed hands to cue 2 at 0:42; voice ducks are later, and there is no loop', 
   }
 });
 
-test('the film keeps the loading path and does not skip to the planet', () => {
+test('the film still waits for a click, and Escape during the film reaches the planet', () => {
   const opening = readFileSync('src/world/cosmos/opening.ts', 'utf8');
   assert.match(opening, /pointerdown/);
   assert.match(opening, /Click or press any key to begin/);
-  assert.match(opening, /first visit does not skip/);
+  assert.match(opening, /cinematic:dismiss/);
   assert.match(opening, /cine-refs/);
   assert.match(readFileSync('src/main.ts', 'utf8'), /createOpening\(/);
+  assert.match(readFileSync('src/main.ts', 'utf8'), /inpage\?\.enter\(\)/);
   for (const f of ['PLACEHOLDER_B1.mp4', 'PLACEHOLDER_B3.mp4', 'PLACEHOLDER_B4.jpg', 'PLACEHOLDER_B5.jpg', 'PLACEHOLDER_B6_B7.jpg', 'PLACEHOLDER_B8_B9.jpg', 'PLACEHOLDER_B10.jpg', 'PLACEHOLDER_B11.jpg', 'PLACEHOLDER_B12.jpg', 'PLACEHOLDER_B13.jpg']) {
     assert.ok(existsSync('public/cinematic/refs/' + f), f);
   }

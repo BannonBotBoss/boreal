@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0216",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/glide-terrain",
+  "skill": "glide-site-frame",
+  "note": "The glide camera follows the landed site. At 8.487 N, 129.334 W it is 400 m above the sea. The pale field (RGB 227, 228, 223) is now the ocean colour (about 16, 25, 41), next to the Sentinel-2 tile (16, 28, 51). The HUD is water, elevation 0.",
+  "at": "2026-11-11T11:50:00-08:00"
+}

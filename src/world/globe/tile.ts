@@ -353,7 +353,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + ORBIT_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc, vAerial;\nvarying vec4 vCover;\nuniform float uHideLake;\nuniform sampler2D uExCanopy, uExFen, uExShore, uExWater, uExLut;\nuniform float uExOn, uExMetres, uExGain, uCrownFloor;\nfloat aerialBand = 0.0;\n' + TILING_BLEND_GLSL + '\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + ORBIT_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc, vAerial;\nvarying vec4 vCover;\nuniform float uHideLake;\nuniform sampler2D uExCanopy, uExFen, uExShore, uExWater, uExLut;\nuniform float uExOn, uExMetres, uExGain, uCrownFloor, uOpenLand;\nfloat aerialBand = 0.0;\n' + TILING_BLEND_GLSL + '\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -452,13 +452,28 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       // Reference open water is near-black and slightly green (about sRGB 12, 20, 16), not navy.
       vec3 waterCol = waterC * vec3(0.16, 0.22, 0.15);
       vec3 photo = mix(waterCol, landEx, landMask) * uExGain;
+      // Prairie and desert are not this conifer crop. meta.json: the crop is 1.6 m GSD
+      // NAIP of northern Minnesota. At 400–2000 m a pixel is metres wide, so that crop
+      // aliases into salt (the 2026-11-12 path frames). uOpenLand is coverSampleAt,
+      // the same class the HUD reports. Thatch and straw match the standing ground
+      // (render/pbr.ts). Oke 1987, Boundary Layer Climates, Table 1.1: short grass
+      // albedo 0.16–0.26, coniferous forest 0.05–0.15. Day 227 is cured Stipa
+      // (Flora of China 22; pbr.ts steppeCure). The 90 m and 420 m waves are
+      // tussocks and stands, not the 1.6 m crown.
+      float clump = detN(vDetW / 420.0, uDetail.w + 4.0);
+      float fleck = detN(vDetW / 90.0, uDetail.w + 6.0);
+      vec3 soilC = vec3(0.22, 0.13, 0.06);
+      vec3 thatchC = vec3(0.42, 0.30, 0.11);
+      vec3 strawC = vec3(0.50, 0.34, 0.11);
+      vec3 openC = mix(soilC, mix(thatchC, strawC, fleck), 0.45 + 0.55 * clump);
+      photo = mix(photo, openC, clamp(uOpenLand, 0.0, 1.0) * landMask);
       diffuseColor.rgb = mix(diffuseColor.rgb, photo, aerial * (1.0 - clamp(vCover.w, 0.0, 1.0)));
       // Impostors own the crowns. The tiled NAIP crop underneath becomes a smooth
       // moss, shrub and litter floor. Feathermoss albedo ~0.09 (Bubier et al. 1997)
       // renders near-black under this sun. These values are the albedo that lands
       // near the NAIP gap, about sRGB (99, 115, 82), once the globe light hits them.
       // Water is left alone.
-      if (uCrownFloor > 0.5 && landMask > 0.5) {
+      if (uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5) {
         float slow = detN(vDetW / 90.0, uDetail.w + 4.0);
         float shrubN = detN(vDetW / 26.0, uDetail.w + 12.0);
         vec3 litter = vec3(0.28, 0.30, 0.16);
@@ -469,6 +484,17 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
         diffuseColor.rgb = floorC;
       }
     }
+    // Past 20 km the aerial crop fades and the vertex colour is spruce. From 2000 m
+    // the limb is that far, so the frame kept green salt around a tan nadir.
+    // The orbit disc is hundreds of thousands of metres out and stays as it was.
+    if (uOpenLand > 0.5 && landMask > 0.5) {
+      float eyeFar = length(vViewPosition);
+      float nearDisc = 1.0 - smoothstep(80000.0, 400000.0, eyeFar);
+      float clumpFar = detN(vDetW / 420.0, uDetail.w + 4.0);
+      float fleckFar = detN(vDetW / 90.0, uDetail.w + 6.0);
+      vec3 openFar = mix(vec3(0.22, 0.13, 0.06), mix(vec3(0.42, 0.30, 0.11), vec3(0.50, 0.34, 0.11), fleckFar), 0.45 + 0.55 * clumpFar);
+      diffuseColor.rgb = mix(diffuseColor.rgb, openFar, nearDisc);
+    }
     }${LAYERS_FRAG}
   if (uDetail.x > 0.001) { // ground detail (DETAIL): octaves fade out where a cell is under ~2 pixels (no shimmer)
     float a = 0.0;
@@ -477,7 +503,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
     float n0 = detN(q0, uDetail.w) - 0.5, n1 = detN(q1, uDetail.w + 1.0) - 0.5, n2 = detN(q2, uDetail.w + 2.0) - 0.5;
     detH = (k0 * n0 * uDetAmp.x + k1 * n1 * uDetAmp.y + k2 * n2 * uDetAmp.z) * uDetail.x * uDetail.z * landMask;
     a = k0 * n0 * ${DETAIL.weight[0].toFixed(3)} + k1 * n1 * ${DETAIL.weight[1].toFixed(3)} + k2 * n2 * ${DETAIL.weight[2].toFixed(3)};
-    diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask * (1.0 - aerialBand);
+    diffuseColor.rgb *= 1.0 + 2.0 * a * uDetail.x * uDetail.y * landMask * (1.0 - aerialBand) * (1.0 - clamp(uOpenLand, 0.0, 1.0));
   }
   if (uOceanGlint > 0.5) { // macro wave chop on the ocean only (stegu simplex). Fades when a cell is under ~2 px. Lakes and the film's early beats stay flat.
     float ocean = (1.0 - landMask) * (1.0 - clamp(vLake, 0.0, 1.0)) * presentW;
@@ -539,7 +565,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       vec3 mosaic = stand < 0.5 ? mix(fen, diffuseColor.rgb, stand * 2.0) : mix(diffuseColor.rgb, leaf, (stand - 0.5) * 2.0);
       // The aerial stand above already painted this band. Do not paint it again.
       float aerialM = smoothstep(120.0, 350.0, length(vViewPosition)) * (1.0 - smoothstep(20000.0, 60000.0, length(vViewPosition)));
-      diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen * mix(0.55, 1.0, dark) * (1.0 - aerialM) * (1.0 - uCrownFloor));
+      diffuseColor.rgb = mix(diffuseColor.rgb, mosaic, seen * mix(0.55, 1.0, dark) * (1.0 - aerialM) * (1.0 - uCrownFloor) * (1.0 - clamp(uOpenLand, 0.0, 1.0)));
       // No 12 m crown grid here. At 400 m that grid was a wallpaper of identical dots
       // (tasks/evidence/T-0185/after-globe-400.png and the first T-0187 recapture).
       // The 40 / 160 / 640 m stands are the canopy.
@@ -566,7 +592,7 @@ roughnessFactor = mix(roughnessFactor, uLakeRough, (1.0 - landMask) * (1.0 - oce
         'float dotNL = smoothstep(-0.08, 0.25, dot( geometryNormal, directLight.direction )); // T-0169: soft Lambert penumbra'))
       .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(material.specularColor, vec3(' + fresnelF0().toFixed(4) + '), (1.0 - landMask) * (1.0 - oceanGlint)); // lakes keep dielectric F0; the ocean keeps the metalness mix (Matthew 2026-11-06)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * clamp(uCrack, 0.0, 1.0);')
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
-if (uCrownFloor > 0.5 && landMask > 0.5) {
+if (uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5) {
   // After tone mapping. These are display colours, matched to the NAIP gap
   // (about sRGB 99, 115, 82), because the lit albedo stayed near-black.
   float slowE = detN(vDetW / 90.0, uDetail.w + 4.0);

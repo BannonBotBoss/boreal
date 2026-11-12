@@ -55,8 +55,22 @@ The clouds are not a mesh. They are `cloudDensity` / `atmClouds` inside the atmo
   Add `&alt=900000&pitch=0` for the nadir close-up. Ready is `__globe.stats().drawn > 0 && queued === 0`.
   `tools/t0169-shot.mjs` writes `tasks/evidence/T-0169/`.
 
+## Orbit disc (T-0220)
+
+Minimum (SwiftShader) draws no cloud shell: `CLOUDS.octaves` is 0, and a level-1 tile at the film
+arrival (3.7 Earth radii, 23,572 km) is one vertex every ~310 km. Ice and the zoom-0 DEM then read
+as axis-aligned rectangles. `orbitAlbedo.ts` bakes a 1024×512 equirectangular from the bilinear DEM
+(`coarseMetresLinear`, the nearest `coarseMetres` stays for the ground tiles) and `surfaceColour`,
+with mipmaps. The deck is `orbitCloudBytes` in `cloudCover.ts`: the same fBm as the shell, at 420 km
+and five octaves, because a 900 km cell is a cotton ball at that distance. Tiers whose octave count
+is above 0 keep the ray-marched shell and do not composite the deck. `presentW` keeps the film's
+early beats on the era colour. The check is `tests/orbit-detail.test.ts`: no bright block that fills
+its box the way those quads did, and the disc's mean RGB within 15% of Apollo 17 AS17-148-22727
+(https://images.nasa.gov/details/as17-148-22727).
+
 ## Mistakes to avoid
-- A second cloud sphere, a baked texture, or `oceanMesh.receiveShadow`. The shadow is analytic.
+- A second cloud sphere, or `oceanMesh.receiveShadow`. The shadow is analytic. The one baked map is
+  the orbit disc above. Do not also bake a shell for tiers that already ray-march.
 - Worley inside every octave. One F1 per `cloudDensity` call. The relief samples are capped at 5 octaves, so they
   skip Worley (the gate is 6) and stay cheaper than the coverage sample.
 - Changing `edgeCentre[0]` without re-running `tests/descent-polish.test.ts`. That test indexes the T-0041 sweep

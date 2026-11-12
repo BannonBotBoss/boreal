@@ -1493,3 +1493,22 @@ export function coarseMetres(latDeg: number, lonDeg: number): number {
   const wrapped = (ix + n) % n;
   return cells()[iy * n + wrapped];
 }
+/**
+ * Bilinear metres on the same grid. A nearest 1.4° cell, drawn through a level-1 tile, is an axis-aligned
+ * rectangle from orbit. The linear sample is what the orbit map filters. `coarseMetres` stays nearest:
+ * the ground tiles and the hypsometry tests keep the pixel they already had.
+ */
+export function coarseMetresLinear(latDeg: number, lonDeg: number): number {
+  const n = COARSE_N, g = cells();
+  const x = ((lonDeg + 180) / 360) * n;
+  const lat = Math.max(-85, Math.min(85, latDeg)) * Math.PI / 180;
+  const y = (1 - Math.log(Math.tan(lat) + 1 / Math.cos(lat)) / Math.PI) / 2 * n;
+  const x0 = Math.floor(x);
+  let y0 = Math.floor(y), tx = x - x0, ty = y - y0;
+  if (y0 < 0) { y0 = 0; ty = 0; }
+  if (y0 >= n - 1) { y0 = n - 1; ty = 0; }
+  const at = (ix: number, iy: number) => g[iy * n + ((ix % n) + n) % n];
+  const y1 = Math.min(n - 1, y0 + 1);
+  const a = at(x0, y0), b = at(x0 + 1, y0), c = at(x0, y1), d = at(x0 + 1, y1);
+  return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
+}

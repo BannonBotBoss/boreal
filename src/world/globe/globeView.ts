@@ -27,7 +27,9 @@ import { smoothstep, clamp } from '../../proc/math';
 import { hash, random } from '../../proc/rng';
 import { children, edgeMetres, faceDir, roots, centre as nodeCentre, type QNode } from './cube';
 import { renderOffset } from './origin';
-import { createAtmosphere } from './atmosphere';
+import { CLOUDS, createAtmosphere } from './atmosphere';
+import { orbitCloudBytes } from './cloudCover';
+import { bindOrbitCloud, setOrbitView } from './orbitAlbedo';
 import { across } from './cube';
 import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock';
 import { timescaleFrom } from '../../core/timescale';
@@ -158,6 +160,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   loadAerialExemplars();
   // Atmosphere (atmosphere.ts): sky shell + aerial perspective on the tiles; ?atmos=0 for the plain look
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
+  bindOrbitCloud(orbitCloudBytes);
   for (const [k, f] of [['envrh', 'rh'], ['envu', 'windE']] as const) if (q.has(k)) ENV_FORCE[f] = Number(q.get(k)); // T-0089 dev hook: ?envrh=0.95&envu=40 force the record (frames)
   // planet budget layers (planetLayers.ts, issue #43): snow, sea ice, wet soil from rust/boreal-sim; count and grid follow the tier; ?layers=0 off
   const layerDay = dayAt(q.has('shot') ? shotSec : worldSec()); // ?day= and ?date= are on the clock (initDay), not a wall-calendar day
@@ -668,6 +671,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (target && !ext && Math.abs(camera.aspect - target.width / target.height) > 1e-6) { camera.aspect = target.width / target.height; camera.updateProjectionMatrix(); }
     setLogDepthFar(camera.far);
     setLayerCamera(camPos, camera.fov, viewH);
+    const octRow = Math.max(0, Math.min(CLOUDS.octaves.length - 1, GOVERNOR.tier));
+    setOrbitView(alt, atmos ? CLOUDS.octaves[octRow] : 0);
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setGlobeMorph(morphRadius, morphSplit, morphFull, morphBoost, morphReach, camPos); // fade each leaf onto its parent before the LOD ring
     LAKE_FADE.uHide.value = alt < COARSE_LAKE.below ? 1 : 0; // vertex lakes off below 8 km; one value for every tile this frame

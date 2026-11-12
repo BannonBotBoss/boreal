@@ -28,14 +28,23 @@ const EMPTY_RGBA = new THREE.DataTexture(new Uint8Array(4), 1, 1);
 const EMPTY_R = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1);
 EMPTY_RGBA.needsUpdate = true;
 EMPTY_R.needsUpdate = true;
-/** uOrbit: 0..1 altitude fade. uOrbitDeck: 1 when the tier draws no cloud shell. */
+/**
+ * Orbit ocean, linear, chosen so ACES on a sunlit pixel lands near the Apollo 17 sea
+ * (AS17-148-22727: saturated blue, not the midnight #030b1e of the close-up water).
+ * Land lift brings the boreal albedo up into the same exposure. Ice (already bright) is not lifted.
+ */
+export const ORBIT_OCEAN = [0.015, 0.07, 0.32] as const;
+export const ORBIT_LAND_LIFT = 3.2;
+const RAD2DEG = (180 / Math.PI).toFixed(4);
+/** uOrbit: 0..1 altitude fade. uOrbitDeck: 1 when the tier draws no cloud shell. uOrbitSun: planet-space sun. */
 export const ORBIT_DRAW = {
   uOrbitTex: { value: EMPTY_RGBA as THREE.Texture },
   uOrbitCloud: { value: EMPTY_R as THREE.Texture },
   uOrbit: { value: 0 },
   uOrbitDeck: { value: 0 },
+  uOrbitSun: { value: new THREE.Vector3(1, 0, 0) },
 };
-export const ORBIT_PARS = 'uniform sampler2D uOrbitTex, uOrbitCloud; uniform float uOrbit, uOrbitDeck;\n';
+export const ORBIT_PARS = 'uniform sampler2D uOrbitTex, uOrbitCloud; uniform float uOrbit, uOrbitDeck; uniform vec3 uOrbitSun;\nvec3 orbitAlb;\n';
 const INV_TAU = (1 / (2 * Math.PI)).toFixed(8);
 const INV_PI = (1 / Math.PI).toFixed(8);
 /** Fragment snippet. Runs after the layer paint and before the film era mix, so Today shows the map
@@ -54,12 +63,39 @@ export const ORBIT_FRAG = `
     poleBlur *= 1.0 / 7.0;
     orb = mix(orb, poleBlur, pinch);
     float ow = clamp(uOrbit, 0.0, 1.0) * presentW;
-    vec3 alb = orb.rgb;
-    float deck = texture2D(uOrbitCloud, ouv).r * uOrbitDeck * 0.86 * (1.0 - pinch);
-    alb = mix(alb, vec3(${ORBIT_CLOUD_ALBEDO.toFixed(2)}), deck);
+    float ice = smoothstep(0.45, 0.72, max(orb.r, max(orb.g, orb.b)));
+    vec3 land = mix(orb.rgb * ${ORBIT_LAND_LIFT.toFixed(2)}, min(orb.rgb, vec3(0.85)), ice);
+    float absLat = abs(asin(clamp(od.y, -1.0, 1.0))) * ${RAD2DEG};
+    float desert = smoothstep(14.0, 22.0, absLat) * (1.0 - smoothstep(30.0, 38.0, absLat));
+    land = mix(land, vec3(0.42, 0.28, 0.14), desert * (1.0 - ice));
+    vec3 ocean = vec3(${ORBIT_OCEAN.map(v => v.toFixed(3)).join(', ')});
+    orbitAlb = mix(ocean, land, orb.a);
+    float deck = texture2D(uOrbitCloud, ouv).r * uOrbitDeck;
+    orbitAlb = mix(orbitAlb, vec3(${ORBIT_CLOUD_ALBEDO.toFixed(2)}), smoothstep(0.4, 0.62, deck));
     landMask = mix(landMask, orb.a, ow);
-    diffuseColor.rgb = mix(diffuseColor.rgb, alb, ow);
+    diffuseColor.rgb = mix(diffuseColor.rgb, orbitAlb, ow);
   }`;
+/** After the material lights. Orbit replaces them with Lambert on the geometric normal
+ *  (planet space: camera-relative position + camera), so a cube face cannot cut a straight seam.
+ *  Twilight is the smoothstep width. The limb feathers into a blue rim. */
+export const ORBIT_LIGHT = `
+{
+  vec3 oN = normalize(vDetW + uCamP);
+  float oMu = dot(oN, normalize(uOrbitSun));
+  float oDay = smoothstep(-0.05, 0.16, oMu);
+  float oNdv = clamp(dot(oN, normalize(-vDetW)), 0.0, 1.0);
+  float oLimb = smoothstep(0.0, 0.07, oNdv);
+  vec3 oLit = orbitAlb * oDay;
+  oLit = mix(vec3(0.22, 0.42, 0.72), oLit, oLimb);
+  if (uOrbit * presentW > 0.85) {
+    reflectedLight.directDiffuse = vec3(0.0);
+    reflectedLight.indirectDiffuse = vec3(0.0);
+    reflectedLight.directSpecular = vec3(0.0);
+    reflectedLight.indirectSpecular = vec3(0.0);
+    totalEmissiveRadiance = oLit;
+  }
+}
+`;
 
 export function orbitWeight(altM: number) {
   const a = ORBIT_FADE;
@@ -173,7 +209,7 @@ let cloudBake: CloudBake | null = null;
 export function bindOrbitCloud(fn: CloudBake) { cloudBake = fn; }
 
 /** Bake once, then set the fade and whether the baked deck is drawn. */
-export function setOrbitView(altM: number, shellOctaves: number) {
+export function setOrbitView(altM: number, shellOctaves: number, sun?: [number, number, number]) {
   if (!baked) {
     const map = bakeOrbitAlbedo();
     ORBIT_DRAW.uOrbitTex.value = upload(map.rgba, map.width, map.height, THREE.RGBAFormat, ORBIT_DRAW.uOrbitTex.value);
@@ -188,6 +224,7 @@ export function setOrbitView(altM: number, shellOctaves: number) {
   }
   ORBIT_DRAW.uOrbit.value = orbitWeight(altM);
   ORBIT_DRAW.uOrbitDeck.value = shellOctaves > 0 ? 0 : 1;
+  if (sun) ORBIT_DRAW.uOrbitSun.value.set(sun[0], sun[1], sun[2]);
 }
 
 /** Tests rebuild the bytes without touching the GPU texture. */

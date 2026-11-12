@@ -29,7 +29,7 @@ import { children, edgeMetres, faceDir, roots, centre as nodeCentre, type QNode 
 import { renderOffset } from './origin';
 import { CLOUDS, createAtmosphere } from './atmosphere';
 import { orbitCloudBytes } from './cloudCover';
-import { bindOrbitCloud, setOrbitView } from './orbitAlbedo';
+import { bindOrbitCloud, ORBIT_FADE, setOrbitView } from './orbitAlbedo';
 import { across } from './cube';
 import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock';
 import { timescaleFrom } from '../../core/timescale';
@@ -537,6 +537,10 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   // ---- loop
   let last = performance.now(), fps = 0, prevT = 0, t0 = 0, dt = 0, tR = 0;
   /** Camera, LOD, builds, adoption, eviction: everything but the draw. */
+  function applyOrbitSegments() {
+    const tierSeg = GLOBE_LOD[Math.max(0, Math.min(GLOBE_LOD.length - 1, worldTier()))].segments;
+    lod.segments = alt > ORBIT_FADE.fullM ? Math.max(tierSeg, 64) : tierSeg;
+  }
   function update() {
     t0 = performance.now(); const wall = Math.max(0, (t0 - last) / 1000); dt = Math.min(.1, wall); last = t0; frame++; pageChrono?.update(dt, 0);
     const sunSec = q.has('shot') ? shotSec : worldSec(), sunDay = dayAt(sunSec), sunHour = hourAt(sunSec);
@@ -634,6 +638,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     { const se = camera.position.clone().normalize().dot(sunDir); hemi.intensity = isOn('sunlight') ? (atmos ? .7 : .04 + .66 * smoothstep(-.3, .12, se)) : 1; /* with the atmosphere the sky light is gated per fragment by the local Sun altitude (atmosphere.ts skyF) */ hemi.color.copy(SKY_DAY).lerp(SKY_DUSK, 1 - smoothstep(0, .2, se)); } // sky light: full by ~7 deg sun, warm at dusk, a little left in civil twilight [game calibration]
     camPos[0] = camera.position.x; camPos[1] = camera.position.y; camPos[2] = camera.position.z;
 
+    applyOrbitSegments();
     // LOD selection, then hand the wanted builds to the workers (or jobs); drop builds nobody wants any more
     camera.updateMatrixWorld(); frustum.setFromProjectionMatrix(projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
     group.clear(); wanted.clear(); drawnNodes.length = 0; drawn = 0; inView = 0; deepest = 0; culled = 0;
@@ -672,7 +677,9 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     setLogDepthFar(camera.far);
     setLayerCamera(camPos, camera.fov, viewH);
     const octRow = Math.max(0, Math.min(CLOUDS.octaves.length - 1, GOVERNOR.tier));
-    setOrbitView(alt, atmos ? CLOUDS.octaves[octRow] : 0);
+    const orbit = alt > ORBIT_FADE.fullM;
+    if (atmos && orbit) atmos.setLayers(false, isOn('atmosphere'), isOn('airglow'));
+    setOrbitView(alt, orbit ? 0 : (atmos ? CLOUDS.octaves[octRow] : 0), [sunDir.x, sunDir.y, sunDir.z]);
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setGlobeMorph(morphRadius, morphSplit, morphFull, morphBoost, morphReach, camPos); // fade each leaf onto its parent before the LOD ring
     LAKE_FADE.uHide.value = alt < COARSE_LAKE.below ? 1 : 0; // vertex lakes off below 8 km; one value for every tile this frame
@@ -682,6 +689,11 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     tR = performance.now(); camera.position.set(0, 0, 0); camera.updateMatrixWorld(); fieldLines.position.set(-camPos[0], -camPos[1], -camPos[2]); plateLayer.position.copy(fieldLines.position);
     crowns.group.position.set(0, 0, 0); // instances are already camera-relative; the impostor shader needs the camera at the origin
     axis.update(camPos as Vec3); if (atmos) atmos.update(camera, camV.set(camPos[0], camPos[1], camPos[2]), sunDir, q.has('shot') ? 0 : worldSec(), viewH, R + ground);
+    if (atmos && alt > ORBIT_FADE.fullM) {
+      const st = atmos.uniforms.uSteps.value;
+      if (st.z < 4) st.z = 6;
+      if (st.w < 2) st.w = 2;
+    }
     if (simReady && simRef && simRef.n && frame - colFrame > 60) { colFrame = frame; const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
       const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3, ll = toLatLon(d), latD = ll.lat * 180 / Math.PI, lonD = ll.lon * 180 / Math.PI;
       const w = weatherAtLatLon(latD, lonD, simRef), envSec = q.has('shot') ? shotSec : worldSec();
@@ -697,11 +709,12 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     if (!bench) { keep(STATS.work, 600); keep(STATS.interval, 600); keep(STATS.build, 2000); }
     fps = fps * .95 + (1000 / Math.max(1, t0 - (prevT || t0 - 16))) * .05; prevT = t0;
     const segWas = lod.segments; if (seamsDebug) material.userData.uSeg.value = lod.segments;
-    if (own.governor && governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyRes(); }
+    if (own.governor && governFrame(work, undefined, dt * 1000)) { lod = globeLod(); applyOrbitSegments(); applyRes(); }
     if (atmos) atmos.setClear(localClouds?.mesh.visible ? cloudClear(alt) * localCloudFade(alt) : 0); // T-0073: the shell stays until the local column draws. Issue #107: that handoff is localCloudFade, not a pop at showBelowM.
     if (layerTier >= 0 && layerTier !== GOVERNOR.tier) { layerTier = GOVERNOR.tier; void simP.then(s => startPlanetLayers(planet, layerTier, layerDay, s, layerUtc)); }
     if (atmos && atmos.tier !== GOVERNOR.tier) atmos.setTier(GOVERNOR.tier); // resolution + atmosphere samples follow the tier now (cheap uniforms)
     if (lodTier !== worldTier()) { lodTier = worldTier(); lod = globeLod(); } // tile resolution/split/caps once the new tier has held (no rebuild per step)
+    applyOrbitSegments();
     if (shot && lod.segments !== segWas) console.log(`SEGMENTS ${segWas} -> ${lod.segments} at frame ${frame} (tier ${GOVERNOR.tier}, world tier ${GOVERNOR.worldTier})`);
     if (hud && frame % 10 === 1) {
       const ll = toLatLon([dir.x, dir.y, dir.z]);

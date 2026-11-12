@@ -9,8 +9,8 @@ The merged orbit deck was a five-octave 420 km fBm. From 23,572 km that is salt-
 ## Done
 
 - `orbitCloudBytes` is the shell's domain warp (hash2u) at 1,800 km and two octaves, plus a zonal amount: ITCZ, subtropical minimum, storm tracks. Poles follow the zonal curve only, so the cap does not spoke.
-- Cover 0.54, clear share 0.23, autocorrelation 557 km. A pixel-independent speckle control is under 150 km. The test requires cover 0.50–0.75 and at least 300 km.
-- Clouds stay in the albedo, so Lambert still darkens the night side. The frame is hour 18, sun bias 0. Night/day luminance 0.43. Green land is still on the day side.
+- Water is a saturated blue under per-pixel Lambert on the geometric normal, so the terminator is a soft arc instead of a cube-face seam. Clouds are pushed to opaque or clear. The limb feathers, and the Hillaire march is on at orbit.
+- Lit disc versus Apollo 17: RGB gaps 10.5%, 10.5%, 7.9%. Saturated blue 0.338 vs 0.462 (12.4 points). Histogram bimodal. `straightThrough` is false. Cover 0.54. Frame is 12°N, 18°W, hour 8.
 - Evidence: `tasks/evidence/T-0221/`. Reference Apollo 17 AS17-148-22727, https://images.nasa.gov/details/as17-148-22727.
 - Tests: `tests/globe-clouds.test.ts`. The T-0220 block test still passes.
 

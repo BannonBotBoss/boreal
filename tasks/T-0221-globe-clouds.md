@@ -23,18 +23,18 @@ Credits 26 = 10 x 2 objectives x 1.3. Not from scratch: the domain warp is the s
 
 | What | Game | Real | Source | Match |
 |---|---|---|---|---|
-| Area-weighted cover | 0.54 | 0.50–0.75, MODIS global mean 0.67 | King et al. 2013; the check's band | yes |
-| Clear fraction (cover < 0.2) | 0.23 | subtropical oceans and deserts stay open | ISCCP zonal minimum near 20–30° | yes |
-| Autocorrelation length | 557 km | speckle control is under 150 km | `orbitCloudReport`, equator and 50°N | yes |
-| Cell | 1,800 km, 2 octaves, domain warp | synoptic systems, not a 25 km flake | same warp as `cloudDensity` | yes |
-| Night / day luminance | 0.43 | a terminator, not a face-on disc | frame at hour 18, altitude 23,572 km | yes |
+| Lit-disc mean RGB | 146.9, 158.0, 172.6 | Apollo 132.9, 142.9, 159.9 | gaps 10.5%, 10.5%, 7.9% (limit 15%) | yes |
+| Saturated-blue share of the lit disc | 0.338 | Apollo 0.462 | 12.4 points (limit 15) | yes |
+| Cloud histogram | bimodal (bright peak separated from the surface) | crisp white against darker ocean | `histogramBimodal` | yes |
+| Terminator | curved arc, not a diameter | soft edge, not a straight cut through the disc | `straightThrough` is false; a synthetic diameter is true | yes |
+| Area-weighted cloud cover | 0.54 | about 0.6; MODIS global mean 0.67 | the subtropical belt is held open so the ocean stays blue | short of 0.67 |
 
 ## Frames
 
 Reference: Apollo 17 AS17-148-22727, 7 December 1972. https://images.nasa.gov/details/as17-148-22727 and https://visibleearth.nasa.gov/images/1133/the-blue-marble.
 
 - Speckle, what landed in #446: `tasks/evidence/T-0221/before-speckle.png`
-- After: `tasks/evidence/T-0221/after-clouds.png`. Systems, a clear belt with land, and a night side.
+- After: `tasks/evidence/T-0221/after-clouds.png`. West Africa and the Atlantic, hour 8, 23,572 km. Blue ocean, a white cloud band, tan desert, a curved terminator.
 - Against the reference: `tasks/evidence/T-0221/side-reference.png`
 - Speckle beside the fix: `tasks/evidence/T-0221/side-before-after.png`
 

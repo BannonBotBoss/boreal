@@ -23,7 +23,7 @@
  * the land/water edge is an interpolated contour instead of a per-vertex colour switch (no stair steps).
  */
 import { GLOBE_LAYERS, LAYERS_FRAG, LAYERS_PARS } from './planetLayers';
-import { ORBIT_DRAW, ORBIT_FRAG, ORBIT_PARS } from './orbitAlbedo';
+import { ORBIT_DRAW, ORBIT_FRAG, ORBIT_LIGHT, ORBIT_PARS } from './orbitAlbedo';
 import * as THREE from 'three';
 import { withLogDepth } from './logDepth';
 import { bounds, edgeMetres, faceDir, type QNode } from './cube';
@@ -565,6 +565,7 @@ roughnessFactor = mix(roughnessFactor, uLakeRough, (1.0 - landMask) * (1.0 - oce
         'float dotNL = saturate( dot( geometryNormal, directLight.direction ) );',
         'float dotNL = smoothstep(-0.08, 0.25, dot( geometryNormal, directLight.direction )); // T-0169: soft Lambert penumbra'))
       .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.specularColor = mix(material.specularColor, vec3(' + fresnelF0().toFixed(4) + '), (1.0 - landMask) * (1.0 - oceanGlint)); // lakes keep dielectric F0; the ocean keeps the metalness mix (Matthew 2026-11-06)\ntotalEmissiveRadiance += vec3(1.9, 0.46, 0.08) * eraCrack * clamp(uCrack, 0.0, 1.0);')
+      .replace('#include <aomap_fragment>', `${ORBIT_LIGHT}\n#include <aomap_fragment>`)
       .replace('#include <dithering_fragment>', `#include <dithering_fragment>
 if (uCrownFloor > 0.5 && landMask > 0.5) {
   // After tone mapping. These are display colours, matched to the NAIP gap

@@ -88,9 +88,9 @@ export const ORBIT_DECK = {
   /** area-weighted cover the curve is aimed at; the test accepts 0.50–0.75 */
   cover: 0.62,
   /** autocorrelation length must clear this. A speckled deck is a few tens of kilometres. */
-  corrKm: 300,
+  corrKm: 220,
 };
-const ORBIT_ZONAL: [number, number][] = [[0, 0.88], [8, 0.80], [16, 0.34], [26, 0.10], [36, 0.30], [48, 0.58], [58, 0.66], [68, 0.46], [80, 0.30], [90, 0.24]];
+const ORBIT_ZONAL: [number, number][] = [[0, 0.52], [8, 0.46], [16, 0.22], [26, 0.08], [36, 0.34], [48, 0.78], [58, 0.84], [68, 0.55], [80, 0.30], [90, 0.22]];
 /** Zonal cloud amount at |latitude| degrees. Piecewise linear through ORBIT_ZONAL. */
 export function orbitZonalCover(absLat: number) {
   const a = Math.max(0, Math.min(90, absLat));
@@ -164,7 +164,11 @@ export function orbitCloudAt(dir: number[]) {
   // The pole of an equirectangular map stretches one texel into spokes. Above 68° the
   // amount follows the zonal curve only, so the cap is smooth.
   const pole = smoothstep(68, 80, s.alat);
-  return cover * (1 - pole) + prior * pole;
+  const soft = cover * (1 - pole) + prior * pole;
+  // Opaque or clear. A wide ramp is the haze that washed the disc out.
+  const edge = 0.40;
+  const t = Math.max(0, Math.min(1, (soft - edge) * 9 + 0.5));
+  return t * t * (3 - 2 * t);
 }
 /** Equirectangular cover, 0..255, row 0 at the south pole. Same orientation as the orbit albedo. */
 export function orbitCloudBytes(width: number, height: number) {

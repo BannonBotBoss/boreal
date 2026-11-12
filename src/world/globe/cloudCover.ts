@@ -5,6 +5,7 @@
  */
 import { hash2u } from '../../proc/rng';
 import { CLOUDS } from './atmosphere';
+import { fromLatLon } from './planet';
 function vnoiseU(px: number, py: number, s: number) {
   const ix = Math.floor(px), iy = Math.floor(py);
   const fx = px - ix, fy = py - iy;
@@ -67,6 +68,44 @@ export function cloudCover(value: number, centre: number, half: number) {
   return smoothstep(centre - half, centre + half, value);
 }
 /** Mean cover and the std of the value, over `n` uncorrelated points. */
+/**
+ * Full-disc cloud deck used only when the shell's octave count is 0 (Minimum, SwiftShader).
+ * The shell's own centre keeps mean cover near 0.16. From orbit the visible deck is the
+ * thicker share: CLOUDS.opticalShare of the MODIS 0.67 total is about 0.39 (King et al. 2013,
+ * the same figure planetLayers cites). 0.32 leaves room for the ice cap so the sunlit disc
+ * is not a white sheet. Apollo 17 (AS17-148-22727) is about 0.30 near-white.
+ */
+export const ORBIT_DECK = { octaves: 5, half: 0.16, cover: 0.28, cellKm: 420 };
+let deckCentre = -1;
+/** Threshold whose mean fBm cover is ORBIT_DECK.cover. Cached: the search is a few thousand samples. */
+export function orbitDeckCentre() {
+  if (deckCentre > 0) return deckCentre;
+  let lo = 0.3, hi = 0.8;
+  for (let i = 0; i < 14; i++) {
+    const mid = (lo + hi) / 2;
+    const s = cloudCoverStats(ORBIT_DECK.octaves, mid, ORBIT_DECK.half, 360, false);
+    if (s.cover > ORBIT_DECK.cover) lo = mid; else hi = mid;
+  }
+  deckCentre = (lo + hi) / 2;
+  return deckCentre;
+}
+/** Equirectangular cover, 0..255, row 0 at the south pole. Same orientation as the orbit albedo. */
+export function orbitCloudBytes(width: number, height: number) {
+  const centre = orbitDeckCentre(), out = new Uint8Array(width * height);
+  // Finer than the live shell (900 km). A 900 km cell is a cotton ball at this distance.
+  // 420 km with five octaves reaches about 25 km, under a pixel on the arrival disc.
+  const scale = 6371 / ORBIT_DECK.cellKm, oct = ORBIT_DECK.octaves, half = ORBIT_DECK.half;
+  for (let j = 0; j < height; j++) {
+    const lat = (-90 + (j + 0.5) / height * 180) * Math.PI / 180;
+    for (let i = 0; i < width; i++) {
+      const lon = (-180 + (i + 0.5) / width * 360) * Math.PI / 180;
+      const d = fromLatLon(lat, lon);
+      const cov = cloudCover(cloudValue([d[0] * scale, d[1] * scale, d[2] * scale], oct, 0, false), centre, half);
+      out[j * width + i] = Math.max(0, Math.min(255, Math.round(cov * 255)));
+    }
+  }
+  return out;
+}
 export function cloudCoverStats(oct: number, centre: number, half: number, n = 480, convective = true) {
   let cover = 0, mean = 0;
   for (let i = 0; i < n; i++) {

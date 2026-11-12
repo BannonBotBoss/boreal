@@ -1,11 +1,14 @@
 /**
- * Full-disc land, ice and (when the shell is off) cloud, one filtered equirectangular.
+ * Orbit clouds, and a CPU bake of the land mask used by tests.
  *
- * From 23,572 km (film arrival, 3.7 Earth radii) a Minimum tile is level 1 with 16 segments:
- * about 310 km between vertices. Ice and the zoom-0 DEM then draw as axis-aligned rectangles,
- * and the continents are those same vertices blended. The map samples the bilinear DEM and
- * `surfaceColour` once per texel (1024×512: about 0.8 px on that disc) and the GPU filters it.
- * Tiers that already ray-march `cloudDensity` do not also composite the baked deck.
+ * The disc itself is the pre-#446 mesh: vertex colours from `sampleSurface`, MeshStandardMaterial,
+ * the directional sun and the Hillaire atmosphere. A poster equirectangular (sharp DEM cells, a
+ * latitude colour ramp, emissive Lambert) drew coasts as meridians and hid the night side. That
+ * poster is not drawn. `bakeOrbitAlbedo` remains so the land-share check can sample the bilinear DEM.
+ *
+ * Clouds at orbit are NASA Visible Earth Blue Marble clouds, `cloud_combined_2048.jpg`
+ * (https://visibleearth.nasa.gov/images/57747/blue-marble-clouds), 2048×1024, composited as albedo.
+ * Tiers that already ray-march `cloudDensity` do not also composite the map.
  */
 import * as THREE from 'three';
 import { hash2u } from '../../proc/rng';
@@ -28,74 +31,29 @@ const EMPTY_RGBA = new THREE.DataTexture(new Uint8Array(4), 1, 1);
 const EMPTY_R = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1);
 EMPTY_RGBA.needsUpdate = true;
 EMPTY_R.needsUpdate = true;
-/**
- * Orbit ocean, linear, chosen so ACES on a sunlit pixel lands near the Apollo 17 sea
- * (AS17-148-22727: saturated blue, not the midnight #030b1e of the close-up water).
- * Land lift brings the boreal albedo up into the same exposure. Ice (already bright) is not lifted.
- */
-export const ORBIT_OCEAN = [0.015, 0.07, 0.32] as const;
-export const ORBIT_LAND_LIFT = 3.2;
-const RAD2DEG = (180 / Math.PI).toFixed(4);
-/** uOrbit: 0..1 altitude fade. uOrbitDeck: 1 when the tier draws no cloud shell. uOrbitSun: planet-space sun. */
+/** uOrbit: 0..1 altitude fade. uOrbitDeck: 1 when the NASA cloud map is drawn. */
 export const ORBIT_DRAW = {
   uOrbitTex: { value: EMPTY_RGBA as THREE.Texture },
   uOrbitCloud: { value: EMPTY_R as THREE.Texture },
   uOrbit: { value: 0 },
   uOrbitDeck: { value: 0 },
-  uOrbitSun: { value: new THREE.Vector3(1, 0, 0) },
 };
-export const ORBIT_PARS = 'uniform sampler2D uOrbitTex, uOrbitCloud; uniform float uOrbit, uOrbitDeck; uniform vec3 uOrbitSun;\nvec3 orbitAlb;\n';
+export const ORBIT_PARS = 'uniform sampler2D uOrbitTex, uOrbitCloud; uniform float uOrbit, uOrbitDeck;\n';
 const INV_TAU = (1 / (2 * Math.PI)).toFixed(8);
 const INV_PI = (1 / Math.PI).toFixed(8);
-/** Fragment snippet. Runs after the layer paint and before the film era mix, so Today shows the map
- *  and the magma beats keep the colour they already had (`presentW` is 0 until the present eases in).
- *  The divisors are 1/tau and 1/pi, injected so the source does not carry a second copy of those constants. */
+/** Clouds only. Land and ocean stay on the mesh material (vertex colour, the real sun, the
+ *  atmosphere). The map is NASA Visible Earth Blue Marble clouds, cloud_combined_2048.jpg
+ *  (https://visibleearth.nasa.gov/images/57747/blue-marble-clouds). White on black, north at
+ *  the top; three's flipY puts that top at v = 1, which is this shader's north pole. */
 export const ORBIT_FRAG = `
-  if (uOrbit > 0.001) {
+  if (uOrbit > 0.001 && uOrbitDeck > 0.5) {
     vec3 od = normalize(vDetW + uCamP);
     vec2 ouv = vec2(atan(od.z, od.x) * ${INV_TAU} + 0.5, asin(clamp(od.y, -1.0, 1.0)) * ${INV_PI} + 0.5);
-    vec4 orb = texture2D(uOrbitTex, ouv);
-    float pinch = smoothstep(0.55, 0.88, abs(od.y));
-    vec4 poleBlur = orb
-      + texture2D(uOrbitTex, ouv + vec2(0.02, 0.0)) + texture2D(uOrbitTex, ouv - vec2(0.02, 0.0))
-      + texture2D(uOrbitTex, ouv + vec2(0.06, 0.0)) + texture2D(uOrbitTex, ouv - vec2(0.06, 0.0))
-      + texture2D(uOrbitTex, ouv + vec2(0.12, 0.0)) + texture2D(uOrbitTex, ouv - vec2(0.12, 0.0));
-    poleBlur *= 1.0 / 7.0;
-    orb = mix(orb, poleBlur, pinch);
+    float c = texture2D(uOrbitCloud, ouv).r;
+    float deck = smoothstep(0.08, 0.55, c);
     float ow = clamp(uOrbit, 0.0, 1.0) * presentW;
-    float ice = smoothstep(0.45, 0.72, max(orb.r, max(orb.g, orb.b)));
-    vec3 land = mix(orb.rgb * ${ORBIT_LAND_LIFT.toFixed(2)}, min(orb.rgb, vec3(0.85)), ice);
-    float absLat = abs(asin(clamp(od.y, -1.0, 1.0))) * ${RAD2DEG};
-    float desert = smoothstep(14.0, 22.0, absLat) * (1.0 - smoothstep(30.0, 38.0, absLat));
-    land = mix(land, vec3(0.42, 0.28, 0.14), desert * (1.0 - ice));
-    vec3 ocean = vec3(${ORBIT_OCEAN.map(v => v.toFixed(3)).join(', ')});
-    orbitAlb = mix(ocean, land, orb.a);
-    float deck = texture2D(uOrbitCloud, ouv).r * uOrbitDeck;
-    orbitAlb = mix(orbitAlb, vec3(${ORBIT_CLOUD_ALBEDO.toFixed(2)}), smoothstep(0.4, 0.62, deck));
-    landMask = mix(landMask, orb.a, ow);
-    diffuseColor.rgb = mix(diffuseColor.rgb, orbitAlb, ow);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${ORBIT_CLOUD_ALBEDO.toFixed(2)}), deck * ow);
   }`;
-/** After the material lights. Orbit replaces them with Lambert on the geometric normal
- *  (planet space: camera-relative position + camera), so a cube face cannot cut a straight seam.
- *  Twilight is the smoothstep width. The limb feathers into a blue rim. */
-export const ORBIT_LIGHT = `
-{
-  vec3 oN = normalize(vDetW + uCamP);
-  float oMu = dot(oN, normalize(uOrbitSun));
-  float oDay = smoothstep(-0.05, 0.16, oMu);
-  float oNdv = clamp(dot(oN, normalize(-vDetW)), 0.0, 1.0);
-  float oLimb = smoothstep(0.0, 0.07, oNdv);
-  vec3 oLit = orbitAlb * oDay;
-  oLit = mix(vec3(0.22, 0.42, 0.72), oLit, oLimb);
-  if (uOrbit * presentW > 0.85) {
-    reflectedLight.directDiffuse = vec3(0.0);
-    reflectedLight.indirectDiffuse = vec3(0.0);
-    reflectedLight.directSpecular = vec3(0.0);
-    reflectedLight.indirectSpecular = vec3(0.0);
-    totalEmissiveRadiance = oLit;
-  }
-}
-`;
 
 export function orbitWeight(altM: number) {
   const a = ORBIT_FADE;
@@ -194,38 +152,23 @@ export function bakeOrbitAlbedo(): OrbitBake {
   return { rgba, width: W, height: H, landShare: wsum > 0 ? landW / wsum : 0 };
 }
 
-function upload(data: Uint8Array, w: number, h: number, format: THREE.PixelFormat, current: THREE.Texture) {
-  const tex = new THREE.DataTexture(data, w, h, format, THREE.UnsignedByteType, THREE.UVMapping, THREE.RepeatWrapping, THREE.ClampToEdgeWrapping, THREE.LinearFilter, THREE.LinearMipmapLinearFilter);
-  tex.generateMipmaps = true;
-  tex.needsUpdate = true;
-  if (current !== EMPTY_RGBA && current !== EMPTY_R) current.dispose();
-  return tex;
+let cloudsRequested = false;
+/** Browser load of the Blue Marble cloud map. Node tests never call this. */
+export function loadBlueMarbleClouds() {
+  if (cloudsRequested || typeof document === 'undefined') return;
+  cloudsRequested = true;
+  const tex = new THREE.TextureLoader().load('/globe/cloud_combined_2048.jpg');
+  tex.colorSpace = THREE.NoColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.anisotropy = 8;
+  const prev = ORBIT_DRAW.uOrbitCloud.value;
+  ORBIT_DRAW.uOrbitCloud.value = tex;
+  if (prev && prev !== EMPTY_R) prev.dispose();
 }
-
-let baked = false;
-type CloudBake = (w: number, h: number) => Uint8Array;
-let cloudBake: CloudBake | null = null;
-/** The deck baker lives in cloudCover.ts. Binding it here keeps that import off this module. */
-export function bindOrbitCloud(fn: CloudBake) { cloudBake = fn; }
-
-/** Bake once, then set the fade and whether the baked deck is drawn. */
-export function setOrbitView(altM: number, shellOctaves: number, sun?: [number, number, number]) {
-  if (!baked) {
-    const map = bakeOrbitAlbedo();
-    ORBIT_DRAW.uOrbitTex.value = upload(map.rgba, map.width, map.height, THREE.RGBAFormat, ORBIT_DRAW.uOrbitTex.value);
-    // The deck is a 900 km fBm. Half the albedo grid is still several samples per cell, and it
-    // keeps the first orbit frame from baking two million noise points.
-    const cw = map.width >> 1, ch = map.height >> 1;
-    const clouds = cloudBake ? cloudBake(cw, ch) : new Uint8Array(cw * ch);
-    const rgba = new Uint8Array(cw * ch * 4);
-    for (let i = 0; i < clouds.length; i++) { const c = clouds[i]; const o = i * 4; rgba[o] = rgba[o + 1] = rgba[o + 2] = rgba[o + 3] = c; }
-    ORBIT_DRAW.uOrbitCloud.value = upload(rgba, cw, ch, THREE.RGBAFormat, ORBIT_DRAW.uOrbitCloud.value);
-    baked = true;
-  }
+export function setOrbitView(altM: number, shellOctaves: number) {
   ORBIT_DRAW.uOrbit.value = orbitWeight(altM);
   ORBIT_DRAW.uOrbitDeck.value = shellOctaves > 0 ? 0 : 1;
-  if (sun) ORBIT_DRAW.uOrbitSun.value.set(sun[0], sun[1], sun[2]);
 }
-
-/** Tests rebuild the bytes without touching the GPU texture. */
-export function resetOrbitBake() { baked = false; }

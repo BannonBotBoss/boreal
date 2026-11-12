@@ -1,23 +1,27 @@
 # T-0221 handoff
 
-Branch `grokbot-2/globe-clouds`, off main `0f6edb8d` (#446).
+Branch `grokbot-2/globe-clouds`, off main `0f6edb8d` (#446). PR #447 stays a draft. Do not mark it ready.
 
 ## Doing
 
-The merged orbit deck was a five-octave 420 km fBm. From 23,572 km that is salt-and-pepper, the land is hidden, and the evidence frame had been shot with the sun pulled onto the camera so the terminator was gone.
+Matthew rejected the poster disc. The numeric Apollo checks had passed a picture with meridian coasts, one cloud ribbon, beige poles and no night side.
 
 ## Done
 
-- `orbitCloudBytes` is the shell's domain warp (hash2u) at 1,800 km and two octaves, plus a zonal amount: ITCZ, subtropical minimum, storm tracks. Poles follow the zonal curve only, so the cap does not spoke.
-- Water is a saturated blue under per-pixel Lambert on the geometric normal, so the terminator is a soft arc instead of a cube-face seam. Clouds are pushed to opaque or clear. The limb feathers, and the Hillaire march is on at orbit.
-- Lit disc versus Apollo 17: RGB gaps 10.5%, 10.5%, 7.9%. Saturated blue 0.338 vs 0.462 (12.4 points). Histogram bimodal. `straightThrough` is false. Cover 0.54. Frame is 12°N, 18°W, hour 8.
-- Evidence: `tasks/evidence/T-0221/`. Reference Apollo 17 AS17-148-22727, https://images.nasa.gov/details/as17-148-22727.
-- Tests: `tests/globe-clouds.test.ts`. The T-0220 block test still passes.
+- Root cause: the zoom-0 land field is a normal world map (0 meridian cuts on a 360×180 sample). The straight coasts were the orbit poster drawing that grid. Evidence: `tasks/evidence/T-0221/land-mask-dem.png`.
+- Restored the pre-#446 material for land and ocean (vertex colour, `MeshStandardMaterial`, the directional sun, the Hillaire march). The emissive poster Lambert is gone.
+- Clouds are NASA Visible Earth Blue Marble `cloud_combined_2048.jpg` (https://visibleearth.nasa.gov/images/57747/blue-marble-clouds), 2048×1024, composited as albedo only while the shell is off.
+- Arrival frame is hour 8 at home (49.8°N, 65.5°E, zenith 60°), 23,572 km, sun bias 0. Night is the west limb. A 12°N, 18°W frame at the same hour stays lit because the subsolar point is 23° from that camera.
+- Side-by-side with Apollo 17 AS17-148-22727 is `tasks/evidence/T-0221/side-reference.png`.
 
 ## Next
 
-Open the PR. Do not merge it from this agent. #446 is already on main; this branch does not push there.
+Matthew views the frame and marks #447 ready himself. Do not merge.
 
 ## Needs from another agent
 
 None.
+
+## Limits
+
+The ocean is the game's deep colour, not Apollo's saturated blue. Land is vertex colour, not a photo albedo. SwiftShader at orbit is 64 segments on level-1 tiles.

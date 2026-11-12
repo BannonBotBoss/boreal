@@ -6,6 +6,7 @@ import { cineArrivalDue, stepCineBoot } from '../src/world/cosmos/cineReady';
 import { createOpening } from '../src/world/cosmos/opening';
 import { cineLayerGateState } from '../src/world/globe/planetLayers';
 import { bootChoice, createContext, markBigBangSeen } from '../src/core/events';
+import { GLOBE_ERA, GLOBE_SKY } from '../src/world/globe/tile';
 import { BOOT_SAMPLES_MS, CINE_BOOT_TIMEOUT_S, CINE_HOLD_MARGIN, CINE_HOLD_S, PREWARM_SAMPLES_MS } from '../src/world/globe/bootReady';
 
 const boot = (over: Partial<Parameters<typeof stepCineBoot>[0]> = {}) => ({
@@ -213,6 +214,39 @@ function film(opts: { search?: string; reduced?: boolean; ready: () => Promise<v
   return { w, opening, probe, run, get shows() { return shows; }, get planets() { return planets; }, get marks() { return marks; }, get seen() { return ctx.introComplete === true; } };
 }
 
+function resetGlobeEra() {
+  GLOBE_ERA.uEra.value.set(0, 0, 0, 0);
+  GLOBE_ERA.uCrack.value = 1;
+  GLOBE_SKY.warm = 0;
+  GLOBE_SKY.steam = 0;
+  GLOBE_SKY.clear = 0;
+  GLOBE_SKY.hold = 0;
+}
+
+/** The era mix the globe shader uses, as one land/ocean colour. Today (w = 1) is the present sample. */
+function epochView() {
+  const era = GLOBE_ERA.uEra.value;
+  const x = Math.min(1, Math.max(0, era.x));
+  const y = Math.min(1, Math.max(0, era.y));
+  const z = Math.min(1, Math.max(0, era.z));
+  const w = Math.min(1, Math.max(0, era.w));
+  const crack = Math.min(1, Math.max(0, GLOBE_ERA.uCrack.value));
+  const crust = [0.03 + 0.27 * (1 - x), 0.01 + 0.24 * (1 - x), 0.008 + 0.192 * (1 - x)];
+  const magma = [1.85, 0.42, 0.07];
+  const skin = crust.map((c, i) => c * (1 - crack) + magma[i] * crack);
+  const flooded = 0.5 * (y <= 0.08 ? 0 : y >= 0.72 ? 1 : (y - 0.08) / 0.64) * (1 - x);
+  const ocean = [0.008, 0.028, 0.09];
+  const wet = skin.map((c, i) => c * (1 - flooded) + ocean[i] * flooded);
+  const plants = 0.5 * (z <= 0.4 ? 0 : Math.min(1, (z - 0.4) / 0.14));
+  const leaf = [0.09, 0.38, 0.08];
+  const grown = wet.map((c, i) => c * (1 - plants) + leaf[i] * plants);
+  const present = [0.18, 0.33, 0.14];
+  const presentMix = 1 - (1 - w) * (1 - w);
+  const colour = grown.map((c, i) => c * (1 - presentMix) + present[i] * presentMix);
+  const label = w >= 0.999 && x <= 0.001 ? 'Today' : 'earlier';
+  return { label, colour };
+}
+
 test('first-visit readiness paths', { concurrency: false }, async (t) => {
   await t.test('a settling boot keeps B14 arrival, one save mark, and the layer gate', async () => {
     const f = film({ ready: () => Promise.resolve() });
@@ -345,25 +379,41 @@ test('first-visit readiness paths', { concurrency: false }, async (t) => {
     assert.equal(f.w.events.length, 1);
   });
 
-  await t.test('Escape at about 5 s reaches the globe within 2 s', async () => {
+  await t.test('Escape at about 5 s reaches Today through the same finish as the ending', async () => {
+    resetGlobeEra();
     const f = film({ ready: () => Promise.resolve() });
     f.probe.begin();
     await Promise.resolve();
     while (f.probe.elapsed < 5) f.opening.step(0.5);
     assert.ok(f.probe.elapsed >= 5 && f.probe.elapsed < 5.6, `film clock ${f.probe.elapsed}`);
     assert.equal(f.planets, 0);
-    const at = f.probe.elapsed;
     const win = globalThis as unknown as { window: { dispatchEvent: (e: unknown) => void }; document: { body: unknown; getElementById: (id: string) => unknown } };
     win.window.dispatchEvent({
       type: 'keydown', key: 'Escape', code: 'Escape', repeat: false, target: win.document.body,
       preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {},
     });
     assert.equal(f.planets, 1, 'the planet entry did not run');
-    assert.ok(f.probe.elapsed < at + 2, `globe waited until ${f.probe.elapsed}`);
+    assert.ok(f.probe.elapsed >= CINE.b14End, `clock stopped at ${f.probe.elapsed}`);
+    assert.equal(formatClock(f.probe.elapsed), 'Today');
     assert.equal(f.marks, 1);
     assert.equal(f.seen, true);
-    assert.equal(f.w.events.filter(e => e === 'cinematic:dismiss').length, 1);
+    assert.equal(f.w.events.filter(e => e === 'cinematic:complete').length, 1);
     assert.equal(win.document.getElementById('cine'), null);
+    const skip = epochView();
+    resetGlobeEra();
+    const done = film({ ready: () => Promise.resolve() });
+    done.probe.begin();
+    await Promise.resolve();
+    for (let i = 0; i < 200 && done.planets === 0; i++) done.opening.step(1);
+    assert.equal(done.planets, 1);
+    assert.equal(formatClock(done.probe.elapsed), 'Today');
+    const natural = epochView();
+    assert.equal(skip.label, natural.label);
+    assert.equal(skip.label, 'Today');
+    for (let i = 0; i < 3; i++) {
+      const rel = Math.abs(skip.colour[i] - natural.colour[i]) / Math.max(0.02, Math.abs(natural.colour[i]));
+      assert.ok(rel <= 0.10, `channel ${i} skip ${skip.colour[i].toFixed(3)} vs finish ${natural.colour[i].toFixed(3)}`);
+    }
   });
 
   await t.test('reduced motion still lands and does not arm the cinematic layer gate', async () => {

@@ -29,4 +29,6 @@ Credits 20 = 10 x 2 objectives. Not from scratch: `cinematic:dismiss`, `markBigB
 ## Frames
 
 - Before: `tasks/evidence/T-0219/before-5s.png`. Black, one pinpoint, the line "It was called…". The film is still up at 5.9 s.
-- After: `tasks/evidence/T-0219/after-escape.png`. The orbit disc, Menu and Enter VR, altitude about 1.40e7 m, `#cine` gone. Escape to that view was 7 ms.
+- After, skip: `tasks/evidence/T-0219/after-escape.png`. Today's Earth, same orbit as the ending.
+- Natural finish: `tasks/evidence/T-0219/natural-finish.png`.
+- Side by side: `tasks/evidence/T-0219/side-escape-finish.png`. Whole-frame mean RGB within 2.4%.

@@ -240,7 +240,24 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       sphere.setFraming(50 + (46 - 50) * u, reduced ? 1 : 1 + Math.max(0, Math.min(1, (elapsed - bangAt(end)) / 1.2)) * 0.18);
       if (!busy) { busy = true; void paintSim().finally(() => { busy = false; }); }
     },
-    skip() { land('cinematic:dismiss'); },
+    skip() {
+      if (arrived || stopped) return;
+      if (!begun) begin();
+      // The ending paints Today and the arrival camera, then lands. Jump the
+      // clock there and run that same paint, so a skip does not leave the
+      // magma uniform or the page-load orbit from the start of the film.
+      if (narrationEndedAt == null) narrationEndedAt = narrationEndFallback();
+      pinned = null;
+      elapsed = CINE.b14End;
+      if (!earthOn) {
+        earthOn = true;
+        earth?.show();
+      }
+      if (!booted) bootGaveUp = true;
+      tintGlobe(elapsed);
+      driveFilm(elapsed);
+      paintDom();
+    },
     stop() {
       if (stopped) return;
       stopped = true;

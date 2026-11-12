@@ -34,7 +34,7 @@ function soilFilter(seed: number): LocalSoil {
 }
 /** The planet the globe uses for these settings (cached per seed + terrain mode). */
 export const globePlanet = (seed: number, staged: boolean, stagesSeed: number) =>
-  planetFor(seed, homeSampler(staged, stagesSeed), staged ? `staged:${stagesSeed}` : 'layered');
+  planetFor(seed, homeSampler(staged, stagesSeed), staged ? `staged:${stagesSeed}` : 'layered', true);
 /** Build the expensive per-seed grids now (planet hypsometry, staged stage grids: ~0.25-1 s), not on the first home tile. */
 export function warmHome(seed: number, staged: boolean, stagesSeed: number) {
   const t0 = performance.now(); const p = globePlanet(seed, staged, stagesSeed); p.sampleSurface(p.home);

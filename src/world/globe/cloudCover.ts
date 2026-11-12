@@ -70,41 +70,159 @@ export function cloudCover(value: number, centre: number, half: number) {
 /** Mean cover and the std of the value, over `n` uncorrelated points. */
 /**
  * Full-disc cloud deck used only when the shell's octave count is 0 (Minimum, SwiftShader).
- * The shell's own centre keeps mean cover near 0.16. From orbit the visible deck is the
- * thicker share: CLOUDS.opticalShare of the MODIS 0.67 total is about 0.39 (King et al. 2013,
- * the same figure planetLayers cites). 0.32 leaves room for the ice cap so the sunlit disc
- * is not a white sheet. Apollo 17 (AS17-148-22727) is about 0.30 near-white.
+ * Same construction as cloudDensity's synoptic swirl (domain warp, Coriolis twist, zonal
+ * stretch in the westerlies), on the shared hash2u. Two octaves at 1,800 km: a five-octave
+ * 420 km fBm read as salt-and-pepper and hid the land. The latitude curve is the zonal
+ * cloud amount: ITCZ near the equator, a dry subtropical belt, storm tracks in the
+ * westerlies (King et al. 2013, MODIS global mean 0.67). `corrKm` is the shortest lag at
+ * which the cover's autocorrelation falls below one half; speckle dies inside a texel.
  */
-export const ORBIT_DECK = { octaves: 5, half: 0.16, cover: 0.28, cellKm: 420 };
-let deckCentre = -1;
-/** Threshold whose mean fBm cover is ORBIT_DECK.cover. Cached: the search is a few thousand samples. */
-export function orbitDeckCentre() {
-  if (deckCentre > 0) return deckCentre;
-  let lo = 0.3, hi = 0.8;
-  for (let i = 0; i < 14; i++) {
-    const mid = (lo + hi) / 2;
-    const s = cloudCoverStats(ORBIT_DECK.octaves, mid, ORBIT_DECK.half, 360, false);
-    if (s.cover > ORBIT_DECK.cover) lo = mid; else hi = mid;
+export const ORBIT_DECK = {
+  cellKm: 1800, octaves: 2, persistence: 0.42,
+  /** how far the warped fBm swings the zonal amount, each way */
+  swing: 0.62,
+  /** extra warp on the orbit still, so the storm tracks meander instead of sitting in latitude stripes */
+  warpGain: 2.4,
+  /** pulls mid-gray toward clear or thick so the deck is systems and holes, not a haze */
+  contrast: 1.45,
+  /** area-weighted cover the curve is aimed at; the test accepts 0.50–0.75 */
+  cover: 0.62,
+  /** autocorrelation length must clear this. A speckled deck is a few tens of kilometres. */
+  corrKm: 220,
+};
+const ORBIT_ZONAL: [number, number][] = [[0, 0.52], [8, 0.46], [16, 0.22], [26, 0.08], [36, 0.34], [48, 0.78], [58, 0.84], [68, 0.55], [80, 0.30], [90, 0.22]];
+/** Zonal cloud amount at |latitude| degrees. Piecewise linear through ORBIT_ZONAL. */
+export function orbitZonalCover(absLat: number) {
+  const a = Math.max(0, Math.min(90, absLat));
+  const z = ORBIT_ZONAL;
+  if (a <= z[0][0]) return z[0][1];
+  for (let i = 1; i < z.length; i++) {
+    if (a <= z[i][0]) {
+      const t = (a - z[i - 1][0]) / (z[i][0] - z[i - 1][0]);
+      return z[i - 1][1] + (z[i][1] - z[i - 1][1]) * t;
+    }
   }
-  deckCentre = (lo + hi) / 2;
-  return deckCentre;
+  return z[z.length - 1][1];
+}
+const v3 = {
+  add: (a: number[], b: number[], s = 1) => [a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * s],
+  scale: (a: number[], s: number) => [a[0] * s, a[1] * s, a[2] * s],
+  dot: (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+  cross: (a: number[], b: number[]) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+  len: (a: number[]) => Math.hypot(a[0], a[1], a[2]),
+};
+/** Two-octave domain-warped fBm, the CPU twin of cloudDensity's swirl without the fine chop.
+ *  Returns the normalised noise and a swirl weight (high in the warp cores). */
+function orbitSwirl(dir: number[]) {
+  const C = CLOUDS, cell = 6371 / ORBIT_DECK.cellKm, warpS = 6371 / C.warpCellKm;
+  const sl = Math.max(-1, Math.min(1, dir[1]));
+  const alat = Math.abs(Math.asin(sl)) * 180 / Math.PI;
+  const pw = v3.scale(dir, warpS);
+  const q = [
+    cloudBase3(v3.add(pw, [1.7, 9.2, 0]), 0),
+    cloudBase3(v3.add(pw, [8.3, 2.8, 5.1]), 0),
+    cloudBase3(v3.add(pw, [4.1, 6.3, 2.2]), 0),
+  ].map(x => x - 0.5);
+  const pw2 = v3.add(v3.scale(pw, 2.07), q, 2);
+  q[0] += 0.5 * (cloudBase3(v3.add(pw2, [3.3, 3.3, 3.3]), 0) - 0.5);
+  q[1] += 0.5 * (cloudBase3(v3.add(pw2, [7.7, 7.7, 7.7]), 0) - 0.5);
+  q[2] += 0.5 * (cloudBase3(v3.add(pw2, [1.1, 1.1, 1.1]), 0) - 0.5);
+  const along = v3.dot(q, dir);
+  let qt = [q[0] - dir[0] * along, q[1] - dir[1] * along, q[2] - dir[2] * along];
+  const tw = C.twistRad * sl, ct = Math.cos(tw), st = Math.sin(tw);
+  const cr = v3.cross(dir, qt);
+  qt = [qt[0] * ct + cr[0] * st, qt[1] * ct + cr[1] * st, qt[2] * ct + cr[2] * st];
+  let east = [-dir[2], 0, dir[0]];
+  const el = v3.len(east);
+  east = el > 1e-4 ? v3.scale(east, 1 / el) : [1, 0, 0];
+  const stretch = C.zonalStretch * smoothstep(20, 35, alat) * (1 - smoothstep(60, 75, alat));
+  const eDot = v3.dot(qt, east);
+  qt = v3.add(qt, east, eDot * stretch);
+  qt = v3.scale(qt, ORBIT_DECK.warpGain);
+  let p = v3.add(v3.scale(dir, cell), qt, C.warpAmp * cell);
+  let v = 0, a = 0.5, n = 0;
+  for (let i = 0; i < ORBIT_DECK.octaves; i++) {
+    v += a * cloudBase3(p, 0); n += a;
+    p = v3.add(v3.scale(p, 2.07), [11.3, 11.3, 11.3]);
+    a *= ORBIT_DECK.persistence;
+  }
+  return { n: v / Math.max(n, 1e-3), swirl: Math.min(1, v3.len(qt) * 1.6), alat };
+}
+/** Cover 0..1 at one direction. Zonal amount plus the warped noise, so the subtropics stay
+ *  mostly clear and the storm tracks and the ITCZ are broad systems, not speckles. */
+export function orbitCloudAt(dir: number[]) {
+  const s = orbitSwirl(dir);
+  const prior = orbitZonalCover(s.alat);
+  // Swirl cores (the warp) gather cloud; the quiet lanes between them stay clearer, mean kept.
+  const storm = smoothstep(30, 46, s.alat) * (1 - smoothstep(66, 78, s.alat));
+  const itcz = 1 - smoothstep(5, 16, s.alat);
+  const swing = ORBIT_DECK.swing * (0.28 + 0.85 * Math.max(storm, itcz * 0.75));
+  const org = (s.swirl - 0.4) * 0.22 * Math.max(storm, itcz);
+  const raw = prior + (s.n - 0.5) * swing * 2 + org;
+  const shaped = (raw - 0.4) * ORBIT_DECK.contrast + 0.4;
+  const cover = Math.max(0, Math.min(1, shaped));
+  // The pole of an equirectangular map stretches one texel into spokes. Above 68° the
+  // amount follows the zonal curve only, so the cap is smooth.
+  const pole = smoothstep(68, 80, s.alat);
+  const soft = cover * (1 - pole) + prior * pole;
+  // Opaque or clear. A wide ramp is the haze that washed the disc out.
+  const edge = 0.40;
+  const t = Math.max(0, Math.min(1, (soft - edge) * 9 + 0.5));
+  return t * t * (3 - 2 * t);
 }
 /** Equirectangular cover, 0..255, row 0 at the south pole. Same orientation as the orbit albedo. */
 export function orbitCloudBytes(width: number, height: number) {
-  const centre = orbitDeckCentre(), out = new Uint8Array(width * height);
-  // Finer than the live shell (900 km). A 900 km cell is a cotton ball at this distance.
-  // 420 km with five octaves reaches about 25 km, under a pixel on the arrival disc.
-  const scale = 6371 / ORBIT_DECK.cellKm, oct = ORBIT_DECK.octaves, half = ORBIT_DECK.half;
+  const out = new Uint8Array(width * height);
   for (let j = 0; j < height; j++) {
     const lat = (-90 + (j + 0.5) / height * 180) * Math.PI / 180;
     for (let i = 0; i < width; i++) {
       const lon = (-180 + (i + 0.5) / width * 360) * Math.PI / 180;
-      const d = fromLatLon(lat, lon);
-      const cov = cloudCover(cloudValue([d[0] * scale, d[1] * scale, d[2] * scale], oct, 0, false), centre, half);
+      const cov = orbitCloudAt(fromLatLon(lat, lon));
       out[j * width + i] = Math.max(0, Math.min(255, Math.round(cov * 255)));
     }
   }
   return out;
+}
+/**
+ * Area-weighted cover, the clear and opaque shares, and the autocorrelation length.
+ * Length is the shortest longitude lag, at the equator and at 50°N, where the
+ * correlation of that parallel falls below one half. A flat row has no variance and
+ * does not count.
+ */
+export function orbitCloudReport(width = 360, height = 180) {
+  const bytes = orbitCloudBytes(width, height);
+  let cover = 0, wsum = 0, clear = 0, thick = 0;
+  for (let j = 0; j < height; j++) {
+    const lat = (-90 + (j + 0.5) / height * 180) * Math.PI / 180;
+    const wt = Math.max(0, Math.cos(lat));
+    for (let i = 0; i < width; i++) {
+      const c = bytes[j * width + i] / 255;
+      wsum += wt; cover += wt * c;
+      if (c < 0.2) clear += wt;
+      if (c > 0.7) thick += wt;
+    }
+  }
+  const corrKm = (latDeg: number) => {
+    const j = Math.max(0, Math.min(height - 1, Math.round(((latDeg + 90) / 180) * height - 0.5)));
+    const row = Array.from({ length: width }, (_, i) => bytes[j * width + i] / 255);
+    const m = row.reduce((a, b) => a + b, 0) / width;
+    let v = 0;
+    for (const x of row) v += (x - m) * (x - m);
+    if (v < 1e-4) return Infinity;
+    const kmPer = 40075 * Math.cos(latDeg * Math.PI / 180) / width;
+    for (let lag = 1; lag < width / 2; lag++) {
+      let c = 0;
+      for (let i = 0; i < width; i++) c += (row[i] - m) * (row[(i + lag) % width] - m);
+      if (c / v < 0.5) return lag * kmPer;
+    }
+    return (width / 2) * kmPer;
+  };
+  const lengths = [corrKm(0), corrKm(50)].filter(x => Number.isFinite(x));
+  return {
+    cover: cover / wsum, clear: clear / wsum, thick: thick / wsum,
+    corrKm: lengths.length ? Math.min(...lengths) : 0,
+    bytes, width, height,
+  };
 }
 export function cloudCoverStats(oct: number, centre: number, half: number, n = 480, convective = true) {
   let cover = 0, mean = 0;

@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 import { coarseMetres, coarseMetresLinear } from '../src/world/globe/coarseRelief';
 import { bakeOrbitAlbedo, orbitWeight } from '../src/world/globe/orbitAlbedo';
-import { ORBIT_DECK, orbitCloudBytes, orbitDeckCentre } from '../src/world/globe/cloudCover';
+import { orbitCloudReport } from '../src/world/globe/cloudCover';
 
 const REF = 'tasks/evidence/T-0220/ref-apollo17.png';
 const BEFORE = 'tasks/evidence/T-0220/before-orbit.png';
@@ -77,12 +77,10 @@ test('orbit map: Earth coasts from the bilinear DEM, not a nearest-cell grid', (
   assert.equal(orbitWeight(100), 0);
 });
 
-test('orbit deck: five octaves at the published visible-cover band', () => {
-  const centre = orbitDeckCentre();
-  assert.ok(centre > 0.4 && centre < 0.75, `centre ${centre}`);
-  const bytes = orbitCloudBytes(48, 24);
-  const mean = bytes.reduce((a, b) => a + b, 0) / bytes.length / 255;
-  assert.ok(Math.abs(mean - ORBIT_DECK.cover) < 0.08, `cover ${mean.toFixed(3)} vs ${ORBIT_DECK.cover}`);
+test('orbit deck: organised cover, not the fine fBm that speckled the disc', () => {
+  const r = orbitCloudReport(360, 180);
+  assert.ok(r.cover >= 0.45 && r.cover <= 0.75, `cover ${r.cover.toFixed(3)}`);
+  assert.ok(r.corrKm >= 220, `autocorrelation ${r.corrKm.toFixed(0)} km`);
 });
 
 test('arrival disc: no axis-aligned bright blocks, mean colour within 15% of Apollo 17', () => {

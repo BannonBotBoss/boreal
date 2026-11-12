@@ -182,7 +182,11 @@ function installDom(search: string, reduced: boolean) {
   g.window = {
     addEventListener(type: string, fn: (e: unknown) => void) { const list = listeners.get(type) ?? []; list.push(fn); listeners.set(type, list); },
     removeEventListener() {},
-    dispatchEvent(ev: { type: string }) { (g.window as { events: string[] }).events.push(ev.type); return true; },
+    dispatchEvent(ev: { type: string }) {
+      (g.window as { events: string[] }).events.push(ev.type);
+      for (const fn of listeners.get(ev.type) ?? []) fn(ev);
+      return true;
+    },
     events: [] as string[],
     setTimeout, clearTimeout, innerWidth: 800, innerHeight: 600,
     devicePixelRatio: 1,
@@ -339,6 +343,27 @@ test('first-visit readiness paths', { concurrency: false }, async (t) => {
     assert.equal(f.planets, 1);
     assert.equal(f.marks, 1);
     assert.equal(f.w.events.length, 1);
+  });
+
+  await t.test('Escape at about 5 s reaches the globe within 2 s', async () => {
+    const f = film({ ready: () => Promise.resolve() });
+    f.probe.begin();
+    await Promise.resolve();
+    while (f.probe.elapsed < 5) f.opening.step(0.5);
+    assert.ok(f.probe.elapsed >= 5 && f.probe.elapsed < 5.6, `film clock ${f.probe.elapsed}`);
+    assert.equal(f.planets, 0);
+    const at = f.probe.elapsed;
+    const win = globalThis as unknown as { window: { dispatchEvent: (e: unknown) => void }; document: { body: unknown; getElementById: (id: string) => unknown } };
+    win.window.dispatchEvent({
+      type: 'keydown', key: 'Escape', code: 'Escape', repeat: false, target: win.document.body,
+      preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {},
+    });
+    assert.equal(f.planets, 1, 'the planet entry did not run');
+    assert.ok(f.probe.elapsed < at + 2, `globe waited until ${f.probe.elapsed}`);
+    assert.equal(f.marks, 1);
+    assert.equal(f.seen, true);
+    assert.equal(f.w.events.filter(e => e === 'cinematic:dismiss').length, 1);
+    assert.equal(win.document.getElementById('cine'), null);
   });
 
   await t.test('reduced motion still lands and does not arm the cinematic layer gate', async () => {

@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-11T16:28:04-08:00",
+  "agent": "grokbot-2",
+  "type": "complete",
+  "task": "T-0219",
+  "branch": "grokbot-2/intro-skip",
+  "skill": "cine-boot-ready",
+  "note": "Escape, space and click after the film starts call the existing dismiss path. Headless test passes. Frames in tasks/evidence/T-0219. Not merged by this agent."
+}

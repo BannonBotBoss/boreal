@@ -17,7 +17,7 @@ import { CINE_BOOT_TIMEOUT_S, cineArrivalDue, cineTrace, stepCineBoot } from './
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
  * is only tens of kelvin). Cycle 62 is the planet. The cycle is not advanced at a constant
  * rate: the colour arc takes `arcSec`, then the deep blue-violet holds for `holdSec`, then the planet.
- * A click or a pinch skips the rest.
+ * A click, Escape or space leaves a film that has already started.
  */
 export const OPENING = { from: 1, violetAt: 58, planetAt: 62, arcSec: 32, holdSec: 12 } as const;
 
@@ -58,7 +58,7 @@ export interface Opening {
   readonly cycle: number;
   readonly phase: 'sphere' | 'planet';
   step(dt: number): void;
-  /** First visit does not skip. Kept so older callers still compile. */
+  /** Leave the film and take the same planet entry the ending already uses. */
   skip(): void;
   stop(): void;
 }
@@ -200,13 +200,18 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     const t = e.target;
     if (t instanceof Element && t.closest('button,a,input,textarea,select,dialog,#loading')) return;
     if (!begun) begin();
+    else api.skip();
   };
   const onKey = (e: KeyboardEvent) => {
     if (e.repeat) return;
-    if (e.target instanceof HTMLElement && (e.target.isContentEditable || e.target.matches('input,textarea,select'))) return;
+    const host = e.target;
+    if (typeof HTMLElement !== 'undefined' && host instanceof HTMLElement && (host.isContentEditable || host.matches('input,textarea,select'))) return;
     const k = e.key.toLowerCase();
-    if (begun && (k === 'i' || k === 'x' || e.key === 'Escape') && !panel.hidden) {
+    if (begun && (k === 'i' || k === 'x') && !panel.hidden) {
       e.preventDefault(); e.stopImmediatePropagation(); shutPanel(); return;
+    }
+    if (begun && (e.key === 'Escape' || e.key === ' ' || e.code === 'Space')) {
+      e.preventDefault(); e.stopPropagation(); api.skip(); return;
     }
     if (!begun) { e.preventDefault(); e.stopPropagation(); begin(); }
   };
@@ -235,7 +240,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       sphere.setFraming(50 + (46 - 50) * u, reduced ? 1 : 1 + Math.max(0, Math.min(1, (elapsed - bangAt(end)) / 1.2)) * 0.18);
       if (!busy) { busy = true; void paintSim().finally(() => { busy = false; }); }
     },
-    skip() { /* first visit does not skip */ },
+    skip() { land('cinematic:dismiss'); },
     stop() {
       if (stopped) return;
       stopped = true;
@@ -371,14 +376,20 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     if (begun) audio.sync(elapsed, narrationEndedAt);
     // Land only on the hold after B14, so 232 million years still plays through to Today.
     if (stage === 'hold' && cineArrivalDue(elapsed, earthOn, booted, bootGaveUp, arrived)) {
-      arrived = true;
       cineTrace(`CINE TRACE arrival ${JSON.stringify({ elapsed: +elapsed.toFixed(3), clock: formatClock(elapsed), earthOn, booted, gaveUp: bootGaveUp, held: +bootHeld.toFixed(2) })}`);
-      window.dispatchEvent(new Event('cinematic:complete'));
-      const save = (window as unknown as { __borealSave?: { markBigBangSeen?: () => void } }).__borealSave;
-      save?.markBigBangSeen?.();
-      api.stop();
-      onPlanet();
+      land('cinematic:complete');
     }
+  }
+
+  /** The ending and a dismissal share one exit: the seen flag, then the planet entry `onPlanet` already is. */
+  function land(kind: 'cinematic:complete' | 'cinematic:dismiss') {
+    if (arrived || stopped) return;
+    arrived = true;
+    window.dispatchEvent(new Event(kind));
+    const save = (window as unknown as { __borealSave?: { markBigBangSeen?: () => void } }).__borealSave;
+    save?.markBigBangSeen?.();
+    api.stop();
+    onPlanet();
   }
 
   function showRef(stage: CineStage) {

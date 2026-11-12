@@ -26,7 +26,16 @@ Finish only when `elapsed >= b14End` and the globe is up (or the boot was given 
 - `npm test` and `npx tsc --noEmit`.
 - Browser: `CINE TRACE` lines for `earth.show`, `toGlobe`, `forestLanding primed`, `arrival`, and `finishIntro`. A drag after arrival must move the camera. SwiftShader timings are not omen timings.
 
+## A dismissal
+
+Once the film has started, Escape, space, or a click calls `skip()`. That is the same exit as the ending: `cinematic:dismiss` (the T-0167 seen events already include it), `markBigBangSeen`, `stop()`, then `onPlanet`, which on the page is `finishIntro` (`releaseFilm`, `enter`). The wait screen still takes the first click or key as "begin". i and x still close the counter panel.
+
+`tests/cine-ready.test.ts` steps the film to about 5 s, dispatches Escape, and requires the planet callback on that same turn, inside 2 s of film time, with the overlay gone and `introComplete` set.
+
 ## Mistakes to avoid
+
+- A second skip flag or a new save key. The seen bit is `introComplete`.
+- Letting Escape only close the panel. At 5 s the panel is still hidden, so that handler does nothing.
 
 - Putting a timeout on `bootP`. Slow hardware then draws before the boot order.
 - Starting the grace at the click. A boot longer than a few seconds would be marked given-up while B1 is still on screen.

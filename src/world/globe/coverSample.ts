@@ -42,12 +42,13 @@ const SPRUCE_MIN_M = SPRUCE[0];
 const SPRUCE_MID_M = (SPRUCE[0] + SPRUCE[1]) / 2;
 
 /** Geographic sample. `dir` defaults to the lat/lon direction. Pass the planet the HUD uses. */
-export function coverSampleLatLon(lat: number, lon: number, dir?: Vec3, planet: Planet = planetFor(WORLD_SEED)): CoverSample {
+export function coverSampleLatLon(lat: number, lon: number, dir?: Vec3, planet: Planet = planetFor(WORLD_SEED, undefined, '', true)): CoverSample {
   const d = dir ?? fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180);
   const s = planet.sampleSurface(d);
   const { water, elevM } = groundForCover(s, sampleDem(lat, lon));
   const coast = liveCoastM(lat, lon);
-  const vegetation = samplePhotoVegetation(lat, lon) ?? vegetationWeight(s, d, coast);
+  // Open water has no canopy. A blue Sentinel-2 pixel's green-red index starts at 0.55 and read as 0.92 vegetation on the Pacific drop.
+  const vegetation = water ? 0 : (samplePhotoVegetation(lat, lon) ?? vegetationWeight(s, d, coast));
   const biome = coverKind(lat, elevM, vegetation, water, coast);
   const row = coverRow(lat, lon, elevM, vegetation, water, coast);
   const heightM = row.heightM;
@@ -64,7 +65,7 @@ export function coverSampleLatLon(lat: number, lon: number, dir?: Vec3, planet: 
 
 /** The sample under a game-local point, the same frame landingContext uses. */
 export function coverSampleAt(x: number, z: number): CoverSample {
-  const planet = planetFor(WORLD_SEED);
+  const planet = planetFor(WORLD_SEED, undefined, '', true);
   // Same direction the HUD uses: the landed frame off home, the seeded home frame otherwise.
   const dir = Number.isFinite(SITE.latDeg) ? siteDirection(x, z, PLANET.radius) : planet.fromLocal(x, z);
   const ll = toLatLon(dir);

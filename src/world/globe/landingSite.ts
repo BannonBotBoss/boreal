@@ -39,7 +39,7 @@ export function clearLanding() {
 export function engageLanding(direction: Vec3, home: number) {
   if (home > 0) { clearLanding(); return false; }
   const frame = tangentFrame(direction);
-  const planet = planetFor(WORLD_SEED);
+  const planet = planetFor(WORLD_SEED, undefined, '', true);
   // sampleSurface reuses one result object, so keep the number: the reader below samples again and would
   // otherwise read its own sample back as the origin (s.h - origin.h = 0, a flat landing patch).
   // On a lake the datum is the lake's surface, not its bed: the game's water plane (LEVEL.waterSurface) is that surface,
@@ -50,9 +50,12 @@ export function engageLanding(direction: Vec3, home: number) {
   const latDeg = ll.lat * 180 / Math.PI;
   const lonDeg = ll.lon * 180 / Math.PI;
   const salt = hash(`landing:${latDeg.toFixed(3)}:${lonDeg.toFixed(3)}`);
-  const cover = landingCover(planet, latDeg, lonDeg, frame.dir);
+  // Ocean keeps the aim (landingShore: no dry cell is open water, not a shore we invent) and stands on the sea
+  // surface. A null cover used to leave treeShare at 1, which planted a closed stand on that sea.
+  const ocean = o.kind === 'ocean' || o.h < 0;
+  const cover = ocean ? null : landingCover(planet, latDeg, lonDeg, frame.dir);
   const coastM = liveCoastM(latDeg, lonDeg);
-  setSite({ latDeg, lonDeg, datumM: Math.max(0, originH), salt, dir: frame.dir, east: frame.east, north: frame.north, treeShare: cover == null ? 1 : coverTreeShare(cover), coastM });
+  setSite({ latDeg, lonDeg, datumM: Math.max(0, originH), salt, dir: frame.dir, east: frame.east, north: frame.north, treeShare: ocean ? 0 : (cover == null ? 1 : coverTreeShare(cover)), coastM });
   setRemoteHeight((x, z) => {
     const d = siteDirection(x, z, PLANET.radius);
     const s = planet.sampleSurface(d);

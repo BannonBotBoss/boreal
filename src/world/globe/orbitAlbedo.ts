@@ -46,11 +46,13 @@ export const ORBIT_FRAG = `
     vec3 od = normalize(vDetW + uCamP);
     vec2 ouv = vec2(atan(od.z, od.x) * ${INV_TAU} + 0.5, asin(clamp(od.y, -1.0, 1.0)) * ${INV_PI} + 0.5);
     vec4 orb = texture2D(uOrbitTex, ouv);
-    float pinch = smoothstep(0.78, 0.97, abs(od.y));
+    float pinch = smoothstep(0.55, 0.88, abs(od.y));
     vec4 poleBlur = orb
-      + texture2D(uOrbitTex, ouv + vec2(0.012, 0.0)) + texture2D(uOrbitTex, ouv - vec2(0.012, 0.0))
-      + texture2D(uOrbitTex, ouv + vec2(0.036, 0.0)) + texture2D(uOrbitTex, ouv - vec2(0.036, 0.0));
-    orb = mix(orb, poleBlur * 0.2, pinch);
+      + texture2D(uOrbitTex, ouv + vec2(0.02, 0.0)) + texture2D(uOrbitTex, ouv - vec2(0.02, 0.0))
+      + texture2D(uOrbitTex, ouv + vec2(0.06, 0.0)) + texture2D(uOrbitTex, ouv - vec2(0.06, 0.0))
+      + texture2D(uOrbitTex, ouv + vec2(0.12, 0.0)) + texture2D(uOrbitTex, ouv - vec2(0.12, 0.0));
+    poleBlur *= 1.0 / 7.0;
+    orb = mix(orb, poleBlur, pinch);
     float ow = clamp(uOrbit, 0.0, 1.0) * presentW;
     vec3 alb = orb.rgb;
     float deck = texture2D(uOrbitCloud, ouv).r * uOrbitDeck * 0.86 * (1.0 - pinch);

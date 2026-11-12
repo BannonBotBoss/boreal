@@ -61,12 +61,14 @@ Minimum (SwiftShader) draws no cloud shell: `CLOUDS.octaves` is 0, and a level-1
 arrival (3.7 Earth radii, 23,572 km) is one vertex every ~310 km. Ice and the zoom-0 DEM then read
 as axis-aligned rectangles. `orbitAlbedo.ts` bakes a 1024×512 equirectangular from the bilinear DEM
 (`coarseMetresLinear`, the nearest `coarseMetres` stays for the ground tiles) and `surfaceColour`,
-with mipmaps. The deck is `orbitCloudBytes` in `cloudCover.ts`: the same fBm as the shell, at 420 km
-and five octaves, because a 900 km cell is a cotton ball at that distance. Tiers whose octave count
-is above 0 keep the ray-marched shell and do not composite the deck. `presentW` keeps the film's
-early beats on the era colour. The check is `tests/orbit-detail.test.ts`: no bright block that fills
-its box the way those quads did, and the disc's mean RGB within 15% of Apollo 17 AS17-148-22727
-(https://images.nasa.gov/details/as17-148-22727).
+with mipmaps. The deck is `orbitCloudBytes`: the shell's domain warp (hash2u, the CPU twin of
+`GLSL_NOISE`) at 1,800 km and two octaves, plus a zonal amount for the ITCZ, the subtropical
+minimum and the storm tracks. A five-octave 420 km fBm was salt-and-pepper and hid the land.
+Tiers whose octave count is above 0 keep the ray-marched shell and do not composite the deck.
+The clouds are albedo, so the sun still cuts a terminator. `presentW` keeps the film's early beats.
+Checks: `tests/orbit-detail.test.ts` (no bright blocks) and `tests/globe-clouds.test.ts` (cover
+0.50–0.75, autocorrelation longer than speckle, night side darker than the day side). Reference
+disc: Apollo 17 AS17-148-22727 (https://images.nasa.gov/details/as17-148-22727).
 
 ## Mistakes to avoid
 - A second cloud sphere, or `oceanMesh.receiveShadow`. The shadow is analytic. The one baked map is

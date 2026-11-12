@@ -28,9 +28,11 @@ Before `tasks/evidence/T-0218/before-eye1.7.png`: sharp yellow pyramids, one rep
 
 `side-before-after-eye1.7.png` and `side-after-ref-eye1.7.png`.
 
+The ground under the blades and the 40 m eye are straw when the cover sample is prairie and `steppeCure(227)` is 1. Frames: `ground-eye1.7.png`, `ground-eye40.png`. Stats: `ground-stats.json`. Check: `tests/steppe-ground.test.ts`.
+
 ## Leftovers
 
-The film does not skip on the first visit. After Today the globe was about 3 fps and a screenshot did not return within 40 s. A drag aimed the centre at the Arctic ocean. The 40 m eye is a smooth olive plain. Nadir crowns stay on #443. The ocean drop stays on #440. Animals were not changed.
+After Today the globe was about 3 fps and a screenshot did not return within 40 s. That frame-time question is separate from this branch. Nadir crowns are on #443, merged. The ocean drop is on #440, merged. Animals were not changed.
 
 ## Needs from another agent
 

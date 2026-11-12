@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import * as THREE from 'three';
-import { setGroundFloor, terrainMaterial } from '../src/render/pbr';
+import { setGroundFloor, steppeCure, terrainMaterial } from '../src/render/pbr';
 
 function readPng(file: string) {
   const buf = readFileSync(file);
@@ -81,10 +81,13 @@ test('prairie feet use thatch and soil, boreal feet use litter', () => {
   const mat = terrainMaterial();
   const shader = { fragmentShader: '#include <color_fragment>\n#include <roughnessmap_fragment>\n#include <normal_fragment_maps>\n', vertexShader: '#include <begin_vertex>\n', uniforms: {} as Record<string, { value: number }> };
   mat.onBeforeCompile(shader as never, {} as never);
-  assert.match(shader.fragmentShader, /vec3 thatch = vec3\(0\.34, 0\.24, 0\.11\)/);
+  assert.match(shader.fragmentShader, /vec3 thatch = vec3\(0\.46, 0\.32, 0\.11\)/);
   assert.match(shader.fragmentShader, /vec3 mossC = vec3\(0\.045, 0\.09, 0\.028\)/);
   assert.equal(shader.uniforms.uFloor.value, 1);
-  setGroundFloor('boreal');
+  assert.equal(shader.uniforms.uCure.value, 1);
+  assert.equal(steppeCure(227), 1);
+  assert.equal(steppeCure(160), 0);
+  setGroundFloor('boreal', 160);
   assert.equal(shader.uniforms.uFloor.value, 0);
 });
 

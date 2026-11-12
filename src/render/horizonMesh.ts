@@ -66,14 +66,16 @@ function skirtMaterial() {
           gl_FragColor.rgb *= 0.9 + 0.2 * clump;
         }
         float canopy = smoothstep(400.0, 900.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(6000.0, 14000.0, vSkirtDist));
-        if (canopy > 0.001) {
+        // The 22 m canopy repeat has no mipmaps. On a prairie skirt it aliased into
+        // green squares. uForest is 0 for prairie and desert (createHorizonSkirt).
+        if (canopy > 0.001 && uForest > 0.2) {
           vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));
           gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.45);
         }
         // Stand mosaic, the same waves and the same dark-canopy stretches as the globe tiles.
         // A coarse triangle is one colour without it. The 1.4 green gain is not applied.
         // A bright grassland pixel keeps its colour; a dark canopy (a few percent albedo) does not stay one fill.
-        if (vSkirtWater < 0.5) {
+        if (vSkirtWater < 0.5 && uForest > 0.2) {
           vec2 xz = vSkirtWorld.xz;
           float s0 = vnoiseU(xz / 40.0, 7.0);
           float s1 = vnoiseU(xz / 160.0, 8.0);
@@ -105,7 +107,7 @@ function skirtMaterial() {
         }
         #include <dithering_fragment>`);
   };
-  material.customProgramCacheKey = () => 'horizon-skirt-biome';
+  material.customProgramCacheKey = () => 'horizon-skirt-biome-open';
   return { material, haze, hazeColor, cam, forest };
 }
 

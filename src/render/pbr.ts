@@ -60,35 +60,43 @@ export function terrainMaterial() {
       .replace('#include <color_fragment>', `#include <color_fragment>
         ${groundLayers.map(l => l.body).join('\n')}
         float n1 = fbm(vXZ * 1.7, ${SEED.toFixed(3)}), n2 = vnoise(vXZ * 9.0, ${SEED.toFixed(3)});
-        diffuseColor.rgb *= (0.85 + 0.3 * n1) * (1.0 - 0.4 * vWet);
-        float snow = smoothstep(0.2, 0.8, vSnow + (n2 - 0.5) * 0.4);
+        // 1.7/m and 9/m are tiller scales. Past a few hundred metres they alias
+        // into salt. Prairie keeps the thatch; the noise drops out with distance.
+        float eyeD = length(vViewPosition.xyz);
+        float grain = mix(1.0, 1.0 - smoothstep(80.0, 500.0, eyeD), step(0.5, uFloor));
+        float n1g = mix(0.5, n1, grain), n2g = mix(0.5, n2, grain);
+        diffuseColor.rgb *= (0.85 + 0.3 * n1g) * (1.0 - 0.4 * vWet);
+        float snow = smoothstep(0.2, 0.8, vSnow + (n2g - 0.5) * 0.4);
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.8), snow);
         // Cover (uFloor) picks prairie thatch or boreal litter. Season (uCure) is
         // steppeCure(day): day 227 is cured, so live green drops out on a dry stand.
-        // The satellite grassland tint is one dark green. It stays past the 40 m view.
+        // The old 900 m reach handed the rest back to boreal litter, so a 2000 m
+        // prairie frame was green salt around a tan nadir.
         float reach = mix(30.0, 900.0, clamp(uFloor, 0.0, 1.0));
-        float floorNear = 1.0 - smoothstep(reach * 0.35, reach, length(vViewPosition.xyz));
+        float floorNear = 1.0 - smoothstep(reach * 0.35, reach, eyeD);
         vec3 soil = vec3(0.28, 0.16, 0.07);
         vec3 thatch = vec3(0.46, 0.32, 0.11);
         vec3 straw = vec3(0.55, 0.38, 0.12);
         vec3 liveG = vec3(0.18, 0.24, 0.07);
         float live = (1.0 - uCure) * mix(0.2, 0.85, clamp(vWet, 0.0, 1.0));
-        vec3 dead = mix(thatch, straw, 0.45 + 0.55 * n2);
-        vec3 prairie = mix(mix(soil, dead, smoothstep(0.22, 0.62, n2)), liveG, live * smoothstep(0.5, 0.85, n1));
+        vec3 dead = mix(thatch, straw, 0.45 + 0.55 * n2g);
+        vec3 prairie = mix(mix(soil, dead, smoothstep(0.22, 0.62, n2g)), liveG, live * smoothstep(0.5, 0.85, n1g));
         vec3 litter = vec3(0.14, 0.08, 0.04);
         vec3 mossC = vec3(0.045, 0.09, 0.028);
-        vec3 boreal = mix(litter, mossC, smoothstep(0.40, 0.75, n1));
+        vec3 boreal = mix(litter, mossC, smoothstep(0.40, 0.75, n1g));
         vec3 floorC = mix(boreal, prairie, clamp(uFloor, 0.0, 1.0));
-        float cover = floorNear * (1.0 - snow) * mix(0.92, 1.0, uCure * clamp(uFloor, 0.0, 1.0));
+        float cover = mix(floorNear, 1.0, step(0.5, uFloor)) * (1.0 - snow) * mix(0.92, 1.0, uCure * clamp(uFloor, 0.0, 1.0));
         diffuseColor.rgb = mix(diffuseColor.rgb, floorC, cover);`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         roughnessFactor = mix(mix(0.95, 0.35, vWet) * (0.9 + 0.2 * n2), 0.6, snow);`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
         { float e = 0.05, s = ${SEED.toFixed(3)}; vec2 p = vXZ * 3.0;
           float gx = fbm(p + vec2(e, 0.), s) - fbm(p - vec2(e, 0.), s), gz = fbm(p + vec2(0., e), s) - fbm(p - vec2(0., e), s);
-          normal = normalize(normal - (viewMatrix * vec4(gx, 0., gz, 0.)).xyz * (1.0 - snow) * 1.5); }`);
+          float eyeN = length(vViewPosition.xyz);
+          float grainN = mix(1.0, 1.0 - smoothstep(80.0, 500.0, eyeN), step(0.5, uFloor));
+          normal = normalize(normal - (viewMatrix * vec4(gx, 0., gz, 0.)).xyz * (1.0 - snow) * 1.5 * grainN); }`);
   };
-  terrain.customProgramCacheKey = () => ['boreal-terrain-pbr-cure', ...groundLayers.map(l => l.name)].join(':');
+  terrain.customProgramCacheKey = () => ['boreal-terrain-pbr-cure-open', ...groundLayers.map(l => l.name)].join(':');
   fadeOptIn(terrain); // render/fade: in-page transition patch fade (uniform only, same cache key)
   return terrain;
 }

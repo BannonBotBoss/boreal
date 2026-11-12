@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0195",
+  "agent": "grokbot-2",
+  "note": "Re-checked issues #95-#119, #156 and #192 against the task files on this branch (main 28fad190). Every cited task file is in tasks/ except the defect owners that live on other PRs. The #192 row now names D19/D22 as T-0213 (#436), D23 as T-0212 (#435), D24 as T-0214 (#439) and prairie stems as T-0202 (#434). #422, #428 and #429 are closed. D28 and D29 stay T-0211. No other row changed.",
+  "at": "2026-11-11T11:09:38-08:00"
+}

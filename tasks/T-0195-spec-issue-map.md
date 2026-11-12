@@ -26,10 +26,10 @@ This is the index. It does not build the holes. A row is a mapping when the task
 
 | issue | owns it | note |
 |---|---|---|
-| #95 ecosystem is the object, animals are one expression | no task yet | not in `notes/design-roadmap.md` |
+| #95 ecosystem is the object, animals are one expression | T-0203 | proposed, not claimed |
 | #96 universal timeline, solar system to the present | T-0060, T-0093 | deep time, then time zero at formation |
-| #97 deterministic generation from seed, place, time, parent | no task yet | closed on GitHub; no task states that formula |
-| #98 habitat from geology | no task yet | soils and cover are later tasks, not this stack |
+| #97 deterministic generation from seed, place, time, parent | T-0213 | proposed. Moved off T-0204 because #436 landed the aerial-horizon task as T-0204. |
+| #98 habitat from geology | T-0205 | proposed, not claimed |
 | #99 seasons change the habitat, not a texture swap | T-0094, T-0172 | climate class, and photoperiod from the landed date. The full ripple is not a task |
 | #100 climate, then weather | T-0082 | Rust grid is the weather the forest reads |
 | #101 Rust simulates, Three.js draws | T-0082, T-0092, T-0095 | no raw world JSON |
@@ -43,16 +43,16 @@ This is the index. It does not build the holes. A row is a mapping when the task
 | #109 spring, dead zone, no instant jump | T-0091, T-0106 | |
 | #110 shaders read simulation, not a painted look | T-0089 | |
 | #111 one environment buffer for the shaders | T-0089 | |
-| #112 a fourth axis, discovery, besides space, time, embodiment | no task yet | rule 18 names what drone and orbit draw. No task builds discovery |
-| #113 gamepad is an observation instrument | no task yet | T-0090 and T-0091 move the clock. They are not this control model. Rule 18 keeps triggers as altitude for the drone |
+| #112 a fourth axis, discovery, besides space, time, embodiment | T-0206 | proposed. Rule 18 still names what drone and orbit draw |
+| #113 gamepad is an observation instrument | T-0207 | proposed. T-0090 and T-0091 move the clock. They are not this model |
 | #114 the roadmap from the ten design issues | T-0080 | the merged roadmap |
-| #115 whale body and swimming | no task yet | rule 18 states the sticks and triggers. No whale task |
-| #116 a whale's own reality | no task yet | |
+| #115 whale body and swimming | T-0208 | proposed. Tagged gait. Rule 19 before it can be completed |
+| #116 a whale's own reality | T-0209 | proposed. The body is T-0208 |
 | #117 drives, not a hunt state | T-0099 | T-0084 says the drives are later and does not add them |
 | #118 why an animal did what it did | T-0081 | T-0084 only reserves a handle. The inspector is not built |
-| #119 an event log for rewind and why | no task yet | T-0084 and T-0092 say the log is not those tasks |
+| #119 an event log for rewind and why | T-0210 | proposed. T-0084 and T-0092 are not the log |
 | #156 navigable globe, drop through clouds, drone landscape | T-0108 through T-0122 | bridge, skirt, elevation, photo, cover, animals, gaps, rings, sky, land, canopy |
-| #192 globe-to-ground descent and the defect list | T-0125, T-0132, T-0164, T-0165, T-0179 onward, T-0202 | wildlife, census, open woodland. Visual passes from T-0179. D25 is the checker spawn ground (still open). D26 is T-0200 (cervid rack, #430). D27 is T-0201 (merged #433). Prairie stems that still read as spruce are T-0202. D19/D22 are T-0194 (#422, held). D23 is T-0198 (#428, held). D24 is T-0199 (#429, held). |
+| #192 globe-to-ground descent and the defect list | T-0125, T-0132, T-0164, T-0165, T-0179 onward, T-0202, T-0211 | wildlife, census, open woodland. Visual passes from T-0179. D25 is the checker spawn ground (still open). D26 is T-0200 (cervid rack, #430). D27 is T-0201 (merged #433). Prairie stems that still read as spruce are T-0202 (#434). D28 and D29 were mapped to T-0211 on this branch. D28 then landed as T-0215 (#440). D29 is T-0216. This branch does not change the drop or the glide. D19/D22 are T-0204, merged as #436. D23 is T-0212, merged as #435. D24 is T-0214 (#439). #422, #428 and #429 are closed; #428 points at #435 and #429 points at #439. |
 
 ## Acceptance
 

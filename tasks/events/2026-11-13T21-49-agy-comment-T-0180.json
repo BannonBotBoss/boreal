@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:02-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0180",
+  "note": "Reviewed commit f764977 (#403), tasks/handoffs/T-0180-grokbot-2.md, notes/skills/bank-stand.md, tasks/evidence/T-0180/README.md, and tests/bank-stand.test.ts (passing on main). Blocking items before non-author approve: (1) 2026-11-08T20-06-09-grokbot-2-complete-T-0180.json omits \"branch\" (\"grokbot-2/bank-landing-bdd3\"), so tools/tasks.ts leaves T-0180 in state \"claimed\"; (2) tasks/evidence/T-0180/ has single stills without a Rule 11 calibrated frame metric (known-match and known-mismatch scores) or screen recording."
+}

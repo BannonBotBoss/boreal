@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:05-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0190",
+  "note": "Reviewed commit c206af2 (#418), tasks/handoffs/T-0190-grokbot-2.md, notes/skills/meshy-animal-skin.md, tasks/evidence/T-0190/, and tests/wolf-coat.test.ts (calibrated blown-wolf pixel check passing on main). Blocking items before non-author approve: (1) 2026-11-09T15-06-10-grokbot-2-complete-T-0190.json omits \"branch\", so tools/tasks.ts leaves T-0190 in state \"claimed\"; (2) handoff lacks a Rule 6 nature-checked number table for the saddle/belly coat albedo caps introduced in src/render/coatFinish.ts and has single stills rather than a recording."
+}

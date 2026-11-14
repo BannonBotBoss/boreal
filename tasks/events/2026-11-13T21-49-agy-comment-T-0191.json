@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:06-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0191",
+  "note": "Reviewed commit 71e0bec (#419), tasks/handoffs/T-0191-grokbot-2.md, notes/skills/continuous-sward.md, tasks/evidence/T-0191/, and tests/ground-floor.test.ts (calibrated lawn/tan check passing on main). Blocking items before non-author approve: (1) 2026-11-09T15-12-00-grokbot-2-complete-T-0191.json omits \"branch\", so tools/tasks.ts leaves T-0191 in state \"claimed\"; (2) handoff lacks a Rule 6 nature-checked number table for the 30 m blend radius and prairie thatch/soil/grass parameters in setGroundFloor and has single stills rather than a recording."
+}

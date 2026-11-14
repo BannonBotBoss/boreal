@@ -1,0 +1,147 @@
+{
+  "capturedAt": "2026-11-14T06:05:47.053Z",
+  "baseUrl": "http://127.0.0.1:5253",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "winter_solstice_noon_home_49_79N",
+      "videoSec": 2.18,
+      "day": 355,
+      "hour": 12.0026,
+      "latitude": 49.79,
+      "longitude": -94.36,
+      "chronoOpen": true,
+      "timeText": "12:00",
+      "sunText": "sun 17° up",
+      "glyphText": "☀",
+      "dialBgSample": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(11, 26, 42) 75deg, rgb(11, 26, 42)",
+      "chronoSunElevation": 16.7901,
+      "skySunElevationSite": 16.7901,
+      "elevationErrorDeg": 0,
+      "liveVenusProbe": {
+        "lat": 49.79,
+        "lon": -94.36,
+        "alt": 14.331931101862802,
+        "az": 228.93756639776666,
+        "sunAlt": 16.77078165575425,
+        "ratio": 0.46613881669413954,
+        "mObs": -3.874892450570226,
+        "visible": false,
+        "opacity": 0,
+        "size": 3.874892450570226,
+        "ndc": [
+          -0.580200310809364,
+          -0.38658202582389223,
+          1.000941054272117
+        ]
+      },
+      "statusFirstLine": "12:00 · WALK · Snow 36.3 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    {
+      "frame": 1,
+      "label": "winter_solstice_dusk_home_49_79N_16h30",
+      "videoSec": 16.96,
+      "day": 355,
+      "hour": 16.5477,
+      "latitude": 49.79,
+      "longitude": -94.36,
+      "chronoOpen": true,
+      "timeText": "16:30",
+      "sunText": "sun 4° down",
+      "glyphText": "☾",
+      "dialBgSample": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(11, 26, 42) 75deg, rgb(11, 26, 42)",
+      "chronoSunElevation": -4.8007,
+      "skySunElevationSite": -4.8007,
+      "elevationErrorDeg": 0,
+      "liveVenusProbe": {
+        "lat": 49.79,
+        "lon": -94.36,
+        "alt": -26.479798629999575,
+        "az": 281.77617091044124,
+        "sunAlt": -4.878853481536709,
+        "ratio": 0,
+        "mObs": null,
+        "visible": false,
+        "opacity": 0,
+        "size": 2,
+        "ndc": [
+          -0.48740158411856005,
+          1.6523673881111938,
+          1.001090045295229
+        ]
+      },
+      "statusFirstLine": "16:30 · WALK · Snow 36.2 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    {
+      "frame": 2,
+      "label": "december_solstice_noon_namib_23_44S_15_0E",
+      "videoSec": 32.01,
+      "day": 355,
+      "hour": 12.0486,
+      "latitude": -23.44,
+      "longitude": 15,
+      "chronoOpen": true,
+      "timeText": "12:00",
+      "sunText": "sun 90° up",
+      "glyphText": "☀",
+      "dialBgSample": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(27, 43, 59) 75deg, rgb(194, 174, 1",
+      "chronoSunElevation": 89.3308,
+      "skySunElevationSite": 89.3308,
+      "elevationErrorDeg": 0,
+      "liveVenusProbe": {
+        "lat": -23.44,
+        "lon": 15,
+        "alt": 42.94017191560384,
+        "az": 274.2989710285633,
+        "sunAlt": 89.17807635946937,
+        "ratio": 0.7398600335550775,
+        "mObs": -4.38729829436257,
+        "visible": false,
+        "opacity": 0,
+        "size": 4.38729829436257,
+        "ndc": [
+          1.7763990748881333,
+          -2.6569970342092972,
+          1.0017236310809083
+        ]
+      },
+      "statusFirstLine": "12:00 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    {
+      "frame": 3,
+      "label": "august_positive_control_noon_home_49_79N",
+      "videoSec": 48.06,
+      "day": 227,
+      "hour": 12.05,
+      "latitude": 49.79,
+      "longitude": -94.36,
+      "chronoOpen": true,
+      "timeText": "12:00",
+      "sunText": "sun 55° up",
+      "glyphText": "☀",
+      "dialBgSample": "conic-gradient(from 180deg, rgb(11, 26, 42) 0deg, rgb(11, 26, 42) 15deg, rgb(11, 26, 42) 30deg, rgb(11, 26, 42) 45deg, rgb(11, 26, 42) 60deg, rgb(187, 147, 110) 75deg, rgb(185, 177",
+      "chronoSunElevation": 54.5052,
+      "skySunElevationSite": 54.5052,
+      "elevationErrorDeg": 0,
+      "liveVenusProbe": {
+        "lat": 49.79,
+        "lon": -94.36,
+        "alt": 24.086268317896625,
+        "az": 131.8711072766788,
+        "sunAlt": 54.19349047319893,
+        "ratio": 0.30912111914857743,
+        "mObs": -3.94685911334653,
+        "visible": false,
+        "opacity": 0,
+        "size": 3.94685911334653,
+        "ndc": [
+          -1.8589737931188755,
+          2.768848750745767,
+          0.998318411008915
+        ]
+      },
+      "statusFirstLine": "12:00 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    }
+  ],
+  "pageErrors": []
+}

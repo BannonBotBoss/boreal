@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2026-11-14T21:00:19.235Z",
+  "metric": {
+    "name": "ratioScore vs Nagy et al. (1999), Nagy & Peterson (1988), Heglund & Taylor (1988), D'Angelo et al. (2008), van Ginkel et al. (2019), and Belovsky (1984)",
+    "passThreshold": 0.95,
+    "calibration": {
+      "knownMatchHareMassScore": 1,
+      "knownMatchHareFovScore": 1,
+      "knownMismatchWolfVsDeerMassScore": 0.5714,
+      "knownMismatchZeroIntakeScore": 0
+    }
+  },
+  "manualHerbivoreFeeding": {
+    "hareActionsOnPlant": [
+      "gather"
+    ],
+    "hareActionsOnBerry": [],
+    "deerActionsOnPlant": [],
+    "deerActionsOnBerry": [],
+    "hareInventoryHerbsAfterGather": 1,
+    "hareManualEnergyGainPctPerAction": 0,
+    "expectedCloverBiteEnergyGainPct": 0.0366,
+    "expectedCloverBiteKj": 0.4076,
+    "manualFeedingScore": 0
+  },
+  "deerNeedsFallbackBug": {
+    "registeredSpeciesInNeedsRegistry": [
+      "wolf",
+      "hare"
+    ],
+    "deerTemplateResolvedId": "wolf",
+    "deerTemplateResolvedDiet": "carnivore",
+    "gameMassKg": 40,
+    "refMassKg": 70,
+    "massScore": 0.5714,
+    "gameFmrKjPerDay": 15034,
+    "refFmrKjPerDay": 23157.8,
+    "fmrScore": 0.6492,
+    "gameWaterMlPerDay": 1895,
+    "refWaterMlPerDay": 2995.8,
+    "waterScore": 0.6326,
+    "gameWalkMps": 2.3,
+    "refWalkMps": 1.3,
+    "walkSpeedScore": 0.2308,
+    "gameRunMps": 6.9,
+    "refRunMps": 4.551,
+    "runSpeedScore": 0.4837,
+    "gameSprintMps": 12.075,
+    "refSprintMps": 15.6464,
+    "sprintSpeedScore": 0.7717,
+    "gameSprintEnduranceSec": 12,
+    "refSprintEnduranceSec": 45,
+    "staminaScore": 0.2667
+  },
+  "sensoryAndRigAnchors": {
+    "deerGameFovDeg": 250,
+    "deerRefFovDeg": 310,
+    "deerFovScore": 0.8065,
+    "deerGameSightRangeM": 60,
+    "deerRefSightRangeM": 80,
+    "deerSightRangeScore": 0.75,
+    "sensesHudHardcodedTraceRangeM": 2400,
+    "deerRefTraceRangeM": 2,
+    "deerTraceRangeScore": 0,
+    "hareRigHasNamedHeadSensor": false,
+    "deerRigHasNamedHeadSensor": true
+  },
+  "carnivoreLeakageOnHerbivores": {
+    "energyThoughtIconGlyphForAllSpecies": "meat",
+    "herbivoreExpectedEnergyGlyph": "plant_or_clover",
+    "carnivoreGlyphScore": 0,
+    "bootEnergyQueryRequested": 8,
+    "bootEnergyAfterApplyPendingOverwrite": 74.91,
+    "bootEnergyPersistenceScore": 0,
+    "sensesHudIncludesWolfAndFoxPredators": false,
+    "sensesPredatorDetectionScore": 0,
+    "liveDeerBrowseUnderFeetGrams": 7180.8,
+    "liveDeerManualEnergyGainOn7kgBrowse": -0.0023,
+    "liveDeerAutonomousStatusLine": "AUTONOMOUS · 12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 45% · Rest 100% · drink (water 45 % < 85 %)"
+  }
+}

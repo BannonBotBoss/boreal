@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-11-14T20:01:28.621Z",
+  "metric": {
+    "name": "ratioScore & excessCostScore vs Wong (2001), Telfer & Kelsall (1984), Murray & Boutin (1991), and CBM-CFS3 Kurz et al. (2009)",
+    "passThreshold": 0.95,
+    "calibration": {
+      "knownMatchPressureScore": 1,
+      "knownMatchCostScore": 1,
+      "knownMismatchPressureScore": 0.3043,
+      "knownMismatchCostScore": 0
+    }
+  },
+  "deerSnowFooting": {
+    "massKg": 65,
+    "gamePlanUsedInMainTs": "canid",
+    "expectedPlan": "cervid",
+    "gamePressureKPa": 15.418,
+    "expectedCervidPressureKPa": 50.66,
+    "publishedRangeKPa": [
+      39.2,
+      58.8
+    ],
+    "gameSnowSinkCm": 17.74,
+    "expectedCervidSnowSinkCm": 33.33,
+    "pressureScore": 0.3043,
+    "sinkScore": 0.5323
+  },
+  "bearSnowFooting": {
+    "massKg": 215,
+    "gamePlanUsedInMainTs": "canid",
+    "expectedPlan": "ursid",
+    "gamePressureKPa": 50.999,
+    "expectedUrsidPressureKPa": 14.076,
+    "pressureScore": 0
+  },
+  "hareSnowCompactionBug": {
+    "massKg": 1.5,
+    "snowDepthCm": 40,
+    "harePressureKPa_canidBug": 0.356,
+    "harePressureKPa_leporid": 0.614,
+    "hareSnowSinkCm_leporid": 2.16,
+    "gameMovementCost_leporidWetLoamBug": 2.9315,
+    "wongExpectedMovementCost_leporidSnow": 1.0692,
+    "excessCompactionResistanceMultiplier": 27.92,
+    "snowCostScore": 0
+  },
+  "bekkerLayerPunchDiscontinuity": {
+    "snowThicknessCm": 20,
+    "organicThicknessCm": 8,
+    "pressureBelowCapKPa": 22.3719,
+    "pressureAboveCapKPa": 22.3763,
+    "sinkBelowCapCm": 20,
+    "sinkAboveCapCm": 28.22,
+    "instantaneousJumpCmFor0_004kPa": 8.22
+  },
+  "globalSoilDecayQ10": {
+    "gameHardcodedTempC": 2.5,
+    "tropical26C_kFreshPerYr": 1.6882,
+    "game2_5C_kFreshPerYr": 0.1709,
+    "tropicalRateUnderestimateFactor": 9.88,
+    "tropicalDecayScore": 0.1012,
+    "polarMinus18C_kFreshPerYr": 0.02318,
+    "polarDecayScore": 0
+  },
+  "liveBrowserSummary": {
+    "terrainClicksAllReturnedNull": true,
+    "hareInspectorWhyExcerpt": [],
+    "deerInspectorWhyExcerpt": [],
+    "saharaDesertMossThicknessCm": 3.87,
+    "saharaDesertDuffAgeLabel": "turnover 45 yr at 2.5 °C"
+  }
+}

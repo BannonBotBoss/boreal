@@ -25,7 +25,8 @@ import { LEPORID_LIMITS } from './locomotion/ik';
 import { skeletonOf, type BodyPlan } from './locomotion/bodyPlan';
 import { createRigSkin, setCoatDay, coatState, type RigLeg } from '../render/rigSkin';
 import { rigTubes, type CoatPalette, type RigBind, type SkinSpec } from '../core/rigBody';
-import { dayAt } from '../core/timeOfDay';
+import { dayAt, hourAt, LATITUDE } from '../core/timeOfDay';
+import { siteLatitude } from '../core/sitePhase';
 import { observation, worldSec } from '../core/worldClock';
 import { animalShares } from '../core/coarse';
 import { INTEREST, tierAt } from '../core/interest';
@@ -283,7 +284,14 @@ export const HARE_RIG_STATS = { rigged: 0, locked: 0, ms: 0 };
 export function createHares(scene: THREE.Scene) {
   // T-0036: the hares' brains run headless in core/sim (template senses, shared vigilance, evasion, diet); this is the thin
   // render adapter: spawn/despawn around the player, write the embodied wolf into the sim, read positions/states back.
-  const world = createWorld({ seed: WORLD_SEED, passable: (x, z) => heightAt(x, z) > LEVEL.hareWater, handling: true });
+  const world = createWorld({
+    seed: WORLD_SEED,
+    passable: (x, z) => heightAt(x, z) > LEVEL.hareWater,
+    hour: () => hourAt(worldSec()),
+    day: () => dayAt(worldSec()),
+    latitude: () => siteLatitude(LATITUDE),
+    handling: true,
+  });
   const wolfAnimal = createAnimal(world, 'wolf', { x: 0, z: 0 }, { controlled: true });
   const hares: Hare[] = []; const pending: number[] = []; const folded = new Set<number>();
   const spawnRng = stream(WORLD_SEED, 'hares-v1'); // seeded placement
@@ -339,6 +347,7 @@ export function createHares(scene: THREE.Scene) {
     const cover = wolf.predator === false ? 0 : 1 - siteAt(wolf.x, wolf.z).light; // canopy closure at the wolf; sight only (core/agent perceive)
     Object.assign(wolfAnimal, { x: wolf.x, z: wolf.z, heading: wolf.heading ?? wolfAnimal.heading, mode: wolf.mode, speed: wolf.moving ? playerSpeed(wolf.mode as WolfMode) : 0, crouched: wolf.mode.includes('stealth'), pouncing: wolf.pouncing, cover });
     world.daylight = () => wolf.daylight ?? 1; world.wind = () => wolf.wind ?? { x: 0, z: 0 };
+    world.hour = () => hourAt(worldSec()); world.day = () => dayAt(worldSec()); world.latitude = () => siteLatitude(LATITUDE);
     tick(world, dt);
     for (const ev of takeEvents(world)) {
       const h = hares.find(x => x.id === ev.id); if (!h) continue;

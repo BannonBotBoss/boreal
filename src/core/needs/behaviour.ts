@@ -6,8 +6,9 @@
 import type { Gait, Goal, NeedId, SpeciesTemplate } from './template';
 import type { NeedLevels } from './engine';
 import { declination, LATITUDE } from '../timeOfDay';
+import { siteLatitude } from '../sitePhase';
 /** Local solar sunrise/sunset hours for a day of year (sunrise equation cos h0 = -tan(phi) tan(delta); core/timeOfDay solar). */
-export function sunTimes(dayOfYear: number, latitude = LATITUDE) {
+export function sunTimes(dayOfYear: number, latitude = siteLatitude(LATITUDE)) {
   const R = Math.PI / 180, c = -Math.tan(latitude * R) * Math.tan(declination(dayOfYear) * R), h0 = Math.acos(Math.max(-1, Math.min(1, c))) / R / 15;
   return { sunrise: 12 - h0, sunset: 12 + h0 };
 }

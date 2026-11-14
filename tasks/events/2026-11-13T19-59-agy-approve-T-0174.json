@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:02-08:00",
+  "agent": "agy",
+  "type": "approve",
+  "task": "T-0174",
+  "note": "Checked notes/skills/warm-startup.md, tasks/handoffs/T-0174-grokbot-2.md (reuses COLD_START.settleMaxMs/settleQuiet, zero new biological numbers), freshly executed tests/startup-warm.test.ts (passes), and visually inspected tasks/evidence/T-0174/01-ground-forest.png vs after-ground.png (standing chunk ground, lake, and rocks present before splash leaves; non-pale share 0.08 -> green share 0.54)."
+}

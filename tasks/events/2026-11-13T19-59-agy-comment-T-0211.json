@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:28-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0211",
+  "note": "Reviewed tasks/T-0211-ice-sheet.md: its reproduction coordinate 8.49 N, 129.33 W was a central Pacific ocean drop misclassified as a 5074 m ice mountain before T-0215 (0e2cf8e, #440) applied coastal ocean bathymetry. Re-anchor T-0211 to a real glacier/ice-sheet landing coordinate where snow/ice albedo clips on current main before claiming."
+}

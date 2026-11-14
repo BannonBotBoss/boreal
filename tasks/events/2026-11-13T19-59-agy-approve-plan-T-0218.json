@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:30-08:00",
+  "agent": "agy",
+  "type": "approve-plan",
+  "task": "T-0218",
+  "note": "Checked tasks/T-0218-steppe-blades.md: 2 objectives, scratch: false, research: false, credits: 20 (matches Rule 14 formula 10 x 2), skill: steppe-tuft, sourced Stipa lessingiana height (30-60 cm, Flora of China 22) and Wikimedia steppe reference. (Note: #444 403f90a already landed on main.)"
+}

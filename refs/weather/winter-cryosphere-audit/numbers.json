@@ -1,0 +1,163 @@
+{
+  "task": "T-0230",
+  "generatedAt": "2026-11-14T21:58:09.363Z",
+  "passThreshold": 0.95,
+  "calibration": {
+    "unitScoreKnownMatch": {
+      "description": "Snow cover fraction 0.99 vs nature 1.00 (fullScale = 1.0)",
+      "measured": 0.99,
+      "target": 1,
+      "score": 0.99,
+      "passes95": true
+    },
+    "unitScoreKnownMismatch": {
+      "description": "Bare summer ground aSnow = 0.00 vs midwinter 34 cm snowpack target 1.00",
+      "measured": 0,
+      "target": 1,
+      "score": 0,
+      "passes95": false
+    },
+    "ratioScoreKnownMatch": {
+      "description": "Equilibrium horizontal wind drift 0.98x vs 1.00x wind speed",
+      "measured": 0.98,
+      "target": 1,
+      "score": 0.98,
+      "passes95": true
+    },
+    "ratioScoreKnownMismatch": {
+      "description": "Rain horizontal wind drift 0.10x vs 1.00x wind speed",
+      "measured": 0.1,
+      "target": 1,
+      "score": 0.1,
+      "passes95": false
+    }
+  },
+  "summary": {
+    "totalChecks": 10,
+    "passingChecks": 0,
+    "failingChecks": 10,
+    "meanScore": 0.1549,
+    "overallPasses95": false
+  },
+  "browserObservationsSummary": {
+    "frame0Status": "12:07 · WALK · Snow 34.2 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%",
+    "frame0LakePixelLuma": 0,
+    "frame0ShorePixelLuma": 0,
+    "frame0MaxASnow": 0,
+    "frame1DistanceMovedM": 8.497,
+    "frame1BareGroundSubzeroSnowFlag": true,
+    "frame2MaxAWet": 0
+  },
+  "checks": [
+    {
+      "id": "continuous_terrain_midwinter_snow_attribute",
+      "quantity": "Midwinter continuousTerrain vertex snow cover aSnow (day 15, tC = -18 C, snowpack 34.4 cm)",
+      "gameMeasured": 0,
+      "natureTarget": 1,
+      "unit": "fraction [0..1]",
+      "metric": "unitScore(measured, 1.0, 1.0)",
+      "score": 0,
+      "passes95": false,
+      "source": "Sturm et al. 2010 (J. Hydrometeorol. 11:1380, boreal taiga snow depth >20 cm -> ~100% ground cover); Oke 1987 (Boundary Layer Climates, 2nd ed., Table 1.1)"
+    },
+    {
+      "id": "midwinter_ground_surface_albedo",
+      "quantity": "Midwinter boreal forest floor broadband diffuse albedo under >30 cm snowpack",
+      "gameMeasured": 0.083,
+      "natureTarget": 0.8,
+      "unit": "albedo [0..1]",
+      "metric": "ratioScore(measured, 0.80)",
+      "score": 0.1037,
+      "passes95": false,
+      "source": "Oke 1987 (Boundary Layer Climates, 2nd ed., Table 1.1: dry snow albedo 0.75-0.90; boreal litter/moss 0.08-0.14); Betts & Ball 1997 (JGR 102:28901, BOREAS)"
+    },
+    {
+      "id": "continuous_terrain_rain_wetness_attribute",
+      "quantity": "Warm rainstorm continuousTerrain vertex wetness aWet (day 227, 4.5 mm/h rain, saturated soil)",
+      "gameMeasured": 0,
+      "natureTarget": 1,
+      "unit": "fraction [0..1]",
+      "metric": "unitScore(measured, 1.0, 1.0)",
+      "score": 0,
+      "passes95": false,
+      "source": "Lekner & Dorf 1988 (Appl. Opt. 27:1278, internal reflection darkening & specular sheen of water-wetted rough rock/soil)"
+    },
+    {
+      "id": "january_boreal_lake_ice_cover_fraction",
+      "quantity": "Mid-January (DOY 15, -18 C) 3.06 ha NW Ontario boreal lake ice + snow cover fraction (vs open rippled water)",
+      "gameMeasured": 0,
+      "natureTarget": 1,
+      "unit": "ice cover fraction [0..1]",
+      "metric": "unitScore(measured, 1.0, 1.0)",
+      "score": 0,
+      "passes95": false,
+      "source": "Schindler et al. 1990 (Science 250:967, ELA NW Ontario 49.67 N freeze-up mid-Nov DOY ~320, ice-out late Apr/May DOY ~120); Duguay et al. 2006 (Hydrol. Process. 20:781)"
+    },
+    {
+      "id": "rain_wind_slant_angle_at_8mps",
+      "quantity": "Raindrop trajectory slant angle from vertical in 8.0 m/s horizontal wind (v_t = 6.0 m/s, D ~ 1.8 mm)",
+      "gameMeasured": 7.59,
+      "natureTarget": 53.13,
+      "unit": "deg",
+      "metric": "unitScore(measured, 53.13, 90.0)",
+      "score": 0.494,
+      "passes95": false,
+      "source": "Gunn & Kinzer 1949 (J. Meteorol. 6:243, terminal velocity v_t = 6.0 m/s -> relaxation time tau = v_t/g = 0.61 s -> 1.0x horizontal wind speed, atan2(8, 6) = 53.13 deg)"
+    },
+    {
+      "id": "snow_wind_advection_coupling",
+      "quantity": "Snowflake horizontal wind speed coupling ratio u_particle / u_wind (aggregate dendrites v_t = 1.0 m/s)",
+      "gameMeasured": 0.5,
+      "natureTarget": 1,
+      "unit": "dimensionless ratio",
+      "metric": "ratioScore(0.50, 1.00)",
+      "score": 0.5,
+      "passes95": false,
+      "source": "Locatelli & Hobbs 1974 (JGR 79:2185, v_t ~ 1.0 m/s -> Stokes/drag relaxation time tau = v_t/g = 0.102 s -> 1.00x wind drift)"
+    },
+    {
+      "id": "precip_world_space_self_motion_parallax",
+      "quantity": "Precipitation cloud world-space parallax displacement when player runs 8.497 m forward (precip.position.copy(camera.position) locks box to camera)",
+      "gameMeasured": 0,
+      "natureTarget": 8.497,
+      "unit": "m",
+      "metric": "unitScore(0.0, 8.497, 8.497)",
+      "score": 0,
+      "passes95": false,
+      "source": "Rigid Euclidean world-frame kinematics: falling hydrometeors are stationary in air frame, producing -v_player optic-flow parallax when running"
+    },
+    {
+      "id": "snow_realtime_fall_speed_under_15x_clock_dial",
+      "quantity": "Apparent real-time snowflake fall speed when time-scale dial is at 15x Behavioral band (60 FPS)",
+      "gameMeasured": 12,
+      "natureTarget": 1,
+      "unit": "m/s (screen real time)",
+      "metric": "ratioScore(12.0, 1.0)",
+      "score": 0.0833,
+      "passes95": false,
+      "source": "Locatelli & Hobbs 1974 (JGR 79:2185: unrimed/moderately rimed aggregates fall at 0.8-1.2 m/s, not 12 m/s rain/hail blur)"
+    },
+    {
+      "id": "clear_winter_footprint_half_day_strength",
+      "quantity": "Wolf footprint strength after 0.5 days on a clear midwinter day (0 mm/h precip, 85 mm SWE snowpack)",
+      "gameMeasured": 0.2636,
+      "natureTarget": 0.7165,
+      "unit": "strength [0..1]",
+      "metric": "ratioScore(measured, 0.7165)",
+      "score": 0.3679,
+      "passes95": false,
+      "source": "Rezendes 1999 (Tracking & the Art of Seeing, 2nd ed.: cold dry clear-sky snow preserves crisp tracks for days, tau >= 1.5 d; catchUpWeather falsely sets snowfall=1 when swe>0.5, accelerating decay 4x)"
+    },
+    {
+      "id": "bare_ground_subzero_snowfall_flag",
+      "quantity": "Active snowfall flag w.snow during sub-zero snowfall (day 315, -5 C, 2.8 mm/h) onto bare ground (sweMm = 0) in mixed weatherAt()",
+      "gameMeasured": 0,
+      "natureTarget": 1,
+      "unit": "boolean [0 or 1]",
+      "metric": "unitScore(measured, 1.0, 1.0)",
+      "score": 0,
+      "passes95": false,
+      "source": "Dai 2008 (J. Climate 21:2803: rain-snow phase transition at surface T < +1.2 C depends on air/wet-bulb temperature, not pre-existing ground SWE)"
+    }
+  ]
+}

@@ -1420,11 +1420,6 @@ The prairie tuft was three 28 cm triangles. It is now nine bent blades, 12 mm wi
 
 Added `siteLongitude` in `src/core/sitePhase.ts`, threaded `dayAt(now())` and `siteLatitude(SITE.lat)` into `src/ui/chronometer.ts` (`chronoSunState` readout + `(day, lat)`-cached `dialGradient` conic gradient), and threaded `siteLatitude(SITE.lat)` + `siteLongitude(SITE.lon)` into `src/render/venusSky.ts` (`siteVenusSky` / `createVenus.update`). Added `tests/chronometer-venus-site.test.ts` and `notes/skills/boreal-seasonal-light-audit.md`.
 
-<<<<<<< HEAD
-## 2026-11-14 11:20 PT - agy: T-0022 seasonal solar date propagation across sky, globe and overhead crowns
-
-Threaded `doy = dayAt(time)` into `moonAge(doy)` and `siteLatitude(VENUS_SITE.lat)` into `moon = sunPosition(...)` in `src/render/sky.ts` so lunar age and topocentric elevation follow the world date and landed site rather than `WEATHER.day` / `49.5°N`. Added `planetSunDirection` in `src/world/globe/planet.ts` using `toLatLon(planet.home).lat` (`49.77°N`) and wired `src/world/globe/globeView.ts` (`sunNow`) and `src/render/trees/overheadCrowns.ts` (`shadowAway`) through it so geocentric subsolar latitude equals solar declination to `< 1e-9°`. Added `tests/seasonal-sky.test.ts` and updated `notes/skills/boreal-seasonal-light-audit.md`.
-=======
 ## 2026-11-14 10:08 PT - agy: T-0205 #98 geology-first landform map and latitude-band habitat audit
 
 Mapped all seven `#98` outputs (`mountain`, `valley`, `floodplain`, `plateau`, `basin`, `wetland`, `coast`) across local `src/core/stages/` (`elevation.ts`, `flow.ts`, `rivers.ts`, `soils.ts`, `surfaceAt.ts`) and global `src/world/globe/` + `rust/boreal-sim/src/`, and audited remaining latitude-band habitat shortcuts (`coverKind.ts:61` / `cover.rs:193` `wetland_lat_min = 50`, `species.rs:37-48` `in_range` boxes, `planet.ts:178-179, 236, 262, 268` lake/canopy/ice/albedo latitude ramps, `orbitAlbedo.ts:139`, and `openTiles.ts:246-252` `biomeGrade`). Notably, `planet.ts:236` (`1 - smoothstep(60, 66, |lat|)`) zeroes `vegetationWeight` by `66°N` even where continental `treeLineAtM` sits at `~600 m`, turning uncached subarctic continental taiga into `'desert'` in `coverKind`. Added `tests/habitat-from-geology.test.ts` and `notes/skills/habitat-from-geology.md`.
@@ -1432,4 +1427,7 @@ Mapped all seven `#98` outputs (`mountain`, `valley`, `floodplain`, `plateau`, `
 ## 2026-11-14 10:19 PT - agy: T-0213 deterministic generation formula and unseeded-source audit (#97)
 
 Documented the canonical `#97` formula `Entity = G(seed, place, time, parent)` and mapped all 12 domain generator pipelines (`universeSeed.ts`, `plates.ts`/`planet.ts`, `stages/*.ts`, `stand.ts`, `world.ts`, `flora/site.ts` & `stands.ts`, `flora/trees/forms.ts` & `conifer.ts`, `weather.ts`, `cover.rs` & `species.rs`, `litter.ts`/`litter.rs`, `genome.ts`, `sunspots.ts`) in `tasks/T-0213-deterministic-generation.md`. Exhaustive `git grep` across `src/` and `rust/boreal-sim/src/` verified zero unseeded RNG calls in world/entity generators (only `universeSeed.ts:mintUniverseSeed` mints initial entropy, plus 5 non-world audio/UI/view wall-clock defaults). Added `tests/deterministic-generation.test.ts` and `notes/skills/deterministic-generation.md`.
->>>>>>> origin/main
+
+## 2026-11-14 11:20 PT - agy: T-0022 seasonal solar date propagation across sky, globe and overhead crowns
+
+Threaded `doy = dayAt(time)` into `moonAge(doy)` and `siteLatitude(VENUS_SITE.lat)` into `moon = sunPosition(...)` in `src/render/sky.ts` so lunar age and topocentric elevation follow the world date and landed site rather than `WEATHER.day` / `49.5°N`. Added `planetSunDirection` in `src/world/globe/planet.ts` using `toLatLon(planet.home).lat` (`49.77°N`) and wired `src/world/globe/globeView.ts` (`sunNow`) and `src/render/trees/overheadCrowns.ts` (`shadowAway`) through it so geocentric subsolar latitude equals solar declination to `< 1e-9°`. Added `tests/seasonal-sky.test.ts` and updated `notes/skills/boreal-seasonal-light-audit.md`.

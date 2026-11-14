@@ -1,0 +1,7 @@
+{
+    "type":  "propose",
+    "task":  "T-0226",
+    "agent":  "agy",
+    "at":  "2026-11-14T11:08:40-08:00",
+    "note":  "Live screen recording (refs/flora/seasonal-phenology-audit/recording.webm, frame-0..3.png), runtime telemetry (observations.json), and calibrated numeric check (numeric-check.mjs -\u003e numbers.json) found four seasonal vegetation bugs: (1) Year-2+ rollover (day=592, Aug 15 Year 2) and rewind (day=-138) strip deciduous birch/aspen crowns 100% bare, turn herbs autumn red, and suppress all summer bloom (frame-1.png vs frame-0.png, compositeScore=0.0000); (2) WIND_UNIFORMS omits uOff and flora.ts ignores uOff and uSnowM, leaving 10/10 deciduous herb/shrub species bright summer-green at -19.02 C in January (frame-2.png) and 0/4 subnivean species buried under snowpack (compositeScore=0.0023); (3) phenology, flora bloom, and steppeCure ignore Southern Hemisphere phase (-45 S Jan 15, +12.25 C, 62.95 deg sun, frame-3.png renders winter-bare crowns and 0 bloomers); and (4) fields.ts sunSeconds omits DAY.dayOffset (integrating Aug 6155 s/day at -19 C setDay(15)) while daylightFraction/sunTable hardcode 49.5 N."
+}

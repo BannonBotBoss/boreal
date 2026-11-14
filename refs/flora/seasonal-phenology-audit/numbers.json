@@ -1,0 +1,108 @@
+{
+  "sources": [
+    "Burns & Honkala (1990), Silvics of North America Vol. 2 (USDA Forest Service Agric. Handb. 654: Populus tremuloides, Betula papyrifera) & Environment Canada PlantWatch: NW Ontario leaf-out DOY 135-150, fall colour DOY 255-278, leaf-off DOY 278-290, strictly 365-day periodic across years",
+    "Raunkiaer (1934), The Life Forms of Plants and Statistical Plant Geography & Baldwin & Sims (1997), Field Guide to the Common Forest Plants in Northwestern Ontario: boreal herbs (hemicryptophytes/geophytes) and deciduous shrubs shed/senesce foliage in winter; 0% summer-green deciduous leaves in January",
+    "Sturm et al. (2010), J. Hydrometeorol. 11:1380-1394: taiga midwinter snowpack (~34 cm at 85 mm SWE, 250 kg/m^3) buries subnivean ground flora shorter than snow depth (h <= uSnowM)",
+    "NOAA General Solar Position Calculations (Spencer 1971) & Frame & Newbould / Aust. J. Exp. Agric. 45:1577: Southern Hemisphere temperate summer (Jan 15 at 45 S) has ~15.4 h daylight, full canopy leaf, summer bloom, and active Trifolium repens growth above 5 C base"
+  ],
+  "calibration": {
+    "metric": "unitScore = max(0, 1 - |game - ref| / scale), averaged across phenology retention, colour/senescence, bloom/burial count, and photoperiod/growth (>= 0.95 pass)",
+    "knownMatch_HomeYear1Aug15_day227": {
+      "gamePhenology": {
+        "colour": 0,
+        "off": 0
+      },
+      "refPhenology": {
+        "doy": 227,
+        "colour": 0,
+        "off": 0,
+        "leafRetention": 1
+      },
+      "gameDaylightFraction": 0.5877,
+      "refDaylightFraction": 0.5877,
+      "bloomingSpeciesCount": 2,
+      "compositeScore": 1
+    },
+    "knownMismatch_WinterStateAtSummerRef": {
+      "compositeScore": 0.1617
+    }
+  },
+  "caseA_year2RolloverAug15_day592": {
+    "day": 592,
+    "gamePhenology": {
+      "colour": 1,
+      "off": 1
+    },
+    "refPhenology": {
+      "doy": 227,
+      "colour": 0,
+      "off": 0,
+      "leafRetention": 1
+    },
+    "gameLeafRetention": 0,
+    "refLeafRetention": 1,
+    "gameBloomingSpeciesCount": 0,
+    "refBloomingSpeciesCount": 2,
+    "priorYearRewindAug15_dayNeg138_gamePhenology": {
+      "colour": 0,
+      "off": 1
+    },
+    "priorYearRewindAug15_dayNeg138_refPhenology": {
+      "doy": 227,
+      "colour": 0,
+      "off": 0,
+      "leafRetention": 1
+    },
+    "compositeScore": 0
+  },
+  "caseB_midwinterSnowpackAndSenescence_day15_49_5N": {
+    "day": 15,
+    "sweMm": 69,
+    "snowDepthM": 0.276,
+    "deciduousFloraSpeciesCount": 10,
+    "subniveanSpeciesShorterThanSnowCount": 4,
+    "subniveanSpeciesIds": [
+      "twinflower (0.08 m)",
+      "bunchberry (0.14 m)",
+      "strawberry (0.1 m)",
+      "blueberry (0.25 m)"
+    ],
+    "gameFloraDeciduousLeafRetention": 1,
+    "refFloraDeciduousLeafRetention": 0,
+    "gameFloraGreenChlorophyllShare": 1,
+    "refFloraGreenChlorophyllShare": 0,
+    "gameSubniveanBuriedSpeciesCount": 0,
+    "refSubniveanBuriedSpeciesCount": 4,
+    "gameCloverSunWeightedSecondsAtSetDay15": 6155.28,
+    "refCloverSunWeightedSecondsAtSetDay15": 0,
+    "compositeScore": 0.0023
+  },
+  "caseC_australMidsummer_day15_45S": {
+    "latDeg": -45,
+    "lonDeg": -71.5,
+    "day": 15,
+    "equivalentSeasonalDoy": 197,
+    "australNoonTempC": -11.45,
+    "gameTreePhenology": {
+      "colour": 0,
+      "off": 1
+    },
+    "refTreePhenology": {
+      "doy": 197,
+      "colour": 0,
+      "off": 0,
+      "leafRetention": 1
+    },
+    "gameLeafRetention": 0,
+    "refLeafRetention": 1,
+    "gameBloomingSpeciesCount": 0,
+    "refBloomingSpeciesCount": 3,
+    "gameFieldsDaylightFraction": 0.338,
+    "refFieldsDaylightFraction": 0.6187,
+    "gameCloverSunWeightedSecondsPerDay": 0,
+    "refCloverSunWeightedSecondsPerDay": 0,
+    "refNoonRegrowthUnitsPerWorldSec": 0,
+    "gameSteppeCureJan15": 0,
+    "compositeScore": 0.3866
+  }
+}

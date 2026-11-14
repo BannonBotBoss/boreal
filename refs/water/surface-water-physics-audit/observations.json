@@ -1,0 +1,60 @@
+{
+  "capturedAt": "2026-11-14T17:54:23.281Z",
+  "baseUrl": "http://127.0.0.1:5255",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "dry_swale_phantom_drinking_21_-15_5",
+      "pos": {
+        "x": 26.71,
+        "z": -15.9
+      },
+      "drawOpenWaterAhead": false,
+      "waterAtAhead": false,
+      "waterAheadCanDrink": false,
+      "actionButtonBeforeClick": "",
+      "actionButtonAfterClick": "",
+      "statusFirstLine": "12:00 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    {
+      "frame": 1,
+      "label": "dry_swale_phantom_wakes_and_water_column_21_-27",
+      "pos": {
+        "x": 25.28,
+        "z": -24.83
+      },
+      "drawOpenWaterAtPos": false,
+      "bedHeightM": -0.54,
+      "wakeOwnedWetContacts": [
+        "player"
+      ],
+      "activeWakeSlots": 1,
+      "activePawRings": 0,
+      "groundWaterLayerThicknessM": 0.293,
+      "wolfGroundPassable": false,
+      "statusFirstLine": "12:00 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    {
+      "frame": 2,
+      "label": "perched_lake_submerged_bed_missing_water_column_and_walkable_animals",
+      "cameraShorePos": {
+        "x": -1192,
+        "z": -980
+      },
+      "submergedProbePos": {
+        "x": -1230,
+        "z": -920
+      },
+      "lakeSurfaceM": 17.631,
+      "lakeBedHeightM": 15.268,
+      "trueWaterDepthM": 2.364,
+      "groundWaterLayerThicknessM": 0,
+      "groundSubmergedSnowThicknessCm": 34.14,
+      "wolfWalkable2_36mUnderwater": true,
+      "deerWalkable2_36mUnderwater": true,
+      "harePassable2_36mUnderwater": true,
+      "statusFirstLine": "11:30 · WALK · Snow 34.1 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    }
+  ],
+  "pageErrors": []
+}

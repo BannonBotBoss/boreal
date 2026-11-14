@@ -1,0 +1,273 @@
+{
+  "capturedAt": "2026-11-14T19:04:47.156Z",
+  "sourceBranch": "agy/t0226-propose",
+  "baseCommit": "d06aa4b",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "videoDurationSec": 35.599,
+  "pageErrors": [],
+  "observations": [
+    {
+      "label": "scene0_year1_aug15_day227_49_5N",
+      "videoOffsetSec": 0.951,
+      "doy": 227,
+      "weatherDay": 227,
+      "hour": 13.078,
+      "latDeg": 49.5,
+      "sunElevationDeg": 52.4,
+      "airTempC": 23.95,
+      "climateTargetTempC": 23.92,
+      "climateSource": "planet",
+      "sweMm": 0,
+      "snowDepthM": 0,
+      "treePhenology": {
+        "colour": 0,
+        "off": 0
+      },
+      "windUniformColour": 0,
+      "windUniformHasOff": false,
+      "floraInfo": {
+        "visible": 1277,
+        "clumpsVisible": 1113,
+        "bySpecies": {
+          "twinflower": 431,
+          "bunchberry": 694,
+          "bluebead": 143,
+          "blueberry": 4,
+          "labradortea": 5
+        }
+      },
+      "fieldsDaylightFraction": 0.5877,
+      "fieldsSunWeightedSecondsNext24h": 6212.05,
+      "spot": {
+        "x": -1144.0997302811593,
+        "z": -948.4984548725188,
+        "yaw": 0,
+        "decid": [
+          {
+            "sp": "paper-birch",
+            "x": -1144.1,
+            "z": -959.5
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1131.6,
+            "z": -935.5
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1155.4,
+            "z": -953.9
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1143,
+            "z": -925.7
+          }
+        ]
+      },
+      "decodedFrame": {
+        "file": "frame-0.png",
+        "requestedSec": 0.951,
+        "decodedCurrentTimeSec": 0.951
+      }
+    },
+    {
+      "label": "scene1_year2_aug15_rollover_day592_49_5N",
+      "videoOffsetSec": 2.484,
+      "doy": 592,
+      "weatherDay": 592,
+      "hour": 13.003,
+      "latDeg": 49.5,
+      "sunElevationDeg": 52.71,
+      "airTempC": 23.96,
+      "climateTargetTempC": 23.92,
+      "climateSource": "planet",
+      "sweMm": 0,
+      "snowDepthM": 0,
+      "treePhenology": {
+        "colour": 1,
+        "off": 1
+      },
+      "windUniformColour": 1,
+      "windUniformHasOff": false,
+      "floraInfo": {
+        "visible": 1277,
+        "clumpsVisible": 1113,
+        "bySpecies": {
+          "twinflower": 431,
+          "bunchberry": 694,
+          "bluebead": 143,
+          "blueberry": 4,
+          "labradortea": 5
+        }
+      },
+      "fieldsDaylightFraction": 0.5877,
+      "fieldsSunWeightedSecondsNext24h": 6211.9,
+      "spot": {
+        "x": -1144.0997302811593,
+        "z": -948.4984548725188,
+        "yaw": 0,
+        "decid": [
+          {
+            "sp": "paper-birch",
+            "x": -1144.1,
+            "z": -959.5
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1131.6,
+            "z": -935.5
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1155.4,
+            "z": -953.9
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1143,
+            "z": -925.7
+          }
+        ]
+      },
+      "decodedFrame": {
+        "file": "frame-1.png",
+        "requestedSec": 2.484,
+        "decodedCurrentTimeSec": 2.484
+      }
+    },
+    {
+      "label": "scene2_midwinter_jan15_day15_49_5N",
+      "videoOffsetSec": 18.883,
+      "doy": 15,
+      "weatherDay": 15,
+      "hour": 13.053,
+      "latDeg": 49.5,
+      "sunElevationDeg": 17.85,
+      "airTempC": -19.02,
+      "climateTargetTempC": -19.02,
+      "climateSource": "planet",
+      "sweMm": 0,
+      "snowDepthM": 0,
+      "treePhenology": {
+        "colour": 0,
+        "off": 1
+      },
+      "windUniformColour": 0,
+      "windUniformHasOff": false,
+      "floraInfo": {
+        "visible": 1277,
+        "clumpsVisible": 1113,
+        "bySpecies": {
+          "twinflower": 431,
+          "bunchberry": 694,
+          "bluebead": 143,
+          "blueberry": 4,
+          "labradortea": 5
+        }
+      },
+      "fieldsDaylightFraction": 0.338,
+      "fieldsSunWeightedSecondsNext24h": 6212,
+      "spot": {
+        "x": -1144.0997302811593,
+        "z": -948.4984548725188,
+        "yaw": 0,
+        "decid": [
+          {
+            "sp": "paper-birch",
+            "x": -1144.1,
+            "z": -959.5
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1131.6,
+            "z": -935.5
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1155.4,
+            "z": -953.9
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1143,
+            "z": -925.7
+          }
+        ]
+      },
+      "decodedFrame": {
+        "file": "frame-2.png",
+        "requestedSec": 18.883,
+        "decodedCurrentTimeSec": 18.883
+      }
+    },
+    {
+      "label": "scene3_austral_midsummer_jan15_day15_45S",
+      "videoOffsetSec": 35.171,
+      "doy": 15,
+      "weatherDay": 15,
+      "hour": 13.052,
+      "latDeg": -45,
+      "sunElevationDeg": 62.95,
+      "airTempC": 12.25,
+      "climateTargetTempC": 12.23,
+      "climateSource": "planet",
+      "sweMm": 0,
+      "snowDepthM": 0,
+      "treePhenology": {
+        "colour": 0,
+        "off": 1
+      },
+      "windUniformColour": 0,
+      "windUniformHasOff": false,
+      "floraInfo": {
+        "visible": 1566,
+        "clumpsVisible": 1196,
+        "bySpecies": {
+          "twinflower": 507,
+          "bunchberry": 889,
+          "bluebead": 161,
+          "blueberry": 4,
+          "labradortea": 5
+        }
+      },
+      "fieldsDaylightFraction": 0.338,
+      "fieldsSunWeightedSecondsNext24h": 6212,
+      "spot": {
+        "x": -1144.0997302811593,
+        "z": -948.4984548725188,
+        "yaw": 0,
+        "decid": [
+          {
+            "sp": "paper-birch",
+            "x": -1144.1,
+            "z": -959.5
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1131.6,
+            "z": -935.5
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1155.4,
+            "z": -953.9
+          },
+          {
+            "sp": "trembling-aspen",
+            "x": -1143,
+            "z": -925.7
+          }
+        ]
+      },
+      "decodedFrame": {
+        "file": "frame-3.png",
+        "requestedSec": 35.171,
+        "decodedCurrentTimeSec": 35.171
+      }
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "source": "NOAA General Solar Position Calculations (Spencer 1971), https://gml.noaa.gov/grad/solcalc/solareqns.PDF; Standish (1992) JPL Keplerian elements & Meeus (1998) Astronomical Algorithms eq. 12.4",
+  "calibration": {
+    "metric": "Absolute elevation angle error |game - reference| in degrees",
+    "knownMatchDeg": 0,
+    "knownMismatchDeg": 38.010406950103736,
+    "passThresholdDeg": 0.05
+  },
+  "solarResults": [
+    {
+      "id": "winter-solstice-noon-kenora",
+      "day": 355,
+      "hour": 12,
+      "latDeg": 49.79,
+      "preFixChronoDeg": 54.80051654380602,
+      "postFixChronoDeg": 16.790109593702283,
+      "noaaReferenceDeg": 16.790109593702283,
+      "preFixAbsErrorDeg": 38.010406950103736,
+      "postFixAbsErrorDeg": 0,
+      "postFixGlyph": "☀",
+      "expectedGlyph": "☀",
+      "postFixText": "sun 17° up",
+      "pass": true
+    },
+    {
+      "id": "winter-solstice-1630-kenora",
+      "day": 355,
+      "hour": 16.5,
+      "latDeg": 49.79,
+      "preFixChronoDeg": 25.382424008499875,
+      "postFixChronoDeg": -4.406659999050917,
+      "noaaReferenceDeg": -4.406659999050917,
+      "preFixAbsErrorDeg": 29.78908400755079,
+      "postFixAbsErrorDeg": 0,
+      "postFixGlyph": "☾",
+      "expectedGlyph": "☾",
+      "postFixText": "sun 4° down",
+      "pass": true
+    },
+    {
+      "id": "southern-solstice-noon-tropic",
+      "day": 355,
+      "hour": 12,
+      "latDeg": -23.44,
+      "preFixChronoDeg": 54.80051654380602,
+      "postFixChronoDeg": 89.9798904062951,
+      "noaaReferenceDeg": 89.9798904062951,
+      "preFixAbsErrorDeg": 35.17937386248908,
+      "postFixAbsErrorDeg": 0,
+      "postFixGlyph": "☀",
+      "expectedGlyph": "☀",
+      "postFixText": "sun 90° up",
+      "pass": true
+    },
+    {
+      "id": "august-baseline-noon-kenora",
+      "day": 227,
+      "hour": 12,
+      "latDeg": 49.79,
+      "preFixChronoDeg": 54.80051654380602,
+      "postFixChronoDeg": 54.51051654380602,
+      "noaaReferenceDeg": 54.51051654380602,
+      "preFixAbsErrorDeg": 0.28999999999999915,
+      "postFixAbsErrorDeg": 0,
+      "postFixGlyph": "☀",
+      "expectedGlyph": "☀",
+      "postFixText": "sun 55° up",
+      "pass": true
+    }
+  ],
+  "venusRemoteResult": {
+    "description": "Day 355 (2026-12-21), 12:00 local solar time at landed site (-23.44°S, 15.0°E)",
+    "preFixVenusAltDeg": 14.350173409806494,
+    "postFixVenusAltDeg": 42.940187099668854,
+    "referenceVenusAltDeg": 42.940187099668854,
+    "preFixVenusAbsErrorDeg": 28.59001368986236,
+    "postFixVenusAbsErrorDeg": 0,
+    "preFixSunAltDeg": 16.771136289694184,
+    "postFixSunAltDeg": 89.17809158081702,
+    "referenceSunAltDeg": 89.17809158081702,
+    "preFixSunAbsErrorDeg": 72.40695529112284,
+    "postFixSunAbsErrorDeg": 0,
+    "pass": true
+  }
+}

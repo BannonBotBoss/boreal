@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0170",
+  "agent": "agy",
+  "branch": "agy/chrono-venus-site",
+  "at": "2026-11-13T22:12:00-08:00",
+  "note": "Completed T-0170 on agy/chrono-venus-site (57f75d0). Added siteLongitude(homeLon) in src/core/sitePhase.ts, wired dayAt(now()) and siteLatitude(WEATHER_SITE.lat) into chronoSunState and cached (day, lat) dialGradient in src/ui/chronometer.ts, wired siteLatitude/siteLongitude into siteVenusSky and createVenus.update in src/render/venusSky.ts, added tests/chronometer-venus-site.test.ts and notes/skills/boreal-seasonal-light-audit.md (24/24 targeted + tsc pass), and verified calibrated NOAA Spencer (1971) & Standish/Meeus (1992/1998) numeric gate (refs/sky/chrono-season-fix/numbers.json: 0.0000 deg error across all 6 checks vs 28.59-72.41 deg pre-fix errors) and live browser frames/video (refs/sky/chrono-season-fix/recording.webm, frame-0..3.png, observations.json)."
+}

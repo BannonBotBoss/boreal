@@ -25,6 +25,8 @@ import { FALL_END_M, ISO_BELOW_HORIZON, freeFallVy, flightPrompt, type EntryPhas
 import { canEmbody, descentFrameDt, landingJobBudget, landingPatchReady } from './landingStream';
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
+import { coverSampleAt } from './coverSample';
+import { AERIAL } from './aerialExemplar';
 import { dropStand, forestLanding } from './forestLanding';
 import { cineTrace } from '../cosmos/cineReady';
 import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
@@ -375,6 +377,12 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     /** main's draw slot: globe mode draws the globe to the screen; band and game draw the game (buildScene calls the hooks). */
     frame(drawGame: () => void) {
       frameNo++;
+      // The aerial crop is boreal canopy. Prairie and desert keep the thatch the feet use.
+      try {
+        const here = host.player();
+        const biome = coverSampleAt(here.x, here.z).biome;
+        AERIAL.uOpenLand.value = biome === 'prairie' || biome === 'desert' ? 1 : 0;
+      } catch { /* cover sample before the planet is ready */ }
       if (next) { if (next === 'game') toGame(); else toGlobe(next === 'sphere'); next = null; }
       if (mode === 'globe' && globe) {
         cameraTouched = true; // orbit clip is on the forest camera; game mode puts 0.2 / 700 back

@@ -289,8 +289,8 @@ export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCr
   function update(dir: THREE.Vector3, altM: number, surfaceR: number, planet: Planet, aspect: number, fovDeg: number, camera: THREE.Camera) {
     pub.alt = altM;
     const show = altM > 180 && altM < 2200;
-    AERIAL.uCrownFloor.value = show ? 1 : 0;
     if (!show) {
+      AERIAL.uCrownFloor.value = 0;
       floor.visible = false; spruce.count = 0; aspen.count = 0; shadows.count = 0; pub.count = 0;
       return 0;
     }
@@ -301,10 +301,15 @@ export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCr
     if (next === key && spruce.count + aspen.count > 0) return pub.count;
     key = next;
     const cover = coverSampleLatLon(lat, lon);
-    if (cover.water || cover.treeShare <= 0) {
+    // Prairie and desert are grass. A 5% tree share still threw conifer cards
+    // across the 2000 m frame, and the screen-space grain read as salt.
+    // Stipa at the feet is steppeTuft, not these crowns.
+    if (cover.water || cover.treeShare <= 0 || cover.biome === 'prairie' || cover.biome === 'desert') {
+      AERIAL.uCrownFloor.value = 0;
       floor.visible = false; spruce.count = 0; aspen.count = 0; shadows.count = 0; pub.count = 0;
       return 0;
     }
+    AERIAL.uCrownFloor.value = 1;
     const frame = tangentFrame([dir.x, dir.y, dir.z]);
     east.set(...frame.east); north.set(...frame.north); up.set(...frame.dir);
     flat.setFromRotationMatrix(new THREE.Matrix4().makeBasis(east, north, up));

@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-12, path and the prairie overhead
+
+Main `0f6edb8d`. CI run 43139524448 green. PR #447 is open, so `cloudCover.ts`, `globeView.ts`, and `orbitAlbedo.ts` were not edited. The film reaches Today. Escape skips it. Orbit drag works and leaves a dashed mark on the polar cap. The drop at 2000 m is prairie, vegetation 0.33, and the picture was conifer salt. That is T-0222 on `cursor/prairie-aerial-027e`. The after frame is straw. Not self-approved. Gait was not touched. The token cannot comment on #192 (HTTP 403).
+
 # grokbot-2 loop — 2026-11-11, path and the tuft blades
 
 Main `e2f7db86`. The film reaches Today (elapsed 111, counter "Today", hero "Today · 13.8 billion years") and then the globe (seen, cine gone, elapsed 116). A second click, Escape, and space during the first minute do not skip: elapsed moved 6.2 s to 9.2 s and the film stayed up. Sound read "Sound on" and the audio context was running. No page error. A drag after handoff aimed the centre at 84.6 N, 143.4 W, ocean, −1986 m. Plus zoomed the altitude. Globe screenshots did not return within 40 s (the page was at about 3 fps). The standing eye at 49.77 N, 65.54 E is prairie, vegetation 0.35, 215 m, day 227, sun 37°, snow 0. That grass was three wide triangles. T-0218 `grokbot-2/steppe-blades` replaces them with a fan of narrow blades. Not claimed. No approve-plan from this agent. Gait was not touched. #440, #441, #443 were not edited.

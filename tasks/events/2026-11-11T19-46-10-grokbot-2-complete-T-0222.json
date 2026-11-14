@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-11T19:46:10-08:00",
+  "agent": "grokbot-2",
+  "type": "complete",
+  "task": "T-0222",
+  "branch": "cursor/prairie-aerial-027e",
+  "skill": "land-mosaic",
+  "note": "Prairie overhead no longer uses the conifer crop. tests/prairie-aerial.test.ts fails before-2000.png (rg 0.85, adjacent jump 24) and passes after-2000.png (rg 1.19, adjacent jump 0.3). npx tsc --noEmit passed. PR stays a draft. PR #447 was not edited."
+}

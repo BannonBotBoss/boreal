@@ -1,0 +1,55 @@
+{
+  "sources": [
+    "NOAA General Solar Position Calculations (Spencer 1971), https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
+    "Mennill (2014), Waterbirds 37(sp1):48-56, doi:10.1675/063.037.sp105 (Common Loon 166.8 wails/night vs 9.3 wails/day)",
+    "McIntyre & Barr (1997), The Birds of North America: Common Loon (Gavia immer, Holarctic breeding distribution 42N-70N, absent from Southern Hemisphere)",
+    "Evans & Conner (1979) & Dodenhoff, Stark & Johnson (1998), Condor 100:350 (Hairy Woodpecker requires forest canopy stems; diurnal 4 drums/min)"
+  ],
+  "calibration": {
+    "metric": "timingScore = 1 - |gameGap - refGap| / refGap (>= 0.95 pass); positionScore = validHabitatCallers / totalCallers (>= 0.95 pass)",
+    "knownMatchHomeDay227Noon": 1,
+    "knownMismatchHalvedInterval": 0.5
+  },
+  "subarcticSummerDusk_64_5N_Day172_21h48": {
+    "siteLatDeg": 64.5,
+    "skySunElevationDeg": 1.6033921896457324,
+    "noaaSunElevationDeg": 1.6056022238630272,
+    "gameNightHours": 8,
+    "refNightHours": 4,
+    "gameLoonGapSec": 172.6618705035971,
+    "refLoonGapSec": 7741.935483870967,
+    "loonTimingScore": 0.022302158273381334,
+    "gameWoodpeckerGapSec": null,
+    "refWoodpeckerGapSec": 15,
+    "woodpeckerTimingScore": 0
+  },
+  "remoteTreelessNamib_23_44S_treeShare0": {
+    "siteLatDeg": -23.44,
+    "siteTreeShare": 0,
+    "expectedWoodpeckerCanopy": 0,
+    "gameHabitatCanopy": 0.756551357574898,
+    "spawnedWoodpeckersIn45m": 1,
+    "expectedLoonsSouthernHemisphere": 0,
+    "gameHabitatLake": false,
+    "spawnedLoonsIn45m": 1,
+    "callerPositionScore": 0
+  },
+  "waterAmbienceAudit": {
+    "dryOriginBasin_0_0": {
+      "drawOpenWater": false,
+      "stagedLakeKind": "open",
+      "renderedWaterVisible": false,
+      "gameNearbyWaterGain": 1,
+      "expectedNearbyWaterGain": 0
+    },
+    "perchedLakeShore_n1192_n980": {
+      "adjacentLakeAreaHa": 3.06,
+      "adjacentLakeSurfaceM": 17.631462138467267,
+      "bankHeightM": 18.212202968291905,
+      "distanceToLakeM": 8,
+      "renderedWaterVisible": true,
+      "gameNearbyWaterGain": 0,
+      "expectedNearbyWaterGainMin": 0.25
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "capturedAt": "2026-11-14T06:18:56.232Z",
+  "baseUrl": "http://127.0.0.1:5254",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "perched_lake_shore_silent_water_-1192_-980",
+      "pos": {
+        "x": -1192,
+        "z": -980
+      },
+      "day": 227,
+      "hour": 10.55,
+      "siteLat": 49.5,
+      "siteTreeShare": 1,
+      "skySunElevationDeg": 50.564,
+      "nearbyWaterGain": 0,
+      "drawOpenWaterAtPos": false,
+      "surfaceHeightM": 18.21,
+      "callersWithin45m": [],
+      "gameLoonGapSec": 5419.35,
+      "gameWoodpeckerGapSec": 15,
+      "statusFirstLine": "10:30 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    {
+      "frame": 1,
+      "label": "subarctic_summer_dusk_64_5N_21h48_false_night_callers",
+      "pos": {
+        "x": -1219.9,
+        "z": -819.9
+      },
+      "day": 172,
+      "hour": 21.849,
+      "siteLat": 64.5,
+      "siteTreeShare": 1,
+      "skySunElevationDeg": 1.448,
+      "nearbyWaterGain": 0,
+      "drawOpenWaterAtPos": true,
+      "surfaceHeightM": 16.55,
+      "callersWithin45m": [
+        {
+          "id": "woodpecker:1400:-20:-13",
+          "kind": "woodpecker",
+          "x": -1248.4286127835512,
+          "z": -794.7553517967463,
+          "clip": "woodpecker"
+        }
+      ],
+      "gameLoonGapSec": 172.66,
+      "gameWoodpeckerGapSec": "Infinity",
+      "statusFirstLine": "21:48 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    {
+      "frame": 2,
+      "label": "treeless_namib_desert_-23_44S_woodpecker_on_sand",
+      "pos": {
+        "x": -1500,
+        "z": -1180
+      },
+      "day": 355,
+      "hour": 12.049,
+      "siteLat": -23.44,
+      "siteTreeShare": 0,
+      "skySunElevationDeg": 89.329,
+      "nearbyWaterGain": 0,
+      "drawOpenWaterAtPos": true,
+      "surfaceHeightM": 26.62,
+      "callersWithin45m": [
+        {
+          "id": "woodpecker:1400:-24:-19",
+          "kind": "woodpecker",
+          "x": -1486.312681093812,
+          "z": -1165.311743736267,
+          "clip": "woodpecker"
+        }
+      ],
+      "gameLoonGapSec": 3096.77,
+      "gameWoodpeckerGapSec": 15,
+      "statusFirstLine": "12:00 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    }
+  ],
+  "pageErrors": []
+}

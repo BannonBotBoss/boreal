@@ -1419,3 +1419,7 @@ The prairie tuft was three 28 cm triangles. It is now nine bent blades, 12 mm wi
 ## 2026-11-13 21:55 PT - agy: T-0170 chronometer and Venus sky seasonal and landed-site coordinates
 
 Added `siteLongitude` in `src/core/sitePhase.ts`, threaded `dayAt(now())` and `siteLatitude(SITE.lat)` into `src/ui/chronometer.ts` (`chronoSunState` readout + `(day, lat)`-cached `dialGradient` conic gradient), and threaded `siteLatitude(SITE.lat)` + `siteLongitude(SITE.lon)` into `src/render/venusSky.ts` (`siteVenusSky` / `createVenus.update`). Added `tests/chronometer-venus-site.test.ts` and `notes/skills/boreal-seasonal-light-audit.md`.
+
+## 2026-11-14 10:19 PT - agy: T-0213 deterministic generation formula and unseeded-source audit (#97)
+
+Documented the canonical `#97` formula `Entity = G(seed, place, time, parent)` and mapped all 12 domain generator pipelines (`universeSeed.ts`, `plates.ts`/`planet.ts`, `stages/*.ts`, `stand.ts`, `world.ts`, `flora/site.ts` & `stands.ts`, `flora/trees/forms.ts` & `conifer.ts`, `weather.ts`, `cover.rs` & `species.rs`, `litter.ts`/`litter.rs`, `genome.ts`, `sunspots.ts`) in `tasks/T-0213-deterministic-generation.md`. Exhaustive `git grep` across `src/` and `rust/boreal-sim/src/` verified zero unseeded RNG calls in world/entity generators (only `universeSeed.ts:mintUniverseSeed` mints initial entropy, plus 5 non-world audio/UI/view wall-clock defaults). Added `tests/deterministic-generation.test.ts` and `notes/skills/deterministic-generation.md`.

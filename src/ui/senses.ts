@@ -9,7 +9,7 @@ import { deltaSources } from '../core/traces';
 import { WOLF_AGENT } from '../core/species';
 import { NEEDS_SPECIES, WOLF_NEEDS } from '../core/needs/species';
 import { sensesTitle } from '../render/playables';
-import { perceive } from '../core/needs/senses';
+import { see, type SightBody, type SightHit } from '../core/needs/senses';
 import { createSoundCues, smell, bearingTo, cueSoundEntry, soundCaption, SENSES, type ScentSource, type ScentHit } from '../core/senses';
 import {
   SENSE_GLYPH, bubbleLook, createSenseStream, demoSenseSignals,
@@ -18,6 +18,7 @@ import {
 
 // Scent potency of a nearby body. The picture does not use the kind.
 const potency: Record<string, number> = { deer: 1, hare: .7, person: .85, forage: .8, plant: .55, log: .3 };
+const visualKind: Record<string, boolean> = { deer: true, hare: true, person: true };
 
 export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: BorealSound, memory: () => EventContext) {
   const root = document.createElement('details'); root.className = 'wolf-senses'; root.open = true;
@@ -30,13 +31,14 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
   const cues = createSoundCues(), stream = createSenseStream(), nose = new Vector3(), forward = new Vector3();
   const nodes = new Map<number, HTMLDivElement>();
   const demo = demoSenseSignals(new URLSearchParams(location.search).get('sensepic'));
-  let tick = 0, demoOnce = false, lastHits: readonly ScentHit[] = [];
+  let tick = 0, demoOnce = false, lastHits: readonly ScentHit[] = [], lastSeen: readonly SightHit[] = [];
   let needs = WOLF_NEEDS;
   audio.onSpatialCue = (id, at, level) => { if (!root.hidden) cues.add(id, at, level); };
-  const speedOf = (key: string) => {
-    if (!key.startsWith('hare:')) return 0;
-    const id = Number(key.slice(5));
-    return view.hares.list().find(h => h.id === id)?.sim.speed ?? 0;
+  const speedOf = (key: string, kind: string) => {
+    if (kind === 'hare') return Math.abs(view.hares.list().find(h => h.id === Number(key.slice(5)))?.sim.speed ?? 0);
+    if (kind === 'deer') return Math.abs(view.lookup(key)?.brain?.speed ?? 0);
+    if (kind === 'person') return Math.abs(view.visitorOf(key)?.speed ?? 0);
+    return 0;
   };
   const paint = () => {
     const live = new Set<number>();
@@ -59,25 +61,24 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
     }
     for (const [id, node] of nodes) if (!live.has(id)) { node.remove(); nodes.delete(id); }
   };
-  const offerLive = (heading: number, wind: { x: number; z: number }, sounds: { x: number; z: number; level: number; age: number; id: string }[]) => {
+  const offerLive = (heading: number, sounds: { x: number; z: number; level: number; age: number; id: string }[]) => {
     sounds.forEach((c, i) => {
       const signal = signalFromSound(cueSoundEntry(c, bearingTo(nose, c, heading)), `hearing:${i}`);
       if (signal) stream.offer(signal);
     });
-    const daylight = 1 - view.darkness();
     lastHits.forEach((h, i) => {
       const scent = signalFromScent(h, `scent:${i}`);
       if (scent) stream.offer(scent);
-      const seen = perceive(needs, { x: nose.x, z: nose.z, heading }, { x: h.x, z: h.z, speed: speedOf(h.key) }, { daylight, wind });
-      if (seen.sight < SENSES.threshold) return;
-      const sight = signalFromSight(`sight:${i}`, seen.sight, seen.bearing);
+    });
+    lastSeen.forEach((s, i) => {
+      const sight = signalFromSight(`sight:${i}`, s.sight, s.bearing);
       if (sight) stream.offer(sight);
     });
   };
   return {
     update(dt: number, hidden: boolean) {
       root.hidden = hidden;
-      if (hidden) { cues.clear(); stream.clear(); lastHits = []; paint(); return; }
+      if (hidden) { cues.clear(); stream.clear(); lastHits = []; lastSeen = []; paint(); return; }
       const step = Math.max(0, dt);
       cues.step(step); stream.step(step); tick += step;
       if (tick >= SENSES.updateSeconds) {
@@ -99,18 +100,35 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
             arrows.append(marker);
           }
           const context = memory();
-          const sources: ScentSource[] = view.entities().filter(e => potency[e.kind] && Math.hypot(e.x - nose.x, e.z - nose.z) < SENSES.range).map(e => ({
+          const embodied = view.livingHere().embodied;
+          const allEntities = view.entities();
+          const sources: ScentSource[] = allEntities.filter(e => potency[e.kind] && e.key !== embodied && Math.hypot(e.x - nose.x, e.z - nose.z) < SENSES.range).map(e => ({
             key: e.key, kind: e.kind, x: e.x, z: e.z, potency: potency[e.kind],
             remembered: playerRemembered(context.records[e.key]), friend: context.records[e.key]?.relationship === 'friend',
           }));
-          for (const h of view.hares.list()) if (h.root.visible) sources.push({ key: `hare:${h.id}`, kind: 'hare', x: h.x, z: h.z, potency: potency.hare });
+          const visualRange = needs.senses.sight.rangeM.v;
+          const visualBodies: SightBody[] = allEntities
+            .filter(e => visualKind[e.kind] && e.key !== embodied && Math.hypot(e.x - nose.x, e.z - nose.z) < visualRange)
+            .map(e => ({ key: e.key, kind: e.kind, x: e.x, z: e.z, speed: speedOf(e.key, e.kind) }));
+          for (const h of view.hares.list()) if (h.sim.alive && !h.embodied) {
+            const key = `hare:${h.id}`;
+            sources.push({ key, kind: 'hare', x: h.x, z: h.z, potency: potency.hare });
+            if (Math.hypot(h.x - nose.x, h.z - nose.z) < visualRange) {
+              visualBodies.push({ key, kind: 'hare', x: h.x, z: h.z, speed: Math.abs(h.sim.speed) });
+            }
+          }
           // Bodies keep the HUD range. A mark, carcass or dropping uses the wolf nose (Mech 1970, 2.4 km) inside deltaSources.
-          sources.push(...deltaSources(nose.x, nose.z, WOLF_AGENT.senses.scent.range));
+          const traces = deltaSources(nose.x, nose.z, WOLF_AGENT.senses.scent.range);
+          sources.push(...traces);
+          for (const t of traces) if (t.kind === 'carcass' && Math.hypot(t.x - nose.x, t.z - nose.z) < visualRange) {
+            visualBodies.push({ key: t.key, kind: t.kind, x: t.x, z: t.z, speed: 0 });
+          }
           const wind = windAt(nose.x, .8, nose.z);
           lastHits = smell(nose, sources, wind, heading);
+          lastSeen = see(needs, { x: nose.x, z: nose.z, heading }, visualBodies, { daylight: 1 - view.darkness(), wind });
           if (demo.replace) {
             if (!(demo.once && demoOnce)) { demoOnce = true; for (const s of demo.signals) stream.offer(s); }
-          } else offerLive(heading, wind, sounds);
+          } else offerLive(heading, sounds);
         }
       }
       paint();
@@ -118,5 +136,6 @@ export function createSensesHUD(view: ReturnType<typeof buildScene>, audio: Bore
     /** The same live cues the panel shows, for the 3D senses halo (render/sensesHalo). */
     sounds: () => cues.list(),
     scents: () => lastHits,
+    sights: () => lastSeen,
   };
 }

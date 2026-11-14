@@ -5,7 +5,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PERCEPTION, readPerception } from '../src/core/perceptionBuffer';
 import { THOUGHT_RULES } from '../src/core/needs/thoughts';
-import { cueSoundEntry, createSoundCues } from '../src/core/senses';
+import { WOLF_NEEDS } from '../src/core/needs/species';
+import { perceive, see, type SightBody } from '../src/core/needs/senses';
+import { cueSoundEntry, createSoundCues, smell, SENSES, type ScentSource } from '../src/core/senses';
+import { DELTAS, record } from '../src/core/deltas';
+import { GROUND } from '../src/core/ground';
+import { deltaSources } from '../src/core/traces';
 import {
   SENSE_ARIA, SENSE_GLYPH, SENSE_PICTURES, bubbleLook, createSenseStream, demoSenseSignals,
   signalFromScent, signalFromSight, signalFromSound, signalOpacity, signalsFromFrame,
@@ -124,4 +129,67 @@ test('T-0100: the screenshot query is not a species list', () => {
   assert.equal(once.signals[0].kind, 'sound');
   assert.equal(SPECIES.test(JSON.stringify(demo.signals.map(s => s.kind))), false);
   assert.equal(demoSenseSignals(null).replace, false);
+});
+
+test('T-0171: see() detects upwind moving prey and moving deer/person beyond presenceM while smell() handles non-visual scent deltas', () => {
+  const nose = { x: 0, z: 0, heading: 0 };
+  // Wind blowing from wolf (0,0) toward target (0,-16): target is upwind of wolf, outside local diffusion radius.
+  const upwind = { x: 0, z: -2.5 };
+  const env = { daylight: 1, wind: upwind };
+
+  // 1. Upwind moving hare at 16 m: smell() returns 0 hits (scentLevel < 0.025), while see() returns sight = 0.7333.
+  const hareSource: ScentSource = { key: 'hare:0', kind: 'hare', x: 0, z: -16, potency: 0.7 };
+  const hareBody: SightBody = { key: 'hare:0', kind: 'hare', x: 0, z: -16, speed: 3.0 };
+  const hareScentHits = smell(nose, [hareSource], upwind, nose.heading);
+  assert.equal(hareScentHits.length, 0);
+  const hareSightHits = see(WOLF_NEEDS, nose, [hareBody], env);
+  assert.equal(hareSightHits.length, 1);
+  assert.equal(hareSightHits[0].key, 'hare:0');
+  assert.ok(Math.abs(hareSightHits[0].sight - (1 - 16 / 60)) < 1e-6);
+  const hareSightSignal = signalFromSight('sight:0', hareSightHits[0].sight, hareSightHits[0].bearing);
+  assert.equal(hareSightSignal?.kind, 'sight');
+  assert.ok(hareSightSignal && hareSightSignal.strength > 0.7);
+
+  // 2. Moving deer (2.0 m/s) and moving person (1.2 m/s) at 20 m (> presenceM = 6 m):
+  // With speed = 0 (pre-T-0171 bug), sight is 0; with real ground speed, see() detects both.
+  const staleDeer = perceive(WOLF_NEEDS, nose, { kind: 'deer', x: 0, z: -20, speed: 0 }, env);
+  const stalePerson = perceive(WOLF_NEEDS, nose, { kind: 'person', x: 4, z: -20, speed: 0 }, env);
+  assert.equal(staleDeer.sight, 0);
+  assert.equal(stalePerson.sight, 0);
+
+  const movingBodies: SightBody[] = [
+    { key: 'deer:0', kind: 'deer', x: 0, z: -20, speed: 2.0 },
+    { key: 'person:hiker', kind: 'person', x: 0, z: -20, speed: 1.2 },
+  ];
+  const seenMoving = see(WOLF_NEEDS, nose, movingBodies, env);
+  assert.equal(seenMoving.length, 2);
+  assert.equal(seenMoving[0].key, 'deer:0');
+  assert.ok(Math.abs(seenMoving[0].sight - (1 - 20 / 60)) < 1e-6);
+  assert.equal(seenMoving[1].key, 'person:hiker');
+  assert.ok(Math.abs(seenMoving[1].sight - 0.75 * (1 - 20 / 60)) < 1e-6);
+
+  // 3. Non-visual olfactory trace deltas (scent mark, droppings) at 2 m ahead produce smell() hits and 0 visual hits.
+  DELTAS.log.length = 0;
+  try {
+    record({ kind: 'scent', x: 0, z: -2, t: GROUND.years, m: 1 });
+    record({ kind: 'droppings', x: 0.5, z: -2, t: GROUND.years, m: 0.01 });
+    const traceSources = deltaSources(nose.x, nose.z, 2400);
+    assert.equal(traceSources.length, 2);
+    const traceScents = smell(nose, traceSources, { x: 0, z: 1 }, nose.heading);
+    assert.equal(traceScents.length, 2);
+    assert.ok(traceScents.every(h => h.level >= SENSES.threshold));
+    // Visual candidate list excludes deltaSources; only visible world bodies enter see().
+    const traceVisualHits = see(WOLF_NEEDS, nose, [], env);
+    assert.equal(traceVisualHits.length, 0);
+  } finally {
+    DELTAS.log.length = 0;
+  }
+
+  // 4. Verify src/ui/senses.ts wires see(), deer brain speed, visitor speed, and non-embodied live hares independently of lastHits.
+  const hud = readFileSync(new URL('../src/ui/senses.ts', import.meta.url), 'utf8');
+  assert.match(hud, /see\(needs/);
+  assert.match(hud, /view\.lookup\(key\)\?\.brain\?\.speed/);
+  assert.match(hud, /view\.visitorOf\(key\)\?\.speed/);
+  assert.match(hud, /h\.sim\.alive && !h\.embodied/);
+  assert.doesNotMatch(hud, /h\.root\.visible/);
 });

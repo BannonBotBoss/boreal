@@ -1,12 +1,12 @@
 ---
 id: T-0171
 title: Decouple Senses HUD sight from scent hits, restore deer/person motion sight, and exclude non-visual scent deltas
-status: proposed
+status: completed
 author: agy
-owner:
-branch:
+owner: agy
+branch: agy/senses-sight
 created: 2026-11-06T19:18:00-08:00
-updated: 2026-11-06T19:55:00-08:00
+updated: 2026-11-13T20:14:00-08:00
 scratch: false
 research: true
 skill: sense-pictures
@@ -53,6 +53,6 @@ Recorded in `refs/senses/sight-audit/recording.webm`, `refs/senses/sight-audit/f
 
 ## Objectives
 
-- [ ] Add a visual perception producer in the core perception layer (`src/core/needs/senses.ts` / `src/core/senses.ts`, parallel to `smell()`) that evaluates candidate visual bodies within `sp.senses.sight.rangeM` via `perceive(sp, observer, body, env)`, filters by `seen.sight >= SENSES.threshold`, and returns the top `SENSES.thoughtCap` (`3`) perceived visual entries (or populates the #106 perception frame's visual block) independently of `smell()` scent hits (`lastHits`), so `src/ui/senses.ts` (`offerLive`) only consumes already-perceived visual signals (`Rule 18` / issue `#106`).
-- [ ] Supply real ground speeds (m/s) for `hare` (`sim.speed`), `deer` (`brain.speed`), and `person` (`visitorReadout` speed) into the perception producer's candidate bodies instead of `0` for non-hare keys.
-- [ ] Keep non-visual olfactory trace deltas (`scent`, `droppings` from `deltaSources`) strictly in the olfactory `smell()` source list and out of visual perception candidates so invisible scent marks never emit `.sense-bubble-sight` eye bubbles, and add unit tests covering upwind moving prey sight, moving deer/person sight beyond `presenceM` (`6 m`), and zero sight bubbles for `scent`/`droppings` deltas.
+- [x] Add a visual perception producer in the core perception layer (`src/core/needs/senses.ts` / `src/core/senses.ts`, parallel to `smell()`) that evaluates candidate visual bodies within `sp.senses.sight.rangeM` via `perceive(sp, observer, body, env)`, filters by `seen.sight >= SENSES.threshold`, and returns the top `SENSES.thoughtCap` (`3`) perceived visual entries (or populates the #106 perception frame's visual block) independently of `smell()` scent hits (`lastHits`), so `src/ui/senses.ts` (`offerLive`) only consumes already-perceived visual signals (`Rule 18` / issue `#106`).
+- [x] Supply real ground speeds (m/s) for `hare` (`sim.speed`), `deer` (`brain.speed`), and `person` (`visitorReadout` speed) into the perception producer's candidate bodies instead of `0` for non-hare keys.
+- [x] Keep non-visual olfactory trace deltas (`scent`, `droppings` from `deltaSources`) strictly in the olfactory `smell()` source list and out of visual perception candidates so invisible scent marks never emit `.sense-bubble-sight` eye bubbles, and add unit tests covering upwind moving prey sight, moving deer/person sight beyond `presenceM` (`6 m`), and zero sight bubbles for `scent`/`droppings` deltas.

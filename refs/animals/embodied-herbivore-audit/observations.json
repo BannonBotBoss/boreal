@@ -1,0 +1,87 @@
+{
+  "capturedAt": "2026-11-14T20:57:24.162Z",
+  "baseUrl": "http://127.0.0.1:5258",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "embodied_snowshoe_hare_starving_meat_thought_bubble_and_hunt_lock",
+      "sensesHudTitle": "",
+      "playerBeforeE": {
+        "x": 50.00000164790911,
+        "z": -8.648893019724226e-7,
+        "yaw": 2.0541182735010186,
+        "energy": 74.9085792317218,
+        "water": 44.9148409925497,
+        "mode": "walk",
+        "handle": "4294967298",
+        "embodied": "4294967298",
+        "species": "hare"
+      },
+      "playerAfterE": {
+        "x": 50.000001693161956,
+        "z": -8.886398348593825e-7,
+        "yaw": 2.0541182735010186,
+        "energy": 74.90512939140942,
+        "water": 44.91163101336128,
+        "mode": "walk",
+        "handle": "4294967298",
+        "embodied": "4294967298",
+        "species": "hare"
+      },
+      "manualEnergyGainFromPressingE": -0.0034,
+      "actButtonText": "Approach an individual",
+      "actButtonDisabled": true,
+      "nearestCloverPatch": null,
+      "energyThoughtIconGlyph": "meat",
+      "hareDietKind": "herbivore",
+      "statusWhileHoldingShiftLock": "12:06 · RUN · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 45% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "statusSnapshot": "12:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 45% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "frame": 1,
+      "label": "embodied_white_tailed_deer_wolf_needs_fallback_and_meat_bubble",
+      "sensesHudTitle": "",
+      "registeredNeedsSpecies": [
+        "wolf",
+        "hare"
+      ],
+      "deerNeedsDefined": false,
+      "effectiveTemplateId": "wolf",
+      "effectiveTemplateMassKg": 40,
+      "effectiveTemplateDietKind": "carnivore",
+      "effectiveTemplateFmrKjPerDay": 15034,
+      "effectiveTemplateWaterMlPerDay": 1895,
+      "effectiveTemplateSightFovDeg": 250,
+      "effectiveWalkSpeedMps": 2.3,
+      "effectiveRunSpeedMps": 6.9,
+      "effectiveSprintSpeedMps": 12.075,
+      "deerPlayableActions": [
+        "speak"
+      ],
+      "browseHereGrams": 7180.8,
+      "actButtonText": "Approach an individual",
+      "actButtonDisabled": true,
+      "manualEnergyGainFromPressingE": -0.0023,
+      "statusSnapshot": "12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 45% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "frame": 2,
+      "label": "embodied_white_tailed_deer_running_autonomous_wolf_agent",
+      "autonomousButtonText": "Autonomous: On",
+      "playerState": {
+        "x": 28.12952270856786,
+        "z": 21.158150544629247,
+        "yaw": 2.1251950303695706,
+        "energy": 74.89724399628292,
+        "water": 44.94730913084197,
+        "mode": "walk",
+        "handle": "4294967299",
+        "embodied": "4294967299",
+        "species": "deer"
+      },
+      "sensesHudText": "",
+      "statusSnapshot": "AUTONOMOUS · 12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 45% · Rest 100% · drink (water 45 % < 85 %)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    }
+  ],
+  "pageErrors": []
+}

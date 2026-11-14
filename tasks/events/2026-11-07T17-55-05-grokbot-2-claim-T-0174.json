@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0174",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/standing-chunk-reveal",
+  "note": "Claim after the approve-plan in this same direct request. Cold startup waits for the standing chunk once the interest-queue ceiling hits.",
+  "at": "2026-11-07T17:55:05-08:00"
+}

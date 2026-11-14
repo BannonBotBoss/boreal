@@ -11,20 +11,26 @@
  */
 import * as THREE from 'three';
 import { BUILD_PHASE, buildConiferSteps, barkMaterial, crownMaterial, foliageMaterial, CONIFER_WIND, type ConiferLods } from './conifer';
-import { INTEREST, enqueue } from '../../core/interest';
+import { INTEREST, cancel, enqueue } from '../../core/interest';
 import { RENDER } from '../../core/renderSettings';
 import { fadeOptIn } from '../fade';
+import { openTileGeneration } from '../../world/globe/openTiles';
+import { clearSteppeCache, steppeAt, steppeTuftGroup } from '../flora/steppeTuft';
+import { hash } from '../../proc/rng';
 
 export const TREES_V2 = { on: typeof location !== 'undefined' && new URLSearchParams(location.search).get('trees') === 'v2', nearM: 28, species: new Set(['black-spruce']) };
+/** Shared crown / far filler starts here. 55 * LOD + 5 put a 40 m eye on Minimum (LOD 0.5) onto the shared crown at 32 m. The mid mesh holds out to at least 70 m. */
+export const crownStartM = (k = 1) => Math.max(70, 55 * k + 5);
 export const TREES_V2_INFO = { stepMaxMs: 0, trees: 0, far: 0, near: 0, mid: 0, crown: 0, variants: 0, buildMs: [] as number[], slow: [] as (number | string)[][], tris: {} as Record<string, number>, full: 0 };
-(globalThis as { borealTreesV2?: unknown }).borealTreesV2 = { fx: TREES_V2, info: TREES_V2_INFO, list: () => [...trees.values()].filter(t => !t.far).map(t => [Math.round(t.m.elements[12]), Math.round(t.m.elements[14]), t.lod]) }; // dev/bench handle
+(globalThis as { borealTreesV2?: unknown }).borealTreesV2 = { fx: TREES_V2, info: TREES_V2_INFO, list: () => [...trees.values()].filter(t => !t.far).map(t => [Math.round(t.m.elements[12]), Math.round(t.m.elements[14]), t.lod]), tufts: () => steppeTufts.size }; // dev/bench handle
 /** Representative age (yr) per render/trees age class (stand age since fire < 40, < 100, < 190, older). */
 const CLASS_AGE = [25, 70, 130, 220], VARIANTS = 4;
 interface Variant { lods: ConiferLods; ids: { nb: number; mb: number; nl: number; ml: number; cr: number } }
 interface Tree { m: THREE.Matrix4; vk: number; far: boolean; lod: number; bark: number; leaf: number; crown: number }
 const variants = new Map<number, Variant>(), building = new Set<number>(), trees = new Map<string, Tree>();
 let scene: THREE.Scene | undefined, bark: THREE.BatchedMesh | undefined, leaf: THREE.BatchedMesh | undefined, crown: THREE.BatchedMesh | undefined, bound = false;
-let lx = Infinity, lz = Infinity, lt = 0, prune = 0;
+let lx = Infinity, lz = Infinity, lt = 0, prune = 0, tuftGen = -1;
+const steppeTufts = new Map<string, THREE.Group>();
 
 /** Is this species drawn by v2? */
 export const v2Handles = (species: string) => TREES_V2.on && TREES_V2.species.has(species);
@@ -66,23 +72,54 @@ function materialise(t: Tree) {
   t.lod = 2;
 }
 const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), p3 = new THREE.Vector3(), s3 = new THREE.Vector3();
-/** Place one tree (idempotent by key). `cls` = render/trees age class 0-3; `seed` picks the variant. */
+/** Place one tree (idempotent by key). `cls` = render/trees age class 0-3; `seed` picks the variant.
+ *  A second call with a new scale rewrites the matrix. The cover sample arrives after the first
+ *  chunks, and a stuck full-size spruce would ignore that. */
 export function placeTree(key: string, x: number, y: number, z: number, rotY: number, sx: number, sy: number, sz: number, seed: number, cls: number, far: boolean) {
-  if (trees.has(key)) return;
+  const m = new THREE.Matrix4().compose(p3.set(x, y, z), q.setFromAxisAngle(up, rotY), s3.set(sx, sy, sz));
+  const prev = trees.get(key);
+  if (prev) {
+    prev.m.copy(m);
+    if (prev.crown >= 0 && crown) crown.setMatrixAt(prev.crown, m);
+    if (prev.bark >= 0 && bark) bark.setMatrixAt(prev.bark, m);
+    if (prev.leaf >= 0 && leaf) leaf.setMatrixAt(prev.leaf, m);
+    return;
+  }
   const vk = Math.max(0, Math.min(3, cls)) * VARIANTS + ((seed >>> 5) % VARIANTS);
-  const t: Tree = { m: new THREE.Matrix4().compose(p3.set(x, y, z), q.setFromAxisAngle(up, rotY), s3.set(sx, sy, sz)), vk, far, lod: -1, bark: -1, leaf: -1, crown: -1 };
+  const t: Tree = { m, vk, far, lod: -1, bark: -1, leaf: -1, crown: -1 };
   trees.set(key, t); variantJob(vk); if (variants.has(vk)) materialise(t);
+}
+/** A placed tree, or undefined. Tests use this to see a near tree survive a cover-tier change. */
+export function treeRecord(key: string): { far: boolean } | undefined {
+  const t = trees.get(key);
+  return t ? { far: t.far } : undefined;
+}
+/** Drop the far filler only. Near-chunk trees (trees.ts, placed with far=false) are not rebuilt
+ *  when the cover tier changes, so a full clear leaves them gone until the chunk reloads.
+ *  The far filler already resets on its own cover key. */
+export function dropFarTrees() {
+  for (const [key, t] of [...trees]) if (t.far) removeTree(key);
+}
+/** Drop every placed tree. The scene does not call this on a cover change. */
+export function dropPlacedTrees() {
+  for (const key of [...trees.keys()]) removeTree(key);
+}
+/** Drop queued variant builds started by placeTree. Tests call this so a later runJobs does not build them. */
+export function cancelPendingTreeBuilds() {
+  for (const vk of [...building]) { cancel(`trees2:build:${vk}`); building.delete(vk); }
 }
 export function removeTree(key: string) {
   const t = trees.get(key); if (!t) return; trees.delete(key);
   if (t.crown >= 0) crown!.deleteInstance(t.crown); if (t.bark >= 0) bark!.deleteInstance(t.bark); if (t.leaf >= 0) leaf!.deleteInstance(t.leaf);
 }
-/** Per frame (driven by render/flora/fartrees): LOD per chunk tree from the camera distance, pruning of unloaded chunks. */
+/** Per frame (driven by render/flora/fartrees): LOD per chunk tree from the camera distance, pruning of unloaded chunks.
+ *  A spruce placed before the steppe photo arrived is removed and a tuft is stood in its place. */
 export function updateTrees(sc: THREE.Scene, camera: THREE.Camera) {
   if (!TREES_V2.on) return; scene = sc;
+  reconcileSteppe(sc);
   const x = camera.position.x, z = camera.position.z, now = performance.now();
   if (Math.hypot(x - lx, z - lz) < 1 && now - lt < 500) return; lx = x; lz = z; lt = now;
-  const k = RENDER.lod.trees, n2 = (TREES_V2.nearM * k) ** 2, m2 = (55 * k + 5) ** 2, drop2 = (INTEREST.mid * 1.5 + 80) ** 2, doPrune = now - prune > 1000;
+  const k = RENDER.lod.trees, n2 = (TREES_V2.nearM * k) ** 2, m2 = crownStartM(k) ** 2, drop2 = (INTEREST.mid * 1.5 + 80) ** 2, doPrune = now - prune > 1000;
   let near = 0, mid = 0, cr = 0, far = 0;
   for (const [key, t] of trees) {
     const dx = t.m.elements[12] - x, dz = t.m.elements[14] - z, d2 = dx * dx + dz * dz;
@@ -96,4 +133,21 @@ export function updateTrees(sc: THREE.Scene, camera: THREE.Camera) {
   }
   if (doPrune) prune = now;
   Object.assign(TREES_V2_INFO, { trees: trees.size, far, near, mid, crown: cr });
+}
+
+/** Drop v2 spruce that the cover sample now calls prairie, and stand a tuft where each one was. */
+export function reconcileSteppe(sc: THREE.Scene) {
+  const gen = openTileGeneration();
+  if (gen !== tuftGen) { tuftGen = gen; clearSteppeCache(); }
+  for (const [key, t] of [...trees]) {
+    const x = t.m.elements[12], z = t.m.elements[14];
+    if (!steppeAt(x, z)) continue;
+    const y = t.m.elements[13];
+    removeTree(key);
+    if (steppeTufts.has(key)) continue;
+    const g = steppeTuftGroup(hash(key) || 1);
+    g.position.set(x, y, z);
+    sc.add(g);
+    steppeTufts.set(key, g);
+  }
 }

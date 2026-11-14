@@ -79,6 +79,8 @@ export function setCineLayerGate(on: boolean, mix = 1) {
   cineLayer.mix = Math.min(1, Math.max(0, mix));
   applyLayerDraw();
 }
+/** What the film last asked the layer shader to do. Reduced motion turns the gate off. */
+export function cineLayerGateState() { return { on: cineLayer.gate === 1, mix: cineLayer.mix }; }
 function applyLayerDraw() {
   GLOBE_LAYERS.uLayers.value.w = layersBaked * (cineLayer.gate ? cineLayer.mix : 1);
 }

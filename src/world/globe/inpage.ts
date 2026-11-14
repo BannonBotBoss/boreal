@@ -18,18 +18,19 @@
  */
 import * as THREE from 'three';
 import type { Globe } from './globeView'; // loaded on demand (only with the in-page path on), so the reload path's game bundle is unchanged
-import { createFarLayer } from './farLayer';
+import { createFarLayer, farLayerScale } from './farLayer';
 import { GLOBE_HUD_CLASS, hudHidden } from './hud';
 import { layerPanelShown } from './layerPanel';
 import { FALL_END_M, ISO_BELOW_HORIZON, freeFallVy, flightPrompt, type EntryPhase } from './flight';
 import { canEmbody, descentFrameDt, landingJobBudget, landingPatchReady } from './landingStream';
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
-import { forestLanding } from './forestLanding';
+import { dropStand, forestLanding } from './forestLanding';
+import { cineTrace } from '../cosmos/cineReady';
 import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
 import { registerPadTarget } from '../../input/padTargets';
 import { PHOTO_FLY_LOOK, stepCarriedFly, photoFlyFloor } from '../../photo/fly';
-import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR, landSpawn } from './handoff';
+import { GLOBE_ENTRY_ALT, eyeClearOfTrees, EYE_CLEAR } from './handoff';
 import { treesAround } from '../../core/ground';
 import { PLANET, GLOBE_COLOURS, fromLatLon } from './planet';
 import { nearGroundOcc, setPatchFade, setPatchFar } from '../../render/fade';
@@ -171,14 +172,13 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
   }
   function setMode(m: TransitionMode) { mode = m; STATS.mode = m; globe?.attachInput(inputOwner(m, down) === 'globe'); globe?.setLayerPanel(layerPanelShown(m)); if (typeof document !== 'undefined') document.body.classList.toggle(GLOBE_HUD_CLASS, hudHidden(m)); if (m === 'game') showPrompt(''); }
   /** Globe -> drone, on the point that was double-clicked. The fall's vertical speed is kept. The spot is not pulled
-   *  home. It does step to the nearest dry stand (the same landSpawn the reload handoff uses): the clicked centre of
-   *  the home region is the lake, and standing there shows the water sheet instead of the forest floor. */
+   *  home. Off home it steps to the nearest dry ground. At home the lake centre's nearest dry cell is the waterline,
+   *  so the drop uses the stand edge (dropStand) and the animal faces the trees, not the flat lake. */
   function descend(at: { x: number; z: number; yaw: number; vy?: number; home?: number; dir?: [number, number, number] }) {
     const g = globe!;
     const remote = !!at.dir && engageLanding(at.dir, at.home ?? 1);
-    const spot = landSpawn({ x: at.x, z: at.z }, undefined, at.yaw);
-    const stood = remote ? dryNear() : spot;
-    spotX = stood.x; spotZ = stood.z; yaw = at.yaw;
+    if (remote) { const stood = dryNear(); spotX = stood.x; spotZ = stood.z; yaw = at.yaw; }
+    else { const stood = dropStand({ x: at.x, z: at.z }, at.yaw); spotX = stood.x; spotZ = stood.z; yaw = stood.yaw; }
     host.place(spotX, spotZ, yaw); placedFrame = frameNo; prep = null; dropStream = true;
     const gy = ground(spotX, spotZ); land.set(spotX, gy, spotZ);
     h = h0 = Math.max(1, g.altitude); pitch = ISO_BELOW_HORIZON;
@@ -210,14 +210,19 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     return a;
   }
   function toGlobe(sphere = false) {
+    const t0 = performance.now();
     kept = null; restoreScene(); globe!.drive(null);
+    let landMs = 0;
     // The climb stops near 2 km, which reads as a map. The sphere is the same altitude the page-load globe uses.
     if (sphere) {
       globe!.resumeOrbit(); globe!.jumpTo(PLANET.radius * 2.2);
+      const tLand = performance.now();
       const spot = forestLanding();
+      landMs = performance.now() - tLand;
       globe!.lookOver(spot.land.x, spot.land.z, spot.land.yaw);
     }
     setMode('globe');
+    cineTrace(`CINE TRACE toGlobe ${JSON.stringify({ sphere, landMs: +landMs.toFixed(1), totalMs: +(performance.now() - t0).toFixed(1) })}`);
   }
   function toGame() { keepClouds(); restoreScene(); globe?.drive(null); setMode('game'); globe?.suspendWorkers(); hold.release(); }
   function restoreScene() {
@@ -332,10 +337,20 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     setFilmFrame(wide: boolean) { globe?.setFilmFrame(wide); },
     /** yaw radians off the page-load aim, altitude in planet radii, view-offset 0..1. */
     setFilmDrive(yaw: number, radii: number, offset: number, sunBias?: number) { globe?.setFilmDrive(yaw, radii, offset, sunBias); },
+    /** Arrival: stop overwriting the camera with the film pose. The disc stays where the last beat left it. */
+    releaseFilm() { return globe?.releaseFilm() ?? false; },
     enter(): boolean {
       if (mode !== 'game') return true;
-      if (!globe) { void loadGlobe().then(() => api.enter()); return true; }
-      prep = null; hold.hold(); globe.resumeWorkers(); lastT = performance.now(); toGlobe(true); return true;
+      if (!globe) { void loadGlobe().then(() => api.enter()).catch(e => console.warn('inpage prewarm', e)); return true; }
+      const go = () => {
+        if (mode !== 'game' || !globe) return;
+        prep = null; hold.hold(); globe.resumeWorkers(); lastT = performance.now(); toGlobe(true);
+      };
+      // A settled boot draws on this frame. A promise that is still pending waits, so the view is not
+      // switched onto a globe that returns before its first renderTo.
+      if (globe.bootSettled) { go(); return true; }
+      void globe.bootP.then(go, e => console.warn('inpage prewarm', e));
+      return true;
     },
     /** The planet grid is final. The film waits on this before the living world gives way to arrival. */
     whenBooted() { return loadGlobe().then(g => g.bootP); },
@@ -449,7 +464,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
       // buffer stretches one texel across two pixels. The shore mask then passes its cutoff and vertex lakes
       // are painted as land. Full buffer while the patch is out; half again once the patch covers the frame
       // and this texture is only the sky. The window size is not used: a second full raster stalled the descent.
-      far.setScale(fade < 0.5 ? 1 : 0.5); far.resize(size.x, size.y);
+      far.setScale(farLayerScale(h, fade)); far.resize(size.x, size.y);
       globeCameraFrom(globe.planet, camera, gcam); globe.drive({ position: gcam.position, quaternion: gcam.quaternion, fov: camera.fov, aspect: camera.aspect });
       globe.step(far.target); STATS.globeMs = performance.now() - t0;
       if (savedBg === undefined) savedBg = scene.background; scene.background = DEV && DEBUG.noGlobe ? NO_GLOBE : far.texture;
@@ -496,6 +511,10 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
      *  the player at the entry altitude, compile the far-layer background program, then terminate the workers. */
     async prewarm() {
       const g = await loadGlobe(); await g.compiled; await g.bootP; await g.precompile(null);
+      // The den search builds chunk trees the first time. Pay it here, during the bang, so the earth frame does not.
+      const tLand = performance.now();
+      forestLanding();
+      cineTrace(`CINE TRACE forestLanding primed ${(performance.now() - tLand).toFixed(1)}ms`);
       // The prewarm steps the globe while the game is still the view. Detach the forest camera for those steps:
       // attached, globeView.step writes the orbit clip (near = altitude x 0.02: 60 m at the 3 km entry altitude, far past the limb) onto
       // view.camera, and game mode never puts 0.2 / 700 back (cameraTouched stays false), so the ground world was clipped.

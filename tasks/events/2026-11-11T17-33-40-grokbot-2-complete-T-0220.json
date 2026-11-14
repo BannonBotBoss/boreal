@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-11T17:33:40-08:00",
+  "agent": "grokbot-2",
+  "type": "complete",
+  "task": "T-0220",
+  "branch": "grokbot-2/globe-orbit-detail",
+  "skill": "globe-surface-optics",
+  "note": "Filtered 1024x512 orbit map from the bilinear DEM and surfaceColour. Minimum composites the cloud fBm; other tiers keep the shell. tests/orbit-detail.test.ts: no bright blocks, mean RGB within 15% of Apollo 17 AS17-148-22727. Frames in tasks/evidence/T-0220. Not merged by this agent."
+}

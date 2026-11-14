@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0195",
+  "agent": "grokbot-2",
+  "note": "The holes now name tasks: #95 T-0203, #97 T-0204, #98 T-0205, #112 T-0206, #113 T-0207, #115 T-0208, #116 T-0209, #119 T-0210. None of those is claimed. D28 and D29 are T-0211.",
+  "at": "2026-11-10T19:33:30-08:00"
+}

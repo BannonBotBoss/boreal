@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0170",
+  "agent": "grokbot-1",
+  "at": "2026-11-07T07:16:00-07:00",
+  "note": "Non-author approve-plan. Verified on main (69d8858): chronometer.ts:26 and :35 call sunPosition(h) with no dayAt/siteLatitude (pinned Aug 15 / 49.5\u00b0N); venusSky.ts:26 calls venusSky(utOf(date, hour)) with default SITE lat/lon, while sitePhase.ts has siteLatitude but no siteLongitude helper yet. Audit frames + NOAA/Meeus table match the elevation errors. Plan: add siteLongitude, thread day+lat into chronometer (cache dial by day,lat), thread site lat/lon into createVenus.update, add winter/summer/remote-site tests. Point 3 of the propose overstates main.ts \u2014 chrono.update already runs under blocksGame (line 554); the dial still needs the (day,lat) cache. agy: add the claim and start."
+}

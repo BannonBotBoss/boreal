@@ -8,15 +8,21 @@ import { logContact, type LogSeatFn } from '../core/logContact';
 import { chunkTerrainJob, positionCamera } from './math';
 import { forestMoving } from '../vr/forestSession';
 import { createLitter } from '../animals/pups';
+import { landingContext } from './landingCast';
+import { installPictureGate } from './pictureGate';
+import { coverSampleAt, coverTierToken, drawOpenWater } from '../world/globe/coverSample';
+import { mountChunkWater } from './chunkWater';
+import { dropFarTrees } from './trees/game';
 import { warmTerrainWorkers } from './terrainPool';
-import { terrainMaterial } from './pbr';
+import { setGroundFloor, terrainMaterial } from './pbr';
 import { createPhotoreal } from './photoreal';
 import { INTEREST, WAIT, cancel, enqueue, pending, setInterestCentre, squareDistance } from '../core/interest';
+import { clearSteppeCache } from './flora/steppeTuft';
 import { chunkRadius } from '../world/globe/landingStream';
 import { registerObservationSources } from '../core/observation';
 import { enterLiving, livingRoster, type LivingChoice } from '../core/enterLiving';
 import type { MemoryMark } from '../core/perceptionBuffer';
-import { playable, type PlayerRig } from './playables';
+import { litterFollowsPlayer, pictureSpecies, playable, type PlayerRig } from './playables';
 import { RENDER } from '../core/renderSettings';
 import { applyPopulation } from '../core/population';
 import { WOLF_SCALE, type WolfMode } from '../core/wolfModes';
@@ -39,7 +45,7 @@ import { createAgent, stepAgent, writeLocomotion, deerPosture, type Agent, type 
 import { stream } from '../proc/rng';
 import { windAt } from '../core/weather';
 import { createHares } from '../animals/hare';
-import { formatHour, hourAt } from '../core/timeOfDay';
+import { formatHour, dayAt, hourAt } from '../core/timeOfDay';
 import { mountViewfinder } from '../camera/gameCamera';
 import { LEVEL, BLOCK } from '../core/tuning';
 import { dropVisitors, stepVisitor, visitorFriend, visitorReadout, visitorSitDrop } from '../core/visitors';
@@ -50,6 +56,11 @@ import { createTargetGlow } from './targetGlow';
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
 import { createChunkBatch } from './batch';
 import { STAGES, lakeAt } from '../core/stages/elevation';
+import { SITE } from '../core/sitePhase';
+import { planetFor } from '../world/globe/planet';
+import { horizonMetres, skirtLatLon } from '../world/globe/horizonSkirt';
+import { warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { createContinuousTerrain } from './continuousTerrain';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
@@ -81,6 +92,7 @@ const GLOW_ON = typeof location === 'undefined' || new URLSearchParams(location.
 /** ?top=1: straight down at the water, for the wake measurement. Not a player camera. */
 const TOP_DOWN = typeof location !== 'undefined' && new URLSearchParams(location.search).has('top');
 export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) {
+  installPictureGate();
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); // hybrid laptops: ask for the discrete GPU
   mountViewfinder(renderer, 'game', { meta: () => ({ gameTime: formatHour(hourAt(0)), location: `x ${camera.position.x.toFixed(0)} z ${camera.position.z.toFixed(0)}`, seed: STAGES.seed }) }); // T-0068: the view is a camera
   const BASE_RATIO = Math.min(devicePixelRatio, 1.5);
@@ -89,6 +101,12 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xc4d4c8, 200, 480);
+  // One surface to the horizon. The old skirt was a second mesh, and the chunk
+  // grounds were the floating plates on top of it. Both stay out of the scene.
+  const terrain = createContinuousTerrain(); scene.add(terrain.mesh);
+  // The skirt used to request the DEM and the photograph. The continuous mesh does not.
+  // Without that request the cover sample stays the seeded forest and a prairie home draws spruce.
+  const coverPlanet = planetFor(STAGES.seed, (x, z) => heightAt(x, z), 'ground-cover');
   const litter = createLitter(scene);
   const sky = createSky(scene); // sun, moon, sky colour, clouds, stars and fog follow the game clock
   // Time of day: core/timeOfDay hourAt (world clock + the chronometer's dial; ?hour=HH sets the first value, initDay in main).
@@ -142,21 +160,25 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   const grass = createGrass(scene); // render/grass: procedural blades around the camera
   const flora = createFlora(scene); // render/flora: flowers + shrubs (shared ecology with the grass)
   const glow = createTargetGlow(renderer, camera); // render/targetGlow (T-0035): outline glow on the interaction target (replaces the ground ring)
-  let lastBatchLod = -1, lastCover = -1;
+  let lastBatchLod = -1, lastCover = -1, lastFloor = -1;
   const openedCover = new Set<string>();
-  let centerKey = '', radius = -1, revision = -1; const chunkJobs = new Set<string>();
+  let centerKey = '', radius = -1, revision = -1, coverKey = '', vegDecile: number | undefined, chunkEpoch = 0; const chunkJobs = new Set<string>();
   const CHUNK_ADDS_PER_FRAME = 2; let frameNo = 0; const adds = { frame: -1, n: 0 }; // upload pacing (see createChunk)
   warmTerrainWorkers(); // stage grids in each terrain worker, behind the loading screen
   /** Instantiates a chunk from the math layers as a sliced job (core/interest): near = full, mid = coarse terrain + far LODs. */
   function* createChunk(cx: number, cz: number, context: EventContext, near: boolean) {
+    const epoch = chunkEpoch;
     const root = new THREE.Group(), objects = new Map<string, THREE.Object3D>(), batch = createChunkBatch(), contacts: Contact[] = []; // contacts begin only once the chunk is in the scene (a cancelled build fires nothing)
     // heights, normals, world-space positions and the water sheet come from a terrain worker (render/terrainPool); WAIT until then
     const t = yield* chunkTerrainJob(cx, cz, near ? RENDER.terrainSegments : Math.max(10, RENDER.terrainSegments >> 3), near, STAGES.on ? (near ? 32 : 8) : 0, { worker: true, wanted: () => chunkJobs.has(`${cx}:${cz}`) });
     const ground = new THREE.Mesh(t.terrain, terrainMaterial()); ground.receiveShadow = true;
+    ground.visible = false; // the continuous mesh is the ground; this plate is not drawn
     ground.userData.inspect = { type: 'terrain', key: `chunk:${cx}:${cz}` }; ground.layers.enable(1); root.add(ground); // layer 1 = GI probe capture
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE), waterMaterial());
-    water.rotation.x = -Math.PI / 2; water.position.set((cx + .5) * CHUNK_SIZE, LEVEL.waterSurface, (cz + .5) * CHUNK_SIZE); root.add(water);
-    if (t.water) { const lake = new THREE.Mesh(t.water, water.material); lake.userData.inspect = { type: 'terrain', key: `water:${cx}:${cz}` }; root.add(lake); } // stages 2b/2c: lake level / river surface sheet
+    // The teal plane follows the cover sample. The staged lake and river sheet is mounted
+    // whenever the terrain job built one, including when that sample is dry.
+    const centreX = (cx + .5) * CHUNK_SIZE, centreZ = (cz + .5) * CHUNK_SIZE;
+    const openSheet = drawOpenWater(centreX, centreZ);
+    if (openSheet || t.water) mountChunkWater(root, cx, cz, openSheet, t.water, waterMaterial());
     const generated = applyPopulation(generateChunk(cx, cz), cx, cz); yield; // chunk build steps stay within the 4 ms job budget
     // Old remembered people bypass generation's land test. Hide invalid placements without
     // deleting their relationship/event records or inventing a new location for them.
@@ -189,8 +211,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     // GPU uploads happen on a mesh's first draw: add at most CHUNK_ADDS_PER_FRAME chunk roots per frame, so uploads spread out
     while (adds.frame === frameNo && adds.n >= CHUNK_ADDS_PER_FRAME) yield WAIT;
     if (adds.frame !== frameNo) { adds.frame = frameNo; adds.n = 0; } adds.n++;
+    if (epoch !== chunkEpoch) return { root, entities, objects, near, batch, contacts, epoch };
     scene.add(root); for (const c of contacts) CONTACTS.begin(c); // T-0006: rising edge per log; ends at disposal
-    return { root, entities, objects, near, batch, contacts };
+    return { root, entities, objects, near, batch, contacts, epoch };
   }
   /** `also`: a second streaming centre (the photo-mode camera); the player's own chunks always stay loaded. */
   function sync(x: number, z: number, altitude: number, context: EventContext, eventRevision: number, also?: { x: number; z: number }) {
@@ -200,9 +223,14 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
     const nextRadius = chunkRadius(altitude, INTEREST.mid, CHUNK_SIZE);
     const ax = also ? Math.floor(also.x / CHUNK_SIZE) : cx, az = also ? Math.floor(also.z / CHUNK_SIZE) : cz;
-    const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}`;
+    const here = coverSampleAt(x, z);
+    const tier = coverTierToken(here.biome, here.water, here.vegetation, vegDecile);
+    vegDecile = tier.decile;
+    const tierChanged = tier.token !== coverKey;
+    if (tierChanged) { coverKey = tier.token; chunkEpoch++; dropFarTrees(); clearSteppeCache(); }
+    const tierKey = `${cx}:${cz}:${ax}:${az}:${INTEREST.near}:${INTEREST.mid}:${tier.token}`;
     if (centerKey === tierKey && radius === nextRadius && revision === eventRevision) return;
-    const changed = revision !== eventRevision;
+    const changed = revision !== eventRevision || tierChanged;
     centerKey = tierKey; radius = nextRadius; revision = eventRevision;
     const needed = new Map<string, boolean>(); // chunk key -> near tier
     for (const [ox, oz] of [[cx, cz], [ax, az]]) for (let a = ox - radius; a <= ox + radius; a++) for (let b = oz - radius; b <= oz + radius; b++) {
@@ -213,10 +241,14 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     for (const [key, chunk] of chunks) if (changed || !needed.has(key) || needed.get(key) !== chunk.near) {
       scene.remove(chunk.root); disposeObject(chunk.root); for (const c of chunk.contacts) CONTACTS.end(c.a, c.b); chunks.delete(key);
     }
-    for (const key of [...chunkJobs]) if (!needed.has(key)) { cancel(`chunk:${key}`); chunkJobs.delete(key); }
+    for (const key of [...chunkJobs]) if (tierChanged || !needed.has(key)) { cancel(`chunk:${key}`); chunkJobs.delete(key); }
     for (const [key, near] of needed) if (!chunks.has(key) && !pending(`chunk:${key}`)) {
       const [a, b] = key.split(':').map(Number); chunkJobs.add(key);
-      enqueue(`chunk:${key}`, squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), createChunk(a, b, context, near), c => { chunkJobs.delete(key); chunks.set(key, c); });
+      enqueue(`chunk:${key}`, squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), createChunk(a, b, context, near), c => {
+        chunkJobs.delete(key);
+        if (c.epoch !== chunkEpoch) { scene.remove(c.root); disposeObject(c.root); return; }
+        chunks.set(key, c);
+      });
     }
   }
   function eat(animal: { rig: ReturnType<typeof createDeerRig>; entity: Entity }, plantKey: string) {
@@ -357,7 +389,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       motion: row.motion, phase: row.phase, speed: row.speed, root: row.root,
     });
     bodies.push({
-      key: 'player-wolf', species: 'Gray Wolf',
+      key: 'player', species: pictureSpecies(current.id),
       x: wolf.root.position.x, y: wolf.root.position.y, z: wolf.root.position.z,
       yaw: wolf.root.rotation.y, moving: Math.abs(wolf.brain.speed) > ANIMAL_LADDER.stillMs,
       motion: wolf.brain.motion, phase: wolf.brain.drawPhase, speed: wolf.brain.gaitSpeed, root: wolf.root,
@@ -375,6 +407,16 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   function draw(x: number, z: number, altitude: number, yaw: number, time: number, target?: Entity, pitch?: number,
     moving = false, action?: 'speak' | 'gather' | 'move', actionElapsed = 0, lookYaw = 0, mode: WolfMode = 'walk', focus?: Entity, pushFrom?: Entity, photo?: PhotoView) {
     frameNo++;
+    // A dry prairie sample does not show the Kenora lake. The mesh stays mounted
+    // (cover-sample.test.ts). It is not drawn.
+    for (const [key, chunk] of chunks) {
+      const [cx, cz] = key.split(':').map(Number);
+      const sample = coverSampleAt((cx + .5) * CHUNK_SIZE, (cz + .5) * CHUNK_SIZE);
+      const hide = sample.biome === 'prairie' && !sample.water;
+      chunk.root.traverse(o => {
+        if (o.name === 'open-water-sheet' || o.name === 'staged-water') o.visible = !hide;
+      });
+    }
     const width = canvas.clientWidth, height = canvas.clientHeight;
     if (renderer.xr.isPresenting) { /* the headset owns the drawing buffer */ }
     else if (output) { if (canvas.width !== output.w || canvas.height !== output.h) { renderer.setPixelRatio(1); renderer.setSize(output.w, output.h, false); } }
@@ -475,12 +517,27 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
         openedCover.delete(e.key);
       }
     }
+    if (time - lastFloor > 1 || time < lastFloor) {
+      lastFloor = time;
+      try { setGroundFloor(landingContext(x, z).biome, dayAt(worldTime ?? time)); } catch { /* keep the last floor */ }
+    }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen, time, mode);
     updateWaterUniforms(time);
     const tod = worldTime ?? time; // time of day / seasons are 'clock' fields (core/stateFields): world clock, also during pause
     const hour = photo?.hour ?? hourAt(tod); clock = formatHour(hour);
     const lit = sky.update(hour, tod, camera, wolf.root.position); darkness = lit.light.night;
+    {
+      const eye = Math.max(1, camera.position.y - heightAt(camera.position.x, camera.position.z));
+      terrain.update(camera.position.x, camera.position.z, eye);
+      const hereLL = skirtLatLon(coverPlanet, camera.position.x, camera.position.z, SITE.remote);
+      warmDemTiles(hereLL.latDeg, hereLL.lonDeg);
+      warmPhotoTiles(hereLL.latDeg, hereLL.lonDeg);
+      // The mesh reaches the geometric horizon. The camera used to clip at 700 m,
+      // which cut that surface off and left the sky in its place.
+      const far = Math.max(8000, horizonMetres(eye) * 1.15);
+      if (Math.abs(camera.far - far) > 50) { camera.far = far; camera.updateProjectionMatrix(); }
+    }
     bandBackground(scene, camera); // world/globe/inpage: band = globe far layer as the background + patch fade (no-op otherwise)
     photoreal.before(lit.dir, time);
     if (output) { const s = output.w / output.crop.w; camera.aspect = output.w / output.h; camera.setViewOffset(width * s, height * s, output.crop.x * s, output.crop.y * s, output.w, output.h); }
@@ -603,7 +660,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   }
   /** Mass (kg) of anything by inspector key; traced, so the inspector shows density x volume. */
   function massOf(key: string) { const l = lookup(key); if (!l) return undefined; return key === 'player' ? rigMass(wolf.root, planOf()) : l.brain && l.object ? rigMass(l.object, 'cervid') : l.entity ? entityMass(l.entity) : l.object && l.hare ? rigMass(l.object, 'leporid') : undefined; }
-  return { stepPups: (dt: number, gameSeconds: number, x: number, z: number, motherYaw: number, mood?: { hungry: boolean; tired: boolean; nudge: boolean; threatened?: boolean }) => litter.step(dt, gameSeconds, x, z, motherYaw, mood), set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, eat, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
+  return { stepPups: (dt: number, gameSeconds: number, x: number, z: number, motherYaw: number, mood?: { hungry: boolean; tired: boolean; nudge: boolean; threatened?: boolean }) => { const on = litterFollowsPlayer(current.id); litter.setFollow(on); return on ? litter.step(dt, gameSeconds, x, z, motherYaw, mood) : []; }, set worldTime(t: number | undefined) { worldTime = t; }, onBeforeRender: (f: (time: number, photo: boolean) => void) => { beforeRender.push(f); }, scene, pick, lookup, setAppearance, massOf, wolfMass: WOLF_MASS, playerMass: () => rigMass(wolf.root, planOf()), appearanceOf: (key: string) => looks.get(key), get playerLookKey() { return `player:${current.id}`; }, sync, draw, eat, forageWolf, hares, setHold: (h?: { jaw: number; head: number; fore: number }) => { carryPose = h; }, camera, setPlayable, get playable() { return current; }, invalidate: () => { revision = -Infinity; }, post, photoreal, capture, setOutput: (o: typeof output) => { output = o; }, canvas, distanceAt, snapshotSources, get playerBrain() { return wolf.brain; }, clock: () => clock, darkness: () => darkness, audibleAnimals: () => audibleAnimals,
     entities: () => [...chunks.values()].flatMap(c => c.entities),
     playerScale: () => ({ x: wolf.root.scale.x, y: wolf.root.scale.y, z: wolf.root.scale.z }),
     /** The saved record for a key (undefined for generated objects), e.g. for the inspector's why. */

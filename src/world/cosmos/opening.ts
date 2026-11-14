@@ -10,13 +10,14 @@ import { createBigBangAudio } from '../../audio/bigBang';
 import { CosmosSphere, type SphereInputs } from './sphere';
 import { GLOBE_ERA, GLOBE_LAND, GLOBE_SKY } from '../globe/tile';
 import { setCineLayerGate } from '../globe/planetLayers';
-import { CINE, NARRATION, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatClock, haloFade, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
+import { CINE, bangAt, bangFlash, cineStage, cosmicSeconds, flashLuma, formatClock, haloFade, kickOffset, narrationEndFallback, panelFigure, pinHeld, plasmaLook, secondsToCycle, shellOnScreen, shellRadius, subtitleAt, titleDissolve, type CineStage } from './cineBeats';
+import { CINE_BOOT_TIMEOUT_S, cineArrivalDue, cineTrace, stepCineBoot } from './cineReady';
 
 /**
  * Cycle 1 is the pink-white bath. Cycle 58 is already the deep blue-violet (the Rust bath
  * is only tens of kelvin). Cycle 62 is the planet. The cycle is not advanced at a constant
  * rate: the colour arc takes `arcSec`, then the deep blue-violet holds for `holdSec`, then the planet.
- * A click or a pinch skips the rest.
+ * A click, Escape or space leaves a film that has already started.
  */
 export const OPENING = { from: 1, violetAt: 58, planetAt: 62, arcSec: 32, holdSec: 12 } as const;
 
@@ -57,7 +58,7 @@ export interface Opening {
   readonly cycle: number;
   readonly phase: 'sphere' | 'planet';
   step(dt: number): void;
-  /** First visit does not skip. Kept so older callers still compile. */
+  /** Leave the film and take the same planet entry the ending already uses. */
   skip(): void;
   stop(): void;
 }
@@ -70,6 +71,7 @@ body.cine-run header,body.cine-run #status,body.cine-run #interaction,body.cine-
 #cine .pin{position:absolute;left:50%;top:50%;width:2px;height:2px;margin:-1px;border-radius:50%;background:#FFE8C0;box-shadow:0 0 4px 0 #FFE8C0;animation:cine-breathe 3.2s ease-in-out infinite}
 #cine .pin.shrink{animation:none;transform:scale(.35);transition:transform .4s ease}
 #cine .prompt{position:absolute;left:50%;bottom:11vh;transform:translateX(-50%);margin:0;letter-spacing:.04em;color:#FFE8C0;text-align:center;animation:cine-wait 3s ease-in-out infinite}
+#cine .boot{position:absolute;left:50%;bottom:6vh;transform:translateX(-50%);margin:0;font:14px/1.4 system-ui,sans-serif;letter-spacing:.04em;color:#FFE8C0;text-align:center}
 #cine .sub{position:absolute;left:50%;bottom:16vh;transform:translateX(-50%);margin:0;font:italic 22px Georgia,serif;letter-spacing:.02em;text-shadow:0 1px 8px #000}
 #cine .title{position:absolute;left:50%;top:46%;width:max-content;max-width:none;margin:0;isolation:isolate;color:#fff6e4;font:700 6.05vw Georgia,serif;letter-spacing:.18em;white-space:nowrap;text-align:center;text-shadow:0 1px 0 #fff6,0 10px 22px #000c,0 0 28px #ffb45a88;transform:translate(-50%,-50%) perspective(700px) rotateX(5deg)}
 #cine .title::before{content:"";position:absolute;left:50%;top:58%;width:145%;height:280%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center, rgba(36,14,6,.66) 0%, rgba(36,14,6,.3) 46%, rgba(36,14,6,0) 72%);z-index:-1;pointer-events:none}
@@ -121,6 +123,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   const veil = el('div', 'veil');
   const pin = el('div', 'pin'); pin.hidden = true;
   const prompt = el('p', 'prompt', 'Click or press any key to begin.');
+  const bootNote = el('p', 'boot', 'loading the planet'); bootNote.hidden = true;
   const sub = el('p', 'sub');
   const title = el('h1', 'title', 'THE BIG BANG'); title.hidden = true;
   const heroLine = el('p', 'hero-line', '3 minutes');
@@ -129,7 +132,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   const count = el('div', 'count');
   const fig = el('div', 'fig');
   panel.append(close, count, fig);
-  root.append(plate, ref, still, veil, pin, sub, title, heroLine, prompt, panel);
+  root.append(plate, ref, still, veil, pin, sub, title, heroLine, prompt, bootNote, panel);
   document.body.append(root);
 
   let sphere: CosmosSphere | null = null;
@@ -144,17 +147,13 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
   let panelShown = false;
   let closed = false;
   let booted = false;
+  let bootGaveUp = false;
+  let bootHeld = 0;
   let earthOn = false;
   let arrived = false;
   try { closed = localStorage.getItem(PANEL_KEY) === 'closed'; } catch { /* private mode */ }
   const audio = createBigBangAudio();
-  const narration = new Audio(NARRATION.file);
-  narration.preload = 'auto';
-  narration.onended = () => {
-    const d = narration.duration;
-    if (Number.isFinite(d) && d < 2) return;
-    if (narrationEndedAt == null) narrationEndedAt = elapsed;
-  };
+  let stopped = false;
 
   if (jump === 'B7') { begun = true; elapsed = CINE.b7; narrationEndedAt = 0; prompt.hidden = true; }
   void onPlanet;
@@ -168,33 +167,51 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     root.style.pointerEvents = 'none';
     panel.style.pointerEvents = 'auto';
     onBegin?.();
-    void earth?.ready().then(() => {
-      booted = true;
-      GLOBE_ERA.uEra.value.set(1, 0, 0, 0);
-      GLOBE_SKY.hold = 1;
-      GLOBE_SKY.warm = 0.55;
-      GLOBE_SKY.steam = 0;
-      GLOBE_SKY.clear = 1;
-    });
+    try {
+      const ready = earth?.ready() ?? Promise.resolve();
+      void Promise.resolve(ready).then(() => {
+        booted = true;
+        GLOBE_ERA.uEra.value.set(1, 0, 0, 0);
+        GLOBE_SKY.hold = 1;
+        GLOBE_SKY.warm = 0.55;
+        GLOBE_SKY.steam = 0;
+        GLOBE_SKY.clear = 1;
+      }, (err: unknown) => {
+        bootGaveUp = true;
+        console.warn('cine earth ready', err);
+      });
+    } catch (err) {
+      bootGaveUp = true;
+      console.warn('cine earth ready', err);
+    }
     audio.begin();
-    void narration.play().catch(() => {});
-    sphere = new CosmosSphere(root);
-    sphere.canvas.style.cssText = 'position:absolute;inset:-70px;width:calc(100% + 140px);height:calc(100% + 140px);z-index:0;pointer-events:none;opacity:0;background:#000';
-    root.insertBefore(sphere.canvas, plate);
-    sphere.setInputs(HOT);
-    if (jump === 'shot') sphere.lockTier('low');
+    try {
+      sphere = new CosmosSphere(root);
+      sphere.canvas.style.cssText = 'position:absolute;inset:-70px;width:calc(100% + 140px);height:calc(100% + 140px);z-index:0;pointer-events:none;opacity:0;background:#000';
+      root.insertBefore(sphere.canvas, plate);
+      sphere.setInputs(HOT);
+      if (jump === 'shot') sphere.lockTier('low');
+    } catch (err) {
+      sphere = null;
+      console.warn('cosmos sphere', err);
+    }
   };
   const onPointer = (e: PointerEvent) => {
     const t = e.target;
     if (t instanceof Element && t.closest('button,a,input,textarea,select,dialog,#loading')) return;
     if (!begun) begin();
+    else api.skip();
   };
   const onKey = (e: KeyboardEvent) => {
     if (e.repeat) return;
-    if (e.target instanceof HTMLElement && (e.target.isContentEditable || e.target.matches('input,textarea,select'))) return;
+    const host = e.target;
+    if (typeof HTMLElement !== 'undefined' && host instanceof HTMLElement && (host.isContentEditable || host.matches('input,textarea,select'))) return;
     const k = e.key.toLowerCase();
-    if (begun && (k === 'i' || k === 'x' || e.key === 'Escape') && !panel.hidden) {
+    if (begun && (k === 'i' || k === 'x') && !panel.hidden) {
       e.preventDefault(); e.stopImmediatePropagation(); shutPanel(); return;
+    }
+    if (begun && (e.key === 'Escape' || e.key === ' ' || e.code === 'Space')) {
+      e.preventDefault(); e.stopPropagation(); api.skip(); return;
     }
     if (!begun) { e.preventDefault(); e.stopPropagation(); begin(); }
   };
@@ -206,13 +223,15 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     get cycle() { return cycle; },
     get phase() { return phase; },
     step(dt: number) {
-      const cap = CINE.b14End;
-      if (pinned != null) elapsed = Math.min(cap, pinned);
-      else if (!begun) elapsed = Math.min(CINE.fade, elapsed + Math.max(0, dt));
-      else elapsed = Math.min(cap, elapsed + Math.max(0, dt));
-      if (pinned == null && begun && !booted && elapsed >= CINE.b13End) elapsed = CINE.b13End - 0.05;
-      if (begun && narrationEndedAt == null && narration.ended && !(Number.isFinite(narration.duration) && narration.duration < 2)) narrationEndedAt = elapsed;
-      if (begun && narrationEndedAt == null && elapsed >= narrationEndFallback() + 1 && !(narration.duration > 2)) narrationEndedAt = narrationEndFallback();
+      const moved = stepCineBoot({
+        elapsed, held: bootHeld, begun, booted, gaveUp: bootGaveUp, pinned: pinned != null,
+      }, dt, CINE_BOOT_TIMEOUT_S);
+      elapsed = moved.elapsed;
+      bootHeld = moved.held;
+      bootGaveUp = moved.gaveUp;
+      if (pinned != null) elapsed = Math.min(CINE.b14End, pinned);
+      if (begun && narrationEndedAt == null && audio.narrationEnded()) narrationEndedAt = elapsed;
+      if (begun && narrationEndedAt == null && elapsed >= narrationEndFallback() + 1 && !(audio.narrationDuration() > 2)) narrationEndedAt = narrationEndFallback();
       paintDom();
       if (!begun || !sphere) return;
       cycle = secondsToCycle(cosmicSeconds(elapsed));
@@ -221,8 +240,33 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       sphere.setFraming(50 + (46 - 50) * u, reduced ? 1 : 1 + Math.max(0, Math.min(1, (elapsed - bangAt(end)) / 1.2)) * 0.18);
       if (!busy) { busy = true; void paintSim().finally(() => { busy = false; }); }
     },
-    skip() { /* first visit does not skip */ },
-    stop() { /* the film holds; B14 will dismiss it */ },
+    skip() {
+      if (arrived || stopped) return;
+      if (!begun) begin();
+      // The ending paints Today and the arrival camera, then lands. Jump the
+      // clock there and run that same paint, so a skip does not leave the
+      // magma uniform or the page-load orbit from the start of the film.
+      if (narrationEndedAt == null) narrationEndedAt = narrationEndFallback();
+      pinned = null;
+      elapsed = CINE.b14End;
+      if (!earthOn) {
+        earthOn = true;
+        earth?.show();
+      }
+      if (!booted) bootGaveUp = true;
+      tintGlobe(elapsed);
+      driveFilm(elapsed);
+      paintDom();
+    },
+    stop() {
+      if (stopped) return;
+      stopped = true;
+      audio.stop();
+      root.remove();
+      document.body.classList.remove('cine-run');
+      window.removeEventListener('pointerdown', onPointer);
+      window.removeEventListener('keydown', onKey, true);
+    },
   };
   const probe = api as Opening & { begin: () => void; seek: (t: number) => void; play: () => void; elapsed: number };
   probe.begin = begin;
@@ -283,6 +327,7 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     if (showEarth && !earthOn) {
       earthOn = true;
       earth?.show();
+      cineTrace(`CINE TRACE earth.show at ${elapsed.toFixed(2)}s`);
     }
     if (sphere) {
       const plasmaOn = !showEarth && bang != null && elapsed >= bang + CINE.bangPeak - 0.05;
@@ -318,13 +363,6 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       setCineLayerGate(false, 1);
     }
     document.documentElement.dataset.cineEarth = earthOn ? '1' : '0';
-    if (stage === 'b14' && earthOn && !arrived) {
-      arrived = true;
-      window.dispatchEvent(new Event('cinematic:complete'));
-      const save = (window as unknown as { __borealSave?: { markBigBangSeen?: () => void } }).__borealSave;
-      save?.markBigBangSeen?.();
-      onPlanet();
-    }
     if (showPanel && !panelShown) { panelShown = true; panel.classList.add('pop'); }
     panel.hidden = !showPanel;
     if (showPanel) {
@@ -351,7 +389,24 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       fig.style.setProperty('filter', 'none', 'important');
       fig.style.setProperty('opacity', figure ? String(fade) : '1', 'important');
     }
+    bootNote.hidden = !(bootHeld > 0 && !booted && !bootGaveUp);
     if (begun) audio.sync(elapsed, narrationEndedAt);
+    // Land only on the hold after B14, so 232 million years still plays through to Today.
+    if (stage === 'hold' && cineArrivalDue(elapsed, earthOn, booted, bootGaveUp, arrived)) {
+      cineTrace(`CINE TRACE arrival ${JSON.stringify({ elapsed: +elapsed.toFixed(3), clock: formatClock(elapsed), earthOn, booted, gaveUp: bootGaveUp, held: +bootHeld.toFixed(2) })}`);
+      land('cinematic:complete');
+    }
+  }
+
+  /** The ending and a dismissal share one exit: the seen flag, then the planet entry `onPlanet` already is. */
+  function land(kind: 'cinematic:complete' | 'cinematic:dismiss') {
+    if (arrived || stopped) return;
+    arrived = true;
+    window.dispatchEvent(new Event(kind));
+    const save = (window as unknown as { __borealSave?: { markBigBangSeen?: () => void } }).__borealSave;
+    save?.markBigBangSeen?.();
+    api.stop();
+    onPlanet();
   }
 
   function showRef(stage: CineStage) {

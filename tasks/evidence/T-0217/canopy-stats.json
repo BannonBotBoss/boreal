@@ -1,0 +1,294 @@
+{
+  "definition": "green >= red and green >= blue and green > 40 and max channel < 220; 4 px border and the bottom 40 px (HUD) excluded",
+  "shot": "52.05 N, 96.94 W, alt 400 and 800, hour 8.3, day 227",
+  "referenceUrl": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-96.947,52.047,-96.933,52.053&bboxSR=4326&size=1280,720&format=jpg&f=image",
+  "instances": {
+    "at400": 4355,
+    "at800": 16397
+  },
+  "blocks": {
+    "note": "Rec. 709 luminance. No 8x8 block in the frame may sit under the reference 1st percentile.",
+    "referenceP01": 15.08,
+    "darkest8At400": 29.57,
+    "darkest8At800": 32.22
+  },
+  "openings": "Tree survival is standDensity(canopy, shore, mottle) from coverWeights. Shore is capped at 0.30, so the stand mottle that already feeds that term opens meadows inside the outcrop. Floor and crown grain use proc/glsl.ts. The floor has no black multiply.",
+  "albedo": "Diffuse colour is linear RGB with green 0.09 (Betts and Ball 1997, JGR 102, 28901, summer boreal conifer albedo about 0.08). A small sky-coloured emissive keeps the shade above the reference dark floor. Instance colour stays at or below 1.",
+  "referenceStats": {
+    "coverage": 0.8765,
+    "r": {
+      "mean": 52.938,
+      "sd": 16.7824
+    },
+    "g": {
+      "mean": 71.9493,
+      "sd": 15.625
+    },
+    "b": {
+      "mean": 43.5496,
+      "sd": 13.6648
+    },
+    "h": {
+      "mean": 101.3993,
+      "sd": 12.6921
+    },
+    "s": {
+      "mean": 0.4032,
+      "sd": 0.0981
+    },
+    "v": {
+      "mean": 0.2822,
+      "sd": 0.0613
+    }
+  },
+  "after400": {
+    "coverage": 0.9135,
+    "r": {
+      "mean": 56.1382,
+      "sd": 7.825
+    },
+    "g": {
+      "mean": 71.2322,
+      "sd": 8.8484
+    },
+    "b": {
+      "mean": 39.4969,
+      "sd": 5.0792
+    },
+    "h": {
+      "mean": 89.2684,
+      "sd": 5.2493
+    },
+    "s": {
+      "mean": 0.4439,
+      "sd": 0.043
+    },
+    "v": {
+      "mean": 0.2793,
+      "sd": 0.0347
+    }
+  },
+  "after800": {
+    "coverage": 0.9497,
+    "r": {
+      "mean": 54.1849,
+      "sd": 9.2143
+    },
+    "g": {
+      "mean": 69.1059,
+      "sd": 10.2531
+    },
+    "b": {
+      "mean": 38.6887,
+      "sd": 5.637
+    },
+    "h": {
+      "mean": 90.4742,
+      "sd": 6.1814
+    },
+    "s": {
+      "mean": 0.4379,
+      "sd": 0.0438
+    },
+    "v": {
+      "mean": 0.271,
+      "sd": 0.0402
+    }
+  },
+  "compare400": [
+    {
+      "channel": "r",
+      "stat": "mean",
+      "frame": 56.138,
+      "reference": 52.938,
+      "rel": 0.06,
+      "within15": true
+    },
+    {
+      "channel": "r",
+      "stat": "sd",
+      "frame": 7.825,
+      "reference": 16.782,
+      "rel": 0.534,
+      "within15": false
+    },
+    {
+      "channel": "g",
+      "stat": "mean",
+      "frame": 71.232,
+      "reference": 71.949,
+      "rel": 0.01,
+      "within15": true
+    },
+    {
+      "channel": "g",
+      "stat": "sd",
+      "frame": 8.848,
+      "reference": 15.625,
+      "rel": 0.434,
+      "within15": false
+    },
+    {
+      "channel": "b",
+      "stat": "mean",
+      "frame": 39.497,
+      "reference": 43.55,
+      "rel": 0.093,
+      "within15": true
+    },
+    {
+      "channel": "b",
+      "stat": "sd",
+      "frame": 5.079,
+      "reference": 13.665,
+      "rel": 0.628,
+      "within15": false
+    },
+    {
+      "channel": "h",
+      "stat": "mean",
+      "frame": 89.268,
+      "reference": 101.399,
+      "rel": 0.12,
+      "within15": true
+    },
+    {
+      "channel": "h",
+      "stat": "sd",
+      "frame": 5.249,
+      "reference": 12.692,
+      "rel": 0.586,
+      "within15": false
+    },
+    {
+      "channel": "s",
+      "stat": "mean",
+      "frame": 0.444,
+      "reference": 0.403,
+      "rel": 0.101,
+      "within15": true
+    },
+    {
+      "channel": "s",
+      "stat": "sd",
+      "frame": 0.043,
+      "reference": 0.098,
+      "rel": 0.562,
+      "within15": false
+    },
+    {
+      "channel": "v",
+      "stat": "mean",
+      "frame": 0.279,
+      "reference": 0.282,
+      "rel": 0.01,
+      "within15": true
+    },
+    {
+      "channel": "v",
+      "stat": "sd",
+      "frame": 0.035,
+      "reference": 0.061,
+      "rel": 0.434,
+      "within15": false
+    }
+  ],
+  "compare800": [
+    {
+      "channel": "r",
+      "stat": "mean",
+      "frame": 54.185,
+      "reference": 52.938,
+      "rel": 0.024,
+      "within15": true
+    },
+    {
+      "channel": "r",
+      "stat": "sd",
+      "frame": 9.214,
+      "reference": 16.782,
+      "rel": 0.451,
+      "within15": false
+    },
+    {
+      "channel": "g",
+      "stat": "mean",
+      "frame": 69.106,
+      "reference": 71.949,
+      "rel": 0.04,
+      "within15": true
+    },
+    {
+      "channel": "g",
+      "stat": "sd",
+      "frame": 10.253,
+      "reference": 15.625,
+      "rel": 0.344,
+      "within15": false
+    },
+    {
+      "channel": "b",
+      "stat": "mean",
+      "frame": 38.689,
+      "reference": 43.55,
+      "rel": 0.112,
+      "within15": true
+    },
+    {
+      "channel": "b",
+      "stat": "sd",
+      "frame": 5.637,
+      "reference": 13.665,
+      "rel": 0.587,
+      "within15": false
+    },
+    {
+      "channel": "h",
+      "stat": "mean",
+      "frame": 90.474,
+      "reference": 101.399,
+      "rel": 0.108,
+      "within15": true
+    },
+    {
+      "channel": "h",
+      "stat": "sd",
+      "frame": 6.181,
+      "reference": 12.692,
+      "rel": 0.513,
+      "within15": false
+    },
+    {
+      "channel": "s",
+      "stat": "mean",
+      "frame": 0.438,
+      "reference": 0.403,
+      "rel": 0.086,
+      "within15": true
+    },
+    {
+      "channel": "s",
+      "stat": "sd",
+      "frame": 0.044,
+      "reference": 0.098,
+      "rel": 0.554,
+      "within15": false
+    },
+    {
+      "channel": "v",
+      "stat": "mean",
+      "frame": 0.271,
+      "reference": 0.282,
+      "rel": 0.04,
+      "within15": true
+    },
+    {
+      "channel": "v",
+      "stat": "sd",
+      "frame": 0.04,
+      "reference": 0.061,
+      "rel": 0.344,
+      "within15": false
+    }
+  ]
+}

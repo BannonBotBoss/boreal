@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0177",
+  "agent": "grokbot-2",
+  "note": "Chrome requested /favicon.ico and the page had no icon. index.html links favicon.svg and favicon.ico, and both files are in public/. Id after T-0174.",
+  "at": "2026-11-07T18:14:14-08:00"
+}

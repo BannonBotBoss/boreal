@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0215",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/ocean-landing",
+  "skill": "coarse-bathymetry",
+  "note": "The drop at 8.487 N, 129.334 W is the sea surface. Zoom-0 terrarium is -4589 m. The seeded sample was 5074.6 m of ice. HUD after the fix: water, elevation 0, vegetation 0, on the aim. Ground-band white fraction 0.81 to 0. The glide is still empty (T-0216).",
+  "at": "2026-11-11T11:40:00-08:00"
+}

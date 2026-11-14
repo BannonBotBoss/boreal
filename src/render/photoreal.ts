@@ -29,29 +29,12 @@ const NEAR_ONLY = new Set<THREE.Material>([LOG_MATERIAL, ROCK_MATERIAL]); let ne
   proto.onBeforeShadow = function (this: THREE.BatchedMesh & { _multiDrawCount: number }, ...a: unknown[]) { base.apply(this, a);
     if (nearShadowCam && a[3] !== nearShadowCam && NEAR_ONLY.has(this.material as THREE.Material)) this._multiDrawCount = 0; }; }
 
-// PCSS (Fernando 2005, 'Percentage-Closer Soft Shadows'), adapted from three r180 examples/webgl_shadowmap_pcss.html (MIT,
-// spidersharma03): blocker search + Poisson PCF, injected into the shared shadow chunk behind `#ifdef PCSS` so only
-// materials of tiers with pcss compile it. Tailored for a DIRECTIONAL sun (ortho cascades): penumbra width =
-// (receiver − blocker depth) × tan(0.53°/2) in light-space, with PCSS_K folding in the cascade's depth/width ratio [game calibration].
-const PCSS_GLSL = `
-#ifdef PCSS
-#define PCSS_N 16
-#define PCSS_K 0.012
-vec2 pcssDisk(int i, float a0) { float r = pow((float(i) + .5) / float(PCSS_N), .75), a = a0 + float(i) * 2.39996; return r * vec2(cos(a), sin(a)); }
-float pcssShadow(sampler2D map, vec2 texel, vec3 c) {
-  float a0 = rand(c.xy) * PI2, search = 12. * texel.x, sum = 0., n = 0.;
-  for (int i = 0; i < PCSS_N; i++) { float d = unpackRGBAToDepth(texture2D(map, c.xy + pcssDisk(i, a0) * search)); if (d < c.z) { sum += d; n += 1.; } }
-  if (n < .5) return 1.;
-  float radius = clamp((c.z - sum / n) * PCSS_K * 40., texel.x, 24. * texel.x), lit = 0.;
-  for (int i = 0; i < PCSS_N; i++) lit += texture2DCompare(map, c.xy + pcssDisk(i, a0 + 1.) * radius, c.z);
-  return lit / float(PCSS_N);
-}
-#endif
-`;
-{ let c = THREE.ShaderChunk.shadowmap_pars_fragment;
-  c = c.replace('float getShadow(', PCSS_GLSL + '\nfloat getShadow(');
-  c = c.replace('#if defined( SHADOWMAP_TYPE_PCF )', '#if defined( PCSS )\n\t\t\tshadow = pcssShadow(shadowMap, 1. / shadowMapSize, shadowCoord.xyz);\n\t\t#elif defined( SHADOWMAP_TYPE_PCF )');
-  THREE.ShaderChunk.shadowmap_pars_fragment = c; }
+// Soft shadows stay on three's built-in getShadow (Vogel disk, hardware PCF, sampler2DShadow).
+// The old PCSS splice (Fernando 2005, from three r180's webgl_shadowmap_pcss example) replaced the
+// FIRST `#if defined( SHADOWMAP_TYPE_PCF )`. In three 0.185 that first test is the sampler uniform,
+// not the body of getShadow, so a PCSS material compiled `shadow = pcssShadow(...)` where `shadow`
+// is not declared. The helper also called unpackRGBAToDepth and texture2DCompare, which this chunk
+// no longer has: a sampler2DShadow compare does not return the blocker depth a PCSS search needs.
 /** Time-sliced cube capture (shared by IBL and the GI probe): ONE face per frame through a CubeCamera's own face cameras,
  *  so no frame pays for six scene renders. `done` fires after the 6th face. */
 function slicedCube(size: number, layer: number, near = .5, far = 1000) {

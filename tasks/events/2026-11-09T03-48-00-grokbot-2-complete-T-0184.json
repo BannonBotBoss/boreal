@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0184",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/overhead-stands",
+  "skill": "land-mosaic",
+  "note": "The 2000 m globe is a fen and conifer stand field, not one soft fill. A coarse lake edge wanders and is lifted off the 0.01 black. Frames tasks/evidence/T-0184/. tests/overhead-stand.test.ts passes. No self-approve.",
+  "at": "2026-11-09T03:48:00-08:00"
+}

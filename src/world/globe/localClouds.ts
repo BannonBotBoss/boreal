@@ -13,7 +13,7 @@ import { hash, random } from '../../proc/rng';
 import { toLatLon, type Vec3 } from './planet';
 import CC from '../../../data/earth/cloud-column.json';
 
-export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: CC.qc_auto_kg_kg as number, /** horizontal LCL scatter (m) over a cell: moisture/temp heterogeneity so bases aren't ruler-flat [game calibration; O(100 m) on convective scales] */ baseUndulM: 300, /** soft condensation zone (m) above the dew-point base: condensate builds over O(100 m), not a knife-edge at the LCL [game calibration; AMS Glossary condensation level] */ baseFeatherM: 200 }; // full bake byte = Kessler qc0 (suspended convective condensate after #329), not the old 1.5e-3 adiabatic-ish scale
+export const LOCAL_CLOUDS = { sizeM: 32000, topM: 12000, nx: 64, nz: 48, showBelowM: 40000, rebakeFrac: .25, cellM: 2500, steps: 96, waterFull: CC.qc_auto_kg_kg as number, /** horizontal LCL half-range (m) from moisture heterogeneity, mapped through Espy 125 m/K so wetter cells sit lower [game calibration; O(100 m) on convective scales] */ baseUndulM: 300, /** soft condensation zone (m) above the dew-point base: condensate builds over O(100 m), not a knife-edge at the LCL [game calibration; AMS Glossary condensation level] */ baseFeatherM: 200 }; // full bake byte = Kessler qc0 (suspended convective condensate after #329), not the old 1.5e-3 adiabatic-ish scale
 /** 0 at showBelowM, 1 at sizeM. The box and the flat shell crossfade across that span instead of swapping in one frame. */
 export function localCloudFade(alt: number, L = LOCAL_CLOUDS) {
   const span = L.showBelowM - L.sizeM;
@@ -57,19 +57,62 @@ const vnoise2 = (salt: number) => { const L = (i: number, j: number) => random(h
 const n1 = vnoise2(1), n2 = vnoise2(2), n3 = vnoise2(3);
 /** Bake density bytes (x fastest, then y = height, then z) for a column; ox, oz: box origin in a fixed local grid (m) so the
  *  cells stay put while the box re-centres. Two kinds of layer, both from the column's dew-point physics:
- *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share a dew-point base near the column LCL (slight per-cell undulation from low-frequency moisture noise so bases aren't ruler-flat; soft-feathered over baseFeatherM so condensate builds over a thin zone, not a knife-edge), and each cell's top rises
+ *  - convective (parcel) cloud: fBm cells (covered share ~ cover) share a dew-point base near the column LCL (slight per-cell undulation from low-frequency moisture noise mapped through Espy 125 m/K so wetter air has a higher dew point and a lower base (then a 3×3 soft-blur so adjacent columns aren't a knife wall) so bases aren't ruler-flat; soft-feathered over baseFeatherM so condensate builds over a thin zone, not a knife-edge), and each cell's top rises
  *    with its strength up to the column's buoyant top; below the EL the convective tower soft-narrows with height (Houze 2014 ch. 8); cell strength scales how far into the overshoot dome each tower punches, and the plume soft-narrows into a turret with height (Houze 2014 ch. 8);
  *  - stratiform (sheet) cloud, where the environment's RH passes the critical value: a broad, low-frequency deck that is
  *    not broken into convective cells, soft-feathered over baseFeatherM at its vertical edges so sheet tops/bottoms aren't knife-edges;
- *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, and cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut. */
+ *  - anvil: a tower deep enough to glaciate spreads sideways in the ice layers just under its buoyant top; blurred cell strength sets weight and ice-deck depth, density peaks near the top (Houze outflow at the EL) then thins deeper, lateral density falls as anv^1.5 so the fringe is wispy, the tower-depth gate soft-ramps from 0.8x to 1x anvil_min_tower_m instead of popping on, the ice-share gate soft-ramps through mixed phase (ice 0.25→0.75) instead of a 0.5 knife, the underside soft-feathers over baseFeatherM so the ice deck is not a knife-edge floor, cells with no overshooting turret soft-feather their top into clear air over baseFeatherM at the EL so the buoyant top is not a knife cut, overshooting cores soft-feather toward the ice-plume value over baseFeatherM below the EL so the tower→plume handoff is not a knife cut, and overshooting turrets whose tip sits inside the box keep a lit plume body and soft-feather the cap over baseFeatherM; the bake soft-feathers toward the horizontal box rim and, on the main write, the vertical lid (at least ~2 cells; not the floor, which is the ground, so fog and ground-based stratus stay, or baseFeatherM when finer) so the volume wall is not a knife cut (overshoot tips that hit the ceiling keep the #360 (1-u)^2 taper). */
+/** Soft tower-depth gate for the anvil: towers only glaciate and spread an anvil once deep (Houze 2014 ch. 8),
+ *  but a hard cut at anvil_min_tower_m made the whole anvil pop on/off as the column top crossed it. Smoothstep
+ *  from 0.8x to 1x the minimum depth ([game calibration] band, 4.8 to 6 km at today's 6 km). */
+/** Core-strength ramp shared by the anvil footprint and the overshoot dome: cells below h=0.5 don't feed either,
+ *  mature cores (h>=0.85) take full weight. A linear ramp left slope corners at both ends, so neighbouring cells
+ *  showed a visible crease in anvil/turret weight; smoothstep keeps the same endpoints and midpoint [game calibration]. */
+export function coreStrength(h: number): number {
+  const u = Math.min(1, Math.max(0, (h - .5) / .35));
+  return u * u * (3 - 2 * u);
+}
+export function anvilDepthGate(depthM: number): number {
+  const lo = .8 * CC.anvil_min_tower_m, u = Math.min(1, Math.max(0, (depthM - lo) / (CC.anvil_min_tower_m - lo)));
+  return u * u * (3 - 2 * u);
+}
+/** Local dew-point cloud base (m): the column LCL shifted by Espy's 125 m/K.
+ *  moisture01 is 0 (drier than the column) .. 1 (wetter); 0.5 is the column-mean mixing ratio.
+ *  Wetter air has a higher dew point and a lower base. undulM is the half-range in metres. */
+export function dewPointBaseM(columnLcl: number, moisture01: number, undulM: number, espyMPerK = CC.espy_m_per_K as number) {
+  if (columnLcl < 0) return columnLcl;
+  const m = Math.min(1, Math.max(0, moisture01));
+  const dTd = (m - .5) * 2 * (undulM / espyMPerK); // dew-point perturbation (K)
+  return Math.max(0, columnLcl - espyMPerK * dTd);
+}
+/** Soften per-cell dew-point bases so adjacent columns don't form a knife-edge wall.
+ *  Moisture varies continuously across ~cellM; a 3×3 binomial blur matches that scale
+ *  (AMS Glossary condensation level; game cal — same O(100–cell) family as baseUndulM). */
+export function softBlurBas(bas: Float32Array, nx: number) {
+  const n = nx * nx, out = new Float32Array(n);
+  for (let k = 0; k < nx; k++) for (let i = 0; i < nx; i++) {
+    let s = 0, w = 0;
+    for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) {
+      const kk = k + b, ii = i + a;
+      if (kk < 0 || ii < 0 || kk >= nx || ii >= nx) continue;
+      const wt = a === 0 && b === 0 ? 4 : a === 0 || b === 0 ? 2 : 1;
+      s += bas[kk * nx + ii] * wt; w += wt;
+    }
+    out[k * nx + i] = s / w;
+  }
+  return out;
+}
 export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L = LOCAL_CLOUDS) {
   const out = new Uint8Array(L.nx * L.nx * L.nz), dz = L.topM / L.nz, n = L.nx * L.nx, h = new Float32Array(n), sh = new Float32Array(n), bas = new Float32Array(n), cut = 1 - cover;
   const base = col.lcl, undul = Math.max(0, L.baseUndulM ?? 0), feather = Math.max(0, L.baseFeatherM ?? 0);
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { const x = (ox + (i + .5) / L.nx * L.sizeM) / L.cellM, z = (oz + (k + .5) / L.nx * L.sizeM) / L.cellM;
     const f = (n1(x, z) * .55 + n2(x * 2.1, z * 2.1) * .3 + n3(x * 4.3, z * 4.3) * .15); h[k * L.nx + i] = Math.max(0, Math.min(1, (f - (.25 + .5 * cut)) / .12)); // fBm spans ~.25-.75
     sh[k * L.nx + i] = Math.max(0, Math.min(1, (n1(x * .35, z * .35) - (.2 + .5 * cut)) / .3)); // broad sheet: low frequency, soft edge
-    // dew-point base undulates with low-frequency moisture noise around the column LCL (not a placed deck height)
-    bas[k * L.nx + i] = base >= 0 ? Math.max(0, base + (n1(x * .4, z * .4) - .5) * 2 * undul) : base; }
+    // Local mixing-ratio heterogeneity shifts the dew point; Espy maps that onto LCL height
+    // so wetter cells sit lower (not a signed height offset around a placed deck).
+    bas[k * L.nx + i] = dewPointBaseM(base, n1(x * .4, z * .4), undul); }
+  // Soft-blur dew-point bases horizontally: adjacent cell LCLs are not a knife wall (moisture is continuous).
+  if (undul > 0 && base >= 0) bas.set(softBlurBas(bas, L.nx));
   const ly = col.layers, step = ly[1]?.z || 250, conv = new Float32Array(L.nz), strat = new Float32Array(L.nz);
   const top = col.top >= base && base >= 0 ? col.top + step / 2 : -1;
   const over = top > base ? Math.max(0, col.overshootM) : 0, tip = top > base ? Math.min(L.topM, top + over) : -1; // Houze overshoot dome; clamp to the local box
@@ -85,7 +128,9 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
       let hi = j; while (hi + 1 < L.nz && on(strat[hi + 1])) hi++;
       if (hi === j) edge[j] = 1;
       else for (let i = j; i <= hi; i++) {
-        const u = Math.min(1, Math.min(i - j, hi - i) * dz / feather);
+        // A deck touching the ground (j === 0) is fog/ground-based stratus: the ground is not a cut through
+        // cloud, so only its top ramps; bottoms above the ground still feather.
+        const u = Math.min(1, (j === 0 ? hi - i : Math.min(i - j, hi - i)) * dz / feather);
         edge[i] = u * u * (3 - 2 * u);
       }
       j = hi + 1;
@@ -95,17 +140,42 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
   // anvil (data/earth/cloud-column.json "anvil"): a tower deep enough to glaciate spreads sideways at its buoyant top, so the
   // top layers take a widened footprint of the towers that reach them (a box blur of the mature cells), not just the cores.
   // Blurred strength also sets how deep the ice deck reaches at that cell: full anvil_depth_m at anv~1, thinner fringe.
-  const anv = new Float32Array(n), iceOk = new Float32Array(L.nz), deep = top > base && col.top - base >= CC.anvil_min_tower_m;
+  const anv = new Float32Array(n), iceOk = new Float32Array(L.nz), dg = top > base ? anvilDepthGate(col.top - base) : 0, deep = dg > 0;
   if (deep) { const r = Math.max(1, Math.round(CC.anvil_spread_m / L.sizeM * L.nx)), m = new Float32Array(n);
-    // same strength ramp as overshoot: mature cores (h>=0.85) full weight, mid cells (.5..0.85) partial, nothing below .5
-    for (let c = 0; c < n; c++) m[c] = h[c] <= .5 ? 0 : Math.min(1, (h[c] - .5) / .35);
+    // same strength ramp as overshoot: mature cores (h>=0.85) full weight, mid cells (.5..0.85) partial (smoothstep), nothing below .5
+    for (let c = 0; c < n; c++) m[c] = coreStrength(h[c]) * dg; // dg: soft tower-depth gate
     for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { let s = 0, w = 0;
       for (let b = -r; b <= r; b++) for (let a = -r; a <= r; a++) { const kk = k + b, ii = i + a; if (kk < 0 || ii < 0 || kk >= L.nx || ii >= L.nx || a * a + b * b > r * r) continue; s += m[kk * L.nx + ii]; w++; }
       anv[k * L.nx + i] = Math.min(1, 1.5 * s / Math.max(1, w)); }
     for (let j = 0; j < L.nz; j++) { const z = (j + .5) * dz, li = Math.min(ly.length - 1, Math.round(z / step)), d = top - z;
-      iceOk[j] = d >= 0 && d <= CC.anvil_depth_m && (ly[li]?.ice ?? 0) >= .5 ? 1 : 0; } }
+      // Soft-ramp the ice-share gate through mixed phase (ECMWF IFS Cy47r1 ice_phase band):
+      // anvil outflow is glaciated, but a 0.5 knife snapped mid-layer. Smoothstep ice 0.25→0.75.
+      if (d >= 0 && d <= CC.anvil_depth_m) {
+        const ice = ly[li]?.ice ?? 0, u = Math.min(1, Math.max(0, (ice - .25) / .5));
+        iceOk[j] = u * u * (3 - 2 * u);
+      } else iceOk[j] = 0; } }
+  // Soft-feather toward the horizontal box rim and the vertical lid: the volume wall
+  // is not a knife cut of cloud. At bake resolution (cellM / dz often > baseFeatherM) use
+  // at least ~2 cells so the ramp is resolvable; when cells are fine, baseFeatherM still
+  // sets the physical width [game cal].
+  const cellM = L.sizeM / L.nx, rimCells = feather > 0 ? Math.max(feather / cellM, 2) : 0;
+  // Lid soft-edge for the main (non-overshoot) write only. Overshoot tips that hit the
+  // box ceiling keep the dedicated (1-u)^2 taper from #360 — the plume continues above the bake.
+  const lidCells = feather > 0 ? Math.max(feather / dz, 2) : 0;
   for (let k = 0; k < L.nx; k++) for (let j = 0; j < L.nz; j++) for (let i = 0; i < L.nx; i++) { const c = k * L.nx + i;
     const z = (j + .5) * dz, cb = bas[c], span = top > cb ? top - cb : 0;
+    let rim = 1;
+    if (rimCells > 0) {
+      const edge = Math.min(i, k, L.nx - 1 - i, L.nx - 1 - k);
+      const u = Math.min(1, edge / rimCells);
+      rim = u * u * (3 - 2 * u);
+    }
+    let lid = 1;
+    if (lidCells > 0) {
+      const vEdge = L.nz - 1 - j; // lid only: the box floor is the ground (column built from groundM), so fog stays
+      const u = Math.min(1, vEdge / lidCells);
+      lid = u * u * (3 - 2 * u);
+    }
     const zrc = span > 0 ? (z - cb) / span : 2; // 0 at this cell's dew-point base, 1 at the buoyant top
     let cv = 0;
     if (zrc >= 0 && zrc <= 1) { // up to the buoyant top: strength scales cell height
@@ -126,20 +196,29 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
         const u = Math.min(1, Math.max(0, (cellDepth - d) / feather)); // 0 at underside, 1 a feather above
         anvEdge = u * u * (3 - 2 * u);
       }
-      const anvHere = iceOk[j] && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper * anvEdge : 0;
+      const anvHere = iceOk[j] > 0 && anv[c] > 0 && d <= cellDepth ? anv[c] * Math.sqrt(anv[c]) * .6 * taper * anvEdge * iceOk[j] : 0;
       cv = Math.max(h[c] * edge * tower, anvHere);
       // Soft-feather dew-point base: ramp 0→1 over baseFeatherM (condensation zone; AMS Glossary / O(100 m) game cal)
       if (feather > 0) { const u = Math.min(1, Math.max(0, (z - cb) / feather)); cv *= u * u * (3 - 2 * u); }
       // Soft-feather buoyant top into clear air over baseFeatherM when this cell has no overshooting turret
       // (h<=0.5): towers that stop at the EL are not a knife cut (Houze 2014 ch. 8). Overshooting cores keep
-      // full density at the EL so the plume can attach.
+      // density at the EL so the plume can attach, but soft-feather toward the ice-plume value over
+      // baseFeatherM below the EL so the liquid-tower → glaciated-plume handoff is not a knife cut.
       if (feather > 0 && !(tip > top && h[c] > .5) && top > cb) {
         const uTop = Math.min(1, Math.max(0, (top - z) / feather)); // 0 at EL, 1 a feather below
         cv *= uTop * uTop * (3 - 2 * uTop);
       }
+      if (feather > 0 && tip > top && h[c] > .5 && top > cb) {
+        const frac = coreStrength(h[c]); // same smoothstep core ramp as the overshoot plume (#368)
+        const li = Math.min(ly.length - 1, Math.round(z / step)), op = iceOpacity(ly[li]?.ice ?? 0);
+        const plumeAtEl = .45 * frac * op; // matches the overshoot path at u=0, turret=1
+        const uAtt = Math.min(1, Math.max(0, (top - z) / feather)); // 0 at EL, 1 a feather below
+        const soft = uAtt * uAtt * (3 - 2 * uAtt);
+        cv = cv * soft + plumeAtEl * (1 - soft);
+      }
     } else if (tip > top && z > top && h[c] > .5) { // overshooting dome: cell strength sets how far past the EL (Houze 2014 ch. 8)
       // mature cores (h~1) take the full overshootM; mid cells taper off; nothing below h=0.5 (same cut as anvil cores start rising)
-      const frac = Math.max(0, Math.min(1, (h[c] - .5) / .35)); // 0 at 0.5, 1 at >=0.85
+      const frac = coreStrength(h[c]); // 0 at 0.5, 1 at >=0.85, smooth both ends
       const cellTip = Math.min(L.topM, top + over * frac);
       if (z <= cellTip && cellTip > top) {
         const u = (z - top) / (cellTip - top); // 0 at anvil level, 1 at this cell's tip
@@ -147,15 +226,24 @@ export function bakeLocal(col: Column, cover: number, ox: number, oz: number, L 
         // turrets above the anvil. At u=0 keep today's footprint; as u→1 scale ~ frac^(u/(1-u))
         // so mid cells leave a stubbier lower dome and only near-h=1 punches a thin tip.
         const turret = Math.pow(Math.max(frac, 1e-9), u / Math.max(1 - u, .05));
-        // layers above the EL carry no suspended water; tapered ice plume, denser for stronger cells
+        // layers above the EL carry no suspended water; ice plume denser for stronger cells
         // iceOpacity (Stephens 1978): glaciated overshoot is optically thinner — same as anvil via conv
         const li = Math.min(ly.length - 1, Math.round(z / step)), op = iceOpacity(ly[li]?.ice ?? 0);
-        const plume = (1 - u) * (1 - u) * .45 * frac * op * turret;
-        out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, plume));
+        // Tip inside the box: keep plume body lit and soft-feather the cap over baseFeatherM into clear
+        // air (Houze 2014 ch. 8). Tip at the box ceiling: keep the old (1-u)^2 taper toward the volume
+        // top — the plume continues above the bake, so a knife feather at the ceiling would be wrong.
+        let plume = .45 * frac * op * turret;
+        if (feather > 0 && cellTip < L.topM) {
+          const uTip = Math.min(1, Math.max(0, (cellTip - z) / feather)); // 0 at tip, 1 a feather below
+          plume *= uTip * uTip * (3 - 2 * uTip);
+        } else {
+          plume *= (1 - u) * (1 - u);
+        }
+        out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, plume * rim));
         continue;
       }
     }
-    out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, conv[j] * cv + strat[j] * sh[c])); }
+    out[i + L.nx * (j + L.nz * k)] = Math.round(255 * Math.min(1, (conv[j] * cv + strat[j] * sh[c]) * rim * lid)); }
   return out;
 }
 
@@ -193,6 +281,15 @@ export function multiScatterSun(tau: number, cosT: number, g = CLOUD_G) {
  *  isotropic, so it takes the same octaves without a phase term, normalised so clear sky above gives SKY_AMB. Cloud tops stay
  *  bright and bases under a deep tower go darker grey, as seen from below, instead of one flat ambient everywhere. CPU mirror. */
 export const SKY_AMB = .25; // [game calibration: ambient level of the old flat term, now the clear-sky value]
+/**
+ * A march that gathers optical depth but no light composites as pure black and hides the
+ * ground (400 m overhead at 52 N, 97 W). Below `minLight` the fragment is discarded, same
+ * as a miss. A lit cloud (channel at or above the floor) still draws.
+ */
+export const CLOUD_VEIL = { minAlpha: 0.01, minLight: 0.001 } as const;
+export function cloudVeilCovers(maxChannel: number, alpha: number) {
+  return alpha >= CLOUD_VEIL.minAlpha && maxChannel >= CLOUD_VEIL.minLight;
+}
 export function skyAmbient(tauUp: number) {
   let s = 0, n0 = 0, a = 1, b = 1; for (let n = 0; n < MS_OCTAVES; n++) { s += a * Math.exp(-b * Math.max(0, tauUp)); n0 += a; a *= MS_A; b *= MS_B; } return SKY_AMB * s / n0; }
 /** Colour of direct sunlight after the air path to the cloud: Rayleigh extinction of a sea-level column (beta * H, H = 8 km,
@@ -250,7 +347,7 @@ void main() { vec3 rd = normalize(vDir); vec2 b = hitBox(vOrigin, rd); if (b.x >
     float d = dens(p); if (d > .01) { if (!hit) { hit = true; first = p; } float sh = dens(p + uSunLocal * .03) + dens(p + uSunLocal * .07); float up = dens(p + vec3(0.0, .03, 0.0)) + dens(p + vec3(0.0, .07, 0.0)); vec3 lit = uSunCol * (msSun(sh * uExt * sm, ct) * max(uSunLocal.y + .25, .15) * sunVis((p.y + .5) * uBoxM.y)) + uSkyF * skyAmb(up * uExt * uBoxM.y * .05) + uSunCol * (uAlb * max(uSunMu, 0.0) * skyAmb((dens(p - vec3(0.0, .03, 0.0)) + dens(p - vec3(0.0, .07, 0.0))) * uExt * uBoxM.y * .05) * 4.0); /* ground bounce from below: see groundBounce (skyAmb is SKY_AMB-scaled, so x4) */ /* skylight through the cloud above, same two-sample path as the sun */
       float a = 1.0 - exp(-d * uExt * dm); /* optical depth of this step: extinction (1/m) times the step in metres */ acc.rgb += (1.0 - acc.a) * a * lit; /* sun term tinted by the air path (sunTint), skylight stays neutral */ acc.a += (1.0 - acc.a) * a; }
     p += rd * dt; }
-  if (acc.a < .01) discard;
+  if (acc.a < .01 || max(acc.r, max(acc.g, acc.b)) < .001) discard; /* unlit march (alpha, no colour) must not paint a black veil over the planet */
 #ifdef BAND_OCCLUDE
   vec4 c = projectionMatrix * (modelViewMatrix * vec4(first, 1.0)); gl_FragDepth = clamp(c.z / c.w * .5 + .5, 0.0, 1.0); // issue #202: depth of the cloud's near edge, so ground in front culls it
 #endif

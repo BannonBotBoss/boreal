@@ -16,6 +16,7 @@ import { HANDOFF } from './handoff';
 import { figureRadius } from './figure';
 import { ISO_BELOW_HORIZON } from './flight';
 import { clamp, smoothstep } from '../../proc/math';
+import { SITE, siteDatum, siteDirection } from '../../core/sitePhase';
 
 export const TRANSITION = {
   bandTop: HANDOFF.alt,           // m above ground: the game patch starts fading in below this (and is gone above it)
@@ -73,24 +74,31 @@ export function transitionPath(search: string, env: { deviceMemory?: number; pro
 
 type PlanetFrame = { home: Vec3; east: Vec3; north: Vec3; radius: number; fromLocal(x: number, z: number): Vec3 };
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+/** Home frame, or the landed site once a drop has moved the origin. The band camera used to keep the home
+ *  gnomonic, so a Pacific aim was drawn as the Kenora patch, or the camera sat inside the seeded mountain. */
+function viewFrame(p: PlanetFrame) {
+  if (!SITE.remote) return { up: p.home, east: p.east, north: p.north, datum: TRANSITION.datum, at: (x: number, z: number) => p.fromLocal(x, z) };
+  return { up: SITE.dir, east: SITE.east, north: SITE.north, datum: siteDatum(TRANSITION.datum), at: (x: number, z: number) => siteDirection(x, z, p.radius) };
+}
 /** Game point (x east, y up = game height, z south) -> planet-frame metres.
  *  The radius is the hydrostatic figure (figure.ts), the same surface the tiles use.
  *  The mean sphere sits kilometres off that figure, so a camera placed on it reads as too high
  *  and the descent never reaches the detail and near-split distances. East/north stay on the mean
- *  radius: that is the gnomonic scale planet.fromLocal already uses. */
+ *  radius: that is the gnomonic scale planet.fromLocal already uses. Off home the datum is the
+ *  landing's sea level, so a 400 m glide is 400 m above that sea, not inside a seeded peak. */
 export function gameToPlanet(p: PlanetFrame, x: number, y: number, z: number): Vec3 {
-  const d = p.fromLocal(x, z), r = figureRadius(d) + TRANSITION.datum + y; return [d[0] * r, d[1] * r, d[2] * r];
+  const f = viewFrame(p), d = f.at(x, z), r = figureRadius(d) + f.datum + y; return [d[0] * r, d[1] * r, d[2] * r];
 }
-/** Inverse of gameToPlanet (exact inverse of planet.fromLocal's projection). */
+/** Inverse of gameToPlanet (exact inverse of the frame's gnomonic projection). */
 export function planetToGame(p: PlanetFrame, v: Vec3) {
-  const len = Math.hypot(v[0], v[1], v[2]), c = dot(v, p.home) / len;
+  const f = viewFrame(p), len = Math.hypot(v[0], v[1], v[2]), c = dot(v, f.up) / len;
   const u: Vec3 = [v[0] / len, v[1] / len, v[2] / len];
-  return { x: p.radius * dot(v, p.east) / len / c, y: len - figureRadius(u) - TRANSITION.datum, z: -p.radius * dot(v, p.north) / len / c };
+  return { x: p.radius * dot(v, f.east) / len / c, y: len - figureRadius(u) - f.datum, z: -p.radius * dot(v, f.north) / len / c };
 }
-/** Rotation taking game-frame vectors (x east, y up, z south) to planet-frame vectors at game point (x, z): home's
- *  east/north projected on the local tangent plane, the same convention as the globe heading (globeView headingYaw). */
+/** Rotation taking game-frame vectors (x east, y up, z south) to planet-frame vectors at game point (x, z): the
+ *  frame's east/north projected on the local tangent plane, the same convention as the globe heading (globeView headingYaw). */
 export function gameBasis(p: PlanetFrame, x: number, z: number, out = new THREE.Matrix4()) {
-  const up = new THREE.Vector3(...p.fromLocal(x, z)), e = new THREE.Vector3(...p.east), n = new THREE.Vector3(...p.north);
+  const f = viewFrame(p), up = new THREE.Vector3(...f.at(x, z)), e = new THREE.Vector3(...f.east), n = new THREE.Vector3(...f.north);
   e.addScaledVector(up, -e.dot(up)).normalize(); n.crossVectors(up, e); // right-handed: north = up x east
   return out.makeBasis(e, up, n.negate()); // game +z = south
 }
@@ -129,7 +137,8 @@ export function forestFromPlanet(
 ) {
   const v = planetCam.position, len = Math.hypot(v.x, v.y, v.z);
   if (!(len > 0)) return false;
-  const c = (v.x * p.home[0] + v.y * p.home[1] + v.z * p.home[2]) / len;
+  const up = viewFrame(p).up;
+  const c = (v.x * up[0] + v.y * up[1] + v.z * up[2]) / len;
   if (!(c > 0.25)) return false;
   const g = planetToGame(p, [v.x, v.y, v.z]);
   if (!Number.isFinite(g.x) || !Number.isFinite(g.y) || !Number.isFinite(g.z)) return false;

@@ -17,6 +17,7 @@ import { hash, random } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 import { LEVEL, PHYS } from '../../core/tuning';
 import { treeIceLinesM } from '../../core/altitudeZones';
+import { coarseMetres, coarseReliefOn } from './coarseRelief';
 
 export const PLANET = {
   radius: PHYS.EARTH_RADIUS,     // m: IUGG mean Earth radius (core/tuning PHYS, Moritz 2000)
@@ -123,8 +124,34 @@ const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0
 export type Planet = ReturnType<typeof createPlanet>;
 const planets = new Map<string, Planet>();
 /** The planet for a seed (cached per seed + local function). `local` is the game's height function for the home region. */
-export function planetFor(seed: number, local?: LocalHeight, key = '') {
-  const k = `${seed}:${key}`; let p = planets.get(k); if (!p) planets.set(k, p = createPlanet(seed, local)); return p;
+/**
+ * The playable planet reads zoom-0 bathymetry outside the home lift (coarseRelief.ts).
+ * createPlanet stays the seeded generator the hypsometry tests call. A seeded mountain
+ * on a negative pixel becomes the sea; a seeded ocean on a positive pixel becomes that land
+ * so the land share stays near Earth's 0.292.
+ */
+export function applyCoarseCoast(d: Vec3, s: Surface, home: Vec3): Surface {
+  if (!coarseReliefOn()) return s;
+  const liftRad = PLANET.home.liftKm * 1000 / PLANET.radius;
+  const c = Math.max(-1, Math.min(1, d[0] * home[0] + d[1] * home[1] + d[2] * home[2]));
+  if (!(Math.acos(c) > liftRad)) return s;
+  const ll = toLatLon(d);
+  const bathy = coarseMetres(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI);
+  if (bathy < 0) { s.h = bathy; s.water = 0; s.kind = 'ocean'; s.level = 0; s.hill = 0; }
+  else if (s.kind === 'ocean' || s.h < 0) { s.h = bathy; s.water = -Infinity; s.kind = ''; s.level = 0; }
+  return s;
+}
+export function planetFor(seed: number, local?: LocalHeight, key = '', coasts = false) {
+  const k = `${seed}:${key}:${coasts ? 1 : 0}`; let p = planets.get(k);
+  if (!p) {
+    p = createPlanet(seed, local);
+    if (coasts) {
+      const raw = p.sampleSurface;
+      p.sampleSurface = (d, fp) => applyCoarseCoast(d, raw(d, fp), p!.home);
+    }
+    planets.set(k, p);
+  }
+  return p;
 }
 export function createPlanet(seed: number, local?: LocalHeight) {
   const { relief, hills, noise } = makeNoise(seed), R = PLANET.radius, H = PLANET.home, fm = R / 150, LK = PLANET.lakes, lf = LK.cellsKm.map(k => R / (k * 1000)), lw = R / (LK.warpCellKm * 1000), wa = LK.warpKm * 2000 / R;
@@ -226,10 +253,13 @@ export function vegetationWeight(s: Surface, d: Vec3, coastM?: number) {
   }
   const { tree: tl, ice: il } = treeIceLinesM(lat, coastM);
   if (s.h > tl - 150) w *= 1 - smoothstep(tl - 150, tl + 250, s.h);
-  if (s.h > il - 300 || lat > 78) w *= lat > 78 ? 0 : 1 - smoothstep(il - 300, il + 300, s.h);
+  w *= 1 - iceCover(s.h, il, lat);
   return Math.max(0, Math.min(1, w));
 }
 /** LAND colour (water is contoured and shaded per pixel by the material). */
+/** Permanent-ice weight 0..1. The ice line (lapse rate x latitude, #192) sets it; above 80° it also fades in up to full ice at 86°,
+ *  instead of the old hard cut at 78° that painted every low polar island pure white (#402). Svalbard-like lowlands at 78° stay bare. */
+export const iceCover = (h: number, il: number, lat: number) => Math.max(smoothstep(il - 300, il + 300, h), smoothstep(80, 86, lat));
 export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0], coastM?: number) {
   const C = GLOBE_COLOURS;
   const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = s.mottle;
@@ -253,6 +283,47 @@ export function surfaceColour(s: Surface, d: Vec3, o: number[] = [0, 0, 0], coas
   }
   const { tree: tl, ice: il } = treeIceLinesM(lat, coastM); // T-0072 + #192 continentality when coastM known
   if (s.h > tl - 150) mixTo(o, C.rock, smoothstep(tl - 150, tl + 250, s.h)); // bare rock above the tree line
-  if (s.h > il - 300 || lat > 78) mixTo(o, C.snow, lat > 78 ? 1 : smoothstep(il - 300, il + 300, s.h)); // permanent ice
+  mixTo(o, C.snow, iceCover(s.h, il, lat)); // permanent ice: from the lapse-rate ice line, plus a soft high-Arctic fade (no hard 78° cut)
   return o;
+}
+
+/**
+ * The same mixes as `surfaceColour`, as weights instead of a baked albedo.
+ * Canopy is what is left after fen (bog), shore (rock, sand, beach) and ice.
+ * Each mix replaces a fraction of whatever is already there, in the same order.
+ * Water is not a weight: the renderer contours `h − level`.
+ * Returns canopy, fen, shore, ice. They sum to 1.
+ */
+export function coverWeights(s: Surface, d: Vec3, coastM?: number): [number, number, number, number] {
+  let canopy = 1, fen = 0, shore = 0, ice = 0;
+  const take = (which: 'fen' | 'shore' | 'ice', t: number) => {
+    const k = Math.max(0, Math.min(1, t));
+    if (!(k > 0)) return;
+    canopy *= 1 - k; fen *= 1 - k; shore *= 1 - k; ice *= 1 - k;
+    if (which === 'fen') fen += k; else if (which === 'shore') shore += k; else ice += k;
+  };
+  const lat = Math.abs(Math.asin(Math.max(-1, Math.min(1, d[1])))) * 180 / Math.PI, m = s.mottle;
+  if (s.home < 1) {
+    const k = 1 - s.home;
+    take('shore', k * .3 * smoothstep(.6, .95, s.hill + .5 * (m - .5)));
+    take('fen', k * .55 * smoothstep(-.35, -.8, s.hill + .25 * (m - .5)));
+    take('shore', k * .5 * (1 - smoothstep(1, 8, s.h)));
+  }
+  if (s.home > 0 && s.soilB) {
+    const w = s.home, W = s.soilW;
+    take('shore', w * W[0] * .6 * smoothstep(.4, .75, m));
+    take('fen', w * W[1] * .7);
+    take('shore', w * W[2] * .5);
+    if (W[3] >= 0) take('fen', w * .45 * smoothstep(.6, .95, W[3]));
+  } else if (s.home > 0 && s.soil) {
+    const w = s.home;
+    if (s.soil === 'bedrock') take('shore', w * .6 * smoothstep(.4, .75, m));
+    else if (s.soil === 'peat') take('fen', w * .7);
+    else if (s.soil === 'sand') take('shore', w * .5);
+    if (s.wet >= 0) take('fen', w * .45 * smoothstep(.6, .95, s.wet));
+  }
+  const { tree: tl, ice: il } = treeIceLinesM(lat, coastM);
+  if (s.h > tl - 150) take('shore', smoothstep(tl - 150, tl + 250, s.h));
+  take('ice', iceCover(s.h, il, lat));
+  return [canopy, fen, shore, ice];
 }

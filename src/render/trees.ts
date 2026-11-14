@@ -19,8 +19,8 @@ import { WEATHER } from '../core/weather';
 import { f, choose, tracing, withTrace, type Trace } from '../proc/trace';
 import { massOf, frustum, cone } from '../core/mass';
 import { PHYS } from '../core/tuning';
-import { icosphere } from './rocks';
 import { TREES_V2, bindWind, placeTree, v2Handles } from './trees/game';
+import { steppeAt, steppeTuftGroup } from './flora/steppeTuft';
 
 /**
  * Stylized boreal forest (Grok Bot). Every 'spruce' entity becomes one of five species picked
@@ -139,6 +139,113 @@ function painted(g: THREE.BufferGeometry, color: THREE.ColorRepresentation, m: T
 const M = (x: number, y: number, z: number, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) =>
   new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
 
+/**
+ * One spruce crown as drooping whorls, not ConeGeometry.
+ * Black spruce is narrow, gapped, and club-tipped (Viereck and Johnston 1990; tools/tree-ref club_tops).
+ * White spruce is broader and droops (Nienstaedt and Zasada 1990). Balsam fir is a dense spire (Frank 1990).
+ * Sector radii differ, so two neighbours are not the same cone.
+ */
+function spireCrown(id: string, h: number, y0: number, w: number, droop: number, tiers: number, detail: number, rng: () => number) {
+  const sectors = detail === 2 ? 8 : 12;
+  const club = id === 'black-spruce';
+  const dense = id === 'balsam-fir';
+  const scale = id === 'white-spruce' ? 1.05 : club ? 0.62 : 0.82;
+  const notchP = dense ? 0.08 : club ? 0.28 : 0.16;
+  const pos: number[] = [];
+  const treeScale = 0.78 + rng() * 0.4;
+  const span = Math.max(0.5, h * 0.97 - y0), step = span / Math.max(1, tiers - 1);
+  const leanA = rng() * Math.PI * 2, lean = (0.012 + rng() * 0.03) * (club ? 1.5 : 0.7);
+  // Both windings: the leaf material is FrontSide, so a one-sided card vanishes from behind and the crown reads as a pole.
+  const push = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c, ...a, ...c, ...b); };
+  for (let i = 0; i < tiers; i++) {
+    const t = tiers <= 1 ? 0 : i / (tiers - 1);
+    let env = 1 - t * (dense ? 0.92 : club ? 0.42 : 0.7);
+    if (club && t > 0.74) env = 0.62;
+    const reach = Math.max(0.45, w * scale * treeScale * Math.max(0.16, env));
+    const y = y0 + (h * 0.97 - y0) * t;
+    const drop = Math.max(step * (dense ? 1.15 : 1.45), Math.sin(Math.max(0.08, droop)) * reach * 0.4);
+    const ox = Math.cos(leanA) * lean * (y - y0), oz = Math.sin(leanA) * lean * (y - y0);
+    const spin = rng() * 0.4 + i * (Math.PI * 2 / sectors * 0.5);
+    const center = [ox, y, oz];
+    const ring: number[][] = [];
+    for (let s = 0; s < sectors; s++) {
+      const notch = rng() < notchP && !(club && t > 0.74);
+      const rad = reach * (notch ? 0.28 + rng() * 0.15 : 0.72 + rng() * 0.38);
+      const a = spin + s / sectors * Math.PI * 2;
+      ring.push([ox + Math.cos(a) * rad, y - drop * (notch ? 0.25 : 0.65 + rng() * 0.5), oz + Math.sin(a) * rad]);
+    }
+    for (let s = 0; s < sectors; s++) {
+      const a = ring[s], b = ring[(s + 1) % sectors];
+      push(center, a, b);
+      const hemA = [ox + (a[0] - ox) * 0.9, a[1] - drop * 0.85, oz + (a[2] - oz) * 0.9];
+      const hemB = [ox + (b[0] - ox) * 0.9, b[1] - drop * 0.85, oz + (b[2] - oz) * 0.9];
+      push(a, hemA, hemB); push(a, hemB, b);
+    }
+  }
+  if (pos.length < 9) pos.push(0, h * 0.9, 0, w * 0.2, h * 0.7, 0, -w * 0.15, h * 0.75, w * 0.1);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
+}
+/**
+ * Broadleaf crown as crossed ragged oval cards. Not an icosahedron.
+ * Paper birch is narrowly oval and irregular (Farrar 1995, Trees in Canada, Betula papyrifera).
+ * Jack pine is wider and more open (Rudolph and Laidly 1990).
+ */
+function broadleafCrown(h: number, y0: number, w: number, detail: number, rng: () => number, oval: boolean) {
+  // Crossed cards. A closed ring mesh reads as a faceted gem from the 40 m eye.
+  // Two or three vertical ovals, the same trick as a tree billboard (render/trees/billboardAtlas).
+  const pos: number[] = [];
+  // Both windings: the leaf material is FrontSide, so a one-sided card vanishes from behind and the crown reads as a pole.
+  const push = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c, ...a, ...c, ...b); };
+  const planes = detail === 2 ? 2 : 3;
+  const steps = 12;
+  const span = Math.max(0.8, h * 0.96 - y0);
+  for (let p = 0; p < planes; p++) {
+    const yaw = p * Math.PI / planes + rng() * 0.15;
+    const c = Math.cos(yaw), s = Math.sin(yaw);
+    const height = span * (0.82 + rng() * 0.18);
+    const halfW = w * (oval ? 0.48 : 0.62) * (0.75 + rng() * 0.35);
+    for (let i = 0; i < steps; i++) {
+      const t0 = i / steps, t1 = (i + 1) / steps;
+      const y0i = y0 + height * t0, y1i = y0 + height * t1;
+      const e0 = Math.sin(Math.PI * t0) * (rng() < 0.2 ? 0.45 : 1);
+      const e1 = Math.sin(Math.PI * t1) * (rng() < 0.2 ? 0.45 : 1);
+      const x0 = halfW * e0, x1 = halfW * e1;
+      const mid: number[] = [0, (y0i + y1i) / 2, 0];
+      const a: number[] = [c * x0, y0i, s * x0], b: number[] = [c * x1, y1i, s * x1];
+      const am: number[] = [-a[0], a[1], -a[2]], bm: number[] = [-b[0], b[1], -b[2]];
+      push(mid, a, b); push(mid, bm, am);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+/** Radius spread of the foliage at mid-crown. A cone is near 1. An uneven whorl is well above that. */
+export function spireSpread(id: string, variant: number, detail = 1) {
+  const geo = build(id, variant, detail, 1, false);
+  const pos = geo.getAttribute('position'), leaf = geo.getAttribute('aLeaf');
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < pos.count; i++) if (leaf.getX(i) > 0.5) { const y = pos.getY(i); if (y < minY) minY = y; if (y > maxY) maxY = y; }
+  const band = minY + (maxY - minY) * 0.45, tol = (maxY - minY) * 0.1;
+  const radii: number[] = [];
+  for (let i = 0; i < pos.count; i++) {
+    if (leaf.getX(i) <= 0.5) continue;
+    if (Math.abs(pos.getY(i) - band) > tol) continue;
+    const r = Math.hypot(pos.getX(i), pos.getZ(i));
+    if (r > 0.15) radii.push(r);
+  }
+  radii.sort((a, b) => a - b);
+  const outer = radii.slice(Math.floor(radii.length * 0.55));
+  const rMin = outer[0] ?? 1, rMax = outer[outer.length - 1] ?? 1;
+  geo.dispose();
+  return { ratio: rMax / Math.max(0.05, rMin), width: rMax, n: outer.length };
+}
+
 /** ONE builder; the crown FORM and every number come from the species spec (core/treeSpecies). Per-vertex attributes:
  * aLeaf (0 bark, 1 needle, 2 deciduous leaf), aFall (fall colour), aFlutter (petiole flutter) feed the shared tree shader. */
 function build(id: TreeSpecies, variant: number, detail: number, cls = 1, snag = false) {
@@ -175,8 +282,6 @@ function build(id: TreeSpecies, variant: number, detail: number, cls = 1, snag =
   }
   parts.push(stem);
   const leafKind = sp.leaf.deciduous ? 2 : 1, green = new THREE.Color(sp.leaf.color);
-  const blob = (x: number, y: number, z: number, sx: number, sy: number, sz: number, c: THREE.Color) =>
-    parts.push(tag(painted(icosphere(detail === 0 ? 1 : 0), c, M(x, y, z, sx, sy, sz, rng(), rng() * 6, rng()), .12, rng), leafKind));
   const limb = (y: number, az: number, len: number, rad: number, ang: number, color: number) => // one branch segment from the stem
     parts.push(tag(painted(new THREE.CylinderGeometry(rad * .5, rad, len, 4), color, M(Math.cos(az) * Math.sin(ang) * len / 2 - lean * y, y + Math.cos(ang) * len / 2, Math.sin(az) * Math.sin(ang) * len / 2, 1, 1, 1, 0, -az, -ang)), 0));
   const crownY0 = h * crownBase, nodes = Math.max(1, Math.floor(h * (1 - crownBase) / B.spacing));
@@ -186,25 +291,49 @@ function build(id: TreeSpecies, variant: number, detail: number, cls = 1, snag =
   const childR = r * Math.max(1, B.per) ** (-1 / B.taper) * .5; // pipe model: r^Δ = Σ r_i^Δ (half the stem radius at crown base)
   if (snag) { // standing dead: bare broken limbs only (crown shed), core/stand snag share
     for (let i = 0; i < Math.min(nodes * B.per, detail === 2 ? 0 : 8); i++) limb(h * (crownBase + rng() * (1 - crownBase) * .8), i * B.div, w * .35 * rng(), childR * .7, B.angle + B.droop, 0x4a3f36);
-  } else if (sp.form === 'spire') { // excurrent conifer: one drooping cone tier per (group of) whorls
-    const tiers = f('tree', 'tiers', Math.min(nodes, detail === 2 ? 2 : detail === 1 ? 5 : 10));
-    for (let i = 0; i < tiers; i++) {
-      const t = i / tiers, y = h * (crownBase + (.96 - crownBase) * t), radius = Math.max(.3, w * B.len * (1 - t * .88) * (.85 + rng() * .3)), tall = h * (1 - crownBase) / tiers * 1.8 + h * (detail === 2 ? .2 : 0);
-      parts.push(tag(painted(new THREE.ConeGeometry(radius, tall, seg + (detail === 0 ? 2 : 0)), green.clone().offsetHSL(0, 0, (t - .5) * .05),
-        M((rng() - .5) * .12, y - Math.sin(B.droop) * radius * .3, (rng() - .5) * .12, 1, 1, 1, (rng() - .5) * .08, i * B.div, (rng() - .5) * .08), .07, rng), leafKind));
+  } else if (sp.form === 'spire') { // excurrent conifer: uneven drooping whorls, not a stack of cones
+    const tiers = f('tree', 'tiers', Math.min(nodes, detail === 2 ? 5 : detail === 1 ? 8 : 11));
+    parts.push(tag(painted(spireCrown(id, h, h * crownBase, w, B.droop, tiers, detail, rng), green.clone().offsetHSL((rng() - .5) * .04, 0, (rng() - .5) * .08),
+      M(0, 0, 0), .1, rng), leafKind));
+  } else { // broadleaf / open pine: a ragged oval, not an icosahedron on the stem
+    if (detail === 0) {
+      const n = Math.min(8, Math.max(3, Math.round(nodes * Math.min(B.per, 2))));
+      for (let i = 0; i < n; i++) limb(h * (crownBase + (i + .3) / n * (1 - crownBase) * .7), i * B.div, w * B.len * .4, childR, B.angle, sp.bark.color);
     }
-  } else { // broadleaf / open pine: limbs at phyllotactic azimuths, foliage masses at drooping tips
-    const n = f('tree', 'limbs', Math.min(nodes * B.per, detail === 2 ? 3 : detail === 1 ? 6 : sp.form === 'open-pine' ? 9 : 14)), flat = sp.form === 'open-pine' ? .5 : 1;
-    for (let i = 0; i < n; i++) {
-      const t = (i + rng() * .5) / n, y = h * (crownBase + t * (1 - crownBase) * .92), az = i * B.div, len = w * B.len * (1 - t * .55);
-      const tipX = Math.cos(az) * Math.sin(B.angle) * len - lean * y, tipZ = Math.sin(az) * Math.sin(B.angle) * len, tipY = y + Math.cos(B.angle) * len - Math.sin(B.droop) * len * .5;
-      if (detail === 0) limb(y, az, len, childR * (1 - t * .5), B.angle, sp.bark.color);
-      const size = Math.max(.6, w * .45) * (.8 + rng() * .5);
-      blob(tipX, tipY, tipZ, size, size * .8 * flat, size, green.clone().offsetHSL((rng() - .5) * .05, 0, (rng() - .5) * .08));
-    }
+    parts.push(tag(painted(broadleafCrown(h, h * crownBase, w, detail, rng, sp.form !== 'open-pine'), green.clone().offsetHSL((rng() - .5) * .04, 0, (rng() - .5) * .06),
+      M(0, 0, 0), .1, rng), leafKind));
   }
   const merged = mergeGeometries(parts)!; parts.forEach(p => p.dispose());
   merged.computeBoundingSphere(); return merged;
+}
+
+/** Leaf cloud. A lollipop is one icosahedron: few vertices on a sphere. An oval crown is taller than it is wide. */
+export function crownShape(id: string, variant = 0, detail = 2) {
+  const geo = build(id, variant, detail, 1, false);
+  const pos = geo.getAttribute('position'), leaf = geo.getAttribute('aLeaf');
+  let n = 0, minY = Infinity, maxY = -Infinity, sx = 0, sy = 0, sz = 0;
+  const pts: number[][] = [];
+  for (let i = 0; i < pos.count; i++) {
+    if (leaf.getX(i) <= 0.5) continue;
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    pts.push([x, y, z]); n++; sx += x; sy += y; sz += z;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+  }
+  sx /= n || 1; sy /= n || 1; sz /= n || 1;
+  let rSum = 0, r2 = 0, maxR = 0;
+  for (const [x, y, z] of pts) {
+    const r = Math.hypot(x - sx, y - sy, z - sz);
+    rSum += r; r2 += r * r; maxR = Math.max(maxR, Math.hypot(x, z));
+  }
+  const mean = rSum / (n || 1);
+  const cv = mean > 1e-4 ? Math.sqrt(Math.max(0, r2 / (n || 1) - mean * mean)) / mean : 0;
+  geo.dispose();
+  return { n, cv, aspect: (maxY - minY) / Math.max(0.2, maxR * 2) };
+}
+
+/** The old crown: a green icosahedron (12–42 vertices) on the stem. */
+export function isLollipop(s: { n: number; cv: number; aspect: number }) {
+  return s.n < 80 || (s.cv < 0.1 && s.aspect < 1.05);
 }
 
 /** Per-frame tree uniforms (wind clock/field, phenology, bark range), shared by every tree material user. Called from the
@@ -215,6 +344,8 @@ export function updateTreeUniforms() {
 }
 /** One LOD level of a tree: a single shared-geometry mesh, flagged so disposeObject skips it. */
 export function treeGeometry(entity: Entity, detail: number): THREE.Group {
+  // A prairie sample is feather grass. A spruce mesh here, even scaled down, reads as a pole.
+  if (entity.kind === 'spruce' && steppeAt(entity.x, entity.z)) return steppeTuftGroup(entity.seed);
   const species = treeSpecies(entity.seed, entity.x, entity.z), variant = f('tree', 'variant', (entity.seed >>> 3) % VARIANTS), cls = ageClass(entity.x, entity.z), snag = isSnag(entity.seed, entity.x, entity.z), key = `${species}:${variant}:${cls}:${snag ? 1 : 0}:${detail}`;
   // Traced (inspector) builds bypass the shared cache so factors are reported and what-if overrides take effect.
   if (TREES_V2.on && !snag && !tracing() && !entity.key.startsWith('fartree:') && v2Handles(species)) { // trees v2 hook (render/trees/game): drawn there, nothing here

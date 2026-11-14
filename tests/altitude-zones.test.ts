@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { treeLineM, iceLineM, zoneAt, plantsGrowAt, gameAltitudeM, siteMaritimeWeight, treeLineAtM, iceLineAtM, siteCoastM } from '../src/core/altitudeZones';
+import { treeLineM, iceLineM, zoneAt, treeIceLinesM, plantsGrowAt, gameAltitudeM, siteMaritimeWeight, treeLineAtM, iceLineAtM, siteCoastM } from '../src/core/altitudeZones';
 import { surfaceColour, vegetationWeight, fromLatLon, type Surface } from '../src/world/globe/planet';
 import { setSite, clearSite } from '../src/core/sitePhase';
 import { coverKind } from '../src/world/globe/coverKind';
@@ -77,4 +77,15 @@ test('vegetationWeight / surfaceColour follow continentality when coast is given
   const greenZ = cz[1] / (cz[0] + cz[1] + cz[2] + 1e-9);
   const greenC = cc[1] / (cc[0] + cc[1] + cc[2] + 1e-9);
   assert.ok(greenC > greenZ, `continental greener ${greenC} vs zonal ${greenZ}`);
+});
+
+test('zoneAt boundaries are exactly treeIceLinesM (one source for the lines)', () => {
+  for (const [lat, coast] of [[49.77, undefined], [64.5, 156_000], [60, 100], [20, NaN]] as [number, number | undefined][]) {
+    const { tree, ice } = treeIceLinesM(lat, coast);
+    assert.equal(zoneAt(ice, lat, coast), 'ice');
+    if (tree > 1 && ice - tree > 2) {
+      assert.equal(zoneAt(tree - 1, lat, coast), 'forest');
+      assert.notEqual(zoneAt(tree + 1, lat, coast), 'forest');
+    }
+  }
 });

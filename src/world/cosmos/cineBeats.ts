@@ -43,10 +43,12 @@ export const CINE = {
   b14End: 116,
   /** B2 inhale after narration `ended`. */
   b2: 0.8,
-  /** Bed eases from −6 dB to −18 dB across this, then on toward 0 dB. */
+  /** Bed returns from the narration duck to full across this, starting when the line ends. */
   bedRamp: 0.4,
-  bedB1: -6,
+  /** Music under the opening voice. −18 dB only while that line is playing. */
+  bedB1: -18,
   bedB2: -18,
+  /** The long take used to be full by here. The short take is already full a ramp after it ends. */
   bedFullBy: 22,
   /** Title lands this long after the impact file starts. Holds 3 s. */
   titleAfterBang: 1.7,
@@ -62,14 +64,26 @@ export const CINE = {
 } as const;
 
 /**
- * Current narration file (measured). It speaks stage directions; a clean take
- * replaces the file. B2 and B3 key off the element's `ended`, not this number.
- * The number is only the timing the tests and the fallback use.
+ * Opening narration, loudness-normalized (about −16 LUFS, true peak under −1.5 dBTP).
+ * B2 and B3 key off the element's `ended`, not this number.
+ * The number is the measured duration the tests and the fallback use.
  */
 export const NARRATION = {
   file: 'audio/big-bang/narration.mp3',
-  seconds: 14.471837,
+  /** ffprobe duration of the clean take. The old file was 14.471837 s. */
+  seconds: 5.851429,
 } as const;
+
+/**
+ * Phrase starts inside narration.mp3, from the silences in that take.
+ * Wall time is CINE.b1 plus `at`. The last line is spoken; it is not left to the title card.
+ */
+export const NARRATION_CUES = [
+  { at: 0, text: 'In the beginning…' },
+  { at: 1.51261, text: 'there was an event…' },
+  { at: 3.16367, text: 'It was called…' },
+  { at: 4.48893, text: 'The Big Bang.' },
+] as const;
 
 /** Later cues. Not played in the B0–B3 slice. Alts are on disk and unused. */
 export const LATER_AUDIO = {
@@ -84,10 +98,10 @@ export const LATER_AUDIO = {
   voB7: 'audio/big-bang/vo-b7-light.mp3',
   /** With “380,000 years”, while the plasma is still glowing. */
   voB7At: 54,
-  voB7Seconds: 2.82,
+  voB7Seconds: 2.821224,
   voB9: 'audio/big-bang/vo-b9-stars.mp3',
   voB9At: 67,
-  voB9Seconds: 1.25,
+  voB9Seconds: 1.253878,
   voB14: 'audio/big-bang/vo-b14-home.mp3',
   voB14At: 112.3,
   voB14Seconds: 2.4,
@@ -411,15 +425,15 @@ export function titleDissolve(dtAfterHold: number): number {
   return Math.min(1, dtAfterHold / 1.3);
 }
 
-/** B1 subtitles, split across the file that is actually playing. Not the spoken stage directions. */
+/** B1 subtitles, one line per spoken phrase. Gone when the file ends, so the old 14 s tail is not held. */
 export function subtitleAt(t: number, narrationEndedAt: number | null): string {
   if (t < CINE.b1) return '';
   const end = narrationEndedAt ?? narrationEndFallback();
   if (t >= end) return '';
-  const u = (t - CINE.b1) / Math.max(0.001, end - CINE.b1);
-  if (u < 1 / 3) return 'In the beginning…';
-  if (u < 2 / 3) return 'there was an event…';
-  return 'It was called…';
+  const local = t - CINE.b1;
+  let line: string = NARRATION_CUES[0].text;
+  for (const cue of NARRATION_CUES) if (local + 1e-4 >= cue.at) line = cue.text;
+  return line;
 }
 
 /** The only four hero lines. Empty until the panel is allowed on screen. */
@@ -434,19 +448,18 @@ export function heroAt(t: number): string {
 const gainDb = (g: number) => g <= 1e-4 ? -80 : 20 * Math.log10(g);
 
 /**
- * Bed level in dB. Silent before the click's B1. Stays at −6 dB until narration ends.
+ * Bed level in dB. Silent before the click's B1. −18 dB only while the narration is still playing,
+ * then back to full across bedRamp. It does not stay ducked through the old 14 s take.
  * From 0:42 the loud part of the bed is still up under cue 2, full for the first
  * half of the 4 s overlap, then out. The voice duck is added on top and lets go
  * after each line. There is no 20–45 s loop.
  */
 export function bedDb(t: number, narrationEndedAt: number | null): number {
   if (t < CINE.b1) return -80;
-  if (narrationEndedAt == null) return CINE.bedB1;
-  const b2 = narrationEndedAt;
-  const ramped = b2 + CINE.bedRamp;
-  if (t < b2) return CINE.bedB1;
-  if (t < ramped) return CINE.bedB1 + (CINE.bedB2 - CINE.bedB1) * ((t - b2) / CINE.bedRamp);
-  if (t < CINE.bedFullBy) return CINE.bedB2 * (1 - (t - ramped) / (CINE.bedFullBy - ramped));
+  // Unknown end: the line is still the open take, so the duck stays. A known end releases across bedRamp.
+  if (narrationEndedAt == null || t < narrationEndedAt) return CINE.bedB1;
+  const up = narrationEndedAt + CINE.bedRamp;
+  if (t < up) return CINE.bedB1 * (1 - (t - narrationEndedAt) / CINE.bedRamp);
   if (t < LATER_AUDIO.cue2At) return 0;
   if (t >= LATER_AUDIO.cue2At + LATER_AUDIO.cue2Fade) return -80;
   const u = (t - LATER_AUDIO.cue2At) / LATER_AUDIO.cue2Fade;

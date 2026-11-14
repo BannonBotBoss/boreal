@@ -67,6 +67,13 @@ function setOpacity(root: THREE.Object3D, opacity: number) {
 function setFur(root: THREE.Object3D, show: boolean) {
   root.traverse(obj => { if (obj.name === 'fur') obj.visible = show; });
 }
+/** The procedural body stays up when nothing else is drawn. A stored skin that fails to claim a slot
+ *  used to force this to 0 and leave only the senses ring. */
+export function proceduralBodyShare(hasSkin: boolean, seen: boolean, drawnFull: number, drawnLow: number, shareFull: number, shareLow: number) {
+  if (!seen) return 0;
+  if (!hasSkin || (drawnFull < 0.04 && drawnLow < 0.04)) return shareFull + shareLow;
+  return 0;
+}
 
 export function createAnimalPicture(scene: THREE.Scene) {
   const cap = ANIMAL_LADDER.speckCap;
@@ -223,7 +230,7 @@ void main() {
           low = share.low;
           lows++;
         }
-        if (!model?.skin) proc = seen ? share.full + share.low : 0;
+        proc = proceduralBodyShare(!!model?.skin, seen, full, low, share.full, share.low);
         const uncovered = seen && full === 0 && low === 0 && proc < 0.04 && (share.full > 0.04 || share.low > 0.04 || share.speck > 0.02);
         if (seen && (share.speck > 0.02 || uncovered) && specks < cap) {
           const tint = coatOf(item.species);

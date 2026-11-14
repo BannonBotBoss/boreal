@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0195",
+  "agent": "grokbot-2",
+  "note": "Correction. #436 merged the aerial-horizon task as T-0204, and #435 merged the terrain task as T-0212. D19/D22 is T-0204. D23 is T-0212. Deterministic generation moved to T-0213. D24 is T-0214 on #439. The earlier comment that called D19/D22 T-0213 was before that merge.",
+  "at": "2026-11-11T11:27:03-08:00"
+}

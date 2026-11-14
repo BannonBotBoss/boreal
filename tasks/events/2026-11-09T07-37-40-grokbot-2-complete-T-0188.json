@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0188",
+  "agent": "grokbot-2",
+  "branch": "grokbot-2/shadow-compile",
+  "skill": "shadow-chunk",
+  "note": "The PCSS splice no longer writes shadow before it is declared. tests/shadow-compile.test.ts passes. No picture: the failure is a program that does not link. No self-approve. Gait was not touched.",
+  "at": "2026-11-09T07:37:40-08:00"
+}

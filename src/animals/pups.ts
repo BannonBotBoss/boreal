@@ -1,7 +1,7 @@
 /**
  * The mama's litter, drawn from the same rules as the Rust store.
  * They stand on the trail beside her. A drop that leaves them behind puts them back on it.
- * The meshes are the wolf skin without the fur cards, scaled to a four-week pup.
+ * The meshes are the wolf skin with a woolly coat of fur cards, scaled to a four-week pup.
  */
 import * as THREE from 'three';
 import { ageAfter, besideMother, followStep, growthStage, pupAim, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';
@@ -31,6 +31,7 @@ export function pupCloud() { return cloud; }
 export function createLitter(scene: THREE.Scene) {
   let rows: { pup: LivePup; holder: THREE.Group; wolf: ReturnType<typeof createPlayerWolf> }[] | null = null;
   let clock = 0;
+  let following = true;
   let motherAt = { x: 0, z: 0, seen: false };
   const nextVoice = new Map<number, number>();
   const ensure = (x: number, z: number, motherYaw: number) => {
@@ -52,7 +53,12 @@ export function createLitter(scene: THREE.Scene) {
   };
   return {
     pups: () => rows?.map(w => w.pup) ?? [],
+    setFollow(on: boolean) {
+      following = on;
+      if (rows) for (const row of rows) row.holder.visible = on;
+    },
     step(dt: number, gameSeconds: number, motherX: number, motherZ: number, motherYaw: number, mood: PupMood = { hungry: false, tired: false, nudge: false }): PupHeard[] {
+      if (!following) return [];
       clock += Math.max(0, dt);
       const motherMoved = motherAt.seen && Math.hypot(motherX - motherAt.x, motherZ - motherAt.z) > 0.004;
       motherAt = { x: motherX, z: motherZ, seen: true };

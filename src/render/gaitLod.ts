@@ -483,7 +483,7 @@ export function createWolfLod(scene: THREE.Scene, ground?: (x: number, z: number
         const live = claim(level);
         live.spawn.root.position.set(b.x, b.y, b.z); live.spawn.root.rotation.y = b.yaw;
         driveWolf(st, live.spawn, live.rig, level === 'near' ? tplFull : tplLow,
-          { motion: b.motion, phase: b.phase, speed: b.speed, moving: b.moving, x: b.x, y: b.y, z: b.z, procRoot: b.key === 'player-wolf' ? b.root : undefined }, dt, ground);
+          { motion: b.motion, phase: b.phase, speed: b.speed, moving: b.moving, x: b.x, y: b.y, z: b.z, procRoot: b.key === 'player' || b.key === 'player-wolf' ? b.root : undefined }, dt, ground);
         const o = Math.min(1, share.full + share.low);
         setOpacity(live.spawn.root, o);
         if (level === 'near') out.full = o; else out.low = o;

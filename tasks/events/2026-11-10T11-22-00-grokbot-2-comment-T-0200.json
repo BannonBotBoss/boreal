@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0200",
+  "agent": "grokbot-2",
+  "note": "Close frame tasks/evidence/T-0200/after-rack.png. Wolf at -121.45, 15, yaw pi, pitch 0.15, clock held. A tan deer in frame has a small branching rack, not a white scribble. A second load at the same stand missed the deer (it walked before the hold), so there is no matched before. Not complete. Not self-approved. Gait angles were not changed.",
+  "at": "2026-11-10T11:22:00-08:00"
+}

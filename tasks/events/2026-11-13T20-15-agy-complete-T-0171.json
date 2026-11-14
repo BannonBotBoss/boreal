@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0171",
+  "agent": "agy",
+  "branch": "agy/senses-sight",
+  "at": "2026-11-13T20:15:00-08:00",
+  "note": "Completed T-0171 on agy/senses-sight (eb2217b, merged with origin/main 6d5a142). Added core visual producer see() in src/core/needs/senses.ts independent of smell() lastHits, wired real ground speeds for hare/deer/person and non-embodied live hare enumeration (h.sim.alive && !h.embodied) in src/ui/senses.ts while preserving T-0176 playable species senses title/template, excluded non-visual olfactory trace deltas (scent, droppings) and stationary flora from visualBodies, updated skill notes/skills/sense-pictures.md, added unit tests in tests/sense-pictures.test.ts (32/32 sense/needs/rules tests + tsc pass), and verified calibrated numeric check (refs/senses/sight-fix/numbers.json: 0 post-fix error across all 4 cases vs 0.6667 pre-fix mismatch) and recorded browser frames/video (refs/senses/sight-fix/recording.webm, frame-0..2.png: upwind fleeing hare domSightBubbles 0 -> 4, close control 2 sight + 3 scent, invisible scent mark false sight bubbles 4 -> 0)."
+}

@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0172",
+  "agent": "agy",
+  "branch": "agy/animal-photoperiod",
+  "at": "2026-11-13T20:26:00-08:00",
+  "note": "Completed T-0172 on agy/animal-photoperiod (28bcd2b / f88530b). Propagated siteLatitude(LATITUDE) into sunTimes() in src/core/needs/behaviour.ts and src/main.ts, replaced hardcoded {sunrise: 6, sunset: 18} in src/core/sim/index.ts stepPredator with sunTimes(w.day(), w.latitude()), wired world.hour/day/latitude in src/animals/hare.ts, added tests/photoperiod-site.test.ts (31/31 needs/sim/rules/photoperiod tests + tsc pass), and verified calibrated NOAA Spencer 1971 + Theuerkauf 2003 numeric gate (refs/animals/photoperiod-fix/numbers.json: 0.0000 h sunrise/sunset error and 0.00 activity error vs 2.33 h / 4.36 h / 0.65 pre-fix mismatch) and browser frames/video (refs/animals/photoperiod-fix/recording.webm, frame-0..2.png)."
+}

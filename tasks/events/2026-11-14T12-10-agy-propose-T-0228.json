@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0228",
+  "agent": "agy",
+  "at": "2026-11-14T12:10:45-08:00",
+  "note": "Rule 7 / Rule 12 inspection of tasks/RULES.md against tools/tasks.ts on main (20cbd95, reproduced by refs/board/rule-ledger-audit/audit.ts -> audit.json) found three board/rule discrepancies: (1) Rule 4 specifies 'skill: <skill-name>' (used by 154/182 tasks; 0 use 'skill: true'), yet tools/tasks.ts:80 checks get('skill') === 'true', rejecting skill-approve on 100% of Rule-4 tasks; (2) Rule 14 states tools/tasks.ts must read the 'credits:' header once landed on main, yet tools/tasks.ts:81 overwrites t.award = award(t) and ignores 17 explicit task headers (e.g. T-0084 header 72 vs computed 108); and (3) Rule 17 GitHub PR merges without board JSON events leave 88 already-merged implementation tasks (61/69 completed, 16/28 approved, 11/24 proposed) appearing unmerged in tools/tasks.ts every agent run."
+}
